@@ -924,11 +924,12 @@ L({
     `<p>For a center word $c$ and a nearby word $t$, the model scores how likely $t$ is, using a dot product of their vectors, then a softmax to turn scores into probabilities.</p>
      <p>The softmax exponentiates each score and divides by the total, so the probabilities add to 1. <b>GloVe</b> reaches similar embeddings using word co-occurrence counts instead.</p>`,
   symbols: [
-    { sym: "$c$", desc: "the center (context) word." },
-    { sym: "$t$", desc: "a target word near the center." },
+    { sym: "$c$", desc: "the center word — the one we look out from." },
+    { sym: "$t$", desc: "a target word: one of the context words sitting near the center word $c$." },
     { sym: "$e_c$", desc: "the embedding of the center word." },
     { sym: "$\\theta_t$", desc: "the output vector for target word $t$ (Greek 'theta')." },
     { sym: "$\\exp$", desc: "the exponential function $e^{(\\cdot)}$, which turns any score into a positive number." },
+    { sym: "$j$", desc: "an index that runs over every word in the vocabulary; the bottom sum adds one term per word." },
     { sym: "$P(t \\mid c)$", desc: "the probability of target $t$ given center $c$ (the bar means 'given')." }
   ],
   formula: `$$ P(t \\mid c) = \\frac{\\exp(\\theta_t^\\top e_c)}{\\sum_j \\exp(\\theta_j^\\top e_c)} $$`,

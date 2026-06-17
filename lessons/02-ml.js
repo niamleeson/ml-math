@@ -371,7 +371,8 @@ L({
     { sym: "$\\eta$", desc: "the natural parameter ('eta'). In a GLM we set $\\eta = \\theta^\\top x$, the linear score." },
     { sym: "$T(y)$", desc: "the sufficient statistic: a simple function of $y$ (often just $y$ itself)." },
     { sym: "$b(y)$", desc: "the base measure: a part that depends only on $y$." },
-    { sym: "$a(\\eta)$", desc: "the log-partition: a normalizer that makes the probabilities add up to 1." }
+    { sym: "$a(\\eta)$", desc: "the log-partition: a normalizer that makes the probabilities add up to 1." },
+    { sym: "$\\phi$", desc: "for a Bernoulli (yes/no) output, the success probability — used in the example ('phi')." }
   ],
   formula: `$$ p(y;\\eta) = b(y)\\,\\exp\\big(\\eta\\,T(y) - a(\\eta)\\big) $$`,
   whatItDoes:

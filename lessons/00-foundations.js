@@ -70,7 +70,8 @@ L({
     { sym: "$x, y$", desc: "two vectors, each with $n$ numbers." },
     { sym: "$x^\\top y$", desc: "the dot product of $x$ and $y$. The little $\\top$ ('transpose') just lays $x$ on its side so the multiply lines up. Also written $x \\cdot y$." },
     { sym: "$\\sum_{i=1}^{n}$", desc: "'add up, for $i$ going from 1 to $n$'. The $\\Sigma$ is a capital Greek S, for Sum." },
-    { sym: "$x_i y_i$", desc: "the $i$-th number of $x$ times the $i$-th number of $y$." }
+    { sym: "$x_i y_i$", desc: "the $i$-th number of $x$ times the $i$-th number of $y$." },
+    { sym: "$w$", desc: "a weight vector used in the example: how much each feature counts. Same length as $x$." }
   ],
   formula: `$$ x^\\top y = \\sum_{i=1}^{n} x_i\\, y_i \\;\\in\\; \\mathbb{R} $$`,
   whatItDoes:

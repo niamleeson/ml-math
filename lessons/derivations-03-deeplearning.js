@@ -85,7 +85,7 @@ Object.assign(window.DERIVATIONS, {
   `<p><b>Why plain descent struggles.</b> Picture a long narrow ravine. The walls are steep, the floor gently slopes to the goal. Plain gradient descent bounces between the steep walls (big sideways gradient) and crawls along the floor (tiny forward gradient). Zig-zag, slow.</p>
    <p><b>Momentum: a running average that damps oscillation.</b></p>
    <ul class="steps">
-     <li>Keep a velocity $v$. Each step blend in the new gradient: $v \\leftarrow \\beta v+(1-\\beta)\\,\\frac{\\partial L}{\\partial w}$, then $w \\leftarrow w-\\eta v$. Here $\\beta$ is a memory factor near 0.9.</li>
+     <li>Keep a velocity $v$. Each step add in the new gradient: $v \\leftarrow \\beta v+\\frac{\\partial L}{\\partial w}$, then $w \\leftarrow w-\\eta v$. Here $\\beta$ (near 0.9) is how much of the past velocity you keep, so consistent gradients pile up into speed.</li>
      <li>The sideways gradient flips sign every step (left wall, right wall, left...). Averaging opposite signs cancels them out. The oscillation dies.</li>
      <li>The forward gradient always points the same way, so its average keeps growing. You accelerate down the floor. A heavy ball ignores the wobble and rolls straight to the bottom.</li>
    </ul>

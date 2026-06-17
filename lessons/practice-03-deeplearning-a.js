@@ -387,23 +387,23 @@ Object.assign(window.PRACTICE, {
       ],
       answer:`$w = 4.8$` },
 
-    { q:`<p>Momentum keeps a running velocity: $v\\leftarrow \\beta v + (1-\\beta)g$. With $\\beta=0.9$, $v=0$, gradient $g=2$, find the new $v$.</p>`,
+    { q:`<p>Momentum keeps a running velocity: $v\\leftarrow \\beta v + g$. With $\\beta=0.9$, $v=0$, gradient $g=2$, find the new $v$.</p>`,
       steps:[
-        {do:`Plug in: $v = 0.9\\times 0 + 0.1\\times 2$.`, why:`Blend old velocity with the new gradient.`},
-        {do:`Compute: $0 + 0.2 = 0.2$.`, why:`On step 1 velocity starts small.`}
+        {do:`Plug in: $v = 0.9\\times 0 + 2$.`, why:`Keep 90% of the old velocity, then add the new gradient.`},
+        {do:`Compute: $0 + 2 = 2$.`, why:`On step 1 there is no past velocity yet, so $v$ just equals the gradient.`}
       ],
-      answer:`$v = 0.2$` },
+      answer:`$v = 2$` },
 
-    { q:`<p>Continue the momentum from $v=0.2$ with $\\beta=0.9$ and another gradient $g=2$. Find the next $v$.</p>`,
+    { q:`<p>Continue the momentum from $v=2$ with $\\beta=0.9$ and another gradient $g=2$. Find the next $v$.</p>`,
       steps:[
-        {do:`Plug in: $v = 0.9\\times 0.2 + 0.1\\times 2$.`, why:`Carry forward 90% of past velocity.`},
-        {do:`Compute: $0.18 + 0.2 = 0.38$.`, why:`Velocity grows as gradients keep pointing the same way.`}
+        {do:`Plug in: $v = 0.9\\times 2 + 2$.`, why:`Carry forward 90% of past velocity, then add the new gradient.`},
+        {do:`Compute: $1.8 + 2 = 3.8$.`, why:`Velocity builds up as gradients keep pointing the same way.`}
       ],
-      answer:`$v = 0.38$` },
+      answer:`$v = 3.8$` },
 
-    { q:`<p>Momentum update uses the velocity, not the raw gradient: $w\\leftarrow w-\\eta v$. With $w=1$, $\\eta=1$, $v=0.38$, find the new $w$.</p>`,
+    { q:`<p>Momentum update uses the velocity, not the raw gradient: $w\\leftarrow w-\\eta v$. With $w=1$, $\\eta=0.1$, $v=3.8$, find the new $w$.</p>`,
       steps:[
-        {do:`Step: $\\eta\\times v = 1\\times 0.38 = 0.38$.`, why:`Momentum steps by the smoothed velocity.`},
+        {do:`Step: $\\eta\\times v = 0.1\\times 3.8 = 0.38$.`, why:`Momentum steps by the built-up velocity, not the raw gradient.`},
         {do:`Update: $w = 1 - 0.38 = 0.62$.`, why:`Move downhill using accumulated speed.`}
       ],
       answer:`$w = 0.62$` },
