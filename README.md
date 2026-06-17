@@ -22,9 +22,12 @@ Every lesson has the same beginner-friendly shape:
 - 🪜 **Building up to it** — connects to what you already know
 - 🔤 **Every symbol explained** — no symbol used before it's defined
 - ➗ **The formula**
+- 📜 **Why it's true** — a derivation / proof + intuition for the formula
 - 🔢 **Concrete example** — real numbers, worked step by step
 - 🚀 **Where you actually use this**
 - 🧠 **Check yourself** — a quiz with a revealed answer
+- ✏️ **Practice — 10 problems** — each with a collapsible step-by-step solution
+  where every step says *what* to do and *why* (1,070 problems in total)
 
 Features: collapsible sidebar, search, prev/next navigation, and **progress is saved in your browser** (click "Mark complete").
 
@@ -36,6 +39,8 @@ lessons/01-probability.js
 lessons/02-ml.js
 lessons/03-deeplearning.js
 lessons/04-ai.js
+lessons/derivations-*.js     ← proofs / intuition, merged into lessons by id
+lessons/practice-*.js        ← 10 step-by-step problems per lesson, merged by id
 ```
 Each `lessons/*.js` just pushes lesson objects into `window.LESSONS`. To **add a lesson**, copy one object and edit it. To **add a module**, add a new file, list it in the `<script src>` block in `index.html`, and add its name to `MODULE_ORDER`.
 

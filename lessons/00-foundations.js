@@ -35,9 +35,14 @@ L({
     `<p>Read it left to right: "$x$ is a stack of $n$ numbers, $x_1$ down to $x_n$, and it lives in $\\mathbb{R}^n$."</p>
      <p>$\\in$ means "is a member of". So $x \\in \\mathbb{R}^n$ just means "$x$ is one of the $n$-number vectors".</p>`,
   example:
-    `<p>Describe one house with 3 numbers: 1500 sq ft, 3 bedrooms, 10 years old.</p>
-     <div class="formula-box">$$ x = \\begin{bmatrix} 1500 \\\\ 3 \\\\ 10 \\end{bmatrix} \\in \\mathbb{R}^3 $$</div>
-     <p>Here $x_1 = 1500$, $x_2 = 3$, $x_3 = 10$, and $n = 3$.</p>
+    `<p>Let's turn one house into a vector, step by step.</p>
+     <ul class="steps">
+       <li>Pick the measurements you care about: size = 1500 sq ft, bedrooms = 3, age = 10 years.</li>
+       <li>Stack them in a fixed order into a column. That column is the vector:
+           $x = \\begin{bmatrix} 1500 \\\\ 3 \\\\ 10 \\end{bmatrix}$.</li>
+       <li>Read the entries back by position: $x_1 = 1500$ (size), $x_2 = 3$ (bedrooms), $x_3 = 10$ (age).</li>
+       <li>Count the entries: there are 3, so $n = 3$ and we write $x \\in \\mathbb{R}^3$.</li>
+     </ul>
      <p>A second house is just another vector. A whole dataset is many such vectors.</p>`,
   application:
     `<p>Every input to every ML model is a vector. A 28×28 grayscale digit becomes a vector of 784 pixel values. A user becomes a vector of their actions. Learning to think in vectors is step one.</p>`,
@@ -110,9 +115,14 @@ L({
   whatItDoes:
     `<p>$A_{2,3}$ means "go to row 2, column 3, read that number". The dots ($\\cdots$, $\\vdots$, $\\ddots$) just mean "and so on" across, down, and diagonally.</p>`,
   example:
-    `<p>Three houses, two features each (size, bedrooms):</p>
-     <div class="formula-box">$$ A = \\begin{bmatrix} 1500 & 3 \\\\ 900 & 2 \\\\ 2200 & 4 \\end{bmatrix} \\in \\mathbb{R}^{3\\times 2} $$</div>
-     <p>$m = 3$ houses, $n = 2$ features. $A_{2,1} = 900$ (second house's size). $A_{3,2} = 4$ (third house's bedrooms).</p>`,
+    `<p>Let's build a matrix from three houses, two features each (size, bedrooms), step by step.</p>
+     <ul class="steps">
+       <li>Write each house as a row: house 1 = $[1500, 3]$, house 2 = $[900, 2]$, house 3 = $[2200, 4]$.</li>
+       <li>Stack the three rows into a grid:
+           $A = \\begin{bmatrix} 1500 & 3 \\\\ 900 & 2 \\\\ 2200 & 4 \\end{bmatrix}$.</li>
+       <li>Count the shape: 3 rows, 2 columns. So $m = 3$, $n = 2$, and $A \\in \\mathbb{R}^{3\\times 2}$.</li>
+       <li>Read a cell by (row, column): $A_{2,1} = 900$ (house 2's size); $A_{3,2} = 4$ (house 3's bedrooms).</li>
+     </ul>`,
   application:
     `<p>Datasets are matrices (rows = examples, columns = features). Images are matrices of pixels. Neural-network layers are matrices of weights. Almost all ML computation is "matrix in, matrix out".</p>`,
   quiz: {

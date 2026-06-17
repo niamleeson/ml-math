@@ -192,6 +192,35 @@
   .quiz .answer { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
   .quiz.open .answer { display: block; }
 
+  .card.practice h3 { color: var(--warn); }
+  .problem { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0; background: var(--bg); }
+  .problem .qrow { display: flex; gap: 10px; align-items: flex-start; }
+  .problem .qnum {
+    min-width: 22px; height: 22px; border-radius: 50%; background: var(--panel-2);
+    border: 1px solid var(--border); color: var(--ink); font-size: 12px;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .problem .qtext { flex: 1; }
+  .problem .reveal {
+    margin-top: 8px; color: var(--accent); cursor: pointer; font-size: 13px; user-select: none;
+    background: none; border: none; padding: 0; text-decoration: underline;
+  }
+  .problem .solution { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .problem.open .solution { display: block; }
+  .solsteps { counter-reset: ps; list-style: none; margin: 0; padding: 0; }
+  .solsteps > li {
+    position: relative; padding: 5px 0 12px 32px; margin: 0 0 0 10px; border-left: 2px solid var(--border);
+  }
+  .solsteps > li:last-child { border-left-color: transparent; padding-bottom: 2px; }
+  .solsteps > li::before {
+    counter-increment: ps; content: counter(ps); position: absolute; left: -11px; top: 2px;
+    width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--ink); font-size: 10px; display: flex; align-items: center; justify-content: center;
+  }
+  .solsteps .do { color: var(--ink); }
+  .solsteps .why { color: var(--ink-dim); font-size: 13.5px; margin-top: 2px; }
+  .finalans { margin-top: 10px; color: var(--accent-2); font-weight: 600; }
+
   .prereqs { font-size: 13px; color: var(--ink-dim); margin-bottom: 18px; }
   .prereqs a { color: var(--accent); cursor: pointer; text-decoration: none; }
   .prereqs a:hover { text-decoration: underline; }
@@ -274,6 +303,8 @@
   window.LESSONS = [];
   // Derivation / proof / intuition text, keyed by lesson id. Filled by lessons/derivations-*.js.
   window.DERIVATIONS = {};
+  // Practice problems (array per lesson id). Filled by lessons/practice-*.js.
+  window.PRACTICE = {};
   // Order the modules appear in the sidebar:
   window.MODULE_ORDER = [
     "Foundations: Math you need first",
@@ -297,6 +328,19 @@
 <script src="lessons/derivations-02-ml.js"></script>
 <script src="lessons/derivations-03-deeplearning.js"></script>
 <script src="lessons/derivations-04-ai.js"></script>
+
+<!-- Practice problems with step-by-step solutions (merged into lessons by id). -->
+<script src="lessons/practice-00-foundations.js"></script>
+<script src="lessons/practice-01-probability-a.js"></script>
+<script src="lessons/practice-01-probability-b.js"></script>
+<script src="lessons/practice-02-ml-a.js"></script>
+<script src="lessons/practice-02-ml-b.js"></script>
+<script src="lessons/practice-02-ml-c.js"></script>
+<script src="lessons/practice-03-deeplearning-a.js"></script>
+<script src="lessons/practice-03-deeplearning-b.js"></script>
+<script src="lessons/practice-03-deeplearning-c.js"></script>
+<script src="lessons/practice-04-ai-a.js"></script>
+<script src="lessons/practice-04-ai-b.js"></script>
 
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
@@ -406,6 +450,22 @@ const App = (function () {
       `<div class="answer">${quiz.a}</div></div>`;
   }
 
+  function practiceBlock(list) {
+    if (!list || !list.length) return "";
+    const probs = list.map((p, i) => {
+      const steps = (p.steps || []).map(s =>
+        `<li><div class="do">${s.do || ""}</div>${s.why ? `<div class="why">${s.why}</div>` : ""}</li>`).join("");
+      return `<div class="problem">
+          <div class="qrow"><span class="qnum">${i + 1}</span><div class="qtext">${p.q}</div></div>
+          <button class="reveal" onclick="this.closest('.problem').classList.toggle('open'); App.typeset(this.closest('.problem'));">Show step-by-step solution ▾</button>
+          <div class="solution"><ol class="solsteps">${steps}</ol>${p.answer ? `<div class="finalans">✅ Answer: ${p.answer}</div>` : ""}</div>
+        </div>`;
+    }).join("");
+    return `<div class="card practice"><h3>✏️ Practice — ${list.length} problems</h3>` +
+      `<p class="hint">Try each one yourself first, then reveal the worked solution. Every step says <i>what</i> to do and <i>why</i>.</p>` +
+      probs + `</div>`;
+  }
+
   function section(cls, icon, label, html) {
     if (!html) return "";
     return `<div class="card ${cls}"><h3>${icon} ${label}</h3>${html}</div>`;
@@ -431,6 +491,7 @@ const App = (function () {
       section("example", "🔢", "Concrete example (real numbers)", l.example) +
       section("app", "🚀", "Where you actually use this", l.application) +
       quizBlock(l.quiz) +
+      practiceBlock(l.practice) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
         `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
       `<div class="nav-row">` +
@@ -496,14 +557,19 @@ const App = (function () {
         "<p style='color:#ffb454'>No lessons loaded. Make sure the <code>lessons/*.js</code> files are next to this page.</p>";
       return;
     }
-    // Merge derivation text into lessons by id.
-    LESSONS.forEach(l => { if (!l.derivation && window.DERIVATIONS && DERIVATIONS[l.id]) l.derivation = DERIVATIONS[l.id]; });
+    // Merge derivation text + practice problems into lessons by id.
+    LESSONS.forEach(l => {
+      if (!l.derivation && window.DERIVATIONS && DERIVATIONS[l.id]) l.derivation = DERIVATIONS[l.id];
+      if (!l.practice && window.PRACTICE && PRACTICE[l.id]) l.practice = PRACTICE[l.id];
+    });
     renderSidebar();
     const hash = location.hash.replace("#", "");
     if (hash && byId[hash]) open(hash); else welcome();
   }
 
-  return { boot, open, toggleDone, filter };
+  function typeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); }
+
+  return { boot, open, toggleDone, filter, typeset };
 })();
 window.addEventListener("DOMContentLoaded", App.boot);
 </script>
