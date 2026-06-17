@@ -635,7 +635,7 @@ Object.assign(window.PRACTICE, {
   "fnd-eigen": [
     { q:`<p>For $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$ and $z=\\begin{bmatrix}1\\\\0\\end{bmatrix}$, check if $z$ is an eigenvector.</p>`,
       steps:[
-        {do:`$Az = \\begin{bmatrix}2\\times1\\\\3\\times0\\end{bmatrix} = \\begin{bmatrix}2\\\\0\\end{bmatrix}$.`, why:`Run $z$ through the matrix.`},
+        {do:`$Az = \\begin{bmatrix}2\\times1+0\\times0\\\\0\\times1+3\\times0\\end{bmatrix} = \\begin{bmatrix}2+0\\\\0+0\\end{bmatrix} = \\begin{bmatrix}2\\\\0\\end{bmatrix}$.`, why:`Dot each row of $A$ with $z$ (multiply matching entries, then add). The off-diagonal $0$s multiply to $0$, so they drop out.`},
         {do:`This equals $2\\begin{bmatrix}1\\\\0\\end{bmatrix} = 2z$.`, why:`Same direction as $z$, just scaled.`},
         {do:`So $z$ is an eigenvector with $\\lambda = 2$.`, why:`$Az=\\lambda z$ holds with $\\lambda=2$.`}
       ],
@@ -643,7 +643,7 @@ Object.assign(window.PRACTICE, {
 
     { q:`<p>For $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$, find the eigenvalue for eigenvector $z=\\begin{bmatrix}0\\\\1\\end{bmatrix}$.</p>`,
       steps:[
-        {do:`$Az = \\begin{bmatrix}2\\times0\\\\3\\times1\\end{bmatrix} = \\begin{bmatrix}0\\\\3\\end{bmatrix}$.`, why:`Multiply the matrix by $z$.`},
+        {do:`$Az = \\begin{bmatrix}2\\times0+0\\times1\\\\0\\times0+3\\times1\\end{bmatrix} = \\begin{bmatrix}0+0\\\\0+3\\end{bmatrix} = \\begin{bmatrix}0\\\\3\\end{bmatrix}$.`, why:`Dot each row of $A$ with $z$. The $0$ entries contribute $0$, so only the diagonal term survives.`},
         {do:`That is $3z$.`, why:`Same direction, stretched by $3$.`}
       ],
       answer:`$\\lambda = 3$` },
@@ -657,14 +657,14 @@ Object.assign(window.PRACTICE, {
 
     { q:`<p>Is $z=\\begin{bmatrix}1\\\\1\\end{bmatrix}$ an eigenvector of $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$?</p>`,
       steps:[
-        {do:`$Az = \\begin{bmatrix}2\\times1\\\\3\\times1\\end{bmatrix} = \\begin{bmatrix}2\\\\3\\end{bmatrix}$.`, why:`Run $z$ through the matrix.`},
+        {do:`$Az = \\begin{bmatrix}2\\times1+0\\times1\\\\0\\times1+3\\times1\\end{bmatrix} = \\begin{bmatrix}2+0\\\\0+3\\end{bmatrix} = \\begin{bmatrix}2\\\\3\\end{bmatrix}$.`, why:`Dot each row of $A$ with $z$. The off-diagonal $0$s drop out.`},
         {do:`Is $[2,3]$ a multiple of $[1,1]$? No, the entries scale differently.`, why:`An eigenvector must keep the same direction.`}
       ],
       answer:`No, $z$ is not an eigenvector.` },
 
     { q:`<p>For $A=\\begin{bmatrix}3&0\\\\0&3\\end{bmatrix}$ and $z=\\begin{bmatrix}4\\\\7\\end{bmatrix}$, find $Az$ and the eigenvalue.</p>`,
       steps:[
-        {do:`$Az = \\begin{bmatrix}3\\times4\\\\3\\times7\\end{bmatrix} = \\begin{bmatrix}12\\\\21\\end{bmatrix}$.`, why:`Multiply the matrix by $z$.`},
+        {do:`$Az = \\begin{bmatrix}3\\times4+0\\times7\\\\0\\times4+3\\times7\\end{bmatrix} = \\begin{bmatrix}12+0\\\\0+21\\end{bmatrix} = \\begin{bmatrix}12\\\\21\\end{bmatrix}$.`, why:`Dot each row of $A$ with $z$. The $0$ entries contribute $0$.`},
         {do:`That is $3z$, so $\\lambda = 3$.`, why:`Same direction, stretched threefold.`}
       ],
       answer:`$Az=\\begin{bmatrix}12\\\\21\\end{bmatrix},\\;\\lambda = 3$` },

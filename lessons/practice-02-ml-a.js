@@ -389,7 +389,7 @@
       { q:`<p>A diagonal $X^\\top X = \\begin{bmatrix}2&0\\\\0&5\\end{bmatrix}$ and $X^\\top y = \\begin{bmatrix}4\\\\10\\end{bmatrix}$. Find $\\theta = (X^\\top X)^{-1}X^\\top y$.</p>`,
         steps:[
           {do:`Inverse of a diagonal matrix flips each diagonal entry: $(X^\\top X)^{-1} = \\begin{bmatrix}1/2&0\\\\0&1/5\\end{bmatrix}$.`, why:`For a diagonal matrix, invert each diagonal number.`},
-          {do:`Multiply: $\\theta = \\begin{bmatrix}1/2\\times 4\\\\1/5\\times 10\\end{bmatrix} = \\begin{bmatrix}2\\\\2\\end{bmatrix}$.`, why:`Each parameter solves independently here.`}
+          {do:`Multiply: $\\theta = \\begin{bmatrix}\\tfrac12\\times 4+0\\times 10\\\\0\\times 4+\\tfrac15\\times 10\\end{bmatrix} = \\begin{bmatrix}2+0\\\\0+2\\end{bmatrix} = \\begin{bmatrix}2\\\\2\\end{bmatrix}$.`, why:`Dot each row with the vector. The off-diagonal $0$s drop out, so each parameter solves independently.`}
         ],
         answer:`$\\theta = \\begin{bmatrix}2\\\\2\\end{bmatrix}$` },
 
