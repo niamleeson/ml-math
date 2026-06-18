@@ -335,7 +335,14 @@ Object.assign(window.DERIVATIONS, {
    <ul class="steps">
      <li>The harmonic mean of $P$ and $R$ is $\\dfrac{2}{\\tfrac1P+\\tfrac1R}$.</li>
      <li>Combine the fractions: $\\dfrac{2}{\\tfrac1P+\\tfrac1R}=\\dfrac{2PR}{P+R}$. That is F1.</li>
-     <li>Substitute $P=\\tfrac{TP}{TP+FP}$ and $R=\\tfrac{TP}{TP+FN}$ and simplify to get $\\text{F1}=\\dfrac{2\\,TP}{2\\,TP+FP+FN}$. ∎</li>
+     <li>Now substitute $P=\\tfrac{TP}{TP+FP}$ and $R=\\tfrac{TP}{TP+FN}$ into $\\dfrac{2PR}{P+R}$ and show the counts fall out.</li>
+   </ul>
+   <p><b>The algebra from $\\tfrac{2PR}{P+R}$ to the count form.</b></p>
+   <ul class="steps">
+     <li>Numerator: $2PR=2\\cdot\\dfrac{TP}{TP+FP}\\cdot\\dfrac{TP}{TP+FN}=\\dfrac{2\\,TP^2}{(TP+FP)(TP+FN)}$.</li>
+     <li>Denominator: $P+R=\\dfrac{TP}{TP+FP}+\\dfrac{TP}{TP+FN}=\\dfrac{TP(TP+FN)+TP(TP+FP)}{(TP+FP)(TP+FN)}=\\dfrac{TP\\,(2\\,TP+FP+FN)}{(TP+FP)(TP+FN)}$.</li>
+     <li>Divide: the common factor $\\dfrac{1}{(TP+FP)(TP+FN)}$ cancels, leaving $\\dfrac{2\\,TP^2}{TP\\,(2\\,TP+FP+FN)}$.</li>
+     <li>Cancel one $TP$: $\\text{F1}=\\dfrac{2\\,TP}{2\\,TP+FP+FN}$. ∎</li>
    </ul>
    <p><b>Why harmonic, not plain average?</b> The harmonic mean is dragged toward the <i>smaller</i> number. If precision is $1.0$ but recall is $0.0$, the plain average is a flattering $0.5$, but F1 is $\\dfrac{2(1)(0)}{1+0}=0$. So F1 refuses to reward a classifier that aces one metric by tanking the other. It punishes imbalance.</p>
    <p><b>Intuition.</b> Precision asks "when I shout 'yes', am I right?" Recall asks "did I catch all the real yeses?" F1 is a strict referee that gives a good grade only when you are honest <i>and</i> thorough.</p>`,

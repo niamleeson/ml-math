@@ -245,6 +245,12 @@ Object.assign(window.DERIVATIONS, {
      <li>The front factor $\\dfrac{1}{\\sqrt{2\\pi}\\,\\sigma}$ is just a scaler chosen so the total area is exactly 1. (Pinning that constant is the one part that needs the Gaussian integral — take it on faith.)</li>
    </ul>
    <p><b>Why the bell shape.</b> Tallest at the center because the exponent is 0 there ($e^0=1$). Symmetric because only the squared distance matters. Thin tails because $e^{-x^2/2}$ shrinks faster than any straight or polynomial drop. That is the whole silhouette.</p>
+   <p><b>Why the mean is $\\mu$ and the variance is $\\sigma^2$.</b> The two parameters in the formula are not <i>named</i> mean and spread by decree — they really come out that way.</p>
+   <ul class="steps">
+     <li>Mean: $E[X]=\\int x\\,f(x)\\,dx$ averages $x$ weighted by the curve. But the curve is perfectly symmetric about $\\mu$ (only $(x-\\mu)^2$ appears, so $x=\\mu+d$ and $x=\\mu-d$ have equal height). Every bit of weight at $\\mu+d$ is matched by equal weight at $\\mu-d$; the two pull on the average equally and opposite, so they balance at $\\mu$. Hence $E[X]=\\mu$. ∎</li>
+     <li>Variance: substitute $z=\\dfrac{x-\\mu}{\\sigma}$, so $x-\\mu=\\sigma z$. Then $\\operatorname{Var}(X)=E[(x-\\mu)^2]=\\sigma^2\\,E[z^2]$, pulling the constant $\\sigma^2$ out. The leftover $E[z^2]$ is the variance of the <i>standard</i> bell ($\\mu=0,\\sigma=1$), which is exactly $1$ (a known fact, the same Gaussian-integral computation we took on faith). So $\\operatorname{Var}(X)=\\sigma^2\\cdot 1=\\sigma^2$. ∎</li>
+   </ul>
+   <p>So the symbol $\\sigma$ in the formula is genuinely the standard deviation, and $\\mu$ genuinely the mean — the labels are earned, not assumed.</p>
    <p><b>The 68-95-99.7 rule is area.</b> Probability is area under this curve. Integrate from $\\mu-\\sigma$ to $\\mu+\\sigma$ and you capture about $68\\%$ of the area; out to $2\\sigma$, about $95\\%$; out to $3\\sigma$, about $99.7\\%$. These are fixed areas of the standard bell — the same for every Normal once you measure distance in $\\sigma$ units.</p>
    <p><b>Why it's everywhere (CLT preview).</b> Add up many small independent random nudges and the total's shape is forced toward this bell — regardless of where each nudge came from. That universality (the Central Limit Theorem) is why the Normal is the default for noise and errors.</p>`,
 

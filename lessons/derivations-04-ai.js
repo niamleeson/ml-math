@@ -280,9 +280,15 @@ Object.assign(window.DERIVATIONS, {
 /* ---------------------------------------------------------------- */
 "ai-hmm":
   `<p>An HMM hides the truth $H_t$ and shows only clues $E_t$. The <b>forward-backward</b> algorithm recovers each hidden state by fusing evidence from the past <i>and</i> the future. Here is why that fusion is both possible and tractable.</p>
-   <p><b>Why the Markov assumption makes it tractable.</b> The model assumes $H_t$ depends only on $H_{t-1}$ (not the whole history), and $E_t$ depends only on $H_t$. So the joint factors into a clean chain:</p>
-   <div class="formula-box">$$ P(H_{1:t},E_{1:t}) = P(H_1)P(E_1\\mid H_1)\\prod_{k=2}^{t} P(H_k\\mid H_{k-1})\\,P(E_k\\mid H_k) $$</div>
-   <p>Each factor links only neighbors. Without the Markov assumption, every state would depend on all the others and the sums would explode. The chain structure is exactly what lets us sweep through time once.</p>
+   <p><b>Deriving the joint factorization.</b> The formula is not an axiom; it falls out of the chain rule plus the two HMM assumptions. Start with the chain rule, which is always true, peeling off variables in time order $H_1, E_1, H_2, E_2, \\dots$:</p>
+   <div class="formula-box">$$ P(H_{1:t},E_{1:t}) = P(H_1)\\,P(E_1\\mid H_1)\\,P(H_2\\mid H_1,E_1)\\,P(E_2\\mid H_1,E_1,H_2)\\cdots $$</div>
+   <ul class="steps">
+     <li><b>Transition assumption:</b> $H_k$ depends only on $H_{k-1}$, not the older states or any past clue. So the long condition collapses: $P(H_k\\mid H_1,E_1,\\dots,H_{k-1}) = P(H_k\\mid H_{k-1})$.</li>
+     <li><b>Emission assumption:</b> $E_k$ depends only on the current hidden state $H_k$. So $P(E_k\\mid H_1,\\dots,H_k) = P(E_k\\mid H_k)$.</li>
+     <li>Substitute both into the chain rule. Every factor shrinks to a neighbor-only term, and the product becomes $P(H_1)P(E_1\\mid H_1)\\prod_{k=2}^{t} P(H_k\\mid H_{k-1})\\,P(E_k\\mid H_k)$. ∎</li>
+   </ul>
+   <p>So the clean chain is the chain rule with the irrelevant conditions thrown away, exactly as in a Bayes net (an HMM <i>is</i> a Bayes net laid out along time).</p>
+   <p><b>Why this makes it tractable.</b> Each factor links only neighbors. Without the Markov assumption, every state would depend on all the others and the sums would explode. The chain structure is exactly what lets us sweep through time once.</p>
    <p><b>Why combine forward and backward.</b> To judge the hidden state at time $t$, all the clues are relevant, both the ones before $t$ and the ones after.</p>
    <ul class="steps">
      <li>The <b>forward</b> pass carries the evidence $E_1,\\dots,E_t$ from the past up to time $t$. It computes the probability of each hidden state given everything seen so far.</li>
