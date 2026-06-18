@@ -422,7 +422,9 @@ L({
   whatItDoes:
     `<p>The first form: average the squared distances from the mean.</p>
      <p>The second form is a shortcut: 'mean of the square' minus 'square of the mean'. It gives the same answer with less work.</p>
-     <p>Take the square root to get $\\sigma$, the spread measured in the same units as $X$.</p>`,
+     <p>Take the square root to get $\\sigma$, the spread measured in the same units as $X$.</p>
+     <p><b>Variance and standard deviation carry the same information — the only difference is units.</b> Squaring the distances also squares the units. If $X$ is in dollars, the variance comes out in <i>dollars squared</i> — which is not a real-world thing (1 <i>what</i>?). The square root undoes that, so $\\sigma$ is back in plain dollars: a typical distance from the mean.</p>
+     <p>So use <b>variance</b> when you are doing the math — it behaves nicely in formulas (variances of independent things simply add). Report <b>standard deviation</b> to a human, because it is a real, feelable distance in the data's own units. The notation even says it: variance is $\\sigma^2$, standard deviation is $\\sigma$ — one is literally the square of the other.</p>`,
   example:
     `<p>Let $X$ be a fair coin worth \\$0 (tails) or \\$2 (heads), each chance $\\frac{1}{2}$.</p>
      <ul class="steps">
