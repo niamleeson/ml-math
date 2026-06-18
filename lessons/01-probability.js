@@ -468,7 +468,10 @@ L({
   whatItDoes:
     `<p>For the Binomial: $p^k (1-p)^{n-k}$ is the chance of one specific pattern with $k$ wins, and $\\binom{n}{k}$ counts all the patterns with exactly $k$ wins.</p>
      <p>Multiply them to get the total chance of exactly $k$ successes.</p>
-     <p>The mean $np$ is intuitive: $n$ trials each contributing $p$ on average.</p>`,
+     <p>The mean $np$ is intuitive: $n$ trials each contributing $p$ on average.</p>
+     <p><b>Why the Bernoulli variance is $p(1-p)$.</b> A Bernoulli $X$ is only ever 0 or 1. And $0^2 = 0$, $1^2 = 1$ — so squaring does nothing: $X^2 = X$. That means $E[X^2] = E[X] = p$. Now use the variance formula $\\operatorname{Var}(X) = E[X^2] - (E[X])^2$:</p>
+     <div class="formula-box">$$ \\operatorname{Var}(X) = E[X^2] - (E[X])^2 = p - p^2 = p(1-p) $$</div>
+     <p>Read $p(1-p)$ as (chance of success) × (chance of failure). It is <b>largest at $p = 0.5$</b> ($0.5 \\times 0.5 = 0.25$, a fair coin — most unpredictable) and <b>zero at $p = 0$ or $p = 1$</b> (the result never changes, so there is no spread). For the Binomial of $n$ such trials, the variances add: $\\operatorname{Var} = np(1-p)$.</p>`,
   example:
     `<p>Flip a fair coin ($p = 0.5$) 3 times. What's the chance of exactly 2 heads?</p>
      <ul class="steps">
