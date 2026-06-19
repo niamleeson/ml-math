@@ -198,8 +198,12 @@ Object.assign(window.DERIVATIONS, {
    <ul class="steps">
      <li>Let each sliver succeed with tiny chance $p$, tuned so the expected count stays fixed: $np = \\lambda$, i.e. $p = \\lambda/n$.</li>
      <li>The count of events is Binomial$(n,p)$. Now let $n\\to\\infty$ (slivers get infinitely fine) while $\\lambda$ stays put.</li>
-     <li>Substitute $p=\\lambda/n$ into the Binomial PMF $\\binom{n}{k}p^k(1-p)^{n-k}$ and split it into three pieces:
-         $\\;\\underbrace{\\dfrac{\\binom{n}{k}}{n^k}}_{\\text{piece 1}}\\;\\cdot\\;\\underbrace{\\lambda^k}_{\\text{piece 2}}\\;\\cdot\\;\\underbrace{\\Big(1-\\dfrac{\\lambda}{n}\\Big)^{n-k}}_{\\text{piece 3}}$.</li>
+     <li>Write the Binomial PMF — it already has three multiplied parts: $\\binom{n}{k}$ (ways to choose which slivers fire) $\\times\\, p^k$ (the $k$ successes) $\\times\\,(1-p)^{n-k}$ (the $n-k$ non-events).</li>
+     <li>Substitute $p=\\lambda/n$: $\\;\\binom{n}{k}\\Big(\\dfrac{\\lambda}{n}\\Big)^{k}\\Big(1-\\dfrac{\\lambda}{n}\\Big)^{n-k}$.</li>
+     <li>Split the middle power with the rule $\\big(\\tfrac{a}{b}\\big)^k=\\tfrac{a^k}{b^k}$ (e.g. $(3/5)^2=9/25$): so $\\Big(\\dfrac{\\lambda}{n}\\Big)^k=\\dfrac{\\lambda^k}{n^k}$. The $\\lambda^k$ separates off, leaving an $n^k$ in the denominator.</li>
+     <li>Reorder the factors (multiplication can be rearranged freely) and slide that $1/n^k$ next to $\\binom{n}{k}$. Now the formula is three clean groups:
+         $\\;\\underbrace{\\dfrac{\\binom{n}{k}}{n^k}}_{\\text{piece 1}}\\;\\cdot\\;\\underbrace{\\lambda^k}_{\\text{piece 2}}\\;\\cdot\\;\\underbrace{\\Big(1-\\dfrac{\\lambda}{n}\\Big)^{n-k}}_{\\text{piece 3}}$. So the "pieces" are just the one Binomial formula, regrouped — nothing new was invented.</li>
+     <li>We split it this exact way on purpose: each group has a clean limit as $n\\to\\infty$ (the next three steps).</li>
      <li><b>Piece 1 $\\to \\frac{1}{k!}$.</b> Write $\\dfrac{\\binom{n}{k}}{n^k}=\\dfrac{n(n-1)\\cdots(n-k+1)}{k!\\,n^k}$. The top is $k$ factors, each $\\approx n$ when $n$ is huge, so the top $\\approx n^k$ and cancels the $n^k$ below — leaving $\\dfrac{1}{k!}$.</li>
      <li><b>Piece 2 $=\\lambda^k$.</b> It carries through unchanged.</li>
      <li><b>Piece 3 $\\to e^{-\\lambda}$.</b> Use the famous limit $\\big(1+\\tfrac{x}{n}\\big)^n\\to e^{x}$ with $x=-\\lambda$: so $\\big(1-\\tfrac{\\lambda}{n}\\big)^n\\to e^{-\\lambda}$ (and the leftover $\\big(1-\\tfrac{\\lambda}{n}\\big)^{-k}\\to 1$, since $\\lambda/n\\to 0$).</li>
