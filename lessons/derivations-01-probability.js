@@ -198,8 +198,21 @@ Object.assign(window.DERIVATIONS, {
    <ul class="steps">
      <li>Let each sliver succeed with tiny chance $p$, tuned so the expected count stays fixed: $np = \\lambda$, i.e. $p = \\lambda/n$.</li>
      <li>The count of events is Binomial$(n,p)$. Now let $n\\to\\infty$ (slivers get infinitely fine) while $\\lambda$ stays put.</li>
-     <li>The Binomial PMF $\\binom{n}{k}p^k(1-p)^{n-k}$ then settles into $\\dfrac{\\lambda^k e^{-\\lambda}}{k!}$ — the Poisson PMF. The $e^{-\\lambda}$ is the limit of $(1-\\lambda/n)^n$, a famous fact about $e$.</li>
+     <li>Substitute $p=\\lambda/n$ into the Binomial PMF $\\binom{n}{k}p^k(1-p)^{n-k}$ and split it into three pieces:
+         $\\;\\underbrace{\\dfrac{\\binom{n}{k}}{n^k}}_{\\text{piece 1}}\\;\\cdot\\;\\underbrace{\\lambda^k}_{\\text{piece 2}}\\;\\cdot\\;\\underbrace{\\Big(1-\\dfrac{\\lambda}{n}\\Big)^{n-k}}_{\\text{piece 3}}$.</li>
+     <li><b>Piece 1 $\\to \\frac{1}{k!}$.</b> Write $\\dfrac{\\binom{n}{k}}{n^k}=\\dfrac{n(n-1)\\cdots(n-k+1)}{k!\\,n^k}$. The top is $k$ factors, each $\\approx n$ when $n$ is huge, so the top $\\approx n^k$ and cancels the $n^k$ below — leaving $\\dfrac{1}{k!}$.</li>
+     <li><b>Piece 2 $=\\lambda^k$.</b> It carries through unchanged.</li>
+     <li><b>Piece 3 $\\to e^{-\\lambda}$.</b> Use the famous limit $\\big(1+\\tfrac{x}{n}\\big)^n\\to e^{x}$ with $x=-\\lambda$: so $\\big(1-\\tfrac{\\lambda}{n}\\big)^n\\to e^{-\\lambda}$ (and the leftover $\\big(1-\\tfrac{\\lambda}{n}\\big)^{-k}\\to 1$, since $\\lambda/n\\to 0$).</li>
+     <li>Multiply the three limits: $\\dfrac{1}{k!}\\cdot\\lambda^k\\cdot e^{-\\lambda}=\\dfrac{\\lambda^k e^{-\\lambda}}{k!}$ — the Poisson PMF. ∎</li>
    </ul>
+   <p>Reading the result: $\\lambda^k$ asks for $k$ events, $e^{-\\lambda}$ is the "and nothing else happened" factor, and $\\div\\,k!$ removes the orderings of the $k$ identical events (the same $r!$ idea from combinations).</p>
+   <p><b>Why $e$ shows up here.</b> $e\\approx 2.718$ is not chosen — it is forced. It is the number you always get from multiplying many tiny factors, defined by the limit $\\big(1+\\tfrac{x}{n}\\big)^n\\to e^{x}$.</p>
+   <ul class="steps">
+     <li>One tiny slot is <i>empty</i> (no event) with chance $1-\\tfrac{\\lambda}{n}$.</li>
+     <li>The $n$ slots are independent, so the chance <i>all</i> of them are empty is the product $\\big(1-\\tfrac{\\lambda}{n}\\big)^n$.</li>
+     <li>That is exactly the limit form with $x=-\\lambda$, so it collapses to $e^{-\\lambda}$ — the chance of seeing zero events.</li>
+   </ul>
+   <p>It is the same math as compound interest: $\\$1$ at $100\\%$ interest compounded $n$ times is $\\big(1+\\tfrac{1}{n}\\big)^n$ — once gives $\\$2$, monthly gives $\\$2.61$, infinitely often marches to $\\$2.718=e$. Pile up infinitely many tiny multiplications and $e$ is what they always converge to.</p>
    <p><b>Intuition.</b> Poisson is "Binomial with so many trials, each so unlikely, that you stop tracking trials and just track the average rate $\\lambda$". Its mean is therefore $\\lambda$, inherited straight from $np$.</p>`,
 
 /* ---------------------------------------------------------------- */
