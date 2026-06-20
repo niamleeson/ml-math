@@ -4,6 +4,31 @@
    Library: NumPy (numpy.linalg). All runnable in Pyodide.
    ===================================================================== */
 window.CODE = Object.assign(window.CODE || {}, {
+  "la-cofactor": {
+    lib: "NumPy",
+    runnable: true,
+    packages: ["numpy"],
+    explain: `<p>Implement cofactor (Laplace) expansion from scratch — recurse along the first row, summing <code>sign * entry * det(minor)</code> — and check it against <code>np.linalg.det</code>.</p>`,
+    code: `import numpy as np
+
+def det_cofactor(A):
+    A = np.asarray(A, dtype=float)
+    n = A.shape[0]
+    if n == 1:
+        return A[0, 0]
+    total = 0.0
+    for j in range(n):                         # expand along the first row
+        minor = np.delete(np.delete(A, 0, axis=0), j, axis=1)
+        total += ((-1) ** j) * A[0, j] * det_cofactor(minor)   # sign * entry * minor
+    return total
+
+A = np.array([[2, 0, 1],
+              [3, 1, 2],
+              [1, 0, 4]], dtype=float)
+print("cofactor expansion det:", det_cofactor(A))
+print("numpy det:             ", round(float(np.linalg.det(A)), 6))
+print("match:", np.isclose(det_cofactor(A), np.linalg.det(A)))`
+  },
   "la-jacobian": {
     lib: "NumPy",
     runnable: true,

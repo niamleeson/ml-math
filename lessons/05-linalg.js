@@ -547,6 +547,153 @@ L({
   }
 });
 
+/* ================================================================ 5b (cofactor expansion) */
+L({
+  id: "la-cofactor",
+  title: "Cofactor expansion",
+  tagline: "Compute any determinant by breaking it into smaller ones — the recursive recipe.",
+  prereqs: ["la-determinant"],
+  bigIdea:
+    `<p><b>Cofactor expansion</b> (also called <b>Laplace expansion</b>) computes a determinant of any size by reducing it to smaller determinants.</p>
+     <p>Pick any one row or column. Walk along it: each entry contributes <i>(its value)</i> × <i>(a sign)</i> × <i>(the determinant of the smaller matrix you get by crossing out that entry's row and column)</i>. Add them up.</p>
+     <p>That is the recursive definition behind the determinant — and how you compute a $3\\times 3$ by hand by turning it into three $2\\times 2$s.</p>`,
+  buildup:
+    `<p>You already know the $2\\times 2$ rule: $\\det\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}=ad-bc$.</p>
+     <p>For a $3\\times 3$ there is no short formula worth memorising. Cofactor expansion gives a recipe: expand along a row and the $3\\times 3$ becomes a signed sum of three $2\\times 2$ determinants — each of which you already know how to do.</p>`,
+  symbols: [
+    { sym: "$A$", desc: "an $n\\times n$ square matrix, with entries $a_{ij}$." },
+    { sym: "$M_{ij}$", desc: "the $(i,j)$ <b>minor</b>: the determinant of the $(n-1)\\times(n-1)$ matrix left after you delete row $i$ and column $j$." },
+    { sym: "$C_{ij}$", desc: "the $(i,j)$ <b>cofactor</b>: the minor with a sign, $C_{ij} = (-1)^{i+j} M_{ij}$." },
+    { sym: "$(-1)^{i+j}$", desc: "the checkerboard sign: $+\\,-\\,+$ across each row, starting $+$ at the top-left." }
+  ],
+  formula: `$$ \\det A = \\sum_{j=1}^{n} a_{ij}\\,C_{ij} = \\sum_{j=1}^{n} a_{ij}\\,(-1)^{i+j} M_{ij} \\qquad (\\text{expanding along row } i) $$`,
+  whatItDoes:
+    `<p>Choose <b>any</b> row $i$ (or any column) — the answer is the same. For each entry on it, multiply the entry by its cofactor, and sum.</p>
+     <p>Practical tip: expand along the row or column with the <b>most zeros</b>. A zero entry kills its whole term, so you do less work.</p>
+     <p>Honest caveat: for large $n$ this costs about $n!$ operations — far too slow. Computers never use it for big matrices; they use LU decomposition ($\\sim n^3$). Cofactor expansion is for small matrices, hand work, and theory (the adjugate inverse, Cramer's rule).</p>`,
+  derivation:
+    `<p><b>Where the checkerboard sign comes from.</b> The determinant flips sign whenever you swap two adjacent rows or columns (it measures <i>signed</i> volume).</p>
+     <ul class="steps">
+       <li>To form the minor $M_{ij}$ you conceptually slide entry $a_{ij}$ up to the top-left corner. That takes $i-1$ row swaps and $j-1$ column swaps.</li>
+       <li>Each swap multiplies the determinant by $-1$, so the total factor is $(-1)^{(i-1)+(j-1)} = (-1)^{i+j}$. That is exactly the cofactor sign.</li>
+       <li><b>Why the sum equals the determinant.</b> The full determinant is a sum over permutations. Group those permutations by which column the row-$i$ entry uses. Each group factors as $a_{ij}$ times the permutations of the remaining rows over the remaining columns — and that leftover sum is precisely the minor $M_{ij}$, carrying sign $(-1)^{i+j}$.</li>
+       <li>Adding the groups back together gives $\\det A = \\sum_j a_{ij}(-1)^{i+j}M_{ij}$. ∎</li>
+     </ul>`,
+  example:
+    `<p>Compute $\\det\\begin{bmatrix}2&0&1\\\\3&1&2\\\\1&0&4\\end{bmatrix}$ by expanding along the <b>first row</b>.</p>
+     <ul class="steps">
+       <li><b>Entry $a_{11}=2$</b>, sign $(-1)^{1+1}=+$. Delete row 1, col 1 to get the minor $\\begin{bmatrix}1&2\\\\0&4\\end{bmatrix}$, whose determinant is $1\\cdot4-2\\cdot0=4$. Term $= +\\,2\\cdot 4 = 8$.</li>
+       <li><b>Entry $a_{12}=0$</b>, sign $-$. The minor is $\\begin{bmatrix}3&2\\\\1&4\\end{bmatrix}=10$, but the entry is $0$, so the whole term is $0$. <span class="why">This is why zeros save work — pick a line with many of them.</span></li>
+       <li><b>Entry $a_{13}=1$</b>, sign $(-1)^{1+3}=+$. Minor $\\begin{bmatrix}3&1\\\\1&0\\end{bmatrix}=3\\cdot0-1\\cdot1=-1$. Term $= +\\,1\\cdot(-1) = -1$.</li>
+       <li><b>Add them:</b> $\\det = 8 + 0 + (-1) = 7$.<div class="why">Check by expanding along column 2 instead (entries $0,1,0$): only $a_{22}=1$ survives, $\\det = (+1)\\cdot 1\\cdot\\det\\begin{bmatrix}2&1\\\\1&4\\end{bmatrix}=7$. Same answer, far less work.</div></li>
+     </ul>`,
+  application:
+    `<p><b>By hand.</b> The standard way to compute a $3\\times3$ or $4\\times4$ determinant on paper.</p>
+     <p><b>The adjugate inverse.</b> The matrix of cofactors gives a closed form for the inverse: $A^{-1} = \\dfrac{1}{\\det A}\\,\\mathrm{adj}(A)$, where $\\mathrm{adj}(A)$ is the transpose of the cofactor matrix.</p>
+     <p><b>Cramer's rule.</b> Solves a small linear system $Ax=b$ as ratios of determinants — built directly on cofactors.</p>
+     <p><b>Theory.</b> The recursive structure is the cleanest way to prove many determinant identities.</p>`,
+  practice: [
+    {
+      q: `Compute $\\det\\begin{bmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{bmatrix}$ by cofactor expansion along the first row.`,
+      steps: [
+        { do: `Term 1: $+\\,1\\cdot\\det\\begin{bmatrix}5&6\\\\8&10\\end{bmatrix} = 1\\cdot(50-48) = 2$.`, why: `Sign $(-1)^{1+1}=+$; minor deletes row 1 and column 1.` },
+        { do: `Term 2: $-\\,2\\cdot\\det\\begin{bmatrix}4&6\\\\7&10\\end{bmatrix} = -2\\cdot(40-42) = +4$.`, why: `Sign $(-1)^{1+2}=-$; minor deletes row 1, column 2.` },
+        { do: `Term 3: $+\\,3\\cdot\\det\\begin{bmatrix}4&5\\\\7&8\\end{bmatrix} = 3\\cdot(32-35) = -9$.`, why: `Sign $(-1)^{1+3}=+$.` },
+        { do: `Sum: $2 + 4 - 9 = -3$.`, why: `Add the three signed terms to get the determinant.` }
+      ],
+      answer: `$\\det = -3$.`
+    },
+    {
+      q: `A $4\\times 4$ matrix has a column that is all zeros except a single $5$ in row 2. Which line should you expand along, and why?`,
+      steps: [
+        { do: `Expand along that column.`, why: `Every zero entry contributes a zero term, so only the $5$ entry survives.` },
+        { do: `The determinant reduces to $\\pm\\,5$ times one $3\\times 3$ minor.`, why: `One term instead of four — cofactor expansion rewards rows/columns full of zeros.` }
+      ],
+      answer: `Expand along the sparse column: $\\det = (-1)^{2+j}\\cdot 5\\cdot M_{2j}$, a single $3\\times3$ determinant.`
+    },
+    {
+      q: `Show that cofactor expansion of $\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}$ along the first row gives the familiar $ad-bc$.`,
+      steps: [
+        { do: `Entry $a$, sign $+$: minor is the $1\\times1$ matrix $[d]$, determinant $d$. Term $= +a\\cdot d$.`, why: `Delete row 1, col 1, leaving $d$.` },
+        { do: `Entry $b$, sign $-$: minor is $[c]$, determinant $c$. Term $= -b\\cdot c$.`, why: `Sign $(-1)^{1+2}=-$; delete row 1, col 2, leaving $c$.` },
+        { do: `Sum: $ad - bc$.`, why: `The $2\\times2$ rule is just cofactor expansion in the base case.` }
+      ],
+      answer: `$ad - bc$ — the $2\\times2$ formula is the smallest cofactor expansion.`
+    }
+  ],
+  demo: function (host) {
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var M = [[2, 0, 1], [3, 1, 2], [1, 0, 4]];
+    var line = { type: "row", idx: 0 };  // expand along row 0 initially
+    var seed = 7; function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed; }
+    function minorDet(ri, ci) {
+      var rs = [0, 1, 2].filter(function (r) { return r !== ri; });
+      var cs = [0, 1, 2].filter(function (c) { return c !== ci; });
+      return M[rs[0]][cs[0]] * M[rs[1]][cs[1]] - M[rs[0]][cs[1]] * M[rs[1]][cs[0]];
+    }
+    function det() { var s = 0; for (var c = 0; c < 3; c++) s += M[0][c] * (c % 2 === 0 ? 1 : -1) * minorDet(0, c); return s; }
+    var cv = document.createElement("canvas"); cv.width = 560; cv.height = 320; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, cv.width, cv.height);
+      // draw the 3x3 matrix grid
+      var ox = 24, oy = 60, cell = 44;
+      for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) {
+        var on = (line.type === "row" && i === line.idx) || (line.type === "col" && j === line.idx);
+        ctx.fillStyle = on ? (c.accent + "22") : "transparent";
+        ctx.fillRect(ox + j * cell, oy + i * cell, cell, cell);
+        ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.strokeRect(ox + j * cell, oy + i * cell, cell, cell);
+        ctx.fillStyle = on ? c.accent : c.ink; ctx.font = "16px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(M[i][j], ox + j * cell + cell / 2, oy + i * cell + cell / 2);
+        // checkerboard sign tag
+        ctx.fillStyle = c.dim; ctx.font = "10px sans-serif";
+        ctx.fillText((i + j) % 2 === 0 ? "+" : "−", ox + j * cell + cell - 8, oy + i * cell + 9);
+      }
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("Expanding along " + (line.type === "row" ? "row " : "column ") + (line.idx + 1) + ":", 24, 40);
+      // the terms
+      var rx = 210, ry = 56, total = 0;
+      ctx.textBaseline = "alphabetic";
+      for (var k = 0; k < 3; k++) {
+        var ri = line.type === "row" ? line.idx : k;
+        var ci = line.type === "col" ? line.idx : k;
+        var sign = (ri + ci) % 2 === 0 ? 1 : -1;
+        var entry = M[ri][ci], m = minorDet(ri, ci), term = sign * entry * m; total += term;
+        ctx.font = "13px sans-serif";
+        ctx.fillStyle = entry === 0 ? c.dim : c.ink;
+        var ssym = sign > 0 ? "+" : "−";
+        ctx.fillText(ssym + " " + entry + " · det(minor)=" + entry + "·(" + m + ") = " + (sign < 0 ? "−" : "") + Math.abs(entry * m), rx, ry + k * 26);
+        if (entry === 0) { ctx.fillStyle = c.warn; ctx.font = "11px sans-serif"; ctx.fillText("(0 → term vanishes)", rx + 250, ry + k * 26); }
+      }
+      ctx.strokeStyle = c.border; ctx.beginPath(); ctx.moveTo(rx, ry + 84); ctx.lineTo(rx + 300, ry + 84); ctx.stroke();
+      ctx.fillStyle = c.accent2; ctx.font = "16px sans-serif";
+      ctx.fillText("det = " + total, rx, ry + 110);
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif";
+      ctx.fillText("Same det = " + det() + " no matter which row/column you pick.", 24, 250);
+      ctx.fillText("Tip: a line with zeros (try column 2) is the least work.", 24, 268);
+    }
+    var bar = document.createElement("div"); bar.style.margin = "8px 0"; host.appendChild(bar);
+    var BTN = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:12px;margin:2px 5px 2px 0";
+    ["Row 1", "Row 2", "Row 3", "Col 1", "Col 2", "Col 3"].forEach(function (lbl, i) {
+      var b = document.createElement("button"); b.style.cssText = BTN; b.textContent = lbl;
+      b.addEventListener("click", function () { line = { type: i < 3 ? "row" : "col", idx: i % 3 }; draw(); });
+      bar.appendChild(b);
+    });
+    var nb = document.createElement("button"); nb.style.cssText = BTN + ";border-color:var(--accent)"; nb.textContent = "↻ New numbers";
+    nb.addEventListener("click", function () {
+      for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) M[i][j] = (rnd() % 7) - 1; // small ints -1..5
+      // keep a couple zeros to show the shortcut
+      M[0][1] = 0; M[2][1] = 0; draw();
+    });
+    bar.appendChild(nb);
+    draw();
+  }
+});
+
 /* ================================================================ 6 */
 L({
   id: "la-trace",

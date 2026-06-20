@@ -7,7 +7,7 @@ window.USAGE = {
   "fnd-derivative": 9, "fnd-gradient": 10, "fnd-chain": 9, "fnd-eigen": 6,
   // Linear Algebra (deep dive)
   "la-matmul": 10, "la-transpose": 9, "la-identity-diagonal": 7, "la-inverse": 6,
-  "la-determinant": 4, "la-trace": 4, "la-rank-independence": 5, "la-psd": 5,
+  "la-determinant": 4, "la-cofactor": 4, "la-trace": 4, "la-rank-independence": 5, "la-psd": 5,
   "la-spectral": 4, "la-svd": 7, "la-jacobian": 7, "la-hessian": 4,
   // Probability & Statistics
   "prob-sample-space": 5, "prob-axioms": 5, "prob-conditional": 9, "prob-bayes": 9,

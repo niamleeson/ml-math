@@ -202,6 +202,7 @@ window.GRAPH_LABELS = {
   "la-matmul>>>la-svd": "factor into three matrices",
   "fnd-gradient>>>la-jacobian": "stack partials per output",
   "fnd-matvec>>>la-jacobian": "local map d to J d",
+  "la-determinant>>>la-cofactor": "expand into smaller dets",
   "la-determinant>>>la-jacobian": "det is area scaling",
   "la-jacobian>>>la-hessian": "Hessian is Jacobian of the gradient",
   "fnd-gradient>>>la-hessian": "derivative of the gradient",
