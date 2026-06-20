@@ -47,6 +47,7 @@
     display: inline-flex; align-items: center; gap: 6px;
   }
   header a:hover, header button:hover { border-color: var(--accent); }
+  header a.back { font-weight: 700; }
   #search { cursor: text; min-width: 200px; }
 
   .wrap { max-width: 1080px; margin: 0 auto; padding: 26px 22px 100px; }
@@ -88,12 +89,13 @@
 </head>
 <body>
 <header>
+  <a href="index.html" class="back">← Lessons</a>
   <h1>🚀 Real-World Applications</h1>
   <span class="spacer"></span>
   <input id="search" placeholder="Filter applications & concepts…" oninput="AppsPage.filter(this.value)" />
   <a href="graph.html">🗺️ Concept map</a>
+  <a href="playbook.html">🧩 Playbook</a>
   <button id="themeToggle" onclick="AppsPage.toggleTheme()" title="Toggle light / dark">☀️</button>
-  <a href="index.html">← Lessons</a>
 </header>
 
 <div class="wrap">

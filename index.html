@@ -152,9 +152,9 @@
   }
   .usage-legend { font-size: 11px; color: var(--ink-dim); margin: 8px 0 0; line-height: 1.4; }
   .usage-legend b { color: var(--ink); font-weight: 600; }
-  .nav-extra { display: flex; gap: 8px; margin-top: 10px; }
+  .nav-extra { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .nav-extra a {
-    flex: 1; text-align: center; text-decoration: none; font-size: 12.5px; font-weight: 600;
+    flex: 1 1 84px; text-align: center; text-decoration: none; font-size: 12.5px; font-weight: 600;
     background: var(--bg); border: 1px solid var(--border); color: var(--ink);
     border-radius: 8px; padding: 7px 6px;
   }
@@ -320,6 +320,7 @@
     <div class="nav-extra">
       <a href="graph.html" title="See how all concepts connect">🗺️ Concept map</a>
       <a href="applications.html" title="Browse by real-world application">🚀 Applications</a>
+      <a href="playbook.html" title="Decision trees for building a model">🧩 Playbook</a>
     </div>
   </div>
   <div id="modules"></div>
