@@ -38,6 +38,15 @@
 <script defer src="https://cdn.jsdelivr.net/npm/ml-matrix@6.12.0/matrix.umd.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.8/dist/simple-statistics.min.js"></script>
 
+<!-- Syntax highlighting for the per-lesson code sections. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/atom-one-dark.min.css" />
+<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/highlight.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/languages/python.min.js"></script>
+<!-- Pyodide: runs real Python (NumPy / scikit-learn / SciPy) in the browser so the runnable
+     code examples actually execute. Only the small loader is fetched now; the ~6 MB runtime
+     downloads lazily the first time you click "Run". -->
+<script defer src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+
 <style>
   :root {
     --bg: #0f1419;
@@ -152,11 +161,12 @@
   }
   .usage-legend { font-size: 11px; color: var(--ink-dim); margin: 8px 0 0; line-height: 1.4; }
   .usage-legend b { color: var(--ink); font-weight: 600; }
-  .nav-extra { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .nav-extra { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
   .nav-extra a {
-    flex: 1 1 84px; text-align: center; text-decoration: none; font-size: 12.5px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
+    text-decoration: none; font-size: 13px; font-weight: 600;
     background: var(--bg); border: 1px solid var(--border); color: var(--ink);
-    border-radius: 8px; padding: 7px 6px;
+    border-radius: 8px; padding: 8px 12px;
   }
   .nav-extra a:hover { border-color: var(--accent); color: var(--accent); }
   .lesson-links { margin: -6px 0 16px; font-size: 13px; }
@@ -278,6 +288,25 @@
   }
   .markdone.done { border-color: var(--good); color: var(--accent-2); }
 
+  /* ---- Per-lesson code section ---- */
+  .card.code h3 { color: #d2a8ff; }
+  .code .codewrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 10px; background: #282c34; }
+  .code .codebar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #21252b; border-bottom: 1px solid #181b20; }
+  .code .libtag { font-size: 11px; font-weight: 700; color: #abb2bf; background: #3a3f4b; border-radius: 5px; padding: 2px 8px; }
+  .code .libtag.torch { color: #1a1208; background: #ee8c52; }
+  .code .codebar .sp { flex: 1; }
+  .code .codebtn { font-size: 12px; color: #c8cedb; background: #3a3f4b; border: 1px solid #4b5263; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .code .codebtn:hover { border-color: var(--accent); color: #fff; }
+  .code .codebtn.run { background: #2ea043; border-color: #2ea043; color: #fff; font-weight: 600; }
+  .code .codebtn.run:hover { filter: brightness(1.1); }
+  .code .codebtn:disabled { opacity: .6; cursor: default; }
+  .code pre { margin: 0; border: none; border-radius: 0; background: #282c34; padding: 14px 16px; font-size: 13px; line-height: 1.55; }
+  .code pre code { background: none; padding: 0; color: #abb2bf; }
+  .code .codenote { display: block; padding: 8px 12px; font-size: 12px; color: var(--ink-dim); background: var(--bg); border-top: 1px solid var(--border); }
+  .code .codeout { background: #1a1d23; border-top: 1px solid #181b20; padding: 10px 14px; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px; white-space: pre-wrap; color: #d6deeb; max-height: 320px; overflow: auto; }
+  .code .codeout .ok { color: #7ee787; } .code .codeout .err { color: #ff7b72; }
+  .code .codeout img { max-width: 100%; background: #fff; border-radius: 6px; margin-top: 6px; }
+
   .demo { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 8px; }
   .demo label { font-size: 12px; color: var(--ink-dim); display: block; margin: 8px 0 2px; }
   .demo input[type=range] { width: 100%; }
@@ -337,6 +366,8 @@
   window.DERIVATIONS = {};
   // Practice problems (array per lesson id). Filled by lessons/practice-*.js.
   window.PRACTICE = {};
+  // Per-lesson code implementations (keyed by lesson id). Filled by lessons/code-*.js.
+  window.CODE = {};
   // Some finer modules are merged into bigger groups in the sidebar nav. The lesson's own
   // `module` field is unchanged (kept for breadcrumbs / the concept-map colors); this map only
   // controls which top-level group it appears under.
@@ -427,6 +458,21 @@
 <script src="lessons/usage.js"></script>
 <!-- Real-world application domains -> lessons (powers the cross-links + applications.html). -->
 <script src="lessons/applications.js"></script>
+
+<!-- Per-lesson code implementations (industry libraries; runnable ones execute via Pyodide). -->
+<script src="lessons/code-00-foundations.js"></script>
+<script src="lessons/code-01-probability.js"></script>
+<script src="lessons/code-02-ml.js"></script>
+<script src="lessons/code-03-deeplearning.js"></script>
+<script src="lessons/code-04-ai.js"></script>
+<script src="lessons/code-05-linalg.js"></script>
+<script src="lessons/code-06-prob-extra.js"></script>
+<script src="lessons/code-07-ml-extra.js"></script>
+<script src="lessons/code-08-ai-extra.js"></script>
+<script src="lessons/code-09-classical-a.js"></script>
+<script src="lessons/code-09-classical-b.js"></script>
+<script src="lessons/code-10-modern-a.js"></script>
+<script src="lessons/code-10-modern-b.js"></script>
 
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
@@ -584,6 +630,31 @@ const App = (function () {
     return `<div class="card ${cls}"><h3>${icon} ${label}</h3>${html}</div>`;
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Bottom-of-lesson code section: idiomatic implementation in an industry library.
+  function codeBlock(id) {
+    const c = window.CODE && CODE[id];
+    if (!c || !c.code) return "";
+    const torch = /torch/i.test(c.lib);
+    const runBtn = c.runnable
+      ? `<button class="codebtn run" onclick="CodeRunner.run('${id}', this)">▶ Run</button>` : "";
+    const note = c.runnable
+      ? ""
+      : `<div class="codenote">▶ Not runnable here — ${escapeHtml(c.lib)} needs a Python/GPU runtime. Copy it into a notebook (Colab works) to run.</div>`;
+    return `<div class="card code"><h3>💻 Implement it in code — ${escapeHtml(c.lib)}</h3>` +
+      (c.explain ? c.explain : "") +
+      `<div class="codewrap">` +
+        `<div class="codebar"><span class="libtag${torch ? " torch" : ""}">${escapeHtml(c.lib)}</span><span class="sp"></span>` +
+          `<button class="codebtn" onclick="CodeRunner.copy('${id}', this)">Copy</button>${runBtn}</div>` +
+        `<pre><code class="language-python">${escapeHtml(c.code)}</code></pre>` +
+        note +
+        `<div class="codeout" id="codeout-${id}" style="display:none"></div>` +
+      `</div></div>`;
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -606,6 +677,7 @@ const App = (function () {
       section("app", "🚀", "Where you actually use this", (l.application || "") + appUses(id)) +
       quizBlock(l.quiz) +
       practiceBlock(l.practice) +
+      codeBlock(id) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
         `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
       `<div class="nav-row">` +
@@ -617,6 +689,7 @@ const App = (function () {
     c.innerHTML = html;
     document.querySelectorAll(".lessons li").forEach(li => li.classList.toggle("active", li.dataset.id === id));
     if (l.demo) { try { l.demo(document.getElementById("demo-host")); } catch (e) { console.warn(e); } }
+    if (window.hljs) c.querySelectorAll("pre code").forEach(b => { try { hljs.highlightElement(b); } catch (e) {} });
     if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([c]);
     document.getElementById("main").scrollTo(0, 0);
     if (history.replaceState) history.replaceState(null, "", "#" + id);
@@ -688,6 +761,61 @@ const App = (function () {
 })();
 window.App = App;   // expose for deep-linking and the screenshot/QA harness
 window.addEventListener("DOMContentLoaded", App.boot);
+</script>
+
+<!-- Runs the per-lesson runnable code examples in the browser via Pyodide. -->
+<script>
+const CodeRunner = (function () {
+  let pyReady = null;
+  function ensurePy() {
+    if (!pyReady) {
+      pyReady = (async () => {
+        if (!window.loadPyodide) throw new Error("Python runtime didn't load (need internet the first time).");
+        return await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
+      })();
+    }
+    return pyReady;
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  async function run(id, btn) {
+    const c = window.CODE && CODE[id]; if (!c) return;
+    const out = document.getElementById("codeout-" + id);
+    out.style.display = "block";
+    out.textContent = "Loading the Python runtime… (first run downloads ~6 MB, then it's cached).";
+    btn.disabled = true; const label = btn.textContent; btn.textContent = "Running…";
+    try {
+      const py = await ensurePy();
+      if (c.packages && c.packages.length) { out.textContent = "Loading packages: " + c.packages.join(", ") + " …"; await py.loadPackage(c.packages); }
+      let buf = "";
+      // Pyodide's batched stdout fires once per line without the trailing newline — re-add it.
+      py.setStdout({ batched: s => { buf += s + "\n"; } });
+      py.setStderr({ batched: s => { buf += s + "\n"; } });
+      out.textContent = "";
+      await py.runPythonAsync(c.code);
+      let img = "";
+      try {
+        if (py.FS.analyzePath("/tmp/out.png").exists) {
+          const data = py.FS.readFile("/tmp/out.png"); let bin = "";
+          for (let i = 0; i < data.length; i++) bin += String.fromCharCode(data[i]);
+          img = '<img src="data:image/png;base64,' + btoa(bin) + '">'; py.FS.unlink("/tmp/out.png");
+        }
+      } catch (e) {}
+      out.innerHTML = '<span class="ok">✓ ran successfully</span>\n' + esc(buf) + img;
+    } catch (e) {
+      out.innerHTML = '<span class="err">✗ ' + esc(e.message || e) + '</span>';
+    } finally {
+      btn.disabled = false; btn.textContent = label;
+    }
+  }
+  function copy(id, btn) {
+    const c = window.CODE && CODE[id]; if (!c) return;
+    navigator.clipboard.writeText(c.code).then(() => {
+      const o = btn.textContent; btn.textContent = "Copied!"; setTimeout(() => { btn.textContent = o; }, 1200);
+    }).catch(() => {});
+  }
+  return { run, copy };
+})();
+window.CodeRunner = CodeRunner;
 </script>
 </body>
 </html>
