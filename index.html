@@ -574,6 +574,7 @@ const App = (function () {
 
   return { boot, open, toggleDone, filter, typeset };
 })();
+window.App = App;   // expose for deep-linking and the screenshot/QA harness
 window.addEventListener("DOMContentLoaded", App.boot);
 </script>
 </body>
