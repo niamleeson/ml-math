@@ -64,85 +64,70 @@
   function fact(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
   function comb(n, k) { if (k < 0 || k > n) return 0; return fact(n) / (fact(k) * fact(n - k)); }
 
-  // ---------- plot: curves + optional drag/tangent/shade ----------
+  // ---------- plot: curves + optional param sliders / drag / tangent / shade ----------
+  // curve.f may be f(x) or f(x, state). opts.controls add parameter sliders that reshape curves.
   Demos.plot = function (host, o) {
     host.innerHTML = '';
-    const W = 640, H = o.height || 300, L = 46, R = 624, T = 18, B = H - 26;
-    const xmin = o.xmin, xmax = o.xmax;
-    const curves = o.curves || [];
-    // sample curves to find y-range
-    const NS = 240;
-    let ymin = (o.ymin != null) ? o.ymin : Infinity, ymax = (o.ymax != null) ? o.ymax : -Infinity;
-    const data = curves.map(cv => {
-      const pts = [];
-      for (let i = 0; i <= NS; i++) {
-        const x = xmin + (xmax - xmin) * i / NS, y = cv.f(x);
-        pts.push([x, y]);
-        if (o.ymin == null && isFinite(y)) ymin = Math.min(ymin, y);
-        if (o.ymax == null && isFinite(y)) ymax = Math.max(ymax, y);
-      }
-      return pts;
-    });
-    if (!isFinite(ymin)) ymin = 0; if (!isFinite(ymax)) ymax = 1;
-    if (ymin === ymax) { ymin -= 1; ymax += 1; }
-    const pad = (ymax - ymin) * 0.08; ymin -= pad; ymax += pad;
-    const px = x => L + (x - xmin) / (xmax - xmin) * (R - L);
-    const py = y => B - (y - ymin) / (ymax - ymin) * (B - T);
-
-    const cv = canvas(host, W, H); const ctx = cv.x;
-    const readout = o.drag ? out(host) : null;
+    const W = 640, H = o.height || 300, L = 46, R = 624, T = 18, B = H - 26, NS = 240;
+    const xmin = o.xmin, xmax = o.xmax, curves = o.curves || [];
+    const state = {}; (o.controls || []).forEach(c => state[c.key] = c.val);
     let dragX = o.drag ? (o.drag.start != null ? o.drag.start : (xmin + xmax) / 2) : null;
+    const cv = canvas(host, W, H); const ctx = cv.x;
+    const readout = (o.drag || o.readout) ? out(host) : null;
+    const px = x => L + (x - xmin) / (xmax - xmin) * (R - L);
 
     function draw() {
       const c = colors();
+      // sample with current state, find y-range
+      let ymin = (o.ymin != null) ? o.ymin : Infinity, ymax = (o.ymax != null) ? o.ymax : -Infinity;
+      const data = curves.map(cu => {
+        const pts = [];
+        for (let i = 0; i <= NS; i++) { const x = xmin + (xmax - xmin) * i / NS, y = cu.f(x, state); pts.push([x, y]); if (o.ymin == null && isFinite(y)) ymin = Math.min(ymin, y); if (o.ymax == null && isFinite(y)) ymax = Math.max(ymax, y); }
+        return pts;
+      });
+      if (!isFinite(ymin)) ymin = 0; if (!isFinite(ymax)) ymax = 1; if (ymin === ymax) { ymin -= 1; ymax += 1; }
+      const pad = (ymax - ymin) * 0.08; ymin -= pad; ymax += pad;
+      const py = y => B - (y - ymin) / (ymax - ymin) * (B - T);
+
       ctx.clearRect(0, 0, W, H);
       ctx.font = '13px -apple-system, sans-serif'; ctx.textBaseline = 'alphabetic';
-      // axes
       ctx.strokeStyle = c.bd; ctx.lineWidth = 1;
       const y0 = (ymin <= 0 && ymax >= 0) ? py(0) : B;
-      ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(R, y0); ctx.stroke();      // x-axis
+      ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(R, y0); ctx.stroke();
       const x0 = (xmin <= 0 && xmax >= 0) ? px(0) : L;
-      ctx.beginPath(); ctx.moveTo(x0, T); ctx.lineTo(x0, B); ctx.stroke();      // y-axis
-      ctx.fillStyle = c.dim;
-      ctx.fillText(String(+xmax.toFixed(2)), R - 18, y0 + 14);
-      ctx.fillText(String(+xmin.toFixed(2)), L, y0 + 14);
-      // shaded area to dragX
+      ctx.beginPath(); ctx.moveTo(x0, T); ctx.lineTo(x0, B); ctx.stroke();
+      ctx.fillStyle = c.dim; ctx.fillText(String(+xmax.toFixed(2)), R - 18, y0 + 14); ctx.fillText(String(+xmin.toFixed(2)), L, y0 + 14);
+      // shaded area up to dragX
       if (o.drag && o.shade && dragX != null) {
         const ci = o.drag.curve || 0;
         ctx.beginPath(); ctx.moveTo(px(xmin), y0);
-        for (let i = 0; i <= NS; i++) { const x = xmin + (xmax - xmin) * i / NS; if (x > dragX) break; ctx.lineTo(px(x), py(curves[ci].f(x))); }
-        ctx.lineTo(px(dragX), y0); ctx.closePath();
-        ctx.fillStyle = alpha(c.a1, '44'); ctx.fill();
+        for (let i = 0; i <= NS; i++) { const x = xmin + (xmax - xmin) * i / NS; if (x > dragX) break; ctx.lineTo(px(x), py(curves[ci].f(x, state))); }
+        ctx.lineTo(px(dragX), y0); ctx.closePath(); ctx.fillStyle = alpha(c.a1, '44'); ctx.fill();
       }
-      // curves
       const cols = [c.a1, c.a2, c.purple, c.warn];
       data.forEach((pts, i) => {
         ctx.beginPath();
         pts.forEach((p, j) => { const X = px(p[0]), Y = py(p[1]); j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
         ctx.strokeStyle = curves[i].color || cols[i % cols.length];
-        ctx.setLineDash(curves[i].dashed ? [5, 4] : []);
-        ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+        ctx.setLineDash(curves[i].dashed ? [5, 4] : []); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
         if (curves[i].label) { ctx.fillStyle = curves[i].color || cols[i % cols.length]; ctx.fillText(curves[i].label, L + 6 + i * 96, T + 12); }
       });
-      // drag point + tangent
       if (o.drag && dragX != null) {
-        const ci = o.drag.curve || 0, yx = curves[ci].f(dragX);
-        ctx.strokeStyle = c.a2; ctx.setLineDash([4, 4]);
+        const ci = o.drag.curve || 0, yx = curves[ci].f(dragX, state);
+        ctx.strokeStyle = c.a2; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(px(dragX), T); ctx.lineTo(px(dragX), B); ctx.stroke(); ctx.setLineDash([]);
         if (o.drag.df) {
-          const m = o.drag.df(dragX), span = (xmax - xmin) * 0.18;
+          const m = o.drag.df(dragX, state), span = (xmax - xmin) * 0.18;
           ctx.strokeStyle = c.warn; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.moveTo(px(dragX - span), py(yx - m * span)); ctx.lineTo(px(dragX + span), py(yx + m * span)); ctx.stroke();
         }
         ctx.fillStyle = c.a2; ctx.beginPath(); ctx.arc(px(dragX), py(yx), 4.5, 0, 7); ctx.fill();
-        if (readout) readout.innerHTML = o.drag.readout(dragX, yx);
-      }
+        if (readout) readout.innerHTML = o.drag.readout(dragX, yx, state);
+      } else if (o.readout && readout) { readout.innerHTML = o.readout(state); }
     }
-    if (o.drag) {
-      slider(host, o.drag.label || 'x', xmin, xmax, dragX, (xmax - xmin) / 200, function (v) { dragX = v; draw(); });
-      // move slider to the END so the canvas stays on top
-      host.appendChild(host.lastChild);
-    }
+    (o.controls || []).forEach(c => slider(host, c.label, c.min, c.max, c.val, c.step || 0.1, function (v) { state[c.key] = v; draw(); }));
+    if (o.drag) slider(host, o.drag.label || 'x', xmin, xmax, dragX, (xmax - xmin) / 200, function (v) { dragX = v; draw(); });
+    host.insertBefore(cv.c, host.children[0]);   // keep canvas on top
     draw();
   };
 

@@ -14,6 +14,23 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-neuron",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "w1", label: "w1", min: -3, max: 3, val: 0.5, step: 0.1 },
+        { key: "w2", label: "w2", min: -3, max: 3, val: -1, step: 0.1 },
+        { key: "x1", label: "x1", min: -3, max: 3, val: 4, step: 0.1 },
+        { key: "x2", label: "x2", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "b", label: "b (bias)", min: -5, max: 5, val: 3, step: 0.1 }
+      ],
+      compute: function (s) {
+        var z = s.w1 * s.x1 + s.w2 * s.x2 + s.b;
+        return { text: "z = w1·x1 + w2·x2 + b = " + s.w1.toFixed(2) + "·" + s.x1.toFixed(2) +
+          " + " + s.w2.toFixed(2) + "·" + s.x2.toFixed(2) + " + " + s.b.toFixed(2) +
+          " = <b>" + z.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "The neuron & network layers",
   tagline: "A neuron is a dot product plus a bump, then a squish. Stack many and you get a brain-ish machine.",
   prereqs: ["fnd-dot"],
@@ -106,6 +123,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-forward-prop",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "x1", label: "x1 (input)", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "x2", label: "x2 (input)", min: -3, max: 3, val: 2, step: 0.1 },
+        { key: "w11", label: "hidden w·x1", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "w12", label: "hidden w·x2", min: -3, max: 3, val: -1, step: 0.1 },
+        { key: "wo", label: "output weight", min: -3, max: 3, val: 2, step: 0.1 }
+      ],
+      compute: function (s) {
+        var zh = s.w11 * s.x1 + s.w12 * s.x2;
+        var ah = Math.max(0, zh);
+        var y = s.wo * ah;
+        return { text: "hidden z = " + s.w11.toFixed(2) + "·" + s.x1.toFixed(2) + " + " +
+          s.w12.toFixed(2) + "·" + s.x2.toFixed(2) + " = " + zh.toFixed(3) +
+          "<br>hidden a = ReLU(z) = <b>" + ah.toFixed(3) + "</b>" +
+          "<br>output = w·a = " + s.wo.toFixed(2) + "·" + ah.toFixed(3) +
+          " = <b>" + y.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Forward propagation",
   tagline: "Push the input through every layer, left to right, to get the prediction.",
   prereqs: ["dl-neuron", "dl-activations"],
@@ -146,6 +184,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-cross-entropy",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0.01, xmax: 1, ymin: 0, ymax: 5, height: 300,
+      curves: [
+        { f: function (p) { return -Math.log(p); }, label: "loss = −log(p)" }
+      ],
+      drag: {
+        curve: 0, start: 0.5, label: "predicted p",
+        readout: function (p, y) {
+          return "true label = 1. predicted p = <b>" + p.toFixed(3) +
+            "</b> → loss = −log(p) = <b>" + y.toFixed(3) +
+            "</b>. Loss → 0 as p → 1, and → ∞ as p → 0.";
+        }
+      }
+    });
+  },
   title: "Cross-entropy loss",
   tagline: "Measures how wrong a yes/no prediction is. Confident and wrong hurts the most.",
   prereqs: ["dl-forward-prop", "ml-loss", "ml-logistic-regression"],
@@ -185,6 +239,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-backprop",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "dLda", label: "∂L/∂a (upstream)", min: -3, max: 3, val: 2, step: 0.1 },
+        { key: "dadz", label: "∂a/∂z (local)", min: -2, max: 2, val: 0.5, step: 0.1 },
+        { key: "dzdw", label: "∂z/∂w = x (local)", min: -3, max: 3, val: 3, step: 0.1 },
+        { key: "eta", label: "η (learning rate)", min: 0.01, max: 1, val: 0.1, step: 0.01 },
+        { key: "w", label: "current w", min: -5, max: 5, val: 1, step: 0.1 }
+      ],
+      compute: function (s) {
+        var grad = s.dLda * s.dadz * s.dzdw;
+        var wNew = s.w - s.eta * grad;
+        return { text: "∂L/∂w = (∂L/∂a)·(∂a/∂z)·(∂z/∂w) = " + s.dLda.toFixed(2) + "·" +
+          s.dadz.toFixed(2) + "·" + s.dzdw.toFixed(2) + " = <b>" + grad.toFixed(3) + "</b>" +
+          "<br>w ← w − η·grad = " + s.w.toFixed(2) + " − " + s.eta.toFixed(2) + "·" +
+          grad.toFixed(3) + " = <b>" + wNew.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Backpropagation",
   tagline: "Run the chain rule backward to find how each weight caused the error, then fix it.",
   prereqs: ["fnd-chain", "ml-gradient-descent", "dl-forward-prop", "dl-cross-entropy"],
@@ -225,6 +298,13 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-optimizers",
+  demo: function (host) {
+    Demos.descent(host, {
+      f: function (x) { return x * x; },
+      df: function (x) { return 2 * x; },
+      xmin: -5, xmax: 5, start: 4, lr: 0.1, height: 300
+    });
+  },
   title: "Optimizers: Momentum, RMSprop, Adam",
   tagline: "Smarter ways to step downhill so training is faster and steadier.",
   prereqs: ["dl-backprop"],
@@ -265,6 +345,19 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-minibatch",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "N", label: "N (dataset size)", min: 1, max: 5000, val: 1000, step: 1 },
+        { key: "m", label: "m (batch size)", min: 1, max: 1024, val: 100, step: 1 }
+      ],
+      compute: function (s) {
+        var iters = Math.ceil(s.N / s.m);
+        return { text: "iterations per epoch = ceil(N / m) = ceil(" + s.N + " / " + s.m +
+          ") = <b>" + iters + "</b> weight updates per epoch." };
+      }
+    });
+  },
   title: "Mini-batch gradient descent & epochs",
   tagline: "Update on small chunks of data instead of one example or the whole set.",
   prereqs: ["dl-backprop"],
@@ -304,6 +397,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-init",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "nin", label: "n_in (inputs to layer)", min: 1, max: 1000, val: 100, step: 1 }
+      ],
+      compute: function (s) {
+        var xavier = 1 / s.nin;
+        var he = 2 / s.nin;
+        return { text: "Xavier variance = 1 / n_in = 1 / " + s.nin + " = <b>" + xavier.toFixed(5) +
+          "</b> (std ≈ " + Math.sqrt(xavier).toFixed(4) + ")" +
+          "<br>He variance = 2 / n_in = 2 / " + s.nin + " = <b>" + he.toFixed(5) +
+          "</b> (std ≈ " + Math.sqrt(he).toFixed(4) + ")" +
+          "<br>More inputs → smaller starting weights." };
+      }
+    });
+  },
   title: "Weight initialization (Xavier)",
   tagline: "Start the weights at small, just-right random values. Zeros or huge values break training.",
   prereqs: ["dl-forward-prop"],
@@ -342,6 +451,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-dropout",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "p", label: "keep prob p", min: 0.1, max: 1, val: 0.5, step: 0.05 },
+        { key: "n", label: "neurons in layer", min: 1, max: 200, val: 10, step: 1 }
+      ],
+      compute: function (s) {
+        var scale = 1 / s.p;
+        var kept = s.p * s.n;
+        return { text: "keep prob p = " + s.p.toFixed(2) +
+          "<br>inverted-dropout scale = 1 / p = <b>" + scale.toFixed(3) + "</b>" +
+          "<br>expected kept neurons = p·n = " + s.p.toFixed(2) + "·" + s.n +
+          " = <b>" + kept.toFixed(1) + "</b>" };
+      }
+    });
+  },
   title: "Dropout",
   tagline: "Randomly switch off neurons during training so the network can't lean on any one of them.",
   prereqs: ["dl-forward-prop", "ml-regularization"],
@@ -380,6 +505,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-batchnorm",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "x1", label: "x1", min: -10, max: 10, val: 2, step: 0.1 },
+        { key: "x2", label: "x2", min: -10, max: 10, val: 4, step: 0.1 },
+        { key: "x3", label: "x3", min: -10, max: 10, val: 6, step: 0.1 }
+      ],
+      compute: function (s) {
+        var eps = 0.00001;
+        var mu = (s.x1 + s.x2 + s.x3) / 3;
+        var v = ((s.x1 - mu) * (s.x1 - mu) + (s.x2 - mu) * (s.x2 - mu) + (s.x3 - mu) * (s.x3 - mu)) / 3;
+        var norm1 = (s.x1 - mu) / Math.sqrt(v + eps);
+        return { text: "mean μ = (" + s.x1.toFixed(1) + " + " + s.x2.toFixed(1) + " + " +
+          s.x3.toFixed(1) + ") / 3 = <b>" + mu.toFixed(3) + "</b>" +
+          "<br>variance = <b>" + v.toFixed(3) + "</b>" +
+          "<br>normalized x1 = (x1 − μ)/√(var+ε) = <b>" + norm1.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Batch normalization",
   tagline: "Rescale each layer's inputs to be tidy and centered, so training is faster and smoother.",
   prereqs: ["dl-forward-prop", "fnd-norm"],
@@ -420,6 +564,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-early-stopping",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 1, xmax: 20, ymin: 0, ymax: 1, height: 300,
+      curves: [
+        { f: function (e) { return 0.9 * Math.exp(-0.18 * e) + 0.05; }, label: "training loss" },
+        { f: function (e) { var d = e - 8; return 0.25 + 0.012 * d * d; }, label: "validation loss" }
+      ],
+      drag: {
+        curve: 1, start: 8, label: "epoch",
+        readout: function (e, y) {
+          return "epoch = <b>" + e.toFixed(1) + "</b>, validation loss = <b>" + y.toFixed(3) +
+            "</b>. Validation bottoms out near epoch 8, then turns up — stop there.";
+        }
+      }
+    });
+  },
   title: "Early stopping",
   tagline: "Stop training the moment the validation error stops improving.",
   prereqs: ["dl-minibatch", "ml-regularization"],
@@ -456,6 +616,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-conv",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "p11", label: "patch[0,0]", min: -5, max: 5, val: 3, step: 0.5 },
+        { key: "p12", label: "patch[0,1]", min: -5, max: 5, val: 5, step: 0.5 },
+        { key: "p21", label: "patch[1,0]", min: -5, max: 5, val: 2, step: 0.5 },
+        { key: "p22", label: "patch[1,1]", min: -5, max: 5, val: 4, step: 0.5 },
+        { key: "f11", label: "filter[0,0]", min: -2, max: 2, val: 1, step: 0.5 },
+        { key: "f12", label: "filter[0,1]", min: -2, max: 2, val: 0, step: 0.5 },
+        { key: "f21", label: "filter[1,0]", min: -2, max: 2, val: 0, step: 0.5 },
+        { key: "f22", label: "filter[1,1]", min: -2, max: 2, val: 1, step: 0.5 }
+      ],
+      compute: function (s) {
+        var o = s.p11 * s.f11 + s.p12 * s.f12 + s.p21 * s.f21 + s.p22 * s.f22;
+        return { text: "output = Σ patch·filter = " +
+          s.p11 + "·" + s.f11 + " + " + s.p12 + "·" + s.f12 + " + " +
+          s.p21 + "·" + s.f21 + " + " + s.p22 + "·" + s.f22 +
+          " = <b>" + o.toFixed(2) + "</b>" };
+      }
+    });
+  },
   title: "Convolutional layer",
   tagline: "A small filter slides over an image, dot-producting as it goes, to spot patterns.",
   prereqs: ["fnd-dot"],
@@ -494,6 +675,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-pooling",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a", label: "value[0,0]", min: -10, max: 10, val: 1, step: 0.5 },
+        { key: "b", label: "value[0,1]", min: -10, max: 10, val: 7, step: 0.5 },
+        { key: "c", label: "value[1,0]", min: -10, max: 10, val: 3, step: 0.5 },
+        { key: "d", label: "value[1,1]", min: -10, max: 10, val: 2, step: 0.5 }
+      ],
+      compute: function (s) {
+        var mx = Math.max(s.a, s.b, s.c, s.d);
+        var avg = (s.a + s.b + s.c + s.d) / 4;
+        return { text: "values: " + s.a + ", " + s.b + ", " + s.c + ", " + s.d +
+          "<br>max-pool = max = <b>" + mx.toFixed(2) + "</b>" +
+          "<br>avg-pool = mean = <b>" + avg.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Pooling (max / average)",
   tagline: "Shrink the feature map by summarizing each little region with one number.",
   prereqs: ["dl-conv"],
@@ -533,6 +731,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-conv-hyperparams",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "I", label: "I (input size)", min: 1, max: 64, val: 7, step: 1 },
+        { key: "F", label: "F (filter size)", min: 1, max: 11, val: 3, step: 1 },
+        { key: "P", label: "P (padding)", min: 0, max: 5, val: 0, step: 1 },
+        { key: "S", label: "S (stride)", min: 1, max: 5, val: 1, step: 1 }
+      ],
+      compute: function (s) {
+        var O = Math.floor((s.I - s.F + 2 * s.P) / s.S) + 1;
+        return { text: "O = floor((I − F + 2P) / S) + 1 = floor((" + s.I + " − " + s.F +
+          " + 2·" + s.P + ") / " + s.S + ") + 1 = <b>" + O + "</b> output size." };
+      }
+    });
+  },
   title: "Filter hyperparameters & output size",
   tagline: "Filter size, stride, and padding decide how big the output map turns out.",
   prereqs: ["dl-conv"],
@@ -573,6 +786,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-cnn-params",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "F", label: "F (filter size)", min: 1, max: 11, val: 3, step: 1 },
+        { key: "C", label: "C (input channels)", min: 1, max: 512, val: 3, step: 1 },
+        { key: "K", label: "K (number of filters)", min: 1, max: 512, val: 10, step: 1 }
+      ],
+      compute: function (s) {
+        var params = (s.F * s.F * s.C + 1) * s.K;
+        return { text: "params = (F·F·C + 1)·K = (" + s.F + "·" + s.F + "·" + s.C +
+          " + 1)·" + s.K + " = (" + (s.F * s.F * s.C) + " + 1)·" + s.K +
+          " = <b>" + params + "</b>" };
+      }
+    });
+  },
   title: "Counting CNN parameters",
   tagline: "How many weights a convolutional layer holds, and what a neuron can 'see'.",
   prereqs: ["dl-conv", "dl-conv-hyperparams"],
@@ -613,6 +841,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-object-detection",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "areaA", label: "Box A area", min: 1, max: 100, val: 40, step: 1 },
+        { key: "areaB", label: "Box B area", min: 1, max: 100, val: 30, step: 1 },
+        { key: "inter", label: "overlap (intersection)", min: 0, max: 100, val: 20, step: 1 }
+      ],
+      compute: function (s) {
+        var inter = Math.min(s.inter, s.areaA, s.areaB);
+        var union = s.areaA + s.areaB - inter;
+        var iou = union > 0 ? inter / union : 0;
+        return { text: "intersection = " + inter +
+          "<br>union = A + B − intersection = " + s.areaA + " + " + s.areaB + " − " + inter +
+          " = " + union +
+          "<br>IoU = intersection / union = <b>" + iou.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Object detection (IoU, YOLO)",
   tagline: "Not just 'is there a cat?' but 'where is it?' — draw a box and score how well it fits.",
   prereqs: ["dl-conv", "dl-pooling"],
@@ -652,6 +898,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-face-recognition",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "dap", label: "d(A,P) anchor-positive", min: 0, max: 2, val: 0.3, step: 0.05 },
+        { key: "dan", label: "d(A,N) anchor-negative", min: 0, max: 2, val: 0.5, step: 0.05 },
+        { key: "alpha", label: "α (margin)", min: 0, max: 1, val: 0.2, step: 0.05 }
+      ],
+      compute: function (s) {
+        var inside = s.dap - s.dan + s.alpha;
+        var loss = Math.max(0, inside);
+        return { text: "inside = d(A,P) − d(A,N) + α = " + s.dap.toFixed(2) + " − " +
+          s.dan.toFixed(2) + " + " + s.alpha.toFixed(2) + " = " + inside.toFixed(3) +
+          "<br>triplet loss = max(0, inside) = <b>" + loss.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Face verification & triplet loss",
   tagline: "Learn an encoding where the same person's faces sit close and different people sit far.",
   prereqs: ["dl-forward-prop", "fnd-norm"],
@@ -691,6 +953,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-style-transfer",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "alpha", label: "α (content weight)", min: 0, max: 10, val: 1, step: 0.5 },
+        { key: "beta", label: "β (style weight)", min: 0, max: 100, val: 40, step: 1 },
+        { key: "Jc", label: "content cost Jc", min: 0, max: 10, val: 3, step: 0.5 },
+        { key: "Js", label: "style cost Js", min: 0, max: 10, val: 2, step: 0.5 }
+      ],
+      compute: function (s) {
+        var J = s.alpha * s.Jc + s.beta * s.Js;
+        return { text: "J = α·Jc + β·Js = " + s.alpha.toFixed(1) + "·" + s.Jc.toFixed(1) +
+          " + " + s.beta.toFixed(0) + "·" + s.Js.toFixed(1) + " = <b>" + J.toFixed(2) +
+          "</b>. Raise β for a more painterly look." };
+      }
+    });
+  },
   title: "Neural style transfer",
   tagline: "Keep a photo's content but repaint it in another image's artistic style.",
   prereqs: ["dl-conv"],
@@ -730,6 +1008,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-gan",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "D", label: "D(x) on a fake", min: 0.01, max: 0.99, val: 0.5, step: 0.01 }
+      ],
+      compute: function (s) {
+        var dLoss = -Math.log(1 - s.D);
+        var gLoss = -Math.log(s.D);
+        var note = Math.abs(s.D - 0.5) < 0.03 ? " D ≈ 0.5: at equilibrium the discriminator is fooled." : "";
+        return { text: "discriminator output on fake D(x) = " + s.D.toFixed(2) +
+          "<br>discriminator loss = −log(1 − D) = <b>" + dLoss.toFixed(3) + "</b>" +
+          "<br>generator loss = −log(D) = <b>" + gLoss.toFixed(3) + "</b>" + note };
+      }
+    });
+  },
   title: "GANs (generator vs discriminator)",
   tagline: "A forger and a detective compete; the forger gets so good its fakes look real.",
   prereqs: ["dl-forward-prop", "dl-backprop"],
@@ -769,6 +1062,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-rnn",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "Waa", label: "Waa (memory weight)", min: -2, max: 2, val: 0.5, step: 0.1 },
+        { key: "aprev", label: "a_prev (old memory)", min: -2, max: 2, val: 0, step: 0.1 },
+        { key: "Wax", label: "Wax (input weight)", min: -2, max: 2, val: 1, step: 0.1 },
+        { key: "x", label: "x (input)", min: -3, max: 3, val: 2, step: 0.1 },
+        { key: "b", label: "b (bias)", min: -2, max: 2, val: 0, step: 0.1 }
+      ],
+      compute: function (s) {
+        var z = s.Waa * s.aprev + s.Wax * s.x + s.b;
+        var a = Math.tanh(z);
+        return { text: "z = Waa·a_prev + Wax·x + b = " + s.Waa.toFixed(1) + "·" + s.aprev.toFixed(1) +
+          " + " + s.Wax.toFixed(1) + "·" + s.x.toFixed(1) + " + " + s.b.toFixed(1) +
+          " = " + z.toFixed(3) +
+          "<br>aₜ = tanh(z) = <b>" + a.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Recurrent neural networks (RNNs)",
   tagline: "Read a sequence one step at a time, carrying a memory of what came before.",
   prereqs: ["dl-forward-prop"],
@@ -808,6 +1120,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-vanishing-gradient",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "r", label: "r (per-step factor)", min: 0, max: 2, val: 0.5, step: 0.05 },
+        { key: "k", label: "k (depth / steps)", min: 1, max: 40, val: 5, step: 1 }
+      ],
+      compute: function (s) {
+        var prod = Math.pow(s.r, s.k);
+        var note = s.r < 1 ? " r < 1: shrinks toward 0 (vanishing)." :
+          (s.r > 1 ? " r > 1: blows up (exploding)." : " r = 1: stays steady.");
+        return { text: "r^k = " + s.r.toFixed(2) + "^" + s.k + " = <b>" + prod.toExponential(3) +
+          "</b>." + note };
+      }
+    });
+  },
   title: "Vanishing & exploding gradients",
   tagline: "Over long sequences, gradients shrink to nothing or blow up; clipping caps the blow-ups.",
   prereqs: ["dl-rnn", "dl-backprop"],
@@ -846,6 +1173,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-lstm-gru",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "f", label: "forget gate f", min: 0, max: 1, val: 0.7, step: 0.05 },
+        { key: "c", label: "c (old cell)", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "cand", label: "candidate (new info)", min: -3, max: 3, val: 2, step: 0.1 }
+      ],
+      compute: function (s) {
+        var cNew = s.f * s.c + (1 - s.f) * s.cand;
+        return { text: "new cell = f·c + (1 − f)·candidate = " + s.f.toFixed(2) + "·" +
+          s.c.toFixed(1) + " + " + (1 - s.f).toFixed(2) + "·" + s.cand.toFixed(1) +
+          " = <b>" + cNew.toFixed(3) + "</b>. f near 1 keeps old memory; f near 0 forgets it." };
+      }
+    });
+  },
   title: "LSTM & GRU (gates)",
   tagline: "Add little gates that decide what to remember and what to forget over long sequences.",
   prereqs: ["dl-rnn", "dl-vanishing-gradient"],
@@ -885,6 +1227,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-word-embeddings",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "V", label: "V (vocabulary size)", min: 2, max: 100000, val: 10000, step: 1 },
+        { key: "d", label: "d (embedding dim)", min: 2, max: 1024, val: 300, step: 1 }
+      ],
+      compute: function (s) {
+        var ratio = s.V / s.d;
+        return { text: "one-hot length = V = <b>" + s.V + "</b> (mostly zeros)" +
+          "<br>embedding length = d = <b>" + s.d + "</b> (dense)" +
+          "<br>embedding is " + ratio.toFixed(1) + "× shorter than one-hot." };
+      }
+    });
+  },
   title: "Word embeddings",
   tagline: "Turn words into number-vectors where similar words land near each other.",
   prereqs: ["fnd-vector", "fnd-matvec"],
@@ -923,6 +1279,31 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-word2vec",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true, barsHeight: 150,
+      inputs: [
+        { key: "s1", label: "score: word 1", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "s2", label: "score: word 2", min: -5, max: 5, val: 1, step: 0.1 },
+        { key: "s3", label: "score: word 3", min: -5, max: 5, val: 0, step: 0.1 }
+      ],
+      compute: function (s) {
+        var e1 = Math.exp(s.s1), e2 = Math.exp(s.s2), e3 = Math.exp(s.s3);
+        var Z = e1 + e2 + e3;
+        var p1 = e1 / Z, p2 = e2 / Z, p3 = e3 / Z;
+        return {
+          text: "softmax P(t|c) = exp(score) / Σ exp. Probabilities sum to " +
+            (p1 + p2 + p3).toFixed(3) + ".",
+          bars: [
+            { label: "word 1", val: p1 },
+            { label: "word 2", val: p2 },
+            { label: "word 3", val: p3 }
+          ],
+          max: 1
+        };
+      }
+    });
+  },
   title: "word2vec & GloVe",
   tagline: "Learn word vectors by predicting nearby words. Then king − man + woman ≈ queen.",
   prereqs: ["dl-word-embeddings", "ml-logistic-regression"],
@@ -964,6 +1345,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-cosine-similarity",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a1", label: "a.x", min: -5, max: 5, val: 1, step: 0.1 },
+        { key: "a2", label: "a.y", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "b1", label: "b.x", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "b2", label: "b.y", min: -5, max: 5, val: 4, step: 0.1 }
+      ],
+      compute: function (s) {
+        var dot = s.a1 * s.b1 + s.a2 * s.b2;
+        var na = Math.sqrt(s.a1 * s.a1 + s.a2 * s.a2);
+        var nb = Math.sqrt(s.b1 * s.b1 + s.b2 * s.b2);
+        var denom = na * nb;
+        var cos = denom > 0 ? dot / denom : 0;
+        return { text: "a·b = " + dot.toFixed(3) +
+          "<br>|a| = " + na.toFixed(3) + ", |b| = " + nb.toFixed(3) +
+          "<br>cos = (a·b)/(|a||b|) = <b>" + cos.toFixed(3) + "</b>" };
+      }
+    });
+  },
   title: "Cosine similarity",
   tagline: "Measure how alike two vectors are by the angle between them, not their length.",
   prereqs: ["fnd-dot", "fnd-norm"],
@@ -1003,6 +1404,35 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-attention",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true, barsHeight: 150,
+      inputs: [
+        { key: "e1", label: "score e1", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "e2", label: "score e2", min: -5, max: 5, val: 1, step: 0.1 },
+        { key: "e3", label: "score e3", min: -5, max: 5, val: 0, step: 0.1 },
+        { key: "a1", label: "input value a1", min: -5, max: 5, val: 1, step: 0.5 },
+        { key: "a2", label: "input value a2", min: -5, max: 5, val: 3, step: 0.5 },
+        { key: "a3", label: "input value a3", min: -5, max: 5, val: 5, step: 0.5 }
+      ],
+      compute: function (s) {
+        var x1 = Math.exp(s.e1), x2 = Math.exp(s.e2), x3 = Math.exp(s.e3);
+        var Z = x1 + x2 + x3;
+        var w1 = x1 / Z, w2 = x2 / Z, w3 = x3 / Z;
+        var ctx = w1 * s.a1 + w2 * s.a2 + w3 * s.a3;
+        return {
+          text: "softmax weights sum to " + (w1 + w2 + w3).toFixed(3) +
+            ". context c = Σ α·a = <b>" + ctx.toFixed(3) + "</b>",
+          bars: [
+            { label: "α1", val: w1 },
+            { label: "α2", val: w2 },
+            { label: "α3", val: w3 }
+          ],
+          max: 1
+        };
+      }
+    });
+  },
   title: "Attention",
   tagline: "Let the model focus on the most relevant input parts, with weights that add to 1.",
   prereqs: ["dl-rnn", "dl-word2vec"],
@@ -1043,6 +1473,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-data-augmentation",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "flips", label: "flip variants", min: 1, max: 4, val: 2, step: 1 },
+        { key: "rots", label: "rotation variants", min: 1, max: 12, val: 4, step: 1 },
+        { key: "crops", label: "crop variants", min: 1, max: 10, val: 3, step: 1 }
+      ],
+      compute: function (s) {
+        var total = s.flips * s.rots * s.crops;
+        return { text: "total variants = flips × rotations × crops = " + s.flips + " × " +
+          s.rots + " × " + s.crops + " = <b>" + total + "</b> images from one original." };
+      }
+    });
+  },
   title: "Data augmentation",
   tagline: "Make more training images by flipping, rotating, and cropping the ones you have.",
   prereqs: ["dl-conv"],

@@ -15,6 +15,47 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-linear-predictors",
+  demo: function (host) {
+    Demos.scatter(host, {
+      points: [
+        { x: 1, y: 1, c: 4 }, { x: 1.5, y: 2, c: 4 }, { x: 2, y: 1.2, c: 4 }, { x: 1.2, y: 2.5, c: 4 },
+        { x: 4, y: 4, c: 1 }, { x: 4.5, y: 3, c: 1 }, { x: 3.5, y: 4.5, c: 1 }, { x: 5, y: 3.5, c: 1 }
+      ],
+      init: function (api) {
+        var w1 = 1, w2 = 1, b = -6;
+        function redraw() {
+          api.draw(function (ctx, c, px, py) {
+            // line w1*x + w2*y + b = 0  ->  y = -(w1*x + b)/w2
+            ctx.strokeStyle = c.ink; ctx.lineWidth = 2;
+            ctx.beginPath();
+            var x0 = 0, x1 = 6;
+            if (Math.abs(w2) > 1e-6) {
+              ctx.moveTo(px(x0), py(-(w1 * x0 + b) / w2));
+              ctx.lineTo(px(x1), py(-(w1 * x1 + b) / w2));
+            } else {
+              var xv = -b / w1; ctx.moveTo(px(xv), py(0)); ctx.lineTo(px(xv), py(6));
+            }
+            ctx.stroke();
+          });
+          var correct = 0, total = api.pts.length, minMargin = Infinity;
+          api.pts.forEach(function (p) {
+            var score = w1 * p.x + w2 * p.y + b;
+            var label = (p.c === 1) ? 1 : -1;
+            var margin = score * label;
+            if (margin > 0) correct++;
+            if (margin < minMargin) minMargin = margin;
+          });
+          api.readout.innerHTML = "weights w = [" + w1.toFixed(2) + ", " + w2.toFixed(2) + "], bias = " + b.toFixed(2) +
+            ".<br>classify by sign(w·x + b). correct: <b>" + correct + " / " + total +
+            "</b>. smallest margin = <b>" + minMargin.toFixed(2) + "</b> (negative means a misclassified point).";
+        }
+        api.slider("w1 (weight on x)", -3, 3, w1, 0.1, function (v) { w1 = v; redraw(); });
+        api.slider("w2 (weight on y)", -3, 3, w2, 0.1, function (v) { w2 = v; redraw(); });
+        api.slider("bias", -10, 4, b, 0.5, function (v) { b = v; redraw(); });
+        redraw();
+      }
+    });
+  },
   title: "Linear predictors (reflex models)",
   tagline: "Turn an input into numbers, take a dot product, read off a yes/no answer.",
   prereqs: ["fnd-dot"],
@@ -62,6 +103,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-loss-minimization",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -2, xmax: 3, ymin: 0, ymax: 4,
+      curves: [
+        { f: function (m) { return m < 0 ? 1 : 0; }, label: "zero-one" },
+        { f: function (m) { return Math.max(0, 1 - m); }, label: "hinge" },
+        { f: function (m) { var d = m - 1; return d * d; }, label: "squared" }
+      ],
+      drag: {
+        label: "margin m", start: 0.3, curve: 1,
+        readout: function (m) {
+          var zo = m < 0 ? 1 : 0, hinge = Math.max(0, 1 - m), sq = (m - 1) * (m - 1);
+          return "at margin m = <b>" + m.toFixed(2) + "</b>: zero-one = <b>" + zo +
+            "</b>, hinge max(0,1−m) = <b>" + hinge.toFixed(2) +
+            "</b>, squared (m−1)² = <b>" + sq.toFixed(2) + "</b>. (larger m = more correct + confident.)";
+        }
+      }
+    });
+  },
   title: "Loss minimization",
   tagline: "Measure how wrong the model is. Then pick weights that make that number smallest.",
   prereqs: ["ai-linear-predictors", "ml-loss"],
@@ -110,6 +170,13 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-sgd",
+  demo: function (host) {
+    Demos.descent(host, {
+      f: function (x) { return x * x; },
+      df: function (x) { return 2 * x; },
+      xmin: -4, xmax: 4, start: 3, lr: 0.2
+    });
+  },
   title: "Stochastic gradient descent (SGD)",
   tagline: "Don't wait for the whole dataset. Step downhill after each single example.",
   prereqs: ["ai-loss-minimization", "ml-gradient-descent"],
@@ -152,6 +219,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-search-problem",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "c1", label: "cost of edge 1", min: 0, max: 10, val: 1, step: 0.5 },
+        { key: "c2", label: "cost of edge 2", min: 0, max: 10, val: 1, step: 0.5 },
+        { key: "c3", label: "cost of edge 3", min: 0, max: 10, val: 2, step: 0.5 }
+      ],
+      compute: function (s) {
+        var total = s.c1 + s.c2 + s.c3;
+        return { text: "total path cost = c1 + c2 + c3 = " + s.c1 + " + " + s.c2 + " + " + s.c3 +
+          " = <b>" + total.toFixed(1) + "</b>. (each action adds its cost; we want the cheapest such sum.)" };
+      }
+    });
+  },
   title: "Search problems",
   tagline: "Start somewhere, take actions that cost something, reach a goal as cheaply as possible.",
   bigIdea:
@@ -193,6 +274,19 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-tree-search",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "b", label: "branching factor b", min: 1, max: 6, val: 2, step: 1 },
+        { key: "d", label: "depth d", min: 0, max: 10, val: 3, step: 1 }
+      ],
+      compute: function (s) {
+        var nodes = Math.pow(s.b, s.d);
+        return { text: "nodes at the deepest level ≈ b^d = " + s.b + "^" + s.d +
+          " = <b>" + nodes + "</b>. this O(b^d) growth is why deep trees explode." };
+      }
+    });
+  },
   title: "Tree search: BFS, DFS, iterative deepening",
   tagline: "Explore possibilities one by one. Go wide, go deep, or do a clever mix.",
   prereqs: ["ai-search-problem"],
@@ -235,6 +329,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-graph-search",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a1", label: "route A: step 1 cost", min: 0, max: 10, val: 1, step: 0.5 },
+        { key: "a2", label: "route A: step 2 cost", min: 0, max: 10, val: 4, step: 0.5 },
+        { key: "b1", label: "route B: step 1 cost", min: 0, max: 10, val: 2, step: 0.5 },
+        { key: "b2", label: "route B: step 2 cost", min: 0, max: 10, val: 1, step: 0.5 }
+      ],
+      compute: function (s) {
+        var ca = s.a1 + s.a2, cb = s.b1 + s.b2, best = Math.min(ca, cb);
+        var winner = ca <= cb ? "A" : "B";
+        return { text: "route A cost = " + s.a1 + " + " + s.a2 + " = <b>" + ca.toFixed(1) +
+          "</b>, route B cost = " + s.b1 + " + " + s.b2 + " = <b>" + cb.toFixed(1) +
+          "</b>.<br>UCS picks the cheaper frontier: min(" + ca.toFixed(1) + ", " + cb.toFixed(1) +
+          ") = <b>" + best.toFixed(1) + "</b>, route <b>" + winner + "</b> wins." };
+      }
+    });
+  },
   title: "Graph search: dynamic programming and UCS",
   tagline: "Don't redo work. Remember states you've solved, and always expand the cheapest one next.",
   prereqs: ["ai-tree-search"],
@@ -277,6 +389,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-astar",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "g", label: "g (cost paid so far)", min: 0, max: 20, val: 4, step: 0.5 },
+        { key: "h", label: "h (heuristic guess of remaining)", min: 0, max: 20, val: 5, step: 0.5 },
+        { key: "t", label: "true remaining cost", min: 0, max: 20, val: 6, step: 0.5 }
+      ],
+      compute: function (s) {
+        var f = s.g + s.h;
+        var ok = s.h <= s.t;
+        return { text: "f = g + h = " + s.g + " + " + s.h + " = <b>" + f.toFixed(1) +
+          "</b>. A* expands the node with the smallest f.<br>admissible? need h ≤ true cost: " +
+          s.h + " ≤ " + s.t + " is <b>" + (ok ? "yes (safe)" : "NO (overestimates — may miss the cheapest path)") + "</b>." };
+      }
+    });
+  },
   title: "A* search",
   tagline: "Uniform cost search with a hint. Aim toward the goal and reach it much faster.",
   prereqs: ["ai-graph-search"],
@@ -320,6 +448,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-mdp",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "r1", label: "reward r1 (step 1)", min: -5, max: 10, val: 10, step: 0.5 },
+        { key: "r2", label: "reward r2 (step 2)", min: -5, max: 10, val: 10, step: 0.5 },
+        { key: "r3", label: "reward r3 (step 3)", min: -5, max: 10, val: 10, step: 0.5 },
+        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 }
+      ],
+      compute: function (s) {
+        var ret = s.r1 + s.g * s.r2 + s.g * s.g * s.r3;
+        return { text: "discounted return = r1 + γ·r2 + γ²·r3 = " + s.r1 + " + " + s.g + "·" + s.r2 +
+          " + " + (s.g * s.g).toFixed(3) + "·" + s.r3 + " = <b>" + ret.toFixed(2) +
+          "</b>. (later rewards shrink by powers of γ.)" };
+      }
+    });
+  },
   title: "Markov Decision Processes (MDPs)",
   tagline: "Planning when actions are unreliable. Sometimes you slip, so plan with the odds.",
   prereqs: ["ai-search-problem", "prob-conditional"],
@@ -364,6 +508,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-policy-value",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "r1", label: "policy reward r1 (step 1)", min: -5, max: 10, val: 4, step: 0.5 },
+        { key: "r2", label: "policy reward r2 (step 2)", min: -5, max: 10, val: 4, step: 0.5 },
+        { key: "r3", label: "policy reward r3 (step 3)", min: -5, max: 10, val: 4, step: 0.5 },
+        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 }
+      ],
+      compute: function (s) {
+        var v = s.r1 + s.g * s.r2 + s.g * s.g * s.r3;
+        return { text: "value of the policy = r1 + γ·r2 + γ²·r3 = " + s.r1 + " + " + s.g + "·" + s.r2 +
+          " + " + (s.g * s.g).toFixed(3) + "·" + s.r3 + " = <b>" + v.toFixed(2) +
+          "</b>. (with no randomness, value equals this discounted return.)" };
+      }
+    });
+  },
   title: "Policies and values",
   tagline: "A policy is your game plan. Its value is how much reward that plan earns on average.",
   prereqs: ["ai-mdp", "prob-expectation"],
@@ -408,6 +568,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-qvalue",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "t", label: "T (probability of next state)", min: 0, max: 1, val: 1, step: 0.05 },
+        { key: "r", label: "Reward(s,a,s′)", min: -5, max: 10, val: 6, step: 0.5 },
+        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 },
+        { key: "v", label: "V(s′) value of next state", min: -5, max: 20, val: 4, step: 0.5 }
+      ],
+      compute: function (s) {
+        var q = s.t * (s.r + s.g * s.v);
+        return { text: "Q = T·(R + γ·V(s′)) = " + s.t + "·(" + s.r + " + " + s.g + "·" + s.v +
+          ") = " + s.t + "·" + (s.r + s.g * s.v).toFixed(2) + " = <b>" + q.toFixed(2) +
+          "</b>. (one outcome shown; sum this over all next states for the full Q-value.)" };
+      }
+    });
+  },
   title: "Q-values",
   tagline: "How good is taking action a in state s? Average over where it might land you.",
   prereqs: ["ai-policy-value"],
@@ -449,6 +625,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-value-iteration",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "q1", label: "Q(s, action 1)", min: -5, max: 20, val: 3, step: 0.5 },
+        { key: "q2", label: "Q(s, action 2)", min: -5, max: 20, val: 7, step: 0.5 }
+      ],
+      compute: function (s) {
+        var v = Math.max(s.q1, s.q2);
+        var best = s.q1 >= s.q2 ? "action 1" : "action 2";
+        return { text: "one Bellman backup: V(s) = max(Q1, Q2) = max(" + s.q1 + ", " + s.q2 +
+          ") = <b>" + v.toFixed(1) + "</b>. best action = arg max = <b>" + best + "</b>." };
+      }
+    });
+  },
   title: "Value iteration",
   tagline: "Guess the values, improve them with the best action, repeat until they settle.",
   prereqs: ["ai-qvalue"],
@@ -549,6 +739,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-minimax",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "l1", label: "leaf 1 (under branch A)", min: 0, max: 10, val: 3, step: 1 },
+        { key: "l2", label: "leaf 2 (under branch A)", min: 0, max: 10, val: 8, step: 1 },
+        { key: "l3", label: "leaf 3 (under branch B)", min: 0, max: 10, val: 5, step: 1 },
+        { key: "l4", label: "leaf 4 (under branch B)", min: 0, max: 10, val: 2, step: 1 }
+      ],
+      compute: function (s) {
+        var minA = Math.min(s.l1, s.l2), minB = Math.min(s.l3, s.l4);
+        var root = Math.max(minA, minB);
+        var pick = minA >= minB ? "A" : "B";
+        return { text: "opponent (MIN) at each branch: A → min(" + s.l1 + ", " + s.l2 + ") = <b>" + minA +
+          "</b>, B → min(" + s.l3 + ", " + s.l4 + ") = <b>" + minB +
+          "</b>.<br>you (MAX) at root: max(" + minA + ", " + minB + ") = <b>" + root +
+          "</b>, so pick branch <b>" + pick + "</b>." };
+      }
+    });
+  },
   title: "Minimax (game playing)",
   tagline: "You play to win, your opponent plays to beat you. Plan for their best reply.",
   bigIdea:
@@ -591,6 +800,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-alpha-beta",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "alpha", label: "α (max's best secured)", min: 0, max: 10, val: 5, step: 1 },
+        { key: "beta", label: "β (min's best secured)", min: 0, max: 10, val: 10, step: 1 },
+        { key: "child", label: "child value seen at a MIN node", min: 0, max: 10, val: 2, step: 1 }
+      ],
+      compute: function (s) {
+        // At a MIN node, beta updates to min(beta, child). Prune when beta <= alpha.
+        var newBeta = Math.min(s.beta, s.child);
+        var pruned = newBeta <= s.alpha;
+        return { text: "at this MIN node, β ← min(β, child) = min(" + s.beta + ", " + s.child +
+          ") = <b>" + newBeta + "</b>.<br>prune when β ≤ α: " + newBeta + " ≤ " + s.alpha +
+          " is <b>" + (pruned ? "yes — PRUNE the rest of this branch" : "no — keep exploring") + "</b>." };
+      }
+    });
+  },
   title: "Alpha-beta pruning",
   tagline: "Skip branches that cannot change your decision. Same answer, far less work.",
   prereqs: ["ai-minimax"],
@@ -633,6 +859,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-expectimax",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "v1", label: "outcome 1 value", min: 0, max: 10, val: 8, step: 1 },
+        { key: "p1", label: "outcome 1 probability", min: 0, max: 1, val: 0.5, step: 0.05 },
+        { key: "v2", label: "outcome 2 value", min: 0, max: 10, val: 2, step: 1 }
+      ],
+      compute: function (s) {
+        var p2 = 1 - s.p1;
+        var ev = s.p1 * s.v1 + p2 * s.v2;
+        var mm = Math.min(s.v1, s.v2);
+        return { text: "outcome 2 probability = 1 − " + s.p1.toFixed(2) + " = <b>" + p2.toFixed(2) +
+          "</b>.<br>expected value = Σ p·v = " + s.p1.toFixed(2) + "·" + s.v1 + " + " + p2.toFixed(2) + "·" + s.v2 +
+          " = <b>" + ev.toFixed(2) + "</b>. (minimax would instead take the worst case, min = " + mm + ".)" };
+      }
+    });
+  },
   title: "Expectimax",
   tagline: "When the opponent is random, not perfect, average the outcomes instead of taking the worst.",
   prereqs: ["ai-minimax", "prob-expectation"],
@@ -675,6 +918,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-csp",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "f1", label: "factor 1 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 },
+        { key: "f2", label: "factor 2 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 },
+        { key: "f3", label: "factor 3 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 }
+      ],
+      compute: function (s) {
+        var w = s.f1 * s.f2 * s.f3;
+        return { text: "Weight(x) = f1 · f2 · f3 = " + s.f1 + " · " + s.f2 + " · " + s.f3 +
+          " = <b>" + w + "</b>. consistent iff all factors = 1: <b>" +
+          (w > 0 ? "yes — valid assignment" : "no — a hard constraint is broken") + "</b>." };
+      }
+    });
+  },
   title: "Constraint satisfaction problems (CSPs)",
   tagline: "Fill in variables so all the rules are happy. Many puzzles are exactly this.",
   bigIdea:
@@ -717,6 +975,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-csp-search",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "dom", label: "neighbor domain size (values left)", min: 0, max: 5, val: 3, step: 1 },
+        { key: "removed", label: "values removed by forward checking", min: 0, max: 5, val: 1, step: 1 }
+      ],
+      compute: function (s) {
+        var left = Math.max(0, s.dom - s.removed);
+        return { text: "after forward checking: " + s.dom + " − " + s.removed +
+          " = <b>" + left + "</b> values remain in the neighbor's domain.<br>" +
+          (left === 0 ? "<b>empty domain — dead end, backtrack!</b>"
+                      : "domain non-empty, so this branch can still be completed.") };
+      }
+    });
+  },
   title: "Solving CSPs: backtracking and consistency",
   tagline: "Try a value, check the rules, and back up the moment you get stuck.",
   prereqs: ["ai-csp"],
@@ -760,6 +1033,19 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-bayes-net",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pa", label: "P(A)", min: 0, max: 1, val: 0.3, step: 0.05 },
+        { key: "pba", label: "P(B | A)", min: 0, max: 1, val: 0.9, step: 0.05 }
+      ],
+      compute: function (s) {
+        var joint = s.pa * s.pba;
+        return { text: "factorization: P(A, B) = P(A) · P(B | A) = " + s.pa.toFixed(2) + " · " + s.pba.toFixed(2) +
+          " = <b>" + joint.toFixed(3) + "</b>. (each node contributes its probability given its parents.)" };
+      }
+    });
+  },
   title: "Bayesian networks",
   tagline: "Draw arrows showing what causes what. The picture compresses a giant probability table.",
   prereqs: ["prob-bayes", "prob-conditional"],
@@ -803,6 +1089,22 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-bayes-inference",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "prior", label: "prior P(query)", min: 0, max: 1, val: 0.2, step: 0.05 },
+        { key: "like", label: "likelihood P(evidence | query)", min: 0, max: 1, val: 0.8, step: 0.05 },
+        { key: "evid", label: "evidence P(evidence)", min: 0.05, max: 1, val: 0.4, step: 0.05 }
+      ],
+      compute: function (s) {
+        var post = (s.like * s.prior) / s.evid;
+        var capped = Math.min(post, 1);
+        return { text: "posterior = (likelihood · prior) / evidence = (" + s.like.toFixed(2) + " · " + s.prior.toFixed(2) +
+          ") / " + s.evid.toFixed(2) + " = <b>" + post.toFixed(3) + "</b>." +
+          (post > 1 ? " (over 1 — these numbers are inconsistent; a real evidence ≥ likelihood·prior, so the true posterior is ≤ 1, here " + capped.toFixed(2) + ".)" : "") };
+      }
+    });
+  },
   title: "Inference in Bayes nets",
   tagline: "Given what you've observed, what's the chance of the thing you care about?",
   prereqs: ["ai-bayes-net"],
@@ -846,6 +1148,31 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-hmm",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "prior", label: "prior P(state = Rainy)", min: 0, max: 1, val: 0.5, step: 0.05 },
+        { key: "stay", label: "transition P(Rainy → Rainy)", min: 0, max: 1, val: 0.7, step: 0.05 },
+        { key: "switch", label: "transition P(Sunny → Rainy)", min: 0, max: 1, val: 0.3, step: 0.05 },
+        { key: "eR", label: "emission P(Umbrella | Rainy)", min: 0, max: 1, val: 0.9, step: 0.05 },
+        { key: "eS", label: "emission P(Umbrella | Sunny)", min: 0, max: 1, val: 0.2, step: 0.05 }
+      ],
+      compute: function (s) {
+        // predict: P(Rainy next) = stay*P(Rainy) + switch*P(Sunny)
+        var predR = s.stay * s.prior + s.switch * (1 - s.prior);
+        var predS = 1 - predR;
+        // weight by emission of observing Umbrella
+        var wR = predR * s.eR, wS = predS * s.eS;
+        var z = wR + wS;
+        var postR = z > 0 ? wR / z : 0;
+        return { text: "predict: P(Rainy) = " + s.stay.toFixed(2) + "·" + s.prior.toFixed(2) + " + " +
+          s.switch.toFixed(2) + "·" + (1 - s.prior).toFixed(2) + " = <b>" + predR.toFixed(3) +
+          "</b> (Sunny = " + predS.toFixed(3) + ").<br>weight by emission (saw Umbrella): Rainy " + predR.toFixed(3) + "·" + s.eR.toFixed(2) +
+          " = " + wR.toFixed(3) + ", Sunny " + predS.toFixed(3) + "·" + s.eS.toFixed(2) + " = " + wS.toFixed(3) +
+          ".<br>normalize: P(Rainy | Umbrella) = " + wR.toFixed(3) + " / " + z.toFixed(3) + " = <b>" + postR.toFixed(3) + "</b>." };
+      }
+    });
+  },
   title: "Hidden Markov Models (HMMs)",
   tagline: "You can't see the true state, only noisy clues. Infer the hidden truth over time.",
   prereqs: ["ai-bayes-net", "prob-conditional"],
@@ -889,6 +1216,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-propositional-logic",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a", label: "A (0 = false, 1 = true)", min: 0, max: 1, val: 1, step: 1 },
+        { key: "b", label: "B (0 = false, 1 = true)", min: 0, max: 1, val: 0, step: 1 }
+      ],
+      compute: function (s) {
+        var A = s.a === 1, B = s.b === 1;
+        var and = A && B, or = A || B, notA = !A, imp = (!A) || B;
+        function tf(x) { return x ? "true" : "false"; }
+        return { text: "A = <b>" + tf(A) + "</b>, B = <b>" + tf(B) +
+          "</b>.<br>A ∧ B = <b>" + tf(and) + "</b>, A ∨ B = <b>" + tf(or) +
+          "</b>, ¬A = <b>" + tf(notA) + "</b>, A → B = <b>" + tf(imp) +
+          "</b>. (A → B is false only when A is true and B is false.)" };
+      }
+    });
+  },
   title: "Propositional logic",
   tagline: "Build true/false statements with AND, OR, NOT. Then ask what must follow.",
   bigIdea:
@@ -931,6 +1275,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-inference-rules",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "p", label: "premise p present (0/1)", min: 0, max: 1, val: 1, step: 1 },
+        { key: "imp", label: "premise p → q present (0/1)", min: 0, max: 1, val: 1, step: 1 }
+      ],
+      compute: function (s) {
+        var derives = (s.p === 1 && s.imp === 1);
+        return { text: "modus ponens: from p and (p → q), conclude q.<br>p present = <b>" + s.p +
+          "</b>, (p → q) present = <b>" + s.imp + "</b>.<br>derive q? <b>" +
+          (derives ? "yes — q is concluded" : "no — both premises are required") + "</b>." };
+      }
+    });
+  },
   title: "Inference and resolution",
   tagline: "Mechanical rules that crank out new true facts from old ones.",
   prereqs: ["ai-propositional-logic"],

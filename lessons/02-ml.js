@@ -14,6 +14,18 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-supervised",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "theta", label: "weight θ", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "x", label: "feature x", min: 0, max: 10, val: 3, step: 0.1 }
+      ],
+      compute: function (s) {
+        var h = s.theta * s.x;
+        return { text: "Prediction h(x) = θ · x = " + s.theta.toFixed(2) + " × " + s.x.toFixed(2) + " = <b>" + h.toFixed(3) + "</b>. The hypothesis just scales the feature by the weight θ." };
+      }
+    });
+  },
   title: "Supervised learning setup",
   tagline: "Show the computer examples with answers. It learns to answer new ones.",
   prereqs: ["fnd-vector", "fnd-dot"],
@@ -57,6 +69,17 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-loss",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -3, xmax: 3, ymin: 0, ymax: 8,
+      curves: [
+        { f: function (r) { return 0.5 * r * r; }, label: "½(y−z)² squared" },
+        { f: function (m) { return Math.max(0, 1 - m); }, label: "max(0,1−m) hinge" }
+      ],
+      drag: { curve: 0, start: 2, label: "residual r = y−z (or margin m)",
+        readout: function (r, y) { return "At r = " + r.toFixed(2) + ": squared loss ½r² = <b>" + (0.5 * r * r).toFixed(3) + "</b>, hinge loss max(0,1−r) = <b>" + Math.max(0, 1 - r).toFixed(3) + "</b>. Squared loss grows fast; hinge is 0 once the margin ≥ 1."; } }
+    });
+  },
   title: "Loss function",
   tagline: "One number that says how wrong a single prediction was.",
   prereqs: ["ml-supervised"],
@@ -99,6 +122,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-cost",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "e1", label: "error y₁−z₁", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "e2", label: "error y₂−z₂", min: -5, max: 5, val: -1, step: 0.1 },
+        { key: "e3", label: "error y₃−z₃", min: -5, max: 5, val: 0, step: 0.1 }
+      ],
+      compute: function (s) {
+        var l1 = 0.5 * s.e1 * s.e1, l2 = 0.5 * s.e2 * s.e2, l3 = 0.5 * s.e3 * s.e3;
+        var J = (l1 + l2 + l3) / 3;
+        return { text: "Per-point losses ½(y−z)²: " + l1.toFixed(3) + ", " + l2.toFixed(3) + ", " + l3.toFixed(3) + ". Average cost J = (" + l1.toFixed(3) + " + " + l2.toFixed(3) + " + " + l3.toFixed(3) + ") / 3 = <b>" + J.toFixed(3) + "</b>." };
+      }
+    });
+  },
   title: "Cost function",
   tagline: "Add up the loss over every example. That total is what we shrink.",
   prereqs: ["ml-loss"],
@@ -187,6 +224,28 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-linear-regression",
+  demo: function (host) {
+    var P = [{ x: 1, y: 2.2 }, { x: 2, y: 3.8 }, { x: 3, y: 6.1 }, { x: 4, y: 7.9 }, { x: 5, y: 9.8 }];
+    Demos.scatter(host, { points: P, init: function (api) {
+      var slope = 2, intercept = 0;
+      function render() {
+        api.draw(function (ctx, col, px, py) {
+          ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(px(0), py(intercept + slope * 0));
+          ctx.lineTo(px(6), py(intercept + slope * 6));
+          ctx.stroke();
+        });
+        var sse = 0;
+        api.pts.forEach(function (p) { var pred = intercept + slope * p.x; sse += (p.y - pred) * (p.y - pred); });
+        var mse = sse / api.pts.length;
+        api.readout.innerHTML = "Line ŷ = " + slope.toFixed(2) + "·x + " + intercept.toFixed(2) + ". MSE = average of (y − ŷ)² over the " + api.pts.length + " points = <b>" + mse.toFixed(3) + "</b>. Drag the sliders to minimize it.";
+      }
+      api.slider("slope", -2, 4, slope, 0.05, function (v) { slope = v; render(); });
+      api.slider("intercept", -4, 4, intercept, 0.05, function (v) { intercept = v; render(); });
+      render();
+    } });
+  },
   title: "Linear regression",
   tagline: "Fit a straight line through your data. The simplest predictor.",
   prereqs: ["ml-gradient-descent", "fnd-matvec", "fnd-dot"],
@@ -231,6 +290,18 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-likelihood",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0.001, xmax: 0.999, ymin: 0,
+      controls: [
+        { key: "h", label: "heads h", min: 0, max: 10, val: 7, step: 1 },
+        { key: "n", label: "flips n", min: 1, max: 10, val: 10, step: 1 }
+      ],
+      curves: [{ f: function (t, s) { var n = Math.max(s.n, s.h); return Math.pow(t, s.h) * Math.pow(1 - t, n - s.h); }, label: "L(θ) = θ^h (1−θ)^(n−h)" }],
+      drag: { curve: 0, start: 0.7, label: "θ (heads probability)",
+        readout: function (t, y, s) { var n = Math.max(s.n, s.h); return "L(" + t.toFixed(2) + ") = " + y.toExponential(3) + ". With h = " + s.h + " heads in n = " + n + " flips, the maximum is at θ = h/n = <b>" + (n > 0 ? (s.h / n).toFixed(3) : "0") + "</b>."; } }
+    });
+  },
   title: "Likelihood & maximum likelihood",
   tagline: "Pick the parameters that make your data look most probable.",
   prereqs: ["ml-cost", "prob-bayes"],
@@ -323,6 +394,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-softmax",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "z1", label: "score z₁", min: -5, max: 5, val: 2, step: 0.1 },
+        { key: "z2", label: "score z₂", min: -5, max: 5, val: 1, step: 0.1 },
+        { key: "z3", label: "score z₃", min: -5, max: 5, val: 0, step: 0.1 }
+      ],
+      compute: function (s) {
+        var e1 = Math.exp(s.z1), e2 = Math.exp(s.z2), e3 = Math.exp(s.z3);
+        var sum = e1 + e2 + e3;
+        var p1 = e1 / sum, p2 = e2 / sum, p3 = e3 / sum;
+        return {
+          text: "Softmax pᵢ = e^zᵢ / Σ e^zⱼ. p₁ = <b>" + p1.toFixed(3) + "</b>, p₂ = <b>" + p2.toFixed(3) + "</b>, p₃ = <b>" + p3.toFixed(3) + "</b>. Sum = " + (p1 + p2 + p3).toFixed(3) + " (always 1).",
+          bars: [{ label: "p₁", val: p1 }, { label: "p₂", val: p2 }, { label: "p₃", val: p3 }],
+          max: 1
+        };
+      }
+    });
+  },
   title: "Softmax (multiclass)",
   tagline: "Turn many scores into probabilities that add up to 1.",
   prereqs: ["ml-logistic-regression"],
@@ -365,6 +456,16 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-glm",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [{ key: "eta", label: "natural parameter η = θᵀx", min: -5, max: 5, val: 1, step: 0.1 }],
+      compute: function (s) {
+        var bern = 1 / (1 + Math.exp(-s.eta));
+        var pois = Math.exp(s.eta);
+        return { text: "The link maps η to each distribution's mean. <br>Bernoulli (yes/no): mean = σ(η) = 1/(1+e^−η) = <b>" + bern.toFixed(3) + "</b> → logistic regression. <br>Poisson (counts): mean = e^η = <b>" + pois.toFixed(3) + "</b> → Poisson regression." };
+      }
+    });
+  },
   title: "Generalized linear models",
   tagline: "One framework that unifies linear and logistic regression.",
   prereqs: ["ml-linear-regression", "ml-logistic-regression"],
@@ -409,6 +510,15 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-svm",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [{ key: "w", label: "weight norm ‖w‖", min: 0.2, max: 5, val: 1, step: 0.05 }],
+      compute: function (s) {
+        var width = 2 / s.w, half = 1 / s.w;
+        return { text: "Margin width = 2 / ‖w‖ = 2 / " + s.w.toFixed(2) + " = <b>" + width.toFixed(3) + "</b> (half-width 1/‖w‖ = " + half.toFixed(3) + "). Smaller ‖w‖ ⇒ wider street, so maximizing the margin = minimizing ‖w‖." };
+      }
+    });
+  },
   title: "Support vector machines",
   tagline: "Find the widest possible street separating two classes.",
   prereqs: ["ml-logistic-regression", "fnd-norm"],
@@ -452,6 +562,15 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-kernels",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0, xmax: 6, ymin: 0, ymax: 1,
+      controls: [{ key: "sigma", label: "width σ", min: 0.3, max: 3, val: 1, step: 0.1 }],
+      curves: [{ f: function (d, s) { return Math.exp(-(d * d) / (2 * s.sigma * s.sigma)); }, label: "K = e^(−d²/2σ²)" }],
+      drag: { curve: 0, start: 2, label: "distance d",
+        readout: function (d, y, s) { return "K(d = " + d.toFixed(2) + ") = e^(−" + (d * d).toFixed(2) + "/(2·" + (s.sigma * s.sigma).toFixed(2) + ")) = <b>" + y.toFixed(3) + "</b>. K = 1 at d = 0 (identical), fading to 0 as points separate. Bigger σ = wider, smoother bump."; } }
+    });
+  },
   title: "The kernel trick",
   tagline: "Draw curved boundaries without ever building the curved features.",
   prereqs: ["ml-svm", "fnd-dot"],
@@ -494,6 +613,30 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-gda",
+  demo: function (host) {
+    var P = [
+      { x: 2, y: 2.5, c: 0 }, { x: 2.6, y: 1.8, c: 0 }, { x: 1.6, y: 2.2, c: 0 }, { x: 2.2, y: 3.0, c: 0 }, { x: 3.0, y: 2.4, c: 0 },
+      { x: 6, y: 6.5, c: 1 }, { x: 6.6, y: 5.8, c: 1 }, { x: 5.6, y: 6.2, c: 1 }, { x: 6.2, y: 7.0, c: 1 }, { x: 7.0, y: 6.4, c: 1 }
+    ];
+    Demos.scatter(host, { points: P, init: function (api) {
+      // class means
+      var m0 = { x: 0, y: 0, n: 0 }, m1 = { x: 0, y: 0, n: 0 };
+      api.pts.forEach(function (p) { var m = p.c === 0 ? m0 : m1; m.x += p.x; m.y += p.y; m.n++; });
+      m0.x /= m0.n; m0.y /= m0.n; m1.x /= m1.n; m1.y /= m1.n;
+      // boundary: perpendicular bisector of the segment between means
+      var mx = (m0.x + m1.x) / 2, my = (m0.y + m1.y) / 2;
+      var dx = m1.x - m0.x, dy = m1.y - m0.y;   // direction between means; boundary normal is (dx,dy)
+      api.draw(function (ctx, col, px, py) {
+        // draw means
+        [m0, m1].forEach(function (m, i) { ctx.fillStyle = api.palette[i]; ctx.strokeStyle = col.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px(m.x), py(m.y), 9, 0, 7); ctx.fill(); ctx.stroke(); });
+        // boundary line: points (x,y) with dx(x-mx)+dy(y-my)=0 -> draw across a wide t range along the perpendicular direction (-dy,dx)
+        ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
+        var ax = mx - (-dy) * 5, ay = my - dx * 5, bx = mx + (-dy) * 5, by = my + dx * 5;
+        ctx.beginPath(); ctx.moveTo(px(ax), py(ay)); ctx.lineTo(px(bx), py(by)); ctx.stroke();
+      });
+      api.readout.innerHTML = "Each color is a Gaussian blob. Big dots = class means μ₀, μ₁. The orange line is the linear boundary: the perpendicular bisector between the means. A new point is labeled by whichever mean's bell curve explains it better.";
+    } });
+  },
   title: "Gaussian discriminant analysis",
   tagline: "Model each class as a bell curve, then flip it with Bayes to classify.",
   prereqs: ["prob-bayes", "prob-normal", "ml-logistic-regression"],
@@ -537,6 +680,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-naive-bayes",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "prior", label: "P(spam)", min: 0.01, max: 0.99, val: 0.4, step: 0.01 },
+        { key: "ws", label: "P(word|spam)", min: 0.01, max: 0.99, val: 0.8, step: 0.01 },
+        { key: "wh", label: "P(word|ham)", min: 0.01, max: 0.99, val: 0.1, step: 0.01 }
+      ],
+      compute: function (s) {
+        var spamScore = s.prior * s.ws;
+        var hamScore = (1 - s.prior) * s.wh;
+        var total = spamScore + hamScore;
+        var pSpam = spamScore / total;
+        return {
+          text: "Prior × likelihood. Spam: P(spam)·P(word|spam) = " + s.prior.toFixed(2) + " × " + s.ws.toFixed(2) + " = <b>" + spamScore.toFixed(4) + "</b>. Ham: " + (1 - s.prior).toFixed(2) + " × " + s.wh.toFixed(2) + " = <b>" + hamScore.toFixed(4) + "</b>. Normalized P(spam|word) = <b>" + pSpam.toFixed(3) + "</b>.",
+          bars: [{ label: "spam score", val: spamScore }, { label: "ham score", val: hamScore }]
+        };
+      }
+    });
+  },
   title: "Naive Bayes",
   tagline: "Assume features are independent. Multiply their probabilities. Surprisingly good.",
   prereqs: ["prob-bayes", "ml-gda"],
@@ -579,6 +742,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-trees",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [{ key: "p", label: "class proportion p", min: 0, max: 1, val: 0.5, step: 0.01 }],
+      compute: function (s) {
+        var p = s.p;
+        var gini = 2 * p * (1 - p);
+        var entropy = 0;
+        if (p > 0 && p < 1) entropy = -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+        return {
+          text: "For two classes with fractions p and 1−p: <br>Gini = 2p(1−p) = <b>" + gini.toFixed(3) + "</b> (max 0.5). <br>Entropy = −p·log₂p − (1−p)·log₂(1−p) = <b>" + entropy.toFixed(3) + "</b> (max 1). Both are 0 when pure (p = 0 or 1) and peak when p = 0.5.",
+          bars: [{ label: "Gini", val: gini, color: "#4ea1ff" }, { label: "Entropy", val: entropy, color: "#7ee787" }],
+          max: 1
+        };
+      }
+    });
+  },
   title: "Decision trees (CART)",
   tagline: "Ask yes/no questions, split the data, repeat. Easy to read.",
   prereqs: ["ml-supervised"],
@@ -621,6 +801,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-ensembles",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "sig2", label: "single-tree variance σ²", min: 0.1, max: 4, val: 2, step: 0.1 },
+        { key: "T", label: "number of trees T", min: 1, max: 50, val: 10, step: 1 }
+      ],
+      compute: function (s) {
+        var ens = s.sig2 / s.T;
+        return {
+          text: "Averaging T independent trees cuts the variance: ensemble variance ≈ σ²/T = " + s.sig2.toFixed(2) + " / " + s.T + " = <b>" + ens.toFixed(4) + "</b>. More trees ⇒ less variance, so the forest is steadier than one tree.",
+          bars: [{ label: "single tree σ²", val: s.sig2 }, { label: "ensemble σ²/T", val: ens }],
+          max: s.sig2
+        };
+      }
+    });
+  },
   title: "Random forests & boosting",
   tagline: "Combine many weak models into one strong one.",
   prereqs: ["ml-trees"],
@@ -663,6 +860,36 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-knn",
+  demo: function (host) {
+    var P = [
+      { x: 2, y: 2, c: 0 }, { x: 3, y: 2.5, c: 0 }, { x: 2.5, y: 3.5, c: 0 }, { x: 3.5, y: 3, c: 0 }, { x: 1.5, y: 3, c: 0 },
+      { x: 7, y: 7, c: 1 }, { x: 6, y: 6.5, c: 1 }, { x: 7.5, y: 6, c: 1 }, { x: 6.5, y: 7.5, c: 1 }, { x: 8, y: 7, c: 1 },
+      { x: 5, y: 5, c: 1 }, { x: 4.5, y: 4, c: 0 }
+    ];
+    var query = { x: 5, y: 4.5 };
+    Demos.scatter(host, { points: P.concat([{ x: query.x, y: query.y, c: 3 }]), init: function (api) {
+      var k = 3;
+      function render() {
+        // distances from query to the real points (exclude the query marker itself = last)
+        var real = api.pts.slice(0, api.pts.length - 1);
+        var sorted = real.map(function (p) { return { p: p, d: Math.sqrt((p.x - query.x) * (p.x - query.x) + (p.y - query.y) * (p.y - query.y)) }; });
+        sorted.sort(function (a, b) { return a.d - b.d; });
+        var kk = Math.min(k, sorted.length);
+        var votes0 = 0, votes1 = 0;
+        for (var i = 0; i < kk; i++) { if (sorted[i].p.c === 0) votes0++; else votes1++; }
+        var pred = votes1 > votes0 ? 1 : 0;
+        api.draw(function (ctx, col, px, py) {
+          // highlight the k nearest
+          for (var i = 0; i < kk; i++) { var pt = sorted[i].p; ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px(pt.x), py(pt.y), 9, 0, 7); ctx.stroke(); }
+          // query as a hollow diamond
+          ctx.strokeStyle = col.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px(query.x), py(query.y), 7, 0, 7); ctx.stroke();
+        });
+        api.readout.innerHTML = "Query point (circled center). Of its k = " + kk + " nearest neighbors (ringed): " + votes0 + " class-0 (blue) vs " + votes1 + " class-1 (green). Majority ⇒ predict class <b>" + pred + "</b>.";
+      }
+      api.slider("k", 1, 11, k, 1, function (v) { k = Math.round(v); render(); });
+      render();
+    } });
+  },
   title: "k-nearest neighbors",
   tagline: "To predict a new point, look at the closest known points.",
   prereqs: ["fnd-norm", "ml-supervised"],
@@ -705,6 +932,18 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-bias-variance",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0.2, xmax: 10, ymin: 0, ymax: 6,
+      curves: [
+        { f: function (c) { return 4 / c; }, label: "bias² (falls)" },
+        { f: function (c) { return 0.06 * c * c; }, label: "variance (rises)" },
+        { f: function (c) { return 4 / c + 0.06 * c * c; }, label: "total (U-shape)" }
+      ],
+      drag: { curve: 2, start: 4, label: "model complexity",
+        readout: function (c, y) { return "At complexity " + c.toFixed(2) + ": bias² = " + (4 / c).toFixed(3) + ", variance = " + (0.06 * c * c).toFixed(3) + ", total = <b>" + y.toFixed(3) + "</b>. The total is U-shaped — best at the bottom, where bias² + variance is smallest."; } }
+    });
+  },
   title: "Bias-variance tradeoff",
   tagline: "Too simple underfits. Too complex overfits. Aim for the middle.",
   prereqs: ["ml-knn", "ml-linear-regression"],
@@ -747,6 +986,15 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-learning-theory",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [{ key: "m", label: "sample size m", min: 1, max: 2000, val: 100, step: 1 }],
+      compute: function (s) {
+        var gap = 1 / Math.sqrt(s.m);
+        return { text: "Generalization gap (true error − training error) shrinks like 1/√m. With m = " + Math.round(s.m) + ": gap ≈ 1/√" + Math.round(s.m) + " = <b>" + gap.toFixed(4) + "</b>. More data ⇒ training error becomes a trustworthy estimate of true error." };
+      }
+    });
+  },
   title: "Learning theory (gentle)",
   tagline: "Why more data and simpler models generalize better.",
   prereqs: ["ml-bias-variance"],
@@ -851,6 +1099,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-em",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "la", label: "likelihood L_A", min: 0.01, max: 1, val: 0.3, step: 0.01 },
+        { key: "lb", label: "likelihood L_B", min: 0.01, max: 1, val: 0.1, step: 0.01 },
+        { key: "w", label: "mixing weight w (for A)", min: 0.01, max: 0.99, val: 0.5, step: 0.01 }
+      ],
+      compute: function (s) {
+        var a = s.w * s.la, b = (1 - s.w) * s.lb;
+        var total = a + b;
+        var rA = a / total, rB = b / total;
+        return {
+          text: "Responsibility = w·L / Σ (soft assignment). To A: " + s.w.toFixed(2) + "·" + s.la.toFixed(2) + " = " + a.toFixed(4) + "; to B: " + (1 - s.w).toFixed(2) + "·" + s.lb.toFixed(2) + " = " + b.toFixed(4) + ". Normalized: r_A = <b>" + rA.toFixed(3) + "</b>, r_B = <b>" + rB.toFixed(3) + "</b> (sum to 1).",
+          bars: [{ label: "r_A", val: rA }, { label: "r_B", val: rB }],
+          max: 1
+        };
+      }
+    });
+  },
   title: "Expectation-Maximization (gentle)",
   tagline: "Soft clustering when each point partly belongs to several groups.",
   prereqs: ["ml-kmeans", "prob-bayes", "prob-normal"],
@@ -893,6 +1161,25 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-hierarchical",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "d1", label: "pair distance d₁", min: 0, max: 10, val: 2, step: 0.1 },
+        { key: "d2", label: "pair distance d₂", min: 0, max: 10, val: 5, step: 0.1 },
+        { key: "d3", label: "pair distance d₃", min: 0, max: 10, val: 8, step: 0.1 }
+      ],
+      compute: function (s) {
+        var single = Math.min(s.d1, s.d2, s.d3);
+        var complete = Math.max(s.d1, s.d2, s.d3);
+        var avg = (s.d1 + s.d2 + s.d3) / 3;
+        return {
+          text: "Cluster distance from the cross-pair distances " + s.d1.toFixed(1) + ", " + s.d2.toFixed(1) + ", " + s.d3.toFixed(1) + ": <br>Single = min = <b>" + single.toFixed(2) + "</b>. Complete = max = <b>" + complete.toFixed(2) + "</b>. Average = mean = <b>" + avg.toFixed(2) + "</b>.",
+          bars: [{ label: "single (min)", val: single }, { label: "average (mean)", val: avg }, { label: "complete (max)", val: complete }]
+        };
+      }
+    });
+  },
   title: "Hierarchical clustering",
   tagline: "Merge the closest groups, over and over, into a tree of clusters.",
   prereqs: ["ml-kmeans", "fnd-norm"],
@@ -935,6 +1222,36 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-pca",
+  demo: function (host) {
+    var P = [
+      { x: 1, y: 1.2 }, { x: 2, y: 1.8 }, { x: 3, y: 3.3 }, { x: 4, y: 3.8 },
+      { x: 5, y: 5.4 }, { x: 6, y: 5.8 }, { x: 2.5, y: 3.0 }, { x: 4.5, y: 4.2 }
+    ];
+    Demos.scatter(host, { points: P, init: function (api) {
+      // center
+      var mx = 0, my = 0; api.pts.forEach(function (p) { mx += p.x; my += p.y; }); mx /= api.pts.length; my /= api.pts.length;
+      // 2x2 covariance
+      var sxx = 0, sxy = 0, syy = 0;
+      api.pts.forEach(function (p) { var dx = p.x - mx, dy = p.y - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; });
+      var n = api.pts.length; sxx /= n; sxy /= n; syy /= n;
+      // eigenvalues of [[sxx,sxy],[sxy,syy]]
+      var tr = sxx + syy, det = sxx * syy - sxy * sxy;
+      var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+      var l1 = tr / 2 + disc, l2 = tr / 2 - disc;
+      // top eigenvector: (sxy, l1 - sxx) (or fallback)
+      var vx = sxy, vy = l1 - sxx;
+      var vlen = Math.sqrt(vx * vx + vy * vy);
+      if (vlen < 1e-9) { vx = 1; vy = 0; vlen = 1; }
+      vx /= vlen; vy /= vlen;
+      var varExplained = (l1 + l2) > 0 ? l1 / (l1 + l2) : 1;
+      api.draw(function (ctx, col, px, py) {
+        ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5;
+        var t = 4;
+        ctx.beginPath(); ctx.moveTo(px(mx - vx * t), py(my - vy * t)); ctx.lineTo(px(mx + vx * t), py(my + vy * t)); ctx.stroke();
+      });
+      api.readout.innerHTML = "Orange line = first principal component (the direction of greatest spread). It captures <b>" + (varExplained * 100).toFixed(1) + "%</b> of the total variance (λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) + "). Projecting onto it reduces 2D to 1D while keeping most variation.";
+    } });
+  },
   title: "Principal component analysis (PCA)",
   tagline: "Find the directions of most spread. Keep them, drop the rest.",
   prereqs: ["fnd-eigen", "fnd-norm"],
@@ -977,6 +1294,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-ica",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a", label: "A₁₁", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "b", label: "A₁₂", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "c", label: "A₂₁", min: -3, max: 3, val: 0, step: 0.1 },
+        { key: "d", label: "A₂₂", min: -3, max: 3, val: 1, step: 0.1 },
+        { key: "x1", label: "observed x₁", min: -5, max: 5, val: 3, step: 0.1 },
+        { key: "x2", label: "observed x₂", min: -5, max: 5, val: 1, step: 0.1 }
+      ],
+      compute: function (s) {
+        var det = s.a * s.d - s.b * s.c;
+        if (Math.abs(det) < 1e-6) return { text: "Mixing matrix A is (near) singular — det ≈ 0, so it cannot be inverted. Adjust A so det ≠ 0." };
+        // A^-1 = 1/det [[d,-b],[-c,a]]; s = A^-1 x
+        var s1 = (s.d * s.x1 - s.b * s.x2) / det;
+        var s2 = (-s.c * s.x1 + s.a * s.x2) / det;
+        return { text: "Unmix s = A⁻¹x. det(A) = " + det.toFixed(3) + ". Recovered sources: s₁ = <b>" + s1.toFixed(3) + "</b>, s₂ = <b>" + s2.toFixed(3) + "</b>. ICA's job is to find this A⁻¹ from data alone." };
+      }
+    });
+  },
   title: "Independent component analysis (ICA)",
   tagline: "Unmix blended signals back into their separate sources.",
   prereqs: ["ml-pca"],
@@ -1019,6 +1356,29 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-classification-metrics",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "tp", label: "TP", min: 0, max: 100, val: 80, step: 1 },
+        { key: "fp", label: "FP", min: 0, max: 100, val: 20, step: 1 },
+        { key: "fn", label: "FN", min: 0, max: 100, val: 10, step: 1 },
+        { key: "tn", label: "TN", min: 0, max: 100, val: 90, step: 1 }
+      ],
+      compute: function (s) {
+        var prec = (s.tp + s.fp) > 0 ? s.tp / (s.tp + s.fp) : 0;
+        var rec = (s.tp + s.fn) > 0 ? s.tp / (s.tp + s.fn) : 0;
+        var f1 = (2 * s.tp + s.fp + s.fn) > 0 ? (2 * s.tp) / (2 * s.tp + s.fp + s.fn) : 0;
+        var tot = s.tp + s.fp + s.fn + s.tn;
+        var acc = tot > 0 ? (s.tp + s.tn) / tot : 0;
+        return {
+          text: "Precision = TP/(TP+FP) = <b>" + prec.toFixed(3) + "</b>. Recall = TP/(TP+FN) = <b>" + rec.toFixed(3) + "</b>. F1 = 2TP/(2TP+FP+FN) = <b>" + f1.toFixed(3) + "</b>. Accuracy = (TP+TN)/all = <b>" + acc.toFixed(3) + "</b>.",
+          bars: [{ label: "precision", val: prec }, { label: "recall", val: rec }, { label: "F1", val: f1 }, { label: "accuracy", val: acc }],
+          max: 1
+        };
+      }
+    });
+  },
   title: "Confusion matrix & classification metrics",
   tagline: "Count the right and wrong predictions, then score the classifier.",
   prereqs: ["ml-logistic-regression"],
@@ -1062,6 +1422,18 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-roc-auc",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0, xmax: 1, ymin: 0, ymax: 1,
+      controls: [{ key: "q", label: "classifier quality", min: 0.5, max: 1, val: 0.8, step: 0.01 }],
+      curves: [
+        { f: function (fpr, s) { var p = (1 - s.q) / s.q; return Math.pow(fpr, p); }, label: "ROC: TPR vs FPR" },
+        { f: function (fpr) { return fpr; }, label: "random (AUC 0.5)", color: "#9aa7b4" }
+      ],
+      drag: { curve: 0, start: 0.3, label: "FPR (false positive rate)",
+        readout: function (fpr, tpr, s) { return "At FPR = " + fpr.toFixed(2) + ", TPR = <b>" + tpr.toFixed(3) + "</b>. A curve hugging the top-left is great. AUC = the probability a random positive is ranked above a random negative (here quality ≈ " + s.q.toFixed(2) + "; 1.0 perfect, 0.5 = the diagonal = random)."; } }
+    });
+  },
   title: "ROC curve & AUC",
   tagline: "See how a classifier trades off catches against false alarms.",
   prereqs: ["ml-classification-metrics"],
@@ -1104,6 +1476,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-regression-metrics",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "ssres", label: "SS_res (model error)", min: 0, max: 100, val: 10, step: 0.5 },
+        { key: "sstot", label: "SS_tot (baseline error)", min: 1, max: 100, val: 50, step: 0.5 },
+        { key: "m", label: "number of points m", min: 1, max: 50, val: 5, step: 1 }
+      ],
+      compute: function (s) {
+        var r2 = 1 - s.ssres / s.sstot;
+        var rmse = Math.sqrt(s.ssres / s.m);
+        return { text: "R² = 1 − SS_res/SS_tot = 1 − " + s.ssres.toFixed(1) + "/" + s.sstot.toFixed(1) + " = <b>" + r2.toFixed(3) + "</b> (fraction of variance explained; 1 = perfect, 0 = no better than the mean). RMSE = √(SS_res/m) = √(" + s.ssres.toFixed(1) + "/" + Math.round(s.m) + ") = <b>" + rmse.toFixed(3) + "</b> (typical error in y's units)." };
+      }
+    });
+  },
   title: "Regression metrics (R² and RMSE)",
   tagline: "How well does the line fit? Compare its errors to a baseline.",
   prereqs: ["ml-linear-regression", "ml-loss"],
@@ -1146,6 +1532,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-regularization",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "w1", label: "weight θ₁", min: -5, max: 5, val: 3, step: 0.1 },
+        { key: "w2", label: "weight θ₂", min: -5, max: 5, val: -2, step: 0.1 },
+        { key: "lam", label: "strength λ", min: 0, max: 5, val: 1, step: 0.1 }
+      ],
+      compute: function (s) {
+        var l1 = s.lam * (Math.abs(s.w1) + Math.abs(s.w2));
+        var l2 = s.lam * (s.w1 * s.w1 + s.w2 * s.w2);
+        return {
+          text: "L1 (LASSO) = λ·Σ|θ| = " + s.lam.toFixed(1) + "·(" + Math.abs(s.w1).toFixed(2) + " + " + Math.abs(s.w2).toFixed(2) + ") = <b>" + l1.toFixed(3) + "</b>. L2 (Ridge) = λ·Σθ² = " + s.lam.toFixed(1) + "·(" + (s.w1 * s.w1).toFixed(2) + " + " + (s.w2 * s.w2).toFixed(2) + ") = <b>" + l2.toFixed(3) + "</b>. Larger λ shrinks weights more.",
+          bars: [{ label: "L1 penalty", val: l1 }, { label: "L2 penalty", val: l2 }]
+        };
+      }
+    });
+  },
   title: "Regularization & cross-validation",
   tagline: "Penalize big weights to fight overfitting. Use folds to tune the penalty.",
   prereqs: ["ml-bias-variance", "fnd-norm", "ml-linear-regression"],

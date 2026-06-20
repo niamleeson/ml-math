@@ -14,6 +14,29 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-sample-space",
+  demo: function (host) {
+    Demos.bars(host, {
+      controls: [{ key: "dice", label: "number of dice", min: 1, max: 2, val: 1, step: 1 }],
+      pmf: function (s) {
+        var d = Math.round(s.dice), o = [];
+        if (d <= 1) {
+          for (var f = 1; f <= 6; f++) o.push({ k: f, p: 1 / 6 });
+        } else {
+          for (var sum = 2; sum <= 12; sum++) {
+            var ways = 6 - Math.abs(sum - 7);
+            o.push({ k: sum, p: ways / 36 });
+          }
+        }
+        return o;
+      },
+      readout: function (s) {
+        var d = Math.round(s.dice);
+        return d <= 1
+          ? "One fair die. Sample space Ω = {1,…,6}, each outcome has probability 1/6 ≈ 0.167."
+          : "Two fair dice, plotting the sum. 36 equally likely outcomes; the sum 7 is most likely (6/36 ≈ 0.167).";
+      }
+    });
+  },
   title: "Sample space & events",
   tagline: "List everything that could happen. That list is where all probability lives.",
   bigIdea:
@@ -56,6 +79,29 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-axioms",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pa", label: "P(A)", min: 0, max: 1, val: 0.3, step: 0.01 },
+        { key: "pb", label: "P(B)", min: 0, max: 1, val: 0.3, step: 0.01 },
+        { key: "pc", label: "P(C)", min: 0, max: 1, val: 0.2, step: 0.01 }
+      ],
+      bars: true, barsHeight: 150,
+      compute: function (s) {
+        var sum = s.pa + s.pb + s.pc;
+        var ok = sum <= 1;
+        var msg = ok
+          ? "Sum P(A)+P(B)+P(C) = " + sum.toFixed(2) + " ≤ 1. Each is in [0,1] and they fit inside one sample space — valid for disjoint events."
+          : "Sum = " + sum.toFixed(2) + " > 1. <b>Invalid</b> if these are disjoint events: total probability can never exceed 1.";
+        return { text: msg,
+          bars: [
+            { label: "P(A)", val: s.pa, color: "#4ea1ff" },
+            { label: "P(B)", val: s.pb, color: "#7ee787" },
+            { label: "P(C)", val: s.pc, color: "#c89bff" }
+          ], max: 1 };
+      }
+    });
+  },
   title: "Probability axioms",
   tagline: "Three simple rules that every probability must obey. No more, no less.",
   prereqs: ["prob-sample-space"],
@@ -101,6 +147,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-conditional",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pab", label: "P(A∩B) — both happen", min: 0, max: 1, val: 0.2, step: 0.01 },
+        { key: "pb", label: "P(B) — the given event", min: 0.01, max: 1, val: 0.5, step: 0.01 }
+      ],
+      compute: function (s) {
+        var pab = Math.min(s.pab, s.pb);
+        var cond = s.pb > 0 ? pab / s.pb : 0;
+        return { text: "P(A|B) = P(A∩B) / P(B) = " + pab.toFixed(2) + " / " + s.pb.toFixed(2) +
+          " = <b>" + cond.toFixed(3) + "</b>. We shrink the world down to B, then ask what fraction of it is also A. (P(A∩B) is capped at P(B), since A∩B sits inside B.)" };
+      }
+    });
+  },
   title: "Conditional probability",
   tagline: "Once you learn something is true, the odds of everything else change. This measures by how much.",
   prereqs: ["prob-axioms"],
@@ -202,6 +262,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-total-prob",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pa1", label: "P(A₁) — weight of case 1 (A₂ = 1−A₁)", min: 0, max: 1, val: 0.6, step: 0.01 },
+        { key: "pb1", label: "P(B|A₁)", min: 0, max: 1, val: 0.02, step: 0.01 },
+        { key: "pb2", label: "P(B|A₂)", min: 0, max: 1, val: 0.05, step: 0.01 }
+      ],
+      bars: true, barsHeight: 130,
+      compute: function (s) {
+        var pa2 = 1 - s.pa1;
+        var c1 = s.pa1 * s.pb1, c2 = pa2 * s.pb2, pb = c1 + c2;
+        return { text: "P(B) = P(A₁)P(B|A₁) + P(A₂)P(B|A₂) = " + c1.toFixed(3) + " + " + c2.toFixed(3) +
+          " = <b>" + pb.toFixed(3) + "</b>. Each case contributes its weight times B's chance inside it.",
+          bars: [
+            { label: "case 1: P(A₁)P(B|A₁)", val: c1, color: "#4ea1ff" },
+            { label: "case 2: P(A₂)P(B|A₂)", val: c2, color: "#7ee787" },
+            { label: "total P(B)", val: pb, color: "#c89bff" }
+          ], max: 1 };
+      }
+    });
+  },
   title: "Total probability theorem",
   tagline: "Split a hard question into easy cases, then weigh and add them up.",
   prereqs: ["prob-conditional"],
@@ -246,6 +327,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-independence",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pa", label: "P(A)", min: 0, max: 1, val: 0.5, step: 0.01 },
+        { key: "pb", label: "P(B)", min: 0, max: 1, val: 0.4, step: 0.01 },
+        { key: "pab", label: "P(A∩B) — actual 'both'", min: 0, max: 1, val: 0.2, step: 0.01 }
+      ],
+      bars: true, barsHeight: 110,
+      compute: function (s) {
+        var prod = s.pa * s.pb;
+        var indep = Math.abs(prod - s.pab) < 0.005;
+        return { text: "P(A)·P(B) = " + prod.toFixed(3) + " vs P(A∩B) = " + s.pab.toFixed(3) +
+          ". " + (indep ? "<b>Equal → independent.</b> Knowing B leaves A's chance unchanged." :
+          "<b>Not equal → dependent.</b> Independent iff the product equals the actual 'both'."),
+          bars: [
+            { label: "P(A)·P(B)", val: prod, color: "#9aa7b4" },
+            { label: "P(A∩B)", val: s.pab, color: "#4ea1ff" }
+          ], max: 1 };
+      }
+    });
+  },
   title: "Independence",
   tagline: "When one event tells you nothing about another, they're independent — and the math gets easy.",
   prereqs: ["prob-conditional"],
@@ -288,6 +390,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-counting",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "n", label: "n (items to choose from)", min: 1, max: 10, val: 5, step: 1 },
+        { key: "r", label: "r (how many to pick)", min: 0, max: 10, val: 3, step: 1 }
+      ],
+      compute: function (s) {
+        var n = Math.round(s.n), r = Math.round(s.r);
+        if (r > n) r = n;
+        var perm = Demos._fact(n) / Demos._fact(n - r);
+        var comb = Demos._comb(n, r);
+        return { text: "Order matters: P(n,r) = n!/(n−r)! = " + Demos._fact(n) + "/" + Demos._fact(n - r) +
+          " = <b>" + perm + "</b>.<br>Order doesn't: C(n,r) = P/r! = " + perm + "/" + Demos._fact(r) +
+          " = <b>" + comb + "</b>. (r is capped at n.)" };
+      }
+    });
+  },
   title: "Counting: permutations & combinations",
   tagline: "To find a probability, you often just have to count carefully. Order is the key question.",
   prereqs: ["prob-axioms"],
@@ -328,6 +447,20 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-random-variable",
+  demo: function (host) {
+    Demos.bars(host, {
+      controls: [],
+      pmf: function () {
+        var n = 3, o = [];
+        for (var k = 0; k <= n; k++) o.push({ k: k, p: Demos._comb(n, k) * Math.pow(0.5, n) });
+        return o;
+      },
+      readout: function (s, bars) {
+        var sum = 0; bars.forEach(function (b) { sum += b.p; });
+        return "X = number of heads in 3 fair flips. PMF values: 1/8, 3/8, 3/8, 1/8. They sum to <b>" + sum.toFixed(2) + "</b> = 1.";
+      }
+    });
+  },
   title: "Random variable & PMF",
   tagline: "Turn messy outcomes into numbers, then list how likely each number is.",
   prereqs: ["prob-axioms"],
@@ -370,6 +503,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-expectation",
+  demo: function (host) {
+    Demos.bars(host, {
+      controls: [],
+      pmf: function () {
+        var o = [];
+        for (var f = 1; f <= 6; f++) o.push({ k: f, p: 1 / 6 });
+        return o;
+      },
+      readout: function (s, bars) {
+        var ex = 0; bars.forEach(function (b) { ex += b.k * b.p; });
+        return "Fair die. E[X] = Σ k·p(k) = (1+2+3+4+5+6)/6 = <b>" + ex.toFixed(2) +
+          "</b>. The mean 3.5 is never an actual face — it is the long-run average.";
+      }
+    });
+  },
   title: "Expectation (the mean)",
   tagline: "The long-run average value. Weight each outcome by its chance, then add.",
   prereqs: ["prob-random-variable"],
@@ -413,6 +561,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-variance",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "p", label: "p — chance of the value 2 (else 0)", min: 0, max: 1, val: 0.5, step: 0.01 }
+      ],
+      bars: true, barsHeight: 110,
+      compute: function (s) {
+        var ex = 2 * s.p;
+        var ex2 = 4 * s.p;
+        var varx = ex2 - ex * ex;
+        var sd = Math.sqrt(varx);
+        return { text: "Two-point variable: 2 with prob p, 0 otherwise. E[X] = 2p = " + ex.toFixed(2) +
+          ", E[X²] = 4p = " + ex2.toFixed(2) + ". Var = E[X²] − (E[X])² = <b>" + varx.toFixed(3) +
+          "</b>, σ = √Var = " + sd.toFixed(3) + ". Spread is largest at p = 0.5.",
+          bars: [
+            { label: "E[X]", val: ex, color: "#4ea1ff" },
+            { label: "Var(X)", val: varx, color: "#7ee787" }
+          ], max: 2 };
+      }
+    });
+  },
   title: "Variance & standard deviation",
   tagline: "The mean tells you the center. Variance tells you the spread.",
   prereqs: ["prob-expectation"],
@@ -514,6 +683,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-geometric-poisson",
+  demo: function (host) {
+    Demos.bars(host, {
+      controls: [{ key: "lam", label: "λ (average events)", min: 1, max: 10, val: 3, step: 0.5 }],
+      pmf: function (s) {
+        var o = [], lam = s.lam;
+        for (var k = 0; k <= 15; k++) {
+          o.push({ k: k, p: Math.pow(lam, k) * Math.exp(-lam) / Demos._fact(k) });
+        }
+        return o;
+      },
+      readout: function (s) {
+        return "Poisson(λ = " + s.lam.toFixed(1) + "). p(k) = λᵏ·e^(−λ)/k!, k = 0..15. For a Poisson, mean = variance = λ = <b>" + s.lam.toFixed(1) + "</b>.";
+      }
+    });
+  },
   title: "Geometric & Poisson",
   tagline: "How long until the first success? And how many rare events in a window?",
   prereqs: ["prob-bernoulli-binomial"],
@@ -666,6 +850,17 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-uniform-exponential",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0, xmax: 8, ymin: 0, ymax: 3,
+      controls: [{ key: "lam", label: "λ (rate)", min: 0.2, max: 3, val: 1, step: 0.1 }],
+      curves: [{ f: function (x, s) { return s.lam * Math.exp(-s.lam * x); }, label: "f(x) = λe^(−λx)", color: "#4ea1ff" }],
+      readout: function (s) {
+        return "Exponential PDF, rate λ = " + s.lam.toFixed(1) + ". Mean wait = 1/λ = <b>" + (1 / s.lam).toFixed(2) +
+          "</b>. Short waits are common, long waits rare; a faster rate means a shorter wait.";
+      }
+    });
+  },
   title: "Uniform & Exponential",
   tagline: "Perfectly flat odds, and the math of waiting times.",
   prereqs: ["prob-pdf-cdf"],
@@ -707,6 +902,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-normal",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -8, xmax: 8, ymin: 0, ymax: 1.1,
+      controls: [
+        { key: "mu", label: "μ (center)", min: -3, max: 3, val: 0, step: 0.1 },
+        { key: "sig", label: "σ (spread)", min: 0.4, max: 3, val: 1, step: 0.1 }
+      ],
+      curves: [{ f: function (x, s) {
+        return (1 / (s.sig * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - s.mu) * (x - s.mu)) / (2 * s.sig * s.sig));
+      }, label: "Normal PDF", color: "#4ea1ff" }],
+      readout: function (s) {
+        return "Normal with μ = " + s.mu.toFixed(1) + ", σ = " + s.sig.toFixed(1) +
+          ". μ slides the bell; σ widens it. Peak height = 1/(σ√(2π)) = <b>" +
+          (1 / (s.sig * Math.sqrt(2 * Math.PI))).toFixed(3) + "</b>. Total area is always 1.";
+      }
+    });
+  },
   title: "Normal (Gaussian) distribution",
   tagline: "The famous bell curve. Nature's default shape, and it's everywhere.",
   prereqs: ["prob-pdf-cdf", "prob-variance"],
@@ -751,6 +963,32 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-joint-marginal",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a", label: "weight (x₁,y₁)", min: 0, max: 1, val: 0.4, step: 0.01 },
+        { key: "b", label: "weight (x₂,y₁)", min: 0, max: 1, val: 0.1, step: 0.01 },
+        { key: "c", label: "weight (x₁,y₂)", min: 0, max: 1, val: 0.2, step: 0.01 },
+        { key: "d", label: "weight (x₂,y₂)", min: 0, max: 1, val: 0.3, step: 0.01 }
+      ],
+      bars: true, barsHeight: 150,
+      compute: function (s) {
+        var tot = s.a + s.b + s.c + s.d;
+        if (tot <= 0) tot = 1;
+        var a = s.a / tot, b = s.b / tot, c = s.c / tot, d = s.d / tot;
+        var px1 = a + c, px2 = b + d, py1 = a + b, py2 = c + d;
+        return { text: "Joint table normalized to sum 1. Row marginals: P(x₁) = " + px1.toFixed(2) +
+          ", P(x₂) = " + px2.toFixed(2) + ". Column marginals: P(y₁) = " + py1.toFixed(2) +
+          ", P(y₂) = " + py2.toFixed(2) + ". Each marginal sums out the other variable.",
+          bars: [
+            { label: "P(x₁)", val: px1, color: "#4ea1ff" },
+            { label: "P(x₂)", val: px2, color: "#4ea1ff" },
+            { label: "P(y₁)", val: py1, color: "#7ee787" },
+            { label: "P(y₂)", val: py2, color: "#7ee787" }
+          ], max: 1 };
+      }
+    });
+  },
   title: "Joint & marginal distributions",
   tagline: "Two variables at once. Sum out one to get the other back.",
   prereqs: ["prob-random-variable"],
@@ -794,6 +1032,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-covariance-correlation",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "sx", label: "σₓ (spread of X)", min: 0.1, max: 5, val: 1, step: 0.1 },
+        { key: "sy", label: "σᵧ (spread of Y)", min: 0.1, max: 5, val: 2, step: 0.1 },
+        { key: "cov", label: "Cov(X,Y)", min: -10, max: 10, val: 2, step: 0.1 }
+      ],
+      compute: function (s) {
+        var denom = s.sx * s.sy;
+        var rho = denom > 0 ? s.cov / denom : 0;
+        if (rho > 1) rho = 1; if (rho < -1) rho = -1;
+        var word = Math.abs(rho) < 0.05 ? "no linear link" : (rho > 0 ? "move together" : "move oppositely");
+        return { text: "ρ = Cov / (σₓ·σᵧ) = " + s.cov.toFixed(2) + " / (" + s.sx.toFixed(1) + "·" + s.sy.toFixed(1) +
+          ") = <b>" + rho.toFixed(3) + "</b>. Correlation always lands in [−1, 1] (clamped here): they " + word +
+          ". (A valid covariance satisfies |Cov| ≤ σₓσᵧ.)" };
+      }
+    });
+  },
   title: "Covariance & correlation",
   tagline: "Do two variables move together? These numbers tell you, and by how much.",
   prereqs: ["prob-joint-marginal", "prob-variance"],
@@ -835,6 +1091,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-conditional-expectation",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "e1", label: "E[X | Y=y₁]", min: 0, max: 100, val: 10, step: 1 },
+        { key: "e2", label: "E[X | Y=y₂]", min: 0, max: 100, val: 20, step: 1 },
+        { key: "py1", label: "P(Y=y₁)  (P(Y=y₂)=1−this)", min: 0, max: 1, val: 0.6, step: 0.01 }
+      ],
+      bars: true, barsHeight: 110,
+      compute: function (s) {
+        var py2 = 1 - s.py1;
+        var ex = s.py1 * s.e1 + py2 * s.e2;
+        return { text: "E[X] = Σ P(y)·E[X|y] = " + s.py1.toFixed(2) + "·" + s.e1 + " + " + py2.toFixed(2) + "·" + s.e2 +
+          " = <b>" + ex.toFixed(2) + "</b>. Law of iterated expectations: averaging the group-averages recovers the overall mean.",
+          bars: [
+            { label: "E[X|y₁]", val: s.e1, color: "#9aa7b4" },
+            { label: "E[X|y₂]", val: s.e2, color: "#9aa7b4" },
+            { label: "E[X] overall", val: ex, color: "#4ea1ff" }
+          ], max: 100 };
+      }
+    });
+  },
   title: "Conditional expectation",
   tagline: "The average of one variable once you know the other. Averages can be done in stages.",
   prereqs: ["prob-expectation", "prob-joint-marginal"],
@@ -877,6 +1154,23 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-inequalities",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "mu", label: "μ (mean, for Markov)", min: 0.1, max: 100, val: 50, step: 1 },
+        { key: "a", label: "a (threshold, for Markov)", min: 0.1, max: 200, val: 100, step: 1 },
+        { key: "sig", label: "σ (std dev, for Chebyshev)", min: 0.1, max: 50, val: 10, step: 0.1 },
+        { key: "k", label: "k (how many σ away)", min: 0.1, max: 10, val: 3, step: 0.1 }
+      ],
+      compute: function (s) {
+        var markov = Math.min(1, s.mu / s.a);
+        var cheb = Math.min(1, 1 / (s.k * s.k));
+        return { text: "Markov: P(X ≥ a) ≤ μ/a = " + s.mu.toFixed(0) + "/" + s.a.toFixed(0) + " = <b>" + markov.toFixed(3) +
+          "</b>.<br>Chebyshev: P(|X−μ| ≥ kσ) ≤ 1/k² = 1/" + (s.k * s.k).toFixed(2) + " = <b>" + cheb.toFixed(3) +
+          "</b>. (Both are probabilities, capped at 1.)" };
+      }
+    });
+  },
   title: "Markov & Chebyshev inequalities",
   tagline: "Bound the chance of extremes using only the mean and variance. No full distribution needed.",
   prereqs: ["prob-expectation", "prob-variance"],
@@ -919,6 +1213,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-lln",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -3, xmax: 3, ymin: 0, ymax: 4,
+      controls: [{ key: "n", label: "n (sample size)", min: 1, max: 500, val: 1, step: 1 }],
+      curves: [{ f: function (x, s) {
+        var n = Math.round(s.n), se = 1 / Math.sqrt(n);
+        return (1 / (se * Math.sqrt(2 * Math.PI))) * Math.exp(-(x * x) / (2 * se * se));
+      }, label: "spread of the sample mean", color: "#4ea1ff" }],
+      readout: function (s) {
+        var n = Math.round(s.n), se = 1 / Math.sqrt(n);
+        return "Sample mean of n = " + n + " draws (true mean 0, σ = 1). Its spread σ/√n = <b>" + se.toFixed(3) +
+          "</b>. As n grows the curve narrows toward the true mean — that is the Law of Large Numbers.";
+      }
+    });
+  },
   title: "Law of Large Numbers",
   tagline: "Average enough samples and you home in on the true mean. Why averages are trustworthy.",
   prereqs: ["prob-expectation", "prob-inequalities"],
@@ -962,6 +1271,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-clt",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: 0, xmax: 7, ymin: 0, ymax: 3,
+      controls: [{ key: "n", label: "n (samples averaged)", min: 1, max: 100, val: 1, step: 1 }],
+      curves: [{ f: function (x, s) {
+        var n = Math.round(s.n), mu = 3.5, varSingle = 35 / 12, varMean = varSingle / n, sd = Math.sqrt(varMean);
+        return (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - mu) * (x - mu)) / (2 * varMean));
+      }, label: "N(μ, σ²/n)", color: "#4ea1ff" }],
+      readout: function (s) {
+        var n = Math.round(s.n), varMean = (35 / 12) / n;
+        return "Averaging n = " + n + " die rolls. The sample mean ≈ N(μ = 3.5, σ²/n = <b>" + varMean.toFixed(3) +
+          "</b>). One roll is flat (uniform), yet the average becomes a narrowing bell as n grows.";
+      }
+    });
+  },
   title: "Central Limit Theorem",
   tagline: "Add up many independent things and the total looks Normal — no matter where they came from.",
   prereqs: ["prob-lln", "prob-normal"],
@@ -1006,6 +1330,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-estimation",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "x1", label: "data point 1", min: 0, max: 20, val: 2, step: 1 },
+        { key: "x2", label: "data point 2", min: 0, max: 20, val: 4, step: 1 },
+        { key: "x3", label: "data point 3", min: 0, max: 20, val: 6, step: 1 }
+      ],
+      compute: function (s) {
+        var n = 3;
+        var mean = (s.x1 + s.x2 + s.x3) / n;
+        var ss = Math.pow(s.x1 - mean, 2) + Math.pow(s.x2 - mean, 2) + Math.pow(s.x3 - mean, 2);
+        var s2 = ss / (n - 1);
+        return { text: "Sample mean X̄ = (" + s.x1 + "+" + s.x2 + "+" + s.x3 + ")/3 = <b>" + mean.toFixed(2) +
+          "</b>. Sum of squared deviations = " + ss.toFixed(2) + ". Sample variance s² = SS/(n−1) = " + ss.toFixed(2) +
+          "/2 = <b>" + s2.toFixed(3) + "</b>. The n−1 divisor removes the downward bias." };
+      }
+    });
+  },
   title: "Parameter estimation",
   tagline: "Guess a distribution's hidden numbers from data. And know when your guess is fair.",
   prereqs: ["prob-expectation", "prob-variance", "prob-lln"],

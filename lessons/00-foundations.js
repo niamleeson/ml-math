@@ -14,6 +14,24 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-vector",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "x1", label: "x₁", min: -5, max: 5, val: 3, step: 1 },
+        { key: "x2", label: "x₂", min: -5, max: 5, val: 4, step: 1 },
+        { key: "x3", label: "x₃", min: -5, max: 5, val: 0, step: 1 }
+      ],
+      compute: function (s) {
+        var len = Math.sqrt(s.x1 * s.x1 + s.x2 * s.x2 + s.x3 * s.x3);
+        return {
+          text: "Vector x = [" + s.x1 + ", " + s.x2 + ", " + s.x3 + "] in ℝ³.<br>" +
+            "Length ‖x‖ = √(x₁² + x₂² + x₃²) = √(" +
+            (s.x1 * s.x1) + " + " + (s.x2 * s.x2) + " + " + (s.x3 * s.x3) + ") = <b>" +
+            len.toFixed(3) + "</b>."
+        };
+      }
+    });
+  },
   title: "Vectors",
   tagline: "A vector is just a list of numbers. That's the whole secret.",
   bigIdea:
@@ -55,6 +73,27 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-dot",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "ax", label: "a.x", min: -5, max: 5, val: 1, step: 1 },
+        { key: "ay", label: "a.y", min: -5, max: 5, val: 2, step: 1 },
+        { key: "bx", label: "b.x", min: -5, max: 5, val: 3, step: 1 },
+        { key: "by", label: "b.y", min: -5, max: 5, val: 4, step: 1 }
+      ],
+      compute: function (s) {
+        var dot = s.ax * s.bx + s.ay * s.by;
+        var meaning = dot > 0 ? "positive: the vectors broadly agree (point a similar way)."
+          : (dot < 0 ? "negative: the vectors disagree (point opposite ways)."
+            : "zero: the vectors are perpendicular (unrelated).");
+        return {
+          text: "a = [" + s.ax + ", " + s.ay + "], b = [" + s.bx + ", " + s.by + "].<br>" +
+            "Dot = a.x·b.x + a.y·b.y = " + (s.ax * s.bx) + " + " + (s.ay * s.by) + " = <b>" +
+            dot + "</b>.<br>Sign is " + meaning
+        };
+      }
+    });
+  },
   title: "The dot product (inner product)",
   tagline: "Multiply two lists, add it all up, get one number. It measures agreement.",
   prereqs: ["fnd-vector"],
@@ -96,6 +135,24 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-matrix",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a11", label: "A₁,₁", min: -5, max: 5, val: 1, step: 1 },
+        { key: "a12", label: "A₁,₂", min: -5, max: 5, val: 2, step: 1 },
+        { key: "a21", label: "A₂,₁", min: -5, max: 5, val: 3, step: 1 },
+        { key: "a22", label: "A₂,₂", min: -5, max: 5, val: 4, step: 1 }
+      ],
+      compute: function (s) {
+        return {
+          text: "A = [[" + s.a11 + ", " + s.a12 + "], [" + s.a21 + ", " + s.a22 + "]].<br>" +
+            "Entries: A₁,₁ = " + s.a11 + ", A₁,₂ = " + s.a12 +
+            ", A₂,₁ = " + s.a21 + ", A₂,₂ = " + s.a22 + ".<br>" +
+            "Shape: 2 rows × 2 columns = <b>2×2</b>."
+        };
+      }
+    });
+  },
   title: "Matrices",
   tagline: "A grid of numbers. Stack many vectors and you get a matrix.",
   prereqs: ["fnd-vector"],
@@ -135,6 +192,29 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-matvec",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a11", label: "A₁,₁", min: -5, max: 5, val: 1, step: 1 },
+        { key: "a12", label: "A₁,₂", min: -5, max: 5, val: 2, step: 1 },
+        { key: "a21", label: "A₂,₁", min: -5, max: 5, val: 3, step: 1 },
+        { key: "a22", label: "A₂,₂", min: -5, max: 5, val: 4, step: 1 },
+        { key: "x1", label: "x₁", min: -5, max: 5, val: 1, step: 1 },
+        { key: "x2", label: "x₂", min: -5, max: 5, val: 1, step: 1 }
+      ],
+      compute: function (s) {
+        var r1 = s.a11 * s.x1 + s.a12 * s.x2;
+        var r2 = s.a21 * s.x1 + s.a22 * s.x2;
+        return {
+          text: "Row 1 · x = A₁,₁·x₁ + A₁,₂·x₂ = " + (s.a11 * s.x1) + " + " + (s.a12 * s.x2) +
+            " = <b>" + r1 + "</b>.<br>" +
+            "Row 2 · x = A₂,₁·x₁ + A₂,₂·x₂ = " + (s.a21 * s.x1) + " + " + (s.a22 * s.x2) +
+            " = <b>" + r2 + "</b>.<br>" +
+            "So Ax = [" + r1 + ", " + r2 + "]."
+        };
+      }
+    });
+  },
   title: "Matrix × vector",
   tagline: "Apply the same dot product to every row at once.",
   prereqs: ["fnd-dot", "fnd-matrix"],
@@ -173,6 +253,30 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-norm",
+  demo: function (host) {
+    Demos.calc(host, {
+      bars: true,
+      inputs: [
+        { key: "x1", label: "x₁", min: -5, max: 5, val: 3, step: 1 },
+        { key: "x2", label: "x₂", min: -5, max: 5, val: -4, step: 1 },
+        { key: "x3", label: "x₃", min: -5, max: 5, val: 0, step: 1 }
+      ],
+      compute: function (s) {
+        var l1 = Math.abs(s.x1) + Math.abs(s.x2) + Math.abs(s.x3);
+        var l2 = Math.sqrt(s.x1 * s.x1 + s.x2 * s.x2 + s.x3 * s.x3);
+        return {
+          text: "x = [" + s.x1 + ", " + s.x2 + ", " + s.x3 + "].<br>" +
+            "L1 = |x₁|+|x₂|+|x₃| = " + Math.abs(s.x1) + "+" + Math.abs(s.x2) + "+" + Math.abs(s.x3) +
+            " = <b>" + l1 + "</b>.<br>" +
+            "L2 = √(x₁²+x₂²+x₃²) = <b>" + l2.toFixed(3) + "</b>.",
+          bars: [
+            { label: "L1", val: l1, color: "#ffb454" },
+            { label: "L2", val: l2 }
+          ]
+        };
+      }
+    });
+  },
   title: "Norms (the length of a vector)",
   tagline: "How big is a vector? Norms measure that. They power 'distance' and regularization.",
   prereqs: ["fnd-vector", "fnd-dot"],
@@ -257,6 +361,13 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-gradient",
+  demo: function (host) {
+    Demos.descent(host, {
+      f: function (x) { return x * x; },
+      df: function (x) { return 2 * x; },
+      xmin: -3, xmax: 3, start: 2.5, lr: 0.2
+    });
+  },
   title: "The gradient (slope in many directions)",
   tagline: "A derivative for functions with many inputs. It points straight uphill.",
   prereqs: ["fnd-derivative", "fnd-vector"],
@@ -294,6 +405,18 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-chain",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -1.5, xmax: 1.5, ymin: -1, ymax: 21,
+      curves: [{ f: function (x) { return (3 * x) * (3 * x); }, label: "z = (3x)²" }],
+      drag: { curve: 0, df: function (x) { return 18 * x; }, start: 0.8, label: "point x",
+        readout: function (x) {
+          return "At x = " + x.toFixed(2) + ": dz/dx = (outer')·(inner') = 2(3x)·3 = 18x = <b>" +
+            (18 * x).toFixed(2) + "</b> (orange tangent). Outer 2(3x) = " + (6 * x).toFixed(2) +
+            ", inner 3.";
+        } }
+    });
+  },
   title: "The chain rule",
   tagline: "Derivative of a function inside a function: multiply the slopes. This IS backprop.",
   prereqs: ["fnd-derivative"],
@@ -332,6 +455,39 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-eigen",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "a11", label: "A₁,₁", min: -4, max: 4, val: 2, step: 1 },
+        { key: "a12", label: "A₁,₂", min: -4, max: 4, val: 0, step: 1 },
+        { key: "a21", label: "A₂,₁", min: -4, max: 4, val: 0, step: 1 },
+        { key: "a22", label: "A₂,₂", min: -4, max: 4, val: 3, step: 1 },
+        { key: "v1", label: "v₁", min: -4, max: 4, val: 1, step: 1 },
+        { key: "v2", label: "v₂", min: -4, max: 4, val: 0, step: 1 }
+      ],
+      compute: function (s) {
+        var w1 = s.a11 * s.v1 + s.a12 * s.v2;
+        var w2 = s.a21 * s.v1 + s.a22 * s.v2;
+        var txt = "v = [" + s.v1 + ", " + s.v2 + "].<br>" +
+          "Av = [A₁,₁·v₁+A₁,₂·v₂, A₂,₁·v₁+A₂,₂·v₂] = [" + w1 + ", " + w2 + "].<br>";
+        if (s.v1 === 0 && s.v2 === 0) {
+          txt += "v is the zero vector, so it cannot be an eigenvector (those must be non-zero).";
+        } else {
+          // parallel iff the cross product w1·v2 - w2·v1 = 0
+          var cross = w1 * s.v2 - w2 * s.v1;
+          if (cross === 0) {
+            // lambda from a non-zero component of v
+            var lam = (s.v1 !== 0) ? (w1 / s.v1) : (w2 / s.v2);
+            txt += "Av is <b>parallel</b> to v, so v is an eigenvector with eigenvalue λ = <b>" +
+              lam + "</b>.";
+          } else {
+            txt += "Av is <b>not parallel</b> to v, so this v is not an eigenvector of A.";
+          }
+        }
+        return { text: txt };
+      }
+    });
+  },
   title: "Eigenvalues & eigenvectors",
   tagline: "Special directions a matrix only stretches, never rotates. The skeleton of your data.",
   prereqs: ["fnd-matvec"],
