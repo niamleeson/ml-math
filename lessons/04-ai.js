@@ -12,6 +12,119 @@
 const M = "Artificial Intelligence (CS221)";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
+/* ---- shared helpers for bespoke AI canvas demos ---- */
+function C() {
+  var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+  var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+  return {
+    ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"),
+    accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"),
+    border: g("--border", "#2a3340"), panel: g("--panel", "#161c24")
+  };
+}
+function mkCanvas(host, w, h) {
+  var cv = document.createElement("canvas"); cv.width = w; cv.height = h; host.appendChild(cv);
+  return { cv: cv, ctx: cv.getContext("2d") };
+}
+function mkBtn(host, label, cb) {
+  var b = document.createElement("button"); b.textContent = label;
+  b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:0 8px 0 0";
+  b.addEventListener("click", cb); host.appendChild(b); return b;
+}
+function mkRow(host) { var d = document.createElement("div"); d.style.margin = "8px 0"; host.appendChild(d); return d; }
+function mkOut(host) { var d = document.createElement("div"); d.className = "out"; d.style.cssText = "margin-top:8px;font-size:14px;line-height:1.6"; host.appendChild(d); return d; }
+
+/* ---- canonical 4x4 gridworld for MDP / value-iteration / RL lessons ----
+   The classic Russell-Norvig grid: goal +1, pit -1, a wall, deterministic moves
+   along the greedy action. One "Iterate" runs one value-iteration sweep:
+   V(s) <- max_a [ R(s') + gamma * V(s') ]. Arrows show the greedy policy. */
+function gridworldDemo(host, opts) {
+  opts = opts || {};
+  host.innerHTML = "";
+  var ROWS = 3, COLS = 4;
+  var GOAL = { r: 0, c: 3 }, PIT = { r: 1, c: 3 }, WALL = { r: 1, c: 1 };
+  var gamma = (opts.gamma != null) ? opts.gamma : 0.9;
+  var R_STEP = -0.04;
+  var acts = [[-1, 0], [1, 0], [0, -1], [0, 1]];   // up, down, left, right
+  var arrows = ["↑", "↓", "←", "→"];
+  function isWall(r, c) { return r === WALL.r && c === WALL.c; }
+  function isTerminal(r, c) { return (r === GOAL.r && c === GOAL.c) || (r === PIT.r && c === PIT.c); }
+  function inBounds(r, c) { return r >= 0 && r < ROWS && c >= 0 && c < COLS && !isWall(r, c); }
+  var V, policy, sweep;
+  function reset() {
+    V = []; policy = [];
+    for (var r = 0; r < ROWS; r++) {
+      V[r] = []; policy[r] = [];
+      for (var c = 0; c < COLS; c++) {
+        if (r === GOAL.r && c === GOAL.c) V[r][c] = 1;
+        else if (r === PIT.r && c === PIT.c) V[r][c] = -1;
+        else V[r][c] = 0;
+        policy[r][c] = -1;
+      }
+    }
+    sweep = 0; draw();
+  }
+  function qOf(r, c, a) {
+    // deterministic move; bumping a wall/edge keeps you in place
+    var nr = r + acts[a][0], nc = c + acts[a][1];
+    if (!inBounds(nr, nc)) { nr = r; nc = c; }
+    return R_STEP + gamma * V[nr][nc];
+  }
+  function iterate() {
+    var nV = [], nP = [];
+    for (var r = 0; r < ROWS; r++) {
+      nV[r] = []; nP[r] = [];
+      for (var c = 0; c < COLS; c++) {
+        if (isWall(r, c)) { nV[r][c] = 0; nP[r][c] = -1; continue; }
+        if (isTerminal(r, c)) { nV[r][c] = V[r][c]; nP[r][c] = -1; continue; }
+        var best = -Infinity, bestA = 0;
+        for (var a = 0; a < 4; a++) { var q = qOf(r, c, a); if (q > best) { best = q; bestA = a; } }
+        nV[r][c] = best; nP[r][c] = bestA;
+      }
+    }
+    V = nV; policy = nP; sweep++; draw();
+  }
+  var W = 520, H = 400, cz = 110, ox = 30, oy = 20;
+  var c0 = mkCanvas(host, W, H), ctx = c0.ctx;
+  var out = mkOut(host);
+  function heat(v, t) {
+    // map value in [-1,1] to a colour: green positive, red negative
+    var x = Math.max(-1, Math.min(1, v));
+    if (x >= 0) return "rgba(126,231,135," + (0.12 + 0.55 * x).toFixed(3) + ")";
+    return "rgba(255,123,114," + (0.12 + 0.55 * (-x)).toFixed(3) + ")";
+  }
+  function draw() {
+    var t = C(); ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) {
+      var x = ox + c * cz, y = oy + r * cz;
+      if (isWall(r, c)) { ctx.fillStyle = t.border; ctx.fillRect(x, y, cz - 2, cz - 2); continue; }
+      ctx.fillStyle = heat(V[r][c], t); ctx.fillRect(x, y, cz - 2, cz - 2);
+      ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.strokeRect(x, y, cz - 2, cz - 2);
+      var cx = x + (cz - 2) / 2, cy = y + (cz - 2) / 2;
+      var goal = (r === GOAL.r && c === GOAL.c), pit = (r === PIT.r && c === PIT.c);
+      // value number
+      ctx.fillStyle = t.ink; ctx.font = "bold 18px sans-serif";
+      ctx.fillText(V[r][c].toFixed(2), cx, cy - 14);
+      if (goal) { ctx.fillStyle = t.accent2; ctx.font = "bold 14px sans-serif"; ctx.fillText("GOAL +1", cx, cy + 18); }
+      else if (pit) { ctx.fillStyle = "#ff7b72"; ctx.font = "bold 14px sans-serif"; ctx.fillText("PIT −1", cx, cy + 18); }
+      else if (policy[r][c] >= 0) { ctx.fillStyle = t.accent; ctx.font = "bold 28px sans-serif"; ctx.fillText(arrows[policy[r][c]], cx, cy + 20); }
+    }
+    ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+    var label = opts.label || ("Value iteration sweep <b>" + sweep + "</b>. Each cell shows V(s); blue arrow = greedy action argmax<sub>a</sub> Q(s,a).");
+    out.innerHTML = label.replace("{n}", sweep) +
+      "<br>One sweep: V(s) ← max<sub>a</sub> [ R + γ·V(s′) ], with γ = " + gamma + ", step reward " + R_STEP + ". " +
+      "<span style=\"color:" + t.accent2 + "\">Green = high value</span>, <span style=\"color:#ff7b72\">red = low</span>.";
+  }
+  var row = mkRow(host);
+  mkBtn(row, opts.stepLabel || "Iterate (one sweep)", iterate);
+  mkBtn(row, "Reset", reset);
+  host.insertBefore(c0.cv, host.children[0]);
+  host.insertBefore(out, host.children[1]);
+  reset();
+  return { iterate: iterate, reset: reset };
+}
+
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-linear-predictors",
@@ -220,18 +333,66 @@ L({
 L({
   id: "ai-search-problem",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "c1", label: "cost of edge 1", min: 0, max: 10, val: 1, step: 0.5 },
-        { key: "c2", label: "cost of edge 2", min: 0, max: 10, val: 1, step: 0.5 },
-        { key: "c3", label: "cost of edge 3", min: 0, max: 10, val: 2, step: 0.5 }
-      ],
-      compute: function (s) {
-        var total = s.c1 + s.c2 + s.c3;
-        return { text: "total path cost = c1 + c2 + c3 = " + s.c1 + " + " + s.c2 + " + " + s.c3 +
-          " = <b>" + total.toFixed(1) + "</b>. (each action adds its cost; we want the cheapest such sum.)" };
+    // A small graph. Step through BFS to watch the frontier grow and nodes get visited in order.
+    host.innerHTML = "";
+    var W = 640, H = 360;
+    var nodes = {
+      S: { x: 90, y: 180, name: "S" }, A: { x: 230, y: 90, name: "A" }, B: { x: 230, y: 270, name: "B" },
+      C: { x: 380, y: 60, name: "C" }, D: { x: 380, y: 190, name: "D" }, E: { x: 380, y: 310, name: "E" },
+      G: { x: 540, y: 180, name: "G" }
+    };
+    var adj = { S: ["A", "B"], A: ["C", "D"], B: ["D", "E"], C: ["G"], D: ["G"], E: ["G"], G: [] };
+    var edges = [];
+    for (var u in adj) adj[u].forEach(function (v) { edges.push([u, v]); });
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    var order, visited, frontier, done;
+    function reset() {
+      order = {}; visited = {}; frontier = ["S"]; done = false;
+      order.S = 0; draw();
+    }
+    function step() {
+      if (done || frontier.length === 0) { done = true; draw(); return; }
+      var u = frontier.shift();   // BFS: pop the front of the queue
+      visited[u] = true;
+      adj[u].forEach(function (v) {
+        if (order[v] === undefined) { order[v] = Object.keys(order).length; frontier.push(v); }
+      });
+      if (frontier.length === 0) done = true;
+      draw();
+    }
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 2; ctx.strokeStyle = t.border;
+      edges.forEach(function (e) {
+        var a = nodes[e[0]], b = nodes[e[1]];
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      for (var k in nodes) {
+        var n = nodes[k], fill = t.panel, ring = t.border, lab = n.name;
+        if (visited[k]) { fill = t.accent2; ring = t.accent2; }
+        else if (frontier.indexOf(k) >= 0) { fill = t.warn; ring = t.warn; }
+        ctx.beginPath(); ctx.fillStyle = fill; ctx.strokeStyle = ring; ctx.lineWidth = 2.5;
+        ctx.arc(n.x, n.y, 22, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = (visited[k] || frontier.indexOf(k) >= 0) ? "#0d1117" : t.ink;
+        ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(lab, n.x, n.y);
+        if (order[k] !== undefined) {
+          ctx.fillStyle = t.accent; ctx.font = "bold 12px sans-serif";
+          ctx.fillText("#" + (order[k] + 1), n.x, n.y - 32);
+        }
       }
-    });
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      out.innerHTML = "BFS from <b>S</b> to goal <b>G</b>. <span style=\"color:" + t.warn + "\">Orange = frontier (queue)</span>, " +
+        "<span style=\"color:" + t.accent2 + "\">green = visited</span>. Small <b>#n</b> is the order each node was discovered.<br>" +
+        "frontier queue: [" + frontier.join(", ") + "]" + (done ? " &nbsp;<b>(search complete)</b>" : "");
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Step (BFS)", step);
+    mkBtn(row, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Search problems",
   tagline: "Start somewhere, take actions that cost something, reach a goal as cheaply as possible.",
@@ -275,35 +436,65 @@ L({
 L({
   id: "ai-tree-search",
   demo: function (host) {
-    // Binary tree of 7 nodes laid on a 3-row x 7-col grid.
-    // Each node shows its BFS order (level order) and DFS order (preorder).
-    // node key -> {row, col, bfs, dfs}
+    // A binary tree of 7 nodes. Step reveals visit order; toggle BFS (queue) vs DFS (stack).
+    host.innerHTML = "";
+    var W = 640, H = 320;
     var nodes = {
-      root: { row: 0, col: 3, bfs: 1, dfs: 1 },
-      L:    { row: 1, col: 1, bfs: 2, dfs: 2 },
-      R:    { row: 1, col: 5, bfs: 3, dfs: 5 },
-      LL:   { row: 2, col: 0, bfs: 4, dfs: 3 },
-      LR:   { row: 2, col: 2, bfs: 5, dfs: 4 },
-      RL:   { row: 2, col: 4, bfs: 6, dfs: 6 },
-      RR:   { row: 2, col: 6, bfs: 7, dfs: 7 }
+      n1: { x: 320, y: 50, name: "1" },
+      n2: { x: 180, y: 150, name: "2" }, n3: { x: 460, y: 150, name: "3" },
+      n4: { x: 100, y: 260, name: "4" }, n5: { x: 260, y: 260, name: "5" },
+      n6: { x: 380, y: 260, name: "6" }, n7: { x: 540, y: 260, name: "7" }
     };
-    var at = {};   // "row,col" -> node
-    for (var k in nodes) { var n = nodes[k]; at[n.row + "," + n.col] = n; }
-    Demos.grid(host, {
-      rows: 3, cols: 7, cellSize: 64,
-      controls: [{ key: "mode", label: "0 = BFS order, 1 = DFS order", min: 0, max: 1, val: 0, step: 1 }],
-      cell: function (r, c, state) {
-        var node = at[r + "," + c];
-        if (!node) return { color: "#0d1117" };
-        var order = state.mode === 1 ? node.dfs : node.bfs;
-        return { color: "#1b4f72", label: String(order), text: "#e6edf3" };
-      },
-      readout: function (state) {
-        return state.mode === 1
-          ? "DFS visit order (dive deep first): root, then all the way down the left subtree, then the right. Numbers are the order each node is reached."
-          : "BFS visit order (level by level): visit row 0, then row 1, then row 2, left to right. Numbers are the order each node is reached.";
+    var children = { n1: ["n2", "n3"], n2: ["n4", "n5"], n3: ["n6", "n7"], n4: [], n5: [], n6: [], n7: [] };
+    var edges = [["n1", "n2"], ["n1", "n3"], ["n2", "n4"], ["n2", "n5"], ["n3", "n6"], ["n3", "n7"]];
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    var mode = "BFS", order, frontier, done;
+    function reset() { order = {}; frontier = ["n1"]; done = false; draw(); }
+    function step() {
+      if (done || frontier.length === 0) { done = true; draw(); return; }
+      var u = (mode === "BFS") ? frontier.shift() : frontier.pop();   // queue vs stack
+      order[u] = Object.keys(order).length;
+      var kids = children[u].slice();
+      if (mode === "DFS") kids.reverse();   // so left child is explored first off the stack
+      kids.forEach(function (v) { if (order[v] === undefined && frontier.indexOf(v) < 0) frontier.push(v); });
+      if (frontier.length === 0) done = true;
+      draw();
+    }
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 2; ctx.strokeStyle = t.border;
+      edges.forEach(function (e) {
+        var a = nodes[e[0]], b = nodes[e[1]];
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      for (var k in nodes) {
+        var n = nodes[k], fill = t.panel, ring = t.border;
+        if (order[k] !== undefined) { fill = t.accent2; ring = t.accent2; }
+        else if (frontier.indexOf(k) >= 0) { fill = t.warn; ring = t.warn; }
+        ctx.beginPath(); ctx.fillStyle = fill; ctx.strokeStyle = ring; ctx.lineWidth = 2.5;
+        ctx.arc(n.x, n.y, 21, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = (order[k] !== undefined || frontier.indexOf(k) >= 0) ? "#0d1117" : t.ink;
+        ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(n.name, n.x, n.y);
+        if (order[k] !== undefined) {
+          ctx.fillStyle = t.accent; ctx.font = "bold 12px sans-serif";
+          ctx.fillText("visit " + (order[k] + 1), n.x, n.y - 30);
+        }
       }
-    });
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      out.innerHTML = "<b>" + mode + "</b> exploring the tree. " +
+        "<span style=\"color:" + t.warn + "\">Orange = frontier</span> (" + (mode === "BFS" ? "a queue, take from front" : "a stack, take from top") + "), " +
+        "<span style=\"color:" + t.accent2 + "\">green = visited</span>.<br>frontier: [" + frontier.join(", ").replace(/n/g, "") + "]" +
+        (done ? " &nbsp;<b>(done)</b>" : "");
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Step", step);
+    mkBtn(row, "BFS / DFS", function () { mode = (mode === "BFS") ? "DFS" : "BFS"; reset(); });
+    mkBtn(row, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Tree search: BFS, DFS, iterative deepening",
   tagline: "Explore possibilities one by one. Go wide, go deep, or do a clever mix.",
@@ -348,22 +539,80 @@ L({
 L({
   id: "ai-graph-search",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a1", label: "route A: step 1 cost", min: 0, max: 10, val: 1, step: 0.5 },
-        { key: "a2", label: "route A: step 2 cost", min: 0, max: 10, val: 4, step: 0.5 },
-        { key: "b1", label: "route B: step 1 cost", min: 0, max: 10, val: 2, step: 0.5 },
-        { key: "b2", label: "route B: step 2 cost", min: 0, max: 10, val: 1, step: 0.5 }
-      ],
-      compute: function (s) {
-        var ca = s.a1 + s.a2, cb = s.b1 + s.b2, best = Math.min(ca, cb);
-        var winner = ca <= cb ? "A" : "B";
-        return { text: "route A cost = " + s.a1 + " + " + s.a2 + " = <b>" + ca.toFixed(1) +
-          "</b>, route B cost = " + s.b1 + " + " + s.b2 + " = <b>" + cb.toFixed(1) +
-          "</b>.<br>UCS picks the cheaper frontier: min(" + ca.toFixed(1) + ", " + cb.toFixed(1) +
-          ") = <b>" + best.toFixed(1) + "</b>, route <b>" + winner + "</b> wins." };
+    // Uniform cost search on a small weighted graph. Each Step pops the cheapest
+    // frontier node and relaxes its neighbours, updating each node's best-known cost.
+    host.innerHTML = "";
+    var W = 640, H = 360;
+    var nodes = {
+      S: { x: 80, y: 180 }, A: { x: 240, y: 80 }, B: { x: 240, y: 280 },
+      C: { x: 420, y: 80 }, D: { x: 420, y: 280 }, G: { x: 560, y: 180 }
+    };
+    var edges = [
+      ["S", "A", 1], ["S", "B", 4], ["A", "C", 2], ["A", "B", 2],
+      ["B", "D", 1], ["C", "G", 3], ["D", "G", 2], ["C", "D", 1]
+    ];
+    var nbr = {};
+    for (var k0 in nodes) nbr[k0] = [];
+    edges.forEach(function (e) { nbr[e[0]].push([e[1], e[2]]); nbr[e[1]].push([e[0], e[2]]); });
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    var dist, settled, frontier, last, done;
+    function reset() {
+      dist = {}; settled = {}; frontier = {}; last = null; done = false;
+      for (var k in nodes) dist[k] = Infinity;
+      dist.S = 0; frontier.S = true; draw("Start: S has cost 0 on the frontier.");
+    }
+    function step() {
+      if (done) { draw("Search complete."); return; }
+      // pop cheapest unsettled frontier node
+      var best = null, bc = Infinity;
+      for (var k in frontier) { if (!settled[k] && dist[k] < bc) { bc = dist[k]; best = k; } }
+      if (best === null) { done = true; draw("Frontier empty. Done."); return; }
+      settled[best] = true; delete frontier[best]; last = best;
+      var msg = "Popped cheapest frontier node <b>" + best + "</b> (cost " + dist[best] + "). ";
+      if (best === "G") { done = true; msg += "It is the goal: shortest cost to G = <b>" + dist.G + "</b>."; draw(msg); return; }
+      var relaxed = [];
+      nbr[best].forEach(function (e) {
+        var v = e[0], w = e[1];
+        if (settled[v]) return;
+        var nd = dist[best] + w;
+        if (nd < dist[v]) { dist[v] = nd; frontier[v] = true; relaxed.push(v + "=" + nd); }
+      });
+      msg += relaxed.length ? ("Updated neighbours: " + relaxed.join(", ") + ".") : "No cheaper neighbours.";
+      draw(msg);
+    }
+    function draw(msg) {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 2; ctx.strokeStyle = t.border; ctx.font = "12px sans-serif";
+      edges.forEach(function (e) {
+        var a = nodes[e[0]], b = nodes[e[1]];
+        ctx.beginPath(); ctx.strokeStyle = t.border; ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.fillStyle = t.dim; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(String(e[2]), (a.x + b.x) / 2, (a.y + b.y) / 2 - 8);
+      });
+      for (var k in nodes) {
+        var n = nodes[k], fill = t.panel, ring = t.border;
+        if (settled[k]) { fill = t.accent2; ring = t.accent2; }
+        else if (frontier[k]) { fill = t.warn; ring = t.warn; }
+        if (k === last) ring = t.accent;
+        ctx.beginPath(); ctx.fillStyle = fill; ctx.strokeStyle = ring; ctx.lineWidth = (k === last) ? 4 : 2.5;
+        ctx.arc(n.x, n.y, 22, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = (settled[k] || frontier[k]) ? "#0d1117" : t.ink;
+        ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(k, n.x, n.y - 4);
+        ctx.font = "11px sans-serif";
+        ctx.fillText(isFinite(dist[k]) ? ("g=" + dist[k]) : "g=∞", n.x, n.y + 10);
       }
-    });
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      out.innerHTML = "UCS from <b>S</b> to <b>G</b>. <span style=\"color:" + t.accent2 + "\">Green = settled</span>, " +
+        "<span style=\"color:" + t.warn + "\">orange = frontier</span>. <b>g</b> = best cost found so far.<br>" + (msg || "");
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Step (pop cheapest)", step);
+    mkBtn(row, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Graph search: dynamic programming and UCS",
   tagline: "Don't redo work. Remember states you've solved, and always expand the cheapest one next.",
@@ -479,19 +728,9 @@ L({
 L({
   id: "ai-mdp",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "r1", label: "reward r1 (step 1)", min: -5, max: 10, val: 10, step: 0.5 },
-        { key: "r2", label: "reward r2 (step 2)", min: -5, max: 10, val: 10, step: 0.5 },
-        { key: "r3", label: "reward r3 (step 3)", min: -5, max: 10, val: 10, step: 0.5 },
-        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 }
-      ],
-      compute: function (s) {
-        var ret = s.r1 + s.g * s.r2 + s.g * s.g * s.r3;
-        return { text: "discounted return = r1 + γ·r2 + γ²·r3 = " + s.r1 + " + " + s.g + "·" + s.r2 +
-          " + " + (s.g * s.g).toFixed(3) + "·" + s.r3 + " = <b>" + ret.toFixed(2) +
-          "</b>. (later rewards shrink by powers of γ.)" };
-      }
+    gridworldDemo(host, {
+      label: "A 4×3 gridworld MDP: a <b>+1 goal</b>, a <b>−1 pit</b>, a wall. Actions move the agent between states; rewards are collected. " +
+        "Iterate to fill in each state's value V(s) and the best action (sweep {n})."
     });
   },
   title: "Markov Decision Processes (MDPs)",
@@ -539,19 +778,9 @@ L({
 L({
   id: "ai-policy-value",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "r1", label: "policy reward r1 (step 1)", min: -5, max: 10, val: 4, step: 0.5 },
-        { key: "r2", label: "policy reward r2 (step 2)", min: -5, max: 10, val: 4, step: 0.5 },
-        { key: "r3", label: "policy reward r3 (step 3)", min: -5, max: 10, val: 4, step: 0.5 },
-        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 }
-      ],
-      compute: function (s) {
-        var v = s.r1 + s.g * s.r2 + s.g * s.g * s.r3;
-        return { text: "value of the policy = r1 + γ·r2 + γ²·r3 = " + s.r1 + " + " + s.g + "·" + s.r2 +
-          " + " + (s.g * s.g).toFixed(3) + "·" + s.r3 + " = <b>" + v.toFixed(2) +
-          "</b>. (with no randomness, value equals this discounted return.)" };
-      }
+    gridworldDemo(host, {
+      label: "Gridworld <b>policy + value</b>. The blue arrow in each cell is the policy π(s): which action to take. " +
+        "The number is V<sub>π</sub>(s): the value of following that policy from that cell (sweep {n})."
     });
   },
   title: "Policies and values",
@@ -599,19 +828,9 @@ L({
 L({
   id: "ai-qvalue",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "t", label: "T (probability of next state)", min: 0, max: 1, val: 1, step: 0.05 },
-        { key: "r", label: "Reward(s,a,s′)", min: -5, max: 10, val: 6, step: 0.5 },
-        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.5, step: 0.05 },
-        { key: "v", label: "V(s′) value of next state", min: -5, max: 20, val: 4, step: 0.5 }
-      ],
-      compute: function (s) {
-        var q = s.t * (s.r + s.g * s.v);
-        return { text: "Q = T·(R + γ·V(s′)) = " + s.t + "·(" + s.r + " + " + s.g + "·" + s.v +
-          ") = " + s.t + "·" + (s.r + s.g * s.v).toFixed(2) + " = <b>" + q.toFixed(2) +
-          "</b>. (one outcome shown; sum this over all next states for the full Q-value.)" };
-      }
+    gridworldDemo(host, {
+      label: "Each cell's value is the best <b>Q-value</b> over its actions: V(s) = max<sub>a</sub> Q(s,a), where " +
+        "Q(s,a) = R + γ·V(s′). The blue arrow points to the action with the highest Q (sweep {n})."
     });
   },
   title: "Q-values",
@@ -656,17 +875,11 @@ L({
 L({
   id: "ai-value-iteration",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "q1", label: "Q(s, action 1)", min: -5, max: 20, val: 3, step: 0.5 },
-        { key: "q2", label: "Q(s, action 2)", min: -5, max: 20, val: 7, step: 0.5 }
-      ],
-      compute: function (s) {
-        var v = Math.max(s.q1, s.q2);
-        var best = s.q1 >= s.q2 ? "action 1" : "action 2";
-        return { text: "one Bellman backup: V(s) = max(Q1, Q2) = max(" + s.q1 + ", " + s.q2 +
-          ") = <b>" + v.toFixed(1) + "</b>. best action = arg max = <b>" + best + "</b>." };
-      }
+    gridworldDemo(host, {
+      stepLabel: "Run one Bellman sweep",
+      label: "<b>Value iteration</b> in action. Press the button to run one Bellman backup over every cell. " +
+        "Watch the values spread out from the goal and the arrows settle into the optimal policy π* (sweep {n}). " +
+        "After enough sweeps they stop changing — that is convergence."
     });
   },
   title: "Value iteration",
@@ -712,18 +925,11 @@ L({
 L({
   id: "ai-q-learning",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "q", label: "old Q(s,a)", min: 0, max: 20, val: 5, step: 0.5 },
-        { key: "r", label: "reward r", min: -5, max: 10, val: 1, step: 0.5 },
-        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.9, step: 0.05 },
-        { key: "qn", label: "max Q at next state", min: 0, max: 20, val: 8, step: 0.5 },
-        { key: "eta", label: "learning rate η", min: 0.01, max: 1, val: 0.5, step: 0.01 }
-      ],
-      compute: function (s) {
-        var target = s.r + s.g * s.qn, nq = (1 - s.eta) * s.q + s.eta * target;
-        return { text: "target = r + γ·maxQ = " + s.r + " + " + s.g + "·" + s.qn + " = <b>" + target.toFixed(2) + "</b>.<br>new Q = (1−η)·Q + η·target = " + (1 - s.eta).toFixed(2) + "·" + s.q + " + " + s.eta + "·" + target.toFixed(2) + " = <b>" + nq.toFixed(2) + "</b>." };
-      }
+    gridworldDemo(host, {
+      stepLabel: "Learn (one sweep)",
+      label: "The same gridworld, but imagine the agent does not know the map and learns by acting. " +
+        "Each sweep nudges every cell's value toward r + γ·V(s′), exactly what Q-learning does from experience. " +
+        "The arrows are its current best guess at the policy (sweep {n})."
     });
   },
   title: "Q-learning (model-free)",
@@ -905,19 +1111,54 @@ L({
 L({
   id: "ai-csp",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "f1", label: "factor 1 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 },
-        { key: "f2", label: "factor 2 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 },
-        { key: "f3", label: "factor 3 (0 = broken, 1 = holds)", min: 0, max: 1, val: 1, step: 1 }
-      ],
-      compute: function (s) {
-        var w = s.f1 * s.f2 * s.f3;
-        return { text: "Weight(x) = f1 · f2 · f3 = " + s.f1 + " · " + s.f2 + " · " + s.f3 +
-          " = <b>" + w + "</b>. consistent iff all factors = 1: <b>" +
-          (w > 0 ? "yes — valid assignment" : "no — a hard constraint is broken") + "</b>." };
+    // Classic map-colouring CSP. Four regions, "adjacent regions must differ".
+    // Click a region's button to cycle its colour; shared-colour edges turn red.
+    host.innerHTML = "";
+    var W = 640, H = 320;
+    var regions = {
+      A: { x: 170, y: 90, name: "A" }, B: { x: 400, y: 90, name: "B" },
+      C: { x: 170, y: 240, name: "C" }, D: { x: 400, y: 240, name: "D" }
+    };
+    var edges = [["A", "B"], ["A", "C"], ["B", "C"], ["B", "D"], ["C", "D"]];
+    var palette = [null, "#ff7b72", "#7ee787", "#4ea1ff"];
+    var pnames = ["—", "Red", "Green", "Blue"];
+    var col = { A: 0, B: 0, C: 0, D: 0 };
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    function conflict(e) { return col[e[0]] !== 0 && col[e[0]] === col[e[1]]; }
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      edges.forEach(function (e) {
+        var a = regions[e[0]], b = regions[e[1]], bad = conflict(e);
+        ctx.beginPath(); ctx.lineWidth = bad ? 5 : 2;
+        ctx.strokeStyle = bad ? "#ff3b30" : t.border;
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      var violations = 0;
+      edges.forEach(function (e) { if (conflict(e)) violations++; });
+      for (var k in regions) {
+        var n = regions[k], fill = palette[col[k]] || t.panel;
+        ctx.beginPath(); ctx.fillStyle = fill; ctx.strokeStyle = t.ink; ctx.lineWidth = 2.5;
+        ctx.arc(n.x, n.y, 36, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col[k] === 0 ? t.ink : "#0d1117"; ctx.font = "bold 18px sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(n.name, n.x, n.y);
       }
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      var allColored = col.A && col.B && col.C && col.D;
+      out.innerHTML = "Map colouring: adjacent regions must differ. Cycle each region's colour with its button. " +
+        "<b style=\"color:#ff3b30\">Red edges = constraint violated</b> (two neighbours share a colour).<br>" +
+        "current: A=" + pnames[col.A] + ", B=" + pnames[col.B] + ", C=" + pnames[col.C] + ", D=" + pnames[col.D] +
+        ". violations: <b>" + violations + "</b>" +
+        ((allColored && violations === 0) ? " &nbsp;<b style=\"color:" + t.accent2 + "\">solved!</b>" : "");
+    }
+    var row = mkRow(host);
+    ["A", "B", "C", "D"].forEach(function (k) {
+      mkBtn(row, "Colour " + k, function () { col[k] = (col[k] + 1) % 4; draw(); });
     });
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    draw();
   },
   title: "Constraint satisfaction problems (CSPs)",
   tagline: "Fill in variables so all the rules are happy. Many puzzles are exactly this.",
@@ -1020,17 +1261,77 @@ L({
 L({
   id: "ai-bayes-net",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "pa", label: "P(A)", min: 0, max: 1, val: 0.3, step: 0.05 },
-        { key: "pba", label: "P(B | A)", min: 0, max: 1, val: 0.9, step: 0.05 }
-      ],
-      compute: function (s) {
-        var joint = s.pa * s.pba;
-        return { text: "factorization: P(A, B) = P(A) · P(B | A) = " + s.pa.toFixed(2) + " · " + s.pba.toFixed(2) +
-          " = <b>" + joint.toFixed(3) + "</b>. (each node contributes its probability given its parents.)" };
-      }
-    });
+    // A node-link DAG: Rain -> WetGrass <- Sprinkler. Toggle each parent ON/OFF;
+    // the child probability P(WetGrass = true) updates from the CPT.
+    host.innerHTML = "";
+    var W = 640, H = 300;
+    var rain = false, spr = false;
+    var pRain = 0.3, pSpr = 0.4;
+    // CPT for P(Wet=true | Rain, Sprinkler)
+    function pWet(r, s) {
+      if (r && s) return 0.99;
+      if (r && !s) return 0.9;
+      if (!r && s) return 0.8;
+      return 0.05;   // neither
+    }
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    var nodes = {
+      Rain: { x: 150, y: 70 }, Spr: { x: 490, y: 70, name: "Sprinkler" }, Wet: { x: 320, y: 220, name: "WetGrass" }
+    };
+    function nodeBox(t, key, on, label) {
+      var n = nodes[key];
+      ctx.beginPath();
+      ctx.fillStyle = on ? t.accent : t.panel;
+      ctx.strokeStyle = on ? t.accent : t.border; ctx.lineWidth = 2.5;
+      ctx.arc(n.x, n.y, 38, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = on ? "#0d1117" : t.ink; ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(label, n.x, n.y - 6);
+      ctx.font = "11px sans-serif";
+      ctx.fillText(on ? "= true" : "= false", n.x, n.y + 12);
+    }
+    function arrow(a, b) {
+      var t = C();
+      var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy);
+      var ux = dx / d, uy = dy / d;
+      var x1 = a.x + ux * 38, y1 = a.y + uy * 38, x2 = b.x - ux * 40, y2 = b.y - uy * 40;
+      ctx.strokeStyle = t.dim; ctx.fillStyle = t.dim; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      var ang = Math.atan2(uy, ux);
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 10 * Math.cos(ang - 0.4), y2 - 10 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 10 * Math.cos(ang + 0.4), y2 - 10 * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      arrow(nodes.Rain, nodes.Wet); arrow(nodes.Spr, nodes.Wet);
+      nodeBox(t, "Rain", rain, "Rain");
+      nodeBox(t, "Spr", spr, "Sprinkler");
+      var pw = pWet(rain, spr);
+      // colour WetGrass node by its probability of being true
+      var n = nodes.Wet;
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(126,231,135," + (0.12 + 0.7 * pw).toFixed(3) + ")";
+      ctx.strokeStyle = t.accent2; ctx.lineWidth = 2.5;
+      ctx.arc(n.x, n.y, 44, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = t.ink; ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("WetGrass", n.x, n.y - 8);
+      ctx.font = "bold 16px sans-serif";
+      ctx.fillText("P=" + pw.toFixed(2), n.x, n.y + 12);
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      out.innerHTML = "DAG: <b>Rain → WetGrass ← Sprinkler</b>. Toggle each cause; the child's probability comes from its CPT.<br>" +
+        "P(Wet = true | Rain=" + rain + ", Sprinkler=" + spr + ") = <b>" + pw.toFixed(2) + "</b>. " +
+        "Turning on a cause drives the grass-wet probability up.";
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Toggle Rain", function () { rain = !rain; draw(); });
+    mkBtn(row, "Toggle Sprinkler", function () { spr = !spr; draw(); });
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    draw();
   },
   title: "Bayesian networks",
   tagline: "Draw arrows showing what causes what. The picture compresses a giant probability table.",
@@ -1135,29 +1436,83 @@ L({
 L({
   id: "ai-hmm",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "prior", label: "prior P(state = Rainy)", min: 0, max: 1, val: 0.5, step: 0.05 },
-        { key: "stay", label: "transition P(Rainy → Rainy)", min: 0, max: 1, val: 0.7, step: 0.05 },
-        { key: "switch", label: "transition P(Sunny → Rainy)", min: 0, max: 1, val: 0.3, step: 0.05 },
-        { key: "eR", label: "emission P(Umbrella | Rainy)", min: 0, max: 1, val: 0.9, step: 0.05 },
-        { key: "eS", label: "emission P(Umbrella | Sunny)", min: 0, max: 1, val: 0.2, step: 0.05 }
-      ],
-      compute: function (s) {
-        // predict: P(Rainy next) = stay*P(Rainy) + switch*P(Sunny)
-        var predR = s.stay * s.prior + s.switch * (1 - s.prior);
-        var predS = 1 - predR;
-        // weight by emission of observing Umbrella
-        var wR = predR * s.eR, wS = predS * s.eS;
-        var z = wR + wS;
-        var postR = z > 0 ? wR / z : 0;
-        return { text: "predict: P(Rainy) = " + s.stay.toFixed(2) + "·" + s.prior.toFixed(2) + " + " +
-          s.switch.toFixed(2) + "·" + (1 - s.prior).toFixed(2) + " = <b>" + predR.toFixed(3) +
-          "</b> (Sunny = " + predS.toFixed(3) + ").<br>weight by emission (saw Umbrella): Rainy " + predR.toFixed(3) + "·" + s.eR.toFixed(2) +
-          " = " + wR.toFixed(3) + ", Sunny " + predS.toFixed(3) + "·" + s.eS.toFixed(2) + " = " + wS.toFixed(3) +
-          ".<br>normalize: P(Rainy | Umbrella) = " + wR.toFixed(3) + " / " + z.toFixed(3) + " = <b>" + postR.toFixed(3) + "</b>." };
+    // A trellis: two hidden states (Rainy / Sunny) drawn as a column per time step,
+    // with transition arrows between steps. Each forward step runs one filtering update
+    // and shows the belief P(state) as the node's fill, with the observed clue per step.
+    host.innerHTML = "";
+    var W = 640, H = 320;
+    var T = 4;
+    var obs = ["Umbrella", "Umbrella", "No-umbr", "Umbrella"];   // clue at each step
+    var stay = 0.7;   // P(Rainy->Rainy) and P(Sunny->Sunny)
+    var eUmbR = 0.9, eUmbS = 0.2;   // P(Umbrella | Rainy), P(Umbrella | Sunny)
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    var belief, t_idx;   // belief[i] = {R, S} after processing step i
+    function filterStep(prev, ob) {
+      // predict using transition (symmetric: stay prob)
+      var predR = stay * prev.R + (1 - stay) * prev.S;
+      var predS = (1 - stay) * prev.R + stay * prev.S;
+      // weight by emission
+      var eR = (ob === "Umbrella") ? eUmbR : (1 - eUmbR);
+      var eS = (ob === "Umbrella") ? eUmbS : (1 - eUmbS);
+      var wR = predR * eR, wS = predS * eS, z = wR + wS;
+      return z > 0 ? { R: wR / z, S: wS / z } : { R: 0.5, S: 0.5 };
+    }
+    function reset() {
+      belief = [{ R: 0.5, S: 0.5 }];   // prior at step 1 before its emission
+      // apply step 1 emission immediately
+      belief[0] = filterStep({ R: 0.5, S: 0.5 }, obs[0]);
+      t_idx = 0; draw();
+    }
+    function step() {
+      if (t_idx >= T - 1) { draw(); return; }
+      belief.push(filterStep(belief[t_idx], obs[t_idx + 1]));
+      t_idx++; draw();
+    }
+    function colX(i) { return 90 + i * 150; }
+    var rowY = 90, sunY = 220;
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      // transition arrows between revealed columns
+      ctx.strokeStyle = t.border; ctx.lineWidth = 1.5;
+      for (var i = 0; i < t_idx; i++) {
+        var x1 = colX(i), x2 = colX(i + 1);
+        [[rowY, rowY], [rowY, sunY], [sunY, rowY], [sunY, sunY]].forEach(function (yy) {
+          ctx.beginPath(); ctx.moveTo(x1 + 26, yy[0]); ctx.lineTo(x2 - 26, yy[1]); ctx.stroke();
+        });
       }
-    });
+      for (var k = 0; k <= t_idx; k++) {
+        var x = colX(k), b = belief[k];
+        // Rainy node
+        drawState(t, x, rowY, "Rainy", b.R, k === t_idx);
+        drawState(t, x, sunY, "Sunny", b.S, k === t_idx);
+        ctx.fillStyle = t.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("t" + (k + 1) + ": " + obs[k], x, 290);
+      }
+      ctx.textAlign = "start";
+      var bf = belief[t_idx];
+      out.innerHTML = "HMM trellis. Hidden state per time step (Rainy / Sunny); the clue below each column is the observation. " +
+        "<span style=\"color:" + t.accent + "\">Node fill = belief P(state)</span>.<br>" +
+        "After t" + (t_idx + 1) + " (saw " + obs[t_idx] + "): P(Rainy) = <b>" + bf.R.toFixed(2) + "</b>, P(Sunny) = <b>" + bf.S.toFixed(2) + "</b>. " +
+        "Each forward step predicts via transitions, then reweights by the new clue.";
+    }
+    function drawState(t, x, y, name, p, hot) {
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(78,161,255," + (0.1 + 0.75 * p).toFixed(3) + ")";
+      ctx.strokeStyle = hot ? t.warn : t.border; ctx.lineWidth = hot ? 3.5 : 2;
+      ctx.arc(x, y, 26, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = t.ink; ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(name, x, y - 5);
+      ctx.font = "11px sans-serif"; ctx.fillText(p.toFixed(2), x, y + 9);
+      ctx.textBaseline = "alphabetic";
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Forward step ▶", step);
+    mkBtn(row, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Hidden Markov Models (HMMs)",
   tagline: "You can't see the true state, only noisy clues. Infer the hidden truth over time.",

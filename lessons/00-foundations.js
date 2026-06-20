@@ -15,19 +15,76 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 L({
   id: "fnd-vector",
   demo: function (host) {
-    Demos.vectors(host, {
-      range: 5,
-      vectors: [{ key: "x", x: 3, y: 2, label: "x" }],
-      compute: function (vecs) {
-        var x = vecs.x.x, y = vecs.x.y;
-        var len = Math.sqrt(x * x + y * y);
-        return {
-          text: "Vector x = [" + x + ", " + y + "].<br>" +
-            "Length ‖x‖ = √(x² + y²) = √(" + (x * x) + " + " + (y * y) + ") = <b>" +
-            len.toFixed(3) + "</b>.<br>Drag the arrow tip to see the vector and its length change."
-        };
+    // Bespoke: a draggable arrow on a light coordinate grid, with the x-leg (to
+    // the right) and y-leg (up) drawn so the [x, y] decomposition is visible.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 520; cv.height = 360; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var v = [3, 2];
+    var rng = 5, P = 24, cx = 260, cy = 180, sc = (260 - P) / rng;
+    function px(X) { return cx + X * sc; }
+    function py(Y) { return cy - Y * sc; }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      // light grid
+      ctx.lineWidth = 1;
+      for (var g = -rng; g <= rng; g++) {
+        ctx.strokeStyle = (g === 0) ? c.border : (c.border + "66");
+        ctx.beginPath(); ctx.moveTo(px(g), py(-rng)); ctx.lineTo(px(g), py(rng)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(-rng), py(g)); ctx.lineTo(px(rng), py(g)); ctx.stroke();
       }
+      var x = v[0], y = v[1];
+      // component legs: x to the right, y up
+      ctx.setLineDash([5, 4]); ctx.lineWidth = 2;
+      ctx.strokeStyle = c.warn;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(x), py(0)); ctx.stroke();
+      ctx.strokeStyle = c.accent2;
+      ctx.beginPath(); ctx.moveTo(px(x), py(0)); ctx.lineTo(px(x), py(y)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = c.warn; ctx.fillText("x = " + x, (px(0) + px(x)) / 2, py(0) + (y >= 0 ? 16 : -16));
+      ctx.fillStyle = c.accent2; ctx.fillText("y = " + y, px(x) + (x >= 0 ? 26 : -26), (py(0) + py(y)) / 2);
+
+      // the vector arrow
+      ctx.strokeStyle = c.accent; ctx.fillStyle = c.accent; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(x), py(y)); ctx.stroke();
+      if (x !== 0 || y !== 0) {
+        var ang = Math.atan2(py(y) - py(0), px(x) - px(0));
+        ctx.beginPath(); ctx.moveTo(px(x), py(y));
+        ctx.lineTo(px(x) - 11 * Math.cos(ang - 0.4), py(y) - 11 * Math.sin(ang - 0.4));
+        ctx.lineTo(px(x) - 11 * Math.cos(ang + 0.4), py(y) - 11 * Math.sin(ang + 0.4));
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle = c.accent; ctx.textAlign = "left";
+      ctx.fillText("x", px(x) + 8, py(y) - 8);
+
+      var len = Math.sqrt(x * x + y * y);
+      ctx.textBaseline = "alphabetic"; ctx.font = "14px sans-serif";
+      ctx.fillStyle = c.ink; ctx.fillText("x = [" + x + ", " + y + "]", 16, cv.height - 26);
+      ctx.fillStyle = c.accent;
+      ctx.fillText("‖x‖ = √(" + (x * x) + " + " + (y * y) + ") = " + len.toFixed(3), 200, cv.height - 26);
+    }
+
+    function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
+    var drag = false;
+    cv.addEventListener("mousedown", function (e) { var m = rel(e); if (Math.hypot(m.x - px(v[0]), m.y - py(v[1])) < 18) drag = true; });
+    cv.addEventListener("mousemove", function (e) {
+      if (!drag) return; var m = rel(e);
+      v[0] = Math.max(-rng, Math.min(rng, Math.round((m.x - cx) / sc)));
+      v[1] = Math.max(-rng, Math.min(rng, Math.round((cy - m.y) / sc)));
+      draw();
     });
+    window.addEventListener("mouseup", function () { drag = false; });
+    var hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Drag the arrow tip. The dashed legs show the [x, y] components.";
+    host.appendChild(hint);
+    draw();
   },
   title: "Vectors",
   tagline: "A vector is just a list of numbers. That's the whole secret.",
@@ -71,31 +128,123 @@ L({
 L({
   id: "fnd-dot",
   demo: function (host) {
-    Demos.vectors(host, {
-      range: 5,
-      vectors: [
-        { key: "a", x: 3, y: 1, label: "a" },
-        { key: "b", x: 1, y: 3, label: "b" }
-      ],
-      compute: function (vecs) {
-        var ax = vecs.a.x, ay = vecs.a.y, bx = vecs.b.x, by = vecs.b.y;
-        var dot = ax * bx + ay * by;
-        var na = Math.sqrt(ax * ax + ay * ay), nb = Math.sqrt(bx * bx + by * by);
-        var cos = (na > 0 && nb > 0) ? dot / (na * nb) : 0;
-        var ang = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
-        var meaning = dot > 0 ? "positive: the vectors broadly agree (point a similar way)."
-          : (dot < 0 ? "negative: the vectors disagree (point opposite ways)."
-            : "zero: the vectors are perpendicular (unrelated).");
-        var cosTxt = (na > 0 && nb > 0)
-          ? ("cos θ = (a·b)/(‖a‖‖b‖) = <b>" + cos.toFixed(3) + "</b>, so θ ≈ <b>" + ang.toFixed(1) + "°</b>.<br>")
-          : "One vector is zero, so the angle is undefined.<br>";
-        return {
-          text: "a = [" + ax + ", " + ay + "], b = [" + bx + ", " + by + "].<br>" +
-            "a·b = aₓ·bₓ + a_y·b_y = " + (ax * bx) + " + " + (ay * by) + " = <b>" + dot + "</b>.<br>" +
-            cosTxt + "Sign is " + meaning
-        };
+    // Bespoke: two columns of numbers a and b, pairing lines, products in the
+    // middle, summed at the bottom = dot product. Plus a small 2D axis with the
+    // two arrows and the angle between them. Drag arrow tips to drive numbers.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 340; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var a = [3, 1], b = [1, 3];
+    var rng = 5;
+    // axis box on the right of the canvas
+    var ax0 = 430, ay0 = 30, axW = 180, axH = 180;
+    var ocx = ax0 + axW / 2, ocy = ay0 + axH / 2, asc = (axW / 2 - 14) / rng;
+    function apx(x) { return ocx + x * asc; }
+    function apy(y) { return ocy - y * asc; }
+
+    function arrow(x1, y1, x2, y2, col) {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 10 * Math.cos(ang - 0.4), y2 - 10 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 10 * Math.cos(ang + 0.4), y2 - 10 * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.textBaseline = "middle";
+      var p0 = a[0] * b[0], p1 = a[1] * b[1], dot = p0 + p1;
+      // column x positions
+      var xA = 70, xB = 150, xP = 300, yTop = 70, rowH = 60;
+      ctx.font = "13px sans-serif"; ctx.textAlign = "center";
+      // headers
+      ctx.fillStyle = c.accent; ctx.fillText("a", xA, 36);
+      ctx.fillStyle = c.purple; ctx.fillText("b", xB, 36);
+      ctx.fillStyle = c.warn; ctx.fillText("aᵢ · bᵢ", xP, 36);
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif";
+      ctx.fillText("multiply matching entries", xP, 52);
+
+      function cell(x, y, txt, col, w) {
+        ctx.fillStyle = c.panel; ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+        ctx.fillRect(x - w / 2, y - 18, w, 36); ctx.strokeRect(x - w / 2, y - 18, w, 36);
+        ctx.fillStyle = col; ctx.font = "16px sans-serif"; ctx.fillText(txt, x, y);
       }
+      for (var i = 0; i < 2; i++) {
+        var y = yTop + i * rowH;
+        // pairing line a_i -> b_i
+        ctx.strokeStyle = c.dim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(xA + 18, y); ctx.lineTo(xB - 18, y); ctx.stroke();
+        // line b_i -> product
+        ctx.beginPath(); ctx.moveTo(xB + 18, y); ctx.lineTo(xP - 30, y); ctx.stroke();
+        ctx.setLineDash([]);
+        cell(xA, y, String(a[i]), c.accent, 34);
+        cell(xB, y, String(b[i]), c.purple, 34);
+        ctx.fillStyle = c.dim; ctx.font = "13px sans-serif";
+        ctx.fillText("×", (xA + xB) / 2, y);
+        cell(xP, y, a[i] + "·" + b[i] + " = " + (i === 0 ? p0 : p1), c.warn, 90);
+      }
+      // sum bracket at the bottom
+      var yS = yTop + rowH + 50;
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(xP - 50, yTop + rowH + 22); ctx.lineTo(xP + 50, yTop + rowH + 22); ctx.stroke();
+      ctx.fillStyle = c.ink; ctx.font = "15px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("sum:  " + p0 + " + " + p1 + " = ", xP - 28, yS);
+      ctx.fillStyle = c.accent2; ctx.font = "20px sans-serif";
+      ctx.fillText(String(dot), xP + 78, yS);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("a · b  (the dot product)", xP, yS + 26);
+
+      // -------- small 2D axis with arrows + angle --------
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(ax0, ocy); ctx.lineTo(ax0 + axW, ocy);
+      ctx.moveTo(ocx, ay0); ctx.lineTo(ocx, ay0 + axH);
+      ctx.stroke();
+      arrow(apx(0), apy(0), apx(a[0]), apy(a[1]), c.accent);
+      arrow(apx(0), apy(0), apx(b[0]), apy(b[1]), c.purple);
+      ctx.fillStyle = c.accent; ctx.font = "13px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("a", apx(a[0]) + 6, apy(a[1]) - 6);
+      ctx.fillStyle = c.purple;
+      ctx.fillText("b", apx(b[0]) + 6, apy(b[1]) - 6);
+      // angle arc + label
+      var na = Math.hypot(a[0], a[1]), nb = Math.hypot(b[0], b[1]);
+      ctx.textAlign = "center"; ctx.fillStyle = c.dim; ctx.font = "11px sans-serif";
+      if (na > 0 && nb > 0) {
+        var cos = Math.max(-1, Math.min(1, dot / (na * nb)));
+        var th = Math.acos(cos) * 180 / Math.PI;
+        var aa = Math.atan2(a[1], a[0]), ab = Math.atan2(b[1], b[0]);
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(apx(0), apy(0), 26, -Math.max(aa, ab), -Math.min(aa, ab)); ctx.stroke();
+        ctx.fillStyle = c.warn;
+        ctx.fillText("θ ≈ " + th.toFixed(0) + "°", ocx, ay0 + axH + 16);
+      }
+    }
+
+    function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
+    var drag = null;
+    cv.addEventListener("mousedown", function (e) {
+      var m = rel(e);
+      if (Math.hypot(m.x - apx(a[0]), m.y - apy(a[1])) < 16) drag = a;
+      else if (Math.hypot(m.x - apx(b[0]), m.y - apy(b[1])) < 16) drag = b;
     });
+    cv.addEventListener("mousemove", function (e) {
+      if (!drag) return; var m = rel(e);
+      drag[0] = Math.max(-rng, Math.min(rng, Math.round((m.x - ocx) / asc)));
+      drag[1] = Math.max(-rng, Math.min(rng, Math.round((ocy - m.y) / asc)));
+      draw();
+    });
+    window.addEventListener("mouseup", function () { drag = null; });
+    var hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Drag arrow tip a or b on the small axis to change the numbers.";
+    host.appendChild(hint);
+    draw();
   },
   title: "The dot product (inner product)",
   tagline: "Multiply two lists, add it all up, get one number. It measures agreement.",
@@ -203,33 +352,102 @@ L({
 L({
   id: "fnd-matvec",
   demo: function (host) {
+    // Bespoke: A (2x2 grid) times x (column) = result (column). Highlight the
+    // active row of A and all of x, show that row dotted with x, write it into
+    // the result. A button steps row 1 -> row 2.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
     var A = [[2, 0], [0, 1]];
-    Demos.vectors(host, {
-      range: 5,
-      vectors: [{ key: "x", x: 2, y: 3, label: "x" }],
-      compute: function (vecs) {
-        var x1 = vecs.x.x, x2 = vecs.x.y;
-        var r1 = A[0][0] * x1 + A[0][1] * x2;
-        var r2 = A[1][0] * x1 + A[1][1] * x2;
-        return {
-          text: "A = [[2, 0], [0, 1]] doubles the x-axis, leaves the y-axis alone.<br>" +
-            "x = [" + x1 + ", " + x2 + "].<br>" +
-            "Ax = [A₁,₁·x₁+A₁,₂·x₂, A₂,₁·x₁+A₂,₂·x₂] = [" + r1 + ", " + r2 + "].<br>" +
-            "The green arrow is Ax — the matrix transforming x. Drag x to watch Ax move.",
-          draw: function (ctx, P) {
-            ctx.strokeStyle = "#7ee787"; ctx.fillStyle = "#7ee787"; ctx.lineWidth = 2.5;
-            var x2p = P.px(r1), y2p = P.py(r2);
-            ctx.beginPath(); ctx.moveTo(P.px(0), P.py(0)); ctx.lineTo(x2p, y2p); ctx.stroke();
-            var a = Math.atan2(y2p - P.py(0), x2p - P.px(0));
-            ctx.beginPath(); ctx.moveTo(x2p, y2p);
-            ctx.lineTo(x2p - 11 * Math.cos(a - 0.4), y2p - 11 * Math.sin(a - 0.4));
-            ctx.lineTo(x2p - 11 * Math.cos(a + 0.4), y2p - 11 * Math.sin(a + 0.4));
-            ctx.closePath(); ctx.fill();
-            ctx.font = "13px sans-serif"; ctx.fillText("Ax", x2p + 8, y2p - 8);
-          }
-        };
+    var x = [3, 2];
+    var step = 0; // 0 = nothing done, 1 = row1 done, 2 = both done
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 260; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+
+    function cellBox(cx, cy, w, h, txt, fill, txtCol, border) {
+      ctx.fillStyle = fill; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.fillStyle = txtCol; ctx.font = "17px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(txt, cx, cy);
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      var active = (step >= 1 && step <= 2) ? (step - 1) : -1; // row currently highlighted
+      var cw = 46, ch = 46, gap = 4;
+      var Ax = 70, Ay0 = 70;            // top-left of A grid
+      var xCol = Ax + 2 * (cw + gap) + 40;
+      var eqX = xCol + cw + 36;
+      var rCol = eqX + 36;
+
+      // label A and x
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("A", Ax + (cw + gap) / 2 + cw / 2, Ay0 - 36);
+      ctx.fillText("x", xCol, Ay0 - 36);
+      ctx.fillText("Ax", rCol, Ay0 - 36);
+
+      // A grid
+      for (var r = 0; r < 2; r++) {
+        var rowHi = (r === active);
+        for (var k = 0; k < 2; k++) {
+          var bx = Ax + k * (cw + gap) + cw / 2;
+          var by = Ay0 + r * (ch + gap) + ch / 2;
+          var fill = rowHi ? (c.accent + "33") : c.panel;
+          var bord = rowHi ? c.accent : c.border;
+          cellBox(bx, by, cw, ch, String(A[r][k]), fill, c.ink, bord);
+        }
       }
-    });
+      // x column (always highlighted, it is used for every row)
+      for (var j = 0; j < 2; j++) {
+        var xy = Ay0 + j * (ch + gap) + ch / 2;
+        cellBox(xCol, xy, cw, ch, String(x[j]), c.purple + "33", c.ink, c.purple);
+      }
+      // equals
+      var midY = Ay0 + ch + gap / 2;
+      ctx.fillStyle = c.dim; ctx.font = "22px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("=", eqX, midY);
+
+      // result column
+      var res = [A[0][0] * x[0] + A[0][1] * x[1], A[1][0] * x[0] + A[1][1] * x[1]];
+      for (var m = 0; m < 2; m++) {
+        var ry = Ay0 + m * (ch + gap) + ch / 2;
+        var done = (m < step);
+        var fill2 = done ? (c.accent2 + "33") : c.panel;
+        var bord2 = (m === active) ? c.accent2 : c.border;
+        cellBox(rCol, ry, cw, ch, done ? String(res[m]) : "?", fill2, done ? c.ink : c.dim, bord2);
+      }
+
+      // explanation line for the active / just-finished row
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.font = "14px sans-serif";
+      var explY = 210;
+      ctx.fillStyle = c.ink;
+      var msg;
+      if (step === 0) {
+        msg = "Click the button: take row 1 of A, dot it with all of x.";
+      } else {
+        var r2 = step - 1;
+        msg = "row " + step + " · x = " + A[r2][0] + "·" + x[0] + " + " + A[r2][1] + "·" + x[1] +
+          " = " + res[r2] + "   →   write " + res[r2] + " into Ax slot " + step + ".";
+      }
+      ctx.fillText(msg, 40, explY);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("Each row of A makes one dot product. Ax has one number per row.", 40, explY + 22);
+    }
+
+    var btnRow = document.createElement("div"); btnRow.style.margin = "8px 0";
+    var nextBtn = document.createElement("button");
+    var resetBtn = document.createElement("button");
+    var BTN = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin-right:8px";
+    nextBtn.style.cssText = BTN; resetBtn.style.cssText = BTN;
+    nextBtn.textContent = "Do next row ▸"; resetBtn.textContent = "Reset";
+    nextBtn.addEventListener("click", function () { step = (step >= 2) ? 2 : step + 1; draw(); });
+    resetBtn.addEventListener("click", function () { step = 0; draw(); });
+    btnRow.appendChild(nextBtn); btnRow.appendChild(resetBtn);
+    host.appendChild(btnRow);
+    draw();
   },
   title: "Matrix × vector",
   tagline: "Apply the same dot product to every row at once.",
@@ -270,28 +488,87 @@ L({
 L({
   id: "fnd-norm",
   demo: function (host) {
-    Demos.calc(host, {
-      bars: true,
-      inputs: [
-        { key: "x1", label: "x₁", min: -5, max: 5, val: 3, step: 1 },
-        { key: "x2", label: "x₂", min: -5, max: 5, val: -4, step: 1 },
-        { key: "x3", label: "x₃", min: -5, max: 5, val: 0, step: 1 }
-      ],
-      compute: function (s) {
-        var l1 = Math.abs(s.x1) + Math.abs(s.x2) + Math.abs(s.x3);
-        var l2 = Math.sqrt(s.x1 * s.x1 + s.x2 * s.x2 + s.x3 * s.x3);
-        return {
-          text: "x = [" + s.x1 + ", " + s.x2 + ", " + s.x3 + "].<br>" +
-            "L1 = |x₁|+|x₂|+|x₃| = " + Math.abs(s.x1) + "+" + Math.abs(s.x2) + "+" + Math.abs(s.x3) +
-            " = <b>" + l1 + "</b>.<br>" +
-            "L2 = √(x₁²+x₂²+x₃²) = <b>" + l2.toFixed(3) + "</b>.",
-          bars: [
-            { label: "L1", val: l1, color: "#ffb454" },
-            { label: "L2", val: l2 }
-          ]
-        };
+    // Bespoke: a draggable vector arrow with its horizontal leg (a) and vertical
+    // leg (b) drawn as a right triangle; the hypotenuse is the L2 norm. Pythagoras
+    // made visible. L1 = |a| + |b| shown alongside.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 520; cv.height = 360; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var v = [3, -4];
+    var rng = 5, P = 24, cx = 260, cy = 180, sc = (260 - P) / rng;
+    function px(X) { return cx + X * sc; }
+    function py(Y) { return cy - Y * sc; }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      // axes
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(P, cy); ctx.lineTo(cv.width - P, cy);
+      ctx.moveTo(cx, P); ctx.lineTo(cx, cv.height - P); ctx.stroke();
+
+      var a = v[0], b = v[1];
+      // right-triangle legs: horizontal leg along x, vertical leg up to the tip
+      ctx.lineWidth = 2;
+      // horizontal leg (a)
+      ctx.strokeStyle = c.warn;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(a), py(0)); ctx.stroke();
+      // vertical leg (b)
+      ctx.strokeStyle = c.purple;
+      ctx.beginPath(); ctx.moveTo(px(a), py(0)); ctx.lineTo(px(a), py(b)); ctx.stroke();
+      // right-angle marker
+      if (a !== 0 && b !== 0) {
+        var sx = a > 0 ? -10 : 10, sy = b > 0 ? 10 : -10;
+        ctx.strokeStyle = c.dim; ctx.lineWidth = 1;
+        ctx.strokeRect(Math.min(px(a), px(a) + sx), Math.min(py(0), py(0) + sy), 10, 10);
       }
+      // leg labels
+      ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = c.warn; ctx.fillText("a = " + a, (px(0) + px(a)) / 2, py(0) + (b > 0 ? 16 : -16));
+      ctx.fillStyle = c.purple; ctx.fillText("b = " + b, px(a) + (a > 0 ? 26 : -26), (py(0) + py(b)) / 2);
+
+      // the vector arrow = hypotenuse
+      ctx.strokeStyle = c.accent; ctx.fillStyle = c.accent; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(a), py(b)); ctx.stroke();
+      var ang = Math.atan2(py(b) - py(0), px(a) - px(0));
+      if (a !== 0 || b !== 0) {
+        ctx.beginPath(); ctx.moveTo(px(a), py(b));
+        ctx.lineTo(px(a) - 11 * Math.cos(ang - 0.4), py(b) - 11 * Math.sin(ang - 0.4));
+        ctx.lineTo(px(a) - 11 * Math.cos(ang + 0.4), py(b) - 11 * Math.sin(ang + 0.4));
+        ctx.closePath(); ctx.fill();
+      }
+      var l2 = Math.sqrt(a * a + b * b), l1 = Math.abs(a) + Math.abs(b);
+      ctx.fillStyle = c.accent; ctx.textAlign = "left";
+      ctx.fillText("‖x‖ = √(a²+b²)", px(a) / 2 + px(0) / 2 - 30, py(b) / 2 + py(0) / 2 - 14);
+
+      // text panel along the bottom
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.font = "14px sans-serif";
+      ctx.fillStyle = c.ink;
+      ctx.fillText("x = [" + a + ", " + b + "]", 16, cv.height - 44);
+      ctx.fillStyle = c.accent;
+      ctx.fillText("L2 = √(" + (a * a) + " + " + (b * b) + ") = √" + (a * a + b * b) + " = " + l2.toFixed(3), 16, cv.height - 24);
+      ctx.fillStyle = c.warn;
+      ctx.fillText("L1 = |" + a + "| + |" + b + "| = " + l1, 300, cv.height - 24);
+    }
+
+    function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
+    var drag = false;
+    cv.addEventListener("mousedown", function (e) { var m = rel(e); if (Math.hypot(m.x - px(v[0]), m.y - py(v[1])) < 18) drag = true; });
+    cv.addEventListener("mousemove", function (e) {
+      if (!drag) return; var m = rel(e);
+      v[0] = Math.max(-rng, Math.min(rng, Math.round((m.x - cx) / sc)));
+      v[1] = Math.max(-rng, Math.min(rng, Math.round((cy - m.y) / sc)));
+      draw();
     });
+    window.addEventListener("mouseup", function () { drag = false; });
+    var hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Drag the blue arrow tip. The hypotenuse of the right triangle is the L2 length.";
+    host.appendChild(hint);
+    draw();
   },
   title: "Norms (the length of a vector)",
   tagline: "How big is a vector? Norms measure that. They power 'distance' and regularization.",
@@ -378,11 +655,89 @@ L({
 L({
   id: "fnd-gradient",
   demo: function (host) {
-    Demos.descent(host, {
-      f: function (x) { return x * x; },
-      df: function (x) { return 2 * x; },
-      xmin: -3, xmax: 3, start: 2.5, lr: 0.2
+    // Bespoke: a 2-D bowl f = x^2 + y^2 shown as contour rings. At a draggable
+    // point, draw the gradient arrow (uphill) and the downhill step -grad f.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 520; cv.height = 380; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var p = [2, 1.5];
+    var rng = 3, P = 28, cx = 260, cy = 190, sc = (190 - P) / rng;
+    function px(X) { return cx + X * sc; }
+    function py(Y) { return cy - Y * sc; }
+
+    function arrow(x1, y1, x2, y2, col, lw) {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2.5;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      if (x1 === x2 && y1 === y2) return;
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 11 * Math.cos(ang - 0.4), y2 - 11 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 11 * Math.cos(ang + 0.4), y2 - 11 * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      // contour rings: f = r^2 -> ring of f = level is a circle of radius sqrt(level)
+      ctx.lineWidth = 1;
+      var levels = [0.5, 1, 2, 3.5, 5, 7, 9];
+      for (var i = 0; i < levels.length; i++) {
+        var rad = Math.sqrt(levels[i]);
+        if (rad > rng + 0.5) continue;
+        ctx.strokeStyle = c.accent + "55";
+        ctx.beginPath(); ctx.arc(px(0), py(0), rad * sc, 0, Math.PI * 2); ctx.stroke();
+      }
+      // axes
+      ctx.strokeStyle = c.border; ctx.beginPath();
+      ctx.moveTo(P, cy); ctx.lineTo(cv.width - P, cy);
+      ctx.moveTo(cx, P); ctx.lineTo(cx, cy + (cy - P)); ctx.stroke();
+      // center / minimum
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("min (0,0)", px(0) + 6, py(0) + 14);
+
+      var x = p[0], y = p[1];
+      // gradient = [2x, 2y]; scale arrow for display
+      var gx = 2 * x, gy = 2 * y;
+      var disp = 0.35; // shrink so arrow stays on canvas
+      // uphill gradient arrow
+      arrow(px(x), py(y), px(x + gx * disp), py(y + gy * disp), c.warn);
+      // downhill step -grad
+      arrow(px(x), py(y), px(x - gx * disp), py(y - gy * disp), c.accent2);
+      // the point
+      ctx.fillStyle = c.purple; ctx.beginPath(); ctx.arc(px(x), py(y), 5, 0, Math.PI * 2); ctx.fill();
+      // labels near arrow tips
+      ctx.font = "12px sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = c.warn; ctx.fillText("∇f (uphill)", px(x + gx * disp), py(y + gy * disp) - 8);
+      ctx.fillStyle = c.accent2; ctx.fillText("−∇f (downhill)", px(x - gx * disp), py(y - gy * disp) + 14);
+
+      // text panel
+      ctx.textAlign = "left"; ctx.font = "14px sans-serif";
+      ctx.fillStyle = c.ink; ctx.fillText("point = (" + x.toFixed(1) + ", " + y.toFixed(1) + "),  f = " + (x * x + y * y).toFixed(2), 16, cv.height - 40);
+      ctx.fillStyle = c.warn; ctx.fillText("∇f = [2x, 2y] = [" + gx.toFixed(1) + ", " + gy.toFixed(1) + "]", 16, cv.height - 20);
+      ctx.fillStyle = c.accent2; ctx.fillText("step −∇f heads back toward the center", 280, cv.height - 20);
+    }
+
+    function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
+    var drag = false;
+    cv.addEventListener("mousedown", function (e) { var m = rel(e); if (Math.hypot(m.x - px(p[0]), m.y - py(p[1])) < 18) drag = true; });
+    cv.addEventListener("mousemove", function (e) {
+      if (!drag) return; var m = rel(e);
+      p[0] = Math.max(-rng, Math.min(rng, (m.x - cx) / sc));
+      p[1] = Math.max(-rng, Math.min(rng, (cy - m.y) / sc));
+      // round to 1 decimal to keep readouts tidy
+      p[0] = Math.round(p[0] * 10) / 10; p[1] = Math.round(p[1] * 10) / 10;
+      draw();
     });
+    window.addEventListener("mouseup", function () { drag = false; });
+    var hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Drag the point. Orange = uphill gradient; green = the downhill step.";
+    host.appendChild(hint);
+    draw();
   },
   title: "The gradient (slope in many directions)",
   tagline: "A derivative for functions with many inputs. It points straight uphill.",
@@ -472,46 +827,109 @@ L({
 L({
   id: "fnd-eigen",
   demo: function (host) {
+    // Bespoke: the unit circle of vectors transformed by A into an ellipse.
+    // Eigenvector axes (here the x and y axes) only stretch, labeled with lambda.
+    // A draggable test vector v shows Av; when v lines up with an eigen-axis,
+    // Av is parallel to v. A = [[2,0],[0,3]] -> eigenvectors x,y; lambda = 2,3.
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return ((s && s.getPropertyValue(n)) || d).trim(); } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
     var A = [[2, 0], [0, 3]];
-    Demos.vectors(host, {
-      range: 5,
-      vectors: [{ key: "v", x: 1, y: 1, label: "v" }],
-      compute: function (vecs) {
-        var v1 = vecs.v.x, v2 = vecs.v.y;
-        var w1 = A[0][0] * v1 + A[0][1] * v2;
-        var w2 = A[1][0] * v1 + A[1][1] * v2;
-        var txt = "A = [[2, 0], [0, 3]].<br>v = [" + v1 + ", " + v2 + "].<br>" +
-          "Av = [A₁,₁·v₁+A₁,₂·v₂, A₂,₁·v₁+A₂,₂·v₂] = [" + w1 + ", " + w2 + "].<br>";
-        if (v1 === 0 && v2 === 0) {
-          txt += "v is the zero vector, so it cannot be an eigenvector (those must be non-zero).";
-        } else {
-          // parallel iff the cross product w1·v2 - w2·v1 = 0
-          var cross = w1 * v2 - w2 * v1;
-          if (cross === 0) {
-            var lam = (v1 !== 0) ? (w1 / v1) : (w2 / v2);
-            txt += "Av is <b>parallel</b> to v, so v is an eigenvector with eigenvalue λ = <b>" +
-              lam + "</b>. The green arrow lines up with v.";
-          } else {
-            txt += "Av is <b>not parallel</b> to v, so this v is not an eigenvector. " +
-              "Drag v onto the x- or y-axis to line the arrows up.";
-          }
-        }
-        return {
-          text: txt,
-          draw: function (ctx, P) {
-            ctx.strokeStyle = "#7ee787"; ctx.fillStyle = "#7ee787"; ctx.lineWidth = 2.5;
-            var x2p = P.px(w1), y2p = P.py(w2);
-            ctx.beginPath(); ctx.moveTo(P.px(0), P.py(0)); ctx.lineTo(x2p, y2p); ctx.stroke();
-            var a = Math.atan2(y2p - P.py(0), x2p - P.px(0));
-            ctx.beginPath(); ctx.moveTo(x2p, y2p);
-            ctx.lineTo(x2p - 11 * Math.cos(a - 0.4), y2p - 11 * Math.sin(a - 0.4));
-            ctx.lineTo(x2p - 11 * Math.cos(a + 0.4), y2p - 11 * Math.sin(a + 0.4));
-            ctx.closePath(); ctx.fill();
-            ctx.font = "13px sans-serif"; ctx.fillText("Av", x2p + 8, y2p - 8);
-          }
-        };
+    var cv = document.createElement("canvas"); cv.width = 520; cv.height = 400; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var v = [1, 1];
+    var rng = 4, P = 26, cx = 260, cy = 200, sc = (200 - P) / rng;
+    function px(X) { return cx + X * sc; }
+    function py(Y) { return cy - Y * sc; }
+
+    function arrow(x2, y2, col, lw) {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2.5;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(x2, y2); ctx.stroke();
+      var ang = Math.atan2(y2 - py(0), x2 - px(0));
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 11 * Math.cos(ang - 0.4), y2 - 11 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 11 * Math.cos(ang + 0.4), y2 - 11 * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      // axes
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(P, cy); ctx.lineTo(cv.width - P, cy);
+      ctx.moveTo(cx, P); ctx.lineTo(cx, cy + (cy - P)); ctx.stroke();
+
+      // unit circle (dashed)
+      ctx.strokeStyle = c.dim; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px(0), py(0), 1 * sc, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      // transformed ellipse: x scaled by 2 (a=2), y scaled by 3 (b=3)
+      ctx.strokeStyle = c.accent; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (var t = 0; t <= 64; t++) {
+        var th = t / 64 * Math.PI * 2;
+        var ux = Math.cos(th), uy = Math.sin(th);
+        var wx = A[0][0] * ux + A[0][1] * uy, wy = A[1][0] * ux + A[1][1] * uy;
+        var X = px(wx), Y = py(wy);
+        if (t === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
       }
+      ctx.stroke();
+      // labels for circle / ellipse
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("unit circle", px(0) + 6, py(1) - 6);
+      ctx.fillStyle = c.accent; ctx.fillText("ellipse = A·(circle)", px(2) - 30, py(0) - 8);
+
+      // eigen-axes: x-axis (lambda 2), y-axis (lambda 3) only stretch
+      ctx.strokeStyle = c.purple; ctx.lineWidth = 2; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(px(-rng), py(0)); ctx.lineTo(px(rng), py(0)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px(0), py(-rng)); ctx.lineTo(px(0), py(rng)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = c.purple; ctx.font = "12px sans-serif";
+      ctx.fillText("eigen-axis  λ = 2", px(rng) - 96, py(0) - 8);
+      ctx.fillText("eigen-axis  λ = 3", px(0) + 8, py(rng) + 14);
+
+      // test vector v and Av
+      var w0 = A[0][0] * v[0] + A[0][1] * v[1];
+      var w1 = A[1][0] * v[0] + A[1][1] * v[1];
+      arrow(px(w0), py(w1), c.accent2, 2.5);   // Av
+      arrow(px(v[0]), py(v[1]), c.warn, 2.5);  // v
+      ctx.fillStyle = c.warn; ctx.font = "13px sans-serif";
+      ctx.fillText("v", px(v[0]) + 8, py(v[1]) - 8);
+      ctx.fillStyle = c.accent2;
+      ctx.fillText("Av", px(w0) + 8, py(w1) - 8);
+
+      // readout
+      ctx.textBaseline = "alphabetic"; ctx.font = "14px sans-serif";
+      ctx.fillStyle = c.ink; ctx.fillText("v = [" + v[0] + ", " + v[1] + "],  Av = [" + w0 + ", " + w1 + "]", 16, cv.height - 38);
+      var cross = w0 * v[1] - w1 * v[0];
+      var aligned = (v[0] === 0 && v[1] === 0) ? false : (cross === 0);
+      if (v[0] === 0 && v[1] === 0) {
+        ctx.fillStyle = c.dim; ctx.fillText("v is the zero vector — not an eigenvector.", 16, cv.height - 18);
+      } else if (aligned) {
+        var lam = (v[0] !== 0) ? (w0 / v[0]) : (w1 / v[1]);
+        ctx.fillStyle = c.accent2; ctx.fillText("Av is parallel to v: eigenvector! λ = " + lam, 16, cv.height - 18);
+      } else {
+        ctx.fillStyle = c.warn; ctx.fillText("Av points a new way. Drag v onto an eigen-axis to line them up.", 16, cv.height - 18);
+      }
+    }
+
+    function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
+    var drag = false;
+    cv.addEventListener("mousedown", function (e) { var m = rel(e); if (Math.hypot(m.x - px(v[0]), m.y - py(v[1])) < 18) drag = true; });
+    cv.addEventListener("mousemove", function (e) {
+      if (!drag) return; var m = rel(e);
+      v[0] = Math.max(-rng, Math.min(rng, Math.round((m.x - cx) / sc)));
+      v[1] = Math.max(-rng, Math.min(rng, Math.round((cy - m.y) / sc)));
+      draw();
     });
+    window.addEventListener("mouseup", function () { drag = false; });
+    var hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Drag v (orange). On an eigen-axis, Av (green) lines up with v.";
+    host.appendChild(hint);
+    draw();
   },
   title: "Eigenvalues & eigenvectors",
   tagline: "Special directions a matrix only stretches, never rotates. The skeleton of your data.",

@@ -15,21 +15,64 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 L({
   id: "dl-neuron",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "w1", label: "w1", min: -3, max: 3, val: 0.5, step: 0.1 },
-        { key: "w2", label: "w2", min: -3, max: 3, val: -1, step: 0.1 },
-        { key: "x1", label: "x1", min: -3, max: 3, val: 4, step: 0.1 },
-        { key: "x2", label: "x2", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "b", label: "b (bias)", min: -5, max: 5, val: 3, step: 0.1 }
-      ],
-      compute: function (s) {
-        var z = s.w1 * s.x1 + s.w2 * s.x2 + s.b;
-        return { text: "z = w1·x1 + w2·x2 + b = " + s.w1.toFixed(2) + "·" + s.x1.toFixed(2) +
-          " + " + s.w2.toFixed(2) + "·" + s.x2.toFixed(2) + " + " + s.b.toFixed(2) +
-          " = <b>" + z.toFixed(3) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var st = { w1: 0.5, w2: -1, x1: 4, x2: 1, b: 3 };
+    function node(c, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+    function edge(x1, y1, x2, y2, col, w) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); }
+    function draw() {
+      var c = C();
+      var sig = function (z) { return 1 / (1 + Math.exp(-z)); };
+      var z = st.w1 * st.x1 + st.w2 * st.x2 + st.b;
+      var a = sig(z);
+      ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "13px -apple-system, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var x1y = 80, x2y = 220, ix = 90, nx = 330, ny = 150, ox = 560;
+      // edges with weights
+      edge(ix, x1y, nx, ny, c.accent, Math.min(7, 1 + Math.abs(st.w1) * 2));
+      edge(ix, x2y, nx, ny, c.accent, Math.min(7, 1 + Math.abs(st.w2) * 2));
+      // weight labels at mid-edge
+      ctx.fillStyle = c.warn;
+      ctx.fillText("w1=" + st.w1.toFixed(1) + " → " + (st.w1 * st.x1).toFixed(1), (ix + nx) / 2, (x1y + ny) / 2 - 12);
+      ctx.fillText("w2=" + st.w2.toFixed(1) + " → " + (st.w2 * st.x2).toFixed(1), (ix + nx) / 2, (x2y + ny) / 2 + 14);
+      // input nodes
+      node(c, ix, x1y, 26, c.panel, c.accent2); node(c, ix, x2y, 26, c.panel, c.accent2);
+      ctx.fillStyle = c.ink; ctx.fillText("x1=" + st.x1.toFixed(1), ix, x1y); ctx.fillText("x2=" + st.x2.toFixed(1), ix, x2y);
+      // neuron node
+      node(c, nx, ny, 40, c.panel, c.accent);
+      ctx.fillStyle = c.ink; ctx.font = "12px sans-serif";
+      ctx.fillText("Σw·x+b", nx, ny - 8); ctx.fillText("z=" + z.toFixed(2), nx, ny + 10);
+      // bias arrow
+      ctx.fillStyle = c.purple; ctx.font = "13px sans-serif"; ctx.fillText("b=" + st.b.toFixed(1), nx, ny + 62);
+      edge(nx, ny + 50, nx, ny + 40, c.purple, 2);
+      // output edge + activation
+      edge(nx + 40, ny, ox - 34, ny, c.accent2, 3);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.fillText("σ(z)", (nx + ox) / 2, ny - 14);
+      node(c, ox, ny, 32, c.panel, c.accent2);
+      ctx.fillStyle = c.accent2; ctx.font = "14px sans-serif"; ctx.fillText(a.toFixed(3), ox, ny);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.fillText("output", ox, ny + 48);
+      ctx.textAlign = "start";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("w1", "w1", -3, 3, 0.1); slider("w2", "w2", -3, 3, 0.1);
+    slider("x1", "x1", -3, 4, 0.1); slider("x2", "x2", -3, 4, 0.1);
+    slider("b (bias)", "b", -5, 5, 0.1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var z = st.w1 * st.x1 + st.w2 * st.x2 + st.b; var a = 1 / (1 + Math.exp(-z)); rd.innerHTML = "z = w1·x1 + w2·x2 + b = " + (st.w1 * st.x1).toFixed(2) + " + " + (st.w2 * st.x2).toFixed(2) + " + " + st.b.toFixed(2) + " = <b>" + z.toFixed(3) + "</b>, &nbsp; σ(z) = <b>" + a.toFixed(3) + "</b>"; };
+    draw();
   },
   title: "The neuron & network layers",
   tagline: "A neuron is a dot product plus a bump, then a squish. Stack many and you get a brain-ish machine.",
@@ -136,25 +179,72 @@ L({
 L({
   id: "dl-forward-prop",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "x1", label: "x1 (input)", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "x2", label: "x2 (input)", min: -3, max: 3, val: 2, step: 0.1 },
-        { key: "w11", label: "hidden w·x1", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "w12", label: "hidden w·x2", min: -3, max: 3, val: -1, step: 0.1 },
-        { key: "wo", label: "output weight", min: -3, max: 3, val: 2, step: 0.1 }
-      ],
-      compute: function (s) {
-        var zh = s.w11 * s.x1 + s.w12 * s.x2;
-        var ah = Math.max(0, zh);
-        var y = s.wo * ah;
-        return { text: "hidden z = " + s.w11.toFixed(2) + "·" + s.x1.toFixed(2) + " + " +
-          s.w12.toFixed(2) + "·" + s.x2.toFixed(2) + " = " + zh.toFixed(3) +
-          "<br>hidden a = ReLU(z) = <b>" + ah.toFixed(3) + "</b>" +
-          "<br>output = w·a = " + s.wo.toFixed(2) + "·" + ah.toFixed(3) +
-          " = <b>" + y.toFixed(3) + "</b>" };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    // 2 inputs -> 2 hidden -> 1 output. Fixed weights.
+    var st = { x1: 1, x2: 2 };
+    var W1 = [[1, -1], [0.5, 2]];   // hidden[j] weights on x1,x2
+    var b1 = [0, -1];
+    var W2 = [1.5, -0.5];           // output weights on h1,h2
+    var b2 = 1;
+    var relu = function (z) { return Math.max(0, z); };
+    function fwd() {
+      var z1 = W1[0][0] * st.x1 + W1[0][1] * st.x2 + b1[0];
+      var z2 = W1[1][0] * st.x1 + W1[1][1] * st.x2 + b1[1];
+      var h1 = relu(z1), h2 = relu(z2);
+      var zo = W2[0] * h1 + W2[1] * h2 + b2;
+      return { z1: z1, z2: z2, h1: h1, h2: h2, zo: zo, y: zo };
+    }
+    function node(x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+    function draw() {
+      var c = C(); var f = fwd();
+      ctx.clearRect(0, 0, 640, 320);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var L1x = 90, L2x = 320, L3x = 560;
+      var inY = [100, 220], hiY = [80, 240], outY = 160;
+      var inV = [st.x1, st.x2], hiV = [f.h1, f.h2];
+      // edges in->hidden
+      for (var i = 0; i < 2; i++) for (var j = 0; j < 2; j++) {
+        var w = W1[j][i];
+        ctx.beginPath(); ctx.moveTo(L1x, inY[i]); ctx.lineTo(L2x, hiY[j]);
+        ctx.strokeStyle = w >= 0 ? c.accent : c.warn; ctx.lineWidth = Math.min(5, 0.6 + Math.abs(w) * 1.5); ctx.stroke();
       }
-    });
+      // edges hidden->out
+      for (var j2 = 0; j2 < 2; j2++) {
+        var w2 = W2[j2];
+        ctx.beginPath(); ctx.moveTo(L2x, hiY[j2]); ctx.lineTo(L3x, outY);
+        ctx.strokeStyle = w2 >= 0 ? c.accent : c.warn; ctx.lineWidth = Math.min(5, 0.6 + Math.abs(w2) * 1.5); ctx.stroke();
+      }
+      // weight labels for input->hidden (small)
+      ctx.fillStyle = c.dim; ctx.font = "10px sans-serif";
+      ctx.fillText(W1[0][0].toFixed(1), L1x + 70, inY[0] + (hiY[0] - inY[0]) * 70 / (L2x - L1x) - 8);
+      // nodes
+      for (var ii = 0; ii < 2; ii++) { node(L1x, inY[ii], 24, c.panel, c.accent2); ctx.fillStyle = c.ink; ctx.font = "12px sans-serif"; ctx.fillText("x" + (ii + 1) + "=" + inV[ii].toFixed(1), L1x, inY[ii]); }
+      for (var jj = 0; jj < 2; jj++) { node(L2x, hiY[jj], 28, c.panel, c.accent); ctx.fillStyle = c.ink; ctx.font = "11px sans-serif"; ctx.fillText("h" + (jj + 1), L2x, hiY[jj] - 8); ctx.fillText("a=" + hiV[jj].toFixed(2), L2x, hiY[jj] + 8); }
+      node(L3x, outY, 32, c.panel, c.accent2); ctx.fillStyle = c.accent2; ctx.font = "13px sans-serif"; ctx.fillText("y", L3x, outY - 9); ctx.fillText(f.y.toFixed(2), L3x, outY + 9);
+      // layer labels
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("input", L1x, 290); ctx.fillText("hidden (ReLU)", L2x, 290); ctx.fillText("output", L3x, 290);
+      ctx.textAlign = "start";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("x1 (input)", "x1", -3, 3, 0.1); slider("x2 (input)", "x2", -3, 3, 0.1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var f = fwd(); rd.innerHTML = "h1 = ReLU(" + f.z1.toFixed(2) + ") = <b>" + f.h1.toFixed(2) + "</b>, h2 = ReLU(" + f.z2.toFixed(2) + ") = <b>" + f.h2.toFixed(2) + "</b><br>y = " + W2[0] + "·h1 + " + W2[1] + "·h2 + " + b2 + " = <b>" + f.y.toFixed(3) + "</b>. Blue edge = positive weight, orange = negative."; };
+    draw();
   },
   title: "Forward propagation",
   tagline: "Push the input through every layer, left to right, to get the prediction.",
@@ -252,23 +342,66 @@ L({
 L({
   id: "dl-backprop",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "dLda", label: "∂L/∂a (upstream)", min: -3, max: 3, val: 2, step: 0.1 },
-        { key: "dadz", label: "∂a/∂z (local)", min: -2, max: 2, val: 0.5, step: 0.1 },
-        { key: "dzdw", label: "∂z/∂w = x (local)", min: -3, max: 3, val: 3, step: 0.1 },
-        { key: "eta", label: "η (learning rate)", min: 0.01, max: 1, val: 0.1, step: 0.01 },
-        { key: "w", label: "current w", min: -5, max: 5, val: 1, step: 0.1 }
-      ],
-      compute: function (s) {
-        var grad = s.dLda * s.dadz * s.dzdw;
-        var wNew = s.w - s.eta * grad;
-        return { text: "∂L/∂w = (∂L/∂a)·(∂a/∂z)·(∂z/∂w) = " + s.dLda.toFixed(2) + "·" +
-          s.dadz.toFixed(2) + "·" + s.dzdw.toFixed(2) + " = <b>" + grad.toFixed(3) + "</b>" +
-          "<br>w ← w − η·grad = " + s.w.toFixed(2) + " − " + s.eta.toFixed(2) + "·" +
-          grad.toFixed(3) + " = <b>" + wNew.toFixed(3) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var st = { dLda: 2, dadz: 0.5, dzdw: 3, eta: 0.1, w: 1 };
+    function node(x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+    // arrow drawn from (x1) to (x2) along the row at y, pointing toward x2
+    function backArrow(x1, x2, y, col, lbl) {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      var dir = x2 < x1 ? -1 : 1;
+      ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - dir * 10, y - 6); ctx.lineTo(x2 - dir * 10, y + 6); ctx.closePath(); ctx.fill();
+      ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.fillText(lbl, (x1 + x2) / 2, y - 12);
+    }
+    function draw() {
+      var c = C();
+      var grad = st.dLda * st.dadz * st.dzdw;
+      var wNew = st.w - st.eta * grad;
+      ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var wx = 90, zx = 270, ax = 430, lx = 580, ny = 120;
+      // forward-ish nodes w -> z -> a -> L
+      node(wx, ny, 30, c.panel, c.accent2); ctx.fillStyle = c.ink; ctx.fillText("w", wx, ny - 8); ctx.fillText(st.w.toFixed(2), wx, ny + 8);
+      node(zx, ny, 30, c.panel, c.accent); ctx.fillStyle = c.ink; ctx.fillText("z", zx, ny);
+      node(ax, ny, 30, c.panel, c.accent); ctx.fillStyle = c.ink; ctx.fillText("a", ax, ny);
+      node(lx, ny, 30, c.panel, c.warn); ctx.fillStyle = c.ink; ctx.fillText("L", lx, ny);
+      // backward gradient arrows (right -> left)
+      backArrow(lx - 30, ax + 30, ny - 50, c.purple, "∂L/∂a=" + st.dLda.toFixed(2));
+      backArrow(ax - 30, zx + 30, ny - 50, c.purple, "∂a/∂z=" + st.dadz.toFixed(2));
+      backArrow(zx - 30, wx + 30, ny - 50, c.purple, "∂z/∂w=" + st.dzdw.toFixed(2));
+      // accumulated gradient at w
+      ctx.fillStyle = c.purple; ctx.font = "13px sans-serif";
+      ctx.fillText("∂L/∂w = " + grad.toFixed(2), wx, ny + 60);
+      // update
+      ctx.fillStyle = c.accent2; ctx.font = "13px sans-serif";
+      ctx.fillText("w ← " + st.w.toFixed(2) + " − " + st.eta.toFixed(2) + "·(" + grad.toFixed(2) + ") = " + wNew.toFixed(3), wx + 120, ny + 100);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("gradients flow right → left (chain rule)", 320, 40);
+      ctx.textAlign = "start";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("∂L/∂a (upstream)", "dLda", -3, 3, 0.1);
+    slider("∂a/∂z (local)", "dadz", -2, 2, 0.1);
+    slider("∂z/∂w = x (local)", "dzdw", -3, 3, 0.1);
+    slider("η (learning rate)", "eta", 0.01, 1, 0.01);
+    slider("current w", "w", -5, 5, 0.1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var grad = st.dLda * st.dadz * st.dzdw; var wNew = st.w - st.eta * grad; rd.innerHTML = "∂L/∂w = (∂L/∂a)·(∂a/∂z)·(∂z/∂w) = " + st.dLda.toFixed(2) + "·" + st.dadz.toFixed(2) + "·" + st.dzdw.toFixed(2) + " = <b>" + grad.toFixed(3) + "</b><br>w ← w − η·grad = <b>" + wNew.toFixed(3) + "</b>"; };
+    draw();
   },
   title: "Backpropagation",
   tagline: "Run the chain rule backward to find how each weight caused the error, then fix it.",
@@ -464,20 +597,52 @@ L({
 L({
   id: "dl-dropout",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "p", label: "keep prob p", min: 0.1, max: 1, val: 0.5, step: 0.05 },
-        { key: "n", label: "neurons in layer", min: 1, max: 200, val: 10, step: 1 }
-      ],
-      compute: function (s) {
-        var scale = 1 / s.p;
-        var kept = s.p * s.n;
-        return { text: "keep prob p = " + s.p.toFixed(2) +
-          "<br>inverted-dropout scale = 1 / p = <b>" + scale.toFixed(3) + "</b>" +
-          "<br>expected kept neurons = p·n = " + s.p.toFixed(2) + "·" + s.n +
-          " = <b>" + kept.toFixed(1) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    // 3 inputs -> 6 hidden -> 2 output. Hidden neurons get dropped.
+    var st = { keep: 0.5 };
+    var mask = [1, 1, 1, 1, 1, 1];
+    function resample() { mask = mask.map(function () { return Math.random() < st.keep ? 1 : 0; }); }
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var inY = [80, 150, 220], hiY = [40, 90, 140, 190, 240, 290].slice(0, 6).map(function (v) { return v - 5; }), outY = [110, 190];
+      var L1 = 90, L2 = 320, L3 = 550;
+      // map 6 hidden to spread vertically
+      var hY = [30, 78, 126, 174, 222, 270];
+      // edges (faint), skip dropped hidden
+      ctx.lineWidth = 1;
+      for (var i = 0; i < 3; i++) for (var j = 0; j < 6; j++) { ctx.strokeStyle = mask[j] ? c.border : "rgba(120,120,120,0.12)"; ctx.beginPath(); ctx.moveTo(L1, inY[i]); ctx.lineTo(L2, hY[j]); ctx.stroke(); }
+      for (var j2 = 0; j2 < 6; j2++) for (var o = 0; o < 2; o++) { ctx.strokeStyle = mask[j2] ? c.border : "rgba(120,120,120,0.12)"; ctx.beginPath(); ctx.moveTo(L2, hY[j2]); ctx.lineTo(L3, outY[o]); ctx.stroke(); }
+      function node(x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+      for (var ii = 0; ii < 3; ii++) node(L1, inY[ii], 16, c.panel, c.accent2);
+      for (var jj = 0; jj < 6; jj++) { var on = mask[jj]; node(L2, hY[jj], 16, on ? c.panel : "rgba(120,120,120,0.25)", on ? c.accent : "rgba(120,120,120,0.4)"); if (!on) { ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.fillText("✕", L2, hY[jj]); } }
+      for (var oo = 0; oo < 2; oo++) node(L3, outY[oo], 16, c.panel, c.accent2);
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("input", L1, 295); ctx.fillText("hidden (dropout)", L2, 295); ctx.fillText("output", L3, 295);
+    }
+    function readout() {
+      var kept = mask.reduce(function (a, b) { return a + b; }, 0);
+      rd.innerHTML = "keep prob p = " + st.keep.toFixed(2) + ". This pass: <b>" + kept + " of 6</b> hidden neurons kept, " + (6 - kept) + " dropped (greyed ✕).<br>inverted-dropout scales survivors by 1/p = <b>" + (1 / st.keep).toFixed(2) + "</b> so the total stays balanced.";
+    }
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px";
+    var btn = document.createElement("button"); btn.textContent = "resample dropout mask";
+    btn.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:8px 0";
+    btn.addEventListener("click", function () { resample(); draw(); readout(); });
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "keep prob p = " + st.keep;
+    var inp = document.createElement("input"); inp.type = "range"; inp.min = 0.1; inp.max = 1; inp.step = 0.05; inp.value = st.keep;
+    inp.addEventListener("input", function () { st.keep = parseFloat(inp.value); lab.textContent = "keep prob p = " + st.keep.toFixed(2); resample(); draw(); readout(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    host.appendChild(btn); host.appendChild(rd);
+    resample(); draw(); readout();
   },
   title: "Dropout",
   tagline: "Randomly switch off neurons during training so the network can't lean on any one of them.",
@@ -518,23 +683,54 @@ L({
 L({
   id: "dl-batchnorm",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "x1", label: "x1", min: -10, max: 10, val: 2, step: 0.1 },
-        { key: "x2", label: "x2", min: -10, max: 10, val: 4, step: 0.1 },
-        { key: "x3", label: "x3", min: -10, max: 10, val: 6, step: 0.1 }
-      ],
-      compute: function (s) {
-        var eps = 0.00001;
-        var mu = (s.x1 + s.x2 + s.x3) / 3;
-        var v = ((s.x1 - mu) * (s.x1 - mu) + (s.x2 - mu) * (s.x2 - mu) + (s.x3 - mu) * (s.x3 - mu)) / 3;
-        var norm1 = (s.x1 - mu) / Math.sqrt(v + eps);
-        return { text: "mean μ = (" + s.x1.toFixed(1) + " + " + s.x2.toFixed(1) + " + " +
-          s.x3.toFixed(1) + ") / 3 = <b>" + mu.toFixed(3) + "</b>" +
-          "<br>variance = <b>" + v.toFixed(3) + "</b>" +
-          "<br>normalized x1 = (x1 − μ)/√(var+ε) = <b>" + norm1.toFixed(3) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 240; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var st = { x1: 2, x2: 4, x3: 6 };
+    var eps = 0.00001;
+    function stats() {
+      var xs = [st.x1, st.x2, st.x3], mu = (xs[0] + xs[1] + xs[2]) / 3;
+      var v = (Math.pow(xs[0] - mu, 2) + Math.pow(xs[1] - mu, 2) + Math.pow(xs[2] - mu, 2)) / 3;
+      var sd = Math.sqrt(v + eps), nm = xs.map(function (x) { return (x - mu) / sd; });
+      return { xs: xs, mu: mu, v: v, sd: sd, nm: nm };
+    }
+    function line(y, lo, hi, label, vals, col, markZero) {
+      var c = C(), L = 70, R = 600;
+      var px = function (x) { return L + (x - lo) / (hi - lo) * (R - L); };
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke();
+      // ticks
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      for (var t = Math.ceil(lo); t <= hi; t++) { var X = px(t); ctx.strokeStyle = c.border; ctx.beginPath(); ctx.moveTo(X, y - 4); ctx.lineTo(X, y + 4); ctx.stroke(); if (t % 2 === 0) ctx.fillText(String(t), X, y + 8); }
+      if (markZero && lo <= 0 && hi >= 0) { ctx.strokeStyle = c.dim; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(px(0), y - 26); ctx.lineTo(px(0), y + 6); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.fillStyle = c.ink; ctx.font = "12px sans-serif"; ctx.textAlign = "start"; ctx.textBaseline = "middle"; ctx.fillText(label, 8, y);
+      vals.forEach(function (x, i) { var X = px(Math.max(lo, Math.min(hi, x))); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X, y, 7, 0, 7); ctx.fill(); ctx.fillStyle = "#161c24"; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i + 1), X, y); ctx.textAlign = "start"; });
+    }
+    function draw() {
+      var c = C(); var s = stats();
+      ctx.clearRect(0, 0, 640, 240);
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("before BN: spread out, mean μ = " + s.mu.toFixed(2), 8, 30);
+      line(70, -10, 10, "raw x", s.xs, c.warn, false);
+      ctx.fillStyle = c.dim; ctx.fillText("after BN: centered at 0, unit spread", 8, 140);
+      line(180, -3, 3, "norm", s.nm, c.accent2, true);
+    }
+    function slider(label, key) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = -10; inp.max = 10; inp.step = 0.1; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("x1", "x1"); slider("x2", "x2"); slider("x3", "x3");
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var s = stats(); rd.innerHTML = "mean μ = <b>" + s.mu.toFixed(3) + "</b>, variance = <b>" + s.v.toFixed(3) + "</b><br>normalized values = [" + s.nm.map(function (x) { return x.toFixed(2); }).join(", ") + "] — centered at 0."; };
+    draw();
   },
   title: "Batch normalization",
   tagline: "Rescale each layer's inputs to be tidy and centered, so training is faster and smoother.",
@@ -629,37 +825,66 @@ L({
 L({
   id: "dl-conv",
   demo: function (host) {
-    // 4x4 input image (fixed values). A 2x2 filter sits over the top-left.
-    var img = [
-      [3, 5, 1, 0],
-      [2, 4, 6, 2],
-      [1, 0, 3, 5],
-      [7, 2, 1, 4]
-    ];
-    var filt = [[1, 0], [0, 1]];   // identity-ish edge filter
-    Demos.grid(host, {
-      rows: 4, cols: 4, cellSize: 56,
-      cell: function (r, k) {
-        var inWindow = (r < 2 && k < 2);
-        if (inWindow) {
-          var fv = filt[r][k];
-          return { color: "#1f6feb", text: "#ffffff",
-            label: img[r][k] + "×" + fv };
-        }
-        return { color: "#161c24", label: img[r][k] };
-      },
-      readout: function () {
-        var sum = 0, terms = [];
-        for (var r = 0; r < 2; r++) for (var k = 0; k < 2; k++) {
-          var prod = img[r][k] * filt[r][k];
-          sum += prod;
-          terms.push(img[r][k] + "·" + filt[r][k]);
-        }
-        return "Blue 2×2 window over the top-left. filter = [[1,0],[0,1]].<br>" +
-          "output = Σ(window·filter) = " + terms.join(" + ") +
-          " = <b>" + sum + "</b>";
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var img = [[3, 5, 1, 0], [2, 4, 6, 2], [1, 0, 3, 5], [7, 2, 1, 4]];
+    var filt = [[1, 0], [0, 1]];   // 2x2 filter, valid conv -> 3x3 output
+    // precompute full output map
+    function convAt(or, oc) { var s = 0; for (var r = 0; r < 2; r++) for (var k = 0; k < 2; k++) s += img[or + r][oc + k] * filt[r][k]; return s; }
+    var out = []; for (var r = 0; r < 3; r++) { out.push([]); for (var k = 0; k < 3; k++) out[r].push(convAt(r, k)); }
+    var st = { pos: 0 };   // position 0..8 across 3x3 output (row-major)
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 280; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C();
+      var or = Math.floor(st.pos / 3), oc = st.pos % 3;
+      ctx.clearRect(0, 0, 640, 280);
+      ctx.font = "16px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var iz = 54, ix0 = 20, iy0 = 50;
+      // input grid
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.fillText("input (4×4)", ix0 + 2 * iz, iy0 - 22); ctx.font = "16px sans-serif";
+      for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++) {
+        var inW = (i >= or && i < or + 2 && j >= oc && j < oc + 2);
+        ctx.fillStyle = inW ? c.accent : c.panel; ctx.fillRect(ix0 + j * iz, iy0 + i * iz, iz - 2, iz - 2);
+        ctx.fillStyle = inW ? "#ffffff" : c.ink; ctx.fillText(String(img[i][j]), ix0 + j * iz + iz / 2 - 1, iy0 + i * iz + iz / 2);
       }
-    });
+      // filter swatch
+      var fz = 34, fx0 = 270, fy0 = 70;
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.fillText("filter", fx0 + fz, fy0 - 18); ctx.font = "15px sans-serif";
+      for (var fi = 0; fi < 2; fi++) for (var fj = 0; fj < 2; fj++) {
+        ctx.fillStyle = c.warn; ctx.fillRect(fx0 + fj * fz, fy0 + fi * fz, fz - 2, fz - 2);
+        ctx.fillStyle = "#161c24"; ctx.fillText(String(filt[fi][fj]), fx0 + fj * fz + fz / 2 - 1, fy0 + fi * fz + fz / 2);
+      }
+      ctx.fillStyle = c.dim; ctx.font = "22px sans-serif"; ctx.fillText("→", fx0 + 2 * fz + 26, fy0 + fz);
+      // output grid (built up to current pos)
+      var oz = 50, ox0 = 430, oy0 = 50;
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.fillText("output (3×3)", ox0 + 1.5 * oz, oy0 - 22); ctx.font = "16px sans-serif";
+      for (var p = 0; p < 9; p++) {
+        var pr = Math.floor(p / 3), pc = p % 3;
+        var done = p <= st.pos;
+        var cur = p === st.pos;
+        ctx.fillStyle = cur ? c.accent2 : (done ? c.panel : "transparent"); ctx.fillRect(ox0 + pc * oz, oy0 + pr * oz, oz - 2, oz - 2);
+        ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.strokeRect(ox0 + pc * oz, oy0 + pr * oz, oz - 2, oz - 2);
+        if (done) { ctx.fillStyle = cur ? "#161c24" : c.ink; ctx.fillText(String(out[pr][pc]), ox0 + pc * oz + oz / 2 - 1, oy0 + pr * oz + oz / 2); }
+      }
+      ctx.textAlign = "start";
+    }
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px";
+    function readout() {
+      var or = Math.floor(st.pos / 3), oc = st.pos % 3, sum = 0, terms = [];
+      for (var r = 0; r < 2; r++) for (var k = 0; k < 2; k++) { sum += img[or + r][oc + k] * filt[r][k]; terms.push(img[or + r][oc + k] + "·" + filt[r][k]); }
+      rd.innerHTML = "filter at output (" + or + "," + oc + "): Σ(window·filter) = " + terms.join(" + ") + " = <b>" + sum + "</b>. Move the slider to slide the filter and build the feature map.";
+    }
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "filter position";
+    var inp = document.createElement("input"); inp.type = "range"; inp.min = 0; inp.max = 8; inp.step = 1; inp.value = 0;
+    inp.addEventListener("input", function () { st.pos = parseInt(inp.value, 10); draw(); readout(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row); host.appendChild(rd);
+    draw(); readout();
   },
   title: "Convolutional layer",
   tagline: "A small filter slides over an image, dot-producting as it goes, to spot patterns.",
@@ -700,39 +925,57 @@ L({
 L({
   id: "dl-pooling",
   demo: function (host) {
-    // 4x4 feature map split into four non-overlapping 2x2 regions.
-    var img = [
-      [1, 7, 8, 3],
-      [3, 2, 1, 0],
-      [4, 6, 9, 2],
-      [5, 0, 1, 4]
-    ];
-    // one tint per 2x2 region (top-left, top-right, bottom-left, bottom-right)
-    var tint = ["#1f6feb", "#2ea043", "#bb8009", "#8957e5"];
-    function regionIndex(r, k) { return (r < 2 ? 0 : 2) + (k < 2 ? 0 : 1); }
-    function regionValues(ri) {
-      var r0 = (ri >= 2) ? 2 : 0, k0 = (ri % 2 === 1) ? 2 : 0, v = [];
-      for (var r = r0; r < r0 + 2; r++) for (var k = k0; k < k0 + 2; k++) v.push(img[r][k]);
-      return v;
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
     }
-    Demos.grid(host, {
-      rows: 4, cols: 4, cellSize: 56,
-      cell: function (r, k) {
-        return { color: tint[regionIndex(r, k)], text: "#ffffff", label: img[r][k] };
-      },
-      readout: function () {
-        var lines = ["Each colored 2×2 region pools to one number:"];
-        var names = ["top-left", "top-right", "bottom-left", "bottom-right"];
-        for (var ri = 0; ri < 4; ri++) {
-          var v = regionValues(ri);
-          var mx = Math.max(v[0], v[1], v[2], v[3]);
-          var avg = (v[0] + v[1] + v[2] + v[3]) / 4;
-          lines.push(names[ri] + " [" + v.join(", ") + "]: max-pool = <b>" + mx +
-            "</b>, avg-pool = <b>" + avg.toFixed(2) + "</b>");
-        }
-        return lines.join("<br>");
+    var img = [[1, 7, 8, 3], [3, 2, 1, 0], [4, 6, 9, 2], [5, 0, 1, 4]];
+    var tint = ["#1f6feb", "#2ea043", "#bb8009", "#8957e5"];
+    function region(ri) { var r0 = ri >= 2 ? 2 : 0, k0 = (ri % 2 === 1) ? 2 : 0, v = []; for (var r = r0; r < r0 + 2; r++) for (var k = k0; k < k0 + 2; k++) v.push(img[r][k]); return v; }
+    var st = { mode: 0 };  // 0 = max, 1 = avg
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 280; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function pooled(ri) { var v = region(ri); return st.mode === 0 ? Math.max(v[0], v[1], v[2], v[3]) : (v[0] + v[1] + v[2] + v[3]) / 4; }
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 280);
+      ctx.font = "16px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var iz = 54, ix0 = 20, iy0 = 50;
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.fillText("feature map (4×4)", ix0 + 2 * iz, iy0 - 22); ctx.font = "16px sans-serif";
+      for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++) {
+        var ri = (i < 2 ? 0 : 2) + (j < 2 ? 0 : 1);
+        ctx.fillStyle = tint[ri]; ctx.fillRect(ix0 + j * iz, iy0 + i * iz, iz - 2, iz - 2);
+        ctx.fillStyle = "#ffffff"; ctx.fillText(String(img[i][j]), ix0 + j * iz + iz / 2 - 1, iy0 + i * iz + iz / 2);
       }
-    });
+      // outline each 2x2 region thickly
+      ctx.lineWidth = 3; ctx.strokeStyle = c.ink;
+      for (var rr = 0; rr < 2; rr++) for (var cc = 0; cc < 2; cc++) ctx.strokeRect(ix0 + cc * 2 * iz, iy0 + rr * 2 * iz, 2 * iz - 2, 2 * iz - 2);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = c.dim; ctx.font = "22px sans-serif"; ctx.fillText("→", ix0 + 4 * iz + 26, iy0 + 2 * iz);
+      // pooled 2x2 output
+      var oz = 60, ox0 = 470, oy0 = 70;
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.fillText((st.mode === 0 ? "max" : "avg") + " pool (2×2)", ox0 + oz, oy0 - 18); ctx.font = "17px sans-serif";
+      for (var ro = 0; ro < 2; ro++) for (var co = 0; co < 2; co++) {
+        var rii = ro * 2 + co;
+        ctx.fillStyle = tint[rii]; ctx.fillRect(ox0 + co * oz, oy0 + ro * oz, oz - 2, oz - 2);
+        var pv = pooled(rii);
+        ctx.fillStyle = "#ffffff"; ctx.fillText(st.mode === 0 ? String(pv) : pv.toFixed(2), ox0 + co * oz + oz / 2 - 1, oy0 + ro * oz + oz / 2);
+      }
+      ctx.textAlign = "start";
+    }
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px";
+    function readout() {
+      var names = ["top-left", "top-right", "bottom-left", "bottom-right"], lines = ["Each outlined 2×2 region → one number (" + (st.mode === 0 ? "max" : "average") + "):"];
+      for (var ri = 0; ri < 4; ri++) { var v = region(ri); lines.push(names[ri] + " [" + v.join(", ") + "] → <b>" + (st.mode === 0 ? String(Math.max(v[0], v[1], v[2], v[3])) : ((v[0] + v[1] + v[2] + v[3]) / 4).toFixed(2)) + "</b>"); }
+      rd.innerHTML = lines.join("<br>");
+    }
+    var btn = document.createElement("button"); btn.textContent = "switch to average pool";
+    btn.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:8px 0";
+    btn.addEventListener("click", function () { st.mode = st.mode === 0 ? 1 : 0; btn.textContent = st.mode === 0 ? "switch to average pool" : "switch to max pool"; draw(); readout(); });
+    host.appendChild(btn); host.appendChild(rd);
+    draw(); readout();
   },
   title: "Pooling (max / average)",
   tagline: "Shrink the feature map by summarizing each little region with one number.",
@@ -899,22 +1142,61 @@ L({
 L({
   id: "dl-object-detection",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "areaA", label: "Box A area", min: 1, max: 100, val: 40, step: 1 },
-        { key: "areaB", label: "Box B area", min: 1, max: 100, val: 30, step: 1 },
-        { key: "inter", label: "overlap (intersection)", min: 0, max: 100, val: 20, step: 1 }
-      ],
-      compute: function (s) {
-        var inter = Math.min(s.inter, s.areaA, s.areaB);
-        var union = s.areaA + s.areaB - inter;
-        var iou = union > 0 ? inter / union : 0;
-        return { text: "intersection = " + inter +
-          "<br>union = A + B − intersection = " + s.areaA + " + " + s.areaB + " − " + inter +
-          " = " + union +
-          "<br>IoU = intersection / union = <b>" + iou.toFixed(3) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    // Box A fixed (true), Box B (predicted) moves. Coordinates in canvas px.
+    var SC = 32, ox = 120, oy = 30; // grid scale: 1 unit = 32px
+    var A = { x: 1, y: 1, w: 5, h: 5 };   // true box (in grid units)
+    var st = { bx: 3, by: 3 };            // predicted box top-left; size 5x4
+    var Bw = 5, Bh = 4;
+    function rect(b) { return { x1: b.x, y1: b.y, x2: b.x + b.w, y2: b.y + b.h }; }
+    function metrics() {
+      var a = rect(A), b = rect({ x: st.bx, y: st.by, w: Bw, h: Bh });
+      var ix = Math.max(0, Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1));
+      var iy = Math.max(0, Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1));
+      var inter = ix * iy, areaA = A.w * A.h, areaB = Bw * Bh, union = areaA + areaB - inter;
+      return { inter: inter, areaA: areaA, areaB: areaB, union: union, iou: union > 0 ? inter / union : 0 };
+    }
+    function draw() {
+      var c = C(); var m = metrics();
+      ctx.clearRect(0, 0, 640, 300);
+      // grid backdrop
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      for (var gx = 0; gx <= 12; gx++) { ctx.beginPath(); ctx.moveTo(ox + gx * SC, oy); ctx.lineTo(ox + gx * SC, oy + 8 * SC); ctx.stroke(); }
+      for (var gy = 0; gy <= 8; gy++) { ctx.beginPath(); ctx.moveTo(ox, oy + gy * SC); ctx.lineTo(ox + 12 * SC, oy + gy * SC); ctx.stroke(); }
+      // intersection fill
+      var a = rect(A), b = rect({ x: st.bx, y: st.by, w: Bw, h: Bh });
+      var ix1 = Math.max(a.x1, b.x1), iy1 = Math.max(a.y1, b.y1), ix2 = Math.min(a.x2, b.x2), iy2 = Math.min(a.y2, b.y2);
+      if (ix2 > ix1 && iy2 > iy1) { ctx.fillStyle = c.warn; ctx.globalAlpha = 0.45; ctx.fillRect(ox + ix1 * SC, oy + iy1 * SC, (ix2 - ix1) * SC, (iy2 - iy1) * SC); ctx.globalAlpha = 1; }
+      // box A (true)
+      ctx.strokeStyle = c.accent2; ctx.lineWidth = 3; ctx.strokeRect(ox + A.x * SC, oy + A.y * SC, A.w * SC, A.h * SC);
+      ctx.fillStyle = c.accent2; ctx.font = "13px sans-serif"; ctx.fillText("A: true box", ox + A.x * SC + 4, oy + A.y * SC - 6);
+      // box B (predicted)
+      ctx.strokeStyle = c.accent; ctx.lineWidth = 3; ctx.strokeRect(ox + st.bx * SC, oy + st.by * SC, Bw * SC, Bh * SC);
+      ctx.fillStyle = c.accent; ctx.fillText("B: predicted", ox + st.bx * SC + 4, oy + (st.by + Bh) * SC + 16);
+      // IoU readout on canvas
+      ctx.fillStyle = c.ink; ctx.font = "15px sans-serif"; ctx.fillText("IoU = " + m.iou.toFixed(3), 16, 40);
+      ctx.fillStyle = c.warn; ctx.font = "12px sans-serif"; ctx.fillText("overlap = " + m.inter, 16, 64);
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("predicted box x", "bx", 0, 7, 1);
+    slider("predicted box y", "by", 0, 4, 1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var m = metrics(); rd.innerHTML = "intersection = <b>" + m.inter + "</b><br>union = A + B − intersection = " + m.areaA + " + " + m.areaB + " − " + m.inter + " = <b>" + m.union + "</b><br>IoU = intersection / union = <b>" + m.iou.toFixed(3) + "</b>" + (m.iou >= 0.5 ? " (good match)" : " (poor match)"); };
+    draw();
   },
   title: "Object detection (IoU, YOLO)",
   tagline: "Not just 'is there a cat?' but 'where is it?' — draw a box and score how well it fits.",
@@ -1120,23 +1402,64 @@ L({
 L({
   id: "dl-rnn",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "Waa", label: "Waa (memory weight)", min: -2, max: 2, val: 0.5, step: 0.1 },
-        { key: "aprev", label: "a_prev (old memory)", min: -2, max: 2, val: 0, step: 0.1 },
-        { key: "Wax", label: "Wax (input weight)", min: -2, max: 2, val: 1, step: 0.1 },
-        { key: "x", label: "x (input)", min: -3, max: 3, val: 2, step: 0.1 },
-        { key: "b", label: "b (bias)", min: -2, max: 2, val: 0, step: 0.1 }
-      ],
-      compute: function (s) {
-        var z = s.Waa * s.aprev + s.Wax * s.x + s.b;
-        var a = Math.tanh(z);
-        return { text: "z = Waa·a_prev + Wax·x + b = " + s.Waa.toFixed(1) + "·" + s.aprev.toFixed(1) +
-          " + " + s.Wax.toFixed(1) + "·" + s.x.toFixed(1) + " + " + s.b.toFixed(1) +
-          " = " + z.toFixed(3) +
-          "<br>aₜ = tanh(z) = <b>" + a.toFixed(3) + "</b>" };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var st = { Waa: 0.5, Wax: 1, b: 0, x1: 2, x2: 1, x3: -1 };
+    function step(aPrev, x) { return Math.tanh(st.Waa * aPrev + st.Wax * x + st.b); }
+    function draw() {
+      var c = C();
+      var xs = [st.x1, st.x2, st.x3];
+      var a = [0]; for (var t = 0; t < 3; t++) a.push(step(a[t], xs[t]));
+      ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "13px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var cx = [130, 320, 510], cy = 150, r = 36;
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("aₜ = tanh(Waa·aₜ₋₁ + Wax·xₜ + b)", 320, 30);
+      // hidden-state arrows between cells (left->right)
+      ctx.strokeStyle = c.purple; ctx.fillStyle = c.purple; ctx.lineWidth = 2.5;
+      // a0 -> cell1
+      function harrow(x1, x2, lbl) {
+        ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x2, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2, cy); ctx.lineTo(x2 - 9, cy - 5); ctx.lineTo(x2 - 9, cy + 5); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = c.purple; ctx.font = "11px sans-serif"; ctx.fillText(lbl, (x1 + x2) / 2, cy - 12); ctx.fillStyle = c.purple;
       }
-    });
+      harrow(40, cx[0] - r, "a0=0.00");
+      harrow(cx[0] + r, cx[1] - r, "a1=" + a[1].toFixed(2));
+      harrow(cx[1] + r, cx[2] - r, "a2=" + a[2].toFixed(2));
+      ctx.strokeStyle = c.purple; ctx.beginPath(); ctx.moveTo(cx[2] + r, cy); ctx.lineTo(cx[2] + r + 50, cy); ctx.stroke();
+      ctx.fillStyle = c.purple; ctx.font = "11px sans-serif"; ctx.fillText("a3=" + a[3].toFixed(2), cx[2] + r + 25, cy - 12);
+      for (var i = 0; i < 3; i++) {
+        // cell box
+        ctx.beginPath(); ctx.arc(cx[i], cy, r, 0, 7); ctx.fillStyle = c.panel; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = c.accent; ctx.stroke();
+        ctx.fillStyle = c.ink; ctx.font = "12px sans-serif"; ctx.fillText("tanh", cx[i], cy - 8); ctx.fillText("a=" + a[i + 1].toFixed(2), cx[i], cy + 10);
+        // input below
+        ctx.strokeStyle = c.accent2; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx[i], cy + 70); ctx.lineTo(cx[i], cy + r); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx[i], cy + 90, 20, 0, 7); ctx.fillStyle = c.panel; ctx.fill(); ctx.strokeStyle = c.accent2; ctx.stroke();
+        ctx.fillStyle = c.ink; ctx.fillText("x" + (i + 1) + "=" + xs[i].toFixed(1), cx[i], cy + 90);
+        ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.fillText("t=" + (i + 1), cx[i], cy - r - 14);
+      }
+      ctx.textAlign = "start";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("Waa (memory weight)", "Waa", -2, 2, 0.1);
+    slider("Wax (input weight)", "Wax", -2, 2, 0.1);
+    slider("x1", "x1", -3, 3, 0.1); slider("x2", "x2", -3, 3, 0.1); slider("x3", "x3", -3, 3, 0.1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var a = [0], xs = [st.x1, st.x2, st.x3]; for (var t = 0; t < 3; t++) a.push(step(a[t], xs[t])); rd.innerHTML = "a1 = tanh(" + st.Waa.toFixed(1) + "·0 + " + st.Wax.toFixed(1) + "·" + st.x1.toFixed(1) + ") = <b>" + a[1].toFixed(3) + "</b><br>The hidden state (purple) carries from each step into the next."; };
+    draw();
   },
   title: "Recurrent neural networks (RNNs)",
   tagline: "Read a sequence one step at a time, carrying a memory of what came before.",
@@ -1475,33 +1798,67 @@ L({
 L({
   id: "dl-attention",
   demo: function (host) {
-    Demos.calc(host, {
-      bars: true, barsHeight: 150,
-      inputs: [
-        { key: "e1", label: "score e1", min: -5, max: 5, val: 2, step: 0.1 },
-        { key: "e2", label: "score e2", min: -5, max: 5, val: 1, step: 0.1 },
-        { key: "e3", label: "score e3", min: -5, max: 5, val: 0, step: 0.1 },
-        { key: "a1", label: "input value a1", min: -5, max: 5, val: 1, step: 0.5 },
-        { key: "a2", label: "input value a2", min: -5, max: 5, val: 3, step: 0.5 },
-        { key: "a3", label: "input value a3", min: -5, max: 5, val: 5, step: 0.5 }
-      ],
-      compute: function (s) {
-        var x1 = Math.exp(s.e1), x2 = Math.exp(s.e2), x3 = Math.exp(s.e3);
-        var Z = x1 + x2 + x3;
-        var w1 = x1 / Z, w2 = x2 / Z, w3 = x3 / Z;
-        var ctx = w1 * s.a1 + w2 * s.a2 + w3 * s.a3;
-        return {
-          text: "softmax weights sum to " + (w1 + w2 + w3).toFixed(3) +
-            ". context c = Σ α·a = <b>" + ctx.toFixed(3) + "</b>",
-          bars: [
-            { label: "α1", val: w1 },
-            { label: "α2", val: w2 },
-            { label: "α3", val: w3 }
-          ],
-          max: 1
-        };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var keys = ["the", "cat", "sat"], queries = ["le", "chat", "assis"];
+    // raw score matrix (query rows x key cols), adjustable bias per row via sliders
+    var base = [[3, 0, -1], [-1, 3, 0], [0, -1, 3]];
+    var st = { focus: [0, 0, 0] };  // extra emphasis on diagonal per query
+    function weights(qr) {
+      var raw = base[qr].map(function (v, i) { return v + (i === qr ? st.focus[qr] : 0); });
+      var ex = raw.map(Math.exp), Z = ex[0] + ex[1] + ex[2];
+      return ex.map(function (e) { return e / Z; });
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 280; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function shade(c, w) {
+      // blend accent over panel by weight w in [0,1]
+      function hx(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+      var a = /^#[0-9a-fA-F]{6}$/.test(c.accent) ? hx(c.accent) : [78, 161, 255];
+      var p = /^#[0-9a-fA-F]{6}$/.test(c.panel) ? hx(c.panel) : [22, 28, 36];
+      var r = Math.round(p[0] + (a[0] - p[0]) * w), g = Math.round(p[1] + (a[1] - p[1]) * w), b = Math.round(p[2] + (a[2] - p[2]) * w);
+      return "rgb(" + r + "," + g + "," + b + ")";
+    }
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 280);
+      ctx.font = "13px sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      var cz = 60, gx = 140, gy = 60;
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("keys →", gx + 1.5 * cz, gy - 26);
+      for (var k = 0; k < 3; k++) { ctx.fillStyle = c.dim; ctx.fillText(keys[k], gx + k * cz + cz / 2, gy - 8); }
+      for (var q = 0; q < 3; q++) {
+        var w = weights(q);
+        ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "end"; ctx.fillText(queries[q], gx - 8, gy + q * cz + cz / 2); ctx.textAlign = "center";
+        for (var kk = 0; kk < 3; kk++) {
+          ctx.fillStyle = shade(c, w[kk]); ctx.fillRect(gx + kk * cz, gy + q * cz, cz - 2, cz - 2);
+          ctx.fillStyle = w[kk] > 0.5 ? "#ffffff" : c.ink; ctx.font = "13px sans-serif"; ctx.fillText(w[kk].toFixed(2), gx + kk * cz + cz / 2, gy + q * cz + cz / 2);
+        }
+        // row sum check
+        ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.fillText("Σ=1.00", gx + 3 * cz + 26, gy + q * cz + cz / 2);
       }
-    });
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "start";
+      ctx.fillText("queries ↓", 18, gy + 1.5 * cz);
+      ctx.fillText("each row = softmax over keys, sums to 1. Darker = more attention.", 18, gy + 3 * cz + 24);
+    }
+    function slider(label, qi) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label;
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = -3; inp.max = 5; inp.step = 0.2; inp.value = 0;
+      inp.addEventListener("input", function () { st.focus[qi] = parseFloat(inp.value); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("extra focus: query 'le' on 'the'", 0);
+    slider("extra focus: query 'chat' on 'cat'", 1);
+    slider("extra focus: query 'assis' on 'sat'", 2);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    var origDraw = draw;
+    draw = function () { origDraw(); var av = [1, 3, 5], w0 = weights(0); var cxt = w0[0] * av[0] + w0[1] * av[1] + w0[2] * av[2]; rd.innerHTML = "Row 'le' weights = [" + w0.map(function (x) { return x.toFixed(2); }).join(", ") + "], sum = <b>1.00</b>.<br>context = Σ α·a with values a=[1,3,5] = <b>" + cxt.toFixed(3) + "</b> (weighted average of the key values)."; };
+    draw();
   },
   title: "Attention",
   tagline: "Let the model focus on the most relevant input parts, with weights that add to 1.",

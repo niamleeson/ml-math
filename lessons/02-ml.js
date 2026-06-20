@@ -188,7 +188,80 @@ L({
 L({
   id: "ml-gradient-descent",
   demo: function (host) {
-    Demos.descent(host, { f: function (x) { return x * x; }, df: function (x) { return 2 * x; }, xmin: -5, xmax: 5, start: 4, lr: 0.1 });
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // J(a,b) = a^2 + 4 b^2 : an elliptical bowl, minimum at (0,0). gradient = (2a, 8b)
+    var A = 4, B = 5; // curvature
+    function J(a, b) { return A * a * a + B * b * b; }
+    var lr = 0.1, start = { a: 4.0, b: 3.0 };
+    var range = 5.5;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+
+    function PX(a) { return 30 + (a + range) / (2 * range) * (640 - 60); }
+    function PY(b) { return 20 + (range - b) / (2 * range) * (340 - 40); }
+
+    function path() {
+      var pts = [{ a: start.a, b: start.b }];
+      var a = start.a, b = start.b;
+      for (var i = 0; i < 40; i++) {
+        var ga = 2 * A * a, gb = 2 * B * b;
+        a = a - lr * ga; b = b - lr * gb;
+        if (!isFinite(a) || !isFinite(b) || Math.abs(a) > 50 || Math.abs(b) > 50) { pts.push({ a: Math.max(-range * 2, Math.min(range * 2, a)), b: Math.max(-range * 2, Math.min(range * 2, b)) }); break; }
+        pts.push({ a: a, b: b });
+        if (Math.abs(a) < 0.01 && Math.abs(b) < 0.01) break;
+      }
+      return pts;
+    }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, 640, 340);
+      // contour rings: level sets J = c (ellipses)
+      var levels = [0.5, 2, 5, 10, 20, 35, 55];
+      ctx.lineWidth = 1;
+      for (var li = 0; li < levels.length; li++) {
+        var c = levels[li];
+        ctx.strokeStyle = col.accent + "55"; ctx.beginPath();
+        var first = true;
+        for (var th = 0; th <= 64; th++) {
+          var ang = th / 64 * Math.PI * 2;
+          var a = Math.sqrt(c / A) * Math.cos(ang);
+          var b = Math.sqrt(c / B) * Math.sin(ang);
+          var X = PX(a), Y = PY(b);
+          if (first) { ctx.moveTo(X, Y); first = false; } else ctx.lineTo(X, Y);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+      // minimum marker
+      ctx.fillStyle = col.accent2; ctx.beginPath(); ctx.arc(PX(0), PY(0), 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("minimum", PX(0) + 8, PY(0) + 4);
+      // descent path
+      var pts = path();
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.beginPath();
+      for (var i = 0; i < pts.length; i++) { var X = PX(pts[i].a), Y = PY(pts[i].b); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+      ctx.stroke();
+      for (var k = 0; k < pts.length; k++) {
+        ctx.fillStyle = (k === 0) ? col.purple : col.warn;
+        ctx.beginPath(); ctx.arc(PX(pts[k].a), PY(pts[k].b), (k === 0 ? 5 : 3), 0, Math.PI * 2); ctx.fill();
+      }
+      var last = pts[pts.length - 1];
+      var diverged = Math.abs(last.a) > range || Math.abs(last.b) > range;
+      var msg = "Each orange dot is one step. The arrow walks downhill, opposite the gradient, toward the green minimum.";
+      if (lr < 0.04) msg = "Learning rate is tiny: steps barely move, descent crawls. It is safe but slow.";
+      else if (diverged || lr > 0.18) msg = "Learning rate too big: steps overshoot the valley and zig-zag OUTWARD — the path diverges instead of settling.";
+      else msg = "Good learning rate: the path spirals smoothly into the minimum in a few steps.";
+      readout.innerHTML = "θ ← θ − α·∇J, with α = <b>" + lr.toFixed(3) + "</b>. " + msg;
+    }
+
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "learning rate α ";
+    var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = lr.toFixed(3); lab.appendChild(span);
+    var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = 0.01; inp.max = 0.26; inp.step = 0.005; inp.value = lr;
+    inp.addEventListener("input", function () { lr = parseFloat(inp.value); span.textContent = lr.toFixed(3); render(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    render();
   },
   title: "Gradient descent",
   tagline: "Walk downhill on the cost. Each step, move opposite the slope.",
@@ -353,12 +426,67 @@ L({
 L({
   id: "ml-logistic-regression",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: -6, xmax: 6, ymin: 0, ymax: 1,
-      curves: [{ f: function (z) { return 1 / (1 + Math.exp(-z)); }, label: "sigmoid σ(z)" }],
-      drag: { curve: 0, start: 0, label: "score z = θᵀx",
-        readout: function (z, y) { return "σ(" + z.toFixed(2) + ") = 1/(1+e^(−z)) = <b>" + y.toFixed(3) + "</b> — the predicted probability. z = 0 gives exactly 0.5."; } }
-    });
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    function sig(z) { return 1 / (1 + Math.exp(-z)); }
+    // 1-D labeled data: label 0 mostly on the left, label 1 mostly on the right
+    var data = [
+      { x: -4.5, y: 0 }, { x: -3.6, y: 0 }, { x: -3.0, y: 0 }, { x: -2.2, y: 0 }, { x: -1.6, y: 0 }, { x: -0.8, y: 1 },
+      { x: 0.4, y: 0 }, { x: 0.9, y: 1 }, { x: 1.7, y: 1 }, { x: 2.4, y: 1 }, { x: 3.1, y: 1 }, { x: 4.2, y: 1 }
+    ];
+    var thresh = 0.5; // decision probability threshold; maps to z = logit(p)
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var xmin = -6, xmax = 6, padL = 40, padR = 20, padT = 18, padB = 32, W = 640, H = 320;
+    function PX(x) { return padL + (x - xmin) / (xmax - xmin) * (W - padL - padR); }
+    function PY(p) { return (H - padB) - p * (H - padT - padB); }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      // axes + gridlines at 0 and 1
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padL, PY(0)); ctx.lineTo(W - padR, PY(0)); ctx.moveTo(padL, PY(1)); ctx.lineTo(W - padR, PY(1)); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(0), PY(1)); ctx.stroke();
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText("p=1", padL - 6, PY(1) + 4); ctx.fillText("p=0", padL - 6, PY(0) + 4);
+      // sigmoid curve
+      ctx.strokeStyle = col.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+      var first = true;
+      for (var i = 0; i <= 240; i++) { var x = xmin + (xmax - xmin) * i / 240; var p = sig(x); if (first) { ctx.moveTo(PX(x), PY(p)); first = false; } else ctx.lineTo(PX(x), PY(p)); }
+      ctx.stroke();
+      // decision threshold: p = thresh -> z* where sigmoid crosses
+      var zStar = Math.log(thresh / (1 - thresh));
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(padL, PY(thresh)); ctx.lineTo(W - padR, PY(thresh)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(PX(zStar), PY(0)); ctx.lineTo(PX(zStar), PY(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = col.warn; ctx.textAlign = "center"; ctx.fillText("decide 1", PX(zStar) + 50, PY(1) + 14); ctx.fillText("decide 0", PX(zStar) - 50, PY(1) + 14);
+      // data points at p=0 / p=1 rows (jittered slightly off the line for visibility)
+      var correct = 0;
+      for (var k = 0; k < data.length; k++) {
+        var d = data[k]; var py = d.y === 1 ? PY(0.97) : PY(0.03);
+        var pred = (d.x >= zStar) ? 1 : 0;
+        var ok = pred === d.y; if (ok) correct++;
+        ctx.fillStyle = d.y === 1 ? col.accent2 : col.accent;
+        ctx.beginPath(); ctx.arc(PX(d.x), py, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = ok ? col.panel : col.warn; ctx.lineWidth = ok ? 1.5 : 2.5; ctx.stroke();
+      }
+      ctx.fillStyle = col.dim; ctx.textAlign = "center"; ctx.fillText("score z = θᵀx", W / 2, H - 8);
+      readout.innerHTML = "The blue curve squashes the score z into a probability σ(z). Threshold = <b>p = " + thresh.toFixed(2) + "</b> draws the vertical decision line at z = " + zStar.toFixed(2) + ": right of it predict 1, left predict 0. Bottom row = true 0s (blue), top row = true 1s (green); orange rings mark misclassified points. Correct here: <b>" + correct + "/" + data.length + "</b>. Drag the dashed line to move the threshold.";
+    }
+    function setFromY(clientY) {
+      var r = cv.getBoundingClientRect(); var scale = cv.height / r.height;
+      var y = (clientY - r.top) * scale;
+      var p = (PYinv(y));
+      thresh = Math.max(0.05, Math.min(0.95, p)); render();
+    }
+    function PYinv(y) { return ((H - padB) - y) / (H - padT - padB); }
+    var dragging = false;
+    cv.addEventListener("mousedown", function () { dragging = true; });
+    window.addEventListener("mousemove", function (e) { if (dragging) setFromY(e.clientY); });
+    window.addEventListener("mouseup", function () { dragging = false; });
+    cv.addEventListener("touchstart", function (e) { dragging = true; if (e.touches[0]) setFromY(e.touches[0].clientY); });
+    cv.addEventListener("touchmove", function (e) { if (dragging && e.touches[0]) { setFromY(e.touches[0].clientY); e.preventDefault(); } });
+    render();
   },
   title: "Logistic regression",
   tagline: "Squash a score into a probability between 0 and 1. Classify by it.",
@@ -599,13 +727,71 @@ L({
 L({
   id: "ml-kernels",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: 0, xmax: 6, ymin: 0, ymax: 1,
-      controls: [{ key: "sigma", label: "width σ", min: 0.3, max: 3, val: 1, step: 0.1 }],
-      curves: [{ f: function (d, s) { return Math.exp(-(d * d) / (2 * s.sigma * s.sigma)); }, label: "K = e^(−d²/2σ²)" }],
-      drag: { curve: 0, start: 2, label: "distance d",
-        readout: function (d, y, s) { return "K(d = " + d.toFixed(2) + ") = e^(−" + (d * d).toFixed(2) + "/(2·" + (s.sigma * s.sigma).toFixed(2) + ")) = <b>" + y.toFixed(3) + "</b>. K = 1 at d = 0 (identical), fading to 0 as points separate. Bigger σ = wider, smoother bump."; } }
-    });
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // 1-D data on a line, x in [-3,3]. inner class (|x|<1.3) is one color, outer is another.
+    // Not separable by a single point on the line. Lift to z = x^2 -> separable by horizontal line.
+    var data = [];
+    for (var x = -2.8; x <= 2.81; x += 0.4) {
+      var c = (Math.abs(x) < 1.3) ? 1 : 0;
+      data.push({ x: Math.round(x * 100) / 100, c: c });
+    }
+    var lifted = false;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 40, W = 640, H = 320;
+    function PX(x) { return pad + (x + 3) / 6 * (W - 2 * pad); }
+    var threshZ = 1.69; // x^2 boundary at |x| ~ 1.3
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      ctx.font = "13px sans-serif";
+      if (!lifted) {
+        // INPUT SPACE: a number line. show points; no single split works.
+        var yLine = H / 2;
+        ctx.strokeStyle = col.border; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(PX(-3), yLine); ctx.lineTo(PX(3), yLine); ctx.stroke();
+        for (var t = -3; t <= 3; t++) { var X = PX(t); ctx.strokeStyle = col.border; ctx.beginPath(); ctx.moveTo(X, yLine - 4); ctx.lineTo(X, yLine + 4); ctx.stroke(); ctx.fillStyle = col.dim; ctx.textAlign = "center"; ctx.fillText(String(t), X, yLine + 22); }
+        for (var i = 0; i < data.length; i++) {
+          ctx.fillStyle = data[i].c === 1 ? col.accent2 : col.accent;
+          ctx.beginPath(); ctx.arc(PX(data[i].x), yLine, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = col.panel; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        ctx.fillStyle = col.ink; ctx.textAlign = "center"; ctx.fillText("input space:  feature x on a line", W / 2, 36);
+        ctx.fillStyle = col.warn; ctx.fillText("green sits BETWEEN blue — no single point on the line separates them", W / 2, H - 24);
+        readout.innerHTML = "On the raw line, the green class (inner) is surrounded by the blue class (outer). No single threshold splits them. Click the button to lift each point to a new feature z = x².";
+      } else {
+        // FEATURE SPACE: plot (x, z=x^2). a horizontal line separates classes.
+        var x0 = pad, x1 = W - 20, y0 = 24, y1 = H - 40;
+        function FX(x) { return x0 + (x + 3) / 6 * (x1 - x0); }
+        function FY(z) { return y1 - (z / 9) * (y1 - y0); }
+        ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.stroke();
+        ctx.fillStyle = col.dim; ctx.textAlign = "center"; ctx.fillText("x", (x0 + x1) / 2, H - 22);
+        ctx.save(); ctx.translate(14, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("z = x²", 0, 0); ctx.restore();
+        // separating line z = threshZ
+        ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, FY(threshZ)); ctx.lineTo(x1, FY(threshZ)); ctx.stroke(); ctx.setLineDash([]);
+        // the parabola guide
+        ctx.strokeStyle = col.dim + "66"; ctx.lineWidth = 1; ctx.beginPath();
+        var first = true;
+        for (var xx = -3; xx <= 3.01; xx += 0.05) { var Z = xx * xx; if (first) { ctx.moveTo(FX(xx), FY(Z)); first = false; } else ctx.lineTo(FX(xx), FY(Z)); }
+        ctx.stroke();
+        for (var k = 0; k < data.length; k++) {
+          var z = data[k].x * data[k].x;
+          ctx.fillStyle = data[k].c === 1 ? col.accent2 : col.accent;
+          ctx.beginPath(); ctx.arc(FX(data[k].x), FY(z), 7, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = col.panel; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        ctx.fillStyle = col.ink; ctx.textAlign = "center"; ctx.fillText("feature space:  lift to z = x²", W / 2, 18);
+        readout.innerHTML = "Lifted to z = x², the green class (low z, near 0) sits BELOW the blue class (high z). A single straight line z = " + threshZ.toFixed(2) + " now separates them. The kernel trick computes dot products in this lifted space without ever building the features by hand.";
+      }
+    }
+    var btn = document.createElement("button"); btn.textContent = "lift to feature space"; btn.style.margin = "6px 0";
+    btn.addEventListener("click", function () { lifted = !lifted; btn.textContent = lifted ? "back to input space" : "lift to feature space"; render(); });
+    host.appendChild(btn);
+    render();
   },
   title: "The kernel trick",
   tagline: "Draw curved boundaries without ever building the curved features.",
@@ -779,21 +965,106 @@ L({
 L({
   id: "ml-trees",
   demo: function (host) {
-    Demos.calc(host, {
-      bars: true,
-      inputs: [{ key: "p", label: "class proportion p", min: 0, max: 1, val: 0.5, step: 0.01 }],
-      compute: function (s) {
-        var p = s.p;
-        var gini = 2 * p * (1 - p);
-        var entropy = 0;
-        if (p > 0 && p < 1) entropy = -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
-        return {
-          text: "For two classes with fractions p and 1−p: <br>Gini = 2p(1−p) = <b>" + gini.toFixed(3) + "</b> (max 0.5). <br>Entropy = −p·log₂p − (1−p)·log₂(1−p) = <b>" + entropy.toFixed(3) + "</b> (max 1). Both are 0 when pure (p = 0 or 1) and peak when p = 0.5.",
-          bars: [{ label: "Gini", val: gini, color: "#4ea1ff" }, { label: "Entropy", val: entropy, color: "#7ee787" }],
-          max: 1
-        };
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // two interleaved classes on [0,1]^2. Class label via a curvy true boundary + noise.
+    var pts = [];
+    var seed = 1234567;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    for (var i = 0; i < 80; i++) {
+      var x = rnd(), y = rnd();
+      // true region: class 1 if y > 0.5 + 0.28*sin(2*pi*x), with a little label noise
+      var boundary = 0.5 + 0.28 * Math.sin(2 * Math.PI * x);
+      var c = (y > boundary) ? 1 : 0;
+      if (rnd() < 0.08) c = 1 - c; // noise -> lets deep trees overfit
+      pts.push({ x: x, y: y, c: c });
+    }
+    var depth = 3;
+    var cv = document.createElement("canvas"); cv.width = 360; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 24, W = 360, H = 340;
+    function PX(x) { return pad + x * (W - 2 * pad); }
+    function PY(y) { return (H - pad) - y * (H - 2 * pad); }
+
+    // greedy CART: recursively split a box by best axis-aligned threshold (gini)
+    function gini(sub) {
+      if (sub.length === 0) return 0;
+      var n1 = 0; for (var i = 0; i < sub.length; i++) if (sub[i].c === 1) n1++;
+      var p = n1 / sub.length; return 2 * p * (1 - p);
+    }
+    function majority(sub) {
+      var n1 = 0; for (var i = 0; i < sub.length; i++) if (sub[i].c === 1) n1++;
+      return (n1 >= sub.length - n1) ? 1 : 0;
+    }
+    function build(sub, box, d) {
+      var node = { box: box, label: majority(sub) };
+      if (d <= 0 || sub.length < 3 || gini(sub) < 1e-6) return node;
+      var best = null;
+      ["x", "y"].forEach(function (ax) {
+        var vals = sub.map(function (p) { return p[ax]; }).sort(function (a, b) { return a - b; });
+        for (var i = 1; i < vals.length; i++) {
+          var thr = (vals[i - 1] + vals[i]) / 2;
+          var L = sub.filter(function (p) { return p[ax] <= thr; });
+          var R = sub.filter(function (p) { return p[ax] > thr; });
+          if (L.length === 0 || R.length === 0) continue;
+          var imp = (L.length * gini(L) + R.length * gini(R)) / sub.length;
+          if (!best || imp < best.imp) best = { ax: ax, thr: thr, imp: imp, L: L, R: R };
+        }
+      });
+      if (!best) return node;
+      var lbox, rbox;
+      if (best.ax === "x") { lbox = { x0: box.x0, x1: best.thr, y0: box.y0, y1: box.y1 }; rbox = { x0: best.thr, x1: box.x1, y0: box.y0, y1: box.y1 }; }
+      else { lbox = { x0: box.x0, x1: box.x1, y0: box.y0, y1: best.thr }; rbox = { x0: box.x0, x1: box.x1, y0: best.thr, y1: box.y1 }; }
+      node.ax = best.ax; node.thr = best.thr;
+      node.left = build(best.L, lbox, d - 1);
+      node.right = build(best.R, rbox, d - 1);
+      return node;
+    }
+    function leaves(node, acc) {
+      if (!node.left) { acc.push(node); return acc; }
+      leaves(node.left, acc); leaves(node.right, acc); return acc;
+    }
+    function predict(node, p) {
+      while (node.left) { node = (p[node.ax] <= node.thr) ? node.left : node.right; }
+      return node.label;
+    }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      var root = build(pts, { x0: 0, x1: 1, y0: 0, y1: 1 }, depth);
+      var lvs = leaves(root, []);
+      // fill leaf regions by predicted class
+      for (var i = 0; i < lvs.length; i++) {
+        var b = lvs[i].box;
+        ctx.fillStyle = (lvs[i].label === 1) ? (col.accent2 + "33") : (col.accent + "33");
+        var X0 = PX(b.x0), X1 = PX(b.x1), Y0 = PY(b.y1), Y1 = PY(b.y0);
+        ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
+        ctx.strokeStyle = col.border; ctx.lineWidth = 1; ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
       }
-    });
+      // points
+      for (var k = 0; k < pts.length; k++) {
+        ctx.fillStyle = (pts[k].c === 1) ? col.accent2 : col.accent;
+        ctx.beginPath(); ctx.arc(PX(pts[k].x), PY(pts[k].y), 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = col.panel; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // training accuracy
+      var correct = 0; for (var m = 0; m < pts.length; m++) if (predict(root, pts[m]) === pts[m].c) correct++;
+      var acc = correct / pts.length;
+      var msg;
+      if (depth <= 1) msg = "Depth 1: one split, a coarse boundary. The tree is too simple — it underfits.";
+      else if (depth >= 6) msg = "Deep tree: many tiny rectangles carve out single noisy points — that is overfitting. Great on train, poor on new data.";
+      else msg = "Moderate depth: the staircase of rectangles tracks the real boundary well.";
+      readout.innerHTML = "Tree depth = <b>" + depth + "</b>, " + lvs.length + " leaf regions. Each split is one axis-aligned line; leaves are colored by predicted class. Train accuracy = <b>" + (acc * 100).toFixed(1) + "%</b>. " + msg;
+    }
+
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "tree depth ";
+    var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = String(depth); lab.appendChild(span);
+    var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = 1; inp.max = 8; inp.step = 1; inp.value = depth;
+    inp.addEventListener("input", function () { depth = parseInt(inp.value, 10); span.textContent = String(depth); render(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    render();
   },
   title: "Decision trees (CART)",
   tagline: "Ask yes/no questions, split the data, repeat. Easy to read.",
@@ -969,16 +1240,95 @@ L({
 L({
   id: "ml-bias-variance",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: 0.2, xmax: 10, ymin: 0, ymax: 6,
-      curves: [
-        { f: function (c) { return 4 / c; }, label: "bias² (falls)" },
-        { f: function (c) { return 0.06 * c * c; }, label: "variance (rises)" },
-        { f: function (c) { return 4 / c + 0.06 * c * c; }, label: "total (U-shape)" }
-      ],
-      drag: { curve: 2, start: 4, label: "model complexity",
-        readout: function (c, y) { return "At complexity " + c.toFixed(2) + ": bias² = " + (4 / c).toFixed(3) + ", variance = " + (0.06 * c * c).toFixed(3) + ", total = <b>" + y.toFixed(3) + "</b>. The total is U-shaped — best at the bottom, where bias² + variance is smallest."; } }
-    });
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // noisy data from a smooth true curve; fit polynomials of degree = complexity
+    var seed = 42;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    function trueF(x) { return 0.6 + 0.9 * Math.sin(1.1 * x); }
+    var data = [];
+    for (var i = 0; i < 11; i++) { var x = i / 10 * 6 - 0.2; data.push({ x: x, y: trueF(x) + (rnd() - 0.5) * 0.7 }); }
+    // polynomial least-squares fit (normal equations, small degrees) via Gaussian elimination
+    function polyfit(deg) {
+      var N = deg + 1, X = [], Y = [];
+      for (var r = 0; r < N; r++) { X.push(new Array(N).fill(0)); Y.push(0); }
+      for (var k = 0; k < data.length; k++) {
+        var xs = [1]; for (var p = 1; p < 2 * N; p++) xs.push(xs[p - 1] * data[k].x);
+        for (var a = 0; a < N; a++) { for (var b = 0; b < N; b++) X[a][b] += xs[a + b]; Y[a] += xs[a] * data[k].y; }
+      }
+      // solve X c = Y
+      for (var col = 0; col < N; col++) {
+        var piv = col; for (var r2 = col + 1; r2 < N; r2++) if (Math.abs(X[r2][col]) > Math.abs(X[piv][col])) piv = r2;
+        var tmp = X[col]; X[col] = X[piv]; X[piv] = tmp; var ty = Y[col]; Y[col] = Y[piv]; Y[piv] = ty;
+        if (Math.abs(X[col][col]) < 1e-9) continue;
+        for (var r3 = 0; r3 < N; r3++) { if (r3 === col) continue; var f = X[r3][col] / X[col][col]; for (var c2 = col; c2 < N; c2++) X[r3][c2] -= f * X[col][c2]; Y[r3] -= f * Y[col]; }
+      }
+      var c = []; for (var d = 0; d < N; d++) c.push(Math.abs(X[d][d]) < 1e-9 ? 0 : Y[d] / X[d][d]);
+      return c;
+    }
+    function evalp(c, x) { var s = 0, xp = 1; for (var i = 0; i < c.length; i++) { s += c[i] * xp; xp *= x; } return s; }
+    var degree = 3;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 220; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var uc = document.createElement("canvas"); uc.width = 640; uc.height = 170; uc.style.maxWidth = "100%"; host.appendChild(uc);
+    var uctx = uc.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 30, W = 640;
+    function PX(x) { return pad + (x + 0.2) / 6 * (W - 2 * pad); }
+    function PY(y) { return (220 - 25) - (y + 1) / 4 * (220 - 50); }
+
+    function bias2(d) { return 1.3 / (d + 0.7); }
+    function variance(d) { return 0.05 + 0.022 * d * d; }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, 220);
+      // axes
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad, PY(-1)); ctx.lineTo(W - pad, PY(-1)); ctx.stroke();
+      // true curve
+      ctx.strokeStyle = col.dim; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath();
+      var first = true;
+      for (var x = -0.2; x <= 5.81; x += 0.05) { if (first) { ctx.moveTo(PX(x), PY(trueF(x))); first = false; } else ctx.lineTo(PX(x), PY(trueF(x))); }
+      ctx.stroke(); ctx.setLineDash([]);
+      // fitted poly of current degree
+      var c = polyfit(degree);
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5; ctx.beginPath(); first = true;
+      for (var xx = -0.2; xx <= 5.81; xx += 0.03) { var yv = evalp(c, xx); yv = Math.max(-1.2, Math.min(3.2, yv)); if (first) { ctx.moveTo(PX(xx), PY(yv)); first = false; } else ctx.lineTo(PX(xx), PY(yv)); }
+      ctx.stroke();
+      // data points
+      for (var k = 0; k < data.length; k++) { ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(data[k].x), PY(data[k].y), 4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = col.panel; ctx.lineWidth = 1; ctx.stroke(); }
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left"; ctx.fillText("dashed = true pattern, orange = fitted degree-" + degree + " model", pad, 18);
+
+      // U-curve panel
+      uctx.clearRect(0, 0, 640, 170);
+      var upad = 36, uy0 = 14, uy1 = 170 - 28;
+      function UX(d) { return upad + (d - 1) / 8 * (640 - upad - 16); }
+      function UY(v) { return uy1 - v / 2.4 * (uy1 - uy0); }
+      uctx.strokeStyle = col.border; uctx.beginPath(); uctx.moveTo(upad, uy1); uctx.lineTo(640 - 16, uy1); uctx.moveTo(upad, uy0); uctx.lineTo(upad, uy1); uctx.stroke();
+      function ucurve(fn, color) { uctx.strokeStyle = color; uctx.lineWidth = 2; uctx.beginPath(); var f2 = true; for (var dd = 1; dd <= 9; dd += 0.1) { var Y = UY(fn(dd)); if (f2) { uctx.moveTo(UX(dd), Y); f2 = false; } else uctx.lineTo(UX(dd), Y); } uctx.stroke(); }
+      ucurve(bias2, col.accent);
+      ucurve(variance, col.accent2);
+      ucurve(function (d) { return bias2(d) + variance(d); }, col.warn);
+      // marker at current degree
+      var tot = bias2(degree) + variance(degree);
+      uctx.strokeStyle = col.purple; uctx.setLineDash([4, 3]); uctx.beginPath(); uctx.moveTo(UX(degree), uy0); uctx.lineTo(UX(degree), uy1); uctx.stroke(); uctx.setLineDash([]);
+      uctx.fillStyle = col.purple; uctx.beginPath(); uctx.arc(UX(degree), UY(tot), 5, 0, Math.PI * 2); uctx.fill();
+      uctx.fillStyle = col.dim; uctx.font = "11px sans-serif"; uctx.textAlign = "left";
+      uctx.fillStyle = col.accent; uctx.fillText("bias²", 44, 18); uctx.fillStyle = col.accent2; uctx.fillText("variance", 90, 18); uctx.fillStyle = col.warn; uctx.fillText("total error", 160, 18);
+      uctx.fillStyle = col.dim; uctx.textAlign = "center"; uctx.fillText("model complexity (polynomial degree) →", 320, 168);
+
+      var msg;
+      if (degree <= 1) msg = "Degree " + degree + ": too simple — the line cannot bend to the curve. High bias, underfitting.";
+      else if (degree >= 6) msg = "Degree " + degree + ": too flexible — the curve wiggles through noise. High variance, overfitting.";
+      else msg = "Degree " + degree + ": just right — the fit tracks the true pattern without chasing noise. Near the bottom of the U.";
+      readout.innerHTML = "bias² = " + bias2(degree).toFixed(3) + ", variance = " + variance(degree).toFixed(3) + ", total = <b>" + tot.toFixed(3) + "</b>. " + msg;
+    }
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "model complexity (degree) ";
+    var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = String(degree); lab.appendChild(span);
+    var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = 1; inp.max = 9; inp.step = 1; inp.value = degree;
+    inp.addEventListener("input", function () { degree = parseInt(inp.value, 10); span.textContent = String(degree); render(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    render();
   },
   title: "Bias-variance tradeoff",
   tagline: "Too simple underfits. Too complex overfits. Aim for the middle.",
@@ -1258,34 +1608,64 @@ L({
 L({
   id: "ml-pca",
   demo: function (host) {
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
     var P = [
       { x: 1, y: 1.2 }, { x: 2, y: 1.8 }, { x: 3, y: 3.3 }, { x: 4, y: 3.8 },
       { x: 5, y: 5.4 }, { x: 6, y: 5.8 }, { x: 2.5, y: 3.0 }, { x: 4.5, y: 4.2 }
     ];
-    Demos.scatter(host, { points: P, init: function (api) {
-      // center
-      var mx = 0, my = 0; api.pts.forEach(function (p) { mx += p.x; my += p.y; }); mx /= api.pts.length; my /= api.pts.length;
-      // 2x2 covariance
-      var sxx = 0, sxy = 0, syy = 0;
-      api.pts.forEach(function (p) { var dx = p.x - mx, dy = p.y - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; });
-      var n = api.pts.length; sxx /= n; sxy /= n; syy /= n;
-      // eigenvalues of [[sxx,sxy],[sxy,syy]]
-      var tr = sxx + syy, det = sxx * syy - sxy * sxy;
-      var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
-      var l1 = tr / 2 + disc, l2 = tr / 2 - disc;
-      // top eigenvector: (sxy, l1 - sxx) (or fallback)
-      var vx = sxy, vy = l1 - sxx;
-      var vlen = Math.sqrt(vx * vx + vy * vy);
-      if (vlen < 1e-9) { vx = 1; vy = 0; vlen = 1; }
-      vx /= vlen; vy /= vlen;
-      var varExplained = (l1 + l2) > 0 ? l1 / (l1 + l2) : 1;
-      api.draw(function (ctx, col, px, py) {
-        ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5;
-        var t = 4;
-        ctx.beginPath(); ctx.moveTo(px(mx - vx * t), py(my - vy * t)); ctx.lineTo(px(mx + vx * t), py(my + vy * t)); ctx.stroke();
-      });
-      api.readout.innerHTML = "Orange line = first principal component (the direction of greatest spread). It captures <b>" + (varExplained * 100).toFixed(1) + "%</b> of the total variance (λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) + "). Projecting onto it reduces 2D to 1D while keeping most variation.";
-    } });
+    var mx = 0, my = 0; P.forEach(function (p) { mx += p.x; my += p.y; }); mx /= P.length; my /= P.length;
+    var sxx = 0, sxy = 0, syy = 0;
+    P.forEach(function (p) { var dx = p.x - mx, dy = p.y - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; });
+    var n = P.length; sxx /= n; sxy /= n; syy /= n;
+    var tr = sxx + syy, det = sxx * syy - sxy * sxy;
+    var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+    var l1 = tr / 2 + disc, l2 = tr / 2 - disc;
+    var v1x = sxy, v1y = l1 - sxx; var vl = Math.sqrt(v1x * v1x + v1y * v1y);
+    if (vl < 1e-9) { v1x = 1; v1y = 0; vl = 1; }
+    v1x /= vl; v1y /= vl;
+    var v2x = -v1y, v2y = v1x; // PC2 orthogonal
+    var varExp = (l1 + l2) > 0 ? l1 / (l1 + l2) : 1;
+    var len1 = Math.sqrt(l1) * 2.2, len2 = Math.sqrt(Math.max(l2, 0.0001)) * 2.2;
+
+    var cv = document.createElement("canvas"); cv.width = 420; cv.height = 320; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 30, W = 420, H = 320, lo = 0, hi = 7;
+    function PX(x) { return pad + (x - lo) / (hi - lo) * (W - 2 * pad); }
+    function PY(y) { return (H - pad) - (y - lo) / (hi - lo) * (H - 2 * pad); }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(hi), PY(0)); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(0), PY(hi)); ctx.stroke();
+      // projection segments onto PC1
+      for (var i = 0; i < P.length; i++) {
+        var dx = P[i].x - mx, dy = P[i].y - my;
+        var t = dx * v1x + dy * v1y; // coordinate along PC1
+        var projx = mx + t * v1x, projy = my + t * v1y;
+        ctx.strokeStyle = col.dim + "88"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(PX(P[i].x), PY(P[i].y)); ctx.lineTo(PX(projx), PY(projy)); ctx.stroke(); ctx.setLineDash([]);
+        // projected point on PC1
+        ctx.fillStyle = col.warn; ctx.beginPath(); ctx.arc(PX(projx), PY(projy), 3, 0, Math.PI * 2); ctx.fill();
+      }
+      // PC1 (long, orange) and PC2 (short, purple)
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(PX(mx - v1x * len1), PY(my - v1y * len1)); ctx.lineTo(PX(mx + v1x * len1), PY(my + v1y * len1)); ctx.stroke();
+      ctx.strokeStyle = col.purple; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(PX(mx - v2x * len2), PY(my - v2y * len2)); ctx.lineTo(PX(mx + v2x * len2), PY(my + v2y * len2)); ctx.stroke();
+      // points
+      for (var k = 0; k < P.length; k++) {
+        ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(P[k].x), PY(P[k].y), 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = col.panel; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // labels
+      ctx.fillStyle = col.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("PC1 (most spread)", PX(mx + v1x * len1) - 30, PY(my + v1y * len1) - 8);
+      ctx.fillStyle = col.purple; ctx.fillText("PC2", PX(mx + v2x * len2) + 4, PY(my + v2y * len2));
+      readout.innerHTML = "PC1 (orange, long) is the direction of greatest spread; PC2 (purple, short) is perpendicular. Orange dots = each point projected onto PC1 (dashed lines show the drop). λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) + " → PC1 explains <b>" + (varExp * 100).toFixed(1) + "%</b> of the variance, so keeping just PC1 turns 2D into 1D while losing only " + ((1 - varExp) * 100).toFixed(1) + "%.";
+    }
+    render();
   },
   title: "Principal component analysis (PCA)",
   tagline: "Find the directions of most spread. Keep them, drop the rest.",
@@ -1392,27 +1772,129 @@ L({
 L({
   id: "ml-classification-metrics",
   demo: function (host) {
-    Demos.calc(host, {
-      bars: true,
-      inputs: [
-        { key: "tp", label: "TP", min: 0, max: 100, val: 80, step: 1 },
-        { key: "fp", label: "FP", min: 0, max: 100, val: 20, step: 1 },
-        { key: "fn", label: "FN", min: 0, max: 100, val: 10, step: 1 },
-        { key: "tn", label: "TN", min: 0, max: 100, val: 90, step: 1 }
-      ],
-      compute: function (s) {
-        var prec = (s.tp + s.fp) > 0 ? s.tp / (s.tp + s.fp) : 0;
-        var rec = (s.tp + s.fn) > 0 ? s.tp / (s.tp + s.fn) : 0;
-        var f1 = (2 * s.tp + s.fp + s.fn) > 0 ? (2 * s.tp) / (2 * s.tp + s.fp + s.fn) : 0;
-        var tot = s.tp + s.fp + s.fn + s.tn;
-        var acc = tot > 0 ? (s.tp + s.tn) / tot : 0;
-        return {
-          text: "Precision = TP/(TP+FP) = <b>" + prec.toFixed(3) + "</b>. Recall = TP/(TP+FN) = <b>" + rec.toFixed(3) + "</b>. F1 = 2TP/(2TP+FP+FN) = <b>" + f1.toFixed(3) + "</b>. Accuracy = (TP+TN)/all = <b>" + acc.toFixed(3) + "</b>.",
-          bars: [{ label: "precision", val: prec }, { label: "recall", val: rec }, { label: "F1", val: f1 }, { label: "accuracy", val: acc }],
-          max: 1
-        };
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // two gaussian score distributions: negatives centered low, positives centered high
+    var N = 100; // per class
+    var negMu = 0.35, posMu = 0.65, sd = 0.16;
+    function gauss(x, mu) { var z = (x - mu) / sd; return Math.exp(-0.5 * z * z); }
+    var thresh = 0.5;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 200; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var matC = document.createElement("canvas"); matC.width = 640; matC.height = 240; matC.style.maxWidth = "100%"; host.appendChild(matC);
+    var mctx = matC.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+
+    function counts() {
+      // areas (counts) of each distribution above/below threshold, scaled to N
+      var stepN = 400, lo = 0, hi = 1, dx = (hi - lo) / stepN;
+      var sumP = 0, sumN = 0; var i, x;
+      for (i = 0; i < stepN; i++) { x = lo + (i + 0.5) * dx; sumP += gauss(x, posMu); sumN += gauss(x, negMu); }
+      var tp = 0, fn = 0, fp = 0, tn = 0;
+      for (i = 0; i < stepN; i++) {
+        x = lo + (i + 0.5) * dx;
+        var gp = gauss(x, posMu), gn = gauss(x, negMu);
+        if (x >= thresh) { tp += gp; fp += gn; } else { fn += gp; tn += gn; }
       }
-    });
+      tp = Math.round(N * tp / sumP); fn = N - tp;
+      tn = Math.round(N * tn / sumN); fp = N - tn;
+      return { tp: tp, fn: fn, fp: fp, tn: tn };
+    }
+
+    function drawDist() {
+      var col = C(); ctx.clearRect(0, 0, 640, 200);
+      var W = 640, H = 200, padL = 12, padR = 12, padT = 12, padB = 28;
+      var x0 = padL, x1 = W - padR, y0 = padT, y1 = H - padB;
+      function PX(x) { return x0 + x * (x1 - x0); }
+      var peak = 1.0;
+      function PY(v) { return y1 - (v / peak) * (y1 - y0); }
+      // axis
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); ctx.stroke();
+      // fill curves
+      function curve(mu, color) {
+        ctx.beginPath();
+        var first = true, i, x;
+        for (i = 0; i <= 200; i++) { x = i / 200; var Y = PY(gauss(x, mu)); if (first) { ctx.moveTo(PX(x), Y); first = false; } else ctx.lineTo(PX(x), Y); }
+        ctx.lineTo(PX(1), y1); ctx.lineTo(PX(0), y1); ctx.closePath();
+        ctx.fillStyle = color + "33"; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+        first = true;
+        for (i = 0; i <= 200; i++) { x = i / 200; var Yy = PY(gauss(x, mu)); if (first) { ctx.moveTo(PX(x), Yy); first = false; } else ctx.lineTo(PX(x), Yy); }
+        ctx.stroke();
+      }
+      curve(negMu, col.accent);   // negatives (blue)
+      curve(posMu, col.accent2);  // positives (green)
+      // threshold line
+      var tx = PX(thresh);
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(tx, y0); ctx.lineTo(tx, y1); ctx.stroke();
+      // handle
+      ctx.fillStyle = col.warn; ctx.beginPath(); ctx.arc(tx, y0 + 6, 6, 0, Math.PI * 2); ctx.fill();
+      // labels
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("negatives", PX(0.05), y0 + 14);
+      ctx.textAlign = "right";
+      ctx.fillText("positives", PX(0.95), y0 + 14);
+      ctx.textAlign = "center";
+      ctx.fillStyle = col.warn; ctx.fillText("threshold = " + thresh.toFixed(2) + "  (drag)", tx, y1 + 18);
+    }
+
+    function cell(x, y, w, h, label, val, color, sub) {
+      var col = C();
+      mctx.fillStyle = color + "2a"; mctx.fillRect(x, y, w, h);
+      mctx.strokeStyle = color; mctx.lineWidth = 2; mctx.strokeRect(x, y, w, h);
+      mctx.textAlign = "center";
+      mctx.fillStyle = col.dim; mctx.font = "12px sans-serif";
+      mctx.fillText(label, x + w / 2, y + 20);
+      mctx.fillStyle = col.ink; mctx.font = "bold 30px sans-serif";
+      mctx.fillText(String(val), x + w / 2, y + h / 2 + 14);
+      mctx.fillStyle = col.dim; mctx.font = "11px sans-serif";
+      mctx.fillText(sub, x + w / 2, y + h - 10);
+    }
+
+    function drawMatrix(c) {
+      var col = C(); mctx.clearRect(0, 0, 640, 240);
+      var gx = 150, gy = 28, cw = 180, ch = 88, gap = 8;
+      mctx.fillStyle = col.dim; mctx.font = "12px sans-serif"; mctx.textAlign = "center";
+      mctx.fillText("predicted positive", gx + cw / 2, gy - 10);
+      mctx.fillText("predicted negative", gx + cw + gap + cw / 2, gy - 10);
+      mctx.save(); mctx.translate(gx - 24, gy + ch / 2); mctx.rotate(-Math.PI / 2); mctx.fillText("actual +", 0, 0); mctx.restore();
+      mctx.save(); mctx.translate(gx - 24, gy + ch + gap + ch / 2); mctx.rotate(-Math.PI / 2); mctx.fillText("actual −", 0, 0); mctx.restore();
+      // top row: actual positive
+      cell(gx, gy, cw, ch, "True Positive", c.tp, "#7ee787", "correctly caught");
+      cell(gx + cw + gap, gy, cw, ch, "False Negative", c.fn, "#ff6b6b", "missed positives");
+      // bottom row: actual negative
+      cell(gx, gy + ch + gap, cw, ch, "False Positive", c.fp, "#ff6b6b", "false alarms");
+      cell(gx + cw + gap, gy + ch + gap, cw, ch, "True Negative", c.tn, "#7ee787", "correctly cleared");
+    }
+
+    function render() {
+      var c = counts();
+      drawDist(); drawMatrix(c);
+      var prec = (c.tp + c.fp) > 0 ? c.tp / (c.tp + c.fp) : 0;
+      var rec = (c.tp + c.fn) > 0 ? c.tp / (c.tp + c.fn) : 0;
+      var f1 = (prec + rec) > 0 ? 2 * prec * rec / (prec + rec) : 0;
+      var tot = c.tp + c.fp + c.fn + c.tn;
+      var acc = tot > 0 ? (c.tp + c.tn) / tot : 0;
+      readout.innerHTML = "Precision = TP/(TP+FP) = <b>" + prec.toFixed(3) + "</b> &nbsp; Recall = TP/(TP+FN) = <b>" + rec.toFixed(3) + "</b> &nbsp; F1 = <b>" + f1.toFixed(3) + "</b> &nbsp; Accuracy = <b>" + acc.toFixed(3) + "</b>.<br>Slide the threshold right: fewer false alarms (FP down) but more missed (FN up) — precision rises, recall falls.";
+    }
+
+    function setFromX(clientX) {
+      var r = cv.getBoundingClientRect();
+      var scale = cv.width / r.width;
+      var x = (clientX - r.left) * scale;
+      var t = (x - 12) / (640 - 24);
+      thresh = Math.max(0.02, Math.min(0.98, t));
+      render();
+    }
+    var dragging = false;
+    cv.addEventListener("mousedown", function (e) { dragging = true; setFromX(e.clientX); });
+    window.addEventListener("mousemove", function (e) { if (dragging) setFromX(e.clientX); });
+    window.addEventListener("mouseup", function () { dragging = false; });
+    cv.addEventListener("touchstart", function (e) { dragging = true; if (e.touches[0]) setFromX(e.touches[0].clientX); });
+    cv.addEventListener("touchmove", function (e) { if (dragging && e.touches[0]) { setFromX(e.touches[0].clientX); e.preventDefault(); } });
+    render();
   },
   title: "Confusion matrix & classification metrics",
   tagline: "Count the right and wrong predictions, then score the classifier.",
@@ -1458,16 +1940,107 @@ L({
 L({
   id: "ml-roc-auc",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: 0, xmax: 1, ymin: 0, ymax: 1,
-      controls: [{ key: "q", label: "classifier quality", min: 0.5, max: 1, val: 0.8, step: 0.01 }],
-      curves: [
-        { f: function (fpr, s) { var p = (1 - s.q) / s.q; return Math.pow(fpr, p); }, label: "ROC" },
-        { f: function (fpr) { return fpr; }, label: "random 0.5", color: "#9aa7b4" }
-      ],
-      drag: { curve: 0, start: 0.3, label: "FPR (false positive rate)",
-        readout: function (fpr, tpr, s) { return "At FPR = " + fpr.toFixed(2) + ", TPR = <b>" + tpr.toFixed(3) + "</b>. A curve hugging the top-left is great. AUC = the probability a random positive is ranked above a random negative (here quality ≈ " + s.q.toFixed(2) + "; 1.0 perfect, 0.5 = the diagonal = random)."; } }
-    });
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    var negMu = 0.4, posMu = 0.6, sd = 0.15;
+    function gauss(x, mu) { var z = (x - mu) / sd; return Math.exp(-0.5 * z * z); }
+    // for a threshold t: TPR = P(score>=t | positive), FPR = P(score>=t | negative)
+    function rates(t) {
+      var stepN = 300, lo = -0.3, hi = 1.3, dx = (hi - lo) / stepN;
+      var sumP = 0, sumN = 0, tp = 0, fp = 0, i, x;
+      for (i = 0; i < stepN; i++) { x = lo + (i + 0.5) * dx; sumP += gauss(x, posMu); sumN += gauss(x, negMu); }
+      for (i = 0; i < stepN; i++) { x = lo + (i + 0.5) * dx; if (x >= t) { tp += gauss(x, posMu); fp += gauss(x, negMu); } }
+      return { tpr: sumP > 0 ? tp / sumP : 0, fpr: sumN > 0 ? fp / sumN : 0 };
+    }
+    // precompute ROC by sweeping threshold high->low so FPR increases
+    var roc = [];
+    for (var k = 0; k <= 120; k++) { var tt = 1.3 - (k / 120) * 1.6; var r = rates(tt); roc.push({ t: tt, fpr: r.fpr, tpr: r.tpr }); }
+    // AUC by trapezoid over fpr
+    var auc = 0;
+    for (var j = 1; j < roc.length; j++) { auc += (roc[j].fpr - roc[j - 1].fpr) * (roc[j].tpr + roc[j - 1].tpr) / 2; }
+    auc = Math.max(0, Math.min(1, auc));
+
+    var thresh = 0.5;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 170; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var rc = document.createElement("canvas"); rc.width = 640; rc.height = 280; rc.style.maxWidth = "100%"; host.appendChild(rc);
+    var rctx = rc.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+
+    function drawDist() {
+      var col = C(); ctx.clearRect(0, 0, 640, 170);
+      var W = 640, H = 170, padL = 12, padR = 12, y0 = 12, y1 = H - 26;
+      function PX(x) { return padL + x * (W - padL - padR); }
+      function PY(v) { return y1 - v * (y1 - y0); }
+      ctx.strokeStyle = col.border; ctx.beginPath(); ctx.moveTo(PX(0), y1); ctx.lineTo(PX(1), y1); ctx.stroke();
+      function curve(mu, color) {
+        ctx.beginPath(); var first = true, i, x;
+        for (i = 0; i <= 200; i++) { x = i / 200; var Y = PY(gauss(x, mu)); if (first) { ctx.moveTo(PX(x), Y); first = false; } else ctx.lineTo(PX(x), Y); }
+        ctx.lineTo(PX(1), y1); ctx.lineTo(PX(0), y1); ctx.closePath(); ctx.fillStyle = color + "33"; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); first = true;
+        for (i = 0; i <= 200; i++) { x = i / 200; var Yy = PY(gauss(x, mu)); if (first) { ctx.moveTo(PX(x), Yy); first = false; } else ctx.lineTo(PX(x), Yy); }
+        ctx.stroke();
+      }
+      curve(negMu, col.accent); curve(posMu, col.accent2);
+      var tx = PX(thresh);
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(tx, y0); ctx.lineTo(tx, y1); ctx.stroke();
+      ctx.fillStyle = col.warn; ctx.beginPath(); ctx.arc(tx, y0 + 6, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("negatives", PX(0.02), y0 + 12); ctx.textAlign = "right"; ctx.fillText("positives", PX(0.98), y0 + 12);
+      ctx.textAlign = "center"; ctx.fillStyle = col.warn; ctx.fillText("threshold (drag)", tx, y1 + 18);
+    }
+
+    function drawROC() {
+      var col = C(); rctx.clearRect(0, 0, 640, 280);
+      var padL = 50, padR = 20, padT = 16, padB = 36;
+      var x0 = padL, x1 = 640 - padR, y0 = padT, y1 = 280 - padB;
+      function PX(f) { return x0 + f * (x1 - x0); }
+      function PY(t) { return y1 - t * (y1 - y0); }
+      // shade AUC under curve
+      rctx.beginPath(); rctx.moveTo(PX(0), PY(0));
+      for (var i = 0; i < roc.length; i++) rctx.lineTo(PX(roc[i].fpr), PY(roc[i].tpr));
+      rctx.lineTo(PX(1), PY(0)); rctx.closePath(); rctx.fillStyle = col.purple + "33"; rctx.fill();
+      // diagonal
+      rctx.strokeStyle = col.dim; rctx.setLineDash([4, 4]); rctx.lineWidth = 1;
+      rctx.beginPath(); rctx.moveTo(PX(0), PY(0)); rctx.lineTo(PX(1), PY(1)); rctx.stroke(); rctx.setLineDash([]);
+      // axes
+      rctx.strokeStyle = col.border; rctx.lineWidth = 1;
+      rctx.beginPath(); rctx.moveTo(x0, y0); rctx.lineTo(x0, y1); rctx.lineTo(x1, y1); rctx.stroke();
+      // ROC curve
+      rctx.strokeStyle = col.purple; rctx.lineWidth = 2.5; rctx.beginPath();
+      for (var k = 0; k < roc.length; k++) { var X = PX(roc[k].fpr), Y = PY(roc[k].tpr); if (k === 0) rctx.moveTo(X, Y); else rctx.lineTo(X, Y); }
+      rctx.stroke();
+      // current point from threshold
+      var cur = rates(thresh);
+      var cx = PX(cur.fpr), cy = PY(cur.tpr);
+      rctx.strokeStyle = col.warn; rctx.setLineDash([3, 3]); rctx.lineWidth = 1;
+      rctx.beginPath(); rctx.moveTo(x0, cy); rctx.lineTo(cx, cy); rctx.lineTo(cx, y1); rctx.stroke(); rctx.setLineDash([]);
+      rctx.fillStyle = col.warn; rctx.beginPath(); rctx.arc(cx, cy, 6, 0, Math.PI * 2); rctx.fill();
+      // labels
+      rctx.fillStyle = col.dim; rctx.font = "12px sans-serif"; rctx.textAlign = "center";
+      rctx.fillText("FPR (false positive rate)", (x0 + x1) / 2, 280 - 10);
+      rctx.save(); rctx.translate(14, (y0 + y1) / 2); rctx.rotate(-Math.PI / 2); rctx.fillText("TPR (recall)", 0, 0); rctx.restore();
+      rctx.fillStyle = col.purple; rctx.font = "bold 13px sans-serif"; rctx.textAlign = "left";
+      rctx.fillText("AUC = " + auc.toFixed(3), x0 + 12, y1 - 12);
+      return cur;
+    }
+
+    function render() {
+      drawDist(); var cur = drawROC();
+      readout.innerHTML = "At this threshold: FPR = <b>" + cur.fpr.toFixed(3) + "</b>, TPR (recall) = <b>" + cur.tpr.toFixed(3) + "</b>. The orange dot is exactly this threshold's spot on the ROC curve. Drag the threshold left and the dot slides up-right (catch more, but more false alarms). AUC = <b>" + auc.toFixed(3) + "</b> = chance a random positive scores above a random negative (1.0 perfect, 0.5 = diagonal = random).";
+    }
+    function setFromX(clientX) {
+      var r = cv.getBoundingClientRect(); var scale = cv.width / r.width;
+      var x = (clientX - r.left) * scale; var t = (x - 12) / (640 - 24);
+      thresh = Math.max(0.0, Math.min(1.0, t)); render();
+    }
+    var dragging = false;
+    cv.addEventListener("mousedown", function (e) { dragging = true; setFromX(e.clientX); });
+    window.addEventListener("mousemove", function (e) { if (dragging) setFromX(e.clientX); });
+    window.addEventListener("mouseup", function () { dragging = false; });
+    cv.addEventListener("touchstart", function (e) { dragging = true; if (e.touches[0]) setFromX(e.touches[0].clientX); });
+    cv.addEventListener("touchmove", function (e) { if (dragging && e.touches[0]) { setFromX(e.touches[0].clientX); e.preventDefault(); } });
+    render();
   },
   title: "ROC curve & AUC",
   tagline: "See how a classifier trades off catches against false alarms.",
@@ -1587,22 +2160,97 @@ L({
 L({
   id: "ml-regularization",
   demo: function (host) {
-    Demos.calc(host, {
-      bars: true,
-      inputs: [
-        { key: "w1", label: "weight θ₁", min: -5, max: 5, val: 3, step: 0.1 },
-        { key: "w2", label: "weight θ₂", min: -5, max: 5, val: -2, step: 0.1 },
-        { key: "lam", label: "strength λ", min: 0, max: 5, val: 1, step: 0.1 }
-      ],
-      compute: function (s) {
-        var l1 = s.lam * (Math.abs(s.w1) + Math.abs(s.w2));
-        var l2 = s.lam * (s.w1 * s.w1 + s.w2 * s.w2);
-        return {
-          text: "L1 (LASSO) = λ·Σ|θ| = " + s.lam.toFixed(1) + "·(" + Math.abs(s.w1).toFixed(2) + " + " + Math.abs(s.w2).toFixed(2) + ") = <b>" + l1.toFixed(3) + "</b>. L2 (Ridge) = λ·Σθ² = " + s.lam.toFixed(1) + "·(" + (s.w1 * s.w1).toFixed(2) + " + " + (s.w2 * s.w2).toFixed(2) + ") = <b>" + l2.toFixed(3) + "</b>. Larger λ shrinks weights more.",
-          bars: [{ label: "L1 penalty", val: l1 }, { label: "L2 penalty", val: l2 }]
-        };
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // unconstrained least-squares optimum (the "true" min), contours are ellipses around it
+    var w = { a: 2.6, b: 1.8 };           // OLS solution
+    var sa = 1.0, sb = 2.2, rot = -0.5;   // ellipse shape (correlated features)
+    // budget radius t shrinks as lambda grows
+    var lam = 1.0;
+    var range = 4;
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var cx = 320, cy = 170, scale = (640 - 60) / (2 * range);
+    function PX(a) { return cx + a * scale; }
+    function PY(b) { return cy - b * scale; }
+    var co = Math.cos(rot), si = Math.sin(rot);
+    function lossAt(a, b) {
+      var da = a - w.a, db = b - w.b;
+      var u = co * da + si * db, v = -si * da + co * db;
+      return (u * u) / (sa * sa) + (v * v) / (sb * sb);
+    }
+    function budget() { return 2.6 / (1 + 0.6 * lam); } // shrinks with lambda
+
+    // find the point on a ball (L1 diamond or L2 circle) of radius t that minimizes loss
+    function bestOnBall(t, norm) {
+      var best = null;
+      for (var i = 0; i < 720; i++) {
+        var ang = i / 720 * Math.PI * 2;
+        var a, b;
+        if (norm === 2) { a = t * Math.cos(ang); b = t * Math.sin(ang); }
+        else { // L1: parametrize diamond perimeter |a|+|b| = t
+          var s = i / 720; var seg = Math.floor(s * 4); var f = s * 4 - seg;
+          var corners = [[t, 0], [0, t], [-t, 0], [0, -t]];
+          var p0 = corners[seg], p1 = corners[(seg + 1) % 4];
+          a = p0[0] + (p1[0] - p0[0]) * f; b = p0[1] + (p1[1] - p0[1]) * f;
+        }
+        var l = lossAt(a, b);
+        if (!best || l < best.l) best = { a: a, b: b, l: l };
       }
-    });
+      return best;
+    }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, 640, 340);
+      // axes
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PX(-range), PY(0)); ctx.lineTo(PX(range), PY(0)); ctx.moveTo(PX(0), PY(-range)); ctx.lineTo(PX(0), PY(range)); ctx.stroke();
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("θ₁", PX(range) - 16, PY(0) - 6); ctx.fillText("θ₂", PX(0) + 6, PY(range) + 12);
+      // loss contours (ellipses) around OLS optimum
+      var levels = [0.3, 0.9, 1.8, 3.0, 4.5];
+      for (var li = 0; li < levels.length; li++) {
+        var L = Math.sqrt(levels[li]);
+        ctx.strokeStyle = col.dim + "66"; ctx.lineWidth = 1; ctx.beginPath();
+        var first = true;
+        for (var th = 0; th <= 80; th++) {
+          var ang = th / 80 * Math.PI * 2;
+          var u = sa * L * Math.cos(ang), v = sb * L * Math.sin(ang);
+          var da = co * u - si * v, db = si * u + co * v;
+          var X = PX(w.a + da), Y = PY(w.b + db);
+          if (first) { ctx.moveTo(X, Y); first = false; } else ctx.lineTo(X, Y);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+      // OLS optimum
+      ctx.fillStyle = col.dim; ctx.beginPath(); ctx.arc(PX(w.a), PY(w.b), 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText("OLS min", PX(w.a) + 8, PY(w.b) - 6);
+      var t = budget();
+      // L2 ball (circle) - blue
+      ctx.strokeStyle = col.accent; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.arc(PX(0), PY(0), t * scale, 0, Math.PI * 2); ctx.stroke();
+      // L1 ball (diamond) - green
+      ctx.strokeStyle = col.accent2; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(PX(t), PY(0)); ctx.lineTo(PX(0), PY(t)); ctx.lineTo(PX(-t), PY(0)); ctx.lineTo(PX(0), PY(-t)); ctx.closePath(); ctx.stroke();
+      // solutions where contour first touches each ball
+      var s2 = bestOnBall(t, 2), s1 = bestOnBall(t, 1);
+      ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(s2.a), PY(s2.b), 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col.accent2; ctx.beginPath(); ctx.arc(PX(s1.a), PY(s1.b), 6, 0, Math.PI * 2); ctx.fill();
+      // legend
+      ctx.textAlign = "left"; ctx.fillStyle = col.accent; ctx.fillText("L2 ball (circle) → Ridge", 12, 22);
+      ctx.fillStyle = col.accent2; ctx.fillText("L1 ball (diamond) → Lasso", 12, 40);
+      var sparse = Math.abs(s1.a) < 0.12 || Math.abs(s1.b) < 0.12;
+      readout.innerHTML = "λ = <b>" + lam.toFixed(2) + "</b> sets the budget radius t = <b>" + t.toFixed(2) + "</b>. The solution is where the loss ellipses first touch the ball. L2 (Ridge) θ = (" + s2.a.toFixed(2) + ", " + s2.b.toFixed(2) + "). L1 (Lasso) θ = (" + s1.a.toFixed(2) + ", " + s1.b.toFixed(2) + ")" + (sparse ? " — it landed on a <b>corner</b>, zeroing a weight (sparsity)." : ".") + " Bigger λ shrinks both balls toward the origin.";
+    }
+
+    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "strength λ ";
+    var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = lam.toFixed(2); lab.appendChild(span);
+    var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = 0; inp.max = 5; inp.step = 0.05; inp.value = lam;
+    inp.addEventListener("input", function () { lam = parseFloat(inp.value); span.textContent = lam.toFixed(2); render(); });
+    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    render();
   },
   title: "Regularization & cross-validation",
   tagline: "Penalize big weights to fight overfitting. Use folds to tune the penalty.",

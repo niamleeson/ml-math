@@ -148,34 +148,109 @@ L({
 L({
   id: "prob-conditional",
   demo: function (host) {
-    Demos.grid(host, {
-      rows: 10, cols: 10,
-      controls: [
-        { key: "sizeA", label: "outcomes in A (event A)", min: 0, max: 100, val: 40, step: 1 },
-        { key: "sizeB", label: "outcomes in B (the given event)", min: 1, max: 100, val: 50, step: 1 },
-        { key: "overlap", label: "outcomes in A AND B (overlap)", min: 0, max: 100, val: 20, step: 1 }
-      ],
-      cell: function (r, c, s) {
-        var i = r * 10 + c;
-        var sizeA = Math.round(s.sizeA), sizeB = Math.round(s.sizeB);
-        var inter = Math.min(Math.round(s.overlap), sizeA, sizeB);
-        var aOnly = sizeA - inter;
-        var bOnly = sizeB - inter;
-        // layout: [0, inter) = A∩B, then A-only, then B-only, then neither
-        if (i < inter) return { color: "#c89bff" };
-        if (i < inter + aOnly) return { color: "#4ea1ff" };
-        if (i < inter + aOnly + bOnly) return { color: "#7ee787" };
-        return { color: "#2a3340" };
-      },
-      readout: function (s) {
-        var sizeA = Math.round(s.sizeA), sizeB = Math.round(s.sizeB);
-        var inter = Math.min(Math.round(s.overlap), sizeA, sizeB);
-        var cond = sizeB > 0 ? inter / sizeB : 0;
-        return "Purple = A&cap;B (<b>" + inter + "</b>), blue = A only, green = B only, gray = neither (out of 100 equally likely outcomes). " +
-          "Shrink the world to B (<b>" + sizeB + "</b> cells). P(A | B) = |A&cap;B| / |B| = " + inter + " / " + sizeB +
-          " = <b>" + cond.toFixed(3) + "</b>.";
+    // BESPOKE Venn diagram: two overlapping circles A and B inside the sample space.
+    // Sliders set each circle's radius and how far apart their centers are, which
+    // controls the overlap. We shade B as the "given" universe, then highlight A∩B
+    // inside it, and report P(A|B) = area(A∩B) / area(B).
+    host.innerHTML = "";
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return (s && s.getPropertyValue(n).trim()) || d; } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 340; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px";
+
+    var state = { rA: 95, rB: 110, d: 120 };
+
+    // lens (intersection) area of two circles, radii r0,r1 with centers distance dd apart
+    function lensArea(r0, r1, dd) {
+      if (dd >= r0 + r1) return 0;                 // disjoint
+      if (dd <= Math.abs(r0 - r1)) {               // one inside the other
+        var rm = Math.min(r0, r1); return Math.PI * rm * rm;
       }
-    });
+      var a0 = (dd * dd + r0 * r0 - r1 * r1) / (2 * dd);
+      var a1 = dd - a0;
+      var h0 = Math.max(0, r0 * r0 - a0 * a0), h1 = Math.max(0, r1 * r1 - a1 * a1);
+      var t0 = r0 * r0 * Math.acos(Math.max(-1, Math.min(1, a0 / r0))) - a0 * Math.sqrt(h0);
+      var t1 = r1 * r1 * Math.acos(Math.max(-1, Math.min(1, a1 / r1))) - a1 * Math.sqrt(h1);
+      return t0 + t1;
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 340);
+      ctx.font = "14px -apple-system, sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      // sample space box
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      ctx.strokeRect(20, 18, 600, 270);
+      ctx.fillStyle = c.dim; ctx.fillText("Ω  (sample space)", 28, 38);
+
+      var cy = 165;
+      var rA = state.rA, rB = state.rB, d = state.d;
+      // center the pair horizontally inside the box
+      var span = d, mid = 320;
+      var bx = mid - span / 2, ax = mid + span / 2;   // B on the left (the given world), A on the right
+
+      // 1) shade B fully = the "given" universe
+      ctx.save();
+      ctx.beginPath(); ctx.arc(bx, cy, rB, 0, 7); ctx.closePath(); ctx.clip();
+      ctx.fillStyle = c.accent2 + "33"; ctx.fillRect(0, 0, 640, 340);
+      ctx.restore();
+
+      // 2) highlight A∩B (the part of B that is also A) by clipping to BOTH circles
+      ctx.save();
+      ctx.beginPath(); ctx.arc(bx, cy, rB, 0, 7); ctx.closePath(); ctx.clip();
+      ctx.beginPath(); ctx.arc(ax, cy, rA, 0, 7); ctx.closePath(); ctx.clip();
+      ctx.fillStyle = c.purple + "aa"; ctx.fillRect(0, 0, 640, 340);
+      ctx.restore();
+
+      // outlines
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = c.accent2;
+      ctx.beginPath(); ctx.arc(bx, cy, rB, 0, 7); ctx.stroke();
+      ctx.strokeStyle = c.accent;
+      ctx.beginPath(); ctx.arc(ax, cy, rA, 0, 7); ctx.stroke();
+
+      // labels
+      ctx.font = "bold 18px -apple-system, sans-serif";
+      ctx.fillStyle = c.accent2; ctx.fillText("B", bx - rB + 12, cy - rB * 0.55);
+      ctx.fillStyle = c.accent; ctx.fillText("A", ax + rA - 24, cy - rA * 0.55);
+      ctx.fillStyle = c.purple; ctx.font = "13px -apple-system, sans-serif";
+      var inter = lensArea(rA, rB, d);
+      if (inter > 300) ctx.fillText("A∩B", (ax + bx) / 2 - 16, cy + 4);
+
+      var areaB = Math.PI * rB * rB;
+      var cond = areaB > 0 ? inter / areaB : 0;
+
+      // legend swatches under the box
+      ctx.font = "12px -apple-system, sans-serif"; ctx.textBaseline = "alphabetic";
+      var ly = 308;
+      ctx.fillStyle = c.accent2 + "55"; ctx.fillRect(28, ly - 10, 14, 14); ctx.strokeStyle = c.accent2; ctx.lineWidth = 1.5; ctx.strokeRect(28, ly - 10, 14, 14);
+      ctx.fillStyle = c.ink; ctx.fillText("B = the given world", 48, ly + 1);
+      ctx.fillStyle = c.purple + "aa"; ctx.fillRect(220, ly - 10, 14, 14);
+      ctx.fillStyle = c.ink; ctx.fillText("A∩B inside B", 240, ly + 1);
+
+      readout.innerHTML = "Once B is given, B becomes the whole world (green). P(A | B) is the fraction of that world also in A (purple). " +
+        "P(A | B) = area(A∩B) / area(B) = <b>" + Math.round(inter) + "</b> / <b>" + Math.round(areaB) + "</b> = <b>" + cond.toFixed(3) + "</b>.";
+    }
+
+    function mkSlider(label, min, max, val, step, set) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block";
+      var vs = document.createElement("span"); vs.className = "out"; vs.style.marginLeft = "6px"; vs.textContent = String(val);
+      lab.textContent = label; lab.appendChild(vs);
+      var inp = document.createElement("input"); inp.setAttribute("type", "range");
+      inp.min = min; inp.max = max; inp.step = step; inp.value = val;
+      inp.addEventListener("input", function () { var v = parseFloat(inp.value); vs.textContent = String(v); set(v); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    mkSlider("size of A (radius)", 40, 130, state.rA, 1, function (v) { state.rA = v; });
+    mkSlider("size of B (the given event, radius)", 40, 130, state.rB, 1, function (v) { state.rB = v; });
+    mkSlider("distance between centers (overlap)", 0, 250, state.d, 1, function (v) { state.d = v; });
+    host.appendChild(readout);
+    draw();
   },
   title: "Conditional probability",
   tagline: "Once you learn something is true, the odds of everything else change. This measures by how much.",
@@ -359,25 +434,83 @@ L({
 L({
   id: "prob-independence",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "pa", label: "P(A)", min: 0, max: 1, val: 0.5, step: 0.01 },
-        { key: "pb", label: "P(B)", min: 0, max: 1, val: 0.4, step: 0.01 },
-        { key: "pab", label: "P(A∩B) — actual 'both'", min: 0, max: 1, val: 0.2, step: 0.01 }
-      ],
-      bars: true, barsHeight: 110,
-      compute: function (s) {
-        var prod = s.pa * s.pb;
-        var indep = Math.abs(prod - s.pab) < 0.005;
-        return { text: "P(A)·P(B) = " + prod.toFixed(3) + " vs P(A∩B) = " + s.pab.toFixed(3) +
-          ". " + (indep ? "<b>Equal → independent.</b> Knowing B leaves A's chance unchanged." :
-          "<b>Not equal → dependent.</b> Independent iff the product equals the actual 'both'."),
-          bars: [
-            { label: "P(A)·P(B)", val: prod, color: "#9aa7b4" },
-            { label: "P(A∩B)", val: s.pab, color: "#4ea1ff" }
-          ], max: 1 };
-      }
-    });
+    // BESPOKE side-by-side: LEFT a unit square (the sample space) with A as a
+    // horizontal strip of height P(A) and B as a vertical strip of width P(B);
+    // their overlap rectangle has area P(A)·P(B) — what independence PREDICTS.
+    // RIGHT shows the ACTUAL P(A∩B) you dial in. Equal areas ⇔ independent.
+    host.innerHTML = "";
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return (s && s.getPropertyValue(n).trim()) || d; } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px";
+    var state = { pa: 0.5, pb: 0.4, pab: 0.2 };
+
+    function panel(ox, oy, sz, title, drawInner) {
+      var c = C();
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1.5; ctx.strokeRect(ox, oy, sz, sz);
+      ctx.fillStyle = c.dim; ctx.font = "13px -apple-system, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(title, ox + sz / 2, oy - 10);
+      drawInner(ox, oy, sz);
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 320);
+      var sz = 220, oy = 40, oxL = 40, oxR = 380;
+      var pa = state.pa, pb = state.pb, pab = state.pab;
+      var prod = pa * pb;
+
+      // LEFT: independence model — strips + product rectangle
+      panel(oxL, oy, sz, "Independence model:  P(A)·P(B)", function (ox, oM, s) {
+        // A strip (height pa) along the bottom
+        ctx.fillStyle = c.accent + "22"; ctx.fillRect(ox, oM + s * (1 - pa), s, s * pa);
+        // B strip (width pb) along the left
+        ctx.fillStyle = c.accent2 + "22"; ctx.fillRect(ox, oM, s * pb, s);
+        // overlap = product rectangle
+        ctx.fillStyle = c.purple + "cc"; ctx.fillRect(ox, oM + s * (1 - pa), s * pb, s * pa);
+        ctx.fillStyle = c.accent; ctx.font = "12px -apple-system, sans-serif"; ctx.textAlign = "start";
+        ctx.fillText("A: height = P(A) = " + pa.toFixed(2), ox + s * 0.34, oM + s * (1 - pa) - 4);
+        ctx.fillStyle = c.accent2; ctx.fillText("B: width", ox + 4, oM + 14);
+        ctx.fillText("= " + pb.toFixed(2), ox + 4, oM + 28);
+        ctx.fillStyle = c.ink; ctx.textAlign = "center";
+        ctx.fillText("area = " + prod.toFixed(3), ox + s / 2, oM + s + 22);
+      });
+
+      // RIGHT: actual P(A∩B) as a square block of equal area for visual compare
+      panel(oxR, oy, sz, "Actual:  P(A∩B)", function (ox, oM, s) {
+        var side = Math.sqrt(Math.max(0, pab)) * s;     // square with area pab*s^2
+        ctx.fillStyle = c.warn + "cc"; ctx.fillRect(ox, oM + s - side, side, side);
+        ctx.fillStyle = c.ink; ctx.textAlign = "center"; ctx.font = "12px -apple-system, sans-serif";
+        ctx.fillText("area = " + pab.toFixed(3), ox + s / 2, oM + s + 22);
+      });
+      ctx.textAlign = "start";
+
+      var diff = Math.abs(prod - pab);
+      var indep = diff < 0.005;
+      readout.innerHTML = "P(A)·P(B) = <b>" + prod.toFixed(3) + "</b> &nbsp; vs &nbsp; P(A∩B) = <b>" + pab.toFixed(3) + "</b>. " +
+        (indep ? "<b style='color:var(--accent-2)'>Areas match → independent.</b> Knowing B leaves A's chance unchanged."
+               : "<b style='color:var(--warn)'>Areas differ by " + diff.toFixed(3) + " → dependent.</b> Independent exactly when the purple rectangle equals the orange one.");
+    }
+
+    function mkSlider(label, val, set) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block";
+      var vs = document.createElement("span"); vs.className = "out"; vs.style.marginLeft = "6px"; vs.textContent = val.toFixed(2);
+      lab.textContent = label; lab.appendChild(vs);
+      var inp = document.createElement("input"); inp.setAttribute("type", "range");
+      inp.min = 0; inp.max = 1; inp.step = 0.01; inp.value = val;
+      inp.addEventListener("input", function () { var v = parseFloat(inp.value); vs.textContent = v.toFixed(2); set(v); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    mkSlider("P(A)", state.pa, function (v) { state.pa = v; });
+    mkSlider("P(B)", state.pb, function (v) { state.pb = v; });
+    mkSlider("P(A∩B) — actual 'both'", state.pab, function (v) { state.pab = v; });
+    host.appendChild(readout);
+    draw();
   },
   title: "Independence",
   tagline: "When one event tells you nothing about another, they're independent — and the math gets easy.",
@@ -422,21 +555,103 @@ L({
 L({
   id: "prob-counting",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "n", label: "n (items to choose from)", min: 1, max: 10, val: 5, step: 1 },
-        { key: "r", label: "r (how many to pick)", min: 0, max: 10, val: 3, step: 1 }
-      ],
-      compute: function (s) {
-        var n = Math.round(s.n), r = Math.round(s.r);
-        if (r > n) r = n;
-        var perm = Demos._fact(n) / Demos._fact(n - r);
-        var comb = Demos._comb(n, r);
-        return { text: "Order matters: P(n,r) = n!/(n−r)! = " + Demos._fact(n) + "/" + Demos._fact(n - r) +
-          " = <b>" + perm + "</b>.<br>Order doesn't: C(n,r) = P/r! = " + perm + "/" + Demos._fact(r) +
-          " = <b>" + comb + "</b>. (r is capped at n.)" };
+    // BESPOKE: draw the actual r slots being filled from n labelled items (A,B,C,...).
+    // The "slots" view shows the n × (n-1) × ... choice cascade for permutations;
+    // below it we list a sample of the real arrangements (ordered) and picks (unordered),
+    // so you SEE why dividing the permutations by r! collapses them into combinations.
+    host.innerHTML = "";
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return (s && s.getPropertyValue(n).trim()) || d; } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px";
+    var state = { n: 5, r: 3 };
+
+    function perms(items, r) {            // ordered arrangements (list of arrays)
+      if (r === 0) return [[]];
+      var out = [];
+      for (var i = 0; i < items.length; i++) {
+        var rest = items.slice(0, i).concat(items.slice(i + 1));
+        perms(rest, r - 1).forEach(function (p) { out.push([items[i]].concat(p)); });
       }
-    });
+      return out;
+    }
+    function combos(items, r) {           // unordered picks (sorted strings)
+      if (r === 0) return [[]];
+      if (items.length < r) return [];
+      var out = [];
+      for (var i = 0; i <= items.length - r; i++) {
+        combos(items.slice(i + 1), r - 1).forEach(function (cb) { out.push([items[i]].concat(cb)); });
+      }
+      return out;
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, 640, 300);
+      var n = Math.round(state.n), r = Math.round(state.r);
+      if (r > n) r = n;
+      var items = LETTERS.slice(0, n);
+
+      ctx.font = "13px -apple-system, sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      // ---- slot cascade: r slots, each labelled with how many choices remain ----
+      ctx.fillStyle = c.dim; ctx.fillText("Filling " + r + " ordered slots from " + n + " items {" + items.join(",") + "}:", 20, 26);
+      var sw = 70, sh = 50, sy = 40, gap = 92, ox = 24;
+      for (var k = 0; k < r; k++) {
+        var x = ox + k * gap;
+        ctx.fillStyle = c.panel; ctx.strokeStyle = c.accent; ctx.lineWidth = 2;
+        ctx.fillRect(x, sy, sw, sh); ctx.strokeRect(x, sy, sw, sh);
+        ctx.fillStyle = c.accent; ctx.font = "bold 20px -apple-system, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(String(n - k), x + sw / 2, sy + sh / 2 + 7);
+        ctx.fillStyle = c.dim; ctx.font = "11px -apple-system, sans-serif";
+        ctx.fillText("choices", x + sw / 2, sy + sh + 14);
+        if (k < r - 1) { ctx.fillStyle = c.ink; ctx.font = "20px -apple-system, sans-serif"; ctx.fillText("×", x + sw + gap / 2 - 36 + 8, sy + sh / 2 + 7); }
+      }
+      ctx.textAlign = "start";
+
+      var perm = Demos._fact(n) / Demos._fact(n - r);
+      var comb = Demos._comb(n, r);
+
+      // ---- sample list of actual arrangements (ordered) and picks (unordered) ----
+      var allP = perms(items, r), allC = combos(items, r);
+      var showP = allP.slice(0, 8).map(function (p) { return p.join(""); });
+      var showC = allC.slice(0, 8).map(function (cb) { return cb.join(""); });
+      var ly = 150;
+      ctx.font = "12px -apple-system, sans-serif";
+      ctx.fillStyle = c.accent; ctx.fillText("Ordered arrangements (order matters): " + perm + " total", 20, ly);
+      ctx.fillStyle = c.ink; ctx.font = "13px ui-monospace, monospace";
+      ctx.fillText(showP.join("  ") + (allP.length > showP.length ? "  …" : ""), 20, ly + 20);
+      ctx.fillStyle = c.accent2; ctx.font = "12px -apple-system, sans-serif";
+      ctx.fillText("Unordered picks (order ignored): " + comb + " total", 20, ly + 56);
+      ctx.fillStyle = c.ink; ctx.font = "13px ui-monospace, monospace";
+      ctx.fillText(showC.join("  ") + (allC.length > showC.length ? "  …" : ""), 20, ly + 76);
+      // bracket linking the two
+      ctx.fillStyle = c.dim; ctx.font = "12px -apple-system, sans-serif";
+      ctx.fillText("Each pick of " + r + " can be ordered in " + r + "! = " + Demos._fact(r) + " ways → divide to collapse them.", 20, ly + 108);
+
+      readout.innerHTML = "Order matters: P(n,r) = n!/(n−r)! = " + Demos._fact(n) + "/" + Demos._fact(n - r) +
+        " = <b>" + perm + "</b>.<br>Order doesn't: C(n,r) = P/r! = " + perm + "/" + Demos._fact(r) +
+        " = <b>" + comb + "</b>. (r is capped at n.)";
+    }
+
+    function mkSlider(label, min, max, val, set) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block";
+      var vs = document.createElement("span"); vs.className = "out"; vs.style.marginLeft = "6px"; vs.textContent = String(val);
+      lab.textContent = label; lab.appendChild(vs);
+      var inp = document.createElement("input"); inp.setAttribute("type", "range");
+      inp.min = min; inp.max = max; inp.step = 1; inp.value = val;
+      inp.addEventListener("input", function () { var v = parseFloat(inp.value); vs.textContent = String(v); set(v); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    mkSlider("n (items to choose from)", 1, 8, state.n, function (v) { state.n = v; });
+    mkSlider("r (how many to pick)", 0, 8, state.r, function (v) { state.r = v; });
+    host.appendChild(readout);
+    draw();
   },
   title: "Counting: permutations & combinations",
   tagline: "To find a probability, you often just have to count carefully. Order is the key question.",
@@ -948,21 +1163,94 @@ L({
 L({
   id: "prob-normal",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: -8, xmax: 8, ymin: 0, ymax: 1.1,
-      controls: [
-        { key: "mu", label: "μ (center)", min: -3, max: 3, val: 0, step: 0.1 },
-        { key: "sig", label: "σ (spread)", min: 0.4, max: 3, val: 1, step: 0.1 }
-      ],
-      curves: [{ f: function (x, s) {
-        return (1 / (s.sig * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - s.mu) * (x - s.mu)) / (2 * s.sig * s.sig));
-      }, label: "Normal PDF", color: "#4ea1ff" }],
-      readout: function (s) {
-        return "Normal with μ = " + s.mu.toFixed(1) + ", σ = " + s.sig.toFixed(1) +
-          ". μ slides the bell; σ widens it. Peak height = 1/(σ√(2π)) = <b>" +
-          (1 / (s.sig * Math.sqrt(2 * Math.PI))).toFixed(3) + "</b>. Total area is always 1.";
-      }
-    });
+    // BESPOKE bell curve with a draggable shaded region [a,b]. We numerically
+    // integrate the PDF over [a,b] to show P(a≤X≤b), and shade the ±1σ/±2σ bands
+    // behind the curve to make the 68-95-99.7 rule visible.
+    host.innerHTML = "";
+    function C() {
+      var s = (typeof getComputedStyle === "function") ? getComputedStyle(document.documentElement) : null;
+      var g = function (n, d) { try { return (s && s.getPropertyValue(n).trim()) || d; } catch (e) { return d; } };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var W = 640, H = 320, L = 46, R = 624, T = 18, B = H - 30;
+    var xmin = -8, xmax = 8;
+    var cv = document.createElement("canvas"); cv.width = W; cv.height = H; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px";
+    var state = { mu: 0, sig: 1, a: -1, b: 1 };
+    var ymax = 1.1;
+    var px = function (x) { return L + (x - xmin) / (xmax - xmin) * (R - L); };
+    var py = function (y) { return B - (y - 0) / (ymax - 0) * (B - T); };
+    function pdf(x) { var sg = state.sig; return (1 / (sg * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - state.mu) * (x - state.mu)) / (2 * sg * sg)); }
+    function integ(a, b) { if (b < a) { var t = a; a = b; b = t; } var n = 400, h = (b - a) / n, s = 0; for (var i = 0; i <= n; i++) { var w = (i === 0 || i === n) ? 1 : (i % 2 ? 4 : 2); s += w * pdf(a + i * h); } return s * h / 3; }
+
+    function band(lo, hi, fill) {
+      ctx.fillStyle = fill;
+      ctx.fillRect(px(lo), T, px(hi) - px(lo), B - T);
+    }
+
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = "13px -apple-system, sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var mu = state.mu, sg = state.sig;
+      // ±1σ, ±2σ bands behind everything
+      band(mu - 2 * sg, mu + 2 * sg, c.warn + "14");
+      band(mu - sg, mu + sg, c.accent2 + "1e");
+
+      // shaded P(a≤X≤b) under the curve
+      var a = Math.min(state.a, state.b), b = Math.max(state.a, state.b);
+      ctx.beginPath(); ctx.moveTo(px(a), py(0));
+      var ns = 200;
+      for (var i = 0; i <= ns; i++) { var x = a + (b - a) * i / ns; ctx.lineTo(px(x), py(pdf(x))); }
+      ctx.lineTo(px(b), py(0)); ctx.closePath();
+      ctx.fillStyle = c.accent + "55"; ctx.fill();
+
+      // axis
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(L, py(0)); ctx.lineTo(R, py(0)); ctx.stroke();
+
+      // the bell
+      ctx.beginPath();
+      for (var j = 0; j <= 240; j++) { var xx = xmin + (xmax - xmin) * j / 240, X = px(xx), Y = py(pdf(xx)); j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+      ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.stroke();
+
+      // a,b handles
+      [["a", a], ["b", b]].forEach(function (p) {
+        ctx.strokeStyle = c.warn; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(px(p[1]), T); ctx.lineTo(px(p[1]), B); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = c.warn; ctx.font = "bold 12px -apple-system, sans-serif";
+        ctx.fillText(p[0], px(p[1]) - 3, B + 14);
+      });
+
+      // σ tick labels
+      ctx.fillStyle = c.dim; ctx.font = "11px -apple-system, sans-serif";
+      ctx.fillText("μ", px(mu) - 3, T + 10);
+      ctx.fillStyle = c.accent2; ctx.fillText("±1σ (≈68%)", px(mu - sg) + 2, T + 24);
+      ctx.fillStyle = c.warn; ctx.fillText("±2σ (≈95%)", px(mu - 2 * sg) + 2, T + 38);
+
+      var area = integ(a, b);
+      readout.innerHTML = "Normal μ = " + mu.toFixed(1) + ", σ = " + sg.toFixed(1) +
+        ". Shaded blue region P(" + a.toFixed(2) + " ≤ X ≤ " + b.toFixed(2) + ") = <b>" + area.toFixed(3) +
+        "</b>. Green band ±1σ ≈ 0.683, orange band ±2σ ≈ 0.954 (the 68-95-99.7 rule).";
+    }
+
+    function mkSlider(label, min, max, val, step, set) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block";
+      var vs = document.createElement("span"); vs.className = "out"; vs.style.marginLeft = "6px"; vs.textContent = (+val).toFixed(2);
+      lab.textContent = label; lab.appendChild(vs);
+      var inp = document.createElement("input"); inp.setAttribute("type", "range");
+      inp.min = min; inp.max = max; inp.step = step; inp.value = val;
+      inp.addEventListener("input", function () { var v = parseFloat(inp.value); vs.textContent = v.toFixed(2); set(v); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    mkSlider("μ (center)", -3, 3, state.mu, 0.1, function (v) { state.mu = v; });
+    mkSlider("σ (spread)", 0.4, 3, state.sig, 0.1, function (v) { state.sig = v; });
+    mkSlider("a (left edge of region)", -8, 8, state.a, 0.1, function (v) { state.a = v; });
+    mkSlider("b (right edge of region)", -8, 8, state.b, 0.1, function (v) { state.b = v; });
+    host.appendChild(readout);
+    draw();
   },
   title: "Normal (Gaussian) distribution",
   tagline: "The famous bell curve. Nature's default shape, and it's everywhere.",
@@ -1108,12 +1396,25 @@ L({
             api.pts[j].x = zx[j]; api.pts[j].y = yv;
             xs.push(zx[j]); ys.push(yv);
           }
-          api.draw();
           var rho = corr(xs, ys);
+          // least-squares trend line  y = mx + b  over the cloud
+          var n = xs.length, mx = 0, my = 0, i;
+          for (i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+          mx /= n; my /= n;
+          var sxy = 0, sxx = 0;
+          for (i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) * (xs[i] - mx); }
+          var slope = sxx > 0 ? sxy / sxx : 0, intercept = my - slope * mx;
+          var x0 = Math.min.apply(0, xs), x1 = Math.max.apply(0, xs);
+          api.draw(function (ctx, c, px, py) {
+            ctx.strokeStyle = c.warn; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]);
+            ctx.beginPath(); ctx.moveTo(px(x0), py(slope * x0 + intercept)); ctx.lineTo(px(x1), py(slope * x1 + intercept)); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = c.warn; ctx.font = "bold 15px -apple-system, sans-serif";
+            ctx.fillText("ρ = " + rho.toFixed(2), px(x0) + 8, py(slope * x1 + intercept) + 18);
+          });
           var word = Math.abs(rho) < 0.1 ? "no clear linear link" : (rho > 0 ? "rise together" : "move oppositely");
           api.readout.innerHTML = "Correlation slider r = <b>" + r.toFixed(2) +
-            "</b>. The resulting cloud has &rho; &asymp; <b>" + rho.toFixed(2) +
-            "</b>: as |r| grows the points tighten onto a line; near 0 the cloud is round. They " + word + ".";
+            "</b>. The cloud tilts along the orange trend line and has &rho; &asymp; <b>" + rho.toFixed(2) +
+            "</b>: as |r| grows the points tighten onto the line; near 0 the cloud is round. They " + word + ".";
         }
         api.slider("correlation r", -1, 1, 0.6, 0.05, render);
         render(0.6);
