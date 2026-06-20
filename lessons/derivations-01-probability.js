@@ -222,7 +222,14 @@ Object.assign(window.DERIVATIONS, {
 /* ---------------------------------------------------------------- */
 "prob-pdf-cdf":
   `<p>The PDF and CDF are definitions, but each rule on the slide is <b>forced</b>. Let us see why.</p>
-   <p><b>Why a single exact value has probability 0.</b> A continuous variable has infinitely many possible values. If even one had a positive chance $c$, then enough of them would add past 1 and break the normalization axiom. The only consistent choice is that each exact point carries chance 0 — and probability lives in <i>ranges</i> (areas) instead.</p>
+   <p><b>Why a single exact value has probability 0.</b> A continuous variable has infinitely many possible values. If even one exact value had a positive chance $c$, then infinitely many of them would add past 1 and break the normalization axiom. The only consistent choice is that each exact point carries chance 0 — and probability lives in <i>ranges</i> (areas) instead.</p>
+   <p><b>"But if every point is 0, how do they add up to 1?" — they never get added.</b> That is the whole resolution:</p>
+   <ul class="steps">
+     <li>A probability here is an <b>area</b>, not a sum of point-chances. Area $=$ height $\\times$ width. A single point is a sliver with <b>zero width</b>, so its probability is $f(x)\\times 0 = 0$ — even though the height $f(x)$ is positive.</li>
+     <li>A <i>range</i> $[a,b]$ has positive width, so it has positive area, so it has positive probability. The whole curve's area is 1.</li>
+     <li>You cannot rebuild that 1 by adding the points one at a time — there are uncountably many, too many to add. The total comes from the area, never from summation. (Formally $0\\times\\infty$ is not forced to be 0; the area is what pins it to exactly 1.)</li>
+   </ul>
+   <p><b>Dart intuition.</b> Throw a dart at a ruler from 0 to 1. The chance it hits <i>exactly</i> $0.5$ (to infinite precision) is 0 — one point among infinitely many. Yet the chance it lands <i>somewhere</i> in $[0,1]$ is 1, and in $[0.4, 0.6]$ it is $0.2$ (a fifth of the length). Probability is the <b>size of the target region</b>, and a single point has size 0. So height (density) can be positive, but only width $\\times$ height (an area over a range) is an actual probability.</p>
    <p><b>Why total area must be 1.</b> "Some value happens" is certain. The area under the whole density is the chance of landing somewhere. Certainty is probability 1, so $\\int_{-\\infty}^{\\infty} f_X(x)\\,dx = 1$. This is just the normalization axiom written with an integral instead of a sum.</p>
    <p><b>Why the CDF is built as a running area.</b></p>
    <ul class="steps">

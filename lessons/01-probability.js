@@ -567,6 +567,72 @@ L({
      </ul>`,
   application:
     `<p>Continuous densities model sensor readings, prices, and neural-network outputs. When a model reports 'the probability the value is below this threshold', it is reading off a CDF.</p>`,
+  demo: function (host) {
+    host.innerHTML =
+      '<label>Drag the cutoff <b>x</b>. Watch the shaded area under the PDF (top) equal the height of the CDF (bottom).</label>' +
+      '<input type="range" id="pc-x" min="-40" max="40" value="0" step="1">' +
+      '<div class="out" id="pc-out"></div>' +
+      '<canvas id="pc-cv" width="640" height="420"></canvas>';
+    var cv = host.querySelector('#pc-cv'), ctx = cv.getContext('2d');
+    var slider = host.querySelector('#pc-x'), out = host.querySelector('#pc-out');
+    // Standard normal data over [-4, 4]
+    var N = 321, lo = -4, hi = 4, dx = (hi - lo) / (N - 1);
+    var xs = [], pdf = [], cdf = [], c = 1 / Math.sqrt(2 * Math.PI), acc = 0, pmax = c;
+    for (var i = 0; i < N; i++) {
+      var x = lo + i * dx, p = c * Math.exp(-x * x / 2);
+      xs.push(x); pdf.push(p); acc += p * dx; cdf.push(acc);
+    }
+    var tot = cdf[N - 1];
+    for (var j = 0; j < N; j++) cdf[j] /= tot;          // normalize so total area = 1
+    var L = 48, R = 624, padTop = 26, Atop = 32, Abot = 190, Btop = 248, Bbot = 398;
+    function px(v) { return L + (v - lo) / (hi - lo) * (R - L); }
+    function pyA(v) { return Abot - (v / pmax) * (Abot - Atop); }
+    function pyB(v) { return Bbot - v * (Bbot - Btop); }
+    function draw() {
+      var cs = getComputedStyle(document.documentElement);
+      var ink = (cs.getPropertyValue('--ink') || '#e6edf3').trim();
+      var dim = (cs.getPropertyValue('--ink-dim') || '#9aa7b4').trim();
+      var a1 = (cs.getPropertyValue('--accent') || '#4ea1ff').trim();
+      var a2 = (cs.getPropertyValue('--accent-2') || '#7ee787').trim();
+      var bd = (cs.getPropertyValue('--border') || '#2a3340').trim();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      var xv = parseFloat(slider.value) / 10;
+      var idx = Math.round((xv - lo) / dx); if (idx < 0) idx = 0; if (idx > N - 1) idx = N - 1;
+      var area = cdf[idx];
+      // --- PDF panel ---
+      ctx.fillStyle = ink; ctx.fillText('PDF  f(x)   — height = density,  area = probability', L, padTop - 6);
+      ctx.beginPath(); ctx.moveTo(px(lo), Abot);
+      for (var a = 0; a <= idx; a++) ctx.lineTo(px(xs[a]), pyA(pdf[a]));
+      ctx.lineTo(px(xs[idx]), Abot); ctx.closePath();
+      ctx.fillStyle = a1 + '55'; ctx.fill();
+      ctx.beginPath();
+      for (var b = 0; b < N; b++) { var X = px(xs[b]), Y = pyA(pdf[b]); b ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+      ctx.strokeStyle = a1; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(L, Abot); ctx.lineTo(R, Abot); ctx.strokeStyle = bd; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px(xv), Atop - 4); ctx.lineTo(px(xv), Bbot); ctx.strokeStyle = a2; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = a1; ctx.fillText('shaded area = ' + area.toFixed(3), L + 6, Atop + 14);
+      // --- CDF panel ---
+      ctx.fillStyle = ink; ctx.fillText('CDF  F(x) = P(X ≤ x)   — the running total of that area', L, Btop - 12);
+      ctx.strokeStyle = bd; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(L, Bbot); ctx.lineTo(R, Bbot); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(L, Btop); ctx.lineTo(R, Btop); ctx.stroke();
+      ctx.fillStyle = dim; ctx.fillText('1', L - 16, Btop + 4); ctx.fillText('0', L - 16, Bbot + 4);
+      ctx.beginPath();
+      for (var d = 0; d < N; d++) { var X2 = px(xs[d]), Y2 = pyB(cdf[d]); d ? ctx.lineTo(X2, Y2) : ctx.moveTo(X2, Y2); }
+      ctx.strokeStyle = a1; ctx.lineWidth = 2; ctx.stroke();
+      var yb = pyB(area);
+      ctx.strokeStyle = a2; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(L, yb); ctx.lineTo(px(xv), yb); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(px(xv), yb, 4.5, 0, 2 * Math.PI); ctx.fillStyle = a2; ctx.fill();
+      ctx.fillStyle = a2; ctx.fillText('F(x) = ' + area.toFixed(3), px(xv) + 8, yb - 6);
+      out.innerHTML = 'cutoff x = ' + xv.toFixed(1) + '  →  area under the PDF left of x = <b>' + area.toFixed(3) +
+        '</b> = F(x) on the CDF. The CDF rises fastest where the bell is tallest — that is exactly "PDF = slope of CDF".';
+    }
+    slider.addEventListener('input', draw);
+    draw();
+  },
   quiz: {
     q: `For the uniform density on $[0,2]$ at height $\\frac{1}{2}$, what is the probability that $X$ is between 1 and 2?`,
     a: `<p>Area $=$ width $\\times$ height $= 1 \\times \\frac{1}{2} = \\frac{1}{2}$. A 50% chance.</p>`
