@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ML Engineering Lab — ML Math Tutor</title>
+
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("mlmath_theme");
+      if (t !== "light" && t !== "dark") t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+  })();
+</script>
+
+<style>
+  :root {
+    --bg:#0f1419; --panel:#161c24; --panel-2:#1d2530; --ink:#e6edf3; --ink-dim:#9aa7b4;
+    --accent:#4ea1ff; --accent-2:#7ee787; --warn:#ffb454; --border:#2a3340; --good:#2ea043;
+    --purple:#c89bff; --shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] {
+    --bg:#f6f8fa; --panel:#fff; --panel-2:#eaeef2; --ink:#1f2328; --ink-dim:#59636e;
+    --accent:#0969da; --accent-2:#1a7f37; --warn:#9a6700; --border:#d0d7de; --good:#1a7f37;
+    --purple:#8250df; --shadow:0 6px 20px rgba(140,149,159,.18);
+  }
+  html { color-scheme: dark; } html[data-theme="light"] { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+
+  header {
+    position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:12px 22px; background:var(--panel); border-bottom:1px solid var(--border);
+  }
+  header h1 { font-size:17px; margin:0; }
+  header .spacer { flex:1; }
+  header a, header button { background:var(--bg); border:1px solid var(--border); color:var(--ink);
+    border-radius:8px; padding:7px 11px; font-size:13px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+  header a:hover, header button:hover { border-color:var(--accent); }
+  header a.back { font-weight:700; }
+
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 22px 100px; }
+  .intro { color:var(--ink-dim); margin:0 0 22px; max-width:760px; }
+
+  /* App picker */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+  .appcard { text-align:left; background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; cursor:pointer; transition:border-color .12s, transform .12s; box-shadow:var(--shadow); }
+  .appcard:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .appcard .ic { font-size:24px; }
+  .appcard .nm { font-weight:700; font-size:15px; margin:6px 0 3px; }
+  .appcard .gl { color:var(--ink-dim); font-size:12.5px; line-height:1.4; }
+
+  /* Lab view */
+  .labhead { display:flex; align-items:flex-start; gap:12px; margin:0 0 16px; }
+  .labhead .ic { font-size:30px; }
+  .labhead h2 { font-size:23px; margin:0; }
+  .labhead .gl { color:var(--ink-dim); margin:3px 0 0; font-size:14px; }
+  .labhead .close { margin-left:auto; }
+
+  .phasebar { display:flex; flex-wrap:wrap; gap:5px; margin:0 0 18px; }
+  .phasebar .ph {
+    font-size:11.5px; padding:4px 9px; border-radius:14px; border:1px solid var(--border);
+    background:var(--panel); color:var(--ink-dim); cursor:pointer; white-space:nowrap;
+  }
+  .phasebar .ph.active { border-color:var(--accent); color:var(--ink); background:var(--panel-2); font-weight:600; }
+  .phasebar .ph.done { color:var(--accent-2); border-color:var(--good); }
+  .phasebar .ph .pn { opacity:.6; margin-right:4px; }
+
+  .lab { display:grid; grid-template-columns:1fr 250px; gap:18px; align-items:start; }
+  @media (max-width:780px){ .lab { grid-template-columns:1fr; } }
+
+  .stage { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 20px; box-shadow:var(--shadow); }
+  .stage .ptag { font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .stage h3 { margin:4px 0 10px; font-size:19px; }
+  .stage .narr { color:var(--ink); font-size:14.5px; }
+  .stage .narr p:first-child { margin-top:0; }
+
+  /* steps */
+  .step { margin:14px 0 0; padding-top:14px; border-top:1px solid var(--border); }
+  .step .q { font-weight:600; margin:0 0 8px; }
+  .opts { display:flex; flex-direction:column; gap:7px; }
+  .opt { text-align:left; background:var(--bg); border:1px solid var(--border); color:var(--ink); border-radius:9px;
+    padding:9px 12px; cursor:pointer; font-size:14px; }
+  .opt:hover { border-color:var(--accent); }
+  .opt.chosen { border-color:var(--accent); background:var(--panel-2); }
+  .opt.best.revealed { border-color:var(--good); }
+  .opt .fb { display:none; margin-top:6px; font-size:13px; color:var(--ink-dim); }
+  .opt.chosen .fb { display:block; }
+  .opt .verdict { font-weight:700; margin-right:6px; }
+  .opt.best.chosen .verdict { color:var(--accent-2); }
+  .opt:not(.best).chosen .verdict { color:var(--warn); }
+
+  .runbtn { background:var(--good); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  .runbtn:hover { filter:brightness(1.08); }
+  .runbtn:disabled { opacity:.6; cursor:default; }
+  .result { margin-top:10px; display:none; }
+  .result.show { display:block; }
+  .termlog { background:#11161d; border:1px solid #222b36; border-radius:8px; padding:10px 12px; color:#d6deeb;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:12.5px; white-space:pre-wrap; }
+  :root[data-theme="light"] .termlog { background:#0d1117; }
+  .metrics { display:flex; flex-wrap:wrap; gap:8px; margin-top:9px; }
+  .metric { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:6px 11px; font-size:13px; }
+  .metric b { color:var(--accent-2); font-variant-numeric:tabular-nums; }
+  .resnote { margin-top:8px; font-size:13.5px; color:var(--ink-dim); }
+
+  .navrow { display:flex; gap:10px; margin-top:18px; }
+  .navrow button { flex:1; background:var(--panel); border:1px solid var(--border); color:var(--ink); border-radius:10px;
+    padding:11px; cursor:pointer; font-size:14px; }
+  .navrow button:hover { border-color:var(--accent); }
+  .navrow button.primary { background:var(--accent); color:#04121f; border-color:var(--accent); font-weight:700; }
+  .navrow button:disabled { opacity:.4; cursor:default; }
+
+  /* concepts panel */
+  .concepts { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px 16px; position:sticky; top:80px; }
+  .concepts h4 { margin:0 0 4px; font-size:13px; }
+  .concepts .hint { color:var(--ink-dim); font-size:12px; margin:0 0 10px; }
+  .concepts a { display:block; text-decoration:none; color:var(--ink); background:var(--bg); border:1px solid var(--border);
+    border-radius:8px; padding:7px 10px; font-size:13px; margin-bottom:6px; }
+  .concepts a:hover { border-color:var(--accent); color:var(--accent); }
+  .concepts a .arw { color:var(--accent); float:right; }
+  .err { padding:30px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="back">← Lessons</a>
+  <h1>🛠️ ML Engineering Lab</h1>
+  <span class="spacer"></span>
+  <a href="applications.html">🚀 Applications</a>
+  <a href="playbook.html">🧩 Playbook</a>
+  <button id="themeToggle" onclick="Sim.toggleTheme()" title="Toggle light / dark">☀️</button>
+</header>
+
+<div class="wrap">
+  <div id="view"></div>
+</div>
+
+<script>window.LESSONS=[];window.DERIVATIONS={};window.PRACTICE={};window.Demos=new Proxy({},{get:()=>function(){}});</script>
+<script src="lessons/00-foundations.js"></script>
+<script src="lessons/01-probability.js"></script>
+<script src="lessons/02-ml.js"></script>
+<script src="lessons/03-deeplearning.js"></script>
+<script src="lessons/04-ai.js"></script>
+<script src="lessons/05-linalg.js"></script>
+<script src="lessons/06-prob-extra.js"></script>
+<script src="lessons/07-ml-extra.js"></script>
+<script src="lessons/08-ai-extra.js"></script>
+<script src="lessons/09-classical-a.js"></script>
+<script src="lessons/09-classical-b.js"></script>
+<script src="lessons/10-modern-a.js"></script>
+<script src="lessons/10-modern-b.js"></script>
+<script src="lessons/applications.js"></script>
+<script src="lessons/simulations-01.js"></script>
+<script src="lessons/simulations-02.js"></script>
+<script src="lessons/simulations-03.js"></script>
+<script src="lessons/simulations-04.js"></script>
+<script src="lessons/simulations-05.js"></script>
+<script src="lessons/simulations-06.js"></script>
+
+<script>
+const Sim = (function () {
+  const L = {};
+  let cur = null, stageIdx = 0;
+  function theme(){ return document.documentElement.getAttribute("data-theme")==="light"?"light":"dark"; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function renderPicker() {
+    const sims = window.SIMULATIONS || {};
+    const apps = (window.APPLICATIONS || []).filter(a => sims[a.id]);
+    document.getElementById("view").innerHTML =
+      `<div class="intro">Go through the motions of building a real ML system — end to end, with no waiting.
+       Pick a project below. You'll frame the problem, gather and clean data, engineer features, pick and train a model,
+       evaluate, iterate, deploy, and monitor it — making the calls an ML engineer makes. A side panel shows exactly
+       which lesson concepts each step uses.</div>` +
+      `<div class="grid">` + apps.map(a => {
+        const s = sims[a.id];
+        return `<button class="appcard" onclick="Sim.open('${a.id}')">
+          <div class="ic">${s.icon || a.icon || "🛠️"}</div>
+          <div class="nm">${esc(s.title || a.name)}</div>
+          <div class="gl">${esc(s.goal || a.blurb || "")}</div>
+        </button>`;
+      }).join("") + `</div>`;
+    if (!apps.length) document.getElementById("view").innerHTML = `<div class="err">No simulations loaded yet.</div>`;
+  }
+
+  function open(id) { cur = (window.SIMULATIONS || {})[id]; cur._id = id; stageIdx = 0; renderLab(); window.scrollTo(0,0); }
+  function close() { cur = null; renderPicker(); window.scrollTo(0,0); }
+
+  function conceptPanel(stage) {
+    const ids = (stage.concepts || []);
+    const links = ids.map(cid => {
+      const l = L[cid]; if (!l) return "";
+      return `<a href="index.html#${cid}">${esc(l.title)}<span class="arw">↗</span></a>`;
+    }).join("");
+    return `<div class="concepts"><h4>🧩 Concepts in play</h4>
+      <p class="hint">The math behind what you're doing right now:</p>${links || '<p class="hint">—</p>'}</div>`;
+  }
+
+  function renderStepHtml(step, si) {
+    if (step.type === "decide") {
+      const opts = (step.options || []).map((o, oi) =>
+        `<button class="opt ${o.best ? "best" : ""}" onclick="Sim.choose(${si},${oi})">
+          <span class="otext">${esc(o.label)}</span>
+          <div class="fb"><span class="verdict">${o.best ? "✓ Good call." : "△ Workable, but"}</span>${o.feedback || ""}</div>
+        </button>`).join("");
+      return `<div class="step" id="step-${si}"><p class="q">${step.prompt || ""}</p><div class="opts">${opts}</div></div>`;
+    }
+    if (step.type === "run") {
+      const r = step.result || {};
+      const metrics = (r.metrics || []).map(m => `<span class="metric">${esc(m.k)}: <b>${esc(m.v)}</b></span>`).join("");
+      return `<div class="step" id="step-${si}">${step.prompt ? `<p class="q">${step.prompt}</p>` : ""}
+        <button class="runbtn" onclick="Sim.run(${si})">${esc(step.label || "▶ Run")}</button>
+        <div class="result" id="res-${si}">
+          ${r.log ? `<div class="termlog">${esc(r.log)}</div>` : ""}
+          ${metrics ? `<div class="metrics">${metrics}</div>` : ""}
+          ${r.note ? `<div class="resnote">${r.note}</div>` : ""}
+        </div></div>`;
+    }
+    return "";
+  }
+
+  function renderLab() {
+    const stages = cur.stages || [];
+    const st = stages[stageIdx];
+    const phases = `<div class="phasebar">` + stages.map((s, i) =>
+      `<span class="ph ${i === stageIdx ? "active" : ""} ${i < stageIdx ? "done" : ""}" onclick="Sim.goto(${i})">
+        <span class="pn">${i + 1}</span>${s.icon || ""} ${esc(s.phase || s.title || ("Stage " + (i + 1)))}</span>`).join("") + `</div>`;
+
+    const steps = (st.steps || []).map((s, i) => renderStepHtml(s, i)).join("");
+    const body = `<div class="lab">
+      <div>
+        <div class="stage">
+          <div class="ptag">${esc(st.phase || "")} · step ${stageIdx + 1} of ${stages.length}</div>
+          <h3>${st.icon || ""} ${esc(st.title || st.phase || "")}</h3>
+          <div class="narr">${st.narrative || ""}</div>
+          ${steps}
+        </div>
+        <div class="navrow">
+          <button ${stageIdx === 0 ? "disabled" : ""} onclick="Sim.goto(${stageIdx - 1})">← Back</button>
+          <button class="primary" ${stageIdx >= stages.length - 1 ? "disabled" : ""} onclick="Sim.goto(${stageIdx + 1})">Next step →</button>
+        </div>
+      </div>
+      ${conceptPanel(st)}
+    </div>`;
+
+    document.getElementById("view").innerHTML =
+      `<div class="labhead"><div class="ic">${cur.icon || "🛠️"}</div>
+        <div><h2>${esc(cur.title)}</h2><div class="gl">${esc(cur.goal || "")}</div></div>
+        <button class="close" onclick="Sim.close()">✕ All projects</button></div>` +
+      phases + body;
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById("view")]);
+  }
+
+  function goto(i) { const n = (cur.stages || []).length; stageIdx = Math.max(0, Math.min(n - 1, i)); renderLab(); window.scrollTo(0, 0); }
+  function choose(si, oi) {
+    const step = cur.stages[stageIdx].steps[si];
+    const wrap = document.getElementById("step-" + si);
+    wrap.querySelectorAll(".opt").forEach((el, k) => {
+      el.classList.toggle("chosen", k === oi);
+      el.classList.add("revealed");
+    });
+  }
+  function run(si) {
+    const res = document.getElementById("res-" + si);
+    res.classList.add("show");
+    const btn = document.querySelector("#step-" + si + " .runbtn");
+    if (btn) { btn.disabled = true; btn.textContent = "✓ done"; }
+  }
+  function syncTheme(){ const b=document.getElementById("themeToggle"); b.textContent=theme()==="light"?"🌙":"☀️"; }
+  function toggleTheme(){ const n=theme()==="light"?"dark":"light"; document.documentElement.setAttribute("data-theme",n); try{localStorage.setItem("mlmath_theme",n)}catch(e){} syncTheme(); }
+
+  function init() {
+    (window.LESSONS || []).forEach(l => L[l.id] = l);
+    syncTheme();
+    const hash = location.hash.replace("#", "");
+    if (hash && (window.SIMULATIONS || {})[hash]) open(hash); else renderPicker();
+  }
+  window.addEventListener("DOMContentLoaded", init);
+  return { open, close, goto, choose, run, toggleTheme };
+})();
+window.Sim = Sim;
+</script>
+<!-- MathJax for any $...$ in the narrative/steps. -->
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']],processEscapes:true},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</body>
+</html>

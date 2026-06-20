@@ -68,6 +68,8 @@
   .app h2 { font-size: 21px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
   .app .ico { font-size: 24px; }
   .app .blurb { color: var(--ink-dim); margin: 0 0 14px; }
+  .app .blurb .lablink { color: var(--accent); text-decoration: none; font-weight: 600; white-space: nowrap; }
+  .app .blurb .lablink:hover { text-decoration: underline; }
   .lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
   .lrow {
     display: block; text-decoration: none; color: inherit;
@@ -95,6 +97,7 @@
   <input id="search" placeholder="Filter applications & concepts…" oninput="AppsPage.filter(this.value)" />
   <a href="graph.html">🗺️ Concept map</a>
   <a href="playbook.html">🧩 Playbook</a>
+  <a href="sim.html">🛠️ ML Lab</a>
   <button id="themeToggle" onclick="AppsPage.toggleTheme()" title="Toggle light / dark">☀️</button>
 </header>
 
@@ -153,7 +156,7 @@ const AppsPage = (function () {
       }).join("");
       return `<section class="app" id="app-${a.id}" data-name="${(a.name + " " + a.blurb).toLowerCase()}">
           <h2><span class="ico">${a.icon}</span>${a.name} <span class="count">· ${(a.lessons||[]).length} concepts</span></h2>
-          <p class="blurb">${a.blurb}</p>
+          <p class="blurb">${a.blurb} <a class="lablink" href="sim.html#${a.id}">🛠️ Build it in the ML Lab →</a></p>
           <div class="lessons">${rows}</div>
         </section>`;
     }).join("");
