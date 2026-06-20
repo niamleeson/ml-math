@@ -23,7 +23,7 @@
 <!-- MathJax (renders the $...$ and $$...$$ formulas). Needs internet the first time. -->
 <script>
   window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
     svg: { fontCache: 'global' },
     options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
   };
@@ -288,6 +288,51 @@
   }
   .markdone.done { border-color: var(--good); color: var(--accent-2); }
 
+  /* ---- Real-world walkthroughs ---- */
+  .card.walk h3 { color: var(--accent-2); }
+  .wt { border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; background: var(--bg); overflow: hidden; }
+  .wt-head {
+    width: 100%; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left;
+    background: none; border: none; color: var(--ink); padding: 11px 13px; font-size: 14px;
+  }
+  .wt-head:hover { background: var(--panel-2); }
+  .wt-num {
+    min-width: 22px; height: 22px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--ink); font-size: 12px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  }
+  .wt-q { flex: 1; font-weight: 600; }
+  .wt-dom {
+    font-size: 11px; color: var(--accent-2); background: rgba(126,231,135,.12);
+    border: 1px solid var(--border); border-radius: 10px; padding: 1px 8px; white-space: nowrap; flex: 0 0 auto;
+  }
+  .wt-chev { color: var(--ink-dim); transition: transform .15s; flex: 0 0 auto; }
+  .wt.open .wt-chev { transform: rotate(90deg); }
+  .wt-body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }
+  .wt.open .wt-body { display: block; }
+  .wt-steps { counter-reset: wts; list-style: none; margin: 10px 0 0; padding: 0; }
+  .wt-steps > li {
+    position: relative; padding: 2px 0 14px 30px; margin: 0 0 0 8px; border-left: 2px solid var(--border);
+  }
+  .wt-steps > li:last-child { border-left-color: transparent; padding-bottom: 2px; }
+  .wt-steps > li::before {
+    counter-increment: wts; content: counter(wts); position: absolute; left: -11px; top: 0;
+    width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--ink); font-size: 10px; display: flex; align-items: center; justify-content: center;
+  }
+  .wt-st { font-size: 14px; }
+  .wt-code { margin: 8px 0 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #282c34; }
+  .wt-code pre { margin: 0; border: none; border-radius: 0; background: #282c34; padding: 11px 13px; font-size: 12.5px; }
+  .wt-code pre code { background: none; padding: 0; color: #abb2bf; }
+  .wt-out {
+    background: #1a1d23; border-top: 1px solid #181b20; padding: 8px 13px; color: #d6deeb;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; white-space: pre-wrap; overflow-x: auto;
+  }
+  .wt-out::before { content: "output ▸ "; color: #7ee787; font-weight: 700; }
+  .wt-conc {
+    margin-top: 8px; padding: 10px 12px; background: rgba(46,160,67,.1); border: 1px solid var(--good);
+    border-radius: 9px; font-size: 14px;
+  }
+
   /* ---- Per-lesson code section ---- */
   .card.code h3 { color: #d2a8ff; }
   .code .codewrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 10px; background: #282c34; }
@@ -368,6 +413,8 @@
   window.PRACTICE = {};
   // Per-lesson code implementations (keyed by lesson id). Filled by lessons/code-*.js.
   window.CODE = {};
+  // Per-lesson real-world walkthroughs (array per lesson id). Filled by lessons/walkthroughs-*.js.
+  window.WALKTHROUGHS = {};
   // Some finer modules are merged into bigger groups in the sidebar nav. The lesson's own
   // `module` field is unchanged (kept for breadcrumbs / the concept-map colors); this map only
   // controls which top-level group it appears under.
@@ -473,6 +520,23 @@
 <script src="lessons/code-09-classical-b.js"></script>
 <script src="lessons/code-10-modern-a.js"></script>
 <script src="lessons/code-10-modern-b.js"></script>
+
+<!-- Per-lesson real-world walkthroughs (question -> data -> code -> answer). -->
+<script src="lessons/walkthroughs-00-foundations.js"></script>
+<script src="lessons/walkthroughs-01-probability.js"></script>
+<script src="lessons/walkthroughs-02-ml-a.js"></script>
+<script src="lessons/walkthroughs-02-ml-b.js"></script>
+<script src="lessons/walkthroughs-03-deeplearning-a.js"></script>
+<script src="lessons/walkthroughs-03-deeplearning-b.js"></script>
+<script src="lessons/walkthroughs-04-ai.js"></script>
+<script src="lessons/walkthroughs-05-linalg.js"></script>
+<script src="lessons/walkthroughs-06-prob-extra.js"></script>
+<script src="lessons/walkthroughs-07-ml-extra.js"></script>
+<script src="lessons/walkthroughs-08-ai-extra.js"></script>
+<script src="lessons/walkthroughs-09-classical-a.js"></script>
+<script src="lessons/walkthroughs-09-classical-b.js"></script>
+<script src="lessons/walkthroughs-10-modern-a.js"></script>
+<script src="lessons/walkthroughs-10-modern-b.js"></script>
 
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
@@ -630,6 +694,34 @@ const App = (function () {
     return `<div class="card ${cls}"><h3>${icon} ${label}</h3>${html}</div>`;
   }
 
+  // Real-world walkthroughs: a question the concept answers, solved end-to-end
+  // (data -> manipulation -> code -> result -> conclusion). Replaces the old quiz.
+  function walkthroughBlock(id) {
+    const ws = window.WALKTHROUGHS && WALKTHROUGHS[id];
+    if (!ws || !ws.length) return "";
+    const items = ws.map((w, i) => {
+      const steps = (w.steps || []).map(s => {
+        const code = s.code
+          ? `<div class="wt-code"><pre><code class="language-python">${escapeHtml(s.code)}</code></pre>` +
+            (s.output ? `<div class="wt-out">${escapeHtml(s.output)}</div>` : "") + `</div>`
+          : "";
+        return `<li><div class="wt-st">${s.title ? `<b>${s.title}.</b> ` : ""}${s.body || ""}</div>${code}</li>`;
+      }).join("");
+      return `<div class="wt">` +
+        `<button class="wt-head" onclick="App.toggleWT(this)">` +
+          `<span class="wt-num">${i + 1}</span>` +
+          `<span class="wt-q">${w.question || w.title || ""}</span>` +
+          (w.domain ? `<span class="wt-dom">${w.domain}</span>` : "") +
+          `<span class="wt-chev">▸</span></button>` +
+        `<div class="wt-body"><ol class="wt-steps">${steps}</ol>` +
+          (w.conclusion ? `<div class="wt-conc">✅ <b>Answer:</b> ${w.conclusion}</div>` : "") +
+        `</div></div>`;
+    }).join("");
+    return `<div class="card walk"><h3>🌍 Real-world walkthroughs — ${ws.length}</h3>` +
+      `<p class="hint">See the concept solve an actual problem, end to end: the question, the data, the work (with code &amp; math), and the answer. Click one to open.</p>` +
+      items + `</div>`;
+  }
+
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
@@ -675,7 +767,7 @@ const App = (function () {
       (l.demo ? `<div class="card"><h3>🎛️ Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       section("example", "🔢", "Concrete example (real numbers)", l.example) +
       section("app", "🚀", "Where you actually use this", (l.application || "") + appUses(id)) +
-      quizBlock(l.quiz) +
+      walkthroughBlock(id) +
       practiceBlock(l.practice) +
       codeBlock(id) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
@@ -756,8 +848,9 @@ const App = (function () {
   }
 
   function typeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); }
+  function toggleWT(btn) { const wt = btn.parentElement; wt.classList.toggle("open"); }
 
-  return { boot, open, toggleDone, filter, typeset };
+  return { boot, open, toggleDone, filter, typeset, toggleWT };
 })();
 window.App = App;   // expose for deep-linking and the screenshot/QA harness
 window.addEventListener("DOMContentLoaded", App.boot);
