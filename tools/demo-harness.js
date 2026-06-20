@@ -51,7 +51,7 @@ class El {
 
 global.document = { createElement: t => new El(t), documentElement: new El('html') };
 global.getComputedStyle = () => ({ getPropertyValue: () => '' });
-global.window = { LESSONS: [], DERIVATIONS: {}, PRACTICE: {} };
+global.window = { LESSONS: [], DERIVATIONS: {}, PRACTICE: {}, addEventListener: () => {}, removeEventListener: () => {} };
 
 const path = require('path');
 const files = process.argv.slice(2);

@@ -263,6 +263,131 @@
     recompute();
   };
 
+  const BTN = 'background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:0 8px 0 0';
+
+  // ---------- grid: N x M colored cell grid (frequency grids, confusion, conv, pooling) ----------
+  Demos.grid = function (host, o) {
+    host.innerHTML = '';
+    const rows = o.rows, cols = o.cols, cz = o.cellSize || Math.max(10, Math.min(38, Math.floor(560 / cols)));
+    const W = Math.max(360, cols * cz + 80), H = rows * cz + 40;
+    const state = {}; (o.controls || []).forEach(c => state[c.key] = c.val);
+    const cv = canvas(host, W, H); const ctx = cv.x;
+    const readout = out(host);
+    function draw() {
+      const c = colors(); ctx.clearRect(0, 0, W, H);
+      ctx.font = Math.min(13, cz - 2) + 'px sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+      const ox = 40, oy = 14;
+      for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+        const info = o.cell(r, k, state) || {};
+        ctx.fillStyle = info.color || c.panel; ctx.fillRect(ox + k * cz, oy + r * cz, cz - 1, cz - 1);
+        if (info.label != null && cz >= 14) { ctx.fillStyle = info.text || c.ink; ctx.fillText(String(info.label), ox + k * cz + cz / 2, oy + r * cz + cz / 2); }
+      }
+      ctx.textAlign = 'start'; readout.innerHTML = o.readout ? o.readout(state) : '';
+    }
+    (o.controls || []).forEach(c => slider(host, c.label, c.min, c.max, c.val, c.step || 1, function (v) { state[c.key] = v; draw(); }));
+    host.insertBefore(cv.c, host.children[0]); host.insertBefore(readout, host.children[1]);
+    draw();
+  };
+
+  // ---------- sampler: animated sampling builds a histogram (CLT, LLN, estimation) ----------
+  Demos.sampler = function (host, o) {
+    host.innerHTML = '';
+    const W = 640, H = o.height || 260, L = 46, R = 624, T = 16, B = H - 24;
+    const nb = o.bins || 24, lo = o.lo, hi = o.hi;
+    let samples = [], counts = new Array(nb).fill(0);
+    const cv = canvas(host, W, H); const ctx = cv.x;
+    const readout = out(host);
+    const row = el('div'); row.style.margin = '8px 0';
+    function add(n) { for (let i = 0; i < n; i++) { const v = o.draw1(); samples.push(v); let b = Math.floor((v - lo) / (hi - lo) * nb); if (b < 0) b = 0; if (b >= nb) b = nb - 1; counts[b]++; } draw(); }
+    function reset() { samples = []; counts = new Array(nb).fill(0); draw(); }
+    function draw() {
+      const c = colors(); ctx.clearRect(0, 0, W, H); ctx.font = '12px sans-serif';
+      const mx = Math.max.apply(0, counts) || 1, bw = (R - L) / nb;
+      ctx.strokeStyle = c.bd; ctx.beginPath(); ctx.moveTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+      for (let i = 0; i < nb; i++) { const h = counts[i] / mx * (B - T); ctx.fillStyle = c.a1; ctx.fillRect(L + i * bw, B - h, bw - 1, h); }
+      const mean = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : (lo + hi) / 2;
+      const mxp = L + (Math.max(lo, Math.min(hi, mean)) - lo) / (hi - lo) * (R - L);
+      ctx.strokeStyle = c.warn; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(mxp, T); ctx.lineTo(mxp, B); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = c.dim; ctx.fillText(String(lo), L, B + 14); ctx.fillText(String(hi), R - 16, B + 14);
+      readout.innerHTML = o.readout ? o.readout(samples, mean) : ('samples drawn: <b>' + samples.length + '</b> &nbsp; running mean = <b>' + mean.toFixed(3) + '</b>');
+    }
+    [['Draw 1', 1], ['Draw 30', 30], ['Draw 200', 200], ['Reset', 0]].forEach(function (p) {
+      const b = el('button', null, p[0]); b.style.cssText = BTN;
+      b.addEventListener('click', function () { p[1] ? add(p[1]) : reset(); }); row.appendChild(b);
+    });
+    host.insertBefore(cv.c, host.children[0]); host.insertBefore(readout, host.children[1]); host.insertBefore(row, host.children[2]);
+    draw();
+  };
+
+  // ---------- vectors: draggable 2-D arrows from origin (dot, norm, eigen, cosine, PCA) ----------
+  Demos.vectors = function (host, o) {
+    host.innerHTML = '';
+    const W = 520, H = 380, rng = o.range || 5, P = 18, cx = W / 2, cy = H / 2, sc = (W / 2 - P) / rng;
+    const px = x => cx + x * sc, py = y => cy - y * sc, ix = X => (X - cx) / sc, iy = Y => (cy - Y) / sc;
+    const vecs = {}; o.vectors.forEach(v => vecs[v.key] = { x: v.x, y: v.y });
+    const cv = canvas(host, W, H); const ctx = cv.x; const readout = out(host);
+    function arrow(x2, y2, col) {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(x2, y2); ctx.stroke();
+      const a = Math.atan2(y2 - py(0), x2 - px(0));
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - 11 * Math.cos(a - 0.4), y2 - 11 * Math.sin(a - 0.4)); ctx.lineTo(x2 - 11 * Math.cos(a + 0.4), y2 - 11 * Math.sin(a + 0.4)); ctx.closePath(); ctx.fill();
+    }
+    function draw() {
+      const c = colors(); ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = c.bd; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P, cy); ctx.lineTo(W - P, cy); ctx.moveTo(cx, P); ctx.lineTo(cx, H - P); ctx.stroke();
+      const cols = [c.a1, c.a2, c.purple, c.warn], r = o.compute ? o.compute(vecs) : {};
+      if (r.draw) r.draw(ctx, { px, py, colors: c });
+      o.vectors.forEach((v, i) => { const vv = vecs[v.key], col = v.color || cols[i % cols.length]; arrow(px(vv.x), py(vv.y), col); ctx.fillStyle = col; ctx.font = '13px sans-serif'; ctx.fillText(v.label || v.key, px(vv.x) + 8, py(vv.y) - 8); });
+      readout.innerHTML = r.text || '';
+    }
+    let drag = null;
+    function rel(e) { const b = cv.c.getBoundingClientRect(); return { x: (e.clientX - b.left) * (cv.c.width / b.width), y: (e.clientY - b.top) * (cv.c.height / b.height) }; }
+    cv.c.addEventListener('mousedown', function (e) { const m = rel(e); o.vectors.forEach(function (v) { if (v.drag === false) return; const vv = vecs[v.key]; if (Math.hypot(m.x - px(vv.x), m.y - py(vv.y)) < 16) drag = v.key; }); });
+    cv.c.addEventListener('mousemove', function (e) { if (!drag) return; const m = rel(e); vecs[drag].x = Math.max(-rng, Math.min(rng, Math.round(ix(m.x)))); vecs[drag].y = Math.max(-rng, Math.min(rng, Math.round(iy(m.y)))); draw(); });
+    window.addEventListener('mouseup', function () { drag = null; });
+    host.insertBefore(cv.c, host.children[0]); host.insertBefore(readout, host.children[1]);
+    host.appendChild(el('div', { class: 'hint' }, 'Drag an arrow tip to move it.'));
+    draw();
+  };
+
+  // ---------- tree: 2-level game tree (minimax / expectimax) with leaf sliders ----------
+  Demos.tree = function (host, o) {
+    host.innerHTML = '';
+    const W = 600, H = 300, type = o.type || 'minimax', probs = o.probs || [0.5, 0.5];
+    const st = { l: [o.leaves[0], o.leaves[1], o.leaves[2], o.leaves[3]] };
+    const cv = canvas(host, W, H); const ctx = cv.x; const readout = out(host);
+    function draw() {
+      const c = colors(); ctx.clearRect(0, 0, W, H); ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const L = st.l;
+      const left = type === 'minimax' ? Math.min(L[0], L[1]) : probs[0] * L[0] + probs[1] * L[1];
+      const right = type === 'minimax' ? Math.min(L[2], L[3]) : probs[0] * L[2] + probs[1] * L[3];
+      const root = Math.max(left, right);
+      const lx = [80, 230, 370, 520], ly = 240, mx = [155, 445], my = 140, rx = 300, ry = 46;
+      ctx.strokeStyle = c.bd; ctx.lineWidth = 1.5;
+      [[rx, ry, mx[0], my], [rx, ry, mx[1], my], [mx[0], my, lx[0], ly], [mx[0], my, lx[1], ly], [mx[1], my, lx[2], ly], [mx[1], my, lx[3], ly]].forEach(e => { ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[2], e[3]); ctx.stroke(); });
+      function node(x, y, val, fill, shape) {
+        ctx.fillStyle = fill; ctx.strokeStyle = c.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+        if (shape === 'up') { ctx.moveTo(x, y - 17); ctx.lineTo(x - 17, y + 12); ctx.lineTo(x + 17, y + 12); ctx.closePath(); }
+        else if (shape === 'down') { ctx.moveTo(x, y + 17); ctx.lineTo(x - 17, y - 12); ctx.lineTo(x + 17, y - 12); ctx.closePath(); }
+        else if (shape === 'circ') { ctx.arc(x, y, 16, 0, 7); }
+        else { ctx.rect(x - 16, y - 14, 32, 28); }
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.ink; ctx.fillText(typeof val === 'number' ? Math.round(val * 100) / 100 : val, x, y);
+      }
+      node(rx, ry, root, alpha(c.a1, '88'), 'up');
+      node(mx[0], my, left, alpha(c.a2, '88'), type === 'minimax' ? 'down' : 'circ');
+      node(mx[1], my, right, alpha(c.a2, '88'), type === 'minimax' ? 'down' : 'circ');
+      lx.forEach((x, i) => node(x, ly, L[i], c.panel, 'rect'));
+      ctx.textAlign = 'start';
+      readout.innerHTML = type === 'minimax'
+        ? ('MIN nodes (▽): min(' + L[0] + ',' + L[1] + ') = ' + left + ', min(' + L[2] + ',' + L[3] + ') = ' + right + '.<br>MAX root (△): max(' + left + ',' + right + ') = <b>' + root + '</b>. The agent picks the ' + (left >= right ? 'left' : 'right') + ' branch.')
+        : ('Chance nodes (○): ' + probs[0] + '·' + L[0] + ' + ' + probs[1] + '·' + L[1] + ' = <b>' + left.toFixed(2) + '</b>, and ' + right.toFixed(2) + '.<br>MAX root picks the higher average: <b>' + Math.max(left, right).toFixed(2) + '</b>.');
+    }
+    [0, 1, 2, 3].forEach(i => slider(host, 'leaf ' + (i + 1), o.min == null ? -5 : o.min, o.max == null ? 10 : o.max, st.l[i], 1, function (v) { st.l[i] = v; draw(); }));
+    host.insertBefore(cv.c, host.children[0]); host.insertBefore(readout, host.children[1]);
+    draw();
+  };
+
   // expose helpers for lessons/tests
   Demos._fact = fact; Demos._comb = comb;
   window.Demos = Demos;

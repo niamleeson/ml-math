@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  :root{--bg:#0f1419;--panel:#161c24;--panel-2:#1d2530;--ink:#e6edf3;--ink-dim:#9aa7b4;--accent:#4ea1ff;--accent-2:#7ee787;--warn:#ffb454;--border:#2a3340;--purple:#c89bff;}
+  body{background:#0f1419;color:#e6edf3;font-family:-apple-system,sans-serif;padding:14px;}
+  .box{background:#161c24;border:1px solid #2a3340;border-radius:12px;padding:14px;margin-bottom:16px;}
+  h4{margin:0 0 8px;color:#4ea1ff;font-size:13px;}
+  .out{color:#7ee787;font-size:13px;} label{font-size:12px;color:#9aa7b4;display:block;margin:6px 0 2px;}
+  input[type=range]{width:100%;} canvas{background:#161c24;border-radius:8px;} button{}
+</style></head><body>
+  <div class="box"><h4>grid</h4><div id="g"></div></div>
+  <div class="box"><h4>sampler (click Draw 200 a few times)</h4><div id="s"></div></div>
+  <div class="box"><h4>vectors</h4><div id="v"></div></div>
+  <div class="box"><h4>tree — minimax</h4><div id="t1"></div></div>
+  <div class="box"><h4>tree — expectimax</h4><div id="t2"></div></div>
+  <script src="../lessons/demos.js"></script>
+  <script>
+    // grid: a 10x10 = 100-person frequency grid (Bayes-style): 1 diseased (true pos), ~9 false pos
+    Demos.grid(document.getElementById('g'), { rows: 8, cols: 12, controls: [{ key: 'd', label: 'diseased count', min: 0, max: 20, val: 4, step: 1 }],
+      cell: function (r, c, s) { var i = r * 12 + c; return { color: i < s.d ? '#ff7b72' : (i < s.d + 12 ? '#ffb454' : '#2a3340'), label: '' }; },
+      readout: function (s) { return 'red = sick, orange = false-positive, gray = healthy-negative.'; } });
+    Demos.sampler(document.getElementById('s'), { lo: 2, hi: 8, bins: 24, draw1: function () { return 2 + (Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()); },
+      readout: function (a, m) { return 'n = ' + a.length + ', sample mean = ' + m.toFixed(3) + ' (true mean 5). Watch it pile into a bell.'; } });
+    Demos.vectors(document.getElementById('v'), { range: 5, vectors: [{ key: 'a', x: 3, y: 1 }, { key: 'b', x: 1, y: 3 }],
+      compute: function (vv) { var d = vv.a.x * vv.b.x + vv.a.y * vv.b.y, la = Math.hypot(vv.a.x, vv.a.y), lb = Math.hypot(vv.b.x, vv.b.y), cos = d / (la * lb || 1);
+        return { text: 'a·b = ' + d + ',  cos θ = ' + cos.toFixed(3) + ' (θ = ' + (Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI).toFixed(0) + '°)' }; } });
+    Demos.tree(document.getElementById('t1'), { leaves: [3, 5, 2, 9], type: 'minimax' });
+    Demos.tree(document.getElementById('t2'), { leaves: [3, 5, 2, 9], type: 'expectimax', probs: [0.5, 0.5] });
+  </script>
+</body></html>
