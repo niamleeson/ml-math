@@ -43,8 +43,11 @@ const filter = process.argv[2] || '';
       await page.evaluate(() => {
         const h = document.getElementById('demo-host');
         const r = h.querySelector('input[type=range]');
-        if (r) { r.value = r.value; r.dispatchEvent(new Event('input', { bubbles: true })); }
-        const b = h.querySelector('button'); if (b) b.click();
+        if (r) { r.dispatchEvent(new Event('input', { bubbles: true })); }
+        const btns = Array.from(h.querySelectorAll('button'));
+        const big = btns.find(b => /200|30/.test(b.textContent));   // sampler: draw a full histogram
+        if (big) { for (let i = 0; i < 6; i++) big.click(); }
+        else { const b = btns.find(b => !/reset/i.test(b.textContent)); if (b) b.click(); }
       });
       await new Promise(r => setTimeout(r, 120));
       // screenshot the whole demo card (host's parent .card) for context (title + canvas + readout)

@@ -883,7 +883,7 @@ L({
   id: "prob-uniform-exponential",
   demo: function (host) {
     Demos.plot(host, {
-      xmin: 0, xmax: 8, ymin: 0, ymax: 3,
+      xmin: 0, xmax: 8, ymin: 0,
       controls: [
         { key: "shape", label: "shape: 0 = Uniform, 1 = Exponential", min: 0, max: 1, val: 0, step: 1 },
         { key: "b", label: "b (Uniform upper end, over [0, b])", min: 1, max: 8, val: 4, step: 0.5 },

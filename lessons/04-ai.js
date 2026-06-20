@@ -408,29 +408,30 @@ L({
 L({
   id: "ai-astar",
   demo: function (host) {
-    // 5 rows x 7 cols grid. Start top-left, goal bottom-right.
-    // g = Manhattan distance from start, h = Manhattan distance to goal, f = g + h.
+    // 5 rows x 7 cols grid. Start and goal sit INSIDE the grid (same row) so that
+    // f = g + h varies: a low corridor between them, rising as you move away.
     var ROWS = 5, COLS = 7;
-    var sr = 0, sc = 0, gr = ROWS - 1, gc = COLS - 1;
+    var sr = 2, sc = 1, gr = 2, gc = 5;
     function gOf(r, c) { return Math.abs(r - sr) + Math.abs(c - sc); }
     function hOf(r, c) { return Math.abs(r - gr) + Math.abs(c - gc); }
     var fOpt = gOf(gr, gc) + hOf(gr, gc);   // smallest possible f (lies on a shortest path)
     Demos.grid(host, {
       rows: ROWS, cols: COLS, cellSize: 56,
       cell: function (r, c) {
-        var g = gOf(r, c), h = hOf(r, c), f = g + h;
-        var onPath = (f === fOpt);   // cells with minimum f lie on an optimal route
-        var start = (r === sr && c === sc), goal = (r === gr && c === gc);
-        var color = onPath ? "#2e7d32" : "#1b2733";
+        var f = gOf(r, c) + hOf(r, c);
+        var start = (r === sr && c === sc), goal = (r === gr && c === gc), onPath = (f === fOpt);
+        var color;
         if (start) color = "#4ea1ff";
-        if (goal) color = "#ffb454";
+        else if (goal) color = "#ffb454";
+        else if (onPath) color = "#2e7d32";
+        else { var lit = Math.max(12, 34 - (f - fOpt) * 4); color = "hsl(205,28%," + lit + "%)"; }
         return { color: color, label: "f" + f, text: "#e6edf3" };
       },
       readout: function () {
         return "Each cell shows f = g + h (g = steps from <span style=\"color:#4ea1ff\">start</span>, " +
-          "h = straight-line guess to <span style=\"color:#ffb454\">goal</span>). " +
-          "A* expands the lowest g+h first; the <span style=\"color:#2e7d32\">green</span> band of minimum f = " +
-          fOpt + " is the cheapest path it follows.";
+          "h = steps to <span style=\"color:#ffb454\">goal</span>). A* always expands the lowest f first. " +
+          "The <span style=\"color:#2e7d32\">green</span> corridor (f = " + fOpt + ") is the cheapest route; " +
+          "cells darken as f grows, so A* leaves those for last instead of exploring everywhere.";
       }
     });
   },

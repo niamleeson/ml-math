@@ -372,7 +372,8 @@
         else if (shape === 'circ') { ctx.arc(x, y, 16, 0, 7); }
         else { ctx.rect(x - 16, y - 14, 32, 28); }
         ctx.fill(); ctx.stroke();
-        ctx.fillStyle = c.ink; ctx.fillText(typeof val === 'number' ? Math.round(val * 100) / 100 : val, x, y);
+        var ty = shape === 'up' ? y + 4 : shape === 'down' ? y - 4 : y;   // keep value in the wide part of triangles
+        ctx.fillStyle = c.ink; ctx.fillText(typeof val === 'number' ? Math.round(val * 100) / 100 : val, x, ty);
       }
       node(rx, ry, root, alpha(c.a1, '88'), 'up');
       node(mx[0], my, left, alpha(c.a2, '88'), type === 'minimax' ? 'down' : 'circ');

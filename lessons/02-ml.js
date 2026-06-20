@@ -81,8 +81,8 @@ L({
     Demos.plot(host, {
       xmin: -3, xmax: 3, ymin: 0, ymax: 8,
       curves: [
-        { f: function (r) { return 0.5 * r * r; }, label: "½(y−z)² squared" },
-        { f: function (m) { return Math.max(0, 1 - m); }, label: "max(0,1−m) hinge" }
+        { f: function (r) { return 0.5 * r * r; }, label: "squared loss" },
+        { f: function (m) { return Math.max(0, 1 - m); }, label: "hinge loss" }
       ],
       drag: { curve: 0, start: 2, label: "residual r = y−z (or margin m)",
         readout: function (r, y) { return "At r = " + r.toFixed(2) + ": squared loss ½r² = <b>" + (0.5 * r * r).toFixed(3) + "</b>, hinge loss max(0,1−r) = <b>" + Math.max(0, 1 - r).toFixed(3) + "</b>. Squared loss grows fast; hinge is 0 once the margin ≥ 1."; } }
