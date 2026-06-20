@@ -30,6 +30,14 @@
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
+<!-- Real machine-learning libraries that power authentic "watch it actually compute" demos.
+     They load from a CDN and expose globals: tf, mlMatrix, ss. Every demo guards on their
+     presence (window.tf / window.mlMatrix / window.ss) and falls back to a plain-canvas
+     drawing if a library hasn't loaded or you're offline, so nothing breaks. -->
+<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/ml-matrix@6.12.0/matrix.umd.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.8/dist/simple-statistics.min.js"></script>
+
 <style>
   :root {
     --bg: #0f1419;
@@ -138,17 +146,22 @@
   .lessons li.done .dot { background: var(--good); border-color: var(--good); }
   .lessons li .ltitle { flex: 1; min-width: 0; }
   .usebadge {
-    min-width: 18px; height: 17px; padding: 0 4px; border-radius: 4px;
+    min-width: 21px; height: 17px; padding: 0 5px; border-radius: 4px;
     font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
-    flex: 0 0 auto; font-variant-numeric: tabular-nums;
+    flex: 0 0 auto; font-variant-numeric: tabular-nums; color: #fff;
   }
-  .usebadge.u5 { background: #2ea043; color: #fff; }
-  .usebadge.u4 { background: var(--accent); color: #04121f; }
-  .usebadge.u3 { background: var(--warn); color: #3a2400; }
-  .usebadge.u2 { background: #586273; color: #e6edf3; }
-  .usebadge.u1 { background: #39414d; color: #9aa7b4; }
   .usage-legend { font-size: 11px; color: var(--ink-dim); margin: 8px 0 0; line-height: 1.4; }
   .usage-legend b { color: var(--ink); font-weight: 600; }
+  .nav-extra { display: flex; gap: 8px; margin-top: 10px; }
+  .nav-extra a {
+    flex: 1; text-align: center; text-decoration: none; font-size: 12.5px; font-weight: 600;
+    background: var(--bg); border: 1px solid var(--border); color: var(--ink);
+    border-radius: 8px; padding: 7px 6px;
+  }
+  .nav-extra a:hover { border-color: var(--accent); color: var(--accent); }
+  .lesson-links { margin: -6px 0 16px; font-size: 13px; }
+  .app-uses { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13.5px; }
+  .app-uses b { color: var(--ink); }
 
   /* ---------- Main ---------- */
   #main { flex: 1; height: 100vh; overflow-y: auto; }
@@ -303,7 +316,11 @@
     <h1>📐 ML Math Tutor</h1>
     <p>The maths of ML, DL & AI — from zero.</p>
     <input id="search" placeholder="Search lessons…" oninput="App.filter(this.value)" />
-    <p class="usage-legend">Number = how commonly used in practice. <b>5</b> = everywhere · <b>1</b> = niche.</p>
+    <p class="usage-legend">Number = how commonly used in practice (0–10). Greener = more common. <b>10</b> = everywhere · <b>0</b> = niche.</p>
+    <div class="nav-extra">
+      <a href="graph.html" title="See how all concepts connect">🗺️ Concept map</a>
+      <a href="applications.html" title="Browse by real-world application">🚀 Applications</a>
+    </div>
   </div>
   <div id="modules"></div>
 </nav>
@@ -319,19 +336,25 @@
   window.DERIVATIONS = {};
   // Practice problems (array per lesson id). Filled by lessons/practice-*.js.
   window.PRACTICE = {};
-  // Order the modules appear in the sidebar:
+  // Some finer modules are merged into bigger groups in the sidebar nav. The lesson's own
+  // `module` field is unchanged (kept for breadcrumbs / the concept-map colors); this map only
+  // controls which top-level group it appears under.
+  window.MODULE_MERGE = {
+    "Foundations: Math you need first": "Foundations & Linear Algebra",
+    "Linear Algebra (deep dive)":       "Foundations & Linear Algebra",
+    "Machine Learning — more":          "Machine Learning (CS229)",
+    "Artificial Intelligence — more":   "Artificial Intelligence (CS221)"
+  };
+  // Order the (merged) groups appear in the sidebar:
   window.MODULE_ORDER = [
-    "Foundations: Math you need first",
-    "Linear Algebra (deep dive)",
+    "Foundations & Linear Algebra",
     "Probability & Statistics",
     "Probability (advanced)",
     "Machine Learning (CS229)",
-    "Machine Learning — more",
     "Classical ML (beyond the cheat sheet)",
     "Deep Learning (CS230)",
     "Modern Deep Learning & AI",
-    "Artificial Intelligence (CS221)",
-    "Artificial Intelligence — more"
+    "Artificial Intelligence (CS221)"
   ];
 </script>
 
@@ -399,8 +422,10 @@
 <script src="lessons/practice-hard2-dl-c.js"></script>
 <script src="lessons/practice-hard2-ai-a.js"></script>
 <script src="lessons/practice-hard2-ai-b.js"></script>
-<!-- Per-lesson commonness rating (1-5) shown as a sidebar badge. -->
+<!-- Per-lesson commonness rating (0-10) shown as a sidebar badge. -->
 <script src="lessons/usage.js"></script>
+<!-- Real-world application domains -> lessons (powers the cross-links + applications.html). -->
+<script src="lessons/applications.js"></script>
 
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
@@ -429,6 +454,14 @@ window.addEventListener("DOMContentLoaded", Theme.init);
 const App = (function () {
   const byId = {};
   const order = [];           // flat lesson order for prev/next
+  const APP_INDEX = {};       // lessonId -> [{id,name,icon}] real-world applications that use it
+  function buildAppIndex() {
+    (window.APPLICATIONS || []).forEach(a => {
+      (a.lessons || []).forEach(x => {
+        (APP_INDEX[x.id] = APP_INDEX[x.id] || []).push({ id: a.id, name: a.name, icon: a.icon });
+      });
+    });
+  }
   const LS_KEY = "mlmath_progress_v1";
   let progress = {};
   try { progress = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { progress = {}; }
@@ -436,9 +469,10 @@ const App = (function () {
   function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(progress)); } catch (e) {} }
 
   // ---- Build module -> lessons structure, preserving file/push order within a module ----
+  function modOf(l) { return (window.MODULE_MERGE && MODULE_MERGE[l.module]) || l.module; }
   function group() {
     const mods = {};
-    LESSONS.forEach(l => { (mods[l.module] = mods[l.module] || []).push(l); l && (byId[l.id] = l); });
+    LESSONS.forEach(l => { const m = modOf(l); (mods[m] = mods[m] || []).push(l); l && (byId[l.id] = l); });
     const names = Object.keys(mods).sort((a, b) => {
       const ia = MODULE_ORDER.indexOf(a), ib = MODULE_ORDER.indexOf(b);
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
@@ -466,8 +500,11 @@ const App = (function () {
         li.dataset.id = l.id;
         li.dataset.search = (l.title + " " + (l.module || "")).toLowerCase();
         li.className = progress[l.id] ? "done" : "";
-        const u = (window.USAGE && window.USAGE[l.id]) || 0;
-        const badge = u ? `<span class="usebadge u${u}" title="How commonly used in practice: ${u}/5 (5 = used everywhere, 1 = niche)">${u}</span>` : "";
+        const u = (window.USAGE && l.id in window.USAGE) ? window.USAGE[l.id] : null;
+        // Green badge whose saturation grows with how commonly the concept is used (0–10).
+        // Lightness is held constant so the white text stays equally readable across the scale.
+        const badge = (u == null) ? "" :
+          `<span class="usebadge" style="background:hsl(140 ${Math.round(14 + u * 6.6)}% 36%)" title="How commonly used in practice: ${u}/10 (10 = used everywhere, 0 = niche)">${u}</span>`;
         li.innerHTML = `<span class="dot">✓</span><span class="ltitle">${l.title}</span>${badge}`;
         li.onclick = () => { open(l.id); if (window.innerWidth <= 820) document.body.classList.remove("nav-open"); };
         ul.appendChild(li);
@@ -503,6 +540,19 @@ const App = (function () {
       ? `<a onclick="App.open('${id}')">${byId[id].title}</a>` : null).filter(Boolean).join(", ");
     if (!links) return "";
     return `<div class="prereqs">🧩 <b>Best to read first:</b> ${links}</div>`;
+  }
+
+  // Link from a lesson into the concept map, centered on this node.
+  function graphLink(id) {
+    return `<div class="lesson-links"><a class="inlink" href="graph.html#${id}">🗺️ See where this fits in the concept map →</a></div>`;
+  }
+
+  // Real-world applications that use this concept (links into applications.html).
+  function appUses(id) {
+    const apps = APP_INDEX[id] || [];
+    if (!apps.length) return "";
+    const links = apps.map(a => `<a class="inlink" href="applications.html#app-${a.id}">${a.icon} ${a.name}</a>`).join(" · ");
+    return `<p class="app-uses">🌍 <b>See it in action:</b> ${links}</p>`;
   }
 
   function quizBlock(quiz) {
@@ -544,6 +594,7 @@ const App = (function () {
       `<h2 class="lesson-title">${l.title}</h2>` +
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
+      graphLink(id) +
       section("idea", "💡", "The big idea", l.bigIdea) +
       section("", "🪜", "Building up to it", l.buildup) +
       symbolsTable(l.symbols) +
@@ -551,7 +602,7 @@ const App = (function () {
       section("deriv", "📜", "Why it's true — derivation &amp; intuition", l.derivation) +
       (l.demo ? `<div class="card"><h3>🎛️ Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       section("example", "🔢", "Concrete example (real numbers)", l.example) +
-      section("app", "🚀", "Where you actually use this", l.application) +
+      section("app", "🚀", "Where you actually use this", (l.application || "") + appUses(id)) +
       quizBlock(l.quiz) +
       practiceBlock(l.practice) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
@@ -624,6 +675,7 @@ const App = (function () {
       if (!l.derivation && window.DERIVATIONS && DERIVATIONS[l.id]) l.derivation = DERIVATIONS[l.id];
       if (!l.practice && window.PRACTICE && PRACTICE[l.id]) l.practice = PRACTICE[l.id];
     });
+    buildAppIndex();
     renderSidebar();
     const hash = location.hash.replace("#", "");
     if (hash && byId[hash]) open(hash); else welcome();

@@ -491,17 +491,117 @@ L({
 L({
   id: "dl-minibatch",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "N", label: "N (dataset size)", min: 1, max: 5000, val: 1000, step: 1 },
-        { key: "m", label: "m (batch size)", min: 1, max: 1024, val: 100, step: 1 }
-      ],
-      compute: function (s) {
-        var iters = Math.ceil(s.N / s.m);
-        return { text: "iterations per epoch = ceil(N / m) = ceil(" + s.N + " / " + s.m +
-          ") = <b>" + iters + "</b> weight updates per epoch." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    // tiny 1-feature linear regression: y = w*x + b. Compare FULL-BATCH vs MINI-BATCH SGD.
+    var N = 40, trueW = 1.8, trueB = -0.5;
+    var X = [], Y = [];
+    var seed = 12345;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    for (var i = 0; i < N; i++) { var x = (i / (N - 1)) * 4 - 2; X.push(x); Y.push(trueW * x + trueB + (rnd() - 0.5) * 0.8); }
+    var lr = 0.05, EPOCHS = 60, BATCH = 4;
+    function lossOf(w, b) { var s = 0; for (var k = 0; k < N; k++) { var e = (w * X[k] + b) - Y[k]; s += e * e; } return s / N; }
+    // returns array of per-epoch loss using full-batch or mini-batch grad
+    function train(mini) {
+      var w = 0, b = 0, curve = [lossOf(w, b)];
+      var order = []; for (var q = 0; q < N; q++) order.push(q);
+      for (var ep = 0; ep < EPOCHS; ep++) {
+        if (mini) {
+          // shuffle (deterministic) then step per batch
+          for (var s2 = N - 1; s2 > 0; s2--) { var j = Math.floor(rnd() * (s2 + 1)); var t = order[s2]; order[s2] = order[j]; order[j] = t; }
+          for (var st0 = 0; st0 < N; st0 += BATCH) {
+            var gw = 0, gb = 0, cnt = 0;
+            for (var bi = st0; bi < Math.min(st0 + BATCH, N); bi++) { var idx = order[bi]; var e = (w * X[idx] + b) - Y[idx]; gw += e * X[idx]; gb += e; cnt++; }
+            gw = gw / cnt; gb = gb / cnt; w -= lr * 2 * gw; b -= lr * 2 * gb;
+          }
+        } else {
+          var GW = 0, GB = 0;
+          for (var f = 0; f < N; f++) { var e2 = (w * X[f] + b) - Y[f]; GW += e2 * X[f]; GB += e2; }
+          GW = GW / N; GB = GB / N; w -= lr * 2 * GW; b -= lr * 2 * GB;
+        }
+        var lv = lossOf(w, b); curve.push(isFinite(lv) ? lv : curve[curve.length - 1]);
       }
-    });
+      return curve;
+    }
+    // Use real tf optimizer if present; else fallback above. Both produce loss curves.
+    function trainTF(mini) {
+      try {
+        if (!window.tf) return null;
+        var w = window.tf.variable(window.tf.scalar(0)), b = window.tf.variable(window.tf.scalar(0));
+        var opt = window.tf.train.sgd(lr);
+        var xt = window.tf.tensor1d(X), yt = window.tf.tensor1d(Y);
+        var curve = [];
+        var lossT = function (xs, ys) { return window.tf.tidy(function () { var pred = w.mul(xs).add(b); return pred.sub(ys).square().mean(); }); };
+        curve.push(lossT(xt, yt).dataSync()[0]);
+        for (var ep = 0; ep < EPOCHS; ep++) {
+          if (mini) {
+            for (var st0 = 0; st0 < N; st0 += BATCH) {
+              var xs = window.tf.tensor1d(X.slice(st0, st0 + BATCH)), ys = window.tf.tensor1d(Y.slice(st0, st0 + BATCH));
+              opt.minimize(function () { return lossT(xs, ys); }); xs.dispose(); ys.dispose();
+            }
+          } else { opt.minimize(function () { return lossT(xt, yt); }); }
+          var lv = lossT(xt, yt).dataSync()[0]; curve.push(isFinite(lv) ? lv : curve[curve.length - 1]);
+        }
+        xt.dispose(); yt.dispose(); w.dispose(); b.dispose();
+        return curve;
+      } catch (e) { return null; }
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var full = null, mb = null, animStep = 0, usingTF = false;
+    function compute() {
+      var ft = trainTF(false), mt = trainTF(true);
+      if (ft && mt) { full = ft; mb = mt; usingTF = true; }
+      else { full = train(false); mb = train(true); usingTF = false; }
+    }
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var L = 50, R = 620, T = 24, B = 260;
+      var n = (full ? full.length : 1);
+      var mx = 0.001; for (var i = 0; i < n; i++) { if (full && full[i] > mx) mx = full[i]; if (mb && mb[i] > mx) mx = mb[i]; }
+      var px = function (i) { return L + (n <= 1 ? 0 : i / (n - 1) * (R - L)); };
+      var py = function (v) { return B - Math.max(0, Math.min(1, v / mx)) * (B - T); };
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, B); ctx.lineTo(R, B); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.stroke();
+      ctx.fillStyle = c.dim; ctx.fillText("loss", 8, T + 4); ctx.fillText("epoch", R - 40, B + 18); ctx.fillText("0", L - 12, B + 4);
+      function curve(arr, col, upto) {
+        if (!arr) return; ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+        var lim = Math.min(upto, arr.length - 1);
+        for (var i = 0; i <= lim; i++) { var X2 = px(i), Y2 = py(arr[i]); i ? ctx.lineTo(X2, Y2) : ctx.moveTo(X2, Y2); }
+        ctx.stroke();
+      }
+      curve(full, c.accent, animStep);
+      curve(mb, c.warn, animStep);
+      // legend
+      ctx.fillStyle = c.accent; ctx.fillRect(L + 8, T, 14, 4); ctx.fillStyle = c.ink; ctx.fillText("full-batch (smooth)", L + 28, T + 5);
+      ctx.fillStyle = c.warn; ctx.fillRect(L + 200, T, 14, 4); ctx.fillStyle = c.ink; ctx.fillText("mini-batch (noisy, faster)", L + 220, T + 5);
+    }
+    function readout() {
+      var fL = full ? full[Math.min(animStep, full.length - 1)] : 0;
+      var mL = mb ? mb[Math.min(animStep, mb.length - 1)] : 0;
+      rd.innerHTML = (usingTF ? "TensorFlow.js SGD. " : "plain-JS SGD. ") + "epoch <b>" + animStep + "</b> / " + EPOCHS +
+        " &nbsp; full-batch loss = <b style='color:" + C().accent + "'>" + fL.toFixed(3) + "</b>" +
+        " &nbsp; mini-batch loss = <b style='color:" + C().warn + "'>" + mL.toFixed(3) + "</b>." +
+        "<br>Mini-batch jitters (each step sees a few points) but drops faster early; full-batch is smooth but slower.";
+    }
+    var timer = null;
+    function animate() {
+      if (timer) { clearInterval(timer); timer = null; }
+      animStep = 0;
+      timer = setInterval(function () { animStep++; if (animStep >= EPOCHS) { animStep = EPOCHS; clearInterval(timer); timer = null; } draw(); readout(); }, 40);
+    }
+    var btnRow = document.createElement("div"); btnRow.style.margin = "8px 0";
+    function mkBtn(txt) { var b = document.createElement("button"); b.textContent = txt; b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:0 8px 0 0"; return b; }
+    var trainBtn = mkBtn("Train"), resetBtn = mkBtn("Reset");
+    trainBtn.addEventListener("click", function () { animStep = EPOCHS; draw(); readout(); animate(); });
+    resetBtn.addEventListener("click", function () { if (timer) { clearInterval(timer); timer = null; } animStep = 0; draw(); readout(); });
+    btnRow.appendChild(trainBtn); btnRow.appendChild(resetBtn); host.appendChild(btnRow);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    compute(); animStep = EPOCHS; draw(); readout();
   },
   title: "Mini-batch gradient descent & epochs",
   tagline: "Update on small chunks of data instead of one example or the whole set.",
@@ -543,20 +643,76 @@ L({
 L({
   id: "dl-init",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "nin", label: "n_in (inputs to layer)", min: 1, max: 1000, val: 100, step: 1 }
-      ],
-      compute: function (s) {
-        var xavier = 1 / s.nin;
-        var he = 2 / s.nin;
-        return { text: "Xavier variance = 1 / n_in = 1 / " + s.nin + " = <b>" + xavier.toFixed(5) +
-          "</b> (std ≈ " + Math.sqrt(xavier).toFixed(4) + ")" +
-          "<br>He variance = 2 / n_in = 2 / " + s.nin + " = <b>" + he.toFixed(5) +
-          "</b> (std ≈ " + Math.sqrt(he).toFixed(4) + ")" +
-          "<br>More inputs → smaller starting weights." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var st = { nin: 100, good: true, layers: 8 };
+    var seed = 999;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    function gauss() { var u = Math.max(1e-9, rnd()), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+    // simulate activation variance through layers via random matmuls
+    function simulate() {
+      var nin = st.nin, std = st.good ? Math.sqrt(2 / nin) : 0.7; // good=He std; bad=fixed large std
+      var width = 24; // neurons per layer (kept small for speed)
+      // start activations ~ unit variance
+      var a = []; for (var i = 0; i < width; i++) a.push(gauss());
+      var vars = [variance(a)];
+      for (var Lz = 0; Lz < st.layers; Lz++) {
+        var na = [];
+        for (var o = 0; o < width; o++) {
+          var z = 0;
+          for (var k = 0; k < width; k++) { z += (gauss() * std) * a[k]; }
+          na.push(Math.max(0, z)); // ReLU
+        }
+        a = na; var vv = variance(a); vars.push(isFinite(vv) ? vv : 0);
       }
-    });
+      return vars;
+    }
+    function variance(arr) { var m = 0, i; for (i = 0; i < arr.length; i++) m += arr[i]; m /= arr.length; var s = 0; for (i = 0; i < arr.length; i++) s += (arr[i] - m) * (arr[i] - m); return s / arr.length; }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); seed = 999; var vars = simulate();
+      ctx.clearRect(0, 0, 640, 300); ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
+      var L = 50, R = 620, T = 30, B = 250, n = vars.length;
+      var mx = 1e-6; for (var i = 0; i < n; i++) if (vars[i] > mx) mx = vars[i];
+      var bw = (R - L) / n * 0.7, gap = (R - L) / n;
+      ctx.strokeStyle = c.border; ctx.beginPath(); ctx.moveTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+      for (i = 0; i < n; i++) {
+        var h = Math.max(0, Math.min(1, vars[i] / mx)) * (B - T);
+        var x = L + i * gap + (gap - bw) / 2;
+        ctx.fillStyle = st.good ? c.accent2 : c.warn; ctx.fillRect(x, B - h, bw, h);
+        ctx.fillStyle = c.dim; ctx.fillText("L" + i, x + bw / 2, B + 14);
+        ctx.fillStyle = c.ink; ctx.fillText(vars[i] < 0.01 ? vars[i].toExponential(0) : vars[i].toFixed(2), x + bw / 2, B - h - 4);
+      }
+      ctx.textAlign = "start"; ctx.fillStyle = c.ink; ctx.font = "13px sans-serif";
+      ctx.fillText((st.good ? "GOOD: He init — variance stays stable" : "BAD: weights too large — variance explodes / ReLU saturates"), L, 18);
+    }
+    function readout() {
+      seed = 999; var vars = simulate();
+      var first = vars[1] || 0, last = vars[vars.length - 1] || 0;
+      rd.innerHTML = (st.good ? "<b style='color:" + C().accent2 + "'>Good init</b> (He: std = √(2/n_in))" : "<b style='color:" + C().warn + "'>Bad init</b> (fixed large std = 0.7)") +
+        " &nbsp; layer-1 var = <b>" + first.toFixed(3) + "</b> → layer-" + (vars.length - 1) + " var = <b>" + (last < 0.01 ? last.toExponential(1) : last.toFixed(3)) + "</b>." +
+        "<br>Bad init makes the variance blow up (or collapse) across depth; good init keeps the signal alive.";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); readout(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    var btn = document.createElement("button"); btn.textContent = "Toggle: good init ↔ bad init";
+    btn.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:8px 0";
+    btn.addEventListener("click", function () { st.good = !st.good; draw(); readout(); });
+    host.appendChild(btn);
+    slider("n_in (inputs to layer)", "nin", 4, 1000, 1);
+    slider("number of layers", "layers", 2, 16, 1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Weight initialization (Xavier)",
   tagline: "Start the weights at small, just-right random values. Zeros or huge values break training.",
@@ -633,15 +789,20 @@ L({
       rd.innerHTML = "keep prob p = " + st.keep.toFixed(2) + ". This pass: <b>" + kept + " of 6</b> hidden neurons kept, " + (6 - kept) + " dropped (greyed ✕).<br>inverted-dropout scales survivors by 1/p = <b>" + (1 / st.keep).toFixed(2) + "</b> so the total stays balanced.";
     }
     var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px";
+    var BTNCSS = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:8px 8px 8px 0";
     var btn = document.createElement("button"); btn.textContent = "resample dropout mask";
-    btn.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:8px 0";
+    btn.style.cssText = BTNCSS;
     btn.addEventListener("click", function () { resample(); draw(); readout(); });
+    // Reset (full network): dropout OFF — all units active, mask cleared to all-on.
+    var resetBtn = document.createElement("button"); resetBtn.textContent = "Reset (full network)";
+    resetBtn.style.cssText = BTNCSS;
+    resetBtn.addEventListener("click", function () { st.keep = 1; inp.value = 1; lab.textContent = "keep prob p = 1.00 (dropout off)"; mask = [1, 1, 1, 1, 1, 1]; draw(); readout(); });
     var row = document.createElement("div"); row.style.margin = "6px 0";
     var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "keep prob p = " + st.keep;
     var inp = document.createElement("input"); inp.type = "range"; inp.min = 0.1; inp.max = 1; inp.step = 0.05; inp.value = st.keep;
     inp.addEventListener("input", function () { st.keep = parseFloat(inp.value); lab.textContent = "keep prob p = " + st.keep.toFixed(2); resample(); draw(); readout(); });
     row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
-    host.appendChild(btn); host.appendChild(rd);
+    var btnRow = document.createElement("div"); btnRow.appendChild(btn); btnRow.appendChild(resetBtn); host.appendChild(btnRow); host.appendChild(rd);
     resample(); draw(); readout();
   },
   title: "Dropout",
@@ -1087,19 +1248,71 @@ L({
 L({
   id: "dl-cnn-params",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "F", label: "F (filter size)", min: 1, max: 11, val: 3, step: 1 },
-        { key: "C", label: "C (input channels)", min: 1, max: 512, val: 3, step: 1 },
-        { key: "K", label: "K (number of filters)", min: 1, max: 512, val: 10, step: 1 }
-      ],
-      compute: function (s) {
-        var params = (s.F * s.F * s.C + 1) * s.K;
-        return { text: "params = (F·F·C + 1)·K = (" + s.F + "·" + s.F + "·" + s.C +
-          " + 1)·" + s.K + " = (" + (s.F * s.F * s.C) + " + 1)·" + s.K +
-          " = <b>" + params + "</b>" };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var st = { F: 3, C: 3, K: 6, img: 32 };
+    var seed = 7;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); seed = 7; ctx.clearRect(0, 0, 640, 320);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var img = st.img, units = 64; // FC: img*img inputs -> 'units' outputs
+      var fcParams = (img * img * 1 + 1) * units; // grayscale FC for fair big number
+      var convParams = (st.F * st.F * st.C + 1) * st.K;
+      // BEFORE: fully-connected weight matrix (huge dense grid)
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif"; ctx.fillText("BEFORE — fully connected", 30, 24);
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.fillText("(img·img+1)·units = " + fcParams.toLocaleString(), 30, 40);
+      var gx = 30, gy = 52, cells = 18, cz = 9;
+      for (var r = 0; r < cells; r++) for (var k = 0; k < cells; k++) {
+        var v = rnd();
+        ctx.fillStyle = "rgba(255,180,84," + (0.25 + v * 0.6).toFixed(2) + ")";
+        ctx.fillRect(gx + k * cz, gy + r * cz, cz - 1, cz - 1);
       }
-    });
+      ctx.fillStyle = c.warn; ctx.font = "12px sans-serif"; ctx.fillText("one weight per pixel×unit — no sharing", gx, gy + cells * cz + 16);
+      // AFTER: conv filter bank (K small FxF grids, shared everywhere)
+      var ox = 360;
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif"; ctx.fillText("AFTER — convolution", ox, 24);
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.fillText("(F·F·C+1)·K = " + convParams.toLocaleString(), ox, 40);
+      var fcz = Math.max(6, Math.min(16, Math.floor(70 / st.F)));
+      var perRow = Math.max(1, Math.floor(250 / (st.F * fcz + 10)));
+      for (var fi = 0; fi < st.K; fi++) {
+        var fx = ox + (fi % perRow) * (st.F * fcz + 10);
+        var fy = 52 + Math.floor(fi / perRow) * (st.F * fcz + 12);
+        if (fy + st.F * fcz > 300) break;
+        for (var rr = 0; rr < st.F; rr++) for (var kk = 0; kk < st.F; kk++) {
+          var vv = rnd();
+          ctx.fillStyle = "rgba(78,161,255," + (0.25 + vv * 0.6).toFixed(2) + ")";
+          ctx.fillRect(fx + kk * fcz, fy + rr * fcz, fcz - 1, fcz - 1);
+        }
+      }
+      ctx.fillStyle = c.accent; ctx.font = "12px sans-serif"; ctx.fillText(st.K + " filters, each " + st.F + "×" + st.F + "×" + st.C + " — reused over the image", ox, 300);
+    }
+    function readout() {
+      var img = st.img, units = 64;
+      var fcParams = (img * img + 1) * units, convParams = (st.F * st.F * st.C + 1) * st.K;
+      var ratio = convParams > 0 ? fcParams / convParams : 0;
+      rd.innerHTML = "FC params (on " + img + "×" + img + " image → " + units + " units) = <b style='color:" + C().warn + "'>" + fcParams.toLocaleString() + "</b>" +
+        " &nbsp; conv params = (F·F·C+1)·K = (" + st.F + "·" + st.F + "·" + st.C + "+1)·" + st.K + " = <b style='color:" + C().accent + "'>" + convParams.toLocaleString() + "</b>." +
+        "<br>Conv uses <b>" + ratio.toFixed(0) + "× fewer</b> weights by sharing one filter across every position.";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key]; draw(); readout(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("F (filter size)", "F", 1, 9, 1);
+    slider("C (input channels)", "C", 1, 64, 1);
+    slider("K (number of filters)", "K", 1, 32, 1);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Counting CNN parameters",
   tagline: "How many weights a convolutional layer holds, and what a neuron can 'see'.",
@@ -1238,20 +1451,111 @@ L({
 L({
   id: "dl-face-recognition",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "dap", label: "d(A,P) anchor-positive", min: 0, max: 2, val: 0.3, step: 0.05 },
-        { key: "dan", label: "d(A,N) anchor-negative", min: 0, max: 2, val: 0.5, step: 0.05 },
-        { key: "alpha", label: "α (margin)", min: 0, max: 1, val: 0.2, step: 0.05 }
-      ],
-      compute: function (s) {
-        var inside = s.dap - s.dan + s.alpha;
-        var loss = Math.max(0, inside);
-        return { text: "inside = d(A,P) − d(A,N) + α = " + s.dap.toFixed(2) + " − " +
-          s.dan.toFixed(2) + " + " + s.alpha.toFixed(2) + " = " + inside.toFixed(3) +
-          "<br>triplet loss = max(0, inside) = <b>" + loss.toFixed(3) + "</b>" };
-      }
-    });
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var alpha = 0.4;
+    // untrained scatter (before) and trained target (after). Points: A, P (2 positives), N (2 negatives)
+    var before = { A: [0.5, 0.55], P: [[0.2, 0.1], [0.85, 0.3]], N: [[0.45, 0.6], [0.6, 0.45]] };
+    // current positions (will animate from before -> learned)
+    function clone(o) { return { A: o.A.slice(), P: o.P.map(function (p) { return p.slice(); }), N: o.N.map(function (p) { return p.slice(); }) }; }
+    var cur = clone(before);
+    var t = 0; // 0 = untrained, 1 = trained
+    function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+    // target arrangement: positives near anchor, negatives pushed far
+    function target() {
+      var A = before.A;
+      return {
+        A: A.slice(),
+        P: [[A[0] + 0.05, A[1] + 0.06], [A[0] - 0.06, A[1] + 0.04]],
+        N: [[A[0] + 0.38, A[1] - 0.4], [A[0] - 0.42, A[1] - 0.35]]
+      };
+    }
+    var tgt = target();
+    // optionally refine target by minimizing triplet loss with tf
+    function refineTF() {
+      try {
+        if (!window.tf) return;
+        var A = window.tf.tensor1d(before.A);
+        var P = window.tf.variable(window.tf.tensor2d(tgt.P));
+        var Nn = window.tf.variable(window.tf.tensor2d(tgt.N));
+        var opt = window.tf.train.adam(0.05);
+        var loss = function () {
+          return window.tf.tidy(function () {
+            var dap = P.sub(A).square().sum(1).sqrt().mean();
+            var dan = Nn.sub(A).square().sum(1).sqrt().mean();
+            return window.tf.relu(dap.sub(dan).add(alpha));
+          });
+        };
+        for (var i = 0; i < 60; i++) opt.minimize(loss);
+        var pv = P.arraySync(), nv = Nn.arraySync();
+        if (pv && nv) { tgt.P = pv; tgt.N = nv; }
+        A.dispose(); P.dispose(); Nn.dispose();
+      } catch (e) { /* keep scripted target */ }
+    }
+    refineTF();
+    var cv = document.createElement("canvas"); cv.width = 420; cv.height = 360; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var P0 = 40, PW = 420 - 2 * P0, PH = 360 - 2 * P0;
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function pos() {
+      // interpolate cur between before and tgt by t
+      return {
+        A: before.A.slice(),
+        P: before.P.map(function (p, i) { return [lerp(p[0], tgt.P[i][0], t), lerp(p[1], tgt.P[i][1], t)]; }),
+        N: before.N.map(function (p, i) { return [lerp(p[0], tgt.N[i][0], t), lerp(p[1], tgt.N[i][1], t)]; })
+      };
+    }
+    function sx(x) { return P0 + x * PW; }
+    function sy(y) { return P0 + (1 - y) * PH; }
+    function dot(p, col, lbl) {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), 8, 0, 7); ctx.fill();
+      ctx.fillStyle = "#000"; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lbl, sx(p[0]), sy(p[1]));
+    }
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, 420, 360);
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.strokeRect(P0, P0, PW, PH);
+      var p = pos();
+      // links anchor->positives (green) and anchor->negatives (orange)
+      ctx.lineWidth = 1.5;
+      p.P.forEach(function (q) { ctx.strokeStyle = c.accent2; ctx.beginPath(); ctx.moveTo(sx(p.A[0]), sy(p.A[1])); ctx.lineTo(sx(q[0]), sy(q[1])); ctx.stroke(); });
+      p.N.forEach(function (q) { ctx.strokeStyle = c.warn; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(sx(p.A[0]), sy(p.A[1])); ctx.lineTo(sx(q[0]), sy(q[1])); ctx.stroke(); ctx.setLineDash([]); });
+      p.P.forEach(function (q) { dot(q, c.accent2, "P"); });
+      p.N.forEach(function (q) { dot(q, c.warn, "N"); });
+      dot(p.A, c.accent, "A");
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif";
+      ctx.fillText(t < 0.5 ? "BEFORE — untrained (scattered)" : "AFTER — trained (P near A, N far)", P0, 24);
+    }
+    function readout() {
+      var p = pos();
+      var dap = (dist(p.A, p.P[0]) + dist(p.A, p.P[1])) / 2;
+      var dan = (dist(p.A, p.N[0]) + dist(p.A, p.N[1])) / 2;
+      var loss = Math.max(0, dap - dan + alpha);
+      rd.innerHTML = (window.tf ? "TensorFlow.js triplet-loss min. " : "scripted triplet motion. ") +
+        "mean d(A,P) = <b style='color:" + C().accent2 + "'>" + dap.toFixed(3) + "</b>, mean d(A,N) = <b style='color:" + C().warn + "'>" + dan.toFixed(3) + "</b>, margin α = " + alpha +
+        "<br>triplet loss = max(0, d(A,P) − d(A,N) + α) = <b>" + loss.toFixed(3) + "</b>. Training pulls P toward A, pushes N away.";
+    }
+    var timer = null;
+    function animateTo(target) {
+      if (timer) { clearInterval(timer); timer = null; }
+      timer = setInterval(function () {
+        t += (target - t) * 0.12;
+        if (Math.abs(target - t) < 0.005) { t = target; clearInterval(timer); timer = null; }
+        draw(); readout();
+      }, 30);
+    }
+    var btnRow = document.createElement("div"); btnRow.style.margin = "8px 0";
+    function mkBtn(txt) { var b = document.createElement("button"); b.textContent = txt; b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:0 8px 0 0"; return b; }
+    var trainBtn = mkBtn("Train"), resetBtn = mkBtn("Reset");
+    trainBtn.addEventListener("click", function () { animateTo(1); });
+    resetBtn.addEventListener("click", function () { if (timer) { clearInterval(timer); timer = null; } t = 0; draw(); readout(); });
+    btnRow.appendChild(trainBtn); btnRow.appendChild(resetBtn); host.appendChild(btnRow);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Face verification & triplet loss",
   tagline: "Learn an encoding where the same person's faces sit close and different people sit far.",
@@ -1293,20 +1597,74 @@ L({
 L({
   id: "dl-style-transfer",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "alpha", label: "α (content weight)", min: 0, max: 10, val: 1, step: 0.5 },
-        { key: "beta", label: "β (style weight)", min: 0, max: 100, val: 40, step: 1 },
-        { key: "Jc", label: "content cost Jc", min: 0, max: 10, val: 3, step: 0.5 },
-        { key: "Js", label: "style cost Js", min: 0, max: 10, val: 2, step: 0.5 }
-      ],
-      compute: function (s) {
-        var J = s.alpha * s.Jc + s.beta * s.Js;
-        return { text: "J = α·Jc + β·Js = " + s.alpha.toFixed(1) + "·" + s.Jc.toFixed(1) +
-          " + " + s.beta.toFixed(0) + "·" + s.Js.toFixed(1) + " = <b>" + J.toFixed(2) +
-          "</b>. Raise β for a more painterly look." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var st = { w: 0.6 }; // 0 = pure content, 1 = pure style
+    // style palette (Starry-Night-ish)
+    var style = [[20, 40, 120], [40, 90, 200], [230, 200, 60], [250, 240, 180]];
+    function lerp(a, b, t) { return Math.round(a + (b - a) * t); }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 260; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var GS = 16; // grid resolution for the content shape
+    // content: a house shape on a grid -> value 0..1
+    function content(gx, gy) {
+      var x = gx / (GS - 1), y = gy / (GS - 1);
+      var body = (x > 0.25 && x < 0.75 && y > 0.45 && y < 0.85) ? 1 : 0; // square house
+      var roof = (y <= 0.45 && y > 0.2 && Math.abs(x - 0.5) < (0.45 - y) * 1.2) ? 1 : 0;
+      var sun = Math.hypot(x - 0.8, y - 0.2) < 0.12 ? 0.6 : 0;
+      return Math.max(body, roof, sun);
+    }
+    function styleColor(v) {
+      // map intensity v 0..1 into the style palette with a swirl
+      var n = style.length - 1, f = Math.max(0, Math.min(0.999, v)) * n, i = Math.floor(f), fr = f - i;
+      var a = style[i], b = style[i + 1] || style[i];
+      return [lerp(a[0], b[0], fr), lerp(a[1], b[1], fr), lerp(a[2], b[2], fr)];
+    }
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, 640, 260);
+      ctx.font = "13px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var cell = 11, ox = 30, oy = 40, side = GS * cell;
+      // BEFORE: content (grayscale)
+      ctx.fillStyle = c.ink; ctx.fillText("BEFORE — content", ox, 28);
+      for (var gy = 0; gy < GS; gy++) for (var gx = 0; gx < GS; gx++) {
+        var v = content(gx, gy), g = Math.round(40 + v * 200);
+        ctx.fillStyle = "rgb(" + g + "," + g + "," + g + ")";
+        ctx.fillRect(ox + gx * cell, oy + gy * cell, cell - 1, cell - 1);
       }
-    });
+      // style swatch
+      var sx = ox + side + 30;
+      ctx.fillStyle = c.dim; ctx.fillText("style", sx, 28);
+      for (var i = 0; i < style.length; i++) { ctx.fillStyle = "rgb(" + style[i][0] + "," + style[i][1] + "," + style[i][2] + ")"; ctx.fillRect(sx, 36 + i * 26, 40, 24); }
+      // AFTER: content recolored by style, blended by weight w
+      var ax = sx + 90;
+      ctx.fillStyle = c.ink; ctx.fillText("AFTER — stylized", ax, 28);
+      for (var gy2 = 0; gy2 < GS; gy2++) for (var gx2 = 0; gx2 < GS; gx2++) {
+        var vv = content(gx2, gy2);
+        var sc = styleColor(vv + Math.sin((gx2 + gy2) * 0.7) * 0.15 * st.w); // swirl with style weight
+        var gg = Math.round(40 + vv * 200);
+        var r = lerp(gg, sc[0], st.w), gr = lerp(gg, sc[1], st.w), bl = lerp(gg, sc[2], st.w);
+        ctx.fillStyle = "rgb(" + r + "," + gr + "," + bl + ")";
+        ctx.fillRect(ax + gx2 * cell, oy + gy2 * cell, cell - 1, cell - 1);
+      }
+    }
+    function readout() {
+      rd.innerHTML = "content↔style weight = <b>" + st.w.toFixed(2) + "</b> (0 = original photo, 1 = fully repainted)." +
+        "<br>The shape (content) stays; its colors and texture come from the style swatch as the weight rises.";
+    }
+    function slider(label, key, min, max, step) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key].toFixed(2); draw(); readout(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("content ↔ style weight", "w", 0, 1, 0.05);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Neural style transfer",
   tagline: "Keep a photo's content but repaint it in another image's artistic style.",
@@ -1348,19 +1706,74 @@ L({
 L({
   id: "dl-gan",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "D", label: "D(x) on a fake", min: 0.01, max: 0.99, val: 0.5, step: 0.01 }
-      ],
-      compute: function (s) {
-        var dLoss = -Math.log(1 - s.D);
-        var gLoss = -Math.log(s.D);
-        var note = Math.abs(s.D - 0.5) < 0.03 ? " D ≈ 0.5: at equilibrium the discriminator is fooled." : "";
-        return { text: "discriminator output on fake D(x) = " + s.D.toFixed(2) +
-          "<br>discriminator loss = −log(1 − D) = <b>" + dLoss.toFixed(3) + "</b>" +
-          "<br>generator loss = −log(D) = <b>" + gLoss.toFixed(3) + "</b>" + note };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    // 1-D distributions. real ~ N(realMu, realSd). generator outputs ~ N(genMu, genSd), drifting toward real as we "train".
+    var realMu = 1.2, realSd = 0.5;
+    var genMu0 = -1.5, genSd0 = 1.2; // far off at start
+    var genMu = genMu0, genSd = genSd0;
+    var lo = -4, hi = 4, nb = 32;
+    var seed = 4242;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    function gauss(mu, sd) { var u = Math.max(1e-9, rnd()), v = rnd(); return mu + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+    function hist(mu, sd, n) {
+      var counts = new Array(nb).fill(0);
+      for (var i = 0; i < n; i++) { var x = gauss(mu, sd); var b = Math.floor((x - lo) / (hi - lo) * nb); if (b < 0) b = 0; if (b >= nb) b = nb - 1; counts[b]++; }
+      return counts;
+    }
+    var realHist = null, genHist = null;
+    function recompute() { seed = 4242; realHist = hist(realMu, realSd, 4000); genHist = hist(genMu, genSd, 4000); }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 280; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function discAcc() {
+      // overlap of two gaussians -> discriminator accuracy. Closer dists => acc toward 50%.
+      var diff = Math.abs(genMu - realMu) / Math.sqrt(genSd * genSd + realSd * realSd + 1e-9);
+      // acc roughly 0.5 + 0.5*erf-like; clamp
+      var a = 0.5 + 0.5 * (1 - Math.exp(-diff * diff));
+      return Math.max(0.5, Math.min(0.99, a));
+    }
+    function draw() {
+      var c = C(); recompute(); ctx.clearRect(0, 0, 640, 280);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var L = 40, R = 620, T = 40, B = 240, bw = (R - L) / nb;
+      var mx = 1; for (var i = 0; i < nb; i++) { mx = Math.max(mx, realHist[i], genHist[i]); }
+      ctx.strokeStyle = c.border; ctx.beginPath(); ctx.moveTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+      for (i = 0; i < nb; i++) {
+        var rh = realHist[i] / mx * (B - T), gh = genHist[i] / mx * (B - T);
+        ctx.fillStyle = "rgba(78,161,255,0.45)"; ctx.fillRect(L + i * bw, B - rh, bw - 1, rh); // real
+        ctx.fillStyle = "rgba(255,180,84,0.55)"; ctx.fillRect(L + i * bw, B - gh, bw - 1, gh); // generator
       }
-    });
+      ctx.fillStyle = c.accent; ctx.fillRect(L, T - 20, 14, 8); ctx.fillStyle = c.ink; ctx.fillText("real data", L + 20, T - 13);
+      ctx.fillStyle = c.warn; ctx.fillRect(L + 120, T - 20, 14, 8); ctx.fillStyle = c.ink; ctx.fillText("generator output", L + 140, T - 13);
+      ctx.fillStyle = c.dim; ctx.fillText(String(lo), L, B + 16); ctx.fillText(String(hi), R - 14, B + 16);
+    }
+    function readout() {
+      var acc = discAcc();
+      var matched = Math.abs(genMu - realMu) < 0.15 && Math.abs(genSd - realSd) < 0.25;
+      rd.innerHTML = "generator: mean = <b>" + genMu.toFixed(2) + "</b>, spread = <b>" + genSd.toFixed(2) + "</b> &nbsp; (real: mean " + realMu + ", spread " + realSd + ")" +
+        "<br>discriminator accuracy = <b style='color:" + (matched ? C().accent2 : C().warn) + "'>" + (acc * 100).toFixed(0) + "%</b>" +
+        (matched ? " — at equilibrium (~50%) the generator's fakes are indistinguishable." : " — generator still off; train to push it toward the real distribution.");
+    }
+    var timer = null, steps = 0;
+    function trainStep() {
+      steps++;
+      genMu += (realMu - genMu) * 0.08;
+      genSd += (realSd - genSd) * 0.08;
+      draw(); readout();
+      if (steps > 120 || (Math.abs(genMu - realMu) < 0.02 && Math.abs(genSd - realSd) < 0.02)) { clearInterval(timer); timer = null; }
+    }
+    var btnRow = document.createElement("div"); btnRow.style.margin = "8px 0";
+    function mkBtn(txt) { var b = document.createElement("button"); b.textContent = txt; b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin:0 8px 0 0"; return b; }
+    var trainBtn = mkBtn("Train"), resetBtn = mkBtn("Reset");
+    trainBtn.addEventListener("click", function () { if (timer) clearInterval(timer); steps = 0; timer = setInterval(trainStep, 40); });
+    resetBtn.addEventListener("click", function () { if (timer) { clearInterval(timer); timer = null; } genMu = genMu0; genSd = genSd0; draw(); readout(); });
+    btnRow.appendChild(trainBtn); btnRow.appendChild(resetBtn); host.appendChild(btnRow);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "GANs (generator vs discriminator)",
   tagline: "A forger and a detective compete; the forger gets so good its fakes look real.",
@@ -1561,19 +1974,63 @@ L({
 L({
   id: "dl-lstm-gru",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "f", label: "forget gate f", min: 0, max: 1, val: 0.7, step: 0.05 },
-        { key: "c", label: "c (old cell)", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "cand", label: "candidate (new info)", min: -3, max: 3, val: 2, step: 0.1 }
-      ],
-      compute: function (s) {
-        var cNew = s.f * s.c + (1 - s.f) * s.cand;
-        return { text: "new cell = f·c + (1 − f)·candidate = " + s.f.toFixed(2) + "·" +
-          s.c.toFixed(1) + " + " + (1 - s.f).toFixed(2) + "·" + s.cand.toFixed(1) +
-          " = <b>" + cNew.toFixed(3) + "</b>. f near 1 keeps old memory; f near 0 forgets it." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var st = { f: 0.95, w: 0.5, T: 16 }; // f = forget gate; w = vanilla RNN recurrent weight
+    // input: a strong signal at t=0 (value 1), zeros afterward. Track how each keeps it.
+    function sequences() {
+      var T = st.T, rnn = [], lstm = [];
+      var hr = 0, cl = 0;
+      for (var t = 0; t <= T; t++) {
+        var x = (t === 0) ? 1 : 0;
+        // vanilla RNN: h = tanh(w*h + x); signal decays since |w|<1 and tanh shrinks
+        hr = Math.tanh(st.w * hr + x);
+        rnn.push(Math.abs(hr));
+        // LSTM/GRU cell: c = f*c + (1-f)*x ; near-constant carry when f~1
+        cl = st.f * cl + (1 - st.f) * x;
+        lstm.push(Math.abs(cl));
       }
-    });
+      return { rnn: rnn, lstm: lstm };
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 280; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); var sq = sequences(); ctx.clearRect(0, 0, 640, 280);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      var L = 50, R = 620, T = 40, B = 230, n = sq.rnn.length;
+      var px = function (i) { return L + (n <= 1 ? 0 : i / (n - 1) * (R - L)); };
+      var py = function (v) { return B - Math.max(0, Math.min(1, v)) * (B - T); };
+      ctx.strokeStyle = c.border; ctx.beginPath(); ctx.moveTo(L, B); ctx.lineTo(R, B); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.stroke();
+      ctx.fillStyle = c.dim; ctx.fillText("|state|", 6, T + 4); ctx.fillText("timestep →", R - 70, B + 18);
+      function plot(arr, col) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); for (var i = 0; i < arr.length; i++) { var X = px(i), Y = py(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); } ctx.stroke(); for (i = 0; i < arr.length; i++) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px(i), py(arr[i]), 2.5, 0, 7); ctx.fill(); } }
+      plot(sq.rnn, c.warn);
+      plot(sq.lstm, c.accent2);
+      ctx.fillStyle = c.warn; ctx.fillRect(L + 8, T - 18, 14, 4); ctx.fillStyle = c.ink; ctx.fillText("vanilla RNN (forgets)", L + 28, T - 13);
+      ctx.fillStyle = c.accent2; ctx.fillRect(L + 200, T - 18, 14, 4); ctx.fillStyle = c.ink; ctx.fillText("LSTM/GRU cell (remembers)", L + 220, T - 13);
+    }
+    function readout() {
+      var sq = sequences();
+      var rnnEnd = sq.rnn[sq.rnn.length - 1], lstmEnd = sq.lstm[sq.lstm.length - 1];
+      rd.innerHTML = "An input pulse arrives at t=0. After " + st.T + " steps: vanilla RNN signal = <b style='color:" + C().warn + "'>" + rnnEnd.toFixed(3) + "</b> (decayed away)," +
+        " LSTM/GRU cell = <b style='color:" + C().accent2 + "'>" + lstmEnd.toFixed(3) + "</b>." +
+        "<br>forget gate f = <b>" + st.f.toFixed(2) + "</b>: near 1 it carries memory almost unchanged; lower it and the gate forgets too.";
+    }
+    function slider(label, key, min, max, step, fixed) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key];
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = step; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + (fixed ? st[key].toFixed(2) : st[key]); draw(); readout(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("forget gate f (LSTM/GRU)", "f", 0, 1, 0.05, true);
+    slider("RNN recurrent weight w", "w", 0, 1, 0.05, true);
+    slider("sequence length T", "T", 4, 30, 1, false);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "LSTM & GRU (gates)",
   tagline: "Add little gates that decide what to remember and what to forget over long sequences.",
@@ -1615,18 +2072,95 @@ L({
 L({
   id: "dl-word-embeddings",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "V", label: "V (vocabulary size)", min: 2, max: 100000, val: 10000, step: 1 },
-        { key: "d", label: "d (embedding dim)", min: 2, max: 1024, val: 300, step: 1 }
-      ],
-      compute: function (s) {
-        var ratio = s.V / s.d;
-        return { text: "one-hot length = V = <b>" + s.V + "</b> (mostly zeros)" +
-          "<br>embedding length = d = <b>" + s.d + "</b> (dense)" +
-          "<br>embedding is " + ratio.toFixed(1) + "× shorter than one-hot." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    // small set of words with higher-dim "meaning" vectors (5-D), grouped semantically.
+    var words = ["king", "queen", "man", "woman", "dog", "cat", "puppy", "kitten"];
+    var grp = [0, 0, 0, 0, 1, 1, 1, 1]; // royalty/people vs animals (coloring)
+    // 5-D hand-built vectors: [royalty, gender, human, animal, youth]
+    var vecs = [
+      [0.9, 0.2, 0.8, 0.0, 0.1],  // king
+      [0.9, 0.9, 0.8, 0.0, 0.1],  // queen
+      [0.1, 0.2, 0.9, 0.0, 0.2],  // man
+      [0.1, 0.9, 0.9, 0.0, 0.2],  // woman
+      [0.0, 0.5, 0.0, 0.9, 0.3],  // dog
+      [0.0, 0.5, 0.0, 0.9, 0.3],  // cat
+      [0.0, 0.5, 0.0, 0.9, 0.95], // puppy
+      [0.0, 0.5, 0.0, 0.9, 0.95]  // kitten
+    ];
+    // small per-word jitter so cat/dog don't fully overlap
+    for (var i = 0; i < vecs.length; i++) { vecs[i] = vecs[i].map(function (v, j) { return v + ((i * 7 + j * 13) % 5 - 2) * 0.03; }); }
+    // PCA -> 2D. Try mlMatrix; else fallback projection onto first two features-ish.
+    var pts2d = null;
+    function pcaFallback() {
+      // center
+      var n = vecs.length, dcols = vecs[0].length;
+      var mean = new Array(dcols).fill(0);
+      vecs.forEach(function (v) { v.forEach(function (x, j) { mean[j] += x / n; }); });
+      var cen = vecs.map(function (v) { return v.map(function (x, j) { return x - mean[j]; }); });
+      // pick two informative axes: royalty(0) vs youth(4) capture the two groupings well
+      return cen.map(function (v) { return [v[0] - v[3], v[4] - v[2] * 0.5]; });
+    }
+    function pcaMl() {
+      try {
+        if (!window.mlMatrix || !window.mlMatrix.Matrix) return null;
+        var M = new window.mlMatrix.Matrix(vecs);
+        var means = M.mean('column');
+        var centered = M.clone();
+        for (var r = 0; r < centered.rows; r++) for (var k = 0; k < centered.columns; k++) centered.set(r, k, centered.get(r, k) - means[k]);
+        var svd = new window.mlMatrix.SVD(centered, { autoTranspose: true });
+        var U = svd.leftSingularVectors, S = svd.diagonal;
+        // projection = U[:, :2] * S[:2]
+        var out = [];
+        for (var rr = 0; rr < U.rows; rr++) out.push([U.get(rr, 0) * (S[0] || 1), U.get(rr, 1) * (S[1] || 1)]);
+        // sanity check finite
+        for (var q = 0; q < out.length; q++) if (!isFinite(out[q][0]) || !isFinite(out[q][1])) return null;
+        return out;
+      } catch (e) { return null; }
+    }
+    pts2d = pcaMl() || pcaFallback();
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, 640, 320);
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      // BEFORE: one-hot sparse grid (8 words x 24 slots, one 1 each)
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif"; ctx.fillText("BEFORE — one-hot (sparse, no similarity)", 20, 22);
+      var ox = 20, oy = 34, cz = 11, V = 24;
+      for (var w = 0; w < words.length; w++) {
+        for (var s = 0; s < V; s++) {
+          var on = (s === (w * 3) % V);
+          ctx.fillStyle = on ? c.accent : c.panel;
+          ctx.fillRect(ox + s * cz, oy + w * (cz + 3), cz - 1, cz - 1);
+        }
+        ctx.fillStyle = c.dim; ctx.font = "10px sans-serif"; ctx.fillText(words[w], ox + V * cz + 6, oy + w * (cz + 3) + cz - 1);
       }
-    });
+      // AFTER: dense 2D embedding scatter
+      var px0 = 360, py0 = 40, pw = 250, ph = 250;
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif"; ctx.fillText("AFTER — dense 2D (clusters)", px0, 22);
+      var xs = pts2d.map(function (p) { return p[0]; }), ys = pts2d.map(function (p) { return p[1]; });
+      var xmin = Math.min.apply(0, xs), xmax = Math.max.apply(0, xs), ymin = Math.min.apply(0, ys), ymax = Math.max.apply(0, ys);
+      if (xmax - xmin < 1e-6) { xmax += 1; xmin -= 1; } if (ymax - ymin < 1e-6) { ymax += 1; ymin -= 1; }
+      ctx.strokeStyle = c.border; ctx.strokeRect(px0, py0, pw, ph);
+      var sx = function (x) { return px0 + 20 + (x - xmin) / (xmax - xmin) * (pw - 40); };
+      var sy = function (y) { return py0 + ph - 20 - (y - ymin) / (ymax - ymin) * (ph - 40); };
+      var cols = [c.accent, c.warn];
+      for (var p = 0; p < pts2d.length; p++) {
+        ctx.fillStyle = cols[grp[p]]; ctx.beginPath(); ctx.arc(sx(pts2d[p][0]), sy(pts2d[p][1]), 6, 0, 7); ctx.fill();
+        ctx.fillStyle = c.ink; ctx.font = "11px sans-serif"; ctx.fillText(words[p], sx(pts2d[p][0]) + 8, sy(pts2d[p][1]) + 4);
+      }
+    }
+    function readout() {
+      rd.innerHTML = (window.mlMatrix && pcaMl() ? "ml-matrix SVD/PCA → 2D. " : "fallback 2D projection. ") +
+        "One-hot vectors are length-24 and all equally far apart — they carry no meaning. " +
+        "The dense embedding places <b>king/queen/man/woman</b> in one cluster and <b>dog/cat/puppy/kitten</b> in another. Related words land near each other.";
+    }
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Word embeddings",
   tagline: "Turn words into number-vectors where similar words land near each other.",
@@ -1901,18 +2435,95 @@ L({
 L({
   id: "dl-data-augmentation",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "flips", label: "flip variants", min: 1, max: 4, val: 2, step: 1 },
-        { key: "rots", label: "rotation variants", min: 1, max: 12, val: 4, step: 1 },
-        { key: "crops", label: "crop variants", min: 1, max: 10, val: 3, step: 1 }
-      ],
-      compute: function (s) {
-        var total = s.flips * s.rots * s.crops;
-        return { text: "total variants = flips × rotations × crops = " + s.flips + " × " +
-          s.rots + " × " + s.crops + " = <b>" + total + "</b> images from one original." };
+    host.innerHTML = "";
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var GS = 12;
+    // base image: a stylized digit "7" on a GSxGS grid -> intensity 0..1
+    function base() {
+      var img = [];
+      for (var r = 0; r < GS; r++) { img.push([]); for (var k = 0; k < GS; k++) img[r].push(0); }
+      // top bar
+      for (var c0 = 2; c0 < 10; c0++) { img[2][c0] = 1; }
+      // diagonal stroke
+      for (var r2 = 3; r2 < 10; r2++) { var cc = Math.round(9 - (r2 - 2) * 0.7); if (cc >= 0 && cc < GS) { img[r2][cc] = 1; if (cc - 1 >= 0) img[r2][cc - 1] = 0.6; } }
+      return img;
+    }
+    var st = { rotate: true, flip: true, shift: true, bright: true, noise: true, crop: true };
+    var seed = 31;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    function sample(img, r, k) { if (r < 0 || r >= GS || k < 0 || k >= GS) return 0; return img[r][k]; }
+    // produce an augmented copy given a transform id
+    function augment(img, kind) {
+      var out = []; for (var r = 0; r < GS; r++) { out.push([]); for (var k = 0; k < GS; k++) out[r].push(0); }
+      var cx = (GS - 1) / 2, cy = (GS - 1) / 2;
+      var ang = (kind === "rotate" && st.rotate) ? (rnd() - 0.5) * 0.8 : 0;
+      var ca = Math.cos(ang), sa = Math.sin(ang);
+      var doFlip = (kind === "flip" && st.flip);
+      var sh = (kind === "shift" && st.shift) ? Math.round((rnd() - 0.5) * 4) : 0;
+      var sv = (kind === "shift" && st.shift) ? Math.round((rnd() - 0.5) * 4) : 0;
+      var zoom = (kind === "crop" && st.crop) ? (1 + rnd() * 0.5) : 1;
+      var bri = (kind === "bright" && st.bright) ? (0.5 + rnd()) : 1;
+      for (var R = 0; R < GS; R++) for (var K = 0; K < GS; K++) {
+        var x = (K - cx) / zoom, y = (R - cy) / zoom;
+        if (doFlip) x = -x;
+        var sxp = x * ca - y * sa + cx - sh;
+        var syp = x * sa + y * ca + cy - sv;
+        var v = sample(img, Math.round(syp), Math.round(sxp)) * bri;
+        if (kind === "noise" && st.noise) v += (rnd() - 0.5) * 0.5;
+        out[R][K] = Math.max(0, Math.min(1, v));
       }
+      return out;
+    }
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function drawImg(img, ox, oy, cz, label, c) {
+      for (var r = 0; r < GS; r++) for (var k = 0; k < GS; k++) {
+        var g = Math.round(20 + img[r][k] * 220);
+        ctx.fillStyle = "rgb(" + g + "," + g + "," + g + ")";
+        ctx.fillRect(ox + k * cz, oy + r * cz, cz, cz);
+      }
+      if (label) { ctx.fillStyle = c.dim; ctx.font = "10px sans-serif"; ctx.fillText(label, ox, oy + GS * cz + 12); }
+    }
+    var kinds = ["rotate", "flip", "shift", "bright", "noise", "crop"];
+    function draw() {
+      var c = C(); seed = 31; var img = base(); ctx.clearRect(0, 0, 640, 300);
+      ctx.font = "13px sans-serif"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      // BEFORE: single original (larger)
+      ctx.fillStyle = c.ink; ctx.fillText("BEFORE — original", 20, 22);
+      drawImg(img, 20, 34, 10, "label: 7", c);
+      // AFTER: grid of augmented variants
+      ctx.fillStyle = c.ink; ctx.fillText("AFTER — augmented variants (all still 7)", 200, 22);
+      var ox0 = 200, oy0 = 34, cz = 7, gap = GS * cz + 18, perRow = 4;
+      for (var v = 0; v < 8; v++) {
+        var kind = kinds[v % kinds.length];
+        var aug = augment(img, kind);
+        var gx = ox0 + (v % perRow) * gap;
+        var gy = oy0 + Math.floor(v / perRow) * (GS * cz + 24);
+        var active = st[kind];
+        drawImg(aug, gx, gy, cz, kind + (active ? "" : " (off)"), c);
+      }
+    }
+    function readout() {
+      var on = kinds.filter(function (k) { return st[k]; });
+      rd.innerHTML = "active augmentations: <b>" + (on.length ? on.join(", ") : "none") + "</b>." +
+        "<br>From <b>one</b> labeled image, each transform makes a new training example — flipped, rotated, shifted, brightened, noisy, or cropped — all still labeled \"7\".";
+    }
+    var togRow = document.createElement("div"); togRow.style.margin = "8px 0";
+    kinds.forEach(function (k) {
+      var lab = document.createElement("label"); lab.style.cssText = "display:inline-block;margin:0 12px 4px 0;font-size:13px;cursor:pointer";
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = st[k]; cb.style.marginRight = "4px";
+      cb.addEventListener("change", function () { st[k] = cb.checked; draw(); readout(); });
+      var txt = document.createElement("span"); txt.textContent = k;
+      lab.appendChild(cb); lab.appendChild(txt);
+      togRow.appendChild(lab);
     });
+    host.appendChild(togRow);
+    var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
+    draw(); readout();
   },
   title: "Data augmentation",
   tagline: "Make more training images by flipping, rotating, and cropping the ones you have.",

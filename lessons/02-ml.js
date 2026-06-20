@@ -195,6 +195,10 @@ L({
     function J(a, b) { return A * a * a + B * b * b; }
     var lr = 0.1, start = { a: 4.0, b: 3.0 };
     var range = 5.5;
+    // animated rolling ball: the path GROWS one step at a time via Step / Run, resets via Reset
+    var ball = { a: start.a, b: start.b };
+    var trail = [{ a: start.a, b: start.b }];
+    var timer = null;
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
     var ctx = cv.getContext("2d");
     var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
@@ -202,18 +206,16 @@ L({
     function PX(a) { return 30 + (a + range) / (2 * range) * (640 - 60); }
     function PY(b) { return 20 + (range - b) / (2 * range) * (340 - 40); }
 
-    function path() {
-      var pts = [{ a: start.a, b: start.b }];
-      var a = start.a, b = start.b;
-      for (var i = 0; i < 40; i++) {
-        var ga = 2 * A * a, gb = 2 * B * b;
-        a = a - lr * ga; b = b - lr * gb;
-        if (!isFinite(a) || !isFinite(b) || Math.abs(a) > 50 || Math.abs(b) > 50) { pts.push({ a: Math.max(-range * 2, Math.min(range * 2, a)), b: Math.max(-range * 2, Math.min(range * 2, b)) }); break; }
-        pts.push({ a: a, b: b });
-        if (Math.abs(a) < 0.01 && Math.abs(b) < 0.01) break;
-      }
-      return pts;
+    function gdStep() {
+      var ga = 2 * A * ball.a, gb = 2 * B * ball.b;
+      var na = ball.a - lr * ga, nb = ball.b - lr * gb;
+      if (!isFinite(na) || !isFinite(nb)) { na = Math.max(-range * 2, Math.min(range * 2, na || 0)); nb = Math.max(-range * 2, Math.min(range * 2, nb || 0)); }
+      na = Math.max(-range * 2, Math.min(range * 2, na));
+      nb = Math.max(-range * 2, Math.min(range * 2, nb));
+      ball.a = na; ball.b = nb; trail.push({ a: na, b: nb });
+      if (trail.length > 200) trail.shift();
     }
+    function resetBall() { if (timer) { clearInterval(timer); timer = null; bRun.textContent = "Run"; } ball = { a: start.a, b: start.b }; trail = [{ a: start.a, b: start.b }]; render(); }
 
     function render() {
       var col = C(); ctx.clearRect(0, 0, 640, 340);
@@ -237,30 +239,53 @@ L({
       ctx.fillStyle = col.accent2; ctx.beginPath(); ctx.arc(PX(0), PY(0), 5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
       ctx.fillText("minimum", PX(0) + 10, PY(0) + 18);
-      // descent path
-      var pts = path();
+      // descent trail so far (grows with Step / Run)
       ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.beginPath();
-      for (var i = 0; i < pts.length; i++) { var X = PX(pts[i].a), Y = PY(pts[i].b); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+      for (var i = 0; i < trail.length; i++) { var X = PX(trail[i].a), Y = PY(trail[i].b); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
       ctx.stroke();
-      for (var k = 0; k < pts.length; k++) {
-        ctx.fillStyle = (k === 0) ? col.purple : col.warn;
-        ctx.beginPath(); ctx.arc(PX(pts[k].a), PY(pts[k].b), (k === 0 ? 5 : 3), 0, Math.PI * 2); ctx.fill();
+      for (var k = 0; k < trail.length; k++) {
+        var lastDot = (k === trail.length - 1);
+        ctx.fillStyle = (k === 0) ? col.purple : (lastDot ? col.warn : col.warn + "99");
+        ctx.beginPath(); ctx.arc(PX(trail[k].a), PY(trail[k].b), (k === 0 ? 5 : lastDot ? 6 : 3), 0, Math.PI * 2); ctx.fill();
       }
-      var last = pts[pts.length - 1];
-      var diverged = Math.abs(last.a) > range || Math.abs(last.b) > range;
-      var msg = "Each orange dot is one step. The arrow walks downhill, opposite the gradient, toward the green minimum.";
-      if (lr < 0.04) msg = "Learning rate is tiny: steps barely move, descent crawls. It is safe but slow.";
-      else if (diverged || lr > 0.18) msg = "Learning rate too big: steps overshoot the valley and zig-zag OUTWARD — the path diverges instead of settling.";
-      else msg = "Good learning rate: the path spirals smoothly into the minimum in a few steps.";
-      readout.innerHTML = "θ ← θ − α·∇J, with α = <b>" + lr.toFixed(3) + "</b>. " + msg;
+      // BEFORE label on the start, AFTER on the moving ball
+      ctx.fillStyle = col.purple; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("start (before)", PX(start.a) + 8, PY(start.b) - 8);
+      var diverged = Math.abs(ball.a) > range || Math.abs(ball.b) > range;
+      var steps = trail.length - 1;
+      var atMin = Math.abs(ball.a) < 0.05 && Math.abs(ball.b) < 0.05;
+      var msg = "The purple dot is the start; the big orange ball is rolling downhill, opposite the gradient, toward the green minimum.";
+      if (lr < 0.04) msg = "Learning rate is tiny: steps barely move, descent crawls. Safe but slow.";
+      else if (diverged || lr > 0.18) msg = "Learning rate too big: steps overshoot and zig-zag OUTWARD — the ball diverges instead of settling.";
+      else if (atMin) msg = "Arrived: the ball reached the green minimum. That is the converged answer (after).";
+      else msg = "Good learning rate: the ball spirals smoothly into the minimum.";
+      readout.innerHTML = "θ ← θ − α·∇J, with α = <b>" + lr.toFixed(3) + "</b>, step " + steps + ", J = <b>" + J(ball.a, ball.b).toFixed(3) + "</b>. " + msg +
+        " Use <b>Step</b> / <b>Run</b> to roll downhill, <b>Reset</b> to return to the start.";
     }
 
-    var row = document.createElement("div"); row.style.margin = "6px 0";
+    var row = document.createElement("div"); row.style.margin = "8px 0";
+    var bStep = document.createElement("button"); var bRun = document.createElement("button"); var bReset = document.createElement("button");
+    bStep.textContent = "Step ↓"; bRun.textContent = "Run"; bReset.textContent = "Reset";
+    [bStep, bRun, bReset].forEach(function (b) { b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:0 8px 0 0;cursor:pointer;font-size:13px"; });
+    bStep.addEventListener("click", function () { gdStep(); render(); });
+    bRun.addEventListener("click", function () {
+      if (timer) { clearInterval(timer); timer = null; bRun.textContent = "Run"; return; }
+      bRun.textContent = "Pause";
+      timer = setInterval(function () {
+        gdStep(); render();
+        var done = (Math.abs(ball.a) < 0.02 && Math.abs(ball.b) < 0.02) || trail.length > 120;
+        if (done) { clearInterval(timer); timer = null; bRun.textContent = "Run"; }
+      }, 110);
+    });
+    bReset.addEventListener("click", resetBall);
+    row.appendChild(bStep); row.appendChild(bRun); row.appendChild(bReset); host.appendChild(row);
+
+    var slRow = document.createElement("div"); slRow.style.margin = "6px 0";
     var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = "learning rate α ";
     var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = lr.toFixed(3); lab.appendChild(span);
     var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = 0.01; inp.max = 0.26; inp.step = 0.005; inp.value = lr;
-    inp.addEventListener("input", function () { lr = parseFloat(inp.value); span.textContent = lr.toFixed(3); render(); });
-    row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    inp.addEventListener("input", function () { lr = parseFloat(inp.value); span.textContent = lr.toFixed(3); resetBall(); });
+    slRow.appendChild(lab); slRow.appendChild(inp); host.appendChild(slRow);
     render();
   },
   title: "Gradient descent",
@@ -306,26 +331,106 @@ L({
 L({
   id: "ml-linear-regression",
   demo: function (host) {
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
     var P = [{ x: 1, y: 2.2 }, { x: 2, y: 3.8 }, { x: 3, y: 6.1 }, { x: 4, y: 7.9 }, { x: 5, y: 9.8 }];
-    Demos.scatter(host, { points: P, init: function (api) {
-      var slope = 2, intercept = 0;
-      function render() {
-        api.draw(function (ctx, col, px, py) {
-          ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(px(0), py(intercept + slope * 0));
-          ctx.lineTo(px(6), py(intercept + slope * 6));
-          ctx.stroke();
-        });
-        var sse = 0;
-        api.pts.forEach(function (p) { var pred = intercept + slope * p.x; sse += (p.y - pred) * (p.y - pred); });
-        var mse = sse / api.pts.length;
-        api.readout.innerHTML = "Line ŷ = " + slope.toFixed(2) + "·x + " + intercept.toFixed(2) + ". MSE = average of (y − ŷ)² over the " + api.pts.length + " points = <b>" + mse.toFixed(3) + "</b>. Drag the sliders to minimize it.";
+    var X = P.map(function (p) { return p.x; }), Y = P.map(function (p) { return p.y; });
+
+    // closed-form target line: simple-statistics if present, else least squares by hand
+    var target;
+    if (window.ss && window.ss.linearRegression) {
+      var lr = window.ss.linearRegression(P.map(function (p) { return [p.x, p.y]; }));
+      target = { m: lr.m, b: lr.b };
+    } else {
+      var n = X.length, sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (var i = 0; i < n; i++) { sx += X[i]; sy += Y[i]; sxx += X[i] * X[i]; sxy += X[i] * Y[i]; }
+      var denom = n * sxx - sx * sx;
+      var m = Math.abs(denom) < 1e-9 ? 0 : (n * sxy - sx * sy) / denom;
+      target = { m: m, b: (sy - m * sx) / n };
+    }
+
+    var lrRate = 0.012;            // gradient-descent step size
+    var slope = -1, intercept = 8; // deliberately bad START line (BEFORE)
+    var epoch = 0, timer = null;
+
+    function mse(mm, bb) { var s = 0; for (var i = 0; i < X.length; i++) { var e = (mm * X[i] + bb) - Y[i]; s += e * e; } return s / X.length; }
+    // one gradient-descent step on MSE. tf.js if present (real autograd), plain JS otherwise.
+    function stepGD() {
+      if (window.tf) {
+        try {
+          var res = window.tf.tidy(function () {
+            var xs = window.tf.tensor1d(X), ys = window.tf.tensor1d(Y);
+            var mT = window.tf.scalar(slope), bT = window.tf.scalar(intercept);
+            var grads = window.tf.grads(function (mm, bb) {
+              var pred = xs.mul(mm).add(bb);
+              return pred.sub(ys).square().mean();
+            })([mT, bT]);
+            return [grads[0].dataSync()[0], grads[1].dataSync()[0]];
+          });
+          slope -= lrRate * res[0]; intercept -= lrRate * res[1];
+          epoch++; return;
+        } catch (e) { /* fall through */ }
       }
-      api.slider("slope", -2, 4, slope, 0.05, function (v) { slope = v; render(); });
-      api.slider("intercept", -4, 4, intercept, 0.05, function (v) { intercept = v; render(); });
-      render();
-    } });
+      // plain-JS gradient of MSE: dL/dm = 2/n Σ(pred−y)x, dL/db = 2/n Σ(pred−y)
+      var n = X.length, gm = 0, gb = 0;
+      for (var i = 0; i < n; i++) { var err = (slope * X[i] + intercept) - Y[i]; gm += err * X[i]; gb += err; }
+      gm = 2 * gm / n; gb = 2 * gb / n;
+      slope -= lrRate * gm; intercept -= lrRate * gb; epoch++;
+    }
+    function reset() { if (timer) { clearInterval(timer); timer = null; bTrain.textContent = "Train (gradient descent)"; } slope = -1; intercept = 8; epoch = 0; render(); }
+
+    var cv = document.createElement("canvas"); cv.width = 480; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 36, W = 480, H = 340, lo = 0, hi = 11;
+    function PX(x) { return pad + (x - lo) / (hi - lo) * (W - 2 * pad); }
+    function PY(y) { return (H - pad) - (y - lo) / (hi - lo) * (H - 2 * pad); }
+
+    function line(mm, bb, color, dash) {
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
+      ctx.beginPath(); ctx.moveTo(PX(0), PY(bb)); ctx.lineTo(PX(11), PY(mm * 11 + bb)); ctx.stroke(); ctx.setLineDash([]);
+    }
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1; ctx.strokeRect(pad, pad, W - 2 * pad, H - 2 * pad);
+      // closed-form best fit (faint green dashed target)
+      line(target.m, target.b, col.accent2, [5, 4]);
+      // residuals from the current descent line
+      P.forEach(function (p) {
+        var pred = slope * p.x + intercept;
+        ctx.strokeStyle = col.dim + "88"; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(PX(p.x), PY(p.y)); ctx.lineTo(PX(p.x), PY(pred)); ctx.stroke(); ctx.setLineDash([]);
+      });
+      // current descent line (orange)
+      line(slope, intercept, col.warn, []);
+      // data points
+      P.forEach(function (p) { ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), 5, 0, Math.PI * 2); ctx.fill(); });
+      ctx.fillStyle = col.accent2; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("closed-form best fit", PX(0) + 6, PY(target.b) - 6);
+      var lib = window.tf ? "tf.js autograd" : "plain-JS gradient";
+      var src = (window.ss && window.ss.linearRegression) ? "simple-statistics" : "least-squares formula";
+      readout.innerHTML = "Orange line ŷ = " + slope.toFixed(2) + "·x + " + intercept.toFixed(2) + ", MSE = <b>" + mse(slope, intercept).toFixed(3) +
+        "</b> (epoch " + epoch + ", " + lib + "). Green dashed = closed-form optimum from " + src + " (m = " + target.m.toFixed(2) + ", b = " + target.b.toFixed(2) +
+        ", MSE = " + mse(target.m, target.b).toFixed(3) + ").<br><b>Train</b> rolls the bad start line down to the green target; <b>Reset</b> restores the bad line.";
+    }
+
+    var row = document.createElement("div"); row.style.margin = "8px 0";
+    var bTrain = document.createElement("button"), bStep = document.createElement("button"), bReset = document.createElement("button");
+    bTrain.textContent = "Train (gradient descent)"; bStep.textContent = "Step ×20"; bReset.textContent = "Reset";
+    [bTrain, bStep, bReset].forEach(function (b) { b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:0 8px 0 0;cursor:pointer;font-size:13px"; });
+    bTrain.addEventListener("click", function () {
+      if (timer) { clearInterval(timer); timer = null; bTrain.textContent = "Train (gradient descent)"; return; }
+      bTrain.textContent = "Pause";
+      timer = setInterval(function () {
+        for (var k = 0; k < 4; k++) stepGD();
+        render();
+        if (epoch > 4000 || mse(slope, intercept) - mse(target.m, target.b) < 1e-4) { clearInterval(timer); timer = null; bTrain.textContent = "Train (gradient descent)"; }
+      }, 60);
+    });
+    bStep.addEventListener("click", function () { for (var k = 0; k < 20; k++) stepGD(); render(); });
+    bReset.addEventListener("click", reset);
+    row.appendChild(bTrain); row.appendChild(bStep); row.appendChild(bReset); host.appendChild(row);
+    render();
   },
   title: "Linear regression",
   tagline: "Fit a straight line through your data. The simplest predictor.",
@@ -1425,24 +1530,112 @@ L({
 L({
   id: "ml-kmeans",
   demo: function (host) {
-    var P = [{ x: 1, y: 1 }, { x: 1.6, y: 2 }, { x: 2, y: 1.4 }, { x: 6, y: 6 }, { x: 6.6, y: 5.4 }, { x: 7, y: 6.6 }];
-    Demos.scatter(host, { points: P, init: function (api) {
-      var cents = [{ x: 2, y: 5 }, { x: 5, y: 2 }];
-      function render() {
-        api.draw(function (ctx, col, px, py) {
-          cents.forEach(function (c, i) { ctx.fillStyle = api.palette[i]; ctx.strokeStyle = col.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px(c.x), py(c.y), 9, 0, 7); ctx.fill(); ctx.stroke(); });
-        });
-        api.readout.innerHTML = "Big circles = centroids. Click <b>1) Assign</b> (color each point to its nearest centroid), then <b>2) Update</b> (move each centroid to its cluster mean). Repeat — distortion only drops, so it converges.";
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    var palette = ["#4ea1ff", "#7ee787", "#ffb454"];
+    var K = 3, lo = 0, hi = 10;
+    // 3 true blobs; deterministic-ish pseudo-random so a fresh seed regenerates points
+    var seed = 12345;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    var pts = [], cents = [], step = 0;   // step: 0 start, then alternating assign/update
+
+    function genPoints() {
+      pts = [];
+      var blobs = [{ x: 2.5, y: 7.5 }, { x: 7.5, y: 7.0 }, { x: 5.0, y: 2.5 }];
+      blobs.forEach(function (b) {
+        for (var i = 0; i < 9; i++) {
+          pts.push({ x: Math.max(lo, Math.min(hi, b.x + (rnd() - 0.5) * 3)),
+                     y: Math.max(lo, Math.min(hi, b.y + (rnd() - 0.5) * 3)), c: -1 });
+        }
+      });
+    }
+    function genCentroids() {
+      cents = [];
+      for (var i = 0; i < K; i++) cents.push({ x: lo + rnd() * (hi - lo), y: lo + rnd() * (hi - lo) });
+    }
+    function reset() { seed = (Date.now() % 100000) + 7; genPoints(); genCentroids(); step = 0; render(); }
+
+    // Euclidean distance — ml-matrix Matrix.sub + norm if present, plain JS fallback
+    function dist2(p, c) {
+      if (window.mlMatrix) {
+        try {
+          var d = new window.mlMatrix.Matrix([[p.x, p.y]]).sub(new window.mlMatrix.Matrix([[c.x, c.y]]));
+          var n = d.norm();   // Frobenius norm of the difference row
+          return n * n;
+        } catch (e) { /* fall through */ }
       }
-      function assign() { api.pts.forEach(function (p) { var best = 0, bd = 1e9; cents.forEach(function (c, i) { var d = (p.x - c.x) * (p.x - c.x) + (p.y - c.y) * (p.y - c.y); if (d < bd) { bd = d; best = i; } }); p.c = best; }); render(); }
-      function update() { cents.forEach(function (c, i) { var sx = 0, sy = 0, n = 0; api.pts.forEach(function (p) { if (p.c === i) { sx += p.x; sy += p.y; n++; } }); if (n) { c.x = sx / n; c.y = sy / n; } }); render(); }
-      var bA = document.createElement("button"), bU = document.createElement("button");
-      bA.textContent = "1) Assign"; bU.textContent = "2) Update";
-      [bA, bU].forEach(function (b) { b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:8px 8px 0 0;cursor:pointer;font-size:13px"; });
-      bA.addEventListener("click", assign); bU.addEventListener("click", update);
-      api.host.appendChild(bA); api.host.appendChild(bU);
-      render();
-    } });
+      var dx = p.x - c.x, dy = p.y - c.y; return dx * dx + dy * dy;
+    }
+    function assign() {
+      pts.forEach(function (p) {
+        var best = 0, bd = Infinity;
+        cents.forEach(function (c, i) { var d = dist2(p, c); if (d < bd) { bd = d; best = i; } });
+        p.c = best;
+      });
+    }
+    function update() {
+      cents.forEach(function (c, i) {
+        // centroid = mean of its assigned points — ml-matrix column means if present
+        var rows = [];
+        pts.forEach(function (p) { if (p.c === i) rows.push([p.x, p.y]); });
+        if (!rows.length) return;
+        if (window.mlMatrix) {
+          try {
+            var m = new window.mlMatrix.Matrix(rows).mean("column");
+            c.x = m[0]; c.y = m[1]; return;
+          } catch (e) { /* fall through */ }
+        }
+        var sx = 0, sy = 0; rows.forEach(function (r) { sx += r[0]; sy += r[1]; });
+        c.x = sx / rows.length; c.y = sy / rows.length;
+      });
+    }
+    function distortion() {
+      var s = 0; pts.forEach(function (p) { if (p.c >= 0) s += dist2(p, cents[p.c]); }); return s;
+    }
+
+    var cv = document.createElement("canvas"); cv.width = 480; cv.height = 360; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+    var pad = 30, W = 480, H = 360;
+    function PX(x) { return pad + (x - lo) / (hi - lo) * (W - 2 * pad); }
+    function PY(y) { return (H - pad) - (y - lo) / (hi - lo) * (H - 2 * pad); }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1; ctx.strokeRect(pad, pad, W - 2 * pad, H - 2 * pad);
+      // points, colored by cluster (gray = unassigned BEFORE first assign)
+      pts.forEach(function (p) {
+        ctx.fillStyle = p.c >= 0 ? palette[p.c % palette.length] : col.dim;
+        ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), 5, 0, Math.PI * 2); ctx.fill();
+      });
+      // centroids (big ringed circles)
+      cents.forEach(function (c, i) {
+        ctx.fillStyle = palette[i % palette.length]; ctx.strokeStyle = col.ink; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(PX(c.x), PY(c.y), 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col.ink; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("μ" + (i + 1), PX(c.x), PY(c.y) - 14);
+      });
+      ctx.textAlign = "left";
+      var lib = window.mlMatrix ? "ml-matrix (means + distances)" : "plain-JS fallback";
+      var phase = step === 0 ? "Start: random centroids, points uncolored."
+        : (step % 2 === 1 ? "After Assign: each point took its nearest centroid's color."
+                          : "After Update: centroids jumped to their cluster means.");
+      readout.innerHTML = "<b>" + phase + "</b> Computing with " + lib + ".<br>" +
+        "Click <b>1) Assign points</b> then <b>2) Update centroids</b>, repeating; distortion (total squared distance) only drops. " +
+        (step > 0 ? "Distortion = <b>" + distortion().toFixed(2) + "</b>. " : "") +
+        "Press <b>Reset</b> for fresh points and random centroids.";
+    }
+
+    var row = document.createElement("div"); row.style.margin = "8px 0";
+    var bA = document.createElement("button"), bU = document.createElement("button"), bR = document.createElement("button");
+    bA.textContent = "1) Assign points"; bU.textContent = "2) Update centroids"; bR.textContent = "Reset";
+    [bA, bU, bR].forEach(function (b) { b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:0 8px 0 0;cursor:pointer;font-size:13px"; });
+    bA.addEventListener("click", function () { assign(); step = (step % 2 === 1) ? step : step + 1; render(); });
+    bU.addEventListener("click", function () { update(); step = step + 1; render(); });
+    bR.addEventListener("click", reset);
+    row.appendChild(bA); row.appendChild(bU); row.appendChild(bR); host.appendChild(row);
+
+    genPoints(); genCentroids(); render();
   },
   title: "k-means clustering",
   tagline: "Group unlabeled points into k clusters around moving centers.",
@@ -1617,57 +1810,106 @@ L({
       { x: 5, y: 5.4 }, { x: 6, y: 5.8 }, { x: 2.5, y: 3.0 }, { x: 4.5, y: 4.2 }
     ];
     var mx = 0, my = 0; P.forEach(function (p) { mx += p.x; my += p.y; }); mx /= P.length; my /= P.length;
+    // covariance matrix Sigma = (1/n) X_c^T X_c
     var sxx = 0, sxy = 0, syy = 0;
     P.forEach(function (p) { var dx = p.x - mx, dy = p.y - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; });
     var n = P.length; sxx /= n; sxy /= n; syy /= n;
-    var tr = sxx + syy, det = sxx * syy - sxy * sxy;
-    var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
-    var l1 = tr / 2 + disc, l2 = tr / 2 - disc;
-    var v1x = sxy, v1y = l1 - sxx; var vl = Math.sqrt(v1x * v1x + v1y * v1y);
-    if (vl < 1e-9) { v1x = 1; v1y = 0; vl = 1; }
-    v1x /= vl; v1y /= vl;
-    var v2x = -v1y, v2y = v1x; // PC2 orthogonal
-    var varExp = (l1 + l2) > 0 ? l1 / (l1 + l2) : 1;
-    var len1 = Math.sqrt(l1) * 2.2, len2 = Math.sqrt(Math.max(l2, 0.0001)) * 2.2;
 
+    // eigen-decomposition of the 2x2 covariance — ml-matrix if present, analytic fallback
+    var l1, l2, v1x, v1y;
+    function analyticEig() {
+      var tr = sxx + syy, det = sxx * syy - sxy * sxy;
+      var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+      l1 = tr / 2 + disc; l2 = tr / 2 - disc;
+      v1x = sxy; v1y = l1 - sxx; var vl = Math.sqrt(v1x * v1x + v1y * v1y);
+      if (vl < 1e-9) { v1x = 1; v1y = 0; vl = 1; }
+      v1x /= vl; v1y /= vl;
+    }
+    var usedLib = false;
+    if (window.mlMatrix && window.mlMatrix.EigenvalueDecomposition) {
+      try {
+        var eig = new window.mlMatrix.EigenvalueDecomposition(new window.mlMatrix.Matrix([[sxx, sxy], [sxy, syy]]));
+        var ev = eig.realEigenvalues, V = eig.eigenvectorMatrix;
+        // pick the largest eigenvalue as PC1
+        var top = ev[0] >= ev[1] ? 0 : 1, bot = 1 - top;
+        l1 = ev[top]; l2 = ev[bot];
+        v1x = V.get(0, top); v1y = V.get(1, top);
+        var vl = Math.sqrt(v1x * v1x + v1y * v1y); if (vl < 1e-9) { v1x = 1; v1y = 0; vl = 1; }
+        v1x /= vl; v1y /= vl; usedLib = true;
+      } catch (e) { analyticEig(); }
+    } else { analyticEig(); }
+    var v2x = -v1y, v2y = v1x;        // PC2 orthogonal to PC1
+    var varExp = (l1 + l2) > 0 ? l1 / (l1 + l2) : 1;
+    var len1 = Math.sqrt(Math.max(l1, 0.0001)) * 2.2, len2 = Math.sqrt(Math.max(l2, 0.0001)) * 2.2;
+
+    var showAfter = false;
     var cv = document.createElement("canvas"); cv.width = 420; cv.height = 320; cv.style.maxWidth = "100%"; host.appendChild(cv);
     var ctx = cv.getContext("2d");
     var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
-    var pad = 30, W = 420, H = 320, lo = 0, hi = 7;
+    var pad = 36, W = 420, H = 320, lo = -4, hi = 7;
     function PX(x) { return pad + (x - lo) / (hi - lo) * (W - 2 * pad); }
     function PY(y) { return (H - pad) - (y - lo) / (hi - lo) * (H - 2 * pad); }
 
-    function render() {
-      var col = C(); ctx.clearRect(0, 0, W, H);
+    function renderBefore(col) {
+      // original x/y axes
       ctx.strokeStyle = col.border; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(hi), PY(0)); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(0), PY(hi)); ctx.stroke();
-      // projection segments onto PC1
-      for (var i = 0; i < P.length; i++) {
-        var dx = P[i].x - mx, dy = P[i].y - my;
-        var t = dx * v1x + dy * v1y; // coordinate along PC1
-        var projx = mx + t * v1x, projy = my + t * v1y;
-        ctx.strokeStyle = col.dim + "88"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(PX(P[i].x), PY(P[i].y)); ctx.lineTo(PX(projx), PY(projy)); ctx.stroke(); ctx.setLineDash([]);
-        // projected point on PC1
-        ctx.fillStyle = col.warn; ctx.beginPath(); ctx.arc(PX(projx), PY(projy), 3, 0, Math.PI * 2); ctx.fill();
-      }
-      // PC1 (long, orange) and PC2 (short, purple)
+      ctx.beginPath(); ctx.moveTo(PX(lo), PY(0)); ctx.lineTo(PX(hi), PY(0)); ctx.moveTo(PX(0), PY(lo)); ctx.lineTo(PX(0), PY(hi)); ctx.stroke();
+      ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("x", PX(hi) - 12, PY(0) - 6); ctx.fillText("y", PX(0) + 6, PY(hi) + 12);
+      // PC axes overlaid on the raw cloud
       ctx.strokeStyle = col.warn; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(PX(mx - v1x * len1), PY(my - v1y * len1)); ctx.lineTo(PX(mx + v1x * len1), PY(my + v1y * len1)); ctx.stroke();
       ctx.strokeStyle = col.purple; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(PX(mx - v2x * len2), PY(my - v2y * len2)); ctx.lineTo(PX(mx + v2x * len2), PY(my + v2y * len2)); ctx.stroke();
-      // points
-      for (var k = 0; k < P.length; k++) {
-        ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(P[k].x), PY(P[k].y), 5, 0, Math.PI * 2); ctx.fill();
+      P.forEach(function (p) {
+        ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), 5, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = col.panel; ctx.lineWidth = 1; ctx.stroke();
-      }
-      // labels
-      ctx.fillStyle = col.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
+      });
+      ctx.fillStyle = col.warn; ctx.textAlign = "right";
       ctx.fillText("PC1", PX(mx + v1x * len1) - 6, PY(my + v1y * len1) - 8);
       ctx.fillStyle = col.purple; ctx.textAlign = "left";
       ctx.fillText("PC2", PX(mx + v2x * len2) + 4, PY(my + v2y * len2));
-      readout.innerHTML = "PC1 (orange, long) is the direction of greatest spread; PC2 (purple, short) is perpendicular. Orange dots = each point projected onto PC1 (dashed lines show the drop). λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) + " → PC1 explains <b>" + (varExp * 100).toFixed(1) + "%</b> of the variance, so keeping just PC1 turns 2D into 1D while losing only " + ((1 - varExp) * 100).toFixed(1) + "%.";
     }
+    function renderAfter(col) {
+      // rotated frame: new axes are PC1 (horizontal) and PC2 (vertical), through the mean
+      ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(PX(lo), PY(0)); ctx.lineTo(PX(hi), PY(0)); ctx.stroke();
+      ctx.strokeStyle = col.purple; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(PX(0), PY(lo)); ctx.lineTo(PX(0), PY(hi)); ctx.stroke();
+      ctx.fillStyle = col.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText("PC1", PX(hi) - 6, PY(0) - 6);
+      ctx.fillStyle = col.purple; ctx.textAlign = "left";
+      ctx.fillText("PC2", PX(0) + 6, PY(hi) + 12);
+      // project each centered point onto (PC1, PC2) — the rotated coordinates
+      P.forEach(function (p) {
+        var dx = p.x - mx, dy = p.y - my;
+        var c1 = dx * v1x + dy * v1y;   // coordinate along PC1
+        var c2 = dx * v2x + dy * v2y;   // coordinate along PC2
+        // drop-line to the PC1 axis to show "keep PC1, throw PC2"
+        ctx.strokeStyle = col.dim + "88"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(PX(c1), PY(c2)); ctx.lineTo(PX(c1), PY(0)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = col.accent; ctx.beginPath(); ctx.arc(PX(c1), PY(c2), 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = col.warn; ctx.beginPath(); ctx.arc(PX(c1), PY(0), 3, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, W, H);
+      if (showAfter) renderAfter(col); else renderBefore(col);
+      var src = usedLib ? "ml-matrix EigenvalueDecomposition" : "analytic 2×2 eigen-solver";
+      var head = showAfter
+        ? "<b>AFTER:</b> data rotated onto its principal components. Orange axis = PC1, purple = PC2. Orange dots on the PC1 axis are the 1-D projection — keep PC1, drop PC2."
+        : "<b>BEFORE:</b> raw correlated cloud on the original x/y axes, with PC1 (orange) and PC2 (purple) drawn through the mean.";
+      readout.innerHTML = head + "<br>Covariance eigenvalues (" + src + "): λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) +
+        " → PC1 explains <b>" + (varExp * 100).toFixed(1) + "%</b> of the variance. Toggle to compare.";
+    }
+
+    var row = document.createElement("div"); row.style.margin = "8px 0";
+    var bT = document.createElement("button");
+    bT.textContent = "Show AFTER (rotate onto PCs)";
+    bT.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px";
+    bT.addEventListener("click", function () { showAfter = !showAfter; bT.textContent = showAfter ? "Show BEFORE (raw cloud)" : "Show AFTER (rotate onto PCs)"; render(); });
+    row.appendChild(bT); host.appendChild(row);
     render();
   },
   title: "Principal component analysis (PCA)",
@@ -1713,24 +1955,121 @@ L({
 L({
   id: "ml-ica",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a", label: "A₁₁", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "b", label: "A₁₂", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "c", label: "A₂₁", min: -3, max: 3, val: 0, step: 0.1 },
-        { key: "d", label: "A₂₂", min: -3, max: 3, val: 1, step: 0.1 },
-        { key: "x1", label: "observed x₁", min: -5, max: 5, val: 3, step: 0.1 },
-        { key: "x2", label: "observed x₂", min: -5, max: 5, val: 1, step: 0.1 }
-      ],
-      compute: function (s) {
-        var det = s.a * s.d - s.b * s.c;
-        if (Math.abs(det) < 1e-6) return { text: "Mixing matrix A is (near) singular — det ≈ 0, so it cannot be inverted. Adjust A so det ≠ 0." };
-        // A^-1 = 1/det [[d,-b],[-c,a]]; s = A^-1 x
-        var s1 = (s.d * s.x1 - s.b * s.x2) / det;
-        var s2 = (-s.c * s.x1 + s.a * s.x2) / det;
-        return { text: "Unmix s = A⁻¹x. det(A) = " + det.toFixed(3) + ". Recovered sources: s₁ = <b>" + s1.toFixed(3) + "</b>, s₂ = <b>" + s2.toFixed(3) + "</b>. ICA's job is to find this A⁻¹ from data alone." };
+    function C(){var s=getComputedStyle(document.documentElement);var g=function(n,d){return (s.getPropertyValue(n)||d).trim();};
+      return {ink:g("--ink","#e6edf3"),dim:g("--ink-dim","#9aa7b4"),accent:g("--accent","#4ea1ff"),accent2:g("--accent-2","#7ee787"),warn:g("--warn","#ffb454"),purple:g("--purple","#c89bff"),border:g("--border","#2a3340"),panel:g("--panel","#161c24")};}
+    // two independent source waveforms sampled over time
+    var N = 160;
+    var s1 = [], s2 = [];
+    for (var i = 0; i < N; i++) {
+      var t = i / N;
+      s1.push(Math.sin(2 * Math.PI * 3 * t));                 // smooth sine wave
+      s2.push(((t * 7) % 1) < 0.5 ? 1 : -1);                  // square wave
+    }
+    // mixing coefficients (sliders). A = [[a,b],[c,d]]
+    var A = { a: 1.0, b: 0.7, c: 0.4, d: 1.0 };
+
+    // 2x2 inverse — uses ml-matrix if present, else closed-form (fallback for Node harness)
+    function invert(M) {
+      if (window.mlMatrix) {
+        try {
+          var inv = window.mlMatrix.inverse(new window.mlMatrix.Matrix(M));
+          return [[inv.get(0,0), inv.get(0,1)], [inv.get(1,0), inv.get(1,1)]];
+        } catch (e) { /* fall through to plain JS */ }
       }
-    });
+      var det = M[0][0]*M[1][1] - M[0][1]*M[1][0];
+      if (Math.abs(det) < 1e-9) return null;
+      return [[ M[1][1]/det, -M[0][1]/det], [-M[1][0]/det, M[0][0]/det]];
+    }
+
+    var cv = document.createElement("canvas"); cv.width = 640; cv.height = 360; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var readout = document.createElement("div"); readout.className = "out"; readout.style.marginTop = "6px"; host.appendChild(readout);
+
+    function plot(col, x0, y0, w, h, data, color, label, sub) {
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1;
+      ctx.strokeRect(x0, y0, w, h);
+      ctx.strokeStyle = col.dim; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(x0, y0 + h/2); ctx.lineTo(x0 + w, y0 + h/2); ctx.stroke(); ctx.setLineDash([]);
+      // auto-scale to data
+      var mx = 0.0001; for (var k = 0; k < data.length; k++) mx = Math.max(mx, Math.abs(data[k]));
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+      for (var j = 0; j < data.length; j++) {
+        var X = x0 + j / (data.length - 1) * w;
+        var Y = y0 + h/2 - (data[j] / mx) * (h/2 - 4);
+        j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = color; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      ctx.fillText(label, x0 + 4, y0 - 4);
+      if (sub) { ctx.fillStyle = col.dim; ctx.fillText(sub, x0 + 70, y0 - 4); }
+    }
+
+    function render() {
+      var col = C(); ctx.clearRect(0, 0, 640, 360);
+      // mix:  x = A s
+      var x1 = [], x2 = [];
+      for (var i = 0; i < N; i++) {
+        x1.push(A.a * s1[i] + A.b * s2[i]);
+        x2.push(A.c * s1[i] + A.d * s2[i]);
+      }
+      // recover: s_hat = A^-1 x
+      var W = invert([[A.a, A.b], [A.c, A.d]]);
+      var r1 = [], r2 = [];
+      if (W) {
+        for (var j = 0; j < N; j++) {
+          r1.push(W[0][0] * x1[j] + W[0][1] * x2[j]);
+          r2.push(W[1][0] * x1[j] + W[1][1] * x2[j]);
+        }
+      } else {
+        for (var k = 0; k < N; k++) { r1.push(0); r2.push(0); }
+      }
+      // layout: left column = SOURCES, middle = MIXED (before), right = RECOVERED (after)
+      var pw = 180, ph = 120, gap = 30, top1 = 28, top2 = 200;
+      ctx.fillStyle = col.ink; ctx.font = "13px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("MIXED (what the 2 mics hear)", 320, 14);
+      ctx.fillText("RECOVERED  ŝ = A⁻¹ x  (after)", 320, 186);
+      ctx.textAlign = "left";
+      // originals (small reference, left)
+      plot(col, 20, top1, pw, ph, s1, col.accent, "source s₁", "sine");
+      plot(col, 20, top2, pw, ph, s2, col.accent2, "source s₂", "square");
+      // mixed (before) middle
+      plot(col, 230, top1, pw, ph, x1, col.warn, "mic x₁", "");
+      plot(col, 230, top2, pw, ph, x2, col.warn, "mic x₂", "");
+      // recovered (after) right
+      plot(col, 440, top1, pw, ph, r1, col.purple, "ŝ₁", "");
+      plot(col, 440, top2, pw, ph, r2, col.purple, "ŝ₂", "");
+
+      // how well did recovery match a source? (ICA recovers up to scale/sign/order)
+      function corr(p, q) {
+        var mp = 0, mq = 0, n = p.length;
+        for (var a = 0; a < n; a++) { mp += p[a]; mq += q[a]; } mp /= n; mq /= n;
+        var sp = 0, sq = 0, sc = 0;
+        for (var b = 0; b < n; b++) { var dp = p[b]-mp, dq = q[b]-mq; sp += dp*dp; sq += dq*dq; sc += dp*dq; }
+        var den = Math.sqrt(sp * sq);
+        return den < 1e-9 ? 0 : Math.abs(sc / den);
+      }
+      var fit = Math.max(corr(r1, s1), corr(r1, s2));
+      var det = A.a*A.d - A.b*A.c;
+      var lib = window.mlMatrix ? "ml-matrix" : "plain-JS";
+      readout.innerHTML = W
+        ? "Mixing A = [[" + A.a.toFixed(2) + ", " + A.b.toFixed(2) + "], [" + A.c.toFixed(2) + ", " + A.d.toFixed(2) + "]], det = " + det.toFixed(3) +
+          ". Recovered ŝ = A⁻¹x (inverse via " + lib + "). The purple waves match the clean sources on the left — recovery quality |corr| = <b>" + fit.toFixed(3) + "</b> (1.0 = perfect)."
+        : "A is singular (det ≈ 0): the two mics heard the same blend, so the mix can't be undone. Move a slider so det ≠ 0.";
+    }
+
+    function mkSlider(label, key, val) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " ";
+      var span = document.createElement("span"); span.className = "out"; span.style.marginLeft = "6px"; span.textContent = val.toFixed(2); lab.appendChild(span);
+      var inp = document.createElement("input"); inp.setAttribute("type", "range"); inp.min = -2; inp.max = 2; inp.step = 0.05; inp.value = val;
+      inp.addEventListener("input", function () { A[key] = parseFloat(inp.value); span.textContent = A[key].toFixed(2); render(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    mkSlider("mix A₁₁ (s₁→mic1)", "a", A.a);
+    mkSlider("mix A₁₂ (s₂→mic1)", "b", A.b);
+    mkSlider("mix A₂₁ (s₁→mic2)", "c", A.c);
+    mkSlider("mix A₂₂ (s₂→mic2)", "d", A.d);
+    render();
   },
   title: "Independent component analysis (ICA)",
   tagline: "Unmix blended signals back into their separate sources.",

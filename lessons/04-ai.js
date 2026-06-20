@@ -1156,6 +1156,7 @@ L({
     ["A", "B", "C", "D"].forEach(function (k) {
       mkBtn(row, "Colour " + k, function () { col[k] = (col[k] + 1) % 4; draw(); });
     });
+    mkBtn(row, "Reset (clear all)", function () { col.A = col.B = col.C = col.D = 0; draw(); });
     host.insertBefore(c.cv, host.children[0]);
     host.insertBefore(out, host.children[1]);
     draw();
@@ -1203,19 +1204,121 @@ L({
 L({
   id: "ai-csp-search",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "dom", label: "neighbor domain size (values left)", min: 0, max: 5, val: 3, step: 1 },
-        { key: "removed", label: "values removed by forward checking", min: 0, max: 5, val: 1, step: 1 }
-      ],
-      compute: function (s) {
-        var left = Math.max(0, s.dom - s.removed);
-        return { text: "after forward checking: " + s.dom + " − " + s.removed +
-          " = <b>" + left + "</b> values remain in the neighbor's domain.<br>" +
-          (left === 0 ? "<b>empty domain — dead end, backtrack!</b>"
-                      : "domain non-empty, so this branch can still be completed.") };
+    // BEFORE -> AFTER forward checking on a map-colouring constraint graph.
+    // BEFORE: every variable still has its full domain {R,G,B}.
+    // Pick a variable and a colour to assign it; forward checking crosses out
+    // that colour in every neighbour's domain (AFTER). Step through several
+    // assignments to watch neighbour domains shrink. Reset restores full domains.
+    host.innerHTML = "";
+    var W = 640, H = 360;
+    var DV = ["R", "G", "B"];                 // the three domain values
+    var DCOL = { R: "#ff7b72", G: "#7ee787", B: "#4ea1ff" };
+    var nodes = {
+      A: { x: 150, y: 90 }, B: { x: 360, y: 70 }, C: { x: 540, y: 150 },
+      D: { x: 250, y: 250 }, E: { x: 470, y: 280 }
+    };
+    var edges = [["A", "B"], ["A", "D"], ["B", "C"], ["B", "D"], ["C", "E"], ["D", "E"]];
+    var nbr = {}; for (var nk in nodes) nbr[nk] = [];
+    edges.forEach(function (e) { nbr[e[0]].push(e[1]); nbr[e[1]].push(e[0]); });
+    var keys = Object.keys(nodes);
+    var dom, assigned, sel;                   // dom[k] = {R:bool,G:bool,B:bool}; assigned[k] = colour or null
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    function reset() {
+      dom = {}; assigned = {};
+      keys.forEach(function (k) { dom[k] = { R: true, G: true, B: true }; assigned[k] = null; });
+      sel = "A";
+      draw("Every variable still has its full domain {R, G, B}. Pick a variable and assign a colour to start forward checking.");
+    }
+    function assign(colour) {
+      if (assigned[sel]) { draw("<b>" + sel + "</b> is already assigned. Reset, or pick an unassigned variable."); return; }
+      if (!dom[sel][colour]) { draw("Cannot give <b>" + sel + "</b> the colour " + colour + " — forward checking already removed it from its domain."); return; }
+      assigned[sel] = colour;
+      // collapse the assigned variable's own domain to the chosen value
+      DV.forEach(function (v) { dom[sel][v] = (v === colour); });
+      var changed = [];
+      nbr[sel].forEach(function (m) {
+        if (assigned[m]) return;
+        if (dom[m][colour]) { dom[m][colour] = false; changed.push(m); }
+      });
+      var dead = changed.filter(function (m) { return !dom[m].R && !dom[m].G && !dom[m].B; });
+      var msg = "Assigned <b>" + sel + " = " + colour + "</b>. Forward checking crossed out <b>" + colour +
+        "</b> from neighbour" + (changed.length === 1 ? "" : "s") + " " + (changed.length ? changed.join(", ") : "(none — already gone)") + ".";
+      if (dead.length) msg += " <b style=\"color:#ff3b30\">" + dead.join(", ") + " now has an EMPTY domain — dead end, backtrack!</b>";
+      // auto-advance selection to next unassigned variable
+      var nextU = keys.filter(function (k) { return !assigned[k]; });
+      if (nextU.length) sel = nextU[0];
+      draw(msg);
+    }
+    function panel(k, x, y, title) {
+      var t = C();
+      // header
+      ctx.fillStyle = t.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(title, x + 80, y - 6);
+      // domain chips for one variable, side by side
+      var d = dom[k], cw = 50, gap = 4, x0 = x;
+      for (var i = 0; i < 3; i++) {
+        var v = DV[i], on = d[v], bx = x0 + i * (cw + gap);
+        ctx.fillStyle = on ? DCOL[v] : t.panel;
+        ctx.strokeStyle = t.border; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.rect(bx, y, cw, 30); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = on ? "#0d1117" : t.dim;
+        ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(v, bx + cw / 2, y + 15);
+        if (!on) {   // cross out removed values
+          ctx.strokeStyle = "#ff3b30"; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(bx + 4, y + 4); ctx.lineTo(bx + cw - 4, y + 26);
+          ctx.moveTo(bx + cw - 4, y + 4); ctx.lineTo(bx + 4, y + 26); ctx.stroke();
+        }
       }
-    });
+      ctx.textBaseline = "alphabetic";
+    }
+    function draw(msg) {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      // edges
+      ctx.lineWidth = 2; ctx.strokeStyle = t.border;
+      edges.forEach(function (e) {
+        var a = nodes[e[0]], b = nodes[e[1]];
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      // nodes with their remaining domain shown as three small chips under the circle
+      keys.forEach(function (k) {
+        var n = nodes[k], a = assigned[k], isSel = (k === sel);
+        ctx.beginPath();
+        ctx.fillStyle = a ? DCOL[a] : t.panel;
+        ctx.strokeStyle = isSel ? t.warn : (a ? DCOL[a] : t.border);
+        ctx.lineWidth = isSel ? 4 : 2.5;
+        ctx.arc(n.x, n.y, 22, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = a ? "#0d1117" : t.ink; ctx.font = "bold 15px sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(k, n.x, n.y);
+        // mini domain chips beside the node
+        var d = dom[k], cw = 13, y0 = n.y + 26, x0 = n.x - (cw * 3 + 4) / 2;
+        for (var i = 0; i < 3; i++) {
+          var v = DV[i], on = d[v], bx = x0 + i * (cw + 2);
+          ctx.fillStyle = on ? DCOL[v] : t.panel;
+          ctx.strokeStyle = t.border; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.rect(bx, y0, cw, 13); ctx.fill(); ctx.stroke();
+          if (!on) { ctx.strokeStyle = "#ff3b30"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx + 2, y0 + 2); ctx.lineTo(bx + cw - 2, y0 + 11); ctx.moveTo(bx + cw - 2, y0 + 2); ctx.lineTo(bx + 2, y0 + 11); ctx.stroke(); }
+        }
+      });
+      ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+      out.innerHTML = "Map-colouring CSP. Neighbours (joined by an edge) must differ. " +
+        "Each variable shows its remaining domain {R, G, B}; <b style=\"color:#ff3b30\">a red cross = a value removed by forward checking</b>. " +
+        "<span style=\"color:" + t.warn + "\">Orange ring = selected variable</span>.<br>" + (msg || "");
+    }
+    var row1 = mkRow(host);
+    var lab = document.createElement("span"); lab.textContent = "select variable: ";
+    lab.style.cssText = "color:var(--ink-dim);font-size:13px;margin-right:6px"; row1.appendChild(lab);
+    keys.forEach(function (k) { mkBtn(row1, k, function () { sel = k; draw("Selected variable <b>" + k + "</b>. Now assign it a colour."); }); });
+    var row2 = mkRow(host);
+    var lab2 = document.createElement("span"); lab2.textContent = "assign colour to selected: ";
+    lab2.style.cssText = "color:var(--ink-dim);font-size:13px;margin-right:6px"; row2.appendChild(lab2);
+    ["R", "G", "B"].forEach(function (col) { mkBtn(row2, "= " + col, function () { assign(col); }); });
+    mkBtn(row2, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Solving CSPs: backtracking and consistency",
   tagline: "Try a value, check the rules, and back up the moment you get stuck.",
@@ -1377,20 +1480,79 @@ L({
 L({
   id: "ai-bayes-inference",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "prior", label: "prior P(query)", min: 0, max: 1, val: 0.2, step: 0.05 },
-        { key: "like", label: "likelihood P(evidence | query)", min: 0, max: 1, val: 0.8, step: 0.05 },
-        { key: "evid", label: "evidence P(evidence)", min: 0.05, max: 1, val: 0.4, step: 0.05 }
-      ],
-      compute: function (s) {
-        var post = (s.like * s.prior) / s.evid;
-        var capped = Math.min(post, 1);
-        return { text: "posterior = (likelihood · prior) / evidence = (" + s.like.toFixed(2) + " · " + s.prior.toFixed(2) +
-          ") / " + s.evid.toFixed(2) + " = <b>" + post.toFixed(3) + "</b>." +
-          (post > 1 ? " (over 1 — these numbers are inconsistent; a real evidence ≥ likelihood·prior, so the true posterior is ≤ 1, here " + capped.toFixed(2) + ".)" : "") };
+    // BEFORE -> AFTER Bayesian update over 3 disease hypotheses.
+    // BEFORE: PRIOR bars P(H). AFTER: POSTERIOR bars P(H | evidence) after a
+    // positive test, computed with Bayes' rule. A slider sets the test's
+    // sensitivity P(+ | disease); the posterior bars (and numbers) update live.
+    host.innerHTML = "";
+    var W = 640, H = 320;
+    var hyps = ["Flu", "Cold", "Healthy"];
+    var prior = [0.20, 0.30, 0.50];           // P(H), sums to 1
+    // likelihood of a positive test given each hypothesis, P(+ | H). Healthy = false-positive rate.
+    var likeBase = [0.90, 0.50, 0.10];
+    var sens = 0.90;                          // slider-controlled sensitivity for the *disease* hyps (scales Flu/Cold)
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    function likelihoods() {
+      // Flu/Cold scale with the sensitivity slider; Healthy keeps a fixed false-positive rate.
+      return [sens, sens * 0.55, 0.10];
+    }
+    function posterior() {
+      var lk = likelihoods();
+      var joint = prior.map(function (p, i) { return p * lk[i]; });
+      var z = joint.reduce(function (a, b) { return a + b; }, 0) || 1;
+      return { post: joint.map(function (j) { return j / z; }), z: z, lk: lk };
+    }
+    function bars(x0, title, vals, cols, hot) {
+      var t = C();
+      var n = vals.length, gw = 150, gap = 16, bw = (gw - (n - 1) * gap) / n;
+      var baseY = 250, maxH = 170;
+      ctx.fillStyle = t.ink; ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(title, x0 + gw / 2, 40);
+      ctx.strokeStyle = t.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, baseY); ctx.lineTo(x0 + gw, baseY); ctx.stroke();
+      for (var i = 0; i < n; i++) {
+        var bx = x0 + i * (bw + gap), h = vals[i] * maxH;
+        ctx.fillStyle = cols[i]; if (hot) { ctx.globalAlpha = 1; }
+        ctx.fillRect(bx, baseY - h, bw, h);
+        ctx.fillStyle = t.ink; ctx.font = "bold 12px sans-serif";
+        ctx.fillText(vals[i].toFixed(2), bx + bw / 2, baseY - h - 6);
+        ctx.fillStyle = t.dim; ctx.font = "11px sans-serif";
+        ctx.fillText(hyps[i], bx + bw / 2, baseY + 16);
       }
-    });
+    }
+    function draw() {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      var cols = ["#ff7b72", "#ffb454", "#7ee787"];
+      var r = posterior();
+      bars(60, "PRIOR  P(H)", prior, cols, false);
+      // arrow between the two panels
+      ctx.strokeStyle = t.accent; ctx.fillStyle = t.accent; ctx.lineWidth = 2.5;
+      var ay = 150, ax1 = 250, ax2 = 360;
+      ctx.beginPath(); ctx.moveTo(ax1, ay); ctx.lineTo(ax2, ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax2, ay); ctx.lineTo(ax2 - 12, ay - 7); ctx.lineTo(ax2 - 12, ay + 7); ctx.closePath(); ctx.fill();
+      ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = t.accent; ctx.fillText("saw +test", (ax1 + ax2) / 2, ay - 12);
+      bars(400, "POSTERIOR  P(H | +)", r.post, cols, true);
+      ctx.textAlign = "start";
+      out.innerHTML = "Bayesian update over 3 hypotheses after a <b>positive test</b>. " +
+        "Posterior = (prior × likelihood) / evidence.<br>" +
+        "P(+ | Flu)=" + r.lk[0].toFixed(2) + ", P(+ | Cold)=" + r.lk[1].toFixed(2) + ", P(+ | Healthy)=" + r.lk[2].toFixed(2) +
+        ". Evidence P(+) = Σ prior·like = <b>" + r.z.toFixed(3) + "</b>.<br>" +
+        "Posterior: Flu <b>" + r.post[0].toFixed(2) + "</b>, Cold <b>" + r.post[1].toFixed(2) + "</b>, Healthy <b>" + r.post[2].toFixed(2) +
+        "</b>. The positive test pushes mass toward the hypothesis it is most consistent with.";
+    }
+    var slRow = mkRow(host);
+    var sl = document.createElement("input"); sl.type = "range"; sl.min = "0.3"; sl.max = "0.99"; sl.step = "0.01"; sl.value = String(sens);
+    sl.style.cssText = "vertical-align:middle";
+    var slLab = document.createElement("label"); slLab.style.cssText = "display:block;font-size:13px;color:var(--ink-dim)";
+    var slVal = document.createElement("span"); slVal.className = "out"; slVal.style.marginLeft = "6px"; slVal.textContent = sens.toFixed(2);
+    slLab.textContent = "test sensitivity  P(+ | disease)"; slLab.appendChild(slVal);
+    sl.addEventListener("input", function () { sens = parseFloat(sl.value); slVal.textContent = sens.toFixed(2); draw(); });
+    slRow.appendChild(slLab); slRow.appendChild(sl);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    draw();
   },
   title: "Inference in Bayes nets",
   tagline: "Given what you've observed, what's the chance of the thing you care about?",
@@ -1629,18 +1791,101 @@ L({
 L({
   id: "ai-inference-rules",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "p", label: "premise p present (0/1)", min: 0, max: 1, val: 1, step: 1 },
-        { key: "imp", label: "premise p → q present (0/1)", min: 0, max: 1, val: 1, step: 1 }
-      ],
-      compute: function (s) {
-        var derives = (s.p === 1 && s.imp === 1);
-        return { text: "modus ponens: from p and (p → q), conclude q.<br>p present = <b>" + s.p +
-          "</b>, (p → q) present = <b>" + s.imp + "</b>.<br>derive q? <b>" +
-          (derives ? "yes — q is concluded" : "no — both premises are required") + "</b>." };
+    // BEFORE -> AFTER forward chaining on a small propositional KB.
+    // BEFORE: only the seed facts are known. Each "Step" applies one round of
+    // modus ponens: any rule whose premises are all known fires and adds its
+    // conclusion. Newly derived facts are highlighted; the rules that fired glow.
+    host.innerHTML = "";
+    var W = 640, H = 360;
+    // Facts (atoms) and their fixed positions.
+    var atoms = ["Rain", "Sprinkler", "Wet", "Slippery", "Cold", "Ice"];
+    var pos = {
+      Rain: { x: 90, y: 60 }, Sprinkler: { x: 90, y: 150 }, Cold: { x: 90, y: 300 },
+      Wet: { x: 330, y: 105 }, Slippery: { x: 560, y: 105 }, Ice: { x: 330, y: 300 }
+    };
+    // Horn rules: premises (all must hold) -> conclusion.
+    var rules = [
+      { pre: ["Rain"], con: "Wet" },
+      { pre: ["Sprinkler"], con: "Wet" },
+      { pre: ["Wet"], con: "Slippery" },
+      { pre: ["Wet", "Cold"], con: "Ice" }
+    ];
+    var seeds = ["Rain", "Cold"];
+    var known, justAdded, firedRule, round, done;
+    var c = mkCanvas(host, W, H), ctx = c.ctx;
+    var out = mkOut(host);
+    function reset() {
+      known = {}; seeds.forEach(function (a) { known[a] = true; });
+      justAdded = {}; firedRule = -1; round = 0; done = false;
+      draw("Known facts (BEFORE): <b>" + seeds.join(", ") + "</b>. Press Step to apply modus ponens and derive new facts.");
+    }
+    function step() {
+      if (done) { draw("No more rules can fire — the knowledge base is saturated."); return; }
+      justAdded = {}; firedRule = -1;
+      var added = [], fired = [];
+      rules.forEach(function (r, i) {
+        if (known[r.con]) return;                       // already derived
+        if (r.pre.every(function (p) { return known[p]; })) {
+          known[r.con] = true; justAdded[r.con] = true; added.push(r.con); fired.push(i);
+        }
+      });
+      round++;
+      if (added.length === 0) {
+        done = true;
+        draw("Round " + round + ": no rule's premises are all satisfied that wasn't already used. <b>Done — nothing new is entailed.</b>");
+        return;
       }
-    });
+      var firedTxt = fired.map(function (i) { return rules[i].pre.join("∧") + "→" + rules[i].con; }).join(", ");
+      draw("Round " + round + ": fired " + firedTxt + ". <b style=\"color:" + C().accent2 + "\">Newly derived: " + added.join(", ") + "</b> (highlighted).");
+    }
+    function drawFact(t, a) {
+      var p = pos[a], k = known[a], fresh = justAdded[a];
+      ctx.beginPath();
+      ctx.fillStyle = fresh ? t.accent2 : (k ? t.accent : t.panel);
+      ctx.strokeStyle = fresh ? t.accent2 : (k ? t.accent : t.border);
+      ctx.lineWidth = fresh ? 4 : 2.5;
+      var w = 66, h = 30;
+      ctx.beginPath(); ctx.rect(p.x - w / 2, p.y - h / 2, w, h); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = (k || fresh) ? "#0d1117" : t.dim; ctx.font = "bold 13px sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(a, p.x, p.y);
+    }
+    function draw(msg) {
+      var t = C(); ctx.clearRect(0, 0, W, H);
+      // rule edges premise -> conclusion
+      rules.forEach(function (r) {
+        var active = r.pre.every(function (p) { return known[p]; });
+        r.pre.forEach(function (p) {
+          var a = pos[p], b = pos[r.con];
+          ctx.strokeStyle = active ? t.accent2 : t.border;
+          ctx.lineWidth = active ? 2.5 : 1.5; ctx.setLineDash(active ? [] : [4, 4]);
+          var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+          var x1 = a.x + ux * 36, y1 = a.y + uy * 18, x2 = b.x - ux * 40, y2 = b.y - uy * 18;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+          ctx.setLineDash([]);
+          // arrowhead
+          var ang = Math.atan2(y2 - y1, x2 - x1);
+          ctx.fillStyle = active ? t.accent2 : t.dim;
+          ctx.beginPath(); ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - 9 * Math.cos(ang - 0.4), y2 - 9 * Math.sin(ang - 0.4));
+          ctx.lineTo(x2 - 9 * Math.cos(ang + 0.4), y2 - 9 * Math.sin(ang + 0.4));
+          ctx.closePath(); ctx.fill();
+        });
+      });
+      atoms.forEach(function (a) { drawFact(t, a); });
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      var ruleList = rules.map(function (r) { return r.pre.join("∧") + "→" + r.con; }).join("; &nbsp; ");
+      out.innerHTML = "Forward chaining (modus ponens). Rules: " + ruleList + ".<br>" +
+        "<span style=\"color:" + t.accent + "\">Blue = known fact</span>, " +
+        "<span style=\"color:" + t.accent2 + "\">green = just derived this step</span>, grey = not yet known. " +
+        "Green arrows = a rule whose premises all hold.<br>" + (msg || "");
+    }
+    var row = mkRow(host);
+    mkBtn(row, "Step (apply rules)", step);
+    mkBtn(row, "Reset", reset);
+    host.insertBefore(c.cv, host.children[0]);
+    host.insertBefore(out, host.children[1]);
+    reset();
   },
   title: "Inference and resolution",
   tagline: "Mechanical rules that crank out new true facts from old ones.",

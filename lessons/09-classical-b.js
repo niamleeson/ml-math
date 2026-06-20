@@ -740,8 +740,14 @@ L({
       var r = rnd() < trueP[i] ? 1 : 0;
       sum[i]+=r; n[i]+=1; t+=1; draw();
     }
-    var btn=document.createElement("button"); btn.textContent="Pull best arm"; btn.style.margin="8px 0"; btn.style.padding="6px 14px";
+    function reset(){ seed = 99; sum = [0,0,0]; n = [0,0,0]; t = 0; initPulls(); draw(); }
+    var BTN = "margin:8px 8px 8px 0;padding:6px 14px;background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px";
+    var btn=document.createElement("button"); btn.textContent="Pull best arm"; btn.style.cssText=BTN;
     btn.addEventListener("click", pull); host.appendChild(btn);
+    var btn20=document.createElement("button"); btn20.textContent="Pull ×20"; btn20.style.cssText=BTN;
+    btn20.addEventListener("click", function(){ for (var k=0;k<20;k++) pull(); }); host.appendChild(btn20);
+    var btnR=document.createElement("button"); btnR.textContent="↺ Reset"; btnR.style.cssText=BTN;
+    btnR.addEventListener("click", reset); host.appendChild(btnR);
     draw();
   }
 });
