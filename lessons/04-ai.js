@@ -275,15 +275,33 @@ L({
 L({
   id: "ai-tree-search",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "b", label: "branching factor b", min: 1, max: 6, val: 2, step: 1 },
-        { key: "d", label: "depth d", min: 0, max: 10, val: 3, step: 1 }
-      ],
-      compute: function (s) {
-        var nodes = Math.pow(s.b, s.d);
-        return { text: "nodes at the deepest level ≈ b^d = " + s.b + "^" + s.d +
-          " = <b>" + nodes + "</b>. this O(b^d) growth is why deep trees explode." };
+    // Binary tree of 7 nodes laid on a 3-row x 7-col grid.
+    // Each node shows its BFS order (level order) and DFS order (preorder).
+    // node key -> {row, col, bfs, dfs}
+    var nodes = {
+      root: { row: 0, col: 3, bfs: 1, dfs: 1 },
+      L:    { row: 1, col: 1, bfs: 2, dfs: 2 },
+      R:    { row: 1, col: 5, bfs: 3, dfs: 5 },
+      LL:   { row: 2, col: 0, bfs: 4, dfs: 3 },
+      LR:   { row: 2, col: 2, bfs: 5, dfs: 4 },
+      RL:   { row: 2, col: 4, bfs: 6, dfs: 6 },
+      RR:   { row: 2, col: 6, bfs: 7, dfs: 7 }
+    };
+    var at = {};   // "row,col" -> node
+    for (var k in nodes) { var n = nodes[k]; at[n.row + "," + n.col] = n; }
+    Demos.grid(host, {
+      rows: 3, cols: 7, cellSize: 64,
+      controls: [{ key: "mode", label: "0 = BFS order, 1 = DFS order", min: 0, max: 1, val: 0, step: 1 }],
+      cell: function (r, c, state) {
+        var node = at[r + "," + c];
+        if (!node) return { color: "#0d1117" };
+        var order = state.mode === 1 ? node.dfs : node.bfs;
+        return { color: "#1b4f72", label: String(order), text: "#e6edf3" };
+      },
+      readout: function (state) {
+        return state.mode === 1
+          ? "DFS visit order (dive deep first): root, then all the way down the left subtree, then the right. Numbers are the order each node is reached."
+          : "BFS visit order (level by level): visit row 0, then row 1, then row 2, left to right. Numbers are the order each node is reached.";
       }
     });
   },
@@ -390,18 +408,29 @@ L({
 L({
   id: "ai-astar",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "g", label: "g (cost paid so far)", min: 0, max: 20, val: 4, step: 0.5 },
-        { key: "h", label: "h (heuristic guess of remaining)", min: 0, max: 20, val: 5, step: 0.5 },
-        { key: "t", label: "true remaining cost", min: 0, max: 20, val: 6, step: 0.5 }
-      ],
-      compute: function (s) {
-        var f = s.g + s.h;
-        var ok = s.h <= s.t;
-        return { text: "f = g + h = " + s.g + " + " + s.h + " = <b>" + f.toFixed(1) +
-          "</b>. A* expands the node with the smallest f.<br>admissible? need h ≤ true cost: " +
-          s.h + " ≤ " + s.t + " is <b>" + (ok ? "yes (safe)" : "NO (overestimates — may miss the cheapest path)") + "</b>." };
+    // 5 rows x 7 cols grid. Start top-left, goal bottom-right.
+    // g = Manhattan distance from start, h = Manhattan distance to goal, f = g + h.
+    var ROWS = 5, COLS = 7;
+    var sr = 0, sc = 0, gr = ROWS - 1, gc = COLS - 1;
+    function gOf(r, c) { return Math.abs(r - sr) + Math.abs(c - sc); }
+    function hOf(r, c) { return Math.abs(r - gr) + Math.abs(c - gc); }
+    var fOpt = gOf(gr, gc) + hOf(gr, gc);   // smallest possible f (lies on a shortest path)
+    Demos.grid(host, {
+      rows: ROWS, cols: COLS, cellSize: 56,
+      cell: function (r, c) {
+        var g = gOf(r, c), h = hOf(r, c), f = g + h;
+        var onPath = (f === fOpt);   // cells with minimum f lie on an optimal route
+        var start = (r === sr && c === sc), goal = (r === gr && c === gc);
+        var color = onPath ? "#2e7d32" : "#1b2733";
+        if (start) color = "#4ea1ff";
+        if (goal) color = "#ffb454";
+        return { color: color, label: "f" + f, text: "#e6edf3" };
+      },
+      readout: function () {
+        return "Each cell shows f = g + h (g = steps from <span style=\"color:#4ea1ff\">start</span>, " +
+          "h = straight-line guess to <span style=\"color:#ffb454\">goal</span>). " +
+          "A* expands the lowest g+h first; the <span style=\"color:#2e7d32\">green</span> band of minimum f = " +
+          fOpt + " is the cheapest path it follows.";
       }
     });
   },
@@ -740,23 +769,7 @@ L({
 L({
   id: "ai-minimax",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "l1", label: "leaf 1 (under branch A)", min: 0, max: 10, val: 3, step: 1 },
-        { key: "l2", label: "leaf 2 (under branch A)", min: 0, max: 10, val: 8, step: 1 },
-        { key: "l3", label: "leaf 3 (under branch B)", min: 0, max: 10, val: 5, step: 1 },
-        { key: "l4", label: "leaf 4 (under branch B)", min: 0, max: 10, val: 2, step: 1 }
-      ],
-      compute: function (s) {
-        var minA = Math.min(s.l1, s.l2), minB = Math.min(s.l3, s.l4);
-        var root = Math.max(minA, minB);
-        var pick = minA >= minB ? "A" : "B";
-        return { text: "opponent (MIN) at each branch: A → min(" + s.l1 + ", " + s.l2 + ") = <b>" + minA +
-          "</b>, B → min(" + s.l3 + ", " + s.l4 + ") = <b>" + minB +
-          "</b>.<br>you (MAX) at root: max(" + minA + ", " + minB + ") = <b>" + root +
-          "</b>, so pick branch <b>" + pick + "</b>." };
-      }
-    });
+    Demos.tree(host, { type: "minimax", leaves: [3, 5, 2, 9], min: 0, max: 10 });
   },
   title: "Minimax (game playing)",
   tagline: "You play to win, your opponent plays to beat you. Plan for their best reply.",
@@ -801,21 +814,7 @@ L({
 L({
   id: "ai-alpha-beta",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "alpha", label: "α (max's best secured)", min: 0, max: 10, val: 5, step: 1 },
-        { key: "beta", label: "β (min's best secured)", min: 0, max: 10, val: 10, step: 1 },
-        { key: "child", label: "child value seen at a MIN node", min: 0, max: 10, val: 2, step: 1 }
-      ],
-      compute: function (s) {
-        // At a MIN node, beta updates to min(beta, child). Prune when beta <= alpha.
-        var newBeta = Math.min(s.beta, s.child);
-        var pruned = newBeta <= s.alpha;
-        return { text: "at this MIN node, β ← min(β, child) = min(" + s.beta + ", " + s.child +
-          ") = <b>" + newBeta + "</b>.<br>prune when β ≤ α: " + newBeta + " ≤ " + s.alpha +
-          " is <b>" + (pruned ? "yes — PRUNE the rest of this branch" : "no — keep exploring") + "</b>." };
-      }
-    });
+    Demos.tree(host, { type: "minimax", leaves: [3, 5, 2, 9], min: 0, max: 10 });
   },
   title: "Alpha-beta pruning",
   tagline: "Skip branches that cannot change your decision. Same answer, far less work.",
@@ -860,21 +859,7 @@ L({
 L({
   id: "ai-expectimax",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "v1", label: "outcome 1 value", min: 0, max: 10, val: 8, step: 1 },
-        { key: "p1", label: "outcome 1 probability", min: 0, max: 1, val: 0.5, step: 0.05 },
-        { key: "v2", label: "outcome 2 value", min: 0, max: 10, val: 2, step: 1 }
-      ],
-      compute: function (s) {
-        var p2 = 1 - s.p1;
-        var ev = s.p1 * s.v1 + p2 * s.v2;
-        var mm = Math.min(s.v1, s.v2);
-        return { text: "outcome 2 probability = 1 − " + s.p1.toFixed(2) + " = <b>" + p2.toFixed(2) +
-          "</b>.<br>expected value = Σ p·v = " + s.p1.toFixed(2) + "·" + s.v1 + " + " + p2.toFixed(2) + "·" + s.v2 +
-          " = <b>" + ev.toFixed(2) + "</b>. (minimax would instead take the worst case, min = " + mm + ".)" };
-      }
-    });
+    Demos.tree(host, { type: "expectimax", probs: [0.5, 0.5], leaves: [3, 5, 2, 9], min: 0, max: 10 });
   },
   title: "Expectimax",
   tagline: "When the opponent is random, not perfect, average the outcomes instead of taking the worst.",
@@ -1217,19 +1202,31 @@ L({
 L({
   id: "ai-propositional-logic",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a", label: "A (0 = false, 1 = true)", min: 0, max: 1, val: 1, step: 1 },
-        { key: "b", label: "B (0 = false, 1 = true)", min: 0, max: 1, val: 0, step: 1 }
-      ],
-      compute: function (s) {
-        var A = s.a === 1, B = s.b === 1;
-        var and = A && B, or = A || B, notA = !A, imp = (!A) || B;
-        function tf(x) { return x ? "true" : "false"; }
-        return { text: "A = <b>" + tf(A) + "</b>, B = <b>" + tf(B) +
-          "</b>.<br>A ∧ B = <b>" + tf(and) + "</b>, A ∨ B = <b>" + tf(or) +
-          "</b>, ¬A = <b>" + tf(notA) + "</b>, A → B = <b>" + tf(imp) +
-          "</b>. (A → B is false only when A is true and B is false.)" };
+    // Truth table. Row 0 = header. Rows 1..4 = the 4 combinations of A,B.
+    // Cols: 0 = A, 1 = B, 2 = A∧B, 3 = A∨B, 4 = ¬A, 5 = A→B.
+    var combos = [[true, true], [true, false], [false, true], [false, false]];
+    var heads = ["A", "B", "A∧B", "A∨B", "¬A", "A→B"];
+    function tf(x) { return x ? "T" : "F"; }
+    function valAt(row, col) {
+      var A = combos[row][0], B = combos[row][1];
+      if (col === 0) return A;
+      if (col === 1) return B;
+      if (col === 2) return A && B;
+      if (col === 3) return A || B;
+      if (col === 4) return !A;
+      return (!A) || B;   // A → B
+    }
+    Demos.grid(host, {
+      rows: 5, cols: 6, cellSize: 60,
+      cell: function (r, c) {
+        if (r === 0) return { color: "#161c24", label: heads[c], text: "#9aa7b4" };
+        var v = valAt(r - 1, c);
+        return { color: v ? "#1f5130" : "#5a1f24", label: tf(v), text: "#e6edf3" };
+      },
+      readout: function () {
+        return "Truth table: each of the 4 rows is one combination of A, B. " +
+          "<span style=\"color:#7ee787\">Green = true</span>, <span style=\"color:#ff7b72\">red = false</span>. " +
+          "Note A→B is false only on row TF (A true, B false).";
       }
     });
   },

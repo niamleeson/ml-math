@@ -15,19 +15,16 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 L({
   id: "fnd-vector",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "x1", label: "x₁", min: -5, max: 5, val: 3, step: 1 },
-        { key: "x2", label: "x₂", min: -5, max: 5, val: 4, step: 1 },
-        { key: "x3", label: "x₃", min: -5, max: 5, val: 0, step: 1 }
-      ],
-      compute: function (s) {
-        var len = Math.sqrt(s.x1 * s.x1 + s.x2 * s.x2 + s.x3 * s.x3);
+    Demos.vectors(host, {
+      range: 5,
+      vectors: [{ key: "x", x: 3, y: 2, label: "x" }],
+      compute: function (vecs) {
+        var x = vecs.x.x, y = vecs.x.y;
+        var len = Math.sqrt(x * x + y * y);
         return {
-          text: "Vector x = [" + s.x1 + ", " + s.x2 + ", " + s.x3 + "] in ℝ³.<br>" +
-            "Length ‖x‖ = √(x₁² + x₂² + x₃²) = √(" +
-            (s.x1 * s.x1) + " + " + (s.x2 * s.x2) + " + " + (s.x3 * s.x3) + ") = <b>" +
-            len.toFixed(3) + "</b>."
+          text: "Vector x = [" + x + ", " + y + "].<br>" +
+            "Length ‖x‖ = √(x² + y²) = √(" + (x * x) + " + " + (y * y) + ") = <b>" +
+            len.toFixed(3) + "</b>.<br>Drag the arrow tip to see the vector and its length change."
         };
       }
     });
@@ -74,22 +71,28 @@ L({
 L({
   id: "fnd-dot",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "ax", label: "a.x", min: -5, max: 5, val: 1, step: 1 },
-        { key: "ay", label: "a.y", min: -5, max: 5, val: 2, step: 1 },
-        { key: "bx", label: "b.x", min: -5, max: 5, val: 3, step: 1 },
-        { key: "by", label: "b.y", min: -5, max: 5, val: 4, step: 1 }
+    Demos.vectors(host, {
+      range: 5,
+      vectors: [
+        { key: "a", x: 3, y: 1, label: "a" },
+        { key: "b", x: 1, y: 3, label: "b" }
       ],
-      compute: function (s) {
-        var dot = s.ax * s.bx + s.ay * s.by;
+      compute: function (vecs) {
+        var ax = vecs.a.x, ay = vecs.a.y, bx = vecs.b.x, by = vecs.b.y;
+        var dot = ax * bx + ay * by;
+        var na = Math.sqrt(ax * ax + ay * ay), nb = Math.sqrt(bx * bx + by * by);
+        var cos = (na > 0 && nb > 0) ? dot / (na * nb) : 0;
+        var ang = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
         var meaning = dot > 0 ? "positive: the vectors broadly agree (point a similar way)."
           : (dot < 0 ? "negative: the vectors disagree (point opposite ways)."
             : "zero: the vectors are perpendicular (unrelated).");
+        var cosTxt = (na > 0 && nb > 0)
+          ? ("cos θ = (a·b)/(‖a‖‖b‖) = <b>" + cos.toFixed(3) + "</b>, so θ ≈ <b>" + ang.toFixed(1) + "°</b>.<br>")
+          : "One vector is zero, so the angle is undefined.<br>";
         return {
-          text: "a = [" + s.ax + ", " + s.ay + "], b = [" + s.bx + ", " + s.by + "].<br>" +
-            "Dot = a.x·b.x + a.y·b.y = " + (s.ax * s.bx) + " + " + (s.ay * s.by) + " = <b>" +
-            dot + "</b>.<br>Sign is " + meaning
+          text: "a = [" + ax + ", " + ay + "], b = [" + bx + ", " + by + "].<br>" +
+            "a·b = aₓ·bₓ + a_y·b_y = " + (ax * bx) + " + " + (ay * by) + " = <b>" + dot + "</b>.<br>" +
+            cosTxt + "Sign is " + meaning
         };
       }
     });
@@ -136,20 +139,27 @@ L({
 L({
   id: "fnd-matrix",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
+    Demos.grid(host, {
+      rows: 2, cols: 2, cellSize: 90,
+      controls: [
         { key: "a11", label: "A₁,₁", min: -5, max: 5, val: 1, step: 1 },
         { key: "a12", label: "A₁,₂", min: -5, max: 5, val: 2, step: 1 },
         { key: "a21", label: "A₂,₁", min: -5, max: 5, val: 3, step: 1 },
         { key: "a22", label: "A₂,₂", min: -5, max: 5, val: 4, step: 1 }
       ],
-      compute: function (s) {
-        return {
-          text: "A = [[" + s.a11 + ", " + s.a12 + "], [" + s.a21 + ", " + s.a22 + "]].<br>" +
-            "Entries: A₁,₁ = " + s.a11 + ", A₁,₂ = " + s.a12 +
-            ", A₂,₁ = " + s.a21 + ", A₂,₂ = " + s.a22 + ".<br>" +
-            "Shape: 2 rows × 2 columns = <b>2×2</b>."
-        };
+      cell: function (r, c, s) {
+        var keys = [["a11", "a12"], ["a21", "a22"]];
+        var v = s[keys[r][c]];
+        var mag = Math.min(1, Math.abs(v) / 5);
+        var aa = Math.round(40 + mag * 160).toString(16);
+        if (aa.length < 2) aa = "0" + aa;
+        var color = v >= 0 ? ("#4ea1ff" + aa) : ("#ff7b72" + aa);
+        return { color: color, label: "A" + (r + 1) + (c + 1) + " = " + v };
+      },
+      readout: function (s) {
+        return "Shape: 2 rows × 2 columns = <b>2×2</b>. " +
+          "Each cell is one entry; e.g. A₂,₁ = <b>" + s.a21 + "</b> (row 2, column 1). " +
+          "Blue = positive, red = negative; darker = larger.";
       }
     });
   },
@@ -193,24 +203,30 @@ L({
 L({
   id: "fnd-matvec",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a11", label: "A₁,₁", min: -5, max: 5, val: 1, step: 1 },
-        { key: "a12", label: "A₁,₂", min: -5, max: 5, val: 2, step: 1 },
-        { key: "a21", label: "A₂,₁", min: -5, max: 5, val: 3, step: 1 },
-        { key: "a22", label: "A₂,₂", min: -5, max: 5, val: 4, step: 1 },
-        { key: "x1", label: "x₁", min: -5, max: 5, val: 1, step: 1 },
-        { key: "x2", label: "x₂", min: -5, max: 5, val: 1, step: 1 }
-      ],
-      compute: function (s) {
-        var r1 = s.a11 * s.x1 + s.a12 * s.x2;
-        var r2 = s.a21 * s.x1 + s.a22 * s.x2;
+    var A = [[2, 0], [0, 1]];
+    Demos.vectors(host, {
+      range: 5,
+      vectors: [{ key: "x", x: 2, y: 3, label: "x" }],
+      compute: function (vecs) {
+        var x1 = vecs.x.x, x2 = vecs.x.y;
+        var r1 = A[0][0] * x1 + A[0][1] * x2;
+        var r2 = A[1][0] * x1 + A[1][1] * x2;
         return {
-          text: "Row 1 · x = A₁,₁·x₁ + A₁,₂·x₂ = " + (s.a11 * s.x1) + " + " + (s.a12 * s.x2) +
-            " = <b>" + r1 + "</b>.<br>" +
-            "Row 2 · x = A₂,₁·x₁ + A₂,₂·x₂ = " + (s.a21 * s.x1) + " + " + (s.a22 * s.x2) +
-            " = <b>" + r2 + "</b>.<br>" +
-            "So Ax = [" + r1 + ", " + r2 + "]."
+          text: "A = [[2, 0], [0, 1]] doubles the x-axis, leaves the y-axis alone.<br>" +
+            "x = [" + x1 + ", " + x2 + "].<br>" +
+            "Ax = [A₁,₁·x₁+A₁,₂·x₂, A₂,₁·x₁+A₂,₂·x₂] = [" + r1 + ", " + r2 + "].<br>" +
+            "The green arrow is Ax — the matrix transforming x. Drag x to watch Ax move.",
+          draw: function (ctx, P) {
+            ctx.strokeStyle = "#7ee787"; ctx.fillStyle = "#7ee787"; ctx.lineWidth = 2.5;
+            var x2p = P.px(r1), y2p = P.py(r2);
+            ctx.beginPath(); ctx.moveTo(P.px(0), P.py(0)); ctx.lineTo(x2p, y2p); ctx.stroke();
+            var a = Math.atan2(y2p - P.py(0), x2p - P.px(0));
+            ctx.beginPath(); ctx.moveTo(x2p, y2p);
+            ctx.lineTo(x2p - 11 * Math.cos(a - 0.4), y2p - 11 * Math.sin(a - 0.4));
+            ctx.lineTo(x2p - 11 * Math.cos(a + 0.4), y2p - 11 * Math.sin(a + 0.4));
+            ctx.closePath(); ctx.fill();
+            ctx.font = "13px sans-serif"; ctx.fillText("Ax", x2p + 8, y2p - 8);
+          }
         };
       }
     });
@@ -456,35 +472,44 @@ L({
 L({
   id: "fnd-eigen",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a11", label: "A₁,₁", min: -4, max: 4, val: 2, step: 1 },
-        { key: "a12", label: "A₁,₂", min: -4, max: 4, val: 0, step: 1 },
-        { key: "a21", label: "A₂,₁", min: -4, max: 4, val: 0, step: 1 },
-        { key: "a22", label: "A₂,₂", min: -4, max: 4, val: 3, step: 1 },
-        { key: "v1", label: "v₁", min: -4, max: 4, val: 1, step: 1 },
-        { key: "v2", label: "v₂", min: -4, max: 4, val: 0, step: 1 }
-      ],
-      compute: function (s) {
-        var w1 = s.a11 * s.v1 + s.a12 * s.v2;
-        var w2 = s.a21 * s.v1 + s.a22 * s.v2;
-        var txt = "v = [" + s.v1 + ", " + s.v2 + "].<br>" +
+    var A = [[2, 0], [0, 3]];
+    Demos.vectors(host, {
+      range: 5,
+      vectors: [{ key: "v", x: 1, y: 1, label: "v" }],
+      compute: function (vecs) {
+        var v1 = vecs.v.x, v2 = vecs.v.y;
+        var w1 = A[0][0] * v1 + A[0][1] * v2;
+        var w2 = A[1][0] * v1 + A[1][1] * v2;
+        var txt = "A = [[2, 0], [0, 3]].<br>v = [" + v1 + ", " + v2 + "].<br>" +
           "Av = [A₁,₁·v₁+A₁,₂·v₂, A₂,₁·v₁+A₂,₂·v₂] = [" + w1 + ", " + w2 + "].<br>";
-        if (s.v1 === 0 && s.v2 === 0) {
+        if (v1 === 0 && v2 === 0) {
           txt += "v is the zero vector, so it cannot be an eigenvector (those must be non-zero).";
         } else {
           // parallel iff the cross product w1·v2 - w2·v1 = 0
-          var cross = w1 * s.v2 - w2 * s.v1;
+          var cross = w1 * v2 - w2 * v1;
           if (cross === 0) {
-            // lambda from a non-zero component of v
-            var lam = (s.v1 !== 0) ? (w1 / s.v1) : (w2 / s.v2);
+            var lam = (v1 !== 0) ? (w1 / v1) : (w2 / v2);
             txt += "Av is <b>parallel</b> to v, so v is an eigenvector with eigenvalue λ = <b>" +
-              lam + "</b>.";
+              lam + "</b>. The green arrow lines up with v.";
           } else {
-            txt += "Av is <b>not parallel</b> to v, so this v is not an eigenvector of A.";
+            txt += "Av is <b>not parallel</b> to v, so this v is not an eigenvector. " +
+              "Drag v onto the x- or y-axis to line the arrows up.";
           }
         }
-        return { text: txt };
+        return {
+          text: txt,
+          draw: function (ctx, P) {
+            ctx.strokeStyle = "#7ee787"; ctx.fillStyle = "#7ee787"; ctx.lineWidth = 2.5;
+            var x2p = P.px(w1), y2p = P.py(w2);
+            ctx.beginPath(); ctx.moveTo(P.px(0), P.py(0)); ctx.lineTo(x2p, y2p); ctx.stroke();
+            var a = Math.atan2(y2p - P.py(0), x2p - P.px(0));
+            ctx.beginPath(); ctx.moveTo(x2p, y2p);
+            ctx.lineTo(x2p - 11 * Math.cos(a - 0.4), y2p - 11 * Math.sin(a - 0.4));
+            ctx.lineTo(x2p - 11 * Math.cos(a + 0.4), y2p - 11 * Math.sin(a + 0.4));
+            ctx.closePath(); ctx.fill();
+            ctx.font = "13px sans-serif"; ctx.fillText("Av", x2p + 8, y2p - 8);
+          }
+        };
       }
     });
   },

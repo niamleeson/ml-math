@@ -15,16 +15,24 @@ const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 L({
   id: "ml-supervised",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "theta", label: "weight θ", min: -5, max: 5, val: 2, step: 0.1 },
-        { key: "x", label: "feature x", min: 0, max: 10, val: 3, step: 0.1 }
-      ],
-      compute: function (s) {
-        var h = s.theta * s.x;
-        return { text: "Prediction h(x) = θ · x = " + s.theta.toFixed(2) + " × " + s.x.toFixed(2) + " = <b>" + h.toFixed(3) + "</b>. The hypothesis just scales the feature by the weight θ." };
+    var P = [{ x: 1, y: 2.1 }, { x: 2, y: 3.9 }, { x: 3, y: 6.2 }, { x: 4, y: 7.8 }, { x: 5, y: 10.1 }];
+    Demos.scatter(host, { points: P, init: function (api) {
+      var theta = 2, intercept = 0;
+      function render() {
+        api.draw(function (ctx, col, px, py) {
+          ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(px(0), py(intercept + theta * 0));
+          ctx.lineTo(px(6), py(intercept + theta * 6));
+          ctx.stroke();
+        });
+        var xs = 3, pred = intercept + theta * xs;
+        api.readout.innerHTML = "Hypothesis h(x) = θ·x + b with θ = " + theta.toFixed(2) + ", b = " + intercept.toFixed(2) + ". The orange line is the learned rule. Sample prediction: h(" + xs + ") = " + theta.toFixed(2) + "·" + xs + " + " + intercept.toFixed(2) + " = <b>" + pred.toFixed(2) + "</b>. Drag the sliders to fit the dots.";
       }
-    });
+      api.slider("weight θ", -2, 4, theta, 0.05, function (v) { theta = v; render(); });
+      api.slider("intercept b", -4, 4, intercept, 0.05, function (v) { intercept = v; render(); });
+      render();
+    } });
   },
   title: "Supervised learning setup",
   tagline: "Show the computer examples with answers. It learns to answer new ones.",
@@ -123,17 +131,17 @@ L({
 L({
   id: "ml-cost",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "e1", label: "error y₁−z₁", min: -5, max: 5, val: 2, step: 0.1 },
-        { key: "e2", label: "error y₂−z₂", min: -5, max: 5, val: -1, step: 0.1 },
-        { key: "e3", label: "error y₃−z₃", min: -5, max: 5, val: 0, step: 0.1 }
-      ],
-      compute: function (s) {
-        var l1 = 0.5 * s.e1 * s.e1, l2 = 0.5 * s.e2 * s.e2, l3 = 0.5 * s.e3 * s.e3;
-        var J = (l1 + l2 + l3) / 3;
-        return { text: "Per-point losses ½(y−z)²: " + l1.toFixed(3) + ", " + l2.toFixed(3) + ", " + l3.toFixed(3) + ". Average cost J = (" + l1.toFixed(3) + " + " + l2.toFixed(3) + " + " + l3.toFixed(3) + ") / 3 = <b>" + J.toFixed(3) + "</b>." };
-      }
+    var X = [1, 2, 3], Y = [2, 4, 6];   // best fit at θ = 2
+    function J(theta) {
+      var s = 0;
+      for (var i = 0; i < X.length; i++) { var e = theta * X[i] - Y[i]; s += 0.5 * e * e; }
+      return s / X.length;
+    }
+    Demos.plot(host, {
+      xmin: -1, xmax: 5, ymin: 0,
+      curves: [{ f: function (t) { return J(t); }, label: "cost J(θ)" }],
+      drag: { curve: 0, start: 4, label: "θ",
+        readout: function (t, y) { return "J(θ) is a bowl (parabola). At θ = " + t.toFixed(2) + ", cost J = <b>" + y.toFixed(3) + "</b>. The lowest point is the best θ; here data (1,2),(2,4),(3,6) bottoms out at θ = 2 with J = 0. Drag θ to roll down into the valley."; } }
     });
   },
   title: "Cost function",
@@ -457,13 +465,18 @@ L({
 L({
   id: "ml-glm",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [{ key: "eta", label: "natural parameter η = θᵀx", min: -5, max: 5, val: 1, step: 0.1 }],
-      compute: function (s) {
-        var bern = 1 / (1 + Math.exp(-s.eta));
-        var pois = Math.exp(s.eta);
-        return { text: "The link maps η to each distribution's mean. <br>Bernoulli (yes/no): mean = σ(η) = 1/(1+e^−η) = <b>" + bern.toFixed(3) + "</b> → logistic regression. <br>Poisson (counts): mean = e^η = <b>" + pois.toFixed(3) + "</b> → Poisson regression." };
-      }
+    Demos.plot(host, {
+      xmin: -4, xmax: 4, ymin: 0,
+      controls: [{ key: "fam", label: "family: 0 = Bernoulli σ(η), 1 = Poisson e^η", min: 0, max: 1, val: 0, step: 1 }],
+      curves: [{
+        f: function (eta, s) { return s.fam < 0.5 ? 1 / (1 + Math.exp(-eta)) : Math.exp(eta); },
+        label: "mean as function of η"
+      }],
+      drag: { curve: 0, start: 1, label: "natural parameter η = θᵀx",
+        readout: function (eta, mean, s) {
+          var name = s.fam < 0.5 ? "Bernoulli: mean = σ(η) = 1/(1+e^−η)" : "Poisson: mean = e^η";
+          return name + ". At η = " + eta.toFixed(2) + ", mean = <b>" + mean.toFixed(3) + "</b>. " + (s.fam < 0.5 ? "Bounded in (0,1) → logistic regression." : "Always positive, grows fast → Poisson regression. Slide the family toggle to swap the link.");
+        } }
     });
   },
   title: "Generalized linear models",
@@ -511,13 +524,36 @@ L({
 L({
   id: "ml-svm",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [{ key: "w", label: "weight norm ‖w‖", min: 0.2, max: 5, val: 1, step: 0.05 }],
-      compute: function (s) {
-        var width = 2 / s.w, half = 1 / s.w;
-        return { text: "Margin width = 2 / ‖w‖ = 2 / " + s.w.toFixed(2) + " = <b>" + width.toFixed(3) + "</b> (half-width 1/‖w‖ = " + half.toFixed(3) + "). Smaller ‖w‖ ⇒ wider street, so maximizing the margin = minimizing ‖w‖." };
+    var P = [
+      { x: 1, y: 1.5, c: 0 }, { x: 1.6, y: 0.9, c: 0 }, { x: 1.1, y: 2.4, c: 0 }, { x: 2.2, y: 1.2, c: 0 },
+      { x: 5, y: 5.2, c: 1 }, { x: 5.8, y: 4.6, c: 1 }, { x: 4.6, y: 5.8, c: 1 }, { x: 6.0, y: 5.0, c: 1 }
+    ];
+    Demos.scatter(host, { points: P, init: function (api) {
+      var w1 = 1, w2 = 1, b = 6;   // boundary w·x = b
+      function render() {
+        var norm = Math.sqrt(w1 * w1 + w2 * w2);
+        api.draw(function (ctx, col, px, py) {
+          // draw line w1*x + w2*y = c  =>  y = (c - w1*x)/w2, sampled across x in [-2, 9]
+          function lineAt(c, style, dash) {
+            if (Math.abs(w2) < 1e-6) return;
+            ctx.strokeStyle = style; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
+            ctx.beginPath();
+            ctx.moveTo(px(-2), py((c - w1 * (-2)) / w2));
+            ctx.lineTo(px(9), py((c - w1 * 9) / w2));
+            ctx.stroke(); ctx.setLineDash([]);
+          }
+          lineAt(b + 1, col.dim, [5, 4]);   // margin +1
+          lineAt(b - 1, col.dim, [5, 4]);   // margin -1
+          lineAt(b, col.warn, []);          // boundary
+        });
+        var width = 2 / norm;
+        api.readout.innerHTML = "Boundary w·x = b (orange), margins w·x = b ± 1 (dashed). w = (" + w1.toFixed(2) + ", " + w2.toFixed(2) + "), ‖w‖ = " + norm.toFixed(3) + ". Margin width = 2/‖w‖ = <b>" + width.toFixed(3) + "</b>. Smaller ‖w‖ ⇒ wider street. Tune w and b to separate the two classes with the widest gap.";
       }
-    });
+      api.slider("w₁", -3, 3, w1, 0.05, function (v) { w1 = v; render(); });
+      api.slider("w₂", 0.2, 3, w2, 0.05, function (v) { w2 = v; render(); });
+      api.slider("bias b", -2, 12, b, 0.1, function (v) { b = v; render(); });
+      render();
+    } });
   },
   title: "Support vector machines",
   tagline: "Find the widest possible street separating two classes.",
@@ -987,12 +1023,11 @@ L({
 L({
   id: "ml-learning-theory",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [{ key: "m", label: "sample size m", min: 1, max: 2000, val: 100, step: 1 }],
-      compute: function (s) {
-        var gap = 1 / Math.sqrt(s.m);
-        return { text: "Generalization gap (true error − training error) shrinks like 1/√m. With m = " + Math.round(s.m) + ": gap ≈ 1/√" + Math.round(s.m) + " = <b>" + gap.toFixed(4) + "</b>. More data ⇒ training error becomes a trustworthy estimate of true error." };
-      }
+    Demos.plot(host, {
+      xmin: 1, xmax: 500, ymin: 0, ymax: 1.1,
+      curves: [{ f: function (m) { return 1 / Math.sqrt(m); }, label: "gap ≈ 1/√m" }],
+      drag: { curve: 0, start: 100, label: "sample size m",
+        readout: function (m, gap) { return "Generalization gap (true error − training error) decays like 1/√m. At m = " + Math.round(m) + ": gap ≈ 1/√" + Math.round(m) + " = <b>" + gap.toFixed(4) + "</b>. The curve falls steeply at first, then flattens — more data helps, with diminishing returns."; } }
     });
   },
   title: "Learning theory (gentle)",
@@ -1427,8 +1462,8 @@ L({
       xmin: 0, xmax: 1, ymin: 0, ymax: 1,
       controls: [{ key: "q", label: "classifier quality", min: 0.5, max: 1, val: 0.8, step: 0.01 }],
       curves: [
-        { f: function (fpr, s) { var p = (1 - s.q) / s.q; return Math.pow(fpr, p); }, label: "ROC: TPR vs FPR" },
-        { f: function (fpr) { return fpr; }, label: "random (AUC 0.5)", color: "#9aa7b4" }
+        { f: function (fpr, s) { var p = (1 - s.q) / s.q; return Math.pow(fpr, p); }, label: "ROC" },
+        { f: function (fpr) { return fpr; }, label: "random 0.5", color: "#9aa7b4" }
       ],
       drag: { curve: 0, start: 0.3, label: "FPR (false positive rate)",
         readout: function (fpr, tpr, s) { return "At FPR = " + fpr.toFixed(2) + ", TPR = <b>" + tpr.toFixed(3) + "</b>. A curve hugging the top-left is great. AUC = the probability a random positive is ranked above a random negative (here quality ≈ " + s.q.toFixed(2) + "; 1.0 perfect, 0.5 = the diagonal = random)."; } }
@@ -1477,18 +1512,37 @@ L({
 L({
   id: "ml-regression-metrics",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "ssres", label: "SS_res (model error)", min: 0, max: 100, val: 10, step: 0.5 },
-        { key: "sstot", label: "SS_tot (baseline error)", min: 1, max: 100, val: 50, step: 0.5 },
-        { key: "m", label: "number of points m", min: 1, max: 50, val: 5, step: 1 }
-      ],
-      compute: function (s) {
-        var r2 = 1 - s.ssres / s.sstot;
-        var rmse = Math.sqrt(s.ssres / s.m);
-        return { text: "R² = 1 − SS_res/SS_tot = 1 − " + s.ssres.toFixed(1) + "/" + s.sstot.toFixed(1) + " = <b>" + r2.toFixed(3) + "</b> (fraction of variance explained; 1 = perfect, 0 = no better than the mean). RMSE = √(SS_res/m) = √(" + s.ssres.toFixed(1) + "/" + Math.round(s.m) + ") = <b>" + rmse.toFixed(3) + "</b> (typical error in y's units)." };
+    var P = [{ x: 1, y: 2.3 }, { x: 2, y: 3.6 }, { x: 3, y: 6.4 }, { x: 4, y: 7.2 }, { x: 5, y: 9.6 }];
+    Demos.scatter(host, { points: P, init: function (api) {
+      var slope = 1.8, intercept = 0.5;
+      var ybar = 0; api.pts.forEach(function (p) { ybar += p.y; }); ybar /= api.pts.length;
+      function render() {
+        api.draw(function (ctx, col, px, py) {
+          // residual segments: vertical from each point to the line
+          ctx.strokeStyle = col.dim; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+          api.pts.forEach(function (p) {
+            var pred = intercept + slope * p.x;
+            ctx.beginPath(); ctx.moveTo(px(p.x), py(p.y)); ctx.lineTo(px(p.x), py(pred)); ctx.stroke();
+          });
+          ctx.setLineDash([]);
+          // the fitted line
+          ctx.strokeStyle = col.warn; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(px(0), py(intercept)); ctx.lineTo(px(6), py(intercept + slope * 6)); ctx.stroke();
+        });
+        var ssres = 0, sstot = 0;
+        api.pts.forEach(function (p) {
+          var pred = intercept + slope * p.x;
+          ssres += (p.y - pred) * (p.y - pred);
+          sstot += (p.y - ybar) * (p.y - ybar);
+        });
+        var r2 = 1 - ssres / sstot;
+        var rmse = Math.sqrt(ssres / api.pts.length);
+        api.readout.innerHTML = "Dashed segments are the residuals (y − ŷ). ŷ = " + slope.toFixed(2) + "·x + " + intercept.toFixed(2) + ". SS_res = " + ssres.toFixed(2) + ", SS_tot = " + sstot.toFixed(2) + ". R² = 1 − SS_res/SS_tot = <b>" + r2.toFixed(3) + "</b>, RMSE = √(SS_res/m) = <b>" + rmse.toFixed(3) + "</b>. Move the sliders to shrink the residuals.";
       }
-    });
+      api.slider("slope", -1, 4, slope, 0.05, function (v) { slope = v; render(); });
+      api.slider("intercept", -4, 4, intercept, 0.05, function (v) { intercept = v; render(); });
+      render();
+    } });
   },
   title: "Regression metrics (R² and RMSE)",
   tagline: "How well does the line fit? Compare its errors to a baseline.",

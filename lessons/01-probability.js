@@ -148,16 +148,32 @@ L({
 L({
   id: "prob-conditional",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "pab", label: "P(A∩B) — both happen", min: 0, max: 1, val: 0.2, step: 0.01 },
-        { key: "pb", label: "P(B) — the given event", min: 0.01, max: 1, val: 0.5, step: 0.01 }
+    Demos.grid(host, {
+      rows: 10, cols: 10,
+      controls: [
+        { key: "sizeA", label: "outcomes in A (event A)", min: 0, max: 100, val: 40, step: 1 },
+        { key: "sizeB", label: "outcomes in B (the given event)", min: 1, max: 100, val: 50, step: 1 },
+        { key: "overlap", label: "outcomes in A AND B (overlap)", min: 0, max: 100, val: 20, step: 1 }
       ],
-      compute: function (s) {
-        var pab = Math.min(s.pab, s.pb);
-        var cond = s.pb > 0 ? pab / s.pb : 0;
-        return { text: "P(A|B) = P(A∩B) / P(B) = " + pab.toFixed(2) + " / " + s.pb.toFixed(2) +
-          " = <b>" + cond.toFixed(3) + "</b>. We shrink the world down to B, then ask what fraction of it is also A. (P(A∩B) is capped at P(B), since A∩B sits inside B.)" };
+      cell: function (r, c, s) {
+        var i = r * 10 + c;
+        var sizeA = Math.round(s.sizeA), sizeB = Math.round(s.sizeB);
+        var inter = Math.min(Math.round(s.overlap), sizeA, sizeB);
+        var aOnly = sizeA - inter;
+        var bOnly = sizeB - inter;
+        // layout: [0, inter) = A∩B, then A-only, then B-only, then neither
+        if (i < inter) return { color: "#c89bff" };
+        if (i < inter + aOnly) return { color: "#4ea1ff" };
+        if (i < inter + aOnly + bOnly) return { color: "#7ee787" };
+        return { color: "#2a3340" };
+      },
+      readout: function (s) {
+        var sizeA = Math.round(s.sizeA), sizeB = Math.round(s.sizeB);
+        var inter = Math.min(Math.round(s.overlap), sizeA, sizeB);
+        var cond = sizeB > 0 ? inter / sizeB : 0;
+        return "Purple = A&cap;B (<b>" + inter + "</b>), blue = A only, green = B only, gray = neither (out of 100 equally likely outcomes). " +
+          "Shrink the world to B (<b>" + sizeB + "</b> cells). P(A | B) = |A&cap;B| / |B| = " + inter + " / " + sizeB +
+          " = <b>" + cond.toFixed(3) + "</b>.";
       }
     });
   },
@@ -204,17 +220,32 @@ L({
 L({
   id: "prob-bayes",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "pa", label: "P(A) — prior (e.g. disease rate)", min: 0.01, max: 0.99, val: 0.01, step: 0.01 },
-        { key: "sens", label: "P(B|A) — test sensitivity", min: 0.5, max: 1, val: 0.9, step: 0.01 },
-        { key: "fpr", label: "P(B|not A) — false-positive rate", min: 0.0, max: 0.5, val: 0.09, step: 0.01 }
+    Demos.grid(host, {
+      rows: 10, cols: 10,
+      controls: [
+        { key: "prev", label: "prevalence (sick per 100)", min: 1, max: 30, val: 5, step: 1 },
+        { key: "sens", label: "sensitivity P(+ | sick) %", min: 50, max: 100, val: 90, step: 1 },
+        { key: "fpr", label: "false-positive rate P(+ | healthy) %", min: 0, max: 40, val: 9, step: 1 }
       ],
-      bars: true, barsHeight: 110,
-      compute: function (s) {
-        var num = s.pa * s.sens, den = s.pa * s.sens + (1 - s.pa) * s.fpr, post = den > 0 ? num / den : 0;
-        return { text: "P(A|B) = P(B|A)·P(A) / P(B) = " + num.toFixed(4) + " / " + den.toFixed(4) + " = <b>" + (post * 100).toFixed(1) + "%</b>. A rare prior keeps the answer low even with a strong test.",
-          bars: [{ label: "prior P(A)", val: s.pa, color: "#9aa7b4" }, { label: "posterior P(A|B)", val: post, color: "#4ea1ff" }], max: 1 };
+      cell: function (r, c, s) {
+        var i = r * 10 + c;
+        var sick = Math.round(s.prev);
+        var falsePos = Math.round((100 - sick) * (s.fpr / 100));
+        if (i < sick) return { color: "#ff7b72" };
+        if (i < sick + falsePos) return { color: "#ffb454" };
+        return { color: "#2a3340" };
+      },
+      readout: function (s) {
+        var sick = Math.round(s.prev);
+        var falsePos = Math.round((100 - sick) * (s.fpr / 100));
+        var truePos = Math.round(sick * (s.sens / 100));
+        var posTotal = truePos + falsePos;
+        var ppv = posTotal > 0 ? (truePos / posTotal) * 100 : 0;
+        return "Red = the <b>" + sick + "</b> truly sick (per 100). Orange = the <b>" + falsePos +
+          "</b> healthy people who get a false positive. Of those, the test actually flags <b>" + truePos +
+          "</b> of the sick and <b>" + falsePos + "</b> of the healthy. So among the <b>" + posTotal +
+          "</b> who test positive, only <b>" + truePos + "</b> are really sick &rarr; P(sick | +) = <b>" +
+          ppv.toFixed(1) + "%</b>. A rare disease keeps this low even with a strong test.";
       }
     });
   },
@@ -853,11 +884,25 @@ L({
   demo: function (host) {
     Demos.plot(host, {
       xmin: 0, xmax: 8, ymin: 0, ymax: 3,
-      controls: [{ key: "lam", label: "λ (rate)", min: 0.2, max: 3, val: 1, step: 0.1 }],
-      curves: [{ f: function (x, s) { return s.lam * Math.exp(-s.lam * x); }, label: "f(x) = λe^(−λx)", color: "#4ea1ff" }],
+      controls: [
+        { key: "shape", label: "shape: 0 = Uniform, 1 = Exponential", min: 0, max: 1, val: 0, step: 1 },
+        { key: "b", label: "b (Uniform upper end, over [0, b])", min: 1, max: 8, val: 4, step: 0.5 },
+        { key: "lam", label: "λ (Exponential rate)", min: 0.2, max: 3, val: 1, step: 0.1 }
+      ],
+      curves: [
+        // Uniform(0, b): flat height 1/b on [0, b], else 0. Shown when shape rounds to 0.
+        { f: function (x, s) { return Math.round(s.shape) === 0 ? (x >= 0 && x <= s.b ? 1 / s.b : 0) : 0; }, label: "Uniform 1/b", color: "#7ee787" },
+        // Exponential(λ): λe^(−λx). Shown when shape rounds to 1.
+        { f: function (x, s) { return Math.round(s.shape) === 1 ? s.lam * Math.exp(-s.lam * x) : 0; }, label: "Exp λe^(−λx)", color: "#4ea1ff" }
+      ],
       readout: function (s) {
-        return "Exponential PDF, rate λ = " + s.lam.toFixed(1) + ". Mean wait = 1/λ = <b>" + (1 / s.lam).toFixed(2) +
-          "</b>. Short waits are common, long waits rare; a faster rate means a shorter wait.";
+        if (Math.round(s.shape) === 0) {
+          return "<b>Uniform(0, " + s.b.toFixed(1) + ")</b>: a flat density at height 1/b = <b>" + (1 / s.b).toFixed(3) +
+            "</b> over [0, " + s.b.toFixed(1) + "]. Every value in range is equally likely. Mean = b/2 = <b>" +
+            (s.b / 2).toFixed(2) + "</b>. Slide shape to 1 to compare the Exponential.";
+        }
+        return "<b>Exponential</b>, rate λ = " + s.lam.toFixed(1) + ". Density λe^(−λx) decays: short waits common, long waits rare. " +
+          "Mean wait = 1/λ = <b>" + (1 / s.lam).toFixed(2) + "</b>. Slide shape to 0 to compare the flat Uniform.";
       }
     });
   },
@@ -1033,20 +1078,45 @@ L({
 L({
   id: "prob-covariance-correlation",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "sx", label: "σₓ (spread of X)", min: 0.1, max: 5, val: 1, step: 0.1 },
-        { key: "sy", label: "σᵧ (spread of Y)", min: 0.1, max: 5, val: 2, step: 0.1 },
-        { key: "cov", label: "Cov(X,Y)", min: -10, max: 10, val: 2, step: 0.1 }
-      ],
-      compute: function (s) {
-        var denom = s.sx * s.sy;
-        var rho = denom > 0 ? s.cov / denom : 0;
-        if (rho > 1) rho = 1; if (rho < -1) rho = -1;
-        var word = Math.abs(rho) < 0.05 ? "no linear link" : (rho > 0 ? "move together" : "move oppositely");
-        return { text: "ρ = Cov / (σₓ·σᵧ) = " + s.cov.toFixed(2) + " / (" + s.sx.toFixed(1) + "·" + s.sy.toFixed(1) +
-          ") = <b>" + rho.toFixed(3) + "</b>. Correlation always lands in [−1, 1] (clamped here): they " + word +
-          ". (A valid covariance satisfies |Cov| ≤ σₓσᵧ.)" };
+    // 30 fixed unit-variance pairs: zx is the X coordinate, e is independent noise.
+    // Tilt toward correlation r via y = r*zx + sqrt(1-r^2)*e, which has correlation r with x.
+    var N = 30, zx = [], e = [];
+    for (var k = 0; k < N; k++) {
+      var ang = (k + 0.5) / N * 2 * Math.PI;
+      zx.push(2.2 * Math.cos(ang * 1.3 + 0.7) + 0.9 * Math.sin(ang * 2.7));
+      e.push(2.2 * Math.sin(ang * 1.7 + 0.3) + 0.9 * Math.cos(ang * 3.1));
+    }
+    // initial points span the worst-case range so px/py axes never clip
+    var points = [];
+    for (var m = 0; m < N; m++) points.push({ x: zx[m], y: e[m], c: 0 });
+    Demos.scatter(host, {
+      points: points,
+      init: function (api) {
+        function corr(xs, ys) {
+          var n = xs.length, mx = 0, my = 0, i;
+          for (i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+          mx /= n; my /= n;
+          var sxy = 0, sxx = 0, syy = 0;
+          for (i = 0; i < n; i++) { var dx = xs[i] - mx, dy = ys[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+          var den = Math.sqrt(sxx * syy);
+          return den > 0 ? sxy / den : 0;
+        }
+        function render(r) {
+          var xs = [], ys = [];
+          for (var j = 0; j < N; j++) {
+            var yv = r * zx[j] + Math.sqrt(1 - r * r) * e[j];
+            api.pts[j].x = zx[j]; api.pts[j].y = yv;
+            xs.push(zx[j]); ys.push(yv);
+          }
+          api.draw();
+          var rho = corr(xs, ys);
+          var word = Math.abs(rho) < 0.1 ? "no clear linear link" : (rho > 0 ? "rise together" : "move oppositely");
+          api.readout.innerHTML = "Correlation slider r = <b>" + r.toFixed(2) +
+            "</b>. The resulting cloud has &rho; &asymp; <b>" + rho.toFixed(2) +
+            "</b>: as |r| grows the points tighten onto a line; near 0 the cloud is round. They " + word + ".";
+        }
+        api.slider("correlation r", -1, 1, 0.6, 0.05, render);
+        render(0.6);
       }
     });
   },
@@ -1162,12 +1232,18 @@ L({
         { key: "sig", label: "σ (std dev, for Chebyshev)", min: 0.1, max: 50, val: 10, step: 0.1 },
         { key: "k", label: "k (how many σ away)", min: 0.1, max: 10, val: 3, step: 0.1 }
       ],
+      bars: true, barsHeight: 150,
       compute: function (s) {
         var markov = Math.min(1, s.mu / s.a);
         var cheb = Math.min(1, 1 / (s.k * s.k));
         return { text: "Markov: P(X ≥ a) ≤ μ/a = " + s.mu.toFixed(0) + "/" + s.a.toFixed(0) + " = <b>" + markov.toFixed(3) +
           "</b>.<br>Chebyshev: P(|X−μ| ≥ kσ) ≤ 1/k² = 1/" + (s.k * s.k).toFixed(2) + " = <b>" + cheb.toFixed(3) +
-          "</b>. (Both are probabilities, capped at 1.)" };
+          "</b>. Both beat the trivial bound of 1 — that is how much the mean (and variance) buy you.",
+          bars: [
+            { label: "trivial bound", val: 1, color: "#9aa7b4" },
+            { label: "Markov μ/a", val: markov, color: "#4ea1ff" },
+            { label: "Chebyshev 1/k²", val: cheb, color: "#7ee787" }
+          ], max: 1 };
       }
     });
   },
@@ -1214,17 +1290,16 @@ L({
 L({
   id: "prob-lln",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: -3, xmax: 3, ymin: 0, ymax: 4,
-      controls: [{ key: "n", label: "n (sample size)", min: 1, max: 500, val: 1, step: 1 }],
-      curves: [{ f: function (x, s) {
-        var n = Math.round(s.n), se = 1 / Math.sqrt(n);
-        return (1 / (se * Math.sqrt(2 * Math.PI))) * Math.exp(-(x * x) / (2 * se * se));
-      }, label: "spread of the sample mean", color: "#4ea1ff" }],
-      readout: function (s) {
-        var n = Math.round(s.n), se = 1 / Math.sqrt(n);
-        return "Sample mean of n = " + n + " draws (true mean 0, σ = 1). Its spread σ/√n = <b>" + se.toFixed(3) +
-          "</b>. As n grows the curve narrows toward the true mean — that is the Law of Large Numbers.";
+    Demos.sampler(host, {
+      lo: 1, hi: 6, bins: 6,
+      draw1: function () { return Math.floor(Math.random() * 6) + 1; },
+      readout: function (samples, mean) {
+        var n = samples.length;
+        var gap = Math.abs(mean - 3.5);
+        return "Rolling a fair die (true mean = <b>3.5</b>). n = <b>" + n +
+          "</b> rolls so far. Running average X&#772; = <b>" + mean.toFixed(3) +
+          "</b>, which is <b>" + gap.toFixed(3) + "</b> away from 3.5. " +
+          "Draw 1 jumps around; keep drawing and the running mean converges to 3.5 &mdash; the Law of Large Numbers.";
       }
     });
   },
@@ -1272,17 +1347,17 @@ L({
 L({
   id: "prob-clt",
   demo: function (host) {
-    Demos.plot(host, {
-      xmin: 0, xmax: 7, ymin: 0, ymax: 3,
-      controls: [{ key: "n", label: "n (samples averaged)", min: 1, max: 100, val: 1, step: 1 }],
-      curves: [{ f: function (x, s) {
-        var n = Math.round(s.n), mu = 3.5, varSingle = 35 / 12, varMean = varSingle / n, sd = Math.sqrt(varMean);
-        return (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - mu) * (x - mu)) / (2 * varMean));
-      }, label: "N(μ, σ²/n)", color: "#4ea1ff" }],
-      readout: function (s) {
-        var n = Math.round(s.n), varMean = (35 / 12) / n;
-        return "Averaging n = " + n + " die rolls. The sample mean ≈ N(μ = 3.5, σ²/n = <b>" + varMean.toFixed(3) +
-          "</b>). One roll is flat (uniform), yet the average becomes a narrowing bell as n grows.";
+    Demos.sampler(host, {
+      lo: 1, hi: 6, bins: 24,
+      draw1: function () {
+        var sum = 0;
+        for (var i = 0; i < 5; i++) sum += Math.floor(Math.random() * 6) + 1;
+        return sum / 5;
+      },
+      readout: function (samples, mean) {
+        return "Each draw is the <b>mean of 5 die rolls</b>. n = <b>" + samples.length +
+          "</b> such means drawn; their average = <b>" + mean.toFixed(3) +
+          "</b>. One roll alone is flat (uniform), but the histogram of these sample-means piles into a <b>bell centered at 3.5</b> &mdash; the Central Limit Theorem. The bell narrows as you average more rolls.";
       }
     });
   },
@@ -1331,20 +1406,21 @@ L({
 L({
   id: "prob-estimation",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "x1", label: "data point 1", min: 0, max: 20, val: 2, step: 1 },
-        { key: "x2", label: "data point 2", min: 0, max: 20, val: 4, step: 1 },
-        { key: "x3", label: "data point 3", min: 0, max: 20, val: 6, step: 1 }
-      ],
-      compute: function (s) {
-        var n = 3;
-        var mean = (s.x1 + s.x2 + s.x3) / n;
-        var ss = Math.pow(s.x1 - mean, 2) + Math.pow(s.x2 - mean, 2) + Math.pow(s.x3 - mean, 2);
-        var s2 = ss / (n - 1);
-        return { text: "Sample mean X̄ = (" + s.x1 + "+" + s.x2 + "+" + s.x3 + ")/3 = <b>" + mean.toFixed(2) +
-          "</b>. Sum of squared deviations = " + ss.toFixed(2) + ". Sample variance s² = SS/(n−1) = " + ss.toFixed(2) +
-          "/2 = <b>" + s2.toFixed(3) + "</b>. The n−1 divisor removes the downward bias." };
+    Demos.sampler(host, {
+      lo: 1, hi: 6, bins: 6,
+      draw1: function () { return Math.floor(Math.random() * 6) + 1; },
+      readout: function (samples, mean) {
+        var n = samples.length;
+        var s2 = 0;
+        if (n >= 2) {
+          var ss = 0;
+          for (var i = 0; i < n; i++) { var d = samples[i] - mean; ss += d * d; }
+          s2 = ss / (n - 1);
+        }
+        return "Rolling a fair die (true mean = 3.5, true variance = 35/12 &asymp; 2.917). " +
+          "n = <b>" + n + "</b> draws. Sample mean X&#772; = <b>" + mean.toFixed(3) +
+          "</b>. Sample variance s&sup2; (divide by n&minus;1) = <b>" + (n >= 2 ? s2.toFixed(3) : "—") +
+          "</b>. Draw more and both estimates settle onto the truth.";
       }
     });
   },

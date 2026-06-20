@@ -72,13 +72,25 @@ L({
 L({
   id: "dl-activations",
   demo: function (host) {
+    var sig = function (z) { return 1 / (1 + Math.exp(-z)); };
+    var th = function (z) { return Math.tanh(z); };
+    var rl = function (z) { return Math.max(0, z); };
     Demos.plot(host, {
       xmin: -5, xmax: 5, ymin: -1.2, ymax: 3,
       curves: [
-        { f: function (z) { return 1 / (1 + Math.exp(-z)); }, label: "sigmoid" },
-        { f: function (z) { return Math.tanh(z); }, label: "tanh" },
-        { f: function (z) { return Math.max(0, z); }, label: "ReLU" }
-      ]
+        { f: sig, label: "sigmoid (0,1)", color: "#4ea1ff" },
+        { f: th, label: "tanh (−1,1)", color: "#7ee787" },
+        { f: rl, label: "ReLU max(0,z)", color: "#c89bff" }
+      ],
+      drag: {
+        curve: 0, start: 1, label: "x",
+        readout: function (z) {
+          return "at x = <b>" + z.toFixed(2) + "</b>: &nbsp; sigmoid = <b style='color:#4ea1ff'>" +
+            sig(z).toFixed(3) + "</b> &nbsp; tanh = <b style='color:#7ee787'>" +
+            th(z).toFixed(3) + "</b> &nbsp; ReLU = <b style='color:#c89bff'>" +
+            rl(z).toFixed(3) + "</b>";
+        }
+      }
     });
   },
   title: "Activation functions",
@@ -617,23 +629,35 @@ L({
 L({
   id: "dl-conv",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "p11", label: "patch[0,0]", min: -5, max: 5, val: 3, step: 0.5 },
-        { key: "p12", label: "patch[0,1]", min: -5, max: 5, val: 5, step: 0.5 },
-        { key: "p21", label: "patch[1,0]", min: -5, max: 5, val: 2, step: 0.5 },
-        { key: "p22", label: "patch[1,1]", min: -5, max: 5, val: 4, step: 0.5 },
-        { key: "f11", label: "filter[0,0]", min: -2, max: 2, val: 1, step: 0.5 },
-        { key: "f12", label: "filter[0,1]", min: -2, max: 2, val: 0, step: 0.5 },
-        { key: "f21", label: "filter[1,0]", min: -2, max: 2, val: 0, step: 0.5 },
-        { key: "f22", label: "filter[1,1]", min: -2, max: 2, val: 1, step: 0.5 }
-      ],
-      compute: function (s) {
-        var o = s.p11 * s.f11 + s.p12 * s.f12 + s.p21 * s.f21 + s.p22 * s.f22;
-        return { text: "output = Σ patch·filter = " +
-          s.p11 + "·" + s.f11 + " + " + s.p12 + "·" + s.f12 + " + " +
-          s.p21 + "·" + s.f21 + " + " + s.p22 + "·" + s.f22 +
-          " = <b>" + o.toFixed(2) + "</b>" };
+    // 4x4 input image (fixed values). A 2x2 filter sits over the top-left.
+    var img = [
+      [3, 5, 1, 0],
+      [2, 4, 6, 2],
+      [1, 0, 3, 5],
+      [7, 2, 1, 4]
+    ];
+    var filt = [[1, 0], [0, 1]];   // identity-ish edge filter
+    Demos.grid(host, {
+      rows: 4, cols: 4, cellSize: 56,
+      cell: function (r, k) {
+        var inWindow = (r < 2 && k < 2);
+        if (inWindow) {
+          var fv = filt[r][k];
+          return { color: "#1f6feb", text: "#ffffff",
+            label: img[r][k] + "×" + fv };
+        }
+        return { color: "#161c24", label: img[r][k] };
+      },
+      readout: function () {
+        var sum = 0, terms = [];
+        for (var r = 0; r < 2; r++) for (var k = 0; k < 2; k++) {
+          var prod = img[r][k] * filt[r][k];
+          sum += prod;
+          terms.push(img[r][k] + "·" + filt[r][k]);
+        }
+        return "Blue 2×2 window over the top-left. filter = [[1,0],[0,1]].<br>" +
+          "output = Σ(window·filter) = " + terms.join(" + ") +
+          " = <b>" + sum + "</b>";
       }
     });
   },
@@ -676,19 +700,37 @@ L({
 L({
   id: "dl-pooling",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a", label: "value[0,0]", min: -10, max: 10, val: 1, step: 0.5 },
-        { key: "b", label: "value[0,1]", min: -10, max: 10, val: 7, step: 0.5 },
-        { key: "c", label: "value[1,0]", min: -10, max: 10, val: 3, step: 0.5 },
-        { key: "d", label: "value[1,1]", min: -10, max: 10, val: 2, step: 0.5 }
-      ],
-      compute: function (s) {
-        var mx = Math.max(s.a, s.b, s.c, s.d);
-        var avg = (s.a + s.b + s.c + s.d) / 4;
-        return { text: "values: " + s.a + ", " + s.b + ", " + s.c + ", " + s.d +
-          "<br>max-pool = max = <b>" + mx.toFixed(2) + "</b>" +
-          "<br>avg-pool = mean = <b>" + avg.toFixed(3) + "</b>" };
+    // 4x4 feature map split into four non-overlapping 2x2 regions.
+    var img = [
+      [1, 7, 8, 3],
+      [3, 2, 1, 0],
+      [4, 6, 9, 2],
+      [5, 0, 1, 4]
+    ];
+    // one tint per 2x2 region (top-left, top-right, bottom-left, bottom-right)
+    var tint = ["#1f6feb", "#2ea043", "#bb8009", "#8957e5"];
+    function regionIndex(r, k) { return (r < 2 ? 0 : 2) + (k < 2 ? 0 : 1); }
+    function regionValues(ri) {
+      var r0 = (ri >= 2) ? 2 : 0, k0 = (ri % 2 === 1) ? 2 : 0, v = [];
+      for (var r = r0; r < r0 + 2; r++) for (var k = k0; k < k0 + 2; k++) v.push(img[r][k]);
+      return v;
+    }
+    Demos.grid(host, {
+      rows: 4, cols: 4, cellSize: 56,
+      cell: function (r, k) {
+        return { color: tint[regionIndex(r, k)], text: "#ffffff", label: img[r][k] };
+      },
+      readout: function () {
+        var lines = ["Each colored 2×2 region pools to one number:"];
+        var names = ["top-left", "top-right", "bottom-left", "bottom-right"];
+        for (var ri = 0; ri < 4; ri++) {
+          var v = regionValues(ri);
+          var mx = Math.max(v[0], v[1], v[2], v[3]);
+          var avg = (v[0] + v[1] + v[2] + v[3]) / 4;
+          lines.push(names[ri] + " [" + v.join(", ") + "]: max-pool = <b>" + mx +
+            "</b>, avg-pool = <b>" + avg.toFixed(2) + "</b>");
+        }
+        return lines.join("<br>");
       }
     });
   },
@@ -732,17 +774,32 @@ L({
 L({
   id: "dl-conv-hyperparams",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "I", label: "I (input size)", min: 1, max: 64, val: 7, step: 1 },
-        { key: "F", label: "F (filter size)", min: 1, max: 11, val: 3, step: 1 },
-        { key: "P", label: "P (padding)", min: 0, max: 5, val: 0, step: 1 },
-        { key: "S", label: "S (stride)", min: 1, max: 5, val: 1, step: 1 }
+    // Draw a padded grid. Padding ring (P) around an I×I input, with an F×F
+    // filter window shaded over the top-left valid position.
+    var GMAX = 16;   // fixed canvas size; covers I + 2P up to 16
+    Demos.grid(host, {
+      rows: GMAX, cols: GMAX, cellSize: 28,
+      controls: [
+        { key: "I", label: "I (input size)", min: 1, max: 10, val: 7, step: 1 },
+        { key: "F", label: "F (filter size)", min: 1, max: 7, val: 3, step: 1 },
+        { key: "P", label: "P (padding)", min: 0, max: 3, val: 0, step: 1 },
+        { key: "S", label: "S (stride)", min: 1, max: 4, val: 1, step: 1 }
       ],
-      compute: function (s) {
+      cell: function (r, k, s) {
+        var span = s.I + 2 * s.P;            // padded input extent
+        if (r >= span || k >= span) return { color: "transparent" };
+        var inPad = (r < s.P || k < s.P || r >= s.P + s.I || k >= s.P + s.I);
+        var inFilter = (r < s.F && k < s.F); // F×F window at top-left
+        if (inFilter) return { color: "#1f6feb", text: "#ffffff", label: "" };
+        if (inPad) return { color: "#30363d", label: "0" };
+        return { color: "#161c24", label: "" };
+      },
+      readout: function (s) {
         var O = Math.floor((s.I - s.F + 2 * s.P) / s.S) + 1;
-        return { text: "O = floor((I − F + 2P) / S) + 1 = floor((" + s.I + " − " + s.F +
-          " + 2·" + s.P + ") / " + s.S + ") + 1 = <b>" + O + "</b> output size." };
+        var note = (s.F > s.I + 2 * s.P) ? " (filter bigger than padded input — no valid position)" : "";
+        return "Gray ring = padding (P), blue = the F×F filter window over the top-left.<br>" +
+          "O = floor((I − F + 2P) / S) + 1 = floor((" + s.I + " − " + s.F + " + 2·" + s.P +
+          ") / " + s.S + ") + 1 = <b>" + O + "</b> output size." + note;
       }
     });
   },
@@ -1121,17 +1178,24 @@ L({
 L({
   id: "dl-vanishing-gradient",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "r", label: "r (per-step factor)", min: 0, max: 2, val: 0.5, step: 0.05 },
-        { key: "k", label: "k (depth / steps)", min: 1, max: 40, val: 5, step: 1 }
+    Demos.plot(host, {
+      xmin: 1, xmax: 20, ymin: 0, ymax: 4, height: 300,
+      controls: [
+        { key: "r", label: "r (per-step factor)", min: 0, max: 2, val: 0.5, step: 0.05 }
       ],
-      compute: function (s) {
-        var prod = Math.pow(s.r, s.k);
-        var note = s.r < 1 ? " r < 1: shrinks toward 0 (vanishing)." :
-          (s.r > 1 ? " r > 1: blows up (exploding)." : " r = 1: stays steady.");
-        return { text: "r^k = " + s.r.toFixed(2) + "^" + s.k + " = <b>" + prod.toExponential(3) +
-          "</b>." + note };
+      curves: [
+        { f: function (k, s) { return Math.pow(s.r, k); }, label: "rᵏ vs depth k", color: "#4ea1ff" }
+      ],
+      drag: {
+        curve: 0, start: 5, label: "depth k",
+        readout: function (k, y, s) {
+          var kk = Math.round(k);
+          var prod = Math.pow(s.r, kk);
+          var note = s.r < 1 ? "r < 1: shrinks toward 0 (vanishing)." :
+            (s.r > 1 ? "r > 1: blows up (exploding)." : "r = 1: stays steady.");
+          return "r = <b>" + s.r.toFixed(2) + "</b>, depth k = <b>" + kk +
+            "</b> → rᵏ = <b>" + prod.toExponential(3) + "</b>. " + note;
+        }
       }
     });
   },
@@ -1346,22 +1410,28 @@ L({
 L({
   id: "dl-cosine-similarity",
   demo: function (host) {
-    Demos.calc(host, {
-      inputs: [
-        { key: "a1", label: "a.x", min: -5, max: 5, val: 1, step: 0.1 },
-        { key: "a2", label: "a.y", min: -5, max: 5, val: 2, step: 0.1 },
-        { key: "b1", label: "b.x", min: -5, max: 5, val: 2, step: 0.1 },
-        { key: "b2", label: "b.y", min: -5, max: 5, val: 4, step: 0.1 }
+    Demos.vectors(host, {
+      range: 5,
+      vectors: [
+        { key: "a", x: 4, y: 1, label: "a", color: "#4ea1ff" },
+        { key: "b", x: 1, y: 4, label: "b", color: "#7ee787" }
       ],
-      compute: function (s) {
-        var dot = s.a1 * s.b1 + s.a2 * s.b2;
-        var na = Math.sqrt(s.a1 * s.a1 + s.a2 * s.a2);
-        var nb = Math.sqrt(s.b1 * s.b1 + s.b2 * s.b2);
+      compute: function (vecs) {
+        var a = vecs.a, b = vecs.b;
+        var dot = a.x * b.x + a.y * b.y;
+        var na = Math.sqrt(a.x * a.x + a.y * a.y);
+        var nb = Math.sqrt(b.x * b.x + b.y * b.y);
         var denom = na * nb;
         var cos = denom > 0 ? dot / denom : 0;
-        return { text: "a·b = " + dot.toFixed(3) +
-          "<br>|a| = " + na.toFixed(3) + ", |b| = " + nb.toFixed(3) +
-          "<br>cos = (a·b)/(|a||b|) = <b>" + cos.toFixed(3) + "</b>" };
+        cos = Math.max(-1, Math.min(1, cos));
+        var deg = Math.acos(cos) * 180 / Math.PI;
+        return {
+          text: "a = (" + a.x + ", " + a.y + "), &nbsp; b = (" + b.x + ", " + b.y + ")<br>" +
+            "a·b = " + dot.toFixed(2) + ", &nbsp; ‖a‖ = " + na.toFixed(2) +
+            ", &nbsp; ‖b‖ = " + nb.toFixed(2) + "<br>" +
+            "cos θ = (a·b)/(‖a‖‖b‖) = <b>" + cos.toFixed(3) + "</b>, &nbsp; θ ≈ <b>" +
+            deg.toFixed(1) + "°</b>"
+        };
       }
     });
   },
