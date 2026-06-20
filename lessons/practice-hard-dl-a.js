@@ -51,7 +51,7 @@
           why: `Compute A's dot product then add its bias.` },
         { do: `Neuron B: $0\\times1 + 1\\times2 + 1\\times3 + (-4) = 0 + 2 + 3 - 4 = 1$.`,
           why: `Compute B's dot product then add its bias.` },
-        { do: `Compare: $z_B = 1 > z_A = 0$.`,
+        { do: `Compare: $z_B = 1 &gt; z_A = 0$.`,
           why: `Neuron B has the larger pre-activation.` }
       ],
       answer: `Neuron B ($z_B = 1$ vs $z_A = 0$)`
@@ -95,9 +95,9 @@
       answer: `$\\tanh'(z) = 0.75$`
     },
     {
-      q: `<p>ReLU's derivative is $1$ for $z > 0$ and $0$ for $z < 0$. A neuron computes $z = -2$, then its ReLU output feeds a downstream gradient $\\frac{\\partial L}{\\partial a} = 5$. What is $\\frac{\\partial L}{\\partial z}$?</p>`,
+      q: `<p>ReLU's derivative is $1$ for $z &gt; 0$ and $0$ for $z &lt; 0$. A neuron computes $z = -2$, then its ReLU output feeds a downstream gradient $\\frac{\\partial L}{\\partial a} = 5$. What is $\\frac{\\partial L}{\\partial z}$?</p>`,
       steps: [
-        { do: `Find ReLU's local derivative at $z=-2$: since $z<0$, $\\frac{\\partial a}{\\partial z} = 0$.`,
+        { do: `Find ReLU's local derivative at $z=-2$: since $z&lt;0$, $\\frac{\\partial a}{\\partial z} = 0$.`,
           why: `ReLU is flat for negative inputs, so its slope there is 0.` },
         { do: `Chain it: $\\frac{\\partial L}{\\partial z} = \\frac{\\partial L}{\\partial a}\\cdot\\frac{\\partial a}{\\partial z} = 5 \\times 0 = 0$.`,
           why: `A zero local slope blocks the upstream gradient — this is the "dying ReLU" effect.` }
@@ -105,9 +105,9 @@
       answer: `$\\frac{\\partial L}{\\partial z} = 0$`
     },
     {
-      q: `<p>Leaky ReLU is $\\max(0.01z,\\, z)$, with derivative $1$ for $z>0$ and $0.01$ for $z<0$. A neuron has $z = -10$ and an upstream gradient $\\frac{\\partial L}{\\partial a} = 4$. Find the Leaky-ReLU output and $\\frac{\\partial L}{\\partial z}$.</p>`,
+      q: `<p>Leaky ReLU is $\\max(0.01z,\\, z)$, with derivative $1$ for $z&gt;0$ and $0.01$ for $z&lt;0$. A neuron has $z = -10$ and an upstream gradient $\\frac{\\partial L}{\\partial a} = 4$. Find the Leaky-ReLU output and $\\frac{\\partial L}{\\partial z}$.</p>`,
       steps: [
-        { do: `Output: $z<0$, so $\\max(0.01\\times(-10), -10) = \\max(-0.1, -10) = -0.1$.`,
+        { do: `Output: $z&lt;0$, so $\\max(0.01\\times(-10), -10) = \\max(-0.1, -10) = -0.1$.`,
           why: `For negatives, Leaky ReLU passes the small-slope branch $0.01z$, which is larger than $z$.` },
         { do: `Local derivative at $z=-10$: $0.01$ (negative side).`,
           why: `Leaky ReLU has slope $0.01$ for negative inputs, unlike plain ReLU's 0.` },
@@ -313,7 +313,7 @@
     {
       q: `<p>2-layer backprop with a dead ReLU. Hidden neuron has $z^{[1]} = -3$ (ReLU). Upstream gives $\\frac{\\partial L}{\\partial a^{[1]}} = 5$, and $\\frac{\\partial z^{[1]}}{\\partial w^{[1]}} = x = 7$. Find $\\frac{\\partial L}{\\partial w^{[1]}}$.</p>`,
       steps: [
-        { do: `ReLU slope at $z^{[1]}=-3$: since $z<0$, $\\frac{\\partial a^{[1]}}{\\partial z^{[1]}} = 0$.`,
+        { do: `ReLU slope at $z^{[1]}=-3$: since $z&lt;0$, $\\frac{\\partial a^{[1]}}{\\partial z^{[1]}} = 0$.`,
           why: `ReLU is flat for negative pre-activations, so its local derivative is 0.` },
         { do: `Chain: $\\frac{\\partial L}{\\partial w^{[1]}} = 5 \\times 0 \\times 7 = 0$.`,
           why: `A zero in the chain blocks all gradient — the dead neuron gets no update.` }

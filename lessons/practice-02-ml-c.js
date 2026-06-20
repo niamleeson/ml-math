@@ -29,7 +29,7 @@ Object.assign(window.PRACTICE, {
       steps:[
         {do:`Distance to $\\mu_1$: $|7-3|=4$.`, why:`Assign each point to its nearest centroid.`},
         {do:`Distance to $\\mu_2$: $|7-10|=3$.`, why:`Compare distances to every centroid.`},
-        {do:`$3<4$, so $\\mu_2$ is closer.`, why:`The smallest distance wins.`}
+        {do:`$3&lt;4$, so $\\mu_2$ is closer.`, why:`The smallest distance wins.`}
       ],
       answer:`Cluster $2$ (centroid $\\mu_2=10$).` },
 
@@ -37,7 +37,7 @@ Object.assign(window.PRACTICE, {
       steps:[
         {do:`To $\\mu_1$: $(0-1)^2+(0-1)^2=1+1=2$.`, why:`Squared L2 distance sums the squared coordinate gaps.`},
         {do:`To $\\mu_2$: $(0-3)^2+(0-0)^2=9+0=9$.`, why:`Same rule for the second centroid.`},
-        {do:`$2<9$, so $\\mu_1$ is closer.`, why:`Pick the centroid with the smaller squared distance.`}
+        {do:`$2&lt;9$, so $\\mu_1$ is closer.`, why:`Pick the centroid with the smaller squared distance.`}
       ],
       answer:`Cluster $1$ (centroid $\\mu_1$).` },
 
@@ -264,7 +264,7 @@ Object.assign(window.PRACTICE, {
     { q:`<p>The covariance matrix is $\\Sigma=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$. Which axis is the top principal component?</p>`,
       steps:[
         {do:`Diagonal entries are the variances: $3$ along x, $1$ along y.`, why:`For a diagonal $\\Sigma$ the axes are the eigenvectors and the diagonal gives the eigenvalues.`},
-        {do:`$3>1$, so the x-axis has more spread.`, why:`The top component points where variance is largest.`}
+        {do:`$3&gt;1$, so the x-axis has more spread.`, why:`The top component points where variance is largest.`}
       ],
       answer:`The x-axis (eigenvalue $3$) is the top principal component.` },
 
@@ -459,7 +459,7 @@ Object.assign(window.PRACTICE, {
       steps:[
         {do:`F1$_A=\\frac{2\\cdot0.9\\cdot0.5}{0.9+0.5}=\\frac{0.9}{1.4}\\approx0.64$.`, why:`Compute the harmonic mean for A.`},
         {do:`F1$_B=\\frac{2\\cdot0.7\\cdot0.7}{0.7+0.7}=\\frac{0.98}{1.4}=0.7$.`, why:`Compute the harmonic mean for B.`},
-        {do:`$0.7>0.64$, so B wins.`, why:`Balanced scores give a higher harmonic mean.`}
+        {do:`$0.7&gt;0.64$, so B wins.`, why:`Balanced scores give a higher harmonic mean.`}
       ],
       answer:`B has the higher F1 ($0.7$ vs $\\approx0.64$).` }
   ],
@@ -596,7 +596,7 @@ Object.assign(window.PRACTICE, {
     { q:`<p>A model has $SS_{res}=60$ but $SS_{tot}=50$. Find $R^2$ and explain the sign.</p>`,
       steps:[
         {do:`$R^2=1-\\frac{60}{50}=1-1.2=-0.2$.`, why:`Plug into the formula even if it goes negative.`},
-        {do:`$R^2<0$ means the model is worse than predicting the mean.`, why:`Its error exceeds the baseline's, so it explains negative variance.`}
+        {do:`$R^2&lt;0$ means the model is worse than predicting the mean.`, why:`Its error exceeds the baseline's, so it explains negative variance.`}
       ],
       answer:`$R^2=-0.2$; the model is worse than just guessing the mean.` },
 
@@ -611,7 +611,7 @@ Object.assign(window.PRACTICE, {
     { q:`<p>Model A has RMSE $5$, model B has RMSE $8$, both on the same data. Which fits better, and roughly how much smaller is A's typical error?</p>`,
       steps:[
         {do:`Lower RMSE means smaller typical error.`, why:`RMSE is the typical error size in $y$'s units.`},
-        {do:`A's RMSE $5<8$, so A fits better.`, why:`Compare the two values directly.`},
+        {do:`A's RMSE $5&lt;8$, so A fits better.`, why:`Compare the two values directly.`},
         {do:`Gap: $8-5=3$ units.`, why:`A's typical miss is about $3$ units smaller.`}
       ],
       answer:`Model A fits better; its typical error is about $3$ units smaller.` }

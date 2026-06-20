@@ -57,7 +57,7 @@ L({
        <li>Start from the CDF of $Y$: $F_Y(y) = P(Y \\le y) = P(g(X) \\le y)$.</li>
        <li>Since $g$ is increasing, $g(X) \\le y$ exactly when $X \\le h(y)$. So $F_Y(y) = P(X \\le h(y)) = F_X(h(y))$.</li>
        <li>Differentiate both sides in $y$. The chain rule gives $f_Y(y) = f_X(h(y))\\, h'(y)$.</li>
-       <li>If instead $g$ is decreasing, $g(X) \\le y$ means $X \\ge h(y)$, giving $F_Y(y) = 1 - F_X(h(y))$ and a derivative $-f_X(h(y))h'(y)$; here $h' < 0$, so the result is positive.</li>
+       <li>If instead $g$ is decreasing, $g(X) \\le y$ means $X \\ge h(y)$, giving $F_Y(y) = 1 - F_X(h(y))$ and a derivative $-f_X(h(y))h'(y)$; here $h' &lt; 0$, so the result is positive.</li>
        <li>Both cases collapse into one if we take the absolute value: $f_Y(y) = f_X(h(y))\\,|h'(y)|$. $\\;\\blacksquare$</li>
      </ul>`,
   example:
@@ -474,7 +474,7 @@ L({
   example:
     `<p>Let $X$ be exponential with rate $\\lambda$, density $f(x) = \\lambda e^{-\\lambda x}$ for $x \\ge 0$. Find its mean and variance via the MGF.</p>
      <ul class="steps">
-       <li>$M_X(t) = \\int_0^\\infty e^{tx}\\lambda e^{-\\lambda x}\\,dx = \\lambda \\int_0^\\infty e^{-(\\lambda - t)x}\\,dx = \\frac{\\lambda}{\\lambda - t}$ for $t < \\lambda$.</li>
+       <li>$M_X(t) = \\int_0^\\infty e^{tx}\\lambda e^{-\\lambda x}\\,dx = \\lambda \\int_0^\\infty e^{-(\\lambda - t)x}\\,dx = \\frac{\\lambda}{\\lambda - t}$ for $t &lt; \\lambda$.</li>
        <li>First derivative: $M_X'(t) = \\frac{\\lambda}{(\\lambda - t)^2}$, so $M_X'(0) = \\frac{\\lambda}{\\lambda^2} = \\frac{1}{\\lambda} = E[X]$.</li>
        <li>Second derivative: $M_X''(t) = \\frac{2\\lambda}{(\\lambda - t)^3}$, so $M_X''(0) = \\frac{2\\lambda}{\\lambda^3} = \\frac{2}{\\lambda^2} = E[X^2]$.</li>
        <li>Variance: $\\operatorname{Var}(X) = E[X^2] - (E[X])^2 = \\frac{2}{\\lambda^2} - \\frac{1}{\\lambda^2} = \\frac{1}{\\lambda^2}$.</li>

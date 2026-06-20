@@ -158,9 +158,9 @@
     { q:`<p>$P(A) = 0.6$ and $P(B) = 0.7$. Show $A$ and $B$ cannot be disjoint.</p>`,
       steps:[
         {do:`If disjoint, $P(A \\cup B) = 0.6 + 0.7 = 1.3$.`, why:`Additivity for disjoint events.`},
-        {do:`But $1.3 > 1$ violates $P(\\Omega) = 1$, so they must overlap.`, why:`No probability can exceed 1.`}
+        {do:`But $1.3 &gt; 1$ violates $P(\\Omega) = 1$, so they must overlap.`, why:`No probability can exceed 1.`}
       ],
-      answer:`Impossible to be disjoint (would give $1.3 > 1$)` },
+      answer:`Impossible to be disjoint (would give $1.3 &gt; 1$)` },
 
     { q:`<p>A loaded die has $P(k) \\propto k$ for $k = 1, \\dots, 6$ (face $k$ has weight $k$). Find $P(\\text{roll} \\ge 5)$.</p>`,
       steps:[
@@ -1106,7 +1106,7 @@
       steps:[
         {do:`$P(X=5) = \\binom{7}{5}(0.7)^5(0.3)^2 = 21 \\times 0.16807 \\times 0.09 \\approx 0.3177$.`, why:`Five heads.`},
         {do:`$P(X=4) = \\binom{7}{4}(0.7)^4(0.3)^3 = 35 \\times 0.2401 \\times 0.027 \\approx 0.2269$.`, why:`Four heads.`},
-        {do:`$P(X=5) > P(X=4)$; the mode is around $\\lfloor (n+1)p \\rfloor = \\lfloor 5.6 \\rfloor = 5$.`, why:`The peak sits near $np = 4.9$, rounding to 5.`}
+        {do:`$P(X=5) &gt; P(X=4)$; the mode is around $\\lfloor (n+1)p \\rfloor = \\lfloor 5.6 \\rfloor = 5$.`, why:`The peak sits near $np = 4.9$, rounding to 5.`}
       ],
       answer:`Mode $= 5$ ($P \\approx 0.318$)` },
 

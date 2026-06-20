@@ -666,8 +666,8 @@ L({
   derivation:
     `<p><b>Why dependence drops the rank (and kills the inverse).</b></p>
      <ul class="steps">
-       <li>Suppose column $v_k$ is a combination of the others: $v_k = \\sum_{i<k} c_i v_i$ for some weights not all zero.</li>
-       <li>Then the vector of coefficients $w$ with $w_i = c_i$ for $i<k$ and $w_k = -1$ satisfies $\\sum_i w_i v_i = \\mathbf{0}$, i.e. $Aw = \\mathbf{0}$ with $w \\neq \\mathbf{0}$.</li>
+       <li>Suppose column $v_k$ is a combination of the others: $v_k = \\sum_{i&lt;k} c_i v_i$ for some weights not all zero.</li>
+       <li>Then the vector of coefficients $w$ with $w_i = c_i$ for $i&lt;k$ and $w_k = -1$ satisfies $\\sum_i w_i v_i = \\mathbf{0}$, i.e. $Aw = \\mathbf{0}$ with $w \\neq \\mathbf{0}$.</li>
        <li>So $A$ sends a non-zero vector $w$ to zero. It cannot be undone: any inverse $A^{-1}$ would force $w = A^{-1}\\mathbf{0} = \\mathbf{0}$, a contradiction.</li>
        <li>Therefore a dependent column means $A$ is singular, its determinant is 0, and its rank is below full. ∎</li>
      </ul>
@@ -787,7 +787,7 @@ L({
        <li>Let $y = U^\\top x$ (rotate $x$ into the eigenvector coordinates). Then $x^\\top A x = y^\\top \\Lambda y$.</li>
        <li>Because $\\Lambda$ is diagonal, this expands to $y^\\top \\Lambda y = \\sum_i \\lambda_i\\, y_i^2$.</li>
        <li>Each $y_i^2 \\ge 0$. So if every $\\lambda_i \\ge 0$, the whole sum is $\\ge 0$ for all $x$ — that is PSD.</li>
-       <li>Conversely, if some $\\lambda_j < 0$, pick $x$ equal to that eigenvector (so $y$ has a single 1 in slot $j$); then $x^\\top A x = \\lambda_j < 0$, breaking PSD. ∎</li>
+       <li>Conversely, if some $\\lambda_j &lt; 0$, pick $x$ equal to that eigenvector (so $y$ has a single 1 in slot $j$); then $x^\\top A x = \\lambda_j &lt; 0$, breaking PSD. ∎</li>
      </ul>
      <p>So the sign of the quadratic form is governed entirely by the signs of the eigenvalues.</p>`,
   example:
@@ -795,7 +795,7 @@ L({
      <ul class="steps">
        <li>$x^\\top A x = 2x_1^2 + 1\\,x_2^2$. Both terms are squares, so the sum is always $\\ge 0$. PSD. ✔</li>
        <li>Eigenvalues are $2$ and $1$, both $\\ge 0$. Same conclusion.</li>
-       <li>Now $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$: $x^\\top B x = x_1^2 - x_2^2$. At $x=(0,1)$ this is $-1 < 0$. Not PSD — it is a saddle (eigenvalue $-1$).</li>
+       <li>Now $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$: $x^\\top B x = x_1^2 - x_2^2$. At $x=(0,1)$ this is $-1 &lt; 0$. Not PSD — it is a saddle (eigenvalue $-1$).</li>
      </ul>`,
   application:
     `<p>Every covariance matrix is PSD (variance can't be negative). A loss is convex exactly when its Hessian is PSD, which guarantees gradient descent reaches the global minimum. Kernel methods (SVMs, Gaussian processes) require a PSD kernel matrix — that is what makes the optimization well-behaved.</p>`,
@@ -864,7 +864,7 @@ L({
     draw();
   },
   quiz: {
-    q: `Is $A=\\begin{bmatrix}3&0\\\\0&0\\end{bmatrix}$ positive semi-definite? Is it positive definite (strictly $>0$)?`,
+    q: `Is $A=\\begin{bmatrix}3&0\\\\0&0\\end{bmatrix}$ positive semi-definite? Is it positive definite (strictly $&gt;0$)?`,
     a: `<p>$x^\\top A x = 3x_1^2 \\ge 0$ always, so yes, PSD (eigenvalues $3$ and $0$, both $\\ge 0$). But it is not positive definite: at $x=(0,1)$ the form is $0$, not strictly positive, because one eigenvalue is exactly 0.</p>`
   }
 });
@@ -1003,7 +1003,7 @@ L({
      <ul class="steps">
        <li>$A^\\top A$ is symmetric and PSD (since $x^\\top A^\\top A x = \\lVert Ax\\rVert^2 \\ge 0$). By the spectral theorem, $A^\\top A = V\\Lambda V^\\top$ with eigenvalues $\\lambda_i \\ge 0$ and orthonormal $V$.</li>
        <li>Define the singular values as $\\sigma_i = \\sqrt{\\lambda_i}$ (real, since $\\lambda_i \\ge 0$).</li>
-       <li>For each $\\sigma_i > 0$ set $u_i = \\tfrac{1}{\\sigma_i} A v_i$. Check these are orthonormal: $u_i^\\top u_j = \\tfrac{1}{\\sigma_i\\sigma_j} v_i^\\top A^\\top A v_j = \\tfrac{\\lambda_j}{\\sigma_i\\sigma_j} v_i^\\top v_j$, which is 1 if $i=j$ and 0 otherwise.</li>
+       <li>For each $\\sigma_i &gt; 0$ set $u_i = \\tfrac{1}{\\sigma_i} A v_i$. Check these are orthonormal: $u_i^\\top u_j = \\tfrac{1}{\\sigma_i\\sigma_j} v_i^\\top A^\\top A v_j = \\tfrac{\\lambda_j}{\\sigma_i\\sigma_j} v_i^\\top v_j$, which is 1 if $i=j$ and 0 otherwise.</li>
        <li>By construction $A v_i = \\sigma_i u_i$, so collecting columns gives $AV = U\\Sigma$, hence $A = U\\Sigma V^\\top$. ∎</li>
      </ul>
      <p><b>Why truncation is optimal.</b> The error of dropping the smaller singular values is $\\lVert A - A_k\\rVert = \\sigma_{k+1}$ — no other rank-$k$ matrix does better (the Eckart–Young theorem). So keeping the biggest $\\sigma$'s keeps the most of $A$.</p>`,
@@ -1111,7 +1111,7 @@ L({
        <li>Gradient: $\\frac{\\partial f}{\\partial x_1} = 2x_1$, $\\frac{\\partial f}{\\partial x_2} = 6x_2$.</li>
        <li>Second derivatives: $\\frac{\\partial^2 f}{\\partial x_1^2} = 2$, $\\frac{\\partial^2 f}{\\partial x_2^2} = 6$, and the cross term $\\frac{\\partial^2 f}{\\partial x_1\\partial x_2} = 0$.</li>
        <li>So $H = \\begin{bmatrix}2 & 0\\\\ 0 & 6\\end{bmatrix}$ — constant here.</li>
-       <li>Eigenvalues $2$ and $6$ are both $> 0$, so $H \\succeq 0$: the function is convex, a bowl with its minimum at the origin.</li>
+       <li>Eigenvalues $2$ and $6$ are both $&gt; 0$, so $H \\succeq 0$: the function is convex, a bowl with its minimum at the origin.</li>
      </ul>
      <p>Compare $g = x_1^2 - x_2^2$: its Hessian is $\\begin{bmatrix}2&0\\\\0&-2\\end{bmatrix}$, eigenvalues $2$ and $-2$ — a saddle, not convex.</p>`,
   application:

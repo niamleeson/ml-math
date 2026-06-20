@@ -134,7 +134,7 @@
         {do:`Weighted sum: $0.4\\cdot 0.9 + 0.3\\cdot 0.8 + 0.1\\cdot 0.3 + 0.2\\cdot 0.6 = 0.36 + 0.24 + 0.03 + 0.12$.`, why:`Blend the per-model probabilities by trust weight.`},
         {do:`Total $= 0.75$, compare to threshold $0.5$.`, why:`Above threshold means the positive class is chosen.`}
       ],
-      answer:`Yes — stacked probability $0.75 > 0.5$, so spam`
+      answer:`Yes — stacked probability $0.75 &gt; 0.5$, so spam`
     },
     {
       q:`<p>Show the learned combiner can never be worse than the plain average (in expected squared error). Fill the logic.</p>`,
@@ -204,12 +204,12 @@
       q:`<p>An outlier scores $s = 0.5$. What does this tell you, and would a threshold of $0.6$ flag it?</p>`,
       steps:[
         {do:`$s = 0.5$ is the neutral value — average isolation depth.`, why:`Only $s$ above the threshold is flagged.`},
-        {do:`Since $0.5 < 0.6$, it is not flagged.`, why:`The point looks normal, not anomalous, by this rule.`}
+        {do:`Since $0.5 &lt; 0.6$, it is not flagged.`, why:`The point looks normal, not anomalous, by this rule.`}
       ],
-      answer:`Not flagged — it looks normal ($0.5 < 0.6$)`
+      answer:`Not flagged — it looks normal ($0.5 &lt; 0.6$)`
     },
     {
-      q:`<p>If $E[h(x)] = 0$ (isolated before any cut, a degenerate extreme), what is the score $s(x)$ for any $c(n) > 0$?</p>`,
+      q:`<p>If $E[h(x)] = 0$ (isolated before any cut, a degenerate extreme), what is the score $s(x)$ for any $c(n) &gt; 0$?</p>`,
       steps:[
         {do:`Exponent: $-0/c(n) = 0$.`, why:`Zero path length means instant isolation — maximal anomaly.`},
         {do:`Score: $s = 2^0 = 1$.`, why:`$s = 1$ is the upper bound, a definite anomaly.`}
@@ -235,7 +235,7 @@
     {
       q:`<p>Two points have scores $s_A = 0.72$ and $s_B = 0.40$ (threshold $0.6$). Which is flagged, and which has the longer isolation path?</p>`,
       steps:[
-        {do:`$s_A = 0.72 > 0.6$ is flagged; $s_B = 0.40 < 0.6$ is not.`, why:`Only scores above threshold count as anomalies.`},
+        {do:`$s_A = 0.72 &gt; 0.6$ is flagged; $s_B = 0.40 &lt; 0.6$ is not.`, why:`Only scores above threshold count as anomalies.`},
         {do:`Lower score means longer path, so B (score 0.40) has the longer path.`, why:`Score and path length move in opposite directions.`}
       ],
       answer:`A is flagged; B has the longer path`
@@ -279,7 +279,7 @@
       steps:[
         {do:`Take $\\log_2$ of both sides: $\\log_2 s = -E[h]/c(n)$.`, why:`Logs invert the exponential to recover the depth ratio.`},
         {do:`So $-E[h]/c(n) = -0.358$, giving $E[h]/c(n) \\approx 0.358$.`, why:`A ratio well below 1 means a short path relative to typical.`},
-        {do:`Since $0.78 > 0.65$, flag the transaction.`, why:`Above threshold, it is treated as fraud.`}
+        {do:`Since $0.78 &gt; 0.65$, flag the transaction.`, why:`Above threshold, it is treated as fraud.`}
       ],
       answer:`$E[h]/c(n) \\approx 0.36$; flagged as fraud`
     },
@@ -343,7 +343,7 @@
         {do:`$u_1\\cdot v = 1\\cdot 3 + 0\\cdot 5 = 3$.`, why:`User 1 cares only about factor 1.`},
         {do:`$u_2\\cdot v = 0\\cdot 3 + 1\\cdot 5 = 5$.`, why:`User 2 cares only about factor 2, where the item is stronger.`}
       ],
-      answer:`User 2 (prediction $5 > 3$)`
+      answer:`User 2 (prediction $5 &gt; 3$)`
     },
     {
       q:`<p>Three latent factors: $u = [0.5, 1, 0.5]$, $v = [2, 1, 4]$. Compute $\\hat{R} = u\\cdot v$.</p>`,
@@ -546,7 +546,7 @@
     {
       q:`<p>In high-D, points $i,j$ are close so $p_{ij}$ is large, but on the current map they are far so $q_{ij}$ is small. Which way does gradient descent move them?</p>`,
       steps:[
-        {do:`The cost term $p\\log(p/q)$ is positive because $p > q$.`, why:`The map under-represents a real neighbor relation.`},
+        {do:`The cost term $p\\log(p/q)$ is positive because $p &gt; q$.`, why:`The map under-represents a real neighbor relation.`},
         {do:`Descent reduces the cost by raising $q$, i.e. pulling the points together.`, why:`Closer points have larger $q$, matching the high $p$.`}
       ],
       answer:`Pulled together (closer)`
@@ -565,7 +565,7 @@
         {do:`$d=0$: $1$; $d=1$: $0.5$; $d=2$: $0.2$.`, why:`Affinity strictly decreases with distance.`},
         {do:`Rank: $d=0$ highest, then $d=1$, then $d=2$.`, why:`Closer pairs are always more neighborly under this kernel.`}
       ],
-      answer:`$1 > 0.5 > 0.2$ (for $d = 0, 1, 2$)`
+      answer:`$1 &gt; 0.5 &gt; 0.2$ (for $d = 0, 1, 2$)`
     },
     {
       q:`<p>The heavy tail keeps affinity finite at large $d$, relieving "crowding". At $d = 5$, what is $(1+d^2)^{-1}$?</p>`,
@@ -791,9 +791,9 @@
       q:`<p>Tube half-width $\\varepsilon = 0.5$. The fit predicts $f(x) = 5$. Is a point with true $y = 5.4$ inside the tube?</p>`,
       steps:[
         {do:`Error: $|5.4 - 5| = 0.4$.`, why:`Compare the absolute error to the tube half-width.`},
-        {do:`Since $0.4 < 0.5$, it is inside.`, why:`Inside-tube points cost nothing and are not support vectors.`}
+        {do:`Since $0.4 &lt; 0.5$, it is inside.`, why:`Inside-tube points cost nothing and are not support vectors.`}
       ],
-      answer:`Inside (error $0.4 < 0.5$)`
+      answer:`Inside (error $0.4 &lt; 0.5$)`
     },
     {
       q:`<p>Which points are support vectors: those inside or outside the $\\varepsilon$-tube? Why?</p>`,
@@ -806,7 +806,7 @@
     {
       q:`<p>Five points have errors $0.2, 0.9, 1.0, 1.5, 2.0$ with $\\varepsilon = 1$. How many are support vectors?</p>`,
       steps:[
-        {do:`Support vectors have error $> \\varepsilon = 1$: that is $1.5$ and $2.0$.`, why:`Strictly outside the tube means a support vector.`},
+        {do:`Support vectors have error $&gt; \\varepsilon = 1$: that is $1.5$ and $2.0$.`, why:`Strictly outside the tube means a support vector.`},
         {do:`The error $1.0$ is on the edge (loss 0), not strictly outside.`, why:`Edge points are absorbed by the tube.`}
       ],
       answer:`$2$ support vectors`
@@ -831,22 +831,22 @@
       q:`<p>The fitted line is $f(x) = 0.8x + 1$ with $\\varepsilon = 0.7$. At $x = 5$, a point has $y = 6.0$. Is it a support vector?</p>`,
       steps:[
         {do:`Predict: $f(5) = 0.8\\cdot 5 + 1 = 4 + 1 = 5$.`, why:`Evaluate the line at the point's $x$.`},
-        {do:`Error: $|6.0 - 5| = 1.0 > 0.7$.`, why:`Error exceeds the tube half-width, so it sits outside.`}
+        {do:`Error: $|6.0 - 5| = 1.0 &gt; 0.7$.`, why:`Error exceeds the tube half-width, so it sits outside.`}
       ],
-      answer:`Yes — error $1.0 > 0.7$, a support vector`
+      answer:`Yes — error $1.0 &gt; 0.7$, a support vector`
     },
     {
       q:`<p>Same line $f(x) = 0.8x + 1$, $\\varepsilon = 0.7$. At $x = 2$, a point has $y = 2.4$. Compute its loss.</p>`,
       steps:[
         {do:`Predict: $f(2) = 0.8\\cdot 2 + 1 = 1.6 + 1 = 2.6$.`, why:`Evaluate the fit at $x = 2$.`},
-        {do:`Error $|2.4 - 2.6| = 0.2 < 0.7$, so $L_\\varepsilon = 0$.`, why:`Inside the tube, the point is free.`}
+        {do:`Error $|2.4 - 2.6| = 0.2 &lt; 0.7$, so $L_\\varepsilon = 0$.`, why:`Inside the tube, the point is free.`}
       ],
       answer:`Loss $= 0$`
     },
     {
       q:`<p>Increasing $\\varepsilon$ from $0.5$ to $1.5$ on a fixed dataset: does the number of support vectors usually go up or down?</p>`,
       steps:[
-        {do:`A wider tube absorbs more points.`, why:`More points now have error $< \\varepsilon$, so loss $0$.`},
+        {do:`A wider tube absorbs more points.`, why:`More points now have error $&lt; \\varepsilon$, so loss $0$.`},
         {do:`Fewer points remain outside.`, why:`Fewer outside points means fewer support vectors.`}
       ],
       answer:`Down (a wider tube absorbs more points)`
@@ -951,7 +951,7 @@
         {do:`A: bonus $\\sqrt{4.6/6} = \\sqrt{0.767} \\approx 0.88$, UCB $\\approx 1.48$.`, why:`More pulls shrink the bonus.`},
         {do:`C: bonus $\\sqrt{4.6/1} \\approx 2.14$, UCB $\\approx 2.84$.`, why:`C's huge uncertainty bonus dominates.`}
       ],
-      answer:`Arm C (UCB $\\approx 2.84 > 1.48$)`
+      answer:`Arm C (UCB $\\approx 2.84 &gt; 1.48$)`
     },
     {
       q:`<p>Why does the UCB bonus shrink as $n_i$ grows? Compare the bonus at $n = 1$ vs $n = 100$ (same $2\\ln t = 4.6$).</p>`,
@@ -998,7 +998,7 @@
       steps:[
         {do:`A: $0.6 + \\sqrt{4.6/6} \\approx 0.6 + 0.88 = 1.48$.`, why:`Compute each UCB = average + bonus.`},
         {do:`B: $0.5 + \\sqrt{4.6/3} \\approx 0.5 + 1.24 = 1.74$; C: $0.7 + \\sqrt{4.6/1} \\approx 0.7 + 2.14 = 2.84$.`, why:`Fewer pulls give bigger bonuses.`},
-        {do:`Rank: C $>$ B $>$ A.`, why:`Optimism favors the least-explored arms first.`}
+        {do:`Rank: C $&gt;$ B $&gt;$ A.`, why:`Optimism favors the least-explored arms first.`}
       ],
       answer:`C ($2.84$) > B ($1.74$) > A ($1.48$)`
     },
@@ -1031,7 +1031,7 @@
       steps:[
         {do:`A: bonus $\\sqrt{9.21/50} = \\sqrt{0.184} \\approx 0.43$, UCB $\\approx 0.93$.`, why:`A well-tried arm has a modest bonus.`},
         {do:`B: bonus $\\sqrt{9.21/10} = \\sqrt{0.921} \\approx 0.96$, UCB $\\approx 1.41$.`, why:`B's smaller count gives a larger bonus.`},
-        {do:`B wins ($1.41 > 0.93$).`, why:`Despite a lower average, B's uncertainty still earns a pull.`}
+        {do:`B wins ($1.41 &gt; 0.93$).`, why:`Despite a lower average, B's uncertainty still earns a pull.`}
       ],
       answer:`Arm B (UCB $\\approx 1.41$)`
     },
@@ -1057,7 +1057,7 @@
       steps:[
         {do:`A: $0.5 + \\sqrt{2.197/2} = 0.5 + \\sqrt{1.099} \\approx 0.5 + 1.05 = 1.55$.`, why:`A's bonus shrank (more pulls) and its average dropped.`},
         {do:`B: $0 + \\sqrt{2.197/1} \\approx 1.48$.`, why:`B is still under-explored, so its bonus is larger.`},
-        {do:`A wins narrowly ($1.55 > 1.48$).`, why:`UCB balances A's higher estimate against B's uncertainty.`}
+        {do:`A wins narrowly ($1.55 &gt; 1.48$).`, why:`UCB balances A's higher estimate against B's uncertainty.`}
       ],
       answer:`Arm A (UCB $\\approx 1.55$ vs B $\\approx 1.48$)`
     }

@@ -53,7 +53,7 @@
     { q:`<p>Two SVMs separate the same data. SVM A has $\\lVert w\\rVert = 1$, SVM B has $\\lVert w\\rVert = 5$. Which has the wider margin?</p>`,
       steps:[
         {do:`Margin $= 2/\\lVert w\\rVert$. A: $2/1 = 2$. B: $2/5 = 0.4$.`, why:`Smaller $\\lVert w\\rVert$ gives a wider margin.`},
-        {do:`$2 > 0.4$.`, why:`Compare the two widths.`}
+        {do:`$2 &gt; 0.4$.`, why:`Compare the two widths.`}
       ],
       answer:`SVM A (margin $2$ vs $0.4$).` },
 
@@ -73,7 +73,7 @@
 
     { q:`<p>A soft-margin SVM lets a point break the rule with a slack penalty. A point of class $+1$ has score $w^\\top x - b = -0.2$. Is it on the correct side, and by how much is the margin violated (target is $\\ge 1$)?</p>`,
       steps:[
-        {do:`Correct side needs a positive score; here score $=-0.2 < 0$.`, why:`Class $+1$ should have a positive score.`},
+        {do:`Correct side needs a positive score; here score $=-0.2 &lt; 0$.`, why:`Class $+1$ should have a positive score.`},
         {do:`Slack $= 1 - (\\text{label}\\times\\text{score}) = 1 - (1)(-0.2) = 1.2$.`, why:`Slack measures how far below the target $1$ the margin falls.`}
       ],
       answer:`Wrong side; slack $=1.2$.` }
@@ -158,7 +158,7 @@
       steps:[
         {do:`Distance to child: $|128-130| = 2$.`, why:`Closeness to a bell curve's center raises its likelihood.`},
         {do:`Distance to adult: $|128-170| = 42$.`, why:`Far from a center means low likelihood.`},
-        {do:`$2 < 42$.`, why:`The closer center explains the point better.`}
+        {do:`$2 &lt; 42$.`, why:`The closer center explains the point better.`}
       ],
       answer:`Child (much closer to the child mean).` },
 
@@ -173,7 +173,7 @@
       steps:[
         {do:`Class 0 top: $0.5\\times0.02 = 0.01$.`, why:`Multiply prior by likelihood (Bayes' numerator).`},
         {do:`Class 1 top: $0.5\\times0.08 = 0.04$.`, why:`Same product for the other class.`},
-        {do:`$0.04 > 0.01$.`, why:`The bigger numerator wins.`}
+        {do:`$0.04 &gt; 0.01$.`, why:`The bigger numerator wins.`}
       ],
       answer:`Class 1.` },
 
@@ -181,7 +181,7 @@
       steps:[
         {do:`Class 0 top: $0.9\\times0.1 = 0.09$.`, why:`Prior times likelihood.`},
         {do:`Class 1 top: $0.1\\times0.5 = 0.05$.`, why:`Same for class 1.`},
-        {do:`$0.09 > 0.05$.`, why:`The common class wins even with a lower likelihood.`}
+        {do:`$0.09 &gt; 0.05$.`, why:`The common class wins even with a lower likelihood.`}
       ],
       answer:`Class 0 (the strong prior tips it).` },
 
@@ -224,7 +224,7 @@
       steps:[
         {do:`Distance to mean 0: $|4-0| = 4$.`, why:`Closer mean gives higher likelihood.`},
         {do:`Distance to mean 10: $|4-10| = 6$.`, why:`Farther mean gives lower likelihood.`},
-        {do:`$4 < 6$, and priors and spreads are equal.`, why:`With ties elsewhere, the nearer mean wins.`}
+        {do:`$4 &lt; 6$, and priors and spreads are equal.`, why:`With ties elsewhere, the nearer mean wins.`}
       ],
       answer:`Class 0 (boundary is at the midpoint $x=5$).` }
   ],
@@ -240,7 +240,7 @@
     { q:`<p>Spam filter. The word "free" has $P(\\text{free}\\mid\\text{spam})=0.6$ and $P(\\text{free}\\mid\\text{ham})=0.1$. Ignoring priors, which class does "free" favor?</p>`,
       steps:[
         {do:`Compare likelihoods: $0.6$ vs $0.1$.`, why:`Higher likelihood under a class favors that class.`},
-        {do:`$0.6 > 0.1$.`, why:`"free" is much more common in spam.`}
+        {do:`$0.6 &gt; 0.1$.`, why:`"free" is much more common in spam.`}
       ],
       answer:`Spam.` },
 
@@ -248,7 +248,7 @@
       steps:[
         {do:`Spam score: $0.5\\times0.4 = 0.20$.`, why:`Prior times likelihood (Naive Bayes uses a product).`},
         {do:`Ham score: $0.5\\times0.05 = 0.025$.`, why:`Same product for ham.`},
-        {do:`$0.20 > 0.025$.`, why:`The bigger score wins.`}
+        {do:`$0.20 &gt; 0.025$.`, why:`The bigger score wins.`}
       ],
       answer:`Spam (score $0.20$ vs $0.025$).` },
 
@@ -256,7 +256,7 @@
       steps:[
         {do:`Spam score: $0.3\\times0.8 = 0.24$.`, why:`Multiply prior by likelihood.`},
         {do:`Ham score: $0.7\\times0.2 = 0.14$.`, why:`Same for ham.`},
-        {do:`$0.24 > 0.14$.`, why:`Spam has the larger product.`}
+        {do:`$0.24 &gt; 0.14$.`, why:`Spam has the larger product.`}
       ],
       answer:`Spam (score $0.24$ vs $0.14$).` },
 
@@ -278,7 +278,7 @@
       steps:[
         {do:`Likelihoods: $0.1\\times0.05 = 0.005$.`, why:`Multiply the two word probabilities.`},
         {do:`Times prior: $0.005\\times0.6 = 0.003$.`, why:`Include the class prior.`},
-        {do:`Compare to spam $0.16$: $0.16 > 0.003$.`, why:`The bigger score wins.`}
+        {do:`Compare to spam $0.16$: $0.16 &gt; 0.003$.`, why:`The bigger score wins.`}
       ],
       answer:`Spam (score $0.16$ vs $0.003$).` },
 
@@ -300,7 +300,7 @@
     { q:`<p>To compare classes we often use the spam-to-ham ratio. Spam score $0.24$, ham score $0.06$. What is the ratio, and what does it mean?</p>`,
       steps:[
         {do:`Ratio $= 0.24 / 0.06 = 4$.`, why:`Dividing the two scores compares them without normalizing.`},
-        {do:`Ratio $> 1$ means spam is favored.`, why:`Spam is $4$ times more likely than ham here.`}
+        {do:`Ratio $&gt; 1$ means spam is favored.`, why:`Spam is $4$ times more likely than ham here.`}
       ],
       answer:`Ratio $=4$; spam is $4\\times$ more likely.` }
   ],
@@ -360,7 +360,7 @@
       steps:[
         {do:`Gain A: $0.50 - 0.30 = 0.20$.`, why:`Bigger gain means purer children.`},
         {do:`Gain B: $0.50 - 0.20 = 0.30$.`, why:`Same calculation for B.`},
-        {do:`$0.30 > 0.20$.`, why:`The tree greedily picks the larger gain.`}
+        {do:`$0.30 &gt; 0.20$.`, why:`The tree greedily picks the larger gain.`}
       ],
       answer:`Split B (gain $0.30$ vs $0.20$).` },
 
@@ -383,7 +383,7 @@
     { q:`<p>Five trees vote on spam: yes, yes, no, yes, yes. What does the forest predict by majority?</p>`,
       steps:[
         {do:`Count: 4 yes, 1 no.`, why:`Bagging uses a majority vote.`},
-        {do:`$4 > 1$.`, why:`The majority class wins.`}
+        {do:`$4 &gt; 1$.`, why:`The majority class wins.`}
       ],
       answer:`Spam (yes).` },
 
@@ -447,7 +447,7 @@
     { q:`<p>Four trees give probabilities of spam: $0.9, 0.8, 0.2, 0.7$. A soft-voting forest averages them, then thresholds at $0.5$. Spam or not?</p>`,
       steps:[
         {do:`Average: $(0.9+0.8+0.2+0.7)/4 = 2.6/4 = 0.65$.`, why:`Soft voting averages the predicted probabilities.`},
-        {do:`$0.65 > 0.5$.`, why:`Above the threshold means predict spam.`}
+        {do:`$0.65 &gt; 0.5$.`, why:`Above the threshold means predict spam.`}
       ],
       answer:`Spam (average $0.65$).` }
   ],
@@ -522,7 +522,7 @@
       steps:[
         {do:`Cat weight: $1/1 = 1$.`, why:`Closer neighbors get more say via $1/d$.`},
         {do:`Dog weight: $1/2 + 1/4 = 0.5 + 0.25 = 0.75$.`, why:`Sum the dog neighbors' weights.`},
-        {do:`$1 > 0.75$.`, why:`The class with more total weight wins.`}
+        {do:`$1 &gt; 0.75$.`, why:`The class with more total weight wins.`}
       ],
       answer:`Cat (weight $1$ vs $0.75$).` }
   ],

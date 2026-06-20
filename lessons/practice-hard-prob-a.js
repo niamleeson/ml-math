@@ -201,7 +201,7 @@
     { q:`<p>Continue the two-coin problem: prior $\\frac{1}{2}$ each (fair vs two-headed). After observing $HHH$ the posterior on two-headed is $\\frac{8}{9}$. Now you flip once more and get a TAIL. Find the updated $P(\\text{two-headed} \\mid HHHT)$.</p>`,
       steps:[
         {do:`A tail is impossible for a two-headed coin: $P(T \\mid \\text{two-headed}) = 0$.`, why:`Two-headed coins never show tails.`},
-        {do:`The two-headed numerator becomes $\\frac{8}{9}\\times 0 = 0$, while fair gives $\\frac{1}{9}\\times\\frac{1}{2} > 0$.`, why:`Bayes update with the new tail evidence.`},
+        {do:`The two-headed numerator becomes $\\frac{8}{9}\\times 0 = 0$, while fair gives $\\frac{1}{9}\\times\\frac{1}{2} &gt; 0$.`, why:`Bayes update with the new tail evidence.`},
         {do:`$P(\\text{two-headed} \\mid HHHT) = 0$.`, why:`A single tail rules out the two-headed coin entirely.`}
       ],
       answer:`$0$` }

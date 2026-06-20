@@ -187,7 +187,7 @@ L({
     { sym: "$w$", desc: "the weight vector: how important each feature is. Learned from data." },
     { sym: "$w\\cdot\\phi(x)$", desc: "the dot product of weights and features. Multiply matching entries, add them up." },
     { sym: "$s(x,w)$", desc: "the score: the single number $w\\cdot\\phi(x)$." },
-    { sym: "$\\text{sign}(s)$", desc: "gives $+1$ if $s>0$, and $-1$ if $s<0$. The final yes/no answer." },
+    { sym: "$\\text{sign}(s)$", desc: "gives $+1$ if $s&gt;0$, and $-1$ if $s&lt;0$. The final yes/no answer." },
     { sym: "$y$", desc: "the true label, either $+1$ (yes) or $-1$ (no)." },
     { sym: "$m(x,y,w)$", desc: "the margin: the score times the true label. Tells us how confident and correct we are." }
   ],
@@ -714,13 +714,13 @@ L({
        <li>$h(s) = 4$ (straight-line guess). Since $4 \\le 5$, the heuristic is admissible. Good.</li>
        <li>A* prefers states with low PastCost $+ h$. A cell near the goal gets a small $h$, so it is explored first.</li>
        <li>Cells in the wrong direction have a large $h$, so A* mostly ignores them.</li>
-       <li>If instead $h(s) = 9 > 5$, the heuristic overestimates. A* might miss the true cheapest path.</li>
+       <li>If instead $h(s) = 9 &gt; 5$, the heuristic overestimates. A* might miss the true cheapest path.</li>
      </ul>`,
   application:
     `<p>A* is the workhorse of GPS routing and video-game pathfinding. The straight-line distance heuristic lets it find the best route while exploring a tiny fraction of the map.</p>`,
   quiz: {
     q: `The true remaining cost from a state is $7$. Is a heuristic of $h=6$ admissible? Is $h=8$ admissible?`,
-    a: `<p>$h=6$ is admissible because $6 \\le 7$ (it does not overshoot). $h=8$ is not, because $8 > 7$ overestimates, which can break A*'s guarantee.</p>`
+    a: `<p>$h=6$ is admissible because $6 \\le 7$ (it does not overshoot). $h=8$ is not, because $8 &gt; 7$ overestimates, which can break A*'s guarantee.</p>`
   }
 });
 
@@ -1051,14 +1051,14 @@ L({
        <li>From branch $A$, you have $\\alpha = 5$ secured.</li>
        <li>In branch $B$, the opponent's first reply already gives a score of $2$.</li>
        <li>Branch $B$'s value is $\\min(2, \\dots)$, so it is at most $2$ no matter what the other replies are.</li>
-       <li>Since $2 < 5$, branch $B$ can never beat branch $A$. Prune it. Skip the remaining replies.</li>
+       <li>Since $2 &lt; 5$, branch $B$ can never beat branch $A$. Prune it. Skip the remaining replies.</li>
      </ul>
      <p>You reached the same decision (branch $A$) without checking the rest of $B$.</p>`,
   application:
     `<p>Alpha-beta pruning is what made strong chess programs practical, including Deep Blue. By skipping doomed branches, it searches several moves deeper in the same time.</p>`,
   quiz: {
     q: `Max already has $\\alpha=7$ secured. A new min-branch's first child returns $4$. Can the rest of that branch matter? Why?`,
-    a: `<p>No. The branch is a min node, so its value is at most $4$. Since $4 < 7$, it cannot beat the secured $7$. Prune it.</p>`
+    a: `<p>No. The branch is a min node, so its value is at most $4$. Since $4 &lt; 7$, it cannot beat the secured $7$. Prune it.</p>`
   }
 });
 

@@ -10,7 +10,7 @@
 
     { q:`<p>A score is $s = 4$. What is the prediction $f_w(x) = \\text{sign}(s)$?</p>`,
       steps:[
-        {do:`Check the sign of $4$. It is positive.`, why:`$\\text{sign}$ gives $+1$ when $s>0$.`},
+        {do:`Check the sign of $4$. It is positive.`, why:`$\\text{sign}$ gives $+1$ when $s&gt;0$.`},
         {do:`So $f_w(x) = +1$.`, why:`A positive score means the "yes" class.`}
       ],
       answer:`$f_w(x) = +1$` },
@@ -91,7 +91,7 @@
     { q:`<p>Margin $m = 0.3$. Compute the hinge loss $\\max(1-m,0)$.</p>`,
       steps:[
         {do:`$1 - m = 1 - 0.3 = 0.7$.`, why:`Hinge penalizes margins below $1$.`},
-        {do:`$\\max(0.7, 0) = 0.7$.`, why:`Since $0.7 > 0$, hinge charges this much.`}
+        {do:`$\\max(0.7, 0) = 0.7$.`, why:`Since $0.7 &gt; 0$, hinge charges this much.`}
       ],
       answer:`$0.7$` },
 
@@ -464,7 +464,7 @@
     { q:`<p>The true remaining cost is $7$. Is $h = 8$ admissible?</p>`,
       steps:[
         {do:`Check $h \\le 7$.`, why:`Admissibility forbids overestimating.`},
-        {do:`$8 > 7$, so it is NOT admissible.`, why:`It overestimates, which can break A*'s guarantee.`}
+        {do:`$8 &gt; 7$, so it is NOT admissible.`, why:`It overestimates, which can break A*'s guarantee.`}
       ],
       answer:`no, not admissible` },
 
@@ -655,7 +655,7 @@
 
     { q:`<p>Why does discounting model that "a reward now is worth more than the same reward later"?</p>`,
       steps:[
-        {do:`Later rewards get multiplied by $\\gamma^{i-1} < 1$.`, why:`Each future step shrinks more.`},
+        {do:`Later rewards get multiplied by $\\gamma^{i-1} &lt; 1$.`, why:`Each future step shrinks more.`},
         {do:`So an earlier reward contributes more to the utility.`, why:`Discounting makes the agent prefer sooner gains.`}
       ],
       answer:`later rewards are shrunk by $\\gamma$` }
@@ -722,7 +722,7 @@
 
     { q:`<p>An agent has $Q(s,\\text{left}) = 6$ and $Q(s,\\text{right}) = 9$. Which action should it take?</p>`,
       steps:[
-        {do:`Compare: $9 > 6$.`, why:`Higher Q-value means more expected reward.`},
+        {do:`Compare: $9 &gt; 6$.`, why:`Higher Q-value means more expected reward.`},
         {do:`Pick "right".`, why:`A greedy agent chooses the highest-Q action.`}
       ],
       answer:`right` },

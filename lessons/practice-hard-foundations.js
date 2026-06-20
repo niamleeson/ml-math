@@ -387,7 +387,7 @@
       steps:[
         {do:`L1: $|1|+|1|+|1|+|1| = 4$.`, why:`Add absolute values for L1.`},
         {do:`L2: $\\sqrt{1+1+1+1} = \\sqrt{4} = 2$.`, why:`Square, sum, root for L2.`},
-        {do:`$4 > 2$, so L1 is larger here.`, why:`L1 is at least L2 for any vector.`}
+        {do:`$4 &gt; 2$, so L1 is larger here.`, why:`L1 is at least L2 for any vector.`}
       ],
       answer:`L1 $=4$, L2 $=2$; L1 larger` },
 
@@ -517,12 +517,12 @@
       ],
       answer:`$w=3$, minimum loss $-4$` },
 
-    { q:`<p>ReLU is $f(x)=\\max(0,x)$. What is its slope for $x>0$, and for $x<0$?</p>`,
+    { q:`<p>ReLU is $f(x)=\\max(0,x)$. What is its slope for $x&gt;0$, and for $x&lt;0$?</p>`,
       steps:[
-        {do:`For $x>0$: $f(x)=x$, so slope $=1$.`, why:`On the positive side ReLU is the line $y=x$.`},
-        {do:`For $x<0$: $f(x)=0$, so slope $=0$.`, why:`On the negative side ReLU is flat at zero.`}
+        {do:`For $x&gt;0$: $f(x)=x$, so slope $=1$.`, why:`On the positive side ReLU is the line $y=x$.`},
+        {do:`For $x&lt;0$: $f(x)=0$, so slope $=0$.`, why:`On the negative side ReLU is flat at zero.`}
       ],
-      answer:`Slope $1$ if $x>0$, slope $0$ if $x<0$` },
+      answer:`Slope $1$ if $x&gt;0$, slope $0$ if $x&lt;0$` },
 
     { q:`<p>Take one gradient-descent step on $E(w)=(w-4)^2$ from $w=1$ with learning rate $\\eta=0.1$. $E'(w)=2(w-4)$.</p>`,
       steps:[
@@ -777,7 +777,7 @@
         {do:`Both $0.5$ and $0.9$ are less than $1$, so $\\lambda^k \\to 0$.`, why:`Powers of a number below $1$ shrink toward zero.`},
         {do:`The vector shrinks toward the zero vector.`, why:`Every component decays, so repeated application damps it out.`}
       ],
-      answer:`It shrinks toward $0$ (both $|\\lambda|<1$).` }
+      answer:`It shrinks toward $0$ (both $|\\lambda|&lt;1$).` }
   ]);
 
 })();

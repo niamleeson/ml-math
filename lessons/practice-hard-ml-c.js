@@ -41,7 +41,7 @@
       steps:[
         {do:`B cluster 1 mean: $\\frac{1+2+9}{3}=4$. Cost: $(1-4)^2+(2-4)^2+(9-4)^2=9+4+25=38$.`, why:`Recompute the centroid and squared distances for B's big cluster.`},
         {do:`B cluster 2 is a singleton: cost $0$. So $J_B=38$.`, why:`A lone point sits on its own centroid.`},
-        {do:`$J_A=1.0<J_B=38$.`, why:`Lower distortion is the better clustering.`}
+        {do:`$J_A=1.0&lt;J_B=38$.`, why:`Lower distortion is the better clustering.`}
       ],
       answer:`A is far better ($J=1.0$ vs $38$).` },
 
@@ -137,7 +137,7 @@
       steps:[
         {do:`Round 2 weighted: A $=0.8\\times0.3=0.24$; B $=0.2\\times0.45=0.09$.`, why:`Plug the new mixing weight into weight times density.`},
         {do:`$r_A=\\frac{0.24}{0.24+0.09}=\\frac{0.24}{0.33}\\approx0.727$.`, why:`Normalize.`},
-        {do:`$0.727>0.6$.`, why:`A's larger prior pulled the responsibility up between rounds.`}
+        {do:`$0.727&gt;0.6$.`, why:`A's larger prior pulled the responsibility up between rounds.`}
       ],
       answer:`$r_A\\approx0.73$, up from $0.6$ as A's weight grew.` },
 
@@ -221,7 +221,7 @@
     { q:`<p>Same points $1,2,4,8$ with COMPLETE linkage. List the merge heights and contrast with single linkage.</p>`,
       steps:[
         {do:`Merge $\\{1,2\\}$ at $1$. Then $d(\\{1,2\\},4)=\\max(3,2)=3$, $d(4,8)=4$.`, why:`Complete linkage uses farthest-member distances.`},
-        {do:`Smallest is $3$, merge $\\{1,2\\}$ with $4$ at height $3$.`, why:`$3<4$, so $4$ joins $\\{1,2\\}$.`},
+        {do:`Smallest is $3$, merge $\\{1,2\\}$ with $4$ at height $3$.`, why:`$3&lt;4$, so $4$ joins $\\{1,2\\}$.`},
         {do:`Last: $d(\\{1,2,4\\},8)=\\max(7,6,4)=7$. Merge at $7$.`, why:`Farthest member ($1$) to $8$.`}
       ],
       answer:`Heights $1, 3, 7$ — higher than single linkage's $1,2,4$.` },
@@ -355,7 +355,7 @@
     { q:`<p>ICA maximizes non-Gaussianity via kurtosis. A Gaussian has excess kurtosis $0$. Signal P has excess kurtosis $+3$, signal Q has $-1$. Which is "more non-Gaussian" by magnitude?</p>`,
       steps:[
         {do:`Non-Gaussianity uses $|\\text{kurtosis}|$: $|+3|=3$ vs $|-1|=1$.`, why:`Both positive (super-Gaussian) and negative (sub-Gaussian) count; magnitude matters.`},
-        {do:`$3>1$, so P is more non-Gaussian.`, why:`ICA prefers directions with larger absolute kurtosis.`}
+        {do:`$3&gt;1$, so P is more non-Gaussian.`, why:`ICA prefers directions with larger absolute kurtosis.`}
       ],
       answer:`P (excess kurtosis $3$) is more non-Gaussian than Q.` },
 
@@ -479,7 +479,7 @@
       steps:[
         {do:`X cost: $2\\times100+50\\times1=200+50=250$.`, why:`Total cost weights each error type by its dollar cost.`},
         {do:`Y cost: $5\\times100+5\\times1=500+5=505$.`, why:`Same weighting for model Y.`},
-        {do:`$250<505$, so X is cheaper.`, why:`When misses are costly, the model with fewer FNs wins.`}
+        {do:`$250&lt;505$, so X is cheaper.`, why:`When misses are costly, the model with fewer FNs wins.`}
       ],
       answer:`Model X ($\\$250$ vs $\\$505$) — it minimizes the expensive false negatives.` }
   ]);
@@ -552,7 +552,7 @@
     { q:`<p>Compare two models by AUC. Model A: positives $0.9,0.85$, negatives $0.4,0.3$. Model B: positives $0.6,0.55$, negatives $0.5,0.45$. Which ranks better?</p>`,
       steps:[
         {do:`A: both positives beat both negatives, $4/4$ correct, AUC$=1$.`, why:`AUC depends only on ranking, not the raw score values.`},
-        {do:`B: $0.6>0.5,0.45$ ($2$); $0.55>0.5,0.45$ ($2$); $4/4$, AUC$=1$.`, why:`B's scores are bunched but still perfectly separated.`},
+        {do:`B: $0.6&gt;0.5,0.45$ ($2$); $0.55&gt;0.5,0.45$ ($2$); $4/4$, AUC$=1$.`, why:`B's scores are bunched but still perfectly separated.`},
         {do:`Both AUC$=1$.`, why:`AUC is invariant to monotonic score rescaling.`}
       ],
       answer:`Tie: both AUC$=1$ — AUC cares only about ranking, not score gaps.` },
@@ -588,7 +588,7 @@
       steps:[
         {do:`$\\frac{m-1}{m-p-1}=\\frac{9}{10-4-1}=\\frac{9}{5}=1.8$.`, why:`The penalty rises with the extra predictor.`},
         {do:`$(1-0.81)\\times1.8=0.19\\times1.8=0.342$. $R^2_{adj}=1-0.342=0.658$.`, why:`Apply the adjusted formula.`},
-        {do:`$0.658<0.70$.`, why:`Adjusted $R^2$ dropped, so the new predictor was not worth it.`}
+        {do:`$0.658&lt;0.70$.`, why:`Adjusted $R^2$ dropped, so the new predictor was not worth it.`}
       ],
       answer:`$R^2_{adj}=0.658$, lower than before — the extra predictor hurt; it added noise.` },
 
@@ -633,7 +633,7 @@
     { q:`<p>Out-of-sample $R^2$ can be negative. On test data $SS_{res}=120$, and using the training mean as baseline $SS_{tot}=100$. Find $R^2$ and interpret.</p>`,
       steps:[
         {do:`$R^2=1-\\frac{120}{100}=1-1.2=-0.2$.`, why:`The formula applies even on test data.`},
-        {do:`$R^2<0$ means the model beats neither the baseline mean.`, why:`Its test error exceeds just predicting the mean — a sign of overfitting.`}
+        {do:`$R^2&lt;0$ means the model beats neither the baseline mean.`, why:`Its test error exceeds just predicting the mean — a sign of overfitting.`}
       ],
       answer:`$R^2=-0.2$ — the model generalizes worse than predicting the mean (overfit).` },
 

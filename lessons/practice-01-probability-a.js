@@ -158,13 +158,13 @@ Object.assign(window.PRACTICE, {
 
   /* ---------------- prob-conditional ---------------- */
   "prob-conditional": [
-    { q:`<p>A die came up greater than 3 (in $\\{4,5,6\\}$). What is $P(6 \\mid >3)$?</p>`,
+    { q:`<p>A die came up greater than 3 (in $\\{4,5,6\\}$). What is $P(6 \\mid &gt;3)$?</p>`,
       steps:[
-        {do:`New world is $\\{4,5,6\\}$: $P(>3) = \\frac{3}{6}$.`, why:`Conditioning shrinks the sample space to $B$.`},
-        {do:`Overlap "6 and $>3$" is $\\{6\\}$: $P = \\frac{1}{6}$.`, why:`6 is the only favorable face still possible.`},
-        {do:`$P(6 \\mid >3) = \\frac{1/6}{3/6} = \\frac{1}{3}$.`, why:`Divide the overlap by the new world's chance.`}
+        {do:`New world is $\\{4,5,6\\}$: $P(&gt;3) = \\frac{3}{6}$.`, why:`Conditioning shrinks the sample space to $B$.`},
+        {do:`Overlap "6 and $&gt;3$" is $\\{6\\}$: $P = \\frac{1}{6}$.`, why:`6 is the only favorable face still possible.`},
+        {do:`$P(6 \\mid &gt;3) = \\frac{1/6}{3/6} = \\frac{1}{3}$.`, why:`Divide the overlap by the new world's chance.`}
       ],
-      answer:`$P(6 \\mid >3) = \\frac{1}{3}$` },
+      answer:`$P(6 \\mid &gt;3) = \\frac{1}{3}$` },
 
     { q:`<p>Roll a die. Let $A$ = "rolled a 2" and $B$ = "even". Find $P(A \\mid B)$.</p>`,
       steps:[

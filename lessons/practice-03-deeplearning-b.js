@@ -128,7 +128,7 @@
     { q:`<p>Patience is $3$. After the best epoch, validation error is worse for $2$ epochs in a row. Do you stop?</p>`,
       steps:[
         {do:`Count bad epochs: $2$.`, why:`We stop only at patience-many bad epochs.`},
-        {do:`Compare to patience $3$: $2 < 3$.`, why:`Two is not yet enough to trigger stopping.`}
+        {do:`Compare to patience $3$: $2 &lt; 3$.`, why:`Two is not yet enough to trigger stopping.`}
       ],
       answer:`No — keep training (need 3 bad epochs).` },
 
@@ -496,7 +496,7 @@
     { q:`<p>Overlap area $= 12$. Box A $= 20$, Box B $= 20$. Is the IoU above the usual $0.5$ threshold?</p>`,
       steps:[
         {do:`Union $= 20 + 20 - 12 = 28$; IoU $= \\frac{12}{28} \\approx 0.43$.`, why:`Compute the IoU first.`},
-        {do:`Compare to $0.5$: $0.43 < 0.5$.`, why:`Below the threshold counts as a poor match.`}
+        {do:`Compare to $0.5$: $0.43 &lt; 0.5$.`, why:`Below the threshold counts as a poor match.`}
       ],
       answer:`No — IoU $\\approx 0.43$, below $0.5$.` },
 

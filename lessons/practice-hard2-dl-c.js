@@ -113,41 +113,41 @@
       steps:[
         {do:`Optimum value: $-\\log 4 = -1.3863$.`, why:`This is the minimum the discriminator can be driven to at equilibrium.`},
         {do:`Gap: $-1.10 - (-1.3863) = 0.2863 \\approx 0.286$.`, why:`Subtract the optimum from the current value.`},
-        {do:`$-1.10 > -1.386$, so $V$ is above the optimum — the discriminator still distinguishes fakes.`, why:`A value above $-\\log 4$ means training is not yet at equilibrium.`}
+        {do:`$-1.10 &gt; -1.386$, so $V$ is above the optimum — the discriminator still distinguishes fakes.`, why:`A value above $-\\log 4$ means training is not yet at equilibrium.`}
       ],
       answer:`gap $\\approx 0.286$; current $V$ is above the optimum (not converged)` },
   ]);
 
   /* ---------------------------------------------------------------- */
   add("dl-rnn", [
-    { q:`<p>An RNN cell $a^{<t>} = \\tanh(0.5\\,a^{<t-1>} + 1\\cdot x^{<t>})$, $a^{<0>} = 0$, runs over four inputs $x = [1, 1, 1, 1]$. Compute $a^{<1>}$ through $a^{<4>}$ (round each to 3 decimals) and note whether it settles.</p>`,
+    { q:`<p>An RNN cell $a^{&lt;t&gt;} = \\tanh(0.5\\,a^{&lt;t-1&gt;} + 1\\cdot x^{&lt;t&gt;})$, $a^{&lt;0&gt;} = 0$, runs over four inputs $x = [1, 1, 1, 1]$. Compute $a^{&lt;1&gt;}$ through $a^{&lt;4&gt;}$ (round each to 3 decimals) and note whether it settles.</p>`,
       steps:[
-        {do:`$a^{<1>} = \\tanh(0.5(0)+1) = \\tanh(1) = 0.762$.`, why:`Begin from zero memory with the first input.`},
-        {do:`$a^{<2>} = \\tanh(0.5(0.762)+1) = \\tanh(1.381) = 0.881$; $a^{<3>} = \\tanh(0.5(0.881)+1) = \\tanh(1.441) = 0.894$.`, why:`Carry half the memory plus the steady input each step.`},
-        {do:`$a^{<4>} = \\tanh(0.5(0.894)+1) = \\tanh(1.447) = 0.895$.`, why:`The state nearly settles toward a fixed point around $0.895$.`}
+        {do:`$a^{&lt;1&gt;} = \\tanh(0.5(0)+1) = \\tanh(1) = 0.762$.`, why:`Begin from zero memory with the first input.`},
+        {do:`$a^{&lt;2&gt;} = \\tanh(0.5(0.762)+1) = \\tanh(1.381) = 0.881$; $a^{&lt;3&gt;} = \\tanh(0.5(0.881)+1) = \\tanh(1.441) = 0.894$.`, why:`Carry half the memory plus the steady input each step.`},
+        {do:`$a^{&lt;4&gt;} = \\tanh(0.5(0.894)+1) = \\tanh(1.447) = 0.895$.`, why:`The state nearly settles toward a fixed point around $0.895$.`}
       ],
       answer:`$a \\approx [0.762, 0.881, 0.894, 0.895]$ — settling near $0.895$` },
 
-    { q:`<p>An RNN with a 2-D hidden state uses $W_{aa} = \\begin{bmatrix}0.5 & 0\\\\0 & 0.5\\end{bmatrix}$, $W_{ax} = \\begin{bmatrix}1\\\\1\\end{bmatrix}$, identity activation, $a^{<0>} = [0,0]$, and scalar inputs $x = [2, 4]$. Compute $a^{<2>}$.</p>`,
+    { q:`<p>An RNN with a 2-D hidden state uses $W_{aa} = \\begin{bmatrix}0.5 & 0\\\\0 & 0.5\\end{bmatrix}$, $W_{ax} = \\begin{bmatrix}1\\\\1\\end{bmatrix}$, identity activation, $a^{&lt;0&gt;} = [0,0]$, and scalar inputs $x = [2, 4]$. Compute $a^{&lt;2&gt;}$.</p>`,
       steps:[
-        {do:`$a^{<1>} = W_{aa}[0,0] + W_{ax}(2) = [0,0] + [2,2] = [2, 2]$.`, why:`Identity means no squish; just the linear update.`},
-        {do:`$W_{aa}\\,a^{<1>} = [0.5(2), 0.5(2)] = [1, 1]$; $W_{ax}(4) = [4, 4]$.`, why:`Scale the previous state by $0.5$ on each component, add the new input.`},
-        {do:`$a^{<2>} = [1,1] + [4,4] = [5, 5]$.`, why:`Sum the carried memory and the input contribution.`}
+        {do:`$a^{&lt;1&gt;} = W_{aa}[0,0] + W_{ax}(2) = [0,0] + [2,2] = [2, 2]$.`, why:`Identity means no squish; just the linear update.`},
+        {do:`$W_{aa}\\,a^{&lt;1&gt;} = [0.5(2), 0.5(2)] = [1, 1]$; $W_{ax}(4) = [4, 4]$.`, why:`Scale the previous state by $0.5$ on each component, add the new input.`},
+        {do:`$a^{&lt;2&gt;} = [1,1] + [4,4] = [5, 5]$.`, why:`Sum the carried memory and the input contribution.`}
       ],
-      answer:`$a^{<2>} = [5, 5]$` },
+      answer:`$a^{&lt;2&gt;} = [5, 5]$` },
 
-    { q:`<p>BPTT over $T = 3$ steps sums gradient contributions. The loss-to-state slope is $\\partial L/\\partial a^{<3>} = 1$, and each backward hop multiplies by $W_{aa} = 0.5$ times an activation slope $\\tanh' = 0.8$. Compute the gradient that reaches $a^{<1>}$ from the step-3 loss.</p>`,
+    { q:`<p>BPTT over $T = 3$ steps sums gradient contributions. The loss-to-state slope is $\\partial L/\\partial a^{&lt;3&gt;} = 1$, and each backward hop multiplies by $W_{aa} = 0.5$ times an activation slope $\\tanh' = 0.8$. Compute the gradient that reaches $a^{&lt;1&gt;}$ from the step-3 loss.</p>`,
       steps:[
         {do:`Per-hop factor: $W_{aa}\\cdot\\tanh' = 0.5 \\times 0.8 = 0.4$.`, why:`Each step backward multiplies by the recurrent weight and the activation slope.`},
         {do:`Hops from step 3 to step 1: $T-1 = 2$ hops, factor $0.4^2 = 0.16$.`, why:`Two recurrent links separate step 3 from step 1.`},
-        {do:`Gradient at $a^{<1>}$: $1 \\times 0.16 = 0.16$.`, why:`Multiply the starting slope by the accumulated factor.`}
+        {do:`Gradient at $a^{&lt;1&gt;}$: $1 \\times 0.16 = 0.16$.`, why:`Multiply the starting slope by the accumulated factor.`}
       ],
       answer:`gradient $= 1 \\times 0.4^2 = 0.16$` },
 
-    { q:`<p>An RNN cell with $W_{aa} = 0.9$, $W_{ax} = 1$, $b = 0$, identity activation, $a^{<0>} = 0$ receives an impulse $x = [1, 0, 0, 0]$ (input only at step 1). Compute $a^{<1>}$ through $a^{<4>}$ and the fraction of the impulse remaining at step 4.</p>`,
+    { q:`<p>An RNN cell with $W_{aa} = 0.9$, $W_{ax} = 1$, $b = 0$, identity activation, $a^{&lt;0&gt;} = 0$ receives an impulse $x = [1, 0, 0, 0]$ (input only at step 1). Compute $a^{&lt;1&gt;}$ through $a^{&lt;4&gt;}$ and the fraction of the impulse remaining at step 4.</p>`,
       steps:[
-        {do:`$a^{<1>} = 0.9(0) + 1(1) = 1$.`, why:`The impulse enters at step 1.`},
-        {do:`$a^{<2>} = 0.9(1) = 0.9$; $a^{<3>} = 0.9(0.9) = 0.81$; $a^{<4>} = 0.9(0.81) = 0.729$.`, why:`With no new input, the state just decays by $W_{aa} = 0.9$ each step.`},
+        {do:`$a^{&lt;1&gt;} = 0.9(0) + 1(1) = 1$.`, why:`The impulse enters at step 1.`},
+        {do:`$a^{&lt;2&gt;} = 0.9(1) = 0.9$; $a^{&lt;3&gt;} = 0.9(0.9) = 0.81$; $a^{&lt;4&gt;} = 0.9(0.81) = 0.729$.`, why:`With no new input, the state just decays by $W_{aa} = 0.9$ each step.`},
         {do:`Fraction at step 4: $0.729$, i.e. $72.9\\%$ of the impulse survives.`, why:`A recurrent weight near 1 gives a long-lasting (but eventually fading) memory.`}
       ],
       answer:`$a = [1, 0.9, 0.81, 0.729]$; $72.9\\%$ remains at step 4` },
@@ -168,11 +168,11 @@
       ],
       answer:`layer 2 has $256 + 256 + 16 = 528$ parameters` },
 
-    { q:`<p>An RNN cell $a^{<t>} = \\tanh(W_{aa}a^{<t-1>} + W_{ax}x^{<t>})$ with $W_{aa} = -0.6$, $W_{ax} = 1$, $a^{<0>} = 0$, inputs $x = [1, 1, 1]$. Compute $a^{<1>}$, $a^{<2>}$, $a^{<3>}$ (round to 3 decimals) and note the oscillation.</p>`,
+    { q:`<p>An RNN cell $a^{&lt;t&gt;} = \\tanh(W_{aa}a^{&lt;t-1&gt;} + W_{ax}x^{&lt;t&gt;})$ with $W_{aa} = -0.6$, $W_{ax} = 1$, $a^{&lt;0&gt;} = 0$, inputs $x = [1, 1, 1]$. Compute $a^{&lt;1&gt;}$, $a^{&lt;2&gt;}$, $a^{&lt;3&gt;}$ (round to 3 decimals) and note the oscillation.</p>`,
       steps:[
-        {do:`$a^{<1>} = \\tanh(-0.6(0)+1) = \\tanh(1) = 0.762$.`, why:`Start from zero memory.`},
-        {do:`$a^{<2>} = \\tanh(-0.6(0.762)+1) = \\tanh(0.543) = 0.495$.`, why:`A negative $W_{aa}$ subtracts part of the previous state.`},
-        {do:`$a^{<3>} = \\tanh(-0.6(0.495)+1) = \\tanh(0.703) = 0.607$.`, why:`The state oscillates ($0.762 \\to 0.495 \\to 0.607$) because the recurrent weight is negative.`}
+        {do:`$a^{&lt;1&gt;} = \\tanh(-0.6(0)+1) = \\tanh(1) = 0.762$.`, why:`Start from zero memory.`},
+        {do:`$a^{&lt;2&gt;} = \\tanh(-0.6(0.762)+1) = \\tanh(0.543) = 0.495$.`, why:`A negative $W_{aa}$ subtracts part of the previous state.`},
+        {do:`$a^{&lt;3&gt;} = \\tanh(-0.6(0.495)+1) = \\tanh(0.703) = 0.607$.`, why:`The state oscillates ($0.762 \\to 0.495 \\to 0.607$) because the recurrent weight is negative.`}
       ],
       answer:`$a \\approx [0.762, 0.495, 0.607]$ (oscillating)` },
 
@@ -184,7 +184,7 @@
       ],
       answer:`$0.9^5 \\approx 0.590$ (errors compound)` },
 
-    { q:`<p>An RNN output layer is $\\hat{y}^{<t>} = \\mathrm{softmax}(W_{ya}a^{<t>} + b_y)$. At a step the logits are $[2, 1, 0]$ for three tokens. Compute the probability of token 1 (round to 3 decimals).</p>`,
+    { q:`<p>An RNN output layer is $\\hat{y}^{&lt;t&gt;} = \\mathrm{softmax}(W_{ya}a^{&lt;t&gt;} + b_y)$. At a step the logits are $[2, 1, 0]$ for three tokens. Compute the probability of token 1 (round to 3 decimals).</p>`,
       steps:[
         {do:`Exponentiate logits: $e^2 = 7.389$, $e^1 = 2.718$, $e^0 = 1$.`, why:`Softmax turns logits into positive scores.`},
         {do:`Sum: $Z = 7.389 + 2.718 + 1 = 11.107$.`, why:`Normalize over all three tokens.`},
@@ -192,7 +192,7 @@
       ],
       answer:`$P(\\text{token 1}) \\approx 0.665$` },
 
-    { q:`<p>A many-to-one RNN classifies a length-$T$ review using only the final hidden state $a^{<T>}$. With $a^{<T>} = [0.5, -0.5]$, output weights $W_{y} = [2, 2]$, bias $b_y = 0.3$, compute the logit and then the sigmoid probability of "positive" (round to 3 decimals).</p>`,
+    { q:`<p>A many-to-one RNN classifies a length-$T$ review using only the final hidden state $a^{&lt;T&gt;}$. With $a^{&lt;T&gt;} = [0.5, -0.5]$, output weights $W_{y} = [2, 2]$, bias $b_y = 0.3$, compute the logit and then the sigmoid probability of "positive" (round to 3 decimals).</p>`,
       steps:[
         {do:`Logit: $2(0.5) + 2(-0.5) + 0.3 = 1 - 1 + 0.3 = 0.3$.`, why:`The final state summarizes the whole review.`},
         {do:`Sigmoid: $\\sigma(0.3) = 1/(1 + e^{-0.3})$, $e^{-0.3} = 0.7408$.`, why:`A single yes/no output uses a sigmoid.`},
@@ -238,7 +238,7 @@
     { q:`<p>A gradient is the 3-D vector $g = [2, 3, 6]$ and the clip threshold is $\\tau = 3.5$. Apply $g \\leftarrow \\tau\\,g/\\lVert g\\rVert$. Give the clipped vector (round each entry to 3 decimals).</p>`,
       steps:[
         {do:`Norm: $\\lVert g\\rVert = \\sqrt{4 + 9 + 36} = \\sqrt{49} = 7$.`, why:`Measure the gradient's length before clipping.`},
-        {do:`$7 > 3.5$, so scale by $3.5/7 = 0.5$.`, why:`The norm exceeds the threshold, so shrink it.`},
+        {do:`$7 &gt; 3.5$, so scale by $3.5/7 = 0.5$.`, why:`The norm exceeds the threshold, so shrink it.`},
         {do:`Clipped: $[2,3,6]\\times0.5 = [1.000, 1.500, 3.000]$, norm $= 3.5$.`, why:`Same direction, length capped at $\\tau$.`}
       ],
       answer:`clipped $g = [1.000, 1.500, 3.000]$` },
@@ -255,7 +255,7 @@
       steps:[
         {do:`$0.25^6 = (1/4)^6 = 1/4096$.`, why:`$0.25 = 1/4$, raised to the 6th power.`},
         {do:`$1/4096 = 0.000244 \\approx 2.441\\times10^{-4}$.`, why:`Even the maximum sigmoid slope shrinks gradients fast.`},
-        {do:`Lesson: deep sigmoid stacks vanish; ReLU (slope 1 for $z>0$) avoids this.`, why:`This is the historical reason ReLU replaced sigmoid in deep nets.`}
+        {do:`Lesson: deep sigmoid stacks vanish; ReLU (slope 1 for $z&gt;0$) avoids this.`, why:`This is the historical reason ReLU replaced sigmoid in deep nets.`}
       ],
       answer:`$0.25^6 = 1/4096 \\approx 2.441\\times10^{-4}$ — sigmoids vanish, use ReLU` },
 
@@ -267,10 +267,10 @@
       ],
       answer:`$0.7^{20} \\approx 0.0008$ vs $1.05^{20} \\approx 2.653$` },
 
-    { q:`<p>How many steps $n$ until a per-step slope of $0.95$ shrinks the gradient below $1\\%$ ($0.95^n < 0.01$)? Solve for the smallest whole $n$ (use $\\ln 0.95 = -0.05129$, $\\ln 0.01 = -4.6052$).</p>`,
+    { q:`<p>How many steps $n$ until a per-step slope of $0.95$ shrinks the gradient below $1\\%$ ($0.95^n &lt; 0.01$)? Solve for the smallest whole $n$ (use $\\ln 0.95 = -0.05129$, $\\ln 0.01 = -4.6052$).</p>`,
       steps:[
-        {do:`Need $n\\ln 0.95 < \\ln 0.01$, i.e. $n(-0.05129) < -4.6052$.`, why:`Take logs; the inequality flips when dividing by a negative.`},
-        {do:`$n > 4.6052/0.05129 = 89.79$.`, why:`Divide both sides by $0.05129$ (and flip the inequality).`},
+        {do:`Need $n\\ln 0.95 &lt; \\ln 0.01$, i.e. $n(-0.05129) &lt; -4.6052$.`, why:`Take logs; the inequality flips when dividing by a negative.`},
+        {do:`$n &gt; 4.6052/0.05129 = 89.79$.`, why:`Divide both sides by $0.05129$ (and flip the inequality).`},
         {do:`Smallest whole $n = 90$.`, why:`Round up: 89 steps would not yet reach below $1\\%$.`}
       ],
       answer:`$n = 90$ steps` },
@@ -278,7 +278,7 @@
     { q:`<p>A gradient $g = [1, 2, 2, 4]$ (4-D) has clip threshold $\\tau = 2.5$. Find its norm, decide if it clips, and give the result (round entries to 3 decimals).</p>`,
       steps:[
         {do:`Norm: $\\sqrt{1 + 4 + 4 + 16} = \\sqrt{25} = 5$.`, why:`Sum of squares, then square root.`},
-        {do:`$5 > 2.5$, scale by $2.5/5 = 0.5$.`, why:`The norm exceeds the threshold.`},
+        {do:`$5 &gt; 2.5$, scale by $2.5/5 = 0.5$.`, why:`The norm exceeds the threshold.`},
         {do:`Clipped: $[1,2,2,4]\\times0.5 = [0.500, 1.000, 1.000, 2.000]$, norm $= 2.5$.`, why:`Direction preserved, length capped at $\\tau$.`}
       ],
       answer:`clipped $g = [0.500, 1.000, 1.000, 2.000]$` },
@@ -311,7 +311,7 @@
       steps:[
         {do:`$1.03^{25} = e^{25(0.029559)} = e^{0.73897}$.`, why:`A slope above 1 grows; compute the exponent first.`},
         {do:`$e^{0.73897} = 2.094$.`, why:`Exponentiate to get the factor.`},
-        {do:`$2.094 > 1$, so the gradient explodes (grows about $2.1\\times$) over 25 steps.`, why:`Even a small excess over 1 compounds into growth.`}
+        {do:`$2.094 &gt; 1$, so the gradient explodes (grows about $2.1\\times$) over 25 steps.`, why:`Even a small excess over 1 compounds into growth.`}
       ],
       answer:`$1.03^{25} \\approx 2.094$ (exploding)` },
 
@@ -319,7 +319,7 @@
       steps:[
         {do:`Multiply first three: $0.9 \\times 0.8 = 0.72$, $\\times 1.2 = 0.864$.`, why:`The total factor is the product of all per-layer slopes.`},
         {do:`Continue: $0.864 \\times 0.5 = 0.432$, $\\times 1.1 = 0.4752$.`, why:`Multiply the remaining slopes.`},
-        {do:`Product $\\approx 0.4752 < 1$: mildly vanishing overall.`, why:`Even with some slopes above 1, the net product can shrink the gradient.`}
+        {do:`Product $\\approx 0.4752 &lt; 1$: mildly vanishing overall.`, why:`Even with some slopes above 1, the net product can shrink the gradient.`}
       ],
       answer:`product $\\approx 0.4752$ (mildly vanishing)` },
 
@@ -334,13 +334,13 @@
 
   /* ---------------------------------------------------------------- */
   add("dl-lstm-gru", [
-    { q:`<p>Run an LSTM cell two steps. Constant gates $f = 0.8$, $i = 0.5$, candidates $\\tilde{c}^{<1>} = 1$, $\\tilde{c}^{<2>} = 2$, $c^{<0>} = 0$. Compute $c^{<1>}$ and $c^{<2>}$.</p>`,
+    { q:`<p>Run an LSTM cell two steps. Constant gates $f = 0.8$, $i = 0.5$, candidates $\\tilde{c}^{&lt;1&gt;} = 1$, $\\tilde{c}^{&lt;2&gt;} = 2$, $c^{&lt;0&gt;} = 0$. Compute $c^{&lt;1&gt;}$ and $c^{&lt;2&gt;}$.</p>`,
       steps:[
-        {do:`$c^{<1>} = 0.8(0) + 0.5(1) = 0.5$.`, why:`Forget gate keeps old memory (zero here); input gate adds half the candidate.`},
-        {do:`$c^{<2>} = 0.8(0.5) + 0.5(2) = 0.4 + 1.0 = 1.4$.`, why:`Now the carried memory $0.5$ is partly forgotten and new info added.`},
-        {do:`So $c^{<1>} = 0.5$, $c^{<2>} = 1.4$.`, why:`The cell accumulates info across steps under the gates.`}
+        {do:`$c^{&lt;1&gt;} = 0.8(0) + 0.5(1) = 0.5$.`, why:`Forget gate keeps old memory (zero here); input gate adds half the candidate.`},
+        {do:`$c^{&lt;2&gt;} = 0.8(0.5) + 0.5(2) = 0.4 + 1.0 = 1.4$.`, why:`Now the carried memory $0.5$ is partly forgotten and new info added.`},
+        {do:`So $c^{&lt;1&gt;} = 0.5$, $c^{&lt;2&gt;} = 1.4$.`, why:`The cell accumulates info across steps under the gates.`}
       ],
-      answer:`$c^{<1>} = 0.5,\\; c^{<2>} = 1.4$` },
+      answer:`$c^{&lt;1&gt;} = 0.5,\\; c^{&lt;2&gt;} = 1.4$` },
 
     { q:`<p>An LSTM computes all three gates from $z = [z_f, z_i, z_o] = [0.5, -1, 2]$ via sigmoid. Compute $f$, $i$, $o$ (round each to 3 decimals).</p>`,
       steps:[
@@ -350,31 +350,31 @@
       ],
       answer:`$f \\approx 0.622,\\; i \\approx 0.269,\\; o \\approx 0.881$` },
 
-    { q:`<p>Full LSTM step from gates above ($f = 0.622$, $i = 0.269$, $o = 0.881$), candidate $\\tilde{c} = \\tanh(0.8) = 0.664$, old cell $c^{<t-1>} = 1.5$. Compute the new cell $c^{<t>}$ and output $a^{<t>} = o\\tanh(c^{<t>})$ (round to 3 decimals).</p>`,
+    { q:`<p>Full LSTM step from gates above ($f = 0.622$, $i = 0.269$, $o = 0.881$), candidate $\\tilde{c} = \\tanh(0.8) = 0.664$, old cell $c^{&lt;t-1&gt;} = 1.5$. Compute the new cell $c^{&lt;t&gt;}$ and output $a^{&lt;t&gt;} = o\\tanh(c^{&lt;t&gt;})$ (round to 3 decimals).</p>`,
       steps:[
-        {do:`$c^{<t>} = 0.622(1.5) + 0.269(0.664) = 0.933 + 0.1786 = 1.1116$.`, why:`Forget gate scales old memory; input gate scales the candidate.`},
+        {do:`$c^{&lt;t&gt;} = 0.622(1.5) + 0.269(0.664) = 0.933 + 0.1786 = 1.1116$.`, why:`Forget gate scales old memory; input gate scales the candidate.`},
         {do:`$\\tanh(1.1116) = 0.8047$.`, why:`Squash the new cell before the output gate.`},
-        {do:`$a^{<t>} = 0.881 \\times 0.8047 = 0.709$.`, why:`The output gate reveals about 88% of the squashed cell.`}
+        {do:`$a^{&lt;t&gt;} = 0.881 \\times 0.8047 = 0.709$.`, why:`The output gate reveals about 88% of the squashed cell.`}
       ],
-      answer:`$c^{<t>} \\approx 1.112,\\; a^{<t>} \\approx 0.709$` },
+      answer:`$c^{&lt;t&gt;} \\approx 1.112,\\; a^{&lt;t&gt;} \\approx 0.709$` },
 
-    { q:`<p>A GRU uses both an update gate $z$ and a reset gate $r$: $\\tilde{a} = \\tanh(W[r\\odot a^{<t-1>}, x])$. With $a^{<t-1>} = 2$, $r = 0.3$, and $W[\\cdot] = 0.5(r\\,a^{<t-1>}) + 1\\cdot x$, $x = 1$, compute $\\tilde{a}$ (round to 3 decimals).</p>`,
+    { q:`<p>A GRU uses both an update gate $z$ and a reset gate $r$: $\\tilde{a} = \\tanh(W[r\\odot a^{&lt;t-1&gt;}, x])$. With $a^{&lt;t-1&gt;} = 2$, $r = 0.3$, and $W[\\cdot] = 0.5(r\\,a^{&lt;t-1&gt;}) + 1\\cdot x$, $x = 1$, compute $\\tilde{a}$ (round to 3 decimals).</p>`,
       steps:[
-        {do:`Reset applied: $r\\,a^{<t-1>} = 0.3 \\times 2 = 0.6$.`, why:`The reset gate decides how much past state enters the candidate.`},
+        {do:`Reset applied: $r\\,a^{&lt;t-1&gt;} = 0.3 \\times 2 = 0.6$.`, why:`The reset gate decides how much past state enters the candidate.`},
         {do:`Pre-activation: $0.5(0.6) + 1(1) = 0.3 + 1 = 1.3$.`, why:`Combine the gated past state with the current input.`},
         {do:`$\\tilde{a} = \\tanh(1.3) = 0.862$.`, why:`The reset gate near 0 would ignore the past entirely.`}
       ],
       answer:`$\\tilde{a} = \\tanh(1.3) \\approx 0.862$` },
 
-    { q:`<p>Continue the GRU: with candidate $\\tilde{a} = 0.862$, update gate $z = 0.4$, and previous state $a^{<t-1>} = 2$, compute $a^{<t>} = (1-z)a^{<t-1>} + z\\,\\tilde{a}$ (round to 3 decimals).</p>`,
+    { q:`<p>Continue the GRU: with candidate $\\tilde{a} = 0.862$, update gate $z = 0.4$, and previous state $a^{&lt;t-1&gt;} = 2$, compute $a^{&lt;t&gt;} = (1-z)a^{&lt;t-1&gt;} + z\\,\\tilde{a}$ (round to 3 decimals).</p>`,
       steps:[
         {do:`Keep term: $(1 - 0.4)(2) = 0.6 \\times 2 = 1.2$.`, why:`$1-z$ controls how much old state survives.`},
         {do:`New term: $0.4 \\times 0.862 = 0.3448$.`, why:`$z$ controls how much candidate enters.`},
-        {do:`$a^{<t>} = 1.2 + 0.3448 = 1.545$.`, why:`The update gate blends old state and new candidate.`}
+        {do:`$a^{&lt;t&gt;} = 1.2 + 0.3448 = 1.545$.`, why:`The update gate blends old state and new candidate.`}
       ],
-      answer:`$a^{<t>} \\approx 1.545$` },
+      answer:`$a^{&lt;t&gt;} \\approx 1.545$` },
 
-    { q:`<p>Count parameters of one GRU cell with input dim $n_x = 4$, hidden dim $n_a = 6$. A GRU has 3 weight sets (update gate, reset gate, candidate), each a matrix on $[a^{<t-1>}, x]$ plus a bias. Compute the total.</p>`,
+    { q:`<p>Count parameters of one GRU cell with input dim $n_x = 4$, hidden dim $n_a = 6$. A GRU has 3 weight sets (update gate, reset gate, candidate), each a matrix on $[a^{&lt;t-1&gt;}, x]$ plus a bias. Compute the total.</p>`,
       steps:[
         {do:`Concatenated input width: $n_a + n_x = 6 + 4 = 10$.`, why:`Each gate reads both previous state and current input.`},
         {do:`One set: $W = 6\\times10 = 60$, plus bias $6$, so $66$.`, why:`A weight per (unit, concatenated input) plus one bias per unit.`},
@@ -390,7 +390,7 @@
       ],
       answer:`LSTM has $66$ more parameters ($264$ vs $198$)` },
 
-    { q:`<p>An LSTM forget gate decays a memory with $f^{<1>} = 0.9$, $f^{<2>} = 0.8$, $f^{<3>} = 0.95$ over three steps (no new input). What fraction of the original memory survives all three steps?</p>`,
+    { q:`<p>An LSTM forget gate decays a memory with $f^{&lt;1&gt;} = 0.9$, $f^{&lt;2&gt;} = 0.8$, $f^{&lt;3&gt;} = 0.95$ over three steps (no new input). What fraction of the original memory survives all three steps?</p>`,
       steps:[
         {do:`Survival is the product of forget gates: $0.9 \\times 0.8 \\times 0.95$.`, why:`Each step keeps only its forget-gate fraction of the running memory.`},
         {do:`$0.9 \\times 0.8 = 0.72$, $\\times 0.95 = 0.684$.`, why:`Multiply the three gates in sequence.`},
@@ -398,13 +398,13 @@
       ],
       answer:`$0.9\\times0.8\\times0.95 = 0.684$ ($68.4\\%$) survives` },
 
-    { q:`<p>An LSTM output gate $o$ and cell $c^{<t>}$ produce $a^{<t>} = o\\tanh(c^{<t>})$. If the cell saturates at $c^{<t>} = 3$, compute $\\tanh(3)$ (round to 4 decimals) and the largest possible $|a^{<t>}|$ given $o\\in[0,1]$.</p>`,
+    { q:`<p>An LSTM output gate $o$ and cell $c^{&lt;t&gt;}$ produce $a^{&lt;t&gt;} = o\\tanh(c^{&lt;t&gt;})$. If the cell saturates at $c^{&lt;t&gt;} = 3$, compute $\\tanh(3)$ (round to 4 decimals) and the largest possible $|a^{&lt;t&gt;}|$ given $o\\in[0,1]$.</p>`,
       steps:[
         {do:`$\\tanh(3) = 0.9951$.`, why:`For large cell values $\\tanh$ saturates near $\\pm1$.`},
         {do:`Max output magnitude when $o = 1$: $1 \\times 0.9951 = 0.9951$.`, why:`The output gate can reveal at most the full squashed cell.`},
-        {do:`So $|a^{<t>}| \\le 0.9951$.`, why:`The $\\tanh$ caps the hidden output near $\\pm1$ regardless of cell size.`}
+        {do:`So $|a^{&lt;t&gt;}| \\le 0.9951$.`, why:`The $\\tanh$ caps the hidden output near $\\pm1$ regardless of cell size.`}
       ],
-      answer:`$\\tanh(3) \\approx 0.9951$; max $|a^{<t>}| \\approx 0.9951$` },
+      answer:`$\\tanh(3) \\approx 0.9951$; max $|a^{&lt;t&gt;}| \\approx 0.9951$` },
 
     { q:`<p>A bidirectional LSTM layer has hidden size 64 per direction. The next layer is dense with 10 outputs reading the concatenated forward+backward final states. How many weights does that dense layer have (ignore biases)?</p>`,
       steps:[
@@ -414,15 +414,15 @@
       ],
       answer:`$10 \\times 128 = 1{,}280$ weights` },
 
-    { q:`<p>A GRU with update gate fixed at $z = 0.2$ and constant candidate $\\tilde{a} = 1$ starts at $a^{<0>} = 0$. Compute $a^{<3>}$ (the state after three updates).</p>`,
+    { q:`<p>A GRU with update gate fixed at $z = 0.2$ and constant candidate $\\tilde{a} = 1$ starts at $a^{&lt;0&gt;} = 0$. Compute $a^{&lt;3&gt;}$ (the state after three updates).</p>`,
       steps:[
-        {do:`$a^{<1>} = 0.8(0) + 0.2(1) = 0.2$.`, why:`Each step moves $20\\%$ of the way toward the candidate.`},
-        {do:`$a^{<2>} = 0.8(0.2) + 0.2(1) = 0.16 + 0.2 = 0.36$.`, why:`Carry $80\\%$ of the old state, add $20\\%$ of the candidate.`},
-        {do:`$a^{<3>} = 0.8(0.36) + 0.2(1) = 0.288 + 0.2 = 0.488$.`, why:`The state climbs geometrically toward 1.`}
+        {do:`$a^{&lt;1&gt;} = 0.8(0) + 0.2(1) = 0.2$.`, why:`Each step moves $20\\%$ of the way toward the candidate.`},
+        {do:`$a^{&lt;2&gt;} = 0.8(0.2) + 0.2(1) = 0.16 + 0.2 = 0.36$.`, why:`Carry $80\\%$ of the old state, add $20\\%$ of the candidate.`},
+        {do:`$a^{&lt;3&gt;} = 0.8(0.36) + 0.2(1) = 0.288 + 0.2 = 0.488$.`, why:`The state climbs geometrically toward 1.`}
       ],
-      answer:`$a^{<3>} = 0.488$` },
+      answer:`$a^{&lt;3&gt;} = 0.488$` },
 
-    { q:`<p>The cell-state gradient through an LSTM is dominated by $\\prod f^{<t>}$. If the forget-gate bias is initialized to open ($f \\approx 1$), with $f = 0.999$ over $200$ steps, compute $0.999^{200}$ (use $\\ln 0.999 = -0.0010005$, round to 3 decimals).</p>`,
+    { q:`<p>The cell-state gradient through an LSTM is dominated by $\\prod f^{&lt;t&gt;}$. If the forget-gate bias is initialized to open ($f \\approx 1$), with $f = 0.999$ over $200$ steps, compute $0.999^{200}$ (use $\\ln 0.999 = -0.0010005$, round to 3 decimals).</p>`,
       steps:[
         {do:`$0.999^{200} = e^{200(-0.0010005)} = e^{-0.2001}$.`, why:`A forget gate just below 1 barely decays the cell-state gradient.`},
         {do:`$e^{-0.2001} = 0.8187$.`, why:`Exponentiate the small negative exponent.`},
@@ -616,7 +616,7 @@
       steps:[
         {do:`$r\\cdot A = 3(3) + 4(4) = 9 + 16 = 25$.`, why:`Dot product rewards both direction and magnitude.`},
         {do:`$r\\cdot B = 3(6) + 4(8) = 18 + 32 = 50$.`, why:`B points the same way but is longer.`},
-        {do:`B wins under raw dot ($50 > 25$), though cosine ties them — this is why analogy tasks usually normalize to cosine.`, why:`Raw dot favors high-norm (often frequent) words, a known bias.`}
+        {do:`B wins under raw dot ($50 &gt; 25$), though cosine ties them — this is why analogy tasks usually normalize to cosine.`, why:`Raw dot favors high-norm (often frequent) words, a known bias.`}
       ],
       answer:`$r\\cdot A = 25$, $r\\cdot B = 50$; B wins under dot (cosine ties)` },
 
@@ -691,9 +691,9 @@
       steps:[
         {do:`$\\lVert q\\rVert = \\sqrt5 = 2.236$. $q\\cdot d_1 = 4$, $\\lVert d_1\\rVert = \\sqrt5$: cos $= 4/5 = 0.800$.`, why:`Score each doc against the query.`},
         {do:`$q\\cdot d_2 = 1+6 = 7$, $\\lVert d_2\\rVert = \\sqrt{10}$: $7/(2.236\\cdot3.162) = 7/7.071 = 0.990$.`, why:`$d_2$ aligns closely with $q$.`},
-        {do:`$q\\cdot d_3 = 3$, $\\lVert d_3\\rVert = 3$: $3/(2.236\\cdot3) = 3/6.708 = 0.447$. Ranking: $d_2 > d_1 > d_3$.`, why:`Higher cosine ranks first in retrieval.`}
+        {do:`$q\\cdot d_3 = 3$, $\\lVert d_3\\rVert = 3$: $3/(2.236\\cdot3) = 3/6.708 = 0.447$. Ranking: $d_2 &gt; d_1 &gt; d_3$.`, why:`Higher cosine ranks first in retrieval.`}
       ],
-      answer:`$d_2(0.990) > d_1(0.800) > d_3(0.447)$` },
+      answer:`$d_2(0.990) &gt; d_1(0.800) &gt; d_3(0.447)$` },
 
     { q:`<p>Cosine of a vector with a slightly shifted version: $u = [3, 4]$ and $v = u + [0, -1] = [3, 3]$. Compute the cosine similarity (round to 4 decimals).</p>`,
       steps:[
@@ -802,7 +802,7 @@
       ],
       answer:`context $= [1.80, 1.40]$` },
 
-    { q:`<p>Temperature in attention: dividing scores by $T$ before softmax sharpens ($T<1$) or flattens ($T>1$) the weights. Scores $[2, 0]$ with $T = 2$ give scaled scores $[1, 0]$. Compute the two weights and compare to $T = 1$ (round to 3 decimals).</p>`,
+    { q:`<p>Temperature in attention: dividing scores by $T$ before softmax sharpens ($T&lt;1$) or flattens ($T&gt;1$) the weights. Scores $[2, 0]$ with $T = 2$ give scaled scores $[1, 0]$. Compute the two weights and compare to $T = 1$ (round to 3 decimals).</p>`,
       steps:[
         {do:`$T = 2$: scaled $[1, 0]$, $e^1 = 2.718$, $e^0 = 1$, $Z = 3.718$; weights $[0.731, 0.269]$.`, why:`Higher temperature flattens the distribution.`},
         {do:`$T = 1$: scores $[2, 0]$, $e^2 = 7.389$, $e^0 = 1$, $Z = 8.389$; weights $[0.881, 0.119]$.`, why:`Lower temperature sharpens toward the top score.`},
@@ -937,7 +937,7 @@
       steps:[
         {do:`Variants per image: $5 \\times 4 \\times 3 = 60$.`, why:`Multiply the independent option counts.`},
         {do:`Total: $800 \\times 60 = 48{,}000$.`, why:`Each original spawns 60 variants.`},
-        {do:`$48{,}000 < 1{,}000{,}000$, under by $1{,}000{,}000 - 48{,}000 = 952{,}000$.`, why:`Well within the budget.`}
+        {do:`$48{,}000 &lt; 1{,}000{,}000$, under by $1{,}000{,}000 - 48{,}000 = 952{,}000$.`, why:`Well within the budget.`}
       ],
       answer:`under budget by $952{,}000$ images` },
 
@@ -945,7 +945,7 @@
       steps:[
         {do:`Transforms after crops: $8 \\times 2 \\times 3 = 48$.`, why:`Multiply the non-crop options.`},
         {do:`Total per image: $1089 \\times 48 = 52{,}272$.`, why:`Each crop is further transformed 48 ways.`},
-        {do:`$52{,}272 > 50{,}000$, so it exceeds the cap by $2{,}272$.`, why:`Combinatorial augmentation explodes quickly.`}
+        {do:`$52{,}272 &gt; 50{,}000$, so it exceeds the cap by $2{,}272$.`, why:`Combinatorial augmentation explodes quickly.`}
       ],
       answer:`$52{,}272$ per image — over the cap by $2{,}272$` },
   ]);

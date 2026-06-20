@@ -313,7 +313,7 @@ L({
   example:
     `<p>One state, two actions. The policy currently gives Left $0.5$ and Right $0.5$. The agent samples <b>Right</b> and the episode returns $G = +2$.</p>
      <ul class="steps">
-       <li>The update term is $\\nabla\\log\\pi(\\text{Right})\\times G$. Since $G = +2 > 0$, we push Right's probability <i>up</i>.</li>
+       <li>The update term is $\\nabla\\log\\pi(\\text{Right})\\times G$. Since $G = +2 &gt; 0$, we push Right's probability <i>up</i>.</li>
        <li>Probabilities must still sum to $1$, so Left's probability goes <i>down</i> by the same amount.</li>
        <li>After the step the policy might read Right $0.62$, Left $0.38$.</li>
        <li>If instead $G$ had been $-2$, Right would have dropped and Left risen.</li>
@@ -432,7 +432,7 @@ L({
      <ul class="steps">
        <li>One-step action value: $Q = r + \\gamma V(s') = 1 + 0.9\\times6 = 1 + 5.4 = 6.4$.</li>
        <li>Advantage: $A = Q - V(s) = 6.4 - 5 = 1.4$.</li>
-       <li>$A > 0$, so the action did better than the state's average. The actor pushes its probability up.</li>
+       <li>$A &gt; 0$, so the action did better than the state's average. The actor pushes its probability up.</li>
        <li>The critic also nudges $V(s)$ up toward $6.4$, since it under-valued the state.</li>
      </ul>`,
   application:

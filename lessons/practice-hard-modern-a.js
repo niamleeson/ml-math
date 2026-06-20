@@ -706,7 +706,7 @@
     {
       q: `<p>Two VAE training runs report KL terms of $0.1$ and $5.0$ for one input. Which encoded distribution is closer to $N(0,1)$, and what does a very large KL hint about the latent code?</p>`,
       steps: [
-        { do: `Smaller KL means closer: $0.1 < 5.0$, so the first is nearer $N(0,1)$.`, why: `KL is a distance-like gap; smaller is closer.` },
+        { do: `Smaller KL means closer: $0.1 &lt; 5.0$, so the first is nearer $N(0,1)$.`, why: `KL is a distance-like gap; smaller is closer.` },
         { do: `A large KL ($5.0$) means the code sits far from the standard normal.`, why: `Its $\\mu$ or $\\sigma$ strays from $0$/$1$, so that region may not generate cleanly — the KL penalty fights this.` }
       ],
       answer: `The KL $= 0.1$ run is closer; large KL means the code drifts from $N(0,1)$.`
@@ -724,7 +724,7 @@
       q: `<p>Total VAE loss is reconstruction loss plus KL. For one input: reconstruction $= 0.12$, KL $= 0.03$. What is the total loss, and which term dominates here?</p>`,
       steps: [
         { do: `Add the two terms: $0.12 + 0.03 = 0.15$.`, why: `The VAE objective sums reconstruction fidelity and the KL regularizer.` },
-        { do: `Compare: $0.12 > 0.03$, so reconstruction dominates.`, why: `Here the model is mostly being pushed to rebuild the input faithfully, with a light tidy-up from KL.` }
+        { do: `Compare: $0.12 &gt; 0.03$, so reconstruction dominates.`, why: `Here the model is mostly being pushed to rebuild the input faithfully, with a light tidy-up from KL.` }
       ],
       answer: `Total $= 0.15$; reconstruction dominates.`
     },
@@ -947,7 +947,7 @@
     {
       q: `<p>For $x = g(u) = 0.5u$ (a squeeze), $g^{-1}(x) = 2x$ and $\\frac{dg^{-1}}{dx} = 2$. If $p_u(u) = 0.4$ at the matching $u$, find $p_x(x)$.</p>`,
       steps: [
-        { do: `Apply the formula: $p_x = 0.4 \\times |2| = 0.8$.`, why: `When $g$ squeezes points together (slope $<1$), the inverse derivative exceeds 1, so the density piles up.` },
+        { do: `Apply the formula: $p_x = 0.4 \\times |2| = 0.8$.`, why: `When $g$ squeezes points together (slope $&lt;1$), the inverse derivative exceeds 1, so the density piles up.` },
         { do: `State: $p_x = 0.8$.`, why: `Halving the width doubles the peak height — total area stays 1.` }
       ],
       answer: `$p_x(x) = 0.8$`
@@ -979,7 +979,7 @@
     {
       q: `<p>A flow's transform has slope $g'(u) = 0.5$ at some point ($g$ squeezes there). Using $\\log p_x = \\log p_u - \\log|g'(u)|$ with $\\log p_u = -1.5$ and $\\log 0.5 \\approx -0.693$, find $\\log p_x$.</p>`,
       steps: [
-        { do: `Substitute: $\\log p_x = -1.5 - (-0.693) = -1.5 + 0.693$.`, why: `Squeezing means slope $<1$, so its log is negative; subtracting a negative raises the density.` },
+        { do: `Substitute: $\\log p_x = -1.5 - (-0.693) = -1.5 + 0.693$.`, why: `Squeezing means slope $&lt;1$, so its log is negative; subtracting a negative raises the density.` },
         { do: `Compute: $-1.5 + 0.693 = -0.807$.`, why: `Where $g$ squeezes, points pile up and the log-density rises.` }
       ],
       answer: `$\\log p_x \\approx -0.807$`
@@ -1028,7 +1028,7 @@
     {
       q: `<p>A flow flags low-probability points as anomalies. Point A has $\\log p_x = -2$, point B has $\\log p_x = -12$. Which is the anomaly, and why use log-density?</p>`,
       steps: [
-        { do: `Compare: $-12 < -2$, so B has the far lower density.`, why: `A normalizing flow gives exact densities; rare points sit in low-density regions.` },
+        { do: `Compare: $-12 &lt; -2$, so B has the far lower density.`, why: `A normalizing flow gives exact densities; rare points sit in low-density regions.` },
         { do: `Flag B as the anomaly.`, why: `Log-density is used because real densities can be astronomically small; logs keep the numbers manageable and additive across stacked flows.` }
       ],
       answer: `B is the anomaly (much lower density); logs keep tiny probabilities tractable.`

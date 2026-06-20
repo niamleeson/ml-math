@@ -12,7 +12,7 @@
 
     { q:`<p>Four points with labels and scores: $(s,y)$ pairs $(2,+1)$, $(-3,-1)$, $(0.5,-1)$, $(-1,+1)$. How many are correctly classified, and what is the smallest margin?</p>`,
       steps:[
-        {do:`Margin $m=s\\cdot y$: $2,\\ 3,\\ -0.5,\\ -1$.`, why:`A correct point has $m>0$; multiply each score by its label.`},
+        {do:`Margin $m=s\\cdot y$: $2,\\ 3,\\ -0.5,\\ -1$.`, why:`A correct point has $m&gt;0$; multiply each score by its label.`},
         {do:`Positive margins: $2$ and $3$ only, so $2$ correct.`, why:`The third and fourth have negative margins, so they are wrong.`},
         {do:`Smallest margin $=\\min(2,3,-0.5,-1)=-1$.`, why:`The most negative margin is the worst-classified point.`}
       ],
@@ -21,7 +21,7 @@
     { q:`<p>Decision boundary $w\\cdot\\phi(x)=0$ with $w=[2,-1]$ and a bias $b=-3$ (score $=2x_1-x_2-3$). Is the point $\\phi=[3,1]$ on the positive or negative side?</p>`,
       steps:[
         {do:`Score $=2\\times3-1\\times1-3=6-1-3=2$.`, why:`Evaluate the linear score at the point.`},
-        {do:`$2>0$, so the point is on the positive side.`, why:`The sign of the score names the side of the boundary.`}
+        {do:`$2&gt;0$, so the point is on the positive side.`, why:`The sign of the score names the side of the boundary.`}
       ],
       answer:`positive side ($s=2$)` },
 
@@ -29,7 +29,7 @@
       steps:[
         {do:`Score $=3x-6$.`, why:`Dot product of weights with the feature vector.`},
         {do:`Set $3x-6=0\\Rightarrow x=2$.`, why:`The prediction flips sign exactly where the score is zero.`},
-        {do:`For $x>2$ score is positive; for $x<2$ negative.`, why:`The score grows with $x$ since $w_1=3>0$.`}
+        {do:`For $x&gt;2$ score is positive; for $x&lt;2$ negative.`, why:`The score grows with $x$ since $w_1=3&gt;0$.`}
       ],
       answer:`$x=2$` },
 
@@ -45,7 +45,7 @@
       steps:[
         {do:`Score: $1\\times2+3\\times(-1)+(-0.5)\\times4=2-3-2=-3$.`, why:`Sum the three weighted features.`},
         {do:`$\\text{sign}(-3)=-1$, so $f_w(x)=-1$.`, why:`Negative score predicts the "no" class.`},
-        {do:`Margin $=(-3)\\times(-1)=3>0$, so correct.`, why:`Score and label share the same sign, giving a positive margin.`}
+        {do:`Margin $=(-3)\\times(-1)=3&gt;0$, so correct.`, why:`Score and label share the same sign, giving a positive margin.`}
       ],
       answer:`$s=-3,\\ f_w=-1,\\ m=3$, correct` }
   ]);
@@ -88,9 +88,9 @@
       steps:[
         {do:`A: $\\max(0.8,0)+\\max(-0.2,0)=0.8+0$; average $=0.4$.`, why:`Only the first margin is below $1$.`},
         {do:`B: $\\max(0.2,0)+\\max(0.2,0)=0.2+0.2$; average $=0.2$.`, why:`Both margins are below $1$ but only slightly.`},
-        {do:`B's average $0.2<0.4$, so Setting B is better.`, why:`Lower average training loss is preferred.`}
+        {do:`B's average $0.2&lt;0.4$, so Setting B is better.`, why:`Lower average training loss is preferred.`}
       ],
-      answer:`Setting B ($0.2<0.4$)` },
+      answer:`Setting B ($0.2&lt;0.4$)` },
 
     { q:`<p>Logistic loss is $\\log(1+e^{-m})$. For a hugely confident correct example $m=10$ versus a wrong one $m=-2$, which has larger loss, and roughly why?</p>`,
       steps:[
@@ -117,9 +117,9 @@
       ],
       answer:`$w=[2,0]$` },
 
-    { q:`<p>Hinge-loss SGD. When the margin $m<1$ the gradient is $-y\\,\\phi$; when $m\\ge1$ it is $0$. Example $\\phi=[1,2]$, $y=+1$, current $w=[0,0]$, $\\eta=1$. Do one update.</p>`,
+    { q:`<p>Hinge-loss SGD. When the margin $m&lt;1$ the gradient is $-y\\,\\phi$; when $m\\ge1$ it is $0$. Example $\\phi=[1,2]$, $y=+1$, current $w=[0,0]$, $\\eta=1$. Do one update.</p>`,
       steps:[
-        {do:`Score $=0$, margin $m=0<1$, so the hinge is active.`, why:`A margin under $1$ means the loss has a nonzero gradient.`},
+        {do:`Score $=0$, margin $m=0&lt;1$, so the hinge is active.`, why:`A margin under $1$ means the loss has a nonzero gradient.`},
         {do:`Gradient $=-y\\,\\phi=-1\\times[1,2]=[-1,-2]$.`, why:`This is the hinge-loss gradient when active.`},
         {do:`$w\\leftarrow[0,0]-1\\times[-1,-2]=[1,2]$.`, why:`Subtracting the negative gradient pushes $w$ toward correctly classifying this point.`}
       ],
@@ -234,7 +234,7 @@
 
     { q:`<p>Why is iterative deepening's repeated work only a constant-factor overhead over BFS for large $b$? Reason with the level sizes.</p>`,
       steps:[
-        {do:`The deepest level $b^d$ dominates the whole tree's node count.`, why:`For $b>1$, $b^d$ exceeds the sum of all shallower levels.`},
+        {do:`The deepest level $b^d$ dominates the whole tree's node count.`, why:`For $b&gt;1$, $b^d$ exceeds the sum of all shallower levels.`},
         {do:`Re-visiting shallow levels adds only lower-order terms.`, why:`Those levels are geometrically smaller than $b^d$.`},
         {do:`So total IDDFS work stays $\\mathcal{O}(b^d)$, the same order as BFS.`, why:`The overhead is a bounded constant factor, not exponential.`}
       ],
@@ -278,7 +278,7 @@
     { q:`<p>UCS frontier currently holds $\\{B:3,\\ C:3,\\ D:5\\}$, and $B$ connects to $D$ with edge cost $1$. Pop $B$, then give the updated frontier.</p>`,
       steps:[
         {do:`Pop the cheapest; $B$ and $C$ tie at $3$, pop $B$.`, why:`UCS expands a minimum-cost node, breaking ties arbitrarily.`},
-        {do:`Relax $D$: $3+1=4<5$, so $D\\to4$.`, why:`The path through $B$ improves $D$.`},
+        {do:`Relax $D$: $3+1=4&lt;5$, so $D\\to4$.`, why:`The path through $B$ improves $D$.`},
         {do:`Frontier becomes $\\{C:3,\\ D:4\\}$.`, why:`$B$ is settled; $D$'s cost dropped.`}
       ],
       answer:`$\\{C:3,\\ D:4\\}$` },
@@ -405,9 +405,9 @@
       steps:[
         {do:`A: $10\\times1+0+0=10$.`, why:`Only the first reward survives.`},
         {do:`B: $4+4\\times0.5+4\\times0.25=4+2+1=7$.`, why:`Discount each of B's rewards.`},
-        {do:`$10>7$, so Policy A is better.`, why:`Front-loaded reward wins under discounting.`}
+        {do:`$10&gt;7$, so Policy A is better.`, why:`Front-loaded reward wins under discounting.`}
       ],
-      answer:`Policy A ($10>7$)` },
+      answer:`Policy A ($10&gt;7$)` },
 
     { q:`<p>Stochastic policy value at $s$: with prob $0.5$ a run yields utility $12$, with prob $0.5$ it yields utility $4$. Find $V_\\pi(s)$.</p>`,
       steps:[
@@ -543,11 +543,11 @@
 
     { q:`<p>When do we stop value iteration? A sweep gives $\\max_s|V^{(t)}(s)-V^{(t-1)}(s)|=0.003$ with threshold $\\epsilon=0.01$. Decide and justify.</p>`,
       steps:[
-        {do:`Compare the largest change to $\\epsilon$: $0.003<0.01$.`, why:`Convergence is judged by the maximum value change across states.`},
+        {do:`Compare the largest change to $\\epsilon$: $0.003&lt;0.01$.`, why:`Convergence is judged by the maximum value change across states.`},
         {do:`Since it is below threshold, stop.`, why:`Values have effectively settled; further sweeps barely move them.`},
         {do:`Read off $\\pi^*(s)=\\arg\\max_a Q(s,a)$ everywhere.`, why:`The greedy policy on converged values is optimal.`}
       ],
-      answer:`stop ($0.003<0.01$); extract $\\pi^*$` }
+      answer:`stop ($0.003&lt;0.01$); extract $\\pi^*$` }
   ]);
 
 })();

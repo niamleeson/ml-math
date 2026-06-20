@@ -277,14 +277,14 @@ L({
      <ul class="steps">
        <li>B's neighbors within 1: A (0.5 away) and C (0.5 away). With itself that is 3 ⇒ B is a <b>core</b> point.</li>
        <li>A's neighbors: B and C ⇒ 3 with itself ⇒ A is core too. C likewise. A, B, C form one cluster.</li>
-       <li>D's neighbors within 1: only E. With itself that is 2 $<3$ ⇒ D is <b>not</b> core. Same for E.</li>
+       <li>D's neighbors within 1: only E. With itself that is 2 $&lt;3$ ⇒ D is <b>not</b> core. Same for E.</li>
        <li>D and E touch no core point, so both are labeled <b>noise</b>. Final: one cluster {A,B,C}, noise {D,E}.</li>
      </ul>`,
   application:
     `<p>DBSCAN finds hotspots in GPS check-ins, groups stars into galaxies, segments lidar point clouds for self-driving cars, and flags fraud as low-density outliers. Anywhere clusters are irregular and outliers matter, it beats k-means.</p>`,
   quiz: {
     q: `With minPts $=4$, a point has exactly 2 other points within $\\varepsilon$. Is it a core point? Could it still belong to a cluster?`,
-    a: `<p>Counting itself it has 3 neighbors $<4$, so it is not a core point. But it can still be a <b>border</b> point if one of those neighbors is a core point — then it joins that core's cluster. Otherwise it is noise.</p>`
+    a: `<p>Counting itself it has 3 neighbors $&lt;4$, so it is not a core point. But it can still be a <b>border</b> point if one of those neighbors is a core point — then it joins that core's cluster. Otherwise it is noise.</p>`
   }
 });
 
@@ -894,7 +894,7 @@ L({
     { sym: "$F_m(x)$", desc: "the boosted model after $m$ stages: the running sum of all trees so far." },
     { sym: "$F_{m-1}(x)$", desc: "the model before this stage." },
     { sym: "$h_m(x)$", desc: "the new weak learner (a small tree) added at stage $m$." },
-    { sym: "$\\nu$", desc: "the learning rate (shrinkage), $0<\\nu\\le 1$: how much of each new tree we keep. Small $\\nu$ = slower but more accurate (Greek 'nu')." },
+    { sym: "$\\nu$", desc: "the learning rate (shrinkage), $0&lt;\\nu\\le 1$: how much of each new tree we keep. Small $\\nu$ = slower but more accurate (Greek 'nu')." },
     { sym: "$r_i$", desc: "the residual for example $i$: the part of the answer the current model still misses." },
     { sym: "$L$", desc: "the loss function being minimized (e.g. squared error)." },
     { sym: "$y_i$", desc: "the true target for example $i$." }

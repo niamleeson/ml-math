@@ -40,7 +40,7 @@
     {
       q: `<p>A pre-activation value is $z=-1.5$. Apply the ReLU activation $\\sigma(z)=\\max(0,z)$.</p>`,
       steps: [
-        { do: `Compare $z$ to $0$: $-1.5<0$.`, why: `ReLU keeps positive values and zeroes out negatives.` },
+        { do: `Compare $z$ to $0$: $-1.5&lt;0$.`, why: `ReLU keeps positive values and zeroes out negatives.` },
         { do: `Output $\\max(0,-1.5)=0$.`, why: `Negative inputs become zero under ReLU.` }
       ],
       answer: `$\\sigma(z)=0$`
@@ -267,7 +267,7 @@
       q: `<p>A reward of $r=1$ is earned every step forever, with $\\gamma=0.9$. What is the value of a state at the start of this infinite stream, $\\sum_{t=0}^{\\infty}\\gamma^t r$?</p>`,
       steps: [
         { do: `Recognize a geometric series: $r(1+\\gamma+\\gamma^2+\\dots)$.`, why: `Discounted rewards form a geometric sum.` },
-        { do: `Sum: $\\frac{r}{1-\\gamma}=\\frac{1}{1-0.9}=\\frac{1}{0.1}=10$.`, why: `The geometric series sums to $\\frac{1}{1-\\gamma}$ for $|\\gamma|<1$.` }
+        { do: `Sum: $\\frac{r}{1-\\gamma}=\\frac{1}{1-0.9}=\\frac{1}{0.1}=10$.`, why: `The geometric series sums to $\\frac{1}{1-\\gamma}$ for $|\\gamma|&lt;1$.` }
       ],
       answer: `Value $=10$`
     },
@@ -292,7 +292,7 @@
       q: `<p>Overestimation bias. Suppose all true next-action values are $0$ but noisy estimates are $\\{+1,-1,+2,-2\\}$. What value does $\\max_{a'}Q(s',a')$ report, and is it biased?</p>`,
       steps: [
         { do: `The max of the noisy estimates is $+2$.`, why: `The max over actions always picks the largest noisy value.` },
-        { do: `True max value is $0$, but the estimate is $+2>0$.`, why: `Taking a max over noise systematically picks lucky positive errors.` }
+        { do: `True max value is $0$, but the estimate is $+2&gt;0$.`, why: `Taking a max over noise systematically picks lucky positive errors.` }
       ],
       answer: `It reports $+2$; this is upward (overestimation) bias because the max favours positive noise.`
     },
@@ -339,7 +339,7 @@
       q: `<p>An action was sampled with return $G=-3$. Which way does $\\nabla\\log\\pi(a\\mid s)\\,G$ move that action's probability?</p>`,
       steps: [
         { do: `The $\\nabla\\log\\pi$ term alone raises the action's probability.`, why: `Increasing $\\log\\pi$ increases the action's probability.` },
-        { do: `Multiplying by $G=-3<0$ flips the direction.`, why: `A negative return reverses the push.` }
+        { do: `Multiplying by $G=-3&lt;0$ flips the direction.`, why: `A negative return reverses the push.` }
       ],
       answer: `Down (the action becomes less likely).`
     },
@@ -503,9 +503,9 @@
       answer: `$A=1.4$`
     },
     {
-      q: `<p>The advantage came out $A=1.4>0$. Does the actor push this action's probability up or down?</p>`,
+      q: `<p>The advantage came out $A=1.4&gt;0$. Does the actor push this action's probability up or down?</p>`,
       steps: [
-        { do: `Positive advantage means the action beat expectations.`, why: `$A>0$ says the outcome was better than the state's average.` },
+        { do: `Positive advantage means the action beat expectations.`, why: `$A&gt;0$ says the outcome was better than the state's average.` },
         { do: `So the actor raises its probability.`, why: `The update $\\nabla\\log\\pi\\,A$ encourages above-average actions.` }
       ],
       answer: `Up`
@@ -571,7 +571,7 @@
       q: `<p>PPO clipping. The probability ratio is $\\rho=\\frac{\\pi_{\\text{new}}}{\\pi_{\\text{old}}}=1.5$, clip range $[0.8,1.2]$. What does PPO clip the ratio to?</p>`,
       steps: [
         { do: `Compare $1.5$ to the upper bound $1.2$.`, why: `PPO clips ratios outside the trust region.` },
-        { do: `Since $1.5>1.2$, clip to $1.2$.`, why: `Clipping caps the update so a single step cannot change the policy too much.` }
+        { do: `Since $1.5&gt;1.2$, clip to $1.2$.`, why: `Clipping caps the update so a single step cannot change the policy too much.` }
       ],
       answer: `Clipped to $1.2$`
     },

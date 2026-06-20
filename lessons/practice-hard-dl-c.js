@@ -71,29 +71,29 @@
 
   /* ---------------------------------------------------------------- */
   add("dl-rnn", [
-    { q:`<p>An RNN updates with $a^{<t>} = \\tanh(W_{aa}\\,a^{<t-1>} + W_{ax}\\,x^{<t>} + b)$. Use $W_{aa} = 0.5$, $W_{ax} = 1$, $b = 0$, $a^{<0>} = 0$, and inputs $x = [2, 1, -1]$. Compute $a^{<1>}$, $a^{<2>}$, $a^{<3>}$ (round each to 3 decimals).</p>`,
+    { q:`<p>An RNN updates with $a^{&lt;t&gt;} = \\tanh(W_{aa}\\,a^{&lt;t-1&gt;} + W_{ax}\\,x^{&lt;t&gt;} + b)$. Use $W_{aa} = 0.5$, $W_{ax} = 1$, $b = 0$, $a^{&lt;0&gt;} = 0$, and inputs $x = [2, 1, -1]$. Compute $a^{&lt;1&gt;}$, $a^{&lt;2&gt;}$, $a^{&lt;3&gt;}$ (round each to 3 decimals).</p>`,
       steps:[
-        {do:`Step 1: pre-activation $= 0.5(0) + 1(2) + 0 = 2$, so $a^{<1>} = \\tanh(2) = 0.964$.`, why:`Start from zero memory and feed the first input.`},
-        {do:`Step 2: $= 0.5(0.964) + 1(1) = 1.482$, so $a^{<2>} = \\tanh(1.482) = 0.902$.`, why:`The new input plus half of the carried memory.`},
-        {do:`Step 3: $= 0.5(0.902) + 1(-1) = -0.549$, so $a^{<3>} = \\tanh(-0.549) = -0.500$.`, why:`A negative input drives the squished memory negative.`}
+        {do:`Step 1: pre-activation $= 0.5(0) + 1(2) + 0 = 2$, so $a^{&lt;1&gt;} = \\tanh(2) = 0.964$.`, why:`Start from zero memory and feed the first input.`},
+        {do:`Step 2: $= 0.5(0.964) + 1(1) = 1.482$, so $a^{&lt;2&gt;} = \\tanh(1.482) = 0.902$.`, why:`The new input plus half of the carried memory.`},
+        {do:`Step 3: $= 0.5(0.902) + 1(-1) = -0.549$, so $a^{&lt;3&gt;} = \\tanh(-0.549) = -0.500$.`, why:`A negative input drives the squished memory negative.`}
       ],
-      answer:`$a^{<1>} \\approx 0.964,\\; a^{<2>} \\approx 0.902,\\; a^{<3>} \\approx -0.500$` },
+      answer:`$a^{&lt;1&gt;} \\approx 0.964,\\; a^{&lt;2&gt;} \\approx 0.902,\\; a^{&lt;3&gt;} \\approx -0.500$` },
 
-    { q:`<p>Same RNN cell, but now $W_{aa} = 1$, $W_{ax} = 0.5$, $b = -0.2$, $a^{<0>} = 0$, inputs $x = [1, 2, 2]$. Compute $a^{<1>}$ and $a^{<2>}$ ($\\tanh$, round to 3 decimals).</p>`,
+    { q:`<p>Same RNN cell, but now $W_{aa} = 1$, $W_{ax} = 0.5$, $b = -0.2$, $a^{&lt;0&gt;} = 0$, inputs $x = [1, 2, 2]$. Compute $a^{&lt;1&gt;}$ and $a^{&lt;2&gt;}$ ($\\tanh$, round to 3 decimals).</p>`,
       steps:[
-        {do:`Step 1: $1(0) + 0.5(1) - 0.2 = 0.3$, so $a^{<1>} = \\tanh(0.3) = 0.291$.`, why:`The bias $-0.2$ shifts the pre-activation down before squishing.`},
-        {do:`Step 2: $1(0.291) + 0.5(2) - 0.2 = 1.091$, so $a^{<2>} = \\tanh(1.091) = 0.797$.`, why:`Memory weight is now 1, so the full previous state carries forward.`},
+        {do:`Step 1: $1(0) + 0.5(1) - 0.2 = 0.3$, so $a^{&lt;1&gt;} = \\tanh(0.3) = 0.291$.`, why:`The bias $-0.2$ shifts the pre-activation down before squishing.`},
+        {do:`Step 2: $1(0.291) + 0.5(2) - 0.2 = 1.091$, so $a^{&lt;2&gt;} = \\tanh(1.091) = 0.797$.`, why:`Memory weight is now 1, so the full previous state carries forward.`},
         {do:`Note the memory grew because $W_{aa} = 1$ keeps the past intact.`, why:`Larger $W_{aa}$ means a longer-lasting memory.`}
       ],
-      answer:`$a^{<1>} \\approx 0.291,\\; a^{<2>} \\approx 0.797$` },
+      answer:`$a^{&lt;1&gt;} \\approx 0.291,\\; a^{&lt;2&gt;} \\approx 0.797$` },
 
-    { q:`<p>An RNN also has an output $\\hat{y}^{<t>} = W_{ya}\\,a^{<t>} + b_y$. With the cell $a^{<t>} = \\tanh(0.5\\,a^{<t-1>} + 1\\cdot x^{<t>})$, $a^{<0>} = 0$, inputs $x = [2, 1]$, and output weights $W_{ya} = 2$, $b_y = -1$, compute $\\hat{y}^{<2>}$ (round to 3 decimals).</p>`,
+    { q:`<p>An RNN also has an output $\\hat{y}^{&lt;t&gt;} = W_{ya}\\,a^{&lt;t&gt;} + b_y$. With the cell $a^{&lt;t&gt;} = \\tanh(0.5\\,a^{&lt;t-1&gt;} + 1\\cdot x^{&lt;t&gt;})$, $a^{&lt;0&gt;} = 0$, inputs $x = [2, 1]$, and output weights $W_{ya} = 2$, $b_y = -1$, compute $\\hat{y}^{&lt;2&gt;}$ (round to 3 decimals).</p>`,
       steps:[
-        {do:`$a^{<1>} = \\tanh(0.5(0) + 2) = \\tanh(2) = 0.964$.`, why:`First get the hidden state at step 1.`},
-        {do:`$a^{<2>} = \\tanh(0.5(0.964) + 1) = \\tanh(1.482) = 0.902$.`, why:`Carry the memory into step 2 with the new input.`},
-        {do:`Output: $\\hat{y}^{<2>} = 2(0.902) - 1 = 0.804$.`, why:`Apply the linear output layer to the step-2 hidden state.`}
+        {do:`$a^{&lt;1&gt;} = \\tanh(0.5(0) + 2) = \\tanh(2) = 0.964$.`, why:`First get the hidden state at step 1.`},
+        {do:`$a^{&lt;2&gt;} = \\tanh(0.5(0.964) + 1) = \\tanh(1.482) = 0.902$.`, why:`Carry the memory into step 2 with the new input.`},
+        {do:`Output: $\\hat{y}^{&lt;2&gt;} = 2(0.902) - 1 = 0.804$.`, why:`Apply the linear output layer to the step-2 hidden state.`}
       ],
-      answer:`$\\hat{y}^{<2>} \\approx 0.804$` },
+      answer:`$\\hat{y}^{&lt;2&gt;} \\approx 0.804$` },
 
     { q:`<p>A bidirectional RNN reads a length-7 sentence both forward and backward and concatenates the two hidden states at each position. Each direction's hidden state has 4 numbers. How many numbers describe each position, and how many across the whole sentence?</p>`,
       steps:[
@@ -138,10 +138,10 @@
       ],
       answer:`$1.5^{12} \\approx 129.7$ (exploding)` },
 
-    { q:`<p>Gradient clipping: if $\\lVert g\\rVert > \\tau$ then $g \\leftarrow \\tau \\cdot g / \\lVert g\\rVert$. A gradient is $g = [6, 8]$ with threshold $\\tau = 5$. Compute the clipped gradient (round to 1 decimal).</p>`,
+    { q:`<p>Gradient clipping: if $\\lVert g\\rVert &gt; \\tau$ then $g \\leftarrow \\tau \\cdot g / \\lVert g\\rVert$. A gradient is $g = [6, 8]$ with threshold $\\tau = 5$. Compute the clipped gradient (round to 1 decimal).</p>`,
       steps:[
         {do:`Norm: $\\lVert g\\rVert = \\sqrt{6^2 + 8^2} = \\sqrt{36 + 64} = \\sqrt{100} = 10$.`, why:`Measure the gradient's size before deciding to clip.`},
-        {do:`Since $10 > 5$, scale factor $= \\tau / \\lVert g\\rVert = 5/10 = 0.5$.`, why:`The norm exceeds the threshold, so shrink it back to $\\tau$.`},
+        {do:`Since $10 &gt; 5$, scale factor $= \\tau / \\lVert g\\rVert = 5/10 = 0.5$.`, why:`The norm exceeds the threshold, so shrink it back to $\\tau$.`},
         {do:`Clipped: $g \\leftarrow [6, 8] \\times 0.5 = [3, 4]$, with norm $\\sqrt{9+16} = 5$.`, why:`Same direction, but now its length equals the threshold.`}
       ],
       answer:`clipped $g = [3, 4]$ (norm $= 5$)` },
@@ -173,13 +173,13 @@
 
   /* ---------------------------------------------------------------- */
   add("dl-lstm-gru", [
-    { q:`<p>An LSTM updates its cell with $c^{<t>} = f \\cdot c^{<t-1>} + i \\cdot \\tilde{c}$, where $f$ is the forget gate, $i$ the input gate, $\\tilde{c}$ the candidate. Given $f = 0.8$, $c^{<t-1>} = 2$, $i = 0.6$, $\\tilde{c} = -1$, compute $c^{<t>}$.</p>`,
+    { q:`<p>An LSTM updates its cell with $c^{&lt;t&gt;} = f \\cdot c^{&lt;t-1&gt;} + i \\cdot \\tilde{c}$, where $f$ is the forget gate, $i$ the input gate, $\\tilde{c}$ the candidate. Given $f = 0.8$, $c^{&lt;t-1&gt;} = 2$, $i = 0.6$, $\\tilde{c} = -1$, compute $c^{&lt;t&gt;}$.</p>`,
       steps:[
-        {do:`Keep term: $f \\cdot c^{<t-1>} = 0.8 \\times 2 = 1.6$.`, why:`The forget gate scales how much old memory survives.`},
+        {do:`Keep term: $f \\cdot c^{&lt;t-1&gt;} = 0.8 \\times 2 = 1.6$.`, why:`The forget gate scales how much old memory survives.`},
         {do:`Add term: $i \\cdot \\tilde{c} = 0.6 \\times (-1) = -0.6$.`, why:`The input gate scales how much new candidate info enters.`},
-        {do:`Sum: $c^{<t>} = 1.6 + (-0.6) = 1.0$.`, why:`New cell state blends kept memory and new info.`}
+        {do:`Sum: $c^{&lt;t&gt;} = 1.6 + (-0.6) = 1.0$.`, why:`New cell state blends kept memory and new info.`}
       ],
-      answer:`$c^{<t>} = 1.0$` },
+      answer:`$c^{&lt;t&gt;} = 1.0$` },
 
     { q:`<p>An LSTM forget gate is $f = \\sigma(z_f)$ with pre-activation $z_f = 1.5$. Compute $\\sigma(1.5)$ (round to 3 decimals) and say what it does to old memory.</p>`,
       steps:[
@@ -189,31 +189,31 @@
       ],
       answer:`$f = \\sigma(1.5) \\approx 0.818$ (keeps ~82% of old memory)` },
 
-    { q:`<p>The LSTM hidden output is $a^{<t>} = o \\cdot \\tanh(c^{<t>})$, where $o$ is the output gate. Given $o = 0.5$ and $c^{<t>} = 1.0$, compute $a^{<t>}$ (round to 3 decimals).</p>`,
+    { q:`<p>The LSTM hidden output is $a^{&lt;t&gt;} = o \\cdot \\tanh(c^{&lt;t&gt;})$, where $o$ is the output gate. Given $o = 0.5$ and $c^{&lt;t&gt;} = 1.0$, compute $a^{&lt;t&gt;}$ (round to 3 decimals).</p>`,
       steps:[
         {do:`Squash the cell: $\\tanh(1.0) = 0.7616$.`, why:`The cell state is passed through $\\tanh$ before the output gate.`},
-        {do:`Apply output gate: $a^{<t>} = 0.5 \\times 0.7616 = 0.3808$.`, why:`The output gate decides how much of the cell is revealed.`},
-        {do:`Round: $a^{<t>} \\approx 0.381$.`, why:`Half the squashed cell value passes out.`}
+        {do:`Apply output gate: $a^{&lt;t&gt;} = 0.5 \\times 0.7616 = 0.3808$.`, why:`The output gate decides how much of the cell is revealed.`},
+        {do:`Round: $a^{&lt;t&gt;} \\approx 0.381$.`, why:`Half the squashed cell value passes out.`}
       ],
-      answer:`$a^{<t>} \\approx 0.381$` },
+      answer:`$a^{&lt;t&gt;} \\approx 0.381$` },
 
-    { q:`<p>Run a full LSTM cell update. Gates: $f = 0.9$, $i = 0.5$, $o = 0.7$. Candidate $\\tilde{c} = 0.8$, old cell $c^{<t-1>} = 1.2$. Compute the new cell $c^{<t>}$ then the output $a^{<t>} = o\\tanh(c^{<t>})$ (round to 3 decimals).</p>`,
+    { q:`<p>Run a full LSTM cell update. Gates: $f = 0.9$, $i = 0.5$, $o = 0.7$. Candidate $\\tilde{c} = 0.8$, old cell $c^{&lt;t-1&gt;} = 1.2$. Compute the new cell $c^{&lt;t&gt;}$ then the output $a^{&lt;t&gt;} = o\\tanh(c^{&lt;t&gt;})$ (round to 3 decimals).</p>`,
       steps:[
-        {do:`New cell: $c^{<t>} = 0.9(1.2) + 0.5(0.8) = 1.08 + 0.4 = 1.48$.`, why:`Forget gate keeps old memory; input gate adds new candidate.`},
+        {do:`New cell: $c^{&lt;t&gt;} = 0.9(1.2) + 0.5(0.8) = 1.08 + 0.4 = 1.48$.`, why:`Forget gate keeps old memory; input gate adds new candidate.`},
         {do:`Squash: $\\tanh(1.48) = 0.9017$.`, why:`Pass the cell through $\\tanh$ for the output.`},
-        {do:`Output: $a^{<t>} = 0.7 \\times 0.9017 = 0.6312 \\approx 0.631$.`, why:`The output gate reveals 70% of the squashed cell.`}
+        {do:`Output: $a^{&lt;t&gt;} = 0.7 \\times 0.9017 = 0.6312 \\approx 0.631$.`, why:`The output gate reveals 70% of the squashed cell.`}
       ],
-      answer:`$c^{<t>} = 1.48,\\; a^{<t>} \\approx 0.631$` },
+      answer:`$c^{&lt;t&gt;} = 1.48,\\; a^{&lt;t&gt;} \\approx 0.631$` },
 
-    { q:`<p>A GRU updates with $a^{<t>} = (1 - z)\\,a^{<t-1>} + z\\,\\tilde{a}$, where $z$ is the update gate. Over two steps: $a^{<0>} = 0$, $z = 0.5$, candidates $\\tilde{a}^{<1>} = 1$, $\\tilde{a}^{<2>} = 1$. Compute $a^{<1>}$ and $a^{<2>}$.</p>`,
+    { q:`<p>A GRU updates with $a^{&lt;t&gt;} = (1 - z)\\,a^{&lt;t-1&gt;} + z\\,\\tilde{a}$, where $z$ is the update gate. Over two steps: $a^{&lt;0&gt;} = 0$, $z = 0.5$, candidates $\\tilde{a}^{&lt;1&gt;} = 1$, $\\tilde{a}^{&lt;2&gt;} = 1$. Compute $a^{&lt;1&gt;}$ and $a^{&lt;2&gt;}$.</p>`,
       steps:[
-        {do:`Step 1: $a^{<1>} = (1 - 0.5)(0) + 0.5(1) = 0.5$.`, why:`Half old (which is 0) plus half new candidate.`},
-        {do:`Step 2: $a^{<2>} = 0.5(0.5) + 0.5(1) = 0.25 + 0.5 = 0.75$.`, why:`Now the carried memory 0.5 contributes too.`},
+        {do:`Step 1: $a^{&lt;1&gt;} = (1 - 0.5)(0) + 0.5(1) = 0.5$.`, why:`Half old (which is 0) plus half new candidate.`},
+        {do:`Step 2: $a^{&lt;2&gt;} = 0.5(0.5) + 0.5(1) = 0.25 + 0.5 = 0.75$.`, why:`Now the carried memory 0.5 contributes too.`},
         {do:`The state climbs $0 \\to 0.5 \\to 0.75$ toward the candidate 1.`, why:`A GRU's update gate blends old and new each step.`}
       ],
-      answer:`$a^{<1>} = 0.5,\\; a^{<2>} = 0.75$` },
+      answer:`$a^{&lt;1&gt;} = 0.5,\\; a^{&lt;2&gt;} = 0.75$` },
 
-    { q:`<p>Count the parameters of one LSTM cell with input dim $n_x = 3$ and hidden dim $n_a = 4$. There are 4 gate/candidate weight sets, each a matrix on $[a^{<t-1>}, x^{<t>}]$ plus a bias. Compute the total.</p>`,
+    { q:`<p>Count the parameters of one LSTM cell with input dim $n_x = 3$ and hidden dim $n_a = 4$. There are 4 gate/candidate weight sets, each a matrix on $[a^{&lt;t-1&gt;}, x^{&lt;t&gt;}]$ plus a bias. Compute the total.</p>`,
       steps:[
         {do:`Concatenated input width $= n_a + n_x = 4 + 3 = 7$.`, why:`Each gate reads both the previous hidden state and the current input.`},
         {do:`One gate: $W$ is $n_a \\times (n_a + n_x) = 4 \\times 7 = 28$, plus bias $n_a = 4$, so $32$.`, why:`A weight per (hidden unit, concatenated input) plus one bias per unit.`},
@@ -377,7 +377,7 @@
 
   /* ---------------------------------------------------------------- */
   add("dl-attention", [
-    { q:`<p>Attention weights are $\\alpha^{<t,t'>} = \\frac{\\exp(e^{<t,t'>})}{\\sum_{t'}\\exp(e^{<t,t'>})}$. With raw scores $e = [3, 1, 0]$, compute the three weights (round each to 3 decimals) and confirm they sum to 1.</p>`,
+    { q:`<p>Attention weights are $\\alpha^{&lt;t,t'&gt;} = \\frac{\\exp(e^{&lt;t,t'&gt;})}{\\sum_{t'}\\exp(e^{&lt;t,t'&gt;})}$. With raw scores $e = [3, 1, 0]$, compute the three weights (round each to 3 decimals) and confirm they sum to 1.</p>`,
       steps:[
         {do:`Exponentiate: $\\exp(3) = 20.086$, $\\exp(1) = 2.718$, $\\exp(0) = 1$.`, why:`Softmax exponentiates each relevance score.`},
         {do:`Sum: $Z = 20.086 + 2.718 + 1 = 23.804$.`, why:`The denominator normalizes the scores.`},
@@ -385,7 +385,7 @@
       ],
       answer:`$\\alpha \\approx [0.844, 0.114, 0.042]$, sum $= 1.000$` },
 
-    { q:`<p>Using the weights $\\alpha = [0.844, 0.114, 0.042]$ from the scores $[3,1,0]$, compute the context $c = \\sum_{t'} \\alpha^{<t,t'>} a^{<t'>}$ for value vectors $a = [10, 20, 30]$ (scalars). Round to 2 decimals.</p>`,
+    { q:`<p>Using the weights $\\alpha = [0.844, 0.114, 0.042]$ from the scores $[3,1,0]$, compute the context $c = \\sum_{t'} \\alpha^{&lt;t,t'&gt;} a^{&lt;t'&gt;}$ for value vectors $a = [10, 20, 30]$ (scalars). Round to 2 decimals.</p>`,
       steps:[
         {do:`Weighted terms: $0.844(10) = 8.44$, $0.114(20) = 2.28$, $0.042(30) = 1.26$.`, why:`Each value is weighted by its attention share.`},
         {do:`Sum: $c = 8.44 + 2.28 + 1.26 = 11.98$.`, why:`The context is the weighted average of the values.`},

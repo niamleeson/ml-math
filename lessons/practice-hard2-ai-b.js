@@ -100,7 +100,7 @@
       steps:[
         {do:`Target $=1+0.9\\times5=1+4.5=5.5$.`, why:`Reward plus discounted best next value.`},
         {do:`$\\delta=5.5-6=-0.5$.`, why:`TD error is target minus current estimate.`},
-        {do:`$\\delta<0$, so the update lowers $\\hat Q$.`, why:`A negative TD error moves the estimate down.`}
+        {do:`$\\delta&lt;0$, so the update lowers $\\hat Q$.`, why:`A negative TD error moves the estimate down.`}
       ],
       answer:`$\\delta=-0.5$; $\\hat Q$ decreases.` },
 
@@ -236,8 +236,8 @@
     { q:`<p>Depth-3 MAX root, three MIN children scanned L-to-R, each two leaves. MIN-A$[5,7]$, MIN-B$[2,?]$, MIN-C$[8,6]$. Trace $\\alpha$ and list pruned leaves.</p>`,
       steps:[
         {do:`MIN-A $=\\min(5,7)=5$; set $\\alpha=5$.`, why:`MAX secures $5$.`},
-        {do:`MIN-B first leaf $2$: value $\\le2<5$, prune MIN-B's second leaf.`, why:`MIN-B cannot beat $5$.`},
-        {do:`MIN-C: $\\min(8,6)=6>5$, no prune; root $=\\max(5,6)=6$.`, why:`MIN-C improves on $5$.`}
+        {do:`MIN-B first leaf $2$: value $\\le2&lt;5$, prune MIN-B's second leaf.`, why:`MIN-B cannot beat $5$.`},
+        {do:`MIN-C: $\\min(8,6)=6&gt;5$, no prune; root $=\\max(5,6)=6$.`, why:`MIN-C improves on $5$.`}
       ],
       answer:`Prune MIN-B's 2nd leaf; root $=6$.` },
 
@@ -245,14 +245,14 @@
       steps:[
         {do:`MAX-A $=\\max(2,4)=4$; root MIN sets $\\beta=4$.`, why:`MIN can hold to $\\le4$.`},
         {do:`MAX-B first leaf $9$: value $\\ge9\\ge\\beta=4$, prune MAX-B's second leaf.`, why:`MIN will reject anything $\\ge\\beta$, so the rest of B is irrelevant.`},
-        {do:`MAX-C $=\\max(1,3)=3<4$; root $=\\min(4,3)=3$.`, why:`MAX-C lowers the MIN to $3$.`}
+        {do:`MAX-C $=\\max(1,3)=3&lt;4$; root $=\\min(4,3)=3$.`, why:`MAX-C lowers the MIN to $3$.`}
       ],
       answer:`Prune MAX-B's 2nd leaf; root $=3$.` },
 
     { q:`<p>Count leaf examinations. MAX root, two MIN children, each three leaves, scanned L-to-R. MIN-L$[6,4,7]$, MIN-R$[3,?,?]$. How many of the 6 leaves are examined?</p>`,
       steps:[
         {do:`MIN-L reads all three: $\\min(6,4,7)=4$, $\\alpha=4$. (3 leaves)`, why:`The first MIN node has no floor to prune against.`},
-        {do:`MIN-R first leaf $3$: $\\le3<\\alpha=4$, prune the remaining two leaves of MIN-R. (1 leaf)`, why:`MIN-R cannot beat $4$ once it hits $3$.`},
+        {do:`MIN-R first leaf $3$: $\\le3&lt;\\alpha=4$, prune the remaining two leaves of MIN-R. (1 leaf)`, why:`MIN-R cannot beat $4$ once it hits $3$.`},
         {do:`Total examined $=3+1=4$ of $6$.`, why:`Two leaves under MIN-R are skipped.`}
       ],
       answer:`$4$ leaves examined; $2$ pruned.` },
@@ -260,7 +260,7 @@
     { q:`<p>Worst ordering, leaf count. MAX root, two MIN children $[1,2]$ and $[8,9]$, but the low subtree $[1,2]$ is searched first. How many leaves are examined, and could reordering do better?</p>`,
       steps:[
         {do:`MIN-L $=\\min(1,2)=1$, $\\alpha=1$. (2 leaves)`, why:`Weak first branch gives a low floor.`},
-        {do:`MIN-R: $8>1$ and $9>1$, no prune; read both. (2 leaves) Root $=\\max(1,8)=8$.`, why:`Nothing prunes; MIN-R $=8$.`},
+        {do:`MIN-R: $8&gt;1$ and $9&gt;1$, no prune; read both. (2 leaves) Root $=\\max(1,8)=8$.`, why:`Nothing prunes; MIN-R $=8$.`},
         {do:`All $4$ examined. Searching $[8,9]$ first ($\\alpha=8$) would prune in $[1,2]$.`, why:`A high first branch enables a cutoff.`}
       ],
       answer:`$4$ leaves; reordering high-first would prune one.` },
@@ -288,16 +288,16 @@
       ],
       answer:`$16$ vs $\\approx7$ leaves.` },
 
-    { q:`<p>Two-level pruning chain. MAX root over MIN-L, MIN-R. MIN-L $=3$ already, $\\alpha=3$. MIN-R has MAX children; its first MAX child reads leaf $2$ then $1$ giving $2$, so MIN-R $\\le2<3$. Prune MIN-R's remaining MAX child?</p>`,
+    { q:`<p>Two-level pruning chain. MAX root over MIN-L, MIN-R. MIN-L $=3$ already, $\\alpha=3$. MIN-R has MAX children; its first MAX child reads leaf $2$ then $1$ giving $2$, so MIN-R $\\le2&lt;3$. Prune MIN-R's remaining MAX child?</p>`,
       steps:[
         {do:`MIN-R's first MAX child $=\\max(2,1)=2$, so MIN-R $\\le2$.`, why:`MIN takes the smallest child seen so far.`},
-        {do:`$2<\\alpha=3$, so prune MIN-R's second MAX child entirely.`, why:`MIN-R can never reach $3$, so its other subtree is irrelevant.`}
+        {do:`$2&lt;\\alpha=3$, so prune MIN-R's second MAX child entirely.`, why:`MIN-R can never reach $3$, so its other subtree is irrelevant.`}
       ],
       answer:`Prune the whole second MAX subtree; root $=3$.` },
 
     { q:`<p>Alpha unchanged by a worse branch. MAX root, MIN-L $=6$ ($\\alpha=6$), MIN-R $=4$. After evaluating both, what is $\\alpha$ at the root and the chosen move?</p>`,
       steps:[
-        {do:`MIN-R $=4<\\alpha=6$, so it does not raise $\\alpha$.`, why:`MAX only updates $\\alpha$ when a child beats it.`},
+        {do:`MIN-R $=4&lt;\\alpha=6$, so it does not raise $\\alpha$.`, why:`MAX only updates $\\alpha$ when a child beats it.`},
         {do:`Root value $=\\max(6,4)=6$, keep MIN-L.`, why:`The first branch stays best.`}
       ],
       answer:`$\\alpha=6$; pick MIN-L.` },
@@ -385,7 +385,7 @@
         {do:`E[Safe]$=5$.`, why:`A sure payoff.`},
         {do:`$\\max(5,4.9)=5$, choose Safe.`, why:`Expectimax maximizes expected value.`}
       ],
-      answer:`Choose Safe ($5>4.9$).` },
+      answer:`Choose Safe ($5&gt;4.9$).` },
 
     { q:`<p>MAX over two chance nodes with 3 outcomes each. Chance-L: $(0.2,0.3,0.5)$ over $(10,0,4)$. Chance-R: $(0.5,0.5)$ over $(6,3)$. Best move.</p>`,
       steps:[
@@ -398,7 +398,7 @@
     { q:`<p>Chance node with a negative outcome. Outcomes $(+10,-6)$ with probs $(0.4,0.6)$. Expected value, and is it worth playing vs a sure $0$?</p>`,
       steps:[
         {do:`E$=0.4\\times10+0.6\\times(-6)=4-3.6=0.4$.`, why:`Weight the gain and the loss.`},
-        {do:`$0.4>0$, so playing beats the sure $0$.`, why:`Positive expectation favors the gamble.`}
+        {do:`$0.4&gt;0$, so playing beats the sure $0$.`, why:`Positive expectation favors the gamble.`}
       ],
       answer:`E$=0.4$; play it.` },
 
@@ -509,7 +509,7 @@
       steps:[
         {do:`$h(a)=2\\times4=8$.`, why:`Multiply the two tables pointwise at $a$.`},
         {do:`$h(b)=6\\times1=6$.`, why:`Same at $b$.`},
-        {do:`$\\arg\\max=a$ (weight $8$).`, why:`$8>6$.`}
+        {do:`$\\arg\\max=a$ (weight $8$).`, why:`$8&gt;6$.`}
       ],
       answer:`$X=a$, $h=8$.` },
 
@@ -546,11 +546,11 @@
       steps:[
         {do:`$0.8\\times0.9=0.72$.`, why:`Multiply the first two.`},
         {do:`$0.72\\times0.5=0.36$.`, why:`Include the third.`},
-        {do:`$0.36<0.4$, so it fails the threshold.`, why:`Compare against $0.4$.`}
+        {do:`$0.36&lt;0.4$, so it fails the threshold.`, why:`Compare against $0.4$.`}
       ],
       answer:`Weight $0.36$; below $0.4$, fails.` },
 
-    { q:`<p>Counting with an inequality chain. $X<Y<Z$, each in $\\{1,2,3,4\\}$, factor $1$ iff strictly increasing. How many valid triples?</p>`,
+    { q:`<p>Counting with an inequality chain. $X&lt;Y&lt;Z$, each in $\\{1,2,3,4\\}$, factor $1$ iff strictly increasing. How many valid triples?</p>`,
       steps:[
         {do:`Strictly increasing triples are choices of 3 distinct values in order.`, why:`Each 3-subset gives exactly one increasing arrangement.`},
         {do:`$\\binom{4}{3}=4$.`, why:`Choose 3 of 4 values; order is forced.`}
@@ -590,11 +590,11 @@
       ],
       answer:`B empties; backtrack at once (0 wasted assignments).` },
 
-    { q:`<p>AC-3 with $X<Y$, domains $\\{1,2,3\\}$ each. Revise arc $X\\to Y$. Result for $X$.</p>`,
+    { q:`<p>AC-3 with $X&lt;Y$, domains $\\{1,2,3\\}$ each. Revise arc $X\\to Y$. Result for $X$.</p>`,
       steps:[
-        {do:`$x=1$: need $y>1$ in $\\{1,2,3\\}$: yes. Keep.`, why:`Support exists.`},
-        {do:`$x=2$: $y>2$ exists ($3$). Keep.`, why:`$y=3$ supports $x=2$.`},
-        {do:`$x=3$: $y>3$ none, remove. $X=\\{1,2\\}$.`, why:`No support for $x=3$.`}
+        {do:`$x=1$: need $y&gt;1$ in $\\{1,2,3\\}$: yes. Keep.`, why:`Support exists.`},
+        {do:`$x=2$: $y&gt;2$ exists ($3$). Keep.`, why:`$y=3$ supports $x=2$.`},
+        {do:`$x=3$: $y&gt;3$ none, remove. $X=\\{1,2\\}$.`, why:`No support for $x=3$.`}
       ],
       answer:`After $X\\to Y$: $X=\\{1,2\\}$.` },
 
@@ -919,7 +919,7 @@
       steps:[
         {do:`$R,S$ joint $=0.7\\times0.8\\times0.4\\times0.3$.`, why:`Prior·emit(R)·transition(R→S)·emit(S) at $t{=}2$.`},
         {do:`$=0.7\\times0.8=0.56;\\times0.4=0.224;\\times0.3=0.0672$.`, why:`Multiply through.`},
-        {do:`$0.2688>0.0672$, so path $R,R$ is more likely.`, why:`Compare the two joint values.`}
+        {do:`$0.2688&gt;0.0672$, so path $R,R$ is more likely.`, why:`Compare the two joint values.`}
       ],
       answer:`$R,S=0.0672$; $R,R$ ($0.2688$) is more likely.` },
 
@@ -965,9 +965,9 @@
       steps:[
         {do:`$R{:}0.6\\times0.9=0.54$.`, why:`Prior times emission for R.`},
         {do:`$S{:}0.4\\times0.5=0.20$.`, why:`Prior times emission for S.`},
-        {do:`$0.54>0.20$, so Rain is the most likely state.`, why:`Viterbi keeps the max-probability path.`}
+        {do:`$0.54&gt;0.20$, so Rain is the most likely state.`, why:`Viterbi keeps the max-probability path.`}
       ],
-      answer:`Rain ($0.54>0.20$).` },
+      answer:`Rain ($0.54&gt;0.20$).` },
 
     { q:`<p>Two-step Viterbi. Prior $P(R)=0.6,P(S)=0.4$; transition stay $0.7$/switch $0.3$; emission $P(U\\mid R)=0.9,P(U\\mid S)=0.5$; observe $U,U$. Find the best $H_2{=}R$ path score.</p>`,
       steps:[

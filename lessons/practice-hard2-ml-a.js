@@ -120,7 +120,7 @@
 
     { q:`<p>Quantile (pinball) loss for quantile $\\tau$ is $\\tau\\,r$ if $r = y - z \\ge 0$, else $(\\tau - 1)\\,r$. With $\\tau = 0.9$ and residual $r = -2$ (over-prediction), find the loss.</p>`,
       steps:[
-        {do:`$r = -2 < 0$, so use $(\\tau - 1)r = (0.9 - 1)(-2)$.`, why:`The negative branch handles over-predictions.`},
+        {do:`$r = -2 &lt; 0$, so use $(\\tau - 1)r = (0.9 - 1)(-2)$.`, why:`The negative branch handles over-predictions.`},
         {do:`$= (-0.1)(-2) = 0.2$.`, why:`At $\\tau = 0.9$ over-prediction is penalized lightly; under-prediction would cost $0.9$ per unit.`}
       ],
       answer:`$L = 0.2$` },
@@ -128,7 +128,7 @@
     { q:`<p>Same pinball loss, $\\tau = 0.9$, but now under-prediction: residual $r = +2$. Find the loss and compare to the over-prediction case ($0.2$).</p>`,
       steps:[
         {do:`$r = 2 \\ge 0$, so use $\\tau r = 0.9 \\times 2 = 1.8$.`, why:`The positive branch penalizes under-prediction at the high quantile.`},
-        {do:`$1.8 > 0.2$, so under-prediction costs $9\\times$ more.`, why:`A high $\\tau$ pushes predictions upward to avoid under-shooting.`}
+        {do:`$1.8 &gt; 0.2$, so under-prediction costs $9\\times$ more.`, why:`A high $\\tau$ pushes predictions upward to avoid under-shooting.`}
       ],
       answer:`$L = 1.8$ (vs $0.2$) — asymmetric: under-prediction is far costlier` },
 
@@ -253,10 +253,10 @@
 
     { q:`<p>Convexity check: is $J(\\theta) = \\theta^4 - 4\\theta^2$ convex everywhere? Its second derivative is $12\\theta^2 - 8$. Evaluate at $\\theta = 0$ and state convexity there.</p>`,
       steps:[
-        {do:`$J''(0) = 12{\\cdot}0 - 8 = -8 < 0$.`, why:`A negative second derivative means the curve bends downward.`},
+        {do:`$J''(0) = 12{\\cdot}0 - 8 = -8 &lt; 0$.`, why:`A negative second derivative means the curve bends downward.`},
         {do:`So $J$ is NOT convex at $\\theta = 0$; it has multiple minima.`, why:`Non-convex costs can trap gradient descent in local minima.`}
       ],
-      answer:`Not convex ($J''(0) = -8 < 0$); it has local minima` },
+      answer:`Not convex ($J''(0) = -8 &lt; 0$); it has local minima` },
 
     { q:`<p>Normalizing the cost: a sum-of-squares cost is $J_{\\text{sum}} = 240$ over $m = 60$ examples. Convert to mean squared cost $\\frac{1}{m}\\sum$ and to the $\\frac{1}{2m}\\sum$ convention.</p>`,
       steps:[
@@ -267,7 +267,7 @@
 
     { q:`<p>The optimal $\\theta$ does not move if you scale the whole cost by a positive constant. If $J_1(\\theta)$ is minimized at $\\theta = 3$, where is $J_2 = 10\\,J_1$ minimized, and does the minimum VALUE change?</p>`,
       steps:[
-        {do:`Scaling by $10 > 0$ keeps the same minimizing $\\theta = 3$.`, why:`A positive scale preserves the location of the minimum.`},
+        {do:`Scaling by $10 &gt; 0$ keeps the same minimizing $\\theta = 3$.`, why:`A positive scale preserves the location of the minimum.`},
         {do:`The minimum value is multiplied by $10$.`, why:`Only the height changes, not where the bottom sits — so a learning rate may need rescaling.`}
       ],
       answer:`Still $\\theta = 3$; the minimum value is $10\\times$ larger` }
@@ -293,12 +293,12 @@
       ],
       answer:`$v = -1.1$, $\\theta = 3.9$` },
 
-    { q:`<p>For $J(\\theta) = \\frac{c}{2}\\theta^2$ (gradient $c\\theta$), the largest stable learning rate is $\\alpha < \\frac{2}{c}$. For $c = 8$, give the stability bound and check $\\alpha = 0.3$.</p>`,
+    { q:`<p>For $J(\\theta) = \\frac{c}{2}\\theta^2$ (gradient $c\\theta$), the largest stable learning rate is $\\alpha &lt; \\frac{2}{c}$. For $c = 8$, give the stability bound and check $\\alpha = 0.3$.</p>`,
       steps:[
-        {do:`Bound: $\\alpha < 2/8 = 0.25$.`, why:`Beyond this the update factor $|1 - \\alpha c|$ exceeds $1$ and diverges.`},
-        {do:`$0.3 > 0.25$, so $\\alpha = 0.3$ diverges.`, why:`The step overshoots and the iterates grow without bound.`}
+        {do:`Bound: $\\alpha &lt; 2/8 = 0.25$.`, why:`Beyond this the update factor $|1 - \\alpha c|$ exceeds $1$ and diverges.`},
+        {do:`$0.3 &gt; 0.25$, so $\\alpha = 0.3$ diverges.`, why:`The step overshoots and the iterates grow without bound.`}
       ],
-      answer:`Stable for $\\alpha < 0.25$; $\\alpha = 0.3$ diverges` },
+      answer:`Stable for $\\alpha &lt; 0.25$; $\\alpha = 0.3$ diverges` },
 
     { q:`<p>Exact line search on $J(\\theta) = \\frac{1}{2}\\theta^2$ from $\\theta_0 = 4$: choose $\\alpha$ to minimize $J(\\theta_0 - \\alpha g)$ along the gradient. The optimal $\\alpha$ here is $1$. Verify the step lands at $0$.</p>`,
       steps:[
@@ -486,7 +486,7 @@
     { q:`<p>MAP estimation adds a prior. A Beta$(2, 2)$ prior on a coin gives MAP $\\hat\\theta = \\frac{h + 1}{n + 2}$. With $h = 7$ heads in $n = 10$ flips, find the MAP estimate and compare to the MLE ($0.7$).</p>`,
       steps:[
         {do:`$\\hat\\theta_{MAP} = \\frac{7 + 1}{10 + 2} = \\frac{8}{12} \\approx 0.667$.`, why:`The Beta$(2,2)$ prior adds one pseudo-head and one pseudo-tail.`},
-        {do:`$0.667 < 0.7$, so the prior pulls the estimate toward $0.5$.`, why:`MAP regularizes the MLE with prior belief.`}
+        {do:`$0.667 &lt; 0.7$, so the prior pulls the estimate toward $0.5$.`, why:`MAP regularizes the MLE with prior belief.`}
       ],
       answer:`$\\hat\\theta_{MAP} \\approx 0.667$ (vs MLE $0.7$) — pulled toward $0.5$` },
 
@@ -584,7 +584,7 @@
     { q:`<p>Calibration: a well-calibrated model predicting $p = 0.7$ on $200$ examples should have about how many positives? If $160$ are actually positive, is it over- or under-confident?</p>`,
       steps:[
         {do:`Expected positives $= 0.7 \\times 200 = 140$.`, why:`Calibration means predicted probability matches observed frequency.`},
-        {do:`Observed $160 > 140$, so the true rate ($0.8$) exceeds the predicted $0.7$: the model is under-confident.`, why:`It assigned too low a probability to the positive class.`}
+        {do:`Observed $160 &gt; 140$, so the true rate ($0.8$) exceeds the predicted $0.7$: the model is under-confident.`, why:`It assigned too low a probability to the positive class.`}
       ],
       answer:`Expect $140$; observed $160$ means under-confident` },
 
@@ -598,7 +598,7 @@
     { q:`<p>Convert a predicted probability to a class with a custom threshold. A fraud model outputs $p = 0.4$. To catch more fraud you set the threshold to $0.3$. Is this example flagged as fraud?</p>`,
       steps:[
         {do:`Compare $p = 0.4$ to the threshold $0.3$.`, why:`Predict class $1$ when $p \\ge$ threshold.`},
-        {do:`$0.4 > 0.3$, so flag it as fraud.`, why:`Lowering the threshold raises recall at the cost of more false positives.`}
+        {do:`$0.4 &gt; 0.3$, so flag it as fraud.`, why:`Lowering the threshold raises recall at the cost of more false positives.`}
       ],
       answer:`Yes — flagged ($0.4 \\ge 0.3$)` },
 
@@ -625,7 +625,7 @@
 
     { q:`<p>MLE for logistic regression maximizes $\\sum [y\\log\\sigma + (1-y)\\log(1-\\sigma)]$, equivalently minimizes cross-entropy. For one example $(x, y) = (2, 0)$ at $\\theta = 0$ ($\\sigma = 0.5$), is the gradient $(\\sigma - y)x$ positive or negative, and which way does $\\theta$ move?</p>`,
       steps:[
-        {do:`Gradient $= (0.5 - 0){\\cdot}2 = 1 > 0$.`, why:`Predicted $0.5$ exceeds the true $0$, so the gradient is positive.`},
+        {do:`Gradient $= (0.5 - 0){\\cdot}2 = 1 &gt; 0$.`, why:`Predicted $0.5$ exceeds the true $0$, so the gradient is positive.`},
         {do:`$\\theta \\leftarrow \\theta - \\alpha(1)$ decreases $\\theta$, lowering $\\sigma$ toward $0$.`, why:`Descent moves opposite the positive gradient.`}
       ],
       answer:`Gradient $= +1$; $\\theta$ decreases to push $\\sigma$ toward $0$` }
@@ -766,7 +766,7 @@
     { q:`<p>The dispersion parameter $\\phi$ scales the variance: $\\mathrm{Var}(y) = \\phi\\,V(\\mu)$. Poisson assumes $\\phi = 1$. If the observed variance is $2.5\\,\\mu$, what is the estimated dispersion, and what does it signal?</p>`,
       steps:[
         {do:`$\\phi = \\mathrm{Var}(y)/V(\\mu) = 2.5\\mu / \\mu = 2.5$.`, why:`Divide observed variance by the model's variance function $V(\\mu) = \\mu$.`},
-        {do:`$\\phi = 2.5 > 1$ signals overdispersion.`, why:`More variance than Poisson allows — use quasi-Poisson or negative binomial.`}
+        {do:`$\\phi = 2.5 &gt; 1$ signals overdispersion.`, why:`More variance than Poisson allows — use quasi-Poisson or negative binomial.`}
       ],
       answer:`$\\phi = 2.5$ (overdispersion)` },
 

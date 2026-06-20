@@ -173,14 +173,14 @@
     { q:`<p>MAX already secured $\\alpha=5$. A new MIN branch's first child returns $2$. Can the rest of that branch change the choice?</p>`,
       steps:[
         {do:`The MIN branch value is at most $2$.`, why:`A MIN node only goes lower as more children appear.`},
-        {do:`Since $2<5$, it cannot beat $\\alpha=5$. Prune.`, why:`No remaining child can raise it above $5$.`}
+        {do:`Since $2&lt;5$, it cannot beat $\\alpha=5$. Prune.`, why:`No remaining child can raise it above $5$.`}
       ],
       answer:`No. Prune the branch.` },
 
     { q:`<p>MAX has $\\alpha=7$. A MIN node's first child returns $4$. Prune or continue?</p>`,
       steps:[
         {do:`MIN value $\\le 4$.`, why:`Min can only fall further.`},
-        {do:`$4<7$, so $\\alpha\\ge$ this branch's ceiling. Prune.`, why:`It cannot exceed the secured $7$.`}
+        {do:`$4&lt;7$, so $\\alpha\\ge$ this branch's ceiling. Prune.`, why:`It cannot exceed the secured $7$.`}
       ],
       answer:`Prune.` },
 
@@ -203,19 +203,19 @@
         {do:`Check $\\alpha\\ge\\beta$: is $2\\ge6$? No.`, why:`The cutoff needs $\\alpha\\ge\\beta$.`},
         {do:`Keep exploring this node.`, why:`The branch may still matter.`}
       ],
-      answer:`No prune ($2<6$).` },
+      answer:`No prune ($2&lt;6$).` },
 
     { q:`<p>MAX root. Left branch fully evaluated to $5$, so $\\alpha=5$. Right is a MIN node; its first leaf is $3$. Do we read its other leaves?</p>`,
       steps:[
         {do:`Right MIN $\\le 3$.`, why:`Min cannot rise above its smallest seen child.`},
-        {do:`$3<\\alpha=5$, so prune.`, why:`Right can never beat the left's $5$.`}
+        {do:`$3&lt;\\alpha=5$, so prune.`, why:`Right can never beat the left's $5$.`}
       ],
       answer:`No, prune the right branch.` },
 
     { q:`<p>MAX root. Left branch gave $\\alpha=4$. Right MIN node leaves are $6$ then $1$. After which leaf can we prune?</p>`,
       steps:[
-        {do:`After leaf $6$: MIN $\\le6$, still $>4$, no prune.`, why:`$6\\ge\\alpha$, branch may still win.`},
-        {do:`After leaf $1$: MIN $\\le1<4$. Prune.`, why:`Now the branch ceiling fell below $\\alpha$.`}
+        {do:`After leaf $6$: MIN $\\le6$, still $&gt;4$, no prune.`, why:`$6\\ge\\alpha$, branch may still win.`},
+        {do:`After leaf $1$: MIN $\\le1&lt;4$. Prune.`, why:`Now the branch ceiling fell below $\\alpha$.`}
       ],
       answer:`Prune after the leaf worth $1$.` },
 
@@ -229,7 +229,7 @@
     { q:`<p>MAX root with two MIN children. Left MIN leaves $(2,9)$ are read first, giving the left value. At the right MIN, first leaf is $1$. Does alpha-beta prune the right, and what is the root value?</p>`,
       steps:[
         {do:`Left MIN $=\\min(2,9)=2$, so $\\alpha=2$.`, why:`MAX now has a floor of $2$.`},
-        {do:`Right MIN first leaf $1$: value $\\le1<2$. Prune rest.`, why:`The right branch cannot beat $2$.`},
+        {do:`Right MIN first leaf $1$: value $\\le1&lt;2$. Prune rest.`, why:`The right branch cannot beat $2$.`},
         {do:`Root $=\\max(2,\\le1)=2$.`, why:`Left branch wins.`}
       ],
       answer:`Prune right; root $=2$.` }
@@ -317,7 +317,7 @@
     { q:`<p>Three factors score $1$, $1$, $0$ for an assignment. Weight, and is it valid?</p>`,
       steps:[
         {do:`Weight $=1\\times1\\times0=0$.`, why:`Weight is the product of all factors.`},
-        {do:`A zero means a broken hard constraint.`, why:`Valid solutions need weight $>0$.`}
+        {do:`A zero means a broken hard constraint.`, why:`Valid solutions need weight $&gt;0$.`}
       ],
       answer:`Weight $0$; invalid.` },
 
@@ -360,7 +360,7 @@
       steps:[
         {do:`$A,B$ differ (Red vs Blue): factor $1$.`, why:`First edge satisfied.`},
         {do:`$B,C$ differ (Blue vs Red): factor $1$.`, why:`Second edge satisfied.`},
-        {do:`Weight $=1\\times1=1>0$.`, why:`All edges hold.`}
+        {do:`Weight $=1\\times1=1&gt;0$.`, why:`All edges hold.`}
       ],
       answer:`Valid (weight $1$).` },
 
@@ -378,7 +378,7 @@
       ],
       answer:`$X=1$ (weight $6$).` },
 
-    { q:`<p>Three regions in a triangle, all pairs must differ, only two colors available. Can any assignment have weight $>0$?</p>`,
+    { q:`<p>Three regions in a triangle, all pairs must differ, only two colors available. Can any assignment have weight $&gt;0$?</p>`,
       steps:[
         {do:`Three mutually adjacent regions need three different colors.`, why:`Every pair must differ.`},
         {do:`With only two colors, two regions must share a color, giving a $0$ factor.`, why:`Pigeonhole: three into two forces a repeat.`}

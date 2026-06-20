@@ -193,7 +193,7 @@
       q: `<p>$\\varepsilon=1.0$, minPts $=4$. Point $q$ has exactly 2 other points within $\\varepsilon$. Is $q$ a core point?</p>`,
       steps: [
         { do: `Neighborhood size $= 2+1 = 3$ (including $q$).`, why: `Always include the point itself.` },
-        { do: `$3 < 4 = $ minPts, so $q$ fails the core test.`, why: `Not enough neighbors to sit inside a dense crowd.` }
+        { do: `$3 &lt; 4 = $ minPts, so $q$ fails the core test.`, why: `Not enough neighbors to sit inside a dense crowd.` }
       ],
       answer: `No, $q$ is not a core point.`
     },
@@ -217,9 +217,9 @@
       q: `<p>Compute the Euclidean distance between $a=(0,0)$ and $b=(3,4)$ to test if $b\\in N_\\varepsilon(a)$ for $\\varepsilon=4$.</p>`,
       steps: [
         { do: `Distance $= \\sqrt{(3-0)^2+(4-0)^2} = \\sqrt{9+16} = \\sqrt{25} = 5$.`, why: `Euclidean distance is the straight-line gap.` },
-        { do: `Compare $5 > 4 = \\varepsilon$, so $b \\notin N_\\varepsilon(a)$.`, why: `$b$ is outside the radius, so it is not a neighbor.` }
+        { do: `Compare $5 &gt; 4 = \\varepsilon$, so $b \\notin N_\\varepsilon(a)$.`, why: `$b$ is outside the radius, so it is not a neighbor.` }
       ],
-      answer: `Distance $=5 > 4$, so $b$ is not in $a$'s $\\varepsilon$-neighborhood.`
+      answer: `Distance $=5 &gt; 4$, so $b$ is not in $a$'s $\\varepsilon$-neighborhood.`
     },
     {
       q: `<p>Five points on a line: A$=0$, B$=0.5$, C$=1$, D$=5$, E$=5.4$. With $\\varepsilon=1$, minPts $=3$, classify B.</p>`,
@@ -234,7 +234,7 @@
       q: `<p>Same line (A$=0$,B$=0.5$,C$=1$,D$=5$,E$=5.4$), $\\varepsilon=1$, minPts $=3$. Classify D.</p>`,
       steps: [
         { do: `D's neighbors within 1: only E ($0.4$ away); C is $4$ away.`, why: `No other point lies within the radius.` },
-        { do: `Counting D itself: $1+1 = 2 < 3$, so D is not core.`, why: `Too few neighbors.` },
+        { do: `Counting D itself: $1+1 = 2 &lt; 3$, so D is not core.`, why: `Too few neighbors.` },
         { do: `E is also not core, so D has no core neighbor either.`, why: `Border requires a core neighbor, which is absent.` }
       ],
       answer: `D is a noise point.`
@@ -282,7 +282,7 @@
     {
       q: `<p>For that chain P,Q,R,S (spacing $0.9$, $\\varepsilon=1$, minPts $=3$), classify endpoint P, and explain density-reachability.</p>`,
       steps: [
-        { do: `P's neighbors within 1: only Q ($0.9$); R is $1.8$ away. So $|N_\\varepsilon(P)|=2 < 3$, P is not core.`, why: `An endpoint has only one close neighbor.` },
+        { do: `P's neighbors within 1: only Q ($0.9$); R is $1.8$ away. So $|N_\\varepsilon(P)|=2 &lt; 3$, P is not core.`, why: `An endpoint has only one close neighbor.` },
         { do: `But Q is core and P is within $\\varepsilon$ of Q.`, why: `P is directly density-reachable from the core point Q.` },
         { do: `So P is a border point in Q's cluster.`, why: `A non-core point reachable from a core joins as border.` }
       ],
@@ -413,7 +413,7 @@
     {
       q: `<p>Using $f^\\top L f=\\tfrac12\\sum_{ij}W_{ij}(f_i-f_j)^2$, explain why minimizing it encourages a "good cut".</p>`,
       steps: [
-        { do: `The sum only grows when $f_i\\ne f_j$ across an edge with weight $W_{ij}>0$.`, why: `Equal labels contribute 0.` },
+        { do: `The sum only grows when $f_i\\ne f_j$ across an edge with weight $W_{ij}&gt;0$.`, why: `Equal labels contribute 0.` },
         { do: `Heavy (strong-similarity) edges are penalized most when split.`, why: `$W_{ij}$ multiplies the squared label gap.` },
         { do: `So minimizing pushes the split onto weak edges — a good cut.`, why: `It separates the graph at its thinnest seam.` }
       ],
@@ -645,7 +645,7 @@
       steps: [
         { do: `At $x=0$ both squared-distance terms are 0.`, why: `The point sits at both means.` },
         { do: `Compare log-determinant penalties: $\\delta_0\\propto -\\tfrac12\\ln 1=0$ vs $\\delta_1\\propto -\\tfrac12\\ln 4\\approx -0.693$.`, why: `The tighter class has a smaller volume penalty, so it scores higher.` },
-        { do: `$\\delta_0 > \\delta_1$, so class 0 wins.`, why: `QDA favors the more concentrated Gaussian at its center.` }
+        { do: `$\\delta_0 &gt; \\delta_1$, so class 0 wins.`, why: `QDA favors the more concentrated Gaussian at its center.` }
       ],
       answer: `Class 0 (the tighter one) is predicted at $x=0$.`
     },
@@ -1021,9 +1021,9 @@
       answer: `Small $\\nu$ takes gentler steps, reducing overfitting and improving accuracy (needs more trees).`
     },
     {
-      q: `<p>A stump splits points $x=[1,2,3,4]$ with residuals $r=[-2,-2,2,2]$ at threshold $x<2.5$. Compute the left and right leaf predictions (mean residual per side).</p>`,
+      q: `<p>A stump splits points $x=[1,2,3,4]$ with residuals $r=[-2,-2,2,2]$ at threshold $x&lt;2.5$. Compute the left and right leaf predictions (mean residual per side).</p>`,
       steps: [
-        { do: `Left side ($x<2.5$): points 1,2 with residuals $-2,-2$; mean $=-2$.`, why: `A regression leaf predicts the mean of its residuals.` },
+        { do: `Left side ($x&lt;2.5$): points 1,2 with residuals $-2,-2$; mean $=-2$.`, why: `A regression leaf predicts the mean of its residuals.` },
         { do: `Right side ($x\\ge 2.5$): points 3,4 with residuals $2,2$; mean $=2$.`, why: `Same rule on the other side of the split.` }
       ],
       answer: `Left leaf $=-2$, right leaf $=+2$.`
@@ -1049,7 +1049,7 @@
       steps: [
         { do: `Before: $(-10)^2+0^2+10^2 = 100+0+100 = 200$.`, why: `Sum of squared residuals of $F_0$.` },
         { do: `After: $0^2+(-5)^2+5^2 = 0+25+25 = 50$.`, why: `Sum of squared residuals of $F_1$.` },
-        { do: `$50 < 200$, so error fell.`, why: `Each boosting stage reduces training loss.` }
+        { do: `$50 &lt; 200$, so error fell.`, why: `Each boosting stage reduces training loss.` }
       ],
       answer: `SSE dropped from 200 to 50.`
     },

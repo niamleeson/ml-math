@@ -12,7 +12,7 @@
 
     { q:`<p>Five labelled points with $(s,y)$ pairs: $(1.5,+1)$, $(-0.5,+1)$, $(-2,-1)$, $(0.5,-1)$, $(3,+1)$. Count correct classifications and report the average zero-one loss.</p>`,
       steps:[
-        {do:`Margins $m=s\\cdot y$: $1.5,\\ -0.5,\\ 2,\\ -0.5,\\ 3$.`, why:`Multiply each score by its label; $m>0$ means correct.`},
+        {do:`Margins $m=s\\cdot y$: $1.5,\\ -0.5,\\ 2,\\ -0.5,\\ 3$.`, why:`Multiply each score by its label; $m&gt;0$ means correct.`},
         {do:`Positive margins: $1.5, 2, 3$, so $3$ correct, $2$ wrong.`, why:`The second and fourth points have negative margins.`},
         {do:`Zero-one loss average $=2/5=0.4$.`, why:`Two mistakes out of five examples.`}
       ],
@@ -77,9 +77,9 @@
       steps:[
         {do:`A's minimum margin $=\\min(2,1,4)=1$.`, why:`The worst point defines the safety margin.`},
         {do:`B's minimum margin $=\\min(3,3,1.5)=1.5$.`, why:`Same rule for B.`},
-        {do:`$1.5>1$, so B has the larger (safer) minimum margin.`, why:`Max-margin training prefers the larger smallest margin.`}
+        {do:`$1.5&gt;1$, so B has the larger (safer) minimum margin.`, why:`Max-margin training prefers the larger smallest margin.`}
       ],
-      answer:`B (min margin $1.5>1$)` },
+      answer:`B (min margin $1.5&gt;1$)` },
 
     { q:`<p>Averaged perceptron idea. Over three updates the weight took values $w_1=[1,0]$, $w_2=[1,1]$, $w_3=[2,1]$. The averaged weight is the mean of these. Compute it.</p>`,
       steps:[
@@ -178,7 +178,7 @@
       ],
       answer:`$2,1,0$; convex, no wrong-way curve` },
 
-    { q:`<p>Gradient direction of hinge. For $m<1$, the per-example hinge gradient is $-y\\,\\phi$. With $\\phi=[2,1]$, $y=+1$, give the gradient and which way $w$ moves under descent.</p>`,
+    { q:`<p>Gradient direction of hinge. For $m&lt;1$, the per-example hinge gradient is $-y\\,\\phi$. With $\\phi=[2,1]$, $y=+1$, give the gradient and which way $w$ moves under descent.</p>`,
       steps:[
         {do:`Gradient $=-y\\,\\phi=-1\\times[2,1]=[-2,-1]$.`, why:`This is the hinge gradient while the margin is below $1$.`},
         {do:`Descent step subtracts it: $w$ moves by $+[2,1]\\eta$.`, why:`Subtracting a negative gradient increases the score on this point.`},
@@ -279,7 +279,7 @@
       steps:[
         {do:`Score $=0\\times2+1\\times(-1)=-1$; sign $-1\\ne y=+1$: misclassified.`, why:`The perceptron only updates on mistakes.`},
         {do:`$w\\leftarrow[0,1]+1\\times[2,-1]=[2,0]$.`, why:`Add $y\\phi$ to push toward correct classification.`},
-        {do:`New score $=2\\times2+0\\times(-1)=4>0$: now correct.`, why:`The single update fixes this example.`}
+        {do:`New score $=2\\times2+0\\times(-1)=4&gt;0$: now correct.`, why:`The single update fixes this example.`}
       ],
       answer:`$w=[2,0]$, now correctly classified` },
 
@@ -295,7 +295,7 @@
       steps:[
         {do:`Gradient $=2(w-3)=2\\times2=4$; step $w=5-0.25\\times4=4$.`, why:`Move against the gradient toward the minimum at $3$.`},
         {do:`Loss before $=(5-3)^2=4$; after $=(4-3)^2=1$.`, why:`Compare the loss at old and new weights.`},
-        {do:`$1<4$: the loss dropped.`, why:`A correctly sized gradient step lowers the loss.`}
+        {do:`$1&lt;4$: the loss dropped.`, why:`A correctly sized gradient step lowers the loss.`}
       ],
       answer:`$w=4$; loss $4\\to1$` },
 
@@ -396,7 +396,7 @@
       ],
       answer:`$3$ (slow then to goal)` },
 
-    { q:`<p>Infinite state space needs care. From $1$, "add 1" cost $1$ with no upper bound. The goal is "reach a prime $>10$". What is the cheapest cost? (Hint: $11$ is the first prime above $10$.)</p>`,
+    { q:`<p>Infinite state space needs care. From $1$, "add 1" cost $1$ with no upper bound. The goal is "reach a prime $&gt;10$". What is the cheapest cost? (Hint: $11$ is the first prime above $10$.)</p>`,
       steps:[
         {do:`First prime above $10$ is $11$.`, why:`The goal test fires at the nearest qualifying state.`},
         {do:`From $1$ to $11$ takes $10$ "add 1" steps.`, why:`Each step costs $1$ and increments by one.`},
@@ -489,7 +489,7 @@
       steps:[
         {do:`One-directional $\\approx2^6=64$.`, why:`A single BFS explores to full depth $6$.`},
         {do:`Bidirectional $\\approx2\\times2^{3}=2\\times8=16$.`, why:`Each frontier only needs depth $3$ before they meet.`},
-        {do:`$16<64$: bidirectional explores far fewer nodes.`, why:`Meeting in the middle halves the effective depth.`}
+        {do:`$16&lt;64$: bidirectional explores far fewer nodes.`, why:`Meeting in the middle halves the effective depth.`}
       ],
       answer:`$64$ vs $16$; bidirectional is cheaper` },
 
@@ -530,7 +530,7 @@
 
     { q:`<p>Dijkstra with a priority queue: ties and re-relaxation. Frontier $\\{A:4,B:4,C:7\\}$, and popping $A$ relaxes $C$ via edge $A\\!-\\!C=2$. Give the new frontier and which node is popped next.</p>`,
       steps:[
-        {do:`Pop $A$ (tie with $B$ at $4$, choose $A$). Relax $C$: $4+2=6<7$.`, why:`A cheaper path through $A$ improves $C$.`},
+        {do:`Pop $A$ (tie with $B$ at $4$, choose $A$). Relax $C$: $4+2=6&lt;7$.`, why:`A cheaper path through $A$ improves $C$.`},
         {do:`Frontier $\\{B:4,\\ C:6\\}$.`, why:`$A$ is settled; $C$ dropped to $6$.`},
         {do:`Next pop is $B$ at $4$.`, why:`$B$ now has the smallest key.`}
       ],
@@ -538,8 +538,8 @@
 
     { q:`<p>UCS vs BFS optimality. Path $S\\to A\\to G$ has edges $1,1$ (cost $2$, $2$ edges); path $S\\to G$ has one edge cost $3$. Which does UCS return, and which does BFS return?</p>`,
       steps:[
-        {do:`UCS compares total cost: $2<3$, returns $S\\to A\\to G$.`, why:`UCS minimizes total path cost.`},
-        {do:`BFS counts edges: $1<2$, returns the direct $S\\to G$ at cost $3$.`, why:`BFS minimizes number of edges, ignoring cost.`},
+        {do:`UCS compares total cost: $2&lt;3$, returns $S\\to A\\to G$.`, why:`UCS minimizes total path cost.`},
+        {do:`BFS counts edges: $1&lt;2$, returns the direct $S\\to G$ at cost $3$.`, why:`BFS minimizes number of edges, ignoring cost.`},
         {do:`UCS finds the cheaper plan; BFS does not.`, why:`Only UCS is cost-optimal with varying edge weights.`}
       ],
       answer:`UCS: cost $2$ path; BFS: cost $3$ path` },
@@ -555,7 +555,7 @@
     { q:`<p>Why does UCS expand $G$ only when popped, not when first discovered? Frontier reaches $G$ at cost $9$ while $D$ sits at cost $4$ with edge $D\\!-\\!G=2$. What can still happen to $G$?</p>`,
       steps:[
         {do:`$G$ is on the frontier at $9$ but not settled.`, why:`UCS only finalizes a node when it is the cheapest popped.`},
-        {do:`Popping $D(4)$ relaxes $G$ to $4+2=6<9$.`, why:`A cheaper path through $D$ lowers $G$.`},
+        {do:`Popping $D(4)$ relaxes $G$ to $4+2=6&lt;9$.`, why:`A cheaper path through $D$ lowers $G$.`},
         {do:`So $G$ is settled at $6$, not $9$.`, why:`Early discovery does not fix the final cost; popping does.`}
       ],
       answer:`$G$ can drop from $9$ to $6$ before settling` },
@@ -637,10 +637,10 @@
     { q:`<p>Dominance and node count. Heuristics $h_1(s)=2$, $h_2(s)=5$, $h_3(s)=4$, all admissible (true cost $6$). Rank them by how few nodes A* expands.</p>`,
       steps:[
         {do:`All $\\le6$, so all admissible.`, why:`None overestimates the true remaining cost.`},
-        {do:`Larger (closer to $6$) dominates: $h_2(5)>h_3(4)>h_1(2)$.`, why:`A bigger admissible heuristic gives tighter $f$ estimates.`},
+        {do:`Larger (closer to $6$) dominates: $h_2(5)&gt;h_3(4)&gt;h_1(2)$.`, why:`A bigger admissible heuristic gives tighter $f$ estimates.`},
         {do:`$h_2$ expands fewest, then $h_3$, then $h_1$.`, why:`More informed heuristics prune more of the search.`}
       ],
-      answer:`$h_2<h_3<h_1$ in nodes expanded ($h_2$ best)` },
+      answer:`$h_2&lt;h_3&lt;h_1$ in nodes expanded ($h_2$ best)` },
 
     { q:`<p>The max of two admissible heuristics is admissible. $h_a(s)=3$, $h_b(s)=5$, true cost $6$. Compute $h(s)=\\max(h_a,h_b)$ and confirm admissibility.</p>`,
       steps:[
@@ -658,15 +658,15 @@
       ],
       answer:`$R,Q$ ($f=6$) then $P,T$ ($f=7$)` },
 
-    { q:`<p>An inadmissible heuristic can break optimality. True cheapest cost to goal is $10$ along path X; A* uses $h$ that overestimates a cheaper-looking path Y. If $h$ makes Y's $f=8<$ X's $f=11$, what goes wrong?</p>`,
+    { q:`<p>An inadmissible heuristic can break optimality. True cheapest cost to goal is $10$ along path X; A* uses $h$ that overestimates a cheaper-looking path Y. If $h$ makes Y's $f=8&lt;$ X's $f=11$, what goes wrong?</p>`,
       steps:[
-        {do:`A* prefers Y because $f_Y=8<f_X=11$.`, why:`A* always expands the lower $f$ first.`},
+        {do:`A* prefers Y because $f_Y=8&lt;f_X=11$.`, why:`A* always expands the lower $f$ first.`},
         {do:`But Y is actually costlier; the overestimate on X hid the true best path.`, why:`Inadmissible $h$ can inflate $f$ on the optimal path.`},
         {do:`A* may return a suboptimal path.`, why:`Admissibility ($h\\le$ true) is required for the optimality guarantee.`}
       ],
       answer:`A* returns suboptimal Y; needs admissible $h$` },
 
-    { q:`<p>Weighted A* uses $f=g+w\\cdot h$ with $w>1$ for speed. With $g=4$, $h=3$, compare $f$ at $w=1$ and $w=2$, and state the trade-off.</p>`,
+    { q:`<p>Weighted A* uses $f=g+w\\cdot h$ with $w&gt;1$ for speed. With $g=4$, $h=3$, compare $f$ at $w=1$ and $w=2$, and state the trade-off.</p>`,
       steps:[
         {do:`$w=1$: $f=4+3=7$.`, why:`Standard A*.`},
         {do:`$w=2$: $f=4+2\\times3=10$.`, why:`Weighting the heuristic greedily favors getting close to the goal.`},
@@ -674,13 +674,13 @@
       ],
       answer:`$f=7$ vs $10$; faster but possibly suboptimal` },
 
-    { q:`<p>Goal heuristic must be zero for admissibility. If $h(\\text{goal})=2>0$ but the true remaining cost at the goal is $0$, why does this break A*?</p>`,
+    { q:`<p>Goal heuristic must be zero for admissibility. If $h(\\text{goal})=2&gt;0$ but the true remaining cost at the goal is $0$, why does this break A*?</p>`,
       steps:[
         {do:`At the goal, true cost-to-go is $0$.`, why:`No moves remain once at the goal.`},
-        {do:`$h(\\text{goal})=2>0$ overestimates $0$.`, why:`Any positive value at the goal is an overestimate.`},
+        {do:`$h(\\text{goal})=2&gt;0$ overestimates $0$.`, why:`Any positive value at the goal is an overestimate.`},
         {do:`So $h$ is inadmissible and A* may stop with a worse path.`, why:`Admissibility demands $h(\\text{goal})=0$.`}
       ],
-      answer:`$h(\\text{goal})$ must be $0$; $2>0$ breaks admissibility` },
+      answer:`$h(\\text{goal})$ must be $0$; $2&gt;0$ breaks admissibility` },
 
     { q:`<p>Relaxed-problem heuristics. The $8$-puzzle "number of misplaced tiles" and "sum of Manhattan distances" are both admissible. For a state with $5$ misplaced tiles whose Manhattan distances sum to $12$, which heuristic dominates?</p>`,
       steps:[
@@ -760,17 +760,17 @@
       steps:[
         {do:`$E[L]=0.6\\times5+0.4\\times0=3$.`, why:`Weight L's rewards by probability.`},
         {do:`$E[R]=1.0\\times2.5=2.5$.`, why:`R is deterministic.`},
-        {do:`$3>2.5$, so L has the higher expected immediate reward.`, why:`Pick the larger expectation.`}
+        {do:`$3&gt;2.5$, so L has the higher expected immediate reward.`, why:`Pick the larger expectation.`}
       ],
-      answer:`L ($3>2.5$)` },
+      answer:`L ($3&gt;2.5$)` },
 
-    { q:`<p>Why is a discount $\\gamma<1$ needed for an infinite-horizon MDP with constant positive rewards? Show what happens to the undiscounted sum.</p>`,
+    { q:`<p>Why is a discount $\\gamma&lt;1$ needed for an infinite-horizon MDP with constant positive rewards? Show what happens to the undiscounted sum.</p>`,
       steps:[
-        {do:`Undiscounted: $r+r+r+\\dots=\\infty$ for $r>0$.`, why:`Adding a positive reward forever diverges.`},
-        {do:`With $\\gamma<1$: $r/(1-\\gamma)$ is finite.`, why:`The geometric series converges.`},
-        {do:`So $\\gamma<1$ keeps values finite and comparable.`, why:`Discounting bounds infinite-horizon returns.`}
+        {do:`Undiscounted: $r+r+r+\\dots=\\infty$ for $r&gt;0$.`, why:`Adding a positive reward forever diverges.`},
+        {do:`With $\\gamma&lt;1$: $r/(1-\\gamma)$ is finite.`, why:`The geometric series converges.`},
+        {do:`So $\\gamma&lt;1$ keeps values finite and comparable.`, why:`Discounting bounds infinite-horizon returns.`}
       ],
-      answer:`undiscounted diverges; $\\gamma<1$ gives finite $r/(1-\\gamma)$` },
+      answer:`undiscounted diverges; $\\gamma&lt;1$ gives finite $r/(1-\\gamma)$` },
 
     { q:`<p>Slippery-grid transition. "Move right": $0.8$ right (r=$-1$), $0.1$ up (r=$-1$), $0.1$ down (r=$-1$). Compute expected immediate reward and confirm the distribution is valid.</p>`,
       steps:[
@@ -846,9 +846,9 @@
       steps:[
         {do:`A at $\\gamma=0.9$: $9+0+0=9$.`, why:`Only the first reward survives.`},
         {do:`B at $\\gamma=0.9$: $3+2.7+2.43=8.13$.`, why:`Discount each of B's rewards by $\\gamma^{i-1}$.`},
-        {do:`$9>8.13$, so A still wins, but the gap narrowed.`, why:`Higher $\\gamma$ values B's later rewards more, closing the gap.`}
+        {do:`$9&gt;8.13$, so A still wins, but the gap narrowed.`, why:`Higher $\\gamma$ values B's later rewards more, closing the gap.`}
       ],
-      answer:`A ($9>8.13$); gap narrows with higher $\\gamma$` },
+      answer:`A ($9&gt;8.13$); gap narrows with higher $\\gamma$` },
 
     { q:`<p>Infinite policy value with a one-time bonus. Stream is $20$ once, then $2$ forever, $\\gamma=0.5$. Compute $V_\\pi$ using $20+\\gamma\\cdot\\frac{2}{1-\\gamma}$.</p>`,
       steps:[
@@ -866,7 +866,7 @@
 
     { q:`<p>Policy improvement check. At $s$, current policy takes L with value $Q(s,L)=5$, but $Q(s,R)=7$. Should the policy switch, and what is the new $V_\\pi(s)$ after a greedy improvement?</p>`,
       steps:[
-        {do:`Compare $Q(s,R)=7>Q(s,L)=5$.`, why:`A higher Q-value means a better action.`},
+        {do:`Compare $Q(s,R)=7&gt;Q(s,L)=5$.`, why:`A higher Q-value means a better action.`},
         {do:`Switch the policy at $s$ to R.`, why:`Policy improvement picks the greedy action.`},
         {do:`New $V_\\pi(s)=7$.`, why:`The state's value becomes the Q-value of the new action.`}
       ],
@@ -979,7 +979,7 @@
       steps:[
         {do:`Term 1: $0.6\\times[1+0.5\\times10]=0.6\\times6=3.6$.`, why:`High future value drives the first outcome.`},
         {do:`Term 2: $0.4\\times[5+0]=0.4\\times5=2$.`, why:`Higher reward but no future value.`},
-        {do:`$Q=3.6+2=5.6$; outcome 1 contributes more ($3.6>2$).`, why:`Future value outweighs the immediate reward here.`}
+        {do:`$Q=3.6+2=5.6$; outcome 1 contributes more ($3.6&gt;2$).`, why:`Future value outweighs the immediate reward here.`}
       ],
       answer:`$Q=5.6$; outcome 1 contributes more` },
 

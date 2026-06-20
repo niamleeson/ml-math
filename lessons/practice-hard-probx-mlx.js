@@ -40,9 +40,9 @@ add("probx-derived", [
     steps:[
       {do:`Invert with $x\\ge0$: $h(y)=\\sqrt{y}$.`, why:`On $[0,1]$ the map $x\\mapsto x^2$ is one-to-one and increasing.`},
       {do:`Slope: $h'(y)=\\frac{1}{2\\sqrt{y}}$.`, why:`Differentiate $\\sqrt{y}=y^{1/2}$.`},
-      {do:`$f_Y(y)=1\\cdot\\frac{1}{2\\sqrt{y}}$ for $0<y\\le1$.`, why:`$f_X(\\sqrt{y})=1$ on $[0,1]$.`}
+      {do:`$f_Y(y)=1\\cdot\\frac{1}{2\\sqrt{y}}$ for $0&lt;y\\le1$.`, why:`$f_X(\\sqrt{y})=1$ on $[0,1]$.`}
     ],
-    answer:`$f_Y(y)=\\frac{1}{2\\sqrt{y}}$ for $0<y\\le1$.`
+    answer:`$f_Y(y)=\\frac{1}{2\\sqrt{y}}$ for $0&lt;y\\le1$.`
   },
   {
     q:`<p>Confirm the density from the previous problem is valid by integrating $\\int_0^1\\frac{1}{2\\sqrt{y}}\\,dy$.</p>`,
@@ -116,13 +116,13 @@ add("probx-derived", [
     answer:`$f_Z(z)=\\frac{1}{\\sqrt{2\\pi}}e^{-z^2/2}$, the standard normal $\\mathcal N(0,1)$.`
   },
   {
-    q:`<p>$X$ is uniform on $[-1,1]$, so $f_X(x)=\\frac12$. Let $Y=X^2$. Use the CDF method to find $f_Y(y)$ for $0<y<1$.</p>`,
+    q:`<p>$X$ is uniform on $[-1,1]$, so $f_X(x)=\\frac12$. Let $Y=X^2$. Use the CDF method to find $f_Y(y)$ for $0&lt;y&lt;1$.</p>`,
     steps:[
       {do:`$g(x)=x^2$ is not one-to-one on $[-1,1]$, so use $F_Y(y)=P(X^2\\le y)=P(-\\sqrt{y}\\le X\\le\\sqrt{y})$.`, why:`Two branches ($x=\\pm\\sqrt{y}$) map to each $y$; the CDF method handles this.`},
       {do:`$F_Y(y)=\\int_{-\\sqrt{y}}^{\\sqrt{y}}\\frac12\\,dx=\\frac12\\cdot2\\sqrt{y}=\\sqrt{y}$.`, why:`Integrate the constant density over the interval.`},
       {do:`Differentiate: $f_Y(y)=\\frac{d}{dy}\\sqrt{y}=\\frac{1}{2\\sqrt{y}}$.`, why:`The density is the derivative of the CDF.`}
     ],
-    answer:`$f_Y(y)=\\frac{1}{2\\sqrt{y}}$ for $0<y<1$.`
+    answer:`$f_Y(y)=\\frac{1}{2\\sqrt{y}}$ for $0&lt;y&lt;1$.`
   },
   {
     q:`<p>$X\\sim\\text{Exp}(\\lambda)$. Let $Y=e^{X}$. Find $f_Y(y)$ and its support.</p>`,
@@ -172,7 +172,7 @@ add("probx-derived", [
   {
     q:`<p>$X$ is uniform on $[0,1]$. Let $Y=\\min(X,\\,1-X)$ (distance to the nearest endpoint). Find $f_Y(y)$ for $0\\le y\\le\\tfrac12$.</p>`,
     steps:[
-      {do:`$Y\\le y$ fails only in the middle: $P(Y>y)=P(y<X<1-y)=1-2y$.`, why:`$\\min(X,1-X)>y$ means $X$ is at least $y$ from both ends.`},
+      {do:`$Y\\le y$ fails only in the middle: $P(Y>y)=P(y&lt;X&lt;1-y)=1-2y$.`, why:`$\\min(X,1-X)>y$ means $X$ is at least $y$ from both ends.`},
       {do:`So $F_Y(y)=1-(1-2y)=2y$ for $0\\le y\\le\\tfrac12$.`, why:`Complement of the survival probability.`},
       {do:`Differentiate: $f_Y(y)=2$.`, why:`Density is the derivative of the CDF.`}
     ],
@@ -1295,7 +1295,7 @@ add("mlx-clustering-metrics", [
     q:`<p>When $a>b$, rewrite $s$ as $\\frac{b}{a}-1$ and state its range.</p>`,
     steps:[
       {do:`$\\max(a,b)=a$, so $s=\\frac{b-a}{a}=\\frac{b}{a}-1$.`, why:`Divide through by $a$.`},
-      {do:`Since $0\\le b<a$, $\\frac{b}{a}\\in[0,1)$.`, why:`Bounds on the ratio.`}
+      {do:`Since $0\\le b&lt;a$, $\\frac{b}{a}\\in[0,1)$.`, why:`Bounds on the ratio.`}
     ],
     answer:`$s=\\frac{b}{a}-1\\in[-1,0)$ when $a>b$.`
   },

@@ -71,13 +71,13 @@
       steps:[
         {do:`Squared: $\\frac12(10)^2 = 50$.`, why:`Squaring grows quadratically with the gap.`},
         {do:`Absolute: $|10| = 10$.`, why:`Absolute loss grows only linearly.`},
-        {do:`$50 > 10$, so squared loss penalizes the outlier far more.`, why:`That is why squared loss is sensitive to outliers.`}
+        {do:`$50 &gt; 10$, so squared loss penalizes the outlier far more.`, why:`That is why squared loss is sensitive to outliers.`}
       ],
       answer:`Squared loss ($50$ vs $10$) penalizes the outlier more` },
 
-    { q:`<p>Huber loss is $\\frac12 r^2$ when $|r|\\le \\delta$ and $\\delta|r| - \\frac12\\delta^2$ when $|r|>\\delta$, where $r = y - z$. With $\\delta = 1$ and residual $r = 3$, find the Huber loss.</p>`,
+    { q:`<p>Huber loss is $\\frac12 r^2$ when $|r|\\le \\delta$ and $\\delta|r| - \\frac12\\delta^2$ when $|r|&gt;\\delta$, where $r = y - z$. With $\\delta = 1$ and residual $r = 3$, find the Huber loss.</p>`,
       steps:[
-        {do:`$|r| = 3 > \\delta = 1$, so use the linear branch.`, why:`Beyond $\\delta$ Huber switches from quadratic to linear.`},
+        {do:`$|r| = 3 &gt; \\delta = 1$, so use the linear branch.`, why:`Beyond $\\delta$ Huber switches from quadratic to linear.`},
         {do:`$\\delta|r| - \\frac12\\delta^2 = 1{\\cdot}3 - \\frac12{\\cdot}1 = 3 - 0.5 = 2.5$.`, why:`Plug into the linear-branch formula.`}
       ],
       answer:`Huber loss $= 2.5$` },
@@ -208,12 +208,12 @@
       ],
       answer:`$\\theta = 0.5$` },
 
-    { q:`<p>For $J(\\theta) = \\theta^2$ the update is $\\theta_{k+1} = \\theta_k(1 - 2\\alpha)$. For which range of $\\alpha > 0$ does gradient descent converge to $0$?</p>`,
+    { q:`<p>For $J(\\theta) = \\theta^2$ the update is $\\theta_{k+1} = \\theta_k(1 - 2\\alpha)$. For which range of $\\alpha &gt; 0$ does gradient descent converge to $0$?</p>`,
       steps:[
-        {do:`Convergence needs $|1 - 2\\alpha| < 1$.`, why:`Each step multiplies $\\theta$ by $1-2\\alpha$; it shrinks only if the factor's size is below $1$.`},
-        {do:`$-1 < 1 - 2\\alpha < 1 \\Rightarrow 0 < \\alpha < 1$.`, why:`Solve the inequality for $\\alpha$.`}
+        {do:`Convergence needs $|1 - 2\\alpha| &lt; 1$.`, why:`Each step multiplies $\\theta$ by $1-2\\alpha$; it shrinks only if the factor's size is below $1$.`},
+        {do:`$-1 &lt; 1 - 2\\alpha &lt; 1 \\Rightarrow 0 &lt; \\alpha &lt; 1$.`, why:`Solve the inequality for $\\alpha$.`}
       ],
-      answer:`$0 < \\alpha < 1$` },
+      answer:`$0 &lt; \\alpha &lt; 1$` },
 
     { q:`<p>Minimize $J(\\theta) = (\\theta - 4)^2$, gradient $2(\\theta - 4)$, from $\\theta_0 = 0$, $\\alpha = 0.25$. Do TWO steps.</p>`,
       steps:[
@@ -352,7 +352,7 @@
       steps:[
         {do:`A: $\\exp(-\\frac{(3-3)^2}{2}) = \\exp(0) = 1$.`, why:`Mean matches the point exactly.`},
         {do:`B: $\\exp(-\\frac{(3-0)^2}{2}) = \\exp(-4.5) \\approx 0.011$.`, why:`The point is far from B's mean.`},
-        {do:`$1 > 0.011$, so model A is more likely.`, why:`The Gaussian peaks at its mean.`}
+        {do:`$1 &gt; 0.011$, so model A is more likely.`, why:`The Gaussian peaks at its mean.`}
       ],
       answer:`Model A ($1$ vs $\\approx 0.011$)` },
 
@@ -379,9 +379,9 @@
     { q:`<p>A logistic model has $\\theta = (-6, 2, 3)$ (bias, then $x_1, x_2$). Is the point $(x_1, x_2) = (2, 1)$ classified $1$ or $0$ (threshold $0.5$)?</p>`,
       steps:[
         {do:`Score $z = -6 + 2{\\cdot}2 + 3{\\cdot}1 = -6 + 4 + 3 = 1$.`, why:`Include the bias term.`},
-        {do:`$z = 1 > 0$, so $\\sigma(z) > 0.5$: predict class $1$.`, why:`A positive score lands above the $0.5$ threshold.`}
+        {do:`$z = 1 &gt; 0$, so $\\sigma(z) &gt; 0.5$: predict class $1$.`, why:`A positive score lands above the $0.5$ threshold.`}
       ],
-      answer:`Class $1$ ($z = 1 > 0$)` },
+      answer:`Class $1$ ($z = 1 &gt; 0$)` },
 
     { q:`<p>The log-odds (logit) is $\\log\\frac{p}{1-p} = z$. If $p = 0.8$, find $z$ (natural log, round to 3 dp).</p>`,
       steps:[
@@ -472,7 +472,7 @@
 
     { q:`<p>A 3-class softmax outputs $\\phi = (0.5, 0.3, 0.2)$ with true class $1$. After one gradient step does $\\phi_1$ increase or decrease, and why?</p>`,
       steps:[
-        {do:`The gradient $\\phi_i - \\mathbb{1}[i=c]$ for class 1 is $0.5 - 1 = -0.5 < 0$.`, why:`A negative gradient on $z_1$ means descent raises $z_1$.`},
+        {do:`The gradient $\\phi_i - \\mathbb{1}[i=c]$ for class 1 is $0.5 - 1 = -0.5 &lt; 0$.`, why:`A negative gradient on $z_1$ means descent raises $z_1$.`},
         {do:`Raising $z_1$ raises its exponential and hence $\\phi_1$.`, why:`Softmax gives more probability to higher relative scores.`}
       ],
       answer:`$\\phi_1$ increases (training pushes mass toward the true class)` },
@@ -546,12 +546,12 @@
       ],
       answer:`Linear → identity, Logistic → logit, Poisson → log` },
 
-    { q:`<p>A count GLM predicts $\\eta = -0.5$. Using the log link ($\\lambda = e^\\eta$), find the expected count (use $e^{-0.5} \\approx 0.607$, 3 dp). Why is $\\lambda > 0$ guaranteed?</p>`,
+    { q:`<p>A count GLM predicts $\\eta = -0.5$. Using the log link ($\\lambda = e^\\eta$), find the expected count (use $e^{-0.5} \\approx 0.607$, 3 dp). Why is $\\lambda &gt; 0$ guaranteed?</p>`,
       steps:[
         {do:`$\\lambda = e^{-0.5} \\approx 0.607$.`, why:`Apply the inverse log link.`},
         {do:`$e^\\eta$ is positive for every real $\\eta$, so the predicted count is always positive.`, why:`The log link enforces a valid (non-negative) count mean.`}
       ],
-      answer:`$\\lambda \\approx 0.607$; $e^\\eta > 0$ always, so counts stay positive` }
+      answer:`$\\lambda \\approx 0.607$; $e^\\eta &gt; 0$ always, so counts stay positive` }
   ]);
 
 })();

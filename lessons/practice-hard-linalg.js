@@ -157,7 +157,7 @@
       answer: `$N^2=\\begin{bmatrix}0&0\\\\0&0\\end{bmatrix}$`
     },
     {
-      q: `<p>Powers of a rotation: $R=\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix}$ rotates by $90^\\circ$. Find the smallest $k>0$ with $R^k=I$.</p>`,
+      q: `<p>Powers of a rotation: $R=\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix}$ rotates by $90^\\circ$. Find the smallest $k&gt;0$ with $R^k=I$.</p>`,
       steps: [
         { do: `$R^2=\\begin{bmatrix}-1&0\\\\0&-1\\end{bmatrix}=-I$.`, why: `Two $90^\\circ$ turns give $180^\\circ$.` },
         { do: `$R^3=R^2 R=-R$, and $R^4=(R^2)^2=(-I)^2=I$.`, why: `Four $90^\\circ$ turns is a full $360^\\circ$ rotation.` }
@@ -1059,7 +1059,7 @@
       answer: `$2$`
     },
     {
-      q: `<p>For which $k$ is $A=\\begin{bmatrix}1&2\\\\2&k\\end{bmatrix}$ rank-deficient (rank $<2$)?</p>`,
+      q: `<p>For which $k$ is $A=\\begin{bmatrix}1&2\\\\2&k\\end{bmatrix}$ rank-deficient (rank $&lt;2$)?</p>`,
       steps: [
         { do: `Rank drops when columns are dependent, i.e. $\\det=0$.`, why: `Full rank $\\Leftrightarrow$ invertible $\\Leftrightarrow\\det\\neq 0$.` },
         { do: `$\\det=k-4=0\\Rightarrow k=4$.`, why: `Solve.` }
@@ -1069,7 +1069,7 @@
     {
       q: `<p>If $A$ is $3\\times 3$ with rank $2$, is it invertible? What is $\\det A$?</p>`,
       steps: [
-        { do: `Rank $2<3$ means a column is dependent.`, why: `Not full rank.` },
+        { do: `Rank $2&lt;3$ means a column is dependent.`, why: `Not full rank.` },
         { do: `Dependent column $\\Rightarrow$ singular $\\Rightarrow\\det A=0$.`, why: `Some non-zero $w$ has $Aw=0$.` }
       ],
       answer: `Not invertible; $\\det A=0$`
@@ -1148,7 +1148,7 @@
       q: `<p>Is $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$ PSD?</p>`,
       steps: [
         { do: `$x^\\top B x=x_1^2-x_2^2$.`, why: `Quadratic form.` },
-        { do: `At $x=(0,1)$: value $=-1<0$.`, why: `A single negative value breaks PSD.` }
+        { do: `At $x=(0,1)$: value $=-1&lt;0$.`, why: `A single negative value breaks PSD.` }
       ],
       answer: `No (not PSD — a saddle)`
     },
@@ -1156,7 +1156,7 @@
       q: `<p>A symmetric matrix has eigenvalues $4$ and $0$. Is it PSD? Positive definite?</p>`,
       steps: [
         { do: `All eigenvalues $\\ge 0$: PSD.`, why: `PSD $\\Leftrightarrow$ every $\\lambda_i\\ge 0$.` },
-        { do: `One eigenvalue is exactly $0$, so not strictly positive: not positive definite.`, why: `Positive definite needs all $\\lambda_i>0$.` }
+        { do: `One eigenvalue is exactly $0$, so not strictly positive: not positive definite.`, why: `Positive definite needs all $\\lambda_i&gt;0$.` }
       ],
       answer: `PSD but not positive definite`
     },
@@ -1179,18 +1179,18 @@
     {
       q: `<p>Use the leading-minor test on $A=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ to check positive definiteness.</p>`,
       steps: [
-        { do: `First leading minor: $2>0$.`, why: `Top-left $1\\times 1$ block must be positive.` },
-        { do: `Second leading minor: $\\det=4-1=3>0$.`, why: `Full determinant must be positive.` },
-        { do: `Both positive $\\Rightarrow$ positive definite.`, why: `Sylvester's criterion: all leading minors $>0$.` }
+        { do: `First leading minor: $2&gt;0$.`, why: `Top-left $1\\times 1$ block must be positive.` },
+        { do: `Second leading minor: $\\det=4-1=3&gt;0$.`, why: `Full determinant must be positive.` },
+        { do: `Both positive $\\Rightarrow$ positive definite.`, why: `Sylvester's criterion: all leading minors $&gt;0$.` }
       ],
-      answer: `Positive definite (minors $2,\\ 3>0$)`
+      answer: `Positive definite (minors $2,\\ 3&gt;0$)`
     },
     {
       q: `<p>Is $A=\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$ PSD? Use leading minors.</p>`,
       steps: [
-        { do: `First minor: $1>0$.`, why: `Top-left entry.` },
-        { do: `$\\det=1-4=-3<0$.`, why: `Full determinant.` },
-        { do: `A negative determinant for a $2\\times 2$ symmetric matrix means one eigenvalue is negative.`, why: `$\\det=\\lambda_1\\lambda_2<0$ forces opposite signs.` }
+        { do: `First minor: $1&gt;0$.`, why: `Top-left entry.` },
+        { do: `$\\det=1-4=-3&lt;0$.`, why: `Full determinant.` },
+        { do: `A negative determinant for a $2\\times 2$ symmetric matrix means one eigenvalue is negative.`, why: `$\\det=\\lambda_1\\lambda_2&lt;0$ forces opposite signs.` }
       ],
       answer: `No (one eigenvalue is negative)`
     },
@@ -1206,7 +1206,7 @@
     {
       q: `<p>Is the covariance matrix $\\Sigma=\\begin{bmatrix}4&2\\\\2&3\\end{bmatrix}$ PSD? Check via leading minors.</p>`,
       steps: [
-        { do: `First minor $4>0$; $\\det=12-4=8>0$.`, why: `Both leading minors positive.` },
+        { do: `First minor $4&gt;0$; $\\det=12-4=8&gt;0$.`, why: `Both leading minors positive.` },
         { do: `So $\\Sigma$ is positive definite, hence PSD.`, why: `Every covariance matrix is PSD (variance can't be negative).` }
       ],
       answer: `Yes, PSD (in fact positive definite)`
@@ -1214,7 +1214,7 @@
     {
       q: `<p>For which values of $c$ is $A=\\begin{bmatrix}1&c\\\\c&1\\end{bmatrix}$ PSD?</p>`,
       steps: [
-        { do: `First minor $1>0$ always.`, why: `Top-left entry is positive.` },
+        { do: `First minor $1&gt;0$ always.`, why: `Top-left entry is positive.` },
         { do: `$\\det=1-c^2\\ge 0\\Rightarrow c^2\\le 1$.`, why: `PSD allows the determinant to be $\\ge 0$.` },
         { do: `So $-1\\le c\\le 1$.`, why: `Solve $c^2\\le 1$.` }
       ],
@@ -1232,8 +1232,8 @@
     {
       q: `<p>Test $A=\\begin{bmatrix}2&-1\\\\-1&2\\end{bmatrix}$ for positive definiteness, then evaluate $x^\\top A x$ at $x=(1,1)$.</p>`,
       steps: [
-        { do: `Minors: $2>0$, $\\det=4-1=3>0$: positive definite.`, why: `Sylvester's criterion.` },
-        { do: `$x^\\top A x=2(1)^2+2(1)^2-2(1)(1)=2+2-2=2>0$.`, why: `Quadratic form $2x_1^2+2x_2^2-2x_1x_2$ at $(1,1)$.` }
+        { do: `Minors: $2&gt;0$, $\\det=4-1=3&gt;0$: positive definite.`, why: `Sylvester's criterion.` },
+        { do: `$x^\\top A x=2(1)^2+2(1)^2-2(1)(1)=2+2-2=2&gt;0$.`, why: `Quadratic form $2x_1^2+2x_2^2-2x_1x_2$ at $(1,1)$.` }
       ],
       answer: `Positive definite; $x^\\top A x=2$`
     },
@@ -1241,9 +1241,9 @@
       q: `<p>Is the $3\\times 3$ matrix $A=\\operatorname{diag}(1,0,-2)$ PSD?</p>`,
       steps: [
         { do: `Eigenvalues $1,0,-2$.`, why: `Diagonal entries are the eigenvalues.` },
-        { do: `$-2<0$ breaks the test.`, why: `PSD requires all $\\lambda_i\\ge 0$.` }
+        { do: `$-2&lt;0$ breaks the test.`, why: `PSD requires all $\\lambda_i\\ge 0$.` }
       ],
-      answer: `No (eigenvalue $-2<0$)`
+      answer: `No (eigenvalue $-2&lt;0$)`
     },
     {
       q: `<p>A kernel (Gram) matrix is $K_{ij}=x_i^\\top x_j$ for vectors $x_1,\\dots,x_n$. Argue $K$ is PSD.</p>`,
@@ -1256,11 +1256,11 @@
     {
       q: `<p>If $A$ is positive definite, show $A$ is invertible.</p>`,
       steps: [
-        { do: `All eigenvalues $\\lambda_i>0$, hence non-zero.`, why: `Positive definite means strictly positive eigenvalues.` },
-        { do: `$\\det A=\\prod_i\\lambda_i>0\\neq 0$.`, why: `Product of positive numbers is positive.` },
+        { do: `All eigenvalues $\\lambda_i&gt;0$, hence non-zero.`, why: `Positive definite means strictly positive eigenvalues.` },
+        { do: `$\\det A=\\prod_i\\lambda_i&gt;0\\neq 0$.`, why: `Product of positive numbers is positive.` },
         { do: `Non-zero determinant $\\Rightarrow$ invertible.`, why: `Singularity requires $\\det=0$.` }
       ],
-      answer: `Yes — $\\det A>0$, so invertible`
+      answer: `Yes — $\\det A&gt;0$, so invertible`
     },
     {
       q: `<p>If $A$ and $B$ are PSD, show $A+B$ is PSD.</p>`,
@@ -1275,7 +1275,7 @@
       q: `<p>Is $A=\\begin{bmatrix}1&2&0\\\\2&1&0\\\\0&0&5\\end{bmatrix}$ PSD? Use the block structure.</p>`,
       steps: [
         { do: `It is block-diagonal: a $2\\times 2$ block $\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$ and a $1\\times 1$ block $[5]$.`, why: `PSD of a block-diagonal matrix needs each block PSD.` },
-        { do: `The $2\\times 2$ block has $\\det=1-4=-3<0$, so it has a negative eigenvalue.`, why: `That block alone is not PSD.` },
+        { do: `The $2\\times 2$ block has $\\det=1-4=-3&lt;0$, so it has a negative eigenvalue.`, why: `That block alone is not PSD.` },
         { do: `One bad block ruins it.`, why: `All blocks must be PSD.` }
       ],
       answer: `No (the $2\\times2$ block is not PSD)`
@@ -1410,7 +1410,7 @@
       q: `<p>A symmetric $3\\times3$ matrix has eigenvalues $1,1,4$. Is it PSD? Positive definite?</p>`,
       steps: [
         { do: `All eigenvalues $\\ge 0$: PSD.`, why: `PSD test.` },
-        { do: `All $>0$: also positive definite.`, why: `No zero eigenvalue.` }
+        { do: `All $&gt;0$: also positive definite.`, why: `No zero eigenvalue.` }
       ],
       answer: `PSD and positive definite`
     },
@@ -1628,7 +1628,7 @@
     {
       q: `<p>For $f=x_1^2+3x_2^2$ with $H=\\begin{bmatrix}2&0\\\\0&6\\end{bmatrix}$, is $f$ convex?</p>`,
       steps: [
-        { do: `Eigenvalues are $2$ and $6$, both $>0$.`, why: `Diagonal eigenvalues.` },
+        { do: `Eigenvalues are $2$ and $6$, both $&gt;0$.`, why: `Diagonal eigenvalues.` },
         { do: `All $\\ge 0$: $H\\succeq 0$, so $f$ is convex.`, why: `PSD Hessian = convex bowl.` }
       ],
       answer: `Yes, convex (a bowl)`
@@ -1661,8 +1661,8 @@
     {
       q: `<p>Is $f=x^2+xy+y^2$ convex? Test the Hessian $H=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ with leading minors.</p>`,
       steps: [
-        { do: `First minor $2>0$.`, why: `Top-left entry.` },
-        { do: `$\\det=4-1=3>0$.`, why: `Full determinant.` },
+        { do: `First minor $2&gt;0$.`, why: `Top-left entry.` },
+        { do: `$\\det=4-1=3&gt;0$.`, why: `Full determinant.` },
         { do: `Both positive $\\Rightarrow$ positive definite $\\Rightarrow$ convex.`, why: `Sylvester's criterion.` }
       ],
       answer: `Yes, strictly convex`
@@ -1671,8 +1671,8 @@
       q: `<p>For $f=x^2-3xy+y^2$, find the Hessian and classify it.</p>`,
       steps: [
         { do: `$f_x=2x-3y\\Rightarrow f_{xx}=2$, $f_{xy}=-3$.`, why: `The $-3xy$ term gives $f_{xy}=-3$.` },
-        { do: `$H=\\begin{bmatrix}2&-3\\\\-3&2\\end{bmatrix}$; $\\det=4-9=-5<0$.`, why: `Negative determinant.` },
-        { do: `Indefinite (eigenvalues of opposite sign): saddle.`, why: `$\\det<0\\Rightarrow\\lambda_1\\lambda_2<0$.` }
+        { do: `$H=\\begin{bmatrix}2&-3\\\\-3&2\\end{bmatrix}$; $\\det=4-9=-5&lt;0$.`, why: `Negative determinant.` },
+        { do: `Indefinite (eigenvalues of opposite sign): saddle.`, why: `$\\det&lt;0\\Rightarrow\\lambda_1\\lambda_2&lt;0$.` }
       ],
       answer: `$H=\\begin{bmatrix}2&-3\\\\-3&2\\end{bmatrix}$, a saddle`
     },
@@ -1713,7 +1713,7 @@
     {
       q: `<p>For the loss above with $H=\\begin{bmatrix}3&1\\\\1&2\\end{bmatrix}$, is the problem convex? Will gradient descent reach the global minimum?</p>`,
       steps: [
-        { do: `Minors: $3>0$, $\\det=6-1=5>0$: positive definite.`, why: `Sylvester's criterion.` },
+        { do: `Minors: $3&gt;0$, $\\det=6-1=5&gt;0$: positive definite.`, why: `Sylvester's criterion.` },
         { do: `PSD (indeed PD) Hessian $\\Rightarrow$ convex.`, why: `Convexity test.` },
         { do: `Convex $\\Rightarrow$ one global minimum reachable by gradient descent.`, why: `No spurious local minima.` }
       ],
@@ -1732,7 +1732,7 @@
       q: `<p>For $f(x,y,z)=x^2+2y^2+3z^2$, write the $3\\times 3$ Hessian and confirm convexity.</p>`,
       steps: [
         { do: `Pure second derivatives: $f_{xx}=2$, $f_{yy}=4$, $f_{zz}=6$; all cross terms $0$.`, why: `No coupling between variables.` },
-        { do: `$H=\\operatorname{diag}(2,4,6)$, eigenvalues $2,4,6$ all $>0$.`, why: `Diagonal Hessian.` },
+        { do: `$H=\\operatorname{diag}(2,4,6)$, eigenvalues $2,4,6$ all $&gt;0$.`, why: `Diagonal Hessian.` },
         { do: `$H\\succ 0$, so $f$ is strictly convex.`, why: `Positive definite Hessian.` }
       ],
       answer: `$H=\\operatorname{diag}(2,4,6)$, strictly convex`

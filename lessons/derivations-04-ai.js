@@ -37,7 +37,7 @@ Object.assign(window.DERIVATIONS, {
    <p><b>Why a surrogate, and why the hinge has a kink.</b> We swap in a smooth-ish stand-in (a <b>surrogate</b>) that <i>does</i> have a useful slope. Hinge loss is $\\max(1-m,\\,0)$, where $m$ is the margin.</p>
    <ul class="steps">
      <li>When the margin $m \\ge 1$ (correct and confident), $1-m \\le 0$, so the $\\max$ picks $0$. No penalty.</li>
-     <li>When $m < 1$, the penalty is $1-m$, a sloped line that grows as the answer gets worse.</li>
+     <li>When $m &lt; 1$, the penalty is $1-m$, a sloped line that grows as the answer gets worse.</li>
      <li>The two pieces meet at $m=1$. That meeting point is the <b>kink</b>: the loss is flat to the right of it and sloped to the left. The kink is exactly the demand "do not just be right, be right by a margin of $1$".</li>
    </ul>
    <p><b>Intuition.</b> Zero-one loss is what we truly care about, but it is blind to direction. The surrogate is a guide that <i>can</i> point downhill, hugs the zero-one shape, and pushes for a safety margin.</p>`,
@@ -91,9 +91,9 @@ Object.assign(window.DERIVATIONS, {
    <p><b>Why DP needs no cycles.</b> The recurrence is $\\text{FutureCost}(s) = \\min_a [\\text{Cost}(s,a) + \\text{FutureCost}(\\text{Succ}(s,a))]$. To compute $\\text{FutureCost}(s)$ you must already know the future cost of its successors. If a cycle existed, say $s$ leads to $t$ and $t$ leads back to $s$, then $s$ needs $t$'s answer and $t$ needs $s$'s answer: each waits on the other, forever. The definition is circular. With <b>no cycles</b> (an acyclic graph), you can always order states so every successor is solved before the state that needs it. ∎</p>
    <p><b>Why UCS is correct (the exchange argument).</b> UCS always pops the frontier node with the smallest $\\text{PastCost}$ (cheapest path found so far). Claim: the first time UCS pops a node, that PastCost is its true cheapest cost. All edge costs are $\\ge 0$.</p>
    <ul class="steps">
-     <li>Suppose not. Suppose UCS pops node $u$ at cost $c$, but a truly cheaper path to $u$ exists, with cost $c' < c$.</li>
+     <li>Suppose not. Suppose UCS pops node $u$ at cost $c$, but a truly cheaper path to $u$ exists, with cost $c' &lt; c$.</li>
      <li>That cheaper path starts at the (already-popped) start and must cross from the explored region to the frontier at some node $v$, still unpopped.</li>
-     <li>$v$ sits on the cheaper path before $u$, and edge costs are $\\ge 0$, so $\\text{PastCost}(v) \\le c' < c$.</li>
+     <li>$v$ sits on the cheaper path before $u$, and edge costs are $\\ge 0$, so $\\text{PastCost}(v) \\le c' &lt; c$.</li>
      <li>But then UCS would have popped the cheaper $v$ <i>before</i> the costlier $u$. Contradiction. ∎</li>
    </ul>
    <p>So the moment a node is popped, its shortest path is settled, and we never revisit it.</p>
@@ -123,10 +123,10 @@ Object.assign(window.DERIVATIONS, {
      <li>Total $= 1 + \\gamma + \\gamma^2 + \\gamma^3 + \\dots$. Call this sum $S$.</li>
      <li>Multiply by $\\gamma$: $\\gamma S = \\gamma + \\gamma^2 + \\gamma^3 + \\dots$.</li>
      <li>Subtract: $S - \\gamma S = 1$ (every term past the first cancels).</li>
-     <li>Factor: $S(1-\\gamma) = 1$, so $S = \\dfrac{1}{1-\\gamma}$. A finite number whenever $\\gamma < 1$. ∎</li>
+     <li>Factor: $S(1-\\gamma) = 1$, so $S = \\dfrac{1}{1-\\gamma}$. A finite number whenever $\\gamma &lt; 1$. ∎</li>
    </ul>
    <p>So even an infinite stream of rewards adds up to something finite. With $\\gamma = 0.9$, the cap is $\\tfrac{1}{0.1} = 10$.</p>
-   <p><b>Intuition.</b> $\\gamma$ does double duty. It makes the math finite, and it captures impatience: a reward today is worth more than the same reward far in the future, because each step ahead it is multiplied by another $\\gamma < 1$ and fades.</p>`,
+   <p><b>Intuition.</b> $\\gamma$ does double duty. It makes the math finite, and it captures impatience: a reward today is worth more than the same reward far in the future, because each step ahead it is multiplied by another $\\gamma &lt; 1$ and fades.</p>`,
 
 /* ---------------------------------------------------------------- */
 "ai-policy-value":
@@ -163,9 +163,9 @@ Object.assign(window.DERIVATIONS, {
    <p><b>The update is a contraction.</b> A <b>contraction</b> is a step that always pulls things closer together by a fixed factor. Let $V^*$ be the true optimal values, and measure error by the largest gap between our estimate $V^{(t)}$ and $V^*$ across all states.</p>
    <ul class="steps">
      <li>The Bellman update combines a reward, a discount $\\gamma$, and a $\\max$ over actions.</li>
-     <li>Reward and the $\\max$ do not magnify a gap. But the future term is multiplied by $\\gamma < 1$.</li>
+     <li>Reward and the $\\max$ do not magnify a gap. But the future term is multiplied by $\\gamma &lt; 1$.</li>
      <li>So if our values were off by at most $\\epsilon$ before the update, they are off by at most $\\gamma\\,\\epsilon$ after it. (Here $\\epsilon$ just names "the current worst error".)</li>
-     <li>Each pass multiplies the worst error by $\\gamma$: after $t$ passes the error is at most $\\gamma^t\\,\\epsilon$. Since $\\gamma < 1$, $\\gamma^t \\to 0$. The estimates close in on $V^*$. ∎</li>
+     <li>Each pass multiplies the worst error by $\\gamma$: after $t$ passes the error is at most $\\gamma^t\\,\\epsilon$. Since $\\gamma &lt; 1$, $\\gamma^t \\to 0$. The estimates close in on $V^*$. ∎</li>
    </ul>
    <p><b>Why it is a fixed point.</b> The true values $V^*$ satisfy the Bellman equation exactly, so applying the update to $V^*$ returns $V^*$ unchanged. Value iteration is walking toward that unmoving target, the gap to it shrinking by $\\gamma$ each step.</p>
    <p><b>Why read off $\\arg\\max$ at the end.</b> $\\max_a$ keeps the best action's <i>value</i>; $\\arg\\max_a$ names the best <i>action</i> itself. Once the values stop moving, the action that looks best in each state is genuinely best, giving the optimal policy $\\pi^*$.</p>

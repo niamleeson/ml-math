@@ -289,7 +289,7 @@ L({
     `<p>Recommendation systems ask "given that you watched this movie, how likely are you to watch that one?" Conditioning on what a user already did is the core of personalization.</p>`,
   quiz: {
     q: `A die came up greater than 3 (so it's in $\\{4,5,6\\}$). What is the probability it's a 6?`,
-    a: `<p>The new world is $\\{4,5,6\\}$, three equally likely faces. $P(6 \\mid >3) = \\frac{1/6}{3/6} = \\frac{1}{3}$.</p>`
+    a: `<p>The new world is $\\{4,5,6\\}$, three equally likely faces. $P(6 \\mid &gt;3) = \\frac{1/6}{3/6} = \\frac{1}{3}$.</p>`
   }
 });
 

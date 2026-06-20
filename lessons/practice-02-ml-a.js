@@ -161,7 +161,7 @@
         steps:[
           {do:`Loss $= -\\log(0.2)$.`, why:`Label is 1, so we use $-\\log(p)$.`},
           {do:`$\\log(0.2) \\approx -1.609$, so loss $\\approx 1.609$.`, why:`Compute the natural log.`},
-          {do:`$1.609 > 0.223$.`, why:`A confidently wrong prediction is punished far more than a confidently right one.`}
+          {do:`$1.609 &gt; 0.223$.`, why:`A confidently wrong prediction is punished far more than a confidently right one.`}
         ],
         answer:`$\\approx 1.609$ (much larger than $0.223$)` }
     ],
@@ -224,7 +224,7 @@
 
       { q:`<p>Model A has cost $J = 12$. Model B has cost $J = 7$. Which model fits the data better?</p>`,
         steps:[
-          {do:`Compare: $7 < 12$.`, why:`Lower cost means less total error.`},
+          {do:`Compare: $7 &lt; 12$.`, why:`Lower cost means less total error.`},
           {do:`Model B fits better.`, why:`Training aims to make the cost as small as possible.`}
         ],
         answer:`Model B (lower cost)` },
@@ -241,7 +241,7 @@
         steps:[
           {do:`Model A predicts $2,4$. Losses: $\\frac{1}{2}(0)^2 = 0$, $\\frac{1}{2}(0)^2 = 0$. $J_A = 0$.`, why:`Model A fits both points exactly.`},
           {do:`Model B predicts $2,3$. Losses: $\\frac{1}{2}(2-2)^2 = 0$, $\\frac{1}{2}(4-3)^2 = 0.5$. $J_B = 0.5$.`, why:`Model B misses the second point.`},
-          {do:`$J_A = 0 < J_B = 0.5$.`, why:`Lower cost wins.`}
+          {do:`$J_A = 0 &lt; J_B = 0.5$.`, why:`Lower cost wins.`}
         ],
         answer:`Model A ($J = 0$)` }
     ],
@@ -437,7 +437,7 @@
         steps:[
           {do:`$\\theta=0.5$: $0.5^7 \\times 0.5^3 = 0.5^{10} \\approx 0.00098$.`, why:`Plug into the likelihood formula.`},
           {do:`$\\theta=0.7$: $0.7^7 \\times 0.3^3 \\approx 0.0823 \\times 0.027 \\approx 0.00222$.`, why:`Compute the other candidate.`},
-          {do:`$0.00222 > 0.00098$, so $\\theta = 0.7$ is more likely.`, why:`Higher likelihood means it explains the data better.`}
+          {do:`$0.00222 &gt; 0.00098$, so $\\theta = 0.7$ is more likely.`, why:`Higher likelihood means it explains the data better.`}
         ],
         answer:`$\\theta = 0.7$ (higher likelihood, $\\approx 0.00222$)` },
 
@@ -506,7 +506,7 @@
       { q:`<p>A model has score $z = \\theta^\\top x = 2$ for an email. Predict the probability of spam, and decide spam or not (threshold $0.5$). Use $g(2)\\approx 0.88$.</p>`,
         steps:[
           {do:`$P(\\text{spam}) = g(2) \\approx 0.88$.`, why:`The sigmoid turns the score into a probability.`},
-          {do:`$0.88 > 0.5$, so predict spam.`, why:`Above the threshold means class 1.`}
+          {do:`$0.88 &gt; 0.5$, so predict spam.`, why:`Above the threshold means class 1.`}
         ],
         answer:`$P \\approx 0.88$; predict spam` },
 
@@ -535,7 +535,7 @@
         steps:[
           {do:`Email 1: $g(3) \\approx 0.95$.`, why:`A large positive score gives high spam probability.`},
           {do:`Email 2: $g(-1) \\approx 0.27$.`, why:`A negative score gives low spam probability.`},
-          {do:`$0.95 > 0.27$, so email 1 is more likely spam.`, why:`Higher probability wins.`}
+          {do:`$0.95 &gt; 0.27$, so email 1 is more likely spam.`, why:`Higher probability wins.`}
         ],
         answer:`Email 1 ($\\approx 0.95$)` },
 

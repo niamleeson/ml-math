@@ -55,7 +55,7 @@ Object.assign(window.DERIVATIONS, {
      <li>For a small step $\\Delta\\theta$, the cost changes by about $J(\\theta+\\Delta\\theta) \\approx J(\\theta) + \\nabla J(\\theta)^\\top \\Delta\\theta$. This is the first-order Taylor approximation: near a point, the change is the slope times the step.</li>
      <li>We choose $\\Delta\\theta = -\\alpha\\nabla J$. Plug it in: $J(\\theta - \\alpha\\nabla J) \\approx J(\\theta) - \\alpha\\,\\nabla J^\\top \\nabla J$.</li>
      <li>But $\\nabla J^\\top\\nabla J = \\lVert\\nabla J\\rVert^2 \\ge 0$ — a squared length, never negative.</li>
-     <li>So $J(\\theta - \\alpha\\nabla J) \\approx J(\\theta) - \\alpha\\lVert\\nabla J\\rVert^2 < J(\\theta)$ whenever the gradient is non-zero and $\\alpha$ is small enough. The cost went down. ∎</li>
+     <li>So $J(\\theta - \\alpha\\nabla J) \\approx J(\\theta) - \\alpha\\lVert\\nabla J\\rVert^2 &lt; J(\\theta)$ whenever the gradient is non-zero and $\\alpha$ is small enough. The cost went down. ∎</li>
    </ul>
    <p><b>Role of the learning rate $\\alpha$.</b> The proof only holds for <i>small</i> steps, because Taylor's line is only accurate nearby.</p>
    <ul class="steps">
@@ -88,7 +88,7 @@ Object.assign(window.DERIVATIONS, {
    <ul class="steps">
      <li>Independent examples multiply: $L(\\theta)=\\prod_{i=1}^{m} p(y^{(i)};\\theta)$. A product of $m$ small numbers underflows to zero on a computer and is painful to differentiate.</li>
      <li>The logarithm turns products into sums: $\\log L(\\theta)=\\sum_{i=1}^{m}\\log p(y^{(i)};\\theta)$. Sums are easy to add up and easy to differentiate term by term.</li>
-     <li>$\\log$ is strictly increasing: if $a>b$ then $\\log a>\\log b$. So whichever $\\theta$ makes $L$ biggest also makes $\\log L$ biggest. The peak does not move. $\\arg\\max_\\theta L = \\arg\\max_\\theta \\log L$. ∎</li>
+     <li>$\\log$ is strictly increasing: if $a&gt;b$ then $\\log a&gt;\\log b$. So whichever $\\theta$ makes $L$ biggest also makes $\\log L$ biggest. The peak does not move. $\\arg\\max_\\theta L = \\arg\\max_\\theta \\log L$. ∎</li>
    </ul>
    <p><b>Intuition.</b> A detective trusts the story under which the clues are least surprising. Maximum likelihood is that detective. The log is just a change of pen — it rewrites a giant product as a friendly sum without changing the verdict.</p>`,
 
@@ -187,7 +187,7 @@ Object.assign(window.DERIVATIONS, {
    <p><b>The naive assumption.</b> Pretend the features are independent <i>given the class</i>. Independence means a joint probability factors into a product.</p>
    <ul class="steps">
      <li>In general $P(x_1,\\dots,x_n\\mid y)=P(x_1\\mid y)\\,P(x_2\\mid x_1,y)\\cdots$ — a chain of messy conditionals.</li>
-     <li>Assume each feature does not care about the others once the class is fixed: $P(x_i\\mid x_{<i},y)=P(x_i\\mid y)$.</li>
+     <li>Assume each feature does not care about the others once the class is fixed: $P(x_i\\mid x_{&lt;i},y)=P(x_i\\mid y)$.</li>
      <li>The chain collapses to a clean product: $P(x\\mid y)=\\prod_{i} P(x_i\\mid y)$. ∎</li>
    </ul>
    <p><b>Then classify with Bayes.</b> $P(y\\mid x)\\propto P(y)\\prod_i P(x_i\\mid y)$. Each $P(x_i\\mid y)$ is a single easy count (how often word $i$ shows up in class $y$). Pick the class with the largest product.</p>
@@ -356,7 +356,7 @@ Object.assign(window.DERIVATIONS, {
      <li>As the threshold drops past a score, whatever example has that score gets newly flagged "yes".</li>
      <li>If it is a true positive, the curve steps <i>up</i> (TPR rises). If a negative, it steps <i>right</i> (FPR rises).</li>
      <li>Area accumulates only on the up-steps that happen to the <i>left</i> of a right-step — i.e. when a positive's score outranks a negative's.</li>
-     <li>Summing that area counts exactly the fraction of positive-negative pairs where the positive scores higher. That fraction <i>is</i> $P(\\text{score}_+ > \\text{score}_-)$. ∎ (sketch)</li>
+     <li>Summing that area counts exactly the fraction of positive-negative pairs where the positive scores higher. That fraction <i>is</i> $P(\\text{score}_+ &gt; \\text{score}_-)$. ∎ (sketch)</li>
    </ul>
    <p><b>Reading the number.</b> AUC $=1.0$: every positive outranks every negative — perfect ranking. AUC $=0.5$: a positive beats a negative only half the time — pure coin flip, the diagonal line. Below $0.5$: the model is worse than random (and could be flipped).</p>
    <p><b>Intuition.</b> Pull one real "yes" and one real "no" at random. AUC is how often the model gives the "yes" the higher score. It judges <i>ranking quality</i> without ever committing to a single threshold.</p>`,

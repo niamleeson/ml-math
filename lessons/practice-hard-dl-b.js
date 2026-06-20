@@ -90,7 +90,7 @@
     { q:`<p>Validation error by epoch: $0.62, 0.48, 0.41, 0.39, 0.42, 0.40, 0.45$. Patience $= 2$. At which epoch do you stop, and which model do you keep?</p>`,
       steps:[
         {do:`Best so far: $0.39$ at epoch 4. Track bad epochs after it.`, why:`Patience counts consecutive epochs with no new best.`},
-        {do:`Epoch 5 ($0.42$) bad (1); epoch 6 ($0.40$) still $> 0.39$ bad (2) — patience hit.`, why:`Two bad epochs in a row triggers the stop.`},
+        {do:`Epoch 5 ($0.42$) bad (1); epoch 6 ($0.40$) still $&gt; 0.39$ bad (2) — patience hit.`, why:`Two bad epochs in a row triggers the stop.`},
         {do:`Stop after epoch 6, restore the epoch-4 model ($0.39$).`, why:`Early stopping keeps the best checkpoint, not the last.`}
       ],
       answer:`Stop after epoch 6; keep the epoch-4 model ($0.39$).` },
@@ -136,7 +136,7 @@
         {do:`Run A deploys its best, $0.31$.`, why:`Early stopping deploys the best checkpoint.`},
         {do:`Run B deploys its epoch-9 best, $0.30$, not the final $0.33$.`, why:`The last epoch is discarded in favor of the best.`}
       ],
-      answer:`Run B — its deployed (best) model is $0.30 < 0.31$.` },
+      answer:`Run B — its deployed (best) model is $0.30 &lt; 0.31$.` },
 
     { q:`<p>Validation error: $0.60, 0.50, 0.50, 0.50, 0.55$. Patience $= 2$. When does it stop?</p>`,
       steps:[
@@ -228,7 +228,7 @@
       ],
       answer:`$9$` },
 
-    { q:`<p>Why does a multi-channel ($C > 1$) convolution still produce a single number per output position, not $C$ numbers?</p>`,
+    { q:`<p>Why does a multi-channel ($C &gt; 1$) convolution still produce a single number per output position, not $C$ numbers?</p>`,
       steps:[
         {do:`The filter has its own slice for each input channel.`, why:`A $F\\times F\\times C$ filter spans all channels.`},
         {do:`Each channel's element-wise products are all summed together into one value.`, why:`Summing across channels fuses them into a single response.`}
@@ -380,12 +380,12 @@
       ],
       answer:`$28\\times28$, depth changes from $64$ to $32$.` },
 
-    { q:`<p>Why does a strided conv ($S > 1$) sometimes need the floor, while $S = 1$ with same padding never does?</p>`,
+    { q:`<p>Why does a strided conv ($S &gt; 1$) sometimes need the floor, while $S = 1$ with same padding never does?</p>`,
       steps:[
-        {do:`With $S>1$, $\\frac{I-F+2P}{S}$ may not divide evenly, leaving a fractional position.`, why:`Partial filter positions at the edge are dropped (floored).`},
+        {do:`With $S&gt;1$, $\\frac{I-F+2P}{S}$ may not divide evenly, leaving a fractional position.`, why:`Partial filter positions at the edge are dropped (floored).`},
         {do:`With $S=1$ and same padding, the numerator is a multiple of $1$, always an integer.`, why:`Dividing by 1 can never produce a fraction.`}
       ],
-      answer:`Stride $>1$ can leave a partial last step (floored); stride 1 always divides evenly.` }
+      answer:`Stride $&gt;1$ can leave a partial last step (floored); stride 1 always divides evenly.` }
   ]);
 
   /* =============================================================
@@ -483,17 +483,17 @@
       ],
       answer:`$\\approx 0.14$` },
 
-    { q:`<p>Non-max suppression: three boxes for one object have confidences $0.9, 0.75, 0.6$. Each lower box has IoU $> 0.5$ with the top box. With NMS threshold $0.5$, which boxes survive?</p>`,
+    { q:`<p>Non-max suppression: three boxes for one object have confidences $0.9, 0.75, 0.6$. Each lower box has IoU $&gt; 0.5$ with the top box. With NMS threshold $0.5$, which boxes survive?</p>`,
       steps:[
         {do:`Keep the highest-confidence box ($0.9$).`, why:`NMS always keeps the most confident box first.`},
-        {do:`The other two have IoU $> 0.5$ with it, so they are suppressed.`, why:`Boxes overlapping the kept box above the threshold are removed as duplicates.`}
+        {do:`The other two have IoU $&gt; 0.5$ with it, so they are suppressed.`, why:`Boxes overlapping the kept box above the threshold are removed as duplicates.`}
       ],
       answer:`Only the $0.9$ box survives.` },
 
     { q:`<p>NMS over four boxes, confidences $0.95, 0.9, 0.85, 0.8$. IoUs with the $0.95$ box: $0.6, 0.3, 0.7$. Threshold $0.5$. After processing the top box, which remain?</p>`,
       steps:[
-        {do:`Keep $0.95$. Suppress boxes with IoU $> 0.5$: the $0.9$ (IoU $0.6$) and $0.8$ (IoU $0.7$) go.`, why:`High overlap means same object — discard.`},
-        {do:`The $0.85$ box (IoU $0.3 < 0.5$) survives to the next round.`, why:`Low overlap means a likely different object, kept for further NMS.`}
+        {do:`Keep $0.95$. Suppress boxes with IoU $&gt; 0.5$: the $0.9$ (IoU $0.6$) and $0.8$ (IoU $0.7$) go.`, why:`High overlap means same object — discard.`},
+        {do:`The $0.85$ box (IoU $0.3 &lt; 0.5$) survives to the next round.`, why:`Low overlap means a likely different object, kept for further NMS.`}
       ],
       answer:`The $0.95$ and $0.85$ boxes remain.` },
 
@@ -582,8 +582,8 @@
 
     { q:`<p>For verification, two faces match if their encoding distance is below threshold $\\tau = 0.6$. Distances: pair 1 $= 0.45$, pair 2 $= 0.72$. Which pairs are accepted as the same person?</p>`,
       steps:[
-        {do:`Pair 1: $0.45 < 0.6$, accept.`, why:`Distances under the threshold mean a likely match.`},
-        {do:`Pair 2: $0.72 > 0.6$, reject.`, why:`Larger distance means different people.`}
+        {do:`Pair 1: $0.45 &lt; 0.6$, accept.`, why:`Distances under the threshold mean a likely match.`},
+        {do:`Pair 2: $0.72 &gt; 0.6$, reject.`, why:`Larger distance means different people.`}
       ],
       answer:`Pair 1 accepted, pair 2 rejected.` },
 

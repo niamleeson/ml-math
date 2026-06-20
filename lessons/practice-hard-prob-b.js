@@ -28,9 +28,9 @@
 
     { q:`<p>You roll a die until the first six ($p=\\tfrac16$). Given that the first 3 rolls were not sixes, what is the chance you need <b>more than 5 total</b> rolls?</p>`,
       steps:[
-        {do:`For a Geometric, $P(X>n)=(1-p)^{n}$.`, why:`Needing more than $n$ rolls means the first $n$ all failed.`},
-        {do:`The Geometric is memoryless: given $X>3$, the extra rolls needed is again Geometric. So $P(X>5\\mid X>3)=P(X>2)$.`, why:`Past failures do not change future waiting; we need 2 more failures.`},
-        {do:`$P(X>2)=(1-\\tfrac16)^2=\\left(\\tfrac56\\right)^2=\\tfrac{25}{36}$.`, why:`Two more independent failures, each chance $\\tfrac56$.`},
+        {do:`For a Geometric, $P(X&gt;n)=(1-p)^{n}$.`, why:`Needing more than $n$ rolls means the first $n$ all failed.`},
+        {do:`The Geometric is memoryless: given $X&gt;3$, the extra rolls needed is again Geometric. So $P(X&gt;5\\mid X&gt;3)=P(X&gt;2)$.`, why:`Past failures do not change future waiting; we need 2 more failures.`},
+        {do:`$P(X&gt;2)=(1-\\tfrac16)^2=\\left(\\tfrac56\\right)^2=\\tfrac{25}{36}$.`, why:`Two more independent failures, each chance $\\tfrac56$.`},
         {do:`$\\tfrac{25}{36}\\approx 0.694$.`, why:`Evaluate the fraction.`}
       ],
       answer:`$\\frac{25}{36}\\approx 0.694$.` },
@@ -53,7 +53,7 @@
 
     { q:`<p>You keep flipping a fair coin until the first head ($p=0.5$). What is $P(X\\ge 3)$ (it takes at least 3 flips)?</p>`,
       steps:[
-        {do:`$P(X\\ge 3)=P(X>2)=(1-p)^{2}$.`, why:`At least 3 flips means the first 2 were tails.`},
+        {do:`$P(X\\ge 3)=P(X&gt;2)=(1-p)^{2}$.`, why:`At least 3 flips means the first 2 were tails.`},
         {do:`$=(0.5)^2=0.25$.`, why:`Two independent tails, each chance $0.5$.`}
       ],
       answer:`$0.25$.` },
@@ -133,38 +133,38 @@
       ],
       answer:`Integrates to $1$; $P(X\\le 1)=\\frac12$.` },
 
-    { q:`<p>For $f(x)=\\tfrac12 x$ on $[0,2]$, find $P(X>1.5 \\mid X>1)$.</p>`,
+    { q:`<p>For $f(x)=\\tfrac12 x$ on $[0,2]$, find $P(X&gt;1.5 \\mid X&gt;1)$.</p>`,
       steps:[
-        {do:`Use $F(x)=\\frac{x^2}{4}$. Then $P(X>a)=1-F(a)$.`, why:`Tail probability is one minus the accumulated area.`},
-        {do:`$P(X>1.5)=1-\\frac{2.25}{4}=1-0.5625=0.4375$ and $P(X>1)=1-\\frac14=0.75$.`, why:`Evaluate the tail at each threshold.`},
-        {do:`$P(X>1.5\\mid X>1)=\\frac{0.4375}{0.75}\\approx 0.583$.`, why:`Conditioning divides by the probability of the given event (since $X>1.5$ implies $X>1$).`}
+        {do:`Use $F(x)=\\frac{x^2}{4}$. Then $P(X&gt;a)=1-F(a)$.`, why:`Tail probability is one minus the accumulated area.`},
+        {do:`$P(X&gt;1.5)=1-\\frac{2.25}{4}=1-0.5625=0.4375$ and $P(X&gt;1)=1-\\frac14=0.75$.`, why:`Evaluate the tail at each threshold.`},
+        {do:`$P(X&gt;1.5\\mid X&gt;1)=\\frac{0.4375}{0.75}\\approx 0.583$.`, why:`Conditioning divides by the probability of the given event (since $X&gt;1.5$ implies $X&gt;1$).`}
       ],
       answer:`$\\approx 0.583$.` }
   ]);
 
   /* ---------------------------------------------------------------- */
   add("prob-uniform-exponential", [
-    { q:`<p>$X$ is Exponential with rate $\\lambda=\\tfrac14$ per minute. What is $P(X>6)$?</p>`,
+    { q:`<p>$X$ is Exponential with rate $\\lambda=\\tfrac14$ per minute. What is $P(X&gt;6)$?</p>`,
       steps:[
-        {do:`The Exponential tail is $P(X>t)=e^{-\\lambda t}$.`, why:`The survival probability of an Exponential decays at rate $\\lambda$.`},
-        {do:`$P(X>6)=e^{-\\frac14\\cdot 6}=e^{-1.5}$.`, why:`Multiply rate by time: $\\frac14\\times 6=1.5$.`},
+        {do:`The Exponential tail is $P(X&gt;t)=e^{-\\lambda t}$.`, why:`The survival probability of an Exponential decays at rate $\\lambda$.`},
+        {do:`$P(X&gt;6)=e^{-\\frac14\\cdot 6}=e^{-1.5}$.`, why:`Multiply rate by time: $\\frac14\\times 6=1.5$.`},
         {do:`$e^{-1.5}\\approx 0.223$.`, why:`Evaluate.`}
       ],
       answer:`$e^{-1.5}\\approx 0.223$.` },
 
     { q:`<p>Bus waits are Exponential, mean 10 minutes. You've already waited 5 minutes. What is the chance you wait at least 8 <b>more</b> minutes?</p>`,
       steps:[
-        {do:`Mean $=\\tfrac1\\lambda=10$ so $\\lambda=0.1$. Exponential is memoryless: $P(X>5+8\\mid X>5)=P(X>8)$.`, why:`Having waited already does not change the remaining wait.`},
-        {do:`$P(X>8)=e^{-0.1\\cdot 8}=e^{-0.8}$.`, why:`Use the tail formula on the extra 8 minutes.`},
+        {do:`Mean $=\\tfrac1\\lambda=10$ so $\\lambda=0.1$. Exponential is memoryless: $P(X&gt;5+8\\mid X&gt;5)=P(X&gt;8)$.`, why:`Having waited already does not change the remaining wait.`},
+        {do:`$P(X&gt;8)=e^{-0.1\\cdot 8}=e^{-0.8}$.`, why:`Use the tail formula on the extra 8 minutes.`},
         {do:`$e^{-0.8}\\approx 0.449$.`, why:`Evaluate.`}
       ],
       answer:`$e^{-0.8}\\approx 0.449$.` },
 
-    { q:`<p>$X$ is Uniform on $[2,10]$. Find $P(X>7 \\mid X>4)$.</p>`,
+    { q:`<p>$X$ is Uniform on $[2,10]$. Find $P(X&gt;7 \\mid X&gt;4)$.</p>`,
       steps:[
-        {do:`For Uniform on $[a,b]$, $P(X>t)=\\frac{b-t}{b-a}$.`, why:`Probability is the fraction of the range above $t$.`},
-        {do:`$P(X>7)=\\frac{10-7}{8}=\\frac38$ and $P(X>4)=\\frac{10-4}{8}=\\frac68$.`, why:`Range width is $b-a=8$.`},
-        {do:`$P(X>7\\mid X>4)=\\frac{3/8}{6/8}=\\frac36=\\frac12$.`, why:`Divide; the event $X>7$ sits inside $X>4$.`}
+        {do:`For Uniform on $[a,b]$, $P(X&gt;t)=\\frac{b-t}{b-a}$.`, why:`Probability is the fraction of the range above $t$.`},
+        {do:`$P(X&gt;7)=\\frac{10-7}{8}=\\frac38$ and $P(X&gt;4)=\\frac{10-4}{8}=\\frac68$.`, why:`Range width is $b-a=8$.`},
+        {do:`$P(X&gt;7\\mid X&gt;4)=\\frac{3/8}{6/8}=\\frac36=\\frac12$.`, why:`Divide; the event $X&gt;7$ sits inside $X&gt;4$.`}
       ],
       answer:`$\\frac12$.` },
 
@@ -178,15 +178,15 @@
 
     { q:`<p>Lifetimes are Exponential with mean 4 years. What is the chance a unit lasts <b>between 2 and 6</b> years?</p>`,
       steps:[
-        {do:`Mean $=\\tfrac1\\lambda=4$ so $\\lambda=0.25$. Use $P(a<X<b)=e^{-\\lambda a}-e^{-\\lambda b}$.`, why:`The interval probability is the difference of tail values.`},
+        {do:`Mean $=\\tfrac1\\lambda=4$ so $\\lambda=0.25$. Use $P(a&lt;X&lt;b)=e^{-\\lambda a}-e^{-\\lambda b}$.`, why:`The interval probability is the difference of tail values.`},
         {do:`$=e^{-0.25\\cdot 2}-e^{-0.25\\cdot 6}=e^{-0.5}-e^{-1.5}$.`, why:`Plug the two endpoints into $e^{-\\lambda t}$.`},
         {do:`$\\approx 0.607-0.223=0.384$.`, why:`$e^{-0.5}\\approx 0.607$, $e^{-1.5}\\approx 0.223$.`}
       ],
       answer:`$e^{-0.5}-e^{-1.5}\\approx 0.384$.` },
 
-    { q:`<p>$X$ is Uniform on $[0,b]$ with $P(X>3)=0.4$. Find $b$, then the mean.</p>`,
+    { q:`<p>$X$ is Uniform on $[0,b]$ with $P(X&gt;3)=0.4$. Find $b$, then the mean.</p>`,
       steps:[
-        {do:`$P(X>3)=\\frac{b-3}{b}=0.4$.`, why:`Fraction of the range above 3.`},
+        {do:`$P(X&gt;3)=\\frac{b-3}{b}=0.4$.`, why:`Fraction of the range above 3.`},
         {do:`$b-3=0.4b\\Rightarrow 0.6b=3\\Rightarrow b=5$.`, why:`Collect terms and solve.`},
         {do:`Mean $=\\frac{0+5}{2}=2.5$.`, why:`Uniform mean is the midpoint of the range.`}
       ],
@@ -194,7 +194,7 @@
 
     { q:`<p>Two independent Exponential waits each have rate $\\lambda=1$. What is the chance <b>both</b> exceed 2?</p>`,
       steps:[
-        {do:`For one, $P(X>2)=e^{-1\\cdot 2}=e^{-2}$.`, why:`Tail of an Exponential at $t=2$.`},
+        {do:`For one, $P(X&gt;2)=e^{-1\\cdot 2}=e^{-2}$.`, why:`Tail of an Exponential at $t=2$.`},
         {do:`Both exceed 2: multiply by independence, $\\left(e^{-2}\\right)^2=e^{-4}$.`, why:`Independent events multiply.`},
         {do:`$e^{-4}\\approx 0.0183$.`, why:`Evaluate.`}
       ],
@@ -259,13 +259,13 @@
       ],
       answer:`$c=30$.` },
 
-    { q:`<p>$Z\\sim\\mathcal{N}(0,1)$. Using $P(Z\\le 1)\\approx 0.841$, find $P(-1\\le Z\\le 1)$ and $P(Z>1)$.</p>`,
+    { q:`<p>$Z\\sim\\mathcal{N}(0,1)$. Using $P(Z\\le 1)\\approx 0.841$, find $P(-1\\le Z\\le 1)$ and $P(Z&gt;1)$.</p>`,
       steps:[
         {do:`By symmetry $P(Z\\le -1)=1-P(Z\\le 1)=1-0.841=0.159$.`, why:`The standard Normal is symmetric about 0.`},
         {do:`$P(-1\\le Z\\le 1)=0.841-0.159=0.682$.`, why:`Subtract the lower-tail CDF from the upper.`},
-        {do:`$P(Z>1)=1-0.841=0.159$.`, why:`Complement of the CDF at 1.`}
+        {do:`$P(Z&gt;1)=1-0.841=0.159$.`, why:`Complement of the CDF at 1.`}
       ],
-      answer:`$P(-1\\le Z\\le 1)\\approx 0.682$; $P(Z>1)\\approx 0.159$.` },
+      answer:`$P(-1\\le Z\\le 1)\\approx 0.682$; $P(Z&gt;1)\\approx 0.159$.` },
 
     { q:`<p>Scores are $\\mathcal{N}(500,\\ \\sigma=100)$. The average of $n=4$ independent scores is taken. What is the distribution of that average, and how rare is an average of $600$?</p>`,
       steps:[
@@ -493,13 +493,13 @@
       ],
       answer:`Chebyshev $\\le 0.16$; Normal exact $\\approx 0.012$.` },
 
-    { q:`<p>$X$ has $\\mu=50$, $\\sigma^2=16$. Using Chebyshev, give a lower bound on $P(42<X<58)$.</p>`,
+    { q:`<p>$X$ has $\\mu=50$, $\\sigma^2=16$. Using Chebyshev, give a lower bound on $P(42&lt;X&lt;58)$.</p>`,
       steps:[
         {do:`The interval is $\\mu\\pm 8$, so $\\epsilon=8$, i.e. $k=\\frac{\\epsilon}{\\sigma}=\\frac{8}{4}=2$ standard deviations.`, why:`$\\sigma=\\sqrt{16}=4$.`},
         {do:`Chebyshev: $P(|X-\\mu|\\ge 8)\\le \\frac{1}{k^2}=\\frac14=0.25$.`, why:`Bound the chance of being far out.`},
-        {do:`So $P(42<X<58)\\ge 1-0.25=0.75$.`, why:`The complement of "far from mean" is "close to mean".`}
+        {do:`So $P(42&lt;X&lt;58)\\ge 1-0.25=0.75$.`, why:`The complement of "far from mean" is "close to mean".`}
       ],
-      answer:`$P(42<X<58)\\ge 0.75$.` },
+      answer:`$P(42&lt;X&lt;58)\\ge 0.75$.` },
 
     { q:`<p>Exam scores are nonnegative with mean 60. Markov says at most what fraction score $\\ge 90$? Then sharpen it if you also know $\\sigma=10$ via Chebyshev.</p>`,
       steps:[
@@ -617,11 +617,11 @@
       ],
       answer:`$\\overline X\\approx\\mathcal{N}(10,4)$, SD $=2$.` },
 
-    { q:`<p>Samples have $\\mu=10$, $\\sigma=6$, $n=9$ (so $\\operatorname{SD}(\\overline X)=2$). Use the 68-95-99.7 rule to find $P(\\overline X>14)$.</p>`,
+    { q:`<p>Samples have $\\mu=10$, $\\sigma=6$, $n=9$ (so $\\operatorname{SD}(\\overline X)=2$). Use the 68-95-99.7 rule to find $P(\\overline X&gt;14)$.</p>`,
       steps:[
         {do:`$14$ is $\\frac{14-10}{2}=2$ standard deviations above the mean of $\\overline X$.`, why:`Standardize using the average's spread of 2.`},
         {do:`About $95\\%$ of $\\overline X$ lies within $\\pm 2$ SD, leaving $\\approx 2.5\\%$ in the upper tail.`, why:`68-95-99.7 rule for the upper tail beyond $+2\\sigma$.`},
-        {do:`$P(\\overline X>14)\\approx 0.025$.`, why:`State the tail probability.`}
+        {do:`$P(\\overline X&gt;14)\\approx 0.025$.`, why:`State the tail probability.`}
       ],
       answer:`$\\approx 0.025$.` },
 
@@ -633,19 +633,19 @@
       ],
       answer:`$S\\approx\\mathcal{N}(350,\\ 292)$.` },
 
-    { q:`<p>A factory part has weight mean 50 g, SD 4 g. A box holds $n=64$ parts. Approximate $P(\\overline X<49)$ for the average part weight.</p>`,
+    { q:`<p>A factory part has weight mean 50 g, SD 4 g. A box holds $n=64$ parts. Approximate $P(\\overline X&lt;49)$ for the average part weight.</p>`,
       steps:[
         {do:`$\\operatorname{SD}(\\overline X)=\\frac{\\sigma}{\\sqrt n}=\\frac{4}{\\sqrt{64}}=\\frac48=0.5$.`, why:`Standard error of the average.`},
         {do:`$49$ is $\\frac{49-50}{0.5}=-2$ SD below the mean.`, why:`Standardize.`},
-        {do:`Lower tail beyond $-2$ SD is $\\approx 2.5\\%$, so $P(\\overline X<49)\\approx 0.025$.`, why:`68-95-99.7 rule, lower tail.`}
+        {do:`Lower tail beyond $-2$ SD is $\\approx 2.5\\%$, so $P(\\overline X&lt;49)\\approx 0.025$.`, why:`68-95-99.7 rule, lower tail.`}
       ],
       answer:`$\\approx 0.025$.` },
 
-    { q:`<p>Bernoulli trials with $p=0.5$, $n=100$. The count of successes $S$ has mean $50$ and variance $np(1-p)=25$. Approximate $P(S>60)$.</p>`,
+    { q:`<p>Bernoulli trials with $p=0.5$, $n=100$. The count of successes $S$ has mean $50$ and variance $np(1-p)=25$. Approximate $P(S&gt;60)$.</p>`,
       steps:[
         {do:`$\\operatorname{SD}(S)=\\sqrt{25}=5$. Standardize: $\\frac{60-50}{5}=2$.`, why:`The CLT makes the binomial count approximately Normal.`},
         {do:`$60$ is $2$ SD above the mean, so the upper tail is $\\approx 2.5\\%$.`, why:`68-95-99.7 rule.`},
-        {do:`$P(S>60)\\approx 0.025$.`, why:`State the result (a Normal approximation to the binomial).`}
+        {do:`$P(S&gt;60)\\approx 0.025$.`, why:`State the result (a Normal approximation to the binomial).`}
       ],
       answer:`$\\approx 0.025$.` },
 
@@ -712,7 +712,7 @@
       steps:[
         {do:`$\\text{MSE}_A=0^2+9=9$.`, why:`Unbiased, so only variance contributes.`},
         {do:`$\\text{MSE}_B=1^2+4=5$.`, why:`Bias squared plus variance.`},
-        {do:`B has lower MSE ($5<9$), so the slightly biased estimator is better overall.`, why:`MSE trades off bias and variance; lower wins.`}
+        {do:`B has lower MSE ($5&lt;9$), so the slightly biased estimator is better overall.`, why:`MSE trades off bias and variance; lower wins.`}
       ],
       answer:`$\\text{MSE}_A=9$, $\\text{MSE}_B=5$; B is better.` },
 

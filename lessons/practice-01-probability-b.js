@@ -202,9 +202,9 @@
       ],
       answer:`About $0.632$.` },
 
-    { q:`<p>An Exponential with rate $\\lambda=\\frac{1}{5}$ has $P(X>x)=e^{-\\lambda x}$. Find $P(X>5)$.</p>`,
+    { q:`<p>An Exponential with rate $\\lambda=\\frac{1}{5}$ has $P(X&gt;x)=e^{-\\lambda x}$. Find $P(X&gt;5)$.</p>`,
       steps:[
-        {do:`$P(X>5)=e^{-(1/5)\\times 5}=e^{-1}$.`, why:`The survival function is $e^{-\\lambda x}$.`},
+        {do:`$P(X&gt;5)=e^{-(1/5)\\times 5}=e^{-1}$.`, why:`The survival function is $e^{-\\lambda x}$.`},
         {do:`$\\approx 0.368$.`, why:`Evaluate $e^{-1}$.`}
       ],
       answer:`About $0.368$.` },
@@ -223,9 +223,9 @@
       ],
       answer:`$0.4$.` },
 
-    { q:`<p>Calls arrive Exponentially with mean wait 2 minutes ($\\lambda=\\frac{1}{2}$). Using $P(X>x)=e^{-\\lambda x}$, find the chance you wait more than 4 minutes.</p>`,
+    { q:`<p>Calls arrive Exponentially with mean wait 2 minutes ($\\lambda=\\frac{1}{2}$). Using $P(X&gt;x)=e^{-\\lambda x}$, find the chance you wait more than 4 minutes.</p>`,
       steps:[
-        {do:`$P(X>4)=e^{-\\lambda\\times 4}=e^{-(1/2)\\times 4}$.`, why:`Plug $x=4$ into the survival function.`},
+        {do:`$P(X&gt;4)=e^{-\\lambda\\times 4}=e^{-(1/2)\\times 4}$.`, why:`Plug $x=4$ into the survival function.`},
         {do:`$=e^{-2}\\approx 0.135$.`, why:`$\\frac{1}{2}\\times 4=2$, and $e^{-2}\\approx 0.135$.`}
       ],
       answer:`About $0.135$.` }
@@ -593,7 +593,7 @@
     { q:`<p>A variable has $\\mu=100$, $\\sigma^2=25$. By Chebyshev, bound $P(|X-100|\\ge 10)$, then state the lower bound on being WITHIN 10.</p>`,
       steps:[
         {do:`$P(|X-100|\\ge 10)\\le\\frac{25}{10^2}=\\frac{25}{100}=0.25$.`, why:`Chebyshev with $\\epsilon=10$.`},
-        {do:`So $P(|X-100|<10)\\ge 1-0.25=0.75$.`, why:`The complement gives a guaranteed lower bound.`}
+        {do:`So $P(|X-100|&lt;10)\\ge 1-0.25=0.75$.`, why:`The complement gives a guaranteed lower bound.`}
       ],
       answer:`$\\le 0.25$ outside; $\\ge 0.75$ within.` }
   ],

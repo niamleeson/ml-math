@@ -95,7 +95,7 @@ Object.assign(window.PRACTICE, {
     { q:`<p>Apply ReLU to $z=-4$.</p>`,
       steps:[
         {do:`Compare: $\\max(0,-4)$.`, why:`ReLU takes the larger of 0 and $z$.`},
-        {do:`Since $-4 < 0$, the answer is $0$.`, why:`ReLU flattens negatives to zero.`}
+        {do:`Since $-4 &lt; 0$, the answer is $0$.`, why:`ReLU flattens negatives to zero.`}
       ],
       answer:`$\\text{ReLU}(-4) = 0$` },
 
@@ -122,7 +122,7 @@ Object.assign(window.PRACTICE, {
 
     { q:`<p>Apply Leaky ReLU (slope $0.01$ for negatives) to $z=-3$.</p>`,
       steps:[
-        {do:`Since $z<0$, use the small slope: $0.01\\times(-3)$.`, why:`Leaky ReLU lets a tiny bit through instead of a flat 0.`},
+        {do:`Since $z&lt;0$, use the small slope: $0.01\\times(-3)$.`, why:`Leaky ReLU lets a tiny bit through instead of a flat 0.`},
         {do:`Compute: $0.01\\times(-3) = -0.03$.`, why:`This keeps the neuron from fully dying.`}
       ],
       answer:`$-0.03$` },
@@ -337,14 +337,14 @@ Object.assign(window.PRACTICE, {
 
     { q:`<p>A neuron uses ReLU. For this example $z=3$ (positive), so the ReLU slope $\\frac{\\partial a}{\\partial z}=1$. If $\\frac{\\partial L}{\\partial a}=2$ and the input $x=\\frac{\\partial z}{\\partial w}=4$, find $\\frac{\\partial L}{\\partial w}$.</p>`,
       steps:[
-        {do:`ReLU slope is 1 because $z>0$.`, why:`ReLU passes positive values, so its slope there is 1.`},
+        {do:`ReLU slope is 1 because $z&gt;0$.`, why:`ReLU passes positive values, so its slope there is 1.`},
         {do:`Chain: $2\\times 1\\times 4 = 8$.`, why:`Multiply loss slope, activation slope, and input.`}
       ],
       answer:`$\\frac{\\partial L}{\\partial w} = 8$` },
 
     { q:`<p>A neuron uses ReLU with $z=-2$ for this example, so the ReLU slope is $0$. If $\\frac{\\partial L}{\\partial a}=5$ and $x=3$, find $\\frac{\\partial L}{\\partial w}$.</p>`,
       steps:[
-        {do:`ReLU slope is 0 because $z<0$.`, why:`ReLU is flat for negatives, so it blocks the gradient.`},
+        {do:`ReLU slope is 0 because $z&lt;0$.`, why:`ReLU is flat for negatives, so it blocks the gradient.`},
         {do:`Chain: $5\\times 0\\times 3 = 0$.`, why:`A zero slope anywhere makes the whole product zero.`}
       ],
       answer:`$\\frac{\\partial L}{\\partial w} = 0$` },
@@ -580,7 +580,7 @@ Object.assign(window.PRACTICE, {
       steps:[
         {do:`A: $\\sqrt{1/100} = 0.1$.`, why:`Xavier spread for 100 inputs.`},
         {do:`B: $\\sqrt{1/400} = 0.05$.`, why:`More inputs, smaller spread.`},
-        {do:`A has larger weights ($0.1 > 0.05$).`, why:`Fewer inputs need bigger weights to keep the signal alive.`}
+        {do:`A has larger weights ($0.1 &gt; 0.05$).`, why:`Fewer inputs need bigger weights to keep the signal alive.`}
       ],
       answer:`A: $0.1$, B: $0.05$; A larger` },
 
@@ -661,7 +661,7 @@ Object.assign(window.PRACTICE, {
         {do:`Keep counts: $p=0.1\\to 90$, $p=0.5\\to 50$, $p=0.9\\to 10$.`, why:`Survivors are $(1-p)\\times 100$.`},
         {do:`So $p=0.1$ keeps the most, $p=0.9$ keeps the fewest.`, why:`Bigger $p$ drops more neurons.`}
       ],
-      answer:`$90 > 50 > 10$` },
+      answer:`$90 &gt; 50 &gt; 10$` },
 
     { q:`<p>A layer of $200$ neurons uses dropout $p=0.25$. On average, how many are kept, and what is the inverted-dropout scale on survivors?</p>`,
       steps:[

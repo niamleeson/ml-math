@@ -82,68 +82,68 @@
   "dl-rnn": [
     { q:`<p>An RNN reads a sequence one step at a time. What carries information from the previous step to the next?</p>`,
       steps:[
-        {do:`Each step produces a hidden state $a^{<t>}$.`, why:`The hidden state is the RNN's memory.`},
+        {do:`Each step produces a hidden state $a^{&lt;t&gt;}$.`, why:`The hidden state is the RNN's memory.`},
         {do:`That state is passed into the next step's computation.`, why:`That is how earlier inputs influence later ones.`}
       ],
-      answer:`$\\text{the hidden state } a^{<t>}$` },
+      answer:`$\\text{the hidden state } a^{&lt;t&gt;}$` },
 
-    { q:`<p>One RNN step: $a^{<t>}=g(W_{aa}a^{<t-1>}+W_{ax}x^{<t>}+b)$. Use $W_{aa}=0$, $W_{ax}=1$, $b=0$, identity $g$, $a^{<0>}=0$, $x^{<1>}=5$. Find $a^{<1>}$.</p>`,
+    { q:`<p>One RNN step: $a^{&lt;t&gt;}=g(W_{aa}a^{&lt;t-1&gt;}+W_{ax}x^{&lt;t&gt;}+b)$. Use $W_{aa}=0$, $W_{ax}=1$, $b=0$, identity $g$, $a^{&lt;0&gt;}=0$, $x^{&lt;1&gt;}=5$. Find $a^{&lt;1&gt;}$.</p>`,
       steps:[
         {do:`Combine: $0\\times0 + 1\\times5 + 0 = 5$.`, why:`Plug each value into the formula.`},
         {do:`Identity $g$ leaves it as $5$.`, why:`The identity function returns its input unchanged.`}
       ],
       answer:`$5$` },
 
-    { q:`<p>RNN step with $W_{aa}=0.5$, $W_{ax}=2$, $b=1$, identity $g$. Given $a^{<0>}=0$, $x^{<1>}=3$, find $a^{<1>}$.</p>`,
+    { q:`<p>RNN step with $W_{aa}=0.5$, $W_{ax}=2$, $b=1$, identity $g$. Given $a^{&lt;0&gt;}=0$, $x^{&lt;1&gt;}=3$, find $a^{&lt;1&gt;}$.</p>`,
       steps:[
-        {do:`Old memory term: $0.5\\times0 = 0$.`, why:`$a^{<0>}=0$, so the past contributes nothing.`},
+        {do:`Old memory term: $0.5\\times0 = 0$.`, why:`$a^{&lt;0&gt;}=0$, so the past contributes nothing.`},
         {do:`Input term plus bias: $2\\times3 + 1 = 7$.`, why:`Add the new-input contribution and the bias.`}
       ],
       answer:`$7$` },
 
-    { q:`<p>RNN with $W_{aa}=1$, $W_{ax}=1$, $b=0$, identity $g$, $a^{<0>}=0$. Inputs $x^{<1>}=2$, $x^{<2>}=3$. Find $a^{<2>}$.</p>`,
+    { q:`<p>RNN with $W_{aa}=1$, $W_{ax}=1$, $b=0$, identity $g$, $a^{&lt;0&gt;}=0$. Inputs $x^{&lt;1&gt;}=2$, $x^{&lt;2&gt;}=3$. Find $a^{&lt;2&gt;}$.</p>`,
       steps:[
-        {do:`Step 1: $1\\times0 + 1\\times2 = 2$, so $a^{<1>}=2$.`, why:`First we get the memory after the first input.`},
-        {do:`Step 2: $1\\times2 + 1\\times3 = 5$, so $a^{<2>}=5$.`, why:`Step 1's memory $2$ feeds into step 2.`}
+        {do:`Step 1: $1\\times0 + 1\\times2 = 2$, so $a^{&lt;1&gt;}=2$.`, why:`First we get the memory after the first input.`},
+        {do:`Step 2: $1\\times2 + 1\\times3 = 5$, so $a^{&lt;2&gt;}=5$.`, why:`Step 1's memory $2$ feeds into step 2.`}
       ],
       answer:`$5$` },
 
-    { q:`<p>RNN with $W_{aa}=0$, $W_{ax}=1$, $b=0$, activation $g=\\tanh$. Given $x^{<1>}=0$, find $a^{<1>}$. (Note $\\tanh(0)=0$.)</p>`,
+    { q:`<p>RNN with $W_{aa}=0$, $W_{ax}=1$, $b=0$, activation $g=\\tanh$. Given $x^{&lt;1&gt;}=0$, find $a^{&lt;1&gt;}$. (Note $\\tanh(0)=0$.)</p>`,
       steps:[
         {do:`Combine: $0\\times0 + 1\\times0 + 0 = 0$.`, why:`All terms are zero before the activation.`},
         {do:`Apply $\\tanh(0)=0$.`, why:`$\\tanh$ of $0$ is exactly $0$.`}
       ],
       answer:`$0$` },
 
-    { q:`<p>RNN with $W_{aa}=0.5$, $W_{ax}=1$, $b=0$, $g=\\tanh$, $a^{<0>}=0$, $x^{<1>}=2$. Find $a^{<1>}$. (Use $\\tanh(2)\\approx 0.96$.)</p>`,
+    { q:`<p>RNN with $W_{aa}=0.5$, $W_{ax}=1$, $b=0$, $g=\\tanh$, $a^{&lt;0&gt;}=0$, $x^{&lt;1&gt;}=2$. Find $a^{&lt;1&gt;}$. (Use $\\tanh(2)\\approx 0.96$.)</p>`,
       steps:[
         {do:`Combine: $0.5\\times0 + 1\\times2 + 0 = 2$.`, why:`This is the pre-activation value.`},
         {do:`Apply $\\tanh(2)\\approx 0.96$.`, why:`$\\tanh$ squishes $2$ into the range $(-1,1)$.`}
       ],
       answer:`$\\approx 0.96$` },
 
-    { q:`<p>Continue the previous RNN: $W_{aa}=0.5$, $W_{ax}=1$, $b=0$, $g=\\tanh$. Now $a^{<1>}\\approx 0.96$ and $x^{<2>}=1$. Find $a^{<2>}$. (Use $\\tanh(1.48)\\approx 0.90$.)</p>`,
+    { q:`<p>Continue the previous RNN: $W_{aa}=0.5$, $W_{ax}=1$, $b=0$, $g=\\tanh$. Now $a^{&lt;1&gt;}\\approx 0.96$ and $x^{&lt;2&gt;}=1$. Find $a^{&lt;2&gt;}$. (Use $\\tanh(1.48)\\approx 0.90$.)</p>`,
       steps:[
         {do:`Combine: $0.5\\times0.96 + 1\\times1 = 0.48 + 1 = 1.48$.`, why:`The old memory $0.96$ is carried forward.`},
         {do:`Apply $\\tanh(1.48)\\approx 0.90$.`, why:`Squish the pre-activation into $(-1,1)$.`}
       ],
       answer:`$\\approx 0.90$` },
 
-    { q:`<p>An RNN's hidden state is a vector. With $W_{ax}=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$, $W_{aa}=\\mathbf{0}$, $b=\\mathbf{0}$, identity $g$, and $x^{<1>}=[3,4]$, find $a^{<1>}$.</p>`,
+    { q:`<p>An RNN's hidden state is a vector. With $W_{ax}=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$, $W_{aa}=\\mathbf{0}$, $b=\\mathbf{0}$, identity $g$, and $x^{&lt;1&gt;}=[3,4]$, find $a^{&lt;1&gt;}$.</p>`,
       steps:[
-        {do:`$W_{ax}$ is the identity matrix, so $W_{ax}x^{<1>}=[3,4]$.`, why:`The identity matrix leaves a vector unchanged.`},
+        {do:`$W_{ax}$ is the identity matrix, so $W_{ax}x^{&lt;1&gt;}=[3,4]$.`, why:`The identity matrix leaves a vector unchanged.`},
         {do:`Add zero memory and zero bias: still $[3,4]$.`, why:`Nothing else contributes here.`}
       ],
       answer:`$[3, 4]$` },
 
     { q:`<p>An RNN reads a $10$-word sentence. How many times is the hidden-state update formula applied (one per word)?</p>`,
       steps:[
-        {do:`The RNN processes one word per time step.`, why:`Each word is one input $x^{<t>}$.`},
+        {do:`The RNN processes one word per time step.`, why:`Each word is one input $x^{&lt;t&gt;}$.`},
         {do:`$10$ words means $10$ steps.`, why:`Each step runs the update formula once.`}
       ],
       answer:`$10$` },
 
-    { q:`<p>RNN with $W_{aa}=1$, $W_{ax}=1$, $b=0$, identity $g$, $a^{<0>}=0$, and constant input $x^{<t>}=1$ for every step. After $4$ steps, what is $a^{<4>}$?</p>`,
+    { q:`<p>RNN with $W_{aa}=1$, $W_{ax}=1$, $b=0$, identity $g$, $a^{&lt;0&gt;}=0$, and constant input $x^{&lt;t&gt;}=1$ for every step. After $4$ steps, what is $a^{&lt;4&gt;}$?</p>`,
       steps:[
         {do:`Each step adds the input $1$ to the carried memory.`, why:`With $W_{aa}=1$ the old memory passes through unchanged.`},
         {do:`After $4$ steps: $0+1+1+1+1 = 4$.`, why:`The memory accumulates one per step.`}
@@ -175,28 +175,28 @@
 
     { q:`<p>A slope of $1.5$ is multiplied over $4$ steps. Is this a vanishing or exploding gradient? Compute $1.5^4$.</p>`,
       steps:[
-        {do:`$1.5>1$, so the product grows each step.`, why:`Multiplying by numbers above $1$ enlarges them.`},
+        {do:`$1.5&gt;1$, so the product grows each step.`, why:`Multiplying by numbers above $1$ enlarges them.`},
         {do:`$1.5^2=2.25$, $1.5^4=2.25\\times2.25=5.0625$.`, why:`Square, then square again.`}
       ],
       answer:`$\\text{exploding}, \\; 1.5^4\\approx 5.06$` },
 
-    { q:`<p>Gradient clipping rule: if $\\lVert g\\rVert > \\text{threshold}$, scale $g$ down. A gradient has size $40$ and the threshold is $10$. What is its new size?</p>`,
+    { q:`<p>Gradient clipping rule: if $\\lVert g\\rVert &gt; \\text{threshold}$, scale $g$ down. A gradient has size $40$ and the threshold is $10$. What is its new size?</p>`,
       steps:[
-        {do:`Check: $40 > 10$, so clipping applies.`, why:`Only oversized gradients get scaled.`},
+        {do:`Check: $40 &gt; 10$, so clipping applies.`, why:`Only oversized gradients get scaled.`},
         {do:`Scale it down to exactly the threshold $10$.`, why:`Clipping caps the size at the threshold, keeping direction.`}
       ],
       answer:`$10$` },
 
     { q:`<p>A gradient has size $8$ and the clip threshold is $10$. What happens to it?</p>`,
       steps:[
-        {do:`Check: is $8 > 10$? No, $8 < 10$.`, why:`The gradient is already under the cap.`},
+        {do:`Check: is $8 &gt; 10$? No, $8 &lt; 10$.`, why:`The gradient is already under the cap.`},
         {do:`So it is left unchanged.`, why:`Clipping only shrinks gradients above the threshold.`}
       ],
       answer:`$\\text{unchanged, size } 8$` },
 
     { q:`<p>Compute $0.9^{10}$ to $3$ decimals (slope $0.9$ over $10$ steps). Use $0.9^{10}\\approx 0.349$.</p>`,
       steps:[
-        {do:`Even a mild $0.9 < 1$ shrinks over many steps.`, why:`Each multiply chips a little off.`},
+        {do:`Even a mild $0.9 &lt; 1$ shrinks over many steps.`, why:`Each multiply chips a little off.`},
         {do:`$0.9^{10}\\approx 0.349$.`, why:`The product is about a third of the start.`}
       ],
       answer:`$\\approx 0.349$` },

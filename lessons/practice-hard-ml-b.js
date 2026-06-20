@@ -45,14 +45,14 @@
       steps:[
         {do:`Term 1: $\\alpha_1 y_1 (x_1^\\top x) = 2(+1)\\big((1)(1)+(0)(1)\\big) = 2(1)=2$.`, why:`Weight the dot product by $\\alpha y$ for each support vector.`},
         {do:`Term 2: $\\alpha_2 y_2 (x_2^\\top x) = 1(-1)\\big((0)(1)+(1)(1)\\big) = -1$.`, why:`Same for the second support vector; the $-1$ label flips the sign.`},
-        {do:`$f = 2 + (-1) - 0 = 1 > 0$.`, why:`Sum and subtract $b$; a positive score is class $+1$.`}
+        {do:`$f = 2 + (-1) - 0 = 1 &gt; 0$.`, why:`Sum and subtract $b$; a positive score is class $+1$.`}
       ],
       answer:`Class $+1$ (score $f=1$).` },
 
     { q:`<p>KKT conditions: a point is a support vector only if its constraint is active, $y_i(w^\\top x_i - b)=1$. Given $w=(2,0)$, $b=1$, which of $A=(1,5)$ [label $+1$] and $B=(3,0)$ [label $+1$] is a support vector?</p>`,
       steps:[
         {do:`Point $A$: $y\\,(w^\\top x - b) = (+1)\\big((2)(1)+(0)(5)-1\\big) = 2-1 = 1$.`, why:`Functional margin exactly $1$ means the constraint is tight.`},
-        {do:`Point $B$: $(+1)\\big((2)(3)+0-1\\big) = 6-1 = 5$.`, why:`A margin of $5 > 1$ means the point is well inside its side, slack-free.`},
+        {do:`Point $B$: $(+1)\\big((2)(3)+0-1\\big) = 6-1 = 5$.`, why:`A margin of $5 &gt; 1$ means the point is well inside its side, slack-free.`},
         {do:`Only $A$ achieves margin $1$.`, why:`Support vectors are exactly the points lying on the margin.`}
       ],
       answer:`$A$ is the support vector; $B$ is not (margin $5$).` },
@@ -69,7 +69,7 @@
       steps:[
         {do:`Functional margin: $y(w^\\top x - b) = (+1)(0.3) = 0.3$.`, why:`Multiply the label by the score.`},
         {do:`Hinge $= \\max(0,\\,1 - 0.3) = 0.7$.`, why:`Margin is below $1$, so the point is penalized though on the right side.`},
-        {do:`Score $0.3 > 0$, so the predicted sign is $+1$ — correct.`, why:`Hinge loss can be positive even for correctly classified points inside the margin.`}
+        {do:`Score $0.3 &gt; 0$, so the predicted sign is $+1$ — correct.`, why:`Hinge loss can be positive even for correctly classified points inside the margin.`}
       ],
       answer:`Hinge loss $=0.7$; correctly classified but margin-violating.` },
 
@@ -104,7 +104,7 @@
       steps:[
         {do:`Trace $=1+1=2$, determinant $=(1)(1)-(2)(2) = 1-4 = -3$.`, why:`A negative determinant of a $2\\times2$ symmetric matrix signals a negative eigenvalue.`},
         {do:`Eigenvalues $= (2\\pm\\sqrt{4-4(-3)})/2 = (2\\pm\\sqrt{16})/2 = (2\\pm4)/2 = 3, -1$.`, why:`Solve the characteristic equation.`},
-        {do:`One eigenvalue is $-1 < 0$.`, why:`PSD requires every eigenvalue $\\ge 0$.`}
+        {do:`One eigenvalue is $-1 &lt; 0$.`, why:`PSD requires every eigenvalue $\\ge 0$.`}
       ],
       answer:`Not valid; eigenvalue $-1$ violates positive semidefiniteness.` },
 
@@ -218,7 +218,7 @@
       steps:[
         {do:`$\\lVert x-\\mu_0\\rVert^2 = 1^2+0^2 = 1$.`, why:`With $\\Sigma=I$, Mahalanobis distance is ordinary squared distance.`},
         {do:`$\\lVert x-\\mu_1\\rVert^2 = (1-2)^2+(0-2)^2 = 1+4 = 5$.`, why:`Distance to the other class mean.`},
-        {do:`$1 < 5$, so class 0 wins.`, why:`Closer mean (smaller distance) gives larger likelihood under equal priors.`}
+        {do:`$1 &lt; 5$, so class 0 wins.`, why:`Closer mean (smaller distance) gives larger likelihood under equal priors.`}
       ],
       answer:`Class 0 (distances $1$ vs $5$).` },
 
@@ -226,7 +226,7 @@
       steps:[
         {do:`Class 0: $\\frac{1}{\\sqrt{2\\pi}\\,(1)}\\exp(-9/2) = 0.399\\cdot\\exp(-4.5)\\approx 0.399(0.0111)\\approx 0.00443$.`, why:`Narrow class 0 drops fast far from its mean.`},
         {do:`Class 1: $\\frac{1}{\\sqrt{2\\pi}\\,(2)}\\exp(-9/8) = 0.199\\cdot\\exp(-1.125)\\approx 0.199(0.3247)\\approx 0.0647$.`, why:`Wider class 1 keeps more density out at $x=3$.`},
-        {do:`$0.0647 > 0.00443$.`, why:`Different variances make the boundary curved (quadratic), not a midpoint.`}
+        {do:`$0.0647 &gt; 0.00443$.`, why:`Different variances make the boundary curved (quadratic), not a midpoint.`}
       ],
       answer:`Class 1 (density $0.0647$ vs $0.00443$); unequal variances give a quadratic boundary.` },
 
@@ -236,7 +236,7 @@
         {do:`Mean-offset term: $-\\frac{4^2-0^2}{2} = -\\frac{16}{2} = -8$.`, why:`Constant offset from the squared means.`},
         {do:`Prior term: $\\log\\frac{0.5}{0.5} = 0$; total $= 12 - 8 + 0 = 4$.`, why:`Equal priors add nothing; positive log-odds favors class 1.`}
       ],
-      answer:`Log-odds $=4 > 0$ ⇒ predict class 1.` },
+      answer:`Log-odds $=4 &gt; 0$ ⇒ predict class 1.` },
 
     { q:`<p>Estimate both class means and the prior from 2D data. Class 1: $(2,0),(4,2)$. Class 0: $(0,0),(0,2),(0,4)$. Find $\\mu_1$, $\\mu_0$, and $\\phi=p(y=1)$.</p>`,
       steps:[
@@ -261,7 +261,7 @@
       steps:[
         {do:`Spam: $0.3\\times(0.5\\times0.4\\times0.2) = 0.3\\times0.04 = 0.012$.`, why:`Multiply the prior by the product of the three independent likelihoods.`},
         {do:`Ham: $0.7\\times(0.1\\times0.2\\times0.6) = 0.7\\times0.012 = 0.0084$.`, why:`Same product rule for ham.`},
-        {do:`$0.012 > 0.0084$.`, why:`The larger posterior numerator wins.`}
+        {do:`$0.012 &gt; 0.0084$.`, why:`The larger posterior numerator wins.`}
       ],
       answer:`Spam (score $0.012$ vs $0.0084$).` },
 
@@ -369,7 +369,7 @@
       steps:[
         {do:`A weighted $= 0.7(0.245)+0.3(0.444) = 0.1715 + 0.1332 = 0.305$; gain $= 0.5-0.305 = 0.195$.`, why:`Weight each child's Gini by its share, then subtract from the parent.`},
         {do:`B weighted $= 0.5(0.32)+0.5(0.32) = 0.32$; gain $= 0.5-0.32 = 0.18$.`, why:`Same computation for split B.`},
-        {do:`$0.195 > 0.18$.`, why:`CART greedily picks the split with the larger gain.`}
+        {do:`$0.195 &gt; 0.18$.`, why:`CART greedily picks the split with the larger gain.`}
       ],
       answer:`Split A (gain $0.195$ vs $0.18$).` },
 
@@ -386,7 +386,7 @@
         {do:`Entropy $= -0.7(-0.515)-0.3(-1.737) = 0.361+0.521 = 0.882$ bits.`, why:`Standard entropy formula.`},
         {do:`Misclass $= 1-\\max(0.7,0.3) = 1-0.7 = 0.3$.`, why:`Error if you always guess the majority class.`}
       ],
-      answer:`Misclass $0.3 <$ Gini $0.42 <$ Entropy $0.882$.` },
+      answer:`Misclass $0.3 &lt;$ Gini $0.42 &lt;$ Entropy $0.882$.` },
 
     { q:`<p>Regression tree split. A node's targets are $\\{2,4,6,8\\}$ (mean $5$). A split gives left $\\{2,4\\}$ and right $\\{6,8\\}$. Compute the parent SSE $=\\sum(y-\\bar y)^2$, the total child SSE, and the variance reduction.</p>`,
       steps:[
@@ -400,7 +400,7 @@
       steps:[
         {do:`A: $R_\\alpha = 0.10 + 0.03(5) = 0.10+0.15 = 0.25$.`, why:`Penalize each leaf by $\\alpha$ to discourage large trees.`},
         {do:`B: $R_\\alpha = 0.16 + 0.03(2) = 0.16+0.06 = 0.22$.`, why:`Same penalized cost for the smaller tree.`},
-        {do:`$0.22 < 0.25$.`, why:`Pruning prefers the lower penalized cost.`}
+        {do:`$0.22 &lt; 0.25$.`, why:`Pruning prefers the lower penalized cost.`}
       ],
       answer:`Tree B (cost $0.22$ vs $0.25$).` },
 
@@ -449,7 +449,7 @@
       steps:[
         {do:`Ratio $= 0.9/0.1 = 9$.`, why:`A much lower error gives a much larger odds ratio.`},
         {do:`$\\alpha = \\tfrac12\\ln 9 = \\tfrac12(2.197) = 1.099$.`, why:`Halve the log of the ratio.`},
-        {do:`$1.099 > 0.693$.`, why:`The more accurate learner gets a bigger say in the final vote.`}
+        {do:`$1.099 &gt; 0.693$.`, why:`The more accurate learner gets a bigger say in the final vote.`}
       ],
       answer:`$\\alpha\\approx 1.099$, larger than $0.693$.` },
 
@@ -470,7 +470,7 @@
     { q:`<p>Soft voting with class probabilities and per-model weights. Models give $P(\\text{spam}) = (0.9, 0.4, 0.6)$ with weights $(0.5, 0.2, 0.3)$. Compute the weighted-average probability and classify at threshold $0.5$.</p>`,
       steps:[
         {do:`Weighted sum $= 0.5(0.9)+0.2(0.4)+0.3(0.6) = 0.45+0.08+0.18 = 0.71$.`, why:`Weights sum to $1$, so this is the weighted mean.`},
-        {do:`$0.71 > 0.5$.`, why:`Above threshold means predict spam.`}
+        {do:`$0.71 &gt; 0.5$.`, why:`Above threshold means predict spam.`}
       ],
       answer:`Weighted $P=0.71$ ⇒ spam.` },
 
@@ -496,7 +496,7 @@
       steps:[
         {do:`$L_1 = |3-0|+|4-0| = 3+4 = 7$.`, why:`Manhattan sums absolute coordinate differences.`},
         {do:`$L_2 = \\sqrt{3^2+4^2} = \\sqrt{25} = 5$.`, why:`Euclidean is the root of summed squares.`},
-        {do:`$L_1=7 > L_2=5$.`, why:`$L_1 \\ge L_2$ always; the gap grows with dimensionality.`}
+        {do:`$L_1=7 &gt; L_2=5$.`, why:`$L_1 \\ge L_2$ always; the gap grows with dimensionality.`}
       ],
       answer:`$L_1=7$, $L_2=5$.` },
 
@@ -520,7 +520,7 @@
       steps:[
         {do:`Red weight $= 1/1 + 1/6 = 1 + 0.167 = 1.167$.`, why:`Sum the inverse-distance weights of red neighbors.`},
         {do:`Blue weight $= 1/1.5 + 1/3 = 0.667 + 0.333 = 1.0$.`, why:`Same for blue neighbors.`},
-        {do:`$1.167 > 1.0$.`, why:`The class with greater total weight wins, even though blue had a near neighbor.`}
+        {do:`$1.167 &gt; 1.0$.`, why:`The class with greater total weight wins, even though blue had a near neighbor.`}
       ],
       answer:`Red (weight $1.167$ vs $1.0$).` },
 
@@ -543,7 +543,7 @@
       steps:[
         {do:`Cat weight $= 1/1 + 1/4 = 1 + 0.25 = 1.25$.`, why:`Inverse-distance weights replace the tied uniform count.`},
         {do:`Dog weight $= 1/2 + 1/2 = 1.0$.`, why:`Sum the dog weights.`},
-        {do:`$1.25 > 1.0$.`, why:`Weighting by closeness resolves the tie toward the nearer class.`}
+        {do:`$1.25 &gt; 1.0$.`, why:`Weighting by closeness resolves the tie toward the nearer class.`}
       ],
       answer:`Cat (weight $1.25$ vs $1.0$); weighting breaks the even-$k$ tie.` },
 
@@ -584,7 +584,7 @@
       steps:[
         {do:`A: $1.0^2 + 0.1 + 0.2 = 1.0 + 0.3 = 1.3$.`, why:`Compute each model's full error.`},
         {do:`B: $0.3^2 + 1.2 + 0.2 = 0.09 + 1.4 = 1.49$.`, why:`B trades bias for a large variance.`},
-        {do:`$1.3 < 1.49$.`, why:`A's lower variance more than offsets its higher bias here.`}
+        {do:`$1.3 &lt; 1.49$.`, why:`A's lower variance more than offsets its higher bias here.`}
       ],
       answer:`Model A (error $1.3$ vs $1.49$).` },
 
@@ -614,14 +614,14 @@
       steps:[
         {do:`Before: $0.1 + 0.8 + 0.15 = 1.05$.`, why:`Sum the three components at the small $\\lambda$.`},
         {do:`After: $0.4 + 0.3 + 0.15 = 0.85$.`, why:`Sum again at the larger $\\lambda$.`},
-        {do:`$0.85 < 1.05$.`, why:`The variance drop outweighs the bias rise.`}
+        {do:`$0.85 &lt; 1.05$.`, why:`The variance drop outweighs the bias rise.`}
       ],
       answer:`Yes — total error falls from $1.05$ to $0.85$.` },
 
     { q:`<p>Find the regularization sweet spot. Bias$^2(\\lambda)=0.1+0.5\\lambda$ rises and variance$(\\lambda)=0.9-0.3\\lambda$ falls (for $\\lambda\\in[0,2]$). Minimize the total bias$^2$+variance over $\\lambda$.</p>`,
       steps:[
         {do:`Total $= (0.1+0.5\\lambda)+(0.9-0.3\\lambda) = 1.0 + 0.2\\lambda$.`, why:`Sum the two pieces; the $\\lambda$ terms combine.`},
-        {do:`Slope $+0.2 > 0$, so the total increases with $\\lambda$.`, why:`Here the bias rise outpaces the variance drop, so more regularization only hurts.`},
+        {do:`Slope $+0.2 &gt; 0$, so the total increases with $\\lambda$.`, why:`Here the bias rise outpaces the variance drop, so more regularization only hurts.`},
         {do:`Minimum at the smallest allowed $\\lambda=0$.`, why:`A monotonically increasing function is smallest at the left endpoint.`}
       ],
       answer:`Best at $\\lambda=0$ (total $=1.0$); bias grows faster than variance shrinks.` },
@@ -685,7 +685,7 @@
       ],
       answer:`No; VC $=4$ means $5$ points cannot all be shattered.` },
 
-    { q:`<p>Growth function bound (Sauer's lemma): for VC dimension $d$, the number of labelings on $m$ points is at most $\\big(\\frac{em}{d}\\big)^d$ once $m>d$. With $d=2$, $m=10$, bound it ($e\\approx2.718$).</p>`,
+    { q:`<p>Growth function bound (Sauer's lemma): for VC dimension $d$, the number of labelings on $m$ points is at most $\\big(\\frac{em}{d}\\big)^d$ once $m&gt;d$. With $d=2$, $m=10$, bound it ($e\\approx2.718$).</p>`,
       steps:[
         {do:`$\\frac{em}{d} = \\frac{2.718\\times 10}{2} = 13.59$.`, why:`Compute the base of the power.`},
         {do:`$(13.59)^2 \\approx 184.7$.`, why:`Raise to the power $d=2$.`},

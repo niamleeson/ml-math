@@ -194,10 +194,10 @@
       ],
       answer:`Weight $=0$; invalid. A triangle needs 3 colors, not 2.` },
 
-    { q:`<p>Count solutions. Two variables $X,Y\\in\\{1,2,3\\}$ with the single constraint $X<Y$ (a $0/1$ factor). How many assignments have weight $1$?</p>`,
+    { q:`<p>Count solutions. Two variables $X,Y\\in\\{1,2,3\\}$ with the single constraint $X&lt;Y$ (a $0/1$ factor). How many assignments have weight $1$?</p>`,
       steps:[
-        {do:`List pairs with $X<Y$: $(1,2),(1,3),(2,3)$.`, why:`Only strictly increasing pairs satisfy the factor.`},
-        {do:`Each such pair has factor $1$, weight $=1$.`, why:`The single factor is $1$ exactly when $X<Y$.`},
+        {do:`List pairs with $X&lt;Y$: $(1,2),(1,3),(2,3)$.`, why:`Only strictly increasing pairs satisfy the factor.`},
+        {do:`Each such pair has factor $1$, weight $=1$.`, why:`The single factor is $1$ exactly when $X&lt;Y$.`},
         {do:`Count $=3$.`, why:`Three valid pairs out of $9$ total.`}
       ],
       answer:`$3$ assignments have weight $1$.` },
@@ -237,7 +237,7 @@
       ],
       answer:`B's domain becomes empty; the search must backtrack.` },
 
-    { q:`<p>AC-3 arc revision. Variables X,Y with constraint $X<Y$. Domains $X=\\{1,2,3\\}$, $Y=\\{1,2\\}$. Revise arc $X\\to Y$: remove any $x$ with no consistent $y$. Show the new domain of X.</p>`,
+    { q:`<p>AC-3 arc revision. Variables X,Y with constraint $X&lt;Y$. Domains $X=\\{1,2,3\\}$, $Y=\\{1,2\\}$. Revise arc $X\\to Y$: remove any $x$ with no consistent $y$. Show the new domain of X.</p>`,
       steps:[
         {do:`$x=1$: need $y>1$ in $\\{1,2\\}$; $y=2$ works. Keep.`, why:`Arc-consistency keeps $x$ if some $y$ satisfies the constraint.`},
         {do:`$x=2$: need $y>2$ in $\\{1,2\\}$; none. Remove $2$.`, why:`No supporting value for $x=2$.`},
@@ -246,10 +246,10 @@
       ],
       answer:`After revising $X\\to Y$: $X=\\{1\\}$.` },
 
-    { q:`<p>Full AC-3 pass on a chain $X<Y<Z$ with domains $X=Y=Z=\\{1,2,3\\}$. Revise arcs $Y\\to Z$, then $X\\to Y$. Give the resulting domains.</p>`,
+    { q:`<p>Full AC-3 pass on a chain $X&lt;Y&lt;Z$ with domains $X=Y=Z=\\{1,2,3\\}$. Revise arcs $Y\\to Z$, then $X\\to Y$. Give the resulting domains.</p>`,
       steps:[
-        {do:`Revise $Y\\to Z$ ($Y<Z$): $y=3$ has no $z>3$, remove $3$. $Y=\\{1,2\\}$.`, why:`No support for $y=3$ in $Z=\\{1,2,3\\}$.`},
-        {do:`Revise $X\\to Y$ ($X<Y$) with $Y=\\{1,2\\}$: $x=2$ needs $y>2$ — gone; $x=3$ too. Remove $2,3$. $X=\\{1\\}$.`, why:`After Y shrank, X loses its larger values.`},
+        {do:`Revise $Y\\to Z$ ($Y&lt;Z$): $y=3$ has no $z>3$, remove $3$. $Y=\\{1,2\\}$.`, why:`No support for $y=3$ in $Z=\\{1,2,3\\}$.`},
+        {do:`Revise $X\\to Y$ ($X&lt;Y$) with $Y=\\{1,2\\}$: $x=2$ needs $y>2$ — gone; $x=3$ too. Remove $2,3$. $X=\\{1\\}$.`, why:`After Y shrank, X loses its larger values.`},
         {do:`Symmetric revision of $Z$ ($Z>Y$) drops $z=1$, leaving $Z=\\{3\\}$ once $Y$ is pinned to $2$.`, why:`Arc-consistency cascades, forcing $X=1,Y=2,Z=3$.`}
       ],
       answer:`AC-3 narrows to $X=\\{1\\}$, $Y=\\{2\\}$, $Z=\\{3\\}$ — the unique solution.` },

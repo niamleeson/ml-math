@@ -27,8 +27,8 @@ add("aix-relaxation", [
   { q:`<p>A heuristic reports $h = 10$ but the true cost is $\\text{Cost} = 7$. Is $h$ admissible?</p>`,
     steps:[
       {do:`Test $h \\le \\text{Cost}$: is $10 \\le 7$?`, why:`Admissibility forbids overestimating the true remaining cost.`},
-      {do:`$10 > 7$, so the test fails.`, why:`The heuristic claims a larger cost than truly exists.`}],
-    answer:`$No.\\ 10 > 7,\\ so\\ h\\ overestimates\\ and\\ is\\ inadmissible.$` },
+      {do:`$10 &gt; 7$, so the test fails.`, why:`The heuristic claims a larger cost than truly exists.`}],
+    answer:`$No.\\ 10 &gt; 7,\\ so\\ h\\ overestimates\\ and\\ is\\ inadmissible.$` },
 
   { q:`<p>In a maze, removing the walls (relaxation) gives straight cost $h = 8$, and the true winding path is $12$ steps. State $h$ and confirm admissibility.</p>`,
     steps:[
@@ -73,7 +73,7 @@ add("aix-relaxation", [
     steps:[
       {do:`Right side: $c + h(s') = 2 + 4 = 6$.`, why:`The triangle-inequality bound for a consistent heuristic.`},
       {do:`Check $h(s) \\le 6$, i.e. $7 \\le 6$. False.`, why:`The heuristic drops by more than the edge cost allows.`}],
-    answer:`$Not\\ consistent:\\ 7 > 2 + 4.$` },
+    answer:`$Not\\ consistent:\\ 7 &gt; 2 + 4.$` },
 
   { q:`<p>Same consistency test with $h(s)=5$, $c(s,s')=3$, $h(s')=4$. Is it consistent across this edge?</p>`,
     steps:[
@@ -109,10 +109,10 @@ add("aix-relaxation", [
 
   { q:`<p>Relaxed cost = $9$, but a buggy implementation returns $h = 9 + 5 = 14$ while the true cost is $11$. Does the bug preserve admissibility, and what can go wrong?</p>`,
     steps:[
-      {do:`Compare buggy $h = 14$ to true cost $11$: $14 > 11$.`, why:`Admissibility needs $h \\le \\text{Cost}$.`},
+      {do:`Compare buggy $h = 14$ to true cost $11$: $14 &gt; 11$.`, why:`Admissibility needs $h \\le \\text{Cost}$.`},
       {do:`The bug overestimates, so admissibility is lost.`, why:`Adding 5 pushed the heuristic above the true cost.`},
       {do:`A* may now miss the optimal path.`, why:`Overestimating heuristics void the optimality guarantee.`}],
-    answer:`$No;\\ h=14>11,\\ admissibility\\ broken.$` }
+    answer:`$No;\\ h=14&gt;11,\\ admissibility\\ broken.$` }
 ]);
 
 /* ===================================================================
@@ -172,8 +172,8 @@ add("aix-structured-perceptron", [
     steps:[
       {do:`Score A $= w \\cdot \\phi_A = 1(1) + (-1)(0) = 1$.`, why:`Dot product of weights with A's features.`},
       {do:`Score B $= w \\cdot \\phi_B = 1(0) + (-1)(1) = -1$.`, why:`Dot product of weights with B's features.`},
-      {do:`$1 > -1$, so predict A.`, why:`The model outputs the argmax-scoring structure.`}],
-    answer:`$Predict\\ A\\ (score\\ 1 > -1).$` },
+      {do:`$1 &gt; -1$, so predict A.`, why:`The model outputs the argmax-scoring structure.`}],
+    answer:`$Predict\\ A\\ (score\\ 1 &gt; -1).$` },
 
   { q:`<p>A shared edge appears in <i>both</i> the true and predicted paths. What happens to its weight under one update, and why?</p>`,
     steps:[
@@ -191,7 +191,7 @@ add("aix-structured-perceptron", [
   { q:`<p>From the previous problem, also compute the new predicted score $w' \\cdot \\phi(\\hat y)$ with $w' = [2,-1]$ and $\\phi(\\hat y) = [1,2]$. Does the true output now win?</p>`,
     steps:[
       {do:`$w' \\cdot \\phi(\\hat y) = 2(1) + (-1)(2) = 2 - 2 = 0$.`, why:`Dot the updated weights with the predicted features.`},
-      {do:`True score $5 >$ predicted score $0$.`, why:`Compare to decide the new argmax.`}],
+      {do:`True score $5 &gt;$ predicted score $0$.`, why:`Compare to decide the new argmax.`}],
     answer:`$Predicted = 0;\\ true\\ (5)\\ now\\ wins.$` },
 
   { q:`<p>Averaged perceptron returns the mean of the weight vectors over all updates. Over 3 steps the weights were $[1,0]$, $[1,-1]$, $[2,-1]$. Compute the averaged weight.</p>`,
@@ -303,7 +303,7 @@ add("aix-monte-carlo", [
 
   { q:`<p>Compute the geometric-sum return for an infinite stream of reward $r = 1$ every step with $\\gamma = 0.9$: $u = \\sum_{k\\ge 0} \\gamma^k r$.</p>`,
     steps:[
-      {do:`$u = \\sum_{k\\ge 0} 0.9^k \\cdot 1 = \\frac{1}{1-\\gamma}$.`, why:`A geometric series with ratio $\\gamma < 1$ sums to $1/(1-\\gamma)$.`},
+      {do:`$u = \\sum_{k\\ge 0} 0.9^k \\cdot 1 = \\frac{1}{1-\\gamma}$.`, why:`A geometric series with ratio $\\gamma &lt; 1$ sums to $1/(1-\\gamma)$.`},
       {do:`$= \\frac{1}{1 - 0.9} = \\frac{1}{0.1} = 10$.`, why:`Plug in $\\gamma = 0.9$.`}],
     answer:`$u = 10$` },
 
@@ -422,7 +422,7 @@ add("aix-sarsa-td", [
   { q:`<p>The TD error magnitude shows "surprise". Transition A: target $6$, current $V=2$. Transition B: target $3$, current $V=2.5$. Which update changes the value more (same $\\alpha$)?</p>`,
     steps:[
       {do:`$\\delta_A = 6 - 2 = 4$; $\\delta_B = 3 - 2.5 = 0.5$.`, why:`Error is target minus current value.`},
-      {do:`$|\\delta_A| = 4 > 0.5 = |\\delta_B|$.`, why:`Update size is $\\alpha\\,\\delta$, so larger error means larger change.`}],
+      {do:`$|\\delta_A| = 4 &gt; 0.5 = |\\delta_B|$.`, why:`Update size is $\\alpha\\,\\delta$, so larger error means larger change.`}],
     answer:`$Transition\\ A\\ (\\delta = 4).$` },
 
   { q:`<p>With a decaying learning rate $\\alpha = 1/N$, update $V(s)$ from current $V = 4$, target $= 7$, on visit $N = 3$. Compute the new $V(s)$.</p>`,
@@ -445,7 +445,7 @@ add("aix-game-theory", [
   { q:`<p>Given B plays "Left", A's payoffs are $5$ (Up) and $3$ (Down). What is A's best response to "Left"?</p>`,
     steps:[
       {do:`A best-responds by maximizing its own payoff: $\\max(5,3)$.`, why:`A best response is the move giving the highest payoff against the opponent's fixed choice.`},
-      {do:`$5 > 3$, so play Up.`, why:`Up yields the higher payoff against Left.`}],
+      {do:`$5 &gt; 3$, so play Up.`, why:`Up yields the higher payoff against Left.`}],
     answer:`$Up\\ (payoff\\ 5).$` },
 
   { q:`<p>Continuing: given B plays "Right", A gets $2$ (Up) and $4$ (Down). A's best response to "Right"?</p>`,
@@ -469,14 +469,14 @@ add("aix-game-theory", [
 
   { q:`<p>In the prisoner's dilemma, (Cooperate, Cooperate) pays $(-1,-1)$, better than the Nash $(-2,-2)$. Why isn't (C,C) a Nash equilibrium?</p>`,
     steps:[
-      {do:`From (C,C), A can switch to Defect and get $0 > -1$.`, why:`A profitable unilateral deviation exists.`},
+      {do:`From (C,C), A can switch to Defect and get $0 &gt; -1$.`, why:`A profitable unilateral deviation exists.`},
       {do:`So a player gains by deviating alone.`, why:`Nash requires no player can improve by switching unilaterally.`}],
     answer:`$Not\\ Nash:\\ each\\ can\\ deviate\\ to\\ gain.$` },
 
   { q:`<p>Find all pure-strategy Nash equilibria. A's payoffs by cell (rows Up/Down, cols Left/Right): UL$=3$, UR$=0$, DL$=0$, DR$=2$; B's: UL$=2$, UR$=0$, DL$=0$, DR$=3$ (a coordination game).</p>`,
     steps:[
-      {do:`A's best response: to Left, $3>0$→Up; to Right, $2>0$→Down.`, why:`Pick A's higher payoff in each column.`},
-      {do:`B's best response: to Up, $2>0$→Left; to Down, $3>0$→Right.`, why:`Pick B's higher payoff in each row.`},
+      {do:`A's best response: to Left, $3&gt;0$→Up; to Right, $2&gt;0$→Down.`, why:`Pick A's higher payoff in each column.`},
+      {do:`B's best response: to Up, $2&gt;0$→Left; to Down, $3&gt;0$→Right.`, why:`Pick B's higher payoff in each row.`},
       {do:`(Up,Left) and (Down,Right) are mutual best responses.`, why:`Both players best-respond, so neither deviates.`}],
     answer:`$Two\\ pure\\ Nash:\\ (Up,Left),\\ (Down,Right).$` },
 
@@ -519,14 +519,14 @@ add("aix-game-theory", [
 
   { q:`<p>A strategy is strictly dominated if another always does better. A's payoffs against B's only column: Up $4$, Middle $1$, Down $3$. Which row is strictly dominated by Up?</p>`,
     steps:[
-      {do:`Compare Middle to Up: $1 < 4$ in this column.`, why:`Up gives a strictly higher payoff than Middle.`},
+      {do:`Compare Middle to Up: $1 &lt; 4$ in this column.`, why:`Up gives a strictly higher payoff than Middle.`},
       {do:`So Middle is strictly dominated by Up and can be removed.`, why:`A rational A never plays a strictly dominated strategy.`}],
     answer:`$Middle\\ is\\ strictly\\ dominated.$` },
 
   { q:`<p>Stag hunt: both Hunt Stag $(3,3)$; both Hunt Hare $(1,1)$; mismatched Stag/Hare $(0,1)$. Find the pure Nash equilibria.</p>`,
     steps:[
-      {do:`From (Stag,Stag): switching to Hare gives $1 < 3$ — no gain.`, why:`Neither wants to deviate, so it is Nash.`},
-      {do:`From (Hare,Hare): switching to Stag gives $0 < 1$ — no gain.`, why:`Neither wants to deviate, so it is also Nash.`},
+      {do:`From (Stag,Stag): switching to Hare gives $1 &lt; 3$ — no gain.`, why:`Neither wants to deviate, so it is Nash.`},
+      {do:`From (Hare,Hare): switching to Stag gives $0 &lt; 1$ — no gain.`, why:`Neither wants to deviate, so it is also Nash.`},
       {do:`Both (Stag,Stag) and (Hare,Hare) are pure Nash.`, why:`Coordination games can have multiple equilibria.`}],
     answer:`$(Stag,Stag)\\ and\\ (Hare,Hare).$` },
 
@@ -686,7 +686,7 @@ add("aix-gibbs-particle", [
   { q:`<p>To draw from the categorical $[0.2, 0.5, 0.3]$ with a uniform $u = 0.6$ via cumulative thresholds, which state is selected?</p>`,
     steps:[
       {do:`Cumulative sums: state 1 up to $0.2$, state 2 up to $0.7$, state 3 up to $1.0$.`, why:`Inverse-CDF sampling compares $u$ to running totals.`},
-      {do:`$0.2 < u = 0.6 \\le 0.7$, so pick state 2.`, why:`$u$ falls in state 2's cumulative interval.`}],
+      {do:`$0.2 &lt; u = 0.6 \\le 0.7$, so pick state 2.`, why:`$u$ falls in state 2's cumulative interval.`}],
     answer:`$State\\ 2.$` },
 
   { q:`<p>Gibbs resamples one variable from $P(X_i \\mid X_{-i})$. Given the unnormalized conditional scores $[\\text{false}: 2,\\ \\text{true}: 6]$, what is the normalized $P(X_i = \\text{true} \\mid X_{-i})$?</p>`,
@@ -958,7 +958,7 @@ add("aix-forward-backward", [
 
   { q:`<p>The smoothed posterior at step $i$ is $[0.9, 0.1]$. The MAP state at $i$ is the argmax. Which hidden state is most likely?</p>`,
     steps:[
-      {do:`Compare the two posteriors: $0.9 > 0.1$.`, why:`The most likely state maximizes the posterior.`},
+      {do:`Compare the two posteriors: $0.9 &gt; 0.1$.`, why:`The most likely state maximizes the posterior.`},
       {do:`So the MAP state is state 1.`, why:`Argmax of $[0.9,0.1]$ is index 1.`}],
     answer:`$State\\ 1.$` },
 
@@ -1035,7 +1035,7 @@ add("aix-lda-topic", [
 
   { q:`<p>The Dirichlet prior pushes $\\theta$ toward sparsity. Which $\\theta$ does a sparse-favoring prior prefer: $[0.5, 0.5]$ or $[0.9, 0.1]$?</p>`,
     steps:[
-      {do:`Sparse means mass concentrated on few topics.`, why:`A sparse-favoring Dirichlet ($\\alpha < 1$) peaks near the simplex corners.`},
+      {do:`Sparse means mass concentrated on few topics.`, why:`A sparse-favoring Dirichlet ($\\alpha &lt; 1$) peaks near the simplex corners.`},
       {do:`$[0.9, 0.1]$ is more concentrated than the uniform $[0.5, 0.5]$.`, why:`Most mass sits on one topic.`}],
     answer:`$[0.9,\\ 0.1]\\ (more\\ sparse).$` },
 
@@ -1066,8 +1066,8 @@ add("aix-lda-topic", [
   { q:`<p>Perplexity measures fit; lower is better. Model A assigns held-out words average probability $0.1$, model B assigns $0.2$. Per-word perplexity is $1/P$. Which fits better?</p>`,
     steps:[
       {do:`Perplexity$_A = 1/0.1 = 10$; perplexity$_B = 1/0.2 = 5$.`, why:`Lower perplexity = higher assigned probability.`},
-      {do:`$5 < 10$, so model B fits better.`, why:`B gives held-out words higher probability.`}],
-    answer:`$Model\\ B\\ (perplexity\\ 5 < 10).$` },
+      {do:`$5 &lt; 10$, so model B fits better.`, why:`B gives held-out words higher probability.`}],
+    answer:`$Model\\ B\\ (perplexity\\ 5 &lt; 10).$` },
 
   { q:`<p>A new document's inferred $\\theta = [0.1, 0.1, 0.8]$ over 3 topics. Which topic dominates, and what does this say about the document?</p>`,
     steps:[

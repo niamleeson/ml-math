@@ -250,7 +250,7 @@ Object.assign(window.DERIVATIONS, {
    </ul>
    <p><b>Deriving the Exponential shape.</b> Events arrive at a steady rate $\\lambda$ with no memory. "No memory" forces the form.</p>
    <ul class="steps">
-     <li>Let $S(t) = P(\\text{wait} > t)$ be the chance you're still waiting after time $t$.</li>
+     <li>Let $S(t) = P(\\text{wait} &gt; t)$ be the chance you're still waiting after time $t$.</li>
      <li>Memorylessness: having already waited $s$, the chance of waiting $t$ more is the same as a fresh start. So $S(s+t) = S(s)\\,S(t)$.</li>
      <li>The only smooth function with "add inputs $\\Rightarrow$ multiply outputs" is an exponential: $S(t) = e^{-\\lambda t}$ (it starts at $S(0)=1$ and decays).</li>
      <li>The density is how fast that survival drops: $f(t) = \\lambda e^{-\\lambda t}$. Short waits are common, long waits rare. ∎</li>
@@ -330,7 +330,7 @@ Object.assign(window.DERIVATIONS, {
 /* ---------------------------------------------------------------- */
 "prob-inequalities":
   `<p>Both inequalities are <b>provable</b> from the definition of expectation. Markov first; Chebyshev falls out of Markov in one move.</p>
-   <p><b>Proving Markov: $P(X \\ge a) \\le \\dfrac{E[X]}{a}$ for $X \\ge 0$ and $a > 0$.</b></p>
+   <p><b>Proving Markov: $P(X \\ge a) \\le \\dfrac{E[X]}{a}$ for $X \\ge 0$ and $a &gt; 0$.</b></p>
    <ul class="steps">
      <li>$E[X] = \\sum_x x\\,p_X(x)$, and since $X\\ge 0$ every term is $\\ge 0$. Dropping terms only shrinks the total.</li>
      <li>Keep only the values $x \\ge a$: $\\;E[X] \\ge \\sum_{x \\ge a} x\\,p_X(x)$.</li>

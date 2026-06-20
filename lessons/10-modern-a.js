@@ -315,7 +315,7 @@ L({
     { sym: "$z_v$", desc: "the logit (raw score) for vocabulary word $v$, before softmax." },
     { sym: "$P(x_{t+1} \\mid x_{1:t})$", desc: "the probability of the next word given everything before it." },
     { sym: "$V$", desc: "the vocabulary: the full list of words (or tokens) the model can output." },
-    { sym: "$T$", desc: "the temperature: a knob that sharpens ($T<1$) or flattens ($T>1$) the probabilities." }
+    { sym: "$T$", desc: "the temperature: a knob that sharpens ($T&lt;1$) or flattens ($T&gt;1$) the probabilities." }
   ],
   formula: `$$ P(x_{t+1} = v \\mid x_{1:t}) = \\frac{\\exp(z_v / T)}{\\sum_{u \\in V} \\exp(z_u / T)} $$`,
   whatItDoes:

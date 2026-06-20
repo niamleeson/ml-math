@@ -447,7 +447,7 @@ L({
      <p>Fix this by dividing each sum of squares by its <b>degrees of freedom</b> instead of by raw counts. With $n$ data points and $k$ predictors:</p>
      $$ \\bar{R}^2 = 1 - \\frac{\\text{RSS}/(n - k - 1)}{\\text{TSS}/(n - 1)}. $$
      <p>Adding a predictor lowers RSS but also lowers the divisor $n - k - 1$. If the new predictor barely helps, the divisor effect wins and $\\bar{R}^2$ <b>drops</b>.</p>
-     <p>Rearranging, $\\bar{R}^2 = 1 - (1 - R^2)\\dfrac{n-1}{n-k-1}$. The factor $\\dfrac{n-1}{n-k-1} > 1$ grows with $k$ — that is the built-in complexity penalty. $\\blacksquare$</p>`,
+     <p>Rearranging, $\\bar{R}^2 = 1 - (1 - R^2)\\dfrac{n-1}{n-k-1}$. The factor $\\dfrac{n-1}{n-k-1} &gt; 1$ grows with $k$ — that is the built-in complexity penalty. $\\blacksquare$</p>`,
   example:
     `<p>Two models for the same $n = 100$ data points. Compare with AIC and BIC.</p>
      <ul class="steps">
@@ -577,16 +577,16 @@ L({
   formula: `$$ s = \\frac{b - a}{\\max(a,\\,b)} $$`,
   whatItDoes:
     `<p>Take the separation $b$ minus the tightness $a$. Divide by whichever is bigger so the score is normalized.</p>
-     <p>If $a$ is tiny and $b$ is large (great clustering), $s \\approx b / b = 1$. If $a \\approx b$ (ambiguous), $s \\approx 0$. If $a > b$ (closer to a neighbor than its own group), $s < 0$.</p>
+     <p>If $a$ is tiny and $b$ is large (great clustering), $s \\approx b / b = 1$. If $a \\approx b$ (ambiguous), $s \\approx 0$. If $a &gt; b$ (closer to a neighbor than its own group), $s &lt; 0$.</p>
      <p>Average $s$ over all points to get the clustering's overall quality. Sweep $k$ and pick the $k$ with the highest average silhouette.</p>`,
   derivation:
     `<p>Why is $s$ guaranteed to lie in $[-1, 1]$? Both $a \\ge 0$ and $b \\ge 0$. Split into two cases.</p>
      <p><b>Case $a \\le b$:</b> then $\\max(a,b) = b$, so</p>
      $$ s = \\frac{b - a}{b} = 1 - \\frac{a}{b}. $$
      <p>Since $0 \\le a \\le b$, the ratio $a/b \\in [0,1]$, hence $s \\in [0, 1]$.</p>
-     <p><b>Case $a > b$:</b> then $\\max(a,b) = a$, so</p>
+     <p><b>Case $a &gt; b$:</b> then $\\max(a,b) = a$, so</p>
      $$ s = \\frac{b - a}{a} = \\frac{b}{a} - 1. $$
-     <p>Since $0 \\le b < a$, the ratio $b/a \\in [0,1)$, hence $s \\in [-1, 0)$.</p>
+     <p>Since $0 \\le b &lt; a$, the ratio $b/a \\in [0,1)$, hence $s \\in [-1, 0)$.</p>
      <p>Together the two cases cover all values, so $s \\in [-1, 1]$ always. The boundary $a = b$ gives $s = 0$. $\\blacksquare$</p>`,
   example:
     `<p>Take one point. It belongs to cluster Red. Compute its $a$ and $b$.</p>

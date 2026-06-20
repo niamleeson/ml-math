@@ -263,10 +263,10 @@ Object.assign(window.DERIVATIONS, {
   `<p><b>Why share the same weights across every time step?</b></p>
    <ul class="steps">
      <li>Sequences vary in length: a tweet, a sentence, a paragraph. We need one rule that works for any length. A fixed set of per-position weights could not handle a sequence longer than expected.</li>
-     <li>So the RNN applies the <i>same</i> update rule at every step: $a^{<t>}=g(W_{aa}\\,a^{<t-1>}+W_{ax}\\,x^{<t>}+b_a)$. The weights $W_{aa},W_{ax},b_a$ do not change with $t$.</li>
+     <li>So the RNN applies the <i>same</i> update rule at every step: $a^{&lt;t&gt;}=g(W_{aa}\\,a^{&lt;t-1&gt;}+W_{ax}\\,x^{&lt;t&gt;}+b_a)$. The weights $W_{aa},W_{ax},b_a$ do not change with $t$.</li>
      <li>Reusing one rule means far fewer weights, and the pattern it learns ("how this word relates to the running context") applies at every position. Just like a conv filter shares weights across space, an RNN shares weights across time.</li>
    </ul>
-   <p><b>Why the hidden state is memory.</b> Each step's new state $a^{<t>}$ is computed from the previous state $a^{<t-1>}$ plus the new input. So $a^{<t-1>}$ carries a squeezed summary of everything seen so far into the next step. That carried summary is the network's memory; it is how an earlier word can still influence a later one.</p>
+   <p><b>Why the hidden state is memory.</b> Each step's new state $a^{&lt;t&gt;}$ is computed from the previous state $a^{&lt;t-1&gt;}$ plus the new input. So $a^{&lt;t-1&gt;}$ carries a squeezed summary of everything seen so far into the next step. That carried summary is the network's memory; it is how an earlier word can still influence a later one.</p>
    <p><b>Intuition.</b> Reading a sentence one word at a time, you keep a running gist in your head. Each new word updates the gist. The gist is the hidden state; the "how to update" habit is the shared weights.</p>`,
 
 /* ---------------------------------------------------------------- */
@@ -275,8 +275,8 @@ Object.assign(window.DERIVATIONS, {
    <ul class="steps">
      <li>To send the gradient from step $t$ back to step $1$, the chain rule passes it through every step in between. Each hop multiplies by a local factor $r$ (roughly the recurrent weight times the activation's slope).</li>
      <li>Over $k$ steps that is the same factor multiplied $k$ times: about $r^k$.</li>
-     <li>If $r<1$ (say $r=0.5$): $0.5^{20}\\approx 0.000001$. The gradient <b>vanishes</b>. Early steps get almost no update, so the network cannot learn long-range links.</li>
-     <li>If $r>1$ (say $r=1.5$): $1.5^{20}\\approx 3300$. The gradient <b>explodes</b>. Updates overshoot and training blows up.</li>
+     <li>If $r&lt;1$ (say $r=0.5$): $0.5^{20}\\approx 0.000001$. The gradient <b>vanishes</b>. Early steps get almost no update, so the network cannot learn long-range links.</li>
+     <li>If $r&gt;1$ (say $r=1.5$): $1.5^{20}\\approx 3300$. The gradient <b>explodes</b>. Updates overshoot and training blows up.</li>
    </ul>
    <p>It is the same math as compound interest: a rate just under 1, compounded many times, decays to nothing; a rate just over 1 rockets to infinity. Multiplying many factors is unforgiving.</p>
    <p><b>The fix for explosion: clipping.</b> If the gradient's size $\\lVert g\\rVert$ exceeds a threshold, rescale it down to that threshold while keeping its direction: $g \\leftarrow \\text{threshold}\\cdot\\frac{g}{\\lVert g\\rVert}$. Same direction, capped length, so one giant step cannot wreck training. (Vanishing needs a different fix, gated cells, next lesson.)</p>`,
@@ -286,8 +286,8 @@ Object.assign(window.DERIVATIONS, {
   `<p><b>Why does a gated, additive cell state let gradients flow far?</b> The previous lesson showed the killer was a long <i>product</i> of factors. Gated cells turn the key step into an <i>addition</i>.</p>
    <ul class="steps">
      <li>A gate is a sigmoid output in $(0,1)$: 0 means "block", 1 means "let through". The forget gate $f$ and update gate $u$ are such gates.</li>
-     <li>The cell state updates additively: $c^{<t>}=f\\cdot c^{<t-1>}+u\\cdot \\tilde{c}^{<t>}$. The old memory passes through scaled by $f$, and new content is <i>added</i>, not multiplied in.</li>
-     <li>When the network wants to remember something, it learns $f\\approx 1$. Then $c^{<t>}\\approx c^{<t-1>}+\\dots$: the old memory survives nearly untouched, step after step.</li>
+     <li>The cell state updates additively: $c^{&lt;t&gt;}=f\\cdot c^{&lt;t-1&gt;}+u\\cdot \\tilde{c}^{&lt;t&gt;}$. The old memory passes through scaled by $f$, and new content is <i>added</i>, not multiplied in.</li>
+     <li>When the network wants to remember something, it learns $f\\approx 1$. Then $c^{&lt;t&gt;}\\approx c^{&lt;t-1&gt;}+\\dots$: the old memory survives nearly untouched, step after step.</li>
      <li>In backprop, a path where each factor is $\\approx 1$ does not shrink (no $0.5^{20}$ decay) and does not blow up. Gradients flow across many steps. The gates created a near-1 "highway" for memory. ∎ (intuitively)</li>
    </ul>
    <p><b>Why gates, not fixed behavior?</b> Different moments need different memory. "Remember the subject is plural until the verb" vs "forget that, new sentence". Gates let the network <i>decide</i>, per step and per input, what to keep, forget, and output.</p>
@@ -334,9 +334,9 @@ Object.assign(window.DERIVATIONS, {
 "dl-attention":
   `<p><b>Why turn raw relevance scores into softmax weights that sum to 1?</b> Because that makes a soft, differentiable look-up.</p>
    <ul class="steps">
-     <li>For output step $t$, score each input part $t'$ by a relevance number $e^{<t,t'>}$: higher means "more worth looking at".</li>
-     <li>Softmax them: $\\alpha^{<t,t'>}=\\frac{\\exp(e^{<t,t'>})}{\\sum_{t'}\\exp(e^{<t,t'>})}$. Exponentiating makes every weight positive; dividing by the sum makes the weights add to 1.</li>
-     <li>Weights that are positive and sum to 1 are exactly the recipe for a weighted average. The context is $c=\\sum_{t'}\\alpha^{<t,t'>}\\,a^{<t'>}$, a blend of the inputs leaning on the relevant ones.</li>
+     <li>For output step $t$, score each input part $t'$ by a relevance number $e^{&lt;t,t'&gt;}$: higher means "more worth looking at".</li>
+     <li>Softmax them: $\\alpha^{&lt;t,t'&gt;}=\\frac{\\exp(e^{&lt;t,t'&gt;})}{\\sum_{t'}\\exp(e^{&lt;t,t'&gt;})}$. Exponentiating makes every weight positive; dividing by the sum makes the weights add to 1.</li>
+     <li>Weights that are positive and sum to 1 are exactly the recipe for a weighted average. The context is $c=\\sum_{t'}\\alpha^{&lt;t,t'&gt;}\\,a^{&lt;t'&gt;}$, a blend of the inputs leaning on the relevant ones.</li>
    </ul>
    <p><b>Why "soft" and "differentiable" matter.</b> A hard look-up ("grab input #2") cannot be trained by gradients; you cannot take a derivative of a discrete pick. Softmax gives a <i>soft</i> pick: mostly input 2, a little of 1 and 3. It is smooth, so backprop can nudge the scores and the model can <i>learn</i> where to look. As one score dominates, its weight approaches 1 and it acts like a real look-up, but it stays trainable.</p>
    <p><b>Why this is the heart of Transformers.</b> Attention lets any output position pull directly from any input position, no matter how far apart, with learned weights. That direct, learnable any-to-any link is what made Transformers and modern large language models possible.</p>

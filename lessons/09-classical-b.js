@@ -572,7 +572,7 @@ L({
     `<p><b>Why only the support vectors matter.</b></p>
      <p>The fit minimizes $\\tfrac12\\|w\\|^2 + C\\sum_i L_\\varepsilon$. Look at how each point pulls on the weights via the gradient.</p>
      <ul class="steps">
-       <li>For a point <i>inside</i> the tube, $|y_i - f(x_i)| < \\varepsilon$, so $L_\\varepsilon = 0$ — flat. Its gradient contribution is $0$. It exerts no force on $w$.</li>
+       <li>For a point <i>inside</i> the tube, $|y_i - f(x_i)| &lt; \\varepsilon$, so $L_\\varepsilon = 0$ — flat. Its gradient contribution is $0$. It exerts no force on $w$.</li>
        <li>For a point <i>outside</i>, $L_\\varepsilon = |y_i - f(x_i)| - \\varepsilon$, whose slope is $\\pm 1$. It pushes $w$ with a fixed-size force, in the direction that pulls the line toward it.</li>
        <li>So the optimal $w$ is determined entirely by the outside points balancing against the flatness term. Inside points could be deleted without changing the answer.</li>
        <li>Those decisive outside points are the support vectors — the regression literally rests on them. ∎</li>
@@ -581,7 +581,7 @@ L({
   example:
     `<p>Tube half-width $\\varepsilon = 1$. The fitted line predicts $f(x) = 5$ at some $x$. Score three points there.</p>
      <ul class="steps">
-       <li>True $y = 5.5$: error $= |5.5 - 5| = 0.5$. Since $0.5 < 1$, it is inside the tube. Loss $= \\max(0,\\ 0.5 - 1) = 0$.</li>
+       <li>True $y = 5.5$: error $= |5.5 - 5| = 0.5$. Since $0.5 &lt; 1$, it is inside the tube. Loss $= \\max(0,\\ 0.5 - 1) = 0$.</li>
        <li>True $y = 6.0$: error $= 1.0$. Exactly at the edge. Loss $= \\max(0,\\ 1.0 - 1) = 0$.</li>
        <li>True $y = 7.5$: error $= 2.5$. Outside. Loss $= \\max(0,\\ 2.5 - 1) = 1.5$. This point is a support vector and pulls on the fit.</li>
        <li>Only the third point pays — the first two are absorbed by the tube.</li>

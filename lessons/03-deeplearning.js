@@ -1882,25 +1882,25 @@ L({
      <p>A <b>recurrent neural network (RNN)</b> reads it one step at a time and keeps a <b>memory</b> of what it has seen.</p>
      <p>That memory, the <b>hidden state</b>, is updated at each step and passed along to the next.</p>`,
   buildup:
-    `<p>At step $t$, the RNN takes the new input $x^{<t>}$ and the previous memory $a^{<t-1>}$, and blends them into a new memory $a^{<t>}$.</p>
-     <p>The little $<t>$ marks the time step. The blend uses weights and an activation, just like before.</p>`,
+    `<p>At step $t$, the RNN takes the new input $x^{&lt;t&gt;}$ and the previous memory $a^{&lt;t-1&gt;}$, and blends them into a new memory $a^{&lt;t&gt;}$.</p>
+     <p>The little $&lt;t&gt;$ marks the time step. The blend uses weights and an activation, just like before.</p>`,
   symbols: [
-    { sym: "$x^{<t>}$", desc: "the input at time step $t$ (e.g. the $t$-th word)." },
-    { sym: "$a^{<t>}$", desc: "the hidden state (memory) at step $t$." },
-    { sym: "$a^{<t-1>}$", desc: "the hidden state from the previous step." },
+    { sym: "$x^{&lt;t&gt;}$", desc: "the input at time step $t$ (e.g. the $t$-th word)." },
+    { sym: "$a^{&lt;t&gt;}$", desc: "the hidden state (memory) at step $t$." },
+    { sym: "$a^{&lt;t-1&gt;}$", desc: "the hidden state from the previous step." },
     { sym: "$W_{aa}, W_{ax}, b_a$", desc: "weights on the old memory, weights on the new input, and a bias." },
     { sym: "$g$", desc: "an activation function, usually tanh." }
   ],
-  formula: `$$ a^{<t>} = g\\big(W_{aa}\\,a^{<t-1>} + W_{ax}\\,x^{<t>} + b_a\\big) $$`,
+  formula: `$$ a^{&lt;t&gt;} = g\\big(W_{aa}\\,a^{&lt;t-1&gt;} + W_{ax}\\,x^{&lt;t&gt;} + b_a\\big) $$`,
   whatItDoes:
     `<p>Combine the old memory and the new input, each through their own weights, add a bias, and squish with $g$.</p>
      <p>The result is the new memory, which feeds into the next step. So information flows along the sequence.</p>`,
   example:
-    `<p>Tiny RNN. Weights $W_{aa} = 0.5$, $W_{ax} = 1$, $b_a = 0$, activation tanh. Start memory $a^{<0>} = 0$. Input sequence $x = [2, 1]$.</p>
+    `<p>Tiny RNN. Weights $W_{aa} = 0.5$, $W_{ax} = 1$, $b_a = 0$, activation tanh. Start memory $a^{&lt;0&gt;} = 0$. Input sequence $x = [2, 1]$.</p>
      <ul class="steps">
-       <li>Step 1: combine $0.5\\times0 + 1\\times2 + 0 = 2$. Then $a^{<1>} = \\tanh(2) \\approx 0.96$.</li>
-       <li>Step 2: combine $0.5\\times0.96 + 1\\times1 + 0 = 1.48$. Then $a^{<2>} = \\tanh(1.48) \\approx 0.90$.</li>
-       <li>The memory $a^{<1>}$ from step 1 carried into step 2's calculation. That is the recurrence.</li>
+       <li>Step 1: combine $0.5\\times0 + 1\\times2 + 0 = 2$. Then $a^{&lt;1&gt;} = \\tanh(2) \\approx 0.96$.</li>
+       <li>Step 2: combine $0.5\\times0.96 + 1\\times1 + 0 = 1.48$. Then $a^{&lt;2&gt;} = \\tanh(1.48) \\approx 0.90$.</li>
+       <li>The memory $a^{&lt;1&gt;}$ from step 1 carried into step 2's calculation. That is the recurrence.</li>
      </ul>`,
   application:
     `<p>RNNs handle text, speech, and time series: early language models, speech-to-text, and forecasting. They process inputs in order and remember context.</p>`,
@@ -1951,7 +1951,7 @@ L({
     { sym: "gradient clipping", desc: "if the gradient's size exceeds a threshold, scale it down to that threshold." },
     { sym: "threshold", desc: "the maximum allowed gradient size." }
   ],
-  formula: `$$ \\text{if } \\|g\\| > \\text{threshold}, \\;\\; g \\leftarrow \\text{threshold}\\cdot\\frac{g}{\\|g\\|} $$`,
+  formula: `$$ \\text{if } \\|g\\| &gt; \\text{threshold}, \\;\\; g \\leftarrow \\text{threshold}\\cdot\\frac{g}{\\|g\\|} $$`,
   whatItDoes:
     `<p>Measure the gradient's size (its norm). If it is bigger than the threshold, shrink it back down to the threshold while keeping its direction.</p>
      <p>This stops single giant steps from wrecking training. Vanishing gradients need a different fix (next lesson: LSTM/GRU).</p>`,
@@ -2405,13 +2405,13 @@ L({
     `<p>For each input part, the model computes a raw score $e$ for how relevant it is. A softmax turns those scores into weights $\\alpha$ that sum to 1.</p>
      <p>Then the <b>context</b> is the weighted sum of the inputs $a$, using those weights.</p>`,
   symbols: [
-    { sym: "$e^{<t,t'>}$", desc: "the raw relevance score of input part $t'$ for output step $t$." },
-    { sym: "$\\alpha^{<t,t'>}$", desc: "the attention weight (Greek 'alpha'): how much to focus on input $t'$. All weights add to 1." },
+    { sym: "$e^{&lt;t,t'&gt;}$", desc: "the raw relevance score of input part $t'$ for output step $t$." },
+    { sym: "$\\alpha^{&lt;t,t'&gt;}$", desc: "the attention weight (Greek 'alpha'): how much to focus on input $t'$. All weights add to 1." },
     { sym: "$\\exp$", desc: "the exponential function, used by softmax to make scores positive." },
-    { sym: "$a^{<t'>}$", desc: "the input representation at position $t'$ being attended to." },
+    { sym: "$a^{&lt;t'&gt;}$", desc: "the input representation at position $t'$ being attended to." },
     { sym: "$c$", desc: "the context: the weighted blend of inputs, focused on the relevant parts." }
   ],
-  formula: `$$ \\alpha^{<t,t'>} = \\frac{\\exp(e^{<t,t'>})}{\\sum_{t'} \\exp(e^{<t,t'>})}, \\qquad c = \\sum_{t'} \\alpha^{<t,t'>}\\, a^{<t'>} $$`,
+  formula: `$$ \\alpha^{&lt;t,t'&gt;} = \\frac{\\exp(e^{&lt;t,t'&gt;})}{\\sum_{t'} \\exp(e^{&lt;t,t'&gt;})}, \\qquad c = \\sum_{t'} \\alpha^{&lt;t,t'&gt;}\\, a^{&lt;t'&gt;} $$`,
   whatItDoes:
     `<p>The softmax turns raw scores into weights between 0 and 1 that sum to 1: bigger score means more focus.</p>
      <p>The context $c$ is the weighted sum of the inputs. Inputs with big weights dominate; inputs with tiny weights are nearly ignored.</p>`,

@@ -235,7 +235,7 @@
       steps: [
         { do: `Outputs: $\\text{ReLU}(4)=4$, $\\text{ReLU}(-1)=0$, sum $= 4$.`,
           why: `ReLU keeps the positive and zeros the negative.` },
-        { do: `Slope w.r.t. $z_A$: $1$ (since $z_A>0$). Slope w.r.t. $z_B$: $0$ (since $z_B<0$).`,
+        { do: `Slope w.r.t. $z_A$: $1$ (since $z_A&gt;0$). Slope w.r.t. $z_B$: $0$ (since $z_B&lt;0$).`,
           why: `ReLU's derivative is 1 on the positive side and 0 on the negative side.` }
       ],
       answer: `sum $= 4$; $\\partial/\\partial z_A = 1$, $\\partial/\\partial z_B = 0$`
@@ -253,7 +253,7 @@
     {
       q: `<p>For binary classification, a sigmoid output $a = 0.9$ is converted to a hard label by thresholding at $0.5$. What is the predicted class, and what is the sigmoid slope $a(1-a)$ there?</p>`,
       steps: [
-        { do: `Threshold: $0.9 > 0.5$, so predicted class $= 1$.`,
+        { do: `Threshold: $0.9 &gt; 0.5$, so predicted class $= 1$.`,
           why: `Outputs above the threshold map to the positive class.` },
         { do: `Slope: $0.9\\times(1-0.9) = 0.9\\times0.1 = 0.09$.`,
           why: `Near the saturated end, the sigmoid slope is small, so gradients shrink.` }
@@ -1137,7 +1137,7 @@
         { do: `Strongest dropout is $p_{keep}=0.3$; scale $= 1/0.3 \\approx 3.333$.`,
           why: `The lowest keep probability drops the most neurons and needs the largest boost.` }
       ],
-      answer: `$90 > 60 > 30$; strongest scale $\\approx 3.333$`
+      answer: `$90 &gt; 60 &gt; 30$; strongest scale $\\approx 3.333$`
     },
     {
       q: `<p>Expected number of active neurons across two layers. Layer 1 has 50 neurons with $p_{keep} = 0.8$; layer 2 has 30 neurons with $p_{keep} = 0.5$. How many neurons are active on average in total?</p>`,
