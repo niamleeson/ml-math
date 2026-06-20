@@ -210,6 +210,14 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "fnd-derivative",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -3, xmax: 3, ymin: -1, ymax: 9,
+      curves: [{ f: function (x) { return x * x; }, label: "f(x) = x²" }],
+      drag: { curve: 0, df: function (x) { return 2 * x; }, start: 1.5, label: "point x",
+        readout: function (x) { return "At x = " + x.toFixed(2) + ", the slope is 2x = <b>" + (2 * x).toFixed(2) + "</b> (orange tangent). Flat at x = 0; steeper as |x| grows."; } }
+    });
+  },
   title: "Derivatives (slope)",
   tagline: "How fast does the output change when you nudge the input? That's the derivative.",
   bigIdea:

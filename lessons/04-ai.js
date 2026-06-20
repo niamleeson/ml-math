@@ -491,6 +491,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ai-q-learning",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "q", label: "old Q(s,a)", min: 0, max: 20, val: 5, step: 0.5 },
+        { key: "r", label: "reward r", min: -5, max: 10, val: 1, step: 0.5 },
+        { key: "g", label: "discount γ", min: 0, max: 1, val: 0.9, step: 0.05 },
+        { key: "qn", label: "max Q at next state", min: 0, max: 20, val: 8, step: 0.5 },
+        { key: "eta", label: "learning rate η", min: 0.01, max: 1, val: 0.5, step: 0.01 }
+      ],
+      compute: function (s) {
+        var target = s.r + s.g * s.qn, nq = (1 - s.eta) * s.q + s.eta * target;
+        return { text: "target = r + γ·maxQ = " + s.r + " + " + s.g + "·" + s.qn + " = <b>" + target.toFixed(2) + "</b>.<br>new Q = (1−η)·Q + η·target = " + (1 - s.eta).toFixed(2) + "·" + s.q + " + " + s.eta + "·" + target.toFixed(2) + " = <b>" + nq.toFixed(2) + "</b>." };
+      }
+    });
+  },
   title: "Q-learning (model-free)",
   tagline: "No map of the world? Learn the value of actions by trying them and seeing what happens.",
   prereqs: ["ai-qvalue", "ai-value-iteration"],

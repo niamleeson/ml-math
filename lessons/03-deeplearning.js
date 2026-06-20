@@ -54,6 +54,16 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "dl-activations",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -5, xmax: 5, ymin: -1.2, ymax: 3,
+      curves: [
+        { f: function (z) { return 1 / (1 + Math.exp(-z)); }, label: "sigmoid" },
+        { f: function (z) { return Math.tanh(z); }, label: "tanh" },
+        { f: function (z) { return Math.max(0, z); }, label: "ReLU" }
+      ]
+    });
+  },
   title: "Activation functions",
   tagline: "The squish that lets a network learn curvy, non-straight patterns.",
   prereqs: ["dl-neuron"],

@@ -143,6 +143,21 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-bayes",
+  demo: function (host) {
+    Demos.calc(host, {
+      inputs: [
+        { key: "pa", label: "P(A) — prior (e.g. disease rate)", min: 0.01, max: 0.99, val: 0.01, step: 0.01 },
+        { key: "sens", label: "P(B|A) — test sensitivity", min: 0.5, max: 1, val: 0.9, step: 0.01 },
+        { key: "fpr", label: "P(B|not A) — false-positive rate", min: 0.0, max: 0.5, val: 0.09, step: 0.01 }
+      ],
+      bars: true, barsHeight: 110,
+      compute: function (s) {
+        var num = s.pa * s.sens, den = s.pa * s.sens + (1 - s.pa) * s.fpr, post = den > 0 ? num / den : 0;
+        return { text: "P(A|B) = P(B|A)·P(A) / P(B) = " + num.toFixed(4) + " / " + den.toFixed(4) + " = <b>" + (post * 100).toFixed(1) + "%</b>. A rare prior keeps the answer low even with a strong test.",
+          bars: [{ label: "prior P(A)", val: s.pa, color: "#9aa7b4" }, { label: "posterior P(A|B)", val: post, color: "#4ea1ff" }], max: 1 };
+      }
+    });
+  },
   title: "Bayes' rule",
   tagline: "Flip a conditional probability around. The secret weapon for tests and beliefs.",
   prereqs: ["prob-conditional"],
@@ -444,6 +459,13 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "prob-bernoulli-binomial",
+  demo: function (host) {
+    Demos.bars(host, {
+      controls: [{ key: "n", label: "n (number of trials)", min: 1, max: 20, val: 10, step: 1 }, { key: "p", label: "p (success chance)", min: 0, max: 1, val: 0.5, step: 0.05 }],
+      pmf: function (s) { var n = Math.round(s.n), o = []; for (var k = 0; k <= n; k++) o.push({ k: k, p: Demos._comb(n, k) * Math.pow(s.p, k) * Math.pow(1 - s.p, n - k) }); return o; },
+      readout: function (s) { var n = Math.round(s.n); return "Binomial(n = " + n + ", p = " + s.p.toFixed(2) + "). Mean np = <b>" + (n * s.p).toFixed(2) + "</b>, variance np(1−p) = <b>" + (n * s.p * (1 - s.p)).toFixed(2) + "</b>."; }
+    });
+  },
   title: "Bernoulli & Binomial",
   tagline: "One yes/no trial, then many of them. The building blocks of counting successes.",
   prereqs: ["prob-expectation", "prob-counting", "prob-random-variable"],
@@ -568,13 +590,15 @@ L({
   application:
     `<p>Continuous densities model sensor readings, prices, and neural-network outputs. When a model reports 'the probability the value is below this threshold', it is reading off a CDF.</p>`,
   demo: function (host) {
-    host.innerHTML =
-      '<label>Drag the cutoff <b>x</b>. Watch the shaded area under the PDF (top) equal the height of the CDF (bottom).</label>' +
-      '<input type="range" id="pc-x" min="-40" max="40" value="0" step="1">' +
-      '<div class="out" id="pc-out"></div>' +
-      '<canvas id="pc-cv" width="640" height="420"></canvas>';
-    var cv = host.querySelector('#pc-cv'), ctx = cv.getContext('2d');
-    var slider = host.querySelector('#pc-x'), out = host.querySelector('#pc-out');
+    host.innerHTML = '';
+    var lab = document.createElement('label');
+    lab.innerHTML = 'Drag the cutoff <b>x</b>. Watch the shaded area under the PDF (top) equal the height of the CDF (bottom).';
+    var slider = document.createElement('input');
+    slider.type = 'range'; slider.min = '-40'; slider.max = '40'; slider.value = '0'; slider.step = '1';
+    var out = document.createElement('div'); out.className = 'out';
+    var cv = document.createElement('canvas'); cv.width = 640; cv.height = 420;
+    host.appendChild(lab); host.appendChild(slider); host.appendChild(out); host.appendChild(cv);
+    var ctx = cv.getContext('2d');
     // Standard normal data over [-4, 4]
     var N = 321, lo = -4, hi = 4, dx = (hi - lo) / (N - 1);
     var xs = [], pdf = [], cdf = [], c = 1 / Math.sqrt(2 * Math.PI), acc = 0, pmax = c;

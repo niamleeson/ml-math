@@ -142,6 +142,9 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-gradient-descent",
+  demo: function (host) {
+    Demos.descent(host, { f: function (x) { return x * x; }, df: function (x) { return 2 * x; }, xmin: -5, xmax: 5, start: 4, lr: 0.1 });
+  },
   title: "Gradient descent",
   tagline: "Walk downhill on the cost. Each step, move opposite the slope.",
   prereqs: ["ml-cost", "fnd-gradient"],
@@ -270,6 +273,14 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-logistic-regression",
+  demo: function (host) {
+    Demos.plot(host, {
+      xmin: -6, xmax: 6, ymin: 0, ymax: 1,
+      curves: [{ f: function (z) { return 1 / (1 + Math.exp(-z)); }, label: "sigmoid σ(z)" }],
+      drag: { curve: 0, start: 0, label: "score z = θᵀx",
+        readout: function (z, y) { return "σ(" + z.toFixed(2) + ") = 1/(1+e^(−z)) = <b>" + y.toFixed(3) + "</b> — the predicted probability. z = 0 gives exactly 0.5."; } }
+    });
+  },
   title: "Logistic regression",
   tagline: "Squash a score into a probability between 0 and 1. Classify by it.",
   prereqs: ["ml-linear-regression", "ml-likelihood"],
@@ -778,6 +789,26 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "ml-kmeans",
+  demo: function (host) {
+    var P = [{ x: 1, y: 1 }, { x: 1.6, y: 2 }, { x: 2, y: 1.4 }, { x: 6, y: 6 }, { x: 6.6, y: 5.4 }, { x: 7, y: 6.6 }];
+    Demos.scatter(host, { points: P, init: function (api) {
+      var cents = [{ x: 2, y: 5 }, { x: 5, y: 2 }];
+      function render() {
+        api.draw(function (ctx, col, px, py) {
+          cents.forEach(function (c, i) { ctx.fillStyle = api.palette[i]; ctx.strokeStyle = col.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px(c.x), py(c.y), 9, 0, 7); ctx.fill(); ctx.stroke(); });
+        });
+        api.readout.innerHTML = "Big circles = centroids. Click <b>1) Assign</b> (color each point to its nearest centroid), then <b>2) Update</b> (move each centroid to its cluster mean). Repeat — distortion only drops, so it converges.";
+      }
+      function assign() { api.pts.forEach(function (p) { var best = 0, bd = 1e9; cents.forEach(function (c, i) { var d = (p.x - c.x) * (p.x - c.x) + (p.y - c.y) * (p.y - c.y); if (d < bd) { bd = d; best = i; } }); p.c = best; }); render(); }
+      function update() { cents.forEach(function (c, i) { var sx = 0, sy = 0, n = 0; api.pts.forEach(function (p) { if (p.c === i) { sx += p.x; sy += p.y; n++; } }); if (n) { c.x = sx / n; c.y = sy / n; } }); render(); }
+      var bA = document.createElement("button"), bU = document.createElement("button");
+      bA.textContent = "1) Assign"; bU.textContent = "2) Update";
+      [bA, bU].forEach(function (b) { b.style.cssText = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:8px 8px 0 0;cursor:pointer;font-size:13px"; });
+      bA.addEventListener("click", assign); bU.addEventListener("click", update);
+      api.host.appendChild(bA); api.host.appendChild(bU);
+      render();
+    } });
+  },
   title: "k-means clustering",
   tagline: "Group unlabeled points into k clusters around moving centers.",
   prereqs: ["fnd-norm", "fnd-vector"],
