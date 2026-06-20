@@ -181,6 +181,12 @@ L({
        <li>$A^\\top=\\begin{bmatrix}1&4\\\\2&5\\\\3&6\\end{bmatrix}$ (shape $3\\times2$).</li>
        <li>Check one entry: $A_{1,3}=3$ moved to $(A^\\top)_{3,1}=3$. Indices swapped. ✔</li>
      </ul>
+     <p><b>See the reversal rule $(AB)^\\top = B^\\top A^\\top$ with numbers.</b> Take $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $B=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$.</p>
+     <ul class="steps">
+       <li><b>Left side.</b> First $AB=\\begin{bmatrix}1\\cdot0+2\\cdot1 & 1\\cdot1+2\\cdot0\\\\ 3\\cdot0+4\\cdot1 & 3\\cdot1+4\\cdot0\\end{bmatrix}=\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}$, so $(AB)^\\top=\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}$.</li>
+       <li><b>Right side.</b> $B^\\top=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$ (it is symmetric) and $A^\\top=\\begin{bmatrix}1&3\\\\2&4\\end{bmatrix}$, so $B^\\top A^\\top=\\begin{bmatrix}0\\cdot1+1\\cdot2 & 0\\cdot3+1\\cdot4\\\\ 1\\cdot1+0\\cdot2 & 1\\cdot3+0\\cdot4\\end{bmatrix}=\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}$.</li>
+       <li><b>They match:</b> $(AB)^\\top=\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}=B^\\top A^\\top$. ✔ Note the order <i>flipped</i>: $B^\\top$ comes first. Computing $A^\\top B^\\top$ instead would give $\\begin{bmatrix}3&1\\\\4&2\\end{bmatrix}$ — the wrong answer.<div class="why">Transposing reverses order, like taking off shoes then socks to undo socks then shoes.</div></li>
+     </ul>
      <p>A symmetric matrix is one where nothing moves: $A^\\top = A$, so $A_{ij}=A_{ji}$ already.</p>`,
   application:
     `<p>The dot product is written $x^\\top y$ because laying $x$ on its side ($1\\times n$) lets it multiply the column $y$ ($n\\times 1$) into a single number. Backpropagation is full of transposes: the gradient flowing back through a layer $W$ uses $W^\\top$.</p>`,
@@ -378,6 +384,12 @@ L({
        <li>Swap $a,d$ and negate $b,c$: $\\begin{bmatrix}1&-1\\\\-1&2\\end{bmatrix}$. Divide by 1 (no change).</li>
        <li>So $A^{-1}=\\begin{bmatrix}1&-1\\\\-1&2\\end{bmatrix}$.</li>
        <li>Check: $A A^{-1}=\\begin{bmatrix}2\\cdot1+1\\cdot(-1) & 2(-1)+1\\cdot2\\\\ 1\\cdot1+1(-1) & 1(-1)+1\\cdot2\\end{bmatrix}=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}=I$. ✔</li>
+     </ul>
+     <p><b>Watch $A^{-1}$ undo $A$ on a real vector.</b> Take $v=\\begin{bmatrix}3\\\\5\\end{bmatrix}$.</p>
+     <ul class="steps">
+       <li><b>Apply $A$:</b> $Av=\\begin{bmatrix}2\\cdot3+1\\cdot5\\\\1\\cdot3+1\\cdot5\\end{bmatrix}=\\begin{bmatrix}11\\\\8\\end{bmatrix}$. The vector $v$ got moved somewhere new.<div class="why">$A$ mixed the two coordinates: row 1 is $2x_1+x_2$, row 2 is $x_1+x_2$.</div></li>
+       <li><b>Now apply $A^{-1}$ to that result:</b> $A^{-1}(Av)=\\begin{bmatrix}1&-1\\\\-1&2\\end{bmatrix}\\begin{bmatrix}11\\\\8\\end{bmatrix}=\\begin{bmatrix}1\\cdot11+(-1)\\cdot8\\\\(-1)\\cdot11+2\\cdot8\\end{bmatrix}=\\begin{bmatrix}11-8\\\\-11+16\\end{bmatrix}=\\begin{bmatrix}3\\\\5\\end{bmatrix}=v$. ✔</li>
+       <li><b>The punchline:</b> $A^{-1}(Av)=v$. Multiplying by $A^{-1}$ undid exactly what $A$ did and handed $v$ back, untouched.<div class="why">This is why $x=A^{-1}b$ solves $Ax=b$: undoing $A$ on both sides isolates $x$.</div></li>
      </ul>`,
   application:
     `<p>The exact solution to least-squares regression is $w=(X^\\top X)^{-1}X^\\top y$ — an inverse sits at its heart. In practice we rarely form $A^{-1}$ explicitly (it is slow and unstable); we solve the system directly. But the inverse is the concept that makes "solve $Ax=b$" precise.</p>`,
@@ -474,9 +486,11 @@ L({
     `<p>Let $A=\\begin{bmatrix}3&1\\\\1&2\\end{bmatrix}$.</p>
      <ul class="steps">
        <li>$\\det A = ad - bc = 3\\cdot2 - 1\\cdot1 = 6 - 1 = 5$.</li>
-       <li>So $A$ scales every area by 5: the unit square (area 1) becomes a parallelogram of area 5.</li>
+       <li><b>Watch the unit square's area.</b> The unit square has corners $(0,0),(1,0),(1,1),(0,1)$ and area exactly $1$. Map each corner with $A$ (a corner $(x,y)$ goes to $(3x+y,\\;x+2y)$):
+         <div class="why">$(0,0)\\to(0,0)$; &nbsp; $(1,0)\\to(3,1)$; &nbsp; $(1,1)\\to(4,3)$; &nbsp; $(0,1)\\to(1,2)$. The square became the parallelogram with these four corners.</div></li>
+       <li><b>Measure that parallelogram's area directly.</b> It is spanned by the two edge vectors out of the origin, $u=(3,1)$ and $w=(1,2)$. The 2D cross-product area is $|u_x w_y - u_y w_x| = |3\\cdot2 - 1\\cdot1| = |6-1| = 5$.<div class="why">Area went from $1$ to $5$. The scale factor is $5/1 = 5 = \\det A$ — the determinant <i>is</i> the area-scaling factor, exactly.</div></li>
        <li>The sign is positive, so orientation is preserved (no mirror flip).</li>
-       <li>Compare $B=\\begin{bmatrix}2&4\\\\1&2\\end{bmatrix}$: $\\det B = 2\\cdot2 - 4\\cdot1 = 0$. Its columns $(2,1)$ and $(4,2)$ are parallel — $B$ flattens the plane onto a line and is singular.</li>
+       <li>Compare $B=\\begin{bmatrix}2&4\\\\1&2\\end{bmatrix}$: $\\det B = 2\\cdot2 - 4\\cdot1 = 0$. Its columns $(2,1)$ and $(4,2)$ are parallel — the unit square gets squashed onto a line of area $0$. Scale factor $0 = \\det B$; $B$ is singular.</li>
      </ul>`,
   application:
     `<p>The determinant decides invertibility (zero = singular = no unique solution). In probability, the multivariate Gaussian's normalizing constant contains $\\det\\Sigma$ (the covariance's "volume"). Change-of-variables in integration multiplies by $|\\det|$ of the Jacobian — the backbone of normalizing-flow generative models.</p>`,
@@ -733,6 +747,12 @@ L({
        <li>Trace by diagonal: $\\operatorname{tr}(A) = A_{11}+A_{22} = 2 + 3 = 5$.</li>
        <li>Check via eigenvalues: this triangular matrix has eigenvalues on its diagonal, $\\lambda_1=2$, $\\lambda_2=3$. Sum $= 5$. ✔</li>
        <li>Cyclic check: with $B=\\begin{bmatrix}1&0\\\\1&1\\end{bmatrix}$, $AB=\\begin{bmatrix}3&1\\\\3&3\\end{bmatrix}$ (trace 6) and $BA=\\begin{bmatrix}2&1\\\\2&4\\end{bmatrix}$ (trace 6). Equal. ✔</li>
+     </ul>
+     <p><b>A harder case where the eigenvalues are NOT on the diagonal.</b> Let $M=\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$.</p>
+     <ul class="steps">
+       <li>Trace by diagonal (the cheap way): $\\operatorname{tr}(M)=1+1=2$.</li>
+       <li>Eigenvalues the hard way, from $\\det(M-\\lambda I)=(1-\\lambda)^2-4=0$, i.e. $1-\\lambda=\\pm2$: $\\lambda_1=3$ and $\\lambda_2=-1$.<div class="why">These are nowhere on the diagonal $(1,1)$ — you had to solve for them.</div></li>
+       <li><b>Sum them:</b> $\\lambda_1+\\lambda_2 = 3 + (-1) = 2 = \\operatorname{tr}(M)$. ✔ The trace equals the sum of eigenvalues even when the eigenvalues are buried.<div class="why">So you can read off the eigenvalue sum for free — just add the diagonal, no characteristic polynomial needed.</div></li>
      </ul>`,
   application:
     `<p>In statistics, the trace of the "hat" matrix is the effective number of parameters used by a model. The trace appears in the matrix derivative identities used to derive backprop, and $\\operatorname{tr}(\\Sigma)$ (total variance) is a quick summary of how spread out data is across all features.</p>`,
@@ -1055,6 +1075,8 @@ L({
      <ul class="steps">
        <li>Eigenvalues from $\\det(A-\\lambda I)=(2-\\lambda)^2-1=0$: $\\lambda = 3$ and $\\lambda = 1$.</li>
        <li>Eigenvector for $\\lambda=3$: $\\frac{1}{\\sqrt2}(1,1)$. For $\\lambda=1$: $\\frac{1}{\\sqrt2}(1,-1)$. Their dot product is $\\frac12(1-1)=0$ — perpendicular. ✔</li>
+       <li><b>Verify $Av=\\lambda v$ with real numbers.</b> Use the unscaled eigenvector $v=(1,1)$ for $\\lambda=3$: $Av=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\begin{bmatrix}1\\\\1\\end{bmatrix}=\\begin{bmatrix}2\\cdot1+1\\cdot1\\\\1\\cdot1+2\\cdot1\\end{bmatrix}=\\begin{bmatrix}3\\\\3\\end{bmatrix}=3\\begin{bmatrix}1\\\\1\\end{bmatrix}=3v$. ✔<div class="why">$A$ left the direction $(1,1)$ alone and just stretched it by exactly $\\lambda=3$ — that is what "eigenvector" means.</div></li>
+       <li><b>The other eigenvector</b> $v=(1,-1)$ for $\\lambda=1$: $Av=\\begin{bmatrix}2\\cdot1+1\\cdot(-1)\\\\1\\cdot1+2\\cdot(-1)\\end{bmatrix}=\\begin{bmatrix}1\\\\-1\\end{bmatrix}=1\\cdot v$. ✔ This direction is unchanged (stretched by $1$).</li>
        <li>So $U=\\frac{1}{\\sqrt2}\\begin{bmatrix}1&1\\\\1&-1\\end{bmatrix}$, $\\Lambda=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$, and $A = U\\Lambda U^\\top$.</li>
        <li>Effect: $A$ stretches by 3 along the $(1,1)$ diagonal and by 1 along $(1,-1)$. The unit circle becomes an ellipse tilted at $45^\\circ$.</li>
      </ul>`,
@@ -1155,7 +1177,12 @@ L({
      </ul>
      <p><b>Why truncation is optimal.</b> The error of dropping the smaller singular values is $\\lVert A - A_k\\rVert = \\sigma_{k+1}$ — no other rank-$k$ matrix does better (the Eckart–Young theorem). So keeping the biggest $\\sigma$'s keeps the most of $A$.</p>`,
   example:
-    `<p>Suppose a matrix has singular values $\\sigma = (10, 8, 1, 0.2)$.</p>
+    `<p><b>First, see $A = U\\Sigma V^\\top$ reconstruct an actual matrix.</b> Take the rank-1 matrix $A=\\begin{bmatrix}3&0\\\\4&0\\end{bmatrix}$. Its SVD has one non-zero singular value $\\sigma_1=5$, with $u_1=\\begin{bmatrix}0.6\\\\0.8\\end{bmatrix}$ and $v_1=\\begin{bmatrix}1\\\\0\\end{bmatrix}$ (both unit vectors).</p>
+     <ul class="steps">
+       <li><b>Rebuild $A$ from the pieces.</b> The rank-1 term is $\\sigma_1 u_1 v_1^\\top = 5\\begin{bmatrix}0.6\\\\0.8\\end{bmatrix}\\begin{bmatrix}1&0\\end{bmatrix} = 5\\begin{bmatrix}0.6\\cdot1 & 0.6\\cdot0\\\\ 0.8\\cdot1 & 0.8\\cdot0\\end{bmatrix} = 5\\begin{bmatrix}0.6&0\\\\0.8&0\\end{bmatrix}=\\begin{bmatrix}3&0\\\\4&0\\end{bmatrix}=A$. ✔<div class="why">The outer product $u_1 v_1^\\top$ is a full $2\\times2$ matrix; scaling it by $\\sigma_1=5$ reconstructs $A$ exactly. Here one singular value carries the whole matrix.</div></li>
+       <li><b>Why $\\sigma_1=5$?</b> Check $\\sqrt{u_1\\cdot u_1}=\\sqrt{0.36+0.64}=1$ (unit), and the column $(3,4)$ has length $\\sqrt{9+16}=5$ — that length <i>is</i> the singular value, since $(3,4)=5\\,(0.6,0.8)=\\sigma_1 u_1$.</li>
+     </ul>
+     <p><b>Now the truncation idea, with bigger spectra.</b> Suppose a matrix has singular values $\\sigma = (10, 8, 1, 0.2)$.</p>
      <ul class="steps">
        <li>"Energy" is measured by $\\sigma_i^2$: total $= 100 + 64 + 1 + 0.04 = 165.04$.</li>
        <li>Keep the top 2: captured energy $= 100 + 64 = 164$, which is $164/165.04 \\approx 99.4\\%$.</li>

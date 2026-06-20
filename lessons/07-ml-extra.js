@@ -159,7 +159,7 @@ L({
        <li>Curvature: $J''(5) = 6$.</li>
        <li>Newton step: $\\theta = 5 - \\dfrac{18}{6} = 5 - 3 = 2$.</li>
        <li>Check: $J'(2) = 6\\cdot 2 - 12 = 0$. The slope is zero — we are at the minimum after <b>one</b> step.</li>
-       <li>Gradient descent with $\\alpha = 0.1$ would have needed many steps: $5 \\to 3.2 \\to 2.48 \\to \\dots \\to 2$.</li>
+       <li>Gradient descent with $\\alpha = 0.1$ crawls: $\\theta_1 = 5 - 0.1(18) = 3.2$, then $\\theta_2 = 3.2 - 0.1(7.2) = 2.48$, then $2.19$, $2.08$, $2.03$, $\\dots$ — still not at $2$ after 5 steps, while Newton was already exact after 1.</li>
      </ul>`,
   application:
     `<p>Newton's method (and Hessian-aware cousins like L-BFGS) trains logistic regression and small GLMs in a handful of iterations. Statistics packages use it for maximum-likelihood fits. It also powers the "trust region" optimizers behind many scientific solvers, where fast, accurate convergence matters more than the cost of the Hessian.</p>`,
@@ -267,6 +267,8 @@ L({
        <li>Point 2 distance $1$: $w^{(2)} = \\exp\\!\\big(-\\tfrac{1}{2}\\big) = e^{-0.5} \\approx 0.61$.</li>
        <li>Point 3 distance $4$: $w^{(3)} = \\exp\\!\\big(-\\tfrac{16}{2}\\big) = e^{-8} \\approx 0.0003$ (basically ignored).</li>
        <li>So the local line for $x=2$ is fit almost entirely from points 1 and 2; the far point barely matters.</li>
+       <li><b>See it in the prediction.</b> Say the targets are $y^{(1)} = 5$, $y^{(2)} = 6$, $y^{(3)} = 20$ (the far point is an outlier). A weighted average of the $y$'s is $\\dfrac{\\sum_i w^{(i)} y^{(i)}}{\\sum_i w^{(i)}} = \\dfrac{1.00(5) + 0.61(6) + 0.0003(20)}{1.00 + 0.61 + 0.0003} = \\dfrac{8.666}{1.610} \\approx 5.38$.</li>
+       <li>The prediction $5.38$ sits right between the two nearby targets ($5$ and $6$). The wild far point at $20$ pulled it by under $0.01$ — exactly the point of local weighting.</li>
        <li>Shrink $\\tau$ to $0.5$ and even point 2 fades: $w^{(2)} = e^{-2} \\approx 0.14$. The fit gets very local and wiggly.</li>
      </ul>`,
   application:
@@ -359,6 +361,7 @@ L({
        <li>Round 4: $\\text{Err}_4 = 0.28$.</li>
        <li>Round 5: $\\text{Err}_5 = 0.32$.</li>
        <li>$\\text{CV} = \\dfrac{0.30 + 0.26 + 0.34 + 0.28 + 0.32}{5} = \\dfrac{1.50}{5} = 0.30$. That 0.30 is your trusted error estimate.</li>
+       <li><b>Why average?</b> A single split could have landed on fold 3 alone and reported $0.34$ (too pessimistic), or fold 2 alone and reported $0.26$ (too rosy) — a spread of $0.08$. The folds scatter around $0.30$ with a spread of only $\\pm 0.04$; averaging all 5 cancels that luck and centers on $0.30$.</li>
      </ul>`,
   application:
     `<p>Cross-validation is the standard way to pick hyperparameters (regularization strength, tree depth, $k$ in k-NN) and to compare models on limited data. Kaggle competitions and scientific ML papers report CV scores because a single split can be misleadingly lucky or unlucky.</p>`,

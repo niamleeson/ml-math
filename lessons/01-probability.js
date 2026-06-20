@@ -540,10 +540,12 @@ L({
   example:
     `<p>Flip a fair coin twice. Let $A$ = "first flip heads", $B$ = "second flip heads".</p>
      <ul class="steps">
-       <li>$P(A) = \\frac{1}{2}$ and $P(B) = \\frac{1}{2}$.</li>
-       <li>The product is $\\frac{1}{2} \\times \\frac{1}{2} = \\frac{1}{4}$.</li>
-       <li>Check directly: outcomes are $\\{HH, HT, TH, TT\\}$, and "both heads" is just $HH$, so $P(A \\cap B) = \\frac{1}{4}$.</li>
-       <li>They match, so the flips are independent. The first flip says nothing about the second.</li>
+       <li>$P(A) = \\frac{1}{2}$ and $P(B) = \\frac{1}{2}$, so the product is $P(A)P(B) = \\frac{1}{2} \\times \\frac{1}{2} = \\frac{1}{4}$.<div class="why">This is what independence <i>predicts</i> for "both heads".</div></li>
+       <li>Check directly: outcomes are $\\{HH, HT, TH, TT\\}$, and "both heads" is just $HH$, so $P(A \\cap B) = \\frac{1}{4}$.<div class="why">$\\frac{1}{4} = \\frac{1}{4}$ — the actual matches the prediction, so $A$ and $B$ are independent.</div></li>
+       <li>The "knowing B" view agrees: $P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)} = \\frac{1/4}{1/2} = \\frac{1}{2} = P(A)$. Learning the second flip was heads left the first flip's chance unchanged.</li>
+       <li><b>Contrast — a DEPENDENT pair.</b> Now let $C$ = "both flips show the same face" $= \\{HH, TT\\}$, so $P(C) = \\frac{2}{4} = \\frac{1}{2}$. Is $C$ independent of $A$?
+         <div class="why">$P(A)P(C) = \\frac{1}{2} \\times \\frac{1}{2} = \\frac{1}{4}$. But $A \\cap C = \\{HH\\}$ gives $P(A \\cap C) = \\frac{1}{4}$ too — so $A$ and $C$ ARE independent. The multiply rule is the only reliable test; "feels related" is not.</div></li>
+       <li><b>A genuinely dependent pair.</b> Let $D$ = "at least one head" $= \\{HH, HT, TH\\}$, $P(D) = \\frac{3}{4}$. Then $P(A)P(D) = \\frac{1}{2} \\times \\frac{3}{4} = \\frac{3}{8}$, but $A \\cap D = \\{HH, HT\\}$ gives $P(A \\cap D) = \\frac{2}{4} = \\frac{1}{2}$. Since $\\frac{1}{2} \\neq \\frac{3}{8}$, $A$ and $D$ are <b>dependent</b> — knowing the first flip is heads makes "at least one head" certain.</li>
      </ul>`,
   application:
     `<p>The 'Naive Bayes' spam classifier assumes every word appears independently. That assumption is not quite true, but it lets the model just multiply many small probabilities together — and it works shockingly well.</p>`,
@@ -919,6 +921,7 @@ L({
        <li>Each pattern's chance: $p^2 (1-p)^1 = 0.5^2 \\times 0.5^1 = 0.25 \\times 0.5 = 0.125$.</li>
        <li>Multiply: $P(X=2) = 3 \\times 0.125 = 0.375$, i.e. 37.5%.</li>
        <li>Mean number of heads: $np = 3 \\times 0.5 = 1.5$.</li>
+       <li>Variance: $np(1-p) = 3 \\times 0.5 \\times 0.5 = 0.75$, so spread $\\sigma = \\sqrt{0.75} \\approx 0.87$ heads.<div class="why">$p = 0.5$ is the most unpredictable coin. Bias it to $p = 0.9$ and the variance drops to $3 \\times 0.9 \\times 0.1 = 0.27$ — a near-certain coin barely varies.</div></li>
      </ul>`,
   application:
     `<p>Click-through rates, conversion counts, and A/B test outcomes are all Binomial: $n$ visitors, each clicking with probability $p$. Logistic regression models the Bernoulli success probability $p$ for each example.</p>`,
@@ -1151,7 +1154,8 @@ L({
        <li>Uniform mean wait: $\\frac{a+b}{2} = \\frac{0 + 10}{2} = 5$ minutes.</li>
        <li>Uniform density height: $\\frac{1}{b-a} = \\frac{1}{10}$ over the range.</li>
        <li>Exponential mean wait: $\\frac{1}{\\lambda} = \\frac{1}{1/5} = 5$ minutes until the next call.</li>
-       <li>Memoryless: if you've already waited 3 minutes, the expected remaining wait is still 5 minutes. The clock 'forgets'.</li>
+       <li><b>Memoryless, with numbers.</b> The chance of waiting more than $t$ minutes is $P(X &gt; t) = e^{-\\lambda t}$. So $P(X &gt; 5) = e^{-(1/5)(5)} = e^{-1} \\approx 0.368$.</li>
+       <li>Now suppose you've <i>already</i> waited 3 minutes. The chance you wait 5 more is $P(X &gt; 8 \\mid X &gt; 3) = \\frac{P(X &gt; 8)}{P(X &gt; 3)} = \\frac{e^{-8/5}}{e^{-3/5}} = e^{-(8-3)/5} = e^{-1} \\approx 0.368$.<div class="why">Same $0.368$ as a fresh start — the 3 minutes already spent change nothing. That equality $P(X &gt; 8 \\mid X &gt; 3) = P(X &gt; 5)$ IS the memoryless property, shown in numbers.</div></li>
      </ul>`,
   application:
     `<p>Uniform is used to initialize neural-network weights and to generate random samples. Exponential models time-between-events: server request gaps, equipment failures, customer arrivals.</p>`,
@@ -1635,12 +1639,12 @@ L({
      <p>As the sample count $n$ grows toward infinity, that average converges to the true mean $\\mu$.</p>
      <p>The gap between your estimate and the truth shrinks the more data you gather.</p>`,
   example:
-    `<p>Roll a fair die (true mean $\\mu = 3.5$) and track the running average.</p>
+    `<p>Roll a fair die (true mean $\\mu = 3.5$, one-roll std $\\sigma = \\sqrt{35/12} \\approx 1.71$) and track the running average $\\overline{X}$. The typical distance of $\\overline{X}$ from $3.5$ shrinks like $\\frac{\\sigma}{\\sqrt{n}}$.</p>
      <ul class="steps">
-       <li>After 5 rolls: maybe $[6, 2, 5, 1, 4]$, average $= \\frac{18}{5} = 3.6$. Close-ish.</li>
-       <li>After 50 rolls: the running average might be $3.42$. Closer.</li>
-       <li>After 5000 rolls: the average is very close to $3.5$, the true mean.</li>
-       <li>The estimate tightens around $3.5$ as $n$ grows — exactly what the law promises.</li>
+       <li>After $n = 5$ rolls $[6, 2, 5, 1, 4]$: average $= \\frac{18}{5} = 3.6$, off by $0.10$. Typical error $\\frac{\\sigma}{\\sqrt{5}} = \\frac{1.71}{2.24} \\approx 0.76$ — wobble is large.</li>
+       <li>After $n = 100$: typical error $\\frac{1.71}{\\sqrt{100}} = \\frac{1.71}{10} \\approx 0.17$. The bound on wobble already fell ~4.4×.</li>
+       <li>After $n = 10000$: typical error $\\frac{1.71}{\\sqrt{10000}} = \\frac{1.71}{100} \\approx 0.017$. So $\\overline{X}$ now sits within a couple hundredths of $3.5$.</li>
+       <li><b>Punchline:</b> going from $n = 100$ to $n = 10000$ (100× the data) cut the typical error 10×, since $\\sqrt{10000}/\\sqrt{100} = 10$. The average homes in on $3.5$ — and the $\\frac{1}{\\sqrt{n}}$ shrink rate says exactly how fast.</li>
      </ul>`,
   application:
     `<p>Stochastic gradient descent relies on this: a gradient from a small batch is a noisy estimate of the true gradient, but averaging over many steps points the right way. Monte Carlo simulation and A/B testing also depend on the Law of Large Numbers.</p>`,

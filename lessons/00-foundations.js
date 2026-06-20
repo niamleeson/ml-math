@@ -269,13 +269,21 @@ L({
     `<p>The $\\sum$ says: walk through every position $i$, multiply $x_i$ by $y_i$, and keep a running total.</p>
      <p>The answer is a plain number (it lives in $\\mathbb{R}$), not a vector.</p>`,
   example:
-    `<p>Let $x = [1500, 3, 10]$ be a house. Let $w = [200, 10000, -500]$ be "price weights" (dollars per sq ft, per bedroom, per year of age).</p>
+    `<p>First, the recipe as a prediction. Let $x = [1500, 3, 10]$ be a house and $w = [200, 10000, -500]$ be "price weights" (dollars per sq ft, per bedroom, per year of age).</p>
      <ul class="steps">
        <li>Multiply matching entries: $1500\\times200 = 300000$, &nbsp; $3\\times10000 = 30000$, &nbsp; $10\\times(-500) = -5000$.</li>
-       <li>Add them: $300000 + 30000 - 5000 = 325000$.</li>
-       <li>So $w^\\top x = \\$325{,}000$. That is a price prediction.</li>
+       <li>Add them: $300000 + 30000 - 5000 = 325000$. So $w^\\top x = \\$325{,}000$, a price prediction.</li>
      </ul>
-     <p>Notice: older house (the $-500$) pushes price <i>down</i>. The negative weight "disagrees" with age.</p>`,
+     <p>Now the real punchline: <b>the dot product measures agreement.</b> Take $a = [1, 0]$ (points right) and dot it with three other vectors to see all three cases with numbers:</p>
+     <ul class="steps">
+       <li><b>Same direction</b> &mdash; $a\\cdot[3,0] = 1\\times3 + 0\\times0 = 3$. Both point right, so the result is <b>positive</b>. They agree.
+           <div class="why">When two vectors point the same way, every matching pair multiplies to a positive, so the sum is big and positive.</div></li>
+       <li><b>Perpendicular</b> &mdash; $a\\cdot[0,5] = 1\\times0 + 0\\times5 = 0$. One points right, the other straight up.
+           <div class="why">A dot product of exactly $0$ is the signal for "at right angles / unrelated". This is why $0$ means orthogonal.</div></li>
+       <li><b>Opposite direction</b> &mdash; $a\\cdot[-4,0] = 1\\times(-4) + 0\\times0 = -4$. One points right, the other left.
+           <div class="why">Pointing against each other makes the products negative, so the sum goes <b>negative</b>: they disagree.</div></li>
+     </ul>
+     <p>So $+3$ (agree), $0$ (unrelated), $-4$ (disagree) &mdash; one number tells you how much two vectors point the same way. That is exactly why the negative age-weight $-500$ above pushes the price <i>down</i>: it disagrees with age.</p>`,
   application:
     `<p>Linear regression, logistic regression, SVMs, and every neuron in a neural net compute a dot product of weights and inputs first, then do something with that number. Master this and half of ML stops being scary.</p>`,
   quiz: {
@@ -597,12 +605,19 @@ L({
     `<p>L2: square every entry, add them, take the square root. That is the Pythagorean distance.</p>
      <p>L1: just add up the absolute values. Simpler, and it likes to push small weights all the way to zero (useful for feature selection).</p>`,
   example:
-    `<p>Let $x = [3, -4]$.</p>
+    `<p>First, the size of one vector. Let $x = [3, -4]$.</p>
      <ul class="steps">
        <li>L2: $\\sqrt{3^2 + (-4)^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$.</li>
        <li>L1: $|3| + |-4| = 3 + 4 = 7$.</li>
      </ul>
-     <p>Same vector, two different "sizes". The distance between two vectors is the norm of their difference: $\\lVert x - y\\rVert$.</p>`,
+     <p>Same vector, two different "sizes". Now the key use: <b>distance between two vectors is the norm of their difference</b>, $\\lVert x - y\\rVert$. Let's see it with numbers. Take $x = [4, 6]$ and $y = [1, 2]$:</p>
+     <ul class="steps">
+       <li>Subtract entry by entry: $x - y = [4-1,\\; 6-2] = [3, 4]$.
+           <div class="why">The difference vector is the "arrow from $y$ to $x$". Its length is how far apart they are.</div></li>
+       <li>Take its L2 norm: $\\lVert x - y\\rVert_2 = \\sqrt{3^2 + 4^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$.
+           <div class="why">So $x$ and $y$ sit a straight-line distance of $5$ apart &mdash; the norm turned two points into one "how far" number.</div></li>
+       <li>The L1 version: $\\lVert x - y\\rVert_1 = |3| + |4| = 7$ &mdash; the city-block distance, longer because you can't cut the corner.</li>
+     </ul>`,
   application:
     `<p>L2 distance powers k-means and k-NN. L2 on the weights = <b>Ridge</b> regularization; L1 = <b>LASSO</b>, which zeroes out useless features. Norms are how models avoid getting too "big" and overfitting.</p>`,
   quiz: {
@@ -962,11 +977,18 @@ L({
     `<p>Left side: run $z$ through the matrix. Right side: just scale $z$ by the number $\\lambda$.</p>
      <p>When both sides match, the matrix's effect on $z$ is pure stretching. Same direction in, same direction out.</p>`,
   example:
-    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$ and try $z=\\begin{bmatrix}1\\\\0\\end{bmatrix}$.</p>
+    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$. First a <i>special</i> direction, $z=\\begin{bmatrix}1\\\\0\\end{bmatrix}$:</p>
      <ul class="steps">
-       <li>$Az=\\begin{bmatrix}2\\cdot1\\\\3\\cdot0\\end{bmatrix}=\\begin{bmatrix}2\\\\0\\end{bmatrix}$.</li>
-       <li>That equals $2\\begin{bmatrix}1\\\\0\\end{bmatrix}$. Same direction, twice as long.</li>
+       <li>$Az=\\begin{bmatrix}2\\cdot1 + 0\\cdot0\\\\0\\cdot1 + 3\\cdot0\\end{bmatrix}=\\begin{bmatrix}2\\\\0\\end{bmatrix}$.</li>
+       <li>That equals $2\\begin{bmatrix}1\\\\0\\end{bmatrix} = 2z$. So $Az = \\lambda z$ holds exactly with $\\lambda = 2$.
+           <div class="why">$Az$ is just $z$ scaled by $2$ &mdash; same direction (still flat along the x-axis), twice as long. That is the whole equation $Az=\\lambda z$ checked with real numbers.</div></li>
        <li>So $z=[1,0]$ is an eigenvector with eigenvalue $\\lambda = 2$. (Similarly $[0,1]$ has $\\lambda=3$.)</li>
+     </ul>
+     <p>Now contrast an <i>ordinary</i> direction, $z=\\begin{bmatrix}1\\\\1\\end{bmatrix}$:</p>
+     <ul class="steps">
+       <li>$Az=\\begin{bmatrix}2\\cdot1 + 0\\cdot1\\\\0\\cdot1 + 3\\cdot1\\end{bmatrix}=\\begin{bmatrix}2\\\\3\\end{bmatrix}$.</li>
+       <li>Is $[2,3]$ a scaled copy of $[1,1]$? No &mdash; that would need both entries times the same number, but $2/1 = 2$ while $3/1 = 3$. The direction <b>changed</b>.
+           <div class="why">$[1,1]$ points at $45°$; $[2,3]$ tilts steeper. The matrix rotated it, so there is no single $\\lambda$ with $Az=\\lambda z$. This is why eigenvectors are special: almost every other vector gets turned.</div></li>
      </ul>`,
   application:
     `<p>PCA finds the eigenvectors of your data's covariance matrix — the directions of greatest spread — and keeps only the top few to compress data. Google's original PageRank was an eigenvector problem too.</p>`,

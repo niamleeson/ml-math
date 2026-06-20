@@ -386,11 +386,12 @@ L({
      </ul>
      <p><b>Intuition.</b> Use a forgiving ruler for the 2-D map. It says "far is far" without insisting on an exact distance, leaving space for clusters to separate cleanly.</p>`,
   example:
-    `<p>Two map points are at distance $d = 1$; another pair at $d = 3$. Compute the (unnormalized) map affinity $(1+d^2)^{-1}$.</p>
+    `<p>The central trick is the <b>heavy tail</b>: it lets far-apart clusters sit at a finite distance instead of crushing together. Watch the Student-t map shape $(1+d^2)^{-1}$ beat a Gaussian $e^{-d^2}$ at a far pair $d = 3$.</p>
      <ul class="steps">
-       <li>Close pair, $d = 1$: $(1 + 1^2)^{-1} = 1/2 = 0.50$. High affinity — they read as neighbors.</li>
-       <li>Far pair, $d = 3$: $(1 + 3^2)^{-1} = 1/10 = 0.10$. Lower affinity — different clusters.</li>
-       <li>The ratio $0.50 / 0.10 = 5$: the close pair is five times more "neighborly", so the layout keeps it tight and the far pair loose.</li>
+       <li>Close pair, $d = 1$. Student-t: $(1 + 1^2)^{-1} = 1/2 = 0.50$. Gaussian: $e^{-1} \\approx 0.37$. Both call this a neighbor.</li>
+       <li>Far pair, $d = 3$. Student-t: $(1 + 3^2)^{-1} = 1/10 = 0.10$. Gaussian: $e^{-9} \\approx 0.00012$.</li>
+       <li>Gaussian far/close ratio $= 0.00012 / 0.37 \\approx 0.0003$: the far pair's affinity has collapsed to near-zero, so the Gaussian map cannot tell "far" from "even farther" — it crushes distant clusters into one blob.</li>
+       <li>Student-t ratio $= 0.10 / 0.50 = 0.2$: the far pair still carries a real, non-vanishing affinity. The heavy tail lets the layout place those clusters at a large but finite gap — so they separate cleanly instead of piling up. That is exactly the crowding problem t-SNE solves.</li>
      </ul>`,
   application:
     `<p>t-SNE and UMAP are everywhere in exploratory data analysis: visualizing word embeddings, single-cell RNA data (cell types appear as islands), and the hidden layers of neural nets. They turn a 50- or 500-dimensional dataset into a picture you can actually read.</p>`,
@@ -482,13 +483,12 @@ L({
      </ul>
      <p><b>Intuition.</b> Correlation <i>between</i> different signals can only come from shared factors, so it must be carried by $\\Lambda\\Lambda^\\top$. Each signal's own private variance is the diagonal $\\Psi$. The model cleanly splits the two.</p>`,
   example:
-    `<p>One hidden factor "general ability" $z$. Three test scores load on it: $\\Lambda = [2,\\ 1.5,\\ 1]^\\top$, with baselines $\\mu = [70,\\ 60,\\ 80]$.</p>
+    `<p>One hidden factor "general ability" $z$. Three test scores load on it: $\\Lambda = [2,\\ 1.5,\\ 1]^\\top$, with baselines $\\mu = [70,\\ 60,\\ 80]$. The key insight: the <i>shared factor</i> is what makes the three scores move together, i.e. correlate. Watch it across two students.</p>
      <ul class="steps">
-       <li>A strong student has $z = +1.5$ (1.5 standard deviations above average).</li>
-       <li>Test 1: $2{\\times}1.5 + 70 = 3 + 70 = 73$ (plus small noise).</li>
-       <li>Test 2: $1.5{\\times}1.5 + 60 = 2.25 + 60 = 62.25$.</li>
-       <li>Test 3: $1{\\times}1.5 + 80 = 1.5 + 80 = 81.5$.</li>
-       <li>One hidden number $z$ moved all three scores up together — that is the shared factor at work.</li>
+       <li>Strong student, $z = +1.5$. Test 1: $2{\\times}1.5 + 70 = 73$. Test 2: $1.5{\\times}1.5 + 60 = 62.25$. Test 3: $1{\\times}1.5 + 80 = 81.5$.</li>
+       <li>Weak student, $z = -1.0$. Test 1: $2{\\times}({-}1) + 70 = 68$. Test 2: $1.5{\\times}({-}1) + 60 = 58.5$. Test 3: $1{\\times}({-}1) + 80 = 79$.</li>
+       <li>One hidden number moved <i>all three</i> tests the same direction: the strong student is up on every test ($73, 62.25, 81.5$), the weak one down on every test ($68, 58.5, 79$). That lock-step co-movement is correlation, and it came entirely from $z$.</li>
+       <li>Check the shared-structure prediction $\\text{Cov} = \\Lambda\\Lambda^\\top + \\Psi$. The off-diagonal coupling between tests 1 and 2 is $\\Lambda_1\\Lambda_2 = 2{\\times}1.5 = 3$ — purely the factor. Noise $\\Psi$ only sits on the diagonal, so it never makes two different tests correlate. The shared factor is the sole source of between-test correlation. ∎</li>
      </ul>`,
   application:
     `<p>Factor analysis was born in psychology (the "g" factor of intelligence) and is a staple in finance (a few market factors drive many stock returns), marketing (survey questions reduce to a few attitudes), and any field drowning in correlated measurements.</p>`,

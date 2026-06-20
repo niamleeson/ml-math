@@ -311,12 +311,12 @@ L({
      </ul>
      <p>The log trick turns a hard-to-sample gradient into a simple average we can estimate by just running episodes. ∎</p>`,
   example:
-    `<p>One state, two actions. The policy currently gives Left $0.5$ and Right $0.5$. The agent samples <b>Right</b> and the episode returns $G = +2$.</p>
+    `<p>One state, two actions, with preferences (logits) $\\ell_{\\text{Left}} = 0$ and $\\ell_{\\text{Right}} = 0$. The softmax gives Left $0.5$ and Right $0.5$. The agent samples <b>Right</b> and the episode returns $G = +2$. Use learning rate $\\eta = 0.4$.</p>
      <ul class="steps">
-       <li>The update term is $\\nabla\\log\\pi(\\text{Right})\\times G$. Since $G = +2 &gt; 0$, we push Right's probability <i>up</i>.</li>
-       <li>Probabilities must still sum to $1$, so Left's probability goes <i>down</i> by the same amount.</li>
-       <li>After the step the policy might read Right $0.62$, Left $0.38$.</li>
-       <li>If instead $G$ had been $-2$, Right would have dropped and Left risen.</li>
+       <li>The score for the chosen action is $\\nabla_\\ell \\log\\pi(\\text{Right}) = 1 - \\pi(\\text{Right}) = 1 - 0.5 = 0.5$. (For the other action it is $0 - 0.5 = -0.5$.)</li>
+       <li>Update each logit by $\\eta\\,G\\times(\\text{score})$: Right gets $0.4\\times2\\times0.5 = +0.4$, Left gets $0.4\\times2\\times(-0.5) = -0.4$.</li>
+       <li>New logits $\\ell_{\\text{Right}} = 0.4$, $\\ell_{\\text{Left}} = -0.4$. Re-softmax: $\\pi(\\text{Right}) = \\frac{e^{0.4}}{e^{0.4}+e^{-0.4}} = \\frac{1.49}{1.49+0.67} \\approx 0.69$, so Left $\\approx 0.31$.</li>
+       <li>Right rose from $0.5$ to $0.69$ <i>because</i> $G = +2 &gt; 0$. Had $G = -2$, every sign flips: Right would fall to $\\approx 0.31$ and Left rise. The reward's sign sets the update's direction.</li>
      </ul>`,
   application:
     `<p>Policy gradients power robotics (smooth, continuous controls), game-playing agents, and the alignment step of chatbots: RLHF tunes a language model's policy to prefer responses humans rated highly.</p>`,
@@ -555,12 +555,12 @@ L({
      </ul>
      <p>So the single loss simultaneously attracts the positive and repels the negatives. ∎</p>`,
   example:
-    `<p>Use $\\tau = 1$. The anchor's similarity to its positive is $\\text{sim}(z_i, z_j) = 0.9$. There is one negative with $\\text{sim}(z_i, z_k) = 0.1$.</p>
+    `<p>Tiny 2D embeddings. Anchor $z_i = (1, 0)$. Its positive $z_j = (0.8, 0.6)$ points almost the same way; a negative $z_k = (-0.6, 0.8)$ points off sideways. Use $\\tau = 1$.</p>
      <ul class="steps">
-       <li>Positive weight: $\\exp(0.9) \\approx 2.46$.</li>
-       <li>Negative weight: $\\exp(0.1) \\approx 1.11$.</li>
-       <li>Probability of the positive: $\\frac{2.46}{2.46 + 1.11} = \\frac{2.46}{3.57} \\approx 0.69$.</li>
-       <li>Loss: $\\ell = -\\log(0.69) \\approx 0.37$. Pulling the positive closer (raising $0.9$) or pushing the negative away (lowering $0.1$) shrinks the loss.</li>
+       <li>Cosine similarity is the dot product over the lengths. Each vector here has length $1$, so $\\text{sim} = z_i\\cdot z$. Positive: $\\text{sim}(z_i,z_j) = 1{\\times}0.8 + 0{\\times}0.6 = 0.8$ (close). Negative: $\\text{sim}(z_i,z_k) = 1{\\times}(-0.6) + 0{\\times}0.8 = -0.6$ (far apart).</li>
+       <li>Turn each into a weight: positive $\\exp(0.8) \\approx 2.23$, negative $\\exp(-0.6) \\approx 0.55$.</li>
+       <li>Probability of the positive: $\\frac{2.23}{2.23 + 0.55} = \\frac{2.23}{2.78} \\approx 0.80$.</li>
+       <li>Loss: $\\ell = -\\log(0.80) \\approx 0.22$. The gap $0.8$ vs $-0.6$ already makes the positive dominate; pulling it closer (toward sim $+1$) or pushing the negative further (toward sim $-1$) shrinks the loss further.</li>
      </ul>`,
   application:
     `<p>SimCLR learns image features with no labels, then a tiny labelled set fine-tunes a strong classifier. CLIP uses the same idea across types: it pulls an image and its caption together, which is how text-to-image search and many generative models connect words to pictures.</p>`,
@@ -681,6 +681,7 @@ L({
        <li>Total tokens: $N = \\frac{48 \\times 48}{16^2} = \\frac{2304}{256} = 9$.</li>
        <li>Each patch holds $16\\times16 = 256$ pixels (per colour channel). Flatten and embed them into one token vector.</li>
        <li>Add each token's position (which of the 9 cells it came from). Now attention can relate any token to any other.</li>
+       <li>Why patches pay off: attention costs $N^2$ comparisons. With $9$ patch tokens that is $9^2 = 81$. One token <i>per pixel</i> instead would be $N = 2304$ tokens, costing $2304^2 \\approx 5.3$ million — about $65{,}000\\times$ more. Patching is what makes attention over an image affordable.</li>
      </ul>`,
   application:
     `<p>Vision Transformers match or beat convolutional networks on image classification when trained on enough data. They are the image backbone of multimodal models (the vision side of systems that take both pictures and text), and power modern image search and captioning.</p>`,
@@ -799,6 +800,13 @@ L({
        <li>Next step uses that forecast: $\\hat y_{t+1} = 2 + 0.5\\times7 = 2 + 3.5 = 5.5$.</li>
        <li>And again: $\\hat y_{t+2} = 2 + 0.5\\times5.5 = 2 + 2.75 = 4.75$.</li>
        <li>The forecasts settle toward $\\frac{c}{1-\\phi} = \\frac{2}{0.5} = 4$, the series' long-run level.</li>
+     </ul>
+     <p>Now watch the uncertainty grow. Say each surprise has variance $\\sigma^2 = 1$. The $h$-step forecast variance is $\\sigma^2(1 + \\phi^2 + \\dots + \\phi^{2(h-1)})$.</p>
+     <ul class="steps">
+       <li>$1$ step: variance $= 1$, so the band half-width $\\propto \\sqrt{1} = 1.00$.</li>
+       <li>$2$ steps: variance $= 1 + 0.5^2 = 1.25$, half-width $\\propto \\sqrt{1.25} \\approx 1.12$.</li>
+       <li>$3$ steps: variance $= 1 + 0.25 + 0.0625 = 1.3125$, half-width $\\propto \\sqrt{1.3125} \\approx 1.15$.</li>
+       <li>The half-width climbs $1.00 \\to 1.12 \\to 1.15$: the interval <i>widens</i> with the horizon. (It tops out near $\\sqrt{1/(1-\\phi^2)} = \\sqrt{1.33} \\approx 1.15$ here, because $\\phi = 0.5 &lt; 1$.)</li>
      </ul>`,
   application:
     `<p>ARIMA and its state-space cousins forecast electricity demand, retail inventory, website traffic, and economic indicators. Anywhere a business asks "what comes next, and how sure are we?", these models give a forecast plus an honest uncertainty band.</p>`,

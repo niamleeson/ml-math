@@ -160,13 +160,15 @@ L({
      <p><b>ReLU</b> is the most popular. It just keeps positive numbers and flattens negatives to 0. Simple and fast.</p>
      <p><b>Leaky ReLU</b> is a small fix: instead of flat 0 for negatives, it lets a tiny slope through (like $0.01z$) so neurons never fully "die".</p>`,
   example:
-    `<p>Let $z = 2$. Apply each activation.</p>
+    `<p>Let $z = 2$. Apply each activation and watch the <b>bend</b>: the input changes, but the outputs do not all move in step.</p>
      <ul class="steps">
        <li>Sigmoid: $\\frac{1}{1+e^{-2}} = \\frac{1}{1+0.135} = \\frac{1}{1.135} \\approx 0.88$.</li>
+       <li>Tanh: $\\frac{e^{2}-e^{-2}}{e^{2}+e^{-2}} = \\frac{7.39-0.135}{7.39+0.135} = \\frac{7.25}{7.52} \\approx 0.96$.</li>
        <li>ReLU: $\\max(0, 2) = 2$ (positive, so it passes through unchanged).</li>
-       <li>Now let $z = -3$. ReLU: $\\max(0, -3) = 0$ (negative, so flattened to 0).</li>
-       <li>Leaky ReLU at $z=-3$: $0.01\\times(-3) = -0.03$ (a tiny bit gets through).</li>
-     </ul>`,
+       <li>Now bump $z$ from $2$ to $4$. ReLU rises $2 \\to 4$ (a straight line), but sigmoid barely moves $0.88 \\to 0.98$ and tanh $0.96 \\to 0.9993$ — they flatten out. That curving is the non-linearity.</li>
+       <li>And for $z = -3$: ReLU $\\max(0, -3) = 0$ (flattened); Leaky ReLU lets $0.01\\times(-3) = -0.03$ through, so the neuron never fully dies.</li>
+     </ul>
+     <p>The punchline: doubling the input from 2 to 4 does <i>not</i> double sigmoid or tanh. A straight line would — that bend is exactly what lets stacked layers learn curvy patterns.</p>`,
   application:
     `<p>ReLU powers almost all modern image and language networks because it trains fast. Sigmoid is used at the very end for yes/no predictions. Tanh shows up inside older recurrent networks.</p>`,
   quiz: {
@@ -425,13 +427,15 @@ L({
     `<p>The first formula chains three slopes to find the total slope of the loss with respect to one weight.</p>
      <p>The second formula updates the weight: step in the <i>opposite</i> direction of the slope (downhill) by an amount $\\eta$. Repeat for every weight, many times.</p>`,
   example:
-    `<p>Suppose for one weight: $\\frac{\\partial L}{\\partial a} = 2$, $\\frac{\\partial a}{\\partial z} = 0.5$, $\\frac{\\partial z}{\\partial w} = 3$. Learning rate $\\eta = 0.1$, current $w = 1$.</p>
+    `<p>Chain the gradient backward through <b>two layers</b>. Layer 2 weight $w^{[2]}$, layer 1 weight $w^{[1]}$. The loss reaches $w^{[1]}$ only by passing through layer 2, so its chain is longer.</p>
      <ul class="steps">
-       <li>Chain the slopes: $\\frac{\\partial L}{\\partial w} = 2 \\times 0.5 \\times 3 = 3$.</li>
-       <li>Update: $w \\leftarrow 1 - 0.1\\times3 = 1 - 0.3 = 0.7$.</li>
-       <li>The weight moved from 1 to 0.7, lowering the loss a little.</li>
+       <li>Suppose the per-step slopes are: $\\frac{\\partial L}{\\partial a^{[2]}} = 2$ (loss vs output), $\\frac{\\partial a^{[2]}}{\\partial z^{[2]}} = 0.5$ (layer-2 activation), $\\frac{\\partial z^{[2]}}{\\partial w^{[2]}} = 3$ (its input).</li>
+       <li><b>Layer 2 weight:</b> $\\frac{\\partial L}{\\partial w^{[2]}} = 2 \\times 0.5 \\times 3 = 3$.</li>
+       <li>To reach layer 1, keep going: $\\frac{\\partial z^{[2]}}{\\partial a^{[1]}} = w^{[2]} = 0.4$, then $\\frac{\\partial a^{[1]}}{\\partial z^{[1]}} = 1$ (ReLU on a positive), then $\\frac{\\partial z^{[1]}}{\\partial w^{[1]}} = 2$ (layer-1 input).</li>
+       <li><b>Layer 1 weight:</b> $\\frac{\\partial L}{\\partial w^{[1]}} = \\underbrace{2 \\times 0.5}_{\\text{into }z^{[2]}} \\times \\underbrace{0.4 \\times 1}_{\\text{through layer 1}} \\times 2 = 0.8$.</li>
+       <li>Update both, with $\\eta = 0.1$ and current $w^{[2]} = 1$, $w^{[1]} = 1$: &nbsp; $w^{[2]} \\leftarrow 1 - 0.1\\times3 = 0.7$, &nbsp; $w^{[1]} \\leftarrow 1 - 0.1\\times0.8 = 0.92$.</li>
      </ul>
-     <p>Do this for all weights, over and over. That is training.</p>`,
+     <p>The same upstream slope ($2\\times0.5 = 1$) flows into both, but layer 1's gradient is smaller (0.8 vs 3) because it is multiplied by extra terms on the way back. That is the chain rule run layer by layer — and why deep early layers get weaker gradients.</p>`,
   application:
     `<p>Backprop is the engine behind training every neural network ever built: image classifiers, translators, and the large language models behind chatbots. It is just the chain rule run at huge scale.</p>`,
   quiz: {
@@ -825,13 +829,14 @@ L({
     `<p>On each training pass, flip a weighted coin for every neuron. With probability $p$ it is dropped to 0. With probability $1-p$ it stays.</p>
      <p>This is like training many slightly different networks and averaging them, which reduces overfitting.</p>`,
   example:
-    `<p>A hidden layer has 10 neurons. Dropout rate $p = 0.5$.</p>
+    `<p>A hidden layer has 10 neurons, each outputting the value 1. Dropout rate $p = 0.5$, so keep prob $1-p = 0.5$.</p>
      <ul class="steps">
-       <li>On one training step, about half the neurons drop: say 5 are kept, 5 are set to 0.</li>
-       <li>Only those 5 active neurons pass values forward this step.</li>
-       <li>Next step, a different random 5 might be kept. The pattern changes every step.</li>
-       <li>At test time: dropout off, all 10 neurons work together.</li>
-     </ul>`,
+       <li>On one training step, about half drop: say 5 are kept (output 1), 5 are set to 0. The kept sum is $5 \\times 1 = 5$, only half the full $10$.</li>
+       <li><b>The fix (inverted dropout):</b> scale every survivor by $\\frac{1}{1-p} = \\frac{1}{0.5} = 2$. Now the kept sum is $5 \\times (1 \\times 2) = 10$ — back to the full-network size.</li>
+       <li>Why it matters: averaged over many random masks, the expected output stays $10$, so test time (dropout off, all 10 active, no scaling) sees the same scale it trained on. No mismatch.</li>
+       <li>Next step a different random 5 survive, but the $\\times 2$ rescaling keeps the total balanced every time.</li>
+     </ul>
+     <p>Dropping neurons would shrink every signal by half; multiplying survivors by $1/(1-p)$ undoes that, so train and test agree.</p>`,
   application:
     `<p>Dropout is a simple, cheap way to reduce overfitting in image and text networks. It was a key trick in many breakthrough models and is built into every deep learning library.</p>`,
   quiz: {
@@ -1687,13 +1692,14 @@ L({
     `<p>The content cost says "look like the photo's subject". The style cost says "use the painting's textures and colors".</p>
      <p>We adjust the generated image's pixels to drive both down. The balance between them controls how stylized the result is.</p>`,
   example:
-    `<p>Take a photo of your street and the style of Van Gogh's Starry Night.</p>
+    `<p>The style cost compares <b>Gram matrices</b>, so let's compute one. Suppose a layer has 2 feature channels, each read off at 3 spots: channel 1 fires $f_1 = [1, 2, 2]$, channel 2 fires $f_2 = [2, 0, 1]$. The Gram matrix holds every pair's dot product.</p>
      <ul class="steps">
-       <li>Content cost keeps the buildings and road where they are.</li>
-       <li>Style cost adds swirling brushstrokes and bold blues and yellows.</li>
-       <li>Lower both at once: your street, repainted as if Van Gogh made it.</li>
+       <li>$G_{11} = f_1\\cdot f_1 = 1{+}4{+}4 = 9$ (how strongly channel 1 fires with itself).</li>
+       <li>$G_{22} = f_2\\cdot f_2 = 4{+}0{+}1 = 5$.</li>
+       <li>$G_{12} = f_1\\cdot f_2 = 1{\\cdot}2 + 2{\\cdot}0 + 2{\\cdot}1 = 4$ (how often the two channels fire <i>together</i>). So $G = \\begin{bmatrix}9 & 4\\\\4 & 5\\end{bmatrix}$.</li>
+       <li>Style cost = how far the generated image's $G$ is from the painting's $G$. Each entry sums over all 3 spots, so shuffling <i>which</i> spot is which leaves every dot product the same — $G$ ignores spatial layout. That is why it captures texture, not where things sit.</li>
      </ul>
-     <p>Weight the style cost higher for a more painterly look, or the content cost higher to stay closer to the photo.</p>`,
+     <p>Match the painting's $G$ (its co-firing pattern) and you copy its style; match the raw feature map and you copy its content. Style transfer drives both costs down at once.</p>`,
   application:
     `<p>This is the magic behind art-filter apps that turn your selfies into paintings. It also helps artists and designers prototype looks quickly.</p>`,
   quiz: {
@@ -1796,13 +1802,13 @@ L({
     `<p>Each round, the generator makes fakes and the discriminator scores a mix of real and fake. Both update: the detective gets sharper, the forger gets sneakier.</p>
      <p>At balance, the generator's fakes are so good the discriminator can only guess (about 50/50).</p>`,
   example:
-    `<p>Training a GAN to make fake handwritten digits.</p>
+    `<p>Track the discriminator's accuracy as a GAN learns to make fake digits. Accuracy is the share of images it labels correctly (1.0 = perfect, 0.5 = pure guessing).</p>
      <ul class="steps">
-       <li>Early on: the generator makes blurry blobs. The discriminator easily labels them fake.</li>
-       <li>The generator learns from being caught and makes sharper digits.</li>
-       <li>The discriminator adapts, getting pickier. Back and forth.</li>
-       <li>Eventually the fakes look like real digits, and the discriminator is fooled about half the time.</li>
-     </ul>`,
+       <li>Early on: fakes are blurry blobs. The discriminator catches almost all of them — accuracy $\\approx 0.98$. The generator's "fool rate" is only $1 - 0.98 = 0.02$.</li>
+       <li>The generator sharpens its digits. Now the detective slips more: accuracy drops to $\\approx 0.75$.</li>
+       <li>At the end, the fakes are indistinguishable from real digits. The discriminator can only guess: accuracy $\\approx 0.50$, the same as flipping a coin.</li>
+     </ul>
+     <p>That $0.50$ is the punchline: <b>equilibrium is 50% accuracy</b>. When the detective is reduced to coin-flipping, the forger has won — the fakes are as good as real.</p>`,
   application:
     `<p>GANs create realistic faces, art, and game textures, fill in missing parts of photos, and upscale low-resolution images. They also drive the "deepfake" technology.</p>`,
   quiz: {
@@ -2053,13 +2059,13 @@ L({
     `<p>Each gate is a sigmoid, giving a value between 0 and 1. The forget gate scales the old memory, the update gate scales the new info, and they are added together.</p>
      <p>Because memory can pass through almost untouched (forget gate near 1), gradients don't vanish, so long-term memory survives.</p>`,
   example:
-    `<p>Reading: "I grew up in France ... I speak fluent ___". The blank needs "French".</p>
+    `<p>Store a memory of strength $1$ at step 0, then read 10 more words. Compare how much survives. The LSTM carry is $c \\leftarrow f\\cdot c$ with forget gate $f = 0.9$; a plain RNN shrinks by roughly its recurrent slope $0.5$ each step.</p>
      <ul class="steps">
-       <li>At the word "France", the update gate opens (near 1) and stores "country = France" in memory.</li>
-       <li>Through the many words in between, the forget gate stays near 1, so that memory is preserved.</li>
-       <li>At the blank, the output gate reveals "France", helping predict "French".</li>
+       <li><b>LSTM (gate $f = 0.9$):</b> after 10 steps the memory is $0.9^{10} \\approx 0.35$. Still over a third — clearly alive.</li>
+       <li><b>Plain RNN (slope $\\approx 0.5$):</b> after 10 steps it is $0.5^{10} \\approx 0.001$. Essentially gone.</li>
+       <li>That is over a <b>350×</b> difference ($0.35 \\div 0.001 \\approx 357$). The gate near 1 keeps the multiplier near 1, so memory barely fades; the RNN's smaller multiplier crushes it.</li>
      </ul>
-     <p>A plain RNN would likely have forgotten "France" by then. The gates kept it alive.</p>`,
+     <p>So in "I grew up in France ... I speak fluent ___", the LSTM still remembers "France" 10 words later to predict "French" — the plain RNN has long forgotten it.</p>`,
   application:
     `<p>LSTMs and GRUs powered a generation of translation, speech recognition, and text generation systems before Transformers. They are still common for time-series forecasting.</p>`,
   quiz: {
@@ -2249,12 +2255,13 @@ L({
     `<p>The top scores word $t$ by the dot product $\\theta_t^\\top e_c$: high when their vectors agree. The bottom sums that over all words $j$, so dividing turns scores into probabilities that add to 1.</p>
      <p>Training maximizes the probability of the real nearby words, which shapes the embeddings so related words cluster.</p>`,
   example:
-    `<p>The analogy "king is to man as queen is to woman" shows up as vector math.</p>
+    `<p>"king − man + woman ≈ queen" is real vector arithmetic. Use tiny 2-number embeddings [royalty, female] the model might have learned: &nbsp; king $=[0.9, 0.1]$, man $=[0.1, 0.1]$, woman $=[0.1, 0.9]$, queen $=[0.9, 0.9]$.</p>
      <ul class="steps">
-       <li>Take the learned vectors and compute: king − man + woman.</li>
-       <li>"king − man" captures the idea of royalty without gender. Adding "woman" puts the gender back as female.</li>
-       <li>The closest word vector to the result is "queen". The embedding learned the relationship on its own.</li>
-     </ul>`,
+       <li>king − man $= [0.9-0.1,\\; 0.1-0.1] = [0.8, 0.0]$. This strips out "man-ness", leaving pure <i>royalty</i> with no gender.</li>
+       <li>+ woman $= [0.8+0.1,\\; 0.0+0.9] = [0.9, 0.9]$. Adding "woman" puts female-ness back in.</li>
+       <li>Compare the result $[0.9, 0.9]$ to the vocabulary: it lands exactly on queen $=[0.9, 0.9]$, and far from man $[0.1,0.1]$ or woman $[0.1,0.9]$.</li>
+     </ul>
+     <p>Nobody told the model about royalty or gender — predicting nearby words alone pushed the vectors into a layout where this subtraction-and-addition just works.</p>`,
   application:
     `<p>word2vec and GloVe embeddings boosted search, recommendation, and translation. They showed that meaning can be learned just from which words appear near each other in text.</p>`,
   quiz: {

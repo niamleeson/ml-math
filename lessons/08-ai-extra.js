@@ -388,12 +388,12 @@ L({
      <p><b>Why it is unbiased.</b> Each $u_t$ is a complete, real return: no estimate feeds into it. So $\\mathbb{E}[\\hat Q] = \\mathbb{E}[u] = Q$ even with few samples. The price is variance: full-episode returns wobble a lot, so you need many episodes.</p>
      <p><b>Intuition.</b> You do not need to know the dice to learn the game. Roll enough times and write down what you actually scored; the average tells you what each move is worth. Monte Carlo trusts experience over any model.</p>`,
   example:
-    `<p>From $(s,a)$ we run $3$ episodes and record their returns: $u = 7$, $u = 9$, $u = 8$.</p>
+    `<p>From $(s,a)$, with $\\gamma = 0.9$, one episode unfolds: reward $-1$, then $-1$, then $+10$ at the goal. Compute its return $u$.</p>
      <ul class="steps">
-       <li>First episode: $\\hat Q = 7$.</li>
-       <li>After two: $\\hat Q = (7 + 9)/2 = 8$.</li>
-       <li>After three: $\\hat Q = (7 + 9 + 8)/3 = 24/3 = 8$.</li>
-       <li>The estimate settles near the true expected return. More episodes shrink the wobble.</li>
+       <li>Discount each reward by $\\gamma^{\\,k-t}$: $u = (-1) + 0.9(-1) + 0.9^2(10) = -1 - 0.9 + 0.81\\times10 = -1 - 0.9 + 8.1 = 6.2$.</li>
+       <li>Two more episodes (different random lengths) give returns $u = 9$ and $u = 8$.</li>
+       <li>Average them: $\\hat Q(s,a) = (6.2 + 9 + 8)/3 = 23.2/3 \\approx 7.73$.</li>
+       <li>No model was used: each $u$ is a real, discounted return, and the mean tracks the true $Q$. More episodes shrink the wobble.</li>
      </ul>`,
   application:
     `<p>Monte Carlo evaluation underlies Monte Carlo Tree Search, the engine behind strong Go and game-playing AIs: it plays many random rollouts to the end and averages the outcomes to score a move. It is also used to evaluate policies when a simulator exists but the exact model does not.</p>`,
@@ -744,12 +744,13 @@ L({
      <p><b>Why order matters.</b> Different elimination orders create intermediate factors of different sizes. A good order keeps factors small; a bad one can blow them up. Finding the optimal order is itself hard, but cheap heuristics (eliminate the least-connected variable first) work well.</p>
      <p><b>Intuition.</b> It is the same trick as factoring $ab + ac = a(b+c)$: do the small multiplications and the small sums in a smart order instead of expanding everything. You never write down the giant joint table; you collapse it variable by variable.</p>`,
   example:
-    `<p>Chain $A - f_1 - B - f_2 - C$ with binary variables. Eliminate $B$ to get $g(A,C)$.</p>
+    `<p>Chain $A - f_1 - B - f_2 - C$, binary variables. $f_1 = \\{00{:}2,\\,01{:}1,\\,10{:}1,\\,11{:}3\\}$, $f_2 = \\{00{:}1,\\,01{:}2,\\,10{:}3,\\,11{:}1\\}$ (indices are $A,B$ then $B,C$). Eliminate $B$ to build the whole new factor $g(A,C)$.</p>
      <ul class="steps">
-       <li>$f_1(A{=}0,B{=}0)=2$, $f_1(0,1)=1$; $f_2(B{=}0,C{=}0)=1$, $f_2(1,0)=3$.</li>
-       <li>$g(0,0) = \\sum_B f_1(0,B)\\,f_2(B,0) = f_1(0,0)f_2(0,0) + f_1(0,1)f_2(1,0)$.</li>
-       <li>$= 2\\times1 + 1\\times3 = 2 + 3 = 5$.</li>
-       <li>Repeat for the other $A,C$ combinations. $B$ is now eliminated; the graph is just $A - g - C$.</li>
+       <li>$g(0,0) = f_1(0,0)f_2(0,0) + f_1(0,1)f_2(1,0) = 2\\times1 + 1\\times3 = 5$.</li>
+       <li>$g(0,1) = f_1(0,0)f_2(0,1) + f_1(0,1)f_2(1,1) = 2\\times2 + 1\\times1 = 5$.</li>
+       <li>$g(1,0) = f_1(1,0)f_2(0,0) + f_1(1,1)f_2(1,0) = 1\\times1 + 3\\times3 = 10$.</li>
+       <li>$g(1,1) = f_1(1,0)f_2(0,1) + f_1(1,1)f_2(1,1) = 1\\times2 + 3\\times1 = 5$.</li>
+       <li>So $g(A,C) = \\{00{:}5,\\,01{:}5,\\,10{:}10,\\,11{:}5\\}$: one factor, $B$ gone, graph now $A - g - C$.</li>
      </ul>`,
   application:
     `<p>Variable elimination is the standard exact-inference engine inside probabilistic systems: medical diagnosis networks, error-correcting decoders, and speech models. The same factor-graph machinery (the sum-product algorithm) underlies belief propagation and the decoding of LDPC and turbo codes in your phone's modem.</p>`,
@@ -972,12 +973,12 @@ L({
      <p><b>Why parents alone are not enough.</b> Knowing a child's value also tells you about $X$ (information flows backward up an arrow). So children must be in the blanket too, even though $X$ does not point the other way.</p>
      <p><b>Intuition.</b> The blanket is a fence. Influence can reach $X$ only through its parents (causes), its children (effects), or the back-door explaining-away link via a shared child. Stand on the whole fence and nothing outside can sneak in. That locality is what makes large probabilistic models computable at all.</p>`,
   example:
-    `<p>Node $X$ has parents $\\{P_1, P_2\\}$, children $\\{C_1, C_2\\}$, and $C_2$ has another parent $\\text{CP}$.</p>
+    `<p>$X$ (binary) has one parent $P$ and one child $C$; a far node $U$ sits outside the blanket. Resample $X$ from its local factors: $P(X{=}1 \\mid \\text{rest}) \\propto P(X{=}1\\mid P)\\,P(C\\mid X{=}1)$.</p>
      <ul class="steps">
-       <li>Parents in the blanket: $P_1, P_2$.</li>
-       <li>Children in the blanket: $C_1, C_2$.</li>
-       <li>Co-parent (other parent of child $C_2$): $\\text{CP}$.</li>
-       <li>So $\\text{MB}(X) = \\{P_1, P_2, C_1, C_2, \\text{CP}\\}$. Given these five, $X$ is independent of all other nodes, however far they are.</li>
+       <li>Suppose $P(X{=}1\\mid P) = 0.6$ and the observed child gives $P(C\\mid X{=}1) = 0.5$, $P(C\\mid X{=}0) = 0.2$.</li>
+       <li>Unnormalized: $X{=}1$ scores $0.6\\times0.5 = 0.30$; $X{=}0$ scores $0.4\\times0.2 = 0.08$.</li>
+       <li>Normalize: $P(X{=}1\\mid\\text{rest}) = 0.30/(0.30+0.08) = 0.30/0.38 \\approx 0.79$.</li>
+       <li>The far node $U$ never entered the arithmetic — it cancels. Conditioning on the blanket $\\{P, C\\}$ alone fixes $X$'s belief; the rest of the network is irrelevant.</li>
      </ul>`,
   application:
     `<p>The Markov blanket makes large-scale probabilistic inference feasible: Gibbs samplers, belief propagation, and Markov random fields all update a variable using only its blanket. In feature selection, the Markov blanket of a target is provably the minimal optimal feature set. The concept even appears in theories of biological self-organization (the "free energy principle").</p>`,
@@ -1219,12 +1220,12 @@ L({
      <p><b>Why topics emerge unsupervised.</b> Words like "game", "team", "score" tend to appear together; LDA can raise their joint likelihood by assigning them to one topic. Co-occurrence is the only signal, yet it reliably carves a corpus into themes.</p>
      <p><b>Intuition.</b> Think of each document as poured from a few colored jugs (topics), each jug full of its own favorite words. You only see the final mixed cup of words. LDA reverse-engineers which jugs exist and how much of each went into every cup.</p>`,
   example:
-    `<p>Two topics: Sports $= \\{$game, team, score$\\}$, Finance $= \\{$market, stock, price$\\}$. A document has topic mix $\\theta = [0.8, 0.2]$ (mostly Sports).</p>
+    `<p>Two topics, Sports and Finance. Document mix $\\theta = [0.8, 0.2]$ (mostly Sports). Word "team" has $\\phi_{\\text{Sports,team}} = 0.4$, $\\phi_{\\text{Fin,team}} = 0.0$. What is $P(\\text{word} = \\text{"team"})$? Sum the mixture over both topics.</p>
      <ul class="steps">
-       <li>For a word slot, draw the topic: $P(Z = \\text{Sports}) = 0.8$, $P(Z = \\text{Finance}) = 0.2$.</li>
-       <li>Most slots draw Sports, so most words come from $\\{$game, team, score$\\}$.</li>
-       <li>Probability the word is "stock": $\\theta_{\\text{Fin}} \\times \\phi_{\\text{Fin, stock}} = 0.2 \\times P(\\text{stock}\\mid\\text{Finance})$.</li>
-       <li>If $P(\\text{stock}\\mid\\text{Finance}) = 0.3$, that is $0.2\\times0.3 = 0.06$: rare, because the document is mostly Sports.</li>
+       <li>$P(\\text{"team"}) = \\sum_k \\theta_k\\,\\phi_{k,\\text{team}} = \\theta_{\\text{Sp}}\\phi_{\\text{Sp,team}} + \\theta_{\\text{Fin}}\\phi_{\\text{Fin,team}}$.</li>
+       <li>$= 0.8\\times0.4 + 0.2\\times0.0 = 0.32 + 0 = 0.32$.</li>
+       <li>Now "stock", with $\\phi_{\\text{Sp,stock}} = 0.0$, $\\phi_{\\text{Fin,stock}} = 0.3$: $P(\\text{"stock"}) = 0.8\\times0.0 + 0.2\\times0.3 = 0.06$.</li>
+       <li>"team" ($0.32$) beats "stock" ($0.06$): the same word probabilities, weighted by $\\theta$, make a mostly-Sports document emit mostly Sports words.</li>
      </ul>`,
   application:
     `<p>LDA organizes huge text collections: it powers topic browsers for news archives and scientific papers, content recommendation, and exploratory analysis of survey responses or customer reviews. The same mixture idea extends to images (objects as topics) and genetics (populations as topics).</p>`,

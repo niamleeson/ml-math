@@ -397,11 +397,11 @@ L({
   example:
     `<p>Tiny graph: 4 points in two pairs. Edges: 1–2 weight 1, 3–4 weight 1, and a weak 2–3 weight $0.1$.</p>
      <ul class="steps">
-       <li>Degrees: $D_{11}=1,\\ D_{22}=1.1,\\ D_{33}=1.1,\\ D_{44}=1$.</li>
-       <li>$L=D-W$. Row for point 2: $[-1,\\ 1.1,\\ -0.1,\\ 0]$.</li>
-       <li>$L$ always has eigenvalue $0$ with the all-ones eigenvector (a connected graph has exactly one).</li>
-       <li>The next-smallest eigenvector (Fiedler vector) comes out roughly $[+, +, -, -]$: positive on {1,2}, negative on {3,4}.</li>
-       <li>Splitting by sign cuts only the weak $0.1$ edge — exactly the two natural pairs. The strong edges stay intact.</li>
+       <li>Degrees: $D_{11}=1,\\ D_{22}=1.1,\\ D_{33}=1.1,\\ D_{44}=1$. Build $L=D-W$; row for point 2 is $[-1,\\ 1.1,\\ -0.1,\\ 0]$.</li>
+       <li>A split is a vector $f$ with $+1$ on one side, $-1$ on the other, and the cut cost is $\\tfrac14 f^\\top L f=\\tfrac14\\sum_{ij}W_{ij}(f_i-f_j)^2$ — sum the weights of edges whose endpoints disagree in sign.</li>
+       <li><b>Natural split</b> $f=[+1,+1,-1,-1]$: only edge 2–3 is cut ($f_2=+1\\ne f_3=-1$), so cost $=W_{23}=0.1$.</li>
+       <li><b>Bad split</b> $f=[+1,-1,+1,-1]$: now edges 1–2 and 3–4 disagree, so cost $=W_{12}+W_{34}=1+1=2.0$ — twenty times worse.</li>
+       <li>$L$'s all-ones eigenvector (eigenvalue $0$) is the trivial "no cut". The next-smallest eigenvector (the Fiedler vector) minimizes that cost, so its sign pattern is $[+,+,-,-]$: it cuts the cheap $0.1$ seam and leaves both strong pairs intact.</li>
      </ul>`,
   application:
     `<p>Spectral methods segment images (pixels as a graph), find communities in social networks, group genes by co-expression, and partition meshes for parallel computing. Whenever "similar" matters more than "nearby", spectral clustering shines.</p>`,
@@ -914,13 +914,13 @@ L({
        <li>Update $F_m=F_{m-1}+\\nu h_m$ with a small step $\\nu$. Repeating is gradient descent where each "step direction" is a regression tree. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Squared loss, $\\nu=1$. Targets $y=[10, 20, 30]$. Start $F_0=$ mean $=20$.</p>
+    `<p>Squared loss, $\\nu=1$. Inputs $x=[1,2,3]$ with targets $y=[10, 20, 30]$. Start $F_0=$ mean $=20$.</p>
      <ul class="steps">
-       <li>Residuals: $r=y-F_0=[-10,\\,0,\\,+10]$.</li>
-       <li>Fit a stump that splits the points and predicts the mean residual on each side: say it outputs $-10$ on the first point and $+5$ on the last two (a crude split).</li>
-       <li>Update: $F_1=F_0+\\nu h_1=[20-10,\\ 20+5,\\ 20+5]=[10,\\,25,\\,25]$.</li>
-       <li>New residuals: $[10-10,\\ 20-25,\\ 30-25]=[0,\\,-5,\\,+5]$ — smaller than before.</li>
-       <li>The next stump fits these leftovers, shrinking them again. Error keeps falling stage by stage.</li>
+       <li>First residuals: $r=y-F_0=[10-20,\\ 20-20,\\ 30-20]=[-10,\\,0,\\,+10]$.</li>
+       <li>Fit a stump (one split) to those residuals. Try the split $x&lt;2.5$ vs $x\\ge2.5$. A stump's leaf outputs the <b>mean residual</b> on its side: left leaf $\\{x=1,2\\}$ gives $\\tfrac{-10+0}{2}=-5$; right leaf $\\{x=3\\}$ gives $+10$.</li>
+       <li>So the tree predicts $h_1=[-5,\\,-5,\\,+10]$ — that is exactly how the next tree "fits" the residual.</li>
+       <li>Update: $F_1=F_0+\\nu h_1=[20-5,\\ 20-5,\\ 20+10]=[15,\\,15,\\,30]$.</li>
+       <li>New residuals: $[10-15,\\ 20-15,\\ 30-30]=[-5,\\,+5,\\,0]$. Sum of squares dropped from $10^2+0+10^2=200$ to $5^2+5^2+0=50$ — a $4\\times$ cut in one stage. The next stump fits these leftovers and shrinks them again.</li>
      </ul>`,
   application:
     `<p>Gradient-boosted trees (XGBoost, LightGBM, CatBoost) are the go-to winners on tabular data: credit risk, click-through rates, search ranking, insurance pricing, and Kaggle leaderboards. They handle mixed feature types, missing values, and nonlinearity with little tuning.</p>`,

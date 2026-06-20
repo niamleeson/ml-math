@@ -128,13 +128,15 @@ L({
      </ul>
      <p>That single $\\frac{1}{\\sqrt{d}}$ keeps the softmax in a healthy range no matter how long the vectors are. $\\blacksquare$</p>`,
   example:
-    `<p>One token attends to three others. The scaled scores are $\\frac{QK^\\top}{\\sqrt{d}} = [2, 1, 0]$.</p>
+    `<p>One token's query is $q = [1, 1, 0, 0]$ (so $d = 4$, and $\\sqrt{d} = 2$). It compares against three keys: $k_1 = [2, 2, 0, 0]$, $k_2 = [1, 1, 0, 0]$, $k_3 = [0, 0, 1, 1]$.</p>
      <ul class="steps">
+       <li>Raw dot products $q \\cdot k$: $k_1$ gives $1{\\cdot}2 + 1{\\cdot}2 = 4$; $k_2$ gives $1 + 1 = 2$; $k_3$ gives $0$.</li>
+       <li>Divide by $\\sqrt{d} = 2$ to get the scaled scores: $[4/2,\\, 2/2,\\, 0/2] = [2, 1, 0]$.</li>
        <li>Exponentiate: $e^{2} \\approx 7.39$, $e^{1} \\approx 2.72$, $e^{0} = 1$. Sum $\\approx 11.11$.</li>
        <li>Softmax weights: $7.39/11.11 \\approx 0.67$, $2.72/11.11 \\approx 0.24$, $1/11.11 \\approx 0.09$. They add to 1.</li>
        <li>The output is $0.67\\,V_1 + 0.24\\,V_2 + 0.09\\,V_3$: mostly the first token's value, a little of the others.</li>
      </ul>
-     <p>So this token's new meaning leans 67% on the first neighbor. That is self-attention picking what matters.</p>`,
+     <p>So this token's new meaning leans 67% on the first neighbor. Real dot products set the scores, $\\sqrt{d}$ tames them, softmax picks the winner. That is one full attention step end to end.</p>`,
   application:
     `<p>Transformers are the backbone of GPT, BERT, image models, and protein folders. Because every token attends to every token in parallel, they train fast on GPUs and capture long-range links a word-by-word model would miss.</p>`,
   quiz: {
@@ -229,14 +231,14 @@ L({
      </ul>
      <p>Same budget, many views. That is why every Transformer uses multiple heads. $\\blacksquare$</p>`,
   example:
-    `<p>A model with vector size $d = 8$ and $h = 2$ heads. The input "cat" vector is split into two halves of size 4.</p>
+    `<p>A model with vector size $d = 4$ and $h = 2$ heads, so each head works in $d/h = 2$ dimensions. Two tokens, "The" and "cat"; we compute the new "cat" vector. Each head divides its scores by $\\sqrt{2} \\approx 1.41$.</p>
      <ul class="steps">
-       <li>Head 1 (first 4 dims) attends back to "The" and returns a 4-number vector, say $[0.2, 0.9, -0.1, 0.3]$.</li>
-       <li>Head 2 (last 4 dims) attends to "sat" and returns $[0.5, -0.2, 0.7, 0.1]$.</li>
-       <li>Concatenate: $[0.2, 0.9, -0.1, 0.3,\\; 0.5, -0.2, 0.7, 0.1]$, back to length 8.</li>
-       <li>Multiply by $W^O$ to mix the two views into the final "cat" vector.</li>
+       <li><b>Head 1</b> (dims 1-2). cat's query is $[1,0]$; keys are The$=[3,0]$, cat$=[0,3]$. Dot products $[3, 0]$, scaled by $\\sqrt{2}$ give $[2.12, 0]$. Softmax: $[0.89, 0.11]$ — it attends to "The".</li>
+       <li>Head 1 values are The$=[1,0]$, cat$=[0,1]$, so its output is $0.89{\\cdot}[1,0] + 0.11{\\cdot}[0,1] = [0.89, 0.11]$.</li>
+       <li><b>Head 2</b> (dims 3-4). Its keys make cat's scaled scores $[0, 2.12]$, softmax $[0.11, 0.89]$ — it attends to "cat" itself, giving output $[0.11, 0.89]$.</li>
+       <li>Concatenate the two heads: $[0.89, 0.11,\\; 0.11, 0.89]$, back to length 4. Multiply by $W^O$ to mix them.</li>
      </ul>
-     <p>One head caught the article, the other caught the verb. Combined, "cat" now knows about both.</p>`,
+     <p>One head looked at the article, the other at the word itself, each a real softmax-weighted blend of values. Combined, "cat" carries both views at once.</p>`,
   application:
     `<p>GPT-style models use dozens of heads per layer. Researchers have found heads that specialize: some track sentence structure, some copy the previous token, some link quotes to speakers. Multi-head attention is why one layer can capture many kinds of relationships at once.</p>`,
   quiz: {
@@ -451,13 +453,14 @@ L({
      </ul>
      <p>The bottleneck turns "copy the input" into "find the hidden low-dimensional structure." $\\blacksquare$</p>`,
   example:
-    `<p>Input $x = [0.8, 0.2, 0.9, 0.1, 0.6]$. The encoder squeezes it to a 2-number code $z = [1.1, 0.4]$. The decoder rebuilds $\\hat{x} = [0.79, 0.25, 0.85, 0.18, 0.55]$.</p>
+    `<p>Input $x = [0.8, 0.2, 0.9, 0.1, 0.6]$. The encoder's first row of weights is $[0.5, 0.1, 0.5, 0.0, 0.3]$, its second row $[0.0, 0.6, 0.1, 0.6, 0.2]$. Each code number is a dot product.</p>
      <ul class="steps">
-       <li>Compare entry by entry: gaps are $0.01, 0.05, 0.05, 0.08, 0.05$.</li>
-       <li>Square them: $0.0001, 0.0025, 0.0025, 0.0064, 0.0025$.</li>
-       <li>Average: $(0.0001 + 0.0025 + 0.0025 + 0.0064 + 0.0025)/5 = 0.0140/5 = 0.0028$. Small error.</li>
-       <li>So 5 numbers were faithfully captured by just 2. The code is a compressed summary.</li>
-     </ul>`,
+       <li>Code entry 1: $0.5(0.8) + 0.1(0.2) + 0.5(0.9) + 0(0.1) + 0.3(0.6) = 0.40 + 0.02 + 0.45 + 0.18 = 1.05$.</li>
+       <li>Code entry 2: $0(0.8) + 0.6(0.2) + 0.1(0.9) + 0.6(0.1) + 0.2(0.6) = 0.12 + 0.09 + 0.06 + 0.12 = 0.39$. So $z = [1.05, 0.39]$.</li>
+       <li>The decoder expands $z$ back to 5 numbers, e.g. row 1 $= 0.9(1.05) + 0.0(0.39) = 0.945$, giving $\\hat{x} \\approx [0.95, 0.42, 0.98, 0.35, 0.54]$.</li>
+       <li>Squared gaps averaged: mean squared error $\\approx 0.028$. Small, even though 5 numbers were squeezed through just 2.</li>
+     </ul>
+     <p>The encoder's two dot products are the entire summary of the input; everything rebuilt downstream flows from those two numbers.</p>`,
   application:
     `<p>Autoencoders power denoising (rebuild a clean image from a noisy one), anomaly detection (a fraud transaction reconstructs badly, so its error spikes), and dimensionality reduction for visualizing high-dimensional data.</p>`,
   quiz: {
@@ -587,7 +590,8 @@ L({
        <li>Form the code: $z = \\mu + \\sigma\\epsilon = 0.5 + 0.2 \\times 1.3 = 0.5 + 0.26 = 0.76$.</li>
        <li>Sample again with $\\epsilon = -0.5$: $z = 0.5 + 0.2 \\times (-0.5) = 0.4$. Same input, slightly different code each time.</li>
        <li>The decoder turns $0.76$ and $0.4$ into two similar-but-different outputs. That variety is what lets a VAE generate.</li>
-       <li>The KL term meanwhile nudges $\\mu$ toward 0 and $\\sigma$ toward 1, keeping the code near a standard bell curve.</li>
+       <li>Now the KL term, in 1-D it is $D_{KL} = \\tfrac{1}{2}\\big(\\mu^2 + \\sigma^2 - 1 - \\ln \\sigma^2\\big)$. Plug in: $\\tfrac{1}{2}\\big(0.25 + 0.04 - 1 - \\ln 0.04\\big) = \\tfrac{1}{2}\\big(-0.71 + 3.22\\big) \\approx 1.25$.</li>
+       <li>That positive KL is the penalty for this code being away from $N(0,1)$; minimizing it pushes $\\mu$ toward 0 and $\\sigma$ toward 1, where $D_{KL} = 0$.</li>
      </ul>`,
   application:
     `<p>VAEs generate faces, molecules, and music, and they give a smooth latent space you can interpolate: walk from one face to another and every step in between is a plausible face. They are also used for anomaly detection and as a building block inside larger generative systems.</p>`,

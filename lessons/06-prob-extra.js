@@ -67,7 +67,9 @@ L({
        <li>Slope of inverse: $\\frac{dh}{dy} = \\frac{1}{2\\sqrt{y}}$.</li>
        <li>Plug in: $f_Y(y) = f_X(\\sqrt{y}) \\cdot \\left|\\frac{1}{2\\sqrt{y}}\\right| = 1 \\cdot \\frac{1}{2\\sqrt{y}} = \\frac{1}{2\\sqrt{y}}$.</li>
        <li>Sanity check it integrates to 1: $\\int_0^1 \\frac{1}{2\\sqrt{y}}\\,dy = [\\sqrt{y}]_0^1 = 1$. Good.</li>
-       <li>Notice $f_Y$ blows up near $y = 0$: squaring squashes small values toward zero, so probability piles up there.</li>
+       <li>Read off the reshaping with real numbers. The input was flat: $f_X = 1$ everywhere. After the transform, at $y = 0.04$ the density is $f_Y(0.04) = \\frac{1}{2\\sqrt{0.04}} = \\frac{1}{2(0.2)} = 2.5$ — squeezed values pile up, height jumps from $1$ to $2.5$.</li>
+       <li>At $y = 0.64$ the density is $f_Y(0.64) = \\frac{1}{2\\sqrt{0.64}} = \\frac{1}{2(0.8)} = 0.625$ — stretched values spread thin, height drops from $1$ to $0.625$.</li>
+       <li>So $f_Y$ blows up near $y = 0$ and thins out near $y = 1$: squaring squashes small values together (probability piles up) and spreads large ones apart.</li>
      </ul>`,
   application:
     `<p>Generating random samples from a target distribution uses this idea in reverse: if $U$ is uniform on $[0,1]$, then $X = F^{-1}(U)$ has CDF $F$ (the "inverse-transform" trick). Reparameterization in variational autoencoders pushes a simple noise variable through a learned $g$ to get a complex one.</p>`,
@@ -207,12 +209,15 @@ L({
        <li>So $f_Z(z) = \\int_{-\\infty}^{\\infty} f_X(x)\\,f_Y(z - x)\\,dx$ — exactly the convolution. $\\;\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Sum of two fair dice. Each die has PMF $p(k) = \\frac{1}{6}$ for $k = 1,\\dots,6$. Find $P(Z = 5)$.</p>
+    `<p>Take two small independent dice, $X$ on faces $\\{1,2,3\\}$ and $Y$ on faces $\\{1,2\\}$, each face uniform. So $p_X = (\\tfrac13,\\tfrac13,\\tfrac13)$ and $p_Y = (\\tfrac12,\\tfrac12)$. Build the whole PMF of $Z = X + Y$ by sliding $p_Y$ across $p_X$.</p>
      <ul class="steps">
-       <li>Pairs that sum to 5: $(1,4), (2,3), (3,2), (4,1)$ — four ways.</li>
-       <li>Each pair has chance $\\frac{1}{6} \\times \\frac{1}{6} = \\frac{1}{36}$ by independence.</li>
-       <li>Convolution sum: $P(Z = 5) = \\sum_{k} p(k)\\,p(5-k) = 4 \\times \\frac{1}{36} = \\frac{4}{36} = \\frac{1}{9}$.</li>
-       <li>The full distribution is triangular: it rises to a peak of $\\frac{6}{36}$ at 7, then falls — the flat dice blended into a tent.</li>
+       <li>For each target $z$, sum $p_X(x)\\,p_Y(z-x)$ over every $x$ — the convolution.</li>
+       <li>$z=2$: only $(1,1)$, so $P = \\tfrac13\\cdot\\tfrac12 = \\tfrac16$.</li>
+       <li>$z=3$: $(1,2)$ and $(2,1)$, so $P = \\tfrac13\\cdot\\tfrac12 + \\tfrac13\\cdot\\tfrac12 = \\tfrac26 = \\tfrac13$.</li>
+       <li>$z=4$: $(2,2)$ and $(3,1)$, so $P = \\tfrac13\\cdot\\tfrac12 + \\tfrac13\\cdot\\tfrac12 = \\tfrac13$.</li>
+       <li>$z=5$: only $(3,2)$, so $P = \\tfrac13\\cdot\\tfrac12 = \\tfrac16$.</li>
+       <li>Resulting PMF: $p_Z = (\\tfrac16,\\ \\tfrac13,\\ \\tfrac13,\\ \\tfrac16)$ at $z = 2,3,4,5$. It sums to $\\tfrac16+\\tfrac13+\\tfrac13+\\tfrac16 = 1$ — a valid distribution, and the two flat inputs blended into a flat-topped tent.</li>
+       <li>Same recipe on two fair 6-sided dice gives $P(Z=5) = 4 \\times \\tfrac{1}{36} = \\tfrac19$ and a triangle peaking at $\\tfrac{6}{36}$ at $z=7$.</li>
        <li>Continuous check: two independent $\\mathcal{N}(0,1)$ Normals sum to $\\mathcal{N}(0,2)$ — means $0{+}0$, variances $1{+}1$.</li>
      </ul>`,
   application:

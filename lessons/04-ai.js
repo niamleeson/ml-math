@@ -417,13 +417,14 @@ L({
      <p>A <b>path</b> is a chain of actions from Start. Each one lands you in a new state via Succ.</p>
      <p>The path's total cost is the sum of all its action costs. We want the path with the smallest total that ends where $\\text{IsEnd}$ is true.</p>`,
   example:
-    `<p>Tiny line of cells: $A - B - C$. Start at $A$, goal is $C$.</p>
+    `<p>Start at $A$, goal is $D$. Two routes exist, and we want the cheapest total cost.</p>
      <ul class="steps">
-       <li>$\\text{Actions}(A) = \\{\\text{right}\\}$. $\\text{Cost}(A,\\text{right}) = 1$, $\\text{Succ}(A,\\text{right}) = B$.</li>
-       <li>$\\text{Actions}(B) = \\{\\text{right}\\}$. $\\text{Cost}(B,\\text{right}) = 1$, $\\text{Succ}(B,\\text{right}) = C$.</li>
-       <li>$\\text{IsEnd}(C)$ is true. The path right-right costs $1 + 1 = 2$.</li>
+       <li>Direct: $\\text{Cost}(A,\\text{slow}) = 5$, $\\text{Succ}(A,\\text{slow}) = D$. One step, total $= 5$.</li>
+       <li>Detour: $A \\to B$ costs $1$, $B \\to D$ costs $1$. Total $= 1 + 1 = 2$.</li>
+       <li>$\\text{IsEnd}(D)$ is true on both. We compare totals: $\\min(5, 2) = 2$.</li>
+       <li>The detour wins even though it takes more steps, because its <i>total cost</i> is lower. Fewest steps is not the same as cheapest.</li>
      </ul>
-     <p>Here only one path exists. Real mazes have many, and we want the cheapest.</p>`,
+     <p>A search algorithm's job is exactly this: out of all paths to a goal, return the one with the smallest summed cost.</p>`,
   application:
     `<p>GPS routing, puzzle solvers, robot path planning, and even compiling a program all become search problems. Define the five pieces, and a search algorithm finds the best plan.</p>`,
   quiz: {
@@ -709,12 +710,13 @@ L({
      <p>If the heuristic is <b>admissible</b> ($h \\le$ true remaining cost), A* is guaranteed to find the cheapest path.</p>
      <p>A <b>consistent</b> heuristic is even nicer: it keeps the modified costs non-negative, so the search behaves smoothly.</p>`,
   example:
-    `<p>Routing on a grid. True remaining distance to the goal from cell $s$ is $5$. Use straight-line distance as $h$.</p>
+    `<p>A* ranks states by $f = g + h$, where $g = \\text{PastCost}$ and $h$ is the guess to the goal. It always expands the smallest $f$ first. Two frontier cells, with $h$ = straight-line distance to the goal:</p>
      <ul class="steps">
-       <li>$h(s) = 4$ (straight-line guess). Since $4 \\le 5$, the heuristic is admissible. Good.</li>
-       <li>A* prefers states with low PastCost $+ h$. A cell near the goal gets a small $h$, so it is explored first.</li>
-       <li>Cells in the wrong direction have a large $h$, so A* mostly ignores them.</li>
-       <li>If instead $h(s) = 9 &gt; 5$, the heuristic overestimates. A* might miss the true cheapest path.</li>
+       <li>Cell $P$ (toward the goal): $g = 2$, $h = 3$, so $f = 2 + 3 = 5$.</li>
+       <li>Cell $Q$ (a detour): $g = 2$, $h = 6$, so $f = 2 + 6 = 8$.</li>
+       <li>Both cost the same to reach ($g = 2$), but $f_P = 5 &lt; f_Q = 8$. A* expands $P$ first and leaves $Q$ for later. The heuristic, not the past cost, broke the tie toward the goal.</li>
+       <li>Plain UCS ignores $h$, so it would treat $P$ and $Q$ as equals ($g = 2$ each) and waste effort on the detour.</li>
+       <li>Admissibility check: if $P$'s true remaining cost is $5$, then $h = 3 \\le 5$ never overshoots, so A* is still guaranteed the cheapest path. An $h = 9 &gt; 5$ would overestimate and could break that guarantee.</li>
      </ul>`,
   application:
     `<p>A* is the workhorse of GPS routing and video-game pathfinding. The straight-line distance heuristic lets it find the best route while exploring a tiny fraction of the map.</p>`,
@@ -762,9 +764,10 @@ L({
     `<p>Robot tries to move right. Outcomes: $80\\%$ it goes right, $20\\%$ it slips up.</p>
      <ul class="steps">
        <li>$T(s, \\text{right}, \\text{right-cell}) = 0.8$ and $T(s, \\text{right}, \\text{up-cell}) = 0.2$.</li>
-       <li>Check: $0.8 + 0.2 = 1$. The probabilities sum to $1$. Good.</li>
-       <li>Reward for reaching the right-cell: say $+5$. For slipping up: $0$.</li>
-       <li>Because outcomes are random, the agent must plan with these odds, not assume success.</li>
+       <li>Check: $0.8 + 0.2 = 1$. The probabilities sum to $1$. Good — something must happen.</li>
+       <li>Reward for reaching the right-cell: $+5$. For slipping up: $0$.</li>
+       <li>Plan with the odds: the <i>expected</i> reward of "right" is $0.8\\times5 + 0.2\\times0 = 4$, not the $5$ you would assume if the move always worked.</li>
+       <li>That gap between $4$ and $5$ is exactly the cost of randomness. The agent must reason about it, not ignore it.</li>
      </ul>`,
   application:
     `<p>MDPs model robot control, inventory restocking, self-driving decisions, and game AI, where actions do not always work and the future is uncertain. They are the foundation of reinforcement learning.</p>`,
@@ -906,12 +909,13 @@ L({
      <p>$\\max_a$ gives the best <i>number</i>. $\\arg\\max_a$ gives the best <i>action</i>.</p>
      <p>The values keep improving until they barely change. At that point, reading off $\\arg\\max$ in every state gives the optimal policy $\\pi^*$.</p>`,
   example:
-    `<p>State $s$ has two actions. Using last round's values, their Q-values come out to: $Q(s,\\text{left}) = 3$, $Q(s,\\text{right}) = 7$.</p>
+    `<p>One Bellman backup. State $s$ has two actions. Last round's neighbour values were $V^{(t-1)} = 0$ everywhere except the goal cell, worth $10$. Step reward $R = -1$, discount $\\gamma = 0.9$. Build each Q-value from $Q = R + \\gamma\\,V^{(t-1)}(s')$:</p>
      <ul class="steps">
-       <li>$V^{(t)}(s) = \\max(3, 7) = 7$. We keep the bigger one.</li>
-       <li>$\\pi^*(s) = \\arg\\max(3, 7) = \\text{right}$. Right is the best action.</li>
-       <li>Next round recomputes Q-values with the updated values, and we repeat.</li>
-       <li>When the values stop moving, we have the optimal plan.</li>
+       <li>$Q(s,\\text{right})$: right leads to the goal cell ($V = 10$), so $Q = -1 + 0.9\\times10 = -1 + 9 = 8$.</li>
+       <li>$Q(s,\\text{left})$: left leads to an empty cell ($V = 0$), so $Q = -1 + 0.9\\times0 = -1$.</li>
+       <li>Backup: $V^{(t)}(s) = \\max(8, -1) = 8$. The state's value jumps from $0$ to $8$ in one sweep.</li>
+       <li>$\\pi^*(s) = \\arg\\max(8, -1) = \\text{right}$. Right is the best action.</li>
+       <li>Next sweep reuses this $8$ to back up the neighbours. When the values stop moving, the plan is optimal.</li>
      </ul>`,
   application:
     `<p>Value iteration solves MDPs exactly when the model is known: robot navigation, inventory control, board-game endgames. It is the textbook way to compute an optimal policy.</p>`,
@@ -1461,13 +1465,14 @@ L({
      <p>Each term is small: just that node's chance given its few parents.</p>
      <p>A node with no parents uses its plain probability $P(X_i)$. This factoring saves enormous space.</p>`,
   example:
-    `<p>Rain causes a Wet sidewalk. Arrow: Rain $\\rightarrow$ Wet. Suppose $P(\\text{Rain}) = 0.3$, and $P(\\text{Wet}\\mid\\text{Rain}) = 0.9$.</p>
+    `<p>The classic net: Rain $\\rightarrow$ WetGrass $\\leftarrow$ Sprinkler. Two causes, one effect. Suppose $P(\\text{Rain})=0.3$, $P(\\text{Sprinkler})=0.4$, and the effect's table gives $P(\\text{Wet}\\mid\\text{Rain},\\text{Sprinkler})=0.99$.</p>
      <ul class="steps">
-       <li>Rain has no parents, so its term is $P(\\text{Rain}) = 0.3$.</li>
-       <li>Wet's parent is Rain, so its term is $P(\\text{Wet}\\mid\\text{Rain})$.</li>
-       <li>Joint: $P(\\text{Rain}, \\text{Wet}) = P(\\text{Rain})\\times P(\\text{Wet}\\mid\\text{Rain}) = 0.3\\times0.9 = 0.27$.</li>
+       <li>Rain and Sprinkler have no parents, so their terms are just $0.3$ and $0.4$.</li>
+       <li>WetGrass has two parents, so its term is $P(\\text{Wet}\\mid\\text{Rain},\\text{Sprinkler}) = 0.99$.</li>
+       <li>Joint for "all three true": $P(\\text{Rain},\\text{Sprinkler},\\text{Wet}) = 0.3 \\times 0.4 \\times 0.99 = 0.1188$.</li>
+       <li>The payoff: the full table over 3 true/false variables needs $2^3 - 1 = 7$ numbers. The graph needs only $1 + 1 + 4 = 6$, and each is a small per-node table. More parents per node, bigger the saving.</li>
      </ul>
-     <p>The graph told us exactly which conditional probabilities to multiply.</p>`,
+     <p>The arrows told us exactly which conditional probabilities to multiply.</p>`,
   application:
     `<p>Bayesian networks power medical diagnosis (symptoms given diseases), spam filtering, and fault detection. They let experts encode cause-and-effect knowledge and reason about it cleanly.</p>`,
   quiz: {
@@ -1579,13 +1584,14 @@ L({
      <p>Exact methods give the true number but can be slow on tangled networks.</p>
      <p>Approximate methods sample, trading a little accuracy for big speed. <b>Explaining away</b> is a key intuition: confirming one cause of an effect lowers the probability of another.</p>`,
   example:
-    `<p>An alarm can be set off by a Burglary or an Earthquake. You hear the alarm (evidence).</p>
+    `<p>A worked posterior. Three hypotheses with priors $P(\\text{Flu})=0.2$, $P(\\text{Cold})=0.3$, $P(\\text{Healthy})=0.5$. A test comes back positive; its likelihoods are $P(+\\mid\\text{Flu})=0.9$, $P(+\\mid\\text{Cold})=0.5$, $P(+\\mid\\text{Healthy})=0.1$.</p>
      <ul class="steps">
-       <li>At first, both Burglary and Earthquake are possible causes. Each grows more likely.</li>
-       <li>Now the radio reports an Earthquake. That cause is confirmed.</li>
-       <li>The alarm is explained. So Burglary becomes <i>less</i> likely again. This is "explaining away".</li>
-       <li>Inference does this arithmetic for you, using $P(\\text{Burglary}\\mid\\text{Alarm},\\text{Earthquake})$.</li>
-     </ul>`,
+       <li>Multiply prior × likelihood for each: Flu $= 0.2\\times0.9 = 0.18$; Cold $= 0.3\\times0.5 = 0.15$; Healthy $= 0.5\\times0.1 = 0.05$.</li>
+       <li>Evidence $P(+) = 0.18 + 0.15 + 0.05 = 0.38$ (this is the normalizer).</li>
+       <li>Divide each by $0.38$: $P(\\text{Flu}\\mid+) = 0.18/0.38 \\approx 0.47$, $P(\\text{Cold}\\mid+) \\approx 0.39$, $P(\\text{Healthy}\\mid+) \\approx 0.13$.</li>
+       <li>The positive test flipped Healthy from the front-runner ($0.50$ prior) to least likely ($0.13$), and lifted Flu from $0.20$ to $0.47$. Evidence reshaped the beliefs.</li>
+     </ul>
+     <p><b>Explaining away</b> is the same idea between rival causes: if a second test later <i>confirms</i> Flu, the probability of Cold drops, because Flu now accounts for the positive result on its own.</p>`,
   application:
     `<p>Inference answers real questions: given these symptoms, how likely is this disease? Given these clicks, how likely is fraud? It is how a Bayes net turns from a diagram into a decision tool.</p>`,
   quiz: {
@@ -1701,13 +1707,14 @@ L({
      <p>The <b>forward-backward</b> algorithm runs through the clues once forward and once backward, combining them.</p>
      <p>The result is the probability of each hidden state at each time, given all the evidence. That is <b>smoothing</b>.</p>`,
   example:
-    `<p>You cannot see the weather (hidden), but you see whether a friend carries an umbrella (clue).</p>
+    `<p>One numeric forward (filtering) step. Hidden weather Rainy/Sunny. Transition: stays the same with prob $0.7$ (so switches with $0.3$). Emission: $P(\\text{Umbrella}\\mid\\text{Rainy})=0.9$, $P(\\text{Umbrella}\\mid\\text{Sunny})=0.2$. Start belief is even: $P(\\text{Rainy})=P(\\text{Sunny})=0.5$. You see an Umbrella.</p>
      <ul class="steps">
-       <li>Hidden states: Rainy or Sunny. Observation: Umbrella or No-umbrella.</li>
-       <li>Emission: $P(\\text{Umbrella}\\mid\\text{Rainy})$ is high, $P(\\text{Umbrella}\\mid\\text{Sunny})$ is low.</li>
-       <li>You see an umbrella three days in a row. The forward-backward algorithm infers it was probably Rainy.</li>
-       <li>A No-umbrella day in between still leans Rainy, because the neighbors are wet. That is smoothing using future clues too.</li>
-     </ul>`,
+       <li><b>Predict</b> via transition: $P(\\text{Rainy}) = 0.7\\times0.5 + 0.3\\times0.5 = 0.5$, same for Sunny. (Symmetric, so unchanged here.)</li>
+       <li><b>Reweight</b> by the emission: Rainy $= 0.5\\times0.9 = 0.45$; Sunny $= 0.5\\times0.2 = 0.10$.</li>
+       <li><b>Normalize</b>: total $= 0.45 + 0.10 = 0.55$, so $P(\\text{Rainy}\\mid\\text{Umbrella}) = 0.45/0.55 \\approx 0.82$, $P(\\text{Sunny}\\mid\\text{Umbrella}) \\approx 0.18$.</li>
+       <li>One clue moved the belief from $50/50$ to $82\\%$ Rainy. Each later day repeats predict-reweight-normalize, chaining the clues.</li>
+     </ul>
+     <p><b>Smoothing</b> goes further: a No-umbrella day wedged between wet days can still come out Rainy, because forward-backward also uses the <i>future</i> clues, not just the past.</p>`,
   application:
     `<p>HMMs power speech recognition (hidden words, observed sound waves), object tracking (hidden position, noisy sensors), and gene finding in DNA. They are the classic model for "infer the hidden truth from a noisy time series".</p>`,
   quiz: {

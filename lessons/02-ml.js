@@ -168,13 +168,12 @@ L({
      <p>The result $J(\\theta)$ is one number summarizing how badly the model fits the entire dataset.</p>
      <p>Training is the search for the $\\theta$ that minimizes $J(\\theta)$.</p>`,
   example:
-    `<p>Three examples. Using least-squared loss, the per-example losses come out to $200$, $50$, and $0$.</p>
+    `<p>Three houses, true prices $y = 300, 250, 400$ (k). Model A predicts $\\hat y = 280, 240, 400$.</p>
      <ul class="steps">
-       <li>Example 1 loss: $200$.</li>
-       <li>Example 2 loss: $50$.</li>
-       <li>Example 3 loss: $0$.</li>
-       <li>Cost: $J(\\theta) = 200 + 50 + 0 = 250$.</li>
-       <li>Pick new $\\theta$ that lowers any of these, and the total $J$ drops.</li>
+       <li>Per-example loss $\\tfrac12(y-\\hat y)^2$: $\\tfrac12(20)^2 = 200$, &nbsp; $\\tfrac12(10)^2 = 50$, &nbsp; $\\tfrac12(0)^2 = 0$.</li>
+       <li>Cost: $J = 200 + 50 + 0 = \\mathbf{250}$. One number for the whole dataset.</li>
+       <li>Now model B fixes example 1, predicting $290$: its loss drops to $\\tfrac12(10)^2 = 50$.</li>
+       <li>New cost: $J = 50 + 50 + 0 = \\mathbf{150}$. Lowering one example's loss lowered the total $J$ — that is exactly what training searches for.</li>
      </ul>`,
   application:
     `<p>Every trained model has a cost it is trying to minimize. House-price models, recommendation systems, and language models all define a cost over their data, then push it down.</p>`,
@@ -746,6 +745,8 @@ L({
        <li>Rewrite it as $\\exp\\!\\big(y \\log\\tfrac{\\phi}{1-\\phi} + \\log(1-\\phi)\\big)$.</li>
        <li>Match the template: $\\eta = \\log\\tfrac{\\phi}{1-\\phi}$. Solving back gives $\\phi = \\dfrac{1}{1+e^{-\\eta}}$.</li>
        <li>That is the sigmoid. So logistic regression falls out of the GLM automatically.</li>
+       <li>Check with numbers: if the linear score is $\\eta = \\theta^\\top x = 2$, then $\\phi = \\dfrac{1}{1+e^{-2}} = \\dfrac{1}{1.135} \\approx \\mathbf{0.88}$ — a probability, exactly logistic regression's output.</li>
+       <li>Swap Bernoulli for Poisson and the mean becomes $e^{\\eta} = e^{2} \\approx \\mathbf{7.39}$ (a count) — same template, different distribution.</li>
      </ul>`,
   application:
     `<p>GLMs let one library fit many models: counts of website visits (Poisson regression), yes/no churn (logistic), or dollar amounts (linear). Statisticians and data scientists use this single framework daily.</p>`,
@@ -815,12 +816,12 @@ L({
      <p>"s.t." means "subject to" — the rule that must hold. Each point must be on its correct side, at least one margin-width away.</p>
      <p>The few points sitting right on the margin edge are the <b>support vectors</b>. They alone define the line. When points overlap, the <b>hinge loss</b> allows soft violations.</p>`,
   example:
-    `<p>1D toy: class $-1$ at $x = 1$, class $+1$ at $x = 3$. Find the dividing point.</p>
+    `<p>1D toy: class $-1$ at $x = 1$, class $+1$ at $x = 3$. The boundary is $w\\,x - b = 0$.</p>
      <ul class="steps">
-       <li>The widest gap puts the boundary halfway: at $x = 2$.</li>
-       <li>The margin reaches from $x=1$ to $x=3$, so its half-width is $1$.</li>
-       <li>Both points sit exactly on the margin edges, so both are support vectors.</li>
-       <li>A new point at $x = 2.5$ scores positive, so predict class $+1$.</li>
+       <li>The widest gap puts the boundary halfway, at $x = 2$, so $b = 2w$.</li>
+       <li>The constraint $y^{(i)}(w x^{(i)} - b) \\ge 1$ is tightest at the two points. At $x=3$: $w(3) - 2w = w \\ge 1$. The smallest allowed weight is $w = 1$.</li>
+       <li>Now compute the margin width: $\\dfrac{2}{\\lVert w\\rVert} = \\dfrac{2}{1} = \\mathbf{2}$ — exactly the gap from $x=1$ to $x=3$. The half-width is $1$.</li>
+       <li>Punchline: if we forced a bigger $w = 2$, the street would shrink to $2/2 = 1$. Minimizing $\\lVert w\\rVert$ is literally maximizing the street. Both points sit on the edges, so both are support vectors.</li>
      </ul>`,
   application:
     `<p>SVMs classify text (spam, topic), images, and gene-expression data. They shine when you have many features but only a moderate number of examples — common in medicine and bioinformatics.</p>`,
@@ -991,12 +992,12 @@ L({
      <p>Weight each by how common the class is, $p(y)$. Bayes' rule combines them into $p(y \\mid x)$.</p>
      <p>The bottom $p(x)$ is the same for every class, so we just pick the class with the largest top.</p>`,
   example:
-    `<p>Classify height as adult or child. Adults: mean $170$ cm. Children: mean $130$ cm. A person is $135$ cm.</p>
+    `<p>Classify height as adult or child. Both bell curves use spread $\\sigma = 20$ cm. Adults: mean $170$. Children: mean $130$. A person is $135$ cm. Equal priors $p(y) = 0.5$.</p>
      <ul class="steps">
-       <li>Distance to child mean: $|135 - 130| = 5$. Close.</li>
-       <li>Distance to adult mean: $|135 - 170| = 35$. Far.</li>
-       <li>The child bell curve explains $135$ far better, so $p(x \\mid \\text{child})$ is much larger.</li>
-       <li>Bayes' rule therefore makes $p(\\text{child} \\mid x)$ the winner. Predict child.</li>
+       <li>Child curve at $135$: $p(x \\mid \\text{child}) \\propto e^{-\\frac{(135-130)^2}{2\\cdot 20^2}} = e^{-25/800} = e^{-0.031} \\approx 0.969$.</li>
+       <li>Adult curve at $135$: $p(x \\mid \\text{adult}) \\propto e^{-\\frac{(135-170)^2}{2\\cdot 20^2}} = e^{-1225/800} = e^{-1.531} \\approx 0.216$.</li>
+       <li>Bayes (equal priors cancel): $p(\\text{child} \\mid x) = \\dfrac{0.969}{0.969 + 0.216} \\approx \\mathbf{0.82}$.</li>
+       <li>So $82\\%$ child vs $18\\%$ adult — the nearer mean wins, and Bayes turns the densities into a real probability. Predict child.</li>
      </ul>`,
   application:
     `<p>Generative models like GDA are useful when data is limited, since they make stronger assumptions. They also let you generate fake-but-plausible examples and detect outliers that fit no class well.</p>`,
@@ -1057,8 +1058,9 @@ L({
      <ul class="steps">
        <li>$P(\\text{"free"} \\mid \\text{spam}) = 0.8$. &nbsp; $P(\\text{"free"} \\mid \\text{not spam}) = 0.1$.</li>
        <li>Say "win" also appears: $P(\\text{"win"} \\mid \\text{spam}) = 0.5$, &nbsp; $P(\\text{"win"} \\mid \\text{not spam}) = 0.05$.</li>
-       <li>Spam side: $0.8 \\times 0.5 = 0.40$. Not-spam side: $0.1 \\times 0.05 = 0.005$.</li>
-       <li>Spam wins by a wide margin (before even adding the prior). Predict spam.</li>
+       <li>Multiply the features (the naive step): spam $= 0.8 \\times 0.5 = 0.40$, not-spam $= 0.1 \\times 0.05 = 0.005$.</li>
+       <li>Now fold in a prior $P(\\text{spam}) = 0.4$: spam score $= 0.4 \\times 0.40 = 0.16$; not-spam score $= 0.6 \\times 0.005 = 0.003$.</li>
+       <li>Normalize: $P(\\text{spam} \\mid \\text{words}) = \\dfrac{0.16}{0.16 + 0.003} \\approx \\mathbf{0.98}$. Predict spam — the two independent words multiplied into near-certainty.</li>
      </ul>`,
   application:
     `<p>Naive Bayes is a classic spam filter. It also classifies news articles by topic, flags sentiment, and serves as a fast baseline for any text-classification problem.</p>`,
@@ -1256,12 +1258,12 @@ L({
      <p>Boosting: add trees one at a time, each with a weight $\\alpha_t$. Later trees correct earlier mistakes.</p>
      <p>Adaboost and gradient boosting are the famous boosting methods.</p>`,
   example:
-    `<p>Five trees vote on whether an email is spam: yes, yes, no, yes, no.</p>
+    `<p>Why does averaging help? Each tree's prediction is noisy with variance $\\sigma^2 = 4$. Average $T$ independent trees.</p>
      <ul class="steps">
-       <li>Count the votes: 3 say spam, 2 say not spam.</li>
-       <li>Majority wins, so the forest predicts spam.</li>
-       <li>If tree 3 was wrong (it said no), the other four still carry the vote.</li>
-       <li>That is why a forest is more reliable than any single tree.</li>
+       <li>One tree: variance $= 4$. The forest of $T$ trees has variance $\\dfrac{\\sigma^2}{T} = \\dfrac{4}{T}$.</li>
+       <li>$T = 4$ trees: variance $= 4/4 = \\mathbf{1}$. Already a quarter of one tree's noise.</li>
+       <li>$T = 25$ trees: variance $= 4/25 = \\mathbf{0.16}$. The forest is steadier and steadier.</li>
+       <li>Concrete vote: three trees predict house prices $8, 10, 12$. The average is $\\dfrac{8+10+12}{3} = \\mathbf{10}$ — their scattered guesses cancel into one stable number.</li>
      </ul>`,
   application:
     `<p>Random forests and gradient boosting (XGBoost, LightGBM) win many real-world contests. They power fraud detection, search ranking, and risk models on tabular data across industry.</p>`,
@@ -1461,12 +1463,12 @@ L({
      <p>Simpler models push bias up and variance down. More complex models do the reverse.</p>
      <p>The best model sits where the bias-plus-variance sum is smallest — the bottom of the U.</p>`,
   example:
-    `<p>Fit data with polynomials of growing degree. Watch the errors.</p>
+    `<p>Fit data with polynomials of growing degree. Total test error $= \\text{bias}^2 + \\text{variance}$ (ignore fixed noise).</p>
      <ul class="steps">
-       <li>Degree 1 (line): training error high, test error high. Underfit (high bias).</li>
-       <li>Degree 4: training error low, test error low. Just right.</li>
-       <li>Degree 15: training error near $0$, test error high. Overfit (high variance).</li>
-       <li>Test error is U-shaped: best near degree 4, worse on both sides.</li>
+       <li>Degree 1 (line): bias$^2 = 0.90$, variance $= 0.07$. Total $= \\mathbf{0.97}$. High bias — underfit.</li>
+       <li>Degree 4: bias$^2 = 0.28$, variance $= 0.40$. Total $= \\mathbf{0.68}$. The lowest sum — just right.</li>
+       <li>Degree 8: bias$^2 = 0.15$, variance $= 1.45$. Total $= \\mathbf{1.60}$. High variance — overfit.</li>
+       <li>Punchline: as degree rises, bias$^2$ keeps falling but variance climbs faster. The total dips to a minimum at degree 4, then rises — the U-shape.</li>
      </ul>`,
   application:
     `<p>Every model-tuning decision is a bias-variance call: how deep a tree, how many neighbors, how strong the regularization. Watching the gap between training and test error tells you which way to move.</p>`,
@@ -1938,10 +1940,10 @@ L({
   example:
     `<p>Data sits roughly along a diagonal line in 2D. PCA should find that diagonal.</p>
      <ul class="steps">
-       <li>The covariance matrix comes out to $\\Sigma = \\begin{bmatrix}2 & 1.8 \\\\ 1.8 & 2\\end{bmatrix}$.</li>
-       <li>Its top eigenvector points along $[1, 1]$ (the diagonal), with the larger eigenvalue.</li>
-       <li>The other eigenvector $[1, -1]$ has a tiny eigenvalue — little spread there.</li>
-       <li>Keep only $[1, 1]$. Project the data onto it. Now 2D becomes 1D, keeping most of the variation.</li>
+       <li>The covariance matrix comes out to $\\Sigma = \\begin{bmatrix}2 & 1.8 \\\\ 1.8 & 2\\end{bmatrix}$. For this symmetric $2\\times2$, the eigenvalues are $\\lambda = 2 \\pm 1.8$.</li>
+       <li>So $\\lambda_1 = 2 + 1.8 = \\mathbf{3.8}$ along $[1, 1]$ (the diagonal), and $\\lambda_2 = 2 - 1.8 = \\mathbf{0.2}$ along $[1, -1]$.</li>
+       <li>Variance captured by PC1: $\\dfrac{\\lambda_1}{\\lambda_1 + \\lambda_2} = \\dfrac{3.8}{4.0} = \\mathbf{95\\%}$. PC2 holds just $5\\%$.</li>
+       <li>Punchline: keep only $[1, 1]$ and 2D collapses to 1D, yet $95\\%$ of the spread survives — almost lossless compression.</li>
      </ul>`,
   application:
     `<p>PCA compresses images, speeds up models by cutting features, removes noise, and makes high-dimensional data visualizable in 2D. It is the classic dimensionality-reduction tool.</p>`,
@@ -2408,12 +2410,12 @@ L({
      <p>The curve traces all the in-between tradeoffs. A curve hugging the top-left corner is excellent.</p>
      <p>AUC sums it up: $1.0$ is perfect, $0.5$ is random guessing, below $0.5$ is worse than a coin flip.</p>`,
   example:
-    `<p>What does an AUC of $0.5$ versus $1.0$ mean?</p>
+    `<p>Tiny dataset. Two positives score $0.9, 0.6$; two negatives score $0.7, 0.3$. AUC = fraction of positive–negative pairs the model ranks correctly.</p>
      <ul class="steps">
-       <li>AUC $= 1.0$: the model ranks every real yes above every real no. Perfect separation.</li>
-       <li>AUC $= 0.5$: the curve is the diagonal line. The model is no better than flipping a coin.</li>
-       <li>AUC $= 0.9$: pick a random yes and a random no; $90\\%$ of the time the yes scores higher.</li>
-       <li>So AUC is the chance a random positive outranks a random negative.</li>
+       <li>There are $2 \\times 2 = 4$ pairs. Check each (positive should outrank negative):</li>
+       <li>$0.9 &gt; 0.7$ ✓, &nbsp; $0.9 &gt; 0.3$ ✓, &nbsp; $0.6 &lt; 0.7$ ✗, &nbsp; $0.6 &gt; 0.3$ ✓.</li>
+       <li>Correct pairs: $3$ of $4$, so AUC $= 3/4 = \\mathbf{0.75}$.</li>
+       <li>Punchline: AUC $= 0.75$ literally means a random positive outranks a random negative $75\\%$ of the time — no threshold needed. ($1.0$ = perfect, $0.5$ = coin flip.)</li>
      </ul>`,
   application:
     `<p>AUC compares classifiers without fixing a threshold first, which is handy when the right cutoff depends on business cost. It is standard in credit scoring, ad targeting, and medical diagnostics.</p>`,
@@ -2618,12 +2620,12 @@ L({
      <p>A bigger $\\lambda$ leans toward simpler models (more bias, less variance); a smaller $\\lambda$ leans toward fitting (less bias, more variance).</p>
      <p>To pick $\\lambda$, use k-fold cross-validation: try several values, see which generalizes best on held-out folds.</p>`,
   example:
-    `<p>Pick $\\lambda$ with 5-fold cross-validation. Test $\\lambda = 0.1, 1, 10$.</p>
+    `<p>Watch a weight shrink. Ridge picks $\\theta$ to minimize $J = (\\theta - 4)^2 + \\lambda\\,\\theta^2$, where plain least-squares wants $\\theta = 4$.</p>
      <ul class="steps">
-       <li>Split the data into 5 equal folds.</li>
-       <li>For each $\\lambda$: train on 4 folds, test on the 5th. Rotate so each fold is the test set once.</li>
-       <li>Average the 5 test errors. Say they come out: $\\lambda{=}0.1 \\to 0.30$, $\\lambda{=}1 \\to 0.22$, $\\lambda{=}10 \\to 0.28$.</li>
-       <li>$\\lambda = 1$ has the lowest average error. Choose it.</li>
+       <li>Set the derivative to zero: $2(\\theta - 4) + 2\\lambda\\theta = 0$, giving the shrunk weight $\\theta = \\dfrac{4}{1 + \\lambda}$.</li>
+       <li>$\\lambda = 0$ (no penalty): $\\theta = 4/1 = \\mathbf{4}$. The original big weight.</li>
+       <li>$\\lambda = 1$: $\\theta = 4/2 = \\mathbf{2}$. &nbsp; $\\lambda = 3$: $\\theta = 4/4 = \\mathbf{1}$. The coefficient shrinks toward $0$ as $\\lambda$ grows — that is regularization, in numbers.</li>
+       <li>Which $\\lambda$? Use 5-fold cross-validation: average test error comes out $\\lambda{=}0.1 \\to 0.30$, $\\lambda{=}1 \\to 0.22$, $\\lambda{=}10 \\to 0.28$. Pick $\\lambda = 1$, the lowest.</li>
      </ul>`,
   application:
     `<p>Ridge stabilizes models with many correlated features. LASSO does automatic feature selection by zeroing out useless ones. Cross-validation is the universal way to tune any knob (penalty, tree depth, $k$) honestly.</p>`,
