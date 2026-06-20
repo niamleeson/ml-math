@@ -502,10 +502,10 @@
     { q:`<p>An email link is clicked with $p = 0.05$ per recipient, $n = 40$ recipients. Find $P(\\text{exactly 3 clicks})$.</p>`,
       steps:[
         {do:`$\\binom{40}{3} = \\frac{40 \\times 39 \\times 38}{6} = 9880$.`, why:`Choose which 3 of 40 click.`},
-        {do:`$0.05^3 \\times 0.95^{37} = 0.000125 \\times 0.1513 \\approx 1.891\\times 10^{-5}$.`, why:`One pattern's chance.`},
-        {do:`$P = 9880 \\times 1.891\\times 10^{-5} \\approx 0.1868$.`, why:`Count times pattern chance.`}
+        {do:`$0.05^3 \\times 0.95^{37} = 0.000125 \\times 0.1499 \\approx 1.874\\times 10^{-5}$.`, why:`One pattern's chance.`},
+        {do:`$P = 9880 \\times 1.874\\times 10^{-5} \\approx 0.1851$.`, why:`Count times pattern chance.`}
       ],
-      answer:`$\\approx 0.1868$` },
+      answer:`$\\approx 0.1851$` },
 
     { q:`<p>A quiz has 8 true/false questions guessed at random ($p = 0.5$). Find $P(X \\ge 6)$ (6 or more correct).</p>`,
       steps:[

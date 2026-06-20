@@ -406,7 +406,7 @@
       q: `<p>The quadratic form satisfies $f^\\top L f = \\tfrac12\\sum_{ij} W_{ij}(f_i-f_j)^2$. For the 2-node graph with $w=2$ and $f=(1,-1)$, compute $f^\\top L f$.</p>`,
       steps: [
         { do: `Only edge (1,2): $(f_1-f_2)^2 = (1-(-1))^2 = 4$.`, why: `The labels differ across the single edge.` },
-        { do: `Both ordered pairs $(1,2)$ and $(2,1)$ contribute, so $f^\\top L f = \\tfrac12(2\\cdot 4 + 2\\cdot 4)=\\tfrac12(16)=8$... use the direct form $f^\\top L f$: $f^\\top L f = \\tfrac12\\sum_{ij}W_{ij}(f_i-f_j)^2 = \\tfrac12(2\\cdot4+2\\cdot4)=8$.`, why: `The form penalizes label differences across weighted edges.` }
+        { do: `Use $f^\\top L f = \\tfrac12\\sum_{ij}W_{ij}(f_i-f_j)^2$. Both ordered pairs $(1,2)$ and $(2,1)$ contribute: $\\tfrac12(2\\cdot 4 + 2\\cdot 4)=\\tfrac12(16)=8$.`, why: `The form penalizes label differences across weighted edges.` }
       ],
       answer: `$f^\\top L f = 8$`
     },

@@ -336,7 +336,7 @@ L({
        <li>Exponentiate: $e^{3.2} \\approx 24.5$, $e^{2.1} \\approx 8.2$, $e^{1.0} \\approx 2.7$. Sum $\\approx 35.4$.</li>
        <li>Probabilities: $24.5/35.4 \\approx 0.69$, $8.2/35.4 \\approx 0.23$, $2.7/35.4 \\approx 0.08$.</li>
        <li>"mat" wins at 69%. The model would likely emit "mat".</li>
-       <li>Raise temperature to $T = 2$: scores become $[1.6, 1.05, 0.5]$, probabilities flatten to about $0.49, 0.28, 0.17$. Less sure, more varied.</li>
+       <li>Raise temperature to $T = 2$: scores become $[1.6, 1.05, 0.5]$, probabilities flatten to about $0.52, 0.30, 0.17$. Less sure, more varied.</li>
      </ul>`,
   application:
     `<p>GPT models power chatbots and coding assistants by sampling next tokens one at a time. BERT's masked-token pretraining made it a workhorse for search ranking, sentiment, and question answering. Both start from the same idea: learn language by filling in the blanks, then fine-tune.</p>`,
