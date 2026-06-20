@@ -167,9 +167,9 @@ L({
       // headers
       ctx.fillStyle = c.accent; ctx.fillText("a", xA, 36);
       ctx.fillStyle = c.purple; ctx.fillText("b", xB, 36);
-      ctx.fillStyle = c.warn; ctx.fillText("aᵢ · bᵢ", xP, 36);
+      ctx.fillStyle = c.warn; ctx.fillText("aᵢ · bᵢ", xP, 30);
       ctx.fillStyle = c.dim; ctx.font = "11px sans-serif";
-      ctx.fillText("multiply matching entries", xP, 52);
+      ctx.fillText("multiply matching entries", xP, 48);
 
       function cell(x, y, txt, col, w) {
         ctx.fillStyle = c.panel; ctx.strokeStyle = c.border; ctx.lineWidth = 1;
@@ -499,7 +499,9 @@ L({
     var cv = document.createElement("canvas"); cv.width = 520; cv.height = 360; host.appendChild(cv);
     var ctx = cv.getContext("2d");
     var v = [3, -4];
-    var rng = 5, P = 24, cx = 260, cy = 180, sc = (260 - P) / rng;
+    // Keep the whole right triangle inside the canvas: leave room at the bottom
+    // for the text panel and size the scale so ±rng never runs off either edge.
+    var rng = 5, P = 24, cx = 260, cy = 150, sc = (130 - P) / rng;
     function px(X) { return cx + X * sc; }
     function py(Y) { return cy - Y * sc; }
 
@@ -509,7 +511,7 @@ L({
       // axes
       ctx.strokeStyle = c.border; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(P, cy); ctx.lineTo(cv.width - P, cy);
-      ctx.moveTo(cx, P); ctx.lineTo(cx, cv.height - P); ctx.stroke();
+      ctx.moveTo(cx, P); ctx.lineTo(cx, cy + (130 - P)); ctx.stroke();
 
       var a = v[0], b = v[1];
       // right-triangle legs: horizontal leg along x, vertical leg up to the tip
@@ -542,8 +544,13 @@ L({
         ctx.closePath(); ctx.fill();
       }
       var l2 = Math.sqrt(a * a + b * b), l1 = Math.abs(a) + Math.abs(b);
-      ctx.fillStyle = c.accent; ctx.textAlign = "left";
-      ctx.fillText("‖x‖ = √(a²+b²)", px(a) / 2 + px(0) / 2 - 30, py(b) / 2 + py(0) / 2 - 14);
+      // hypotenuse label: offset perpendicular to the arrow so it never sits on the line
+      var mxh = (px(0) + px(a)) / 2, myh = (py(0) + py(b)) / 2;
+      var nlen = Math.hypot(px(a) - px(0), py(b) - py(0)) || 1;
+      var nx = -(py(b) - py(0)) / nlen, ny = (px(a) - px(0)) / nlen; // unit normal
+      var side = (a >= 0) ? -1 : 1; // push to the open side of the triangle
+      ctx.fillStyle = c.accent; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("‖x‖ = √(a²+b²)", mxh + side * nx * 26, myh + side * ny * 26);
 
       // text panel along the bottom
       ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.font = "14px sans-serif";
@@ -552,7 +559,7 @@ L({
       ctx.fillStyle = c.accent;
       ctx.fillText("L2 = √(" + (a * a) + " + " + (b * b) + ") = √" + (a * a + b * b) + " = " + l2.toFixed(3), 16, cv.height - 24);
       ctx.fillStyle = c.warn;
-      ctx.fillText("L1 = |" + a + "| + |" + b + "| = " + l1, 300, cv.height - 24);
+      ctx.fillText("L1 = |" + a + "| + |" + b + "| = " + l1, 320, cv.height - 44);
     }
 
     function rel(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; }
@@ -877,10 +884,14 @@ L({
         if (t === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
       }
       ctx.stroke();
-      // labels for circle / ellipse
-      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-      ctx.fillText("unit circle", px(0) + 6, py(1) - 6);
-      ctx.fillStyle = c.accent; ctx.fillText("ellipse = A·(circle)", px(2) - 30, py(0) - 8);
+      // labels for circle / ellipse — placed near each object, well apart
+      ctx.font = "12px sans-serif"; ctx.textBaseline = "alphabetic";
+      // unit circle: label up-left, near its own outline
+      ctx.fillStyle = c.dim; ctx.textAlign = "right";
+      ctx.fillText("unit circle", px(-0.72) - 2, py(0.72) - 4);
+      // ellipse: label at its top, where it stretches highest (λ=3 direction)
+      ctx.fillStyle = c.accent; ctx.textAlign = "center";
+      ctx.fillText("ellipse = A·(circle)", px(0), py(3) - 8);
 
       // eigen-axes: x-axis (lambda 2), y-axis (lambda 3) only stretch
       ctx.strokeStyle = c.purple; ctx.lineWidth = 2; ctx.setLineDash([2, 3]);
@@ -888,8 +899,8 @@ L({
       ctx.beginPath(); ctx.moveTo(px(0), py(-rng)); ctx.lineTo(px(0), py(rng)); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = c.purple; ctx.font = "12px sans-serif";
-      ctx.fillText("eigen-axis  λ = 2", px(rng) - 96, py(0) - 8);
-      ctx.fillText("eigen-axis  λ = 3", px(0) + 8, py(rng) + 14);
+      ctx.textAlign = "right"; ctx.fillText("λ = 2 axis", px(rng) - 4, py(0) + 16);
+      ctx.textAlign = "left"; ctx.fillText("λ = 3 axis", px(0) + 8, py(rng) + 14);
 
       // test vector v and Av
       var w0 = A[0][0] * v[0] + A[0][1] * v[1];

@@ -236,7 +236,7 @@ L({
       // minimum marker
       ctx.fillStyle = col.accent2; ctx.beginPath(); ctx.arc(PX(0), PY(0), 5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = col.dim; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
-      ctx.fillText("minimum", PX(0) + 8, PY(0) + 4);
+      ctx.fillText("minimum", PX(0) + 10, PY(0) + 18);
       // descent path
       var pts = path();
       ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.beginPath();
@@ -459,7 +459,9 @@ L({
       ctx.strokeStyle = col.warn; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
       ctx.beginPath(); ctx.moveTo(padL, PY(thresh)); ctx.lineTo(W - padR, PY(thresh)); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(PX(zStar), PY(0)); ctx.lineTo(PX(zStar), PY(1)); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = col.warn; ctx.textAlign = "center"; ctx.fillText("decide 1", PX(zStar) + 50, PY(1) + 14); ctx.fillText("decide 0", PX(zStar) - 50, PY(1) + 14);
+      ctx.fillStyle = col.warn;
+      ctx.textAlign = "left"; ctx.fillText("← decide 0", padL + 6, padT + 10);
+      ctx.textAlign = "right"; ctx.fillText("decide 1 →", W - padR - 6, padT + 10);
       // data points at p=0 / p=1 rows (jittered slightly off the line for visibility)
       var correct = 0;
       for (var k = 0; k < data.length; k++) {
@@ -1660,9 +1662,10 @@ L({
         ctx.strokeStyle = col.panel; ctx.lineWidth = 1; ctx.stroke();
       }
       // labels
-      ctx.fillStyle = col.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
-      ctx.fillText("PC1 (most spread)", PX(mx + v1x * len1) - 30, PY(my + v1y * len1) - 8);
-      ctx.fillStyle = col.purple; ctx.fillText("PC2", PX(mx + v2x * len2) + 4, PY(my + v2y * len2));
+      ctx.fillStyle = col.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText("PC1", PX(mx + v1x * len1) - 6, PY(my + v1y * len1) - 8);
+      ctx.fillStyle = col.purple; ctx.textAlign = "left";
+      ctx.fillText("PC2", PX(mx + v2x * len2) + 4, PY(my + v2y * len2));
       readout.innerHTML = "PC1 (orange, long) is the direction of greatest spread; PC2 (purple, short) is perpendicular. Orange dots = each point projected onto PC1 (dashed lines show the drop). λ₁ = " + l1.toFixed(2) + ", λ₂ = " + l2.toFixed(2) + " → PC1 explains <b>" + (varExp * 100).toFixed(1) + "%</b> of the variance, so keeping just PC1 turns 2D into 1D while losing only " + ((1 - varExp) * 100).toFixed(1) + "%.";
     }
     render();

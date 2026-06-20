@@ -215,8 +215,10 @@ L({
 
       // labels
       ctx.font = "bold 18px -apple-system, sans-serif";
-      ctx.fillStyle = c.accent2; ctx.fillText("B", bx - rB + 12, cy - rB * 0.55);
-      ctx.fillStyle = c.accent; ctx.fillText("A", ax + rA - 24, cy - rA * 0.55);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = c.accent2; ctx.fillText("B", bx - rB - 12, cy);
+      ctx.fillStyle = c.accent; ctx.fillText("A", ax + rA + 12, cy);
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
       ctx.fillStyle = c.purple; ctx.font = "13px -apple-system, sans-serif";
       var inter = lensArea(rA, rB, d);
       if (inter > 300) ctx.fillText("A∩B", (ax + bx) / 2 - 16, cy + 4);
@@ -1223,11 +1225,15 @@ L({
         ctx.fillText(p[0], px(p[1]) - 3, B + 14);
       });
 
-      // σ tick labels
-      ctx.fillStyle = c.dim; ctx.font = "11px -apple-system, sans-serif";
-      ctx.fillText("μ", px(mu) - 3, T + 10);
-      ctx.fillStyle = c.accent2; ctx.fillText("±1σ (≈68%)", px(mu - sg) + 2, T + 24);
-      ctx.fillStyle = c.warn; ctx.fillText("±2σ (≈95%)", px(mu - 2 * sg) + 2, T + 38);
+      // σ-band labels: μ at the peak; the two σ labels staggered to the
+      // inner edge of each band so they sit over their own region, not on top
+      // of one another.
+      ctx.font = "11px -apple-system, sans-serif";
+      ctx.fillStyle = c.dim; ctx.textAlign = "center"; ctx.fillText("μ", px(mu), T + 12);
+      ctx.textAlign = "left";
+      var sigLabelX = Math.min(px(mu + sg) + 4, R - 78);
+      ctx.fillStyle = c.accent2; ctx.fillText("±1σ (≈68%)", sigLabelX, T + 28);
+      ctx.fillStyle = c.warn; ctx.fillText("±2σ (≈95%)", sigLabelX, T + 44);
 
       var area = integ(a, b);
       readout.innerHTML = "Normal μ = " + mu.toFixed(1) + ", σ = " + sg.toFixed(1) +
