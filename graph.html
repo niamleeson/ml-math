@@ -71,20 +71,41 @@
   }
   #hud button { width: 34px; height: 34px; font-size: 16px; padding: 0; justify-content: center; }
   .err { padding: 40px; max-width: 600px; margin: 0 auto; }
+  header a.back { font-weight: 600; }
+  /* Hover / pinned "go to lesson" popover that floats above a node. */
+  #nodePop {
+    position: fixed; z-index: 20; transform: translate(-50%, -100%);
+    display: none; align-items: center; gap: 9px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 9px;
+    padding: 6px 8px 6px 11px; box-shadow: 0 8px 22px rgba(0,0,0,.32);
+    font-size: 13px; max-width: 260px;
+  }
+  #nodePop::after {  /* little pointer tail */
+    content: ""; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
+    border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid var(--border);
+  }
+  #nodePop .pt { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #nodePop .go {
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #04121f; font-weight: 800; font-size: 15px;
+  }
+  #nodePop .go:hover { filter: brightness(1.12); }
 </style>
 </head>
 <body>
 <header>
+  <a href="index.html" class="back">← Lessons</a>
   <h1>🗺️ Concept Map</h1>
   <span class="sub">How every idea connects — zoom in to read each link.</span>
   <span class="spacer"></span>
   <input id="search" placeholder="Find a concept…" oninput="GraphApp.search(this.value)" />
   <button onclick="GraphApp.fit()" title="Fit everything in view">⤢ Fit</button>
   <button id="themeToggle" onclick="GraphApp.toggleTheme()" title="Toggle light / dark">☀️</button>
-  <a href="index.html">← Lessons</a>
 </header>
 
 <div id="cy"></div>
+<div id="nodePop"><span class="pt"></span><a class="go" title="Open this lesson">↗</a></div>
 <div id="legend"></div>
 <div id="hud">
   <button onclick="GraphApp.zoom(1.3)" title="Zoom in">＋</button>
@@ -131,15 +152,16 @@ const GraphApp = (function () {
     "Artificial Intelligence — more": 234
   };
   const MOD_ORDER = Object.keys(MOD_HUE);
-  let cy = null;
+  let cy = null, pinned = null, hovered = null;
 
   function theme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
   function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
   // Node colors per module per theme. Lightness held in a readable band; hue identifies the module.
-  function nodeFill(hue) { return theme() === "light" ? `hsl(${hue} 76% 86%)` : `hsl(${hue} 47% 30%)`; }
-  function nodeBorder(hue) { return theme() === "light" ? `hsl(${hue} 55% 46%)` : `hsl(${hue} 60% 58%)`; }
-  function nodeText(hue) { return theme() === "light" ? `hsl(${hue} 65% 22%)` : `hsl(${hue} 70% 92%)`; }
+  // NOTE: comma-separated hsl() — cytoscape's color parser does not accept the space-separated form.
+  function nodeFill(hue) { return theme() === "light" ? `hsl(${hue}, 78%, 85%)` : `hsl(${hue}, 50%, 31%)`; }
+  function nodeBorder(hue) { return theme() === "light" ? `hsl(${hue}, 60%, 44%)` : `hsl(${hue}, 65%, 60%)`; }
+  function nodeText(hue) { return theme() === "light" ? `hsl(${hue}, 70%, 22%)` : `hsl(${hue}, 75%, 93%)`; }
 
   function buildElements() {
     const byId = {}; (window.LESSONS || []).forEach(l => byId[l.id] = l);
@@ -227,7 +249,7 @@ const GraphApp = (function () {
       `<div class="row"><span class="sw" style="background:${nodeFill(MOD_HUE[m])};border-color:${nodeBorder(MOD_HUE[m])}"></span>${m} <span style="color:var(--ink-dim)">(${counts[m]})</span></div>`
     ).join("");
     document.getElementById("legend").innerHTML =
-      `<b>Modules</b>${rows}<div class="hint">Arrows point from a concept to what it unlocks. Click a node to open its lesson · hover to trace its links · scroll to zoom, drag to pan.</div>`;
+      `<b>Modules</b>${rows}<div class="hint">Arrows point from a concept to what it unlocks. <b>Hover</b> a node to trace its links and get a ↗ to its lesson · <b>click</b> to pin/unpin that highlight · scroll to zoom, drag to pan.</div>`;
   }
 
   function init() {
@@ -250,12 +272,47 @@ const GraphApp = (function () {
     });
 
     window.cy = cy;   // exposed for power-users / validation
-    cy.on("tap", "node", evt => { window.location.href = "index.html#" + evt.target.id(); });
-    cy.on("mouseover", "node", evt => neighborhood(evt.target));
-    cy.on("mouseout", "node", clearHighlight);
-    cy.on("tap", evt => { if (evt.target === cy) clearHighlight(); });
-    cy.nodes().on("mouseover", function(){ document.body.style.cursor = "pointer"; });
-    cy.nodes().on("mouseout", function(){ document.body.style.cursor = "default"; });
+
+    // Interaction: HOVER previews a node's links + shows a "go to lesson" popover.
+    // CLICK toggles a pinned highlight (stays until you click it again or the background).
+    // Navigation happens only via the ↗ icon in the popover — not by clicking the node.
+    const pop = document.getElementById("nodePop");
+    let hideTimer = null;
+    function placePop(node) {
+      const box = document.getElementById("cy").getBoundingClientRect();
+      const bb = node.renderedBoundingBox();
+      pop.style.left = (box.left + (bb.x1 + bb.x2) / 2) + "px";
+      pop.style.top = (box.top + bb.y1 - 6) + "px";
+    }
+    function openPop(node) {
+      pop.querySelector(".pt").textContent = node.data("label");
+      pop.querySelector(".go").setAttribute("href", "index.html#" + node.id());
+      placePop(node); pop.style.display = "flex";
+    }
+    function closePop() { pop.style.display = "none"; }
+    pop.addEventListener("mouseenter", () => { if (hideTimer) clearTimeout(hideTimer); });
+    pop.addEventListener("mouseleave", () => { if (!pinned) { closePop(); clearHighlight(); } });
+
+    cy.on("mouseover", "node", evt => {
+      document.body.style.cursor = "pointer";
+      if (pinned) return;                 // a node is pinned -> ignore hover previews
+      hovered = evt.target;
+      if (hideTimer) clearTimeout(hideTimer);
+      neighborhood(evt.target); openPop(evt.target);
+    });
+    cy.on("mouseout", "node", () => {
+      document.body.style.cursor = "default";
+      if (pinned) return;
+      hovered = null;
+      hideTimer = setTimeout(() => { if (!pinned) { closePop(); clearHighlight(); } }, 180);
+    });
+    cy.on("tap", "node", evt => {
+      const n = evt.target;
+      if (pinned && pinned.id() === n.id()) { pinned = null; clearHighlight(); closePop(); }
+      else { pinned = n; hovered = null; neighborhood(n); openPop(n); }
+    });
+    cy.on("tap", evt => { if (evt.target === cy) { pinned = null; clearHighlight(); closePop(); } });
+    cy.on("pan zoom", () => { const n = pinned || hovered; if (n && pop.style.display !== "none") placePop(n); });
 
     renderLegend();
     syncThemeButton();
