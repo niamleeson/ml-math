@@ -739,9 +739,12 @@ L({
       ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.strokeRect(ax, ay, aw, ah);
       ctx.fillStyle = c.dim; ctx.font = "12px sans-serif"; ctx.fillText("base density: Gaussian in u", ax + aw / 2, ay - 14);
       ctx.strokeStyle = c.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+      // scale so the whole Gaussian peak fits inside the panel with headroom:
+      // peak basePdf(0) ≈ 0.399 should reach ~85% of the panel height, not overshoot it
+      var baseScale = (ah * 0.85) / basePdf(0);
       for (var i = 0; i <= 120; i++) {
         var u = -4 + (8 * i) / 120; var p = basePdf(u);
-        var X = ax + ((u + 4) / 8) * aw; var Y = ay + ah - p * ah * 4.8;
+        var X = ax + ((u + 4) / 8) * aw; var Y = ay + ah - p * baseScale;
         if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
       }
       ctx.stroke();

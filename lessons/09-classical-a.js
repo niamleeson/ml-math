@@ -464,20 +464,25 @@ L({
         ctx.fillStyle = color; ctx.beginPath(); ctx.arc(PX(cl.mx), PY(cl.my), 4, 0, Math.PI * 2); ctx.fill();
       }
       ring(c0, c.accent); ring(c1, c.accent2);
-      // boundary: scan each column for a sign change of score
-      ctx.strokeStyle = c.warn; ctx.lineWidth = 2.5; ctx.beginPath();
-      var started = false;
+      // decision boundary: a distinct ORANGE line drawn on top of the regions.
+      // Scan each column and mark EVERY sign change of score (QDA's curve can cross a
+      // column twice), drawing each crossing as a short orange segment so the whole
+      // boundary reads clearly as one orange curve/line.
+      ctx.strokeStyle = c.warn; ctx.fillStyle = c.warn; ctx.lineWidth = 3;
       for (var col = padL; col <= W - padR; col += 3) {
         var x2 = xmin + (col - padL) / (W - padL - padR) * (xmax - xmin);
-        var prev = null, hitY = null;
-        for (var yy = ymin; yy <= ymax; yy += 0.06) {
+        var prev = null, prevY = null;
+        for (var yy = ymin; yy <= ymax; yy += 0.04) {
           var v = score(x2, yy);
-          if (prev !== null && prev * v <= 0) { hitY = yy; break; }
-          prev = v;
+          if (prev !== null && prev * v <= 0) {
+            // linear-interpolate the exact crossing between prevY and yy
+            var frac = prev / (prev - v);
+            var cy = prevY + frac * (yy - prevY);
+            ctx.beginPath(); ctx.arc(col, PY(cy), 1.6, 0, Math.PI * 2); ctx.fill();
+          }
+          prev = v; prevY = yy;
         }
-        if (hitY !== null) { if (!started) { ctx.moveTo(col, PY(hitY)); started = true; } else ctx.lineTo(col, PY(hitY)); }
       }
-      ctx.stroke();
       readout.innerHTML = qda
         ? "<b>QDA</b>: each class keeps its own covariance (tight blue vs wide green), so the orange boundary is a <b>curve</b> that wraps the tight class. Toggle to LDA."
         : "<b>LDA</b>: both classes are forced to share one pooled covariance, so the orange boundary is a <b>straight vertical line</b> — the linear split between the two means. Toggle to QDA.";

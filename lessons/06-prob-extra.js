@@ -125,8 +125,12 @@ L({
       ctx.stroke();
       // labels
       ctx.fillStyle = c.dim; ctx.fillText("0", L0, B0 + 14); ctx.fillText("1", R0 - 8, B0 + 14);
-      ctx.fillStyle = c.accent; ctx.fillText("histogram of Y = X^" + pow, L0 + 4, T0 + 12);
-      ctx.fillStyle = c.warn; ctx.fillText("theoretical f_Y(y)", L0 + 4, T0 + 28);
+      // y-axis hint (density / count grows upward)
+      ctx.fillStyle = c.dim; ctx.fillText("density →", L0 + 60, B0 + 14);
+      // legend, indented well inside the left edge so it is never clipped
+      var legX = L0 + 60;
+      ctx.fillStyle = c.accent; ctx.fillText("histogram of Y = X^" + pow, legX, T0 + 12);
+      ctx.fillStyle = c.warn; ctx.fillText("theoretical f_Y(y)", legX, T0 + 28);
       var mean = 0; for (var k = 0; k < samples.length; k++) mean += samples[k]; mean = samples.length ? mean / samples.length : 0;
       readout.innerHTML = "X is uniform on [0,1] (flat). Y = X<sup>" + pow + "</sup> bunches probability toward 0 because squaring/cubing squashes small values. " +
         "Samples: <b>" + samples.length + "</b>, mean of Y = <b>" + mean.toFixed(3) + "</b> (theory: 1/(" + pow + "+1) = " + (1 / (pow + 1)).toFixed(3) + ").";
@@ -382,13 +386,16 @@ L({
       ctx.fillStyle = c.dim; ctx.fillText(String(vmin), L0, axisY + 16); ctx.fillText(String(vmax), R0 - 16, axisY + 16);
 
       // RIGHT: stacked bar — within (bottom) + between (top) = total
-      var bx = 430, bw = 90, baseY = 250, scale = 240 / Math.max(60, total);
+      // leave headroom at the top so the Var(X) title above the bar is never clipped
+      var bx = 430, bw = 90, baseY = 250, scale = 210 / Math.max(60, total);
       var hWithin = within * scale, hBetween = between * scale;
       ctx.fillStyle = c.accent2; ctx.fillRect(bx, baseY - hWithin, bw, hWithin);
       ctx.fillStyle = c.purple; ctx.fillRect(bx, baseY - hWithin - hBetween, bw, hBetween);
       ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.strokeRect(bx, baseY - hWithin - hBetween, bw, hWithin + hBetween);
       ctx.fillStyle = c.ink; ctx.textAlign = "center";
-      ctx.fillText("Var(X) = " + total.toFixed(1), bx + bw / 2, baseY - hWithin - hBetween - 8);
+      // keep the title fully on-screen: never let it rise above the panel top edge
+      var titleY = Math.max(14, baseY - hWithin - hBetween - 8);
+      ctx.fillText("Var(X) = " + total.toFixed(1), bx + bw / 2, titleY);
       ctx.fillStyle = c.accent2; ctx.fillText("within " + within.toFixed(1), bx + bw / 2, baseY - hWithin / 2 + 4);
       ctx.fillStyle = c.purple; ctx.fillText("between " + between.toFixed(1), bx + bw / 2, baseY - hWithin - hBetween / 2 + 4);
       ctx.textAlign = "start";

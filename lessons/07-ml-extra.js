@@ -399,15 +399,18 @@ L({
       curve(function (k) { return pen(k, penMult); }, c.purple, [5, 4]);        // penalty rises
       curve(function (k) { return fit(k) + pen(k, penMult); }, c.warn, []);     // total
 
+      // find the minimum of the actual plotted total curve (same fine sampling as the
+      // drawn curve, step 0.1), so the marker sits exactly on the curve's minimum
       var bestK = kmin, bestV = Infinity;
-      for (var ki = kmin; ki <= kmax; ki++) { var v = fit(ki) + pen(ki, penMult); if (v < bestV) { bestV = v; bestK = ki; } }
+      for (var ki = kmin; ki <= kmax + 1e-9; ki += 0.1) { var v = fit(ki) + pen(ki, penMult); if (v < bestV) { bestV = v; bestK = ki; } }
+      var bestKi = Math.round(bestK); // nearest whole number of parameters, for the readout
       ctx.fillStyle = c.accent2; ctx.beginPath(); ctx.arc(PX(bestK), PY(Math.min(ymax, bestV)), 5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = c.ink; ctx.textAlign = "left";
       ctx.fillText("misfit −2 lnL (falls)", PX(kmax) - 150, PY(fit(kmax)) - 8);
       ctx.fillText("penalty " + penMult + "k (rises)", 60, PY(pen(2, penMult)) - 6);
       ctx.fillText("AIC total (min ★)", PX(bestK) + 8, PY(Math.min(ymax, bestV)) - 8);
 
-      readout.innerHTML = "Dashed blue = misfit (−2 ln L) keeps falling as you add parameters. Dashed purple = penalty " + penMult + "·k keeps rising. Solid orange = their sum (AIC). The sum dips then climbs: the best model is at the minimum, k = <b>" + bestK + "</b>. Slide the penalty multiplier (2 = AIC, ln n = BIC).";
+      readout.innerHTML = "Dashed blue = misfit (−2 ln L) keeps falling as you add parameters. Dashed purple = penalty " + penMult + "·k keeps rising. Solid orange = their sum (AIC). The sum dips then climbs: the best model is at the minimum, k ≈ <b>" + bestKi + "</b>. Slide the penalty multiplier (2 = AIC, ln n = BIC).";
     }
     makeSlider(host, "penalty per param", 1, 5, penMult, 0.5, function (v) { penMult = v; render(); });
     render();
@@ -526,13 +529,25 @@ L({
       var assign = kmeans(k);
       var s = silhouette(assign, k);
       var avg = 0; for (var i = 0; i < s.length; i++) avg += s[i]; avg /= s.length;
+      // color each point by its silhouette value relative to this clustering's
+      // own spread, so the high/low contrast is always visible (not all one color):
+      // well-clustered (top third) green, middle blue, border/low (bottom third) orange,
+      // and any negative (likely misassigned) red.
+      var smin = Infinity, smax = -Infinity;
+      for (var q = 0; q < s.length; q++) { if (s[q] < smin) smin = s[q]; if (s[q] > smax) smax = s[q]; }
+      var span = (smax - smin) > 1e-6 ? (smax - smin) : 1;
       for (var p = 0; p < pts.length; p++) {
         var sv = Math.max(-1, Math.min(1, s[p]));
-        var t = (sv + 1) / 2;                       // 0..1
-        var col = sv > 0.4 ? c.accent2 : sv > 0 ? c.accent : c.warn;
-        var r = 4 + 3 * t;
+        var rel = (sv - smin) / span;               // 0 = lowest s here, 1 = highest s here
+        var col;
+        if (sv < 0) col = c.warn;                    // negative: flagged (orange/red family)
+        else if (rel >= 0.66) col = c.accent2;       // high silhouette: green
+        else if (rel >= 0.33) col = c.accent;        // middling: blue
+        else col = c.warn;                           // low / near-0 / border: orange
+        var r = 4 + 3 * rel;
+        // all points are filled dots (no hollow rings)
         ctx.fillStyle = col; ctx.beginPath(); ctx.arc(PX(pts[p].x), PY(pts[p].y), r, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke();
       }
       ctx.fillStyle = c.ink; ctx.font = "13px sans-serif"; ctx.textAlign = "left";
       ctx.fillText("k = " + k + "   avg silhouette = " + avg.toFixed(3), 14, 22);

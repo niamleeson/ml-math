@@ -212,8 +212,12 @@ L({
         ctx.stroke();}
       ctx.setLineDash([]);
       ctx.font="11px sans-serif";
+      // precompute each point's isolation depth, then flag the shallowest (most easily
+      // isolated, in sparse regions) as anomalies so they get the anomaly color
+      var depths = pts.map(depth);
+      var minDepth = Infinity; for (var di=0; di<depths.length; di++) if (depths[di] < minDepth) minDepth = depths[di];
       for (var k=0;k<pts.length;k++){
-        var d=depth(pts[k]); var anom = d<=2;
+        var d=depths[k]; var anom = d <= minDepth + 1;
         ctx.fillStyle = anom ? c.warn : c.accent;
         ctx.beginPath(); ctx.arc(PX(pts[k].x),PY(pts[k].y), anom?7:5, 0, Math.PI*2); ctx.fill();
         if (anom){ ctx.strokeStyle=c.warn; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(PX(pts[k].x),PY(pts[k].y),11,0,Math.PI*2); ctx.stroke();

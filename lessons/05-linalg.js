@@ -188,49 +188,47 @@ L({
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
     var ctx = cv.getContext("2d");
     var A = [[1, 2, 3], [4, 5, 6]];
-    var t = 0; // 0 = original, 1 = transposed; animate between
-    var anim = null;
-    function lerp(a, b, u) { return a + (b - a) * u; }
-    function draw() {
-      var c = C();
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      var cw = 50, ch = 50, gap = 6;
-      // origin for the grid (centered-ish)
-      var ox = 180, oy = 70;
-      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-      ctx.fillText(t < 0.5 ? "A  (2 rows × 3 cols)" : "Aᵀ  (3 rows × 2 cols)", ox, oy - 16);
-      // draw the diagonal mirror line (row==col cells)
-      for (var r = 0; r < 2; r++) for (var k = 0; k < 3; k++) {
-        // start position (r,k); end position after transpose is (k,r)
-        var sx = ox + k * (cw + gap), sy = oy + r * (ch + gap);
-        var ex = ox + r * (cw + gap), ey = oy + k * (ch + gap);
-        var x = lerp(sx, ex, t), y = lerp(sy, ey, t);
-        var onDiag = (r === k);
+    var highlight = false; // toggle: emphasize the (i,j) -> (j,i) correspondence
+    var cw = 46, ch = 46, gap = 8;
+    // draw a clean fixed grid of non-overlapping squares; cell(r,k) holds value val(r,k)
+    function grid(ox, oy, rows, cols, val, diagFn) {
+      for (var r = 0; r < rows; r++) for (var k = 0; k < cols; k++) {
+        var x = ox + k * (cw + gap), y = oy + r * (ch + gap);
+        var c = C();
+        var onDiag = diagFn(r, k);
         ctx.fillStyle = onDiag ? (c.warn + "33") : c.panel;
         ctx.fillRect(x, y, cw, ch);
         ctx.strokeStyle = onDiag ? c.warn : c.border; ctx.lineWidth = 1.5;
         ctx.strokeRect(x, y, cw, ch);
         ctx.fillStyle = c.ink; ctx.font = "17px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(String(A[r][k]), x + cw / 2, y + ch / 2);
+        ctx.fillText(String(val(r, k)), x + cw / 2, y + ch / 2);
       }
-      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.font = "13px sans-serif";
-      ctx.fillStyle = c.dim;
-      ctx.fillText("Diagonal cells (orange) stay put. Every other cell swaps (i,j) → (j,i).", ox, oy + 3 * (ch + gap) + 24);
     }
-    function animateTo(target) {
-      if (anim) { clearInterval(anim); anim = null; }
-      var start = t, t0 = Date.now();
-      anim = setInterval(function () {
-        var u = Math.min(1, (Date.now() - t0) / 600);
-        t = lerp(start, target, u);
-        draw();
-        if (u >= 1) { clearInterval(anim); anim = null; }
-      }, 16);
+    function draw() {
+      var c = C();
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      // A on the left (2 rows x 3 cols), Aᵀ on the right (3 rows x 2 cols), on fixed grids
+      var axA = 70, ayA = 70;
+      var axT = 400, ayT = 70;
+      ctx.fillText("A  (2 rows × 3 cols)", axA, ayA - 16);
+      ctx.fillText("Aᵀ  (3 rows × 2 cols)", axT, ayT - 16);
+      grid(axA, ayA, 2, 3, function (r, k) { return A[r][k]; }, function (r, k) { return r === k; });
+      grid(axT, ayT, 3, 2, function (r, k) { return A[k][r]; }, function (r, k) { return r === k; });
+      // arrow between the two grids
+      ctx.strokeStyle = c.accent; ctx.fillStyle = c.accent; ctx.lineWidth = 2;
+      var amid = (axA + 3 * (cw + gap)) + 14, ay = ayA + (ch + gap);
+      ctx.beginPath(); ctx.moveTo(amid, ay); ctx.lineTo(axT - 22, ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(axT - 22, ay); ctx.lineTo(axT - 30, ay - 5); ctx.lineTo(axT - 30, ay + 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = c.dim; ctx.font = "13px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("transpose", (amid + axT - 26) / 2, ay - 12);
+      ctx.textAlign = "left";
+      ctx.fillText("Diagonal cells (orange) stay put. Every other cell swaps (i,j) → (j,i).", axA, ayA + 3 * (ch + gap) + 24);
     }
     var bar = document.createElement("div"); bar.style.margin = "8px 0";
     var BTN = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin-right:8px";
-    var flip = document.createElement("button"); flip.style.cssText = BTN; flip.textContent = "Flip across diagonal ⤢";
-    flip.addEventListener("click", function () { animateTo(t < 0.5 ? 1 : 0); });
+    var flip = document.createElement("button"); flip.style.cssText = BTN; flip.textContent = "Show A and Aᵀ ⤢";
+    flip.addEventListener("click", function () { highlight = !highlight; draw(); });
     bar.appendChild(flip); host.appendChild(bar);
     draw();
   },
@@ -312,7 +310,10 @@ L({
       // axis stretch markers
       ctx.fillStyle = c.warn; ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
       ctx.fillText("× " + d1, px(d1 / 2), py(0) + 18);
-      ctx.fillStyle = c.purple; ctx.save(); ctx.translate(px(0) - 18, py(d2 / 2)); ctx.rotate(-Math.PI / 2); ctx.fillText("× " + d2, 0, 0); ctx.restore();
+      // y-axis stretch label: keep horizontal and clear of the axis (to the left of it)
+      ctx.fillStyle = c.purple; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillText("× " + d2, px(0) - 10, py(d2 / 2));
+      ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
       // readout
       ctx.textAlign = "left"; ctx.fillStyle = c.ink; ctx.font = "14px sans-serif";
       ctx.fillText("D = [[" + d1 + ", 0], [0, " + d2 + "]]   (dashed = original unit square)", 16, cv.height - 14);
@@ -1172,8 +1173,10 @@ L({
       }
       // point at origin + curvature arrows along axes
       ctx.fillStyle = c.purple; ctx.beginPath(); ctx.arc(px(0), py(0), 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-      ctx.fillText("evaluate H at (0,0)", px(0) + 8, py(0) + 16);
+      // caption in the clear top-left corner, away from the contours and the center dot
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("evaluate H at (0,0)", P, P - 16);
+      ctx.textBaseline = "alphabetic";
       // readout
       var rx = 400;
       ctx.textAlign = "left"; ctx.font = "14px sans-serif"; ctx.fillStyle = c.ink;
