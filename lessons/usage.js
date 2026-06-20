@@ -8,7 +8,7 @@ window.USAGE = {
   // Linear Algebra (deep dive)
   "la-matmul": 10, "la-transpose": 9, "la-identity-diagonal": 7, "la-inverse": 6,
   "la-determinant": 4, "la-trace": 4, "la-rank-independence": 5, "la-psd": 5,
-  "la-spectral": 4, "la-svd": 7, "la-hessian": 4,
+  "la-spectral": 4, "la-svd": 7, "la-jacobian": 7, "la-hessian": 4,
   // Probability & Statistics
   "prob-sample-space": 5, "prob-axioms": 5, "prob-conditional": 9, "prob-bayes": 9,
   "prob-total-prob": 5, "prob-independence": 6, "prob-counting": 3, "prob-random-variable": 6,

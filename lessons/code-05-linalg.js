@@ -4,6 +4,36 @@
    Library: NumPy (numpy.linalg). All runnable in Pyodide.
    ===================================================================== */
 window.CODE = Object.assign(window.CODE || {}, {
+  "la-jacobian": {
+    lib: "NumPy",
+    runnable: true,
+    packages: ["numpy"],
+    explain: `<p>Build the Jacobian of the polar -> Cartesian map analytically, then confirm it with finite differences. Its determinant equals <code>r</code> — the change-of-variables factor for polar integrals.</p>`,
+    code: `import numpy as np
+
+# f: (r, theta) -> (x, y) = (r cos t, r sin t)   [polar -> Cartesian]
+def f(p):
+    r, t = p
+    return np.array([r * np.cos(t), r * np.sin(t)])
+
+def jacobian(p):                 # analytic m x n matrix of partials
+    r, t = p
+    return np.array([[np.cos(t), -r * np.sin(t)],
+                     [np.sin(t),  r * np.cos(t)]])
+
+p = np.array([2.0, 0.6])
+J = jacobian(p)
+print("analytic Jacobian:\\n", np.round(J, 4))
+print("det J =", round(float(np.linalg.det(J)), 4), " (should equal r =", p[0], ")")
+
+# verify every partial with a central finite difference
+eps = 1e-6
+Jn = np.zeros((2, 2))
+for j in range(2):
+    d = np.zeros(2); d[j] = eps
+    Jn[:, j] = (f(p + d) - f(p - d)) / (2 * eps)
+print("finite-diff matches analytic:", np.allclose(J, Jn, atol=1e-4))`
+  },
 
   "la-matmul": {
     lib: "NumPy",

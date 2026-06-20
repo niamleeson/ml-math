@@ -1074,10 +1074,158 @@ L({
 
 /* ================================================================ 11 */
 L({
+  id: "la-jacobian",
+  title: "The Jacobian",
+  tagline: "The matrix of all first derivatives. It is how a vector function stretches space, locally.",
+  prereqs: ["fnd-gradient", "fnd-matvec", "la-determinant"],
+  bigIdea:
+    `<p>The <b>Jacobian</b> is the matrix of every first partial derivative of a function that takes <b>several inputs</b> and returns <b>several outputs</b>.</p>
+     <p>Near a point it is the function's <b>best linear approximation</b>: how the map stretches, rotates, and shears space right there.</p>
+     <p>The gradient is just the one-output special case. The Jacobian generalises it to many outputs at once.</p>`,
+  buildup:
+    `<p>One input, one output: the derivative $f'(x)$ is a single slope.</p>
+     <p>Many inputs, one output: the gradient stacks the partials into one vector.</p>
+     <p>Many inputs, many outputs: you need the partial of <i>every output</i> with respect to <i>every input</i>. Lay them out in a grid — that grid is the Jacobian.</p>`,
+  symbols: [
+    { sym: "$f$", desc: "a function from $n$ inputs to $m$ outputs, $f:\\mathbb{R}^n\\to\\mathbb{R}^m$." },
+    { sym: "$J$", desc: "the Jacobian: an $m\\times n$ matrix of first partial derivatives." },
+    { sym: "$J_{ij}$", desc: "entry $(i,j)$: $\\partial f_i/\\partial x_j$ — how output $i$ changes as input $j$ moves." },
+    { sym: "$f_i$", desc: "the $i$-th output component of $f$." },
+    { sym: "$\\partial f_i/\\partial x_j$", desc: "the partial derivative of output $i$ with respect to input $j$ (curly $\\partial$ = 'partial')." }
+  ],
+  formula: `$$ J_{ij} = \\frac{\\partial f_i}{\\partial x_j}, \\qquad J = \\begin{bmatrix} \\frac{\\partial f_1}{\\partial x_1} & \\cdots & \\frac{\\partial f_1}{\\partial x_n} \\\\ \\vdots & \\ddots & \\vdots \\\\ \\frac{\\partial f_m}{\\partial x_1} & \\cdots & \\frac{\\partial f_m}{\\partial x_n} \\end{bmatrix}, \\qquad f(x+d)\\approx f(x)+J\\,d $$`,
+  whatItDoes:
+    `<p>Row $i$ of $J$ is the gradient of output $f_i$. Column $j$ says how <i>all</i> outputs move when input $j$ wiggles.</p>
+     <p>Near a point, $f$ behaves like the linear map $d \\mapsto J\\,d$ — the Jacobian <b>is</b> that local linear approximation. When inputs and outputs match ($m=n$), $\\det J$ is the local area/volume scaling. When there is one output ($m=1$), $J$ is just the gradient, written as a row.</p>`,
+  derivation:
+    `<p><b>Why $J$ is the best linear approximation.</b> We build it one output at a time, then stack.</p>
+     <ul class="steps">
+       <li>Expand a single output to first order: $f_i(x+d) \\approx f_i(x) + \\nabla f_i(x)^\\top d$ — the ordinary gradient/Taylor rule for a scalar function.</li>
+       <li>The row $\\nabla f_i(x)^\\top$ is exactly $\\big[\\partial f_i/\\partial x_1,\\dots,\\partial f_i/\\partial x_n\\big]$ — row $i$ of $J$.</li>
+       <li>Stack all $m$ outputs and the rows assemble into the matrix: $f(x+d) \\approx f(x) + J\\,d$. So $J$ is the one matrix whose action $J d$ gives the first-order change of every output together.</li>
+       <li>Volume part (when $m=n$): a tiny box of volume $V$ at $x$ maps to a box of volume $|\\det J|\\,V$, because a linear map scales volume by its determinant (the determinant lesson). ∎</li>
+     </ul>`,
+  example:
+    `<p>Take the polar → Cartesian map $f(r,\\theta) = (r\\cos\\theta,\\; r\\sin\\theta)$. Find its Jacobian and determinant.</p>
+     <ul class="steps">
+       <li><b>Partials of the first output</b> $x=r\\cos\\theta$: $\\;\\partial x/\\partial r = \\cos\\theta$, $\\;\\partial x/\\partial\\theta = -r\\sin\\theta$.<div class="why">Differentiate $r\\cos\\theta$ once treating $\\theta$ fixed, once treating $r$ fixed.</div></li>
+       <li><b>Partials of the second output</b> $y=r\\sin\\theta$: $\\;\\partial y/\\partial r = \\sin\\theta$, $\\;\\partial y/\\partial\\theta = r\\cos\\theta$.</li>
+       <li><b>Assemble</b> $J = \\begin{bmatrix}\\cos\\theta & -r\\sin\\theta\\\\ \\sin\\theta & r\\cos\\theta\\end{bmatrix}$.<div class="why">Rows = outputs $(x,y)$, columns = inputs $(r,\\theta)$.</div></li>
+       <li><b>Determinant</b> $\\det J = \\cos\\theta\\,(r\\cos\\theta) - (-r\\sin\\theta)\\,\\sin\\theta = r\\cos^2\\theta + r\\sin^2\\theta = r$.<div class="why">That $r$ is exactly the "$r\\,dr\\,d\\theta$" area factor you use when integrating in polar coordinates — the Jacobian determinant is the change-of-variables factor.</div></li>
+     </ul>`,
+  application:
+    `<p><b>Backpropagation.</b> Each layer has a local Jacobian; backprop chains them by multiplying Jacobians (the vector chain rule). Autodiff never builds them fully — it computes Jacobian–vector products.</p>
+     <p><b>Robotics.</b> The Jacobian relates joint velocities to the robot hand's velocity, and tells you when the arm is in a stuck (singular) configuration.</p>
+     <p><b>Change of variables.</b> The $|\\det J|$ factor reweights probabilities and integrals when you switch coordinates (it is the heart of normalizing flows).</p>
+     <p><b>Newton's method for systems.</b> Solve $J\\,\\Delta = -f$ to step toward a root of several equations at once.</p>`,
+  quiz: {
+    q: `For a function $f:\\mathbb{R}^3\\to\\mathbb{R}^2$, what shape is the Jacobian, and what is its row $i$?`,
+    a: `<p>It is $2\\times 3$ — $m=2$ rows (one per output), $n=3$ columns (one per input). Row $i$ is the gradient of output $f_i$, i.e. $[\\partial f_i/\\partial x_1,\\ \\partial f_i/\\partial x_2,\\ \\partial f_i/\\partial x_3]$.</p>`
+  },
+  practice: [
+    {
+      q: `Find the Jacobian of $f(x,y) = (x+y,\\ xy)$ at the point $(2,3)$, and its determinant.`,
+      steps: [
+        { do: `Partials of output 1, $f_1=x+y$: $\\partial f_1/\\partial x = 1$, $\\partial f_1/\\partial y = 1$.`, why: `Each variable appears linearly, so its partial is 1.` },
+        { do: `Partials of output 2, $f_2=xy$: $\\partial f_2/\\partial x = y$, $\\partial f_2/\\partial y = x$.`, why: `Treat the other variable as a constant when differentiating.` },
+        { do: `Assemble $J = \\begin{bmatrix}1 & 1\\\\ y & x\\end{bmatrix}$, then plug in $(2,3)$: $J = \\begin{bmatrix}1 & 1\\\\ 3 & 2\\end{bmatrix}$.`, why: `Rows are outputs, columns are inputs $(x,y)$.` },
+        { do: `Determinant $= 1\\cdot 2 - 1\\cdot 3 = -1$.`, why: `$\\det\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}=ad-bc$. Negative det means the map flips orientation here.` }
+      ],
+      answer: `$J=\\begin{bmatrix}1&1\\\\3&2\\end{bmatrix}$, $\\det J = -1$.`
+    },
+    {
+      q: `What is the shape of the Jacobian of $f(x,y,z) = (x^2+y,\\ yz)$, and what are its entries?`,
+      steps: [
+        { do: `Two outputs, three inputs, so $J$ is $2\\times 3$.`, why: `Shape is (number of outputs) × (number of inputs).` },
+        { do: `Row 1 ($f_1=x^2+y$): $[\\,2x,\\ 1,\\ 0\\,]$.`, why: `$\\partial(x^2+y)/\\partial x = 2x$, $/\\partial y = 1$, $/\\partial z = 0$.` },
+        { do: `Row 2 ($f_2=yz$): $[\\,0,\\ z,\\ y\\,]$.`, why: `$\\partial(yz)/\\partial x = 0$, $/\\partial y = z$, $/\\partial z = y$.` }
+      ],
+      answer: `$J = \\begin{bmatrix}2x & 1 & 0\\\\ 0 & z & y\\end{bmatrix}$ (a $2\\times 3$ matrix).`
+    },
+    {
+      q: `A map $f:\\mathbb{R}^2\\to\\mathbb{R}^2$ has $\\det J = 3$ at a point. A tiny square of area $0.01$ sits there. What is the area of its image?`,
+      steps: [
+        { do: `The image area is $|\\det J|$ times the original area.`, why: `The Jacobian is the local linear map, and a linear map scales area by its determinant.` },
+        { do: `Compute $3 \\times 0.01 = 0.03$.`, why: `$|\\det J| = 3$.` }
+      ],
+      answer: `$0.03$ — the map stretches local area by a factor of 3.`
+    }
+  ],
+  demo: function (host) {
+    function C() {
+      var s = getComputedStyle(document.documentElement);
+      var g = function (n, d) { return (s.getPropertyValue(n) || d).trim(); };
+      return { ink: g("--ink", "#e6edf3"), dim: g("--ink-dim", "#9aa7b4"), accent: g("--accent", "#4ea1ff"), accent2: g("--accent-2", "#7ee787"), warn: g("--warn", "#ffb454"), purple: g("--purple", "#c89bff"), border: g("--border", "#2a3340"), panel: g("--panel", "#161c24") };
+    }
+    var st = { x: 1.0, y: 0.6 };
+    var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; cv.style.maxWidth = "100%"; host.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    function draw() {
+      var c = C(); ctx.clearRect(0, 0, cv.width, cv.height);
+      // f(x,y) = (x^2 - y^2, 2xy);  J = [[2x, -2y], [2y, 2x]]
+      var x = st.x, y = st.y;
+      var c1 = [2 * x, 2 * y];      // column 1 of J (image of input e1)
+      var c2 = [-2 * y, 2 * x];     // column 2 of J (image of input e2)
+      var det = 2 * x * (2 * x) - (-2 * y) * (2 * y); // = 4(x^2+y^2)
+      var ox = 180, oy = 180, sc = 26;
+      function px(v) { return ox + v * sc; } function py(v) { return oy - v * sc; }
+      // axes
+      ctx.strokeStyle = c.border; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(20, oy); ctx.lineTo(345, oy); ctx.moveTo(ox, 20); ctx.lineTo(ox, 330); ctx.stroke();
+      // parallelogram spanned by the two Jacobian columns
+      var O = [px(0), py(0)], A = [px(c1[0]), py(c1[1])], B = [px(c2[0]), py(c2[1])], AB = [px(c1[0] + c2[0]), py(c1[1] + c2[1])];
+      ctx.fillStyle = (det >= 0 ? c.accent : c.warn) + "33";
+      ctx.beginPath(); ctx.moveTo(O[0], O[1]); ctx.lineTo(A[0], A[1]); ctx.lineTo(AB[0], AB[1]); ctx.lineTo(B[0], B[1]); ctx.closePath(); ctx.fill();
+      // unit square (input) for comparison
+      ctx.strokeStyle = c.dim; ctx.setLineDash([4, 4]);
+      ctx.strokeRect(px(0), py(1), sc, sc); ctx.setLineDash([]);
+      function arrow(v, col, lbl) {
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(v[0]), py(v[1])); ctx.stroke();
+        var ang = Math.atan2(py(v[1]) - py(0), px(v[0]) - px(0));
+        ctx.beginPath(); ctx.moveTo(px(v[0]), py(v[1]));
+        ctx.lineTo(px(v[0]) - 9 * Math.cos(ang - 0.4), py(v[1]) - 9 * Math.sin(ang - 0.4));
+        ctx.lineTo(px(v[0]) - 9 * Math.cos(ang + 0.4), py(v[1]) - 9 * Math.sin(ang + 0.4));
+        ctx.closePath(); ctx.fill();
+        ctx.font = "12px sans-serif"; ctx.fillText(lbl, px(v[0]) + 6, py(v[1]) - 4);
+      }
+      arrow(c1, c.accent, "J·e₁");
+      arrow(c2, c.accent2, "J·e₂");
+      // readout panel
+      var rx = 370; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = c.dim; ctx.font = "12px sans-serif";
+      ctx.fillText("f(x,y) = (x² − y², 2xy)", rx, 40);
+      ctx.fillStyle = c.ink; ctx.font = "13px sans-serif";
+      ctx.fillText("Jacobian J at (" + x.toFixed(2) + ", " + y.toFixed(2) + "):", rx, 70);
+      ctx.font = "13px monospace";
+      ctx.fillStyle = c.accent;  ctx.fillText("[ " + (2 * x).toFixed(2) + "   " + (-2 * y).toFixed(2) + " ]", rx, 94);
+      ctx.fillStyle = c.accent2; ctx.fillText("[ " + (2 * y).toFixed(2) + "   " + (2 * x).toFixed(2) + " ]", rx, 112);
+      ctx.fillStyle = c.warn; ctx.font = "13px sans-serif";
+      ctx.fillText("det J = " + det.toFixed(2), rx, 142);
+      ctx.fillStyle = c.dim; ctx.font = "11px sans-serif";
+      ctx.fillText("= area of the parallelogram", rx, 160);
+      ctx.fillText("(how much the map stretches", rx, 176);
+      ctx.fillText(" a tiny square near this point)", rx, 192);
+    }
+    function slider(label, key, min, max) {
+      var row = document.createElement("div"); row.style.margin = "6px 0";
+      var lab = document.createElement("label"); lab.style.display = "block"; lab.textContent = label + " = " + st[key].toFixed(2);
+      var inp = document.createElement("input"); inp.type = "range"; inp.min = min; inp.max = max; inp.step = 0.05; inp.value = st[key];
+      inp.addEventListener("input", function () { st[key] = parseFloat(inp.value); lab.textContent = label + " = " + st[key].toFixed(2); draw(); });
+      row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
+    }
+    slider("input x", "x", -3, 3);
+    slider("input y", "y", -3, 3);
+    draw();
+  }
+});
+
+/* ================================================================ 12 */
+L({
   id: "la-hessian",
   title: "The Hessian",
   tagline: "The matrix of second derivatives. It tells you the curvature, and whether you're convex.",
-  prereqs: ["fnd-gradient", "la-psd", "la-determinant"],
+  prereqs: ["fnd-gradient", "la-jacobian", "la-psd", "la-determinant"],
   bigIdea:
     `<p>The <b>Hessian</b> is the matrix of all second partial derivatives of a function of several inputs.</p>
      <p>Where the gradient gives slope (first derivative), the Hessian gives <b>curvature</b> (second derivative): how the slope itself bends, in every pair of directions.</p>

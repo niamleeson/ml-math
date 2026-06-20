@@ -209,6 +209,7 @@ window.APPLICATIONS = [
     icon: "🤖",
     blurb: "How robot arms, drones and warehouse bots learn to move and act to achieve goals.",
     lessons: [
+      { id: "la-jacobian", how: "maps joint velocities to end-effector motion" },
       { id: "ai-mdp", how: "frames control as states, actions and rewards" },
       { id: "ai-policy-value", how: "values states to choose good actions" },
       { id: "ai-value-iteration", how: "computes the optimal control policy" },
