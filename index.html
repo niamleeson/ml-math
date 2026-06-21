@@ -198,25 +198,13 @@
   .card.whenuse h3 { color: var(--accent); }
   .card.pitfalls { border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 5%, var(--panel)); }
   .card.pitfalls h3 { color: var(--warn); }
-  /* "Under the hood" — folds the math/theory under a toggle */
-  details.underhood {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    margin: 0 0 18px; box-shadow: var(--shadow); overflow: hidden;
+  /* "Under the hood" — a non-collapsible divider before the math/theory sections */
+  .uh-divider {
+    display: flex; align-items: center; gap: 9px; margin: 26px 2px 14px;
+    font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-dim); border-top: 1px solid var(--border); padding-top: 18px;
   }
-  details.underhood > summary {
-    list-style: none; cursor: pointer; padding: 16px 20px; font-size: 13px; font-weight: 700;
-    letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim);
-    display: flex; align-items: center; gap: 9px; user-select: none;
-  }
-  details.underhood > summary::-webkit-details-marker { display: none; }
-  details.underhood > summary:hover { color: var(--ink); }
-  details.underhood > summary .uh-ic { font-size: 16px; }
-  details.underhood > summary .uh-hint { margin-left: auto; font-size: 11px; font-weight: 600;
-    letter-spacing: .04em; text-transform: none; color: var(--ink-dim); opacity: .8; }
-  details.underhood[open] > summary { border-bottom: 1px solid var(--border); }
-  details.underhood[open] > summary .uh-hint::after { content: ""; }
-  details.underhood .uh-body { padding: 16px 16px 2px; }
-  details.underhood .uh-body .card:last-child { margin-bottom: 14px; }
+  .uh-divider .uh-ic { font-size: 16px; }
   .card p:first-of-type { margin-top: 0; }
   .card p:last-child { margin-bottom: 0; }
 
@@ -861,9 +849,7 @@ const App = (function () {
       section("deriv", "📜", "Why it's true — derivation &amp; intuition", l.derivation) +
       section("example", "🔢", "Concrete example (real numbers)", l.example);
     const underHoodWrap = underHood.trim()
-      ? `<details class="underhood" ontoggle="if(this.open)App.typeset(this)">` +
-          `<summary><span class="uh-ic">🔬</span> Under the hood — the math &amp; intuition <span class="uh-hint">click to expand ▾</span></summary>` +
-          `<div class="uh-body">${underHood}</div></details>`
+      ? `<div class="uh-divider"><span class="uh-ic">🔬</span> Under the hood — the math &amp; intuition</div>${underHood}`
       : "";
 
     const html =
