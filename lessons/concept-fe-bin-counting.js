@@ -1,11 +1,11 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 5, "Bin Counting".
+/* Feature Engineering — Chapter 5, "Bin Counting".
    BEGINNER lesson. Self-contained: lesson + CODE + CODEVIZ merged by id "fe-bin-counting". */
 (function () {
   window.LESSONS.push({
     id: "fe-bin-counting",
     title: "Bin counting: encode a category by its target rate",
     tagline: "Replace a giant category (device ID, zip) with the click rate it has historically produced.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     // Verified against window.LESSONS: only skill-leakage and fe-binning exist as files.
     // (fe-categorical-encoding / fe-feature-hashing are planned siblings but not yet authored.)
     prereqs: ["fe-binning", "skill-leakage"],

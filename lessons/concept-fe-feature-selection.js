@@ -3,7 +3,7 @@
     id: "fe-feature-selection",
     title: "Feature Selection",
     tagline: "Throw away features that do not help, so the model is cheaper, faster, and overfits less.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["ml-regularization", "met-association", "skill-validation"],
     whenToUse:
       `<p><b>Feature selection is pruning.</b> You have many input columns. Some carry signal about the target. Many do not. <b>Feature selection</b> keeps the useful ones and drops the rest. Chapter 2 of Zheng &amp; Casari frames the payoff plainly: fewer features means a model that is <b>cheaper to train and serve</b>, <b>less prone to overfitting</b>, and <b>easier to understand</b>.</p>

@@ -19,7 +19,7 @@
     id: "fe-phrase-detection",
     title: "Parsing, tokenization & phrase detection",
     tagline: "Keep meaningful multi-word phrases like \"New York\" as single features instead of splitting them into useless single words.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["met-distribution"],
 
     whenToUse:

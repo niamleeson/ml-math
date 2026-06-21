@@ -1,4 +1,4 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 8, "Automating the Featurizer:
+/* Feature Engineering — Chapter 8, "Automating the Featurizer:
    Image Feature Extraction" (the MANUAL part: SIFT & HOG, built from image gradients).
    BEGINNER lesson. Self-contained: lesson + CODE + CODEVIZ merged by id "fe-image-features". */
 (function () {
@@ -6,7 +6,7 @@
     id: "fe-image-features",
     title: "Hand-designed image features: gradients, HOG, and SIFT",
     tagline: "Before deep nets, vision turned raw pixels into edge-orientation histograms (HOG, SIFT) to get robust shape features.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["fnd-gradient", "dl-conv", "fe-what-is-a-feature"],
 
     bigIdea:

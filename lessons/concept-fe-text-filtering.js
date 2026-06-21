@@ -13,7 +13,7 @@
     id: "fe-text-filtering",
     title: "Filtering for cleaner text features",
     tagline: "Throw away the words that carry no signal — stopwords, the too-common and too-rare, and word variants — so your bag-of-words is small and meaningful.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: [],
 
     whenToUse:

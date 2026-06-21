@@ -3,7 +3,7 @@
     id: "fe-scaling-normalization",
     title: "Feature Scaling or Normalization",
     tagline: "Put features that live on wildly different scales onto a common footing — so distance- and gradient-based models stop being bullied by the big-numbered column.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["met-distribution", "skill-validation", "skill-leakage"],
     whenToUse:
       `<p><b>Reach for scaling whenever a feature's raw magnitude — not its information — would dominate the model.</b> One column might be "number of words" (in the hundreds) and another "color hue" (around 1). A model that measures distances or follows gradients treats the hundreds-column as if it mattered hundreds of times more, purely because of the units. Scaling fixes the units so every feature gets a fair say.</p>

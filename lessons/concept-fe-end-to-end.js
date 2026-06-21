@@ -11,7 +11,7 @@
     id: "fe-end-to-end",
     title: "Back to the feature: an end-to-end paper recommender",
     tagline: "Compose the book's transforms into one pipeline — one-hot the categories, scale the numbers, normalize, and retrieve nearest neighbors.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["fe-bag-of-words", "fe-scaling-normalization", "fe-tfidf", "ml-pca", "met-ranking", "met-recsys"],
 
     whenToUse:

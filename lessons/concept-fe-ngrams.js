@@ -3,7 +3,7 @@
    From Alice Zheng & Amanda Casari, "Feature Engineering for Machine
    Learning" (O'Reilly 2018), Chapter 3 — "Text Data: Flattening,
    Filtering, and Chunking", the "Bag-of-n-Grams" section.
-   BEGINNER audience. Module: "Feature Engineering (Zheng & Casari)".
+   BEGINNER audience. Module: "Feature Engineering".
      - short sentences, one idea each
      - every symbol defined in plain English BEFORE it is used
      - HTML teaching fields; math in $...$ / $$...$$ with DOUBLED backslashes
@@ -16,7 +16,7 @@
     id: "fe-ngrams",
     title: "Bag-of-n-Grams",
     tagline: "Count word-pairs and word-triples, not just single words — so \"not good\" can become its own feature.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: [],
 
     whenToUse:

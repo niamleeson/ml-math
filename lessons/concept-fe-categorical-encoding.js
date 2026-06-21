@@ -1,11 +1,11 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 5, "Encoding Categorical Variables".
+/* Feature Engineering — Chapter 5, "Encoding Categorical Variables".
    BEGINNER lesson. Self-contained: lesson + CODE + CODEVIZ merged by id "fe-categorical-encoding". */
 (function () {
   window.LESSONS.push({
     id: "fe-categorical-encoding",
     title: "Encoding categorical variables: one-hot, dummy, and effect coding",
     tagline: "Turn a category like city or browser into numbers a model can use, without inventing a fake order.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["fe-binning", "ml-classification-metrics"],
 
     bigIdea:

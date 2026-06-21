@@ -9,7 +9,7 @@
     id: "fe-interaction-features",
     title: "Interaction features (products of features)",
     tagline: "Multiply two features so a linear model can say 'the effect of one depends on the other'.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["ml-linear-regression", "ml-regularization", "ml-bias-variance"],
 
     whenToUse:

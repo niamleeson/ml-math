@@ -1,11 +1,11 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 5, "Feature Hashing".
+/* Feature Engineering — Chapter 5, "Feature Hashing".
    BEGINNER lesson. Self-contained: lesson + CODE + CODEVIZ merged by id "fe-feature-hashing". */
 (function () {
   window.LESSONS.push({
     id: "fe-feature-hashing",
     title: "Feature hashing: the hashing trick for huge category spaces",
     tagline: "Hash millions of categories into a fixed number of buckets — no vocabulary stored, no matter how many categories appear.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: [],
 
     bigIdea:

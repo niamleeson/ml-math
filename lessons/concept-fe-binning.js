@@ -1,11 +1,11 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 2, "Quantization or Binning".
+/* Feature Engineering — Chapter 2, "Quantization or Binning".
    BEGINNER lesson. Self-contained: lesson + CODE + CODEVIZ merged by id "fe-binning". */
 (function () {
   window.LESSONS.push({
     id: "fe-binning",
     title: "Quantization (binning): turning counts into buckets",
     tagline: "Chop a heavy-tailed count into a handful of bins so the big values stop dominating.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: [],
 
     bigIdea:

@@ -9,7 +9,7 @@
     id: "fe-tfidf",
     title: "From bag-of-words to tf-idf: scaling text features",
     tagline: "Weight each word by how rare it is across documents, so common words stop drowning out the signal.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["met-distribution"],
 
     whenToUse:

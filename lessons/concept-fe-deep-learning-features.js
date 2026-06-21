@@ -1,4 +1,4 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 8, "Deep Learning... as the latest
+/* Feature Engineering — Chapter 8, "Deep Learning... as the latest
    feature extraction technique for images".
    Self-contained: lesson + CODE + CODEVIZ merged by id "fe-deep-learning-features". */
 (function () {
@@ -6,7 +6,7 @@
     id: "fe-deep-learning-features",
     title: "Deep learning as a feature extractor for images",
     tagline: "Let a convolutional network LEARN the image features, then reuse its activations instead of hand-designing SIFT or HOG.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["dl-conv", "dl-cnn-params", "fs-transfer-learning"],
 
     bigIdea:

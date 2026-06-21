@@ -1,4 +1,4 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 6,
+/* Feature Engineering — Chapter 6,
    "Dimensionality Reduction: Squashing the Data Pancake with PCA".
    The FEATURE-ENGINEERING angle on PCA: PCA as a featurizer / dimensionality reducer.
    Self-contained: lesson + CODE + CODEVIZ merged by id "fe-pca". */
@@ -7,7 +7,7 @@
     id: "fe-pca",
     title: "PCA as a featurizer: squashing the data pancake",
     tagline: "Find the few directions where the data spreads out the most, keep those, and drop the rest.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["ml-pca", "la-svd", "fnd-eigen"],
 
     bigIdea:

@@ -1,4 +1,4 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 7,
+/* Feature Engineering — Chapter 7,
    "Nonlinear Featurization via K-Means Model Stacking".
    Self-contained: lesson + CODE + CODEVIZ merged by id "fe-kmeans-featurization".
    Cross-links the existing ml-kmeans lesson — this is the FEATURIZATION angle on k-means. */
@@ -7,7 +7,7 @@
     id: "fe-kmeans-featurization",
     title: "K-means as a feature generator (model stacking)",
     tagline: "Cluster the data, then use cluster membership as new features so a plain linear model can carve nonlinear boundaries.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["ml-kmeans", "ml-pca"],
 
     bigIdea:

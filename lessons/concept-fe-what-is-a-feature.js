@@ -13,7 +13,7 @@
     id: "fe-what-is-a-feature",
     title: "What is a feature?",
     tagline: "A feature is a number that stands for one aspect of your raw data; features sit between the data and the model.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["ml-classification-metrics"],
 
     whenToUse:

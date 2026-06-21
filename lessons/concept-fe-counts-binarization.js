@@ -3,7 +3,7 @@
     id: "fe-counts-binarization",
     title: "Dealing with Counts: Binarization",
     tagline: "Sometimes only presence matters, not how much — clip a raw count to 0/1.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["met-distribution", "met-recsys"],
     whenToUse:
       `<p><b>Reach for binarization when a count is being used to mean "did this happen at all?"</b> Raw counts are tempting to feed straight into a model, but they often carry far more magnitude than the task actually needs. Zheng &amp; Casari open Chapter 2 with the warning that <i>raw counts can span many orders of magnitude</i> — and when one feature ranges from 1 to tens of thousands, it can dominate the model's loss and drown out everything else.</p>

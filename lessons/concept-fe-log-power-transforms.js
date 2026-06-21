@@ -8,7 +8,7 @@
     id: "fe-log-power-transforms",
     title: "Log & Power Transforms (Box-Cox)",
     tagline: "Squash a long-tailed positive feature so it looks more like a bell curve.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["met-regression", "met-distribution"],
 
     whenToUse:

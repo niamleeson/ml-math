@@ -1,11 +1,11 @@
-/* Feature Engineering (Zheng & Casari) — Chapter 3, "Bag-of-Words".
+/* Feature Engineering — Chapter 3, "Bag-of-Words".
    Self-contained: lesson + CODE + CODEVIZ merged by id "fe-bag-of-words". */
 (function () {
   window.LESSONS.push({
     id: "fe-bag-of-words",
     title: "Bag-of-Words: turning text into a vector of word counts",
     tagline: "Count how many times each vocabulary word appears in a document, ignore the order.",
-    module: "Feature Engineering (Zheng & Casari)",
+    module: "Feature Engineering",
     prereqs: ["dl-word-embeddings", "met-distribution"],
 
     bigIdea:
