@@ -116,6 +116,30 @@
       `<p>Meta-learning shines when each new task has very little data. A robot arm meeting a new object, a drug-response model for a rare disease, or a phone keyboard adapting to your typing in a few taps.</p>
        <p>It also underpins fast personalization: a shared model is meta-trained across many users, then adapts to one new user from just a handful of their examples.</p>`,
 
+    whenToUse:
+      `<p><b>Reach for meta-learning when you face a stream of related tasks, each with very little data, and you want a model that <i>learns to adapt fast</i></b> — new robot objects, per-user personalization, per-patient drug response. MAML (Model-Agnostic Meta-Learning) trains an initialization from which a few gradient steps on a tiny new support set reach good accuracy.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>Plain transfer learning</b> — when you have <i>many</i> small tasks, not one; meta-learning optimizes directly for fast adaptation, while a single pretrained backbone is not tuned for few-step updates.</li>
+         <li><b>Prototype-based few-shot</b> — when each new task needs real gradient updates (regression, control), not just nearest-prototype classification.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>You have one task with plenty of data — ordinary supervised training is simpler and stronger.</li>
+         <li>You only ever classify new classes by similarity — <a onclick="App.open('fs-few-shot')">few-shot</a> prototypes are cheaper and need no inner-loop gradients.</li>
+         <li>Adaptation can happen purely in a prompt — use <a onclick="App.open('fs-in-context')">in-context learning</a>, which adapts with no weight updates at all.</li>
+       </ul>
+       <p><b>Which library:</b> <code>learn2learn</code> or <code>higher</code> for MAML and its first-order variants in PyTorch.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Second-order cost and instability.</b> True MAML differentiates through the inner-loop gradient step, which is memory-heavy and can blow up. Use first-order MAML or Reptile when the full second-order term is too costly.</li>
+         <li><b>Inner / outer learning-rate coupling.</b> The inner step size $\\alpha$ and outer step size $\\beta$ interact tightly; a bad pair gives divergence or no adaptation. Tune them together, starting with a small $\\alpha$.</li>
+         <li><b>Task distribution mismatch.</b> Meta-training tasks must resemble the tasks you will face at test time. If they differ, the learned initialization adapts to the wrong thing. Sample meta-training tasks to match deployment.</li>
+         <li><b>Meta-overfitting.</b> With too few or too-similar training tasks, the model memorizes them and fails on genuinely new tasks. Hold out novel <i>tasks</i> (not just examples) for evaluation.</li>
+         <li><b>Support / query leakage.</b> Reusing the same examples in the inner-loop support set and the outer-loop query set inflates the meta-objective. Keep them disjoint within every episode.</li>
+         <li><b>Adaptation step count drift.</b> Adapting with 5 inner steps in training but 50 at deployment changes behavior. Match the number of inner steps used at train and test time.</li>
+       </ul>`,
+
     practice: [
       {
         q: `Why does MAML optimize the loss at the adapted weights $\\theta'$ instead of at the shared start $\\theta$?`,

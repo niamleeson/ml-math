@@ -123,6 +123,29 @@
        <p>One warning: the answer is sensitive to the examples. Swap in worse examples, or reorder them, and the prediction can flip. The format and the choice of demonstrations matter.</p>`,
     application:
       `<p>In-context learning is why modern chatbots feel so flexible. You can paste a couple of examples of the formatting or style you want, and the model copies it — with no fine-tuning, no GPUs, no waiting. It powers prompt-engineering tricks like giving a model two or three labelled examples before asking it to classify, translate, or extract data in the same shape.</p>`,
+    whenToUse:
+      `<p><b>Reach for in-context learning when you have a capable LLM (Large Language Model) and want it to do a new task by simply showing it a few examples in the prompt</b> — no training, no GPUs, instant. It is the fastest way to prototype classification, extraction, translation, or reformatting when the task can be demonstrated in text.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>Fine-tuning</b> — when you need a result <i>today</i>, the task changes often, or you lack the data and compute to train; a prompt edit is free and immediate.</li>
+         <li><b>Building a custom classifier</b> — when the label set or format shifts per request and a fixed model would be too rigid.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>You have many labeled examples and need maximum accuracy or low cost per call — <a onclick="App.open('fs-transfer-learning')">fine-tuning</a> a smaller model wins on both.</li>
+         <li>The examples needed exceed the context window, or per-call latency and token cost are unacceptable — bake the knowledge into weights instead.</li>
+         <li>The task is non-text (raw images, tabular) with no language interface — use a trained model for that modality.</li>
+       </ul>
+       <p><b>Which library:</b> any LLM API (Anthropic, OpenAI) or local <code>transformers</code> models; pair with a retrieval step to select the best in-context examples.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Prompt sensitivity.</b> Wording, order, and formatting of the examples swing accuracy a lot. Test variations, fix a clear template, and keep example formatting identical to the query.</li>
+         <li><b>Example-order and recency bias.</b> Models over-weight the last example and the majority label among the shots. Shuffle, balance the labels across examples, and re-test.</li>
+         <li><b>Context-window limits and cost.</b> Every example is re-sent and re-billed on every call, and too many overflow the window. Keep the demonstrations minimal and retrieve only the most relevant ones.</li>
+         <li><b>No real learning persists.</b> The model forgets the moment the prompt ends — nothing is saved to weights. If the task is permanent and high-volume, fine-tune instead.</li>
+         <li><b>Label leakage from pretraining.</b> The model may already know your "test" answers from its training data, so a benchmark looks better than real performance. Validate on genuinely fresh, private data.</li>
+         <li><b>Distractible by irrelevant context.</b> Long or noisy prompts let the model latch onto the wrong cue. Keep the prompt tight and put the instruction clearly before the examples.</li>
+       </ul>`,
     practice: [
       {
         q: `You give an LLM three labelled examples in the prompt, then a new sentence to classify. What is $K$, and is this zero-shot, one-shot, or few-shot?`,

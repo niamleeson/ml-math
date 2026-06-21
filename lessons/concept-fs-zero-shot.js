@@ -155,6 +155,29 @@
     application:
       `<p>Zero-shot learning is everywhere in modern AI. <b>CLIP</b> (Contrastive Language-Image Pretraining) classifies an image into any list of labels you type, with no fine-tuning: it embeds the image and each label-sentence, then picks the nearest sentence. Large language models do zero-shot text classification the same way. And attribute-based zero-shot lets vision systems flag rare or never-photographed categories (new animal species, rare defects) from a written description alone.</p>`,
 
+    whenToUse:
+      `<p><b>Reach for zero-shot when you have a label or description but no labeled training examples at all for that class</b> — a brand-new product category, a rare defect, an ad-hoc set of tags a user types at run time. A model pretrained to align inputs with text lets you classify by comparing the input's embedding to each label's embedding.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>Collecting and labeling data</b> — when no examples exist yet, or the label set changes per request, so training a classifier is impossible.</li>
+         <li><b>Few-shot learning</b> — when you have <i>zero</i> examples rather than a handful; if even one or two examples exist, <a onclick="App.open('fs-few-shot')">few-shot</a> usually beats pure zero-shot.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>You do have labeled data for the classes — a trained classifier or fine-tuned model will be more accurate.</li>
+         <li>The classes are subtle or fine-grained (bird subspecies) where a text description can't separate them — gather a few examples and go few-shot.</li>
+       </ul>
+       <p><b>Which library:</b> <code>open_clip</code> or Hugging Face <code>transformers</code> for CLIP-style image / text alignment and zero-shot pipelines.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Prompt sensitivity.</b> "a photo of a cat" versus "cat" can swing accuracy by many points. Test several prompt templates and ensemble them, or use prompt tuning.</li>
+         <li><b>Calibration across labels.</b> Raw similarity scores are not comparable probabilities across classes, so a temperature-scaled softmax over labels is needed before thresholding. Calibrate on a small validation set.</li>
+         <li><b>Label set wording matters.</b> Ambiguous, overlapping, or jargon labels confuse the text encoder. Use clear, mutually distinct descriptions and expand abbreviations.</li>
+         <li><b>Pretraining bias and blind spots.</b> The model only knows concepts seen during pretraining; truly novel or culturally specific classes fail silently. Validate on real examples before trusting it.</li>
+         <li><b>Evaluation leakage.</b> If your "zero-shot" test classes actually appeared in the pretraining corpus, scores are inflated and not really zero-shot. Check overlap honestly.</li>
+         <li><b>Fine-grained failure.</b> Zero-shot struggles to separate look-alike classes a sentence cannot distinguish. Fall back to few-shot when distinctions are visual and subtle.</li>
+       </ul>`,
+
     practice: [
       {
         q: `Three class descriptions: $s_{\\text{cat}} = [1, 0]$, $s_{\\text{dog}} = [0, 1]$, $s_{\\text{wolf}} = [0, 1]$ (a wolf is described like a dog). A new image embeds to $g(x) = [0.1, 0.9]$. Which class wins, and why might cat lose badly?`,

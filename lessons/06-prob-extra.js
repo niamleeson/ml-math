@@ -73,6 +73,24 @@ L({
      </ul>`,
   application:
     `<p>Generating random samples from a target distribution uses this idea in reverse: if $U$ is uniform on $[0,1]$, then $X = F^{-1}(U)$ has CDF $F$ (the "inverse-transform" trick). Reparameterization in variational autoencoders pushes a simple noise variable through a learned $g$ to get a complex one.</p>`,
+  whenToUse:
+    `<p><b>Reach for the change-of-variables formula whenever you push a known random variable through a deterministic function and need the new density</b> — not just a sample, but the actual probability per unit length. This is the everyday tool behind sampling and likelihood math in modern generative models.</p>
+     <p><b>Where it unlocks real ML / AI (Artificial Intelligence) work:</b></p>
+     <ul>
+       <li><b>Normalizing flows</b> — the whole model is a stack of invertible $g$'s, and training maximizes the exact log-likelihood, which is just $\\log f_X(h(y)) + \\log\\left|\\frac{dh}{dy}\\right|$. The Jacobian (the multi-dimensional version of the slope term) is the entire game.</li>
+       <li><b>The reparameterization trick</b> in a VAE (Variational Autoencoder) — sample $\\epsilon$ from a fixed simple density, then map it through $g$ so gradients can flow through the sampler.</li>
+       <li><b>Inverse-transform sampling</b> — when you only have a uniform generator and need draws from some target distribution.</li>
+     </ul>
+     <p><b>Use a different tool when:</b> the transform is not invertible (use the CDF (Cumulative Distribution Function) method and split into monotone pieces), the map is many-to-one or loses dimensions (the density formula breaks — fall back to direct integration), or you only need samples and never the density (just push samples through $g$). In practice, libraries like PyTorch <code>TransformedDistribution</code> or TensorFlow Probability bijectors track the Jacobian for you.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting the Jacobian / slope factor.</b> The single most common error is writing $f_Y(y) = f_X(h(y))$ and dropping the $\\left|\\frac{dh}{dy}\\right|$. Without it the result does not integrate to 1 and your log-likelihood is simply wrong.</li>
+       <li><b>Confusing $g$ and $g^{-1}$.</b> You evaluate the old density at $h(y) = g^{-1}(y)$ and differentiate the <i>inverse</i>, not $g$. Mixing these up flips the stretch factor upside down.</li>
+       <li><b>Assuming the function is one-to-one when it is not.</b> For $Y = X^2$ over all of $\\mathbb{R}$, two $x$ values map to each $y$; you must add both branches. The one-line formula only covers the monotone case.</li>
+       <li><b>Ignoring the support.</b> The new density lives only on the image of the old support. Returning a value outside the valid range of $y$ (or off by the endpoints) is a frequent off-by-one-style bug.</li>
+       <li><b>Numerical blow-up where the slope is huge.</b> Near points where $g$ is nearly flat, $\\left|\\frac{dh}{dy}\\right|$ explodes (as at $y=0$ for $Y=X^2$). Work in log-space and clamp, exactly as flow implementations do.</li>
+       <li><b>Singular Jacobian in higher dimensions.</b> If the multivariate map collapses a direction, the Jacobian determinant is 0 and the density is undefined — the transform must be a genuine bijection.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
@@ -222,6 +240,24 @@ L({
      </ul>`,
   application:
     `<p>Total latency across independent services is a convolution of per-service latencies. Adding independent noise sources, bootstrap resampling sums, and the spread of a random walk after many steps are all convolutions. The bell-shape pile-up is the Central Limit Theorem at work.</p>`,
+  whenToUse:
+    `<p><b>Reach for convolution whenever you need the distribution of a sum of independent random variables</b> — not just its mean or variance, but the full shape. Sums show up constantly in ML: pooled latencies, accumulated noise, aggregated counts, and bootstrap totals.</p>
+     <p><b>Where it unlocks real ML / AI (Artificial Intelligence) work:</b></p>
+     <ul>
+       <li><b>Reasoning about additive noise.</b> When you inject independent noise (differential privacy, diffusion model forward steps, data augmentation), the resulting distribution is a convolution. Diffusion's "add Gaussian noise $T$ times" is a chain of convolutions, which is why each step stays Gaussian.</li>
+       <li><b>Tail and SLA (Service Level Agreement) estimation.</b> End-to-end latency of independent stages is the convolution of their latencies; you need the convolved tail, not the sum of means, to predict the 99th percentile.</li>
+       <li><b>Justifying the Gaussian assumption.</b> Convolution explains why averaging many independent effects gives the bell curve (the Central Limit Theorem), the basis for least-squares and most error bars.</li>
+     </ul>
+     <p><b>Use a different tool when:</b> the variables are <i>dependent</i> (convolution silently gives the wrong answer — model the joint distribution instead, or use copulas), you only need the mean and variance (just add them — no convolution needed), or you want a sample rather than the density (draw each variable and add). For named families (Normal, Poisson, Gamma) use the closed-form "add the parameters" shortcut; reach for the FFT (Fast Fourier Transform) only when convolving long discrete histograms numerically.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The independence assumption is load-bearing.</b> The product $f_X(x)\\,f_Y(z-x)$ only holds when $X$ and $Y$ are independent. Correlated inputs make convolution flat-out wrong — and real-world stages (shared queues, shared load) are often correlated.</li>
+       <li><b>Add variances, never standard deviations.</b> For sums it is the variances that add ($\\sigma_Z^2 = \\sigma_X^2 + \\sigma_Y^2$). Adding the standard deviations overstates the spread every time.</li>
+       <li><b>Getting the support limits wrong.</b> The integral runs only where both $f_X(x)$ and $f_Y(z-x)$ are nonzero. Convolving two things on $[0,\\infty)$ but integrating over all of $\\mathbb{R}$ is a classic off-by-the-bounds error.</li>
+       <li><b>Discrete index bookkeeping.</b> For PMFs (Probability Mass Functions), each output index $z$ needs every pair $(x, z-x)$ that lands there; a wrong loop range drops or double-counts terms.</li>
+       <li><b>It is the sum, not the average.</b> The average $\\frac{X+Y}{2}$ is the convolved sum then rescaled — and rescaling re-triggers the change-of-variables Jacobian. Forgetting the rescale halves nothing correctly.</li>
+       <li><b>Numerical cost and aliasing.</b> Direct convolution of long histograms is $O(n^2)$; switching to the FFT (Fast Fourier Transform) is faster but wraps around (circular convolution) unless you zero-pad, which silently corrupts the tails.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
@@ -346,6 +382,25 @@ L({
      </ul>`,
   application:
     `<p>This is the bias–variance and ANOVA (Analysis of Variance) backbone. Mixed-effects models split variance into within-subject and between-subject parts. Ensemble methods reduce the within term by averaging; "explained variance" $R^2$ is the between-group share of the total. It also underlies Rao–Blackwell variance reduction in estimators.</p>`,
+  whenToUse:
+    `<p><b>Reach for the law of total variance whenever you need to decide where a model's uncertainty comes from</b> — the part explained by a grouping or conditioning variable versus the irreducible scatter that remains. It is the bookkeeping identity behind variance decomposition across ML.</p>
+     <p><b>Where it unlocks real ML / AI (Artificial Intelligence) work:</b></p>
+     <ul>
+       <li><b>Splitting predictive uncertainty</b> into <i>aleatoric</i> (the within-group $E[\\operatorname{Var}(X \\mid Y)]$ — noise you cannot remove) and <i>epistemic</i> (the between-group $\\operatorname{Var}(E[X \\mid Y])$ — uncertainty about the model). Bayesian and deep-ensemble uncertainty estimates use exactly this split.</li>
+       <li><b>Understanding ensembles and bagging.</b> Averaging many models shrinks the within term, which is why bagging reduces variance; this identity makes that precise.</li>
+       <li><b>$R^2$ and ANOVA.</b> "Explained variance" is the between-group share of the total — a direct application that powers feature-importance and experiment analysis.</li>
+       <li><b>Rao–Blackwellization</b> — conditioning on a sufficient statistic can only lower variance, a fact that falls straight out of this law.</li>
+     </ul>
+     <p><b>Use a different tool when:</b> you only have point predictions with no notion of groups or conditioning (there is nothing to decompose), or the quantities are not square-integrable so variances do not exist (use robust spread measures instead). The identity is exact, so there is no "alternative method" — but estimating each term from finite data is where the care goes.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting the within term entirely.</b> People remember "variance of the group means" (between) and drop $E[\\operatorname{Var}(X \\mid Y)]$. The two <i>add</i>; the between part alone undercounts the total spread.</li>
+       <li><b>Confusing $\\operatorname{Var}(E[X \\mid Y])$ with $E[\\operatorname{Var}(X \\mid Y)]$.</b> One is the variance of an average, the other the average of a variance — different numbers. Swapping them is the most common algebra slip.</li>
+       <li><b>Unequal group sizes.</b> The outer expectation weights each group by its probability, not equally. With imbalanced groups, a plain unweighted average of the per-group variances is wrong.</li>
+       <li><b>Estimator bias on small groups.</b> Conditional variances estimated from tiny groups are noisy and biased low (the $n$ vs $n-1$ correction), which inflates the apparent between-group share. Pool or regularize sparse groups.</li>
+       <li><b>Reading aleatoric / epistemic backwards.</b> The within term is the irreducible noise; the between term is what conditioning explains. Labeling them the wrong way around inverts your uncertainty story.</li>
+       <li><b>Assuming independence you do not have.</b> The law itself needs none, but downstream "just add the variances" shortcuts do — applying them to correlated components double-counts shared variance.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
@@ -487,6 +542,24 @@ L({
      </ul>`,
   application:
     `<p>MGFs prove that sums of independent Poissons are Poisson and sums of independent Normals are Normal (multiply the MGFs, recognize the form). They power Chernoff bounds — the backbone of concentration inequalities and generalization bounds in learning theory — by bounding $P(X \\ge a) \\le e^{-ta}M_X(t)$.</p>`,
+  whenToUse:
+    `<p><b>Reach for the moment generating function (MGF) when you need to control the <i>tail</i> of a sum of independent random variables</b> — the probability of a rare large deviation — rather than just its mean. This is the engine behind the concentration inequalities that justify why averages converge and why learned models generalize.</p>
+     <p><b>Where it unlocks real ML / AI (Artificial Intelligence) work:</b></p>
+     <ul>
+       <li><b>Chernoff and Hoeffding bounds.</b> Bounding $P(X \\ge a) \\le e^{-ta}M_X(t)$ and optimizing over $t$ gives exponential tail bounds — the basis of sample-complexity and generalization guarantees in learning theory.</li>
+       <li><b>Bandits and PAC (Probably Approximately Correct) analysis.</b> Confidence radii in UCB (Upper Confidence Bound) algorithms and the bounds behind A/B test sizing come straight from MGF / sub-Gaussian arguments.</li>
+       <li><b>Proving distributions of sums.</b> Because $M_{X+Y}(t) = M_X(t)\\,M_Y(t)$ for independent variables, MGFs cleanly show sums of independent Normals are Normal, sums of Poissons are Poisson, and so on.</li>
+     </ul>
+     <p><b>Use a different tool when:</b> the MGF does not exist (heavy-tailed variables like Cauchy or anything without all moments — use the characteristic function $\\varphi_X(t)=E[e^{itX}]$, which always exists), you only need the mean and variance (compute them directly), or the variables are dependent (the product rule fails — use martingale or coupling bounds instead). For named families the MGF has a known closed form you can look up; you rarely derive it from scratch in production.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The MGF may not exist.</b> $M_X(t) = E[e^{tX}]$ is only finite on an interval around 0 for light-tailed variables. For heavy tails it diverges for every $t>0$, so any "moment via the MGF" argument is invalid — switch to the characteristic function.</li>
+       <li><b>Region of convergence matters.</b> For the exponential, $M_X(t)=\\frac{\\lambda}{\\lambda - t}$ is only valid for $t &lt; \\lambda$; plugging in $t \\ge \\lambda$ gives nonsense. Always carry the range of $t$.</li>
+       <li><b>Evaluate derivatives at exactly $t=0$.</b> Moments are $M_X^{(n)}(0)$. Reading the slope at any other $t$ does not give $E[X]$ — a frequent slip when differentiating numerically.</li>
+       <li><b>Product rule needs independence.</b> $M_{X+Y}=M_X M_Y$ holds only for independent $X,Y$. Multiplying MGFs of correlated variables silently gives the wrong distribution.</li>
+       <li><b>Numerical overflow.</b> $e^{tX}$ explodes for large $tX$, so Monte-Carlo estimates of the MGF have enormous variance and overflow. Work with the cumulant generating function $\\log M_X(t)$ and log-sum-exp tricks.</li>
+       <li><b>Loose Chernoff bounds.</b> The bound holds for <i>every</i> $t$ in the valid range, but only the optimized $t$ is tight. Forgetting to minimize over $t$ leaves a uselessly weak tail bound.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);

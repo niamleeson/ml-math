@@ -105,6 +105,28 @@ L({
      <p>So this neuron outputs $z = 8$ before its activation. The bias nudged the answer from 5 up to 8.</p>`,
   application:
     `<p>Every layer of every deep network is full of these neurons. A digit recognizer might have 784 inputs (the pixels), a few hidden layers of neurons, and 10 output neurons (one per digit 0-9).</p>`,
+  whenToUse:
+    `<p><b>Reach for a fully-connected (dense) layer of neurons</b> when your input is a flat vector of features and you want the network to learn arbitrary combinations of them. It is the universal building block: stack a few with nonlinear activations and you can approximate almost any function on tabular or already-extracted features.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain linear or logistic regression</b> — when the relationship is nonlinear and features interact in ways a single weighted sum cannot capture.</li>
+       <li><b>Gradient-boosted trees</b> — when you specifically want a differentiable model you can fine-tune, attach to other neural layers, or train on a GPU (Graphics Processing Unit) end to end.</li>
+     </ul>
+     <p><b>Pick a different layer when:</b></p>
+     <ul>
+       <li>The input is an image with spatial structure — a Conv (Convolutional) layer shares weights and sees far fewer parameters.</li>
+       <li>The input is a sequence — an RNN (Recurrent Neural Network) or attention layer respects order and length.</li>
+       <li>The input is raw tabular data with mixed types and you want top accuracy with little tuning — gradient-boosted trees usually win.</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.Linear</code> in PyTorch or <code>Dense</code> in Keras, with a ReLU (Rectified Linear Unit) activation between layers.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>No nonlinearity means no power.</b> Stacking dense layers without an activation between them collapses to a single linear layer. Always insert a nonlinear activation, or the depth buys you nothing.</li>
+       <li><b>Unscaled inputs stall learning.</b> A neuron's dot product explodes when one feature is in the thousands and another near zero. Standardize inputs (zero mean, unit variance) before the first layer.</li>
+       <li><b>Forgetting the bias term.</b> Without $b$ the neuron's boundary is forced through the origin. Keep the bias unless a normalization layer makes it redundant.</li>
+       <li><b>Parameter blow-up on wide inputs.</b> A dense layer on flattened high-resolution images has millions of weights and overfits instantly. Use convolutions for spatial data instead of flattening into one big dense layer.</li>
+       <li><b>Dead or saturated neurons.</b> Bad weight scale plus a saturating activation can freeze a neuron's output. Use sensible initialization and ReLU-family activations to keep gradients flowing.</li>
+     </ul>`,
   quiz: {
     q: `A neuron has $w = [2, -1]$, $b = 1$, and input $x = [3, 5]$. Find $z$.`,
     a: `<p>Dot product: $2\\times3 + (-1)\\times5 = 6 - 5 = 1$. Add bias: $z = 1 + 1 = 2$.</p>`
@@ -171,6 +193,25 @@ L({
      <p>The punchline: doubling the input from 2 to 4 does <i>not</i> double sigmoid or tanh. A straight line would — that bend is exactly what lets stacked layers learn curvy patterns.</p>`,
   application:
     `<p>ReLU powers almost all modern image and language networks because it trains fast. Sigmoid is used at the very end for yes/no predictions. Tanh shows up inside older recurrent networks.</p>`,
+  whenToUse:
+    `<p><b>You need an activation between every pair of learnable layers</b> — the choice depends on where in the network you are. For hidden layers the default is ReLU (Rectified Linear Unit); for the output it depends on the task.</p>
+     <p><b>Choose by position:</b></p>
+     <ul>
+       <li><b>ReLU</b> for hidden layers — cheap, non-saturating for positive inputs, and the safe default for most CNNs (Convolutional Neural Networks) and dense networks.</li>
+       <li><b>Leaky ReLU or GELU (Gaussian Error Linear Unit)</b> — when you hit dead neurons (Leaky) or are training Transformers (GELU is the modern default there).</li>
+       <li><b>Sigmoid</b> only at the output for binary (yes/no) probability, or inside gates — not in hidden layers, where it saturates and kills gradients.</li>
+       <li><b>Tanh</b> when you want a zero-centered squashing function, common inside classic RNNs (Recurrent Neural Networks).</li>
+       <li><b>Softmax</b> at the output for multi-class probabilities that sum to 1.</li>
+     </ul>
+     <p><b>In practice:</b> start with ReLU everywhere hidden, pick the output activation from the loss you use (sigmoid with binary cross-entropy, softmax with categorical cross-entropy).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Dying ReLU.</b> A large negative bias or bad init can push a neuron permanently below zero so it never updates. Use Leaky ReLU or He-initialization, and watch for whole layers outputting zeros.</li>
+       <li><b>Sigmoid / tanh saturation.</b> Far from zero their gradient is near zero, so deep stacks of them vanish gradients. Keep them out of deep hidden layers.</li>
+       <li><b>Softmax plus a separate log is numerically unstable.</b> Use the fused <code>cross_entropy</code> (log-softmax) op rather than computing softmax then taking a log yourself.</li>
+       <li><b>Double-squashing the output.</b> Applying sigmoid in the model <i>and</i> using a loss that expects raw logits double-counts the nonlinearity. Feed raw logits to <code>BCEWithLogitsLoss</code>-style losses.</li>
+       <li><b>Wrong output activation for the task.</b> Sigmoid on a 10-class problem or softmax on multi-label outputs gives nonsensical probabilities. Match the activation to whether classes are exclusive.</li>
+     </ul>`,
   quiz: {
     q: `Apply ReLU to $z = -7$ and to $z = 4$.`,
     a: `<p>ReLU$(-7) = \\max(0, -7) = 0$. ReLU$(4) = \\max(0, 4) = 4$.</p>`
@@ -279,6 +320,23 @@ L({
      <p>Notice the output of layer 1 (which was 5) became the input to layer 2. That chaining is forward propagation.</p>`,
   application:
     `<p>Every time you ask a chatbot a question or a phone unlocks with your face, the device runs forward propagation through a trained network to produce the answer.</p>`,
+  whenToUse:
+    `<p><b>Forward propagation is not optional</b> — it is how any neural network turns an input into a prediction, at both training and inference (serving) time. The practitioner question is not <i>whether</i> to use it but <i>how</i> to make it fast and correct.</p>
+     <p><b>When it shows up in real work:</b></p>
+     <ul>
+       <li><b>Inference / serving</b> — at deployment you run forward propagation only, with gradients turned off, to score live inputs.</li>
+       <li><b>Training</b> — the forward pass produces the loss that backpropagation then differentiates; you cannot have one without the other.</li>
+       <li><b>Debugging</b> — printing intermediate activations during the forward pass is the first thing you do when a network won't learn.</li>
+     </ul>
+     <p><b>What it unlocks:</b> batching many inputs through the same forward pass is what makes GPU (Graphics Processing Unit) inference cheap; vectorizing it (matrix multiplies, not Python loops) is the single biggest speedup. In practice use <code>torch.no_grad()</code> or <code>model.eval()</code> for inference so you skip the backward bookkeeping.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting eval mode.</b> Layers like Dropout and Batch Normalization behave differently in training vs inference. Call <code>model.eval()</code> before serving or predictions will be noisy and wrong.</li>
+       <li><b>Leaving gradients on at inference.</b> Without <code>torch.no_grad()</code> you waste memory building a graph you never use; long inference loops then run out of memory.</li>
+       <li><b>Shape mismatches.</b> A wrong transpose or a missing batch dimension silently broadcasts or errors deep in the stack. Assert tensor shapes between layers while developing.</li>
+       <li><b>Train / serve skew.</b> Different preprocessing offline vs online makes the forward pass see inputs it was never trained on. Share one preprocessing path across training and serving.</li>
+       <li><b>Numerical overflow in the last layer.</b> Large logits into an exponential (softmax / sigmoid) overflow to NaN (Not a Number). Use the log-sum-exp trick or a fused loss that handles it.</li>
+     </ul>`,
   quiz: {
     q: `One layer, ReLU activation. $w = 2$, $b = -3$, input $x = 4$. What does it output?`,
     a: `<p>$z = 2\\times4 - 3 = 5$. ReLU$(5) = 5$. The output is $5$.</p>`
@@ -334,6 +392,28 @@ L({
      <p>The closer the prediction is to the truth, the smaller the loss. Being confidently wrong is punished the hardest.</p>`,
   application:
     `<p>Cross-entropy is the standard loss for classification: spam vs not-spam, cat vs dog, which of 1000 objects is in a photo. Training drives this loss down step by step.</p>`,
+  whenToUse:
+    `<p><b>Use cross-entropy whenever the network outputs a probability and the target is a class label.</b> It is the default classification loss because it punishes confident wrong answers hard and pairs cleanly with sigmoid / softmax outputs.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Mean squared error (MSE)</b> on classification — MSE gives tiny gradients when a sigmoid output is confidently wrong, so cross-entropy trains far faster.</li>
+       <li><b>Plain accuracy as a loss</b> — accuracy is not differentiable; cross-entropy is the smooth surrogate you actually optimize.</li>
+     </ul>
+     <p><b>Pick a different loss when:</b></p>
+     <ul>
+       <li>The target is a continuous number (price, temperature) — use MSE or Huber loss for regression.</li>
+       <li>Classes are wildly imbalanced — reach for focal loss or class weighting on top of cross-entropy.</li>
+       <li>You want well-separated embeddings rather than class scores — use a contrastive or triplet loss.</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.CrossEntropyLoss</code> (multi-class) and <code>nn.BCEWithLogitsLoss</code> (binary / multi-label) — both take raw logits, not probabilities.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Feeding probabilities instead of logits.</b> The library losses expect raw logits and apply softmax / sigmoid internally. Passing already-softmaxed values double-applies it and breaks training.</li>
+       <li><b>Log of zero gives negative infinity.</b> A probability of exactly 0 for the true class makes the loss explode. Use the fused log-softmax loss, never a hand-rolled <code>log(p)</code>.</li>
+       <li><b>Wrong loss for the label shape.</b> Multi-label problems need binary cross-entropy per class, not softmax cross-entropy, which assumes the classes are mutually exclusive.</li>
+       <li><b>Ignoring class imbalance.</b> With 99% negatives the loss is minimized by always predicting the majority. Weight the classes or switch to focal loss.</li>
+       <li><b>Reading the loss value as calibrated probability.</b> A low cross-entropy does not guarantee calibrated probabilities. Check a reliability curve and calibrate if you ship the probabilities themselves.</li>
+     </ul>`,
   quiz: {
     q: `True label $y = 0$. The model predicts $z = 0.2$. What is the loss? (Use $\\log(0.8) \\approx -0.223$.)`,
     a: `<p>Since $y=0$, $L = -\\log(1 - 0.2) = -\\log(0.8) = -(-0.223) = 0.223$.</p>`
@@ -438,6 +518,23 @@ L({
      <p>The same upstream slope ($2\\times0.5 = 1$) flows into both, but layer 1's gradient is smaller (0.8 vs 3) because it is multiplied by extra terms on the way back. That is the chain rule run layer by layer — and why deep early layers get weaker gradients.</p>`,
   application:
     `<p>Backprop is the engine behind training every neural network ever built: image classifiers, translators, and the large language models behind chatbots. It is just the chain rule run at huge scale.</p>`,
+  whenToUse:
+    `<p><b>Backpropagation is the standard way to get gradients</b> for any differentiable model trained by gradient descent. In modern frameworks you rarely write it by hand — autograd (automatic differentiation) does it — but knowing it is essential for debugging.</p>
+     <p><b>When it shows up in real work:</b></p>
+     <ul>
+       <li><b>Every gradient-based training run</b> — the framework records the forward pass and replays it backward to fill each weight's <code>.grad</code>.</li>
+       <li><b>Custom layers</b> — when you write a non-standard operation you may implement its backward pass so autograd can chain through it.</li>
+       <li><b>Debugging training</b> — inspecting gradient norms layer by layer is how you diagnose vanishing or exploding gradients.</li>
+     </ul>
+     <p><b>When you reach past plain backprop:</b> truncated backprop through time for long sequences, gradient checkpointing to trade compute for memory on huge models, and synthetic / approximate gradients in special research settings. In practice <code>loss.backward()</code> does it; you just have to call <code>optimizer.zero_grad()</code> first.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting to zero gradients.</b> Gradients accumulate by default, so skipping <code>optimizer.zero_grad()</code> sums this step's gradient onto last step's. Zero them every iteration.</li>
+       <li><b>Vanishing gradients in deep stacks.</b> Many small derivatives multiply toward zero, so early layers stop learning. Use ReLU (Rectified Linear Unit), residual connections, and good initialization.</li>
+       <li><b>Exploding gradients.</b> Products of large terms blow up to NaN (Not a Number), especially in RNNs (Recurrent Neural Networks). Clip the gradient norm.</li>
+       <li><b>Breaking the graph accidentally.</b> Converting a tensor to NumPy or calling <code>.detach()</code> mid-network cuts the gradient path so those weights never update. Keep operations inside the autograd graph.</li>
+       <li><b>In-place operations corrupting the graph.</b> Modifying a tensor in place can overwrite values autograd needs for the backward pass and raises a runtime error. Avoid in-place ops on tensors that require grad.</li>
+     </ul>`,
   quiz: {
     q: `If $\\frac{\\partial L}{\\partial w} = 4$, $\\eta = 0.5$, and $w = 10$, what is the new $w$?`,
     a: `<p>$w \\leftarrow 10 - 0.5\\times4 = 10 - 2 = 8$.</p>`
@@ -485,6 +582,25 @@ L({
      <p>When the gradient is consistent, Momentum speeds you up. When it flip-flops, it cancels out the noise.</p>`,
   application:
     `<p>Nearly every deep network today is trained with Adam. It saves engineers from hand-tuning the step size and makes training reliable on huge models.</p>`,
+  whenToUse:
+    `<p><b>Reach for Adam (Adaptive Moment Estimation) as your default optimizer</b> when you want training to "just work" with little tuning — it adapts the step size per weight and is forgiving of the learning rate. For the last bit of generalization, plain SGD (Stochastic Gradient Descent) with momentum can edge it out.</p>
+     <p><b>Choose by situation:</b></p>
+     <ul>
+       <li><b>Adam / AdamW</b> — the safe default for Transformers, most research, and anything you want training fast. Use <b>AdamW</b> (decoupled weight decay) when you also want regularization.</li>
+       <li><b>SGD with momentum</b> — for large image classifiers (e.g. ResNet) where, with a tuned schedule, it often generalizes slightly better than Adam.</li>
+       <li><b>RMSprop</b> — historically common for RNNs (Recurrent Neural Networks); Adam mostly supersedes it now.</li>
+       <li><b>Plain SGD (no momentum)</b> — almost never; momentum is nearly free and helps.</li>
+     </ul>
+     <p><b>In practice:</b> start with AdamW at a learning rate around $0.001$, add a warmup-then-decay schedule, and only switch to tuned SGD+momentum if you are chasing the last point of accuracy.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Learning rate still matters.</b> Adam adapts <i>per-weight</i> scaling but not the global step size. Too high diverges, too low crawls — sweep it.</li>
+       <li><b>Weight decay is broken in plain Adam.</b> L2 (L2 / ridge) regularization couples badly with Adam's scaling. Use <code>AdamW</code>, which decouples weight decay.</li>
+       <li><b>No learning-rate schedule.</b> A flat rate plateaus. Add warmup (especially for Transformers) and decay, or training stalls or destabilizes early.</li>
+       <li><b>Adam can generalize worse.</b> On some vision tasks Adam reaches a sharper minimum than SGD. If validation accuracy lags, try SGD+momentum with a schedule.</li>
+       <li><b>Forgetting bias correction.</b> Early steps of a hand-rolled Adam without the $1-\\beta^t$ correction take huge wrong steps. Use the library implementation.</li>
+       <li><b>Stale optimizer state on resume.</b> Reloading model weights but not the optimizer's moment buffers restarts adaptation from scratch. Checkpoint and restore the optimizer state too.</li>
+     </ul>`,
   quiz: {
     q: `Why is Adam usually preferred over plain gradient descent?`,
     a: `<p>It adapts the step size for each weight (using Momentum and RMSprop), so training is faster and needs less manual tuning of the learning rate.</p>`
@@ -637,6 +753,24 @@ L({
      </ul>`,
   application:
     `<p>All large-scale training uses mini-batches because they fit nicely in GPU memory and keep the GPU busy. Batch size is one of the first knobs engineers tune.</p>`,
+  whenToUse:
+    `<p><b>Mini-batch gradient descent is the standard training regime</b> — almost never do you train on one example at a time or the whole dataset at once. The practical question is which batch size to pick.</p>
+     <p><b>Choose batch size by:</b></p>
+     <ul>
+       <li><b>Larger batches</b> — when you have GPU (Graphics Processing Unit) memory to spare and want smoother gradients and higher throughput. Scale the learning rate up with the batch size.</li>
+       <li><b>Smaller batches</b> — when memory is tight, or when the gradient noise actually helps generalization (common in vision).</li>
+       <li><b>Full-batch (the whole set)</b> — only for tiny datasets; gradients are exact but each step is expensive and can overfit to flat minima.</li>
+       <li><b>Batch size 1 (pure stochastic)</b> — almost never on modern hardware; it wastes the GPU's parallelism.</li>
+     </ul>
+     <p><b>In practice:</b> pick the largest batch that fits memory, then tune the learning rate. Use gradient accumulation to simulate a big batch when it will not fit at once.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Changing batch size without the learning rate.</b> Bigger batches give smaller gradient noise, so the old learning rate may be too small. Scale the learning rate roughly with batch size (and add warmup for very large batches).</li>
+       <li><b>Not shuffling each epoch.</b> Feeding examples in a fixed order biases the gradient and can leak structure. Shuffle the data every epoch.</li>
+       <li><b>The last ragged batch.</b> A final partial batch can skew Batch Normalization statistics or a hand-computed mean. Drop it or handle it explicitly.</li>
+       <li><b>Huge batches generalize worse.</b> Very large batches converge to sharp minima that test poorly. Add noise back via a schedule, smaller batches, or stronger regularization.</li>
+       <li><b>Counting epochs, not steps, when comparing.</b> The same number of epochs at different batch sizes means different numbers of updates. Compare on steps or wall-clock, not epochs alone.</li>
+     </ul>`,
   quiz: {
     q: `You have 800 examples and a batch size of 200. How many iterations are in one epoch?`,
     a: `<p>$800 \\div 200 = 4$ iterations per epoch.</p>`
@@ -747,6 +881,23 @@ L({
      <p>Compare with all-zeros: every neuron would be identical forever, so the network could never learn.</p>`,
   application:
     `<p>Good initialization lets very deep networks (dozens of layers) train at all. Xavier and its cousin He-initialization are the defaults in PyTorch and TensorFlow.</p>`,
+  whenToUse:
+    `<p><b>You pick an initialization scheme whenever you build a network from scratch</b> — the goal is to start weights so activations and gradients keep a healthy scale through every layer. Match the scheme to the activation function.</p>
+     <p><b>Choose by activation:</b></p>
+     <ul>
+       <li><b>He / Kaiming initialization</b> — for ReLU (Rectified Linear Unit) and its variants, the default in modern CNNs (Convolutional Neural Networks).</li>
+       <li><b>Xavier / Glorot initialization</b> — for tanh and sigmoid layers, where it keeps variance balanced across the saturating curve.</li>
+       <li><b>Orthogonal initialization</b> — for RNNs (Recurrent Neural Networks), to help preserve gradient norm over many time steps.</li>
+     </ul>
+     <p><b>When initialization matters less:</b> if every layer is followed by Batch / Layer Normalization, the network is far more forgiving of the starting scale — but good init still speeds early training. In practice the framework defaults (<code>kaiming_normal_</code>, <code>xavier_uniform_</code>) are the right starting point.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Initializing all weights to zero (or any constant).</b> Every neuron then computes the same thing and gets the same gradient, so they never differentiate. Use random init.</li>
+       <li><b>Too-large initial weights.</b> Activations and gradients blow up, giving NaN (Not a Number) losses on the first steps. Scale by fan-in as He / Xavier do.</li>
+       <li><b>Too-small initial weights.</b> Signals shrink layer by layer until gradients vanish and deep layers stop learning. Again, use a variance-preserving scheme.</li>
+       <li><b>Mismatched scheme and activation.</b> Xavier with ReLU under-scales (ReLU zeros half the inputs); use He for ReLU and Xavier for tanh / sigmoid.</li>
+       <li><b>Initializing biases carelessly.</b> Large random biases can saturate activations from the start. Initialize biases to zero (or a small positive value for ReLU if you want to avoid dead units).</li>
+     </ul>`,
   quiz: {
     q: `Why is starting all weights at zero a bad idea?`,
     a: `<p>Every neuron would compute the same value and get the same update, so they never become different. The network cannot learn distinct features.</p>`
@@ -839,6 +990,28 @@ L({
      <p>Dropping neurons would shrink every signal by half; multiplying survivors by $1/(1-p)$ undoes that, so train and test agree.</p>`,
   application:
     `<p>Dropout is a simple, cheap way to reduce overfitting in image and text networks. It was a key trick in many breakthrough models and is built into every deep learning library.</p>`,
+  whenToUse:
+    `<p><b>Add dropout when a network overfits</b> — training accuracy keeps climbing while validation accuracy stalls or worsens. It is a cheap, parameter-free regularizer that forces the network to spread out its representations.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>L2 (L2 / ridge) weight decay alone</b> — when you want a stronger regularizer; the two stack well together.</li>
+       <li><b>Collecting more data</b> — when more labeled data is not available or is expensive; dropout is free.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You are using Batch Normalization in a CNN (Convolutional Neural Network) — modern image nets often regularize with BatchNorm plus data augmentation and use little or no dropout in conv layers.</li>
+       <li>The network underfits — dropout makes that worse; reduce it or remove it.</li>
+       <li>You are in a Transformer — dropout is used, but at modest rates on attention and feed-forward layers, not the aggressive 0.5 of older dense nets.</li>
+     </ul>
+     <p><b>In practice:</b> place <code>nn.Dropout(p)</code> after activations in dense layers, $p$ around $0.2$–$0.5$, and remember it only acts during training.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Leaving dropout on at inference.</b> Dropout must be disabled when serving. Call <code>model.eval()</code> or predictions become random and inconsistent.</li>
+       <li><b>Forgetting the scale correction.</b> Inverted dropout scales surviving activations by $1/(1-p)$ during training so the expected value matches inference. Use the library layer, which handles this.</li>
+       <li><b>Too high a rate.</b> A large $p$ throws away so much signal the network underfits and trains slowly. Lower $p$ if training loss won't drop.</li>
+       <li><b>Dropout right before Batch Normalization.</b> The two interact badly because dropout shifts the variance BatchNorm estimates. Order them carefully or avoid stacking them.</li>
+       <li><b>Using standard dropout in RNNs (Recurrent Neural Networks).</b> Randomly dropping the recurrent connection each step disrupts memory. Use variational / recurrent dropout with the same mask across time steps.</li>
+     </ul>`,
   quiz: {
     q: `With dropout rate $p = 0.2$ on a layer of 50 neurons, about how many are kept each step?`,
     a: `<p>Keep probability is $1 - 0.2 = 0.8$, so about $0.8 \\times 50 = 40$ neurons are kept each step.</p>`
@@ -929,6 +1102,24 @@ L({
      </ul>`,
   application:
     `<p>Batch norm lets very deep image networks train faster and more reliably. It is standard in convolutional networks like ResNet and reduces the need for careful tuning.</p>`,
+  whenToUse:
+    `<p><b>Reach for Batch Normalization in deep convolutional networks</b> to train faster, tolerate higher learning rates, and reduce sensitivity to initialization. It normalizes each layer's inputs across the batch, then rescales with learned parameters.</p>
+     <p><b>Choose by architecture:</b></p>
+     <ul>
+       <li><b>Batch Norm</b> — for CNNs (Convolutional Neural Networks) with reasonably large batches (e.g. ResNet); the standard choice for vision.</li>
+       <li><b>Layer Normalization</b> — for Transformers and RNNs (Recurrent Neural Networks), and whenever batches are tiny, since it normalizes per-example and does not depend on batch statistics.</li>
+       <li><b>Group / Instance Normalization</b> — for very small batches (detection, segmentation) or style-transfer-style tasks.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b> batch size is 1 or 2 (Batch Norm's statistics are unreliable — use Group or Layer Norm), or in the discriminator of some GANs (Generative Adversarial Networks) where Batch Norm can cause artifacts. In practice insert <code>nn.BatchNorm2d</code> after the convolution and before the activation.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Train / eval mismatch.</b> Batch Norm uses batch statistics while training but running averages at inference. Forgetting <code>model.eval()</code> gives wildly different, batch-dependent predictions.</li>
+       <li><b>Tiny batches break it.</b> With a batch of 1–2 the per-batch mean and variance are noisy garbage. Switch to Group or Layer Norm for small-batch regimes.</li>
+       <li><b>Stale running statistics.</b> If the data distribution shifts (new domain) without re-estimating, the stored running mean / variance are wrong. Recompute statistics on the new distribution.</li>
+       <li><b>Redundant bias.</b> The convolution's bias is canceled by the normalization's mean subtraction. Disable the preceding layer's bias to save parameters.</li>
+       <li><b>Bad interaction with dropout.</b> Dropout before Batch Norm shifts the variance it estimates. Order them carefully or avoid the combination.</li>
+       <li><b>Distributed training needs synced stats.</b> Per-GPU (Graphics Processing Unit) Batch Norm computes statistics on a small shard. Use SyncBatchNorm so statistics pool across devices.</li>
+     </ul>`,
   quiz: {
     q: `For the batch $[1, 3, 5]$, what is the mean $\\mu_B$?`,
     a: `<p>$\\mu_B = (1 + 3 + 5)\\div 3 = 9 \\div 3 = 3$.</p>`
@@ -981,6 +1172,28 @@ L({
      </ul>`,
   application:
     `<p>Early stopping is a free, simple guard against overfitting used everywhere. It also saves compute time by not training longer than helpful.</p>`,
+  whenToUse:
+    `<p><b>Use early stopping on almost every training run</b> as a cheap, automatic guard against overfitting and wasted compute. You watch a validation metric and stop when it stops improving.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Guessing a fixed epoch count</b> — early stopping adapts to the data instead of over- or under-training.</li>
+       <li><b>Heavy regularization alone</b> — it complements weight decay and dropout rather than replacing them; combine them.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>You are using a learning-rate schedule (e.g. cosine decay) tuned for a fixed length — early stopping can interrupt it before the decay finishes; coordinate the two.</li>
+       <li>Validation is too noisy to trust step to step — increase the patience or smooth the metric first.</li>
+       <li>Training is so cheap that running the full schedule and keeping the best checkpoint is simpler.</li>
+     </ul>
+     <p><b>In practice:</b> track validation loss, keep a "patience" of several epochs, and always restore the best checkpoint, not the last one.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Stopping on the wrong split.</b> Watching training loss never triggers (it keeps dropping); watching the test set leaks it. Use a separate validation set.</li>
+       <li><b>Patience too small.</b> Validation curves are bumpy, so a one-epoch dip can stop you prematurely. Use a patience window of several epochs.</li>
+       <li><b>Keeping the last model, not the best.</b> The final epoch is often past the optimum. Checkpoint and restore the best-scoring weights.</li>
+       <li><b>Tuning on the same set you stop on.</b> Choosing hyperparameters and stopping on one validation set overfits to it. Use a held-out test set for the final number.</li>
+       <li><b>Fighting the learning-rate schedule.</b> Stopping mid-decay can leave the model in a poor spot. Align early stopping with the schedule, or stop only after the rate has decayed.</li>
+     </ul>`,
   quiz: {
     q: `Why watch the validation error instead of the training error to decide when to stop?`,
     a: `<p>Training error almost always keeps falling, even when the model is memorizing. Validation error reflects real-world performance, so its rise signals overfitting.</p>`
@@ -1081,6 +1294,29 @@ L({
      </ul>`,
   application:
     `<p>Convolutional layers are the heart of image recognition: detecting faces, reading handwriting, spotting tumors in medical scans, and seeing the road for self-driving cars.</p>`,
+  whenToUse:
+    `<p><b>Reach for a convolutional (conv) layer whenever the input has grid-like spatial structure</b> — images, spectrograms, even 1-D signals — and nearby values are related. Weight sharing lets it detect a pattern anywhere with far fewer parameters than a dense layer.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A dense / fully-connected layer on flattened pixels</b> — the dense version has orders of magnitude more weights and ignores spatial locality.</li>
+       <li><b>Classic hand-crafted image features</b> — conv layers learn the filters from data instead of you designing edge detectors by hand.</li>
+     </ul>
+     <p><b>Pick a different layer when:</b></p>
+     <ul>
+       <li>The data is unordered tabular features — there is no spatial neighborhood to exploit, so use dense layers or trees.</li>
+       <li>Long-range global relationships dominate — a Vision Transformer's attention can beat convolutions given enough data.</li>
+       <li>The input is a 1-D sequence where order, not locality, is key — an RNN (Recurrent Neural Network) or attention may fit better, though 1-D convolutions are also common.</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.Conv2d</code>, usually followed by Batch Normalization and a ReLU (Rectified Linear Unit), stacked into a CNN (Convolutional Neural Network) backbone.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Wrong padding shrinks the map.</b> A 3×3 filter with no padding trims the border each layer until the map vanishes. Use "same" padding to preserve size when you intend to.</li>
+       <li><b>Channel-order mismatch.</b> Mixing up NCHW (batch, channel, height, width) and NHWC layouts silently corrupts the data. Confirm the framework's expected tensor order.</li>
+       <li><b>Forgetting to normalize inputs.</b> Feeding raw 0–255 pixel values makes activations explode. Scale to roughly zero mean, unit variance.</li>
+       <li><b>Too-large early filters.</b> Big filters in the first layers waste parameters and compute. Modern nets stack small (3×3) filters instead.</li>
+       <li><b>Train / serve preprocessing skew.</b> Different resize, crop, or normalization at serving time than in training degrades accuracy silently. Share one preprocessing path.</li>
+       <li><b>Receptive field too small for the task.</b> Few layers can't "see" enough of the image for global structure. Add depth, strides, or dilation to grow the receptive field.</li>
+     </ul>`,
   quiz: {
     q: `Filter $\\begin{bmatrix}1 & 1\\\\0 & 0\\end{bmatrix}$ over patch $\\begin{bmatrix}2 & 3\\\\5 & 1\\end{bmatrix}$. What is the output?`,
     a: `<p>$1\\times2 + 1\\times3 + 0\\times5 + 0\\times1 = 2 + 3 + 0 + 0 = 5$.</p>`
@@ -1173,6 +1409,28 @@ L({
      <p>The whole 2×2 block becomes a single number, shrinking the map.</p>`,
   application:
     `<p>Pooling is in nearly every image network. It makes recognition robust to small shifts: a cat slightly off-center still triggers the same strong features.</p>`,
+  whenToUse:
+    `<p><b>Use pooling to shrink feature maps and add a little shift-invariance</b> inside a CNN (Convolutional Neural Network). It summarizes each small region into one number, cutting spatial size and compute as you go deeper.</p>
+     <p><b>Choose by type:</b></p>
+     <ul>
+       <li><b>Max pooling</b> — when you want the strongest activation in a region to survive, good for detecting whether a feature is present.</li>
+       <li><b>Average pooling</b> — when you want a smoother summary, common in later layers.</li>
+       <li><b>Global average pooling</b> — at the very end, to collapse a map into one vector per channel before the classifier, replacing huge dense layers.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>You need to preserve fine spatial detail (segmentation, super-resolution) — use strided convolutions or none, since pooling throws away location.</li>
+       <li>You want a learnable downsample — a strided conv can outperform fixed pooling.</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.MaxPool2d(2)</code> between conv blocks, and a global average pool before the final classifier.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Pooling away the detail you need.</b> For pixel-level tasks (segmentation), pooling loses the precise location. Use dilated or strided convolutions instead, or add skip connections.</li>
+       <li><b>Over-pooling to nothing.</b> Too many pooling layers shrink the map to 1×1 too early and discard information. Balance depth against pooling.</li>
+       <li><b>Overstated invariance.</b> Pooling gives only small-shift robustness, not rotation or scale invariance. Use data augmentation for those.</li>
+       <li><b>Flatten vs global pool.</b> Flattening a large map into a dense layer creates millions of weights and overfits. Prefer global average pooling before the classifier.</li>
+       <li><b>Mismatched pool and stride.</b> A pool size and stride that don't tile the map cleanly drop or double-count border regions. Choose sizes that divide the spatial dimensions.</li>
+     </ul>`,
   quiz: {
     q: `Max-pool the window $\\begin{bmatrix}4 & 1\\\\6 & 5\\end{bmatrix}$.`,
     a: `<p>$\\max(4, 1, 6, 5) = 6$.</p>`
@@ -1243,6 +1501,24 @@ L({
      </ul>`,
   application:
     `<p>Designers use this formula to plan network shapes: how much each layer shrinks the image, and whether to pad to keep the size the same. It is everyday work in building CNNs (Convolutional Neural Networks).</p>`,
+  whenToUse:
+    `<p><b>You compute output size whenever you design or debug a CNN (Convolutional Neural Network).</b> Filter size, stride, and padding together decide how big each feature map turns out and how much the network "sees".</p>
+     <p><b>Choose hyperparameters by intent:</b></p>
+     <ul>
+       <li><b>"Same" padding</b> — when you want the output the same size as the input, so you can stack many layers without shrinking.</li>
+       <li><b>Stride &gt; 1</b> — when you want to downsample inside the convolution instead of using a separate pooling layer.</li>
+       <li><b>Small (3×3) filters, stacked</b> — the modern default; two stacked 3×3 layers match a 5×5 receptive field with fewer parameters.</li>
+       <li><b>Dilation</b> — when you need a large receptive field without adding parameters or losing resolution (segmentation).</li>
+     </ul>
+     <p><b>What it unlocks:</b> planning the size chain end to end tells you the final feature-map shape feeding the classifier, and whether the receptive field is large enough for the task. In practice, sketch the size at each layer before training so a shape mismatch doesn't surface mid-run.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Off-by-one in the formula.</b> The output size is $\\lfloor (n + 2p - f)/s \\rfloor + 1$; dropping the floor or the $+1$ gives the wrong shape. Compute it carefully.</li>
+       <li><b>Non-integer result.</b> A stride that doesn't divide the padded size silently truncates the last partial window. Choose padding / stride so the division is exact.</li>
+       <li><b>Forgetting padding doubles.</b> Padding $p$ adds to <i>both</i> sides, so it contributes $2p$. Halving that is a common shape bug.</li>
+       <li><b>Mismatch into the dense layer.</b> If you hard-code the flattened size and change an earlier layer, the classifier breaks. Compute it from the actual feature-map shape.</li>
+       <li><b>Receptive field too small.</b> The chosen filters and strides may not let deep neurons see enough context. Track the receptive field, not just the map size.</li>
+     </ul>`,
   quiz: {
     q: `Input $I = 5$, filter $F = 3$, padding $P = 1$, stride $S = 1$. What is the output size $O$?`,
     a: `<p>$O = \\frac{5 - 3 + 2\\times1}{1} + 1 = \\frac{5 - 3 + 2}{1} + 1 = 4 + 1 = 5$. The padding kept the size the same.</p>`
@@ -1350,6 +1626,23 @@ L({
      <p>Only 280 numbers, no matter if the image is 32×32 or 1000×1000. That reuse is why CNNs are efficient.</p>`,
   application:
     `<p>Parameter counts tell engineers how big and how memory-hungry a model is. Knowing them helps fit networks on phones and edge devices.</p>`,
+  whenToUse:
+    `<p><b>Count parameters whenever model size, memory, or latency matters</b> — fitting a network on a phone or edge device, estimating training memory, or comparing two architectures fairly. It is a back-of-the-envelope skill you use constantly.</p>
+     <p><b>When it shows up in real work:</b></p>
+     <ul>
+       <li><b>Edge / mobile deployment</b> — parameter count drives the download size and on-device RAM budget.</li>
+       <li><b>Choosing conv over dense</b> — counting shows a conv layer shares weights and so has dramatically fewer parameters than a dense layer over the same input.</li>
+       <li><b>Estimating training memory</b> — optimizer state (e.g. Adam) stores extra buffers per parameter, multiplying the count by 2–3.</li>
+     </ul>
+     <p><b>What it unlocks:</b> knowing a layer's count guides pruning, quantization, and choosing depth vs width. Note that parameter count is not the same as FLOPs (Floating-Point Operations) — a small conv applied over a large image is cheap in parameters but expensive in compute. In practice, <code>sum(p.numel() for p in model.parameters())</code> gives the total.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting the bias.</b> Each filter (or neuron) usually adds one bias parameter. Skipping it undercounts, especially across many filters.</li>
+       <li><b>Confusing parameters with compute.</b> A conv layer can have few weights but huge FLOPs (Floating-Point Operations) over a big image. Track both, not just one.</li>
+       <li><b>Ignoring input channels.</b> A conv filter's weight count is filter-height × filter-width × <i>input channels</i> × output channels. Dropping the input-channel factor badly undercounts.</li>
+       <li><b>Overlooking normalization and embedding parameters.</b> Batch Norm scales / shifts and large embedding tables add real parameters. Count them too.</li>
+       <li><b>Underestimating training memory.</b> Activations stored for backprop and Adam's moment buffers dwarf the raw weight count. Budget for them, not just the parameters.</li>
+     </ul>`,
   quiz: {
     q: `A layer has $K = 5$ filters of size $F = 2$ over $C = 1$ channel (grayscale). How many parameters?`,
     a: `<p>$(2\\times2\\times1 + 1)\\times5 = (4 + 1)\\times5 = 5 \\times 5 = 25$ parameters.</p>`
@@ -1446,6 +1739,29 @@ L({
      </ul>`,
   application:
     `<p>Object detection powers self-driving cars (spotting pedestrians and signs), security cameras, and photo apps that tag the people and pets in your pictures.</p>`,
+  whenToUse:
+    `<p><b>Reach for object detection when you need both <i>what</i> and <i>where</i></b> — boxes around every object in an image, not just one label for the whole picture.</p>
+     <p><b>Choose by need:</b></p>
+     <ul>
+       <li><b>YOLO (You Only Look Once) / single-stage detectors</b> — when speed matters (real-time video, robotics); they predict boxes in one pass.</li>
+       <li><b>Two-stage detectors (Faster R-CNN)</b> — when you want top accuracy on small or overlapping objects and can spend more compute.</li>
+     </ul>
+     <p><b>Pick a different task when:</b></p>
+     <ul>
+       <li>You only need one label for the whole image — plain classification is simpler and cheaper.</li>
+       <li>You need exact pixel masks, not boxes — use instance or semantic segmentation.</li>
+       <li>There is always exactly one object centered in frame — classification plus a simple regressor suffices.</li>
+     </ul>
+     <p><b>In practice:</b> start from a pretrained detector (Ultralytics YOLO, Detectron2), fine-tune on your boxes, and tune the IoU (Intersection over Union) and confidence thresholds for your precision / recall trade-off.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Wrong IoU (Intersection over Union) threshold.</b> Too high and correct boxes are rejected; too low and sloppy boxes pass. Tune it to your task and report it.</li>
+       <li><b>Non-Max Suppression (NMS) misconfigured.</b> A bad NMS threshold leaves duplicate boxes or merges distinct objects. Tune it alongside the confidence threshold.</li>
+       <li><b>Class imbalance from background.</b> The vast majority of candidate boxes are background, swamping the loss. Use focal loss or hard-negative mining.</li>
+       <li><b>Tiny and overlapping objects.</b> Single-stage detectors miss small or crowded objects. Use multi-scale features (Feature Pyramid Network) or a two-stage model.</li>
+       <li><b>Annotation and anchor mismatch.</b> Inconsistent box labels or anchor sizes that don't match object scales tank recall. Audit labels and set anchors from the data.</li>
+       <li><b>Evaluating on the wrong metric.</b> Accuracy is meaningless here; use mAP (mean Average Precision) at the right IoU thresholds.</li>
+     </ul>`,
   quiz: {
     q: `Overlap area is 10. Box A is 25, Box B is 25, sharing the 10 overlap. Find the IoU.`,
     a: `<p>Union $= 25 + 25 - 10 = 40$. IoU $= 10 \\div 40 = 0.25$.</p>`
@@ -1592,6 +1908,28 @@ L({
      </ul>`,
   application:
     `<p>This powers phone face-unlock and photo apps that group pictures by person. It works from just one example per person, since it compares encodings rather than memorizing faces.</p>`,
+  whenToUse:
+    `<p><b>Reach for face verification with triplet loss when you must recognize from very few examples per identity</b> — often just one — and the set of identities changes after training. Instead of a fixed classifier, you learn an embedding where same-person faces sit close and different people sit far.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A plain N-class classifier</b> — when new people are added constantly; a softmax over fixed classes would need retraining for every new identity.</li>
+       <li><b>Storing raw images and comparing pixels</b> — embeddings are robust to lighting, pose, and expression; pixel matching is not.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>You have many labeled examples for a fixed, closed set of classes — a normal classifier is simpler and stronger.</li>
+       <li>Triplet mining is too fiddly — modern margin-softmax losses (ArcFace, CosFace) often train more stably for the same goal.</li>
+     </ul>
+     <p><b>In practice:</b> embed each face with a CNN (Convolutional Neural Network), train with triplet or ArcFace loss, then verify by thresholding the distance between two embeddings.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Easy triplets give no signal.</b> Random triplets are mostly already correct, so the loss is zero and learning stalls. Use semi-hard or hard-negative mining.</li>
+       <li><b>Embedding collapse.</b> Without normalization the network can shrink all embeddings together. L2-normalize embeddings and use a sensible margin.</li>
+       <li><b>Threshold tuned on the wrong data.</b> The verification distance threshold must be set on a held-out set that matches deployment, or false accepts spike.</li>
+       <li><b>Demographic bias.</b> Training data skewed by ethnicity, age, or lighting yields uneven error rates. Audit performance across groups and balance the data.</li>
+       <li><b>Identity leakage in the split.</b> The same person appearing in train and test inflates accuracy. Split by identity, not by image.</li>
+       <li><b>Spoofing.</b> A photo or mask can fool pure verification. Add liveness / anti-spoofing detection for security uses.</li>
+     </ul>`,
   quiz: {
     q: `$d(A,P) = 0.2$, $d(A,N) = 0.9$, $\\alpha = 0.3$. What is the triplet loss?`,
     a: `<p>Inside: $0.2 - 0.9 + 0.3 = -0.4$. Loss $= \\max(-0.4, 0) = 0$. The negative is far enough, so no loss.</p>`
@@ -1702,6 +2040,28 @@ L({
      <p>Match the painting's $G$ (its co-firing pattern) and you copy its style; match the raw feature map and you copy its content. Style transfer drives both costs down at once.</p>`,
   application:
     `<p>This is the magic behind art-filter apps that turn your selfies into paintings. It also helps artists and designers prototype looks quickly.</p>`,
+  whenToUse:
+    `<p><b>Reach for classic (optimization-based) neural style transfer when you want to repaint one image in another's style</b> and you only need it occasionally, for a single image, without training a model.</p>
+     <p><b>Choose by need:</b></p>
+     <ul>
+       <li><b>Optimization-based transfer</b> — when quality on a one-off image matters more than speed; you iteratively optimize the pixels.</li>
+       <li><b>A trained feed-forward style network</b> — when you need real-time transfer (video, an app), trained once per style.</li>
+       <li><b>A general image-to-image model (GAN or diffusion)</b> — when you want learned, flexible styles and have data and compute.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need photorealistic edits, not painterly ones — use a diffusion or image-to-image model.</li>
+       <li>You need many styles fast — train a multi-style or arbitrary-style network instead of optimizing per image.</li>
+     </ul>
+     <p><b>What it teaches:</b> the Gram matrix (feature correlations) captures "style" while deeper feature maps capture "content" — a foundational idea reused across generative vision. In practice, run it on the GPU (Graphics Processing Unit); per-image optimization is slow on a CPU.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Content / style weight imbalance.</b> Too much style weight smears the content; too little barely changes the image. Tune the ratio per image.</li>
+       <li><b>Resolution and memory.</b> Optimizing high-resolution images is slow and memory-hungry. Work at moderate resolution, then upscale.</li>
+       <li><b>Unstable optimization.</b> A bad learning rate produces noisy, garish artifacts. Use L-BFGS or a tuned Adam and total-variation regularization to smooth output.</li>
+       <li><b>Wrong feature layers.</b> Picking the wrong layers for content vs style gives muddy results. Use the well-known VGG (Visual Geometry Group) layer choices as a starting point.</li>
+       <li><b>Color bleed.</b> Style transfer can shift colors unintentionally. Add color-preservation (luminance-only transfer) if you must keep the original palette.</li>
+     </ul>`,
   quiz: {
     q: `What does the Gram matrix capture that the raw feature map does not?`,
     a: `<p>It captures how features correlate (fire together) — the texture and style — rather than the exact spatial layout of the content.</p>`
@@ -1811,6 +2171,29 @@ L({
      <p>That $0.50$ is the punchline: <b>equilibrium is 50% accuracy</b>. When the detective is reduced to coin-flipping, the forger has won — the fakes are as good as real.</p>`,
   application:
     `<p>GANs create realistic faces, art, and game textures, fill in missing parts of photos, and upscale low-resolution images. They also drive the "deepfake" technology.</p>`,
+  whenToUse:
+    `<p><b>Reach for a GAN (Generative Adversarial Network) when you want to <i>generate</i> realistic samples</b> — faces, textures, upscaled images — and you value sharp, fast single-pass output.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A VAE (Variational Autoencoder)</b> — when you want sharper samples; VAEs are more stable but tend to produce blurrier output.</li>
+       <li><b>A diffusion model</b> — when inference speed matters; a GAN generates in one forward pass, while diffusion takes many steps (though diffusion now leads on raw quality and diversity).</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need a likelihood or good coverage of the whole distribution — GANs can miss modes; use a diffusion or autoregressive model.</li>
+       <li>The task is discriminative (classify, detect) — you don't need a generator at all.</li>
+       <li>Training stability is a blocker and you can't tune much — diffusion or a VAE is more forgiving.</li>
+     </ul>
+     <p><b>In practice:</b> start from a proven recipe (DCGAN, StyleGAN) and a stabilizing loss (WGAN-GP, hinge); training GANs from scratch is notoriously finicky.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Mode collapse.</b> The generator produces a few samples that always fool the discriminator, losing diversity. Use minibatch discrimination, unrolled GANs, or a WGAN-GP loss.</li>
+       <li><b>Training instability.</b> Generator and discriminator can oscillate or diverge. Balance their learning rates (e.g. TTUR), use spectral normalization, and watch both losses.</li>
+       <li><b>Vanishing discriminator gradient.</b> A too-strong discriminator gives the generator no signal. Use the Wasserstein or hinge loss to keep gradients flowing.</li>
+       <li><b>Hard to know when it's "done".</b> Loss values don't track sample quality. Judge with FID (Fréchet Inception Distance) and human inspection, not the loss curve.</li>
+       <li><b>Checkerboard artifacts.</b> Transposed convolutions create grid patterns. Use resize-then-convolve upsampling instead.</li>
+       <li><b>Ethical and safety risks.</b> The same tech enables deepfakes. Watermark outputs and gate sensitive uses.</li>
+     </ul>`,
   quiz: {
     q: `In a GAN, what is the generator's goal?`,
     a: `<p>To produce fakes realistic enough to fool the discriminator into labeling them as real.</p>`
@@ -1910,6 +2293,28 @@ L({
      </ul>`,
   application:
     `<p>RNNs handle text, speech, and time series: early language models, speech-to-text, and forecasting. They process inputs in order and remember context.</p>`,
+  whenToUse:
+    `<p><b>Reach for an RNN (Recurrent Neural Network) when the input is a sequence and order matters</b> — time series, streaming sensor data, or short text — especially when you want to process one step at a time with bounded memory.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A feed-forward network on a fixed window</b> — when the relevant context length varies or is long; the RNN carries a running memory.</li>
+       <li><b>A Transformer</b> — when sequences are very long but you need streaming, low-memory inference, or you have little data; the RNN's cost is linear in length, not quadratic.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have lots of data and need top accuracy on language — a Transformer almost always wins now.</li>
+       <li>Dependencies are long-range — a plain RNN forgets; use an LSTM (Long Short-Term Memory) / GRU (Gated Recurrent Unit), or attention.</li>
+       <li>The data is not sequential — use the architecture that fits its structure.</li>
+     </ul>
+     <p><b>In practice:</b> default to an LSTM or GRU rather than a vanilla RNN, and consider a 1-D convolution or small Transformer for many sequence tasks.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Vanishing / exploding gradients.</b> Backpropagating through many steps shrinks or blows up gradients. Use LSTM / GRU gates and clip the gradient norm.</li>
+       <li><b>No parallelism over time.</b> Each step depends on the last, so RNNs train slowly on long sequences. Truncate backprop-through-time or switch to attention.</li>
+       <li><b>Forgetting to reset / carry state correctly.</b> Mishandling the hidden state across batches leaks or drops context. Reset at sequence boundaries deliberately.</li>
+       <li><b>Variable-length batching.</b> Padding sequences and then computing loss over the padding corrupts training. Use masking / packed sequences.</li>
+       <li><b>Limited long-range memory.</b> Even gated RNNs struggle past a few hundred steps. For long context, use attention or chunking.</li>
+     </ul>`,
   quiz: {
     q: `Why is an RNN suited to sentences but a plain feed-forward net is not?`,
     a: `<p>An RNN carries a hidden state across steps, so earlier words influence later ones. A plain network treats each input independently, losing the order and context.</p>`
@@ -1970,6 +2375,25 @@ L({
      </ul>`,
   application:
     `<p>These problems are why plain RNNs (Recurrent Neural Networks) struggle with long paragraphs. Gradient clipping is standard in training RNNs and even large language models to keep updates stable.</p>`,
+  whenToUse:
+    `<p><b>Understanding vanishing and exploding gradients is what tells you which fix to apply</b> when a deep or recurrent network won't train. The symptoms (early layers frozen, or losses jumping to NaN) point straight to the remedy.</p>
+     <p><b>Match the fix to the symptom:</b></p>
+     <ul>
+       <li><b>Gradients vanish (deep feed-forward / CNN)</b> — use ReLU (Rectified Linear Unit), residual / skip connections, and good initialization.</li>
+       <li><b>Gradients vanish (recurrent)</b> — switch from a vanilla RNN to an LSTM (Long Short-Term Memory) or GRU (Gated Recurrent Unit) whose gates carry signal across time.</li>
+       <li><b>Gradients explode</b> — clip the gradient norm and lower the learning rate.</li>
+       <li><b>Internal activations drift</b> — add Batch / Layer Normalization to keep scales stable.</li>
+     </ul>
+     <p><b>What it unlocks:</b> these diagnoses underpin why ResNets, LSTMs, and normalization exist at all. In practice, log per-layer gradient norms so you can <i>see</i> the problem before guessing at fixes.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Treating NaN (Not a Number) loss as a code bug.</b> It is usually exploding gradients. Clip the gradient norm and reduce the learning rate first.</li>
+       <li><b>Clipping too aggressively.</b> A tiny clip threshold throttles all learning. Set it from observed gradient norms, not an arbitrary small value.</li>
+       <li><b>Ignoring silent vanishing.</b> No crash, just early layers that never move. Monitor gradient norms by layer to catch it.</li>
+       <li><b>Saturating activations.</b> Deep stacks of sigmoid / tanh squash gradients to zero. Use ReLU-family activations in hidden layers.</li>
+       <li><b>Skipping residual connections in very deep nets.</b> Without them gradients struggle to reach early layers. Add skip connections past dozens of layers.</li>
+       <li><b>Bad initialization.</b> A too-large or too-small init triggers explosion or vanishing on step one. Use He / Xavier.</li>
+     </ul>`,
   quiz: {
     q: `A gradient has size 40 and the clip threshold is 10. What happens to it?`,
     a: `<p>40 is above 10, so it is scaled down to size 10 (keeping its direction). If it had been size 8, it would be left unchanged.</p>`
@@ -2068,6 +2492,29 @@ L({
      <p>So in "I grew up in France ... I speak fluent ___", the LSTM still remembers "France" 10 words later to predict "French" — the plain RNN has long forgotten it.</p>`,
   application:
     `<p>LSTMs and GRUs powered a generation of translation, speech recognition, and text generation systems before Transformers. They are still common for time-series forecasting.</p>`,
+  whenToUse:
+    `<p><b>Reach for an LSTM (Long Short-Term Memory) or GRU (Gated Recurrent Unit) when you need a recurrent model that remembers across longer sequences</b> than a vanilla RNN (Recurrent Neural Network) can manage — the gates let useful signal flow many steps without vanishing.</p>
+     <p><b>Choose between them:</b></p>
+     <ul>
+       <li><b>LSTM</b> — when you want the most expressive gating and a separate cell state; the safer default for harder sequence tasks.</li>
+       <li><b>GRU</b> — when you want fewer parameters and faster training with usually similar accuracy; good on smaller datasets.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have lots of data and need top accuracy on language — a Transformer typically wins.</li>
+       <li>Dependencies are extremely long — even gated RNNs fade; use attention.</li>
+       <li>The sequence is short and order barely matters — a simpler model may do.</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.LSTM</code> / <code>nn.GRU</code>, often bidirectional for offline tasks; they remain strong and cheap for time-series forecasting.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Still not infinite memory.</b> Gates help but very long-range dependencies still fade. Use attention for very long context.</li>
+       <li><b>Slow, sequential training.</b> The recurrence can't parallelize over time. Truncate backprop-through-time or move to a Transformer for speed.</li>
+       <li><b>Forget-gate bias.</b> A poorly initialized forget gate makes the LSTM forget too fast. Initialize the forget-gate bias to a positive value (around 1).</li>
+       <li><b>Exploding gradients remain.</b> Gates fix vanishing, not explosion. Still clip the gradient norm.</li>
+       <li><b>Padding and masking.</b> Computing loss over padded time steps corrupts learning. Use packed / masked sequences.</li>
+       <li><b>Overkill for simple data.</b> An LSTM on a tiny tabular series overfits. Try a simpler model first.</li>
+     </ul>`,
   quiz: {
     q: `What does a forget gate value near 0 do to the old memory?`,
     a: `<p>It throws most of the old memory away (multiplies it by nearly 0). A value near 1 would keep it.</p>`
@@ -2197,6 +2644,29 @@ L({
      </ul>`,
   application:
     `<p>Embeddings let search engines, translators, and chatbots understand that "happy" and "glad" mean almost the same thing. They are the first layer of nearly every language model.</p>`,
+  whenToUse:
+    `<p><b>Reach for an embedding layer whenever you have categorical or symbolic inputs</b> — words, user IDs, product IDs — and one-hot vectors would be huge and meaningless. The embedding learns a dense vector per item where similar items land near each other.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>One-hot encoding</b> — when the vocabulary is large; one-hot wastes memory and captures no similarity.</li>
+       <li><b>Hand-crafted features</b> — when you'd rather the model learn the representation from data and the downstream task.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>The category has only a handful of values — one-hot is fine and simpler.</li>
+       <li>You need fixed, pretrained meaning and have little data — load pretrained embeddings (e.g. GloVe (Global Vectors)) or a contextual model instead of training from scratch.</li>
+       <li>Meaning depends heavily on context — a single static vector per word can't disambiguate; use a contextual model (BERT-style).</li>
+     </ul>
+     <p><b>In practice:</b> <code>nn.Embedding</code> trained end to end, or initialized from pretrained vectors and fine-tuned.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Out-of-vocabulary items.</b> Unseen words / IDs have no embedding at inference. Reserve an <code>&lt;UNK&gt;</code> token or use subword tokenization.</li>
+       <li><b>Cold-start IDs.</b> New users or products start with random embeddings and predict poorly. Fall back to content features until enough data accrues.</li>
+       <li><b>Huge embedding tables.</b> Millions of IDs blow up memory and dominate the parameter count. Use hashing, factorization, or pruning.</li>
+       <li><b>Static vectors miss context.</b> One vector per word can't separate "bank" (river) from "bank" (money). Use contextual embeddings when meaning shifts.</li>
+       <li><b>Leakage through learned embeddings.</b> An ID that encodes the label (e.g. a near-unique key) lets the model memorize. Drop or regularize such features.</li>
+       <li><b>Inherited bias.</b> Embeddings absorb social biases from the corpus. Audit and debias before high-stakes use.</li>
+     </ul>`,
   quiz: {
     q: `Why are one-hot vectors poor at showing that "happy" and "glad" are similar?`,
     a: `<p>Each one-hot has its single 1 in a different slot, so any two distinct words are equally far apart. They carry no similarity information at all.</p>`
@@ -2264,6 +2734,29 @@ L({
      <p>Nobody told the model about royalty or gender — predicting nearby words alone pushed the vectors into a layout where this subtraction-and-addition just works.</p>`,
   application:
     `<p>word2vec and GloVe embeddings boosted search, recommendation, and translation. They showed that meaning can be learned just from which words appear near each other in text.</p>`,
+  whenToUse:
+    `<p><b>Reach for word2vec or GloVe (Global Vectors) static word embeddings when you want cheap, pretrained word meaning</b> and don't have the data or compute for a large contextual model. They give a single fixed vector per word, trained from co-occurrence.</p>
+     <p><b>Choose between them:</b></p>
+     <ul>
+       <li><b>word2vec</b> — when you want to train on your own corpus quickly with the skip-gram or CBOW (Continuous Bag of Words) objective.</li>
+       <li><b>GloVe</b> — when you'd rather use strong pretrained vectors built from global co-occurrence counts.</li>
+       <li><b>fastText</b> — when you need subword robustness to rare or out-of-vocabulary words.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Word meaning depends on context — use contextual embeddings (BERT-style) so "bank" differs by sentence.</li>
+       <li>You have abundant data and need top accuracy — fine-tune a large pretrained language model.</li>
+     </ul>
+     <p><b>In practice:</b> load pretrained GloVe / fastText vectors as the embedding layer's initial weights, then optionally fine-tune.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>No context.</b> One static vector per word can't separate senses of a homonym. Switch to contextual embeddings when senses matter.</li>
+       <li><b>Out-of-vocabulary words.</b> Rare or new words have no vector. Use fastText subwords or an <code>&lt;UNK&gt;</code> token.</li>
+       <li><b>Analogy hype.</b> "king − man + woman ≈ queen" works on curated cases but is brittle in general. Don't over-trust vector arithmetic.</li>
+       <li><b>Encoded bias.</b> The vectors absorb gender, race, and other biases from the corpus. Audit and debias for sensitive applications.</li>
+       <li><b>Preprocessing mismatch.</b> Different tokenization / casing between training the vectors and using them silently misaligns lookups. Match preprocessing exactly.</li>
+       <li><b>Domain drift.</b> Vectors trained on news fit medical or legal text poorly. Retrain or fine-tune on in-domain text.</li>
+     </ul>`,
   quiz: {
     q: `In the softmax $P(t \\mid c)$, what is the bottom sum for, and what does it guarantee?`,
     a: `<p>It adds the exponentiated scores over every word, so dividing by it makes the probabilities of all words add up to 1.</p>`
@@ -2329,6 +2822,28 @@ L({
      </ul>`,
   application:
     `<p>Search engines and recommenders use cosine similarity to find the closest matching documents, products, or words. It is the standard "how alike are these?" measure for embeddings.</p>`,
+  whenToUse:
+    `<p><b>Reach for cosine similarity when you compare embeddings and you care about direction, not magnitude</b> — semantic search, recommendation, clustering, and nearest-neighbor lookup over vectors. It measures the angle between two vectors, so vector length cancels out.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Euclidean (L2) distance</b> — when vectors have different magnitudes but you only want directional similarity; cosine ignores length. (On L2-normalized vectors the two rank identically.)</li>
+       <li><b>Dot product</b> — when you want similarity bounded to $[-1, 1]$ regardless of magnitude; the dot product grows with length.</li>
+     </ul>
+     <p><b>Pick a different measure when:</b></p>
+     <ul>
+       <li>Magnitude carries meaning (e.g. raw counts where bigger = stronger) — use the dot product or Euclidean distance.</li>
+       <li>You need a true metric for clustering geometry — Euclidean distance on normalized vectors is cleaner.</li>
+     </ul>
+     <p><b>What it unlocks:</b> it is the scoring core of vector databases (FAISS, approximate nearest neighbors) powering retrieval and RAG (Retrieval-Augmented Generation). In practice, normalize once and the cosine is just a dot product.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Zero vectors.</b> The denominator's norm is 0, so cosine is undefined (division by zero). Guard against empty / all-zero embeddings.</li>
+       <li><b>Forgetting it ignores magnitude.</b> If length actually matters for your task, cosine throws away real signal. Choose the dot product instead.</li>
+       <li><b>Curse of dimensionality.</b> In very high dimensions all vectors look mildly similar, so similarities bunch up. Calibrate thresholds on real data.</li>
+       <li><b>Re-normalizing every query.</b> Recomputing norms at query time is wasteful at scale. Pre-normalize stored vectors so similarity is one dot product.</li>
+       <li><b>Comparing across embedding spaces.</b> Cosine between vectors from two different models is meaningless. Compare only within one shared space.</li>
+       <li><b>Floating-point drift.</b> Accumulated error can push the value slightly past $\\pm 1$. Clamp to $[-1, 1]$ before taking an angle.</li>
+     </ul>`,
   quiz: {
     q: `Two vectors are at a right angle (perpendicular). What is their cosine similarity?`,
     a: `<p>$\\cos(90^\\circ) = 0$. A right angle means they are unrelated in direction, so the similarity is 0.</p>`
@@ -2432,6 +2947,29 @@ L({
      </ul>`,
   application:
     `<p>Attention is the core of Transformers, which power modern translation, search, and large language models like the ones behind chatbots. It lets a model link any word to any other word.</p>`,
+  whenToUse:
+    `<p><b>Reach for attention when any element of a sequence may depend on any other</b>, however far apart — language, code, long documents — and you have the data and compute to train it. It lets each position directly attend to every other, with weights that sum to 1.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>An RNN (Recurrent Neural Network) / LSTM (Long Short-Term Memory)</b> — when dependencies are long-range and you want to train in parallel across positions instead of step by step.</li>
+       <li><b>A CNN (Convolutional Neural Network)</b> — when relationships are global, not just local neighborhoods.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Sequences are extremely long — full self-attention costs grow with the square of length; use a linear / sparse-attention variant or chunking.</li>
+       <li>Data is scarce — attention is data-hungry; a smaller RNN or convolution may generalize better.</li>
+       <li>You need streaming, low-memory inference — a recurrent model can be lighter.</li>
+     </ul>
+     <p><b>In practice:</b> multi-head self-attention inside a Transformer block, usually from a pretrained model you fine-tune.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Quadratic cost in sequence length.</b> Self-attention compares every pair of positions, so memory and compute scale with the square of length. Use flash / sparse / linear attention for long inputs.</li>
+       <li><b>Missing positional information.</b> Attention is order-agnostic by itself. Add positional encodings or the model can't tell word order.</li>
+       <li><b>Forgetting the causal mask.</b> In a decoder, attending to future tokens leaks the answer. Apply a causal mask for autoregressive generation.</li>
+       <li><b>Unscaled scores.</b> Dot products grow with dimension, saturating the softmax. Divide by $\\sqrt{d_k}$ (the scaled dot-product).</li>
+       <li><b>Padding attended to.</b> Without a padding mask the model attends to padding tokens. Mask them out.</li>
+       <li><b>Over-reading attention weights.</b> They are not a faithful explanation of the model's reasoning. Don't treat attention maps as ground-truth interpretability.</li>
+     </ul>`,
   quiz: {
     q: `Attention weights for 3 inputs are $0.7, 0.2, 0.1$. Which input does the model focus on most, and what do the weights add to?`,
     a: `<p>The first input (weight 0.7) gets the most focus. The weights add to $0.7 + 0.2 + 0.1 = 1$, as attention weights always do.</p>`
@@ -2562,6 +3100,29 @@ L({
      </ul>`,
   application:
     `<p>Data augmentation is standard in image recognition for medical scans, self-driving, and photo apps, especially when labeled data is scarce. It is a cheap way to fight overfitting.</p>`,
+  whenToUse:
+    `<p><b>Reach for data augmentation when labeled data is limited and the model overfits</b> — it manufactures new, plausible training examples by transforming the ones you have, teaching invariance to those transforms for free.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Collecting more labeled data</b> — when new labels are expensive or slow; augmentation is nearly free.</li>
+       <li><b>Heavier regularization alone</b> — it complements dropout and weight decay rather than replacing them.</li>
+     </ul>
+     <p><b>Pick augmentations by domain:</b></p>
+     <ul>
+       <li><b>Images</b> — flips, crops, color jitter, and mix-based methods (Mixup, CutMix).</li>
+       <li><b>Audio</b> — time / frequency masking (SpecAugment), noise, pitch shift.</li>
+       <li><b>Text</b> — back-translation or synonym swaps, used cautiously since meaning is fragile.</li>
+     </ul>
+     <p><b>In practice:</b> apply augmentations on the fly during training (e.g. <code>torchvision.transforms</code>), and never to the validation / test set.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Label-breaking transforms.</b> Flipping a "6" into a "9" or mirroring left / right hands changes the answer. Only use transforms that preserve the label.</li>
+       <li><b>Augmenting the test set.</b> Transforming validation / test data gives a misleading score. Augment training only (test-time augmentation is a separate, deliberate technique).</li>
+       <li><b>Too aggressive.</b> Extreme distortions push examples off the real data distribution and hurt accuracy. Keep augmentations realistic.</li>
+       <li><b>Leakage across the split.</b> Augmenting before splitting puts variants of the same image in both train and test. Split first, then augment.</li>
+       <li><b>Train / serve mismatch.</b> If real inputs are clean but training was heavily distorted in one direction, the model can skew. Match augmentation to expected real-world variation.</li>
+       <li><b>Domain-wrong augmentations.</b> Color jitter on grayscale medical scans, or word swaps that flip sentiment, inject noise. Choose transforms valid for the domain.</li>
+     </ul>`,
   quiz: {
     q: `If you flip a photo labeled "cat" left-to-right, what label should the new image get?`,
     a: `<p>Still "cat". Flipping doesn't change what the object is, so the label stays the same.</p>`

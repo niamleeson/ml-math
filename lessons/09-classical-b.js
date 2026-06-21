@@ -64,6 +64,29 @@ L({
      </ul>`,
   application:
     `<p>Stacking wins Kaggle competitions and powers production ranking systems. Netflix's famous \\$1M prize was won by a stacked blend of many models. Anywhere a single model plateaus, stacking a few diverse models squeezes out extra accuracy.</p>`,
+  whenToUse:
+    `<p><b>Reach for stacking when a single model has plateaued</b> and you have a handful of <i>diverse</i> base models that each capture different structure — a gradient-boosted tree, a linear model, and a neural net, say. Stacking pays off most when the base models make <i>uncorrelated</i> errors; combining models that agree adds nothing.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A simple average or blend</b> — when you want a learned weighting that leans on the reliable models, not a fixed equal vote. Stacking strictly dominates a plain average because the meta-model can reproduce it.</li>
+       <li><b>One bigger, better-tuned model</b> — when you have already squeezed the most out of your strongest learner and need the last 1–2% for a competition or high-stakes ranking.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need low latency or a small footprint — running $K$ base models plus a meta-model is expensive; ship a single distilled model instead.</li>
+       <li>The base models are near-duplicates — diversity is the whole point, so a stack of correlated models is wasted effort.</li>
+       <li>You lack the data to build clean out-of-fold predictions — stacking needs honest held-out folds to train the combiner.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>StackingClassifier</code> / <code>StackingRegressor</code> handle the out-of-fold plumbing; keep the meta-model simple (regularized linear or logistic regression).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Leakage from in-sample base predictions.</b> If the meta-model trains on predictions the base models made on data they already saw, those predictions are unrealistically good and the stack collapses out of sample. Always use <b>out-of-fold</b> predictions to build the meta-features.</li>
+       <li><b>A heavy meta-model overfits.</b> The combiner sees only $K$ tiny inputs, so a deep tree or another boosting model there just memorizes. Keep $g$ simple — regularized linear or logistic regression.</li>
+       <li><b>Correlated base models add nothing.</b> Stacking three flavors of the same boosted tree barely beats one. Deliberately diversify the model families and feature views.</li>
+       <li><b>Double cross-validation is mandatory for honest scoring.</b> Estimating the stack's true performance needs an <i>outer</i> CV (Cross-Validation) loop around the inner out-of-fold loop, or you will report an optimistic number.</li>
+       <li><b>Serving cost multiplies.</b> Every prediction runs all $K$ base models. Budget the latency and memory, and consider distilling the stack into one model for production.</li>
+       <li><b>Train / serving skew across many pipelines.</b> Each base model has its own feature pipeline; all of them must match offline and online, or the live blend drifts from your offline numbers.</li>
+     </ul>`,
   quiz: {
     q: `Base models predict $z_1 = 8$ and $z_2 = 12$. The meta-model uses weights $w_1 = 0.75$, $w_2 = 0.25$. What is the stacked prediction?`,
     a: `<p>$\\hat{y} = 0.75 \\times 8 + 0.25 \\times 12 = 6 + 3 = 9$. The combiner leans toward model 1.</p>`
@@ -168,6 +191,30 @@ L({
      </ul>`,
   application:
     `<p>Isolation Forests catch credit-card fraud, server intrusions, and faulty sensors. They are fast (linear time), need no labels, and handle high-dimensional data — the default tool when you must find "the weird ones" without knowing in advance what weird looks like.</p>`,
+  whenToUse:
+    `<p><b>Reach for an Isolation Forest when you need unsupervised outlier detection</b> on tabular data and you have few or no labels of what "weird" looks like. It shines on medium-to-high-dimensional numeric data, scales to large datasets (near-linear time), and needs little tuning beyond the expected contamination rate.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>One-Class SVM (Support Vector Machine)</b> — when you have many points and want speed; the SVM is more sensitive but scales badly past tens of thousands of rows.</li>
+       <li><b>LOF (Local Outlier Factor)</b> — when anomalies are <i>global</i> rather than tied to local density; LOF is better for clusters of varying density but slower.</li>
+       <li><b>A simple statistical rule (z-score, IQR)</b> — when relationships <i>across</i> features matter, not just per-column extremes.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You actually have labeled anomalies — train a supervised classifier; it will beat any unsupervised method.</li>
+       <li>The data is sequences, images, or text — use an autoencoder or a domain model; trees can't read raw structure.</li>
+       <li>Anomalies hide in <i>local</i> density dips — prefer LOF or a density model.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>IsolationForest</code>; set <code>contamination</code> from a domain estimate of the outlier rate.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The contamination rate sets the threshold.</b> Setting <code>contamination</code> wrong shifts the cutoff and floods you with false positives or hides real anomalies. Estimate it from the domain, or rank by score and review the top slice instead of trusting a fixed threshold.</li>
+       <li><b>Axis-aligned cuts miss diagonal structure.</b> The standard split is along one feature at a time, so anomalies that are only odd along a <i>combination</i> of correlated features can slip through. Use the Extended Isolation Forest for oblique cuts.</li>
+       <li><b>Scores are relative, not absolute.</b> The $(0,1)$ score is calibrated to the training sample, so a "0.7" on one dataset is not comparable to a "0.7" on another. Re-threshold per dataset.</li>
+       <li><b>Drift silently rots the model.</b> Today's normal becomes tomorrow's anomaly as traffic shifts. Retrain on recent data on a schedule and monitor the score distribution.</li>
+       <li><b>Mixed feature scales and categoricals confuse the cuts.</b> Encode categoricals deliberately and be aware that raw scale affects where random thresholds land; consider standardizing.</li>
+       <li><b>It flags the unusual, not the malicious.</b> A rare-but-benign event scores high too. Pair the score with business rules or a human review queue before acting.</li>
+     </ul>`,
   quiz: {
     q: `Point A is isolated after an average of 2 cuts; point B after 8 cuts. With $c(n) = 4$, which has the higher anomaly score, and is it the outlier?`,
     a: `<p>A: $s = 2^{-2/4} = 2^{-0.5} \\approx 0.71$. B: $s = 2^{-8/4} = 2^{-2} = 0.25$. Point A scores higher and is the outlier — short paths mean easy to isolate.</p>`
@@ -290,6 +337,31 @@ L({
      </ul>`,
   application:
     `<p>This is the engine behind Netflix, Spotify, Amazon, and YouTube recommendations. From a sparse log of "who watched/bought/liked what", matrix factorization fills in the rest and surfaces items you have not seen but probably want.</p>`,
+  whenToUse:
+    `<p><b>Reach for matrix factorization when you have a large, sparse user–item interaction log</b> — ratings, clicks, plays, purchases — and want personalized recommendations from collaborative signal alone. It is the workhorse baseline for recommenders: cheap to train, fast to serve (a dot product), and strong when interactions are plentiful.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Content-based filtering</b> — when you have rich behavior but weak item metadata; factorization discovers latent taste without hand-built features.</li>
+       <li><b>Item-item or user-user kNN (k-Nearest Neighbors)</b> — when the matrix is huge; factorization compresses it to small vectors that generalize and serve faster.</li>
+       <li><b>A deep recommender (two-tower, neural CF)</b> — when you want a strong, interpretable baseline before paying for the extra data and compute a neural model needs.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You face the <b>cold-start</b> problem — brand-new users or items have no interactions, so blend in content features or a hybrid model.</li>
+       <li>Side information (text, images, context, time) carries most of the signal — use a feature-rich model like factorization machines or a two-tower network.</li>
+       <li>You only have implicit feedback at massive scale — prefer ALS (Alternating Least Squares) with confidence weighting or BPR (Bayesian Personalized Ranking).</li>
+     </ul>
+     <p><b>In practice:</b> the <code>implicit</code> library (ALS) for implicit data, <code>Surprise</code> or <code>LightFM</code> for explicit ratings and hybrids.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Cold start breaks the dot product.</b> A new user or item has no learned vector, so it cannot be scored. Fall back to popularity, onboarding questions, or a content-feature hybrid until interactions accumulate.</li>
+       <li><b>Train only on observed cells.</b> Treating every blank as a zero rating biases the model toward "dislike everything". Minimize error over <i>known</i> entries, and for implicit data weight observed interactions by confidence.</li>
+       <li><b>Popularity bias and feedback loops.</b> The model recommends popular items, which gets them more clicks, which makes them look even better. Add diversity, debiasing, or exploration to avoid collapsing the catalog.</li>
+       <li><b>Random splits leak the future.</b> Splitting interactions at random lets the model train on events that happened after the test events. Use a <i>time-based</i> split so the test set is genuinely future behavior.</li>
+       <li><b>Implicit feedback is not a rating.</b> A click means "looked", not "loved", and a non-click is ambiguous. Model confidence explicitly rather than treating clicks as 1-vs-0 labels.</li>
+       <li><b>Regularization and factor count are coupled.</b> Too many latent factors with weak penalty overfits the sparse cells. Tune $k$ and the regularization strength together on a held-out time slice.</li>
+       <li><b>Stale embeddings drift.</b> Tastes and catalogs change; retrain on a schedule and refresh vectors, or recommendations slowly go stale.</li>
+     </ul>`,
   quiz: {
     q: `User vector $u = [1,\\ 0.5]$, item vector $v = [0.6,\\ 0.4]$. What is the predicted rating $u \\cdot v$?`,
     a: `<p>$\\hat{R} = 1 \\times 0.6 + 0.5 \\times 0.4 = 0.6 + 0.2 = 0.8$. A high predicted rating.</p>`
@@ -395,6 +467,29 @@ L({
      </ul>`,
   application:
     `<p>t-SNE and UMAP are everywhere in exploratory data analysis: visualizing word embeddings, single-cell RNA data (cell types appear as islands), and the hidden layers of neural nets. They turn a 50- or 500-dimensional dataset into a picture you can actually read.</p>`,
+  whenToUse:
+    `<p><b>Reach for t-SNE or UMAP when you want to <i>see</i> the structure of high-dimensional data</b> as a 2-D picture — to spot clusters, check whether classes separate, or inspect embeddings from a model. These are <b>visualization and exploration</b> tools, not a preprocessing step that feeds a downstream model.</p>
+     <p><b>Choose them over:</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — when the structure is nonlinear and curved; PCA only keeps linear directions of spread and smears curved manifolds together.</li>
+       <li><b>UMAP over t-SNE specifically</b> — when you have many points and care about <i>global</i> layout and speed; UMAP is faster and preserves coarse structure better. Use t-SNE when fine local neighborhoods matter most.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need features for a classifier or to compress data for a model — use PCA, an autoencoder, or the raw embedding; t-SNE coordinates are not meaningful features.</li>
+       <li>You need a reproducible, interpretable projection — PCA's axes have meaning; t-SNE's do not.</li>
+       <li>You must embed <i>new</i> points later — plain t-SNE has no transform; use UMAP (which can) or PCA.</li>
+     </ul>
+     <p><b>In practice:</b> <code>umap-learn</code> for speed and out-of-sample transform; scikit-learn's <code>TSNE</code> (or openTSNE for large data) for the classic method.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Cluster sizes and gaps are not real.</b> t-SNE distorts density and distance — a tight blob and a loose blob can look the same size, and the space <i>between</i> clusters carries no meaning. Never read quantitative structure off the picture.</li>
+       <li><b>Perplexity (t-SNE) changes everything.</b> Too low fragments real clusters into specks; too high merges them. Try several values (5–50) and trust only structure that survives across them.</li>
+       <li><b>Random initialization gives different maps.</b> Re-running with a new seed reshuffles the layout. Fix the seed (or use a PCA initialization) and confirm findings are stable.</li>
+       <li><b>You can hallucinate clusters from noise.</b> t-SNE will happily carve random data into neat blobs. Validate apparent clusters against labels or a clustering metric before believing them.</li>
+       <li><b>Do not feed the coordinates into a model.</b> The 2-D output is for human eyes, not features — distances are non-Euclidean and unstable across runs.</li>
+       <li><b>Scale and preprocess first.</b> Run PCA down to ~50 dimensions and standardize before t-SNE/UMAP; otherwise it is slow and dominated by whichever feature has the largest range.</li>
+     </ul>`,
   quiz: {
     q: `On the 2-D map, pair A is at distance 2 and pair B at distance 4. Using affinity $(1+d^2)^{-1}$, which pair is treated as closer neighbors?`,
     a: `<p>A: $(1+4)^{-1} = 0.2$. B: $(1+16)^{-1} \\approx 0.059$. Pair A has higher affinity, so it is treated as closer neighbors.</p>`
@@ -492,6 +587,30 @@ L({
      </ul>`,
   application:
     `<p>Factor analysis was born in psychology (the "g" factor of intelligence) and is a staple in finance (a few market factors drive many stock returns), marketing (survey questions reduce to a few attitudes), and any field drowning in correlated measurements.</p>`,
+  whenToUse:
+    `<p><b>Reach for factor analysis when you believe a few hidden causes generate many correlated measurements</b> and you want to <i>explain</i> that correlation, not just compress it. It is the right tool when the measurements carry genuinely different amounts of noise — surveys, test batteries, financial returns, sensor panels.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — when you want a generative model that separates shared structure from <i>per-variable</i> noise. PCA folds noise into its components; factor analysis isolates it in the diagonal $\\Psi$.</li>
+       <li><b>A plain correlation heatmap</b> — when you want named, quantitative drivers (loadings) rather than just "these move together".</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You only need to compress or whiten data for a downstream model — PCA is simpler and faster.</li>
+       <li>The hidden sources are non-Gaussian and you want to <i>separate signals</i> (e.g. audio sources) — use ICA (Independent Component Analysis).</li>
+       <li>The latent structure is nonlinear — use an autoencoder or a nonlinear latent-variable model.</li>
+       <li>The data is counts or categorical — use a model built for that (e.g. item-response theory, topic models), not Gaussian factor analysis.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>FactorAnalysis</code>; rotate loadings (e.g. varimax) afterward for interpretability.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Factors are unidentified without rotation.</b> Any rotation of $\\Lambda$ fits the covariance equally well, so the raw loadings are arbitrary. Apply a rotation (varimax for independent factors, oblimin for correlated ones) before interpreting them.</li>
+       <li><b>Choosing the number of factors is a judgment call.</b> Too few hides real structure; too many fits noise. Use a scree plot, parallel analysis, or held-out likelihood — not a single heuristic.</li>
+       <li><b>It assumes linear, Gaussian relationships.</b> Heavy tails, skew, or nonlinearity break the covariance derivation. Transform variables or switch models when the assumption fails.</li>
+       <li><b>Sensitive to scale.</b> Loadings depend on each variable's units, so standardize (or analyze the correlation matrix) unless the scales are genuinely comparable.</li>
+       <li><b>Loadings are not causation.</b> A factor labeled "general ability" is a statistical summary, not a proven mechanism. Resist over-reading the names you assign.</li>
+       <li><b>Needs enough samples per variable.</b> With too few observations the covariance estimate is noisy and factors are unstable; a common rule of thumb is several times as many rows as columns.</li>
+     </ul>`,
   quiz: {
     q: `A signal has loading $\\Lambda = 3$ on a single factor, baseline $\\mu = 50$ (ignore noise). If the factor value is $z = -2$, what is the observed signal $x$?`,
     a: `<p>$x = \\Lambda z + \\mu = 3 \\times (-2) + 50 = -6 + 50 = 44$. The negative factor pulls the signal below its baseline.</p>`
@@ -588,6 +707,30 @@ L({
      </ul>`,
   application:
     `<p>SVR forecasts stock prices, electricity demand, and sensor readings where small jitter should be ignored but real trends tracked. The $\\varepsilon$-tube gives a built-in tolerance band, making it sturdier than least squares on noisy time series.</p>`,
+  whenToUse:
+    `<p><b>Reach for Support Vector Regression (SVR) on small-to-medium datasets</b> where you want a robust, nonlinear fit and a built-in tolerance for small noise. The $\\varepsilon$-tube ignores tiny jitter, and the kernel trick lets it bend without you hand-engineering features — a strong choice when rows number in the thousands, not millions.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Ordinary least squares</b> — when noise is heavy and you want the model to forgive small errors instead of chasing every wobble.</li>
+       <li><b>A neural network</b> — when data is limited; SVR generalizes well from few examples and has fewer knobs.</li>
+       <li><b>Plain linear or polynomial regression</b> — when the relationship is nonlinear and an RBF (Radial Basis Function) kernel captures it cleanly.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The dataset is large — kernel SVR scales between quadratically and cubically in the number of rows and becomes infeasible; use gradient-boosted trees or a linear model instead.</li>
+       <li>You need feature importance or an interpretable model — a tree or linear model is clearer; kernel SVR is a black box.</li>
+       <li>Features are mixed-type tabular with interactions — gradient boosting usually wins with less tuning.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>SVR</code> (RBF kernel) for nonlinear fits; <code>LinearSVR</code> when the relationship is linear and the data is larger.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>You must scale the features.</b> The RBF (Radial Basis Function) kernel and the margin depend on distances, so unscaled features let the largest-range column dominate. Standardize inputs (and often the target) first.</li>
+       <li><b>Three coupled hyperparameters.</b> $C$, $\\varepsilon$, and the kernel width $\\gamma$ interact strongly — bigger $C$ fits harder, bigger $\\varepsilon$ widens the free tube, bigger $\\gamma$ makes the fit wigglier. Tune them jointly with cross-validation, not one at a time.</li>
+       <li><b>It scales badly.</b> Training cost grows fast with the number of rows, so kernel SVR chokes on large data. Subsample, switch to <code>LinearSVR</code>, or pick another model.</li>
+       <li><b>$\\varepsilon$ is in the target's units.</b> Set it relative to the noise level you want to forgive; too large and the model underfits, too small and it chases noise like least squares.</li>
+       <li><b>Time-series leakage.</b> Forecasting needs a forward-chaining split, not random K-fold CV (Cross-Validation), or the reported error is optimistic.</li>
+       <li><b>No native uncertainty.</b> SVR outputs a point prediction with no error bar; wrap it (e.g. quantile or conformal methods) if you need intervals.</li>
+     </ul>`,
   quiz: {
     q: `With $\\varepsilon = 0.5$, a point has error $|y - f(x)| = 2$. What is its $\\varepsilon$-insensitive loss, and is it a support vector?`,
     a: `<p>$L_\\varepsilon = \\max(0,\\ 2 - 0.5) = 1.5$. It is outside the tube, so it is a support vector and influences the fit.</p>`
@@ -692,6 +835,29 @@ L({
      </ul>`,
   application:
     `<p>Bandits power A/B testing that adapts in real time, news and ad selection, clinical-trial dosing, and recommendation cold-starts. Wherever you must keep earning while still learning, a bandit beats a fixed split-test.</p>`,
+  whenToUse:
+    `<p><b>Reach for a multi-armed bandit when you must keep earning reward while still learning</b> which option is best — and feedback arrives one decision at a time. It fits online choices with a handful of options: which headline, ad, layout, or treatment to serve, where a fixed split-test would waste traffic on losers.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A classic A/B test</b> — when the cost of showing the worse option is real; a bandit shifts traffic to the winner as evidence accrues instead of waiting for the test to end.</li>
+       <li><b>UCB (Upper Confidence Bound) vs $\\varepsilon$-greedy</b> — UCB explores smartly (proportional to uncertainty), while $\\varepsilon$-greedy explores blindly; Thompson sampling often beats both in practice and handles delayed feedback gracefully.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The best option depends on <i>context</i> (the user, the time) — use a <b>contextual bandit</b>, which conditions the choice on features.</li>
+       <li>Actions change future state and reward (sequential planning) — use full reinforcement learning, not a bandit.</li>
+       <li>You need a rigorous, fixed-horizon statistical conclusion for a one-time decision — a classic controlled experiment is cleaner.</li>
+     </ul>
+     <p><b>In practice:</b> <code>Vowpal Wabbit</code> for contextual bandits at scale; a Beta-Bernoulli Thompson sampler is a few lines for binary rewards.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>UCB assumes bounded, stationary rewards.</b> The $\\sqrt{2\\ln t / n_i}$ bonus is derived for rewards in a known range that do not drift. If the environment changes, use a discounted or sliding-window variant so old data does not anchor the estimates.</li>
+       <li><b>Delayed feedback corrupts the counts.</b> If rewards arrive late (a purchase hours after the click), the algorithm pulls based on stale averages and over-explores. Account for in-flight pulls or use Thompson sampling, which tolerates delay better.</li>
+       <li><b>Non-stationarity defeats the simple rule.</b> A formerly bad arm can become the best one. Plain UCB locks onto the historical favorite; add decay or periodic forced exploration.</li>
+       <li><b>Reward scaling matters.</b> The exploration bonus is on the reward's scale, so an unscaled or wrongly-bounded reward makes the model explore far too much or too little. Normalize rewards into a known range.</li>
+       <li><b>Tiny effect sizes need huge traffic.</b> Separating arms that differ by a fraction of a percent takes enormous sample sizes; estimate the volume you need before launching.</li>
+       <li><b>It optimizes the chosen reward exactly.</b> Reward clicks and you may get clickbait. Define the metric to match the real business goal, and watch guardrail metrics for unintended effects.</li>
+     </ul>`,
   quiz: {
     q: `At $t = 10$ ($2\\ln t \\approx 4.6$), arm X has $\\bar{x} = 0.8$ with $n = 4$. What is its UCB score?`,
     a: `<p>Bonus $= \\sqrt{4.6 / 4} = \\sqrt{1.15} \\approx 1.07$. UCB $= 0.8 + 1.07 = 1.87$.</p>`

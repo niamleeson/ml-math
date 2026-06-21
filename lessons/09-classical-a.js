@@ -155,6 +155,29 @@ L({
      </ul>`,
   application:
     `<p>GMMs model speaker voices, customer segments, and image colors. They were the backbone of speech recognition for years, and they power background subtraction in video and anomaly detection (a point with low $p(x)$ is unusual).</p>`,
+  whenToUse:
+    `<p><b>Reach for a GMM (Gaussian Mixture Model) when your clusters are blob-shaped but you want <i>soft</i> memberships and a real density model</b>, not just a hard label. It shines when points genuinely sit between groups (one customer is 70% segment A, 30% segment B) and when you want $p(x)$ for anomaly scoring.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>k-means</b> — when clusters have different sizes, spreads, or elongated tilts. k-means assumes equal round blobs and gives only hard labels; a GMM fits a full covariance per component and returns soft probabilities.</li>
+       <li><b>A single Gaussian</b> — when the data is clearly multi-modal (several bumps), which one bell cannot capture.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Clusters are non-convex (rings, crescents) — use <b>DBSCAN</b> or spectral clustering instead.</li>
+       <li>You do not know the number of components and don't want to search — try a <b>Bayesian / Dirichlet-process GMM</b>, which prunes unused components.</li>
+       <li>Dimensionality is high relative to the sample count — full covariances become unstable; use diagonal or tied covariances, or reduce dimensions first.</li>
+     </ul>
+     <p><b>Which library:</b> <code>sklearn.mixture.GaussianMixture</code> (or <code>BayesianGaussianMixture</code> to auto-select $K$).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>EM (Expectation–Maximization) only finds a <i>local</i> optimum.</b> The result depends on the starting point. Run several random restarts (<code>n_init</code>) and keep the best log-likelihood; k-means initialization helps.</li>
+       <li><b>Covariances can collapse to a spike.</b> A component latching onto a single point drives its variance toward zero and the likelihood toward infinity. Add a covariance floor / regularizer (<code>reg_covar</code>) to keep it stable.</li>
+       <li><b>You must choose $K$.</b> Too many components overfit, too few underfit. Pick $K$ with BIC (Bayesian Information Criterion) or AIC (Akaike Information Criterion), not by raw likelihood, which always favors more components.</li>
+       <li><b>Full covariances are data-hungry.</b> Each one needs many points per dimension. When $n$ is small relative to dimension, switch to diagonal or tied covariances or you will overfit.</li>
+       <li><b>It assumes Gaussian-shaped components.</b> Heavy-tailed or skewed clusters are modeled poorly; the fit will spawn extra components to patch the mismatch. Transform features or use a heavier-tailed mixture.</li>
+       <li><b>Label switching.</b> Component indices are arbitrary across runs, so don't compare "component 2" between fits — match components by their means before interpreting.</li>
+     </ul>`,
   quiz: {
     q: `A point gets weighted blob scores $0.09$ for blob A and $0.03$ for blob B. What is its responsibility (membership) for blob A?`,
     a: `<p>Normalize: $\\gamma_A=\\dfrac{0.09}{0.09+0.03}=\\dfrac{0.09}{0.12}=0.75$. The point is 75% blob A, 25% blob B.</p>`
@@ -282,6 +305,29 @@ L({
      </ul>`,
   application:
     `<p>DBSCAN finds hotspots in GPS check-ins, groups stars into galaxies, segments lidar point clouds for self-driving cars, and flags fraud as low-density outliers. Anywhere clusters are irregular and outliers matter, it beats k-means.</p>`,
+  whenToUse:
+    `<p><b>Reach for DBSCAN (Density-Based Spatial Clustering of Applications with Noise) when you don't know how many clusters there are, the clusters have arbitrary shapes, and you want outliers flagged as noise rather than forced into a group.</b> It is ideal for spatial data — GPS points, lidar, hotspots — where density, not roundness, defines a cluster.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>k-means</b> — when you can't pick $k$ up front, when clusters are non-convex (rings, ribbons), or when real outliers should be excluded instead of distorting a centroid.</li>
+       <li><b>A GMM (Gaussian Mixture Model)</b> — when clusters are not blob-shaped and you don't want to assume any parametric form.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Clusters have very different densities — classic DBSCAN uses one global $\\varepsilon$ and fails here; use <b>HDBSCAN</b>, which adapts the density threshold.</li>
+       <li>The data is high-dimensional — distances concentrate and the $\\varepsilon$ neighborhood becomes meaningless. Reduce dimensions first (PCA, UMAP) or use a different method.</li>
+       <li>You need soft / probabilistic memberships — use a GMM instead.</li>
+     </ul>
+     <p><b>Which library:</b> <code>sklearn.cluster.DBSCAN</code>, or the <code>hdbscan</code> package when densities vary.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>$\\varepsilon$ is the make-or-break knob.</b> Too small and everything becomes noise; too big and separate clusters merge into one. Choose it from a <b>k-distance plot</b> (sort each point's distance to its $k$-th neighbor and look for the elbow), not by guessing.</li>
+       <li><b>One global density rarely fits real data.</b> A single $\\varepsilon$ cannot capture both dense and sparse clusters at once. Switch to <b>HDBSCAN</b> when densities differ.</li>
+       <li><b>It breaks down in high dimensions.</b> The curse of dimensionality makes all pairwise distances look similar, so the $\\varepsilon$ ball stops separating clusters. Reduce dimensions first.</li>
+       <li><b>Distance scale and units matter.</b> Features on different scales let one feature dominate the distance. Standardize first, and use a metric (e.g. haversine for latitude / longitude) that matches the geometry.</li>
+       <li><b>Border points are assignment-order dependent.</b> A border point reachable from two clusters goes to whichever core claims it first, so results can vary slightly run to run.</li>
+       <li><b>Naive implementation is $O(n^2)$.</b> On large data it crawls without a spatial index. Make sure the implementation uses a KD-tree or ball-tree, and watch memory on dense neighborhoods.</li>
+     </ul>`,
   quiz: {
     q: `With minPts $=4$, a point has exactly 2 other points within $\\varepsilon$. Is it a core point? Could it still belong to a cluster?`,
     a: `<p>Counting itself it has 3 neighbors $&lt;4$, so it is not a core point. But it can still be a <b>border</b> point if one of those neighbors is a core point — then it joins that core's cluster. Otherwise it is noise.</p>`
@@ -405,6 +451,29 @@ L({
      </ul>`,
   application:
     `<p>Spectral methods segment images (pixels as a graph), find communities in social networks, group genes by co-expression, and partition meshes for parallel computing. Whenever "similar" matters more than "nearby", spectral clustering shines.</p>`,
+  whenToUse:
+    `<p><b>Reach for spectral clustering when clusters are defined by <i>connectivity</i> rather than straight-line distance</b> — interleaved crescents, manifolds that curve through space, or data that already comes as a graph (a social network, a similarity matrix). It cuts the graph along its thin seams, so it traces shapes k-means can never carve.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>k-means</b> — when clusters are non-convex or when "similar" should follow a chain of neighbors instead of distance to a centroid.</li>
+       <li><b>DBSCAN (Density-Based Spatial Clustering of Applications with Noise)</b> — when you know how many clusters you want and the groups are balanced; spectral handles complex shapes without DBSCAN's single global-density assumption.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The dataset is large (tens of thousands or more) — building and eigen-decomposing an $n\\times n$ affinity matrix is $O(n^3)$ and memory-heavy. Use mini-batch k-means or a Nyström / landmark approximation.</li>
+       <li>You need to assign brand-new points without re-fitting — spectral clustering is transductive; it has no natural out-of-sample rule.</li>
+       <li>You want automatic outlier rejection — use DBSCAN, which labels noise explicitly.</li>
+     </ul>
+     <p><b>Which library:</b> <code>sklearn.cluster.SpectralClustering</code> (set <code>affinity='nearest_neighbors'</code> for shaped data).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The similarity kernel decides everything.</b> The Gaussian-kernel bandwidth $\\sigma$ (or the number of nearest neighbors) controls which points are "connected". Too wide and all clusters fuse; too narrow and the graph fragments. Tune it deliberately.</li>
+       <li><b>It scales badly.</b> Forming the affinity matrix is $O(n^2)$ memory and the eigen-decomposition is up to $O(n^3)$. For big data use sparse k-nearest-neighbor graphs and a partial / sparse eigensolver.</li>
+       <li><b>You still must choose the number of clusters $k$.</b> Use the <b>eigengap heuristic</b> — pick $k$ at the largest jump between consecutive smallest eigenvalues of the Laplacian.</li>
+       <li><b>Use the normalized Laplacian.</b> The unnormalized $L=D-W$ is biased toward equal-size cuts and mishandles uneven densities. Prefer the normalized cut (Ng–Jordan–Weiss) formulation.</li>
+       <li><b>The final k-means step is random.</b> Clustering the embedding still depends on initialization; run several restarts and keep the best.</li>
+       <li><b>No native out-of-sample prediction.</b> A new point needs the whole graph rebuilt or a separate embedding approximation, so it is awkward for streaming use.</li>
+     </ul>`,
   quiz: {
     q: `Why does k-means fail on two interleaved crescent moons, while spectral clustering succeeds?`,
     a: `<p>k-means groups by straight-line distance to a center, so it can only carve convex, blob-like regions — it slices each curved moon. Spectral clustering groups by <b>connectivity along the graph</b>: points are together if a dense chain of neighbors links them, which follows the curve of each moon and cuts the thin gap between them.</p>`
@@ -541,6 +610,30 @@ L({
      </ul>`,
   application:
     `<p>LDA is a fast, robust baseline for face recognition, credit scoring, and medical diagnosis, and doubles as a supervised dimensionality reducer. QDA is preferred when classes genuinely have different spreads, e.g. distinguishing tissue types in imaging.</p>`,
+  whenToUse:
+    `<p><b>Reach for LDA (Linear Discriminant Analysis) or QDA (Quadratic Discriminant Analysis) when each class is roughly Gaussian and you want a fast, well-calibrated baseline that also gives class probabilities.</b> LDA is a strong default for small, low-noise problems; QDA is the move when classes clearly differ in spread or shape.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Logistic regression</b> — when classes are approximately Gaussian and data is scarce. LDA's generative assumptions make it more data-efficient and stable, and it doubles as a supervised dimensionality reducer.</li>
+       <li><b>QDA over LDA</b> — when class covariances genuinely differ (one class tight, another wide), so a curved boundary fits better.</li>
+       <li><b>LDA over QDA</b> — when data is limited; QDA must estimate a separate covariance per class and overfits quickly.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The decision boundary is complex and you have plenty of data — use gradient-boosted trees or a neural network.</li>
+       <li>Features are far from Gaussian or strongly non-linear — logistic regression with engineered features or a kernel method generalizes better.</li>
+       <li>Dimensionality is high with few samples — LDA's pooled covariance becomes singular; use <b>regularized / shrinkage LDA</b>.</li>
+     </ul>
+     <p><b>Which library:</b> <code>sklearn.discriminant_analysis.LinearDiscriminantAnalysis</code> (with <code>solver='lsqr', shrinkage='auto'</code> when $n$ is small) and <code>QuadraticDiscriminantAnalysis</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The pooled covariance can go singular.</b> When features outnumber samples or two features are collinear, $\\Sigma^{-1}$ blows up. Use <b>shrinkage</b> (Ledoit–Wolf) or reduce dimensions first.</li>
+       <li><b>QDA overfits with little data.</b> Estimating a full covariance per class needs many examples per class; with few, the curved boundary chases noise. Fall back to LDA or regularize.</li>
+       <li><b>The Gaussian assumption can silently fail.</b> Skewed or heavy-tailed features distort the fitted bells. Transform features (e.g. log) or check normality before trusting the boundary.</li>
+       <li><b>Outliers wreck the mean and covariance estimates.</b> A few extreme points shift $\\mu_k$ and inflate $\\Sigma_k$. Clean or robustly estimate, or use a robust covariance.</li>
+       <li><b>Class priors must match deployment.</b> The $\\log\\pi_k$ term uses the training class frequencies; if production prevalence differs, reset the priors or the boundary is biased.</li>
+       <li><b>Don't confuse this LDA with the topic model.</b> Linear Discriminant Analysis (a classifier) is unrelated to Latent Dirichlet Allocation (text topics) — same abbreviation, different method.</li>
+     </ul>`,
   quiz: {
     q: `Two classes share the same covariance. Will the decision boundary be a straight line or a curve? Which method is this?`,
     a: `<p>A straight line — this is <b>LDA</b>. When the covariances are equal, the quadratic term cancels and only a linear function of $x$ remains. Give each class its own covariance and you get the curved <b>QDA</b> boundary instead.</p>`
@@ -668,6 +761,30 @@ L({
      </ul>`,
   application:
     `<p>GPs power <b>Bayesian optimization</b> for tuning hyperparameters and experiments — they pick where to sample next by trading off "predicted good" against "uncertain". They also model sensor noise in robotics, geostatistics (kriging), and time-series with calibrated error bars.</p>`,
+  whenToUse:
+    `<p><b>Reach for a GP (Gaussian Process) when data is scarce and <i>honest uncertainty</i> matters more than raw scale</b> — you want a prediction <i>and</i> a calibrated error bar from a handful of points. It is the engine behind Bayesian optimization, where each experiment is expensive and you must decide where to sample next.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Linear or polynomial regression</b> — when the function is smooth but unknown in form and you want flexibility plus principled uncertainty, not a fixed-degree fit.</li>
+       <li><b>A neural network</b> — when you have tens to low-thousands of points; a GP needs no architecture search and quantifies uncertainty natively, where a plain network gives an over-confident point estimate.</li>
+       <li><b>Random search / grid search for tuning</b> — Bayesian optimization on a GP finds good hyperparameters in far fewer trials.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have more than a few thousand points — exact GPs cost $O(n^3)$ to fit and $O(n^2)$ memory. Use sparse / inducing-point approximations or switch models.</li>
+       <li>Inputs are very high-dimensional — a stationary kernel struggles; consider deep models or a learned feature embedding.</li>
+       <li>The target is discrete classification at scale — logistic / boosted models are simpler than a GP classifier.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>GaussianProcessRegressor</code> for small problems; <b>GPyTorch</b> or <b>GPflow</b> for scalable / sparse GPs, and <code>botorch</code> for Bayesian optimization.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Kernel choice is a modeling decision, not a default.</b> The kernel encodes your assumptions (smoothness, periodicity). A radial-basis-function kernel assumes very smooth functions; pick a Matern kernel for rougher data, and add a periodic kernel for seasonality.</li>
+       <li><b>It does not scale.</b> Fitting inverts an $n\\times n$ matrix at $O(n^3)$ cost. Beyond a few thousand points use sparse / inducing-point methods rather than the exact GP.</li>
+       <li><b>The kernel matrix goes numerically singular.</b> Nearby inputs make $K$ nearly rank-deficient and the Cholesky factorization fails. Add a small <b>jitter</b> (nugget) to the diagonal, equivalent to an observation-noise term.</li>
+       <li><b>Hyperparameters can land in a bad local optimum.</b> Maximizing the marginal likelihood over the length scale and noise is non-convex. Use several random restarts of the optimizer.</li>
+       <li><b>Standardize inputs and outputs.</b> A single length scale across features on different scales fits poorly. Scale features and center the target (or learn a mean function) so the zero-mean prior is sensible.</li>
+       <li><b>Mis-set noise breaks calibration.</b> Too little assumed noise interpolates and over-fits; too much over-smooths and ignores data. Learn the noise level jointly rather than hard-coding it.</li>
+     </ul>`,
   quiz: {
     q: `In a Gaussian Process, what happens to the prediction's uncertainty (the ±2σ band) far away from all training points, and why?`,
     a: `<p>It grows wide. Far from data, the kernel values $k_*$ between the test point and the training points are near zero, so the variance-reduction term $k_*^\\top K^{-1}k_*$ vanishes and the variance stays at its full prior level $k(x_*,x_*)$. The GP honestly reports that it has little information there.</p>`
@@ -802,6 +919,30 @@ L({
      </ul>`,
   application:
     `<p>Bayesian regression gives calibrated error bars for A/B test effects, sensor calibration, and forecasting with small data. Its built-in regularization (the prior) tames overfitting, and the same machinery underlies Bayesian neural nets and active learning.</p>`,
+  whenToUse:
+    `<p><b>Reach for Bayesian linear regression when the relationship is (close to) linear, data is limited, and you need an <i>error bar</i> on both the fit and each prediction.</b> It is the right tool for A/B-test effect sizes, sensor calibration, and small-sample forecasting where "how sure are we?" is part of the answer.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Ordinary least squares</b> — when you want predictive uncertainty, not just a point estimate, and built-in regularization from the prior.</li>
+       <li><b>Ridge regression</b> — when you want the <i>same</i> regularizing shrinkage but also a full posterior and the ability to learn the regularization strength from the data (the prior precision $\\alpha$) instead of grid-searching it.</li>
+       <li><b>A Gaussian Process</b> — when the trend is genuinely linear in your features; it is far cheaper and still gives calibrated bars.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The relationship is strongly non-linear — use a GP (Gaussian Process), gradient-boosted trees, or a neural network (or add non-linear basis features first).</li>
+       <li>You have abundant data and don't need uncertainty — plain OLS (Ordinary Least Squares) or ridge is simpler and just as accurate.</li>
+       <li>The posterior isn't conjugate (non-Gaussian likelihood, e.g. logistic) — you'll need approximate inference (Laplace, variational, MCMC) rather than the closed form here.</li>
+     </ul>
+     <p><b>Which library:</b> <code>sklearn.linear_model.BayesianRidge</code> or <code>ARDRegression</code> for the closed form; <b>PyMC</b> or <b>NumPyro</b> when you want custom priors or non-conjugate likelihoods.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The prior actually matters with little data.</b> A strong prior precision $\\alpha$ pulls the slope toward zero and can bias the fit; a weak prior barely regularizes. Set $\\alpha$ from domain knowledge or learn it via the marginal likelihood, and check sensitivity.</li>
+       <li><b>Mis-specified noise miscalibrates the bars.</b> Underestimating the observation noise $\\beta^{-1}$ makes the model over-confident. Learn the noise jointly with the weights rather than fixing it by guess.</li>
+       <li><b>Standardize features first.</b> An isotropic prior $\\alpha^{-1}I$ assumes all weights are on the same scale. Unscaled features make the prior penalize them unevenly, so center and scale the inputs.</li>
+       <li><b>It can't model non-linearity on its own.</b> It is still <i>linear in the features</i>. Add basis functions (polynomial, splines) or it will under-fit curved data while reporting tight, misleading error bars.</li>
+       <li><b>Don't confuse posterior and predictive uncertainty.</b> The full predictive variance adds the observation-noise term $\\beta^{-1}$ to the parameter uncertainty; report the predictive interval, not just the spread of the weight posterior.</li>
+       <li><b>Extrapolation bars are only as honest as the model.</b> Far outside the training range the linear form may be wrong, so a confidently narrow band there can still be flatly mistaken.</li>
+     </ul>`,
   quiz: {
     q: `As you collect more and more data, what happens to the posterior covariance $S_N$ over the weights, and to the cloud of sampled lines?`,
     a: `<p>The data term $\\beta\\Phi^\\top\\Phi$ in $S_N=(\\alpha I+\\beta\\Phi^\\top\\Phi)^{-1}$ grows, so $S_N$ shrinks toward zero. The posterior concentrates: the cloud of plausible lines tightens around the single best-fit line, and predictions become more certain.</p>`

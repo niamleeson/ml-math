@@ -139,6 +139,29 @@ L({
      <p>So this token's new meaning leans 67% on the first neighbor. Real dot products set the scores, $\\sqrt{d}$ tames them, softmax picks the winner. That is one full attention step end to end.</p>`,
   application:
     `<p>Transformers are the backbone of GPT, BERT, image models, and protein folders. Because every token attends to every token in parallel, they train fast on GPUs (Graphics Processing Units) and capture long-range links a word-by-word model would miss.</p>`,
+  whenToUse:
+    `<p><b>Reach for a transformer when your data is a sequence and long-range context matters</b> — text, code, audio tokens, or any ordered set where item $i$ may depend on item $j$ far away. It is the default architecture for language, and the parallel attention pattern trains far faster on GPUs (Graphics Processing Units) than recurrent models.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>An RNN (Recurrent Neural Network) or LSTM (Long Short-Term Memory)</b> — when you have enough data and compute; the transformer captures long-range links the recurrent state forgets, and trains in parallel instead of step by step.</li>
+       <li><b>A 1-D CNN (Convolutional Neural Network)</b> — when dependencies span the whole sequence, not just a local window.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Sequences are very long (tens of thousands of tokens) and the $O(n^2)$ attention cost is prohibitive — use a sparse / linear-attention variant or a state-space model (e.g. Mamba).</li>
+       <li>The data is small tabular rows — gradient-boosted trees usually win with far less compute.</li>
+       <li>You only have a few hundred examples — a from-scratch transformer will overfit; fine-tune a pretrained one instead.</li>
+     </ul>
+     <p><b>Which library:</b> <b>Hugging Face Transformers</b> with PyTorch is the practical default; use <code>flash-attention</code> kernels for speed at long context.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Attention cost grows with the square of sequence length.</b> Memory and compute scale as $O(n^2)$, so doubling context roughly quadruples cost. Cap the context window, chunk the input, or use a linear-attention variant.</li>
+       <li><b>No position information by default.</b> Self-attention is permutation-invariant — without positional encodings the model cannot tell word order. Add sinusoidal or rotary (RoPE) embeddings, and confirm they extend to your longest sequence.</li>
+       <li><b>Training is unstable without warmup.</b> Transformers diverge early if the learning rate starts high. Use a warmup schedule, careful initialization, and layer normalization in the right place (pre-norm is more stable than post-norm).</li>
+       <li><b>Training from scratch needs huge data.</b> On small datasets a transformer badly overfits. Fine-tune a pretrained checkpoint instead of training the whole stack yourself.</li>
+       <li><b>Padding and masking bugs leak across examples.</b> A wrong attention mask lets a token attend to padding or, in a decoder, to future tokens — silently inflating training scores. Unit-test the mask shapes.</li>
+       <li><b>Inference is memory-hungry.</b> The key/value cache grows with every generated token. Budget GPU memory for long outputs, and use quantization or paged attention to serve at scale.</li>
+     </ul>`,
   quiz: {
     q: `Scaled scores for 3 tokens are $[0, 0, 0]$. What attention weights does the softmax give, and why?`,
     a: `<p>Equal scores give $e^0 = 1$ each, sum $3$, so each weight is $1/3 \\approx 0.33$. With no preference, attention spreads evenly across all tokens.</p>`
@@ -241,6 +264,28 @@ L({
      <p>One head looked at the article, the other at the word itself, each a real softmax-weighted blend of values. Combined, "cat" carries both views at once.</p>`,
   application:
     `<p>GPT-style models use dozens of heads per layer. Researchers have found heads that specialize: some track sentence structure, some copy the previous token, some link quotes to speakers. Multi-head attention is why one layer can capture many kinds of relationships at once.</p>`,
+  whenToUse:
+    `<p><b>Multi-head attention is the default inside any transformer</b> — you rarely choose it standalone, you choose how many heads. Use several heads (rather than one big one) whenever a single layer must capture several kinds of relationship at once: syntax, coreference, and copying can each live in their own subspace.</p>
+     <p><b>Choose more heads over fewer when:</b></p>
+     <ul>
+       <li><b>A single wide attention</b> — when the task has many distinct relational patterns; splitting into heads lets each specialize, and it costs the same compute since head width shrinks as head count grows.</li>
+       <li><b>Stacking more layers</b> — when you want richer per-layer mixing without making the network deeper and harder to train.</li>
+     </ul>
+     <p><b>Pick a different setup when:</b></p>
+     <ul>
+       <li>The model dimension is small — too many heads makes each head's subspace tiny and starved of capacity; keep head size at roughly 32–128.</li>
+       <li>Memory bandwidth at inference is the bottleneck — use grouped-query or multi-query attention to share keys and values across heads.</li>
+     </ul>
+     <p><b>Which library:</b> <code>torch.nn.MultiheadAttention</code> or the attention modules in <b>Hugging Face Transformers</b>; reach for <code>flash-attention</code> for fused, memory-efficient kernels.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Head count must divide the model dimension.</b> Each head gets $d / h$ dimensions; if that is not an integer the reshape fails or silently mis-splits. Pick $h$ that divides $d$ evenly.</li>
+       <li><b>Too many heads starves each one.</b> With a small $d$, lots of heads leaves each with a few dimensions and little capacity. Tune head size, not just head count.</li>
+       <li><b>Heads are redundant more often than you think.</b> Many heads learn near-identical patterns; pruning a large fraction often barely hurts. Do not assume every head is doing useful, distinct work.</li>
+       <li><b>The key/value cache scales with head count.</b> At serving time, more heads means a bigger cache and slower generation. Use grouped-query or multi-query attention to cut memory.</li>
+       <li><b>Reshape and transpose bugs are common.</b> Splitting into heads and merging back involves easy-to-mix-up axis order. Assert the output shape equals the input shape after the merge.</li>
+       <li><b>Per-head interpretability is overstated.</b> A head that "tracks syntax" on one example may do something else on another. Do not hard-wire product logic to a specific head's behavior.</li>
+     </ul>`,
   quiz: {
     q: `A model has vector size $d = 12$ and $h = 3$ heads. What size is each head's query vector, and what length is the concatenated output?`,
     a: `<p>Each head works in $12 / 3 = 4$ dimensions, so each query is length 4. Concatenating 3 heads of size 4 gives back length $3 \\times 4 = 12$.</p>`
@@ -342,6 +387,26 @@ L({
      </ul>`,
   application:
     `<p>GPT models power chatbots and coding assistants by sampling next tokens one at a time. BERT's masked-token pretraining made it a workhorse for search ranking, sentiment, and question answering. Both start from the same idea: learn language by filling in the blanks, then fine-tune.</p>`,
+  whenToUse:
+    `<p><b>Reach for a large language model (LLM) when the task is open-ended language</b> — drafting, summarizing, extracting structured fields from messy text, answering questions, or generating code. Use a <b>decoder</b> model (GPT-style) for generation; use an <b>encoder</b> model (BERT-style) when you only need a representation for classification, ranking, or retrieval.</p>
+     <p><b>Choose an approach in this order of cost:</b></p>
+     <ul>
+       <li><b>Prompt a hosted model</b> — when you have no labeled data and need results today; cheapest to start, but you pay per token and depend on a vendor.</li>
+       <li><b>RAG (Retrieval-Augmented Generation)</b> — when answers must be grounded in your own documents; retrieve relevant text and feed it in, instead of retraining.</li>
+       <li><b>Fine-tune (often with LoRA, Low-Rank Adaptation)</b> — when you need a consistent style or format the base model won't follow, and you have a few thousand examples.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b> the task is a fixed-label classification on tabular data (use trees), or you need exact, auditable arithmetic (call a tool / database, don't trust generated text).</p>
+     <p><b>Which library:</b> <b>Hugging Face Transformers</b> for open models; <b>vLLM</b> for high-throughput serving; <b>LangChain</b> or <b>LlamaIndex</b> for RAG plumbing.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Hallucination is the headline risk.</b> The model emits fluent, confident text that is simply wrong. Ground answers with retrieval, ask for citations, and verify any fact that matters before acting on it.</li>
+       <li><b>Context windows are finite and costly.</b> Stuffing more text raises latency and price and can bury the key fact in the middle, where models attend least. Retrieve and rank; don't dump everything in.</li>
+       <li><b>Prompt injection is a real attack.</b> Untrusted input can override your instructions ("ignore the above and..."). Separate system from user content, and never let model output trigger privileged actions unchecked.</li>
+       <li><b>Evaluation is hard.</b> There is no single accuracy number for free-form text. Build a labeled eval set, use an LLM-as-judge with care, and watch for the judge being fooled by confident wrong answers.</li>
+       <li><b>Cost and latency scale with tokens.</b> Long prompts and long outputs add up fast in production. Cache, shorten prompts, and pick the smallest model that passes your eval.</li>
+       <li><b>Data leakage into pretraining inflates benchmarks.</b> A model may have seen your test set during pretraining. Use fresh, private evals before trusting a public score.</li>
+       <li><b>Non-determinism complicates testing.</b> Sampling makes outputs vary run to run. Pin the temperature and seed where you need reproducible behavior.</li>
+     </ul>`,
   quiz: {
     q: `Logits for ["yes", "no"] are $[2, 0]$ at temperature $T = 1$. What probability does the model give "yes"? (Use $e^2 \\approx 7.39$.)`,
     a: `<p>$P(\\text{yes}) = \\frac{e^2}{e^2 + e^0} = \\frac{7.39}{7.39 + 1} = \\frac{7.39}{8.39} \\approx 0.88$, about 88%.</p>`
@@ -463,6 +528,29 @@ L({
      <p>The encoder's two dot products are the entire summary of the input; everything rebuilt downstream flows from those two numbers.</p>`,
   application:
     `<p>Autoencoders power denoising (rebuild a clean image from a noisy one), anomaly detection (a fraud transaction reconstructs badly, so its error spikes), and dimensionality reduction for visualizing high-dimensional data.</p>`,
+  whenToUse:
+    `<p><b>Reach for an autoencoder when you have lots of unlabeled data and want a compact representation</b> — for anomaly detection, denoising, or nonlinear dimensionality reduction. It learns to compress and rebuild its input, so a high reconstruction error flags inputs unlike anything seen in training.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — when the structure in your data is nonlinear; PCA can only find linear directions, an autoencoder can bend.</li>
+       <li><b>A supervised classifier for anomalies</b> — when you have almost no labeled anomalies; you train only on "normal" data and let reconstruction error do the flagging.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You want to <i>generate</i> new, varied samples — a plain autoencoder's latent space has holes; use a VAE (Variational Autoencoder) or a diffusion model.</li>
+       <li>You just need 2-D visualization — UMAP or t-SNE is usually faster and clearer.</li>
+       <li>Data is small and tabular — PCA or an isolation forest is simpler and less prone to overfitting.</li>
+     </ul>
+     <p><b>Which library:</b> build it directly in <b>PyTorch</b> or <b>Keras</b> — it is just an encoder and decoder with a reconstruction loss.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The identity-function trap.</b> If the bottleneck is as wide as the input, the network just copies its input and learns nothing useful. Keep the latent dimension genuinely smaller, or add noise (a denoising autoencoder).</li>
+       <li><b>The latent space is not generative.</b> Decoding a random point usually gives garbage — there are gaps between the encoded training points. Use a VAE if you need to sample new data.</li>
+       <li><b>Reconstruction loss must match the data.</b> Mean squared error blurs images and assumes Gaussian noise; use a loss suited to the data (e.g. cross-entropy for binary pixels).</li>
+       <li><b>Anomaly thresholds drift.</b> The error cutoff that separated normal from anomalous can move as the input distribution shifts. Recalibrate the threshold on recent data and monitor it.</li>
+       <li><b>It reconstructs unseen anomalies too well.</b> A powerful decoder may rebuild even abnormal inputs, hiding them. Constrain capacity so the model only generalizes to the normal manifold.</li>
+       <li><b>Scaling matters.</b> Features on wildly different scales let a few dominate the loss. Normalize inputs before training.</li>
+     </ul>`,
   quiz: {
     q: `An autoencoder reconstructs $x = [1, 0]$ as $\\hat{x} = [0.8, 0.1]$. What is the squared-error reconstruction loss?`,
     a: `<p>$\\mathcal{L} = (1 - 0.8)^2 + (0 - 0.1)^2 = 0.04 + 0.01 = 0.05$.</p>`
@@ -595,6 +683,25 @@ L({
      </ul>`,
   application:
     `<p>VAEs generate faces, molecules, and music, and they give a smooth latent space you can interpolate: walk from one face to another and every step in between is a plausible face. They are also used for anomaly detection and as a building block inside larger generative systems.</p>`,
+  whenToUse:
+    `<p><b>Reach for a Variational Autoencoder (VAE) when you want a generative model with a smooth, structured latent space</b> — one you can sample from, interpolate across, and use to detect anomalies. Unlike a plain autoencoder, its latent space has no holes, so decoding a random code gives a plausible sample.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A plain autoencoder</b> — when you need to <i>generate</i> or interpolate, not just compress.</li>
+       <li><b>A GAN (Generative Adversarial Network)</b> — when you want stable training, an explicit likelihood estimate, and a usable encoder; accept that samples may be a bit blurry.</li>
+       <li><b>A diffusion model</b> — when speed and a compact latent matter more than top sample sharpness (VAEs decode in one pass; diffusion needs many steps).</li>
+     </ul>
+     <p><b>Pick a different tool when:</b> you need state-of-the-art image realism (use diffusion), or you only need compression with no generation (use a plain autoencoder or PCA, Principal Component Analysis).</p>
+     <p><b>Which library:</b> build it in <b>PyTorch</b>; VAEs also serve as the latent compressor inside latent-diffusion image models.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Posterior collapse.</b> With a strong decoder, the model ignores the latent code and the KL (Kullback–Leibler) term drives the encoder to the prior, so $z$ carries no information. Use KL warmup (anneal its weight) or weaken the decoder.</li>
+       <li><b>Blurry samples.</b> The Gaussian reconstruction loss averages over possibilities, so images look soft. Use a perceptual loss, a discrete latent (VQ-VAE), or pair the VAE with a sharper decoder.</li>
+       <li><b>Balancing the two loss terms is delicate.</b> Reconstruction and the KL term pull against each other; the $\\beta$ weight that balances them needs tuning ($\\beta$-VAE) and changes what the model learns.</li>
+       <li><b>Forgetting the reparameterization trick.</b> You cannot backpropagate through random sampling directly; sample $\\epsilon$ from a fixed noise source and compute $z=\\mu+\\sigma\\epsilon$, or gradients won't flow.</li>
+       <li><b>Prior mismatch.</b> A standard Gaussian prior may not fit the true latent shape, leaving low-density regions that decode poorly. Consider a richer prior (e.g. a flow or a mixture).</li>
+       <li><b>Likelihood is a lower bound, not the truth.</b> The ELBO (Evidence Lower BOund) underestimates the real log-likelihood, so comparing VAEs by ELBO across architectures can mislead.</li>
+     </ul>`,
   quiz: {
     q: `An encoder gives $\\mu = 1.0$ and $\\sigma = 0.5$. With sampled noise $\\epsilon = -2$, what code $z$ does the reparameterization trick produce?`,
     a: `<p>$z = \\mu + \\sigma\\epsilon = 1.0 + 0.5 \\times (-2) = 1.0 - 1.0 = 0$.</p>`
@@ -713,6 +820,29 @@ L({
      <p>To reverse, the network would predict that $\\epsilon \\approx -1.0$ was added, and subtract it to recover $0.9$.</p>`,
   application:
     `<p>Diffusion models power Stable Diffusion, DALL-E, and Midjourney for image generation, plus tools for video, audio, and 3-D shapes. They produce sharp, diverse samples and are now the dominant approach to image generation.</p>`,
+  whenToUse:
+    `<p><b>Reach for a diffusion model when you want the sharpest, most diverse generated samples</b> — images, audio, video, or 3-D shapes — and you can afford a slower, multi-step sampling process. It learns to reverse a gradual noising process, denoising pure noise into a sample step by step.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A GAN (Generative Adversarial Network)</b> — when you want stable training and broad mode coverage; GANs train faster to sample but suffer mode collapse and are finicky to balance.</li>
+       <li><b>A VAE (Variational Autoencoder)</b> — when sample quality outweighs speed; VAEs decode in one pass but look blurrier.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need real-time generation — many denoising steps make diffusion slow; use a GAN or a distilled / few-step diffusion variant.</li>
+       <li>You need exact likelihoods for density estimation — use a normalizing flow.</li>
+       <li>You generate text — autoregressive transformers still dominate language.</li>
+     </ul>
+     <p><b>Which library:</b> <b>Hugging Face Diffusers</b> for ready pipelines; work in a VAE's latent space (latent diffusion) to cut cost.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Sampling is slow.</b> Hundreds of denoising steps make generation expensive and high-latency. Use a faster sampler (DDIM, Denoising Diffusion Implicit Models) or distill the model to a few steps.</li>
+       <li><b>The noise schedule matters a lot.</b> A poorly chosen schedule wastes steps or hurts quality. Tune it (cosine schedules often beat linear) and match training and sampling schedules.</li>
+       <li><b>Training cost is high.</b> Diffusion needs large datasets and long GPU (Graphics Processing Unit) training. Train in a compressed latent space and start from a checkpoint where possible.</li>
+       <li><b>Guidance is a double-edged sword.</b> High classifier-free guidance sharpens prompt adherence but reduces diversity and can over-saturate outputs. Sweep the guidance scale for your use case.</li>
+       <li><b>It memorizes rare training images.</b> With limited data the model can reproduce near-copies of training examples, a privacy and copyright risk. Deduplicate data and test for memorization.</li>
+       <li><b>Evaluation is fuzzy.</b> Metrics like FID (Fréchet Inception Distance) are noisy and game-able. Pair them with human judgment before trusting a quality claim.</li>
+     </ul>`,
   quiz: {
     q: `In a forward step with $\\beta_t = 0.5$, what are the keep factor $\\sqrt{1-\\beta_t}$ and the noise factor $\\sqrt{\\beta_t}$?`,
     a: `<p>Keep factor $\\sqrt{1 - 0.5} = \\sqrt{0.5} \\approx 0.707$. Noise factor $\\sqrt{0.5} \\approx 0.707$. At $\\beta_t = 0.5$ the image and the noise are mixed in equal measure.</p>`
@@ -829,6 +959,25 @@ L({
      </ul>`,
   application:
     `<p>Normalizing flows give exact likelihoods, so they are used for density estimation, anomaly detection (low-probability points are flagged), and generating audio, where the invertible WaveGlow flow produces speech in real time.</p>`,
+  whenToUse:
+    `<p><b>Reach for a normalizing flow when you need an exact likelihood, not just samples</b> — for density estimation, calibrated anomaly detection, or when you must report how probable a data point is. A flow is an invertible network that warps a simple base distribution into a complex one, so it can both sample <i>and</i> score.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A VAE (Variational Autoencoder)</b> — when you need the <i>exact</i> log-likelihood; a VAE only gives a lower bound (the ELBO, Evidence Lower BOund).</li>
+       <li><b>A GAN (Generative Adversarial Network)</b> — when you need a probability for each point, which a GAN cannot provide at all.</li>
+       <li><b>A diffusion model</b> — when fast, exact density is the goal and you can accept slightly lower sample sharpness.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b> you want top image realism (use diffusion), or your latent must compress to a smaller dimension — a flow keeps the dimension fixed because it must stay invertible.</p>
+     <p><b>Which library:</b> <b>nflows</b> or <b>Pyro</b> / <b>TensorFlow Probability</b> for composable flow layers (RealNVP, Glow, neural spline flows).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Invertibility constrains the architecture.</b> Every layer must be invertible with a tractable Jacobian determinant, which rules out most ordinary network designs. Use coupling or autoregressive layers built for this.</li>
+       <li><b>The dimension can never shrink.</b> An invertible map preserves dimensionality, so flows cannot compress to a small latent like a VAE. Plan for memory and compute that scale with the full input size.</li>
+       <li><b>The log-determinant term must be exact.</b> A wrong or approximate Jacobian term silently breaks the likelihood. Use layer types whose determinant is cheap and exact (triangular Jacobians).</li>
+       <li><b>One direction is slower than the other.</b> Autoregressive flows are fast to score but slow to sample (or vice versa). Pick the flow type to match whether you sample or evaluate more often.</li>
+       <li><b>Numerical stability of the inverse.</b> Near-singular transforms make the inverse blow up. Constrain scale factors (e.g. via a $\\tanh$ or softplus) and clamp to avoid overflow.</li>
+       <li><b>Many layers needed for expressiveness.</b> Each flow step is simple, so capturing rich data takes a deep stack, raising cost. Budget depth carefully against your data complexity.</li>
+     </ul>`,
   quiz: {
     q: `A flow uses $x = g(u) = 3u$, so $g^{-1}(x) = x/3$ and the stretch factor is $\\frac{1}{3}$. If the base density at the matching $u$ is $p_u(u) = 0.3$, what is $p_x(x)$?`,
     a: `<p>$p_x(x) = p_u(u) \\times \\left|\\frac{d g^{-1}}{dx}\\right| = 0.3 \\times \\frac{1}{3} = 0.1$. Stretching by 3 thins the density to one third.</p>`

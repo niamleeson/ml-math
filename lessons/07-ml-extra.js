@@ -163,6 +163,28 @@ L({
      </ul>`,
   application:
     `<p>Newton's method (and Hessian-aware cousins like L-BFGS) trains logistic regression and small GLMs (Generalized Linear Models) in a handful of iterations. Statistics packages use it for maximum-likelihood fits. It also powers the "trust region" optimizers behind many scientific solvers, where fast, accurate convergence matters more than the cost of the Hessian.</p>`,
+  whenToUse:
+    `<p><b>Reach for Newton's method when the parameter count is small (roughly tens to low hundreds) and the cost is smooth and near-convex</b> — logistic regression, GLMs (Generalized Linear Models), maximum-likelihood fits. You want very few iterations and high accuracy, and you can afford to form or solve with the Hessian (the matrix of second derivatives).</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain gradient descent</b> — when curvature varies a lot and tuning a learning rate is painful; Newton's curvature step removes that knob and converges in a handful of steps.</li>
+       <li><b>Hand-tuned momentum / Adam</b> — when the problem is small enough that an exact second-order step is cheap and you want machine-precision answers.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The model is large (deep nets, millions of parameters) — the Hessian is too big to store or invert; use SGD (Stochastic Gradient Descent), Adam, or a quasi-Newton method like <b>L-BFGS</b> that only approximates curvature.</li>
+       <li>The cost is non-convex or noisy — Newton can step toward saddle points or diverge; prefer a trust-region or damped variant.</li>
+     </ul>
+     <p><b>In practice:</b> <code>scipy.optimize.minimize</code> with <code>method="Newton-CG"</code> or <code>"L-BFGS-B"</code>; statsmodels uses it (IRLS) for GLM fits.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The Hessian is expensive.</b> It is parameters $\\times$ parameters in size, and inverting it costs about $O(p^3)$. For large models this is the whole reason to fall back to gradient methods or L-BFGS.</li>
+       <li><b>A non-positive-definite Hessian breaks the step.</b> Away from a minimum the curvature can point the wrong way, so the "Newton step" heads uphill or toward a saddle. Add damping (a $\\lambda I$ ridge) or use a trust region to stay safe.</li>
+       <li><b>No global convergence guarantee.</b> Pure Newton can overshoot and diverge if you start far from the optimum. Use a <b>line search</b> or step-size backtracking so each step actually lowers the cost.</li>
+       <li><b>Near-singular Hessian is numerically unstable.</b> When two parameters are nearly redundant the matrix is ill-conditioned and $H^{-1}$ blows up. Regularize, or solve the linear system instead of explicitly inverting.</li>
+       <li><b>Don't form $H^{-1}$ explicitly.</b> Solve $H\\,\\Delta = -\\nabla J$ with a linear solver (Cholesky or conjugate gradient). It is faster and far more stable than computing the inverse.</li>
+       <li><b>It needs second derivatives.</b> If the loss is only piecewise-smooth or has kinks (e.g. L1 (absolute-value) penalties), the Hessian is undefined where it matters; use a subgradient or proximal method instead.</li>
+     </ul>`,
   quiz: {
     q: `For $J(\\theta) = 2\\theta^2 - 8\\theta + 5$ (slope $4\\theta - 8$, curvature $4$), start at $\\theta_0 = 10$. What is $\\theta$ after one Newton step?`,
     a: `<p>Slope $= 4\\cdot 10 - 8 = 32$. Curvature $= 4$. Step $= 10 - 32/4 = 10 - 8 = 2$. And $J'(2) = 0$, so it lands exactly at the minimum in one step.</p>`
@@ -273,6 +295,30 @@ L({
      </ul>`,
   application:
     `<p>LWR (a.k.a. LOESS / LOWESS) is the go-to smoother for scatterplots in statistics. Robotics and control use locally weighted methods to model nonlinear dynamics on the fly. Anywhere the relationship bends in ways a single line cannot capture — and you have enough data to refit locally — LWR shines.</p>`,
+  whenToUse:
+    `<p><b>Reach for LWR (Locally Weighted Regression) when you have one or a few input dimensions, plenty of training data, and a curvy relationship that a single global line can't capture</b> — smoothing a noisy scatterplot, modeling a nonlinear sensor curve, or any exploratory fit where you don't want to commit to a fixed functional form.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain linear regression</b> — when the true curve bends; LWR follows the bends without you specifying them.</li>
+       <li><b>Fitting a high-degree polynomial</b> — when you'd rather not hunt for the right degree; LWR adapts locally and won't wiggle wildly at the edges the way a global polynomial does.</li>
+       <li><b>Splines / a GAM (Generalized Additive Model)</b> — when you want the simplest possible local smoother and don't need a single closed-form equation to ship.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have many input features — distances become meaningless in high dimensions (the curse of dimensionality); use a parametric model or trees.</li>
+       <li>Predictions must be fast or the model must be small — LWR is <b>non-parametric</b>: it stores all the data and refits per query.</li>
+       <li>Data is sparse — local neighborhoods empty out and the local fit becomes unstable.</li>
+     </ul>
+     <p><b>In practice:</b> <code>statsmodels.nonparametric.lowess</code> in Python, or <code>loess()</code> in R.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The bandwidth $\\tau$ is everything.</b> Too small and the curve chases noise (overfit, wiggly); too large and it flattens into one straight line (underfit). Pick $\\tau$ by CV (Cross-Validation), not by eye.</li>
+       <li><b>It refits at every query.</b> Each prediction solves a fresh weighted least-squares problem over all points, so serving is slow and memory grows with the data. Pre-index neighbors or downsample for production.</li>
+       <li><b>Curse of dimensionality.</b> With more than a handful of features, "nearby" points are all roughly equidistant, the Gaussian weights flatten, and LWR degenerates. Reduce dimensions first or use a different model.</li>
+       <li><b>Empty or sparse neighborhoods.</b> Where data is thin, $X^\\top W X$ becomes near-singular and the local line swings wildly. Widen $\\tau$ adaptively or fall back to the weighted mean in sparse regions.</li>
+       <li><b>Scale your features first.</b> The distance in the weight $\\exp(-(x^{(i)}-x)^2/2\\tau^2)$ is dominated by whichever feature has the largest units. Standardize inputs so one axis doesn't drown out the rest.</li>
+       <li><b>Bad extrapolation at the edges.</b> Past the range of the data, weights come only from one side and the local line tilts unreliably. Don't trust LWR predictions outside the training range.</li>
+     </ul>`,
   quiz: {
     q: `With bandwidth $\\tau = 2$, what weight does a training point exactly at the query (distance $0$) get? What about one at distance $4$?`,
     a: `<p>Distance $0$: $w = \\exp(0) = 1$. Distance $4$: $w = \\exp\\!\\big(-\\tfrac{16}{2\\cdot 4}\\big) = \\exp(-2) \\approx 0.135$. Closer points always weigh more.</p>`
@@ -365,6 +411,29 @@ L({
      </ul>`,
   application:
     `<p>Cross-validation is the standard way to pick hyperparameters (regularization strength, tree depth, $k$ in k-NN (k-Nearest Neighbors)) and to compare models on limited data. Kaggle competitions and scientific ML (Machine Learning) papers report CV (Cross-Validation) scores because a single split can be misleadingly lucky or unlucky.</p>`,
+  whenToUse:
+    `<p><b>Reach for k-fold CV (Cross-Validation) whenever your dataset is small-to-moderate and you need an honest, low-variance estimate of generalization</b> — to tune hyperparameters, to compare candidate models, or to report a trustworthy score. It is the default evaluation protocol when you can't afford to waste data on a single fixed test split.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A single train/test split</b> — when data is limited; one split gives a noisy score and a lucky or unlucky test set can mislead you. CV averages over $k$ splits.</li>
+       <li><b>Leave-one-out CV</b> — when $m$ is large; leave-one-out trains $m$ times and is costly, while $k = 5$ or $10$ gives nearly the same estimate far cheaper.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>The data is huge — a single large held-out set is already stable and far cheaper than refitting $k$ times.</li>
+       <li>The data is a time series — random folds peek into the future; use forward-chaining (rolling-origin) splits instead.</li>
+       <li>Rows are grouped (same user, same patient) — use grouped CV so the same group never appears in both train and validation.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>cross_val_score</code>, <code>StratifiedKFold</code> (for imbalanced labels), <code>GroupKFold</code>, and <code>TimeSeriesSplit</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Leakage from preprocessing.</b> Fitting a scaler, imputer, or feature selector on the full data <i>before</i> splitting leaks test information and inflates the score. Wrap every transform in a <code>Pipeline</code> so it refits inside each fold.</li>
+       <li><b>Random folds on time series.</b> Shuffling lets the model train on future rows and test on past ones — an optimistic fantasy. Use time-ordered splits.</li>
+       <li><b>Ignoring groups.</b> If the same user or device lands in both train and validation, the model "cheats" by memorizing the group. Split by group, not by row.</li>
+       <li><b>Forgetting stratification.</b> With imbalanced classes, plain folds can leave a fold with almost no positives, wrecking the estimate. Use stratified folds to keep class ratios steady.</li>
+       <li><b>Selection bias from tuning.</b> The CV score of the <i>best</i> hyperparameter setting is optimistic because you picked the luckiest one. Use <b>nested CV</b> (an outer loop for honest scoring, an inner loop for tuning) when you need an unbiased number.</li>
+       <li><b>Correlated folds.</b> Folds share training data, so the variance shrinks slower than $\\sigma^2/k$ — don't treat the $k$ scores as fully independent when computing confidence intervals.</li>
+     </ul>`,
   quiz: {
     q: `With $k = 4$ folds, the round errors are $0.20, 0.24, 0.22, 0.26$. What is the cross-validation error?`,
     a: `<p>$\\text{CV} = \\dfrac{0.20 + 0.24 + 0.22 + 0.26}{4} = \\dfrac{0.92}{4} = 0.23$.</p>`
@@ -463,6 +532,29 @@ L({
      </ul>`,
   application:
     `<p>AIC and BIC pick the order of time-series models (how many lags in ARIMA (AutoRegressive Integrated Moving Average)), choose the number of components in a mixture model, and select which features enter a regression. Whenever "more parameters" is tempting but risky, these criteria give an automatic, principled cutoff.</p>`,
+  whenToUse:
+    `<p><b>Reach for an information criterion (AIC (Akaike Information Criterion), BIC (Bayesian Information Criterion)) when you are choosing among a handful of nested, likelihood-based models and want a single number that balances fit against complexity</b> — how many lags in a time-series model, how many components in a mixture, which subset of predictors to keep. It is fast: one fit per candidate, no resampling.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain $R^2$ or training likelihood</b> — those always favor the bigger model and can't warn you about overfitting; the penalty term in AIC/BIC can.</li>
+       <li><b>Cross-validation</b> — when refitting many times is too slow, or when you have a clean likelihood; AIC is asymptotically close to leave-one-out CV (Cross-Validation) at a fraction of the cost.</li>
+       <li><b>BIC vs AIC:</b> use <b>BIC</b> when you believe one true model exists and want the simplest one (it penalizes harder as $n$ grows); use <b>AIC</b> when you care about predictive accuracy.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>The models aren't likelihood-based (random forests, neural nets) — there's no clean $\\ln L$; use cross-validation instead.</li>
+       <li>You only care about held-out predictive error on plenty of data — measure it directly on a validation set.</li>
+     </ul>
+     <p><b>In practice:</b> <code>statsmodels</code> reports AIC/BIC on every fitted model; <code>pmdarima.auto_arima</code> uses them to pick model order.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Only comparable on the same data.</b> AIC and BIC are valid only across models fit to the <i>identical</i> dataset and response. Drop a row for a missing value in one model and the scores are no longer comparable.</li>
+       <li><b>Absolute value is meaningless.</b> Only <i>differences</i> matter. An AIC of $246$ means nothing alone; $\\Delta\\text{AIC} &lt; 2$ between two models means they are essentially tied.</li>
+       <li><b>Count every estimated parameter.</b> The variance $\\sigma^2$, dispersion terms, and any tuned hyperparameter all add to $k$. Undercount and you systematically favor complex models.</li>
+       <li><b>AIC over-selects on large $n$.</b> Its penalty doesn't grow with sample size, so on big data it tends to keep too many parameters; switch to BIC if you want consistency.</li>
+       <li><b>Small samples need the correction.</b> When $n$ is not much larger than $k$, use <b>AICc</b> (the small-sample-corrected AIC) — plain AIC badly under-penalizes here.</li>
+       <li><b>Garbage likelihood, garbage criterion.</b> These assume the model's likelihood is correctly specified. If the error distribution is wrong (e.g. heavy tails treated as Gaussian), the score is misleading — check residuals first.</li>
+     </ul>`,
   quiz: {
     q: `A model has $k = 5$ parameters and log-likelihood $\\ln L = -50$. What is its AIC?`,
     a: `<p>$\\text{AIC} = 2k - 2\\ln L = 2(5) - 2(-50) = 10 + 100 = 110$. Lower AIC across candidates is better.</p>`
@@ -602,6 +694,30 @@ L({
      </ul>`,
   application:
     `<p>The average silhouette is the standard way to choose how many clusters to use when you have no labels: customer segments, document topics, gene-expression groups. Run k-means for $k = 2, 3, 4, \\dots$ and keep the $k$ whose average silhouette peaks. It also flags individual points that may be misclustered (negative $s$).</p>`,
+  whenToUse:
+    `<p><b>Reach for the silhouette score when you've clustered unlabeled data and need to judge the result or choose the number of clusters $k$</b> — there's no ground truth to compare against, so you grade the geometry itself: tight inside each cluster, far from the next one. Sweep $k$, plot the average silhouette, and keep the peak.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>The elbow method (inertia)</b> — the elbow is often ambiguous and subjective; the silhouette gives a single number per point and an interpretable scale from $-1$ to $+1$.</li>
+       <li><b>Eyeballing a scatterplot</b> — when you have more than two dimensions and can't just look.</li>
+       <li><b>The Davies–Bouldin or Calinski–Harabasz index</b> — when you also want per-point diagnostics (which specific points are poorly assigned), not just a global score.</li>
+     </ul>
+     <p><b>Pick a different measure when:</b></p>
+     <ul>
+       <li>You actually have labels — use an external metric like the ARI (Adjusted Rand Index) or NMI (Normalized Mutual Information) instead.</li>
+       <li>Clusters are non-convex or density-based (DBSCAN-style) — the silhouette assumes roughly convex, distance-based blobs and will undervalue stringy or nested shapes.</li>
+       <li>The dataset is very large — the $O(n^2)$ pairwise distances get expensive; sample points or use a cheaper index.</li>
+     </ul>
+     <p><b>In practice:</b> scikit-learn's <code>silhouette_score</code> and <code>silhouette_samples</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>It assumes convex, roughly equal-size blobs.</b> On crescent or nested clusters the silhouette can rank a wrong $k$ as best. Don't use it to validate density-based clustering.</li>
+       <li><b>Distance metric and scaling dominate.</b> The score is built from distances, so an unscaled large-magnitude feature controls the result. Standardize features and pick the metric deliberately before scoring.</li>
+       <li><b>$O(n^2)$ cost.</b> Computing every pairwise distance is quadratic in the number of points and blows up on large datasets. Subsample or use an approximate variant.</li>
+       <li><b>$k$ must equal the trained $k$.</b> Score each clustering with the same number of clusters it was built with; comparing a silhouette computed at one $k$ against a model trained at another is meaningless.</li>
+       <li><b>Average hides structure.</b> A decent mean can mask one terrible cluster. Inspect the per-point silhouette plot, not just the single average.</li>
+       <li><b>Undefined for singletons.</b> A cluster with one point has no intra-cluster distance $a$, so its silhouette is conventionally set to $0$ — watch for this skewing the average when clusters are tiny.</li>
+     </ul>`,
   quiz: {
     q: `A point has intra-cluster distance $a = 2$ and nearest-other-cluster distance $b = 6$. What is its silhouette $s$?`,
     a: `<p>$\\max(a,b) = 6$. $s = \\dfrac{6 - 2}{6} = \\dfrac{4}{6} \\approx 0.67$. Comfortably positive — a good assignment.</p>`
@@ -709,6 +825,29 @@ L({
      </ul>`,
   application:
     `<p>Andrew Ng's CS229 popularized this for vision pipelines, but the idea drives any multi-stage ML (Machine Learning) system: speech recognition (acoustic vs. language model), recommendation (candidate generation vs. ranking), and modern RAG (Retrieval-Augmented Generation) stacks (retriever vs. generator). Before optimizing blindly, run error analysis to find the bottleneck and ablative analysis to prune dead weight.</p>`,
+  whenToUse:
+    `<p><b>Reach for error analysis (ceiling analysis) the moment a multi-stage pipeline underperforms and you have to decide where to spend your effort</b> — retriever vs. generator in RAG (Retrieval-Augmented Generation), detector vs. classifier in vision, acoustic vs. language model in speech. It replaces guesswork with a ranked list of headroom, so you fix the real bottleneck first. Reach for <b>ablative analysis</b> when you instead need to know which components actually earn their keep and which to prune.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Staring at the aggregate metric</b> — one accuracy number can't tell you <i>which stage</i> is dragging it down; ceiling analysis can.</li>
+       <li><b>Tuning every component a little</b> — when you have limited time; ranking by headroom concentrates effort where it pays off.</li>
+       <li><b>Pure hyperparameter search</b> — when the problem is structural (a weak stage), not a knob; no amount of tuning a downstream stage fixes a broken upstream one.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>The system is a single end-to-end model with no separable stages — there's nothing to perfect or ablate independently; do per-slice error analysis on the data instead.</li>
+       <li>You lack ground-truth outputs for intermediate stages — you can't build the oracle that ceiling analysis needs.</li>
+     </ul>
+     <p><b>In practice:</b> it's a manual experiment harness on your dev set — feed each stage its labels in turn and re-score; no special library required.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Stages aren't truly additive.</b> The single-stage gains $\\Delta_c$ rarely sum to the full gap because components interact. Treat the ranking as a guide, not a precise budget, and re-measure after each real fix.</li>
+       <li><b>You need correct intermediate labels.</b> "Perfecting" a stage means injecting its ground-truth output. If those labels are noisy or unavailable, the ceiling is wrong and the ranking misleads.</li>
+       <li><b>Run it on the dev set, not the test set.</b> Repeatedly probing components against the test set leaks information and inflates your final number. Keep a clean held-out test set untouched.</li>
+       <li><b>Headroom is not delivered gain.</b> A big $\\Delta_c$ is the <i>ceiling</i> if the stage became flawless — real improvements capture only a fraction. Don't promise the full $\\Delta$.</li>
+       <li><b>Noise can masquerade as signal.</b> On a small dev set a $1$–$2\\%$ gap may be sampling noise. Use enough examples (or confidence intervals) before declaring a winner.</li>
+       <li><b>Ablation order and correlation mislead.</b> Removing one of two redundant components shows almost no drop, tempting you to cut a part that's actually important together with its twin. Check pairs, not just singles.</li>
+     </ul>`,
   quiz: {
     q: `Error analysis on a 70%-accurate pipeline: perfecting the OCR stage lifts it to 85%, perfecting the parser lifts it to 73%. Which stage should you work on, and what is its $\\Delta$?`,
     a: `<p>The OCR stage: $\\Delta = 85\\% - 70\\% = 15\\%$, far more than the parser's $\\Delta = 73\\% - 70\\% = 3\\%$. Spend your effort on OCR.</p>`

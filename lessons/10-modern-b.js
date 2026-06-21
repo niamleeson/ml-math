@@ -88,6 +88,29 @@ L({
      <p>Node $v$'s new value $1.5$ was pulled from its neighbours' $4$ and $2$. That is one message-passing step.</p>`,
   application:
     `<p>GNNs predict whether a molecule is a useful drug (nodes are atoms), recommend friends or products (nodes are users and items), and route traffic on maps. Google Maps uses a GNN to estimate arrival times across the road graph.</p>`,
+  whenToUse:
+    `<p><b>Reach for a Graph Neural Network (GNN) when your data is naturally a graph</b> — nodes connected by edges, where a thing's meaning depends on its neighbors: molecules, social networks, recommendation user–item graphs, knowledge graphs, road networks. The GNN passes messages along edges so each node's representation absorbs its local structure.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A plain MLP (Multi-Layer Perceptron) on flat features</b> — when relationships between examples carry signal; the MLP ignores who is connected to whom.</li>
+       <li><b>A CNN (Convolutional Neural Network)</b> — when the data has no fixed grid; a GNN generalizes convolution to irregular connectivity.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>There is no real graph structure — flat tabular rows are better served by gradient-boosted trees.</li>
+       <li>The graph is enormous and dense — full-graph message passing won't fit in memory; use neighbor sampling (GraphSAGE) or a simpler heuristic.</li>
+       <li>You only need node features, not relations — skip the graph machinery.</li>
+     </ul>
+     <p><b>Which library:</b> <b>PyTorch Geometric</b> (PyG) or <b>Deep Graph Library</b> (DGL) for batching, sampling, and standard layers (GCN, GraphSAGE, GAT).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Over-smoothing with depth.</b> Stack too many message-passing layers and every node's representation converges to the same vector, erasing distinctions. Keep it shallow (2–4 layers) or add residual / jumping-knowledge connections.</li>
+       <li><b>Over-squashing on long-range tasks.</b> Information from far-away nodes gets compressed through bottleneck edges and lost. Add virtual nodes or rewire the graph if distant dependencies matter.</li>
+       <li><b>Neighbor leakage across splits.</b> In transductive settings, message passing can pull test-node information into training. Use proper inductive splits and mask test edges during training.</li>
+       <li><b>Scalability.</b> Full-batch training on a huge graph blows up memory. Use neighbor sampling (GraphSAGE) or cluster-based batching (Cluster-GCN).</li>
+       <li><b>Class imbalance on node labels.</b> Real graphs often have rare target classes; accuracy looks great while the minority is missed. Weight the loss and judge on AUC (Area Under the Curve) or per-class recall.</li>
+       <li><b>Sensitivity to graph noise.</b> Spurious or missing edges propagate errors to neighbors. Clean the adjacency or use attention (GAT) so the model can down-weight bad edges.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // small graph; click a node to update it from the mean of its neighbours.
@@ -215,6 +238,29 @@ L({
      </ul>`,
   application:
     `<p>DQN famously learned to play dozens of Atari games straight from raw pixels, reaching human level on many. The same recipe drives game AI and control problems where the state space is far too big for a table.</p>`,
+  whenToUse:
+    `<p><b>Reach for a Deep Q-Network (DQN) when an agent must learn from trial and error in an environment with a small, discrete set of actions</b> — game playing, simple control, routing — and the state space is far too large for a lookup table. The network approximates the value $Q(s,a)$ of each action, and the agent acts greedily on it.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A tabular Q-learning table</b> — when states are too many to enumerate (raw pixels, high-dimensional sensors); the network generalizes across similar states.</li>
+       <li><b>A policy-gradient method</b> — when actions are discrete and you want sample efficiency from replaying past experience.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Actions are continuous (steering angle, joint torque) — use DDPG, TD3, or SAC instead; you can't take a max over infinitely many actions.</li>
+       <li>You can collect huge amounts of fresh experience and want stability — a policy-gradient or actor-critic method may be easier to tune.</li>
+       <li>The problem is supervised, not sequential decision-making — don't use reinforcement learning at all.</li>
+     </ul>
+     <p><b>Which library:</b> <b>Stable-Baselines3</b> for a battle-tested DQN; <b>Gymnasium</b> for environments.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Training is unstable without the standard tricks.</b> Bootstrapping off your own moving estimates can diverge. Use a <b>target network</b> (a slow copy for the bootstrap) and an <b>experience replay buffer</b> to break correlation between consecutive samples.</li>
+       <li><b>Q-values are over-estimated.</b> The max operator systematically inflates value estimates. Use Double DQN to decouple action selection from evaluation.</li>
+       <li><b>Exploration is fragile.</b> A badly tuned $\\epsilon$-greedy schedule either never explores or never settles. Anneal $\\epsilon$ from high to low and verify the agent visits the whole state space.</li>
+       <li><b>Reward scaling and clipping matter.</b> Huge or tiny rewards destabilize the gradients. Normalize or clip rewards, and be aware clipping changes what "optimal" means.</li>
+       <li><b>Sample inefficiency and cost.</b> DQN can need millions of environment steps. Budget compute, and reuse the replay buffer aggressively.</li>
+       <li><b>Reproducibility is poor.</b> Results swing wildly with the random seed. Report results across several seeds, never a single lucky run.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // 1x5 corridor; goal at the right. A "net" holds Q per cell; Step does one TD sweep.
@@ -320,6 +366,29 @@ L({
      </ul>`,
   application:
     `<p>Policy gradients power robotics (smooth, continuous controls), game-playing agents, and the alignment step of chatbots: RLHF (Reinforcement Learning from Human Feedback) tunes a language model's policy to prefer responses humans rated highly.</p>`,
+  whenToUse:
+    `<p><b>Reach for a policy-gradient method when you want to learn a policy directly</b> — especially with continuous or high-dimensional action spaces, or when you need a stochastic policy. Instead of estimating action values, it nudges the probability of actions that led to high reward straight upward.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A Deep Q-Network (DQN)</b> — when actions are continuous (robot torques, steering) where you cannot take a max over actions, or when a randomized policy is desirable.</li>
+       <li><b>A scripted controller</b> — when the dynamics are too complex to hand-tune and you can simulate or collect reward signals.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Actions are discrete and you want sample efficiency — DQN reuses past experience; vanilla policy gradient is on-policy and data-hungry.</li>
+       <li>You need stable, low-variance learning out of the box — add a critic baseline (actor-critic) rather than using REINFORCE alone.</li>
+       <li>The task is not sequential decision-making — use ordinary supervised learning.</li>
+     </ul>
+     <p><b>Which library:</b> <b>Stable-Baselines3</b> (PPO, A2C) for proven implementations; the PPO (Proximal Policy Optimization) variant is the workhorse, including the RLHF (Reinforcement Learning from Human Feedback) step of chatbots.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>High gradient variance.</b> Plain REINFORCE estimates the gradient from noisy returns, so learning is slow and jittery. Subtract a <b>baseline</b> (a value estimate) to cut variance without bias.</li>
+       <li><b>Sample inefficiency.</b> Being on-policy means you throw away data after each update. Use importance sampling or a clipped objective (PPO) to reuse batches a few times.</li>
+       <li><b>Destructive policy updates.</b> One large step can collapse the policy and it never recovers. Constrain step size with a trust region (TRPO) or PPO's clipped ratio.</li>
+       <li><b>Reward shaping backfires.</b> Poorly designed rewards get gamed — the agent maximizes the proxy, not your intent. Test for reward hacking and keep shaping minimal.</li>
+       <li><b>Entropy collapse.</b> The policy can become deterministic too early and stop exploring. Add an entropy bonus to keep it stochastic.</li>
+       <li><b>Seed sensitivity.</b> Results vary sharply by random seed. Average over multiple seeds before claiming an improvement.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // One state, 3 actions. Bars = probabilities. Each episode, sample an action,
@@ -437,6 +506,29 @@ L({
      </ul>`,
   application:
     `<p>Actor-Critic methods (A2C, A3C (Asynchronous Advantage Actor-Critic), PPO) are the modern default for reinforcement learning: they trained the OpenAI Five Dota 2 team, control simulated and real robots, and run the reinforcement step (PPO) in many chatbot alignment pipelines.</p>`,
+  whenToUse:
+    `<p><b>Reach for an actor-critic method as the default modern reinforcement-learning recipe</b> — it pairs a policy (the actor) with a value estimate (the critic) so updates are both flexible and low-variance. Use it for continuous control, complex games, and the reinforcement step of chatbot alignment.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain policy gradient (REINFORCE)</b> — when the noisy gradient is too slow; the critic baseline cuts variance dramatically.</li>
+       <li><b>A Deep Q-Network (DQN)</b> — when actions are continuous, or when you want a stochastic policy DQN cannot represent.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Actions are discrete and sample efficiency is paramount — an off-policy value method (DQN) reuses data more aggressively.</li>
+       <li>The problem is tiny and tabular — simpler tabular methods converge with less machinery.</li>
+       <li>You need maximum sample efficiency in continuous control — consider an off-policy actor-critic (SAC, TD3) over on-policy PPO.</li>
+     </ul>
+     <p><b>Which library:</b> <b>Stable-Baselines3</b> for PPO / A2C / SAC; PPO (Proximal Policy Optimization) is the robust starting point.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Two networks, two ways to fail.</b> If the critic is wrong, the actor follows a bad signal. Let the critic learn fast enough to give the actor reliable advantages, and watch both losses.</li>
+       <li><b>Advantage estimation is delicate.</b> The bias–variance tradeoff in the advantage drives stability. Use Generalized Advantage Estimation (GAE) and tune its $\\lambda$.</li>
+       <li><b>On-policy data is expensive.</b> PPO and A2C discard data after a few updates. Size your rollout batches well, and consider an off-policy variant if simulation is costly.</li>
+       <li><b>Hyperparameters are coupled.</b> Learning rates for actor and critic, the clip range, and the entropy coefficient all interact. Change one at a time and validate.</li>
+       <li><b>Entropy collapse kills exploration.</b> The actor can go deterministic too early. Keep an entropy bonus so it keeps trying alternatives.</li>
+       <li><b>Reproducibility is poor.</b> Outcomes swing by seed and by tiny implementation details. Report multiple seeds and pin library versions.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // Left: actor (3 action probs). Right: critic value bar. Step shows advantage.
@@ -564,6 +656,29 @@ L({
      </ul>`,
   application:
     `<p>SimCLR learns image features with no labels, then a tiny labelled set fine-tunes a strong classifier. CLIP uses the same idea across types: it pulls an image and its caption together, which is how text-to-image search and many generative models connect words to pictures.</p>`,
+  whenToUse:
+    `<p><b>Reach for contrastive learning when you have lots of unlabeled data and want strong, reusable embeddings</b> — pull related pairs together in the embedding space and push unrelated ones apart. It is the engine behind self-supervised pretraining and cross-modal models that link images to text.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Fully supervised training</b> — when labels are scarce or costly; you pretrain on cheap unlabeled data, then fine-tune a classifier on a small labeled set.</li>
+       <li><b>A plain autoencoder</b> — when you want embeddings tuned for downstream discrimination and retrieval, not pixel reconstruction.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You already have abundant labels — direct supervised training is simpler and often better.</li>
+       <li>You cannot construct meaningful positive pairs (good augmentations or natural pairings) — the method has nothing to contrast.</li>
+       <li>The end task needs generation, not representation — use a generative model.</li>
+     </ul>
+     <p><b>Which library:</b> reference implementations of <b>SimCLR</b> / <b>MoCo</b> for images, and <b>OpenCLIP</b> for the image–text (CLIP, Contrastive Language–Image Pretraining) recipe.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Augmentation choice is the whole game.</b> Weak or wrong augmentations create trivial positive pairs and the model learns shortcuts (e.g. color, not content). Tune the augmentation pipeline carefully — it matters more than the architecture.</li>
+       <li><b>Negatives must be plentiful and hard.</b> Too few negatives, or negatives that are too easy, gives a weak signal. Use a large batch or a memory bank / queue (MoCo) to supply many negatives.</li>
+       <li><b>False negatives poison the loss.</b> A "negative" that is actually similar to the anchor pushes apart things that belong together. Be aware that random negatives can collide with the positive class.</li>
+       <li><b>Temperature tuning is sensitive.</b> The softmax temperature $\\tau$ controls how hard the model separates pairs; a bad value cripples learning. Sweep it.</li>
+       <li><b>Representation collapse.</b> Without enough negatives or with a bad objective, all embeddings shrink to one point. Use a projection head and verify embedding variance during training.</li>
+       <li><b>Evaluation needs a downstream probe.</b> A low contrastive loss does not guarantee useful features. Always evaluate with a linear probe or fine-tuning on the real task.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // Embedding plane. Anchor + positive (pull close, green); negatives (push away, red).
@@ -685,6 +800,29 @@ L({
      </ul>`,
   application:
     `<p>Vision Transformers match or beat convolutional networks on image classification when trained on enough data. They are the image backbone of multimodal models (the vision side of systems that take both pictures and text), and power modern image search and captioning.</p>`,
+  whenToUse:
+    `<p><b>Reach for a Vision Transformer (ViT) when you have a large image dataset (or a pretrained backbone) and want global context across the whole image</b> — long-range relationships that a local convolution misses. It cuts the image into patches, treats them as tokens, and applies self-attention.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A CNN (Convolutional Neural Network)</b> — when data is plentiful (or you start from a pretrained ViT) and global relationships matter; with enough scale it matches or beats convolutional nets.</li>
+       <li><b>A hand-crafted feature pipeline</b> — when you want one model that learns features end to end.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Your dataset is small and you cannot pretrain — a CNN's built-in locality and translation bias generalizes better from few images.</li>
+       <li>You need low latency on edge devices — a compact CNN is usually cheaper to run.</li>
+       <li>You need fine local detail at high resolution — a hierarchical variant (Swin Transformer) handles that better than a vanilla ViT.</li>
+     </ul>
+     <p><b>Which library:</b> <b>timm</b> or <b>Hugging Face Transformers</b> for pretrained ViT and Swin checkpoints to fine-tune.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Data-hungry from scratch.</b> A ViT lacks the locality bias of a CNN (Convolutional Neural Network), so it overfits small datasets. Pretrain on a large corpus (or use a public checkpoint) before fine-tuning.</li>
+       <li><b>Patch size trades detail for cost.</b> Large patches lose fine detail; small patches explode the token count and the $O(n^2)$ attention cost. Match patch size to the detail your task needs.</li>
+       <li><b>Resolution changes break positional embeddings.</b> Fine-tuning at a different image size needs the position embeddings interpolated, or accuracy drops. Resize them explicitly.</li>
+       <li><b>Heavy augmentation and regularization are required.</b> ViTs need strong recipes (RandAugment, Mixup, stochastic depth) to train well. Copying a CNN training recipe underperforms.</li>
+       <li><b>Compute and memory are high.</b> Attention over many patches is expensive at high resolution. Use a hierarchical model (Swin) or windowed attention to scale.</li>
+       <li><b>Attention maps are not clean explanations.</b> Pretty attention heatmaps can mislead about what drove a decision. Do not treat them as ground-truth saliency.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // 4x4 patch grid; numbered tokens. Click a patch -> attention links to all others.
@@ -810,6 +948,29 @@ L({
      </ul>`,
   application:
     `<p>ARIMA and its state-space cousins forecast electricity demand, retail inventory, website traffic, and economic indicators. Anywhere a business asks "what comes next, and how sure are we?", these models give a forecast plus an honest uncertainty band.</p>`,
+  whenToUse:
+    `<p><b>Reach for classical time-series models (ARIMA, AutoRegressive Integrated Moving Average, and state-space cousins) when you forecast a numeric quantity over time and want an honest uncertainty band</b> — demand, traffic, inventory. They are a strong, cheap, interpretable baseline that every forecasting project should beat before reaching for anything fancier.</p>
+     <p><b>Choose them over:</b></p>
+     <ul>
+       <li><b>A deep model (LSTM, Long Short-Term Memory, or a temporal transformer)</b> — when you have one or a few series and limited data; classical models need far less data and give calibrated intervals.</li>
+       <li><b>A plain regression</b> — when the data has autocorrelation, trend, and seasonality that ordinary regression ignores.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have thousands of related series and want to share structure — gradient-boosted trees on lag features, or a global deep model, scale better.</li>
+       <li>The drivers are rich external features — a tree or neural model uses them more naturally than ARIMA.</li>
+       <li>Relationships are strongly nonlinear — classical linear models will underfit.</li>
+     </ul>
+     <p><b>Which library:</b> <b>statsmodels</b> or <b>pmdarima</b> for ARIMA; <b>Prophet</b> for quick trend-plus-seasonality; <b>sktime</b> for a unified forecasting interface.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Never shuffle a time split.</b> Random train/test splits leak the future into training. Always split by time and back-test on a rolling forward window.</li>
+       <li><b>Non-stationarity breaks the model.</b> ARIMA assumes a stationary series after differencing; an untreated trend or changing variance gives nonsense forecasts. Difference, log-transform, or detrend first, and test stationarity (e.g. ADF, Augmented Dickey–Fuller).</li>
+       <li><b>Leaky features.</b> A lag or rolling feature computed across the split boundary uses future data. Build features within each window only.</li>
+       <li><b>Seasonality must be modeled explicitly.</b> Plain ARIMA ignores weekly or yearly cycles; use SARIMA or add seasonal terms, or forecasts drift off the pattern.</li>
+       <li><b>Forecast intervals are often too narrow.</b> Model intervals assume the model is correct and ignore structural change. Validate coverage on held-out data and widen if reality breaks out of the band.</li>
+       <li><b>Concept drift over time.</b> A model fit last year may be stale now. Retrain on a schedule and monitor forecast error for regime changes.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = "";
     // A noisy series + AR(1) forecast continuation with a widening interval.

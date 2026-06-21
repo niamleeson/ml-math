@@ -157,6 +157,30 @@
       `<p>Few-shot learning shines when labels are scarce or new classes appear constantly. A face-unlock system enrolls you from a couple of photos (a few-shot support set) and then recognizes you forever after — no retraining. Drug-discovery and rare-disease models classify molecules or scans from only a handful of known cases. Product-catalog systems add a brand-new item from one reference photo. In every case a strong embedding is trained once, then new classes are handled for free by building a prototype.</p>
        <p>This is a different flavor from <a onclick="App.open('fs-in-context')">in-context few-shot learning</a>, where a large language model is simply <i>shown</i> a few examples inside its prompt and adapts without any prototypes or distance math. And it differs from <a onclick="App.open('fs-meta-learning')">meta-learning</a>, which trains a model to be good at <i>learning</i> from few examples across many tasks. Prototypical Networks are one clean, popular member of that broader few-shot family.</p>`,
 
+    whenToUse:
+      `<p><b>Reach for few-shot learning when you must recognize a new class from only a handful of labeled examples</b> — one to maybe twenty per class — and new classes keep appearing. You train a strong embedding once, then handle each new class by building a <b>prototype</b> (the mean embedding of its few examples) and classifying by nearest prototype.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>Standard supervised training</b> — when you simply do not have enough labels per class to fit a normal classifier; a few examples can't train millions of weights but can place one prototype.</li>
+         <li><b>Fine-tuning the whole backbone</b> — when retraining for every new class is too slow; prototypes are computed in one forward pass, no gradient steps.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>You have abundant labels for a fixed class set — train an ordinary classifier; it will beat a few-shot prototype.</li>
+         <li>The task lives entirely in a language prompt — use <a onclick="App.open('fs-in-context')">in-context learning</a>, which needs no embedding or distance math.</li>
+         <li>You want a model that itself gets better at few-shot adapting across tasks — see <a onclick="App.open('fs-meta-learning')">meta-learning</a> (MAML, Model-Agnostic Meta-Learning).</li>
+       </ul>
+       <p><b>Which library:</b> <code>pytorch-metric-learning</code> or <code>learn2learn</code> for episodic few-shot training and Prototypical Networks.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Support-set bias.</b> With one or two examples per class, an unlucky or noisy example drags the prototype off-center and every prediction suffers. Use several shots when you can and screen out obvious outliers.</li>
+         <li><b>Weak embedding, weak everything.</b> Few-shot rests entirely on the pretrained representation. If the backbone is poor or off-domain, no clever prototype rule saves you — invest in <a onclick="App.open('fs-transfer-learning')">transfer learning</a> first.</li>
+         <li><b>Class imbalance across shots.</b> Unequal shots per class skew prototype quality and the nearest-prototype decision. Balance the support set or weight by shot count.</li>
+         <li><b>Train / test class overlap.</b> If test classes were seen during embedding training, reported few-shot accuracy is inflated. Hold out <i>novel</i> classes for evaluation, never just novel images.</li>
+         <li><b>Episode design that doesn't match production.</b> Evaluating on 5-way 5-shot episodes but deploying on 50-way 1-shot gives a misleading score. Match the way / shot setting to real use.</li>
+         <li><b>Distance / normalization mismatch.</b> Building prototypes in one metric but querying in another quietly breaks accuracy. L2-normalize and use the same distance throughout.</li>
+       </ul>`,
+
     practice: [
       {
         q: `In a <b>3-way 5-shot</b> episode, how many labeled examples are in the support set, and what is $K$ for a one-shot version?`,

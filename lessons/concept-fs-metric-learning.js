@@ -127,6 +127,28 @@
       `<p>Metric learning is the math behind the face-verification system in [dl-face-recognition]: a phone unlocks by checking whether your face's embedding is within a small distance of the stored one.</p>
        <p>It also powers image search ("find pictures like this one"), speaker verification, and product recommendations, all of which boil down to "is this close to that?" in a learned space.</p>
        <p>Crucially, it sets up few-shot learning [fs-few-shot]: once you have this learned space, you can recognize a brand-new class from just one or two examples by checking which known points it lands nearest to, using a distance rule like k-NN (k-Nearest Neighbors).</p>`,
+    whenToUse:
+      `<p><b>Reach for metric learning when the set of classes is open or huge and keeps changing</b> — face verification, image or product search, speaker ID, deduplication — so you cannot train a fixed classifier head per class. You learn one embedding space where "same" things land close and "different" things land far, then answer new queries by distance.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>A softmax classifier with one output per class</b> — when classes appear or vanish constantly, or there are millions of them. A fixed head can't add a new identity without retraining; an embedding just adds a new reference point.</li>
+         <li><b>Hand-tuned distances on raw features</b> — when raw Euclidean distance does not match semantic similarity; a learned embedding fixes the geometry.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>You have a small, fixed set of classes with plenty of labels each — a plain classifier is simpler and usually more accurate.</li>
+         <li>The new task is described in words or shown in a prompt — use <a>[fs-zero-shot]</a> or <a>[fs-in-context]</a> instead.</li>
+       </ul>
+       <p><b>Which library:</b> <code>pytorch-metric-learning</code> for triplet / contrastive losses and miners; FAISS for fast nearest-neighbor lookup over the learned embeddings.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Easy triplets teach nothing.</b> Most random triplets are already well separated, so their loss is zero and training stalls. Use <b>hard or semi-hard mining</b> to pick triplets the model still gets wrong.</li>
+         <li><b>Embedding collapse.</b> Without a margin or normalization the model can map everything to one point and trivially satisfy the loss. Enforce a margin and L2-normalize embeddings onto the unit sphere.</li>
+         <li><b>Distance / loss mismatch.</b> Training with cosine similarity but querying with Euclidean distance (or forgetting to normalize) silently wrecks retrieval. Use the same distance at train and query time.</li>
+         <li><b>Support-set bias.</b> The reference example you enroll a class from may be unusual (bad lighting, odd pose), so every comparison is skewed. Enroll several references and average them into a prototype.</li>
+         <li><b>Identity leakage in the split.</b> If the same person or product appears in both train and test, scores look great but generalization is fake. Split by <i>identity</i>, not by image.</li>
+         <li><b>Threshold drift.</b> The accept / reject distance threshold tuned offline shifts as the data distribution moves. Recalibrate it on fresh held-out pairs and monitor the false-accept rate.</li>
+       </ul>`,
     practice: [
       {
         q: `Triplet loss with margin $\\alpha = 0.5$. Embeddings (1-D): anchor $f(a) = 0$, positive $f(p) = 0.4$, negative $f(n) = 0.6$. Find the loss.`,

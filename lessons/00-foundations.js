@@ -118,6 +118,24 @@ L({
      <p>A second house is just another vector. A whole dataset is many such vectors.</p>`,
   application:
     `<p>Every input to every ML (Machine Learning) model is a vector. A 28×28 grayscale digit becomes a vector of 784 pixel values. A user becomes a vector of their actions. Learning to think in vectors is step one.</p>`,
+  whenToUse:
+    `<p>Vectors show up the instant you turn any real thing — a user, a document, an image, a sensor reading — into numbers a model can chew on. The "feature vector" is the universal input format for ML (Machine Learning).</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Feature engineering</b> — every column you add is one more entry in the vector; the whole pipeline exists to build good ones.</li>
+       <li><b>Embeddings</b> — words, products, and faces become dense vectors so "similar" means "close", which powers search and recommendations.</li>
+       <li><b>Batching</b> — stacking example vectors into a matrix is what lets GPUs (Graphics Processing Units) score thousands at once.</li>
+     </ul>
+     <p><b>Think bigger than a list when:</b> the data is a grid (an image is better held as a 2-D array / tensor) or a sequence (text needs order, not just a bag of numbers) — though both still flatten to vectors eventually. In practice you build them with <code>numpy</code> arrays or <code>torch</code> tensors, not Python lists.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Order is part of the meaning.</b> Entry 2 must be "bedrooms" for <i>every</i> example. Shuffle the columns of one row and the model learns garbage — fix a schema and never reorder.</li>
+       <li><b>Unscaled features dominate.</b> A "size" of 1500 and an "age" of 10 live on wildly different scales, so distance and gradients drown out the small one. Standardize (zero mean, unit variance) before anything that uses magnitude.</li>
+       <li><b>Mixing units silently breaks things.</b> Square feet in one row and square meters in another is invisible to the code but poison to the model. Normalize units at ingest.</li>
+       <li><b>Categories are not numbers.</b> Encoding "red=1, green=2, blue=3" invents a fake ordering. Use one-hot or learned embeddings instead.</li>
+       <li><b>Missing entries aren't zero.</b> A blank becoming $0$ quietly says "this house has size zero". Impute explicitly and add a "was-missing" flag.</li>
+       <li><b>Length must be fixed.</b> Two examples with different vector lengths can't share a model. Pad, truncate, or aggregate to a constant $n$.</li>
+     </ul>`,
   quiz: {
     q: `A movie is described by [running time = 120, rating = 8.5, year = 1999]. What are $n$, $x_2$, and what does $\\mathbb{R}^n$ mean here?`,
     a: `<p>$n = 3$ (three numbers). $x_2 = 8.5$ (the second entry, the rating). $\\mathbb{R}^3$ = the set of all 3-number vectors, which is where this movie-vector lives.</p>`
@@ -286,6 +304,25 @@ L({
      <p>So $+3$ (agree), $0$ (unrelated), $-4$ (disagree) &mdash; one number tells you how much two vectors point the same way. That is exactly why the negative age-weight $-500$ above pushes the price <i>down</i>: it disagrees with age.</p>`,
   application:
     `<p>Linear regression, logistic regression, SVMs (Support Vector Machines), and every neuron in a neural net compute a dot product of weights and inputs first, then do something with that number. Master this and half of ML (Machine Learning) stops being scary.</p>`,
+  whenToUse:
+    `<p>The dot product is the workhorse "agreement score" — reach for it any time you need one number that says how aligned two vectors are. It is the atom that every linear model and attention layer is built from.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Every prediction</b> — a linear or logistic model is literally weights dotted with features, then a squashing function.</li>
+       <li><b>Similarity search</b> — cosine similarity is a dot product of length-normalized vectors; it ranks embeddings in recommendations and RAG (Retrieval-Augmented Generation).</li>
+       <li><b>Attention</b> — transformers score query against key with a dot product to decide what to focus on.</li>
+       <li><b>Projection</b> — dotting with a unit vector tells you "how much of this points along that direction".</li>
+     </ul>
+     <p><b>Use a different measure when:</b> you care about magnitude differences, not just direction — then L2 (Euclidean) distance fits better; or when features are on different scales — normalize first or the largest entry dominates. In code it is one <code>np.dot</code> / <code>@</code> call, fused into matrix multiplies for speed.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>It explodes with scale.</b> The dot product grows with vector length, so a big-magnitude feature can dominate the score. For pure direction use <b>cosine similarity</b> (divide by both norms).</li>
+       <li><b>Zero means orthogonal, not "opposite".</b> A common mix-up: $0$ is "unrelated / at right angles", while a <i>negative</i> value is "pointing against". Don't read $0$ as disagreement.</li>
+       <li><b>Lengths must match.</b> Dotting an $n$-vector with an $m$-vector ($m \\ne n$) is undefined — a shape mismatch, not a small bug. Check dimensions.</li>
+       <li><b>Float summation drifts.</b> Adding many terms accumulates rounding error; for very long or ill-scaled vectors use a stable reduction (pairwise / Kahan summation) or higher precision.</li>
+       <li><b>Cosine is undefined for a zero vector.</b> If either vector is all zeros, its norm is $0$ and you divide by zero. Guard with an epsilon or skip the row.</li>
+       <li><b>Forgetting to center.</b> Cosine on un-centered data can call everything "similar" because all entries are positive. Mean-center when "shape" matters more than sign.</li>
+     </ul>`,
   quiz: {
     q: `Compute the dot product of $[2, 0, 1]$ and $[3, 5, 4]$.`,
     a: `<p>$2\\times3 + 0\\times5 + 1\\times4 = 6 + 0 + 4 = 10$.</p>`
@@ -350,6 +387,24 @@ L({
      </ul>`,
   application:
     `<p>Datasets are matrices (rows = examples, columns = features). Images are matrices of pixels. Neural-network layers are matrices of weights. Almost all ML (Machine Learning) computation is "matrix in, matrix out".</p>`,
+  whenToUse:
+    `<p>The moment you have <i>many</i> examples or <i>many</i> features, you reach for a matrix. It is the data structure the whole numerical stack is optimized around, so packing data into one is how you make ML (Machine Learning) code both clean and fast.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Vectorized batches</b> — one matrix multiply scores a whole dataset, replacing a slow per-row Python loop and letting BLAS / GPU (Graphics Processing Unit) kernels run flat-out.</li>
+       <li><b>Neural-network layers</b> — each dense layer is a weight matrix; the forward pass is matrix multiplies.</li>
+       <li><b>Decompositions</b> — SVD (Singular Value Decomposition) and eigen-decomposition power PCA (Principal Component Analysis), recommenders, and compression.</li>
+     </ul>
+     <p><b>Reach for something else when:</b> the data is mostly zeros (use a <b>sparse</b> matrix like <code>scipy.sparse</code> to save memory) or has more than two axes — images and sequences need a higher-rank <b>tensor</b>, not a flat 2-D grid. Day to day this is a <code>numpy</code> 2-D array or a <code>torch</code> tensor.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Row-major vs column-major confusion.</b> Is a row an example or a feature? Pick the convention (rows = examples here) and label your shapes, or transposes will silently corrupt results.</li>
+       <li><b>Shape mismatches in multiplication.</b> An $(m\\times n)$ times $(p\\times q)$ only works when $n = p$. Most matrix bugs are a missing transpose — print <code>.shape</code> first.</li>
+       <li><b>Dense storage blows up memory.</b> A $100000 \\times 100000$ dense matrix is tens of gigabytes. If it is mostly zeros, store it sparse.</li>
+       <li><b>Indexing is row-then-column, and often 0-based in code.</b> Math writes $A_{2,1}$ (1-based); <code>numpy</code> writes <code>A[1, 0]</code>. Off-by-one and swapped indices are classic slips.</li>
+       <li><b>In-place edits alias.</b> A slice of a <code>numpy</code> array is a view, so writing to it mutates the original. Copy when you mean to copy.</li>
+       <li><b>Mixed dtypes downcast silently.</b> An integer matrix that meets a float can truncate or overflow. Set the dtype on purpose.</li>
+     </ul>`,
   quiz: {
     q: `In the house matrix above, what is $A_{1,2}$, and what does it mean?`,
     a: `<p>$A_{1,2} = 3$: row 1, column 2 — the first house has 3 bedrooms.</p>`
@@ -486,6 +541,24 @@ L({
      </ul>`,
   application:
     `<p>Predicting on a batch of data, passing inputs through a neural-network layer, rotating 3D points in graphics — all are matrix×vector. GPUs exist mainly to do this operation very fast.</p>`,
+  whenToUse:
+    `<p>Whenever you want to apply the <i>same</i> linear operation to a whole batch — score every example, transform every point, run one network layer — matrix×vector (and its big sibling, matrix×matrix) is the tool. It is the single most-run operation in all of ML (Machine Learning).</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Forward pass</b> — a dense layer is $Wx$ (then a bias and a nonlinearity); stacking these is a neural network.</li>
+       <li><b>Batched inference</b> — one matrix multiply replaces thousands of dot-product loops, which is exactly what GPUs (Graphics Processing Units) accelerate.</li>
+       <li><b>Geometry</b> — rotations, scalings, and projections of points are all matrix×vector.</li>
+     </ul>
+     <p><b>When something else fits better:</b> if the matrix is huge and sparse, an iterative solver that only needs matrix×vector products (e.g. conjugate gradient) beats forming a dense inverse; if you truly need a one-off single dot product, just use the dot product directly. In code it is <code>A @ x</code> in <code>numpy</code> / <code>torch</code>, dispatched to tuned BLAS kernels.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Inner dimensions must cancel.</b> An $(m\\times n)$ matrix times an $(n)$ vector needs the $n$'s to match. Mismatched shapes are the number-one bug — check before you multiply.</li>
+       <li><b>Multiplication does not commute.</b> $Ax$ is not $xA$, and $AB \\ne BA$ for matrices. Order is meaning, not decoration.</li>
+       <li><b>Broadcasting can hide a bug.</b> <code>numpy</code> may silently broadcast a wrong-shaped array into something that "works" but is meaningless. Assert the output shape you expect.</li>
+       <li><b>Forgetting the bias / affine term.</b> A pure $Wx$ has no offset; most layers need $Wx + b$. Leaving out $b$ pins every output through the origin.</li>
+       <li><b>Don't form an inverse to solve $Ax=b$.</b> Computing $A^{-1}$ is slow and numerically worse than a direct solve (<code>np.linalg.solve</code> or an LU / QR factorization).</li>
+       <li><b>Memory layout costs.</b> Repeatedly multiplying against a transposed or non-contiguous matrix thrashes the cache. Make arrays contiguous for the hot loop.</li>
+     </ul>`,
   quiz: {
     q: `If $A$ is $5\\times 3$ and $x$ has 3 numbers, how many numbers does $Ax$ have?`,
     a: `<p>5. The $3$'s match and cancel, leaving the row count $m=5$.</p>`
@@ -620,6 +693,25 @@ L({
      </ul>`,
   application:
     `<p>L2 distance powers k-means and k-NN (k-Nearest Neighbors). L2 on the weights = <b>Ridge</b> regularization; L1 = <b>LASSO</b>, which zeroes out useless features. Norms are how models avoid getting too "big" and overfitting.</p>`,
+  whenToUse:
+    `<p>Reach for a norm whenever you need a single "how big" or "how far" number — to measure distance between examples, to penalize large weights, or to check whether training has converged. Picking L1 (Manhattan) vs L2 (Euclidean) is a real modeling choice, not a detail.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Distance-based models</b> — k-NN (k-Nearest Neighbors) and k-means rank neighbors by L2 distance.</li>
+       <li><b>Regularization</b> — L2 on the weights gives <b>Ridge</b> (shrinks smoothly); L1 gives <b>LASSO</b> (drives weights to exactly zero, so it selects features).</li>
+       <li><b>Gradient clipping</b> — capping the gradient's L2 norm keeps deep-network training from blowing up.</li>
+       <li><b>Normalization</b> — dividing a vector by its norm makes a unit vector, the basis of cosine similarity.</li>
+     </ul>
+     <p><b>Choose by goal:</b> want sparsity? L1. Want a smooth, rotation-invariant length? L2. Want worst-case (the single largest entry)? the L∞ (max) norm. In code these are one <code>np.linalg.norm</code> call with an <code>ord</code> argument.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Distance lies on unscaled features.</b> A feature measured in thousands swamps one measured in single digits, so the norm tracks only the big one. Standardize before any distance or k-NN (k-Nearest Neighbors).</li>
+       <li><b>The curse of dimensionality.</b> In very high dimensions all pairwise L2 distances bunch together, so "nearest" becomes meaningless. Reduce dimensions first.</li>
+       <li><b>L1 vs L2 is not interchangeable.</b> L2 squares errors, so it overreacts to outliers; L1 is robust but its corner makes optimization non-smooth at zero. Pick on purpose.</li>
+       <li><b>Squaring can overflow.</b> Naively computing $\\sum x_i^2$ on large values can overflow before the square root. Use a scaled (hypot-style) computation or <code>np.linalg.norm</code>, which handles it.</li>
+       <li><b>Never gradient-descend the raw L1 at zero.</b> The L1 norm has no derivative at $0$; use the subgradient or a proximal step, or training stalls.</li>
+       <li><b>A norm is always non-negative.</b> Getting a negative "length" means a sign or absolute-value bug — norms can't be below zero.</li>
+     </ul>`,
   quiz: {
     q: `Find the L2 and L1 norm of $[0, 6, 8]$.`,
     a: `<p>L2 $=\\sqrt{0+36+64}=\\sqrt{100}=10$. L1 $=0+6+8=14$.</p>`
@@ -667,6 +759,24 @@ L({
      <p>To reach the bottom, step <i>opposite</i> the slope. That single idea is gradient descent.</p>`,
   application:
     `<p>Every model is trained by computing the derivative of its error and stepping downhill. Backpropagation is just the chain rule (next lessons) applied to millions of derivatives at once.</p>`,
+  whenToUse:
+    `<p>The derivative is the heartbeat of <i>learning</i>: any time you want to make an output smaller (or bigger) by nudging a knob, the derivative tells you which way and how hard to push. Every gradient-based optimizer rests on it.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Gradient descent</b> — step opposite the derivative of the loss to shrink error; this is how essentially all models train.</li>
+       <li><b>Backpropagation</b> — the chain rule (next lesson) chains derivatives through every layer of a neural network.</li>
+       <li><b>Sensitivity analysis</b> — the derivative says which input the output is most responsive to.</li>
+     </ul>
+     <p><b>How you actually get them:</b> rarely by hand. <b>Autodiff</b> (automatic differentiation, as in <code>torch.autograd</code> or JAX) computes exact derivatives from your code. Use a closed-form rule when you can; fall back to a finite-difference check only to <i>verify</i>. When a function has no derivative (a hard threshold, a non-smooth loss), reach for a subgradient or a smooth surrogate instead.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Zero slope is not always a minimum.</b> A derivative of $0$ marks a flat spot — it could be a maximum, a minimum, or a saddle. Check the curvature (second derivative) before celebrating.</li>
+       <li><b>Non-differentiable points bite.</b> Functions like $|x|$ or a step have a kink or jump with no derivative there. Smooth them or use a subgradient, or the optimizer stalls.</li>
+       <li><b>Finite differences are fragile.</b> Approximating with $(f(x+h)-f(x))/h$ is haunted by a trade-off: too-large $h$ is inaccurate, too-small $h$ drowns in floating-point round-off. Prefer autodiff (automatic differentiation).</li>
+       <li><b>Sign and direction slips.</b> To <i>minimize</i> you step against the derivative; flipping the sign sends you uphill and the loss climbs. Watch the minus.</li>
+       <li><b>Vanishing and exploding slopes.</b> Chaining many derivatives can make them shrink to nothing or blow up — the core reason deep nets are hard to train; mitigate with good activations and normalization.</li>
+       <li><b>Units matter for step size.</b> A derivative's magnitude depends on input scaling, so an un-normalized feature can force a tiny or huge learning rate. Standardize inputs.</li>
+     </ul>`,
   quiz: {
     q: `For $f(x)=x^2$, what is the slope at $x=-5$? Are we going up or down as $x$ increases?`,
     a: `<p>$f'(-5)=2(-5)=-10$. Negative slope means the function is going <i>down</i> as $x$ increases there.</p>`
@@ -789,6 +899,24 @@ L({
      </ul>`,
   application:
     `<p>Training = "compute gradient of the error, step downhill, repeat." This is gradient descent, the engine behind linear models, SVMs (Support Vector Machines), and every deep neural network.</p>`,
+  whenToUse:
+    `<p>The gradient is the derivative for functions of <i>many</i> inputs — exactly the situation in ML (Machine Learning), where the loss depends on millions of weights. Whenever you optimize anything multi-dimensional, the gradient is the compass pointing steepest-uphill (so you step the other way).</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Training every model</b> — gradient descent and its variants (SGD (Stochastic Gradient Descent), Adam) move all the weights at once by following $-\\nabla L$.</li>
+       <li><b>Backpropagation</b> — produces the gradient of the loss with respect to every parameter in one backward sweep.</li>
+       <li><b>Constrained / regularized objectives</b> — gradients drive Lagrangian and proximal methods too.</li>
+     </ul>
+     <p><b>Reach past plain gradients when:</b> the surface is ill-conditioned (long narrow valleys) — momentum or Adam help; the function is non-smooth — use subgradients; or you can afford curvature — second-order methods (Newton, L-BFGS) converge in far fewer steps on small problems. In practice an autodiff (automatic differentiation) library hands you $\\nabla L$ for free.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The gradient points uphill.</b> $\\nabla f$ is the direction of steepest <i>increase</i>; to minimize you must step toward $-\\nabla f$. Forgetting the minus makes the loss grow.</li>
+       <li><b>Learning rate is everything.</b> Too large and the steps overshoot and diverge; too small and training crawls. Tune it, and consider a schedule or an adaptive optimizer.</li>
+       <li><b>Local minima and saddles.</b> A zero gradient can be a saddle point or a poor local minimum, especially in high dimensions. Momentum, noise (SGD (Stochastic Gradient Descent)), and restarts help escape.</li>
+       <li><b>Vanishing / exploding gradients.</b> Deep chains can drive $\\nabla L$ toward zero or infinity. Use good initialization, normalization, residual connections, and gradient clipping.</li>
+       <li><b>Unscaled features warp the bowl.</b> Features on different scales make the loss surface a stretched ravine that gradient descent zig-zags down slowly. Standardize inputs.</li>
+       <li><b>The whole loss must be differentiable.</b> A hard <code>argmax</code> or a discrete step in the middle of the model zeroes the gradient and blocks learning. Use a smooth surrogate (softmax, sigmoid).</li>
+     </ul>`,
   quiz: {
     q: `For $f(x_1,x_2)=x_1^2+x_2^2$, what is the gradient at $(0,0)$, and what does it tell you?`,
     a: `<p>$\\nabla f = [0,0]$. A zero gradient means you're at a flat spot — here, the minimum of the bowl. Nowhere is downhill, so learning stops.</p>`
@@ -839,6 +967,24 @@ L({
      </ul>`,
   application:
     `<p>Backpropagation runs the chain rule backward through every layer of a network, multiplying local slopes, to find how each weight affects the final loss. Without it, deep learning would be impossible.</p>`,
+  whenToUse:
+    `<p>The chain rule is how you differentiate <i>composed</i> functions — and a neural network is nothing but functions stacked on functions. Any time a value passes through several steps and you need its sensitivity to an early input, the chain rule is the tool.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>Backpropagation</b> — the chain rule applied backward through every layer is what gives you the gradient of the loss for each weight; it is the whole training algorithm of deep learning.</li>
+       <li><b>Reverse-mode autodiff</b> — frameworks like <code>torch.autograd</code> and JAX implement exactly this rule, multiplying local Jacobians as they walk the computation graph backward.</li>
+       <li><b>Composed transforms</b> — change-of-variables in probability and the reparameterization trick both lean on it.</li>
+     </ul>
+     <p><b>Two modes, pick by shape:</b> <b>reverse mode</b> (one output, many inputs — i.e. a scalar loss over millions of weights) is what neural nets use; <b>forward mode</b> is cheaper when there are few inputs and many outputs. You almost never apply it by hand — the framework does, exactly and fast.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Multiply, don't add, the local slopes.</b> The overall rate is the <i>product</i> of each step's derivative. Adding them is a classic beginner error.</li>
+       <li><b>Evaluate each factor at the right point.</b> The outer derivative is taken at the inner function's value, not at the original input. Plug $y = g(x)$ into $f'$, not $x$.</li>
+       <li><b>Vanishing / exploding products.</b> Many factors below $1$ multiply toward zero (vanishing gradient); factors above $1$ blow up. This is the central deep-learning training problem — fix with good activations, normalization, and residuals.</li>
+       <li><b>Cache the forward pass.</b> Backprop needs the intermediate values from the forward pass; recompute or store them, or the backward gradients are wrong.</li>
+       <li><b>Branches and shared inputs sum.</b> When one variable feeds several downstream paths, its gradient is the <i>sum</i> over all paths (the multivariable chain rule). Miss a path and the gradient is undercounted.</li>
+       <li><b>A non-differentiable link breaks the chain.</b> A hard step or <code>argmax</code> in the middle zeroes the product. Use a smooth surrogate or a straight-through estimator.</li>
+     </ul>`,
   quiz: {
     q: `If $y = 2x$ and $z = y^3$, use the chain rule to find $\\frac{dz}{dx}$.`,
     a: `<p>$\\frac{dz}{dy}=3y^2$ and $\\frac{dy}{dx}=2$, so $\\frac{dz}{dx}=3y^2\\cdot2=6y^2=6(2x)^2=24x^2$.</p>`
@@ -992,6 +1138,24 @@ L({
      </ul>`,
   application:
     `<p>PCA finds the eigenvectors of your data's covariance matrix — the directions of greatest spread — and keeps only the top few to compress data. Google's original PageRank was an eigenvector problem too.</p>`,
+  whenToUse:
+    `<p>Eigen-decomposition is the tool for finding the <i>intrinsic axes</i> of a square matrix — the directions it merely stretches. Reach for it whenever you want to understand, compress, or simplify a linear operator or a covariance structure.</p>
+     <p><b>Where it unlocks things:</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — the top eigenvectors of the covariance matrix are the directions of greatest spread; keep a few to compress and denoise data.</li>
+       <li><b>PageRank and graphs</b> — the steady-state ranking is the dominant eigenvector of a transition matrix; spectral clustering uses the smallest ones.</li>
+       <li><b>Stability and conditioning</b> — eigenvalues tell you whether a dynamical system or an optimization landscape is well-behaved.</li>
+     </ul>
+     <p><b>Use the SVD (Singular Value Decomposition) instead when:</b> the matrix is rectangular (data is rows×columns, not square) or you need numerical robustness — SVD always exists and is more stable. For just the top few directions on a huge matrix, a truncated / randomized solver (<code>scipy.sparse.linalg.eigsh</code>, <code>sklearn</code>'s PCA) beats a full decomposition.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Eigen-decomposition needs a square matrix.</b> For non-square data (examples × features), eigenvectors aren't defined — use the SVD (Singular Value Decomposition), which factors any shape.</li>
+       <li><b>Real matrices can have complex eigenvalues.</b> A rotation has no real eigenvectors. Only symmetric matrices (like covariance) are guaranteed real eigenvalues and orthogonal eigenvectors — the case PCA (Principal Component Analysis) relies on.</li>
+       <li><b>PCA without centering is wrong.</b> Subtract the mean first, or the leading component just points at the data's offset from the origin instead of its spread.</li>
+       <li><b>Scale changes the answer.</b> Eigenvectors of a covariance matrix depend on feature units, so an unscaled feature dominates. Standardize (or use the correlation matrix).</li>
+       <li><b>Eigenvectors aren't unique.</b> Sign and ordering can flip between libraries or runs, and repeated eigenvalues leave a whole subspace free. Don't depend on a fixed sign.</li>
+       <li><b>Near-equal eigenvalues are unstable.</b> When two eigenvalues are close, their eigenvectors are numerically ill-conditioned and swap easily. Trust the subspace, not the individual vectors.</li>
+     </ul>`,
   quiz: {
     q: `For $A=\\begin{bmatrix}5&0\\\\0&5\\end{bmatrix}$, what does $Az$ do to ANY vector $z$? What is the eigenvalue?`,
     a: `<p>It scales every vector by 5 without turning it. So every direction is an eigenvector, all with eigenvalue $\\lambda=5$.</p>`

@@ -68,6 +68,28 @@ L({
      </ul>`,
   application:
     `<p>Spam filters learn from emails labeled spam / not-spam. Photo apps learn to tag cats from labeled photos. Loan approval learns from past approved / denied applications. Anything with labeled past data can be supervised learning.</p>`,
+  whenToUse:
+    `<p><b>Reach for supervised learning when you have a column of correct answers</b> — labeled rows where each example carries the target you want to predict (a price, a category, a yes/no). It is the default framing for prediction problems whenever labels exist or can be collected at reasonable cost.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Unsupervised learning</b> (clustering, PCA (Principal Component Analysis)) — when you actually have labels; never throw away a target you have.</li>
+       <li><b>Hand-written rules</b> — when the pattern is complex or shifting and rules grow brittle; let the data fit it.</li>
+     </ul>
+     <p><b>Pick a different framing when:</b></p>
+     <ul>
+       <li>You have no labels and just want structure — use clustering or dimensionality reduction.</li>
+       <li>Labels are scarce but unlabeled data is plentiful — try semi-supervised or self-supervised pretraining, then fine-tune.</li>
+       <li>The system learns from rewards over time, not fixed answers — use reinforcement learning.</li>
+     </ul>
+     <p><b>Where to start:</b> a strong baseline first (logistic / linear regression or gradient-boosted trees in <code>scikit-learn</code>) before anything fancier.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Mislabeled or biased labels poison everything.</b> The model can only be as correct as its answers; audit a sample of labels and measure inter-annotator agreement before trusting them.</li>
+       <li><b>Train / test contamination.</b> If test rows leak into training (duplicates, near-duplicates, or shared groups), accuracy looks great and collapses in production. Split <i>before</i> any feature engineering.</li>
+       <li><b>Distribution shift.</b> A model trained on last year's data drifts when the world changes; monitor live inputs and re-train on a schedule.</li>
+       <li><b>Label leakage.</b> A feature that secretly encodes the answer (or is recorded after prediction time) inflates offline scores. Build features with only information available at prediction time.</li>
+       <li><b>Optimizing the wrong target.</b> The label must match the real business goal — predicting "clicked" is not the same as predicting "was satisfied". Pick the target deliberately.</li>
+     </ul>`,
   quiz: {
     q: `You predict whether an email is spam (yes / no) from its words. Is this regression or classification? What is $y$?`,
     a: `<p>Classification, because the answer is a category, not a number. Here $y$ is "spam" or "not spam" (often written as 1 or 0).</p>`
@@ -121,6 +143,24 @@ L({
      </ul>`,
   application:
     `<p>Predicting delivery times, stock prices, or temperatures all use squared loss. Image classifiers use cross-entropy loss. Every model needs a loss so it knows what "wrong" means.</p>`,
+  whenToUse:
+    `<p><b>Pick the loss to match the task and the cost of being wrong</b> — the loss is the model's definition of "wrong", so it directly shapes what gets learned.</p>
+     <p><b>Choose one over another:</b></p>
+     <ul>
+       <li><b>Squared loss (MSE (Mean Squared Error))</b> for regression when big errors are much worse than small ones and outliers are rare.</li>
+       <li><b>Absolute / Huber loss</b> over squared loss when outliers are present — squared loss lets a few extreme points dominate; Huber is robust yet still smooth.</li>
+       <li><b>Cross-entropy (log loss)</b> for classification and any time you need calibrated probabilities, not just a label.</li>
+       <li><b>Hinge loss</b> for max-margin SVM (Support Vector Machine) classifiers when you only need the decision, not a probability.</li>
+     </ul>
+     <p><b>In practice:</b> <code>scikit-learn</code> and the deep-learning frameworks expose these directly (<code>log_loss</code>, <code>MSELoss</code>, <code>HuberLoss</code>); choose the loss before tuning anything else.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Squared loss is outlier-hungry.</b> One mislabeled giant value can drag the whole fit; clip, winsorize, or switch to Huber / absolute loss.</li>
+       <li><b>Loss and metric mismatch.</b> Training on MSE but reporting MAE (Mean Absolute Error), or training on accuracy-blind log loss while the business cares about recall, leads to confusing results. Align the loss with the metric you are judged on.</li>
+       <li><b>Squaring distorts scale.</b> Loss values are not in the units of $y$, so they are hard to read — convert back (e.g. RMSE (Root Mean Squared Error)) before reporting.</li>
+       <li><b>Cross-entropy explodes at confident-and-wrong.</b> A predicted probability of exactly $0$ or $1$ gives infinite loss; clamp probabilities away from the extremes for numerical stability.</li>
+       <li><b>Asymmetric costs need an asymmetric loss.</b> If a false negative costs far more than a false positive, a symmetric loss optimizes the wrong thing — weight the classes or use a custom loss.</li>
+     </ul>`,
   quiz: {
     q: `True value $y = 10$, prediction $z = 7$. What is the least-squared loss $\\tfrac12(y-z)^2$?`,
     a: `<p>Gap $= 10 - 7 = 3$. Squared $= 9$. Halved $= \\tfrac12 \\times 9 = 4.5$. So $L = 4.5$.</p>`
@@ -177,6 +217,23 @@ L({
      </ul>`,
   application:
     `<p>Every trained model has a cost it is trying to minimize. House-price models, recommendation systems, and language models all define a cost over their data, then push it down.</p>`,
+  whenToUse:
+    `<p><b>When this shows up in real ML work, the cost function is the single objective you hand the optimizer.</b> Every supervised model unlocks training by summing a per-example loss into one cost $J(\\theta)$ and minimizing it.</p>
+     <p><b>Design choices that matter:</b></p>
+     <ul>
+       <li><b>Average vs sum</b> — use the mean (divide by $m$) so the learning rate does not depend on dataset size; the plain sum couples step size to $m$.</li>
+       <li><b>Add a regularizer</b> to the cost when the model overfits — the cost becomes fit-the-data plus keep-weights-small.</li>
+       <li><b>Weight the terms</b> when classes or examples differ in importance, instead of treating every example equally.</li>
+     </ul>
+     <p><b>What relies on it:</b> gradient descent and every higher-level training loop minimize this cost; frameworks like <code>PyTorch</code> build it as the scalar you call <code>.backward()</code> on.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Summing instead of averaging.</b> A summed cost grows with $m$, so a learning rate tuned on a small set diverges on a big one. Average over examples.</li>
+       <li><b>Unscaled features.</b> Features on wildly different scales make the cost a stretched valley that gradient descent crawls through; standardize first.</li>
+       <li><b>Imbalanced data hides in the average.</b> A rare class barely moves the total cost, so the model ignores it; weight the minority class or its loss term.</li>
+       <li><b>Non-convex cost surfaces.</b> Beyond linear models the cost has many local minima and saddle points; results depend on initialization and the optimizer, so do not expect one true bottom.</li>
+       <li><b>Watching training cost only.</b> A falling training cost can mask overfitting; always track cost on a held-out validation set too.</li>
+     </ul>`,
   quiz: {
     q: `Two examples have losses $3$ and $5$. What is the cost $J(\\theta)$? If a better $\\theta$ cuts the second loss to $1$, what is the new cost?`,
     a: `<p>$J = 3 + 5 = 8$. After the improvement, $J = 3 + 1 = 4$. Lower cost means a better fit.</p>`
@@ -320,6 +377,24 @@ L({
      </ul>`,
   application:
     `<p>Gradient descent trains almost everything: linear regression, logistic regression, and every deep neural network. SGD is how giant models learn from billions of examples without choking.</p>`,
+  whenToUse:
+    `<p><b>Reach for gradient descent when the cost is differentiable and too big or too curved to solve in closed form.</b> It is the default training engine for neural networks and large-scale linear / logistic models.</p>
+     <p><b>Choose a variant over the others:</b></p>
+     <ul>
+       <li><b>Mini-batch SGD (Stochastic Gradient Descent)</b> over full-batch — when the dataset is large; full-batch is exact but slow per step, mini-batches are noisier but far faster.</li>
+       <li><b>Adam over plain SGD</b> — when you want fast, low-tuning convergence on deep nets; plain SGD with momentum often generalizes slightly better but needs more careful tuning.</li>
+       <li><b>A closed-form / second-order solver</b> over gradient descent — when the problem is small and convex (e.g. linear regression's normal equations, or L-BFGS for modest logistic regression).</li>
+     </ul>
+     <p><b>In practice:</b> use the optimizer your framework ships (<code>torch.optim.Adam</code>, <code>SGD</code>) and let a learning-rate scheduler decay the step over training.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Learning rate is everything.</b> Too big and the cost diverges or oscillates; too small and training crawls. Start with a small grid or a learning-rate finder.</li>
+       <li><b>Unscaled features stall descent.</b> Different feature scales create a long, narrow valley; standardize inputs so steps point toward the minimum.</li>
+       <li><b>Local minima and saddles.</b> On non-convex costs the path can stall; momentum, good initialization, and restarts help escape.</li>
+       <li><b>Exploding / vanishing gradients.</b> Deep models can blow up or freeze; clip gradients, normalize layers, and pick stable activations.</li>
+       <li><b>Stopping at the wrong time.</b> Training-cost-only stopping overfits; use a validation set and early stopping.</li>
+       <li><b>Non-reproducible runs.</b> SGD shuffling and random init make runs differ; fix the seed and log it when results must be repeatable.</li>
+     </ul>`,
   quiz: {
     q: `With $J(\\theta)=\\theta^2$ (slope $2\\theta$), start at $\\theta = 3$ with $\\alpha = 0.5$. What is $\\theta$ after one step?`,
     a: `<p>Slope $= 2 \\times 3 = 6$. Step: $\\theta = 3 - 0.5 \\times 6 = 3 - 3 = 0$. One big step landed right at the minimum.</p>`
@@ -466,6 +541,29 @@ L({
      </ul>`,
   application:
     `<p>Predicting house prices from size, sales from ad spend, or crop yield from rainfall. Linear regression is the first model to try, and the baseline everything else is compared against.</p>`,
+  whenToUse:
+    `<p><b>Reach for linear regression first whenever you predict a number and want a fast, interpretable baseline.</b> It shines when the relationship is roughly linear, you have more rows than features, and you need to explain each coefficient.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Gradient-boosted trees or neural nets</b> — when interpretability and stability matter more than squeezing out the last bit of accuracy.</li>
+       <li><b>The closed-form normal equations vs gradient descent</b> — use the formula for small feature counts; switch to gradient descent (or an iterative solver) when features number in the thousands and inverting $X^\\top X$ is too costly.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The target is a category — use logistic regression.</li>
+       <li>The relationship is clearly curved or features interact strongly — use trees, splines, or add polynomial / interaction features.</li>
+       <li>Features are many and correlated — use Ridge or LASSO (Least Absolute Shrinkage and Selection Operator) regularized regression.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>LinearRegression</code> (or <code>Ridge</code> / <code>Lasso</code>); <code>statsmodels</code> when you want confidence intervals and p-values.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Multicollinearity wrecks the coefficients.</b> Highly correlated features make $X^\\top X$ near-singular, so the inverse blows up and weights swing wildly. Drop redundant features or use Ridge.</li>
+       <li><b>Outliers dominate the fit.</b> Squared error lets a few extreme points bend the whole line; inspect residuals and consider robust regression or Huber loss.</li>
+       <li><b>Extrapolation is unsafe.</b> Predictions far outside the training range follow the line blindly with no support from data.</li>
+       <li><b>Forgetting to scale for gradient descent.</b> Unscaled features make the iterative version converge slowly; standardize first (the closed form does not care).</li>
+       <li><b>Trusting R² alone.</b> A high R² (R-squared) can still hide a biased fit; plot residuals to check for curvature and heteroscedasticity (non-constant error spread).</li>
+       <li><b>Leaking the target.</b> A feature computed from $y$ gives a perfect-looking fit that fails live.</li>
+     </ul>`,
   quiz: {
     q: `Using $\\theta = (X^\\top X)^{-1}X^\\top y$ with $X^\\top X = 10$ and $X^\\top y = 30$, what is $\\theta$?`,
     a: `<p>$\\theta = 30 / 10 = 3$. The best-fit slope is 3.</p>`
@@ -520,6 +618,22 @@ L({
      </ul>`,
   application:
     `<p>Maximum likelihood underlies logistic regression, naive Bayes, and the training of language models. It is the standard recipe: define the data's probability, then maximize it.</p>`,
+  whenToUse:
+    `<p><b>Maximum likelihood is the default recipe for fitting a probabilistic model:</b> write the probability of the data as a function of the parameters, then pick the parameters that make it largest. When this shows up in real work, it is what turns "I assumed a distribution" into concrete fitted numbers.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Ad-hoc curve-fitting</b> — when you want a principled estimate with known statistical properties (consistency, asymptotic normality).</li>
+       <li><b>Bayesian MAP (Maximum A Posteriori) / full Bayes</b> — use plain maximum likelihood when you have plenty of data and no strong prior; switch to MAP or a posterior when data is scarce or you want to encode prior belief and uncertainty.</li>
+     </ul>
+     <p><b>What it unlocks:</b> the cross-entropy loss of logistic regression, the fits of naive Bayes and Gaussian mixtures (via Expectation–Maximization), and the next-token objective of language models all <i>are</i> maximum likelihood. Optimize the log-likelihood with the same gradient solvers used elsewhere.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Work in log space.</b> Multiplying many small probabilities underflows to zero; always maximize the log-likelihood (a sum) instead of the raw product.</li>
+       <li><b>Maximum likelihood overfits small samples.</b> With few data points it happily fits noise (a coin seen once gives probability $0$ or $1$); add a prior / regularizer or use smoothing.</li>
+       <li><b>Zero-probability traps.</b> An unseen event gets likelihood $0$ and kills the whole product; use Laplace (add-one) smoothing so nothing is exactly impossible.</li>
+       <li><b>Wrong distribution assumption.</b> Maximum likelihood is only as good as the assumed family; if the data is not really Gaussian / Bernoulli, the estimate is biased.</li>
+       <li><b>Non-convex log-likelihoods.</b> For mixtures and latent-variable models there are many local maxima; use multiple restarts and Expectation–Maximization rather than trusting one run.</li>
+     </ul>`,
   quiz: {
     q: `You see 3 heads in 4 flips. By maximum likelihood, what is the best estimate of the heads-probability $\\theta$?`,
     a: `<p>$\\theta = 3/4 = 0.75$. The maximum-likelihood estimate for a coin is simply the fraction of heads observed.</p>`
@@ -627,6 +741,30 @@ L({
      </ul>`,
   application:
     `<p>Spam detection, click-through prediction, disease risk scoring, and credit default — all are yes/no problems solved with logistic regression. It is the workhorse classifier of industry.</p>`,
+  whenToUse:
+    `<p><b>Reach for logistic regression first on any yes/no problem where you want a calibrated probability and a model you can explain.</b> It is the industry default for click-through, risk, and churn scoring on tabular data.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Gradient-boosted trees or neural nets</b> — when you need transparent coefficients, fast training, well-calibrated probabilities, or a regulator-friendly model, and can accept a small accuracy hit.</li>
+       <li><b>A plain linear-regression threshold</b> — always; logistic output stays in $(0,1)$ and trains on the right (cross-entropy) loss.</li>
+       <li><b>An SVM (Support Vector Machine)</b> — when you need a probability, not just a side of the boundary.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The decision boundary is strongly nonlinear — use trees, boosting, or add interaction / kernel features.</li>
+       <li>You have more than two classes — use softmax (multinomial) logistic regression.</li>
+       <li>Inputs are raw images, audio, or text — use a neural network.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>LogisticRegression</code> with an L2 or L1 penalty; <code>statsmodels</code> for coefficient inference.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Threshold $0.5$ is rarely right.</b> Pick the cutoff from the cost of false alarms vs misses, using an ROC (Receiver Operating Characteristic) or precision–recall curve.</li>
+       <li><b>Class imbalance skews it.</b> On rare positives the model predicts mostly the majority class; use <code>class_weight</code>, resampling, and judge on AUC (Area Under the Curve) or PR-AUC (Precision–Recall Area Under the Curve), not accuracy.</li>
+       <li><b>Perfect separation breaks training.</b> If a feature splits the classes cleanly, weights run off to infinity; add regularization.</li>
+       <li><b>Scale your features.</b> Unscaled inputs slow convergence and distort the L1 / L2 penalty; standardize first.</li>
+       <li><b>Probabilities can drift out of calibration.</b> After resampling or with a strong penalty, re-calibrate (Platt or isotonic) before trusting the numbers as real probabilities.</li>
+       <li><b>Target leakage.</b> A feature that encodes the outcome gives a perfect validation score that vanishes in production.</li>
+     </ul>`,
   quiz: {
     q: `What is the sigmoid output $g(z)$ when $z = 0$? What does it mean?`,
     a: `<p>$g(0) = \\dfrac{1}{1 + e^{0}} = \\dfrac{1}{1 + 1} = 0.5$. The model is perfectly unsure: a 50/50 chance for each class.</p>`
@@ -689,6 +827,28 @@ L({
      </ul>`,
   application:
     `<p>Softmax is the final layer of almost every image classifier and language model. Recognizing handwritten digits (10 classes) or the next word (tens of thousands of classes) both end in a softmax.</p>`,
+  whenToUse:
+    `<p><b>Reach for softmax whenever you must pick exactly one class out of many and want probabilities that sum to 1.</b> It is the standard output layer for multiclass classifiers and the next-token head of language models.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>One sigmoid per class (one-vs-rest)</b> — when the classes are mutually exclusive; softmax couples them so the probabilities compete and sum to 1, while independent sigmoids do not.</li>
+       <li><b>A bare argmax over raw scores</b> — when you need a confidence, not just the winning label.</li>
+     </ul>
+     <p><b>Pick a different output when:</b></p>
+     <ul>
+       <li>An example can belong to several classes at once (multi-label) — use independent sigmoids with binary cross-entropy.</li>
+       <li>There are only two classes — a single sigmoid is the simpler equivalent.</li>
+       <li>The class count is enormous (millions of words) — use a sampled or hierarchical softmax to keep training tractable.</li>
+     </ul>
+     <p><b>In practice:</b> frameworks fuse softmax with the loss (<code>CrossEntropyLoss</code>, <code>softmax_cross_entropy_with_logits</code>) — feed them raw logits, not pre-softmaxed probabilities.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Numerical overflow.</b> $e^{z}$ blows up for large scores; subtract the max score before exponentiating (the standard log-sum-exp trick). Library implementations already do this.</li>
+       <li><b>Double-applying softmax.</b> Passing already-softmaxed probabilities into a loss that expects logits silently wrecks training; feed raw logits.</li>
+       <li><b>Overconfidence.</b> Softmax outputs are often poorly calibrated and near $0$ or $1$; use temperature scaling or label smoothing if you need honest probabilities.</li>
+       <li><b>Out-of-distribution inputs still get a confident class.</b> Softmax always sums to 1, so it never says "none of these"; add an explicit reject / unknown class or an out-of-distribution detector.</li>
+       <li><b>Redundant parameters.</b> Softmax is shift-invariant in its logits, so one class's weights are redundant; regularization keeps the solution well-defined.</li>
+     </ul>`,
   quiz: {
     q: `Two classes have scores $0$ and $0$. After softmax, what are the two probabilities?`,
     a: `<p>$e^0 = 1$ for both. Sum $= 2$. Each $= 1/2 = 0.5$. Equal scores give equal probabilities.</p>`
@@ -750,6 +910,28 @@ L({
      </ul>`,
   application:
     `<p>GLMs let one library fit many models: counts of website visits (Poisson regression), yes/no churn (logistic), or dollar amounts (linear). Statisticians and data scientists use this single framework daily.</p>`,
+  whenToUse:
+    `<p><b>Reach for a GLM (Generalized Linear Model) when your target is not a plain unbounded number</b> — it is a count, a yes/no, a rate, or a positive skewed amount — and you want an interpretable model with the right error distribution.</p>
+     <p><b>Choose the family by the target:</b></p>
+     <ul>
+       <li><b>Poisson / negative binomial</b> over linear regression — for counts (visits, claims); linear regression can predict negative counts and assumes constant variance.</li>
+       <li><b>Bernoulli (logistic)</b> for yes/no, <b>Gamma</b> for positive skewed amounts (insurance payouts), <b>Gaussian</b> for ordinary numbers.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The relationship is strongly nonlinear or has heavy interactions — use gradient-boosted trees or a GAM (Generalized Additive Model).</li>
+       <li>You need top raw accuracy over interpretability — use boosting or a neural net.</li>
+     </ul>
+     <p><b>Which library:</b> <code>statsmodels.GLM</code> (with coefficient inference) or <code>scikit-learn</code>'s <code>PoissonRegressor</code> / <code>GammaRegressor</code> / <code>TweedieRegressor</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Wrong family, wrong fit.</b> Using a Gaussian on counts predicts negatives and mis-states uncertainty; match the family to the data-generating process.</li>
+       <li><b>Overdispersion.</b> Real counts are often more variable than Poisson allows; switch to negative binomial or add a dispersion term, or standard errors will be too small.</li>
+       <li><b>Mind the link function.</b> Coefficients live on the link scale (log, logit), not the raw scale — exponentiate / transform before interpreting them.</li>
+       <li><b>Exposure / offset omitted.</b> For rates (events per unit time or population), include an offset term or the model conflates volume with rate.</li>
+       <li><b>Separation and collinearity.</b> Perfectly separating or correlated features blow up coefficients; regularize or drop redundant features.</li>
+       <li><b>Outliers on the response scale.</b> A few extreme targets can dominate; inspect deviance residuals.</li>
+     </ul>`,
   quiz: {
     q: `Which distribution, used in a GLM, gives ordinary linear regression? Which gives logistic regression?`,
     a: `<p>The normal (Gaussian) distribution gives linear regression. The Bernoulli (yes/no) distribution gives logistic regression.</p>`
@@ -825,6 +1007,29 @@ L({
      </ul>`,
   application:
     `<p>SVMs classify text (spam, topic), images, and gene-expression data. They shine when you have many features but only a moderate number of examples — common in medicine and bioinformatics.</p>`,
+  whenToUse:
+    `<p><b>Reach for an SVM (Support Vector Machine) when you have a clean margin to exploit, many features, and only a moderate number of examples</b> — text, gene-expression, and other high-dimensional, medium-sample problems are its sweet spot.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Logistic regression</b> — when you want the widest-margin boundary and slightly better generalization on small, separable data; logistic wins when you need a probability.</li>
+       <li><b>Gradient-boosted trees</b> — when features outnumber examples (wide, short data) where trees tend to overfit.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have hundreds of thousands of rows or more — kernel SVMs scale poorly (roughly quadratically); use linear SVM (<code>LinearSVC</code>), logistic regression, or boosting.</li>
+       <li>You need calibrated probabilities — SVMs output a margin, not a probability (you must calibrate).</li>
+       <li>The data is huge and messy tabular — boosting usually wins with less tuning.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>SVC</code> (kernel) for small data, <code>LinearSVC</code> / <code>SGDClassifier</code> for large linear problems.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Features must be scaled.</b> The margin depends on distances, so unscaled features let one dominate; standardize every input first.</li>
+       <li><b>The C and γ (gamma) knobs are coupled.</b> C trades margin width against violations; the Gaussian γ sets boundary wiggliness. Tune them jointly with grid or random search and cross-validation.</li>
+       <li><b>No probabilities out of the box.</b> The raw output is a signed distance; wrap with Platt scaling (<code>probability=True</code>) if you need a probability, knowing it costs extra fitting.</li>
+       <li><b>Poor scaling to big data.</b> Kernel SVM training cost grows fast with rows; downsample or switch to a linear SVM for large sets.</li>
+       <li><b>Class imbalance.</b> The margin ignores rare classes; set <code>class_weight</code> and judge on AUC (Area Under the Curve), not accuracy.</li>
+       <li><b>Wrong kernel.</b> A linear kernel underfits curved data; an over-flexible Gaussian overfits — validate the choice.</li>
+     </ul>`,
   quiz: {
     q: `Two classes sit at $x = 0$ (class $-1$) and $x = 4$ (class $+1$). Where does the SVM put the boundary, and what is the margin half-width?`,
     a: `<p>The boundary goes halfway, at $x = 2$. The margin half-width is the distance to each point, which is $2$.</p>`
@@ -934,6 +1139,29 @@ L({
      </ul>`,
   application:
     `<p>Kernel SVMs handle handwriting, text, and tasks where the boundary is curvy. The same kernel idea also powers Gaussian processes and many similarity-based methods.</p>`,
+  whenToUse:
+    `<p><b>Reach for the kernel trick when a straight boundary is too rigid but the dataset is small enough that you never need the explicit high-dimensional features.</b> It lets a linear method draw curved boundaries through a cheap similarity function.</p>
+     <p><b>Choose a kernel:</b></p>
+     <ul>
+       <li><b>Gaussian / RBF (Radial Basis Function)</b> for general curved boundaries — the safe default.</li>
+       <li><b>Polynomial</b> when you expect feature interactions of a known degree.</li>
+       <li><b>Linear</b> when features already outnumber examples — kernelizing buys nothing and costs speed.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>The dataset is large (hundreds of thousands of rows) — the kernel (Gram) matrix is $n \\times n$ and blows up memory and time; use explicit features, random Fourier features, or gradient-boosted trees / neural nets instead.</li>
+       <li>You can hand-craft good features cheaply — then a plain linear model is simpler and faster.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>SVC(kernel="rbf")</code>, or <code>Nystroem</code> / <code>RBFSampler</code> to approximate a kernel for larger data.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Features must be scaled.</b> Distance-based kernels are dominated by large-scale features; standardize before computing the kernel.</li>
+       <li><b>The Gram matrix is $O(n^2)$.</b> Storing an $n \\times n$ similarity matrix runs out of memory on big data; cap $n$ or use a kernel approximation.</li>
+       <li><b>γ (gamma) controls overfitting.</b> Too small a Gaussian width memorizes points (wiggly boundary); too large smears everything into one blob. Tune γ with cross-validation.</li>
+       <li><b>Not every function is a valid kernel.</b> A custom similarity must be symmetric and positive semi-definite (Mercer's condition), or the solver misbehaves.</li>
+       <li><b>The mapped space is invisible.</b> You gain accuracy but lose interpretability — there are no readable feature weights.</li>
+       <li><b>Slow at prediction.</b> Scoring depends on the support vectors, so a model with many of them is slow to serve.</li>
+     </ul>`,
   quiz: {
     q: `With a Gaussian kernel, what is $K(x,z)$ when $x = z$ (distance 0)? What does that value mean?`,
     a: `<p>$K = \\exp(0) = 1$. A point is maximally similar to itself, so the kernel gives its highest value, 1.</p>`
@@ -1001,6 +1229,28 @@ L({
      </ul>`,
   application:
     `<p>Generative models like GDA are useful when data is limited, since they make stronger assumptions. They also let you generate fake-but-plausible examples and detect outliers that fit no class well.</p>`,
+  whenToUse:
+    `<p><b>Reach for GDA (Gaussian Discriminant Analysis) when the classes really do form roughly bell-shaped clouds and you have little data.</b> Its strong Gaussian assumption pays off when there are too few examples to fit a more flexible model.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Logistic regression</b> — when the Gaussian assumption holds and data is scarce; GDA then needs fewer examples to reach good accuracy. When the assumption is wrong, logistic regression is the safer (more robust) choice.</li>
+       <li><b>Shared vs per-class covariance</b> — a shared covariance gives LDA (Linear Discriminant Analysis) with a linear boundary; per-class covariance gives QDA (Quadratic Discriminant Analysis) with a curved one but needs more data.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Features are clearly non-Gaussian or categorical — use logistic regression, naive Bayes, or trees.</li>
+       <li>You have plenty of data and want top accuracy — boosting or a neural net.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>LinearDiscriminantAnalysis</code> / <code>QuadraticDiscriminantAnalysis</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Non-Gaussian features break it.</b> Skewed or multimodal features violate the bell-curve assumption; transform them (log, Box–Cox) or pick another model.</li>
+       <li><b>Singular covariance.</b> With more features than examples (or correlated features) the covariance is not invertible; use shrinkage / regularized covariance.</li>
+       <li><b>QDA is data-hungry.</b> A separate covariance per class needs many examples per class, or it overfits; prefer the shared-covariance LDA when data is thin.</li>
+       <li><b>Outliers move the means and shapes.</b> A few extreme points distort μ (mu) and Σ (Sigma); clean or robustly estimate them.</li>
+       <li><b>Wrong priors.</b> Class priors estimated from an imbalanced sample skew the decision; set priors deliberately if the deployment mix differs.</li>
+       <li><b>Correlated features inflate one direction.</b> Standardize and consider decorrelating before fitting.</li>
+     </ul>`,
   quiz: {
     q: `GDA models each class with a bell curve $p(x \\mid y)$. What rule turns these into the class probability $p(y \\mid x)$?`,
     a: `<p>Bayes' rule: $p(y \\mid x) = \\dfrac{p(x \\mid y)\\,p(y)}{p(x)}$. It flips "input given class" into "class given input".</p>`
@@ -1064,6 +1314,29 @@ L({
      </ul>`,
   application:
     `<p>Naive Bayes is a classic spam filter. It also classifies news articles by topic, flags sentiment, and serves as a fast baseline for any text-classification problem.</p>`,
+  whenToUse:
+    `<p><b>Reach for naive Bayes as a fast, cheap baseline on high-dimensional, mostly-independent features</b> — above all bag-of-words text. It trains in one pass, handles thousands of features, and works with tiny data.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Logistic regression</b> — when you need something instant and have very little data; logistic usually wins on accuracy once data grows, because it does not assume independence.</li>
+       <li><b>The right variant:</b> <b>Multinomial</b> for word counts, <b>Bernoulli</b> for word presence/absence, <b>Gaussian</b> for continuous features.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Features are strongly correlated — the independence assumption hurts; use logistic regression or trees.</li>
+       <li>You need well-calibrated probabilities — naive Bayes outputs are usually over-confident.</li>
+       <li>You want top accuracy on tabular data — use gradient-boosted trees.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>MultinomialNB</code> / <code>BernoulliNB</code> / <code>GaussianNB</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Zero-frequency trap.</b> A word never seen with a class gives probability $0$, which zeroes the whole product; always use Laplace (add-one) smoothing.</li>
+       <li><b>Work in log space.</b> Multiplying many small probabilities underflows; sum log-probabilities instead.</li>
+       <li><b>Correlated features double-count.</b> The independence assumption makes repeated or synonymous features over-influence the result; de-duplicate or prune them.</li>
+       <li><b>Probabilities are mis-calibrated.</b> Outputs cluster near $0$ or $1$ and should not be read as true probabilities without calibration.</li>
+       <li><b>Imbalanced priors dominate.</b> A skewed class prior can swamp weak evidence; check and, if needed, reset the priors.</li>
+       <li><b>Wrong variant for the data.</b> Feeding raw counts to a Bernoulli model (or presence flags to a multinomial) quietly degrades accuracy.</li>
+     </ul>`,
   quiz: {
     q: `Naive Bayes assumes features are independent given the class. With that, how do you get $P(x \\mid y)$ for two features?`,
     a: `<p>Multiply them: $P(x \\mid y) = P(x_1 \\mid y) \\times P(x_2 \\mid y)$. Independence turns the joint probability into a product.</p>`
@@ -1208,6 +1481,29 @@ L({
      </ul>`,
   application:
     `<p>Decision trees power credit scoring, medical triage, and customer churn analysis, where people must understand and trust the reasoning. They are also the building block of random forests.</p>`,
+  whenToUse:
+    `<p><b>Reach for a single decision tree when interpretability is the whole point</b> — you need a model a human can read, follow, and defend, and you can accept lower accuracy than an ensemble.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Linear / logistic regression</b> — when the relationship is nonlinear with interactions and you want automatic feature splits and mixed numeric/categorical handling.</li>
+       <li><b>A random forest or boosting</b> — only when you must show the exact decision path; ensembles are far more accurate but no longer a single readable tree.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Accuracy matters more than transparency — use a random forest or gradient boosting (a single tree is high-variance).</li>
+       <li>The boundary is smooth and roughly linear — a linear model is simpler and steadier.</li>
+       <li>Inputs are images, audio, or text — use a neural network.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>DecisionTreeClassifier</code> / <code>DecisionTreeRegressor</code>; constrain it with <code>max_depth</code> and <code>min_samples_leaf</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Unpruned trees overfit hard.</b> A deep tree memorizes noise and scores perfectly on train, poorly on test; limit <code>max_depth</code>, set <code>min_samples_leaf</code>, or prune (cost-complexity).</li>
+       <li><b>High variance.</b> A tiny data change can flip the whole tree; this instability is exactly why ensembles exist.</li>
+       <li><b>Greedy splits are myopic.</b> CART (Classification And Regression Trees) picks the locally best split, not the globally best tree, so it can miss the real structure.</li>
+       <li><b>Biased toward many-valued features.</b> Impurity splits favor high-cardinality columns; use proper encoding or impurity corrections.</li>
+       <li><b>Class imbalance.</b> Pure-majority leaves ignore rare classes; set <code>class_weight</code> or resample.</li>
+       <li><b>Can't extrapolate.</b> Regression trees output constant leaf values, so predictions flatten outside the training range.</li>
+     </ul>`,
   quiz: {
     q: `A group is perfectly pure (all one class). What is its Gini impurity?`,
     a: `<p>With one class, $p_c = 1$, so Gini $= 1 - 1^2 = 0$. Pure groups have Gini 0.</p>`
@@ -1267,6 +1563,29 @@ L({
      </ul>`,
   application:
     `<p>Random forests and gradient boosting (XGBoost (eXtreme Gradient Boosting), LightGBM) win many real-world contests. They power fraud detection, search ranking, and risk models on tabular data across industry.</p>`,
+  whenToUse:
+    `<p><b>Reach for an ensemble whenever a single tree is too weak and accuracy on tabular data is the goal.</b> Combining many trees is the most reliable way to win on rows-and-columns problems.</p>
+     <p><b>Choose the style:</b></p>
+     <ul>
+       <li><b>Random forest (bagging)</b> over a single tree — when you want a strong, low-tuning model that resists overfitting; it averages independent trees to cut variance.</li>
+       <li><b>Gradient boosting</b> over a random forest — when you want the last few points of accuracy and will tune more; sequential trees correct each other's errors and usually edge out the forest.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need a fully transparent model — use a single tree or a linear model.</li>
+       <li>Inputs are images, audio, or text — use a neural network; trees can't read raw pixels or tokens.</li>
+       <li>You need online / streaming updates — ensembles retrain in batches.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>RandomForestClassifier</code> for bagging; <b>XGBoost</b> / <b>LightGBM</b> / <b>CatBoost</b> for boosting.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Bagging only helps if trees disagree.</b> Highly correlated trees barely reduce variance; random forests inject randomness by sampling features and rows — keep that on.</li>
+       <li><b>Boosting overfits without a brake.</b> It keeps fitting the training set; use early stopping on a validation set and a small learning rate.</li>
+       <li><b>Wrong split leaks.</b> Random K-fold cross-validation leaks on time-series or grouped data; use time-based or grouped splits.</li>
+       <li><b>Size and latency.</b> Hundreds of deep trees are slow and large to serve; cap depth, prune, or compile the model.</li>
+       <li><b>Imbalance and calibration.</b> Judge on AUC (Area Under the Curve), set class weights, and calibrate probabilities — ensemble scores are often over-confident.</li>
+       <li><b>Misreading feature importance.</b> Impurity importance is biased toward high-cardinality features; prefer permutation importance or SHAP (SHapley Additive exPlanations).</li>
+     </ul>`,
   quiz: {
     q: `In a random forest, three trees predict 8, 10, and 12 for a house price. What is the forest's prediction (by averaging)?`,
     a: `<p>Average them: $(8 + 10 + 12) / 3 = 30 / 3 = 10$. Bagging averages the members' predictions.</p>`
@@ -1339,6 +1658,29 @@ L({
      </ul>`,
   application:
     `<p>k-NN powers recommendation ("users like you also bought..."), image search by similarity, and quick baselines. It is simple but slow at prediction time, since it scans all stored points.</p>`,
+  whenToUse:
+    `<p><b>Reach for k-NN (k-Nearest Neighbors) as a quick non-parametric baseline, or when "find the most similar items" is literally the task</b> — recommendation and similarity search. It needs no training and adapts instantly to new data.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A parametric model (logistic regression, trees)</b> — when the decision boundary is irregular and you have few enough features that distances stay meaningful.</li>
+       <li><b>Small k vs large k:</b> small k tracks fine detail but is jumpy; large k is smoother but blurs boundaries — tune it by cross-validation.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have many features — distances lose meaning (the curse of dimensionality); reduce dimensions first or use a model.</li>
+       <li>Prediction must be fast or the dataset is huge — k-NN scans all points; use an approximate-nearest-neighbor index (FAISS, Annoy, HNSW) or a parametric model.</li>
+       <li>You need an interpretable rule — a tree or linear model explains itself better.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>KNeighborsClassifier</code>; FAISS / HNSW for large-scale similarity search.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Features must be scaled.</b> Distance is dominated by large-range features; standardize every input or one column decides everything.</li>
+       <li><b>Curse of dimensionality.</b> In high dimensions all points look equidistant and k-NN degrades; reduce dimensions (PCA (Principal Component Analysis)) or pick features.</li>
+       <li><b>Slow, memory-heavy prediction.</b> Every query scans the whole training set; use KD-trees, ball-trees, or approximate indexes.</li>
+       <li><b>Pick k carefully.</b> Even k can tie; small k overfits noise, large k underfits — cross-validate, and use distance weighting.</li>
+       <li><b>Imbalanced classes bias the vote.</b> The majority class dominates neighborhoods; use distance weighting or resampling.</li>
+       <li><b>No model to inspect.</b> There are no coefficients or importances — only the neighbors explain a prediction.</li>
+     </ul>`,
   quiz: {
     q: `If you increase $k$ from 1 to 50, does the prediction get smoother or jumpier? More bias or more variance?`,
     a: `<p>Smoother. Larger $k$ averages over more neighbors, which raises bias but lowers variance.</p>`
@@ -1472,6 +1814,24 @@ L({
      </ul>`,
   application:
     `<p>Every model-tuning decision is a bias-variance call: how deep a tree, how many neighbors, how strong the regularization. Watching the gap between training and test error tells you which way to move.</p>`,
+  whenToUse:
+    `<p><b>When this shows up in real ML work, bias–variance is the diagnostic you run every time a model under- or over-performs.</b> It tells you <i>which direction</i> to move next instead of guessing.</p>
+     <p><b>How to use it to decide:</b></p>
+     <ul>
+       <li><b>High training error (underfit / high bias)</b> — add capacity: a richer model, more features, less regularization.</li>
+       <li><b>Low training but high test error (overfit / high variance)</b> — reduce capacity or add data: more regularization, simpler model, more examples, or an ensemble that averages variance away.</li>
+       <li><b>Use a learning curve</b> (error vs training-set size) to tell whether more data will actually help.</li>
+     </ul>
+     <p><b>What relies on it:</b> every tuning knob — tree depth, k in k-NN (k-Nearest Neighbors), regularization strength, network size — is a bias–variance trade, and cross-validation is how you find its sweet spot.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Judging on training error.</b> Training error keeps falling with complexity and hides overfitting; always read the gap to validation / test error.</li>
+       <li><b>One split fools you.</b> A single train/test split is noisy; use k-fold cross-validation to estimate variance honestly.</li>
+       <li><b>Tuning on the test set.</b> Picking complexity by peeking at the test score leaks it; reserve a final untouched test set and tune on validation folds.</li>
+       <li><b>Assuming more data always fixes variance.</b> It cuts variance but never bias; a too-simple model stays wrong no matter how much data you add.</li>
+       <li><b>Ignoring irreducible noise.</b> Some error is built into the labels; chasing it past that floor just overfits.</li>
+       <li><b>The modern caveat.</b> Very large models can show "double descent" where extra capacity helps again — the classic U-curve is a guide, not a law.</li>
+     </ul>`,
   quiz: {
     q: `A model scores nearly $0$ error on training data but high error on test data. Is this high bias or high variance? Under- or over-fitting?`,
     a: `<p>High variance, which is overfitting. The model memorized the training data instead of learning the general pattern.</p>`
@@ -1522,6 +1882,23 @@ L({
      </ul>`,
   application:
     `<p>Learning theory guides practical choices: collect more data, prefer simpler models, and never trust training accuracy alone. It explains why huge models still need huge datasets to generalize.</p>`,
+  whenToUse:
+    `<p><b>When this shows up in real ML work, learning theory is the reasoning behind data-budget and model-complexity decisions.</b> You rarely compute a VC (Vapnik–Chervonenkis) bound by hand, but its logic answers "will this generalize, and what would help?"</p>
+     <p><b>What it unlocks in practice:</b></p>
+     <ul>
+       <li><b>Estimating data needs</b> — the gap shrinking like $1/\\sqrt{m}$ tells you that doubling data only modestly helps, so plan collection accordingly.</li>
+       <li><b>Choosing model complexity</b> — a more flexible class (higher VC dimension) needs more data to close the same gap; this is the formal backing for "prefer the simplest model that fits".</li>
+       <li><b>Trusting an estimate</b> — it justifies why a held-out test error is a believable proxy for true error when the test set is large and untouched.</li>
+     </ul>
+     <p><b>What relies on it:</b> regularization, cross-validation, and the whole bias–variance picture are the operational tools that put these bounds to work.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Worst-case bounds are loose.</b> VC and similar bounds are often far too pessimistic to use as exact numbers; treat them as direction, not measurement.</li>
+       <li><b>Training accuracy is not generalization.</b> A perfect training score says nothing about new data; estimate true error on held-out data.</li>
+       <li><b>Reusing the test set leaks it.</b> Each peek erodes the guarantee; the bound assumes the test data was never used to choose the model.</li>
+       <li><b>Independence assumption fails on real data.</b> Bounds assume independent, identically distributed samples; time-series, grouped, or drifting data break this, so use the matching split.</li>
+       <li><b>Modern over-parameterized models defy the simple story.</b> Huge networks generalize despite enormous capacity; classical VC bounds do not explain this, so apply the intuition cautiously.</li>
+     </ul>`,
   quiz: {
     q: `A model gets $3$ wrong out of $20$ training examples. What is its training error $\\hat\\epsilon$?`,
     a: `<p>$\\hat\\epsilon = 3 / 20 = 0.15$, i.e. a $15\\%$ training error.</p>`
@@ -1672,6 +2049,29 @@ L({
      </ul>`,
   application:
     `<p>k-means segments customers into groups, compresses image colors, and organizes documents by topic, all without labels. It is the go-to first step for exploring unlabeled data.</p>`,
+  whenToUse:
+    `<p><b>Reach for k-means as the default first cut at clustering when you expect roughly round, similar-sized groups and you can name the number of clusters.</b> It is fast, scales well, and is the standard starting point for unlabeled data.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Hierarchical clustering</b> — when the dataset is large; k-means scales far better, while hierarchical is better for small data and a full dendrogram.</li>
+       <li><b>Gaussian mixtures (Expectation–Maximization)</b> — when you want hard, fast assignments rather than soft, elliptical clusters.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Clusters are stretched, nested, or oddly shaped — use DBSCAN (Density-Based Spatial Clustering of Applications with Noise) or spectral clustering.</li>
+       <li>Cluster sizes / densities vary widely or there is noise — DBSCAN handles outliers; k-means forces every point into a cluster.</li>
+       <li>You cannot guess k — use hierarchical clustering or DBSCAN, or sweep k with the elbow / silhouette method.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>KMeans</code> (with <code>k-means++</code> init) or <code>MiniBatchKMeans</code> for very large data.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Features must be scaled.</b> Distance-based, so a large-range feature dominates the clusters; standardize first.</li>
+       <li><b>Sensitive to initialization.</b> Bad random starts give poor local minima; use <code>k-means++</code> and several restarts (<code>n_init</code>).</li>
+       <li><b>You must choose k.</b> The wrong k splits or merges real groups; use the elbow plot, silhouette score, or domain knowledge.</li>
+       <li><b>Assumes round, equal clusters.</b> It fails on elongated or unequal-density groups, slicing them wrongly.</li>
+       <li><b>Outliers drag centroids.</b> A few extreme points shift the means; remove or clip them, or use k-medoids.</li>
+       <li><b>Non-reproducible runs.</b> Random init and point order make results vary; fix the seed when you need repeatability.</li>
+     </ul>`,
   quiz: {
     q: `A cluster contains the points $4, 6, 8$. After the update step, where does its centroid move?`,
     a: `<p>To their mean: $(4 + 6 + 8) / 3 = 18 / 3 = 6$. The centroid moves to $6$.</p>`
@@ -1734,6 +2134,29 @@ L({
      </ul>`,
   application:
     `<p>EM with mixtures of Gaussians models speaker voices, customer segments with overlap, and fills in missing data. It is the standard tool whenever some labels or variables are hidden.</p>`,
+  whenToUse:
+    `<p><b>Reach for EM (Expectation–Maximization) when something is hidden</b> — the cluster label, a missing value, a latent variable — and you want soft, probabilistic assignments instead of hard ones. A Gaussian mixture fit by EM is the classic case.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>k-means</b> — when clusters overlap, have different shapes / spreads, or you need a membership probability per point; k-means is the hard-assignment, round-cluster special case.</li>
+       <li><b>Dropping incomplete rows</b> — when data is missing; EM can fit while accounting for the missing values rather than discarding them.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Clusters are non-elliptical or density-based — use DBSCAN (Density-Based Spatial Clustering of Applications with Noise) or spectral clustering.</li>
+       <li>You only need fast hard clusters — k-means is simpler and quicker.</li>
+       <li>You want full posterior uncertainty — use variational inference or MCMC (Markov Chain Monte Carlo).</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>GaussianMixture</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Local maxima.</b> EM only climbs to a nearby optimum, not the global one; use several restarts (e.g. via k-means++ init) and keep the best.</li>
+       <li><b>Singular / collapsing components.</b> A Gaussian can shrink onto a single point, sending its likelihood to infinity; add a covariance floor (regularization) to prevent it.</li>
+       <li><b>You still must choose the number of components.</b> Too many overfit; select with BIC (Bayesian Information Criterion) or AIC (Akaike Information Criterion).</li>
+       <li><b>Slow convergence.</b> EM can crawl near flat regions; cap iterations and watch the log-likelihood for a plateau.</li>
+       <li><b>Sensitive to scaling and outliers.</b> Standardize features and clean extreme points, or component shapes get distorted.</li>
+       <li><b>Label switching.</b> Component identities can swap between runs; do not read meaning into a component's index.</li>
+     </ul>`,
   quiz: {
     q: `In the E-step, a point gets density $0.6$ from cluster A and $0.2$ from cluster B. What is its responsibility to cluster A?`,
     a: `<p>$0.6 / (0.6 + 0.2) = 0.6 / 0.8 = 0.75$. The point is $75\\%$ assigned to cluster A.</p>`
@@ -1795,6 +2218,29 @@ L({
      </ul>`,
   application:
     `<p>Hierarchical clustering groups genes, organizes documents, and builds taxonomies. Its dendrogram is loved in biology because it shows structure at every level of detail.</p>`,
+  whenToUse:
+    `<p><b>Reach for hierarchical clustering on small datasets when you do not know the number of clusters and want to see structure at every level.</b> Its dendrogram lets you cut at any height to get however many groups you like.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>k-means</b> — when you cannot pre-specify k, want a nested view (taxonomies, gene trees), or clusters are not round.</li>
+       <li><b>Linkage choice:</b> <b>Ward</b> for compact, equal-size clusters; <b>single</b> for chaining / elongated shapes; <b>complete</b> / <b>average</b> as middle grounds.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The dataset is large — naive agglomerative clustering is roughly $O(n^2)$ to $O(n^3)$ in time and memory; use k-means or <code>MiniBatchKMeans</code>.</li>
+       <li>There is noise and you want outliers flagged — use DBSCAN (Density-Based Spatial Clustering of Applications with Noise).</li>
+       <li>You only need a flat partition fast — k-means is simpler.</li>
+     </ul>
+     <p><b>Which library:</b> <code>scipy.cluster.hierarchy</code> for dendrograms, or <code>scikit-learn</code>'s <code>AgglomerativeClustering</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Scales badly.</b> Memory and time grow quadratically (or worse) with the number of points; subsample or switch methods on big data.</li>
+       <li><b>Linkage changes everything.</b> Single linkage chains clusters into straggly shapes; Ward favors round equal ones — pick deliberately and compare.</li>
+       <li><b>Merges are irreversible.</b> A greedy early merge can never be undone, so one bad join propagates upward.</li>
+       <li><b>Features must be scaled.</b> Unscaled inputs let one dimension dominate the distances; standardize first.</li>
+       <li><b>Cutting the dendrogram is subjective.</b> The number of clusters depends on the cut height; justify it with domain sense or a stability check, not eyeballing alone.</li>
+       <li><b>Sensitive to outliers.</b> Stray points form their own branches and distort merges; clean them first.</li>
+     </ul>`,
   quiz: {
     q: `In agglomerative clustering, how many clusters do you start with if you have $6$ data points?`,
     a: `<p>$6$. Every point begins as its own cluster, then they merge upward one pair at a time.</p>`
@@ -1947,6 +2393,30 @@ L({
      </ul>`,
   application:
     `<p>PCA compresses images, speeds up models by cutting features, removes noise, and makes high-dimensional data visualizable in 2D. It is the classic dimensionality-reduction tool.</p>`,
+  whenToUse:
+    `<p><b>Reach for PCA (Principal Component Analysis) when you have many correlated numeric features and want to compress, denoise, or speed up a downstream model</b> while keeping most of the variance.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Keeping all features</b> — when features are redundant / correlated; PCA packs the signal into a few orthogonal directions and shrinks training cost.</li>
+       <li><b>t-SNE / UMAP</b> for <i>preprocessing</i> — PCA is linear, fast, and reversible, so it feeds models cleanly; t-SNE / UMAP are better only for 2D visualization, not as model inputs.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You want a faithful 2D picture of clusters — use UMAP or t-SNE.</li>
+       <li>You need independent (not just uncorrelated) signals — use ICA (Independent Component Analysis).</li>
+       <li>The structure is strongly nonlinear — use kernel PCA or an autoencoder.</li>
+       <li>You need interpretable original features — PCA's components are blends; prefer feature selection (e.g. LASSO (Least Absolute Shrinkage and Selection Operator)).</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>PCA</code> (or <code>TruncatedSVD</code> for sparse data).</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>You must standardize first.</b> PCA chases variance, so an unscaled large-range feature hijacks the top components; scale every feature to unit variance.</li>
+       <li><b>Fit on train only.</b> Fitting PCA on the whole dataset before the split leaks test information; fit on train and only transform the test set.</li>
+       <li><b>Components are not interpretable.</b> Each is a mix of all original features, so you lose direct feature meaning.</li>
+       <li><b>Variance is not importance.</b> A low-variance direction can carry the label's signal; PCA can throw away exactly what predicts $y$. Validate downstream accuracy.</li>
+       <li><b>Linear only.</b> It cannot capture curved manifolds; nonlinear structure needs kernel PCA or an autoencoder.</li>
+       <li><b>Sensitive to outliers.</b> A few extreme points tilt the principal axes; clean or use robust PCA.</li>
+     </ul>`,
   quiz: {
     q: `PCA keeps the eigenvectors with the largest eigenvalues. What do those eigenvalues represent?`,
     a: `<p>The amount of variance (spread) of the data along each direction. A large eigenvalue means the data spreads a lot that way, so it is worth keeping.</p>`
@@ -2106,6 +2576,29 @@ L({
      </ul>`,
   application:
     `<p>ICA separates brain signals in EEG (Electroencephalography), isolates instruments in audio, and cleans mixed sensor data. Anywhere independent signals get blended together, ICA can pull them apart.</p>`,
+  whenToUse:
+    `<p><b>Reach for ICA (Independent Component Analysis) when several independent sources got linearly mixed and you want to unmix them</b> — the cocktail-party problem: separate voices, EEG (Electroencephalography) brain sources, or blended sensor channels.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — when you need <i>statistically independent</i> sources, not just uncorrelated, orthogonal directions. PCA maximizes variance; ICA maximizes independence (non-Gaussianity), which is what recovers real signals.</li>
+       <li><b>Often after PCA</b> — PCA whitens and reduces dimensions first, then ICA rotates to the independent axes.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You only want compression or denoising — PCA is simpler and faster.</li>
+       <li>The mixing is nonlinear — linear ICA fails; use a nonlinear method or an autoencoder.</li>
+       <li>The sources are Gaussian — ICA cannot separate them (Gaussian mixtures are unidentifiable this way).</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>FastICA</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Gaussian sources are unrecoverable.</b> ICA relies on non-Gaussianity; if the true sources are Gaussian, it cannot separate them.</li>
+       <li><b>Scale, sign, and order are ambiguous.</b> Recovered components can be flipped, rescaled, or permuted; never trust their amplitude or index without anchoring.</li>
+       <li><b>Center and whiten first.</b> <code>FastICA</code> assumes zero-mean, whitened input; skipping preprocessing degrades the result (most implementations do this internally — keep it on).</li>
+       <li><b>Choosing the component count.</b> Asking for too many components manufactures noise sources; reduce dimensions (PCA) first to a sensible number.</li>
+       <li><b>Local optima.</b> The iterative solver can converge to different rotations; use multiple restarts and check stability.</li>
+       <li><b>Outliers distort independence estimates.</b> Heavy contamination skews the non-Gaussianity measure; clean the data first.</li>
+     </ul>`,
   quiz: {
     q: `In ICA, the recordings are $x = As$. If you find the unmixing matrix $W = A^{-1}$, how do you recover the sources $s$?`,
     a: `<p>Multiply the recordings by $W$: $s = Wx$. The inverse undoes the mixing.</p>`
@@ -2274,6 +2767,25 @@ L({
      </ul>`,
   application:
     `<p>In medical tests, recall matters most (don't miss a sick patient). In spam filtering, precision matters (don't trash real mail). The confusion matrix lets you tune for the cost you care about.</p>`,
+  whenToUse:
+    `<p><b>Reach for the confusion matrix and its metrics whenever you evaluate a classifier, and especially when classes are imbalanced</b> — they reveal what kind of mistakes the model makes, which a single accuracy number hides.</p>
+     <p><b>Choose the metric by the cost of each error:</b></p>
+     <ul>
+       <li><b>Precision</b> over recall — when false alarms are expensive (spam filter trashing real mail, flagging a good customer as fraud).</li>
+       <li><b>Recall</b> over precision — when misses are dangerous (cancer screening, fraud you must not let through).</li>
+       <li><b>F1</b> — when you need a single balanced number; <b>PR-AUC (Precision–Recall Area Under the Curve)</b> when positives are very rare.</li>
+       <li><b>Accuracy</b> only when classes are roughly balanced and errors cost the same.</li>
+     </ul>
+     <p><b>In practice:</b> <code>scikit-learn</code>'s <code>classification_report</code> and <code>confusion_matrix</code> give all of these at once.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Accuracy lies on imbalance.</b> With 99% negatives, predicting all-negative scores 99% accuracy yet catches nothing; report precision, recall, and PR-AUC instead.</li>
+       <li><b>The threshold sets the trade-off.</b> Precision and recall both depend on the cutoff; tune it for your cost, do not assume $0.5$.</li>
+       <li><b>Precision–recall is a trade.</b> Pushing one up usually drags the other down; quote both (or F1), never one alone.</li>
+       <li><b>Macro vs micro averaging matters.</b> For multiclass, micro hides minority-class failure while macro weights classes equally — pick the one that matches your goal.</li>
+       <li><b>Evaluate on the real class balance.</b> Metrics measured on a resampled (balanced) test set overstate live precision; test on the production distribution.</li>
+       <li><b>Tiny test sets give noisy metrics.</b> A handful of positives makes recall swing wildly; report confidence intervals or use cross-validation.</li>
+     </ul>`,
   quiz: {
     q: `A classifier has TP $= 30$, FP $= 10$, FN $= 20$. What are its precision and recall?`,
     a: `<p>Precision $= 30 / (30 + 10) = 30/40 = 0.75$. Recall $= 30 / (30 + 20) = 30/50 = 0.60$.</p>`
@@ -2419,6 +2931,29 @@ L({
      </ul>`,
   application:
     `<p>AUC compares classifiers without fixing a threshold first, which is handy when the right cutoff depends on business cost. It is standard in credit scoring, ad targeting, and medical diagnostics.</p>`,
+  whenToUse:
+    `<p><b>Reach for the ROC (Receiver Operating Characteristic) curve and AUC (Area Under the Curve) when you want one threshold-free score for how well a classifier ranks positives above negatives.</b> It is the standard for comparing models before the operating cutoff is chosen.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Accuracy / F1 at a fixed threshold</b> — when the right cutoff depends on business cost and you want to judge ranking quality across all thresholds.</li>
+       <li><b>PR-AUC (Precision–Recall Area Under the Curve) over ROC-AUC</b> — when positives are very rare; ROC-AUC can look deceptively high on heavy imbalance, while PR-AUC stays honest.</li>
+     </ul>
+     <p><b>Pick a different metric when:</b></p>
+     <ul>
+       <li>You have already fixed an operating threshold — report precision / recall / F1 at that point.</li>
+       <li>You need calibrated probabilities, not just ranking — use log loss or a calibration curve (AUC ignores calibration).</li>
+       <li>Costs of the two error types differ sharply — use a cost-weighted metric.</li>
+     </ul>
+     <p><b>In practice:</b> <code>scikit-learn</code>'s <code>roc_auc_score</code> and <code>average_precision_score</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>ROC-AUC flatters imbalance.</b> With very few positives, a model can look great by AUC yet have terrible precision; pair it with PR-AUC.</li>
+       <li><b>AUC ignores calibration.</b> A high AUC says the ranking is good, not that the probabilities are right; calibrate (Platt or isotonic) if you use the scores as probabilities.</li>
+       <li><b>One number hides the curve's shape.</b> Two models with equal AUC can differ where it matters (the low-FPR (False Positive Rate) region); look at the curve, not just the area.</li>
+       <li><b>Feed scores, not hard labels.</b> AUC needs the continuous probability / score; passing $0$/$1$ predictions collapses the curve.</li>
+       <li><b>Compute on the realistic class mix.</b> AUC measured on a resampled test set misrepresents production.</li>
+       <li><b>Tiny sets give noisy AUC.</b> Few examples make it unstable; report a confidence interval or use cross-validation.</li>
+     </ul>`,
   quiz: {
     q: `A classifier has an AUC of $0.5$. How good is it?`,
     a: `<p>No better than random guessing. An AUC of $0.5$ is the diagonal line; the model cannot tell the classes apart.</p>`
@@ -2494,6 +3029,24 @@ L({
      </ul>`,
   application:
     `<p>R² and RMSE report how well a model predicts sales, prices, or demand. RMSE in real units tells stakeholders the typical miss; R² tells them how much better than guessing the average it is.</p>`,
+  whenToUse:
+    `<p><b>Reach for these whenever you evaluate a regression.</b> Report RMSE (Root Mean Squared Error) in the target's units so stakeholders feel the typical miss, and R² (R-squared) to say how much better the model is than guessing the average.</p>
+     <p><b>Choose the metric:</b></p>
+     <ul>
+       <li><b>RMSE</b> over MAE (Mean Absolute Error) — when large errors are disproportionately costly; RMSE punishes big misses harder.</li>
+       <li><b>MAE</b> over RMSE — when you want a robust, outlier-resistant typical error in plain units.</li>
+       <li><b>R²</b> for a unitless "fraction of variance explained" — good for comparing across datasets; <b>MAPE (Mean Absolute Percentage Error)</b> when relative error matters and targets stay well away from zero.</li>
+     </ul>
+     <p><b>In practice:</b> <code>scikit-learn</code>'s <code>mean_squared_error</code>, <code>mean_absolute_error</code>, and <code>r2_score</code> — always reported on a held-out test set.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>RMSE is outlier-sensitive.</b> A few huge errors dominate it; pair with MAE or inspect the residual distribution.</li>
+       <li><b>R² can be negative.</b> On held-out data a model worse than the mean gives R² &lt; 0 — not a bug, a warning.</li>
+       <li><b>R² always rises with more features.</b> Adding junk predictors inflates training R²; use adjusted R² or judge on a test set.</li>
+       <li><b>MAPE blows up near zero.</b> Targets at or near $0$ make percentage error explode or divide by zero; avoid MAPE there.</li>
+       <li><b>Report on the test set, in real units.</b> Training-set metrics overstate quality; and a unitless number alone hides whether a $\\$20$k miss is acceptable.</li>
+       <li><b>Aggregate metrics hide structure.</b> A good overall RMSE can mask large errors in one segment; slice by subgroup and plot residuals vs prediction.</li>
+     </ul>`,
   quiz: {
     q: `A model has $SS_{res} = 10$ and $SS_{tot} = 50$. What is its $R^2$?`,
     a: `<p>$R^2 = 1 - 10/50 = 1 - 0.2 = 0.8$. The model explains $80\\%$ of the variation.</p>`
@@ -2629,6 +3182,29 @@ L({
      </ul>`,
   application:
     `<p>Ridge stabilizes models with many correlated features. LASSO does automatic feature selection by zeroing out useless ones. Cross-validation is the universal way to tune any knob (penalty, tree depth, $k$) honestly.</p>`,
+  whenToUse:
+    `<p><b>Reach for regularization whenever a model overfits or has many features relative to examples</b> — it trades a little fit for far better generalization by penalizing big weights. Cross-validation is how you tune the penalty honestly.</p>
+     <p><b>Choose the penalty:</b></p>
+     <ul>
+       <li><b>Ridge (L2)</b> over LASSO — when features are correlated and you want to keep them all but shrink them; it stabilizes near-singular fits.</li>
+       <li><b>LASSO (Least Absolute Shrinkage and Selection Operator) (L1)</b> over Ridge — when you want automatic feature selection (weak weights driven to exactly zero) and a sparse, readable model.</li>
+       <li><b>Elastic Net</b> — when features are both numerous and correlated; it blends L1 sparsity with L2 stability.</li>
+     </ul>
+     <p><b>Pick a different approach when:</b></p>
+     <ul>
+       <li>You barely have enough features and no overfitting — regularization just adds bias.</li>
+       <li>You need raw nonlinear accuracy — use a tree ensemble (which regularizes via depth, learning rate, and subsampling instead).</li>
+     </ul>
+     <p><b>Which library:</b> <code>scikit-learn</code>'s <code>Ridge</code> / <code>Lasso</code> / <code>ElasticNet</code>, tuned with <code>RidgeCV</code> / <code>LassoCV</code> or <code>GridSearchCV</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Standardize first.</b> Penalties act on weight size, so unscaled features are penalized unfairly; scale every feature to unit variance before fitting.</li>
+       <li><b>Tune λ (lambda) by cross-validation, not eyeballing.</b> Too large underfits, too small lets overfitting back in; sweep it on held-out folds.</li>
+       <li><b>Tune λ inside the cross-validation loop.</b> Choosing the penalty on the test set leaks it; use nested CV (Cross-Validation) for an honest estimate.</li>
+       <li><b>LASSO is arbitrary with correlated features.</b> Among correlated columns it keeps one almost at random and zeros the rest; prefer Elastic Net for stable selection.</li>
+       <li><b>Do not penalize the intercept.</b> Shrinking the bias term distorts predictions; most libraries exclude it — confirm yours does.</li>
+       <li><b>Regularization adds bias.</b> It cuts variance at the cost of bias, so an over-strong penalty makes the model systematically wrong; watch the bias–variance balance.</li>
+     </ul>`,
   quiz: {
     q: `You want a model that automatically drops useless features by setting their weights to exactly zero. Should you use Ridge (L2) or LASSO (L1)?`,
     a: `<p>LASSO (L1). Its absolute-value penalty pushes weak weights all the way to zero, removing those features. Ridge only shrinks them toward zero but rarely hits exactly zero.</p>`

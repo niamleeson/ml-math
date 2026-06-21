@@ -67,6 +67,28 @@ L({
      <p>Order matters: $BA=\\begin{bmatrix}23&34\\\\31&46\\end{bmatrix}$, a different matrix. Matrix multiplication is not commutative.</p>`,
   application:
     `<p>A neural-network layer computes $XW$: $X$ is a batch of examples (rows), $W$ is the weight matrix. One matrix multiply scores the whole batch. GPUs are built to do exactly this, which is why deep learning runs on them.</p>`,
+  whenToUse:
+    `<p><b>Matrix multiply is the workhorse</b> behind nearly every ML (Machine Learning) computation: a linear layer, an attention score, a covariance, a change of basis. Whenever you transform a whole batch of vectors at once, you are doing a matrix multiply.</p>
+     <p><b>Reach for the batched form</b> $XW$ (many examples as rows) over:</p>
+     <ul>
+       <li><b>A Python loop over examples</b> — one BLAS (Basic Linear Algebra Subprograms) call is hundreds of times faster and runs on the GPU (Graphics Processing Unit).</li>
+       <li><b>Repeated matrix–vector products</b> — stacking the vectors into a matrix lets one call reuse cache and cores.</li>
+     </ul>
+     <p><b>Think twice when:</b></p>
+     <ul>
+       <li>One factor is huge and sparse — use a sparse multiply (<code>scipy.sparse</code>) instead of dense.</li>
+       <li>You only need the diagonal or trace of the product — compute that directly; forming the full product wastes work.</li>
+     </ul>
+     <p><b>In practice:</b> <code>numpy</code> / <code>torch</code> <code>@</code> or <code>matmul</code>, backed by BLAS / cuBLAS.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Shape mismatches are the number-one bug.</b> The inner dimensions must agree: $(m\\times n)(n\\times p)$. Print shapes before every multiply; a silent broadcast can produce a wrong-but-valid result.</li>
+       <li><b>Order matters — it is not commutative.</b> $AB \\neq BA$ in general. Swapping factors (or forgetting a transpose) gives a different matrix, not an error.</li>
+       <li><b>Accidental broadcasting.</b> In <code>numpy</code>, <code>*</code> is element-wise and <code>@</code> is matrix multiply. Mixing them up scales rows instead of contracting them.</li>
+       <li><b>Float precision drifts.</b> Long chains of products accumulate rounding error; in deep nets this shows up as exploding or vanishing activations. Use <code>float32</code> or higher and normalize between layers.</li>
+       <li><b>Memory blows up on large intermediates.</b> An $(m\\times n)(n\\times p)$ product allocates $m\\times p$ floats. Chain associativity to keep intermediates small — multiply the cheaper pairing first.</li>
+       <li><b>Row-major vs column-major.</b> Passing a transposed-but-not-copied array to a BLAS routine can silently transpose your math. Know your library's layout.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 320; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -190,6 +212,24 @@ L({
      <p>A symmetric matrix is one where nothing moves: $A^\\top = A$, so $A_{ij}=A_{ji}$ already.</p>`,
   application:
     `<p>The dot product is written $x^\\top y$ because laying $x$ on its side ($1\\times n$) lets it multiply the column $y$ ($n\\times 1$) into a single number. Backpropagation is full of transposes: the gradient flowing back through a layer $W$ uses $W^\\top$.</p>`,
+  whenToUse:
+    `<p><b>Transpose shows up the instant you need shapes to line up</b> or you move from the forward pass to the backward pass. It is not a computation you "choose" so much as a reshaping you reach for constantly.</p>
+     <p><b>Where it earns its keep in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Inner products and Gram matrices</b> — $x^\\top y$ is a dot product; $X^\\top X$ is the covariance / normal-equations matrix at the heart of least squares and PCA (Principal Component Analysis).</li>
+       <li><b>Backpropagation</b> — the gradient through a linear layer $W$ flows back as $W^\\top$ times the upstream gradient. Forget the transpose and your gradients have the wrong shape.</li>
+       <li><b>The reversal rule</b> $(AB)^\\top = B^\\top A^\\top$ lets you re-associate products into the cheaper or better-conditioned order.</li>
+     </ul>
+     <p><b>In practice:</b> <code>A.T</code> in <code>numpy</code> and <code>A.transpose(-2, -1)</code> in <code>torch</code> — usually a free view, not a copy, so it costs nothing until materialized.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Transpose reverses order.</b> $(AB)^\\top = B^\\top A^\\top$, not $A^\\top B^\\top$. Getting the order wrong silently produces a different matrix.</li>
+       <li><b>A view is not a copy.</b> In <code>numpy</code>/<code>torch</code>, transposing returns a non-contiguous view. Writing into it, or passing it to code that assumes contiguous memory, can corrupt data or error — call <code>.contiguous()</code> / <code>np.ascontiguousarray</code> when needed.</li>
+       <li><b>Conjugate vs plain transpose.</b> For complex data, the "transpose" you usually want is the conjugate (Hermitian) transpose $A^{*}$, not the plain $A^\\top$. Mixing them breaks inner products.</li>
+       <li><b>Forgetting it in the backward pass.</b> A layer's forward uses $W$; its gradient uses $W^\\top$. Dropping the transpose is a classic hand-rolled-backprop bug.</li>
+       <li><b>Assuming symmetry.</b> $A^\\top = A$ only for symmetric matrices. Do not skip a transpose just because the matrix "looks square."</li>
+       <li><b>Double transpose waste.</b> $(A^\\top)^\\top = A$ — chains of transposes that cancel cost memory traffic for nothing; simplify them out.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -288,6 +328,24 @@ L({
      </ul>`,
   application:
     `<p>Scaling features (normalization) is multiplying by a diagonal matrix. Regularizers add $\\lambda I$ to a matrix to keep it invertible (Ridge regression: $(X^\\top X + \\lambda I)^{-1}$). Batch-norm (Batch Normalization) scale parameters are a diagonal $D$ applied per feature.</p>`,
+  whenToUse:
+    `<p><b>Diagonal and identity matrices are the cheap, stable special cases</b> you actively design toward. When a transform touches each feature independently, a diagonal matrix captures it in $O(n)$ storage and time instead of $O(n^2)$.</p>
+     <p><b>Where they appear in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Feature scaling / normalization</b> — standardizing each feature is a diagonal multiply; whitening uses $\\Lambda^{-1/2}$ on eigen-coordinates.</li>
+       <li><b>Regularization for stability</b> — adding $\\lambda I$ (Ridge / Tikhonov) lifts every eigenvalue by $\\lambda$, pulling a near-singular $X^\\top X$ away from the cliff so its inverse behaves.</li>
+       <li><b>Per-channel scale parameters</b> — Batch-norm and LayerNorm learn a diagonal $D$.</li>
+     </ul>
+     <p><b>Prefer a full matrix when</b> features genuinely interact (rotations, correlations) — a diagonal cannot mix coordinates. <b>In practice:</b> store diagonals as a 1-D vector and broadcast-multiply; never build the full <code>diag()</code> matrix for large $n$.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Don't materialize $I$ or a big diagonal.</b> A dense <code>np.eye(n)</code> or <code>np.diag(v)</code> wastes $O(n^2)$ memory. Multiply by broadcasting the 1-D diagonal instead.</li>
+       <li><b>Inverting a diagonal means reciprocating entries — watch for zeros.</b> A zero (or tiny) diagonal entry makes $1/d_i$ blow up. That is a singular / ill-conditioned matrix in disguise.</li>
+       <li><b>$\\lambda I$ is a band-aid, not a free lunch.</b> Too small a $\\lambda$ leaves the system near-singular; too large biases the solution. Tune it, do not guess.</li>
+       <li><b>"Diagonal-dominant" is not "diagonal."</b> Approximating a full matrix by its diagonal (e.g. a diagonal preconditioner or a diagonal Hessian) drops all cross-terms and can mislead optimization.</li>
+       <li><b>Identity size must match.</b> Adding $\\lambda I$ requires $I$ of the right $n\\times n$ shape; a mismatched identity broadcasts wrongly or errors.</li>
+       <li><b>Scaling changes conditioning.</b> A diagonal scale with wildly different $d_i$ can make a well-conditioned matrix ill-conditioned. Normalize features to comparable ranges first.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -393,6 +451,24 @@ L({
      </ul>`,
   application:
     `<p>The exact solution to least-squares regression is $w=(X^\\top X)^{-1}X^\\top y$ — an inverse sits at its heart. In practice we rarely form $A^{-1}$ explicitly (it is slow and unstable); we solve the system directly. But the inverse is the concept that makes "solve $Ax=b$" precise.</p>`,
+  whenToUse:
+    `<p><b>The inverse is the right <i>mental model</i> for "solve $Ax=b$" — but almost never the right computation.</b> When you see $A^{-1}b$ in a formula, that is a signal to <i>solve a linear system</i>, not to build an inverse.</p>
+     <p><b>Solve directly instead of inverting:</b></p>
+     <ul>
+       <li><b>For one right-hand side</b> — use <code>np.linalg.solve(A, b)</code> (LU (Lower–Upper) factorization): faster and more accurate than <code>inv(A) @ b</code>.</li>
+       <li><b>When $A$ is symmetric PSD (Positive Semi-Definite)</b> — use a Cholesky solve; it is twice as fast and more stable.</li>
+       <li><b>When $A$ is tall, rectangular, or near-singular</b> — do <i>not</i> form $X^\\top X$ and invert. Use a QR or SVD (Singular Value Decomposition) based least-squares solver (<code>lstsq</code>).</li>
+     </ul>
+     <p><b>Actually build $A^{-1}$ only when</b> you need the inverse itself (e.g. a covariance's precision matrix entries, or many solves with the same $A$ where a factorization is even better). <b>In practice:</b> reach for <code>solve</code> / <code>cho_solve</code> / <code>lstsq</code>, not <code>inv</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Never code $A^{-1}b$ literally.</b> <code>inv(A) @ b</code> is slower and less accurate than <code>solve(A, b)</code>. Forming the inverse amplifies rounding error.</li>
+       <li><b>Near-singular matrices explode.</b> When $\\det A$ is tiny, $A^{-1}$ has huge entries and tiny input changes swing the output wildly — the matrix is ill-conditioned. Check the condition number, not just whether $\\det \\neq 0$.</li>
+       <li><b>$\\det \\neq 0$ is not "safe."</b> A matrix can be invertible on paper yet numerically useless. Conditioning, not invertibility, is what matters in floating point.</li>
+       <li><b>Don't invert $X^\\top X$ for least squares.</b> Forming the normal equations <i>squares</i> the condition number. Use QR or SVD on $X$ directly.</li>
+       <li><b>Stabilize with regularization.</b> Adding $\\lambda I$ before inverting (Ridge) keeps a borderline matrix solvable — but pick $\\lambda$ deliberately.</li>
+       <li><b>Reuse the factorization.</b> For many solves with the same $A$, factor once (LU / Cholesky) and reuse it; re-inverting or re-solving from scratch each time wastes most of the work.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 600; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -494,6 +570,24 @@ L({
      </ul>`,
   application:
     `<p>The determinant decides invertibility (zero = singular = no unique solution). In probability, the multivariate Gaussian's normalizing constant contains $\\det\\Sigma$ (the covariance's "volume"). Change-of-variables in integration multiplies by $|\\det|$ of the Jacobian — the backbone of normalizing-flow generative models.</p>`,
+  whenToUse:
+    `<p><b>The determinant is a diagnostic and a density factor, not a thing you compute for its own sake.</b> Reach for it when you need to know whether a map collapses space, or when a probability density carries a volume term.</p>
+     <p><b>Where it shows up in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Gaussian densities</b> — the multivariate normal's normalizer has $\\det\\Sigma$; in code you use $\\log\\det\\Sigma$, the sum of $\\log$ eigenvalues.</li>
+       <li><b>Normalizing flows</b> — each invertible layer contributes $\\log|\\det J|$ of its Jacobian to the likelihood; flows are <i>designed</i> so this is cheap (triangular or diagonal Jacobians).</li>
+       <li><b>Volume / spread summaries</b> — $\\det\\Sigma$ is the generalized variance of a dataset.</li>
+     </ul>
+     <p><b>Use a different signal when</b> you only care about invertibility on real data — the <i>condition number</i> is far more informative than the determinant. <b>In practice:</b> prefer <code>slogdet</code> (sign + log-magnitude) over <code>det</code> to avoid overflow.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>$\\det = 0$ is the exception, not the rule, in floating point.</b> A truly singular matrix almost never gives an exact <code>0.0</code>; you get a tiny number. Test the condition number or smallest singular value, not <code>det == 0</code>.</li>
+       <li><b>Determinants overflow and underflow fast.</b> For an $n\\times n$ matrix the determinant scales like a product of $n$ eigenvalues, so it can hit $10^{\\pm 300}$. Always work with $\\log\\det$ via <code>slogdet</code>.</li>
+       <li><b>Big magnitude does not mean well-conditioned.</b> A large $|\\det|$ can still hide a near-zero eigenvalue. Determinant magnitude and conditioning are different things.</li>
+       <li><b>Never compute it by cofactor expansion for large $n$.</b> That is $O(n!)$. Use the LU (Lower–Upper) factorization the library already does ($O(n^3)$).</li>
+       <li><b>Sign carries meaning.</b> A negative determinant means orientation flipped. For densities you want $|\\det|$ (or the log of it); dropping the absolute value gives a negative "probability."</li>
+       <li><b>Scaling distorts it.</b> Multiplying a feature by $c$ multiplies the determinant by $c$ per affected dimension — comparisons across differently scaled data are meaningless.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 360; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -606,6 +700,28 @@ L({
      <p><b>The adjugate inverse.</b> The matrix of cofactors gives a closed form for the inverse: $A^{-1} = \\dfrac{1}{\\det A}\\,\\mathrm{adj}(A)$, where $\\mathrm{adj}(A)$ is the transpose of the cofactor matrix.</p>
      <p><b>Cramer's rule.</b> Solves a small linear system $Ax=b$ as ratios of determinants — built directly on cofactors.</p>
      <p><b>Theory.</b> The recursive structure is the cleanest way to prove many determinant identities.</p>`,
+  whenToUse:
+    `<p><b>Cofactor expansion is a hand-and-theory tool, not a production algorithm.</b> Reach for it on small matrices ($2\\times2$ up to $4\\times4$) you are working through on paper, or when you need the closed-form structure behind a result.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Memorizing a $3\\times3$ formula</b> — expansion along a row with zeros is less error-prone and generalizes to any size.</li>
+       <li><b>Numerical row reduction</b> — when you want an <i>exact symbolic</i> determinant (entries are variables), cofactors keep everything algebraic.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The matrix is large — cofactor expansion costs about $n!$ operations. Computers use LU (Lower–Upper) factorization ($O(n^3)$) instead; never call a cofactor routine on a big numeric matrix.</li>
+       <li>You only need to know <i>if</i> the matrix is singular — check rank or the smallest singular value, far cheaper and more stable.</li>
+     </ul>
+     <p><b>In practice:</b> use <code>sympy</code> for exact small/symbolic determinants and the adjugate inverse; use <code>numpy.linalg</code> (which factorizes) for everything numeric.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Factorially slow for large $n$.</b> Cofactor expansion is $O(n!)$ — unusable past tiny matrices. Reach for an LU-based determinant on anything real.</li>
+       <li><b>Sign-pattern slips.</b> The checkerboard sign is $(-1)^{i+j}$, starting $+$ at the top-left. Mis-tracking the alternating sign is the most common hand-calc error.</li>
+       <li><b>Expand along the wrong line.</b> Picking a row/column <i>without</i> zeros multiplies your work. Always expand along the line with the most zeros.</li>
+       <li><b>The adjugate inverse is unstable.</b> $A^{-1}=\\frac{1}{\\det A}\\,\\mathrm{adj}(A)$ is great for proofs but divides by a possibly-tiny $\\det A$ — never use it as a numerical inverse.</li>
+       <li><b>Cramer's rule does not scale.</b> Solving $Ax=b$ by determinant ratios is elegant but $O(n!)$ and ill-conditioned; use a direct solver instead.</li>
+       <li><b>Minor index bookkeeping.</b> A minor deletes the entry's <i>row and column</i>; deleting the wrong one quietly produces a wrong sub-determinant.</li>
+     </ul>`,
   practice: [
     {
       q: `Compute $\\det\\begin{bmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{bmatrix}$ by cofactor expansion along the first row.`,
@@ -756,6 +872,24 @@ L({
      </ul>`,
   application:
     `<p>In statistics, the trace of the "hat" matrix is the effective number of parameters used by a model. The trace appears in the matrix derivative identities used to derive backprop (backpropagation), and $\\operatorname{tr}(\\Sigma)$ (total variance) is a quick summary of how spread out data is across all features.</p>`,
+  whenToUse:
+    `<p><b>The trace is the cheap scalar summary of a matrix</b> — one addition that secretly equals the sum of the eigenvalues. Reach for it whenever you need that total stretch without paying for an eigendecomposition.</p>
+     <p><b>Where it earns its keep in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Effective degrees of freedom</b> — $\\operatorname{tr}(H)$ of the hat / smoother matrix counts how many parameters a model effectively uses, which feeds model-selection scores.</li>
+       <li><b>Total variance</b> — $\\operatorname{tr}(\\Sigma)$ summarizes spread across all features in one number (used to pick how many PCA (Principal Component Analysis) components to keep).</li>
+       <li><b>The cyclic trick</b> $\\operatorname{tr}(AB)=\\operatorname{tr}(BA)$ lets you reorder a product into the cheaper shape, and underlies many matrix-calculus gradients (Hutchinson's trace estimator for $\\operatorname{tr}(A)$ via random probes).</li>
+     </ul>
+     <p><b>Use eigenvalues instead when</b> you need the <i>individual</i> stretch factors, not just their sum. <b>In practice:</b> <code>np.trace</code>, or <code>np.einsum('ii->', A)</code>; never form $AB$ just to take its trace — contract directly.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Don't build $AB$ to get $\\operatorname{tr}(AB)$.</b> The full product is $O(n^3)$ and $O(n^2)$ memory; $\\operatorname{tr}(AB)=\\sum_{ij}A_{ij}B_{ji}$ needs only $O(n^2)$ work and no big intermediate.</li>
+       <li><b>Cyclic, not arbitrary, reordering.</b> $\\operatorname{tr}(ABC)=\\operatorname{tr}(BCA)=\\operatorname{tr}(CAB)$ — you may <i>rotate</i> the factors, but $\\operatorname{tr}(ABC)\\neq\\operatorname{tr}(BAC)$ in general.</li>
+       <li><b>Trace is only defined for square matrices.</b> Taking the "diagonal sum" of a rectangular matrix is meaningless; reshape or pick the right product first.</li>
+       <li><b>Sum of eigenvalues includes complex ones.</b> For a non-symmetric matrix, eigenvalues can be complex; they still sum to the (real) trace, but don't expect each to be real.</li>
+       <li><b>Stochastic trace estimates are noisy.</b> Hutchinson's estimator $\\operatorname{tr}(A)\\approx \\frac1m\\sum z_k^\\top A z_k$ converges slowly; use enough probes or your degrees-of-freedom estimate is unstable.</li>
+       <li><b>Trace ignores off-diagonal structure.</b> Two very different matrices can share a trace. It summarizes total scale, not shape — don't over-read it.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 300; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -849,6 +983,24 @@ L({
      </ul>`,
   application:
     `<p>Multicollinearity in regression is exactly low rank in $X$: two features carry the same information, $X^\\top X$ becomes singular, and the fit blows up. Low-rank structure is also a feature: recommender systems assume the giant user–item matrix is approximately low rank, which is why a few latent factors explain it (next: SVD (Singular Value Decomposition)).</p>`,
+  whenToUse:
+    `<p><b>Rank is the question "how many directions are real?"</b> — and it sits behind both a failure mode (redundant features) and a feature (compressible structure). You reach for it whenever you suspect columns secretly repeat each other.</p>
+     <p><b>Where it matters in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Multicollinearity</b> — duplicated or near-duplicated features make $X$ rank-deficient, $X^\\top X$ singular, and regression coefficients unstable. Drop a feature or regularize.</li>
+       <li><b>Low-rank modeling</b> — recommender systems and embeddings <i>assume</i> a giant matrix is approximately low rank, so a few latent factors explain it.</li>
+       <li><b>Dimensionality</b> — the numerical rank (count of non-negligible singular values) tells you the true dimensionality of your data.</li>
+     </ul>
+     <p><b>Use the SVD (Singular Value Decomposition) to measure rank in practice</b> — exact-rank tests are meaningless in floating point. <b>In practice:</b> <code>np.linalg.matrix_rank</code> (which thresholds singular values) over any hand-rolled elimination.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Exact rank does not exist numerically.</b> Floating-point noise lifts every "zero" singular value off zero, so a rank-2 matrix reports full rank. Threshold the singular values (numerical rank) instead.</li>
+       <li><b>Choosing the threshold is judgment.</b> Where you cut "negligible" singular values changes the reported rank. Use a relative tolerance tied to the largest singular value and the machine epsilon.</li>
+       <li><b>Near-dependence is as dangerous as exact dependence.</b> Features that are <i>almost</i> collinear make $X^\\top X$ ill-conditioned, not singular — the fit still blows up. Watch the condition number, not just rank.</li>
+       <li><b>Rank-deficient least squares has no unique answer.</b> When $X$ is not full rank, infinitely many weight vectors fit equally; pick one with regularization (Ridge) or the minimum-norm SVD solution.</li>
+       <li><b>Scaling masks redundancy.</b> Unnormalized features can hide collinearity from a quick look. Standardize before judging independence.</li>
+       <li><b>Rank is not a similarity score.</b> Two columns can be independent yet highly correlated; rank only counts exact-direction overlap, so pair it with correlation when diagnosing features.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -966,6 +1118,24 @@ L({
      </ul>`,
   application:
     `<p>Every covariance matrix is PSD (variance can't be negative). A loss is convex exactly when its Hessian is PSD, which guarantees gradient descent reaches the global minimum. Kernel methods (SVMs (Support Vector Machines), Gaussian processes) require a PSD kernel matrix — that is what makes the optimization well-behaved.</p>`,
+  whenToUse:
+    `<p><b>PSD (Positive Semi-Definite) is the "is this well-behaved?" check</b> for any matrix that should act like a non-negative quantity: a covariance, a kernel, a Hessian. When an algorithm assumes a bowl, not a saddle, PSD is the property it relies on.</p>
+     <p><b>Where it gates real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Convex optimization</b> — a loss is convex exactly when its Hessian is PSD everywhere, which is why gradient descent on linear / logistic regression reaches the global minimum.</li>
+       <li><b>Covariance and kernels</b> — covariance matrices are PSD by construction; SVM (Support Vector Machine) and Gaussian-process kernels must stay PSD or the optimization is ill-posed.</li>
+       <li><b>Square roots and whitening</b> — only a PSD matrix has a real square root $A^{1/2}$, used to sample correlated Gaussians and to whiten data.</li>
+     </ul>
+     <p><b>Test it via eigenvalues or a Cholesky attempt</b> — a successful Cholesky factorization <i>is</i> a positive-definite certificate. <b>In practice:</b> <code>np.linalg.cholesky</code> (fails fast if not PD) over computing the full eigendecomposition.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>"Should be PSD" often isn't, numerically.</b> A covariance or kernel built from data picks up tiny negative eigenvalues from rounding. Project them up: clip eigenvalues at 0, or add a small $\\epsilon I$ (jitter).</li>
+       <li><b>PSD vs PD matters.</b> Positive <i>semi</i>-definite allows zero eigenvalues (singular); Cholesky and a clean inverse need strictly positive-definite. A zero eigenvalue breaks the factorization.</li>
+       <li><b>The matrix must be symmetric first.</b> The quadratic-form test assumes $A=A^\\top$. Floating-point asymmetry sneaks in — symmetrize with $\\tfrac12(A+A^\\top)$ before testing.</li>
+       <li><b>A positive diagonal does not imply PSD.</b> Off-diagonal entries can still create a negative direction. Check eigenvalues, not just the diagonal.</li>
+       <li><b>Cholesky failure is information, not just an error.</b> If <code>cholesky</code> throws, the matrix lost positive-definiteness — add jitter or diagnose the near-zero eigenvalue rather than ignoring it.</li>
+       <li><b>Jitter is a tuning knob.</b> Too little $\\epsilon I$ leaves the matrix non-PD; too much biases your kernel or covariance. Use the smallest value that restores stability.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -1082,6 +1252,24 @@ L({
      </ul>`,
   application:
     `<p>PCA (Principal Component Analysis) is the spectral theorem applied to the covariance matrix: the eigenvectors are the principal axes of the data, the eigenvalues are the variances along them. Whitening, Gaussian-process kernels, and matrix square roots ($A^{1/2}=U\\Lambda^{1/2}U^\\top$) all rest on this decomposition.</p>`,
+  whenToUse:
+    `<p><b>The spectral theorem is your tool the moment a matrix is symmetric</b> — covariance, kernel, Hessian, graph Laplacian. It guarantees real eigenvalues and perpendicular eigenvectors, which makes every downstream computation clean and stable.</p>
+     <p><b>Where it powers real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>PCA (Principal Component Analysis)</b> — eigendecompose the covariance matrix; eigenvectors are the principal axes, eigenvalues the variances.</li>
+       <li><b>Whitening and matrix square roots</b> — $A^{1/2}=U\\Lambda^{1/2}U^\\top$ and $A^{-1/2}$ come straight from the eigenvalues, used to decorrelate features.</li>
+       <li><b>Spectral clustering / graph methods</b> — eigenvectors of the symmetric Laplacian reveal community structure.</li>
+     </ul>
+     <p><b>Use the SVD (Singular Value Decomposition) instead when</b> the matrix is rectangular or non-symmetric — the spectral theorem needs symmetry. <b>In practice:</b> call <code>np.linalg.eigh</code> (symmetric solver), never the general <code>eig</code>, on symmetric matrices — it is faster and returns real, sorted eigenvalues.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Use <code>eigh</code>, not <code>eig</code>, for symmetric matrices.</b> The general solver returns tiny imaginary parts and unsorted, non-orthogonal eigenvectors. The symmetric routine guarantees real, orthonormal results.</li>
+       <li><b>Symmetrize before decomposing.</b> Rounding makes a "symmetric" matrix slightly asymmetric; pass $\\tfrac12(A+A^\\top)$ so the theorem's assumptions actually hold.</li>
+       <li><b>Repeated eigenvalues give an ambiguous basis.</b> When two eigenvalues are equal, their eigenvectors are only defined up to rotation within that subspace — don't read meaning into the individual directions.</li>
+       <li><b>Eigenvector sign and order are not fixed.</b> Solvers may flip a sign or reorder; pin a convention (e.g. largest component positive) for reproducibility across runs.</li>
+       <li><b>Near-degenerate eigenvalues are unstable.</b> When two eigenvalues are close, their eigenvectors swing wildly under tiny perturbations — a stability trap in PCA on noisy data.</li>
+       <li><b>It only applies to symmetric matrices.</b> Applying $U\\Lambda U^\\top$ logic to a non-symmetric matrix is simply wrong; reach for the SVD there.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 360; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -1191,6 +1379,24 @@ L({
      </ul>`,
   application:
     `<p>Image compression: keep the top-$k$ singular values of the pixel matrix. Latent Semantic Analysis and recommender systems factor the user–item matrix this way to find hidden topics/tastes. PCA (Principal Component Analysis) is the SVD of the centered data matrix. SVD also gives the numerically stable pseudo-inverse for least squares.</p>`,
+  whenToUse:
+    `<p><b>The SVD (Singular Value Decomposition) is the Swiss-army knife of numerical linear algebra</b> — it works on <i>any</i> matrix and is the stable answer when an inverse or eigendecomposition would be risky. When in doubt, SVD.</p>
+     <p><b>Reach for it over:</b></p>
+     <ul>
+       <li><b>The normal-equations inverse $(X^\\top X)^{-1}$</b> — for least squares, the SVD-based pseudo-inverse avoids squaring the condition number and handles rank-deficient $X$ gracefully.</li>
+       <li><b>A plain eigendecomposition</b> — when the matrix is rectangular or non-symmetric, only the SVD applies.</li>
+       <li><b>Storing a full matrix</b> — truncating to the top-$k$ singular values gives the provably best rank-$k$ approximation (Eckart–Young), the basis of compression and denoising.</li>
+     </ul>
+     <p><b>Pick a cheaper tool when:</b> the matrix is enormous and you only need a few components — use a randomized or truncated SVD (<code>sklearn</code> <code>TruncatedSVD</code>, <code>scipy.sparse.linalg.svds</code>) instead of the full <code>np.linalg.svd</code>.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Don't form $X^\\top X$ for least squares.</b> It squares the condition number; run the SVD on $X$ directly for the stable pseudo-inverse.</li>
+       <li><b>Full SVD is expensive on big matrices.</b> It is $O(\\min(mn^2, m^2n))$. For a few components, use truncated / randomized SVD, not the full factorization.</li>
+       <li><b>Center (and often scale) before SVD for PCA.</b> SVD of an un-centered matrix is <i>not</i> PCA — the first component then chases the mean, not the variance.</li>
+       <li><b>Sign and order conventions vary.</b> Singular vectors are defined up to a sign, and ties in singular values leave their vectors ambiguous; pin a convention for reproducibility.</li>
+       <li><b>Tiny singular values are noise, not signal.</b> When you build the pseudo-inverse, dividing by near-zero $\\sigma_i$ amplifies noise — truncate or use a tolerance (the <code>rcond</code> in <code>lstsq</code>).</li>
+       <li><b>Energy is $\\sigma_i^2$, not $\\sigma_i$.</b> Choosing how many components to keep by raw singular values over-counts the tail; rank by squared singular values (variance explained).</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 600; cv.height = 320; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -1292,6 +1498,25 @@ L({
      <p><b>Robotics.</b> The Jacobian relates joint velocities to the robot hand's velocity, and tells you when the arm is in a stuck (singular) configuration.</p>
      <p><b>Change of variables.</b> The $|\\det J|$ factor reweights probabilities and integrals when you switch coordinates (it is the heart of normalizing flows).</p>
      <p><b>Newton's method for systems.</b> Solve $J\\,\\Delta = -f$ to step toward a root of several equations at once.</p>`,
+  whenToUse:
+    `<p><b>The Jacobian is the local linear map of a vector-valued function</b> — reach for it whenever you need to know how several outputs respond to several inputs, or how a transform stretches volume.</p>
+     <p><b>Where it shows up in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Backpropagation</b> — each layer has a Jacobian, and the chain rule multiplies them. Autodiff (automatic differentiation) computes Jacobian–vector products, never the full matrix.</li>
+       <li><b>Normalizing flows</b> — the likelihood needs $\\log|\\det J|$, so flows are designed with cheap (triangular / diagonal) Jacobians.</li>
+       <li><b>Newton's method for systems</b> — solving $J\\,\\Delta=-f$ steps toward a joint root far faster than gradient descent.</li>
+       <li><b>Robotics / sensitivity analysis</b> — the Jacobian links input rates to output rates and flags singular configurations.</li>
+     </ul>
+     <p><b>Don't form the full $J$ when</b> $m$ and $n$ are large — it is $m\\times n$ and usually unnecessary. <b>In practice:</b> use <code>torch.autograd</code> / <code>jax.jvp</code> / <code>jax.vjp</code> for matrix-free products.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Materializing the full Jacobian is usually a mistake.</b> For wide layers it is huge ($m\\times n$). Use Jacobian–vector (forward-mode) or vector–Jacobian (reverse-mode) products instead.</li>
+       <li><b>Mind the convention.</b> Some texts/libraries store $J$ transposed (inputs as rows). A flipped convention silently breaks the chain rule — check whether your tool gives $\\partial f_i/\\partial x_j$ or its transpose.</li>
+       <li><b>$\\det J$ needs $m=n$.</b> The volume-scaling interpretation only applies to square Jacobians; for rectangular maps there is no determinant.</li>
+       <li><b>Use $\\log|\\det J|$, not $\\det J$.</b> In flows the determinant under/overflows; work in log-space and keep the absolute value or you get negative likelihoods.</li>
+       <li><b>Finite-difference Jacobians are fragile.</b> Approximating partials by perturbation is noisy and $O(n)$ extra evaluations; prefer autodiff, which is exact.</li>
+       <li><b>Singular Jacobian = stuck.</b> When $\\det J\\to 0$ (robot arm fully extended, flow layer non-invertible), the linear approximation collapses and Newton steps blow up. Detect it and regularize.</li>
+     </ul>`,
   quiz: {
     q: `For a function $f:\\mathbb{R}^3\\to\\mathbb{R}^2$, what shape is the Jacobian, and what is its row $i$?`,
     a: `<p>It is $2\\times 3$ — $m=2$ rows (one per output), $n=3$ columns (one per input). Row $i$ is the gradient of output $f_i$, i.e. $[\\partial f_i/\\partial x_1,\\ \\partial f_i/\\partial x_2,\\ \\partial f_i/\\partial x_3]$.</p>`
@@ -1438,6 +1663,24 @@ L({
      <p>Compare $g = x_1^2 - x_2^2$: its Hessian is $\\begin{bmatrix}2&0\\\\0&-2\\end{bmatrix}$, eigenvalues $2$ and $-2$ — a saddle, not convex.</p>`,
   application:
     `<p>Newton's method steps with $H^{-1}\\nabla f$, using curvature to converge far faster than plain gradient descent. Checking the Hessian's eigenvalue signs classifies critical points (min, max, saddle). Convex loss functions (the Hessian stays PSD) are why linear and logistic regression train reliably to the global optimum.</p>`,
+  whenToUse:
+    `<p><b>The Hessian is the curvature matrix</b> — reach for it when first-order (gradient) information is not enough: to classify a critical point, to take a Newton step, or to certify convexity.</p>
+     <p><b>Where it pays off in real ML (Machine Learning):</b></p>
+     <ul>
+       <li><b>Convexity certificate</b> — a PSD (Positive Semi-Definite) Hessian everywhere means one global bowl, which is why linear and logistic regression train reliably.</li>
+       <li><b>Second-order optimization</b> — Newton and quasi-Newton (L-BFGS) use curvature to converge in far fewer steps than plain gradient descent.</li>
+       <li><b>Critical-point classification</b> — the signs of the Hessian's eigenvalues label a point as minimum, maximum, or saddle.</li>
+     </ul>
+     <p><b>Avoid the full Hessian when</b> the parameter count is large — it is $n\\times n$ and forming or inverting it is infeasible for deep nets. Use Hessian–vector products (Pearlmutter's trick) or a quasi-Newton approximation. <b>In practice:</b> L-BFGS for medium problems; matrix-free <code>hvp</code> via autodiff for large ones.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The full Hessian is $O(n^2)$ — infeasible for deep nets.</b> Never materialize it for millions of parameters; use Hessian–vector products or a low-rank / diagonal approximation.</li>
+       <li><b>Don't invert it directly.</b> Newton's $H^{-1}\\nabla f$ should be a <i>solve</i>, and when $H$ is indefinite or near-singular the step explodes. Add damping ($H+\\mu I$) or trust-region control.</li>
+       <li><b>Non-convex Hessians are indefinite.</b> Away from a minimum, eigenvalues are mixed-sign and a raw Newton step can move <i>uphill</i>. Modify the Hessian (e.g. clip negative eigenvalues) before stepping.</li>
+       <li><b>Symmetry can break numerically.</b> Mixed partials are equal in theory ($H_{ij}=H_{ji}$) but finite-difference or asymmetric code can violate it — symmetrize before eigen-analysis.</li>
+       <li><b>Convexity is pointwise.</b> $H\\succeq 0$ at one point does not make the whole function convex; it must hold <i>everywhere</i>. A single point's Hessian only classifies that point.</li>
+       <li><b>Ill-conditioned Hessians slow first-order methods.</b> A wide spread of eigenvalues (large condition number) makes gradient descent zig-zag; precondition or normalize features to tighten it.</li>
+     </ul>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 360; host.appendChild(cv);
     var ctx = cv.getContext("2d");

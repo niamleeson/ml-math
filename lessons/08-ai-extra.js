@@ -163,6 +163,29 @@ L({
      </ul>`,
   application:
     `<p>Relaxation is the standard recipe for inventing heuristics. For the 8-puzzle, "ignore that tiles block each other" gives the Manhattan-distance heuristic. For routing, "ignore roads, fly straight" gives the straight-line heuristic. Every good A* heuristic is a relaxed problem in disguise.</p>`,
+  whenToUse:
+    `<p><b>Reach for a relaxed heuristic whenever you run A* (A-star) or any informed search and need an admissible estimate of cost-to-go</b> but cannot hand-craft one. Pick a constraint to delete so the easier problem has a closed-form or fast solution, and use that cost as $h$.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A hand-tuned guess</b> — a relaxation is provably admissible by construction, so A* stays optimal; a hand-tuned guess can overestimate and break optimality.</li>
+       <li><b>$h=0$ (uniform-cost / Dijkstra)</b> — when blind search explores too many nodes; a relaxed $h$ aims the search and prunes hard.</li>
+       <li><b>Pattern databases</b> — when you want a cheap, instantly-computable heuristic instead of precomputing and storing exact sub-problem costs.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need the <i>tightest</i> possible heuristic and have memory to spare — build a pattern database or take the max of several relaxations.</li>
+       <li>The state space is so large that even relaxed costs are expensive — switch to greedy best-first or learned heuristics, accepting sub-optimality.</li>
+       <li>Costs are learned from data rather than known — train a heuristic (see the structured perceptron lesson) instead of relaxing.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>A relaxation that is too loose is useless.</b> Manhattan distance with most constraints dropped can return near-zero, giving A* almost no guidance. Relax as little as you can while keeping the sub-problem easy.</li>
+       <li><b>Admissibility is not the same as consistency.</b> A* with a closed list needs a <b>consistent</b> (monotone) heuristic, $h(s) \\le c(s,s') + h(s')$, or it may re-expand nodes. Most natural relaxations are consistent, but verify it.</li>
+       <li><b>Taking the max of two heuristics can break consistency.</b> The maximum of admissible heuristics stays admissible, but is only consistent if each component is; check before combining.</li>
+       <li><b>Relaxing the wrong constraint helps nothing.</b> Drop a rule the search was not struggling with and the heuristic barely changes. Target the constraint that actually forces detours.</li>
+       <li><b>Floating-point ties cause node thrashing.</b> When $h$ exactly equals true cost, rounding can flip the open-list order and re-expand states. Break ties deterministically (e.g. prefer higher $g$).</li>
+       <li><b>Forgetting non-unit step costs.</b> "Number of grid steps" is only admissible when every move costs the same. With weighted edges, scale the relaxed cost by the minimum edge weight.</li>
+     </ul>`,
   quiz: {
     q: `In a grid, start $(1,1)$ and goal $(1,5)$. Walls force a detour costing $8$ steps. What is the relaxed (Manhattan) heuristic, and is it admissible?`,
     a: `<p>Manhattan $= |1-1| + |5-1| = 0 + 4 = 4$. Since $4 \\le 8$, it does not overestimate, so it is admissible.</p>`
@@ -281,6 +304,29 @@ L({
      </ul>`,
   application:
     `<p>The structured perceptron trains part-of-speech taggers, dependency parsers, and named-entity recognizers, where the output is a whole sequence or tree, not a single label. It is also how you learn action costs for a search/planning agent from demonstrations (imitation learning).</p>`,
+  whenToUse:
+    `<p><b>Reach for the structured perceptron when the thing you predict is a whole structure</b> — a sequence, a tree, an alignment, a path — and you can find the highest-scoring structure with a fast decoder (Viterbi, dynamic programming, or search). It learns the scoring weights from labeled examples with one simple update rule.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A per-token classifier</b> (logistic regression on each label independently) — when neighboring labels constrain each other; the structured model scores the joint output, not isolated pieces.</li>
+       <li><b>A CRF (Conditional Random Field)</b> — when you want something simpler and faster to train; the perceptron skips probability normalization and just needs argmax decoding.</li>
+       <li><b>A neural sequence model</b> — when data is small, features are hand-designed, and you want a transparent linear model that trains in seconds.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need calibrated probabilities per output — train a CRF or a softmax model instead; the perceptron gives scores, not probabilities.</li>
+       <li>You have large data and raw inputs (text, audio) — a BiLSTM (Bidirectional Long Short-Term Memory) or transformer tagger will beat hand-built features.</li>
+       <li>Exact argmax decoding is intractable — without a good decoder the update is unreliable; switch to a search-based or approximate-inference learner.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The raw perceptron overfits and oscillates.</b> The final weights bounce around. Use the <b>averaged perceptron</b> (average the weight vectors over all updates) — it generalizes far better at almost no extra cost.</li>
+       <li><b>It only converges if the data is separable.</b> On noisy or non-separable data, weights never settle. Averaging, a margin, or a max-violation update keeps it stable.</li>
+       <li><b>A wrong or approximate decoder corrupts learning.</b> The update assumes $\\hat y$ is the true argmax. If your Viterbi/search is buggy or pruned too hard, you train toward the wrong structure.</li>
+       <li><b>Feature-pipeline skew between train and decode.</b> The exact same feature extraction must run at training and prediction time, or the learned weights apply to features the decoder never sees.</li>
+       <li><b>No regularization knob.</b> Unlike a CRF there is no explicit penalty term; control capacity through feature design, averaging, and early stopping instead.</li>
+       <li><b>Label-bias and tie-breaking.</b> Deterministic ties (e.g. always preferring the first label) can bake in a systematic error; break ties consistently and shuffle the training order each epoch.</li>
+     </ul>`,
   quiz: {
     q: `True output features $\\phi(y)=[1,0]$, predicted features $\\phi(\\hat y)=[0,1]$, weights $w=[0,0]$. After one update $w \\leftarrow w + \\phi(y) - \\phi(\\hat y)$, what is $w$?`,
     a: `<p>$w = [0,0] + [1,0] - [0,1] = [1,-1]$. The true feature's weight rose to $1$, the wrong feature's fell to $-1$.</p>`
@@ -397,6 +443,30 @@ L({
      </ul>`,
   application:
     `<p>Monte Carlo evaluation underlies Monte Carlo Tree Search, the engine behind strong Go and game-playing AIs (Artificial Intelligences): it plays many random rollouts to the end and averages the outcomes to score a move. It is also used to evaluate policies when a simulator exists but the exact model does not.</p>`,
+  whenToUse:
+    `<p><b>Reach for Monte Carlo RL (Reinforcement Learning) when you have a simulator or can replay full episodes, but no transition model</b>, and episodes actually end. It needs zero knowledge of the dynamics — just the returns you actually observed — making it the simplest model-free estimator.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>TD (Temporal-Difference) / SARSA</b> — when you want an <i>unbiased</i> estimate and do not mind variance; Monte Carlo never bootstraps off a possibly-wrong value, so it cannot inherit that bias.</li>
+       <li><b>Dynamic programming (value iteration)</b> — when you do not have the model's probabilities; Monte Carlo learns straight from experience.</li>
+       <li><b>A learned model (model-based RL)</b> — when building an accurate model is harder than just sampling rollouts.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Tasks never terminate (continuing problems) — there is no full return to average; use TD or n-step methods.</li>
+       <li>Returns are extremely noisy or episodes are long — TD's lower variance learns faster per step.</li>
+       <li>You need to update online, mid-episode — Monte Carlo must wait for the episode to finish; TD updates immediately.</li>
+     </ul>
+     <p><b>Where you meet it:</b> Monte Carlo Tree Search (game engines) and policy evaluation inside simulators.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>High variance, slow convergence.</b> Full-episode returns swing wildly, so estimates need many episodes. Reduce it with baselines, control variates, or by switching to TD.</li>
+       <li><b>It needs episodes to terminate.</b> On non-episodic tasks the return is undefined. Add an artificial horizon or discount, or use a bootstrapping method.</li>
+       <li><b>First-visit vs every-visit confusion.</b> Averaging every visit to a state within one episode introduces correlation/bias; decide deliberately and stay consistent — first-visit is unbiased.</li>
+       <li><b>Off-policy needs importance sampling.</b> If the episodes were generated by a different policy than the one you evaluate, raw averaging is wrong; weight by the importance ratio (and watch its variance explode).</li>
+       <li><b>Unexplored state-action pairs get no estimate.</b> Without exploring starts or an $\\epsilon$-greedy (epsilon-greedy) policy, some pairs are never sampled and their values stay garbage.</li>
+       <li><b>Running mean vs naive sum.</b> Summing returns then dividing can overflow or lose precision over millions of episodes; use the incremental running-average update.</li>
+     </ul>`,
   quiz: {
     q: `Three episodes from $(s,a)$ give returns $u = 4$, $u = 10$, $u = 7$. What is the Monte Carlo estimate $\\hat Q(s,a)$?`,
     a: `<p>$\\hat Q = (4 + 10 + 7)/3 = 21/3 = 7$. The estimate is the average of the observed returns.</p>`
@@ -505,6 +575,29 @@ L({
      </ul>`,
   application:
     `<p>TD learning is the backbone of modern RL (Reinforcement Learning). TD-Gammon learned backgammon at expert level this way. The TD error even matches dopamine signals measured in the brain, making it a leading model of how animals learn from reward. SARSA's on-policy nature makes it safer than Q-learning when exploration can be costly.</p>`,
+  whenToUse:
+    `<p><b>Reach for TD (Temporal-Difference) / SARSA (State–Action–Reward–State–Action) when you want to learn from experience online, updating after every step</b>, especially on long or non-terminating tasks where waiting for a full episode is impractical. SARSA specifically when you want to learn the value of the policy you are actually following, exploration included.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Monte Carlo</b> — when you need low variance and immediate, mid-episode updates, and can tolerate a little bootstrapping bias.</li>
+       <li><b>Q-learning (off-policy)</b> — when exploration is <i>costly or dangerous</i>; SARSA learns the safe on-policy value (it accounts for the exploratory moves it will actually make), so it avoids risky greedy paths near cliffs.</li>
+       <li><b>Dynamic programming</b> — when you lack the transition model and must learn from samples.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You want the value of the <i>optimal</i> policy regardless of exploration — use Q-learning, which bootstraps off the max action.</li>
+       <li>You need an unbiased estimate at any cost — Monte Carlo never inherits a wrong value.</li>
+       <li>State/action spaces are huge or continuous — pair TD with function approximation (deep Q-networks, actor-critic) rather than a table.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Bootstrapping is biased while values are wrong.</b> Early in training the target $r + \\gamma V(s')$ uses bad estimates, so values can be systematically off until the chain settles.</li>
+       <li><b>The "deadly triad" diverges.</b> Combining bootstrapping, off-policy learning, and function approximation can blow up. Keep on-policy (SARSA), use target networks, or smaller learning rates.</li>
+       <li><b>Learning rate $\\alpha$ matters a lot.</b> Too high oscillates or diverges; too low crawls. Decay $\\alpha$ over time for convergence guarantees.</li>
+       <li><b>Discount $\\gamma$ near $1$ slows credit assignment.</b> Value flows back one step per update, so long-horizon rewards take many sweeps to propagate. Eligibility traces (TD($\\lambda$)) speed this up.</li>
+       <li><b>SARSA vs Q-learning mix-up.</b> Using the greedy next action in a SARSA update silently turns it into Q-learning and changes the safety properties. Use the action the policy actually takes ($a'$).</li>
+       <li><b>Exploration schedule.</b> A fixed $\\epsilon$ (epsilon) never lets the policy converge to greedy; decay exploration as values stabilize, or SARSA's learned values stay pessimistic.</li>
+     </ul>`,
   quiz: {
     q: `$V(s)=2$, reward $r=1$, next value $V(s')=4$, $\\alpha=0.5$, $\\gamma=0.5$. Compute the TD target, the TD error, and the new $V(s)$.`,
     a: `<p>Target $= 1 + 0.5\\times4 = 3$. Error $= 3 - 2 = 1$. New value $= 2 + 0.5\\times1 = 2.5$.</p>`
@@ -616,6 +709,29 @@ L({
      </ul>`,
   application:
     `<p>Game theory models pricing wars, ad auctions, network routing congestion, and security (attacker vs defender). Nash equilibrium predicts stable behavior; the minimax theorem underlies poker-bot strategies and adversarial machine learning, where one network maximizes and another minimizes.</p>`,
+  whenToUse:
+    `<p><b>Reach for game-theoretic analysis whenever multiple self-interested agents act and each one's best move depends on the others'</b> — pricing, auctions, bidding, routing, or any attacker-vs-defender setup. Use Nash equilibrium to predict where rational play settles; use the minimax value for two-player zero-sum contests.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Single-agent optimization (plain reward maximization)</b> — when other agents react to you; ignoring them gives a brittle plan they will exploit.</li>
+       <li><b>Pure minimax search</b> — when moves are simultaneous or hidden; you then need mixed (randomized) strategies, not a deterministic game tree.</li>
+       <li><b>Best-response heuristics</b> — when you need a stable, self-consistent prediction rather than a one-shot reaction.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>There is really one decision-maker against fixed nature — use an MDP (Markov Decision Process) or plain optimization.</li>
+       <li>Agents cooperate and can bind agreements — use cooperative game theory or joint optimization, not Nash.</li>
+       <li>Players are not rational / are learning over time — use empirical game theory, no-regret learning, or multi-agent RL (Reinforcement Learning).</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Pure-strategy Nash may not exist.</b> Many games (matching pennies) only have a <i>mixed</i> equilibrium. If you search only deterministic profiles you will find nothing — allow randomization.</li>
+       <li><b>Multiple equilibria, no built-in selection.</b> When several Nash points exist the theory does not say which one happens; you need refinements (subgame-perfect, focal points) or extra assumptions.</li>
+       <li><b>Nash is not the social optimum.</b> The prisoner's dilemma's equilibrium is worse for everyone than cooperation. Do not assume the equilibrium maximizes total welfare.</li>
+       <li><b>Minimax equality needs zero-sum.</b> The maximin = minimax guarantee holds for two-player zero-sum games; in general-sum games the orders differ and the "value of the game" is not well defined.</li>
+       <li><b>Garbage payoffs, garbage equilibrium.</b> Equilibria are exquisitely sensitive to the payoff numbers; if your utilities are mis-estimated the predicted behavior is meaningless.</li>
+       <li><b>Computing equilibria is hard.</b> Finding a Nash equilibrium is PPAD-complete in general; for large games use approximate or no-regret methods (e.g. CFR, Counterfactual Regret Minimization) rather than exact solvers.</li>
+     </ul>`,
   quiz: {
     q: `In a 2×2 game, given B plays "Left", A's payoffs are $5$ (Up) and $3$ (Down). Given B plays "Right", A gets $2$ (Up) and $4$ (Down). What is A's best response to "Left", and to "Right"?`,
     a: `<p>Against Left: $\\max(5,3) = 5$ → play Up. Against Right: $\\max(2,4) = 4$ → play Down. A's best response depends on B's move.</p>`
@@ -754,6 +870,29 @@ L({
      </ul>`,
   application:
     `<p>Variable elimination is the standard exact-inference engine inside probabilistic systems: medical diagnosis networks, error-correcting decoders, and speech models. The same factor-graph machinery (the sum-product algorithm) underlies belief propagation and the decoding of LDPC (Low-Density Parity-Check) and turbo codes in your phone's modem.</p>`,
+  whenToUse:
+    `<p><b>Reach for variable elimination when you need an <i>exact</i> answer from a Bayes net or factor graph and the graph is not too densely connected</b> (low treewidth). It is the default exact-inference algorithm: pick an elimination order, multiply-and-sum out hidden variables one at a time.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Brute-force enumeration of the joint</b> — when there are more than a handful of variables; enumeration costs $2^n$, elimination costs roughly $2^{\\text{treewidth}}$.</li>
+       <li><b>Sampling (Gibbs, particle filters)</b> — when you need the precise number, not an approximation, and the network is sparse enough.</li>
+       <li><b>The junction-tree algorithm</b> — when you only need <i>one</i> query; junction trees pay extra to answer many queries fast.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The graph is densely connected (high treewidth) — exact inference is exponential; switch to approximate inference (sampling, loopy belief propagation, variational methods).</li>
+       <li>You will run many different queries — compile a junction tree once and reuse it.</li>
+       <li>Variables are continuous and non-Gaussian — closed-form sums do not exist; use sampling or assumed-density methods.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Elimination order makes or breaks it.</b> A bad order creates huge intermediate factors and blows up memory; a good order keeps them small. Use a heuristic like min-degree or min-fill — never just the variable index order.</li>
+       <li><b>Cost is set by the largest factor, not the network size.</b> Even a "small" net with high treewidth is intractable. Estimate the induced width before committing to exact inference.</li>
+       <li><b>Numerical underflow on long chains.</b> Multiplying many small probabilities drives factors toward zero. Work in log-space or renormalize intermediate factors.</li>
+       <li><b>Forgetting to normalize at the end.</b> The final factor is unnormalized; divide by its sum to get a probability. Skipping this gives numbers that do not add to $1$.</li>
+       <li><b>Mishandling evidence.</b> Observed variables must be fixed (their factors restricted to the observed value) <i>before</i> elimination, not summed out — summing out evidence answers the wrong query.</li>
+       <li><b>Assuming it scales.</b> People reuse a working small-net solution on a big one and hit an exponential wall; switch to approximate methods rather than waiting forever.</li>
+     </ul>`,
   quiz: {
     q: `Eliminate $B$ from $f_1(A,B)$ and $f_2(B,C)$. Given $f_1(1,0)=1$, $f_1(1,1)=3$, $f_2(0,1)=2$, $f_2(1,1)=1$, compute $g(A{=}1, C{=}1) = \\sum_B f_1(1,B)f_2(B,1)$.`,
     a: `<p>$g(1,1) = f_1(1,0)f_2(0,1) + f_1(1,1)f_2(1,1) = 1\\times2 + 3\\times1 = 2 + 3 = 5$.</p>`
@@ -860,6 +999,30 @@ L({
      </ul>`,
   application:
     `<p>Particle filters track robot and self-driving-car positions (Monte Carlo localization), aircraft on radar, and objects in video. Gibbs sampling powers topic models, image denoising, and the Bayesian statistics packages (BUGS, Stan's cousins) used across science when the posterior has no closed form.</p>`,
+  whenToUse:
+    `<p><b>Reach for approximate inference when exact inference is too slow</b> — a densely connected (high-treewidth) network, or a posterior with no closed form. Use <b>Gibbs sampling</b> for static graphical models where each variable's conditional is easy; use a <b>particle filter</b> for tracking a hidden state through time as observations stream in.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Variable elimination / exact inference</b> — when the graph is too tangled for exact methods to finish.</li>
+       <li><b>Variational inference</b> — when you want asymptotically <i>correct</i> samples and can afford to run long, rather than a fast but biased deterministic approximation.</li>
+       <li><b>A Kalman filter</b> — for tracking when the dynamics are nonlinear or the noise is non-Gaussian; particles handle arbitrary distributions a Kalman filter cannot.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Exact inference is feasible — prefer it; it gives the precise answer with no convergence worries.</li>
+       <li>You need speed and a deterministic result — use variational inference or loopy belief propagation.</li>
+       <li>The model is linear-Gaussian — a Kalman filter is exact and far cheaper than particles.</li>
+     </ul>
+     <p><b>Which library:</b> probabilistic programming systems (Stan, PyMC) for Gibbs/MCMC (Markov Chain Monte Carlo); dedicated particle-filter libraries for sequential tracking.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Gibbs needs burn-in and mixing checks.</b> Early samples reflect the starting point, not the posterior. Discard a burn-in window and check convergence (multiple chains, $\\hat R$ statistic) before trusting results.</li>
+       <li><b>Correlated variables mix slowly.</b> When variables are strongly coupled, single-variable Gibbs crawls and gives correlated, low-information samples. Use block sampling or a reparameterization.</li>
+       <li><b>Disconnected modes get stuck.</b> Gibbs can trap itself in one mode of a multi-modal posterior and never visit the others. Run multiple chains from dispersed starts.</li>
+       <li><b>Particle degeneracy.</b> After a few steps almost all weight lands on one particle and the rest are wasted. Monitor effective sample size and <b>resample</b> when it drops.</li>
+       <li><b>Sample impoverishment after resampling.</b> Repeated resampling collapses diversity; add jitter (roughening) or use resample-move steps to keep particles spread out.</li>
+       <li><b>Too few samples / particles.</b> Estimates are noisy and over-confident with small $N$. Variance falls only like $1/\\sqrt{N}$, so budget enough samples for the precision you claim.</li>
+     </ul>`,
   quiz: {
     q: `Sampling a query variable $X$, out of $200$ samples $50$ have $X=\\text{true}$. What is the estimated $P(X=\\text{true}\\mid\\text{evidence})$?`,
     a: `<p>$\\hat P(X=\\text{true}) = 50/200 = 0.25$. The estimate is just the fraction of samples with that value.</p>`
@@ -982,6 +1145,24 @@ L({
      </ul>`,
   application:
     `<p>The Markov blanket makes large-scale probabilistic inference feasible: Gibbs samplers, belief propagation, and Markov random fields all update a variable using only its blanket. In feature selection, the Markov blanket of a target is provably the minimal optimal feature set. The concept even appears in theories of biological self-organization (the "free energy principle").</p>`,
+  whenToUse:
+    `<p><b>This shows up whenever you build, sample from, or do feature selection on a graphical model.</b> The Markov blanket is the local "scope" you exploit to make global problems tractable: to reason about a node you only ever touch its parents, children, and co-parents.</p>
+     <p><b>What it unlocks in practice:</b></p>
+     <ul>
+       <li><b>Cheap Gibbs sampling</b> — to resample a variable you condition only on its blanket, never the whole network, which is what makes MCMC (Markov Chain Monte Carlo) on big models possible.</li>
+       <li><b>Optimal feature selection</b> — the blanket of the target variable is provably the smallest feature set that makes every other feature redundant; algorithms like IAMB and HITON search for exactly this set.</li>
+       <li><b>Local message passing</b> — belief propagation and Markov random fields update each node from blanket messages alone.</li>
+     </ul>
+     <p><b>When to reach for the broader idea instead:</b> if you actually need the <i>global</i> joint (e.g. the partition function), the blanket alone is not enough — you still need full inference. And in undirected models the blanket is simply the neighbors, so the parent/child/co-parent distinction only matters for directed Bayes nets.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting co-parents.</b> The single most common mistake: people include parents and children but drop the children's <i>other</i> parents. Omitting them leaks dependence (explaining-away) and corrupts a Gibbs update or feature-selection result.</li>
+       <li><b>Confusing directed and undirected blankets.</b> In a Bayes net (directed) the blanket is parents + children + co-parents; in a Markov random field (undirected) it is just the immediate neighbors. Using the wrong rule gives the wrong set.</li>
+       <li><b>Assuming the blanket is small.</b> A node with many children, or children with many parents, can have a huge blanket — then "local" inference is not cheap. Check the degree before assuming locality buys speed.</li>
+       <li><b>Treating it as marginal independence.</b> $X \\perp \\text{Rest}$ holds only <i>given</i> the blanket's values. Without conditioning on the blanket, $X$ is not independent of the outside world.</li>
+       <li><b>Estimating blankets from limited data.</b> In feature selection, statistical tests with too few samples add or drop neighbors wrongly, yielding an unstable blanket. Use enough data and stable conditional-independence tests.</li>
+       <li><b>Hidden / latent variables widen the blanket.</b> An unobserved common cause couples nodes you thought were separate; the effective blanket is larger than the drawn graph suggests.</li>
+     </ul>`,
   quiz: {
     q: `Node $Y$ has parents $\\{A\\}$, one child $Z$, and $Z$'s other parent is $W$. List the Markov blanket of $Y$.`,
     a: `<p>$\\text{MB}(Y) = \\{A, Z, W\\}$: parent $A$, child $Z$, and co-parent $W$. Given these, $Y$ is independent of everything else.</p>`
@@ -1124,6 +1305,29 @@ L({
      </ul>`,
   application:
     `<p>Forward-backward trains and decodes HMMs in speech recognition, gene finding (which DNA (Deoxyribonucleic Acid) regions are genes), and part-of-speech tagging. It is the E-step of the Baum-Welch (EM, Expectation–Maximization) algorithm that learns the HMM's parameters from unlabeled sequences.</p>`,
+  whenToUse:
+    `<p><b>Reach for forward-backward (smoothing) when you want the best estimate of a <i>past</i> hidden state in an HMM (Hidden Markov Model) and you have the whole observation sequence in hand</b> — offline analysis, where future clues can sharpen a belief about the past.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Filtering (forward pass only)</b> — when you can wait for all the data; using the future evidence ($\\beta$) gives a strictly better estimate than past-only filtering.</li>
+       <li><b>The Viterbi algorithm</b> — when you want the marginal posterior of <i>each</i> state, not the single most-likely whole <i>path</i>; Viterbi maximizes the joint sequence, forward-backward gives per-step probabilities.</li>
+       <li><b>Generic variable elimination</b> — it <i>is</i> elimination specialized to a chain, so it is the right, efficient choice for sequence models.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You must decide in real time as data arrives — use the forward filter alone; you cannot wait for the future.</li>
+       <li>You need the single best label sequence — use Viterbi.</li>
+       <li>The state space is continuous and linear-Gaussian — use the Kalman smoother (RTS), the continuous analogue.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Numerical underflow.</b> The $\\alpha$ and $\\beta$ messages are products of many probabilities and shrink toward zero on long sequences. Rescale each column (and track the log of the scale) or run entirely in log-space.</li>
+       <li><b>Forgetting to normalize the smoothed posterior.</b> $\\alpha_i\\beta_i$ is unnormalized; divide by its sum over states. Skipping this leaves values that do not sum to $1$.</li>
+       <li><b>Mismatched scaling between passes.</b> If you rescale $\\alpha$ but not $\\beta$ (or use inconsistent constants), the product is wrong. Apply the same per-step scaling to both, or use log-space throughout.</li>
+       <li><b>Confusing smoothing with the Viterbi path.</b> Concatenating the per-step most-probable states does <i>not</i> give the most-probable sequence — that path can even have zero probability. Use Viterbi if you need a coherent path.</li>
+       <li><b>Baum-Welch (EM, Expectation–Maximization) finds local optima.</b> Training the HMM with forward-backward as the E-step is sensitive to initialization and can converge to a poor local maximum. Use multiple random restarts.</li>
+       <li><b>Label switching / unidentifiable states.</b> Hidden states have no inherent names, so learned states may permute between runs; align them before comparing models.</li>
+     </ul>`,
   quiz: {
     q: `Forward $\\alpha_i = [0.4, 0.4]$ and backward $\\beta_i = [1.0, 0.0]$ over states $\\{1,2\\}$. What is the smoothed posterior $P(H_i \\mid E)$?`,
     a: `<p>Products: $[0.4\\times1.0,\\,0.4\\times0.0] = [0.4, 0.0]$. Normalize by $0.4$: $P(H_i{=}1)=1.0$, $P(H_i{=}2)=0.0$. The backward evidence ruled out state $2$.</p>`
@@ -1229,6 +1433,29 @@ L({
      </ul>`,
   application:
     `<p>LDA organizes huge text collections: it powers topic browsers for news archives and scientific papers, content recommendation, and exploratory analysis of survey responses or customer reviews. The same mixture idea extends to images (objects as topics) and genetics (populations as topics).</p>`,
+  whenToUse:
+    `<p><b>Reach for LDA (Latent Dirichlet Allocation) when you have a large unlabeled collection of documents and want to discover its themes and a per-document topic breakdown</b> — exploratory analysis, browsing, or as interpretable features for a downstream model.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain clustering (k-means on bag-of-words)</b> — when documents are genuinely about <i>several</i> topics at once; LDA gives a soft mixture per document instead of one hard label.</li>
+       <li><b>Latent Semantic Analysis (LSA / truncated SVD, Singular Value Decomposition)</b> — when you want a generative, probabilistic model with non-negative, interpretable topics rather than signed SVD components.</li>
+       <li><b>Neural topic / embedding models (BERTopic, top2vec)</b> — when you want a simple, well-understood baseline that needs no GPU and few dependencies.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have labels and a supervised target — train a classifier; LDA is unsupervised and not optimized for prediction.</li>
+       <li>Documents are very short (tweets, queries) — word co-occurrence is too sparse; use a short-text model (biterm) or embeddings.</li>
+       <li>You need semantic similarity, not theme discovery — use sentence/document embeddings.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>You must choose the number of topics $K$.</b> Too few blurs themes together, too many fragments them. Tune $K$ by held-out perplexity or topic-coherence scores — do not guess once and stop.</li>
+       <li><b>Topics need human interpretation.</b> LDA returns word lists, not names; some "topics" are junk or duplicates. Inspect the top words and label or prune them before trusting the output.</li>
+       <li><b>Stop-words and rare words dominate.</b> Without removing stop-words and very rare tokens, topics fill with "the", "and" or noise. Preprocess: lowercase, remove stop-words, filter by document frequency.</li>
+       <li><b>Hyperparameters $\\alpha$ and $\\beta$ shape sparsity.</b> The Dirichlet priors control how peaked document-topic and topic-word mixtures are; defaults can give muddy topics. Tune them or use an asymmetric prior.</li>
+       <li><b>Inference is stochastic and non-identifiable.</b> Different runs give different (permuted) topics. Fix the seed for reproducibility and align topics across runs before comparing.</li>
+       <li><b>Bag-of-words throws away order.</b> LDA ignores word order and phrases, so "machine learning" is two unrelated tokens. Add bigrams/collocations if phrase meaning matters.</li>
+     </ul>`,
   quiz: {
     q: `A document has topic mix $\\theta = [0.6, 0.4]$ over (Sports, Finance). Topic Finance gives the word "bank" probability $0.5$. What is $P(\\text{word} = \\text{"bank"} \\text{ from Finance})$?`,
     a: `<p>$\\theta_{\\text{Fin}} \\times \\phi_{\\text{Fin, bank}} = 0.4 \\times 0.5 = 0.2$. There is a $0.2$ chance a given slot is a Finance topic emitting "bank".</p>`
@@ -1326,6 +1553,29 @@ L({
      </ul>`,
   application:
     `<p>First-order logic and resolution power automated theorem provers, the Prolog programming language (its execution <i>is</i> resolution), formal verification of hardware and software, and the knowledge bases behind expert systems and the semantic web (ontologies, description logics).</p>`,
+  whenToUse:
+    `<p><b>Reach for first-order logic (FOL) when you need to represent objects, relations, and general rules with "for all" / "there exists", and to draw guaranteed-correct conclusions</b> — knowledge bases, formal verification, planning, and any setting where a wrong inference is unacceptable.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Propositional logic</b> — when facts involve objects and quantification; FOL avoids enumerating a separate proposition for every object.</li>
+       <li><b>A machine-learning classifier</b> — when the rules are known and exact, and you need provable, auditable answers rather than a statistical guess.</li>
+       <li><b>A relational database query</b> — when you need recursive rules and logical entailment, not just lookups (this is the Datalog / Prolog niche).</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The knowledge is uncertain or noisy — use probabilistic models (Bayes nets) or Markov logic, which blend logic with probabilities.</li>
+       <li>You are learning patterns from data — use ML; FOL does not generalize from examples on its own.</li>
+       <li>You only need decidable, lightweight reasoning over a taxonomy — use a description logic (OWL, Web Ontology Language) rather than full FOL.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Full FOL is only semi-decidable.</b> If a goal does <i>not</i> follow, a prover may run forever rather than report "no". Bound the search depth/time and treat non-termination as inconclusive.</li>
+       <li><b>The skip-the-occurs-check trap.</b> Fast unifiers omit the occurs-check (does the variable appear in the term it binds to?), which can build cyclic terms and unsound proofs. Enable it when soundness matters.</li>
+       <li><b>Clause blow-up from Skolemization and CNF (Conjunctive Normal Form) conversion.</b> Converting quantified formulas to clauses can explode in size; the variable order and Skolem-function choices matter. Use structure-preserving (Tseitin) transforms.</li>
+       <li><b>Combinatorial explosion of resolvents.</b> Naive resolution generates astronomically many clauses. You need strategies (unit preference, set-of-support, subsumption deletion) to keep it tractable.</li>
+       <li><b>Mis-scoped quantifiers change meaning.</b> $\\forall x\\,\\exists y$ versus $\\exists y\\,\\forall x$ are completely different claims; a swapped order silently encodes the wrong rule.</li>
+       <li><b>Closed-world vs open-world confusion.</b> Prolog assumes anything unproven is false (closed world); classical FOL does not. Mixing the two leads to "facts" that are not actually entailed.</li>
+     </ul>`,
   quiz: {
     q: `Find a unifier for $\\text{Loves}(x, \\text{mary})$ and $\\text{Loves}(\\text{john}, y)$. Then, given the rule $\\neg\\text{Loves}(\\text{john},\\text{mary}) \\vee \\text{Happy}(\\text{john})$ and the fact $\\text{Loves}(\\text{john},\\text{mary})$, what does resolution derive?`,
     a: `<p>Unifier $\\theta = \\{x/\\text{john},\\, y/\\text{mary}\\}$; both become $\\text{Loves}(\\text{john}, \\text{mary})$. Resolving on it cancels the complementary literal and derives $\\text{Happy}(\\text{john})$.</p>`

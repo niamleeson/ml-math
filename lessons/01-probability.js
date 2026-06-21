@@ -70,6 +70,26 @@ L({
      </ul>`,
   application:
     `<p>A spam filter's sample space is every email it could see. The event "this email is spam" is a subset. Defining the sample space clearly is the first step in any model that handles uncertainty.</p>`,
+  whenToUse:
+    `<p><b>You reach for sample spaces and events whenever you set up a probabilistic model from scratch</b> — before any formula, you must pin down what can happen and which outcomes you care about. It is the framing step for classification, simulation, and any decision under uncertainty.</p>
+     <p><b>Use this framing over:</b></p>
+     <ul>
+       <li><b>Jumping straight to a formula</b> — when the problem is new and you are unsure what "all outcomes" even are; listing $\\Omega$ first prevents double-counting and missed cases.</li>
+       <li><b>An informal "list of cases"</b> — when outcomes overlap or are not mutually exclusive; set notation forces you to be precise about subsets.</li>
+     </ul>
+     <p><b>Pick a different framing when:</b></p>
+     <ul>
+       <li>The outcome is a real number on a continuum (a price, a delay) — use a continuous density and CDF (Cumulative Distribution Function) instead of an enumerable set.</li>
+       <li>The space is astronomically large (all word sequences) — you model structure with random variables and factorized distributions, not an explicit list.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>An incomplete sample space breaks everything.</b> If $\\Omega$ misses an outcome, probabilities won't sum to 1 and every downstream number is wrong. List exhaustively before you compute.</li>
+       <li><b>Overlapping events are not disjoint.</b> "Even" and "greater than 3" share the outcome 4, so you cannot just add their probabilities. Check for shared outcomes first.</li>
+       <li><b>Outcomes are not always equally likely.</b> The $1/|\\Omega|$ shortcut only holds for a fair, symmetric setup. A loaded die or a biased sensor needs explicit per-outcome weights.</li>
+       <li><b>Confusing an outcome with an event.</b> An outcome is one element of $\\Omega$; an event is a subset. Rolling a 4 is an outcome; "rolling an even number" is an event containing it.</li>
+       <li><b>Continuous quantities have no listable outcomes.</b> For a measured weight or time, single points have probability zero — switch to intervals and densities rather than forcing a discrete list.</li>
+     </ul>`,
   quiz: {
     q: `Toss two coins. Write the sample space $\\Omega$. Then write the event $A$ = "exactly one head".`,
     a: `<p>$\\Omega = \\{HH, HT, TH, TT\\}$ (four outcomes). $A = \\{HT, TH\\}$ — the two outcomes with exactly one head.</p>`
@@ -138,6 +158,22 @@ L({
      </ul>`,
   application:
     `<p>When a classifier outputs probabilities over many classes (cat, dog, bird), those numbers must each be $\\ge 0$ and sum to 1. That is the normalization axiom in action. The 'softmax' function exists to enforce it.</p>`,
+  whenToUse:
+    `<p><b>The axioms are your sanity-check layer</b> — you reach for them whenever a model emits numbers that claim to be probabilities and you need to confirm they are valid (non-negative, summing to 1) and combine them correctly. They are the rules every probability formula must obey.</p>
+     <p><b>Lean on them over:</b></p>
+     <ul>
+       <li><b>Trusting raw model scores</b> — when an output layer produces unbounded logits; the axioms tell you to push them through softmax or a sigmoid before treating them as probabilities.</li>
+       <li><b>Ad-hoc addition</b> — when events overlap; the axioms give you the inclusion–exclusion rule $P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$ instead of double-counting.</li>
+     </ul>
+     <p><b>Reach elsewhere when:</b> you need conditional reasoning (use Bayes' rule) or expectations and spread (use expectation and variance) — the axioms underlie those but don't compute them for you.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Probabilities that don't sum to 1.</b> Raw model outputs or hand-built tables often miss this. Normalize explicitly; a vector summing to 0.97 is not a valid distribution.</li>
+       <li><b>Adding non-disjoint events.</b> $P(A\\cup B)=P(A)+P(B)$ only holds when $A$ and $B$ cannot both happen. Subtract the overlap otherwise.</li>
+       <li><b>Negative or above-one "probabilities".</b> A floating-point bug or a bad normalization can push values outside $[0,1]$. Clamp and assert during development.</li>
+       <li><b>Forgetting the complement.</b> $P(\\text{not } A)=1-P(A)$ is the cheapest sanity check; if it gives something weird, your numbers are off.</li>
+       <li><b>Treating "low probability" as impossible.</b> An event with probability $0.001$ still happens roughly once in a thousand trials — rare is not never at scale.</li>
+     </ul>`,
   quiz: {
     q: `If $P(\\text{rain}) = 0.3$, what is $P(\\text{no rain})$?`,
     a: `<p>Use the complement rule: $P(\\text{no rain}) = 1 - 0.3 = 0.7$.</p>`
@@ -287,6 +323,26 @@ L({
      </ul>`,
   application:
     `<p>Recommendation systems ask "given that you watched this movie, how likely are you to watch that one?" Conditioning on what a user already did is the core of personalization.</p>`,
+  whenToUse:
+    `<p><b>You reach for conditional probability the moment new information should change a prediction</b> — it is how you update a belief once you know something. Any model that personalizes, filters, or reasons "given X, what about Y?" runs on conditioning.</p>
+     <p><b>Choose conditioning over:</b></p>
+     <ul>
+       <li><b>A flat, unconditional rate</b> — when context matters; the base click rate is far less useful than the click rate <i>given</i> this user and this hour.</li>
+       <li><b>Assuming independence</b> — when features actually interact; conditioning keeps the dependence that a naive product would throw away.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You need to flip the direction (you have $P(B\\mid A)$ but want $P(A\\mid B)$) — that is Bayes' rule.</li>
+       <li>You want a single summary number given inputs — use conditional expectation $E[Y\\mid X]$ rather than a full conditional distribution.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Reversing the condition.</b> $P(A\\mid B)$ is not $P(B\\mid A)$. "Spam given these words" differs wildly from "these words given spam" — mixing them is the classic Bayesian blunder.</li>
+       <li><b>Conditioning on a zero-probability event.</b> Dividing by $P(B)=0$ is undefined. If $B$ never occurs in your data, you cannot condition on it without smoothing.</li>
+       <li><b>Tiny conditioning sets.</b> $P(A\\mid B)$ estimated from a handful of matching rows is wildly noisy. Watch the count behind every conditional rate; n &lt; 30 is shaky.</li>
+       <li><b>Selection bias sneaks in.</b> Conditioning on a variable affected by the outcome (a collider) can create fake correlations. Be careful what you filter on.</li>
+       <li><b>Assuming conditioning implies causation.</b> "Survival given treatment" mixes the treatment's effect with who got treated. Conditioning describes association, not cause.</li>
+     </ul>`,
   quiz: {
     q: `A die came up greater than 3 (so it's in $\\{4,5,6\\}$). What is the probability it's a 6?`,
     a: `<p>The new world is $\\{4,5,6\\}$, three equally likely faces. $P(6 \\mid &gt;3) = \\frac{1/6}{3/6} = \\frac{1}{3}$.</p>`
@@ -361,6 +417,27 @@ L({
      </ul>`,
   application:
     `<p>Bayes' rule powers spam filters (given these words, is it spam?), medical diagnosis, and Bayesian machine learning. The lesson about base rates is one of the most important ideas in all of statistics.</p>`,
+  whenToUse:
+    `<p><b>Reach for Bayes' rule when you can measure one direction of a relationship but need the other</b> — you know how likely the evidence is under each hypothesis, and you want the probability of the hypothesis given the evidence. It is the engine of diagnosis, spam filtering, and belief updating.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Reading a test result at face value</b> — when the base rate is low; Bayes forces you to fold in how rare the condition is, which a raw "95% accurate" claim hides.</li>
+       <li><b>A discriminative model</b> — when you want interpretable, updatable beliefs and have a clean generative story for the evidence.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You only care about a decision boundary, not calibrated probabilities — a discriminative classifier (logistic regression, a tree) is often simpler and more accurate.</li>
+       <li>The likelihood is intractable — you may need approximate inference (variational methods, MCMC, Markov Chain Monte Carlo) rather than the closed-form rule.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Ignoring the base rate.</b> The single most common error. A 99%-accurate test for a 1-in-10,000 disease still flags mostly false positives. Always multiply by the prior.</li>
+       <li><b>Confusing $P(A\\mid B)$ with $P(B\\mid A)$.</b> "Disease given a positive test" is not "positive test given disease." Bayes exists precisely to convert between them.</li>
+       <li><b>A bad prior dominates with little data.</b> When evidence is thin, the posterior is mostly the prior. Choose priors deliberately and report sensitivity to them.</li>
+       <li><b>Treating correlated evidence as independent.</b> Multiplying likelihoods of overlapping signals overcounts the evidence and gives a falsely confident posterior.</li>
+       <li><b>Numerical underflow.</b> Multiplying many small likelihoods drives products toward zero. Work in log-space with $\\log P$ sums instead of raw products.</li>
+       <li><b>Stale priors.</b> A prior estimated last year may no longer match today's population; revisit base rates as the data distribution drifts.</li>
+     </ul>`,
   quiz: {
     q: `Why was a positive test only 9% likely to mean illness, despite the test being 99% accurate?`,
     a: `<p>Because the disease is rare (1 in 1000). Healthy people vastly outnumber sick people, so even a tiny 1% false-alarm rate produces many more false positives than true positives. The base rate dominates.</p>`
@@ -426,6 +503,26 @@ L({
      </ul>`,
   application:
     `<p>This theorem is the denominator $P(B)$ inside Bayes' rule. Any time a model averages over hidden cases (which topic generated this word? which cluster is this point in?), total probability is doing the work.</p>`,
+  whenToUse:
+    `<p><b>Reach for the law of total probability whenever the easy path to an answer runs through cases you cannot observe directly</b> — split the problem by a hidden variable, solve each case, then average weighted by how likely each case is. It is the standard move for marginalizing out a latent label or cluster.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Attacking $P(B)$ head-on</b> — when $B$ is tangled but becomes simple once you condition on which scenario you are in.</li>
+       <li><b>Ignoring a mixture structure</b> — when your data is generated by several sub-populations; summing over components is exactly this law.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The hidden cases form a continuum — replace the sum with an integral (marginalizing a continuous latent variable).</li>
+       <li>There are too many cases to enumerate — use sampling or variational approximation instead of an exact sum.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The cases must partition the space.</b> They have to be mutually exclusive <i>and</i> cover every possibility. Overlapping or missing cases make the total wrong.</li>
+       <li><b>Forgetting the weights.</b> You average $P(B\\mid A_i)$ weighted by $P(A_i)$, not a plain average. Equal weighting silently assumes equal priors.</li>
+       <li><b>Combinatorial blow-up.</b> Summing over many latent configurations is exponential. For large hidden spaces, exact marginalization is infeasible — approximate it.</li>
+       <li><b>Numerical underflow in the sum.</b> Adding many tiny terms loses precision; use the log-sum-exp trick to stay stable.</li>
+       <li><b>Mismatched conditioning.</b> Every term must condition on the same evidence. Mixing conditions across the partition gives a meaningless total.</li>
+     </ul>`,
   quiz: {
     q: `A bag has 70% red apples (10% bruised) and 30% green apples (20% bruised). What is the overall chance an apple is bruised?`,
     a: `<p>$0.7 \\times 0.10 + 0.3 \\times 0.20 = 0.07 + 0.06 = 0.13$, or 13%.</p>`
@@ -549,6 +646,26 @@ L({
      </ul>`,
   application:
     `<p>The 'Naive Bayes' spam classifier assumes every word appears independently. That assumption is not quite true, but it lets the model just multiply many small probabilities together — and it works shockingly well.</p>`,
+  whenToUse:
+    `<p><b>You invoke independence as a modeling simplification</b> — when assuming variables don't influence each other lets you multiply probabilities instead of estimating a giant joint table. It is the assumption that makes Naive Bayes, many graphical models, and bootstrap resampling tractable.</p>
+     <p><b>Assume independence over:</b></p>
+     <ul>
+       <li><b>A full joint distribution</b> — when you have too little data to estimate every interaction; independence trades a little accuracy for a model you can actually fit.</li>
+       <li><b>Modeling every correlation</b> — when the dependencies are weak enough that the simpler factorized model generalizes better.</li>
+     </ul>
+     <p><b>Drop the assumption when:</b></p>
+     <ul>
+       <li>Variables clearly move together (pixels in an image, words in a phrase) — use a model that captures structure, such as a CRF (Conditional Random Field) or a neural network.</li>
+       <li>You need to model joint extremes or tail co-movement (correlated failures, financial risk) — independence badly underestimates them.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Independence is an assumption, not a fact.</b> Most real features are at least mildly dependent. Naive Bayes works <i>despite</i> being wrong; don't assume it because it's convenient and forget to check.</li>
+       <li><b>Confusing independence with zero correlation.</b> Zero correlation only rules out linear association. Variables can be uncorrelated yet strongly dependent (e.g. $Y=X^2$).</li>
+       <li><b>Pairwise does not imply mutual.</b> Three variables can be independent in every pair yet dependent together. Verify the level of independence you actually need.</li>
+       <li><b>Multiplying dependent probabilities over-counts.</b> If signals are correlated, the product is too confident — the classic Naive Bayes over-confidence.</li>
+       <li><b>Conditional independence is subtle.</b> $A$ and $B$ may be independent only given $C$. Conditioning on the wrong variable can create or destroy independence.</li>
+     </ul>`,
   quiz: {
     q: `$P(A) = 0.5$, $P(B) = 0.4$, and $P(A \\cap B) = 0.2$. Are $A$ and $B$ independent?`,
     a: `<p>Check: $P(A)P(B) = 0.5 \\times 0.4 = 0.2$, which equals $P(A \\cap B) = 0.2$. Yes, they are independent.</p>`
@@ -688,6 +805,26 @@ L({
      </ul>`,
   application:
     `<p>Combinations appear inside the binomial distribution (next lessons), in counting possible feature subsets, and in calculating the odds of card hands or lottery wins. Counting correctly is the foundation of discrete probability.</p>`,
+  whenToUse:
+    `<p><b>You reach for counting whenever a probability reduces to "favorable outcomes over total outcomes" and the outcomes are discrete arrangements</b> — hands of cards, subsets of features, orderings, or the coefficients inside a binomial. It is the bookkeeping under every discrete distribution.</p>
+     <p><b>Use combinatorics over:</b></p>
+     <ul>
+       <li><b>Brute-force enumeration</b> — when the space is too large to list but has clean multiplicative structure; a formula gives the count instantly.</li>
+       <li><b>Guessing the size of a search space</b> — when you need to know how many models, splits, or hyperparameter grids exist before committing compute.</li>
+     </ul>
+     <p><b>Reach elsewhere when:</b></p>
+     <ul>
+       <li>Outcomes are continuous — counting doesn't apply; use densities and integration.</li>
+       <li>The exact count is astronomically large and you only need an estimate — use sampling or asymptotic approximations (Stirling's formula).</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Order matters or it doesn't — decide first.</b> Permutations count ordered arrangements; combinations count unordered sets. Using the wrong one is the #1 counting error.</li>
+       <li><b>Double-counting.</b> Treating $\\{A,B\\}$ and $\\{B,A\\}$ as distinct inflates the count. Divide out the repeats you didn't mean to count.</li>
+       <li><b>With- vs without-replacement.</b> Drawing the same item twice changes the formula entirely. Be explicit about whether items can repeat.</li>
+       <li><b>Factorial overflow.</b> $n!$ explodes fast; $20!$ already overflows a 64-bit integer. Compute in log-space or cancel terms before multiplying.</li>
+       <li><b>Forgetting equal-likelihood.</b> The favorable-over-total shortcut assumes every outcome is equally likely. Weighted or biased outcomes need probabilities, not raw counts.</li>
+     </ul>`,
   quiz: {
     q: `How many ways can you choose 2 toppings from 4 available (order doesn't matter)?`,
     a: `<p>$\\binom{4}{2} = \\frac{4!}{2!\\,2!} = \\frac{24}{2 \\times 2} = \\frac{24}{4} = 6$ ways.</p>`
@@ -744,6 +881,22 @@ L({
      </ul>`,
   application:
     `<p>A model's output 'how many clicks will this ad get?' is a random variable. Its PMF is the model's prediction. Random variables are how we attach numbers and probabilities to real-world uncertainty.</p>`,
+  whenToUse:
+    `<p><b>You reach for the random-variable framing whenever you need to attach numbers and probabilities to an uncertain outcome</b> — it is the bridge from "things that could happen" to quantities you can average, compare, and feed into a model. Every prediction, label, and loss is a random variable.</p>
+     <p><b>Use it over:</b></p>
+     <ul>
+       <li><b>Reasoning about raw outcomes</b> — when you want to compute an expectation or variance; those need a numeric variable, not a list of events.</li>
+       <li><b>A single point estimate</b> — when the spread matters as much as the center; a random variable carries the whole distribution, not just one number.</li>
+     </ul>
+     <p><b>Choose a specific distribution when:</b> you know the data's shape — a Bernoulli for yes/no, a Poisson for counts, a Normal for noise. The random variable is the abstract object; the distribution (covered next) is its concrete law.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Discrete vs continuous mix-up.</b> Discrete variables have a PMF (Probability Mass Function) that sums to 1; continuous ones have a density that integrates to 1. Treating one as the other gives nonsense.</li>
+       <li><b>A density value is not a probability.</b> A PDF (Probability Density Function) can exceed 1; only its integral over an interval is a probability. Don't read a density off as a chance.</li>
+       <li><b>Forgetting variables depend on the same draw.</b> $X$ and $Y$ from one experiment can be coupled. Computing them as if independent loses that link.</li>
+       <li><b>Encoding categories as numbers carelessly.</b> Mapping "red, green, blue" to 1, 2, 3 invents a fake ordering. Use indicator variables unless the category is truly ordinal.</li>
+       <li><b>Ignoring the support.</b> A count can't be negative; a probability lives in $[0,1]$. A model that predicts outside the variable's range is misspecified.</li>
+     </ul>`,
   quiz: {
     q: `Roll a fair die, $X$ = the face shown. What is $p_X(3)$, and do all six values' probabilities add to 1?`,
     a: `<p>$p_X(3) = \\frac{1}{6}$. Each of the six faces has probability $\\frac{1}{6}$, and $6 \\times \\frac{1}{6} = 1$. ✔</p>`
@@ -802,6 +955,27 @@ L({
      </ul>`,
   application:
     `<p>'Expected loss' is the quantity nearly every ML (Machine Learning) model minimizes during training. Expected value also drives decision-making: an A/B test picks the option with the higher expected payoff.</p>`,
+  whenToUse:
+    `<p><b>You reach for expectation whenever you need one number to summarize an uncertain quantity's long-run average</b> — expected loss to train a model, expected reward to choose an action, expected value to compare two bets. It is the target that almost all of supervised learning minimizes.</p>
+     <p><b>Use the expectation over:</b></p>
+     <ul>
+       <li><b>A single sampled outcome</b> — when you want the stable long-run value rather than one noisy draw.</li>
+       <li><b>The most likely value (the mode)</b> — when every outcome's magnitude matters, not just the peak; expectation weights by both value and probability.</li>
+     </ul>
+     <p><b>Prefer a different summary when:</b></p>
+     <ul>
+       <li>The distribution is heavy-tailed or has outliers — the mean is dragged around, so the median is more robust.</li>
+       <li>You care about risk or worst cases, not the average — use a quantile, VaR (Value at Risk), or the variance instead.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The mean can be a value that never occurs.</b> The expected roll of a die is 3.5. Don't interpret an expectation as a typical single outcome.</li>
+       <li><b>Outliers wreck the mean.</b> A few extreme values pull the average far from the bulk of the data. Inspect the distribution; consider the median for skewed data.</li>
+       <li><b>Undefined expectation.</b> Heavy-tailed distributions (e.g. Cauchy) have no finite mean — averaging more samples does not converge. Check the tail before trusting an average.</li>
+       <li><b>Estimating from too few samples.</b> A sample mean from n &lt; 30 noisy points can be far from the true expectation. Report a confidence interval alongside it.</li>
+       <li><b>Linearity is your friend — non-linearity isn't.</b> $E[X+Y]=E[X]+E[Y]$ always holds, but $E[g(X)]\\ne g(E[X])$ for non-linear $g$ (Jensen's inequality). Don't push a function through the mean.</li>
+       <li><b>Mismatched weights.</b> An expectation over the wrong distribution (training vs deployment) gives a biased estimate of real-world performance.</li>
+     </ul>`,
   quiz: {
     q: `A coin pays \\$10 for heads, \\$0 for tails, each with chance $\\frac{1}{2}$. What is $E[X]$?`,
     a: `<p>$E[X] = 10 \\times \\frac{1}{2} + 0 \\times \\frac{1}{2} = 5$. The expected payout is \\$5.</p>`
@@ -869,6 +1043,27 @@ L({
      </ul>`,
   application:
     `<p>In finance, variance is risk. In ML (Machine Learning), high variance in a model's predictions signals overfitting. The bias-variance tradeoff — a central idea in machine learning — is named after this exact quantity.</p>`,
+  whenToUse:
+    `<p><b>You reach for variance (and its square root, standard deviation) whenever the spread of a quantity matters, not just its average</b> — to quantify risk, to detect overfitting, to set error bars, or to standardize features before training. It is the second half of the story the mean alone can't tell.</p>
+     <p><b>Use variance over:</b></p>
+     <ul>
+       <li><b>Reporting only the mean</b> — when two options share an average but differ in risk; variance separates a steady bet from a volatile one.</li>
+       <li><b>The range (max minus min)</b> — when you want a measure that uses all the data and isn't dictated by a single extreme point.</li>
+     </ul>
+     <p><b>Prefer a different measure when:</b></p>
+     <ul>
+       <li>The data has heavy tails or outliers — variance is inflated by squared deviations; use the IQR (Interquartile Range) or MAD (Median Absolute Deviation).</li>
+       <li>You need spread on the original scale and units — report the standard deviation, not the variance (whose units are squared).</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Variance is in squared units.</b> A variance of 9 "dollars-squared" is hard to read. Take the square root for a standard deviation in dollars before interpreting.</li>
+       <li><b>Outliers dominate.</b> Squaring deviations gives extreme points outsized weight, so one bad measurement can blow up the variance. Inspect for outliers first.</li>
+       <li><b>Population vs sample formula.</b> Dividing by $n$ underestimates the true variance; the unbiased sample estimator divides by $n-1$. Use the right denominator.</li>
+       <li><b>Naive one-pass formulas lose precision.</b> Computing $E[X^2]-E[X]^2$ can subtract two large near-equal numbers and produce catastrophic cancellation. Use Welford's algorithm for streaming data.</li>
+       <li><b>Zero variance breaks downstream math.</b> A constant feature has variance 0, so standardizing it divides by zero. Detect and drop constant columns.</li>
+       <li><b>Variance is not the whole shape.</b> Two distributions with equal variance can be wildly different (skewed vs symmetric). Don't assume Normality from spread alone.</li>
+     </ul>`,
   quiz: {
     q: `A variable is always exactly 7 (no randomness). What is its variance?`,
     a: `<p>0. It never moves away from its mean of 7, so the average squared distance is 0. No spread.</p>`
@@ -925,6 +1120,27 @@ L({
      </ul>`,
   application:
     `<p>Click-through rates, conversion counts, and A/B test outcomes are all Binomial: $n$ visitors, each clicking with probability $p$. Logistic regression models the Bernoulli success probability $p$ for each example.</p>`,
+  whenToUse:
+    `<p><b>Reach for Bernoulli and Binomial whenever you count successes out of a fixed number of independent yes/no trials with the same success probability</b> — clicks out of impressions, conversions out of visitors, defects out of units. Bernoulli is a single trial; Binomial is the count over $n$ of them.</p>
+     <p><b>Choose this model over:</b></p>
+     <ul>
+       <li><b>A continuous distribution</b> — when the outcome is a count of successes, not a measured magnitude.</li>
+       <li><b>A Poisson</b> — when the number of trials $n$ is fixed and known; Poisson is the limit when $n$ is huge and $p$ tiny with no fixed ceiling.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Trials aren't independent or $p$ varies between them — use a Beta-Binomial or a regression with covariates instead.</li>
+       <li>You want to predict $p$ per example from features — that is logistic regression (the Bernoulli likelihood with a learned $p$).</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Trials must be independent with constant $p$.</b> Correlated users or a drifting click rate violate the Binomial. The variance is then larger than $np(1-p)$ (over-dispersion).</li>
+       <li><b>Small samples give noisy rate estimates.</b> 1 click in 5 visits is not a 20% rate with any confidence. Use a confidence interval (Wilson, not the naive normal) for small n.</li>
+       <li><b>Zero successes don't mean zero probability.</b> 0/200 conversions still has an upper-bound rate well above zero. Apply smoothing or a Bayesian (Beta) prior.</li>
+       <li><b>The Normal approximation fails at the extremes.</b> When $np$ or $n(1-p)$ is small (rare events), the symmetric Normal interval is wrong — use exact or Poisson methods.</li>
+       <li><b>Confusing the count with the rate.</b> The Binomial models the number of successes; divide by $n$ only when you want the proportion, and track that $n$ for uncertainty.</li>
+       <li><b>Peeking inflates false positives.</b> Repeatedly checking an A/B test's running conversion count and stopping early breaks the fixed-$n$ assumption.</li>
+     </ul>`,
   quiz: {
     q: `An archer hits the target with probability $0.8$ on each shot. In 5 shots, what is the expected number of hits?`,
     a: `<p>$E[X] = np = 5 \\times 0.8 = 4$ hits on average.</p>`
@@ -981,6 +1197,27 @@ L({
      </ul>`,
   application:
     `<p>Poisson models website hits, server requests, and rare defects. Geometric models 'tries until conversion'. Both appear in queueing systems and in modeling counts of rare events in data.</p>`,
+  whenToUse:
+    `<p><b>Reach for Poisson when you count how many rare events land in a fixed window</b> (requests per second, defects per batch), and for Geometric when you count how many trials until the first success (visits until a conversion). Both model "rare events over a fixed exposure" from opposite angles.</p>
+     <p><b>Choose Poisson over:</b></p>
+     <ul>
+       <li><b>A Binomial</b> — when the number of opportunities is huge or unknown and the per-event chance is tiny; Poisson needs only the rate $\\lambda$.</li>
+       <li><b>A Normal for counts</b> — when counts are small (near zero), where the Normal would put mass on impossible negatives.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The variance far exceeds the mean (over-dispersion) — use a Negative Binomial instead of Poisson.</li>
+       <li>Events cluster in bursts rather than arriving independently — Poisson's constant-rate assumption breaks; model the bursts explicitly.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Poisson assumes mean equals variance.</b> Real count data is usually over-dispersed (variance &gt; mean). Check the ratio; if it's far above 1, switch to Negative Binomial.</li>
+       <li><b>The rate must be constant over the window.</b> Traffic spikes at peak hours violate a single $\\lambda$. Segment by time or use a time-varying rate.</li>
+       <li><b>Events must be independent.</b> One failure triggering a cascade breaks Poisson — arrivals that clump are not Poisson-distributed.</li>
+       <li><b>Geometric's memorylessness surprises people.</b> Past failures don't make the next success "due"; the probability resets every trial.</li>
+       <li><b>Off-by-one in the Geometric definition.</b> Some texts count trials <i>until</i> success, others count failures <i>before</i> it. Confirm which convention your library uses.</li>
+       <li><b>Zero-inflation.</b> If far more zeros appear than Poisson predicts (many windows with no events at all), use a zero-inflated model.</li>
+     </ul>`,
   quiz: {
     q: `A Poisson process averages $\\lambda = 3$ events per hour. What is the expected number of events in an hour?`,
     a: `<p>For a Poisson distribution, $E[X] = \\lambda = 3$ events.</p>`
@@ -1024,6 +1261,23 @@ L({
      </ul>`,
   application:
     `<p>Continuous densities model sensor readings, prices, and neural-network outputs. When a model reports 'the probability the value is below this threshold', it is reading off a CDF.</p>`,
+  whenToUse:
+    `<p><b>You reach for the PDF (Probability Density Function) and CDF (Cumulative Distribution Function) whenever the outcome lives on a continuum</b> — a price, a delay, a sensor reading. The PDF describes relative likelihood across the range; the CDF answers "what is the probability of being below this threshold?"</p>
+     <p><b>Use these over:</b></p>
+     <ul>
+       <li><b>A discrete PMF</b> — when values are real numbers with no natural minimum gap; a density, not a mass at each point, is the right object.</li>
+       <li><b>Just a mean and variance</b> — when you need tail probabilities, quantiles, or thresholds, which require the full CDF.</li>
+     </ul>
+     <p><b>Reach for the CDF specifically when:</b> you need percentiles, p-values, or threshold probabilities; reach for the inverse CDF (the quantile function) to <i>generate</i> samples or set a confidence cutoff.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>A PDF value is not a probability.</b> A density can exceed 1; only the area under it over an interval is a probability. $P(X=x)=0$ for any single point.</li>
+       <li><b>Probability of an exact value is zero.</b> Ask for $P(a\\le X\\le b)$, never $P(X=3.7)$. Continuous variables only assign probability to ranges.</li>
+       <li><b>The density must integrate to 1.</b> A hand-built or learned density that doesn't normalize is invalid — divide by the normalizing constant.</li>
+       <li><b>Change of variables needs the Jacobian.</b> Transforming $X$ to $g(X)$ rescales the density by $|dg/dx|$; forgetting it gives a density that no longer integrates to 1.</li>
+       <li><b>Reading the CDF backwards.</b> The CDF is $P(X\\le x)$, non-decreasing from 0 to 1. For the upper tail use the survival function $1-\\text{CDF}$.</li>
+       <li><b>Binning continuous data hides structure.</b> A coarse histogram can erase modes or skew; choose bin width carefully or use a kernel density estimate.</li>
+     </ul>`,
   demo: function (host) {
     host.innerHTML = '';
     var lab = document.createElement('label');
@@ -1159,6 +1413,27 @@ L({
      </ul>`,
   application:
     `<p>Uniform is used to initialize neural-network weights and to generate random samples. Exponential models time-between-events: server request gaps, equipment failures, customer arrivals.</p>`,
+  whenToUse:
+    `<p><b>Reach for the Uniform when every value in a range is equally plausible</b> — random initialization, sampling, a non-informative prior. Reach for the Exponential when you model the waiting time until the next event from a constant-rate process — request gaps, failures, arrivals.</p>
+     <p><b>Choose these over:</b></p>
+     <ul>
+       <li><b>A Normal</b> — Uniform when you genuinely have no preference inside an interval; Exponential when the quantity is a non-negative waiting time, which the symmetric Normal can't represent.</li>
+       <li><b>A Geometric</b> — Exponential is its continuous analog; use it when time is measured continuously rather than in discrete trials.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The event rate changes over time (aging equipment, ramps) — the Exponential's constant-hazard assumption fails; use a Weibull or Gamma.</li>
+       <li>You need bounded values with a central tendency — a Beta on $[0,1]$ beats a flat Uniform.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The Exponential is memoryless.</b> The expected remaining wait never shrinks no matter how long you've waited. If "overdue" failures get more likely with age, this model is wrong — use a Weibull.</li>
+       <li><b>Uniform initialization can hurt deep nets.</b> A naive symmetric range can shrink or explode signals across layers; use a scaled scheme (Xavier/Glorot, He) tied to layer width.</li>
+       <li><b>Rate vs scale confusion.</b> The Exponential is parameterized by rate $\\lambda$ or mean $1/\\lambda$ depending on the library. Mixing them silently scales everything wrong.</li>
+       <li><b>Uniform's hard boundaries.</b> Exactly-at-the-edge values and the discontinuous density cause trouble for methods that assume smoothness.</li>
+       <li><b>Heavy real-world tails.</b> Inter-arrival times are often more heavy-tailed than Exponential predicts; check before assuming a constant rate.</li>
+       <li><b>RNG quality.</b> Sampling "Uniform" from a weak pseudo-random generator introduces structure; use a vetted generator for simulations and security.</li>
+     </ul>`,
   quiz: {
     q: `A Uniform random variable runs over $[2, 8]$. What is its mean?`,
     a: `<p>$E[X] = \\frac{a+b}{2} = \\frac{2+8}{2} = \\frac{10}{2} = 5$.</p>`
@@ -1297,6 +1572,27 @@ L({
      </ul>`,
   application:
     `<p>The Normal is the default assumption for noise and errors in countless models. Linear regression assumes Normal residuals. Many neural-network weights are initialized from a Normal. It is the most important distribution in all of ML (Machine Learning).</p>`,
+  whenToUse:
+    `<p><b>Reach for the Normal (Gaussian) as your default model for measurement noise, errors, and sums of many small independent effects</b> — the CLT (Central Limit Theorem) makes it the right shape for averages and aggregates. It is the assumed residual in linear regression and the standard weight initializer.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A more exotic distribution</b> — when you have a symmetric, single-peaked quantity and no strong reason to expect skew or heavy tails; the Normal is analytically convenient and well understood.</li>
+       <li><b>Modeling raw data directly</b> — when a transform (log) makes the data roughly Normal, unlocking simple methods.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The data is bounded, skewed, or count-valued — use Beta, log-Normal, or Poisson; forcing Normality predicts impossible values.</li>
+       <li>Outliers and heavy tails are real — use a Student-$t$ for robustness; the Normal's thin tails dismiss extremes as near-impossible.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Assuming Normality without checking.</b> Many real distributions are skewed or heavy-tailed. Plot a histogram or Q-Q plot before relying on Normal-based methods.</li>
+       <li><b>Thin tails underestimate extremes.</b> A "6-sigma" event is treated as essentially impossible, yet financial and failure data show such events regularly. Don't model fat tails with a Normal.</li>
+       <li><b>Outliers distort the fit.</b> Mean and standard deviation are non-robust; a few extreme points shift the whole curve. Consider robust estimators.</li>
+       <li><b>Normality of data vs of the mean.</b> The CLT makes <i>averages</i> Normal, not the raw data. Don't claim individual observations are Normal just because their mean is.</li>
+       <li><b>Negative or bounded quantities.</b> A Normal puts mass below zero, so it's wrong for prices, counts, or durations. Use a bounded or positive distribution.</li>
+       <li><b>Standardize before Normal-assuming methods.</b> PCA and many models assume centered, comparably scaled features; skipping standardization quietly breaks the assumption.</li>
+     </ul>`,
   quiz: {
     q: `Test scores are Normal with $\\mu = 500$, $\\sigma = 100$. Roughly what percent of scores fall between 400 and 600?`,
     a: `<p>That's $\\mu \\pm 1\\sigma$ (one standard deviation each way). By the 68-95-99.7 rule, about <b>68%</b> of scores fall there.</p>`
@@ -1366,6 +1662,22 @@ L({
      </ul>`,
   application:
     `<p>Joint distributions describe how features relate. Probabilistic graphical models and Bayesian networks are built entirely from joint and marginal distributions. Marginalizing out hidden variables is a core inference step.</p>`,
+  whenToUse:
+    `<p><b>You reach for joint and marginal distributions whenever you need to reason about several variables at once</b> — how features co-vary, what one variable says about another, or what's left when you average a nuisance variable away. They are the substrate of every probabilistic graphical model.</p>
+     <p><b>Use the joint over:</b></p>
+     <ul>
+       <li><b>Per-variable marginals alone</b> — when the variables interact; the product of marginals throws away exactly the dependence you care about.</li>
+       <li><b>A correlation number</b> — when you need full conditional or tail behavior, not just a single linear summary.</li>
+     </ul>
+     <p><b>Marginalize (sum/integrate out) when:</b> a variable is a hidden nuisance you don't want to predict — that is the core inference step in mixture models and Bayesian networks. Reach for a factorized representation when the full joint is too large to store directly.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The joint blows up combinatorially.</b> A full table over many discrete variables has exponentially many cells. You can't estimate or store it without structure (independence assumptions, factorization).</li>
+       <li><b>Marginals don't rebuild the joint.</b> Knowing each variable separately tells you nothing about how they relate. You cannot recover dependence from marginals alone.</li>
+       <li><b>Marginalizing the wrong variable.</b> Summing out a confounder vs a mediator gives different — sometimes misleading — answers. Know what each variable means.</li>
+       <li><b>Sparse cells, noisy estimates.</b> High-dimensional joints leave most cells with few or zero samples, so estimates are unreliable. Smooth or assume structure.</li>
+       <li><b>Confusing joint, marginal, and conditional.</b> $P(X,Y)$, $P(X)$, and $P(X\\mid Y)$ are three different objects. Mixing them up corrupts the whole derivation.</li>
+     </ul>`,
   quiz: {
     q: `From the table above, what is the marginal probability that the weather is Rainy?`,
     a: `<p>Sum the Rainy column: $P(\\text{Happy, Rainy}) + P(\\text{Sad, Rainy}) = 0.1 + 0.3 = 0.4$.</p>`
@@ -1463,6 +1775,27 @@ L({
      </ul>`,
   application:
     `<p>Correlation finds related features in data. Highly correlated features are often redundant, so dropping one speeds up models. PCA (Principal Component Analysis) works directly on the covariance matrix to find the main directions of variation.</p>`,
+  whenToUse:
+    `<p><b>Reach for covariance and correlation whenever you want to measure how two quantities move together</b> — to spot redundant features, find leading indicators, or build the covariance matrix that PCA (Principal Component Analysis) and many models consume. Correlation is the scale-free, unit-less version that compares across features.</p>
+     <p><b>Choose correlation over:</b></p>
+     <ul>
+       <li><b>Raw covariance</b> — when features have different units or scales; correlation normalizes to $[-1,1]$ for an apples-to-apples comparison.</li>
+       <li><b>A scatter eyeball</b> — when you need one comparable number across many feature pairs to rank or filter them.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The relationship is non-linear (U-shaped, threshold) — Pearson correlation misses it; use mutual information or Spearman rank correlation.</li>
+       <li>You suspect a confounder driving both variables — correlation won't separate it; you need partial correlation or a causal model.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Correlation is not causation.</b> Two variables can move together because a third drives both. Never read a correlation as a cause without a design that supports it.</li>
+       <li><b>Pearson only sees linear structure.</b> A perfect parabola can have zero correlation. Zero correlation does not mean independence — plot the data.</li>
+       <li><b>Outliers fake or hide correlation.</b> One extreme point can create a strong correlation out of noise or mask a real one. Inspect and consider robust measures.</li>
+       <li><b>Spurious correlation in high dimensions.</b> With many features and few rows, some pairs correlate strongly by chance. Correct for multiple comparisons.</li>
+       <li><b>Covariance matrices go non-invertible.</b> Collinear features make the matrix singular, breaking PCA and Gaussian models. Regularize (add to the diagonal) or drop redundant columns.</li>
+       <li><b>Scale sensitivity of covariance.</b> Unscaled covariance is dominated by high-variance features. Standardize before comparing or before PCA.</li>
+     </ul>`,
   quiz: {
     q: `If $\\operatorname{Cov}(X, Y) = 0$, what does that say about their correlation $\\rho$?`,
     a: `<p>$\\rho = \\frac{0}{\\sigma_X \\sigma_Y} = 0$. There's no linear relationship between $X$ and $Y$.</p>`
@@ -1526,6 +1859,27 @@ L({
      </ul>`,
   application:
     `<p>A regression model literally predicts $E[Y \\mid X]$ — the average output given the inputs. Conditional expectation is the formal target of nearly all supervised learning.</p>`,
+  whenToUse:
+    `<p><b>You reach for conditional expectation whenever you want the best single-number prediction of an output given some inputs</b> — $E[Y\\mid X]$ is exactly what a regression model estimates and the formal target of nearly all supervised learning under squared-error loss.</p>
+     <p><b>Use it over:</b></p>
+     <ul>
+       <li><b>The unconditional mean $E[Y]$</b> — when features carry signal; conditioning on $X$ sharpens the prediction beyond the overall average.</li>
+       <li><b>A full conditional distribution</b> — when you only need a point estimate and downstream cost is symmetric (squared error), where the conditional mean is optimal.</li>
+     </ul>
+     <p><b>Prefer a different target when:</b></p>
+     <ul>
+       <li>Your loss isn't squared error — the conditional median minimizes absolute error; a conditional quantile targets a percentile (quantile regression).</li>
+       <li>You need uncertainty, not just a center — predict the conditional variance or the full predictive distribution too.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The mean isn't always the right target.</b> For skewed outcomes or asymmetric costs, $E[Y\\mid X]$ can be a poor decision; match the estimator to the loss.</li>
+       <li><b>Tower property abuse.</b> $E[E[Y\\mid X]]=E[Y]$ holds, but only when you average over the correct distribution of $X$ — train/serving skew breaks it.</li>
+       <li><b>Conditioning on too many things.</b> Predicting $E[Y\\mid X]$ with high-dimensional $X$ and few rows gives noisy, overfit estimates. Regularize.</li>
+       <li><b>Conditioning on a post-outcome variable.</b> Including a feature influenced by $Y$ (leakage or a collider) makes $E[Y\\mid X]$ look great offline and fail live.</li>
+       <li><b>Heteroscedastic noise.</b> The conditional mean can be right while the conditional <i>variance</i> changes across $X$; reporting one error bar everywhere misleads.</li>
+       <li><b>Extrapolation.</b> $E[Y\\mid X]$ learned on one region of $X$ has no guarantee outside it. Flag inputs far from the training support.</li>
+     </ul>`,
   quiz: {
     q: `Class A (half the students) averages 80 on a test; class B (the other half) averages 90. What is the overall average?`,
     a: `<p>$E[X] = 0.5 \\times 80 + 0.5 \\times 90 = 40 + 45 = 85$.</p>`
@@ -1591,6 +1945,26 @@ L({
      </ul>`,
   application:
     `<p>These bounds underpin the Law of Large Numbers (next lesson) and many guarantees in machine-learning theory. They give worst-case safety nets when you can't or won't assume a distribution's exact shape.</p>`,
+  whenToUse:
+    `<p><b>Reach for probability inequalities (Markov, Chebyshev, Hoeffding) when you need a guarantee but won't commit to a distribution's exact shape</b> — they bound the chance of a large deviation using only a mean, or a mean and variance. They are the workhorses behind generalization and concentration bounds in ML theory.</p>
+     <p><b>Use a bound over:</b></p>
+     <ul>
+       <li><b>An exact tail probability</b> — when you don't know the distribution; the inequality gives a safe worst case from minimal assumptions.</li>
+       <li><b>A Normal approximation</b> — when sample sizes are too small for the CLT (Central Limit Theorem) to apply or you need a distribution-free guarantee.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You know the distribution — use its exact tail; the bound is far looser than the truth.</li>
+       <li>You need a tight, usable interval, not a conservative one — bootstrap or an exact method beats a worst-case inequality.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The bounds are loose by design.</b> Chebyshev can say "at most 25%" when the real tail is 0.1%. Use them for guarantees, not for accurate probabilities.</li>
+       <li><b>Markov needs non-negativity.</b> Markov's inequality applies only to non-negative variables. Applying it to signed quantities gives nonsense.</li>
+       <li><b>Hoeffding needs bounded, independent terms.</b> Correlated samples or unbounded values violate its assumptions and the bound no longer holds.</li>
+       <li><b>Required moments must be finite.</b> Chebyshev needs a finite variance; for heavy-tailed data without one, it simply doesn't apply.</li>
+       <li><b>One-sided vs two-sided confusion.</b> Some forms bound $P(X\\ge a)$, others $P(|X-\\mu|\\ge a)$. Using the wrong one mis-states the guarantee by a factor of two.</li>
+     </ul>`,
   quiz: {
     q: `A nonnegative variable has mean 4. By Markov, what is the most that $P(X \\ge 8)$ can be?`,
     a: `<p>$P(X \\ge 8) \\le \\frac{E[X]}{a} = \\frac{4}{8} = 0.5$. At most 50%.</p>`
@@ -1648,6 +2022,26 @@ L({
      </ul>`,
   application:
     `<p>Stochastic gradient descent relies on this: a gradient from a small batch is a noisy estimate of the true gradient, but averaging over many steps points the right way. Monte Carlo simulation and A/B testing also depend on the Law of Large Numbers.</p>`,
+  whenToUse:
+    `<p><b>You lean on the Law of Large Numbers (LLN) whenever you estimate something by averaging many samples</b> — it is the promise that a sample mean converges to the true mean as data grows. Monte Carlo estimation, mini-batch gradients, and A/B test averages all rest on it.</p>
+     <p><b>Invoke it over:</b></p>
+     <ul>
+       <li><b>A single measurement</b> — when one noisy reading is unreliable but its average over many trials is trustworthy.</li>
+       <li><b>An analytic integral</b> — when the integral is intractable; averaging random samples (Monte Carlo) estimates it instead.</li>
+     </ul>
+     <p><b>Don't rely on it when:</b></p>
+     <ul>
+       <li>Samples are dependent or the distribution has no finite mean (heavy tails) — the average may not converge.</li>
+       <li>You need to know <i>how fast</i> it converges or want error bars — that is the CLT (Central Limit Theorem), which the LLN alone doesn't give.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>It says nothing about the rate.</b> "Eventually converges" can mean an enormous sample. For how-many-samples and error bars, use the CLT, not the LLN.</li>
+       <li><b>Gambler's fallacy.</b> The LLN does not make outcomes "balance out" in the short run. A streak of tails doesn't make heads due next.</li>
+       <li><b>Independence (or weak dependence) required.</b> Strongly correlated samples — autocorrelated time series, repeated near-duplicate rows — break convergence to the true mean.</li>
+       <li><b>No finite mean, no convergence.</b> For heavy-tailed data (Cauchy-like), the running average wanders forever. Check that a mean exists.</li>
+       <li><b>Biased sampling converges to the wrong number.</b> The LLN converges to the mean <i>of the sampled distribution</i>. If sampling is skewed, you converge confidently to a biased answer.</li>
+     </ul>`,
   quiz: {
     q: `You flip a fair coin (true heads rate 0.5). After 100,000 flips, roughly what fraction will be heads, and why?`,
     a: `<p>Very close to 0.5. By the Law of Large Numbers, the sample fraction converges to the true probability as the number of flips grows large.</p>`
@@ -1707,6 +2101,27 @@ L({
      </ul>`,
   application:
     `<p>The CLT is why confidence intervals and hypothesis tests use the Normal distribution. A/B tests, polling margins of error, and quality control all lean on it. It's the reason measurement noise is so often assumed Normal.</p>`,
+  whenToUse:
+    `<p><b>You invoke the CLT (Central Limit Theorem) whenever you need the distribution of an average or a sum</b> — it says that mean of enough independent samples is approximately Normal regardless of the underlying shape. It is the justification for confidence intervals, z-tests, and t-tests in A/B testing and polling.</p>
+     <p><b>Lean on it over:</b></p>
+     <ul>
+       <li><b>The LLN (Law of Large Numbers) alone</b> — when you need not just convergence but the <i>spread</i> of the estimate (the $1/\\sqrt{n}$ shrinkage) for error bars.</li>
+       <li><b>Modeling raw data as Normal</b> — the CLT licenses Normality for the <i>average</i>, which is what most tests actually use.</li>
+     </ul>
+     <p><b>Reach for something else when:</b></p>
+     <ul>
+       <li>The sample is small (n &lt; 30) or skewed — use a t-distribution or a bootstrap instead of the Normal approximation.</li>
+       <li>The data is heavy-tailed with infinite variance — the classic CLT fails; you need a generalized (stable) limit or robust methods.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>It applies to the average, not the data.</b> The sample mean becomes Normal; the individual observations do not. Don't claim raw data is Normal because of the CLT.</li>
+       <li><b>"Large enough n" depends on skew.</b> Symmetric data converges fast; highly skewed data may need hundreds of samples before the Normal approximation is good.</li>
+       <li><b>Independence is required.</b> Correlated samples (time series, clustered users) shrink the effective sample size, so the naive $1/\\sqrt{n}$ interval is too narrow.</li>
+       <li><b>Finite variance is required.</b> Heavy-tailed distributions with infinite variance don't obey the standard CLT — the average won't be Normal.</li>
+       <li><b>Peeking and multiple looks.</b> Repeatedly applying a CLT-based test as data trickles in inflates false positives. Use sequential or corrected methods.</li>
+       <li><b>Small samples need the t-distribution.</b> Using the Normal instead of Student-$t$ for small $n$ produces over-confident intervals.</li>
+     </ul>`,
   quiz: {
     q: `Samples have mean $\\mu = 10$ and variance $\\sigma^2 = 16$. For an average of $n = 4$ samples, what is the variance of $\\overline{X}$?`,
     a: `<p>$\\frac{\\sigma^2}{n} = \\frac{16}{4} = 4$. (So the average's standard deviation is $\\sqrt{4} = 2$, half of the single-sample $\\sigma = 4$.)</p>`
@@ -1770,6 +2185,23 @@ L({
      </ul>`,
   application:
     `<p>Every statistic computed from a dataset is an estimator: a model's accuracy, a feature's average, an A/B test's lift. Understanding bias keeps you from being fooled by your own measurements. Maximum likelihood estimation generalizes this idea to fit entire models.</p>`,
+  whenToUse:
+    `<p><b>You think in terms of estimators (bias, variance, consistency) whenever a number you report is computed from a finite sample</b> — a model's accuracy, a feature mean, an A/B lift. The framing tells you how much to trust that number and whether it's systematically off.</p>
+     <p><b>Use this lens over:</b></p>
+     <ul>
+       <li><b>Treating a sample statistic as ground truth</b> — when n is finite; every estimate carries variance and possibly bias you should quantify.</li>
+       <li><b>Point estimates alone</b> — when decisions ride on the number; pair it with a standard error or confidence interval.</li>
+     </ul>
+     <p><b>Choose a specific estimator when:</b> you can write a likelihood — use MLE (Maximum Likelihood Estimation) to fit whole models. Reach for a Bayesian estimator (a posterior mean) when you have prior information or little data; reach for a robust estimator (median, trimmed mean) when outliers are present.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>The bias–variance tradeoff.</b> An unbiased estimator can have huge variance; a slightly biased one (regularized) often predicts better. Don't chase unbiasedness blindly.</li>
+       <li><b>Evaluating on training data.</b> A model's accuracy measured on the data it was fit to is an optimistically biased estimator. Always hold out a test set.</li>
+       <li><b>Small samples, wild estimates.</b> Statistics from n &lt; 30 are high-variance. Report uncertainty; don't act on a noisy point estimate.</li>
+       <li><b>Sampling bias dooms the estimate.</b> If the sample isn't representative, even infinite data converges to the wrong value. Audit how the data was collected.</li>
+       <li><b>Plug-in bias.</b> Some quantities (variance with $1/n$, ratios) are biased even on clean data. Use the bias-corrected form ($1/(n-1)$) or a bootstrap correction.</li>
+       <li><b>Multiple testing inflates lift.</b> Picking the best of many A/B variants overstates the winner's effect (the winner's curse). Correct for selection.</li>
+     </ul>`,
   quiz: {
     q: `For the data $\\{1, 3\\}$, compute the sample mean and the sample variance $s^2$ (using $n-1$).`,
     a: `<p>Mean $= \\frac{1+3}{2} = 2$. Squared distances: $(1-2)^2 = 1$ and $(3-2)^2 = 1$, sum $= 2$. Divide by $n-1 = 1$: $s^2 = \\frac{2}{1} = 2$.</p>`

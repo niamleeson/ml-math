@@ -207,6 +207,28 @@ L({
      </ul>`,
   application:
     `<p>Spam filters, simple image classifiers, and credit-approval systems all start as linear predictors. They are fast and easy to understand. The dot product is the same one from the foundations module.</p>`,
+  whenToUse:
+    `<p><b>Reach for a linear predictor first</b> when the input is already a flat vector of meaningful numbers and you need a fast, transparent yes/no or score. It is the right baseline before anything fancier.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A deep network</b> — when data is scarce, latency must be tiny, or you must explain every decision (each weight reads as "how much this feature matters").</li>
+       <li><b>A decision tree</b> — when the boundary is roughly a straight line and you want a smooth, calibratable score rather than hard splits.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The classes are not linearly separable — add features, a kernel, or move to a tree-based model or a neural network.</li>
+       <li>The input is raw pixels, audio, or text — let a CNN (Convolutional Neural Network) or transformer learn the features first.</li>
+     </ul>
+     <p><b>In practice</b> reach for <code>scikit-learn</code>'s <code>LogisticRegression</code> or <code>SGDClassifier</code> as the workhorse implementation.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Garbage features, garbage model.</b> A linear predictor can only weight the features you give it. If the signal needs an interaction or a nonlinearity, it will never find it — engineer the feature explicitly.</li>
+       <li><b>Unscaled features distort the weights.</b> A feature measured in thousands swamps one measured in fractions. Standardize $\\phi(x)$ so each feature has comparable scale before training.</li>
+       <li><b>Sign convention bites.</b> The label must be $+1$ / $-1$ (or $0$ / $1$) consistently between training and serving. A flipped label silently inverts every prediction.</li>
+       <li><b>The score is not a probability.</b> $w\\cdot\\phi(x)$ is an unbounded number; do not read it as a confidence without a squashing function and calibration.</li>
+       <li><b>A separating line is not a confident one.</b> Many weight vectors classify the training set perfectly but generalize differently — a tiny margin means a fragile boundary.</li>
+       <li><b>Correlated features make weights unstable.</b> Two near-duplicate features split the weight unpredictably; the individual numbers stop being interpretable. Drop duplicates or add regularization.</li>
+     </ul>`,
   quiz: {
     q: `Features $\\phi(x)=[1, 4]$, weights $w=[3, -1]$. Compute the score and the prediction $f_w(x)$.`,
     a: `<p>Score $= 3\\times1 + (-1)\\times4 = 3 - 4 = -1$. The sign is negative, so $f_w(x) = -1$ (the "no" class).</p>`
@@ -274,6 +296,25 @@ L({
      </ul>`,
   application:
     `<p>Every trained model minimizes some loss. Spam filters and classifiers often use hinge or logistic loss. House-price predictors use squared loss. Choosing the loss shapes what "good" means.</p>`,
+  whenToUse:
+    `<p><b>You always pick a loss</b> — the question is <i>which</i> one. Match the loss to the prediction task and to what mistakes cost you.</p>
+     <p><b>Choose by task:</b></p>
+     <ul>
+       <li><b>Hinge loss</b> — for a hard-margin classifier (the support vector machine) when you care about a clean decision boundary, not probabilities.</li>
+       <li><b>Logistic (log) loss</b> — when you need calibrated probabilities, not just a label; it is the default for classification.</li>
+       <li><b>Squared loss</b> — for regression (predicting a number), when large errors should be punished hard.</li>
+       <li><b>Absolute / Huber loss</b> — for regression with outliers, when squared loss would let a few bad points dominate.</li>
+     </ul>
+     <p><b>Avoid zero-one loss as a training target</b> — it has no useful slope, so gradient descent cannot move on it. Use it only to <i>report</i> accuracy.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>Optimizing the wrong objective.</b> Minimizing squared loss does not maximize accuracy or AUC (Area Under the Curve). Pick the loss whose minimum matches the metric you will be judged on.</li>
+       <li><b>Squared loss chases outliers.</b> One mislabeled point with a huge error can dominate the whole sum. Switch to Huber or absolute loss when the data is noisy.</li>
+       <li><b>Class imbalance silently dominates.</b> The average loss is swamped by the majority class. Reweight per-class or resample so the rare class still moves the gradient.</li>
+       <li><b>Zero-one loss has no gradient.</b> It is flat almost everywhere, so it cannot be trained directly — that is the whole reason surrogate losses (hinge, logistic) exist.</li>
+       <li><b>Training loss is not test loss.</b> Driving training loss to zero usually means overfitting. Watch a held-out validation loss and stop when it stops falling.</li>
+       <li><b>Forgetting regularization.</b> Raw training-loss minimization can blow weights up. Add an $L_2$ ($\\lambda\\lVert w\\rVert^2$) penalty to keep the solution stable.</li>
+     </ul>`,
   quiz: {
     q: `True label $y=+1$, score $s=2$ (so margin $m=2$). What is the hinge loss $\\max(1-m,0)$?`,
     a: `<p>$\\max(1-2,\\,0) = \\max(-1,\\,0) = 0$. The margin is past $1$, so hinge is happy: zero loss.</p>`
@@ -323,6 +364,27 @@ L({
      <p>Thousands of tiny nudges like this drive the loss down.</p>`,
   application:
     `<p>SGD trains almost every modern model, including giant neural networks. Looking at one example (or a small batch) at a time is what makes training huge datasets possible.</p>`,
+  whenToUse:
+    `<p><b>Reach for SGD whenever the dataset is too big to process all at once</b>, or whenever the model is differentiable and trained by gradient descent — which is almost every neural network. It trades exactness for speed and scales to millions of examples.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Full-batch gradient descent</b> — when computing the gradient over the whole dataset each step is too slow; SGD takes many cheap, noisy steps instead.</li>
+       <li><b>Closed-form solutions</b> (the normal equations) — when the problem is huge or has no closed form; SGD needs only one example's gradient at a time.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The dataset is small and the problem is convex with a closed form — solve it directly for an exact answer.</li>
+       <li>You want fewer, smoother steps — use mini-batch SGD or an adaptive optimizer like Adam, the practical default for deep learning.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Learning rate is everything.</b> Too large and the loss diverges to infinity; too small and training crawls. Start with a small value, watch the loss, and use a schedule that decays $\\eta$ over time.</li>
+       <li><b>Unshuffled data biases the path.</b> If examples arrive sorted by label, each step pulls one way. Shuffle every epoch so the noise averages out.</li>
+       <li><b>Pure single-example SGD is noisy.</b> The gradient of one point is a rough estimate. Use mini-batches (32–512) for a steadier descent and better hardware use.</li>
+       <li><b>Unscaled features stall it.</b> Wildly different feature scales make a stretched loss surface that zig-zags. Standardize inputs first.</li>
+       <li><b>No convergence guarantee with a fixed rate.</b> A constant $\\eta$ bounces around the minimum forever. Decay it, or use momentum / Adam to settle.</li>
+       <li><b>Non-reproducible runs.</b> The random order changes the result. Fix the seed when you need to compare experiments.</li>
+     </ul>`,
   quiz: {
     q: `$w=10$, gradient $\\nabla_w=4$, learning rate $\\eta=0.25$. What is the new $w$?`,
     a: `<p>$w \\leftarrow 10 - 0.25\\times4 = 10 - 1 = 9$. The weight steps down from $10$ to $9$.</p>`
@@ -427,6 +489,28 @@ L({
      <p>A search algorithm's job is exactly this: out of all paths to a goal, return the one with the smallest summed cost.</p>`,
   application:
     `<p>GPS (Global Positioning System) routing, puzzle solvers, robot path planning, and even compiling a program all become search problems. Define the five pieces, and a search algorithm finds the best plan.</p>`,
+  whenToUse:
+    `<p><b>Frame a problem as search when you need a sequence of actions to a goal, the world is deterministic and known, and you can write down states and moves.</b> If a single reflex decision will not do, but you do have a clear model of how actions change the world, search is the right lens.</p>
+     <p><b>Choose search over:</b></p>
+     <ul>
+       <li><b>A reflex / learned model</b> — when the answer is a multi-step plan, not a one-shot label, and you can specify the rules exactly.</li>
+       <li><b>Hand-coded rules</b> — when the space of situations is too large to enumerate by hand but follows a clean transition model.</li>
+     </ul>
+     <p><b>Pick a different framework when:</b></p>
+     <ul>
+       <li>Actions are unreliable (you might slip) — use a Markov Decision Process (MDP) instead.</li>
+       <li>You do not know the rules and must learn from data — use reinforcement learning or a learned model.</li>
+       <li>There is an adversary — use game-tree search (minimax).</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The state space explodes.</b> Naively listing all states is hopeless for real problems (a chessboard, a road network). Define states compactly and rely on graph search to avoid revisiting them.</li>
+       <li><b>A bloated state encoding.</b> Putting irrelevant detail in the state multiplies the search tree. Keep the state the minimal snapshot that the transitions actually need.</li>
+       <li><b>Confusing fewest steps with cheapest path.</b> The shortest action count is not the lowest total cost. If costs vary, optimize total $\\text{Cost}$, not hop count.</li>
+       <li><b>Negative or zero action costs.</b> Most search algorithms assume $\\text{Cost}(s,a) \\ge 0$. A negative edge breaks uniform-cost search and A* outright.</li>
+       <li><b>Forgetting to detect goals or cycles.</b> A wrong $\\text{IsEnd}$ test, or no visited-set, sends the search looping forever.</li>
+       <li><b>Modeling a stochastic world as deterministic.</b> If actions sometimes fail, a search plan is brittle — you need an MDP that plans with the odds.</li>
+     </ul>`,
   quiz: {
     q: `In the $A-B-C$ line, if $\\text{Cost}(B,\\text{right})$ were $5$ instead of $1$, what is the cost of the path from $A$ to $C$?`,
     a: `<p>$\\text{Cost}(A,\\text{right}) + \\text{Cost}(B,\\text{right}) = 1 + 5 = 6$. The total path cost is $6$.</p>`
@@ -530,6 +614,28 @@ L({
      </ul>`,
   application:
     `<p>Puzzle solvers, web crawlers, and game engines all use tree search. The $b^d$ blowup is why we need smarter methods (next lessons) for big problems.</p>`,
+  whenToUse:
+    `<p><b>Pick the traversal that matches your memory budget and what you need to guarantee.</b> All three explore the same tree; they differ in order, memory, and optimality.</p>
+     <p><b>Which one:</b></p>
+     <ul>
+       <li><b>BFS (Breadth-First Search)</b> — when you need the shallowest goal and all action costs are equal; it finds the fewest-step solution but holds a whole level in memory.</li>
+       <li><b>DFS (Depth-First Search)</b> — when memory is tight and any goal will do; it uses only $\\mathcal{O}(d)$ memory but can dive down a wrong branch.</li>
+       <li><b>Iterative deepening</b> — when you want BFS's shallowest-goal guarantee with DFS's tiny memory; the default for big trees with unknown depth.</li>
+     </ul>
+     <p><b>Move beyond plain tree search when:</b></p>
+     <ul>
+       <li>Action costs vary — use uniform-cost search.</li>
+       <li>You have a heuristic toward the goal — use A* to explore far fewer nodes.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>BFS memory blows up.</b> Holding a full frontier costs $\\mathcal{O}(b^d)$ — gigabytes for modest $b$ and $d$. Prefer iterative deepening when the tree is deep.</li>
+       <li><b>DFS can loop forever.</b> On a graph with cycles, or an infinitely deep branch, DFS never returns. Add a visited-set or a depth limit.</li>
+       <li><b>BFS / DFS ignore cost.</b> Equal-step does not mean equal-cost. If actions have different costs, the shallowest path can be the most expensive — use uniform-cost search.</li>
+       <li><b>Re-expanding the same state.</b> In a graph, the same state reappears on many paths. Without a closed set you redo exponential work — switch to graph search.</li>
+       <li><b>Iterative deepening looks wasteful but is not.</b> Re-searching shallow levels repeatedly only adds a constant factor, because the bottom level dominates the count. Do not "optimize" it away with a memory-hungry BFS.</li>
+       <li><b>Wrong child ordering in DFS.</b> Push children in the order that puts the likely goal first off the stack, or DFS wanders the worst branch first.</li>
+     </ul>`,
   quiz: {
     q: `Branching factor $b=3$, goal depth $d=2$. Roughly how many states are at the deepest level, $b^d$?`,
     a: `<p>$b^d = 3^2 = 9$. There are about $9$ states at depth $2$. The count grows fast as $d$ rises.</p>`
@@ -648,6 +754,27 @@ L({
      </ul>`,
   application:
     `<p>UCS (as Dijkstra) powers shortest-path routing in networks and maps. Dynamic programming solves scheduling, sequence alignment in biology, and many optimization tasks by reusing sub-answers.</p>`,
+  whenToUse:
+    `<p><b>Reach for graph search the moment the same state can be reached by many paths</b> — which is true of almost every real problem. Remembering solved states turns an exponential tree into a manageable graph.</p>
+     <p><b>Which method:</b></p>
+     <ul>
+       <li><b>Dynamic programming (DP)</b> — when the graph is acyclic, so "future cost" is well-defined and each state can be solved once and memoized.</li>
+       <li><b>Uniform cost search (UCS / Dijkstra)</b> — when there are cycles or varying non-negative costs and you need the cheapest path.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have a heuristic toward the goal — use A*, which is UCS plus a goal-direction hint and explores far fewer states.</li>
+       <li>Edge costs can be negative — Dijkstra is wrong; use Bellman-Ford instead.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>UCS / Dijkstra breaks on negative edges.</b> The "settle the cheapest node once" logic assumes costs never go below zero. A single negative edge gives wrong answers — switch to Bellman-Ford.</li>
+       <li><b>DP needs an acyclic graph.</b> Apply dynamic programming to a graph with cycles and the future-cost recursion never bottoms out. Confirm the graph is a DAG (Directed Acyclic Graph) first.</li>
+       <li><b>Forgetting the closed set.</b> The whole point is to not re-expand settled states. Skip the visited check and you are back to exponential tree search.</li>
+       <li><b>Storing every state runs out of memory.</b> Memoizing or settling every state costs $\\mathcal{O}(\\text{states})$ space. For enormous spaces, prune with a heuristic (A*) instead of remembering everything.</li>
+       <li><b>Reconstructing the path.</b> UCS gives the cost but you must store back-pointers to recover the actual route — easy to forget.</li>
+       <li><b>Ties and floating-point costs.</b> Equal or near-equal costs can make the frontier order unstable; break ties deterministically for reproducible paths.</li>
+     </ul>`,
   quiz: {
     q: `Two ways to reach goal $G$: via $X$ costs $2+2=4$, via $Y$ costs $3+5=8$. What is $\\text{FutureCost}$ of the start, and which route wins?`,
     a: `<p>$\\min(4, 8) = 4$. The route through $X$ wins, at a total cost of $4$.</p>`
@@ -720,6 +847,27 @@ L({
      </ul>`,
   application:
     `<p>A* is the workhorse of GPS (Global Positioning System) routing and video-game pathfinding. The straight-line distance heuristic lets it find the best route while exploring a tiny fraction of the map.</p>`,
+  whenToUse:
+    `<p><b>Reach for A* when you need the cheapest path AND you can cheaply estimate the distance to the goal.</b> That goal-direction hint is what makes it far faster than uniform-cost search on large maps.</p>
+     <p><b>Choose A* over:</b></p>
+     <ul>
+       <li><b>Uniform cost search (UCS)</b> — when you have any admissible heuristic; A* explores far fewer nodes for the same optimal answer. With $h = 0$, A* simply degrades back to UCS.</li>
+       <li><b>Greedy best-first search</b> — when you need the <i>optimal</i> path, not just a fast one; greedy follows $h$ alone and can return a bad route.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>No good heuristic exists — fall back to UCS or Dijkstra.</li>
+       <li>Memory is tight on a huge map — use IDA* (Iterative-Deepening A*) or a weighted/bounded-suboptimal variant.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>A non-admissible heuristic breaks optimality.</b> If $h(s)$ ever overestimates the true remaining cost, A* can return a suboptimal path. Keep $h(s) \\le$ the true cost (straight-line distance is safe for road maps).</li>
+       <li><b>Inconsistency causes re-expansions.</b> An admissible but inconsistent heuristic can force A* to reopen settled nodes. Prefer a consistent (monotone) $h$ so each node is expanded once.</li>
+       <li><b>A weak heuristic is just slow UCS.</b> If $h$ is near zero everywhere, A* loses its advantage and explores almost the whole map. Invest in a tighter, still-admissible estimate.</li>
+       <li><b>Memory still grows.</b> A* keeps the whole frontier and closed set; on giant graphs it can exhaust RAM. Use IDA* or bounded variants when space is the limit.</li>
+       <li><b>Mismatched cost units.</b> If $h$ is in miles but edge costs are in minutes, the heuristic silently over- or under-estimates. Put $h$ in the same units as the path cost.</li>
+       <li><b>Tie-breaking thrashes.</b> Many cells share the same $f = g + h$. Break ties toward higher $g$ (closer to goal) to cut needless expansions.</li>
+     </ul>`,
   quiz: {
     q: `The true remaining cost from a state is $7$. Is a heuristic of $h=6$ admissible? Is $h=8$ admissible?`,
     a: `<p>$h=6$ is admissible because $6 \\le 7$ (it does not overshoot). $h=8$ is not, because $8 &gt; 7$ overestimates, which can break A*'s guarantee.</p>`
@@ -771,6 +919,27 @@ L({
      </ul>`,
   application:
     `<p>MDPs model robot control, inventory restocking, self-driving decisions, and game AI (Artificial Intelligence), where actions do not always work and the future is uncertain. They are the foundation of reinforcement learning.</p>`,
+  whenToUse:
+    `<p><b>Model a problem as an MDP when actions are unreliable, you collect rewards over time, and the next state depends only on the current state and action.</b> It is the right frame for sequential decisions under uncertainty.</p>
+     <p><b>Choose an MDP over:</b></p>
+     <ul>
+       <li><b>Deterministic search</b> — when actions can fail or slip; search plans a brittle single path, an MDP plans a policy that handles every outcome.</li>
+       <li><b>A one-shot reflex model</b> — when decisions compound over time and a reward now trades off against rewards later.</li>
+     </ul>
+     <p><b>Pick a different framework when:</b></p>
+     <ul>
+       <li>You cannot fully observe the state — use a Partially Observable MDP (POMDP) or a Hidden Markov Model (HMM).</li>
+       <li>You do not know the transition probabilities or rewards — use reinforcement learning (for example Q-learning) to learn them from experience.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The Markov assumption can fail silently.</b> If the right decision depends on history, not just the current state, your MDP is mis-specified. Fold the needed history into the state.</li>
+       <li><b>Reward shaping changes behavior.</b> Reward the wrong thing and the agent games it (it reaches the cell, not the goal). Reward outcomes you actually want, sparingly.</li>
+       <li><b>Discount choice matters.</b> A $\\gamma$ near $1$ values the far future and can diverge or learn slowly; a small $\\gamma$ makes the agent myopic. Pick it to match your real time horizon.</li>
+       <li><b>Transitions must be valid probabilities.</b> For each $(s,a)$, the outcomes must sum to $1$. An un-normalized table corrupts every value computed from it.</li>
+       <li><b>State-space blow-up.</b> Cross-producting many variables makes states explode. Use function approximation or factored representations rather than a giant table.</li>
+       <li><b>Confusing expected and actual reward.</b> Plan with the <i>expected</i> value of an action, not the value assuming it always succeeds — that gap is the cost of randomness.</li>
+     </ul>`,
   quiz: {
     q: `An action has $T(s,a,s_1)=0.7$ and one other possible outcome $s_2$. What must $T(s,a,s_2)$ be?`,
     a: `<p>The probabilities must sum to $1$, so $T(s,a,s_2) = 1 - 0.7 = 0.3$.</p>`
@@ -821,6 +990,26 @@ L({
      <p>With no randomness here, the value equals this utility, $17.5$.</p>`,
   application:
     `<p>Policies are the decision rules learned by game AI (Artificial Intelligence), trading bots, and robot controllers. Discounting models the fact that a reward now is usually worth more than the same reward later.</p>`,
+  whenToUse:
+    `<p><b>This shows up whenever you need to compare two plans inside an MDP (Markov Decision Process).</b> The policy is the plan; its value is the yardstick that says which plan is better, averaging over the world's randomness.</p>
+     <p><b>It unlocks:</b></p>
+     <ul>
+       <li><b>Policy evaluation</b> — fix a policy and compute its value everywhere, the inner loop of policy iteration.</li>
+       <li><b>Comparing controllers</b> — pick the policy with the higher value $V_\\pi(s)$ at the states you care about.</li>
+     </ul>
+     <p><b>Reach further when:</b></p>
+     <ul>
+       <li>You want the <i>best</i> policy, not the value of a given one — use value iteration or policy iteration.</li>
+       <li>You also need to rate a specific action, not just a state — use Q-values.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Value is an average, not a guarantee.</b> $V_\\pi(s)$ is the <i>expected</i> return; any single run can be much worse. For risk-sensitive settings, look at the spread, not just the mean.</li>
+       <li><b>Wrong discount exponent.</b> Step $i$ is weighted by $\\gamma^{i-1}$, not $\\gamma^i$ — an off-by-one in the power silently mis-values every plan.</li>
+       <li><b>Undiscounted infinite horizons can diverge.</b> With $\\gamma = 1$ and no terminal state, the discounted sum may not converge. Keep $\\gamma &lt; 1$ or guarantee episodes end.</li>
+       <li><b>A high-value policy can be unsafe.</b> Maximizing average reward may accept rare catastrophic outcomes. Encode hard constraints in the reward or the action set.</li>
+       <li><b>Comparing values across different MDPs is meaningless.</b> Values only rank policies within the same reward and discount setup; rescaling rewards rescales every value.</li>
+     </ul>`,
   quiz: {
     q: `Rewards $r_1=4$, $r_2=4$, with $\\gamma=0.5$. What is the discounted utility $u$?`,
     a: `<p>$u = 4\\times1 + 4\\times0.5 = 4 + 2 = 6$. The second reward is discounted to $2$.</p>`
@@ -868,6 +1057,26 @@ L({
      </ul>`,
   application:
     `<p>Q-values are the heart of reinforcement learning. A game AI (Artificial Intelligence) compares the Q-value of each move and picks the highest. They let an agent rate actions without simulating the whole future by hand.</p>`,
+  whenToUse:
+    `<p><b>Use Q-values when you need to choose an action, not just rate a state.</b> A state value $V(s)$ tells you how good a position is; a Q-value $Q(s,a)$ tells you which move to make, which is what an agent actually needs.</p>
+     <p><b>It unlocks:</b></p>
+     <ul>
+       <li><b>Acting greedily</b> — pick $\\arg\\max_a Q(s,a)$ with no extra lookahead or model rollout.</li>
+       <li><b>Model-free learning</b> — Q-learning estimates $Q$ directly from experience, without ever knowing the transition table $T$.</li>
+     </ul>
+     <p><b>Reach for something else when:</b></p>
+     <ul>
+       <li>The action space is continuous or huge — tabular Q-values do not fit; use a policy-gradient method or an actor-critic.</li>
+       <li>You only need to evaluate one fixed plan — a state value $V_\\pi$ is enough.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forgetting to weight by transition probability.</b> The Q-value averages over <i>every</i> next state $s'$, weighted by $T(s,a,s')$ — not just the most likely one. Drop the weighting and the value is wrong.</li>
+       <li><b>Mixing up immediate and future reward.</b> Each term is reward <i>plus</i> discounted future value, $R + \\gamma V(s')$. Omitting either piece breaks the recursion.</li>
+       <li><b>Tabular Q does not scale.</b> One entry per state-action pair blows up for large spaces. Approximate $Q$ with a function (a network) instead.</li>
+       <li><b>Stale $V(s')$ values.</b> A Q-value is only as good as the next-state values it is built from; during learning those are still moving, so early Q-values are unreliable.</li>
+       <li><b>Greedy action selection while still learning.</b> Always taking the current best $Q$ means you never explore better moves. Mix in exploration (epsilon-greedy).</li>
+     </ul>`,
   quiz: {
     q: `One outcome only: probability $1$, reward $6$, next-state value $V=4$, $\\gamma=0.5$. What is $Q(s,a)$?`,
     a: `<p>$Q = 1\\times[\\,6 + 0.5\\times4\\,] = 6 + 2 = 8$.</p>`
@@ -919,6 +1128,27 @@ L({
      </ul>`,
   application:
     `<p>Value iteration solves MDPs (Markov Decision Processes) exactly when the model is known: robot navigation, inventory control, board-game endgames. It is the textbook way to compute an optimal policy.</p>`,
+  whenToUse:
+    `<p><b>Use value iteration when you know the full MDP model</b> — the transitions $T$ and rewards — <b>and the state space is small enough to sweep.</b> It computes the optimal policy exactly, no learning required.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Policy iteration</b> — when you prefer many cheap Bellman backups to fewer, costlier full policy evaluations; both converge to $\\pi^*$, value iteration is simpler to code.</li>
+       <li><b>Just evaluating one policy</b> — when you want the <i>best</i> policy, not the value of a fixed one; the $\\max_a$ is what optimizes.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You do not know $T$ or the rewards — use Q-learning, which learns from experience.</li>
+       <li>The state space is huge or continuous — use approximate dynamic programming or a function approximator; a full sweep is infeasible.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>It needs the model.</b> Value iteration assumes you know $T(s,a,s')$ and the rewards exactly. Without them you cannot run a single backup — that is what reinforcement learning is for.</li>
+       <li><b>Convergence depends on the discount.</b> A $\\gamma$ close to $1$ makes the values converge slowly; with $\\gamma = 1$ and no terminal state they may never settle. Keep $\\gamma &lt; 1$ or guarantee episodes end.</li>
+       <li><b>Stopping too early.</b> Halt before the values stop moving and the extracted policy is suboptimal. Iterate until the largest change (the Bellman residual) drops below a small threshold.</li>
+       <li><b>Each sweep is $\\mathcal{O}(\\text{states} \\times \\text{actions} \\times \\text{successors})$.</b> Large spaces make every sweep expensive. Use prioritized sweeping or asynchronous updates.</li>
+       <li><b>Reusing the wrong round's values.</b> A synchronous sweep should back up from the <i>previous</i> round's estimates; mixing in this round's half-updated values changes the dynamics.</li>
+       <li><b>Floating-point ties in $\\arg\\max$.</b> Near-equal Q-values make the greedy policy flicker between actions; break ties deterministically.</li>
+     </ul>`,
   quiz: {
     q: `A state's actions have Q-values $Q(\\text{up})=2$, $Q(\\text{down})=9$, $Q(\\text{stay})=5$. What is the new value, and the optimal action?`,
     a: `<p>$V = \\max(2,9,5) = 9$. The optimal action is $\\arg\\max = \\text{down}$.</p>`
@@ -970,6 +1200,27 @@ L({
      </ul>`,
   application:
     `<p>Q-learning trained early game-playing agents and robot controllers without a known model. Deep Q-Networks (DQN) used this idea, with a neural network, to learn Atari games straight from pixels.</p>`,
+  whenToUse:
+    `<p><b>Reach for Q-learning when you do NOT know the MDP (Markov Decision Process) model and must learn by acting.</b> The agent tries actions, sees rewards, and bootstraps Q-values from experience — no transition table needed.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Value / policy iteration</b> — when $T$ and the rewards are unknown; those methods need the model, Q-learning does not.</li>
+       <li><b>SARSA (on-policy)</b> — when you want the optimal greedy policy regardless of how you explore; Q-learning is off-policy, so it can learn the best policy while behaving exploratorily.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The state or action space is large or continuous — use a Deep Q-Network (DQN) or a policy-gradient method; a Q-table will not fit.</li>
+       <li>The model is actually known and small — value iteration is faster and exact.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>No exploration, no learning.</b> Always taking the current best action traps the agent in a local habit. Use epsilon-greedy (or another exploration scheme) and decay it over time.</li>
+       <li><b>Learning rate must decay.</b> A fixed $\\eta$ never lets the estimates settle. Shrink $\\eta$ as visits accumulate so Q-values converge.</li>
+       <li><b>Sparse or delayed rewards stall it.</b> If reward only comes at the very end, credit propagates one step per visit and learning crawls. Use reward shaping or eligibility traces.</li>
+       <li><b>Tabular Q does not scale.</b> One cell per state-action pair is hopeless for big spaces. Move to function approximation — but then watch for instability.</li>
+       <li><b>Function-approximation divergence.</b> Naive deep Q-learning can oscillate or blow up. Stabilize it with a replay buffer and a target network, as DQN does.</li>
+       <li><b>Maximization bias.</b> The $\\max_{a'}$ over noisy estimates systematically over-estimates Q-values. Double Q-learning corrects this.</li>
+     </ul>`,
   quiz: {
     q: `$\\hat Q=2$, reward $r=8$, best next value $0$, $\\gamma=0.5$, $\\eta=0.5$. What is the updated $\\hat Q$?`,
     a: `<p>Target $= 8 + 0.5\\times0 = 8$. Blend $= 0.5\\times2 + 0.5\\times8 = 1 + 4 = 5$. The new estimate is $5$.</p>`
@@ -1015,6 +1266,28 @@ L({
      </ul>`,
   application:
     `<p>Minimax drives classic game engines for chess, checkers, and tic-tac-toe. It assumes a tough opponent, so its plans are safe even against the best play.</p>`,
+  whenToUse:
+    `<p><b>Use minimax for two-player, zero-sum, perfect-information games against an opponent who plays to beat you.</b> It gives the safe move: the best you can guarantee no matter how well the opponent replies.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A single-agent search</b> — when there is an adversary; ordinary search assumes you control every move, minimax alternates max and min.</li>
+       <li><b>Expectimax</b> — when the opponent is a strong, deliberate player rather than random; the worst-case min is the right model.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The opponent or environment is random — use expectimax (average, not worst case).</li>
+       <li>The game tree is too deep to reach the leaves — add an evaluation function and a depth cutoff, and prune with alpha-beta.</li>
+       <li>The branching factor is enormous (Go) — use Monte Carlo Tree Search (MCTS) instead.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The tree is too big to search fully.</b> Real games have astronomically many positions. You must cut off at a depth and apply a heuristic <b>evaluation function</b> to non-terminal leaves.</li>
+       <li><b>A bad evaluation function dooms the search.</b> Below the cutoff, the leaf scores are guesses; a poor heuristic makes deep search confidently wrong. Tune it carefully.</li>
+       <li><b>Assuming a perfect opponent against a weak one.</b> Minimax leaves easy wins on the table when the real opponent blunders — model a random or imperfect opponent with expectimax.</li>
+       <li><b>The horizon effect.</b> A fixed depth can hide a disaster just past the cutoff, so the agent "delays" bad news. Use quiescence search to extend volatile lines.</li>
+       <li><b>Sign / perspective bugs.</b> Mixing up whose turn maximizes flips the whole evaluation. Keep one consistent convention (high = good for you).</li>
+       <li><b>Ignoring repeated positions.</b> The same board reached by different move orders is re-searched; use a transposition table to cache it.</li>
+     </ul>`,
   quiz: {
     q: `Your move. Branch $A$'s opponent reply gives $\\min(6,1)$; branch $B$'s gives $\\min(4,4)$. Which branch do you pick, and what is the value?`,
     a: `<p>Branch $A$: $\\min(6,1)=1$. Branch $B$: $\\min(4,4)=4$. You max: $\\max(1,4)=4$, so pick branch $B$. Value is $4$.</p>`
@@ -1060,6 +1333,25 @@ L({
      <p>You reached the same decision (branch $A$) without checking the rest of $B$.</p>`,
   application:
     `<p>Alpha-beta pruning is what made strong chess programs practical, including Deep Blue. By skipping doomed branches, it searches several moves deeper in the same time.</p>`,
+  whenToUse:
+    `<p><b>Apply alpha-beta whenever you run minimax — it is a free upgrade.</b> Same exact answer, far fewer nodes, so you can search several plies deeper in the same time.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Plain minimax</b> — always, for adversarial search; there is no downside, only skipped branches that could not change the decision.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The branching factor is huge (Go) — even pruned, the tree is too big; use Monte Carlo Tree Search (MCTS).</li>
+       <li>The node is a chance node, not an opponent node — alpha-beta does not prune random averages cleanly; use expectimax with care.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Move ordering makes or breaks it.</b> Pruning power depends entirely on trying strong moves first. With perfect ordering you search $\\mathcal{O}(b^{d/2})$ nodes; with the worst ordering you save nothing. Order by a quick heuristic or iterative deepening.</li>
+       <li><b>It does not change the answer.</b> A common bug is "pruning" a branch that could actually matter — alpha-beta only skips branches that provably cannot affect the root. If your pruned result differs from minimax, the cutoff logic is wrong.</li>
+       <li><b>Off-by-one on the cutoff test.</b> Prune when $\\alpha \\ge \\beta$, and update the right bound at max vs min nodes. Swapping them silently breaks correctness.</li>
+       <li><b>Still bounded by depth.</b> Pruning lets you go deeper but never to the leaves of a big game. You still need an evaluation function at the cutoff.</li>
+       <li><b>Transpositions interact subtly.</b> Caching node values with a transposition table alongside alpha-beta needs care — stored bounds depend on the $\\alpha$, $\\beta$ window they were computed in.</li>
+     </ul>`,
   quiz: {
     q: `Max already has $\\alpha=7$ secured. A new min-branch's first child returns $4$. Can the rest of that branch matter? Why?`,
     a: `<p>No. The branch is a min node, so its value is at most $4$. Since $4 &lt; 7$, it cannot beat the secured $7$. Prune it.</p>`
@@ -1105,6 +1397,25 @@ L({
      <p>Treating a random opponent as perfect would waste good chances.</p>`,
   application:
     `<p>Expectimax fits games with dice or randomness, like backgammon, and AIs that face beginner (not perfect) opponents. It is the right model when "the other side" is chance.</p>`,
+  whenToUse:
+    `<p><b>Use expectimax when the "other side" is random, not adversarial</b> — a dice roll, a shuffled deck, or an opponent who does not play optimally. It averages over outcomes instead of assuming the worst.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>Minimax</b> — when the opponent is chance or a known imperfect player; minimax's worst-case assumption is too pessimistic and leaves easy value on the table.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The opponent really does play to beat you — use minimax; assuming randomness there is dangerously optimistic.</li>
+       <li>The chance branching is enormous — sample outcomes with Monte Carlo rollouts instead of enumerating them all.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Wrong opponent model is the core risk.</b> Expectimax against a strong adversary over-trusts them and can be exploited; minimax against a random world is needlessly cautious. Match the node type to reality.</li>
+       <li><b>You need accurate outcome probabilities.</b> The average is only as good as the $\\pi_{opp}(s,a)$ weights. Bad probability estimates give a confidently wrong expected value.</li>
+       <li><b>No clean pruning.</b> Unlike minimax, chance nodes resist alpha-beta cutoffs (every child contributes to the average), so expectimax explores more nodes — sample or bound the values.</li>
+       <li><b>Evaluation-function scale matters.</b> Because outcomes are averaged, a non-linear or mis-scaled leaf evaluation distorts the expectation in ways minimax would not show.</li>
+       <li><b>Forgetting your own nodes still maximize.</b> Only chance / random-opponent nodes average; your decision nodes take the max. Averaging your own move throws away your agency.</li>
+     </ul>`,
   quiz: {
     q: `A chance node has outcomes worth $10$ and $0$, each with probability $0.5$. What is the expectimax value? How does it differ from minimax?`,
     a: `<p>Expectimax $= 0.5\\times10 + 0.5\\times0 = 5$. Minimax would take the worst case, $\\min(10,0)=0$. Expectimax is higher because it averages.</p>`
@@ -1198,6 +1509,28 @@ L({
      <p>Sudoku works the same way: each row, column, and box is a "must all differ" set of factors.</p>`,
   application:
     `<p>CSPs model scheduling (no two classes share a room and time), Sudoku, map coloring, and circuit layout. State the variables, domains, and constraints, and a solver fills them in.</p>`,
+  whenToUse:
+    `<p><b>Frame a problem as a CSP (Constraint Satisfaction Problem) when the goal is an assignment that satisfies a set of hard rules</b> — variables to pick, each from a small domain, with constraints linking them. If you can list variables, domains, and "these must / must not" rules, a CSP solver does the rest.</p>
+     <p><b>Choose a CSP over:</b></p>
+     <ul>
+       <li><b>Generic search</b> — when the structure is "assign all variables consistently"; CSP-specific pruning (forward checking, arc consistency) beats blind search.</li>
+       <li><b>Hand-written rule code</b> — when the constraints interact in tangled ways that ad-hoc loops cannot manage cleanly.</li>
+     </ul>
+     <p><b>Pick a different framework when:</b></p>
+     <ul>
+       <li>You want the <i>best</i> assignment by some score, not just a valid one — use a weighted CSP, MAX-SAT, or integer programming.</li>
+       <li>Constraints are numeric and linear over reals — use linear programming.</li>
+       <li>There is uncertainty or sequential decisions — use an MDP or a Bayes net, not a CSP.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Modeling soft preferences as hard constraints.</b> A single $0$ factor kills an otherwise-good assignment. Use weighted factors for "nice to have" so the solver can trade them off.</li>
+       <li><b>The search space is exponential.</b> $k$ values across $n$ variables is $k^n$ assignments. Never enumerate them — lean on backtracking with forward checking and arc consistency.</li>
+       <li><b>Over-tight constraints make it unsatisfiable.</b> Add one rule too many and there is no solution at all. Check feasibility, and relax or report the conflicting constraints.</li>
+       <li><b>Forgetting symmetry.</b> Interchangeable values (Red / Green / Blue are all "a colour") multiply equivalent solutions and waste search. Add symmetry-breaking constraints.</li>
+       <li><b>A factor that returns a negative number.</b> Factors must be $\\ge 0$ so the product weight is meaningful; a stray negative inverts the logic.</li>
+       <li><b>Ignoring variable ordering.</b> Which variable you branch on first hugely changes the search size — the most-constrained-variable heuristic matters (next lesson).</li>
+     </ul>`,
   quiz: {
     q: `Three factors give scores $1$, $1$, and $0$ for an assignment. What is its weight, and is it a valid solution?`,
     a: `<p>Weight $= 1\\times1\\times0 = 0$. A zero means a hard constraint is broken, so it is not a valid solution.</p>`
@@ -1358,6 +1691,28 @@ L({
      </ul>`,
   application:
     `<p>These techniques power Sudoku solvers, exam and shift scheduling, and resource allocation. Forward checking and good variable ordering turn problems that look impossible into ones that solve in a blink.</p>`,
+  whenToUse:
+    `<p><b>Backtracking with consistency techniques is the default way to actually solve a CSP (Constraint Satisfaction Problem).</b> Use it whenever you have variables, domains, and constraints and need a valid assignment fast.</p>
+     <p><b>Which technique to add:</b></p>
+     <ul>
+       <li><b>Plain backtracking</b> — the baseline: assign, check, undo on failure. Always start here.</li>
+       <li><b>Forward checking</b> — when a choice obviously prunes neighbours' options; it catches dead ends one step early for little cost.</li>
+       <li><b>Arc consistency (AC-3)</b> — when constraints are tight and propagation can collapse many domains; it prunes harder but costs more per step.</li>
+       <li><b>Most-constrained-variable ordering</b> — almost always; tackling the variable with the fewest choices first finds failures sooner.</li>
+     </ul>
+     <p><b>Reach past backtracking when:</b></p>
+     <ul>
+       <li>The problem is huge and you only need a good-enough answer — use local search (min-conflicts) or a dedicated SAT solver.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Naive full-assignment enumeration is hopeless.</b> Trying every combination is $k^n$. Always assign one variable at a time and prune — that is the whole point of backtracking.</li>
+       <li><b>Skipping consistency checks.</b> Without forward checking or arc consistency, backtracking thrashes deep into doomed branches before noticing. Propagate constraints after each assignment.</li>
+       <li><b>Bad variable / value ordering.</b> Picking an easy variable first delays the inevitable conflict; order by most-constrained variable and least-constraining value.</li>
+       <li><b>Arc consistency is not a solver.</b> AC-3 prunes domains but rarely solves the CSP alone; it is a preprocessing and inline pruning step inside backtracking, not a replacement for it.</li>
+       <li><b>Forgetting to undo on backtrack.</b> A choice must fully restore the domains it pruned when it is abandoned, or later branches inherit phantom restrictions.</li>
+       <li><b>No restart on heavy-tailed runs.</b> Some orderings get unlucky and run for ages; randomized restarts often finish far faster.</li>
+     </ul>`,
   quiz: {
     q: `Variable A's domain is $\\{$Red, Blue$\\}$ and B's is $\\{$Red$\\}$. Using the most-constrained-variable heuristic, which do you assign first, and why?`,
     a: `<p>Assign B first. It has only one value left ($\\{$Red$\\}$), the smallest domain, so it is the most constrained.</p>`
@@ -1475,6 +1830,28 @@ L({
      <p>The arrows told us exactly which conditional probabilities to multiply.</p>`,
   application:
     `<p>Bayesian networks power medical diagnosis (symptoms given diseases), spam filtering, and fault detection. They let experts encode cause-and-effect knowledge and reason about it cleanly.</p>`,
+  whenToUse:
+    `<p><b>Reach for a Bayes net when you have variables with known cause-and-effect structure and want to reason about uncertainty.</b> It compresses a giant joint probability table into small per-node tables and makes "what causes what" explicit.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A full joint table</b> — when variables are mostly conditionally independent; the graph needs far fewer numbers and is interpretable.</li>
+       <li><b>A black-box classifier</b> — when you need to encode expert knowledge, handle missing inputs gracefully, or explain <i>why</i> a prediction was made.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>You have lots of labeled data and only care about prediction accuracy — a discriminative model (gradient boosting, a neural network) usually wins.</li>
+       <li>The variables form a time series — use a Hidden Markov Model (HMM) or a Dynamic Bayes Net.</li>
+       <li>Relationships are dense with no clean independence structure — the graph saves nothing.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Arrows are not proven causation.</b> A Bayes net encodes conditional independence, not real-world cause; a wrong arrow direction can still fit the data but mislead any intervention reasoning.</li>
+       <li><b>The graph must be acyclic.</b> A cycle makes the factorization $\\prod_i P(X_i \\mid \\text{Parents}(i))$ ill-defined. Keep it a DAG (Directed Acyclic Graph).</li>
+       <li><b>CPT (Conditional Probability Table) size explodes with parents.</b> A node with $k$ binary parents needs $2^k$ rows. Limit fan-in, or use a structured CPT (noisy-OR) to keep it estimable.</li>
+       <li><b>Sparse data gives unreliable probabilities.</b> Rare parent combinations may have few or zero examples. Use priors / smoothing so a CPT entry is not $0$ just because it was unseen.</li>
+       <li><b>Exact inference can be intractable.</b> On densely connected graphs, variable elimination blows up. Switch to approximate inference (sampling) for big networks.</li>
+       <li><b>Confusing marginal and conditional independence.</b> Two causes can be independent on their own yet become dependent once their shared effect is observed (explaining away). Reason through the graph, not by intuition.</li>
+     </ul>`,
   quiz: {
     q: `For Rain $\\rightarrow$ Wet, with $P(\\text{Rain})=0.4$ and $P(\\text{Wet}\\mid\\text{Rain})=0.5$, what is $P(\\text{Rain}, \\text{Wet})$?`,
     a: `<p>$P(\\text{Rain})\\times P(\\text{Wet}\\mid\\text{Rain}) = 0.4\\times0.5 = 0.2$.</p>`
@@ -1594,6 +1971,27 @@ L({
      <p><b>Explaining away</b> is the same idea between rival causes: if a second test later <i>confirms</i> Flu, the probability of Cold drops, because Flu now accounts for the positive result on its own.</p>`,
   application:
     `<p>Inference answers real questions: given these symptoms, how likely is this disease? Given these clicks, how likely is fraud? It is how a Bayes net turns from a diagram into a decision tool.</p>`,
+  whenToUse:
+    `<p><b>Run inference whenever you have a Bayes net and want $P(\\text{query}\\mid\\text{evidence})$</b> — the chance of something unobserved given what you have seen. The method depends on how big and tangled the network is.</p>
+     <p><b>Which method:</b></p>
+     <ul>
+       <li><b>Exact inference (variable elimination)</b> — when the network is small or has low treewidth; it gives the true probability.</li>
+       <li><b>Approximate inference (Gibbs / importance sampling)</b> — when the network is large or densely connected and exact inference is too slow; trade a little accuracy for speed.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The unknowns evolve over time — use the forward-backward algorithm on an HMM (Hidden Markov Model).</li>
+       <li>You only ever query one fixed variable from data — a direct discriminative model may be simpler.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Exact inference is NP-hard in general.</b> On a densely connected network, variable elimination's intermediate tables explode. Watch the treewidth; switch to sampling when it grows.</li>
+       <li><b>Elimination order matters enormously.</b> A bad ordering creates huge intermediate factors; a good one keeps them small. Use a min-fill or min-degree heuristic.</li>
+       <li><b>Sampling can converge slowly.</b> Gibbs sampling mixes badly when variables are highly correlated, giving biased estimates from too-few effective samples. Use enough burn-in and check convergence.</li>
+       <li><b>Zero-probability evidence breaks rejection sampling.</b> Rare evidence means almost all samples are thrown away. Use likelihood weighting or importance sampling instead.</li>
+       <li><b>Forgetting to normalize.</b> The posterior must divide by the evidence $P(\\text{evidence})$; skip it and the "probabilities" do not sum to $1$.</li>
+       <li><b>Misreading explaining-away.</b> Observing a shared effect couples two independent causes. Treating them as still-independent gives wrong posteriors.</li>
+     </ul>`,
   quiz: {
     q: `In the alarm example, after the earthquake is confirmed, does the probability of a burglary go up or down? What is this effect called?`,
     a: `<p>It goes down. The earthquake already explains the alarm, so the rival cause (burglary) is less needed. This is called "explaining away".</p>`
@@ -1717,6 +2115,28 @@ L({
      <p><b>Smoothing</b> goes further: a No-umbrella day wedged between wet days can still come out Rainy, because forward-backward also uses the <i>future</i> clues, not just the past.</p>`,
   application:
     `<p>HMMs power speech recognition (hidden words, observed sound waves), object tracking (hidden position, noisy sensors), and gene finding in DNA. They are the classic model for "infer the hidden truth from a noisy time series".</p>`,
+  whenToUse:
+    `<p><b>Reach for an HMM (Hidden Markov Model) when a hidden state evolves over time and you only see noisy clues</b> — and the state's next value depends only on its current value. It is the go-to model for "infer the hidden truth from a noisy sequence".</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A static Bayes net</b> — when the data is a time series; the HMM ties the steps together with a transition model.</li>
+       <li><b>A Kalman filter</b> — when the hidden state is discrete (which word, which weather) rather than a continuous vector.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The hidden state is continuous with linear-Gaussian dynamics — use a Kalman filter.</li>
+       <li>Long-range dependencies matter (the state $50$ steps back) — use a Recurrent Neural Network (RNN) or a transformer; the Markov assumption forgets.</li>
+       <li>You have abundant labeled sequences and only want accuracy — a discriminative sequence model (a Conditional Random Field, or a neural tagger) often wins.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>The Markov assumption forgets the past.</b> $H_t$ depends only on $H_{t-1}$, so genuine long-range dependencies are lost. Add states to encode needed history, or use an RNN.</li>
+       <li><b>Confusing filtering with smoothing.</b> Filtering uses only past clues; smoothing (forward-backward) also uses future ones and is more accurate for past states. Pick the one your task needs.</li>
+       <li><b>Numerical underflow.</b> Multiplying many small probabilities along the chain drives values to zero. Work in log-space or normalize (rescale) at every step.</li>
+       <li><b>Forgetting to normalize each step.</b> The filtering update must renormalize the belief to sum to $1$; skip it and the probabilities decay away.</li>
+       <li><b>Local optima in training.</b> Learning the transition / emission tables with Baum-Welch (an EM algorithm) only finds a local optimum. Try several random restarts.</li>
+       <li><b>Wrong number of hidden states.</b> Too few states cannot capture the dynamics; too many overfit. Validate the state count on held-out data.</li>
+     </ul>`,
   quiz: {
     q: `In the umbrella HMM, what is hidden and what is observed? Which probability links the two, $P(E_t\\mid H_t)$ or $P(H_t\\mid H_{t-1})$?`,
     a: `<p>The weather is hidden; the umbrella is observed. The emission $P(E_t\\mid H_t)$ links the observation to the hidden state. $P(H_t\\mid H_{t-1})$ instead describes how the hidden weather changes day to day.</p>`
@@ -1788,6 +2208,28 @@ L({
      </ul>`,
   application:
     `<p>Logic underlies digital circuits (AND, OR, NOT gates), program verification, and rule-based expert systems. When facts are crisp and certain, logic gives exact, checkable reasoning.</p>`,
+  whenToUse:
+    `<p><b>Use propositional logic when knowledge is crisp and certain</b> — facts that are simply true or false, joined by AND / OR / NOT / IMPLIES — and you need exact, checkable conclusions rather than probabilities.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A Bayes net</b> — when there is no uncertainty; logic gives a hard yes/no entailment instead of a probability.</li>
+       <li><b>Ad-hoc if/else code</b> — when you want to <i>ask what follows</i> from a knowledge base, not just hard-code one decision path.</li>
+     </ul>
+     <p><b>Pick a different framework when:</b></p>
+     <ul>
+       <li>Facts are uncertain or noisy — use probability (a Bayes net); logic has no notion of "probably".</li>
+       <li>You need to talk about objects, relations, and "for all / there exists" — move up to first-order logic.</li>
+       <li>The rules are learned from data rather than stated — use a machine-learning model.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Truth tables blow up.</b> $n$ symbols give $2^n$ rows, so checking entailment by table is exponential. Use inference rules or a SAT solver for anything sizeable.</li>
+       <li><b>Implication is not causation.</b> $f \\rightarrow g$ only says "if $f$ then $g$"; it is vacuously true whenever $f$ is false, which trips up beginners reading rules.</li>
+       <li><b>Brittleness with exceptions.</b> Classical logic cannot say "birds usually fly". One counterexample (a penguin) makes a universal rule false. Real knowledge often needs probabilities or default logic.</li>
+       <li><b>An inconsistent knowledge base entails everything.</b> If the KB (Knowledge Base) contains a contradiction, every sentence follows, and the system is useless. Check consistency.</li>
+       <li><b>Confusing satisfiable with valid.</b> "True in some model" (satisfiable) is not "true in every model" (valid / entailed). Mixing them gives wrong conclusions.</li>
+       <li><b>The closed-world trap.</b> Logic does not assume "unstated means false" unless you say so; be explicit about which assumption you are making.</li>
+     </ul>`,
   quiz: {
     q: `KB: $P$ is true, and $P \\rightarrow Q$. Does KB entail $Q$? Explain in one line.`,
     a: `<p>Yes. $P$ is true and the rule $P\\rightarrow Q$ forces $Q$ true, so $Q$ holds in every model of the KB. Thus KB $\\models Q$.</p>`
@@ -1929,6 +2371,28 @@ L({
      <p>The quantified rule "for all $x$" is first-order logic; the plain $f, f\\rightarrow g$ step is propositional modus ponens.</p>`,
   application:
     `<p>Automated theorem provers, the Prolog programming language, and formal verification of software all run on resolution and modus ponens. They let a machine prove conclusions that are guaranteed correct.</p>`,
+  whenToUse:
+    `<p><b>Use inference rules when you need to derive new facts mechanically from a knowledge base, without building a full truth table.</b> They are how a logic system actually proves things.</p>
+     <p><b>Which rule:</b></p>
+     <ul>
+       <li><b>Modus ponens / forward chaining</b> — when your knowledge is Horn clauses ("if these, then that"); it is fast and is exactly how Prolog and rule engines run.</li>
+       <li><b>Resolution</b> — when you need a complete proof procedure for full propositional (or first-order) logic, including proof by contradiction.</li>
+       <li><b>First-order logic</b> — when rules must quantify over objects ("for all $x$"), not just fixed facts.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>Facts are uncertain — use probabilistic inference, not logical entailment.</li>
+       <li>You just need to test satisfiability of many clauses — a modern SAT solver beats hand-rolled resolution.</li>
+     </ul>`,
+  pitfalls:
+    `<ul>
+       <li><b>Forward chaining only handles Horn clauses.</b> Plain modus ponens cannot derive everything in full propositional logic. For general entailment you need resolution.</li>
+       <li><b>Resolution needs Conjunctive Normal Form (CNF).</b> You must first convert sentences to CNF; a wrong conversion silently changes the meaning. Automate and test it.</li>
+       <li><b>First-order resolution can run forever.</b> It is complete but only semi-decidable — on an unprovable goal it may never halt. Bound the search or depth.</li>
+       <li><b>Unification bugs.</b> Matching variables across clauses (Socrates for $x$) is subtle; a missing occurs-check or wrong substitution yields false proofs.</li>
+       <li><b>Soundness vs completeness confusion.</b> Sound means "never derives a falsehood"; complete means "derives every truth". A system can be one without the other — know which you have.</li>
+       <li><b>Combinatorial blow-up.</b> Resolving every clause pair generates huge numbers of new clauses. Use ordering and subsumption strategies to keep it tractable.</li>
+     </ul>`,
   quiz: {
     q: `You know $\\text{Bird(Tweety)}$ and the rule $\\text{Bird}(x) \\rightarrow \\text{CanFly}(x)$. What does modus ponens conclude?`,
     a: `<p>Match $x = $ Tweety. From $\\text{Bird(Tweety)}$ and the rule, modus ponens concludes $\\text{CanFly(Tweety)}$.</p>`

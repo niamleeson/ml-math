@@ -111,6 +111,31 @@
          <li><b>Efficient fine-tuning:</b> the LoRA fine-tuning idea is transfer learning made cheap. Instead of nudging all the backbone weights, LoRA freezes them and trains a tiny low-rank add-on, so you adapt a huge model on one GPU.</li>
        </ul>
        <p>Transfer is also what makes few-shot learning possible: a frozen pretrained representation gives the strong features that <a>[fs-metric-learning]</a> compares by distance and that <a>[fs-few-shot]</a> classifiers lean on to learn a new class from only a handful of examples.</p>`,
+    whenToUse:
+      `<p><b>Reach for transfer learning whenever a strong pretrained model already exists for your data type</b> — images, text, audio, or video — and your own labeled set is small (a few dozen to a few thousand examples). It is the default starting point for almost every modern vision or language task.</p>
+       <p><b>Choose it over:</b></p>
+       <ul>
+         <li><b>Training from scratch</b> — when you have less data than the millions of examples a backbone needs. Reusing a pretrained representation buys you good features for free.</li>
+         <li><b>Full fine-tuning</b> — pick cheaper <i>feature extraction</i> (freeze the backbone, train only a small head) when data is tiny; switch to fine-tuning the top layers only once the head is stable and you have more labels.</li>
+         <li><b>PEFT (Parameter-Efficient Fine-Tuning)</b> like LoRA (Low-Rank Adaptation) — when the backbone is huge and GPU memory is scarce; you adapt a giant model on one GPU.</li>
+       </ul>
+       <p><b>Pick a different tool when:</b></p>
+       <ul>
+         <li>No pretrained model matches your modality at all (an exotic sensor signal) — you may have to train from scratch.</li>
+         <li>The new task is shown only inside a prompt at run time — use <a>[fs-in-context]</a> in-context learning, which needs no weight updates.</li>
+         <li>You must recognize brand-new classes from one or two examples without any training — reach for <a>[fs-metric-learning]</a> or <a>[fs-few-shot]</a> on top of the frozen features.</li>
+       </ul>
+       <p><b>Which library:</b> Hugging Face <code>transformers</code> and <code>timm</code> for pretrained backbones; <code>peft</code> for LoRA-style efficient fine-tuning.</p>`,
+    pitfalls:
+      `<ul>
+         <li><b>Negative transfer.</b> If the source domain is unlike your target (natural photos vs medical scans), the pretrained features can <i>hurt</i> instead of help. Sanity-check against a from-scratch baseline before trusting transfer.</li>
+         <li><b>Catastrophic forgetting.</b> A large learning rate during fine-tuning shoves the backbone weights far from their good spot and overwrites general skills. Use a tiny $\\eta$, freeze lower layers, or use PEFT (Parameter-Efficient Fine-Tuning).</li>
+         <li><b>Domain shift at serving time.</b> Production inputs (lighting, vocabulary, sensor) drift from the source distribution, so accuracy quietly drops. Monitor live inputs and re-fine-tune when the gap grows.</li>
+         <li><b>Preprocessing mismatch.</b> The backbone expects the <i>exact</i> normalization, resize, and tokenizer it was trained with. Feed it differently and the frozen features are garbage. Reuse the original preprocessing pipeline verbatim.</li>
+         <li><b>Fine-tuning a huge model on tiny data.</b> Unfreezing millions of weights for 40 examples overfits instantly. Freeze the backbone and train only the small head until you have more labels.</li>
+         <li><b>Evaluation leakage.</b> If pretraining data overlaps your test set, scores look inflated. Check that your held-out set is genuinely unseen by the backbone.</li>
+         <li><b>Train / serving skew.</b> The same backbone version and preprocessing must run offline and online — pin and version both, or live predictions drift from offline numbers.</li>
+       </ul>`,
     practice: [
       {
         q: `You have a model pretrained on millions of photos and a new task with only 40 labeled images. Should you do feature extraction (freeze the backbone) or full fine-tuning (train every layer)? Why?`,
