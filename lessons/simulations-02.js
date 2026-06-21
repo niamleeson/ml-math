@@ -9,9 +9,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You run the home page of a streaming app. Only ~$5\\%$ of the titles a user sees ever get clicked, and the slot at the top of the row earns far more plays than the slot below it. The job is to <i>order</i> titles so the best ones land on top — not to predict an exact star rating nobody asked for. Framing this as ranking (not rating, not classification) decides every choice downstream: the data you label, the loss you train, and the metric you ship on.</p>`,
+        narrative: `<p>You build movie recommendations on the <b>MovieLens 25M</b> dataset (GroupLens / University of Minnesota): <b>162,000 users</b>, <b>62,000 movies</b>, and <b>25 million ratings</b> on a 0.5–5 star scale. Only a tiny fraction of the catalog a user could see ever gets rated, and a recommender's home row earns far more attention at the top than the bottom. The job is to <i>order</i> titles so the best ones land on top — not to predict an exact star rating nobody asked for. Framing this as ranking (not rating, not classification) decides every choice downstream: the data you label, the loss you train, and the metric you ship on.</p>`,
         concepts: ["cls-recommender", "ml-classification-metrics", "ml-supervised"],
-        insight: `<b>Position is everything.</b> Roughly <b>62% of plays come from the first 3 slots</b> of a row, and only ~$5\\%$ of shown titles get clicked at all. So a model that is "accurate on average" but puts the user's one true favorite in slot 9 has failed — the only ranks that earn watch-time are the top few. That is why you optimize <b>top-$K$ ranking</b>, not per-title accuracy.`,
+        insight: `<b>Position is everything.</b> The bigger industry benchmark, the <b>Netflix Prize</b> set, has <b>480K users</b> and <b>100M ratings</b> on just <b>17K movies</b> — and there, roughly <b>62% of plays come from the first 3 slots</b> of a row. So a model that is "accurate on average" but puts the user's one true favorite in slot 9 has failed — the only ranks that earn watch-time are the top few. That is why you optimize <b>top-$K$ ranking</b>, not per-title accuracy.`,
         symbols: [
           { sym: "$K$", desc: "how many titles fit in the visible row (here $K\\approx 10$); only these positions get meaningful attention." },
           { sym: "recall@$K$", desc: "fraction of the titles a user actually played that landed in your top $K$ — the core ranking success metric." },
@@ -28,61 +28,61 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You need signals of what users like. Explicit star ratings are rare and biased toward a vocal minority; implicit signals (plays, watch-time) are everywhere but noisier — a play can mean "loved it" or "fell asleep with it on". The hardest part is the negatives: the catalog is mostly titles a user never SAW, so you can't treat un-clicked as un-liked. Get the positive/negative definition wrong here and no model downstream can recover.</p>`,
+        narrative: `<p>MovieLens 25M ships one core file, <code>ratings.csv</code>, with exactly four columns: <b>userId, movieId, rating, timestamp</b>. Each row is one explicit star rating (0.5–5.0 in half-star steps). Explicit ratings are gold but sparse — most user–movie pairs are simply blank because the user never saw that film, so you can't treat an un-rated movie as disliked. Get the positive/negative definition wrong here and no model downstream can recover.</p>`,
         concepts: ["ml-supervised", "cls-recommender", "prob-bernoulli-binomial"],
-        insight: `<b>Implicit dwarfs explicit.</b> Over 90 days you collect <b>410M plays</b> but fewer than <b>8M star ratings</b> — implicit feedback is ~50× more abundant. A play that reaches <b>&gt;70% of runtime</b> is a confident positive; everything un-watched is mostly just <i>un-shown</i>, not disliked. That asymmetry is why you train on plays with <i>soft</i> negatives, never on stars alone.`,
+        insight: `<b>25M filled cells in a 10-billion-cell grid.</b> The matrix is <b>162,000 users × 62,000 movies ≈ 10 billion cells</b>, but only <b>25 million</b> are filled — about <b>0.25% density (~99.75% empty)</b>. A high star rating is a confident positive; everything un-rated is mostly just <i>un-seen</i>, not disliked. In a production setting you'd add implicit signals (plays, watch-time) on top, but that asymmetry — sparse positives, mostly-missing negatives — is the defining shape of the data.`,
         data: {
-          caption: "Raw interaction events (one row per user–title touch)",
-          columns: ["user", "title", "% runtime", "rated?", "label"],
+          caption: "ratings.csv — the MovieLens 25M interaction table (one row per rating)",
+          columns: ["userId", "movieId", "rating", "timestamp"],
           rows: [
-            ["u_1042", "Stranger Th.", "98%", "—", "strong +"],
-            ["u_1042", "Doc #441", "12%", "—", "weak +/−"],
-            ["u_2310", "The Crown", "81%", "5★", "strong +"],
-            ["u_2310", "Rom-Com #9", "(never shown)", "—", "soft −"],
-            ["… 410M rows", "…", "…", "…", "…"]
+            ["1", "296", "5.0", "1147880044"],
+            ["1", "306", "3.5", "1147868817"],
+            ["7", "1196", "4.5", "1106635992"],
+            ["14", "1", "2.0", "1442169485"],
+            ["… 25,000,095 rows", "…", "…", "…"]
           ],
-          note: `Only ~2% of rows carry a star rating, so the "rated?" column is mostly empty. The label comes from <b>% runtime</b>: &gt;70% is a strong positive, a quick bounce is a weak signal, and titles never shown become <i>soft</i> negatives — downweighted, never treated as confident dislikes.`
+          note: `Real schema: <b>userId</b> and <b>movieId</b> are integer keys, <b>rating</b> is on the 0.5–5.0 half-star scale, <b>timestamp</b> is Unix seconds (used for time-split holdouts). There is no "disliked" row — an absent (userId, movieId) pair means <i>unseen</i>, which is why un-rated titles become <i>soft</i> negatives, downweighted rather than treated as confident dislikes.`
         },
         symbols: [
-          { sym: "% runtime", desc: "fraction of a title's length the user watched; the proxy for an implicit positive (&gt;70% = confident like)." },
-          { sym: "soft −", desc: "a downweighted negative for an un-shown title — counted weakly because 'not watched' usually means 'never offered'." },
-          { sym: "$p$", desc: "the Bernoulli play-probability the model ultimately estimates for each (user, title) pair." }
+          { sym: "rating", desc: "explicit star score on MovieLens's 0.5–5.0 half-star scale; a high value is a confident implicit positive." },
+          { sym: "soft −", desc: "a downweighted negative for an un-rated (unseen) movie — counted weakly because 'not rated' usually means 'never watched'." },
+          { sym: "$p$", desc: "the Bernoulli like-probability the model ultimately estimates for each (userId, movieId) pair." }
         ],
         steps: [
           { type: "decide", prompt: "What feedback should you train on?",
             options: [
-              { label: "Implicit signals: completed plays and watch-time, with un-watched titles as weak negatives", best: true, feedback: "right. Implicit feedback is ~50× more abundant than ratings and reflects what people actually do, not what they say. The mechanism: treat a finished play (&gt;70% runtime) as a strong positive, and downweight the enormous pile of un-shown items as SOFT negatives so the model learns preference without being told that 'unseen' equals 'disliked'. Abundance plus honest labels is the winning combination." },
-              { label: "Only the explicit 1–5 star ratings users typed in", feedback: "too sparse and too biased. Fewer than 2% of impressions get a rating, and the people who rate are a vocal minority who skew toward extremes (loved it / hated it). You'd train on a tiny, unrepresentative slice and have nothing to say about the 98% of behavior that's implicit. Stars can ANCHOR, but they can't carry the catalog." },
-              { label: "Treat every title a user did NOT click as a hard negative", feedback: "this poisons the labels. Users never SAW the vast majority of the 38K-title catalog, so 'not clicked' overwhelmingly means 'never shown' — not 'disliked'. Marking all of it a confident negative teaches the model to suppress titles a user might love simply because the old system never surfaced them. Negatives must be SOFT, not hard." }
+              { label: "Treat high star ratings as positives and downweight the vast pile of un-rated movies as soft negatives", best: true, feedback: "right. The 25M ratings are honest positives, but they cover only ~0.25% of all (userId, movieId) pairs — the rest is mostly unseen, not disliked. The mechanism: treat a high rating as a strong positive, and downweight the enormous un-rated set as SOFT negatives so the model learns preference without being told that 'unseen' equals 'disliked'. Honest labels plus soft negatives is the winning combination." },
+              { label: "Only train on movies a user rated exactly 5 stars", feedback: "too sparse and too biased. Five-star ratings are a vocal minority of an already-sparse signal, skewing hard toward extremes. You'd train on a tiny, unrepresentative slice and throw away the 3.5s and 4.0s that carry most of the preference information. The full 0.5–5.0 scale ANCHORS taste; a single rating value can't carry the catalog." },
+              { label: "Treat every movie a user did NOT rate as a hard negative", feedback: "this poisons the labels. Users never SAW the vast majority of the 62K-movie catalog, so 'not rated' overwhelmingly means 'never watched' — not 'disliked'. Marking all of it a confident negative teaches the model to suppress movies a user might love simply because they never encountered them. Negatives must be SOFT, not hard." }
             ] },
-          { type: "run", label: "▶ Pull 90 days of interactions", prompt: "Assemble the user-item interaction matrix.",
-            result: { log: "querying playback events...\nusers: 2,400,000   items: 38,000\ninteractions: 410,000,000 plays\nmatrix density: 0.45%  (99.55% empty)\nimplicit positives: completed plays >70% runtime", metrics: [{ k: "users", v: "2.4M" }, { k: "items", v: "38K" }, { k: "density", v: "0.45%" }] } }
+          { type: "run", label: "▶ Load MovieLens 25M ratings", prompt: "Assemble the user-item interaction matrix.",
+            result: { log: "reading ratings.csv (userId, movieId, rating, timestamp)...\nusers: 162,000   movies: 62,000\nratings: 25,000,095   scale: 0.5 .. 5.0 (half-star)\nmatrix density: 0.25%  (99.75% empty)\npositives: high star ratings; un-rated pairs treated as soft negatives", metrics: [{ k: "users", v: "162K" }, { k: "movies", v: "62K" }, { k: "density", v: "0.25%" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore the matrix",
-        narrative: `<p>Before modeling, understand the shape of demand. Recommender data is brutally skewed: a few blockbusters soak up most plays, and most titles get almost none.</p>`,
+        narrative: `<p>Before modeling, understand the shape of demand. MovieLens ratings are brutally skewed: a few blockbusters soak up most ratings, and most of the 62,000 movies get almost none.</p>`,
         concepts: ["prob-variance", "cls-recommender", "mlx-error-analysis"],
-        insight: `<b>The long tail.</b> Plays are brutally skewed — the <b>top 1% of titles draws 62% of all plays</b>, while the bottom 80% of titles together get under 5%. And the matrix is <b>~99.6% empty</b>: the average user has watched only ~23 of 38,000 titles. Every modeling choice has to survive this skew and this sparsity.`,
-        chart: { type: "bars", title: "Play distribution by popularity tier (long tail)", labels: ["top 1%", "next 19%", "bottom 80%"], values: [62, 33, 5], valueLabels: ["62%", "33%", "5%"], colors: ["#4ea1ff", "#ffb454", "#ff7b72"] },
+        insight: `<b>The long tail.</b> Ratings are brutally skewed — the <b>top 1% of movies draws 62% of all ratings</b>, while the bottom 80% of movies together get under 5%. And the matrix is <b>~99.75% empty</b>: with 25M ratings over 162K users, the average user has rated only ~155 of 62,000 movies. Every modeling choice has to survive this skew and this sparsity.`,
+        chart: { type: "bars", title: "Rating distribution by popularity tier (long tail)", labels: ["top 1%", "next 19%", "bottom 80%"], values: [62, 33, 5], valueLabels: ["62%", "33%", "5%"], colors: ["#4ea1ff", "#ffb454", "#ff7b72"] },
         data: {
           caption: "The user–item matrix $R$ (a tiny corner of a huge, mostly-empty grid)",
-          columns: ["user / item →", "Stranger Th.", "The Crown", "Rom-Com #9", "Doc #441", "… 38K cols"],
+          columns: ["userId / movieId →", "296", "1196", "1", "306", "… 62K cols"],
           rows: [
-            ["user 1", "5", "—", "—", "2", "…"],
-            ["user 2", "—", "4", "—", "—", "…"],
-            ["user 3", "—", "—", "5", "—", "…"],
-            ["… 90M rows", "…", "…", "…", "…", "…"]
+            ["user 1", "5.0", "—", "—", "3.5", "…"],
+            ["user 7", "—", "4.5", "—", "—", "…"],
+            ["user 14", "—", "—", "2.0", "—", "…"],
+            ["… 162K rows", "…", "…", "…", "…", "…"]
           ],
-          note: `90M users × 38K items = 3.4 trillion cells, but only ~0.45% are filled. A dash (—) means "never watched". The entire job is predicting the dashes — which title each user <i>would</i> love.`
+          note: `162K users × 62K movies ≈ 10 billion cells, but only ~0.25% (25M) are filled. A dash (—) means "never rated". The entire job is predicting the dashes — which movie each user <i>would</i> love.`
         },
         symbols: [
-          { sym: "$R$", desc: "the user–item matrix; entry $R_{ui}$ is user $u$'s rating or play count for item $i$ (mostly empty)." },
-          { sym: "$m,\\ n$", desc: "number of users ($m\\approx 90$M) and items ($n\\approx 38$K)." },
-          { sym: "density", desc: "fraction of cells actually filled — here only $\\approx 0.45\\%$, which is why naive averages fail." }
+          { sym: "$R$", desc: "the user–item matrix; entry $R_{ui}$ is user $u$'s star rating for movie $i$ (mostly empty)." },
+          { sym: "$m,\\ n$", desc: "number of users ($m\\approx 162$K) and movies ($n\\approx 62$K)." },
+          { sym: "density", desc: "fraction of cells actually filled — here only $\\approx 0.25\\%$, which is why naive averages fail." }
         ],
         steps: [
-          { type: "run", label: "▶ Profile popularity & users", result: { log: "play distribution: top 1% of titles -> 62% of all plays (long tail)\nmedian plays per user: 23   median ratings per item: 4\nnew users last 7d: 180,000  (0 history each -> cold start)\nnew titles last 30d: 1,200  (no plays yet)", metrics: [{ k: "tail skew", v: "top 1% = 62%" }, { k: "cold users/wk", v: "180K" }] } },
+          { type: "run", label: "▶ Profile popularity & users", result: { log: "rating distribution: top 1% of movies -> 62% of all ratings (long tail)\nmedian ratings per user: 70   median ratings per movie: 3\nnew users (held-out latest week): cold start, 0 prior ratings\nnew movies (recent additions): no ratings yet", metrics: [{ k: "tail skew", v: "top 1% = 62%" }, { k: "ratings", v: "25M" }] } },
           { type: "decide", prompt: "The popularity curve is extremely skewed. What's the modeling risk?",
             options: [
               { label: "The model just learns to recommend blockbusters to everyone (popularity bias)", best: true, feedback: "right. Without care, it collapses toward global popularity and never surfaces the personalized long tail — the whole reason to personalize." },
@@ -94,7 +94,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Features", icon: "🧬", title: "Latent factors",
         narrative: `<p>Raw user and item IDs don't generalize — ID 9471 tells the model nothing about taste. Matrix factorization instead learns a short vector for each user and each item so that their dot product $\\hat{r}_{ui}=\\mathbf{p}_u^\\top \\mathbf{q}_i$ predicts affinity. Read symbol by symbol: $\\mathbf{p}_u$ is user $u$'s taste in $k$ hidden dimensions, $\\mathbf{q}_i$ is item $i$'s position in those same dimensions, and $\\mathbf{p}_u^\\top\\mathbf{q}_i$ sums their agreement — high when the user's "loves sci-fi" lines up with the item's "is sci-fi". The size of $k$ is the one knob that sets how much taste the model can express.</p>`,
         concepts: ["la-svd", "ml-pca", "fnd-dot"],
-        insight: `<b>From 38K columns to $k$.</b> Factorization replaces the 38,000-wide, <b>99.55%-empty</b> row for each user with a dense vector of just <b>$k\\approx 64$</b> numbers — a ~600× compression. Those 64 dimensions become reusable axes like "drama↔action" or "kids↔adult", and a brand-new title slots in by its vector instead of needing its own play history.`,
+        insight: `<b>From 62K columns to $k$.</b> Factorization replaces the 62,000-wide, <b>99.75%-empty</b> row for each user with a dense vector of just <b>$k\\approx 64$</b> numbers — a ~1000× compression. Those 64 dimensions become reusable axes like "drama↔action" or "kids↔adult", and a brand-new title slots in by its vector instead of needing its own rating history.`,
         chart: { type: "scatter", title: "Latent space: dim 1 (sci-fi) vs dim 2 (light)", xlabel: "dim 1 (sci-fi)", groups: [
           { name: "user u_1042", color: "#4ea1ff", points: [[0.91, -0.40]] },
           { name: "Stranger Th.", color: "#7ee787", points: [[0.88, -0.31]] },
@@ -107,7 +107,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["user u_1042 ($\\mathbf{p}_u$)", "+0.91", "−0.40", "+0.12", "…"],
             ["Stranger Th. ($\\mathbf{q}_i$)", "+0.88", "−0.31", "+0.20", "…"],
             ["Rom-Com #9 ($\\mathbf{q}_i$)", "−0.62", "+0.85", "−0.10", "…"],
-            ["… 2.4M users + 38K items", "…", "…", "…", "…"]
+            ["… 162K users + 62K movies", "…", "…", "…", "…"]
           ],
           note: `The dot product $\\mathbf{p}_u^\\top\\mathbf{q}_i$ is large when signs align: user u_1042 (high sci-fi, low light) matches Stranger Things but scores low on Rom-Com #9. The dimension names are illustrative — the model discovers the axes itself; we never label them.`
         },
@@ -120,17 +120,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         steps: [{
           type: "decide", prompt: "How big should the latent factor dimension $k$ be?",
           options: [
-            { label: "Small (k≈64): low-rank embeddings that capture broad taste with regularization", best: true, feedback: "this is the sweet spot. On a matrix that's only 0.45% filled, a COMPACT rank is exactly what generalizes: 64 dimensions are enough to encode genres, moods and eras, but few enough that the model is forced to find patterns shared across many users instead of memorizing individual cells. SVD-style factorization compresses 38K items into ~64 reusable axes, so even a title with little history inherits a sensible vector. Low rank = built-in regularization." },
-            { label: "Huge (k≈5,000): one dimension is nearly one item", feedback: "this defeats the purpose. With $k$ that large there's almost a dimension per item, so the model barely compresses anything and instead OVERFITS the 0.45%-dense matrix — it memorizes the handful of filled cells and predicts noise for the empty ones. Serving cost (storage + dot-product time) also balloons. The whole value of factorization is the LOW rank; 5,000 throws it away." },
+            { label: "Small (k≈64): low-rank embeddings that capture broad taste with regularization", best: true, feedback: "this is the sweet spot. On a matrix that's only 0.25% filled, a COMPACT rank is exactly what generalizes: 64 dimensions are enough to encode genres, moods and eras, but few enough that the model is forced to find patterns shared across many users instead of memorizing individual cells. SVD-style factorization compresses 62K movies into ~64 reusable axes, so even a title with little history inherits a sensible vector. Low rank = built-in regularization." },
+            { label: "Huge (k≈5,000): one dimension is nearly one item", feedback: "this defeats the purpose. With $k$ that large there's almost a dimension per item, so the model barely compresses anything and instead OVERFITS the 0.25%-dense matrix — it memorizes the handful of filled cells and predicts noise for the empty ones. Serving cost (storage + dot-product time) also balloons. The whole value of factorization is the LOW rank; 5,000 throws it away." },
             { label: "k=1: a single 'goodness' score per item", feedback: "rank-1 is too little capacity. One dimension can only place every item on a single 'good↔bad' line, which collapses right back to global popularity — there's no room to encode that you love sci-fi but skip rom-coms, because that requires at least two opposing axes. You need enough dimensions to separate tastes, just not so many that you overfit." }
           ]
         }]
       },
       {
         phase: "Model", icon: "🧠", title: "Pick a model",
-        narrative: `<p>You have a sparse implicit-feedback matrix and need fast top-$K$ retrieval over 38K items for 2.4M users. The model has to do three things well: learn taste from sparse data, serve in milliseconds, and degrade gracefully for users or titles with no history. Reach for the simplest thing that clears that bar before anything fancier — a strong cheap baseline tells you what "good" even looks like.</p>`,
+        narrative: `<p>You have a sparse rating matrix and need fast top-$K$ retrieval over 62K movies for 162K users. The model has to do three things well: learn taste from sparse data, serve in milliseconds, and degrade gracefully for users or titles with no history. Reach for the simplest thing that clears that bar before anything fancier — a strong cheap baseline tells you what "good" even looks like.</p>`,
         concepts: ["cls-recommender", "cls-factor-analysis", "ml-linear-regression"],
-        insight: `<b>The cheap baseline is the right baseline.</b> Implicit-feedback matrix factorization at <b>$k=64$</b> stores just <b>2.4M + 38K vectors</b> (a few hundred MB) and serves a top-$K$ row as one approximate nearest-neighbor lookup in <b>single-digit milliseconds</b> — orders of magnitude cheaper than a deep net, while still doubling recall over popularity. Start here; earn the right to add complexity.`,
+        insight: `<b>The cheap baseline is the right baseline.</b> Matrix factorization at <b>$k=64$</b> stores just <b>162K + 62K vectors</b> (well under a hundred MB) and serves a top-$K$ row as one approximate nearest-neighbor lookup in <b>single-digit milliseconds</b> — orders of magnitude cheaper than a deep net, while still doubling recall over popularity. Start here; earn the right to add complexity.`,
         symbols: [
           { sym: "ALS", desc: "Alternating Least Squares — the optimizer that fits MF by solving for $\\mathbf{p}_u$ with items fixed, then $\\mathbf{q}_i$ with users fixed, repeatedly." },
           { sym: "MF", desc: "Matrix Factorization — approximating $R\\approx PQ^\\top$ with low-rank user ($P$) and item ($Q$) factor matrices." },
@@ -140,8 +140,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           type: "decide", prompt: "Choose a first recommender model.",
           options: [
             { label: "Matrix factorization (ALS / implicit-feedback MF) with a popularity fallback for cold start", best: true, feedback: "this is the workhorse for a reason. MF learns the latent user/item vectors from the previous stage, serves top-$K$ by fast vector search, and is cheap to store and update. The cold-start gap (no vector yet for a brand-new user or title) is handled by BOLTING ON a popularity fallback rather than complicating the model. It clears all three bars — learns from sparse data, serves fast, degrades gracefully — at the lowest cost." },
-            { label: "A giant deep network over raw user+item IDs from day one", feedback: "premature complexity. A deep model only pays off once you have rich side features to feed it and a baseline that has plateaued — neither is true on day one. Up front it costs far more to train and serve, is harder to debug, and on a 0.45%-dense ID matrix it tends to overfit. MF is the strong, cheap baseline you reach for FIRST; deep models come later, if at all." },
-            { label: "k-nearest-neighbors over the raw 38K-wide rows", feedback: "wrong space, wrong cost. Exact neighbor search on 99.55%-empty 38K-wide rows is both slow (millions of high-dimensional comparisons) and noisy (two users overlapping on a single title look 'similar'). The fix is to factorize FIRST into a dense 64-d space, then do nearest-neighbor there if you want — MF is the prerequisite, not the alternative." }
+            { label: "A giant deep network over raw user+item IDs from day one", feedback: "premature complexity. A deep model only pays off once you have rich side features to feed it and a baseline that has plateaued — neither is true on day one. Up front it costs far more to train and serve, is harder to debug, and on a 0.25%-dense ID matrix it tends to overfit. MF is the strong, cheap baseline you reach for FIRST; deep models come later, if at all." },
+            { label: "k-nearest-neighbors over the raw 62K-wide rows", feedback: "wrong space, wrong cost. Exact neighbor search on 99.75%-empty 62K-wide rows is both slow (millions of high-dimensional comparisons) and noisy (two users overlapping on a single title look 'similar'). The fix is to factorize FIRST into a dense 64-d space, then do nearest-neighbor there if you want — MF is the prerequisite, not the alternative." }
           ]
         }]
       },
@@ -150,7 +150,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         narrative: `<p>Fit the user and item vectors by minimizing reconstruction error with an $\\ell_2$ penalty $\\lambda(\\lVert\\mathbf{p}_u\\rVert^2+\\lVert\\mathbf{q}_i\\rVert^2)$ so the factors don't overfit the handful of filled entries. The penalty term shrinks vectors toward zero unless the data really insists otherwise — crucial when most users have only ~23 plays.</p>
 <p><b>How ALS actually solves it, step by step.</b> The loss $\\sum_{(u,i)}(r_{ui}-\\mathbf{p}_u^\\top\\mathbf{q}_i)^2+\\lambda(\\lVert\\mathbf{p}_u\\rVert^2+\\lVert\\mathbf{q}_i\\rVert^2)$ is non-convex in $P$ and $Q$ jointly, but if you FIX one side it becomes a plain ridge regression in the other. So ALS alternates: <b>(1)</b> hold all item vectors $\\mathbf{q}_i$ fixed and, for each user $u$ independently, solve the ridge regression $\\mathbf{p}_u=(Q_u^\\top Q_u+\\lambda I)^{-1}Q_u^\\top \\mathbf{r}_u$ — where $Q_u$ stacks the vectors of the items $u$ touched and $\\mathbf{r}_u$ their ratings; the $+\\lambda I$ is the regularizer that keeps the small $k\\times k$ matrix invertible even for a user with few plays. <b>(2)</b> Then swap: hold all user vectors fixed and solve the symmetric ridge $\\mathbf{q}_i=(P_i^\\top P_i+\\lambda I)^{-1}P_i^\\top \\mathbf{r}_i$ for each item. <b>(3)</b> Repeat (1)↔(2); every half-step is a closed-form least-squares solve and can never increase the loss, so it converges. Stop when validation recall stops improving.</p>`,
         concepts: ["ml-gradient-descent", "ml-regularization", "la-svd"],
-        insight: `<b>Watch the gap, stop at the plateau.</b> Train loss keeps falling (<b>0.214 → 0.061</b>) but validation recall@10 plateaus at <b>0.188 by epoch 12</b> — pushing further would just memorize the sparse cells. The $\\lambda=0.05$ penalty and early stop are what keep a 64-d model honest; the result is two compact factor tables (2.4M×64 and 38K×64) ready to serve.`,
+        insight: `<b>Watch the gap, stop at the plateau.</b> Train loss keeps falling (<b>0.214 → 0.061</b>) but validation recall@10 plateaus at <b>0.188 by epoch 12</b> — pushing further would just memorize the sparse cells. The $\\lambda=0.05$ penalty and early stop are what keep a 64-d model honest; the result is two compact factor tables (162K×64 and 62K×64) ready to serve.`,
         symbols: [
           { sym: "$\\lambda$", desc: "regularization strength (here 0.05) — how hard the $\\ell_2$ penalty pulls vectors toward zero to prevent overfitting." },
           { sym: "$\\lVert\\mathbf{p}_u\\rVert^2$", desc: "the squared length of a user vector; penalizing it stops any one user's factors from growing wild on thin data." },
@@ -158,7 +158,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         ],
         steps: [{
           type: "run", label: "▶ Train ALS (k=64, λ=0.05)",
-          result: { log: "alternating least squares, 38M positive interactions...\neach epoch = two half-steps of closed-form ridge solves:\n  fix items Q -> per user: p_u = (Q_u^T Q_u + lambda I)^-1 Q_u^T r_u\n  fix users P -> per item: q_i = (P_i^T P_i + lambda I)^-1 P_i^T r_i\nepoch 1  train loss 0.214  val recall@10 0.118\nepoch 5  train loss 0.092  val recall@10 0.171\nepoch 12 train loss 0.061  val recall@10 0.188  (val plateaued)\nbest epoch: 12   factors: users 2.4M x 64, items 38K x 64", metrics: [{ k: "val recall@10", v: "0.188" }, { k: "k", v: "64" }], chart: { type: "line", title: "ALS training curve", xlabel: "epoch", series: [
+          result: { log: "alternating least squares, 25M ratings...\neach epoch = two half-steps of closed-form ridge solves:\n  fix items Q -> per user: p_u = (Q_u^T Q_u + lambda I)^-1 Q_u^T r_u\n  fix users P -> per item: q_i = (P_i^T P_i + lambda I)^-1 P_i^T r_i\nepoch 1  train loss 0.214  val recall@10 0.118\nepoch 5  train loss 0.092  val recall@10 0.171\nepoch 12 train loss 0.061  val recall@10 0.188  (val plateaued)\nbest epoch: 12   factors: users 162K x 64, movies 62K x 64", metrics: [{ k: "val recall@10", v: "0.188" }, { k: "k", v: "64" }], chart: { type: "line", title: "ALS training curve", xlabel: "epoch", series: [
             { name: "train loss", color: "#ff7b72", points: [[1, 0.214], [5, 0.092], [12, 0.061]] },
             { name: "val recall@10", color: "#7ee787", points: [[1, 0.118], [5, 0.171], [12, 0.188]] }
           ] } } }
@@ -181,7 +181,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "NDCG@10", desc: "discounted-gain ranking score in the top 10 — a hit in slot 1 counts more than slot 9." },
-          { sym: "coverage", desc: "fraction of the 38K-title catalog that ever appears in someone's top list — a long-tail health check." },
+          { sym: "coverage", desc: "fraction of the 62K-movie catalog that ever appears in someone's top list — a long-tail health check." },
           { sym: "time-split", desc: "holdout strategy where test data is strictly LATER than training data, mimicking real deployment." }
         ],
         steps: [
@@ -195,7 +195,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Iterate", icon: "🔁", title: "Cold start & diversity",
-        narrative: `<p>Two complaints surface after launch: brand-new users (180K/week with zero history) get generic rows, and the row feels repetitive — five near-identical action films stacked together. Both are classic recommender failure modes, and crucially they are <i>different</i> problems: cold start is a missing-signal problem, repetition is a ranking problem. Fixing them needs two different tools, not more model capacity.</p>`,
+        narrative: `<p>Two complaints surface after launch: brand-new users with zero rating history get generic rows, and the row feels repetitive — five near-identical action films stacked together. Both are classic recommender failure modes, and crucially they are <i>different</i> problems: cold start is a missing-signal problem, repetition is a ranking problem. Fixing them needs two different tools, not more model capacity.</p>`,
         concepts: ["cls-bandits", "dl-cosine-similarity", "mlx-error-analysis"],
         insight: `<b>Two failures, two fixes.</b> A cold user has no vector, so MF falls back to popularity — but you can bootstrap from <b>signup genre prefs</b> and let a <b>bandit</b> explore to learn their taste within a few sessions. Repetition is separate: when the top items share a vector direction (cosine similarity <b>&gt;0.9</b>), a diversity re-rank demotes the duplicates so the row spans more of the user's interests.`,
         symbols: [
@@ -214,21 +214,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Deploy", icon: "🚀", title: "Two-stage serving",
-        narrative: `<p>Scoring all 38K items for every request is too slow at 2.4M users. Production recommenders split serving into two stages: <b>retrieval</b> narrows 38K to a few hundred candidates with a fast approximate nearest-neighbor lookup over the latent vectors, then <b>ranking</b> applies a richer (and slower) re-ranker only to that shortlist. This is the pattern that makes personalization fit inside a single-digit-millisecond budget.</p>`,
+        narrative: `<p>Scoring all 62K movies for every request is too slow at 162K users. Production recommenders split serving into two stages: <b>retrieval</b> narrows 62K to a few hundred candidates with a fast approximate nearest-neighbor lookup over the latent vectors, then <b>ranking</b> applies a richer (and slower) re-ranker only to that shortlist. This is the pattern that makes personalization fit inside a single-digit-millisecond budget.</p>`,
         concepts: ["dl-cosine-similarity", "fnd-dot", "cls-recommender"],
-        insight: `<b>38K → 500 → 10.</b> ANN retrieval collapses the 38K-item catalog to ~<b>500 candidates</b> in a few ms, the re-ranker orders those, and the top <b>10</b> fill the row. The canary confirms it holds: <b>p99 latency 38ms</b> and shadow online recall@10 <b>0.181</b> — within a hair of the 0.188 offline number, so the serving approximation costs almost nothing.`,
+        insight: `<b>62K → 500 → 10.</b> ANN retrieval collapses the 62K-movie catalog to ~<b>500 candidates</b> in a few ms, the re-ranker orders those, and the top <b>10</b> fill the row. The canary confirms it holds: <b>p99 latency 38ms</b> and shadow online recall@10 <b>0.181</b> — within a hair of the 0.188 offline number, so the serving approximation costs almost nothing.`,
         symbols: [
-          { sym: "ANN", desc: "Approximate Nearest Neighbor — sub-linear vector search that finds 'close' item vectors without scanning all 38K exactly." },
+          { sym: "ANN", desc: "Approximate Nearest Neighbor — sub-linear vector search that finds 'close' item vectors without scanning all 62K exactly." },
           { sym: "p99 latency", desc: "the 99th-percentile response time (38ms here) — 99% of requests finish faster, the tail users care about." },
           { sym: "retrieval / ranking", desc: "the two serving stages: cheap recall-oriented shortlisting, then precise ordering of the shortlist." }
         ],
         steps: [
           { type: "decide", prompt: "How should the home row be served?",
             options: [
-              { label: "Retrieve top ~500 by approximate nearest neighbor on user/item vectors, then re-rank that shortlist", best: true, feedback: "two-stage is the standard, and here's the mechanism: ANN exploits the dense latent space to find ~500 plausible candidates in milliseconds without scoring all 38K, then a richer re-ranker — which can afford more features per item — orders just that shortlist. You get most of the accuracy of full scoring at a tiny fraction of the cost. The shadow recall (0.181 vs 0.188 offline) shows the approximation barely hurts." },
-              { label: "Score every one of the 38K items for every request in real time", feedback: "accurate in principle but economically impossible here. At 2.4M users each requesting rows, scoring 38K items per request is millions of dot products per second of needless work — latency blows past budget and serving cost explodes. Retrieval-then-rank exists PRECISELY to avoid this: the vast majority of those 38K items would never make the row, so spending compute to rank them is wasted." }
+              { label: "Retrieve top ~500 by approximate nearest neighbor on user/item vectors, then re-rank that shortlist", best: true, feedback: "two-stage is the standard, and here's the mechanism: ANN exploits the dense latent space to find ~500 plausible candidates in milliseconds without scoring all 62K, then a richer re-ranker — which can afford more features per item — orders just that shortlist. You get most of the accuracy of full scoring at a tiny fraction of the cost. The shadow recall (0.181 vs 0.188 offline) shows the approximation barely hurts." },
+              { label: "Score every one of the 62K movies for every request in real time", feedback: "accurate in principle but economically impossible here. At 162K users each requesting rows, scoring 62K movies per request is millions of dot products per second of needless work — latency blows past budget and serving cost explodes. Retrieval-then-rank exists PRECISELY to avoid this: the vast majority of those 62K movies would never make the row, so spending compute to rank them is wasted." }
             ] },
-          { type: "run", label: "▶ Ship (canary 5% → 100%)", result: { log: "building ANN index over 38K item vectors...\ncanary 5%: p99 latency 38ms, error rate 0.0%\nshadow online recall@10 vs offline: 0.181 (close)\npromoting to 100% ...\nlive.", metrics: [{ k: "p99 latency", v: "38ms" }, { k: "rollout", v: "100%" }] } }
+          { type: "run", label: "▶ Ship (canary 5% → 100%)", result: { log: "building ANN index over 62K movie vectors...\ncanary 5%: p99 latency 38ms, error rate 0.0%\nshadow online recall@10 vs offline: 0.181 (close)\npromoting to 100% ...\nlive.", metrics: [{ k: "p99 latency", v: "38ms" }, { k: "rollout", v: "100%" }] } }
         ]
       },
       {
@@ -259,9 +259,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You own search for a large site. A single query can return thousands of candidate documents, yet users only ever look at the first few — click-through falls off a cliff after the first page. So the task is not to score each document in isolation but to <i>order</i> them, putting the most relevant ones where the eyes already are. Framing this as ranking (not classification, not regression) decides which loss, which metric, and which model you reach for next.</p>`,
+        narrative: `<p>You build a learning-to-rank model on <b>MS MARCO</b> (Microsoft's Bing-derived benchmark): over <b>1 million real anonymized Bing queries</b>, each paired against a corpus of <b>8.8 million passages</b> with human relevance judgments. A single query can return thousands of candidate documents, yet users only ever look at the first few — click-through falls off a cliff after the first page. So the task is not to score each document in isolation but to <i>order</i> them, putting the most relevant ones where the eyes already are. Framing this as ranking (not classification, not regression) decides which loss, which metric, and which model you reach for next.</p>`,
         concepts: ["ai-linear-predictors", "ml-classification-metrics", "ml-roc-auc"],
-        insight: `<b>Attention is brutally top-heavy.</b> Roughly <b>90% of clicks land in the top 5 results</b> and the first organic result alone can take <b>~30% of clicks</b>. That is why you optimize a position-weighted metric like NDCG@K — a perfect document buried at rank 12 is, for the user, invisible. Ordering <i>is</i> the product.`,
+        insight: `<b>Attention is brutally top-heavy.</b> The classic learning-to-rank benchmarks — <b>LETOR</b> and the <b>Yahoo! Learning-to-Rank Challenge</b> set (~36K queries, ~883K query-document feature vectors) — grade relevance on a <b>0–4</b> scale precisely because position matters: roughly <b>90% of clicks land in the top 5 results</b> and the first organic result alone can take <b>~30% of clicks</b>. That is why you optimize a position-weighted metric like NDCG@K — a perfect document buried at rank 12 is, for the user, invisible. Ordering <i>is</i> the product.`,
         symbols: [
           { sym: "NDCG@$K$", desc: "Normalized Discounted Cumulative Gain over the top $K$ results — rewards placing high-grade docs near the top, with a discount that shrinks as you go down the list." },
           { sym: "$K$", desc: "the cutoff rank you score at (e.g. $K=10$, the first page) — positions below it barely matter because users rarely look." },
@@ -284,18 +284,18 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
 <p><b>2. Debias each click with Inverse Propensity Weighting (IPW).</b> $\\text{debiased\\_relevance}(q,d) = \\dfrac{\\text{clicks}(q,d)}{p_{\\text{examine}}(\\text{rank shown})}$. A click at rank 7 (rarely examined, small $p$) is divided by a small number and so gets UP-weighted; a click at rank 1 (almost always examined, $p\\approx 1$) is divided by ~1 and barely changes. This lifts genuinely good documents that the old ranking buried.</p>
 <p><b>3. Anchor to the editorial grades.</b> The debiased numbers are unitless, so calibrate them onto the 0–4 editorial scale using the 42K graded pairs (e.g. isotonic/linear fit), so a debiased label finally reads as a relevance grade rather than a reweighted click count.</p>`,
         concepts: ["ml-supervised", "ml-logistic-regression", "prob-bernoulli-binomial"],
-        insight: `<b>Cheap signal, expensive anchor — and the rank where it was shown matters.</b> You assemble <b>58M query-doc pairs</b> from clicks but only <b>42K editorial grades</b> — clicks outnumber expert labels ~1,400 to 1. Estimated examination probabilities fall off fast — about <b>$p_{\\text{examine}}=[1.0,\\ 0.64,\\ 0.49,\\ \\ldots,\\ 0.18]$ by rank 1, 2, 3, … 7</b>. So a doc shown at rank 7 with <b>30 clicks / 1000 impr.</b> has raw CTR $0.03$ but debiased relevance $0.03/0.18 = \\mathbf{0.167}$ — which lifts it ABOVE a rank-1 doc with the same raw CTR ($0.03/1.0 = 0.03$). That single division is what stops you from training the old ranking's bias back into the model. Then the 42K graded pairs calibrate these to the 0–4 scale so a click means "relevant", not just "shown at rank 1".`,
+        insight: `<b>Cheap signal, expensive anchor — and the rank where it was shown matters.</b> The Yahoo! LTR benchmark ships <b>883,000 query-document rows</b>, each a <b>700-feature vector</b> with a <b>0–4 editorial grade</b> over <b>36,000 queries</b>. In production you augment those scarce expert grades with abundant click logs: you might assemble <b>58M query-doc pairs</b> from Bing-scale clicks but anchor to only ~42K editorial grades — clicks outnumber expert labels ~1,400 to 1. Estimated examination probabilities fall off fast — about <b>$p_{\\text{examine}}=[1.0,\\ 0.64,\\ 0.49,\\ \\ldots,\\ 0.18]$ by rank 1, 2, 3, … 7</b>. So a doc shown at rank 7 with <b>30 clicks / 1000 impr.</b> has raw CTR $0.03$ but debiased relevance $0.03/0.18 = \\mathbf{0.167}$ — which lifts it ABOVE a rank-1 doc with the same raw CTR ($0.03/1.0 = 0.03$). That single division stops you training the old ranking's bias back into the model; then the editorial grades calibrate everything to the 0–4 scale.`,
         data: {
-          caption: "The (query, doc, label) training table",
-          columns: ["query", "doc", "shown rank", "clicks / impr.", "editorial grade", "debiased label"],
+          caption: "LETOR-style (qid, doc features, label) training table + click signals",
+          columns: ["qid", "doc", "feat: BM25", "shown rank", "clicks / impr.", "label (0–4)", "debiased label"],
           rows: [
-            ["\"red running shoes\"", "doc_8841", "1", "0.42", "—", "3.1"],
-            ["\"red running shoes\"", "doc_2207", "7", "0.05", "4 (perfect)", "3.9"],
-            ["\"tax filing 2024\"", "doc_5560", "2", "0.18", "—", "2.4"],
-            ["\"acme login\"", "doc_0001", "1", "0.71", "4 (perfect)", "4.0"],
-            ["… 58M pairs", "…", "…", "…", "…", "…"]
+            ["q:001", "doc_8841", "12.4", "1", "0.42", "—", "3.1"],
+            ["q:001", "doc_2207", "6.1", "7", "0.05", "4", "3.9"],
+            ["q:014", "doc_5560", "9.8", "2", "0.18", "—", "2.4"],
+            ["q:027", "doc_0001", "15.2", "1", "0.71", "4", "4.0"],
+            ["… 58M pairs", "…", "…", "…", "…", "…", "…"]
           ],
-          note: `Most pairs have no editorial grade (—); the 42K that do anchor the scale. Notice doc_2207 was shown at rank 7 with few clicks yet is graded 'perfect' — position bias hid it, so the debiased label lifts it above its raw click rate. That correction is exactly what training on raw clicks would miss.`
+          note: `LETOR/Yahoo rows key on <b>qid</b> + a dense feature vector (BM25 and ~699 others) with a <b>0–4 label</b>; most click-log pairs have no editorial grade (—) and the ~42K that do anchor the scale. Notice doc_2207 sat at rank 7 with few clicks yet is graded 4 (perfect) — position bias hid it, so the debiased label lifts it above its raw click rate. That correction is exactly what training on raw clicks would miss.`
         },
         symbols: [
           { sym: "position bias", desc: "the tendency for higher-ranked results to be clicked simply because they're higher, regardless of true relevance." },
@@ -308,19 +308,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             options: [
               { label: "Clicks debiased for position, anchored by a smaller set of editorial graded judgments", best: true, feedback: "this gets both scale and trust. Raw clicks suffer position bias — rank 1 gets clicked partly for BEING rank 1 — so you reweight them by examination probability to recover a relevance-like signal, then calibrate that signal against the 42K editorial grades so the numbers mean something. Clicks give you coverage of the long tail; editorial grades give you a ground truth to anchor to. Combining them is what makes the labels trustworthy at 58M-pair scale." },
               { label: "Raw clicks, treating any click as 'relevant'", feedback: "this bakes the current ranking's bias straight into your labels. Because the top result gets clicked regardless of quality, raw clicks mostly measure WHERE a doc was shown, not how good it is. Train on them and the model learns to reproduce today's ranking — a feedback loop that can never discover that a great doc stuck at rank 7 deserves to be higher. Debiasing is the whole point." },
-              { label: "Only hand-graded editorial judgments", feedback: "high quality but far too few. 42K graded pairs can't begin to cover 1.2M queries, and they cluster on common head queries — leaving the 64% long tail of rare queries unlabeled, which is exactly where you most need to generalize. Editorial grades are the right ANCHOR, but as the entire training set they starve the model of coverage." }
+              { label: "Only hand-graded editorial judgments", feedback: "high quality but far too few. 42K graded pairs can't begin to cover 1M+ queries, and they cluster on common head queries — leaving the 64% long tail of rare queries unlabeled, which is exactly where you most need to generalize. Editorial grades are the right ANCHOR, but as the entire training set they starve the model of coverage." }
             ] },
           { type: "run", label: "▶ Estimate examination probability (result randomization)", prompt: "Run a 1% randomization slice and read off p_examine per rank, then debias.",
             result: { log: "randomization slice: 1% of traffic, top-10 results shuffled\nmeasuring CTR at each rank (position decided by chance, not relevance):\n  rank 1  CTR 0.300 -> p_examine 1.00\n  rank 2  CTR 0.192 -> p_examine 0.64\n  rank 3  CTR 0.147 -> p_examine 0.49\n  rank 4  CTR 0.114 -> p_examine 0.38\n  rank 5  CTR 0.090 -> p_examine 0.30\n  rank 7  CTR 0.054 -> p_examine 0.18\nIPW debias: debiased = clicks/impr / p_examine(rank)\n  worked: doc_2207 shown at rank 7, 30 clicks/1000 impr -> raw CTR 0.030\n          debiased = 0.030 / 0.18 = 0.167\n  vs a rank-1 doc, same raw CTR 0.030 -> 0.030 / 1.00 = 0.030\n  => the rank-7 doc now outranks the rank-1 doc (0.167 > 0.030)", metrics: [{ k: "p_examine r7", v: "0.18" }, { k: "raw CTR r7", v: "0.030" }, { k: "debiased r7", v: "0.167" }] } },
-          { type: "run", label: "▶ Assemble the judgment set", prompt: "Build the (query, doc, label) training table.",
-            result: { log: "joining query logs + click logs + editorial grades...\nqueries: 1,200,000   query-doc pairs: 58,000,000\ndebias clicks: divide each by p_examine(rank shown)  [IPW]\nanchor: calibrate debiased scores onto editorial 0..4 scale (42,000 graded pairs)\ngraded relevance: 0 (irrelevant) .. 4 (perfect)", metrics: [{ k: "queries", v: "1.2M" }, { k: "pairs", v: "58M" }, { k: "editorial", v: "42K" }] } }
+          { type: "run", label: "▶ Assemble the judgment set", prompt: "Build the (qid, doc, label) training table.",
+            result: { log: "joining MS MARCO queries + click logs + editorial grades...\nqueries: 1,010,000 (MS MARCO scale)   query-doc pairs: 58,000,000\ndebias clicks: divide each by p_examine(rank shown)  [IPW]\nanchor: calibrate debiased scores onto editorial 0..4 scale (42,000 graded pairs)\ngraded relevance: 0 (irrelevant) .. 4 (perfect)", metrics: [{ k: "queries", v: "1.01M" }, { k: "pairs", v: "58M" }, { k: "editorial", v: "42K" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore queries",
-        narrative: `<p>Profile the query distribution before you model anything — its shape dictates your whole strategy. Search traffic is split between a heavy head of a few hugely popular queries and a vast tail of rare, often unique ones, and many candidate documents are near-duplicates that can clog the top results. Understanding that 64% of unique queries are seen only once tells you immediately that memorization is hopeless and generalization is everything.</p>`,
+        narrative: `<p>Profile the query distribution before you model anything — its shape dictates your whole strategy. In MS MARCO most of the 1.01M Bing queries are <i>distinct, naturally-phrased questions</i>, split between a heavy head of a few hugely popular queries and a vast tail of rare, often unique ones, and many candidate passages are near-duplicates that can clog the top results. Understanding that 64% of unique queries are seen only once tells you immediately that memorization is hopeless and generalization is everything.</p>`,
         concepts: ["prob-variance", "mlx-error-analysis", "ml-classification-metrics"],
-        insight: `<b>The tail is where the work is.</b> The top <b>0.1% of queries pull 41% of traffic</b>, but <b>64% of unique queries are seen ≤ once</b> — you can never collect per-query training data for them. With only <b>~6.2 relevant docs per query</b> against thousands of candidates, the ranker's real job is separating a handful of needles from mostly-noise it has never seen before.`,
+        insight: `<b>The tail is where the work is.</b> The top <b>0.1% of queries pull 41% of traffic</b>, but <b>64% of unique queries are seen ≤ once</b> — you can never collect per-query training data for them. MS MARCO is built this way on purpose: most queries have only <b>~1 known-relevant passage</b> against millions of candidates, and even a graded benchmark averages just <b>~6.2 relevant docs per query</b> — so the ranker's real job is separating a handful of needles from mostly-noise it has never seen before.`,
         chart: { type: "bars", title: "Traffic share by query segment", labels: ["head (top 0.1%)", "torso", "tail (seen <= once)"], values: [41, 44, 15], valueLabels: ["41%", "44%", "15%"], colors: ["#4ea1ff", "#ffb454", "#ff7b72"] },
         data: {
           caption: "Query distribution & relevance profile",
@@ -516,11 +516,11 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You run retention for a subscription product where monthly churn sits at ~$4\\%$. The business doesn't actually want a churn score — it wants to know <i>who to give a discount to</i> so they stay, and the retention budget only covers a slice of the base. So the real deliverable is a prioritized targeting list, not a yes/no flag, and the right objective is ranking the people whose departure you can both predict and prevent.</p>`,
+        narrative: `<p>You run retention on the <b>Telco Customer Churn</b> dataset (IBM sample, popularized on Kaggle): <b>7,043 customers</b> of a fictional California telco, <b>21 columns</b> of account and service attributes, and a binary <b>Churn</b> label where <b>~26.5%</b> of customers left last quarter. The business doesn't actually want a churn score — it wants to know <i>who to give a discount to</i> so they stay, and the retention budget only covers a slice of the base. So the real deliverable is a prioritized targeting list, not a yes/no flag, and the right objective is ranking the people whose departure you can both predict and prevent.</p>`,
         concepts: ["ml-logistic-regression", "ml-classification-metrics", "ml-supervised"],
-        insight: `<b>The class imbalance defines the problem.</b> Only ~$4\\%$ of subscribers churn each month, so a model that simply predicts &quot;nobody churns&quot; scores <b>96% accuracy</b> while saving zero customers. That's why you frame this as <b>ranking by risk</b> and judge it with precision near the top of the list, not raw accuracy — the budget reaches only the highest-ranked few percent, so getting that head of the list right is the entire game.`,
+        insight: `<b>Imbalance still defines the problem.</b> Even at the Telco set's <b>~26.5% churn</b>, a model that predicts &quot;nobody churns&quot; scores <b>73.5% accuracy</b> while saving zero customers — and in a real subscription with monthly churn near <b>4%</b> that lazy baseline hits 96%. That's why you frame this as <b>ranking by risk</b> and judge it with precision near the top of the list, not raw accuracy — the budget reaches only the highest-ranked few percent, so getting that head of the list right is the entire game.`,
         symbols: [
-          { sym: "churn rate", desc: "the fraction of active subscribers who cancel in a given window — here ~4% per month, the positive-class rate." },
+          { sym: "churn rate", desc: "the fraction of subscribers who cancel in a given window — ~26.5% in the Telco set (last quarter), the positive-class rate." },
           { sym: "accuracy", desc: "share of all predictions that are correct; misleading when classes are imbalanced because the majority class dominates it." },
           { sym: "precision@top", desc: "of the customers the model ranks highest (the ones you can afford to contact), what fraction actually churn — the metric the budget cares about." }
         ],
@@ -535,61 +535,61 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You need labeled churners and a clean prediction window. The subtle trap is <i>target leakage</i>: a feature that's only true <i>because</i> the customer already churned, like &quot;visited the cancel page&quot;. To avoid it, you freeze every feature at a snapshot date (&quot;today&quot;) and label whether the customer churns in the window AFTER that date, so nothing the model sees could depend on the outcome it's predicting.</p>`,
+        narrative: `<p>The Telco churn table is one row per customer with <b>21 columns</b>: demographics (gender, SeniorCitizen, Partner, Dependents), account terms (<b>tenure</b>, <b>Contract</b>, PaperlessBilling, <b>PaymentMethod</b>, <b>MonthlyCharges</b>, TotalCharges), services (<b>InternetService</b>, OnlineSecurity, TechSupport, StreamingTV, …), and the label <b>Churn</b> (Yes/No). In production you'd snapshot these at a cutoff date and label churn in the window AFTER it — the subtle trap is <i>target leakage</i>, a feature that's only true <i>because</i> the customer already churned. Get the feature window wrong and no model downstream can recover.</p>`,
         concepts: ["ml-supervised", "prob-bernoulli-binomial", "mlx-error-analysis"],
-        insight: `<b>Sparse positives, and one trap to dodge.</b> The snapshot has <b>1.8M customers, 64 features</b>, and only <b>71,000 churned (3.9%)</b> — so positives are rare and every leaky feature is precious to remove. Two <b>post-cutoff leak columns</b> were dropped here; left in, they'd inflate validation scores yet fail completely on live customers, who don't have a cancellation event yet.`,
+        insight: `<b>Small, wide, imbalanced — and one trap to dodge.</b> The Telco snapshot is <b>7,043 customers × 21 columns</b>, with <b>1,869 churned (26.5%)</b>. It's a clean public set, but the lesson generalizes: any feature only known at or after cancellation (a &quot;visited cancel page&quot; flag, a cancellation-reason field) is <b>leakage</b> — left in, it inflates validation scores yet fails completely on live customers, who don't have a cancellation event yet.`,
         data: {
-          caption: "Labeled snapshot table — features frozen at the cutoff, label from the next 30 days",
-          columns: ["customer", "tenure_mo", "usage_trend", "payment_fails", "days_since_login", "churned_30d"],
+          caption: "Telco Customer Churn — one row per customer (real columns)",
+          columns: ["customerID", "tenure", "Contract", "InternetService", "MonthlyCharges", "Churn"],
           rows: [
-            ["c_88401", "27", "−12%", "0", "2", "0"],
-            ["c_88402", "3", "−61%", "1", "19", "1"],
-            ["c_88403", "44", "+4%", "0", "1", "0"],
-            ["c_88404", "5", "—", "2", "31", "1"],
-            ["… 1.8M rows", "…", "…", "…", "…", "…"]
+            ["7590-VHVEG", "1", "Month-to-month", "DSL", "29.85", "No"],
+            ["3668-QPYBK", "2", "Month-to-month", "DSL", "53.85", "Yes"],
+            ["7795-CFOCW", "45", "One year", "DSL", "42.30", "No"],
+            ["9237-HQITU", "2", "Month-to-month", "Fiber optic", "70.70", "Yes"],
+            ["… 7,043 rows", "…", "…", "…", "…", "…"]
           ],
-          note: `Every column is known as of the cutoff date; <b>churned_30d</b> is observed only AFTER it. The dash (—) is a genuinely missing value (a brand-new account with no prior usage window). A &quot;visited cancel page&quot; column would belong nowhere here — it exists only at churn time, so it's leakage and was removed.`
+          note: `Real Telco schema: <b>tenure</b> in months, <b>Contract</b> ∈ {Month-to-month, One year, Two year}, <b>InternetService</b> ∈ {DSL, Fiber optic, No}, <b>MonthlyCharges</b> in dollars, and the binary <b>Churn</b> label. A &quot;cancellation reason&quot; column would belong nowhere here — it exists only at churn time, so it would be leakage and must be excluded.`
         },
         symbols: [
           { sym: "target leakage", desc: "using a feature whose value is only known because the outcome already happened — it inflates offline scores but fails in production." },
-          { sym: "cutoff / snapshot", desc: "the date at which all features are frozen; the label is measured strictly after it to enforce a time gap." },
-          { sym: "$y$", desc: "the binary churn label — 1 if the customer cancels within the next 30 days, 0 otherwise." }
+          { sym: "Contract", desc: "the Telco term length (Month-to-month / One year / Two year) — the single strongest churn signal in this dataset." },
+          { sym: "$y$", desc: "the binary Churn label — 1 if the customer left (Churn = Yes), 0 otherwise." }
         ],
         steps: [
           { type: "decide", prompt: "How do you define the churn label and feature window?",
             options: [
-              { label: "Predict churn in the NEXT 30 days using only features known as of today (a strict cutoff)", best: true, feedback: "right, and the mechanism matters: by freezing features at a snapshot date and labeling churn in the FOLLOWING window, you guarantee a time gap between what the model sees and what it predicts. That gap is exactly what prevents post-decision information from sneaking in, so the offline setup mirrors how you'll actually score a live, still-active customer." },
+              { label: "Use the Churn label with only features known as of a snapshot cutoff (no post-cancellation fields)", best: true, feedback: "right, and the mechanism matters: by freezing features at a snapshot date and labeling Churn from the period AFTER, you guarantee a time gap between what the model sees and what it predicts. That gap is exactly what prevents post-decision information from sneaking in, so the offline setup mirrors how you'll actually score a live, still-active customer." },
               { label: "Label churners, then use their final-week activity as features", feedback: "this is textbook leakage. Cancellation-week behavior — visiting the cancel page, downgrading, a final-day login spike — is only observable AFTER the customer has effectively decided to leave. The model will look brilliant offline because those features almost perfectly predict the label, then collapse on live customers who haven't generated that behavior yet." },
               { label: "Use a customer's cancellation reason text as a feature", feedback: "same leakage, even more blatant: the cancellation reason is literally recorded at the moment of churn, so it cannot exist when you'd score an active subscriber. Any feature that only materializes at or after the outcome must be excluded — if you couldn't compute it for a customer who's still paying, it can't be in the model." }
             ] },
-          { type: "run", label: "▶ Pull subscriber snapshots", prompt: "Build the labeled training table at the cutoff date.",
-            result: { log: "snapshotting subscribers as of cutoff...\ncustomers: 1,800,000   features: 64\nchurned within 30d: 71,000  (3.9%)\nfeatures: tenure, usage trend, support tickets, payment fails, plan, last-login recency\nremoved 2 post-cutoff leak columns", metrics: [{ k: "customers", v: "1.8M" }, { k: "churn rate", v: "3.9%" }, { k: "features", v: "64" }] } }
+          { type: "run", label: "▶ Load Telco churn snapshot", prompt: "Build the labeled training table.",
+            result: { log: "reading Telco Customer Churn (7043 rows, 21 columns)...\ncustomers: 7,043   columns: 21\nchurned (Churn = Yes): 1,869  (26.5%)\nkey features: tenure, Contract, MonthlyCharges, TotalCharges, InternetService, PaymentMethod\ncoerced TotalCharges to numeric (11 blank strings -> NaN)", metrics: [{ k: "customers", v: "7,043" }, { k: "churn rate", v: "26.5%" }, { k: "columns", v: "21" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & segment",
-        narrative: `<p>Before predicting churn, understand who your customers even are. Unsupervised segmentation (PCA to compress the 64 features, then k-means) reveals distinct behavior groups that churn for very different reasons — a power user who leaves is not the same animal as a price-sensitive newcomer. Letting the data define the segments, instead of guessing them, keeps the later interventions honest: each group gets a churn driver you can actually act on.</p>`,
+        narrative: `<p>Before predicting churn, understand who your customers even are. In the Telco data the single biggest split is <b>Contract</b>, but unsupervised segmentation (PCA over the encoded features, then k-means) reveals richer behavior groups that churn for very different reasons — a long-tenure two-year customer is not the same animal as a month-to-month fiber newcomer. Letting the data define the segments, instead of guessing them, keeps the later interventions honest: each group gets a churn driver you can actually act on.</p>`,
         concepts: ["ml-kmeans", "mlx-clustering-metrics", "ml-pca"],
-        insight: `<b>Churn is concentrated, not uniform.</b> The silhouette score peaks at <b>k=4</b> (0.41), and the four segments span a <b>11×</b> range in churn: power users churn at <b>1.1%</b> while newly-onboarded churn at <b>12.4%</b>. Price-sensitive (9.2%) and new accounts together dominate the 3.9% base — so the retention budget has obvious places to aim before a single model is trained.`,
-        chart: { type: "bars", title: "Churn rate by discovered segment (base 3.9%)", labels: ["power users", "casual", "price-sensitive", "newly-onboarded"], values: [1.1, 5.8, 9.2, 12.4], valueLabels: ["1.1%", "5.8%", "9.2%", "12.4%"], colors: ["#7ee787", "#4ea1ff", "#ffb454", "#ff7b72"] },
+        insight: `<b>Churn is concentrated, not uniform.</b> The silhouette score peaks at <b>k=4</b> (0.41), and the segments span a <b>13×</b> range in churn — mirroring the real Telco breakdown where <b>two-year contracts churn at ~2.8%</b> while <b>month-to-month churns at ~42.7%</b>. Month-to-month fiber customers without tech support dominate the 26.5% base, so the retention budget has obvious places to aim before a single model is trained.`,
+        chart: { type: "bars", title: "Churn rate by discovered segment (base 26.5%)", labels: ["2-yr loyal", "1-yr stable", "mo-to-mo DSL", "mo-to-mo fiber"], values: [2.8, 11.3, 35.0, 42.7], valueLabels: ["2.8%", "11.3%", "35.0%", "42.7%"], colors: ["#7ee787", "#4ea1ff", "#ffb454", "#ff7b72"] },
         data: {
           caption: "Discovered segments and their churn rates (k-means, k=4)",
           columns: ["segment", "share of base", "churn rate", "main driver"],
           rows: [
-            ["power users", "18%", "1.1%", "deeply engaged"],
-            ["casual", "47%", "5.8%", "low habit"],
-            ["price-sensitive", "23%", "9.2%", "cost vs value"],
-            ["newly-onboarded", "12%", "12.4%", "weak activation"]
+            ["two-year loyal", "24%", "2.8%", "long contract, high tenure"],
+            ["one-year stable", "21%", "11.3%", "moderate commitment"],
+            ["month-to-month DSL", "30%", "35.0%", "no lock-in"],
+            ["month-to-month fiber", "25%", "42.7%", "high charges, no support"]
           ],
-          note: `The shares are illustrative but the churn-rate ordering is the real signal: a single average of 3.9% hides a 1.1%→12.4% spread. Each segment maps to a DIFFERENT intervention (price-sensitive → discount, new → onboarding help), which is why segmenting first pays off.`
+          note: `The shares are illustrative but the churn-rate ordering is the real Telco signal: a single average of 26.5% hides a 2.8%→42.7% spread driven by Contract and InternetService. Each segment maps to a DIFFERENT intervention (fiber → tech-support bundle, month-to-month → annual-contract offer), which is why segmenting first pays off.`
         },
         symbols: [
           { sym: "$k$", desc: "the number of clusters (segments) k-means is asked to find; chosen here by the silhouette score, not by eye." },
           { sym: "silhouette", desc: "a 0–1 cluster-quality score measuring within-cluster cohesion vs between-cluster separation; higher is tighter and more distinct." },
-          { sym: "PCA", desc: "Principal Component Analysis — compresses the 64 features to 12 informative dimensions so k-means clusters on signal, not noise." }
+          { sym: "PCA", desc: "Principal Component Analysis — compresses the encoded Telco features to a few informative dimensions so k-means clusters on signal, not noise." }
         ],
         steps: [
-          { type: "run", label: "▶ Cluster customers (k-means)", result: { log: "PCA to 12 dims, k-means sweep k=2..10...\nsilhouette score peaks at k=4\nsegments: 'power users' (1.1% churn), 'casual' (5.8%), 'price-sensitive' (9.2%), 'newly-onboarded' (12.4%)\nprice-sensitive + new accounts dominate churn", metrics: [{ k: "segments", v: "4" }, { k: "silhouette", v: "0.41" }] } },
+          { type: "run", label: "▶ Cluster customers (k-means)", result: { log: "one-hot encode categoricals, PCA to 8 dims, k-means sweep k=2..10...\nsilhouette score peaks at k=4\nsegments: 'two-year loyal' (2.8% churn), 'one-year stable' (11.3%), 'month-to-month DSL' (35.0%), 'month-to-month fiber' (42.7%)\nmonth-to-month fiber customers dominate churn", metrics: [{ k: "segments", v: "4" }, { k: "silhouette", v: "0.41" }] } },
           { type: "decide", prompt: "Silhouette peaks at k=4. Why pick the segment count this way instead of by eye?",
             options: [
               { label: "Silhouette quantifies how tight and separated clusters are, giving an objective k instead of a guess", best: true, feedback: "right — silhouette measures cohesion (points close to their own cluster) against separation (far from the next cluster), so it gives a principled answer instead of an aesthetic one. Its peak at k=4 is the data's own verdict on how many real groups exist, and those four happen to map cleanly onto distinct churn drivers you can target separately." },
@@ -599,40 +599,40 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Engineer features",
-        narrative: `<p>A static snapshot misses the story; <i>change</i> is what predicts churn. A customer using the product as much this month as last is fine — it's the one whose usage just fell off a cliff that's about to leave. So you engineer trend and recency features (deltas, slopes, days-since) that capture a customer cooling off, plus friction signals like payment failures and support spikes that often trigger the final decision.</p>`,
+        narrative: `<p>The raw Telco columns already carry most of the signal, but encoding and combining them sharpens it. The dominant predictors are <b>Contract</b> (month-to-month is far riskier than a locked-in two-year term), low <b>tenure</b>, high <b>MonthlyCharges</b>, <b>Fiber optic</b> internet without <b>TechSupport</b>, and the <b>electronic-check</b> payment method. You one-hot the categoricals and can derive ratios like charges-per-tenure that capture a customer paying a lot for little commitment.</p>`,
         concepts: ["ml-pca", "ml-logistic-regression", "mlx-error-analysis"],
-        insight: `<b>Deltas beat levels.</b> Among the 64 features, the strongest churn signals are <i>changes</i>: a customer whose usage_trend reads <b>−61% with a payment failure</b> is far likelier to churn than a long-tenured account holding steady at <b>+4%</b>. Raw tenure barely separates the two — only the recent-behavior delta tells a quietly-disengaging customer apart from a happy one.`,
+        insight: `<b>Some columns dominate, some are noise.</b> In the Telco set, <b>Contract</b>, <b>tenure</b>, and <b>InternetService</b> drive most of the separability — a <b>month-to-month fiber customer with high MonthlyCharges and no TechSupport</b> is far likelier to churn than a long-tenure two-year customer. Raw <b>customerID</b> carries none — it's an arbitrary identifier that only invites overfitting if fed in.`,
         data: {
-          caption: "From raw level to engineered signal (why the delta is what matters)",
+          caption: "From raw Telco column to model feature (which signals actually separate churn)",
           columns: ["feature", "type", "churn signal", "example"],
           rows: [
-            ["usage_trend (30d vs prior)", "delta", "strong", "−61% → high risk"],
-            ["days_since_login", "recency", "strong", "31 → high risk"],
-            ["payment_fails (last 60d)", "friction", "strong", "2 → high risk"],
-            ["tenure_months", "level", "weak", "44 → ambiguous"],
-            ["account_id", "identifier", "none", "noise / leakage"]
+            ["Contract (one-hot)", "categorical", "strong", "Month-to-month → high risk"],
+            ["tenure", "level", "strong", "2 mo → high risk"],
+            ["InternetService = Fiber optic", "categorical", "strong", "fiber + no TechSupport → high risk"],
+            ["MonthlyCharges", "level", "moderate", "70.70 → elevated risk"],
+            ["customerID", "identifier", "none", "noise / leakage"]
           ],
-          note: `Levels (tenure) describe who someone IS; deltas (usage_trend, recency) describe where they're HEADING — and heading-down is what churn is. The account_id row is a warning: an arbitrary identifier carries no predictive magnitude and invites overfitting.`
+          note: `Telco churn is driven by commitment and price: short <b>tenure</b> + <b>Month-to-month</b> + <b>Fiber optic</b> + high <b>MonthlyCharges</b> stack into the highest-risk profile. The customerID row is a warning: an arbitrary identifier carries no predictive magnitude and invites overfitting.`
         },
         symbols: [
-          { sym: "usage trend", desc: "the ratio or difference of activity in the last 30 days versus the prior 30 days — a falling value flags disengagement." },
-          { sym: "recency", desc: "time since the last meaningful action (e.g. days since last login); large values mean a customer is drifting away." },
-          { sym: "delta", desc: "a change feature (this period minus last); captures direction of movement rather than a static level." }
+          { sym: "Contract", desc: "term length (Month-to-month / One year / Two year) — the strongest single churn predictor in the Telco data; no lock-in means easy to leave." },
+          { sym: "tenure", desc: "months the customer has been with the telco; low tenure (especially &lt; 12 months) is strongly associated with churn." },
+          { sym: "one-hot", desc: "encoding a categorical column (Contract, InternetService, PaymentMethod) as a set of 0/1 indicator features the model can use." }
         ],
         steps: [{
-          type: "decide", prompt: "Which features best predict imminent churn?",
+          type: "decide", prompt: "Which features best predict churn in the Telco data?",
           options: [
-            { label: "Usage trend (last 30d vs prior 30d), days since last login, support-ticket spikes, and recent payment failures", best: true, feedback: "these are the leading indicators because they capture DISENGAGEMENT and FRICTION as they happen. A falling usage trend says the customer is pulling away; a payment failure is a concrete trigger event; days-since-login times how cold they've gone. Stacked together — usage dropping AND a payment failure — they compound into a strong, actionable churn signal, exactly what a targeting model needs." },
-            { label: "Only the customer's signup date", feedback: "tenure alone is too weak. Signup date is a static LEVEL: it can't distinguish a loyal five-year subscriber from a five-year subscriber who silently stopped logging in this month — both have identical tenure. Churn lives in the recent-behavior DELTAS, which a single fixed date simply cannot express." },
-            { label: "The customer's raw account ID as a number", feedback: "an account ID is an arbitrary label, not a measurement — its numeric magnitude means nothing, so feeding it in is pure noise. Worse, a high-capacity model can memorize specific IDs from training, which is overfitting and a backdoor to leakage. Identifiers belong in joins, never as predictive features." }
+            { label: "Contract type, tenure, MonthlyCharges, and Fiber-optic-without-TechSupport, with categoricals one-hot encoded", best: true, feedback: "these are exactly the columns that separate churners in this dataset. Month-to-month Contract means no lock-in; low tenure means a customer who hasn't yet committed; high MonthlyCharges on Fiber optic without TechSupport is the classic 'paying a lot, getting frustrated' profile. Stacked together they compound into a strong, actionable churn signal — and one-hot encoding lets the model split on each category cleanly." },
+            { label: "Only the customer's gender", feedback: "gender is essentially uncorrelated with churn in the Telco data — churn rates for male and female customers are nearly identical. A single demographic flag with no signal can't distinguish a loyal two-year customer from a month-to-month fiber newcomer. The churn signal lives in Contract, tenure, and service mix, which a lone demographic column simply cannot express." },
+            { label: "The raw customerID as a number", feedback: "a customerID is an arbitrary label, not a measurement — its numeric magnitude means nothing, so feeding it in is pure noise. Worse, a high-capacity model can memorize specific IDs from training, which is overfitting and a backdoor to leakage. Identifiers belong in joins, never as predictive features." }
           ]
         }]
       },
       {
         phase: "Model", icon: "🧠", title: "Pick a model",
-        narrative: `<p>You have 64 tabular features with strong non-linear interactions — a payment failure matters far more for a price-sensitive newcomer than for a power user — and you need a score you can both rank by and read as a probability for budgeting. That points to a model that handles feature interactions natively, ranks well, and can be calibrated. Match the model to the data shape, not to fashion.</p>`,
+        narrative: `<p>After one-hot encoding the Telco categoricals you have ~30 tabular features with strong non-linear interactions — Fiber-optic internet matters far more for a month-to-month customer than for a two-year one — and you need a score you can both rank by and read as a probability for budgeting. That points to a model that handles feature interactions natively, ranks well, and can be calibrated. Match the model to the data shape, not to fashion.</p>`,
         concepts: ["cls-gradient-boosting", "ml-logistic-regression", "ml-classification-metrics"],
-        insight: `<b>Interactions are the whole point.</b> Churn isn't additive: payment_fail × price-sensitive × low-tenure compounds into far more risk than the three add up to separately. Gradient-boosted trees split on exactly these combinations, which is why they hit <b>AUC ~0.84</b> on 64 tabular features where plain logistic regression — additive by construction — leaves signal on the table. Calibration then makes a <b>0.3 score mean ~30% churn</b>, so the marketing team can budget against it.`,
+        insight: `<b>Interactions are the whole point.</b> Churn isn't additive: Fiber-optic × month-to-month × low-tenure compounds into far more risk than the three add up to separately. Gradient-boosted trees split on exactly these combinations, which is why they reach <b>AUC ~0.84</b> on the encoded Telco features where plain logistic regression — additive by construction — leaves signal on the table. Calibration then makes a <b>0.3 score mean ~30% churn</b>, so the marketing team can budget against it.`,
         symbols: [
           { sym: "AUC", desc: "area under the ROC curve — the probability the model ranks a random churner above a random stayer; 0.5 is coin-flip, 1.0 is perfect." },
           { sym: "interaction", desc: "when the effect of one feature depends on another (payment failure matters more for new price-sensitive users); trees capture these, linear models don't." },
@@ -643,17 +643,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           options: [
             { label: "Gradient-boosted trees for the ranker, with calibrated probabilities", best: true, feedback: "this fits the data shape exactly. Boosted trees split on feature COMBINATIONS, so they natively capture the failure × segment × tenure interactions that drive churn — the signal a linear model can't see. They rank strongly (good AUC and top-decile precision), and calibrating the outputs (e.g. isotonic) makes the scores behave like genuine probabilities, which is what lets you tie each customer to an expected-value targeting decision." },
             { label: "Logistic regression only", feedback: "a valuable baseline, but ADDITIVE by design — it sums each feature's independent contribution and so structurally cannot represent &quot;a payment failure is dangerous only for new price-sensitive users&quot;. You'd lose the interaction signal that makes churn predictable. Keep it as an interpretable sanity check next to boosting, not as the production model." },
-            { label: "A deep neural net on the 64 tabular features", feedback: "overkill that rarely pays off here. On modest, mixed tabular data, boosted trees usually MATCH or beat deep nets while training faster, calibrating more easily, and being far simpler to explain to a marketing team that has to trust the targeting list. A neural net adds tuning burden and opacity with no accuracy edge on this problem." }
+            { label: "A deep neural net on the encoded Telco features", feedback: "overkill that rarely pays off here. On a small (~7K-row), mixed tabular dataset, boosted trees usually MATCH or beat deep nets while training faster, calibrating more easily, and being far simpler to explain to a marketing team that has to trust the targeting list. A neural net adds tuning burden and opacity with no accuracy edge on this problem." }
           ]
         }]
       },
       {
         phase: "Train", icon: "⚙️", title: "Train it",
-        narrative: `<p>Fit gradient-boosted trees with class weighting to counter the 3.9% positive rate (so the rare churners aren't drowned out) and $\\ell_2$ regularization to keep the trees from memorizing noise. Then calibrate the output scores — raw boosting scores aren't true probabilities — so a 0.3 score really means ~30% churn likelihood, which is what the budgeting math downstream depends on.</p>`,
+        narrative: `<p>Fit gradient-boosted trees with class weighting to counter the 26.5% positive rate (so the minority churners aren't drowned out by the 73.5% who stay) and $\\ell_2$ regularization to keep the trees from memorizing noise on a small dataset. Then calibrate the output scores — raw boosting scores aren't true probabilities — so a 0.3 score really means ~30% churn likelihood, which is what the budgeting math downstream depends on.</p>`,
         concepts: ["ml-gradient-descent", "ml-regularization", "cls-gradient-boosting"],
         insight: `<b>Watch the gap, then calibrate.</b> Train AUC climbs to <b>0.918</b> while validation plateaus at <b>0.838</b> by iteration 268 — a widening gap is the overfitting signal that triggers early stopping. The held-out <b>0.838 AUC</b> is the honest number. Crucially, isotonic calibration afterward fixes the scores so they read as real probabilities (reliability &quot;good&quot;), without which a 0.3 wouldn't mean 30%.`,
         symbols: [
-          { sym: "class weighting", desc: "up-weighting the rare churn (3.9%) examples so the loss doesn't ignore them in favor of the 96% who stay." },
+          { sym: "class weighting", desc: "up-weighting the minority churn (26.5%) examples so the loss doesn't favor the 73.5% who stay." },
           { sym: "$\\ell_2$", desc: "L2 regularization — a penalty on large leaf weights that shrinks the model toward simpler fits, reducing overfitting." },
           { sym: "early stop", desc: "halting training when validation AUC stops improving (here ~iter 268), even though training AUC keeps rising — the gap is overfitting." },
           { sym: "isotonic", desc: "a monotonic calibration step that maps raw model scores onto well-behaved probabilities matching observed churn rates." }
@@ -670,29 +670,29 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Evaluate", icon: "📊", title: "Evaluate for targeting",
         narrative: `<p>You don't ship an AUC; you ship a <i>targeting list</i>. A single aggregate score says little about the only customers you'll actually contact — the highest-ranked few percent — so you evaluate precision and lift in the top deciles, where the retention budget gets spent. Top-decile lift answers the business question directly: how much denser is churn among the people we'd reach than in the base?</p>`,
         concepts: ["ml-classification-metrics", "ml-roc-auc", "mlx-cross-validation"],
-        insight: `<b>The list is sharp where it counts.</b> The model's top decile (<b>180K contacted</b>) churns at <b>21.4% vs the 3.9% base</b> — a <b>5.5× lift</b> — and that one decile captures <b>55% of all churners</b>. So contacting 10% of the base reaches over half the people who'd leave: that's a budget multiplier the bare AUC of 0.836 never shows.`,
+        insight: `<b>The list is sharp where it counts.</b> The model's top decile (<b>141 contacted</b>) churns at <b>72% vs the 26.5% base</b> — a <b>2.7× lift</b> — and that one decile captures <b>27% of all churners</b>. With the budget reaching only the riskiest few percent, that front-loading is the multiplier the bare AUC of 0.836 never shows.`,
         chart: { type: "roc", title: "Churn ranker ROC (AUC 0.836)", auc: 0.836, points: [[0, 0], [0.05, 0.34], [0.1, 0.51], [0.2, 0.68], [0.4, 0.84], [0.6, 0.92], [0.8, 0.97], [1, 1]] },
         data: {
           caption: "Decile lift table — sort by predicted risk, then look top-down",
           columns: ["decile", "customers", "churn rate", "lift vs base", "cumulative churners"],
           rows: [
-            ["1 (highest risk)", "180K", "21.4%", "5.5×", "55%"],
-            ["2", "180K", "7.1%", "1.8×", "73%"],
-            ["3", "180K", "3.4%", "0.9×", "82%"],
+            ["1 (highest risk)", "141", "72.0%", "2.7×", "27%"],
+            ["2", "141", "51.1%", "1.9×", "47%"],
+            ["3", "141", "37.6%", "1.4×", "61%"],
             ["… deciles 4–10", "…", "…", "…", "…"],
-            ["base (all)", "1.8M", "3.9%", "1.0×", "100%"]
+            ["base (all)", "1,409", "26.5%", "1.0×", "100%"]
           ],
-          note: `Targeting works because risk is front-loaded: decile 1 alone holds 55% of churners at 5.5× the base rate, while by decile 3 lift has fallen below 1×. The budget should chase the steep top of this table — but high risk still isn't the same as persuadable, which is the next question.`
+          note: `Targeting works because risk is front-loaded: decile 1 holds 27% of churners at 2.7× the base rate, and the top three deciles together capture 61%. The budget should chase the steep top of this table — but high risk still isn't the same as persuadable, which is the next question.`
         },
         symbols: [
           { sym: "decile", desc: "a 10% slice of customers after sorting by predicted churn risk; decile 1 is the highest-risk tenth." },
-          { sym: "lift", desc: "churn rate within a slice divided by the overall base rate — 5.5× means that slice churns 5.5 times as often as average." },
-          { sym: "precision@decile", desc: "the fraction of the targeted decile that actually churns (0.214 here) — directly how well the budget is spent." },
-          { sym: "recall", desc: "the share of all churners captured by the slices you target (55% in decile 1) — coverage of the people worth saving." }
+          { sym: "lift", desc: "churn rate within a slice divided by the overall base rate — 2.7× means that slice churns 2.7 times as often as average." },
+          { sym: "precision@decile", desc: "the fraction of the targeted decile that actually churns (0.72 here) — directly how well the budget is spent." },
+          { sym: "recall", desc: "the share of all churners captured by the slices you target (27% in decile 1) — coverage of the people worth saving." }
         ],
         steps: [
-          { type: "run", label: "▶ Evaluate top-decile targeting", result: { log: "holdout: 360,000 customers, 14,000 churners\nAUC 0.836\nsort customers by predicted risk, cut into 10 equal deciles (36k each)\ntop decile (36k): ~7,700 churners observed -> churn rate 21.4%\nlift = decile churn rate / base rate = 21.4% / 3.9% = 5.5x\nprecision@top-decile = churners in decile / decile size = 0.214\nrecall = churners in decile / all churners = ~7,700 / 14,000 = 55% captured", metrics: [{ k: "AUC", v: "0.836" }, { k: "top-decile lift", v: "5.5x" }, { k: "churners caught", v: "55%" }], chart: { type: "bars", title: "Churn rate by risk decile (base 3.9%)", labels: ["decile 1", "decile 2", "decile 3", "base"], values: [21.4, 7.1, 3.4, 3.9], valueLabels: ["21.4%", "7.1%", "3.4%", "3.9%"], colors: ["#ff7b72", "#ffb454", "#4ea1ff", "#7ee787"] } } },
-          { type: "decide", prompt: "The top decile has 5.5x lift. Is high churn risk enough to target someone?",
+          { type: "run", label: "▶ Evaluate top-decile targeting", result: { log: "holdout: 1,409 customers (20% of 7,043), 373 churners\nAUC 0.836\nsort customers by predicted risk, cut into 10 equal deciles (~141 each)\ntop decile (141): ~102 churners observed -> churn rate 72.0%\nlift = decile churn rate / base rate = 72.0% / 26.5% = 2.7x\nprecision@top-decile = churners in decile / decile size = 0.72\nrecall = churners in decile / all churners = ~102 / 373 = 27% captured", metrics: [{ k: "AUC", v: "0.836" }, { k: "top-decile lift", v: "2.7x" }, { k: "churners caught", v: "27%" }], chart: { type: "bars", title: "Churn rate by risk decile (base 26.5%)", labels: ["decile 1", "decile 2", "decile 3", "base"], values: [72.0, 51.1, 37.6, 26.5], valueLabels: ["72.0%", "51.1%", "37.6%", "26.5%"], colors: ["#ff7b72", "#ffb454", "#4ea1ff", "#7ee787"] } } },
+          { type: "decide", prompt: "The top decile has 2.7x lift. Is high churn risk enough to target someone?",
             options: [
               { label: "No — target high-risk customers who are also persuadable (uplift), not the ones who'll churn no matter what", best: true, feedback: "right, and this is the crucial distinction. Risk answers &quot;who will leave?&quot; but the offer only earns its cost on people whose decision it actually CHANGES. The top decile mixes lost causes (already gone, an offer won't help) with the genuinely persuadable; spending only on the persuadable is what makes the campaign profitable. Risk ranking is step one — uplift, the causal effect of the offer, is the real target." },
               { label: "Yes — just send the offer to everyone in the top decile", feedback: "this over-targets and wastes budget two ways. You'll spend on doomed churners who'll leave no matter what the offer says, AND on a hidden group who would have stayed for free — handing them a needless discount. Pure risk ranking can't tell these apart from the persuadable middle, which is exactly why you next need to estimate uplift, not just risk." }
@@ -701,7 +701,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Iterate", icon: "🔁", title: "Uplift, not just risk",
-        narrative: `<p>The first campaign saved fewer customers than the 5.5× lift suggested. The reason is the gap between risk and <i>uplift</i>: targeting by risk alone spends offers on two useless groups — the lost causes who churn anyway, and the &quot;sure things&quot; who'd have stayed for free. The offer only pays off on the persuadable middle, and the only way to find them is to measure the offer's causal effect by withholding it from a randomized control.</p>`,
+        narrative: `<p>The first campaign saved fewer customers than the 2.7× lift suggested. The reason is the gap between risk and <i>uplift</i>: targeting by risk alone spends offers on two useless groups — the lost causes who churn anyway, and the &quot;sure things&quot; who'd have stayed for free. The offer only pays off on the persuadable middle, and the only way to find them is to measure the offer's causal effect by withholding it from a randomized control.</p>`,
         concepts: ["cls-bandits", "mlx-error-analysis", "ml-classification-metrics"],
         insight: `<b>Four customer types, one paying group.</b> Split high-risk users into lost causes, sure things, sleeping dogs (an offer annoys them into leaving), and the <b>persuadables</b> — only the last earns back the discount. Risk ranking can't separate them; a <b>randomized control</b> can, by comparing treated vs untreated retention. That measured difference is uplift, and it's why the next campaign keeps a holdout.`,
         data: {
@@ -733,7 +733,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Deploy", icon: "🚀", title: "Deploy the campaign",
         narrative: `<p>Churn plays out over days and renewals are scheduled, so the model doesn't need millisecond serving — a daily batch that scores everyone and flags at-risk renewals is the right fit. The non-negotiable is baking a randomized control directly into the launch: hold back a random slice of the targeted group untreated, so every campaign keeps measuring incremental retention instead of just total retention.</p>`,
         concepts: ["ml-classification-metrics", "cls-gradient-boosting", "cls-bandits"],
-        insight: `<b>Batch is enough; the control is essential.</b> A daily batch scoring <b>1.8M customers</b> matches a decision that unfolds over days, not milliseconds. With a <b>10% untreated control</b>, week-1 results read <b>treated 88.1% vs control 83.4%</b> retention — a clean <b>+4.7pp incremental</b> lift. Without that control you'd see only the 88.1% and never know how much the offer actually caused.`,
+        insight: `<b>Batch is enough; the control is essential.</b> A daily batch scoring the <b>7,043-customer</b> base (trivial at this scale) matches a decision that unfolds over days, not milliseconds. With a <b>10% untreated control</b>, week-1 results read <b>treated 88.1% vs control 83.4%</b> retention — a clean <b>+4.7pp incremental</b> lift. Without that control you'd see only the 88.1% and never know how much the offer actually caused.`,
         symbols: [
           { sym: "batch scoring", desc: "scoring all customers on a schedule (here daily) rather than on-demand per request — appropriate when decisions evolve slowly." },
           { sym: "10% control", desc: "one in ten targeted customers randomly left untreated, forming the baseline that turns raw retention into a causal measurement." },
@@ -745,37 +745,37 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Daily batch scoring that flags at-risk renewals, with a randomized holdout left untreated to measure lift", best: true, feedback: "this matches the problem on both axes. Churn and renewals evolve over DAYS, so a daily batch refreshes scores in plenty of time and costs a fraction of a live service. And building the randomized holdout INTO the campaign means you keep measuring incremental (causal) retention on every run, so a fading offer is caught by the control instead of hidden behind a healthy-looking total." },
               { label: "A real-time sub-100ms scoring service at page load", feedback: "over-engineered for this decision. A retention offer tied to a renewal date doesn't need to be computed in the moment a page loads — nothing acts on the score within milliseconds. Standing up a low-latency service adds infrastructure cost and complexity for zero benefit, when a nightly batch delivers the same targeting list far more cheaply." }
             ] },
-          { type: "run", label: "▶ Launch campaign (with 10% control)", result: { log: "scoring 1.8M customers (daily batch)...\ntargeted: top-decile persuadable, 90% treated / 10% control\noffer: 20% off 3 months\nweek 1 retention: treated 88.1% vs control 83.4% -> +4.7pp incremental\nlive.", metrics: [{ k: "incremental retention", v: "+4.7pp" }, { k: "control", v: "10%" }] } }
+          { type: "run", label: "▶ Launch campaign (with 10% control)", result: { log: "scoring 7,043 customers (daily batch)...\ntargeted: top-decile persuadable, 90% treated / 10% control\noffer: 20% off 3 months\nweek 1 retention: treated 88.1% vs control 83.4% -> +4.7pp incremental\nlive.", metrics: [{ k: "incremental retention", v: "+4.7pp" }, { k: "control", v: "10%" }] } }
         ]
       },
       {
         phase: "Monitor", icon: "📡", title: "Monitor & maintain",
         narrative: `<p>A churn campaign decays from two directions: the MODEL drifts as pricing, competitors and customer mix shift, and the OFFER fatigues as customers grow numb to the same discount. The retained control group is your ground truth for both — only the treated-minus-control gap tells you whether the offer still causes retention, or whether you're spending budget on a campaign that quietly stopped working.</p>`,
         concepts: ["mlx-error-analysis", "ml-roc-auc", "prob-clt"],
-        insight: `<b>Both halves are slipping.</b> Incremental retention has fallen from <b>+4.7pp to +1.9pp</b> (offer fatigue) while top-decile precision dropped <b>0.214 → 0.171</b> after a pricing change shifted the usage_trend distribution (model drift). A total-retained dashboard would look fine; only the <b>control comparison and drift alerts</b> expose that the campaign is losing both its targeting accuracy and its causal punch.`,
+        insight: `<b>Both halves are slipping.</b> Incremental retention has fallen from <b>+4.7pp to +1.9pp</b> (offer fatigue) while top-decile precision dropped <b>0.72 → 0.61</b> after a pricing change shifted the MonthlyCharges distribution (model drift). A total-retained dashboard would look fine; only the <b>control comparison and drift alerts</b> expose that the campaign is losing both its targeting accuracy and its causal punch.`,
         data: {
           caption: "What the monitors caught this month",
           columns: ["monitor", "at launch", "now", "diagnosis"],
           rows: [
             ["incremental retention (vs control)", "+4.7pp", "+1.9pp ⚠", "offer fatigue"],
-            ["top-decile precision", "0.214", "0.171 ⚠", "model drift"],
-            ["usage_trend distribution", "stable", "shifted", "pricing change"],
+            ["top-decile precision", "0.72", "0.61 ⚠", "model drift"],
+            ["MonthlyCharges distribution", "stable", "shifted", "pricing change"],
             ["offer-cost ROI", "positive", "thinning", "spend at risk"]
           ],
           note: `Two distinct failures, two distinct fixes: fatigue calls for a fresh offer, drift calls for a retrain on post-price-change data. A single &quot;customers retained&quot; number would have blurred them together — the control and per-metric alerts are what separate cause from coincidence.`
         },
         symbols: [
-          { sym: "model drift", desc: "the live feature distribution moving away from training (here usage_trend after a price change), eroding the model's targeting accuracy." },
+          { sym: "model drift", desc: "the live feature distribution moving away from training (here MonthlyCharges after a price change), eroding the model's targeting accuracy." },
           { sym: "offer fatigue", desc: "the declining causal effect of a repeated offer as customers grow used to it — visible as shrinking incremental lift vs control." },
           { sym: "ROI", desc: "return on investment of the campaign — incremental revenue retained versus discount cost; thins as lift fades." }
         ],
         steps: [
           { type: "decide", prompt: "What should you monitor for the live campaign?",
             options: [
-              { label: "Incremental retention vs control, top-decile precision as labels land, feature drift, and offer-cost ROI — with alerts", best: true, feedback: "this watches every way the campaign can fail. Incremental retention vs CONTROL tracks the offer's causal lift (catching fatigue); top-decile precision as outcomes arrive tracks targeting quality (catching model drift); feature drift flags when inputs like usage_trend shift after a price change; and ROI guards that the discount still pays for itself. Alerts turn all four into early warnings, so you fix a fading offer or stale model before the budget bleeds." },
+              { label: "Incremental retention vs control, top-decile precision as labels land, feature drift, and offer-cost ROI — with alerts", best: true, feedback: "this watches every way the campaign can fail. Incremental retention vs CONTROL tracks the offer's causal lift (catching fatigue); top-decile precision as outcomes arrive tracks targeting quality (catching model drift); feature drift flags when inputs like MonthlyCharges shift after a price change; and ROI guards that the discount still pays for itself. Alerts turn all four into early warnings, so you fix a fading offer or stale model before the budget bleeds." },
               { label: "Just total customers retained, with no control group", feedback: "this is blind exactly where it matters. Without a control you can't separate the offer's effect from seasonality, a price change, or a product launch — total retention can hold steady while the offer's real (causal) lift collapses to zero. You'd keep funding a campaign that may no longer work, with no signal that anything is wrong. The control comparison is the whole point." }
             ] },
-          { type: "run", label: "▶ Check this month's monitors", result: { log: "incremental retention: +4.7pp -> +1.9pp  (offer fatigue?)\nfeature 'usage_trend' drift detected: a pricing change shifted the distribution\ntop-decile precision: 0.214 -> 0.171  ALERT\naction: refresh the offer, retrain on post-price-change data", metrics: [{ k: "incremental lift", v: "+1.9pp ⚠" }, { k: "precision", v: "0.171 ⚠" }] }, note: `The loop closes here: a pricing change shifted the data and the offer fatigued, so monitoring triggers a retrain and a new offer — back to <b>Data</b>. Retention is a moving target.` }
+          { type: "run", label: "▶ Check this month's monitors", result: { log: "incremental retention: +4.7pp -> +1.9pp  (offer fatigue?)\nfeature 'MonthlyCharges' drift detected: a pricing change shifted the distribution\ntop-decile precision: 0.72 -> 0.61  ALERT\naction: refresh the offer, retrain on post-price-change data", metrics: [{ k: "incremental lift", v: "+1.9pp ⚠" }, { k: "precision", v: "0.61 ⚠" }] }, note: `The loop closes here: a pricing change shifted the data and the offer fatigued, so monitoring triggers a retrain and a new offer — back to <b>Data</b>. Retention is a moving target.` }
         ]
       }
     ]
@@ -787,9 +787,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the hypothesis",
-        narrative: `<p>A designer wants to ship a new checkout button color, certain it lifts conversion. Before touching traffic, turn the hunch into a testable hypothesis with exactly one <b>primary metric</b>, a stated direction, and a guardrail you commit to in advance. The reason to pre-commit is statistical: every extra metric you let yourself watch is another lottery ticket for a false positive, so freezing the question before you see the data is what keeps the answer honest.</p>`,
+        narrative: `<p>This is the classic web-conversion experiment behind the widely-used Kaggle <b>"A/B testing"</b> dataset: a site shows a control group the <b>old landing/checkout page</b> and a treatment group a <b>new page</b>, logging for each session whether the user <b>converted</b> (the binary primary metric). Before touching traffic, turn the hunch into a testable hypothesis with exactly one <b>primary metric</b>, a stated direction, and a guardrail you commit to in advance. The reason to pre-commit is statistical: every extra metric you let yourself watch is another lottery ticket for a false positive, so freezing the question before you see the data is what keeps the answer honest.</p>`,
         concepts: ["prob-estimation", "prob-bernoulli-binomial", "prob-expectation"],
-        insight: `<b>One metric, decided up front.</b> If you watch <b>40 metrics</b> at $\\alpha=0.05$, you expect <b>~2 to look "significant" by pure chance</b> even when nothing changed ($40\\times0.05=2$). Pre-registering a single primary metric (checkout conversion) plus a revenue guardrail collapses those 40 lottery tickets down to one honest test.`,
+        insight: `<b>One metric, decided up front.</b> That public dataset logs <b>294,478 sessions</b> split ~50/50 into control and treatment, with a baseline conversion of <b>~12%</b> — and its honest verdict is no significant lift, a reminder of how easy noise is to mistake for signal. If you watch <b>40 metrics</b> at $\\alpha=0.05$, you expect <b>~2 to look "significant" by pure chance</b> even when nothing changed ($40\\times0.05=2$). Pre-registering a single primary metric (conversion) plus a revenue guardrail collapses those 40 lottery tickets down to one honest test.`,
         symbols: [
           { sym: "$\\alpha$", desc: "the false-positive rate you accept — here 0.05, a 5% chance of calling a null effect 'significant'." },
           { sym: "primary metric", desc: "the single pre-chosen outcome the decision rests on (checkout conversion); everything else is secondary." },
@@ -806,7 +806,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Power & sample size",
-        narrative: `<p>Before launching, decide how much traffic you need. Sample size depends on three things: the baseline conversion rate, the smallest effect worth detecting (the MDE), and the variance of the metric — roughly $n\\propto \\frac{\\sigma^2}{\\delta^2}$, so halving the effect you want to catch quadruples the users you need.</p>
+        narrative: `<p>Each logged row in the experiment table is one session: <b>user_id, timestamp, group</b> (control / treatment), <b>landing_page</b> (old_page / new_page), and <b>converted</b> (0/1) — the same schema as the Kaggle A/B dataset. Before launching, decide how much traffic you need. Sample size depends on three things: the baseline conversion rate (~12% here), the smallest effect worth detecting (the MDE), and the variance of the metric — roughly $n\\propto \\frac{\\sigma^2}{\\delta^2}$, so halving the effect you want to catch quadruples the users you need.</p>
 <p><b>How the sample size is actually derived, step by step.</b> The per-arm formula for comparing two proportions is $n=\\dfrac{(z_{\\alpha/2}+z_{\\beta})^2\\,\\big(\\sigma_0^2+\\sigma_1^2\\big)}{\\delta^2}$. Reading it piece by piece: $z_{\\alpha/2}$ is the normal cutoff for the false-positive rate (for $\\alpha=0.05$ two-sided, $z_{\\alpha/2}=1.96$); $z_{\\beta}$ is the cutoff for the miss rate (for 80% power, $\\beta=0.20$ so $z_{\\beta}=0.84$); $\\delta$ is the MDE; and the variance of a proportion $p$ is $\\sigma^2=p(1-p)$. Plug in: baseline $p_0=0.12$ gives $\\sigma_0^2=0.12\\times0.88=0.1056$, treatment $p_1=0.126$ gives $\\sigma_1^2=0.126\\times0.874=0.1101$, and $\\delta=0.006$. So $n=\\dfrac{(1.96+0.84)^2(0.1056+0.1101)}{0.006^2}=\\dfrac{7.84\\times0.2157}{0.000036}\\approx 58{,}200$ users per arm. Because $\\delta$ is squared in the denominator, the MDE is the dominant lever. Computing this up front fixes the finish line so you read the result exactly once, instead of peeking until randomness crosses the line.</p>`,
         concepts: ["prob-variance", "prob-clt", "prob-estimation"],
         insight: `<b>The math gives a concrete finish line.</b> For a <b>12.0% baseline</b>, an MDE of <b>+0.6pp</b> (relative +5%), $\\alpha=0.05$ and <b>80% power</b>, the formula returns <b>~58,200 users per arm</b> — about <b>7 days</b> at 9,000 eligible users/day/arm. That number is decided NOW, before any data arrives, so 'when do we stop?' is never a judgment call.`,

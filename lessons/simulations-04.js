@@ -9,23 +9,23 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>A retailer wants cameras to spot empty shelves so staff can restock before a customer walks away. Each frame holds dozens of products at once, so you must <i>locate and identify every item</i> — not just label the whole picture. How you frame the task decides everything downstream: a per-frame label can't say <i>which</i> slot is empty, but a box per product can. That single framing choice fixes your labels, your loss, and your metrics.</p>`,
+        narrative: `<p>A retailer wants cameras to spot empty shelves so staff can restock before a customer walks away. Each frame holds dozens of products at once, so you must <i>locate and identify every item</i> — not just label the whole picture. This is the <b>object detection</b> task benchmarked by <b>COCO</b> (Common Objects in Context: 330K images, 80 object classes, 1.5M labeled instances) — the standard against which detectors report mAP. How you frame the task decides everything downstream: a per-frame label (the <b>ImageNet</b> setup — 1.28M images, 1000 classes, one label each) can't say <i>which</i> slot is empty, but a box per product can. That single framing choice fixes your labels, your loss, and your metrics.</p>`,
         concepts: ["dl-object-detection", "ml-classification-metrics"],
-        insight: `<b>One label per frame throws away the answer.</b> A shelf frame averages <b>21 products</b>, and the business question is "which slot is empty?" — a location, not a category. Image classification collapses all 21 items into one label and erases position, so it literally cannot answer the question. Detection keeps a box per item, which is why it costs ~$20\\times$ more to label but is the only framing that works.`,
+        insight: `<b>One label per frame throws away the answer.</b> A COCO image averages <b>~7 labeled objects</b> and a dense shelf frame holds dozens, but the business question is "which slot is empty?" — a location, not a category. Image classification (ImageNet-style: one of 1000 labels per image) collapses every item into one label and erases position, so it literally cannot answer the question. Detection keeps a box per item — the COCO ground-truth format — which is why COCO's 1.5M instance annotations cost ~$20\\times$ more to label than ImageNet's image tags, but it's the only framing that works.`,
         data: {
-          caption: "What one labeled frame looks like (object detection ground truth)",
-          columns: ["box_id", "class", "x,y (top-left)", "w×h (px)", "occluded?"],
+          caption: "What one labeled image looks like (COCO object-detection ground truth)",
+          columns: ["box_id", "category", "bbox [x, y, w, h]", "area (px²)", "iscrowd"],
           rows: [
-            ["b001", "cereal_box", "412, 88", "64×120", "no"],
-            ["b002", "soda_can", "498, 102", "28×70", "partial"],
-            ["b003", "(empty slot)", "560, 90", "70×118", "—"],
-            ["… 21 boxes", "…", "…", "…", "…"]
+            ["1001", "person (id 1)", "[412, 88, 64, 120]", "7680", "0"],
+            ["1002", "bottle (id 44)", "[498, 102, 28, 70]", "1960", "0"],
+            ["1003", "backpack (id 27)", "[560, 90, 70, 118]", "8260", "0"],
+            ["… ~7 objects", "…", "…", "…", "…"]
           ],
-          note: `Every product is one row with a position. A classification label would be a single value like "shelf" for the whole image — none of these rows, so none of the empty-slot information survives.`
+          note: `This is COCO's annotation schema: each object is one row with a bbox [x, y, w, h], an integer category_id (1 of 80), area, and iscrowd flag. An ImageNet classification label would be a single value like "shelf" for the whole image — none of these rows, so none of the empty-slot information survives.`
         },
         symbols: [
-          { sym: "box $(x,y,w,h)$", desc: "a bounding box: top-left corner $(x,y)$ plus width $w$ and height $h$ in pixels — where an object sits in the frame." },
-          { sym: "class", desc: "the product category predicted for each box (one of 60 SKUs here)." },
+          { sym: "box $(x,y,w,h)$", desc: "a COCO bounding box: top-left corner $(x,y)$ plus width $w$ and height $h$ in pixels — where an object sits in the frame." },
+          { sym: "class", desc: "the category predicted for each box (one of COCO's 80 object classes; your warehouse uses a 60-SKU subset)." },
           { sym: "IoU", desc: "Intersection-over-Union: overlap area of predicted and true box divided by their union; the score that decides if a box is 'correct' (defined fully at Evaluate)." },
           { sym: "mAP", desc: "mean Average Precision: precision averaged across classes and IoU thresholds — the headline detection metric." }
         ],
@@ -40,20 +40,20 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather labeled images",
-        narrative: `<p>Detection is supervised: each training image needs a human-drawn box and class for every product — far more expensive than a single image label. You pull store footage spanning many stores, lighting conditions, and times of day, then send it for annotation. The diversity matters: a model trained only on bright midday aisles will fail at dusk, so what you sample now bounds what the model can ever handle.</p>`,
+        narrative: `<p>Detection is supervised: each training image needs a human-drawn box and class for every product — far more expensive than a single image label. The public benchmarks show the cost: <b>COCO</b> ships <b>118K train images with 860K boxes</b>, and <b>Open Images</b> pushes further to <b>1.7M images and ~14.6M boxes across 600 classes</b>. You build your own shelf set the same way — pull store footage spanning many stores, lighting conditions, and times of day, then send it for box annotation. The diversity matters: a model trained only on bright midday aisles will fail at dusk, so what you sample now bounds what the model can ever handle.</p>`,
         concepts: ["ml-supervised", "dl-object-detection"],
-        insight: `<b>Box labels are the cost center.</b> The job produced <b>511,402 boxes across 24,000 frames</b> — about <b>21 boxes per frame</b>, each one a human click-drag-classify. At even a few seconds per box that's days of annotator time, which is why double-review quality matters: a wrong box is a wrong training target you pay twice for. Auto-labeling looks cheaper but copies an existing model's blind spots straight into your ground truth.`,
+        insight: `<b>Box labels are the cost center.</b> COCO's 118K-image train split carries <b>~860K boxes</b> (~7.3 per image), each a human click-drag-classify; your shelf job produced <b>511,402 boxes across 24,000 frames</b> — about <b>21 boxes per frame</b> because shelves are far denser than typical COCO scenes. At even a few seconds per box that's days of annotator time, which is why double-review quality matters: a wrong box is a wrong training target you pay twice for. Auto-labeling looks cheaper but copies an existing model's blind spots straight into your ground truth.`,
         data: {
-          caption: "Annotation batch summary (what came back from labeling)",
-          columns: ["field", "value", "why it matters"],
+          caption: "Annotation batch summary (vs the COCO benchmark)",
+          columns: ["field", "your shelf set", "COCO train2017", "why it matters"],
           rows: [
-            ["frames", "24,000", "across 38 stores → lighting/angle diversity"],
-            ["boxes", "511,402", "the supervised targets the model fits"],
-            ["avg boxes/frame", "21.3", "dense scenes → small-object problem ahead"],
-            ["classes", "60", "60-way product classifier head"],
-            ["blurry rejected", "4.2%", "bad frames re-shot, not trained on"]
+            ["images", "24,000", "118,287", "store/lighting/angle diversity"],
+            ["boxes", "511,402", "860,001", "the supervised targets the model fits"],
+            ["avg boxes/image", "21.3", "7.3", "dense shelves → small-object problem ahead"],
+            ["classes", "60", "80", "product classifier head width"],
+            ["blurry rejected", "4.2%", "—", "bad frames re-shot, not trained on"]
           ],
-          note: `Each box is a labeled example $(x,y,w,h,\\text{class})$. The 4.2% blurry frames are dropped because a box on an unreadable image teaches the model noise.`
+          note: `Each box is a labeled example $(x,y,w,h,\\text{class})$, the COCO format. Shelves pack ~3× more objects per image than COCO's everyday scenes. The 4.2% blurry frames are dropped because a box on an unreadable image teaches the model noise.`
         },
         symbols: [
           { sym: "frame", desc: "one captured image from a store camera; the input example." },
@@ -68,25 +68,25 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Use the whole image as one big box", feedback: "this collapses 21 distinct products into a single rectangle, erasing every object's position — the exact information detection exists to provide. The model would learn 'there is a shelf here' and nothing about individual items, which defeats the empty-slot goal. It's classification wearing a box's clothes." }
             ] },
           { type: "run", label: "▶ Pull & annotate frames", prompt: "Sample frames across stores, lighting, and times of day.",
-            result: { log: "sampled 24,000 frames from 38 stores\nannotated boxes: 511,402  (avg 21.3 per frame)\nclasses: 60 product types\nflagged 4.2% frames as blurry -> sent to re-shoot", metrics: [{ k: "frames", v: "24k" }, { k: "boxes", v: "511k" }, { k: "classes", v: "60" }] } }
+            result: { log: "sampled 24,000 frames from 38 stores\nannotated boxes: 511,402  (avg 21.3 per frame; COCO averages 7.3)\nbox format: [x, y, w, h] + category_id (COCO schema)\nclasses: 60 product types (subset of COCO's 80)\nflagged 4.2% frames as blurry -> sent to re-shoot", metrics: [{ k: "frames", v: "24k" }, { k: "boxes", v: "511k" }, { k: "classes", v: "60" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Look before you train. Detection datasets hide two killers in plain sight: <b>class imbalance</b> (some SKUs appear thousands of times, others almost never) and <b>tiny objects</b> (small items lose all their detail when a CNN downsamples). Profiling now tells you which architecture and augmentation choices you'll need later — a problem you don't see in exploration becomes a mystery failure in evaluation.</p>`,
+        narrative: `<p>Look before you train. Detection datasets hide two killers in plain sight: <b>class imbalance</b> (some SKUs appear thousands of times, others almost never) and <b>tiny objects</b> (small items lose all their detail when a CNN downsamples). COCO itself bakes this in — it defines a <b>small</b> object as area &lt;$32^2$px ($1024$px²) and reports mAP separately for small/medium/large, because <b>~41% of COCO instances are "small"</b> and detectors score far worse on them. Profiling now tells you which architecture and augmentation choices you'll need later — a problem you don't see in exploration becomes a mystery failure in evaluation.</p>`,
         concepts: ["mlx-error-analysis", "ml-classification-metrics"],
-        insight: `<b>A 220:1 imbalance and a small-object cliff.</b> The most common SKU has <b>41,800 boxes</b> and the rarest just <b>190</b> — so naive training sees the rare class once for every 220 common boxes and barely learns it. Worse, <b>23% of all boxes are &lt;32px</b>: after a CNN downsamples an image 32×, a 32px object shrinks to a single feature-map cell, so its detail is literally gone. These two facts will explain your weakest recall slices later.`,
+        insight: `<b>A 220:1 imbalance and a small-object cliff.</b> The most common SKU has <b>41,800 boxes</b> and the rarest just <b>190</b> — so naive training sees the rare class once for every 220 common boxes and barely learns it (COCO has this too: classes range from 250K+ "person" boxes down to a few hundred for rare classes like "hair drier"). Worse, <b>23% of all boxes are &lt;32px</b> on a side — COCO's "small" cutoff: after a CNN downsamples an image 32×, a 32px object shrinks to a single feature-map cell, so its detail is literally gone. These two facts will explain your weakest recall slices later.`,
         data: {
           caption: "Dataset profile (box counts and sizes)",
           columns: ["slice", "count / share", "consequence"],
           rows: [
             ["most common SKU", "41,800 boxes", "well-learned"],
             ["rarest SKU", "190 boxes", "starved → 220:1 imbalance"],
-            ["boxes &lt;32px", "23%", "vanish after downsampling"],
+            ["boxes &lt;32px (COCO 'small')", "23%", "vanish after downsampling"],
             ["very dark stores", "3 of 38", "under-exposed inputs"],
             ["duplicate frames", "1,108", "near-identical, leak risk"]
           ],
-          note: `Imbalance ratio = 41,800 / 190 ≈ 220:1. Duplicates (same camera, 1s apart) get de-duped so the same scene can't sit in both train and validation, which would inflate scores.`
+          note: `Imbalance ratio = 41,800 / 190 ≈ 220:1. "Small" = area &lt;$32^2$px, COCO's own threshold. Duplicates (same camera, 1s apart) get de-duped so the same scene can't sit in both train and validation, which would inflate scores.`
         },
         chart: { type: "bars", title: "Box count by SKU rank (220:1 imbalance)", labels: ["most common", "2nd", "median SKU", "rarest"], values: [41800, 22400, 3100, 190], colors: ["#4ea1ff", "#4ea1ff", "#ffb454", "#ff7b72"] },
         symbols: [
@@ -198,7 +198,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Evaluate", icon: "📊", title: "Evaluate with mAP & IoU",
         narrative: `<p>First clean the raw outputs. The detector fires several overlapping anchors on one object, so you run <b>non-max suppression (NMS)</b>: sort all kept boxes of a class by score, take the top one, and drop every remaining box whose <b>IoU</b> with it exceeds a threshold (e.g. $0.5$); repeat on what's left. That leaves one box per object. <b>IoU</b> (Intersection over Union) measures overlap — and it both drives NMS and decides whether a surviving box counts as "correct" against ground truth.</p><p>Then compute <b>mAP</b> per class: sort that class's predictions by confidence, walk down the list matching each to a true box at IoU $\\geq 0.5$ (a match is a true positive, otherwise a false positive), and at every step record running <b>precision</b> $=TP/(TP+FP)$ and <b>recall</b> $=TP/\\text{(all true boxes)}$. Those points trace a precision–recall curve; its area is the class's <b>Average Precision (AP)</b>. <b>mAP</b> is the mean AP over all 60 classes. You also evaluate on <i>unseen stores</i> and slice by object size — a healthy average can hide a broken slice.</p>`,
         concepts: ["dl-object-detection", "ml-classification-metrics", "ml-roc-auc"],
-        insight: `<b>The average is healthy; the slice that matters is not.</b> Headline <b>mAP@0.5 is 0.701</b> — the mean over 60 per-class areas-under-the-PR-curve — but recall on <b>small/rare items is only 0.39</b>, precisely the empty-shelf cases the system exists to catch. So a number that says "70% good" hides a 39% slice that drives the business value. The stricter <b>mAP@0.5:0.95 (0.448)</b>, which re-runs the whole AP computation at IoU cutoffs $0.5,0.55,\\dots,0.95$ and averages, drops sharply — telling you boxes are roughly placed but not tightly localized.`,
+        insight: `<b>The average is healthy; the slice that matters is not.</b> Headline <b>mAP@0.5 is 0.701</b> — the mean over 60 per-class areas-under-the-PR-curve — but recall on <b>small/rare items is only 0.39</b>, precisely the empty-shelf cases the system exists to catch. So a number that says "70% good" hides a 39% slice that drives the business value. The stricter <b>mAP@0.5:0.95 (0.448)</b> — the COCO primary metric, which re-runs the whole AP computation at IoU cutoffs $0.5,0.55,\\dots,0.95$ and averages — drops sharply, telling you boxes are roughly placed but not tightly localized. (For reference, top COCO detectors reach ~0.55–0.60 mAP@0.5:0.95.)`,
         data: {
           caption: "Holdout evaluation (6 unseen stores)",
           columns: ["metric", "value", "reading"],
@@ -327,7 +327,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>Pneumonia is rare in the screened population (~$4\\%$ positive), and the two errors are not symmetric: a <b>missed case (false negative)</b> can harm a patient, while a <b>false alarm (false positive)</b> wastes a scan and frightens someone healthy. Under this imbalance, plain accuracy is a trap — you must decide which error you most need to avoid before choosing a metric. The framing also sets the role: a decision-support flag for a radiologist, not an autonomous diagnosis.</p>`,
+        narrative: `<p>This is the chest-X-ray classification task benchmarked by <b>CheXpert</b> (Stanford: 224,316 X-rays from 65,240 patients, labeled for 14 findings) and <b>NIH ChestX-ray14</b> (112,120 frontal images, 30,805 patients, the same 14 findings). Pneumonia is one of those 14 findings and is <b>rare</b> — it appears as a positive label in only ~$4\\%$ of scans — and the two errors are not symmetric: a <b>missed case (false negative)</b> can harm a patient, while a <b>false alarm (false positive)</b> wastes a scan and frightens someone healthy. Under this imbalance, plain accuracy is a trap — you must decide which error you most need to avoid before choosing a metric. The framing also sets the role: a decision-support flag for a radiologist, not an autonomous diagnosis.</p>`,
         concepts: ["ml-classification-metrics", "prob-bayes"],
         insight: `<b>Accuracy is useless here.</b> Only <b>1 in ~24 chest X-rays is positive</b> (4.1%), so a model that blindly says "healthy" every time is <b>95.9% accurate and catches zero disease</b>. That's why you track <b>sensitivity</b> (of truly sick patients, how many did we flag?) instead — in screening, a false negative can cost a life while a false positive costs a second look. The objective is high sensitivity at a tolerable specificity, with a clinician kept in the loop.`,
         data: {
@@ -358,19 +358,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather labeled scans",
-        narrative: `<p>You collect X-rays from several hospitals to get patient and scanner diversity. But labels and scanners differ across sites in ways that matter more than they look: a disease label is only as good as how it was confirmed, and each scanner vendor stamps its own brightness and markers on the image. Where the labels come from and how the sites differ will decide both your label noise and the shortcuts your model can later exploit.</p>`,
+        narrative: `<p>You collect X-rays from several hospitals to get patient and scanner diversity — the way <b>MIMIC-CXR</b> (377,110 images + free-text reports from Beth Israel) and CheXpert/NIH were each assembled at a single institution. The label source is the catch: CheXpert and MIMIC-CXR derive their 14-finding labels by running an <b>automated NLP labeler over the radiology report text</b>, which introduces real label noise (including explicit "uncertain" labels), whereas the cleanest possible ground truth is a confirmed radiologist read checked against outcome. Each scanner vendor also stamps its own brightness and burned-in markers. Where labels come from and how the sites differ will decide both your label noise and the shortcuts your model can later exploit.</p>`,
         concepts: ["ml-supervised", "dl-data-augmentation"],
-        insight: `<b>The label source is the silent risk.</b> The pull is <b>61,200 scans, 2,510 positive (4.1%)</b> across <b>5 hospitals and 3 scanner vendors</b> — and hospital E uses a brighter exposure protocol. Confirmed-outcome radiologist labels are trustworthy; keyword-scraped report text is noisy and inconsistent across sites; ward location isn't a diagnosis at all. Choosing the wrong label source means you train on label noise, and the model's ceiling is set by how clean these 2,510 positives are.`,
+        insight: `<b>The label source is the silent risk.</b> Your pull is <b>61,200 scans, 2,510 pneumonia-positive (4.1%)</b> across <b>5 hospitals and 3 scanner vendors</b> — and hospital E uses a brighter exposure protocol. This mirrors the public sets: CheXpert/MIMIC-CXR labels come from report-text NLP (noisy), while a confirmed-outcome radiologist read is the gold standard. Keyword-scraped report text is noisy and inconsistent across sites; ward location isn't a diagnosis at all. Choosing the wrong label source means you train on label noise, and the model's ceiling is set by how clean these 2,510 positives are.`,
         data: {
-          caption: "Multi-hospital pull (a few example scan records)",
-          columns: ["scan_id", "hospital", "vendor", "label source", "label"],
+          caption: "Multi-hospital pull (CheXpert/MIMIC-style scan records)",
+          columns: ["scan_id", "hospital", "vendor", "label source", "Pneumonia"],
           rows: [
-            ["x0001", "A", "Siemens", "radiologist + outcome", "negative"],
-            ["x0002", "E", "GE (bright)", "radiologist + outcome", "positive"],
-            ["x0003", "C", "Philips", "radiologist + outcome", "negative"],
-            ["… 61,200 rows", "A–E", "3 vendors", "confirmed", "4.1% pos"]
+            ["p10001", "A", "Siemens", "radiologist + outcome", "negative"],
+            ["p10002", "E", "GE (bright)", "radiologist + outcome", "positive"],
+            ["p10003", "C", "Philips", "report-NLP (uncertain)", "−1 (uncertain)"],
+            ["… 61,200 rows", "A–E", "3 vendors", "mixed", "4.1% pos"]
           ],
-          note: `Each row is one scan with its source site, scanner vendor, and how its label was established. Vendor and hospital columns look harmless now but become the leakage suspects in the next stage.`
+          note: `Schema follows CheXpert/MIMIC-CXR: each scan carries the 14 findings as $\\{1=\\text{positive}, 0=\\text{negative}, -1=\\text{uncertain}, \\text{blank}\\}$; here we show the Pneumonia column. Vendor and hospital columns look harmless now but become the leakage suspects in the next stage.`
         },
         symbols: [
           { sym: "label source", desc: "how the ground-truth diagnosis was established (confirmed radiologist read vs scraped text vs ward); sets label noise." },
@@ -385,12 +385,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Assume any scan from the pulmonology ward is positive", feedback: "ward location is not a diagnosis. Plenty of pulmonology patients have asthma, COPD, or are there for unrelated reasons and have perfectly clear lungs, so this rule mislabels a large fraction of negatives as positive. You'd be training on the hospital's routing logic, not on radiographic disease — guaranteed label corruption." }
             ] },
           { type: "run", label: "▶ Pull multi-hospital scans", prompt: "Pull labeled X-rays across 5 hospitals.",
-            result: { log: "loaded 61,200 chest X-rays from 5 hospitals\npositives (pneumonia): 2,510  (4.1%)\nscanner vendors: 3 distinct\nhospital E uses a different exposure protocol (brighter images)", metrics: [{ k: "scans", v: "61.2k" }, { k: "positive rate", v: "4.1%" }, { k: "hospitals", v: "5" }] } }
+            result: { log: "loaded 61,200 chest X-rays from 5 hospitals (CheXpert/MIMIC-style schema)\nlabels: 14 findings per scan {1, 0, -1 uncertain, blank}\npneumonia positives: 2,510  (4.1%)\nscanner vendors: 3 distinct\nhospital E uses a different exposure protocol (brighter images)", metrics: [{ k: "scans", v: "61.2k" }, { k: "positive rate", v: "4.1%" }, { k: "hospitals", v: "5" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & spot leakage",
-        narrative: `<p>Medical datasets are full of <b>shortcuts</b>: features that correlate with the label in <i>this</i> dataset but aren't the disease. The classic trap is that the sickest patients cluster at one referral hospital, so the model can learn "this scanner's brightness = sick" instead of reading the lung. Exploration's job is to find these spurious correlations now — burned-in markers, per-vendor brightness, site skew — because a shortcut that helps on your split will collapse on a new hospital.</p>`,
+        narrative: `<p>Medical datasets are full of <b>shortcuts</b>: features that correlate with the label in <i>this</i> dataset but aren't the disease. This is documented for exactly these benchmarks — Zech et al. (2018) showed a pneumonia CNN trained on NIH + Mount Sinai data had learned to read <b>hospital-specific markers and scanner traits</b> rather than the lung, and its accuracy <b>dropped sharply on external hospitals</b>. The classic trap is that the sickest patients cluster at one referral hospital, so the model learns "this scanner's brightness = sick." Exploration's job is to find these spurious correlations now — burned-in markers, per-vendor brightness, site skew — because a shortcut that helps on your split will collapse on a new hospital.</p>`,
         concepts: ["mlx-error-analysis", "prob-variance"],
         insight: `<b>71% of positives come from one site.</b> Hospital E (a referral center with a brighter exposure protocol) supplies <b>71% of all 2,510 positives</b>, so "is this an E-looking scan?" predicts the label almost as well as reading the lung — a shortcut. The model would happily learn that proxy, score great on a random split, then <b>collapse at every hospital that isn't E</b>. The fix: strip burned-in text markers, normalize brightness per vendor, and validate per-hospital so a scanner signature can't masquerade as diagnostic skill.`,
         data: {
@@ -635,7 +635,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>The shuttle must <b>perceive</b> the road, <b>predict</b> what other agents will do, and <b>plan</b> a safe path — a three-part stack. The defining property is that safety is judged on the <i>tail</i>, not the average: a single catastrophic miss outweighs millions of smooth miles, so the objective is built around worst-case risk and a guaranteed fail-safe. Optimizing average comfort or speed quietly trades away exactly the rare events that matter most.</p>`,
+        narrative: `<p>The shuttle must <b>perceive</b> the road, <b>predict</b> what other agents will do, and <b>plan</b> a safe path — a three-part stack. Perception is benchmarked on multi-sensor sets like <b>nuScenes</b> (1,000 driving scenes of 20s each, a full sensor suite of 6 cameras + 1 lidar + 5 radars + GPS/IMU, 1.4M 3D boxes over 23 classes) and the <b>Waymo Open Dataset</b> (1,150 scenes, ~12M 3D lidar boxes), with <b>KITTI</b> and <b>Cityscapes</b> as the earlier camera/lidar standards. The defining property is that safety is judged on the <i>tail</i>, not the average: a single catastrophic miss outweighs millions of smooth miles, so the objective is built around worst-case risk and a guaranteed fail-safe. Optimizing average comfort or speed quietly trades away exactly the rare events that matter most.</p>`,
         concepts: ["dl-object-detection", "ai-mdp"],
         insight: `<b>The tail is the product.</b> A fleet at "<b>1 catastrophic event per million miles</b>" still has thousands of catastrophes at scale, so a metric like average trip time — which improves by braking less and driving faster — can <i>raise</i> tail risk while looking better on average. Autonomy is graded on its worst cases, so you optimize the long tail and guarantee a safe fallback (a minimal-risk stop) whenever the system is unsure. Even a perfect detector isn't enough: perception still needs safe planning around it.`,
         data: {
@@ -664,20 +664,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather driving data",
-        narrative: `<p>You log real drives across three complementary sensors — camera, LiDAR, radar — but raw miles are mostly redundant highway cruising. The valuable data is the rare scary moment: a disengagement (the safety driver took over), a near-miss, or an odd scene. So you <b>actively mine</b> the long tail from fleet logs and pay to label only those, because uniform labeling drowns you in boring frames while the failures hide in the 1% that matters.</p>`,
+        narrative: `<p>You log real drives across the same complementary sensors nuScenes and Waymo carry — camera, LiDAR, radar — but raw miles are mostly redundant highway cruising. (nuScenes deliberately curated its 1,000 scenes for <i>interesting</i> traffic: rain, night, dense intersections.) The valuable data is the rare scary moment: a disengagement (the safety driver took over), a near-miss, or an odd scene. So you <b>actively mine</b> the long tail from fleet logs and pay to label only those, because uniform labeling drowns you in boring frames while the failures hide in the 1% that matters.</p>`,
         concepts: ["ml-supervised", "dl-object-detection"],
-        insight: `<b>Mining concentrates labels where the model fails.</b> Of <b>2.1M logged miles</b>, you mine just <b>41,300 hard events</b> and label <b>1.9M 3D boxes</b> on those — a tiny, dense slice rich in night (18%), rain (11%), and occluded pedestrians (9%). Labeling all 2.1M miles uniformly would cost orders of magnitude more and be ~99% redundant cruising that teaches nothing new. The whole point is that a near-miss frame carries far more learning signal than a thousand empty-highway frames.`,
+        insight: `<b>Mining concentrates labels where the model fails.</b> Of <b>2.1M logged miles</b>, you mine just <b>41,300 hard events</b> and label <b>1.9M 3D boxes</b> on those (nuScenes hand-labeled ~1.4M boxes across 23 classes for comparison) — a tiny, dense slice rich in night (18%), rain (11%), and occluded pedestrians (9%). Labeling all 2.1M miles uniformly would cost orders of magnitude more and be ~99% redundant cruising that teaches nothing new. The whole point is that a near-miss frame carries far more learning signal than a thousand empty-highway frames.`,
         data: {
-          caption: "What one mined transition looks like (multi-sensor, labeled)",
+          caption: "One mined keyframe, nuScenes 3D-box schema",
           columns: ["field", "example value", "source"],
           rows: [
-            ["event_id", "ev_41021 (disengagement)", "mined from logs"],
-            ["3D box", "pedestrian @ (12.4m, −1.1m), 1.8m tall", "LiDAR + camera"],
-            ["track", "velocity 1.2 m/s toward lane", "temporal fusion"],
+            ["sample_token", "ev_41021 (disengagement)", "mined from logs"],
+            ["category", "human.pedestrian.adult", "23-class taxonomy"],
+            ["box: center / size / yaw", "[12.4, −1.1, 0.9] / [0.7,0.8,1.8] / 1.2 rad", "LiDAR + 6 cameras"],
+            ["velocity / attribute", "1.2 m/s toward lane / moving", "temporal fusion"],
             ["scene tags", "night, occluded_ped", "auto + human"],
             ["… 1.9M objects", "…", "…"]
           ],
-          note: `Each object is a 3D box plus a track (motion over time). Scene tags let you measure recall per condition later. Mining = keep the 41.3k informative events, drop the redundant millions.`
+          note: `nuScenes box schema: a 3D box = center $(x,y,z)$ + size $(w,l,h)$ + yaw rotation, plus a category, a velocity, and an attribute, tracked across frames by instance_token. Scene tags let you measure recall per condition later. Mining = keep the 41.3k informative events, drop the redundant millions.`
         },
         symbols: [
           { sym: "disengagement", desc: "an event where the safety driver took control from the autonomy; a high-value mined signal of a failure." },
@@ -692,12 +693,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Label every single frame equally", feedback: "labeling all 2.1M miles of 3D boxes is astronomically expensive and mostly wasted, since the overwhelming majority of frames are near-identical empty road that the model already handles. You'd burn the budget on redundancy and still under-sample the rare events, because they're rare. Equal labeling ignores that information density, not frame count, is what matters." }
             ] },
           { type: "run", label: "▶ Mine & label hard cases", prompt: "Mine disengagements and rare scenes from the fleet logs.",
-            result: { log: "fleet logs: 2.1M miles\nmined events: 41,300 (disengagements, near-misses, anomalies)\nlabeled 3D boxes + tracks: 1.9M objects\nscene tags: night 18%, rain 11%, construction 6%, occluded peds 9%", metrics: [{ k: "miles", v: "2.1M" }, { k: "hard events", v: "41.3k" }] } }
+            result: { log: "fleet logs: 2.1M miles (6 cameras + lidar + 5 radars, nuScenes-style suite)\nmined events: 41,300 (disengagements, near-misses, anomalies)\nlabeled 3D boxes + tracks: 1.9M objects across 23 classes\nbox = center xyz + size whl + yaw + velocity + attribute\nscene tags: night 18%, rain 11%, construction 6%, occluded peds 9%", metrics: [{ k: "miles", v: "2.1M" }, { k: "hard events", v: "41.3k" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore the long tail",
-        narrative: `<p>Survey <i>where</i> perception currently struggles by slicing recall per scene condition. The distribution of failures — not the average recall — drives the roadmap, because in autonomy a slice that's both <b>weak and safety-critical</b> (occluded pedestrians) outranks one that's weak but harmless. You also flag where sensors disagree, since radar-vs-camera conflicts are a clue that fusion (next stage) is doing real work.</p>`,
+        narrative: `<p>Survey <i>where</i> perception currently struggles by slicing recall per scene condition — nuScenes and Waymo ship exactly these slices (night/rain splits, per-class AP, and Waymo's LEVEL_2 boxes that include heavily occluded objects). The distribution of failures — not the average recall — drives the roadmap, because in autonomy a slice that's both <b>weak and safety-critical</b> (occluded pedestrians) outranks one that's weak but harmless. You also flag where sensors disagree, since radar-vs-camera conflicts are a clue that fusion (next stage) is doing real work.</p>`,
         concepts: ["mlx-error-analysis", "ai-hmm"],
         insight: `<b>Frequency is the wrong lens; cost is the right one.</b> Recall falls from <b>day 0.96 → night 0.81 → heavy rain 0.74</b>, and the worst slice is <b>occluded pedestrians at 0.69</b>. That slice is a small fraction of frames, but a single missed pedestrian is catastrophic, so it sets priority over more common but lower-stakes misses. The <b>3.1% radar-camera disagreements</b> aren't failures — they mark exactly the scenes (rain, glare) where one sensor covers the other's blind spot.`,
         data: {
@@ -947,7 +948,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Define the reward",
-        narrative: `<p>You frame control as a <b>Markov Decision Process</b>: at each step the arm observes a <b>state</b>, takes an <b>action</b>, and earns a <b>reward</b>. Everything the robot learns flows from how you shape that reward — it is the only signal that defines "good." The art is balancing two failure modes: a reward too <i>sparse</i> (only +1 at the goal) is never discovered by random exploration, while a reward for the wrong proxy (motor speed) is maximized by useless thrashing. You want a dense reward for the true goal plus gentle shaping terms.</p>`,
+        narrative: `<p>This is the <b>FetchPickAndPlace</b> task from <b>Gymnasium Robotics</b> (built on the <b>MuJoCo</b> physics engine, also used by <b>RoboSuite</b>): a 7-DOF arm must grasp a block and place it at a target. You frame control as a <b>Markov Decision Process</b>: at each step the arm observes a <b>state</b>, takes an <b>action</b>, and earns a <b>reward</b>. Tellingly, FetchPickAndPlace's <i>default</i> reward is <b>sparse</b> (−1 every step until the block is within 5cm of the goal, then 0) — which is precisely why it ships as a benchmark for goal-conditioned RL and is famously hard to learn from scratch. Everything the robot learns flows from how you shape that reward. The art is balancing two failure modes: a reward too sparse is never discovered by random exploration, while a reward for the wrong proxy (motor speed) is maximized by useless thrashing. You want a dense reward for the true goal plus gentle shaping terms.</p>`,
         concepts: ["ai-mdp", "ai-policy-value"],
         insight: `<b>Sparse rewards are undiscoverable; proxy rewards are gameable.</b> A "+1 only at exact placement" reward gives a random policy essentially <b>zero chance</b> of ever stumbling onto a +1, so there's no gradient to climb — the arm flails forever. Rewarding raw motor velocity is worse: it's maximized by thrashing the joints fast while placing nothing. The fix is a <b>dense reward</b> for successful gentle placement plus small penalties for time, jerk, and drops — frequent enough to learn from, aligned enough to mean the real task.`,
         data: {
@@ -978,19 +979,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Collect / simulate experience",
-        narrative: `<p>An RL policy learns from <b>experience</b> — transitions of (state, action, reward, next-state) it collects by acting. But early RL actions are nearly random, and random actions on a real arm mean collisions and broken parts before any learning happens. So you generate experience in a fast <b>physics simulator</b> first, and you apply <b>domain randomization</b> (varying friction, mass, object pose) so the policy learns a robust skill instead of overfitting one exact setup. Reality comes later, once the policy is competent.</p>`,
+        narrative: `<p>An RL policy learns from <b>experience</b> — transitions of (state, action, reward, next-state) it collects by acting. But early RL actions are nearly random, and random actions on a real arm mean collisions and broken parts before any learning happens. So you generate experience in <b>MuJoCo</b> (via Gymnasium's vectorized envs) first — the same simulator that backs FetchPickAndPlace and RoboSuite — and apply <b>domain randomization</b> (varying friction, mass, object pose) so the policy learns a robust skill instead of overfitting one exact setup. Reality comes later, once the policy is competent. In FetchPickAndPlace the action is a 4-vector (3 gripper-displacement components + 1 gripper open/close) and the observation is a 25-dim state plus the goal.</p>`,
         concepts: ["ai-mdp", "ai-q-learning"],
-        insight: `<b>Sim is cheap, safe, and parallel.</b> 64 parallel sim envs collect <b>5.0M transitions in 22 minutes</b> — a volume that would take months and a graveyard of broken parts on real hardware. Crucially, a <b>random policy succeeds only 1.8%</b> of the time, which is exactly why you can't start on the real arm: the first millions of actions are mostly failures you don't want happening physically. Domain randomization over friction/mass/pose means the policy can't memorize one setup, so it transfers better later.`,
+        insight: `<b>Sim is cheap, safe, and parallel.</b> 64 parallel MuJoCo envs collect <b>5.0M transitions in 22 minutes</b> — a volume that would take months and a graveyard of broken parts on real hardware. Crucially, on FetchPickAndPlace's sparse reward a <b>random policy succeeds only ~1.8%</b> of the time, which is exactly why you can't start on the real arm: the first millions of actions are mostly failures you don't want happening physically. Domain randomization over friction/mass/pose means the policy can't memorize one setup, so it transfers better later.`,
         data: {
-          caption: "Example collected transitions (the RL training data)",
-          columns: ["state $s$", "action $a$", "reward $r$", "next-state $s'$"],
+          caption: "Example MuJoCo transitions (FetchPickAndPlace, the RL training data)",
+          columns: ["state $s$ (25-dim)", "action $a$ (4-vec)", "reward $r$", "next-state $s'$"],
           rows: [
-            ["gripper above part, open", "lower + close", "+0.2 (grasp)", "part held"],
-            ["part held, mid-air", "move toward bin", "−0.01 (time)", "part over bin"],
-            ["part over bin", "open gripper", "+1.0 (placed)", "bin filled"],
-            ["part held, tilted", "jerk up", "−0.5 (dropped)", "part on floor"]
+            ["gripper above block, open", "[Δx,Δy,Δz, close]", "−1 (sparse: not at goal)", "block held"],
+            ["block held, mid-air", "[Δ toward target, hold]", "−1 (not at goal)", "block over target"],
+            ["block at target ≤5cm", "[hold, open]", "0 (success)", "block placed"],
+            ["block held, tilted", "[jerk up, hold]", "−1 (dropped)", "block on table"]
           ],
-          note: `Each row is one MDP transition $(s,a,r,s')$ — the atomic unit RL learns from. Domain randomization perturbs the physics behind these transitions each episode (e.g. friction $\\mu\\sim U(0.4,1.2)$, part mass $\\times U(0.7,1.3)$, object pose $\\pm$2cm/$\\pm$15°, lighting/camera noise) so the policy can't memorize one rig and instead learns a skill robust across the whole range — the basis of sim-to-real transfer.`
+          note: `Each row is one MDP transition $(s,a,r,s')$ — the atomic unit RL learns from. The action is FetchPickAndPlace's 4-vector (3 Cartesian gripper displacements + 1 open/close); the state is the 25-dim observation (gripper + block pose/velocity) plus the desired goal. Domain randomization perturbs the physics each episode (friction $\\mu\\sim U(0.4,1.2)$, part mass $\\times U(0.7,1.3)$, object pose $\\pm$2cm/$\\pm$15°, lighting/camera noise) so the policy learns a skill robust across the whole range — the basis of sim-to-real transfer.`
         },
         symbols: [
           { sym: "transition $(s,a,r,s')$", desc: "one experience tuple: state, action taken, reward received, resulting next state — the data RL trains on." },
@@ -1005,12 +1006,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "From a single recorded human demo, replayed forever", feedback: "one demonstration is a single trajectory through state space, but an RL policy will visit countless states that demo never touches — and the moment it deviates, a replay has no idea how to recover. You can't learn a robust closed-loop controller from one open-loop path; it covers neither the variety nor the recovery behavior the task requires." }
             ] },
           { type: "run", label: "▶ Spin up sim & collect rollouts", prompt: "Launch parallel simulators with domain randomization.",
-            result: { log: "launching 64 parallel sim envs...\ndomain randomization per episode: friction mu~U(0.4,1.2), mass xU(0.7,1.3),\n  object pose +-2cm/+-15deg, lighting + camera noise\ncollected 5.0M transitions in 22 min\nsuccess under random policy: 1.8%", metrics: [{ k: "transitions", v: "5.0M" }, { k: "sim envs", v: "64" }, { k: "random success", v: "1.8%" }] } }
+            result: { log: "launching 64 parallel MuJoCo envs (Gymnasium FetchPickAndPlace)...\naction 4-vec [dx,dy,dz,grip]; obs 25-dim + goal; sparse reward {-1,0}\ndomain randomization per episode: friction mu~U(0.4,1.2), mass xU(0.7,1.3),\n  object pose +-2cm/+-15deg, lighting + camera noise\ncollected 5.0M transitions in 22 min\nsuccess under random policy: 1.8%", metrics: [{ k: "transitions", v: "5.0M" }, { k: "sim envs", v: "64" }, { k: "random success", v: "1.8%" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Inspect the state space",
-        narrative: `<p>Before committing to a long training run, profile the <i>rollouts</i>: which states the arm actually visits, how reward accrues, and where episodes end. This is where <b>reward bugs</b> and <b>coverage holes</b> surface cheaply. The classic bug is <b>reward hacking</b> — the policy finds a way to farm the shaping term without doing the task — and catching it now saves you from training a perfectly-optimized useless policy.</p>`,
+        narrative: `<p>Before committing to a long training run, profile the <i>rollouts</i>: which states the arm actually visits, how reward accrues, and where episodes end. This is where <b>reward bugs</b> and <b>coverage holes</b> surface cheaply. (On sparse FetchPickAndPlace the standard remedy for the coverage hole is <b>Hindsight Experience Replay</b>, which relabels failed rollouts as successes for the goal actually reached — but that only works once you've confirmed the reward itself isn't gameable.) The classic bug is <b>reward hacking</b> — the policy farms the shaping term without doing the task — and catching it now saves you from training a perfectly-optimized useless policy.</p>`,
         concepts: ["ai-mdp", "mlx-error-analysis"],
         insight: `<b>Reward hacking caught early.</b> The profile shows the arm learned to <b>hover near the goal to farm the shaping reward without ever placing</b> — high reward, zero task success, the unmistakable signature of a misspecified reward. Two more red flags: the far-left bin is reached in only <b>2% of episodes</b> (a coverage hole), and episodes <b>hit the max-steps cap 61% of the time</b> (the policy is stalling, not finishing). All three are diagnosable from rollouts in minutes, versus discovering them after a multi-hour training run.`,
         data: {
@@ -1052,7 +1053,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["gripper pose", "6", "forward kinematics", "where the hand is"],
             ["object pose (rel. to gripper)", "6", "vision system", "what to grasp; generalizes"]
           ],
-          note: `Relative object pose = object_pose ⊖ gripper_pose. Encoding it relatively means one policy handles all part locations. Mapping joint motion to gripper motion uses the arm's Jacobian.`
+          note: `This mirrors the FetchPickAndPlace 25-dim observation, which encodes object position/rotation/velocity <i>relative to the gripper</i> exactly so one policy handles all part locations. Relative object pose = object_pose ⊖ gripper_pose. Mapping joint motion to gripper motion uses the arm's Jacobian.`
         },
         symbols: [
           { sym: "state representation", desc: "the observation vector the policy sees each step; must be both informative and measurable on real hardware." },

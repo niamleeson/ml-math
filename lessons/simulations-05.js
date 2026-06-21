@@ -10,17 +10,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>The utility must commit power purchases a full day ahead. Under-buy and you pay brutal spot prices when demand surprises you; over-buy and you pay for power nobody uses. The asymmetry is real money: a single bad peak-hour miss can cost more than a month of small errors.</p><p>So the deliverable isn't "a number" — it's an hourly load curve a week out, each hour carrying honest uncertainty so purchasers can size their safety margin.</p>`,
+        narrative: `<p>This is the canonical load-forecasting task, studied on real benchmarks like the <b>UCI ElectricityLoadDiagrams</b> dataset (370 Portuguese clients, 15-minute meter readings, 2011–2014) and the <b>M5 Forecasting</b> competition (Walmart, 42,840 hierarchical daily sales series). The utility must commit power purchases a full day ahead. Under-buy and you pay brutal spot prices when demand surprises you; over-buy and you pay for power nobody uses. The asymmetry is real money: a single bad peak-hour miss can cost more than a month of small errors.</p><p>So the deliverable isn't "a number" — it's an hourly load curve a week out, each hour carrying honest uncertainty so purchasers can size their safety margin.</p>`,
         concepts: ["mod-timeseries", "prob-expectation", "ml-regression-metrics"],
         insight: `<b>The flat baseline is hopeless.</b> Load swings about <b>2.6× between the 4am trough (~7,200 MW) and the 6pm weekday peak (~18,700 MW)</b>. A single all-day mean misses the peak by roughly 4,000 MW — far more than the spot-market penalty you can afford. Any useful forecast must be hour-by-hour, because the cost lives entirely in the peaks.`,
         data: {
           caption: "What the target looks like: an hourly load series indexed by time",
           columns: ["timestamp", "load (MW)", "hour", "weekday"],
           rows: [
-            ["2026-06-15 04:00", "7,210", "4", "Mon"],
-            ["2026-06-15 18:00", "18,640", "18", "Mon"],
-            ["2026-06-16 18:00", "18,910", "18", "Tue"],
-            ["2026-06-20 18:00", "14,300", "18", "Sat"]
+            ["2014-06-15 04:00", "7,210", "4", "Mon"],
+            ["2014-06-15 18:00", "18,640", "18", "Mon"],
+            ["2014-06-16 18:00", "18,910", "18", "Tue"],
+            ["2014-06-20 18:00", "14,300", "18", "Sat"]
           ],
           note: `One row per hour, in strict time order. The target is the <b>load</b> column; everything else (hour, weekday, later weather) is a clue you can know in advance. Notice the same 6pm hour is far lower on Saturday — the calendar matters.`
         },
@@ -40,19 +40,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You pull years of metered load plus the drivers that move it: weather and the calendar. Two things make time-series data special. First, ordering is sacred — you can never let a future row inform a past one. Second, the features that matter must be <i>knowable ahead of time</i>, or they're useless at forecast time.</p>`,
+        narrative: `<p>The UCI ElectricityLoadDiagrams dataset gives metered consumption (kW) for <b>370 clients at 15-minute resolution, 2011–2014</b>. You aggregate it to a single hourly system load and join the drivers that move it: weather and the calendar. Two things make time-series data special. First, ordering is sacred — you can never let a future row inform a past one. Second, the features that matter must be <i>knowable ahead of time</i>, or they're useless at forecast time.</p>`,
         concepts: ["ml-supervised", "prob-random-variable", "mod-timeseries"],
         insight: `<b>Weather is the dominant exogenous driver.</b> Over 4 years, hour-of-day plus temperature alone explain about <b>78% of load variance</b> — heating below 12°C and cooling above 24°C drive the rest. That's why you join a weather feed: without it, your best model is stuck guessing the weather-driven swings.`,
         data: {
-          caption: "The joined training table — load history with calendar and weather columns",
+          caption: "The joined training table — hourly load (370 clients aggregated) with calendar and weather columns",
           columns: ["timestamp", "load (MW)", "temp °C", "hour", "dow", "holiday"],
           rows: [
-            ["2026-06-15 08:00", "13,420", "19.5", "8", "Mon", "0"],
-            ["2026-06-15 18:00", "18,640", "27.1", "18", "Mon", "1?"],
-            ["2026-06-16 03:00", "7,540", "16.2", "3", "Tue", "0"],
-            ["2026-06-20 14:00", "12,180", "29.8", "14", "Sat", "0"]
+            ["2014-06-15 08:00", "13,420", "19.5", "8", "Mon", "0"],
+            ["2014-06-15 18:00", "18,640", "27.1", "18", "Mon", "1?"],
+            ["2014-06-16 03:00", "7,540", "16.2", "3", "Tue", "0"],
+            ["2014-06-20 14:00", "12,180", "29.8", "14", "Sat", "0"]
           ],
-          note: `35,064 rows like these (4 years × 8,766 hours). Each row is one hour; columns are the load target plus the drivers. The weather columns come from a forecast feed, so they're available a day ahead — that's what makes them legal features.`
+          note: `35,064 hourly rows (4 years × 8,766 hours), each aggregated from the 96 daily 15-minute readings across the 370 clients. Columns are the load target plus the drivers. The weather columns come from a forecast feed, so they're available a day ahead — that's what makes them legal features.`
         },
         symbols: [
           { sym: "$x_t$", desc: "the feature vector for hour $t$ — temperature, hour, day-of-week, holiday flag, and lagged load." },
@@ -66,8 +66,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Tomorrow's actual metered load", feedback: "that's the answer itself, and it doesn't exist yet at forecast time. Joining it is textbook look-ahead leakage — your backtest would look perfect and production would collapse, because the column is blank when you actually need it." },
               { label: "Only the raw timestamp", feedback: "a bare timestamp can't express that 6pm on a hot weekday is a peak while 6pm Saturday isn't. A tree or regression sees an integer, not a clock. You must engineer the timestamp into hour/weekday/holiday drivers — the raw value carries no usable structure." }
             ] },
-          { type: "run", label: "▶ Pull 4 years of hourly load", prompt: "Load metered history joined with weather and calendar.",
-            result: { log: "querying meter warehouse...\nloaded 35,064 hourly rows x 11 columns\njoined weather (temp, humidity)\njoined calendar (hour, dow, holiday)\ndaily + weekly + yearly seasonality visible in autocorrelation", metrics: [{ k: "rows", v: "35,064" }, { k: "span", v: "4 yrs" }, { k: "features", v: "11" }] } }
+          { type: "run", label: "▶ Pull 4 years of hourly load", prompt: "Load UCI ElectricityLoadDiagrams, aggregate to hourly, join weather and calendar.",
+            result: { log: "loading UCI ElectricityLoadDiagrams (370 clients, 15-min, 2011-2014)...\naggregated to 35,064 hourly system-load rows x 11 columns\njoined weather (temp, humidity)\njoined calendar (hour, dow, holiday)\ndaily + weekly + yearly seasonality visible in autocorrelation", metrics: [{ k: "rows", v: "35,064" }, { k: "clients", v: "370" }, { k: "span", v: "4 yrs" }] } }
         ]
       },
       {
@@ -336,19 +336,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You want an agent that masters a perfect-information board game. The first and most consequential choice is what "good" means — what scalar signal does the agent actually optimize? Get this wrong and the agent will dutifully maximize the wrong thing.</p><p>In a board game the only thing that matters is the final result, so the reward should live at the end of the game, not on every move.</p>`,
+        narrative: `<p>You want an agent that masters a perfect-information board game — concretely, <b>chess, trained by self-play the way DeepMind's AlphaZero (Silver et al., Science 2018) was</b> from <b>44 million self-play games</b> and no human data. (The other classic RL benchmark, the <b>Atari Arcade Learning Environment</b>'s 57 games, learns from raw 210×160 pixels instead of board states.) The first and most consequential choice is what "good" means — what scalar signal does the agent actually optimize? Get this wrong and the agent will dutifully maximize the wrong thing.</p><p>In a board game the only thing that matters is the final result, so the reward should live at the end of the game, not on every move.</p>`,
         concepts: ["ai-mdp", "ai-policy-value", "aix-game-theory"],
-        insight: `<b>Sparse terminal reward beats dense shaped reward here.</b> A naive "capture a piece, get +0.1" reward sounds helpful, but in test games it makes the agent <b>trade material greedily and lose ~20% more often</b> — material is a heuristic that correlates with winning, not winning itself. The honest signal is a single $\\pm1$ at the terminal state; the hard part the agent must solve is credit assignment back through ~38 moves.`,
+        insight: `<b>Sparse terminal reward beats dense shaped reward here.</b> A naive "capture a piece, get +0.1" reward sounds helpful, but in test games it makes the agent <b>trade material greedily and lose ~20% more often</b> — material is a heuristic that correlates with winning, not winning itself. The honest signal is a single $\\pm1$ at the terminal state; the hard part the agent must solve is credit assignment back through the <b>~80 plies</b> of a typical chess game.`,
         data: {
           caption: "A trajectory: states, the chosen action, and the reward (only the last is non-zero)",
           columns: ["ply", "state (board)", "action", "reward $r$"],
           rows: [
             ["1", "opening position", "e2→e4", "0"],
-            ["19", "midgame, even material", "knight fork", "0"],
-            ["37", "winning attack", "queen→h7", "0"],
-            ["38", "checkmate (terminal)", "—", "+1"]
+            ["41", "midgame, even material", "knight fork", "0"],
+            ["79", "winning attack", "queen→h7", "0"],
+            ["80", "checkmate (terminal)", "—", "+1"]
           ],
-          note: `Reward is 0 for all 37 non-terminal moves and +1 only at the win. The agent must learn that the ply-37 fork <i>caused</i> the ply-38 win — that backward credit assignment is the whole RL problem.`
+          note: `Reward is 0 for all 79 non-terminal moves and +1 only at the win. The agent must learn that the ply-79 fork <i>caused</i> the ply-80 win — that backward credit assignment is the whole RL problem.`
         },
         symbols: [
           { sym: "$r_t$", desc: "the reward at step $t$; here $r_t=0$ except at the terminal state, where it is $+1$ (win), $-1$ (loss), or $0$ (draw)." },
@@ -366,24 +366,24 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Generate self-play data",
-        narrative: `<p>There's no labeled dataset of "best moves" for a game stronger than humans play. So the agent must generate its own experience by playing itself — the data source <i>is</i> the agent. As it improves, the data improves, in a bootstrapping spiral.</p>`,
+        narrative: `<p>There's no labeled dataset of "best moves" for a game stronger than humans play. So the agent must generate its own experience by playing itself — the data source <i>is</i> the agent. As it improves, the data improves, in a bootstrapping spiral. AlphaZero ran this loop at scale: <b>44 million self-play chess games</b>, each move chosen after <b>800 MCTS simulations</b>.</p>`,
         concepts: ["aix-monte-carlo", "ai-q-learning", "ai-mdp"],
-        insight: `<b>Self-play scales without a ceiling.</b> 50,000 games yield <b>3.1M (state, action, reward) transitions</b> in hours, all at the agent's current skill level — no human bottleneck. The logs reveal a <b>51.2% first-player win rate</b>, a real first-move edge the agent must learn to exploit, and an average game length of <b>38 plies</b>, which sets how far credit must propagate.`,
+        insight: `<b>Self-play scales without a ceiling.</b> 50,000 games yield <b>4.0M (state, action, reward) transitions</b> in hours, all at the agent's current skill level — no human bottleneck. The logs reveal a <b>~52–55% White (first-player) win rate</b>, the real first-move edge that holds even at the top of human chess, and an average game length of <b>~80 plies</b>, which sets how far credit must propagate.`,
         data: {
           caption: "The self-play transition log (one row per move played by either side)",
           columns: ["game", "ply", "state", "action", "final reward"],
           rows: [
             ["1", "1", "s₀ (opening)", "a₁", "+1"],
-            ["1", "38", "s₃₇", "a₃₈", "+1"],
+            ["1", "80", "s₇₉", "a₈₀", "+1"],
             ["2", "1", "s₀ (opening)", "a₇", "-1"],
-            ["50000", "12", "midgame s", "a", "0 (draw)"]
+            ["50000", "44", "midgame s", "a", "0 (draw)"]
           ],
-          note: `Each game contributes ~38 rows, all stamped with that game's final reward. 50K games × ~62 transitions ≈ 3.1M training examples — generated entirely by the agent playing itself.`
+          note: `Each game contributes ~80 rows, all stamped with that game's final reward. 50K games × ~80 transitions ≈ 4.0M training examples — generated entirely by the agent playing itself, the same scheme that produced AlphaZero's 44M-game corpus.`
         },
         symbols: [
           { sym: "$(s,a,r)$", desc: "a transition: the board state $s$, the action $a$ taken, and the game's final reward $r$ propagated back to it." },
           { sym: "self-play", desc: "the data-generation scheme where the current agent plays both sides, producing fresh experience at its own skill level." },
-          { sym: "ply", desc: "a single move by one player; a 38-ply game is 19 moves per side." }
+          { sym: "ply", desc: "a single move by one player; an 80-ply game is 40 moves per side." }
         ],
         steps: [
           { type: "decide", prompt: "Where does training data come from?",
@@ -392,17 +392,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Only games scraped from human experts", feedback: "useful as a warm start, but it caps the agent at human strength and is limited in volume — there are only so many master games. To exceed humans you need experience from play stronger than any human, which only self-play can produce." },
               { label: "Random games with random moves", feedback: "fine for the very first batch when the agent knows nothing, but pure random play plateaus fast — there's no strong signal about which moves win. The agent must learn from increasingly skilled play, which is exactly what self-play delivers as it improves." }
             ] },
-          { type: "run", label: "▶ Run 50,000 self-play games", prompt: "Generate experience by self-play.",
-            result: { log: "spawning self-play workers...\nplayed 50,000 games\nlogged 3.1M (state, action, reward) transitions\nfirst-player win rate: 51.2% (slight first-move edge)\naverage game length: 38 plies", metrics: [{ k: "games", v: "50,000" }, { k: "transitions", v: "3.1M" }] } }
+          { type: "run", label: "▶ Run 50,000 self-play games", prompt: "Generate experience by self-play (800 MCTS sims/move).",
+            result: { log: "spawning self-play workers (800 MCTS sims per move)...\nplayed 50,000 games\nlogged 4.0M (state, action, reward) transitions\nWhite (first-player) win rate: 53.1% (real first-move edge)\naverage game length: 80 plies", metrics: [{ k: "games", v: "50,000" }, { k: "transitions", v: "4.0M" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore the state space",
         narrative: `<p>Understand how big the problem is before you choose an algorithm. If the game tree is astronomically large, you cannot enumerate it — you must sample and approximate. The branching factor and depth tell you which regime you're in.</p><p><b>How MCTS samples the tree, concretely.</b> Each move runs many simulations; one simulation has four phases. <b>(1) Select:</b> starting at the root, walk down by repeatedly picking the child that maximizes the upper-confidence rule $\\text{UCB}(s,a)=Q(s,a)+c\\,\\sqrt{\\frac{\\ln N(s)}{n(s,a)}}$ — $Q$ is the average value seen through that edge (exploit), the square-root term rewards rarely-tried moves (explore), and $c$ tunes the balance. (AlphaZero's PUCT variant scales the bonus by the policy prior: $c\\,P(s,a)\\frac{\\sqrt{N(s)}}{1+n(s,a)}$.) <b>(2) Expand:</b> at a leaf, add its children. <b>(3) Evaluate:</b> score the leaf with the learned value $V(s)$ instead of playing to the end. <b>(4) Backup:</b> add that value to $Q$ and increment the visit counts $n(s,a)$ and $N(s)$ along the path. After the budget is spent, play the most-visited root move.</p>`,
         concepts: ["ai-tree-search", "ai-minimax", "aix-monte-carlo"],
-        insight: `<b>The tree is unenumerable by 40 orders of magnitude.</b> With a branching factor of <b>~31</b> and depth <b>~38</b>, the game has roughly <b>$31^{38}\\approx10^{40}$</b> reachable positions. Enumerating one per nanosecond would still take longer than the age of the universe ($\\sim10^{17}$ s). So exact minimax is off the table; you must sample promising lines (MCTS) and evaluate leaves with a learned value function.`,
+        insight: `<b>The chess game tree is unenumerable by 120 orders of magnitude.</b> With a branching factor of <b>~35</b> legal moves and a depth of <b>~80</b> plies, the game tree has on the order of <b>$35^{80}\\approx10^{123}$</b> lines (Shannon's number), over roughly <b>$10^{43}$</b> reachable legal positions. Enumerating one per nanosecond would still take longer than the age of the universe ($\\sim10^{17}$ s) by a vast margin. So exact minimax is off the table; you must sample promising lines (MCTS) and evaluate leaves with a learned value function.`,
         data: {
-          caption: "State→value snapshot from the learned evaluator (a tiny sample of $10^{40}$)",
+          caption: "State→value snapshot from the learned evaluator (a tiny sample of $10^{43}$ positions)",
           columns: ["state", "side to move", "value $V(s)$", "interpretation"],
           rows: [
             ["opening s₀", "player 1", "+0.04", "near-even, slight edge"],
@@ -410,21 +410,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["king exposed", "player 2", "-0.55", "losing"],
             ["forced mate in 2", "player 1", "+0.98", "all but won"]
           ],
-          note: `The value function maps any board to a number in $[-1,+1]$ — the expected game outcome from that position. It lets MCTS judge a leaf without searching all the way to checkmate, which is what makes $10^{40}$ states tractable.`
+          note: `The value function maps any board to a number in $[-1,+1]$ — the expected game outcome from that position. It lets MCTS judge a leaf without searching all the way to checkmate, which is what makes $10^{43}$ states tractable.`
         },
         symbols: [
-          { sym: "$b$", desc: "the branching factor — average number of legal moves per position (here $\\approx31$)." },
-          { sym: "$d$", desc: "the typical game depth in plies (here $\\approx38$); the tree size grows like $b^d$." },
+          { sym: "$b$", desc: "the branching factor — average number of legal moves per position (here $\\approx35$, the chess average)." },
+          { sym: "$d$", desc: "the typical game depth in plies (here $\\approx80$); the tree size grows like $b^d$." },
           { sym: "$V(s)$", desc: "the value of state $s$: the expected final reward from $s$ under good play, in $[-1,+1]$." },
           { sym: "UCB", desc: "the selection score $Q(s,a)+c\\sqrt{\\ln N(s)/n(s,a)}$: pick the child balancing high average value $Q$ (exploit) against few visits $n$ (explore)." },
           { sym: "$N(s),\\,n(s,a)$", desc: "MCTS visit counts: $N(s)$ times state $s$ was visited, $n(s,a)$ times edge $a$ was taken from it — they drive both the UCB bonus and the final move choice." }
         ],
         steps: [
-          { type: "run", label: "▶ Estimate branching & tree size", result: { log: "avg branching factor: ~31 legal moves\ntypical depth: ~38 plies\nstate-space estimate: ~10^40 positions\nfull minimax tree: intractable to enumerate\nMCTS per move: select via UCB Q + c*sqrt(ln N / n) -> expand -> eval with V(s) -> backup", metrics: [{ k: "branching", v: "~31" }, { k: "states", v: "~10^40" }] } },
-          { type: "decide", prompt: "The tree has ~$10^{40}$ states. How do you search it?",
+          { type: "run", label: "▶ Estimate branching & tree size", result: { log: "avg branching factor: ~35 legal moves\ntypical depth: ~80 plies\ngame-tree complexity: ~35^80 ~= 10^123 lines (Shannon number)\nlegal positions: ~10^43\nfull minimax tree: intractable to enumerate\nMCTS per move: select via UCB Q + c*sqrt(ln N / n) -> expand -> eval with V(s) -> backup", metrics: [{ k: "branching", v: "~35" }, { k: "positions", v: "~10^43" }] } },
+          { type: "decide", prompt: "The tree has ~$10^{43}$ positions. How do you search it?",
             options: [
-              { label: "Use Monte Carlo Tree Search guided by a learned value/policy, with alpha-beta-style pruning of bad branches", best: true, feedback: "you can't enumerate $10^{40}$ states, so you sample. MCTS spends its simulations on the promising lines the policy suggests, and a learned value function evaluates leaves without playing to the end. Pruning weak branches focuses the budget where it pays — the only tractable approach at this scale." },
-              { label: "Enumerate the full minimax tree to the terminal of every game", feedback: "impossible by an enormous margin — $10^{40}$ positions at a nanosecond each is longer than the universe has existed. Exact minimax works for tiny games (tic-tac-toe), but here you have no choice but to approximate by sampling." }
+              { label: "Use Monte Carlo Tree Search guided by a learned value/policy, with alpha-beta-style pruning of bad branches", best: true, feedback: "you can't enumerate $10^{43}$ positions, so you sample. MCTS spends its simulations on the promising lines the policy suggests, and a learned value function evaluates leaves without playing to the end. Pruning weak branches focuses the budget where it pays — the only tractable approach at this scale." },
+              { label: "Enumerate the full minimax tree to the terminal of every game", feedback: "impossible by an enormous margin — $10^{43}$ positions at a nanosecond each is longer than the universe has existed. Exact minimax works for tiny games (tic-tac-toe), but here you have no choice but to approximate by sampling." }
             ] }
         ]
       },
@@ -432,17 +432,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Features", icon: "🧬", title: "Encode the state",
         narrative: `<p>The agent needs a numeric view of the board. A good encoding makes patterns learnable and a bad one hides them. Because board games are spatial, the natural representation is a stack of 2-D planes that a convolutional network can scan for local patterns.</p>`,
         concepts: ["ai-qvalue", "dl-conv", "ai-policy-value"],
-        insight: `<b>Spatial planes preserve the structure convolutions need.</b> Encoding the board as a stack of binary planes — one per (piece type × side) — lets a single learned filter detect a threat pattern <b>anywhere on the board</b>, the same way it learns it once and reuses it. A flat integer hash of the board destroys this entirely: two positions differing by one piece get unrelated hashes, so nothing generalizes.`,
+        insight: `<b>Spatial planes preserve the structure convolutions need.</b> AlphaZero encodes a chess board as a stack of <b>119 binary 8×8 planes</b> — 6 piece types × 2 colors over the last 8 positions (112 planes), plus 7 constant planes for side-to-move, move count, castling rights, and the no-progress counter. A single learned filter can then detect a threat pattern <b>anywhere on the board</b>, learning it once and reusing it. A flat integer hash of the board destroys this entirely: two positions differing by one piece get unrelated hashes, so nothing generalizes.`,
         data: {
-          caption: "The state tensor: a stack of binary planes (3×3 corner shown)",
+          caption: "The state tensor: a stack of binary 8×8 planes (3×3 corner shown)",
           columns: ["plane", "meaning", "row0", "row1", "row2"],
           rows: [
             ["0", "my pawns", "0 1 0", "0 0 0", "1 0 0"],
-            ["1", "my king", "0 0 0", "0 1 0", "0 0 0"],
-            ["2", "opponent pawns", "0 0 1", "0 0 0", "0 0 0"],
-            ["k", "side-to-move (all 1 or 0)", "1 1 1", "1 1 1", "1 1 1"]
+            ["5", "my king", "0 0 0", "0 1 0", "0 0 0"],
+            ["6", "opponent pawns", "0 0 1", "0 0 0", "0 0 0"],
+            ["112", "side-to-move (all 1 or 0)", "1 1 1", "1 1 1", "1 1 1"]
           ],
-          note: `Each plane is a binary grid marking where one piece type sits. Stacked, they form a (planes × height × width) tensor — the exact shape a conv net consumes, so it can learn position-independent patterns like forks and pins.`
+          note: `Each plane is a binary grid marking where one piece type sits. Stacked into AlphaZero's 119-plane (planes × 8 × 8) tensor, it's the exact shape a conv net consumes, so it can learn position-independent patterns like forks and pins. The policy head mirrors this with an 8×8×73 = 4,672-move output.`
         },
         symbols: [
           { sym: "binary plane", desc: "a board-shaped grid of 0/1 marking the squares occupied by one piece type for one side." },
@@ -666,7 +666,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>Lab assays are slow and expensive — you can physically test only a few hundred molecules. So the model's job is not to label the whole library but to <i>rank</i> it, pushing the likely binders to the top so that the small shortlist you actually test is dense with real hits.</p><p>This reframes the goal from "accuracy" to "enrichment at the top", which changes the metric you optimize.</p>`,
+        narrative: `<p>This is the virtual-screening task that ML practitioners run on real bioactivity data — the <b>ChEMBL</b> database (ChEMBL 33: <b>~20.3M bioactivity measurements over ~2.4M distinct compounds and 15,398 targets</b>) and the <b>MoleculeNet</b> benchmark suite (Tox21, BBBP, ESOL). Lab assays are slow and expensive — you can physically test only a few hundred molecules. So the model's job is not to label the whole library but to <i>rank</i> it, pushing the likely binders to the top so that the small shortlist you actually test is dense with real hits.</p><p>This reframes the goal from "accuracy" to "enrichment at the top", which changes the metric you optimize.</p>`,
         concepts: ["ml-svm", "ml-classification-metrics", "cls-gaussian-process"],
         insight: `<b>Accuracy is a trap when actives are rare.</b> Only about <b>1.5% of molecules are active</b>, so a model that calls <i>everything</i> inactive scores <b>98.5% accuracy</b> and finds zero drugs. What matters is enrichment: if the top 1% of your ranking has an <b>18% hit rate</b>, that's <b>12× better than random</b> — far more binders per precious assay. Rank, don't classify.`,
         data: {
@@ -695,22 +695,23 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather assay data",
-        narrative: `<p>You pull historical assay results for this target — molecules labeled active or inactive from past dose-response experiments. Two properties of this data will wreck a naive evaluation if ignored: actives are extremely rare, and the library is full of near-duplicate analogs that can leak across a train/test split.</p>`,
+        narrative: `<p>You query ChEMBL for every bioactivity record measured against this target — each molecule's <code>canonical_smiles</code>, the assay <code>standard_type</code> (IC50, Ki, EC50), its <code>standard_value</code> and <code>standard_units</code> (nM), and the normalized <code>pchembl_value</code>. Thresholding gives an active/inactive label. Two properties of this data will wreck a naive evaluation if ignored: actives are extremely rare, and the library is full of near-duplicate analogs that can leak across a train/test split.</p>`,
         concepts: ["ml-supervised", "ml-kmeans", "mlx-error-analysis"],
         insight: `<b>Two silent killers live in this data.</b> Actives are only <b>3,604 of 240,118 molecules (1.5%)</b>, so any split must preserve that imbalance and the loss must weight the rare class. Worse, there are <b>12,400 near-duplicate analog pairs</b> — molecules differing by an atom — and if an analog lands in both train and test, the model memorizes rather than generalizes, and your AUC becomes fiction.`,
         data: {
-          caption: "The labeled assay table (a molecule per row)",
-          columns: ["molecule id", "fingerprint (2048-bit)", "IC50 (nM)", "label"],
+          caption: "The ChEMBL bioactivity table for this target (a molecule per row)",
+          columns: ["molecule_chembl_id", "canonical_smiles", "standard_type", "standard_value (nM)", "pchembl", "label"],
           rows: [
-            ["CHEMBL-1042", "1010…0110", "38", "active"],
-            ["CHEMBL-1043 (analog)", "1010…0100", "51", "active"],
-            ["CHEMBL-8819", "0001…1001", "> 10,000", "inactive"],
-            ["CHEMBL-7702", "0100…0011", "> 10,000", "inactive"]
+            ["CHEMBL1042", "CC(=O)Oc1ccccc1C(=O)O", "IC50", "38", "7.42", "active"],
+            ["CHEMBL1043 (analog)", "CC(=O)Oc1ccc(C)cc1C(=O)O", "IC50", "51", "7.29", "active"],
+            ["CHEMBL8819", "c1ccc2ccccc2c1", "IC50", "> 10,000", "< 5", "inactive"],
+            ["CHEMBL7702", "C1CCCCC1", "IC50", "> 10,000", "< 5", "inactive"]
           ],
-          note: `Labels come from thresholding the IC50 dose-response (active if it binds at low concentration). Note rows 1–2: near-identical fingerprints — analogs that must not be split across train and test, or the score leaks.`
+          note: `Labels come from thresholding the IC50 / pChEMBL dose-response (active if it binds at low concentration; pChEMBL ≥ 6 is a common cutoff). Note rows 1–2: near-identical SMILES — analogs that must not be split across train and test, or the score leaks.`
         },
         symbols: [
           { sym: "IC50", desc: "the concentration at which a molecule inhibits the target by 50%; low IC50 means strong binding, so it's thresholded into the active label." },
+          { sym: "pchembl_value", desc: "ChEMBL's $-\\log_{10}$ of the molar activity (IC50/Ki/EC50), a comparable potency scale; pChEMBL ≥ 6 (≤ 1 µM) is a typical active threshold." },
           { sym: "class imbalance", desc: "the ~1.5% active rate; without class weighting a model just predicts the majority (inactive)." },
           { sym: "analog", desc: "a molecule nearly identical to another (differs by one substructure); analogs across a split cause leakage." }
         ],
@@ -720,8 +721,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Severe class imbalance and near-duplicate analog molecules that could leak across splits", best: true, feedback: "actives are under 2% and thousands of molecules are tiny variants of each other. If analogs land in both train and test, the model just recognizes a memorized neighbor and your score is fantasy. Both the imbalance (handle with class weighting) and the analog leakage (handle with scaffold splits) must be addressed up front." },
               { label: "Nothing — assay labels are always clean and balanced", feedback: "assays are noisy (dose-response has measurement error) and overwhelmingly inactive. Assuming clean, balanced data guarantees a misleading evaluation: you'd report a high accuracy that reflects the majority class and leakage, not real discovery." }
             ] },
-          { type: "run", label: "▶ Pull assay history", prompt: "Load labeled molecules for the target.",
-            result: { log: "querying assay database...\nloaded 240,118 molecules\nactives: 3,604  (1.5%)\nfound 12,400 near-duplicate analog pairs\nlabel source: dose-response IC50 thresholded", metrics: [{ k: "molecules", v: "240k" }, { k: "active rate", v: "1.5%" }] } }
+          { type: "run", label: "▶ Pull assay history", prompt: "Query ChEMBL for labeled molecules against the target.",
+            result: { log: "querying ChEMBL bioactivities for target...\nloaded 240,118 molecules (canonical_smiles + IC50/pChEMBL)\nactives (pChEMBL >= 6): 3,604  (1.5%)\nfound 12,400 near-duplicate analog pairs\nlabel source: IC50 dose-response thresholded", metrics: [{ k: "molecules", v: "240k" }, { k: "active rate", v: "1.5%" }] } }
         ]
       },
       {
@@ -999,9 +1000,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>A support center pays agents by the hour. Too few agents and callers wait — then abandon, angry; too many and you burn payroll on idle staff. The job is to set staffing <i>per hour</i> so you hit a wait-time promise at the lowest cost.</p><p>That makes it a constrained optimization: minimize cost subject to a service-level constraint, not minimize cost alone (which is zero agents) nor minimize wait alone (which is infinite agents).</p>`,
+        narrative: `<p>This is the classic call-center queueing problem, studied on the <b>"Anonymous Bank" call center dataset</b> — a full year (1999) of call-by-call records from an Israeli bank, made public by the Technion SEELab and analyzed by Brown, Gans, Mandelbaum et al. in their JASA 2005 paper "Statistical Analysis of a Telephone Call Center". A support center pays agents by the hour. Too few agents and callers wait — then abandon, angry; too many and you burn payroll on idle staff. The job is to set staffing <i>per hour</i> so you hit a wait-time promise at the lowest cost.</p><p>That makes it a constrained optimization: minimize cost subject to a service-level constraint, not minimize cost alone (which is zero agents) nor minimize wait alone (which is infinite agents).</p>`,
         concepts: ["prob-expectation", "prob-random-variable", "prob-conditional-expectation"],
-        insight: `<b>The cost is non-linear in staffing, so framing matters.</b> Near full utilization, waiting <b>explodes</b>: dropping from 12 to 11 agents at a busy hour can swing average wait from <b>22s to over 90s</b>. So neither "minimize agents" nor "staff for the worst minute" works — you want the cheapest schedule that still answers, say, <b>≥80% of calls within 30s</b>. The constraint is what makes the problem well-posed.`,
+        insight: `<b>The cost is non-linear in staffing, so framing matters.</b> Near full utilization, waiting <b>explodes</b>: dropping from 12 to 11 agents at a busy hour can swing average wait from <b>22s to over 90s</b>. So neither "minimize agents" nor "staff for the worst minute" works — you want the cheapest schedule that still answers, say, <b>≥80% of calls within 30s</b> (the bank's actual target). The constraint is what makes the problem well-posed.`,
         data: {
           caption: "Why the constraint matters: wait vs agents at one busy hour",
           columns: ["agents $c$", "utilization", "avg wait", "meets SL?"],
@@ -1038,23 +1039,24 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather call logs",
-        narrative: `<p>You pull timestamped call records: when each call arrived and how long it took to handle. These two streams — arrivals and service times — are the entire raw material for any queue model. Everything downstream (the rate, the distribution fits, the staffing) is derived from them.</p>`,
+        narrative: `<p>You pull the Anonymous Bank's call-by-call records: one row per call, with the timestamps the call hit each stage (VRU entry, queue start, service start/end) and the agent that served it. The dataset covers all of <b>1999 — about 444,000 calls across the year</b>, roughly 30,000 per month. From the raw timestamps you derive the two streams every queue model needs — arrivals and service times. Everything downstream (the rate, the distribution fits, the staffing) is derived from them.</p>`,
         concepts: ["prob-sample-space", "prob-random-variable", "prob-pdf-cdf"],
-        insight: `<b>Two distributions, not two averages, drive queues.</b> The logs show arrivals peaking <b>10am–2pm</b> and a mean handle time of <b>6.2 min</b> — but with a <b>heavy right tail (max 71 min)</b>. That tail matters: a few very long calls tie up agents and create waits that the mean alone hides. The inter-arrival times look roughly memoryless, a hint the arrivals fit a clean stochastic model.`,
+        insight: `<b>Two distributions, not two averages, drive queues.</b> The logs show arrivals peaking <b>10am–noon</b> and a mean service (handle) time of about <b>185 seconds (≈3.1 min)</b> — but with a <b>heavy right tail (longest calls over an hour)</b>. That tail matters: a few very long calls tie up agents and create waits the mean alone hides. The inter-arrival times look roughly memoryless, a hint the arrivals fit a clean stochastic model. About <b>15% of callers abandon</b> (the <code>HANG</code> outcome) before reaching an agent.`,
         data: {
-          caption: "Raw call log: one row per call (arrivals + handle times)",
-          columns: ["call id", "arrival time", "handle time (min)", "agent"],
+          caption: "Anonymous Bank call-by-call record: one row per call",
+          columns: ["call_id", "type", "q_start", "q_exit", "ser_time (s)", "outcome", "server"],
           rows: [
-            ["C-88401", "10:00:04", "5.8", "a17"],
-            ["C-88402", "10:00:11", "6.1", "a04"],
-            ["C-88403", "10:00:33", "71.0 ⟵ tail", "a22"],
-            ["C-88404", "10:00:39", "4.2", "a09"]
+            ["C-88401", "PS", "10:00:04", "10:00:21", "178", "AGENT", "BENSION"],
+            ["C-88402", "PS", "10:00:11", "10:00:38", "203", "AGENT", "AVI"],
+            ["C-88403", "PS", "10:00:33", "10:01:55", "3680 ⟵ tail", "AGENT", "TOVA"],
+            ["C-88404", "NW", "10:00:39", "10:00:48", "—", "HANG", "—"]
           ],
-          note: `From these two columns you derive everything: the arrival rate (calls per interval) from the timestamps, and the service-time distribution from the handle times. Note the 71-min outlier — the heavy tail that averages would hide.`
+          note: `<b>type</b> is the call class (PS regular service, NW new customer, PE English…). Queue wait = <code>q_exit − q_start</code>; service time = <code>ser_exit − ser_start</code>. The <b>outcome</b> column tells served (<code>AGENT</code>) from abandoned (<code>HANG</code>) — row 4 hung up after 9s. The 3,680s call is the heavy tail an average would hide.`
         },
         symbols: [
           { sym: "arrival rate", desc: "calls per unit time (per hour), estimated by counting timestamps in each interval — the queue's input load." },
-          { sym: "handle time", desc: "the service duration of a single call; its full distribution (not just the mean) drives waiting." },
+          { sym: "service (handle) time", desc: "ser_exit − ser_start for one call; its full distribution (not just the mean ≈185s) drives waiting." },
+          { sym: "outcome", desc: "the disposition of a call: AGENT (served) or HANG (abandoned in queue) — the field that quantifies abandonment." },
           { sym: "inter-arrival time", desc: "the gap between consecutive arrivals; memoryless gaps signal a Poisson arrival process." }
         ],
         steps: [
@@ -1063,8 +1065,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "The arrival rate (calls per interval) and the service-time distribution (handle time per call)", best: true, feedback: "these are the two and only inputs to any queue model: how fast work arrives and how long each job takes. Everything else — expected wait, service level, staffing — is derived from them. Measuring the full service-time distribution (not just its mean) matters because the heavy tail drives waits." },
               { label: "Only the total number of calls in the year", feedback: "a yearly total averages away the hourly peaks and the per-call variability that actually create queues. Two centers with the same annual volume can need wildly different staffing depending on their peaks and tails. You need the rate over time and the service-time distribution." }
             ] },
-          { type: "run", label: "▶ Pull 1 year of call logs", prompt: "Load timestamped arrivals and handle times.",
-            result: { log: "querying telephony logs...\nloaded 2,184,330 calls\narrivals: strong daily + weekly pattern, peak 10am-2pm\nmean handle time 6.2 min, heavy right tail (max 71 min)\ninter-arrival times roughly memoryless", metrics: [{ k: "calls", v: "2.18M" }, { k: "mean handle", v: "6.2 min" }] } }
+          { type: "run", label: "▶ Pull 1 year of call logs", prompt: "Load the Anonymous Bank call-by-call records for 1999.",
+            result: { log: "querying Technion SEELab call-center logs (1999)...\nloaded 443,958 call records x 13 fields\narrivals: strong daily + weekly pattern, peak 10am-12pm\nmean service time 185s (3.1 min), heavy right tail (max > 1hr)\nabandonment (HANG outcome): ~15% of calls\ninter-arrival times roughly memoryless", metrics: [{ k: "calls", v: "443,958" }, { k: "mean service", v: "185s" }, { k: "abandon", v: "15%" }] } }
         ]
       },
       {

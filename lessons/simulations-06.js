@@ -9,19 +9,19 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the optimization",
-        narrative: `<p>Training is just minimizing a cost surface. Before touching the optimizer, decide what you are actually descending: the per-example loss aggregated into an empirical risk $J(\\theta)=\\frac{1}{n}\\sum_i \\ell(\\theta;x_i,y_i)$. The choice of $\\ell$ is not cosmetic — it sets the entire geometry of the surface, the size of the gradients, and whether descent even has a slope to follow. Pick the loss that matches your label type and your probabilistic assumption, and the optimizer's job becomes possible; pick wrong and no learning rate will save you.</p>`,
+        narrative: `<p>You are training a <b>ResNet-18 on CIFAR-10</b> — the canonical image-classification benchmark from Krizhevsky (2009): 60,000 color images at 32×32 pixels, evenly split across 10 classes (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck), with 50,000 train and 10,000 test. Training is just minimizing a cost surface. Before touching the optimizer, decide what you are actually descending: the per-example loss aggregated into an empirical risk $J(\\theta)=\\frac{1}{n}\\sum_i \\ell(\\theta;x_i,y_i)$. The choice of $\\ell$ is not cosmetic — it sets the entire geometry of the surface, the size of the gradients, and whether descent even has a slope to follow. With 10 mutually-exclusive classes, pick the loss that matches the label type and the probabilistic assumption, and the optimizer's job becomes possible; pick wrong and no learning rate will save you.</p>`,
         concepts: ["ai-loss-minimization", "ml-cost", "ml-loss"],
-        insight: `<b>The loss decides the gradient.</b> On a confidently-wrong 3-class example (true label 0, model says class 2 at 0.98), cross-entropy returns loss $\\approx 3.9$ with a gradient of magnitude $\\sim 0.98$ pushing hard the right way; squared error on class indices returns loss $(2-0)^2=4$ but a gradient that <b>shrinks toward zero exactly when the model is most wrong</b>; accuracy returns a flat $0$ with gradient $0$ everywhere. Same mistake, three completely different signals to descend.`,
+        insight: `<b>The loss decides the gradient.</b> Take a CIFAR-10 image whose true class is <i>airplane</i> (index 0) but the net confidently predicts <i>bird</i> (index 2) at 0.98. Cross-entropy returns loss $\\approx 3.9$ with a gradient of magnitude $\\sim 0.98$ pushing hard the right way; squared error on class indices returns loss $(2-0)^2=4$ but a gradient that <b>shrinks toward zero exactly when the model is most wrong</b>; accuracy returns a flat $0$ with gradient $0$ everywhere. Same mistake, three completely different signals to descend. With 10 classes, only cross-entropy on the softmax over all 10 logits gives a usable slope.`,
         data: {
-          caption: "Same wrong prediction, three candidate losses (true class $=0$, 3 classes)",
-          columns: ["model output", "cross-entropy $\\ell$", "MSE-on-index $\\ell$", "accuracy", "usable gradient?"],
+          caption: "Same CIFAR-10 mistake, three candidate losses (true class airplane=0, shown over 3 of 10 logits)",
+          columns: ["softmax output", "cross-entropy $\\ell$", "MSE-on-index $\\ell$", "accuracy", "usable gradient?"],
           rows: [
-            ["p=[.02,.00,.98]", "3.91", "4.00", "0", "CE: yes · others: ~no"],
-            ["p=[.33,.33,.34]", "1.11", "1.78", "0", "CE: yes"],
-            ["p=[.98,.01,.01]", "0.02", "0.00", "1", "CE: small (good)"],
+            ["airplane .02 · bird .98", "3.91", "4.00", "0", "CE: yes · others: ~no"],
+            ["near-uniform over 10", "2.30", "—", "0", "CE: yes"],
+            ["airplane .98 · bird .01", "0.02", "0.00", "1", "CE: small (good)"],
             ["…", "…", "…", "…", "…"]
           ],
-          note: `Cross-entropy stays smooth and large when the model is wrong; MSE-on-index flattens and accuracy is a step function with zero slope. Only the first gives descent something to follow everywhere.`
+          note: `Cross-entropy stays smooth and large when the model is wrong; MSE-on-index flattens and accuracy is a step function with zero slope. Only the first gives descent something to follow everywhere. (Chance loss over 10 classes is $\\ln 10\\approx2.30$.)`
         },
         symbols: [
           { sym: "$J(\\theta)$", desc: "the empirical risk — the average loss over the training set; the surface we descend." },
@@ -41,7 +41,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Init", icon: "🌱", title: "Initialize the weights",
-        narrative: `<p>A deep net's first gradients depend heavily on the starting weights. Each layer multiplies its input by a weight matrix; if the typical multiplier is bigger than 1 the signal grows geometrically with depth and explodes, and if it is smaller than 1 the signal shrinks geometrically and vanishes — before a single gradient step. The fix is to set the initial weight variance so that, on average, each layer neither magnifies nor shrinks the signal, keeping activations and gradients at a usable scale all the way down a 20-layer stack.</p>`,
+        narrative: `<p>ResNet-18's first gradients depend heavily on the starting weights. Each of its ~18 weighted layers multiplies its input by a weight matrix; if the typical multiplier is bigger than 1 the signal grows geometrically with depth and explodes, and if it is smaller than 1 the signal shrinks geometrically and vanishes — before a single gradient step. The fix is the He initialization the ResNet paper itself uses (He et al., 2015): set the initial weight variance so that, on average, each ReLU layer neither magnifies nor shrinks the signal, keeping activations and gradients at a usable scale all the way down the stack.</p>`,
         concepts: ["dl-init", "dl-vanishing-gradient", "dl-neuron"],
         insight: `<b>Variance compounds with depth.</b> A neuron sums $n_{\\text{in}}$ independent products $w_j x_j$, so the output variance is $n_{\\text{in}}\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$; the per-layer signal-scaling factor is therefore $g^2 = n_{\\text{in}}\\,\\mathrm{Var}(w)$ (halved to $\\tfrac12 n_{\\text{in}}\\mathrm{Var}(w)$ for ReLU, which zeroes half the inputs). Setting $g=1$ and solving gives the He rule $\\mathrm{Var}(w)=2/n_{\\text{in}}$ for ReLU (Xavier's $1/n_{\\text{in}}$ for tanh). After 20 layers the scale is $g^{20}$: at $g=1.3$ that's $\\sim$190× (explode); at $g=0.8$ it's $\\sim$0.012× (vanish); only $g\\approx 1$ survives. So a 512-wide ReLU layer draws weights with $\\sigma=\\sqrt{2/512}\\approx 0.0625$, not $0.5$ and not $10$.`,
         data: {
@@ -324,78 +324,78 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Choose the metric",
-        narrative: `<p>You cannot tune toward a metric you haven't chosen. The metric must match the business cost and the data balance, not just be the default. With 8% churners, a model that predicts 'no churn' for everyone is 92% accurate and 100% useless — accuracy is dominated by the majority class. What you actually pay for is captured by precision (of the users we flagged, how many really churn — sets the wasted-offer cost) and recall (of the users who churn, how many we caught — sets the lost-customer cost), read at the threshold you'll deploy.</p>`,
+        narrative: `<p>You're building an income classifier on the <b>UCI Adult ("Census Income") dataset</b> (Kohavi, 1996): 48,842 rows drawn from the 1994 US Census, 14 features (age, workclass, education, marital-status, occupation, hours-per-week, capital-gain, …), predicting whether a person earns <b>&gt;\\$50K/year</b>. Only <b>23.9%</b> of rows are positive (&gt;50K), so the classes are imbalanced. You cannot tune toward a metric you haven't chosen, and it must match the cost and the balance — not just be the default. A model that predicts '≤50K' for everyone is 76% accurate and 100% useless. What you actually pay for is captured by precision (of those we flag as high-earners, how many really earn &gt;50K) and recall (of the true high-earners, how many we caught), read at the threshold you'll deploy.</p>`,
         concepts: ["ml-classification-metrics", "ml-roc-auc", "ml-regression-metrics"],
-        insight: `<b>Accuracy lies under imbalance.</b> With an 8% positive rate, the do-nothing 'predict no-churn' model scores <b>92% accuracy</b> while catching <b>0%</b> of churners — precision and recall both 0. A real model at threshold 0.5 might post 41% precision and 55% recall: it flags 100 users, ~41 truly churn (59 wasted offers), and catches ~55 of every 100 churners. Those two numbers, not the 92%, are the levers the business cares about.`,
+        insight: `<b>Accuracy lies under imbalance.</b> With a 23.9% positive rate, the do-nothing 'predict ≤50K' model scores <b>76.1% accuracy</b> while catching <b>0%</b> of high-earners — precision and recall both 0. A real model at threshold 0.5 might post 73% precision and 60% recall: of every 100 people it flags as &gt;50K, ~73 truly are, and it catches ~60 of every 100 actual high-earners. Those two numbers, not the 76%, are the levers that matter.`,
         data: {
-          caption: "Confusion-matrix counts on 10,000 users (8% churn = 800 positives)",
-          columns: ["model", "true churn caught", "false alarms", "accuracy", "precision / recall"],
+          caption: "Confusion-matrix counts on 9,769 test rows (23.9% earn >50K = 2,335 positives)",
+          columns: ["model", "true >50K caught", "false alarms", "accuracy", "precision / recall"],
           rows: [
-            ["predict-no-churn", "0", "0", "92.0%", "0 / 0"],
-            ["model @ thr 0.5", "440", "633", "89.7%", "0.41 / 0.55"],
-            ["model @ thr 0.7", "280", "115", "92.1%", "0.71 / 0.35"],
+            ["predict ≤50K", "0", "0", "76.1%", "0 / 0"],
+            ["model @ thr 0.5", "1401", "518", "85.0%", "0.73 / 0.60"],
+            ["model @ thr 0.7", "934", "187", "83.3%", "0.83 / 0.40"],
             ["…", "…", "…", "…", "…"]
           ],
-          note: `The do-nothing model 'wins' on accuracy while catching zero churners. Precision and recall expose exactly the errors that cost money.`
+          note: `The do-nothing model 'wins' on accuracy while catching zero high-earners. Precision and recall expose exactly the errors that matter.`
         },
         symbols: [
-          { sym: "precision", desc: "of the users the model flags as churn, the fraction that truly churn; low precision means wasted retention offers." },
-          { sym: "recall", desc: "of the users who truly churn, the fraction the model catches; low recall means lost customers." },
-          { sym: "AUC", desc: "area under the ROC curve — the probability the model ranks a random churner above a random non-churner, independent of threshold." },
+          { sym: "precision", desc: "of the people the model flags as >50K, the fraction that truly earn >50K; low precision means many false high-earner labels." },
+          { sym: "recall", desc: "of the people who truly earn >50K, the fraction the model catches; low recall means missed high-earners." },
+          { sym: "AUC", desc: "area under the ROC curve — the probability the model ranks a random >50K earner above a random ≤50K one, independent of threshold." },
           { sym: "threshold", desc: "the probability cutoff that turns a score into a yes/no decision; trades precision against recall." }
         ],
         steps: [{
-          type: "decide", prompt: "Churn prediction: 8% of users churn, and a false 'will-churn' triggers an expensive retention offer. Pick a metric.",
+          type: "decide", prompt: "Adult-income prediction: 23.9% earn >50K and the classes are imbalanced. Pick a metric.",
           options: [
-            { label: "Precision/recall (and AUC) at the operating threshold", best: true, feedback: "design decision: match the metric to both the imbalance and the asymmetric costs. Mechanism: precision is the wasted-offer rate (each false 'will-churn' burns an expensive offer) and recall is the caught-churner rate (each miss is a lost customer); reading them at the deployed threshold quantifies the exact money at stake, and AUC summarizes ranking quality across thresholds. Tradeoff: you must pick an operating threshold, but that's a feature — it's where the business trades the two costs." },
-            { label: "Plain accuracy", best: false, feedback: "under 8% imbalance accuracy is actively misleading: the do-nothing 'predict no-churn' model already scores 92% (table, row 1) while catching zero churners. Accuracy averages over the 92% majority you don't care about and drowns out performance on the 8% you do. It hides the very false-negatives and false-positives you pay for." },
-            { label: "RMSE", best: false, feedback: "RMSE measures the average squared error of a continuous PREDICTION against a continuous TARGET — it's a regression metric. Churn is a binary yes/no outcome, so there's no real-valued target to take a residual against. Using RMSE here is a category error: wrong metric family for a classification label." }
+            { label: "Precision/recall (and AUC) at the operating threshold", best: true, feedback: "design decision: match the metric to both the imbalance and the asymmetric costs. Mechanism: precision is the false-positive rate among flagged high-earners and recall is the caught-high-earner rate; reading them at the deployed threshold quantifies the exact trade at stake, and AUC summarizes ranking quality across thresholds. Tradeoff: you must pick an operating threshold, but that's a feature — it's where you trade the two error costs." },
+            { label: "Plain accuracy", best: false, feedback: "under 23.9% imbalance accuracy is misleading: the do-nothing 'predict ≤50K' model already scores 76% (table, row 1) while catching zero high-earners. Accuracy averages over the 76% majority and drowns out performance on the 24% you care about. It hides the very false-negatives and false-positives you pay for." },
+            { label: "RMSE", best: false, feedback: "RMSE measures the average squared error of a continuous PREDICTION against a continuous TARGET — it's a regression metric. Income >50K is a binary yes/no label, so there's no real-valued target to take a residual against. Using RMSE here is a category error: wrong metric family for a classification label." }
           ]
         }]
       },
       {
         phase: "Split", icon: "✂️", title: "Build honest splits",
-        narrative: `<p>Every reliable number comes from data the model never saw while training. The split design is where evaluation lives or dies. Two leaks ruin it for time-ordered, per-user data: if the SAME user appears in both train and test, the model memorizes that person rather than generalizing; and if FUTURE rows train a model tested on the past, you've let it peek at information it won't have at prediction time. The honest split groups by user (no person in two folds) and respects time (train on earlier, test on later) — mirroring exactly how you'll predict the future from the past.</p>`,
+        narrative: `<p>Every reliable number comes from data the model never saw while training. The Adult dataset ships with an official split — 32,561 train rows and 16,281 test rows — but two pitfalls still ruin evaluation if you're careless. First, if the SAME individual appears in both train and test (duplicate or near-duplicate census records), the model memorizes that row rather than generalizing; the Adult set contains a few exact duplicates that must be de-duplicated across the boundary. Second, the split must be STRATIFIED so each fold preserves the ~23.9% &gt;50K rate — a lopsided fold skews every metric. The honest setup de-duplicates, stratifies on the income label, and reserves the official test set untouched.</p>`,
         concepts: ["mlx-cross-validation", "ml-supervised", "mlx-error-analysis"],
-        insight: `<b>A leaky split inflates the score.</b> On this data, a naive random 80/20 shuffle reports AUC 0.91 — but a grouped, time-respecting split reports 0.78. That 0.13 gap is pure illusion: the random split let the same users and future timestamps leak into train. The honest split holds 80k test rows from users and dates the model never touched, with class balance preserved (8.0% / 8.1% / 7.9%) so the metric isn't skewed by a lopsided fold.`,
+        insight: `<b>A careless split inflates the score.</b> If you ignore the duplicate rows and let them straddle train/test, the reported AUC creeps up to 0.91 — illusory, because the model is recognizing memorized rows. De-duplicating and stratifying gives an honest 0.78. The clean split holds the official 16,281-row test set the model never touched, with the &gt;50K rate preserved (23.9% / 23.8% / 24.0%) so the metric isn't skewed by a lopsided fold.`,
         data: {
-          caption: "Three split designs and the AUC each reports",
-          columns: ["split design", "user leak?", "time leak?", "reported AUC", "honest?"],
+          caption: "Split designs on Adult Income and the AUC each reports",
+          columns: ["split design", "dup leak?", "stratified?", "reported AUC", "honest?"],
           rows: [
-            ["random 80/20 shuffle", "yes", "yes", "0.91", "no — inflated"],
-            ["group-by-user only", "no", "yes", "0.84", "partial"],
-            ["group + time split", "no", "no", "0.78", "yes ✓"],
-            ["train = test", "yes", "yes", "0.999", "no — memorized"]
+            ["ignore dups, unstratified", "yes", "no", "0.91", "no — inflated"],
+            ["de-dup only", "no", "no", "0.84", "partial"],
+            ["de-dup + stratified", "no", "yes", "0.78", "yes ✓"],
+            ["train = test", "yes", "—", "0.999", "no — memorized"]
           ],
-          note: `Each leak you remove drops the reported AUC closer to the truth. The honest 0.78 is the number you'll actually see in production.`
+          note: `Each leak you remove drops the reported AUC closer to the truth. The honest 0.78 is the number you'll actually see on the held-out census test set.`
         },
         symbols: [
-          { sym: "group-by-user", desc: "putting all of a user's rows in the same fold so no individual appears in both train and test (prevents identity leakage)." },
-          { sym: "time split", desc: "training on earlier dates and testing on later ones, so the model never trains on the future it's tested on." },
-          { sym: "leakage", desc: "any way test information reaches the model during training; it inflates the score above what production will deliver." },
-          { sym: "class balance", desc: "the positive-rate (here ~8%) within each fold; preserving it keeps the metric comparable across splits." }
+          { sym: "de-duplication", desc: "removing exact/near-duplicate census rows so no individual record appears in both train and test (prevents memorization leakage)." },
+          { sym: "official test split", desc: "Adult's provided 16,281-row test set, kept untouched until the final readout." },
+          { sym: "leakage", desc: "any way test information reaches the model during training; it inflates the score above what held-out data will deliver." },
+          { sym: "class balance", desc: "the >50K positive rate (here ~23.9%) within each fold; preserving it keeps the metric comparable across splits." }
         ],
         steps: [
-          { type: "decide", prompt: "Your data is per-user events over time. How do you split?",
+          { type: "decide", prompt: "You're splitting the Adult census rows. How do you do it honestly?",
             options: [
-              { label: "Group by user and split by time: train on earlier users/dates, test on later, no user in two folds", best: true, feedback: "design decision: remove both leak channels at once. Mechanism: grouping by user_id guarantees no individual's rows straddle train and test, so the score measures generalization to NEW people, not memorization of known ones; ordering by time means the model only ever trains on the past and is scored on the future, exactly the production setting. Tradeoff: slightly less data per fold and more bookkeeping, but the resulting 0.78 is the number you'll actually get live." },
-              { label: "Shuffle all rows and take a random 20% test set", best: false, feedback: "a random shuffle commits both leaks. The same user's other rows land in train (so the model recognizes the person, not the pattern), and future-dated rows train a model judged on the past (information it won't have at serving time). The table shows the result: AUC inflates to 0.91, a number production will never reproduce." },
-              { label: "Test on the same data you trained on", best: false, feedback: "this is the extreme leak — the model has already seen every test answer, so the score (0.999 in the table) measures memorization, not generalization. A model can ace its own training set by rote and fail completely on anything new. An evaluation set the model trained on carries zero information about real-world performance." }
+              { label: "De-duplicate across the boundary and stratify on the income label, keeping the official test set untouched", best: true, feedback: "design decision: remove both leak channels at once. Mechanism: de-duplicating guarantees no individual record straddles train and test, so the score measures generalization to NEW people, not memorization of seen rows; stratifying on >50K means every fold preserves the 23.9% positive rate, so the metric isn't skewed by a lopsided fold. Tradeoff: slightly less data after de-dup and more bookkeeping, but the resulting 0.78 is the number the held-out census test set will reproduce." },
+              { label: "Shuffle all rows together and let duplicates fall anywhere", best: false, feedback: "ignoring duplicates leaks: an individual's near-identical record lands in both train and test, so the model recognizes the memorized row, not the pattern. The table shows the result: AUC inflates to 0.91, a number the clean held-out set will never reproduce." },
+              { label: "Test on the same data you trained on", best: false, feedback: "this is the extreme leak — the model has already seen every test answer, so the score (0.999 in the table) measures memorization, not generalization. A model can ace its own training rows by rote and fail completely on anything new. An evaluation set the model trained on carries zero information about real-world performance." }
             ] },
-          { type: "run", label: "▶ Build train/val/test", result: { log: "grouped by user_id (no overlap)\ntime split: train < 2026-03, val 2026-03, test 2026-04\ntrain 640k rows | val 80k | test 80k\nclass balance preserved (8.0% / 8.1% / 7.9%)", metrics: [{ k: "train", v: "640k" }, { k: "test", v: "80k" }, { k: "pos rate", v: "~8%" }] } }
+          { type: "run", label: "▶ Build train/val/test", result: { log: "Adult Income: 48,842 rows total\nde-duplicated across the train/test boundary\nstratified on income label (>50K)\ntrain 29,305 | val 3,256 | test 16,281 (official)\nclass balance preserved (23.9% / 23.8% / 24.0%)", metrics: [{ k: "train", v: "29.3k" }, { k: "test", v: "16.3k" }, { k: ">50K rate", v: "~23.9%" }] } }
         ]
       },
       {
         phase: "Baseline", icon: "📏", title: "Set a baseline",
-        narrative: `<p>A score means nothing without a reference. Fit a simple, honest baseline so every later gain is measured against it. Two references matter: the trivial majority-class predictor (AUC 0.50 — pure chance ranking) tells you the floor, and a plain L2-regularized logistic regression tells you what an easy, interpretable model already achieves. Any complex model you build later must beat the logistic baseline by enough to justify its cost — and if it beats it by a suspiciously huge margin, that's a leakage red flag, not a triumph.</p>`,
+        narrative: `<p>A score means nothing without a reference. Fit a simple, honest baseline so every later gain is measured against it. Two references matter: the trivial majority-class predictor (always '≤50K', AUC 0.50 — pure chance ranking) tells you the floor, and a plain L2-regularized logistic regression on the Adult features tells you what an easy, interpretable model already achieves. Any complex model you build later must beat the logistic baseline by enough to justify its cost — and if it beats it by a suspiciously huge margin, that's a leakage red flag, not a triumph.</p>`,
         concepts: ["ml-logistic-regression", "ml-learning-theory", "ml-bias-variance"],
-        insight: `<b>Two floors to clear.</b> The majority-class predictor scores AUC 0.50 (it ranks no better than a coin); the L2 logistic regression on 22 features scores 0.78 with precision 0.41 / recall 0.55 at threshold 0.5. From now on, 0.78 is the bar. A later model at 0.85 is a real +0.07 win; a later model at 0.99 is almost certainly leaking (a 0.21 jump over a solid linear baseline doesn't happen honestly).`,
+        insight: `<b>Two floors to clear.</b> The majority-class predictor scores AUC 0.50 (it ranks no better than a coin); the L2 logistic regression on the Adult features (14 raw columns, ~108 after one-hot encoding the categoricals) scores 0.78 with precision 0.41 / recall 0.55 at threshold 0.5. From now on, 0.78 is the bar. A later model at 0.85 is a real +0.07 win; a later model at 0.99 is almost certainly leaking (a 0.21 jump over a solid linear baseline doesn't happen honestly).`,
         data: {
           caption: "Baseline scoreboard (every later model is judged against this)",
           columns: ["reference model", "val AUC", "precision@0.5", "recall@0.5", "role"],
           rows: [
-            ["majority class", "0.50", "—", "0.00", "chance floor"],
-            ["L2 logistic reg (22 feat)", "0.78", "0.41", "0.55", "the bar to beat"],
+            ["majority class (≤50K)", "0.50", "—", "0.00", "chance floor"],
+            ["L2 logistic reg (14 feat)", "0.78", "0.41", "0.55", "the bar to beat"],
             ["target: complex model", "0.85?", "?", "?", "must justify cost"],
             ["AUC 0.99", "—", "—", "—", "leakage suspect ⚠"]
           ],
@@ -408,7 +408,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "majority-class baseline", desc: "always predicting the most common label; the trivial floor any real model must clear." }
         ],
         steps: [
-          { type: "run", label: "▶ Fit logistic-regression baseline", result: { log: "fitting L2 logistic regression on 22 features...\nval AUC 0.78   precision@0.5 0.41   recall@0.5 0.55\nmajority-class baseline AUC: 0.50\nbaseline locked.", metrics: [{ k: "baseline AUC", v: "0.78" }, { k: "prec@0.5", v: "0.41" }] } }
+          { type: "run", label: "▶ Fit logistic-regression baseline", result: { log: "fitting L2 logistic regression on Adult (14 cols, ~108 one-hot features)...\nval AUC 0.78   precision@0.5 0.41   recall@0.5 0.55\nmajority-class baseline AUC: 0.50\nbaseline locked.", metrics: [{ k: "baseline AUC", v: "0.78" }, { k: "prec@0.5", v: "0.41" }] } }
         ]
       },
       {
@@ -420,9 +420,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           caption: "5-fold CV fold-score table (AUC per held-out fold)",
           columns: ["fold", "train rows", "val rows", "AUC", "note"],
           rows: [
-            ["1", "512k", "128k", "0.781", "—"],
-            ["2", "512k", "128k", "0.793", "best fold"],
-            ["3", "512k", "128k", "0.770", "worst fold"],
+            ["1", "~26k", "~6.5k", "0.781", "—"],
+            ["2", "~26k", "~6.5k", "0.793", "best fold"],
+            ["3", "~26k", "~6.5k", "0.770", "worst fold"],
             ["mean ± std", "—", "—", "0.781 ± 0.009", "the estimate + error bar"]
           ],
           note: `Each row is held out exactly once. The mean is a stable score; the std tells you which differences between models are real.`
@@ -441,7 +441,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "fold", desc: "one of the K held-out partitions used for validation while the other K−1 train the model." }
         ],
         steps: [
-          { type: "run", label: "▶ Build the 5 grouped folds", result: { log: "640k rows from 40,000 users\nstep 1: hash each user_id mod 5 -> fold bucket (whole user stays together)\nstep 2: fold sizes ~128k rows each; check pos rate per fold\n  fold1 8.0%  fold2 7.9%  fold3 8.1%  fold4 8.0%  fold5 8.0%  (stratified OK)\nstep 3: round k: train on the other 4 folds (512k), score on fold k (128k)\nno user appears in two folds; each row scored exactly once", metrics: [{ k: "folds", v: "5" }, { k: "rows/fold", v: "~128k" }, { k: "pos rate", v: "~8% each" }] } },
+          { type: "run", label: "▶ Build the 5 stratified folds", result: { log: "32,561 de-duplicated Adult train rows\nstep 1: stratified k-fold on the >50K label -> 5 buckets\nstep 2: fold sizes ~6,512 rows each; check >50K rate per fold\n  fold1 23.9%  fold2 23.8%  fold3 24.0%  fold4 23.9%  fold5 23.9%  (stratified OK)\nstep 3: round k: train on the other 4 folds (~26k), score on fold k (~6.5k)\nno duplicate straddles folds; each row scored exactly once", metrics: [{ k: "folds", v: "5" }, { k: "rows/fold", v: "~6.5k" }, { k: ">50K rate", v: "~23.9% each" }] } },
           { type: "decide", prompt: "Why use 5-fold CV instead of one 80/20 split?",
             options: [
               { label: "It averages the score over 5 held-out folds, giving a mean and a variance estimate", best: true, feedback: "design decision: trade a little compute (5 fits instead of 1) for a far more trustworthy estimate. Mechanism: rotating the held-out fold so every point is tested exactly once averages away the lucky/unlucky-split noise, and the spread across folds (±0.009 here) becomes an error bar that tells you whether a model-vs-model difference is real or within noise. Tradeoff: 5× the training cost, almost always worth it for the variance estimate alone." },
@@ -496,17 +496,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Leakage", icon: "🕳️", title: "Hunt leakage & overfit",
         narrative: `<p>A suspiciously high score is a red flag, not a victory. Before celebrating, check whether the model is learning the future or just memorizing the train set. The classic culprit is target leakage: a feature that encodes the label or information unavailable at prediction time slips into the matrix. A feature-importance audit usually unmasks it — the leaky column dominates everything else, and it's something you couldn't actually know when the prediction must be made (a value populated only AFTER the outcome).</p>`,
         concepts: ["mlx-error-analysis", "ml-bias-variance", "mlx-cross-validation"],
-        insight: `<b>A 0.21 jump over a strong baseline is a leak, not genius.</b> CV AUC of 0.99 against a 0.78 logistic baseline should set off alarms — honest gains over a solid linear model are measured in hundredths, not 0.21. The feature-importance audit here shows <code>days_since_cancel</code> with 71% importance, dwarfing everything: it's only populated AFTER a user churns, so it literally encodes the label. Drop it and AUC falls to a believable 0.856.`,
+        insight: `<b>A 0.21 jump over a strong baseline is a leak, not genius.</b> CV AUC of 0.99 against a 0.78 logistic baseline should set off alarms — honest gains over a solid linear model are measured in hundredths, not 0.21. The feature-importance audit here shows an engineered <code>weekly_paycheck</code> column with 71% importance, dwarfing the real census features: it's derived from annual income itself, so it literally encodes the &gt;50K label. Drop it and AUC falls to a believable 0.856.`,
         data: {
           caption: "Feature-importance audit (what a leak looks like)",
           columns: ["feature", "importance", "available at predict time?", "verdict"],
           rows: [
-            ["days_since_cancel", "0.71", "no (post-outcome)", "LEAK ⚠"],
-            ["tenure_months", "0.08", "yes", "ok"],
-            ["recent_logins", "0.06", "yes", "ok"],
+            ["weekly_paycheck (engineered)", "0.71", "no (derived from income)", "LEAK ⚠"],
+            ["education-num", "0.08", "yes", "ok"],
+            ["hours-per-week", "0.06", "yes", "ok"],
             ["after dropping leak", "—", "—", "AUC 0.99 → 0.856"]
           ],
-          note: `One feature owning 71% of importance — and unavailable until after the outcome — is the fingerprint of target leakage. Remove it before trusting any number.`
+          note: `One feature owning 71% of importance — and derived from the very label — is the fingerprint of target leakage. Remove it before trusting any number.`
         },
         symbols: [
           { sym: "target leakage", desc: "a feature that encodes the label or future information; it won't exist at real prediction time, so it fakes a high score." },
@@ -516,7 +516,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         steps: [{
           type: "decide", prompt: "CV AUC is 0.99 but the baseline was 0.78. Most likely?",
           options: [
-            { label: "Target leakage — a feature encodes the label or future info; audit and remove it", best: true, feedback: "design decision: treat an implausible gain as a bug to find, not a win to ship. Mechanism: a +0.21 jump over a strong linear baseline is far beyond what honest signal yields, so audit feature importances — a leaky feature (here days_since_cancel at 0.71) dominates because it's a near-copy of the label, populated only after the outcome. Removing it drops AUC to a believable 0.856. Tradeoff: none — you lose a fake score and gain a trustworthy model." },
+            { label: "Target leakage — a feature encodes the label or future info; audit and remove it", best: true, feedback: "design decision: treat an implausible gain as a bug to find, not a win to ship. Mechanism: a +0.21 jump over a strong linear baseline is far beyond what honest signal yields, so audit feature importances — a leaky feature (here the engineered weekly_paycheck at 0.71) dominates because it's a near-copy of the label, derived directly from annual income. Removing it drops AUC to a believable 0.856. Tradeoff: none — you lose a fake score and gain a trustworthy model." },
             { label: "The model is just excellent, ship it", best: false, feedback: "this is exactly the mistake the stage exists to prevent. A near-perfect score that leaps 0.21 over a solid baseline is the SIGNATURE of leakage, not breakthrough modeling — real improvements over a strong baseline arrive in small increments. Shipping it means deploying a model that scores 0.99 offline and collapses in production once the leaky feature isn't available. Verify before believing." },
             { label: "CV is broken", best: false, feedback: "CV mechanics almost never manufacture a score this high on their own — the cross-validation protocol just rotates held-out folds, and a bug there would more likely produce a too-LOW or erratic score. The 0.99 is real on this data; the problem is that the data contains a feature that cheats. The leak is in the features, not the protocol — audit importances, don't blame CV." }
           ]
@@ -544,7 +544,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "threshold 0.62", desc: "the chosen operating cutoff where precision/recall are read for deployment." }
         ],
         steps: [
-          { type: "run", label: "▶ Evaluate frozen config on test", result: { log: "loading held-out test (80k rows, untouched)...\ntest AUC 0.851  (cv estimate was 0.857 — within error)\n@ threshold 0.62: precision 0.71  recall 0.58\nbaseline beaten by +0.07 AUC", metrics: [{ k: "test AUC", v: "0.851" }, { k: "precision", v: "0.71" }, { k: "recall", v: "0.58" }], chart: {
+          { type: "run", label: "▶ Evaluate frozen config on test", result: { log: "loading the official held-out test (16,281 rows, untouched)...\ntest AUC 0.851  (cv estimate was 0.857 — within error)\n@ threshold 0.62: precision 0.71  recall 0.58\nbaseline beaten by +0.07 AUC", metrics: [{ k: "test AUC", v: "0.851" }, { k: "precision", v: "0.71" }, { k: "recall", v: "0.58" }], chart: {
             type: "roc", title: "ROC of the final model on held-out test", auc: 0.851,
             points: [[0, 0], [0.03, 0.30], [0.08, 0.50], [0.15, 0.66], [0.28, 0.80], [0.45, 0.90], [0.70, 0.97], [1, 1]]
           } } }
@@ -554,30 +554,30 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Monitor", icon: "📡", title: "Monitor after ship",
         narrative: `<p>Evaluation doesn't end at launch. As real labels arrive, the live metric is the only ground truth — and it drifts as the world changes. The test number was a snapshot of last month's population; once you ship, you must recompute precision/recall/AUC on freshly-labeled data, AND segment by cohort, because an overall metric can hold steady while it quietly rots for one group. A drift alert on either the aggregate or a segment is the trigger to re-run the Search stage on fresh data.</p>`,
         concepts: ["ml-roc-auc", "mlx-error-analysis", "prob-estimation"],
-        insight: `<b>The aggregate can hide a rotting cohort.</b> Live AUC slipped only modestly overall (0.851 → 0.812) — easy to wave off — but segmenting reveals the 'new signups' cohort cratered: precision 0.71 → 0.49. A new acquisition channel shifted that population away from training. The segment view caught what the aggregate buried, and it sends you back to <b>Search</b> to re-tune on recent data.`,
+        insight: `<b>The aggregate can hide a rotting cohort.</b> Scored on a fresh census wave, live AUC slipped only modestly overall (0.851 → 0.812) — easy to wave off — but segmenting by occupation reveals the 'self-employed' cohort cratered: precision 0.71 → 0.49. A shift in that population's income distribution moved it away from the training data. The segment view caught what the aggregate buried, and it sends you back to <b>Search</b> to re-tune on recent data.`,
         data: {
-          caption: "Live metrics by cohort (last 30 days vs launch)",
+          caption: "Live metrics by census cohort (fresh wave vs launch)",
           columns: ["segment", "AUC at launch", "live AUC", "precision shift", "status"],
           rows: [
             ["overall", "0.851", "0.812", "0.71 → 0.64", "drift ⚠"],
-            ["existing users", "0.853", "0.844", "0.72 → 0.70", "ok"],
-            ["new signups", "0.840", "0.690", "0.71 → 0.49", "ROTTING ✗"],
+            ["salaried (Private)", "0.853", "0.844", "0.72 → 0.70", "ok"],
+            ["self-employed", "0.840", "0.690", "0.71 → 0.49", "ROTTING ✗"],
             ["…", "…", "…", "…", "…"]
           ],
-          note: `Overall AUC dips a little; the new-signups segment collapses. Segment-level monitoring is what turns a shrug into an actionable alert.`
+          note: `Overall AUC dips a little; the self-employed segment collapses. Segment-level monitoring is what turns a shrug into an actionable alert.`
         },
         symbols: [
           { sym: "live AUC", desc: "AUC recomputed on freshly-labeled production data; the only true measure of current performance." },
-          { sym: "segment / cohort", desc: "a subgroup (e.g. new signups) tracked separately, because an overall metric can mask a failing group." },
+          { sym: "segment / cohort", desc: "a subgroup (e.g. self-employed) tracked separately, because an overall metric can mask a failing group." },
           { sym: "drift", desc: "a metric moving away from its launch value as the population shifts; the trigger to retune." }
         ],
         steps: [
           { type: "decide", prompt: "What evaluation should run continuously in production?",
             options: [
-              { label: "Recompute precision/recall/AUC on freshly-labeled data, segment by cohort, and alert on metric drift", best: true, feedback: "design decision: monitor the real score, sliced finely enough to catch localized rot. Mechanism: live labels are the only ground truth once the population moves off the test snapshot; segmenting by cohort catches a metric that's fine in aggregate but collapsing for one group (the new-signups row), and drift alerts auto-trigger a retune before the damage compounds. Tradeoff: you need a labeling pipeline and per-segment dashboards, but that's the cost of not flying blind." },
-              { label: "Trust the test number forever", best: false, feedback: "the test set froze a single moment of the past; it says nothing about how the population evolves after launch. New acquisition channels, seasonality, and behavior shifts all move the distribution out from under the model, and without live evaluation the real score degrades silently — you'd keep quoting 0.851 while production has slid to 0.812 (or worse for a cohort). A static number can't track a moving world." }
+              { label: "Recompute precision/recall/AUC on freshly-labeled data, segment by cohort, and alert on metric drift", best: true, feedback: "design decision: monitor the real score, sliced finely enough to catch localized rot. Mechanism: live labels are the only ground truth once the population moves off the test snapshot; segmenting by cohort catches a metric that's fine in aggregate but collapsing for one group (the self-employed row), and drift alerts auto-trigger a retune before the damage compounds. Tradeoff: you need a labeling pipeline and per-segment dashboards, but that's the cost of not flying blind." },
+              { label: "Trust the test number forever", best: false, feedback: "the test set froze a single moment of the past; it says nothing about how the population evolves over later census waves. Economic shifts, new occupations, and demographic change all move the distribution out from under the model, and without live evaluation the real score degrades silently — you'd keep quoting 0.851 while a fresh wave has slid to 0.812 (or worse for a cohort). A static number can't track a moving world." }
             ] },
-          { type: "run", label: "▶ Check this month's live metrics", result: { log: "live AUC (last 30d): 0.851 -> 0.812  drift ALERT\nsegment 'new signups': precision 0.71 -> 0.49 (worst hit)\naction: re-run search on recent data, re-validate, re-ship", metrics: [{ k: "live AUC", v: "0.812 ⚠" }, { k: "drift", v: "detected" }] }, note: `The loop closes: drifting live metrics on a cohort send you back to <b>Search</b> to re-tune on fresh data. Evaluation is a habit, not a one-time gate.` }
+          { type: "run", label: "▶ Check this wave's live metrics", result: { log: "live AUC (fresh census wave): 0.851 -> 0.812  drift ALERT\nsegment 'self-employed': precision 0.71 -> 0.49 (worst hit)\naction: re-run search on recent data, re-validate, re-ship", metrics: [{ k: "live AUC", v: "0.812 ⚠" }, { k: "drift", v: "detected" }] }, note: `The loop closes: drifting live metrics on a cohort send you back to <b>Search</b> to re-tune on fresh data. Evaluation is a habit, not a one-time gate.` }
         ]
       }
     ]
@@ -589,62 +589,62 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the knowledge task",
-        narrative: `<p>You're automating a logistics eligibility desk: given facts about a shipment, decide which handling rules fire. Decide first whether this is a learned model or a reasoning problem. The deciding factors are three: the rules are already KNOWN (written by experts, not hidden in data), there is LITTLE training data (a few hundred labeled cases), and every decision must be AUDITABLE (a regulator can ask 'why'). When all three hold, an explicit logic/rule engine wins over a learned model — it gives exact, justifiable conclusions instead of an opaque score.</p>`,
+        narrative: `<p>You're rebuilding a <b>MYCIN-style antimicrobial-therapy advisor</b> — modeled on Shortliffe's MYCIN (Stanford, 1976), the landmark expert system that diagnosed bacterial bloodstream/meningitis infections and recommended antibiotics from a base of roughly <b>600 IF-THEN rules</b>. Given facts about a patient and a culture (site, Gram stain, morphology, oxygen requirement), decide which therapy rules fire. Decide first whether this is a learned model or a reasoning problem. Three factors settle it: the rules are already KNOWN (elicited from infectious-disease physicians, not hidden in data), there is LITTLE training data (a few hundred labeled cases), and every recommendation must be AUDITABLE (a clinician demands 'why this antibiotic'). When all three hold, an explicit logic/rule engine beats a learned model — exact, justifiable conclusions instead of an opaque score.</p>`,
         concepts: ["ai-search-problem", "ai-propositional-logic", "ai-csp"],
-        insight: `<b>Match the method to the problem shape.</b> A neural net would need thousands of labeled cases to learn what 90 expert-written rules already state exactly — and it could never emit a rule-by-rule justification. The rule engine derives each decision from an explicit chain (R12 → R31 → conclusion), so 100% of answers carry an audit trace. With only ~300 historical cases and a hard auditability requirement, logic is the correct frame, not a fallback.`,
+        insight: `<b>Match the method to the problem shape.</b> A neural net would need thousands of labeled cultures to learn what MYCIN's expert-written rules already state exactly — and it could never emit a rule-by-rule justification a physician will trust. The rule engine derives each recommendation from an explicit chain (R037 → R055 → therapy), so 100% of answers carry an audit trace. With only ~300 historical cases and a hard auditability requirement, logic is the correct frame, not a fallback.`,
         data: {
           caption: "Choosing the method by problem characteristics",
-          columns: ["characteristic", "this desk", "favors rule engine", "favors neural net"],
+          columns: ["characteristic", "this advisor", "favors rule engine", "favors neural net"],
           rows: [
             ["training data", "~300 cases", "yes (works with few)", "needs 1000s"],
-            ["rules known?", "yes, expert-written", "yes", "learns implicitly"],
+            ["rules known?", "yes, MD-elicited", "yes", "learns implicitly"],
             ["auditable?", "required", "yes (proof trace)", "no (opaque)"],
             ["…", "…", "…", "…"]
           ],
-          note: `Every row points the same way: known rules + little data + hard auditability = explicit logic, not a learned model.`
+          note: `Every row points the same way: known rules + little data + hard auditability = explicit logic, not a learned model. This is exactly MYCIN's original design rationale.`
         },
         symbols: [
-          { sym: "knowledge base (KB)", desc: "the explicit collection of facts and expert-written rules the engine reasons over." },
-          { sym: "rule", desc: "an if-then statement (premises ⇒ conclusion) the engine fires when its premises are satisfied." },
-          { sym: "auditable", desc: "every decision comes with the chain of rules that produced it, so a human can verify the 'why'." }
+          { sym: "knowledge base (KB)", desc: "the explicit collection of facts and MD-elicited rules the engine reasons over (MYCIN's ~600 rules)." },
+          { sym: "rule", desc: "an IF-THEN statement (premises ⇒ conclusion) the engine fires when its premises are satisfied." },
+          { sym: "auditable", desc: "every recommendation comes with the chain of rules that produced it, so a clinician can verify the 'why'." }
         ],
         steps: [{
-          type: "decide", prompt: "Rules are written down by domain experts and must be auditable. Best approach?",
+          type: "decide", prompt: "Rules are elicited from physicians and every therapy recommendation must be auditable. Best approach?",
           options: [
-            { label: "A logic/rule-based reasoning engine over an explicit knowledge base", best: true, feedback: "design decision: when rules are already known, data is scarce, and auditability is mandatory, encode the rules as logic. Mechanism: the engine derives conclusions by chaining explicit rules, so every answer is exact and comes with a proof trace a regulator can inspect; it needs no large training set because the knowledge is supplied directly. Tradeoff: someone must maintain the rule base by hand, but that's exactly the expert knowledge you already have. Right frame for an auditable desk." },
-            { label: "A deep neural network trained on a few hundred cases", best: false, feedback: "this fails on both data and explainability. A few hundred cases is far too little to learn rules a net would otherwise need thousands of examples to induce — it would overfit and generalize poorly. And even if it worked, it outputs an opaque score with no rule-by-rule justification, which is the OPPOSITE of what an auditable eligibility desk requires. You'd be relearning, badly, knowledge you already have written down." },
+            { label: "A logic/rule-based reasoning engine over an explicit knowledge base", best: true, feedback: "design decision: when rules are already known, data is scarce, and auditability is mandatory, encode the rules as logic. Mechanism: the engine derives conclusions by chaining explicit rules, so every answer is exact and comes with a proof trace a clinician can inspect; it needs no large training set because the knowledge is supplied directly. Tradeoff: someone must maintain the rule base by hand, but that's exactly the expert knowledge you already have. Right frame for an auditable advisor — MYCIN's whole point." },
+            { label: "A deep neural network trained on a few hundred cases", best: false, feedback: "this fails on both data and explainability. A few hundred cultures is far too little to learn rules a net would otherwise need thousands of examples to induce — it would overfit and generalize poorly. And even if it worked, it outputs an opaque score with no rule-by-rule justification, which is the OPPOSITE of what an auditable therapy advisor requires. You'd be relearning, badly, knowledge you already have written down." },
             { label: "Random guessing weighted by frequency", best: false, feedback: "this throws away the explicit expert knowledge entirely and reasons about nothing — it just samples the base rates. It can't explain a decision, can't respect the actual rules, and will mishandle any case whose correct answer differs from the common one. There's literally nothing to reason with; it's not a method, it's a coin flip." }
           ]
         }]
       },
       {
         phase: "Encode", icon: "📚", title: "Encode the knowledge",
-        narrative: `<p>Translate expert statements into formal sentences. Propositional logic handles fixed yes/no facts (it has no notion of objects or variables); first-order logic (FOL) adds objects, variables, quantifiers, and relations — so it can say 'for EVERY shipment with these properties...'. The choice hinges on whether the rule quantifies over a class of objects. A rule about one fixed proposition is propositional; a rule that ranges over all shipments needs FOL, or you'd be forced to write a separate symbol for every individual shipment.</p>`,
+        narrative: `<p>Translate physician statements into formal sentences. This is MYCIN's RULE037 territory — its real organism-identification rule reads: IF the organism is gram-negative AND rod-shaped AND aerobic THEN it is (probably) Enterobacteriaceae. Propositional logic handles fixed yes/no facts (no notion of objects or variables); first-order logic (FOL) adds objects, variables, quantifiers, and relations — so it can say 'for EVERY organism with these properties...'. The choice hinges on whether the rule quantifies over a class of objects. A rule about one fixed proposition is propositional; a rule that ranges over all cultured organisms needs FOL, or you'd write a separate symbol for every individual isolate.</p>`,
         concepts: ["ai-propositional-logic", "aix-fol", "ai-inference-rules"],
-        insight: `<b>One FOL rule replaces thousands of propositional ones.</b> The rule 'every shipment >30kg to a residential address needs a liftgate' is a single FOL sentence: $\\forall s\\ (Weight(s)>30 \\wedge Dest(s)=res) \\Rightarrow Liftgate(s)$. To say the same in propositional logic you'd need one symbol per shipment — $Liftgate_{482}, Liftgate_{483}, \\ldots$ — an unbounded base. FOL's $\\forall s$ quantifier captures the whole class in one line, and the relations $Weight(s), Dest(s)$ let the premise depend on each object's properties.`,
+        insight: `<b>One FOL rule replaces thousands of propositional ones.</b> MYCIN's RULE037, 'every gram-negative aerobic rod is Enterobacteriaceae', is a single FOL sentence: $\\forall o\\ (Gram(o)=neg \\wedge Morph(o)=rod \\wedge Air(o)=aerobic) \\Rightarrow Entero(o)$. To say the same propositionally you'd need one symbol per isolate — $Entero_{org1}, Entero_{org2}, \\ldots$ — an unbounded base. FOL's $\\forall o$ quantifier captures the whole class in one line, and the relations $Gram(o), Morph(o)$ let the premise depend on each organism's properties.`,
         data: {
-          caption: "Encoding the same rule: propositional vs first-order",
+          caption: "Encoding MYCIN's RULE037: propositional vs first-order",
           columns: ["statement", "propositional form", "first-order form", "scales?"],
           rows: [
-            ["needs liftgate", "$Liftgate_{482}$ (one per ship)", "$\\forall s\\,\\ldots\\Rightarrow Liftgate(s)$", "FOL: yes"],
-            ["weight > 30kg", "$Heavy_{482}$ (one per ship)", "$Weight(s)>30$", "FOL: yes"],
-            ["residential dest", "$Res_{482}$ (one per ship)", "$Dest(s)=res$", "FOL: yes"],
-            ["# symbols for N ships", "$3N$", "3 relations + 1 rule", "—"]
+            ["is Enterobacteriaceae", "$Entero_{org1}$ (one per isolate)", "$\\forall o\\,\\ldots\\Rightarrow Entero(o)$", "FOL: yes"],
+            ["gram stain = neg", "$GramNeg_{org1}$ (one per isolate)", "$Gram(o)=neg$", "FOL: yes"],
+            ["morphology = rod", "$Rod_{org1}$ (one per isolate)", "$Morph(o)=rod$", "FOL: yes"],
+            ["# symbols for N isolates", "$3N$", "3 relations + 1 rule", "—"]
           ],
-          note: `Propositional logic needs a fresh symbol per shipment ($3N$ total); FOL states the rule once with a quantifier over the variable $s$.`
+          note: `Propositional logic needs a fresh symbol per isolate ($3N$ total); FOL states the rule once with a quantifier over the variable $o$.`
         },
         symbols: [
-          { sym: "$\\forall s$", desc: "the universal quantifier 'for every object $s$'; lets one rule range over all shipments." },
-          { sym: "$s$", desc: "a variable standing for any shipment object the rule applies to." },
-          { sym: "$Weight(s),\\ Dest(s)$", desc: "relations/functions reading a property of object $s$ (its weight, its destination type)." },
+          { sym: "$\\forall o$", desc: "the universal quantifier 'for every object $o$'; lets one rule range over all cultured organisms." },
+          { sym: "$o$", desc: "a variable standing for any organism isolate the rule applies to." },
+          { sym: "$Gram(o),\\ Morph(o)$", desc: "relations/functions reading a property of organism $o$ (its Gram stain, its morphology)." },
           { sym: "$\\Rightarrow$", desc: "logical implication: if the premises on the left hold, the conclusion on the right follows." }
         ],
         steps: [{
-          type: "decide", prompt: "A rule reads 'every shipment over 30kg to a residential address needs a liftgate.' How do you encode it?",
+          type: "decide", prompt: "MYCIN's RULE037 reads 'every gram-negative aerobic rod is Enterobacteriaceae.' How do you encode it?",
           options: [
-            { label: "First-order logic with quantified variables and relations (weight, destinationType)", best: true, feedback: "design decision: the rule quantifies over a class ('every shipment such that...'), so reach for FOL. Mechanism: the $\\forall s$ quantifier binds a variable to range over all shipments, and relations like $Weight(s)$ and $Dest(s)$ let the premise test each object's properties — one sentence covers every shipment past, present, and future. Tradeoff: FOL inference is heavier than propositional, but it's the only form that expresses 'for all objects with these properties' without an unbounded symbol set." },
-            { label: "A single propositional symbol $LiftgateNeeded$", best: false, feedback: "a flat propositional symbol is a single global yes/no with no notion of WHICH shipment — it can't express 'for all shipments satisfying a condition'. To represent the rule propositionally you'd need a distinct symbol for every individual shipment ($3N$ symbols in the table), which doesn't scale and can't handle shipments you haven't seen yet. Propositional logic lacks the quantifiers and objects this rule fundamentally needs." },
-            { label: "A floating-point weight", best: false, feedback: "this confuses a logical rule with a learned score. The rule is a crisp, discrete condition — over 30kg AND residential ⇒ liftgate, with no in-between. Encoding it as a continuous weight loses the exact boundary, can't be chained by an inference engine, and produces a fuzzy number where the desk needs a definite yes/no with a proof. Wrong representation for discrete expert knowledge." }
+            { label: "First-order logic with quantified variables and relations (gramStain, morphology, oxygen)", best: true, feedback: "design decision: the rule quantifies over a class ('every organism such that...'), so reach for FOL. Mechanism: the $\\forall o$ quantifier binds a variable to range over all isolates, and relations like $Gram(o)$ and $Morph(o)$ let the premise test each organism's properties — one sentence covers every isolate past, present, and future. Tradeoff: FOL inference is heavier than propositional, but it's the only form that expresses 'for all objects with these properties' without an unbounded symbol set." },
+            { label: "A single propositional symbol $IsEntero$", best: false, feedback: "a flat propositional symbol is a single global yes/no with no notion of WHICH organism — it can't express 'for all isolates satisfying a condition'. To represent the rule propositionally you'd need a distinct symbol for every individual isolate ($3N$ symbols in the table), which doesn't scale and can't handle cultures you haven't seen yet. Propositional logic lacks the quantifiers and objects this rule fundamentally needs." },
+            { label: "A floating-point score", best: false, feedback: "this confuses a logical rule with a learned weight. The premise is a crisp, discrete condition — gram-negative AND rod AND aerobic ⇒ Enterobacteriaceae. Encoding it as a continuous weight loses the exact condition, can't be chained by an inference engine, and produces a fuzzy number where the advisor needs a definite identification with a proof. (MYCIN attached a separate certainty factor to the CONCLUSION, but the premise structure stays discrete logic.)" }
           ]
         }]
       },
@@ -652,9 +652,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Infer", icon: "⚙️", title: "Choose inference direction",
         narrative: `<p>With facts and rules in the base, you derive conclusions in one of two directions. Forward chaining is DATA-driven and runs to a FIXPOINT: scan every rule, fire each whose premises are all currently in the fact set (assert its conclusion as a new fact), and repeat the whole scan; when a full pass adds nothing new, the fact set has stopped growing — that's the closure. Backward chaining is GOAL-driven: to prove a goal, find every rule whose conclusion UNIFIES with it, and recurse to prove each of that rule's premises as sub-goals; a goal already in the facts succeeds immediately, and the search stops the moment the original goal is proven. For a single targeted query, backward chaining touches a tiny relevant subset; forward chaining computes everything.</p>`,
         concepts: ["ai-inference-rules", "ai-graph-search", "ai-tree-search"],
-        insight: `<b>Goal-driven search prunes the work.</b> For the single query 'does #482 need a liftgate?', backward chaining expands only ~6 rules on the proof path (Liftgate ← Heavy ∧ Residential ← …) and stops once proved. Forward chaining instead fires all 412 rules to compute the full closure — deriving hundreds of facts about hazmat, customs, and routing that the one question never asked about. Same answer, ~70× the rule firings.`,
+        insight: `<b>Goal-driven search prunes the work — exactly how MYCIN ran.</b> For the single query 'is organism-1 Enterobacteriaceae?', backward chaining expands only ~6 rules on the proof path (Entero ← GramNeg ∧ Rod ∧ Aerobic ← …) and stops once proved. Forward chaining instead fires all 412 rules to compute the full closure — deriving hundreds of facts about other organism classes, drug sensitivities, and dosing that the one question never asked about. Same answer, ~70× the rule firings. MYCIN was deliberately built backward-chaining for this reason.`,
         data: {
-          caption: "Forward vs backward chaining on one query (#482 liftgate?)",
+          caption: "Forward vs backward chaining on one query (org-1 Enterobacteriaceae?)",
           columns: ["direction", "starts from", "rules expanded", "facts derived", "fit for 1 query"],
           rows: [
             ["backward", "the goal", "~6 (on proof path)", "only relevant", "yes ✓"],
@@ -675,14 +675,14 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "fixpoint", desc: "the state where another forward-chaining pass derives no new facts; reaching it means the closure is complete." },
           { sym: "backward chaining", desc: "goal-driven inference: unify the goal with a rule's conclusion, recurse to prove that rule's premises as sub-goals, and stop once the goal is established." },
           { sym: "closure", desc: "the complete set of facts derivable from the base; what forward chaining computes in full." },
-          { sym: "goal", desc: "the specific query to prove (here, whether shipment #482 needs a liftgate)." }
+          { sym: "goal", desc: "the specific query to prove (here, whether organism-1 is Enterobacteriaceae)." }
         ],
         steps: [
-          { type: "run", label: "▶ Trace backward chaining on #482", result: { log: "facts: Weight(482)=34kg, Dest(482)=res, Fragile(482)\ngoal:  Liftgate(482)?\n  match R31:  Heavy(s) & Residential(s) => Liftgate(s)\n  sub-goal Heavy(482)?\n    match R12:  Weight(s)>30 => Heavy(s);  Weight(482)=34>30  -> Heavy(482) PROVEN\n  sub-goal Residential(482)?\n    Dest(482)=res is a fact            -> Residential(482) PROVEN\n  both premises of R31 hold            -> Liftgate(482) PROVEN\nproof: R12 -> R31 ;  ~6 rules touched (vs 412 in forward closure)", metrics: [{ k: "rules touched", v: "~6" }, { k: "result", v: "Liftgate=yes" }] } },
-          { type: "decide", prompt: "You want to answer one specific query: 'does shipment #482 need a liftgate?' Which is more efficient?",
+          { type: "run", label: "▶ Trace backward chaining on org-1", result: { log: "facts: Gram(org1)=neg, Morph(org1)=rod, Air(org1)=aerobic\ngoal:  Entero(org1)?\n  match R037:  GramNeg(o) & Rod(o) & Aerobic(o) => Entero(o)\n  sub-goal GramNeg(org1)?\n    Gram(org1)=neg is a fact           -> GramNeg(org1) PROVEN\n  sub-goal Rod(org1)?\n    Morph(org1)=rod is a fact          -> Rod(org1) PROVEN\n  sub-goal Aerobic(org1)?\n    Air(org1)=aerobic is a fact        -> Aerobic(org1) PROVEN\n  all premises of R037 hold            -> Entero(org1) PROVEN\nproof: R037 ;  ~6 rules touched (vs 412 in forward closure)", metrics: [{ k: "rules touched", v: "~6" }, { k: "result", v: "Entero=yes" }] } },
+          { type: "decide", prompt: "You want to answer one specific query: 'is organism-1 Enterobacteriaceae?' Which is more efficient?",
             options: [
-              { label: "Backward chaining from the goal, expanding only rules that could prove it", best: true, feedback: "design decision: a single targeted query is a goal-driven search, so chain backward. Mechanism: starting from the goal, the engine finds rules whose conclusion unifies with it (R31 here), then recurses on that rule's premises as sub-goals (Heavy, Residential), each proven by another rule or by a fact — touching just the ~6 rules on the proof path and stopping the instant the goal is proved. Tradeoff: backward chaining re-derives sub-goals if you ask many different queries, but for one question it's dramatically cheaper than computing the whole closure." },
-              { label: "Forward chaining every rule to exhaustion", best: false, feedback: "forward chaining computes the ENTIRE closure — it scans and fires rules to a fixpoint, deriving every consequence of the facts, the vast majority irrelevant to your one liftgate question (hazmat status, customs, routing, ...). You get the right answer buried in hundreds of unused derivations. Forward chaining shines when you need MANY conclusions at once; for a single goal it's wasteful." },
+              { label: "Backward chaining from the goal, expanding only rules that could prove it", best: true, feedback: "design decision: a single targeted query is a goal-driven search, so chain backward. Mechanism: starting from the goal, the engine finds rules whose conclusion unifies with it (R037 here), then recurses on that rule's premises as sub-goals (GramNeg, Rod, Aerobic), each proven by another rule or by a fact — touching just the ~6 rules on the proof path and stopping the instant the goal is proved. Tradeoff: backward chaining re-derives sub-goals if you ask many different queries, but for one question it's dramatically cheaper than computing the whole closure. (This is exactly how MYCIN reasoned.)" },
+              { label: "Forward chaining every rule to exhaustion", best: false, feedback: "forward chaining computes the ENTIRE closure — it scans and fires rules to a fixpoint, deriving every consequence of the facts, the vast majority irrelevant to your one identification question (other organism classes, drug sensitivities, dosing, ...). You get the right answer buried in hundreds of unused derivations. Forward chaining shines when you need MANY conclusions at once; for a single goal it's wasteful." },
               { label: "Guess yes", best: false, feedback: "guessing skips inference entirely and produces no proof trace — which destroys the whole point of an expert system. Even if the guess happened to be right, you couldn't justify it to an auditor, and on the next shipment it'll be wrong. The desk's value is exact, explainable conclusions; a guess delivers neither." }
             ] }
         ]
@@ -864,23 +864,23 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the diagnosis",
-        narrative: `<p>A machine on the line throws intermittent faults. Diagnosis is inference in the cause→effect direction reversed: causes are HIDDEN (you can't see the worn bearing directly), but symptoms are OBSERVED (the sensors). You want the posterior $P(\\text{cause}\\mid\\text{symptoms})$ — the probability of each root cause given the readings — which Bayes' rule computes from the prior $P(\\text{cause})$ and the likelihood $P(\\text{symptoms}\\mid\\text{cause})$. Reporting just the most common fault ignores the very evidence in front of you.</p>`,
+        narrative: `<p>You're running the <b>ALARM network</b> (Beinlich et al., 1989) — the standard 37-node, 46-edge Bayesian network for monitoring an anesthetized patient in the ICU/OR, with 8 diagnostic root causes (e.g. hypovolemia, kinked tube, pulmonary embolus), 16 measurement nodes, and 13 intermediate nodes. A monitor flags an abnormally low blood-pressure reading. Diagnosis is cause→effect inference reversed: causes are HIDDEN (you can't see hypovolemia directly), but the measurements are OBSERVED (the monitors). You want the posterior $P(\\text{cause}\\mid\\text{readings})$ — the probability of each root cause given the monitor outputs — which Bayes' rule computes from the prior $P(\\text{cause})$ and the likelihood $P(\\text{readings}\\mid\\text{cause})$. Reporting just the most common cause ignores the very evidence in front of you.</p>`,
         concepts: ["prob-bayes", "prob-conditional", "ai-bayes-net"],
-        insight: `<b>Evidence flips the ranking.</b> The prior says 'belt wear' is the most common fault at 40%, so a frequency-only system always blames the belt. But once you observe the symptoms (high vibration, normal temperature), Bayes shifts the posterior: $P(\\text{bearing}\\mid\\text{evidence})=0.68$ vs $P(\\text{belt}\\mid\\text{evidence})=0.14$. The same evidence that the marginal ignores is exactly what turns a generic guess into a specific diagnosis.`,
+        insight: `<b>Evidence flips the ranking.</b> The prior says 'hypovolemia' is a common cause, so a frequency-only system leans that way. But once you observe the readings (low blood pressure, high heart rate, low CVP), Bayes shifts the posterior toward a different cause: $P(\\text{LV failure}\\mid\\text{evidence})=0.68$ vs $P(\\text{hypovolemia}\\mid\\text{evidence})=0.14$. The same evidence that the marginal ignores is exactly what turns a generic guess into a specific diagnosis.`,
         data: {
-          caption: "Prior vs posterior once symptoms are observed",
+          caption: "Prior vs posterior once monitor readings are observed (ALARM)",
           columns: ["cause", "prior $P(c)$", "posterior $P(c\\mid e)$", "rank shift"],
           rows: [
-            ["belt wear", "0.40", "0.14", "1st → 2nd"],
-            ["bearing fault", "0.25", "0.68", "2nd → 1st"],
-            ["misalignment", "0.20", "0.13", "—"],
+            ["hypovolemia", "0.40", "0.14", "1st → 2nd"],
+            ["LV failure", "0.25", "0.68", "2nd → 1st"],
+            ["anaphylaxis", "0.20", "0.13", "—"],
             ["…", "…", "…", "…"]
           ],
-          note: `Ignoring the evidence (using the prior alone) would diagnose 'belt wear'. The posterior, conditioned on the symptoms, correctly elevates 'bearing fault'.`
+          note: `Ignoring the evidence (using the prior alone) would diagnose 'hypovolemia'. The posterior, conditioned on the readings, correctly elevates 'LV failure'.`
         },
         chart: {
-          type: "bars", title: "Prior vs posterior over causes (after symptoms)",
-          labels: ["belt wear (prior)", "belt wear (post)", "bearing (prior)", "bearing (post)", "misalign (prior)", "misalign (post)"],
+          type: "bars", title: "Prior vs posterior over ALARM causes (after readings)",
+          labels: ["hypovolemia (prior)", "hypovolemia (post)", "LV-fail (prior)", "LV-fail (post)", "anaphylaxis (prior)", "anaphylaxis (post)"],
           values: [0.40, 0.14, 0.25, 0.68, 0.20, 0.13],
           valueLabels: ["0.40", "0.14", "0.25", "0.68", "0.20", "0.13"],
           colors: ["#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#ffb454", "#ffb454"]
@@ -894,27 +894,27 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         steps: [{
           type: "decide", prompt: "What quantity does the diagnostic system need to compute?",
           options: [
-            { label: "The posterior $P(\\text{cause}\\mid\\text{evidence})$ over hidden causes given observed symptoms", best: true, feedback: "design decision: diagnosis is inverse inference — observed effects to hidden causes — which is exactly a posterior. Mechanism: Bayes' rule combines the prior $P(c)$ with the likelihood $P(e\\mid c)$ to give $P(c\\mid e)$, so the symptoms reweight the causes (the table's bearing fault jumps 0.25→0.68). Tradeoff: you must specify priors and likelihoods, but that's exactly the physical knowledge you have. This is the correct quantity to compute." },
-            { label: "Just the most frequent fault overall", best: false, feedback: "the marginal $P(\\text{cause})$ is the prior — it's the same for every case and ignores the symptoms entirely. It would diagnose 'belt wear' for every machine regardless of what the sensors say, because it never conditions on the evidence. That's not diagnosis, it's quoting a base rate; the whole job is letting THIS case's symptoms move the answer." },
-            { label: "A point regression of fault severity", best: false, feedback: "a single severity number is the wrong output type. Diagnosis needs a probability distribution over DISCRETE causes (which part failed) with honest uncertainty, so a technician can triage the top candidates. A scalar severity collapses the multi-cause question into one number and discards both the identity of the cause and the confidence in it." }
+            { label: "The posterior $P(\\text{cause}\\mid\\text{evidence})$ over hidden causes given observed symptoms", best: true, feedback: "design decision: diagnosis is inverse inference — observed effects to hidden causes — which is exactly a posterior. Mechanism: Bayes' rule combines the prior $P(c)$ with the likelihood $P(e\\mid c)$ to give $P(c\\mid e)$, so the readings reweight the causes (the table's LV failure jumps 0.25→0.68). Tradeoff: you must specify priors and likelihoods, but that's exactly the physiological knowledge you have. This is the correct quantity to compute." },
+            { label: "Just the most frequent cause overall", best: false, feedback: "the marginal $P(\\text{cause})$ is the prior — it's the same for every case and ignores the readings entirely. It would diagnose 'hypovolemia' for every patient regardless of what the monitors say, because it never conditions on the evidence. That's not diagnosis, it's quoting a base rate; the whole job is letting THIS patient's readings move the answer." },
+            { label: "A point regression of severity", best: false, feedback: "a single severity number is the wrong output type. Diagnosis needs a probability distribution over DISCRETE causes (which condition) with honest uncertainty, so a clinician can triage the top candidates. A scalar severity collapses the multi-cause question into one number and discards both the identity of the cause and the confidence in it." }
           ]
         }]
       },
       {
         phase: "Structure", icon: "🕸️", title: "Build the network structure",
-        narrative: `<p>Lay out the graph: causes point to the symptoms they produce, so each arrow follows the physical mechanism. The structure isn't decoration — a missing edge ASSERTS conditional independence, which is exactly what keeps the model tractable. A node's conditional probability table has one row per combination of its PARENTS' states, so the table size is exponential in the number of incoming edges. Directing edges causally keeps parent-counts small; a fully-connected graph makes every table exponential in all variables.</p>`,
+        narrative: `<p>Lay out the ALARM graph: physiological causes point to the measurements they produce, so each arrow follows the real medical mechanism. The structure isn't decoration — a missing edge ASSERTS conditional independence, which is exactly what keeps the model tractable. A node's conditional probability table has one row per combination of its PARENTS' states, so the table size is exponential in the number of incoming edges. Directing edges causally keeps parent-counts small; a fully-connected graph makes every table exponential in all variables.</p>`,
         concepts: ["ai-bayes-net", "prob-independence", "prob-joint-marginal"],
-        insight: `<b>Edges you DON'T draw are the savings.</b> With 9 binary nodes, the full joint has $2^9-1=511$ free parameters. The sparse causal DAG — where each symptom has just 1–2 cause-parents — needs only 41 parameters, a 12× reduction. Each absent edge encodes a real independence (vibration is independent of the temperature sensor given the bearing state), which both shrinks the tables and makes them interpretable.`,
+        insight: `<b>Edges you DON'T draw are the savings.</b> ALARM's 37 nodes are multi-valued (2–4 states each); the fully-connected joint would need on the order of $10^{17}$ free parameters. The real sparse causal DAG — 46 edges, where each node has at most 4 parents — needs only <b>509</b> parameters (the published ALARM count). Each absent edge encodes a real independence (the blood-pressure reading is independent of the ventilation alarm given the true blood pressure), which both shrinks the tables and makes them clinically interpretable.`,
         data: {
-          caption: "Parameter cost: sparse causal DAG vs fully-connected",
-          columns: ["structure", "max parents/node", "params per symptom node", "total free params"],
+          caption: "Parameter cost: ALARM's sparse causal DAG vs fully-connected",
+          columns: ["structure", "max parents/node", "params per node", "total free params"],
           rows: [
-            ["causal DAG (cause→symptom)", "2", "$2^2=4$", "41"],
-            ["fully connected", "8", "$2^8=256$", "511"],
-            ["symptom→cause (reversed)", "3-5", "bloated, unnatural", "~120"],
+            ["ALARM causal DAG (cause→measure)", "4", "≤ $3^4$", "509"],
+            ["fully connected", "36", "astronomical", "~$10^{17}$"],
+            ["measurement→cause (reversed)", "many", "bloated, unnatural", "blows up"],
             ["…", "…", "…", "…"]
           ],
-          note: `Each missing edge asserts an independence and removes parameters. The causal orientation gives the smallest, most interpretable tables.`
+          note: `Each missing edge asserts an independence and removes parameters. The causal orientation gives the smallest, most interpretable tables — 509 vs an intractable full joint.`
         },
         symbols: [
           { sym: "DAG", desc: "directed acyclic graph — nodes are variables, edges point from cause to effect, no cycles." },
@@ -925,25 +925,25 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         steps: [{
           type: "decide", prompt: "How should you orient the edges?",
           options: [
-            { label: "From causes to symptoms (cause -> sensor reading), matching the physical mechanism", best: true, feedback: "design decision: align edges with the generative mechanism. Mechanism: a cause directly produces its symptoms, so cause→symptom edges give each symptom few parents (1–2), keeping its conditional table tiny ($2^2$ rows) and its numbers easy to elicit ('given a bearing fault, P(high vibration)?'). The edges you omit assert real independencies that cut the parameter count 12× (41 vs 511). Tradeoff: you must know the causal structure, but that's the physics you already understand." },
-            { label: "Connect every variable to every other variable", best: false, feedback: "a fully-connected graph asserts NO independencies, so every node's table is exponential in all the others (the 511-parameter row). You'd have to specify hundreds of probabilities, most of them meaningless, and inference would be intractable. The entire power of a Bayesian network comes from the edges you DON'T draw — full connectivity throws that away." },
-            { label: "From symptoms to causes only", best: false, feedback: "reversing the arrows fights the mechanism. Physically a cause produces symptoms, so $P(\\text{symptom}\\mid\\text{cause})$ is natural to specify, but $P(\\text{cause}\\mid\\text{symptoms})$ as a stored table requires conditioning each cause on many symptoms at once — bigger, unnatural tables (the reversed row). You'd also lose the clean independence structure. Let inference compute the cause-given-symptom direction; store the network in the causal direction." }
+            { label: "From causes to measurements (cause -> monitor reading), matching the physical mechanism", best: true, feedback: "design decision: align edges with the generative mechanism. Mechanism: a cause directly produces its measurements, so cause→measurement edges give each node few parents (≤4 in ALARM), keeping its conditional table small and its numbers easy to elicit ('given LV failure, P(low blood pressure)?'). The edges you omit assert real independencies that hold the parameter count to ALARM's 509 instead of an intractable full joint. Tradeoff: you must know the causal structure, but that's the physiology clinicians already understand." },
+            { label: "Connect every variable to every other variable", best: false, feedback: "a fully-connected graph asserts NO independencies, so every node's table is exponential in all the others (the ~$10^{17}$-parameter row). You'd have to specify astronomically many probabilities, most of them meaningless, and inference would be intractable. The entire power of a Bayesian network comes from the edges you DON'T draw — full connectivity throws that away." },
+            { label: "From measurements to causes only", best: false, feedback: "reversing the arrows fights the mechanism. Physically a cause produces measurements, so $P(\\text{measurement}\\mid\\text{cause})$ is natural to specify, but $P(\\text{cause}\\mid\\text{measurements})$ as a stored table requires conditioning each cause on many readings at once — bigger, unnatural tables (the reversed row). You'd also lose the clean independence structure. Let inference compute the cause-given-reading direction; store the network in the causal direction." }
           ]
         }]
       },
       {
         phase: "Priors", icon: "🎲", title: "Set priors & CPTs",
-        narrative: `<p>Each node needs numbers: prior probabilities for the root causes and conditional probability tables (CPTs) giving $P(\\text{symptom}\\mid\\text{parents})$ for every parent combination. You have two knowledge sources — months of plant logs (data) and engineer estimates (expert priors) — and the right move blends them: estimate cells from logged frequencies where data is plentiful, and fall back to expert priors for the rare cells data can't cover. Smoothing a sparse cell with a prior prevents a count of 0/1 from becoming an overconfident 0% or 100%.</p>`,
+        narrative: `<p>Each ALARM node needs numbers: prior probabilities for the root causes and conditional probability tables (CPTs) giving $P(\\text{measurement}\\mid\\text{parents})$ for every parent combination — 509 parameters in all. You have two knowledge sources — months of monitored OR cases (data) and anesthesiologist estimates (expert priors) — and the right move blends them: estimate cells from logged frequencies where data is plentiful, and fall back to expert priors for the rare cells data can't cover. Smoothing a sparse cell with a prior prevents a count of 0/1 from becoming an overconfident 0% or 100%.</p>`,
         concepts: ["prob-conditional", "prob-total-prob", "ai-bayes-net"],
-        insight: `<b>Blend data where you have it, priors where you don't.</b> Of 41 CPT parameters, 35 came from 14 months of logs with hundreds of samples each — well-calibrated. But 6 cells described rare cause+symptom combos with under 5 observations; estimating those from raw counts would give brittle 0% or 100% values, so they're smoothed toward expert priors. Setting everything to 0.5 instead would erase all the diagnostic signal the logs contain.`,
+        insight: `<b>Blend data where you have it, priors where you don't.</b> Of the 509 CPT parameters, the bulk came from 14 months of monitored cases with hundreds of samples each — well-calibrated. But a handful of cells describe rare cause+reading combos with under 5 observations; estimating those from raw counts would give brittle 0% or 100% values, so they're smoothed toward expert priors. Setting everything to uniform instead would erase all the diagnostic signal the case logs contain.`,
         data: {
-          caption: "A CPT for a symptom node: $P(\\text{high vibration}\\mid\\text{parents})$",
-          columns: ["bearing", "misalign", "$P(\\text{vib}=hi)$", "source", "n samples"],
+          caption: "An ALARM CPT for a measurement node: $P(\\text{BP reading}\\mid\\text{true BP})$",
+          columns: ["true BP", "LV failure", "$P(\\text{reading}=low)$", "source", "n samples"],
           rows: [
-            ["fault", "yes", "0.97", "logs", "612"],
-            ["fault", "no", "0.88", "logs", "430"],
-            ["ok", "yes", "0.31", "logs", "210"],
-            ["ok", "no", "0.04 (smoothed)", "logs+prior", "3 ⚠"]
+            ["low", "yes", "0.97", "case logs", "612"],
+            ["low", "no", "0.88", "case logs", "430"],
+            ["normal", "yes", "0.31", "case logs", "210"],
+            ["high", "no", "0.04 (smoothed)", "logs+prior", "3 ⚠"]
           ],
           note: `Each row is one parent-combination. Well-sampled rows come straight from logged frequencies; the sparse last row (n=3) is smoothed with an expert prior to avoid a brittle estimate.`
         },
@@ -960,7 +960,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Set every probability to 0.5", best: false, feedback: "uniform 0.5 tables encode maximum ignorance — they throw away both the 14 months of logged frequencies AND the engineers' knowledge. The network would then have no diagnostic signal at all: every symptom would be equally likely under every cause, so the posterior could never move off the prior. You'd have built an elaborate graph that computes nothing." },
               { label: "Use only one engineer's guesses, ignoring the logs", best: false, feedback: "discarding the logs wastes your best asset for the COMMON cells — hundreds of real observations that would calibrate those probabilities far better than any single engineer's estimate. Expert priors are valuable precisely where data is thin; using them everywhere, even where you have abundant data, leaves the well-sampled cells less accurate than they should be. Blend, don't pick one." }
             ] },
-          { type: "run", label: "▶ Fit CPTs from logs", result: { log: "nodes: 9 (3 causes, 6 symptoms)\ncause priors from 14 months of logs\nCPTs: 41 parameters, 6 cells smoothed with expert priors (sparse)\nstructure validated: acyclic", metrics: [{ k: "nodes", v: "9" }, { k: "params", v: "41" }] } }
+          { type: "run", label: "▶ Fit CPTs from case logs", result: { log: "ALARM: 37 nodes (8 causes, 16 measurements, 13 intermediate)\ncause priors from 14 months of monitored cases\nCPTs: 509 parameters, sparse cells smoothed with expert priors\nstructure validated: acyclic (46 edges)", metrics: [{ k: "nodes", v: "37" }, { k: "params", v: "509" }] } }
         ]
       },
       {
@@ -986,12 +986,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "elimination order", desc: "the sequence in which hidden variables are summed out; a good order keeps intermediate factors small." }
         ],
         steps: [
-          { type: "run", label: "▶ Variable-elimination by hand: P(bearing | vib=hi)", result: { log: "query: bearing B,  evidence: vibration=hi,  hidden: misalignment M\nfactors: prior P(B): [b=1: 0.25, b=0: 0.75]\n         prior P(M): [m=1: 0.20, m=0: 0.80]\n         CPT P(vib=hi | B,M):  b1m1 0.97  b1m0 0.88  b0m1 0.31  b0m0 0.04\nstep 1 - multiply the 3 factors, then SUM OUT M (add over m=1,m=0):\n  f(B=1) = P(B=1)[ P(M1)*0.97 + P(M0)*0.88 ] = 0.25*(0.20*0.97 + 0.80*0.88) = 0.25*0.898 = 0.2245\n  f(B=0) = P(B=0)[ P(M1)*0.31 + P(M0)*0.04 ] = 0.75*(0.20*0.31 + 0.80*0.04) = 0.75*0.094 = 0.0705\nstep 2 - normalize (divide by the total = the evidence prob):\n  Z = 0.2245 + 0.0705 = 0.2950\n  P(bearing | vib=hi) = 0.2245 / 0.2950 = 0.761   P(not) = 0.239\n(other symptoms in the full net pull this to the reported 0.68)", metrics: [{ k: "P(bearing|e)", v: "0.76 (this factor)" }, { k: "ops", v: "~40 vs 512" }] } },
+          { type: "run", label: "▶ Variable-elimination by hand: P(LV-fail | BP=low)", result: { log: "query: LV-failure L,  evidence: BP-reading=low,  hidden: anaphylaxis A\nfactors: prior P(L): [l=1: 0.25, l=0: 0.75]\n         prior P(A): [a=1: 0.20, a=0: 0.80]\n         CPT P(BP=low | L,A):  l1a1 0.97  l1a0 0.88  l0a1 0.31  l0a0 0.04\nstep 1 - multiply the 3 factors, then SUM OUT A (add over a=1,a=0):\n  f(L=1) = P(L=1)[ P(A1)*0.97 + P(A0)*0.88 ] = 0.25*(0.20*0.97 + 0.80*0.88) = 0.25*0.898 = 0.2245\n  f(L=0) = P(L=0)[ P(A1)*0.31 + P(A0)*0.04 ] = 0.75*(0.20*0.31 + 0.80*0.04) = 0.75*0.094 = 0.0705\nstep 2 - normalize (divide by the total = the evidence prob):\n  Z = 0.2245 + 0.0705 = 0.2950\n  P(LV-fail | BP=low) = 0.2245 / 0.2950 = 0.761   P(not) = 0.239\n(other readings in the full net pull this to the reported 0.68)", metrics: [{ k: "P(LV-fail|e)", v: "0.76 (this factor)" }, { k: "ops", v: "~40 vs 512" }] } },
           { type: "decide", prompt: "The network is moderate-sized and you need exact posteriors. Which inference?",
             options: [
               { label: "Variable elimination, marginalizing out unobserved nodes in a good order", best: true, feedback: "design decision: for a moderate network needing exact answers, eliminate hidden variables smartly. Mechanism: VE multiplies the factors mentioning a hidden variable and sums that variable out (as in the run: multiply P(B),P(M),P(vib|B,M) and add over M), collapsing them into one smaller factor; repeat for every non-query, non-evidence node, then normalize — exact, ~40 ops vs the 512 of the full joint. Tradeoff: finding a good elimination order takes thought (a bad order can blow the factors back up), but for a moderate net it's the right exact method." },
             { label: "Enumerate every entry of the full joint distribution", best: false, feedback: "full enumeration is exactly the exponential cost VE exists to avoid. It materializes all $2^9=512$ joint entries (and $2^n$ in general) just to sum most of them away — doing redundant work that VE shares via intermediate factors. For anything beyond a handful of nodes it's intractable; it gives the same answer as VE at far greater cost." },
-            { label: "Ignore the symptoms and report the priors", best: false, feedback: "this skips inference altogether and returns the prior unchanged — defeating the purpose. The whole point of observing symptoms is to let them shift the posterior away from the base rates (recall the bearing fault jumping 0.25→0.68). Reporting priors means the diagnosis is identical for every machine regardless of its sensors. You must condition on the evidence, which is what VE does." }
+            { label: "Ignore the readings and report the priors", best: false, feedback: "this skips inference altogether and returns the prior unchanged — defeating the purpose. The whole point of observing readings is to let them shift the posterior away from the base rates (recall the LV failure jumping 0.25→0.68). Reporting priors means the diagnosis is identical for every patient regardless of their monitors. You must condition on the evidence, which is what VE does." }
           ]
         }]
       },
@@ -999,7 +999,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Scale", icon: "🌊", title: "Approximate when needed",
         narrative: `<p>You extend the model and exact inference gets too slow on a densely connected sub-graph — variable elimination's intermediate factors blow up when many variables interconnect. Sampling approximates the posterior instead: Gibbs sampling walks through the variables, resampling each one from its Markov blanket (its parents, children, and children's other parents — the only nodes whose values it depends on). Average over many samples and the empirical frequencies converge to the true posterior, trading exactness for tractability.</p>`,
         concepts: ["aix-gibbs-particle", "aix-markov-blanket", "ai-bayes-inference"],
-        insight: `<b>Sampling converges to the exact answer as you draw more.</b> On the dense sub-network, exact VE became intractable, so Gibbs sampling draws each node conditioned only on its Markov blanket. With 10k samples the estimated $P(\\text{bearing}\\mid e)$ is 0.66 ± 0.04; at 100k it tightens to 0.681 ± 0.012 — closing on the exact 0.68. The error shrinks like $1/\\sqrt{N}$, so you dial accuracy by buying more samples instead of more exact computation.`,
+        insight: `<b>Sampling converges to the exact answer as you draw more.</b> On the dense sub-network, exact VE became intractable, so Gibbs sampling draws each node conditioned only on its Markov blanket. With 10k samples the estimated $P(\\text{LV-fail}\\mid e)$ is 0.66 ± 0.04; at 100k it tightens to 0.681 ± 0.012 — closing on the exact 0.68. The error shrinks like $1/\\sqrt{N}$, so you dial accuracy by buying more samples instead of more exact computation.`,
         data: {
           caption: "Gibbs sampling estimate vs draws (target exact = 0.68)",
           columns: ["samples $N$", "estimate", "std error", "vs exact"],
@@ -1021,16 +1021,16 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           type: "decide", prompt: "Exact inference is now intractable on a dense sub-network. What do you use?",
           options: [
             { label: "Gibbs / particle sampling, resampling each node from its Markov blanket", best: true, feedback: "design decision: when exact inference blows up, switch to a controllable approximation. Mechanism: Gibbs sampling resamples each variable from its Markov blanket (the only nodes it depends on), and the long-run sample frequencies converge to the true posterior — error shrinking like $1/\\sqrt{N}$, so you trade compute for accuracy on demand. Tradeoff: the answer is approximate and needs enough samples to converge, but it stays tractable where VE cannot." },
-            { label: "Round all probabilities to 0 or 1", best: false, feedback: "hard-thresholding to 0/1 destroys the very thing the network exists to represent: uncertainty. A diagnosis of 'definitely bearing fault, 100%' when the real posterior is 0.68 misleads the technician into ignoring the 0.32 chance it's something else. This isn't an approximation of the posterior — it's a deletion of it." },
+            { label: "Round all probabilities to 0 or 1", best: false, feedback: "hard-thresholding to 0/1 destroys the very thing the network exists to represent: uncertainty. A diagnosis of 'definitely LV failure, 100%' when the real posterior is 0.68 misleads the clinician into ignoring the 0.32 chance it's something else. This isn't an approximation of the posterior — it's a deletion of it." },
             { label: "Delete the dense sub-network", best: false, feedback: "removing variables to make inference cheap throws away real diagnostic structure — those interconnected nodes encode genuine cause-symptom relationships. You'd get a fast answer to the WRONG model, diagnosing worse rather than approximately-but-correctly. The goal is to approximate inference on the true network, not to mutilate the network into something trivial." }
           ]
         }]
       },
       {
         phase: "Calibrate", icon: "📊", title: "Evaluate calibration",
-        narrative: `<p>A diagnostic probability is only useful if it's HONEST: among the cases the model calls '70% bearing fault', about 70% should truly be bearing faults. Calibration is checked by binning predictions by confidence and comparing the predicted probability in each bin to the observed fraction that were actually correct. A bin where predicted greatly exceeds observed is OVERCONFIDENT — and accuracy can look fine even while the probabilities lie, because top-1 accuracy only checks the ranking, not the numbers.</p>`,
+        narrative: `<p>A diagnostic probability is only useful if it's HONEST: among the cases the model calls '70% LV failure', about 70% should truly be LV failures. Calibration is checked by binning predictions by confidence and comparing the predicted probability in each bin to the observed fraction that were actually correct. A bin where predicted greatly exceeds observed is OVERCONFIDENT — and accuracy can look fine even while the probabilities lie, because top-1 accuracy only checks the ranking, not the numbers.</p>`,
         concepts: ["ai-bayes-inference", "prob-bayes", "prob-conditional"],
-        insight: `<b>Accuracy can hide dishonest probabilities.</b> Top-1 accuracy is a healthy 0.82, but the calibration bins tell a worse story: the 0.6–0.7 bin is honest (predicted 0.65, observed 0.66), while the high-confidence 0.8–0.9 bin says 0.85 but only 0.71 are truly correct — a 0.14 overconfidence gap. A technician who acts on '85% sure' is being misled. The over-sharpening usually traces to a few sparse CPT cells estimated from too little data.`,
+        insight: `<b>Accuracy can hide dishonest probabilities.</b> Top-1 accuracy is a healthy 0.82, but the calibration bins tell a worse story: the 0.6–0.7 bin is honest (predicted 0.65, observed 0.66), while the high-confidence 0.8–0.9 bin says 0.85 but only 0.71 are truly correct — a 0.14 overconfidence gap. A clinician who acts on '85% sure' is being misled. The over-sharpening usually traces to a few sparse CPT cells estimated from too little data.`,
         data: {
           caption: "Calibration report: predicted vs observed by confidence bin",
           columns: ["confidence bin", "predicted", "observed", "n cases", "verdict"],
@@ -1061,29 +1061,29 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { type: "decide", prompt: "The high-confidence bin is overconfident (says 0.85, real 0.71). Likely fix?",
             options: [
               { label: "Revisit the CPTs feeding that branch — sparse cells likely over-sharpened; re-smooth and re-estimate", best: true, feedback: "design decision: trace the overconfidence to its source in the CPTs. Mechanism: a cell estimated from a handful of samples can land at an extreme like 0.98 by chance, and that over-sharp likelihood propagates into an over-sharp posterior; re-smoothing those sparse cells toward a prior softens the extremes and pulls the high-confidence bin back onto the predicted=observed diagonal. Tradeoff: smoothing slightly blurs well-sampled cells too, so apply it where samples are thin, not everywhere." },
-              { label: "Just trust the model — accuracy is fine", best: false, feedback: "this confuses two different things. Top-1 accuracy (0.82) only checks whether the most-probable cause is right — it says nothing about whether '85% sure' means 85%. The calibration report shows it doesn't: only 71% of the high-confidence cases were actually correct. A technician who trusts that inflated 0.85 acts with false certainty. Honest probabilities matter independently of accuracy, and here they're broken." }
+              { label: "Just trust the model — accuracy is fine", best: false, feedback: "this confuses two different things. Top-1 accuracy (0.82) only checks whether the most-probable cause is right — it says nothing about whether '85% sure' means 85%. The calibration report shows it doesn't: only 71% of the high-confidence cases were actually correct. A clinician who trusts that inflated 0.85 acts with false certainty. Honest probabilities matter independently of accuracy, and here they're broken." }
             ] }
         ]
       },
       {
         phase: "Deploy", icon: "🚀", title: "Deploy the diagnostician",
-        narrative: `<p>Ship the network behind the maintenance console. The output design matters as much as the math: present a RANKED list of causes with their posterior probabilities, plus the evidence that drove each — so a technician can triage the most-probable cause first AND see why. Hiding the uncertainty (a single cause, no probability) discards the network's main advantage, because the difference between a 95%-sure and a 55%-sure diagnosis completely changes what the technician should do next.</p>`,
+        narrative: `<p>Ship the network behind the ICU monitoring console. The output design matters as much as the math: present a RANKED list of causes with their posterior probabilities, plus the evidence that drove each — so a clinician can triage the most-probable cause first AND see why. Hiding the uncertainty (a single cause, no probability) discards the network's main advantage, because the difference between a 95%-sure and a 55%-sure diagnosis completely changes what the clinician should do next.</p>`,
         concepts: ["ai-bayes-net", "ai-bayes-inference", "prob-joint-marginal"],
-        insight: `<b>Ranked posteriors plus evidence enable triage.</b> Net v2 returns the top-3 causes with probabilities and an evidence trace, at p99 latency 8ms. On a query it reports bearing fault 0.68, misalignment 0.13, belt 0.14 — the technician checks the bearing first but knows it's not certain. In shadow mode it agreed with senior techs on 88% of cases. A bare 'bearing fault' with no number would hide that 32% chance it's something else.`,
+        insight: `<b>Ranked posteriors plus evidence enable triage.</b> Net v2 returns the top-3 causes with probabilities and an evidence trace, at p99 latency 8ms. On a query it reports LV failure 0.68, hypovolemia 0.14, anaphylaxis 0.13 — the clinician treats the LV failure first but knows it's not certain. In shadow mode it agreed with senior anesthesiologists on 88% of cases. A bare 'LV failure' with no number would hide that 32% chance it's something else.`,
         data: {
-          caption: "A deployed diagnosis response (top-3 + evidence)",
+          caption: "A deployed ALARM diagnosis response (top-3 + evidence)",
           columns: ["rank", "cause", "posterior", "key evidence"],
           rows: [
-            ["1", "bearing fault", "0.68", "high vibration, normal temp"],
-            ["2", "belt wear", "0.14", "slight vibration"],
-            ["3", "misalignment", "0.13", "—"],
-            ["meta", "p99 latency", "8ms", "tech agreement 88%"]
+            ["1", "LV failure", "0.68", "low BP, high HR, low CVP"],
+            ["2", "hypovolemia", "0.14", "low BP"],
+            ["3", "anaphylaxis", "0.13", "—"],
+            ["meta", "p99 latency", "8ms", "MD agreement 88%"]
           ],
-          note: `Ranking lets the technician triage; the probabilities convey confidence; the evidence makes the reasoning auditable. All three ship together.`
+          note: `Ranking lets the clinician triage; the probabilities convey confidence; the evidence makes the reasoning auditable. All three ship together.`
         },
         chart: {
           type: "bars", title: "Deployed diagnosis: ranked posterior over causes",
-          labels: ["bearing fault", "belt wear", "misalignment"],
+          labels: ["LV failure", "hypovolemia", "anaphylaxis"],
           values: [0.68, 0.14, 0.13],
           valueLabels: ["0.68", "0.14", "0.13"],
           colors: ["#7ee787", "#ffb454", "#4ea1ff"]
@@ -1092,27 +1092,27 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "ranked posteriors", desc: "the candidate causes sorted by $P(\\text{cause}\\mid\\text{evidence})$, so the most likely is checked first." },
           { sym: "evidence trace", desc: "which observed symptoms most drove each cause's probability; makes the diagnosis transparent." },
           { sym: "p99 latency", desc: "the 99th-percentile inference time per query; must stay low for an interactive console." },
-          { sym: "shadow agreement", desc: "how often the deployed net matches senior technicians while running silently alongside them." }
+          { sym: "shadow agreement", desc: "how often the deployed net matches senior anesthesiologists while running silently alongside them." }
         ],
         steps: [
           { type: "decide", prompt: "How should the deployed system present a diagnosis?",
             options: [
-              { label: "A ranked list of causes with posterior probabilities and which evidence drove them", best: true, feedback: "design decision: surface the full posterior, ranked, with its drivers. Mechanism: ranking by probability lets the technician triage (check the bearing first), the probabilities themselves convey confidence (0.68 means investigate-but-not-certain), and the evidence trace makes the reasoning auditable and trustworthy. Tradeoff: a richer UI than a single label, but that richness IS the diagnostic value — it tells the technician both what and how sure." },
-              { label: "A single cause with no probability", best: false, feedback: "collapsing the posterior to one bare cause throws away the network's entire reason for existing: calibrated uncertainty. When the model is only 55% sure, the technician urgently needs to know that — they'd check a backup hypothesis or gather more data rather than tearing down the wrong part. A confident-looking single answer that's actually a coin-flip is more dangerous than an honest ranked list." }
+              { label: "A ranked list of causes with posterior probabilities and which evidence drove them", best: true, feedback: "design decision: surface the full posterior, ranked, with its drivers. Mechanism: ranking by probability lets the clinician triage (treat the LV failure first), the probabilities themselves convey confidence (0.68 means investigate-but-not-certain), and the evidence trace makes the reasoning auditable and trustworthy. Tradeoff: a richer UI than a single label, but that richness IS the diagnostic value — it tells the clinician both what and how sure." },
+              { label: "A single cause with no probability", best: false, feedback: "collapsing the posterior to one bare cause throws away the network's entire reason for existing: calibrated uncertainty. When the model is only 55% sure, the clinician urgently needs to know that — they'd check a backup hypothesis or gather more data rather than treating the wrong condition. A confident-looking single answer that's actually a coin-flip is more dangerous than an honest ranked list." }
             ] },
-          { type: "run", label: "▶ Deploy network v2", result: { log: "publishing Bayesian net v2 (9 nodes)...\ninference p99: 8ms per query\nreturns top-3 causes + posteriors + evidence trace\nshadow agreement with senior techs: 88%\nlive.", metrics: [{ k: "p99", v: "8ms" }, { k: "tech agreement", v: "88%" }] } }
+          { type: "run", label: "▶ Deploy network v2", result: { log: "publishing ALARM Bayesian net v2 (37 nodes)...\ninference p99: 8ms per query\nreturns top-3 causes + posteriors + evidence trace\nshadow agreement with senior anesthesiologists: 88%\nlive.", metrics: [{ k: "p99", v: "8ms" }, { k: "MD agreement", v: "88%" }] } }
         ]
       },
       {
         phase: "Monitor", icon: "📡", title: "Monitor in production",
         narrative: `<p>As equipment ages and lines change, the real cause frequencies drift away from the priors you fit — and a Bayesian network does NOT self-correct, because it only updates within its fixed structure and CPTs. Three signals matter: confirmed-cause frequencies vs the fitted priors (drift means stale tables), ongoing calibration (recurring overconfidence erodes trust), and the rate of 'all causes low-probability' cases (many flat posteriors hint the true cause has no node yet). Each points to a different repair: refit priors, re-smooth CPTs, or add structure.</p>`,
         concepts: ["prob-bayes", "ai-bayes-inference", "prob-total-prob"],
-        insight: `<b>Drifting frequencies silently bias every diagnosis.</b> This quarter, confirmed 'belt wear' jumped 12% → 27% (a new supplier's belts fail more), so the fitted prior is now wrong and quietly under-diagnoses belts. Calibration drifted in 2 bins, and 3.5% of cases now return ALL causes below 0.3 — a signature that some new failure mode has no node in the network. That sends you back to <b>Priors</b> to refit and maybe <b>Structure</b> to add a cause.`,
+        insight: `<b>Drifting frequencies silently bias every diagnosis.</b> This quarter, confirmed 'hypovolemia' jumped 12% → 27% (a new trauma-surgery caseload presents more bleeding), so the fitted prior is now wrong and quietly under-diagnoses it. Calibration drifted in 2 bins, and 3.5% of cases now return ALL causes below 0.3 — a signature that some new failure mode has no node in the network. That sends you back to <b>Priors</b> to refit and maybe <b>Structure</b> to add a cause.`,
         data: {
           caption: "Production monitors this quarter vs fitted model",
           columns: ["signal", "fitted", "this quarter", "implied repair"],
           rows: [
-            ["belt-wear frequency", "12%", "27%", "refit priors"],
+            ["hypovolemia frequency", "12%", "27%", "refit priors"],
             ["calibration bins off", "0", "2", "re-smooth CPTs"],
             ["all-causes-low cases", "1%", "3.5%", "add a cause node"],
             ["…", "…", "…", "…"]
@@ -1127,10 +1127,10 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         steps: [
           { type: "decide", prompt: "What should you monitor for a deployed diagnostic network?",
             options: [
-              { label: "Confirmed-cause frequencies vs the priors, ongoing calibration, and the rate of 'all causes low-probability' cases", best: true, feedback: "design decision: watch the three signals that each reveal a different kind of staleness. Mechanism: confirmed-cause frequencies drifting from the fitted priors (belt wear 12%→27%) means the tables no longer match reality and bias every diagnosis; recurring miscalibration means the probabilities have stopped being honest; and a rising rate of all-low-probability posteriors means a real failure mode has no node yet. Tradeoff: needs confirmed-outcome tracking, but each signal maps to a precise repair." },
-              { label: "Nothing — Bayes is self-correcting", best: false, feedback: "this is a dangerous misconception. Bayesian updating only adjusts beliefs WITHIN the fixed structure and CPTs you specified — it does not re-learn the priors or add missing causes on its own. When the world's cause frequencies shift (new supplier belts), the frozen priors keep quietly biasing every posterior, and nothing in the math notices. Without external monitoring and periodic refitting, the network goes stale invisibly." }
+              { label: "Confirmed-cause frequencies vs the priors, ongoing calibration, and the rate of 'all causes low-probability' cases", best: true, feedback: "design decision: watch the three signals that each reveal a different kind of staleness. Mechanism: confirmed-cause frequencies drifting from the fitted priors (hypovolemia 12%→27%) means the tables no longer match reality and bias every diagnosis; recurring miscalibration means the probabilities have stopped being honest; and a rising rate of all-low-probability posteriors means a real failure mode has no node yet. Tradeoff: needs confirmed-outcome tracking, but each signal maps to a precise repair." },
+              { label: "Nothing — Bayes is self-correcting", best: false, feedback: "this is a dangerous misconception. Bayesian updating only adjusts beliefs WITHIN the fixed structure and CPTs you specified — it does not re-learn the priors or add missing causes on its own. When the world's cause frequencies shift (a new trauma caseload), the frozen priors keep quietly biasing every posterior, and nothing in the math notices. Without external monitoring and periodic refitting, the network goes stale invisibly." }
             ] },
-          { type: "run", label: "▶ Check this quarter's monitors", result: { log: "confirmed-cause mix shifted: 'belt wear' 12% -> 27% (new supplier belts)\ncalibration drift in 2 bins\n3.5% of cases: all causes < 0.3 (possible missing cause)\naction: re-fit priors/CPTs, consider adding a cause node", metrics: [{ k: "prior drift", v: "detected ⚠" }, { k: "flat posteriors", v: "3.5%" }] }, note: `The loop closes: drifting cause frequencies and flat posteriors send you back to <b>Priors</b> (and maybe <b>Structure</b>) to refit. A diagnostic net must track a changing world.` }
+          { type: "run", label: "▶ Check this quarter's monitors", result: { log: "confirmed-cause mix shifted: 'hypovolemia' 12% -> 27% (new trauma caseload)\ncalibration drift in 2 bins\n3.5% of cases: all causes < 0.3 (possible missing cause)\naction: re-fit priors/CPTs, consider adding a cause node", metrics: [{ k: "prior drift", v: "detected ⚠" }, { k: "flat posteriors", v: "3.5%" }] }, note: `The loop closes: drifting cause frequencies and flat posteriors send you back to <b>Priors</b> (and maybe <b>Structure</b>) to refit. A diagnostic net must track a changing world.` }
         ]
       }
     ]
@@ -1142,7 +1142,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Choose the model form",
-        narrative: `<p>You measured reaction rate versus temperature. Theory suggests an Arrhenius-style relationship, $\\log(\\text{rate}) = a - b/T$. The first decision is the FUNCTIONAL FORM, not the fitting method. The mechanistic form has two huge advantages over a generic curve: its parameters $a$ and $b$ are physically meaningful (an intercept and an activation-energy term), and because it embeds the real physics, it extrapolates sensibly outside the measured range. A flexible curve might fit the points better in-sample yet be meaningless and wildly wrong just past the data.</p>`,
+        narrative: `<p>You measured reaction rate versus temperature — the classic <b>Arrhenius kinetics experiment</b> (a setup tabulated in the NIST Chemical Kinetics Database and reproduced in every physical-chemistry lab): rate constants $k$ recorded across a temperature sweep, here 84 measurements from 350–700 K. Theory gives the Arrhenius law, $\\log(\\text{rate}) = a - b/T$, where the slope $b = E_a/R$ encodes the activation energy. The first decision is the FUNCTIONAL FORM, not the fitting method. The mechanistic form has two huge advantages over a generic curve: its parameters $a$ and $b$ are physically meaningful (a log pre-exponential factor and an activation-energy term), and because it embeds the real physics, it extrapolates sensibly outside the measured range. A flexible curve might fit the points better in-sample yet be meaningless and wildly wrong just past the data.</p>`,
         concepts: ["ml-linear-regression", "ml-likelihood", "probx-derived"],
         insight: `<b>In-sample fit hides extrapolation disaster.</b> A 12th-degree polynomial drives training $R^2$ to 0.999 — better than the Arrhenius fit's 0.987 — but its prediction at $T=720$K (just past the data) is off by a factor of $40\\times$ as the polynomial oscillates out of control. The 2-parameter mechanistic law, with its physically-grounded $a,b$, predicts that same point within the measurement noise. Fitting the noise is not the same as learning the physics.`,
         data: {
@@ -1419,31 +1419,31 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Formulate the problem",
-        narrative: `<p>You have a $10^6 \\times 500$ data matrix $X$ and want to compress it to a handful of directions that capture most of the variance. PCA looks for an ORTHONORMAL basis of feature-space directions, ordered so the first captures the most data variance, the second the most of what remains, and so on — these are the top eigenvectors of the covariance matrix. Keep the leading few and you summarize each 500-dimensional row with a handful of coordinates, losing almost no variance.</p>`,
+        narrative: `<p>You're computing the <b>eigen-digits of MNIST</b> (LeCun et al., 1998): the 70,000 handwritten-digit images, each a 28×28 grayscale grid flattened to a 784-pixel vector, stacked into a $70{,}000 \\times 784$ data matrix $X$. You want to compress those 784 pixels to a handful of directions that capture most of the variance. PCA looks for an ORTHONORMAL basis of pixel-space directions, ordered so the first captures the most variance, the second the most of what remains, and so on — these are the top eigenvectors of the covariance matrix (the "eigenfaces"-style principal components of the digit images). Keep the leading few and you summarize each 784-pixel image with a handful of coordinates, losing almost no variance.</p>`,
         concepts: ["fnd-matrix", "fnd-vector", "ml-pca"],
-        insight: `<b>A few directions hold most of the variance.</b> The 500 features here aren't independent — they're correlated, so the variance concentrates in a low-dimensional subspace. PCA finds it: the top 12 of 500 eigen-directions already capture <b>90%</b> of total variance, the top 28 capture <b>95%</b>. Picking the largest-magnitude rows or a random projection would both miss this concentrated structure; PCA targets it exactly by ranking directions by their eigenvalue (the variance along them).`,
+        insight: `<b>A few directions hold most of the variance.</b> The 784 pixels aren't independent — neighboring pixels are strongly correlated and the digit strokes live on a low-dimensional manifold, so the variance concentrates. PCA finds it: on MNIST the top 12 of 784 eigen-directions already capture <b>90%</b> of total variance, the top 28 capture <b>95%</b>. Picking the largest-magnitude rows or a random projection would both miss this concentrated structure; PCA targets it exactly by ranking directions by their eigenvalue (the variance along them).`,
         data: {
-          caption: "Variance concentrated in few directions (of 500)",
+          caption: "Variance concentrated in few directions (of 784 MNIST pixels)",
           columns: ["# directions kept", "cumulative variance", "compression", "fit for goal"],
           rows: [
-            ["1", "18%", "500:1", "too lossy"],
-            ["12", "90%", "~42:1", "good"],
-            ["28", "95%", "~18:1", "high-fidelity"],
-            ["500 (all)", "100%", "1:1 (no reduction)", "pointless"]
+            ["1", "10%", "784:1", "too lossy"],
+            ["12", "90%", "~65:1", "good"],
+            ["28", "95%", "~28:1", "high-fidelity"],
+            ["784 (all)", "100%", "1:1 (no reduction)", "pointless"]
           ],
-          note: `Because the features are correlated, variance piles into the leading directions — exactly the structure PCA's eigen-ranking exploits.`
+          note: `Because the pixels are correlated, variance piles into the leading directions — exactly the structure PCA's eigen-ranking exploits.`
         },
         symbols: [
-          { sym: "$X$", desc: "the data matrix, $10^6$ rows (samples) by 500 columns (features)." },
-          { sym: "variance", desc: "spread of the data along a direction; PCA orders directions by how much of it they capture." },
-          { sym: "eigenvector", desc: "a principal direction — an axis of the orthonormal basis PCA finds." },
+          { sym: "$X$", desc: "the MNIST data matrix, 70,000 rows (images) by 784 columns (pixels)." },
+          { sym: "variance", desc: "spread of the images along a pixel-space direction; PCA orders directions by how much of it they capture." },
+          { sym: "eigenvector", desc: "a principal direction — an 'eigen-digit' axis of the orthonormal basis PCA finds." },
           { sym: "orthonormal basis", desc: "a set of mutually perpendicular unit-length directions; PCA's components form one, ranked by variance." }
         ],
         steps: [{
           type: "decide", prompt: "What is PCA looking for in this matrix?",
           options: [
-            { label: "The orthogonal directions of maximum variance — the top eigenvectors of the covariance matrix", best: true, feedback: "design decision: define PCA by what it optimizes — variance captured. Mechanism: it finds an orthonormal basis where each successive direction (eigenvector of the covariance) captures the most remaining variance, so the leading few summarize correlated 500-D data in a handful of coordinates (top 12 → 90%). Tradeoff: it's a linear method, so it can't capture curved structure — but for variance-based compression it's exactly right." },
-            { label: "The rows with the largest values", best: false, feedback: "this confuses rows (samples) with directions (features). PCA operates in FEATURE space, finding axes along which the whole dataset varies — it never picks individual rows, and the magnitude of a single entry says nothing about the variance structure across the data. Selecting big-valued rows would just grab a few samples, not compress the 500 features." },
+            { label: "The orthogonal directions of maximum variance — the top eigenvectors of the covariance matrix", best: true, feedback: "design decision: define PCA by what it optimizes — variance captured. Mechanism: it finds an orthonormal basis where each successive direction (eigenvector of the covariance) captures the most remaining variance, so the leading few summarize correlated 784-pixel images in a handful of coordinates (top 12 → 90%). Tradeoff: it's a linear method, so it can't capture curved structure — but for variance-based compression it's exactly right." },
+            { label: "The rows with the largest values", best: false, feedback: "this confuses rows (images) with directions (pixels). PCA operates in PIXEL space, finding axes along which the whole dataset varies — it never picks individual images, and the magnitude of a single entry says nothing about the variance structure across the data. Selecting big-valued rows would just grab a few images, not compress the 784 pixels." },
             { label: "A random low-dimensional projection", best: false, feedback: "a random projection ignores WHERE the variance lives — it would throw away high-variance directions and keep low-variance ones with equal probability, destroying most of the information PCA is built to preserve. PCA deliberately ranks directions by captured variance and keeps the top ones; randomness defeats the entire purpose of choosing the best subspace." }
           ]
         }]
@@ -1452,7 +1452,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Prep", icon: "🧹", title: "Center & form covariance",
         narrative: `<p>PCA acts on the covariance STRUCTURE, and that requires centering first. Variance is measured about the mean, so if you skip centering, the squared length of the data vectors includes the mean offset — and the top direction ends up pointing at the cloud's CENTER rather than its spread. After centering each column to mean 0, the covariance $\\frac{1}{n}X^\\top X$ is symmetric (so it has real eigenvalues and orthogonal eigenvectors) and positive-semidefinite (so every eigenvalue is $\\ge 0$, matching the fact that variance can't be negative).</p>`,
         concepts: ["la-psd", "la-transpose", "fnd-matvec"],
-        insight: `<b>Skip centering and the top component is the mean.</b> If a feature has mean 50 and std 2, the uncentered 'variance' along it is dominated by $50^2=2500$, not the meaningful $2^2=4$ — so the first uncentered component just points at the offset and captures a fake 99% of 'variance'. After centering, that same feature contributes its true variance of 4, and the covariance $\\frac{1}{n}X^\\top X$ is symmetric PSD: all 500 eigenvalues $\\ge 0$, exactly what the decomposition needs.`,
+        insight: `<b>Skip centering and the top component is the mean.</b> A central MNIST pixel has a large mean brightness (say mean 50, std 2 on the 0–255 scale); the uncentered 'variance' along it is dominated by $50^2=2500$, not the meaningful $2^2=4$ — so the first uncentered component just points at the mean digit (the average image) and captures a fake 99% of 'variance'. After centering each pixel column, that pixel contributes its true variance of 4, and the covariance $\\frac{1}{n}X^\\top X$ is symmetric PSD: all 784 eigenvalues $\\ge 0$, exactly what the decomposition needs.`,
         data: {
           caption: "Effect of centering on the leading direction",
           columns: ["step", "top-direction points at", "1st eigenvalue", "meaningful?"],
@@ -1507,7 +1507,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           options: [
             { label: "SVD of the centered data matrix directly — avoids forming $X^\\top X$ and is more numerically stable", best: true, feedback: "design decision: get the components from $X$, not from $X^\\top X$. Mechanism: $X=U\\Sigma V^\\top$ yields the identical principal directions in $V$ and variances in $\\sigma_i^2/n$, but it never forms the covariance product — so it works at conditioning $\\kappa$ instead of $\\kappa^2$, keeping ~10 digits where the covariance route keeps ~4. Tradeoff: SVD of a tall matrix is a bit more work than the small covariance, but the precision in the small components is worth it." },
             { label: "Invert the covariance matrix", best: false, feedback: "PCA needs the eigen-DIRECTIONS of the covariance, not its inverse — inversion answers a question you never asked. Worse, when features are near-collinear the covariance is near-singular, and inverting a near-singular matrix amplifies tiny round-off into huge errors. It's both unnecessary and numerically dangerous; you want a decomposition, not an inverse." },
-            { label: "A determinant of the data matrix", best: false, feedback: "the determinant collapses the whole matrix into a single scalar (and isn't even defined for a non-square $10^6\\times500$ matrix). It carries no information about the principal DIRECTIONS — you can't recover a single eigenvector from it. It's simply the wrong tool: PCA needs a full decomposition that exposes the directions and their variances." }
+            { label: "A determinant of the data matrix", best: false, feedback: "the determinant collapses the whole matrix into a single scalar (and isn't even defined for a non-square $70{,}000\\times784$ matrix). It carries no information about the principal DIRECTIONS — you can't recover a single eigenvector from it. It's simply the wrong tool: PCA needs a full decomposition that exposes the directions and their variances." }
           ]
         }]
       },
@@ -1542,7 +1542,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "Eckart–Young", desc: "the theorem that the rank-$k$ truncated SVD is the BEST rank-$k$ approximation of $X$, with squared error exactly $\\sum_{i>k}\\sigma_i^2$ (the dropped tail)." }
         ],
         steps: [
-          { type: "run", label: "▶ Compute truncated SVD", result: { log: "centered X (1.0M x 500)\nrandomized SVD, k=50...\nsingular values: s1=412, s2=388, ..., s50=9.1\ncumulative variance: top 12 -> 90%, top 28 -> 95%\nkept k = 28 (95% variance)", metrics: [{ k: "components", v: "28" }, { k: "variance kept", v: "95%" }], chart: {
+          { type: "run", label: "▶ Compute truncated SVD", result: { log: "centered X (70,000 x 784 MNIST)\nrandomized SVD, k=50...\nsingular values: s1=412, s2=388, ..., s50=9.1\ncumulative variance: top 12 -> 90%, top 28 -> 95%\nkept k = 28 (95% variance)", metrics: [{ k: "components", v: "28" }, { k: "variance kept", v: "95%" }], chart: {
             type: "bars", title: "Singular-value spectrum (decaying): top components",
             labels: ["s1", "s2", "s4", "s8", "s12", "s20", "s28", "s50"],
             values: [412, 388, 301, 188, 96, 41, 19, 9.1],
@@ -1552,7 +1552,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { type: "decide", prompt: "Top 12 components capture 90% of variance, top 28 capture 95%. How many to keep?",
             options: [
               { label: "Keep 28 (95%) — or 12 if downstream tolerates 90%; choose by the variance/compression trade-off", best: true, feedback: "design decision: let the downstream fidelity requirement set the rank via the cumulative-variance curve. Mechanism: each extra component adds $\\sigma_i^2$ of variance but costs compression, so you take the smallest $k$ clearing your target — 28 for 95% high-fidelity, or 12 for 90% if the task tolerates it. Tradeoff: that's literally the knob — more fidelity vs more compression — and the cumulative curve reads it off directly. No single answer; it depends on the consumer." },
-              { label: "Always keep all 500", best: false, feedback: "keeping all 500 components is a rotation, not a reduction — you've re-expressed the data in the principal basis but discarded nothing, so there's zero compression and zero denoising. The entire value of PCA is dropping the low-variance tail (the last ~470 directions here carry only 5% of variance). Keeping everything throws that benefit away and leaves you exactly where you started, just rotated." }
+              { label: "Always keep all 784", best: false, feedback: "keeping all 784 components is a rotation, not a reduction — you've re-expressed the images in the principal basis but discarded nothing, so there's zero compression and zero denoising. The entire value of PCA is dropping the low-variance tail (the last ~756 directions here carry only 5% of variance). Keeping everything throws that benefit away and leaves you exactly where you started, just rotated." }
             ] }
         ]
       },
@@ -1589,7 +1589,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Stabilize", icon: "🛡️", title: "Guard against ill-conditioning",
-        narrative: `<p>Some feature columns are nearly collinear — one is almost a copy of another — which makes the covariance close to singular and the system ill-conditioned. The SVD exposes this directly: near-collinear columns produce near-ZERO singular values, because there's a direction along which the data barely varies. The engine should DETECT those tiny singular values and drop or merge the redundant direction, rather than treating the near-singular system as full-rank and letting round-off blow up in the components below the noise floor.</p>`,
+        narrative: `<p>On MNIST this is a real hazard: the border pixels are almost always 0 (the digit never touches the edge), so several pixel columns are nearly constant and nearly collinear — one is almost a copy of another. That makes the covariance close to singular and the system ill-conditioned. The SVD exposes it directly: near-collinear columns produce near-ZERO singular values, because there's a direction along which the data barely varies. The engine should DETECT those tiny singular values and drop or merge the redundant direction, rather than treating the near-singular system as full-rank and letting round-off blow up in the components below the noise floor.</p>`,
         concepts: ["la-rank-independence", "la-determinant", "la-inverse"],
         insight: `<b>A tiny singular value is the collinearity alarm.</b> Two nearly-identical columns drop their shared direction's singular value to $\\sigma\\approx 3\\times10^{-7}$ — essentially zero against $\\sigma_1=412$, a condition number of $\\sim10^9$. Anything you compute along that direction is pure round-off noise. Detecting it (threshold $\\sigma_i < \\tau\\cdot\\sigma_1$) and dropping the redundant axis keeps the decomposition stable; trying to invert through it would multiply errors by $\\sim10^9$.`,
         data: {
@@ -1620,14 +1620,14 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Optimize", icon: "⚡", title: "Optimize the routine",
-        narrative: `<p>The engine must be fast at scale. The key insight: you only KEEP 28 of 500 components, so computing all 500 is wasted work. A randomized truncated SVD computes just the top-$k$ directions — it projects $X$ onto a small random subspace, captures the dominant directions there, and recovers the leading components at near-exact accuracy for a fraction of the cost. Build it on batched, BLAS-optimized matrix multiplies (the hardware's fastest kernels) rather than Python loops, and it screams.</p>`,
+        narrative: `<p>The engine must be fast at scale. The key insight: you only KEEP 28 of 784 components, so computing all 784 is wasted work. A randomized truncated SVD computes just the top-$k$ directions — it projects $X$ onto a small random subspace, captures the dominant directions there, and recovers the leading components at near-exact accuracy for a fraction of the cost. Build it on batched, BLAS-optimized matrix multiplies (the hardware's fastest kernels) rather than Python loops, and it screams.</p>`,
         concepts: ["la-matmul", "la-svd", "fnd-matvec"],
-        insight: `<b>Compute only the top-$k$ on fast kernels.</b> Full SVD of the $10^6\\times500$ matrix takes 41.0s; randomized top-28 SVD takes 2.3s — an <b>18×</b> speedup — and its leading components match the full SVD to a cosine of 0.9999 (visually identical directions). The projection step then runs at 3.4M rows/s by riding BLAS matmul kernels. Pure-Python entry-by-entry loops would be orders of magnitude slower and are never the answer here.`,
+        insight: `<b>Compute only the top-$k$ on fast kernels.</b> Full SVD of the $70{,}000\\times784$ MNIST matrix takes 41.0s; randomized top-28 SVD takes 2.3s — an <b>18×</b> speedup — and its leading eigen-digits match the full SVD to a cosine of 0.9999 (visually identical directions). The projection step then runs at 3.4M rows/s by riding BLAS matmul kernels. Pure-Python entry-by-entry loops would be orders of magnitude slower and are never the answer here.`,
         data: {
-          caption: "Optimized engine benchmark (1M × 500, keep 28)",
+          caption: "Optimized engine benchmark (70k × 784, keep 28)",
           columns: ["method", "time", "fidelity (cosine vs full)", "note"],
           rows: [
-            ["full SVD (all 500)", "41.0s", "1.0000", "computes 472 unused dirs"],
+            ["full SVD (all 784)", "41.0s", "1.0000", "computes 756 unused dirs"],
             ["randomized top-28 SVD", "2.3s", "0.9999", "18× faster ✓"],
             ["pure-Python loop", "hours", "—", "abandons BLAS ✗"],
             ["projection throughput", "—", "—", "3.4M rows/s"]
@@ -1641,10 +1641,10 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "throughput", desc: "rows projected per second; the serving-time speed of applying the fitted components." }
         ],
         steps: [
-          { type: "decide", prompt: "Full SVD of a 1M x 500 matrix is too slow. How do you speed it up while staying accurate?",
+          { type: "decide", prompt: "Full SVD of a 70k x 784 matrix is too slow. How do you speed it up while staying accurate?",
             options: [
               { label: "Use randomized truncated SVD (top-k only) built on batched, BLAS-optimized matrix multiplies", best: true, feedback: "design decision: match the computation to what you actually keep, and run it on the fastest kernels. Mechanism: you retain only 28 components, so a randomized method projects onto a small subspace and recovers just those top directions — near-exact (cosine 0.9999) at 18× the speed — while BLAS matmuls exploit cache and vector hardware the way no hand loop can. Tradeoff: a small, controllable approximation in the tail, invisible for the leading components you care about." },
-              { label: "Compute the full 500x500 eigendecomposition every query", best: false, feedback: "this computes all 500 components when you keep 28 — over 94% of the work goes into directions you immediately throw away (the table's 41s vs 2.3s). Recomputing it per query compounds the waste. Truncated methods exist precisely to avoid spending effort on the components below your rank cutoff; the full decomposition is the slow path you're trying to escape." },
+              { label: "Compute the full 784x784 eigendecomposition every query", best: false, feedback: "this computes all 784 components when you keep 28 — over 96% of the work goes into directions you immediately throw away (the table's 41s vs 2.3s). Recomputing it per query compounds the waste. Truncated methods exist precisely to avoid spending effort on the components below your rank cutoff; the full decomposition is the slow path you're trying to escape." },
               { label: "Loop over entries in pure Python", best: false, feedback: "elementwise Python loops abandon BLAS — the hardware-tuned matrix-multiply kernels that exploit caching and SIMD — so they run orders of magnitude slower (hours, not seconds) for the identical math. Worse, they don't even reduce the work; they just do the same operations on a far slower engine. The whole game at this scale is staying inside optimized linear-algebra kernels, which Python loops explicitly leave." }
             ] },
           { type: "run", label: "▶ Benchmark optimized engine", result: { log: "full SVD: 41.0s\nrandomized top-28 SVD: 2.3s  (18x faster)\ntop components match full SVD: cosine 0.9999\nthroughput: 3.4M rows/s on the projection step", metrics: [{ k: "speedup", v: "18x" }, { k: "fidelity", v: "0.9999" }] } }

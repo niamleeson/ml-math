@@ -9,22 +9,25 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the use-case & evals",
-        narrative: `<p>You're building a customer-support assistant for a software product. Before any model work, decide what "good" means: it must answer from the docs, refuse when unsure, and stay polite. The hard part is that fluency and correctness are different things — a model can write a perfect-sounding paragraph that is completely wrong. A vague goal gives you a chatbot you can't measure, so you pin down the exact metrics you'll grade before you touch a model.</p>`,
+        narrative: `<p>You're building a customer-support assistant for a software product. Before any model work, decide what "good" means: it must answer from the docs, refuse when unsure, and stay polite. The hard part is that fluency and correctness are different things — a model can write a perfect-sounding paragraph that is completely wrong. The field already has standard report cards for this: <b>MMLU</b> (57-subject knowledge), <b>TruthfulQA</b> (does it avoid confident falsehoods), and <b>MT-Bench</b> (multi-turn helpfulness judged 1–10). A vague goal gives you a chatbot you can't measure, so you pin down which of these — plus your own domain evals — you'll grade before you touch a model.</p>`,
         concepts: ["mod-llm", "ml-classification-metrics"],
-        insight: `<b>Fluency is not correctness.</b> A strong base model already scores a perplexity around <b>8–12</b> on in-domain text — meaning at each word it is effectively choosing among ~8–12 plausible next words — yet that number says <b>nothing</b> about whether the answer resolves the ticket. On a 1,000-ticket eval, the gap is real: the same model can be <b>92% fluent-sounding</b> but only <b>~80% actually correct</b>, with a <b>~6%</b> hallucination rate hiding inside the fluent-looking answers.`,
+        insight: `<b>Fluency is not correctness.</b> A strong base model already scores a perplexity around <b>8–12</b> on in-domain text — meaning at each word it is effectively choosing among ~8–12 plausible next words — yet that number says <b>nothing</b> about whether the answer resolves the ticket. The public benchmarks make the gap concrete: a 7B instruct model lands around <b>MMLU 60%</b> and <b>TruthfulQA ~45%</b> truthful, so it "knows" a lot while still asserting falsehoods ~half the time it's tempted. On your own 1,000-ticket eval the same model is <b>92% fluent-sounding</b> but only <b>~80% actually correct</b>, with a <b>~6%</b> hallucination rate hiding inside the fluent-looking answers.`,
         data: {
-          caption: "Three evals, three different things they measure",
+          caption: "Standard LLM evals + your domain evals — what each measures",
           columns: ["metric", "what it scores", "range", "good?", "catches hallucination?"],
           rows: [
-            ["perplexity", "next-word fluency", "1 → ∞ (lower better)", "≈ 9", "no"],
-            ["task success", "does it resolve the ticket", "0–100% (higher)", "≥ 80%", "indirectly"],
-            ["hallucination rate", "claims not in the source", "0–100% (lower)", "≤ 2%", "directly"],
-            ["helpfulness (human)", "1–5 rating by a person", "1–5 (higher)", "≥ 4.0", "partly"]
+            ["MMLU", "57-subject knowledge (multiple-choice)", "0–100% (higher)", "≥ 60%", "no"],
+            ["TruthfulQA", "avoids confident falsehoods", "0–100% (higher)", "≥ 50%", "directly"],
+            ["MT-Bench", "multi-turn helpfulness (LLM-judge)", "1–10 (higher)", "≥ 7", "partly"],
+            ["task success (yours)", "does it resolve the ticket", "0–100% (higher)", "≥ 80%", "indirectly"],
+            ["hallucination rate (yours)", "claims not in the source", "0–100% (lower)", "≤ 2%", "directly"]
           ],
-          note: `Perplexity is cheap and automatic but blind to truth. Task success and hallucination rate need a labeled held-out set; helpfulness needs people. You report all of them — no single number certifies a support bot.`
+          note: `MMLU/TruthfulQA/MT-Bench are public, comparable, and cheap to rerun — but generic. Task success and hallucination rate need a labeled held-out set of YOUR tickets. You report both families — no single number certifies a support bot.`
         },
         symbols: [
-          { sym: "perplexity", desc: "$\\exp(\\text{average cross-entropy})$ — roughly, the effective number of equally-likely next words the model is choosing among; lower means more confident/fluent." },
+          { sym: "MMLU", desc: "Massive Multitask Language Understanding — 57 subjects of multiple-choice questions; a standard knowledge benchmark, but blind to grounding/truthfulness." },
+          { sym: "TruthfulQA", desc: "a benchmark of questions where models tend to repeat popular falsehoods; scores the fraction of answers that are truthful rather than confidently wrong." },
+          { sym: "MT-Bench", desc: "an 80-prompt multi-turn benchmark scored 1–10 by an LLM-judge; a standard proxy for chat helpfulness." },
           { sym: "hallucination rate", desc: "fraction of generated claims that are not supported by the retrieved source document." },
           { sym: "task success", desc: "fraction of held-out tickets where the answer actually resolves the customer's problem." }
         ],
@@ -32,47 +35,47 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           type: "decide", prompt: "What should your primary eval be?",
           options: [
             { label: "Perplexity on a generic web corpus", feedback: "perplexity measures next-token fluency on text the model has seen the style of — not whether answers are correct or grounded in your docs. A model can hit perplexity 9 and still confidently invent a refund policy that doesn't exist. Worse, a generic web corpus isn't even your domain, so the number reflects neither fluency on support text nor correctness." },
-            { label: "Task success on a held-out set of real support questions, plus a hallucination rate and a human-helpfulness score", best: true, feedback: "you ship answers, not log-likelihoods. Task success measures whether the reply resolves the ticket, the hallucination rate measures how often it invents facts the source doesn't support, and the human score catches tone/usefulness that automatic metrics miss. The held-out set is the key design choice: it must be real tickets the model never trained on, or the scores are fantasy." },
+            { label: "Standard benchmarks (MMLU/TruthfulQA/MT-Bench) plus task success on a held-out set of real support questions, a hallucination rate, and a human-helpfulness score", best: true, feedback: "you ship answers, not log-likelihoods. The public benchmarks (MMLU/TruthfulQA/MT-Bench) let you compare candidate base models on knowledge, truthfulness, and chat quality; your own task success measures whether the reply resolves the ticket, the hallucination rate measures how often it invents facts the source doesn't support, and the human score catches tone/usefulness that automatic metrics miss. The held-out set is the key design choice: it must be real tickets the model never trained on, or the scores are fantasy." },
             { label: "Number of tokens generated per reply", feedback: "longer isn't better — this metric literally rewards rambling, and the easiest way to maximize it is to pad every answer with filler. Length is a cost driver (you pay per generated token), so you track it as a budget number, never as a quality target." }
           ]
         }]
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather instruction data",
-        narrative: `<p>You need examples of good support answers. The cleanest signal is real resolved tickets where a human gave a correct, grounded reply. Each example is an <b>instruction–response pair</b>: the customer's question is the instruction, the agent's accepted answer is the target response, and ideally a link to the doc passage that backs it. That doc link is doing double duty — it teaches grounding during fine-tuning and seeds the RAG index for retrieval.</p>`,
+        narrative: `<p>You need examples of good answers in <i>instruction-following</i> form. Practitioners bootstrap this from public instruction-tuning sets — <b>Alpaca</b> (52K instruction–response pairs auto-generated from GPT), <b>Dolly-15k</b> (15K human-written by Databricks employees), and <b>OpenAssistant/OASST1</b> (~161K crowd-sourced conversation messages) — which teach the general "follow a request" behavior. But the cleanest <i>domain</i> signal is your own real resolved tickets where a human gave a correct, grounded reply. Each example is an <b>instruction–response pair</b>: the customer's question is the instruction, the agent's accepted answer is the target response, and ideally a link to the doc passage that backs it. That doc link is doing double duty — it teaches grounding during fine-tuning and seeds the RAG index for retrieval.</p>`,
         concepts: ["ml-supervised", "mod-llm"],
-        insight: `<b>Grounding is the asset.</b> Of <b>84,210</b> resolved tickets, only <b>73%</b> (61,540) come with a linked doc passage — and that linked subset is worth far more than the rest. A grounded pair lets you <i>verify</i> the answer against a source; an ungrounded one is just a plausible-looking reply you have to trust blindly. The 27% without links aren't useless, but they can't anchor a hallucination check.`,
+        insight: `<b>Grounding is the asset.</b> Public sets give breadth — Alpaca's <b>52K</b>, Dolly's <b>15K</b>, OASST1's <b>161K</b> messages teach instruction-following — but none is grounded in <i>your</i> product. So you mine your support warehouse: of <b>84,210</b> resolved tickets, only <b>73%</b> (61,540) come with a linked doc passage, and that linked subset is worth far more than the rest. A grounded pair lets you <i>verify</i> the answer against a source; an ungrounded one is just a plausible-looking reply you have to trust blindly. The 27% without links aren't useless, but they can't anchor a hallucination check.`,
         data: {
-          caption: "What one instruction–response training pair looks like",
-          columns: ["field", "example value"],
+          caption: "Instruction sets in play — public (general) vs. your tickets (grounded)",
+          columns: ["source", "size", "instruction", "response", "grounded?"],
           rows: [
-            ["instruction", "\"How do I reset my API key?\""],
-            ["response", "\"Go to Settings → API, click Revoke, then Generate…\""],
-            ["source_doc", "docs/api/keys.md#rotating-keys"],
-            ["language", "en"],
-            ["resolved", "yes (customer marked solved)"]
+            ["Alpaca", "52K pairs", "\"Give three tips for…\"", "\"1. … 2. … 3. …\"", "no"],
+            ["Dolly-15k", "15K pairs", "\"Summarize this passage\"", "\"The passage explains…\"", "no"],
+            ["OASST1", "161K msgs", "\"How do JWTs work?\"", "\"A JWT is a signed token…\"", "no"],
+            ["your tickets", "61.5K pairs", "\"How do I reset my API key?\"", "\"Go to Settings → API, click Revoke…\"", "yes → docs/api/keys.md"]
           ],
-          note: `The model learns instruction → response; the source_doc field is what lets you later ask "is every claim in the response actually in the doc?" — the basis of the hallucination metric.`
+          note: `Public sets teach the format (instruction → response); your tickets carry a source_doc link, which is what lets you later ask "is every claim in the response actually in the doc?" — the basis of the hallucination metric.`
         },
         symbols: [
-          { sym: "$(x, y)$", desc: "one supervised pair: $x$ is the instruction (customer question), $y$ is the target response (accepted agent reply)." },
+          { sym: "$(x, y)$", desc: "one supervised pair: $x$ is the instruction (customer question / task), $y$ is the target response (accepted agent reply)." },
+          { sym: "Alpaca / Dolly / OASST", desc: "public instruction-tuning datasets (52K / 15K / 161K) that teach general instruction-following but are not grounded in your product." },
           { sym: "source_doc", desc: "the doc passage that backs $y$; used for grounding during training and as a retrieval target in RAG." },
-          { sym: "grounded %", desc: "fraction of pairs that carry a verifiable source_doc link (here 73%)." }
+          { sym: "grounded %", desc: "fraction of your ticket pairs that carry a verifiable source_doc link (here 73%)." }
         ],
         steps: [
           { type: "decide", prompt: "Where do your instruction-response pairs come from?",
             options: [
-              { label: "Resolved support tickets with the agent's accepted reply, linked to the doc passage that backs it", best: true, feedback: "real questions, real grounded answers, with a citation you can verify. The accepted-reply filter means a human already judged the answer correct, and the doc link gives you the source needed to check grounding later. This is gold for both fine-tuning (teaches the answer) and RAG (seeds the retrieval index) — the only option that produces verifiable data." },
-              { label: "Scrape any Q&A off the open web", feedback: "noisy, off-domain, and full of wrong answers — you'd teach the model the internet's mistakes, not your product. Web Q&A is about other companies' products, uses different terminology, and has no quality gate, so a large fraction of the 'answers' are simply wrong. Volume can't fix a poisoned signal." },
-              { label: "Have the base model generate its own training answers, unchecked", feedback: "self-generated answers bake in the model's own hallucinations — you'd be training it to imitate its own mistakes, which amplifies them. Distillation can work, but only from a verified teacher whose outputs are checked; unchecked self-training is a feedback loop with no ground truth." }
+              { label: "Public instruction sets (Alpaca/Dolly/OASST) for general format, plus resolved support tickets with the agent's accepted reply linked to the doc passage that backs it", best: true, feedback: "the public sets teach the general instruction-following behavior cheaply, but only your resolved tickets give real questions, real grounded answers, and a citation you can verify. The accepted-reply filter means a human already judged the answer correct, and the doc link gives you the source needed to check grounding later. This combination is gold for both fine-tuning (teaches the answer) and RAG (seeds the retrieval index) — the only option that produces verifiable domain data." },
+              { label: "Scrape any Q&A off the open web", feedback: "noisy, off-domain, and full of wrong answers — you'd teach the model the internet's mistakes, not your product. Random web Q&A is about other companies' products, uses different terminology, and has no quality gate, so a large fraction of the 'answers' are simply wrong. Curated sets like Dolly exist precisely because raw scraping is a poisoned signal." },
+              { label: "Have the base model generate its own training answers, unchecked", feedback: "unchecked self-generated answers bake in the model's own hallucinations — you'd be training it to imitate its own mistakes, which amplifies them. Distillation can work (Alpaca itself is distilled from a stronger teacher), but only when the teacher is strong and outputs are filtered; unchecked self-training on your own weak base is a feedback loop with no ground truth." }
             ] },
           { type: "run", label: "▶ Pull resolved support tickets", prompt: "Export tickets with accepted answers and doc links.",
-            result: { log: "exporting from support warehouse...\n84,210 resolved tickets\nwith linked doc passage: 61,540 (73%)\nlanguages: en 88%, de 6%, ja 4%, other 2%\nmedian question length: 34 tokens", metrics: [{ k: "pairs", v: "61.5K" }, { k: "grounded", v: "73%" }] } }
+            result: { log: "loading public instruction sets: Alpaca 52K, Dolly-15k 15K, OASST1 161K msgs\nexporting domain data from support warehouse...\n84,210 resolved tickets\nwith linked doc passage: 61,540 (73%)\nlanguages: en 88%, de 6%, ja 4%, other 2%\nmedian question length: 34 tokens", metrics: [{ k: "domain pairs", v: "61.5K" }, { k: "grounded", v: "73%" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Clean & deduplicate",
-        narrative: `<p>Support archives are full of near-duplicates and junk: the same FAQ answered 50 times, copied email threads, and tickets stuffed with personal data. Duplicates waste compute and — far worse — can leak your eval set into training, inflating every score you report. You detect near-duplicates with embeddings: each pair becomes a vector, and any two with cosine similarity above a threshold are treated as the same item.</p>`,
+        narrative: `<p>Support archives are full of near-duplicates and junk: the same FAQ answered 50 times, copied email threads, and tickets stuffed with personal data. Aggressive dedup is standard practice on the big web corpora too — <b>C4</b> (the 750 GB Common Crawl set behind T5) and <b>RefinedWeb</b> (the heavily-filtered, deduplicated corpus behind Falcon) both treat dedup as a primary quality lever — because duplicates waste compute and, far worse, can leak your eval set into training and inflate every score you report. You detect near-duplicates with embeddings: each pair becomes a vector, and any two with cosine similarity above a threshold are treated as the same item.</p>`,
         concepts: ["dl-cosine-similarity", "mlx-error-analysis"],
         insight: `<b>Dedup removes a quarter of the data.</b> Starting from 61,540 grounded pairs, cleaning strips <b>4,102</b> exact dups, <b>9,377</b> near-dups (cosine $&gt;0.95$), <b>12,840</b> PII redactions, and <b>1,205</b> toxic/off-topic items — leaving <b>46,856</b> clean pairs, a <b>~23%</b> cut. The near-dup step is the dangerous one: those 9,377 items, if split carelessly, would put copies of the same ticket on both sides of the train/eval line.`,
         data: {
@@ -134,14 +137,14 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Model", icon: "🧠", title: "Pick a base model",
-        narrative: `<p>Training a transformer from scratch costs millions of dollars and needs trillions of tokens of text. You start from a strong pretrained base and adapt it instead. The engine inside is <b>self-attention</b>: for each token, the model computes a weighted average over every other token, where the weights come from how well a query matches each key. That is how a token "reads" the whole context at once instead of one neighbor at a time.</p>`,
+        narrative: `<p>Training a transformer from scratch costs millions of dollars and needs trillions of tokens of text — drawn from corpora like <b>The Pile</b> (an 825 GB, 22-source curated text dataset), <b>C4</b>, or <b>RefinedWeb</b>. You start from a strong pretrained base and adapt it instead. The engine inside is <b>self-attention</b>: for each token, the model computes a weighted average over every other token, where the weights come from how well a query matches each key. That is how a token "reads" the whole context at once instead of one neighbor at a time.</p>`,
         concepts: ["mod-transformer", "mod-multihead", "dl-attention"],
-        insight: `<b>Adapt, don't pretrain.</b> A 7B model was pretrained on ~<b>1–2 trillion</b> tokens; your cleaned corpus is <b>46,856</b> pairs ≈ <b>~10 million</b> tokens — about <b>0.0005%</b> of pretraining scale. There is no way to learn language from that, but it is plenty to <i>specialize</i> a base that already knows language. The attention core scales as $O(L^2)$ in sequence length $L$, which is exactly why the 4K window from the last stage matters.`,
+        insight: `<b>Adapt, don't pretrain.</b> A 7B model was pretrained on ~<b>1–2 trillion</b> tokens of corpora like The Pile (825 GB) / C4 / RefinedWeb; your cleaned domain corpus is <b>46,856</b> pairs ≈ <b>~10 million</b> tokens — about <b>0.0005%</b> of pretraining scale. There is no way to learn language from that, but it is plenty to <i>specialize</i> a base that already knows language. The attention core scales as $O(L^2)$ in sequence length $L$, which is exactly why the 4K window from the last stage matters.`,
         data: {
           caption: "Three ways to get a model — scale vs. fit",
           columns: ["option", "params", "tokens it needs", "your data covers it?"],
           rows: [
-            ["pretrain 7B from scratch", "7B", "~1–2 trillion", "no (10M ≪ needed)"],
+            ["pretrain 7B from scratch", "7B", "~1–2T (The Pile / C4 / RefinedWeb)", "no (10M ≪ needed)"],
             ["adapt pretrained 7–8B instruct", "7–8B", "~10M to specialize", "yes ✓"],
             ["tiny 125M model", "125M", "~10M", "fits, but too weak"]
           ],
@@ -328,21 +331,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>Support gets 20,000 tickets a day. You want two things: a <b>classifier</b> that tags each ticket's topic (billing, bug, how-to…) into one of 14 routes, and an <b>NER</b> (named-entity recognition) step that extracts product names, versions, and order IDs as exact text spans. The classes are wildly imbalanced — and one of the rare ones, security, is the one you absolutely cannot miss. So success is not "high accuracy"; it's "every class counts, and the critical rare ones are caught."</p>`,
+        narrative: `<p>You're building intent classification on <b>banking77</b> — a public dataset of <b>13,083</b> real online-banking customer queries hand-labeled into <b>77</b> fine-grained intents (card_arrival, exchange_rate, pin_blocked…). You want two things: a <b>classifier</b> that tags each query's intent into one of the 77 routes, and an <b>NER</b> (named-entity recognition) step (trained on <b>CoNLL-2003</b>, the standard BIO-tagged benchmark) that extracts entities like card numbers and merchant names as exact text spans. With 77 intents the tail is thin — some rare intents matter far more than their frequency (a 'card_swallowed' or fraud query you absolutely cannot misroute). So success is not "high accuracy"; it's "every class counts, and the critical rare ones are caught."</p>`,
         concepts: ["ml-classification-metrics", "ml-supervised"],
-        insight: `<b>Accuracy lies under imbalance.</b> With <b>14</b> topics ranging from 'how-to' at <b>31%</b> down to 'security' at <b>0.4%</b>, a model that simply ignores security still scores <b>~99.6%</b> accuracy on that class by always predicting "not security" — while missing every urgent ticket. Macro-F1 fixes this by averaging the F1 of each class equally, so the 0.4% class pulls the score down exactly as much as the 31% one.`,
+        insight: `<b>Accuracy lies under imbalance.</b> Across banking77's <b>77</b> intents the share ranges from common ones near <b>3%</b> down to rare critical ones near <b>0.4%</b>, so a model that simply ignores a rare fraud intent still scores <b>~99.6%</b> accuracy on that class by always predicting "not it" — while missing every urgent query. Macro-F1 fixes this by averaging the F1 of each class equally, so a 0.4% class pulls the score down exactly as much as a 3% one — which is why the GLUE-era convention of reporting per-class and macro scores, not just accuracy, exists.`,
         data: {
-          caption: "Class imbalance across the 14 routing topics",
-          columns: ["topic", "share of tickets", "criticality", "metric that guards it"],
+          caption: "Class imbalance across banking77's 77 intents (illustrative tail)",
+          columns: ["intent", "share of queries", "criticality", "metric that guards it"],
           rows: [
-            ["how-to", "31%", "low", "accuracy already fine"],
-            ["billing", "17%", "medium", "precision/recall"],
-            ["bug", "12%", "medium", "recall"],
-            ["security", "0.4%", "CRITICAL", "per-class recall"]
+            ["card_arrival", "3.1%", "low", "accuracy already fine"],
+            ["exchange_rate", "2.4%", "medium", "precision/recall"],
+            ["pin_blocked", "1.6%", "medium", "recall"],
+            ["card_swallowed (fraud)", "0.4%", "CRITICAL", "per-class recall"]
           ],
-          note: `Macro-F1 = mean of per-class F1, so each class weighs the same regardless of size. A 99% accurate model that never predicts 'security' has a security-F1 of 0, dragging macro-F1 way down — which is the alarm you want.`
+          note: `Macro-F1 = mean of per-class F1, so each of the 77 classes weighs the same regardless of size. A 99% accurate model that never predicts a rare fraud intent has that intent's F1 = 0, dragging macro-F1 way down — which is the alarm you want.`
         },
-        chart: { type: "bars", title: "Class distribution across routing topics (% of tickets)", labels: ["how-to", "billing", "bug", "security"], values: [31, 17, 12, 0.4], valueLabels: ["31%", "17%", "12%", "0.4%"], colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72"] },
+        chart: { type: "bars", title: "banking77 intent distribution (% of queries, illustrative)", labels: ["card_arrival", "exchange_rate", "pin_blocked", "card_swallowed"], values: [3.1, 2.4, 1.6, 0.4], valueLabels: ["3.1%", "2.4%", "1.6%", "0.4%"], colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72"] },
         symbols: [
           { sym: "F1", desc: "harmonic mean of precision and recall, $\\dfrac{2PR}{P+R}$; high only when both are high, so it punishes ignoring a class." },
           { sym: "macro-F1", desc: "the unweighted average of every class's F1; treats rare and common classes equally." },
@@ -350,59 +353,59 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "precision $P$", desc: "of all tickets the model labels a class, the fraction that truly are; the false-alarm side." }
         ],
         steps: [{
-          type: "decide", prompt: "What objective fits a multi-class routing task with rare but critical classes?",
+          type: "decide", prompt: "What objective fits a 77-intent routing task with rare but critical classes?",
           options: [
-            { label: "Maximize overall accuracy", feedback: "accuracy is dominated by the big classes, so it hides exactly the rare ones you care about. With 'security' at 0.4%, a model that never predicts it is still 99.6% accurate on that class and scores beautifully overall — while routing every security incident to the wrong queue. The metric rewards the failure you most need to avoid." },
-            { label: "Maximize macro-F1 so rare classes count, plus per-class recall on the urgent ones", best: true, feedback: "macro-F1 averages each class's F1 equally, so the tiny security class moves the score as much as the giant how-to class — you can't game it by ignoring the tail. Adding per-class recall on the urgent routes gives you a direct, reportable guarantee on the categories where a miss is expensive. This is what stakeholders actually need to see." },
+            { label: "Maximize overall accuracy", feedback: "accuracy is dominated by the common intents, so it hides exactly the rare ones you care about. With a fraud intent at 0.4%, a model that never predicts it is still 99.6% accurate on that class and scores beautifully overall — while routing every fraud query to the wrong queue. The metric rewards the failure you most need to avoid." },
+            { label: "Maximize macro-F1 so rare classes count, plus per-class recall on the urgent ones", best: true, feedback: "macro-F1 averages each of the 77 classes' F1 equally, so a tiny fraud intent moves the score as much as a common card_arrival intent — you can't game it by ignoring the tail. Adding per-class recall on the urgent routes gives you a direct, reportable guarantee on the categories where a miss is expensive. This is what stakeholders actually need to see." },
             { label: "Minimize cross-entropy and ignore class metrics", feedback: "cross-entropy is the loss you optimize during training, but it's not what you report or make decisions on — a log-loss number doesn't tell a stakeholder whether security tickets are being caught. You need per-route precision/recall to know if the routing is trustworthy; the loss alone can fall while a critical class quietly fails." }
           ]
         }]
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather labeled text",
-        narrative: `<p>You need two kinds of labels. <b>Topic labels</b> are nearly free — agents already tag every ticket's route when they handle it, giving 312K weakly-supervised examples. <b>NER labels</b> are expensive — they require marking the exact character span of each entity (PRODUCT, VERSION, ORDER_ID), so you hand-annotate a smaller gold set and double-annotate it to measure agreement. The two label types have completely different cost and quality profiles, which shapes how much of each you collect.</p>`,
+        narrative: `<p>You need two kinds of labels, and two public datasets supply them. <b>Intent labels</b> come from <b>banking77</b> — <b>13,083</b> queries already labeled into 77 intents (10,003 train / 3,080 test). <b>NER labels</b> come from <b>CoNLL-2003</b>, the standard span-labeled benchmark: every token carries a BIO tag for one of four entity types — <b>PER, ORG, LOC, MISC</b> — and it's expensive to make because annotators must mark exact span boundaries, which is why CoNLL ships with measured inter-annotator agreement. The two label types have completely different cost and quality profiles, which shapes how much of each you collect.</p>`,
         concepts: ["ml-supervised", "aix-lda-topic"],
-        insight: `<b>Span labels are the costly ones.</b> You harvest <b>312,000</b> topic-labeled tickets for free from existing routing tags, but the NER gold set is only <b>3,400</b> tickets — and that small set is enough <i>because</i> it's high quality: inter-annotator <b>F1 0.92</b> means two humans agreed on span boundaries 92% of the time. A weak NER label of similar size would be far noisier and cap the tagger's ceiling.`,
+        insight: `<b>Span labels are the costly ones.</b> banking77 hands you <b>13,083</b> intent-labeled queries ready to use, while CoNLL-2003 is a hand-annotated NER gold set of <b>~14,000</b> sentences (≈203K tokens) — small <i>because</i> it's high quality: its published inter-annotator <b>F1 ≈ 0.97</b> means two humans agreed on span boundaries almost always. A weak NER label of similar size would be far noisier and cap the tagger's ceiling.`,
         data: {
-          caption: "What an NER-labeled ticket looks like (BIO span tags)",
-          columns: ["token", "Acme", "Pro", "v2.1", "order", "#48213"],
+          caption: "What a CoNLL-2003 NER-labeled sentence looks like (BIO span tags)",
+          columns: ["token", "U.N.", "official", "Ekeus", "heads", "for", "Baghdad"],
           rows: [
-            ["BIO tag", "B-PRODUCT", "I-PRODUCT", "B-VERSION", "O", "B-ORDER_ID"],
-            ["char start", "0", "5", "9", "14", "20"],
-            ["char end", "4", "8", "13", "19", "26"]
+            ["BIO tag", "B-ORG", "O", "B-PER", "O", "O", "B-LOC"],
+            ["char start", "0", "5", "14", "20", "26", "30"],
+            ["char end", "4", "13", "19", "25", "29", "37"]
           ],
-          note: `BIO tagging: B- begins an entity, I- continues it, O is outside any entity. The model predicts one tag per token; exact char spans are what let you evaluate VERSION vs ORDER_ID separately. "#48213" is a single ORDER_ID span.`
+          note: `BIO tagging: B- begins an entity, I- continues it, O is outside any entity. The model predicts one tag per token; exact char spans are what let you evaluate PER vs ORG vs LOC separately. CoNLL-2003's four types are PER, ORG, LOC, MISC.`
         },
         symbols: [
-          { sym: "BIO tags", desc: "per-token labels: B-(egin), I-(nside), O-(utside); the standard scheme that turns span extraction into a token-classification problem." },
-          { sym: "inter-annotator F1", desc: "agreement between two independent human labelers on the same spans (here 0.92); your gold-set quality ceiling." },
-          { sym: "weak labels", desc: "cheap, noisy labels (e.g. agents' existing routing tags) used at scale for the classifier where exactness matters less." }
+          { sym: "BIO tags", desc: "per-token labels: B-(egin), I-(nside), O-(utside); the standard scheme (used by CoNLL-2003) that turns span extraction into a token-classification problem." },
+          { sym: "inter-annotator F1", desc: "agreement between two independent human labelers on the same spans (CoNLL-2003 ≈ 0.97); your gold-set quality ceiling." },
+          { sym: "intent labels", desc: "the single-class-per-query labels from banking77 (77 intents); ready-made supervision for the classifier." }
         ],
         steps: [
-          { type: "decide", prompt: "How do you label NER spans (product, version, order-id)?",
+          { type: "decide", prompt: "How do you label NER spans (PER / ORG / LOC)?",
             options: [
-              { label: "Hand-annotate a few thousand tickets with span boundaries, double-annotated for agreement", best: true, feedback: "NER is a per-token, exact-boundary task — a label that's off by one word is wrong — so the noise tolerance is far lower than for topic routing. A modest gold set (3,400 tickets) double-annotated to F1 0.92 gives you clean spans to both train and evaluate the tagger, and the agreement number tells you the labels themselves are trustworthy. Quality beats quantity here precisely because spans must be exact." },
-              { label: "Regex everything and call it labels", feedback: "regex nails the easy structured cases ('v1.2.3', '#48213') but breaks on the messy real text — 'the Pro plan, version two point one', truncated IDs, typos — and crucially, if you train on regex output the model just learns to imitate the regex, inheriting its exact blind spots. You'd cap the tagger at regex-level recall and never know what it's missing." },
-              { label: "Skip NER labels and hope the classifier learns entities too", feedback: "a topic classifier emits a single class per ticket, not character spans — there is no mechanism for it to output 'ORDER_ID is at chars 20–26'. Without span labels you can neither train the tagger nor evaluate extraction, so entity extraction simply doesn't exist. The two tasks need two label sets." }
+              { label: "Use a hand-annotated, double-checked gold set like CoNLL-2003 with exact span boundaries", best: true, feedback: "NER is a per-token, exact-boundary task — a label that's off by one word is wrong — so the noise tolerance is far lower than for intent routing. CoNLL-2003's ~14K sentences, annotated to F1 ≈ 0.97, give you clean spans to both train and evaluate the tagger, and the published agreement number tells you the labels themselves are trustworthy. Quality beats quantity here precisely because spans must be exact." },
+              { label: "Regex everything and call it labels", feedback: "regex nails the easy structured cases ('v1.2.3', dates) but breaks on the messy real text — multi-word org names, lowercased entities, typos — and crucially, if you train on regex output the model just learns to imitate the regex, inheriting its exact blind spots. You'd cap the tagger at regex-level recall and never know what it's missing. CoNLL exists precisely because regex isn't enough." },
+              { label: "Skip NER labels and hope the classifier learns entities too", feedback: "an intent classifier emits a single class per query, not character spans — there is no mechanism for it to output 'ORG is at chars 0–4'. Without span labels you can neither train the tagger nor evaluate extraction, so entity extraction simply doesn't exist. The two tasks need two label sets." }
             ] },
-          { type: "run", label: "▶ Assemble the corpus", result: { log: "pulling tagged tickets...\nrouting-labeled tickets: 312,000 across 14 topics\nclass imbalance: 'how-to' 31% ... 'security' 0.4%\nNER gold set: 3,400 tickets, inter-annotator F1 0.92\nentity types: PRODUCT, VERSION, ORDER_ID", metrics: [{ k: "tickets", v: "312K" }, { k: "topics", v: "14" }, { k: "NER agreement", v: "0.92" }] } }
+          { type: "run", label: "▶ Assemble the corpus", result: { log: "loading public datasets...\nbanking77: 13,083 queries across 77 intents (10,003 train / 3,080 test)\nclass imbalance: common intents ~3% ... rare fraud intents ~0.4%\nCoNLL-2003 NER gold set: ~14,000 sentences, inter-annotator F1 ~0.97\nentity types: PER, ORG, LOC, MISC", metrics: [{ k: "queries", v: "13.1K" }, { k: "intents", v: "77" }, { k: "NER agreement", v: "0.97" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore the text",
-        narrative: `<p>Look before you model. <b>LDA</b> (latent Dirichlet allocation) is an unsupervised topic model that discovers clusters of co-occurring words — themes — without using your labels, so it can surface routes your schema forgot. Meanwhile <b>t-SNE</b> projects the high-dimensional embeddings to 2-D so you can see which classes overlap. Class balance, multilingual text, and code snippets all shape later choices, so you profile all of it first.</p>`,
+        narrative: `<p>Look before you model. <b>LDA</b> (latent Dirichlet allocation) is an unsupervised topic model that discovers clusters of co-occurring words — themes — without using your labels, so it can surface routes your schema forgot; it's the classic tool run on topic corpora like <b>20 Newsgroups</b> and <b>AG News</b>. Meanwhile <b>t-SNE</b> projects the high-dimensional embeddings to 2-D so you can see which classes overlap. With 77 banking77 intents, class balance and any non-English queries shape later choices, so you profile all of it first.</p>`,
         concepts: ["aix-lda-topic", "cls-tsne", "mlx-error-analysis"],
-        insight: `<b>An unlabeled theme is a 4% routing hole.</b> LDA with $k=20$ topics surfaces a 'mobile-app-crash' cluster covering <b>~4%</b> of tickets that has <b>no routing label at all</b> — meaning today those tickets get forced into the wrong bucket every single day. Exploration also reveals <b>19%</b> non-English text and <b>12%</b> code-snippet tickets needing special tokenization, and a t-SNE plot where 'billing' and 'refund' embeddings sit right on top of each other.`,
+        insight: `<b>An unlabeled theme is a routing hole.</b> LDA with $k=20$ topics over the queries surfaces a 'crypto / digital-wallet' cluster covering <b>~4%</b> of traffic that maps to <b>no banking77 intent at all</b> — meaning today those queries get forced into the wrong bucket every single day. (On 20 Newsgroups the same trick separates 20 known topics cleanly; here it finds a missing one.) Exploration also flags rare non-English queries, and a t-SNE plot where the 'card_payment_fee' and 'transfer_fee' intents sit right on top of each other.`,
         data: {
-          caption: "LDA-discovered topics vs. your existing label schema",
-          columns: ["LDA topic (top words)", "% tickets", "has a label?", "action"],
+          caption: "LDA-discovered topics vs. your banking77 label schema",
+          columns: ["LDA topic (top words)", "% queries", "has a label?", "action"],
           rows: [
-            ["refund, charge, money back", "8%", "yes (billing/refund)", "keep"],
-            ["crash, freeze, android, ios", "4%", "NO", "add new class"],
-            ["password, login, reset", "6%", "yes (account)", "keep"],
+            ["fee, charge, payment, transfer", "8%", "yes (card_payment_fee)", "keep"],
+            ["crypto, wallet, bitcoin, exchange", "4%", "NO", "add new class"],
+            ["pin, blocked, reset, login", "6%", "yes (pin_blocked)", "keep"],
             ["…", "…", "…", "…"]
           ],
-          note: `LDA models each ticket as a mixture over $k$ latent topics inferred purely from word co-occurrence. A high-mass topic with no matching label is a gap in your schema — found before training, not after a misroute incident.`
+          note: `LDA models each query as a mixture over $k$ latent topics inferred purely from word co-occurrence. A high-mass topic with no matching banking77 intent is a gap in your schema — found before training, not after a misroute incident.`
         },
         symbols: [
           { sym: "$k$", desc: "the number of latent topics LDA is told to find (here 20); a discovery knob, not a final class count." },
@@ -410,11 +413,11 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "t-SNE", desc: "a nonlinear 2-D projection of high-dimensional embeddings that preserves local neighborhoods, used to <i>see</i> class overlap." }
         ],
         steps: [
-          { type: "run", label: "▶ Profile & topic-model", result: { log: "running LDA topic model (k=20) for discovery...\nfound an unlabeled cluster: 'mobile-app-crash' (~4% of tickets)\nlanguages: en 81%, es 9%, fr 5%, other 5%\ncode-snippet tickets: 12% (need special tokenization)\nt-SNE shows 'billing' and 'refund' heavily overlap", metrics: [{ k: "LDA topics", v: "20" }, { k: "non-en", v: "19%" }] } },
-          { type: "decide", prompt: "LDA found a 'mobile-app-crash' theme that has no routing label. What now?",
+          { type: "run", label: "▶ Profile & topic-model", result: { log: "running LDA topic model (k=20) for discovery (as on 20 Newsgroups / AG News)...\nfound an unlabeled cluster: 'crypto / digital-wallet' (~4% of queries)\nlanguages: en 96%, es 2%, fr 1%, other 1%\nt-SNE shows 'card_payment_fee' and 'transfer_fee' heavily overlap", metrics: [{ k: "LDA topics", v: "20" }, { k: "intents", v: "77" }] } },
+          { type: "decide", prompt: "LDA found a 'crypto / digital-wallet' theme that maps to no banking77 intent. What now?",
             options: [
-              { label: "Add it as a new class and get those tickets labeled before training", best: true, feedback: "LDA just told you the label schema is incomplete — 4% of real traffic belongs to a route that doesn't exist yet. If you train without it, those tickets are forced into the nearest wrong class every time, a guaranteed systematic error baked into the model. Defining the class and labeling examples now closes the hole before it becomes a recurring misroute. This is exactly why you explore before you model." },
-              { label: "Ignore it — it's not in the label schema", feedback: "the tickets don't disappear because your schema lacks a slot for them — they keep arriving and get misrouted into whatever class is closest, producing a steady 4% error you've chosen not to fix. Worse, that error is invisible to accuracy because the model confidently predicts the wrong existing class. Pretending the theme isn't there just hides the problem." }
+              { label: "Add it as a new class and get those queries labeled before training", best: true, feedback: "LDA just told you the label schema is incomplete — 4% of real traffic belongs to a route that doesn't exist yet. If you train without it, those queries are forced into the nearest wrong intent every time, a guaranteed systematic error baked into the model. Defining the class and labeling examples now closes the hole before it becomes a recurring misroute. This is exactly why you explore before you model." },
+              { label: "Ignore it — it's not in the label schema", feedback: "the queries don't disappear because your schema lacks a slot for them — they keep arriving and get misrouted into whatever intent is closest, producing a steady 4% error you've chosen not to fix. Worse, that error is invisible to accuracy because the model confidently predicts the wrong existing class. Pretending the theme isn't there just hides the problem." }
             ] }
         ]
       },
@@ -422,21 +425,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Features", icon: "🧬", title: "Represent the text",
         narrative: `<p>Models need vectors, not strings. <b>TF-IDF</b> turns a ticket into a sparse vector that weights each word by how often it appears here versus everywhere — a fast, strong baseline. <b>Contextual embeddings</b> from a transformer instead give each word a dense vector that depends on its neighbors, so 'crash' near 'payment' and 'crash' near 'app' get different representations. The plan is baseline first, then upgrade where it pays off.</p>`,
         concepts: ["dl-word2vec", "dl-word-embeddings", "mod-transformer"],
-        insight: `<b>TF-IDF down-weights the filler.</b> The word 'the' appears in ~100% of tickets so its IDF is near $\\log(1)=0$ — it contributes almost nothing — while 'refund' appears in ~8% of tickets, giving IDF $\\approx\\log(312\\text{K}/25\\text{K})\\approx 2.5$, so it dominates the vector. That's the whole trick: rare, discriminative words get weight; ubiquitous ones don't. Transformer embeddings then add what TF-IDF can't — context and word order.`,
+        insight: `<b>TF-IDF down-weights the filler.</b> The word 'the' appears in ~100% of banking77 queries so its IDF is near $\\log(1)=0$ — it contributes almost nothing — while 'refund' appears in ~8% of queries, giving IDF $\\approx\\log(13\\text{K}/1\\text{K})\\approx 2.5$, so it dominates the vector. That's the whole trick: rare, discriminative words get weight; ubiquitous ones don't. Transformer embeddings then add what TF-IDF can't — context and word order.`,
         data: {
-          caption: "TF-IDF vs. contextual embedding for one ticket",
+          caption: "TF-IDF vs. contextual embedding for one banking77 query",
           columns: ["word", "term freq", "IDF (rarity)", "TF-IDF", "contextual?"],
           rows: [
             ["the", "0.09", "≈ 0.0", "≈ 0.00", "no"],
             ["refund", "0.04", "≈ 2.5", "0.10", "no"],
-            ["crash", "0.03", "≈ 2.1", "0.06", "yes — meaning shifts"],
+            ["transfer", "0.03", "≈ 2.1", "0.06", "yes — meaning shifts"],
             ["…", "…", "…", "…", "…"]
           ],
-          note: `TF-IDF $= \\text{tf}\\times\\text{idf}$ is sparse (one weight per vocab word, mostly zero) and context-blind. A transformer embedding is dense (~768 dims) and context-aware, which is why it lifts the overlapping billing/refund classes.`
+          note: `TF-IDF $= \\text{tf}\\times\\text{idf}$ is sparse (one weight per vocab word, mostly zero) and context-blind. A transformer embedding is dense (~768 dims) and context-aware, which is why it lifts the overlapping fee-related intents.`
         },
         symbols: [
           { sym: "tf", desc: "term frequency — how often a word occurs in this ticket, normalized by ticket length." },
-          { sym: "idf", desc: "inverse document frequency, $\\log\\!\\dfrac{N}{n_w}$ over $N$ tickets where $n_w$ contain the word; high for rare, discriminative words." },
+          { sym: "idf", desc: "inverse document frequency, $\\log\\!\\dfrac{N}{n_w}$ over $N$ queries where $n_w$ contain the word; high for rare, discriminative words." },
           { sym: "TF-IDF", desc: "the product $\\text{tf}\\times\\text{idf}$; a sparse, fast, context-blind vector — the baseline to beat." },
           { sym: "contextual embedding", desc: "a dense vector per token from a transformer that depends on surrounding words, capturing meaning and order." }
         ],
@@ -643,11 +646,11 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
   "speech-translation": {
     title: "Speech Recognition & Translation",
     icon: "🗣️",
-    goal: "Transcribe spoken English and translate it to Spanish in near real time — accurate, low-latency, robust to noise.",
+    goal: "Transcribe spoken English and translate it to German in near real time — accurate, low-latency, robust to noise.",
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You're building speech-to-text plus translation for a meetings app, a two-stage pipeline: ASR (audio → English text) then MT (English → Spanish). Each half needs its own metric. <b>WER</b> (word error rate) counts how many word edits — insertions, deletions, substitutions — turn the transcript into the reference, divided by reference length; lower is better. <b>BLEU</b> scores how much the translation's n-grams overlap a reference translation; higher is better. Picking the right metric per task is the framing decision.</p>`,
+        narrative: `<p>You're building speech-to-text plus translation for a meetings app, a two-stage pipeline: ASR (audio → English text) then MT (English → German). Each half has a standard benchmark and metric: ASR is measured by <b>WER</b> on sets like <b>LibriSpeech</b>, and MT by <b>BLEU</b> on the <b>WMT</b> news-translation EN-DE task. <b>WER</b> (word error rate) counts how many word edits — insertions, deletions, substitutions — turn the transcript into the reference, divided by reference length; lower is better. <b>BLEU</b> scores how much the translation's n-grams overlap a reference translation; higher is better. Picking the right metric per task is the framing decision.</p>`,
         concepts: ["dl-rnn", "ml-classification-metrics"],
         insight: `<b>WER counts edits, not sentences.</b> If the reference is 10 words and the transcript has 1 substitution + 1 deletion, WER $= (1+1)/10 = $ <b>20%</b> — a graded signal, where plain sentence accuracy would just score the whole utterance "wrong" and tell you nothing about how wrong. BLEU works on n-gram overlap (1- to 4-grams) so it rewards partially-correct translations too. Two tasks, two graded metrics — that's why neither sentence-accuracy nor waveform-MSE fits.`,
         data: {
@@ -678,40 +681,42 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather paired data",
-        narrative: `<p>The two stages need two kinds of paired data. ASR needs <b>audio paired with its transcript</b> — supervised, because the model must learn the mapping from sound to words. MT needs <b>English-Spanish sentence pairs</b>. Robustness to real meetings comes entirely from <i>coverage</i>: the training audio must span the accents, background noise, microphone types, and speaking rates you'll actually encounter, or the model fails the moment conditions leave the studio.</p>`,
+        narrative: `<p>The two stages need two kinds of paired data, and standard public corpora supply both. ASR needs <b>audio paired with its transcript</b>: <b>LibriSpeech</b> gives <b>1,000 hours</b> of read English (16 kHz, from public-domain audiobooks) — clean and large — but it's all studio-read, so you add <b>Mozilla Common Voice</b> for crowd-sourced accents, microphones, and noise. MT needs <b>English–German sentence pairs</b>, from the <b>WMT14</b> news task (~<b>4.5M</b> EN-DE pairs). Robustness to real meetings comes from <i>coverage</i>: the training audio must span the accents, background noise, mic types, and speaking rates you'll actually encounter, which is exactly why LibriSpeech alone isn't enough.</p>`,
         concepts: ["dl-rnn", "ai-hmm"],
-        insight: `<b>Cover the conditions you'll face.</b> The corpus spans <b>2,100 hours</b> across accents — US 44%, UK 18%, IN 14%, AU 9%, other 15% — and SNR from <b>5 to 40 dB</b>, deliberately including noisy calls. SNR (signal-to-noise ratio) of 5 dB means the speech is only ~3× louder than the background; a model that never trains below 30 dB will collapse there. The 12.4M MT pairs cover translation. Sample rate is <b>16 kHz</b>, the speech standard.`,
+        insight: `<b>Cover the conditions you'll face.</b> LibriSpeech contributes <b>1,000 hours</b> of clean read English, but it's a single style — so Common Voice adds the accent and device diversity (and lower SNR) that LibriSpeech lacks, pushing the combined SNR range down to <b>5–40 dB</b>. SNR (signal-to-noise ratio) of 5 dB means the speech is only ~3× louder than the background; a model trained only on clean LibriSpeech (SNR ≥ 30) collapses there. The <b>4.5M</b> WMT14 EN-DE pairs cover translation. Sample rate is <b>16 kHz</b>, the LibriSpeech/speech standard.`,
         data: {
-          caption: "What the paired ASR data looks like",
-          columns: ["audio clip", "transcript", "accent", "SNR (dB)", "duration"],
+          caption: "What the paired ASR data looks like (LibriSpeech + Common Voice)",
+          columns: ["audio clip", "transcript", "source / accent", "SNR (dB)", "duration"],
           rows: [
-            ["clip_0001.wav", "\"let's start the standup\"", "US", "38", "2.1s"],
-            ["clip_0002.wav", "\"can everyone hear me\"", "IN", "12", "1.8s"],
-            ["clip_0003.wav", "\"I'll share my screen now\"", "UK", "6", "2.4s"],
+            ["1089-134686-0000.flac", "\"he hoped there would be stew\"", "LibriSpeech / US", "38", "3.6s"],
+            ["common_voice_en_12.mp3", "\"can everyone hear me\"", "Common Voice / IN", "12", "1.8s"],
+            ["common_voice_en_47.mp3", "\"I'll share my screen now\"", "Common Voice / UK", "6", "2.4s"],
             ["…", "…", "…", "…", "…"]
           ],
-          note: `Each row is one (audio, transcript) supervised pair. Low-SNR rows (6–12 dB) are the noisy-call cases the model must handle. MT data is separate: 12.4M (English sentence, Spanish sentence) pairs.`
+          note: `Each row is one (audio, transcript) supervised pair. Clean LibriSpeech rows anchor accuracy; low-SNR Common Voice rows (6–12 dB) are the noisy-call cases the model must handle. MT data is separate: 4.5M WMT14 (English, German) sentence pairs.`
         },
         symbols: [
+          { sym: "LibriSpeech", desc: "a 1,000-hour read-English ASR corpus (16 kHz) from public-domain audiobooks; the standard clean-speech benchmark." },
+          { sym: "Common Voice", desc: "Mozilla's crowd-sourced multi-accent speech corpus; adds the device/accent/noise diversity LibriSpeech lacks." },
+          { sym: "WMT14 EN-DE", desc: "the WMT news-translation English–German set (~4.5M sentence pairs); the standard MT benchmark." },
           { sym: "SNR", desc: "signal-to-noise ratio in decibels; high dB = clean speech, low dB = noisy. Each +10 dB ≈ 10× more signal power vs noise." },
-          { sym: "sample rate", desc: "audio samples per second (16 kHz here); enough to capture speech frequencies up to 8 kHz." },
           { sym: "(audio, transcript)", desc: "one supervised ASR pair; the transcript is the target the model learns to produce from the audio." }
         ],
         steps: [
-          { type: "decide", prompt: "What makes the ASR training set robust?",
+          { type: "decide", prompt: "LibriSpeech is 1,000 clean hours. What else makes the ASR set robust?",
             options: [
-              { label: "Diverse accents, background noise, mic types, and speaking speeds — matching real meeting conditions", best: true, feedback: "a model only ever learns to handle the conditions it sees in training, so coverage <i>is</i> robustness here. Spanning accents, SNR levels, and mics means the noisy 6 dB call and the heavy-accent speaker are in-distribution at test time instead of surprises. Matching your training distribution to real meeting conditions is the single biggest lever on production WER." },
-              { label: "One narrator, studio-clean, single accent", feedback: "pristine audio produces a model that's excellent at exactly one thing you'll never ship to: a quiet studio with one familiar voice. The instant a real user joins from a noisy room with an accent the model never heard, WER explodes — the data is clean but the distribution is wrong, which is useless." },
-              { label: "Audio with no transcripts; the model can figure it out", feedback: "ASR is supervised — the transcript is the target that teaches the sound-to-word mapping, and without it there's no signal for what was said. Unlabeled audio can help with self-supervised pretraining, but you still need paired transcripts to learn and to measure WER. Raw audio alone can't teach this task." }
+              { label: "Add Common Voice for diverse accents, noise, and mic types — matching real meeting conditions", best: true, feedback: "a model only ever learns to handle the conditions it sees, so coverage <i>is</i> robustness here. LibriSpeech is clean read English from a narrow style; adding Common Voice's crowd-sourced accents, devices, and lower-SNR clips means the noisy 6 dB call and the heavy-accent speaker are in-distribution at test time instead of surprises. Broadening beyond clean LibriSpeech is the single biggest lever on production WER." },
+              { label: "Train on LibriSpeech only — it's clean and large", feedback: "LibriSpeech's 1,000 hours are pristine read audiobook speech, which produces a model excellent at exactly one thing you'll never ship to: a quiet narrator. The instant a real user joins from a noisy room with an accent absent from LibriSpeech, WER explodes — the data is clean but the distribution is wrong, which is why Common Voice exists alongside it." },
+              { label: "Audio with no transcripts; the model can figure it out", feedback: "ASR is supervised — the transcript is the target that teaches the sound-to-word mapping, and without it there's no signal for what was said. Unlabeled audio can help with self-supervised pretraining, but you still need paired transcripts (as LibriSpeech and Common Voice provide) to learn and to measure WER. Raw audio alone can't teach this task." }
             ] },
-          { type: "run", label: "▶ Assemble audio + text corpora", result: { log: "ASR: 2,100 hours paired audio/transcript\naccents: US 44%, UK 18%, IN 14%, AU 9%, other 15%\nSNR range: 5-40 dB (includes noisy calls)\nMT: 12.4M en-es sentence pairs\nsample rate: 16 kHz", metrics: [{ k: "audio", v: "2,100 hrs" }, { k: "MT pairs", v: "12.4M" }] } }
+          { type: "run", label: "▶ Assemble audio + text corpora", result: { log: "ASR: LibriSpeech 1,000 hrs (clean read English) + Common Voice (accents/noise)\naccents: US 44%, UK 18%, IN 14%, AU 9%, other 15%\nSNR range: 5-40 dB (LibriSpeech clean; Common Voice adds noisy)\nMT: WMT14 EN-DE, 4.5M sentence pairs\nsample rate: 16 kHz", metrics: [{ k: "audio", v: "1,000+ hrs" }, { k: "MT pairs", v: "4.5M" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
         narrative: `<p>Audio data hides traps that text doesn't: mislabeled transcripts, clipped (saturated) recordings, dead silence, and the wrong language leaking in. A bad pair is worse than no pair — it actively teaches the model a wrong sound→text mapping. The most useful signal is the <b>audio-to-transcript length ratio</b>: a 10-second clip paired with a 2-word transcript is almost certainly misaligned, so you profile that ratio before featurizing.</p>`,
         concepts: ["mlx-error-analysis", "prob-normal"],
-        insight: `<b>Length mismatch flags bad labels.</b> Across 2,100 hours, <b>2.4%</b> of pairs have an audio↔transcript length ratio off by more than 3× — almost always a misaligned or wrong transcript. Add <b>1.8%</b> empty/silent clips, <b>0.9%</b> clipped audio, and <b>0.3%</b> non-English leakage, and you drop <b>~5.1%</b> total before training. Mean utterance is <b>7.2s</b>, so at 100 frames/sec that's ~720 spectrogram frames per clip.`,
+        insight: `<b>Length mismatch flags bad labels.</b> LibriSpeech is well-aligned, but the crowd-sourced Common Voice clips need scrubbing: across the combined corpus, <b>2.4%</b> of pairs have an audio↔transcript length ratio off by more than 3× — almost always a misaligned or wrong transcript. Add <b>1.8%</b> empty/silent clips, <b>0.9%</b> clipped audio, and <b>0.3%</b> non-English leakage (mostly from Common Voice), and you drop <b>~5.1%</b> total before training. Mean utterance is <b>7.2s</b>, so at 100 frames/sec that's ~720 spectrogram frames per clip.`,
         data: {
           caption: "Profiling flags: which pairs to drop",
           columns: ["clip", "audio len", "transcript words", "ratio", "verdict"],
@@ -729,7 +734,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "language ID", desc: "an automatic check of the spoken language; used to drop non-English clips that leaked into the English ASR set." }
         ],
         steps: [
-          { type: "run", label: "▶ Profile the audio", result: { log: "scanning 2,100 hours...\nempty/silent clips: 1.8% (drop)\ntranscript-audio length mismatch > 3x: 2.4% (likely misaligned)\nclipped/saturated audio: 0.9%\nlanguage ID check: 0.3% non-English leaked in (drop)\nmean utterance: 7.2s", metrics: [{ k: "dropped", v: "5.1%" }, { k: "mean len", v: "7.2s" }] } },
+          { type: "run", label: "▶ Profile the audio", result: { log: "scanning LibriSpeech + Common Voice...\nempty/silent clips: 1.8% (drop, mostly Common Voice)\ntranscript-audio length mismatch > 3x: 2.4% (likely misaligned)\nclipped/saturated audio: 0.9%\nlanguage ID check: 0.3% non-English leaked in (drop)\nmean utterance: 7.2s", metrics: [{ k: "dropped", v: "5.1%" }, { k: "mean len", v: "7.2s" }] } },
           { type: "decide", prompt: "2.4% of pairs have a big audio↔transcript length mismatch. What is that, usually?",
             options: [
               { label: "Misaligned or wrong transcripts — filter or re-align them", best: true, feedback: "a 10-second clip with a 2-word transcript is a label error: either the alignment slipped or the wrong transcript got attached. Training on it teaches the model that 10 seconds of speech maps to 2 words, corrupting exactly the audio→text alignment it's trying to learn. Filtering or re-aligning these protects the supervised signal; the length ratio is the cheap detector for them." },
@@ -965,7 +970,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You're building a text-to-image generator for a design tool, where there is no single "correct" output — many images satisfy "a red sports car at sunset." That breaks any pixel-matching metric, so you measure three things instead. <b>FID</b> (Fréchet Inception Distance) compares the <i>distribution</i> of generated images to real ones (lower = more realistic). <b>CLIP score</b> checks the image matches the prompt. And human preference catches what both metrics miss. The framing decision is committing to all three.</p>`,
+        narrative: `<p>You're building a text-to-image generator for a design tool, where there is no single "correct" output — many images satisfy "a red sports car at sunset." That breaks any pixel-matching metric, so you measure three things instead. <b>FID</b> (Fréchet Inception Distance) compares the <i>distribution</i> of generated images to a real reference set (lower = more realistic) — the standard reference distributions are benchmark image sets like <b>FFHQ</b> (70K faces), <b>CelebA</b> (200K faces), and <b>ImageNet</b> (1.2M labeled images). <b>CLIP score</b> checks the image matches the prompt. And human preference catches what both metrics miss. The framing decision is committing to all three.</p>`,
         concepts: ["mod-diffusion", "prob-normal"],
         insight: `<b>No single right image — so measure distributions.</b> Pixel accuracy is meaningless because a prompt has infinitely many valid outputs. FID is computed in concrete steps: (1) push a large batch of real images and a large batch of generated images through a pretrained <b>Inception</b> network, taking its 2048-d penultimate feature vector for each; (2) fit a Gaussian to each set — i.e. compute the mean $\\mu$ and covariance $\\Sigma$ of the real features ($\\mu_r,\\Sigma_r$) and of the generated features ($\\mu_g,\\Sigma_g$); (3) report the Fréchet (Wasserstein-2) distance between those two Gaussians, $\\lVert\\mu_r-\\mu_g\\rVert^2+\\text{Tr}(\\Sigma_r+\\Sigma_g-2(\\Sigma_r\\Sigma_g)^{1/2})$. FID <b>0</b> = identical distributions; good models land around <b>10–15</b>. CLIP score measures prompt alignment via image-text cosine similarity (~<b>0.25–0.30</b> is well-aligned). Humans break ties the metrics can't.`,
         data: {
@@ -996,40 +1001,41 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather image-text pairs",
-        narrative: `<p>Text-to-image learns from <b>(image, caption)</b> pairs — the caption is the text condition, the image is the target. Three properties of the pairs set hard ceilings: <b>caption accuracy</b> determines how well the model can follow prompts, <b>resolution</b> caps the detail it can ever produce, and <b>licensing</b> determines whether you can legally ship it. A model is only as good as its pairs, so all three are sourcing requirements, not nice-to-haves.</p>`,
+        narrative: `<p>Text-to-image learns from <b>(image, caption)</b> pairs — the caption is the text condition, the image is the target. The web-scale source for this is <b>LAION</b> (e.g. LAION-400M / LAION-5B), built by scraping Common Crawl images and their <b>alt-text</b> captions, then keeping only pairs whose <b>CLIP</b> image–text similarity is high enough. Three properties set hard ceilings: <b>caption accuracy</b> determines how well the model follows prompts, <b>resolution</b> caps the detail it can ever produce, and <b>licensing/safety</b> determines whether you can legally and safely ship it. A model is only as good as its pairs, so all three are sourcing requirements, not nice-to-haves.</p>`,
         concepts: ["mod-contrastive", "dl-word-embeddings"],
-        insight: `<b>Caption source quality varies widely.</b> Of <b>18.0M</b> pairs, captions come from alt-text (<b>60%</b>, noisy/SEO-spammy), humans (<b>25%</b>, clean but expensive), and auto-captioning (<b>15%</b>). The human 25% teaches prompt alignment best; the alt-text 60% is volume with mixed accuracy. Resolution matters as a hard ceiling — <b>91%</b> are ≥512px because you cannot generate detail finer than the training images. A safety filter removed 240K NSFW/violent images.`,
+        insight: `<b>Caption source quality varies widely.</b> You start from a LAION-style web set: of <b>18.0M</b> pairs the captions are mostly <b>alt-text</b> (<b>60%</b>, noisy/SEO-spammy — this is what raw LAION is), with humans (<b>25%</b>, clean but expensive) and auto-captioning (<b>15%</b>) added for your product domain. The human 25% teaches prompt alignment best; the alt-text 60% is volume with mixed accuracy. Resolution is a hard ceiling — <b>91%</b> are ≥512px (LAION ships a high-resolution subset for exactly this reason) because you cannot generate detail finer than the training images. A safety filter removed 240K NSFW/violent images.`,
         data: {
-          caption: "What one image-caption training pair looks like",
+          caption: "What one LAION-style image-caption training pair looks like",
           columns: ["field", "example", "source", "quality"],
           rows: [
-            ["image", "studio_chair_07.jpg (768²)", "licensed stock", "high"],
-            ["caption", "\"a walnut mid-century lounge chair\"", "human", "clean"],
-            ["caption (alt)", "\"chair buy now best price 2024\"", "alt-text", "noisy"],
-            ["license", "CC-BY / purchased", "—", "shippable"]
+            ["image", "studio_chair_07.jpg (768²)", "Common Crawl / licensed", "high"],
+            ["caption (alt-text)", "\"chair buy now best price 2024\"", "LAION alt-text", "noisy"],
+            ["caption (human)", "\"a walnut mid-century lounge chair\"", "human-relabeled", "clean"],
+            ["CLIP sim / license", "0.31 / CC-BY", "—", "kept, shippable"]
           ],
-          note: `The model maps caption → image, so a clean human caption teaches precise prompt-following while SEO alt-text teaches noise. Resolution is a ceiling: a 64px thumbnail can never train a sharp 512px output.`
+          note: `The model maps caption → image, so a clean human caption teaches precise prompt-following while SEO alt-text teaches noise. LAION itself is filtered by CLIP similarity. Resolution is a ceiling: a 64px thumbnail can never train a sharp 512px output.`
         },
         symbols: [
           { sym: "(image, caption)", desc: "one training pair; the caption is the text condition, the image is the target the model learns to generate." },
+          { sym: "LAION", desc: "a web-scale (image, alt-text) dataset (LAION-400M / 5B) scraped from Common Crawl and filtered by CLIP image-text similarity; the standard text-to-image pretraining source." },
           { sym: "resolution ceiling", desc: "the max output detail is bounded by the training images' resolution — you can't generate detail that was never present." },
           { sym: "caption source", desc: "where a caption came from (alt-text / human / auto); determines its accuracy and thus how well the model follows prompts." }
         ],
         steps: [
           { type: "decide", prompt: "What matters most when sourcing image-caption pairs?",
             options: [
-              { label: "Licensed, high-resolution images with accurate captions covering your product domain", best: true, feedback: "the three properties set three independent ceilings: accurate captions are the only way the model learns to follow prompts (the caption is literally the conditioning signal), resolution caps the detail it can ever generate, and licensing is what lets you ship without legal exposure. Domain coverage ensures it's good at <i>your</i> product imagery specifically. Miss any one and you've capped the model before training starts — all three are non-negotiable." },
-              { label: "Any images scraped from the web, captions optional", feedback: "two fatal problems: missing or garbage captions break text conditioning, because the model has no clean signal linking words to pixels and learns to ignore the prompt; and unlicensed scraping is a legal and ethical landmine that can sink the whole product. 'Captions optional' guts the one thing that makes it text-to-image." },
-              { label: "Tiny thumbnails, since they train faster", feedback: "resolution is a hard ceiling, not a speed knob — a model trained on 64px thumbnails can never produce sharp 512px detail because that detail was never in the data to learn. You'd permanently cap output quality to save some training time, which defeats the purpose of a generator people use for real design work." }
+              { label: "High-resolution, CLIP-filtered, licensed images with accurate captions covering your product domain", best: true, feedback: "the three properties set three independent ceilings: accurate captions are the only way the model learns to follow prompts (the caption is literally the conditioning signal), resolution caps the detail it can ever generate, and licensing is what lets you ship without legal exposure. LAION's CLIP-similarity filter is what keeps the alt-text captions usable, and domain relabeling makes it good at <i>your</i> product imagery specifically. Miss any one and you've capped the model before training starts." },
+              { label: "Any images scraped from the web, captions optional", feedback: "two fatal problems: missing or garbage captions break text conditioning, because the model has no clean signal linking words to pixels and learns to ignore the prompt; and unfiltered, unlicensed scraping is a legal, ethical, and quality landmine. Even LAION doesn't ship raw scrape — it CLIP-filters every pair. 'Captions optional' guts the one thing that makes it text-to-image." },
+              { label: "Tiny thumbnails, since they train faster", feedback: "resolution is a hard ceiling, not a speed knob — a model trained on 64px thumbnails can never produce sharp 512px detail because that detail was never in the data to learn. It's why LAION publishes a ≥512px high-resolution subset. You'd permanently cap output quality to save some training time, which defeats the purpose of a generator people use for real design work." }
             ] },
-          { type: "run", label: "▶ Assemble the dataset", result: { log: "collecting licensed image-caption pairs...\npairs: 18.0M\nresolution: >=512px 91%\ncaption source: alt-text 60%, human 25%, auto-captioned 15%\nNSFW/violence filter removed: 240,000\nde-duplicated near-identical images: 1.1M", metrics: [{ k: "pairs", v: "18.0M" }, { k: "≥512px", v: "91%" }] } }
+          { type: "run", label: "▶ Assemble the dataset", result: { log: "collecting LAION-style image-caption pairs (CLIP-filtered)...\npairs: 18.0M\nresolution: >=512px 91% (LAION high-res subset)\ncaption source: alt-text 60%, human 25%, auto-captioned 15%\nNSFW/violence filter removed: 240,000\nde-duplicated near-identical images: 1.1M", metrics: [{ k: "pairs", v: "18.0M" }, { k: "≥512px", v: "91%" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Generative models faithfully reproduce whatever <i>recurs</i> in training, so junk that appears consistently becomes a learned feature. Watermarks, broken aspect ratios, and caption-image mismatches are the big three. The mismatch check uses <b>CLIP</b> itself: embed the image and caption, take their cosine similarity, and drop pairs that score low (the caption doesn't describe the image). What you leave in, the model will draw.</p>`,
+        narrative: `<p>Generative models faithfully reproduce whatever <i>recurs</i> in training, so junk that appears consistently becomes a learned feature — and web-scraped LAION is famously full of it. Watermarks (stock-photo logos are rampant in LAION), broken aspect ratios, and caption-image mismatches are the big three. The mismatch check is the same <b>CLIP</b>-similarity filter LAION itself uses: embed the image and caption, take their cosine similarity, and drop pairs that score low (the caption doesn't describe the image). What you leave in, the model will draw.</p>`,
         concepts: ["mlx-error-analysis", "prob-normal"],
-        insight: `<b>6.2% watermarked = a model that draws watermarks.</b> Because diffusion reproduces recurring patterns, leaving the <b>6.2%</b> watermarked images in teaches the model that a faint logo in the corner is part of "what an image looks like" — and it will paint fake watermarks on outputs. Separately, <b>4.7%</b> of pairs have a CLIP image-caption similarity below 0.18 (the caption is wrong) and get dropped, plus 2.1% aspect-ratio outliers and a warm color bias to correct.`,
+        insight: `<b>6.2% watermarked = a model that draws watermarks.</b> Because diffusion reproduces recurring patterns, leaving the <b>6.2%</b> watermarked images in (LAION inherits these from stock-photo sites) teaches the model that a faint logo in the corner is part of "what an image looks like" — and it will paint fake watermarks on outputs. Separately, <b>4.7%</b> of pairs have a CLIP image-caption similarity below 0.18 (the caption is wrong) and get dropped, plus 2.1% aspect-ratio outliers and a warm color bias to correct.`,
         data: {
           caption: "Dataset profiling flags and why each matters",
           columns: ["flag", "share", "what the model would learn", "action"],

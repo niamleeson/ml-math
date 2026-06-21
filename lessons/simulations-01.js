@@ -9,18 +9,18 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You work at a payments company processing millions of card swipes a day, and only ~$0.3\\%$ of them are fraud. Blocking a good customer costs trust and lifetime revenue; missing fraud costs the chargeback plus the goods. Before touching a model you must decide what "good" even means — because the wrong objective will quietly optimize for the wrong thing on this extreme class imbalance.</p>`,
+        narrative: `<p>You work with the canonical public benchmark for this problem: the Kaggle <b>Credit Card Fraud Detection</b> dataset released by the ULB Machine Learning Group with Worldline — real card transactions made by European cardholders over two days in September 2013. Only $0.172\\%$ of them are fraud. Blocking a good customer costs trust and lifetime revenue; missing fraud costs the chargeback plus the goods. Before touching a model you must decide what "good" even means — because the wrong objective will quietly optimize for the wrong thing on this extreme class imbalance.</p>`,
         concepts: ["ml-classification-metrics", "ml-roc-auc", "prob-bayes"],
-        insight: `<b>Imbalance breaks your intuition.</b> At a $0.3\\%$ fraud rate, the "always say legit" model is right $99.7\\%$ of the time yet catches <b>zero</b> fraud. With ~$3{,}000$ frauds hiding in $1{,}000{,}000$ transactions, the prior $P(\\text{fraud})\\approx 0.003$ is so low that a single useless flag can outnumber true catches. The metric you pick has to reward finding the rare positive, not agreeing with the overwhelming negative.`,
+        insight: `<b>Imbalance breaks your intuition.</b> At a $0.172\\%$ fraud rate, the "always say legit" model is right $99.83\\%$ of the time yet catches <b>zero</b> fraud. With just $492$ frauds hiding in $284{,}807$ transactions, the prior $P(\\text{fraud})\\approx 0.0017$ is so low that a single useless flag can outnumber true catches. The metric you pick has to reward finding the rare positive, not agreeing with the overwhelming negative.`,
         symbols: [
-          { sym: "$P(\\text{fraud})$", desc: "the prior probability a random transaction is fraud — here $\\approx 0.003$ (0.3%)." },
+          { sym: "$P(\\text{fraud})$", desc: "the prior probability a random transaction is fraud — here $\\approx 0.0017$ (0.172%)." },
           { sym: "precision", desc: "of the transactions you flag, the fraction that really are fraud — penalizes false alarms." },
           { sym: "recall", desc: "of all real frauds, the fraction you actually flag — penalizes misses." }
         ],
         steps: [{
-          type: "decide", prompt: "Which objective fits a 0.3%-positive problem?",
+          type: "decide", prompt: "Which objective fits a 0.172%-positive problem?",
           options: [
-            { label: "Maximize accuracy", feedback: "trap: a model that flags nothing already scores 99.7% accuracy by predicting the majority class every time. Accuracy averages over a sea of easy negatives, so it's dominated by the 99.7% and blind to whether you caught any of the 0.3% that matters. It rewards doing nothing." },
+            { label: "Maximize accuracy", feedback: "trap: a model that flags nothing already scores 99.83% accuracy by predicting the majority class every time. Accuracy averages over a sea of easy negatives, so it's dominated by the 99.83% and blind to whether you caught any of the 0.172% that matters. It rewards doing nothing." },
             { label: "Maximize recall at a fixed precision (e.g. catch as much fraud as possible while keeping ≥90% of flags correct)", best: true, feedback: "right. The business has two distinct costs — a false negative (missed fraud, lost money) and a false positive (blocked good customer, lost trust). Pinning precision at a floor (≥90% of flags correct) caps the customer-harm cost, then maximizing recall under that constraint catches as much fraud as possible without crossing the harm line. This separates the model's ranking quality from the operating threshold you'll tune later." },
             { label: "Minimize mean-squared error", feedback: "trap: MSE is a regression loss for predicting a continuous number, but fraud is a yes/no event. Squared error on a 0/1 label doesn't map to the precision–recall trade-off you actually care about, and it has no notion of the asymmetric costs of a miss vs a false alarm." }
           ]
@@ -28,60 +28,61 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>A supervised model is only as honest as its labels, so the first real decision is where "this was fraud" comes from. Each label source carries a different bias: rules teach the past, analysts can't scale, and ground-truth disputes arrive weeks late. You pull a labeled sample and immediately confront the label lag that will shape every later choice.</p>`,
+        narrative: `<p>A supervised model is only as honest as its labels, so the first real decision is where "this was fraud" comes from. The ULB/Worldline dataset ships with a confirmed <code>Class</code> label, but in the real pipeline that produced it, fraud is defined by chargebacks and disputes that arrive weeks after the swipe. Each label source carries a different bias: rules teach the past, analysts can't scale, and ground-truth disputes arrive late. You load the labeled file and immediately confront the schema this dataset is famous for — $28$ anonymized PCA components plus <code>Time</code> and <code>Amount</code>.</p>`,
         concepts: ["ml-supervised", "prob-sample-space"],
-        insight: `<b>Labels arrive from the future.</b> Confirmed fraud is defined by chargebacks and disputes that land ~$18$ days after the swipe, so today's transactions are still <i>unlabeled</i>. In a $1{,}000{,}000$-row pull only $3{,}021$ ($0.302\\%$) carry a positive label — and the most recent weeks are systematically under-labeled because their disputes haven't been filed yet. Any "fresh" evaluation must account for this maturation lag.`,
+        insight: `<b>The features are pre-anonymized.</b> For confidentiality the original transaction fields were transformed by PCA into $28$ numeric components <code>V1..V28</code>; only <code>Time</code> (seconds since the first transaction) and <code>Amount</code> are left raw, and <code>Class</code> is the $0/1$ label. The full file is $284{,}807$ transactions with exactly $492$ frauds ($0.172\\%$). In the production system those labels came from chargebacks that landed weeks after the swipe, so a fresh stream would still be partly <i>unlabeled</i> — any "recent" evaluation must account for that maturation lag. For a richer, non-anonymized alternative, practitioners reach for the <b>IEEE-CIS Fraud Detection</b> dataset (~$590{,}000$ transactions with identity and device columns).`,
         data: {
-          caption: "A few raw rows as pulled from the warehouse (42 columns, abbreviated)",
-          columns: ["txn_id", "amount", "merchant_zip", "device_id", "ts", "label"],
+          caption: "Raw rows from creditcard.csv (31 columns: Time, V1..V28 PCA components, Amount, Class)",
+          columns: ["Time", "V1", "V2", "…", "V28", "Amount", "Class"],
           rows: [
-            ["t_0001", "$42.10", "94107", "d_8821", "10:02:14", "0"],
-            ["t_0002", "$5,400.00", "—", "—", "10:02:15", "1"],
-            ["t_0003", "$12.99", "10001", "d_1190", "10:02:15", "0"],
-            ["t_0004", "$890.00", "60611", "d_8821", "10:02:16", "0"],
-            ["… 1.0M rows", "…", "…", "…", "…", "…"]
+            ["0", "-1.3598", "-0.0728", "…", "-0.0211", "149.62", "0"],
+            ["406", "-2.3122", "1.9520", "…", "0.0145", "0.00", "1"],
+            ["472", "-3.0435", "-3.1574", "…", "0.0356", "529.00", "1"],
+            ["1.0", "1.1919", "0.2662", "…", "-0.0210", "3.67", "0"],
+            ["… 284,807 rows", "…", "…", "…", "…", "…", "…"]
           ],
-          note: `A dash (—) marks a missing field; the <b>label</b> arrives ~18 days later from chargebacks, so recent rows are still un-disputed. Only ~3 in every 1,000 rows are label <code>1</code>.`
+          note: `<code>Time</code> is seconds elapsed since the first transaction; <code>V1..V28</code> are the PCA-anonymized components; <code>Amount</code> is the transaction amount (EUR); <code>Class</code> is 1 = fraud, 0 = legit. Only $492$ of $284{,}807$ rows are <code>Class</code> 1 — about $1.7$ in every $1{,}000$.`
         },
         symbols: [
-          { sym: "label $\\in\\{0,1\\}$", desc: "the supervised target: 1 = confirmed fraud, 0 = legitimate (or not-yet-disputed)." },
-          { sym: "$0.302\\%$", desc: "the observed positive rate — 3,021 frauds in 1,000,000 sampled transactions." }
+          { sym: "Class $\\in\\{0,1\\}$", desc: "the supervised target shipped in the file: 1 = confirmed fraud, 0 = legitimate." },
+          { sym: "$0.172\\%$", desc: "the observed positive rate — 492 frauds in 284,807 transactions." },
+          { sym: "V1..V28", desc: "28 PCA-transformed components that replace the original (confidential) transaction features." }
         ],
         steps: [
           { type: "decide", prompt: "How will you label transactions as fraud?",
             options: [
-              { label: "Use confirmed chargebacks + customer disputes as positives", best: true, feedback: "right. Chargebacks and disputes are settled, money-backed verdicts — the closest thing to ground truth you have, so the model learns what fraud actually is rather than what someone guessed. The cost is label lag (~18 days), which you handle by holding out a fully-matured window for evaluation, not by abandoning the truest signal." },
+              { label: "Use confirmed chargebacks + customer disputes as positives", best: true, feedback: "right. Chargebacks and disputes are settled, money-backed verdicts — the closest thing to ground truth you have, and exactly how the ULB/Worldline Class label was constructed. The model learns what fraud actually is rather than what someone guessed. The cost is label lag, which you handle by holding out a fully-matured window for evaluation, not by abandoning the truest signal." },
               { label: "Label anything a rule flagged as fraud", feedback: "trap: rule-flags are your OLD system's opinion, not ground truth. Training on them makes the model a clone of the rules — it can only re-learn the blind spots the rules already have, and it will confidently miss every novel fraud pattern the rules never encoded." },
-              { label: "Have analysts hand-label everything", feedback: "trap: human labels are accurate but don't scale — at millions of transactions a day, analysts can cover a vanishing fraction, and the 0.3% base rate means they'd hand-review thousands of legit txns per real fraud. Reserve scarce human labeling for spot-auditing the dispute labels, not for the whole stream." }
+              { label: "Have analysts hand-label everything", feedback: "trap: human labels are accurate but don't scale — at hundreds of thousands of transactions, analysts can cover a vanishing fraction, and the 0.172% base rate means they'd hand-review hundreds of legit txns per real fraud. Reserve scarce human labeling for spot-auditing the dispute labels, not for the whole stream." }
             ] },
-          { type: "run", label: "▶ Pull 1,000,000 transactions", prompt: "Pull a labeled sample from the warehouse.",
-            result: { log: "querying warehouse...\nloaded 1,000,000 rows x 42 columns\nfraud positives: 3,021  (0.302%)\njoined chargeback labels (label lag: 18 days avg)", metrics: [{ k: "rows", v: "1.0M" }, { k: "fraud rate", v: "0.30%" }, { k: "features", v: "42" }] } }
+          { type: "run", label: "▶ Load creditcard.csv", prompt: "Load the labeled ULB/Worldline dataset.",
+            result: { log: "loading creditcard.csv (ULB / Worldline)...\nloaded 284,807 rows x 31 columns\nfraud positives (Class=1): 492  (0.172%)\nfeatures: Time, V1..V28 (PCA), Amount; label: Class", metrics: [{ k: "rows", v: "284,807" }, { k: "fraud rate", v: "0.172%" }, { k: "features", v: "30" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Before modeling you profile the columns to find what will sabotage the model later. Two traps dominate fraud data: the brutal $332{:}1$ class imbalance (which distorts every naive average) and target leakage (a column secretly built from the answer). A column that "predicts" fraud almost perfectly is a red flag, not a gift — it usually means information from the future has leaked backward into your features.</p>`,
+        narrative: `<p>Before modeling you profile the columns to find what will sabotage the model later. Two traps dominate fraud data: the brutal $578{:}1$ class imbalance (which distorts every naive average) and target leakage (a column secretly built from the answer). The shipped <code>creditcard.csv</code> is clean — but the moment you join it back to a warehouse to enrich it, you risk pulling in a post-decision column like <code>is_disputed</code>. A column that "predicts" fraud almost perfectly is a red flag, not a gift — it usually means information from the future has leaked backward into your features.</p>`,
         concepts: ["prob-variance", "ml-classification-metrics", "mlx-error-analysis"],
-        insight: `<b>A perfect predictor is almost always a leak.</b> The profiler finds <code>is_disputed</code> correlates near-perfectly with the label — but a dispute is filed <i>after</i> fraud is discovered, so it literally cannot exist at swipe time. Meanwhile <code>device_id</code> is missing $11.7\\%$ of the time and the amount has a heavy right tail (max $\\$48{,}200$ vs a typical ~$\\$40$), so a raw mean is dominated by a few outliers. With imbalance at $332{:}1$, the negative class swamps any unweighted statistic.`,
+        insight: `<b>A perfect predictor is almost always a leak.</b> If you enrich the raw file from the warehouse, the profiler finds a joined <code>is_disputed</code> column correlates near-perfectly with <code>Class</code> — but a dispute is filed <i>after</i> fraud is discovered, so it literally cannot exist at swipe time. The shipped features behave very differently: <code>Amount</code> has a heavy right tail (max €$25{,}691$ vs a median around €$22$), so a raw mean is dominated by a few outliers, and the PCA components <code>V1..V28</code> each correlate only weakly with the label. With imbalance at $578{:}1$, the negative class swamps any unweighted statistic.`,
         data: {
-          caption: "Profiling output: missingness, leakage, and balance",
-          columns: ["column", "missing %", "corr. w/ label", "verdict"],
+          caption: "Profiling output: leakage check, tails, and balance",
+          columns: ["column", "missing %", "corr. w/ Class", "verdict"],
           rows: [
-            ["is_disputed", "0%", "≈ 0.99", "LEAK — drop"],
-            ["device_id", "11.7%", "0.21", "keep, impute"],
-            ["merchant_zip", "4.1%", "0.08", "keep"],
-            ["amount", "0%", "0.14", "keep, heavy tail"],
-            ["class balance", "—", "—", "332:1 (neg:pos)"]
+            ["is_disputed (joined)", "0%", "≈ 0.99", "LEAK — drop"],
+            ["V17", "0%", "-0.33", "keep (top PCA signal)"],
+            ["V14", "0%", "-0.30", "keep (top PCA signal)"],
+            ["Amount", "0%", "0.006", "keep, heavy tail"],
+            ["class balance", "—", "—", "578:1 (neg:pos)"]
           ],
-          note: `A near-$1.0$ correlation with the label is the signature of leakage — the column was populated <i>after</i> the outcome was known. Genuine fraud signals correlate weakly because fraud is hard.`
+          note: `A near-$1.0$ correlation with <code>Class</code> is the signature of leakage — the joined column was populated <i>after</i> the outcome was known. The genuine PCA signals (<code>V17</code>, <code>V14</code>, <code>V12</code>, <code>V10</code>) correlate only modestly because real fraud is hard.`
         },
-        chart: { type: "bars", title: "Class balance: legit vs fraud (332 to 1)", labels: ["legit", "fraud"], values: [996979, 3021], valueLabels: ["99.70%", "0.30%"], colors: ["#4ea1ff", "#ff7b72"] },
+        chart: { type: "bars", title: "Class balance: legit vs fraud (578 to 1)", labels: ["legit", "fraud"], values: [284315, 492], valueLabels: ["99.83%", "0.17%"], colors: ["#4ea1ff", "#ff7b72"] },
         symbols: [
-          { sym: "$332{:}1$", desc: "the class-balance ratio — 332 legit transactions for every 1 fraud." },
-          { sym: "corr. w/ label", desc: "correlation between a column and the 0/1 fraud label; values near 1 signal leakage, not skill." }
+          { sym: "$578{:}1$", desc: "the class-balance ratio — about 578 legit transactions (284,315) for every 1 fraud (492)." },
+          { sym: "corr. w/ Class", desc: "correlation between a column and the 0/1 fraud label; values near 1 signal leakage, not skill." }
         ],
         steps: [
-          { type: "run", label: "▶ Profile the dataset", result: { log: "missing values: merchant_zip 4.1%, device_id 11.7%\nclass balance: 332:1 (neg:pos)\nfound column 'is_disputed' -> PERFECT correlation with label (LEAKAGE)\namount: heavy right tail (max $48,200)", metrics: [{ k: "imbalance", v: "332:1" }, { k: "leaky cols", v: "1" }] } },
+          { type: "run", label: "▶ Profile the dataset", result: { log: "rows: 284,807  features: Time, V1..V28, Amount\nclass balance: 578:1 (neg:pos)  (284,315 legit / 492 fraud)\nwarehouse join added 'is_disputed' -> PERFECT correlation with Class (LEAKAGE)\nAmount: heavy right tail (max €25,691)", metrics: [{ k: "imbalance", v: "578:1" }, { k: "leaky cols", v: "1" }] } },
           { type: "decide", prompt: "'is_disputed' predicts the label almost perfectly. What is it?",
             options: [
               { label: "A great feature — keep it", feedback: "trap: it's only known AFTER fraud is reported and the customer files a dispute, so it does not exist at the moment you must score the swipe. Keeping it makes offline AUC look near-perfect and then the model collapses in production, because at serving time the column is always empty. A predictor that's too good to be true is leakage." },
@@ -91,7 +92,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Engineer features",
-        narrative: `<p>Raw columns rarely separate fraud because a value that's normal for one customer is alarming for another. The trick is to engineer <i>relative</i> features that measure how abnormal a transaction is <b>for this specific user</b> — velocity, an amount z-score against their own history, a device-match flag. The amount z-score $\\frac{x-\\mu}{\\sigma}$ turns a raw dollar figure into "how many standard deviations from this customer's normal," which is what an anomaly model can actually learn from.</p>`,
+        narrative: `<p>The ULB dataset's <code>V1..V28</code> are already a PCA rotation of richer raw fields, so this stage shows what that engineering looks like <i>before</i> anonymization — exactly the work you'd do on the non-anonymized <b>IEEE-CIS</b> data. Raw columns rarely separate fraud because a value that's normal for one customer is alarming for another. The trick is to engineer <i>relative</i> features that measure how abnormal a transaction is <b>for this specific user</b> — velocity, an amount z-score against their own history, a device-match flag. The amount z-score $\\frac{x-\\mu}{\\sigma}$ turns a raw figure into "how many standard deviations from this customer's normal," which is what an anomaly model can actually learn from.</p>`,
         concepts: ["fnd-norm", "prob-conditional-expectation", "dl-cosine-similarity"],
         insight: `<b>Personalize the baseline.</b> A flat \\$5{,}000 charge is routine for a frequent traveler and a screaming alarm for someone whose history averages \\$40. Computing $z=\\frac{x-\\mu}{\\sigma}$ <i>per customer</i> means the same \\$5{,}000 might be $z\\approx 0.3$ for one user and $z\\approx 9$ for another — and it's that per-user $z$, not the dollar amount, that carries the fraud signal. Velocity (txns/hour) catches the rapid-fire testing pattern that a single-transaction view can't see.`,
         data: {
@@ -143,9 +144,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train it",
-        narrative: `<p>You fit the boosted trees with two safeguards aimed at this dataset. <code>scale_pos_weight=332</code> up-weights each rare fraud to roughly match the $332{:}1$ imbalance, so the loss doesn't ignore the positives; regularization plus early stopping prevent the ensemble from memorizing the handful of fraud examples. Watch the train–valid AUC gap: when valid stops improving (epoch ~214) you stop, because every tree after that is fitting noise.</p>`,
+        narrative: `<p>You fit the boosted trees with two safeguards aimed at this dataset. <code>scale_pos_weight=578</code> up-weights each rare fraud to roughly match the $578{:}1$ imbalance, so the loss doesn't ignore the positives; regularization plus early stopping prevent the ensemble from memorizing the handful of fraud examples. Watch the train–valid AUC gap: when valid stops improving (epoch ~214) you stop, because every tree after that is fitting noise.</p>`,
         concepts: ["ml-gradient-descent", "ml-regularization", "cls-gradient-boosting"],
-        insight: `<b>Early stopping is the regularizer.</b> Train AUC keeps climbing ($0.971 \\to 0.989 \\to 0.997$) but valid AUC plateaus at $0.972$ — the widening gap is overfitting in real time. Adding trees past iteration $214$ buys train accuracy you can't ship. The <code>scale_pos_weight</code> term is what keeps the loss from collapsing to "predict legit always". You set it directly from the imbalance: $\\text{scale\\_pos\\_weight}=\\frac{\\#\\,\\text{negatives}}{\\#\\,\\text{positives}}=\\frac{996{,}979}{3{,}021}\\approx 332$. Mechanically, each boosting round computes a gradient (and hessian) per row from the log-loss; this weight <i>multiplies</i> the gradient of every positive (fraud) row by $332$, so a single missed fraud pushes the trees as hard as $332$ missed legit rows would. That is what stops the optimum from sitting at "predict legit always".`,
+        insight: `<b>Early stopping is the regularizer.</b> Train AUC keeps climbing ($0.971 \\to 0.989 \\to 0.997$) but valid AUC plateaus at $0.972$ — the widening gap is overfitting in real time. Adding trees past iteration $214$ buys train accuracy you can't ship. The <code>scale_pos_weight</code> term is what keeps the loss from collapsing to "predict legit always". You set it directly from the imbalance: $\\text{scale\\_pos\\_weight}=\\frac{\\#\\,\\text{negatives}}{\\#\\,\\text{positives}}=\\frac{284{,}315}{492}\\approx 578$. Mechanically, each boosting round computes a gradient (and hessian) per row from the log-loss; this weight <i>multiplies</i> the gradient of every positive (fraud) row by $578$, so a single missed fraud pushes the trees as hard as $578$ missed legit rows would. That is what stops the optimum from sitting at "predict legit always".`,
         data: {
           caption: "Train vs valid AUC over boosting rounds (the overfitting gap opens up)",
           columns: ["round", "train AUC", "valid AUC", "gap"],
@@ -158,42 +159,42 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           note: `Valid AUC flatlines at $0.972$ after ~214 rounds while train keeps rising — early stopping picks round 214 as the best iteration and discards the rest.`
         },
         symbols: [
-          { sym: "scale_pos_weight", desc: "the factor $\\frac{\\#\\,\\text{neg}}{\\#\\,\\text{pos}}=\\frac{996{,}979}{3{,}021}\\approx 332$ that multiplies the gradient of each fraud row, up-weighting it $332\\times$ in the loss to offset the imbalance." },
+          { sym: "scale_pos_weight", desc: "the factor $\\frac{\\#\\,\\text{neg}}{\\#\\,\\text{pos}}=\\frac{284{,}315}{492}\\approx 578$ that multiplies the gradient of each fraud row, up-weighting it $578\\times$ in the loss to offset the imbalance." },
           { sym: "train / valid AUC", desc: "ranking quality on data the model fit vs held-out data; their gap measures overfitting." }
         ],
         steps: [{
-          type: "run", label: "▶ Train LightGBM (scale_pos_weight=332)",
-          result: { log: "computing class weight: negatives 996,979 / positives 3,021 = 331.99 -> scale_pos_weight=332\ntraining gradient-boosted trees (each fraud row's gradient x332)...\n[50]  train auc 0.971  valid auc 0.958\n[150] train auc 0.989  valid auc 0.971\n[300] train auc 0.997  valid auc 0.972  (early stop: valid plateaued)\nbest iteration: 214", metrics: [{ k: "valid AUC", v: "0.972" }, { k: "trees", v: "214" }], chart: { type: "line", title: "Train vs valid AUC over boosting rounds", xlabel: "round", ylabel: "AUC", series: [ { name: "train", color: "#4ea1ff", points: [[50, 0.971], [150, 0.989], [214, 0.994], [300, 0.997]] }, { name: "valid", color: "#ffb454", points: [[50, 0.958], [150, 0.971], [214, 0.972], [300, 0.972]] } ] } } }
+          type: "run", label: "▶ Train LightGBM (scale_pos_weight=578)",
+          result: { log: "computing class weight: negatives 284,315 / positives 492 = 577.9 -> scale_pos_weight=578\ntraining gradient-boosted trees (each fraud row's gradient x578)...\n[50]  train auc 0.971  valid auc 0.958\n[150] train auc 0.989  valid auc 0.971\n[300] train auc 0.997  valid auc 0.972  (early stop: valid plateaued)\nbest iteration: 214", metrics: [{ k: "valid AUC", v: "0.972" }, { k: "trees", v: "214" }], chart: { type: "line", title: "Train vs valid AUC over boosting rounds", xlabel: "round", ylabel: "AUC", series: [ { name: "train", color: "#4ea1ff", points: [[50, 0.971], [150, 0.989], [214, 0.994], [300, 0.997]] }, { name: "valid", color: "#ffb454", points: [[50, 0.958], [150, 0.971], [214, 0.972], [300, 0.972]] } ] } } }
         ]
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate honestly",
-        narrative: `<p>An AUC of $0.969$ is a single number summarizing every threshold at once — but you don't ship an AUC, you ship one <i>decision threshold</i>. The honest evaluation reads precision and recall at the exact cutoff you'd operate, because the same model behaves completely differently at $0.5$ vs $0.9$. With only $604$ frauds in the $200{,}000$-row holdout, even a small false-positive rate produces a flood of bad alerts.</p>`,
+        narrative: `<p>An AUC of $0.969$ is a single number summarizing every threshold at once — but you don't ship an AUC, you ship one <i>decision threshold</i>. The honest evaluation reads precision and recall at the exact cutoff you'd operate, because the same model behaves completely differently at $0.5$ vs $0.9$. With only $148$ frauds in the $85{,}443$-row stratified holdout ($30\\%$ of the $284{,}807$ rows), even a small false-positive rate produces a flood of bad alerts.</p>`,
         concepts: ["ml-roc-auc", "ml-classification-metrics", "prob-bayes"],
-        insight: `<b>The threshold is the product.</b> The same model at threshold $0.5$ gives precision $0.34$ (two of every three alerts are wrong) but at $0.9$ gives precision $0.91$ — a $2.7\\times$ swing from one knob. Why so steep? Base rate: with $604$ frauds among $\\sim 200{,}000$ txns, a $1\\%$ false-positive rate alone adds ~$2{,}000$ false alerts, swamping the true ones. Raising the threshold trades recall ($0.82 \\to 0.61$) for the precision the business requires.`,
+        insight: `<b>The threshold is the product.</b> The same model at threshold $0.5$ gives precision $0.34$ (two of every three alerts are wrong) but at $0.9$ gives precision $0.91$ — a $2.7\\times$ swing from one knob. Why so steep? Base rate: with just $148$ frauds among $85{,}443$ holdout txns, even a $1\\%$ false-positive rate adds ~$850$ false alerts, swamping the true ones. Raising the threshold trades recall ($0.82 \\to 0.61$) for the precision the business requires.`,
         data: {
-          caption: "Operating points on the holdout (200,000 txns, 604 fraud)",
+          caption: "Operating points on the holdout (85,443 txns, 148 fraud)",
           columns: ["threshold", "precision", "recall", "fraud caught", "false alarms"],
           rows: [
-            ["0.5", "0.34", "0.82", "~495", "~960"],
-            ["0.7", "0.71", "0.74", "~447", "~183"],
-            ["0.9", "0.91", "0.61", "~368", "~36"],
-            ["0.95", "0.96", "0.48", "~290", "~12"]
+            ["0.5", "0.34", "0.82", "~121", "~235"],
+            ["0.7", "0.71", "0.74", "~110", "~45"],
+            ["0.9", "0.91", "0.61", "~90", "~9"],
+            ["0.95", "0.96", "0.48", "~71", "~3"]
           ],
           note: `Read across one row: at $0.9$ you catch 61% of fraud with 91% of alerts correct. Pushing recall up to 82% (threshold 0.5) crashes precision to 0.34 — analysts drown.`
         },
-        chart: { type: "confusion", title: "Confusion matrix at threshold 0.9 (200,000 holdout)", labels: ["legit", "fraud"], matrix: [[199360, 36], [236, 368]] },
+        chart: { type: "confusion", title: "Confusion matrix at threshold 0.9 (85,443 holdout)", labels: ["legit", "fraud"], matrix: [[85286, 9], [58, 90]] },
         symbols: [
           { sym: "threshold", desc: "the score cutoff above which a transaction is flagged fraud; moving it trades precision against recall." },
           { sym: "precision", desc: "fraction of flagged transactions that are truly fraud (1 − false-alarm rate among alerts)." },
           { sym: "recall", desc: "fraction of all true frauds that the threshold catches." }
         ],
         steps: [
-          { type: "run", label: "▶ Evaluate on a fresh holdout", result: { log: "holdout: 200,000 txns, 604 fraud\nAUC 0.969\n@ threshold 0.5 -> precision 0.34, recall 0.82  (too many false alarms)\n@ threshold 0.9 -> precision 0.91, recall 0.61", metrics: [{ k: "AUC", v: "0.969" }, { k: "prec@0.9", v: "0.91" }, { k: "recall@0.9", v: "0.61" }], chart: { type: "roc", title: "ROC curve (holdout)", auc: 0.969, points: [[0, 0], [0.0002, 0.61], [0.005, 0.74], [0.03, 0.82], [0.15, 0.95], [1, 1]] } } },
+          { type: "run", label: "▶ Evaluate on a fresh holdout", result: { log: "holdout: 85,443 txns (30% stratified), 148 fraud\nAUC 0.969\n@ threshold 0.5 -> precision 0.34, recall 0.82  (too many false alarms)\n@ threshold 0.9 -> precision 0.91, recall 0.61", metrics: [{ k: "AUC", v: "0.969" }, { k: "prec@0.9", v: "0.91" }, { k: "recall@0.9", v: "0.61" }], chart: { type: "roc", title: "ROC curve (holdout)", auc: 0.969, points: [[0, 0], [0.0002, 0.61], [0.005, 0.74], [0.03, 0.82], [0.15, 0.95], [1, 1]] } } },
           { type: "decide", prompt: "Which operating point matches the goal (≥90% precision)?",
             options: [
               { label: "Threshold 0.9 — precision 0.91, recall 0.61", best: true, feedback: "right. The Frame stage fixed the constraint at ≥90% precision, and $0.91$ clears it while still catching $61\\%$ of fraud. Because precision rises steeply near the top of the score distribution, this is the highest-recall point that still respects the false-alarm ceiling — exactly the constrained optimization you set up. Pushing recall higher would breach the precision floor and harm customers." },
-              { label: "Threshold 0.5 — recall 0.82", feedback: "trap: it catches more fraud (82%) but precision $0.34$ means two of every three alerts are wrong. At the holdout's base rate that's ~960 false alarms vs ~495 catches — analysts can't triage that volume, good customers get blocked, and you've violated the precision constraint the business set. More recall isn't free; here it's bought with unacceptable customer harm." }
+              { label: "Threshold 0.5 — recall 0.82", feedback: "trap: it catches more fraud (82%) but precision $0.34$ means two of every three alerts are wrong. At the holdout's base rate that's ~235 false alarms vs ~121 catches — analysts can't triage that volume, good customers get blocked, and you've violated the precision constraint the business set. More recall isn't free; here it's bought with unacceptable customer harm." }
             ] }
         ]
       },
@@ -286,11 +287,11 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You build the underwriting model at a lender. Each application is a single repay-or-default bet, $y\\in\\{0,1\\}$, with roughly a $6.8\\%$ base rate of default in the booked population. Denying a good borrower forfeits years of interest; approving a defaulter can lose the entire principal — so the two error types are wildly asymmetric in dollars. The first decision is what the model should even output, because that choice constrains pricing, the approve/deny cutoff, and what you can defend to a regulator.</p>`,
+        narrative: `<p>You build the underwriting model on the Kaggle <b>"Give Me Some Credit"</b> dataset — $150{,}000$ real borrowers, each labeled with whether they hit serious delinquency (<code>SeriousDlqin2yrs</code>) in the following two years. About $6.7\\%$ of them did. Each application is a single repay-or-default bet, $y\\in\\{0,1\\}$. Denying a good borrower forfeits years of interest; approving a defaulter can lose the entire principal — so the two error types are wildly asymmetric in dollars. The first decision is what the model should even output, because that choice constrains pricing, the approve/deny cutoff, and what you can defend to a regulator.</p>`,
         concepts: ["prob-bernoulli-binomial", "ml-classification-metrics", "ml-supervised"],
-        insight: `<b>The output shape decides the business.</b> A loan defaults or it doesn't, so $y$ is a Bernoulli trial and the natural target is $P(\\text{default})$ — one number in $[0,1]$. That single calibrated probability does triple duty: it sets a risk-based <i>price</i> (charge more where $P(\\text{default})$ is higher), it sets the <i>cutoff</i> (deny above some threshold), and it lets you re-tune that cutoff as the economy moves without retraining. Collapse it to a hard yes/no too early and you throw all of that away.`,
+        insight: `<b>The output shape decides the business.</b> A loan defaults or it doesn't, so $y$ is a Bernoulli trial and the natural target is $P(\\text{default})$ — one number in $[0,1]$. In "Give Me Some Credit" that target is <code>SeriousDlqin2yrs</code>, positive for $10{,}026$ of the $150{,}000$ borrowers ($6.7\\%$). That single calibrated probability does triple duty: it sets a risk-based <i>price</i> (charge more where $P(\\text{default})$ is higher), it sets the <i>cutoff</i> (deny above some threshold), and it lets you re-tune that cutoff as the economy moves without retraining. Collapse it to a hard yes/no too early and you throw all of that away.`,
         symbols: [
-          { sym: "$y$", desc: "the outcome label for one loan: $1$ if it defaulted (90+ days delinquent), $0$ if it repaid." },
+          { sym: "$y$", desc: "the outcome label for one borrower: SeriousDlqin2yrs $=1$ if 90+ days delinquent within 2 years, $0$ otherwise." },
           { sym: "$y\\in\\{0,1\\}$", desc: "reads '$y$ is in the set {0, 1}' — i.e. $y$ takes only the values 0 or 1, a binary (Bernoulli) outcome, not a number on a scale." },
           { sym: "$P(\\text{default})$", desc: "the probability the model assigns to this borrower defaulting; also written PD." }
         ],
@@ -305,64 +306,64 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You need past loans with <i>known</i> outcomes, but a loan's outcome isn't decided until it has had time to default — usually a full 18–24 months. Worse, you only ever observe the applicants you already <i>approved</i>; everyone you rejected is invisible, so the data is a biased slice of all applicants (this is the reject-inference gap). Getting the label window right is the whole game here: too short and almost no loan has had a chance to go bad, so 'good' is a lie.</p>`,
+        narrative: `<p>You need past borrowers with <i>known</i> outcomes, and "Give Me Some Credit" supplies exactly that: each of the $150{,}000$ rows carries a $2$-year-forward <code>SeriousDlqin2yrs</code> label, so the outcome window is already matured. Two realities still bite. The label is time-censored — a borrower's outcome isn't decided until a full $18$–$24$ month window has passed — and you only ever observe the applicants you already <i>approved</i>; everyone you rejected is invisible (the reject-inference gap). The dataset also has missingness you must confront: <code>MonthlyIncome</code> and <code>NumberOfDependents</code> are blank on a sizable share of rows.</p>`,
         concepts: ["ml-supervised", "ml-likelihood"],
-        insight: `<b>Labels are censored by time.</b> Default is observed only after a long performance window — a loan booked last month simply hasn't had the chance to miss 90 days of payments yet. So you train on <b>480K</b> loans booked 24+ months ago, where the $6.8\\%$ that defaulted are truly labeled. Pull recent loans for 'freshness' and you'd mark a maturing book as nearly all 'good' — the model would learn that almost nobody defaults, which is catastrophically wrong.`,
+        insight: `<b>Labels are censored by time.</b> Default is observed only after a long performance window — which is why "Give Me Some Credit" defines its target over the <i>next two years</i>. Across the <b>150,000</b> borrowers, the $6.7\\%$ ($10{,}026$) flagged <code>SeriousDlqin2yrs</code> are truly labeled because the window has elapsed. Pull a freshly-booked cohort instead and you'd mark a maturing book as nearly all 'good' — the model would learn that almost nobody defaults, which is catastrophically wrong. For richer schemas, practitioners also use the <b>German Credit</b> dataset ($1{,}000$ applicants, $20$ attributes) and <b>Lending Club</b> loan data (millions of issued loans with grade, term, and outcome).`,
         data: {
-          caption: "A few rows of the booked loan book (96 columns total)",
-          columns: ["loan_id", "dti", "bureau_score", "utilization", "booked", "y (default)"],
+          caption: "Rows of cs-training.csv — Give Me Some Credit (11 columns: target + 10 features)",
+          columns: ["SeriousDlqin2yrs", "RevolvingUtilization", "age", "DebtRatio", "MonthlyIncome", "NumberOfTimes90DaysLate"],
           rows: [
-            ["L-4471", "0.18", "742", "0.22", "2022-03", "0"],
-            ["L-4472", "0.41", "611", "0.88", "2022-05", "1"],
-            ["L-4473", "0.29", "688", "0.55", "2023-01", "0"],
-            ["L-4474", "0.52", "—", "0.91", "2022-08", "1"],
-            ["… 480K rows", "…", "…", "…", "…", "…"]
+            ["1", "0.766", "45", "0.803", "9120", "0"],
+            ["0", "0.957", "40", "0.1219", "2600", "0"],
+            ["0", "0.658", "38", "0.0851", "3042", "1"],
+            ["0", "0.234", "30", "0.036", "3300", "0"],
+            ["… 150,000 rows", "…", "…", "…", "…", "…"]
           ],
-          note: `Only <b>approved</b> applicants appear (the rejected are unobserved). $y$ is known only because every row matured 24+ months. A dash (—) is a missing value, e.g. bureau_score is missing on $2.1\\%$ of rows.`
+          note: `The target is <code>SeriousDlqin2yrs</code> (1 = 90+ days past due within 2 years). Other columns include <code>NumberOfTime30-59DaysPastDueNotWorse</code>, <code>NumberOfOpenCreditLinesAndLoans</code>, <code>NumberRealEstateLoansOrLines</code>, and <code>NumberOfDependents</code>. <code>MonthlyIncome</code> is missing on ~$19.8\\%$ of rows and <code>NumberOfDependents</code> on ~$2.6\\%$.`
         },
         symbols: [
-          { sym: "$y$", desc: "default label: $1$ if the loan reached 90+ days past due within the window, else $0$." },
-          { sym: "dti", desc: "debt-to-income ratio — monthly debt payments divided by monthly income; higher means more stretched." },
-          { sym: "90+ dpd", desc: "'90 or more days past due' — the industry definition of default used to set $y$." }
+          { sym: "$y$", desc: "the SeriousDlqin2yrs label: $1$ if the borrower hit 90+ days past due within 2 years, else $0$." },
+          { sym: "DebtRatio", desc: "monthly debt payments (incl. alimony, living costs) divided by monthly gross income; higher means more stretched." },
+          { sym: "90+ dpd", desc: "'90 or more days past due' — the delinquency threshold used to set SeriousDlqin2yrs." }
         ],
         steps: [
           { type: "decide", prompt: "How do you build labels for 'defaulted'?",
             options: [
-              { label: "Use loans booked 24+ months ago, labeling 90+ days delinquent as default", best: true, feedback: "default is a time-censored event: you can only call a loan 'good' once it has survived a full performance window without going 90+ dpd. Booking-vintages that are 24+ months old have actually had that chance, so both labels are real. This is why the $6.8\\%$ default rate is trustworthy — every row had time to go bad." },
+              { label: "Use a matured 2-year window, labeling 90+ days delinquent as default", best: true, feedback: "default is a time-censored event: you can only call a borrower 'good' once they have survived a full performance window without going 90+ dpd. 'Give Me Some Credit' uses a $2$-year forward window, so both labels are real. This is why the $6.7\\%$ default rate is trustworthy — every row had time to go bad." },
               { label: "Label any loan currently 1+ day late as default", feedback: "a one-day slip — a forgotten autopay, a bank holiday — is not a default; most such borrowers are current again within a week. Defining the target this loosely floods $y=1$ with noise, so the model learns to predict harmless lateness instead of real loss, and your bad-rate numbers become meaningless." },
               { label: "Use only loans from the last 3 months for freshness", feedback: "this is the censoring trap: almost no 3-month-old loan has had time to reach 90+ dpd, so nearly every row gets labeled $y=0$. The model learns that default essentially never happens and approves everyone — the freshest data is the most useless when the label needs time to appear." }
             ] },
-          { type: "run", label: "▶ Pull matured loan book", prompt: "Pull approved loans with a full performance window.",
-            result: { log: "querying loan warehouse...\nloaded 480,000 booked loans x 96 columns\nwindow: booked 2022-2024, 24mo performance\ndefault rate (90+ dpd): 6.8%\nNOTE: only APPROVED applicants present (rejected applicants unobserved)", metrics: [{ k: "loans", v: "480K" }, { k: "default rate", v: "6.8%" }, { k: "features", v: "96" }] } }
+          { type: "run", label: "▶ Load cs-training.csv", prompt: "Load the Give Me Some Credit training file.",
+            result: { log: "loading cs-training.csv (Give Me Some Credit)...\nloaded 150,000 borrowers x 11 columns\ntarget: SeriousDlqin2yrs (2-year window)\ndefault rate: 6.7% (10,026 positives)\nmissing: MonthlyIncome 19.8%, NumberOfDependents 2.6%", metrics: [{ k: "borrowers", v: "150,000" }, { k: "default rate", v: "6.7%" }, { k: "features", v: "10" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Before modeling, hunt for the two things that quietly destroy a credit model: <b>target leakage</b> (a feature that only exists <i>after</i> the outcome) and <b>selection bias</b> (you only see approved applicants). Credit warehouses are stuffed with post-decision fields — recoveries, collections activity, restructurings — that correlate almost perfectly with default but are blank at scoring time. The skew matters too: at $13.7{:}1$ good-to-bad, naive accuracy is a useless mirror.</p>`,
+        narrative: `<p>Before modeling, hunt for the two things that quietly destroy a credit model: <b>target leakage</b> (a feature that only exists <i>after</i> the outcome) and <b>selection bias</b> (you only see approved applicants). "Give Me Some Credit" ships only application-time fields, but the moment you enrich it from a credit warehouse you risk pulling in post-decision columns — recoveries, collections activity, restructurings — that correlate almost perfectly with default but are blank at scoring time. The skew matters too: at $14{:}1$ good-to-bad, naive accuracy is a useless mirror.</p>`,
         concepts: ["ml-classification-metrics", "mlx-error-analysis"],
-        insight: `<b>The 'too good to be true' feature is the tell.</b> A column that predicts default almost perfectly is usually leakage, not insight. Here <code>recovery_amount</code> is nonzero <b>only</b> on the $6.8\\%$ that defaulted — because recoveries happen <i>after</i> a charge-off — and <code>collections_calls</code> is populated post-booking. At application time both are exactly $0$, so a model leaning on them learns a fact it can never see live, and the magical offline AUC collapses the day it ships.`,
+        insight: `<b>The 'too good to be true' feature is the tell.</b> A column that predicts default almost perfectly is usually leakage, not insight. If you join in a warehouse <code>recovery_amount</code> it is nonzero <b>only</b> on the $6.7\\%$ that defaulted — because recoveries happen <i>after</i> a charge-off — and <code>collections_calls</code> is populated post-booking. At application time both are exactly $0$, so a model leaning on them learns a fact it can never see live, and the magical offline AUC collapses the day it ships. The honest GMSC columns (<code>RevolvingUtilization</code>, <code>NumberOfTimes90DaysLate</code>, <code>age</code>) correlate only modestly.`,
         data: {
           caption: "Leakage / quality profile (per column)",
           columns: ["column", "missing %", "nonzero when y=0", "nonzero when y=1", "verdict"],
           rows: [
-            ["recovery_amount", "0%", "0%", "100%", "LEAK — post-default"],
-            ["collections_calls", "0%", "0%", "≈100%", "LEAK — post-booking"],
-            ["bureau_score", "2.1%", "yes", "yes", "keep"],
-            ["employment_length", "14%", "yes", "yes", "keep, impute"]
+            ["recovery_amount (joined)", "0%", "0%", "100%", "LEAK — post-default"],
+            ["collections_calls (joined)", "0%", "0%", "≈100%", "LEAK — post-booking"],
+            ["RevolvingUtilization", "0%", "yes", "yes", "keep"],
+            ["MonthlyIncome", "19.8%", "yes", "yes", "keep, impute"]
           ],
-          note: `A feature that is nonzero <i>only</i> for $y=1$ rows is leaking the label. The class balance is $13.7{:}1$ good-to-bad, so a 'predict good' model is $93\\%$ accurate while catching zero defaults — accuracy is the wrong metric here.`
+          note: `A feature that is nonzero <i>only</i> for $y=1$ rows is leaking the label. The class balance is $14{:}1$ good-to-bad ($139{,}974$ repaid vs $10{,}026$ default), so a 'predict good' model is $93.3\\%$ accurate while catching zero defaults — accuracy is the wrong metric here.`
         },
-        chart: { type: "bars", title: "Class balance: repaid vs default (13.7 to 1)", labels: ["repaid", "default"], values: [447360, 32640], valueLabels: ["93.2%", "6.8%"], colors: ["#7ee787", "#ff7b72"] },
+        chart: { type: "bars", title: "Class balance: repaid vs default (14 to 1)", labels: ["repaid", "default"], values: [139974, 10026], valueLabels: ["93.3%", "6.7%"], colors: ["#7ee787", "#ff7b72"] },
         symbols: [
-          { sym: "$y$", desc: "the default label ($1$=default, $0$=repaid) being predicted." },
-          { sym: "$13.7{:}1$", desc: "the class ratio — about 13.7 repaid loans for every 1 default; a heavily imbalanced problem." }
+          { sym: "$y$", desc: "the SeriousDlqin2yrs label ($1$=default, $0$=repaid) being predicted." },
+          { sym: "$14{:}1$", desc: "the class ratio — about 14 repaid borrowers (139,974) for every 1 default (10,026); a heavily imbalanced problem." }
         ],
         steps: [
-          { type: "run", label: "▶ Profile the data", result: { log: "missing: employment_length 14%, bureau_score 2.1%\nfound 'recovery_amount' -> nonzero ONLY for defaults (LEAKAGE)\nfound 'collections_calls' -> populated post-booking (LEAKAGE)\nclass balance 13.7:1 (good:default)\nreject inference gap: model only sees approved population", metrics: [{ k: "imbalance", v: "13.7:1" }, { k: "leaky cols", v: "2" }] } },
+          { type: "run", label: "▶ Profile the data", result: { log: "missing: MonthlyIncome 19.8%, NumberOfDependents 2.6%\nwarehouse join 'recovery_amount' -> nonzero ONLY for defaults (LEAKAGE)\nwarehouse join 'collections_calls' -> populated post-booking (LEAKAGE)\nclass balance 14:1 (good:default), 139,974 vs 10,026\nreject inference gap: dataset only contains observed borrowers", metrics: [{ k: "imbalance", v: "14:1" }, { k: "leaky cols", v: "2" }] } },
           { type: "decide", prompt: "'recovery_amount' is a strong predictor of default. Keep it?",
             options: [
               { label: "Keep it — it's highly predictive", feedback: "its predictive power is the symptom, not the cure. Recoveries are collected only AFTER a loan charges off, so the field is nonzero exclusively on $y=1$ rows and is exactly $0$ for every live application. Training on it teaches the model a value it can never observe at decision time — the AUC looks spectacular offline and falls apart in production." },
-              { label: "Drop it (and other post-decision fields)", best: true, feedback: "correct — the iron rule is that only information available at application time may be used. <code>recovery_amount</code> and <code>collections_calls</code> are populated post-decision, so they encode the answer. Dropping them (and auditing the other 94 columns for the same pattern) keeps offline AUC honest instead of a fantasy that evaporates live." }
+              { label: "Drop it (and other post-decision fields)", best: true, feedback: "correct — the iron rule is that only information available at application time may be used. <code>recovery_amount</code> and <code>collections_calls</code> are populated post-decision, so they encode the answer. Dropping them (and auditing every joined column for the same pattern) keeps offline AUC honest instead of a fantasy that evaporates live." }
             ] }
         ]
       },
@@ -372,17 +373,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
         concepts: ["fnd-norm", "ml-regularization"],
         insight: `<b>Predictive is not enough — it must be lawful and explainable.</b> A ZIP-code or 'neighborhood quality' feature can lift AUC, but it acts as a stand-in for race, and a decision driven by it is a fair-lending violation even if you never typed 'race' anywhere. The winning set — debt-to-income, bureau score, utilization, delinquency count, credit-history length — is causally tied to repayment and produces a clean reason code like 'high credit utilization'. Standardizing each as $\\frac{x-\\mu}{\\sigma}$ (mean $\\mu$, std $\\sigma$) makes the fitted weights comparable across features.`,
         data: {
-          caption: "Scorecard features after standardizing to $z=\\frac{x-\\mu}{\\sigma}$",
+          caption: "GMSC scorecard features after standardizing to $z=\\frac{x-\\mu}{\\sigma}$",
           columns: ["feature", "raw $x$", "$\\mu$", "$\\sigma$", "z-score", "weight sign"],
           rows: [
-            ["debt_to_income", "0.41", "0.28", "0.11", "+1.18", "+ (riskier)"],
-            ["bureau_score", "640", "705", "60", "−1.08", "− (safer)"],
-            ["utilization", "0.88", "0.45", "0.22", "+1.95", "+ (riskier)"],
-            ["credit_hist_yrs", "3", "9", "5", "−1.20", "− (safer)"]
+            ["DebtRatio", "0.80", "0.35", "0.30", "+1.50", "+ (riskier)"],
+            ["age", "30", "52", "14", "−1.57", "− (safer)"],
+            ["RevolvingUtilization", "0.88", "0.32", "0.29", "+1.93", "+ (riskier)"],
+            ["NumberOfTimes90DaysLate", "2", "0.27", "1.0", "+1.73", "+ (riskier)"]
           ],
-          note: `Each raw value $x$ becomes $z=\\frac{x-\\mu}{\\sigma}$ so all features are unit-free and coefficients are comparable. A '+' weight means higher values raise $P(\\text{default})$. Every column here is knowable at application and yields a defensible adverse-action reason.`
+          note: `Each raw value $x$ becomes $z=\\frac{x-\\mu}{\\sigma}$ so all features are unit-free and coefficients are comparable. A '+' weight means higher values raise $P(\\text{default})$. Every column here is a real GMSC field, knowable at application, and yields a defensible adverse-action reason.`
         },
-        chart: { type: "bars", title: "Standardized z-scores for one applicant (+ raises risk)", labels: ["debt_to_income", "bureau_score", "utilization", "credit_hist_yrs"], values: [1.18, -1.08, 1.95, -1.20], valueLabels: ["+1.18", "-1.08", "+1.95", "-1.20"], colors: ["#ff7b72", "#7ee787", "#ff7b72", "#7ee787"] },
+        chart: { type: "bars", title: "Standardized z-scores for one applicant (+ raises risk)", labels: ["DebtRatio", "age", "RevolvingUtilization", "90DaysLate"], values: [1.50, -1.57, 1.93, 1.73], valueLabels: ["+1.50", "-1.57", "+1.93", "+1.73"], colors: ["#ff7b72", "#7ee787", "#ff7b72", "#ff7b72"] },
         symbols: [
           { sym: "$x$", desc: "the raw value of a feature for one applicant (e.g. utilization $=0.88$)." },
           { sym: "$\\mu$", desc: "the mean of that feature across the training population." },
@@ -414,7 +415,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
           options: [
             { label: "A regularized logistic-regression scorecard as the system of record, with a boosted-tree challenger monitored alongside", best: true, feedback: "the GLM scores as $\\sigma(\\mathbf{w}^\\top\\mathbf{x})$, so every decision decomposes into signed per-feature contributions — exactly what an adverse-action notice and a model audit require. Regularization keeps it from overfitting the sparse default class. Running the boosted-tree challenger in parallel tells you the accuracy you're trading away ($0.781$ vs $0.823$) without ever putting an unexplainable model in front of an applicant. Best of both worlds." },
             { label: "A deep neural net, because accuracy is everything", feedback: "in lending, accuracy you can't explain is worse than useless — it can be illegal. You're legally required to give a denied applicant the principal reasons, and a deep net's decision can't be reduced to honest reason codes. Chasing raw AUC into an unauditable model is how lenders end up in front of a regulator." },
-            { label: "A single deep decision tree, unpruned", feedback: "an unpruned tree memorizes the training book (high variance) so it generalizes poorly, and its dozens of nested splits are nearly impossible to defend as a coherent, monotonic decision rule. A regularized linear scorecard both generalizes better on this $13.7{:}1$ data and explains in one sentence per feature." }
+            { label: "A single deep decision tree, unpruned", feedback: "an unpruned tree memorizes the training book (high variance) so it generalizes poorly, and its dozens of nested splits are nearly impossible to defend as a coherent, monotonic decision rule. A regularized linear scorecard both generalizes better on this $14{:}1$ data and explains in one sentence per feature." }
           ]
         }]
       },
@@ -422,7 +423,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
         phase: "Train", icon: "⚙️", title: "Train it",
         narrative: `<p>You fit the scorecard by <i>maximum likelihood</i> — choosing the weights $\\mathbf{w}$ that make the observed defaults and repayments most probable, which for logistic regression means minimizing log-loss. You add an L2 penalty $\\lambda\\lVert\\mathbf{w}\\rVert^2$ so no single coefficient blows up on the rare default class and the weights stay stable and monotonic. A crucial regulatory check rides along: every coefficient must end up signed the way domain sense demands (more utilization $\\Rightarrow$ more risk), or the scorecard is rejected no matter its AUC.</p>`,
         concepts: ["ml-likelihood", "ml-regularization", "ml-gradient-descent"],
-        insight: `<b>Maximum likelihood, kept honest by a penalty.</b> Training minimizes log-loss ($0.214$ here after 38 iterations) — the negative log-likelihood of the data under the model. The L2 term $\\lambda\\lVert\\mathbf{w}\\rVert^2$ shrinks the weights toward zero, trading a little fit for a lot of stability on the $6.8\\%$ minority class, and it's what guarantees the coefficients stay monotonic and signed as expected. The result: scorecard AUC $0.781$, with the unconstrained GBM challenger at $0.823$ ($+4.2$ pts) marking the ceiling.`,
+        insight: `<b>Maximum likelihood, kept honest by a penalty.</b> Training minimizes log-loss ($0.214$ here after 38 iterations) — the negative log-likelihood of the data under the model. The L2 term $\\lambda\\lVert\\mathbf{w}\\rVert^2$ shrinks the weights toward zero, trading a little fit for a lot of stability on the $6.7\\%$ minority class, and it's what guarantees the coefficients stay monotonic and signed as expected. The result: scorecard AUC $0.781$, with the unconstrained GBM challenger at $0.823$ ($+4.2$ pts) marking the ceiling.`,
         symbols: [
           { sym: "$\\mathbf{w}$", desc: "the weight vector being fit; one signed coefficient per feature." },
           { sym: "$\\lambda$", desc: "the regularization strength — how hard the L2 penalty pulls the weights toward zero (bigger $\\lambda$ = simpler, more stable model)." },
@@ -546,9 +547,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You run the spam filter for a messaging platform. About $7\\%$ of traffic is spam, but the two errors are wildly asymmetric: a false ban silences a real person and burns trust, while a miss lets a scam reach an inbox. Because adversaries actively probe and adapt to whatever you ship, this is a moving target, not a fixed dataset — you're designing a control loop, not a one-off classifier.</p>`,
+        narrative: `<p>You run the spam filter for a messaging platform, benchmarking on the classic <b>SMS Spam Collection</b> (UCI / Almeida & Hidalgo) — $5{,}574$ real English SMS messages hand-labeled spam vs ham, of which $13.4\\%$ are spam. The two errors are wildly asymmetric: a false ban silences a real person and burns trust, while a miss lets a scam reach an inbox. Because adversaries actively probe and adapt to whatever you ship, this is a moving target, not a fixed dataset — you're designing a control loop, not a one-off classifier.</p>`,
         concepts: ["ml-classification-metrics", "prob-bayes", "ml-supervised"],
-        insight: `<b>The asymmetry is the whole problem.</b> Spam is only $\\approx 7\\%$ of messages, so a model that flags nothing is already $93\\%$ accurate and totally useless. What actually matters is the cost ratio: one wrongful ban (a silenced real user filing an appeal) is far costlier to the platform than one missed spam, so you optimize <b>recall under a hard precision floor</b> — never raw accuracy.`,
+        insight: `<b>The asymmetry is the whole problem.</b> Spam is only $13.4\\%$ of the SMS Spam Collection ($747$ spam in $5{,}574$ messages), so a model that flags nothing is already $86.6\\%$ accurate and totally useless. What actually matters is the cost ratio: one wrongful ban (a silenced real user filing an appeal) is far costlier to the platform than one missed spam, so you optimize <b>recall under a hard precision floor</b> — never raw accuracy.`,
         symbols: [
           { sym: "$P(\\text{spam}\\mid x)$", desc: "the model's probability that message $x$ is spam — the score you threshold to ban, allow, or route to review." },
           { sym: "precision", desc: "of everything flagged as spam, the fraction that truly is spam; low precision means wrongful bans." },
@@ -558,47 +559,47 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
           type: "decide", prompt: "What objective fits content moderation?",
           options: [
             { label: "High recall on spam at a precision floor that keeps false bans rare, with a human-review queue for the gray zone", best: true, feedback: "right, and here's the mechanism: you hold precision above a floor (say $0.97$) so wrongful bans stay rare, then push recall as high as that floor allows. The uncertain middle band — where $P(\\text{spam}\\mid x)$ is neither high nor low — goes to humans instead of an automatic ban, so the model never gambles on a real user's account. This directly encodes the asymmetric cost of the two errors." },
-            { label: "Maximize raw accuracy", feedback: "the trap is the $7\\%$ base rate: a classifier that labels everything 'ham' scores $93\\%$ accuracy while catching zero spam. Accuracy rewards the majority class, so it actively pushes you toward doing nothing. Imbalanced problems need precision/recall, not accuracy." },
+            { label: "Maximize raw accuracy", feedback: "the trap is the $13.4\\%$ base rate: a classifier that labels everything 'ham' scores $86.6\\%$ accuracy while catching zero spam. Accuracy rewards the majority class, so it actively pushes you toward doing nothing. Imbalanced problems need precision/recall, not accuracy." },
             { label: "Block anything that looks even slightly unusual", feedback: "this maximizes recall by torching precision. At platform scale a few percent of false bans is tens of thousands of silenced real users per day — the single worst outcome for the product. You'd 'catch all spam' and lose your user base doing it." }
           ]
         }]
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You need a corpus labeled spam vs ham. Labels come from three sources — confirmed moderator takedowns, user reports, and the gold human audit — and each carries its own bias: takedowns are precise but sparse, reports are abundant but gameable. How you combine them decides whether the model learns real abuse or just your old filter's habits. You also hold out a clean hand-audited set so your final numbers aren't measured against noisy labels.</p>`,
+        narrative: `<p>You need a corpus labeled spam vs ham. The SMS Spam Collection gives you $5{,}574$ cleanly hand-labeled messages as a trustworthy gold standard, and in production you augment it from three live sources — confirmed moderator takedowns, user reports, and a held-out human audit. Each carries its own bias: hand labels and takedowns are precise but sparse, reports are abundant but gameable. How you combine them decides whether the model learns real abuse or just your old filter's habits.</p>`,
         concepts: ["ml-supervised", "prob-bayes"],
-        insight: `<b>Three label sources, three biases.</b> Of $2.4$M messages, only $168$K ($7.0\\%$) are confirmed-takedown spam — your highest-precision positives. User reports add $410$K weak signals, but $\\approx 9\\%$ of them disagree with a moderator audit, so trusting them blindly injects label noise. The fix is a label hierarchy: takedowns as strong labels, reports as weak ones, and $50$K human-audited messages frozen as the gold test set so evaluation is never contaminated.`,
+        insight: `<b>Start from a clean benchmark, then layer weak signals.</b> The SMS Spam Collection is $4{,}827$ ham and $747$ spam ($13.4\\%$) with two columns — <code>label</code> and <code>text</code> — and zero label noise, which makes it the perfect frozen gold set. To reach platform scale you add confirmed-takedown spam (high precision) plus user reports, but $\\approx 9\\%$ of reports disagree with a moderator audit, so trusting them blindly injects label noise. The fix is a label hierarchy: hand labels and takedowns as strong labels, reports as weak ones, and a clean audited slice frozen for evaluation. For larger corpora, practitioners use <b>Enron-Spam</b> (~$33{,}000$ labeled emails) and <b>Jigsaw Toxic Comments</b> (~$160{,}000$ Wikipedia comments) for the toxicity/abuse side.`,
         data: {
-          caption: "A few rows of the labeled sample (text snippets, label source, link count)",
-          columns: ["message snippet", "label", "source", "n_links", "lang"],
+          caption: "Rows of the SMS Spam Collection (2 columns: label, text)",
+          columns: ["label", "text"],
           rows: [
-            ["\"hey are we still on for lunch?\"", "ham", "audit", "0", "en"],
-            ["\"CLAIM your $500 reward now bit.ly/…\"", "spam", "takedown", "3", "en"],
-            ["\"check out my page, free followers\"", "spam", "report", "1", "en"],
-            ["\"reunión mañana a las 10\"", "ham", "audit", "0", "es"],
-            ["… 2.4M rows", "…", "…", "…", "…"]
+            ["ham", "\"Ok lar... Joking wif u oni\""],
+            ["spam", "\"WINNER!! You have won a £1000 prize. Call 09061..\""],
+            ["ham", "\"Nah I don't think he goes to usf, he lives aroun..\""],
+            ["spam", "\"Free entry in 2 a wkly comp to win FA Cup final t..\""],
+            ["… 5,574 rows", "…"]
           ],
-          note: `Confirmed-takedown rows are trustworthy positives; report-sourced rows are weak labels ($\\approx 9\\%$ wrong). Spam skews toward short text with many links; ham skews longer with few. $62\\%$ of messages are English, but $31$ languages appear.`
+          note: `The raw file is exactly two columns: <code>label</code> (ham/spam) and <code>text</code>. Spam skews toward short promo text with prizes, links, and shortcodes; ham is everyday chat. Production adds <code>source</code> and <code>n_links</code> columns when joining takedown/report streams.`
         },
-        chart: { type: "bars", title: "Label sources by volume (messages)", labels: ["takedown (strong)", "report (weak)", "gold audit (test)"], values: [168000, 410000, 50000], valueLabels: ["168K", "410K", "50K"], colors: ["#7ee787", "#ffb454", "#4ea1ff"] },
+        chart: { type: "bars", title: "SMS Spam Collection: ham vs spam (13.4% spam)", labels: ["ham", "spam"], values: [4827, 747], valueLabels: ["86.6%", "13.4%"], colors: ["#7ee787", "#ff7b72"] },
         symbols: [
           { sym: "$P(\\text{spam}\\mid x)$", desc: "probability message $x$ is spam — what the model learns from these labels." },
-          { sym: "n_links", desc: "count of URLs in a message; a strong blast/scam signal, near $0$ for normal chat." }
+          { sym: "n_links", desc: "count of URLs in a message; a strong blast/scam signal, near $0$ for normal chat (added as production metadata)." }
         ],
         steps: [
           { type: "decide", prompt: "How do you build a trustworthy training label?",
             options: [
-              { label: "Combine confirmed moderator takedowns (high precision) with user reports as weak signals, holding out a clean human-audited test set", best: true, feedback: "the mechanism is a label hierarchy: moderator takedowns are ground truth, so they anchor the positive class; user reports are abundant but $\\approx 9\\%$ wrong, so you down-weight them as weak labels rather than discarding their volume. Crucially you freeze a hand-audited gold set for evaluation, so noisy training labels can never inflate your reported numbers. You get scale and an honest yardstick." },
+              { label: "Combine confirmed moderator takedowns (high precision) with user reports as weak signals, holding out a clean human-audited test set", best: true, feedback: "the mechanism is a label hierarchy: hand-labeled SMS-Collection rows and moderator takedowns are ground truth, so they anchor the positive class; user reports are abundant but $\\approx 9\\%$ wrong, so you down-weight them as weak labels rather than discarding their volume. Crucially you freeze a hand-audited gold set for evaluation, so noisy training labels can never inflate your reported numbers. You get scale and an honest yardstick." },
               { label: "Treat every user report as spam", feedback: "the trap is that reports are an adversarial, gameable signal — users mass-report rivals, dissenting opinions, and content they merely dislike. Train on raw reports and the model learns to ban unpopular-but-legitimate speech, manufacturing false bans at scale. Reports are a hint, not a label." },
               { label: "Label spam only from messages your old keyword filter already caught", feedback: "this caps the model at the old filter's ceiling: every label is something keywords already flagged, so the model just clones their blind spots and never sees the obfuscated or novel spam keywords miss. You'd ship an expensive copy of the system you're trying to replace." }
             ] },
-          { type: "run", label: "▶ Pull labeled message sample", prompt: "Pull a labeled spam/ham sample.",
-            result: { log: "sampling message stream...\nloaded 2,400,000 messages\nconfirmed-takedown spam: 168,000 (7.0%)\nuser-reported (weak): 410,000\nheld out 50,000 human-audited messages as gold test set\nlanguages: 31 (en 62%)", metrics: [{ k: "messages", v: "2.4M" }, { k: "spam rate", v: "7.0%" }, { k: "languages", v: "31" }] } }
+          { type: "run", label: "▶ Load SMS Spam Collection + live streams", prompt: "Load the labeled spam/ham corpus.",
+            result: { log: "loading SMS Spam Collection (UCI)...\n5,574 messages: 4,827 ham, 747 spam (13.4%)\ncolumns: label, text\naugmenting with confirmed-takedown spam + user-reported (weak, ~9% noisy)\nheld out a clean human-audited slice as gold test set", metrics: [{ k: "messages", v: "5,574" }, { k: "spam rate", v: "13.4%" }, { k: "columns", v: "label, text" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Before modeling, profile the corpus and hunt for the three traps text data hides: duplicated campaigns, leaky columns, and label noise. The biggest here is that $22\\%$ of spam are near-identical blasts — if you split train/test randomly, copies of the same message land on both sides and your score is fiction. You also find a column written by the old filter (leakage) and confirm $\\approx 9\\%$ of weak labels disagree with the audit.</p>`,
+        narrative: `<p>Before modeling, profile the corpus and hunt for the three traps text data hides: duplicated campaigns, leaky columns, and label noise. Even the tidy SMS Spam Collection ships with real near-duplicate promo blasts (the same "claim your prize" template re-sent), and at platform scale $22\\%$ of spam are near-identical blasts — if you split train/test randomly, copies of the same message land on both sides and your score is fiction. You also find a column written by the old filter (leakage) and confirm $\\approx 9\\%$ of weak labels disagree with the audit.</p>`,
         concepts: ["mlx-error-analysis", "ml-classification-metrics"],
         insight: `<b>Duplicates leak across the split.</b> $22\\%$ of spam rows are near-duplicate campaign blasts, so a naive random split puts identical messages in both train and test — the model memorizes the blast and reports an inflated score that collapses on truly new spam. Two more traps: <b>was_auto_removed</b> is set by the OLD filter, so it's only known after a decision (target leakage), and $\\approx 9\\%$ of user-report labels disagree with the moderator audit. The cure is to dedupe, split by campaign/sender, and drop post-decision columns.`,
         data: {
@@ -690,7 +691,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate honestly",
-        narrative: `<p>You ship a <i>threshold</i>, not an AUC, so the real question is where to set the auto-ban cutoff on the hand-audited gold set. As you raise the threshold, precision climbs and the false-ban rate falls, but recall drops — the classic trade-off. The product answer is a two-band policy: auto-ban only where precision is high enough to act blindly, and route the uncertain middle to humans.</p>`,
+        narrative: `<p>You ship a <i>threshold</i>, not an AUC, so the real question is where to set the auto-ban cutoff on the hand-audited gold set — a $50$K live-traffic audit whose $7.1\\%$ spam rate is lower than the curated $13.4\\%$ of the SMS benchmark because real streams are mostly ordinary chat. As you raise the threshold, precision climbs and the false-ban rate falls, but recall drops — the classic trade-off. The product answer is a two-band policy: auto-ban only where precision is high enough to act blindly, and route the uncertain middle to humans.</p>`,
         concepts: ["ml-classification-metrics", "ml-roc-auc"],
         insight: `<b>Read the threshold table, not the AUC.</b> AUC is a strong $0.972$, but it doesn't pick an operating point. At threshold $0.5$ you get recall $0.93$ but a $0.7\\%$ false-ban rate — at this scale that's tens of thousands of silenced real users a day. Push to threshold $0.8$ and precision rises to $0.97$ with a false-ban rate of just $0.1\\%$ — $7\\times$ safer — at the cost of recall dropping to $0.81$. That recall you 'lose' isn't lost: it falls into the $0.5$–$0.8$ band that goes to human review.`,
         data: {
@@ -789,7 +790,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You're a quant building a systematic strategy. Markets are nearly efficient, so the signal-to-noise ratio is brutal — a real edge might tilt the odds from 50% to just 53%. Before touching data you must decide <i>what</i> you predict and <i>how</i> you judge it, because the wrong objective makes a losing strategy look like a winner. The honest target is risk-adjusted return after costs, not raw profit on paper.</p>`,
+        narrative: `<p>You're a quant building a systematic strategy on real daily equity data — <b>CRSP</b> survivorship-free daily OHLCV (or <b>Yahoo Finance</b> / Quandl / WRDS for the same fields) across the S&P 500 / broad-market universe. Markets are nearly efficient, so the signal-to-noise ratio is brutal — a real edge might tilt the odds from 50% to just 53%. Before touching data you must decide <i>what</i> you predict and <i>how</i> you judge it, because the wrong objective makes a losing strategy look like a winner. The honest target is risk-adjusted return after costs, not raw profit on paper.</p>`,
         concepts: ["prob-expectation", "prob-variance", "ml-linear-regression"],
         insight: `<b>The thin-edge reality.</b> A good systematic strategy is right barely more than half the time — a <b>53% hit rate</b> is already a strong signal in liquid markets. The Sharpe ratio $\\frac{E[r]}{\\sigma(r)}$ measures return <i>per unit of risk</i>: a Sharpe of $1.0$ roughly means a year of ~$+10\\%$ return earned with ~$10\\%$ volatility. Raw backtest profit hides both risk and costs, so two strategies with identical total profit can have wildly different Sharpe — and only the steadier one survives live.`,
         symbols: [
@@ -809,39 +810,39 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather the data",
-        narrative: `<p>You assemble ~19 years of daily price/volume history plus fundamentals across 3,100 names. Two silent killers live in this data: survivorship bias (quietly dropping the firms that went bankrupt) and point-in-time errors (using numbers that weren't actually known on the trade date). Get either wrong and your backtest invents returns that never existed. So you build a survivorship-free universe and lag every fundamental to its real publish date — and you fence off 2021-2024 as an untouched out-of-sample block you will not look at until the very end.</p>`,
+        narrative: `<p>You assemble ~19 years of daily OHLCV bars (open, high, low, close, volume) plus fundamentals across ~3,100 names, pulled from <b>CRSP</b> daily stock data (the standard survivorship-free academic source) and cross-checked against <b>Yahoo Finance</b> adjusted prices. Two silent killers live in this data: survivorship bias (quietly dropping the firms that went bankrupt) and point-in-time errors (using numbers that weren't actually known on the trade date). Get either wrong and your backtest invents returns that never existed. So you build a survivorship-free universe and lag every fundamental to its real publish date — and you fence off 2021-2024 as an untouched out-of-sample block you will not look at until the very end.</p>`,
         concepts: ["mod-timeseries", "prob-normal"],
-        insight: `<b>Why the dead companies matter.</b> The universe spans <b>3,100 names over 2005-2024</b> and deliberately <b>includes 640 delisted or bankrupt names</b>. Those 640 are exactly the firms a naive "today's index members" pull would erase — and they are disproportionately the big losers. Drop them and your backtest only ever trades the survivors, silently adding a few percent of fake annual return. The untouched 2021-2024 slice (~$20\\%$ of the history) is held back so the final test is on data the strategy has truly never seen.`,
+        insight: `<b>Why the dead companies matter.</b> The universe spans <b>~3,100 names over 2005-2024</b> and deliberately <b>includes 640 delisted or bankrupt names</b> — exactly what CRSP retains and a naive Yahoo "today's S&P 500 members" pull would erase. Those 640 are disproportionately the big losers; drop them and your backtest only ever trades the survivors, silently adding a few percent of fake annual return. The untouched 2021-2024 slice (~$20\\%$ of the history) is held back so the final test is on data the strategy has truly never seen.`,
         data: {
-          caption: "Point-in-time daily panel (one row per name per day, fundamentals as known THAT day)",
-          columns: ["date", "ticker", "close (adj)", "ret_1d", "P/E (pit)", "status"],
+          caption: "CRSP/Yahoo daily OHLCV panel (one row per name per day, fundamentals point-in-time)",
+          columns: ["date", "ticker", "open", "high", "low", "close (adj)", "volume", "return"],
           rows: [
-            ["2018-03-14", "AAA", "142.10", "+0.6%", "18.4", "active"],
-            ["2018-03-14", "BBB", "9.07", "-2.1%", "\u2014", "active"],
-            ["2019-11-02", "CCC", "0.41", "-31%", "\u2014", "delisted \u2192"],
-            ["\u2026", "\u2026 3,100 names", "\u2026", "\u2026", "\u2026", "\u2026"]
+            ["2018-03-14", "AAA", "141.3", "143.0", "140.8", "142.10", "3.2M", "+0.6%"],
+            ["2018-03-14", "BBB", "9.27", "9.31", "8.95", "9.07", "1.1M", "-2.1%"],
+            ["2019-11-02", "CCC", "0.59", "0.60", "0.40", "0.41", "8.7M", "-31%"],
+            ["\u2026", "\u2026 3,100 names", "\u2026", "\u2026", "\u2026", "\u2026", "\u2026", "\u2026"]
           ],
-          note: `Prices are split/dividend adjusted; <i>ret_1d</i> is the one-day return. The P/E column is <b>point-in-time</b> — a dash (\u2014) means the ratio wasn't yet published (or earnings were negative), NOT today's restated value. The delisted row for CCC is kept on purpose; deleting it would be survivorship bias.`
+          note: `Standard OHLCV columns: <code>open/high/low/close/volume</code>, with <code>close</code> split/dividend adjusted and <code>return</code> the one-day return. Fundamentals (e.g. point-in-time P/E) are joined separately, lagged to their real publish date. The delisted row for CCC is kept on purpose; deleting it would be survivorship bias.`
         },
         symbols: [
-          { sym: "ret_1d", desc: "a name's one-day excess return — the daily change in adjusted price, the raw $r$ the strategy stacks up over time." },
-          { sym: "P/E (pit)", desc: "price-to-earnings ratio as it was KNOWN on that date (point-in-time), not the later restated figure." },
+          { sym: "return", desc: "a name's one-day return — the daily change in adjusted close, the raw $r$ the strategy stacks up over time." },
+          { sym: "OHLCV", desc: "open, high, low, close, volume — the five standard daily bar fields from CRSP / Yahoo Finance." },
           { sym: "split/dividend adj", desc: "prices rescaled so a stock split or dividend doesn't look like a fake jump in return." }
         ],
         steps: [
           { type: "decide", prompt: "What's the biggest data trap to fix first?",
             options: [
-              { label: "Use a survivorship-bias-free universe with point-in-time fundamentals (as known on each date), adjusted for splits/dividends", best: true, feedback: "right, and these are two separate fixes that both protect the same thing — an honest record of what you could have known. Keeping the 640 delisted names stops you from only 'trading' winners; lagging fundamentals to their publish date stops you from trading on numbers nobody had yet; split/dividend adjustment stops a corporate action from masquerading as a return. Get these wrong and EVERY downstream metric is fiction." },
-              { label: "Just download today's index members back through history", feedback: "trap: this is textbook survivorship bias. Today's index excludes the firms that went bankrupt or got delisted — precisely the losers — so your backtest retroactively only holds the companies that made it, inflating returns by a few percent a year you can never earn live." },
+              { label: "Use a survivorship-bias-free universe with point-in-time fundamentals (as known on each date), adjusted for splits/dividends", best: true, feedback: "right, and these are two separate fixes that both protect the same thing — an honest record of what you could have known. Keeping the 640 delisted names (CRSP retains them) stops you from only 'trading' winners; lagging fundamentals to their publish date stops you from trading on numbers nobody had yet; split/dividend adjustment stops a corporate action from masquerading as a return. Get these wrong and EVERY downstream metric is fiction." },
+              { label: "Just download today's index members back through history", feedback: "trap: this is textbook survivorship bias — exactly what a naive Yahoo Finance 'current S&P 500' pull gives you. Today's index excludes the firms that went bankrupt or got delisted — precisely the losers — so your backtest retroactively only holds the companies that made it, inflating returns by a few percent a year you can never earn live." },
               { label: "Use the latest restated earnings for every past date", feedback: "trap: restated figures weren't known on the trade date, so feeding them in is pure look-ahead bias. The model 'trades' on the corrected number months before the correction existed, fabricating an edge that evaporates the moment you go live with only same-day information." }
             ] },
           { type: "run", label: "▶ Assemble universe", prompt: "Assemble a clean point-in-time dataset.",
-            result: { log: "loading survivorship-bias-free universe...\n3,100 names, 2005-2024, daily bars\nincluded 640 delisted/bankrupt names\nfundamentals: point-in-time, lagged to report date\nsplit/dividend adjusted\nNOTE: reserve 2021-2024 as untouched out-of-sample", metrics: [{ k: "names", v: "3,100" }, { k: "span", v: "19y" }, { k: "delisted incl.", v: "640" }] } }
+            result: { log: "loading CRSP survivorship-bias-free universe...\n3,100 names, 2005-2024, daily OHLCV bars\nincluded 640 delisted/bankrupt names\nfundamentals: point-in-time, lagged to report date\nclose split/dividend adjusted (cross-checked vs Yahoo Finance)\nNOTE: reserve 2021-2024 as untouched out-of-sample", metrics: [{ k: "names", v: "3,100" }, { k: "span", v: "19y" }, { k: "delisted incl.", v: "640" }] } }
         ]
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore & clean",
-        narrative: `<p>Inspect the signal and hunt for look-ahead bias — the trading equivalent of target leakage, where information from the future sneaks into a past prediction. In time series it hides in subtle alignment and timing errors rather than obvious columns. Two things jump out here: returns have fat tails (excess kurtosis $7.4$, far from Gaussian, so big moves are common), and several signals are nearly identical copies of each other ($|r|&gt;0.9$). Both shape what you can safely model next.</p>`,
+        narrative: `<p>Inspect the daily-return panel and hunt for look-ahead bias — the trading equivalent of target leakage, where information from the future sneaks into a past prediction. In time series it hides in subtle alignment and timing errors rather than obvious columns. Two things jump out, both well-documented in real CRSP/Yahoo equity returns: returns have fat tails (excess kurtosis $7.4$, far from Gaussian, so big moves are common), and several factor signals are nearly identical copies of each other ($|r|&gt;0.9$). Both shape what you can safely model next.</p>`,
         concepts: ["prob-covariance-correlation", "mlx-error-analysis"],
         insight: `<b>The 1-3 day leak that fabricates alpha.</b> The data profile shows returns with <b>excess kurtosis $7.4$</b> — fat tails mean rare 5-sigma moves happen far more than a normal curve predicts, so risk sizing can't assume Gaussian. More dangerous: a momentum signal is aligned to the earnings <i>event</i> date instead of the <i>publish</i> date, leaking 1-3 days of not-yet-public info. And <b>4 signals are pairwise $|r|&gt;0.9$</b> — secretly the same bet wearing four hats. A leak this small still fabricates returns that vanish the instant you trade live.`,
         data: {
