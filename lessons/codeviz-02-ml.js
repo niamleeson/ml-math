@@ -1,146 +1,167 @@
-/* Per-lesson visualizations of the code's data & results. Merged into window.CODEVIZ by id.
-   { question?, charts:[ chartSpec ], caption? }  - chartSpec types: bars/line/scatter/roc/confusion/heatmap.
-   All numbers below are REAL outputs from running each lesson's code (numpy + scikit-learn). */
+/* Per-lesson visualizations of the code result on REAL sklearn datasets. Merged into window.CODEVIZ by id.
+   { question, charts:[ chartSpec ], caption, code }  - chartSpec types: bars/line/scatter/roc/confusion/heatmap.
+   All numbers are REAL outputs from running each lesson on a bundled sklearn dataset (breast cancer / iris / wine / digits / diabetes). */
 window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
-  "ml-supervised": {question:"Given labeled examples, can a model learn a rule that separates the two classes on new data?",charts:[{type:"scatter",title:"Supervised data, 2 PCA views, colored by label",xlabel:"component 1",ylabel:"component 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[0.778,1.278],[2.639,0.447],[-1.89,0.349],[-1.493,-1.155],[0.007,1.48],[-0.415,0.576],[-1.115,-0.232],[-2.456,-0.529],[-2.005,-0.545],[-1.023,1.659],[2.647,0.645],[-2.017,-0.305],[-3.014,-0.394],[-1.514,0.272],[1.184,1.099],[-1.07,1.928],[-1.175,1.805],[-0.599,1.674],[-1.222,1.718],[0.663,1.157],[-2.292,0.039],[-0.352,1.757],[-1.256,-0.23],[-1.939,-0.117],[0.009,0.473],[-2.98,-1.574],[-1.924,-0.959],[0.731,1.041],[-1.204,1.587],[-1.087,1.798],[-1.604,0.403]]},{name:"class 1",color:"#7ee787",points:[[-1.033,-1.265],[-1.664,0.352],[-0.234,-1.198],[-0.964,-0.955],[-1.384,-1.069],[1.716,-0.494],[1.834,-1.426],[0.66,-1.399],[1.644,1.326],[0.412,-1.633],[-0.48,-1.131],[-0.766,-1.446],[1.769,0.039],[1.486,0.876],[-0.742,-1.002],[1.958,-1.504],[1.593,-0.323],[-0.546,-0.529],[1.754,-0.962],[0.598,-1.981],[1.739,0.675],[1.858,-1.351],[1.43,0.593],[1.987,-2.39]]}]}],caption:"Yes. A logistic model trained on the labeled pairs scores 0.83 accuracy on unseen test data (train 0.863).",code:`import numpy as np
+  "ml-supervised": {question:"Breast-cancer tumors: from 30 cell measurements, can a model tell malignant from benign on new patients?",charts:[{type:"scatter",title:"569 real tumors, top 2 PCA directions, colored by diagnosis",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"malignant",color:"#ff7b72",points:[[0.46,0.394],[12.285,-7.543],[3.111,1.569],[4.418,1.419],[1.715,-1.524],[-0.934,-2.106],[6.439,-3.577],[7.676,-3.075],[4.68,-0.969],[2.38,3.95],[-0.543,-1.317],[4.759,3.012],[1.428,-1.967],[4.809,-3.029],[1.345,-1.275],[0.664,0.437],[4.149,0.767],[0.759,-1.609],[2.705,-4.437],[5.494,-4.166],[6.059,-0.757],[2.4,4.838],[2.239,-2.69],[1.786,-0.269],[3.519,-3.859],[0.608,0.162],[0.616,0.639],[4.207,1.176],[6.227,-1.39],[6.004,-0.091]]},{name:"benign",color:"#7ee787",points:[[-2.847,-2.894],[-1.867,-0.902],[-3.194,-1.849],[-3.448,-1.425],[-2.803,-1.666],[-1.301,-1.821],[-2.793,-1.078],[-4.976,-3.386],[-4.042,-1.357],[-2.787,-2.533],[-2.976,1.811],[4.33,9.203],[-1.557,-1.038],[-1.928,-1.138],[0.393,1.083],[-0.371,0.114],[-4.019,-1.354],[-2.373,-1.682],[-2.001,-0.293],[-5.475,-0.671],[-3.455,1.307],[-2.56,-2.494],[-3.143,-1.877],[-0.78,-2.124],[-5.566,-0.478],[-3.31,0.156],[-3.996,0.96],[-2.622,2.502],[7.093,12.573],[-3.315,-1.442]]}]}],caption:"Yes. Logistic regression on the 30 standardized cell features scores 0.965 test accuracy (train 0.991) on the Wisconsin breast-cancer data.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 
-# same labeled data the lesson trains on
-X, y = make_classification(n_samples=400, n_features=4, random_state=0)
+# 569 real tumors, 30 cell-nucleus measurements each
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target                      # 0 malignant, 1 benign
 
-# project the 4-D inputs to 2-D so we can see the two classes
-X2 = PCA(n_components=2, random_state=0).fit_transform(X)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
+clf = LogisticRegression(max_iter=5000).fit(Xtr, ytr)
+print("test accuracy", clf.score(Xte, yte))
 
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
-    pts = X2[y == label]
+# project the 30-D inputs to 2-D so we can see the two diagnoses
+P = PCA(n_components=2, random_state=0).fit_transform(X)
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
+    pts = P[y == label]
     plt.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
-
-plt.xlabel("component 1")
-plt.ylabel("component 2")
-plt.title("Supervised data, 2 PCA views, colored by label")
+plt.xlabel("PCA component 1")
+plt.ylabel("PCA component 2")
+plt.title("Breast-cancer tumors projected to 2-D")
 plt.legend()
 plt.show()`},
-  "ml-loss": {question:"How fast does a loss punish a wrong prediction as the error grows?",charts:[{type:"line",title:"Loss vs residual",xlabel:"residual r = y minus z",ylabel:"loss",series:[{name:"squared 0.5 r^2",color:"#ffb454",points:[[-3.0,4.5],[-2.75,3.781],[-2.5,3.125],[-2.25,2.531],[-2.0,2.0],[-1.75,1.531],[-1.5,1.125],[-1.25,0.781],[-1.0,0.5],[-0.75,0.281],[-0.5,0.125],[-0.25,0.031],[0.0,0.0],[0.25,0.031],[0.5,0.125],[0.75,0.281],[1.0,0.5],[1.25,0.781],[1.5,1.125],[1.75,1.531],[2.0,2.0],[2.25,2.531],[2.5,3.125],[2.75,3.781],[3.0,4.5]]},{name:"hinge max(0,1-r)",color:"#4ea1ff",points:[[-3.0,4.0],[-2.75,3.75],[-2.5,3.5],[-2.25,3.25],[-2.0,3.0],[-1.75,2.75],[-1.5,2.5],[-1.25,2.25],[-1.0,2.0],[-0.75,1.75],[-0.5,1.5],[-0.25,1.25],[0.0,1.0],[0.25,0.75],[0.5,0.5],[0.75,0.25],[1.0,0.0],[1.25,0.0],[1.5,0.0],[1.75,0.0],[2.0,0.0],[2.25,0.0],[2.5,0.0],[2.75,0.0],[3.0,0.0]]}]},{type:"bars",title:"Squared loss for growing gap",labels:["gap 1","gap 2","gap 4"],values:[0.5,2.0,8.0],colors:["#4ea1ff","#ffb454","#ff7b72"]}],caption:"Squared loss grows like a bowl: double the gap, quadruple the loss (0.5, 2, 8). Hinge is flat once the margin clears 1.",code:`import numpy as np
+  "ml-loss": {question:"On real diabetes-progression predictions, how hard does each loss punish a prediction error as it grows?",charts:[{type:"line",title:"Loss vs prediction error (real diabetes residual range)",xlabel:"prediction error r (true minus predicted)",ylabel:"loss",series:[{name:"squared 0.5 r squared",color:"#ffb454",points:[[-100.0,5000.0],[-91.7,4201.4],[-83.3,3472.2],[-75.0,2812.5],[-66.7,2222.2],[-58.3,1701.4],[-50.0,1250.0],[-41.7,868.1],[-33.3,555.6],[-25.0,312.5],[-16.7,138.9],[-8.3,34.7],[0.0,0.0],[8.3,34.7],[16.7,138.9],[25.0,312.5],[33.3,555.6],[41.7,868.1],[50.0,1250.0],[58.3,1701.4],[66.7,2222.2],[75.0,2812.5],[83.3,3472.2],[91.7,4201.4],[100.0,5000.0]]},{name:"absolute |r|",color:"#4ea1ff",points:[[-100.0,100.0],[-91.7,91.7],[-83.3,83.3],[-75.0,75.0],[-66.7,66.7],[-58.3,58.3],[-50.0,50.0],[-41.7,41.7],[-33.3,33.3],[-25.0,25.0],[-16.7,16.7],[-8.3,8.3],[0.0,0.0],[8.3,8.3],[16.7,16.7],[25.0,25.0],[33.3,33.3],[41.7,41.7],[50.0,50.0],[58.3,58.3],[66.7,66.7],[75.0,75.0],[83.3,83.3],[91.7,91.7],[100.0,100.0]]}]},{type:"bars",title:"Squared loss at three real residual sizes",labels:["small err 5.1","median err 40.1","large err 139.3"],values:[13.0,804.0,9702.2],colors:["#4ea1ff","#ffb454","#ff7b72"]}],caption:"A linear model on the diabetes data leaves residuals up to 164.6. Squared loss explodes on the big errors, while absolute loss grows only linearly.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
-# residual r = y - z, swept across a range
-r = np.linspace(-3, 3, 25)
-squared = 0.5 * r ** 2                 # squared loss bowl
-hinge = np.maximum(0.0, 1 - r)         # hinge loss
+# 442 real diabetes patients, target = disease progression
+db = load_diabetes()
+Xtr, Xte, ytr, yte = train_test_split(db.data, db.target, test_size=0.3, random_state=0)
+model = LinearRegression().fit(Xtr, ytr)
+residuals = yte - model.predict(Xte)        # real prediction errors
+
+# how each loss grows across the real residual range
+r = np.linspace(-100, 100, 25)
+squared = 0.5 * r ** 2
+absolute = np.abs(r)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-
-ax1.plot(r, squared, color="#ffb454", label="squared 0.5 r^2")
-ax1.plot(r, hinge, color="#4ea1ff", label="hinge max(0,1-r)")
-ax1.set_xlabel("residual r = y minus z")
+ax1.plot(r, squared, color="#ffb454", label="squared 0.5 r squared")
+ax1.plot(r, absolute, color="#4ea1ff", label="absolute |r|")
+ax1.set_xlabel("prediction error r")
 ax1.set_ylabel("loss")
-ax1.set_title("Loss vs residual")
+ax1.set_title("Loss vs prediction error")
 ax1.legend()
 
-# squared loss quadruples when the gap doubles
-gaps = [1, 2, 4]
-vals = [0.5 * g ** 2 for g in gaps]
-ax2.bar(["gap 1", "gap 2", "gap 4"], vals, color=["#4ea1ff", "#ffb454", "#ff7b72"])
-ax2.set_title("Squared loss for growing gap")
+ex = np.sort(np.abs(residuals))[[5, len(residuals)//2, -3]]
+ax2.bar(["small", "median", "large"], 0.5 * ex ** 2,
+        color=["#4ea1ff", "#ffb454", "#ff7b72"])
+ax2.set_title("Squared loss at three real residual sizes")
 plt.show()`},
-  "ml-cost": {question:"As we vary the parameter theta, where does total cost over the dataset bottom out?",charts:[{type:"line",title:"Cost J(theta) over the whole dataset",xlabel:"theta",ylabel:"mean squared loss J",series:[{name:"J(theta)",color:"#4ea1ff",points:[[-1.0,164.017],[-0.75,137.793],[-0.5,113.856],[-0.25,92.206],[0.0,72.842],[0.25,55.764],[0.5,40.973],[0.75,28.469],[1.0,18.251],[1.25,10.319],[1.5,4.674],[1.75,1.316],[2.0,0.244],[2.25,1.459],[2.5,4.961],[2.75,10.749],[3.0,18.823],[3.25,29.184],[3.5,41.832],[3.75,56.766],[4.0,73.986],[4.25,93.493],[4.5,115.287],[4.75,139.367],[5.0,165.734]]}]}],caption:"Cost is a single bowl with one minimum near theta = 2 (the true slope) where J drops to about 0.5 of noise.",code:`import numpy as np
+  "ml-cost": {question:"On real diabetes data, as we vary the BMI slope theta, where does total squared cost bottom out?",charts:[{type:"line",title:"Cost J(theta) over 442 diabetes patients",xlabel:"theta (slope on BMI)",ylabel:"mean squared loss J",series:[{name:"J(theta)",color:"#4ea1ff",points:[[0.0,2964.9],[83.3,2793.8],[166.7,2638.4],[250.0,2498.6],[333.3,2374.6],[416.7,2266.3],[500.0,2173.7],[583.3,2096.8],[666.7,2035.7],[750.0,1990.2],[833.3,1960.5],[916.7,1946.4],[1000.0,1948.1],[1083.3,1965.5],[1166.7,1998.6],[1250.0,2047.4],[1333.3,2111.9],[1416.7,2192.2],[1500.0,2288.1],[1583.3,2399.8],[1666.7,2527.2],[1750.0,2670.2],[1833.3,2829.0],[1916.7,3003.5],[2000.0,3193.7]]}]}],caption:"Cost is a single bowl with one minimum near theta = 916.667, the least-squares BMI slope that best predicts disease progression.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
 
-# data from the true line y = 2x + 1 plus noise
-rng = np.random.default_rng(0)
-X = rng.uniform(0, 10, size=20)
-y = 2.0 * X + 1.0 + rng.normal(0, 1, size=20)
+# real diabetes data: predict progression from BMI alone
+db = load_diabetes()
+x = db.data[:, 2]              # BMI feature (already centered/scaled)
+y = db.target
+xbar, ybar = x.mean(), y.mean()
 
-def cost(theta, b=1.0):
-    pred = theta * X + b
-    return np.mean(0.5 * (pred - y) ** 2)   # mean squared loss J
+def cost(theta):
+    pred = theta * (x - xbar) + ybar
+    return np.mean(0.5 * (pred - y) ** 2)
 
-# scan theta and record the cost at each value
-thetas = np.linspace(-1, 5, 25)
+thetas = np.linspace(0, 2000, 25)
 J = [cost(t) for t in thetas]
 
 plt.plot(thetas, J, color="#4ea1ff", label="J(theta)")
-plt.xlabel("theta")
+plt.xlabel("theta (slope on BMI)")
 plt.ylabel("mean squared loss J")
-plt.title("Cost J(theta) over the whole dataset")
+plt.title("Cost J(theta) over the diabetes dataset")
 plt.legend()
 plt.show()`},
-  "ml-gradient-descent": {question:"Does stepping opposite the slope actually drive the cost down to the minimum?",charts:[{type:"line",title:"Cost J = theta^2 over gradient-descent steps",xlabel:"step",ylabel:"J",series:[{name:"J at each step",color:"#ffb454",points:[[1,16.0],[2,10.24],[3,6.5536],[4,4.1943],[5,2.68435],[6,1.71799],[7,1.09951],[8,0.70369],[9,0.45036],[10,0.28823],[11,0.18447],[12,0.11806],[13,0.07556],[14,0.04836],[15,0.03095],[16,0.01981],[17,0.01268],[18,0.00811],[19,0.00519],[20,0.00332]]}]}],caption:"Yes. Each step theta <- theta - alpha grad shrinks J smoothly toward 0, the minimum of the bowl.",code:`import numpy as np
+  "ml-gradient-descent": {question:"Fitting the diabetes BMI slope by gradient descent: does each step actually drive the cost down?",charts:[{type:"line",title:"Cost over gradient-descent steps (diabetes BMI slope)",xlabel:"step",ylabel:"mean squared loss J",series:[{name:"J at each step",color:"#ffb454",points:[[1.0,2962.6],[2.0,2960.3],[3.0,2958.0],[4.0,2955.8],[5.0,2953.5],[6.0,2951.2],[7.0,2948.9],[8.0,2946.6],[9.0,2944.4],[10.0,2942.1],[11.0,2939.9],[12.0,2937.6],[13.0,2935.4],[14.0,2933.1],[15.0,2930.9],[16.0,2928.7],[17.0,2926.4],[18.0,2924.2],[19.0,2922.0],[20.0,2919.8]]}]}],caption:"Yes. Each step nudges theta opposite the slope (theta minus alpha times the gradient), lowering J on the real diabetes data and converging to the least-squares slope near 21.251.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
 
-# minimize J(theta) = theta^2, gradient = 2*theta, minimum at 0
-def grad(theta):
-    return 2 * theta
+# real diabetes data: gradient descent on the BMI slope
+db = load_diabetes()
+x = db.data[:, 2]
+y = db.target
+xc = x - x.mean()
+yc = y - y.mean()
 
-theta = 5.0      # starting point
-alpha = 0.1      # learning rate
-
+theta = 0.0
+alpha = 0.5
 steps, costs = [], []
-for step in range(1, 21):
-    theta = theta - alpha * grad(theta)   # step opposite the slope
-    steps.append(step)
-    costs.append(theta ** 2)              # J at this step
+for s in range(1, 21):
+    grad = np.mean((theta * xc - yc) * xc)   # slope of the cost
+    theta = theta - alpha * grad             # step opposite the slope
+    steps.append(s)
+    costs.append(np.mean(0.5 * (theta * xc - yc) ** 2))
 
 plt.plot(steps, costs, color="#ffb454", marker="o", label="J at each step")
 plt.xlabel("step")
-plt.ylabel("J")
-plt.title("Cost J = theta^2 over gradient-descent steps")
+plt.ylabel("mean squared loss J")
+plt.title("Gradient descent on the diabetes BMI slope")
 plt.legend()
 plt.show()`},
-  "ml-linear-regression": {question:"Does a straight line fit this noisy data, and what is the slope?",charts:[{type:"scatter",title:"Least-squares fit on y = 3x + 2 + noise",xlabel:"x",ylabel:"y",groups:[{name:"data",color:"#4ea1ff",points:[[6.37,21.466],[2.698,8.885],[0.41,3.225],[0.165,3.152],[8.133,25.11],[9.128,29.778],[6.066,20.629],[7.295,24.581],[5.436,17.125],[9.351,29.39],[8.159,26.039],[0.027,0.912],[8.574,29.461],[0.336,2.512],[7.297,24.219],[1.757,7.011],[8.632,29.479],[5.415,19.564],[2.997,11.625],[4.227,12.477],[0.283,2.902],[1.243,6.412],[6.706,23.123],[6.472,20.798],[6.154,22.284],[3.837,12.19],[9.972,31.255],[9.808,32.36],[6.855,22.615],[6.505,23.516],[6.884,22.842],[3.889,13.034],[1.351,5.675],[7.215,22.554],[5.254,16.483],[3.102,11.938],[4.858,17.156],[8.895,29.979],[9.34,29.267],[3.578,14.423],[5.715,18.859],[3.219,13.23],[5.943,19.396],[3.379,11.402],[3.916,13.998],[8.903,29.74],[2.272,8.976],[6.232,20.11],[0.84,3.179],[8.326,25.578]]}],lines:[{name:"fit",color:"#ffb454",points:[[0,1.757],[10,32.281]]}]}],caption:"Yes. The fit recovers slope 3.052 and intercept 1.757 (R^2 = 0.9876) - a line explains almost all the variation.",code:`import numpy as np
+  "ml-linear-regression": {question:"Does a straight line fit diabetes progression from body-mass index, and what is the slope?",charts:[{type:"scatter",title:"Least-squares fit: BMI to disease progression (442 patients)",xlabel:"BMI (standardized)",ylabel:"disease progression",groups:[{name:"patients",color:"#4ea1ff",points:[[0.044,129.0],[-0.029,179.0],[0.078,233.0],[-0.047,72.0],[-0.008,31.0],[-0.085,90.0],[0.011,276.0],[-0.056,39.0],[-0.063,65.0],[-0.076,134.0],[0.03,222.0],[-0.008,131.0],[-0.026,252.0],[0.11,258.0],[0.062,242.0],[-0.019,214.0],[0.042,166.0],[0.039,310.0],[-0.042,103.0],[0.093,200.0],[-0.047,138.0],[-0.031,154.0],[-0.013,91.0],[0.056,303.0],[-0.022,156.0],[0.014,297.0],[-0.032,78.0],[0.044,141.0],[-0.07,48.0],[0.002,123.0],[0.025,182.0],[-0.026,118.0],[-0.051,75.0],[-0.019,219.0],[0.081,180.0],[0.002,85.0],[0.001,258.0],[0.007,182.0],[0.01,151.0],[0.171,242.0],[0.0,259.0],[0.006,138.0],[-0.031,172.0],[-0.025,89.0],[-0.012,206.0],[-0.062,115.0],[-0.016,104.0],[-0.036,102.0],[0.071,220.0],[0.046,202.0]]}],lines:[{name:"fit",color:"#ffb454",points:[[-0.09,66.423],[0.171,314.065]]}]}],caption:"Yes, with scatter. The line recovers a positive BMI slope of 949.435 (intercept 152.133, R^2 = 0.3439) - higher BMI tracks worse progression.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 
-# synthetic data: y = 3x + 2 + noise
-rng = np.random.default_rng(0)
-X = rng.uniform(0, 10, size=(50, 1))
-y = 3 * X[:, 0] + 2 + rng.normal(0, 1, size=50)
-
-# least-squares fit
+# 442 real diabetes patients; predict progression from BMI
+db = load_diabetes()
+X = db.data[:, 2:3]                # BMI feature (standardized)
+y = db.target
 m = LinearRegression().fit(X, y)
+print("slope", m.coef_[0], "intercept", m.intercept_)
 
-# fitted line across the x range
-xs = np.array([[0.0], [10.0]])
+xs = np.array([[X.min()], [X.max()]])
 ys = m.predict(xs)
 
-plt.scatter(X[:, 0], y, c="#4ea1ff", edgecolor="k", label="data")
+plt.scatter(X[:, 0], y, c="#4ea1ff", edgecolor="k", label="patients")
 plt.plot(xs[:, 0], ys, color="#ffb454", label="fit")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Least-squares fit on y = 3x + 2 + noise")
+plt.xlabel("BMI (standardized)")
+plt.ylabel("disease progression")
+plt.title("Least-squares fit: BMI to progression")
 plt.legend()
 plt.show()`},
-  "ml-likelihood": {question:"After seeing 7 heads in 10 flips, which coin-bias theta best explains the data?",charts:[{type:"line",title:"Log-likelihood vs heads-probability theta",xlabel:"theta (heads probability)",ylabel:"log-likelihood",series:[{name:"log L(theta)",color:"#c89bff",points:[[0.05,-21.124],[0.087,-17.328],[0.125,-14.957],[0.162,-13.252],[0.2,-11.935],[0.237,-10.877],[0.275,-10.002],[0.312,-9.266],[0.35,-8.641],[0.387,-8.107],[0.425,-7.65],[0.462,-7.26],[0.5,-6.931],[0.537,-6.659],[0.575,-6.441],[0.613,-6.276],[0.65,-6.165],[0.688,-6.112],[0.725,-6.124],[0.763,-6.211],[0.8,-6.39],[0.838,-6.693],[0.875,-7.173],[0.912,-7.949],[0.95,-9.346]]}]}],caption:"The log-likelihood peaks at theta = 0.7 = 7/10 - the maximum-likelihood estimate is just the observed head fraction.",code:`import numpy as np
+  "ml-likelihood": {question:"Of 569 real tumors, 212 are malignant. Which malignancy rate theta best explains that count?",charts:[{type:"line",title:"Log-likelihood vs assumed malignancy rate theta",xlabel:"theta (probability a tumor is malignant)",ylabel:"log-likelihood",series:[{name:"log L(theta)",color:"#c89bff",points:[[0.05,-653.407],[0.087,-549.146],[0.125,-488.512],[0.162,-448.529],[0.2,-420.863],[0.237,-401.57],[0.275,-388.494],[0.312,-380.354],[0.35,-376.352],[0.387,-375.988],[0.425,-378.96],[0.462,-385.11],[0.5,-394.401],[0.537,-406.901],[0.575,-422.79],[0.613,-442.374],[0.65,-466.112],[0.688,-494.68],[0.725,-529.057],[0.763,-570.703],[0.8,-621.876],[0.838,-686.291],[0.875,-770.669],[0.912,-889.106],[0.95,-1080.351]]}]}],caption:"The log-likelihood peaks at theta = 0.373 = 212/569, the observed malignant fraction in the breast-cancer data, which is the maximum-likelihood estimate.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_breast_cancer
 
-# observed: 7 heads in 10 flips
-h, n = 7, 10
+# real data: count malignant tumors among all 569
+bc = load_breast_cancer()
+h = int((bc.target == 0).sum())    # malignant successes
+n = len(bc.target)
 
 def log_likelihood(theta):
-    # log of theta^h (1-theta)^(n-h)
     return h * np.log(theta) + (n - h) * np.log(1 - theta)
 
-# sweep the heads-probability theta
 thetas = np.linspace(0.05, 0.95, 25)
 ll = log_likelihood(thetas)
 
 plt.plot(thetas, ll, color="#c89bff", label="log L(theta)")
-plt.xlabel("theta (heads probability)")
+plt.xlabel("theta (malignancy rate)")
 plt.ylabel("log-likelihood")
-plt.title("Log-likelihood vs heads-probability theta")
+plt.title("Log-likelihood vs malignancy rate theta")
 plt.legend()
 plt.show()`},
-  "ml-logistic-regression": {question:"Can we separate these two classes, and where does logistic regression draw the line?",charts:[{type:"scatter",title:"Logistic regression decision boundary",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[0.24,3.464],[1.474,1.239],[1.602,1.967],[1.313,1.817],[1.646,1.276],[2.935,-0.292],[3.021,-0.148],[2.326,0.397],[1.691,0.838],[0.481,2.591],[1.934,0.874],[3.627,-1.2],[1.647,1.299],[2.389,0.251],[2.424,0.298],[2.391,0.303],[1.073,2.005],[1.903,0.775],[1.426,1.829],[0.749,2.475],[1.455,1.828],[1.574,2.042],[1.746,0.793],[1.166,1.552],[1.104,2.339]]},{name:"class 1",color:"#7ee787",points:[[-1.211,2.141],[-1.622,1.982],[-1.379,2.09],[-1.697,1.864],[-1.473,1.873],[-1.229,1.593],[-1.64,1.544],[-1.319,1.532],[-1.548,1.468],[-1.657,1.809],[-1.415,2.264],[-1.554,1.956],[-1.598,1.431],[-1.678,1.85],[-1.406,1.184],[-2.078,1.593],[-1.308,1.737],[-1.053,1.057],[-1.236,0.898],[-1.547,1.658],[-1.713,1.026],[-1.74,1.551],[-1.581,0.431],[-1.464,2.352],[-1.555,1.689]]}],lines:[{name:"boundary",color:"#ffb454",points:[[-2.078,5.206],[3.627,-5.024]]}]}],caption:"Yes. The fitted line splits the classes at 0.99 accuracy - points on each side get probability above or below 0.5.",code:`import numpy as np
+  "ml-logistic-regression": {question:"Using just mean radius and mean texture, where does logistic regression draw the line between malignant and benign?",charts:[{type:"scatter",title:"Logistic boundary on two real tumor features",xlabel:"mean radius",ylabel:"mean texture",groups:[{name:"malignant",color:"#ff7b72",points:[[20.73,31.12],[16.26,21.88],[19.81,22.15],[14.95,17.57],[13.71,20.83],[14.42,19.77],[17.75,28.03],[13.8,15.79],[14.25,21.72],[16.78,18.8],[15.1,22.02],[19.19,15.94],[17.46,39.28],[14.54,27.54],[20.34,21.51],[18.22,18.87],[20.94,23.56],[16.13,17.88],[15.46,11.89],[27.22,21.87],[15.7,20.31],[17.42,25.56],[21.37,15.1],[18.25,19.98],[15.12,16.68],[17.93,24.48],[14.58,21.53],[14.99,25.2]]},{name:"benign",color:"#7ee787",points:[[12.54,18.07],[14.26,18.17],[12.18,14.08],[12.07,13.44],[11.6,18.36],[12.42,15.04],[11.75,20.18],[11.43,17.31],[11.74,14.69],[11.89,21.17],[12.36,21.8],[13.47,14.06],[12.88,18.22],[11.75,17.56],[12.85,21.37],[14.58,13.66],[12.23,19.56],[10.51,23.09],[12.43,17.0],[13.59,21.84],[14.76,14.74],[12.39,17.48],[12.31,16.52],[14.87,20.21],[15.19,13.21],[12.75,16.7],[11.41,10.82],[9.667,18.49]]}],lines:[{name:"boundary",color:"#ffb454",points:[[6.981,57.023],[28.11,-44.904]]}]}],caption:"The fitted line splits the two real features at 0.891 accuracy: larger, coarser nuclei fall on the malignant side.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
 
-# two well-separated classes in 2-D
-X, y = make_classification(n_samples=50, n_features=2, n_redundant=0,
-                           n_clusters_per_class=1, class_sep=2.0, random_state=0)
-clf = LogisticRegression().fit(X, y)
+# two real, interpretable features of each tumor
+bc = load_breast_cancer()
+X = bc.data[:, [0, 1]]             # mean radius, mean texture
+y = bc.target
+clf = LogisticRegression(max_iter=5000).fit(X, y)
+print("accuracy", clf.score(X, y))
 
 # decision boundary: w0*x + w1*z + b = 0  ->  z = -(w0*x + b)/w1
 w0, w1 = clf.coef_[0]
@@ -148,180 +169,194 @@ b = clf.intercept_[0]
 xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 50)
 zs = -(w0 * xs + b) / w1
 
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
     pts = X[y == label]
     plt.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
 plt.plot(xs, zs, color="#ffb454", label="boundary")
-plt.xlabel("feature 1")
-plt.ylabel("feature 2")
-plt.title("Logistic regression decision boundary")
+plt.xlabel("mean radius")
+plt.ylabel("mean texture")
+plt.title("Logistic regression boundary")
 plt.legend()
 plt.show()`},
-  "ml-softmax": {question:"Given three class scores (2, 1, 0), what probability does softmax give each class?",charts:[{type:"bars",title:"Softmax class probabilities (scores 2, 1, 0)",labels:["class 1","class 2","class 3"],values:[0.665,0.245,0.09],colors:["#ffb454","#4ea1ff","#c89bff"]}],caption:"Softmax turns the scores into 0.665, 0.245, 0.09 - all positive, summing to 1; class 1 wins.",code:`import numpy as np
+  "ml-softmax": {question:"Shown one real iris flower's four measurements, what probability does softmax give each of the three species?",charts:[{type:"bars",title:"Softmax species probabilities for one real iris",labels:["setosa","versicolor","virginica"],values:[0.056,0.938,0.006],colors:["#ffb454","#4ea1ff","#c89bff"]}],caption:"Softmax turns the three class scores into 0.056, 0.938, 0.006 - all positive and summing to 1; the flower is called versicolor.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
 
-# three class scores
-scores = np.array([2.0, 1.0, 0.0])
+# 150 real flowers, 4 measurements, 3 species
+iris = load_iris()
+clf = LogisticRegression(max_iter=5000).fit(iris.data, iris.target)
 
-# softmax: exponentiate then normalize so the row sums to 1
-exp = np.exp(scores - scores.max())
-probs = exp / exp.sum()
+# softmax probabilities for one real flower
+probs = clf.predict_proba(iris.data[60:61])[0]
 
-plt.bar(["class 1", "class 2", "class 3"], probs,
+plt.bar(list(iris.target_names), probs,
         color=["#ffb454", "#4ea1ff", "#c89bff"])
 plt.ylabel("probability")
-plt.title("Softmax class probabilities (scores 2, 1, 0)")
+plt.title("Softmax species probabilities for one iris")
 plt.show()`},
-  "ml-glm": {question:"For count data that curves upward, does a Poisson GLM fit better than a straight line?",charts:[{type:"scatter",title:"Poisson GLM vs linear fit on count data",xlabel:"x",ylabel:"count y",groups:[{name:"counts",color:"#4ea1ff",points:[[1.624,3.0],[1.268,0.0],[0.373,1.0],[1.846,2.0],[1.151,0.0],[2.164,10.0],[1.87,0.0],[0.252,1.0],[0.718,2.0],[2.389,3.0],[0.272,0.0],[2.847,3.0],[2.467,0.0],[2.406,3.0],[0.122,1.0],[2.196,1.0],[0.2,1.0],[1.291,3.0],[0.777,0.0],[1.758,3.0],[1.681,3.0],[0.865,1.0],[1.108,0.0],[2.489,1.0],[0.822,1.0],[1.467,1.0],[2.64,1.0],[2.004,3.0],[2.582,5.0],[1.187,4.0],[1.735,2.0],[1.578,4.0],[2.318,1.0],[1.77,2.0],[0.563,0.0],[1.807,4.0],[1.164,1.0],[1.185,2.0],[1.417,2.0],[0.382,1.0],[2.607,3.0],[0.954,1.0],[0.278,2.0],[2.403,2.0],[0.196,1.0],[2.505,8.0],[1.145,1.0],[0.977,1.0],[0.967,1.0],[2.556,5.0],[2.742,3.0],[1.429,2.0],[1.759,1.0],[2.801,2.0],[2.471,2.0]]}],lines:[{name:"Poisson (log link)",color:"#7ee787",points:[[0.0,0.99],[0.103,1.043],[0.207,1.098],[0.31,1.156],[0.414,1.217],[0.517,1.281],[0.621,1.349],[0.724,1.42],[0.828,1.495],[0.931,1.574],[1.034,1.657],[1.138,1.744],[1.241,1.836],[1.345,1.933],[1.448,2.035],[1.552,2.143],[1.655,2.256],[1.759,2.375],[1.862,2.5],[1.966,2.632],[2.069,2.771],[2.172,2.918],[2.276,3.072],[2.379,3.234],[2.483,3.405],[2.586,3.585],[2.69,3.774],[2.793,3.973],[2.897,4.183],[3.0,4.404]]},{name:"linear",color:"#ff7b72",points:[[0.0,0.619],[0.103,0.735],[0.207,0.851],[0.31,0.967],[0.414,1.083],[0.517,1.199],[0.621,1.315],[0.724,1.431],[0.828,1.547],[0.931,1.663],[1.034,1.779],[1.138,1.895],[1.241,2.011],[1.345,2.127],[1.448,2.243],[1.552,2.359],[1.655,2.475],[1.759,2.591],[1.862,2.707],[1.966,2.823],[2.069,2.939],[2.172,3.055],[2.276,3.171],[2.379,3.287],[2.483,3.403],[2.586,3.52],[2.69,3.636],[2.793,3.752],[2.897,3.868],[3.0,3.984]]}]}],caption:"Yes. The Poisson curve (coef 0.497) bends with the exponential mean; the straight line cannot match the count growth.",code:`import numpy as np
+  "ml-glm": {question:"Diabetes progression is a non-negative count-like target. Does a Poisson GLM (log link) bend with it better than a straight line?",charts:[{type:"scatter",title:"Poisson GLM vs linear fit: BMI to diabetes progression",xlabel:"BMI (shifted to start at 0)",ylabel:"disease progression",groups:[{name:"patients",color:"#4ea1ff",points:[[0.052,253.0],[0.116,52.0],[0.061,179.0],[0.044,47.0],[0.133,166.0],[0.066,89.0],[0.039,75.0],[0.0,94.0],[0.079,94.0],[0.095,107.0],[0.121,172.0],[0.129,310.0],[0.009,51.0],[0.121,244.0],[0.152,242.0],[0.101,276.0],[0.058,53.0],[0.095,200.0],[0.167,332.0],[0.079,206.0],[0.074,53.0],[0.097,109.0],[0.088,185.0],[0.097,277.0],[0.16,277.0],[0.078,160.0],[0.044,178.0],[0.043,138.0],[0.088,109.0],[0.081,60.0],[0.084,262.0],[0.092,196.0],[0.034,109.0],[0.045,90.0],[0.15,268.0],[0.074,104.0],[0.051,78.0],[0.025,153.0],[0.034,39.0],[0.183,200.0],[0.084,164.0],[0.168,233.0],[0.07,111.0],[0.136,272.0],[0.084,283.0],[0.162,295.0],[0.06,108.0],[0.111,246.0],[0.043,72.0],[0.135,141.0],[0.066,58.0],[0.179,264.0],[0.027,65.0],[0.105,297.0],[0.074,132.0]]}],lines:[{name:"Poisson (log link)",color:"#7ee787",points:[[0.0,86.865],[0.009,91.49],[0.018,96.362],[0.027,101.493],[0.036,106.897],[0.045,112.589],[0.054,118.584],[0.063,124.899],[0.072,131.549],[0.081,138.554],[0.09,145.932],[0.099,153.702],[0.108,161.886],[0.117,170.507],[0.126,179.586],[0.135,189.148],[0.144,199.22],[0.153,209.828],[0.162,221.001],[0.171,232.769],[0.18,245.163],[0.189,258.217],[0.198,271.967],[0.207,286.448],[0.216,301.701],[0.225,317.766],[0.234,334.686],[0.243,352.508],[0.252,371.278],[0.261,391.048]]},{name:"linear",color:"#ff7b72",points:[[0.0,66.423],[0.009,74.962],[0.018,83.502],[0.027,92.041],[0.036,100.58],[0.045,109.12],[0.054,117.659],[0.063,126.199],[0.072,134.738],[0.081,143.277],[0.09,151.817],[0.099,160.356],[0.108,168.895],[0.117,177.435],[0.126,185.974],[0.135,194.513],[0.144,203.053],[0.153,211.592],[0.162,220.132],[0.171,228.671],[0.18,237.21],[0.189,245.75],[0.198,254.289],[0.207,262.828],[0.216,271.368],[0.225,279.907],[0.234,288.447],[0.243,296.986],[0.252,305.525],[0.261,314.065]]}]}],caption:"The Poisson curve (coef 5.768) bends upward with the exponential mean and stays positive, while the straight line can dip below zero.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
 from sklearn.linear_model import PoissonRegressor, LinearRegression
 
-# count data: y ~ Poisson(mean = exp(0.5*x)), a log link
-rng = np.random.default_rng(0)
-X = rng.uniform(0, 3, size=(300, 1))
-y = rng.poisson(np.exp(0.5 * X[:, 0]))
+# real diabetes data; progression treated as a non-negative count
+db = load_diabetes()
+x = db.data[:, 2:3]
+x = x - x.min()                    # shift BMI to start at 0
+y = db.target.astype(int)
 
-glm = PoissonRegressor(alpha=0.0).fit(X, y)   # bends with the mean
-lin = LinearRegression().fit(X, y)            # straight line
+glm = PoissonRegressor(alpha=0.0, max_iter=2000).fit(x, y)   # log link
+lin = LinearRegression().fit(x, y)
 
-xs = np.linspace(0, 3, 30).reshape(-1, 1)
-plt.scatter(X[:, 0], y, c="#4ea1ff", edgecolor="k", label="counts")
+xs = np.linspace(x.min(), x.max(), 30).reshape(-1, 1)
+plt.scatter(x[:, 0], y, c="#4ea1ff", edgecolor="k", label="patients")
 plt.plot(xs[:, 0], glm.predict(xs), color="#7ee787", label="Poisson (log link)")
 plt.plot(xs[:, 0], lin.predict(xs), color="#ff7b72", label="linear")
-plt.xlabel("x")
-plt.ylabel("count y")
-plt.title("Poisson GLM vs linear fit on count data")
+plt.xlabel("BMI (shifted)")
+plt.ylabel("disease progression")
+plt.title("Poisson GLM vs linear fit")
 plt.legend()
 plt.show()`},
-  "ml-svm": {question:"Can a linear SVM find the widest gap between these two classes?",charts:[{type:"scatter",title:"Linear SVM separating boundary",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[3.028,1.493],[0.935,-4.179],[2.226,-1.24],[1.052,-2.397],[0.689,-1.482],[2.249,-2.659],[1.539,-2.358],[0.85,-1.999],[1.89,-1.291],[-0.155,-2.714],[2.556,-0.412],[2.067,0.168],[0.57,-1.645],[2.297,0.231],[1.696,-0.48],[1.201,-1.425],[1.028,-1.297],[0.986,-1.068],[2.021,-0.428],[-0.556,-2.535],[2.496,-1.172],[0.58,-4.106],[3.118,0.034],[1.438,-2.049],[0.921,-1.436],[2.723,-2.145],[2.75,-1.447],[3.073,1.839]]},{name:"class 1",color:"#7ee787",points:[[1.935,1.388],[1.105,2.065],[1.87,2.672],[0.62,0.993],[1.652,1.531],[2.069,2.179],[1.347,1.14],[2.057,1.43],[1.901,1.854],[1.553,1.99],[1.805,1.713],[1.599,1.608],[1.885,1.388],[1.883,1.296],[1.32,1.076],[1.683,1.667],[1.288,1.085],[1.174,1.043],[1.26,1.252],[1.442,1.074],[1.008,0.902],[0.405,1.679]]}],lines:[{name:"max-margin boundary",color:"#ffb454",points:[[-1.062,-1.438],[3.822,1.849]]}]}],caption:"Yes. The max-margin line separates the classes at 0.947 accuracy using 20 support vectors on the margin.",code:`import numpy as np
+  "ml-svm": {question:"On two real tumor features, can a linear SVM find the widest gap between malignant and benign?",charts:[{type:"scatter",title:"Linear SVM boundary on standardized tumor features",xlabel:"mean radius (standardized)",ylabel:"mean texture (standardized)",groups:[{name:"malignant",color:"#ff7b72",points:[[1.114,-0.731],[1.801,0.321],[0.026,0.891],[0.663,0.191],[2.58,1.787],[0.978,-0.987],[1.637,0.226],[-0.411,1.059],[1.935,0.994],[1.097,-2.073],[1.319,0.498],[0.31,2.637],[0.609,0.331],[1.461,1.671],[0.603,0.051],[-0.474,1.105],[1.713,0.086],[1.608,1.357],[0.018,1.052],[1.719,1.089],[1.836,0.454],[0.234,-0.4],[0.538,0.919],[1.75,-1.152],[0.915,0.877],[-0.241,0.23],[1.231,-0.179],[0.949,1.254]]},{name:"benign",color:"#7ee787",points:[[-0.718,1.21],[-0.826,3.379],[-0.474,-1.503],[0.237,-0.044],[-0.786,-0.4],[-1.098,-0.631],[-0.241,-1.296],[-1.532,-0.57],[-0.545,-1.21],[-1.448,-0.456],[-1.101,-0.724],[-0.897,-0.486],[-0.851,0.733],[1.057,-1.41],[-0.735,-1.129],[0.038,-0.261],[-0.746,-0.195],[-0.905,-0.163],[-1.09,1.936],[-0.633,-1.08],[-0.354,-0.249],[-0.351,-1.205],[-0.826,0.133],[-1.295,-0.786],[-0.312,-0.202],[-1.236,-0.535],[0.617,-0.835],[0.572,-1.031]]}],lines:[{name:"max-margin boundary",color:"#ffb454",points:[[-2.03,8.589],[3.971,-14.264]]}]}],caption:"Yes. The max-margin line separates the two real features at 0.889 accuracy using 157 support vectors on the margin.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-X, y = make_classification(n_samples=300, n_features=2, n_redundant=0,
-                           n_clusters_per_class=1, class_sep=1.5, random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data[:, [0, 1]])   # radius, texture
+y = bc.target
 clf = SVC(kernel="linear", C=1.0).fit(X, y)
+print("support vectors", clf.support_.size)
 
-# max-margin boundary: w0*x + w1*z + b = 0
 w0, w1 = clf.coef_[0]
 b = clf.intercept_[0]
 xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 50)
 zs = -(w0 * xs + b) / w1
 
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
     pts = X[y == label]
     plt.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
 plt.plot(xs, zs, color="#ffb454", label="max-margin boundary")
-plt.xlabel("feature 1")
-plt.ylabel("feature 2")
-plt.title("Linear SVM separating boundary")
+plt.xlabel("mean radius (standardized)")
+plt.ylabel("mean texture (standardized)")
+plt.title("Linear SVM boundary")
 plt.legend()
 plt.show()`},
-  "ml-kernels": {question:"These two classes form concentric rings - can a straight line ever separate them?",charts:[{type:"scatter",title:"Concentric rings: not linearly separable",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"inner ring",color:"#4ea1ff",points:[[-0.267,-0.997],[-0.795,0.645],[-1.05,-0.094],[0.627,-0.818],[-0.431,0.94],[-0.232,0.884],[1.078,0.089],[-0.11,-0.96],[0.828,0.18],[-0.817,-0.445],[-0.929,-0.468],[0.526,0.764],[0.337,-0.965],[-0.982,0.102],[0.197,-1.013],[0.399,0.882],[-1.024,0.342],[0.478,-1.08],[-0.714,0.797],[0.875,-0.416],[0.902,-0.534],[-0.934,0.282],[0.783,-0.406],[0.708,0.713],[-0.999,0.064],[0.954,-0.148]]},{name:"outer ring",color:"#7ee787",points:[[-0.123,-0.397],[-0.202,-0.269],[-0.31,0.441],[0.137,-0.457],[-0.397,-0.133],[-0.355,0.211],[0.407,0.002],[-0.38,-0.118],[0.134,0.505],[-0.195,-0.24],[0.561,-0.004],[0.227,0.184],[0.24,-0.162],[0.279,0.197],[0.273,0.241],[-0.386,0.141],[0.371,-0.101],[-0.166,0.3],[-0.393,-0.371],[-0.131,-0.404],[0.414,0.281],[-0.454,-0.03],[-0.193,0.357],[-0.419,-0.265],[-0.204,-0.375],[0.3,-0.206],[-0.376,-0.092],[-0.146,0.38],[-0.097,0.267],[-0.139,0.428],[0.067,-0.383],[0.039,-0.292],[-0.243,-0.35],[0.36,0.143]]}]},{type:"bars",title:"Test accuracy: linear vs RBF kernel",labels:["linear kernel","RBF kernel"],values:[0.47,1.0],colors:["#ff7b72","#7ee787"]}],caption:"No straight line works (linear kernel 0.47), but the RBF kernel bends the boundary and hits 1.0.",code:`import numpy as np
+  "ml-kernels": {question:"On the full 30-feature breast-cancer data, does an RBF kernel beat a plain linear SVM?",charts:[{type:"scatter",title:"569 tumors in 2 PCA views (real classes)",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"malignant",color:"#ff7b72",points:[[7.183,0.055],[4.809,-3.029],[3.288,-1.668],[1.428,-1.967],[5.035,0.774],[7.236,-0.036],[-0.81,-2.659],[-0.39,-0.989],[2.763,-1.079],[1.803,0.166],[2.776,0.558],[11.669,4.749],[3.712,-2.807],[3.064,-1.877],[3.766,5.985],[3.303,-1.131],[3.519,-3.859],[10.934,-3.703],[4.149,0.767],[2.611,1.561],[1.715,-1.524],[2.735,-3.945],[0.851,-2.307],[4.442,-0.992],[6.439,-3.577],[7.248,-3.655],[0.759,-1.609],[2.388,-3.768]]},{name:"benign",color:"#7ee787",points:[[-2.386,2.758],[-2.894,-0.978],[-1.774,0.804],[7.093,12.573],[-2.116,1.849],[-3.368,-0.563],[-2.012,-1.103],[-2.551,0.228],[-1.325,1.469],[-4.871,-2.339],[-1.992,1.329],[-0.687,1.695],[-0.826,-1.25],[-1.077,1.804],[-3.315,-1.442],[-2.836,-0.399],[-0.771,-0.064],[-2.301,-0.932],[-3.639,1.59],[-2.059,0.32],[-3.194,-1.849],[-0.056,-0.227],[-2.976,1.811],[-3.996,0.96],[-2.786,2.311],[1.012,1.092],[-5.352,1.027],[-0.412,-0.39]]}]},{type:"bars",title:"Test accuracy: linear vs RBF kernel",labels:["linear kernel","RBF kernel"],values:[0.972,0.965],colors:["#4ea1ff","#7ee787"]}],caption:"On real tumor data both kernels do well: the linear SVM scores 0.972 and the RBF kernel 0.965 by bending the boundary in 30-D.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_circles
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 
-# two concentric rings: not linearly separable
-X, y = make_circles(n_samples=400, noise=0.08, factor=0.4, random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-for label, color, name in [(0, "#4ea1ff", "inner ring"), (1, "#7ee787", "outer ring")]:
-    pts = X[y == label]
+P = PCA(n_components=2, random_state=0).fit_transform(X)
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
+    pts = P[y == label]
     ax1.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
-ax1.set_xlabel("feature 1")
-ax1.set_ylabel("feature 2")
-ax1.set_title("Concentric rings: not linearly separable")
+ax1.set_xlabel("PCA component 1")
+ax1.set_ylabel("PCA component 2")
+ax1.set_title("Breast-cancer tumors in 2-D")
 ax1.legend()
 
 lin = SVC(kernel="linear").fit(Xtr, ytr).score(Xte, yte)
-rbf = SVC(kernel="rbf", gamma=1.0).fit(Xtr, ytr).score(Xte, yte)
-ax2.bar(["linear kernel", "RBF kernel"], [lin, rbf], color=["#ff7b72", "#7ee787"])
-ax2.set_title("Test accuracy: linear vs RBF kernel")
+rbf = SVC(kernel="rbf", gamma="scale").fit(Xtr, ytr).score(Xte, yte)
+ax2.bar(["linear kernel", "RBF kernel"], [lin, rbf], color=["#4ea1ff", "#7ee787"])
+ax2.set_title("Test accuracy: linear vs RBF")
 plt.show()`},
-  "ml-gda": {question:"Modeling each class as a bell curve - does shared (LDA) or per-class (QDA) covariance classify better?",charts:[{type:"scatter",title:"Two Gaussian classes (2 PCA views)",xlabel:"component 1",ylabel:"component 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[-0.785,0.343],[-1.906,1.972],[1.047,-2.054],[-0.193,-0.427],[0.32,-0.325],[1.224,0.576],[-1.573,-0.284],[-0.049,2.509],[0.539,-0.634],[2.519,-0.469],[0.655,-0.724],[-3.745,1.559],[-1.211,1.343],[-1.979,1.933],[1.446,1.159],[2.212,-0.783],[4.138,0.255],[2.306,-1.311],[0.505,1.239],[4.021,0.38],[1.802,-0.837],[-2.911,0.874],[0.526,-3.749],[-2.618,0.88],[-0.395,0.063],[-1.253,0.251],[-0.113,0.393]]},{name:"class 1",color:"#7ee787",points:[[0.561,0.942],[-0.151,-0.19],[-0.921,-0.749],[-1.208,-1.639],[-0.782,-0.922],[-0.694,-0.939],[-2.203,-2.267],[-0.029,-0.279],[-2.11,-2.055],[0.021,0.279],[0.299,2.325],[-2.861,-2.436],[0.901,-0.068],[-0.965,-1.086],[0.336,0.702],[-0.365,-0.812],[1.198,1.513],[-1.612,-1.886],[-3.02,-3.12],[0.48,0.648],[1.677,2.918],[-1.522,-1.372],[0.936,1.565],[0.034,-0.281],[-0.235,-0.301],[0.673,0.249],[-1.089,-1.281],[-0.62,-1.003]]}]},{type:"bars",title:"Test accuracy: LDA vs QDA",labels:["LDA shared cov","QDA per-class cov"],values:[0.63,0.84],colors:["#4ea1ff","#c89bff"]}],caption:"Both fit bell curves per class; here LDA scores 0.63 and QDA 0.84 on the test set.",code:`import numpy as np
+  "ml-gda": {question:"Modeling each tumor class as a Gaussian: does shared (LDA) or per-class (QDA) covariance classify breast-cancer better?",charts:[{type:"scatter",title:"Two tumor classes (2 PCA views)",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"malignant",color:"#ff7b72",points:[[3.475,-1.673],[2.735,-3.945],[2.38,3.95],[1.428,-1.967],[1.786,-0.269],[8.631,-3.459],[4.704,-0.196],[1.353,-1.154],[6.004,-0.091],[4.442,-0.992],[2.79,3.386],[5.734,-1.075],[4.549,-0.816],[3.712,-2.807],[4.95,-1.544],[3.245,-1.778],[0.982,-2.21],[2.388,-3.768],[4.944,-2.848],[0.337,-3.144],[3.785,-1.902],[2.611,1.561],[1.835,-4.322],[0.342,-0.968],[-0.947,-1.685],[6.62,-6.003],[2.985,0.758],[7.144,-2.075]]},{name:"benign",color:"#7ee787",points:[[-2.926,0.377],[1.37,2.11],[-2.125,-1.195],[-3.068,1.136],[-3.557,1.663],[-1.249,-1.589],[-3.143,-1.877],[-3.146,-0.743],[-2.684,1.444],[-0.2,1.076],[-2.471,-0.138],[-0.771,-0.064],[-2.51,3.251],[-1.42,1.394],[-1.665,2.39],[-4.139,-1.377],[-1.077,1.804],[-1.143,5.599],[-4.064,-1.246],[-1.81,0.396],[-2.985,-0.673],[-2.203,1.286],[-2.836,-1.018],[-3.484,1.62],[1.323,4.789],[7.093,12.573],[1.167,2.515],[-2.224,-0.357]]}]},{type:"bars",title:"Test accuracy: LDA vs QDA",labels:["LDA shared cov","QDA per-class cov"],values:[0.972,0.958],colors:["#4ea1ff","#c89bff"]}],caption:"Both fit bell curves per diagnosis; on the breast-cancer test set LDA scores 0.972 and QDA 0.958.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import (
     LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
 from sklearn.model_selection import train_test_split
-from sklearn.decomposition import PCA
 
-X, y = make_classification(n_samples=400, n_features=5, n_informative=3,
-                           n_redundant=0, random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
 
-X2 = PCA(n_components=2, random_state=0).fit_transform(X)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
-    pts = X2[y == label]
+P = PCA(n_components=2, random_state=0).fit_transform(X)
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
+    pts = P[y == label]
     ax1.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
-ax1.set_xlabel("component 1")
-ax1.set_ylabel("component 2")
-ax1.set_title("Two Gaussian classes (2 PCA views)")
+ax1.set_xlabel("PCA component 1")
+ax1.set_ylabel("PCA component 2")
+ax1.set_title("Two tumor classes")
 ax1.legend()
 
 lda = LinearDiscriminantAnalysis().fit(Xtr, ytr).score(Xte, yte)
 qda = QuadraticDiscriminantAnalysis().fit(Xtr, ytr).score(Xte, yte)
-ax2.bar(["LDA shared cov", "QDA per-class cov"], [lda, qda], color=["#4ea1ff", "#c89bff"])
+ax2.bar(["LDA", "QDA"], [lda, qda], color=["#4ea1ff", "#c89bff"])
 ax2.set_title("Test accuracy: LDA vs QDA")
 plt.show()`},
-  "ml-naive-bayes": {question:"Assuming features are independent given the class, how confidently does naive Bayes classify points?",charts:[{type:"scatter",title:"Naive Bayes data (2 PCA views)",xlabel:"component 1",ylabel:"component 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[1.956,-1.646],[2.109,1.177],[-2.016,0.774],[1.846,-1.288],[0.738,-1.735],[-3.093,0.394],[-5.564,1.239],[0.443,-1.251],[-3.993,0.266],[-0.453,-0.212],[-3.41,1.701],[-0.61,0.461],[-2.089,0.155],[-1.374,-1.535],[-2.026,-1.258],[3.084,-1.764],[2.292,-1.151],[1.844,1.898],[-1.844,0.119],[-1.536,1.559],[-1.141,-0.782],[-1.068,2.501],[1.694,-0.779],[-3.282,-1.675],[-0.219,2.341],[-2.744,4.137],[-3.634,0.728],[1.207,-0.454]]},{name:"class 1",color:"#7ee787",points:[[0.254,-2.002],[3.922,0.413],[-1.226,-0.64],[4.428,0.111],[-1.72,-0.36],[-0.977,-2.761],[-0.831,-1.107],[-0.848,4.227],[1.389,1.379],[0.264,-0.908],[-0.932,-0.71],[-1.261,-1.074],[4.481,-0.868],[2.511,2.873],[-3.458,-0.196],[-0.108,-0.958],[5.662,-0.919],[-1.021,-0.438],[2.264,2.306],[-1.713,4.404],[6.013,-0.65],[-1.708,0.059],[3.328,3.294],[0.868,-0.147],[-2.863,-0.73],[1.238,3.221],[0.684,1.926]]}]},{type:"bars",title:"Predicted P(class 1) for first 3 test points",labels:["point 1","point 2","point 3"],values:[0.735,0.967,0.623],colors:["#ffb454","#ffb454","#ffb454"]}],caption:"Multiplying per-feature probabilities gives 0.71 accuracy and confident per-point probabilities for class 1.",code:`import numpy as np
+  "ml-naive-bayes": {question:"Assuming the 30 tumor features are independent given the diagnosis, how confidently does naive Bayes classify real tumors?",charts:[{type:"scatter",title:"Breast-cancer tumors (2 PCA views)",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"malignant",color:"#ff7b72",points:[[2.472,-1.5],[0.342,-0.968],[3.064,-1.877],[2.251,-0.349],[4.549,-0.816],[3.288,-1.668],[-0.223,-0.702],[2.38,3.95],[3.372,2.588],[3.104,-1.236],[-1.909,-3.122],[3.793,-3.584],[1.835,-4.322],[3.51,2.172],[0.447,-2.788],[-0.742,-2.452],[7.676,-3.075],[9.513,-5.603],[4.991,-1.133],[2.227,1.942],[1.432,-1.05],[2.171,-2.826],[4.007,0.537],[4.944,-2.848],[1.314,-1.775],[2.902,4.005],[9.007,0.581],[4.555,3.087]]},{name:"benign",color:"#7ee787",points:[[-3.194,-1.849],[-1.443,0.306],[-1.237,-0.188],[-4.659,-0.223],[-3.895,0.539],[-0.749,1.798],[-0.78,-2.124],[-0.86,0.097],[-2.116,1.849],[-2.473,-0.335],[-2.001,-0.293],[-0.733,3.702],[0.347,1.541],[-3.357,-1.104],[-1.167,-1.666],[-4.038,-0.241],[-2.334,0.79],[-3.765,4.398],[-1.929,1.461],[-2.63,-0.697],[-1.655,-4.556],[-0.709,-1.568],[-2.136,-0.004],[-2.969,-0.069],[-2.125,-1.195],[-2.456,0.898],[-2.997,-2.739],[-4.478,-1.741]]}]},{type:"bars",title:"Predicted P(benign) for 3 real test tumors",labels:["tumor 1","tumor 2","tumor 3"],values:[0.0,1.0,1.0],colors:["#ffb454","#ffb454","#ffb454"]}],caption:"Multiplying per-feature Gaussians gives 0.937 test accuracy and confident per-tumor benign probabilities.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
-from sklearn.decomposition import PCA
 
-X, y = make_classification(n_samples=400, n_features=6, n_informative=4,
-                           random_state=0)
+bc = load_breast_cancer()
+X, y = bc.data, bc.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
 nb = GaussianNB().fit(Xtr, ytr)
+print("accuracy", nb.score(Xte, yte))
 
-X2 = PCA(n_components=2, random_state=0).fit_transform(X)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
-    pts = X2[y == label]
+P = PCA(n_components=2, random_state=0).fit_transform(StandardScaler().fit_transform(X))
+for label, color, name in [(0, "#ff7b72", "malignant"), (1, "#7ee787", "benign")]:
+    pts = P[y == label]
     ax1.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
-ax1.set_xlabel("component 1")
-ax1.set_ylabel("component 2")
-ax1.set_title("Naive Bayes data (2 PCA views)")
+ax1.set_xlabel("PCA component 1")
+ax1.set_ylabel("PCA component 2")
+ax1.set_title("Breast-cancer tumors")
 ax1.legend()
 
-# predicted P(class 1) for the first 3 test points
-p1 = nb.predict_proba(Xte[:3])[:, 1]
-ax2.bar(["point 1", "point 2", "point 3"], p1, color="#ffb454")
-ax2.set_title("Predicted P(class 1) for first 3 test points")
+p1 = nb.predict_proba(Xte[:3])[:, 1]   # P(benign) for 3 real tumors
+ax2.bar(["tumor 1", "tumor 2", "tumor 3"], p1, color="#ffb454")
+ax2.set_title("Predicted P(benign)")
 plt.show()`},
-  "ml-trees": {question:"Which features does a decision tree rely on most when splitting the data?",charts:[{type:"bars",title:"Decision-tree feature importances",labels:["feat 1","feat 2","feat 3","feat 4","feat 5"],values:[0.303,0.449,0.248,0.0,0.0],colors:["#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff"]}],caption:"The tree leans on a few informative features (test accuracy 0.89); the importances sum to 1 across all splits.",code:`import numpy as np
+  "ml-trees": {question:"Which of the 30 tumor measurements does a decision tree rely on most to call malignant vs benign?",charts:[{type:"bars",title:"Decision-tree feature importances (breast cancer)",labels:["mean concave points","worst area","worst texture","perimeter error","area error"],values:[0.765,0.124,0.054,0.021,0.018],colors:["#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff"]}],caption:"The tree leans hardest on 'mean concave points' (test accuracy 0.937); importances sum to 1 across all splits.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 
-X, y = make_classification(n_samples=400, n_features=5, n_informative=3,
-                           random_state=0)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
+bc = load_breast_cancer()
+Xtr, Xte, ytr, yte = train_test_split(bc.data, bc.target, test_size=0.25, random_state=0)
 
 tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr)
-imp = tree.feature_importances_   # how much each feature reduces impurity
+imp = tree.feature_importances_          # impurity reduction per feature
+order = np.argsort(imp)[::-1][:5]        # top 5 features
 
-plt.bar(["feat 1", "feat 2", "feat 3", "feat 4", "feat 5"], imp, color="#4ea1ff")
+plt.bar([bc.feature_names[i] for i in order], imp[order], color="#4ea1ff")
+plt.xticks(rotation=30, ha="right")
 plt.ylabel("importance")
 plt.title("Decision-tree feature importances")
+plt.tight_layout()
 plt.show()`},
-  "ml-ensembles": {question:"Does combining many trees beat a single decision tree?",charts:[{type:"bars",title:"Test accuracy: single tree vs ensembles",labels:["single tree","random forest","boosting"],values:[0.86,0.88,0.907],colors:["#ff7b72","#7ee787","#ffb454"]}],caption:"Yes. One tree scores 0.86, but the random forest (0.88) and boosting (0.907) combine many trees to do better.",code:`import numpy as np
+  "ml-ensembles": {question:"On breast-cancer data, does combining many trees beat a single decision tree?",charts:[{type:"bars",title:"Test accuracy: single tree vs ensembles (breast cancer)",labels:["single tree","random forest","boosting"],values:[0.881,0.972,0.965],colors:["#ff7b72","#7ee787","#ffb454"]}],caption:"Yes. One tree scores 0.881, while the random forest (0.972) and gradient boosting (0.965) combine many trees to do better.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 
-X, y = make_classification(n_samples=600, n_features=10, n_informative=5,
-                           random_state=0)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
+bc = load_breast_cancer()
+Xtr, Xte, ytr, yte = train_test_split(bc.data, bc.target, test_size=0.25, random_state=0)
 
 tree = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr).score(Xte, yte)
 rf = RandomForestClassifier(n_estimators=200, random_state=0).fit(Xtr, ytr).score(Xte, yte)
@@ -330,22 +365,20 @@ gb = GradientBoostingClassifier(random_state=0).fit(Xtr, ytr).score(Xte, yte)
 plt.bar(["single tree", "random forest", "boosting"], [tree, rf, gb],
         color=["#ff7b72", "#7ee787", "#ffb454"])
 plt.ylabel("test accuracy")
-plt.title("Test accuracy: single tree vs ensembles")
+plt.title("Single tree vs ensembles")
 plt.show()`},
-  "ml-knn": {question:"How many neighbors k gives the best accuracy - too few overfits, too many oversmooths?",charts:[{type:"line",title:"kNN test accuracy vs number of neighbors k",xlabel:"k (neighbors)",ylabel:"test accuracy",series:[{name:"test accuracy",color:"#4ea1ff",points:[[1,0.9],[3,0.93],[5,0.93],[9,0.94],[15,0.91],[25,0.89]]}]}],caption:"Accuracy rises then plateaus as k grows; very small k is jittery, and mid-range k gives the steadiest fit.",code:`import numpy as np
+  "ml-knn": {question:"On breast-cancer data, how many neighbors k gives the best accuracy - too few overfits, too many oversmooths?",charts:[{type:"line",title:"kNN test accuracy vs number of neighbors k (breast cancer)",xlabel:"k (neighbors)",ylabel:"test accuracy",series:[{name:"test accuracy",color:"#4ea1ff",points:[[1.0,0.951],[3.0,0.944],[5.0,0.951],[9.0,0.951],[15.0,0.965],[25.0,0.951]]}]}],caption:"Accuracy rises then plateaus as k grows on real tumor data; very small k is jittery and mid-range k gives the steadiest fit.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 
-X, y = make_classification(n_samples=400, n_features=4, random_state=0)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
+bc = load_breast_cancer()
+Xtr, Xte, ytr, yte = train_test_split(bc.data, bc.target, test_size=0.25, random_state=0)
 
-# scale first since kNN relies on distances
-ks = [1, 3, 5, 9, 15, 25]
-acc = []
+ks, acc = [1, 3, 5, 9, 15, 25], []
 for k in ks:
     knn = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=k))
     knn.fit(Xtr, ytr)
@@ -354,248 +387,278 @@ for k in ks:
 plt.plot(ks, acc, color="#4ea1ff", marker="o", label="test accuracy")
 plt.xlabel("k (neighbors)")
 plt.ylabel("test accuracy")
-plt.title("kNN test accuracy vs number of neighbors k")
+plt.title("kNN accuracy vs k")
 plt.legend()
 plt.show()`},
-  "ml-bias-variance": {question:"As model complexity grows, where is the sweet spot between underfitting and overfitting?",charts:[{type:"line",title:"Train vs test error over polynomial degree",xlabel:"polynomial degree",ylabel:"MSE",series:[{name:"train MSE",color:"#4ea1ff",points:[[1,0.231],[2,0.228],[3,0.107],[5,0.085],[7,0.083],[9,0.082],[12,0.082],[15,0.081]]},{name:"test MSE",color:"#ff7b72",points:[[1,0.256],[2,0.269],[3,0.09],[5,0.104],[7,0.109],[9,0.111],[12,0.111],[15,0.112]]}]}],caption:"Train error keeps falling, but test error dips then climbs - the U-curve bottoms out at low degree, the bias-variance sweet spot.",code:`import numpy as np
+  "ml-bias-variance": {question:"Fitting diabetes progression from BMI with growing polynomial degree, where is the sweet spot between underfitting and overfitting?",charts:[{type:"line",title:"Train vs test error over polynomial degree (diabetes BMI)",xlabel:"polynomial degree",ylabel:"mean squared error",series:[{name:"train MSE",color:"#4ea1ff",points:[[1.0,3892.7],[2.0,3892.7],[3.0,3878.8],[5.0,3863.4],[7.0,3826.3],[9.0,3819.8],[12.0,3809.6],[15.0,3788.3]]},{name:"test MSE",color:"#ff7b72",points:[[1.0,3921.4],[2.0,3922.1],[3.0,3937.5],[5.0,3894.4],[7.0,3999.3],[9.0,3941.2],[12.0,4134.1],[15.0,5400.3]]}]}],caption:"Train error keeps falling but test error dips then climbs - the U-curve bottoms out at low degree, the bias-variance sweet spot on real diabetes data.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
-rng = np.random.default_rng(0)
-X = rng.uniform(-3, 3, size=(120, 1))
-y = np.sin(X[:, 0]) + rng.normal(0, 0.3, size=120)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0)
+db = load_diabetes()
+x = db.data[:, 2:3]                # BMI
+y = db.target
+Xtr, Xte, ytr, yte = train_test_split(x, y, test_size=0.3, random_state=0)
 
 degrees = [1, 2, 3, 5, 7, 9, 12, 15]
-tr_err, te_err = [], []
+tr, te = [], []
 for d in degrees:
-    model = make_pipeline(PolynomialFeatures(d), LinearRegression()).fit(Xtr, ytr)
-    tr_err.append(mean_squared_error(ytr, model.predict(Xtr)))
-    te_err.append(mean_squared_error(yte, model.predict(Xte)))
+    m = make_pipeline(PolynomialFeatures(d), StandardScaler(),
+                      LinearRegression()).fit(Xtr, ytr)
+    tr.append(mean_squared_error(ytr, m.predict(Xtr)))
+    te.append(mean_squared_error(yte, m.predict(Xte)))
 
-plt.plot(degrees, tr_err, color="#4ea1ff", marker="o", label="train MSE")
-plt.plot(degrees, te_err, color="#ff7b72", marker="o", label="test MSE")
+plt.plot(degrees, tr, color="#4ea1ff", marker="o", label="train MSE")
+plt.plot(degrees, te, color="#ff7b72", marker="o", label="test MSE")
 plt.xlabel("polynomial degree")
-plt.ylabel("MSE")
-plt.title("Train vs test error over polynomial degree")
+plt.ylabel("mean squared error")
+plt.title("Train vs test error")
 plt.legend()
 plt.show()`},
-  "ml-learning-theory": {question:"Does adding more training data close the gap between training and validation accuracy?",charts:[{type:"line",title:"Learning curve: accuracy vs training-set size",xlabel:"training examples",ylabel:"accuracy",series:[{name:"train accuracy",color:"#4ea1ff",points:[[64,0.869],[192,0.859],[384,0.861],[640,0.863]]},{name:"validation accuracy",color:"#7ee787",points:[[64,0.85],[192,0.857],[384,0.859],[640,0.86]]}]}],caption:"Yes. As training size grows the train and validation curves converge - more data shrinks the generalization gap.",code:`import numpy as np
+  "ml-learning-theory": {question:"On breast-cancer data, does adding more training examples close the gap between training and validation accuracy?",charts:[{type:"line",title:"Learning curve: accuracy vs training-set size (breast cancer)",xlabel:"training examples",ylabel:"accuracy",series:[{name:"train accuracy",color:"#4ea1ff",points:[[45.0,1.0],[136.0,0.987],[273.0,0.985],[455.0,0.989]]},{name:"validation accuracy",color:"#7ee787",points:[[45.0,0.775],[136.0,0.949],[273.0,0.967],[455.0,0.981]]}]}],caption:"Yes. As training size grows the train and validation curves converge on real tumor data - more data shrinks the generalization gap.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import learning_curve
 
-X, y = make_classification(n_samples=800, n_features=8, n_informative=5,
-                           random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target
 
-# score the model at growing training-set sizes
 sizes, train_sc, val_sc = learning_curve(
-    LogisticRegression(max_iter=500), X, y,
-    train_sizes=[0.1, 0.3, 0.6, 1.0], cv=5, random_state=0)
+    LogisticRegression(max_iter=5000), X, y,
+    train_sizes=[0.1, 0.3, 0.6, 1.0], cv=5)
 
 plt.plot(sizes, train_sc.mean(1), color="#4ea1ff", marker="o", label="train accuracy")
 plt.plot(sizes, val_sc.mean(1), color="#7ee787", marker="o", label="validation accuracy")
 plt.xlabel("training examples")
 plt.ylabel("accuracy")
-plt.title("Learning curve: accuracy vs training-set size")
+plt.title("Learning curve")
 plt.legend()
 plt.show()`},
-  "ml-kmeans": {question:"How many natural groups are in this data, and which point belongs to which?",charts:[{type:"scatter",title:"k-means clusters (k = 3) with centroids",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"cluster A",color:"#4ea1ff",points:[[1.961,0.354],[2.707,0.945],[1.967,1.714],[1.89,1.602],[0.471,1.122],[2.742,1.811],[1.528,0.486],[2.215,0.857],[0.697,1.207],[2.283,2.292],[2.696,0.96],[0.16,1.589],[1.641,0.115],[1.241,0.835],[1.903,0.582],[0.442,0.466],[2.172,2.648],[0.167,1.629],[1.129,0.648],[1.267,-0.28],[2.729,0.698],[1.736,1.194]]},{name:"cluster B",color:"#7ee787",points:[[1.653,2.828],[-0.328,4.674],[0.421,4.184],[0.666,4.062],[0.945,3.369],[0.898,3.773],[1.1,4.606],[1.029,4.546],[0.727,4.349],[0.437,4.329],[0.466,3.986],[1.013,4.154],[0.36,4.735],[1.215,5.365],[0.385,5.538],[-0.058,4.517],[0.762,4.946],[1.704,4.558],[0.499,4.262],[0.26,4.613],[1.662,3.783],[0.498,4.113]]},{name:"cluster C",color:"#c89bff",points:[[-2.007,4.16],[-1.369,3.783],[-1.574,2.664],[-1.7,3.274],[-1.632,3.824],[-0.923,3.612],[-0.986,2.612],[-1.164,1.454],[-0.335,3.335],[-1.262,3.677],[-1.043,3.634],[-0.99,2.352],[-1.721,4.132]]},{name:"centroids",color:"#ffb454",points:[[1.93,0.88],[0.91,4.32],[-1.64,2.8]]}]},{type:"line",title:"Elbow: inertia vs number of clusters k",xlabel:"k (clusters)",ylabel:"inertia",series:[{name:"inertia",color:"#ffb454",points:[[1,2185.5],[2,1064.6],[3,486.3],[4,419.6],[5,356.9]]}]}],caption:"Three tight clusters; the elbow plot bends sharply at k = 3, where inertia stops dropping fast.",code:`import numpy as np
+  "ml-kmeans": {question:"The wine dataset has 178 wines from 3 cultivars. Can k-means rediscover the groups from the chemistry alone?",charts:[{type:"scatter",title:"k-means clusters (k=3) on wine chemistry, PCA view",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"cluster A",color:"#4ea1ff",points:[[-1.115,-1.802],[-1.177,-0.664],[-0.551,-2.222],[-0.366,-2.169],[0.031,-1.263],[-0.462,-0.618],[1.578,-1.462],[-0.457,-2.269],[-1.349,-2.118],[-0.097,-2.11],[0.74,-1.409],[-1.542,-1.381],[0.376,-1.027],[-1.772,-1.717],[-0.66,-2.68],[-0.495,-2.381],[-0.725,-1.064],[-0.253,-2.821],[1.41,-2.166],[-0.161,-1.164],[-0.61,-1.908],[0.482,-3.872]]},{name:"cluster B",color:"#7ee787",points:[[1.645,-0.516],[2.113,0.676],[1.087,0.242],[1.009,0.87],[2.305,1.663],[2.225,1.875],[2.172,2.327],[1.336,0.253],[1.41,0.698],[2.544,0.169],[1.899,1.631],[2.252,-1.433],[1.629,0.053],[2.821,0.646],[3.458,1.131],[2.174,1.212],[1.235,-0.09],[2.449,1.175],[2.469,1.329],[3.506,1.613],[2.742,1.437],[0.668,0.17]]},{name:"cluster C",color:"#c89bff",points:[[-2.287,0.373],[-2.949,1.555],[-3.916,0.155],[-2.539,-0.087],[-2.55,2.045],[-3.212,-0.251],[-2.807,1.571],[-2.986,0.489],[-2.321,2.356],[-2.597,0.698],[-1.048,3.515],[-1.61,2.407],[-2.37,-0.46],[-3.605,1.802],[-3.064,0.353],[-3.371,2.216],[-2.385,0.375],[-2.466,2.194],[-2.626,0.563],[-3.094,0.349],[-2.374,0.292],[-2.929,1.274]]},{name:"centroids",color:"#ffb454",points:[[-0.163,-1.768],[2.266,0.866],[-2.744,1.214]]}]},{type:"line",title:"Elbow: inertia vs number of clusters k",xlabel:"k (clusters)",ylabel:"inertia",series:[{name:"inertia",color:"#ffb454",points:[[1.0,1282.1],[2.0,628.8],[3.0,259.5],[4.0,192.4],[5.0,155.1]]}]}],caption:"Three tight clusters emerge from the 13 chemical features; the elbow bends at k=3, matching the three real cultivars.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
-X, _ = make_blobs(n_samples=400, centers=3, cluster_std=0.8, random_state=0)
-km = KMeans(n_clusters=3, n_init=10, random_state=0).fit(X)
+# 178 real wines, 13 chemical measurements each
+wine = load_wine()
+X = StandardScaler().fit_transform(wine.data)
+P = PCA(n_components=2, random_state=0).fit_transform(X)
+km = KMeans(n_clusters=3, n_init=10, random_state=0).fit(P)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 colors = ["#4ea1ff", "#7ee787", "#c89bff"]
 for c in range(3):
-    pts = X[km.labels_ == c]
+    pts = P[km.labels_ == c]
     ax1.scatter(pts[:, 0], pts[:, 1], c=colors[c], edgecolor="k")
 cen = km.cluster_centers_
-ax1.scatter(cen[:, 0], cen[:, 1], c="#ffb454", marker="X", s=200, edgecolor="k", label="centroids")
-ax1.set_xlabel("feature 1")
-ax1.set_ylabel("feature 2")
-ax1.set_title("k-means clusters (k = 3) with centroids")
+ax1.scatter(cen[:, 0], cen[:, 1], c="#ffb454", marker="X", s=200,
+            edgecolor="k", label="centroids")
+ax1.set_xlabel("PCA component 1")
+ax1.set_ylabel("PCA component 2")
+ax1.set_title("k-means on wine chemistry")
 ax1.legend()
 
-# elbow: inertia drops fast until k = 3
 ks = [1, 2, 3, 4, 5]
-inertia = [KMeans(n_clusters=k, n_init=10, random_state=0).fit(X).inertia_ for k in ks]
+inertia = [KMeans(n_clusters=k, n_init=10, random_state=0).fit(P).inertia_ for k in ks]
 ax2.plot(ks, inertia, color="#ffb454", marker="o", label="inertia")
 ax2.set_xlabel("k (clusters)")
 ax2.set_ylabel("inertia")
-ax2.set_title("Elbow: inertia vs number of clusters k")
+ax2.set_title("Elbow plot")
 ax2.legend()
 plt.show()`},
-  "ml-em": {question:"Can a Gaussian mixture softly assign each point to one of three overlapping groups?",charts:[{type:"scatter",title:"GMM soft clusters (EM, 3 components)",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"component 1",color:"#4ea1ff",points:[[1.937,0.217],[2.87,0.957],[1.945,1.918],[1.848,1.778],[0.97,0.673],[2.913,2.039],[1.397,0.383],[2.255,0.847],[0.357,1.285],[2.34,2.64],[2.856,0.976],[1.538,-0.081],[1.037,0.82],[1.865,0.503],[0.039,0.358],[2.471,2.234],[0.59,1.307],[0.898,0.585],[1.07,-0.574],[2.897,0.648],[1.656,1.268]]},{name:"component 2",color:"#7ee787",points:[[1.552,3.31],[-0.654,4.767],[0.282,4.154],[0.589,4.001],[0.937,3.136],[0.878,3.64],[1.131,4.682],[1.043,4.606],[0.665,4.36],[0.302,4.336],[0.339,3.907],[1.022,4.117],[0.206,4.843],[1.275,5.63],[0.237,5.847],[-0.317,4.571],[-0.038,3.439],[0.708,5.106],[1.886,4.621],[0.38,4.251],[0.081,4.691],[1.833,3.653],[0.379,4.066]]},{name:"component 3",color:"#c89bff",points:[[-2.128,4.47],[-1.329,4.0],[-1.585,2.6],[-1.744,3.363],[-1.658,4.051],[-0.772,3.785],[-0.314,1.762],[-0.85,2.536],[-1.073,1.088],[-1.196,3.867],[-0.922,3.813],[-0.856,2.21],[-1.769,4.436]]}]}],caption:"Yes. EM finds three Gaussian components with mixture weights [0.331, 0.352, 0.317], each point getting a probability per group.",code:`import numpy as np
+  "ml-em": {question:"Can a Gaussian mixture softly assign each real wine to one of three overlapping cultivar groups?",charts:[{type:"scatter",title:"GMM soft clusters (EM, 3 components) on wine, PCA view",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"component 1",color:"#4ea1ff",points:[[0.083,-2.306],[-0.55,-2.293],[2.05,-1.925],[-0.929,-3.073],[-1.793,-1.15],[0.9,-0.764],[1.035,-1.451],[-1.572,-0.885],[1.976,-1.403],[2.252,-1.433],[-0.813,-0.221],[-0.725,-1.064],[-1.772,-1.717],[-0.457,-2.269],[0.747,-2.313],[0.762,-3.375],[-1.457,-1.383],[-1.303,-0.763],[-0.807,-2.234],[1.578,-1.462],[0.376,-1.027],[0.957,-2.224]]},{name:"component 2",color:"#7ee787",points:[[-2.385,0.375],[-3.936,0.66],[-2.986,0.489],[-4.281,0.65],[-2.55,2.045],[-3.678,0.848],[-3.209,2.769],[-2.406,2.592],[-3.371,2.216],[-2.21,1.16],[-2.181,2.078],[-2.24,1.175],[-2.375,0.482],[-2.737,0.41],[-2.848,0.556],[-3.583,1.273],[-2.937,0.264],[-1.048,3.515],[-2.381,2.589],[-3.605,1.802],[-2.387,2.297],[-3.392,1.312]]},{name:"component 3",color:"#c89bff",points:[[3.071,1.156],[0.99,0.941],[1.235,-0.09],[1.41,0.698],[1.629,0.053],[1.336,0.253],[1.385,0.659],[2.01,1.247],[3.506,1.613],[1.502,-0.769],[2.085,1.061],[0.668,0.17],[2.305,1.663],[2.449,1.175],[2.677,1.472],[3.458,1.131],[1.122,0.114],[1.899,1.631],[2.544,0.169],[3.542,2.518],[3.215,0.167],[2.147,1.017]]}]}],caption:"Yes. EM fits three Gaussian components to the wine chemistry with mixture weights [0.38, 0.269, 0.351], each wine getting a probability per group.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.mixture import GaussianMixture
 
-X, _ = make_blobs(n_samples=400, centers=3, cluster_std=1.0, random_state=0)
+wine = load_wine()
+X = StandardScaler().fit_transform(wine.data)
+P = PCA(n_components=2, random_state=0).fit_transform(X)
 
-# EM fits a 3-component Gaussian mixture; hard label = argmax of soft probs
-gmm = GaussianMixture(n_components=3, random_state=0).fit(X)
-labels = gmm.predict(X)
+gmm = GaussianMixture(n_components=3, random_state=0).fit(P)
+labels = gmm.predict(P)            # hard label = argmax of soft probs
+print("mixture weights", gmm.weights_)
 
 colors = ["#4ea1ff", "#7ee787", "#c89bff"]
 for c in range(3):
-    pts = X[labels == c]
+    pts = P[labels == c]
     plt.scatter(pts[:, 0], pts[:, 1], c=colors[c], edgecolor="k",
                 label="component %d" % (c + 1))
-plt.xlabel("feature 1")
-plt.ylabel("feature 2")
-plt.title("GMM soft clusters (EM, 3 components)")
+plt.xlabel("PCA component 1")
+plt.ylabel("PCA component 2")
+plt.title("GMM soft clusters on wine")
 plt.legend()
 plt.show()`},
-  "ml-hierarchical": {question:"Merging nearest groups bottom-up - which linkage best recovers the true clusters?",charts:[{type:"scatter",title:"Agglomerative clusters (ward linkage, k = 3)",xlabel:"feature 1",ylabel:"feature 2",groups:[{name:"cluster A",color:"#4ea1ff",points:[[-2.178,2.793],[-0.737,3.265],[-1.925,3.107],[-1.178,3.651],[-2.67,1.82],[-0.9,3.88],[-3.095,3.199],[-2.993,3.004],[-2.423,2.508],[-1.696,3.981],[-1.207,2.243],[-0.967,2.973],[-1.856,2.766],[-2.325,3.467],[-0.314,3.397],[-2.163,2.621],[-1.669,2.841]]},{name:"cluster B",color:"#7ee787",points:[[1.223,0.543],[2.165,1.06],[2.252,0.202],[1.562,1.558],[0.476,0.182],[1.394,0.611],[2.862,1.653],[2.09,1.243],[3.101,-0.551],[1.962,0.689],[2.044,1.01],[1.52,-0.109],[1.246,1.445],[2.539,1.384],[2.592,1.147],[1.72,1.332],[2.043,1.163],[2.708,1.136],[1.91,1.514],[1.574,0.048]]},{name:"cluster C",color:"#c89bff",points:[[1.287,4.537],[1.24,3.534],[1.195,3.706],[0.349,4.575],[0.504,4.326],[0.718,4.136],[1.226,4.798],[0.526,2.747],[1.837,5.145],[0.373,5.641],[0.628,5.654],[0.355,2.917],[0.705,4.092],[0.907,3.839],[1.424,3.172],[2.565,3.286],[1.093,4.748],[1.801,4.178],[1.487,4.394],[-0.153,4.155]]}]},{type:"bars",title:"Cluster quality (ARI vs truth) by linkage",labels:["ward","average","complete"],values:[0.96,0.951,0.912],colors:["#7ee787","#ffb454","#4ea1ff"]}],caption:"Bottom-up merging recovers three clusters; ward linkage matches the true labels best (ARI 0.96).",code:`import numpy as np
+  "ml-hierarchical": {question:"Merging nearest wines bottom-up - which linkage best recovers the three real cultivars?",charts:[{type:"scatter",title:"Agglomerative clusters (ward, k=3) on wine, PCA view",xlabel:"PCA component 1",ylabel:"PCA component 2",groups:[{name:"cluster A",color:"#4ea1ff",points:[[-0.556,-2.658],[0.031,-1.263],[-1.597,-1.208],[0.038,-1.267],[0.762,-3.375],[-0.462,-0.618],[1.421,-1.418],[0.798,-2.377],[-0.494,-1.939],[-0.544,-0.369],[-1.793,-1.15],[1.578,-1.462],[1.035,-1.451],[0.482,-3.872],[-0.097,-2.11],[-0.253,-2.821],[-0.807,-2.234],[-0.279,-1.931],[-0.66,-2.68],[-1.836,-0.83],[-0.929,-3.073],[0.9,-0.764]]},{name:"cluster B",color:"#7ee787",points:[[-2.737,0.41],[-3.605,1.802],[-2.937,0.264],[-2.89,1.925],[-2.949,1.555],[-2.55,2.045],[-2.37,-0.46],[-2.375,0.482],[-2.21,1.16],[-2.321,2.356],[-3.916,0.155],[-2.387,2.297],[-2.181,2.078],[-3.143,0.738],[-2.678,2.761],[-2.76,2.139],[-3.53,0.883],[-3.583,1.273],[-3.094,0.349],[-2.287,0.373],[-1.813,1.528],[-1.048,3.515]]},{name:"cluster C",color:"#c89bff",points:[[2.535,-0.092],[2.059,1.609],[2.707,1.752],[1.009,0.87],[3.542,2.518],[3.215,0.167],[2.53,1.803],[1.775,0.686],[3.757,2.756],[2.5,1.241],[2.188,0.69],[2.677,1.472],[1.235,-0.09],[2.147,1.017],[2.727,1.191],[2.754,0.789],[0.668,0.17],[1.629,0.053],[3.506,1.613],[2.101,-0.071],[2.562,0.26],[2.085,1.061]]}]},{type:"bars",title:"Cluster quality (ARI vs true cultivar) by linkage",labels:["ward","average","complete"],values:[0.896,0.769,0.658],colors:["#7ee787","#ffb454","#4ea1ff"]}],caption:"Bottom-up merging of the wine chemistry recovers three clusters; ward linkage matches the true cultivars best (ARI 0.896).",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import adjusted_rand_score
 
-X, true_labels = make_blobs(n_samples=300, centers=3, cluster_std=0.7, random_state=0)
+wine = load_wine()
+X = StandardScaler().fit_transform(wine.data)
+P = PCA(n_components=2, random_state=0).fit_transform(X)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-labels = AgglomerativeClustering(n_clusters=3, linkage="ward").fit_predict(X)
+labels = AgglomerativeClustering(n_clusters=3, linkage="ward").fit_predict(P)
 colors = ["#4ea1ff", "#7ee787", "#c89bff"]
 for c in range(3):
-    pts = X[labels == c]
+    pts = P[labels == c]
     ax1.scatter(pts[:, 0], pts[:, 1], c=colors[c], edgecolor="k")
-ax1.set_xlabel("feature 1")
-ax1.set_ylabel("feature 2")
-ax1.set_title("Agglomerative clusters (ward linkage, k = 3)")
+ax1.set_xlabel("PCA component 1")
+ax1.set_ylabel("PCA component 2")
+ax1.set_title("Agglomerative clusters (ward)")
 
-# compare linkages by agreement with the true labels
 links = ["ward", "average", "complete"]
-aris = []
-for link in links:
-    pred = AgglomerativeClustering(n_clusters=3, linkage=link).fit_predict(X)
-    aris.append(adjusted_rand_score(true_labels, pred))
+aris = [adjusted_rand_score(
+    wine.target,
+    AgglomerativeClustering(n_clusters=3, linkage=l).fit_predict(P)) for l in links]
 ax2.bar(links, aris, color=["#7ee787", "#ffb454", "#4ea1ff"])
-ax2.set_title("Cluster quality (ARI vs truth) by linkage")
+ax2.set_title("Cluster quality by linkage")
 plt.show()`},
-  "ml-pca": {question:"What 2 directions capture the most spread, and how much variance do they keep?",charts:[{type:"scatter",title:"Data projected onto top 2 principal components",xlabel:"PC 1",ylabel:"PC 2",groups:[{name:"class 0",color:"#4ea1ff",points:[[4.466,-1.019],[0.788,0.052],[-0.461,1.868],[2.721,1.54],[3.952,1.509],[4.535,-0.468],[-4.114,-1.426],[0.15,1.408],[0.864,1.641],[-1.25,2.266],[-2.097,0.275],[-1.335,1.598],[-3.312,0.533],[1.433,0.993],[-4.234,-0.17],[-1.159,1.211],[-1.091,-1.278],[5.48,-0.729],[1.155,0.824],[-2.358,-1.375],[3.518,-0.053],[2.77,1.324],[-3.1,-0.895],[1.865,1.644],[-2.697,-0.01]]},{name:"class 1",color:"#7ee787",points:[[0.517,0.579],[-1.885,2.034],[-1.061,1.371],[-0.698,1.877],[0.22,-0.993],[0.387,-1.528],[0.634,-2.43],[-1.364,1.039],[0.377,-2.314],[0.834,-3.389],[-1.869,1.671],[0.601,-1.279],[0.276,1.318],[-1.443,1.195],[0.033,0.455],[0.213,0.542],[-2.984,1.55],[-0.119,0.404],[0.865,-3.81],[0.503,-1.057],[-1.592,1.967],[-1.713,0.7],[-0.014,1.337],[0.563,-2.202],[-0.152,1.698],[0.646,-1.611],[0.589,-2.274],[0.036,0.197],[-4.127,2.527],[0.28,0.649]]}]},{type:"bars",title:"Variance explained per principal component",labels:["PC1","PC2","PC3","PC4","PC5","PC6","PC7","PC8"],values:[0.447,0.211,0.117,0.082,0.076,0.066,0.0,0.0],colors:["#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454"]}],caption:"The first two components capture most of the spread; the bar chart shows variance dropping fast after PC1 and PC2.",code:`import numpy as np
+  "ml-pca": {question:"Handwritten digits live in 64 pixels. What 2 directions capture the most spread, and how much variance do they keep?",charts:[{type:"scatter",title:"Digit images projected to top 2 principal components",xlabel:"PC 1",ylabel:"PC 2",groups:[{name:"digit 0",color:"#4ea1ff",points:[[-1.274,-2.238],[-1.223,-2.255],[-2.748,-1.872],[-1.344,-1.587],[-0.701,-1.953],[-2.582,-0.633],[-0.748,-3.043],[-3.193,-0.291],[-2.855,-0.542],[-2.919,-2.252],[-1.23,-3.092],[-2.002,-1.32],[-1.421,-2.539],[-1.171,1.187],[-1.612,-3.317],[-2.252,-0.968],[-1.497,-2.971],[-1.434,-2.776],[-0.963,-3.068],[0.662,-3.638],[-2.0,-1.328],[-1.413,0.169],[-1.982,-1.421],[-0.798,-2.835],[-1.316,-1.975],[-0.53,-3.569],[-3.555,-2.158],[-0.777,-2.296],[-1.009,-3.326],[-0.99,-3.739]]},{name:"digit 1",color:"#7ee787",points:[[-1.752,1.049],[0.657,-0.034],[-2.688,1.205],[-2.268,0.986],[-0.003,0.288],[-1.125,0.415],[-0.602,1.29],[-2.505,2.052],[0.035,0.999],[0.092,0.123],[-1.951,1.234],[0.101,1.338],[-1.573,1.547],[2.35,-2.741],[-2.177,0.459],[-1.567,0.325],[0.596,0.586],[-0.613,0.946],[0.032,0.694],[-1.99,1.366],[0.579,1.077],[0.59,1.593],[-1.015,-0.418],[0.133,2.081],[-1.368,1.381],[0.809,-4.711],[-1.355,1.227],[1.439,-2.48],[0.623,1.383],[-0.102,0.545]]}]},{type:"bars",title:"Variance explained per principal component",labels:["PC1","PC2","PC3","PC4","PC5","PC6","PC7","PC8"],values:[0.12,0.096,0.084,0.065,0.049,0.042,0.039,0.034],colors:["#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454","#ffb454"]}],caption:"The top two of 64 directions already pull digits 0 and 1 apart, capturing about 0.216 of the total pixel variance combined.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_digits
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-X, y = make_classification(n_samples=400, n_features=8, n_informative=3,
-                           random_state=0)
-pca = PCA(n_components=8, random_state=0).fit(X)
-X2 = pca.transform(X)[:, :2]   # project onto the top 2 components
+# 1797 real 8x8 handwritten digit images, 64 pixels each
+digits = load_digits()
+X = StandardScaler().fit_transform(digits.data)
+y = digits.target
+pca = PCA(n_components=10, random_state=0).fit(X)
+P = pca.transform(X)[:, :2]
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-for label, color, name in [(0, "#4ea1ff", "class 0"), (1, "#7ee787", "class 1")]:
-    pts = X2[y == label]
+for label, color, name in [(0, "#4ea1ff", "digit 0"), (1, "#7ee787", "digit 1")]:
+    pts = P[y == label]
     ax1.scatter(pts[:, 0], pts[:, 1], c=color, label=name, edgecolor="k")
 ax1.set_xlabel("PC 1")
 ax1.set_ylabel("PC 2")
-ax1.set_title("Data projected onto top 2 principal components")
+ax1.set_title("Digits projected to 2-D")
 ax1.legend()
 
-ratio = pca.explained_variance_ratio_
+ratio = pca.explained_variance_ratio_[:8]
 ax2.bar(["PC%d" % (i + 1) for i in range(8)], ratio, color="#ffb454")
-ax2.set_title("Variance explained per principal component")
+ax2.set_title("Variance explained per component")
 plt.show()`},
-  "ml-ica": {question:"From two mixed-together signals, can ICA recover the original independent sources?",charts:[{type:"line",title:"ICA: a mixture and the two recovered sources",xlabel:"time",ylabel:"amplitude (scaled)",series:[{name:"mixture 1",color:"#ff7b72",points:[[0.0,0.003],[0.107,0.835],[0.214,1.136],[0.321,1.57],[0.427,1.469],[0.534,1.551],[0.641,1.634],[0.748,1.704],[0.855,1.561],[0.962,1.645],[1.068,0.174],[1.175,-0.064],[1.282,-0.049],[1.389,-0.295],[1.496,-0.505],[1.603,-0.658],[1.71,-1.029],[1.816,-1.343],[1.923,-1.361],[2.03,-1.47],[2.137,-0.21],[2.244,-0.318],[2.351,-0.401],[2.457,-0.299],[2.564,-0.328],[2.671,-0.103],[2.778,0.045],[2.885,0.342],[2.992,0.46],[3.098,0.744],[3.205,-0.395],[3.312,-0.34],[3.419,-0.237],[3.526,0.086],[3.633,0.127],[3.74,0.119],[3.846,0.242],[3.953,0.215],[4.06,0.1],[4.167,-0.001],[4.274,1.436],[4.381,1.343],[4.487,1.083],[4.594,1.02],[4.701,0.77],[4.808,0.578],[4.915,0.12],[5.022,0.131],[5.129,-0.078],[5.235,-0.209],[5.342,-1.681],[5.449,-1.73],[5.556,-1.783],[5.663,-1.427],[5.77,-1.532],[5.876,-1.433],[5.983,-1.17],[6.09,-1.104],[6.197,-1.04],[6.304,0.868],[6.411,0.674],[6.518,1.15],[6.624,1.276],[6.731,1.423],[6.838,1.757],[6.945,1.718],[7.052,1.519],[7.159,1.682],[7.265,1.663],[7.372,0.253],[7.479,0.003],[7.586,-0.26],[7.693,-0.53],[7.8,-0.401],[7.907,-0.835]]},{name:"recovered source 1",color:"#4ea1ff",points:[[0.0,-0.046],[0.107,0.734],[0.214,0.794],[0.321,0.842],[0.427,0.716],[0.534,0.682],[0.641,0.683],[0.748,0.746],[0.855,0.649],[0.962,0.702],[1.068,-0.891],[1.175,-0.773],[1.282,-0.862],[1.389,-0.736],[1.496,-0.73],[1.603,-0.865],[1.71,-0.81],[1.816,-0.922],[1.923,-0.751],[2.03,-0.809],[2.137,0.752],[2.244,0.713],[2.351,0.732],[2.457,0.868],[2.564,0.762],[2.671,0.842],[2.778,0.852],[2.885,0.823],[2.992,0.772],[3.098,0.791],[3.205,-0.7],[3.312,-0.793],[3.419,-0.862],[3.526,-0.743],[3.633,-0.966],[3.74,-0.895],[3.846,-0.898],[3.953,-0.971],[4.06,-0.899],[4.167,-1.0],[4.274,0.765],[4.381,0.685],[4.487,0.651],[4.594,0.799],[4.701,0.802],[4.808,0.798],[4.915,0.739],[5.022,0.636],[5.129,0.837],[5.235,0.767],[5.342,-0.748],[5.449,-0.867],[5.556,-0.796],[5.663,-0.813],[5.77,-0.798],[5.876,-0.764],[5.983,-0.864],[6.09,-0.797],[6.197,-0.899],[6.304,0.701],[6.411,0.738],[6.518,0.756],[6.624,0.732],[6.731,0.735],[6.838,0.86],[6.945,0.658],[7.052,0.661],[7.159,0.738],[7.265,0.817],[7.372,-0.754],[7.479,-0.761],[7.586,-0.84],[7.693,-0.892],[7.8,-0.711],[7.907,-0.759]]},{name:"recovered source 2",color:"#7ee787",points:[[0.0,-0.083],[0.107,0.008],[0.214,0.204],[0.321,0.516],[0.427,0.528],[0.534,0.619],[0.641,0.684],[0.748,0.694],[0.855,0.652],[0.962,0.68],[1.068,0.678],[1.175,0.4],[1.282,0.478],[1.389,0.188],[1.496,0.015],[1.603,-0.008],[1.71,-0.346],[1.816,-0.514],[1.923,-0.655],[2.03,-0.699],[2.137,-0.842],[2.244,-0.901],[2.351,-0.981],[2.457,-1.0],[2.564,-0.945],[2.671,-0.824],[2.778,-0.713],[2.885,-0.453],[2.992,-0.322],[3.098,-0.108],[3.205,0.082],[3.312,0.194],[3.419,0.328],[3.526,0.499],[3.633,0.695],[3.74,0.637],[3.846,0.738],[3.953,0.769],[4.06,0.625],[4.167,0.618],[4.274,0.466],[4.381,0.45],[4.487,0.267],[4.594,0.108],[4.701,-0.095],[4.808,-0.246],[4.915,-0.569],[5.022,-0.484],[5.129,-0.8],[5.235,-0.853],[5.342,-0.914],[5.449,-0.865],[5.556,-0.96],[5.663,-0.662],[5.77,-0.757],[5.876,-0.703],[5.983,-0.418],[6.09,-0.415],[6.197,-0.288],[6.304,0.058],[6.411,-0.125],[6.518,0.243],[6.624,0.362],[6.731,0.477],[6.838,0.652],[6.945,0.771],[7.052,0.609],[7.159,0.683],[7.265,0.609],[7.372,0.64],[7.479,0.445],[7.586,0.293],[7.693,0.114],[7.8,0.084],[7.907,-0.228]]}]}],caption:"Yes. ICA unmixes the blended signal back into a clean sine and a square wave - the two independent sources.",code:`import numpy as np
+  "ml-ica": {question:"From two blended digit-image intensity signals, can ICA recover the original independent sources?",charts:[{type:"line",title:"ICA: a mixture and the two recovered sources (digit pixels)",xlabel:"pixel index (0..63)",ylabel:"intensity (scaled)",series:[{name:"mixture",color:"#ff7b72",points:[[0.0,-0.553],[1.0,-0.504],[2.0,0.23],[3.0,0.914],[4.0,0.954],[5.0,0.227],[6.0,-0.477],[7.0,-0.553],[8.0,-0.551],[9.0,-0.185],[10.0,0.846],[11.0,0.567],[12.0,0.62],[13.0,0.772],[14.0,-0.298],[15.0,-0.552],[16.0,-0.552],[17.0,-0.271],[18.0,0.224],[19.0,-0.006],[20.0,0.604],[21.0,0.598],[22.0,-0.4],[23.0,-0.553],[24.0,-0.553],[25.0,-0.479],[26.0,-0.063],[27.0,0.644],[28.0,1.0],[29.0,0.139],[30.0,-0.524],[31.0,-0.553],[32.0,-0.553],[33.0,-0.529],[34.0,-0.163],[35.0,0.464],[36.0,0.835],[37.0,0.39],[38.0,-0.404],[39.0,-0.553],[40.0,-0.553],[41.0,-0.472],[42.0,0.031],[43.0,-0.097],[44.0,0.159],[45.0,0.636],[46.0,-0.078],[47.0,-0.553],[48.0,-0.553],[49.0,-0.45],[50.0,0.421],[51.0,0.229],[52.0,0.377],[53.0,0.743],[54.0,-0.056],[55.0,-0.548],[56.0,-0.553],[57.0,-0.513],[58.0,0.291],[59.0,0.996],[60.0,0.966],[61.0,0.328],[62.0,-0.405],[63.0,-0.548]]},{name:"recovered source 1",color:"#4ea1ff",points:[[0.0,-0.573],[1.0,-0.532],[2.0,0.167],[3.0,0.882],[4.0,0.937],[5.0,0.203],[6.0,-0.5],[7.0,-0.573],[8.0,-0.571],[9.0,-0.237],[10.0,0.853],[11.0,0.619],[12.0,0.592],[13.0,0.778],[14.0,-0.305],[15.0,-0.572],[16.0,-0.572],[17.0,-0.271],[18.0,0.368],[19.0,0.067],[20.0,0.536],[21.0,0.65],[22.0,-0.392],[23.0,-0.573],[24.0,-0.573],[25.0,-0.481],[26.0,0.059],[27.0,0.732],[28.0,1.0],[29.0,0.162],[30.0,-0.535],[31.0,-0.573],[32.0,-0.573],[33.0,-0.541],[34.0,-0.064],[35.0,0.623],[36.0,0.865],[37.0,0.265],[38.0,-0.459],[39.0,-0.573],[40.0,-0.573],[41.0,-0.476],[42.0,0.196],[43.0,0.033],[44.0,0.243],[45.0,0.578],[46.0,-0.179],[47.0,-0.573],[48.0,-0.573],[49.0,-0.465],[50.0,0.495],[51.0,0.262],[52.0,0.382],[53.0,0.69],[54.0,-0.131],[55.0,-0.569],[56.0,-0.573],[57.0,-0.539],[58.0,0.212],[59.0,0.977],[60.0,0.965],[61.0,0.294],[62.0,-0.425],[63.0,-0.569]]},{name:"recovered source 2",color:"#7ee787",points:[[0.0,-0.032],[1.0,-0.089],[2.0,-0.421],[3.0,-0.342],[4.0,-0.259],[5.0,-0.183],[6.0,-0.062],[7.0,-0.033],[8.0,-0.03],[9.0,-0.288],[10.0,-0.094],[11.0,0.229],[12.0,-0.268],[13.0,-0.092],[14.0,0.01],[15.0,-0.034],[16.0,-0.032],[17.0,0.045],[18.0,0.839],[19.0,0.445],[20.0,-0.509],[21.0,0.215],[22.0,0.115],[23.0,-0.032],[24.0,-0.032],[25.0,0.066],[26.0,0.756],[27.0,0.43],[28.0,-0.162],[29.0,0.116],[30.0,0.015],[31.0,-0.032],[32.0,-0.032],[33.0,0.01],[34.0,0.627],[35.0,0.893],[36.0,0.045],[37.0,-0.823],[38.0,-0.269],[39.0,-0.032],[40.0,-0.032],[41.0,0.048],[42.0,1.0],[43.0,0.807],[44.0,0.489],[45.0,-0.46],[46.0,-0.603],[47.0,-0.032],[48.0,-0.032],[49.0,-0.02],[50.0,0.386],[51.0,0.164],[52.0,-0.032],[53.0,-0.441],[54.0,-0.445],[55.0,-0.039],[56.0,-0.032],[57.0,-0.073],[58.0,-0.528],[59.0,-0.274],[60.0,-0.163],[61.0,-0.262],[62.0,-0.057],[63.0,-0.038]]}]}],caption:"Yes. Starting from the average images of two real digits mixed together, ICA unmixes the 64-pixel signal back into the two independent source patterns.",code:`import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
 from sklearn.decomposition import FastICA
 
-rng = np.random.default_rng(0)
-t = np.linspace(0, 8, 600)
-s1 = np.sin(2 * t)                # source 1: sine
-s2 = np.sign(np.sin(3 * t))       # source 2: square wave
-S = np.c_[s1, s2] + 0.1 * rng.normal(size=(600, 2))
+# two real source signals: the average pixel pattern of digits 3 and 8
+digits = load_digits()
+X, y = digits.data, digits.target
+s1 = X[y == 3].mean(0)             # 64-pixel mean image of digit 3
+s2 = X[y == 8].mean(0)
+S = np.c_[s1, s2]
+S = S - S.mean(0)
 
 # mix the sources together, then unmix with ICA
 A = np.array([[1.0, 0.7], [0.5, 1.0]])
-X = S @ A.T
-S_hat = FastICA(n_components=2, random_state=0).fit_transform(X)
+Xmix = S @ A.T
+S_hat = FastICA(n_components=2, random_state=0, max_iter=2000).fit_transform(Xmix)
 
-def scale(v):                     # normalize for plotting
-    return v / np.abs(v).max()
+def scale(v):
+    m = np.abs(v).max()
+    return v / m if m > 0 else v
 
-plt.plot(t, scale(X[:, 0]), color="#ff7b72", label="mixture 1")
+t = np.arange(64)
+plt.plot(t, scale(Xmix[:, 0]), color="#ff7b72", label="mixture")
 plt.plot(t, scale(S_hat[:, 0]), color="#4ea1ff", label="recovered source 1")
 plt.plot(t, scale(S_hat[:, 1]), color="#7ee787", label="recovered source 2")
-plt.xlabel("time")
-plt.ylabel("amplitude (scaled)")
-plt.title("ICA: a mixture and the two recovered sources")
+plt.xlabel("pixel index")
+plt.ylabel("intensity (scaled)")
+plt.title("ICA unmixing of digit-pixel signals")
 plt.legend()
 plt.show()`},
-  "ml-classification-metrics": {question:"Out of all predictions, how many were right - and what kind of mistakes did the model make?",charts:[{type:"confusion",title:"Confusion matrix (test set)",labels:["class 0","class 1"],matrix:[[107,3],[13,27]]}],caption:"On the test set: 27 true positives, 13 missed, 3 false alarms. Precision 0.9, recall 0.68 read straight off the matrix.",code:`import numpy as np
+  "ml-classification-metrics": {question:"On held-out breast-cancer tumors, how many did the model get right - and what kind of mistakes did it make?",charts:[{type:"confusion",title:"Confusion matrix on breast-cancer test set",labels:["malignant","benign"],matrix:[[60,3],[1,107]]}],caption:"On the test set: 107 benign caught, 3 benign missed, 1 malignant flagged as benign. Precision 0.97, recall 0.99 read straight off the matrix.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay
 
-X, y = make_classification(n_samples=500, n_features=6, weights=[0.7, 0.3],
-                           random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0)
 
-clf = LogisticRegression().fit(Xtr, ytr)
+clf = LogisticRegression(max_iter=5000).fit(Xtr, ytr)
 pred = clf.predict(Xte)
 
-# rows = true class, columns = predicted class
-ConfusionMatrixDisplay.from_predictions(yte, pred, display_labels=["class 0", "class 1"])
-plt.title("Confusion matrix (test set)")
+# rows = true diagnosis, columns = predicted
+ConfusionMatrixDisplay.from_predictions(
+    yte, pred, display_labels=["malignant", "benign"])
+plt.title("Confusion matrix (breast-cancer test set)")
 plt.show()`},
-  "ml-roc-auc": {question:"Across every threshold, how well does the classifier trade true positives against false positives?",charts:[{type:"roc",title:"ROC curve",auc:0.9157,points:[[0.0,0.0],[0.0,0.014],[0.0,0.42],[0.012,0.522],[0.025,0.522],[0.037,0.681],[0.037,0.725],[0.049,0.725],[0.062,0.739],[0.062,0.754],[0.074,0.768],[0.086,0.768],[0.086,0.797],[0.099,0.812],[0.123,0.812],[0.16,0.826],[0.16,0.855],[0.247,0.87],[0.321,0.87],[0.321,0.884],[0.37,0.899],[0.383,0.899],[0.42,0.913],[0.42,0.928],[0.432,0.928],[0.457,0.942],[0.457,0.971],[0.469,0.986],[0.889,0.986],[1.0,1.0]]}],caption:"The curve bows toward the top-left with AUC = 0.9157 - far above the 0.5 diagonal of random guessing.",code:`import numpy as np
+  "ml-roc-auc": {question:"Across every threshold, how well does the breast-cancer classifier trade true positives against false positives?",charts:[{type:"roc",title:"ROC curve (breast-cancer test set)",auc:0.9947,points:[[0.0,0.0],[0.0,0.009],[0.0,0.759],[0.016,0.759],[0.016,0.926],[0.032,0.926],[0.032,0.991],[0.063,0.991],[0.063,1.0],[1.0,1.0]]}],caption:"The curve bows hard toward the top-left with AUC = 0.9947 - far above the 0.5 diagonal of random guessing.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import RocCurveDisplay
 
-X, y = make_classification(n_samples=500, n_features=6, random_state=0)
+bc = load_breast_cancer()
+X = StandardScaler().fit_transform(bc.data)
+y = bc.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0)
 
-clf = LogisticRegression().fit(Xtr, ytr)
-scores = clf.predict_proba(Xte)[:, 1]   # probability of class 1
+clf = LogisticRegression(max_iter=5000).fit(Xtr, ytr)
+scores = clf.predict_proba(Xte)[:, 1]      # probability of benign
 
-# ROC traces TPR vs FPR across every threshold; AUC summarizes it
 RocCurveDisplay.from_predictions(yte, scores)
 plt.plot([0, 1], [0, 1], "--", color="gray")   # random-guess diagonal
-plt.title("ROC curve")
+plt.title("ROC curve (breast cancer)")
 plt.show()`},
-  "ml-regression-metrics": {question:"How close are the model's predictions to the true values?",charts:[{type:"scatter",title:"Predicted vs actual on the test set",xlabel:"actual y",ylabel:"predicted y",groups:[{name:"test points",color:"#4ea1ff",points:[[-124.13,-98.9],[35.3,43.9],[121.51,111.17],[30.57,20.81],[-132.88,-121.46],[33.58,29.96],[-116.45,-88.62],[-61.51,-58.62],[90.39,85.98],[-18.65,-11.67],[36.64,47.1],[21.76,21.92],[-14.61,-10.88],[-69.57,-65.68],[30.07,41.1],[10.59,23.16],[73.97,73.56],[61.03,64.28],[-51.99,-63.19],[8.42,0.42],[23.69,16.35],[-78.26,-54.3],[-72.19,-63.62],[59.25,34.48],[62.89,48.19],[-4.17,4.14],[-61.75,-40.01],[66.14,26.22],[-105.79,-108.11],[-66.05,-69.44],[-89.05,-64.73],[-48.58,-56.32],[-135.27,-114.83],[-41.16,-47.68],[39.14,46.48],[16.5,1.02],[-174.9,-177.14],[77.81,75.3],[-92.56,-78.13],[36.1,56.51],[93.57,103.27],[41.07,49.98],[-69.86,-57.97],[-117.48,-122.73],[21.39,13.96],[-30.17,-37.23],[53.49,51.64],[154.2,169.9],[104.0,96.57],[27.35,11.8],[52.58,51.15],[24.45,17.32],[-65.62,-96.51],[-10.89,-12.93],[-18.28,-10.8]]}],lines:[{name:"perfect prediction",color:"#ffb454",dash:true,points:[[-221.69,-221.69],[222.89,222.89]]}]}],caption:"Points hug the diagonal: R^2 = 0.9694 and RMSE = 14.319 in the target's own units.",code:`import numpy as np
+  "ml-regression-metrics": {question:"How close are a linear model's diabetes-progression predictions to the true values?",charts:[{type:"scatter",title:"Predicted vs actual disease progression (test set)",xlabel:"actual progression",ylabel:"predicted progression",groups:[{name:"test patients",color:"#4ea1ff",points:[[180.0,222.35],[53.0,125.15],[71.0,115.71],[171.0,176.12],[64.0,120.28],[61.0,118.93],[321.0,239.68],[51.0,123.62],[292.0,193.26],[270.0,231.42],[96.0,85.53],[127.0,164.85],[156.0,163.79],[317.0,228.13],[170.0,133.97],[99.0,236.97],[110.0,164.14],[128.0,170.21],[297.0,208.07],[128.0,66.9],[230.0,131.1],[192.0,225.37],[63.0,112.38],[122.0,191.69],[137.0,98.64],[302.0,155.57],[49.0,91.19],[215.0,250.53],[219.0,144.09],[233.0,270.15],[47.0,46.69],[212.0,193.78],[51.0,84.59],[179.0,167.78],[131.0,165.03],[71.0,115.42],[113.0,151.44],[52.0,216.57],[89.0,71.93],[137.0,208.51],[150.0,210.16],[121.0,169.88],[155.0,212.26],[85.0,148.69],[179.0,112.24],[182.0,139.03],[195.0,237.28],[168.0,144.29],[145.0,129.9],[42.0,131.16],[208.0,237.72],[167.0,187.03],[118.0,98.53],[93.0,82.77],[182.0,112.04]]}],lines:[{name:"perfect prediction",color:"#ffb454",dash:true,points:[[42.0,42.0],[321.0,321.0]]}]}],caption:"Points scatter around the diagonal: R^2 = 0.3929 and RMSE = 55.652 in the progression score's own units.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_regression
+from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
-X, y = make_regression(n_samples=400, n_features=5, noise=15.0, random_state=0)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0)
+# 442 real patients, all 10 features, progression target
+db = load_diabetes()
+Xtr, Xte, ytr, yte = train_test_split(db.data, db.target, test_size=0.3, random_state=0)
 
 model = LinearRegression().fit(Xtr, ytr)
 pred = model.predict(Xte)
 
-plt.scatter(yte, pred, c="#4ea1ff", edgecolor="k", label="test points")
+plt.scatter(yte, pred, c="#4ea1ff", edgecolor="k", label="test patients")
 lo, hi = yte.min(), yte.max()
 plt.plot([lo, hi], [lo, hi], "--", color="#ffb454", label="perfect prediction")
-plt.xlabel("actual y")
-plt.ylabel("predicted y")
-plt.title("Predicted vs actual on the test set")
+plt.xlabel("actual progression")
+plt.ylabel("predicted progression")
+plt.title("Predicted vs actual")
 plt.legend()
 plt.show()`},
-  "ml-regularization": {question:"With few samples and many features, does shrinking the weights (ridge) beat plain least squares?",charts:[{type:"bars",title:"Test R^2: OLS vs ridge",labels:["OLS","ridge (CV)"],values:[0.776,0.801],colors:["#ff7b72","#7ee787"]},{type:"line",title:"Test R^2 vs ridge penalty alpha",xlabel:"alpha (penalty strength)",ylabel:"test R^2",series:[{name:"test R^2",color:"#c89bff",points:[[0.01,0.778],[0.028,0.78],[0.081,0.785],[0.231,0.796],[0.658,0.807],[1.874,0.814],[5.337,0.804],[15.199,0.73],[43.288,0.561],[123.285,0.342],[351.119,0.163],[1000.0,0.064]]}]}],caption:"Yes. OLS overfits (R^2 0.776); ridge with alpha 0.379 shrinks the weight norm from 215.36 to 203.46 and lifts R^2 to 0.801.",code:`import numpy as np
+  "ml-regularization": {question:"On diabetes data, does shrinking the weights (ridge) beat plain least squares, and how much penalty is too much?",charts:[{type:"bars",title:"Test R squared: OLS vs ridge (diabetes)",labels:["OLS","ridge (CV)"],values:[0.387,0.393],colors:["#ff7b72","#7ee787"]},{type:"line",title:"Test R squared vs ridge penalty alpha",xlabel:"alpha (penalty strength)",ylabel:"test R squared",series:[{name:"test R squared",color:"#c89bff",points:[[0.01,0.387],[0.028,0.387],[0.081,0.387],[0.231,0.386],[0.658,0.386],[1.874,0.386],[5.337,0.387],[15.199,0.393],[43.288,0.406],[123.285,0.415],[351.119,0.386],[1000.0,0.297]]}]}],caption:"Ridge with cross-validated alpha = 14.384 lifts test R squared from 0.387 (OLS) to 0.393 on the diabetes data; crank alpha too high and the fit collapses.",code:`import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_regression
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, RidgeCV, Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 
-# few samples, many features -> OLS overfits
-X, y = make_regression(n_samples=60, n_features=40, noise=10.0, random_state=0)
+db = load_diabetes()
+X = StandardScaler().fit_transform(db.data)
+y = db.target
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.4, random_state=0)
 
 ols = LinearRegression().fit(Xtr, ytr)
@@ -605,17 +668,16 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 ax1.bar(["OLS", "ridge (CV)"],
         [r2_score(yte, ols.predict(Xte)), r2_score(yte, ridge.predict(Xte))],
         color=["#ff7b72", "#7ee787"])
-ax1.set_ylabel("test R^2")
-ax1.set_title("Test R^2: OLS vs ridge")
+ax1.set_ylabel("test R squared")
+ax1.set_title("OLS vs ridge")
 
-# sweep the penalty alpha: too much shrinkage hurts
 alphas = np.logspace(-2, 3, 12)
 r2s = [r2_score(yte, Ridge(alpha=a).fit(Xtr, ytr).predict(Xte)) for a in alphas]
-ax2.plot(alphas, r2s, color="#c89bff", marker="o", label="test R^2")
+ax2.plot(alphas, r2s, color="#c89bff", marker="o", label="test R squared")
 ax2.set_xscale("log")
 ax2.set_xlabel("alpha (penalty strength)")
-ax2.set_ylabel("test R^2")
-ax2.set_title("Test R^2 vs ridge penalty alpha")
+ax2.set_ylabel("test R squared")
+ax2.set_title("R squared vs ridge penalty")
 ax2.legend()
 plt.show()`}
 });

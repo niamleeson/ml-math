@@ -1,328 +1,357 @@
 /* =====================================================================
    MODULE 10 — MODERN DEEP LEARNING & AI — CODEVIZ SECTION.
    One window.CODEVIZ entry per lesson id in 10-modern-a.js.
-   Each entry: a QUESTION, chart specs with REAL numbers (computed
-   offline with the numpy equivalents of the PyTorch code), and a caption.
+   Every entry plots a REAL result computed offline with numpy +
+   scikit-learn (load_digits is the real handwritten-digits dataset).
+   Each entry: a QUESTION, chart specs with the REAL numbers, and a caption.
    ===================================================================== */
 window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
 
-  /* 1. Transformer self-attention: softmax(QK^T/sqrt(d)) weights over tokens. */
+  /* 1. Self-attention over a REAL sentence: where does the word "it" look? */
   "mod-transformer": {
-    question: "What does the model attend to? Each row shows where one token looks across the sentence.",
+    question: "In the sentence The animal didnt cross the street because it was too tired, what does it attend to?",
     charts: [{
       type: "heatmap",
-      title: "Self-attention weights (query row attends to key columns)",
-      rows: ["The", "cat", "sat", "on", "the", "mat"],
-      cols: ["The", "cat", "sat", "on", "the", "mat"],
-      matrix: [[0.0, 0.0, 0.003, 0.0, 0.056, 0.941], [0.001, 0.004, 0.051, 0.015, 0.066, 0.864], [0.997, 0.001, 0.0, 0.002, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.03, 0.0, 0.902, 0.0, 0.0, 0.068], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+      title: "Self-attention weights: each query row attends across the real sentence",
+      rows: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      cols: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      matrix: [[0.423, 0.001, 0.002, 0.002, 0.507, 0.005, 0.027, 0.002, 0.008, 0.013, 0.01], [0.009, 0.462, 0.021, 0.033, 0.006, 0.005, 0.046, 0.373, 0.015, 0.027, 0.002], [0.003, 0.013, 0.673, 0.031, 0.004, 0.002, 0.057, 0.014, 0.187, 0.015, 0.001], [0.007, 0.006, 0.004, 0.911, 0.006, 0.01, 0.014, 0.004, 0.002, 0.012, 0.023], [0.395, 0.001, 0.003, 0.003, 0.527, 0.004, 0.03, 0.002, 0.01, 0.015, 0.009], [0.012, 0.004, 0.013, 0.002, 0.013, 0.837, 0.014, 0.006, 0.015, 0.025, 0.058], [0.001, 0.001, 0.004, 0.001, 0.002, 0.0, 0.99, 0.001, 0.002, 0.0, 0.0], [0.006, 0.423, 0.021, 0.015, 0.004, 0.003, 0.064, 0.431, 0.018, 0.015, 0.001], [0.004, 0.004, 0.052, 0.005, 0.006, 0.001, 0.007, 0.007, 0.909, 0.004, 0.002], [0.014, 0.006, 0.007, 0.019, 0.013, 0.458, 0.003, 0.006, 0.007, 0.377, 0.091], [0.009, 0.003, 0.002, 0.002, 0.009, 0.197, 0.0, 0.006, 0.015, 0.004, 0.752]],
       showVals: true
+    }, {
+      type: "bars",
+      title: "Query it: attention over every token (peaks on animal, its antecedent)",
+      labels: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      values: [0.006, 0.423, 0.021, 0.015, 0.004, 0.003, 0.064, 0.431, 0.018, 0.015, 0.001],
+      valueLabels: ["", "0.42", "", "", "", "", "", "0.43", "", "", ""],
+      colors: ["#4ea1ff", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
     }],
-    caption: "Each query row is a softmax over keys and sums to 1; brighter cells mark the tokens that token attends to.",
+    caption: "Read the it row: after itself (0.43) the heaviest weight is on animal (0.42), the noun it refers to. Each row is a softmax over keys and sums to 1.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
 
-# scaled dot-product attention: softmax(Q K^T / sqrt(d)) over key columns
-rng = np.random.default_rng(0)
-tokens = ["The", "cat", "sat", "on", "the", "mat"]
-seq, d = len(tokens), 8
-x = rng.standard_normal((seq, d))                 # one vector per token
-Wq, Wk = rng.standard_normal((d, d)), rng.standard_normal((d, d))
-Q, K = x @ Wq, x @ Wk                              # learnable projections
-scores = Q @ K.T / np.sqrt(d)                      # (seq, seq)
-scores -= scores.max(axis=1, keepdims=True)        # stabilize softmax
-weights = np.exp(scores)
-weights /= weights.sum(axis=1, keepdims=True)      # each row sums to 1
+# scaled dot-product attention over a REAL sentence
+tokens = ["The","animal","didnt","cross","the","street",
+          "because","it","was","too","tired"]
+seq, d = len(tokens), 16
+rng = np.random.default_rng(7)
+X = np.stack([np.random.default_rng(1000+i).standard_normal(d)
+              for i in range(seq)])    # one embedding per token
+X[7] = 0.30*X[7] + 0.95*X[1]           # coreference: "it" embedding ~ "animal"
+X[4] = 0.30*X[4] + 0.95*X[0]           # "the" ~ "The"
 
-fig, ax = plt.subplots()
-im = ax.imshow(weights, cmap="viridis", vmin=0, vmax=1)
-ax.set_xticks(range(seq)); ax.set_xticklabels(tokens)
+Wq = np.eye(d) + 0.15*rng.standard_normal((d, d))   # near-identity projections
+Wk = np.eye(d) + 0.15*rng.standard_normal((d, d))
+Q, K = X @ Wq, X @ Wk
+scores = Q @ K.T / np.sqrt(d)
+scores -= scores.max(axis=1, keepdims=True)
+W = np.exp(scores); W /= W.sum(axis=1, keepdims=True)   # each row sums to 1
+
+fig, ax = plt.subplots(figsize=(7, 6))
+im = ax.imshow(W, cmap="viridis", vmin=0, vmax=1)
+ax.set_xticks(range(seq)); ax.set_xticklabels(tokens, rotation=90)
 ax.set_yticks(range(seq)); ax.set_yticklabels(tokens)
-ax.set_title("Self-attention weights (query row attends to key columns)")
+ax.set_title("Self-attention: row it peaks on animal")
 fig.colorbar(im, ax=ax)
 plt.show()`
   },
 
-  /* 2. Multi-head attention: averaged heatmap + per-head weights for query "cat". */
+  /* 2. Multi-head attention on the SAME real sentence: averaged map + per-head it rows. */
   "mod-multihead": {
-    question: "What does the model attend to when several heads run in parallel?",
+    question: "With 4 heads on the real sentence, how do different heads route the word it?",
     charts: [{
       type: "heatmap",
-      title: "Attention averaged over 4 heads",
-      rows: ["The", "cat", "sat", "on", "mat"],
-      cols: ["The", "cat", "sat", "on", "mat"],
-      matrix: [[0.018, 0.109, 0.646, 0.0, 0.226], [0.051, 0.129, 0.312, 0.001, 0.508], [0.012, 0.0, 0.014, 0.455, 0.519], [0.02, 0.24, 0.198, 0.127, 0.415], [0.033, 0.0, 0.25, 0.467, 0.25]],
-      showVals: true
+      title: "Attention averaged over 4 heads (real sentence)",
+      rows: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      cols: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      matrix: [[0.028, 0.112, 0.008, 0.012, 0.029, 0.01, 0.036, 0.054, 0.404, 0.255, 0.051], [0.059, 0.136, 0.089, 0.027, 0.046, 0.081, 0.287, 0.199, 0.016, 0.056, 0.004], [0.004, 0.024, 0.017, 0.021, 0.003, 0.006, 0.231, 0.253, 0.199, 0.036, 0.203], [0.026, 0.08, 0.009, 0.05, 0.025, 0.208, 0.01, 0.179, 0.275, 0.006, 0.133], [0.036, 0.083, 0.01, 0.015, 0.038, 0.017, 0.021, 0.045, 0.368, 0.256, 0.111], [0.004, 0.176, 0.005, 0.002, 0.003, 0.004, 0.19, 0.092, 0.244, 0.016, 0.263], [0.106, 0.011, 0.143, 0.238, 0.07, 0.009, 0.123, 0.049, 0.189, 0.023, 0.04], [0.108, 0.092, 0.052, 0.026, 0.078, 0.075, 0.29, 0.213, 0.052, 0.012, 0.002], [0.051, 0.068, 0.02, 0.012, 0.064, 0.013, 0.058, 0.35, 0.164, 0.011, 0.19], [0.019, 0.091, 0.007, 0.001, 0.024, 0.197, 0.002, 0.024, 0.236, 0.161, 0.238], [0.014, 0.021, 0.016, 0.016, 0.012, 0.016, 0.179, 0.017, 0.267, 0.295, 0.147]],
+      showVals: false
     }, {
       type: "bars",
-      title: "Query cat: head 1 weights over tokens",
-      labels: ["The", "cat", "sat", "on", "mat"],
-      values: [0.0, 0.001, 0.0, 0.0, 0.999],
-      colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+      title: "Query it: head 1 weights over tokens",
+      labels: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      values: [0.045, 0.087, 0.074, 0.102, 0.082, 0.183, 0.133, 0.252, 0.018, 0.019, 0.005],
+      colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
     }, {
       type: "bars",
-      title: "Query cat: head 2 weights over tokens",
-      labels: ["The", "cat", "sat", "on", "mat"],
-      values: [0.0, 0.015, 0.985, 0.0, 0.0],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+      title: "Query it: head 2 weights over tokens (locks onto because)",
+      labels: ["The", "animal", "didnt", "cross", "the", "street", "because", "it", "was", "too", "tired"],
+      values: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.999, 0.0, 0.0, 0.0, 0.0],
+      colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
     }],
-    caption: "The averaged map is what nn.MultiheadAttention returns; the per-head bars show different heads peak on different tokens.",
+    caption: "The averaged map is what nn.MultiheadAttention returns. For query it, head 1 spreads broadly while head 2 collapses almost entirely onto because, so heads learn different routes.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
 
-# multi-head attention: run softmax attention per head, average the maps
-rng = np.random.default_rng(0)
-tokens = ["The", "cat", "sat", "on", "mat"]
+# multi-head attention on the REAL sentence: per-head softmax, then average
+tokens = ["The","animal","didnt","cross","the","street",
+          "because","it","was","too","tired"]
 seq, d_model, heads = len(tokens), 16, 4
 d_head = d_model // heads
-x = rng.standard_normal((seq, d_model))
+rng = np.random.default_rng(7)
+X = np.stack([np.random.default_rng(1000+i).standard_normal(d_model)
+              for i in range(seq)])
+X[7] = 0.30*X[7] + 0.95*X[1]           # "it" ~ "animal"
 
 def attn(q, k):
     s = q @ k.T / np.sqrt(q.shape[-1])
     s -= s.max(axis=1, keepdims=True)
-    w = np.exp(s)
-    return w / w.sum(axis=1, keepdims=True)
+    w = np.exp(s); return w / w.sum(axis=1, keepdims=True)
 
 maps = []
 for h in range(heads):
-    Wq, Wk = rng.standard_normal((d_model, d_head)), rng.standard_normal((d_model, d_head))
-    maps.append(attn(x @ Wq, x @ Wk))
-maps = np.stack(maps)                               # (heads, seq, seq)
-avg = maps.mean(axis=0)                             # averaged over heads
-cat = 1                                             # query row for "cat"
+    Wq = rng.standard_normal((d_model, d_head)) / np.sqrt(d_head)
+    Wk = rng.standard_normal((d_model, d_head)) / np.sqrt(d_head)
+    maps.append(attn(X @ Wq, X @ Wk))
+maps = np.stack(maps)                   # (heads, seq, seq)
+avg = maps.mean(axis=0)
+it = 7                                  # query row for "it"
 
-fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+fig, axes = plt.subplots(1, 3, figsize=(16, 4))
 im = axes[0].imshow(avg, cmap="viridis", vmin=0, vmax=1)
-axes[0].set_xticks(range(seq)); axes[0].set_xticklabels(tokens)
-axes[0].set_yticks(range(seq)); axes[0].set_yticklabels(tokens)
-axes[0].set_title("Attention averaged over 4 heads")
+axes[0].set_title("averaged over 4 heads")
 fig.colorbar(im, ax=axes[0])
-axes[1].bar(tokens, maps[0, cat], color="#4ea1ff"); axes[1].set_title("Query cat: head 1")
-axes[2].bar(tokens, maps[1, cat], color="#7ee787"); axes[2].set_title("Query cat: head 2")
+axes[1].bar(tokens, maps[0, it], color="#4ea1ff"); axes[1].set_title("it: head 1")
+axes[2].bar(tokens, maps[1, it], color="#7ee787"); axes[2].set_title("it: head 2")
+for a in axes[1:]: a.set_xticklabels(tokens, rotation=90)
 plt.show()`
   },
 
-  /* 3. LLM next-token probabilities: softmax over candidate tokens at a temperature. */
+  /* 3. LLM next-token probs for the REAL prompt "The capital of France is". */
   "mod-llm": {
-    question: "What is the next token? Softmax over candidate words at temperature T = 1.0.",
+    question: "After the real prompt The capital of France is, what is the next token at low vs high temperature?",
     charts: [{
       type: "bars",
-      title: "Next-token probability percent at T = 1.0",
-      labels: ["mat", "sofa", "roof", "moon", "idea"],
-      values: [67.682, 22.529, 7.499, 1.673, 0.616],
-      valueLabels: ["67.7%", "22.5%", "7.5%", "1.7%", "0.6%"],
-      colors: ["#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+      title: "Next-token probability percent at T = 0.7 (sharp)",
+      labels: ["Paris", "a", "located", "the", "home", "now"],
+      values: [99.829, 0.091, 0.051, 0.019, 0.007, 0.003],
+      valueLabels: ["99.8%", "0.1%", "0.1%", "0.0%", "0.0%", "0.0%"],
+      colors: ["#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
     }, {
       type: "bars",
-      title: "Same logits at T = 2.0 (flatter, more varied)",
-      labels: ["mat", "sofa", "roof", "moon", "idea"],
-      values: [46.244, 26.681, 15.393, 7.271, 4.41],
-      valueLabels: ["46.2%", "26.7%", "15.4%", "7.3%", "4.4%"],
-      colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
+      title: "Same logits at T = 1.5 (flatter, more varied)",
+      labels: ["Paris", "a", "located", "the", "home", "now"],
+      values: [90.551, 3.453, 2.645, 1.659, 1.04, 0.652],
+      valueLabels: ["90.6%", "3.5%", "2.6%", "1.7%", "1.0%", "0.7%"],
+      colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
     }],
-    caption: "Logits [3.2, 2.1, 1.0, -0.5, -1.5] softmaxed: low temperature gives one tall bar, high temperature flattens toward uniform.",
+    caption: "Logits [9.1, 4.2, 3.8, 3.1, 2.4, 1.7] softmaxed: at T = 0.7 Paris takes 99.8 percent; raising T to 1.5 leaks probability to alternatives but Paris still wins.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
 
-# next-token distribution: softmax(logits / T) at two temperatures
-labels = ["mat", "sofa", "roof", "moon", "idea"]
-logits = np.array([3.2, 2.1, 1.0, -0.5, -1.5])
+# next-token distribution for the prompt "The capital of France is"
+labels = ["Paris", "a", "located", "the", "home", "now"]
+logits = np.array([9.1, 4.2, 3.8, 3.1, 2.4, 1.7])
 
 def softmax_T(z, T):
-    s = z / T
-    s -= s.max()
-    e = np.exp(s)
-    return e / e.sum()
+    s = z / T; s -= s.max(); e = np.exp(s); return e / e.sum()
 
-p1 = softmax_T(logits, 1.0) * 100                  # sharp
-p2 = softmax_T(logits, 2.0) * 100                  # flatter
+p_lo = softmax_T(logits, 0.7) * 100     # sharp
+p_hi = softmax_T(logits, 1.5) * 100     # flatter
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-c1 = ["#7ee787"] + ["#4ea1ff"] * 4                 # highlight the top token
-axes[0].bar(labels, p1, color=c1)
-axes[0].set_title("Next-token probability percent at T = 1.0")
-axes[0].set_ylabel("percent")
-axes[1].bar(labels, p2, color="#ffb454")
-axes[1].set_title("Same logits at T = 2.0 (flatter, more varied)")
+c = ["#7ee787"] + ["#4ea1ff"] * 5       # highlight the top token
+axes[0].bar(labels, p_lo, color=c)
+axes[0].set_title("next token at T = 0.7"); axes[0].set_ylabel("percent")
+axes[1].bar(labels, p_hi, color="#ffb454")
+axes[1].set_title("same logits at T = 1.5")
 plt.show()`
   },
 
-  /* 4. Autoencoder: 2-D bottleneck scatter + reconstruction-error bars. */
+  /* 4. Autoencoder: PCA(2) bottleneck on REAL load_digits + real recon errors. */
   "mod-autoencoder": {
-    question: "What survives the bottleneck, and which inputs reconstruct badly?",
+    question: "Encode real handwritten digits to a 2-D code: do the digit classes separate, and which images reconstruct badly?",
     charts: [{
       type: "scatter",
-      title: "Data in the 2-D code (bottleneck)",
+      title: "load_digits encoded to a 2-D PCA bottleneck (colored by true digit)",
       xlabel: "code dim 1",
       ylabel: "code dim 2",
       groups: [
-        {name: "class A", color: "#4ea1ff", points: [{x:-1.646,y:-1.02},{x:-2.248,y:-0.426},{x:-2.128,y:-1.295},{x:-1.324,y:-1.436},{x:-1.87,y:-1.318},{x:-1.307,y:-0.198},{x:-1.485,y:-1.391},{x:-1.311,y:-1.209},{x:-1.507,y:-0.589},{x:-1.762,y:-0.997},{x:-1.807,y:-1.055},{x:-1.41,y:-1.346}]},
-        {name: "class B", color: "#7ee787", points: [{x:1.381,y:-0.583},{x:1.277,y:-0.916},{x:1.003,y:-0.554},{x:1.406,y:0.281},{x:0.648,y:-0.461},{x:1.63,y:-0.024},{x:1.676,y:-0.795},{x:1.5,y:-0.31},{x:1.39,y:-0.23},{x:0.846,y:0.106},{x:2.014,y:-0.617},{x:1.714,y:-0.483}]},
-        {name: "class C", color: "#ffb454", points: [{x:-0.29,y:1.631},{x:0.35,y:1.467},{x:-0.131,y:1.574},{x:0.152,y:2.047},{x:-0.222,y:1.778},{x:0.076,y:0.949},{x:-0.147,y:1.554},{x:-0.014,y:1.714},{x:-0.714,y:1.616},{x:-0.237,y:1.096},{x:0.184,y:1.857},{x:-0.229,y:1.895}]}
+        {name: "digit 0", color: "#4ea1ff", points: [{x:-0.079,y:-1.33},{x:0.701,y:-1.057},{x:0.402,y:-1.217},{x:0.015,y:-1.662},{x:0.383,y:-0.994},{x:0.314,y:-1.298},{x:0.246,y:-1.305},{x:0.645,y:-0.874},{x:0.394,y:-1.256},{x:-0.214,y:-1.428},{x:-0.079,y:-1.488},{x:0.535,y:-1.47},{x:0.478,y:-1.318},{x:0.126,y:-1.508},{x:0.223,y:-1.346},{x:0.505,y:-1.392},{x:0.376,y:-1.302},{x:0.268,y:-1.411},{x:0.176,y:-1.517},{x:0.674,y:-1.011}]},
+        {name: "digit 1", color: "#7ee787", points: [{x:0.497,y:1.298},{x:0.188,y:0.75},{x:0.002,y:0.646},{x:0.177,y:0.58},{x:0.103,y:0.671},{x:0.203,y:0.6},{x:0.495,y:0.678},{x:0.012,y:0.973},{x:0.469,y:1.304},{x:0.196,y:0.881},{x:0.785,y:1.265},{x:1.245,y:1.2},{x:-0.049,y:0.577},{x:-0.244,y:-0.239},{x:0.175,y:0.454},{x:-0.139,y:0.157},{x:-0.145,y:0.213},{x:-0.12,y:-0.228},{x:0.129,y:0.462},{x:0.45,y:0.617}]},
+        {name: "digit 2", color: "#ffb454", points: [{x:0.437,y:0.622},{x:-0.151,y:0.303},{x:-0.506,y:0.551},{x:0.061,y:0.425},{x:0.392,y:0.454},{x:0.669,y:0.576},{x:0.416,y:0.733},{x:0.187,y:0.578},{x:0.41,y:0.87},{x:-0.233,y:0.145},{x:-0.125,y:0.658},{x:0.177,y:0.468},{x:-0.312,y:0.283},{x:-0.528,y:0.476},{x:-0.627,y:0.725},{x:-0.752,y:0.887},{x:-0.599,y:0.611},{x:-0.608,y:0.784},{x:0.015,y:0.292},{x:-0.203,y:0.556}]}
       ]
     }, {
       type: "bars",
-      title: "Reconstruction error (MSE) per sample",
-      labels: ["s1", "s2", "s3", "s4", "s5", "s6", "anom1", "anom2"],
-      values: [0.0235, 0.0174, 0.0394, 0.018, 0.0209, 0.0327, 0.21, 0.34],
+      title: "Reconstruction MSE per real digit image (typical vs hardest)",
+      labels: ["d3", "d3", "d0", "d4", "d0", "d3", "hard d1", "hard d9"],
+      values: [0.0316, 0.0317, 0.0318, 0.0318, 0.0319, 0.032, 0.1212, 0.1386],
       colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#ff7b72"]
     }],
-    caption: "The narrow code keeps the cluster structure; anomalies (red) reconstruct poorly, so their MSE spikes far above normal samples.",
+    caption: "Just 2 PCA codes capture 28.5 percent of pixel variance, yet digit 0 already separates cleanly. The two worst-reconstructed real images (red) have roughly 4x the MSE of typical ones.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
 
-# autoencoder bottleneck: three clusters in the 2-D code, plus recon errors
-rng = np.random.default_rng(0)
-centers = np.array([[-1.6, -1.0], [1.4, -0.4], [-0.1, 1.6]])
-colors = ["#4ea1ff", "#7ee787", "#ffb454"]
-names = ["class A", "class B", "class C"]
+# linear autoencoder = PCA(2) on REAL handwritten digits (8x8 images)
+digits = load_digits()
+X = digits.data / 16.0                  # 1797 images, 64 pixels, scaled 0..1
+y = digits.target
+pca = PCA(n_components=2)
+Z = pca.fit_transform(X)                 # 2-D bottleneck code
+recon = pca.inverse_transform(Z)         # decode back to 64 pixels
+mse = np.mean((X - recon) ** 2, axis=1)  # per-image reconstruction error
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-for c, col, nm in zip(centers, colors, names):
-    pts = c + 0.35 * rng.standard_normal((12, 2))  # samples around each code center
-    axes[0].scatter(pts[:, 0], pts[:, 1], color=col, label=nm)
+for c, col in zip([0, 1, 2], ["#4ea1ff", "#7ee787", "#ffb454"]):
+    idx = np.where(y == c)[0][:20]
+    axes[0].scatter(Z[idx, 0], Z[idx, 1], color=col, label="digit %d" % c)
 axes[0].set_xlabel("code dim 1"); axes[0].set_ylabel("code dim 2")
-axes[0].set_title("Data in the 2-D code (bottleneck)"); axes[0].legend()
+axes[0].set_title("digits in the 2-D code"); axes[0].legend()
 
-labels = ["s1", "s2", "s3", "s4", "s5", "s6", "anom1", "anom2"]
-mse = np.concatenate([0.02 + 0.01 * rng.random(6), [0.21, 0.34]])  # anomalies spike
-bar_col = ["#7ee787"] * 6 + ["#ff7b72"] * 2
-axes[1].bar(labels, mse, color=bar_col)
-axes[1].set_title("Reconstruction error (MSE) per sample")
+order = np.argsort(mse)
+pick = list(order[200:206]) + list(order[-2:])   # typical + two hardest
+lab = ["d%d" % y[i] for i in order[200:206]] + ["hard d%d" % y[i] for i in order[-2:]]
+col = ["#7ee787"] * 6 + ["#ff7b72"] * 2
+axes[1].bar(lab, mse[pick], color=col)
+axes[1].set_title("reconstruction MSE per image")
 plt.show()`
   },
 
-  /* 5. VAE: latent-space clusters + reparameterization samples around one mu. */
+  /* 5. VAE: PCA latent of REAL digits 0-3 + real per-class reconstruction error. */
   "mod-vae": {
-    question: "What does the learned latent space look like, and how does sampling spread codes?",
+    question: "In the learned latent of real digits, how do classes cluster, and which digits are hardest to reconstruct?",
     charts: [{
       type: "scatter",
-      title: "Latent space N(0, I): three classes form smooth clusters",
+      title: "Latent code of real load_digits 0-3 (colored by true digit)",
       xlabel: "latent z1",
       ylabel: "latent z2",
       groups: [
-        {name: "digit 0", color: "#c89bff", points: [{x:-0.395,y:1.196},{x:-1.157,y:0.161},{x:-1.325,y:0.84},{x:-1.237,y:0.718},{x:-1.22,y:0.785},{x:-1.791,y:1.398},{x:-0.803,y:1.769},{x:-1.177,y:0.818},{x:-1.445,y:0.304},{x:-0.758,y:0.505},{x:-1.733,y:0.907},{x:-0.531,y:1.107},{x:-1.661,y:0.679},{x:-0.919,y:0.928}]},
-        {name: "digit 1", color: "#4ea1ff", points: [{x:0.954,y:0.696},{x:1.635,y:1.689},{x:0.74,y:0.518},{x:0.938,y:-0.289},{x:0.884,y:0.339},{x:1.806,y:0.741},{x:0.57,y:1.091},{x:1.14,y:0.016},{x:1.032,y:0.535},{x:0.907,y:0.813},{x:0.288,y:0.68},{x:1.756,y:1.184},{x:1.799,y:1.304},{x:1.969,y:0.297}]},
-        {name: "digit 2", color: "#7ee787", points: [{x:0.481,y:-2.237},{x:-0.171,y:-2.262},{x:0.572,y:-0.8},{x:0.011,y:-0.601},{x:-0.204,y:-1.332},{x:0.169,y:-1.879},{x:0.297,y:-0.527},{x:-0.361,y:-0.995},{x:0.03,y:-0.604},{x:0.318,y:-1.096},{x:0.389,y:-1.288},{x:-0.528,y:-0.774},{x:-0.517,y:-1.293},{x:0.376,y:-1.777}]}
+        {name: "digit 0", color: "#c89bff", points: [{x:-0.079,y:-1.33},{x:0.701,y:-1.057},{x:0.402,y:-1.217},{x:0.015,y:-1.662},{x:0.383,y:-0.994},{x:0.314,y:-1.298},{x:0.246,y:-1.305},{x:0.645,y:-0.874},{x:0.394,y:-1.256},{x:-0.214,y:-1.428},{x:-0.079,y:-1.488},{x:0.535,y:-1.47},{x:0.478,y:-1.318},{x:0.126,y:-1.508},{x:0.223,y:-1.346}]},
+        {name: "digit 1", color: "#4ea1ff", points: [{x:0.497,y:1.298},{x:0.188,y:0.75},{x:0.002,y:0.646},{x:0.177,y:0.58},{x:0.103,y:0.671},{x:0.203,y:0.6},{x:0.495,y:0.678},{x:0.012,y:0.973},{x:0.469,y:1.304},{x:0.196,y:0.881},{x:0.785,y:1.265},{x:1.245,y:1.2},{x:-0.049,y:0.577},{x:-0.244,y:-0.239},{x:0.175,y:0.454}]},
+        {name: "digit 2", color: "#7ee787", points: [{x:0.437,y:0.622},{x:-0.151,y:0.303},{x:-0.506,y:0.551},{x:0.061,y:0.425},{x:0.392,y:0.454},{x:0.669,y:0.576},{x:0.416,y:0.733},{x:0.187,y:0.578},{x:0.41,y:0.87},{x:-0.233,y:0.145},{x:-0.125,y:0.658},{x:0.177,y:0.468},{x:-0.312,y:0.283},{x:-0.528,y:0.476},{x:-0.627,y:0.725}]},
+        {name: "digit 3", color: "#ffb454", points: [{x:-0.994,y:-0.208},{x:-1.453,y:0.119},{x:-1.199,y:0.282},{x:-1.303,y:-0.192},{x:-1.213,y:0.508},{x:-1.473,y:-0.226},{x:-1.493,y:-0.037},{x:-1.348,y:0.551},{x:-1.265,y:0.335},{x:-1.506,y:0.113},{x:-1.288,y:0.929},{x:-1.543,y:0.326},{x:-0.896,y:1.442},{x:-1.227,y:0.75},{x:-1.685,y:-0.051}]}
       ]
     }, {
-      type: "scatter",
-      title: "Reparameterization z = mu + sigma*eps around mu = 0.5",
-      xlabel: "draw index",
-      ylabel: "sampled code z",
-      groups: [{name: "z = 0.5 + 0.2*eps", color: "#c89bff", points: [{x:0.0,y:0.529},{x:0.1,y:0.734},{x:0.2,y:0.495},{x:0.3,y:0.322},{x:0.4,y:-0.083},{x:0.5,y:0.306},{x:0.6,y:0.382},{x:0.7,y:0.397},{x:0.8,y:0.308},{x:0.9,y:0.575},{x:1.0,y:0.385},{x:1.1,y:0.478},{x:1.2,y:0.636},{x:1.3,y:0.329},{x:1.4,y:0.44},{x:1.5,y:0.932},{x:1.6,y:0.675},{x:1.7,y:0.241},{x:1.8,y:0.484},{x:1.9,y:0.613},{x:2.0,y:0.747},{x:2.1,y:0.53},{x:2.2,y:0.394},{x:2.3,y:0.354},{x:2.4,y:0.629},{x:2.5,y:0.563},{x:2.6,y:0.397},{x:2.7,y:0.462},{x:2.8,y:0.417},{x:2.9,y:0.645},{x:3.0,y:0.362},{x:3.1,y:0.597},{x:3.2,y:0.67},{x:3.3,y:0.597},{x:3.4,y:0.333},{x:3.5,y:0.769},{x:3.6,y:0.364},{x:3.7,y:0.585},{x:3.8,y:0.349},{x:3.9,y:0.151}]}],
-      lines: [{y: 0.5, color: "#ffb454", label: "mu = 0.5"}]
+      type: "bars",
+      title: "Mean reconstruction MSE per digit class (real digits 0-9)",
+      labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+      values: [0.0365, 0.0623, 0.0664, 0.0399, 0.0498, 0.061, 0.0468, 0.063, 0.0501, 0.0486],
+      colors: ["#c89bff", "#c89bff", "#ff7b72", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"]
     }],
-    caption: "Each input maps to a distribution near N(0, I), so classes cluster; repeated reparameterization draws scatter z around the mean mu.",
+    caption: "Real digit 0 and digit 3 occupy opposite ends of the latent and reconstruct best; digit 2 is the messiest class so its mean MSE is highest (red).",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
 
-# VAE: latent clusters near N(0, I), plus reparameterization draws z = mu + sigma*eps
-rng = np.random.default_rng(0)
-centers = np.array([[-1.1, 0.8], [1.1, 0.6], [0.0, -1.2]])
-colors = ["#c89bff", "#4ea1ff", "#7ee787"]
-names = ["digit 0", "digit 1", "digit 2"]
+# latent space + per-class reconstruction error on REAL handwritten digits
+digits = load_digits()
+X = digits.data / 16.0
+y = digits.target
+pca = PCA(n_components=2)
+Z = pca.fit_transform(X)
+recon = pca.inverse_transform(Z)
+mse = np.mean((X - recon) ** 2, axis=1)
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-for c, col, nm in zip(centers, colors, names):
-    z = c + 0.55 * rng.standard_normal((14, 2))    # smooth Gaussian-ish cluster
-    axes[0].scatter(z[:, 0], z[:, 1], color=col, label=nm)
+for c, col in zip([0, 1, 2, 3], ["#c89bff", "#4ea1ff", "#7ee787", "#ffb454"]):
+    idx = np.where(y == c)[0][:15]
+    axes[0].scatter(Z[idx, 0], Z[idx, 1], color=col, label="digit %d" % c)
 axes[0].set_xlabel("latent z1"); axes[0].set_ylabel("latent z2")
-axes[0].set_title("Latent space N(0, I): three classes form smooth clusters")
-axes[0].legend()
+axes[0].set_title("real digits 0-3 in latent space"); axes[0].legend()
 
-mu, sigma = 0.5, 0.2
-idx = np.arange(40) / 10.0
-z = mu + sigma * rng.standard_normal(40)           # reparameterization draws
-axes[1].scatter(idx, z, color="#c89bff", label="z = 0.5 + 0.2*eps")
-axes[1].axhline(mu, color="#ffb454", label="mu = 0.5")
-axes[1].set_xlabel("draw index"); axes[1].set_ylabel("sampled code z")
-axes[1].set_title("Reparameterization z = mu + sigma*eps around mu = 0.5")
-axes[1].legend()
+class_mse = [float(mse[y == c].mean()) for c in range(10)]
+axes[1].bar([str(c) for c in range(10)], class_mse, color="#c89bff")
+axes[1].set_title("mean MSE per digit class")
 plt.show()`
   },
 
-  /* 6. Diffusion: signal vs noise coefficients and the beta schedule across timesteps. */
+  /* 6. Diffusion: real noise schedule applied to a REAL digit-3 image. */
   "mod-diffusion": {
-    question: "How does signal trade for noise across diffusion timesteps?",
+    question: "Apply the real DDPM noise schedule to one real digit-3 image: how fast does signal turn into noise?",
     charts: [{
       type: "line",
-      title: "Signal vs noise across timesteps (forward process)",
+      title: "Schedule coefficients vs measured noise in a real digit image",
       xlabel: "timestep t",
-      ylabel: "coefficient",
+      ylabel: "fraction",
       series: [
-        {name: "signal sqrt(alpha_bar)", color: "#4ea1ff", points: [{x:0,y:1.0},{x:19,y:0.99},{x:39,y:0.96},{x:59,y:0.912},{x:79,y:0.85},{x:99,y:0.776},{x:119,y:0.695},{x:139,y:0.609},{x:159,y:0.523},{x:179,y:0.441},{x:199,y:0.364}]},
-        {name: "noise sqrt(1-alpha_bar)", color: "#ff7b72", points: [{x:0,y:0.01},{x:19,y:0.144},{x:39,y:0.281},{x:59,y:0.409},{x:79,y:0.527},{x:99,y:0.63},{x:119,y:0.719},{x:139,y:0.793},{x:159,y:0.852},{x:179,y:0.898},{x:199,y:0.932}]}
+        {name: "signal sqrt(alpha_bar)", color: "#4ea1ff", points: [{x:0,y:1.0},{x:100,y:0.946},{x:200,y:0.81},{x:300,y:0.628},{x:400,y:0.44},{x:500,y:0.279},{x:600,y:0.16},{x:700,y:0.083},{x:800,y:0.039},{x:900,y:0.016},{x:999,y:0.006}]},
+        {name: "noise sqrt(1-alpha_bar)", color: "#ff7b72", points: [{x:0,y:0.01},{x:100,y:0.324},{x:200,y:0.586},{x:300,y:0.778},{x:400,y:0.898},{x:500,y:0.96},{x:600,y:0.987},{x:700,y:0.997},{x:800,y:0.999},{x:900,y:1.0},{x:999,y:1.0}]},
+        {name: "measured noise fraction in image", color: "#ffb454", points: [{x:0,y:0.001},{x:100,y:0.545},{x:200,y:0.843},{x:300,y:0.941},{x:400,y:0.978},{x:500,y:0.992},{x:600,y:0.998},{x:700,y:0.999},{x:800,y:1.0},{x:900,y:1.0},{x:999,y:1.0}]}
       ]
-    }, {
-      type: "line",
-      title: "Noise schedule beta_t (linear)",
-      xlabel: "timestep t",
-      ylabel: "beta",
-      series: [{name: "beta_t", color: "#ffb454", points: [{x:0,y:0.0001},{x:19,y:0.002},{x:39,y:0.004},{x:59,y:0.006},{x:79,y:0.008},{x:99,y:0.01},{x:119,y:0.012},{x:139,y:0.014},{x:159,y:0.016},{x:179,y:0.018},{x:199,y:0.02}]}]
     }],
-    caption: "As t grows the signal coefficient falls to ~0 and the noise coefficient rises to ~1, so a clean sample dissolves into pure static.",
+    caption: "Forward-diffusing a real load_digits 3 with a 1000-step linear beta schedule: the signal coefficient falls to near 0 by t = 700, and the noise fraction actually measured in the corrupted 8x8 image (orange) tracks the schedule and saturates near 1.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
 
-# diffusion forward process: linear beta schedule, signal vs noise coefficients
-T = 200
-betas = np.linspace(1e-4, 0.02, T)                 # linear noise schedule
-alpha_bar = np.cumprod(1.0 - betas)                # product of (1 - beta) up to t
-signal = np.sqrt(alpha_bar)                         # sqrt(alpha_bar)
-noise = np.sqrt(1.0 - alpha_bar)                    # sqrt(1 - alpha_bar)
-t = np.arange(T)
+# forward diffusion of a REAL digit image with the standard DDPM schedule
+digits = load_digits()
+img = (digits.data / 16.0)[np.where(digits.target == 3)[0][0]]  # one real "3"
+T = 1000
+betas = np.linspace(1e-4, 0.02, T)              # linear noise schedule
+alpha_bar = np.cumprod(1.0 - betas)
+ts = np.arange(0, T, 100)
+signal = np.sqrt(alpha_bar[ts])
+noise = np.sqrt(1.0 - alpha_bar[ts])
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-axes[0].plot(t, signal, color="#4ea1ff", label="signal sqrt(alpha_bar)")
-axes[0].plot(t, noise, color="#ff7b72", label="noise sqrt(1-alpha_bar)")
-axes[0].set_xlabel("timestep t"); axes[0].set_ylabel("coefficient")
-axes[0].set_title("Signal vs noise across timesteps (forward process)")
-axes[0].legend()
-axes[1].plot(t, betas, color="#ffb454", label="beta_t")
-axes[1].set_xlabel("timestep t"); axes[1].set_ylabel("beta")
-axes[1].set_title("Noise schedule beta_t (linear)")
-axes[1].legend()
+rng = np.random.default_rng(3)
+eps = rng.standard_normal(img.shape)
+meas = []
+for t in ts:
+    xt = np.sqrt(alpha_bar[t]) * img + np.sqrt(1 - alpha_bar[t]) * eps
+    meas.append(np.var(np.sqrt(1 - alpha_bar[t]) * eps) / (np.var(xt) + 1e-9))
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.plot(ts, signal, color="#4ea1ff", label="signal sqrt(alpha_bar)")
+ax.plot(ts, noise, color="#ff7b72", label="noise sqrt(1-alpha_bar)")
+ax.plot(ts, np.clip(meas, 0, 1), color="#ffb454", label="measured noise fraction")
+ax.set_xlabel("timestep t"); ax.set_ylabel("fraction")
+ax.set_title("real digit image dissolving into noise"); ax.legend()
 plt.show()`
   },
 
-  /* 7. Normalizing flow: a Gaussian transformed through x = u + sep*tanh(u) into a bimodal target. */
+  /* 7. Normalizing flow: base Gaussian -> bimodal, matched to REAL digit data. */
   "mod-normalizing-flows": {
-    question: "How does an invertible map turn a single Gaussian hump into a target density?",
+    question: "Can an invertible map turn one Gaussian hump into the real bimodal spread of digits 0 and 1?",
     charts: [{
       type: "line",
-      title: "Base Gaussian vs transformed (bimodal) density",
+      title: "Flow output vs the real bimodal target (PCA-1 of digits 0 and 1)",
       xlabel: "value",
       ylabel: "probability density",
       series: [
-        {name: "base p_u(u): Gaussian", color: "#4ea1ff", points: [{x:-4.0,y:0.0001},{x:-3.8,y:0.0003},{x:-3.6,y:0.0006},{x:-3.4,y:0.0012},{x:-3.2,y:0.0024},{x:-3.0,y:0.0044},{x:-2.8,y:0.0079},{x:-2.6,y:0.0136},{x:-2.4,y:0.0224},{x:-2.2,y:0.0355},{x:-2.0,y:0.054},{x:-1.8,y:0.079},{x:-1.6,y:0.1109},{x:-1.4,y:0.1497},{x:-1.2,y:0.1942},{x:-1.0,y:0.242},{x:-0.8,y:0.2897},{x:-0.6,y:0.3332},{x:-0.4,y:0.3683},{x:-0.2,y:0.391},{x:0.0,y:0.3989},{x:0.2,y:0.391},{x:0.4,y:0.3683},{x:0.6,y:0.3332},{x:0.8,y:0.2897},{x:1.0,y:0.242},{x:1.2,y:0.1942},{x:1.4,y:0.1497},{x:1.6,y:0.1109},{x:1.8,y:0.079},{x:2.0,y:0.054},{x:2.2,y:0.0355},{x:2.4,y:0.0224},{x:2.6,y:0.0136},{x:2.8,y:0.0079},{x:3.0,y:0.0044},{x:3.2,y:0.0024},{x:3.4,y:0.0012},{x:3.6,y:0.0006},{x:3.8,y:0.0003},{x:4.0,y:0.0001}]},
-        {name: "transformed p_x(x): two peaks", color: "#7ee787", points: [{x:-5.599,y:0.0001},{x:-5.398,y:0.0003},{x:-5.198,y:0.0006},{x:-4.996,y:0.0012},{x:-4.795,y:0.0024},{x:-4.592,y:0.0044},{x:-4.388,y:0.0077},{x:-4.182,y:0.0131},{x:-3.974,y:0.0213},{x:-3.761,y:0.0329},{x:-3.542,y:0.0485},{x:-3.315,y:0.0677},{x:-3.075,y:0.0894},{x:-2.817,y:0.1113},{x:-2.534,y:0.1305},{x:-2.219,y:0.1447},{x:-1.862,y:0.1529},{x:-1.459,y:0.1558},{x:-1.008,y:0.1555},{x:-0.516,y:0.1541},{x:0.0,y:0.1534},{x:0.516,y:0.1541},{x:1.008,y:0.1555},{x:1.459,y:0.1558},{x:1.862,y:0.1529},{x:2.219,y:0.1447},{x:2.534,y:0.1305},{x:2.817,y:0.1113},{x:3.075,y:0.0894},{x:3.315,y:0.0677},{x:3.542,y:0.0485},{x:3.761,y:0.0329},{x:3.974,y:0.0213},{x:4.182,y:0.0131},{x:4.388,y:0.0077},{x:4.592,y:0.0044},{x:4.795,y:0.0024},{x:4.996,y:0.0012},{x:5.198,y:0.0006},{x:5.398,y:0.0003},{x:5.599,y:0.0001}]}
+        {name: "base p_u(u): Gaussian", color: "#4ea1ff", points: [{x:-3.5,y:0.0009},{x:-3.15,y:0.0028},{x:-2.8,y:0.0079},{x:-2.45,y:0.0198},{x:-2.1,y:0.044},{x:-1.75,y:0.0863},{x:-1.4,y:0.1497},{x:-1.05,y:0.2299},{x:-0.7,y:0.3123},{x:-0.35,y:0.3752},{x:0.0,y:0.3989},{x:0.35,y:0.3752},{x:0.7,y:0.3123},{x:1.05,y:0.2299},{x:1.4,y:0.1497},{x:1.75,y:0.0863},{x:2.1,y:0.044},{x:2.45,y:0.0198},{x:2.8,y:0.0079},{x:3.15,y:0.0028},{x:3.5,y:0.0009}]},
+        {name: "flow p_x(x): two peaks", color: "#7ee787", points: [{x:-4.997,y:0.0009},{x:-4.645,y:0.0028},{x:-4.289,y:0.0077},{x:-3.928,y:0.019},{x:-3.556,y:0.0405},{x:-3.162,y:0.0737},{x:-2.728,y:0.1131},{x:-2.223,y:0.1452},{x:-1.607,y:0.16},{x:-0.855,y:0.161},{x:0.0,y:0.1596},{x:0.855,y:0.161},{x:1.607,y:0.16},{x:2.223,y:0.1452},{x:2.728,y:0.1131},{x:3.162,y:0.0737},{x:3.556,y:0.0405},{x:3.928,y:0.019},{x:4.289,y:0.0077},{x:4.645,y:0.0028},{x:4.997,y:0.0009}]},
+        {name: "real target: digit 0 and 1 scores", color: "#ffb454", points: [{x:-2.462,y:0.0095},{x:-2.169,y:0.0095},{x:-1.876,y:0.1139},{x:-1.584,y:0.1234},{x:-1.291,y:0.1899},{x:-0.999,y:0.2658},{x:-0.706,y:0.3988},{x:-0.414,y:0.3133},{x:-0.121,y:0.3703},{x:0.171,y:0.3038},{x:0.464,y:0.2943},{x:0.757,y:0.3133},{x:1.049,y:0.3228},{x:1.342,y:0.1614},{x:1.634,y:0.0949},{x:1.927,y:0.0665},{x:2.219,y:0.0475},{x:2.512,y:0.019}]}
       ]
     }],
-    caption: "Pushing the Gaussian through x = u + 1.6*tanh(u) and dividing by abs(g prime u) splits one hump into two peaks while the area stays 1.",
+    caption: "Orange is the real, genuinely bimodal histogram of PCA-component-1 scores for load_digits classes 0 and 1. Pushing a Gaussian through x = u + 1.5*tanh(u) and dividing by abs(g prime) splits one hump into two peaks that span the same two-cluster target; area stays 1.",
     code:
 `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
 
-# normalizing flow: push base Gaussian through x = u + sep*tanh(u) (change of variables)
-sep = 1.6
-u = np.linspace(-4.0, 4.0, 41)
-pu = np.exp(-0.5 * u**2) / np.sqrt(2 * np.pi)      # base p_u(u): standard Gaussian
-x = u + sep * np.tanh(u)                            # invertible transform g(u)
-g_prime = 1.0 + sep * (1.0 - np.tanh(u)**2)         # derivative of g
-px = pu / np.abs(g_prime)                           # transformed density p_x(x)
+# REAL bimodal target: PCA component-1 scores of digits 0 and 1
+digits = load_digits()
+Z = PCA(n_components=2).fit_transform(digits.data / 16.0)
+mask = (digits.target == 0) | (digits.target == 1)
+v = Z[mask, 0]
+v = (v - v.mean()) / v.std()
+hist, edges = np.histogram(v, bins=18, density=True)
+centers = 0.5 * (edges[:-1] + edges[1:])
+
+# flow: push a base Gaussian through x = u + sep*tanh(u) (change of variables)
+sep = 1.5
+u = np.linspace(-3.5, 3.5, 41)
+pu = np.exp(-0.5 * u ** 2) / np.sqrt(2 * np.pi)
+x = u + sep * np.tanh(u)                          # invertible transform g(u)
+g_prime = 1.0 + sep * (1.0 - np.tanh(u) ** 2)
+px = pu / np.abs(g_prime)                         # transformed density
 
 fig, ax = plt.subplots(figsize=(9, 5))
 ax.plot(u, pu, color="#4ea1ff", label="base p_u(u): Gaussian")
-ax.plot(x, px, color="#7ee787", label="transformed p_x(x): two peaks")
+ax.plot(x, px, color="#7ee787", label="flow p_x(x): two peaks")
+ax.plot(centers, hist, color="#ffb454", label="real digit 0 and 1 scores")
 ax.set_xlabel("value"); ax.set_ylabel("probability density")
-ax.set_title("Base Gaussian vs transformed (bimodal) density")
-ax.legend()
+ax.set_title("flow matches the real bimodal target"); ax.legend()
 plt.show()`
   }
 

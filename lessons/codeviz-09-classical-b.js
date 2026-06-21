@@ -1,35 +1,35 @@
 /* Per-lesson CODE VISUALIZATIONS for Module 9B — Classical ML (beyond the cheat sheet).
-   Each entry: { question, charts:[<chartSpec>], caption }.
-   All numbers below are REAL outputs from running the lesson code in
-   code-09-classical-b.js with python3 (numpy / scikit-learn). Merged into
-   window.CODEVIZ by lesson id. */
+   Each entry: { question, charts:[<chartSpec>], caption, code }.
+   All numbers below are REAL outputs from running scikit-learn on REAL bundled
+   datasets (load_breast_cancer, load_wine, load_digits, load_diabetes) plus a
+   small real-style movie-ratings matrix. Merged into window.CODEVIZ by lesson id. */
 window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
 
   "cls-stacking": {
-    question: "Does stacking the base models beat each one alone?",
+    question: "On the breast-cancer scan data, does stacking beat each base model alone?",
     charts: [
       {
         type: "bars",
-        title: "5-fold accuracy: base models vs the stacked ensemble",
+        title: "5-fold accuracy on breast cancer: base models vs stacked ensemble",
         labels: ["RandomForest", "kNN", "Stacked"],
-        values: [0.942, 0.948, 0.953],
-        valueLabels: ["0.942", "0.948", "0.953"],
+        values: [0.963, 0.970, 0.967],
+        valueLabels: ["0.963", "0.970", "0.967"],
         colors: ["#4ea1ff", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "The stacked ensemble (0.953) edges out both base models, so the learned combiner adds accuracy on top of the best single model.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
+    caption: "On the 569-patient Wisconsin breast-cancer dataset the stacked ensemble scores 0.967 — it matches the strong kNN base model (0.970) and beats RandomForest (0.963), so the learned combiner holds its own against the best single model.",
+    code: `import matplotlib.pyplot as plt
+from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import StackingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
 
-X, y = make_classification(n_samples=600, n_features=20, n_informative=8,
-                           random_state=0)
-rf = RandomForestClassifier(n_estimators=50, random_state=0)
-knn = KNeighborsClassifier(n_neighbors=7)
+X, y = load_breast_cancer(return_X_y=True)   # 569 real tumor scans, 30 features
+rf = RandomForestClassifier(n_estimators=100, random_state=0)
+knn = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=7))
 stack = StackingClassifier(estimators=[("rf", rf), ("knn", knn)],
                            final_estimator=LogisticRegression(max_iter=1000), cv=5)
 
@@ -40,126 +40,135 @@ colors = ["#4ea1ff", "#4ea1ff", "#7ee787"]
 plt.bar(labels, accs, color=colors)
 for i, a in enumerate(accs):
     plt.text(i, a, "%.3f" % a, ha="center", va="bottom")
-plt.ylim(0.9, 0.97)
-plt.title("5-fold accuracy: base models vs the stacked ensemble")
+plt.ylim(0.94, 0.98)
+plt.title("5-fold accuracy on breast cancer: base models vs stacked ensemble")
 plt.ylabel("accuracy")
 plt.show()`
   },
 
   "cls-anomaly": {
-    question: "Which points are anomalies?",
+    question: "On real breast-cancer scans, which tumors look like outliers?",
     charts: [
       {
         type: "scatter",
-        title: "Isolation Forest: normal points vs flagged outliers",
-        xlabel: "feature 1",
-        ylabel: "feature 2",
+        title: "Isolation Forest on breast cancer: normal scans vs flagged outliers",
+        xlabel: "mean radius",
+        ylabel: "mean texture",
         groups: [
-          { name: "normal", color: "#4ea1ff", points: [[1.09,-0.05],[0.32,-0.36],[-1.94,-1.31],[-0.53,-0.24],[1.3,-0.35],[-1.19,-2.4],[-0.76,0.81],[-1.42,-0.83],[-0.22,-0.53],[-0.7,-1.27],[-0.65,0.68],[-0.62,0.04],[0.36,-0.39],[-1.53,2.03],[-0.46,0.22],[0.84,1.16],[-1.9,-0.11],[-0.47,0.59],[1.2,0.64],[-0.85,-0.51],[-0.58,0.11],[1.23,-1.11],[0.35,-0.47],[-1.26,0.83],[-2.37,1.23],[0.05,2.0],[1.3,0.95],[0.19,-0.63],[0.58,1.29],[-0.29,1.57],[-1.09,-0.6],[-1.17,-1.43],[1.58,-1.72],[-0.29,0.3],[-0.16,-1.07],[0.36,-1.21],[0.06,0.41],[0.34,0.42],[0.26,-0.31],[-0.15,-0.63],[0.5,0.99],[1.65,0.92],[0.9,0.09],[1.46,1.96],[-0.37,0.22]] },
-          { name: "anomaly (flagged)", color: "#ff7b72", points: [[-0.87,3.07],[-3.11,-1.14],[0.56,-3.77],[-3.92,1.04],[5.5,2.6],[5.77,0.89],[5.8,4.04],[3.34,4.66],[0.34,-3.28],[3.33,-3.96],[2.06,3.13]] }
+          { name: "normal", color: "#4ea1ff", points: [[12.1,13.4],[11.5,18.2],[12.0,24.9],[11.4,17.6],[19.2,15.9],[12.3,16.5],[16.1,17.9],[12.4,15.0],[17.9,21.0],[9.5,21.0],[16.1,20.7],[19.6,25.0],[16.0,23.2],[15.4,22.8],[11.4,14.9],[11.4,17.3],[15.5,21.1],[12.6,20.8],[12.5,12.8],[19.4,18.8],[14.8,23.9],[10.7,20.4],[12.2,17.9],[20.2,19.5],[10.8,15.0],[18.4,21.9],[11.4,18.9],[11.3,18.2],[13.7,13.2],[19.8,25.1],[13.7,19.1],[10.3,16.4],[12.2,22.4],[13.6,16.3],[12.3,22.2],[11.1,22.4],[16.1,14.9],[12.2,14.1],[14.2,23.8],[13.7,22.6],[11.7,24.4],[17.7,20.7],[17.2,24.5],[17.4,23.1],[13.0,25.1],[11.3,14.2],[11.9,17.4],[10.5,19.9],[18.6,17.6],[15.0,22.1],[12.9,19.5],[13.1,22.5],[11.9,20.8],[9.7,19.1],[10.1,17.5],[11.3,19.0],[9.9,18.1]] },
+          { name: "anomaly (flagged)", color: "#ff7b72", points: [[23.3,22.0],[19.5,32.5],[24.6,21.6]] }
         ]
       }
     ],
-    caption: "The dense central blob is normal; the 11 scattered points far from the crowd are flagged red as anomalies.",
+    caption: "Plotting mean radius against mean texture for real tumor scans, Isolation Forest flags 46 of 569 patients as outliers; the three in this 60-point sample sit at the large-radius, high-texture edge — exactly the unusual tumors a screen wants to surface.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import IsolationForest
 
-rng = np.random.default_rng(0)
-inliers = rng.normal(0, 1, size=(200, 2))      # dense blob
-outliers = rng.uniform(-6, 6, size=(10, 2))    # scattered far out
-X = np.vstack([inliers, outliers])
+bc = load_breast_cancer()
+X = bc.data[:, [0, 1]]                 # mean radius, mean texture (real features)
 
-iso = IsolationForest(contamination=0.05, random_state=0).fit(X)
-pred = iso.predict(X)                           # -1 = anomaly, 1 = normal
+iso = IsolationForest(contamination=0.08, random_state=0).fit(X)
+pred = iso.predict(X)                   # -1 = anomaly, 1 = normal
 normal = X[pred == 1]
 flagged = X[pred == -1]
 
-plt.scatter(normal[:, 0], normal[:, 1], c="#4ea1ff", label="normal")
-plt.scatter(flagged[:, 0], flagged[:, 1], c="#ff7b72", label="anomaly (flagged)")
-plt.title("Isolation Forest: normal points vs flagged outliers")
-plt.xlabel("feature 1")
-plt.ylabel("feature 2")
+plt.scatter(normal[:, 0], normal[:, 1], c="#4ea1ff", s=12, label="normal")
+plt.scatter(flagged[:, 0], flagged[:, 1], c="#ff7b72", s=12, label="anomaly (flagged)")
+plt.title("Isolation Forest on breast cancer: normal scans vs flagged outliers")
+plt.xlabel("mean radius")
+plt.ylabel("mean texture")
 plt.legend()
 plt.show()`
   },
 
   "cls-recommender": {
-    question: "Can we fill the blank ratings the users never gave?",
+    question: "Can we fill in the movie ratings these viewers never gave?",
     charts: [
       {
         type: "heatmap",
-        title: "Observed ratings (blank cells were hidden from the model)",
-        rows: ["U1", "U2", "U3", "U4", "U5", "U6"],
-        cols: ["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8"],
-        matrix: [[null,-0.7,-0.6,0.2,-0.1,0.7,-0.2,0.2],[-0.3,null,-0.5,0.5,-0.7,-0.2,-0.8,null],[1.8,null,-1.2,-2.5,null,null,-2.2,0.6],[null,null,null,null,-1.3,null,null,-0.8],[-2.1,null,null,2.3,-1.1,null,4.8,null],[-1.1,1.4,1.1,1.2,-1.0,-1.9,1.0,null]],
+        title: "Observed movie ratings (blank cells were hidden from the model)",
+        rows: ["Alice", "Ben", "Chloe", "Diego", "Emma", "Frank"],
+        cols: ["Matrix", "Titanic", "Inception", "ToyStory", "Gladiator", "Frozen", "Avatar", "Shrek"],
+        matrix: [[5.0,2.0,null,3.0,4.0,2.0,4.0,null],[4.0,null,4.0,4.0,null,2.0,3.0,3.0],[2.0,5.0,2.0,null,2.0,5.0,null,5.0],[null,3.0,3.0,4.0,3.0,null,4.0,4.0],[1.0,null,1.0,3.0,2.0,5.0,2.0,null],[4.0,3.0,null,3.0,5.0,2.0,null,2.0]],
         showVals: true
       },
       {
         type: "heatmap",
-        title: "Reconstructed matrix (every blank now filled by rank-3 SVD)",
-        rows: ["U1", "U2", "U3", "U4", "U5", "U6"],
-        cols: ["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8"],
-        matrix: [[0.2,-0.4,-0.3,-0.0,0.1,0.5,-0.3,0.2],[-0.2,-0.3,-0.1,0.4,-0.5,-0.2,-0.4,-0.0],[0.8,-0.9,-1.2,-1.6,0.9,0.9,-1.9,0.4],[-0.6,0.8,0.8,0.9,-0.7,-1.1,0.9,-0.4],[-1.2,2.7,2.3,1.4,-0.8,-2.5,3.3,-0.9],[-0.8,0.8,0.9,0.9,-1.0,-1.7,0.5,-0.5]],
+        title: "Reconstructed ratings (every blank now filled by rank-3 SVD)",
+        rows: ["Alice", "Ben", "Chloe", "Diego", "Emma", "Frank"],
+        cols: ["Matrix", "Titanic", "Inception", "ToyStory", "Gladiator", "Frozen", "Avatar", "Shrek"],
+        matrix: [[4.8,1.98,3.24,3.14,4.17,2.05,4.19,3.16],[3.9,3.33,4.28,3.43,3.55,2.38,3.36,2.97],[1.81,4.41,2.3,3.42,1.57,5.03,3.25,4.94],[3.55,3.21,3.04,3.35,2.96,3.32,3.84,4.07],[1.0,3.37,1.09,2.66,2.24,5.18,2.16,3.19],[4.0,2.29,3.59,2.97,4.28,2.07,3.09,1.96]],
         showVals: true
       }
     ],
-    caption: "Factoring the sparse table fills every blank; reconstruction RMSE is 0.517 on observed cells and 0.858 on the held-out hidden ones.",
+    caption: "Six viewers rated eight real films on a 1-5 scale. Factoring the sparse table with a rank-3 SVD fills every blank: e.g. action-fan Alice is predicted 3.2 for Inception, and Frozen-loving Emma 5.2 for Frozen. RMSE is 0.30 on observed cells and 1.02 on the held-out ones.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import TruncatedSVD
 
-rng = np.random.default_rng(0)
-U = rng.normal(size=(40, 3)); V = rng.normal(size=(25, 3))
-R = U @ V.T
-mask = rng.random(R.shape) < 0.7               # 70% observed
-Robs = np.where(mask, R, 0.0)                   # zero-fill unknowns
+users = ["Alice","Ben","Chloe","Diego","Emma","Frank"]
+movies = ["Matrix","Titanic","Inception","ToyStory","Gladiator","Frozen","Avatar","Shrek"]
+R = np.array([                          # real-style 1-5 ratings
+ [5,2,5,3,4,2,4,3],[4,2,4,4,3,2,3,3],[2,5,2,4,2,5,3,5],
+ [3,3,3,4,3,3,4,4],[1,4,1,3,2,5,2,5],[4,3,5,3,5,2,4,2]], dtype=float)
+mask = np.array([                        # which cells the user actually rated
+ [1,1,0,1,1,1,1,0],[1,0,1,1,0,1,1,1],[1,1,1,0,1,1,0,1],
+ [0,1,1,1,1,0,1,1],[1,0,1,1,1,1,1,0],[1,1,0,1,1,1,0,1]], dtype=bool)
 
+mean = R[mask].mean()
+Robs = np.where(mask, R - mean, 0.0)     # center, zero-fill unknowns
 svd = TruncatedSVD(n_components=3, random_state=0)
-Z = svd.fit_transform(Robs)
-Rhat = Z @ svd.components_                       # reconstruction
+Rhat = svd.fit_transform(Robs) @ svd.components_ + mean
 
-obs = np.where(mask, R, np.nan)                  # blanks as NaN for display
-fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-ax[0].imshow(obs[:6, :8], cmap="coolwarm", vmin=-3, vmax=3)
-ax[0].set_title("Observed ratings (blanks hidden)")
-ax[1].imshow(Rhat[:6, :8], cmap="coolwarm", vmin=-3, vmax=3)
-ax[1].set_title("Reconstructed matrix (rank-3 SVD)")
+obs = np.where(mask, R, np.nan)          # blanks as NaN for display
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+ax[0].imshow(obs, cmap="coolwarm", vmin=1, vmax=5)
+ax[0].set_title("Observed movie ratings (blanks hidden)")
+ax[1].imshow(Rhat, cmap="coolwarm", vmin=1, vmax=5)
+ax[1].set_title("Reconstructed ratings (rank-3 SVD)")
+for a in ax:
+    a.set_xticks(range(len(movies))); a.set_xticklabels(movies, rotation=90)
+    a.set_yticks(range(len(users))); a.set_yticklabels(users)
 plt.show()`
   },
 
   "cls-tsne": {
-    question: "Is there hidden structure in the 10-D data?",
+    question: "Does t-SNE expose the digit structure in real handwritten images?",
     charts: [
       {
         type: "scatter",
-        title: "t-SNE projection of 10-D data to 2-D, colored by true cluster",
+        title: "t-SNE of handwritten digits (8x8 images) projected to 2-D",
         xlabel: "t-SNE 1",
         ylabel: "t-SNE 2",
         groups: [
-          { name: "cluster A", color: "#4ea1ff", points: [[16.6,-3.1],[18.9,-5.7],[16.3,-5.0],[16.7,-3.5],[18.8,-3.7],[17.2,-4.0],[17.8,-4.3],[16.9,-3.2],[17.5,-2.9],[17.4,-4.6],[15.9,-3.6],[18.2,-3.2],[15.9,-4.5],[17.3,-5.6],[17.2,-5.5],[17.8,-4.5]] },
-          { name: "cluster B", color: "#7ee787", points: [[-4.6,14.4],[-4.3,16.0],[-6.7,17.1],[-4.6,16.8],[-4.6,15.3],[-6.7,16.2],[-6.8,16.7],[-5.6,15.7],[-4.6,16.5],[-4.8,15.9],[-4.2,14.8],[-6.0,16.3],[-5.3,14.8],[-6.4,15.5],[-4.8,15.7],[-6.4,16.2]] },
-          { name: "cluster C", color: "#ffb454", points: [[-6.4,-10.2],[-6.9,-10.4],[-10.0,-10.2],[-8.2,-9.5],[-9.1,-9.2],[-8.4,-12.3],[-9.1,-10.5],[-7.8,-9.6],[-8.9,-11.1],[-6.3,-11.3],[-6.4,-9.9],[-9.1,-11.7],[-8.0,-11.7],[-7.3,-10.1],[-8.6,-10.3],[-7.5,-11.4]] }
+          { name: "digit 0", color: "#4ea1ff", points: [[11.8,-31.7],[14.5,-29.9],[15.7,-23.5],[12.6,-35.1],[13.9,-25.0],[16.4,-39.8],[13.2,-26.3],[18.5,-27.2],[21.7,-23.8],[8.9,-35.3],[13.2,-27.8],[18.5,-30.1]] },
+          { name: "digit 1", color: "#7ee787", points: [[1.2,27.4],[4.7,5.9],[5.8,22.2],[-2.4,22.3],[4.3,23.1],[-4.5,22.3],[-1.9,26.8],[-0.2,27.9],[7.6,8.1],[6.0,11.0],[5.7,11.9],[-1.4,21.2]] },
+          { name: "digit 2", color: "#ffb454", points: [[-34.5,14.4],[-31.6,0.4],[-31.9,12.2],[-31.4,12.9],[-29.6,19.1],[-23.7,15.0],[-28.9,14.8],[-35.1,4.7],[-25.5,12.5],[-26.5,11.2],[-29.5,3.4],[-30.5,0.2]] },
+          { name: "digit 3", color: "#c89bff", points: [[-13.2,-15.2],[-14.3,-19.8],[-15.5,-15.7],[-21.1,-17.2],[-19.5,-21.0],[-20.3,-14.8],[-17.3,-20.6],[-21.2,-20.5],[-22.4,-14.5],[-22.1,-20.3],[-15.4,-20.3],[-12.2,-18.8]] },
+          { name: "digit 4", color: "#ff7b72", points: [[33.7,1.0],[30.4,-0.7],[31.3,0.9],[27.2,6.5],[22.5,10.7],[26.2,11.7],[37.1,10.9],[39.8,7.9],[26.4,17.3],[29.5,13.0],[31.2,3.2],[33.2,7.9]] }
         ]
       }
     ],
-    caption: "Yes — the three colored groups land in well-separated blobs (between/within gap ratio 22.63), so the hidden cluster structure is real.",
+    caption: "This is the canonical real t-SNE example: each point is a real 8x8 scan of a handwritten digit (sklearn load_digits). Compressing the 64 pixels to 2-D lands each digit class in its own well-separated cluster, colored by the true label.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs
+from sklearn.datasets import load_digits
 from sklearn.manifold import TSNE
 
-X, labels = make_blobs(n_samples=150, n_features=10, centers=3,
-                       cluster_std=1.0, random_state=0)
+digits = load_digits()                   # 8x8 handwritten-digit images
+keep = np.isin(digits.target, [0, 1, 2, 3, 4])
+X, y = digits.data[keep], digits.target[keep]
+
 emb = TSNE(n_components=2, perplexity=30, init="pca",
            random_state=0).fit_transform(X)
 
-names = ["cluster A", "cluster B", "cluster C"]
-colors = ["#4ea1ff", "#7ee787", "#ffb454"]
-for k in range(3):
-    pts = emb[labels == k]
-    plt.scatter(pts[:, 0], pts[:, 1], c=colors[k], label=names[k])
-plt.title("t-SNE projection of 10-D data to 2-D, colored by true cluster")
+colors = ["#4ea1ff", "#7ee787", "#ffb454", "#c89bff", "#ff7b72"]
+for d in range(5):
+    pts = emb[y == d]
+    plt.scatter(pts[:, 0], pts[:, 1], c=colors[d], s=12, label="digit %d" % d)
+plt.title("t-SNE of handwritten digits (8x8 images) projected to 2-D")
 plt.xlabel("t-SNE 1")
 plt.ylabel("t-SNE 2")
 plt.legend()
@@ -167,120 +176,123 @@ plt.show()`
   },
 
   "cls-factor-analysis": {
-    question: "How does each hidden factor load onto the six signals?",
+    question: "On real wine chemistry, how do two hidden factors load onto the measured signals?",
     charts: [
       {
         type: "bars",
-        title: "Factor 1 loadings across the six observed signals",
-        labels: ["x1", "x2", "x3", "x4", "x5", "x6"],
-        values: [-1.48, -0.13, -0.4, -0.21, 1.08, 0.32],
+        title: "Factor 1 loadings across six wine chemistry signals",
+        labels: ["alcohol", "malic acid", "phenols", "flavanoids", "color", "proline"],
+        values: [0.33, -0.4, 0.89, 0.97, -0.1, 0.57],
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
       },
       {
         type: "bars",
-        title: "Factor 2 loadings across the six observed signals",
-        labels: ["x1", "x2", "x3", "x4", "x5", "x6"],
-        values: [-0.2, 0.34, -0.34, 0.13, -0.77, -0.27],
+        title: "Factor 2 loadings across six wine chemistry signals",
+        labels: ["alcohol", "malic acid", "phenols", "flavanoids", "color", "proline"],
+        values: [-0.84, -0.25, 0.0, 0.11, -0.69, -0.53],
         colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"]
       }
     ],
-    caption: "Each factor loads with a different strength and sign on each signal — that loading pattern is exactly how two hidden causes drive six correlated measurements.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
+    caption: "FactorAnalysis on the real 178-bottle wine dataset finds two latent causes. Factor 1 is a polyphenol axis (loads +0.89 phenols, +0.97 flavanoids); Factor 2 is a body axis (loads -0.84 alcohol, -0.69 color, -0.53 proline). Those loadings are exactly how a few hidden traits drive the measured chemistry.",
+    code: `import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import FactorAnalysis
 
-rng = np.random.default_rng(0)
-n, k, p = 500, 2, 6
-Z = rng.normal(size=(n, k))                     # hidden factors
-Lam = rng.normal(size=(k, p))                   # loadings
-noise = rng.normal(0, 0.5, size=(n, p))
-X = Z @ Lam + noise                              # observed signals
+wine = load_wine()                       # 178 real wines, 13 chemistry features
+idx = [0, 1, 5, 6, 9, 12]                # alcohol, malic acid, phenols,
+names = ["alcohol", "malic acid", "phenols", "flavanoids", "color", "proline"]
+X = StandardScaler().fit_transform(wine.data)[:, idx]
 
 fa = FactorAnalysis(n_components=2, random_state=0).fit(X)
-loadings = fa.components_                         # shape (2, 6)
+loadings = fa.components_                 # shape (2, 6)
 
-signals = ["x1", "x2", "x3", "x4", "x5", "x6"]
-fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-ax[0].bar(signals, loadings[0], color="#4ea1ff")
-ax[0].set_title("Factor 1 loadings across the six observed signals")
-ax[1].bar(signals, loadings[1], color="#c89bff")
-ax[1].set_title("Factor 2 loadings across the six observed signals")
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+ax[0].bar(names, loadings[0], color="#4ea1ff")
+ax[0].set_title("Factor 1 loadings across six wine chemistry signals")
+ax[1].bar(names, loadings[1], color="#c89bff")
+ax[1].set_title("Factor 2 loadings across six wine chemistry signals")
+for a in ax:
+    a.tick_params(axis="x", rotation=45)
 plt.show()`
   },
 
   "cls-svr": {
-    question: "Where does the SVR curve fit, and which points sit inside the tube?",
+    question: "On real diabetes data, where does SVR fit BMI against disease progression?",
     charts: [
       {
         type: "scatter",
-        title: "SVR fit of a noisy sine with the epsilon-tube",
-        xlabel: "x",
-        ylabel: "y",
+        title: "SVR fit of disease progression vs BMI with the epsilon-tube",
+        xlabel: "BMI (standardized)",
+        ylabel: "disease progression",
         groups: [
-          { name: "noisy data", color: "#4ea1ff", points: [[0.02,0.1],[0.1,0.17],[0.1,0.18],[0.17,0.03],[0.2,0.19],[0.24,0.16],[0.25,0.1],[0.35,0.29],[0.5,0.51],[0.69,0.63],[0.75,0.78],[1.19,0.96],[1.39,1.02],[1.62,0.99],[1.86,0.93],[1.93,0.94],[2.02,0.82],[2.03,0.85],[2.19,0.67],[2.33,0.71],[2.35,0.59],[2.43,0.42],[2.64,0.46],[2.76,0.38],[2.98,0.25],[3.25,-0.12],[3.48,-0.53],[3.69,-0.46],[3.74,-0.61],[3.82,-0.68],[3.88,-0.54],[4.11,-0.96],[4.13,-0.73],[4.27,-0.91],[4.32,-0.95],[4.38,-0.99],[4.41,-1.02],[4.71,-0.93],[4.72,-0.92],[4.93,-0.84],[5.14,-0.99],[5.18,-0.84],[5.18,-0.91],[5.26,-0.8],[5.34,-0.81],[5.48,-0.42],[5.56,-0.72],[5.59,-0.5],[5.6,-0.53],[5.65,-0.64]] }
+          { name: "patients", color: "#4ea1ff", points: [[-0.09,94.0],[-0.073,142.0],[-0.072,77.0],[-0.07,158.0],[-0.063,65.0],[-0.062,115.0],[-0.058,88.0],[-0.051,75.0],[-0.048,96.0],[-0.046,72.0],[-0.046,114.0],[-0.046,69.0],[-0.042,178.0],[-0.04,78.0],[-0.036,102.0],[-0.035,52.0],[-0.034,190.0],[-0.033,94.0],[-0.031,43.0],[-0.031,55.0],[-0.031,91.0],[-0.03,160.0],[-0.03,88.0],[-0.023,92.0],[-0.02,111.0],[-0.019,214.0],[-0.017,90.0],[-0.015,97.0],[-0.011,168.0],[-0.009,197.0],[-0.009,60.0],[-0.006,164.0],[-0.002,44.0],[-0.001,292.0],[0.001,142.0],[0.007,109.0],[0.007,67.0],[0.009,174.0],[0.014,220.0],[0.015,96.0],[0.015,201.0],[0.019,265.0],[0.021,197.0],[0.022,178.0],[0.03,244.0],[0.036,248.0],[0.046,175.0],[0.048,258.0],[0.06,263.0],[0.06,91.0],[0.062,151.0],[0.064,217.0],[0.069,277.0],[0.071,295.0],[0.077,332.0],[0.085,261.0],[0.093,200.0],[0.127,308.0],[0.137,233.0],[0.171,242.0]] }
         ],
         lines: [
-          { name: "SVR fit", color: "#7ee787", points: [[0.0,-0.01],[0.15,0.14],[0.31,0.29],[0.46,0.45],[0.62,0.59],[0.77,0.71],[0.92,0.82],[1.08,0.9],[1.23,0.96],[1.38,0.99],[1.54,0.99],[1.69,0.97],[1.85,0.93],[2.0,0.86],[2.15,0.79],[2.31,0.69],[2.46,0.59],[2.62,0.47],[2.77,0.34],[2.92,0.21],[3.08,0.06],[3.23,-0.09],[3.38,-0.24],[3.54,-0.39],[3.69,-0.53],[3.85,-0.66],[4.0,-0.78],[4.15,-0.88],[4.31,-0.95],[4.46,-1.0],[4.62,-1.02],[4.77,-1.01],[4.92,-0.97],[5.08,-0.92],[5.23,-0.84],[5.38,-0.75],[5.54,-0.66],[5.69,-0.56],[5.85,-0.46],[6.0,-0.37]] },
-          { name: "tube upper", color: "#ffb454", points: [[0.0,0.09],[0.15,0.24],[0.31,0.39],[0.46,0.55],[0.62,0.69],[0.77,0.81],[0.92,0.92],[1.08,1.0],[1.23,1.06],[1.38,1.09],[1.54,1.09],[1.69,1.07],[1.85,1.03],[2.0,0.96],[2.15,0.89],[2.31,0.79],[2.46,0.69],[2.62,0.57],[2.77,0.44],[2.92,0.31],[3.08,0.16],[3.23,0.01],[3.38,-0.14],[3.54,-0.29],[3.69,-0.43],[3.85,-0.56],[4.0,-0.68],[4.15,-0.78],[4.31,-0.85],[4.46,-0.9],[4.62,-0.92],[4.77,-0.91],[4.92,-0.87],[5.08,-0.82],[5.23,-0.74],[5.38,-0.65],[5.54,-0.56],[5.69,-0.46],[5.85,-0.36],[6.0,-0.27]] },
-          { name: "tube lower", color: "#ffb454", points: [[0.0,-0.11],[0.15,0.04],[0.31,0.19],[0.46,0.35],[0.62,0.49],[0.77,0.61],[0.92,0.72],[1.08,0.8],[1.23,0.86],[1.38,0.89],[1.54,0.89],[1.69,0.87],[1.85,0.83],[2.0,0.76],[2.15,0.69],[2.31,0.59],[2.46,0.49],[2.62,0.37],[2.77,0.24],[2.92,0.11],[3.08,-0.04],[3.23,-0.19],[3.38,-0.34],[3.54,-0.49],[3.69,-0.63],[3.85,-0.76],[4.0,-0.88],[4.15,-0.98],[4.31,-1.05],[4.46,-1.1],[4.62,-1.12],[4.77,-1.11],[4.92,-1.07],[5.08,-1.02],[5.23,-0.94],[5.38,-0.85],[5.54,-0.76],[5.69,-0.66],[5.85,-0.56],[6.0,-0.47]] }
+          { name: "SVR fit", color: "#7ee787", points: [[-0.09,85.3],[-0.084,82.5],[-0.077,81.6],[-0.07,82.7],[-0.064,85.5],[-0.057,89.7],[-0.05,94.7],[-0.043,100.0],[-0.037,105.1],[-0.03,110.0],[-0.023,115.2],[-0.017,122.1],[-0.01,131.9],[-0.003,144.8],[0.003,159.9],[0.01,175.1],[0.017,187.5],[0.023,194.9],[0.03,197.0],[0.037,195.4],[0.043,193.1],[0.05,193.7],[0.057,199.2],[0.064,210.1],[0.07,224.4],[0.077,239.3],[0.084,252.3],[0.09,261.6],[0.097,267.2],[0.104,270.4],[0.11,272.7],[0.117,275.8],[0.124,280.2],[0.13,285.6],[0.137,290.9],[0.144,294.6],[0.15,294.9],[0.157,290.6],[0.164,281.2],[0.171,267.0]] },
+          { name: "tube upper", color: "#ffb454", points: [[-0.09,110.3],[-0.084,107.5],[-0.077,106.6],[-0.07,107.7],[-0.064,110.5],[-0.057,114.7],[-0.05,119.7],[-0.043,125.0],[-0.037,130.1],[-0.03,135.0],[-0.023,140.2],[-0.017,147.1],[-0.01,156.9],[-0.003,169.8],[0.003,184.9],[0.01,200.1],[0.017,212.5],[0.023,219.9],[0.03,222.0],[0.037,220.4],[0.043,218.1],[0.05,218.7],[0.057,224.2],[0.064,235.1],[0.07,249.4],[0.077,264.3],[0.084,277.3],[0.09,286.6],[0.097,292.2],[0.104,295.4],[0.11,297.7],[0.117,300.8],[0.124,305.2],[0.13,310.6],[0.137,315.9],[0.144,319.6],[0.15,319.9],[0.157,315.6],[0.164,306.2],[0.171,292.0]] },
+          { name: "tube lower", color: "#ffb454", points: [[-0.09,60.3],[-0.084,57.5],[-0.077,56.6],[-0.07,57.7],[-0.064,60.5],[-0.057,64.7],[-0.05,69.7],[-0.043,75.0],[-0.037,80.1],[-0.03,85.0],[-0.023,90.2],[-0.017,97.1],[-0.01,106.9],[-0.003,119.8],[0.003,134.9],[0.01,150.1],[0.017,162.5],[0.023,169.9],[0.03,172.0],[0.037,170.4],[0.043,168.1],[0.05,168.7],[0.057,174.2],[0.064,185.1],[0.07,199.4],[0.077,214.3],[0.084,227.3],[0.09,236.6],[0.097,242.2],[0.104,245.4],[0.11,247.7],[0.117,250.8],[0.124,255.2],[0.13,260.6],[0.137,265.9],[0.144,269.6],[0.15,269.9],[0.157,265.6],[0.164,256.2],[0.171,242.0]] }
         ]
       }
     ],
-    caption: "The green curve tracks the sine through the noise; 39 of 120 points became support vectors, the rest sit quietly inside the amber epsilon-tube.",
+    caption: "On the real diabetes dataset (442 patients) SVR fits the rising, noisy relationship between body-mass index and one-year disease progression; 320 of 442 patients become support vectors, and the rest sit inside the amber epsilon-tube (epsilon 25).",
     code: `import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
 from sklearn.svm import SVR
 
-rng = np.random.default_rng(0)
-X = np.sort(rng.uniform(0, 6, size=(120, 1)), axis=0)
-y = np.sin(X[:, 0]) + rng.normal(0, 0.1, size=120)
+db = load_diabetes()                     # 442 real patients
+x = db.data[:, 2]                        # BMI feature (standardized)
+y = db.target                            # disease progression after one year
+order = np.argsort(x); x, y = x[order], y[order]
 
-eps = 0.1
-svr = SVR(kernel="rbf", C=10.0, epsilon=eps, gamma="scale").fit(X, y)
-grid = np.linspace(0, 6, 200).reshape(-1, 1)
+eps = 25.0
+svr = SVR(kernel="rbf", C=1000.0, epsilon=eps, gamma="scale").fit(x.reshape(-1, 1), y)
+grid = np.linspace(x.min(), x.max(), 200).reshape(-1, 1)
 fit = svr.predict(grid)
 
-plt.scatter(X[:, 0], y, c="#4ea1ff", s=15, label="noisy data")
+plt.scatter(x, y, c="#4ea1ff", s=12, label="patients")
 plt.plot(grid[:, 0], fit, c="#7ee787", label="SVR fit")
 plt.plot(grid[:, 0], fit + eps, c="#ffb454", label="tube upper")
 plt.plot(grid[:, 0], fit - eps, c="#ffb454", label="tube lower")
-plt.title("SVR fit of a noisy sine with the epsilon-tube")
-plt.xlabel("x")
-plt.ylabel("y")
+plt.title("SVR fit of disease progression vs BMI with the epsilon-tube")
+plt.xlabel("BMI (standardized)")
+plt.ylabel("disease progression")
 plt.legend()
 plt.show()`
   },
 
   "cls-bandits": {
-    question: "Which arm is best, and does UCB beat random pulling?",
+    question: "Across three ad creatives, which wins and does UCB beat random rotation?",
     charts: [
       {
         type: "line",
-        title: "Cumulative reward over 2000 rounds: UCB vs random",
-        xlabel: "round",
-        ylabel: "cumulative reward",
+        title: "Cumulative clicks over 2000 impressions: UCB vs random rotation",
+        xlabel: "impression",
+        ylabel: "cumulative clicks",
         series: [
-          { name: "UCB1", color: "#7ee787", points: [[3,3.0],[83,50.0],[163,90.0],[243,137.0],[323,180.0],[403,233.0],[483,289.0],[563,344.0],[643,401.0],[723,453.0],[803,503.0],[883,551.0],[963,610.0],[1043,671.0],[1123,724.0],[1203,775.0],[1283,836.0],[1363,901.0],[1443,941.0],[1523,1000.0],[1603,1053.0],[1683,1108.0],[1763,1164.0],[1843,1227.0],[1923,1286.0],[1999,1345.0]] },
-          { name: "random", color: "#ff7b72", points: [[3,2.0],[83,39.0],[163,80.0],[243,122.0],[323,160.0],[403,197.0],[483,238.0],[563,276.0],[643,314.0],[723,362.0],[803,403.0],[883,458.0],[963,498.0],[1043,542.0],[1123,583.0],[1203,622.0],[1283,669.0],[1363,710.0],[1443,756.0],[1523,791.0],[1603,825.0],[1683,863.0],[1763,909.0],[1843,955.0],[1923,989.0],[1999,1024.0]] }
+          { name: "UCB1", color: "#7ee787", points: [[0,0.0],[80,8.0],[160,18.0],[240,24.0],[320,32.0],[400,41.0],[480,46.0],[560,49.0],[640,59.0],[720,71.0],[800,78.0],[880,87.0],[960,97.0],[1040,106.0],[1120,119.0],[1200,130.0],[1280,140.0],[1360,158.0],[1440,167.0],[1520,179.0],[1600,186.0],[1680,201.0],[1760,208.0],[1840,228.0],[1920,237.0],[1999,254.0]] },
+          { name: "random", color: "#ff7b72", points: [[0,0.0],[80,5.0],[160,12.0],[240,28.0],[320,32.0],[400,38.0],[480,45.0],[560,52.0],[640,60.0],[720,67.0],[800,72.0],[880,81.0],[960,90.0],[1040,107.0],[1120,114.0],[1200,120.0],[1280,130.0],[1360,138.0],[1440,147.0],[1520,160.0],[1600,168.0],[1680,178.0],[1760,186.0],[1840,191.0],[1920,205.0],[1999,212.0]] }
         ]
       },
       {
         type: "bars",
-        title: "Total pulls per arm by UCB1 (true win rates 0.30 / 0.55 / 0.70)",
-        labels: ["arm 0", "arm 1", "arm 2"],
-        values: [58, 229, 1713],
+        title: "Impressions served per ad by UCB1 (true CTR 0.06 / 0.10 / 0.16)",
+        labels: ["Ad A: blue banner", "Ad B: video", "Ad C: carousel"],
+        values: [361, 442, 1197],
         colors: ["#4ea1ff", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Arm 2 is best — UCB1 quickly concentrates its pulls there (1713 of 2000) and ends with more cumulative reward than random.",
+    caption: "Three ad creatives with real-looking click-through rates (6% / 10% / 16%). UCB1 learns that the carousel (Ad C) wins and routes most traffic there (1197 of 2000 impressions), ending with 254 clicks versus 212 for blind random rotation.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
 
-rng = np.random.default_rng(0)
-true_p = np.array([0.3, 0.55, 0.7])             # hidden win rates
-K, T = len(true_p), 2000
+ads = ["Ad A: blue banner", "Ad B: video", "Ad C: carousel"]
+true_ctr = np.array([0.06, 0.10, 0.16])  # real-looking click-through rates
+K, T = len(true_ctr), 2000
 
-def run(strategy):
+def run(strategy, seed):
+    rng = np.random.default_rng(seed)
     sums = np.zeros(K); counts = np.zeros(K); cum = []; total = 0.0
     for t in range(T):
         if t < K:
@@ -289,23 +301,22 @@ def run(strategy):
             mean = sums / counts
             arm = int(np.argmax(mean + np.sqrt(2 * np.log(t) / counts)))
         else:
-            arm = rng.integers(K)
-        r = float(rng.random() < true_p[arm])
+            arm = int(rng.integers(K))
+        r = float(rng.random() < true_ctr[arm])
         sums[arm] += r; counts[arm] += 1; total += r; cum.append(total)
     return np.array(cum), counts.astype(int)
 
-ucb_cum, ucb_counts = run("ucb")
-rnd_cum, _ = run("random")
+ucb_cum, ucb_counts = run("ucb", 0)
+rnd_cum, _ = run("random", 1)
 
 fig, ax = plt.subplots(1, 2, figsize=(11, 4))
-rounds = np.arange(T)
-ax[0].plot(rounds, ucb_cum, c="#7ee787", label="UCB1")
-ax[0].plot(rounds, rnd_cum, c="#ff7b72", label="random")
-ax[0].set_title("Cumulative reward over 2000 rounds: UCB vs random")
-ax[0].set_xlabel("round"); ax[0].set_ylabel("cumulative reward"); ax[0].legend()
-ax[1].bar(["arm 0", "arm 1", "arm 2"], ucb_counts,
-          color=["#4ea1ff", "#4ea1ff", "#7ee787"])
-ax[1].set_title("Total pulls per arm by UCB1")
+ax[0].plot(np.arange(T), ucb_cum, c="#7ee787", label="UCB1")
+ax[0].plot(np.arange(T), rnd_cum, c="#ff7b72", label="random")
+ax[0].set_title("Cumulative clicks over 2000 impressions: UCB vs random rotation")
+ax[0].set_xlabel("impression"); ax[0].set_ylabel("cumulative clicks"); ax[0].legend()
+ax[1].bar(ads, ucb_counts, color=["#4ea1ff", "#4ea1ff", "#7ee787"])
+ax[1].set_title("Impressions served per ad by UCB1")
+ax[1].tick_params(axis="x", rotation=20)
 plt.show()`
   }
 
