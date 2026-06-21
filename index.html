@@ -333,6 +333,14 @@
     border-radius: 9px; font-size: 14px;
   }
 
+  /* ---- Per-lesson code-output visualization ---- */
+  .card.viz h3 { color: var(--accent); }
+  .viz .vizq { font-size: 14px; margin: 0 0 10px; }
+  .viz .vizchart { margin: 12px 0 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg); }
+  .viz .vizchart .vizct { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .viz canvas[data-viz] { width: 100%; max-width: 600px; height: auto; display: block; }
+  .viz .vizcap { font-size: 13.5px; color: var(--ink-dim); margin: 10px 0 0; }
+
   /* ---- Per-lesson code section ---- */
   .card.code h3 { color: #d2a8ff; }
   .code .codewrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 10px; background: #282c34; }
@@ -416,6 +424,8 @@
   window.CODE = {};
   // Per-lesson real-world walkthroughs (array per lesson id). Filled by lessons/walkthroughs-*.js.
   window.WALKTHROUGHS = {};
+  // Per-lesson code-output visualizations (keyed by lesson id). Filled by lessons/codeviz-*.js.
+  window.CODEVIZ = {};
   // Some finer modules are merged into bigger groups in the sidebar nav. The lesson's own
   // `module` field is unchanged (kept for breadcrumbs / the concept-map colors); this map only
   // controls which top-level group it appears under.
@@ -440,6 +450,8 @@
 
 <!-- Reusable interactive-widget library (used by lesson demo functions). -->
 <script src="lessons/demos.js"></script>
+<!-- Reusable canvas chart engine (window.Charts) for the per-lesson visualizations. -->
+<script src="lessons/charts.js"></script>
 
 <!-- Content files. Plain <script src> works directly from file:// (no server needed). -->
 <script src="lessons/00-foundations.js"></script>
@@ -521,6 +533,21 @@
 <script src="lessons/code-09-classical-b.js"></script>
 <script src="lessons/code-10-modern-a.js"></script>
 <script src="lessons/code-10-modern-b.js"></script>
+
+<!-- Per-lesson visualizations of the code's data & results (charts/graphs). -->
+<script src="lessons/codeviz-00-foundations.js"></script>
+<script src="lessons/codeviz-01-probability.js"></script>
+<script src="lessons/codeviz-02-ml.js"></script>
+<script src="lessons/codeviz-03-deeplearning.js"></script>
+<script src="lessons/codeviz-04-ai.js"></script>
+<script src="lessons/codeviz-05-linalg.js"></script>
+<script src="lessons/codeviz-06-prob-extra.js"></script>
+<script src="lessons/codeviz-07-ml-extra.js"></script>
+<script src="lessons/codeviz-08-ai-extra.js"></script>
+<script src="lessons/codeviz-09-classical-a.js"></script>
+<script src="lessons/codeviz-09-classical-b.js"></script>
+<script src="lessons/codeviz-10-modern-a.js"></script>
+<script src="lessons/codeviz-10-modern-b.js"></script>
 
 <!-- Per-lesson real-world walkthroughs (question -> data -> code -> answer). -->
 <script src="lessons/walkthroughs-00-foundations.js"></script>
@@ -748,6 +775,27 @@ const App = (function () {
       `</div></div>`;
   }
 
+  // Visualize the code's data & results with charts/graphs (drawn after render).
+  function codeVizBlock(id) {
+    const v = window.CODEVIZ && CODEVIZ[id];
+    if (!v || !v.charts || !v.charts.length) return "";
+    const canvases = v.charts.map((ch, i) =>
+      `<div class="vizchart">${ch.title ? `<div class="vizct">${ch.title}</div>` : ""}` +
+      `<canvas data-viz="${id}::${i}" width="600" height="${ch.h || 260}"></canvas></div>`).join("");
+    return `<div class="card viz"><h3>📊 Visualize the data &amp; results</h3>` +
+      (v.question ? `<p class="vizq">❓ <b>${v.question}</b></p>` : "") +
+      canvases +
+      (v.caption ? `<p class="vizcap">${v.caption}</p>` : "") +
+      `</div>`;
+  }
+  function drawLessonViz(root) {
+    if (!window.Charts) return;
+    root.querySelectorAll("canvas[data-viz]").forEach(cv => {
+      const parts = cv.dataset.viz.split("::"), v = window.CODEVIZ && CODEVIZ[parts[0]];
+      if (v && v.charts && v.charts[+parts[1]]) Charts.draw(cv, v.charts[+parts[1]]);
+    });
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -771,6 +819,7 @@ const App = (function () {
       walkthroughBlock(id) +
       practiceBlock(l.practice) +
       codeBlock(id) +
+      codeVizBlock(id) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
         `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
       `<div class="nav-row">` +
@@ -783,6 +832,7 @@ const App = (function () {
     document.querySelectorAll(".lessons li").forEach(li => li.classList.toggle("active", li.dataset.id === id));
     if (l.demo) { try { l.demo(document.getElementById("demo-host")); } catch (e) { console.warn(e); } }
     if (window.hljs) c.querySelectorAll("pre code").forEach(b => { try { hljs.highlightElement(b); } catch (e) {} });
+    drawLessonViz(c);
     if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([c]);
     document.getElementById("main").scrollTo(0, 0);
     if (history.replaceState) history.replaceState(null, "", "#" + id);
