@@ -71,6 +71,14 @@ L.forEach(l => {
   setup += "\nimport numpy as np, matplotlib.pyplot as plt";
   cells.push(codeCell(setup));
 
+  // Feature-Engineering "reproduce the problem -> apply the fix" demo (tools/fe-demos/<id>.py).
+  // Shows raw data + the problem it causes, then engineered data + the fix, with before/after numbers.
+  const demoPath = path.join(ROOT, "tools", "fe-demos", id + ".py");
+  if (fs.existsSync(demoPath)) {
+    cells.push(mdCell("## See it for yourself: the problem, then the fix\n\nRun this cell. It plots the **raw** data and reproduces the problem it causes, then plots the **engineered** data and shows the fix — with before/after numbers."));
+    cells.push(codeCell(fs.readFileSync(demoPath, "utf8").trim()));
+  }
+
   // library implementation
   if (code && code.code) {
     cells.push(mdCell("## Reference implementation" + (code.lib ? " — " + htmlToText(code.lib) : "")));
