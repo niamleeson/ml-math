@@ -17,7 +17,33 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "The stacked ensemble (0.953) edges out both base models, so the learned combiner adds accuracy on top of the best single model."
+    caption: "The stacked ensemble (0.953) edges out both base models, so the learned combiner adds accuracy on top of the best single model.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.ensemble import StackingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import cross_val_score
+
+X, y = make_classification(n_samples=600, n_features=20, n_informative=8,
+                           random_state=0)
+rf = RandomForestClassifier(n_estimators=50, random_state=0)
+knn = KNeighborsClassifier(n_neighbors=7)
+stack = StackingClassifier(estimators=[("rf", rf), ("knn", knn)],
+                           final_estimator=LogisticRegression(max_iter=1000), cv=5)
+
+labels = ["RandomForest", "kNN", "Stacked"]
+accs = [cross_val_score(m, X, y, cv=5).mean() for m in (rf, knn, stack)]
+
+colors = ["#4ea1ff", "#4ea1ff", "#7ee787"]
+plt.bar(labels, accs, color=colors)
+for i, a in enumerate(accs):
+    plt.text(i, a, "%.3f" % a, ha="center", va="bottom")
+plt.ylim(0.9, 0.97)
+plt.title("5-fold accuracy: base models vs the stacked ensemble")
+plt.ylabel("accuracy")
+plt.show()`
   },
 
   "cls-anomaly": {
@@ -34,7 +60,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The dense central blob is normal; the 11 scattered points far from the crowd are flagged red as anomalies."
+    caption: "The dense central blob is normal; the 11 scattered points far from the crowd are flagged red as anomalies.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import IsolationForest
+
+rng = np.random.default_rng(0)
+inliers = rng.normal(0, 1, size=(200, 2))      # dense blob
+outliers = rng.uniform(-6, 6, size=(10, 2))    # scattered far out
+X = np.vstack([inliers, outliers])
+
+iso = IsolationForest(contamination=0.05, random_state=0).fit(X)
+pred = iso.predict(X)                           # -1 = anomaly, 1 = normal
+normal = X[pred == 1]
+flagged = X[pred == -1]
+
+plt.scatter(normal[:, 0], normal[:, 1], c="#4ea1ff", label="normal")
+plt.scatter(flagged[:, 0], flagged[:, 1], c="#ff7b72", label="anomaly (flagged)")
+plt.title("Isolation Forest: normal points vs flagged outliers")
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.legend()
+plt.show()`
   },
 
   "cls-recommender": {
@@ -57,7 +104,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "Factoring the sparse table fills every blank; reconstruction RMSE is 0.517 on observed cells and 0.858 on the held-out hidden ones."
+    caption: "Factoring the sparse table fills every blank; reconstruction RMSE is 0.517 on observed cells and 0.858 on the held-out hidden ones.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import TruncatedSVD
+
+rng = np.random.default_rng(0)
+U = rng.normal(size=(40, 3)); V = rng.normal(size=(25, 3))
+R = U @ V.T
+mask = rng.random(R.shape) < 0.7               # 70% observed
+Robs = np.where(mask, R, 0.0)                   # zero-fill unknowns
+
+svd = TruncatedSVD(n_components=3, random_state=0)
+Z = svd.fit_transform(Robs)
+Rhat = Z @ svd.components_                       # reconstruction
+
+obs = np.where(mask, R, np.nan)                  # blanks as NaN for display
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+ax[0].imshow(obs[:6, :8], cmap="coolwarm", vmin=-3, vmax=3)
+ax[0].set_title("Observed ratings (blanks hidden)")
+ax[1].imshow(Rhat[:6, :8], cmap="coolwarm", vmin=-3, vmax=3)
+ax[1].set_title("Reconstructed matrix (rank-3 SVD)")
+plt.show()`
   },
 
   "cls-tsne": {
@@ -75,7 +143,27 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Yes — the three colored groups land in well-separated blobs (between/within gap ratio 22.63), so the hidden cluster structure is real."
+    caption: "Yes — the three colored groups land in well-separated blobs (between/within gap ratio 22.63), so the hidden cluster structure is real.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.manifold import TSNE
+
+X, labels = make_blobs(n_samples=150, n_features=10, centers=3,
+                       cluster_std=1.0, random_state=0)
+emb = TSNE(n_components=2, perplexity=30, init="pca",
+           random_state=0).fit_transform(X)
+
+names = ["cluster A", "cluster B", "cluster C"]
+colors = ["#4ea1ff", "#7ee787", "#ffb454"]
+for k in range(3):
+    pts = emb[labels == k]
+    plt.scatter(pts[:, 0], pts[:, 1], c=colors[k], label=names[k])
+plt.title("t-SNE projection of 10-D data to 2-D, colored by true cluster")
+plt.xlabel("t-SNE 1")
+plt.ylabel("t-SNE 2")
+plt.legend()
+plt.show()`
   },
 
   "cls-factor-analysis": {
@@ -96,7 +184,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"]
       }
     ],
-    caption: "Each factor loads with a different strength and sign on each signal — that loading pattern is exactly how two hidden causes drive six correlated measurements."
+    caption: "Each factor loads with a different strength and sign on each signal — that loading pattern is exactly how two hidden causes drive six correlated measurements.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import FactorAnalysis
+
+rng = np.random.default_rng(0)
+n, k, p = 500, 2, 6
+Z = rng.normal(size=(n, k))                     # hidden factors
+Lam = rng.normal(size=(k, p))                   # loadings
+noise = rng.normal(0, 0.5, size=(n, p))
+X = Z @ Lam + noise                              # observed signals
+
+fa = FactorAnalysis(n_components=2, random_state=0).fit(X)
+loadings = fa.components_                         # shape (2, 6)
+
+signals = ["x1", "x2", "x3", "x4", "x5", "x6"]
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+ax[0].bar(signals, loadings[0], color="#4ea1ff")
+ax[0].set_title("Factor 1 loadings across the six observed signals")
+ax[1].bar(signals, loadings[1], color="#c89bff")
+ax[1].set_title("Factor 2 loadings across the six observed signals")
+plt.show()`
   },
 
   "cls-svr": {
@@ -117,7 +226,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The green curve tracks the sine through the noise; 39 of 120 points became support vectors, the rest sit quietly inside the amber epsilon-tube."
+    caption: "The green curve tracks the sine through the noise; 39 of 120 points became support vectors, the rest sit quietly inside the amber epsilon-tube.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.svm import SVR
+
+rng = np.random.default_rng(0)
+X = np.sort(rng.uniform(0, 6, size=(120, 1)), axis=0)
+y = np.sin(X[:, 0]) + rng.normal(0, 0.1, size=120)
+
+eps = 0.1
+svr = SVR(kernel="rbf", C=10.0, epsilon=eps, gamma="scale").fit(X, y)
+grid = np.linspace(0, 6, 200).reshape(-1, 1)
+fit = svr.predict(grid)
+
+plt.scatter(X[:, 0], y, c="#4ea1ff", s=15, label="noisy data")
+plt.plot(grid[:, 0], fit, c="#7ee787", label="SVR fit")
+plt.plot(grid[:, 0], fit + eps, c="#ffb454", label="tube upper")
+plt.plot(grid[:, 0], fit - eps, c="#ffb454", label="tube lower")
+plt.title("SVR fit of a noisy sine with the epsilon-tube")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
+plt.show()`
   },
 
   "cls-bandits": {
@@ -141,7 +272,41 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Arm 2 is best — UCB1 quickly concentrates its pulls there (1713 of 2000) and ends with more cumulative reward than random."
+    caption: "Arm 2 is best — UCB1 quickly concentrates its pulls there (1713 of 2000) and ends with more cumulative reward than random.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(0)
+true_p = np.array([0.3, 0.55, 0.7])             # hidden win rates
+K, T = len(true_p), 2000
+
+def run(strategy):
+    sums = np.zeros(K); counts = np.zeros(K); cum = []; total = 0.0
+    for t in range(T):
+        if t < K:
+            arm = t
+        elif strategy == "ucb":
+            mean = sums / counts
+            arm = int(np.argmax(mean + np.sqrt(2 * np.log(t) / counts)))
+        else:
+            arm = rng.integers(K)
+        r = float(rng.random() < true_p[arm])
+        sums[arm] += r; counts[arm] += 1; total += r; cum.append(total)
+    return np.array(cum), counts.astype(int)
+
+ucb_cum, ucb_counts = run("ucb")
+rnd_cum, _ = run("random")
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+rounds = np.arange(T)
+ax[0].plot(rounds, ucb_cum, c="#7ee787", label="UCB1")
+ax[0].plot(rounds, rnd_cum, c="#ff7b72", label="random")
+ax[0].set_title("Cumulative reward over 2000 rounds: UCB vs random")
+ax[0].set_xlabel("round"); ax[0].set_ylabel("cumulative reward"); ax[0].legend()
+ax[1].bar(["arm 0", "arm 1", "arm 2"], ucb_counts,
+          color=["#4ea1ff", "#4ea1ff", "#7ee787"])
+ax[1].set_title("Total pulls per arm by UCB1")
+plt.show()`
   }
 
 });

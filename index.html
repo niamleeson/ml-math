@@ -340,6 +340,13 @@
   .viz .vizchart .vizct { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
   .viz canvas[data-viz] { width: 100%; max-width: 600px; height: auto; display: block; }
   .viz .vizcap { font-size: 13.5px; color: var(--ink-dim); margin: 10px 0 0; }
+  .viz .viztoggle { display: inline-flex; gap: 0; margin: 2px 0 4px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .viz .vbtn { background: var(--bg); color: var(--ink-dim); border: none; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
+  .viz .vbtn + .vbtn { border-left: 1px solid var(--border); }
+  .viz .vbtn.active { background: var(--accent); color: #04121f; font-weight: 600; }
+  .viz .viz-code { margin-top: 10px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #282c34; }
+  .viz .viz-code pre { margin: 0; border: none; border-radius: 0; background: #282c34; padding: 12px 14px; font-size: 12.5px; }
+  .viz .viz-code pre code { background: none; padding: 0; color: #abb2bf; }
 
   /* ---- Per-lesson code section ---- */
   .card.code h3 { color: #d2a8ff; }
@@ -782,9 +789,16 @@ const App = (function () {
     const canvases = v.charts.map((ch, i) =>
       `<div class="vizchart">${ch.title ? `<div class="vizct">${ch.title}</div>` : ""}` +
       `<canvas data-viz="${id}::${i}" width="600" height="${ch.h || 260}"></canvas></div>`).join("");
+    const hasCode = !!v.code;
+    const toggle = hasCode
+      ? `<div class="viztoggle"><button class="vbtn active" onclick="App.vizView(this,'chart')">📊 Chart</button>` +
+        `<button class="vbtn" onclick="App.vizView(this,'code')">💻 Code that made it</button></div>`
+      : "";
     return `<div class="card viz"><h3>📊 Visualize the data &amp; results</h3>` +
       (v.question ? `<p class="vizq">❓ <b>${v.question}</b></p>` : "") +
-      canvases +
+      toggle +
+      `<div class="viz-charts">${canvases}</div>` +
+      (hasCode ? `<div class="viz-code" style="display:none"><pre><code class="language-python">${escapeHtml(v.code)}</code></pre></div>` : "") +
       (v.caption ? `<p class="vizcap">${v.caption}</p>` : "") +
       `</div>`;
   }
@@ -900,8 +914,16 @@ const App = (function () {
 
   function typeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); }
   function toggleWT(btn) { const wt = btn.parentElement; wt.classList.toggle("open"); }
+  function vizView(btn, mode) {
+    const card = btn.closest(".card.viz");
+    card.querySelectorAll(".vbtn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const charts = card.querySelector(".viz-charts"), code = card.querySelector(".viz-code");
+    if (charts) charts.style.display = mode === "chart" ? "" : "none";
+    if (code) code.style.display = mode === "code" ? "" : "none";
+  }
 
-  return { boot, open, toggleDone, filter, typeset, toggleWT };
+  return { boot, open, toggleDone, filter, typeset, toggleWT, vizView };
 })();
 window.App = App;   // expose for deep-linking and the screenshot/QA harness
 window.addEventListener("DOMContentLoaded", App.boot);

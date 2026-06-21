@@ -30,7 +30,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#7ee787", "#ffb454"]
       }
     ],
-    caption: "A vector is an ordered list of numbers; drawn as an arrow it has horizontal and vertical legs, and the code reads each entry by position."
+    caption: "A vector is an ordered list of numbers; drawn as an arrow it has horizontal and vertical legs, and the code reads each entry by position.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# the house vector and a small 2-D vector to draw as an arrow
+house = np.array([1500.0, 3.0, 10.0])
+x = np.array([3.0, 2.0])
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+
+# left: x drawn as an arrow from the origin with its legs
+ax1.quiver(0, 0, x[0], x[1], angles="xy", scale_units="xy", scale=1, color="C0")
+ax1.plot([0, x[0]], [0, 0], "--", color="orange")
+ax1.plot([x[0], x[0]], [0, x[1]], "--", color="green")
+ax1.set_xlim(-1, 4); ax1.set_ylim(-1, 3)
+ax1.set_xlabel("x1"); ax1.set_ylabel("x2")
+ax1.set_title("Vector x = [3, 2] as an arrow")
+
+# right: the three entries of the house vector as bars
+labels = ["x0 size", "x1 bedrooms", "x2 age"]
+ax2.bar(labels, house, color=["C0", "green", "orange"])
+ax2.set_title("Entries of x = [1500, 3, 10]")
+plt.show()`
   },
 
   "fnd-dot": {
@@ -59,7 +81,30 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Positive dot product means vectors agree (+3), zero means perpendicular, negative means they oppose (-4); a and b give cosine 0.6."
+    caption: "Positive dot product means vectors agree (+3), zero means perpendicular, negative means they oppose (-4); a and b give cosine 0.6.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# dot [1,0] with three directions: agree, perpendicular, oppose
+base = np.array([1.0, 0.0])
+dirs = np.array([[3.0, 0.0], [0.0, 5.0], [-4.0, 0.0]])
+dots = dirs @ base                       # [3, 0, -4]
+
+a = np.array([3.0, 1.0])
+b = np.array([1.0, 3.0])
+cos = (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))  # 0.6
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+labels = ["same [3,0]", "perp [0,5]", "opp [-4,0]"]
+ax1.bar(labels, dots, color=["green", "gray", "red"])
+ax1.set_title("Dot product of [1,0] with each direction")
+
+ax2.quiver([0, 0], [0, 0], [a[0], b[0]], [a[1], b[1]],
+           angles="xy", scale_units="xy", scale=1, color=["C0", "purple"])
+ax2.set_xlim(-1, 4); ax2.set_ylim(-1, 4)
+ax2.set_xlabel("x1"); ax2.set_ylabel("x2")
+ax2.set_title("a, b  cosine = " + str(round(float(cos), 2)))
+plt.show()`
   },
 
   "fnd-matrix": {
@@ -78,7 +123,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "A matrix is a grid; here each row is one house and each column is one feature, so A has shape 3 rows by 2 columns."
+    caption: "A matrix is a grid; here each row is one house and each column is one feature, so A has shape 3 rows by 2 columns.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# three houses (rows) by two features (cols)
+A = np.array([
+    [1500.0, 3.0],
+    [ 900.0, 2.0],
+    [2200.0, 4.0],
+])
+
+fig, ax = plt.subplots()
+im = ax.imshow(A, cmap="viridis", aspect="auto")
+ax.set_xticks([0, 1]); ax.set_xticklabels(["size", "bedrooms"])
+ax.set_yticks([0, 1, 2]); ax.set_yticklabels(["house 1", "house 2", "house 3"])
+ax.set_title("Matrix A: 3 houses by 2 features")
+
+# write each value into its cell
+for i in range(A.shape[0]):
+    for j in range(A.shape[1]):
+        ax.text(j, i, str(A[i, j]), ha="center", va="center", color="white")
+fig.colorbar(im)
+plt.show()`
   },
 
   "fnd-matvec": {
@@ -93,7 +160,27 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Matrix times vector does one dot product per row: house 1 scores 330000 and house 2 scores 200000, both at once."
+    caption: "Matrix times vector does one dot product per row: house 1 scores 330000 and house 2 scores 200000, both at once.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([                 # two houses: [size, bedrooms]
+    [1500.0, 3.0],
+    [ 900.0, 2.0],
+])
+x = np.array([200.0, 10000.0])  # price weights
+
+# matrix times vector: one dot product per row
+Ax = A @ x                      # [330000, 200000]
+
+fig, ax = plt.subplots()
+labels = ["house 1 [1500,3]", "house 2 [900,2]"]
+ax.bar(labels, Ax, color=["C0", "green"])
+for i, v in enumerate(Ax):
+    ax.text(i, v, str(int(v)), ha="center", va="bottom")
+ax.set_ylabel("price")
+ax.set_title("Ax = price per house")
+plt.show()`
   },
 
   "fnd-norm": {
@@ -122,7 +209,26 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "L2 squares-sums-roots to give straight-line length 5; L1 sums absolute values to give 7; the legs 3 and 4 make the hypotenuse 5."
+    caption: "L2 squares-sums-roots to give straight-line length 5; L1 sums absolute values to give 7; the legs 3 and 4 make the hypotenuse 5.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.array([3.0, -4.0])
+l2 = np.linalg.norm(x)          # 5.0, straight-line length
+l1 = np.linalg.norm(x, ord=1)   # 7.0, sum of absolute values
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.bar(["L2 norm", "L1 norm"], [l2, l1], color=["C0", "orange"])
+ax1.set_title("Two sizes of x = [3, -4]")
+
+# x as a right triangle: hypotenuse is the L2 length
+ax2.quiver(0, 0, x[0], x[1], angles="xy", scale_units="xy", scale=1, color="C0")
+ax2.plot([0, x[0]], [0, 0], "--", color="orange")        # leg a = 3
+ax2.plot([x[0], x[0]], [0, x[1]], "--", color="purple")  # leg b = -4
+ax2.set_xlim(-1, 4); ax2.set_ylim(-5, 1)
+ax2.set_xlabel("x1"); ax2.set_ylabel("x2")
+ax2.set_title("x as a right triangle, L2 = " + str(l2))
+plt.show()`
   },
 
   "fnd-derivative": {
@@ -147,7 +253,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#ff7b72", "#9aa7b4", "#7ee787"]
       }
     ],
-    caption: "The derivative is the tangent slope; the code confirms it is 2x, so -4 at x=-2, flat 0 at the minimum x=0, and +6 at x=3."
+    caption: "The derivative is the tangent slope; the code confirms it is 2x, so -4 at x=-2, flat 0 at the minimum x=0, and +6 at x=3.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+xs = np.linspace(-3, 3, 13)
+f = xs ** 2                       # the bowl
+
+# tangent at x = 1.5 has slope 2*1.5 = 3
+x0 = 1.5
+tangent = f[xs == x0][0] + 3 * (xs - x0)
+
+pts = np.array([-2.0, 0.0, 3.0])
+slopes = 2 * pts                  # exact derivative 2x: [-4, 0, 6]
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.plot(xs, f, color="C0", label="f(x) = x^2")
+ax1.plot(xs, tangent, color="orange", label="tangent at x=1.5")
+ax1.set_xlabel("x"); ax1.set_ylabel("f(x)")
+ax1.set_ylim(-4, 9); ax1.legend(); ax1.set_title("x^2 and its tangent")
+
+ax2.bar(["x=-2", "x=0", "x=3"], slopes, color=["red", "gray", "green"])
+ax2.set_title("Exact derivative 2x")
+plt.show()`
   },
 
   "fnd-gradient": {
@@ -176,7 +304,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Each step subtracts the gradient, sliding the point from (3,4) toward (0,0) while the loss falls from 25 down to about 2.68."
+    caption: "Each step subtracts the gradient, sliding the point from (3,4) toward (0,0) while the loss falls from 25 down to about 2.68.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# gradient descent on f = x^2 + y^2 from (3, 4)
+p = np.array([3.0, 4.0])
+lr = 0.1
+path = [p.copy()]
+losses = [float(p @ p)]
+for _ in range(5):
+    p = p - lr * (2 * p)          # step opposite the gradient
+    path.append(p.copy())
+    losses.append(float(p @ p))
+path = np.array(path)
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.scatter(path[:, 0], path[:, 1], color="C0")
+ax1.plot(path[:, 0], path[:, 1], color="orange")
+ax1.scatter([0], [0], color="green", marker="*", s=120)
+ax1.set_xlabel("x"); ax1.set_ylabel("y")
+ax1.set_title("Descent toward min (0,0)")
+
+ax2.plot(range(len(losses)), losses, color="C0")
+ax2.set_xlabel("step"); ax2.set_ylabel("f value")
+ax2.set_title("Loss going down each step")
+plt.show()`
   },
 
   "fnd-chain": {
@@ -200,7 +353,25 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Multiplying the inner slope 3 by the outer slope 2y gives 18x, matching the numeric check: -18, 9, 18 at x = -1, 0.5, 1."
+    caption: "Multiplying the inner slope 3 by the outer slope 2y gives 18x, matching the numeric check: -18, 9, 18 at x = -1, 0.5, 1.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# z = (3x)^2, chain rule dz/dx = (2y)*3 = 18x
+pts = np.array([-1.0, 0.5, 1.0])
+slopes = 18 * pts                 # [-18, 9, 18]
+
+line_x = np.linspace(-1, 1, 5)
+line_y = 18 * line_x              # the straight line 18x
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.bar(["x=-1", "x=0.5", "x=1"], slopes, color=["red", "green", "C0"])
+ax1.set_title("Chain rule dz/dx = 18x")
+
+ax2.plot(line_x, line_y, color="purple")
+ax2.set_xlabel("x"); ax2.set_ylabel("dz/dx")
+ax2.set_title("Slope of (3x)^2 is the line 18x")
+plt.show()`
   },
 
   "fnd-eigen": {
@@ -232,7 +403,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Eigenvectors [1,0] and [0,1] only stretch (by 2 and 3) and stay on their lines, while a generic vector [1,1] maps to [2,3] and tilts to a new direction."
+    caption: "Eigenvectors [1,0] and [0,1] only stretch (by 2 and 3) and stay on their lines, while a generic vector [1,1] maps to [2,3] and tilts to a new direction.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[2.0, 0.0], [0.0, 3.0]])
+vals, vecs = np.linalg.eig(A)     # eigenvalues [2, 3]
+
+# where A sends each test vector
+e1, e2, g = np.array([1.0, 0.0]), np.array([0.0, 1.0]), np.array([1.0, 1.0])
+Ae1, Ae2, Ag = A @ e1, A @ e2, A @ g   # [2,0], [0,3], [2,3]
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.quiver([0, 0, 0], [0, 0, 0], [Ae1[0], Ae2[0], Ag[0]],
+           [Ae1[1], Ae2[1], Ag[1]], angles="xy", scale_units="xy",
+           scale=1, color=["C0", "green", "red"])
+ax1.plot([0, 1], [0, 1], "--", color="gray")   # [1,1] before
+ax1.set_xlim(-1, 4); ax1.set_ylim(-1, 4)
+ax1.set_xlabel("x1"); ax1.set_ylabel("x2")
+ax1.set_title("Eigenvectors stretch, [1,1] tilts")
+
+ax2.bar(["lambda 1", "lambda 2"], np.sort(vals), color=["C0", "green"])
+ax2.set_title("Eigenvalues = stretch factors")
+plt.show()`
   }
 
 });

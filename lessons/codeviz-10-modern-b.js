@@ -44,7 +44,30 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "Each node's new row is the plain mean of its neighbours' rows, so sharp values like C's 7.0 get smoothed toward its neighbours (B and F) into 2.0."
+    caption: "Each node's new row is the plain mean of its neighbours' rows, so sharp values like C's 7.0 get smoothed toward its neighbours (B and F) into 2.0.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# 6 node features, 2 features each (BEFORE message passing)
+H = np.array([[4.,1.],[1.,5.],[7.,2.],[2.,6.],[5.,3.],[3.,4.]])
+labels = ['A','B','C','D','E','F']
+
+# neighbour lists (no self-loop): each node averages ONLY its neighbours
+neigh = [[1,3],[0,2,4],[1,5],[0,4],[1,3,5],[2,4]]
+A = np.zeros((6,6))
+for i, ns in enumerate(neigh):
+    A[i, ns] = 1.0 / len(ns)          # row-normalized adjacency -> mean
+H2 = A @ H                            # one GCN aggregation: mean of neighbours
+
+fig, ax = plt.subplots(1, 2, figsize=(7,4))
+for a, M, t in [(ax[0], H, 'BEFORE'), (ax[1], H2, 'AFTER avg neighbours')]:
+    a.imshow(M, cmap='viridis', aspect='auto')
+    a.set_xticks([0,1]); a.set_xticklabels(['feature 0','feature 1'])
+    a.set_yticks(range(6)); a.set_yticklabels(labels); a.set_title(t)
+    for i in range(6):
+        for j in range(2):
+            a.text(j, i, format(M[i,j], '.2f'), ha='center', va='center', color='w')
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 2. DEEP Q-NETWORKS ------------------------------------------- */
@@ -69,7 +92,33 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Yes: reward climbs from about 4 to a ceiling near 9.6 as the Q-values sharpen, then flattens once the agent reliably runs to the goal."
+    caption: "Yes: reward climbs from about 4 to a ceiling near 9.6 as the Q-values sharpen, then flattens once the agent reliably runs to the goal.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(0)
+N, GOAL = 6, 5                       # corridor of 6 states, goal at the right end
+Q = np.zeros((N, 2))                 # tabular Q: 2 actions (left=0, right=1)
+gamma, alpha = 0.95, 0.2
+rewards = []
+for ep in range(300):
+    s, total, eps = 0, 0.0, max(0.05, 1.0 - ep / 150)   # epsilon decay
+    for _ in range(20):
+        a = rng.integers(2) if rng.random() < eps else int(np.argmax(Q[s]))
+        s2 = min(N - 1, s + 1) if a == 1 else max(0, s - 1)
+        r = 10.0 if s2 == GOAL else -0.1                 # +10 at goal
+        Q[s, a] += alpha * (r + gamma * Q[s2].max() - Q[s, a])
+        s, total = s2, total + r
+        if s2 == GOAL:
+            break
+    rewards.append(total)
+
+sm = np.convolve(rewards, np.ones(20) / 20, mode='valid')   # smoothed curve
+plt.figure(figsize=(6,4))
+plt.plot(sm, color='#4ea1ff', label='episode reward')
+plt.xlabel('episode'); plt.ylabel('smoothed episode reward')
+plt.title('DQN episode reward over 300 episodes'); plt.legend()
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 3. POLICY GRADIENTS (REINFORCE) ------------------------------ */
@@ -94,7 +143,39 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Yes: noisy at first (the raw return is high-variance) but the trend rises from about 5 to near 9.6 as good actions get reinforced."
+    caption: "Yes: noisy at first (the raw return is high-variance) but the trend rises from about 5 to near 9.6 as good actions get reinforced.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(1)
+N, GOAL = 6, 5                       # same corridor task, goal reward = +10
+theta = np.zeros((N, 2))            # softmax policy logits per state
+lr, gamma = 0.4, 0.95
+returns_hist = []
+for ep in range(300):
+    s, traj, G = 0, [], 0.0
+    for _ in range(20):
+        p = np.exp(theta[s] - theta[s].max()); p /= p.sum()   # softmax pi(.|s)
+        a = rng.choice(2, p=p)
+        s2 = min(N - 1, s + 1) if a == 1 else max(0, s - 1)
+        r = 10.0 if s2 == GOAL else -0.1
+        traj.append((s, a, r)); G += r; s = s2
+        if s2 == GOAL:
+            break
+    Gt = 0.0                                   # REINFORCE: walk trajectory backwards
+    for s, a, r in reversed(traj):
+        Gt = r + gamma * Gt
+        p = np.exp(theta[s] - theta[s].max()); p /= p.sum()
+        grad = -p; grad[a] += 1.0              # d log pi / d theta
+        theta[s] += lr * Gt * grad
+    returns_hist.append(G)
+
+sm = np.convolve(returns_hist, np.ones(20) / 20, mode='valid')
+plt.figure(figsize=(6,4))
+plt.plot(sm, color='#7ee787', label='return G')
+plt.xlabel('episode'); plt.ylabel('smoothed return G')
+plt.title('REINFORCE episode return over 300 episodes'); plt.legend()
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 4. ACTOR-CRITIC (A2C, PPO) ----------------------------------- */
@@ -119,7 +200,38 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Yes: subtracting the critic's value baseline cuts the variance, so the curve rises quickly and steadily from about 3 to near 9.6."
+    caption: "Yes: subtracting the critic's value baseline cuts the variance, so the curve rises quickly and steadily from about 3 to near 9.6.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(2)
+N, GOAL = 6, 5                       # same corridor, goal reward = +10
+theta = np.zeros((N, 2))            # actor: softmax logits per state
+V = np.zeros(N)                    # critic: state value baseline
+lr_a, lr_c, gamma = 0.4, 0.3, 0.95
+rewards = []
+for ep in range(300):
+    s, total = 0, 0.0
+    for _ in range(20):
+        p = np.exp(theta[s] - theta[s].max()); p /= p.sum()
+        a = rng.choice(2, p=p)
+        s2 = min(N - 1, s + 1) if a == 1 else max(0, s - 1)
+        r = 10.0 if s2 == GOAL else -0.1
+        adv = r + gamma * V[s2] - V[s]          # one-step TD advantage
+        V[s] += lr_c * adv                       # critic update
+        grad = -p; grad[a] += 1.0
+        theta[s] += lr_a * adv * grad            # actor scaled by advantage
+        s, total = s2, total + r
+        if s2 == GOAL:
+            break
+    rewards.append(total)
+
+sm = np.convolve(rewards, np.ones(20) / 20, mode='valid')
+plt.figure(figsize=(6,4))
+plt.plot(sm, color='#c89bff', label='episode reward')
+plt.xlabel('episode'); plt.ylabel('smoothed episode reward')
+plt.title('Actor-Critic episode reward over 300 episodes'); plt.legend()
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 5. CONTRASTIVE LEARNING (SimCLR / CLIP) ---------------------- */
@@ -144,7 +256,30 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "Yes: every item's two views sit near 1.0 (item k in row matches item k in the other half-block), so the loss can spot each row's true positive among the negatives."
+    caption: "Yes: every item's two views sit near 1.0 (item k in row matches item k in the other half-block), so the loss can spot each row's true positive among the negatives.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(3)
+# 4 items, each a random 8-dim base embedding
+base = rng.standard_normal((4, 8))
+view1 = base + 0.02 * rng.standard_normal((4, 8))   # augmented view 1
+view2 = base + 0.02 * rng.standard_normal((4, 8))   # augmented view 2
+Z = np.vstack([view1, view2])                       # (8, 8): 4 items x 2 views
+
+Z = Z / np.linalg.norm(Z, axis=1, keepdims=True)    # L2-normalize rows
+S = Z @ Z.T                                          # cosine-similarity matrix
+
+names = ['v1_1','v1_2','v1_3','v1_4','v2_1','v2_2','v2_3','v2_4']
+plt.figure(figsize=(6,5))
+plt.imshow(S, cmap='coolwarm', vmin=-1, vmax=1)
+plt.colorbar(label='cosine similarity')
+plt.xticks(range(8), names, rotation=45); plt.yticks(range(8), names)
+plt.title('Pairwise cosine similarity of 8 embeddings')
+for i in range(8):
+    for j in range(8):
+        plt.text(j, i, format(S[i,j], '.2f'), ha='center', va='center', fontsize=7)
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 6. VISION TRANSFORMERS (ViT) --------------------------------- */
@@ -172,7 +307,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
       }
     ],
-    caption: "The center patch p4 grabs 32 percent of the attention while corner patches get under 6 percent, so the model focuses on the object in the middle."
+    caption: "The center patch p4 grabs 32 percent of the attention while corner patches get under 6 percent, so the model focuses on the object in the middle.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# CLS token query vs 9 patch keys -> attention via scaled-dot-product softmax.
+# Raw scores hand-set so the center patch (p4) is most similar to the CLS query.
+scores = np.array([0.5, 2.0, 0.7, 0.9, 2.6, 1.1, 0.7, 1.7, 1.1])
+w = np.exp(scores - scores.max()); w = w / w.sum()   # softmax -> sums to 1
+grid = w.reshape(3, 3)                                # 3x3 patch layout
+
+fig, ax = plt.subplots(1, 2, figsize=(9,4))
+im = ax[0].imshow(grid, cmap='magma')
+ax[0].set_title('CLS attention over 3x3 patch grid')
+ax[0].set_xticks(range(3)); ax[0].set_yticks(range(3))
+for i in range(3):
+    for j in range(3):
+        ax[0].text(j, i, format(grid[i,j], '.3f'), ha='center', va='center', color='w')
+fig.colorbar(im, ax=ax[0])
+
+cols = ['#ffb454' if i == int(np.argmax(w)) else '#4ea1ff' for i in range(9)]
+ax[1].bar([f'p{i}' for i in range(9)], w, color=cols)
+ax[1].set_title('Attention weight per patch token'); ax[1].set_ylabel('weight')
+plt.tight_layout(); plt.show()`
   },
 
   /* ---- 7. TIME-SERIES FORECASTING (LSTM / AR) ----------------------- */
@@ -224,7 +381,31 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The forecast follows the actual line's ups and downs, and the true value mostly sits inside the purple band (about plus or minus 2.3 wide from the residual noise)."
+    caption: "The forecast follows the actual line's ups and downs, and the true value mostly sits inside the purple band (about plus or minus 2.3 wide from the residual noise).",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(7)
+# generate an AR(2) series: y_t = c + a1*y_{t-1} + a2*y_{t-2} + noise
+c, a1, a2, sigma = 5.0, 0.6, 0.1, 1.0
+T = 40
+y = np.zeros(T); y[0], y[1] = 14.0, 14.5
+for t in range(2, T):
+    y[t] = c + a1 * y[t-1] + a2 * y[t-2] + rng.normal(0, sigma)
+
+# one-step-ahead forecast from the same AR(2) coefficients, last 12 steps
+idx = np.arange(28, T)
+fc = c + a1 * y[idx-1] + a2 * y[idx-2]      # predicted mean
+band = 1.96 * 1.18                           # 95% interval from residual noise
+lower, upper = fc - band, fc + band
+
+plt.figure(figsize=(7,4))
+plt.plot(idx, y[idx], color='#4ea1ff', marker='o', label='actual')
+plt.plot(idx, fc, color='#ffb454', marker='o', label='forecast')
+plt.fill_between(idx, lower, upper, color='#c89bff', alpha=0.3, label='95% interval')
+plt.xlabel('time step'); plt.ylabel('value')
+plt.title('Forecast vs actual with 95 percent prediction interval (AR(2))')
+plt.legend(); plt.tight_layout(); plt.show()`
   }
 
 });

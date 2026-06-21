@@ -44,7 +44,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#7ee787"]
       }
     ],
-    caption: "The simulated histogram lands right on the formula curve, blowing up near y=0 and thinning near y=1, with E[Y] = 0.333."
+    caption: "The simulated histogram lands right on the formula curve, blowing up near y=0 and thinning near y=1, with E[Y] = 0.333.",
+    code:
+`import numpy as np
+import matplotlib.pyplot as plt
+
+# X ~ Uniform[0,1], Y = X^2.  Formula density: f_Y(y) = 1/(2 sqrt(y)).
+rng = np.random.default_rng(0)
+y_sim = rng.random(2_000_000) ** 2
+
+# Chart 1: formula curve vs Monte-Carlo histogram heights at bin centers.
+centers = np.array([0.065, 0.125, 0.205, 0.305, 0.425, 0.565, 0.725])
+formula = 1.0 / (2.0 * np.sqrt(centers))
+edges = np.array([0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81])
+mc, _ = np.histogram(y_sim, bins=edges, density=True)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+ax1.plot(centers, formula, '-o', color='#ffb454', label='formula 1/(2 sqrt(y))')
+ax1.plot(centers, mc, '-o', color='#4ea1ff', label='Monte-Carlo histogram')
+ax1.set_xlabel('y'); ax1.set_ylabel('density f_Y(y)'); ax1.legend()
+ax1.set_title('Derived density of Y = X^2: formula vs simulation')
+
+# Chart 2: formula density height at sample y values (squaring piles mass near 0).
+ys = np.array([0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81])
+heights = 1.0 / (2.0 * np.sqrt(ys))
+ax2.bar([str(v) for v in ys], heights, color='#7ee787')
+ax2.set_title('Density height at sample y values (formula)')
+plt.tight_layout(); plt.show()`
   },
 
   "probx-convolution": {
@@ -67,7 +92,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff"]
       }
     ],
-    caption: "Convolving two flat inputs gives a flat-topped tent; two flat dice give a triangle peaking at 7 with probability 0.167, matching Monte-Carlo to four decimals."
+    caption: "Convolving two flat inputs gives a flat-topped tent; two flat dice give a triangle peaking at 7 with probability 0.167, matching Monte-Carlo to four decimals.",
+    code:
+`import numpy as np
+import matplotlib.pyplot as plt
+
+# PMF of a sum = convolution of the input PMFs.
+# Chart 1: A on {1,2,3}, B on {1,2}, each uniform -> tent PMF over sums 2..5.
+a = np.full(3, 1/3)                  # P(A) on 1..3
+b = np.full(2, 1/2)                  # P(B) on 1..2
+tent = np.convolve(a, b)            # index 0 -> sum 2
+tent_sums = np.arange(2, 6)
+
+# Chart 2: two fair dice, faces uniform on 1..6 -> triangle PMF peaking at 7.
+face = np.full(6, 1/6)
+dice = np.convolve(face, face)     # index 0 -> sum 2
+dice_sums = np.arange(2, 13)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+ax1.bar([str(s) for s in tent_sums], tent, color='#c89bff')
+ax1.set_title('Tent PMF of Z = A + B (sums 2..5)')
+ax2.bar([str(s) for s in dice_sums], dice, color='#4ea1ff')
+ax2.set_title('Two fair dice: convolution PMF peaks at 7')
+plt.tight_layout(); plt.show()`
   },
 
   "probx-total-variance": {
@@ -82,7 +129,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#7ee787", "#c89bff", "#ffb454", "#4ea1ff"]
       }
     ],
-    caption: "Within-group scatter (25) plus between-group scatter of the class means (25) sum to the total variance 50, confirmed by the raw simulated variance 49.9."
+    caption: "Within-group scatter (25) plus between-group scatter of the class means (25) sum to the total variance 50, confirmed by the raw simulated variance 49.9.",
+    code:
+`import numpy as np
+import matplotlib.pyplot as plt
+
+# Law of total variance: Var(X) = E[Var(X|Y)] + Var(E[X|Y]).
+# Two equal classes, means 70/80, shared within-group variance 25.
+rng = np.random.default_rng(0)
+means = np.array([70.0, 80.0]); within_var = 25.0
+n = 1_000_000
+grp = rng.integers(0, 2, n)
+x = rng.normal(means[grp], np.sqrt(within_var))
+
+within = within_var                         # E[Var(X|Y)]
+between = np.mean((means - means.mean()) ** 2)   # Var(E[X|Y]), equal weights
+total = within + between                    # formula total
+mc = x.var()                                # raw simulated variance
+
+labels = ['within E[Var(X|Y)]', 'between Var(E[X|Y])', 'formula total', 'Monte-Carlo Var(X)']
+vals = [within, between, total, mc]
+colors = ['#7ee787', '#c89bff', '#ffb454', '#4ea1ff']
+plt.figure(figsize=(8, 4))
+plt.bar(labels, vals, color=colors)
+plt.title('Variance decomposition: within + between = total')
+plt.xticks(rotation=20, ha='right')
+plt.tight_layout(); plt.show()`
   },
 
   "probx-mgf": {
@@ -114,7 +186,36 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787", "#ffb454", "#c89bff"]
       }
     ],
-    caption: "The slope of M(t) at t=0 gives E[X]=0.667 and the curvature gives E[X^2]=0.889, so Var=0.444, all matching the exact 1/lambda and 1/lambda^2 and the simulated sample."
+    caption: "The slope of M(t) at t=0 gives E[X]=0.667 and the curvature gives E[X^2]=0.889, so Var=0.444, all matching the exact 1/lambda and 1/lambda^2 and the simulated sample.",
+    code:
+`import numpy as np
+import matplotlib.pyplot as plt
+
+# MGF of Exponential(rate=lam): M(t) = lam/(lam - t), valid for t < lam.
+lam = 1.5
+M = lambda t: lam / (lam - t)
+
+# Chart 1: the MGF curve; it blows up as t -> lam = 1.5.
+t = np.array([-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.25])
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+ax1.plot(t, M(t), '-o', color='#4ea1ff', label='M(t)')
+ax1.set_xlabel('t'); ax1.set_ylabel('M(t)'); ax1.legend()
+ax1.set_title('MGF of Exponential rate 1.5: blows up at t = 1.5')
+
+# Chart 2: read moments off M by finite-difference derivatives at t=0.
+h = 1e-4
+m1 = (M(h) - M(-h)) / (2 * h)              # M'(0)  = E[X]
+m2 = (M(h) - 2 * M(0) + M(-h)) / (h * h)   # M''(0) = E[X^2]
+var_mgf = m2 - m1 ** 2
+rng = np.random.default_rng(0)
+xs = rng.exponential(1 / lam, 2_000_000)   # Monte-Carlo sample
+labels = ['E[X] MGF', 'E[X] exact', 'E[X^2] MGF', 'E[X^2] exact', 'Var MGF', 'Var MC']
+vals = [m1, 1 / lam, m2, 2 / lam ** 2, var_mgf, xs.var()]
+colors = ['#4ea1ff', '#7ee787', '#4ea1ff', '#7ee787', '#ffb454', '#c89bff']
+ax2.bar(labels, vals, color=colors)
+ax2.set_title('Moments of Exponential(1.5): MGF vs exact vs MC')
+ax2.tick_params(axis='x', rotation=30)
+plt.tight_layout(); plt.show()`
   }
 
 });

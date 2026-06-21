@@ -253,7 +253,25 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "GaussianMixture recovers 3 blobs; each point is colored by the component most responsible for it."
+    "caption": "GaussianMixture recovers 3 blobs; each point is colored by the component most responsible for it.",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.mixture import GaussianMixture
+
+X, _ = make_blobs(n_samples=300, centers=3, cluster_std=1.0, random_state=0)
+
+gmm = GaussianMixture(n_components=3, covariance_type="full", random_state=0)
+labels = gmm.fit_predict(X)
+
+colors = np.array(["#4ea1ff", "#7ee787", "#c89bff"])
+plt.scatter(X[:, 0], X[:, 1], c=colors[labels], s=20)
+plt.scatter(gmm.means_[:, 0], gmm.means_[:, 1],
+            c="black", marker="x", s=120)
+plt.title("GMM soft clustering (3 Gaussian blobs)")
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.show()`
   },
   "cls-dbscan": {
     "question": "Can density clustering find arbitrary-shaped clusters and flag noise?",
@@ -489,7 +507,24 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "DBSCAN traces the two curved crescents and labels 7 scattered points as noise (no k given)."
+    "caption": "DBSCAN traces the two curved crescents and labels 7 scattered points as noise (no k given).",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.cluster import DBSCAN
+
+X, _ = make_moons(n_samples=300, noise=0.06, random_state=0)
+
+labels = DBSCAN(eps=0.18, min_samples=5).fit_predict(X)
+
+# label -1 is noise; draw it red, the rest by cluster color
+palette = np.array(["#4ea1ff", "#7ee787", "#c89bff"])
+colors = np.where(labels == -1, "#ff7b72", palette[labels % len(palette)])
+plt.scatter(X[:, 0], X[:, 1], c=colors, s=20)
+plt.title("DBSCAN on two moons (eps=0.18, minPts=5)")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.show()`
   },
   "cls-spectral-clustering": {
     "question": "Can spectral clustering split two moons that k-means cuts in half?",
@@ -983,7 +1018,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "Spectral cuts the graph along the thin seam (ARI 0.87); k-means carves a straight line through both moons (ARI 0.23)."
+    "caption": "Spectral cuts the graph along the thin seam (ARI 0.87); k-means carves a straight line through both moons (ARI 0.23).",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.cluster import SpectralClustering, KMeans
+
+X, y = make_moons(n_samples=300, noise=0.06, random_state=0)
+
+sc = SpectralClustering(n_clusters=2, affinity="nearest_neighbors",
+                        n_neighbors=10, random_state=0).fit_predict(X)
+km = KMeans(n_clusters=2, n_init=10, random_state=0).fit_predict(X)
+
+colors = np.array(["#4ea1ff", "#7ee787"])
+fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
+ax1.scatter(X[:, 0], X[:, 1], c=colors[sc], s=18)
+ax1.set_title("Spectral clustering - correct")
+ax2.scatter(X[:, 0], X[:, 1], c=colors[km], s=18)
+ax2.set_title("k-means - slices each moon")
+for ax in (ax1, ax2):
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+plt.show()`
   },
   "cls-lda-qda": {
     "question": "Where does the decision boundary fall: a straight LDA line or a curved QDA boundary?",
@@ -1640,7 +1696,36 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "LDA gives a straight boundary (acc 0.90); QDA bends around the classes (acc 0.92)."
+    "caption": "LDA gives a straight boundary (acc 0.90); QDA bends around the classes (acc 0.92).",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
+
+X, y = make_classification(n_samples=400, n_features=2, n_redundant=0,
+                           n_informative=2, n_clusters_per_class=1,
+                           class_sep=1.2, random_state=0)
+
+lda = LinearDiscriminantAnalysis().fit(X, y)
+qda = QuadraticDiscriminantAnalysis().fit(X, y)
+
+# grid for the two decision boundaries
+gx = np.linspace(X[:, 0].min() - 1, X[:, 0].max() + 1, 300)
+gy = np.linspace(X[:, 1].min() - 1, X[:, 1].max() + 1, 300)
+XX, YY = np.meshgrid(gx, gy)
+grid = np.c_[XX.ravel(), YY.ravel()]
+
+colors = np.array(["#4ea1ff", "#7ee787"])
+plt.scatter(X[:, 0], X[:, 1], c=colors[y], s=18)
+plt.contour(XX, YY, lda.predict(grid).reshape(XX.shape),
+            levels=[0.5], colors="#ffb454")
+plt.contour(XX, YY, qda.predict(grid).reshape(XX.shape),
+            levels=[0.5], colors="#c89bff", linestyles="dashed")
+plt.title("LDA line vs QDA curve (2-class)")
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.show()`
   },
   "cls-gaussian-process": {
     "question": "How confident is the model away from the data?",
@@ -2330,7 +2415,31 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "The GP mean follows the data; the +/-2 sigma band pinches at observations and fans out where there is none."
+    "caption": "The GP mean follows the data; the +/-2 sigma band pinches at observations and fans out where there is none.",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
+rng = np.random.RandomState(0)
+X = np.sort(rng.uniform(-1, 3, 12)).reshape(-1, 1)
+y = np.sin(X).ravel() + 0.1 * rng.randn(12)
+
+kernel = 1.0 * RBF(length_scale=1.0) + WhiteKernel(noise_level=0.01)
+gp = GaussianProcessRegressor(kernel=kernel, random_state=0,
+                              normalize_y=True).fit(X, y)
+
+Xs = np.linspace(-4, 4, 200).reshape(-1, 1)
+mean, std = gp.predict(Xs, return_std=True)
+
+plt.scatter(X.ravel(), y, c="#ffb454", s=30, zorder=3)
+plt.plot(Xs.ravel(), mean, c="#4ea1ff")
+plt.fill_between(Xs.ravel(), mean - 2 * std, mean + 2 * std,
+                 color="#7ee787", alpha=0.3)
+plt.title("GP regression: mean and uncertainty band")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.show()`
   },
   "cls-bayesian-regression": {
     "question": "How does the posterior-mean fit shrink toward the flat prior?",
@@ -2796,7 +2905,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "The Bayesian posterior slope (1.99) is pulled below the OLS slope (2.27), shrinking toward the flat zero prior."
+    "caption": "The Bayesian posterior slope (1.99) is pulled below the OLS slope (2.27), shrinking toward the flat zero prior.",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import BayesianRidge, LinearRegression
+
+rng = np.random.RandomState(0)
+x = np.sort(rng.uniform(-3, 3, 16))
+y = 2.0 * x + 6.0 * rng.randn(16)   # noisy line
+X = x.reshape(-1, 1)
+
+ols = LinearRegression().fit(X, y)
+br = BayesianRidge().fit(X, y)
+
+xs = np.linspace(-3.2, 3.2, 30).reshape(-1, 1)
+plt.scatter(x, y, c="#ffb454", s=30)
+plt.plot(xs.ravel(), ols.predict(xs), c="#ff7b72", linestyle="--",
+         label="OLS fit")
+plt.plot(xs.ravel(), br.predict(xs), c="#4ea1ff",
+         label="posterior mean")
+plt.plot(xs.ravel(), np.zeros_like(xs.ravel()), c="#9aa7b4",
+         linestyle="--", label="prior mean (slope 0)")
+plt.legend()
+plt.title("Bayesian ridge: posterior mean shrinks toward prior")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.show()`
   },
   "cls-gradient-boosting": {
     "question": "Does test error shrink as boosting rounds accumulate?",
@@ -2900,6 +3034,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    "caption": "Each tree fits the residual, so held-out MSE drops from 30583 after 1 tree to 3519 after 200."
+    "caption": "Each tree fits the residual, so held-out MSE drops from 30583 after 1 tree to 3519 after 200.",
+    "code": `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error
+
+X, y = make_regression(n_samples=400, n_features=6, noise=10.0, random_state=0)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)
+
+gb = GradientBoostingRegressor(n_estimators=200, learning_rate=0.1,
+                               max_depth=3, random_state=0).fit(Xtr, ytr)
+
+# test MSE after each boosting round via staged_predict
+rounds = np.arange(1, gb.n_estimators_ + 1)
+mse = np.array([mean_squared_error(yte, yp)
+                for yp in gb.staged_predict(Xte)])
+
+plt.plot(rounds, mse, c="#4ea1ff")
+plt.title("Gradient boosting: test MSE per round")
+plt.xlabel("number of trees")
+plt.ylabel("test MSE")
+plt.show()`
   }
 });

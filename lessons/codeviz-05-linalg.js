@@ -28,7 +28,25 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "A @ B and B @ A are both valid 2x2 products but hold different numbers, so order matters."
+    caption: "A @ B and B @ A are both valid 2x2 products but hold different numbers, so order matters.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+AB = A @ B           # 19,22 / 43,50
+BA = B @ A           # 23,34 / 31,46
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+for ax, M, title in zip(axes, [AB, BA], ['A @ B', 'B @ A']):
+    ax.imshow(M, cmap='Blues')
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, str(M[i, j]), ha='center', va='center')
+    ax.set_title(title)
+    ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
+plt.tight_layout()
+plt.show()`
   },
 
   "la-transpose": {
@@ -51,7 +69,23 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "Transpose turns the 2x3 grid into a 3x2 grid; row 1 of A becomes column 1 of A.T."
+    caption: "Transpose turns the 2x3 grid into a 3x2 grid; row 1 of A becomes column 1 of A.T.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[1, 2, 3], [4, 5, 6]])    # 2x3
+At = A.T                                 # 3x2: entry (i,j) -> (j,i)
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+for ax, M, title in zip(axes, [A, At], ['A (2x3)', 'A.T (3x2)']):
+    ax.imshow(M, cmap='Blues')
+    for i in range(M.shape[0]):
+        for j in range(M.shape[1]):
+            ax.text(j, i, str(M[i, j]), ha='center', va='center')
+    ax.set_title(title)
+    ax.set_xticks(range(M.shape[1])); ax.set_yticks(range(M.shape[0]))
+plt.tight_layout()
+plt.show()`
   },
 
   "la-identity-diagonal": {
@@ -74,7 +108,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#7ee787", "#ffb454"]
       }
     ],
-    caption: "Each diagonal entry stretches one axis on its own: D @ (4,5,6) = (8,15,30)."
+    caption: "Each diagonal entry stretches one axis on its own: D @ (4,5,6) = (8,15,30).",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+d = np.array([2., 3., 5.])
+D = np.diag(d)                  # diag(2,3,5)
+x = np.array([4., 5., 6.])
+scaled = D @ x                  # 8, 15, 30
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.imshow(D, cmap='Blues')
+for i in range(3):
+    for j in range(3):
+        ax1.text(j, i, str(int(D[i, j])), ha='center', va='center')
+ax1.set_title('D = diag(2, 3, 5)')
+labels = ['x1 times 2', 'x2 times 3', 'x3 times 5']
+ax2.bar(labels, scaled, color=['#4ea1ff', '#7ee787', '#ffb454'])
+for i, v in enumerate(scaled):
+    ax2.text(i, v, str(int(v)), ha='center', va='bottom')
+ax2.set_title('D scales each coordinate')
+plt.tight_layout()
+plt.show()`
   },
 
   "la-inverse": {
@@ -103,7 +158,25 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         showVals: true
       }
     ],
-    caption: "A sends v=(3,5) to (11,8); A-inverse carries (11,8) straight back to (3,5), so A-inverse(A.v)=v."
+    caption: "A sends v=(3,5) to (11,8); A-inverse carries (11,8) straight back to (3,5), so A-inverse(A.v)=v.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[2., 1.], [1., 1.]])
+Ainv = np.linalg.inv(A)          # [[1,-1],[-1,2]]
+v = np.array([3., 5.])
+Av = A @ v                       # (11, 8)
+back = Ainv @ Av                 # back to (3, 5)
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.scatter(*v, color='#7ee787', s=80, label='v (start)')
+ax.scatter(*Av, color='#4ea1ff', s=80, label='A.v (moved)')
+ax.plot([v[0], Av[0]], [v[1], Av[1]], color='#4ea1ff', label='apply A')
+ax.plot([Av[0], back[0]], [Av[1], back[1]], color='#c89bff',
+        linestyle='--', label='apply A-inverse')
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+plt.tight_layout()
+plt.show()`
   },
 
   "la-determinant": {
@@ -124,7 +197,25 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "A=[[3,1],[1,2]] sends the area-1 unit square to a parallelogram of area 5, which equals det A."
+    caption: "A=[[3,1],[1,2]] sends the area-1 unit square to a parallelogram of area 5, which equals det A.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[3., 1.], [1., 2.]])
+det = np.linalg.det(A)                   # 5.0
+square = np.array([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
+image = square @ A.T                      # transform each corner
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.plot(square[:, 0], square[:, 1], color='#9aa7b4',
+        linestyle='--', label='unit square (area 1)')
+ax.plot(image[:, 0], image[:, 1], color='#4ea1ff',
+        label='image parallelogram (area ' + str(round(det)) + ')')
+ax.scatter(image[:-1, 0], image[:-1, 1], color='#4ea1ff')
+ax.set_title('|det A| = ' + str(round(det)))
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+plt.tight_layout()
+plt.show()`
   },
 
   "la-cofactor": {
@@ -147,7 +238,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#9aa7b4", "#ff7b72", "#7ee787"]
       }
     ],
-    caption: "Expanding along row 1: 8 + 0 + (-1) = 7, matching numpy det(A) = 7."
+    caption: "Expanding along row 1: 8 + 0 + (-1) = 7, matching numpy det(A) = 7.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[2, 0, 1], [3, 1, 2], [1, 0, 4]], dtype=float)
+terms = []
+for j in range(3):                        # expand along first row
+    minor = np.delete(np.delete(A, 0, 0), j, 1)
+    terms.append(((-1) ** j) * A[0, j] * np.linalg.det(minor))
+detA = np.linalg.det(A)                    # 7.0
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.imshow(A, cmap='Blues')
+for i in range(3):
+    for j in range(3):
+        ax1.text(j, i, str(int(A[i, j])), ha='center', va='center')
+ax1.set_title('A with cofactor signs')
+labels = ['+ 2*det4', '- 0*det10', '+ 1*det(-1)', 'det A']
+vals = [round(t) for t in terms] + [round(detA)]
+ax2.bar(labels, vals, color=['#4ea1ff', '#9aa7b4', '#ff7b72', '#7ee787'])
+ax2.set_title('cofactor terms sum to det A')
+plt.tight_layout()
+plt.show()`
   },
 
   "la-trace": {
@@ -170,7 +283,24 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#c89bff", "#c89bff", "#c89bff"]
       }
     ],
-    caption: "Diagonal (2,3,6) and eigenvalues (0.68,3.88,6.44) look different but both add to 11 = trace."
+    caption: "Diagonal (2,3,6) and eigenvalues (0.68,3.88,6.44) look different but both add to 11 = trace.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+A = np.array([[2., 1., 0.], [4., 3., 5.], [1., 0., 6.]])
+diag = np.diag(A)                          # 2, 3, 6 -> trace 11
+eigs = np.sort(np.linalg.eigvals(A).real)  # ~0.68, 3.88, 6.44
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.bar(['A[0,0]=2', 'A[1,1]=3', 'A[2,2]=6'], diag, color='#4ea1ff')
+ax1.set_title('diagonal sums to trace = ' + str(int(diag.sum())))
+ax2.bar(['lambda 1', 'lambda 2', 'lambda 3'], eigs, color='#c89bff')
+ax2.set_title('eigenvalues sum to ' + str(round(eigs.sum())))
+for ax, vals in [(ax1, diag), (ax2, eigs)]:
+    for i, v in enumerate(vals):
+        ax.text(i, v, str(round(v, 2)), ha='center', va='bottom')
+plt.tight_layout()
+plt.show()`
   },
 
   "la-rank-independence": {
@@ -190,7 +320,27 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "When v3 = 2*v1 + 3*v2 the columns add no new direction, so rank falls to 2 of 3 and det = 0."
+    caption: "When v3 = 2*v1 + 3*v2 the columns add no new direction, so rank falls to 2 of 3 and det = 0.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+v1 = np.array([1., 0.])                    # independent basis vectors
+v2 = np.array([0., 1.])
+# dependent set: every vector lies on one line through the origin
+dep = np.array([[1, 0.5], [2, 1], [3, 1.5]])
+A = np.column_stack([v1, v2, 2 * v1 + 3 * v2])
+print('rank', np.linalg.matrix_rank(A))    # 2 of 3
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.scatter([v1[0], v2[0]], [v1[1], v2[1]], color='#7ee787',
+           s=80, label='independent: v1, v2')
+ax.scatter(dep[:, 0], dep[:, 1], color='#ff7b72',
+           s=80, label='dependent (rank drops)')
+ax.plot([0, 3], [0, 1.5], color='#ff7b72', linestyle='--',
+        label='line every dependent vector lies on')
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+plt.tight_layout()
+plt.show()`
   },
 
   "la-psd": {
@@ -213,7 +363,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#ff7b72", "#ff7b72", "#7ee787"]
       }
     ],
-    caption: "Every eigenvalue of A.T A is non-negative (PSD); a random symmetric matrix can dip below zero."
+    caption: "Every eigenvalue of A.T A is non-negative (PSD); a random symmetric matrix can dip below zero.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.default_rng(0)
+
+A = rng.standard_normal((4, 3))
+M = A.T @ A                                 # symmetric PSD
+psd = np.linalg.eigvalsh(M)                 # all >= 0
+
+B = rng.standard_normal((3, 3))
+S = B + B.T                                 # symmetric, indefinite
+indef = np.linalg.eigvalsh(S)              # some negative
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.bar(['lambda 1', 'lambda 2', 'lambda 3'], psd, color='#7ee787')
+ax1.set_title('eigenvalues of A.T A (PSD)')
+colors = ['#ff7b72' if v < 0 else '#7ee787' for v in indef]
+ax2.bar(['lambda 1', 'lambda 2', 'lambda 3'], indef, color=colors)
+ax2.set_title('symmetric but indefinite')
+ax2.axhline(0, color='#9aa7b4', linewidth=0.8)
+plt.tight_layout()
+plt.show()`
   },
 
   "la-spectral": {
@@ -241,7 +412,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The covariance eigenvectors point along the data's spread; the long amber axis carries the larger eigenvalue."
+    caption: "The covariance eigenvectors point along the data's spread; the long amber axis carries the larger eigenvalue.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.default_rng(0)
+
+B = rng.standard_normal((3, 3))
+S = B + B.T                                 # random symmetric
+eigs = np.linalg.eigvalsh(S)               # real, can be negative
+
+X = rng.standard_normal((200, 2)) @ np.array([[2, 1], [0, 0.5]])
+cov = np.cov(X.T)
+w, V = np.linalg.eigh(cov)                  # principal axes
+order = np.argsort(w)[::-1]
+w, V = w[order], V[:, order]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+colors = ['#ff7b72' if v < 0 else '#7ee787' for v in eigs]
+ax1.bar(['lambda 1', 'lambda 2', 'lambda 3'], eigs, color=colors)
+ax1.set_title('eigenvalues of symmetric S')
+ax2.scatter(X[:, 0], X[:, 1], color='#4ea1ff', s=10)
+for k, c in zip(range(2), ['#ffb454', '#c89bff']):
+    axis = V[:, k] * 2 * np.sqrt(w[k])
+    ax2.plot([-axis[0], axis[0]], [-axis[1], axis[1]], color=c, linewidth=2)
+ax2.set_xlabel('x'); ax2.set_ylabel('y'); ax2.set_title('principal axes')
+plt.tight_layout()
+plt.show()`
   },
 
   "la-svd": {
@@ -265,7 +461,27 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Keeping more singular values shrinks the error; at k=1 the leftover error equals the next singular value, 0.93."
+    caption: "Keeping more singular values shrinks the error; at k=1 the leftover error equals the next singular value, 0.93.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.default_rng(0)
+
+A = rng.standard_normal((4, 3))
+U, s, Vt = np.linalg.svd(A, full_matrices=False)   # singular values decay
+
+errors = []
+for k in range(len(s) + 1):                         # rank-k reconstruction
+    Ak = U[:, :k] @ np.diag(s[:k]) @ Vt[:k, :]
+    errors.append(np.linalg.norm(A - Ak))           # Frobenius error
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.bar(['sigma 1', 'sigma 2', 'sigma 3'], s, color='#4ea1ff')
+ax1.set_title('singular values (decaying)')
+ax2.plot(range(len(errors)), errors, marker='o', color='#7ee787')
+ax2.set_xlabel('rank k kept'); ax2.set_ylabel('||A - A_k||')
+ax2.set_title('reconstruction error vs rank')
+plt.tight_layout()
+plt.show()`
   },
 
   "la-jacobian": {
@@ -286,7 +502,27 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The Jacobian's two columns span a tiny parallelogram whose area det J = 2 equals r, the polar change-of-variables factor."
+    caption: "The Jacobian's two columns span a tiny parallelogram whose area det J = 2 equals r, the polar change-of-variables factor.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+r, t = 2.0, 0.6
+J = np.array([[np.cos(t), -r * np.sin(t)],   # polar -> Cartesian Jacobian
+              [np.sin(t),  r * np.cos(t)]])
+detJ = np.linalg.det(J)                       # equals r = 2
+c1, c2 = J[:, 0], J[:, 1]                      # the two columns
+para = np.array([[0, 0], c1, c1 + c2, c2, [0, 0]])
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.plot(para[:, 0], para[:, 1], color='#7ee787', linestyle='--',
+        label='parallelogram (area = r = ' + str(round(detJ)) + ')')
+ax.quiver(0, 0, c1[0], c1[1], angles='xy', scale_units='xy', scale=1,
+          color='#4ea1ff', label='column 1 (d/dr)')
+ax.quiver(0, 0, c2[0], c2[1], angles='xy', scale_units='xy', scale=1,
+          color='#c89bff', label='column 2 (d/dtheta)')
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+plt.tight_layout()
+plt.show()`
   },
 
   "la-hessian": {
@@ -311,7 +547,35 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The Hessian [[2,1],[1,4]] has eigenvalues 1.59 and 4.41, both positive, so f curves up like a bowl (convex)."
+    caption: "The Hessian [[2,1],[1,4]] has eigenvalues 1.59 and 4.41, both positive, so f curves up like a bowl (convex).",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+def f(v):
+    x, y = v
+    return x**2 + x*y + 2*y**2            # true Hessian [[2,1],[1,4]]
+
+h = 1e-4
+H = np.zeros((2, 2))
+for i in range(2):                        # Hessian via finite differences
+    for j in range(2):
+        ei, ej = np.zeros(2), np.zeros(2); ei[i] = h; ej[j] = h
+        H[i, j] = (f(ei+ej) - f(ei-ej) - f(-ei+ej) + f(-ei-ej)) / (4*h*h)
+w = np.linalg.eigvalsh(H)                  # both positive -> convex
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.imshow(H, cmap='Blues')
+for i in range(2):
+    for j in range(2):
+        ax1.text(j, i, str(round(H[i, j])), ha='center', va='center')
+ax1.set_title('Hessian (finite differences)')
+ax1.set_xticks([0, 1], ['d/dx', 'd/dy']); ax1.set_yticks([0, 1], ['d/dx', 'd/dy'])
+t = np.linspace(-2, 2, 9)
+ax2.plot(t, w[0]/2 * t**2, color='#7ee787', label='convex bowl (positive eig)')
+ax2.plot(t, -w[0]/2 * t**2, color='#ff7b72', label='saddle direction')
+ax2.set_xlabel('step along an axis'); ax2.set_ylabel('function value'); ax2.legend()
+plt.tight_layout()
+plt.show()`
   }
 
 });

@@ -33,7 +33,31 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Because J is a true parabola its curvature is constant, so one Newton step jumps from t=5 straight onto the minimum at t=2."
+    caption: "Because J is a true parabola its curvature is constant, so one Newton step jumps from t=5 straight onto the minimum at t=2.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+
+# Convex cost J(t) = 3t^2 - 12t + 7, minimum at t = 2.
+J   = lambda t: 3*t**2 - 12*t + 7
+Jp  = lambda t: 6*t - 12      # slope
+Jpp = lambda t: 6.0           # curvature (constant)
+
+t = 5.0                       # start anywhere
+iters = [t]
+for _ in range(4):
+    t = t - Jp(t) / Jpp(t)    # Newton step
+    iters.append(t)
+    if abs(Jp(t)) < 1e-9:
+        break
+
+grid = np.linspace(-1, 5, 13)
+plt.plot(grid, J(grid), color='#4ea1ff', label='cost J(t)')
+plt.plot(iters, [J(v) for v in iters], 'o-', color='#c89bff',
+         label='Newton iterates (start 5 to min 2)')
+plt.xlabel('t (parameter)'); plt.ylabel('J(t) = 3t^2 - 12t + 7')
+plt.title('Newton iterates jump to the bottom of the parabola')
+plt.legend(); plt.show()
+`
   },
 
   "mlx-lwr": {
@@ -72,7 +96,29 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "No global formula: at each x we refit a weighted line, and stitched together they trace the bending shape of the data."
+    caption: "No global formula: at each x we refit a weighted line, and stitched together they trace the bending shape of the data.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.RandomState(0)
+
+# Curvy data: y = sin(x) + 0.25x + noise.
+x = np.linspace(-5, 5, 21)
+y = np.sin(x) + 0.25*x + 0.15*rng.randn(21)
+X = np.c_[np.ones_like(x), x]            # design matrix with intercept
+
+def lwr_predict(xq, tau=0.8):
+    w = np.exp(-((x - xq)**2) / (2*tau**2))      # Gaussian weights
+    W = np.diag(w)
+    theta = np.linalg.solve(X.T @ W @ X, X.T @ W @ y)  # weighted normal eqns
+    return theta @ np.array([1.0, xq])
+
+fit = np.array([lwr_predict(xq) for xq in x])
+plt.scatter(x, y, color='#4ea1ff', label='training data')
+plt.plot(x, fit, color='#ffb454', label='LWR fit (refit a line at every x)')
+plt.xlabel('x'); plt.ylabel('y = sin(x) + 0.25x + noise')
+plt.title('Curvy data with a locally-weighted fit (tau = 0.8)')
+plt.legend(); plt.show()
+`
   },
 
   "mlx-cross-validation": {
@@ -87,7 +133,28 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Folds scatter from 104 to 270 MSE; averaging the 5 honest tests gives the trusted CV error of 168.5."
+    caption: "Folds scatter from 104 to 270 MSE; averaging the 5 honest tests gives the trusted CV error of 168.5.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_regression
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+X, y = make_regression(n_samples=200, n_features=8, noise=12.0,
+                       random_state=0)
+kf = KFold(n_splits=5, shuffle=True, random_state=0)
+scores = cross_val_score(LinearRegression(), X, y, cv=kf,
+                         scoring='neg_mean_squared_error')
+mse = -scores                            # back to positive error per fold
+
+labels = ['fold 1', 'fold 2', 'fold 3', 'fold 4', 'fold 5', 'MEAN']
+vals   = list(mse) + [mse.mean()]
+colors = ['#4ea1ff']*5 + ['#7ee787']
+plt.bar(labels, vals, color=colors)
+plt.ylabel('MSE')
+plt.title('Per-fold MSE and the mean across 5 folds')
+plt.show()
+`
   },
 
   "mlx-model-selection": {
@@ -112,7 +179,32 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "Both AIC and BIC bottom out at degree 2, exactly the true degree of the data; higher degrees only add penalty."
+    caption: "Both AIC and BIC bottom out at degree 2, exactly the true degree of the data; higher degrees only add penalty.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.RandomState(0)
+x = np.linspace(-3, 3, 60)
+y = 2 + 1.5*x - 0.8*x**2 + 0.5*rng.randn(60)     # true degree 2
+n = len(y)
+
+degs, aics, bics = [], [], []
+for deg in range(1, 8):
+    Xp = PolynomialFeatures(deg).fit_transform(x.reshape(-1, 1))
+    yhat = LinearRegression().fit(Xp, y).predict(Xp)
+    rss = float(np.sum((y - yhat)**2))
+    k = Xp.shape[1] + 1                           # coefs + noise variance
+    lnL = -0.5*n*(np.log(2*np.pi*rss/n) + 1)     # Gaussian log-likelihood
+    degs.append(deg); aics.append(2*k - 2*lnL); bics.append(k*np.log(n) - 2*lnL)
+
+plt.plot(degs, aics, 'o-', color='#4ea1ff', label='AIC')
+plt.plot(degs, bics, 'o-', color='#c89bff', label='BIC')
+plt.xlabel('polynomial degree'); plt.ylabel('criterion score (lower is better)')
+plt.title('AIC and BIC vs polynomial degree (minimum = best)')
+plt.legend(); plt.show()
+`
   },
 
   "mlx-clustering-metrics": {
@@ -132,7 +224,26 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         ]
       }
     ],
-    caption: "The silhouette peaks at k=3 (0.557), correctly recovering the three real blobs in the data."
+    caption: "The silhouette peaks at k=3 (0.557), correctly recovering the three real blobs in the data.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+X, _ = make_blobs(n_samples=300, centers=3, cluster_std=0.8, random_state=0)
+
+ks, sils = [], []
+for k in range(2, 7):
+    labels = KMeans(n_clusters=k, n_init=10, random_state=0).fit_predict(X)
+    ks.append(k)
+    sils.append(silhouette_score(X, labels))     # mean silhouette over points
+
+plt.plot(ks, sils, 'o-', color='#7ee787', label='avg silhouette')
+plt.xlabel('number of clusters k'); plt.ylabel('average silhouette score')
+plt.title('Average silhouette vs k (peak = best k)')
+plt.legend(); plt.show()
+`
   },
 
   "mlx-error-analysis": {
@@ -147,7 +258,33 @@ window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
         colors: ["#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
       }
     ],
-    caption: "Removing feat0-1 costs 8.75% accuracy (the biggest drop), so it contributes most; feat2-3 even slightly hurts."
+    caption: "Removing feat0-1 costs 8.75% accuracy (the biggest drop), so it contributes most; feat2-3 even slightly hurts.",
+    code: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+X, y = make_classification(n_samples=400, n_features=8, n_informative=4,
+                           n_redundant=0, random_state=0)
+acc = lambda cols: cross_val_score(
+    LogisticRegression(max_iter=1000), X[:, cols], y, cv=5).mean()
+
+full = acc(list(range(8)))                       # baseline: all features
+blocks = {'feat0-1': [0, 1], 'feat2-3': [2, 3],
+          'feat4-5': [4, 5], 'feat6-7': [6, 7]}
+names, drops = [], []
+for name, cols in blocks.items():
+    keep = [c for c in range(8) if c not in cols]
+    names.append(name)
+    drops.append(full - acc(keep))               # accuracy lost without block
+
+colors = ['#ffb454' if d == max(drops) else '#4ea1ff' for d in drops]
+plt.bar(names, [d*100 for d in drops], color=colors)
+plt.ylabel('accuracy lost (%)')
+plt.title('Accuracy lost when each feature block is removed')
+plt.show()
+`
   }
 
 });
