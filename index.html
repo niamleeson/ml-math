@@ -199,13 +199,12 @@
   .card.pitfalls { border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 5%, var(--panel)); }
   .card.pitfalls h3 { color: var(--warn); }
   .colab-btn {
-    display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 16px;
-    padding: 9px 15px; border-radius: 10px; font-size: 13px; font-weight: 700;
-    text-decoration: none; color: #04121f; background: var(--warn);
-    border: 1px solid var(--warn); transition: filter .15s, transform .05s;
+    display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 14px;
+    padding: 4px 9px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    text-decoration: none; color: var(--ink-dim); background: transparent;
+    border: 1px solid var(--border); transition: color .15s, border-color .15s;
   }
-  .colab-btn:hover { filter: brightness(1.08); }
-  .colab-btn:active { transform: translateY(1px); }
+  .colab-btn:hover { color: var(--ink); border-color: var(--accent); }
   .card.playbook { border-left: 3px solid var(--accent-2); }
   .card.playbook h3 { color: var(--accent-2); }
   .card.checklist { border-left: 3px solid var(--accent-2); background: color-mix(in srgb, var(--accent-2) 6%, var(--panel)); }
