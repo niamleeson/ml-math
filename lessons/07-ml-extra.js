@@ -674,8 +674,11 @@ L({
      <p><b>Ablative analysis</b> is the mirror image: <b>remove</b> a component from a working system and see how much accuracy you lose. The biggest drop = the part that matters most.</p>`,
   buildup:
     `<p>Both methods change <b>one</b> component at a time and re-measure the whole system. That isolates each part's effect.</p>
-     <p>Error analysis compares against the <b>perfect</b> system (replace a component with ground-truth output). It tells you the <b>upside</b> of improving that part.</p>
-     <p>Ablative analysis compares against a <b>baseline</b> (delete or simplify a component). It tells you how much a part is currently <b>contributing</b>.</p>`,
+     <p><b>What does "make a component perfect" actually mean?</b> A perfect component makes <b>zero mistakes</b> — for every input it outputs exactly the right answer. You can't build such a thing, so you <b>fake it on your dev set</b>: for each example you hand that stage its <b>ground-truth</b> output (read straight from your labels) instead of whatever the component actually computed, and let the rest of the pipeline run on that flawless input. The overall accuracy you then measure is the <b>ceiling</b> you'd hit if that stage were flawless.</p>
+     <p>Concretely: to "perfect" a face <b>detector</b>, you paste in the correct face boxes for every test image; to "perfect" an <b>OCR</b> stage, you feed in the true text; to "perfect" a <b>retriever</b>, you hand the generator the actually-relevant document. Nothing is trained — you are just simulating "what if this one part never erred?"</p>
+     <p>Making the <b>whole system</b> perfect means every stage gets its ground-truth output, so the final answer is always correct — that is $100\\%$ accuracy, the absolute ceiling. Error analysis asks: <i>which single stage, made perfect, closes the most of the gap up toward that $100\\%$?</i> (Equivalently: replace stages one-by-one from the front of the pipeline and watch accuracy climb toward 100% — the step with the biggest jump is the bottleneck. This is Andrew Ng's "ceiling analysis".)</p>
+     <p>Error analysis compares against the <b>perfect</b> system (ground-truth output for one stage). It tells you the <b>upside</b> of improving that part.</p>
+     <p>Ablative analysis is the opposite comparison — against a <b>baseline</b> (delete or simplify a component). It tells you how much a part is currently <b>contributing</b>.</p>`,
   symbols: [
     { sym: "$\\text{acc}$", desc: "the overall accuracy of the full system (fraction correct)." },
     { sym: "$\\text{acc}^{\\star}_c$", desc: "accuracy when component $c$ is replaced by a perfect oracle, everything else unchanged." },
