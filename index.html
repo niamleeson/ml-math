@@ -198,6 +198,14 @@
   .card.whenuse h3 { color: var(--accent); }
   .card.pitfalls { border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 5%, var(--panel)); }
   .card.pitfalls h3 { color: var(--warn); }
+  .colab-btn {
+    display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 16px;
+    padding: 9px 15px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    text-decoration: none; color: #04121f; background: var(--warn);
+    border: 1px solid var(--warn); transition: filter .15s, transform .05s;
+  }
+  .colab-btn:hover { filter: brightness(1.08); }
+  .colab-btn:active { transform: translateY(1px); }
   .card.playbook { border-left: 3px solid var(--accent-2); }
   .card.playbook h3 { color: var(--accent-2); }
   .card.checklist { border-left: 3px solid var(--accent-2); background: color-mix(in srgb, var(--accent-2) 6%, var(--panel)); }
@@ -730,6 +738,14 @@ const App = (function () {
     return `<div class="lesson-links"><a class="inlink" href="graph.html#${id}">🗺️ See where this fits in the concept map →</a></div>`;
   }
 
+  // Opens a starter notebook (committed under notebooks/) in Google Colab, with the
+  // lesson's code + visualization + practice cells pre-populated. Colab loads it from
+  // GitHub; the user does "Save a copy in Drive" to get their own runnable notebook.
+  function colabBtn(id) {
+    const url = "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/" + encodeURIComponent(id) + ".ipynb";
+    return `<a class="colab-btn" href="${url}" target="_blank" rel="noopener">⚡ Open practice notebook in Colab</a>`;
+  }
+
   // Real-world applications that use this concept (links into applications.html).
   function appUses(id) {
     const apps = APP_INDEX[id] || [];
@@ -874,6 +890,7 @@ const App = (function () {
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
       graphLink(id) +
+      colabBtn(id) +
       // ---- Implementation-first: lead with when/where/how, then run it, then pitfalls ----
       section("whenuse", "🎯", "When to reach for it", l.whenToUse) +
       section("playbook", "🧭", "The playbook", l.playbook) +
