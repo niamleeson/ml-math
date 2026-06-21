@@ -34,7 +34,8 @@ function htmlToText(s) {
 const PIP = { cleanlab:"cleanlab", evidently:"evidently", fairlearn:"fairlearn", mapie:"mapie",
   river:"river", nannyml:"nannyml", pandera:"pandera", ydata_profiling:"ydata-profiling",
   pandas_profiling:"ydata-profiling", shap:"shap", catboost:"catboost", mlxtend:"mlxtend",
-  umap:"umap-learn", great_expectations:"great-expectations" };
+  umap:"umap-learn", great_expectations:"great-expectations", pyspark:"pyspark",
+  rapidfuzz:"rapidfuzz", pandera:"pandera", polars:"polars" };
 function neededPips(code) {
   const found = new Set();
   Object.keys(PIP).forEach(tok => { if (new RegExp("\\b" + tok + "\\b").test(code)) found.add(PIP[tok]); });
