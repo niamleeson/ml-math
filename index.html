@@ -198,6 +198,10 @@
   .card.whenuse h3 { color: var(--accent); }
   .card.pitfalls { border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 5%, var(--panel)); }
   .card.pitfalls h3 { color: var(--warn); }
+  .card.playbook { border-left: 3px solid var(--accent-2); }
+  .card.playbook h3 { color: var(--accent-2); }
+  .card.checklist { border-left: 3px solid var(--accent-2); background: color-mix(in srgb, var(--accent-2) 6%, var(--panel)); }
+  .card.checklist h3 { color: var(--accent-2); }
   /* "Under the hood" — a non-collapsible divider before the math/theory sections */
   .uh-divider {
     display: flex; align-items: center; gap: 9px; margin: 26px 2px 14px;
@@ -464,7 +468,8 @@
     "Deep Learning (CS230)",
     "Modern Deep Learning & AI",
     "Few-shot & Transfer Learning",
-    "Artificial Intelligence (CS221)"
+    "Artificial Intelligence (CS221)",
+    "Doing ML for Real — the skills that matter (2026)"
   ];
 </script>
 
@@ -496,6 +501,17 @@
 <script src="lessons/concept-fs-zero-shot.js"></script>
 <script src="lessons/concept-fs-meta-learning.js"></script>
 <script src="lessons/concept-fs-in-context.js"></script>
+
+<!-- Wave D: Doing ML for Real — practitioner skills (lesson + code + codeviz self-register) -->
+<script src="lessons/concept-skill-framing.js"></script>
+<script src="lessons/concept-skill-data-audit.js"></script>
+<script src="lessons/concept-skill-leakage.js"></script>
+<script src="lessons/concept-skill-baselines.js"></script>
+<script src="lessons/concept-skill-metrics-cost.js"></script>
+<script src="lessons/concept-skill-validation.js"></script>
+<script src="lessons/concept-skill-error-segments.js"></script>
+<script src="lessons/concept-skill-monitoring.js"></script>
+<script src="lessons/concept-skill-limitations.js"></script>
 
 <!-- Derivations / proofs / intuition (merged into lessons by id). -->
 <script src="lessons/derivations-00-foundations.js"></script>
@@ -860,11 +876,13 @@ const App = (function () {
       graphLink(id) +
       // ---- Implementation-first: lead with when/where/how, then run it, then pitfalls ----
       section("whenuse", "🎯", "When to reach for it", l.whenToUse) +
+      section("playbook", "🧭", "The playbook", l.playbook) +
       section("app", "🚀", "Where it's used in practice", (l.application || "") + appUses(id)) +
       codeBlock(id) +
       codeVizBlock(id) +
       walkthroughBlock(id) +
       section("pitfalls", "⚠️", "Production pitfalls", l.pitfalls) +
+      section("checklist", "✅", "Your checklist", l.checklist) +
       // ---- Theory, folded ----
       underHoodWrap +
       (l.demo ? `<div class="card"><h3>🎛️ Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
