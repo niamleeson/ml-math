@@ -924,6 +924,33 @@ L({
      </ul>`,
   application:
     `<p>Gradient-boosted trees (XGBoost, LightGBM, CatBoost) are the go-to winners on tabular data: credit risk, click-through rates, search ranking, insurance pricing, and Kaggle leaderboards. They handle mixed feature types, missing values, and nonlinearity with little tuning.</p>`,
+  whenToUse:
+    `<p><b>Reach for gradient boosting when your data is a table</b> — rows of examples, columns of mixed numeric and categorical features — and you want top accuracy with modest effort. It is the default winner for classification and regression on tabular data from a few hundred to several million rows, especially when the signal is nonlinear and features interact.</p>
+     <p><b>Choose it over:</b></p>
+     <ul>
+       <li><b>A single decision tree or linear / logistic regression</b> — when you can trade some interpretability for a real jump in accuracy.</li>
+       <li><b>A random forest</b> — when you want the last few points of accuracy and will tune a little more. Boosting builds trees in sequence to fix each other's errors, so it usually edges out the forest's parallel averaging.</li>
+       <li><b>A deep neural network</b> — on tabular data specifically, gradient-boosted trees usually <i>win</i> while needing far less data, compute, and tuning.</li>
+     </ul>
+     <p><b>Pick a different tool when:</b></p>
+     <ul>
+       <li>The input is images, audio, text, or sequences — use a CNN (Convolutional Neural Network) or a transformer; trees can't read raw pixels or tokens.</li>
+       <li>You need a fully transparent model for regulators — prefer a monotonic-constrained GBM (Gradient-Boosted Model), a GAM (Generalized Additive Model), or plain logistic regression.</li>
+       <li>The dataset is tiny or very noisy — a regularized linear model often generalizes better.</li>
+       <li>You need online / streaming updates — boosting retrains in batches, not row by row.</li>
+     </ul>
+     <p><b>Which library:</b> <b>XGBoost</b> is the robust default; <b>LightGBM</b> is fastest on large, high-cardinality data; <b>CatBoost</b> has the best native categorical handling and strong out-of-the-box defaults.</p>`,
+  pitfalls:
+    `<ul>
+       <li><b>It will overfit if you let it.</b> Boosting keeps fitting the training set forever. Always hold out a validation set and use <b>early stopping</b> (e.g. <code>early_stopping_rounds</code>) so training halts when the validation score stops improving.</li>
+       <li><b>Target leakage is the silent killer.</b> A feature built from the label — or from information that arrives after prediction time — gives a gorgeous validation score that collapses in production. Build features with a <i>time-aware</i> split and audit anything that looks suspiciously predictive.</li>
+       <li><b>Match the split to the data.</b> Random K-fold CV (Cross-Validation) leaks on time-series or grouped data. Use time-based or grouped splits so the test set is genuinely in the future or out-of-group.</li>
+       <li><b>Tune in the right order.</b> The learning rate ν and the number of trees trade off (smaller ν needs more trees). Fix the tree count with early stopping, then tune ν, tree depth, the subsample ratio, and the regularizers (λ, γ, min_child_weight).</li>
+       <li><b>Imbalanced classes fool accuracy.</b> Set <code>scale_pos_weight</code>, judge the model on AUC (Area Under the Curve) or PR-AUC (Precision–Recall Area Under the Curve), and <b>calibrate</b> the probabilities (isotonic or Platt) — raw boosting scores are often over-confident.</li>
+       <li><b>Trees can't extrapolate.</b> Predictions flatten outside the range seen in training, so a model on a rising trend (sales, prices) will under-predict the future. Detrend first or add an explicit trend feature.</li>
+       <li><b>Training / serving skew.</b> The exact same feature pipeline must run offline and online. Version the model <i>and</i> the feature code together, or live predictions will silently drift from your offline numbers.</li>
+       <li><b>Watch size and latency.</b> Hundreds to thousands of deep trees can be slow and large to serve — cap depth, prune, or compile the model (e.g. Treelite) for low-latency scoring.</li>
+     </ul>`,
   quiz: {
     q: `In gradient boosting with squared-error loss, what does each new tree $h_m$ try to predict? Why is a small learning rate $\\nu$ often better?`,
     a: `<p>Each new tree fits the current <b>residuals</b> $y_i-F_{m-1}(x_i)$ — equivalently, the negative gradient of the loss. A small $\\nu$ takes gentler steps, so no single tree dominates; this reduces overfitting and usually gives a more accurate final model (at the cost of needing more trees).</p>`
