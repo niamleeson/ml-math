@@ -59,7 +59,9 @@
   .labhead .ic { font-size:30px; }
   .labhead h2 { font-size:23px; margin:0; }
   .labhead .gl { color:var(--ink-dim); margin:3px 0 0; font-size:14px; }
-  .labhead .close { margin-left:auto; }
+  .labhead .close { margin-left:auto; flex:none; align-self:flex-start; background:var(--panel); border:1px solid var(--border);
+    color:var(--ink); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:border-color .15s, background .15s; }
+  .labhead .close:hover { border-color:var(--accent); background:var(--panel-2); }
 
   .phasebar { display:flex; flex-wrap:wrap; gap:5px; margin:0 0 18px; }
   .phasebar .ph {
@@ -317,8 +319,8 @@ const Sim = (function () {
     if (!apps.length) document.getElementById("view").innerHTML = `<div class="err">No simulations loaded yet.</div>`;
   }
 
-  function open(id) { cur = (window.SIMULATIONS || {})[id]; cur._id = id; stageIdx = 0; renderLab(); window.scrollTo(0,0); }
-  function close() { cur = null; renderPicker(); window.scrollTo(0,0); }
+  function open(id) { cur = (window.SIMULATIONS || {})[id]; cur._id = id; stageIdx = 0; renderLab(); window.scrollTo(0,0); pushURL(); }
+  function close() { cur = null; renderPicker(); window.scrollTo(0,0); pushURL(); }
 
   function conceptPanel(stage) {
     const ids = (stage.concepts || []);
@@ -408,7 +410,28 @@ const Sim = (function () {
     if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById("view")]);
   }
 
-  function goto(i) { const n = (cur.stages || []).length; stageIdx = Math.max(0, Math.min(n - 1, i)); renderLab(); window.scrollTo(0, 0); }
+  function goto(i) { const n = (cur.stages || []).length; stageIdx = Math.max(0, Math.min(n - 1, i)); renderLab(); window.scrollTo(0, 0); pushURL(); }
+
+  // ---- URL <-> state, so the browser Back/Forward buttons walk lab stages ----
+  function stateHash() { return cur ? ("#" + cur._id + (stageIdx > 0 ? "/" + stageIdx : "")) : ""; }
+  function pushURL() {
+    const h = stateHash();
+    if (h === location.hash) return;                 // no change -> no duplicate history entry
+    history.pushState(null, "", h || (location.pathname + location.search));
+  }
+  function applyHash() {
+    const raw = location.hash.replace(/^#/, "");
+    if (!raw) { cur = null; renderPicker(); window.scrollTo(0, 0); return; }
+    const slash = raw.indexOf("/");
+    const id = slash === -1 ? raw : raw.slice(0, slash);
+    const sIdx = slash === -1 ? 0 : (parseInt(raw.slice(slash + 1), 10) || 0);
+    if ((window.SIMULATIONS || {})[id]) {
+      cur = window.SIMULATIONS[id]; cur._id = id;
+      const n = (cur.stages || []).length;
+      stageIdx = Math.max(0, Math.min(n - 1, sIdx));
+      renderLab(); window.scrollTo(0, 0);
+    } else { cur = null; renderPicker(); }
+  }
   function choose(si, oi) {
     const step = cur.stages[stageIdx].steps[si];
     const wrap = document.getElementById("step-" + si);
@@ -429,8 +452,8 @@ const Sim = (function () {
   function init() {
     (window.LESSONS || []).forEach(l => L[l.id] = l);
     syncTheme();
-    const hash = location.hash.replace("#", "");
-    if (hash && (window.SIMULATIONS || {})[hash]) open(hash); else renderPicker();
+    applyHash();
+    window.addEventListener("popstate", applyHash);
   }
   window.addEventListener("DOMContentLoaded", init);
   return { open, close, goto, choose, run, toggleTheme };
