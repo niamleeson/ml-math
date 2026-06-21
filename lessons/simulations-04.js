@@ -105,7 +105,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Augment the data",
-        narrative: `<p>Cameras see varied lighting, angles, and partial occlusion, but your 24k frames can't cover every combination. Data augmentation synthesizes that variety for free: each epoch the same frame is shown slightly brighter, flipped, or cropped, so the CNN learns the invariant (the product) instead of memorizing the nuisance (one store's lighting). The key rule is that augmentations must stay <i>physically plausible</i> — teach a world the cameras actually see.</p>`,
+        narrative: `<p>Cameras see varied lighting, angles, and partial occlusion, but your 24k frames can't cover every combination. Data augmentation synthesizes that variety for free: each epoch a fresh random transform is sampled per image, so the CNN learns the invariant (the product) instead of memorizing the nuisance (one store's lighting). Concretely each op samples from a range — brightness $\\times U(0.8,1.2)$, contrast $\\times U(0.8,1.2)$, horizontal flip with probability $0.5$, scale $\\times U(0.8,1.2)$ then a random crop back to input size. Geometric ops also transform the boxes so labels stay valid (a flip maps $x\\to W-x-w$; a scale-by-$s$ multiplies every box coordinate by $s$). The key rule is that augmentations stay <i>physically plausible</i> — teach a world the cameras actually see.</p>`,
         concepts: ["dl-data-augmentation", "dl-conv"],
         insight: `<b>Augmentation multiplies a fixed dataset.</b> With brightness jitter, horizontal flip, and scale crops, each of the 24k frames yields effectively dozens of distinct training views — cheap robustness without paying to label more boxes. But direction matters: a horizontal flip is a real camera angle, while a <b>180° rotation is an upside-down shelf that never exists</b>, so it wastes model capacity learning an impossible world. Good augmentation only adds variation the deployment cameras will actually encounter.`,
         data: {
@@ -125,20 +125,21 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "invariance", desc: "the property you want: prediction unchanged under nuisance changes (lighting, flip) — what augmentation teaches." },
           { sym: "scale jitter", desc: "randomly resizing the image so objects appear at different pixel sizes, helping the small-object problem." }
         ],
-        steps: [{
-          type: "decide", prompt: "Which augmentations fit shelf detection?",
-          options: [
-            { label: "Random brightness/contrast, horizontal flip, small crops and scale jitter", best: true, feedback: "these match the real variation the cameras see — different store lighting, either-side camera placement, and products at varied distances — so the model is pushed to rely on product appearance, not on a memorized lighting level. Each is also box-safe: flips and crops transform the boxes accordingly, keeping labels valid. This is robustness bought without a single new annotation." },
-            { label: "Vertical flips and 180° rotations", feedback: "this teaches an impossible world. Shelves are never upside-down in a store, so capacity spent learning inverted products is wasted, and worse, it can hurt — the model may become invariant to an orientation cue that actually carries real information. Augmentation should expand toward realistic variation, not fabricate scenes that never occur." },
-            { label: "No augmentation — the dataset is big enough", feedback: "24k frames feels large but it's a fixed, finite slice of lighting and angle combinations; the dark stores and dusk shots are under-represented, and the model will overfit the conditions it happened to see. Augmentation is the cheapest robustness you can buy — skipping it leaves easy generalization on the table and guarantees a brittle model at deployment-time lighting." }
-          ]
-        }]
+        steps: [
+          { type: "decide", prompt: "Which augmentations fit shelf detection?",
+            options: [
+              { label: "Random brightness/contrast, horizontal flip, small crops and scale jitter", best: true, feedback: "these match the real variation the cameras see — different store lighting, either-side camera placement, and products at varied distances — so the model is pushed to rely on product appearance, not on a memorized lighting level. Each is also box-safe: flips and crops transform the boxes accordingly, keeping labels valid. This is robustness bought without a single new annotation." },
+              { label: "Vertical flips and 180° rotations", feedback: "this teaches an impossible world. Shelves are never upside-down in a store, so capacity spent learning inverted products is wasted, and worse, it can hurt — the model may become invariant to an orientation cue that actually carries real information. Augmentation should expand toward realistic variation, not fabricate scenes that never occur." },
+              { label: "No augmentation — the dataset is big enough", feedback: "24k frames feels large but it's a fixed, finite slice of lighting and angle combinations; the dark stores and dusk shots are under-represented, and the model will overfit the conditions it happened to see. Augmentation is the cheapest robustness you can buy — skipping it leaves easy generalization on the table and guarantees a brittle model at deployment-time lighting." }
+            ] },
+          { type: "run", label: "▶ Apply augmentation policy", prompt: "Sample a random transform per image each epoch.", result: { log: "per-image random pipeline (sampled fresh each epoch):\n  brightness x U(0.8,1.2), contrast x U(0.8,1.2)\n  horizontal flip p=0.5  -> box x -> W-x-w\n  scale x U(0.8,1.2) + random crop to 640x640 -> box coords x scale\nexample box b001 (412,88,64,120): flipped+scaled 0.9 -> (?, 79, 58, 108)\n24k base frames x ~30 distinct sampled views = ~720k effective training images\nno new labels drawn", metrics: [{ k: "base frames", v: "24k" }, { k: "effective views", v: "~720k" }] } }
+        ]
       },
       {
         phase: "Model", icon: "🧠", title: "Pick an architecture",
-        narrative: `<p>The detector must run on cheap in-store edge hardware at several frames per second, so the architecture choice is a speed-vs-accuracy trade, not just an accuracy race. A single-stage detector predicts all boxes in one forward pass; a two-stage detector first proposes regions then classifies them — more accurate but roughly $2$–$3\\times$ slower. The compute budget, not the leaderboard, picks the family here.</p>`,
+        narrative: `<p>The detector must run on cheap in-store edge hardware at several frames per second, so the architecture choice is a speed-vs-accuracy trade, not just an accuracy race. A single-stage detector predicts all boxes in one forward pass; a two-stage detector first proposes regions then classifies them — more accurate but roughly $2$–$3\\times$ slower. The compute budget, not the leaderboard, picks the family here.</p><p>Concretely, a single-stage detector tiles the image with a grid of <b>anchor boxes</b> — pre-set reference rectangles at each cell, in a few aspect ratios and scales. For every anchor the network outputs four <i>offset</i> numbers $(t_x,t_y,t_w,t_h)$ that nudge the anchor into the true box ($x = x_a + t_x w_a$, $w = w_a\\,e^{t_w}$, and likewise for $y,h$), an objectness score, and 60 class scores. So "predict all boxes in one pass" means: score every anchor and regress its offset, then keep the confident ones.</p>`,
         concepts: ["dl-conv", "dl-object-detection", "mod-vit"],
-        insight: `<b>The frame-rate budget rules out the heavy options.</b> The edge camera needs ~$25$ fps, which is a hard <b>~40 ms per frame</b> latency ceiling. A full-resolution Vision Transformer or a two-stage detector can win a few mAP points but cost $100$+ ms — they'd run at well under $10$ fps and miss the budget by $2$–$3\\times$. A single-stage CNN detector lands near $38$ ms (~$26$ fps), so it's the only family that fits before you even compare accuracy.`,
+        insight: `<b>The frame-rate budget rules out the heavy options.</b> The edge camera needs ~$25$ fps, which is a hard <b>~40 ms per frame</b> latency ceiling. A full-resolution Vision Transformer or a two-stage detector can win a few mAP points but cost $100$+ ms — they'd run at well under $10$ fps and miss the budget by $2$–$3\\times$. A single-stage CNN detector lands near $38$ ms (~$26$ fps), so it's the only family that fits before you even compare accuracy. It reaches that speed by predicting box <b>offsets off a fixed anchor grid</b> in one pass: roughly a $20\\times20$ grid $\\times$ 3 aspect ratios $= 1{,}200$ anchors per scale, each regressed and scored simultaneously rather than via a slow region-proposal stage.`,
         data: {
           caption: "Detector families vs the edge budget",
           columns: ["family", "≈ latency", "≈ mAP@0.5", "fits ~40ms?"],
@@ -151,6 +152,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "single-stage", desc: "a detector that predicts boxes + classes in one network pass (fast); contrast with two-stage propose-then-classify." },
+          { sym: "anchor box", desc: "a pre-set reference rectangle tiled across the image grid at fixed scales/aspect ratios; the network predicts an offset $(t_x,t_y,t_w,t_h)$ from each anchor rather than absolute coordinates." },
+          { sym: "box offset", desc: "the four regressed numbers that turn an anchor into a prediction: $x=x_a+t_x w_a$, $y=y_a+t_y h_a$, $w=w_a e^{t_w}$, $h=h_a e^{t_h}$." },
           { sym: "fps", desc: "frames per second the model can process; the camera target is ~25, i.e. ~40 ms/frame." },
           { sym: "backbone", desc: "the CNN feature extractor the detector head sits on; its size sets most of the latency." }
         ],
@@ -165,7 +168,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train the detector",
-        narrative: `<p>You train the CNN by gradient descent on a <b>detection loss</b> with two parts: a localization term (how far the predicted box is from the true box) and a classification term (cross-entropy on the 60 classes). Batch-norm keeps activations well-scaled so deep layers converge stably. Critically, you watch <i>validation mAP</i>, not training loss — training loss keeps falling even as the model starts memorizing, so val mAP is what tells you when to stop.</p>`,
+        narrative: `<p>You train the CNN by gradient descent on a <b>detection loss</b> with two parts: a localization term (how far the predicted box is from the true box, e.g. smooth-L1 on the $(t_x,t_y,t_w,t_h)$ offsets) and a classification term on the 60 classes. But ~$1{,}200$ anchors fire per image and only ~21 hold an object, so the classification term is swamped by easy background — a foreground:background imbalance near $1{:}50$. The fix is <b>focal loss</b>: scale each example's cross-entropy by $(1-p_t)^{\\gamma}$ (with $\\gamma\\approx2$), where $p_t$ is the predicted probability of the true class. Easy backgrounds have $p_t\\to1$ so $(1-p_t)^2\\to0$ and they nearly vanish from the gradient, while hard foregrounds keep full weight. Batch-norm keeps activations well-scaled. You watch <i>validation mAP</i>, not training loss — loss keeps falling as the model memorizes, so val mAP tells you when to stop.</p>`,
         concepts: ["ml-gradient-descent", "dl-batchnorm", "dl-cross-entropy"],
         insight: `<b>Train loss and val metric diverge — trust the metric.</b> From epoch 30 to 50 train loss keeps dropping ($2.18\\to1.74$) but val mAP barely moves ($0.671\\to0.708$ and then flat). That gap is the model fitting training quirks that don't generalize. The best checkpoint is <b>epoch 47</b>, not 50 — early stopping picks the peak val mAP and discards the later overfitting epochs, which is why you save by validation, not by final loss.`,
         data: {
@@ -177,24 +180,25 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["47", "1.85", "0.709", "best checkpoint"],
             ["50", "1.74", "0.708", "loss↓ but val flat → overfit"]
           ],
-          note: `The detection loss = localization loss + classification (cross-entropy) loss. Early stopping keeps epoch 47 because val mAP stopped improving — extra epochs only lowered train loss.`
+          note: `The detection loss = localization (smooth-L1 on box offsets) + focal classification loss, where the $(1-p_t)^2$ factor mutes the easy-background anchors. Early stopping keeps epoch 47 because val mAP stopped improving — extra epochs only lowered train loss.`
         },
         symbols: [
-          { sym: "detection loss", desc: "sum of a box-regression (localization) term and a cross-entropy classification term, minimized by gradient descent." },
+          { sym: "detection loss", desc: "sum of a box-regression (localization) term and a focal classification term, minimized by gradient descent." },
+          { sym: "focal loss", desc: "cross-entropy reweighted by $(1-p_t)^{\\gamma}$ ($\\gamma\\approx2$, $p_t$ = prob of the true class); down-weights the swarm of easy background anchors so the few foreground objects dominate the gradient." },
           { sym: "mAP@0.5", desc: "mean Average Precision counting a box correct when IoU with the truth $\\geq 0.5$." },
           { sym: "batch-norm", desc: "normalizes each layer's activations per mini-batch, stabilizing and speeding convergence." },
           { sym: "early stopping", desc: "halt (or checkpoint) at the epoch with best validation metric to avoid overfitting." }
         ],
         steps: [{
           type: "run", label: "▶ Train detector (50 epochs)",
-          result: { log: "training single-stage detector...\nepoch 10  train loss 3.91  val mAP@0.5 0.512\nepoch 30  train loss 2.18  val mAP@0.5 0.671\nepoch 50  train loss 1.74  val mAP@0.5 0.708  (val plateaued, early stop armed)\nbest checkpoint: epoch 47", metrics: [{ k: "val mAP@0.5", v: "0.708" }, { k: "epochs", v: "47" }], chart: { type: "line", title: "Training: val mAP@0.5 vs epoch (best at 47)", xlabel: "epoch", ylabel: "val mAP@0.5", series: [{ name: "val mAP@0.5", color: "#7ee787", points: [[10, 0.512], [30, 0.671], [47, 0.709], [50, 0.708]] }] } } }
+          result: { log: "training single-stage detector (focal loss, gamma=2)...\nfg:bg anchors per image ~21:1200 -> focal (1-p_t)^2 mutes easy bg\nepoch 10  train loss 3.91  val mAP@0.5 0.512\nepoch 30  train loss 2.18  val mAP@0.5 0.671\nepoch 50  train loss 1.74  val mAP@0.5 0.708  (val plateaued, early stop armed)\nbest checkpoint: epoch 47", metrics: [{ k: "val mAP@0.5", v: "0.708" }, { k: "epochs", v: "47" }], chart: { type: "line", title: "Training: val mAP@0.5 vs epoch (best at 47)", xlabel: "epoch", ylabel: "val mAP@0.5", series: [{ name: "val mAP@0.5", color: "#7ee787", points: [[10, 0.512], [30, 0.671], [47, 0.709], [50, 0.708]] }] } } }
         ]
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate with mAP & IoU",
-        narrative: `<p>A predicted box counts as "correct" only if it overlaps the true box enough. <b>IoU</b> (Intersection over Union) measures that overlap, and a threshold (e.g. $0.5$) sets the bar. <b>mAP</b> then averages precision across all classes — and across IoU thresholds for the stricter mAP@0.5:0.95. You also evaluate on <i>unseen stores</i>, because a model can ace its training stores and still fail on a new one. And you slice by object size: a healthy average can hide a broken slice.</p>`,
+        narrative: `<p>First clean the raw outputs. The detector fires several overlapping anchors on one object, so you run <b>non-max suppression (NMS)</b>: sort all kept boxes of a class by score, take the top one, and drop every remaining box whose <b>IoU</b> with it exceeds a threshold (e.g. $0.5$); repeat on what's left. That leaves one box per object. <b>IoU</b> (Intersection over Union) measures overlap — and it both drives NMS and decides whether a surviving box counts as "correct" against ground truth.</p><p>Then compute <b>mAP</b> per class: sort that class's predictions by confidence, walk down the list matching each to a true box at IoU $\\geq 0.5$ (a match is a true positive, otherwise a false positive), and at every step record running <b>precision</b> $=TP/(TP+FP)$ and <b>recall</b> $=TP/\\text{(all true boxes)}$. Those points trace a precision–recall curve; its area is the class's <b>Average Precision (AP)</b>. <b>mAP</b> is the mean AP over all 60 classes. You also evaluate on <i>unseen stores</i> and slice by object size — a healthy average can hide a broken slice.</p>`,
         concepts: ["dl-object-detection", "ml-classification-metrics", "ml-roc-auc"],
-        insight: `<b>The average is healthy; the slice that matters is not.</b> Headline <b>mAP@0.5 is 0.701</b>, but recall on <b>small/rare items is only 0.39</b> — and those are precisely the empty-shelf cases the system exists to catch. So a number that says "70% good" is hiding a 39% slice that drives the business value. The stricter <b>mAP@0.5:0.95 (0.448)</b> also drops sharply, telling you boxes are roughly placed but not tightly localized.`,
+        insight: `<b>The average is healthy; the slice that matters is not.</b> Headline <b>mAP@0.5 is 0.701</b> — the mean over 60 per-class areas-under-the-PR-curve — but recall on <b>small/rare items is only 0.39</b>, precisely the empty-shelf cases the system exists to catch. So a number that says "70% good" hides a 39% slice that drives the business value. The stricter <b>mAP@0.5:0.95 (0.448)</b>, which re-runs the whole AP computation at IoU cutoffs $0.5,0.55,\\dots,0.95$ and averages, drops sharply — telling you boxes are roughly placed but not tightly localized.`,
         data: {
           caption: "Holdout evaluation (6 unseen stores)",
           columns: ["metric", "value", "reading"],
@@ -204,16 +208,18 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["recall, small/rare", "0.39 ⚠", "the slice the business needs"],
             ["edge latency", "38 ms", "~26 fps, within budget"]
           ],
-          note: `IoU = (area of overlap) / (area of union). mAP@0.5 counts a hit at IoU ≥ 0.5; mAP@0.5:0.95 averages over IoU from 0.5 to 0.95, so it punishes loose boxes.`
+          note: `IoU = (area of overlap) / (area of union). NMS uses it to delete duplicate boxes (drop any box with IoU &gt; 0.5 vs a higher-scoring one). AP = area under one class's precision-recall curve; mAP@0.5 = mean AP over classes at IoU ≥ 0.5; mAP@0.5:0.95 averages that over 10 IoU cutoffs.`
         },
         symbols: [
           { sym: "IoU", desc: "Intersection over Union $= \\dfrac{\\text{area}(\\text{pred}\\cap\\text{true})}{\\text{area}(\\text{pred}\\cup\\text{true})}$; 1 is a perfect box, 0 is no overlap." },
-          { sym: "mAP@0.5", desc: "mean Average Precision with the hit threshold IoU $\\geq 0.5$." },
-          { sym: "mAP@0.5:0.95", desc: "mAP averaged over IoU thresholds $0.5,0.55,\\dots,0.95$; rewards tight localization." },
-          { sym: "recall", desc: "fraction of true objects the model actually found; the metric that exposes missed small items." }
+          { sym: "NMS", desc: "non-max suppression: sort boxes by score, keep the top one, drop any later box with IoU above a threshold against a kept box; removes duplicate detections of one object." },
+          { sym: "precision / recall", desc: "at a confidence cutoff, precision $=\\dfrac{TP}{TP+FP}$ (how many predictions are right) and recall $=\\dfrac{TP}{\\text{all true boxes}}$ (how many objects were found)." },
+          { sym: "AP (Average Precision)", desc: "area under one class's precision–recall curve, swept by lowering the confidence threshold; a single number summarizing the precision/recall trade for that class." },
+          { sym: "mAP@0.5", desc: "mean of the per-class AP values with the hit threshold IoU $\\geq 0.5$." },
+          { sym: "mAP@0.5:0.95", desc: "mAP averaged over IoU thresholds $0.5,0.55,\\dots,0.95$; rewards tight localization." }
         ],
         steps: [
-          { type: "run", label: "▶ Evaluate on holdout stores", result: { log: "holdout: 6 unseen stores, 4,900 frames\nmAP@0.5      0.701\nmAP@0.5:0.95 0.448\nper-class: small/rare items recall 0.39 (weak)\nlatency on edge: 38 ms/frame (~26 fps)", metrics: [{ k: "mAP@0.5", v: "0.701" }, { k: "small recall", v: "0.39 ⚠" }, { k: "fps", v: "26" }], chart: { type: "bars", title: "Holdout metrics: average is fine, small-item slice is not", labels: ["mAP@0.5", "mAP@0.5:0.95", "recall small/rare"], values: [0.701, 0.448, 0.39], colors: ["#7ee787", "#ffb454", "#ff7b72"] } } },
+          { type: "run", label: "▶ NMS + per-class AP on holdout", result: { log: "holdout: 6 unseen stores, 4,900 frames\nNMS: 312,000 raw boxes -> 104,500 after dropping IoU>0.5 duplicates\nexample IoU: pred 64x118 vs true 64x120 overlap 7050/7610 = 0.93 (hit)\nper-class AP@0.5 (sort by conf, integrate precision-recall):\n  cereal_box AP 0.88   soda_can AP 0.81   ...   rare_sku AP 0.31\nmAP@0.5 = mean of 60 class APs = 0.701\nmAP@0.5:0.95 (avg AP over IoU 0.5..0.95) = 0.448\nper-class: small/rare items recall 0.39 (weak)\nlatency on edge: 38 ms/frame (~26 fps)", metrics: [{ k: "mAP@0.5", v: "0.701" }, { k: "small recall", v: "0.39 ⚠" }, { k: "fps", v: "26" }], chart: { type: "bars", title: "Holdout metrics: average is fine, small-item slice is not", labels: ["mAP@0.5", "mAP@0.5:0.95", "recall small/rare"], values: [0.701, 0.448, 0.39], colors: ["#7ee787", "#ffb454", "#ff7b72"] } } },
           { type: "decide", prompt: "mAP looks fine but small/rare items have recall 0.39. What does that tell you?",
             options: [
               { label: "The headline mAP hides a real failure mode on small and rare classes", best: true, feedback: "right — mAP is an average over classes and objects, and averages drown out minorities. Small/rare items are a fraction of all boxes, so their 0.39 recall barely dents a 0.701 headline, yet those are the exact empty-shelf cases that justify the project. The lesson: always slice the metric by the dimension the business cares about, because the aggregate can stay green while the important slice fails." },
@@ -475,7 +481,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train & calibrate",
-        narrative: `<p>You train the class-weighted CNN with regularization and watch a screening-relevant metric: <b>sensitivity at 90% specificity</b> (catch-rate when false alarms are held to 10%), not raw accuracy. But a model can rank cases well (high AUC) yet still be <i>over-confident</i> — and a confident-but-wrong probability is dangerous in medicine. So after training you <b>calibrate</b> with temperature scaling so a "0.8" really means ~80% risk, measured by Expected Calibration Error (ECE).</p>`,
+        narrative: `<p>You train the class-weighted CNN with regularization and watch a screening-relevant metric: <b>sensitivity at 90% specificity</b> (catch-rate when false alarms are held to 10%), not raw accuracy. But a model can rank cases well (high AUC) yet still be <i>over-confident</i> — and a confident-but-wrong probability is dangerous in medicine. So after training you <b>calibrate</b> with temperature scaling so a "0.8" really means ~80% risk, measured by Expected Calibration Error (ECE).</p><p>ECE is computed concretely: sort validation predictions into bins by confidence (say 10 bins of width $0.1$); in each bin compute the <i>mean confidence</i> and the <i>actual fraction positive</i> (accuracy); ECE is the sample-weighted average gap $\\sum_b \\frac{n_b}{N}\\,|\\text{acc}_b - \\text{conf}_b|$. To fix it, <b>temperature scaling</b> fits one scalar $T$ by minimizing validation loss over $T$, then divides every logit by it ($z\\to z/T$, $T&gt;1$ softens over-confidence) — a one-parameter post-hoc rescale that leaves the ranking, and thus AUC, untouched.</p>`,
         concepts: ["ml-gradient-descent", "ml-regularization", "ml-classification-metrics"],
         insight: `<b>Good ranking ≠ honest probabilities.</b> Training reaches <b>val AUC 0.941</b> and sensitivity@90%-spec <b>0.86</b> — strong discrimination. But raw <b>ECE is 0.142</b>, meaning predicted probabilities are off by ~14 points on average (the model says 0.9 when the real risk is ~0.76). Temperature scaling — dividing the logits by one learned constant $T$ — pulls <b>ECE down to 0.038</b> without changing the ranking or AUC. In a tool a clinician trusts to gauge risk, that calibration step is not optional.`,
         data: {
@@ -486,17 +492,17 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["epoch 24 (early stop)", "0.941", "0.86", "0.142"],
             ["after temperature scaling", "0.941", "0.86", "0.038 ✓"]
           ],
-          note: `Temperature scaling rescales logits $z \\to z/T$ (one parameter $T$ fit on validation). It leaves the ranking — and thus AUC and sensitivity — unchanged while making probabilities honest, so ECE drops but the discrimination metrics don't move.`
+          note: `ECE = $\\sum_b (n_b/N)\\,|\\text{acc}_b-\\text{conf}_b|$ over confidence bins. Temperature scaling fits one $T$ on validation and rescales logits $z \\to z/T$. It leaves the ranking — and thus AUC and sensitivity — unchanged while making probabilities honest, so ECE drops but the discrimination metrics don't move.`
         },
         symbols: [
           { sym: "AUC", desc: "Area Under the ROC curve: probability the model ranks a random positive above a random negative; pure discrimination, ignores calibration." },
           { sym: "sensitivity@90%spec", desc: "the catch-rate (sensitivity) achieved when the threshold is set so specificity is 90% — a screening operating point." },
-          { sym: "ECE", desc: "Expected Calibration Error: average gap between predicted probability and observed frequency; 0 is perfectly calibrated." },
-          { sym: "$T$ (temperature)", desc: "the single scalar in temperature scaling; logits are divided by $T$ to soften over-confident probabilities." }
+          { sym: "ECE", desc: "Expected Calibration Error $=\\sum_b \\frac{n_b}{N}|\\text{acc}_b-\\text{conf}_b|$: bin predictions by confidence, average the gap between bin accuracy and bin confidence; 0 is perfectly calibrated." },
+          { sym: "$T$ (temperature)", desc: "the single scalar in temperature scaling, fit on validation by minimizing loss; logits are divided by $T$ ($T&gt;1$ softens over-confident probabilities) without changing their order." }
         ],
         steps: [{
           type: "run", label: "▶ Train CNN (class-weighted) + calibrate",
-          result: { log: "training class-weighted CNN...\nepoch 12  val AUC 0.918  sensitivity@90%spec 0.79\nepoch 24  val AUC 0.941  sensitivity@90%spec 0.86  (early stop)\ncalibrating (temperature scaling)...\nECE 0.142 -> 0.038  (better calibrated)", metrics: [{ k: "val AUC", v: "0.941" }, { k: "ECE", v: "0.038" }], chart: { type: "roc", title: "Validation ROC (AUC 0.941), operating point at 90% specificity", auc: 0.941, points: [[0, 0], [0.02, 0.42], [0.05, 0.71], [0.10, 0.86], [0.20, 0.93], [0.40, 0.97], [0.70, 0.99], [1, 1]] } } }
+          result: { log: "training class-weighted CNN...\nepoch 12  val AUC 0.918  sensitivity@90%spec 0.79\nepoch 24  val AUC 0.941  sensitivity@90%spec 0.86  (early stop)\ncalibrating (temperature scaling)...\nECE pre = sum_b (n_b/N)|acc_b-conf_b| over 10 bins = 0.142\n  e.g. bin[0.9-1.0]: mean conf 0.93, actual positive frac 0.76 -> gap 0.17\nfit T on validation -> T=1.7; logits z -> z/1.7\nECE post = 0.038  (AUC unchanged at 0.941)", metrics: [{ k: "val AUC", v: "0.941" }, { k: "ECE", v: "0.038" }], chart: { type: "roc", title: "Validation ROC (AUC 0.941), operating point at 90% specificity", auc: 0.941, points: [[0, 0], [0.02, 0.42], [0.05, 0.71], [0.10, 0.86], [0.20, 0.93], [0.40, 0.97], [0.70, 0.99], [1, 1]] } } }
         ]
       },
       {
@@ -753,7 +759,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Model", icon: "🧠", title: "Perception + planning",
         narrative: `<p>Perception detects and tracks agents; <b>planning</b> chooses safe actions over time. The key modeling decision is to frame planning as a <i>sequential</i> decision process — a Markov Decision Process where each action changes the next state — not a one-shot label. Driving is fundamentally about consequences over a horizon: braking now changes where every other agent will be in two seconds. A learned policy over the MDP handles the nuance, while hard rule-based safety checks act as an outer guardrail.</p>`,
         concepts: ["dl-conv", "ai-mdp", "mod-actor-critic"],
-        insight: `<b>Driving is sequential, so the model must be too.</b> In an MDP the car is in a <b>state $s_t$</b>, takes an <b>action $a_t$</b> (steer/accelerate/brake), pays a <b>cost</b>, and lands in a new state $s_{t+1}$ — and that transition is exactly why a per-frame classifier fails: it can't reason that this brake prevents a collision three steps ahead. A learned <b>policy $\\pi(a\\mid s)$</b> optimizes over the whole horizon, and a rule-based safety layer vetoes any action that violates a hard constraint, so the learned part never has the final say on safety.`,
+        insight: `<b>Driving is sequential, so the model must be too.</b> In an MDP the car is in a <b>state $s_t$</b>, takes an <b>action $a_t$</b> (steer/accelerate/brake), pays a <b>cost</b>, and lands in a new state $s_{t+1}$ — and that transition is exactly why a per-frame classifier fails: it can't reason that this brake prevents a collision three steps ahead. A learned <b>policy $\\pi(a\\mid s)$</b> is trained actor-critic style: a critic estimates each state's value $V(s)$, the <b>advantage</b> $A_t=G_t-V(s_t)$ scores whether an action beat that baseline, and the policy is nudged toward positive-advantage actions over the whole horizon. A rule-based safety layer then vetoes any action that violates a hard constraint, so the learned part never has the final say on safety.`,
         data: {
           caption: "One planning transition as an MDP step",
           columns: ["$s_t$ (state)", "$a_t$ (action)", "cost", "$s_{t+1}$ (next state)"],
@@ -770,6 +776,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "MDP", desc: "Markov Decision Process: states, actions, transition dynamics, and costs; the framework for sequential decisions." },
           { sym: "$s_t,\\ a_t$", desc: "the state at time $t$ (scene + agent tracks) and the action taken (steer/accelerate/brake)." },
           { sym: "policy $\\pi(a\\mid s)$", desc: "the learned mapping from state to action the planner optimizes over the driving horizon." },
+          { sym: "advantage $A_t$", desc: "$A_t=G_t-V(s_t)$, return minus the critic's value baseline; the actor-critic signal that pushes good actions up and bad ones down with low variance." },
           { sym: "safety guardrail", desc: "hard rule-based checks that veto any policy action violating a constraint; safety never relies on the learned net alone." }
         ],
         steps: [{
@@ -783,7 +790,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train in simulation",
-        narrative: `<p>You can't ethically collect crashes on real roads, so you train and stress-test the policy in <b>simulation</b> first — replaying the mined long-tail scenes plus synthetic edge cases you'd never want to encounter for real. Training is gradient ascent on expected return, and you watch <i>two</i> objectives move together: collision rate (safety, must fall) and a comfort score (smoothness, secondary). Watching both prevents a policy that's safe by being uselessly timid or smooth by being unsafe.</p>`,
+        narrative: `<p>You can't ethically collect crashes on real roads, so you train and stress-test the policy in <b>simulation</b> first — replaying the mined long-tail scenes plus synthetic edge cases you'd never want to encounter for real. To narrow the coming sim-to-real gap you apply <b>domain randomization</b>: each episode the sim samples sensor noise, weather/lighting, friction, and other-agent behavior from a range, so the policy learns to be robust across conditions rather than overfitting one rendered world — the real road then falls inside the trained distribution. Training is gradient ascent on expected return, and you watch <i>two</i> objectives move together: collision rate (safety, must fall) and a comfort score (smoothness, secondary). Watching both prevents a policy that's safe by being uselessly timid or smooth by being unsafe.</p>`,
         concepts: ["ml-gradient-descent", "mod-actor-critic", "ai-mdp"],
         insight: `<b>Simulation buys safe, unlimited rare-case practice.</b> Over <b>1.2M scenarios</b> (mined long-tail + synthetic edge cases) the policy drives collision rate from <b>2.1 → 0.18 per 1k miles</b> while comfort <i>rises</i> from <b>0.71 → 0.85</b> — safety and smoothness improving together, not traded off. None of these millions of near-crashes could be collected on real roads without endangering people, which is the entire reason sim comes first. The catch (next stage): sim numbers are optimistic and must survive the sim-to-real gap.`,
         data: {
@@ -794,16 +801,18 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["600k", "0.4", "0.83", "improving both"],
             ["900k", "0.18", "0.85", "converged"]
           ],
-          note: `The policy maximizes expected return $G_t=\\sum_k \\gamma^k r_{t+k}$ where rewards encode safety and smoothness. Both metrics improve together because the reward shapes for both — a sign the objective is well-formed.`
+          note: `The policy maximizes expected return $G_t=\\sum_k \\gamma^k r_{t+k}$ with a shaped per-step reward, e.g. $r = +1\\,(\\text{progress}) - 100\\,(\\text{collision}) - 0.3\\,(\\text{hard brake/jerk}) - 0.05\\,(\\text{time})$. The huge collision penalty makes safety dominate the return; the small comfort terms shape smoothness. Training nudges the policy by the advantage $A_t=G_t-V(s_t)$. Both metrics improve together because the reward shapes for both — a sign the objective is well-formed.`
         },
         symbols: [
           { sym: "simulation", desc: "a physics/scenario simulator where the policy can experience millions of rare and dangerous events with zero real-world risk." },
           { sym: "collision rate /1k mi", desc: "simulated collisions per thousand miles; the primary safety metric to drive down." },
-          { sym: "return $G_t$", desc: "$G_t=\\sum_k \\gamma^k r_{t+k}$, the discounted sum of future rewards the policy maximizes ($\\gamma$ = discount, $r$ = per-step reward)." }
+          { sym: "return $G_t$", desc: "$G_t=\\sum_k \\gamma^k r_{t+k}$, the discounted sum of future rewards the policy maximizes ($\\gamma$ = discount, $r$ = per-step reward)." },
+          { sym: "shaped reward", desc: "per-step reward with safety dominating, e.g. $+1$ progress, $-100$ collision, $-0.3$ jerk, $-0.05$ time; the large collision penalty is what makes the return prioritize safety over speed." },
+          { sym: "advantage $A_t$", desc: "$A_t=G_t-V(s_t)$, return minus the critic's value baseline; the actor-critic update signal." }
         ],
         steps: [{
           type: "run", label: "▶ Train policy in sim (hard-case scenarios)",
-          result: { log: "training planning policy in simulation...\nscenarios: 1.2M (incl. mined long-tail + synthetic edge cases)\niter 200k  collision rate 2.1/1k mi  comfort 0.71\niter 600k  collision rate 0.4/1k mi  comfort 0.83\niter 900k  collision rate 0.18/1k mi comfort 0.85 (converged)", metrics: [{ k: "sim collisions/1k mi", v: "0.18" }, { k: "comfort", v: "0.85" }], chart: { type: "line", title: "Sim training: collisions fall, comfort rises (in 1000s of iters)", xlabel: "iteration (k)", series: [{ name: "collisions/1k mi", color: "#ff7b72", points: [[200, 2.1], [600, 0.4], [900, 0.18]] }, { name: "comfort", color: "#7ee787", points: [[200, 0.71], [600, 0.83], [900, 0.85]] }] } } }
+          result: { log: "training planning policy in simulation (actor-critic, gamma=0.99)...\nscenarios: 1.2M (incl. mined long-tail + synthetic edge cases)\nshaped reward r = +1 progress -100 collision -0.3 jerk -0.05 time\nupdate by advantage A_t = G_t - V(s_t); collision term dominates return\niter 200k  collision rate 2.1/1k mi  comfort 0.71\niter 600k  collision rate 0.4/1k mi  comfort 0.83\niter 900k  collision rate 0.18/1k mi comfort 0.85 (converged)", metrics: [{ k: "sim collisions/1k mi", v: "0.18" }, { k: "comfort", v: "0.85" }], chart: { type: "line", title: "Sim training: collisions fall, comfort rises (in 1000s of iters)", xlabel: "iteration (k)", series: [{ name: "collisions/1k mi", color: "#ff7b72", points: [[200, 2.1], [600, 0.4], [900, 0.18]] }, { name: "comfort", color: "#7ee787", points: [[200, 0.71], [600, 0.83], [900, 0.85]] }] } } }
         ]
       },
       {
@@ -981,11 +990,11 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["part over bin", "open gripper", "+1.0 (placed)", "bin filled"],
             ["part held, tilted", "jerk up", "−0.5 (dropped)", "part on floor"]
           ],
-          note: `Each row is one MDP transition $(s,a,r,s')$ — the atomic unit RL learns from. Domain randomization perturbs the physics behind these transitions so the policy generalizes across setups.`
+          note: `Each row is one MDP transition $(s,a,r,s')$ — the atomic unit RL learns from. Domain randomization perturbs the physics behind these transitions each episode (e.g. friction $\\mu\\sim U(0.4,1.2)$, part mass $\\times U(0.7,1.3)$, object pose $\\pm$2cm/$\\pm$15°, lighting/camera noise) so the policy can't memorize one rig and instead learns a skill robust across the whole range — the basis of sim-to-real transfer.`
         },
         symbols: [
           { sym: "transition $(s,a,r,s')$", desc: "one experience tuple: state, action taken, reward received, resulting next state — the data RL trains on." },
-          { sym: "domain randomization", desc: "randomizing sim physics (friction, mass, pose, lighting) so the learned policy is robust and transfers to the real arm." },
+          { sym: "domain randomization", desc: "sampling sim physics from a range each episode (friction $\\mu\\sim U(0.4,1.2)$, mass $\\times U(0.7,1.3)$, pose $\\pm$2cm/$\\pm$15°, lighting) so the policy learns one skill robust across setups; the real arm's true physics falls inside the trained range, which is how the policy transfers." },
           { sym: "rollout", desc: "a trajectory of transitions produced by running the current policy in an environment for an episode." }
         ],
         steps: [
@@ -996,7 +1005,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "From a single recorded human demo, replayed forever", feedback: "one demonstration is a single trajectory through state space, but an RL policy will visit countless states that demo never touches — and the moment it deviates, a replay has no idea how to recover. You can't learn a robust closed-loop controller from one open-loop path; it covers neither the variety nor the recovery behavior the task requires." }
             ] },
           { type: "run", label: "▶ Spin up sim & collect rollouts", prompt: "Launch parallel simulators with domain randomization.",
-            result: { log: "launching 64 parallel sim envs...\ndomain randomization: friction, mass, lighting, object pose\ncollected 5.0M transitions in 22 min\nsuccess under random policy: 1.8%", metrics: [{ k: "transitions", v: "5.0M" }, { k: "sim envs", v: "64" }, { k: "random success", v: "1.8%" }] } }
+            result: { log: "launching 64 parallel sim envs...\ndomain randomization per episode: friction mu~U(0.4,1.2), mass xU(0.7,1.3),\n  object pose +-2cm/+-15deg, lighting + camera noise\ncollected 5.0M transitions in 22 min\nsuccess under random policy: 1.8%", metrics: [{ k: "transitions", v: "5.0M" }, { k: "sim envs", v: "64" }, { k: "random success", v: "1.8%" }] } }
         ]
       },
       {
@@ -1063,7 +1072,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Model", icon: "🧠", title: "Choose the RL algorithm",
         narrative: `<p>The arm is driven by <b>continuous joint torques</b>, so the action space is continuous — a real-valued vector, not a small menu of discrete moves. That single fact rules out whole families of RL: you can't tabulate a continuous space, and a stateless bandit can't handle a multi-step sequence. The fit is an <b>actor-critic policy-gradient</b> method (e.g. PPO): the <i>actor</i> outputs continuous actions directly, the <i>critic</i> estimates value to reduce variance, and a clipped update keeps training stable.</p>`,
         concepts: ["mod-actor-critic", "mod-policy-gradient", "ai-q-learning"],
-        insight: `<b>Continuous actions pick the algorithm.</b> Tabular Q-learning needs a finite table of states × actions, but a continuous torque vector has <b>infinitely many actions</b>, so the table can't exist (and discretizing finely explodes combinatorially). A bandit ignores state entirely, yet grasp-and-place is sequential — the right action depends on where you are in the motion. An actor-critic policy gradient handles both: the actor maps state to a continuous action directly, and the clipped update (PPO) prevents the destabilizing large policy jumps that plague vanilla policy gradients.`,
+        insight: `<b>Continuous actions pick the algorithm.</b> Tabular Q-learning needs a finite table of states × actions, but a continuous torque vector has <b>infinitely many actions</b>, so the table can't exist (and discretizing finely explodes combinatorially). A bandit ignores state entirely, yet grasp-and-place is sequential — the right action depends on where you are in the motion. An actor-critic policy gradient handles both: the actor maps state to a continuous action directly, and the critic supplies the <b>advantage</b> $A_t = G_t - V(s_t)$ — how much better an action did than the critic's baseline — so the gradient pushes up actions with $A_t&gt;0$ and down those with $A_t&lt;0$, with far less variance than using raw return. PPO then bounds each step: it forms the probability ratio $r_t = \\pi_{\\text{new}}(a_t\\mid s_t)/\\pi_{\\text{old}}(a_t\\mid s_t)$ and optimizes $\\min(r_t A_t,\\ \\text{clip}(r_t,1-\\epsilon,1+\\epsilon)A_t)$, so a single update can never move the policy more than $\\pm\\epsilon$ (≈0.2) — the clip is what prevents the destabilizing jumps that plague vanilla policy gradients.`,
         data: {
           caption: "RL method vs the continuous, sequential task",
           columns: ["method", "continuous actions?", "uses state/sequence?", "stable?"],
@@ -1072,12 +1081,13 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["tabular Q-learning", "no (table explodes)", "yes", "n/a"],
             ["stateless bandit", "n/a", "no (ignores state)", "n/a"]
           ],
-          note: `Actor = policy network mapping state→continuous action; critic = value estimate that lowers gradient variance. PPO's clip keeps each update small, the key to stable continuous control.`
+          note: `Actor = policy network mapping state→continuous action; critic estimates $V(s)$ to form the advantage $A_t=G_t-V(s_t)$, which lowers gradient variance. PPO's clipped objective $\\min(r_t A_t,\\ \\text{clip}(r_t,1-\\epsilon,1+\\epsilon)A_t)$ caps each update at $\\pm\\epsilon$ — the key to stable continuous control.`
         },
         symbols: [
           { sym: "continuous action space", desc: "actions are real-valued vectors (joint torques), not a finite set; rules out tabular methods." },
-          { sym: "actor-critic", desc: "an actor network that chooses actions plus a critic network that estimates value to reduce the gradient's variance." },
-          { sym: "policy gradient (PPO)", desc: "optimizes the policy by ascending the gradient of expected return; PPO clips the update to keep it stable." },
+          { sym: "actor-critic", desc: "an actor network that chooses actions plus a critic network that estimates value $V(s)$ to reduce the gradient's variance." },
+          { sym: "advantage $A_t$", desc: "$A_t=G_t-V(s_t)$: how much more return an action earned than the critic's baseline; positive advantage pushes the action's probability up, negative pushes it down." },
+          { sym: "policy gradient (PPO)", desc: "optimizes the policy by ascending $\\min(r_t A_t,\\ \\text{clip}(r_t,1-\\epsilon,1+\\epsilon)A_t)$ where $r_t=\\pi_{\\text{new}}/\\pi_{\\text{old}}$; the clip bounds each update to $\\pm\\epsilon$ for stability." },
           { sym: "bandit", desc: "a stateless one-shot decision problem; can't model the multi-step, state-dependent structure of control." }
         ],
         steps: [{
@@ -1091,7 +1101,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train the policy (RL)",
-        narrative: `<p>You optimize the policy by <b>gradient ascent on expected return</b> $G_t$ — pushing the network toward actions that earned more cumulative reward. You watch three signals together: success rate (the real goal), mean return (the optimized quantity), and the critic's value loss (training health). A healthy run shows success and return climbing together while value loss stays stable and policy entropy <i>anneals</i> (exploration decreasing as the policy commits to a good strategy).</p>`,
+        narrative: `<p>You optimize the policy by <b>gradient ascent on the clipped PPO objective</b>: collect rollouts, compute each step's return $G_t=\\sum_k \\gamma^k r_{t+k}$ and advantage $A_t=G_t-V(s_t)$, then nudge the actor up on positive-advantage actions and down on negative ones — but only within the clip range $1\\pm\\epsilon$ so no single update destabilizes the policy. You watch three signals together: success rate (the real goal), mean return (the optimized quantity), and the critic's value loss (training health). A healthy run shows success and return climbing together while value loss stays stable and policy entropy <i>anneals</i> (exploration decreasing as the policy commits to a good strategy).</p>`,
         concepts: ["ml-gradient-descent", "mod-actor-critic", "ai-q-learning"],
         insight: `<b>Success and return rise together — that's a well-shaped reward.</b> Success climbs <b>31% → 74% → 89%</b> as mean return climbs <b>4.1 → 12.8 → 15.2</b>, and they track each other, confirming the reward is aligned (more return really means more placements, not more hacking). Return <b>plateaus at step 16M</b>, the signal to stop. Meanwhile entropy annealing means the policy is exploring less and exploiting its learned grasp more, and a <b>stable value loss</b> says the critic is keeping up — no divergence.`,
         data: {
@@ -1113,7 +1123,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         ],
         steps: [{
           type: "run", label: "▶ Train PPO policy in sim",
-          result: { log: "training PPO (64 envs)...\nstep 2M   success 31%  mean return  4.1\nstep 8M   success 74%  mean return 12.8\nstep 16M  success 89%  mean return 15.2  (return plateaued)\npolicy entropy annealed; value loss stable", metrics: [{ k: "sim success", v: "89%" }, { k: "mean return", v: "15.2" }], chart: { type: "line", title: "PPO training: success rate and return rise together (in millions of steps)", xlabel: "step (M)", series: [{ name: "success rate (%)", color: "#7ee787", points: [[2, 31], [8, 74], [16, 89]] }, { name: "mean return", color: "#4ea1ff", points: [[2, 4.1], [8, 12.8], [16, 15.2]] }] } } }
+          result: { log: "training PPO (64 envs, clip eps=0.2, gamma=0.99)...\nper step: G_t = sum gamma^k r ; A_t = G_t - V(s_t)\nupdate = min(r_t*A_t, clip(r_t,0.8,1.2)*A_t)  (ratio r_t = pi_new/pi_old)\nstep 2M   success 31%  mean return  4.1  mean |A_t| 2.3\nstep 8M   success 74%  mean return 12.8  mean |A_t| 0.9\nstep 16M  success 89%  mean return 15.2  (return plateaued, |A_t|->0.2)\npolicy entropy annealed; value loss stable", metrics: [{ k: "sim success", v: "89%" }, { k: "mean return", v: "15.2" }], chart: { type: "line", title: "PPO training: success rate and return rise together (in millions of steps)", xlabel: "step (M)", series: [{ name: "success rate (%)", color: "#7ee787", points: [[2, 31], [8, 74], [16, 89]] }, { name: "mean return", color: "#4ea1ff", points: [[2, 4.1], [8, 12.8], [16, 15.2]] }] } } }
         ]
       },
       {

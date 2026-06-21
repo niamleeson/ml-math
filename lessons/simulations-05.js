@@ -94,7 +94,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454"]
         },
         symbols: [
-          { sym: "$\\rho_k$", desc: "the autocorrelation at lag $k$: correlation between $\\text{load}_t$ and $\\text{load}_{t-k}$. Near $1$ means strong repetition at that spacing." },
+          { sym: "$\\rho_k$", desc: "the autocorrelation at lag $k$: correlation between $\\text{load}_t$ and $\\text{load}_{t-k}$, $\\rho_k=\\frac{\\sum_t (\\text{load}_t-\\bar{L})(\\text{load}_{t-k}-\\bar{L})}{\\sum_t (\\text{load}_t-\\bar{L})^2}$. Near $1$ means strong repetition at that spacing." },
           { sym: "lag $k$", desc: "how many hours back you look; peaks at $k=24$ and $k=168$ reveal the daily and weekly cycles." },
           { sym: "U-shape", desc: "the non-monotonic load-vs-temperature curve — high at both hot and cold extremes, lowest in the mild middle." }
         ],
@@ -109,7 +109,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Engineer time features",
-        narrative: `<p>Tree and regression models can't see "time" — they see a row of numbers. You must hand them the seasonality explicitly: lagged loads, calendar encodings, and the weather forecast.</p><p>The golden rule governs every choice: each feature must be knowable <i>before</i> the hour you predict. A feature that needs the future is leakage, no matter how predictive it looks offline.</p>`,
+        narrative: `<p>Tree and regression models can't see "time" — they see a row of numbers. You must hand them the seasonality explicitly. Three families, each built mechanically:</p><p><b>Lag features:</b> copy the target from $k$ hours back into the row — $\\text{lag}_k(t)=\\text{load}_{t-k}$, with $k\\in\\{24,48,168\\}$ chosen from the autocorrelation peaks. <b>Rolling features:</b> the mean (or std) of load over a trailing window ending strictly before $t$ — $\\text{roll7d}(t)=\\frac{1}{168}\\sum_{j=1}^{168}\\text{load}_{t-j}$. <b>Calendar features:</b> extract hour, day-of-week, and a holiday flag from the timestamp; one-hot them for a linear model, leave them integer for a tree. For a linear/seasonal model you can instead inject smooth cyclic shape with <b>Fourier terms</b>: for the daily cycle (period $P=24$) add $\\sin\\!\\big(\\frac{2\\pi h}{24}\\big),\\ \\cos\\!\\big(\\frac{2\\pi h}{24}\\big)$ (and higher harmonics $\\frac{2\\pi\\cdot 2h}{24}$, etc.), and likewise $P=168$ for the weekly cycle — a few sine/cosine pairs reproduce the seasonal curve without 24 separate dummies.</p><p>The golden rule governs every choice: each feature must be knowable <i>before</i> the hour you predict. A feature that needs the future is leakage, no matter how predictive it looks offline.</p>`,
         concepts: ["ml-linear-regression", "cls-gradient-boosting", "prob-conditional-expectation"],
         insight: `<b>Lags carry the level; calendar carries the shape.</b> The 168-hour lag (same hour last week) alone gets MAPE down to about <b>7.6%</b> — that's your baseline. Adding hour-of-day, weekday, holiday, and the temperature forecast on top cuts another ~3 points. But the 1-hour lag, tempting because $\\rho=0.97$, is <b>illegal</b>: for a day-ahead forecast you won't have last hour's actual load.`,
         data: {
@@ -124,7 +124,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "lag$_k$", desc: "$\\text{load}_{t-k}$, the actual load $k$ hours before the target hour; legal only if $t-k$ is in the past at scoring time." },
-          { sym: "roll7d", desc: "the rolling 7-day mean of load ending before the target hour — a smooth estimate of the current demand level." },
+          { sym: "roll7d", desc: "the rolling 7-day mean of load ending before the target hour, $\\frac{1}{168}\\sum_{j=1}^{168}\\text{load}_{t-j}$ — a smooth estimate of the current demand level." },
+          { sym: "Fourier term", desc: "a $\\sin/\\cos$ pair at the season's frequency, e.g. $\\sin(2\\pi h/24),\\cos(2\\pi h/24)$ for the daily cycle — encodes the periodic shape smoothly with few features." },
           { sym: "fcst temp", desc: "the forecasted temperature for the target hour, supplied by the weather feed a day ahead (not the realized temperature)." }
         ],
         steps: [{
@@ -157,7 +158,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train with backtesting",
-        narrative: `<p>You must validate the way you'll deploy: train on the past, test on the future. A random shuffle would scatter future hours into the training fold and let neighbors leak across the split, inflating your score by points.</p><p>Rolling-origin backtesting walks a window forward through time, so every test point is strictly later than its training data — the only honest estimate of forecast skill.</p>`,
+        narrative: `<p>You must validate the way you'll deploy: train on the past, test on the future. A random shuffle would scatter future hours into the training fold and let neighbors leak across the split, inflating your score by points.</p><p><b>The walk-forward loop, concretely.</b> Pick an origin index $t$. Fit the model on rows $[0..t]$ only. Predict hour $t+1$ (or the whole next block, here the next month), and record the error against the actual once it lands. Then advance the origin — $t \\leftarrow t+\\text{step}$ — refit on the now-larger window $[0..t]$, and repeat. Two iron rules: (1) every feature for a test row uses only data dated $\\le t$ (lags, rolling means, and the weather forecast you'd have had then) — <b>never a row from the future</b>; (2) the test block is always strictly after the train block. Average the per-fold errors to get the reported skill.</p>`,
         concepts: ["mlx-cross-validation", "cls-gradient-boosting", "ml-gradient-descent"],
         insight: `<b>Honest backtesting costs you accuracy on paper — and that's the point.</b> A random k-fold split here reports a flattering MAPE because each test hour sits between training hours that nearly give away the answer. The walk-forward MAPE of <b>4.2%</b> is a couple points worse than the leaky number but is the one that survives deployment. The model beats the 7.6% baseline on all 12 folds, so the lift is robust, not a fluke of one split.`,
         data: {
@@ -174,7 +175,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         symbols: [
           { sym: "fold", desc: "one train/test split in the backtest; later folds train on more history and test on a later month." },
           { sym: "rolling-origin", desc: "the validation scheme where the train/test boundary (origin) slides forward in time, never letting test precede train." },
-          { sym: "$\\bar{\\text{MAPE}}$", desc: "the mean MAPE across all folds — the single number summarizing out-of-sample forecast skill." }
+          { sym: "origin $t$", desc: "the index of the last training row; fold $i$ fits on $[0..t]$ and tests on the block right after $t$, then $t$ advances by one step (here one month)." },
+          { sym: "$\\bar{\\text{MAPE}}$", desc: "the mean MAPE across all folds — the single number summarizing out-of-sample forecast skill: $\\frac{1}{F}\\sum_{i=1}^{F}\\text{MAPE}_i$." }
         ],
         steps: [
           { type: "decide", prompt: "How do you split train/validation for a forecaster?",
@@ -182,7 +184,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
               { label: "Rolling-origin backtest: train on months 1-N, test on month N+1, then walk forward", best: true, feedback: "this respects time order — every test point is strictly in the future of its training data, exactly as production will be. Walking the origin forward also gives you many folds to average, so the skill estimate is stable rather than hostage to one lucky split." },
               { label: "Random k-fold shuffle of all hours", feedback: "shuffling drops future hours into the training fold, and adjacent hours (which are ~97% correlated) leak across the split. The model effectively sees the answer's neighbors, so the reported MAPE is fantasy — it look-ahead-leaks and massively overstates real accuracy." }
             ] },
-          { type: "run", label: "▶ Backtest LightGBM (walk-forward)", result: { log: "rolling-origin backtest, 12 folds...\nfold 1  MAPE 4.8%   fold 6  MAPE 4.1%\nfold 12 MAPE 3.9%\nseasonal-naive baseline MAPE: 7.6%\nmodel beats baseline on 12/12 folds", metrics: [{ k: "model MAPE", v: "4.2%" }, { k: "baseline MAPE", v: "7.6%" }],
+          { type: "run", label: "▶ Backtest LightGBM (walk-forward)", result: { log: "rolling-origin backtest, 12 folds...\nfold 1 : fit on rows[0..8760]   (mo 1-12), predict rows[8761..9480] (mo 13)  -> MAPE 4.8%\nfold 6 : fit on rows[0..12384]  (mo 1-17), predict mo 18                    -> MAPE 4.1%\nfold 12: fit on rows[0..17544]  (mo 1-23), predict mo 24                    -> MAPE 3.9%\n  (origin slides forward by 1 month each fold; test always > train, no future leak)\nseasonal-naive baseline MAPE: 7.6%\nmodel beats baseline on 12/12 folds", metrics: [{ k: "model MAPE", v: "4.2%" }, { k: "baseline MAPE", v: "7.6%" }],
             chart: {
               type: "line",
               title: "Backtest MAPE per fold: model vs seasonal-naive",
@@ -197,7 +199,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate accuracy & intervals",
-        narrative: `<p>A point forecast isn't enough — purchasers need to know the risk so they can size a safety margin. So you report error metrics AND calibrated prediction intervals: a band that should contain the true load a stated fraction of the time.</p><p>Calibration is the test that matters: a "90% interval" must actually cover the truth about 90% of the time, no more and no less.</p>`,
+        narrative: `<p>A point forecast isn't enough — purchasers need to know the risk so they can size a safety margin. So you report error metrics AND calibrated prediction intervals: a band that should contain the true load a stated fraction of the time.</p><p><b>How the band is built.</b> Collect the validation residuals $e = y - \\hat{y}$ for each hour-of-day bucket (peak hours are noisier than troughs). Two equivalent recipes: <b>(a) sigma-times-z</b> — estimate the residual standard deviation $\\sigma$ per bucket, then the 90% band is $[\\hat{y}-z\\sigma,\\ \\hat{y}+z\\sigma]$ with $z=1.645$ (the 95th percentile of the standard normal, so 5% spills out each side); <b>(b) residual quantiles</b> — take the empirical 5th and 95th percentiles of the residuals directly, $[\\hat{y}+q_{0.05},\\ \\hat{y}+q_{0.95}]$, which needs no normality assumption. Either way the width is bucket-specific, so peak hours get wider bands.</p><p>Calibration is the test that matters: a "90% interval" must actually cover the truth about 90% of the time, no more and no less.</p>`,
         concepts: ["ml-regression-metrics", "cls-gaussian-process", "prob-variance"],
         insight: `<b>Peaks are harder, and the interval knows it.</b> Overall MAPE is <b>4.2%</b> but peak-hour MAPE is <b>5.1%</b> — the costly hours are also the noisiest. The 90% prediction interval covers the truth <b>89.4%</b> of the time, essentially nominal, so purchasers can trust the band: roughly 9 in 10 actuals land inside it. Width scales with hour-level variance, so peak intervals are wider exactly where uncertainty is real.`,
         data: {
@@ -212,7 +214,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "RMSE", desc: "Root Mean Squared Error in MW — penalizes large misses more than small ones, so it spotlights bad peak errors." },
-          { sym: "90% interval", desc: "a band $[\\hat{y}-z\\sigma,\\ \\hat{y}+z\\sigma]$ meant to contain the true load 90% of the time; $\\sigma$ is the forecast's standard deviation for that hour." },
+          { sym: "90% interval", desc: "a band $[\\hat{y}-z\\sigma,\\ \\hat{y}+z\\sigma]$ meant to contain the true load 90% of the time; $\\sigma$ is the std of validation residuals for that hour bucket and $z=1.645$." },
+          { sym: "$\\sigma$ (per bucket)", desc: "the standard deviation of held-out residuals $e=y-\\hat{y}$ within an hour-of-day bucket: $\\sigma=\\sqrt{\\frac{1}{n}\\sum e^2}$ — bigger at peaks, which is why peak bands are wider." },
           { sym: "coverage", desc: "the empirical fraction of actuals that actually fall inside the interval — should match the nominal level (here 90%)." }
         ],
         steps: [
@@ -395,7 +398,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Explore", icon: "🔍", title: "Explore the state space",
-        narrative: `<p>Understand how big the problem is before you choose an algorithm. If the game tree is astronomically large, you cannot enumerate it — you must sample and approximate. The branching factor and depth tell you which regime you're in.</p>`,
+        narrative: `<p>Understand how big the problem is before you choose an algorithm. If the game tree is astronomically large, you cannot enumerate it — you must sample and approximate. The branching factor and depth tell you which regime you're in.</p><p><b>How MCTS samples the tree, concretely.</b> Each move runs many simulations; one simulation has four phases. <b>(1) Select:</b> starting at the root, walk down by repeatedly picking the child that maximizes the upper-confidence rule $\\text{UCB}(s,a)=Q(s,a)+c\\,\\sqrt{\\frac{\\ln N(s)}{n(s,a)}}$ — $Q$ is the average value seen through that edge (exploit), the square-root term rewards rarely-tried moves (explore), and $c$ tunes the balance. (AlphaZero's PUCT variant scales the bonus by the policy prior: $c\\,P(s,a)\\frac{\\sqrt{N(s)}}{1+n(s,a)}$.) <b>(2) Expand:</b> at a leaf, add its children. <b>(3) Evaluate:</b> score the leaf with the learned value $V(s)$ instead of playing to the end. <b>(4) Backup:</b> add that value to $Q$ and increment the visit counts $n(s,a)$ and $N(s)$ along the path. After the budget is spent, play the most-visited root move.</p>`,
         concepts: ["ai-tree-search", "ai-minimax", "aix-monte-carlo"],
         insight: `<b>The tree is unenumerable by 40 orders of magnitude.</b> With a branching factor of <b>~31</b> and depth <b>~38</b>, the game has roughly <b>$31^{38}\\approx10^{40}$</b> reachable positions. Enumerating one per nanosecond would still take longer than the age of the universe ($\\sim10^{17}$ s). So exact minimax is off the table; you must sample promising lines (MCTS) and evaluate leaves with a learned value function.`,
         data: {
@@ -412,10 +415,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         symbols: [
           { sym: "$b$", desc: "the branching factor — average number of legal moves per position (here $\\approx31$)." },
           { sym: "$d$", desc: "the typical game depth in plies (here $\\approx38$); the tree size grows like $b^d$." },
-          { sym: "$V(s)$", desc: "the value of state $s$: the expected final reward from $s$ under good play, in $[-1,+1]$." }
+          { sym: "$V(s)$", desc: "the value of state $s$: the expected final reward from $s$ under good play, in $[-1,+1]$." },
+          { sym: "UCB", desc: "the selection score $Q(s,a)+c\\sqrt{\\ln N(s)/n(s,a)}$: pick the child balancing high average value $Q$ (exploit) against few visits $n$ (explore)." },
+          { sym: "$N(s),\\,n(s,a)$", desc: "MCTS visit counts: $N(s)$ times state $s$ was visited, $n(s,a)$ times edge $a$ was taken from it — they drive both the UCB bonus and the final move choice." }
         ],
         steps: [
-          { type: "run", label: "▶ Estimate branching & tree size", result: { log: "avg branching factor: ~31 legal moves\ntypical depth: ~38 plies\nstate-space estimate: ~10^40 positions\nfull minimax tree: intractable to enumerate", metrics: [{ k: "branching", v: "~31" }, { k: "states", v: "~10^40" }] } },
+          { type: "run", label: "▶ Estimate branching & tree size", result: { log: "avg branching factor: ~31 legal moves\ntypical depth: ~38 plies\nstate-space estimate: ~10^40 positions\nfull minimax tree: intractable to enumerate\nMCTS per move: select via UCB Q + c*sqrt(ln N / n) -> expand -> eval with V(s) -> backup", metrics: [{ k: "branching", v: "~31" }, { k: "states", v: "~10^40" }] } },
           { type: "decide", prompt: "The tree has ~$10^{40}$ states. How do you search it?",
             options: [
               { label: "Use Monte Carlo Tree Search guided by a learned value/policy, with alpha-beta-style pruning of bad branches", best: true, feedback: "you can't enumerate $10^{40}$ states, so you sample. MCTS spends its simulations on the promising lines the policy suggests, and a learned value function evaluates leaves without playing to the end. Pruning weak branches focuses the budget where it pays — the only tractable approach at this scale." },
@@ -466,10 +471,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["endgame s", "Kg2:0.88, Rh1:0.07", "+1"],
             ["losing s", "resign-ish spread", "-1"]
           ],
-          note: `The policy head is trained toward the MCTS visit distribution π (a sharpened version of its own suggestions); the value head is trained toward the game's actual outcome z. One network, two heads, both supervised by self-play.`
+          note: `The policy target π comes from the root visit counts: $\\pi(a)=N(s,a)^{1/\\tau}/\\sum_b N(s,b)^{1/\\tau}$ (temperature $\\tau$; $\\tau\\to0$ makes it pick the single most-visited move). The value target z is the game's actual outcome ($+1/-1/0$) stamped onto every state in that game. One network, two heads, both supervised by self-play.`
         },
         symbols: [
           { sym: "policy head $\\pi$", desc: "the network output giving a probability over legal moves — the actor that proposes what to play." },
+          { sym: "policy target", desc: "the training label for the policy head: the MCTS visit distribution $\\pi(a)=N(s,a)^{1/\\tau}/\\sum_b N(s,b)^{1/\\tau}$ — search's verdict, sharper than the raw net." },
+          { sym: "value target $z$", desc: "the training label for the value head: the final game result ($+1$ win, $-1$ loss, $0$ draw) assigned to every state of that game." },
           { sym: "value head $V$", desc: "the network output estimating the expected outcome of the position — the critic that judges who's winning." },
           { sym: "$Q(s,a)$", desc: "the value of taking action $a$ in state $s$; tabular Q-learning stores one per (state, action), which is infeasible here." }
         ],
@@ -484,7 +491,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train by self-play RL",
-        narrative: `<p>Training is a loop, not a single fit: generate games with the current net, train the net to predict the MCTS move probabilities and the game outcomes, evaluate, and repeat. Each cycle the data gets stronger because the agent generating it got stronger.</p>`,
+        narrative: `<p>Training is a loop, not a single fit: generate games with the current net, train the net to predict the MCTS move probabilities and the game outcomes, evaluate, and repeat. Each cycle the data gets stronger because the agent generating it got stronger.</p><p><b>The single loss both heads minimize.</b> For each stored $(s,\\pi,z)$ example, $\\;L=(z-V(s))^2-\\pi^{\\top}\\log p(s)+\\lambda\\lVert\\theta\\rVert^2$: a squared-error term pulling the value head $V(s)$ toward the outcome $z$, a cross-entropy term pulling the policy head $p(s)$ toward the search distribution $\\pi$, and an L2 weight-decay term. One gradient step updates the shared trunk and both heads at once.</p>`,
         concepts: ["ai-q-learning", "mod-actor-critic", "ai-sgd"],
         insight: `<b>Both losses fall and skill rises in lockstep.</b> Across 60 iterations the value loss drops <b>0.61 → 0.28</b> and the policy loss <b>1.42 → 0.74</b>, while win rate climbs from <b>88% to 99% vs random</b> — and, more tellingly, to <b>64% vs the previous best net</b>. Beating random is easy; beating your own prior version is the signal that the loop is actually compounding, which is why a new best is only promoted on that head-to-head.`,
         data: {
@@ -742,12 +749,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           colors: ["#7ee787", "#7ee787", "#4ea1ff", "#c89bff"]
         },
         symbols: [
-          { sym: "scaffold", desc: "the shared core substructure of a family of molecules; activity often tracks the scaffold." },
+          { sym: "scaffold", desc: "the shared core substructure of a family of molecules; activity often tracks the scaffold. Computed by Bemis–Murcko: strip all terminal side-chains, keeping only the ring systems and the linkers between them." },
           { sym: "t-SNE", desc: "a non-linear projection that places similar fingerprints near each other in 2-D, revealing clusters." },
-          { sym: "scaffold split", desc: "a train/test split that keeps whole scaffold families on one side, so test scaffolds are genuinely unseen." }
+          { sym: "scaffold split", desc: "compute each molecule's Bemis–Murcko scaffold, group molecules by identical scaffold, then assign whole scaffold groups entirely to train or test — so no test scaffold (or its analogs) ever appears in train." }
         ],
         steps: [
-          { type: "run", label: "▶ Cluster & visualize molecules", result: { log: "computed molecular fingerprints\nt-SNE projection: 6 dense scaffold clusters\nactives concentrated in 2 of 6 clusters\nlarge inactive 'dark' region of unexplored chemistry", metrics: [{ k: "clusters", v: "6" }, { k: "active clusters", v: "2" }] } },
+          { type: "run", label: "▶ Cluster & visualize molecules", result: { log: "computed 2048-bit Morgan fingerprints (radius 2)\nderived Bemis-Murcko scaffolds -> 1,847 distinct scaffold groups\nt-SNE projection: 6 dense scaffold clusters\nactives concentrated in 2 of 6 clusters\nlarge inactive 'dark' region of unexplored chemistry", metrics: [{ k: "clusters", v: "6" }, { k: "active clusters", v: "2" }] } },
           { type: "decide", prompt: "Actives cluster into just 2 scaffolds. What's the validation risk?",
             options: [
               { label: "Random splits leak scaffolds across train/test, so use scaffold-based splits to test true generalization", best: true, feedback: "if the same scaffold appears in both train and test, the model just memorizes the family and your metric measures recall of known chemistry, not discovery. Splitting by whole scaffolds forces the model to predict activity for chemistry it has never seen — the only honest test of whether it can find NEW drug families." },
@@ -757,7 +764,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Featurize molecules",
-        narrative: `<p>A model can't read a chemical formula — you must turn each molecule into numbers that capture what drives binding: its substructures and 3-D shape. The two standard choices are fixed fingerprints (substructure bit-vectors) and learned graph neural nets over the atom-bond graph.</p>`,
+        narrative: `<p>A model can't read a chemical formula — you must turn each molecule into numbers that capture what drives binding: its substructures and 3-D shape. The two standard choices are fixed fingerprints (substructure bit-vectors) and learned graph neural nets over the atom-bond graph.</p><p><b>How a Morgan / ECFP fingerprint is computed.</b> Give each atom an initial integer id from its element, charge, and degree. Then for $r$ rounds (the radius, e.g. $r=2$ → "ECFP4"), update every atom's id by hashing together its own current id and the ids of its bonded neighbours — so after round $k$ each id summarizes the atom's circular neighbourhood out to $k$ bonds. Collect every id generated across all rounds (these are the substructures present), and fold each one into a fixed-length bit vector by setting bit $\\;h(\\text{id})\\bmod 2048\\;$ to 1. The result is a sparse 2048-bit vector: bit on = "this circular substructure occurs in the molecule".</p>`,
         concepts: ["mod-gnn", "ml-svm", "dl-cosine-similarity"],
         insight: `<b>Structure is the signal; weight and string are not.</b> A 2048-bit Morgan fingerprint encodes which substructures are present, and on this data a kernel SVM over fingerprints hits <b>0.83 AUC</b>. Collapsing a molecule to its <b>molecular weight</b> (one number) throws away nearly all structure — many distinct molecules share a weight — and treating the raw SMILES as one categorical token makes every molecule unique, so nothing generalizes.`,
         data: {
@@ -773,6 +780,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "fingerprint", desc: "a fixed-length bit-vector where each bit flags the presence of a particular substructure in the molecule." },
+          { sym: "Morgan / ECFP", desc: "the algorithm above: iteratively hash each atom's growing circular neighbourhood (radius $r$), then fold the resulting substructure ids into a 2048-bit vector via $h(\\text{id})\\bmod 2048$." },
+          { sym: "radius $r$", desc: "how many bond-hops each atom id summarizes after the iterative hashing; ECFP4 means $r=2$ (diameter 4)." },
           { sym: "GNN", desc: "a graph neural net that learns a vector for the molecule by passing messages along its atom-bond graph." },
           { sym: "SMILES", desc: "a text string encoding a molecule's structure; useful as input to parse, useless as one opaque category." }
         ],
@@ -851,7 +860,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate enrichment",
-        narrative: `<p>AUC is a fine summary, but the lab cares about one concrete thing: of the top molecules you'd actually test, how many are real binders? That's the enrichment factor, and it translates directly into assays saved.</p>`,
+        narrative: `<p>AUC is a fine summary, but the lab cares about one concrete thing: of the top molecules you'd actually test, how many are real binders? That's the enrichment factor, and it translates directly into assays saved.</p><p><b>The formula.</b> Sort all $N$ molecules by predicted score, take the top $K$ (here $K=1\\%\\!\\times\\!N$), and count how many actives $a$ landed in them. The enrichment factor is the top-$K$ hit rate divided by the library-wide base rate: $\\;\\text{EF}@K=\\dfrac{a/K}{A/N}\\;$, where $A$ is the total number of actives. Worked here: top-1% hit rate $a/K = 18.4\\%$ over a base rate $A/N = 1.5\\%$ gives $\\text{EF}@1\\% = 0.184/0.015 \\approx 12.3\\times$. An $\\text{EF}$ of 1 is no better than random; 12 means twelve times as many binders per assay.</p>`,
         concepts: ["ml-classification-metrics", "ml-roc-auc", "mlx-error-analysis"],
         insight: `<b>Enrichment turns AUC into dollars saved.</b> On held-out unseen scaffolds the model scores <b>0.82 AUC</b>, but the number that matters is the <b>top-1% hit rate of 18.4%</b> against a <b>1.5% random base</b> — an <b>enrichment factor of 12.3×</b>. That means a chemist testing your top 1% finds roughly twelve times as many binders per assay as random picking. Enrichment, not overall accuracy, is the screen's value.`,
         data: {
@@ -873,7 +882,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           colors: ["#ff7b72", "#ffb454", "#7ee787"]
         },
         symbols: [
-          { sym: "EF@1%", desc: "Enrichment Factor at 1%: the top-1% hit rate divided by the random hit rate — how many times richer the shortlist is." },
+          { sym: "EF@1%", desc: "Enrichment Factor at 1%: $\\text{EF}@K=\\frac{a/K}{A/N}$ — top-$K$ hit rate over the base rate; here $0.184/0.015\\approx12.3$, so the shortlist is 12.3× richer than random." },
           { sym: "hit rate", desc: "the fraction of tested molecules that turn out to be active; 18% in the top 1% vs 1.5% at random." },
           { sym: "base rate", desc: "the overall active rate in the library (1.5%) — the denominator enrichment is measured against." }
         ],
@@ -1126,7 +1135,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Model", icon: "🧠", title: "Model the queue",
-        narrative: `<p>With Poisson arrivals at rate $\\lambda$, exponential service at rate $\\mu$, and $c$ agents, an M/M/c queue gives you the expected wait and the probability a caller has to wait at all. You tie this to the load forecast: the forecast supplies $\\lambda$, the model converts a staffing level into a predicted wait.</p>`,
+        narrative: `<p>With Poisson arrivals at rate $\\lambda$, exponential service at rate $\\mu$, and $c$ agents, an M/M/c queue gives you the expected wait and the probability a caller has to wait at all. You tie this to the load forecast: the forecast supplies $\\lambda$, the model converts a staffing level into a predicted wait.</p><p><b>The Erlang-C formula, step by step.</b> Let the offered load be $a=\\lambda/\\mu$ (in Erlangs) and utilization $\\rho=a/c$. The probability an arriving caller has to wait at all is Erlang-C: $\\;P_{\\text{wait}}=\\dfrac{\\dfrac{a^{c}}{c!}\\dfrac{1}{1-\\rho}}{\\sum_{k=0}^{c-1}\\dfrac{a^{k}}{k!}+\\dfrac{a^{c}}{c!}\\dfrac{1}{1-\\rho}}$. Given that, the average wait across all callers is $\\;W_q=\\dfrac{P_{\\text{wait}}}{c\\mu-\\lambda}\\;$, and the service level (fraction answered within $t$ seconds) is $\\;\\text{SL}(t)=1-P_{\\text{wait}}\\,e^{-(c\\mu-\\lambda)t}$. Plug in $\\lambda$, set $\\mu=1/\\text{mean handle time}$, sweep $c$, and read off the cheapest $c$ that clears the target.</p>`,
         concepts: ["prob-geometric-poisson", "prob-uniform-exponential", "prob-conditional-expectation"],
         insight: `<b>The queue model captures the non-linearity a ratio can't.</b> A flat "X calls per agent" rule fails because waiting explodes as utilization $\\rho=\\lambda/(c\\mu)$ nears 1 — the Erlang-C wait formula is sharply convex. The M/M/c model also captures that even when capacity exceeds the mean load, Poisson <b>bursts</b> still create real queues. Forecast $\\lambda$, set $\\mu$ from handle times, and the model maps each candidate $c$ to a predicted service level.`,
         data: {
@@ -1138,7 +1147,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["55", "0.87", "0.34", "16s"],
             ["60", "0.80", "0.16", "4s"]
           ],
-          note: `Each candidate staffing $c$ yields a predicted P(wait) and average wait from the M/M/c formulas. The optimizer searches these rows for the cheapest $c$ meeting the target — impossible with a flat calls-per-agent ratio.`
+          note: `Worked row ($c=52$): offered load $a=\\lambda/\\mu=480/10=48$ Erlangs, $\\rho=48/52=0.92$; Erlang-C gives $P_{\\text{wait}}\\approx0.55$, so $W_q=0.55/(52\\!\\times\\!10-480)\\,\\text{hr}=0.55/40\\,\\text{hr}\\approx48\\text{s}$. Each candidate $c$ is scored this way; the optimizer searches for the cheapest $c$ meeting the target — impossible with a flat calls-per-agent ratio.`
         },
         chart: {
           type: "line",
@@ -1152,6 +1161,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         symbols: [
           { sym: "M/M/c", desc: "a queue with Markovian (Poisson) arrivals, Markovian (exponential) service, and $c$ servers — the classic multi-agent model." },
           { sym: "$\\mu$", desc: "the service rate per agent (calls completed per hour), the reciprocal of mean handle time." },
+          { sym: "$a=\\lambda/\\mu$", desc: "the offered load in Erlangs — the average number of agents kept busy; $\\rho=a/c$ is the per-agent utilization." },
+          { sym: "Erlang-C $P_{\\text{wait}}$", desc: "the probability a caller must wait, $\\frac{(a^c/c!)/(1-\\rho)}{\\sum_{k=0}^{c-1} a^k/k! + (a^c/c!)/(1-\\rho)}$ — feeds the mean wait $W_q=P_{\\text{wait}}/(c\\mu-\\lambda)$." },
           { sym: "$\\rho=\\lambda/(c\\mu)$", desc: "the utilization; waits grow sharply as $\\rho\\to1$, the non-linearity the model captures and a ratio misses." }
         ],
         steps: [{

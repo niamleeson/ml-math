@@ -102,9 +102,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Tokenize",
-        narrative: `<p>Models read tokens, not characters. A BPE (byte-pair encoding) tokenizer splits text into subword pieces drawn from a fixed vocabulary, keeping sequences short while still representing rare words. Common words map to a single token; unusual ones break into several pieces. Token count is what you pay for and what fills the context window, so it's the unit that governs both cost and whether an input even fits.</p>`,
+        narrative: `<p>Models read tokens, not characters. A BPE (byte-pair encoding) tokenizer splits text into subword pieces drawn from a fixed vocabulary, keeping sequences short while still representing rare words. The vocabulary is <b>learned</b>, not hand-written: start from single characters, then repeatedly find the most-frequent adjacent symbol pair in the corpus and merge it into one new symbol, recording the merge — repeat until you hit the target vocab size. At encode time you replay those learned merges in order. Common words end up as a single token; unusual ones break into several pieces. Token count is what you pay for and what fills the context window, so it's the unit that governs both cost and whether an input even fits.</p>`,
         concepts: ["dl-word-embeddings", "ml-softmax"],
-        insight: `<b>Subwords, not words.</b> A 50,257-token BPE vocab turns the average English word into <b>~1.3 tokens</b>. Frequent words like "the" are one token; "unbelievable" becomes <b>3</b> sub-words (<i>un</i> / <i>believ</i> / <i>able</i>). Your average question is <b>41</b> tokens and answer <b>187</b>, so a full conversation runs ~228 tokens — but the 99th percentile hits <b>2,940</b>, and <b>3.1%</b> of grounded conversations blow past a 4K context window.`,
+        insight: `<b>Subwords, learned by merging frequent pairs.</b> BPE training is a loop: count every adjacent symbol pair, merge the most frequent one (e.g. <i>e</i>+<i>s</i> → <i>es</i>, then <i>es</i>+<i>t</i> → <i>est</i>), and repeat — each merge adds one token to the vocab, so to reach <b>50,257</b> tokens you apply ~50K merges. Frequent words like "the" survive as one token; "unbelievable" never got its own merge so it splits into <b>3</b> sub-words (<i>un</i> / <i>believ</i> / <i>able</i>). The result: the average English word is <b>~1.3 tokens</b>. Your average question is <b>41</b> tokens and answer <b>187</b>, so a full conversation runs ~228 tokens — but the 99th percentile hits <b>2,940</b>, and <b>3.1%</b> of grounded conversations blow past a 4K context window.`,
         data: {
           caption: "How BPE maps text to token IDs",
           columns: ["text", "tokens", "token IDs", "# tokens"],
@@ -118,11 +118,12 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "vocab size $V$", desc: "number of distinct tokens the tokenizer knows (here 50,257); also the width of the model's output softmax." },
+          { sym: "BPE merge", desc: "the core training step: replace the most-frequent adjacent symbol pair $(a,b)$ in the corpus with a single new symbol $ab$; the ordered list of merges IS the learned tokenizer. ~50K merges → a 50K vocab." },
           { sym: "context window", desc: "max number of tokens the model can attend to at once (here 4K); inputs longer than this must be chunked or truncated." },
           { sym: "token", desc: "a subword unit (1–4 chars typically); the atomic input the model actually consumes — you are billed per token." }
         ],
         steps: [
-          { type: "run", label: "▶ Tokenize the corpus", result: { log: "applying BPE tokenizer (vocab 50,257)...\navg tokens / question: 41\navg tokens / answer: 187\n99th pct conversation length: 2,940 tokens\ndocs that exceed 4K context: 3.1%  -> will need chunking for RAG", metrics: [{ k: "vocab", v: "50,257" }, { k: "avg conv", v: "228 tok" }],
+          { type: "run", label: "▶ Learn BPE merges, then tokenize", result: { log: "learning BPE vocab (start from bytes/chars)...\n  iter 1: most-frequent pair ('e','s') count 482k  -> merge to 'es'\n  iter 2: most-frequent pair ('es','t') count 311k -> merge to 'est'\n  iter 3: most-frequent pair ('t','h') count 305k  -> merge to 'th'\n  ... repeat until vocab reaches 50,257 (~50K merges)\napplying learned merges to corpus...\n  'unbelievable' -> [un, believ, able]  (no full-word merge was learned)\navg tokens / question: 41\navg tokens / answer: 187\n99th pct conversation length: 2,940 tokens\ndocs that exceed 4K context: 3.1%  -> will need chunking for RAG", metrics: [{ k: "vocab", v: "50,257" }, { k: "avg conv", v: "228 tok" }],
             chart: { type: "bars", title: "Token-length distribution (tokens)", labels: ["avg question", "avg answer", "avg conversation", "99th pct conversation"], values: [41, 187, 228, 2940], valueLabels: ["41", "187", "228", "2,940"], colors: ["#4ea1ff", "#4ea1ff", "#c89bff", "#ffb454"] } } },
           { type: "decide", prompt: "3.1% of doc-grounded conversations exceed the 4K context window. What do you do?",
             options: [
@@ -163,9 +164,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Adapt: LoRA fine-tune + RAG",
-        narrative: `<p>Two cheap levers. <b>RAG</b> (retrieval-augmented generation) fetches the most relevant doc passages at query time and pastes them into the prompt, so answers stay grounded and current without retraining. <b>LoRA</b> (low-rank adaptation) freezes the billions of base weights and learns only a small pair of low-rank matrices per layer — a few million params — to nudge tone and format. You train LoRA by minimizing cross-entropy on the instruction-response pairs; RLHF/PPO can align further later.</p>`,
+        narrative: `<p>Two cheap levers. <b>RAG</b> (retrieval-augmented generation) works in four steps at query time: (1) embed the user's question into a vector with the same encoder used for the chunks; (2) nearest-neighbour search over the chunk-embedding index, ranking chunks by cosine similarity to the question; (3) take the top-k (here k=4) highest-scoring chunks; (4) stuff those chunk texts into the prompt before the question — so the model answers from retrieved evidence, grounded and current without retraining. <b>LoRA</b> (low-rank adaptation) freezes the billions of base weights $W$ and learns only a small low-rank update per layer. For a weight of shape $d\\times k$, instead of training all $d{\\times}k$ entries it trains $\\Delta W = BA$ with $B$ of shape $d\\times r$ and $A$ of shape $r\\times k$ — only $r(d+k)$ trainable params, a tiny fraction when $r\\ll d,k$. You train LoRA by minimizing cross-entropy on the instruction-response pairs; RLHF/PPO can align further later.</p>`,
         concepts: ["dl-cross-entropy", "dl-optimizers", "mod-actor-critic"],
-        insight: `<b>0.13% of the weights do the job.</b> LoRA trains <b>9.4M</b> of the model's <b>7.0B</b> parameters — the rest stay frozen — by inserting a rank-$r$ update $\\Delta W = BA$ where $A,B$ are skinny matrices. Validation loss falls <b>1.71 → 1.49 → 1.47</b> and then plateaus at epoch 3, so you stop: the gap between train (1.33) and val (1.47) is starting to open, the classic early-stopping signal. RAG indexes all <b>46,856</b> chunks for cosine retrieval.`,
+        insight: `<b>0.13% of the weights do the job.</b> LoRA trains <b>9.4M</b> of the model's <b>7.0B</b> parameters — the rest stay frozen — by inserting a rank-$r$ update $\\Delta W = BA$. Concretely, with rank $r=16$ a $4096\\times4096$ attention weight that holds ~16.8M params is adapted with only $r(d+k)=16(4096+4096)\\approx131$K params — a <b>~128×</b> reduction per matrix, which is where the 0.13% comes from. Validation loss falls <b>1.71 → 1.49 → 1.47</b> and then plateaus at epoch 3, so you stop: the gap between train (1.33) and val (1.47) is starting to open, the classic early-stopping signal. RAG embeds all <b>46,856</b> chunks once, builds a cosine-similarity index, and at query time embeds the question and returns its top-k nearest chunks.`,
         data: {
           caption: "LoRA training curve — watch the train/val gap",
           columns: ["epoch", "train loss", "val loss", "read"],
@@ -178,14 +179,16 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           note: `Loss here is cross-entropy in nats per token. The decision to stop at epoch 3 is read off the gap: train keeps dropping but val stalls, so more epochs would memorize, not generalize.`
         },
         symbols: [
-          { sym: "$\\Delta W = BA$", desc: "the LoRA update added to a frozen weight $W$; $B$ is $d\\times r$ and $A$ is $r\\times d$, so the update has rank $r$ and far fewer params than $W$." },
+          { sym: "$\\Delta W = BA$", desc: "the LoRA update added to a frozen weight $W$ (shape $d\\times k$); $B$ is $d\\times r$ and $A$ is $r\\times k$, so the update has rank $\\le r$ and only $r(d+k)$ trainable params instead of $d{\\times}k$." },
+          { sym: "$r(d+k)$", desc: "the LoRA trainable-parameter count for one weight: $r$ rows of $A$ ($r{\\times}k$) plus $r$ columns of $B$ ($d{\\times}r$). With $r{=}16,\\,d{=}k{=}4096$ that's ~131K vs 16.8M — the source of the 0.13%." },
           { sym: "$r$", desc: "the LoRA rank (here 16) — the width of the bottleneck; larger $r$ = more capacity but more params." },
+          { sym: "top-k retrieval", desc: "RAG step: embed the query, score every chunk embedding by cosine similarity to it, and return the $k$ (here 4) highest-scoring chunks to paste into the prompt." },
           { sym: "cross-entropy $\\mathcal{L}$", desc: "$-\\sum_t \\log p_\\theta(y_t\\mid y_{&lt;t}, x)$ — the loss that rewards assigning high probability to the correct next token." },
           { sym: "$y_{&lt;t}$", desc: "all target tokens before position $t$; the model predicts $y_t$ conditioned on these and the instruction $x$." }
         ],
         steps: [{
-          type: "run", label: "▶ Train LoRA adapters (rank 16)",
-          result: { log: "freezing base weights, training LoRA adapters (rank 16)...\ntrainable params: 9.4M / 7.0B (0.13%)\nepoch 1  train loss 1.84  val loss 1.71\nepoch 2  train loss 1.52  val loss 1.49\nepoch 3  train loss 1.33  val loss 1.47  (val plateau, stop)\nRAG index built: 46,856 chunks, FAISS cosine retriever", metrics: [{ k: "val loss", v: "1.47" }, { k: "trainable", v: "0.13%" }],
+          type: "run", label: "▶ Train LoRA adapters (rank 16) + build RAG index",
+          result: { log: "freezing base weights, training LoRA adapters (rank 16)...\nper-matrix params: r(d+k)=16(4096+4096)=131,072 vs full 16.8M (~128x fewer)\ntrainable params (all adapters): 9.4M / 7.0B (0.13%)\nepoch 1  train loss 1.84  val loss 1.71\nepoch 2  train loss 1.52  val loss 1.49\nepoch 3  train loss 1.33  val loss 1.47  (val plateau, stop)\nbuilding RAG index: embedding 46,856 chunks -> 768-d vectors, FAISS cosine\n  retrieval at query time: embed question, cosine-rank all chunks, take top-4", metrics: [{ k: "val loss", v: "1.47" }, { k: "trainable", v: "0.13%" }],
             chart: { type: "line", title: "LoRA loss by epoch (train vs val)", xlabel: "epoch", ylabel: "cross-entropy loss", series: [
               { name: "train loss", color: "#4ea1ff", points: [[1, 1.84], [2, 1.52], [3, 1.33], [4, 1.18]] },
               { name: "val loss", color: "#ffb454", points: [[1, 1.71], [2, 1.49], [3, 1.47], [4, 1.49]] }
@@ -194,7 +197,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Evaluate", icon: "📊", title: "Evaluate: held-out + human + hallucination",
-        narrative: `<p>Loss alone won't tell you if answers are <i>right</i> — a model can have low loss and still confidently misstate a policy. So you run the three evals you committed to in Frame: a held-out task-success eval on 1,000 unseen tickets, a human helpfulness rating, and a hallucination check that compares every claim in the answer to the retrieved source. The hallucination check is the one automatic loss can't approximate, because it requires matching claims against an external document.</p>`,
+        narrative: `<p>Loss alone won't tell you if answers are <i>right</i> — a model can have low loss and still confidently misstate a policy. So you run the three evals you committed to in Frame. <b>Task success</b> on 1,000 held-out tickets: for each, generate the answer and have a grader (human or an LLM-judge checking against the resolved ticket) mark resolved / not — success rate = resolved ÷ 1,000. <b>Helpfulness</b>: humans rate each answer 1–5; report the mean. <b>Hallucination check</b>, the procedure loss can't approximate: (1) split each answer into atomic claims, (2) for each claim, test whether the retrieved source passage <i>entails</i> it (an NLI/LLM-judge entailment call), (3) an answer counts as hallucinated if any claim is unsupported; rate = hallucinated answers ÷ total. It needs the external document, so no log-likelihood can stand in for it.</p>`,
         concepts: ["ml-classification-metrics", "mod-llm", "mlx-error-analysis"],
         insight: `<b>81% right, but 1 in 16 invents a fact.</b> On 1,000 held-out tickets the bot resolves <b>81%</b>, humans rate it <b>4.2/5</b>, and perplexity is a healthy <b>9.3</b> — yet the hallucination rate is <b>6.1%</b>, meaning roughly <b>61</b> of those answers state something the retrieved source does not support. Note how the good-looking numbers hide the dangerous one: helpfulness and perplexity both look fine while the model is fabricating in 6% of replies.`,
         data: {
@@ -209,12 +212,13 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           note: `Three of four metrics pass, but the failing one is a shipping blocker: in support, a confident wrong answer costs more trust than ten correct ones build. You do not ship on the average.`
         },
         symbols: [
-          { sym: "task success", desc: "fraction of held-out tickets the answer actually resolves; the headline quality number." },
-          { sym: "hallucination rate", desc: "fraction of answers containing at least one claim not entailed by the retrieved source passage." },
+          { sym: "task success", desc: "fraction of held-out tickets the answer actually resolves; computed as resolved ÷ total via a human or LLM-judge grader comparing each answer to the resolved ticket." },
+          { sym: "hallucination rate", desc: "fraction of answers with ≥1 atomic claim not entailed by the retrieved source: split answer into claims, run an entailment check per claim against the source, flag the answer if any claim fails." },
+          { sym: "claim entailment", desc: "the per-claim test at the heart of the hallucination metric: does the retrieved passage logically support this claim? Run as an NLI or LLM-judge call returning supported / unsupported." },
           { sym: "perplexity", desc: "$\\exp(\\text{cross-entropy})$ on held-out in-domain text; a fluency sanity-check, not a correctness measure." }
         ],
         steps: [
-          { type: "run", label: "▶ Run the full eval suite", result: { log: "held-out support questions: 1,000\ntask success (answer resolves the ticket): 81%\nhuman helpfulness (1-5): 4.2 avg\nhallucination rate (claim not in retrieved source): 6.1%\nperplexity on in-domain held-out: 9.3", metrics: [{ k: "task success", v: "81%" }, { k: "hallucination", v: "6.1%" }, { k: "helpfulness", v: "4.2/5" }],
+          { type: "run", label: "▶ Run the full eval suite", result: { log: "held-out support questions: 1,000\ntask success (LLM-judge: answer resolves the ticket): 810/1000 = 81%\nhuman helpfulness (1-5): 4.2 avg\nhallucination check: split 1,000 answers into 3,140 atomic claims\n  per-claim entailment vs retrieved source: 192 claims unsupported\n  answers with >=1 unsupported claim: 61/1000 = 6.1%\nperplexity on in-domain held-out: 9.3", metrics: [{ k: "task success", v: "81%" }, { k: "hallucination", v: "6.1%" }, { k: "helpfulness", v: "4.2/5" }],
             chart: { type: "bars", title: "Eval suite on 1,000 held-out tickets (percent)", labels: ["task success", "helpfulness (4.2 of 5)", "hallucination rate"], values: [81, 84, 6.1], valueLabels: ["81%", "84%", "6.1%"], colors: ["#7ee787", "#7ee787", "#ff7b72"] } } },
           { type: "decide", prompt: "Hallucination rate is 6.1%. What does that mean for shipping?",
             options: [
@@ -735,7 +739,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Extract features (spectrograms)",
-        narrative: `<p>Raw 16 kHz audio is 16,000 numbers per second — huge and hard to model directly. You convert it to a <b>log-mel spectrogram</b>: slide a short window (STFT) across the audio, measure energy in <b>mel</b> frequency bands (spaced like human hearing), and take the log to compress the dynamic range. The result is a small time-by-frequency image, <b>80 × T</b>, the standard front-end for speech models. SpecAugment then masks random time/frequency stripes during training for robustness.</p>`,
+        narrative: `<p>Raw 16 kHz audio is 16,000 numbers per second — huge and hard to model directly. You convert it to a <b>log-mel spectrogram</b> in four concrete steps. (1) <b>STFT</b>: slide a 25ms window (400 samples) every 10ms hop, and run an FFT on each window to get its frequency spectrum. (2) <b>Power</b>: take the squared magnitude $|X|^2$ of each FFT, giving energy per linear-frequency bin (~201 bins). (3) <b>Mel filterbank</b>: multiply that power vector by an $80\\times201$ matrix of triangular filters spaced on the <i>mel</i> scale (denser at low frequencies, like the ear), collapsing 201 bins into 80 mel-band energies. (4) <b>Log</b>: take $\\log$ of the 80 energies to compress dynamic range. The result is a small time-by-frequency image, <b>80 × T</b>, the standard front-end for speech models. SpecAugment then masks random time/frequency stripes during training for robustness.</p>`,
         concepts: ["dl-conv", "fnd-norm"],
         insight: `<b>16,000 samples/sec become 100 frames/sec × 80 bins.</b> With a 25ms window and 10ms hop, each second of audio yields <b>100</b> frames, each an <b>80</b>-value mel vector — a ~<b>200×</b> reduction versus raw samples, while keeping the frequency structure that distinguishes phonemes. The mel scale is roughly logarithmic in Hz (mimicking the ear), and per-feature mean/variance normalization centers each bin so optimization is stable. A 7.2s utterance → an 80 × 720 matrix.`,
         data: {
@@ -750,13 +754,15 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           note: `The spectrogram is an 80 × 720 grid the model reads like an image. STFT window=25ms sets frequency resolution; hop=10ms sets the 100 frames/sec time resolution. SpecAugment masks random rows/columns so the model can't lean on any single band.`
         },
         symbols: [
-          { sym: "STFT", desc: "short-time Fourier transform — slides a window over the audio and gives the frequency content in each window." },
+          { sym: "STFT", desc: "short-time Fourier transform — slide a 25ms window every 10ms hop, FFT each window, giving the frequency content (~201 bins) per frame." },
+          { sym: "$|X|^2$", desc: "the power spectrum — squared magnitude of the FFT in each window; energy per linear-frequency bin before mel-warping." },
+          { sym: "mel filterbank", desc: "an $80\\times201$ matrix of triangular filters on the mel scale; multiplying the power vector by it maps 201 linear bins to 80 perceptually-spaced mel bands." },
           { sym: "mel bins", desc: "the 80 frequency bands, spaced ~logarithmically to match human pitch perception; the spectrogram's rows." },
           { sym: "$T$", desc: "number of time frames = audio seconds × 100 (10ms hop); the spectrogram's variable width." },
-          { sym: "log", desc: "applied to mel energies to compress dynamic range so quiet and loud sounds are both represented well." }
+          { sym: "log", desc: "applied to the 80 mel energies to compress dynamic range so quiet and loud sounds are both represented well." }
         ],
         steps: [
-          { type: "run", label: "▶ Compute log-mel spectrograms", result: { log: "STFT window 25ms, hop 10ms...\nmel filterbanks: 80\nframes / second: 100\nper-feature mean/variance normalization applied\noutput: 80 x T feature matrices\nSpecAugment (time/freq masking) enabled for training", metrics: [{ k: "mel bins", v: "80" }, { k: "frame rate", v: "100/s" }] } },
+          { type: "run", label: "▶ Compute log-mel spectrograms", result: { log: "step 1 STFT: 25ms window (400 samples), 10ms hop -> FFT per frame\nstep 2 power: |X|^2 -> 201 linear-frequency energies / frame\nstep 3 mel filterbank: multiply by 80x201 triangular-filter matrix -> 80 mel energies\nstep 4 log: log(mel energies) to compress dynamic range\nframes / second: 100\nper-feature mean/variance normalization applied\noutput: 80 x T feature matrices\nSpecAugment (time/freq masking) enabled for training", metrics: [{ k: "mel bins", v: "80" }, { k: "frame rate", v: "100/s" }] } },
           { type: "decide", prompt: "Why log-mel spectrograms instead of the raw waveform?",
             options: [
               { label: "They compactly encode the frequency content humans hear, shrinking the input and exposing speech structure", best: true, feedback: "the mel scaling mimics human hearing and the log compresses dynamic range, so the model sees a clean ~80×T time-frequency image where phonemes are visible as patterns — instead of 16,000 raw samples per second with the structure buried. That ~200× shrink cuts compute and gives convolution/attention a representation where speech structure is already exposed. It's the practical default for exactly these reasons." },
@@ -768,13 +774,13 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Model", icon: "🧠", title: "Pick the architecture",
         narrative: `<p>ASR maps a variable-length spectrogram (~720 frames) to a much shorter word sequence (~20 words), and the alignment between them is unknown. Three ways to bridge that gap: <b>CTC</b> sums over all possible frame-to-token alignments so you need no hand-built alignment; a classic <b>HMM</b> models phoneme states with explicit transition probabilities; or an attention <b>seq2seq</b> encoder-decoder learns, for each output word, which input frames to look at. MT is a clean transformer seq2seq.</p>`,
         concepts: ["dl-attention", "mod-transformer", "dl-lstm-gru", "ai-hmm"],
-        insight: `<b>The core problem is alignment: 720 frames → ~20 words.</b> Attention solves it by computing, for each output token, a softmax distribution over all input frames — effectively learning the alignment instead of hand-building it. CTC solves the same mismatch by marginalizing over alignments with a blank symbol. Both beat the classic HMM-GMM pipeline substantially on WER, and transformers are state-of-the-art for both halves, so one architecture family covers ASR and MT.`,
+        insight: `<b>The core problem is alignment: 720 frames → ~20 words.</b> Attention solves it by computing, for each output token, a softmax distribution over all input frames — effectively learning the alignment instead of hand-building it. CTC solves the same mismatch differently: it lets each of the 720 frames emit either a character or a special <b>blank</b> $\\varnothing$, then defines a collapse rule — <i>merge consecutive duplicate labels, then delete blanks</i> — that maps a 720-long frame path down to the ~20-character word sequence (e.g. <i>c c $\\varnothing$ a a t</i> → <i>cat</i>). Many frame paths collapse to the same text, so the CTC loss is $-\\log$ of the <i>summed</i> probability over <b>all</b> paths that collapse to the target (computed efficiently by dynamic programming). Both beat the classic HMM-GMM pipeline substantially on WER, and transformers are state-of-the-art for both halves, so one architecture family covers ASR and MT.`,
         data: {
           caption: "Three ASR architectures vs. the alignment problem",
           columns: ["architecture", "how it aligns frames→words", "variable length?", "modern WER"],
           rows: [
             ["attention seq2seq", "learned soft attention", "yes", "best"],
-            ["CTC", "marginalize over alignments + blank", "yes", "strong"],
+            ["CTC", "blank + collapse rule, sum all paths", "yes", "strong"],
             ["HMM-GMM", "explicit state transitions", "yes", "weaker (legacy)"],
             ["fixed feed-forward", "can't — needs fixed size", "no", "unusable"]
           ],
@@ -782,7 +788,8 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         },
         symbols: [
           { sym: "$\\alpha_{w,f}$", desc: "attention weight: how much output word $w$ attends to input frame $f$; the learned soft alignment, summing to 1 over frames." },
-          { sym: "CTC", desc: "connectionist temporal classification — a loss that sums over all valid frame-to-token alignments using a blank token, so no manual alignment is needed." },
+          { sym: "CTC", desc: "connectionist temporal classification — each frame emits a label or blank; the collapse rule (merge repeats, drop blanks) maps the frame path to the text. Loss = $-\\log\\sum_{\\text{paths}\\to y} P(\\text{path})$, summed by dynamic programming so no manual alignment is needed." },
+          { sym: "blank $\\varnothing$", desc: "CTC's special 'emit nothing' label; it separates repeated characters (so 'caat' stays distinct from 'cat') and absorbs the extra frames when there are more frames than output symbols." },
           { sym: "seq2seq", desc: "an encoder reads the spectrogram, a decoder emits words one at a time, attending back to the encoder." },
           { sym: "HMM", desc: "hidden Markov model — the classic approach modeling phoneme states with explicit transition/emission probabilities." }
         ],
@@ -960,7 +967,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
         narrative: `<p>You're building a text-to-image generator for a design tool, where there is no single "correct" output — many images satisfy "a red sports car at sunset." That breaks any pixel-matching metric, so you measure three things instead. <b>FID</b> (Fréchet Inception Distance) compares the <i>distribution</i> of generated images to real ones (lower = more realistic). <b>CLIP score</b> checks the image matches the prompt. And human preference catches what both metrics miss. The framing decision is committing to all three.</p>`,
         concepts: ["mod-diffusion", "prob-normal"],
-        insight: `<b>No single right image — so measure distributions.</b> Pixel accuracy is meaningless because a prompt has infinitely many valid outputs. FID sidesteps this by comparing distributions: it fits a Gaussian to deep features of real vs generated images and measures the distance between them (FID <b>0</b> = identical distributions; good models land around <b>10–15</b>). CLIP score measures prompt alignment via image-text cosine similarity (~<b>0.25–0.30</b> is well-aligned). Humans break ties the metrics can't.`,
+        insight: `<b>No single right image — so measure distributions.</b> Pixel accuracy is meaningless because a prompt has infinitely many valid outputs. FID is computed in concrete steps: (1) push a large batch of real images and a large batch of generated images through a pretrained <b>Inception</b> network, taking its 2048-d penultimate feature vector for each; (2) fit a Gaussian to each set — i.e. compute the mean $\\mu$ and covariance $\\Sigma$ of the real features ($\\mu_r,\\Sigma_r$) and of the generated features ($\\mu_g,\\Sigma_g$); (3) report the Fréchet (Wasserstein-2) distance between those two Gaussians, $\\lVert\\mu_r-\\mu_g\\rVert^2+\\text{Tr}(\\Sigma_r+\\Sigma_g-2(\\Sigma_r\\Sigma_g)^{1/2})$. FID <b>0</b> = identical distributions; good models land around <b>10–15</b>. CLIP score measures prompt alignment via image-text cosine similarity (~<b>0.25–0.30</b> is well-aligned). Humans break ties the metrics can't.`,
         data: {
           caption: "Three generative metrics — what each one measures",
           columns: ["metric", "measures", "good value", "blind spot"],
@@ -973,8 +980,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           note: `FID $=\\lVert\\mu_r-\\mu_g\\rVert^2+\\text{Tr}(\\Sigma_r+\\Sigma_g-2(\\Sigma_r\\Sigma_g)^{1/2})$ over Inception features. Each metric has a blind spot, which is why you report all three rather than trusting one green number.`
         },
         symbols: [
-          { sym: "FID", desc: "Fréchet Inception Distance — Wasserstein distance between Gaussians fit to deep features of real vs generated images; 0 = identical, lower is better." },
-          { sym: "$\\mu_r,\\Sigma_r$", desc: "mean and covariance of Inception features for real images (and $\\mu_g,\\Sigma_g$ for generated); FID compares these." },
+          { sym: "FID", desc: "Fréchet Inception Distance — run real and generated images through Inception, fit a Gaussian to each feature set, take the Fréchet distance $\\lVert\\mu_r-\\mu_g\\rVert^2+\\text{Tr}(\\Sigma_r+\\Sigma_g-2(\\Sigma_r\\Sigma_g)^{1/2})$; 0 = identical, lower is better." },
+          { sym: "Inception features", desc: "the 2048-d penultimate-layer activations of a pretrained Inception net; FID compares the distributions of these, not raw pixels." },
+          { sym: "$\\mu_r,\\Sigma_r$", desc: "mean and covariance of the Inception features for real images (and $\\mu_g,\\Sigma_g$ for generated) — the two Gaussians FID compares." },
           { sym: "CLIP score", desc: "cosine similarity between an image embedding and its prompt embedding from CLIP; higher means better prompt alignment." }
         ],
         steps: [{
@@ -1116,9 +1124,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Train", icon: "⚙️", title: "Train the diffusion model",
-        narrative: `<p>The training objective is simple: take a clean latent, add a known amount of Gaussian noise, and train the network (a U-Net) to <b>predict that noise</b>. The loss is the mean-squared error between predicted and true noise; backprop drives it down over millions of noisy examples. Two extras: <b>EMA</b> (exponential moving average) keeps a smoothed copy of the weights for better samples, and <b>classifier-free guidance</b> is trained so you can later dial up prompt adherence.</p>`,
+        narrative: `<p>The training objective is simple. The <b>forward</b> (noising) process has a closed form: pick a random timestep $t$, draw Gaussian noise $\\epsilon\\sim\\mathcal{N}(0,I)$, and build the noisy latent in one shot as $z_t = \\sqrt{\\bar\\alpha_t}\\,z_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$, where $\\bar\\alpha_t$ is a fixed schedule running from ~1 (almost clean) at small $t$ to ~0 (almost pure noise) at large $t$. Then train the network (a U-Net) to <b>predict that noise</b>: feed it $z_t$, $t$, and the prompt $c$, and minimize $\\lVert\\epsilon - \\epsilon_\\theta(z_t,t,c)\\rVert^2$. At sampling time you run this <b>in reverse</b> — start from pure noise and, step by step, subtract the predicted noise to recover $z_0$. Backprop drives the loss down over millions of noisy examples. Two extras: <b>EMA</b> keeps a smoothed copy of the weights for better samples, and <b>classifier-free guidance</b> is trained so you can later dial up prompt adherence.</p>`,
         concepts: ["dl-backprop", "prob-normal", "dl-optimizers"],
-        insight: `<b>Predicting noise drives FID from 38 to 12.</b> The model is trained on the objective $\\lVert\\epsilon - \\epsilon_\\theta(z_t, t, c)\\rVert^2$ — guess the noise $\\epsilon$ that was added to latent $z_t$ at step $t$ given prompt $c$. As this MSE loss falls <b>0.142 → 0.094</b> over 500K steps, validation FID drops <b>38.0 → 19.4 → 12.1</b>, i.e. generated images move steadily closer to the real distribution. Note the loss and FID track together — the denoising proxy genuinely predicts sample quality.`,
+        insight: `<b>Predicting noise drives FID from 38 to 12.</b> Forward step (one shot): $z_t = \\sqrt{\\bar\\alpha_t}\\,z_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ mixes clean latent and noise by the schedule $\\bar\\alpha_t$. The model is trained on $\\lVert\\epsilon - \\epsilon_\\theta(z_t, t, c)\\rVert^2$ — guess the very noise $\\epsilon$ that was added — and at generation it reverses the process from pure noise. As this MSE loss falls <b>0.142 → 0.094</b> over 500K steps, validation FID drops <b>38.0 → 19.4 → 12.1</b>, i.e. generated images move steadily closer to the real distribution. Note the loss and FID track together — the denoising proxy genuinely predicts sample quality.`,
         data: {
           caption: "Training progress — denoising loss vs. sample quality",
           columns: ["step", "MSE loss", "val FID", "read"],
@@ -1128,17 +1136,20 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
             ["500K", "0.094", "12.1", "realistic"],
             ["+EMA / CFG", "—", "—", "smoother, controllable"]
           ],
-          note: `Objective: predict the added noise $\\epsilon$. Lower MSE means better denoising, which means samples closer to real (lower FID). EMA smooths weights; classifier-free guidance is trained now so prompt strength is tunable at sampling time.`
+          note: `Forward: $z_t=\\sqrt{\\bar\\alpha_t}z_0+\\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$. Objective: predict the added noise $\\epsilon$. Lower MSE means better denoising, which means samples closer to real (lower FID). EMA smooths weights; classifier-free guidance is trained now so prompt strength is tunable at sampling time.`
         },
         symbols: [
+          { sym: "$z_t=\\sqrt{\\bar\\alpha_t}z_0+\\sqrt{1-\\bar\\alpha_t}\\epsilon$", desc: "the forward (noising) process in closed form: blend clean latent $z_0$ and noise $\\epsilon$ by the schedule $\\bar\\alpha_t$, so any noise level $t$ is reachable in one step." },
+          { sym: "$\\bar\\alpha_t$", desc: "the cumulative noise schedule: ~1 at small $t$ (nearly clean) down to ~0 at large $t$ (nearly pure noise); fixed, not learned." },
           { sym: "$\\epsilon$", desc: "the Gaussian noise actually added to a latent; the target the network tries to predict." },
           { sym: "$\\epsilon_\\theta(z_t,t,c)$", desc: "the network's predicted noise given the noisy latent $z_t$, timestep $t$, and prompt condition $c$." },
-          { sym: "$z_t$", desc: "the latent after $t$ steps of added noise; the noisy input the denoiser sees." },
+          { sym: "$z_t$", desc: "the latent after adding noise per the schedule at step $t$; the noisy input the denoiser sees." },
+          { sym: "reverse step", desc: "sampling: start at $z_T\\sim\\mathcal{N}(0,I)$ and repeatedly use $\\epsilon_\\theta$ to subtract predicted noise, walking $z_t\\to z_{t-1}$ down to a clean latent $z_0$." },
           { sym: "EMA", desc: "exponential moving average of the weights kept alongside training; the smoothed copy used for sampling gives better, less jittery images." }
         ],
         steps: [{
           type: "run", label: "▶ Train (predict the noise)",
-          result: { log: "training U-Net noise predictor in latent space...\nstep 50k   loss 0.142   FID(val) 38.0\nstep 200k  loss 0.108   FID(val) 19.4\nstep 500k  loss 0.094   FID(val) 12.1\nEMA weights enabled, classifier-free guidance trained", metrics: [{ k: "val FID", v: "12.1" }, { k: "steps", v: "500K" }],
+          result: { log: "training U-Net noise predictor in latent space...\nforward: z_t = sqrt(abar_t)*z0 + sqrt(1-abar_t)*eps,  eps ~ N(0,I)\nloss: || eps - eps_theta(z_t, t, c) ||^2  (MSE on the added noise)\nstep 50k   loss 0.142   FID(val) 38.0\nstep 200k  loss 0.108   FID(val) 19.4\nstep 500k  loss 0.094   FID(val) 12.1\nEMA weights enabled, classifier-free guidance trained", metrics: [{ k: "val FID", v: "12.1" }, { k: "steps", v: "500K" }],
             chart: { type: "line", title: "Validation FID falls over training (lower is better)", xlabel: "training step (thousands)", ylabel: "FID", series: [
               { name: "val FID", color: "#c89bff", points: [[50, 38.0], [200, 19.4], [500, 12.1]] }
             ] } } }
