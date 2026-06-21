@@ -117,7 +117,7 @@ L({
      </ul>
      <p>A second house is just another vector. A whole dataset is many such vectors.</p>`,
   application:
-    `<p>Every input to every ML model is a vector. A 28×28 grayscale digit becomes a vector of 784 pixel values. A user becomes a vector of their actions. Learning to think in vectors is step one.</p>`,
+    `<p>Every input to every ML (Machine Learning) model is a vector. A 28×28 grayscale digit becomes a vector of 784 pixel values. A user becomes a vector of their actions. Learning to think in vectors is step one.</p>`,
   quiz: {
     q: `A movie is described by [running time = 120, rating = 8.5, year = 1999]. What are $n$, $x_2$, and what does $\\mathbb{R}^n$ mean here?`,
     a: `<p>$n = 3$ (three numbers). $x_2 = 8.5$ (the second entry, the rating). $\\mathbb{R}^3$ = the set of all 3-number vectors, which is where this movie-vector lives.</p>`
@@ -285,7 +285,7 @@ L({
      </ul>
      <p>So $+3$ (agree), $0$ (unrelated), $-4$ (disagree) &mdash; one number tells you how much two vectors point the same way. That is exactly why the negative age-weight $-500$ above pushes the price <i>down</i>: it disagrees with age.</p>`,
   application:
-    `<p>Linear regression, logistic regression, SVMs, and every neuron in a neural net compute a dot product of weights and inputs first, then do something with that number. Master this and half of ML stops being scary.</p>`,
+    `<p>Linear regression, logistic regression, SVMs (Support Vector Machines), and every neuron in a neural net compute a dot product of weights and inputs first, then do something with that number. Master this and half of ML (Machine Learning) stops being scary.</p>`,
   quiz: {
     q: `Compute the dot product of $[2, 0, 1]$ and $[3, 5, 4]$.`,
     a: `<p>$2\\times3 + 0\\times5 + 1\\times4 = 6 + 0 + 4 = 10$.</p>`
@@ -349,7 +349,7 @@ L({
        <li>Read a cell by (row, column): $A_{2,1} = 900$ (house 2's size); $A_{3,2} = 4$ (house 3's bedrooms).</li>
      </ul>`,
   application:
-    `<p>Datasets are matrices (rows = examples, columns = features). Images are matrices of pixels. Neural-network layers are matrices of weights. Almost all ML computation is "matrix in, matrix out".</p>`,
+    `<p>Datasets are matrices (rows = examples, columns = features). Images are matrices of pixels. Neural-network layers are matrices of weights. Almost all ML (Machine Learning) computation is "matrix in, matrix out".</p>`,
   quiz: {
     q: `In the house matrix above, what is $A_{1,2}$, and what does it mean?`,
     a: `<p>$A_{1,2} = 3$: row 1, column 2 — the first house has 3 bedrooms.</p>`
@@ -591,7 +591,7 @@ L({
   bigIdea:
     `<p>A <b>norm</b> measures the size (length) of a vector — a single non-negative number.</p>
      <p>The most common one is ordinary straight-line length, from the Pythagorean theorem.</p>
-     <p>Norms let us say how <i>far apart</i> two vectors are, and how <i>big</i> a model's weights are. Both matter a lot in ML.</p>`,
+     <p>Norms let us say how <i>far apart</i> two vectors are, and how <i>big</i> a model's weights are. Both matter a lot in ML (Machine Learning).</p>`,
   buildup:
     `<p>In 2D, the length of an arrow $[a, b]$ is $\\sqrt{a^2+b^2}$ (Pythagoras). Norms generalize that to any number of dimensions.</p>`,
   symbols: [
@@ -619,7 +619,7 @@ L({
        <li>The L1 version: $\\lVert x - y\\rVert_1 = |3| + |4| = 7$ &mdash; the city-block distance, longer because you can't cut the corner.</li>
      </ul>`,
   application:
-    `<p>L2 distance powers k-means and k-NN. L2 on the weights = <b>Ridge</b> regularization; L1 = <b>LASSO</b>, which zeroes out useless features. Norms are how models avoid getting too "big" and overfitting.</p>`,
+    `<p>L2 distance powers k-means and k-NN (k-Nearest Neighbors). L2 on the weights = <b>Ridge</b> regularization; L1 = <b>LASSO</b>, which zeroes out useless features. Norms are how models avoid getting too "big" and overfitting.</p>`,
   quiz: {
     q: `Find the L2 and L1 norm of $[0, 6, 8]$.`,
     a: `<p>L2 $=\\sqrt{0+36+64}=\\sqrt{100}=10$. L1 $=0+6+8=14$.</p>`
@@ -765,7 +765,7 @@ L({
   tagline: "A derivative for functions with many inputs. It points straight uphill.",
   prereqs: ["fnd-derivative", "fnd-vector"],
   bigIdea:
-    `<p>Most ML functions have many inputs (millions of weights), not one.</p>
+    `<p>Most ML (Machine Learning) functions have many inputs (millions of weights), not one.</p>
      <p>The <b>gradient</b> collects the slope in <i>each</i> input direction into one vector.</p>
      <p>Key fact: the gradient points in the direction that makes the output grow fastest. To shrink error, step the opposite way.</p>`,
   buildup:
@@ -788,7 +788,7 @@ L({
        <li>To go downhill, step toward $-[6,8] = [-6,-8]$, heading back to the bottom at $(0,0)$.</li>
      </ul>`,
   application:
-    `<p>Training = "compute gradient of the error, step downhill, repeat." This is gradient descent, the engine behind linear models, SVMs, and every deep neural network.</p>`,
+    `<p>Training = "compute gradient of the error, step downhill, repeat." This is gradient descent, the engine behind linear models, SVMs (Support Vector Machines), and every deep neural network.</p>`,
   quiz: {
     q: `For $f(x_1,x_2)=x_1^2+x_2^2$, what is the gradient at $(0,0)$, and what does it tell you?`,
     a: `<p>$\\nabla f = [0,0]$. A zero gradient means you're at a flat spot — here, the minimum of the bowl. Nowhere is downhill, so learning stops.</p>`
@@ -811,7 +811,7 @@ L({
     });
   },
   title: "The chain rule",
-  tagline: "Derivative of a function inside a function: multiply the slopes. This IS backprop.",
+  tagline: "Derivative of a function inside a function: multiply the slopes. This IS backprop (backpropagation).",
   prereqs: ["fnd-derivative"],
   bigIdea:
     `<p>Often a value passes through several steps: $x \\to$ step 1 $\\to$ step 2 $\\to$ output.</p>
@@ -963,7 +963,7 @@ L({
   bigIdea:
     `<p>A matrix usually rotates <i>and</i> stretches a vector when it multiplies it.</p>
      <p>But for a few special directions, the matrix only stretches — it does not change the direction at all.</p>
-     <p>Those directions are <b>eigenvectors</b>. The stretch amount is the <b>eigenvalue</b>. They reveal the main axes hidden inside data (this is what PCA uses).</p>`,
+     <p>Those directions are <b>eigenvectors</b>. The stretch amount is the <b>eigenvalue</b>. They reveal the main axes hidden inside data (this is what PCA (Principal Component Analysis) uses).</p>`,
   buildup:
     `<p>Multiplying $A$ by $z$ normally gives a vector pointing somewhere new.</p>
      <p>Ask: is there a $z$ where $Az$ points the <i>same</i> way as $z$, just longer or shorter? If yes, $z$ is special.</p>`,

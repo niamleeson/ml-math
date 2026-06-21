@@ -110,7 +110,7 @@ L({
   whatItDoes:
     `<p>Find the gap $y - z$. Square it so it is always positive. Multiply by $\\tfrac12$ (this makes the calculus tidy later).</p>
      <p>A gap of 2 gives loss $\\tfrac12(2)^2 = 2$. A gap of 4 gives loss $\\tfrac12(4)^2 = 8$. Twice the gap, four times the loss.</p>
-     <p>Other tasks use other losses: <b>hinge loss</b> (for SVMs) and <b>cross-entropy loss</b> (for probabilities). Same idea, different formula.</p>`,
+     <p>Other tasks use other losses: <b>hinge loss</b> (for SVMs (Support Vector Machines)) and <b>cross-entropy loss</b> (for probabilities). Same idea, different formula.</p>`,
   example:
     `<p>True price is $y = \\$300$k. The model predicts $z = \\$280$k.</p>
      <ul class="steps">
@@ -910,7 +910,7 @@ L({
      <p>But that mapping can be huge or infinite. Computing it directly is too expensive.</p>
      <p>The <b>kernel trick</b> computes the dot product in that high space directly, skipping the mapping entirely.</p>`,
   buildup:
-    `<p>SVMs only ever need dot products between examples, never the examples alone.</p>
+    `<p>SVMs (Support Vector Machines) only ever need dot products between examples, never the examples alone.</p>
      <p>A <b>kernel</b> $K(x,z)$ gives the dot product of the mapped points $\\phi(x)$ and $\\phi(z)$.</p>
      <p>If we have a cheap formula for $K$, we get the high-dimensional power for free.</p>`,
   symbols: [
@@ -1175,7 +1175,7 @@ L({
     row.appendChild(lab); row.appendChild(inp); host.appendChild(row);
     render();
   },
-  title: "Decision trees (CART)",
+  title: "Decision trees (CART (Classification And Regression Trees))",
   tagline: "Ask yes/no questions, split the data, repeat. Easy to read.",
   prereqs: ["ml-supervised"],
   bigIdea:
@@ -1266,7 +1266,7 @@ L({
        <li>Concrete vote: three trees predict house prices $8, 10, 12$. The average is $\\dfrac{8+10+12}{3} = \\mathbf{10}$ — their scattered guesses cancel into one stable number.</li>
      </ul>`,
   application:
-    `<p>Random forests and gradient boosting (XGBoost, LightGBM) win many real-world contests. They power fraud detection, search ranking, and risk models on tabular data across industry.</p>`,
+    `<p>Random forests and gradient boosting (XGBoost (eXtreme Gradient Boosting), LightGBM) win many real-world contests. They power fraud detection, search ranking, and risk models on tabular data across industry.</p>`,
   quiz: {
     q: `In a random forest, three trees predict 8, 10, and 12 for a house price. What is the forest's prediction (by averaging)?`,
     a: `<p>Average them: $(8 + 10 + 12) / 3 = 30 / 3 = 10$. Bagging averages the members' predictions.</p>`
@@ -1511,7 +1511,7 @@ L({
   whatItDoes:
     `<p>Go through the training examples. Add $1$ for each mistake, $0$ for each correct answer. Divide by $m$.</p>
      <p>That is the training error rate, between $0$ (perfect) and $1$ (always wrong).</p>
-     <p>The theory: with more data ($m$ large) or a simpler class (low VC dimension), training error becomes a trustworthy estimate of true error.</p>`,
+     <p>The theory: with more data ($m$ large) or a simpler class (low VC (Vapnik–Chervonenkis) dimension), training error becomes a trustworthy estimate of true error.</p>`,
   example:
     `<p>A classifier is tested on $5$ training examples. It gets $4$ right and $1$ wrong.</p>
      <ul class="steps">
@@ -1705,7 +1705,7 @@ L({
   tagline: "Soft clustering when each point partly belongs to several groups.",
   prereqs: ["ml-kmeans", "prob-bayes", "prob-normal"],
   bigIdea:
-    `<p>k-means gives each point to exactly one cluster. <b>EM</b> lets a point partly belong to several.</p>
+    `<p>k-means gives each point to exactly one cluster. <b>EM</b> (Expectation–Maximization) lets a point partly belong to several.</p>
      <p>Each point gets a <b>responsibility</b>: the chance it came from each cluster.</p>
      <p>The cluster labels are hidden, so we guess them and refine, back and forth.</p>
      <p>This is soft clustering, often with a <b>mixture of Gaussians</b> (several bell curves).</p>`,
@@ -2080,7 +2080,7 @@ L({
     `<p>Imagine two people talking and two microphones. Each mic hears a mix of both voices.</p>
      <p>This is the <b>cocktail party problem</b>. We want the separate voices back.</p>
      <p><b>ICA</b> assumes the original sources are independent and finds a way to unmix them.</p>
-     <p>Unlike PCA (which finds spread), ICA finds statistically independent signals.</p>`,
+     <p>Unlike PCA (Principal Component Analysis) (which finds spread), ICA finds statistically independent signals.</p>`,
   buildup:
     `<p>The recordings $x$ are a mix of the true sources $s$, blended by an unknown mixing matrix $A$: $x = As$.</p>
      <p>To undo the mixing, we need the inverse, $W = A^{-1}$.</p>
@@ -2105,7 +2105,7 @@ L({
        <li>ICA's job is to discover this $W$ from the data alone, without being told $A$.</li>
      </ul>`,
   application:
-    `<p>ICA separates brain signals in EEG, isolates instruments in audio, and cleans mixed sensor data. Anywhere independent signals get blended together, ICA can pull them apart.</p>`,
+    `<p>ICA separates brain signals in EEG (Electroencephalography), isolates instruments in audio, and cleans mixed sensor data. Anywhere independent signals get blended together, ICA can pull them apart.</p>`,
   quiz: {
     q: `In ICA, the recordings are $x = As$. If you find the unmixing matrix $W = A^{-1}$, how do you recover the sources $s$?`,
     a: `<p>Multiply the recordings by $W$: $s = Wx$. The inverse undoes the mixing.</p>`
@@ -2386,7 +2386,7 @@ L({
     cv.addEventListener("touchmove", function (e) { if (dragging && e.touches[0]) { setFromX(e.touches[0].clientX); e.preventDefault(); } });
     render();
   },
-  title: "ROC curve & AUC",
+  title: "ROC (Receiver Operating Characteristic) curve & AUC (Area Under the Curve)",
   tagline: "See how a classifier trades off catches against false alarms.",
   prereqs: ["ml-classification-metrics"],
   bigIdea:
@@ -2461,7 +2461,7 @@ L({
       render();
     } });
   },
-  title: "Regression metrics (R² and RMSE)",
+  title: "Regression metrics (R² and RMSE (Root Mean Squared Error))",
   tagline: "How well does the line fit? Compare its errors to a baseline.",
   prereqs: ["ml-linear-regression", "ml-loss"],
   bigIdea:
@@ -2607,7 +2607,7 @@ L({
   buildup:
     `<p>Add a term $\\lambda \\lVert \\theta \\rVert$ to the cost. Bigger weights cost more.</p>
      <p><b>Ridge</b> (L2) uses the squared norm; it shrinks weights smoothly toward zero.</p>
-     <p><b>LASSO</b> (L1) uses the absolute norm; it pushes some weights exactly to zero, dropping features. <b>Elastic Net</b> mixes both.</p>`,
+     <p><b>LASSO</b> (Least Absolute Shrinkage and Selection Operator) (L1) uses the absolute norm; it pushes some weights exactly to zero, dropping features. <b>Elastic Net</b> mixes both.</p>`,
   symbols: [
     { sym: "$\\lambda$", desc: "the regularization strength ('lambda'). Bigger = simpler model, more shrinkage." },
     { sym: "$\\lVert \\theta \\rVert_2^2$", desc: "squared L2 norm of the weights (Ridge): $\\sum \\theta_j^2$." },

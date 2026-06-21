@@ -116,7 +116,7 @@ L({
     `<p>k-means gives each point one hard label. A <b>Gaussian Mixture Model</b> (GMM) is gentler.</p>
      <p>It says the data is a blend of several bell-shaped blobs (Gaussians).</p>
      <p>Each point gets a <i>soft</i> membership: 70% blob A, 30% blob B.</p>
-     <p>We learn the blobs with an algorithm called <b>EM</b> that alternates two easy steps.</p>`,
+     <p>We learn the blobs with an algorithm called <b>EM</b> (Expectation–Maximization) that alternates two easy steps.</p>`,
   buildup:
     `<p>Each blob $k$ has a center $\\mu_k$, a spread $\\Sigma_k$, and a weight $\\pi_k$ (how big a slice of data it owns).</p>
      <p>The chance a point came from blob $k$ is its <b>responsibility</b> $\\gamma_k$.</p>
@@ -238,7 +238,7 @@ L({
     host.appendChild(row); host.appendChild(readout);
     draw();
   },
-  title: "DBSCAN (density clustering)",
+  title: "DBSCAN (Density-Based Spatial Clustering of Applications with Noise)",
   tagline: "Clusters are dense crowds; lonely points are noise. No k needed.",
   prereqs: ["ml-kmeans"],
   bigIdea:
@@ -500,8 +500,8 @@ L({
   prereqs: ["ml-gda", "prob-normal"],
   bigIdea:
     `<p>Model each class as its own Gaussian bell. To classify a point, ask which bell explains it better.</p>
-     <p>If all classes are forced to share one covariance (one shape), the boundary between them is a straight line: that is <b>LDA</b>.</p>
-     <p>If each class keeps its own covariance, the boundary bends into a curve: that is <b>QDA</b>.</p>
+     <p>If all classes are forced to share one covariance (one shape), the boundary between them is a straight line: that is <b>LDA</b> (Linear Discriminant Analysis).</p>
+     <p>If each class keeps its own covariance, the boundary bends into a curve: that is <b>QDA</b> (Quadratic Discriminant Analysis).</p>
      <p>LDA is simpler and needs less data; QDA is more flexible when class shapes truly differ.</p>`,
   buildup:
     `<p>For class $k$: a prior $\\pi_k$ (how common it is), a mean $\\mu_k$, and a covariance $\\Sigma_k$.</p>
@@ -878,7 +878,7 @@ L({
     host.appendChild(row); host.appendChild(readout);
     draw();
   },
-  title: "Gradient boosting / XGBoost",
+  title: "Gradient boosting / XGBoost (eXtreme Gradient Boosting)",
   tagline: "Build the model in stages: each new tree fixes the last one's mistakes.",
   prereqs: ["ml-ensembles", "ml-gradient-descent"],
   bigIdea:

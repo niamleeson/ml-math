@@ -426,7 +426,7 @@ L({
      </ul>
      <p>A search algorithm's job is exactly this: out of all paths to a goal, return the one with the smallest summed cost.</p>`,
   application:
-    `<p>GPS routing, puzzle solvers, robot path planning, and even compiling a program all become search problems. Define the five pieces, and a search algorithm finds the best plan.</p>`,
+    `<p>GPS (Global Positioning System) routing, puzzle solvers, robot path planning, and even compiling a program all become search problems. Define the five pieces, and a search algorithm finds the best plan.</p>`,
   quiz: {
     q: `In the $A-B-C$ line, if $\\text{Cost}(B,\\text{right})$ were $5$ instead of $1$, what is the cost of the path from $A$ to $C$?`,
     a: `<p>$\\text{Cost}(A,\\text{right}) + \\text{Cost}(B,\\text{right}) = 1 + 5 = 6$. The total path cost is $6$.</p>`
@@ -497,7 +497,7 @@ L({
     host.insertBefore(out, host.children[1]);
     reset();
   },
-  title: "Tree search: BFS, DFS, iterative deepening",
+  title: "Tree search: BFS (Breadth-First Search), DFS (Depth-First Search), iterative deepening",
   tagline: "Explore possibilities one by one. Go wide, go deep, or do a clever mix.",
   prereqs: ["ai-search-problem"],
   bigIdea:
@@ -615,7 +615,7 @@ L({
     host.insertBefore(out, host.children[1]);
     reset();
   },
-  title: "Graph search: dynamic programming and UCS",
+  title: "Graph search: dynamic programming and UCS (Uniform Cost Search)",
   tagline: "Don't redo work. Remember states you've solved, and always expand the cheapest one next.",
   prereqs: ["ai-tree-search"],
   bigIdea:
@@ -624,7 +624,7 @@ L({
      <p>Two key methods: <b>dynamic programming</b> (memoize the future cost) and <b>uniform cost search</b> (always expand the cheapest-so-far state).</p>`,
   buildup:
     `<p>If two paths reach the same state, the cost to finish from there is the same. So solve each state once and reuse the answer.</p>
-     <p>For DP this works when the graph is <b>acyclic</b>: no loops, so "future cost" is well defined.</p>
+     <p>For DP (Dynamic Programming) this works when the graph is <b>acyclic</b>: no loops, so "future cost" is well defined.</p>
      <p>For UCS, costs can vary, so we always pick the state with the smallest cost reached so far.</p>`,
   symbols: [
     { sym: "$\\text{FutureCost}(s)$", desc: "the cheapest cost to get from state $s$ to a goal." },
@@ -693,7 +693,7 @@ L({
      <p><b>A* search</b> adds a <b>heuristic</b>: a cheap guess of the remaining distance to the goal.</p>
      <p>It explores states by past cost plus that guess. So it leans toward the goal and skips dead ends.</p>`,
   buildup:
-    `<p>Imagine routing across a city. Pure UCS spreads out evenly like a circle. Slow.</p>
+    `<p>Imagine routing across a city. Pure UCS (Uniform Cost Search) spreads out evenly like a circle. Slow.</p>
      <p>But you have a hint: the straight-line distance to the destination. That guess pulls the search the right way.</p>
      <p>A* uses past cost (what you have paid) plus the heuristic (your guess of what is left).</p>`,
   symbols: [
@@ -719,7 +719,7 @@ L({
        <li>Admissibility check: if $P$'s true remaining cost is $5$, then $h = 3 \\le 5$ never overshoots, so A* is still guaranteed the cheapest path. An $h = 9 &gt; 5$ would overestimate and could break that guarantee.</li>
      </ul>`,
   application:
-    `<p>A* is the workhorse of GPS routing and video-game pathfinding. The straight-line distance heuristic lets it find the best route while exploring a tiny fraction of the map.</p>`,
+    `<p>A* is the workhorse of GPS (Global Positioning System) routing and video-game pathfinding. The straight-line distance heuristic lets it find the best route while exploring a tiny fraction of the map.</p>`,
   quiz: {
     q: `The true remaining cost from a state is $7$. Is a heuristic of $h=6$ admissible? Is $h=8$ admissible?`,
     a: `<p>$h=6$ is admissible because $6 \\le 7$ (it does not overshoot). $h=8$ is not, because $8 &gt; 7$ overestimates, which can break A*'s guarantee.</p>`
@@ -770,7 +770,7 @@ L({
        <li>That gap between $4$ and $5$ is exactly the cost of randomness. The agent must reason about it, not ignore it.</li>
      </ul>`,
   application:
-    `<p>MDPs model robot control, inventory restocking, self-driving decisions, and game AI, where actions do not always work and the future is uncertain. They are the foundation of reinforcement learning.</p>`,
+    `<p>MDPs model robot control, inventory restocking, self-driving decisions, and game AI (Artificial Intelligence), where actions do not always work and the future is uncertain. They are the foundation of reinforcement learning.</p>`,
   quiz: {
     q: `An action has $T(s,a,s_1)=0.7$ and one other possible outcome $s_2$. What must $T(s,a,s_2)$ be?`,
     a: `<p>The probabilities must sum to $1$, so $T(s,a,s_2) = 1 - 0.7 = 0.3$.</p>`
@@ -794,7 +794,7 @@ L({
      <p>The <b>value</b> of a policy at a state is the average total reward you collect by following it from there.</p>
      <p>Because actions are random, we average. And later rewards are discounted by $\\gamma$.</p>`,
   buildup:
-    `<p>From the MDP lesson: actions are uncertain and rewards are discounted.</p>
+    `<p>From the MDP (Markov Decision Process) lesson: actions are uncertain and rewards are discounted.</p>
      <p>A policy $\\pi$ is a rule: state in, action out. Follow it and you get a (random) stream of rewards.</p>
      <p>The <b>utility</b> of one run is the discounted sum of those rewards. The <b>value</b> is its average.</p>`,
   symbols: [
@@ -820,7 +820,7 @@ L({
      </ul>
      <p>With no randomness here, the value equals this utility, $17.5$.</p>`,
   application:
-    `<p>Policies are the decision rules learned by game AI, trading bots, and robot controllers. Discounting models the fact that a reward now is usually worth more than the same reward later.</p>`,
+    `<p>Policies are the decision rules learned by game AI (Artificial Intelligence), trading bots, and robot controllers. Discounting models the fact that a reward now is usually worth more than the same reward later.</p>`,
   quiz: {
     q: `Rewards $r_1=4$, $r_2=4$, with $\\gamma=0.5$. What is the discounted utility $u$?`,
     a: `<p>$u = 4\\times1 + 4\\times0.5 = 4 + 2 = 6$. The second reward is discounted to $2$.</p>`
@@ -867,7 +867,7 @@ L({
        <li>Q-value: $8 + 0 = 8$. That is the average worth of action $a$ here.</li>
      </ul>`,
   application:
-    `<p>Q-values are the heart of reinforcement learning. A game AI compares the Q-value of each move and picks the highest. They let an agent rate actions without simulating the whole future by hand.</p>`,
+    `<p>Q-values are the heart of reinforcement learning. A game AI (Artificial Intelligence) compares the Q-value of each move and picks the highest. They let an agent rate actions without simulating the whole future by hand.</p>`,
   quiz: {
     q: `One outcome only: probability $1$, reward $6$, next-state value $V=4$, $\\gamma=0.5$. What is $Q(s,a)$?`,
     a: `<p>$Q = 1\\times[\\,6 + 0.5\\times4\\,] = 6 + 2 = 8$.</p>`
@@ -918,7 +918,7 @@ L({
        <li>Next sweep reuses this $8$ to back up the neighbours. When the values stop moving, the plan is optimal.</li>
      </ul>`,
   application:
-    `<p>Value iteration solves MDPs exactly when the model is known: robot navigation, inventory control, board-game endgames. It is the textbook way to compute an optimal policy.</p>`,
+    `<p>Value iteration solves MDPs (Markov Decision Processes) exactly when the model is known: robot navigation, inventory control, board-game endgames. It is the textbook way to compute an optimal policy.</p>`,
   quiz: {
     q: `A state's actions have Q-values $Q(\\text{up})=2$, $Q(\\text{down})=9$, $Q(\\text{stay})=5$. What is the new value, and the optimal action?`,
     a: `<p>$V = \\max(2,9,5) = 9$. The optimal action is $\\arg\\max = \\text{down}$.</p>`
@@ -1324,7 +1324,7 @@ L({
     host.insertBefore(out, host.children[1]);
     reset();
   },
-  title: "Solving CSPs: backtracking and consistency",
+  title: "Solving CSPs (Constraint Satisfaction Problems): backtracking and consistency",
   tagline: "Try a value, check the rules, and back up the moment you get stuck.",
   prereqs: ["ai-csp"],
   bigIdea:
@@ -1771,7 +1771,7 @@ L({
     { sym: "$\\vee$", desc: "OR: true when at least one side is true." },
     { sym: "$\\rightarrow$", desc: "IMPLIES: '$f \\rightarrow g$' means 'if $f$ then $g$'." },
     { sym: "model", desc: "a complete true/false assignment to all the symbols." },
-    { sym: "$\\models$", desc: "entails: 'KB $\\models f$' means $f$ is true in every model where the knowledge base KB is true." }
+    { sym: "$\\models$", desc: "entails: 'KB (Knowledge Base) $\\models f$' means $f$ is true in every model where the knowledge base KB is true." }
   ],
   formula: `$$ \\text{KB} \\models f \\quad\\text{means}\\quad f \\text{ is true in every model where KB is true} $$`,
   whatItDoes:
@@ -1919,7 +1919,7 @@ L({
      <p>An inference system is <b>sound</b> if it never derives a falsehood, and <b>complete</b> if it can derive every truth.</p>
      <p>Resolution is both sound and complete for propositional logic. <b>First-order logic</b> extends all this with variables and quantifiers (like "for all $x$" and "there exists $x$"), so rules can talk about whole classes of objects, not just fixed facts.</p>`,
   example:
-    `<p>KB: $\\text{Human(Socrates)}$, and the rule $\\text{Human}(x) \\rightarrow \\text{Mortal}(x)$ ("every human is mortal").</p>
+    `<p>KB (Knowledge Base): $\\text{Human(Socrates)}$, and the rule $\\text{Human}(x) \\rightarrow \\text{Mortal}(x)$ ("every human is mortal").</p>
      <ul class="steps">
        <li>We know $\\text{Human(Socrates)}$ is true.</li>
        <li>The rule says: if someone is Human, they are Mortal.</li>

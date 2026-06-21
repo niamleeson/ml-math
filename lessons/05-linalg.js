@@ -253,7 +253,7 @@ L({
   bigIdea:
     `<p>The <b>identity matrix</b> $I$ has 1's down the diagonal and 0's everywhere else. Multiplying by it changes nothing: $AI = A$ and $Ix = x$.</p>
      <p>A <b>diagonal matrix</b> $D$ also has zeros off the diagonal, but any numbers on it. Multiplying a vector by $D$ scales each coordinate independently — stretch axis 1 by $d_1$, axis 2 by $d_2$, and so on.</p>
-     <p>These are the simplest matrices, and most deep results (eigen, SVD) work by turning a hard matrix into a diagonal one.</p>`,
+     <p>These are the simplest matrices, and most deep results (eigen, SVD (Singular Value Decomposition)) work by turning a hard matrix into a diagonal one.</p>`,
   buildup:
     `<p>Ordinary numbers have a special value, $1$, that leaves everything unchanged: $1\\cdot a = a$.</p>
      <p>Matrices need their own "1". It is $I$: the matrix that does nothing. And a diagonal matrix is the next-simplest thing — it acts on each axis separately, with no mixing.</p>`,
@@ -287,7 +287,7 @@ L({
        <li>With $I=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$ instead: $Ix=\\begin{bmatrix}4\\\\5\\end{bmatrix}=x$. Nothing changes.</li>
      </ul>`,
   application:
-    `<p>Scaling features (normalization) is multiplying by a diagonal matrix. Regularizers add $\\lambda I$ to a matrix to keep it invertible (Ridge regression: $(X^\\top X + \\lambda I)^{-1}$). Batch-norm scale parameters are a diagonal $D$ applied per feature.</p>`,
+    `<p>Scaling features (normalization) is multiplying by a diagonal matrix. Regularizers add $\\lambda I$ to a matrix to keep it invertible (Ridge regression: $(X^\\top X + \\lambda I)^{-1}$). Batch-norm (Batch Normalization) scale parameters are a diagonal $D$ applied per feature.</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -755,7 +755,7 @@ L({
        <li><b>Sum them:</b> $\\lambda_1+\\lambda_2 = 3 + (-1) = 2 = \\operatorname{tr}(M)$. ✔ The trace equals the sum of eigenvalues even when the eigenvalues are buried.<div class="why">So you can read off the eigenvalue sum for free — just add the diagonal, no characteristic polynomial needed.</div></li>
      </ul>`,
   application:
-    `<p>In statistics, the trace of the "hat" matrix is the effective number of parameters used by a model. The trace appears in the matrix derivative identities used to derive backprop, and $\\operatorname{tr}(\\Sigma)$ (total variance) is a quick summary of how spread out data is across all features.</p>`,
+    `<p>In statistics, the trace of the "hat" matrix is the effective number of parameters used by a model. The trace appears in the matrix derivative identities used to derive backprop (backpropagation), and $\\operatorname{tr}(\\Sigma)$ (total variance) is a quick summary of how spread out data is across all features.</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 300; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -848,7 +848,7 @@ L({
        <li>The matrix $[v_1\\;v_2\\;v_3]$ is $3\\times3$ but rank 2: it is singular, $\\det = 0$, and has no inverse.</li>
      </ul>`,
   application:
-    `<p>Multicollinearity in regression is exactly low rank in $X$: two features carry the same information, $X^\\top X$ becomes singular, and the fit blows up. Low-rank structure is also a feature: recommender systems assume the giant user–item matrix is approximately low rank, which is why a few latent factors explain it (next: SVD).</p>`,
+    `<p>Multicollinearity in regression is exactly low rank in $X$: two features carry the same information, $X^\\top X$ becomes singular, and the fit blows up. Low-rank structure is also a feature: recommender systems assume the giant user–item matrix is approximately low rank, which is why a few latent factors explain it (next: SVD (Singular Value Decomposition)).</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -965,7 +965,7 @@ L({
        <li>Now $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$: $x^\\top B x = x_1^2 - x_2^2$. At $x=(0,1)$ this is $-1 &lt; 0$. Not PSD — it is a saddle (eigenvalue $-1$).</li>
      </ul>`,
   application:
-    `<p>Every covariance matrix is PSD (variance can't be negative). A loss is convex exactly when its Hessian is PSD, which guarantees gradient descent reaches the global minimum. Kernel methods (SVMs, Gaussian processes) require a PSD kernel matrix — that is what makes the optimization well-behaved.</p>`,
+    `<p>Every covariance matrix is PSD (variance can't be negative). A loss is convex exactly when its Hessian is PSD, which guarantees gradient descent reaches the global minimum. Kernel methods (SVMs (Support Vector Machines), Gaussian processes) require a PSD kernel matrix — that is what makes the optimization well-behaved.</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 340; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -1081,7 +1081,7 @@ L({
        <li>Effect: $A$ stretches by 3 along the $(1,1)$ diagonal and by 1 along $(1,-1)$. The unit circle becomes an ellipse tilted at $45^\\circ$.</li>
      </ul>`,
   application:
-    `<p>PCA is the spectral theorem applied to the covariance matrix: the eigenvectors are the principal axes of the data, the eigenvalues are the variances along them. Whitening, Gaussian-process kernels, and matrix square roots ($A^{1/2}=U\\Lambda^{1/2}U^\\top$) all rest on this decomposition.</p>`,
+    `<p>PCA (Principal Component Analysis) is the spectral theorem applied to the covariance matrix: the eigenvectors are the principal axes of the data, the eigenvalues are the variances along them. Whitening, Gaussian-process kernels, and matrix square roots ($A^{1/2}=U\\Lambda^{1/2}U^\\top$) all rest on this decomposition.</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 560; cv.height = 360; host.appendChild(cv);
     var ctx = cv.getContext("2d");
@@ -1149,7 +1149,7 @@ L({
   tagline: "Factor ANY matrix into rotate, stretch, rotate. Keep the big stretches, throw the rest away.",
   prereqs: ["la-spectral", "la-rank-independence", "la-matmul"],
   bigIdea:
-    `<p>The <b>SVD</b> factors <i>any</i> matrix (square or not) as $A = U\\Sigma V^\\top$.</p>
+    `<p>The <b>SVD</b> (Singular Value Decomposition) factors <i>any</i> matrix (square or not) as $A = U\\Sigma V^\\top$.</p>
      <p>$V^\\top$ rotates, $\\Sigma$ stretches each axis by a non-negative <b>singular value</b>, and $U$ rotates again. The singular values $\\sigma_1 \\ge \\sigma_2 \\ge \\dots$ rank the directions from most important to least.</p>
      <p>Keep only the top few singular values and you get the best low-rank approximation of $A$ — the math behind compression, recommender systems, and noise removal.</p>`,
   buildup:
@@ -1190,7 +1190,7 @@ L({
        <li>The reconstruction error is the next singular value, $\\sigma_3 = 1$ — small compared to $\\sigma_1=10$.</li>
      </ul>`,
   application:
-    `<p>Image compression: keep the top-$k$ singular values of the pixel matrix. Latent Semantic Analysis and recommender systems factor the user–item matrix this way to find hidden topics/tastes. PCA is the SVD of the centered data matrix. SVD also gives the numerically stable pseudo-inverse for least squares.</p>`,
+    `<p>Image compression: keep the top-$k$ singular values of the pixel matrix. Latent Semantic Analysis and recommender systems factor the user–item matrix this way to find hidden topics/tastes. PCA (Principal Component Analysis) is the SVD of the centered data matrix. SVD also gives the numerically stable pseudo-inverse for least squares.</p>`,
   demo: function (host) {
     var cv = document.createElement("canvas"); cv.width = 600; cv.height = 320; host.appendChild(cv);
     var ctx = cv.getContext("2d");

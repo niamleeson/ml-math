@@ -49,7 +49,7 @@ L({
     `<p>To find the height of $Y$'s density at $y$: first find which $x$ landed there, $x = h(y)$.</p>
      <p>Read off the old height $f_X(h(y))$ at that point.</p>
      <p>Then rescale by $\\left|\\frac{dh}{dy}\\right|$ — the local stretch/squeeze factor.</p>
-     <p>The safe two-step method (works even when $g$ is not one-to-one): write the CDF $F_Y(y) = P(g(X) \\le y)$, then differentiate to get $f_Y$.</p>`,
+     <p>The safe two-step method (works even when $g$ is not one-to-one): write the CDF (Cumulative Distribution Function) $F_Y(y) = P(g(X) \\le y)$, then differentiate to get $f_Y$.</p>`,
   derivation:
     `<p><b>Where it comes from.</b></p>
      <ul class="steps">
@@ -186,7 +186,7 @@ L({
   symbols: [
     { sym: "$X, Y$", desc: "two independent random variables you are adding." },
     { sym: "$Z = X + Y$", desc: "their sum — the new random variable of interest." },
-    { sym: "$f_X, f_Y, f_Z$", desc: "the densities of $X$, $Y$, and $Z$ (for discrete variables, read these as PMFs $p_X$, etc.)." },
+    { sym: "$f_X, f_Y, f_Z$", desc: "the densities of $X$, $Y$, and $Z$ (for discrete variables, read these as PMFs (Probability Mass Functions) $p_X$, etc.)." },
     { sym: "$*$", desc: "the convolution operator: '$f_X * f_Y$' means blend the two densities by sliding and summing." },
     { sym: "$\\int$", desc: "an integral: a continuous sum over all values of $x$." },
     { sym: "$x$", desc: "the dummy variable we sum over; the partner value is then $z - x$." }
@@ -345,7 +345,7 @@ L({
        <li>Check directly: $E[X^2] = \\frac{1}{2}(25 + 70^2) + \\frac{1}{2}(25 + 80^2) = \\frac{1}{2}(4925) + \\frac{1}{2}(6425) = 5675$, and $5675 - 75^2 = 5675 - 5625 = 50$. Matches.</li>
      </ul>`,
   application:
-    `<p>This is the bias–variance and ANOVA backbone. Mixed-effects models split variance into within-subject and between-subject parts. Ensemble methods reduce the within term by averaging; "explained variance" $R^2$ is the between-group share of the total. It also underlies Rao–Blackwell variance reduction in estimators.</p>`,
+    `<p>This is the bias–variance and ANOVA (Analysis of Variance) backbone. Mixed-effects models split variance into within-subject and between-subject parts. Ensemble methods reduce the within term by averaging; "explained variance" $R^2$ is the between-group share of the total. It also underlies Rao–Blackwell variance reduction in estimators.</p>`,
   demo: function (host) {
     host.innerHTML = "";
     var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; host.appendChild(cv);

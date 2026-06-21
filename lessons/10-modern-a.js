@@ -138,7 +138,7 @@ L({
      </ul>
      <p>So this token's new meaning leans 67% on the first neighbor. Real dot products set the scores, $\\sqrt{d}$ tames them, softmax picks the winner. That is one full attention step end to end.</p>`,
   application:
-    `<p>Transformers are the backbone of GPT, BERT, image models, and protein folders. Because every token attends to every token in parallel, they train fast on GPUs and capture long-range links a word-by-word model would miss.</p>`,
+    `<p>Transformers are the backbone of GPT, BERT, image models, and protein folders. Because every token attends to every token in parallel, they train fast on GPUs (Graphics Processing Units) and capture long-range links a word-by-word model would miss.</p>`,
   quiz: {
     q: `Scaled scores for 3 tokens are $[0, 0, 0]$. What attention weights does the softmax give, and why?`,
     a: `<p>Equal scores give $e^0 = 1$ each, sum $3$, so each weight is $1/3 \\approx 0.33$. With no preference, attention spreads evenly across all tokens.</p>`
@@ -559,7 +559,7 @@ L({
      <p>A <b>variational autoencoder</b> fixes this. The encoder outputs a small <i>distribution</i> for each input: a mean $\\mu$ and a spread $\\sigma$.</p>
      <p>We sample a code from that distribution, then decode it. Training packs all the distributions near a standard bell curve, so the whole space is smooth. To generate, just sample a random code and decode.</p>`,
   buildup:
-    `<p>The loss has two jobs. <b>Reconstruction</b> keeps the decoded output close to the input. The <b>KL term</b> pulls each encoded distribution toward the standard normal $N(0, 1)$.</p>
+    `<p>The loss has two jobs. <b>Reconstruction</b> keeps the decoded output close to the input. The <b>KL (Kullback–Leibler) term</b> pulls each encoded distribution toward the standard normal $N(0, 1)$.</p>
      <p>The KL term is what makes the latent space tidy and continuous. Without it, you would just have a regular autoencoder again.</p>`,
   symbols: [
     { sym: "$x$", desc: "the input we want to encode and rebuild." },
@@ -793,7 +793,7 @@ L({
   bigIdea:
     `<p>A <b>normalizing flow</b> builds a complex probability distribution out of a simple one.</p>
      <p>Start with an easy density, a standard Gaussian. Pass each sample through an <b>invertible</b> transform $g$. The Gaussian gets stretched and folded into a rich, multi-peaked shape.</p>
-     <p>Because $g$ can be undone, you also get the <i>exact</i> probability of any data point, something GANs and VAEs only approximate.</p>`,
+     <p>Because $g$ can be undone, you also get the <i>exact</i> probability of any data point, something GANs (Generative Adversarial Networks) and VAEs (Variational Autoencoders) only approximate.</p>`,
   buildup:
     `<p>The key tool is the <b>change-of-variables</b> formula. When you transform a random variable, its density does not just move, it also rescales by how much the transform stretches space.</p>
      <p>That stretch factor is the absolute derivative $|g'(u)|$ in 1-D (the Jacobian determinant in higher dimensions). Dividing by it keeps the total probability equal to 1.</p>`,

@@ -151,7 +151,7 @@ L({
     { sym: "$e$", desc: "Euler's number, about 2.718. A fixed constant used for smooth curves." },
     { sym: "$\\sigma(z)$", desc: "the sigmoid function (Greek 'sigma'). Squishes any number into the range 0 to 1." },
     { sym: "$\\tanh(z)$", desc: "the tanh function. Squishes any number into the range -1 to 1." },
-    { sym: "$\\max(0, z)$", desc: "the larger of 0 and $z$. This is ReLU: keep positives, turn negatives into 0." }
+    { sym: "$\\max(0, z)$", desc: "the larger of 0 and $z$. This is ReLU (Rectified Linear Unit): keep positives, turn negatives into 0." }
   ],
   formula: `$$ \\sigma(z) = \\frac{1}{1+e^{-z}} \\qquad \\tanh(z) = \\frac{e^{z}-e^{-z}}{e^{z}+e^{-z}} \\qquad \\text{ReLU}(z) = \\max(0, z) $$`,
   whatItDoes:
@@ -263,7 +263,7 @@ L({
     { sym: "$z^{[1]}$", desc: "the pre-activation of layer 1. The $[1]$ in brackets means 'layer number 1'." },
     { sym: "$a^{[1]}$", desc: "the output (activation) of layer 1, after the activation function." },
     { sym: "$W^{[1]}, b^{[1]}$", desc: "the weights and bias of layer 1." },
-    { sym: "$g(\\cdot)$", desc: "the activation function (like ReLU or sigmoid)." }
+    { sym: "$g(\\cdot)$", desc: "the activation function (like ReLU (Rectified Linear Unit) or sigmoid)." }
   ],
   formula: `$$ z^{[1]} = W^{[1]} x + b^{[1]}, \\quad a^{[1]} = g(z^{[1]}), \\quad a^{[2]} = g(W^{[2]} a^{[1]} + b^{[2]}) $$`,
   whatItDoes:
@@ -1242,7 +1242,7 @@ L({
        <li>Now try stride $S = 2$: $\\frac{7-3+0}{2}+1 = \\frac{4}{2}+1 = 2+1 = 3$. A bigger stride shrinks the output to 3×3.</li>
      </ul>`,
   application:
-    `<p>Designers use this formula to plan network shapes: how much each layer shrinks the image, and whether to pad to keep the size the same. It is everyday work in building CNNs.</p>`,
+    `<p>Designers use this formula to plan network shapes: how much each layer shrinks the image, and whether to pad to keep the size the same. It is everyday work in building CNNs (Convolutional Neural Networks).</p>`,
   quiz: {
     q: `Input $I = 5$, filter $F = 3$, padding $P = 1$, stride $S = 1$. What is the output size $O$?`,
     a: `<p>$O = \\frac{5 - 3 + 2\\times1}{1} + 1 = \\frac{5 - 3 + 2}{1} + 1 = 4 + 1 = 5$. The padding kept the size the same.</p>`
@@ -1319,7 +1319,7 @@ L({
     var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
     draw(); readout();
   },
-  title: "Counting CNN parameters",
+  title: "Counting CNN (Convolutional Neural Network) parameters",
   tagline: "How many weights a convolutional layer holds, and what a neuron can 'see'.",
   prereqs: ["dl-conv", "dl-conv-hyperparams"],
   bigIdea:
@@ -1416,7 +1416,7 @@ L({
     draw = function () { origDraw(); var m = metrics(); rd.innerHTML = "intersection = <b>" + m.inter + "</b><br>union = A + B − intersection = " + m.areaA + " + " + m.areaB + " − " + m.inter + " = <b>" + m.union + "</b><br>IoU = intersection / union = <b>" + m.iou.toFixed(3) + "</b>" + (m.iou >= 0.5 ? " (good match)" : " (poor match)"); };
     draw();
   },
-  title: "Object detection (IoU, YOLO)",
+  title: "Object detection (IoU (Intersection over Union), YOLO (You Only Look Once))",
   tagline: "Not just 'is there a cat?' but 'where is it?' — draw a box and score how well it fits.",
   prereqs: ["dl-conv", "dl-pooling"],
   bigIdea:
@@ -1679,7 +1679,7 @@ L({
      <p>The result keeps <i>what</i> is in your photo but paints it in the brushstrokes and colors of the artwork.</p>
      <p>It works by minimizing two costs at once: a content cost and a style cost.</p>`,
   buildup:
-    `<p>A trained CNN's feature maps capture content. The <b>style</b> is captured by how feature maps correlate with each other, summarized in a <b>Gram matrix</b>.</p>
+    `<p>A trained CNN (Convolutional Neural Network)'s feature maps capture content. The <b>style</b> is captured by how feature maps correlate with each other, summarized in a <b>Gram matrix</b>.</p>
      <p>We start from a blank or noisy image and tweak its pixels to lower both costs.</p>`,
   symbols: [
     { sym: "content cost", desc: "how different the generated image's features are from the photo's. Keeps the subject." },
@@ -1781,7 +1781,7 @@ L({
     var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
     draw(); readout();
   },
-  title: "GANs (generator vs discriminator)",
+  title: "GANs (Generative Adversarial Networks) (generator vs discriminator)",
   tagline: "A forger and a detective compete; the forger gets so good its fakes look real.",
   prereqs: ["dl-forward-prop", "dl-backprop"],
   bigIdea:
@@ -1960,7 +1960,7 @@ L({
   formula: `$$ \\text{if } \\|g\\| &gt; \\text{threshold}, \\;\\; g \\leftarrow \\text{threshold}\\cdot\\frac{g}{\\|g\\|} $$`,
   whatItDoes:
     `<p>Measure the gradient's size (its norm). If it is bigger than the threshold, shrink it back down to the threshold while keeping its direction.</p>
-     <p>This stops single giant steps from wrecking training. Vanishing gradients need a different fix (next lesson: LSTM/GRU).</p>`,
+     <p>This stops single giant steps from wrecking training. Vanishing gradients need a different fix (next lesson: LSTM (Long Short-Term Memory)/GRU (Gated Recurrent Unit)).</p>`,
   example:
     `<p>Multiply slopes of 0.5 along a 5-step sequence: $0.5 \\times 0.5 \\times 0.5 \\times 0.5 \\times 0.5$.</p>
      <ul class="steps">
@@ -1969,7 +1969,7 @@ L({
        <li>Now clipping: if a gradient's size is 100 but the threshold is 5, scale it down to size 5, same direction.</li>
      </ul>`,
   application:
-    `<p>These problems are why plain RNNs struggle with long paragraphs. Gradient clipping is standard in training RNNs and even large language models to keep updates stable.</p>`,
+    `<p>These problems are why plain RNNs (Recurrent Neural Networks) struggle with long paragraphs. Gradient clipping is standard in training RNNs and even large language models to keep updates stable.</p>`,
   quiz: {
     q: `A gradient has size 40 and the clip threshold is 10. What happens to it?`,
     a: `<p>40 is above 10, so it is scaled down to size 10 (keeping its direction). If it had been size 8, it would be left unchanged.</p>`
@@ -2038,11 +2038,11 @@ L({
     var rd = document.createElement("div"); rd.className = "out"; rd.style.marginTop = "6px"; host.appendChild(rd);
     draw(); readout();
   },
-  title: "LSTM & GRU (gates)",
+  title: "LSTM (Long Short-Term Memory) & GRU (Gated Recurrent Unit) (gates)",
   tagline: "Add little gates that decide what to remember and what to forget over long sequences.",
   prereqs: ["dl-rnn", "dl-vanishing-gradient"],
   bigIdea:
-    `<p>Plain RNNs forget the distant past because of vanishing gradients.</p>
+    `<p>Plain RNNs (Recurrent Neural Networks) forget the distant past because of vanishing gradients.</p>
      <p><b>LSTM</b> and <b>GRU</b> are smarter RNN cells. They add <b>gates</b>: little controls that decide what to keep, what to forget, and what to output.</p>
      <p>This lets them carry important information across long sequences.</p>`,
   buildup:
@@ -2407,7 +2407,7 @@ L({
   bigIdea:
     `<p>When producing each output, a model shouldn't treat all inputs equally. Some words matter more right now.</p>
      <p><b>Attention</b> lets the model focus. It gives each input part a weight, and the weights add up to 1.</p>
-     <p>The output is a weighted blend of the inputs, leaning on the most relevant ones. This idea is the foundation of Transformers and LLMs.</p>`,
+     <p>The output is a weighted blend of the inputs, leaning on the most relevant ones. This idea is the foundation of Transformers and LLMs (Large Language Models).</p>`,
   buildup:
     `<p>For each input part, the model computes a raw score $e$ for how relevant it is. A softmax turns those scores into weights $\\alpha$ that sum to 1.</p>
      <p>Then the <b>context</b> is the weighted sum of the inputs $a$, using those weights.</p>`,

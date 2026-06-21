@@ -111,7 +111,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Features", icon: "🧬", title: "Engineer time features",
         narrative: `<p>Tree and regression models can't see "time" — they see a row of numbers. You must hand them the seasonality explicitly. Three families, each built mechanically:</p><p><b>Lag features:</b> copy the target from $k$ hours back into the row — $\\text{lag}_k(t)=\\text{load}_{t-k}$, with $k\\in\\{24,48,168\\}$ chosen from the autocorrelation peaks. <b>Rolling features:</b> the mean (or std) of load over a trailing window ending strictly before $t$ — $\\text{roll7d}(t)=\\frac{1}{168}\\sum_{j=1}^{168}\\text{load}_{t-j}$. <b>Calendar features:</b> extract hour, day-of-week, and a holiday flag from the timestamp; one-hot them for a linear model, leave them integer for a tree. For a linear/seasonal model you can instead inject smooth cyclic shape with <b>Fourier terms</b>: for the daily cycle (period $P=24$) add $\\sin\\!\\big(\\frac{2\\pi h}{24}\\big),\\ \\cos\\!\\big(\\frac{2\\pi h}{24}\\big)$ (and higher harmonics $\\frac{2\\pi\\cdot 2h}{24}$, etc.), and likewise $P=168$ for the weekly cycle — a few sine/cosine pairs reproduce the seasonal curve without 24 separate dummies.</p><p>The golden rule governs every choice: each feature must be knowable <i>before</i> the hour you predict. A feature that needs the future is leakage, no matter how predictive it looks offline.</p>`,
         concepts: ["ml-linear-regression", "cls-gradient-boosting", "prob-conditional-expectation"],
-        insight: `<b>Lags carry the level; calendar carries the shape.</b> The 168-hour lag (same hour last week) alone gets MAPE down to about <b>7.6%</b> — that's your baseline. Adding hour-of-day, weekday, holiday, and the temperature forecast on top cuts another ~3 points. But the 1-hour lag, tempting because $\\rho=0.97$, is <b>illegal</b>: for a day-ahead forecast you won't have last hour's actual load.`,
+        insight: `<b>Lags carry the level; calendar carries the shape.</b> The 168-hour lag (same hour last week) alone gets MAPE (Mean Absolute Percentage Error) down to about <b>7.6%</b> — that's your baseline. Adding hour-of-day, weekday, holiday, and the temperature forecast on top cuts another ~3 points. But the 1-hour lag, tempting because $\\rho=0.97$, is <b>illegal</b>: for a day-ahead forecast you won't have last hour's actual load.`,
         data: {
           caption: "One engineered feature row for a target hour (all columns known a day ahead)",
           columns: ["lag24 (MW)", "lag168 (MW)", "roll7d mean", "hour", "fcst temp °C"],
@@ -298,7 +298,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         ]
       },
       {
-        phase: "Monitor", icon: "📡", title: "Monitor & maintain (MLOps)",
+        phase: "Monitor", icon: "📡", title: "Monitor & maintain (MLOps, Machine Learning Operations)",
         narrative: `<p>Forecasts rot when the world drifts, and the rot is silent unless you watch for it. You track three things as actuals arrive: realized error against the baseline, interval coverage (is the band still honest?), and input health (is the weather feed fresh?).</p><p>Breached thresholds should trigger an automatic retrain — that's what closes the loop.</p>`,
         concepts: ["mlx-error-analysis", "prob-variance", "ml-regression-metrics"],
         insight: `<b>Inputs fail before outputs do.</b> This week a weather-feed latency jump (5 min → 90 min) starved the model of fresh temperature, and rolling 7-day MAPE climbed from <b>4.2% to 6.9%</b> while interval coverage fell to <b>81%</b> — both past their alert thresholds. Watching the <i>input</i> (feed freshness) would have caught it before the <i>output</i> (MAPE) ever moved, which is why you monitor both.`,
@@ -336,7 +336,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
     stages: [
       {
         phase: "Frame", icon: "🎯", title: "Frame the problem",
-        narrative: `<p>You want an agent that masters a perfect-information board game — concretely, <b>chess, trained by self-play the way DeepMind's AlphaZero (Silver et al., Science 2018) was</b> from <b>44 million self-play games</b> and no human data. (The other classic RL benchmark, the <b>Atari Arcade Learning Environment</b>'s 57 games, learns from raw 210×160 pixels instead of board states.) The first and most consequential choice is what "good" means — what scalar signal does the agent actually optimize? Get this wrong and the agent will dutifully maximize the wrong thing.</p><p>In a board game the only thing that matters is the final result, so the reward should live at the end of the game, not on every move.</p>`,
+        narrative: `<p>You want an agent that masters a perfect-information board game — concretely, <b>chess, trained by self-play the way DeepMind's AlphaZero (Silver et al., Science 2018) was</b> from <b>44 million self-play games</b> and no human data. (The other classic RL (Reinforcement Learning) benchmark, the <b>Atari Arcade Learning Environment</b>'s 57 games, learns from raw 210×160 pixels instead of board states.) The first and most consequential choice is what "good" means — what scalar signal does the agent actually optimize? Get this wrong and the agent will dutifully maximize the wrong thing.</p><p>In a board game the only thing that matters is the final result, so the reward should live at the end of the game, not on every move.</p>`,
         concepts: ["ai-mdp", "ai-policy-value", "aix-game-theory"],
         insight: `<b>Sparse terminal reward beats dense shaped reward here.</b> A naive "capture a piece, get +0.1" reward sounds helpful, but in test games it makes the agent <b>trade material greedily and lose ~20% more often</b> — material is a heuristic that correlates with winning, not winning itself. The honest signal is a single $\\pm1$ at the terminal state; the hard part the agent must solve is credit assignment back through the <b>~80 plies</b> of a typical chess game.`,
         data: {
@@ -366,7 +366,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Generate self-play data",
-        narrative: `<p>There's no labeled dataset of "best moves" for a game stronger than humans play. So the agent must generate its own experience by playing itself — the data source <i>is</i> the agent. As it improves, the data improves, in a bootstrapping spiral. AlphaZero ran this loop at scale: <b>44 million self-play chess games</b>, each move chosen after <b>800 MCTS simulations</b>.</p>`,
+        narrative: `<p>There's no labeled dataset of "best moves" for a game stronger than humans play. So the agent must generate its own experience by playing itself — the data source <i>is</i> the agent. As it improves, the data improves, in a bootstrapping spiral. AlphaZero ran this loop at scale: <b>44 million self-play chess games</b>, each move chosen after <b>800 MCTS (Monte Carlo Tree Search) simulations</b>.</p>`,
         concepts: ["aix-monte-carlo", "ai-q-learning", "ai-mdp"],
         insight: `<b>Self-play scales without a ceiling.</b> 50,000 games yield <b>4.0M (state, action, reward) transitions</b> in hours, all at the agent's current skill level — no human bottleneck. The logs reveal a <b>~52–55% White (first-player) win rate</b>, the real first-move edge that holds even at the top of human chess, and an average game length of <b>~80 plies</b>, which sets how far credit must propagate.`,
         data: {
@@ -416,7 +416,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
           { sym: "$b$", desc: "the branching factor — average number of legal moves per position (here $\\approx35$, the chess average)." },
           { sym: "$d$", desc: "the typical game depth in plies (here $\\approx80$); the tree size grows like $b^d$." },
           { sym: "$V(s)$", desc: "the value of state $s$: the expected final reward from $s$ under good play, in $[-1,+1]$." },
-          { sym: "UCB", desc: "the selection score $Q(s,a)+c\\sqrt{\\ln N(s)/n(s,a)}$: pick the child balancing high average value $Q$ (exploit) against few visits $n$ (explore)." },
+          { sym: "UCB", desc: "Upper Confidence Bound — the selection score $Q(s,a)+c\\sqrt{\\ln N(s)/n(s,a)}$: pick the child balancing high average value $Q$ (exploit) against few visits $n$ (explore)." },
           { sym: "$N(s),\\,n(s,a)$", desc: "MCTS visit counts: $N(s)$ times state $s$ was visited, $n(s,a)$ times edge $a$ was taken from it — they drive both the UCB bonus and the final move choice." }
         ],
         steps: [
@@ -697,7 +697,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Data", icon: "🗄️", title: "Gather assay data",
         narrative: `<p>You query ChEMBL for every bioactivity record measured against this target — each molecule's <code>canonical_smiles</code>, the assay <code>standard_type</code> (IC50, Ki, EC50), its <code>standard_value</code> and <code>standard_units</code> (nM), and the normalized <code>pchembl_value</code>. Thresholding gives an active/inactive label. Two properties of this data will wreck a naive evaluation if ignored: actives are extremely rare, and the library is full of near-duplicate analogs that can leak across a train/test split.</p>`,
         concepts: ["ml-supervised", "ml-kmeans", "mlx-error-analysis"],
-        insight: `<b>Two silent killers live in this data.</b> Actives are only <b>3,604 of 240,118 molecules (1.5%)</b>, so any split must preserve that imbalance and the loss must weight the rare class. Worse, there are <b>12,400 near-duplicate analog pairs</b> — molecules differing by an atom — and if an analog lands in both train and test, the model memorizes rather than generalizes, and your AUC becomes fiction.`,
+        insight: `<b>Two silent killers live in this data.</b> Actives are only <b>3,604 of 240,118 molecules (1.5%)</b>, so any split must preserve that imbalance and the loss must weight the rare class. Worse, there are <b>12,400 near-duplicate analog pairs</b> — molecules differing by an atom — and if an analog lands in both train and test, the model memorizes rather than generalizes, and your AUC (Area Under the Curve) becomes fiction.`,
         data: {
           caption: "The ChEMBL bioactivity table for this target (a molecule per row)",
           columns: ["molecule_chembl_id", "canonical_smiles", "standard_type", "standard_value (nM)", "pchembl", "label"],
@@ -729,7 +729,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Explore", icon: "🔍", title: "Explore chemical space",
         narrative: `<p>Look at how molecules cluster before you model. Actives often share a common scaffold (a core substructure), and the library is usually dominated by a few chemical families with a vast "dark" region of unexplored chemistry. The shape of this space dictates how you must split your data.</p>`,
         concepts: ["cls-tsne", "ml-pca", "ml-kmeans"],
-        insight: `<b>Actives hide in just 2 of 6 scaffold families.</b> A t-SNE of the fingerprints shows <b>6 dense clusters</b>, with the <b>3,604 actives concentrated in only 2</b> of them. This is exactly why a random split lies: with active scaffolds in both train and test, the model memorizes those 2 families and looks brilliant — then fails on any new scaffold. A scaffold split forces it to generalize to chemistry it has never seen.`,
+        insight: `<b>Actives hide in just 2 of 6 scaffold families.</b> A t-SNE (t-distributed Stochastic Neighbor Embedding) of the fingerprints shows <b>6 dense clusters</b>, with the <b>3,604 actives concentrated in only 2</b> of them. This is exactly why a random split lies: with active scaffolds in both train and test, the model memorizes those 2 families and looks brilliant — then fails on any new scaffold. A scaffold split forces it to generalize to chemistry it has never seen.`,
         data: {
           caption: "Scaffold clusters from the t-SNE projection",
           columns: ["cluster", "molecules", "actives", "active rate"],
@@ -765,9 +765,9 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Features", icon: "🧬", title: "Featurize molecules",
-        narrative: `<p>A model can't read a chemical formula — you must turn each molecule into numbers that capture what drives binding: its substructures and 3-D shape. The two standard choices are fixed fingerprints (substructure bit-vectors) and learned graph neural nets over the atom-bond graph.</p><p><b>How a Morgan / ECFP fingerprint is computed.</b> Give each atom an initial integer id from its element, charge, and degree. Then for $r$ rounds (the radius, e.g. $r=2$ → "ECFP4"), update every atom's id by hashing together its own current id and the ids of its bonded neighbours — so after round $k$ each id summarizes the atom's circular neighbourhood out to $k$ bonds. Collect every id generated across all rounds (these are the substructures present), and fold each one into a fixed-length bit vector by setting bit $\\;h(\\text{id})\\bmod 2048\\;$ to 1. The result is a sparse 2048-bit vector: bit on = "this circular substructure occurs in the molecule".</p>`,
+        narrative: `<p>A model can't read a chemical formula — you must turn each molecule into numbers that capture what drives binding: its substructures and 3-D shape. The two standard choices are fixed fingerprints (substructure bit-vectors) and learned graph neural nets over the atom-bond graph.</p><p><b>How a Morgan / ECFP (Extended-Connectivity Fingerprint) fingerprint is computed.</b> Give each atom an initial integer id from its element, charge, and degree. Then for $r$ rounds (the radius, e.g. $r=2$ → "ECFP4"), update every atom's id by hashing together its own current id and the ids of its bonded neighbours — so after round $k$ each id summarizes the atom's circular neighbourhood out to $k$ bonds. Collect every id generated across all rounds (these are the substructures present), and fold each one into a fixed-length bit vector by setting bit $\\;h(\\text{id})\\bmod 2048\\;$ to 1. The result is a sparse 2048-bit vector: bit on = "this circular substructure occurs in the molecule".</p>`,
         concepts: ["mod-gnn", "ml-svm", "dl-cosine-similarity"],
-        insight: `<b>Structure is the signal; weight and string are not.</b> A 2048-bit Morgan fingerprint encodes which substructures are present, and on this data a kernel SVM over fingerprints hits <b>0.83 AUC</b>. Collapsing a molecule to its <b>molecular weight</b> (one number) throws away nearly all structure — many distinct molecules share a weight — and treating the raw SMILES as one categorical token makes every molecule unique, so nothing generalizes.`,
+        insight: `<b>Structure is the signal; weight and string are not.</b> A 2048-bit Morgan fingerprint encodes which substructures are present, and on this data a kernel SVM (Support Vector Machine) over fingerprints hits <b>0.83 AUC</b>. Collapsing a molecule to its <b>molecular weight</b> (one number) throws away nearly all structure — many distinct molecules share a weight — and treating the raw SMILES as one categorical token makes every molecule unique, so nothing generalizes.`,
         data: {
           caption: "Three featurizations of the same molecule",
           columns: ["representation", "what it captures", "dims", "useful?"],
@@ -829,7 +829,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Train", icon: "⚙️", title: "Train with careful splits",
         narrative: `<p>Train on scaffold-split folds with class weighting for the rare actives, and tune regularization in an inner loop. The validation must mimic the real task — predict activity for chemistry the model has never seen — or your reported number will be the leaky one, not the deployable one.</p>`,
         concepts: ["mlx-cross-validation", "ml-svm", "ml-regularization"],
-        insight: `<b>The honest split costs ~0.11 AUC — and that's the truth.</b> Scaffold-split 5-fold CV gives a mean <b>ROC-AUC of 0.826</b>; the same model under a random split reports <b>0.94</b>, inflated purely by analog leakage. The 0.83 is the number that predicts real-world enrichment. Class weighting keeps the rare actives from being ignored, and the regularization strength $C$ is tuned by inner CV so the model neither overfits nor underfits the sparse positives.`,
+        insight: `<b>The honest split costs ~0.11 AUC — and that's the truth.</b> Scaffold-split 5-fold CV (Cross-Validation) gives a mean <b>ROC-AUC (Receiver Operating Characteristic – Area Under the Curve) of 0.826</b>; the same model under a random split reports <b>0.94</b>, inflated purely by analog leakage. The 0.83 is the number that predicts real-world enrichment. Class weighting keeps the rare actives from being ignored, and the regularization strength $C$ is tuned by inner CV so the model neither overfits nor underfits the sparse positives.`,
         data: {
           caption: "Scaffold-split 5-fold CV (class-weighted), with the leaky split for contrast",
           columns: ["split type", "fold AUCs", "mean AUC", "honest?"],
@@ -906,7 +906,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Iterate", icon: "🔁", title: "Diagnose & iterate",
         narrative: `<p>Error analysis shows the model ranks well <i>within</i> the known scaffolds but is blind to the unexplored "dark" chemistry — it keeps re-finding the same two families. To discover genuinely novel drugs you need diverse candidates, which means exploring where the model is uncertain, not exploiting where it's confident.</p>`,
         concepts: ["cls-gaussian-process", "cls-bandits", "mlx-error-analysis"],
-        insight: `<b>Exploitation re-finds known families; exploration discovers new ones.</b> The model is confident only inside clusters A and B, and assaying its top picks keeps surfacing analogs of known actives — <b>0 novel scaffolds</b> per round. Active learning flips this: select the molecules where the model is <i>most uncertain</i> (high-variance GP predictions) in the dark region. Each such assay teaches the model the most, and it's what surfaced <b>2 brand-new active scaffolds</b>.`,
+        insight: `<b>Exploitation re-finds known families; exploration discovers new ones.</b> The model is confident only inside clusters A and B, and assaying its top picks keeps surfacing analogs of known actives — <b>0 novel scaffolds</b> per round. Active learning flips this: select the molecules where the model is <i>most uncertain</i> (high-variance GP (Gaussian Process) predictions) in the dark region. Each such assay teaches the model the most, and it's what surfaced <b>2 brand-new active scaffolds</b>.`,
         data: {
           caption: "Two selection strategies for the next assay batch",
           columns: ["strategy", "picks from", "novel scaffolds", "info gained"],
@@ -1039,7 +1039,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Data", icon: "🗄️", title: "Gather call logs",
-        narrative: `<p>You pull the Anonymous Bank's call-by-call records: one row per call, with the timestamps the call hit each stage (VRU entry, queue start, service start/end) and the agent that served it. The dataset covers all of <b>1999 — about 444,000 calls across the year</b>, roughly 30,000 per month. From the raw timestamps you derive the two streams every queue model needs — arrivals and service times. Everything downstream (the rate, the distribution fits, the staffing) is derived from them.</p>`,
+        narrative: `<p>You pull the Anonymous Bank's call-by-call records: one row per call, with the timestamps the call hit each stage (VRU (Voice Response Unit) entry, queue start, service start/end) and the agent that served it. The dataset covers all of <b>1999 — about 444,000 calls across the year</b>, roughly 30,000 per month. From the raw timestamps you derive the two streams every queue model needs — arrivals and service times. Everything downstream (the rate, the distribution fits, the staffing) is derived from them.</p>`,
         concepts: ["prob-sample-space", "prob-random-variable", "prob-pdf-cdf"],
         insight: `<b>Two distributions, not two averages, drive queues.</b> The logs show arrivals peaking <b>10am–noon</b> and a mean service (handle) time of about <b>185 seconds (≈3.1 min)</b> — but with a <b>heavy right tail (longest calls over an hour)</b>. That tail matters: a few very long calls tie up agents and create waits the mean alone hides. The inter-arrival times look roughly memoryless, a hint the arrivals fit a clean stochastic model. About <b>15% of callers abandon</b> (the <code>HANG</code> outcome) before reaching an agent.`,
         data: {
@@ -1109,7 +1109,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Features", icon: "🧬", title: "Engineer load features",
         narrative: `<p>The arrival rate $\\lambda$ isn't constant — it depends on time of day, day of week, and special events. So you build features that let you <i>predict</i> $\\lambda$ for each future hour. That hourly rate forecast is the input the queue model needs to choose staffing ahead of time.</p>`,
         concepts: ["prob-conditional-expectation", "prob-expectation", "ml-linear-regression"],
-        insight: `<b>Calendar features predict the rate; a flat average can't.</b> The arrival rate swings from about <b>40 calls/hr at 3am to 520 calls/hr at noon</b> — a 13× range. Hour-of-day, day-of-week, holiday flag, and a recent-volume trend let you forecast $\\lambda$ for each future hour to within <b>~7% MAPE</b>. A single global average rate would understaff every peak and overstaff every night — the worst of both errors.`,
+        insight: `<b>Calendar features predict the rate; a flat average can't.</b> The arrival rate swings from about <b>40 calls/hr at 3am to 520 calls/hr at noon</b> — a 13× range. Hour-of-day, day-of-week, holiday flag, and a recent-volume trend let you forecast $\\lambda$ for each future hour to within <b>~7% MAPE (Mean Absolute Percentage Error)</b>. A single global average rate would understaff every peak and overstaff every night — the worst of both errors.`,
         data: {
           caption: "Feature row predicting the arrival rate $\\lambda$ for a future hour",
           columns: ["hour", "dow", "holiday", "recent trend", "→ predicted λ (calls/hr)"],
@@ -1240,7 +1240,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
       },
       {
         phase: "Iterate", icon: "🔁", title: "Diagnose & iterate",
-        narrative: `<p>Error analysis on the live results reveals a hidden assumption: the model treated all calls as one type, but premium customers have much longer handle times and a tighter wait target. The blended average satisfies neither group — it over-serves regular calls and misses premium SLAs.</p>`,
+        narrative: `<p>Error analysis on the live results reveals a hidden assumption: the model treated all calls as one type, but premium customers have much longer handle times and a tighter wait target. The blended average satisfies neither group — it over-serves regular calls and misses premium SLAs (Service-Level Agreements).</p>`,
         concepts: ["prob-pdf-cdf", "prob-conditional-expectation", "mlx-error-analysis"],
         insight: `<b>One blended distribution hides two very different jobs.</b> Premium calls average <b>14 min</b> handle time with a <b>20s</b> answer target, while regular calls average <b>5 min</b> with a <b>30s</b> target — but the blended model assumes a single <b>6.2 min</b> mean. The result: premium SL sits at a failing <b>68%</b> while regular runs a wasteful <b>91%</b>. Splitting into priority classes, each with its own $\\mu$ and target, lets staffing meet both promises.`,
         data: {
@@ -1271,7 +1271,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         phase: "Deploy", icon: "🚀", title: "Deploy the scheduler",
         narrative: `<p>The optimizer publishes staffing recommendations that feed the workforce-scheduling system each week. You decide the cadence and the human oversight: schedules need lead time to assign shifts, and a blind automated plan needs a manager's sign-off before it touches payroll.</p>`,
         concepts: ["prob-expectation", "prob-conditional-expectation"],
-        insight: `<b>Weekly cadence with an intraday safety valve.</b> Shifts can't be reassigned minute-by-minute — agents have lives and the WFM system needs lead time — so the optimizer emits a <b>weekly</b> plan for a manager to approve. But a same-day <b>re-forecast</b> handles surprises (a viral outage doubling volume) without waiting a week. The backtest gate (SL 83% > 80% target) and human approval together guard against a bad automated plan going live.`,
+        insight: `<b>Weekly cadence with an intraday safety valve.</b> Shifts can't be reassigned minute-by-minute — agents have lives and the WFM (Workforce Management) system needs lead time — so the optimizer emits a <b>weekly</b> plan for a manager to approve. But a same-day <b>re-forecast</b> handles surprises (a viral outage doubling volume) without waiting a week. The backtest gate (SL 83% > 80% target) and human approval together guard against a bad automated plan going live.`,
         data: {
           caption: "Production cadence and its guardrails",
           columns: ["component", "cadence", "purpose"],
@@ -1298,7 +1298,7 @@ window.SIMULATIONS = Object.assign(window.SIMULATIONS || {}, {
         ]
       },
       {
-        phase: "Monitor", icon: "📡", title: "Monitor & maintain (MLOps)",
+        phase: "Monitor", icon: "📡", title: "Monitor & maintain (MLOps, Machine Learning Operations)",
         narrative: `<p>Call patterns drift — product launches, outages, and seasonality all shift the load. You watch realized service level and arrival-rate forecast error as the week unfolds, plus abandonment and handle-time drift, and you refit when they slip. A breach should trigger a re-forecast and re-optimization before staffing decisions go wrong.</p>`,
         concepts: ["mlx-error-analysis", "prob-variance", "prob-expectation"],
         insight: `<b>A demand shock shows up in the input metric first.</b> A new product launch doubled call volume overnight, so arrival-rate forecast error jumped <b>6.8%→14.2%</b> — the leading indicator — and only then did realized service level fall <b>83%→68%</b> and abandonment climb <b>3.4%→8.9%</b>. Watching the rate error catches the shock before the service level visibly breaks, which is why you alert on inputs as well as outcomes.`,

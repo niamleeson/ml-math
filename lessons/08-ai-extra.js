@@ -356,7 +356,7 @@ L({
   tagline: "No model? Just play out whole episodes and average the rewards you actually got.",
   prereqs: ["ai-q-learning", "ai-qvalue"],
   bigIdea:
-    `<p>Q-learning bootstraps off its own estimates. <b>Monte Carlo</b> RL does something even simpler: it just averages real outcomes.</p>
+    `<p>Q-learning bootstraps off its own estimates. <b>Monte Carlo</b> RL (Reinforcement Learning) does something even simpler: it just averages real outcomes.</p>
      <p>Play a full episode to the end. Add up the discounted rewards you actually received: that is the <b>return</b> $u$.</p>
      <p>The Q-value of a state-action pair is estimated as the average return over all episodes where that pair appeared.</p>`,
   buildup:
@@ -396,7 +396,7 @@ L({
        <li>No model was used: each $u$ is a real, discounted return, and the mean tracks the true $Q$. More episodes shrink the wobble.</li>
      </ul>`,
   application:
-    `<p>Monte Carlo evaluation underlies Monte Carlo Tree Search, the engine behind strong Go and game-playing AIs: it plays many random rollouts to the end and averages the outcomes to score a move. It is also used to evaluate policies when a simulator exists but the exact model does not.</p>`,
+    `<p>Monte Carlo evaluation underlies Monte Carlo Tree Search, the engine behind strong Go and game-playing AIs (Artificial Intelligences): it plays many random rollouts to the end and averages the outcomes to score a move. It is also used to evaluate policies when a simulator exists but the exact model does not.</p>`,
   quiz: {
     q: `Three episodes from $(s,a)$ give returns $u = 4$, $u = 10$, $u = 7$. What is the Monte Carlo estimate $\\hat Q(s,a)$?`,
     a: `<p>$\\hat Q = (4 + 10 + 7)/3 = 21/3 = 7$. The estimate is the average of the observed returns.</p>`
@@ -458,7 +458,7 @@ L({
     host.insertBefore(out, host.children[1]);
     reset();
   },
-  title: "SARSA and temporal-difference learning",
+  title: "SARSA (State–Action–Reward–State–Action) and temporal-difference learning",
   tagline: "Don't wait for the episode to end. Update each step from the very next step's guess.",
   prereqs: ["aix-monte-carlo", "ai-q-learning"],
   bigIdea:
@@ -493,7 +493,7 @@ L({
        <li>When $\\mathbb{E}[\\delta] \\ne 0$, the estimate violates Bellman. Step toward closing it: $V(s) \\leftarrow V(s) + \\alpha\\,\\delta$.</li>
        <li>This is stochastic approximation of the Bellman fixed point. With $\\alpha$ shrinking suitably, $V$ converges to the value that makes $\\mathbb{E}[\\delta] = 0$ everywhere — the true value. ∎</li>
      </ul>
-     <p><b>MC vs TD in one line.</b> Monte Carlo uses the full return $u_t$ (low bias, high variance, must wait). TD uses $r + \\gamma V(s')$ (a little biased while $V$ is wrong, but low variance and usable immediately).</p>
+     <p><b>MC (Monte Carlo) vs TD in one line.</b> Monte Carlo uses the full return $u_t$ (low bias, high variance, must wait). TD uses $r + \\gamma V(s')$ (a little biased while $V$ is wrong, but low variance and usable immediately).</p>
      <p><b>Intuition.</b> You do not need to finish the trip to learn the route. The moment the next landmark looks closer than expected, you revise your estimate of where you started. Each step's small surprise teaches a little, and the goal's reward seeps backward one cell per update.</p>`,
   example:
     `<p>State $s$ has value $V(s) = 0$. The agent steps, gets reward $r = 0$, lands in $s'$ with $V(s') = 1$. Use $\\alpha = 0.5$, $\\gamma = 0.9$.</p>
@@ -504,7 +504,7 @@ L({
        <li>$V(s)$ moved from $0$ to $0.45$, halfway to the target. The goal's value flowed back one step.</li>
      </ul>`,
   application:
-    `<p>TD learning is the backbone of modern RL. TD-Gammon learned backgammon at expert level this way. The TD error even matches dopamine signals measured in the brain, making it a leading model of how animals learn from reward. SARSA's on-policy nature makes it safer than Q-learning when exploration can be costly.</p>`,
+    `<p>TD learning is the backbone of modern RL (Reinforcement Learning). TD-Gammon learned backgammon at expert level this way. The TD error even matches dopamine signals measured in the brain, making it a leading model of how animals learn from reward. SARSA's on-policy nature makes it safer than Q-learning when exploration can be costly.</p>`,
   quiz: {
     q: `$V(s)=2$, reward $r=1$, next value $V(s')=4$, $\\alpha=0.5$, $\\gamma=0.5$. Compute the TD target, the TD error, and the new $V(s)$.`,
     a: `<p>Target $= 1 + 0.5\\times4 = 3$. Error $= 3 - 2 = 1$. New value $= 2 + 0.5\\times1 = 2.5$.</p>`
@@ -753,7 +753,7 @@ L({
        <li>So $g(A,C) = \\{00{:}5,\\,01{:}5,\\,10{:}10,\\,11{:}5\\}$: one factor, $B$ gone, graph now $A - g - C$.</li>
      </ul>`,
   application:
-    `<p>Variable elimination is the standard exact-inference engine inside probabilistic systems: medical diagnosis networks, error-correcting decoders, and speech models. The same factor-graph machinery (the sum-product algorithm) underlies belief propagation and the decoding of LDPC and turbo codes in your phone's modem.</p>`,
+    `<p>Variable elimination is the standard exact-inference engine inside probabilistic systems: medical diagnosis networks, error-correcting decoders, and speech models. The same factor-graph machinery (the sum-product algorithm) underlies belief propagation and the decoding of LDPC (Low-Density Parity-Check) and turbo codes in your phone's modem.</p>`,
   quiz: {
     q: `Eliminate $B$ from $f_1(A,B)$ and $f_2(B,C)$. Given $f_1(1,0)=1$, $f_1(1,1)=3$, $f_2(0,1)=2$, $f_2(1,1)=1$, compute $g(A{=}1, C{=}1) = \\sum_B f_1(1,B)f_2(B,1)$.`,
     a: `<p>$g(1,1) = f_1(1,0)f_2(0,1) + f_1(1,1)f_2(1,1) = 1\\times2 + 3\\times1 = 2 + 3 = 5$.</p>`
@@ -1078,7 +1078,7 @@ L({
     host.insertBefore(out, host.children[1]);
     reset();
   },
-  title: "HMM smoothing (forward-backward)",
+  title: "HMM (Hidden Markov Model) smoothing (forward-backward)",
   tagline: "Use the future as well as the past. Combine both directions for the best estimate of each state.",
   prereqs: ["ai-hmm", "aix-variable-elimination"],
   bigIdea:
@@ -1123,7 +1123,7 @@ L({
        <li>The future evidence ($\\beta$) reweighted the belief away from what filtering alone would have said.</li>
      </ul>`,
   application:
-    `<p>Forward-backward trains and decodes HMMs in speech recognition, gene finding (which DNA regions are genes), and part-of-speech tagging. It is the E-step of the Baum-Welch (EM) algorithm that learns the HMM's parameters from unlabeled sequences.</p>`,
+    `<p>Forward-backward trains and decodes HMMs in speech recognition, gene finding (which DNA (Deoxyribonucleic Acid) regions are genes), and part-of-speech tagging. It is the E-step of the Baum-Welch (EM, Expectation–Maximization) algorithm that learns the HMM's parameters from unlabeled sequences.</p>`,
   quiz: {
     q: `Forward $\\alpha_i = [0.4, 0.4]$ and backward $\\beta_i = [1.0, 0.0]$ over states $\\{1,2\\}$. What is the smoothed posterior $P(H_i \\mid E)$?`,
     a: `<p>Products: $[0.4\\times1.0,\\,0.4\\times0.0] = [0.4, 0.0]$. Normalize by $0.4$: $P(H_i{=}1)=1.0$, $P(H_i{=}2)=0.0$. The backward evidence ruled out state $2$.</p>`

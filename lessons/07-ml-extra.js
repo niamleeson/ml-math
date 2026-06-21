@@ -162,7 +162,7 @@ L({
        <li>Gradient descent with $\\alpha = 0.1$ crawls: $\\theta_1 = 5 - 0.1(18) = 3.2$, then $\\theta_2 = 3.2 - 0.1(7.2) = 2.48$, then $2.19$, $2.08$, $2.03$, $\\dots$ — still not at $2$ after 5 steps, while Newton was already exact after 1.</li>
      </ul>`,
   application:
-    `<p>Newton's method (and Hessian-aware cousins like L-BFGS) trains logistic regression and small GLMs in a handful of iterations. Statistics packages use it for maximum-likelihood fits. It also powers the "trust region" optimizers behind many scientific solvers, where fast, accurate convergence matters more than the cost of the Hessian.</p>`,
+    `<p>Newton's method (and Hessian-aware cousins like L-BFGS) trains logistic regression and small GLMs (Generalized Linear Models) in a handful of iterations. Statistics packages use it for maximum-likelihood fits. It also powers the "trust region" optimizers behind many scientific solvers, where fast, accurate convergence matters more than the cost of the Hessian.</p>`,
   quiz: {
     q: `For $J(\\theta) = 2\\theta^2 - 8\\theta + 5$ (slope $4\\theta - 8$, curvature $4$), start at $\\theta_0 = 10$. What is $\\theta$ after one Newton step?`,
     a: `<p>Slope $= 4\\cdot 10 - 8 = 32$. Curvature $= 4$. Step $= 10 - 32/4 = 10 - 8 = 2$. And $J'(2) = 0$, so it lands exactly at the minimum in one step.</p>`
@@ -364,7 +364,7 @@ L({
        <li><b>Why average?</b> A single split could have landed on fold 3 alone and reported $0.34$ (too pessimistic), or fold 2 alone and reported $0.26$ (too rosy) — a spread of $0.08$. The folds scatter around $0.30$ with a spread of only $\\pm 0.04$; averaging all 5 cancels that luck and centers on $0.30$.</li>
      </ul>`,
   application:
-    `<p>Cross-validation is the standard way to pick hyperparameters (regularization strength, tree depth, $k$ in k-NN) and to compare models on limited data. Kaggle competitions and scientific ML papers report CV scores because a single split can be misleadingly lucky or unlucky.</p>`,
+    `<p>Cross-validation is the standard way to pick hyperparameters (regularization strength, tree depth, $k$ in k-NN (k-Nearest Neighbors)) and to compare models on limited data. Kaggle competitions and scientific ML (Machine Learning) papers report CV (Cross-Validation) scores because a single split can be misleadingly lucky or unlucky.</p>`,
   quiz: {
     q: `With $k = 4$ folds, the round errors are $0.20, 0.24, 0.22, 0.26$. What is the cross-validation error?`,
     a: `<p>$\\text{CV} = \\dfrac{0.20 + 0.24 + 0.22 + 0.26}{4} = \\dfrac{0.92}{4} = 0.23$.</p>`
@@ -424,7 +424,7 @@ L({
   bigIdea:
     `<p>A bigger model always fits the <b>training</b> data better. But it may just memorize noise.</p>
      <p>So we need a score that rewards good fit but <b>punishes</b> extra parameters.</p>
-     <p><b>Model selection criteria</b> like AIC and BIC do exactly that: fit term plus complexity penalty.</p>
+     <p><b>Model selection criteria</b> like AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) do exactly that: fit term plus complexity penalty.</p>
      <p>Pick the model with the best (lowest) score. It is the sweet spot between underfit and overfit.</p>`,
   buildup:
     `<p>Measure fit with the <b>log-likelihood</b> $\\ln L$: how probable the data is under the model. Higher is better.</p>
@@ -462,7 +462,7 @@ L({
        <li>BIC punishes B's extra parameters even harder. Both criteria prefer the simpler Model A.</li>
      </ul>`,
   application:
-    `<p>AIC and BIC pick the order of time-series models (how many lags in ARIMA), choose the number of components in a mixture model, and select which features enter a regression. Whenever "more parameters" is tempting but risky, these criteria give an automatic, principled cutoff.</p>`,
+    `<p>AIC and BIC pick the order of time-series models (how many lags in ARIMA (AutoRegressive Integrated Moving Average)), choose the number of components in a mixture model, and select which features enter a regression. Whenever "more parameters" is tempting but risky, these criteria give an automatic, principled cutoff.</p>`,
   quiz: {
     q: `A model has $k = 5$ parameters and log-likelihood $\\ln L = -50$. What is its AIC?`,
     a: `<p>$\\text{AIC} = 2k - 2\\ln L = 2(5) - 2(-50) = 10 + 100 = 110$. Lower AIC across candidates is better.</p>`
@@ -675,7 +675,7 @@ L({
   buildup:
     `<p>Both methods change <b>one</b> component at a time and re-measure the whole system. That isolates each part's effect.</p>
      <p><b>What does "make a component perfect" actually mean?</b> A perfect component makes <b>zero mistakes</b> — for every input it outputs exactly the right answer. You can't build such a thing, so you <b>fake it on your dev set</b>: for each example you hand that stage its <b>ground-truth</b> output (read straight from your labels) instead of whatever the component actually computed, and let the rest of the pipeline run on that flawless input. The overall accuracy you then measure is the <b>ceiling</b> you'd hit if that stage were flawless.</p>
-     <p>Concretely: to "perfect" a face <b>detector</b>, you paste in the correct face boxes for every test image; to "perfect" an <b>OCR</b> stage, you feed in the true text; to "perfect" a <b>retriever</b>, you hand the generator the actually-relevant document. Nothing is trained — you are just simulating "what if this one part never erred?"</p>
+     <p>Concretely: to "perfect" a face <b>detector</b>, you paste in the correct face boxes for every test image; to "perfect" an <b>OCR</b> (Optical Character Recognition) stage, you feed in the true text; to "perfect" a <b>retriever</b>, you hand the generator the actually-relevant document. Nothing is trained — you are just simulating "what if this one part never erred?"</p>
      <p>Making the <b>whole system</b> perfect means every stage gets its ground-truth output, so the final answer is always correct — that is $100\\%$ accuracy, the absolute ceiling. Error analysis asks: <i>which single stage, made perfect, closes the most of the gap up toward that $100\\%$?</i> (Equivalently: replace stages one-by-one from the front of the pipeline and watch accuracy climb toward 100% — the step with the biggest jump is the bottleneck. This is Andrew Ng's "ceiling analysis".)</p>
      <p>Error analysis compares against the <b>perfect</b> system (ground-truth output for one stage). It tells you the <b>upside</b> of improving that part.</p>
      <p>Ablative analysis is the opposite comparison — against a <b>baseline</b> (delete or simplify a component). It tells you how much a part is currently <b>contributing</b>.</p>`,
@@ -708,7 +708,7 @@ L({
        <li>Ablative check: removing the classifier might drop accuracy from $72\\%$ to $60\\%$ ($\\nabla = 12\\%$), confirming it is essential to keep.</li>
      </ul>`,
   application:
-    `<p>Andrew Ng's CS229 popularized this for vision pipelines, but the idea drives any multi-stage ML system: speech recognition (acoustic vs. language model), recommendation (candidate generation vs. ranking), and modern RAG stacks (retriever vs. generator). Before optimizing blindly, run error analysis to find the bottleneck and ablative analysis to prune dead weight.</p>`,
+    `<p>Andrew Ng's CS229 popularized this for vision pipelines, but the idea drives any multi-stage ML (Machine Learning) system: speech recognition (acoustic vs. language model), recommendation (candidate generation vs. ranking), and modern RAG (Retrieval-Augmented Generation) stacks (retriever vs. generator). Before optimizing blindly, run error analysis to find the bottleneck and ablative analysis to prune dead weight.</p>`,
   quiz: {
     q: `Error analysis on a 70%-accurate pipeline: perfecting the OCR stage lifts it to 85%, perfecting the parser lifts it to 73%. Which stage should you work on, and what is its $\\Delta$?`,
     a: `<p>The OCR stage: $\\Delta = 85\\% - 70\\% = 15\\%$, far more than the parser's $\\Delta = 73\\% - 70\\% = 3\\%$. Spend your effort on OCR.</p>`

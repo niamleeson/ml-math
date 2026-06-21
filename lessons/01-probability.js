@@ -801,7 +801,7 @@ L({
        <li>Linearity: if the prize doubles and adds \\$1, expected winning is $2 \\times 3.5 + 1 = \\$8$.</li>
      </ul>`,
   application:
-    `<p>'Expected loss' is the quantity nearly every ML model minimizes during training. Expected value also drives decision-making: an A/B test picks the option with the higher expected payoff.</p>`,
+    `<p>'Expected loss' is the quantity nearly every ML (Machine Learning) model minimizes during training. Expected value also drives decision-making: an A/B test picks the option with the higher expected payoff.</p>`,
   quiz: {
     q: `A coin pays \\$10 for heads, \\$0 for tails, each with chance $\\frac{1}{2}$. What is $E[X]$?`,
     a: `<p>$E[X] = 10 \\times \\frac{1}{2} + 0 \\times \\frac{1}{2} = 5$. The expected payout is \\$5.</p>`
@@ -868,7 +868,7 @@ L({
        <li>Standard deviation: $\\sigma = \\sqrt{1} = 1$. Values sit about \\$1 away from the \\$1 mean — which matches \\$0 and \\$2.</li>
      </ul>`,
   application:
-    `<p>In finance, variance is risk. In ML, high variance in a model's predictions signals overfitting. The bias-variance tradeoff — a central idea in machine learning — is named after this exact quantity.</p>`,
+    `<p>In finance, variance is risk. In ML (Machine Learning), high variance in a model's predictions signals overfitting. The bias-variance tradeoff — a central idea in machine learning — is named after this exact quantity.</p>`,
   quiz: {
     q: `A variable is always exactly 7 (no randomness). What is its variance?`,
     a: `<p>0. It never moves away from its mean of 7, so the average squared distance is 0. No spread.</p>`
@@ -997,9 +997,9 @@ L({
     `<p>Some quantities are continuous: height, weight, time. They can be any value in a range.</p>
      <p>There are infinitely many exact values, so any single one has probability 0.</p>
      <p>Instead, probability becomes <b>area under a curve</b> over a range.</p>
-     <p>The curve is the PDF; the running total of area is the CDF.</p>`,
+     <p>The curve is the PDF (Probability Density Function); the running total of area is the CDF (Cumulative Distribution Function).</p>`,
   buildup:
-    `<p>For discrete variables, the PMF gave the chance of each exact value.</p>
+    `<p>For discrete variables, the PMF (Probability Mass Function) gave the chance of each exact value.</p>
      <p>For continuous variables, we use a <b>density</b> curve $f_X$ instead. Height of the curve is not probability — area is.</p>
      <p>'Area under a curve' is computed by an integral, written $\\int$. Total area must be 1.</p>`,
   symbols: [
@@ -1296,7 +1296,7 @@ L({
        <li>So a height of 200 cm is about 3 $\\sigma$ out — very rare (top ~0.15%).</li>
      </ul>`,
   application:
-    `<p>The Normal is the default assumption for noise and errors in countless models. Linear regression assumes Normal residuals. Many neural-network weights are initialized from a Normal. It is the most important distribution in all of ML.</p>`,
+    `<p>The Normal is the default assumption for noise and errors in countless models. Linear regression assumes Normal residuals. Many neural-network weights are initialized from a Normal. It is the most important distribution in all of ML (Machine Learning).</p>`,
   quiz: {
     q: `Test scores are Normal with $\\mu = 500$, $\\sigma = 100$. Roughly what percent of scores fall between 400 and 600?`,
     a: `<p>That's $\\mu \\pm 1\\sigma$ (one standard deviation each way). By the 68-95-99.7 rule, about <b>68%</b> of scores fall there.</p>`
@@ -1341,7 +1341,7 @@ L({
      <p>Think of it as a table: rows for one variable, columns for the other.</p>
      <p>A <b>marginal</b> distribution recovers one variable alone by summing out the other.</p>`,
   buildup:
-    `<p>One variable had a PMF $p_X(x)$. Two variables have a joint PMF $p_{X,Y}(x, y)$ — a chance for each pair.</p>
+    `<p>One variable had a PMF (Probability Mass Function) $p_X(x)$. Two variables have a joint PMF $p_{X,Y}(x, y)$ — a chance for each pair.</p>
      <p>To get $X$ by itself, you don't care about $Y$. So add up over all values of $Y$.</p>
      <p>Summing over a variable 'integrates it out' — the answer sits in the margin of the table, hence 'marginal'.</p>`,
   symbols: [
@@ -1462,7 +1462,7 @@ L({
        <li>$\\rho = 1$ means a perfect positive linear relationship.</li>
      </ul>`,
   application:
-    `<p>Correlation finds related features in data. Highly correlated features are often redundant, so dropping one speeds up models. PCA works directly on the covariance matrix to find the main directions of variation.</p>`,
+    `<p>Correlation finds related features in data. Highly correlated features are often redundant, so dropping one speeds up models. PCA (Principal Component Analysis) works directly on the covariance matrix to find the main directions of variation.</p>`,
   quiz: {
     q: `If $\\operatorname{Cov}(X, Y) = 0$, what does that say about their correlation $\\rho$?`,
     a: `<p>$\\rho = \\frac{0}{\\sigma_X \\sigma_Y} = 0$. There's no linear relationship between $X$ and $Y$.</p>`
@@ -1682,7 +1682,7 @@ L({
      <p>It explains why the Normal distribution shows up absolutely everywhere.</p>`,
   buildup:
     `<p>The Law of Large Numbers told you the average $\\overline{X}$ converges to $\\mu$.</p>
-     <p>The CLT goes further: it describes the <i>shape</i> of $\\overline{X}$'s wobble around $\\mu$.</p>
+     <p>The CLT (Central Limit Theorem) goes further: it describes the <i>shape</i> of $\\overline{X}$'s wobble around $\\mu$.</p>
      <p>That shape is Normal, centered at $\\mu$, with a spread that shrinks as $n$ grows.</p>`,
   symbols: [
     { sym: "$\\overline{X}$", desc: "the sample average of $n$ independent samples." },

@@ -51,7 +51,7 @@ L({
      <p>A <b>Graph Neural Network</b> gives every node a small list of numbers (its features). Then it lets nodes share with their neighbours.</p>
      <p>The sharing rule is called <b>message passing</b>: each node collects its neighbours' features, averages them, and uses that to update itself.</p>`,
   buildup:
-    `<p>You already know a neuron: multiply by a weight, add up, then squish. A GNN does the same, but the inputs are a node's neighbours.</p>
+    `<p>You already know a neuron: multiply by a weight, add up, then squish. A GNN (Graph Neural Network) does the same, but the inputs are a node's neighbours.</p>
      <p>One round of message passing lets a node hear from its direct neighbours. A second round lets it hear from neighbours-of-neighbours. Information spreads.</p>`,
   symbols: [
     { sym: "$v$", desc: "one node (a dot) in the graph." },
@@ -60,7 +60,7 @@ L({
     { sym: "$h_u$", desc: "the feature vector of a neighbour $u$ (one of the nodes in $N(v)$)." },
     { sym: "$\\text{agg}$", desc: "the aggregate step: combine the neighbours' features into one, usually by averaging them." },
     { sym: "$W$", desc: "a weight matrix, shared by all nodes. It reshapes the aggregated features (learned during training)." },
-    { sym: "$\\sigma$", desc: "an activation function (Greek 'sigma'), like ReLU. Adds a bend so the network can learn curves." },
+    { sym: "$\\sigma$", desc: "an activation function (Greek 'sigma'), like ReLU (Rectified Linear Unit). Adds a bend so the network can learn curves." },
     { sym: "$h_v'$", desc: "the updated feature vector of $v$ (the prime mark means 'after this round')." }
   ],
   formula: `$$ h_v' = \\sigma\\!\\big(\\, W \\cdot \\text{agg}\\big(\\{\\, h_u : u \\in N(v) \\,\\}\\big) \\big) $$`,
@@ -319,7 +319,7 @@ L({
        <li>Right rose from $0.5$ to $0.69$ <i>because</i> $G = +2 &gt; 0$. Had $G = -2$, every sign flips: Right would fall to $\\approx 0.31$ and Left rise. The reward's sign sets the update's direction.</li>
      </ul>`,
   application:
-    `<p>Policy gradients power robotics (smooth, continuous controls), game-playing agents, and the alignment step of chatbots: RLHF tunes a language model's policy to prefer responses humans rated highly.</p>`,
+    `<p>Policy gradients power robotics (smooth, continuous controls), game-playing agents, and the alignment step of chatbots: RLHF (Reinforcement Learning from Human Feedback) tunes a language model's policy to prefer responses humans rated highly.</p>`,
   demo: function (host) {
     host.innerHTML = "";
     // One state, 3 actions. Bars = probabilities. Each episode, sample an action,
@@ -391,7 +391,7 @@ L({
 /* ================================================================ */
 L({
   id: "mod-actor-critic",
-  title: "Actor-Critic (A2C, PPO)",
+  title: "Actor-Critic — A2C (Advantage Actor-Critic), PPO (Proximal Policy Optimization)",
   tagline: "One net picks actions, a second net judges the state. Update the actor by how much better an action did than expected.",
   prereqs: ["mod-policy-gradient", "ai-value-iteration"],
   bigIdea:
@@ -436,7 +436,7 @@ L({
        <li>The critic also nudges $V(s)$ up toward $6.4$, since it under-valued the state.</li>
      </ul>`,
   application:
-    `<p>Actor-Critic methods (A2C, A3C, PPO) are the modern default for reinforcement learning: they trained the OpenAI Five Dota 2 team, control simulated and real robots, and run the reinforcement step (PPO) in many chatbot alignment pipelines.</p>`,
+    `<p>Actor-Critic methods (A2C, A3C (Asynchronous Advantage Actor-Critic), PPO) are the modern default for reinforcement learning: they trained the OpenAI Five Dota 2 team, control simulated and real robots, and run the reinforcement step (PPO) in many chatbot alignment pipelines.</p>`,
   demo: function (host) {
     host.innerHTML = "";
     // Left: actor (3 action probs). Right: critic value bar. Step shows advantage.
@@ -759,7 +759,7 @@ L({
 /* ================================================================ */
 L({
   id: "mod-timeseries",
-  title: "Time-series forecasting (ARIMA)",
+  title: "Time-series forecasting — ARIMA (AutoRegressive Integrated Moving Average)",
   tagline: "Predict the next value from recent values and recent surprises, then give a range, not just a point.",
   prereqs: ["ml-gradient-descent"],
   bigIdea:

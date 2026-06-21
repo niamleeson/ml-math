@@ -57,7 +57,7 @@ L({
   example:
     `<p>Three base models predict a house price (in \\$k). The truth is $y = 300$.</p>
      <ul class="steps">
-       <li>Tree predicts $z_1 = 310$. Linear predicts $z_2 = 290$. kNN predicts $z_3 = 330$.</li>
+       <li>Tree predicts $z_1 = 310$. Linear predicts $z_2 = 290$. kNN (k-Nearest Neighbors) predicts $z_3 = 330$.</li>
        <li>A meta-model learned the weights $w = (0.5,\\ 0.4,\\ 0.1)$ on past data (it trusts the tree and linear model most).</li>
        <li>Combine: $\\hat{y} = 0.5{\\cdot}310 + 0.4{\\cdot}290 + 0.1{\\cdot}330 = 155 + 116 + 33 = 304$.</li>
        <li>A plain average would give $(310 + 290 + 330)/3 = 310$ — further from the true $300$ than the learned $304$.</li>
@@ -349,13 +349,13 @@ L({
 /* ---------------------------------------------------------------- */
 L({
   id: "cls-tsne",
-  title: "t-SNE / UMAP",
+  title: "t-SNE (t-distributed Stochastic Neighbor Embedding) / UMAP (Uniform Manifold Approximation and Projection)",
   tagline: "Squash high-dimensional data to 2-D while keeping neighbors together.",
   prereqs: ["ml-pca", "ml-knn"],
   bigIdea:
     `<p><b>t-SNE</b> and <b>UMAP</b> are tools for <i>seeing</i> high-dimensional data on a flat screen.</p>
      <p>They place each point in 2-D so that points close in the original space stay close on the map.</p>
-     <p>Unlike PCA, they can bend and curve — they capture nonlinear structure.</p>
+     <p>Unlike PCA (Principal Component Analysis), they can bend and curve — they capture nonlinear structure.</p>
      <p>The payoff: hidden clusters pop out as visible blobs.</p>`,
   buildup:
     `<p>PCA keeps the directions of biggest spread, but flattens curved structure.</p>
@@ -471,7 +471,7 @@ L({
     `<p>Pick a few hidden factor values $z$ (drawn from a standard bell curve). Multiply by the loadings $\\Lambda$ to spread them across the observed signals.</p>
      <p>Add the baseline $\\mu$ so each signal sits at its normal level. Add a little private noise $\\epsilon$.</p>
      <p>The result is the observed vector $x$. Training learns $\\Lambda$, $\\mu$, and the noise sizes $\\Psi$ from data.</p>
-     <p>Because the noise $\\epsilon$ is modeled <i>per variable</i> (the diagonal $\\Psi$), factor analysis separates shared structure from per-signal junk — something plain PCA does not do.</p>`,
+     <p>Because the noise $\\epsilon$ is modeled <i>per variable</i> (the diagonal $\\Psi$), factor analysis separates shared structure from per-signal junk — something plain PCA (Principal Component Analysis) does not do.</p>`,
   derivation:
     `<p><b>Why this implies a specific correlation pattern.</b></p>
      <p>Center the data so $\\mu = 0$, giving $x = \\Lambda z + \\epsilon$. Find the covariance of $x$ (how its components vary together).</p>
