@@ -2346,7 +2346,14 @@ L({
   buildup:
     `<p><b>Modus ponens</b>: if you know $f$, and you know $f \\rightarrow g$, then you may conclude $g$.</p>
      <p><b>Horn clauses</b> are simple rules ("if these, then that") that modus ponens handles fast.</p>
-     <p><b>Resolution</b> is a single rule that, applied over and over, can prove anything that logically follows.</p>`,
+     <p><b>Resolution</b> is a single rule that, applied over and over, can prove anything that logically follows.</p>
+     <p>Resolution requires the knowledge base in <b>CNF (Conjunctive Normal Form)</b> first — an AND of clauses, where each clause is an OR of literals. Convert any sentence to CNF in order:</p>
+     <ol>
+       <li>Eliminate $\\leftrightarrow$: replace $f \\leftrightarrow g$ with $(f \\rightarrow g) \\wedge (g \\rightarrow f)$.</li>
+       <li>Eliminate $\\rightarrow$: replace $f \\rightarrow g$ with $\\neg f \\vee g$.</li>
+       <li>Drive in negations using double-negation $\\neg\\neg f \\equiv f$ and De Morgan ($\\neg(f \\wedge g) \\equiv \\neg f \\vee \\neg g$, $\\neg(f \\vee g) \\equiv \\neg f \\wedge \\neg g$).</li>
+       <li>Distribute $\\vee$ over $\\wedge$: $f \\vee (g \\wedge h) \\equiv (f \\vee g) \\wedge (f \\vee h)$.</li>
+     </ol>`,
   symbols: [
     { sym: "$f, g$", desc: "logical sentences (each true or false)." },
     { sym: "modus ponens", desc: "from $f$ and $f \\rightarrow g$, conclude $g$." },
@@ -2355,7 +2362,9 @@ L({
     { sym: "soundness", desc: "every fact the rules derive is actually true. No false conclusions." },
     { sym: "completeness", desc: "the rules can derive every fact that truly follows. Nothing true is missed." }
   ],
-  formula: `$$ \\frac{f,\\quad f \\rightarrow g}{g} \\qquad\\text{(modus ponens)} $$`,
+  formula: `$$ \\frac{f,\\quad f \\rightarrow g}{g} \\qquad\\text{(modus ponens)} $$
+     $$ \\frac{f_1 \\vee \\dots \\vee f_n \\vee p, \\quad \\neg p \\vee g_1 \\vee \\dots \\vee g_m}{f_1 \\vee \\dots \\vee f_n \\vee g_1 \\vee \\dots \\vee g_m} \\qquad\\text{(resolution)} $$
+     <p>Resolution takes two clauses (disjunctions of literals) sharing a complementary literal $p$ / $\\neg p$ and cancels it, producing a new clause; applied repeatedly it is a complete proof procedure (proof by contradiction: derive the empty clause $=$ False).</p>`,
   whatItDoes:
     `<p>The bar means: from the facts on top, derive the fact below.</p>
      <p>An inference system is <b>sound</b> if it never derives a falsehood, and <b>complete</b> if it can derive every truth.</p>

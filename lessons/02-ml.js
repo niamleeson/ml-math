@@ -3165,9 +3165,13 @@ L({
     { sym: "$\\lambda$", desc: "the regularization strength ('lambda'). Bigger = simpler model, more shrinkage." },
     { sym: "$\\lVert \\theta \\rVert_2^2$", desc: "squared L2 norm of the weights (Ridge): $\\sum \\theta_j^2$." },
     { sym: "$\\lVert \\theta \\rVert_1$", desc: "L1 norm of the weights (LASSO): $\\sum |\\theta_j|$; it zeros out weak features." },
+    { sym: "$\\alpha$", desc: "the L1/L2 mixing ratio for Elastic Net ('alpha'), $\\alpha \\in [0,1]$: $\\alpha=0$ is pure LASSO, $\\alpha=1$ is pure Ridge." },
     { sym: "k-fold CV", desc: "split data into $k$ parts; train on $k-1$, test on the rest; rotate and average." }
   ],
-  formula: `$$ J(\\theta) = \\underbrace{\\sum_{i=1}^{m} L(h_\\theta(x^{(i)}), y^{(i)})}_{\\text{fit the data}} \\;+\\; \\underbrace{\\lambda\\,\\lVert \\theta \\rVert}_{\\text{keep weights small}} $$`,
+  formula: `$$ J(\\theta) = \\underbrace{\\sum_{i=1}^{m} L(h_\\theta(x^{(i)}), y^{(i)})}_{\\text{fit the data}} \\;+\\; \\underbrace{\\lambda\\,\\lVert \\theta \\rVert}_{\\text{keep weights small}} $$
+     <p><b>Elastic Net</b> penalty:</p>
+     $$ \\lambda\\left[(1-\\alpha)\\lVert\\theta\\rVert_1 + \\alpha\\lVert\\theta\\rVert_2^2\\right], \\qquad \\alpha \\in [0,1] $$
+     <p>$\\alpha$ trades off between LASSO's variable selection ($\\alpha=0$) and Ridge's smooth shrinkage ($\\alpha=1$); it keeps groups of correlated features that LASSO would arbitrarily drop.</p>`,
   whatItDoes:
     `<p>The first term rewards fitting the data. The second term punishes large weights.</p>
      <p>A bigger $\\lambda$ leans toward simpler models (more bias, less variance); a smaller $\\lambda$ leans toward fitting (less bias, more variance).</p>

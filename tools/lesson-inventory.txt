@@ -10,7 +10,7 @@
   fnd-chain  —  The chain rule
   fnd-eigen  —  Eigenvalues & eigenvectors
 
-### Probability & Statistics (22)
+### Probability & Statistics (23)
   prob-sample-space  —  Sample space & events
   prob-axioms  —  Probability axioms
   prob-conditional  —  Conditional probability
@@ -33,6 +33,7 @@
   prob-lln  —  Law of Large Numbers
   prob-clt  —  Central Limit Theorem
   prob-estimation  —  Parameter estimation
+  prob-jensen  —  Jensen's inequality
 
 ### Machine Learning (CS229) (27)
   ml-supervised  —  Supervised learning setup
@@ -137,19 +138,21 @@
   la-hessian  —  The Hessian
   la-matrix-calculus  —  Matrix calculus: gradient identities
 
-### Probability (advanced) (4)
+### Probability (advanced) (5)
   probx-derived  —  Derived distributions
   probx-convolution  —  Distribution of a sum (convolution)
   probx-total-variance  —  Law of total variance
   probx-mgf  —  Moment generating functions
+  probx-random-sum  —  Random sums & Wald's identity
 
-### Machine Learning — more (6)
+### Machine Learning — more (7)
   mlx-newton  —  Newton's method
   mlx-lwr  —  Locally weighted regression (LWR)
   mlx-cross-validation  —  k-fold cross-validation
   mlx-model-selection  —  Model selection criteria
   mlx-clustering-metrics  —  Clustering quality (silhouette)
   mlx-error-analysis  —  Error analysis & ablative analysis
+  mlx-ica-infomax  —  ICA: the Bell-Sejnowski (infomax) algorithm
 
 ### Artificial Intelligence — more (11)
   aix-relaxation  —  Relaxed heuristics for A*
@@ -360,4 +363,4 @@
   unl-pseudo-label  —  Pseudo-labeling & entropy minimization
   unl-simclr  —  SimCLR & contrastive learning (NT-Xent / InfoNCE)
 
-TOTAL: 321
+TOTAL: 324

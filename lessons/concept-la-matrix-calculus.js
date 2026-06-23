@@ -97,7 +97,8 @@
 
     formula:
       `$$ \\nabla_x\\, b^{\\top}x = b, \\qquad \\nabla_x\\, x^{\\top}A x = (A + A^{\\top})x $$
-       $$ \\nabla_A \\operatorname{tr}(AB) = B^{\\top}, \\qquad \\nabla_A \\operatorname{tr}(ABA^{\\top}C) = CAB + C^{\\top}AB^{\\top}, \\qquad \\nabla_A |A| = |A|\\,(A^{-1})^{\\top} $$`,
+       $$ \\nabla_A \\operatorname{tr}(AB) = B^{\\top}, \\qquad \\nabla_A \\operatorname{tr}(ABA^{\\top}C) = CAB + C^{\\top}AB^{\\top}, \\qquad \\nabla_A |A| = |A|\\,(A^{-1})^{\\top} $$
+       $$ \\nabla_{A^{\\top}} f(A) = \\left(\\nabla_A f(A)\\right)^{\\top} $$`,
 
     whatItDoes:
       `<p><b>The two vector rules</b> are the workhorses. $\\nabla_x\\, b^\\top x = b$: the gradient of a
@@ -108,7 +109,10 @@
         in $A$, so its gradient is the constant $B^\\top$. The longer
         $\\operatorname{tr}(ABA^\\top C)$ has $A$ appearing twice, so its gradient has two terms, one from each
         appearance. <b>The determinant rule</b> $\\nabla_A|A|=|A|(A^{-1})^\\top$ is what makes Gaussian
-        log-likelihoods differentiable.</p>`,
+        log-likelihoods differentiable.</p>
+       <p><b>The transpose rule</b> $\\nabla_{A^\\top} f(A) = (\\nabla_A f(A))^\\top$ just says: differentiating with
+        respect to the transpose gives the transpose of the gradient — a bookkeeping identity that lets you
+        switch layouts without redoing the calculus.</p>`,
 
     derivation:
       `<p><b>1. The linear rule</b> $\\nabla_x\\, b^\\top x = b$.</p>

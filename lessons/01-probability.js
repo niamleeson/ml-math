@@ -940,10 +940,13 @@ L({
     { sym: "$p_X(x)$", desc: "the probability that $X$ equals $x$ (the PMF)." },
     { sym: "$aX + b$", desc: "a rescaled variable: multiply $X$ by a constant $a$ and add a constant $b$." }
   ],
-  formula: `$$ E[X] = \\sum_x x\\, p_X(x) \\qquad E[aX + b] = a\\,E[X] + b $$`,
+  formula: `$$ E[X] = \\sum_x x\\, p_X(x) \\qquad E[aX + b] = a\\,E[X] + b $$
+$$ E[g(X)] = \\sum_x g(x)\\,p(x) \\quad\\text{(discrete)}, \\qquad E[g(X)] = \\int_{-\\infty}^{\\infty} g(x)\\,f(x)\\,dx \\quad\\text{(continuous)} $$`,
   whatItDoes:
     `<p>For each value $x$: multiply it by its chance $p_X(x)$, then add up all those products.</p>
-     <p>The second formula (linearity) says: scaling and shifting $X$ scales and shifts its mean the same way. Very handy.</p>`,
+     <p>The second formula (linearity) says: scaling and shifting $X$ scales and shifts its mean the same way. Very handy.</p>
+     <p><b>Law of the Unconscious Statistician (LOTUS):</b> you can take the expectation of a FUNCTION of $X$ by weighting $g(x)$ by the distribution of $X$ — you do NOT need the distribution of $g(X)$ itself (that is why it is the "unconscious statistician").</p>
+     <p>The <b>$k$-th moment</b> is $E[X^k]$: so $k = 1$ is the mean, and the variance uses the 2nd moment.</p>`,
   example:
     `<p>A game: roll a fair die, win that many dollars. What's your expected winning?</p>
      <ul class="steps">
@@ -1646,11 +1649,14 @@ L({
     { sym: "$\\sum_y$", desc: "'add up over every value $y$ of $Y$'." },
     { sym: "$x, y$", desc: "particular values of the two variables $X$ and $Y$." }
   ],
-  formula: `$$ p_X(x) = \\sum_y p_{X,Y}(x, y) \\qquad \\Big(\\text{continuous: } f_X(x) = \\int f_{X,Y}(x, y)\\, dy\\Big) $$`,
+  formula: `$$ p_X(x) = \\sum_y p_{X,Y}(x, y) \\qquad \\Big(\\text{continuous: } f_X(x) = \\int f_{X,Y}(x, y)\\, dy\\Big) $$
+$$ f_{X\\mid Y}(x\\mid y) = \\frac{f_{X,Y}(x,y)}{f_Y(y)} $$`,
   whatItDoes:
     `<p>To find the marginal of $X$ at value $x$: fix $x$, then add the joint probabilities across all $y$.</p>
      <p>You're collapsing the table down one direction. $Y$ disappears; $X$ remains.</p>
-     <p>For continuous variables, replace the sum $\\sum$ with an integral $\\int$.</p>`,
+     <p>For continuous variables, replace the sum $\\sum$ with an integral $\\int$.</p>
+     <p>The <b>conditional density</b> $f_{X\\mid Y}(x\\mid y) = \\frac{f_{X,Y}(x,y)}{f_Y(y)}$ rescales the joint density by the marginal of the variable you are conditioning on, so it integrates to 1 once $y$ is fixed.</p>
+     <p><b>Independence (continuous):</b> $X$ and $Y$ are independent iff $f_{X,Y}(x,y) = f_X(x)\\,f_Y(y)$ for all $x, y$ — that is, the joint factors into the product of the two marginals.</p>`,
   example:
     `<p>Joint table for weather ($Y$ = Sunny/Rainy) and your mood ($X$ = Happy/Sad):</p>
      <ul class="steps">

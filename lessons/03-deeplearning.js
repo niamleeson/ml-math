@@ -173,14 +173,18 @@ L({
     { sym: "$e$", desc: "Euler's number, about 2.718. A fixed constant used for smooth curves." },
     { sym: "$\\sigma(z)$", desc: "the sigmoid function (Greek 'sigma'). Squishes any number into the range 0 to 1." },
     { sym: "$\\tanh(z)$", desc: "the tanh function. Squishes any number into the range -1 to 1." },
-    { sym: "$\\max(0, z)$", desc: "the larger of 0 and $z$. This is ReLU (Rectified Linear Unit): keep positives, turn negatives into 0." }
+    { sym: "$\\max(0, z)$", desc: "the larger of 0 and $z$. This is ReLU (Rectified Linear Unit): keep positives, turn negatives into 0." },
+    { sym: "$\\epsilon$", desc: "the Leaky ReLU slope (Greek 'epsilon'), a tiny positive number with $\\epsilon \\ll 1$ (e.g. 0.01) — the small gradient it lets through for negative inputs is what stops neurons from dying." },
+    { sym: "$\\alpha$", desc: "the ELU scale (Greek 'alpha'), a small positive number with $\\alpha \\ll 1$ that sets how far negative the smooth Exponential Linear Unit curve can dip." }
   ],
-  formula: `$$ \\sigma(z) = \\frac{1}{1+e^{-z}} \\qquad \\tanh(z) = \\frac{e^{z}-e^{-z}}{e^{z}+e^{-z}} \\qquad \\text{ReLU}(z) = \\max(0, z) $$`,
+  formula: `$$ \\sigma(z) = \\frac{1}{1+e^{-z}} \\qquad \\tanh(z) = \\frac{e^{z}-e^{-z}}{e^{z}+e^{-z}} \\qquad \\text{ReLU}(z) = \\max(0, z) $$
+$$ \\text{Leaky ReLU}(z) = \\max(\\epsilon z, z),\\ \\epsilon \\ll 1 \\qquad \\text{ELU}(z) = \\max(\\alpha(e^{z} - 1),\\, z),\\ \\alpha \\ll 1 $$`,
   whatItDoes:
     `<p><b>Sigmoid</b> turns any number into a value between 0 and 1. Good for probabilities.</p>
      <p><b>Tanh</b> is like sigmoid but ranges from -1 to 1, centered at zero.</p>
      <p><b>ReLU</b> is the most popular. It just keeps positive numbers and flattens negatives to 0. Simple and fast.</p>
-     <p><b>Leaky ReLU</b> is a small fix: instead of flat 0 for negatives, it lets a tiny slope through (like $0.01z$) so neurons never fully "die".</p>`,
+     <p><b>Leaky ReLU</b> is a small fix: $g(z) = \\max(\\epsilon z, z)$ with $\\epsilon \\ll 1$. Instead of flat 0 for negatives, it lets a tiny slope through (like $0.01z$), so a small gradient still flows and neurons never fully "die" — this is the fix for the "dying ReLU" problem.</p>
+     <p><b>ELU (Exponential Linear Unit)</b> goes further: $g(z) = \\max(\\alpha(e^{z} - 1),\\, z)$ with $\\alpha \\ll 1$. It is smooth and differentiable everywhere (no sharp kink at 0) and can output negative values, which pushes the activations' mean toward zero and helps training.</p>`,
   example:
     `<p>Let $z = 2$. Apply each activation and watch the <b>bend</b>: the input changes, but the outputs do not all move in step.</p>
      <ul class="steps">
@@ -1491,6 +1495,14 @@ L({
   whatItDoes:
     `<p>Read it as: start with the input size, subtract the filter size, add padding on both sides ($2P$), divide by the stride, then add 1.</p>
      <p>The result is how many positions the filter fits, which is the output width.</p>`,
+  derivation:
+    `<p>You rarely pick a raw number for $P$. Instead libraries offer three named zero-padding modes, each fixing $P$ for you:</p>
+     $$ \\text{Valid: } P = 0 \\qquad \\text{Same: } O = \\lceil I / S \\rceil \\qquad \\text{Full: } P_{\\text{end}} = F - 1 $$
+     <ul>
+       <li><b>Valid</b> — no padding ($P = 0$). The filter only sits on real input cells, so the output shrinks.</li>
+       <li><b>Same</b> — pad just enough that the output size is $\\lceil I/S \\rceil$ (the input size is preserved at stride 1). Also called "half" padding, because at stride 1 it adds about half a filter on each side.</li>
+       <li><b>Full</b> — maximal padding, $P_{\\text{end}} = F - 1$ on each end, so every input cell is fully convolved (visited by every filter position). The output grows.</li>
+     </ul>`,
   example:
     `<p>Input $I = 7$, filter $F = 3$, padding $P = 0$, stride $S = 1$.</p>
      <ul class="steps">
@@ -2476,12 +2488,25 @@ L({
     { sym: "forget gate", desc: "decides how much of the old memory to throw away (0 = forget all, 1 = keep all)." },
     { sym: "update gate", desc: "decides how much new information to add to the memory." },
     { sym: "output gate", desc: "decides how much of the memory to reveal as the step's output." },
-    { sym: "GRU", desc: "a lighter cell with fewer gates; faster, often works just as well." }
+    { sym: "GRU", desc: "a lighter cell with fewer gates; faster, often works just as well." },
+    { sym: "$\\Gamma$", desc: "a gate (Greek capital 'Gamma'): $\\Gamma = \\sigma(W\\,x^{&lt;t&gt;} + U\\,a^{&lt;t-1&gt;} + b)$, a sigmoid so each entry lands in $[0,1]$." },
+    { sym: "$\\Gamma_u$", desc: "the update gate: how much new candidate memory to write in." },
+    { sym: "$\\Gamma_r$", desc: "the relevance (reset) gate, used in the GRU: how much of the old state to expose when forming the candidate." },
+    { sym: "$\\Gamma_f$", desc: "the forget gate, used in the LSTM: how much old cell memory to keep." },
+    { sym: "$\\Gamma_o$", desc: "the output gate, used in the LSTM: how much of the cell to reveal as the step's activation." },
+    { sym: "$\\star$", desc: "elementwise (Hadamard) multiplication: multiply the two vectors entry by entry." },
+    { sym: "$\\tilde{c}^{&lt;t&gt;}$", desc: "the candidate memory at step $t$: the new content proposed to write into the cell." }
   ],
-  formula: `$$ \\text{gate} = \\sigma(\\cdots) \\in (0, 1), \\quad \\text{new memory} = \\text{forget}\\cdot\\text{old} + \\text{update}\\cdot\\text{new} $$`,
+  formula: `$$ \\text{gate: } \\Gamma = \\sigma(W\\,x^{&lt;t&gt;} + U\\,a^{&lt;t-1&gt;} + b) \\in [0,1] $$
+$$ \\text{GRU: } \\tilde{c}^{&lt;t&gt;} = \\tanh(W_c[\\Gamma_r \\star a^{&lt;t-1&gt;},\\, x^{&lt;t&gt;}] + b_c), \\quad c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + (1-\\Gamma_u)\\star c^{&lt;t-1&gt;} $$
+$$ \\text{LSTM: } c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + \\Gamma_f \\star c^{&lt;t-1&gt;}, \\quad a^{&lt;t&gt;} = \\Gamma_o \\star c^{&lt;t&gt;} $$`,
   whatItDoes:
     `<p>Each gate is a sigmoid, giving a value between 0 and 1. The forget gate scales the old memory, the update gate scales the new info, and they are added together.</p>
      <p>Because memory can pass through almost untouched (forget gate near 1), gradients don't vanish, so long-term memory survives.</p>`,
+  derivation:
+    `<p>Every gate is computed the same way — a sigmoid over the current input and previous activation: $\\Gamma = \\sigma(W\\,x^{&lt;t&gt;} + U\\,a^{&lt;t-1&gt;} + b)$, where $x^{&lt;t&gt;}$ is the input at timestep $t$ and $a^{&lt;t-1&gt;}$ is the previous step's activation. The learnable weights $W, U$ and bias $b$ differ per gate, so each gate learns its own job.</p>
+     <p><b>GRU.</b> First build a candidate memory $\\tilde{c}^{&lt;t&gt;} = \\tanh(W_c[\\Gamma_r \\star a^{&lt;t-1&gt;},\\, x^{&lt;t&gt;}] + b_c)$ — the relevance gate $\\Gamma_r$ chooses how much old state to look at. Then the update gate $\\Gamma_u$ blends old and new: $c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + (1-\\Gamma_u)\\star c^{&lt;t-1&gt;}$. One gate trades off "write new" against "keep old".</p>
+     <p><b>LSTM.</b> It splits that single trade-off into two independent gates — an update gate $\\Gamma_u$ and a separate forget gate $\\Gamma_f$: $c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + \\Gamma_f \\star c^{&lt;t-1&gt;}$. A third output gate $\\Gamma_o$ then decides how much of the cell to expose: $a^{&lt;t&gt;} = \\Gamma_o \\star c^{&lt;t&gt;}$. Here $\\star$ is elementwise multiplication, so each entry of the memory vector is gated on its own.</p>`,
   example:
     `<p>Store a memory of strength $1$ at step 0, then read 10 more words. Compare how much survives. The LSTM carry is $c \\leftarrow f\\cdot c$ with forget gate $f = 0.9$; a plain RNN shrinks by roughly its recurrent slope $0.5$ each step.</p>
      <ul class="steps">
