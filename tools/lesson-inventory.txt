@@ -1,0 +1,363 @@
+
+### Foundations: Math you need first (9)
+  fnd-vector  —  Vectors
+  fnd-dot  —  The dot product (inner product)
+  fnd-matrix  —  Matrices
+  fnd-matvec  —  Matrix × vector
+  fnd-norm  —  Norms (the length of a vector)
+  fnd-derivative  —  Derivatives (slope)
+  fnd-gradient  —  The gradient (slope in many directions)
+  fnd-chain  —  The chain rule
+  fnd-eigen  —  Eigenvalues & eigenvectors
+
+### Probability & Statistics (22)
+  prob-sample-space  —  Sample space & events
+  prob-axioms  —  Probability axioms
+  prob-conditional  —  Conditional probability
+  prob-bayes  —  Bayes' rule
+  prob-total-prob  —  Total probability theorem
+  prob-independence  —  Independence
+  prob-counting  —  Counting: permutations & combinations
+  prob-random-variable  —  Random variable & PMF
+  prob-expectation  —  Expectation (the mean)
+  prob-variance  —  Variance & standard deviation
+  prob-bernoulli-binomial  —  Bernoulli & Binomial
+  prob-geometric-poisson  —  Geometric & Poisson
+  prob-pdf-cdf  —  Continuous variables: PDF & CDF
+  prob-uniform-exponential  —  Uniform & Exponential
+  prob-normal  —  Normal (Gaussian) distribution
+  prob-joint-marginal  —  Joint & marginal distributions
+  prob-covariance-correlation  —  Covariance & correlation
+  prob-conditional-expectation  —  Conditional expectation
+  prob-inequalities  —  Markov & Chebyshev inequalities
+  prob-lln  —  Law of Large Numbers
+  prob-clt  —  Central Limit Theorem
+  prob-estimation  —  Parameter estimation
+
+### Machine Learning (CS229) (27)
+  ml-supervised  —  Supervised learning setup
+  ml-loss  —  Loss function
+  ml-cost  —  Cost function
+  ml-gradient-descent  —  Gradient descent
+  ml-linear-regression  —  Linear regression
+  ml-likelihood  —  Likelihood & maximum likelihood
+  ml-logistic-regression  —  Logistic regression
+  ml-softmax  —  Softmax (multiclass)
+  ml-glm  —  Generalized linear models
+  ml-svm  —  Support vector machines
+  ml-kernels  —  The kernel trick
+  ml-gda  —  Gaussian discriminant analysis
+  ml-naive-bayes  —  Naive Bayes
+  ml-trees  —  Decision trees (CART (Classification And Regression Trees))
+  ml-ensembles  —  Random forests & boosting
+  ml-knn  —  k-nearest neighbors
+  ml-bias-variance  —  Bias-variance tradeoff
+  ml-learning-theory  —  Learning theory (gentle)
+  ml-kmeans  —  k-means clustering
+  ml-em  —  Expectation-Maximization (gentle)
+  ml-hierarchical  —  Hierarchical clustering
+  ml-pca  —  Principal component analysis (PCA)
+  ml-ica  —  Independent component analysis (ICA)
+  ml-classification-metrics  —  Confusion matrix & classification metrics
+  ml-roc-auc  —  ROC (Receiver Operating Characteristic) curve & AUC (Area Under the Curve)
+  ml-regression-metrics  —  Regression metrics (R² and RMSE (Root Mean Squared Error))
+  ml-regularization  —  Regularization & cross-validation
+
+### Deep Learning (CS230) (32)
+  dl-neuron  —  The neuron & network layers
+  dl-activations  —  Activation functions
+  dl-forward-prop  —  Forward propagation
+  dl-cross-entropy  —  Cross-entropy loss
+  dl-backprop  —  Backpropagation
+  dl-optimizers  —  Optimizers: Momentum, RMSprop, Adam
+  dl-minibatch  —  Mini-batch gradient descent & epochs
+  dl-init  —  Weight initialization (Xavier)
+  dl-dropout  —  Dropout
+  dl-batchnorm  —  Batch normalization
+  dl-early-stopping  —  Early stopping
+  dl-conv  —  Convolutional layer
+  dl-pooling  —  Pooling (max / average)
+  dl-conv-hyperparams  —  Filter hyperparameters & output size
+  dl-cnn-params  —  Counting CNN (Convolutional Neural Network) parameters
+  dl-object-detection  —  Object detection (IoU (Intersection over Union), YOLO (You Only Look Once))
+  dl-face-recognition  —  Face verification & triplet loss
+  dl-style-transfer  —  Neural style transfer
+  dl-gan  —  GANs (Generative Adversarial Networks) (generator vs discriminator)
+  dl-rnn  —  Recurrent neural networks (RNNs)
+  dl-vanishing-gradient  —  Vanishing & exploding gradients
+  dl-lstm-gru  —  LSTM (Long Short-Term Memory) & GRU (Gated Recurrent Unit) (gates)
+  dl-word-embeddings  —  Word embeddings
+  dl-word2vec  —  word2vec & GloVe
+  dl-cosine-similarity  —  Cosine similarity
+  dl-attention  —  Attention
+  dl-data-augmentation  —  Data augmentation
+  dl-beam-search  —  Beam search decoding & length normalization
+  dl-inception  —  Inception modules & 1×1 convolutions
+  dl-language-model  —  Language models: n-grams & perplexity
+  dl-receptive-field  —  The receptive field of a CNN
+  dl-resnet  —  Residual networks (skip connections)
+
+### Artificial Intelligence (CS221) (22)
+  ai-linear-predictors  —  Linear predictors (reflex models)
+  ai-loss-minimization  —  Loss minimization
+  ai-sgd  —  Stochastic gradient descent (SGD)
+  ai-search-problem  —  Search problems
+  ai-tree-search  —  Tree search: BFS (Breadth-First Search), DFS (Depth-First Search), iterative deepening
+  ai-graph-search  —  Graph search: dynamic programming and UCS (Uniform Cost Search)
+  ai-astar  —  A* search
+  ai-mdp  —  Markov Decision Processes (MDPs)
+  ai-policy-value  —  Policies and values
+  ai-qvalue  —  Q-values
+  ai-value-iteration  —  Value iteration
+  ai-q-learning  —  Q-learning (model-free)
+  ai-minimax  —  Minimax (game playing)
+  ai-alpha-beta  —  Alpha-beta pruning
+  ai-expectimax  —  Expectimax
+  ai-csp  —  Constraint satisfaction problems (CSPs)
+  ai-csp-search  —  Solving CSPs (Constraint Satisfaction Problems): backtracking and consistency
+  ai-bayes-net  —  Bayesian networks
+  ai-bayes-inference  —  Inference in Bayes nets
+  ai-hmm  —  Hidden Markov Models (HMMs)
+  ai-propositional-logic  —  Propositional logic
+  ai-inference-rules  —  Inference and resolution
+
+### Linear Algebra (deep dive) (14)
+  la-matmul  —  Matrix × matrix
+  la-transpose  —  Transpose
+  la-identity-diagonal  —  Identity & diagonal matrices
+  la-inverse  —  Matrix inverse
+  la-determinant  —  Determinant
+  la-cofactor  —  Cofactor expansion
+  la-trace  —  Trace
+  la-rank-independence  —  Rank & linear independence
+  la-psd  —  Positive semi-definite matrices
+  la-spectral  —  Spectral theorem
+  la-svd  —  Singular Value Decomposition (SVD)
+  la-jacobian  —  The Jacobian
+  la-hessian  —  The Hessian
+  la-matrix-calculus  —  Matrix calculus: gradient identities
+
+### Probability (advanced) (4)
+  probx-derived  —  Derived distributions
+  probx-convolution  —  Distribution of a sum (convolution)
+  probx-total-variance  —  Law of total variance
+  probx-mgf  —  Moment generating functions
+
+### Machine Learning — more (6)
+  mlx-newton  —  Newton's method
+  mlx-lwr  —  Locally weighted regression (LWR)
+  mlx-cross-validation  —  k-fold cross-validation
+  mlx-model-selection  —  Model selection criteria
+  mlx-clustering-metrics  —  Clustering quality (silhouette)
+  mlx-error-analysis  —  Error analysis & ablative analysis
+
+### Artificial Intelligence — more (11)
+  aix-relaxation  —  Relaxed heuristics for A*
+  aix-structured-perceptron  —  Learning costs (structured perceptron)
+  aix-monte-carlo  —  Monte Carlo reinforcement learning
+  aix-sarsa-td  —  SARSA (State–Action–Reward–State–Action) and temporal-difference learning
+  aix-game-theory  —  Simultaneous games and Nash equilibrium
+  aix-variable-elimination  —  Exact inference: variable elimination
+  aix-gibbs-particle  —  Approximate inference: Gibbs sampling and particle filtering
+  aix-markov-blanket  —  The Markov blanket
+  aix-forward-backward  —  HMM (Hidden Markov Model) smoothing (forward-backward)
+  aix-lda-topic  —  Latent Dirichlet Allocation (topic modeling)
+  aix-fol  —  First-order logic
+
+### Classical ML (beyond the cheat sheet) (14)
+  cls-gmm  —  Gaussian Mixture Models
+  cls-dbscan  —  DBSCAN (Density-Based Spatial Clustering of Applications with Noise)
+  cls-spectral-clustering  —  Spectral clustering
+  cls-lda-qda  —  Linear & Quadratic Discriminant Analysis
+  cls-gaussian-process  —  Gaussian Processes
+  cls-bayesian-regression  —  Bayesian linear regression
+  cls-gradient-boosting  —  Gradient boosting / XGBoost (eXtreme Gradient Boosting)
+  cls-stacking  —  Stacking ensembles
+  cls-anomaly  —  Anomaly detection (Isolation Forest)
+  cls-recommender  —  Collaborative filtering / matrix factorization
+  cls-tsne  —  t-SNE (t-distributed Stochastic Neighbor Embedding) / UMAP (Uniform Manifold Approximation and Projection)
+  cls-factor-analysis  —  Factor analysis
+  cls-svr  —  Support Vector Regression
+  cls-bandits  —  Multi-armed bandits
+
+### Modern Deep Learning & AI (14)
+  mod-transformer  —  Transformers & self-attention
+  mod-multihead  —  Multi-head attention
+  mod-llm  —  Large Language Models (BERT / GPT)
+  mod-autoencoder  —  Autoencoders
+  mod-vae  —  Variational Autoencoders (VAE)
+  mod-diffusion  —  Diffusion models
+  mod-normalizing-flows  —  Normalizing flows
+  mod-gnn  —  Graph Neural Networks (message passing)
+  mod-dqn  —  Deep Q-Networks (DQN)
+  mod-policy-gradient  —  Policy gradients (REINFORCE)
+  mod-actor-critic  —  Actor-Critic — A2C (Advantage Actor-Critic), PPO (Proximal Policy Optimization)
+  mod-contrastive  —  Contrastive learning (SimCLR, CLIP)
+  mod-vit  —  Vision Transformers (ViT)
+  mod-timeseries  —  Time-series forecasting — ARIMA (AutoRegressive Integrated Moving Average)
+
+### Data Wrangling (29)
+  dw-big-data  —  Wrangling big data: when the data won't fit in memory
+  dw-bivariate  —  Bivariate analysis: looking at two variables together
+  dw-choosing-chart  —  Choosing the right chart
+  dw-combining  —  Combining tables: concatenation vs joins
+  dw-correlation  —  Reading a correlation matrix during EDA
+  dw-data-types  —  Data types: get every column's dtype right
+  dw-dates-times  —  Working with datetimes: parse, extract, zones, resample
+  dw-distribution-relationship-plots  —  Distribution & relationship plots: reading the workhorse charts
+  dw-duplicates  —  Duplicates: exact, fuzzy, and the leak across the split
+  dw-eda-workflow  —  EDA: the disciplined first look at your data
+  dw-effective-visuals  —  Designing effective, honest visuals
+  dw-getting-data-in  —  Getting data in: reading from every source and format
+  dw-interactive-dashboards  —  Interactive charts & dashboards
+  dw-loading-inspecting  —  First contact: loading and inspecting a dataset
+  dw-misleading-charts  —  How charts lie (and how not to get fooled)
+  dw-missing-data  —  Handling missing values: detect, choose, impute (without leaking)
+  dw-multivariate  —  Multivariate EDA: looking at many variables and groups at once
+  dw-outliers  —  Outliers and impossible values: detect, then decide
+  dw-pipelines  —  Reproducible wrangling: script it as a pipeline
+  dw-privacy-pii  —  Privacy & PII: wrangling data about people responsibly
+  dw-profiling-tools  —  Automated profiling: a full EDA report in one line
+  dw-summary-stats  —  Summary statistics: center, spread, shape, position
+  dw-tables  —  Tables done right: when a table beats a chart
+  dw-text-categories  —  Cleaning text & categorical values: one thing, one label
+  dw-tidy-data  —  Tidy data: one observation per row, one variable per column
+  dw-timeseries-eda  —  Time-series EDA: trend, seasonality, autocorrelation, stationarity
+  dw-uncertainty-storytelling  —  Showing uncertainty & telling the story
+  dw-univariate  —  Univariate analysis: look at one variable at a time
+  dw-validation  —  Data validation: a contract your data must pass
+
+### Feature Engineering (20)
+  fe-bag-of-words  —  Bag-of-Words: turning text into a vector of word counts
+  fe-bin-counting  —  Bin counting: encode a category by its target rate
+  fe-binning  —  Quantization (binning): turning counts into buckets
+  fe-categorical-encoding  —  Encoding categorical variables: one-hot, dummy, and effect coding
+  fe-counts-binarization  —  Dealing with Counts: Binarization
+  fe-deep-learning-features  —  Deep learning as a feature extractor for images
+  fe-end-to-end  —  Back to the feature: an end-to-end paper recommender
+  fe-feature-hashing  —  Feature hashing: the hashing trick for huge category spaces
+  fe-feature-selection  —  Feature Selection
+  fe-image-features  —  Hand-designed image features: gradients, HOG, and SIFT
+  fe-interaction-features  —  Interaction features (products of features)
+  fe-kmeans-featurization  —  K-means as a feature generator (model stacking)
+  fe-log-power-transforms  —  Log & Power Transforms (Box-Cox)
+  fe-ngrams  —  Bag-of-n-Grams
+  fe-pca  —  PCA as a featurizer: squashing the data pancake
+  fe-phrase-detection  —  Parsing, tokenization & phrase detection
+  fe-scaling-normalization  —  Feature Scaling or Normalization
+  fe-text-filtering  —  Filtering for cleaner text features
+  fe-tfidf  —  From bag-of-words to tf-idf: scaling text features
+  fe-what-is-a-feature  —  What is a feature?
+
+### Few-shot & Transfer Learning (6)
+  fs-few-shot  —  One-shot & few-shot learning
+  fs-in-context  —  In-context learning (few-shot prompting)
+  fs-meta-learning  —  Meta-learning (MAML)
+  fs-metric-learning  —  Metric learning: contrastive & triplet loss
+  fs-transfer-learning  —  Transfer learning & fine-tuning
+  fs-zero-shot  —  Zero-shot learning
+
+### Metrics & Evaluation — measuring models, data & statistics (22)
+  met-agreement-fairness  —  Agreement between raters & fairness across groups
+  met-association  —  Measuring how two variables relate (correlation & association)
+  met-calibration  —  Is your model's confidence trustworthy? Calibration metrics
+  met-classification-label  —  Classification metrics from hard labels
+  met-classification-prob  —  Classification metrics from scores & probabilities
+  met-clustering  —  Scoring clusters with no labels
+  met-data-quality  —  Metrics for evaluating data (quality & drift)
+  met-detection-segmentation  —  Metrics for object detection & segmentation
+  met-distribution  —  Distance between two distributions (and information)
+  met-effect-size  —  Effect sizes — how big, not just whether
+  met-forecasting  —  Metrics for time-series forecasting
+  met-foundations  —  How to think about metrics
+  met-generative  —  Scoring what a model generates (images)
+  met-hypothesis-tests  —  Statistical tests — is this difference real?
+  met-model-selection  —  Criteria for choosing between models
+  met-multilabel  —  Metrics for many classes & many labels
+  met-nlp  —  Metrics for text, translation & speech
+  met-ranking  —  Metrics for rankings & search results
+  met-recsys  —  Metrics for recommender systems
+  met-regression  —  Metrics for predicting numbers (regression)
+  met-survival  —  Survival & anomaly-detection metrics
+  met-uncertainty  —  Scoring uncertainty & prediction intervals
+
+### PyTorch (a complete course) (20)
+  pt-autograd  —  Autograd: PyTorch's automatic differentiation
+  pt-cnn  —  Building a CNN in PyTorch
+  pt-custom  —  Extending PyTorch: custom layers, losses, and autograd Functions
+  pt-data  —  Feeding data: Dataset and DataLoader
+  pt-debugging  —  Debugging PyTorch: the errors everyone hits, and a method to find them
+  pt-deployment  —  Deploying a trained model
+  pt-distributed  —  Distributed training: DataParallel, DistributedDataParallel (DDP), and sharding
+  pt-ecosystem  —  The PyTorch ecosystem — what to reach for
+  pt-gpu-amp  —  Using the GPU and mixed precision
+  pt-intro  —  PyTorch: tensors, autograd, and neural nets that run as you write them
+  pt-loss-optim  —  Loss functions and optimizers
+  pt-nn-module  —  Building models with torch.nn: nn.Module, layers, and parameters
+  pt-performance  —  Making PyTorch fast: torch.compile, mixed precision, DataLoader, and profiling
+  pt-regularization  —  Regularization in PyTorch: fighting overfitting
+  pt-rnn  —  Sequence models: nn.RNN, nn.LSTM, nn.GRU
+  pt-save-load  —  Saving and loading models
+  pt-tensor-ops  —  Operating on tensors
+  pt-tensors  —  Tensors: PyTorch's core data structure
+  pt-training-loop  —  The PyTorch training loop
+  pt-transfer-learning  —  Transfer learning with torchvision.models
+
+### Reinforcement Learning (20)
+  rl-actor-critic  —  Actor-Critic: a policy that acts and a value that judges
+  rl-bellman-optimality  —  Bellman optimality: $V^*$, $Q^*$, and the greedy policy
+  rl-continuous-control  —  Continuous control: DDPG, TD3, and SAC
+  rl-dqn  —  Deep Q-Networks (DQN): Q-learning with a neural net
+  rl-exploration  —  Exploration vs exploitation: how an agent decides what to try next
+  rl-frontier  —  The frontier of RL: reward hacking, RLHF, and the practical reality
+  rl-function-approximation  —  Value Function Approximation
+  rl-intro  —  Reinforcement Learning: learning to act from reward, not from labels
+  rl-mdp  —  The Markov Decision Process: the formal model behind all of RL
+  rl-model-based  —  Model-based RL: learn the world, then plan in it
+  rl-monte-carlo  —  Monte Carlo methods: learning values from full episodes
+  rl-offline-rl  —  Offline (Batch) RL: learning a policy from logged data alone
+  rl-policy-gradients  —  Policy gradients: optimize the policy directly by gradient ascent on return
+  rl-policy-iteration  —  Policy iteration
+  rl-ppo  —  Proximal Policy Optimization (PPO): the clipped-objective workhorse of deep RL
+  rl-returns-values  —  Returns and value functions: how RL measures "how good"
+  rl-sarsa-qlearning  —  TD control: SARSA (on-policy) vs Q-learning (off-policy)
+  rl-td-lambda  —  n-step returns, the λ-return, and eligibility traces (TD(λ))
+  rl-td-learning  —  Temporal-Difference (TD) learning: the central idea of reinforcement learning
+  rl-value-iteration  —  Value iteration: one backup to rule them all
+
+### Doing ML for Real — the skills that matter (2026) (9)
+  skill-baselines  —  Building simple baselines first
+  skill-data-audit  —  Auditing data before you trust it
+  skill-error-segments  —  Analyzing errors by segment
+  skill-framing  —  Framing a vague business problem into a clear ML task
+  skill-leakage  —  Detecting leakage and bad labels
+  skill-limitations  —  Explaining limitations clearly
+  skill-metrics-cost  —  Choosing metrics based on business cost
+  skill-monitoring  —  Monitoring model behavior after deployment
+  skill-validation  —  Validating models correctly
+
+### Apache Spark (big-data processing) (11)
+  spark-aggregations-joins  —  Aggregating and joining at scale
+  spark-dataframes  —  Spark DataFrames: a distributed table with a schema
+  spark-ecosystem  —  The Spark ecosystem: where Spark runs, Delta Lake, and when to actually use it
+  spark-intro  —  Apache Spark: distributed computing for data too big for one machine
+  spark-mllib  —  MLlib: machine learning at cluster scale
+  spark-performance  —  Spark performance: caching, broadcast joins, Catalyst, AQE, and pushdown
+  spark-rdd  —  RDD: the resilient distributed dataset
+  spark-shuffles-partitioning  —  Partitioning and the shuffle: Spark's biggest performance lever
+  spark-sql  —  Spark SQL: query DataFrames with real SQL at scale
+  spark-streaming  —  Structured Streaming: process never-ending data with the batch API
+  spark-transformations-actions  —  Spark's lazy engine: transformations vs actions
+
+### Learning from Unlabeled Data (semi- & self-supervised) (9)
+  unl-consistency  —  Consistency regularization
+  unl-cpc  —  Contrastive Predictive Coding (CPC v2)
+  unl-eval  —  Evaluating self-supervised representations
+  unl-fixmatch  —  FixMatch: confidence-thresholded pseudo-labels meet consistency
+  unl-mixmatch  —  MixMatch: one loss that mixes labeled and guessed-label data
+  unl-moco  —  MoCo: Momentum Contrast
+  unl-overview  —  Learning from unlabeled data: the landscape
+  unl-pseudo-label  —  Pseudo-labeling & entropy minimization
+  unl-simclr  —  SimCLR & contrastive learning (NT-Xent / InfoNCE)
+
+TOTAL: 321
