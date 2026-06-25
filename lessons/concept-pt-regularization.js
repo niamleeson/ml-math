@@ -71,28 +71,147 @@
        </ul>`,
     practice: [
       {
-        q: `Your validation predictions change a little every time you run them on the same input, and they are worse than your training metrics suggest. The model has <code>nn.Dropout(0.5)</code> and <code>nn.BatchNorm1d</code> layers. What did you most likely forget, and what is the fix?`,
+        q: `<b>Type this in Colab.</b> Create <code>drop = nn.Dropout(p=0.5)</code> and a fixed input <code>x = torch.ones(1, 10)</code>. With <code>drop.train()</code>, run the dropout twice and print both outputs; then call <code>drop.eval()</code> and run it once more. Set <code>torch.manual_seed(0)</code> first.`,
         steps: [
-          { do: `Note the symptom: <b>non-deterministic</b> predictions on identical input.`, why: `Only a training-mode layer injects randomness; at eval everything should be deterministic.` },
-          { do: `Recall that dropout randomly zeros activations and batch norm uses batch statistics — but only while the module is in <code>train()</code> mode.`, why: `These layers are mode-dependent; leaving them in train mode keeps the noise on.` }
+          { do: `Toggle the layer mode with <code>drop.train()</code> then <code>drop.eval()</code> around the calls.`, why: `<code>nn.Dropout</code> is mode-dependent: it only zeros (and rescales by $\\tfrac{1}{1-p}$) in train mode, and is a pass-through in eval.` },
+          { do: `Print the two train-mode outputs and the eval-mode output.`, why: `The two train outputs differ (random masks); the eval output is the unchanged input — the famous train/eval trap made visible.` }
         ],
-        answer: `You forgot <code>model.eval()</code> before evaluating. Dropout was still randomly zeroing units (hence the changing outputs) and batch norm was using batch statistics instead of its running averages. <b>Fix:</b> call <code>model.eval()</code> (and wrap inference in <code>torch.no_grad()</code>), then <code>model.train()</code> when you resume training.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+torch.manual_seed(0)
+drop = nn.Dropout(p=0.5)
+x = torch.ones(1, 10)
+
+drop.train()
+print(drop(x))   # some entries 0, survivors scaled to 2.0 (1/(1-0.5))
+print(drop(x))   # a DIFFERENT random mask -> different output
+drop.eval()
+print(drop(x))   # tensor([[1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]]) -- pass-through
+# Exact survivors vary, but eval ALWAYS returns x unchanged.</code></pre>`
       },
       {
-        q: `You want true L2 regularization with the Adam family. Why is <code>optim.Adam(params, weight_decay=1e-2)</code> not quite what you want, and what should you use instead?`,
+        q: `<b>Type this in Colab.</b> Build <code>model = nn.Sequential(nn.Linear(8, 16), nn.Dropout(0.5), nn.Linear(16, 2))</code>. With a fixed input <code>x = torch.randn(4, 8)</code> (seed 0), call <code>model.eval()</code> and run it twice; then call <code>model.train()</code> and run it twice. Print whether the two outputs are equal in each mode with <code>torch.equal</code>.`,
         steps: [
-          { do: `Recall that classic L2 adds $\\lambda \\lVert w \\rVert^2$ to the loss, so the decay term passes through Adam's per-parameter adaptive scaling.`, why: `Adam rescales every gradient component, which distorts the intended uniform shrink.` },
-          { do: `Recall that <code>AdamW</code> <i>decouples</i> the decay: it subtracts $\\eta\\,\\lambda\\,w$ directly, outside the adaptive update.`, why: `That gives the clean weight-shrink the L2 penalty is supposed to produce.` }
+          { do: `Compare repeated forward passes with <code>torch.equal(a, b)</code> in each mode.`, why: `It returns a single boolean, making the determinism difference unmistakable.` },
+          { do: `Predict before running: equal in <code>eval()</code>, unequal in <code>train()</code>.`, why: `Dropout is deterministic (identity) in eval but random in train — the #1 source of "my predictions keep changing" bugs.` }
         ],
-        answer: `With plain <code>Adam</code> the <code>weight_decay</code> gets entangled with the adaptive learning-rate scaling, so it is not the L2 you intended. Use <code>optim.AdamW(params, lr=1e-3, weight_decay=1e-2)</code>, which applies decoupled weight decay correctly.`
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(8, 16), nn.Dropout(0.5), nn.Linear(16, 2))
+x = torch.randn(4, 8)
+
+model.eval()
+print(torch.equal(model(x), model(x)))   # True  -- deterministic in eval
+model.train()
+print(torch.equal(model(x), model(x)))   # False -- dropout randomizes in train</code></pre>`
       },
       {
-        q: `Your early-stopping loop stops 5 epochs after the best validation loss, then you save and deploy <code>model</code> as-is. Why might the deployed model be worse than the best one you saw, and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Make <code>bn = nn.BatchNorm1d(3)</code>. Push a batch <code>x = torch.randn(16, 3)</code> (seed 0) through it in <code>train()</code> mode, then print <code>bn.running_mean</code>. Predict: is it still all zeros after one training forward pass?`,
         steps: [
-          { do: `Note that you keep training (and updating weights) for the 5 patience epochs after the best point.`, why: `Those extra steps move the weights past the best-generalizing state — validation loss was rising.` },
-          { do: `Recall that you must snapshot <code>model.state_dict()</code> at each new best and reload it at the end.`, why: `Otherwise the final in-memory weights are the worse, later ones.` }
+          { do: `Call <code>bn.train()</code> then <code>bn(x)</code>, and read <code>bn.running_mean</code>.`, why: `In train mode BatchNorm updates its running statistics from the batch; those running stats are what <code>eval()</code> later uses.` },
+          { do: `Predict before running: the running mean moves OFF zero.`, why: `It starts at zeros and is updated toward the batch mean by the momentum (default 0.1), proving train-mode side effects.` }
         ],
-        answer: `The weights in memory are from 5 epochs <i>after</i> the best, where validation loss had already risen. <b>Fix:</b> save <code>best_state = copy.deepcopy(model.state_dict())</code> whenever validation loss hits a new low, and <code>model.load_state_dict(best_state)</code> before saving / deploying — restore the BEST weights, not the last ones.`
+        answer: `<pre><code>torch.manual_seed(0)
+bn = nn.BatchNorm1d(3)
+print(bn.running_mean)          # tensor([0., 0., 0.]) before
+bn.train()
+_ = bn(x := torch.randn(16, 3))
+print(bn.running_mean)          # small NON-zero values, e.g. tensor([0.0?, ...])
+# Updated as 0.9*old + 0.1*batch_mean -> no longer all zeros.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Try <code>nn.BatchNorm1d(3)(torch.randn(1, 3))</code> in <code>train()</code> mode (batch of ONE) and read the error. Then show it works with a batch of 16. Explain in a comment why batch size 1 fails.`,
+        steps: [
+          { do: `Run a forward pass with a single sample in train mode and catch the <code>ValueError</code>.`, why: `BatchNorm needs more than one sample to estimate a per-feature variance across the batch.` },
+          { do: `Repeat with <code>torch.randn(16, 3)</code>.`, why: `A real batch gives a valid variance, so the layer runs — the standard fix is a bigger batch (or GroupNorm/LayerNorm).` }
+        ],
+        answer: `<pre><code>bn = nn.BatchNorm1d(3); bn.train()
+try:
+    bn(torch.randn(1, 3))
+except ValueError as e:
+    print("CAUGHT:", str(e).splitlines()[0])
+    # Expected more than 1 value per channel when training, got input size torch.Size([1, 3])
+print(bn(torch.randn(16, 3)).shape)   # torch.Size([16, 3]) -- fine with a real batch
+# Batch size 1 -> variance over the batch is undefined.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Create one <code>nn.Linear(4, 1)</code> and two optimizers on its parameters: <code>torch.optim.SGD(p, lr=0.1, weight_decay=0.0)</code> and <code>torch.optim.SGD(p, lr=0.1, weight_decay=10.0)</code>. Take one step on each (with the SAME gradient) and print the weight norm. Predict which optimizer shrinks the weights more.`,
+        steps: [
+          { do: `Backprop a loss, then call <code>step()</code> for each optimizer on a fresh copy of the layer.`, why: `<code>weight_decay</code> adds $-\\eta\\lambda w$ to the update, so larger decay pulls weights harder toward zero.` },
+          { do: `Compare <code>weight.norm()</code> before and after each step.`, why: `Predict: <code>weight_decay=10.0</code> produces a smaller post-step norm — that shrink IS L2 regularization.` }
+        ],
+        answer: `<pre><code>import copy
+torch.manual_seed(0)
+base = nn.Linear(4, 1)
+x, y = torch.randn(8, 4), torch.randn(8, 1)
+
+def step(wd):
+    m = copy.deepcopy(base)
+    opt = torch.optim.SGD(m.parameters(), lr=0.1, weight_decay=wd)
+    opt.zero_grad()
+    ((m(x) - y) ** 2).mean().backward()
+    opt.step()
+    return m.weight.norm().item()
+
+print(round(step(0.0), 4))    # e.g. 0.7261  (no decay)
+print(round(step(10.0), 4))   # SMALLER     (heavy decay shrinks weights more)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Create gradients by backpropagating a loss through <code>nn.Linear(4, 1)</code>. Compute the total gradient norm; then call <code>nn.utils.clip_grad_norm_(params, max_norm=0.5)</code> and recompute it. Print both. (Use seed 0.)`,
+        steps: [
+          { do: `Sum per-parameter <code>grad.norm()**2</code> and square-root for the total norm.`, why: `<code>clip_grad_norm_</code> rescales all gradients so this combined L2 norm is at most <code>max_norm</code>.` },
+          { do: `Call <code>clip_grad_norm_</code> between <code>backward()</code> and <code>step()</code> and recompute the norm.`, why: `If the original norm exceeded 0.5, the clipped norm is exactly 0.5 — preventing a single huge update.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+m = nn.Linear(4, 1)
+x, y = torch.randn(8, 4), torch.randn(8, 1)
+((m(x) - y) ** 2).mean().backward()
+
+def total_norm():
+    return sum(p.grad.norm()**2 for p in m.parameters()) ** 0.5
+print(round(float(total_norm()), 4))                       # original (e.g. > 0.5)
+nn.utils.clip_grad_norm_(m.parameters(), max_norm=0.5)
+print(round(float(total_norm()), 4))                       # 0.5 (clipped to the cap)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Simulate early stopping by hand: given the list <code>val = [0.9, 0.7, 0.55, 0.6, 0.62, 0.65]</code>, track the best (lowest) value and the epoch it occurred, stopping once validation has not improved for <code>patience=2</code> epochs. Print the best value and best epoch.`,
+        steps: [
+          { do: `Keep <code>best_val</code> and <code>since_best</code> counters, snapshotting on each new low.`, why: `In real training you would <code>copy.deepcopy(model.state_dict())</code> at each best — here we track the index instead.` },
+          { do: `Break when <code>since_best >= patience</code>.`, why: `You must restore the BEST weights, not the last ones, which are worse after validation started rising.` }
+        ],
+        answer: `<pre><code>val = [0.9, 0.7, 0.55, 0.6, 0.62, 0.65]
+best_val, best_epoch, since_best, patience = float("inf"), -1, 0, 2
+for epoch, v in enumerate(val):
+    if v < best_val - 1e-4:
+        best_val, best_epoch, since_best = v, epoch, 0
+    else:
+        since_best += 1
+        if since_best >= patience:
+            print(f"early stop at epoch {epoch}")   # early stop at epoch 4
+            break
+print("best:", best_val, "at epoch", best_epoch)     # best: 0.55 at epoch 2</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Build a small regularized block <code>nn.Sequential(nn.Linear(20, 32), nn.BatchNorm1d(32), nn.ReLU(), nn.Dropout(0.3), nn.Linear(32, 2))</code> and an <code>AdamW</code> optimizer with <code>weight_decay=1e-2</code>. Run ONE train step on <code>x = torch.randn(16, 20)</code>, <code>y = torch.randint(0, 2, (16,))</code> (seed 0), printing the loss; then switch to <code>eval()</code> and print the prediction shape under <code>torch.no_grad()</code>.`,
+        steps: [
+          { do: `Use <code>model.train()</code> + <code>zero_grad()</code> + <code>backward()</code> + <code>step()</code> for the train step, with <code>nn.CrossEntropyLoss</code>.`, why: `CrossEntropy wants raw logits and <code>long</code> class indices; AdamW applies decoupled (correct) weight decay.` },
+          { do: `Call <code>model.eval()</code> and wrap inference in <code>torch.no_grad()</code>.`, why: `eval turns Dropout into a pass-through and BatchNorm onto running stats; no_grad skips graph bookkeeping at inference.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(20, 32), nn.BatchNorm1d(32),
+                      nn.ReLU(), nn.Dropout(0.3), nn.Linear(32, 2))
+opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
+x = torch.randn(16, 20)
+y = torch.randint(0, 2, (16,))
+
+model.train()
+opt.zero_grad()
+loss = nn.CrossEntropyLoss()(model(x), y)
+loss.backward(); opt.step()
+print(round(loss.item(), 4))            # a finite loss near ln(2) ~= 0.69
+
+model.eval()
+with torch.no_grad():
+    print(model(x).shape)               # torch.Size([16, 2])</code></pre>`
       }
     ]
   });

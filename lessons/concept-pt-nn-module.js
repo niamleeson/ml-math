@@ -122,31 +122,142 @@
 
     practice: [
       {
-        q: `A teammate's model trains but the hidden layer's weights never change &mdash; the loss barely moves. Their code creates the hidden layer like this: <code>def forward(self, x): h = nn.Linear(8, 8)(x); return self.out(h)</code>. What is wrong, and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Define a minimal <code>nn.Module</code> subclass <code>Net</code> with one layer <code>self.fc = nn.Linear(4, 2)</code> declared in <code>__init__</code> (call <code>super().__init__()</code> first) and a <code>forward</code> that returns <code>self.fc(x)</code>. Instantiate it and <code>print(model)</code>.`,
         steps: [
-          { do: `Spot that the hidden <code>nn.Linear</code> is built inside <code>forward</code>, not in <code>__init__</code>.`, why: `Only layers assigned to <code>self</code> in <code>__init__</code> get registered; a layer created inside <code>forward</code> is a throwaway local.` },
-          { do: `Realize the layer is recreated with fresh random weights on every forward pass and is absent from <code>model.parameters()</code>.`, why: `If it is not in <code>parameters()</code>, the optimizer never receives it, so its weights are never updated &mdash; and it is reset each call anyway.` },
-          { do: `Move it to <code>__init__</code>: <code>self.hidden = nn.Linear(8, 8)</code>, then use <code>self.hidden(x)</code> in <code>forward</code>.`, why: `Now the layer is registered once, its weights persist, and the optimizer trains them.` }
+          { do: `Call <code>super().__init__()</code> as the first line of <code>__init__</code>.`, why: `It sets up the bookkeeping that registers layers; skipping it raises an error.` },
+          { do: `Declare the layer on <code>self</code>, then use it in <code>forward</code>.`, why: `Only layers assigned to <code>self</code> are registered and trained.` }
         ],
-        answer: `<p>The hidden layer is constructed <i>inside</i> <code>forward</code>, so it is never registered: it is missing from <code>model.parameters()</code> and the optimizer never updates it &mdash; worse, it is rebuilt with new random weights every call. <b>Define layers in <code>__init__</code>:</b> <code>self.hidden = nn.Linear(8, 8)</code>, and call <code>self.hidden(x)</code> in <code>forward</code>. Then it is registered once and trains normally.</p>`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(4, 2)
+    def forward(self, x):
+        return self.fc(x)
+
+model = Net()
+print(model)
+# Net(
+#   (fc): Linear(in_features=4, out_features=2, bias=True)
+# )</code></pre>`
       },
       {
-        q: `You build an MLP and run it, but get <code>RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu</code>. You already did <code>x = x.to("cuda")</code>. What did you forget, and why does it matter?`,
+        q: `<b>Type this in Colab.</b> Reproduce the famous <code>super().__init__()</code> pitfall. Write a subclass that assigns <code>self.fc = nn.Linear(4, 2)</code> WITHOUT calling <code>super().__init__()</code> first. Instantiate it inside a <code>try/except</code> and print the error. Then fix it and confirm it constructs.`,
         steps: [
-          { do: `Note the input <code>x</code> is on the GPU (<code>cuda:0</code>) but something is still on the CPU.`, why: `The error fires whenever a layer's weights and the data it multiplies live on different devices.` },
-          { do: `Check whether the model itself was moved.`, why: `Moving the input does not move the model; the <code>nn.Linear</code> weights stay on the CPU until you move the module.` },
-          { do: `Add <code>model.to("cuda")</code> (or <code>device</code>) before the forward pass.`, why: `<code>model.to(device)</code> walks the module tree and moves every registered parameter to the GPU, so weights and input now match.` }
+          { do: `Omit <code>super().__init__()</code> and assign a layer to <code>self</code>.`, why: `The registration machinery is not set up yet, so assigning a Module fails.` },
+          { do: `Add <code>super().__init__()</code> as the first line to fix it.`, why: `It initializes the parameter/submodule registries before any layer is assigned.` }
         ],
-        answer: `<p>You moved the data but not the model. The input is on <code>cuda:0</code> while the layer weights are still on the CPU, and a matmul needs both operands on the same device. Call <code>model.to("cuda")</code> (it moves every registered parameter at once) <i>and</i> <code>x = x.to("cuda")</code>. A clean pattern is to pick one <code>device</code> up front and send both the model and every batch to it.</p>`
+        answer: `<pre><code>class Broken(nn.Module):
+    def __init__(self):
+        self.fc = nn.Linear(4, 2)     # no super().__init__() yet!
+    def forward(self, x):
+        return self.fc(x)
+
+try:
+    Broken()
+except AttributeError as err:
+    print("failed:", "Module.__init__()" in str(err))   # failed: True
+
+class Fixed(nn.Module):
+    def __init__(self):
+        super().__init__()            # the fix
+        self.fc = nn.Linear(4, 2)
+    def forward(self, x):
+        return self.fc(x)
+print(Fixed())   # constructs fine</code></pre>`
       },
       {
-        q: `You want to confirm a freshly built MLP <code>Linear(10&rarr;32) &rarr; ReLU &rarr; Linear(32&rarr;2)</code> has the number of trainable parameters you expect. How do you compute it by hand, and how do you check it in code?`,
+        q: `<b>Type this in Colab.</b> Build the canonical MLP <code>Linear(784&rarr;256) &rarr; ReLU &rarr; Linear(256&rarr;10)</code> as an <code>nn.Module</code> subclass (seed first with <code>torch.manual_seed(0)</code>). Run a forward pass on <code>x = torch.randn(8, 784)</code> and print the output shape. Predict the shape first.`,
         steps: [
-          { do: `Apply the per-linear-layer formula <code>in*out + out</code> to each <code>nn.Linear</code>.`, why: `A linear layer holds a weight matrix (<code>in*out</code> numbers) plus one bias per output (<code>out</code> numbers).` },
-          { do: `First layer: 10*32 + 32 = 352. Second layer: 32*2 + 2 = 66. ReLU adds 0.`, why: `ReLU is a parameter-free activation, so it contributes nothing to the count.` },
-          { do: `Sum to 418, then verify with <code>sum(p.numel() for p in model.parameters())</code>.`, why: `<code>p.numel()</code> counts the elements in each registered parameter tensor; summing over <code>parameters()</code> totals them.` }
+          { do: `Stack two <code>nn.Linear</code> layers with a <code>ReLU</code> between them.`, why: `The hidden width 256 connects the layers; ReLU adds nonlinearity with no parameters.` },
+          { do: `Call <code>model(x)</code> (never <code>model.forward(x)</code>).`, why: `Calling the module runs hooks plus <code>forward</code>; a batch of 8 maps to <code>(8, 10)</code> logits.` }
         ],
-        answer: `<p>Use <code>in*out + out</code> per linear layer. First layer: $10\\times32+32 = 352$. ReLU: $0$. Second layer: $32\\times2+2 = 66$. Total $= 418$. Check it with <code>sum(p.numel() for p in model.parameters())</code>, which iterates every registered weight tensor and sums their element counts &mdash; it should print <code>418</code>.</p>`
+        answer: `<pre><code>torch.manual_seed(0)
+class MLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(784, 256)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(256, 10)
+    def forward(self, x):
+        return self.fc2(self.relu(self.fc1(x)))
+
+model = MLP()
+x = torch.randn(8, 784)
+logits = model(x)
+print(logits.shape)     # torch.Size([8, 10])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Count the trainable parameters of that MLP two ways. Compute by hand with <code>in*out + out</code> per layer, then verify with <code>sum(p.numel() for p in model.parameters())</code>. Predict the total before running.`,
+        steps: [
+          { do: `Apply <code>in*out + out</code> to each <code>nn.Linear</code>.`, why: `A linear layer is a weight matrix (<code>in*out</code>) plus one bias per output (<code>out</code>).` },
+          { do: `Sum with <code>p.numel()</code> over <code>model.parameters()</code>.`, why: `It iterates every registered weight tensor and totals their element counts.` }
+        ],
+        answer: `<pre><code># By hand, in*out + out per linear layer (ReLU has 0):
+#   fc1: 784*256 + 256 = 200960
+#   fc2: 256*10  + 10  =   2570
+#   total              = 203530
+n = sum(p.numel() for p in model.parameters())
+print(n)                # 203530
+print(n == 200960 + 2570)   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show that a layer built inside <code>forward</code> is NOT registered. Define a model whose <code>forward</code> does <code>h = nn.Linear(4, 4)(x)</code> (a throwaway), with only <code>self.out = nn.Linear(4, 2)</code> in <code>__init__</code>. Print the names from <code>model.named_parameters()</code> and note the in-<code>forward</code> layer is absent.`,
+        steps: [
+          { do: `List <code>[name for name, _ in model.named_parameters()]</code>.`, why: `Only layers assigned to <code>self</code> in <code>__init__</code> appear; the in-<code>forward</code> layer never registers.` },
+          { do: `Observe only <code>out.*</code> entries are present.`, why: `The throwaway <code>nn.Linear</code> is rebuilt with new random weights each call and the optimizer never sees it.` }
+        ],
+        answer: `<pre><code>class Leaky(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.out = nn.Linear(4, 2)
+    def forward(self, x):
+        h = nn.Linear(4, 4)(x)      # throwaway -- NOT registered
+        return self.out(h)
+
+model = Leaky()
+print([name for name, _ in model.named_parameters()])
+# ['out.weight', 'out.bias']   -- the in-forward Linear is missing!</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The same network with <code>nn.Sequential</code>. Build <code>seq = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), nn.Linear(256, 10))</code>, run it on <code>x = torch.randn(8, 784)</code>, and confirm its parameter count matches the subclassed MLP (203530).`,
+        steps: [
+          { do: `Stack the layers in <code>nn.Sequential</code>.`, why: `For a straight chain it glues layers without writing a class.` },
+          { do: `Count with <code>sum(p.numel() for p in seq.parameters())</code>.`, why: `Same layers mean the same registered parameters and identical count.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+seq = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), nn.Linear(256, 10))
+x = torch.randn(8, 784)
+print(seq(x).shape)                                  # torch.Size([8, 10])
+print(sum(p.numel() for p in seq.parameters()))      # 203530</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Peek at the checkpoint keys and confirm parameters track gradients. For the subclassed MLP, print <code>list(model.state_dict().keys())</code> and <code>model.fc1.weight.requires_grad</code>. Predict both before running.`,
+        steps: [
+          { do: `Read <code>model.state_dict().keys()</code>.`, why: `It names every registered weight tensor — what a checkpoint stores.` },
+          { do: `Check <code>model.fc1.weight.requires_grad</code>.`, why: `Registered parameters default to <code>requires_grad=True</code> so autograd fills their <code>.grad</code>.` }
+        ],
+        answer: `<pre><code>print(list(model.state_dict().keys()))
+# ['fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias']
+print(model.fc1.weight.requires_grad)   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Reproduce a layer-size-mismatch error. Build <code>nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(64, 2))</code> (note: 32 &ne; 64), run it on <code>torch.randn(5, 10)</code> inside a <code>try/except</code>, and print the error. Then fix the second layer's <code>in_features</code> to 32 and print the output shape.`,
+        steps: [
+          { do: `Wire <code>out_features=32</code> into <code>in_features=64</code> and run.`, why: `The forward matmul needs matching dims; a mismatch raises a shape error.` },
+          { do: `Change the second layer to <code>nn.Linear(32, 2)</code>.`, why: `Each layer's <code>out_features</code> must equal the next layer's <code>in_features</code>.` }
+        ],
+        answer: `<pre><code>bad = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(64, 2))
+x = torch.randn(5, 10)
+try:
+    bad(x)
+except RuntimeError as err:
+    print("mismatch:", "cannot be multiplied" in str(err))   # mismatch: True
+
+good = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 2))
+print(good(x).shape)      # torch.Size([5, 2])</code></pre>`
       }
     ]
   });
@@ -193,7 +304,7 @@ print(model)                              # prints the module tree
 # Parameters are auto-registered: each is an autograd tensor.
 # ------------------------------------------------------------
 n_params = sum(p.numel() for p in model.parameters())
-print("trainable parameters:", n_params)          # -> 235146
+print("trainable parameters:", n_params)          # -> 203530
 print("fc1.weight requires_grad:",
       model.fc1.weight.requires_grad)             # -> True
 print("state_dict keys:", list(model.state_dict().keys()))
@@ -217,7 +328,7 @@ seq = nn.Sequential(
     nn.Linear(256, 10),
 )
 seq_params = sum(p.numel() for p in seq.parameters())
-print("sequential parameters:", seq_params)       # -> 235146 (identical)
+print("sequential parameters:", seq_params)       # -> 203530 (identical)
 print("sequential output:", seq(x).shape)         # -> torch.Size([8, 10])
 
 # ------------------------------------------------------------
@@ -264,7 +375,7 @@ labels, values = labels[:-1], values[:-1]   # drop trailing ReLU after last Line
 
 for lab, v in zip(labels, values):
     print(f"{lab:18s} {v:>8d}")
-print("total parameters:", sum(values))   # -> 235146
+print("total parameters:", sum(values))   # -> 203530
 
 # (matches torch:  sum(p.numel() for p in model.parameters()))
 import matplotlib.pyplot as plt

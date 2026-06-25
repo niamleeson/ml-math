@@ -123,29 +123,161 @@
 
     practice: [
       {
-        q: `Put these five per-batch steps in the correct order: <code>loss.backward()</code>, <code>optimizer.step()</code>, <code>pred = model(x)</code>, <code>optimizer.zero_grad()</code>, <code>loss = criterion(pred, y)</code>.`,
+        q: `<b>Type this in Colab.</b> Write the five-line training step in the correct order on a tiny model. With
+            <code>torch.manual_seed(0)</code>, build <code>model = nn.Linear(3, 1)</code>,
+            <code>opt = torch.optim.SGD(model.parameters(), lr=0.1)</code>, <code>crit = nn.MSELoss()</code>,
+            <code>x = torch.randn(5, 3)</code>, <code>y = torch.randn(5, 1)</code>. Run exactly one batch:
+            zero_grad &rarr; forward &rarr; loss &rarr; backward &rarr; step. Print the loss.`,
         steps: [
-          { do: `Start by clearing old gradients.`, why: `Gradients accumulate; if you do not zero them, this batch's update mixes in the last batch's slopes.` },
-          { do: `Forward pass to get the prediction, then compute the loss.`, why: `The forward pass builds the autograd graph that backward() will later walk.` },
-          { do: `Call backward(), then step().`, why: `backward() fills each weight's .grad; step() uses those grads to update the weights.` }
+          { do: `Order it: <code>opt.zero_grad()</code>, <code>pred = model(x)</code>, <code>loss = crit(pred, y)</code>, <code>loss.backward()</code>, <code>opt.step()</code>.`, why: `Forward builds the autograd graph; backward fills <code>.grad</code>; step uses them — the order is load-bearing.` },
+          { do: `Print <code>loss.item()</code> after the forward.`, why: `<code>.item()</code> pulls out the plain Python number with no graph attached.` }
         ],
-        answer: `<code>zero_grad()</code> &rarr; <code>pred = model(x)</code> &rarr; <code>loss = criterion(pred, y)</code> &rarr; <code>loss.backward()</code> &rarr; <code>optimizer.step()</code>.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+torch.manual_seed(0)
+model = nn.Linear(3, 1)
+opt = torch.optim.SGD(model.parameters(), lr=0.1)
+crit = nn.MSELoss()
+x = torch.randn(5, 3)
+y = torch.randn(5, 1)
+
+opt.zero_grad()          # 1. clear old grads
+pred = model(x)          # 2. forward
+loss = crit(pred, y)     # 3. measure error
+loss.backward()          # 4. backprop -> fills .grad
+opt.step()               # 5. update weights
+print(round(loss.item(), 4))   # 1.0855</code></pre>`
       },
       {
-        q: `Your validation loss looks fine on screen but the script slowly runs out of memory over many epochs. You accumulate the loss with <code>total += loss</code>. What is wrong and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Prove that forgetting <code>zero_grad()</code> corrupts training. Make
+            <code>w = torch.zeros(1, requires_grad=True)</code> and <code>opt = torch.optim.SGD([w], lr=0.0)</code>.
+            Loop 3 times: forward <code>loss = (w - 2.0).pow(2)</code>, <code>loss.backward()</code>, but NEVER call
+            <code>zero_grad()</code>. Print <code>w.grad</code> each time and watch it pile up.`,
         steps: [
-          { do: `Note that <code>loss</code> is a tensor still attached to its computation graph.`, why: `Summing it keeps a reference to every batch's graph, so none can be freed.` },
-          { do: `Replace it with the scalar value.`, why: `<code>loss.item()</code> returns a plain Python float with no graph attached.` }
+          { do: `Skip <code>opt.zero_grad()</code> inside the loop.`, why: `PyTorch ADDS each backward's gradient onto <code>.grad</code>, so it grows: -4, -8, -12.` },
+          { do: `Use <code>lr=0.0</code> so <code>w</code> never changes and the grad is the same each backward.`, why: `It isolates the accumulation: only the missing reset changes the printed value.` }
         ],
-        answer: `Accumulate <code>loss.item()</code> instead of <code>loss</code>. Also wrap validation in <code>with torch.no_grad():</code> so no graph is built at all.`
+        answer: `<pre><code>w = torch.zeros(1, requires_grad=True)
+opt = torch.optim.SGD([w], lr=0.0)
+for i in range(3):
+    loss = (w - 2.0).pow(2)   # d/dw = 2(w-2) = -4 at w=0
+    loss.backward()           # NO zero_grad -> accumulates
+    print(w.grad)             # tensor([-4.]) tensor([-8.]) tensor([-12.])</code></pre>`
       },
       {
-        q: `You forgot to call <code>model.eval()</code> before validating a network that uses dropout. Why are your validation numbers unreliable?`,
+        q: `<b>Type this in Colab.</b> Now fix it: same setup as above, but call <code>opt.zero_grad()</code> at the top
+            of each iteration. Print <code>w.grad</code> each time and confirm it stays at <code>-4</code>.`,
         steps: [
-          { do: `Recall what dropout does in training mode.`, why: `In train mode it randomly zeroes some activations each forward pass, so the same input gives different outputs.` },
-          { do: `Realize validation should be deterministic.`, why: `<code>model.eval()</code> turns dropout off (and switches batch norm to running statistics), giving stable, fair numbers.` }
+          { do: `Add <code>opt.zero_grad()</code> before <code>loss.backward()</code>.`, why: `Resetting the grad to zero each step means each backward sees only its own gradient.` },
+          { do: `Compare with the previous task's growing values.`, why: `The constant <code>-4</code> shows the reset is what keeps every update correct.` }
         ],
-        answer: `Without <code>model.eval()</code>, dropout stays active during validation, so predictions are noisy and the loss/accuracy are not trustworthy. Call <code>model.eval()</code> first, then <code>model.train()</code> again before the next training epoch.`
+        answer: `<pre><code>w = torch.zeros(1, requires_grad=True)
+opt = torch.optim.SGD([w], lr=0.0)
+for i in range(3):
+    opt.zero_grad()           # the fix
+    loss = (w - 2.0).pow(2)
+    loss.backward()
+    print(w.grad)             # tensor([-4.]) tensor([-4.]) tensor([-4.])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show that <code>model.eval()</code> changes dropout behavior. Build
+            <code>torch.manual_seed(0); m = nn.Dropout(0.5)</code> and <code>x = torch.ones(10)</code>. In
+            <code>m.train()</code> mode, print <code>m(x)</code> twice (different each time, some zeros). Then call
+            <code>m.eval()</code> and print <code>m(x)</code> (all ones — dropout off).`,
+        steps: [
+          { do: `Call the module in <code>.train()</code> then <code>.eval()</code> mode.`, why: `Train mode randomly zeroes half the units and scales the rest; eval mode passes the input through unchanged.` },
+          { do: `Use a fixed input of ones so the effect is obvious.`, why: `Zeros appear only in train mode, proving why you must switch to eval for validation.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+m = nn.Dropout(0.5)
+x = torch.ones(10)
+m.train()
+print(m(x))   # e.g. tensor([2.,0.,2.,2.,0.,...])  random zeros, survivors x2
+print(m(x))   # different again
+m.eval()
+print(m(x))   # tensor([1.,1.,1.,1.,1.,1.,1.,1.,1.,1.])  dropout OFF</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show that <code>torch.no_grad()</code> stops graph building. Make
+            <code>w = torch.ones(1, requires_grad=True)</code>. Compute <code>(w * 2).requires_grad</code> normally,
+            then compute it inside <code>with torch.no_grad():</code>. Predict each before running, then verify.`,
+        steps: [
+          { do: `Read <code>.requires_grad</code> on the output tensor in both contexts.`, why: `Outside the block it is <code>True</code> (graph tracked); inside it is <code>False</code> (no graph).` },
+          { do: `Wrap inference / validation in <code>torch.no_grad()</code>.`, why: `No graph means less memory and faster evaluation — the validation-pass habit.` }
+        ],
+        answer: `<pre><code>w = torch.ones(1, requires_grad=True)
+print((w * 2).requires_grad)        # True
+with torch.no_grad():
+    print((w * 2).requires_grad)    # False  -- no graph built</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Move a model and a batch to the chosen device to avoid a mismatch. Set
+            <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code>. Put <code>model = nn.Linear(4, 2).to(device)</code>
+            and a batch <code>x = torch.randn(16, 4)</code>. Run <code>model(x)</code> WITHOUT moving <code>x</code>
+            (note the error on GPU), then move it with <code>x.to(device)</code> and run again.`,
+        steps: [
+          { do: `Build the device string once and <code>.to(device)</code> both model and data.`, why: `An op between a <code>cuda</code> tensor and a <code>cpu</code> tensor raises a device-mismatch error.` },
+          { do: `Print <code>out.shape</code> after the corrected call.`, why: `A <code>(16, 2)</code> output confirms both operands now share a device.` }
+        ],
+        answer: `<pre><code>device = "cuda" if torch.cuda.is_available() else "cpu"
+model = nn.Linear(4, 2).to(device)
+x = torch.randn(16, 4)
+# On GPU this raises:
+#   RuntimeError: Expected all tensors to be on the same device
+# out = model(x)
+x = x.to(device)              # fix: move the batch too
+out = model(x)
+print(out.shape)              # torch.Size([16, 2])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Write a reusable <code>run_epoch(loader, train)</code> helper. With
+            <code>torch.manual_seed(0)</code>, make a <code>TensorDataset</code> from <code>X = torch.randn(200, 8)</code>,
+            <code>y = torch.randint(0, 2, (200,))</code>, a <code>DataLoader(batch_size=32, shuffle=True)</code>, a
+            model <code>nn.Sequential(nn.Linear(8,16), nn.ReLU(), nn.Linear(16,2))</code>,
+            <code>CrossEntropyLoss</code>, and <code>Adam</code>. The helper sets <code>train()/eval()</code>, wraps
+            eval in <code>no_grad</code>, accumulates <code>loss.item()</code>, and returns mean loss + accuracy.`,
+        steps: [
+          { do: `Toggle <code>model.train()</code> / <code>model.eval()</code> and pick <code>enable_grad()</code> vs <code>no_grad()</code> by the <code>train</code> flag.`, why: `Train mode updates weights and builds the graph; eval mode skips both for correct, cheap validation.` },
+          { do: `Accumulate <code>loss.item() * len(xb)</code>, not the raw <code>loss</code> tensor.`, why: `<code>.item()</code> drops the graph, avoiding the slow cross-epoch memory leak.` }
+        ],
+        answer: `<pre><code>from torch.utils.data import TensorDataset, DataLoader
+torch.manual_seed(0)
+X = torch.randn(200, 8); y = torch.randint(0, 2, (200,))
+dl = DataLoader(TensorDataset(X, y), batch_size=32, shuffle=True)
+model = nn.Sequential(nn.Linear(8, 16), nn.ReLU(), nn.Linear(16, 2))
+crit = nn.CrossEntropyLoss(); opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+
+def run_epoch(loader, train):
+    model.train() if train else model.eval()
+    ctx = torch.enable_grad() if train else torch.no_grad()
+    total, correct, n = 0.0, 0, 0
+    with ctx:
+        for xb, yb in loader:
+            if train: opt.zero_grad()
+            pred = model(xb)
+            loss = crit(pred, yb)
+            if train:
+                loss.backward(); opt.step()
+            total += loss.item() * len(xb)            # .item() -> no graph
+            correct += (pred.argmax(1) == yb).sum().item()
+            n += len(xb)
+    return total / n, correct / n
+
+print(run_epoch(dl, train=True))    # e.g. (0.70..., 0.55...)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Put it together: train the model from the previous task for 5 epochs, calling
+            <code>run_epoch(dl, train=True)</code> each epoch and printing the epoch number, mean loss, and accuracy.
+            Confirm the loss falls across epochs.`,
+        steps: [
+          { do: `Loop <code>for epoch in range(1, 6):</code> and call the helper.`, why: `An epoch is one full pass over the loader; repeating it drives learning.` },
+          { do: `Print the returned loss and accuracy each epoch.`, why: `Watching loss fall (and accuracy rise) confirms the loop is wired correctly.` }
+        ],
+        answer: `<pre><code>for epoch in range(1, 6):
+    loss, acc = run_epoch(dl, train=True)
+    print(f"epoch {epoch}  loss {loss:.4f}  acc {acc:.3f}")
+# epoch 1  loss 0.70..  acc 0.5..
+# epoch 5  loss 0.55..  acc 0.7..   (loss falls, accuracy climbs)</code></pre>`
       }
     ]
   });

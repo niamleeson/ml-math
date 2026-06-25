@@ -70,28 +70,128 @@
 
     practice: [
       {
-        q: `Your teammate sends you <code>m.pt</code> saved with <code>torch.save(model.state_dict(), 'm.pt')</code>. Write the three lines to load it for inference.`,
+        q: `<b>Type this in Colab.</b> Define a tiny <code>Net</code> with <code>fc1 = nn.Linear(4, 8)</code> and <code>fc2 = nn.Linear(8, 1)</code>. Build one, then print <code>list(model.state_dict().keys())</code>. Predict the four key names before running.`,
         steps: [
-          { do: `Rebuild the same class: <code>model = Net()</code>.`, why: `A <code>state_dict</code> holds only numbers; you need the code to give them shape. The architecture must match the saved keys.` },
-          { do: `Pour the numbers in: <code>model.load_state_dict(torch.load('m.pt', weights_only=True))</code>.`, why: `Copies each saved tensor into the parameter of the same name. <code>weights_only=True</code> loads tensors safely without running pickled code.` },
-          { do: `Switch to inference: <code>model.eval()</code>.`, why: `Turns off dropout and makes batch-norm use running stats, so predictions are deterministic and correct.` }
+          { do: `Call <code>model.state_dict().keys()</code>.`, why: `The <code>state_dict</code> is a dictionary keyed by dotted parameter paths.` },
+          { do: `Read the names.`, why: `Each submodule's params are namespaced: <code>fc1.weight</code>, <code>fc1.bias</code>, etc.` }
         ],
-        answer: `<code>model = Net(); model.load_state_dict(torch.load('m.pt', weights_only=True)); model.eval()</code>. Without <code>eval()</code> dropout/batch-norm would corrupt the predictions.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(4, 8)
+        self.fc2 = nn.Linear(8, 1)
+    def forward(self, x):
+        return self.fc2(torch.relu(self.fc1(x)))
+model = Net()
+print(list(model.state_dict().keys()))
+# ['fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias']</code></pre>`
       },
       {
-        q: `You trained on a GPU and saved the <code>state_dict</code>. Loading on your CPU-only laptop raises a device error. Fix the load.`,
+        q: `<b>Type this in Colab.</b> Save just the numbers, not the object. Save <code>model.state_dict()</code> to <code>"m.pt"</code> with <code>torch.save</code>. Then build a <i>fresh</i> <code>Net()</code> (random weights), load the saved dict into it with <code>weights_only=True</code>, and confirm <code>load_state_dict</code> reports no missing/unexpected keys.`,
         steps: [
-          { do: `Pass <code>map_location='cpu'</code> to <code>torch.load</code>.`, why: `The saved tensors are tagged <code>cuda</code>; <code>map_location</code> remaps each one to the CPU as it deserializes, before any GPU is touched.` }
+          { do: `<code>torch.save(model.state_dict(), "m.pt")</code> — the state_dict, not <code>model</code> itself.`, why: `Saving the whole object pickles the class by reference and breaks on refactors.` },
+          { do: `<code>fresh.load_state_dict(torch.load("m.pt", weights_only=True))</code>.`, why: `It returns <code>&lt;All keys matched successfully&gt;</code> when the architectures align.` }
         ],
-        answer: `<code>model.load_state_dict(torch.load('m.pt', map_location='cpu', weights_only=True))</code>. Then <code>model.eval()</code> as usual.`
+        answer: `<pre><code>torch.save(model.state_dict(), "m.pt")
+fresh = Net()                                    # random weights
+result = fresh.load_state_dict(torch.load("m.pt", weights_only=True))
+print(result)   # &lt;All keys matched successfully&gt;</code></pre>`
       },
       {
-        q: `Your training job got preempted at epoch 7. You want to resume — not restart. What must your checkpoint have contained, and how do you resume?`,
+        q: `<b>Type this in Colab.</b> The famous <code>eval()</code>-after-load rule. Add a <code>nn.Dropout(0.5)</code> between the layers of <code>Net</code>. Save and reload the weights. Feed the same input <code>x = torch.randn(4, 4)</code> through the original (in eval) and the reloaded model — show outputs match <i>only</i> after calling <code>reloaded.eval()</code>.`,
         steps: [
-          { do: `The checkpoint needs the model and the optimizer state, plus the epoch: <code>{'model': model.state_dict(), 'optim': optimizer.state_dict(), 'epoch': 7, 'loss': last_loss}</code>.`, why: `Adam keeps per-parameter momentum and variance; without the optimizer state the first resumed steps lurch with a cold optimizer.` },
-          { do: `On resume, load all of it and continue: <code>ckpt = torch.load('ckpt.pt'); model.load_state_dict(ckpt['model']); optimizer.load_state_dict(ckpt['optim']); start = ckpt['epoch'] + 1; model.train()</code>.`, why: `Restores both the weights and the optimizer's running averages, and starts the loop at the next epoch in training mode.` }
+          { do: `Put both models in <code>eval()</code> and compare with <code>torch.allclose</code>.`, why: `<code>eval()</code> turns dropout off so the math is deterministic.` },
+          { do: `Then put the reloaded model in <code>train()</code> and compare again.`, why: `In training mode dropout randomly zeroes units, so outputs diverge.` }
         ],
-        answer: `Save a dict with model + optimizer <code>state_dict</code>s + epoch + loss; reload all of them, set <code>start_epoch = epoch + 1</code>, and call <code>model.train()</code>. Saving only the weights would lose the optimizer's momentum.`
+        answer: `<pre><code>torch.manual_seed(0)
+class NetD(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(4, 8); self.drop = nn.Dropout(0.5); self.fc2 = nn.Linear(8, 1)
+    def forward(self, x):
+        return self.fc2(self.drop(torch.relu(self.fc1(x))))
+m = NetD(); torch.save(m.state_dict(), "d.pt")
+x = torch.randn(4, 4)
+m.eval()
+with torch.no_grad(): orig = m(x)
+r = NetD(); r.load_state_dict(torch.load("d.pt", weights_only=True))
+r.eval()
+with torch.no_grad(): print(torch.allclose(orig, r(x)))   # True
+r.train()
+with torch.no_grad(): print(torch.allclose(orig, r(x)))   # False (dropout on)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Device mismatch on load. Simulate a GPU-trained file by loading with <code>map_location="cpu"</code>. Load <code>"m.pt"</code> remapping every tensor to the CPU, load it into a fresh <code>Net()</code>, and print the device of the first parameter.`,
+        steps: [
+          { do: `Pass <code>map_location="cpu"</code> to <code>torch.load</code>.`, why: `It redirects every saved tensor to the CPU as it deserializes, before any absent GPU is touched.` },
+          { do: `Check <code>next(model.parameters()).device</code>.`, why: `Confirms the loaded weights landed on the CPU.` }
+        ],
+        answer: `<pre><code>cpu_model = Net()
+cpu_model.load_state_dict(
+    torch.load("m.pt", map_location="cpu", weights_only=True)
+)
+cpu_model.eval()
+print(next(cpu_model.parameters()).device)   # cpu</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Save a full checkpoint for resuming. Train <code>Net</code> a few steps with Adam, then save a dict containing the model state_dict, optimizer state_dict, the epoch, and the last loss into <code>"ckpt.pt"</code>. Print the dict's keys.`,
+        steps: [
+          { do: `Build the dict <code>{"epoch": e, "model": model.state_dict(), "optim": opt.state_dict(), "loss": loss.item()}</code>.`, why: `Adam keeps per-parameter momentum/variance; the optimizer state must travel too.` },
+          { do: `<code>torch.save(ckpt, "ckpt.pt")</code> and print <code>ckpt.keys()</code>.`, why: `A checkpoint is just a bigger dictionary saved with the same call.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = Net(); opt = torch.optim.Adam(model.parameters(), lr=0.05)
+lossf = nn.MSELoss(); x = torch.randn(16, 4); y = torch.randn(16, 1)
+for e in range(10):
+    opt.zero_grad(); loss = lossf(model(x), y); loss.backward(); opt.step()
+ckpt = {"epoch": e, "model": model.state_dict(), "optim": opt.state_dict(), "loss": loss.item()}
+torch.save(ckpt, "ckpt.pt")
+print(list(ckpt.keys()))   # ['epoch', 'model', 'optim', 'loss']</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Resume from the checkpoint. Load <code>"ckpt.pt"</code>, push the model and optimizer states back into fresh objects, set <code>start_epoch = ckpt["epoch"] + 1</code>, call <code>model.train()</code>, and print the resume epoch. Predict it before running (the save loop ended at epoch 9).`,
+        steps: [
+          { do: `Restore both states: <code>model2.load_state_dict(ckpt["model"])</code> and <code>opt2.load_state_dict(ckpt["optim"])</code>.`, why: `Restoring the optimizer keeps Adam's running averages warm so resumed steps do not lurch.` },
+          { do: `Set <code>start_epoch = ckpt["epoch"] + 1</code> and call <code>model2.train()</code>.`, why: `Resume at the next epoch, in training mode.` }
+        ],
+        answer: `<pre><code>ckpt = torch.load("ckpt.pt", weights_only=True)
+model2 = Net(); opt2 = torch.optim.Adam(model2.parameters(), lr=0.05)
+model2.load_state_dict(ckpt["model"])
+opt2.load_state_dict(ckpt["optim"])
+start_epoch = ckpt["epoch"] + 1
+model2.train()
+print(start_epoch)   # 10  (saved at epoch 9)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Partial load with <code>strict=False</code> (transfer-learning style). Take the saved <code>Net</code> weights but load them into a model whose <code>fc2</code> has a different output size, using <code>strict=False</code>. Print the returned missing and unexpected keys.`,
+        steps: [
+          { do: `Build a variant with <code>fc2 = nn.Linear(8, 3)</code> and load with <code>strict=False</code>.`, why: `Strict loading would raise on the shape mismatch; <code>strict=False</code> copies only the keys that match.` },
+          { do: `Inspect the returned <code>missing_keys</code> / <code>unexpected_keys</code>.`, why: `It reports which tensors did not get copied so you can spot mismatches.` }
+        ],
+        answer: `<pre><code>class Net3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(4, 8); self.fc2 = nn.Linear(8, 3)   # different head
+    def forward(self, x):
+        return self.fc2(torch.relu(self.fc1(x)))
+out = Net3().load_state_dict(torch.load("m.pt", weights_only=True), strict=False)
+print(out.missing_keys)      # [] (fc1/fc2 names exist) -- but fc2 shapes differ
+# In practice the size-mismatched fc2.* are skipped; matching fc1.* are copied.
+# missing/unexpected lists report any names that did not line up.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Three-line inference reload. Your teammate sends <code>m.pt</code> (a state_dict). Write the canonical three-line load-for-inference: rebuild the class, <code>load_state_dict</code> with <code>weights_only=True</code>, and <code>eval()</code>. Then run a no-grad forward on <code>torch.randn(2, 4)</code>.`,
+        steps: [
+          { do: `<code>model = Net(); model.load_state_dict(torch.load("m.pt", weights_only=True)); model.eval()</code>.`, why: `Rebuild code, pour in numbers, switch off dropout/batch-norm training behavior.` },
+          { do: `Wrap inference in <code>torch.no_grad()</code>.`, why: `No autograd graph is needed at inference; it saves memory.` }
+        ],
+        answer: `<pre><code>model = Net()
+model.load_state_dict(torch.load("m.pt", weights_only=True))
+model.eval()
+with torch.no_grad():
+    print(model(torch.randn(2, 4)).shape)   # torch.Size([2, 1])</code></pre>`
       }
     ]
   });

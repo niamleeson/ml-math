@@ -140,31 +140,152 @@
 
     practice: [
       {
-        q: `Your model trains at 30% GPU utilization (per <code>nvidia-smi</code>) and an epoch is slow. Your DataLoader uses <code>num_workers=0</code> and you copy each batch with plain <code>batch.to("cuda")</code>. What is the bottleneck, and what two changes fix it?`,
+        q: `<b>Type this in Colab.</b> Show that <code>torch.no_grad()</code> matters at inference. Build <code>model = nn.Sequential(nn.Linear(10, 5))</code> and <code>x = torch.randn(4, 10)</code> (seed 0). Run the forward pass once normally and once inside <code>with torch.no_grad():</code>, and print <code>out.requires_grad</code> for each.`,
         steps: [
-          { do: `Read the symptom: low GPU utilization with a slow epoch.`, why: `A starved GPU sits idle waiting for the next batch &mdash; the bottleneck is data loading, not compute.` },
-          { do: `Note <code>num_workers=0</code> means the main process loads batches serially with no overlap.`, why: `With zero workers the GPU waits while the CPU prepares each batch; nothing runs in parallel.` },
-          { do: `Set <code>num_workers&gt;0</code> and <code>pin_memory=True</code>, and copy with <code>batch.to("cuda", non_blocking=True)</code>.`, why: `Worker subprocesses prefetch the next batches while the GPU computes the current one; pinned memory plus non_blocking lets the copy overlap too.` }
+          { do: `Run the same forward outside and inside <code>torch.no_grad()</code>.`, why: `<code>no_grad</code> disables autograd graph construction, so at inference you skip the memory and time cost of tracking gradients.` },
+          { do: `Print <code>out.requires_grad</code> in each case.`, why: `It is <code>True</code> normally and <code>False</code> under no_grad — proving the graph is not being built.` }
         ],
-        answer: `<p>The GPU is <b>starving for data</b> &mdash; low utilization with a slow epoch is the signature of a data-loading bottleneck, and <code>num_workers=0</code> confirms it (batches load serially on the main process). Fix it two ways: (1) raise <code>num_workers</code> (e.g. to 4&ndash;8) and set <code>pin_memory=True</code> in the DataLoader so batches are prefetched in parallel into page-locked memory; (2) copy with <code>batch.to("cuda", non_blocking=True)</code> so the transfer overlaps compute. GPU utilization should jump and the epoch should shrink. See <code>pt-data</code> for the full pipeline.</p>`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(10, 5))
+x = torch.randn(4, 10)
+
+out1 = model(x)
+print(out1.requires_grad)        # True  -- graph built (wasteful at inference)
+with torch.no_grad():
+    out2 = model(x)
+print(out2.requires_grad)        # False -- no graph, less memory/time</code></pre>`
       },
       {
-        q: `A teammate added <code>model = torch.compile(model)</code> expecting a speedup, but training got <i>slower</i> and the log shows repeated "recompiling" messages. Their batch size varies every step (they drop the last partial batch sometimes, pad differently others). What is happening and how do they fix it?`,
+        q: `<b>Type this in Colab.</b> Time a Python-loop sum over a batch versus a vectorized one. For <code>x = torch.randn(10000, 64)</code> (seed 0), compute row sums two ways: a Python <code>for</code> loop appending <code>x[i].sum()</code>, and <code>x.sum(dim=1)</code>. Use <code>time.perf_counter()</code> and print both durations, then confirm the results match with <code>torch.allclose</code>.`,
         steps: [
-          { do: `Recall <code>torch.compile</code> specializes the compiled graph on the input shapes it sees.`, why: `The fast path is a graph compiled for specific shapes; a new shape is a cache miss.` },
-          { do: `Connect the varying batch size to the "recompiling" messages.`, why: `Each new batch shape triggers a fresh, expensive compilation, so they pay the compile cost over and over instead of reusing it.` },
-          { do: `Make shapes stable (fixed batch size, <code>drop_last=True</code>, pad to a constant length) or pass <code>dynamic=True</code>.`, why: `Stable shapes let one compiled graph be reused; <code>dynamic=True</code> compiles a shape-flexible graph that tolerates variation.` }
+          { do: `Time both approaches with <code>time.perf_counter()</code>.`, why: `Python-level loops drop off the fast vectorized path and serialize the work — the vectorized op is dramatically faster.` },
+          { do: `Verify equality with <code>torch.allclose</code>.`, why: `Same answer, far less time: the lesson is to vectorize over the batch, never loop element by element.` }
         ],
-        answer: `<p><code>torch.compile</code> compiles a graph specialized to the input <b>shapes</b>. Because the batch size keeps changing, every new shape is a cache miss that triggers another expensive recompile &mdash; so the model spends its time compiling, not training. Fix: keep shapes constant (fix the batch size, set <code>drop_last=True</code>, pad sequences to a fixed length), or compile with <code>torch.compile(model, dynamic=True)</code> to get one shape-flexible graph. Then the compile cost is paid once and the speedup shows up.</p>`
+        answer: `<pre><code>import time
+torch.manual_seed(0)
+x = torch.randn(10000, 64)
+
+t0 = time.perf_counter()
+loop = torch.stack([x[i].sum() for i in range(x.shape[0])])
+t_loop = time.perf_counter() - t0
+
+t0 = time.perf_counter()
+vec = x.sum(dim=1)
+t_vec = time.perf_counter() - t0
+
+print(f"loop: {t_loop*1e3:.1f} ms, vec: {t_vec*1e3:.3f} ms")  # vec is much faster
+print(torch.allclose(loop, vec))                               # True</code></pre>`
       },
       {
-        q: `You want an effective batch size of 256 but only 64 fits in GPU memory. Without buying more hardware, how do you train as if the batch were 256, and what is the one detail people get wrong?`,
+        q: `<b>Type this in Colab.</b> Demonstrate the <code>.item()</code> hot-loop sync trap as code. Given a tensor loss each step, accumulate a running total TWO ways: <code>running += loss.item()</code> (Python float) versus <code>running += loss.detach()</code> (stays a tensor). Use a list of 3 fake losses <code>[torch.tensor(2.0), torch.tensor(1.0), torch.tensor(0.5)]</code> and print the type of each running total.`,
         steps: [
-          { do: `Recognize this is what gradient accumulation is for.`, why: `Summing gradients over several small (micro) batches before stepping reproduces the gradient of one large batch.` },
-          { do: `Run 4 micro-batches of 64, calling <code>.backward()</code> each (grads accumulate) and <code>optimizer.step()</code> + <code>zero_grad()</code> only after the 4th.`, why: `Because <code>4 × 64 = 256</code>, four accumulated micro-batch gradients equal one 256-sample gradient.` },
-          { do: `Divide each micro-batch loss by 4 (the accumulation count) before <code>.backward()</code>.`, why: `Without the division the accumulated gradient is the sum, not the average, so it is 4× too large &mdash; this is the detail people forget.` }
+          { do: `Accumulate with <code>loss.detach()</code> and only call <code>.item()</code> once at the end.`, why: `On a GPU, <code>.item()</code> forces a host/device sync every step; keeping the total on-device avoids the stall.` },
+          { do: `Print <code>type(running)</code> for each.`, why: `The <code>.item()</code> total is a Python float (synced each step); the <code>.detach()</code> total stays a tensor until you sync once.` }
         ],
-        answer: `<p>Use <b>gradient accumulation</b>: process 4 micro-batches of 64 (since $4\\times64=256$), call <code>loss.backward()</code> after each so gradients accumulate, and only call <code>optimizer.step()</code> then <code>optimizer.zero_grad()</code> after the 4th. The detail people get wrong: <b>scale each micro-batch loss by <code>1/4</code></b> before <code>.backward()</code> &mdash; otherwise you accumulate the <i>sum</i> of four gradients instead of the average of a 256-batch, making the effective gradient (and learning rate) 4&times; too large. With the division, it matches a true batch of 256.</p>`
+        answer: `<pre><code>losses = [torch.tensor(2.0), torch.tensor(1.0), torch.tensor(0.5)]
+
+# BAD: .item() every step -> a host/device sync each iteration on GPU
+running_bad = 0.0
+for loss in losses:
+    running_bad += loss.item()
+print(type(running_bad), running_bad)      # &lt;class 'float'&gt; 3.5
+
+# GOOD: stay on-device, sync ONCE at the end
+running_good = torch.zeros(())
+for loss in losses:
+    running_good += loss.detach()
+print(type(running_good), running_good.item())  # &lt;class 'torch.Tensor'&gt; 3.5</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Implement gradient accumulation and verify the averaging detail. For <code>model = nn.Linear(4, 1)</code> (seed 0), micro-batch <code>x = torch.randn(8, 4)</code>, <code>y = torch.randn(8, 1)</code>, with <code>accum_steps = 4</code>: do 4 backward passes of <code>loss / accum_steps</code> WITHOUT stepping, then print the gradient norm. Compare it to backprop on the full 4&times; data at once.`,
+        steps: [
+          { do: `Divide each micro-batch loss by <code>accum_steps</code> before <code>backward()</code>, accumulating grads.`, why: `Without the division you accumulate the SUM, not the average — the gradient (and effective lr) is <code>accum_steps</code>x too large.` },
+          { do: `Compare to one backward over the concatenated 4&times; batch.`, why: `Done right, accumulated micro-batch grads equal the gradient of one big batch.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Linear(4, 1)
+x = torch.randn(8, 4); y = torch.randn(8, 1)
+accum_steps = 4
+
+# Accumulate 4 identical micro-batches, scaling each loss by 1/accum_steps
+model.zero_grad()
+for _ in range(accum_steps):
+    loss = ((model(x) - y) ** 2).mean() / accum_steps
+    loss.backward()
+g_accum = model.weight.grad.norm().item()
+
+# One backward over the full 4x batch (same data repeated)
+model.zero_grad()
+X = x.repeat(accum_steps, 1); Y = y.repeat(accum_steps, 1)
+((model(X) - Y) ** 2).mean().backward()
+g_full = model.weight.grad.norm().item()
+
+print(round(g_accum, 5), round(g_full, 5))   # equal -> averaging is correct</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Build an efficient DataLoader. Wrap <code>TensorDataset(torch.randn(256, 10), torch.randint(0, 3, (256,)))</code> in a <code>DataLoader</code> with <code>batch_size=64</code>, <code>num_workers=2</code>, <code>pin_memory=False</code>, <code>drop_last=True</code>. Iterate once and print how many batches you get and the shape of the first batch's inputs. Predict the batch count.`,
+        steps: [
+          { do: `Set <code>num_workers&gt;0</code> so worker subprocesses prefetch batches in parallel with compute.`, why: `With <code>num_workers=0</code> the GPU waits while the main process loads each batch — the classic starvation bottleneck.` },
+          { do: `Predict the batch count: <code>256 // 64 = 4</code> with <code>drop_last=True</code>.`, why: `<code>drop_last</code> keeps a fixed batch shape, which also avoids <code>torch.compile</code> recompiles.` }
+        ],
+        answer: `<pre><code>from torch.utils.data import DataLoader, TensorDataset
+torch.manual_seed(0)
+ds = TensorDataset(torch.randn(256, 10), torch.randint(0, 3, (256,)))
+loader = DataLoader(ds, batch_size=64, num_workers=2,
+                    pin_memory=False, drop_last=True)
+batches = list(loader)
+print(len(batches))            # 4   (256 // 64, last partial dropped)
+print(batches[0][0].shape)     # torch.Size([64, 10])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Move a batch to the chosen device with an asynchronous copy. Pick <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code>, make <code>xb = torch.randn(64, 10)</code>, and copy it with <code>xb.to(device, non_blocking=True)</code>. Print the result's <code>.device</code>. Explain in a comment what <code>non_blocking=True</code> needs to actually help.`,
+        steps: [
+          { do: `Copy with <code>.to(device, non_blocking=True)</code>.`, why: `<code>non_blocking=True</code> lets the CPU&rarr;GPU transfer run in the background instead of stalling the host.` },
+          { do: `Note it only overlaps when the source is in pinned (<code>pin_memory</code>) host memory.`, why: `Without pinned memory the copy is synchronous anyway, so DataLoader <code>pin_memory=True</code> is the partner setting.` }
+        ],
+        answer: `<pre><code>device = "cuda" if torch.cuda.is_available() else "cpu"
+xb = torch.randn(64, 10)
+xb = xb.to(device, non_blocking=True)
+print(xb.device)        # cuda:0 on a GPU runtime, else cpu
+# non_blocking=True only overlaps the copy when xb is in pinned host memory
+# (DataLoader pin_memory=True), otherwise the transfer is synchronous.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Apply <code>torch.compile</code> and confirm it still produces the same numbers. Build <code>model = nn.Sequential(nn.Linear(10, 10), nn.ReLU(), nn.Linear(10, 3))</code> (seed 0), get <code>out_eager = model(x)</code> for <code>x = torch.randn(8, 10)</code>, then <code>compiled = torch.compile(model)</code> and compare <code>compiled(x)</code> with <code>torch.allclose(..., atol=1e-5)</code>.`,
+        steps: [
+          { do: `Wrap with <code>torch.compile(model)</code> — one line, no other code changes.`, why: `It traces and fuses the graph into optimized kernels; the first call compiles, later calls reuse it.` },
+          { do: `Compare compiled vs eager output with <code>torch.allclose</code>.`, why: `Compilation is a speed optimization, not a math change — the outputs must match (up to tiny numerical noise).` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(10, 10), nn.ReLU(), nn.Linear(10, 3))
+x = torch.randn(8, 10)
+out_eager = model(x)
+
+compiled = torch.compile(model)        # PyTorch 2.x; first call compiles
+out_compiled = compiled(x)
+print(torch.allclose(out_eager, out_compiled, atol=1e-5))   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Put it together: a small profiled-style training step that avoids the sync trap. Build <code>model = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 3))</code>, an Adam optimizer, and loop 50 steps over fixed <code>xb/yb</code> (seed 0), accumulating <code>running</code> with <code>loss.detach()</code> and calling <code>.item()</code> only once at the end. Print the final averaged loss.`,
+        steps: [
+          { do: `Accumulate the loss on-device with <code>running += loss.detach()</code> inside the loop.`, why: `Calling <code>.item()</code> every step forces a host/device sync; detaching keeps it on the GPU.` },
+          { do: `Call <code>.item()</code> exactly once, after the loop.`, why: `One sync at the end (for logging) instead of fifty in the hot loop — free speed on a real GPU.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 3))
+opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+loss_fn = nn.CrossEntropyLoss()
+xb = torch.randn(16, 10); yb = torch.randint(0, 3, (16,))
+
+running = torch.zeros(())
+for _ in range(50):
+    opt.zero_grad()
+    loss = loss_fn(model(xb), yb)
+    loss.backward(); opt.step()
+    running += loss.detach()           # stays on-device; NO per-step .item()
+print("avg loss:", round((running / 50).item(), 4))   # one sync at the end</code></pre>`
       }
     ]
   });

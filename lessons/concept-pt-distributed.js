@@ -156,31 +156,151 @@
 
     practice: [
       {
-        q: `A teammate scales from 1 GPU to 4 GPUs with DDP, but final accuracy drops noticeably versus the single-GPU baseline. They kept everything else the same. What is the most likely cause, and what is the fix?`,
+        q: `<b>Type this in Colab.</b> Compute the <b>effective batch size</b> for a DDP run. Set <code>local_batch = 32</code> and <code>world_size = 8</code>, then print <code>local_batch * world_size</code>. Also print the per-GPU shard size of an 80,000-image dataset (<code>80000 // world_size</code>). Predict both numbers before running.`,
         steps: [
-          { do: `Note that 4-GPU DDP makes the effective batch size 4&times; larger (each GPU keeps its local batch, and gradients are averaged across all 4).`, why: `DDP is mathematically one run on the concatenated big batch, so the optimizer is now stepping on a much larger batch than the baseline used.` },
-          { do: `Realize a bigger batch gives a less noisy gradient, so the old learning rate is now effectively too small for the new batch.`, why: `The learning rate was tuned for the small-batch gradient noise; at 4&times; the batch it no longer matches.` },
-          { do: `Apply the linear scaling rule: multiply the learning rate by 4 (with a short warmup).`, why: `Scaling lr with the effective batch restores the step magnitude the optimizer expects, recovering the baseline accuracy.` }
+          { do: `Multiply the per-GPU batch by the number of GPUs: <code>local_batch * world_size</code>.`, why: `Each GPU processes its own local batch and their gradients are averaged, so the optimizer steps on the concatenated big batch.` },
+          { do: `Floor-divide the dataset size by <code>world_size</code> for the per-rank shard.`, why: `The <code>DistributedSampler</code> hands each rank a disjoint slice, so each rank sees <code>1/N</code> of the data per epoch.` }
         ],
-        answer: `<p>They forgot to <b>scale the learning rate</b>. With 4 GPUs the effective batch is 4&times; larger, which lowers gradient noise and makes the original learning rate effectively too small. Use the linear scaling rule &mdash; multiply the learning rate by 4 (the number of GPUs), typically with a few warmup epochs so the larger early steps stay stable. This is the single most common reason a correct DDP setup underperforms its single-GPU baseline.</p>`
+        answer: `<pre><code>local_batch = 32
+world_size = 8
+print(local_batch * world_size)       # 256  -- effective batch size
+print(80000 // world_size)            # 10000  -- images per GPU per epoch</code></pre>`
       },
       {
-        q: `A DDP job launched with <code>torchrun --nproc_per_node=4</code> hangs partway through an epoch with no error &mdash; the GPUs sit at 100% then go idle and nothing happens. What class of bug is this, and what causes it?`,
+        q: `<b>Type this in Colab.</b> Build a <code>DistributedSampler</code> by hand (no real cluster needed). Make a <code>TensorDataset</code> of 12 items, then create <code>DistributedSampler(ds, num_replicas=4, rank=0, shuffle=False)</code> and print <code>list(sampler)</code> &mdash; the indices rank 0 owns. Then build the same sampler for <code>rank=1</code> and print its indices. Notice they are disjoint.`,
         steps: [
-          { do: `Recognize that DDP does an all-reduce on every backward pass, which is a synchronization barrier: all 4 ranks must reach it together.`, why: `If even one rank does not arrive at an all-reduce, the others block waiting for it indefinitely &mdash; a deadlock, which looks like a silent hang.` },
-          { do: `Look for a reason one rank runs fewer steps than the others &mdash; an uneven dataset split, <code>drop_last=False</code> leaving a ragged last batch, or a per-rank early <code>break</code>.`, why: `Different step counts mean one rank finishes its loop while the others are still waiting at the next all-reduce.` },
-          { do: `Make the step counts equal: set <code>drop_last=True</code> in the DataLoader (or use DDP's <code>join()</code> context for uneven inputs).`, why: `Equal step counts keep every rank hitting each all-reduce together, so no rank is left waiting.` }
+          { do: `Construct a sampler per rank with <code>num_replicas=4</code> and a different <code>rank</code>.`, why: `Each rank gets a disjoint shard; without the sampler every rank would iterate the SAME data and you'd just do the work N times.` },
+          { do: `Print <code>list(sampler)</code> for rank 0 and rank 1.`, why: `Seeing the index sets makes the disjoint-shard behavior concrete.` }
         ],
-        answer: `<p>It is a <b>deadlock from uneven batch counts</b>. DDP synchronizes via all-reduce on every backward pass, so all ranks must run the same number of steps. When one rank runs out of batches early &mdash; ragged last batch, uneven split, or a per-rank <code>break</code> &mdash; the others block forever at the next all-reduce and the job hangs with no error. Fix it by forcing equal step counts: <code>drop_last=True</code> in the DataLoader, or wrap the loop in DDP's <code>model.join()</code> context to handle uneven inputs.</p>`
+        answer: `<pre><code>import torch
+from torch.utils.data import TensorDataset
+from torch.utils.data.distributed import DistributedSampler
+
+ds = TensorDataset(torch.arange(12))
+s0 = DistributedSampler(ds, num_replicas=4, rank=0, shuffle=False)
+s1 = DistributedSampler(ds, num_replicas=4, rank=1, shuffle=False)
+print(list(s0))     # [0, 4, 8]
+print(list(s1))     # [1, 5, 9]
+# disjoint shards -- rank 0 and rank 1 never see the same index</code></pre>`
       },
       {
-        q: `You have one big model and a large dataset. You try DDP and immediately get a CUDA out-of-memory error before training even starts &mdash; the model will not even fit one copy on one GPU. Is DDP the right tool, and what should you use instead?`,
+        q: `<b>Type this in Colab.</b> Demonstrate the <code>set_epoch</code> gotcha. Build a shuffling <code>DistributedSampler(ds, num_replicas=2, rank=0, shuffle=True)</code> over a 10-item dataset. Print <code>list(sampler)</code> twice with NO <code>set_epoch</code> (same order), then call <code>sampler.set_epoch(1)</code> and print again (new order).`,
         steps: [
-          { do: `Identify which wall you hit: this is the memory wall (the model does not fit), not the compute wall (training too slow).`, why: `DDP is data parallelism &mdash; it puts a full replica on every GPU. If one replica does not fit, DDP cannot help.` },
-          { do: `Recognize you need to shard the model itself &mdash; split its weights, gradients, and optimizer state across GPUs rather than replicating them.`, why: `Sharding means no single GPU ever holds the whole model, so a model larger than one GPU's memory becomes trainable.` },
-          { do: `Switch to Fully Sharded Data Parallel (FSDP) or DeepSpeed/ZeRO.`, why: `These shard parameters/optimizer state across GPUs (and can offload to CPU), fitting models too big for plain DDP while still scaling across data.` }
+          { do: `Print the sampler's indices twice without changing the epoch.`, why: `A shuffling sampler reuses the same seed each epoch unless told otherwise, so the shuffle is identical &mdash; the famous bug.` },
+          { do: `Call <code>sampler.set_epoch(1)</code> then print again.`, why: `<code>set_epoch</code> mixes the epoch into the seed so each epoch reshuffles differently across ranks.` }
         ],
-        answer: `<p>DDP is the <i>wrong</i> tool here. DDP replicates a full copy of the model on every GPU, so if one copy will not fit, it cannot run &mdash; this is the <b>memory wall</b>, not the speed problem DDP solves. You need <b>model sharding</b>: <b>Fully Sharded Data Parallel (FSDP)</b> or <b>DeepSpeed/ZeRO</b>, which split the weights, gradients, and optimizer state across GPUs (optionally offloading to Central Processing Unit memory) so no single GPU ever holds the whole model. Reserve plain DDP for when the model fits but training is too slow.</p>`
+        answer: `<pre><code>import torch
+from torch.utils.data import TensorDataset
+from torch.utils.data.distributed import DistributedSampler
+
+ds = TensorDataset(torch.arange(10))
+sampler = DistributedSampler(ds, num_replicas=2, rank=0, shuffle=True)
+
+sampler.set_epoch(0)
+print(list(sampler))     # e.g. [4, 1, 7, 5, 3]
+sampler.set_epoch(0)
+print(list(sampler))     # SAME order -- identical shuffle (the bug)
+sampler.set_epoch(1)
+print(list(sampler))     # different order -- correct reshuffle</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Wrap a tiny model in <code>nn.DataParallel</code> (works on CPU/single GPU, unlike DDP). Build <code>nn.Linear(4, 2)</code>, wrap it as <code>dp = nn.DataParallel(model)</code>, run a <code>(6, 4)</code> input through it, and print the output shape. Then unwrap with <code>dp.module</code> and confirm it is the original <code>Linear</code>.`,
+        steps: [
+          { do: `Wrap the model with <code>nn.DataParallel(model)</code> and call it on a batch.`, why: `<code>DataParallel</code> is the single-process API; it runs even with one device, so it's the one you can demo in Colab.` },
+          { do: `Access <code>dp.module</code> to reach the underlying model.`, why: `Both <code>DataParallel</code> and DDP store the real model under <code>.module</code> &mdash; you need it to save a clean <code>state_dict</code>.` }
+        ],
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+model = nn.Linear(4, 2)
+dp = nn.DataParallel(model)
+x = torch.randn(6, 4)
+out = dp(x)
+print(out.shape)                 # torch.Size([6, 2])
+print(type(dp.module).__name__)  # Linear  -- the unwrapped model
+print(dp.module is model)        # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show the <code>.module</code> checkpoint gotcha. Wrap <code>nn.Linear(4, 2)</code> in <code>nn.DataParallel</code>, then print the FIRST key of <code>dp.state_dict()</code> (note the <code>module.</code> prefix) versus <code>dp.module.state_dict()</code> (no prefix). Save the clean one with <code>torch.save</code> and confirm it loads back into a plain <code>nn.Linear(4, 2)</code>.`,
+        steps: [
+          { do: `Compare <code>list(dp.state_dict())[0]</code> with <code>list(dp.module.state_dict())[0]</code>.`, why: `Saving the wrapper's <code>state_dict</code> prepends <code>module.</code> to every key, which then fails to load into the bare model.` },
+          { do: `Save <code>dp.module.state_dict()</code> and <code>load_state_dict</code> into a fresh <code>nn.Linear</code>.`, why: `Unwrapping first gives keys that match the plain model exactly.` }
+        ],
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+dp = nn.DataParallel(nn.Linear(4, 2))
+print(list(dp.state_dict())[0])         # module.weight  -- prefixed!
+print(list(dp.module.state_dict())[0])  # weight         -- clean
+
+torch.save(dp.module.state_dict(), "m.pt")
+plain = nn.Linear(4, 2)
+plain.load_state_dict(torch.load("m.pt"))   # loads cleanly
+print("loaded ok")                          # loaded ok</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Initialize a single-process &ldquo;distributed&rdquo; group with the <code>gloo</code> CPU backend and do a real <code>all_reduce</code>. Set the env vars, call <code>dist.init_process_group("gloo", rank=0, world_size=1)</code>, all-reduce a tensor <code>[1.0, 2.0, 3.0]</code> with <code>ReduceOp.SUM</code>, print it, then <code>destroy_process_group()</code>.`,
+        steps: [
+          { do: `Set <code>MASTER_ADDR</code>/<code>MASTER_PORT</code> and call <code>init_process_group</code> with <code>world_size=1</code>.`, why: `<code>gloo</code> runs on CPU, so a 1-process group is the only DDP-family primitive you can actually execute in Colab.` },
+          { do: `Call <code>dist.all_reduce(t, op=ReduceOp.SUM)</code>.`, why: `All-reduce is the collective DDP uses to average gradients; with one rank the sum just returns the same tensor, proving the call works.` }
+        ],
+        answer: `<pre><code>import os, torch
+import torch.distributed as dist
+
+os.environ["MASTER_ADDR"] = "127.0.0.1"
+os.environ["MASTER_PORT"] = "29500"
+dist.init_process_group("gloo", rank=0, world_size=1)
+
+t = torch.tensor([1.0, 2.0, 3.0])
+dist.all_reduce(t, op=dist.ReduceOp.SUM)
+print(t)                       # tensor([1., 2., 3.])  (sum over 1 rank)
+print(dist.get_world_size())   # 1
+dist.destroy_process_group()</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Apply the <b>linear scaling rule</b> in code. Given <code>base_lr = 0.1</code> tuned at a local batch of 32, and a DDP run with <code>world_size = 8</code>, compute the scaled learning rate and the effective batch size, then build an SGD optimizer over <code>nn.Linear(10, 2)</code> with that learning rate and print <code>optimizer.param_groups[0]["lr"]</code>.`,
+        steps: [
+          { do: `Scale the learning rate: <code>base_lr * world_size</code>.`, why: `A bigger effective batch has less gradient noise, so the linear scaling rule raises the learning rate by N to keep step magnitudes right.` },
+          { do: `Pass the scaled value into <code>torch.optim.SGD</code> and read it back from <code>param_groups</code>.`, why: `<code>param_groups</code> is the source of truth for what the optimizer will actually use.` }
+        ],
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+base_lr, world_size, local_batch = 0.1, 8, 32
+scaled_lr = base_lr * world_size
+print(scaled_lr)                       # 0.8
+print(local_batch * world_size)        # 256  -- effective batch
+
+model = nn.Linear(10, 2)
+optimizer = torch.optim.SGD(model.parameters(), lr=scaled_lr, momentum=0.9)
+print(optimizer.param_groups[0]["lr"]) # 0.8</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Demonstrate gradient accumulation (the single-GPU stand-in for a big effective batch). On <code>nn.Linear(4, 1)</code> with <code>K = 4</code> micro-batches of shape <code>(2, 4)</code>, run forward/backward 4 times, dividing each loss by <code>K</code>, and call <code>optimizer.step()</code> and <code>zero_grad()</code> only ONCE after the loop. Print the loss of each micro-step. Use <code>torch.manual_seed(0)</code>.`,
+        steps: [
+          { do: `Accumulate <code>(loss / K).backward()</code> across K micro-batches without stepping.`, why: `Gradients add up across backward calls, so K micro-batches give the same averaged gradient as one batch of K&times; the size.` },
+          { do: `Call <code>optimizer.step()</code> then <code>optimizer.zero_grad()</code> once, after the loop.`, why: `Stepping once per K micro-batches yields an effective batch of K&times; the micro-batch with 1/K the peak memory.` }
+        ],
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+model = nn.Linear(4, 1)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+K = 4
+optimizer.zero_grad()
+for k in range(K):
+    xb = torch.randn(2, 4)
+    yb = torch.randn(2, 1)
+    loss = ((model(xb) - yb) ** 2).mean() / K   # scale by K
+    loss.backward()                             # grads ACCUMULATE
+    print(round(loss.item(), 4))
+# 0.4961
+# 0.2473
+# 0.6014
+# 0.2105
+optimizer.step()        # one step on the accumulated gradient
+optimizer.zero_grad()   # clear for the next effective batch</code></pre>`
       }
     ]
   });

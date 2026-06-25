@@ -63,28 +63,120 @@
        </ul>`,
     practice: [
       {
-        q: `You have a leaf tensor <code>w = torch.tensor([1.0, 2.0], requires_grad=True)</code>. Inside a training loop you compute a loss and call <code>loss.backward()</code> every iteration, but you forgot to zero the gradient. After 3 identical iterations, how does <code>w.grad</code> compare to a single iteration's gradient?`,
+        q: `<b>Type this in Colab.</b> Hand-check autograd. Create <code>x = torch.tensor(2.0, requires_grad=True)</code>, compute <code>y = x**3 + 2*x</code>, call <code>y.backward()</code>, and print <code>x.grad</code>. Predict the value first using the derivative $3x^2+2$ at $x=2$.`,
         steps: [
-          { do: `Recall that <code>.backward()</code> accumulates into <code>.grad</code> rather than replacing it.`, why: `This is the default so multiple backward passes can be summed (gradient accumulation).` },
-          { do: `Each iteration adds the same gradient g into <code>w.grad</code>.`, why: `The forward is identical, so each backward deposits the same g.` }
+          { do: `Set <code>requires_grad=True</code> on the leaf, then compute <code>y</code>.`, why: `Only tracked tensors build a graph that <code>.backward()</code> can walk.` },
+          { do: `Call <code>y.backward()</code> and read <code>x.grad</code>.`, why: `Reverse-mode autodiff deposits $dy/dx = 3x^2+2 = 14$ into the leaf's <code>.grad</code>.` }
         ],
-        answer: `<code>w.grad</code> equals <b>3&times;</b> the single-iteration gradient. The fix is <code>optimizer.zero_grad()</code> (or <code>w.grad.zero_()</code>) at the top of each iteration so each step sees only its own gradient.`
+        answer: `<pre><code>x = torch.tensor(2.0, requires_grad=True)
+y = x**3 + 2*x
+y.backward()
+print(x.grad)        # tensor(14.)   -- matches 3*2^2 + 2 = 14</code></pre>`
       },
       {
-        q: `For <code>x = torch.tensor(3.0, requires_grad=True)</code> and <code>y = x**2 + 5*x</code>, what is <code>x.grad</code> after <code>y.backward()</code>?`,
+        q: `<b>Type this in Colab.</b> Inspect the graph. Create <code>x = torch.tensor(3.0, requires_grad=True)</code>, compute <code>y = x**2 + 5*x</code>, and print <code>y.grad_fn</code>. Then call <code>y.backward()</code> and print <code>x.grad</code>. Predict <code>x.grad</code> from $2x+5$ at $x=3$.`,
         steps: [
-          { do: `Differentiate: $\\frac{dy}{dx} = 2x + 5$.`, why: `Power rule on $x^2$ gives $2x$; the $5x$ term gives $5$. Autograd applies the same chain rule automatically.` },
-          { do: `Evaluate at $x=3$: $2(3)+5 = 11$.`, why: `Plug the leaf value into the derivative.` }
+          { do: `Print <code>y.grad_fn</code> before backward.`, why: `A tracked op attaches a <code>grad_fn</code> (here <code>AddBackward0</code>) — the edge of the graph.` },
+          { do: `Call <code>y.backward()</code> and read <code>x.grad</code>.`, why: `Autograd computes $2x+5 = 11$ at $x=3$.` }
         ],
-        answer: `<code>x.grad</code> is <b>11.0</b>. PyTorch's autograd returns exactly this analytic value.`
+        answer: `<pre><code>x = torch.tensor(3.0, requires_grad=True)
+y = x**2 + 5*x
+print(y.grad_fn)     # &lt;AddBackward0 object at 0x...&gt;
+y.backward()
+print(x.grad)        # tensor(11.)   -- 2*3 + 5 = 11</code></pre>`
       },
       {
-        q: `You wrap your evaluation loop in <code>with torch.no_grad():</code>. What changes about the tensors produced inside that block, and why do it?`,
+        q: `<b>Type this in Colab.</b> The #1 pitfall: gradients accumulate. With <code>x = torch.tensor(2.0, requires_grad=True)</code>, run <code>y = x**3 + 2*x; y.backward()</code> THREE times in a loop WITHOUT zeroing, printing <code>x.grad</code> each time. Predict the three values before running.`,
         steps: [
-          { do: `Inside the block, operations are not tracked: outputs have <code>requires_grad=False</code> and no <code>grad_fn</code>.`, why: `<code>no_grad</code> turns off graph construction.` },
-          { do: `No graph means no stored activations for a backward pass.`, why: `At inference you never call <code>.backward()</code>, so that memory and bookkeeping is pure waste.` }
+          { do: `Re-run forward + <code>backward()</code> three times without zeroing.`, why: `<code>.backward()</code> ADDS into <code>.grad</code> rather than replacing it.` },
+          { do: `Watch <code>x.grad</code> grow 14, 28, 42.`, why: `Each pass deposits the same gradient 14, so they pile up — this is the bug behind broken training loops.` }
         ],
-        answer: `Tensors come out detached from the graph (<code>requires_grad=False</code>). You do it to save memory and speed up inference / evaluation, where gradients are not needed. (Closely related: <code>.detach()</code> cuts a single tensor out of the graph.)`
+        answer: `<pre><code>x = torch.tensor(2.0, requires_grad=True)
+for i in range(3):
+    y = x**3 + 2*x
+    y.backward()
+    print(x.grad)
+# tensor(14.)
+# tensor(28.)   -- accumulated!
+# tensor(42.)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Now fix the accumulation. Repeat the previous loop but call <code>x.grad.zero_()</code> at the top of each iteration (after the first, since <code>.grad</code> starts as <code>None</code>). Print <code>x.grad</code> each time and confirm it stays 14.`,
+        steps: [
+          { do: `Zero the gradient before each <code>backward()</code> (guard the first <code>None</code>).`, why: `Zeroing clears stale gradients so each step sees only its own — in a model this is <code>optimizer.zero_grad()</code>.` },
+          { do: `Confirm <code>x.grad</code> is 14 every iteration.`, why: `With a clean slate each pass, the gradient no longer piles up.` }
+        ],
+        answer: `<pre><code>x = torch.tensor(2.0, requires_grad=True)
+for i in range(3):
+    if x.grad is not None:
+        x.grad.zero_()          # optimizer.zero_grad() in a real loop
+    y = x**3 + 2*x
+    y.backward()
+    print(x.grad)
+# tensor(14.)
+# tensor(14.)   -- correct every time
+# tensor(14.)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Calling <code>.backward()</code> twice on one graph. Create <code>x = torch.tensor(2.0, requires_grad=True)</code>, compute <code>y = x**3 + 2*x</code>, call <code>y.backward()</code>, then call <code>y.backward()</code> AGAIN inside a <code>try/except</code> and print the error. Then show <code>retain_graph=True</code> on the first call avoids it.`,
+        steps: [
+          { do: `Call <code>y.backward()</code> twice and catch the <code>RuntimeError</code>.`, why: `PyTorch frees the graph after the first backward to save memory, so a second call fails.` },
+          { do: `Pass <code>retain_graph=True</code> on the first backward.`, why: `It keeps the graph alive so a genuine second backward can run.` }
+        ],
+        answer: `<pre><code>x = torch.tensor(2.0, requires_grad=True)
+y = x**3 + 2*x
+y.backward()
+try:
+    y.backward()                # graph already freed
+except RuntimeError as err:
+    print("backward twice failed:", "backward through the graph a second time" in str(err))
+    # backward twice failed: True
+
+x = torch.tensor(2.0, requires_grad=True)
+y = x**3 + 2*x
+y.backward(retain_graph=True)   # keep the graph
+y.backward()                    # now this works
+print(x.grad)                   # tensor(28.)  -- 14 + 14 (still accumulates)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Inference with <code>torch.no_grad()</code>. Create <code>x = torch.tensor(2.0, requires_grad=True)</code>. Inside <code>with torch.no_grad():</code> compute <code>z = x**3 + 2*x</code>. Print <code>z.requires_grad</code> and <code>z.grad_fn</code>. Predict both before running.`,
+        steps: [
+          { do: `Compute inside <code>with torch.no_grad():</code>.`, why: `It turns off graph construction, so the output is detached.` },
+          { do: `Print <code>z.requires_grad</code> and <code>z.grad_fn</code>.`, why: `No graph means <code>requires_grad=False</code> and <code>grad_fn=None</code> — saving memory at inference.` }
+        ],
+        answer: `<pre><code>x = torch.tensor(2.0, requires_grad=True)
+with torch.no_grad():
+    z = x**3 + 2*x
+print(z.requires_grad)   # False
+print(z.grad_fn)         # None</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The float-only rule. Try <code>w = torch.tensor([1, 2, 3], requires_grad=True)</code> in a <code>try/except</code> and print the error. Then fix it with float values and confirm <code>w.requires_grad</code> and <code>w.dtype</code>.`,
+        steps: [
+          { do: `Attempt an int tensor with <code>requires_grad=True</code> and catch the error.`, why: `Only floating-point tensors can carry gradients, because gradients are real-valued.` },
+          { do: `Use <code>[1.0, 2.0, 3.0]</code> (or <code>dtype=torch.float32</code>).`, why: `Floats can track grad; print <code>requires_grad</code> and <code>dtype</code> to confirm.` }
+        ],
+        answer: `<pre><code>try:
+    w = torch.tensor([1, 2, 3], requires_grad=True)
+except RuntimeError as err:
+    print("int failed:", "floating point" in str(err))  # int failed: True
+w = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+print(w.requires_grad)   # True
+print(w.dtype)           # torch.float32</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> A one-step gradient descent by hand using autograd. Start <code>w = torch.tensor(5.0, requires_grad=True)</code>, define loss <code>L = (w - 3)**2</code>, call <code>L.backward()</code>, then update <code>w</code> by <code>w.data -= 0.1 * w.grad</code> inside <code>torch.no_grad()</code>. Print the gradient and the new <code>w</code>.`,
+        steps: [
+          { do: `Backprop the loss to get <code>w.grad</code>.`, why: `$dL/dw = 2(w-3) = 4$ at $w=5$ — the slope pointing uphill.` },
+          { do: `Step downhill: <code>w.data -= 0.1 * w.grad</code>.`, why: `Subtracting a fraction of the gradient moves <code>w</code> toward the minimum at 3; this is one optimizer step done by hand.` }
+        ],
+        answer: `<pre><code>w = torch.tensor(5.0, requires_grad=True)
+L = (w - 3)**2
+L.backward()
+print(w.grad)            # tensor(4.)   -- 2*(5-3)
+with torch.no_grad():
+    w -= 0.1 * w.grad     # gradient-descent step
+print(w)                 # tensor(4.6000, requires_grad=True)  -- moved toward 3</code></pre>`
       }
     ]
   });

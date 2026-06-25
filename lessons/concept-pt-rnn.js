@@ -53,28 +53,134 @@
 </ul>`,
     practice: [
       {
-        q: `You build <code>nn.LSTM(10, 20)</code> with the defaults and pass a tensor shaped <code>(32, 15, 10)</code>, meaning 32 sequences of length 15 with 10 features. Training "works" but accuracy is stuck near random. What is the likely cause and the fix?`,
+        q: `<b>Type this in Colab.</b> Build <code>rnn = nn.RNN(input_size=3, hidden_size=5, batch_first=True)</code>. Feed it <code>x = torch.randn(2, 4, 3)</code> (2 sequences, 4 steps, 3 features). Call <code>output, h_n = rnn(x)</code>. Predict the shapes of <code>output</code> and <code>h_n</code> before running, then print both.`,
         steps: [
-          { do: `Recall the default input layout of an LSTM.`, why: `Without <code>batch_first=True</code> it expects <code>(seq_len, batch, features)</code>.` },
-          { do: `Compare that to the tensor you passed.`, why: `Your tensor is <code>(batch, seq_len, features)</code> — the first two axes are swapped, so it treated 32 as the sequence length and 15 as the batch.` }
+          { do: `Construct with <code>batch_first=True</code> so input is <code>(batch, seq_len, features)</code>.`, why: `It matches the <code>(2, 4, 3)</code> tensor you are passing.` },
+          { do: `Unpack <code>output, h_n = rnn(x)</code> and print each <code>.shape</code>.`, why: `<code>output</code> is every step <code>(batch, seq, hidden)</code>; <code>h_n</code> is the last step <code>(num_layers, batch, hidden)</code>.` }
         ],
-        answer: `The shape convention is reversed. Either construct it as <code>nn.LSTM(10, 20, batch_first=True)</code> so it expects <code>(batch, seq_len, features)</code>, or transpose your input to <code>(15, 32, 10)</code>. This is the single most common RNN bug.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+torch.manual_seed(0)
+rnn = nn.RNN(input_size=3, hidden_size=5, batch_first=True)
+x = torch.randn(2, 4, 3)
+output, h_n = rnn(x)
+print(output.shape)   # torch.Size([2, 4, 5])  hidden at every step
+print(h_n.shape)      # torch.Size([1, 2, 5])  last step only</code></pre>`
       },
       {
-        q: `You want one class label for each whole sequence. After <code>output, (h_n, c_n) = lstm(x)</code>, should you feed <code>output</code> or <code>h_n[-1]</code> to your <code>nn.Linear</code> classifier, and why?`,
+        q: `<b>Type this in Colab.</b> THE classic RNN shape bug. Build <code>lstm = nn.LSTM(10, 20)</code> with the <i>defaults</i> (no <code>batch_first</code>). You have data shaped <code>(32, 15, 10)</code> = 32 sequences, length 15, 10 features. First feed it raw and print <code>h_n.shape</code> — notice the batch dimension is wrong. Then rebuild with <code>batch_first=True</code> and confirm <code>h_n</code> reports 32 sequences.`,
         steps: [
-          { do: `Recall what each return holds.`, why: `<code>output</code> is every timestep's hidden state; <code>h_n</code> is only the last step.` },
-          { do: `Match that to "one label per sequence".`, why: `A single label needs a single summary vector, not one per step.` }
+          { do: `With the default layout, the module reads axis 0 as <code>seq_len</code> and axis 1 as <code>batch</code>.`, why: `So <code>(32, 15, 10)</code> is misread as 32 steps of a 15-sequence batch — silently wrong.` },
+          { do: `Rebuild with <code>nn.LSTM(10, 20, batch_first=True)</code>.`, why: `Now axis 0 is the batch, so <code>h_n</code> correctly reports 32 sequences.` }
         ],
-        answer: `Use <code>h_n[-1]</code> — the final hidden state of the top layer, shape <code>(batch, hidden_size)</code>. It summarizes the whole sequence. You would use <code>output</code> instead only when you need a prediction at <i>every</i> step (sequence-to-sequence or tagging).`
+        answer: `<pre><code>x = torch.randn(32, 15, 10)
+bad = nn.LSTM(10, 20)                      # default: (seq, batch, feat)
+_, (h_n, _) = bad(x)
+print(h_n.shape)   # torch.Size([1, 15, 20])  <-- batch read as 15, WRONG
+
+good = nn.LSTM(10, 20, batch_first=True)   # (batch, seq, feat)
+_, (h_n, _) = good(x)
+print(h_n.shape)   # torch.Size([1, 32, 20])  <-- batch is 32, correct</code></pre>`
       },
       {
-        q: `A batch contains sentences of lengths 5, 9, and 3. You pad them all to length 9 and feed the raw padded batch to your LSTM, then read <code>h_n[-1]</code> for classification. Why might the short sentences classify poorly, and what is the fix?`,
+        q: `<b>Type this in Colab.</b> Build <code>lstm = nn.LSTM(input_size=3, hidden_size=8, batch_first=True)</code> and feed <code>x = torch.randn(4, 6, 3)</code>. Unpack the LSTM's return correctly (it bundles hidden and cell state in a tuple), then take the top layer's last hidden state and print its shape.`,
         steps: [
-          { do: `Think about what the LSTM does on the padding steps.`, why: `It keeps updating the hidden state on filler tokens past the real end.` },
-          { do: `Recall what <code>h_n</code> reflects then.`, why: `For the length-3 and length-5 sentences, the final hidden state reflects padding, not the real last word.` }
+          { do: `Unpack as <code>output, (h_n, c_n) = lstm(x)</code>.`, why: `An LSTM returns <code>(h_n, c_n)</code> as a tuple, unlike RNN/GRU which return just <code>h_n</code>.` },
+          { do: `Take <code>h_n[-1]</code> for the top layer's final hidden state.`, why: `That single vector per sequence is what a classifier head consumes.` }
         ],
-        answer: `The last hidden state of short sequences is contaminated by padding. Wrap the input with <code>nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)</code> before the LSTM. Packing tells the module each sequence's true length so it stops at the real end, and <code>h_n</code> then reflects the actual last token.`
+        answer: `<pre><code>torch.manual_seed(0)
+lstm = nn.LSTM(input_size=3, hidden_size=8, batch_first=True)
+x = torch.randn(4, 6, 3)
+output, (h_n, c_n) = lstm(x)
+print(output.shape)    # torch.Size([4, 6, 8])  every step
+print(h_n.shape)       # torch.Size([1, 4, 8])  last step
+last = h_n[-1]
+print(last.shape)      # torch.Size([4, 8])  -> feed to nn.Linear</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> One label per whole sequence. Reuse the LSTM above (<code>hidden_size=8</code>), add <code>fc = nn.Linear(8, 3)</code> for 3 classes, run <code>x = torch.randn(4, 6, 3)</code> through both, and print the logits shape. Use <code>h_n[-1]</code> — the last timestep — not <code>output</code>.`,
+        steps: [
+          { do: `Pass <code>h_n[-1]</code> (shape <code>(4, 8)</code>) into <code>fc</code>.`, why: `A single label per sequence needs one summary vector, not one per step.` },
+          { do: `Print the resulting logits shape.`, why: `It should be <code>(batch, num_classes)</code> = <code>(4, 3)</code>, ready for <code>CrossEntropyLoss</code>.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+lstm = nn.LSTM(3, 8, batch_first=True)
+fc = nn.Linear(8, 3)
+x = torch.randn(4, 6, 3)
+_, (h_n, _) = lstm(x)
+logits = fc(h_n[-1])        # last timestep -> classifier
+print(logits.shape)   # torch.Size([4, 3])  raw logits, one row per sequence</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Tokens in. Build <code>emb = nn.Embedding(num_embeddings=10, embedding_dim=4)</code> and a batch of token ids <code>ids = torch.tensor([[1, 2, 3, 4], [5, 6, 7, 8]])</code> (shape <code>(2, 4)</code>). Embed it and print the new shape, then feed it to <code>nn.GRU(4, 6, batch_first=True)</code> and print the GRU output shape.`,
+        steps: [
+          { do: `Apply <code>emb(ids)</code> to map each id to a length-4 vector.`, why: `It turns <code>(batch, seq)</code> of ids into <code>(batch, seq, embed_dim)</code> for the recurrent layer.` },
+          { do: `Pass the embeddings to the GRU and unpack <code>output, h_n</code>.`, why: `A GRU returns just <code>h_n</code> (no cell state), unlike the LSTM.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+emb = nn.Embedding(num_embeddings=10, embedding_dim=4)
+ids = torch.tensor([[1, 2, 3, 4], [5, 6, 7, 8]])
+e = emb(ids)
+print(e.shape)        # torch.Size([2, 4, 4])  (batch, seq, embed_dim)
+gru = nn.GRU(4, 6, batch_first=True)
+output, h_n = gru(e)
+print(output.shape)   # torch.Size([2, 4, 6])
+print(h_n.shape)      # torch.Size([1, 2, 6])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Embedding index out of range. Build <code>emb = nn.Embedding(num_embeddings=5, embedding_dim=3)</code> — valid ids are 0..4. Run <code>emb(torch.tensor([5]))</code> and observe the error. Then fix it by sizing the table to <code>num_embeddings=6</code> and re-run on the same id.`,
+        steps: [
+          { do: `Look up an id equal to <code>num_embeddings</code>.`, why: `Row indices only go <code>0 .. num_embeddings-1</code>, so id 5 is out of range and raises an <code>IndexError</code>.` },
+          { do: `Enlarge the table to cover your full vocabulary.`, why: `<code>num_embeddings</code> must exceed the largest token id (leave slots for padding/unknown too).` }
+        ],
+        answer: `<pre><code># Broken: IndexError -- index 5 is out of bounds for a table of size 5
+# emb = nn.Embedding(num_embeddings=5, embedding_dim=3)
+# emb(torch.tensor([5]))
+
+torch.manual_seed(0)
+emb = nn.Embedding(num_embeddings=6, embedding_dim=3)   # ids 0..5 now valid
+print(emb(torch.tensor([5])).shape)   # torch.Size([1, 3])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Variable lengths. You have 3 sequences of lengths 5, 9, 3 with 2 features each, all padded to length 9 — build <code>x = torch.zeros(3, 9, 2)</code> and <code>lengths = torch.tensor([5, 9, 3])</code>. Pack it, run an LSTM, unpack, and confirm the <i>output</i> comes back at shape <code>(3, 9, hidden)</code>.`,
+        steps: [
+          { do: `Wrap with <code>pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)</code>.`, why: `Packing tells the LSTM each true length so it skips padding and <code>h_n</code> reflects the real last token.` },
+          { do: `Run the LSTM on the packed input, then <code>pad_packed_sequence(out, batch_first=True)</code>.`, why: `It restores the padded rectangular shape for downstream layers.` }
+        ],
+        answer: `<pre><code>from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+torch.manual_seed(0)
+x = torch.zeros(3, 9, 2)
+lengths = torch.tensor([5, 9, 3])
+lstm = nn.LSTM(2, 4, batch_first=True)
+packed = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+out_packed, (h_n, c_n) = lstm(packed)
+out, lens = pad_packed_sequence(out_packed, batch_first=True)
+print(out.shape)    # torch.Size([3, 9, 4])
+print(lens)         # tensor([5, 9, 3])  true lengths preserved</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Tiny end-to-end sequence classifier. Generate <code>x = torch.randn(8, 5, 2)</code> and <code>y = torch.randint(0, 2, (8,))</code>. Build an LSTM(2 &rarr; 16, batch_first) plus <code>nn.Linear(16, 2)</code>, run one training step with <code>CrossEntropyLoss</code> and Adam (remember <code>zero_grad</code> and gradient clipping), and print the loss.`,
+        steps: [
+          { do: `Forward: take <code>h_n[-1]</code> into the linear head to get logits, score with <code>CrossEntropyLoss</code>.`, why: `Cross-entropy wants raw logits and integer class indices — no softmax.` },
+          { do: `<code>zero_grad()</code>, <code>backward()</code>, <code>clip_grad_norm_(..., 1.0)</code>, <code>step()</code>.`, why: `Clipping tames exploding gradients through time; zeroing prevents accumulation.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+x = torch.randn(8, 5, 2)
+y = torch.randint(0, 2, (8,))
+lstm = nn.LSTM(2, 16, batch_first=True)
+fc = nn.Linear(16, 2)
+params = list(lstm.parameters()) + list(fc.parameters())
+opt = torch.optim.Adam(params, lr=0.01)
+loss_fn = nn.CrossEntropyLoss()
+
+opt.zero_grad()
+_, (h_n, _) = lstm(x)
+logits = fc(h_n[-1])          # (8, 2) raw logits
+loss = loss_fn(logits, y)
+loss.backward()
+nn.utils.clip_grad_norm_(params, 1.0)
+opt.step()
+print(round(loss.item(), 4))   # ~0.70  (near ln(2), random start)</code></pre>`
       }
     ]
   });

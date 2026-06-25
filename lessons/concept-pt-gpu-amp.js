@@ -53,28 +53,135 @@
 </ul>`,
     practice: [
       {
-        q: `Your model is on the GPU (<code>model.to(device)</code> with <code>device='cuda'</code>), but training crashes on the first batch with <code>RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu</code>. What did you forget?`,
+        q: `<b>Type this in Colab.</b> The device pattern. Pick <code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')</code>, build <code>model = nn.Linear(4, 2)</code>, move it with <code>.to(device)</code>, and print the device of its first parameter. Predict the output on a CPU-only runtime before running.`,
         steps: [
-          { do: `Ask where the input batch lives.`, why: `DataLoader hands you CPU tensors by default.` },
-          { do: `Compare the batch's device to the model's device.`, why: `Every tensor in one operation must share a device.` }
+          { do: `Build the device once with the <code>is_available()</code> ternary.`, why: `One variable used everywhere prevents CPU/GPU mismatch later.` },
+          { do: `Move the model in place with <code>.to(device)</code>, then read <code>next(model.parameters()).device</code>.`, why: `Modules move in place; the parameters now live on the chosen device.` }
         ],
-        answer: `You moved the model but not the data. Add <code>xb, yb = xb.to(device), yb.to(device)</code> at the top of the loop so the batch is on <code>cuda</code> too. This device mismatch is the most common GPU bug.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = nn.Linear(4, 2).to(device)
+print(device)                                 # cpu  (or cuda on a GPU runtime)
+print(next(model.parameters()).device)        # cpu  (or cuda:0)</code></pre>`
       },
       {
-        q: `You switch on AMP with <code>torch.autocast</code> but skip the <code>GradScaler</code>, calling plain <code>loss.backward()</code>. Training runs without error, yet the loss stops improving and the model barely learns. Why, and what is the fix?`,
+        q: `<b>Type this in Colab.</b> THE #1 GPU bug. Make <code>device = 'cuda' if torch.cuda.is_available() else 'cpu'</code>, a <code>model = nn.Linear(4, 2).to(device)</code>, and an input <code>x = torch.randn(8, 4)</code> left on the CPU. Run <code>model(x)</code> — on a GPU runtime this raises a device-mismatch error. Then fix it by moving <code>x</code> to the device and print the output shape.`,
         steps: [
-          { do: `Recall float16's limited range.`, why: `Very small numbers underflow to exactly 0 in float16.` },
-          { do: `Think about what happens to tiny gradients.`, why: `Zeroed gradients mean the optimizer makes no real update.` }
+          { do: `Note that <code>x</code> starts on the CPU while the model is on <code>device</code>.`, why: `Every tensor in one operation must share a device, or PyTorch raises <code>Expected all tensors to be on the same device</code>.` },
+          { do: `Move the input with <code>x = x.to(device)</code> before the forward pass.`, why: `Plain tensors are not moved in place — you must reassign.` }
         ],
-        answer: `Small float16 gradients underflow to <code>0</code>, so the weights barely move. Wrap the backward pass in a scaler: <code>scaler.scale(loss).backward(); scaler.step(opt); scaler.update()</code>. The scaler multiplies the loss up before backward so gradients stay in float16's range, then unscales them for the step.`
+        answer: `<pre><code>device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = nn.Linear(4, 2).to(device)
+x = torch.randn(8, 4)               # still on CPU
+# model(x)  # on cuda: RuntimeError: Expected all tensors on the same device
+x = x.to(device)                    # the fix: move the input too
+print(model(x).shape)               # torch.Size([8, 2])</code></pre>`
       },
       {
-        q: `Inside your training loop you call <code>.cpu()</code> on the model output and <code>.cuda()</code> on a freshly built tensor on every step. Training is barely faster on the GPU than on the CPU. What is going on?`,
+        q: `<b>Type this in Colab.</b> Forgetting <code>.to(device)</code> on a new tensor. With a model and <code>x</code> on <code>device</code>, build a fresh bias <code>b = torch.ones(2)</code> (lands on CPU) and try <code>model(x) + b</code>. Observe the mismatch on a GPU runtime, then create <code>b</code> with <code>device=device</code> and confirm it works.`,
         steps: [
-          { do: `Identify what crosses the CPU&harr;GPU bus each step.`, why: `Each <code>.cpu()</code>/<code>.cuda()</code> is a memory copy across a slow link.` },
-          { do: `Count how many such copies happen per epoch.`, why: `Thousands of round-trips can dominate the runtime.` }
+          { do: `Recall that tensors you build inside the loop default to the CPU.`, why: `Combining a CPU tensor with a GPU result triggers the same device error.` },
+          { do: `Construct it with <code>device=device</code>.`, why: `Create-on-device avoids an extra transfer and the mismatch.` }
         ],
-        answer: `The per-step transfers are eating the speedup. Move data onto the device <i>once</i> and keep it there; build new tensors with <code>device=device</code>; and only bring small scalars back, e.g. <code>loss.item()</code>. Avoid <code>.cpu()</code>/<code>.cuda()</code> in the hot loop.`
+        answer: `<pre><code>device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = nn.Linear(4, 2).to(device)
+x = torch.randn(8, 4, device=device)
+# b = torch.ones(2)            # CPU -> model(x) + b errors on a GPU
+b = torch.ones(2, device=device)   # fix: build it on the device
+print((model(x) + b).shape)        # torch.Size([8, 2])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Set up AMP. Create a <code>GradScaler</code> enabled only on CUDA, and write an <code>autocast</code> block for the forward pass using <code>device_type</code> and <code>dtype=torch.float16</code>. Print whether AMP is enabled. (Build <code>use_amp = (device.type == 'cuda')</code>.)`,
+        steps: [
+          { do: `<code>scaler = torch.cuda.amp.GradScaler(enabled=use_amp)</code>.`, why: `On CPU there is no float16 speedup, so AMP is disabled cleanly.` },
+          { do: `Wrap the forward in <code>with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):</code>.`, why: `autocast runs matmuls in float16 where it is safe, float32 elsewhere.` }
+        ],
+        answer: `<pre><code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+use_amp = (device.type == 'cuda')
+scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+model = nn.Linear(4, 2).to(device)
+x = torch.randn(8, 4, device=device)
+with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+    out = model(x)
+print("AMP enabled:", use_amp)    # False on CPU, True on a GPU runtime
+print(out.shape)                  # torch.Size([8, 2])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> AMP without a <code>GradScaler</code> (the silent-underflow pitfall) vs the correct order. Write one full AMP step in the RIGHT order: <code>zero_grad</code> &rarr; autocast forward &rarr; <code>scaler.scale(loss).backward()</code> &rarr; <code>scaler.step(opt)</code> &rarr; <code>scaler.update()</code>. Print the loss.`,
+        steps: [
+          { do: `Scale the loss before backward: <code>scaler.scale(loss).backward()</code>.`, why: `Without scaling, tiny float16 gradients underflow to 0 and the model stops learning.` },
+          { do: `Step then update: <code>scaler.step(opt)</code> then <code>scaler.update()</code>.`, why: `<code>step</code> unscales and applies the update; <code>update</code> adjusts the scale factor for next time.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+use_amp = (device.type == 'cuda')
+model = nn.Linear(4, 2).to(device)
+opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+loss_fn = nn.CrossEntropyLoss()
+scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+x = torch.randn(8, 4, device=device)
+y = torch.randint(0, 2, (8,), device=device)
+
+opt.zero_grad()
+with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+    loss = loss_fn(model(x), y)
+scaler.scale(loss).backward()     # scale up, then backprop
+scaler.step(opt)                  # unscale + optimizer step
+scaler.update()                   # adjust scale factor
+print(round(loss.item(), 4))      # ~0.70  (near ln(2), random start)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Move once, keep on-device. Build batches as CPU tensors, then move each batch inside the loop with <code>.to(device)</code> and bring only the scalar loss back with <code>.item()</code>. Run 3 fake batches and print the average loss.`,
+        steps: [
+          { do: `Move <code>xb, yb = xb.to(device), yb.to(device)</code> once per batch.`, why: `The model and batch must share a device for the forward pass.` },
+          { do: `Accumulate <code>loss.item()</code>, not the tensor.`, why: `<code>.item()</code> copies one scalar back and frees the graph; never <code>.cpu()</code> big tensors in the hot loop.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = nn.Linear(4, 2).to(device)
+opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+loss_fn = nn.CrossEntropyLoss()
+batches = [(torch.randn(8, 4), torch.randint(0, 2, (8,))) for _ in range(3)]
+running = 0.0
+for xb, yb in batches:
+    xb, yb = xb.to(device), yb.to(device)   # move every batch
+    opt.zero_grad()
+    loss = loss_fn(model(xb), yb)
+    loss.backward(); opt.step()
+    running += loss.item()                  # only a scalar comes back
+print(round(running / len(batches), 4))     # ~0.7</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Timing the GPU correctly. On a GPU runtime, time a matmul, calling <code>torch.cuda.synchronize()</code> before reading the clock. Print the elapsed milliseconds. (On CPU the sync call is a harmless no-op — guard it with <code>if device.type == 'cuda'</code>.)`,
+        steps: [
+          { do: `Call <code>torch.cuda.synchronize()</code> before <code>perf_counter()</code>.`, why: `GPU work is asynchronous; without syncing the CPU clock stops before the GPU finishes.` },
+          { do: `Guard the sync so it is skipped on CPU.`, why: `<code>torch.cuda.synchronize()</code> on a CPU-only box would error.` }
+        ],
+        answer: `<pre><code>import time
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+a = torch.randn(2048, 2048, device=device)
+b = torch.randn(2048, 2048, device=device)
+if device.type == 'cuda': torch.cuda.synchronize()
+t0 = time.perf_counter()
+c = a @ b
+if device.type == 'cuda': torch.cuda.synchronize()   # wait for the GPU
+print(round((time.perf_counter() - t0) * 1000, 2), "ms")   # e.g. ~3 ms on a GPU</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Peak GPU memory. After running a small AMP training loop, print <code>torch.cuda.max_memory_allocated()</code> in megabytes — but only when on CUDA. Show the CPU-safe guard.`,
+        steps: [
+          { do: `Guard with <code>if device.type == 'cuda':</code> and call <code>torch.cuda.synchronize()</code> first.`, why: `Memory stats are only meaningful on CUDA, and you must wait for pending GPU work.` },
+          { do: `Convert <code>max_memory_allocated()</code> bytes to MB by dividing by 1e6.`, why: `It reports the peak allocation across the run.` }
+        ],
+        answer: `<pre><code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# ... after a training loop on the chosen device ...
+if device.type == 'cuda':
+    torch.cuda.synchronize()
+    mb = torch.cuda.max_memory_allocated() / 1e6
+    print(f"peak GPU memory: {mb:.1f} MB")
+else:
+    print("on CPU: no GPU memory stats")   # this prints on a CPU runtime</code></pre>`
       }
     ]
   });

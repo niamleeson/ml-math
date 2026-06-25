@@ -156,29 +156,144 @@
 
     practice: [
       {
-        q: `An MNIST batch arrives as a NumPy array of shape (64, 28, 28). What must you do before the first Conv2d, and what is the target shape?`,
+        q: `<b>Type this in Colab.</b> The channel-axis pitfall. Make a grayscale batch
+            <code>arr = torch.randn(64, 28, 28)</code>. Try <code>nn.Conv2d(1, 8, 3)(arr)</code> and observe the shape
+            error, then add the channel axis with <code>arr.unsqueeze(1)</code> and run it. Predict the output shape
+            before running.`,
         steps: [
-          { do: `Note PyTorch convolutions want (N, C, H, W).`, why: `Conv2d expects an explicit channel axis even for grayscale.` },
-          { do: `Add a channel axis: x = torch.tensor(arr).unsqueeze(1).`, why: `That inserts C=1 at position 1, giving (64, 1, 28, 28).` }
+          { do: `Insert C=1 with <code>arr.unsqueeze(1)</code> to get <code>(64, 1, 28, 28)</code>.`, why: `<code>nn.Conv2d</code> wants <code>(N, C, H, W)</code> — an explicit channel axis even for grayscale.` },
+          { do: `Run the conv and print <code>out.shape</code>.`, why: `A 3&times;3 conv with no padding trims the border, so 28&rarr;26.` }
         ],
-        answer: `<p>Convert to a tensor and add the channel dimension with <code>unsqueeze(1)</code>, producing shape <code>(64, 1, 28, 28)</code>. Feeding <code>(64, 28, 28)</code> straight in is a shape error.</p>`
+        answer: `<pre><code>import torch, torch.nn as nn
+arr = torch.randn(64, 28, 28)
+# nn.Conv2d(1, 8, 3)(arr)  -> RuntimeError: expected 4D input (N,C,H,W)
+x = arr.unsqueeze(1)              # (64, 1, 28, 28)
+out = nn.Conv2d(1, 8, 3)(x)
+print(out.shape)                  # torch.Size([64, 8, 26, 26])</code></pre>`
       },
       {
-        q: `A net does Conv(p=1, 3×3) → Pool2 → Conv(p=1, 3×3) → Pool2 on a 1×32×32 image, ending with 64 channels. What is the input size of the first Linear layer?`,
+        q: `<b>Type this in Colab.</b> Verify the conv output-shape formula. Feed <code>x = torch.randn(2, 3, 32, 32)</code>
+            through (a) <code>nn.Conv2d(3, 16, kernel_size=3, padding=1)</code> and (b)
+            <code>nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=0)</code>. Predict each output's H and W from
+            $H_{out}=\\lfloor (H+2p-k)/s \\rfloor + 1$, then verify.`,
         steps: [
-          { do: `Padded 3×3 convs keep the spatial size; each Pool2 halves it.`, why: `H_out = (H + 2p − k)/s + 1 = H for p=1,k=3,s=1; pool halves.` },
-          { do: `32 → (pool) 16 → (pool) 8, with 64 channels.`, why: `Two MaxPool2d(2) layers halve twice: 32 → 16 → 8.` },
-          { do: `Flattened size = 64 × 8 × 8.`, why: `channels × height × width of the final map.` }
+          { do: `Apply both convs and print <code>.shape</code>.`, why: `Padded 3&times;3 (p=1,s=1) keeps 32; the 5&times;5 stride-2 gives (32-5)/2+1 = 14.` },
+          { do: `Check the channel dim is the conv's <code>out_channels</code> (16).`, why: `<code>out_channels</code> is how many filters/feature maps the layer learns.` }
         ],
-        answer: `<p>$64 \\times 8 \\times 8 = 4096$. So the head is <code>Linear(4096, num_classes)</code>.</p>`
+        answer: `<pre><code>x = torch.randn(2, 3, 32, 32)
+a = nn.Conv2d(3, 16, kernel_size=3, padding=1)(x)
+b = nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=0)(x)
+print(a.shape)   # torch.Size([2, 16, 32, 32])  (p=1,s=1 keeps size)
+print(b.shape)   # torch.Size([2, 16, 14, 14])  ((32-5)/2 + 1 = 14)</code></pre>`
       },
       {
-        q: `Test accuracy is much lower and noisier than your training accuracy suggested. The model uses BatchNorm. What is the most likely one-line bug?`,
+        q: `<b>Type this in Colab.</b> Trace a two-block feature extractor. Build
+            <code>nn.Sequential(Conv2d(1,16,3,padding=1), ReLU(), MaxPool2d(2), Conv2d(16,32,3,padding=1), ReLU(), MaxPool2d(2))</code>
+            and run an MNIST-sized input <code>torch.randn(4, 1, 28, 28)</code> through it. Predict the final shape,
+            then compute the flattened feature count.`,
         steps: [
-          { do: `Check whether model.eval() is called before the test loop.`, why: `BatchNorm uses batch stats in train mode and running stats in eval mode.` },
-          { do: `Also wrap inference in torch.no_grad().`, why: `Saves memory and signals you are not training.` }
+          { do: `Print the output shape after the two conv+pool blocks.`, why: `Each <code>MaxPool2d(2)</code> halves H and W: 28&rarr;14&rarr;7, with 32 channels.` },
+          { do: `Compute <code>32 * 7 * 7</code> for the flattened size.`, why: `That is the input width the first <code>Linear</code> head needs.` }
         ],
-        answer: `<p>You forgot <code>model.eval()</code>, so BatchNorm normalized test batches with their own statistics instead of the stored running stats. Call <code>model.eval()</code> (and use <code>torch.no_grad()</code>) before evaluating.</p>`
+        answer: `<pre><code>feat = nn.Sequential(
+    nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+)
+out = feat(torch.randn(4, 1, 28, 28))
+print(out.shape)            # torch.Size([4, 32, 7, 7])
+print(32 * 7 * 7)           # 1568  -> Linear(1568, num_classes)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The flatten-size pitfall. Build a tiny CNN where the head is wrongly
+            <code>nn.Linear(100, 10)</code> after the two-block extractor above. Feed a <code>(4, 1, 28, 28)</code> batch
+            and read the <code>mat1 and mat2 shapes cannot be multiplied</code> error. Fix the head to the correct size.`,
+        steps: [
+          { do: `Flatten with <code>torch.flatten(x, 1)</code> (keep the batch dim) before the <code>Linear</code>.`, why: `The head is a matrix multiply; the in-features must equal channels&times;H&times;W = 1568.` },
+          { do: `Replace <code>Linear(100, 10)</code> with <code>Linear(1568, 10)</code>.`, why: `Matching the flattened size removes the shape-mismatch error.` }
+        ],
+        answer: `<pre><code>class Net(nn.Module):
+    def __init__(s, in_feats):
+        super().__init__()
+        s.feat = feat                       # the 2-block extractor above
+        s.head = nn.Linear(in_feats, 10)
+    def forward(s, x):
+        return s.head(torch.flatten(s.feat(x), 1))
+
+x = torch.randn(4, 1, 28, 28)
+# Net(100)(x)   -> RuntimeError: mat1 and mat2 shapes cannot be multiplied (4x1568 and 100x10)
+print(Net(1568)(x).shape)    # torch.Size([4, 10])  -- correct flattened size</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Count a Conv2d's parameters. Build
+            <code>conv = nn.Conv2d(3, 16, kernel_size=3)</code> and print
+            <code>sum(p.numel() for p in conv.parameters())</code>. Predict it first:
+            weights = out&times;in&times;k&times;k, plus one bias per output channel.`,
+        steps: [
+          { do: `Compute weights <code>16 * 3 * 3 * 3 = 432</code> plus <code>16</code> biases.`, why: `A Conv2d learns one <code>k&times;k</code> filter per (in, out) channel pair, plus a per-output bias.` },
+          { do: `Verify with <code>sum(p.numel() for p in conv.parameters())</code>.`, why: `<code>.numel()</code> totals every weight and bias the layer holds.` }
+        ],
+        answer: `<pre><code>conv = nn.Conv2d(3, 16, kernel_size=3)
+print(sum(p.numel() for p in conv.parameters()))   # 448
+# weights 16*3*3*3 = 432, biases 16  ->  432 + 16 = 448</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The eval-mode pitfall with BatchNorm. Build
+            <code>bn = nn.BatchNorm2d(4)</code> and a fixed input <code>x = torch.randn(8, 4, 6, 6)</code>. Print
+            <code>bn(x).mean().item()</code> in <code>bn.train()</code> mode, then in <code>bn.eval()</code> mode, and
+            note they differ.`,
+        steps: [
+          { do: `Run the same input through <code>bn.train()</code> then <code>bn.eval()</code>.`, why: `Train mode normalizes with the batch's own stats; eval mode uses stored running stats.` },
+          { do: `Observe the two outputs differ.`, why: `That difference is exactly why forgetting <code>model.eval()</code> at test time corrupts the numbers.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+bn = nn.BatchNorm2d(4)
+x = torch.randn(8, 4, 6, 6)
+bn.train(); print(round(bn(x).mean().item(), 4))   # ~ 0.0    (batch stats -> centered)
+bn.eval();  print(round(bn(x).mean().item(), 4))   # ~ 0.0276 (running stats -> not centered)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Run one full training step of a small CNN. With <code>torch.manual_seed(0)</code>,
+            build the <code>Net(1568)</code> from before, <code>CrossEntropyLoss</code> (raw logits, no softmax),
+            <code>Adam(lr=1e-3)</code>, a batch <code>x = torch.randn(8, 1, 28, 28)</code>, and labels
+            <code>y = torch.randint(0, 10, (8,))</code>. Do zero_grad &rarr; forward &rarr; loss &rarr; backward &rarr;
+            step and print the loss.`,
+        steps: [
+          { do: `Pass raw logits to <code>CrossEntropyLoss</code> with integer labels.`, why: `The loss applies log-softmax internally — no softmax layer on the head.` },
+          { do: `Run <code>opt.zero_grad()</code> before <code>loss.backward()</code>.`, why: `Gradients accumulate across batches; zeroing keeps each step's update correct.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = Net(1568)
+crit = nn.CrossEntropyLoss()
+opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+x = torch.randn(8, 1, 28, 28)
+y = torch.randint(0, 10, (8,))
+opt.zero_grad()
+loss = crit(model(x), y)     # logits + integer labels
+loss.backward()
+opt.step()
+print(round(loss.item(), 4))   # ~ 2.45  (near ln(10)=2.30 at init)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Assemble a clean LeNet-style model class end-to-end and confirm the output shape.
+            Subclass <code>nn.Module</code> with two <code>Conv2d&rarr;BatchNorm2d&rarr;ReLU&rarr;MaxPool2d</code> blocks
+            (1&rarr;16&rarr;32 channels, padding=1) and a <code>Linear(1568, 10)</code> head. Feed
+            <code>torch.randn(5, 1, 28, 28)</code> and print the logits shape.`,
+        steps: [
+          { do: `Put the conv blocks in <code>self.features</code> and the head in <code>self.head</code>.`, why: `Separating the feature extractor from the classifier head is the standard CNN layout.` },
+          { do: `In <code>forward</code>, <code>torch.flatten(x, 1)</code> before the head.`, why: `Flattening keeps the batch dim and turns the 32&times;7&times;7 map into the 1568-vector the head expects.` }
+        ],
+        answer: `<pre><code>class SmallCNN(nn.Module):
+    def __init__(s, num_classes=10):
+        super().__init__()
+        s.features = nn.Sequential(
+            nn.Conv2d(1, 16, 3, padding=1), nn.BatchNorm2d(16), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
+        )
+        s.head = nn.Linear(32 * 7 * 7, num_classes)   # raw logits (no softmax)
+    def forward(s, x):
+        return s.head(torch.flatten(s.features(x), 1))
+
+print(SmallCNN()(torch.randn(5, 1, 28, 28)).shape)   # torch.Size([5, 10])</code></pre>`
       }
     ]
   });

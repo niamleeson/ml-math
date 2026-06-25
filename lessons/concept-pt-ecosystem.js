@@ -111,28 +111,138 @@
 
     practice: [
       {
-        q: `You need to fine-tune a well-known text classifier (a Transformer) on your labeled data, and you want it working by tomorrow. Which part of the ecosystem do you reach for, and why?`,
+        q: `<b>Type this in Colab.</b> Define a minimal <code>LightningModule</code> called <code>LitNet</code> wrapping <code>nn.Linear(4, 2)</code>, with a <code>training_step</code> that computes <code>F.cross_entropy</code> on a <code>(batch, labels)</code> tuple and a <code>configure_optimizers</code> returning <code>Adam(lr=1e-2)</code>. Instantiate it and print <code>type(m).__mro__[1].__name__</code> to confirm it subclasses <code>LightningModule</code>. (lightning is auto-installed by the setup cell.)`,
         steps: [
-          { do: `Notice the model already exists pretrained.`, why: `A pretrained Transformer means you skip training from scratch — the expensive part.` },
-          { do: `Pick the hub built for exactly this.`, why: `Hugging Face <code>transformers</code> gives <code>AutoModelForSequenceClassification.from_pretrained</code> + a matching tokenizer + a <code>Trainer</code>.` }
+          { do: `Subclass <code>L.LightningModule</code> and implement <code>training_step</code> + <code>configure_optimizers</code>.`, why: `These two hooks are the minimum a <code>LightningModule</code> needs; the <code>Trainer</code> supplies the loop, device handling, and logging.` },
+          { do: `Return the loss from <code>training_step</code>.`, why: `Lightning calls <code>backward()</code> and <code>optimizer.step()</code> for you on whatever loss you return &mdash; the same five steps, organized away.` }
         ],
-        answer: `Hugging Face. Load with <code>from_pretrained</code>, tokenize with the model's own tokenizer, and fine-tune with the <code>Trainer</code> — far less code than a raw loop, and you start from learned weights instead of random ones.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import lightning as L
+
+class LitNet(L.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Linear(4, 2)        # raw logits (no softmax)
+    def forward(self, x):
+        return self.net(x)
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        loss = F.cross_entropy(self(x), y)   # Lightning runs backward()+step()
+        return loss
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=1e-2)
+
+m = LitNet()
+print(type(m).__mro__[1].__name__)   # LightningModule</code></pre>`
       },
       {
-        q: `Your raw training script works on one GPU. You now have 4 GPUs and want multi-GPU training plus mixed precision, but you would rather not rewrite the loop with Distributed Data Parallel by hand. What is the lightest-touch move?`,
+        q: `<b>Type this in Colab.</b> Train the <code>LitNet</code> from the previous task for 2 epochs on a tiny synthetic dataset (100 samples, 4 features, 2 classes) using a <code>Trainer</code>. Build a <code>DataLoader</code>, run <code>L.Trainer(max_epochs=2, accelerator="cpu", devices=1, logger=False, enable_checkpointing=False).fit(...)</code>, and print "done". Use <code>torch.manual_seed(0)</code>.`,
         steps: [
-          { do: `Identify what is reusable vs. what is plumbing.`, why: `Your per-batch math (forward/loss/backward) stays; only the loop scaffolding and device/precision handling change.` },
-          { do: `Move the per-batch logic into a framework's hook.`, why: `In Lightning, put it in <code>training_step</code> + <code>configure_optimizers</code>, then set <code>Trainer(devices=4, precision="16-mixed")</code>.` }
+          { do: `Wrap the synthetic tensors in a <code>TensorDataset</code> + <code>DataLoader</code>.`, why: `The <code>Trainer</code> iterates the loader; you never write the <code>for batch</code> loop yourself.` },
+          { do: `Call <code>Trainer(...).fit(model, train_dl)</code>.`, why: `<code>fit</code> runs the whole loop &mdash; flipping <code>devices=4, precision="16-mixed"</code> would turn on multi-GPU + AMP without touching your code.` }
         ],
-        answer: `Use PyTorch Lightning (or Hugging Face Accelerate for a thinner wrapper). Lightning's <code>Trainer</code> flags turn on multi-GPU (DDP) and AMP without you writing the distributed loop. Your math is unchanged.`
+        answer: `<pre><code>import torch
+from torch.utils.data import TensorDataset, DataLoader
+import lightning as L
+
+torch.manual_seed(0)
+X = torch.randn(100, 4)
+y = torch.randint(0, 2, (100,))
+train_dl = DataLoader(TensorDataset(X, y), batch_size=16, shuffle=True)
+
+trainer = L.Trainer(max_epochs=2, accelerator="cpu", devices=1,
+                    logger=False, enable_checkpointing=False)
+trainer.fit(LitNet(), train_dl)
+print("done")     # Lightning ran the loop for you</code></pre>`
       },
       {
-        q: `A teammate insists on using Lightning and Hugging Face for everything and never writing a raw loop. Why is that risky for a learner?`,
+        q: `<b>Type this in Colab.</b> Use a Hugging Face <code>pipeline</code> with NO training. Create <code>clf = pipeline("sentiment-analysis")</code>, run it on the string <code>"PyTorch's ecosystem makes shipping fast."</code>, and print the predicted <code>label</code> and rounded <code>score</code>. (transformers is auto-installed by the setup cell.)`,
         steps: [
-          { do: `Recall that these frameworks wrap the same five-step loop.`, why: `They hide <code>zero_grad</code>/forward/loss/<code>backward</code>/<code>step</code>, not replace them.` },
-          { do: `Imagine a subtle bug inside the hidden loop.`, why: `A wrong tensor shape or a device mismatch surfaces as a cryptic framework error; without the fundamentals you cannot trace it.` }
+          { do: `Call <code>pipeline("sentiment-analysis")</code>.`, why: `One line downloads a pretrained model + its tokenizer and wires them into a ready task &mdash; zero training.` },
+          { do: `Read <code>result[0]["label"]</code> and <code>["score"]</code>.`, why: `The pipeline returns a list of dicts; the label is the class and the score is its confidence.` }
         ],
-        answer: `Frameworks save time only after you understand the raw loop. Skip the fundamentals and every framework error is unfixable magic. Learn the loop first (<code>pt-training-loop</code>), then use Lightning/Hugging Face as conveniences — not crutches.`
+        answer: `<pre><code>from transformers import pipeline
+
+clf = pipeline("sentiment-analysis")    # downloads a pretrained model
+out = clf("PyTorch's ecosystem makes shipping fast.")
+print(out[0]["label"])                  # POSITIVE
+print(round(out[0]["score"], 2))        # 1.0  (high confidence)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Load a pretrained backbone with <code>from_pretrained</code> and inspect the embedding shape. Use <code>AutoTokenizer</code> and <code>AutoModel</code> on <code>"bert-base-uncased"</code>, tokenize <code>"hello pytorch"</code> with <code>return_tensors="pt"</code>, run it under <code>torch.no_grad()</code>, and print <code>out.last_hidden_state.shape</code>. Predict the last dimension before running.`,
+        steps: [
+          { do: `Pair the model's OWN tokenizer with <code>AutoModel.from_pretrained</code>.`, why: `A pretrained model expects its own preprocessing; using the matching tokenizer avoids train/serve skew.` },
+          { do: `Run inference inside <code>torch.no_grad()</code> and read <code>last_hidden_state.shape</code>.`, why: `BERT-base outputs a 768-dim hidden state per token; the batch is 1 and seq length includes the [CLS]/[SEP] tokens.` }
+        ],
+        answer: `<pre><code>import torch
+from transformers import AutoTokenizer, AutoModel
+
+tok = AutoTokenizer.from_pretrained("bert-base-uncased")
+bert = AutoModel.from_pretrained("bert-base-uncased")
+enc = tok("hello pytorch", return_tensors="pt")   # model's own tokenizer
+with torch.no_grad():
+    out = bert(**enc)
+print(out.last_hidden_state.shape)   # torch.Size([1, 4, 768])
+# batch 1, 4 tokens ([CLS] hello pytorch [SEP]), 768 hidden dim</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Grab a pretrained <code>torchvision</code> model and count its parameters. Load <code>torchvision.models.resnet18(weights="DEFAULT")</code>, put it in <code>eval()</code>, and print the total parameter count with <code>sum(p.numel() for p in model.parameters())</code>. Then run a random <code>(1, 3, 224, 224)</code> image through it and print the output shape.`,
+        steps: [
+          { do: `Load <code>resnet18(weights="DEFAULT")</code> from <code>torchvision.models</code>.`, why: `Domain libraries ship ready architectures with pretrained weights, so you fine-tune instead of training from scratch.` },
+          { do: `Run a <code>(1, 3, 224, 224)</code> tensor through it and read the shape.`, why: `ImageNet ResNet-18 outputs 1000 class logits, so the shape is <code>(1, 1000)</code>.` }
+        ],
+        answer: `<pre><code>import torch
+import torchvision
+
+model = torchvision.models.resnet18(weights="DEFAULT").eval()
+print(sum(p.numel() for p in model.parameters()))   # 11689512  (~11.7M)
+
+x = torch.randn(1, 3, 224, 224)
+with torch.no_grad():
+    out = model(x)
+print(out.shape)     # torch.Size([1, 1000])  -- ImageNet logits</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show that a framework does NOT change the math. Take the <code>LitNet</code>'s <code>training_step</code> logic and write the equivalent RAW five-step update by hand on <code>nn.Linear(4, 2)</code>: <code>zero_grad</code>, forward, <code>cross_entropy</code>, <code>backward</code>, <code>step</code>. Run one step on a <code>(8, 4)</code> batch and print the loss. Use <code>torch.manual_seed(0)</code>.`,
+        steps: [
+          { do: `Write the explicit <code>optimizer.zero_grad()</code> &rarr; <code>forward</code> &rarr; <code>loss</code> &rarr; <code>backward()</code> &rarr; <code>step()</code> sequence.`, why: `These are the exact five steps Lightning's <code>training_step</code> hides; seeing them raw is the fundamentals the lesson insists on.` },
+          { do: `Print <code>loss.item()</code>.`, why: `Confirms the hand-written step computes the same quantity the framework would.` }
+        ],
+        answer: `<pre><code>import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(0)
+model = nn.Linear(4, 2)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+
+x = torch.randn(8, 4)
+y = torch.randint(0, 2, (8,))
+
+optimizer.zero_grad()              # 1
+logits = model(x)                  # 2 forward
+loss = F.cross_entropy(logits, y)  # 3 loss
+loss.backward()                    # 4 backward
+optimizer.step()                   # 5 step
+print(round(loss.item(), 4))       # 0.7311</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Export a model to ONNX (the deployment ring of the ecosystem) and confirm the artifact. Build <code>nn.Linear(10, 3).eval()</code>, call <code>torch.onnx.export</code> with a <code>(1, 10)</code> example and <code>opset_version=17</code>, then print <code>os.path.exists("eco.onnx")</code> and the file size in bytes.`,
+        steps: [
+          { do: `Call <code>torch.onnx.export(model, example, "eco.onnx", opset_version=17)</code>.`, why: `ONNX is the portable export format the ecosystem uses to hand a model to other runtimes (ONNX Runtime, TensorRT).` },
+          { do: `Verify with <code>os.path.exists</code> and <code>os.path.getsize</code>.`, why: `Confirms the export wrote a real artifact you could ship.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn, os
+
+model = nn.Linear(10, 3).eval()
+x = torch.randn(1, 10)
+torch.onnx.export(model, x, "eco.onnx",
+                  input_names=["input"], output_names=["out"],
+                  opset_version=17)
+print(os.path.exists("eco.onnx"))     # True
+print(os.path.getsize("eco.onnx") &gt; 0)  # True</code></pre>`
       }
     ]
   });

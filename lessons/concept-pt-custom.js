@@ -158,31 +158,152 @@
 
     practice: [
       {
-        q: `You write a custom layer with <code>self.weight = torch.randn(8, 4)</code> and <code>self.bias = torch.zeros(8)</code>. Training runs without error but the layer's weights never change and the loss is stuck. What is the bug, and what is the fix?`,
+        q: `<b>Type this in Colab.</b> Write a <code>MyLinear(nn.Module)</code> from scratch: in <code>__init__</code> hold <code>self.W = nn.Parameter(torch.randn(out, in_) * 0.1)</code> and <code>self.b = nn.Parameter(torch.zeros(out))</code>; in <code>forward</code> return <code>x @ self.W.t() + self.b</code>. Instantiate <code>MyLinear(4, 3)</code>, run a <code>(2, 4)</code> input through it, and print the output shape. Use seed 0.`,
         steps: [
-          { do: `Notice the weights are plain tensors, not <code>nn.Parameter</code>.`, why: `Only <code>nn.Parameter</code> (or submodules) assigned to <code>self</code> get registered; a bare tensor is invisible to the module.` },
-          { do: `Check whether they appear in <code>model.parameters()</code>.`, why: `If they are missing from <code>parameters()</code>, the optimizer was never handed them, so it cannot update them.` },
-          { do: `Wrap them: <code>self.weight = nn.Parameter(torch.randn(8, 4))</code> and <code>self.bias = nn.Parameter(torch.zeros(8))</code>.`, why: `<code>nn.Parameter</code> registers the tensor and sets <code>requires_grad=True</code>, so it lands in <code>parameters()</code> and trains.` }
+          { do: `Subclass <code>nn.Module</code>, call <code>super().__init__()</code> first, and store weights as <code>nn.Parameter</code>.`, why: `<code>nn.Parameter</code> registers the tensor so it lands in <code>parameters()</code> and the optimizer trains it.` },
+          { do: `Implement the math with plain differentiable ops in <code>forward</code>.`, why: `<code>x @ W.t() + b</code> is differentiable, so autograd builds the backward pass for free — no hand-written gradient.` }
         ],
-        answer: `<p>The weights are <i>plain tensors</i>, so they are never registered &mdash; they are absent from <code>model.parameters()</code>, the optimizer never receives them, and they never update (a bare tensor also has <code>requires_grad=False</code> by default). <b>Wrap them in <code>nn.Parameter</code>:</b> <code>self.weight = nn.Parameter(torch.randn(8, 4))</code>. Now they register, require grad, and train. Use <code>register_buffer</code> only for state you do <i>not</i> want trained.</p>`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+torch.manual_seed(0)
+
+class MyLinear(nn.Module):
+    def __init__(self, in_, out):
+        super().__init__()
+        self.W = nn.Parameter(torch.randn(out, in_) * 0.1)
+        self.b = nn.Parameter(torch.zeros(out))
+    def forward(self, x):
+        return x @ self.W.t() + self.b
+
+layer = MyLinear(4, 3)
+print(layer(torch.randn(2, 4)).shape)   # torch.Size([2, 3])</code></pre>`
       },
       {
-        q: `You wrote a <code>torch.autograd.Function</code> for a custom op and want to be sure the <code>backward</code> is correct before training a real model on it. How do you check it, and what setup does the check require?`,
+        q: `<b>Type this in Colab.</b> Build the famous pitfall: a layer that stores its weight as a plain tensor <code>self.W = torch.randn(3, 4)</code> instead of an <code>nn.Parameter</code>. Print <code>list(layer.named_parameters())</code>. Predict: is the weight in there? Then fix it with <code>nn.Parameter</code> and reprint.`,
         steps: [
-          { do: `Use <code>torch.autograd.gradcheck(Fn.apply, inputs)</code>.`, why: `gradcheck compares your analytic backward against a numerical finite-difference gradient, which catches a wrong derivative formula.` },
-          { do: `Make the input tensors <code>float64</code> (<code>.double()</code>) with <code>requires_grad=True</code>.`, why: `Finite differences subtract nearly equal numbers; 64-bit precision is needed or the check reports false mismatches.` },
-          { do: `Call the op through <code>.apply</code>, never <code>Fn.forward</code> directly.`, why: `<code>.apply</code> records the op on the autograd graph so backward actually runs; calling <code>forward</code> bypasses autograd.` }
+          { do: `Print <code>named_parameters()</code> with the plain-tensor version.`, why: `A bare tensor assigned to <code>self</code> is NOT registered, so it is missing from <code>parameters()</code> and the optimizer never trains it.` },
+          { do: `Wrap it in <code>nn.Parameter(...)</code> and reprint.`, why: `<code>nn.Parameter</code> registers it and sets <code>requires_grad=True</code>, so now it appears and will train.` }
         ],
-        answer: `<p>Run <code>torch.autograd.gradcheck(MyFn.apply, (x,))</code> where <code>x</code> is a <code>float64</code> tensor with <code>requires_grad=True</code>. gradcheck perturbs each input by a tiny step, measures the numerical slope, and compares it to what your <code>backward</code> returns; it returns <code>True</code> (or raises) so you learn about a bad gradient <i>before</i> it quietly ruins training. The double precision is essential &mdash; finite differences lose too many digits in <code>float32</code>.</p>`
+        answer: `<pre><code>class Bad(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.W = torch.randn(3, 4)        # plain tensor -> NOT registered
+print(list(Bad().named_parameters()))     # []  -- empty! optimizer sees nothing
+
+class Good(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.W = nn.Parameter(torch.randn(3, 4))
+print([n for n, _ in Good().named_parameters()])   # ['W']</code></pre>`
       },
       {
-        q: `Your model needs a fixed lookup table (a positional-encoding matrix) that should travel to the GPU with the model and be saved in checkpoints, but must <b>not</b> be updated by the optimizer. Where do you put it, and why not just make it an attribute or a parameter?`,
+        q: `<b>Type this in Colab.</b> Write a custom loss as a plain function <code>my_mse(pred, target)</code> returning <code>((pred - target) ** 2).mean()</code>. On <code>pred = torch.randn(8, 3)</code> and <code>target = torch.randn(8, 3)</code> (seed 0), print your loss next to <code>nn.MSELoss()(pred, target)</code> and confirm they match.`,
         steps: [
-          { do: `Reject a plain attribute (<code>self.table = tensor</code>).`, why: `A plain tensor does not move with <code>model.to(device)</code> and is not in <code>state_dict()</code>, so it stays on the CPU and is lost on save/load.` },
-          { do: `Reject <code>nn.Parameter</code>.`, why: `A Parameter <i>would</i> be trained by the optimizer, which you explicitly do not want for a fixed table.` },
-          { do: `Use <code>self.register_buffer("table", tensor)</code>.`, why: `A buffer is registered non-learnable state: it moves with the module and saves in the checkpoint, but the optimizer ignores it.` }
+          { do: `Build the loss from differentiable torch ops only.`, why: `A loss is just a scalar-returning function; if it is differentiable, autograd backpropagates it with no extra code.` },
+          { do: `Compare against the built-in <code>nn.MSELoss</code>.`, why: `It confirms your hand-rolled formula matches PyTorch's reduction (mean over all elements).` }
         ],
-        answer: `<p>Register it as a <b>buffer</b>: <code>self.register_buffer("table", tensor)</code>. A buffer is the right home for non-learnable state &mdash; it walks the module tree with <code>model.to(device)</code> and appears in <code>state_dict()</code> (so it is checkpointed), yet it is <i>not</i> returned by <code>model.parameters()</code>, so the optimizer never touches it. A plain attribute would be left behind on device moves and saves; an <code>nn.Parameter</code> would wrongly be trained.</p>`
+        answer: `<pre><code>torch.manual_seed(0)
+def my_mse(pred, target):
+    return ((pred - target) ** 2).mean()
+
+pred   = torch.randn(8, 3)
+target = torch.randn(8, 3)
+print(float(my_mse(pred, target)))            # e.g. 1.8945
+print(float(nn.MSELoss()(pred, target)))      # identical value</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Implement a <code>torch.autograd.Function</code> named <code>Square</code> for $f(x)=x^2$: in <code>forward</code> save <code>x</code> with <code>ctx.save_for_backward(x)</code> and return <code>x * x</code>; in <code>backward</code> return <code>grad_output * 2 * x</code>. Call it via <code>Square.apply</code> on <code>x = torch.tensor([3.0], requires_grad=True)</code>, backprop, and print <code>x.grad</code>. Predict the value first.`,
+        steps: [
+          { do: `Define static <code>forward(ctx, x)</code> and <code>backward(ctx, grad_output)</code>, calling the op via <code>.apply</code>.`, why: `<code>.apply</code> records the op on the autograd graph; calling <code>forward</code> directly bypasses autograd.` },
+          { do: `Predict the gradient: $\\tfrac{d}{dx}x^2 = 2x$, so at $x=3$ it is $6$.`, why: `Verifying the hand-written backward against the known derivative is the whole point of owning the gradient.` }
+        ],
+        answer: `<pre><code>class Square(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x * x
+    @staticmethod
+    def backward(ctx, grad_output):
+        (x,) = ctx.saved_tensors
+        return grad_output * 2 * x
+
+x = torch.tensor([3.0], requires_grad=True)
+y = Square.apply(x)
+y.backward()
+print(x.grad)        # tensor([6.])  -- 2*x at x=3</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Verify the <code>Square</code> Function's backward with <code>torch.autograd.gradcheck</code>. Make a <code>float64</code> input with <code>requires_grad=True</code> and print the result. Then change the backward to a WRONG formula (<code>grad_output * x</code>) and show gradcheck now fails.`,
+        steps: [
+          { do: `Run <code>torch.autograd.gradcheck(Square.apply, (x,))</code> on a <code>.double()</code> input.`, why: `Finite differences need 64-bit headroom; on float32 gradcheck reports spurious mismatches.` },
+          { do: `Break the backward (return <code>grad_output * x</code>) and rerun.`, why: `gradcheck compares analytic vs numerical gradient and raises on a wrong derivative — catching the bug before training.` }
+        ],
+        answer: `<pre><code>x = torch.randn(5, dtype=torch.float64, requires_grad=True)
+print(torch.autograd.gradcheck(Square.apply, (x,)))   # True  -- correct backward
+
+class BadSquare(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x); return x * x
+    @staticmethod
+    def backward(ctx, grad_output):
+        (x,) = ctx.saved_tensors
+        return grad_output * x          # WRONG: should be 2*x
+try:
+    torch.autograd.gradcheck(BadSquare.apply, (x,))
+except Exception as e:
+    print("gradcheck FAILED:", type(e).__name__)   # raises -> bug caught</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> In an <code>nn.Module</code>, register a fixed lookup table with <code>self.register_buffer("table", torch.arange(6.0).reshape(2, 3))</code>. Print <code>list(m.named_parameters())</code>, <code>list(m.named_buffers())</code>, and <code>list(m.state_dict().keys())</code>. Predict which lists contain <code>table</code>.`,
+        steps: [
+          { do: `Use <code>register_buffer</code> for non-learnable state that must travel with the model.`, why: `A buffer moves with <code>model.to(device)</code> and is saved in <code>state_dict</code>, but the optimizer ignores it.` },
+          { do: `Predict: <code>table</code> is in buffers and state_dict, NOT in parameters.`, why: `Only <code>nn.Parameter</code>s show up in <code>parameters()</code>; a buffer is deliberately excluded so it is never trained.` }
+        ],
+        answer: `<pre><code>class M(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.register_buffer("table", torch.arange(6.0).reshape(2, 3))
+
+m = M()
+print([n for n, _ in m.named_parameters()])   # []          -- not trained
+print([n for n, _ in m.named_buffers()])      # ['table']   -- registered state
+print(list(m.state_dict().keys()))            # ['table']   -- checkpointed</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show why <code>nn.Parameter</code> matters end-to-end. Train your <code>MyLinear(4, 3)</code> (from the first task) to fit <code>Y = X @ true_W.t() + true_b</code> for 200 Adam steps with your <code>my_mse</code> loss; print the loss every 50 steps. Use seeds so the run is reproducible.`,
+        steps: [
+          { do: `Pass <code>model.parameters()</code> to <code>torch.optim.Adam</code> and run the train loop.`, why: `Because <code>W</code> and <code>b</code> are <code>nn.Parameter</code>s they are in <code>parameters()</code>, so the optimizer can update them.` },
+          { do: `Call <code>zero_grad()</code> before each <code>backward()</code>.`, why: `Gradients accumulate by default; clearing them keeps each step's update correct so the loss drops to near zero.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(1)
+X = torch.randn(64, 4)
+true_W, true_b = torch.randn(3, 4), torch.randn(3)
+Y = X @ true_W.t() + true_b
+
+model = MyLinear(4, 3)
+opt = torch.optim.Adam(model.parameters(), lr=0.1)
+for step in range(200):
+    opt.zero_grad()
+    loss = my_mse(model(X), Y)
+    loss.backward(); opt.step()
+    if step % 50 == 0:
+        print(step, round(loss.item(), 4))
+# 0  large; loss falls each block
+print("final:", round(my_mse(model(X), Y).item(), 5))   # near 0.0</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Demonstrate the non-differentiable pitfall. Take <code>x = torch.tensor([1.7], requires_grad=True)</code>, compute <code>y = torch.round(x)</code>, backprop <code>y</code>, and print <code>x.grad</code>. Predict the gradient before running, then explain in a comment why a custom Function would be needed for a usable gradient.`,
+        steps: [
+          { do: `Backprop through <code>torch.round</code> and inspect <code>x.grad</code>.`, why: `Rounding has zero derivative almost everywhere, so autograd hands back a zero gradient — no learning signal.` },
+          { do: `Note the fix: a custom <code>autograd.Function</code> with a straight-through estimator.`, why: `When you need a gradient through a non-differentiable step, you must hand-write the backward yourself.` }
+        ],
+        answer: `<pre><code>x = torch.tensor([1.7], requires_grad=True)
+y = torch.round(x)
+y.backward()
+print(x.grad)        # tensor([0.])  -- round has zero gradient -> no signal
+# Fix: a torch.autograd.Function whose backward passes grad_output through
+#      unchanged (a straight-through estimator).</code></pre>`
       }
     ]
   });

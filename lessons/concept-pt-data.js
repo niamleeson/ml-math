@@ -145,33 +145,173 @@
 
     practice: [
       {
-        q: `Your training is slow and <code>nvidia-smi</code> shows GPU utilisation bouncing between 0% and 100% instead of staying high. Your <code>DataLoader</code> uses the defaults: <code>num_workers=0</code>, <code>pin_memory=False</code>. What is happening and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Write a minimal custom <code>Dataset</code> over two numpy arrays. With
+            <code>X = np.arange(20).reshape(10, 2).astype("float32")</code> and <code>y = np.arange(10)</code>,
+            implement <code>__len__</code> and <code>__getitem__</code> (return <code>x</code> as
+            <code>float32</code>, <code>y</code> as a <code>long</code> scalar). Print <code>len(ds)</code> and
+            <code>ds[3]</code>.`,
         steps: [
-          { do: `Recognize the symptom: spiky/low GPU utilisation means the GPU keeps finishing a batch and then <b>waiting</b> for the next one.`, why: `With <code>num_workers=0</code> the data is loaded in the <i>main</i> process, serially, in between training steps &mdash; so the GPU sits idle while the CPU decodes and augments.` },
-          { do: `Raise <code>num_workers</code> to a small number (say 4) so worker processes <b>prefetch</b> the next batches in parallel while the GPU trains on the current one.`, why: `Parallel prefetching overlaps CPU data work with GPU compute, so the next batch is ready the instant the GPU needs it.` },
-          { do: `Set <code>pin_memory=True</code> and copy with <code>.to(device, non_blocking=True)</code>.`, why: `Page-locked host memory makes the CPU&rarr;GPU transfer faster and lets it overlap compute.` },
-          { do: `Measure throughput (samples/sec) as you raise <code>num_workers</code> and stop at the plateau.`, why: `Past the point where the GPU is saturated, more workers only add overhead &mdash; the plateau in the CODEVIZ chart.` }
+          { do: `Subclass <code>Dataset</code> and implement <code>__len__</code> + <code>__getitem__</code>.`, why: `Those two methods are the entire map-style Dataset contract.` },
+          { do: `Cast inside <code>__getitem__</code>: input <code>torch.float32</code>, label <code>torch.long</code>.`, why: `The model wants float32 features; <code>CrossEntropyLoss</code> wants a long class index.` }
         ],
-        answer: `<p>The GPU is <b>data-starved</b>: with <code>num_workers=0</code> every batch is loaded serially in the main process, so the GPU finishes a step and then idles while the CPU prepares the next batch &mdash; exactly the 0%&harr;100% sawtooth. Fix it by letting the loader prefetch in parallel: set <code>num_workers</code> to a few (e.g. 4), and add <code>pin_memory=True</code> with <code>.to(device, non_blocking=True)</code> for a faster, overlapping transfer. Raise <code>num_workers</code> while throughput climbs and stop at the plateau, since beyond GPU saturation extra workers just add overhead.</p>`
+        answer: `<pre><code>import numpy as np, torch
+from torch.utils.data import Dataset, DataLoader
+
+class ArrayDS(Dataset):
+    def __init__(self, X, y):
+        self.X, self.y = X, y
+    def __len__(self):
+        return len(self.X)
+    def __getitem__(self, i):
+        x = torch.tensor(self.X[i], dtype=torch.float32)
+        t = torch.tensor(self.y[i], dtype=torch.long)
+        return x, t
+
+X = np.arange(20).reshape(10, 2).astype("float32")
+y = np.arange(10)
+ds = ArrayDS(X, y)
+print(len(ds))     # 10
+print(ds[3])       # (tensor([6., 7.]), tensor(3))</code></pre>`
       },
       {
-        q: `You copy your train <code>DataLoader</code> to make the validation one, leaving <code>shuffle=True</code> and the same <code>transforms.Compose([RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor(), Normalize(...)])</code>. Your validation accuracy is noisy and looks lower than it should. What two things are wrong?`,
+        q: `<b>Type this in Colab.</b> Wrap the <code>ds</code> from above in a
+            <code>DataLoader(ds, batch_size=4, shuffle=False)</code>. Grab one batch with
+            <code>next(iter(loader))</code>. Predict the shapes and dtypes of <code>xb</code> and <code>yb</code>
+            before running, then verify.`,
         steps: [
-          { do: `Spot <code>shuffle=True</code> on the validation loader.`, why: `Validation should be a fixed, reproducible pass; shuffling it gains nothing and can break any per-sample bookkeeping. Shuffle the train loader only.` },
-          { do: `Spot the <b>augmentation</b> (<code>RandomCrop</code>, <code>RandomHorizontalFlip</code>) in the validation transform.`, why: `Random crops/flips on eval make each pass see different, distorted inputs, so the metric is noisy and not measuring true performance.` },
-          { do: `Build a separate eval transform: deterministic only &mdash; e.g. <code>ToTensor()</code> + the same <code>Normalize(...)</code> (and resize/center-crop if needed), no randomness.`, why: `Eval must be deterministic and undistorted so the metric is stable and reflects real accuracy.` },
-          { do: `Set <code>shuffle=False</code> on the validation loader.`, why: `A fixed order makes evaluation reproducible.` }
+          { do: `Build the <code>DataLoader</code> and pull one batch with <code>next(iter(loader))</code>.`, why: `The loader collates 4 samples into one batched tensor.` },
+          { do: `Print <code>xb.shape, xb.dtype</code> and <code>yb.shape, yb.dtype</code>.`, why: `The default collate stacks the 4 <code>(2,)</code> inputs into <code>(4, 2)</code> and the 4 labels into <code>(4,)</code>.` }
         ],
-        answer: `<p>Two split-hygiene bugs. (1) <b><code>shuffle=True</code> on validation</b> &mdash; only the <i>train</i> loader should shuffle; eval should be a fixed, reproducible pass (<code>shuffle=False</code>). (2) <b>Augmentation on validation</b> &mdash; <code>RandomCrop</code> and <code>RandomHorizontalFlip</code> distort each eval pass differently, making the metric noisy and unrepresentative. Give validation its own deterministic transform (<code>ToTensor()</code> + the <i>same</i> <code>Normalize(...)</code>, plus resize/center-crop if needed) and keep the random augmentation for training only. Normalization must match across splits; randomness must not.</p>`
+        answer: `<pre><code>loader = DataLoader(ds, batch_size=4, shuffle=False)
+xb, yb = next(iter(loader))
+print(xb.shape, xb.dtype)   # torch.Size([4, 2]) torch.float32
+print(yb.shape, yb.dtype)   # torch.Size([4]) torch.int64
+print(yb)                   # tensor([0, 1, 2, 3])</code></pre>`
       },
       {
-        q: `You write a custom <code>Dataset</code> for a classifier. <code>__getitem__</code> returns <code>(self.X[i], int(self.y[i]))</code> where <code>self.X</code> is a numpy float64 array and <code>self.y</code> is a numpy array of class ids. Training crashes inside <code>nn.CrossEntropyLoss</code> / the model. What dtypes should <code>__getitem__</code> return and why?`,
+        q: `<b>Type this in Colab.</b> Show what <code>shuffle</code> does. Build a <code>DataLoader</code> over the
+            same <code>ds</code> with <code>batch_size=10, shuffle=False</code> and print the label batch; then with
+            <code>shuffle=True</code> after <code>torch.manual_seed(0)</code> and print it again.`,
         steps: [
-          { do: `Recognize the model expects <code>torch.float32</code> input tensors, not a numpy <code>float64</code> array or Python objects.`, why: `Layer weights are <code>float32</code>; a <code>float64</code> numpy array (or a non-tensor) causes a dtype mismatch error in the forward pass.` },
-          { do: `Recognize <code>nn.CrossEntropyLoss</code> wants the target as a <code>torch.long</code> tensor of <b>class indices</b> (not one-hot, not float, not a Python int).`, why: `CrossEntropyLoss indexes into the logits with integer class ids; it requires a <code>long</code> tensor of indices.` },
-          { do: `Return <code>(torch.tensor(self.X[i], dtype=torch.float32), torch.tensor(int(self.y[i]), dtype=torch.long))</code>.`, why: `Explicit casts give the input <code>float32</code> and the target a scalar <code>long</code>, exactly what the model and loss expect; the default collate then stacks them into a clean batch.` }
+          { do: `Set <code>shuffle=False</code> for the natural order, <code>shuffle=True</code> for a random permutation.`, why: `<code>shuffle=True</code> uses a fresh random index order each epoch — for the TRAIN loader only.` },
+          { do: `Seed with <code>torch.manual_seed(0)</code> before the shuffled loader.`, why: `So the random order is reproducible for grading.` }
         ],
-        answer: `<p><code>__getitem__</code> must return real tensors with the right dtypes: the input as <b><code>torch.float32</code></b> (the model's weights are float32, so a numpy float64 array or a Python object mismatches) and the classification target as a scalar <b><code>torch.long</code></b> class index (because <code>nn.CrossEntropyLoss</code> takes integer class indices, not one-hot vectors, floats, or Python ints). So: <code>return torch.tensor(x, dtype=torch.float32), torch.tensor(int(y), dtype=torch.long)</code>. With the correct dtypes, the default <code>collate_fn</code> stacks them into a <code>(B, ...)</code> float input batch and a <code>(B,)</code> long target batch and the loss is happy.</p>`
+        answer: `<pre><code>print(next(iter(DataLoader(ds, batch_size=10, shuffle=False)))[1])
+# tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+torch.manual_seed(0)
+print(next(iter(DataLoader(ds, batch_size=10, shuffle=True)))[1])
+# tensor([4, 1, 7, 5, 3, 9, 0, 8, 6, 2])  -- a random permutation</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show <code>drop_last</code>. With 10 samples and <code>batch_size=4</code>, iterate
+            the loader once with <code>drop_last=False</code> and print each batch size; then with
+            <code>drop_last=True</code>. Predict the batch counts before running.`,
+        steps: [
+          { do: `Iterate the loader and print <code>len(xb)</code> per batch.`, why: `10 / 4 leaves a final short batch of 2.` },
+          { do: `Compare <code>drop_last=False</code> (keeps it: 4,4,2) vs <code>drop_last=True</code> (drops it: 4,4).`, why: `<code>drop_last=True</code> guarantees every batch is exactly <code>batch_size</code>.` }
+        ],
+        answer: `<pre><code>for drop in (False, True):
+    dl = DataLoader(ds, batch_size=4, drop_last=drop)
+    print(drop, [len(xb) for xb, _ in dl])
+# False [4, 4, 2]   <- keeps the short final batch
+# True  [4, 4]      <- drops it</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The dtype pitfall. Make a Dataset whose <code>__getitem__</code> wrongly returns
+            <code>(self.X[i], int(self.y[i]))</code> with <code>X</code> a numpy <code>float64</code> array. Feed a
+            batch to <code>nn.Linear(2, 3)</code> + <code>nn.CrossEntropyLoss</code> and observe the dtype error. Then
+            fix <code>__getitem__</code> to return <code>float32</code> input and a <code>long</code> target.`,
+        steps: [
+          { do: `Return real tensors: input <code>torch.float32</code>, label <code>torch.long</code> (not a Python <code>int</code> or <code>float64</code>).`, why: `Linear weights are float32 and <code>CrossEntropyLoss</code> needs a long index tensor.` },
+          { do: `Run a forward+loss on one batch after the fix.`, why: `It confirms the corrected dtypes flow cleanly through model and loss.` }
+        ],
+        answer: `<pre><code>import torch.nn as nn
+Xf = np.arange(20).reshape(10, 2).astype("float64")   # float64 -> mismatch
+class GoodDS(Dataset):
+    def __init__(s, X, y): s.X, s.y = X, y
+    def __len__(s): return len(s.X)
+    def __getitem__(s, i):
+        return (torch.tensor(s.X[i], dtype=torch.float32),   # fix: float32
+                torch.tensor(s.y[i], dtype=torch.long))      # fix: long index
+dl = DataLoader(GoodDS(Xf, np.arange(10) % 3), batch_size=4)
+xb, yb = next(iter(dl))
+loss = nn.CrossEntropyLoss()(nn.Linear(2, 3)(xb), yb)
+print(loss.shape, xb.dtype, yb.dtype)   # torch.Size([]) torch.float32 torch.int64</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Use a built-in dataset split into train and eval loaders with the RIGHT hygiene.
+            Build a train transform <code>Compose([RandomHorizontalFlip(), ToTensor(), Normalize((0.5,),(0.5,))])</code>
+            and a deterministic eval transform <code>Compose([ToTensor(), Normalize((0.5,),(0.5,))])</code>. Make a
+            train <code>DataLoader(shuffle=True)</code> and a test <code>DataLoader(shuffle=False)</code> over MNIST.`,
+        steps: [
+          { do: `Give train and eval <b>separate</b> transforms — augment train only, deterministic eval.`, why: `Random crops/flips on eval make the metric noisy; eval must be deterministic.` },
+          { do: `Shuffle the train loader, not the eval loader.`, why: `Shuffling decorrelates train batches; eval should be a fixed, reproducible pass.` }
+        ],
+        answer: `<pre><code>from torchvision import datasets, transforms
+train_tf = transforms.Compose([
+    transforms.RandomHorizontalFlip(),          # augmentation: TRAIN only
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,)),
+])
+eval_tf = transforms.Compose([                  # deterministic: no randomness
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,)),
+])
+train_ds = datasets.MNIST("./data", train=True,  download=True, transform=train_tf)
+test_ds  = datasets.MNIST("./data", train=False, download=True, transform=eval_tf)
+train_dl = DataLoader(train_ds, batch_size=128, shuffle=True)    # shuffle TRAIN
+test_dl  = DataLoader(test_ds,  batch_size=256, shuffle=False)   # NOT eval
+imgs, labels = next(iter(train_dl))
+print(imgs.shape, labels.shape)   # torch.Size([128, 1, 28, 28]) torch.Size([128])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Variable-length data needs a custom <code>collate_fn</code>. Build a Dataset of
+            sequences <code>[[1,2,3], [4,5], [6,7,8,9]]</code> with labels <code>[0,1,0]</code> returning each as a
+            <code>long</code> tensor. Write <code>pad_collate</code> using
+            <code>nn.utils.rnn.pad_sequence(..., batch_first=True)</code> and print the padded batch shape.`,
+        steps: [
+          { do: `Pass <code>collate_fn=pad_collate</code> to the <code>DataLoader</code>.`, why: `The default collate calls <code>torch.stack</code>, which fails on different-length sequences.` },
+          { do: `Pad with <code>pad_sequence(seqs, batch_first=True, padding_value=0)</code>.`, why: `It pads every sequence to the batch's longest length so they stack into one rectangle.` }
+        ],
+        answer: `<pre><code>from torch.nn.utils.rnn import pad_sequence
+class SeqDS(Dataset):
+    def __init__(s, seqs, labels): s.seqs, s.labels = seqs, labels
+    def __len__(s): return len(s.seqs)
+    def __getitem__(s, i):
+        return torch.tensor(s.seqs[i], dtype=torch.long), s.labels[i]
+
+def pad_collate(batch):
+    seqs, labels = zip(*batch)
+    padded = pad_sequence(seqs, batch_first=True, padding_value=0)
+    return padded, torch.tensor(labels)
+
+dl = DataLoader(SeqDS([[1,2,3],[4,5],[6,7,8,9]], [0,1,0]),
+                batch_size=3, collate_fn=pad_collate)
+padded, lbls = next(iter(dl))
+print(padded.shape)   # torch.Size([3, 4])  -- padded to the longest (4)
+print(padded)
+# tensor([[1, 2, 3, 0],
+#         [4, 5, 0, 0],
+#         [6, 7, 8, 9]])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Tie it together: iterate a full epoch. Build a <code>TensorDataset</code> from
+            <code>X = torch.randn(50, 4)</code>, <code>y = torch.randint(0, 2, (50,))</code>, wrap it in a
+            <code>DataLoader(batch_size=16, shuffle=True)</code>, loop over it once, and count how many batches you get
+            and the total number of samples seen.`,
+        steps: [
+          { do: `Use <code>TensorDataset</code> as a quick Dataset over in-memory tensors.`, why: `No custom class needed when the data already fits in tensors.` },
+          { do: `Loop <code>for xb, yb in loader:</code> and tally <code>len(xb)</code>.`, why: `50 / 16 gives 4 batches (16,16,16,2) totalling 50 samples.` }
+        ],
+        answer: `<pre><code>from torch.utils.data import TensorDataset
+torch.manual_seed(0)
+X = torch.randn(50, 4); y = torch.randint(0, 2, (50,))
+loader = DataLoader(TensorDataset(X, y), batch_size=16, shuffle=True)
+n_batches = total = 0
+for xb, yb in loader:
+    n_batches += 1
+    total += len(xb)
+print(n_batches, total)   # 4 50</code></pre>`
       }
     ]
   });

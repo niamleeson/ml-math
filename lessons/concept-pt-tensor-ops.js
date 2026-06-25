@@ -73,27 +73,112 @@
 
     practice: [
       {
-        q: `You have <code>x</code> of shape <code>(32, 784)</code> (a batch of 32 flattened images) and a weight <code>W</code> of shape <code>(784, 10)</code>. Write the linear layer output and give its shape.`,
+        q: `<b>Type this in Colab.</b> Make <code>A = torch.arange(6.).reshape(2, 3)</code> and <code>B = torch.ones(2, 3)</code>. Compute the elementwise product <code>A * B</code> and print its shape. Then make <code>C = torch.ones(3, 2)</code> and compute the matrix product <code>A @ C</code> and print its shape. Predict both shapes before running.`,
         steps: [
-          { do: `Use matmul, not elementwise: <code>z = x @ W</code>.`, why: `A linear layer is a matrix multiply; <code>*</code> would try elementwise and fail (shapes differ).` },
-          { do: `Apply the matmul shape rule: <code>(32,784) @ (784,10)</code>, inner 784 matches and cancels.`, why: `Inner dims must match; outer dims survive.` }
+          { do: `Use <code>*</code> for elementwise and <code>@</code> for matmul.`, why: `They are different ops: <code>*</code> keeps the shape, <code>@</code> follows the matmul shape rule.` },
+          { do: `Apply <code>(2,3) @ (3,2)</code>: the inner 3 cancels.`, why: `Inner dims must match; the outer dims <code>(2,2)</code> survive.` }
         ],
-        answer: `<code>z = x @ W</code> has shape <code>(32, 10)</code> — 10 class scores for each of the 32 images.`
+        answer: `<pre><code>A = torch.arange(6.).reshape(2, 3)
+B = torch.ones(2, 3)
+C = torch.ones(3, 2)
+print((A * B).shape)   # torch.Size([2, 3])  elementwise keeps shape
+print((A @ C).shape)   # torch.Size([2, 2])  inner 3 cancels</code></pre>`
       },
       {
-        q: `Those scores <code>z</code> are <code>(32, 10)</code>. Turn them into a predicted class per image.`,
+        q: `<b>Type this in Colab.</b> Broadcast a column against a row. Build <code>col = torch.tensor([[10.],[20.],[30.]])</code> (shape <code>(3,1)</code>) and <code>row = torch.tensor([[1.,2.,3.,4.]])</code> (shape <code>(1,4)</code>), add them, and print the result and its shape. Predict the shape first.`,
         steps: [
-          { do: `Reduce over the class axis (the last one): <code>pred = z.argmax(dim=-1)</code>.`, why: `<code>argmax</code> returns the index of the largest score; the class axis is dim -1, not the batch axis.` }
+          { do: `Add the <code>(3,1)</code> and <code>(1,4)</code> tensors directly.`, why: `Broadcasting stretches each size-1 axis to meet the other operand.` },
+          { do: `Print <code>.shape</code> to verify it is <code>(3,4)</code>.`, why: `Cell <code>(i,j) = col[i] + row[j]</code>; printing shape catches a silent mis-broadcast.` }
         ],
-        answer: `<code>pred = z.argmax(dim=-1)</code> has shape <code>(32,)</code> — one integer class label per image. Reducing over <code>dim=0</code> by mistake would collapse the batch, which is wrong.`
+        answer: `<pre><code>col = torch.tensor([[10.], [20.], [30.]])
+row = torch.tensor([[1., 2., 3., 4.]])
+grid = col + row
+print(grid.shape)   # torch.Size([3, 4])
+print(grid)
+# tensor([[11., 12., 13., 14.],
+#         [21., 22., 23., 24.],
+#         [31., 32., 33., 34.]])</code></pre>`
       },
       {
-        q: `You ran <code>y = x.permute(0, 2, 1)</code> and then <code>y.view(-1)</code> raised an error. Why, and what fixes it?`,
+        q: `<b>Type this in Colab.</b> The silent-broadcast pitfall. You meant to add two length-3 vectors, but one is a row and one is a column: add <code>torch.tensor([1., 2., 3.])</code> (shape <code>(3,)</code>) to <code>torch.tensor([[10.],[20.],[30.]])</code> (shape <code>(3,1)</code>). Print the result shape — it is NOT <code>(3,)</code>. Explain in a comment what happened.`,
         steps: [
-          { do: `Recall <code>permute</code> reorders axes by changing strides, leaving the tensor non-contiguous.`, why: `<code>view</code> needs contiguous row-major memory; permuted data is not.` },
-          { do: `Use <code>y.reshape(-1)</code> or <code>y.contiguous().view(-1)</code>.`, why: `<code>reshape</code> copies when needed; <code>.contiguous()</code> makes a fresh ordered copy first.` }
+          { do: `Add the <code>(3,)</code> and <code>(3,1)</code> tensors and print <code>.shape</code>.`, why: `Broadcasting aligns trailing dims, turning this into a <code>(3,3)</code> grid — a wrong answer with no error.` },
+          { do: `Note the fix: make both the same shape (e.g. flatten the column).`, why: `Printing shapes is the only way to catch a silent mis-broadcast.` }
         ],
-        answer: `<code>view</code> fails on the non-contiguous permuted tensor. Use <code>y.reshape(-1)</code> (or <code>y.contiguous().view(-1)</code>).`
+        answer: `<pre><code>v   = torch.tensor([1., 2., 3.])          # (3,)
+col = torch.tensor([[10.], [20.], [30.]]) # (3,1)
+out = v + col
+print(out.shape)   # torch.Size([3, 3])  -- a 3x3 grid, NOT (3,)!
+print(out)
+# tensor([[11., 12., 13.],
+#         [21., 22., 23.],
+#         [31., 32., 33.]])
+# Fix: align shapes, e.g. v + col.flatten() -> tensor([11., 22., 33.])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Reduce over a chosen axis with and without <code>keepdim</code>. Make <code>g = torch.tensor([[1.,2.,3.,4.],[5.,6.,7.,8.],[9.,10.,11.,12.]])</code>. Print <code>g.sum(dim=1)</code> and its shape, then <code>g.sum(dim=1, keepdim=True)</code> and its shape.`,
+        steps: [
+          { do: `Sum across columns with <code>dim=1</code>.`, why: `<code>dim</code> is the axis that collapses; <code>dim=1</code> leaves one value per row.` },
+          { do: `Add <code>keepdim=True</code> to retain the axis as size 1.`, why: `Keeping it as <code>(3,1)</code> lets the result broadcast back (the softmax-normalize trick).` }
+        ],
+        answer: `<pre><code>g = torch.tensor([[1.,2.,3.,4.],[5.,6.,7.,8.],[9.,10.,11.,12.]])
+print(g.sum(dim=1))                 # tensor([10., 26., 42.])
+print(g.sum(dim=1).shape)           # torch.Size([3])
+print(g.sum(dim=1, keepdim=True))   # tensor([[10.],[26.],[42.]])
+print(g.sum(dim=1, keepdim=True).shape)  # torch.Size([3, 1])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> A row-softmax in three lines. Take <code>g</code> from the previous task. Compute <code>e = torch.exp(g - g.max(dim=1, keepdim=True).values)</code>, then <code>probs = e / e.sum(dim=1, keepdim=True)</code>. Print <code>probs.shape</code> and <code>probs.sum(dim=1)</code> to confirm each row sums to 1.`,
+        steps: [
+          { do: `Subtract the per-row max with <code>keepdim=True</code> before <code>exp</code>.`, why: `Numerically stabilizes the exponent; <code>keepdim</code> keeps the <code>(3,1)</code> shape so it broadcasts back.` },
+          { do: `Divide by the per-row sum (also <code>keepdim=True</code>).`, why: `Normalizes each row to a probability distribution summing to 1.` }
+        ],
+        answer: `<pre><code>e = torch.exp(g - g.max(dim=1, keepdim=True).values)
+probs = e / e.sum(dim=1, keepdim=True)
+print(probs.shape)         # torch.Size([3, 4])
+print(probs.sum(dim=1))    # tensor([1., 1., 1.])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> A linear layer plus argmax prediction. Make a batch <code>x = torch.randn(4, 5)</code> (seed first) and a weight <code>W = torch.randn(5, 3)</code>. Compute <code>z = x @ W</code>, print <code>z.shape</code>, then <code>pred = z.argmax(dim=-1)</code> and print <code>pred</code> and <code>pred.shape</code>.`,
+        steps: [
+          { do: `Matmul <code>(4,5) @ (5,3)</code> to get scores <code>(4,3)</code>.`, why: `Every linear layer is a matmul; inner 5 cancels, leaving 3 class scores per example.` },
+          { do: `Take <code>argmax(dim=-1)</code> over the class axis.`, why: `It returns the index of the top score per row — the predicted class; reducing <code>dim=0</code> would wrongly collapse the batch.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+x = torch.randn(4, 5)
+W = torch.randn(5, 3)
+z = x @ W
+print(z.shape)              # torch.Size([4, 3])
+pred = z.argmax(dim=-1)
+print(pred)                # tensor([0, 1, 0, 1])
+print(pred.shape)          # torch.Size([4])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The <code>view</code>-vs-<code>reshape</code> pitfall. Make <code>x = torch.arange(24).reshape(2, 3, 4)</code> and <code>xp = x.permute(0, 2, 1)</code>. Try <code>xp.view(-1)</code> in a <code>try/except</code> and print the failure, then show <code>xp.reshape(-1)</code> works and print its shape.`,
+        steps: [
+          { do: `Call <code>xp.view(-1)</code> on the permuted (non-contiguous) tensor.`, why: `<code>view</code> needs contiguous row-major memory; <code>permute</code> only reorders strides, so it raises.` },
+          { do: `Fall back to <code>xp.reshape(-1)</code> (or <code>xp.contiguous().view(-1)</code>).`, why: `<code>reshape</code> copies into a fresh contiguous block when needed.` }
+        ],
+        answer: `<pre><code>x = torch.arange(24).reshape(2, 3, 4)
+xp = x.permute(0, 2, 1)              # (2,4,3), non-contiguous
+print(xp.is_contiguous())           # False
+try:
+    xp.view(-1)
+except RuntimeError as err:
+    print("view failed:", "not compatible" in str(err))  # view failed: True
+print(xp.reshape(-1).shape)         # torch.Size([24])  reshape copies</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Reshape moves: build <code>x = torch.arange(24).reshape(2, 3, 4)</code>, then print the shapes of <code>x.flatten(1)</code>, <code>x.unsqueeze(0)</code>, <code>torch.cat([x, x], dim=0)</code>, and <code>torch.stack([x, x], dim=0)</code>. Predict each before running.`,
+        steps: [
+          { do: `Use <code>flatten(1)</code> and <code>unsqueeze(0)</code> to merge and insert axes.`, why: `<code>flatten(1)</code> merges axes from dim 1 on; <code>unsqueeze(0)</code> inserts a size-1 batch axis.` },
+          { do: `Compare <code>cat</code> (joins an existing axis) with <code>stack</code> (adds a new one).`, why: `<code>cat</code> on dim 0 doubles that axis; <code>stack</code> adds a fresh leading axis of size 2.` }
+        ],
+        answer: `<pre><code>x = torch.arange(24).reshape(2, 3, 4)
+print(x.flatten(1).shape)               # torch.Size([2, 12])
+print(x.unsqueeze(0).shape)             # torch.Size([1, 2, 3, 4])
+print(torch.cat([x, x], dim=0).shape)   # torch.Size([4, 3, 4])
+print(torch.stack([x, x], dim=0).shape) # torch.Size([2, 2, 3, 4])</code></pre>`
       }
     ]
   });

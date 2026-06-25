@@ -29,7 +29,7 @@ Read first:
     derivation: `...`,    // the mechanism / how it works under the API (the graph, the optimizer step, etc.)
     example: `...`,       // a tiny concrete worked example (a few tensors, a 2-line model)
     demo: function (host) { ... },   // OPTIONAL theme-aware canvas/Charts demo
-    practice: [ { q:`...`, steps:[{do:`...`, why:`...`}], answer:`...` }, ... ]
+    practice: [ { q:`...`, steps:[{do:`...`, why:`...`}], answer:`...` }, ... ]   // HANDS-ON CODING TASKS — see below
   });
   window.CODE["<ID>"] = {
     lib: "PyTorch",
@@ -48,6 +48,21 @@ Read first:
 
 ## Page render order: title/tagline → whenToUse → (where used) → CODE → CODEVIZ → pitfalls →
 ## "Under the hood" (bigIdea, buildup, symbols?, formula?, derivation, example) → demo → practice.
+
+## PRACTICE = HANDS-ON CODING TASKS (the learner TYPES these into Colab)
+The notebook generator (`tools/gen-notebooks.js`) emits, per practice item, the prompt + an empty
+`# Your turn:` code cell + a collapsible solution. So practice must be CODE the learner types — NOT a
+conceptual "explain why…" question. Gold standard: `lessons/concept-pt-tensors.js`. Rules:
+- 7–9 items per lesson, building from simplest to a small end-to-end task.
+- `q`: open with `<b>Type this in Colab.</b>` then a concrete, self-contained coding task with the
+  exact inputs/shapes/values named ("Create a 3×4 float tensor …, then …, print …"). One or two
+  "predict the output/shape before running, then verify" items per lesson are encouraged.
+- `steps`: 2 `{do, why}` pairs — the approach and the reason, naming the key API call.
+- `answer`: the REAL solution as `<pre><code>…</code></pre>` containing runnable PyTorch the learner
+  could have typed, WITH the expected printed output as inline `# comments`. Numbers must be correct
+  (use a seed where there's randomness). Escape `<` as `&lt;` inside code; `>` is fine.
+- Cover the lesson's actual API surface and at least one of its famous pitfalls AS a coding task
+  (e.g. forgetting `zero_grad`, device mismatch, `view` vs `reshape`, `train()`/`eval()`).
 
 ## Code rules — TWO TRACKS
 - `CODE.code` = REAL, idiomatic, COMPLETE PyTorch for the topic, runnable in Colab (torch/torchvision are

@@ -78,30 +78,158 @@
 
     practice: [
       {
-        q: `Your model has an <code>if x.sum() &gt; 0:</code> branch inside <code>forward()</code>. You export it with <code>torch.jit.trace</code> and deploy. Some inputs now give clearly wrong answers. What happened, and how do you fix the export?`,
+        q: `<b>Type this in Colab.</b> Build a tiny <code>nn.Linear(4, 3)</code> model, put it in <code>model.eval()</code>, trace it with <code>torch.jit.trace(model, example)</code> using an example of shape <code>(1, 4)</code>, and confirm the TorchScript output matches the eager output with <code>torch.allclose</code>. Use <code>torch.manual_seed(0)</code>.`,
         steps: [
-          { do: `Recall what <code>trace</code> records.`, why: `<code>trace</code> runs the model on one example and records only the operations that actually ran — the branch <i>not</i> taken on that example is missing from the graph.` },
-          { do: `Realize the branch was frozen.`, why: `Whichever side of the <code>if</code> the example triggered is baked in for every future input, so inputs that should take the other branch are handled wrongly.` },
-          { do: `Re-export with <code>torch.jit.script(model)</code>.`, why: `<code>script</code> compiles the actual Python control flow, so the <code>if</code> survives as a real branch in the graph.` }
+          { do: `Call <code>model.eval()</code> before exporting, then <code>torch.jit.trace(model, example)</code>.`, why: `<code>eval()</code> is the must-do before any export; <code>trace</code> records the ops that run on the example input.` },
+          { do: `Compare <code>ts(x)</code> to <code>model(x)</code> with <code>torch.allclose</code>.`, why: `Always verify the exported graph reproduces the original numerically before trusting it.` }
         ],
-        answer: `<code>trace</code> dropped the data-dependent branch (it only saw one path). Use <code>ts = torch.jit.script(model)</code> instead, which preserves the <code>if</code>. Reserve <code>trace</code> for straight-line tensor code.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+model = nn.Linear(4, 3).eval()      # eval() before export -- the must-do
+example = torch.randn(1, 4)
+ts = torch.jit.trace(model, example)
+with torch.inference_mode():
+    print(torch.allclose(ts(example), model(example)))   # True</code></pre>`
       },
       {
-        q: `You quantized your model to int8 to make it 4x smaller and faster. How do you decide whether it is safe to ship?`,
+        q: `<b>Type this in Colab.</b> Demonstrate the <b>trace-vs-script control-flow gotcha</b>. Write a module whose <code>forward</code> returns <code>x.sum()</code> if <code>x.sum() &gt; 0</code> else <code>-x.sum()</code>. Trace it on a POSITIVE example, then feed it a NEGATIVE input and show the traced output is wrong. Re-export with <code>torch.jit.script</code> and show it is now correct.`,
         steps: [
-          { do: `Remember quantization is lossy.`, why: `int8 rounds every weight, so the model's outputs shift slightly; the effect on accuracy varies by model and cannot be assumed.` },
-          { do: `Evaluate the quantized model on a held-out validation set.`, why: `The only way to know the real cost is to measure the same metric you used in training on data the model never saw.` },
-          { do: `Compare against your accuracy budget.`, why: `Ship only if the drop is within the budget the product can tolerate; otherwise keep float32 or try a less aggressive scheme.` }
+          { do: `Trace on a positive example, then call the traced module on a negative input.`, why: `<code>trace</code> freezes whichever branch the example took, so the <code>if</code> is baked to one side for all future inputs.` },
+          { do: `Re-export with <code>torch.jit.script(m)</code> and call it on the same negative input.`, why: `<code>script</code> compiles the Python control flow, so the data-dependent <code>if</code> survives.` }
         ],
-        answer: `Validate the int8 model on held-out data and compare its accuracy to the float32 model against an explicit budget. Never assume "little loss" — measure it.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+class M(nn.Module):
+    def forward(self, x):
+        if x.sum() &gt; 0:
+            return x.sum()
+        return -x.sum()
+
+m = M().eval()
+traced = torch.jit.trace(m, torch.tensor([1.0, 2.0]))   # positive example
+print(traced(torch.tensor([-5.0])).item())   # -5.0  (WRONG: branch frozen)
+
+scripted = torch.jit.script(m)
+print(scripted(torch.tensor([-5.0])).item()) #  5.0  (correct: if preserved)</code></pre>`
       },
       {
-        q: `Your FastAPI <code>/predict</code> endpoint works but is slow and occasionally returns inconsistent answers for the same input. List the two serving-time fixes.`,
+        q: `<b>Type this in Colab.</b> Save a TorchScript module to disk and reload it WITHOUT the original class. Trace an <code>nn.Linear(4, 2)</code>, call <code>ts.save("m.ts")</code>, then <code>reloaded = torch.jit.load("m.ts")</code>, and confirm <code>reloaded</code> produces the same output on a <code>(3, 4)</code> input. Predict the output shape first.`,
         steps: [
-          { do: `Set the model to inference mode at load: <code>model.eval()</code>.`, why: `In training mode dropout randomly zeroes units and batch-norm uses batch stats, so the same input can give different (and wrong) answers.` },
-          { do: `Wrap every prediction in <code>with torch.inference_mode():</code>.`, why: `Stops PyTorch from building the autograd graph you never use at serving, cutting per-request memory and latency.` }
+          { do: `Persist with <code>ts.save("m.ts")</code> and bring it back with <code>torch.jit.load</code>.`, why: `A saved TorchScript graph carries its own ops + weights, so it runs without the Python model class &mdash; the whole point of exporting.` },
+          { do: `Run a <code>(3, 4)</code> batch through the reloaded module and check the shape.`, why: `A <code>Linear(4, 2)</code> maps the last dim 4&rarr;2, so a batch of 3 gives <code>(3, 2)</code>.` }
         ],
-        answer: `Call <code>model.eval()</code> once at load (fixes the non-determinism from dropout/batch-norm) and run each request inside <code>torch.inference_mode()</code> (fixes the wasted memory/latency). Batching requests further raises throughput.`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+model = nn.Linear(4, 2).eval()
+ts = torch.jit.trace(model, torch.randn(1, 4))
+ts.save("m.ts")
+
+reloaded = torch.jit.load("m.ts")     # no Net class needed
+x = torch.randn(3, 4)
+print(reloaded(x).shape)              # torch.Size([3, 2])
+print(torch.allclose(reloaded(x), model(x)))   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Export a model to <b>ONNX</b> and verify the file exists. Build <code>nn.Linear(8, 4).eval()</code>, call <code>torch.onnx.export</code> with an example of shape <code>(1, 8)</code>, <code>opset_version=17</code>, and <code>dynamic_axes</code> on the batch dimension, then use <code>os.path.exists("m.onnx")</code> and <code>os.path.getsize</code> to confirm the file was written.`,
+        steps: [
+          { do: `Call <code>torch.onnx.export(model, example, "m.onnx", opset_version=17, dynamic_axes=...)</code>.`, why: `Exporting traces the model into a portable ONNX graph; pinning the opset keeps it loadable across runtime versions.` },
+          { do: `Check <code>os.path.exists("m.onnx")</code> and the byte size.`, why: `Confirms the export actually produced an artifact on disk.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn, os
+
+model = nn.Linear(8, 4).eval()
+x = torch.randn(1, 8)
+torch.onnx.export(
+    model, x, "m.onnx",
+    input_names=["input"], output_names=["out"],
+    opset_version=17,
+    dynamic_axes={"input": {0: "batch"}, "out": {0: "batch"}},
+)
+print(os.path.exists("m.onnx"))           # True
+print(os.path.getsize("m.onnx") &gt; 0)      # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Run an exported ONNX model with <code>onnxruntime</code> and check it matches PyTorch across the boundary. Export <code>nn.Linear(8, 4).eval()</code> to <code>m.onnx</code>, create an <code>InferenceSession</code>, run a <code>(2, 8)</code> input through it, and assert <code>np.allclose(onnx_out, torch_out, atol=1e-4)</code>. (onnxruntime is auto-installed by the notebook setup cell.)`,
+        steps: [
+          { do: `Create <code>ort.InferenceSession("m.onnx")</code> and call <code>.run(...)</code> with the numpy input.`, why: `ONNX Runtime executes the portable graph with no PyTorch installed &mdash; the production path.` },
+          { do: `Compare the ONNX output to PyTorch's with <code>np.allclose</code>.`, why: `Numeric drift across the ONNX boundary is a classic deployment bug; verify before shipping.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn, numpy as np
+import onnxruntime as ort
+
+torch.manual_seed(0)
+model = nn.Linear(8, 4).eval()
+x = torch.randn(2, 8)
+torch.onnx.export(model, x, "m.onnx",
+                  input_names=["input"], output_names=["out"],
+                  opset_version=17,
+                  dynamic_axes={"input": {0: "batch"}, "out": {0: "batch"}})
+
+with torch.inference_mode():
+    torch_out = model(x).numpy()
+sess = ort.InferenceSession("m.onnx", providers=["CPUExecutionProvider"])
+onnx_out = sess.run(["out"], {"input": x.numpy()})[0]
+print(np.allclose(onnx_out, torch_out, atol=1e-4))   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Apply <b>dynamic int8 quantization</b> to the linear layers and measure the file-size drop. Build a model with two <code>nn.Linear</code> layers, quantize with <code>torch.ao.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)</code>, save both state dicts, and print the float32 vs int8 file sizes in KB.`,
+        steps: [
+          { do: `Call <code>quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)</code>.`, why: `Dynamic quantization stores Linear weights as int8 (1 byte) instead of float32 (4 bytes) &mdash; about 4&times; smaller.` },
+          { do: `Save both <code>state_dict</code>s and compare <code>os.path.getsize</code>.`, why: `Showing the real byte sizes makes the ~4&times; shrink concrete.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn, os
+
+model = nn.Sequential(nn.Linear(256, 256), nn.ReLU(), nn.Linear(256, 64)).eval()
+qmodel = torch.ao.quantization.quantize_dynamic(
+    model, {nn.Linear}, dtype=torch.qint8).eval()
+
+torch.save(model.state_dict(),  "fp32.pt")
+torch.save(qmodel.state_dict(), "int8.pt")
+print("fp32 KB:", round(os.path.getsize("fp32.pt") / 1e3, 1))   # ~ 345.x
+print("int8 KB:", round(os.path.getsize("int8.pt") / 1e3, 1))   # ~  92.x (much smaller)
+# NOTE: always re-validate accuracy on a held-out set before shipping int8!</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Save a whole TorchScript MODULE (not just a state_dict) and reload it for serving. Trace a 2-layer model, save it with <code>ts.save("served.ts")</code>, load it with <code>torch.jit.load</code> into <code>eval()</code> mode, and run one prediction inside <code>torch.inference_mode()</code>, printing the predicted class via <code>argmax</code>.`,
+        steps: [
+          { do: `Save the TorchScript module and reload it, then call <code>.eval()</code>.`, why: `Serving loads the self-contained graph; <code>eval()</code> is non-negotiable so dropout/batch-norm behave deterministically.` },
+          { do: `Run the prediction inside <code>torch.inference_mode()</code> and take <code>argmax</code>.`, why: `<code>inference_mode</code> skips autograd bookkeeping you never use at serving, cutting per-request memory and latency.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn
+
+torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(8, 16), nn.ReLU(), nn.Linear(16, 3)).eval()
+ts = torch.jit.trace(model, torch.randn(1, 8))
+ts.save("served.ts")
+
+served = torch.jit.load("served.ts").eval()   # eval() for correct serving
+x = torch.randn(1, 8)
+with torch.inference_mode():                   # no autograd graph per request
+    logits = served(x)
+print(logits.argmax(1).item())                 # 2  (the predicted class index)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show why <code>model.eval()</code> matters at serving. Build <code>nn.Sequential(nn.Linear(4, 4), nn.Dropout(0.5))</code>. With the model in <code>train()</code> mode, run the SAME input twice and print whether the two outputs match (they won't, because dropout is random). Switch to <code>eval()</code> and show the two outputs now match. Use <code>torch.manual_seed(0)</code>.`,
+        steps: [
+          { do: `In <code>train()</code> mode, call the model twice on one input and compare with <code>torch.equal</code>.`, why: `Dropout randomly zeroes units in training mode, so the same input gives different, non-deterministic answers &mdash; the famous serving bug.` },
+          { do: `Call <code>model.eval()</code> and repeat.`, why: `<code>eval()</code> turns dropout off (and batch-norm to running stats), making predictions deterministic.` }
+        ],
+        answer: `<pre><code>import torch, torch.nn as nn
+
+torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(4, 4), nn.Dropout(0.5))
+x = torch.randn(1, 4)
+
+model.train()
+print(torch.equal(model(x), model(x)))   # False  -- dropout is random!
+
+model.eval()
+print(torch.equal(model(x), model(x)))   # True   -- deterministic at serving</code></pre>`
       }
     ]
   });

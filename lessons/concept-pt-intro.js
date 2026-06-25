@@ -175,31 +175,105 @@
 
     practice: [
       {
-        q: `A teammate coming from TensorFlow 1 asks why, in PyTorch, they can put a plain Python <code>print(x)</code> in the middle of their model's <code>forward</code> method and actually see numbers. What is the one-word property that makes this work, and what does it mean?`,
+        q: `<b>Type this in Colab.</b> Import torch, then print three things: <code>torch.__version__</code>, <code>torch.cuda.is_available()</code>, and a <code>device</code> string set to <code>"cuda"</code> if a GPU is present else <code>"cpu"</code>. Use this <code>device</code> variable everywhere in the rest of the session.`,
         steps: [
-          { do: `Recall how PyTorch executes a model's operations.`, why: `PyTorch runs each operation the moment Python reaches it, rather than building a graph to run later.` },
-          { do: `Name the property: eager execution (define-by-run).`, why: `Because the graph is built as the code runs, real numbers exist at every line, so a normal print sees them.` },
-          { do: `Contrast with old static-graph TensorFlow 1.`, why: `There the graph was defined first and run later in a session, so at definition time no numbers existed to print.` }
+          { do: `Check for a GPU with <code>torch.cuda.is_available()</code>.`, why: `It returns a boolean telling you whether a CUDA GPU runtime is attached.` },
+          { do: `Pick the device once: <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code>.`, why: `One variable reused everywhere prevents CPU/GPU mismatch errors later.` }
         ],
-        answer: `<p>The property is <b>eager execution</b> (also called <b>define-by-run</b>): every operation runs immediately as Python reaches it, building the computation graph on the fly. Because real values exist at every line, an ordinary <code>print</code>, breakpoint, or <code>if</code> works inside the model. Old static-graph TensorFlow 1 defined the whole graph first and only produced numbers later in a separate session, which is why you could not just print mid-network. This define-by-run feel is the main reason PyTorch dominates research.</p>`
+        answer: `<pre><code>import torch
+print(torch.__version__)              # e.g. 2.5.1+cu121
+print(torch.cuda.is_available())      # True on a GPU runtime, else False
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)                         # cuda  (on a GPU runtime) or cpu</code></pre>`
       },
       {
-        q: `You write <code>model = model.to("cuda")</code> at the top of your script, but the first batch crashes with <code>Expected all tensors to be on the same device, but found at least two devices, cuda and cpu</code>. What did you forget, and what is the general rule?`,
+        q: `<b>Type this in Colab.</b> Create <code>a = torch.tensor([1.0, 2.0, 3.0])</code> and <code>b = torch.ones(3)</code>, then compute <code>c = a + b</code>. Predict <code>c</code> and <code>c.shape</code> before running, then print both to verify.`,
         steps: [
-          { do: `Read the error: two devices are involved, cuda and cpu.`, why: `An operation is mixing a tensor on the GPU with a tensor on the CPU, which PyTorch forbids.` },
-          { do: `Check where the input batch lives.`, why: `You moved the model to the GPU but a freshly loaded input tensor defaults to the CPU, so they mismatch.` },
-          { do: `Move the inputs to the same device as the model.`, why: `<code>x = x.to(device)</code> (and the targets too) puts every tensor on one device so the operation is legal.` }
+          { do: `Add the two 1-D tensors with <code>a + b</code>.`, why: `The op runs immediately (eager execution), so the result exists the instant you call it.` },
+          { do: `Print <code>c</code> and <code>c.shape</code>.`, why: `Verifies the elementwise sum and that the shape is unchanged at <code>(3,)</code>.` }
         ],
-        answer: `<p>You moved the <b>model</b> to the GPU but left the <b>input batch on the CPU</b>. New tensors default to the CPU, so the forward pass tried to combine a GPU weight with a CPU input. The general rule: pick one <code>device</code> up front and send <i>everything</i> there &mdash; <code>model.to(device)</code> <b>and</b> <code>x = x.to(device)</code> (and the targets). Mixing CPU and GPU tensors is one of the most common PyTorch errors.</p>`
+        answer: `<pre><code>a = torch.tensor([1.0, 2.0, 3.0])
+b = torch.ones(3)
+c = a + b
+print(c)            # tensor([2., 3., 4.])
+print(c.shape)      # torch.Size([3])</code></pre>`
       },
       {
-        q: `Your friend wants to fit a standard, off-the-shelf image classifier as fast as possible with minimal code, while you are inventing a brand-new attention variant for a paper. Which tools fit each of you, and why?`,
+        q: `<b>Type this in Colab.</b> Demonstrate eager execution: build <code>x = torch.arange(4.)</code>, compute <code>y = x * x</code>, then <code>print("mid-graph:", y)</code> on the very next line, then compute <code>z = y.sum()</code> and print <code>z</code>. Notice you can print the intermediate <code>y</code> without compiling anything.`,
         steps: [
-          { do: `Characterize the friend's task: a standard architecture, wants minimal boilerplate.`, why: `A high-level wrapper hides the training loop and gives a short, batteries-included path for common models.` },
-          { do: `Characterize your task: a novel custom component for research.`, why: `Research needs full control and easy debugging of every tensor, which raw PyTorch's eager style gives.` },
-          { do: `Match each person to a tool.`, why: `Friend -> Keras / fast.ai / PyTorch Lightning; you -> raw PyTorch (and Lightning still sits on PyTorch if wanted).` }
+          { do: `Print the intermediate tensor <code>y</code> right after computing it.`, why: `Eager / define-by-run means real numbers exist at every line, so a plain <code>print</code> sees them.` },
+          { do: `Reduce with <code>y.sum()</code> and print it.`, why: `Shows the chain of ops each ran as Python reached it, no session or graph step.` }
         ],
-        answer: `<p>Your friend's job is a <b>standard model with minimal code</b>, so a high-level wrapper &mdash; <b>Keras</b>, <b>fast.ai</b>, or <b>PyTorch Lightning</b> &mdash; is the fast path; it hides the loop and the boilerplate. Your job is a <b>novel custom component for a paper</b>, where you want to see and touch every tensor and debug freely, so <b>raw PyTorch</b> with its eager, define-by-run style fits best. Note these are not opposites: Lightning runs <i>on top of</i> PyTorch, so you can always start in plain PyTorch and add a wrapper later. (JAX would be the pick only if you specifically wanted a functional style or heavy TPU use.)</p>`
+        answer: `<pre><code>x = torch.arange(4.)        # tensor([0., 1., 2., 3.])
+y = x * x
+print("mid-graph:", y)      # mid-graph: tensor([0., 1., 4., 9.])
+z = y.sum()
+print(z)                    # tensor(14.)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Make a tensor on the chosen device and move it back to the CPU. Set <code>device</code> as before, create <code>t = torch.ones(2, 2, device=device)</code>, print <code>t.device</code>, then <code>t = t.to("cpu")</code> and print <code>t.device</code> again.`,
+        steps: [
+          { do: `Create with <code>device=device</code>, then read <code>t.device</code>.`, why: `Confirms the tensor was placed on the GPU (or CPU) you selected.` },
+          { do: `Move with <code>t.to("cpu")</code> and reassign.`, why: `<code>.to(...)</code> returns a tensor on the new device; you must reassign to keep it.` }
+        ],
+        answer: `<pre><code>device = "cuda" if torch.cuda.is_available() else "cpu"
+t = torch.ones(2, 2, device=device)
+print(t.device)        # cuda:0 on a GPU runtime, else cpu
+t = t.to("cpu")
+print(t.device)        # cpu</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Reproduce the famous device-mismatch error, then fix it. Create <code>w = torch.ones(3, device=device)</code> and <code>x = torch.ones(3)</code> (note: no device, so CPU). Try <code>w + x</code> on a GPU runtime and read the error; then fix it by moving <code>x</code> to <code>device</code> and print the sum.`,
+        steps: [
+          { do: `Add a GPU tensor to a CPU tensor and read the <code>RuntimeError</code>.`, why: `An op between tensors on different devices is forbidden — this is the #1 beginner error.` },
+          { do: `Move both to one device: <code>x = x.to(device)</code>, then add.`, why: `Once every operand shares a device, the op is legal.` }
+        ],
+        answer: `<pre><code>w = torch.ones(3, device=device)
+x = torch.ones(3)                 # defaults to CPU
+# On a GPU runtime, w + x raises:
+# RuntimeError: Expected all tensors to be on the same device,
+#   but found at least two devices, cuda:0 and cpu!
+x = x.to(device)                  # fix: move x to the same device
+print(w + x)                      # tensor([2., 2., 2.], device='cuda:0') on GPU
+# On a CPU-only runtime both are already cpu and it just works.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show that random init is reproducible with a seed. Call <code>torch.manual_seed(0)</code> then <code>print(torch.randn(3))</code>. Re-seed with <code>torch.manual_seed(0)</code> and print again — confirm you get the identical numbers.`,
+        steps: [
+          { do: `Set the seed with <code>torch.manual_seed(0)</code> before sampling.`, why: `Fixes the RNG so the same draws come out every run — essential for reproducible experiments.` },
+          { do: `Re-seed and re-sample.`, why: `Resetting the seed rewinds the RNG, so the second draw matches the first.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+print(torch.randn(3))   # tensor([ 1.5410, -0.2934, -2.1788])
+torch.manual_seed(0)
+print(torch.randn(3))   # tensor([ 1.5410, -0.2934, -2.1788])  identical</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Build the five-line model teaser. Create <code>model = torch.nn.Linear(3, 1)</code> on the device, make an input <code>x = torch.tensor([1.0, 2.0, 3.0], device=device)</code>, run a forward pass <code>y = model(x)</code>, and print <code>y.shape</code> and <code>y.item()</code>. Predict the output shape first.`,
+        steps: [
+          { do: `Move the model to the same device with <code>.to(device)</code>.`, why: `The layer's weights and the input must be on one device for the forward pass.` },
+          { do: `Call <code>model(x)</code> (not <code>model.forward(x)</code>).`, why: `Calling the module runs the forward pass plus hooks; <code>nn.Linear(3,1)</code> maps 3 inputs to 1 output.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = torch.nn.Linear(3, 1).to(device)
+x = torch.tensor([1.0, 2.0, 3.0], device=device)
+y = model(x)
+print(y.shape)     # torch.Size([1])  -- one output
+print(y.item())    # a single float, e.g. -1.2353 (depends on seeded init)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Convert a tensor to a NumPy array and back. Create <code>c = torch.tensor([2.0, 3.0, 4.0])</code>, print <code>c.numpy()</code> and its type, then wrap a NumPy array back into a tensor with <code>torch.from_numpy(np.array([5.0, 6.0]))</code> and print it.`,
+        steps: [
+          { do: `Bridge to NumPy with <code>.numpy()</code>.`, why: `CPU tensors share their buffer with NumPy, so interop is cheap and common at the data boundary.` },
+          { do: `Wrap a NumPy array with <code>torch.from_numpy(...)</code>.`, why: `Brings external array data into PyTorch as a tensor.` }
+        ],
+        answer: `<pre><code>import numpy as np
+c = torch.tensor([2.0, 3.0, 4.0])
+arr = c.numpy()
+print(arr, type(arr))                 # [2. 3. 4.] <class 'numpy.ndarray'>
+t = torch.from_numpy(np.array([5.0, 6.0]))
+print(t)                              # tensor([5., 6.], dtype=torch.float64)</code></pre>`
       }
     ]
   });

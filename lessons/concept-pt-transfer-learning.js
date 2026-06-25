@@ -59,28 +59,113 @@
 </ol>`,
     practice: [
       {
-        q: `You load a pretrained <code>resnet18</code>, replace <code>model.fc</code> with <code>nn.Linear(512, 3)</code>, and create <code>optim.Adam(model.parameters(), lr=1e-3)</code>. Training is slow and the model overfits your 200 images. You intended feature extraction. What two things are wrong?`,
+        q: `<b>Type this in Colab.</b> Load <code>resnet18</code> with <code>ResNet18_Weights.DEFAULT</code> and print <code>model.fc</code>. Then print <code>model.fc.in_features</code> and <code>model.fc.out_features</code> so you see the ImageNet head's exact shape before you replace it.`,
         steps: [
-          { do: `Check whether the backbone was frozen.`, why: `Nothing set <code>requires_grad = False</code>, so every layer is still trainable.` },
-          { do: `Check what you handed the optimizer.`, why: `<code>model.parameters()</code> is the whole network, not just the head.` }
+          { do: `Build with <code>resnet18(weights=ResNet18_Weights.DEFAULT)</code>.`, why: `<code>DEFAULT</code> downloads the architecture plus the best ImageNet weights.` },
+          { do: `Read <code>model.fc.in_features</code> and <code>.out_features</code>.`, why: `You need the input size (512) to size a new head, and the 1000 outputs are ImageNet's classes.` }
         ],
-        answer: `Two fixes. First, freeze the backbone: <code>for p in model.parameters(): p.requires_grad = False</code> <b>before</b> swapping the head (the new head is created trainable). Second, give the optimizer only the head: <code>optim.Adam(model.fc.parameters(), lr=1e-3)</code>. Now you train a small classifier on fixed features — fast and far less prone to overfitting on 200 images.`
+        answer: `<pre><code>import torch.nn as nn
+from torchvision.models import resnet18, ResNet18_Weights
+model = resnet18(weights=ResNet18_Weights.DEFAULT)
+print(model.fc)                  # Linear(in_features=512, out_features=1000, bias=True)
+print(model.fc.in_features)      # 512
+print(model.fc.out_features)     # 1000</code></pre>`
       },
       {
-        q: `Your transfer model trains fine but test accuracy is far worse than expected. You loaded the weights correctly and the head is the right size. You preprocessed images by simply dividing pixel values by 255. What is the likely cause?`,
+        q: `<b>Type this in Colab.</b> Freezing pitfall. On the loaded <code>resnet18</code>, count how many parameter tensors have <code>requires_grad=True</code> before freezing. Then freeze every parameter with <code>requires_grad=False</code> and count again. Predict the second count before running.`,
         steps: [
-          { do: `Recall how the pretrained model was trained.`, why: `It expects a specific resize, crop, and per-channel normalization.` },
-          { do: `Compare your preprocessing to the model's expected transforms.`, why: `Dividing by 255 is not the ImageNet normalization the weights were trained with.` }
+          { do: `Count <code>sum(p.requires_grad for p in model.parameters())</code> first.`, why: `Out of the box every tensor is trainable — that is "training from scratch".` },
+          { do: `Loop <code>for p in model.parameters(): p.requires_grad = False</code>, then recount.`, why: `Freezing makes autograd skip those tensors; the count drops to 0.` }
         ],
-        answer: `You skipped the model's expected input transforms. Use <code>tf = weights.transforms()</code> and apply it to every image. It does the right resize/center-crop and subtracts the ImageNet per-channel mean and divides by its standard deviation — the exact distribution the weights expect. Mismatched normalization shifts the inputs off the manifold the network learned, so accuracy drops.`
+        answer: `<pre><code>before = sum(p.requires_grad for p in model.parameters())
+print(before)    # 62  (all tensors trainable)
+for p in model.parameters():
+    p.requires_grad = False
+after = sum(p.requires_grad for p in model.parameters())
+print(after)     # 0  (backbone frozen)</code></pre>`
       },
       {
-        q: `After training the head, you unfreeze the whole backbone and continue with learning rate <code>1e-2</code>. Accuracy suddenly gets much worse. Why, and what should you do?`,
+        q: `<b>Type this in Colab.</b> After freezing the backbone, replace the head with <code>nn.Linear(in_features, 5)</code> for a 5-class task. Then print the names of the parameters that still require grad — confirm only the new <code>fc</code> trains.`,
         steps: [
-          { do: `Think about how big each gradient step is at <code>lr = 1e-2</code>.`, why: `That is a large step for weights that are already near-optimal.` },
-          { do: `Consider what large updates do to pretrained weights.`, why: `They overwrite the useful features before the model can gently adapt.` }
+          { do: `Read <code>in_features = model.fc.in_features</code>, then assign a fresh <code>model.fc = nn.Linear(in_features, 5)</code>.`, why: `A brand-new <code>nn.Linear</code> is created with <code>requires_grad=True</code> by default.` },
+          { do: `List <code>[n for n, p in model.named_parameters() if p.requires_grad]</code>.`, why: `Only the new head should appear — the frozen backbone is excluded.` }
         ],
-        answer: `The learning rate is too high for fine-tuning. The pretrained weights are already good, so big steps wreck them. Drop to a small rate like <code>1e-4</code> or <code>1e-5</code> (often smaller than the head's rate) so the backbone adapts gently. A common pattern is two phases: train the head at a moderate rate, then unfreeze and fine-tune everything at a much lower rate.`
+        answer: `<pre><code>in_features = model.fc.in_features          # 512
+model.fc = nn.Linear(in_features, 5)        # fresh head -> requires_grad=True
+trainable = [n for n, p in model.named_parameters() if p.requires_grad]
+print(trainable)   # ['fc.weight', 'fc.bias']  -- only the head trains</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Optimizer pitfall. Create the optimizer for feature-extraction mode so it touches <i>only</i> the head, then print how many parameter tensors it manages. (Hint: pass <code>model.fc.parameters()</code>, not <code>model.parameters()</code>.)`,
+        steps: [
+          { do: `Build <code>optim.Adam(model.fc.parameters(), lr=1e-3)</code>.`, why: `Handing it the whole network would waste bookkeeping on frozen, gradient-less params.` },
+          { do: `Count <code>len(optimizer.param_groups[0]['params'])</code>.`, why: `It should be 2 — the head's weight and bias only.` }
+        ],
+        answer: `<pre><code>import torch.optim as optim
+optimizer = optim.Adam(model.fc.parameters(), lr=1e-3)   # NOT model.parameters()
+print(len(optimizer.param_groups[0]['params']))   # 2  (fc.weight, fc.bias)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Use the model's expected transforms. Grab <code>preprocess = ResNet18_Weights.DEFAULT.transforms()</code> and print it. Then apply it to a fake PIL-sized tensor input by building a random <code>(3, 300, 300)</code> uint8 image and confirming the transform resizes it to the <code>3&times;224&times;224</code> the weights expect.`,
+        steps: [
+          { do: `Call <code>weights.transforms()</code> to get the exact resize/crop/normalize pipeline.`, why: `The weights were trained on this specific preprocessing; mismatched input collapses accuracy.` },
+          { do: `Run it on a sample image and print the output shape.`, why: `It center-crops to 224 and normalizes with ImageNet statistics.` }
+        ],
+        answer: `<pre><code>import torch
+from torchvision.models import ResNet18_Weights
+weights = ResNet18_Weights.DEFAULT
+preprocess = weights.transforms()
+print(preprocess)   # ImageClassification(crop_size=[224], resize_size=[256], mean=..., std=...)
+img = torch.randint(0, 256, (3, 300, 300), dtype=torch.uint8)
+out = preprocess(img)
+print(out.shape)    # torch.Size([3, 224, 224])
+print(out.dtype)    # torch.float32  (normalized)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> <code>model.eval()</code> for the frozen backbone. Put the frozen-backbone model in eval mode, then put just the head back in train mode. Print <code>model.training</code> and <code>model.fc.training</code> to confirm the split.`,
+        steps: [
+          { do: `Call <code>model.eval()</code> on the whole model.`, why: `So the backbone's batch-norm uses stored running stats instead of recomputing from tiny batches.` },
+          { do: `Call <code>model.fc.train()</code> to re-enable training only on the head.`, why: `The new head is what you actually optimize.` }
+        ],
+        answer: `<pre><code>model.eval()        # backbone batchnorm -> stored running stats
+model.fc.train()    # but the head trains
+print(model.training)      # False
+print(model.fc.training)   # True</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> One feature-extraction training step. With the frozen backbone + new 5-class head, run a single step on a fake batch <code>x = torch.randn(8, 3, 224, 224)</code>, <code>y = torch.randint(0, 5, (8,))</code> using <code>CrossEntropyLoss</code> and the head-only optimizer. Remember <code>zero_grad()</code>. Print the loss.`,
+        steps: [
+          { do: `Forward through the model, score with <code>CrossEntropyLoss</code> on raw logits.`, why: `Cross-entropy wants logits and integer class indices, no softmax.` },
+          { do: `<code>optimizer.zero_grad()</code>, <code>loss.backward()</code>, <code>optimizer.step()</code>.`, why: `Gradients flow only into the head; zeroing prevents them accumulating across steps.` }
+        ],
+        answer: `<pre><code>import torch
+torch.manual_seed(0)
+criterion = nn.CrossEntropyLoss()
+x = torch.randn(8, 3, 224, 224)
+y = torch.randint(0, 5, (8,))
+optimizer.zero_grad()
+logits = model(x)               # (8, 5) raw logits
+loss = criterion(logits, y)
+loss.backward()                 # grads only in fc
+optimizer.step()
+print(round(loss.item(), 4))    # ~1.6  (near ln(5), random head start)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Switch to fine-tuning. Unfreeze the whole backbone, rebuild the optimizer over <code>model.parameters()</code> with a <b>small</b> learning rate <code>1e-4</code>, switch to <code>model.train()</code>, and run one step on the same fake batch. Print the loss. Note why <code>1e-2</code> would be the wrong rate here.`,
+        steps: [
+          { do: `Set <code>requires_grad=True</code> on every param and rebuild <code>optim.Adam(model.parameters(), lr=1e-4)</code>.`, why: `Now the whole network adapts, but gently — pretrained weights are already good.` },
+          { do: `Call <code>model.train()</code> and run one full step.`, why: `A large rate like <code>1e-2</code> would take big steps and wreck the pretrained features.` }
+        ],
+        answer: `<pre><code>for p in model.parameters():
+    p.requires_grad = True
+optimizer = optim.Adam(model.parameters(), lr=1e-4)   # small lr for fine-tuning
+model.train()
+optimizer.zero_grad()
+loss = criterion(model(x), y)
+loss.backward()
+optimizer.step()
+print(round(loss.item(), 4))   # another small loss; backbone now adapting gently
+# lr=1e-2 here would overwrite the good ImageNet features and accuracy would drop.</code></pre>`
       }
     ]
   });

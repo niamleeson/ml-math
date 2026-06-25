@@ -101,33 +101,155 @@
         drop further as training sharpens these logits.</p>`,
     practice: [
       {
-        q: `Your image classifier ends with <code>nn.Softmax(dim=1)</code> and you train it with
-            <code>nn.CrossEntropyLoss</code>. Accuracy is stuck. What's wrong and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Build <code>preds = torch.tensor([2.5, 0.0, 4.0])</code> and
+            <code>target = torch.tensor([3.0, 0.0, 5.0])</code>. Compute <code>nn.MSELoss()(preds, target)</code>.
+            Predict the value by hand first (mean of the squared differences), then verify.`,
         steps: [
-          { do: `Recall what CrossEntropyLoss does to its input.`, why: `It applies log-softmax internally, so it expects raw logits.` },
-          { do: `Notice the model already applied softmax.`, why: `You are now softmaxing twice — the gradients are tiny and learning stalls.` }
+          { do: `Instantiate the loss object, then call it: <code>nn.MSELoss()(preds, target)</code>.`, why: `<code>MSELoss</code> is a module; you build it once, then call it like a function.` },
+          { do: `By hand: differences are <code>[-0.5, 0, -1.0]</code>, squared <code>[0.25, 0, 1.0]</code>, mean <code>0.4167</code>.`, why: `MSE is the mean of squared differences, so you can check the printed number.` }
         ],
-        answer: `Remove the <code>Softmax</code> layer so the model outputs raw logits. <code>CrossEntropyLoss</code>
-                 handles the softmax itself. (For inference, apply softmax separately if you need probabilities.)`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+preds  = torch.tensor([2.5, 0.0, 4.0])
+target = torch.tensor([3.0, 0.0, 5.0])
+print(nn.MSELoss()(preds, target))   # tensor(0.4167)
+# (0.25 + 0.0 + 1.0) / 3 = 0.4167</code></pre>`
       },
       {
-        q: `You write the loop as <code>loss.backward(); optimizer.step()</code> with no
-            <code>zero_grad()</code>. The loss behaves erratically. Why?`,
+        q: `<b>Type this in Colab.</b> The pitfall: <code>nn.CrossEntropyLoss</code> wants <b>raw logits</b> and
+            <b>integer class indices</b>. With <code>logits = torch.tensor([[2.0, 0.5, -1.0], [0.1, 1.5, 0.2]])</code>
+            and <code>targets = torch.tensor([0, 1])</code>, compute the loss. Then apply
+            <code>torch.softmax(logits, dim=1)</code> first and pass <i>that</i> instead — show the loss is wrong (higher).`,
         steps: [
-          { do: `Recall PyTorch's gradient behavior.`, why: `<code>.grad</code> accumulates across backward calls; it is not reset automatically.` },
-          { do: `Trace step 2.`, why: `Its gradient is added on top of step 1's leftover gradient — the update direction is corrupted.` }
+          { do: `Call <code>nn.CrossEntropyLoss()(logits, targets)</code> with the raw logits.`, why: `The loss applies log-softmax internally, so you must NOT softmax beforehand.` },
+          { do: `Pass <code>torch.softmax(logits, dim=1)</code> instead and compare.`, why: `Softmaxing twice (double softmax) flattens the values, giving a larger, wrong loss.` }
         ],
-        answer: `Call <code>optimizer.zero_grad()</code> at the top of every step, before
-                 <code>loss.backward()</code>. Then each step uses only its own gradient.`
+        answer: `<pre><code>logits  = torch.tensor([[2.0, 0.5, -1.0], [0.1, 1.5, 0.2]])
+targets = torch.tensor([0, 1])
+ce = nn.CrossEntropyLoss()
+print(ce(logits, targets))                       # tensor(0.3168)  <- correct, raw logits
+probs = torch.softmax(logits, dim=1)
+print(ce(probs, targets))                        # tensor(0.9756)  <- WRONG: double softmax</code></pre>`
       },
       {
-        q: `Pick the loss: (a) predicting house price (a number), (b) predicting one of 10 digit classes,
-            (c) tagging an image with any of 5 non-exclusive labels.`,
+        q: `<b>Type this in Colab.</b> Show that <code>CrossEntropyLoss</code> takes class indices, NOT one-hot rows.
+            Reuse the <code>logits</code> above. Build the one-hot version of <code>targets</code> with
+            <code>torch.nn.functional.one_hot(targets, num_classes=3)</code>, try passing it, and observe the result;
+            then pass the integer indices and print the loss.`,
         steps: [
-          { do: `Match task type to loss.`, why: `Regression &rarr; squared error; single-label &rarr; cross-entropy; independent labels &rarr; per-label binary.` }
+          { do: `Make one-hot targets with <code>F.one_hot(targets, 3)</code>.`, why: `This is what beginners wrongly hand to the loss; it is a <code>(2, 3)</code> tensor, not indices.` },
+          { do: `Pass the integer index tensor <code>targets</code> instead.`, why: `<code>CrossEntropyLoss</code> indexes the logits with integer class ids; that is the supported form.` }
         ],
-        answer: `(a) <code>nn.MSELoss</code>. (b) <code>nn.CrossEntropyLoss</code> on logits with integer targets.
-                 (c) <code>nn.BCEWithLogitsLoss</code> on logits with multi-hot float targets.`
+        answer: `<pre><code>import torch.nn.functional as F
+oh = F.one_hot(targets, num_classes=3)           # tensor([[1,0,0],[0,1,0]])
+# ce(logits, oh.float()) -> treats it as soft labels / errors in older versions; NOT what you want
+print(ce(logits, targets))                       # tensor(0.3168)  <- correct: integer indices</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> The pitfall the optimizer hides: gradients <b>accumulate</b>. Make
+            <code>w = torch.tensor([1.0], requires_grad=True)</code>. Call <code>(w * w).backward()</code> twice in a row
+            <i>without</i> zeroing, printing <code>w.grad</code> after each. Then zero with
+            <code>w.grad = None</code> and do one clean backward.`,
+        steps: [
+          { do: `Backward twice on <code>w*w</code> (derivative is <code>2w = 2</code>).`, why: `PyTorch ADDS each new gradient onto <code>.grad</code>, so it reads 2 then 4 — not 2 both times.` },
+          { do: `Reset with <code>w.grad = None</code> (what <code>optimizer.zero_grad()</code> does) before the next backward.`, why: `Clearing the grad makes the next step use only its own gradient.` }
+        ],
+        answer: `<pre><code>w = torch.tensor([1.0], requires_grad=True)
+(w * w).backward()
+print(w.grad)        # tensor([2.])
+(w * w).backward()
+print(w.grad)        # tensor([4.])  <- accumulated! not reset
+w.grad = None        # what optimizer.zero_grad() does
+(w * w).backward()
+print(w.grad)        # tensor([2.])  <- clean again</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Run the real three-step update once by hand. With <code>torch.manual_seed(0)</code>,
+            build <code>model = nn.Linear(4, 1)</code>, <code>opt = torch.optim.SGD(model.parameters(), lr=0.1)</code>,
+            input <code>x = torch.randn(8, 4)</code>, target <code>y = torch.randn(8, 1)</code>. Do
+            <code>zero_grad</code> &rarr; forward &rarr; <code>MSELoss</code> &rarr; <code>backward</code> &rarr;
+            <code>step</code>, and print the loss before and after.`,
+        steps: [
+          { do: `Compute and print the loss, then run <code>opt.zero_grad()</code>, <code>loss.backward()</code>, <code>opt.step()</code>.`, why: `This is the canonical update trio every PyTorch model runs each step.` },
+          { do: `Recompute the loss on the same batch after the step.`, why: `One downhill SGD step should lower the loss on this batch.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Linear(4, 1)
+opt = torch.optim.SGD(model.parameters(), lr=0.1)
+x = torch.randn(8, 4)
+y = torch.randn(8, 1)
+crit = nn.MSELoss()
+loss = crit(model(x), y)
+print(loss.item())                # 1.5046  (before)
+opt.zero_grad()
+loss.backward()
+opt.step()
+print(crit(model(x), y).item())   # 1.2473  (after -- lower)</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Show why the optimizer must be given the model's parameters. Build
+            <code>model = nn.Linear(2, 1)</code>. Save a copy of its weight with
+            <code>w0 = model.weight.clone()</code>. Create <code>opt = torch.optim.SGD(model.parameters(), lr=0.5)</code>,
+            run one update on <code>x = torch.ones(3, 2)</code>, <code>y = torch.zeros(3, 1)</code>, and check the weight
+            actually changed.`,
+        steps: [
+          { do: `Pass <code>model.parameters()</code> into the optimizer.`, why: `Without it, <code>step()</code> updates nothing — the optimizer needs to know which tensors to move.` },
+          { do: `Compare <code>model.weight</code> to <code>w0</code> after the step.`, why: `A nonzero difference confirms the optimizer is wired to the right parameters.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Linear(2, 1)
+w0 = model.weight.clone()
+opt = torch.optim.SGD(model.parameters(), lr=0.5)
+x, y = torch.ones(3, 2), torch.zeros(3, 1)
+opt.zero_grad()
+nn.MSELoss()(model(x), y).backward()
+opt.step()
+print(torch.allclose(model.weight, w0))   # False  -- weights moved</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Train the tiny 3-class problem to convergence. With <code>torch.manual_seed(0)</code>,
+            make <code>X = torch.randn(60, 4)</code>, <code>y = torch.randint(0, 3, (60,))</code>, and a model
+            <code>nn.Sequential(nn.Linear(4,16), nn.ReLU(), nn.Linear(16,3))</code> (raw logits, no softmax). Use
+            <code>CrossEntropyLoss</code> + <code>Adam(lr=1e-2)</code> and run 30 steps, printing the loss every 10 steps.`,
+        steps: [
+          { do: `Build the model with NO softmax layer at the end.`, why: `<code>CrossEntropyLoss</code> adds log-softmax itself; a softmax layer would double it.` },
+          { do: `Run the <code>zero_grad</code>/<code>backward</code>/<code>step</code> trio 30 times.`, why: `Repeated downhill steps drive the loss down as the logits sharpen toward the labels.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+X = torch.randn(60, 4)
+y = torch.randint(0, 3, (60,))
+model = nn.Sequential(nn.Linear(4, 16), nn.ReLU(), nn.Linear(16, 3))
+crit = nn.CrossEntropyLoss()
+opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+for step in range(30):
+    logits = model(X)
+    loss = crit(logits, y)
+    opt.zero_grad(); loss.backward(); opt.step()
+    if step % 10 == 0:
+        print(step, round(loss.item(), 4))
+# 0 1.1146
+# 10 0.7714
+# 20 0.5559</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Attach a learning-rate scheduler. Build any
+            <code>opt = torch.optim.SGD(nn.Linear(2,2).parameters(), lr=0.1)</code> and
+            <code>sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.5)</code>. Loop 4 times: call
+            <code>opt.step()</code> then <code>sched.step()</code>, printing the current learning rate each round.`,
+        steps: [
+          { do: `Read the rate with <code>sched.get_last_lr()</code> (or <code>opt.param_groups[0]["lr"]</code>).`, why: `<code>StepLR</code> multiplies the rate by <code>gamma</code> each time you call <code>sched.step()</code>.` },
+          { do: `Call <code>sched.step()</code> once per epoch, after <code>opt.step()</code>.`, why: `Forgetting it leaves the rate frozen — the scheduler only moves when stepped.` }
+        ],
+        answer: `<pre><code>opt = torch.optim.SGD(nn.Linear(2, 2).parameters(), lr=0.1)
+sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.5)
+for epoch in range(4):
+    opt.step()
+    sched.step()
+    print(round(sched.get_last_lr()[0], 4))
+# 0.05
+# 0.025
+# 0.0125
+# 0.00625</code></pre>`
       }
     ]
   });

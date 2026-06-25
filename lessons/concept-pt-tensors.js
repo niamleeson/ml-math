@@ -48,28 +48,115 @@
 </ul>`,
     practice: [
       {
-        q: `You have a numpy array <code>a = np.array([1, 2, 3])</code> and run <code>t = torch.from_numpy(a)</code>. Then you do <code>t[0] = 99</code>. What is <code>a[0]</code> afterward, and why?`,
+        q: `<b>Type this in Colab.</b> Create three tensors and print each one's <code>.shape</code> and <code>.dtype</code>: (a) a 2&times;3 tensor of zeros in <code>float32</code>; (b) a 1-D tensor holding 0,1,2,3,4 built with <code>torch.arange</code>; (c) a 3&times;3 identity matrix.`,
         steps: [
-          { do: `Recall what <code>from_numpy</code> does to memory.`, why: `It wraps the same buffer; it does not copy.` },
-          { do: `Mutate <code>t</code>, then read <code>a</code>.`, why: `Both names point at one block of numbers.` }
+          { do: `Use the dedicated constructors instead of typing numbers by hand.`, why: `<code>torch.zeros</code>, <code>torch.arange</code>, and <code>torch.eye</code> create these shapes directly.` },
+          { do: `Pass <code>dtype=torch.float32</code> to (a) and read <code>.dtype</code> on each.`, why: `<code>arange</code> defaults to <code>int64</code>; only by printing dtype do you see the difference.` }
         ],
-        answer: `<code>a[0]</code> is now <code>99</code>. <code>from_numpy</code> shares memory, so writing through the tensor also changes the numpy array. Use <code>torch.tensor(a)</code> or <code>t.clone()</code> if you need an independent copy.`
+        answer: `<pre><code>import torch
+a = torch.zeros(2, 3, dtype=torch.float32)
+b = torch.arange(5)            # tensor([0, 1, 2, 3, 4])
+c = torch.eye(3)
+for t in (a, b, c):
+    print(t.shape, t.dtype)
+# torch.Size([2, 3]) torch.float32
+# torch.Size([5]) torch.int64
+# torch.Size([3, 3]) torch.float32</code></pre>`
       },
       {
-        q: `You write <code>w = torch.tensor([1, 2, 3], requires_grad=True)</code> and PyTorch raises an error. What is wrong and how do you fix it?`,
+        q: `<b>Type this in Colab.</b> Make a 1-D tensor of the numbers 0..11 with <code>torch.arange</code>, reshape it to 3&times;4, then to 4&times;3, then flatten it back to 1-D. Print the shape at each step.`,
         steps: [
-          { do: `Check the dtype of <code>[1, 2, 3]</code>.`, why: `Integer literals give an <code>int64</code> tensor.` },
-          { do: `Recall which tensors can carry gradients.`, why: `Only floating-point tensors can require grad.` }
+          { do: `Start from <code>torch.arange(12)</code>.`, why: `It gives the twelve values you will rearrange.` },
+          { do: `Chain <code>.reshape(3, 4)</code>, <code>.reshape(4, 3)</code>, <code>.reshape(-1)</code>.`, why: `<code>-1</code> tells PyTorch to infer the remaining dimension, which flattens it.` }
         ],
-        answer: `Integers cannot have gradients. Make it a float: <code>torch.tensor([1.0, 2.0, 3.0], requires_grad=True)</code> (or add <code>dtype=torch.float32</code>).`
+        answer: `<pre><code>x = torch.arange(12)
+print(x.shape)              # torch.Size([12])
+x = x.reshape(3, 4)
+print(x.shape)              # torch.Size([3, 4])
+x = x.reshape(4, 3)
+print(x.shape)              # torch.Size([4, 3])
+x = x.reshape(-1)
+print(x.shape)              # torch.Size([12])</code></pre>`
       },
       {
-        q: `A loss tensor prints as <code>tensor(0.4231)</code>. You append it to a Python list every step to plot later, and memory grows each epoch. What is the fix?`,
+        q: `<b>Type this in Colab.</b> Build a 4&times;4 tensor of 0..15 (use <code>torch.arange(16).reshape(4, 4)</code>). Then slice out: row index 1; column index 2; and the top-left 2&times;2 block. Print each.`,
         steps: [
-          { do: `Notice the tensor still carries its autograd graph.`, why: `Keeping the tensor keeps the whole computation graph alive.` },
-          { do: `Extract the plain number instead.`, why: `<code>.item()</code> returns a detached Python float.` }
+          { do: `Index rows with <code>x[1]</code> and columns with <code>x[:, 2]</code>.`, why: `The first index is the row axis; <code>:</code> keeps every row while picking one column.` },
+          { do: `Slice both axes for the block: <code>x[:2, :2]</code>.`, why: `<code>:2</code> means indices 0 and 1 on each axis.` }
         ],
-        answer: `Store <code>loss.item()</code>, not <code>loss</code>. <code>.item()</code> pulls out a plain Python <code>float</code> and drops the reference to the graph, so old graphs can be freed.`
+        answer: `<pre><code>x = torch.arange(16).reshape(4, 4)
+print(x[1])        # tensor([4, 5, 6, 7])
+print(x[:, 2])     # tensor([ 2,  6, 10, 14])
+print(x[:2, :2])   # tensor([[0, 1],
+                   #         [4, 5]])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Create a column vector of shape <code>(3, 1)</code> holding 1,2,3 and a row vector of shape <code>(1, 4)</code> holding 10,20,30,40. Add them. Before you run it, predict the output shape; then verify with <code>.shape</code>.`,
+        steps: [
+          { do: `Reshape <code>torch.tensor([1,2,3])</code> to <code>(3, 1)</code> and <code>torch.tensor([10,20,30,40])</code> to <code>(1, 4)</code>.`, why: `Broadcasting stretches a size-1 axis to match the other operand.` },
+          { do: `Add them; the result broadcasts to <code>(3, 4)</code>.`, why: `Each of the 3 rows pairs with each of the 4 columns.` }
+        ],
+        answer: `<pre><code>col = torch.tensor([1, 2, 3]).reshape(3, 1)
+row = torch.tensor([10, 20, 30, 40]).reshape(1, 4)
+out = col + row
+print(out.shape)   # torch.Size([3, 4])
+print(out)
+# tensor([[11, 21, 31, 41],
+#         [12, 22, 32, 42],
+#         [13, 23, 33, 43]])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Make a 3&times;4 tensor of random values with <code>torch.randn(3, 4)</code>. Compute the mean of each <i>column</i> and the sum of each <i>row</i>. (Hint: reductions take a <code>dim</code> argument.)`,
+        steps: [
+          { do: `Set a seed first with <code>torch.manual_seed(0)</code>.`, why: `So your numbers match a teammate's and the run is reproducible.` },
+          { do: `Use <code>x.mean(dim=0)</code> for column means and <code>x.sum(dim=1)</code> for row sums.`, why: `<code>dim</code> is the axis that <i>collapses</i>: <code>dim=0</code> collapses rows, leaving one value per column.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+x = torch.randn(3, 4)
+print(x.mean(dim=0).shape)   # torch.Size([4])  one mean per column
+print(x.sum(dim=1).shape)    # torch.Size([3])  one sum per row
+print(x.mean(dim=0))
+print(x.sum(dim=1))</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Pick a device string (<code>"cuda"</code> if a GPU is available, else <code>"cpu"</code>). Create a <code>float32</code> tensor on that device, print its <code>.device</code>, move it to the CPU, and print <code>.device</code> again.`,
+        steps: [
+          { do: `Build the device string once: <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code>.`, why: `One variable used everywhere prevents CPU/GPU mismatch errors later.` },
+          { do: `Create with <code>device=device</code>, then call <code>.to("cpu")</code>.`, why: `<code>.to(...)</code> returns a tensor on the requested device; reassign to keep it.` }
+        ],
+        answer: `<pre><code>device = "cuda" if torch.cuda.is_available() else "cpu"
+t = torch.ones(2, 2, dtype=torch.float32, device=device)
+print(t.device)        # cuda:0 on a GPU runtime, else cpu
+t = t.to("cpu")
+print(t.device)        # cpu</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Create <code>a = np.array([1, 2, 3])</code> and <code>t = torch.from_numpy(a)</code>. Set <code>t[0] = 99</code> and print <code>a</code> &mdash; notice they share memory. Then make an <i>independent</i> copy and show that mutating it does <b>not</b> touch <code>a</code>.`,
+        steps: [
+          { do: `Mutate through the tensor, then print the numpy array.`, why: `<code>from_numpy</code> wraps the same buffer, so <code>a[0]</code> becomes 99 too.` },
+          { do: `Make a copy with <code>t.clone()</code> (or <code>torch.tensor(a)</code>) and mutate that instead.`, why: `<code>clone()</code> allocates new memory, breaking the link to <code>a</code>.` }
+        ],
+        answer: `<pre><code>import numpy as np
+a = np.array([1, 2, 3])
+t = torch.from_numpy(a)
+t[0] = 99
+print(a)            # [99  2  3]  -- shared memory!
+indep = t.clone()
+indep[1] = 0
+print(a)            # [99  2  3]  -- unchanged this time</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Try to create <code>w = torch.tensor([1, 2, 3], requires_grad=True)</code> and observe the error. Then fix it so <code>w</code> is a float tensor that requires gradients, and print <code>w.requires_grad</code> and <code>w.dtype</code>.`,
+        steps: [
+          { do: `Run the broken line and read the error.`, why: `Integer tensors cannot carry gradients, so PyTorch raises a <code>RuntimeError</code>.` },
+          { do: `Make the values floats: <code>[1.0, 2.0, 3.0]</code> (or pass <code>dtype=torch.float32</code>).`, why: `Only floating-point tensors can require grad, because gradients are real-valued.` }
+        ],
+        answer: `<pre><code># Broken: RuntimeError -- only float tensors can require grad
+# w = torch.tensor([1, 2, 3], requires_grad=True)
+
+w = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+print(w.requires_grad)   # True
+print(w.dtype)           # torch.float32</code></pre>`
       }
     ]
   });

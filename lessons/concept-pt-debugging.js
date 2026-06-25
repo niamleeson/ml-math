@@ -162,31 +162,140 @@
 
     practice: [
       {
-        q: `Your training loss bounces around and never settles &mdash; some epochs it drops, then it jumps back up, with no steady descent. You did call <code>loss.backward()</code> and <code>optimizer.step()</code> every iteration. What is the single most likely cause, and how do you confirm and fix it?`,
+        q: `<b>Type this in Colab.</b> Reproduce the classic shape-mismatch error, then read it. Make <code>x = torch.randn(16, 20)</code> and <code>layer = nn.Linear(10, 4)</code>, call <code>layer(x)</code> inside a <code>try/except RuntimeError</code>, and print the first line of the message. Then print <code>x.shape</code> and build a correctly-sized layer that works.`,
         steps: [
-          { do: `Recall that PyTorch <b>accumulates</b> gradients into <code>.grad</code> by default; they are not cleared automatically.`, why: `If you never clear them, each step's gradient is added on top of every previous step's, so the update direction and size grow erratically.` },
-          { do: `Check whether <code>optimizer.zero_grad()</code> runs at the top of every iteration, before <code>backward()</code>.`, why: `Missing or misplaced <code>zero_grad</code> is the textbook cause of a loss that refuses to descend smoothly.` },
-          { do: `Add <code>optimizer.zero_grad()</code> as the first line of the loop body and re-run.`, why: `Now each step uses only the current batch's gradient, so updates are the right size and the loss descends.` }
+          { do: `Wrap the failing call in <code>try/except RuntimeError</code> and print <code>str(e).splitlines()[0]</code>.`, why: `Catching and reading the message is the first debugging move; the error names the mismatched matrix shapes.` },
+          { do: `Print <code>x.shape</code>, then set <code>in_features</code> to the last dim (20).`, why: `<code>nn.Linear</code> needs <code>in_features</code> to equal the input's last dimension — printing the shape reveals the right number.` }
         ],
-        answer: `<p>You almost certainly forgot <code>optimizer.zero_grad()</code>. PyTorch <i>adds</i> new gradients onto whatever is already in <code>.grad</code>, so without clearing them they pile up across steps and the optimizer takes wildly oversized, ever-changing steps &mdash; the loss oscillates instead of descending. Put <code>optimizer.zero_grad()</code> at the start of each loop iteration (before <code>loss.backward()</code>). The CODEVIZ chart on this page shows exactly this: the buggy curve thrashes between ~0.4 and ~4.5, while the fixed curve slides smoothly to ~0.009.</p>`
+        answer: `<pre><code>import torch
+import torch.nn as nn
+x = torch.randn(16, 20)
+bad = nn.Linear(10, 4)
+try:
+    bad(x)
+except RuntimeError as e:
+    print(str(e).splitlines()[0])
+    # mat1 and mat2 shapes cannot be multiplied (16x20 and 10x4)
+print(x.shape)                          # torch.Size([16, 20]) -> in_features must be 20
+good = nn.Linear(20, 4)
+print(good(x).shape)                    # torch.Size([16, 4])</code></pre>`
       },
       {
-        q: `You feed <code>nn.CrossEntropyLoss</code> the output of a final <code>softmax</code> layer, with one-hot encoded targets, and training barely moves. What two things are wrong, and what should you pass instead?`,
+        q: `<b>Type this in Colab.</b> Run the overfit-one-batch sanity check. Build <code>model = nn.Sequential(nn.Linear(20, 32), nn.ReLU(), nn.Linear(32, 3))</code>, a fixed batch <code>xb = torch.randn(16, 20)</code> and <code>yb = torch.randint(0, 3, (16,))</code> (seed 0), and train on that ONE batch for 200 Adam steps with <code>nn.CrossEntropyLoss</code>. Print the loss every 50 steps. Predict: can it reach ~0?`,
         steps: [
-          { do: `Remember that <code>nn.CrossEntropyLoss</code> applies <code>log_softmax</code> internally.`, why: `It expects <b>raw logits</b>; if you softmax first, you softmax twice, squashing the signal so gradients are tiny and learning crawls.` },
-          { do: `Remember it expects <b>integer class indices</b> of shape <code>(N,)</code>, not one-hot vectors.`, why: `One-hot <code>float</code> targets are the wrong shape/type for the index-based loss and either error or compute the wrong thing.` },
-          { do: `Remove the final <code>softmax</code> so the model outputs logits of shape <code>(N, C)</code>, and pass <code>targets</code> as a <code>long</code> tensor of class indices in <code>[0, C-1]</code>.`, why: `That is the exact input contract of <code>CrossEntropyLoss</code>; gradients flow correctly and the loss drops.` }
+          { do: `Loop <code>zero_grad()</code> &rarr; <code>logits = model(xb)</code> &rarr; <code>loss</code> &rarr; <code>backward()</code> &rarr; <code>step()</code> on the same batch.`, why: `A correctly wired model can memorize one batch, driving its loss to ~0 — that proves the wiring is right.` },
+          { do: `Predict: yes, it reaches ~0; if it cannot, the bug is in the model or loss.`, why: `The overfit-one-batch test separates wiring bugs from data/regularization/learning-rate issues.` }
         ],
-        answer: `<p>Two mistakes. (1) You softmaxed the outputs, but <code>nn.CrossEntropyLoss</code> already does <code>log_softmax</code> inside &mdash; so the network is softmaxed twice and the gradient nearly vanishes. (2) You passed one-hot targets, but it wants integer class indices. Fix both: have the model return <b>raw logits</b> of shape <code>(N, C)</code> (no final <code>softmax</code>), and pass <code>targets</code> as a <code>torch.long</code> tensor of shape <code>(N,)</code> holding the class index of each example.</p>`
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(20, 32), nn.ReLU(), nn.Linear(32, 3))
+opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+loss_fn = nn.CrossEntropyLoss()
+xb = torch.randn(16, 20)
+yb = torch.randint(0, 3, (16,))
+
+for step in range(200):
+    opt.zero_grad()
+    loss = loss_fn(model(xb), yb)
+    loss.backward(); opt.step()
+    if step % 50 == 0:
+        print(step, round(loss.item(), 4))
+print("final:", round(loss.item(), 5))   # ~0.0 -> wiring is correct</code></pre>`
       },
       {
-        q: `On a Graphics Processing Unit (GPU), your first training step throws <code>RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu</code>. You already wrote <code>model = model.to(device)</code>. Where is the cpu tensor, and what is the systematic fix?`,
+        q: `<b>Type this in Colab.</b> Make NaN loss happen on purpose. Train the same tiny model with an absurd learning rate <code>lr=1e6</code> for a few steps and print the loss each step until it becomes non-finite. Use <code>torch.isfinite(loss)</code> to detect it and stop.`,
         steps: [
-          { do: `Read the error: weights are on <code>cuda:0</code>, but some operand is still on <code>cpu</code>.`, why: `A matmul or add needs both operands on the same device; one of them was never moved.` },
-          { do: `Check the data path &mdash; the inputs and the targets coming off the DataLoader are on the CPU by default.`, why: `Moving the model does not move the batches; each batch starts on the CPU and must be sent over explicitly.` },
-          { do: `Inside the loop, do <code>x = x.to(device)</code> and <code>y = y.to(device)</code> for every batch (and confirm the loss's targets too).`, why: `Now data and weights share a device, so every operation is legal.` }
+          { do: `Set a huge <code>lr</code> so the weights blow up, and guard with <code>torch.isfinite(loss)</code>.`, why: `Too-high a learning rate is the most common NaN cause; the finite check catches it the instant it appears.` },
+          { do: `Break out of the loop on the first non-finite loss.`, why: `Training past a NaN is pointless — the standard triage is to stop, lower the lr, and/or clip gradients.` }
         ],
-        answer: `<p>The leftover CPU tensor is your <b>data</b> (and/or targets). Moving the model with <code>.to(device)</code> does not move the batches the DataLoader yields &mdash; those start on the CPU. The systematic fix is to choose one <code>device</code> at the top and move <i>everything</i> to it: <code>model.to(device)</code> once, and <code>x = x.to(device)</code>, <code>y = y.to(device)</code> for <i>every</i> batch inside the loop.</p>`
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(20, 32), nn.ReLU(), nn.Linear(32, 3))
+opt = torch.optim.Adam(model.parameters(), lr=1e6)   # absurdly high
+loss_fn = nn.CrossEntropyLoss()
+xb = torch.randn(16, 20); yb = torch.randint(0, 3, (16,))
+
+for step in range(20):
+    opt.zero_grad()
+    loss = loss_fn(model(xb), yb)
+    loss.backward(); opt.step()
+    print(step, loss.item())
+    if not torch.isfinite(loss):
+        print("non-finite loss -> stop; lower lr / clip grads")  # fires within a few steps
+        break</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Debug a missing gradient. Create <code>w = torch.randn(3, requires_grad=True)</code>, then <code>x = w.detach() * 2</code>, then <code>loss = (x ** 2).sum()</code>, call <code>loss.backward()</code> and print <code>w.grad</code>. Predict the result, then fix it so <code>w.grad</code> is not <code>None</code>.`,
+        steps: [
+          { do: `Backprop through a graph that contains <code>.detach()</code> and inspect <code>w.grad</code>.`, why: `<code>detach()</code> cuts the graph, so no gradient flows back to <code>w</code> and <code>w.grad</code> stays <code>None</code>.` },
+          { do: `Remove the <code>.detach()</code> so the graph connects loss to <code>w</code>.`, why: `A <code>None</code> grad almost always means the loss does not depend on the parameter through a tracked graph.` }
+        ],
+        answer: `<pre><code>w = torch.randn(3, requires_grad=True)
+x = w.detach() * 2            # detach CUTS the graph
+loss = (x ** 2).sum()
+loss.backward()
+print(w.grad)                # None  -- no gradient reached w
+
+w = torch.randn(3, requires_grad=True)
+x = w * 2                     # FIX: keep w in the graph
+loss = (x ** 2).sum()
+loss.backward()
+print(w.grad)                # tensor([...]) -- real gradients now</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Reproduce the <code>nn.CrossEntropyLoss</code> double-softmax pitfall as code. With seed 0 and <code>logits = torch.randn(5, 3)</code>, <code>y = torch.tensor([0, 2, 1, 0, 1])</code>, compute the loss on (a) the raw logits and (b) <code>logits.softmax(dim=1)</code>. Print both. Which is correct?`,
+        steps: [
+          { do: `Pass raw logits to <code>nn.CrossEntropyLoss</code> — never pre-softmaxed.`, why: `CrossEntropyLoss applies <code>log_softmax</code> internally; feeding probabilities softmaxes twice and shrinks the gradient.` },
+          { do: `Compare the two loss values.`, why: `The pre-softmaxed version gives a different, wrong loss — showing why you must feed logits.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+loss_fn = nn.CrossEntropyLoss()
+logits = torch.randn(5, 3)
+y = torch.tensor([0, 2, 1, 0, 1])         # long class indices, shape (5,)
+
+print(round(loss_fn(logits, y).item(), 4))                  # CORRECT (raw logits)
+print(round(loss_fn(logits.softmax(dim=1), y).item(), 4))   # WRONG (double softmax)
+# The two values differ; only the first uses the intended log_softmax once.</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Expose the silent broadcasting bug. With <code>pred = torch.randn(4, 1)</code> and <code>target = torch.randn(4)</code> (seed 0), print <code>(pred - target).shape</code>. Predict it BEFORE running. Then fix the shapes two ways and print the corrected shape.`,
+        steps: [
+          { do: `Print the shape of <code>pred - target</code> and predict it first.`, why: `<code>(4,1)</code> broadcasts against <code>(4,)</code> to <code>(4,4)</code> — an outer-product grid, with no error raised.` },
+          { do: `Fix with <code>pred.squeeze(1)</code> or <code>target.unsqueeze(1)</code>.`, why: `Matching the shapes exactly gives the intended elementwise difference instead of a silent 16-element grid.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+pred = torch.randn(4, 1)
+target = torch.randn(4)
+print((pred - target).shape)              # torch.Size([4, 4])  -- silently WRONG!
+print((pred.squeeze(1) - target).shape)   # torch.Size([4])
+print((pred - target.unsqueeze(1)).shape) # torch.Size([4, 1])</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Trigger and fix the in-place autograd error. Make <code>w = torch.randn(3, requires_grad=True)</code> and try <code>w += 1</code> inside a <code>try/except RuntimeError</code>; print the first line. Then do the same edit safely under <code>torch.no_grad()</code> and print <code>w</code>.`,
+        steps: [
+          { do: `Attempt the in-place <code>w += 1</code> on a leaf that requires grad and catch the error.`, why: `In-place edits on a leaf tensor autograd is tracking corrupt the backward graph, so PyTorch raises.` },
+          { do: `Repeat inside <code>with torch.no_grad():</code> (or use out-of-place <code>w = w + 1</code>).`, why: `<code>no_grad</code> tells autograd not to track the edit, making manual weight updates legal.` }
+        ],
+        answer: `<pre><code>w = torch.randn(3, requires_grad=True)
+try:
+    w += 1
+except RuntimeError as e:
+    print(str(e).splitlines()[0])
+    # a leaf Variable that requires grad is being used in an in-place operation.
+with torch.no_grad():            # FIX: untracked edit
+    w += 1
+print(w.requires_grad)           # True -- still a leaf that requires grad, edit ok</code></pre>`
+      },
+      {
+        q: `<b>Type this in Colab.</b> Print shapes, dtypes, and devices through a forward pass — the cheapest debug tool. Build <code>model = nn.Sequential(nn.Linear(20, 8), nn.ReLU(), nn.Linear(8, 3))</code>, make <code>xb = torch.randn(16, 20)</code> (seed 0), and print <code>xb.shape</code>, <code>xb.dtype</code>, <code>xb.device</code>, then the logits' shape after the forward.`,
+        steps: [
+          { do: `Print <code>.shape</code>, <code>.dtype</code>, <code>.device</code> of the input before the forward.`, why: `Most <code>RuntimeError</code>s answer themselves once you see the three attributes at the failing line.` },
+          { do: `Print the output shape after <code>model(xb)</code>.`, why: `Confirming the output shape <code>(16, 3)</code> verifies the layers line up end to end.` }
+        ],
+        answer: `<pre><code>torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(20, 8), nn.ReLU(), nn.Linear(8, 3))
+xb = torch.randn(16, 20)
+print(xb.shape, xb.dtype, xb.device)   # torch.Size([16, 20]) torch.float32 cpu
+logits = model(xb)
+print(logits.shape)                    # torch.Size([16, 3])</code></pre>`
       }
     ]
   });
