@@ -3,7 +3,7 @@
     id: "unl-eval",
     title: "Evaluating self-supervised representations",
     tagline: "You trained an encoder on unlabeled data. How do you actually tell if its representation is any good?",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["fs-transfer-learning", "ml-classification-metrics"],
     whenToUse:
       `<p><b>Reach for these protocols whenever you have an encoder trained on unlabeled data</b> — from a contrastive method like <a>[unl-simclr]</a> or <a>[unl-moco]</a>, a predictive method like <a>[unl-cpc]</a>, or a masked-prediction model — and you need a number that says "this representation is better than that one". You are <i>not</i> training a product model here; you are <b>measuring representation quality</b> so you can pick the best pretraining recipe before spending real labeling money.</p>

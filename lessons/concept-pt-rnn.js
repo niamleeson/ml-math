@@ -7,7 +7,7 @@
     id: "pt-rnn",
     title: "Sequence models: nn.RNN, nn.LSTM, nn.GRU",
     tagline: "PyTorch modules that read an ordered sequence one step at a time and carry a hidden state forward.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-tensors", "dl-rnn", "dl-lstm-gru"],
 

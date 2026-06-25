@@ -5,7 +5,7 @@
     id: "spark-ecosystem",
     title: "The Spark ecosystem: where Spark runs, Delta Lake, and when to actually use it",
     tagline: "How Spark runs in the real world — local, Databricks, EMR, Dataproc — plus Delta Lake for a reliable data lake, and the judgment of when a simpler tool wins.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data"],
 
     whenToUse:

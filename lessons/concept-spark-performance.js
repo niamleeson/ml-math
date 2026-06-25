@@ -5,7 +5,7 @@
     id: "spark-performance",
     title: "Spark performance: caching, broadcast joins, Catalyst, AQE, and pushdown",
     tagline: "Reuse work with cache, kill shuffles with broadcast joins, read less with pushdown, and let Catalyst, Tungsten, and AQE do the rest.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data"],
 
     whenToUse:

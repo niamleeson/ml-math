@@ -3,7 +3,7 @@
     id: "skill-data-audit",
     title: "Auditing data before you trust it",
     tagline: "Most model failures are data failures. Audit the data first, or your metrics are lying to you.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["prob-normal", "prob-estimation"],
     whenToUse:
       `<p><b>Audit your data before you fit a single model — every time you touch a new dataset, a new data source, or a new serving pipeline.</b> The hardest bugs in ML are silent: a column that is 40% missing for one customer segment, a duplicated user that inflates your accuracy, a unit that switched from dollars to cents halfway through the year. None of these throw an error. They quietly poison the model and the metrics that are supposed to catch the model.</p>

@@ -3,7 +3,7 @@
     id: "pt-regularization",
     title: "Regularization in PyTorch: fighting overfitting",
     tagline: "Dropout, batch norm, weight decay, early stopping, and grad clipping — the tools that keep a PyTorch model from memorizing the training set.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["ml-regularization", "dl-dropout", "dl-batchnorm", "dl-early-stopping", "dl-optimizers", "pt-autograd"],
 

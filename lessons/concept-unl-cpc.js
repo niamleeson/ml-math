@@ -3,7 +3,7 @@
     id: "unl-cpc",
     title: "Contrastive Predictive Coding (CPC v2)",
     tagline: "Learn representations by predicting the future in latent space — and judge the prediction by picking the true future out of a crowd of negatives.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["mod-contrastive", "dl-attention", "dl-cosine-similarity", "dl-cross-entropy", "fs-metric-learning"],
     bigIdea:
       `<p>Suppose nobody labels your data. How do you still learn a useful representation? CPC (Contrastive Predictive Coding) has a clever answer: <b>predict the future</b>.</p>

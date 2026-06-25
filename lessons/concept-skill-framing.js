@@ -3,7 +3,7 @@
     id: "skill-framing",
     title: "Framing a vague business problem into a clear ML task",
     tagline: "Turn 'reduce churn' into a precise spec: a decision, a target, a label, a metric, and proof there is signal.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["ml-classification-metrics", "ml-logistic-regression"],
     whenToUse:
       `<p><b>Framing is the first and highest-leverage step of any ML project.</b> A model that perfectly predicts the wrong thing is worthless, and you cannot tell good from wrong until the task is written down precisely. The cost of a bad frame is paid at the very end — after months of data and modeling work — so it is the cheapest mistake to fix early and the most expensive to fix late.</p>

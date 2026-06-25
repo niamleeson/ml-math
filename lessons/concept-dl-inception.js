@@ -3,7 +3,7 @@
     id: "dl-inception",
     title: "Inception modules & 1×1 convolutions",
     tagline: "Run several filter sizes side by side, and use a cheap 1×1 conv to shrink channels first.",
-    module: "Deep Learning (CS230)",
+    module: "Deep Learning",
     prereqs: ["dl-conv", "dl-conv-hyperparams", "dl-cnn-params", "dl-pooling"],
     whenToUse:
       `<p><b>Reach for an Inception module when you do not want to commit to one filter size.</b> Instead of guessing whether 1×1, 3×3, or 5×5 is right, an Inception module runs all of them in parallel on the same input and lets the network learn which to lean on.</p>

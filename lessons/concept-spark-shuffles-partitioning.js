@@ -5,7 +5,7 @@
     id: "spark-shuffles-partitioning",
     title: "Partitioning and the shuffle: Spark's biggest performance lever",
     tagline: "Partitions are how Spark splits work; the shuffle is when it moves data across the network by key — and it's the first place to look when a job is slow.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data"],
 
     whenToUse:

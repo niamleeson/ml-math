@@ -10,7 +10,7 @@
     id: "pt-tensor-ops",
     title: "Operating on tensors",
     tagline: "Add, multiply, broadcast, matmul, reduce, and reshape — the moves every model is built from.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["fnd-dot", "fnd-matrix", "dl-forward-prop"],
 

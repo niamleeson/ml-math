@@ -12,7 +12,7 @@
      - a bespoke, theme-aware demo that renders on load (never NaN/Infinity)
    ===================================================================== */
 (function () {
-const M = "Classical ML (beyond the cheat sheet)";
+const M = "Classical ML";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* ---------------------------------------------------------------- */

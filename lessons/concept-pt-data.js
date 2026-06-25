@@ -6,7 +6,7 @@
     id: "pt-data",
     title: "Feeding data: Dataset and DataLoader",
     tagline: "Wrap your data in a Dataset, hand it to a DataLoader, and get batched, shuffled, augmented, parallel-loaded tensors that keep the GPU (Graphics Processing Unit) busy.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-minibatch", "dl-data-augmentation"],
 

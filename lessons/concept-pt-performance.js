@@ -5,7 +5,7 @@
     id: "pt-performance",
     title: "Making PyTorch fast: torch.compile, mixed precision, DataLoader, and profiling",
     tagline: "Profile first, then speed up: one-line torch.compile, mixed precision, a well-fed GPU, and fewer CPU/GPU syncs.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-training-loop", "pt-nn-module", "dl-minibatch"],
 

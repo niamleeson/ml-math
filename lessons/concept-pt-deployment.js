@@ -10,7 +10,7 @@
     id: "pt-deployment",
     title: "Deploying a trained model",
     tagline: "Take the trained weights out of the notebook: export to a Python-free runtime (TorchScript / ONNX), quantize to int8, and serve it behind an API.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-save-load", "pt-nn-module", "skill-monitoring", "skill-limitations"],
 

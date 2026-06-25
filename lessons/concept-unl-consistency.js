@@ -3,7 +3,7 @@
     id: "unl-consistency",
     title: "Consistency regularization",
     tagline: "A good model should not change its mind when you nudge the input. Make that a training signal and unlabeled data starts teaching.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["unl-overview", "dl-data-augmentation", "dl-cross-entropy", "dl-backprop"],
     bigIdea:
       `<p><b>Consistency regularization</b> is the backbone of modern semi-supervised learning (learning from a few labels plus a flood of unlabeled data).</p>

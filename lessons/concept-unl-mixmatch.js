@@ -3,7 +3,7 @@
     id: "unl-mixmatch",
     title: "MixMatch: one loss that mixes labeled and guessed-label data",
     tagline: "Guess a label for each unlabeled image, sharpen the guess, then MixUp everything into one clean supervised + consistency loss.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["dl-cross-entropy", "dl-data-augmentation", "dl-conv"],
     bigIdea:
       `<p>You have a few labeled images and a big pile of unlabeled ones. <b>MixMatch</b> (Berthelot et al., 2019) is a recipe that turns that pile into useful training signal with one combined loss.</p>

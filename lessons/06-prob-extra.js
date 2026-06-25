@@ -9,7 +9,7 @@
    theme-aware canvas demo, and a real derivation ending in ∎.
    ===================================================================== */
 (function () {
-const M = "Probability (advanced)";
+const M = "Probability & Statistics";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* shared theme reader for bespoke demos */

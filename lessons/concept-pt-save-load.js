@@ -10,7 +10,7 @@
     id: "pt-save-load",
     title: "Saving and loading models",
     tagline: "Save the state_dict (just the learned numbers), reload it into a fresh model, and call eval() — the safe, portable way.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-tensors", "pt-tensor-ops", "dl-dropout", "dl-batchnorm", "dl-optimizers"],
 

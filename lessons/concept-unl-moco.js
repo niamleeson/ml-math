@@ -8,7 +8,7 @@
     id: "unl-moco",
     title: "MoCo: Momentum Contrast",
     tagline: "Get SimCLR's many negatives for free with a memory queue and a slowly-moving key encoder.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["dl-cosine-similarity", "mod-contrastive", "fs-metric-learning", "dl-data-augmentation"],
 
     whenToUse:

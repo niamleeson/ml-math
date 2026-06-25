@@ -7,7 +7,7 @@
     id: "skill-baselines",
     title: "Building simple baselines first",
     tagline: "Before any fancy model, beat the dumbest one — or you don't know if you've done anything.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["ml-classification-metrics", "ml-logistic-regression", "ml-regression-metrics"],
 
     whenToUse:

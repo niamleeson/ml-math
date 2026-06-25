@@ -9,7 +9,7 @@
    Each lesson is an object pushed into window.LESSONS.
    ===================================================================== */
 (function () {
-const M = "Linear Algebra (deep dive)";
+const M = "Linear Algebra";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* Shared theme reader for the bespoke demos below. Returns CSS-variable

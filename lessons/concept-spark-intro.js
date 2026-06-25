@@ -5,7 +5,7 @@
     id: "spark-intro",
     title: "Apache Spark: distributed computing for data too big for one machine",
     tagline: "A driver hands work to executors across a cluster, which crunch data partitions in parallel — lazily, with fault tolerance.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data"],
 
     whenToUse:

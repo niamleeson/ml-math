@@ -5,7 +5,7 @@
     id: "spark-mllib",
     title: "MLlib: machine learning at cluster scale",
     tagline: "Spark's DataFrame ML API — Transformers, Estimators, and Pipelines — runs the same training across a cluster on data that won't fit on one machine.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data", "dw-pipelines", "ml-logistic-regression"],
 
     whenToUse:

@@ -7,7 +7,7 @@
     id: "pt-tensors",
     title: "Tensors: PyTorch's core data structure",
     tagline: "A tensor is an n-dimensional array, like a numpy array but with GPU and autograd built in.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["fnd-vector", "fnd-matrix"],
 

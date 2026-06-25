@@ -5,7 +5,7 @@
     id: "spark-transformations-actions",
     title: "Spark's lazy engine: transformations vs actions",
     tagline: "Transformations only build a plan; an action triggers the whole computation — and Spark optimizes the chain before running it.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data", "dw-combining"],
 
     whenToUse:

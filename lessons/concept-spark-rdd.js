@@ -5,7 +5,7 @@
     id: "spark-rdd",
     title: "RDD: the resilient distributed dataset",
     tagline: "Spark's original abstraction — an immutable, partitioned collection you transform lazily and process in parallel across a cluster.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data"],
 
     bigIdea:

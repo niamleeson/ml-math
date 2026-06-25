@@ -5,7 +5,7 @@
     id: "dl-resnet",
     title: "Residual networks (skip connections)",
     tagline: "Add the layer's input back to its output, so very deep nets train instead of stalling.",
-    module: "Deep Learning (CS230)",
+    module: "Deep Learning",
     prereqs: ["dl-conv", "dl-backprop", "dl-vanishing-gradient", "dl-forward-prop", "dl-activations", "dl-cnn-params"],
 
     whenToUse:

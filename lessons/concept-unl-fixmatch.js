@@ -3,7 +3,7 @@
     id: "unl-fixmatch",
     title: "FixMatch: confidence-thresholded pseudo-labels meet consistency",
     tagline: "Guess a label from a weak view; if you are sure enough, train a strong view to match it.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["dl-cross-entropy", "dl-data-augmentation", "dl-conv", "mod-contrastive"],
     bigIdea:
       `<p><b>FixMatch</b> (Sohn et al., 2020) is the method that beat the complicated ones by being simple. It learns from a pile of unlabeled images with one short rule.</p>

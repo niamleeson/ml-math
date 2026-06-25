@@ -3,7 +3,7 @@
     id: "skill-leakage",
     title: "Detecting leakage and bad labels",
     tagline: "If your offline score looks amazing, suspect a leak or a lie in the labels before you celebrate.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["mlx-cross-validation", "mlx-error-analysis"],
     whenToUse:
       `<p><b>Reach for a leakage-and-label audit the moment a model looks too good</b> — a jump in AUC (Area Under the Curve) you cannot explain, a validation score far above what the business thought was possible, or a model that wins offline and dies in production. Leakage means information the model could not actually have at prediction time sneaked into training. Bad labels mean your "ground truth" is partly wrong, so the model learns the noise.</p>

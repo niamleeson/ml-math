@@ -5,7 +5,7 @@
     id: "spark-dataframes",
     title: "Spark DataFrames: a distributed table with a schema",
     tagline: "The modern, optimized Spark API — like a pandas DataFrame, but lazy, distributed, and rewritten into an efficient plan by the Catalyst optimizer.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data", "dw-tidy-data"],
 
     whenToUse:

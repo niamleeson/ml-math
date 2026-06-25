@@ -3,7 +3,7 @@
     id: "unl-simclr",
     title: "SimCLR & contrastive learning (NT-Xent / InfoNCE)",
     tagline: "Make two augmented views of the same image agree, and disagree with everything else in the batch. No labels needed.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["dl-cosine-similarity", "dl-cross-entropy", "dl-data-augmentation", "mod-contrastive", "fs-metric-learning"],
     bigIdea:
       `<p><b>SimCLR</b> (Simple framework for Contrastive Learning of visual Representations, Chen et al. 2020) learns useful image features with <b>no labels at all</b>.</p>

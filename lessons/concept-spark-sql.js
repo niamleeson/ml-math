@@ -6,7 +6,7 @@
     id: "spark-sql",
     title: "Spark SQL: query DataFrames with real SQL at scale",
     tagline: "Register a DataFrame as a view, then SELECT from it — SQL and the DataFrame API compile to the same plan, so they run identically fast.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-big-data", "dw-combining"],
 
     bigIdea:

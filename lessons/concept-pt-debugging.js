@@ -5,7 +5,7 @@
     id: "pt-debugging",
     title: "Debugging PyTorch: the errors everyone hits, and a method to find them",
     tagline: "Most of your PyTorch time is debugging — so learn the greatest-hits errors, their fixes, and one method: overfit a single batch first.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-tensor-ops", "pt-autograd", "pt-nn-module", "dl-cross-entropy", "dl-optimizers"],
 

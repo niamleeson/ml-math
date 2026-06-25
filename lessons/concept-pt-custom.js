@@ -5,7 +5,7 @@
     id: "pt-custom",
     title: "Extending PyTorch: custom layers, losses, and autograd Functions",
     tagline: "Write your own nn.Module layer with learnable nn.Parameters, a custom loss function, and — when you need a hand-written gradient — a torch.autograd.Function verified by gradcheck.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-nn-module", "pt-autograd", "dl-backprop"],
 

@@ -10,7 +10,7 @@
     id: "skill-monitoring",
     title: "Monitoring model behavior after deployment",
     tagline: "A model is not done at deploy — it quietly rots, and only monitoring tells you.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["ml-classification-metrics", "prob-clt", "prob-normal"],
 
     whenToUse:

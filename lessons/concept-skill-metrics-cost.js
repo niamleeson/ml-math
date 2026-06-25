@@ -8,7 +8,7 @@
     id: "skill-metrics-cost",
     title: "Choosing metrics based on business cost",
     tagline: "Accuracy doesn't pay the bills. Pick the threshold that minimizes real dollars.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["ml-classification-metrics", "ml-roc-auc"],
 
     whenToUse:

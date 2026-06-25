@@ -7,7 +7,7 @@
     id: "pt-gpu-amp",
     title: "Using the GPU and mixed precision",
     tagline: "Move the model and every batch to the GPU, then run parts in float16 with AMP for a free ~2x speedup.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-tensors", "pt-autograd", "dl-backprop", "dl-optimizers"],
 

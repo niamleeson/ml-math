@@ -9,7 +9,7 @@
    Each lesson is an object pushed into window.LESSONS.
    ===================================================================== */
 (function () {
-const M = "Classical ML (beyond the cheat sheet)";
+const M = "Classical ML";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 var BTN = "background:var(--panel);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;margin-right:8px";

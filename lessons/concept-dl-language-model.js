@@ -16,7 +16,7 @@
     id: "dl-language-model",
     title: "Language models: n-grams & perplexity",
     tagline: "A language model puts a probability on a sentence — n-grams estimate it from counts, and perplexity grades it.",
-    module: "Deep Learning (CS230)",
+    module: "Deep Learning",
     prereqs: ["dl-cross-entropy", "dl-rnn", "ml-naive-bayes", "fe-ngrams", "mod-llm"],
 
     whenToUse:

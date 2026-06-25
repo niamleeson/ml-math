@@ -9,7 +9,7 @@
    Each lesson is an object pushed into window.LESSONS.
    ===================================================================== */
 (function () {
-const M = "Artificial Intelligence (CS221)";
+const M = "Artificial Intelligence";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* ---- shared helpers for bespoke AI canvas demos ---- */

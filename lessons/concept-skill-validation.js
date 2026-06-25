@@ -3,7 +3,7 @@
     id: "skill-validation",
     title: "Validating models correctly",
     tagline: "Your score is a guess about the future. Most ways of computing it lie — here is how to make it honest.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["mlx-cross-validation", "ml-bias-variance"],
     whenToUse:
       `<p><b>Validation is how you find out whether your model will actually work on data it has never seen.</b> Every number you report — accuracy, AUC (Area Under the Curve), error — is really a <i>prediction about the future</i>. If you measure it wrong, you ship a model that looked great in the notebook and falls apart in production. This is the single most common way ML projects fail, and it almost never shows up until it is too late.</p>

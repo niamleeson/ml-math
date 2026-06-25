@@ -3,7 +3,7 @@
     id: "dl-receptive-field",
     title: "The receptive field of a CNN",
     tagline: "How big a patch of the original image one deep output neuron actually sees.",
-    module: "Deep Learning (CS230)",
+    module: "Deep Learning",
     prereqs: ["dl-conv", "dl-conv-hyperparams", "dl-pooling", "dl-cnn-params"],
     whenToUse:
       `<p><b>Reach for the receptive-field idea whenever you need to know how much of the input one output neuron depends on.</b> The <b>receptive field</b> of a neuron is the patch of the ORIGINAL input image that can change its value. It tells you whether a layer can "see" enough context to make its decision.</p>

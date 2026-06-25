@@ -3,7 +3,7 @@
     id: "skill-error-segments",
     title: "Analyzing errors by segment",
     tagline: "The average hides the failure. Slice the metric and the broken group jumps out.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["mlx-error-analysis", "ml-classification-metrics"],
     whenToUse:
       `<p><b>Reach for segmented error analysis the moment you have one headline number and a decision riding on it.</b> A single accuracy or AUC (Area Under the Curve) is an average over everyone. Averages lie by mixing a group the model nails with a group it wrecks. The mix looks fine; the broken group is invisible.</p>

@@ -9,7 +9,7 @@
     id: "dl-beam-search",
     title: "Beam search decoding & length normalization",
     tagline: "Don't grab the top word at every step — keep the best few partial sentences, and stop short answers from cheating.",
-    module: "Deep Learning (CS230)",
+    module: "Deep Learning",
     prereqs: ["dl-rnn", "dl-attention", "dl-cross-entropy", "mod-transformer", "mod-llm"],
 
     whenToUse:

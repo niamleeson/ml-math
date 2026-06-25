@@ -3,7 +3,7 @@
     id: "pt-autograd",
     title: "Autograd: PyTorch's automatic differentiation",
     tagline: "PyTorch records every operation, then computes all the gradients for you with one .backward() call.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-backprop", "dl-forward-prop", "fnd-chain", "fnd-gradient"],
 

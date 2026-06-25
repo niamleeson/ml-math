@@ -10,7 +10,7 @@
     id: "pt-training-loop",
     title: "The PyTorch training loop",
     tagline: "The hand-written loop at the heart of every PyTorch project.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-backprop", "dl-optimizers", "dl-minibatch", "dl-cross-entropy", "dl-dropout", "dl-batchnorm", "dl-early-stopping"],
 

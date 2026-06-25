@@ -3,7 +3,7 @@
     id: "skill-limitations",
     title: "Explaining limitations clearly",
     tagline: "A model that won't say \"I don't know\" is dangerous — quantify what it doesn't know and write it down.",
-    module: "Doing ML for Real — the skills that matter (2026)",
+    module: "Doing ML for Real — the skills that matter",
     prereqs: ["ml-classification-metrics", "prob-estimation", "prob-clt"],
     whenToUse:
       `<p><b>Reach for this the moment a model leaves your notebook and touches a real decision.</b> A single number — "92% accurate" — tells a stakeholder nothing about <i>when</i> the model is wrong, <i>for whom</i>, or <i>how sure</i> it is on the case in front of them. The skill of stating limitations clearly is what separates a demo from a deployable system.</p>

@@ -3,7 +3,7 @@
     id: "pt-loss-optim",
     title: "Loss functions and optimizers",
     tagline: "The two pieces that turn a model into learning: a loss to score it, an optimizer to fix it.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-cross-entropy", "dl-optimizers", "ml-gradient-descent"],
 

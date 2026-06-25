@@ -6,7 +6,7 @@
     id: "spark-aggregations-joins",
     title: "Aggregating and joining at scale",
     tagline: "Group-and-aggregate, window functions, and the broadcast-vs-shuffle join choice that makes big joins fast or slow.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-combining", "dw-big-data"],
 
     whenToUse:

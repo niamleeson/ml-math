@@ -5,7 +5,7 @@
     id: "pt-distributed",
     title: "Distributed training: DataParallel, DistributedDataParallel (DDP), and sharding",
     tagline: "Replicate the model on every GPU, split the batch, and all-reduce the gradients so all copies stay in sync — DDP is the standard way.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-training-loop", "dl-minibatch", "dl-optimizers", "spark-intro"],
 

@@ -14,7 +14,7 @@
     id: "pt-ecosystem",
     title: "The PyTorch ecosystem — what to reach for",
     tagline: "The course finale: the libraries around PyTorch, and when to use each.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-training-loop", "pt-nn-module", "pt-save-load", "dl-attention", "dl-cnn-params", "mod-llm"],
 

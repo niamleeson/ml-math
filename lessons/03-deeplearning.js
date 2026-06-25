@@ -8,7 +8,7 @@
    Each lesson is an object pushed into window.LESSONS.
    ===================================================================== */
 (function () {
-const M = "Deep Learning (CS230)";
+const M = "Deep Learning";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* ---------------------------------------------------------------- */

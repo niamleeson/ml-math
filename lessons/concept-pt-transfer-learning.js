@@ -12,7 +12,7 @@
     id: "pt-transfer-learning",
     title: "Transfer learning with torchvision.models",
     tagline: "Start from a model pretrained on millions of images, then teach it your task with very little data.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["pt-tensors", "pt-tensor-ops", "dl-optimizers", "fs-transfer-learning", "fe-deep-learning-features"],
 

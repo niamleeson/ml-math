@@ -8,7 +8,7 @@
     id: "probx-random-sum",
     title: "Random sums & Wald's identity",
     tagline: "Add up a random NUMBER of random pieces: the mean and variance of the total have two clean formulas.",
-    module: "Probability (advanced)",
+    module: "Probability & Statistics",
     prereqs: ["prob-expectation", "prob-variance", "prob-conditional-expectation", "probx-total-variance"],
 
     whenToUse:

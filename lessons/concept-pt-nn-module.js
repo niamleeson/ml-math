@@ -5,7 +5,7 @@
     id: "pt-nn-module",
     title: "Building models with torch.nn: nn.Module, layers, and parameters",
     tagline: "Subclass nn.Module, declare layers in __init__, wire them in forward, and PyTorch tracks every weight for you.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-forward-prop", "dl-neuron", "dl-init"],
 

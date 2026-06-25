@@ -5,7 +5,7 @@
     id: "spark-streaming",
     title: "Structured Streaming: process never-ending data with the batch API",
     tagline: "Treat a live stream as a table that keeps growing, run it in tiny micro-batches, and write almost the same code you'd write for batch.",
-    module: "Apache Spark (big-data processing)",
+    module: "Apache Spark",
     prereqs: ["dw-timeseries-eda", "skill-monitoring"],
 
     bigIdea:

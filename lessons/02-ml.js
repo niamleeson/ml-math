@@ -8,7 +8,7 @@
    Each lesson is an object pushed into window.LESSONS.
    ===================================================================== */
 (function () {
-const M = "Machine Learning (CS229)";
+const M = "Machine Learning";
 const L = (o) => window.LESSONS.push(Object.assign({ module: M }, o));
 
 /* ---------------------------------------------------------------- */

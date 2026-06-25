@@ -10,7 +10,7 @@
     id: "unl-overview",
     title: "Learning from unlabeled data: the landscape",
     tagline: "Labels are scarce and pricey; raw data is cheap. Here is how to learn from the cheap stuff.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["dl-cross-entropy", "dl-data-augmentation", "mod-contrastive"],
     whenToUse:
       `<p><b>Reach for semi-supervised or self-supervised learning when you have a flood of unlabeled data but only a trickle of labels.</b> Labels cost money and time — a radiologist annotating scans, a human transcribing audio, a moderator tagging abuse. Raw, unlabeled examples are almost free. These methods squeeze signal out of the cheap pile.</p>

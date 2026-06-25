@@ -13,7 +13,7 @@
     id: "pt-cnn",
     title: "Building a CNN in PyTorch",
     tagline: "Wire conv, pool, and a linear head into a small image classifier, then train it.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-conv", "dl-pooling", "dl-cnn-params", "dl-forward-prop", "dl-backprop", "dl-optimizers"],
 

@@ -5,7 +5,7 @@
     id: "pt-intro",
     title: "PyTorch: tensors, autograd, and neural nets that run as you write them",
     tagline: "A Python library where every operation runs immediately (eager / define-by-run), so you build, debug, and train models with ordinary Python — which is why research lives here.",
-    module: "PyTorch (a complete course)",
+    module: "PyTorch",
     template: "pytorch",
     prereqs: ["dl-forward-prop", "dl-backprop", "dl-optimizers", "fnd-gradient"],
 

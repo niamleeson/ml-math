@@ -3,7 +3,7 @@
     id: "unl-pseudo-label",
     title: "Pseudo-labeling & entropy minimization",
     tagline: "Let the model label its own unlabeled data, keep only the predictions it is sure about, and train on those.",
-    module: "Learning from Unlabeled Data (semi- & self-supervised)",
+    module: "Semi & Self-Supervised Learning",
     prereqs: ["unl-overview", "dl-cross-entropy"],
     bigIdea:
       `<p>You have a few labeled examples and a mountain of <b>unlabeled</b> ones. <b>Pseudo-labeling</b> (also called <b>self-training</b>) is the simplest way to use that mountain.</p>

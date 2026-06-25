@@ -8,7 +8,7 @@
     id: "la-matrix-calculus",
     title: "Matrix calculus: gradient identities",
     tagline: "A handful of derivative rules for vectors and matrices that turn least squares into one line.",
-    module: "Linear Algebra (deep dive)",
+    module: "Linear Algebra",
     prereqs: ["fnd-gradient", "la-jacobian", "la-trace", "la-determinant", "la-inverse", "ml-linear-regression"],
 
     whenToUse:
