@@ -483,7 +483,22 @@
     "Metrics & Evaluation — measuring models, data & statistics",
     "Data Wrangling",
     "Apache Spark (big-data processing)",
-    "Feature Engineering"
+    "Feature Engineering",
+    "Capstones",
+    "Papers · Foundations & Optimization",
+    "Papers · Classical ML",
+    "Papers · Computer Vision",
+    "Papers · Sequence & NLP",
+    "Papers · Transformers & LLMs",
+    "Papers · Generative Models",
+    "Papers · Self-supervised & Representation",
+    "Papers · Reinforcement Learning",
+    "Papers · Graph Neural Networks",
+    "Papers · Speech & Audio",
+    "Papers · Recommender Systems",
+    "Papers · Efficiency & Compression",
+    "Papers · Meta-learning, Bayesian & Robustness",
+    "Papers · Datasets, Benchmarks & Surveys"
   ];
 </script>
 
@@ -617,6 +632,8 @@
 
 <!-- Wave L: cheat-sheet formula gaps (CS230 architectures, language modeling, decoding, matrix calculus) -->
 <script src="lessons/concept-dl-resnet.js"></script>
+<script src="lessons/concept-paper-batchnorm.js"></script>
+<script src="lessons/concept-paper-resnet.js"></script>
 <script src="lessons/concept-dl-inception.js"></script>
 <script src="lessons/concept-dl-receptive-field.js"></script>
 <script src="lessons/concept-dl-language-model.js"></script>
@@ -1027,6 +1044,89 @@ const App = (function () {
     });
   }
 
+  // ---- Paper-lesson + capstone rendering ----
+  function trackBadge(track) {
+    const m = { primitive: ["🔨 Build from scratch", "tb-a"], architecture: ["🧩 Compose with PyTorch", "tb-b"], "read-only": ["📖 Read-only", "tb-r"] };
+    const t = m[track]; return t ? `<span class="trackbadge ${t[1]}">${t[0]}</span>` : "";
+  }
+  function paperCard(l) {
+    const p = l.paper || {};
+    const links = [];
+    if (p.arxiv) links.push(`<a href="${p.arxiv}" target="_blank" rel="noopener">📄 arXiv</a>`);
+    if (p.code) links.push(`<a href="${p.code}" target="_blank" rel="noopener">💻 Official code</a>`);
+    const meta = [p.authors, p.org, p.venue, p.year, p.citations].filter(Boolean).join(" · ");
+    return `<div class="papercard"><div class="pc-top">${trackBadge(l.track)}</div>` +
+      (meta ? `<div class="pc-meta">${meta}</div>` : "") +
+      (links.length ? `<div class="pc-links">${links.join(" · ")}</div>` : "") + `</div>`;
+  }
+  function partOfCallout(l) {
+    if (!l.partOf || !l.partOf.length) return "";
+    const items = l.partOf.map(po => {
+      const cap = byId[po.capstone], name = cap ? cap.title : po.capstone;
+      return `<a onclick="App.open('${po.capstone}')">${name}</a>` + (po.step ? ` — step ${po.step}` : "") + (po.builds ? ` (${po.builds})` : "");
+    }).join("; ");
+    return `<div class="partof">🏗️ <b>Part of capstone:</b> ${items}</div>`;
+  }
+  function conceptCallout(l) {
+    if (!l.conceptLink || !byId[l.conceptLink]) return "";
+    return `<div class="conceptlink">📐 <b>The underlying math is taught in:</b> <a onclick="App.open('${l.conceptLink}')">${byId[l.conceptLink].title}</a></div>`;
+  }
+  function recallBlock(list) {
+    if (!list || !list.length) return "";
+    return `<div class="card recall"><h3>🧠 Recall check — close the page, answer from memory</h3><ul>` +
+      list.map(q => `<li>${q}</li>`).join("") + `</ul></div>`;
+  }
+  function navRow(id, prev, next) {
+    return `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
+      `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
+      `<div class="nav-row">` +
+      `<button ${prev ? `onclick="App.open('${prev}')"` : "disabled"}><span>← Previous</span>${prev ? byId[prev].title : ""}</button>` +
+      `<button class="next" ${next ? `onclick="App.open('${next}')"` : "disabled"}><span>Next →</span>${next ? byId[next].title : ""}</button>` +
+      `</div>`;
+  }
+  function renderPaper(l, id, prev, next) {
+    const howItWorks =
+      section("", "🔬", "How it works", l.walkthrough) +
+      symbolsTable(l.symbols) +
+      (l.formula ? `<div class="card"><h3>➗ The key equation</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes || ""}</div>` : "") +
+      section("deriv", "📜", "Why it's true", l.derivation) +
+      section("example", "🔢", "Worked example — real numbers", l.example) +
+      section("", "🪜", "The recipe — what you'll build", l.recipe) +
+      section("", "📊", "What the paper showed", l.results);
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      paperCard(l) + partOfCallout(l) + prereqLinks(l.prereqs) + colabBtn(id) +
+      section("", "🔧", "The problem it solved", l.problem) +
+      section("", "✨", "What it introduced", l.contribution) +
+      section("", "🌟", "Why it mattered", l.whyItMattered) +
+      section("", "📖", "How to read the paper", l.readingGuide) +
+      section("predict", "🤔", "Predict first — guess before you run", l.predict) +
+      section("", "⌨️", "Your turn — try it before the reveal", l.attempt) +
+      `<div class="uh-divider"><span class="uh-ic">🔬</span> How it works — read &amp; understand</div>` +
+      howItWorks + conceptCallout(l) +
+      section("", "🧱", "Implement it — build vs import", l.implementBoundary) +
+      codeBlock(id) + codeVizBlock(id) +
+      section("pitfalls", "⚠️", "Pitfalls &amp; gotchas", l.pitfalls) +
+      recallBlock(l.recall) + practiceBlock(l.practice) + navRow(id, prev, next);
+  }
+  function renderCapstone(l, id, prev, next) {
+    const steps = (l.steps || []).map(s => {
+      const lp = byId[s.paper], name = lp ? lp.title : s.paper;
+      const link = lp ? `<a onclick="App.open('${s.paper}')">${name}</a>` : `${name} <i>(coming soon)</i>`;
+      return `<li>${link}${s.builds ? ` — ${s.builds}` : ""}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
+    }).join("");
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">🏗️ ${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      section("", "🎯", "The goal", l.goal) +
+      section("", "🧭", "What you'll build", l.architecture) +
+      `<div class="card"><h3>🪜 Build order — implement each paper, then assemble</h3><ol class="capsteps">${steps}</ol></div>` +
+      colabBtn(id) + codeBlock(id) + codeVizBlock(id) +
+      section("", "💭", "Reflection", l.reflection) +
+      practiceBlock(l.practice) + navRow(id, prev, next);
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -1048,7 +1148,10 @@ const App = (function () {
       ? `<div class="uh-divider"><span class="uh-ic">🔬</span> Under the hood — the math &amp; intuition</div>${underHood}`
       : "";
 
-    const html =
+    let html;
+    if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
+    else if (l.paper) { html = renderPaper(l, id, prev, next); }
+    else { html =
       `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
@@ -1073,7 +1176,7 @@ const App = (function () {
       `<div class="nav-row">` +
         `<button ${prev ? `onclick="App.open('${prev}')"` : "disabled"}><span>← Previous</span>${prev ? byId[prev].title : ""}</button>` +
         `<button class="next" ${next ? `onclick="App.open('${next}')"` : "disabled"}><span>Next →</span>${next ? byId[next].title : ""}</button>` +
-      `</div>`;
+      `</div>`; }
 
     const c = document.getElementById("content");
     c.innerHTML = html;
