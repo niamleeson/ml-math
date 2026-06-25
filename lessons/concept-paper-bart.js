@@ -165,6 +165,50 @@
          must find the true start.</li>
        </ul>`,
 
+    architecture:
+      `<p><b>A standard sequence-to-sequence (encoder&ndash;decoder) Transformer</b> (Section 2.1). "Sequence-to-sequence"
+       means it maps one whole sequence (the corrupted input) to another (the reconstructed original). It has two stacks
+       wired in series, plus an embedding and an output projection.</p>
+       <ul>
+         <li><b>Token + position embeddings.</b> Each input token id is looked up in an embedding table (a learned vector
+         per vocabulary entry) and a position vector is added so the model knows token order.</li>
+         <li><b>Bidirectional encoder stack (the "BERT" half).</b> A stack of identical Transformer encoder layers
+         &mdash; <b>6</b> in BART-base, <b>12</b> in BART-large. Each layer = multi-head <i>self-attention</i> (every
+         position attends to every other position, with <b>no</b> causal mask) + a position-wise feed-forward network,
+         each wrapped in a residual connection and layer normalization. Reads the corrupted input $\\tilde{x}$ and emits
+         one hidden vector per input position; the stack of vectors from the <b>final</b> encoder layer is the
+         <b>memory</b>.</li>
+         <li><b>Autoregressive decoder stack (the "GPT" half).</b> A stack of decoder layers &mdash; <b>6</b> in base,
+         <b>12</b> in large. Each decoder layer adds a third sub-block versus the encoder layer, so it has three in
+         order: (1) <i>masked</i> (causal) multi-head self-attention &mdash; position $t$ may only attend to positions
+         $\\le t$, so generation stays left-to-right; (2) <b>cross-attention</b> over the encoder memory &mdash; the
+         queries come from the decoder, the keys/values from the <b>final hidden layer of the encoder</b>, which is how
+         the decoder reads the (corrupted) source; (3) a position-wise feed-forward network. Residual + layer-norm
+         around each.</li>
+         <li><b>Output projection.</b> A linear layer maps each decoder hidden vector to vocabulary-sized logits; a
+         softmax turns those into the next-token distribution $p_\\theta(x_t\\mid x_{\\lt t},\\tilde{x})$.</li>
+       </ul>
+       <p><b>Differences from vanilla Transformer / BERT:</b> activations are <b>GeLU</b> (a smooth ReLU variant) rather
+       than ReLU, and parameters are initialized from $\\mathcal{N}(0,\\,0.02)$ (a normal distribution, mean 0, standard
+       deviation 0.02). Because the decoder layers carry the extra cross-attention sub-block, "BART contains roughly
+       <b>10% more parameters</b> than the equivalently sized BERT model" (Section 2.1).</p>
+       <p><b>Fine-tuning (Section 3) &mdash; same backbone, four task shapes:</b></p>
+       <ul>
+         <li><b>Sequence classification (Section 3.1).</b> Feed the <i>same</i> uncorrupted input to both encoder and
+         decoder; take the hidden state of the <b>final decoder token</b> and pass it to a new multi-class linear
+         classifier. (Like BERT's <code>[CLS]</code>, but the special token is added at the <b>end</b> so its decoder
+         state can attend to the whole input.)</li>
+         <li><b>Token classification (Section 3.2).</b> e.g. answer-span selection on SQuAD: use the <b>top decoder
+         hidden state for each token</b> as that token's representation and classify it.</li>
+         <li><b>Sequence generation (Section 3.3).</b> The native shape: the encoder reads the input, the decoder
+         generates the output <b>autoregressively</b> &mdash; used directly for abstractive summarization and question
+         answering.</li>
+         <li><b>Machine translation (Section 3.4).</b> Replace BART's encoder <b>embedding layer</b> with a fresh,
+         randomly-initialized small encoder that maps a foreign language into BART's input space; train in two steps
+         (first only the new encoder + a few BART params, then all params), backpropagating the cross-entropy loss
+         through the whole BART model.</li>
+       </ul>`,
+
     symbols: [
       { sym: "$x$", desc: "the clean original token sequence (the target the model must reconstruct)." },
       { sym: "$\\tilde{x}$", desc: "the corrupted input: $x$ after the noising function damages it (read 'x-tilde')." },
@@ -181,9 +225,22 @@
     ],
 
     formula:
-      `$$\\mathcal{L}(\\theta) \\;=\\; -\\sum_{t=1}^{|x|} \\log\\, p_\\theta\\!\\big(x_t \\mid x_{\\lt t},\\, \\tilde{x}\\big),
-        \\qquad \\tilde{x} = g(x)
-        \\qquad\\text{(reconstruction loss, Section 2.2)}$$`,
+      `$$\\tilde{x} \\;=\\; g(x)
+        \\qquad\\text{(corruption: the noising function damages the clean document, Section 2.2)}$$
+       <p>Apply one of the five noising functions $g$ &mdash; token masking, token deletion, text infilling, sentence
+       permutation, or document rotation &mdash; to the clean document $x$ to get the corrupted input $\\tilde{x}$.</p>
+       $$p_\\theta\\big(x \\mid \\tilde{x}\\big) \\;=\\; \\prod_{t=1}^{|x|} p_\\theta\\big(x_t \\mid x_{\\lt t},\\, \\tilde{x}\\big)
+        \\qquad\\text{(autoregressive factorization the decoder computes, Section 2.1)}$$
+       <p>The decoder is left-to-right: the probability of the whole original document factorizes into a product of
+       per-token conditionals, each token given the corrupted source and the tokens already produced.</p>
+       $$\\mathcal{L}(\\theta) \\;=\\; -\\sum_{t=1}^{|x|} \\log\\, p_\\theta\\!\\big(x_t \\mid x_{\\lt t},\\, \\tilde{x}\\big)
+        \\qquad\\text{(reconstruction loss = negative log-likelihood / cross-entropy, Section 2.2)}$$
+       <p>The training objective: the cross-entropy between the decoder's output and the original document, summed over
+       positions. Minimizing it teaches the model to undo the corruption $g$.</p>
+       $$s \\sim \\text{Poisson}(\\lambda=3),\\quad \\text{span of length } s \\;\\longrightarrow\\; [\\text{MASK}]
+        \\qquad\\text{(Text Infilling span rule, Section 2.2)}$$
+       <p>For Text Infilling, each span's length is drawn from a Poisson distribution with mean 3, and the whole span is
+       replaced by a <b>single</b> mask token; a 0-length draw inserts a mask without removing anything.</p>`,
 
     whatItDoes:
       `<p>The equation is the <b>reconstruction cross-entropy</b> the paper describes in Section 2.2 ("the cross-entropy

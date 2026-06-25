@@ -137,6 +137,32 @@
        way as the teacher's. The architecture (&sect;3) keeps BERT's design but takes "one layer out of two"
        (halving depth), removes the token-type embeddings and the pooler, and <b>initializes the student from
        the teacher</b> by copying every other layer.</p>`,
+    architecture:
+      `<p><b>The student keeps BERT's general architecture, halved in depth</b> (&sect;3). The teacher is
+       BERT-base: 12 Transformer encoder layers, hidden size 768, ~110M parameters. DistilBERT is the
+       <b>6-layer student</b> &mdash; "the number of layers is reduced by a factor of 2" &mdash; ~66M
+       parameters, i.e. <b>40% smaller</b>.</p>
+       <ul>
+        <li><b>What is kept.</b> The hidden dimension (768) and the per-layer Transformer block (multi-head
+        self-attention + feed-forward) are unchanged. The paper notes most of the compute is governed by the
+        number of layers, not the hidden size, so halving <i>depth</i> (not width) is what buys the speedup.</li>
+        <li><b>What is removed.</b> The <b>token-type embeddings</b> (the segment-A / segment-B embedding BERT
+        adds for sentence-pair tasks) and the final <b>pooler</b> (the dense layer on the [CLS] token) are
+        dropped. The <b>next-sentence-prediction (NSP)</b> objective is also dropped.</li>
+        <li><b>Initialization from the teacher.</b> The student is not trained from random weights: each of its
+        6 layers is initialized by copying <b>"one layer out of two"</b> from the 12-layer teacher (e.g. take
+        the teacher's even-numbered layers). Distilling between architectures of different depth is hard, so
+        starting the student near the teacher matters.</li>
+        <li><b>Where the three losses attach.</b> $L_{mlm}$ comes from the student's masked-LM head (predict the
+        blanked-out token). $L_{ce}$ matches the student's softened output distribution to the teacher's over
+        the same masked positions. $L_{cos}$ aligns the student's hidden-state vectors to the teacher's at the
+        layer level &mdash; a per-layer directional match on top of the output-level match.</li>
+       </ul>
+       <p><b>Training setup (&sect;3).</b> Pre-trained on the same corpus as BERT (English Wikipedia + Toronto
+       Book Corpus), following RoBERTa best practices: <b>dynamic masking</b> (the masked positions change each
+       epoch), <b>very large batches</b> (up to ~4K examples, via gradient accumulation), and <b>no NSP</b>.
+       Result: <b>60% faster</b> inference than BERT and <b>71% faster</b> on an iPhone 7 Plus, while
+       <b>retaining 97%</b> of BERT's GLUE language-understanding score.</p>`,
     symbols: [
       { sym: "$z_i$", desc: "a <b>logit</b>: the model's raw, pre-softmax score for class $i$ (any real number). The teacher's logits are $z^{(t)}$, the student's $z^{(s)}$." },
       { sym: "$T$", desc: "the <b>temperature</b>: a number you divide the logits by before the softmax. $T = 1$ is the normal softmax; $T \\gt 1$ smooths the distribution so the small 'dark knowledge' probabilities become visible. Set back to $1$ at inference." },
@@ -145,11 +171,37 @@
       { sym: "$s_i$", desc: "the <b>student's</b> softened probability for class $i$." },
       { sym: "$L_{ce}$", desc: "the <b>distillation loss</b> $\\sum_i t_i \\log(s_i)$: the cross-entropy between the teacher's soft targets and the student's soft predictions. ('ce' = cross-entropy.)" },
       { sym: "$L_{mlm}$", desc: "the <b>masked-language-modeling loss</b>: BERT's ordinary 'predict the blanked-out word' training loss (here, the student's normal hard-label cross-entropy on the true labels)." },
-      { sym: "$L_{cos}$", desc: "the <b>cosine-embedding loss</b>: pushes the student's hidden-state vectors to point in the same <i>direction</i> as the teacher's (cosine = the angle-based similarity of two vectors)." },
+      { sym: "$L_{cos}$", desc: "the <b>cosine-embedding loss</b> $1 - \\cos(h^{(s)}, h^{(t)})$: pushes the student's hidden-state vectors to point in the same <i>direction</i> as the teacher's (cosine = the angle-based similarity of two vectors)." },
+      { sym: "$h^{(s)}, h^{(t)}$", desc: "the <b>hidden-state vectors</b> of the student and teacher at a layer: the internal activation vectors $L_{cos}$ aligns by direction. $\\lVert h \\rVert$ is the vector's length (Euclidean norm) and $h^{(s)} \\cdot h^{(t)}$ their dot product." },
       { sym: "$\\alpha$", desc: "the <b>mixing weight</b> (a plain term, not from the paper's notation) that balances how much the student listens to the soft teacher targets vs the hard true labels in the linear combination." },
       { sym: "“dark knowledge”", desc: "a plain term: the small probabilities the teacher places on the <i>wrong</i> classes, encoding which classes it finds similar &mdash; information a one-hot label throws away." }
     ],
-    formula: `$$ p_i = \\frac{\\exp(z_i/T)}{\\sum_j \\exp(z_j/T)} \\qquad\\qquad L_{ce} = \\sum_i t_i \\, \\log(s_i) \\qquad\\text{(\\S2)} $$`,
+    formula:
+      `$$ p_i = \\frac{\\exp(z_i/T)}{\\sum_j \\exp(z_j/T)} $$
+       <p>The <b>softmax-temperature</b> (&sect;2). Each logit $z_i$ is divided by the temperature $T$ before the
+       softmax; $T \\gt 1$ smooths the distribution to expose the teacher's small 'dark knowledge' probabilities.
+       The same $T$ is applied to teacher and student during training; $T = 1$ at inference recovers the standard
+       softmax.</p>
+       $$ L_{ce} = \\sum_i t_i \\, \\log(s_i) $$
+       <p>The <b>distillation loss</b> (&sect;2): the soft-target cross-entropy between the teacher's softened
+       probabilities $t_i$ and the student's $s_i$. As an objective it is minimized as $-\\sum_i t_i \\log s_i$;
+       with the same teacher targets this is equivalent, up to a constant, to the Kullback&ndash;Leibler
+       divergence $\\mathrm{KL}(t \\,\\|\\, s) = \\sum_i t_i \\log(t_i/s_i)$ &mdash; "how far the student
+       distribution is from the teacher's."</p>
+       $$ L_{cos} = 1 - \\cos\\!\\big(h^{(s)},\\, h^{(t)}\\big)
+          = 1 - \\frac{h^{(s)} \\cdot h^{(t)}}{\\lVert h^{(s)} \\rVert \\, \\lVert h^{(t)} \\rVert} $$
+       <p>The <b>cosine-embedding loss</b> (&sect;2): it aligns the <i>direction</i> of the student hidden-state
+       vector $h^{(s)}$ with the teacher's $h^{(t)}$. It is $0$ when the two vectors point the same way and grows
+       toward $2$ as they diverge. (The paper names this loss and its role; the cosine form is the standard
+       definition.)</p>
+       $$ L = L_{ce} + L_{mlm} + L_{cos} \\qquad\\text{(\\S2, "Training loss" \\textemdash the triple loss)} $$
+       <p>The <b>final training objective</b> (&sect;2): a linear combination of the distillation loss $L_{ce}$,
+       the masked-language-modeling loss $L_{mlm}$, and the cosine-embedding loss $L_{cos}$ &mdash; "a triple
+       loss combining language modeling, distillation and cosine-distance losses" (Abstract).</p>
+       $$ L = \\alpha\\, T^2 \\Big(\\!-\\!\\sum_i t_i \\log s_i\\Big) + (1-\\alpha)\\, L_{\\text{hard}} $$
+       <p>The <b>practical implementation</b> of the $L_{ce}$ + hard-label mix we build in code: the soft term is
+       scaled by $T^2$ to keep its gradient comparable to the hard term (Hinton et al. 2015), with $\\alpha$ the
+       mixing weight and $L_{\\text{hard}}$ the cross-entropy on the true labels (the $L_{mlm}$ role here).</p>`,
     whatItDoes:
       `<p>The <b>left</b> equation is the softmax-temperature: take each logit $z_i$, divide by the temperature
        $T$, exponentiate, and normalize so the outputs sum to 1. With $T = 1$ it is the ordinary softmax; as

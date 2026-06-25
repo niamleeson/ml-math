@@ -145,6 +145,43 @@
        <p>For this lesson's notebook we implement the two <b>parameter</b> tricks (factorization + sharing) on
        a tiny encoder and measure them, because they are the architectural core; SOP is a data/loss change we
        describe and ablate conceptually (see the practice section).</p>`,
+    architecture:
+      `<p>ALBERT is a BERT encoder with three modifications. Component by component, a token flows like this:</p>
+       <ol>
+        <li><b>Factorized embedding (input stage).</b> Token id &rarr; <code>Embedding(V, E)</code> giving a
+        small width-$E$ vector ($V\\times E$ table) &rarr; <code>Linear(E, H)</code> up-projection ($E\\times H$,
+        shared by all tokens) giving the width-$H$ hidden state. Add positional + segment embeddings. BERT skips
+        this split and uses one $V\\times H$ table ($E = H$).</li>
+        <li><b>One shared encoder block, applied $L$ times.</b> The block is a standard Transformer encoder
+        layer: multi-head self-attention (with $H/64$ heads) &rarr; residual + LayerNorm &rarr; feed-forward of
+        inner size $4H$ (so <code>Linear(H, 4H)</code> &rarr; activation &rarr; <code>Linear(4H, H)</code>) &rarr;
+        residual + LayerNorm. ALBERT stores this block's weights <i>once</i> ($\\theta$) and loops the input
+        through it $L$ times; the network is $L$ deep but holds one layer's parameters.</li>
+        <li><b>Two pre-training heads.</b> (a) The <b>MLM head</b> ($H\\to V$) predicts the original token at each
+        masked position. (b) The <b>SOP head</b> ($H\\to 2$) reads the <code>[CLS]</code> vector and classifies
+        in-order vs swapped &mdash; replacing BERT's NSP head.</li>
+       </ol>
+       <p><b>Config table (Table 1).</b> All ALBERT models use $E = 128$, feed-forward inner size $4H$, and
+       $H/64$ attention heads; all are fully cross-layer shared. BERT uses $E = H$ and no sharing.</p>
+       <table>
+        <thead><tr>
+          <th>Model</th><th>Params</th><th>Layers $L$</th><th>Hidden $H$</th><th>Embed $E$</th><th>Shared</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>BERT-base</td><td>108M</td><td>12</td><td>768</td><td>768</td><td>no</td></tr>
+          <tr><td>BERT-large</td><td>334M</td><td>24</td><td>1024</td><td>1024</td><td>no</td></tr>
+          <tr><td>ALBERT-base</td><td>12M</td><td>12</td><td>768</td><td>128</td><td>all</td></tr>
+          <tr><td>ALBERT-large</td><td>18M</td><td>24</td><td>1024</td><td>128</td><td>all</td></tr>
+          <tr><td>ALBERT-xlarge</td><td>60M</td><td>24</td><td>2048</td><td>128</td><td>all</td></tr>
+          <tr><td>ALBERT-xxlarge</td><td>235M</td><td>12</td><td>4096</td><td>128</td><td>all</td></tr>
+        </tbody>
+       </table>
+       <p><b>Parameter savings (Table 1).</b> ALBERT-base has <b>12M</b> vs BERT-base's <b>108M</b> ($\\approx
+       9\\times$ fewer); ALBERT-large (24 layers) has <b>18M</b> vs BERT-large's <b>334M</b> ($\\approx 18\\times$
+       fewer). The two cuts compound: factorization shrinks the embedding ($23.0$M $\\to 3.9$M for $H=768$), and
+       sharing divides the encoder's distinct layer weights by $L$. ALBERT-xxlarge has only $H=4096$ with $L=12$
+       and still lands at 235M &mdash; <i>fewer</i> than BERT-large's 334M &mdash; while beating it on GLUE/RACE/SQuAD
+       (abstract). Note xxlarge stops at $L=12$ because the paper found 24 layers gave no further gain.</p>`,
     symbols: [
       { sym: "$V$", desc: "the <b>vocabulary size</b>: how many distinct tokens (word-pieces) the model knows. BERT-base uses about $30{,}000$." },
       { sym: "$H$", desc: "the <b>hidden size</b> (model width): the length of every token vector inside the encoder. ALBERT-base uses $H=768$." },
@@ -152,6 +189,13 @@
       { sym: "$L$", desc: "the <b>number of stacked encoder layers</b> (the depth). With sharing, the model is still $L$ layers deep but stores one block's weights." },
       { sym: "$V \\times H$", desc: "the <b>BERT embedding parameter count</b>: one $H$-dimensional vector per vocabulary entry." },
       { sym: "$V \\times E + E \\times H$", desc: "the <b>ALBERT factorized embedding parameter count</b>: a $V\\times E$ small-embedding table plus one $E\\times H$ up-projection matrix shared by all tokens." },
+      { sym: "$x_\\ell$", desc: "the <b>hidden state entering layer $\\ell$</b>: the width-$H$ token vectors after $\\ell$ passes through the encoder block ($x_0$ is the embedded input)." },
+      { sym: "$\\theta$", desc: "the <b>single shared encoder-block weights</b> (attention + feed-forward + LayerNorms). Under cross-layer sharing the same $\\theta$ is used at every one of the $L$ layers." },
+      { sym: "$P_{\\text{layer}}$", desc: "the <b>parameter count of one encoder block</b>. BERT stores $L\\cdot P_{\\text{layer}}$; ALBERT stores just $P_{\\text{layer}}$." },
+      { sym: "$\\mathcal{L}_{\\text{SOP}}$", desc: "the <b>sentence-order prediction loss</b>: binary cross-entropy on whether segments $A,B$ are in order or swapped." },
+      { sym: "$y$", desc: "the <b>SOP label</b>: $y=1$ when $A,B$ are in their true consecutive order, $y=0$ when the two segments are swapped." },
+      { sym: "$A,\\,B$", desc: "the <b>two consecutive text segments</b> from the same document fed to the SOP head; the negative example uses the same pair with order reversed." },
+      { sym: "$n,\\,N$", desc: "in n-gram masking, the <b>span length</b> $n$ to mask and the <b>maximum span length</b> $N=3$; longer spans are masked less often." },
       { sym: "MLM", desc: "<b>masked-language model</b>: the fill-in-the-blank pre-training task &mdash; hide ~15% of tokens with a <code>[MASK]</code> symbol and predict the originals from the surrounding context." },
       { sym: "NSP", desc: "<b>next-sentence prediction</b>: BERT's second loss &mdash; classify whether sentence B truly follows sentence A or is a random sentence from another document." },
       { sym: "SOP", desc: "<b>sentence-order prediction</b>: ALBERT's replacement loss &mdash; both examples are two consecutive segments from the <i>same</i> document; the model must say whether they are in the correct order or swapped." },
@@ -159,7 +203,14 @@
       { sym: "factorization", desc: "a plain term: writing one big matrix (here the $V\\times H$ embedding) as a product of two smaller ones ($V\\times E$ and $E\\times H$) to cut its parameter count." }
     ],
     formula: `$$ \\underbrace{O(V \\times H)}_{\\text{BERT embedding}} \\;\\longrightarrow\\; \\underbrace{O(V \\times E + E \\times H)}_{\\text{ALBERT factorized embedding}} \\qquad (E \\ll H) \\quad\\text{(\\S 3.1)} $$
-$$ \\text{distinct encoder-layer params:}\\quad \\underbrace{L \\cdot P_{\\text{layer}}}_{\\text{no sharing (BERT)}} \\;\\longrightarrow\\; \\underbrace{P_{\\text{layer}}}_{\\text{share all layers (ALBERT)}} \\quad\\text{(\\S 3.1)} $$`,
+<p>Factorized embedding parameterization (&sect;3.1): instead of one big $V\\times H$ table, store a small $V\\times E$ table and lift it with one shared $E\\times H$ matrix. With $E \\ll H$ this is far smaller.</p>
+$$ x_{\\ell+1} = \\text{Block}(x_\\ell;\\,\\theta), \\qquad \\ell = 0, 1, \\dots, L-1 \\quad\\text{(one shared } \\theta \\text{ for all } L \\text{ layers, \\S 3.1)} $$
+$$ \\text{distinct encoder-layer params:}\\quad \\underbrace{L \\cdot P_{\\text{layer}}}_{\\text{no sharing (BERT)}} \\;\\longrightarrow\\; \\underbrace{P_{\\text{layer}}}_{\\text{share all layers (ALBERT)}} \\quad\\text{(\\S 3.1)} $$
+<p>Cross-layer parameter sharing (&sect;3.1): one block's weights $\\theta$ are reused at every depth, so the encoder stores $P_{\\text{layer}}$ instead of $L\\cdot P_{\\text{layer}}$ &mdash; a factor-$L$ cut.</p>
+$$ \\mathcal{L}_{\\text{SOP}} = -\\,\\mathbb{E}\\big[\\, y\\,\\log p(\\text{in-order}\\mid A,B) + (1-y)\\,\\log p(\\text{swapped}\\mid A,B) \\,\\big] $$
+<p>Sentence-order prediction loss (&sect;3.1) replacing BERT's next-sentence prediction. Positive ($y{=}1$): two consecutive segments $A,B$ from the same document, in order. Negative ($y{=}0$): the <i>same</i> two segments with their order swapped. Same topic in both cases, so only coherence/order separates them. The paper reports an SOP-trained model scores $86.5\\%$ on SOP while an NSP-trained model scores only $52.0\\%$ (chance).</p>
+$$ p(n) = \\frac{1/n}{\\sum_{k=1}^{N} 1/k}, \\qquad N = 3 $$
+<p>N-gram masking probability (&sect;3, a small data tweak): the masked span length $n$ is sampled with probability inversely proportional to $n$, up to $N=3$. Shorter spans are masked more often.</p>`,
     whatItDoes:
       `<p><b>Top line (factorized embedding, &sect;3.1).</b> BERT's embedding table stores one $H$-wide vector
        for each of the $V$ tokens: $V \\times H$ numbers. ALBERT instead stores a small $V \\times E$ table
@@ -170,7 +221,14 @@ $$ \\text{distinct encoder-layer params:}\\quad \\underbrace{L \\cdot P_{\\text{
        encoder block. A standard $L$-layer Transformer stores $L \\cdot P_{\\text{layer}}$. ALBERT stores just
        $P_{\\text{layer}}$ and applies it $L$ times, so the depth (and compute) is unchanged but the distinct
        weight count drops by a factor of $L$. Together the two tricks are why ALBERT-base has ~12M parameters
-       where BERT-base has ~108M (Table 1).</p>`,
+       where BERT-base has ~108M (Table 1).</p>
+       <p><b>SOP loss (&sect;3.1).</b> $\\mathcal{L}_{\\text{SOP}}$ is a binary cross-entropy: given two
+       consecutive segments $A,B$ from one document, predict whether they are in their true order ($y=1$) or
+       swapped ($y=0$). Because both classes share topic, the only separating signal is discourse coherence
+       &mdash; which is why an NSP-trained model can only guess (~52%) on this task.</p>
+       <p><b>N-gram masking (&sect;3).</b> The span-length formula $p(n) = (1/n)/\\sum_{k=1}^{N}(1/k)$ says: when
+       masking, prefer short spans &mdash; length-1 is most likely, length-3 ($N=3$) least &mdash; a minor data
+       tweak layered on top of the 15% MLM masking.</p>`,
     derivation:
       `<p>This is an architecture/efficiency paper, not a new equation, so the "derivation" is the parameter
        arithmetic &mdash; and that is exactly what the notebook checks.</p>

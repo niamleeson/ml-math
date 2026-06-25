@@ -171,6 +171,40 @@
        consistent across the segment boundary. (In the toy code we use a tiny learned bias-per-distance as a
        stand-in for $R_{i-j}$ &mdash; the structure, not the exact sinusoidal form, is what matters for the
        demo.)</p>`,
+    architecture:
+      `<p>Transformer-XL is a stack of $N$ identical decoder blocks (the base block is the
+       <b>paper-transformer</b> machinery: multi-head self-attention &rarr; residual + LayerNorm &rarr;
+       position-wise feed-forward &rarr; residual + LayerNorm). Two things are bolted on: a
+       <b>per-layer memory cache</b> and a <b>relative-position attention score</b>. Data flow, for
+       segment $\\tau{+}1$:</p>
+       <ol>
+        <li><b>Embed.</b> Map the $L$ input tokens of the current segment to hidden states
+        $h_{\\tau+1}^{0}$ (dimension $d$). No absolute position vector is added &mdash; position is injected
+        inside attention instead.</li>
+        <li><b>Per layer $n = 1\\ldots N$ &mdash; build the extended context.</b> Read the cached states
+        $m_{\\tau}^{n-1} = h_{\\tau}^{n-1}$ that this same layer produced for the <i>previous</i> segment and
+        concatenate (with stop-gradient): $\\tilde h_{\\tau+1}^{n-1} = [\\,\\mathrm{SG}(h_{\\tau}^{n-1}) \\circ
+        h_{\\tau+1}^{n-1}\\,]$, length $M{+}L$ where $M$ is the memory length.</li>
+        <li><b>Relative multi-head attention.</b> Queries from the current segment only
+        ($q = h_{\\tau+1}^{n-1} W_q^{\\!\\top}$); keys/values from the extended context
+        ($k,v = \\tilde h_{\\tau+1}^{n-1} W_{k,E}^{\\!\\top},\\, \\tilde h_{\\tau+1}^{n-1} W_v^{\\!\\top}$). Scores
+        are the four-term $A^{\\mathrm{rel}}_{i,j}$ &mdash; content$\\times$content, content$\\times$relative
+        ($W_{k,R} R_{i-j}$), and the two global biases $u,v$ &mdash; with <b>causal masking</b>
+        (Masked-Softmax) so a query attends only to itself and earlier positions.</li>
+        <li><b>Residual + LayerNorm, then feed-forward + residual + LayerNorm</b> &mdash; the standard block,
+        producing $h_{\\tau+1}^{n}$.</li>
+        <li><b>Cache.</b> Store $h_{\\tau+1}^{n}$ as the memory for this layer to use on segment $\\tau{+}2$.</li>
+        <li><b>Output head.</b> After the top layer, a linear + softmax over the vocabulary predicts the next
+        token at each position.</li>
+       </ol>
+       <p><b>The recurrence mechanism.</b> Because layer $n$ of one segment feeds layer $n$'s memory for the
+       <i>next</i> segment, and each layer can also reach the layer below it from the previous segment, the
+       reachable context deepens by one segment per layer: the <b>effective context length is</b> $O(N \\times
+       L)$ &mdash; $N$ layers times segment length $L$ &mdash; rather than the single window $L$ of the vanilla
+       segmented model. <b>The relative-position attention</b> is what makes this splice coherent: position
+       enters only as the gap $R_{i-j}$, so a cached key is simply "further to the left," well-defined across
+       the segment boundary. At <b>evaluation</b>, the model advances one whole segment at a time and reuses the
+       cache instead of recomputing the window, which is the source of the large speed-up.</p>`,
     symbols: [
       { sym: "token", desc: "one unit of input &mdash; a word or sub-word piece. A long document is a list of tokens, here chopped into segments." },
       { sym: "segment", desc: "a fixed-length window of $L$ consecutive tokens. The vanilla model trains on each segment independently; Transformer-XL lets a segment see the previous one." },
@@ -184,13 +218,28 @@
       { sym: "$W_q,\\,W_k,\\,W_v$", desc: "the learned <b>projection matrices</b> that map a hidden state to its query / key / value. In &sect;3.3 the key map splits into $W_{k,E}$ (content) and $W_{k,R}$ (relative position)." },
       { sym: "$A_{i,j}$", desc: "the <b>attention score</b> between query at position $i$ and key at position $j$ (before softmax). The superscript marks the absolute ($\\mathrm{abs}$) vs relative ($\\mathrm{rel}$) form." },
       { sym: "$E_{x_i}$", desc: "the <b>content embedding</b> of the token sitting at position $i$ &mdash; depends on the token, not its position." },
-      { sym: "$U_i$", desc: "the <b>absolute</b> positional encoding of position $i$ in the original Transformer. Transformer-XL removes this from the score." },
+      { sym: "$U_i,\\,U_j$", desc: "the <b>absolute</b> positional encodings of query position $i$ and key position $j$ in the original Transformer (appear in $A^{\\mathrm{abs}}$). Transformer-XL removes both from the score." },
+      { sym: "$W_{k,E},\\,W_{k,R}$", desc: "the <b>split key projections</b> in the relative score: $W_{k,E}$ maps content embeddings to content keys, $W_{k,R}$ maps the relative encoding $R_{i-j}$ to position keys." },
+      { sym: "$L$", desc: "the <b>segment length</b> &mdash; how many tokens are in one fixed window." },
+      { sym: "$N$", desc: "the <b>number of layers</b> in the stack (same as the top of the $n$ range)." },
+      { sym: "$M$", desc: "the <b>memory length</b> &mdash; how many cached previous-segment states are concatenated in front of the current segment (here $M=L$)." },
+      { sym: "$O(N\\times L)$", desc: "the <b>effective (largest learnable) dependency length</b>: with $N$ layers and segment length $L$, recurrence makes context grow linearly in both, far beyond a single window." },
       { sym: "$R_{i-j}$", desc: "the <b>relative</b> positional encoding: a vector that depends only on the distance $i-j$ between query and key. Replaces $U_j$ in the score." },
       { sym: "$u,\\,v$", desc: "two <b>trainable vectors</b> (one per the content and position terms) that replace the query's absolute-position term, which would otherwise be the same for every query &mdash; so it can be a single learned bias." },
       { sym: "perplexity", desc: "a plain term for a language model's score (lower = better): roughly, how 'surprised' the model is by the true next token, on average." }
     ],
-    formula: `$$ \\tilde h_{\\tau+1}^{\\,n-1} = \\big[\\, \\mathrm{SG}\\!\\big(h_{\\tau}^{\\,n-1}\\big) \\circ h_{\\tau+1}^{\\,n-1} \\,\\big], \\qquad q_{\\tau+1}^{\\,n} = h_{\\tau+1}^{\\,n-1} W_q^{\\!\\top}, \\quad k_{\\tau+1}^{\\,n},\\, v_{\\tau+1}^{\\,n} = \\tilde h_{\\tau+1}^{\\,n-1} W_k^{\\!\\top},\\ \\tilde h_{\\tau+1}^{\\,n-1} W_v^{\\!\\top} \\quad\\text{(\\S 3.2)} $$
-$$ A_{i,j}^{\\mathrm{rel}} = \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_{k,E}\\, E_{x_j}}_{(a)\\ \\text{content--content}} + \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_{k,R}\\, R_{i-j}}_{(b)\\ \\text{content--position}} + \\underbrace{u^{\\!\\top} W_{k,E}\\, E_{x_j}}_{(c)\\ \\text{global content}} + \\underbrace{v^{\\!\\top} W_{k,R}\\, R_{i-j}}_{(d)\\ \\text{global position}} \\quad\\text{(\\S 3.3)} $$`,
+    formula: `$$ \\tilde h_{\\tau+1}^{\\,n-1} = \\big[\\, \\mathrm{SG}\\!\\big(h_{\\tau}^{\\,n-1}\\big) \\circ h_{\\tau+1}^{\\,n-1} \\,\\big] \\quad\\text{(\\S 3.2 — segment-level recurrence: cache the previous segment, stop-gradient on it)} $$
+<p>Cache segment $\\tau$'s layer-$(n{-}1)$ states and splice them in front of segment $\\tau{+}1$'s. $\\mathrm{SG}$ = stop-gradient (fixed memory); $\\circ$ = concatenate along the sequence.</p>
+$$ q_{\\tau+1}^{\\,n} = h_{\\tau+1}^{\\,n-1} W_q^{\\!\\top}, \\qquad k_{\\tau+1}^{\\,n} = \\tilde h_{\\tau+1}^{\\,n-1} W_k^{\\!\\top}, \\qquad v_{\\tau+1}^{\\,n} = \\tilde h_{\\tau+1}^{\\,n-1} W_v^{\\!\\top} \\quad\\text{(\\S 3.2)} $$
+<p><b>Queries</b> come only from the current segment $h_{\\tau+1}^{\\,n-1}$; <b>keys and values</b> from the extended (cached + current) context $\\tilde h_{\\tau+1}^{\\,n-1}$.</p>
+$$ h_{\\tau+1}^{\\,n} = \\text{Transformer-Layer}\\big(q_{\\tau+1}^{\\,n},\\, k_{\\tau+1}^{\\,n},\\, v_{\\tau+1}^{\\,n}\\big) \\quad\\text{(\\S 3.2 — recurrent hidden-state update)} $$
+<p>The layer-$n$ state of segment $\\tau{+}1$ depends on layer $n{-}1$ of segment $\\tau$; stacking $N$ layers chains this back through $N$ segments.</p>
+$$ A_{i,j}^{\\mathrm{abs}} = \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_k\\, E_{x_j}}_{(a)} + \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_k\\, U_j}_{(b)} + \\underbrace{U_i^{\\!\\top} W_q^{\\!\\top} W_k\\, E_{x_j}}_{(c)} + \\underbrace{U_i^{\\!\\top} W_q^{\\!\\top} W_k\\, U_j}_{(d)} \\quad\\text{(\\S 3.3 — the absolute-position score, expanded)} $$
+<p>Expanding $(E_{x_i}{+}U_i)^{\\!\\top} W_q^{\\!\\top} W_k (E_{x_j}{+}U_j)$ into content/position $\\times$ content/position. Transformer-XL rewrites every $U$ term:</p>
+$$ A_{i,j}^{\\mathrm{rel}} = \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_{k,E}\\, E_{x_j}}_{(a)\\ \\text{content--content}} + \\underbrace{E_{x_i}^{\\!\\top} W_q^{\\!\\top} W_{k,R}\\, R_{i-j}}_{(b)\\ \\text{content--relative position}} + \\underbrace{u^{\\!\\top} W_{k,E}\\, E_{x_j}}_{(c)\\ \\text{global content bias}} + \\underbrace{v^{\\!\\top} W_{k,R}\\, R_{i-j}}_{(d)\\ \\text{global position bias}} \\quad\\text{(\\S 3.3 — relative-position score)} $$
+<p>Three edits: absolute key $U_j \\to R_{i-j}$ (relative encoding); absolute query $U_i^{\\!\\top} W_q^{\\!\\top} \\to$ a single trainable $u$ in $(c)$ and $v$ in $(d)$; the key map splits into $W_{k,E}$ (content) and $W_{k,R}$ (relative).</p>
+$$ \\text{effective / largest dependency length} = O(N \\times L) \\quad\\text{(\\S 3.2)} $$
+<p>With $N$ layers and segment length $L$, recurrence chains memory across layers and segments, so the longest learnable dependency grows linearly in both — not the single window $L$ of the vanilla model.</p>`,
     whatItDoes:
       `<p><b>Top line (segment recurrence, &sect;3.2).</b> Read it left to right: build $\\tilde h$ by gluing
        the <i>cached</i> previous-segment states (with a stop-gradient, so they act as fixed memory) in front

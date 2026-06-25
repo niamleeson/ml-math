@@ -130,6 +130,38 @@
        rare long-range link is carried either by stacking windows or by a global token. So the dropped entries are
        mostly near-zero anyway — Longformer spends compute where the attention weight actually lives.</p>`,
 
+    architecture:
+      `<p>Longformer is a standard Transformer encoder/decoder stack in which the dense self-attention of every
+       layer is swapped for one sparse <b>attention pattern</b> (Section 3.1, Figure 1). Everything else — the
+       embeddings, feed-forward sub-layers, residual connections, layer norms — is untouched. The novelty lives
+       entirely in the per-layer attention mask and projections.</p>
+       <p><b>The attention pattern (the four masks of Figure 1), in order of construction:</b></p>
+       <ol>
+         <li><b>Full attention (baseline).</b> Dense $n\\times n$ mask — every token to every token. $O(n^2)$.</li>
+         <li><b>Sliding-window mask.</b> A diagonal <i>band</i> of width $w$: pair $(i,j)$ is live iff
+         $|i-j|\\le\\tfrac{1}{2}w$. Each row keeps $\\le w$ entries, so the layer costs $O(n\\times w)$. Window size
+         $w$ may vary per layer — small windows in the lower layers, larger in the upper layers (Section 4.1).</li>
+         <li><b>Dilated sliding-window mask.</b> The band keeps only every $d$-th position (gaps of size $d$), so $w$
+         live keys span a wider range. Per the paper's char-LM config, dilation is $0$ for the lower layers and a
+         small increasing value only on $2$ heads of the higher layers (Section 4.1); receptive field
+         $=\\ell\\times d\\times w$.</li>
+         <li><b>Global + sliding mask.</b> The window mask plus a few fully-live rows <i>and</i> columns at the
+         pre-selected global positions.</li>
+       </ol>
+       <p><b>Where global attention attaches (task-specific, Section 3.1).</b> The global positions are chosen by the
+       task, not learned: the <code>[CLS]</code> classification token for sequence/document classification; every
+       <i>question token</i> for question-answering; the whole set is tiny ($g\\ll n$). A global token attends to all
+       $n$ tokens (its full row) and is attended by all $n$ tokens (its full column) — symmetric — so task-critical
+       signal crosses the entire sequence in a single layer.</p>
+       <p><b>Two projection sets (Section 3.1).</b> Sliding-window scores use one linear projection
+       $(Q_s,K_s,V_s)$; global scores use a second, independent projection $(Q_g,K_g,V_g)$ initialized to match the
+       first. So a global token is scored with different learned weights than ordinary windowed tokens.</p>
+       <p><b>Linear-in-sequence scaling.</b> Per layer: sliding band $=O(n\\times w)$, global rows/columns
+       $=O(g\\times n)$ with $g$ a small constant, total $O(n)$ — versus full $O(n^2)$. Memory scales the same way
+       <i>only</i> with the banded kernel of Section 3.2 (the <code>cuda</code>/TVM kernel, or the
+       <code>loop</code>/<code>chunks</code> variants) that never materializes the $n\\times n$ table; our teaching
+       code builds and masks the full table for clarity, so it is $O(n^2)$ memory.</p>`,
+
     symbols: [
       { sym: "$n$", desc: "the sequence length — the number of tokens. Full attention cost grows like $n^2$; Longformer's like $n$." },
       { sym: "$w$", desc: "the sliding-window size: each token attends to a band of $w$ neighbours total ($\\tfrac{1}{2}w$ on each side). A fixed constant, not growing with $n$." },
@@ -141,13 +173,58 @@
       { sym: "$QK^\\top$", desc: "the raw $n\\times n$ score table; Longformer only keeps a band (window) plus a few global rows/columns of it." },
       { sym: "receptive field", desc: "how far apart two tokens can be and still influence each other. One window layer reaches $\\pm\\tfrac{1}{2}w$; $\\ell$ layers reach $\\ell\\times w$." },
       { sym: "global token", desc: "a pre-selected position (e.g. the classification token) that attends to all tokens and is attended by all — its own projections in the paper." },
+      { sym: "$g$", desc: "the number of global tokens — a small constant independent of $n$ (e.g. one $[CLS]$, or all question tokens). They add $O(g\\times n)$ work (Section 3.1)." },
+      { sym: "$(Q_s,K_s,V_s)$", desc: "the linear projection used for sliding-window attention scores (Section 3.1)." },
+      { sym: "$(Q_g,K_g,V_g)$", desc: "the separate, independent linear projection used for global-attention scores, initialized to match $(Q_s,K_s,V_s)$ (Section 3.1)." },
+      { sym: "$\\mathcal{N}^{\\text{win}}(i)$", desc: "the set of keys token $i$ may attend to under the sliding window: all $j$ with $|i-j|\\le\\tfrac{1}{2}w$." },
+      { sym: "$\\mathcal{N}^{\\text{dil}}(i)$", desc: "the dilated window's allowed key set: positions in the band spaced $d$ apart ($(i-j)\\bmod d=0$)." },
+      { sym: "$[CLS]$", desc: "the special classification token; in document classification it is given global attention (Section 3.1)." },
       { sym: "$O(n\\times w)$", desc: "big-O notation: the work grows in proportion to $n$ times $w$; with $w$ fixed this is linear in $n$ (Section 3.1)." },
       { sym: "$O(n^2)$", desc: "the cost of full self-attention: proportional to $n$ squared, so doubling $n$ quadruples the cost (Section 1)." },
       { sym: "BPC", desc: "bits-per-character: a character-level language-modeling score; lower is better. The paper's character-LM metric (Section 4.2)." }
     ],
 
     formula:
-      `$$\\text{cost}_{\\text{full}} = O(n^2) \\quad\\longrightarrow\\quad \\text{cost}_{\\text{Longformer}} = O(n\\times w)$$`,
+      `$$\\text{Attention}(Q,K,V) = \\operatorname{softmax}\\!\\left(\\frac{QK^\\top}{\\sqrt{d_k}}\\right)V$$
+       <p>Eq. (1): the standard scaled-dot-product attention Longformer keeps unchanged — score every query
+       against every key, scale by $\\sqrt{d_k}$, softmax into weights, take the weighted sum of values. Longformer
+       changes only <i>which</i> $(i,j)$ pairs enter the softmax.</p>
+
+       $$A^{\\text{full}}_{ij} = \\frac{Q_i\\!\\cdot\\!K_j}{\\sqrt{d_k}}\\ \\text{for all } j
+       \\qquad\\Longrightarrow\\qquad
+       \\text{cost}_{\\text{full}} = O(n^2)$$
+       <p>Full self-attention (Section 1): each of $n$ tokens attends to all $n$ tokens, giving the $n\\times n$
+       score table whose cost grows quadratically — the bottleneck.</p>
+
+       $$j \\in \\mathcal{N}^{\\text{win}}(i) \\iff |i-j| \\le \\tfrac{1}{2}w
+       \\qquad\\Longrightarrow\\qquad
+       \\text{cost}_{\\text{window}} = O(n\\times w)$$
+       <p>Sliding-window attention (Section 3.1): token $i$ attends only to the band of $\\tfrac{1}{2}w$ tokens on
+       each side. The paper: <i>"The computation complexity of this pattern is $O(n\\times w)$, which scales linearly
+       with input sequence length $n$."</i> With $w$ fixed this is linear in $n$.</p>
+
+       $$\\text{receptive field after } \\ell \\text{ layers} = \\ell \\times w$$
+       <p>Stacking restores long range (Section 3.1): <i>"In a transformer with $\\ell$ layers, the receptive field
+       size at the top layer is $\\ell\\times w$ (assuming $w$ is fixed for all layers)."</i></p>
+
+       $$j \\in \\mathcal{N}^{\\text{dil}}(i) \\iff |i-j| \\le \\tfrac{1}{2}w\\,d \\ \\text{ and }\\ (i-j)\\bmod d = 0
+       \\qquad\\Longrightarrow\\qquad
+       \\text{receptive field} = \\ell \\times d \\times w$$
+       <p>Dilated sliding window (Section 3.1): put gaps of size $d$ between attended positions, so the same $w$
+       live keys span a wider range. The receptive field becomes $\\ell\\times d\\times w$, which <i>"can reach tens
+       of thousands of tokens even for small values of $d$."</i> Different heads use different dilation $d$.</p>
+
+       $$\\text{sliding: } (Q_s,K_s,V_s) \\qquad\\qquad \\text{global: } (Q_g,K_g,V_g)$$
+       <p>Global + sliding attention (Section 3.1): a few pre-selected tokens get <b>global</b> attention — they
+       attend to all tokens and all tokens attend to them. The paper uses <i>two separate sets of linear
+       projections</i>: <i>"$Q_s,K_s,V_s$ to compute attention scores of sliding window attention, and
+       $Q_g,K_g,V_g$ to compute attention scores for the global attention"</i> (with $Q_g,K_g,V_g$ initialized to
+       match $Q_s,K_s,V_s$). Global rows/columns use Eq. (1) with the $g$-projections.</p>
+
+       $$\\text{cost}_{\\text{Longformer}} = \\underbrace{O(n\\times w)}_{\\text{sliding}} + \\underbrace{O(g\\times n)}_{\\text{global, } g \\text{ tokens}} = O(n)$$
+       <p>Combined complexity (Section 3.1): because the number of global tokens $g$ is small and independent of $n$,
+       <i>"the complexity of the combined local and global attention is still $O(n)$"</i> — linear, versus full
+       $O(n^2)$.</p>`,
 
     whatItDoes:
       `<p>This is the complexity claim of Section 3.1, not a learned equation: full self-attention scores all

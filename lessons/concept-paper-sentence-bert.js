@@ -147,6 +147,31 @@
        <p><b>At inference</b> (&sect;7) you never run the pair through together: encode each sentence once into
        its vector, store it, and compare any two with a cheap cosine. That is the 65-hours &rarr; 5-seconds win
        &mdash; you replaced $O(n^2)$ joint forward passes with $n$ encodes plus fast vector arithmetic.</p>`,
+    architecture:
+      `<p>SBERT is a thin head on top of a frozen-in-structure BERT, wired into one of three
+       configurations. The encoder branch is identical in all three; only how the branches combine differs.</p>
+       <p><b>Encoder branch (shared, the "tower").</b> One sentence $s$ &rarr; BERT (a stack of Transformer
+       encoder layers, output width $n$; $n=768$ for BERT-base) &rarr; $L$ token vectors $h_1,\\dots,h_L$ &rarr;
+       <b>pooling layer</b> &rarr; one fixed sentence embedding in $\\mathbb{R}^n$. The pooling layer is the
+       only added structure here and offers three modes:</p>
+       <ul>
+        <li><b>MEAN</b> (default): $\\frac{1}{L}\\sum_i h_i$ &mdash; average all token vectors.</li>
+        <li><b>CLS</b>: take only $h_{\\mathrm{[CLS]}}$, BERT's leading special-token vector.</li>
+        <li><b>MAX</b>: element-wise max over time, $\\max_i h_{i,d}$ for each dimension $d$.</li>
+       </ul>
+       <p><b>Siamese configuration &mdash; classification (Figure 1).</b> Two encoder branches with <b>tied
+       weights</b> run on sentences $A$ and $B$, giving $u$ and $v$. A concatenation layer forms
+       $(u,\\,v,\\,|u-v|)\\in\\mathbb{R}^{3n}$, a single linear layer $W_t\\in\\mathbb{R}^{3n\\times k}$ projects
+       to $k$ class logits, and softmax + cross-entropy trains it. Width flow: $n,n \\to 3n \\to k$.</p>
+       <p><b>Siamese configuration &mdash; regression / inference (Figure 2).</b> The same two tied branches
+       produce $u$ and $v$; a cosine-similarity node compares them. In <i>training</i> the cosine is fit to the
+       gold label with MSE; in <i>inference</i> the cosine score <i>is</i> the output. No classification head.</p>
+       <p><b>Triplet configuration.</b> <i>Three</i> tied encoder branches run on anchor, positive, and negative
+       to give $s_a,s_p,s_n$; the triplet-margin loss on Euclidean distances combines them. Same shared encoder,
+       three passes instead of two.</p>
+       <p><b>Why "tied".</b> All branches are the <i>same</i> weights &mdash; structurally there is one encoder,
+       drawn as 2 or 3 copies only to show that two/three sentences flow through it. This is what places every
+       sentence in a single comparable embedding space (the metric-learning requirement).</p>`,
     symbols: [
       { sym: "token", desc: "one unit of input &mdash; a word or sub-word piece. BERT outputs one vector per token." },
       { sym: "$u,\\ v$", desc: "the <b>pooled sentence embeddings</b> of the two input sentences: each is one fixed-length vector produced by the (shared) tower." },
@@ -164,9 +189,16 @@
       { sym: "$\\epsilon$", desc: "the <b>margin</b> in the triplet loss &mdash; how much closer (in distance) the anchor must be to the positive than to the negative. The paper sets $\\epsilon=1$." },
       { sym: "MSE", desc: "<b>mean-squared error</b>: average of $(\\text{prediction}-\\text{target})^2$. The regression objective fits $\\cos(u,v)$ to the gold similarity with MSE." }
     ],
-    formula: `$$ o = \\mathrm{softmax}\\big(W_t\\,(u,\\ v,\\ |u-v|)\\big), \\qquad W_t \\in \\mathbb{R}^{3n\\times k} \\quad\\text{(classification objective, \\S 3)} $$
-$$ \\max\\!\\big(\\,\\lVert s_a - s_p\\rVert \\;-\\; \\lVert s_a - s_n\\rVert \\;+\\; \\epsilon,\\ \\ 0\\,\\big), \\qquad \\epsilon = 1 \\quad\\text{(triplet objective, \\S 3)} $$
-$$ \\text{and the comparison used throughout:}\\quad \\cos(u,v) = \\frac{u\\cdot v}{\\lVert u\\rVert\\,\\lVert v\\rVert} $$`,
+    formula: `$$ u = \\mathrm{MEAN\\text{-}pool}\\big(\\mathrm{BERT}(s)\\big) = \\frac{1}{L}\\sum_{i=1}^{L} h_i, \\qquad h_i \\in \\mathbb{R}^{n} $$
+<p>The siamese BERT with MEAN-pooling: run the shared BERT over a sentence $s$ to get $L$ token vectors $h_1,\\dots,h_L$, then average them into one fixed sentence embedding $u\\in\\mathbb{R}^n$ (the same tied weights produce $v$ for the partner sentence). (&sect;3, default pooling.)</p>
+$$ o = \\mathrm{softmax}\\big(W_t\\,(u,\\ v,\\ |u-v|)\\big), \\qquad W_t \\in \\mathbb{R}^{3n\\times k} $$
+<p>Classification objective: concatenate $u$, $v$, and the element-wise absolute difference $|u-v|$, project with $W_t$, softmax to $k$ label classes; trained with cross-entropy. (&sect;3.)</p>
+$$ \\cos(u,v) = \\frac{u\\cdot v}{\\lVert u\\rVert\\,\\lVert v\\rVert}, \\qquad \\mathcal{L} = \\mathrm{MSE}\\big(\\cos(u,v),\\ y\\big) = \\big(\\cos(u,v)-y\\big)^2 $$
+<p>Regression objective: compute the cosine similarity of $u$ and $v$ and fit it to the gold similarity $y$ with mean-squared error. (&sect;3.)</p>
+$$ \\max\\!\\big(\\,\\lVert s_a - s_p\\rVert \\;-\\; \\lVert s_a - s_n\\rVert \\;+\\; \\epsilon,\\ \\ 0\\,\\big), \\qquad \\epsilon = 1 $$
+<p>Triplet objective: keep the anchor at least a margin $\\epsilon$ (Euclidean distance, $\\epsilon=1$) nearer the positive $s_p$ than the negative $s_n$. (&sect;3.)</p>
+$$ \\text{Inference:}\\quad \\hat{y} = \\cos(u,v) = \\frac{u\\cdot v}{\\lVert u\\rVert\\,\\lVert v\\rVert} $$
+<p>At inference, encode each sentence once into its embedding, then score any pair by plain cosine similarity &mdash; no joint forward pass. (&sect;6 inference / &sect;7.)</p>`,
     whatItDoes:
       `<p><b>Classification objective (top, &sect;3).</b> Build the feature vector
        $(u,\\,v,\\,|u-v|)$ &mdash; both sentence embeddings plus their element-wise absolute difference, a

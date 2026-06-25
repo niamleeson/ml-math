@@ -159,12 +159,65 @@
        prompt, read off the next-token distribution from the head, <b>sample</b> a token from it (often with a
        temperature, see <b>mod-llm</b>), append it, and repeat. The sampled text is what improves as training
        loss falls.</p>`,
+    architecture:
+      `<p>GPT-2 is a <b>decoder-only Transformer</b>: a single tower of identical masked-self-attention blocks,
+       with no encoder and no cross-attention. Data flows bottom to top through five stages (\\S 2.2&ndash;2.3).</p>
+       <p><b>Stage 1 &mdash; Tokenizer (byte-level BPE, \\S 2.2).</b> Raw text is first turned into a sequence of
+       integer token ids. GPT-2 uses <b>Byte-Pair Encoding over bytes</b>, not characters or words: the base
+       vocabulary is the <b>256 possible byte values</b> (so <i>any</i> Unicode string is representable &mdash;
+       no out-of-vocabulary token ever), and frequent byte pairs are greedily <b>merged</b> into new tokens up
+       to a final vocabulary of <b>50,257</b>. (A Unicode-level BPE would need a base vocabulary "of over
+       130,000 before any multi-symbol tokens are added"; bytes keep it to 256.) One extra rule: BPE is
+       prevented from merging <i>across character categories</i> (e.g. it will not glue a letter to punctuation),
+       so the model is not forced to learn many spellings of <code>dog</code> (<code>dog.</code>,
+       <code>dog!</code>, <code>dog?</code>).</p>
+       <p><b>Stage 2 &mdash; Embeddings.</b> Each token id indexes a <b>token-embedding</b> table into a
+       $d_{\\text{model}}$-dimensional vector, and a <b>learned positional-embedding</b> table (one vector per
+       position, up to the 1024-token context) is <b>added</b> so the model knows token order. (GPT uses
+       <i>learned</i> position vectors, not the original Transformer's fixed sinusoids.)</p>
+       <p><b>Stage 3 &mdash; The decoder block, repeated $N$ times.</b> Each block has two sub-layers, each
+       wrapped in a residual connection, with <b>Layer Normalization moved to the input of each sub-block</b>
+       (pre-norm, \\S 2.3): &nbsp;(i)&nbsp;<b>masked multi-head self-attention</b> &mdash; the scaled
+       dot-product attention from <b>paper-transformer</b>, but with a <b>causal mask</b> that sets every
+       attention score from position $t$ to a future position $j\\gt t$ to $-\\infty$ before the softmax, so a
+       token can attend only to itself and the past; &nbsp;(ii)&nbsp;a position-wise <b>feed-forward network</b>
+       (two linear layers with a nonlinearity, inner width typically $4\\,d_{\\text{model}}$). In symbols a block
+       is $x \\leftarrow x + \\mathrm{Attn}(\\mathrm{LN}(x))$ then $x \\leftarrow x + \\mathrm{FF}(\\mathrm{LN}(x))$.
+       Multi-head means $d_{\\text{model}}$ is split into several heads that attend independently and are
+       concatenated.</p>
+       <p><b>Stage 4 &mdash; Final LayerNorm + head.</b> After the last block, GPT-2 adds <b>one extra
+       LayerNorm</b> ("an additional layer normalization was added after the final self-attention block",
+       \\S 2.3), then a <b>linear output head</b> maps each position's $d_{\\text{model}}$ vector to a row of
+       <b>50,257 logits</b>, one per vocabulary token. Softmax over that row is the next-token distribution.</p>
+       <p><b>Stage 5 &mdash; Initialization detail.</b> Residual-layer weights are scaled at init by
+       $1/\\sqrt{N}$ ($N$ = number of residual layers) to "account for the accumulation on the residual path"
+       (\\S 2.3) &mdash; deeper stacks start with smaller residual contributions so the running sum stays
+       well-scaled.</p>
+       <p><b>The four sizes (Table 2).</b> All four are the <i>same</i> architecture, scaled by depth $N$ and
+       width $d_{\\text{model}}$:</p>
+       <ul>
+        <li><b>117M</b> params &mdash; $N=12$ layers, $d_{\\text{model}}=768$ &nbsp;("equivalent to the original GPT", \\S 3)</li>
+        <li><b>345M</b> params &mdash; $N=24$ layers, $d_{\\text{model}}=1024$ &nbsp;("equivalent to the largest model from BERT", \\S 3)</li>
+        <li><b>762M</b> params &mdash; $N=36$ layers, $d_{\\text{model}}=1280$</li>
+        <li><b>1542M (1.5B)</b> params &mdash; $N=48$ layers, $d_{\\text{model}}=1600$ &nbsp;&mdash; this is <b>GPT-2</b></li>
+       </ul>
+       <p>Context size is <b>1024 tokens</b> (raised from GPT's 512) and the batch size is 512 (\\S 2.3). The
+       tiny model you build below is this exact stack shrunk to $N=3$, $d_{\\text{model}}=64$, char-level
+       tokens instead of byte-level BPE.</p>`,
     symbols: [
       { sym: "token", desc: "one unit of input. GPT-2 uses byte-level BPE sub-word tokens; in our tiny build a token is a single <b>character</b>, which is the simplest honest choice." },
       { sym: "$(s_1,\\dots,s_n)$", desc: "a <b>sequence of tokens</b> &mdash; the text, written as a list of token symbols in order. $n$ is its length." },
       { sym: "$s_i$", desc: "the <b>$i$-th token</b> in the sequence; the thing the model predicts from the tokens before it." },
       { sym: "$p(x)$", desc: "the <b>probability the model assigns to the whole sequence</b> $x=(s_1,\\dots,s_n)$. Equation 1 writes it as a product of next-token probabilities." },
       { sym: "$p(s_i \\mid s_1,\\dots,s_{i-1})$", desc: "the <b>next-token conditional</b>: the probability of token $s_i$ given all the tokens that came before it. This is exactly what one forward pass of the model outputs (after softmax) at position $i-1$." },
+      { sym: "$n$, $i$", desc: "$n$ is the <b>sequence length</b> (number of tokens); $i$ is the <b>position index</b> running $1\\dots n$. Eq. 1's product and the loss's sum both run over $i$." },
+      { sym: "$p(s_{n-k},\\dots,s_n \\mid s_1,\\dots,s_{n-k-1})$", desc: "a <b>general suffix conditional</b>: the probability of the last $k{+}1$ tokens given the prefix before them. Eq. 1's factorization makes any such conditional computable &mdash; that is what lets one trained model both score and generate arbitrary continuations (\\S 2)." },
+      { sym: "$L(\\mathcal{U})$", desc: "the <b>language-modeling objective</b> of the GPT line: the summed log-probability the model assigns to each true next token over the corpus. <i>Maximizing</i> $L$ = <i>minimizing</i> the cross-entropy loss." },
+      { sym: "$\\mathcal{U}$", desc: "the <b>unsupervised training corpus</b> &mdash; the pile of raw tokens (for GPT-2, the 40&nbsp;GB WebText) summed over in $L(\\mathcal{U})$." },
+      { sym: "$k$", desc: "the <b>context window</b> size: how many previous tokens the model conditions on. 512 in the original GPT, raised to 1024 in GPT-2 (\\S 2.3)." },
+      { sym: "$\\theta$", desc: "the <b>model parameters</b> (all the embedding tables, attention and feed-forward weights, LayerNorm scales). Training adjusts $\\theta$ to maximize $L(\\mathcal{U})$." },
+      { sym: "$p(\\text{output}\\mid\\text{input})$ vs $p(\\text{output}\\mid\\text{input},\\text{task})$", desc: "<b>task conditioning</b> (\\S 2). A single-task system estimates $p(\\text{output}\\mid\\text{input})$; a general system also conditions on the <b>task</b>. GPT-2 specifies the task in plain language inside the input text, so one next-token LM covers many tasks <b>zero-shot</b> &mdash; no task-specific parameters." },
+      { sym: "$d_{\\text{model}}$ split into heads", desc: "<b>multi-head</b> attention divides the width $d_{\\text{model}}$ into $h$ heads of size $d_k=d_{\\text{model}}/h$; each head attends independently and the results are concatenated back to width $d_{\\text{model}}$." },
       { sym: "$\\prod$", desc: "<b>product</b> (multiply together) &mdash; here over the $n$ positions, so $p(x)$ is the product of all the per-position next-token probabilities." },
       { sym: "$d_{\\text{model}}$", desc: "the <b>model width</b>: the length of every token vector inside the network. Table 2 ranges it from $768$ (117M model) to $1600$ (1.5B model); our tiny build uses a small value like $32$." },
       { sym: "$N$", desc: "the number of <b>stacked Transformer blocks</b> (= residual layers). Table 2: 12 / 24 / 36 / 48 for the four sizes; the $1/\\sqrt{N}$ init uses this $N$." },
@@ -177,20 +230,40 @@
       { sym: "decoder-only / autoregressive", desc: "plain terms: <b>decoder-only</b> = a single stack of (masked) Transformer blocks with no separate encoder; <b>autoregressive</b> = generates one token at a time, each conditioned on the tokens generated so far." }
     ],
     formula: `$$ p(x) \\;=\\; \\prod_{i=1}^{n} p\\!\\left(s_i \\,\\middle|\\, s_1, \\dots, s_{i-1}\\right) \\qquad\\text{(Eq. 1, \\S 2)} $$
-$$ \\text{train by minimizing}\\quad \\mathcal{L} \\;=\\; -\\frac{1}{n}\\sum_{i=1}^{n} \\ln p\\!\\left(s_i \\,\\middle|\\, s_1,\\dots,s_{i-1}\\right) \\quad\\text{(the cross-entropy of Eq. 1)} $$`,
+<p>The factorization of a sequence's probability into a product of next-token conditionals — the chain rule of probability applied left-to-right. This is the whole unsupervised objective.</p>
+$$ p\\!\\left(s_{n-k}, \\dots, s_n \\,\\middle|\\, s_1, \\dots, s_{n-k-1}\\right) $$
+<p>The general conditional Eq. 1 lets you read off (\\S 2): the same model can score or sample any suffix given any prefix. The paper notes this factorization "allows for tractable sampling from and estimation of $p(x)$ as well as any conditionals of the form" above.</p>
+$$ L(\\mathcal{U}) \\;=\\; \\sum_{i} \\log P\\!\\left(s_i \\,\\middle|\\, s_{i-k}, \\dots, s_{i-1};\\, \\theta\\right) \\qquad\\text{(the GPT autoregressive LM objective; $k$ = context window)} $$
+<p>The training objective written as the GPT line states it: maximize, over the corpus $\\mathcal{U}$, the log-probability the network (parameters $\\theta$) assigns to each true token $s_i$ given the previous $k$ tokens. Maximizing this log-likelihood is identical to minimizing the next-token cross-entropy below; the $k$-window is the model's context size (512 in GPT, 1024 in GPT-2, \\S 2.3).</p>
+$$ \\text{train by minimizing}\\quad \\mathcal{L} \\;=\\; -\\frac{1}{n}\\sum_{i=1}^{n} \\ln p\\!\\left(s_i \\,\\middle|\\, s_1,\\dots,s_{i-1}\\right) \\quad\\text{(the cross-entropy of Eq. 1)} $$
+<p>The practical loss: average negative log-probability of the true next token. Logs turn Eq. 1's product into a sum (no underflow); the minus sign turns "maximize likelihood" into "minimize loss".</p>
+$$ p(\\text{output} \\mid \\text{input}) \\qquad\\longrightarrow\\qquad p(\\text{output} \\mid \\text{input},\\, \\text{task}) \\qquad\\text{(\\S 2, task conditioning / zero-shot)} $$
+<p>The conceptual leap. A single task is estimating $p(\\text{output}\\mid\\text{input})$; a general system "should condition not only on the input but also on the task to be performed," so it models $p(\\text{output}\\mid\\text{input},\\text{task})$. The paper's key move: "language provides a flexible way to specify tasks, inputs, and outputs all as a sequence of symbols" — so $\\text{task}$, $\\text{input}$, and $\\text{output}$ are all just text the same LM predicts. A translation example becomes the sequence (translate to french, english text, french text); a reading-comprehension example becomes (answer the question, document, question, answer). No new equation is needed: zero-shot task transfer is Eq. 1 applied to text that names its own task.</p>`,
     whatItDoes:
-      `<p><b>Top line (Equation 1, &sect;2).</b> The probability of an entire sequence is the product of, for
-       each position, the probability the model gives to the token that actually appears there <i>given only
-       the tokens before it</i>. Reading it left to right: predict $s_1$ from nothing, then $s_2$ from $s_1$,
-       then $s_3$ from $s_1 s_2$, and so on &mdash; multiply all those probabilities. The paper notes this
-       factorization "allows for tractable sampling from and estimation of $p(x)$": you can both score text and
-       <b>generate</b> it one token at a time.</p>
-       <p><b>Bottom line (the training loss).</b> Multiplying many probabilities underflows, so in practice we
-       take logs and a sum, and minimize the <b>average negative log-probability</b> of the true next token
-       &mdash; the cross-entropy. Each forward pass produces, at every position $t$, a logit row over the
-       vocabulary; softmax makes it a distribution; the loss at $t$ is $-\\ln$ of the probability it placed on
-       the real token at $t{+}1$. The causal mask is what guarantees position $t$'s prediction used only the
-       past, so this single pass scores all $n$ next-token predictions at once.</p>`,
+      `<p><b>Eq. 1 (&sect;2) &mdash; the factorization.</b> The probability of an entire sequence is the product
+       of, for each position, the probability the model gives to the token that actually appears there <i>given
+       only the tokens before it</i>. Reading it left to right: predict $s_1$ from nothing, then $s_2$ from
+       $s_1$, then $s_3$ from $s_1 s_2$, and so on &mdash; multiply all those probabilities.</p>
+       <p><b>The suffix conditional.</b> Because Eq. 1 is exact, the <i>same</i> trained model can read off any
+       conditional $p(s_{n-k},\\dots,s_n\\mid s_1,\\dots,s_{n-k-1})$ &mdash; the probability of any tail given any
+       head. The paper says this "allows for tractable sampling from and estimation of $p(x)$": one model both
+       <b>scores</b> existing text and <b>generates</b> new text one token at a time.</p>
+       <p><b>The GPT objective $L(\\mathcal{U})$.</b> Training maximizes, over the whole corpus, the
+       log-probability of each true next token given its preceding $k$-token window. This is the literal
+       training signal of the GPT line; it is the log of Eq. 1's product, summed over the corpus.</p>
+       <p><b>The training loss (cross-entropy).</b> Multiplying many probabilities underflows, so in practice we
+       take logs and a sum and <i>minimize</i> the <b>average negative log-probability</b> of the true next
+       token. Each forward pass produces, at every position $t$, a logit row over the 50,257-token vocabulary;
+       softmax makes it a distribution; the loss at $t$ is $-\\ln$ of the probability it placed on the real
+       token at $t{+}1$. The causal mask guarantees position $t$'s prediction used only the past, so one pass
+       scores all $n$ next-token predictions at once.</p>
+       <p><b>Task conditioning &rarr; zero-shot (&sect;2).</b> The last line is not a new loss &mdash; it is the
+       <i>reframing</i> that makes a plain LM multitask. Estimating one task is $p(\\text{output}\\mid\\text{input})$;
+       a general system should also condition on <i>which</i> task, $p(\\text{output}\\mid\\text{input},\\text{task})$.
+       GPT-2's trick is that you can write the task, input, and output all as one stream of tokens &mdash; e.g.
+       the sequence (translate to french, english text, french text). So predicting the next token (Eq. 1) on
+       text that <i>names its own task</i> already performs the task, with <b>no parameter or architecture
+       change</b>. That is zero-shot task transfer.</p>`,
     derivation:
       `<p><b>Why the product (chain rule of probability).</b> For <i>any</i> joint distribution over an ordered
        sequence, the chain rule says $p(s_1,\\dots,s_n) = p(s_1)\\,p(s_2\\mid s_1)\\,p(s_3\\mid s_1,s_2)\\cdots$,
@@ -204,7 +277,18 @@ $$ \\text{train by minimizing}\\quad \\mathcal{L} \\;=\\; -\\frac{1}{n}\\sum_{i=
        is the same as <i>minimizing</i> $-\\sum_i \\ln p(\\cdot)$ &mdash; the cross-entropy. So "predict the
        next token well" and "assign high probability to real text" are the same objective. The full derivation
        of cross-entropy as the negative log-likelihood lives in <b>dl-cross-entropy</b>; here we just apply it
-       per position. The temperature-sampling side of generation lives in <b>mod-llm</b>.</p>`,
+       per position. The temperature-sampling side of generation lives in <b>mod-llm</b>.</p>
+       <p><b>Why zero-shot multitask falls out for free.</b> The paper's argument (&sect;2): a supervised task
+       objective is "the same as the unsupervised objective but only evaluated on a subset of the sequence," so
+       "the global minimum of the unsupervised objective is also the global minimum of the supervised
+       objective." In words: if a sequence happens to contain a task demonstration &mdash; a question followed
+       by its answer, English followed by its French &mdash; then predicting the next token (Eq. 1) on the
+       answer part <i>is</i> performing that task. Because WebText contains many such naturally-occurring
+       demonstrations, an LM trained only on next-token prediction is implicitly trained on $p(\\text{output}\\mid
+       \\text{input},\\text{task})$ whenever the task is named in the text. So a sufficiently capable LM can do
+       the task <b>zero-shot</b>, just by being given the task as a prompt &mdash; no fine-tuning. The paper
+       cautions this is "much slower than explicitly supervised approaches," which is exactly why <b>scale</b>
+       (capacity + data) matters.</p>`,
     example:
       `<p>Two worked pieces, each recomputed in the notebook so you can check every number.</p>
        <p><b>(a) The causal mask.</b> Take a 3-token sequence, one head, width $d_k=2$, and (for clarity)

@@ -133,6 +133,35 @@
        $z' = \\mathrm{MSA}(\\mathrm{LN}(z)) + z$ then $z = \\mathrm{MLP}(\\mathrm{LN}(z')) + z'$. Note ViT puts
        LayerNorm <i>before</i> each sub-layer (<b>pre-norm</b>), unlike the original post-norm Transformer. After
        $L$ layers, take the class token's output, LayerNorm it, and feed a linear head: $y$.</p>`,
+    architecture:
+      `<p>ViT is a five-stage pipeline. The only image-specific part is the front end; the body is a stock
+       Transformer encoder (&sect;3.1, Figure 1).</p>
+       <p><b>1. Patchify.</b> Input image $x\\in\\mathbb{R}^{H\\times W\\times C}$. Reshape into $N=HW/P^2$
+       non-overlapping $P\\times P$ patches, each flattened to a vector of length $P^2 C$. For ViT-Base at
+       $224\\times224$, $C=3$, $P=16$: $N = 224^2/16^2 = 196$ patches.</p>
+       <p><b>2. Linear projection (patch embedding).</b> Multiply each flattened patch by the shared matrix
+       $E\\in\\mathbb{R}^{(P^2C)\\times D}$ to get an $N\\times D$ array of patch tokens. In code, one
+       <code>Conv2d</code> with kernel $=$ stride $=P$ does the patchify-and-project together.</p>
+       <p><b>3. [class] token + position embeddings.</b> Prepend the learnable class token $x_\\text{class}$ (sequence
+       length $\\to N{+}1$), then <b>add</b> the learnable position table $E_\\text{pos}\\in\\mathbb{R}^{(N+1)\\times D}$
+       (standard 1-D learned positions). This produces $z_0$ (Eq 1).</p>
+       <p><b>4. $L$ Transformer encoder layers.</b> Each layer is two residual sub-layers in <b>pre-norm</b> order:
+       LayerNorm $\\to$ multi-head self-attention $\\to$ add input (Eq 2), then LayerNorm $\\to$ MLP $\\to$ add input
+       (Eq 3). The MLP is two linear layers with a <b>GELU</b> nonlinearity ($D\\to$ MLP-size $\\to D$). Residual
+       connections after every block; LayerNorm before every block.</p>
+       <p><b>5. MLP classification head.</b> Take the class token's final state $z_L^0$, LayerNorm it (Eq 4). The
+       paper attaches an MLP with <b>one hidden layer at pre-training</b> time and a <b>single linear layer at
+       fine-tuning</b> time to produce class scores.</p>
+       <p><b>Model sizes (Table 1).</b> The notation ViT-L/16 means the Large variant with $P=16$.</p>
+       <ul>
+        <li><b>ViT-Base:</b> $L=12$ layers, hidden $D=768$, MLP size $3072$, $12$ heads, $86$M params.</li>
+        <li><b>ViT-Large:</b> $L=24$, $D=1024$, MLP $4096$, $16$ heads, $307$M params.</li>
+        <li><b>ViT-Huge:</b> $L=32$, $D=1280$, MLP $5120$, $16$ heads, $632$M params.</li>
+       </ul>
+       <p><b>Data-scale dependence (&sect;4).</b> The architecture has almost no image-specific inductive bias
+       (no locality, no translation equivariance &mdash; only the patch cut and the learned positions). Trained on
+       mid-sized data (ImageNet) it yields only modest accuracy; trained on $14$M&ndash;$300$M images it matches or
+       beats CNNs &mdash; "large scale training trumps inductive bias."</p>`,
     symbols: [
       { sym: "$H \\times W$", desc: "the image <b>height</b> and <b>width</b> in pixels." },
       { sym: "$C$", desc: "the number of <b>colour channels</b> ($3$ for RGB, $1$ for grayscale like MNIST)." },
@@ -154,7 +183,8 @@
     ],
     formula: `$$ z_0 = [\\,x_\\text{class};\\ x_p^1 E;\\ x_p^2 E;\\ \\cdots;\\ x_p^N E\\,] + E_\\text{pos}, \\qquad E\\in\\mathbb{R}^{(P^2C)\\times D},\\ \\ E_\\text{pos}\\in\\mathbb{R}^{(N+1)\\times D} \\quad\\text{(Eq 1, \\S 3.1)} $$
 $$ z'_\\ell = \\mathrm{MSA}(\\mathrm{LN}(z_{\\ell-1})) + z_{\\ell-1}, \\qquad z_\\ell = \\mathrm{MLP}(\\mathrm{LN}(z'_\\ell)) + z'_\\ell, \\qquad \\ell = 1\\ldots L \\quad\\text{(Eq 2-3)} $$
-$$ y = \\mathrm{LN}(z_L^0) \\quad\\text{(Eq 4: read out the class token)} $$`,
+$$ y = \\mathrm{LN}(z_L^0) \\quad\\text{(Eq 4: read out the class token; a head -- MLP w/ one hidden layer at pre-train, linear at fine-tune -- then maps } y \\text{ to class scores)} $$
+$$ N = \\frac{HW}{P^2} \\quad\\text{(\\S 3.1: number of patches = sequence length)} $$`,
     whatItDoes:
       `<p><b>Equation 1 (the patch-embedding front end).</b> Build the encoder's input sequence $z_0$. Flatten each
        of the $N$ patches and project it with the shared matrix $E$ to get $N$ patch tokens; <b>prepend</b> the

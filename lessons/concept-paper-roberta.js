@@ -149,6 +149,37 @@
        <p>None of these touches the attention or feed-forward math &mdash; that is the whole point. The
        model is BERT (<code>paper-bert</code>); only the training procedure changes.</p>`,
 
+    architecture:
+      `<p><b>The model is unchanged from BERT.</b> RoBERTa reuses the exact <b>BERT encoder</b> &mdash; a
+       stack of bidirectional Transformer encoder layers, each layer being multi-head self-attention
+       followed by a position-wise feed-forward block, with residual connections and layer normalization.
+       Tokens enter as the sum of a token embedding and a position embedding; the final hidden state at a
+       masked position is fed to a softmax over the vocabulary (the MLM head). The two sizes the paper uses
+       are BERT's own (Section 3 / BERT paper):</p>
+       <ul>
+         <li><b>BERT-base</b>: $L=12$ layers, hidden $H=768$, $A=12$ attention heads, ~110M parameters
+         (used for the masking and NSP ablations, Tables 1&ndash;2).</li>
+         <li><b>BERT-large</b>: $L=24$ layers, hidden $H=1024$, $A=16$ attention heads, ~355M parameters
+         (the final RoBERTa checkpoint, Section 5).</li>
+       </ul>
+       <p>The <b>MLM head</b> is the only output head &mdash; the BERT NSP classification head is deleted
+       (Section 4.2). So architecturally RoBERTa = BERT encoder + MLM head, no NSP head.</p>
+       <p><b>What actually changes is the pretraining recipe.</b> The contribution is this table of deltas:</p>
+       <table style="border-collapse:collapse;width:100%">
+         <tr><th style="text-align:left;border-bottom:1px solid #555;padding:4px">Knob</th>
+             <th style="text-align:left;border-bottom:1px solid #555;padding:4px">BERT</th>
+             <th style="text-align:left;border-bottom:1px solid #555;padding:4px">RoBERTa</th>
+             <th style="text-align:left;border-bottom:1px solid #555;padding:4px">§</th></tr>
+         <tr><td style="padding:4px">Masking</td><td style="padding:4px">static (mask once, 10&times; dup, 40 epochs)</td><td style="padding:4px">dynamic (fresh mask every pass)</td><td style="padding:4px">4.1</td></tr>
+         <tr><td style="padding:4px">Input / NSP</td><td style="padding:4px">SEGMENT-PAIR + NSP loss</td><td style="padding:4px">FULL-SENTENCES, NSP removed</td><td style="padding:4px">4.2</td></tr>
+         <tr><td style="padding:4px">Batch size</td><td style="padding:4px">256 sequences</td><td style="padding:4px">up to 8K sequences (LR retuned)</td><td style="padding:4px">4.3</td></tr>
+         <tr><td style="padding:4px">Tokenizer</td><td style="padding:4px">30K character-level BPE / WordPiece</td><td style="padding:4px">50K byte-level BPE (no UNK)</td><td style="padding:4px">4.4</td></tr>
+         <tr><td style="padding:4px">Data</td><td style="padding:4px">16GB (BookCorpus + Wikipedia)</td><td style="padding:4px">160GB (+ CC-News 76GB, OpenWebText 38GB, Stories 31GB)</td><td style="padding:4px">3.2</td></tr>
+         <tr><td style="padding:4px">Training length</td><td style="padding:4px">1M steps @ batch 256</td><td style="padding:4px">up to 500K steps @ large batch</td><td style="padding:4px">5</td></tr>
+       </table>
+       <p>Rows are independent knobs the paper ablated one at a time (Tables 1&ndash;4); the rightmost
+       column is the recipe that becomes "RoBERTa". The encoder itself is byte-for-byte BERT.</p>`,
+
     symbols: [
       { sym: "token", desc: "one unit of the input (a word or sub-word). MLM hides some tokens and asks the model to predict them." },
       { sym: "MLM", desc: "masked language modeling: the self-supervised task of predicting hidden (masked) tokens from their surrounding context." },
@@ -164,11 +195,44 @@
       { sym: "cross-entropy", desc: "the loss that measures how surprised the model is by the true token: $-\\log$ of the probability it assigned to that token. Smaller is better." },
       { sym: "perplexity", desc: "$e$ raised to the average MLM cross-entropy; an interpretable 'effective branching factor'. Lower = the model is less surprised. RoBERTa uses it in Table 3." },
       { sym: "batch size", desc: "the number of sequences processed before one weight update. BERT-large used 256; RoBERTa up to 8K (Section 4.3)." },
-      { sym: "BPE", desc: "byte-pair encoding: a sub-word tokenizer that merges frequent character pairs. RoBERTa uses a 50K byte-level BPE that never needs an 'unknown' token (Section 4.4)." }
+      { sym: "BPE", desc: "byte-pair encoding: a sub-word tokenizer that merges frequent character pairs. RoBERTa uses a 50K byte-level BPE that never needs an 'unknown' token (Section 4.4)." },
+      { sym: "$\\mathcal{L}_{\\text{NSP}}$", desc: "BERT's next-sentence-prediction loss, $-\\log P_\\theta(\\text{IsNext}\\mid A,B)$ — a binary cross-entropy on whether segment B follows segment A. RoBERTa drops this term entirely (Section 4.2)." },
+      { sym: "$A,B$", desc: "the two text segments paired in BERT's NSP task. RoBERTa instead packs contiguous FULL-SENTENCES and uses no pairing." },
+      { sym: "$\\mathcal{L}_{\\text{BERT}}$", desc: "BERT's total pretraining loss, the sum $\\mathcal{L}_{\\text{MLM}}+\\mathcal{L}_{\\text{NSP}}$. RoBERTa minimizes only the first term." },
+      { sym: "$M^{(e)}$", desc: "the masked set used at epoch $e$. Static keeps it fixed ($M^{(e)}=M$ for all $e$); dynamic re-samples it i.i.d. each epoch (Section 4.1)." },
+      { sym: "$E$", desc: "the number of training epochs / passes over the data." },
+      { sym: "$B$", desc: "the batch size in sequences. BERT-large used 256; RoBERTa up to 8K (Section 4.3). (Reused symbol: also denotes the second NSP segment in $A,B$.)" },
+      { sym: "$|\\mathcal{V}|$", desc: "the vocabulary size of the tokenizer. RoBERTa's byte-level BPE uses $|\\mathcal{V}|=50\\text{K}$ (Section 4.4)." },
+      { sym: "$L,H,A$", desc: "BERT encoder size: $L$ = number of Transformer layers, $H$ = hidden dimension, $A$ = number of attention heads (base: 12/768/12; large: 24/1024/16)." }
     ],
 
     formula:
-      `$$\\mathcal{L}_{\\text{MLM}}(\\theta)=\\frac{1}{|M|}\\sum_{i\\in M}-\\log P_\\theta\\!\\left(x_i \\mid \\hat x\\right)$$`,
+      `<p><b>Honest framing.</b> RoBERTa is an <i>empirical replication / ablation study</i>, not a new-math
+       paper. It introduces <b>no new equation</b>. The only objective is the masked-language-modeling
+       (MLM) loss it <i>keeps</i> from BERT; its contribution is a training recipe, which we state below as
+       precise design rules rather than as new formulas.</p>
+       <p><b>(1) The kept objective &mdash; MLM cross-entropy</b> (Section 2.3, BERT's objective that
+       RoBERTa retains):</p>
+       $$\\mathcal{L}_{\\text{MLM}}(\\theta)=\\frac{1}{|M|}\\sum_{i\\in M}-\\log P_\\theta\\!\\left(x_i \\mid \\hat x\\right)$$
+       <p>For every masked position $i$ in the masked set $M$, take the negative log of the probability the
+       model assigns to the true token $x_i$ given the corrupted sequence $\\hat x$, and average over $M$.
+       (Held-out quality is reported as perplexity $\\text{ppl}=\\exp(\\mathcal{L}_{\\text{MLM}})$, Table 3.)</p>
+       <p><b>(2) The 80/10/10 corruption rule</b> that defines $\\hat x$ from $x$ (Section 2.3): select a
+       fraction $p=0.15$ of positions to form $M$, then for each $i\\in M$,</p>
+       $$\\hat x_i=\\begin{cases}[\\text{MASK}] & \\text{with prob. } 0.8\\\\ \\text{a random vocab token} & \\text{with prob. } 0.1\\\\ x_i\\ (\\text{unchanged}) & \\text{with prob. } 0.1\\end{cases}\\qquad \\hat x_j=x_j\\ \\text{for } j\\notin M$$
+       <p><b>(3) Dynamic vs static masking</b> (Section 4.1) &mdash; the difference is <i>when</i> $M$ is
+       drawn, stated precisely. Static draws one fixed $M$ shared across every epoch
+       $e=1,\\dots,E$; dynamic draws an independent fresh $M^{(e)}$ at every pass:</p>
+       $$\\text{static: } M^{(e)}=M\\ \\ \\forall e \\qquad\\text{vs}\\qquad \\text{dynamic: } M^{(e)}\\overset{\\text{i.i.d.}}{\\sim}\\text{Mask}(p)\\ \\ \\text{per epoch}$$
+       <p><b>(4) Dropping the NSP loss</b> (Section 4.2). BERT minimized
+       $\\mathcal{L}_{\\text{BERT}}=\\mathcal{L}_{\\text{MLM}}+\\mathcal{L}_{\\text{NSP}}$, where
+       $\\mathcal{L}_{\\text{NSP}}=-\\log P_\\theta(\\text{IsNext}\\mid A,B)$ is a binary classification on
+       whether segment $B$ follows $A$. RoBERTa <i>removes</i> the second term and packs FULL-SENTENCES:</p>
+       $$\\mathcal{L}_{\\text{RoBERTa}}=\\mathcal{L}_{\\text{MLM}}\\quad(\\text{no }\\mathcal{L}_{\\text{NSP}})$$
+       <p><b>(5) Scale knobs</b> stated as the recipe deltas (Sections 3.2, 4.3, 4.4): batch size
+       $B$ raised from $256$ to $8\\text{K}$ sequences with the learning rate retuned; training data raised
+       from $16\\,\\text{GB}\\to 160\\,\\text{GB}$; a byte-level byte-pair-encoding (BPE) tokenizer with
+       $|\\mathcal{V}|=50\\text{K}$ that needs no "unknown" token. These are settings, not new math.</p>`,
 
     whatItDoes:
       `<p>This is the masked-language-modeling loss (the objective recapped in Section 2.3; RoBERTa keeps

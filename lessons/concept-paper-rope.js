@@ -139,6 +139,33 @@
        <b>block-diagonal</b> matrix $R^d_{\\Theta,m}$ (Eq. 15), and the relative-position cancellation holds
        block by block, so it holds for the whole vector.</p>`,
 
+    architecture:
+      `<p><b>Where RoPE sits in a Transformer.</b> RoPE is not a new layer &mdash; it is a fixed transform
+       inserted <i>inside</i> each self-attention head, between the query/key projections and the score
+       dot-product. Nothing else in the Transformer changes.</p>
+       <p><b>Data flow through one attention head</b> (sequence of $T$ tokens, model width $d$):</p>
+       <ol>
+         <li><b>Input.</b> Token embeddings $x_1,\\dots,x_T$, each a $d$-vector. Unlike sinusoidal encoding,
+         <b>no position vector is added here</b> &mdash; the embeddings stay position-free.</li>
+         <li><b>Projections.</b> For every token, compute the query, key, value:
+         $q = W_q x$, $k = W_k x$, $v = W_v x$ (the standard learned $d\\times d$ matrices).</li>
+         <li><b>Rotary transform (the only new step).</b> Apply $R^d_{\\Theta,m}$ to the query and
+         $R^d_{\\Theta,n}$ to the key, each at its <i>own</i> position, via the element-wise Eq. 34 form:
+         $\\tilde q_m = R^d_{\\Theta,m} q_m$, $\\tilde k_n = R^d_{\\Theta,n} k_n$. The <b>value $v$ is left
+         untouched.</b></li>
+         <li><b>Scores.</b> Scaled dot-product $\\tilde q_m^\\top \\tilde k_n/\\sqrt{d}$; by Eq. 16 this equals
+         $x_m^\\top W_q^\\top R^d_{\\Theta,n-m} W_k x_n/\\sqrt{d}$ &mdash; a function of the two contents and the
+         <b>relative distance $m-n$</b> only.</li>
+         <li><b>Softmax + mix.</b> Softmax the $T\\times T$ score matrix over keys, then take the weighted sum
+         of the (un-rotated) values $v$ to produce each token's output.</li>
+       </ol>
+       <p><b>Replicated across heads and layers.</b> Every head in every layer applies the same rotary transform
+       to its own $q,k$, sharing the frequency set $\\Theta=\\{\\theta_1,\\dots,\\theta_{d_h/2}\\}$ ($d_h$ = per-head
+       width). <b>Parameter cost: zero</b> &mdash; the angles are fixed, not learned, so RoPE adds no weights.
+       <b>Compute cost: negligible</b> &mdash; two element-wise $\\cos/\\sin$ multiplies per token. Because the
+       rotation is purely relative, the same trained model can be run on sequences longer than it was trained on
+       by scaling the angles (the basis for later RoPE-extension methods).</p>`,
+
     symbols: [
       { sym: "query / key", desc: "in attention, the query $q$ is one token's 'what am I looking for' vector; the key $k$ is another token's 'what do I offer' vector. Their dot product is the raw attention score. See $dl\\text{-}attention$." },
       { sym: "$m,\\,n$", desc: "the integer positions (indices) of two tokens in the sequence, e.g. $m=3$ means the 4th token. RoPE rotates by an angle proportional to the position." },
@@ -150,17 +177,51 @@
       { sym: "$R^d_{\\Theta,m}$", desc: "the full $d\\times d$ rotary matrix for position $m$ (Eq. 15): a block-diagonal stack of the $d/2$ small rotations $R(m\\theta_1),\\dots,R(m\\theta_{d/2})$, one per coordinate pair." },
       { sym: "orthogonal matrix", desc: "a matrix $R$ whose transpose is its inverse: $R^\\top R = I$. Rotations are orthogonal; this is exactly why $R_m^\\top R_n = R_{n-m}$." },
       { sym: "$R^\\top$", desc: "the transpose of $R$ (rows and columns swapped). For a rotation, $R(\\phi)^\\top = R(-\\phi)$ — the reverse turn." },
-      { sym: "$\\Theta$", desc: "the set of all the per-pair frequencies $\\{\\theta_1,\\dots,\\theta_{d/2}\\}$." }
+      { sym: "$\\Theta$", desc: "the set of all the per-pair frequencies $\\{\\theta_1,\\dots,\\theta_{d/2}\\}$." },
+      { sym: "$x_m$", desc: "the raw $d$-dimensional embedding of the token at position $m$ (its content, before any position is applied). RoPE keeps these position-free." },
+      { sym: "$W_q,\\,W_k,\\,W_v$", desc: "the learned projection matrices that turn an embedding $x$ into its query $W_q x$, key $W_k x$, and value $W_v x$. Standard Transformer weights; RoPE does not change them." },
+      { sym: "$f_q,\\,f_k$", desc: "the position-encoding functions RoPE defines: $f_q(x_m,m)$ takes the query content $x_m$ and its position $m$ and returns the rotated query $R^d_{\\Theta,m}W_q x_m$ (likewise $f_k$ for keys)." },
+      { sym: "$g$", desc: "the target function in the design requirement (Eq. 11): the inner product $\\langle f_q,f_k\\rangle$ must equal some $g(x_m,x_n,m-n)$ that uses only the contents and the relative distance." },
+      { sym: "$e^{im\\theta}$", desc: "complex-exponential rotation by angle $m\\theta$ (Euler: $\\cos m\\theta + i\\sin m\\theta$). In the 2-D base case (Eq. 12), multiplying the query-as-complex-number by this is exactly the $2\\times2$ rotation." },
+      { sym: "$\\odot$", desc: "the element-wise (Hadamard) product of two vectors — multiply matching entries. Used in the efficient Eq. 34 form." }
     ],
 
     formula:
-      `$$R(m\\theta)=\\begin{pmatrix}\\cos m\\theta & -\\sin m\\theta\\\\[2pt] \\sin m\\theta & \\cos m\\theta\\end{pmatrix}
-        \\qquad(\\text{2-D rotation, Eq. 13})$$
-       $$\\theta_i = 10000^{-2(i-1)/d},\\quad i=1,\\dots,d/2
-        \\qquad(\\text{per-pair frequencies, Eq. 15})$$
-       $$\\big(R^d_{\\Theta,m}\\,q\\big)^\\top\\big(R^d_{\\Theta,n}\\,k\\big)
-        = q^\\top\\,R^d_{\\Theta,\\,n-m}\\,k
-        \\qquad(\\text{relative-position property, Eq. 16})$$`,
+      `$$\\langle f_q(x_m,m),\\,f_k(x_n,n)\\rangle = g(x_m,\\,x_n,\\,m-n)
+        \\qquad(\\text{the design requirement, Eq. 11})$$
+       <p>Demand that the dot product of the encoded query and key be some function $g$ of the two
+       token contents and their <b>relative</b> distance $m-n$ only &mdash; never the absolute $m,n$.</p>
+       $$f_q(x_m,m) = \\big(W_q\\,x_m\\big)\\,e^{i m\\theta},\\qquad
+         f_k(x_n,n) = \\big(W_k\\,x_n\\big)\\,e^{i n\\theta}
+        \\qquad(\\text{2-D base case, Eqs. 12--13})$$
+       <p>The $d=2$ solution: project with $W_q$/$W_k$, treat the pair as a complex number, and multiply by
+       $e^{im\\theta}$ &mdash; i.e. rotate by angle $m\\theta$.</p>
+       $$R(m\\theta)=\\begin{pmatrix}\\cos m\\theta & -\\sin m\\theta\\\\[2pt] \\sin m\\theta & \\cos m\\theta\\end{pmatrix}
+        \\qquad(\\text{the }2\\times2\\text{ rotation block, Eq. 13})$$
+       <p>The same rotation written as a real matrix &mdash; the engine that turns a coordinate pair.</p>
+       $$f_{q,k}(x_m,m) = R^d_{\\Theta,m}\\,W_{q,k}\\,x_m,\\qquad
+         \\theta_i = 10000^{-2(i-1)/d},\\quad i=1,\\dots,d/2
+        \\qquad(\\text{general }d\\text{-dim form + frequencies, Eqs. 14--15})$$
+       <p>Project, then multiply by the block-diagonal rotary matrix $R^d_{\\Theta,m}$ (below). Each coordinate
+       pair $i$ spins at its own speed $\\theta_i$.</p>
+       $$R^d_{\\Theta,m}=\\begin{pmatrix}
+         R(m\\theta_1) & & \\\\ & \\ddots & \\\\ & & R(m\\theta_{d/2})
+       \\end{pmatrix}
+        \\qquad(\\text{block-diagonal rotary matrix, Eq. 15})$$
+       <p>$d/2$ of the small $2\\times2$ blocks stacked down the diagonal, one per pair.</p>
+       $$q_m^\\top k_n = \\big(R^d_{\\Theta,m}W_q x_m\\big)^\\top\\big(R^d_{\\Theta,n}W_k x_n\\big)
+        = x_m^\\top\\,W_q^\\top\\,R^d_{\\Theta,\\,n-m}\\,W_k\\,x_n
+        \\qquad(\\text{relative-position property, Eq. 16})$$
+       <p>The payoff: the two absolute rotations collapse into a single relative rotation $R^d_{\\Theta,n-m}$,
+       so the attention score sees only the distance $m-n$.</p>
+       $$R^d_{\\Theta,m}\\,x = x\\odot\\begin{pmatrix}\\cos m\\theta_1\\\\ \\cos m\\theta_1\\\\ \\vdots\\\\
+         \\cos m\\theta_{d/2}\\\\ \\cos m\\theta_{d/2}\\end{pmatrix}
+         + \\begin{pmatrix}-x_2\\\\ x_1\\\\ \\vdots\\\\ -x_d\\\\ x_{d-1}\\end{pmatrix}
+         \\odot\\begin{pmatrix}\\sin m\\theta_1\\\\ \\sin m\\theta_1\\\\ \\vdots\\\\
+         \\sin m\\theta_{d/2}\\\\ \\sin m\\theta_{d/2}\\end{pmatrix}
+        \\qquad(\\text{efficient element-wise form, Eq. 34})$$
+       <p>How you actually code it: an element-wise multiply by a $\\cos$ vector plus a swap-and-negate of $x$
+       times a $\\sin$ vector &mdash; no dense matrix needed ($\\odot$ is element-wise product).</p>`,
 
     whatItDoes:
       `<p>The first line is the engine: a $2\\times2$ matrix that turns a coordinate pair by the angle

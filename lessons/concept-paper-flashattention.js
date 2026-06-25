@@ -143,6 +143,41 @@
        <p><b>The key insight</b>: softmax looks un-splittable because of the global max and sum, but a running max plus a
        rescale-by-$e^{\\Delta m}$ makes it perfectly streamable — exact, one block at a time.</p>`,
 
+    architecture:
+      `<p>FlashAttention is not a network layer but a <b>fused GPU kernel</b> — one routine that does scoring, softmax, and
+       value-weighting in a single pass over on-chip memory, so the $N\\times N$ matrices $S$ and $P$ are never written to
+       HBM. Its structure is a doubly-nested tiled loop (Algorithm 1, Section 3.1).</p>
+       <p><b>Memory layout (the two-level hierarchy of Section 2).</b></p>
+       <ul>
+         <li><b>HBM</b> (large, slow): holds the inputs $Q,K,V$ (each $N\\times d$), the output $O$ ($N\\times d$), and the two
+         length-$N$ softmax statistics $m$ and $\\ell$. Nothing of size $N\\times N$ lives here.</li>
+         <li><b>SRAM</b> (small, fast, size $M$): holds one tile of $Q$, one tile of $K$ and $V$, and the small score patch
+         $S_{ij}$ formed from them. Everything in the inner loop happens here.</li>
+       </ul>
+       <p><b>Tiling (lines 1–5).</b> Choose block widths so a tile fits in SRAM:
+       $B_c=\\lceil M/4d\\rceil$ for the $K,V$ column-blocks and $B_r=\\min(\\lceil M/4d\\rceil,\\,d)$ for the $Q$ row-blocks.
+       This splits $K,V$ into $T_c=\\lceil N/B_c\\rceil$ blocks and $Q$ into $T_r=\\lceil N/B_r\\rceil$ blocks. The factor $4$
+       reserves SRAM for the four tiles ($Q_i,K_j,V_j,O_i$) in flight at once.</p>
+       <p><b>The kernel-level loop (lines 6–14).</b></p>
+       <ol>
+         <li><b>Outer loop over $K,V$ column-blocks</b> $j=1\\ldots T_c$ (line 6): load $K_j,V_j$ (each $B_c\\times d$) from
+         HBM into SRAM once.</li>
+         <li><b>Inner loop over $Q$ row-blocks</b> $i=1\\ldots T_r$ (line 8): load $Q_i$ and its current running state
+         $O_i,\\ell_i,m_i$ from HBM into SRAM.</li>
+         <li><b>On-chip compute</b> (lines 10–11): form the tile score $S_{ij}=Q_iK_j^\\top\\in\\mathbb{R}^{B_r\\times B_c}$,
+         take its row max $\\tilde m_{ij}$, exponentiate $\\tilde P_{ij}=e^{S_{ij}-\\tilde m_{ij}}$, and row-sum to
+         $\\tilde\\ell_{ij}$ — all in SRAM.</li>
+         <li><b>Online-softmax update</b> (line 12): bump $m_i^{\\text{new}}$, rescale and accumulate $\\ell_i$ and $O_i$ by the
+         formula in <code>formula</code>, and write the updated $O_i,\\ell_i,m_i$ back to HBM.</li>
+         <li><b>After the outer loop:</b> $O$ holds the exact $\\operatorname{softmax}(QK^\\top)V$; only $O,m,\\ell$ were ever
+         resident — $O(N)$ state (Theorem 1).</li>
+       </ol>
+       <p><b>Backward pass.</b> A symmetric tiled kernel: it stores only $O,m,\\ell$ from the forward pass and <b>recomputes</b>
+       each tile's $S_{ij},\\tilde P_{ij}$ in SRAM to form gradients, again never materializing an $N\\times N$ matrix in HBM.
+       Recomputation costs extra FLOPs but, because HBM traffic is the bottleneck, is still faster end-to-end (Section 3.1).</p>
+       <p>This lesson's PyTorch CODE mirrors the loop structure but, for clarity, keeps the small tiles in ordinary tensors;
+       the paper's contribution is doing it inside CUDA SRAM as one fused kernel.</p>`,
+
     symbols: [
       { sym: "$N$", desc: "the sequence length — the number of tokens. Standard attention's memory grows like $N^2$; FlashAttention's like $N$." },
       { sym: "$d$ (also $d_k$)", desc: "the head dimension — the length of each query/key/value vector. Scores are divided by $\\sqrt{d_k}$ (the scaling from paper-attention)." },
@@ -161,13 +196,45 @@
       { sym: "$M$", desc: "the SRAM size in bytes. Block sizes are chosen relative to $M$ (e.g. $B_c=\\lceil M/4d\\rceil$); IO cost is $\\Theta(N^2 d^2 M^{-1})$ (Theorem 2)." },
       { sym: "$O(N^2)$", desc: "big-O notation: standard attention's memory grows in proportion to $N$ squared — the $N\\times N$ table. Doubling $N$ quadruples it." },
       { sym: "$O(N)$", desc: "FlashAttention's extra memory: linear in $N$ — just the running $m,\\ell,O$ (Theorem 1). Doubling $N$ only doubles it." },
-      { sym: "exact attention", desc: "the output equals $\\mathrm{softmax}(QK^\\top)V$ to floating-point tolerance — NOT an approximation (Theorem 1). This is what torch.allclose verifies." }
+      { sym: "exact attention", desc: "the output equals $\\mathrm{softmax}(QK^\\top)V$ to floating-point tolerance — NOT an approximation (Theorem 1). This is what torch.allclose verifies." },
+      { sym: "$P=\\mathrm{softmax}(S)$", desc: "the $N\\times N$ attention-weight matrix (row-wise softmax of the scores). Standard attention materializes it in HBM; FlashAttention only forms one tile $\\tilde P_{ij}$ at a time." },
+      { sym: "$m(x),f(x),\\ell(x)$", desc: "the stable-softmax pieces for one length-$B$ row (eq. (1)): row max, unnormalized weights $e^{x-m(x)}$, and their sum. The whole online algorithm is built from these three." },
+      { sym: "$B$", desc: "the length of one softmax row segment in the eq. (1)/(2) decomposition — a generic block width used to introduce online softmax." },
+      { sym: "$B_c$", desc: "the key/value column-block width, $B_c=\\lceil M/4d\\rceil$ — sized so a $K,V$ tile fits in SRAM (Algorithm 1, line 1)." },
+      { sym: "$B_r$", desc: "the query row-block height, $B_r=\\min(\\lceil M/4d\\rceil,d)$ (Algorithm 1, line 1)." },
+      { sym: "$T_c,T_r$", desc: "the number of column-blocks ($T_c=\\lceil N/B_c\\rceil$) and row-blocks ($T_r=\\lceil N/B_r\\rceil$) the loop iterates over (Algorithm 1, line 5)." },
+      { sym: "$S_{ij},\\tilde P_{ij},\\tilde m_{ij},\\tilde\\ell_{ij}$", desc: "the per-tile quantities for query-block $i$ against key-block $j$: the $B_r\\times B_c$ score patch, its exp-weights, its row max, and its row sum (Algorithm 1, lines 10–11)." },
+      { sym: "$\\operatorname{diag}(v)$", desc: "the diagonal matrix with vector $v$ on its diagonal — here it scales each query row of $O_i$ by that row's own normalizer (Algorithm 1, line 12)." }
     ],
 
     formula:
-      `$$m^{\\text{new}}=\\max\\!\\big(m,\\ \\tilde m\\big),\\qquad
-        \\ell^{\\text{new}}=e^{\\,m-m^{\\text{new}}}\\,\\ell+e^{\\,\\tilde m-m^{\\text{new}}}\\,\\tilde\\ell,\\qquad
-        O^{\\text{new}}=\\tfrac{1}{\\ell^{\\text{new}}}\\Big(e^{\\,m-m^{\\text{new}}}\\,\\ell\\,O+e^{S-m^{\\text{new}}}V_j\\Big)$$`,
+      `$$S=\\frac{QK^\\top}{\\sqrt{d}}\\in\\mathbb{R}^{N\\times N},\\qquad
+        P=\\operatorname{softmax}(S)\\in\\mathbb{R}^{N\\times N},\\qquad
+        O=PV\\in\\mathbb{R}^{N\\times d}$$
+       <p>Standard attention (Section 3, "Standard Attention Implementation"): the three matrix steps. The $N\\times N$ matrices $S$ and $P$ are materialized in HBM — that is the memory and IO cost FlashAttention removes. (The $1/\\sqrt{d}$ scaling comes from <code>paper-attention</code>.)</p>
+
+       $$m(x)=\\max_i x_i,\\qquad
+        f(x)=\\big[\\,e^{x_1-m(x)}\\ \\cdots\\ e^{x_B-m(x)}\\,\\big],\\qquad
+        \\ell(x)=\\sum_i f(x)_i,\\qquad
+        \\operatorname{softmax}(x)=\\frac{f(x)}{\\ell(x)}$$
+       <p>Numerically-stable softmax of one length-$B$ row (Section 3.1, eq. (1)): subtract the row max $m(x)$ before exponentiating so nothing overflows. $f(x)$ are the unnormalized weights, $\\ell(x)$ the normalizer.</p>
+
+       $$m(x)=\\max\\!\\big(m(x^{(1)}),\\,m(x^{(2)})\\big)$$
+       $$f(x)=\\big[\\,e^{m(x^{(1)})-m(x)}f(x^{(1)})\\quad e^{m(x^{(2)})-m(x)}f(x^{(2)})\\,\\big]$$
+       $$\\ell(x)=e^{m(x^{(1)})-m(x)}\\,\\ell(x^{(1)})+e^{m(x^{(2)})-m(x)}\\,\\ell(x^{(2)})$$
+       <p>Online (block-decomposed) softmax for a row split as $x=[x^{(1)}\\;x^{(2)}]$ (Section 3.1, eq. (2)): combine two blocks' maxes and sums by rescaling each block to the shared max with $e^{(\\text{block max})-m(x)}$. This is the streaming recurrence FlashAttention iterates.</p>
+
+       $$m_i^{\\text{new}}=\\max\\!\\big(m_i,\\ \\tilde m_{ij}\\big),\\qquad
+        \\ell_i^{\\text{new}}=e^{\\,m_i-m_i^{\\text{new}}}\\,\\ell_i+e^{\\,\\tilde m_{ij}-m_i^{\\text{new}}}\\,\\tilde\\ell_{ij}$$
+       $$O_i\\leftarrow \\operatorname{diag}(\\ell_i^{\\text{new}})^{-1}\\Big(\\operatorname{diag}(\\ell_i)\\,e^{\\,m_i-m_i^{\\text{new}}}\\,O_i+e^{\\,\\tilde m_{ij}-m_i^{\\text{new}}}\\,\\tilde P_{ij}V_j\\Big)$$
+       <p>The on-chip update when block $j$ of $K,V$ meets query-block $i$ (Algorithm 1, lines 11–12): bump the running max, rescale the old running normalizer $\\ell_i$ and output $O_i$ by $e^{m_i-m_i^{\\text{new}}}$, add this block's contribution, and re-normalize. $\\operatorname{diag}(\\cdot)$ scales each query row by its own scalar.</p>
+
+       $$\\text{HBM accesses:}\\quad \\text{standard}=\\Theta\\!\\big(Nd+N^2\\big),\\qquad
+        \\text{FlashAttention}=\\Theta\\!\\big(N^2 d^2 M^{-1}\\big)$$
+       <p>IO complexity (Section 3.2, Theorem 2), with SRAM size $M$ and $d\\le M\\le Nd$. Since $M\\gg d$, FlashAttention does many times fewer slow HBM reads/writes than standard attention — the actual wall-clock win.</p>
+
+       $$\\text{backward: store only }(O,m,\\ell)\\ \\Rightarrow\\ \\text{recompute }S=\\tfrac{QK^\\top}{\\sqrt d},\\ P=\\operatorname{softmax}(S)\\ \\text{per block in SRAM}$$
+       <p>Backward-pass recomputation (Section 3.1 / Appendix): rather than save the $N\\times N$ matrices $S,P$ for the gradient, keep only the output $O$ and the softmax statistics $(m,\\ell)$ and rebuild $S,P$ block-by-block in SRAM. Extra FLOPs, but no $O(N^2)$ HBM read — the same IO win as the forward pass.</p>`,
 
     whatItDoes:
       `<p>This is the online-softmax block-combine of Section 3.1 (Algorithm 1, line 11), written for one query row absorbing

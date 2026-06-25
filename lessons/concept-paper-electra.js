@@ -141,12 +141,42 @@
        discriminator computes a loss at <b>all</b> $n$ positions — "the task is defined over all input tokens rather
        than just the small subset that was masked out." Roughly $6{\\times}$ more positions contribute a learning
        signal per sentence, so the same compute teaches the encoder more.</p>`,
+    architecture:
+      `<p>ELECTRA is <b>two Transformer encoders wired in series</b>, sharing one embedding table (\\S2, Figure 1).</p>
+       <p><b>Generator $G$ (small).</b> A Transformer encoder of hidden size $h_G$ with an MLM head. It reads the
+       masked sentence $\\mathbf{x}^{\\text{masked}}$ and at each masked position produces the softmax
+       $p_G(x_t\\mid\\mathbf{x})$ over the vocabulary (a linear layer that, by tying, reuses the shared embedding
+       matrix $e(\\cdot)$ as its output projection). The paper's ablation (\\S3.2) puts $G$ at
+       <b>$1/4$–$1/2$ the discriminator's hidden size</b> — strong enough for plausible fakes, weak enough to keep
+       the detection task learnable. $G$ is <b>discarded</b> after pretraining.</p>
+       <p><b>Sampling bridge.</b> Between the two networks, at each masked position a token $\\hat{x}_t$ is
+       <b>sampled</b> from $p_G$ and spliced in; unmasked positions keep their original token. This produces
+       $\\mathbf{x}^{\\text{corrupt}}$. The sampled ids are <b>detached</b> — this discrete sampling step is exactly
+       what blocks the discriminator's gradient from reaching $G$ (so ELECTRA is not a GAN).</p>
+       <p><b>Discriminator $D$ (full size).</b> The Transformer encoder you keep and fine-tune. It reads
+       $\\mathbf{x}^{\\text{corrupt}}$, producing a contextual vector $h_D(\\mathbf{x})_t$ at every position, and a
+       <b>shared one-unit linear head $w$ + sigmoid</b> turns each into $D(\\mathbf{x},t)$, the probability that
+       token $t$ is real. The head runs at <b>all $n$ positions</b>, not just the masked ones.</p>
+       <p><b>Weight sharing of embeddings (\\S3.1).</b> $G$ and $D$ <b>share their token (and positional)
+       embeddings</b> — a single matrix $e(\\cdot)$. Because $G$'s MLM loss touches every vocabulary row via its
+       softmax (whereas $D$ only updates the embeddings of tokens actually present), sharing lets the embeddings
+       receive a richer gradient. The bodies of $G$ and $D$ are <b>not</b> shared. (Tying input and output
+       embeddings within $G$ follows BERT.)</p>
+       <p><b>Data flow:</b> $\\mathbf{x} \\to$ mask 15% $\\to \\mathbf{x}^{\\text{masked}} \\to G$ softmax $\\to$
+       sample &amp; splice $\\to \\mathbf{x}^{\\text{corrupt}} \\to D \\to$ per-token $P(\\text{real})$. Two losses
+       ($\\mathcal{L}_{\\text{MLM}}$ on $G$ at masked spots; $\\mathcal{L}_{\\text{Disc}}$ on $D$ at all spots) are
+       summed with weight $\\lambda$ and minimized jointly.</p>
+       <p><b>Why it's sample-efficient:</b> $D$'s loss is defined over <b>every</b> token, so each sentence yields
+       $n$ learning signals instead of MLM's $\\approx 0.15\\,n$ — roughly $6{\\times}$ more per step, the core reason
+       ELECTRA reaches a given quality with far less compute.</p>`,
     symbols: [
       { sym: "$\\mathbf{x} = [x_1,\\ldots,x_n]$", desc: "the <b>original</b> sentence: $n$ tokens (word-pieces). $x_t$ is the token at position $t$." },
       { sym: "$\\mathbf{m}$", desc: "the set of <b>masked positions</b> — a random subset of the $n$ positions, &ldquo;typically 15%&rdquo; per the paper. Only these get replaced with <code>[MASK]</code>." },
       { sym: "$\\mathbf{x}^{\\text{masked}}$", desc: "the <b>masked</b> sentence: the same sentence but with the tokens at positions in $\\mathbf{m}$ swapped for <code>[MASK]</code>. This is what the generator reads." },
       { sym: "$G$ (generator)", desc: "a <b>small masked language model</b>. At each masked position it produces a softmax over the vocabulary and a token is sampled from it. Trained by maximum likelihood (plain MLM). Thrown away after pretraining." },
       { sym: "$p_G(x_t \\mid \\mathbf{x}^{\\text{masked}})$", desc: "the generator's <b>softmax probability</b> of token $x_t$ at masked position $t$, given the masked sentence. The replacement $\\hat{x}_t$ is sampled from this distribution." },
+      { sym: "$h_G(\\mathbf{x})_t$", desc: "the <b>generator's contextual vector</b> (hidden state) for position $t$ — its representation of that position, used to score every vocabulary token in the softmax." },
+      { sym: "$e(x')$", desc: "the <b>token embedding</b> of vocabulary token $x'$. The generator's softmax score for $x'$ is the dot product $e(x')^\\top h_G(\\mathbf{x})_t$. These embeddings are <b>shared</b> between the generator and discriminator (\\S3.1)." },
       { sym: "$\\hat{x}_t$", desc: "the token the generator <b>sampled</b> for masked position $t$. It replaces the <code>[MASK]</code> there. It may equal the original token by chance (then that position is &ldquo;not replaced&rdquo;)." },
       { sym: "$\\mathbf{x}^{\\text{corrupt}}$", desc: "the <b>corrupted</b> sentence the discriminator sees: original tokens at unmasked positions, generator-sampled tokens at the masked ones." },
       { sym: "$D$ (discriminator)", desc: "the <b>Transformer encoder</b> you actually keep. For every position it predicts real-vs-replaced. Fine-tuned downstream after pretraining." },
@@ -157,8 +187,16 @@
       { sym: "$\\mathcal{L}_{\\text{Disc}}$", desc: "the <b>discriminator's</b> Replaced-Token-Detection loss: binary cross-entropy of real-vs-replaced, summed over <i>all</i> $n$ positions." },
       { sym: "$\\lambda$", desc: "the <b>weight</b> on the discriminator loss in the combined objective. The paper (Appendix A) sets $\\lambda = 50$ — the RTD loss is small per-token (binary) so it is up-weighted to balance the MLM loss." }
     ],
-    formula: `$$ \\mathcal{L}_{\\text{Disc}}(\\mathbf{x},\\theta_D) = \\mathbb{E}\\!\\left(\\sum_{t=1}^{n} -\\mathbb{1}(x_t^{\\text{corrupt}}\\!=\\!x_t)\\,\\log D(\\mathbf{x}^{\\text{corrupt}},t) \\;-\\; \\mathbb{1}(x_t^{\\text{corrupt}}\\!\\neq\\!x_t)\\,\\log\\!\\big(1 - D(\\mathbf{x}^{\\text{corrupt}},t)\\big)\\right) $$
-$$ \\min_{\\theta_G,\\theta_D}\\ \\sum_{\\mathbf{x}\\in\\mathcal{X}} \\mathcal{L}_{\\text{MLM}}(\\mathbf{x},\\theta_G) + \\lambda\\,\\mathcal{L}_{\\text{Disc}}(\\mathbf{x},\\theta_D) \\qquad\\text{(RTD loss + combined objective, \\S2)} $$`,
+    formula: `$$ p_G(x_t \\mid \\mathbf{x}) = \\frac{\\exp\\!\\big(e(x_t)^\\top h_G(\\mathbf{x})_t\\big)}{\\sum_{x'} \\exp\\!\\big(e(x')^\\top h_G(\\mathbf{x})_t\\big)} $$
+<div class="cap">Generator output (\\S2): a softmax over the whole vocabulary at masked position $t$, scoring each candidate token $x'$ by the dot product of its embedding $e(x')$ with the generator's hidden state $h_G(\\mathbf{x})_t$.</div>
+$$ \\mathcal{L}_{\\text{MLM}}(\\mathbf{x},\\theta_G) = \\mathbb{E}\\!\\left(\\sum_{i\\in\\mathbf{m}} -\\log p_G\\!\\big(x_i \\mid \\mathbf{x}^{\\text{masked}}\\big)\\right) $$
+<div class="cap">Generator MLM loss (\\S2): negative log-likelihood of the true tokens, summed over the masked positions $i\\in\\mathbf{m}$ only — ordinary BERT-style masked language modeling.</div>
+$$ D(\\mathbf{x},t) = \\operatorname{sigmoid}\\!\\big(w^\\top h_D(\\mathbf{x})_t\\big) $$
+<div class="cap">Discriminator output (\\S2): probability that token $t$ is <i>real</i> (not replaced) — a sigmoid on a one-unit linear head $w$ applied to the discriminator's hidden state $h_D(\\mathbf{x})_t$.</div>
+$$ \\mathcal{L}_{\\text{Disc}}(\\mathbf{x},\\theta_D) = \\mathbb{E}\\!\\left(\\sum_{t=1}^{n} -\\mathbb{1}(x_t^{\\text{corrupt}}\\!=\\!x_t)\\,\\log D(\\mathbf{x}^{\\text{corrupt}},t) \\;-\\; \\mathbb{1}(x_t^{\\text{corrupt}}\\!\\neq\\!x_t)\\,\\log\\!\\big(1 - D(\\mathbf{x}^{\\text{corrupt}},t)\\big)\\right) $$
+<div class="cap">Discriminator RTD loss (\\S2): per-token binary cross-entropy of real-vs-replaced, summed over <b>all</b> $n$ positions — this all-tokens coverage is ELECTRA's efficiency win.</div>
+$$ \\min_{\\theta_G,\\theta_D}\\ \\sum_{\\mathbf{x}\\in\\mathcal{X}} \\mathcal{L}_{\\text{MLM}}(\\mathbf{x},\\theta_G) + \\lambda\\,\\mathcal{L}_{\\text{Disc}}(\\mathbf{x},\\theta_D) $$
+<div class="cap">Combined objective (\\S2): minimize the sum of the generator's MLM loss and the discriminator's RTD loss (weighted by $\\lambda$, set to $50$ in Appendix A) over the corpus $\\mathcal{X}$. The two networks share token embeddings $e(\\cdot)$ but are optimized by separate losses — $D$'s loss is never back-propagated into $G$.</div>`,
     whatItDoes:
       `<p>The <b>first line</b> is the heart of ELECTRA: the discriminator's Replaced-Token-Detection loss. For each
        position $t$ it is a <b>binary cross-entropy</b>. If the token there is <b>real</b> (corrupt equals original,
