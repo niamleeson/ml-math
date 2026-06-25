@@ -139,6 +139,31 @@
        instead we take a <b>lower confidence bound</b> (a value the true probability exceeds with high
        confidence, say $99.9\\%$). That conservative $\\bar p_A$ is what goes into the radius, so the certificate
        holds with high probability.</p>`,
+    architecture:
+      `<p>There is no new <i>network</i> here &mdash; the "architecture" is the <b>smoothing wrapper and its two
+       algorithms</b> built on top of an unchanged base classifier $f$. Components, in order:</p>
+       <p><b>1. Base classifier $f$ (black box, trained under noise).</b> Any classifier mapping an input in
+       $\\mathbb{R}^d$ to one of $K$ class labels &mdash; here a tiny multi-layer perceptron, but in the paper a
+       ResNet on ImageNet. Its one requirement: it must classify <i>well under Gaussian noise</i>, so it is
+       trained with Gaussian-noise augmentation at the same $\\sigma$ used later.</p>
+       <p><b>2. Noise injection.</b> At input $x$, draw $n$ independent perturbations
+       $\\varepsilon_i\\sim\\mathcal{N}(0,\\sigma^2 I)$ and form noisy copies $x+\\varepsilon_i$. The single
+       hyper-parameter $\\sigma$ controls the whole accuracy-vs-radius trade-off.</p>
+       <p><b>3. <code>SampleUnderNoise</code> &mdash; vote counter.</b> Run $f$ on all $n$ copies, return the
+       per-class counts. This Monte-Carlo estimate stands in for the intractable integral
+       $\\mathbb{P}(f(x+\\varepsilon)=c)$.</p>
+       <p><b>4a. <code>Predict</code> (&sect;3.2.1).</b> Sample $n$ copies, take the top-two classes
+       $\\hat c_A,\\hat c_B$ with counts $n_A,n_B$, and run a two-sided binomial test
+       $\\textsc{BinomPValue}(n_A,n_A{+}n_B,\\tfrac12)$. Return $\\hat c_A$ if the p-value $\\le\\alpha$, else
+       abstain. By Proposition 1 it returns $g(x)$ or abstains, w.p. $\\ge 1-\\alpha$.</p>
+       <p><b>4b. <code>Certify</code> (&sect;3.2.2).</b> Two-stage: a small $n_0$-sample pass picks the candidate
+       top class $\\hat c_A$; a large $n$-sample pass counts $k_A$ for that class; then
+       $\\underline p_A=\\textsc{LowerConfBound}(k_A,n,1-\\alpha)$ (Clopper&ndash;Pearson). If
+       $\\underline p_A\\gt\\tfrac12$ return $(\\hat c_A,\\,R=\\sigma\\,\\Phi^{-1}(\\underline p_A))$; else abstain.
+       By Proposition 2 the radius is sound w.p. $\\ge 1-\\alpha$.</p>
+       <p><b>Data flow:</b> $x \\to$ add $n$ Gaussian noises $\\to f$ on each $\\to$ class counts $\\to$ top class
+       $+$ binomial confidence bound $\\to$ certified radius $R$. Nothing is back-propagated at certify time; the
+       only learned object is $f$.</p>`,
     symbols: [
       { sym: "$f$", desc: "the <b>base classifier</b>: any function from an input to a class label (here a tiny trained neural network). Smoothing wraps it without changing it." },
       { sym: "$g$", desc: "the <b>smoothed classifier</b>: at $x$, returns the class the base classifier $f$ outputs most often under Gaussian noise. This is what you actually predict with and certify." },
@@ -153,7 +178,24 @@
       { sym: "$\\lVert \\delta \\rVert_2$", desc: "the <b>$\\ell_2$ norm</b> of a perturbation $\\delta$: its straight-line length, the square root of the sum of its squared coordinates. The attacker's budget." },
       { sym: "$n$", desc: "the <b>number of Monte-Carlo samples</b>: how many noisy copies we draw to estimate the vote. More samples give a tighter $\\bar p_A$." }
     ],
-    formula: `$$ g(x) = \\arg\\max_{c}\\, \\mathbb{P}\\big(f(x+\\varepsilon)=c\\big),\\ \\varepsilon\\sim\\mathcal{N}(0,\\sigma^2 I) \\quad\\text{(\\S3, Eqn. 1)} \\qquad\\qquad R = \\tfrac{\\sigma}{2}\\big(\\Phi^{-1}(\\bar p_A) - \\Phi^{-1}(\\bar p_B)\\big) \\quad\\text{(Theorem 1, Eqn. 3)} $$`,
+    formula:
+      `$$ g(x) = \\arg\\max_{c}\\, \\mathbb{P}\\big(f(x+\\varepsilon)=c\\big),\\qquad \\varepsilon\\sim\\mathcal{N}(0,\\sigma^2 I). $$
+       <p class="cap">The <b>smoothed classifier</b> (&sect;3, Eqn. 1): the majority vote of base classifier $f$ over isotropic Gaussian noise.</p>
+
+       $$ \\text{If } \\;\\mathbb{P}\\big(f(x+\\varepsilon)=c_A\\big) \\ge \\underline p_A \\;\\ge\\; \\overline p_B \\ge \\max_{c\\neq c_A}\\mathbb{P}\\big(f(x+\\varepsilon)=c\\big),\\quad \\text{then } g(x+\\delta)=c_A \\ \\text{for all } \\lVert\\delta\\rVert_2 \\lt R. $$
+       <p class="cap"><b>Theorem 1</b> condition (&sect;3.1): the top-class probability is lower-bounded by $\\underline p_A$, the runner-up upper-bounded by $\\overline p_B$.</p>
+
+       $$ R = \\tfrac{\\sigma}{2}\\big(\\Phi^{-1}(\\underline p_A) - \\Phi^{-1}(\\overline p_B)\\big). $$
+       <p class="cap">The <b>certified $\\ell_2$ radius</b> (&sect;3.1, Theorem 1 / Eqn. 3): half the gap of the inverse-normal-CDF scores, scaled by $\\sigma$. Proven tight.</p>
+
+       $$ \\overline p_B = 1-\\underline p_A \\;\\Longrightarrow\\; R = \\tfrac{\\sigma}{2}\\big(\\Phi^{-1}(\\underline p_A)-\\Phi^{-1}(1-\\underline p_A)\\big) = \\sigma\\,\\Phi^{-1}(\\underline p_A). $$
+       <p class="cap"><b>Two-class reduction</b> (&sect;3.1): using $\\Phi^{-1}(1-p)=-\\Phi^{-1}(p)$. This is the form the code certifies with.</p>
+
+       $$ \\underline p_A = \\textsc{LowerConfBound}(k_A,\\,n,\\,1-\\alpha),\\qquad k_A \\sim \\text{Binomial}\\big(n,\\,\\mathbb{P}(f(x+\\varepsilon)=c_A)\\big). $$
+       <p class="cap"><b>Monte-Carlo certify</b> (&sect;3.2.2, <code>Certify</code>): draw $n$ noisy samples, count winner $k_A$, take a one-sided binomial (Clopper&ndash;Pearson) lower confidence bound; abstain if $\\underline p_A \\le \\tfrac12$. By Proposition 2 the certificate then holds with probability $\\ge 1-\\alpha$.</p>
+
+       $$ \\Lambda(z)=\\frac{p_{X+\\delta}(z)}{p_X(z)}=\\exp\\!\\Big(\\tfrac{1}{\\sigma^2}\\big(\\delta^\\top z\\big)+b\\Big),\\qquad X\\sim\\mathcal{N}(x,\\sigma^2 I),\\ X{+}\\delta\\sim\\mathcal{N}(x{+}\\delta,\\sigma^2 I). $$
+       <p class="cap"><b>Neyman&ndash;Pearson basis</b> (Lemma 4, Appendix A): the Gaussian likelihood ratio is monotone in $\\delta^\\top z$, so the worst-case region is a halfspace $\\{z:\\delta^\\top z\\le\\beta\\}$ &mdash; this is what makes the bound exact and yields the $\\Phi^{-1}$ form.</p>`,
     whatItDoes:
       `<p><b>The smoothed classifier</b> (left, &sect;3 Eqn. 1) is a majority vote of the base classifier over
        Gaussian noise. Averaging over noise smooths the decision boundary: instead of a sharp surface that a tiny

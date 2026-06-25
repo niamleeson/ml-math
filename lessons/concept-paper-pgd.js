@@ -129,6 +129,36 @@
        <p><b>Adversarial training</b> is just gradient descent on this min-max objective: for each batch, run PGD
        to approximate the inner max, then take one optimizer step on the loss measured at those PGD inputs. The
        network learns to be flat in a small ball around every training point.</p>`,
+    architecture:
+      `<p>This is an algorithm paper, so the "architecture" is the <b>adversarial-training loop</b> wrapped around
+       a standard classifier. Two nested procedures.</p>
+       <p><b>Inner loop &mdash; the PGD attack</b> (approximates $\\max_{\\delta\\in S}$, &sect;2.1). Given fixed
+       weights $\\theta$ and a batch $(x, y)$:</p>
+       <ol>
+        <li><b>Random start:</b> $x^0 = x + \\delta_0$, with $\\delta_0$ drawn uniformly from
+        $[-\\epsilon, \\epsilon]$ per coordinate (a point inside the $\\ell_\\infty$-ball).</li>
+        <li><b>Repeat for $t = 0 \\dots T-1$:</b>
+          <ul>
+            <li>Compute the <i>input</i> gradient $\\nabla_x L(\\theta, x^t, y)$ (backprop to $x$, not $\\theta$).</li>
+            <li>Ascend: $x^{t+1}_{\\text{raw}} = x^t + \\alpha\\,\\text{sign}(\\nabla_x L)$.</li>
+            <li>Project: $x^{t+1} = \\Pi_{x+S}(x^{t+1}_{\\text{raw}})$ = clip each coordinate to $[x-\\epsilon, x+\\epsilon]$.</li>
+          </ul>
+        </li>
+        <li><b>Return</b> $x^T$ &mdash; the adversarial example $x+\\delta^\\star$.</li>
+       </ol>
+       <p><b>Outer loop &mdash; the defender</b> (the $\\min_\\theta$, Eqn. 2.1). For each minibatch:</p>
+       <ol>
+        <li>Run the inner PGD loop to get worst-case inputs $x+\\delta^\\star$.</li>
+        <li>Compute the loss $L(\\theta, x+\\delta^\\star, y)$ at those inputs.</li>
+        <li>Backprop to the <i>weights</i> and take one optimizer step (SGD/Adam). By <b>Danskin's theorem</b>
+        (Appendix A) the gradient at $\\delta^\\star$ is a valid descent direction, so this single backward pass is
+        a legitimate step on the saddle-point objective.</li>
+       </ol>
+       <p><b>The classifier itself</b> is an ordinary network &mdash; no special layers. In the paper's experiments
+       (&sect;5): for <b>MNIST</b>, two convolutional layers (32 and 64 filters, each with $2\\times 2$ max-pooling)
+       then a 1024-unit fully connected layer; for <b>CIFAR-10</b>, a wide residual network (5 residual units,
+       $(16, 160, 320, 640)$ filters). The robustness comes entirely from <i>what it is trained on</i> (PGD
+       examples), not from the architecture.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>clean input</b> (e.g. an image, as a vector of pixel values)." },
       { sym: "$y$", desc: "the <b>true label</b> for $x$." },
@@ -142,9 +172,30 @@
       { sym: "$\\alpha$", desc: "the <b>PGD step size</b>: how far each inner attack step moves (typically $\\alpha \\lt \\epsilon$ so many steps fit inside the ball)." },
       { sym: "$\\Pi_{x+S}$ (“Proj”)", desc: "the <b>projection</b> onto the set $x+S$ &mdash; the $\\epsilon$-ball around $x$. It snaps any point back to the nearest allowed point; for the $\\ell_\\infty$-ball this is just clipping each coordinate to $[x-\\epsilon,\\, x+\\epsilon]$." },
       { sym: "$\\rho(\\theta)$", desc: "the <b>robust risk</b>: the expected worst-case loss, i.e. the average over data of the inner maximum. The outer loop minimizes this." },
+      { sym: "$\\phi(\\theta)$", desc: "the <b>inner-max value</b> for a single point: $\\phi(\\theta) = \\max_{\\delta\\in S} L(\\theta, x+\\delta, y)$. The robust risk $\\rho$ is the expectation of $\\phi$ over the data." },
+      { sym: "$\\delta^\\star$", desc: "the <b>inner maximizer</b>: the worst-case perturbation, $\\delta^\\star \\in \\arg\\max_{\\delta\\in S} L$. PGD's output $x^T$ approximates $x+\\delta^\\star$." },
+      { sym: "$\\nabla_\\theta L$", desc: "the <b>gradient of the loss with respect to the weights</b> &mdash; what the outer optimizer descends. Danskin's theorem says evaluating it at $\\delta^\\star$ gives a valid descent direction for $\\phi$." },
       { sym: "“FGSM”", desc: "a plain term: the <b>Fast Gradient Sign Method</b>, the single-step attack $x + \\epsilon\\,\\text{sign}(\\nabla_x L)$. PGD is FGSM iterated with projection." }
     ],
-    formula: `$$ \\min_\\theta \\; \\rho(\\theta), \\quad \\text{where } \\rho(\\theta) = \\mathbb{E}_{(x,y)\\sim \\mathcal{D}}\\Big[ \\max_{\\delta \\in S} \\, L(\\theta,\\, x+\\delta,\\, y) \\Big] \\quad\\text{(Eqn. 2.1, \\S2)} \\qquad x^{t+1} = \\Pi_{x+S}\\big(x^t + \\alpha\\, \\text{sign}(\\nabla_x L(\\theta, x^t, y))\\big) \\quad\\text{(PGD iterate, \\S2.1)} $$`,
+    formula:
+      `<p><b>1. The saddle-point (min-max) robust-optimization objective &mdash; Equation 2.1 (&sect;2).</b></p>
+       $$ \\min_\\theta \\; \\rho(\\theta), \\qquad \\rho(\\theta) = \\mathbb{E}_{(x,y)\\sim \\mathcal{D}}\\Big[ \\max_{\\delta \\in S} \\, L(\\theta,\\, x+\\delta,\\, y) \\Big]. $$
+       <p>Outer $\\min_\\theta$ = the defender training weights; inner $\\max_{\\delta\\in S}$ = the adversary picking the worst perturbation. One equation holds both roles.</p>
+       <p><b>2. The allowed perturbation set $S$ &mdash; the $\\ell_\\infty$-ball (&sect;2).</b></p>
+       $$ S = \\{\\, \\delta : \\|\\delta\\|_\\infty \\le \\epsilon \\,\\} = \\{\\, \\delta : |\\delta_j| \\le \\epsilon \\ \\text{for every coordinate } j \\,\\}. $$
+       <p>Every pixel may move by at most $\\epsilon$; the perturbation is invisible to a human.</p>
+       <p><b>3. The PGD attack iterate &mdash; projected gradient ascent on the input (&sect;2.1).</b></p>
+       $$ x^{t+1} = \\Pi_{x+S}\\big(x^t + \\alpha\\, \\text{sign}(\\nabla_x L(\\theta, x^t, y))\\big). $$
+       <p>Take a sign-gradient step of size $\\alpha$ to raise the loss, then project $\\Pi_{x+S}$ back into the $\\ell_\\infty$-ball. Repeat. This approximately solves the inner max.</p>
+       <p><b>4. FGSM &mdash; the single-step special case (&sect;2.1).</b></p>
+       $$ x_{\\text{adv}} = x + \\epsilon\\, \\text{sign}(\\nabla_x L(\\theta, x, y)). $$
+       <p>One step of size $\\epsilon$. PGD is FGSM iterated with re-projection.</p>
+       <p><b>5. The $\\ell_\\infty$ projection is per-coordinate clipping (&sect;2.1).</b></p>
+       $$ \\big(\\Pi_{x+S}(z)\\big)_j = \\text{clip}\\big(z_j,\\; x_j-\\epsilon,\\; x_j+\\epsilon\\big) = \\min\\!\\big(\\max(z_j,\\; x_j-\\epsilon),\\; x_j+\\epsilon\\big). $$
+       <p>No matrix, no solve &mdash; just clamp each coordinate; this is why each PGD step is cheap.</p>
+       <p><b>6. Danskin's theorem &mdash; why training on the inner maximizer is valid (Appendix A).</b></p>
+       $$ \\nabla_\\theta \\, \\phi(\\theta) = \\nabla_\\theta \\, L(\\theta,\\, x+\\delta^\\star,\\, y), \\qquad \\phi(\\theta) = \\max_{\\delta \\in S} L(\\theta,\\, x+\\delta,\\, y), \\quad \\delta^\\star \\in \\arg\\max_{\\delta\\in S} L. $$
+       <p>The gradient of the inner-max value equals the loss gradient evaluated <i>at</i> the maximizer $\\delta^\\star$. So $-\\nabla_\\theta L(\\theta, x+\\delta^\\star, y)$ is a valid descent direction for the outer min &mdash; we may legitimately backprop through the PGD-found adversarial example and ignore how $\\delta^\\star$ depends on $\\theta$.</p>`,
     whatItDoes:
       `<p><b>The saddle-point objective</b> (left, their <b>Equation 2.1</b>, &sect;2) reads inside-out. The inner
        $\\max_{\\delta \\in S}$ is the <b>attack</b>: among all allowed perturbations, find the one that hurts most.
@@ -170,7 +221,21 @@
        <p>So "Proj onto the $\\ell_\\infty$-ball" is literally per-coordinate clamping &mdash; no matrix, no solve.
        That is why PGD is cheap: each step is one input-gradient plus a clip. <b>FGSM is one PGD step</b> with
        $\\alpha=\\epsilon$ and no random start; iterating with smaller $\\alpha$ and re-projecting is what makes
-       PGD stronger. (This is the cross-link to the FGSM lesson: PGD = multi-step FGSM.)</p>`,
+       PGD stronger. (This is the cross-link to the FGSM lesson: PGD = multi-step FGSM.)</p>
+       <p><b>Why training on the PGD example is legitimate (Danskin's theorem, Appendix A).</b> The outer objective
+       minimizes $\\phi(\\theta) = \\max_{\\delta\\in S} L(\\theta, x+\\delta, y)$, a maximum over $\\delta$. To run
+       gradient descent on $\\theta$ we need $\\nabla_\\theta \\phi$ &mdash; but $\\phi$ involves a max, and the
+       maximizer $\\delta^\\star$ itself shifts as $\\theta$ changes. Danskin's theorem says we can ignore that
+       coupling: for a function that is a max over a compact set, the gradient of the max equals the gradient of
+       the inner function evaluated <i>at the maximizer</i>,</p>
+       <p>$$ \\nabla_\\theta \\phi(\\theta) = \\nabla_\\theta L(\\theta,\\, x+\\delta^\\star,\\, y), \\qquad
+       \\delta^\\star \\in \\arg\\max_{\\delta\\in S} L. $$</p>
+       <p>So once PGD has found (approximately) the worst-case $\\delta^\\star$, we simply backprop the loss at
+       $x+\\delta^\\star$ to the weights as if $\\delta^\\star$ were a fixed constant &mdash; no second-order terms,
+       no differentiating through the attack. That is the theoretical license for the whole training loop: a single
+       ordinary backward pass on the adversarial example is a valid descent step on the saddle-point objective.
+       (The theorem needs the true maximizer; PGD only approximates it, but the paper's experiments show the
+       approximation is good enough that this descent direction works in practice.)</p>`,
     example:
       `<p>Work <b>one PGD step plus the projection clip</b> by hand so the iterate is concrete. Use a one-feature
        model with logit $= w\\,x$, weight $w=2.0$, true label $y=1$, and binary-cross-entropy loss. Start at

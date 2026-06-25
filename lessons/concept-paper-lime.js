@@ -144,6 +144,36 @@
        one did not matter <i>here</i>. Because $g$ is fit only on nearby, heavily-weighted points, it matches
        $f$ near $x$ but is <i>not</i> expected to match $f$ far away. That is the point: a local explanation,
        not a global one.</p>`,
+    architecture:
+      `<p>LIME is a <b>pipeline</b> wrapped around a sealed black box $f$, not a network. Data flows
+       perturb &rarr; weight &rarr; fit. Two algorithms sit on top.</p>
+       <p><b>Algorithm 1 — Sparse Linear Explanations (one prediction).</b> Inputs: black box $f$, sample count
+       $N$, instance $x$ and its interpretable form $x' \\in \\{0,1\\}^{d'}$, kernel $\\pi_x$, length $K$.</p>
+       <ol>
+        <li><b>Perturb.</b> For $i=1\\dots N$: draw $z'_i \\leftarrow$ <code>sample_around</code>$(x')$ — a
+        nearby interpretable point (turn features on/off, or jitter). Recover its raw form $z_i$.</li>
+        <li><b>Probe + weight.</b> Store the triple $\\langle z'_i,\\, f(z_i),\\, \\pi_x(z_i)\\rangle$ into the
+        dataset $\\mathcal{Z}$: the surrogate's input $z'_i$, the black-box label $f(z_i)$, and the proximity
+        weight $\\pi_x(z_i)$. $f$ is only ever <i>called</i>.</li>
+        <li><b>Fit sparse linear.</b> $w \\leftarrow$ <b>K-LASSO</b>$(\\mathcal{Z}, K)$: select the $K$ most
+        important features along the Lasso path, then learn their weights by (proximity-weighted) least squares.
+        Return $w$ — the local attributions.</li>
+       </ol>
+       <p><b>Algorithm 2 — Submodular Pick (SP-LIME, global view).</b> Inputs: instance set $X$, budget $B$.</p>
+       <ol>
+        <li><b>Explain all.</b> For each $x_i \\in X$, run Algorithm 1 to get its explanation row $W_i$, building
+        the $n \\times d'$ explanation matrix $W$.</li>
+        <li><b>Score features.</b> For each feature $j$: $I_j = \\sqrt{\\sum_i \\lvert W_{ij}\\rvert}$ — features
+        appearing strongly across many instances score higher.</li>
+        <li><b>Greedy cover.</b> Start $V = \\{\\}$; while $\\lvert V\\rvert \\lt B$, add the instance whose
+        marginal gain in coverage $c(V \\cup \\{i\\}, W, I)$ (Eqn. 3) is largest. This greedily optimizes the
+        Pick problem (Eqn. 4) with a $1-1/e$ guarantee.</li>
+        <li>Return $V$: a handful of non-redundant predictions that together showcase the model's important
+        features, so a human can audit the whole model from a few cases.</li>
+       </ol>
+       <p>The novel, hand-built block is the <b>weighted linear surrogate</b> of Algorithm 1 (steps 1–3); the
+       black box is a closed-form function called from outside, and SP-LIME is a greedy submodular loop over the
+       per-instance explanations.</p>`,
     symbols: [
       { sym: "$f$", desc: "the <b>black box</b> being explained: a function from an input to a prediction (here a probability). LIME only <i>calls</i> $f$; it never reads its internals." },
       { sym: "$x$", desc: "the <b>one instance</b> whose prediction we explain. Everything is local to this point." },
@@ -156,9 +186,31 @@
       { sym: "$\\mathcal{L}(f,g,\\pi_x)$", desc: "the <b>local-fidelity loss</b>: how badly $g$ disagrees with $f$, with each sample's error scaled by its proximity weight $\\pi_x$. Lower means $g$ matches $f$ better nearby." },
       { sym: "$\\Omega(g)$", desc: "the <b>complexity penalty</b> on $g$: how hard $g$ is for a human to read (number of non-zero weights for a linear model, tree depth for a tree). Keeping it small keeps the explanation simple." },
       { sym: "$\\xi(x)$", desc: "the <b>explanation</b> for $x$: the best simple model $g$, found by minimizing fidelity loss plus complexity (Equation 1)." },
-      { sym: "$\\mathcal{Z}$", desc: "the <b>set of perturbed samples</b> drawn around $x$ that the loss sums over." }
+      { sym: "$\\mathcal{Z}$", desc: "the <b>set of perturbed samples</b> drawn around $x$ that the loss sums over." },
+      { sym: "$z'$", desc: "the <b>interpretable representation</b> of a sample $z$: a binary vector in $\\{0,1\\}^{d'}$ (e.g. word present/absent, superpixel on/off). For our tabular demo $z'$ equals $z$." },
+      { sym: "$w_g$", desc: "the <b>weight vector</b> of the linear surrogate $g(z') = w_g \\cdot z'$. Its entries are the per-feature local attributions." },
+      { sym: "$d'$", desc: "the <b>number of interpretable features</b> — the dimension of $z'$." },
+      { sym: "$K$", desc: "the <b>explanation length</b>: the maximum number of non-zero features allowed in $g$, enforced by $\\Omega(g)$ and chosen by K-LASSO. Smaller $K$ means a simpler, sparser explanation." },
+      { sym: "$\\lVert w_g \\rVert_0$", desc: "the <b>$L_0$ norm</b> of the surrogate weights: the count of non-zero coefficients, i.e. how many features the explanation uses." },
+      { sym: "$n$", desc: "the <b>number of instances</b> explained in SP-LIME (the rows of the explanation matrix $W$)." },
+      { sym: "$W_{ij}$", desc: "entry of the <b>explanation matrix</b>: the absolute local weight $\\lvert w_{g_{ij}}\\rvert$ of feature $j$ in the explanation of instance $i$." },
+      { sym: "$I_j$", desc: "the <b>global importance</b> of feature $j$ across all explanations, $\\sqrt{\\sum_i W_{ij}}$. Features that matter in many instances score higher." },
+      { sym: "$V$", desc: "the <b>chosen set of instances</b> SP-LIME picks for a human to inspect." },
+      { sym: "$c(V,W,I)$", desc: "the <b>coverage function</b>: total importance $I_j$ of the features that appear in at least one picked instance in $V$ (Eqn. 3)." },
+      { sym: "$B$", desc: "the <b>budget</b>: how many representative instances SP-LIME is allowed to pick ($\\lvert V\\rvert \\le B$)." }
     ],
-    formula: `$$ \\xi(x) = \\underset{g \\in G}{\\arg\\min}\\; \\mathcal{L}(f, g, \\pi_x) + \\Omega(g) \\quad\\text{(Eqn. 1, \\S3.2)} \\qquad\\qquad \\mathcal{L}(f, g, \\pi_x) = \\sum_{z,z' \\in \\mathcal{Z}} \\pi_x(z)\\,\\big(f(z) - g(z')\\big)^2 \\quad\\text{(Eqn. 2, \\S3.4)} $$`,
+    formula: `<p>$$ \\xi(x) = \\underset{g \\in G}{\\arg\\min}\\; \\mathcal{L}(f, g, \\pi_x) + \\Omega(g) $$</p>
+       <p><b>Eqn. 1 (&sect;3.2) — the LIME objective.</b> The explanation is the simple model $g$ that minimizes local-infidelity $\\mathcal{L}$ plus complexity $\\Omega(g)$.</p>
+       <p>$$ \\mathcal{L}(f, g, \\pi_x) = \\sum_{z,z' \\in \\mathcal{Z}} \\pi_x(z)\\,\\big(f(z) - g(z')\\big)^2 $$</p>
+       <p><b>Eqn. 2 (&sect;3.4) — locally-weighted square loss.</b> Sum of proximity-weighted squared gaps between the black box $f(z)$ and the surrogate $g(z')$ over the perturbed sample set $\\mathcal{Z}$.</p>
+       <p>$$ \\pi_x(z) = \\exp\\!\\left( -\\,\\frac{D(x,z)^2}{\\sigma^2} \\right) $$</p>
+       <p><b>Proximity kernel (&sect;3.4).</b> An exponential kernel on distance $D$ with width $\\sigma$ (cosine distance for text, $L_2$ for images). Weight $1$ at $z=x$, falling toward $0$ as $z$ moves away.</p>
+       <p>$$ g(z') = w_g \\cdot z' \\qquad\\qquad \\Omega(g) = \\infty \\cdot \\mathbb{1}\\big[\\,\\lVert w_g \\rVert_0 \\gt K\\,\\big] $$</p>
+       <p><b>Sparse linear surrogate (&sect;3.4).</b> $g$ is linear in the interpretable representation $z' \\in \\{0,1\\}^{d'}$; the $L_0$ complexity $\\Omega(g)$ is infinite once $g$ uses more than $K$ non-zero features. In practice they select the $K$ features with <b>K-LASSO</b> (Lasso regularization path), then fit least squares — yielding a <b>sparse</b> explanation.</p>
+       <p>$$ I_j = \\sqrt{\\sum_{i=1}^{n} W_{ij}} \\qquad\\qquad c(V, W, I) = \\sum_{j=1}^{d'} \\mathbb{1}\\big[\\exists\\, i \\in V : W_{ij} \\gt 0\\big]\\, I_j $$</p>
+       <p><b>SP-LIME global importance &amp; coverage, Eqn. 3 (&sect;4).</b> $W$ is the $n \\times d'$ explanation matrix ($W_{ij} = \\lvert w_{g_{ij}} \\rvert$, the local weight of feature $j$ in explanation $i$). $I_j$ scores each feature's global importance; $c(V,W,I)$ is the total importance of features covered by at least one instance in the chosen set $V$.</p>
+       <p>$$ \\mathrm{Pick}(W, I) = \\underset{V,\\; \\lvert V \\rvert \\le B}{\\arg\\max}\\; c(V, W, I) $$</p>
+       <p><b>SP-LIME submodular pick, Eqn. 4 (&sect;4).</b> Choose a budget of $B$ representative instances that maximize feature coverage. NP-hard; the greedy algorithm gives a $1 - 1/e$ approximation guarantee.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> (left, &sect;3.2) is the whole method in one line. It says: the explanation $\\xi(x)$
        is the simple model $g$ that best trades off two things &mdash; <b>local fidelity</b>
@@ -172,7 +224,17 @@
        same vector.) Because faraway samples get tiny weights, they barely affect the fit. Minimizing this
        weighted square loss over a linear $g$ is exactly <b>weighted least squares</b> &mdash; a closed-form
        solve. The complexity term $\\Omega(g)$ for a linear model is the number of non-zero coefficients; the
-       paper keeps it small (e.g. select $K$ features first), giving a <b>sparse</b> explanation.</p>`,
+       paper keeps it small (e.g. select $K$ features first), giving a <b>sparse</b> explanation.</p>
+       <p>The <b>proximity kernel</b> $\\pi_x(z)=\\exp(-D(x,z)^2/\\sigma^2)$ is what defines "near": it converts a
+       distance into a weight that is $1$ at $x$ and decays smoothly to $0$, so only nearby probes shape the fit.
+       The <b>sparse linear surrogate</b> $g(z')=w_g\\cdot z'$ with $\\Omega(g)=\\infty\\cdot\\mathbb{1}[\\lVert
+       w_g\\rVert_0 \\gt K]$ says: a linear model is allowed, but it may use at most $K$ features — beyond that the
+       penalty is infinite, so the optimizer must keep $g$ short (K-LASSO does the selection).</p>
+       <p><b>SP-LIME (Eqns. 3-4)</b> answers a different question — "show me the whole model in a few examples."
+       It scores each feature globally by $I_j=\\sqrt{\\sum_i W_{ij}}$ (importance summed over all explanations),
+       then picks a budget of $B$ instances maximizing coverage $c(V,W,I)$ — the total importance of features
+       touched by at least one picked instance. Greedily adding the highest-marginal-gain instance gives a
+       $1-1/e$-optimal, non-redundant set for a human to audit.</p>`,
     derivation:
       `<p>Why does minimizing Equation 2 over a linear $g$ reduce to a weighted least squares solve? Write the
        linear surrogate as $g(z) = c^\\top \\tilde z$, where $\\tilde z = [1, z_0, z_1, \\dots]$ stacks a $1$

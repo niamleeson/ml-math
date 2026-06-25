@@ -67,10 +67,14 @@
         $a(\\hat{x},x_i)$. This is the equation you will transcribe and implement.</li>
         <li><b>Section 2.2 (Training Strategy)</b> &mdash; the episodic objective and the "match inference at
         test time" principle. This is why few-shot training looks the way it does.</li>
+        <li><b>Section 2.1.2 (Full Context Embeddings)</b> &mdash; the optional but important refinement: make
+        the embeddings $f$ and $g$ depend on the <i>whole</i> support set via a bidirectional LSTM (for $g$) and
+        an attention-LSTM (for $f$). This is what gives the paper's best numbers.</li>
        </ul>
-       <p><b>Skim:</b> Section 2.1.2 (Full Context Embeddings &mdash; an optional Long Short-Term Memory, or
-       LSTM, refinement of the embeddings) and the per-benchmark tables in Section 4 unless you want the exact
-       Omniglot / miniImageNet / ImageNet numbers. The math you need is two short equations in Section 2.1.</p>`,
+       <p><b>Skim:</b> the per-benchmark tables in Section 4 unless you want the exact
+       Omniglot / miniImageNet / ImageNet numbers. The core math you need is the two short equations in
+       Section 2.1; Section 2.1.2 adds the LSTM-conditioned embeddings.</p>`,
+
 
     // PREDICT + ATTEMPT
     predict:
@@ -120,6 +124,34 @@
        pick $K$ labelled support examples per class, pick some query examples, run the weighted-vote
        prediction, and minimize the error on the queries. Because every training episode is itself a small
        N-way K-shot problem, the training conditions <b>match</b> the test conditions exactly.</p>`,
+    architecture:
+      `<p>The model is a <b>non-parametric classifier wrapped around a learned embedding</b> &mdash; there are
+       no per-class weights anywhere; classes are supplied at run time as a support set. Three components:</p>
+       <p><b>1. Base feature extractors $f'$ and $g'$.</b> A convolutional neural network (for images) maps each
+       raw input to a feature vector. In the simplest model $f=f'$ and $g=g'$ (one shared encoder), and that is
+       what Equation 1 and the attention kernel use directly.</p>
+       <p><b>2. Full Context Embeddings (FCE, Section 2.1.2) &mdash; the embeddings are conditioned on the whole
+       support set $S$.</b> The paper's argument: how you should embed $x_i$ depends on the other examples you
+       must tell it apart from. So:</p>
+       <ul>
+        <li><b>Support encoder $g(x_i,S)$:</b> run a <b>bidirectional LSTM</b> over the base features
+        $g'(x_1)\\ldots g'(x_{|S|})$ of the whole support set. The contextual embedding is the forward state
+        plus the backward state plus a skip connection: $g(x_i,S)=\\vec{h}_i+\\overleftarrow{h}_i+g'(x_i)$. Every
+        support embedding now "knows about" the rest of the support set.</li>
+        <li><b>Query encoder $f(\\hat{x},S)$:</b> an <b>attention-LSTM</b> seeded with $f'(\\hat{x})$ and unrolled
+        for $K$ fixed processing steps. At each step it (a) reads the support set with content-based attention
+        $r_{k-1}=\\sum_i a(h_{k-1},g(x_i))\\,g(x_i)$ where $a(\\cdot)=\\text{softmax}(h_{k-1}^{\\top}g(x_i))$, then
+        (b) updates its state $\\hat{h}_k,c_k=\\text{LSTM}(f'(\\hat{x}),[h_{k-1},r_{k-1}],c_{k-1})$ with a skip
+        connection $h_k=\\hat{h}_k+f'(\\hat{x})$. After $K$ steps, $f(\\hat{x},S)$ is the query embedding, now also
+        conditioned on $S$.</li>
+       </ul>
+       <p><b>3. Cosine-softmax attention classifier (Section 2.1.1 + Eqn. 1).</b> Take the cosine similarity of
+       the (full-context) query and support embeddings, softmax over the $k$ support points to get attention
+       weights $a(\\hat{x},x_i)$, and predict $\\hat{y}=\\sum_i a(\\hat{x},x_i)\\,y_i$ &mdash; a differentiable,
+       end-to-end nearest-neighbour vote. The whole stack (convnet + LSTMs + cosine-softmax) is trained jointly
+       by the episodic objective of Eqn. 2; nothing is fine-tuned at test time. The toy implementation below
+       builds component 3 on a plain multilayer-perceptron encoder and omits the optional FCE LSTMs of
+       component 2.</p>`,
     symbols: [
       { sym: "$\\hat{x}$", desc: "the <b>query</b>: the unlabelled example whose class we must predict." },
       { sym: "$\\hat{y}$", desc: "the <b>prediction</b> for the query: a vector of class scores (an attention-weighted sum of support labels); its largest entry is the chosen class." },
@@ -132,9 +164,28 @@
       { sym: "$c(\\cdot,\\cdot)$", desc: "<b>cosine similarity</b> between two embedding vectors &mdash; the cosine of the angle between them ($+1$ = same direction, $0$ = perpendicular, $-1$ = opposite)." },
       { sym: "$k$", desc: "the number of labelled examples in the support set." },
       { sym: "N-way K-shot", desc: "a plain term, not a symbol: a task with $N$ classes and $K$ labelled examples per class. \"1-shot\" means $K=1$." },
-      { sym: "episode", desc: "one sampled mini-task (a support set plus some queries) used as a single training step." }
+      { sym: "episode", desc: "one sampled mini-task (a support set plus some queries) used as a single training step." },
+      { sym: "$g(x_i,S)$", desc: "the <b>full-context support embedding</b> (Section 2.1.2): the embedding of support example $x_i$ made to depend on the <i>whole</i> support set $S$, not just $x_i$ alone." },
+      { sym: "$g'$", desc: "the base (pre-context) feature extractor for support examples &mdash; e.g. a convolutional network &mdash; whose output is fed into the bidirectional LSTM." },
+      { sym: "$\\vec{h}_i,\\;\\overleftarrow{h}_i$", desc: "the forward and backward hidden states of a <b>bidirectional LSTM</b> (a recurrent net read left-to-right and right-to-left) run over the support embeddings; their sum (plus $g'(x_i)$) gives the contextual embedding." },
+      { sym: "$f(\\hat{x},S)$", desc: "the <b>full-context query embedding</b> (Section 2.1.2): the query embedding made to depend on the support set $S$ via an attention-LSTM." },
+      { sym: "$f'$", desc: "the base (pre-context) feature extractor for the query &mdash; e.g. the same convolutional network &mdash; whose output seeds the attention-LSTM." },
+      { sym: "$\\text{attLSTM}$", desc: "an <b>attention LSTM</b>: an LSTM unrolled for $K$ fixed steps that, at each step, reads (attends over) the support embeddings and folds what it reads back into its state." },
+      { sym: "$\\hat{h}_k,\\;h_k,\\;c_k$", desc: "at processing step $k$: the raw LSTM output $\\hat{h}_k$, the skip-connected hidden state $h_k=\\hat{h}_k+f'(\\hat{x})$, and the LSTM cell (memory) state $c_k$." },
+      { sym: "$r_{k-1}$", desc: "the <b>read vector</b> at step $k\\!-\\!1$: an attention-weighted sum of the support embeddings $g(x_i)$, i.e. what the LSTM \"reads\" from the support set this step." },
+      { sym: "$K$ (processing steps)", desc: "the number of fixed unrolling steps the attention-LSTM runs (distinct from the $K$ of \"K-shot\")." },
+      { sym: "$\\theta$", desc: "all learnable parameters of the embedding networks; chosen to maximize the episodic objective (Eqn. 2)." },
+      { sym: "$L,\\;T$", desc: "$L$ is one sampled <b>task</b> (a label set / class subset); $T$ is the <b>distribution over tasks</b> from which episodes are drawn." },
+      { sym: "$B$", desc: "the <b>batch (query set)</b> of an episode: the labelled examples whose loss we minimize, scored against support set $S$." },
+      { sym: "$P_{\\theta}(y\\mid x,S)$", desc: "the model's predicted probability of label $y$ for input $x$ given support set $S$ &mdash; i.e. entry $y$ of $\\hat{y}$ from Eqn. 1." }
     ],
-    formula: `$$ \\hat{y} \\;=\\; \\sum_{i=1}^{k} a(\\hat{x},x_i)\\,y_i \\qquad\\text{(Eqn. 1)} \\qquad\\qquad a(\\hat{x},x_i) \\;=\\; \\frac{e^{\\,c\\left(f(\\hat{x}),\\,g(x_i)\\right)}}{\\sum_{j=1}^{k} e^{\\,c\\left(f(\\hat{x}),\\,g(x_j)\\right)}} \\quad\\text{(\\S 2.1.1)} $$`,
+    formula: `$$ \\hat{y} \\;=\\; \\sum_{i=1}^{k} a(\\hat{x},x_i)\\,y_i \\qquad\\text{(Eqn. 1, \\S 2.1 — the classifier: an attention-weighted vote over support labels)} $$
+       $$ a(\\hat{x},x_i) \\;=\\; \\frac{e^{\\,c\\left(f(\\hat{x}),\\,g(x_i)\\right)}}{\\sum_{j=1}^{k} e^{\\,c\\left(f(\\hat{x}),\\,g(x_j)\\right)}} \\qquad\\text{(\\S 2.1.1 — the attention kernel: a softmax over cosine similarities)} $$
+       $$ g(x_i,S) \\;=\\; \\vec{h}_i + \\overleftarrow{h}_i + g'(x_i) \\qquad\\text{(\\S 2.1.2 — full-context support embedding: a bidirectional LSTM over the whole support set $S$)} $$
+       $$ f(\\hat{x},S) \\;=\\; \\text{attLSTM}\\big(f'(\\hat{x}),\\,g(S),\\,K\\big), \\qquad \\hat{h}_k,\\,c_k \\;=\\; \\text{LSTM}\\big(f'(\\hat{x}),\\,[\\,h_{k-1},\\,r_{k-1}\\,],\\,c_{k-1}\\big) $$
+       $$ h_k \\;=\\; \\hat{h}_k + f'(\\hat{x}), \\qquad r_{k-1} \\;=\\; \\sum_{i=1}^{|S|} a\\big(h_{k-1},\\,g(x_i)\\big)\\,g(x_i), \\qquad a\\big(h_{k-1},\\,g(x_i)\\big) \\;=\\; \\text{softmax}\\big(h_{k-1}^{\\top}\\,g(x_i)\\big) $$
+       $$ \\text{(\\S 2.1.2 — full-context query embedding: an attention-LSTM that reads the support set for $K$ steps, so $f$ is conditioned on $S$)} $$
+       $$ \\theta \\;=\\; \\arg\\max_{\\theta}\\; \\mathbb{E}_{L\\sim T}\\Big[\\, \\mathbb{E}_{S\\sim L,\\;B\\sim L}\\Big[\\, \\sum_{(x,y)\\in B} \\log P_{\\theta}\\big(y \\mid x,\\,S\\big) \\,\\Big] \\Big] \\qquad\\text{(Eqn. 2, \\S 2.2 — episodic objective: train on tasks $L$ drawn the same way you test)} $$`,
     whatItDoes:
       `<p><b>Equation 1</b> says the prediction is a <b>weighted vote</b>: add up the support labels $y_i$,
        each scaled by how much attention $a(\\hat{x},x_i)$ the query pays to that support example. Since the
@@ -144,7 +195,19 @@
        support example with $g$, take the cosine similarity $c(\\cdot,\\cdot)$ of each pair, then exponentiate
        and normalize. High cosine (the query points the same way as that support embedding) &rarr; large
        weight; low or negative cosine &rarr; small weight. So the whole classifier is: <b>"vote for the
-       classes of the support examples your embedding is most aligned with."</b></p>`,
+       classes of the support examples your embedding is most aligned with."</b></p>
+       <p>The <b>Full Context Embedding equations</b> (Section 2.1.2) say the embeddings should depend on the
+       whole support set, not each example in isolation. $g(x_i,S)=\\vec{h}_i+\\overleftarrow{h}_i+g'(x_i)$ runs
+       a bidirectional LSTM over the support features so each $g(x_i)$ is contextualised by its neighbours. The
+       attention-LSTM lines do the same for the query: for $K$ steps it computes a <b>read</b> $r_{k-1}$ &mdash;
+       a softmax-attention-weighted sum of the support embeddings &mdash; and folds it back into its hidden
+       state $h_k$, so the final $f(\\hat{x},S)$ has "looked at" the support set before being compared to it.</p>
+       <p>The <b>training objective</b> (Eqn. 2) is the episodic principle written as math: pick a task $L$ from
+       the task distribution $T$, draw a support set $S$ and a query batch $B$ from it, and maximize the
+       log-probability $\\log P_{\\theta}(y\\mid x,S)$ of the correct labels on $B$. Averaging this over many
+       sampled tasks tunes $\\theta$ so the embedding works for the support-set vote on <i>unseen</i> tasks
+       &mdash; i.e. "match inference at test time."</p>`,
+
     derivation:
       `<p><b>Short recap &mdash; the few-shot framing lives in the concept lesson.</b> Why does a softmax over
        cosine similarities make a sensible classifier? Think of it as a soft, differentiable

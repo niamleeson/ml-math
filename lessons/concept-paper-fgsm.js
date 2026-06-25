@@ -142,6 +142,27 @@
        clean loss and the adversarial loss into one objective and minimize as usual. With $\\alpha=0.5$, half the
        weight goes on clean inputs and half on the network's own FGSM examples, regenerated each step from the
        current weights.</p>`,
+    architecture:
+      `<p>FGSM is not a network architecture but a <b>per-step attack + training procedure</b> wrapped around any
+       differentiable classifier. The structure has three reusable pieces.</p>
+       <p><b>(a) The victim classifier.</b> Any model $f_\\theta$ trained with a differentiable loss $J$. In the
+       paper the strongest demonstrations use a <b>maxout network</b> (and a shallow softmax classifier) on MNIST;
+       the linear argument of &sect;3 applies to any unit whose output is (locally) $w^\\top x$ &mdash; ReLU,
+       maxout, LSTM gates &mdash; which the paper notes are all <i>deliberately</i> designed to behave linearly
+       for easy optimization, and that is exactly why they are vulnerable.</p>
+       <p><b>(b) The FGSM perturbation step (&sect;4).</b> One forward pass computes $J(\\theta,x,y)$; one backward
+       pass computes $\\nabla_x J$ &mdash; the gradient differentiated w.r.t. the <i>input</i> $x$, not the weights
+       $\\theta$. Apply $\\text{sign}(\\cdot)$ entrywise, scale by $\\epsilon$, add to $x$, and clamp to the valid
+       pixel range. Cost: one extra backprop. No inner optimization loop &mdash; that is what makes it "fast."</p>
+       <p><b>(c) The adversarial-training loop (&sect;6).</b> Each training iteration:
+       (1) compute the clean loss $J(\\theta,x,y)$;
+       (2) run step (b) on the <i>current</i> weights to build $x_{\\text{adv}} = x + \\epsilon\\,\\text{sign}(\\nabla_x J)$;
+       (3) compute the adversarial loss $J(\\theta, x_{\\text{adv}}, y)$;
+       (4) form the mixed objective $\\tilde J = \\alpha J + (1-\\alpha)J_{\\text{adv}}$ with $\\alpha = 0.5$;
+       (5) backpropagate $\\tilde J$ through $\\theta$ and update. The attack is <b>regenerated every step</b>, so
+       it always targets the model's current decision surface rather than a frozen set of examples. Data flow per
+       step: $x \\to f_\\theta \\to J \\to \\nabla_x J \\to x_{\\text{adv}} \\to f_\\theta \\to J_{\\text{adv}}
+       \\to \\tilde J \\to \\nabla_\\theta \\tilde J \\to$ weight update.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> (here a digit image, flattened to a vector of pixel values in $[0,1]$). The attack perturbs $x$, not the weights." },
       { sym: "$y$", desc: "the <b>true label</b> of input $x$ (which digit it actually is)." },
@@ -158,7 +179,15 @@
       { sym: "$\\alpha$", desc: "the <b>adversarial-training mix weight</b> (alpha): how much of the loss is the clean term vs. the FGSM term. The paper uses $\\alpha = 0.5$." },
       { sym: "“max-norm”", desc: "a plain term: the largest absolute entry of a vector, written $\\lVert\\cdot\\rVert_\\infty$. FGSM bounds the perturbation in this norm &mdash; \"no pixel moves more than $\\epsilon$.\"" }
     ],
-    formula: `$$ \\eta = \\epsilon\\,\\text{sign}\\big(\\nabla_x J(\\theta,x,y)\\big),\\quad x_{\\text{adv}} = x + \\eta \\quad\\text{(FGSM, \\S4)} \\qquad\\qquad \\tilde J(\\theta,x,y) = \\alpha\\,J(\\theta,x,y) + (1-\\alpha)\\,J\\big(\\theta,\\,x+\\epsilon\\,\\text{sign}(\\nabla_x J)\\big) \\quad\\text{(adv. training, \\S6)} $$`,
+    formula:
+      `$$ w^\\top \\tilde x = w^\\top x + w^\\top \\eta $$
+       <p class="cap">A linear unit's output under a perturbed input $\\tilde x = x + \\eta$: the change is exactly $w^\\top\\eta$ (&sect;3, linear explanation).</p>
+       $$ \\eta = \\epsilon\\,\\text{sign}(w) \\;\\Longrightarrow\\; w^\\top \\eta = \\epsilon \\sum_j |w_j| = \\epsilon\\, m\\, n $$
+       <p class="cap">The max-norm-bounded perturbation that maximizes the output change; the change grows as $\\epsilon m n$ &mdash; linearly in the dimension $n$ &mdash; while $\\epsilon$ stays fixed (&sect;3, dimension-growth argument).</p>
+       $$ \\eta = \\epsilon\\,\\text{sign}\\big(\\nabla_x J(\\theta,x,y)\\big), \\qquad x_{\\text{adv}} = x + \\eta $$
+       <p class="cap">The Fast Gradient Sign Method: step every input pixel by $\\epsilon$ along the sign of the loss gradient w.r.t. the input (&sect;4).</p>
+       $$ \\tilde J(\\theta,x,y) = \\alpha\\,J(\\theta,x,y) + (1-\\alpha)\\,J\\big(\\theta,\\,x+\\epsilon\\,\\text{sign}(\\nabla_x J(\\theta,x,y)),\\,y\\big) $$
+       <p class="cap">The adversarial-training objective: a mix ($\\alpha = 0.5$) of the clean loss and the loss on the FGSM example regenerated from the current weights (&sect;6).</p>`,
     whatItDoes:
       `<p><b>The FGSM equation</b> (left, &sect;4) says: find the direction in input space that most increases the
        loss (that is $\\nabla_x J$), strip it down to just its sign, and step every pixel by the same amount

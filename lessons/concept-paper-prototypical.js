@@ -126,6 +126,35 @@
        (to score) &mdash; and the loss pushes queries toward their own class's prototype. Because every episode
        uses different classes, the embedding learns a <i>general</i> rule for separating classes, not the
        identities of any fixed label set. That is what lets it handle classes it never trained on.</p>`,
+    architecture:
+      `<p>Two pieces: the <b>embedding network</b> $f_\\phi$ (the only learned weights) and the
+       <b>non-parametric classifier head</b> (prototypes + distance softmax, no weights of its own).</p>
+       <p><b>Embedding network</b> $f_\\phi$ (&sect;3.1, used for Omniglot and miniImageNet). <b>Four convolutional
+       blocks</b> stacked in sequence; each block is:
+       <code>Conv 3&times;3, 64 filters &rarr; BatchNorm &rarr; ReLU &rarr; MaxPool 2&times;2</code>. Each block
+       halves the spatial resolution. On 28&times;28 Omniglot images the four 2&times;2 pools shrink the map to
+       1&times;1&times;64, giving a <b>64-dimensional</b> embedding ($M=64$); on 84&times;84 miniImageNet images the
+       same stack outputs a 5&times;5&times;64 map flattened to a <b>1600-dimensional</b> embedding ($M=1600$). The
+       paper deliberately reuses the <i>same</i> simple architecture as Matching Networks for a fair comparison.
+       In this lesson's toy code $f_\\phi$ is instead a small MLP
+       (<code>Linear 20&rarr;64 &rarr; ReLU &rarr; Linear 64&rarr;16</code>) over synthetic vectors, but the head is identical.</p>
+       <p><b>Classifier head</b> (Eqns. 1-2, no parameters). Given an episode: (a) embed the $N\\times K$ support
+       examples and <b>average per class</b> &rarr; $N$ prototypes $c_k$ of dimension $M$ (Eqn. 1); (b) embed each
+       query, compute its <b>squared Euclidean distance</b> to all $N$ prototypes, <b>negate</b> to get logits, and
+       softmax (Eqn. 2). Nothing here is trainable &mdash; gradients flow only back into $\\phi$.</p>
+       <p><b>Episodic training (Algorithm 1).</b> Each step is a fresh task, not a fixed dataset pass:</p>
+       <ol>
+        <li>Randomly select $N_C$ classes from the training split.</li>
+        <li>For each chosen class, randomly draw $N_S$ <b>support</b> examples and $N_Q$ <b>query</b> examples
+        (disjoint).</li>
+        <li>Compute the $N_C$ prototypes from the support sets (Eqn. 1).</li>
+        <li>For every query point accumulate the softmax cross-entropy loss $J = -\\log p_\\phi(y=k\\mid x)$ (Eqn. 2),
+        averaged over all $N_C \\times N_Q$ queries.</li>
+        <li>Take one SGD/Adam step on $\\phi$. Repeat for thousands of episodes, each sampling different classes.</li>
+       </ol>
+       <p>The paper notes it can help to train with <b>more classes per episode than at test time</b> (a higher
+       $N_C$ during meta-training than the $N$-way used for evaluation), making the task harder and the embedding
+       more discriminative.</p>`,
     symbols: [
       { sym: "$x$", desc: "an <b>input</b> example (e.g. an image), either a labeled support example or a query to classify." },
       { sym: "$f_\\phi$", desc: "the <b>embedding network</b>: a neural network with weights $\\phi$ that maps an input $x$ to an $M$-dimensional point $f_\\phi(x)$ (a length-$M$ list of numbers). This is the only thing that gets trained." },
@@ -138,11 +167,23 @@
       { sym: "$d(z, z')$", desc: "the <b>distance function</b> between two embedded points. The paper uses squared Euclidean distance $d(z,z') = \\lVert z - z' \\rVert^2$ (subtract, square each coordinate, sum)." },
       { sym: "$p_\\phi(y=k\\mid x)$", desc: "the model's <b>probability</b> that query $x$ belongs to class $k$, from a softmax over the negative distances to the prototypes." },
       { sym: "$J(\\phi)$", desc: "the <b>training loss</b>: the negative log-probability of the query's true class, $-\\log p_\\phi(y=k\\mid x)$ (cross-entropy on the distance-based softmax)." },
+      { sym: "$\\mathbf{z}, \\mathbf{z}'$", desc: "two <b>embedded points</b> in the $M$-dimensional space &mdash; generic arguments of the distance $d$ (e.g. a query embedding and a prototype)." },
+      { sym: "$\\varphi$", desc: "the Greek letter <b>varphi</b> &mdash; the convex <b>generating function</b> of a Bregman divergence. For squared Euclidean distance $\\varphi(\\mathbf{z}) = \\lVert \\mathbf{z}\\rVert^2$; $\\nabla\\varphi$ is its gradient." },
+      { sym: "$\\mathbf{w}_k, b_k$", desc: "the <b>weight vector and bias</b> of the equivalent linear classifier for class $k$ (&sect;2.4): $\\mathbf{w}_k = 2\\,\\mathbf{c}_k$ and $b_k = -\\mathbf{c}_k^\\top\\mathbf{c}_k$, so the negative squared distance equals $\\mathbf{w}_k^\\top f_\\phi(x) + b_k$ up to a class-independent constant." },
+      { sym: "$N_C, N_S, N_Q$", desc: "episode sizes in Algorithm 1: number of <b>classes</b> per episode, <b>support</b> examples per class, and <b>query</b> examples per class (called $N$, $K$, $Q$ elsewhere in this lesson)." },
       { sym: "“episode”", desc: "a plain term, not a symbol: one self-contained mini few-shot task sampled per training step &mdash; a set of classes split into a support set and a query set." },
       { sym: "“Bregman divergence”", desc: "a plain term: a family of distance-like measures (squared Euclidean is one) for which the <i>mean</i> of a set of points is the provably best single representative &mdash; which is why the prototype is a mean." }
     ],
     formula: `$$ \\mathbf{c}_k = \\frac{1}{|S_k|}\\sum_{(x_i,y_i)\\in S_k} f_\\phi(x_i) \\qquad\\text{(Eqn. 1)} $$
-              $$ p_\\phi(y=k \\mid \\mathbf{x}) = \\frac{\\exp\\!\\big(-d(f_\\phi(\\mathbf{x}),\\,\\mathbf{c}_k)\\big)}{\\sum_{k'} \\exp\\!\\big(-d(f_\\phi(\\mathbf{x}),\\,\\mathbf{c}_{k'})\\big)} \\qquad\\text{(Eqn. 2)} $$`,
+              <p>The class <b>prototype</b> is the mean of its support embeddings (&sect;2.2).</p>
+              $$ p_\\phi(y=k \\mid \\mathbf{x}) = \\frac{\\exp\\!\\big(-d(f_\\phi(\\mathbf{x}),\\,\\mathbf{c}_k)\\big)}{\\sum_{k'} \\exp\\!\\big(-d(f_\\phi(\\mathbf{x}),\\,\\mathbf{c}_{k'})\\big)} \\qquad\\text{(Eqn. 2)} $$
+              <p>A <b>softmax over the negative distances</b> from the query embedding to every prototype (&sect;2.2). The nearest prototype gets the highest probability.</p>
+              $$ J(\\phi) = -\\log p_\\phi(y=k \\mid \\mathbf{x}) $$
+              <p>The <b>loss</b>: negative log-probability of the query's true class $k$, minimized by SGD over episodes (&sect;2.2).</p>
+              $$ d(\\mathbf{z},\\mathbf{z}') = \\lVert \\mathbf{z}-\\mathbf{z}' \\rVert^2 \\quad\\text{(squared Euclidean), a Bregman divergence } d_\\varphi(\\mathbf{z},\\mathbf{z}') = \\varphi(\\mathbf{z}) - \\varphi(\\mathbf{z}') - (\\mathbf{z}-\\mathbf{z}')^\\top \\nabla\\varphi(\\mathbf{z}') $$
+              <p>The distance used. Squared Euclidean is the Bregman divergence generated by $\\varphi(\\mathbf{z})=\\lVert \\mathbf{z}\\rVert^2$; for any Bregman divergence the cluster <b>mean</b> minimizes total distance to its points, which is why the prototype is a mean (&sect;2.3).</p>
+              $$ -\\lVert \\mathbf{z}-\\mathbf{c}_k \\rVert^2 = -\\mathbf{z}^\\top\\mathbf{z} + 2\\,\\mathbf{c}_k^\\top\\mathbf{z} - \\mathbf{c}_k^\\top\\mathbf{c}_k = \\underbrace{2\\,\\mathbf{c}_k}_{\\mathbf{w}_k}{}^{\\!\\top}\\mathbf{z} \\;\\underbrace{-\\,\\mathbf{c}_k^\\top\\mathbf{c}_k}_{b_k} + \\;\\text{const} $$
+              <p><b>Linear-model equivalence</b> (&sect;2.4): for squared Euclidean distance the negative distance is <i>linear</i> in the embedding $\\mathbf{z}=f_\\phi(\\mathbf{x})$. The $-\\mathbf{z}^\\top\\mathbf{z}$ term is the same for every class so it cancels in the softmax, leaving a linear classifier with weights $\\mathbf{w}_k = 2\\,\\mathbf{c}_k$ and bias $b_k = -\\mathbf{c}_k^\\top\\mathbf{c}_k$.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> builds the prototype: run every support example of class $k$ through the embedding
        network $f_\\phi$, then <b>average</b> those points. The $\\frac{1}{|S_k|}\\sum$ is exactly "add them up
@@ -166,7 +207,18 @@
        (Eqn. 1) is not arbitrary &mdash; it is the optimal representative <i>for this exact distance</i>. Use a
        different distance (say cosine) and the mean is no longer guaranteed optimal, which is why the paper
        insists on squared Euclidean. The deeper softmax-over-distances probability and the few-shot framing are
-       developed in the <b>fs-few-shot</b> concept lesson; here we recap.</p>`,
+       developed in the <b>fs-few-shot</b> concept lesson; here we recap.</p>
+       <p><b>Why this equals a linear model (&sect;2.4).</b> Expand the negative squared Euclidean distance between
+       a query embedding $z = f_\\phi(x)$ and a prototype $c_k$:</p>
+       <p>$$ -\\lVert z - c_k\\rVert^2 = -(z - c_k)^\\top(z - c_k) = -z^\\top z + 2\\,c_k^\\top z - c_k^\\top c_k. $$</p>
+       <p>The first term $-z^\\top z$ does <b>not depend on $k$</b> &mdash; it is the same for every class &mdash; so
+       it cancels top-and-bottom in the Eqn. 2 softmax. What is left is <b>linear in the embedding $z$</b>:</p>
+       <p>$$ 2\\,c_k^\\top z - c_k^\\top c_k = w_k^\\top z + b_k, \\qquad w_k = 2\\,c_k, \\quad b_k = -c_k^\\top c_k. $$</p>
+       <p>So a Prototypical Network with squared Euclidean distance is <b>exactly a linear classifier</b> on top of
+       the embedding, whose weights $w_k$ and biases $b_k$ are <i>computed</i> from the support set rather than
+       learned as free parameters. This is why squaring (not plain Euclidean distance) is the natural choice: it
+       makes the model both Bregman-optimal for the mean prototype <i>and</i> equivalent to a familiar linear
+       softmax classifier.</p>`,
     example:
       `<p>Work a tiny <b>2-way 2-shot</b> case by hand with 2-dimensional embeddings, so every number is
        checkable. Suppose the embedding network has already mapped the support examples to these points:</p>

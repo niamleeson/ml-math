@@ -143,6 +143,38 @@
        <p>No matrix to factor &mdash; just a dot product and a logarithm. Stack a handful of these and the round
        Gaussian becomes a bent, possibly multi-peaked density, while we still know its exact log-density at every
        sample.</p>`,
+    architecture:
+      `<p><b>What is being built:</b> a flexible approximate posterior $q_K(z \\mid x)$ for amortized variational
+       inference (a VAE), assembled as a <b>stack of invertible flow maps placed on top of a simple base
+       posterior</b>. Data flows in one direction; the exact log-density is carried alongside.</p>
+       <p><b>Block 1 &mdash; Inference network (encoder).</b> A neural network reads the data $x$ and outputs the
+       parameters of the <b>base density</b> $q_0$: a mean-field Gaussian $\\mu(x), \\sigma(x)$ <i>plus</i> the
+       per-step <b>flow parameters</b> $\\{(w_k, u_k, b_k)\\}_{k=1}^{K}$ (for planar flows) or
+       $\\{(z_{0,k}, \\alpha_k, \\beta_k)\\}$ (for radial flows). The flow parameters are <b>amortized</b> &mdash;
+       predicted by the encoder from $x$, not free per-datapoint variables.</p>
+       <p><b>Block 2 &mdash; Base sample.</b> Draw $z_0 \\sim q_0 = \\mathcal{N}(\\mu(x), \\sigma(x)^2)$ via the
+       reparameterization trick, and initialize its log-density $\\ln q_0(z_0)$.</p>
+       <p><b>Block 3 &mdash; The flow stack (the novel part).</b> $K$ flow layers in series,
+       $z_K = f_K \\circ \\cdots \\circ f_1(z_0)$. Each layer $f_k$:</p>
+       <ul>
+        <li>maps its input $z_{k-1}$ to $z_k = z_{k-1} + u_k\\,h(w_k^{\\top}z_{k-1} + b_k)$ (planar) &mdash; an
+        elementwise add of a rank-one "ridge"; the layer changes the <i>shape</i> of the density but keeps the
+        dimension $d$ unchanged;</li>
+        <li>emits a scalar <b>log-determinant</b> $\\ln|1 + u_k^{\\top}\\psi_k(z_{k-1})|$, which is
+        <b>subtracted</b> from the running $\\ln q$;</li>
+        <li>passes $z_k$ to the next layer.</li>
+       </ul>
+       <p>A <b>radial</b> flow layer is the drop-in alternative: it contracts/expands points around a learned
+       center $z_0$ instead of along a direction $u$.</p>
+       <p><b>Block 4 &mdash; Decoder + objective.</b> The final $z_K$ feeds the generative model $p(x, z_K)$
+       (the decoder). The whole thing is trained by minimizing the <b>flow-based free energy</b> $\\mathcal{F}(x)$
+       (Eq 15): the usual VAE evidence lower bound with one extra term &mdash; the summed flow log-determinants.</p>
+       <p><b>Data flow, end to end:</b>
+       $x \\rightarrow$ encoder $\\rightarrow (\\mu, \\sigma, \\{w_k, u_k, b_k\\}) \\rightarrow z_0 \\sim q_0
+       \\rightarrow f_1 \\rightarrow z_1 \\rightarrow \\cdots \\rightarrow f_K \\rightarrow z_K \\rightarrow$
+       decoder $p(x \\mid z_K)$. Two quantities are propagated in parallel: the <b>sample</b> $z_k$ and its
+       <b>running log-density</b> $\\ln q_k = \\ln q_0 - \\sum_{j\\le k}\\ln|\\det \\partial f_j|$. Cost per layer is
+       $O(d)$ &mdash; one dot product and one logarithm &mdash; so depth $K$ is cheap to add.</p>`,
     symbols: [
       { sym: "$z_0$", desc: "a sample from the <b>base density</b> $q_0$ &mdash; here a 2-D unit Gaussian (a round symmetric blob, mean 0, variance 1 per dimension). This is the simple distribution we start from." },
       { sym: "$q_0(z_0)$", desc: "the <b>base density</b>: the probability density of the starting Gaussian, which we can sample and score in closed form." },
@@ -157,9 +189,36 @@
       { sym: "$b$", desc: "the planar flow's scalar <b>bias</b>: it shifts the dividing plane." },
       { sym: "$h$ , $h'$", desc: "the smooth <b>nonlinearity</b> (the paper uses $h = \\tanh$) and its derivative $h'$ (for $\\tanh$, $h'(a) = 1 - \\tanh^2 a$)." },
       { sym: "$\\psi(z)$", desc: "a helper vector $\\psi(z) = h'(w^{\\top}z + b)\\,w$ (Eqn 11). It is the gradient of the ridge term; the planar log-determinant is built from it (Eqn 12)." },
-      { sym: "$\\mathcal{F}(x)$", desc: "the <b>free energy</b> / negative evidence lower bound (Eqn 15): the variational objective minimized when the approximate posterior is a normalizing flow." }
+      { sym: "$\\hat{u}$ , $m(\\cdot)$", desc: "the <b>reparameterized</b> $u$ that enforces invertibility (Appendix A.1): $\\hat{u} = u + [m(w^{\\top}u) - w^{\\top}u]\\,w/\\lVert w\\rVert^2$ with $m(x) = -1 + \\ln(1 + e^x)$. It pushes $w^{\\top}u \\ge -1$ so that $1 + u^{\\top}\\psi(z) \\gt 0$." },
+      { sym: "$z_0$ (radial center)", desc: "for the <b>radial flow</b>: the <b>center point</b> around which the map contracts or expands. (Distinct from the base sample $z_0$ &mdash; same letter, different role.)" },
+      { sym: "$\\alpha$ , $\\beta$", desc: "the radial flow's scalar parameters: $\\alpha \\gt 0$ sets the radius scale, and $\\beta$ sets the strength (and sign) of the radial push." },
+      { sym: "$r$", desc: "the <b>radius</b> $r = \\lVert z - z_0 \\rVert$: the distance from a point to the radial flow's center." },
+      { sym: "$h(\\alpha, r)$ , $h'(\\alpha,r)$", desc: "the radial flow's <b>radial kernel</b> $h(\\alpha, r) = 1/(\\alpha + r)$ and its derivative $h'(\\alpha,r) = -1/(\\alpha + r)^2$ (used in the radial log-determinant, Eq 14)." },
+      { sym: "$d$", desc: "the <b>dimension</b> of $z$. It appears as the exponent $d-1$ in the radial flow's determinant, and sets the $O(d)$ cost of each planar/radial log-determinant." },
+      { sym: "$\\mathcal{F}(x)$", desc: "the <b>free energy</b> / negative evidence lower bound (Eq 15): the variational objective minimized when the approximate posterior is a normalizing flow &mdash; the VAE bound plus the flow's summed log-determinant term." },
+      { sym: "$p(x, z_K)$", desc: "the generative model's <b>joint density</b> of data $x$ and the flowed latent $z_K$; the decoder term in the free energy bound (Eq 15)." }
     ],
-    formula: `$$ \\ln q_K(z_K) = \\ln q_0(z_0) - \\sum_{k=1}^{K} \\ln\\Big|\\det \\tfrac{\\partial f_k}{\\partial z_{k-1}}\\Big| \\quad\\text{(Eqns 6-7, \\S3.1)} \\qquad\\qquad f(z) = z + u\\,h(w^{\\top}z + b), \\;\\; \\Big|\\det \\tfrac{\\partial f}{\\partial z}\\Big| = |1 + u^{\\top}\\psi(z)| \\quad\\text{(Eqns 10-12, \\S4.1)} $$`,
+    formula:
+      `<p>$$ q(z') = q(z)\\,\\Big|\\det \\frac{\\partial f^{-1}}{\\partial z'}\\Big| = q(z)\\,\\Big|\\det \\frac{\\partial f}{\\partial z}\\Big|^{-1} $$</p>
+       <p>Change of variables for an invertible map $z' = f(z)$ &mdash; the new density is the old one divided by the absolute Jacobian determinant (Eq 5, &sect;3.1).</p>
+       <p>$$ z_K = f_K \\circ \\cdots \\circ f_2 \\circ f_1(z_0), \\qquad
+            \\ln q_K(z_K) = \\ln q_0(z_0) - \\sum_{k=1}^{K} \\ln\\Big|\\det \\frac{\\partial f_k}{\\partial z_{k-1}}\\Big| $$</p>
+       <p>A flow of length $K$ and its log-density: the log-determinant corrections simply sum over the chain (Eqs 6&ndash;7, &sect;3.1).</p>
+       <p>$$ \\mathbb{E}_{q_K}[\\,h(z)\\,] = \\mathbb{E}_{q_0}\\big[\\,h\\big(f_K \\circ \\cdots \\circ f_1(z_0)\\big)\\,\\big] $$</p>
+       <p>Law of the unconscious statistician: expectations under the flow density are computed by sampling the base $q_0$ and pushing through the maps &mdash; no explicit $q_K$ needed (Eq 8, &sect;3.1).</p>
+       <p>$$ f(z) = z + u\\,h(w^{\\top}z + b), \\qquad
+            \\psi(z) = h'(w^{\\top}z + b)\\,w, \\qquad
+            \\Big|\\det \\frac{\\partial f}{\\partial z}\\Big| = \\big|1 + u^{\\top}\\psi(z)\\big| $$</p>
+       <p>The <b>planar flow</b>: a rank-one "ridge" map and its linear-time log-determinant via the matrix determinant lemma (Eqs 10&ndash;12, &sect;4.1).</p>
+       <p>$$ \\hat{u}(w,u) = u + \\big[\\,m(w^{\\top}u) - (w^{\\top}u)\\,\\big]\\frac{w}{\\lVert w\\rVert^2}, \\qquad m(x) = -1 + \\ln(1 + e^{x}) $$</p>
+       <p>Invertibility constraint for the planar flow: reparameterize $u$ so that $w^{\\top}u \\ge -1$, guaranteeing $1 + u^{\\top}\\psi(z) \\gt 0$ (Appendix A.1, &sect;4.1).</p>
+       <p>$$ f(z) = z + \\beta\\,h(\\alpha, r)\\,(z - z_0), \\quad r = \\lVert z - z_0 \\rVert, \\;\\; h(\\alpha, r) = \\frac{1}{\\alpha + r} $$</p>
+       <p>$$ \\Big|\\det \\frac{\\partial f}{\\partial z}\\Big| = \\big[1 + \\beta\\,h(\\alpha,r)\\big]^{d-1}\\,\\big[1 + \\beta\\,h(\\alpha,r) + \\beta\\,h'(\\alpha,r)\\,r\\big] $$</p>
+       <p>The <b>radial flow</b>: contracts or expands points radially around a center $z_0$; its log-determinant is also a closed-form scalar (Eqs 13&ndash;14, &sect;4.1).</p>
+       <p>$$ \\mathcal{F}(x) = \\mathbb{E}_{q_0(z_0)}\\big[\\ln q_0(z_0)\\big]
+            - \\mathbb{E}_{q_0(z_0)}\\big[\\log p(x, z_K)\\big]
+            - \\mathbb{E}_{q_0(z_0)}\\Big[\\sum_{k=1}^{K} \\ln\\big|1 + u_k^{\\top}\\psi_k(z_{k-1})\\big|\\Big] $$</p>
+       <p>The <b>flow-based free energy bound</b>: the negative evidence lower bound minimized when the posterior is a planar flow &mdash; the standard VAE objective plus the flow's sum-of-log-determinants term (Eq 15, &sect;4.2).</p>`,
     whatItDoes:
       `<p><b>The flow log-density</b> (left, the paper's <b>Equations 6&ndash;7</b>) says: the log-density of the
        final variable equals the base log-density minus the running total of log-determinants, one per map. Each
@@ -171,7 +230,23 @@
        rank-one term $u\\,\\psi(z)^{\\top}$, and the determinant of "identity plus rank-one" is the famous matrix
        determinant lemma result $1 + u^{\\top}\\psi(z)$ &mdash; a single scalar. So the per-step correction is just
        $\\ln|1 + u^{\\top}\\psi(z)|$: one dot product, one logarithm, linear in the dimension. That is why these
-       flows are called <b>linear-time</b>.</p>`,
+       flows are called <b>linear-time</b>.</p>
+       <p><b>The radial flow</b> (the paper's <b>Equations 13&ndash;14</b>) is the other linear-time map. Instead of
+       pushing along a direction, $f(z) = z + \\beta\\,h(\\alpha, r)(z - z_0)$ contracts or expands points
+       <i>radially</i> around a center $z_0$, by an amount that falls off with distance $r = \\lVert z - z_0\\rVert$.
+       Its determinant is again closed-form: $[1 + \\beta h]^{d-1}[1 + \\beta h + \\beta h' r]$ &mdash; the $d-1$
+       directions tangent to the sphere each scale by $1 + \\beta h$, and the one radial direction scales by
+       $1 + \\beta h + \\beta h' r$.</p>
+       <p><b>The invertibility constraint</b> (Appendix A.1) keeps the planar map one-to-one. For arbitrary $u$ the
+       factor $1 + u^{\\top}\\psi(z)$ can hit zero; reparameterizing $u \\to \\hat{u}$ forces $w^{\\top}u \\ge -1$,
+       which keeps it positive so the log is always defined.</p>
+       <p><b>The free energy bound</b> (the paper's <b>Equation 15</b>) is where the flow earns its keep. Training a
+       VAE minimizes the negative evidence lower bound $\\mathcal{F}(x)$. With a flow posterior it splits into three
+       expectations under the easy base $q_0$: the base entropy term $\\mathbb{E}[\\ln q_0(z_0)]$, the
+       reconstruction/prior term $-\\mathbb{E}[\\log p(x, z_K)]$ (evaluated at the flowed sample $z_K$), and the
+       extra flow term $-\\mathbb{E}[\\sum_k \\ln|1 + u_k^{\\top}\\psi_k(z_{k-1})|]$ &mdash; the summed log-determinants.
+       Every piece is an expectation over $q_0$, so it is estimated by sampling $z_0$ and pushing it through the
+       flow (the law of the unconscious statistician, Eq 8).</p>`,
     derivation:
       `<p><b>Short recap &mdash; the change-of-variables machinery lives in the mod-normalizing-flows concept
        lesson.</b> Here we make the planar flow's log-determinant concrete. Start from the change-of-variables

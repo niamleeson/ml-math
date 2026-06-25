@@ -132,6 +132,34 @@
        feature $i$ arrives right after exactly the players in $S$. Because the weights are exactly those order
        counts, summing the $\\phi_i$ telescopes to $f(x) - \\phi_0$ &mdash; that is the local-accuracy guarantee,
        falling straight out of the formula.</p>`,
+    architecture:
+      `<p>SHAP is not a neural network but a <b>method with a fixed pipeline</b>. Here is the structure, stage by stage.</p>
+       <p><b>1. Simplified-input layer ($h_x$).</b> Pick the instance $x$ to explain and a background dataset. A
+       coalition is a bit-vector $z' \\in \\{0,1\\}^M$; the mapping $x = h_x(z')$ turns it back into a real input by
+       keeping present features ($z'_i=1$) at their value in $x$ and replacing absent ones ($z'_i=0$) by the
+       background. This is the only model-agnostic interface SHAP needs &mdash; everything else is arithmetic on
+       $f(h_x(\\cdot))$.</p>
+       <p><b>2. Value function ($f_x$).</b> $f_x(z') = E[f(z)\\mid z_S]$ &mdash; the model's expected output given the
+       present features $S$. SHAP estimates this by averaging $f$ over background draws of the absent features (or, in
+       the additive-model / independence case, by plugging the mean). One scalar per coalition.</p>
+       <p><b>3. Attribution engine (the choice of estimator):</b></p>
+       <ul>
+        <li><b>Exact Shapley (this lesson):</b> enumerate all $2^M$ coalitions, weight each marginal by
+        $\\tfrac{|S|!\\,(M-|S|-1)!}{M!}$, and sum (Eqn. 8). $O(M\\,2^M)$ value-function calls &mdash; exact, only
+        feasible for small $M$.</li>
+        <li><b>Kernel SHAP (model-agnostic):</b> sample a set of coalitions $z'$, evaluate $f(h_x(z'))$ on each, and
+        solve a <i>weighted linear regression</i> of those outputs onto the bits $z'$ using the Shapley kernel
+        $\\pi_x$ (Theorem 2). The fitted coefficients are the SHAP values. Cost is controlled by the number of
+        sampled coalitions, not $2^M$.</li>
+        <li><b>Deep SHAP (model-specific):</b> compose per-layer DeepLIFT-style attributions through the network
+        using the chain rule, reusing SHAP's additivity to back-propagate attributions in one or a few passes &mdash;
+        a fast approximation for deep models.</li>
+       </ul>
+       <p><b>4. Output / consumption layer.</b> The result is the vector $(\\phi_0, \\phi_1, \\dots, \\phi_M)$
+       satisfying $\\phi_0 + \\sum_i \\phi_i = f(x)$ (local accuracy). Because the pieces add up, they feed directly
+       into waterfall plots, force plots, and beeswarm summaries &mdash; the additive structure of Eqn. 1 <i>is</i>
+       the visualization contract. Our code implements stages 1&ndash;3 with the exact engine and stage 4 as the
+       local-accuracy check and bar chart.</p>`,
     symbols: [
       { sym: "$\\phi_i$", desc: "the <b>attribution</b> (SHAP value) for feature $i$: a single number saying how much knowing feature $i$ moved this prediction. The thing we compute." },
       { sym: "$\\phi_0$", desc: "the <b>base value</b>: the model output when <i>no</i> feature is known, equal to the expected prediction $E[f]$ over the background data. Where the explanation starts from." },
@@ -143,9 +171,33 @@
       { sym: "$S$", desc: "a <b>coalition</b>: a subset of features treated as 'known/present'. The sum runs over every $S$ drawn from $F$ with feature $i$ left out, i.e. $S \\subseteq F \\setminus \\{i\\}$." },
       { sym: "$f_x(S)$", desc: "the <b>value function</b>: the model's output when only the features in $S$ are known and the rest are replaced by their background average. The 'payout' of coalition $S$." },
       { sym: "$f_x(S \\cup \\{i\\}) - f_x(S)$", desc: "the <b>marginal contribution</b> of feature $i$ to coalition $S$: how much the output changes when feature $i$ joins the known set." },
-      { sym: "$\\dfrac{|S|!\\,(M-|S|-1)!}{M!}$", desc: "the <b>coalition weight</b>: the fraction of orderings of all $M$ features in which feature $i$ arrives immediately after exactly the features in $S$. $|S|!$ orders the players before $i$; $(M-|S|-1)!$ orders the players after $i$; $M!$ is the total number of orderings." }
+      { sym: "$\\dfrac{|S|!\\,(M-|S|-1)!}{M!}$", desc: "the <b>coalition weight</b>: the fraction of orderings of all $M$ features in which feature $i$ arrives immediately after exactly the features in $S$. $|S|!$ orders the players before $i$; $(M-|S|-1)!$ orders the players after $i$; $M!$ is the total number of orderings." },
+      { sym: "$z'_i$", desc: "the $i$-th bit of the simplified input $z'$: $1$ if feature $i$ is present in this coalition, $0$ if absent. (In Eqn. 5 the specific bit-vector for the instance is written $x'$.)" },
+      { sym: "$z' \\setminus i$", desc: "the coalition $z'$ with feature $i$ <b>removed</b> (bit $i$ set to $0$). $f_x(z') - f_x(z' \\setminus i)$ is feature $i$'s marginal contribution to coalition $z'$ &mdash; the set-notation version of $f_x(S\\cup\\{i\\})-f_x(S)$." },
+      { sym: "$h_x$", desc: "the <b>mapping function</b> $x = h_x(z')$ from a simplified binary coalition back to a real model input: present features keep their value in $x$, absent features take a background value. The only interface SHAP needs to a black-box model." },
+      { sym: "$E[f(z)\\mid z_S]$", desc: "the <b>conditional expectation</b> of the model output given that the present features (indices $S$) are fixed at $x$'s values; the absent features are averaged over the background. This is what $f_x$ of a coalition means in general (Eqn. 8 region / &sect;4)." },
+      { sym: "$f'$ , $\\phi_i(f,x)$", desc: "a <b>second model</b> $f'$ compared to $f$ in the consistency axiom (Eqn. 7); $\\phi_i(f,x)$ makes explicit that the attribution depends on both the model $f$ and the instance $x$." },
+      { sym: "$\\pi_x(z')$", desc: "the <b>Shapley kernel</b> (Theorem 2): the regression weight $\\tfrac{M-1}{\\binom{M}{|z'|}|z'|(M-|z'|)}$ given to coalition $z'$ in Kernel SHAP. Largest for coalitions of size $1$ or $M-1$." },
+      { sym: "$g$ , $G$ , $\\xi$", desc: "the <b>explanation model</b> $g$ (the additive form of Eqn. 1) drawn from the class $G$; $\\xi$ is the fitted $g$ that minimizes the weighted loss $L$ &mdash; the LIME/Kernel-SHAP objective." },
+      { sym: "$L$ , $\\Omega$", desc: "the <b>weighted squared-error loss</b> $L(f,g,\\pi_x)=\\sum_{z'}[f(h_x(z'))-g(z')]^2\\pi_x(z')$ and the <b>regularizer</b> $\\Omega$. Kernel SHAP uses this $L$ with $\\Omega(g)=0$." }
     ],
-    formula: `$$ \\phi_i = \\sum_{S \\subseteq F \\setminus \\{i\\}} \\frac{|S|!\\,(M - |S| - 1)!}{M!} \\big[\\, f_x(S \\cup \\{i\\}) - f_x(S) \\,\\big] \\quad\\text{(Theorem 1, Eqn. 8)} \\qquad\\qquad f(x) = \\phi_0 + \\sum_{i=1}^{M} \\phi_i \\quad\\text{(Local Accuracy, Eqn. 5)} $$`,
+    formula:
+      `$$ g(z') = \\phi_0 + \\sum_{i=1}^{M} \\phi_i\\, z'_i. $$
+       <p>The <b>additive feature-attribution</b> form (&sect;2, Definition 1, <b>Eqn. 1</b>): every method the paper unifies explains a prediction as a base value $\\phi_0$ plus one attribution $\\phi_i$ per present simplified feature $z'_i \\in \\{0,1\\}$.</p>
+       $$ f(x) = g(x') = \\phi_0 + \\sum_{i=1}^{M} \\phi_i\\, x'_i. $$
+       <p><b>Property 1 &mdash; Local Accuracy</b> (&sect;3, <b>Eqn. 5</b>): with $x = h_x(x')$, the explanation must reproduce the model's output. The attributions plus the base value equal the true prediction.</p>
+       $$ x'_i = 0 \\;\\Longrightarrow\\; \\phi_i = 0. $$
+       <p><b>Property 2 &mdash; Missingness</b> (&sect;3, <b>Eqn. 6</b>): a feature that is absent from the simplified input gets zero attribution.</p>
+       $$ f'_x(z') - f'_x(z' \\setminus i) \\;\\ge\\; f_x(z') - f_x(z' \\setminus i)\\ \\ \\forall z' \\in \\{0,1\\}^M \\;\\Longrightarrow\\; \\phi_i(f', x) \\ge \\phi_i(f, x). $$
+       <p><b>Property 3 &mdash; Consistency</b> (&sect;3, <b>Eqn. 7</b>): if a model change raises (or keeps) feature $i$'s marginal contribution in <i>every</i> coalition, that feature's attribution cannot decrease. ($z' \\setminus i$ sets bit $i$ to 0.)</p>
+       $$ \\phi_i(f, x) = \\sum_{z' \\subseteq x'} \\frac{|z'|!\\,(M - |z'| - 1)!}{M!} \\big[\\, f_x(z') - f_x(z' \\setminus i) \\,\\big]. $$
+       <p><b>Theorem 1 (SHAP / Shapley value, &sect;3, Eqn. 8).</b> The three properties above are satisfied by <i>exactly one</i> attribution &mdash; the classic Shapley value, summing over every coalition $z'$ (equivalently every subset $S \\subseteq F \\setminus \\{i\\}$) with the order-counting weight. Writing coalitions as sets $S$: $\\phi_i = \\sum_{S \\subseteq F \\setminus \\{i\\}} \\tfrac{|S|!\\,(M-|S|-1)!}{M!}\\,[\\,f_x(S \\cup \\{i\\}) - f_x(S)\\,]$.</p>
+       $$ f_x(z') = f(h_x(z')) = E[\\, f(z) \\mid z_S \\,], \\qquad S = \\{\\, i : z'_i = 1 \\,\\}. $$
+       <p>The <b>value function</b> (&sect;4): absent features are integrated out, so $f_x$ of a coalition is the model's expected output given the present features $z_S$. SHAP approximates this conditional expectation (assuming feature independence / model linearity, Eqns. 11&ndash;12).</p>
+       $$ \\pi_{x}(z') = \\frac{M - 1}{\\dbinom{M}{|z'|}\\,|z'|\\,(M - |z'|)}. $$
+       <p><b>The Shapley kernel</b> (&sect;5, Theorem 2): the weight that turns LIME's weighted linear regression into SHAP. Note it is huge for $|z'| \\in \\{1, M-1\\}$ (single features in/out) and small in the middle.</p>
+       $$ \\xi = \\arg\\min_{g \\in G}\\ L(f, g, \\pi_x), \\qquad L(f, g, \\pi_x) = \\sum_{z'} \\big[\\, f(h_x(z')) - g(z') \\,\\big]^2 \\pi_x(z'), \\qquad \\Omega(g) = 0. $$
+       <p><b>Kernel SHAP</b> (&sect;5, Eqns. 2 &amp; 9): fit the additive model $g$ (Eqn. 1) by <i>weighted least squares</i> over sampled coalitions $z'$ using the Shapley kernel $\\pi_x$ and no regularization ($\\Omega = 0$). Theorem 2 proves the recovered coefficients are exactly the Shapley values of Eqn. 8 &mdash; without enumerating all $2^M$ coalitions.</p>`,
     whatItDoes:
       `<p><b>The Shapley value</b> (left, the paper's <b>Theorem 1 / Equation 8</b>) is the novel quantity. For
        feature $i$ it averages the feature's <b>marginal contribution</b> $f_x(S \\cup \\{i\\}) - f_x(S)$ over every

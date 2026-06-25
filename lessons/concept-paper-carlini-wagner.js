@@ -147,8 +147,38 @@
        <p>The constant $c$ is chosen by <b>binary search</b> (Section V-A): the smallest $c$ that still flips the
        label gives the smallest distortion. Small $c$ keeps $\\delta$ tiny but may not fool the net; large $c$
        guarantees a flip but spends more distortion than needed.</p>`,
+    architecture:
+      `<p>This is an <b>attack algorithm</b>, not a new network: it wraps a gradient-descent loop around a fixed,
+       already-trained classifier. Two pieces stack &mdash; the victim model and the optimization loop.</p>
+       <p><b>The victim classifier (&sect;IV, Tables I&ndash;II).</b> A standard convolutional net used as a black
+       box for its <b>logits</b> $Z$. The MNIST/CIFAR model is: two $3\\times3$ conv layers of 32 channels +
+       ReLU &rarr; $2\\times2$ max-pool &rarr; two $3\\times3$ conv layers of 64 channels + ReLU &rarr; max-pool
+       &rarr; two fully-connected layers of 200 units + ReLU &rarr; a final dense layer to the class logits
+       $Z(x)$ &rarr; softmax $F(x)=\\mathrm{softmax}(Z(x))$. Trained 50 epochs with momentum SGD (momentum $0.9$),
+       dropout $0.5$. The attack reads the layer <i>before</i> the softmax, so $C(x)=\\arg\\max_i F(x)_i$.</p>
+       <p><b>The attack loop (&sect;V-B, &sect;VI-A) &mdash; per-iteration procedure</b> for the $L_2$ attack on a
+       batch of clean inputs $x$ with targets $t$:</p>
+       <ol>
+        <li><b>Initialize</b> the free variable at the clean image: $w \\leftarrow \\mathrm{arctanh}(2x-1)$ (clamp
+        $x$ just inside $(0,1)$ first to avoid $\\pm\\infty$).</li>
+        <li><b>Decode</b> the candidate image: $x' = \\tfrac12(\\tanh(w)+1)\\in[0,1]^n$.</li>
+        <li><b>Forward pass</b> through the frozen classifier to get logits $Z(x')$; read the target logit
+        $Z(x')_t$ and the best competitor $\\max_{i\\neq t}Z(x')_i$.</li>
+        <li><b>Loss</b> $= \\lVert x'-x\\rVert_2^2 + c\\cdot\\max(\\max_{i\\neq t}Z(x')_i - Z(x')_t,\\,-\\kappa)$.</li>
+        <li><b>Backprop &amp; step</b>: gradient w.r.t. $w$ (classifier weights frozen), one <b>Adam</b> update
+        (&ldquo;we use the Adam optimizer almost exclusively&rdquo;, &sect;V-B).</li>
+        <li><b>Repeat</b> for up to 10,000 iterations (&sect;V-C); keep the smallest-distortion $x'$ seen that is
+        classified as $t$.</li>
+       </ol>
+       <p><b>Outer binary search (&sect;V-A).</b> Wrap the loop in ~20 steps of binary search over
+       $c\\in[10^{-4},10^{10}]$: raise $c$ when no adversarial example is found, lower it when one is, converging on
+       the smallest $c$ (hence smallest distortion) that still flips the label. The $L_0$ attack (&sect;VI-B)
+       repeatedly runs this $L_2$ loop while freezing the least-important pixels; the $L_\\infty$ attack
+       (&sect;VI-C) replaces the distance term with $\\sum_i(\\delta_i-\\tau)^+$ and shrinks the cap $\\tau$ by
+       $0.9\\times$ each round.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>clean input</b> &mdash; the original, correctly classified image, with every pixel in $[0,1]$." },
+      { sym: "$\\mathcal{D}(x,\\,x+\\delta)$", desc: "the <b>distance metric</b> measuring how big the perturbation is &mdash; one of $L_2$, $L_0$, or $L_\\infty$. For the $L_2$ attack it is the squared Euclidean distortion $\\lVert\\delta\\rVert_2^2$." },
       { sym: "$\\delta$", desc: "the <b>perturbation</b>: the small change we add. The adversarial input is $x' = x+\\delta$." },
       { sym: "$x'$", desc: "the <b>adversarial input</b> $x+\\delta$ &mdash; what we feed the network to fool it." },
       { sym: "$t$", desc: "the <b>target class</b>: the (wrong) label we want the network to output for $x'$. This is a <i>targeted</i> attack." },
@@ -162,7 +192,26 @@
       { sym: "$w$", desc: "the <b>free optimization variable</b> introduced by the change of variables. We optimize $w$ unconstrained; the image $\\tfrac12(\\tanh(w)+1)$ stays in $[0,1]$ automatically." },
       { sym: "$\\tanh$", desc: "the <b>hyperbolic tangent</b>, a smooth function whose output is always between $-1$ and $1$. That bounded range is exactly what keeps the reparametrized pixels inside $[0,1]$." }
     ],
-    formula: `$$ f(x') = \\max\\Big( \\max_{i \\neq t} Z(x')_i - Z(x')_t,\\; -\\kappa \\Big) \\quad\\text{(margin loss, \\S V\\text{-}A / VI\\text{-}A)} \\qquad\\qquad \\text{minimize}_{\\,w}\\;\\; \\big\\lVert \\tfrac12(\\tanh(w)+1) - x \\big\\rVert_2^2 + c\\cdot f\\big(\\tfrac12(\\tanh(w)+1)\\big) \\quad\\text{(\\S VI\\text{-}A)} $$`,
+    formula:
+      `$$ \\text{minimize}\\;\\; \\mathcal{D}(x,\\,x+\\delta) \\;+\\; c\\cdot f(x+\\delta)
+        \\qquad\\text{such that}\\qquad x+\\delta \\in [0,1]^n. $$
+       <p>The general attack (&sect;V): make the perturbation small under a distance $\\mathcal{D}$ (one of
+       $L_2,\\,L_0,\\,L_\\infty$) while the objective $f$ drives misclassification to the target $t$; the constant
+       $c\\gt 0$ balances the two.</p>
+       $$ f(x') = \\max\\Big( \\max_{i \\neq t} Z(x')_i \\;-\\; Z(x')_t,\\;\\; -\\kappa \\Big). $$
+       <p>The chosen objective function (&sect;V-A, their $f_6$; the best of seven candidates): the
+       <b>margin loss on the logits</b> $Z$. It is $\\gt 0$ while a non-target class leads, $0$ at the boundary,
+       and saturates at $-\\kappa$ once the target leads by $\\kappa$.</p>
+       $$ \\delta_i = \\tfrac12\\big(\\tanh(w_i)+1\\big) - x_i
+        \\qquad\\Longrightarrow\\qquad x_i+\\delta_i = \\tfrac12\\big(\\tanh(w_i)+1\\big) \\in (0,1). $$
+       <p>The box-constraint change of variables (&sect;V-B): optimize an unconstrained $w$; since $\\tanh\\in(-1,1)$
+       the reparametrized pixel always lands in $(0,1)$, so $x+\\delta\\in[0,1]^n$ holds for free.</p>
+       $$ \\text{minimize}_{\\,w}\\;\\; \\big\\lVert \\tfrac12(\\tanh(w)+1) - x \\big\\rVert_2^2
+        \\;+\\; c\\cdot f\\big(\\tfrac12(\\tanh(w)+1)\\big). $$
+       <p>The final $L_2$ attack (&sect;VI-A): substitute the tanh map into the general objective with
+       $\\mathcal{D}=\\lVert\\delta\\rVert_2^2$ and minimize over $w$ with Adam. The confidence $\\kappa$ sits inside
+       $f$; the trade-off $c$ is chosen by <b>binary search</b> (&sect;V-A) &mdash; the smallest $c$ that still
+       flips the label yields the smallest distortion.</p>`,
     whatItDoes:
       `<p><b>The margin loss</b> $f$ (left, Section V-A's $f_6$ with the $\\kappa$ term from Section VI-A) measures
        how far the target class is from winning. It compares the best competing logit to the target's logit. If

@@ -130,6 +130,29 @@
        interested in the features that have a <i>positive</i> influence on the class of interest" (&sect;3).
        Negative values are pixels that argue <i>against</i> class $c$; we drop them so the map shows only what
        supports the decision.</p>`,
+    architecture:
+      `<p>Grad-CAM is not a network &mdash; it is a <b>read-out attached to an existing CNN</b>. The data flow is a
+       single forward pass, one tap, and a backward pass:</p>
+       <ul>
+        <li><b>Backbone (unchanged).</b> Any CNN: input image &rarr; a stack of convolutional/pooling blocks &rarr;
+        the <b>last convolutional layer</b> &rarr; (for typical classifiers) flatten or global-average-pool &rarr;
+        fully-connected layers &rarr; class logits $y^c$ &rarr; softmax. Grad-CAM neither changes nor retrains any
+        of this.</li>
+        <li><b>The tap point.</b> Grad-CAM hooks the activations $A^k$ of the <b>last conv layer</b> &mdash; a stack
+        of $K$ feature maps, each a small spatial grid ($14\\times14$ for the last conv of VGG and AlexNet; $8\\times8$
+        in our toy CNN). This layer is chosen because it is "the last convolutional layer," the deepest place that
+        still retains <i>spatial</i> location while holding the highest-level semantic concepts (&sect;3); fully-
+        connected layers downstream throw the spatial grid away, and earlier conv layers hold only low-level edges.</li>
+        <li><b>Gradient path.</b> Pick a target class $c$, take its logit $y^c$, and back-propagate to the tapped
+        maps to obtain $\\partial y^c/\\partial A^k_{ij}$ at every cell. Global-average-pool over space &rarr; the
+        per-map weights $\\alpha_k^c$ (Eqn. 1).</li>
+        <li><b>Combine head.</b> Weighted sum of the tapped maps $\\sum_k \\alpha_k^c A^k$, then ReLU (Eqn. 2),
+        yielding a coarse $14\\times14$ (here $8\\times8$) localization map. Bilinearly upsample to the image to
+        overlay.</li>
+        <li><b>Optional Guided Grad-CAM branch.</b> In parallel, run Guided Backpropagation to get a full-resolution
+        pixel-space map, then take its <b>element-wise product</b> with the upsampled Grad-CAM map &mdash; combining
+        high pixel detail with class-discriminative localization.</li>
+       </ul>`,
     symbols: [
       { sym: "$A^k$", desc: "the <b>$k$-th feature map</b> from the network's last convolutional layer &mdash; a small 2-D grid (e.g. 8&times;8) that lights up where channel $k$'s learned pattern appears. There are as many maps as that layer has channels." },
       { sym: "$A^k_{ij}$", desc: "a single <b>cell</b> of feature map $k$ at spatial row $i$, column $j$: one activation value." },
@@ -140,9 +163,21 @@
       { sym: "$\\sum_i \\sum_j$", desc: "a <b>double sum</b> over the spatial grid: add up over every row $i$ and every column $j$ of the feature map." },
       { sym: "$\\text{ReLU}$", desc: "the <b>rectified linear unit</b>: $\\text{ReLU}(x)=\\max(0,x)$. Keep positive values, set negatives to zero. Here it drops the pixels that argue against class $c$." },
       { sym: "$L^c_{\\text{Grad-CAM}}$", desc: "the <b>Grad-CAM heatmap</b> for class $c$: the ReLU of the weighted sum of feature maps. Same small spatial size as $A^k$; upsample to overlay on the image." },
+      { sym: "$w_k^c$", desc: "the <b>CAM class weight</b> for map $k$ and class $c$ &mdash; the weight CAM <i>learns</i> in its final layer. The paper shows $w_k^c = \\sum_i\\sum_j \\partial Y^c/\\partial A^k_{ij} = Z\\,\\alpha_k^c$, i.e. it equals Grad-CAM's weight up to the $1/Z$ that normalizes out. This is why Grad-CAM generalizes CAM." },
+      { sym: "$L^c_{\\text{Guided Grad-CAM}}$", desc: "the <b>Guided Grad-CAM</b> map: the upsampled Grad-CAM map multiplied element-wise by a Guided-Backpropagation pixel map. High-resolution <i>and</i> class-discriminative." },
+      { sym: "$\\odot$", desc: "<b>element-wise (Hadamard) product</b>: multiply two equal-sized maps cell by cell. Used to fuse Grad-CAM with Guided Backprop." },
+      { sym: "$G_{\\text{Guided-Backprop}}$", desc: "the <b>Guided-Backpropagation</b> pixel map: a full-resolution, fine-detail saliency map (sharp edges) but not class-discriminative on its own. Grad-CAM supplies the missing class localization." },
       { sym: "“logit”", desc: "a plain term: the raw score a network outputs for a class <i>before</i> the softmax turns scores into probabilities. $y^c$ is the logit for class $c$." }
     ],
-    formula: `$$ \\alpha_k^c = \\underbrace{\\frac{1}{Z}\\sum_i \\sum_j}_{\\text{global average pooling}} \\; \\underbrace{\\frac{\\partial y^c}{\\partial A^k_{ij}}}_{\\text{gradients via backprop}} \\quad\\text{(Eqn. 1, \\S3)} \\qquad\\qquad L^c_{\\text{Grad-CAM}} = \\text{ReLU}\\!\\Big( \\sum_k \\alpha_k^c \\, A^k \\Big) \\quad\\text{(Eqn. 2, \\S3)} $$`,
+    formula:
+      `$$ \\alpha_k^c \\;=\\; \\underbrace{\\frac{1}{Z}\\sum_i \\sum_j}_{\\text{global average pooling}} \\; \\underbrace{\\frac{\\partial y^c}{\\partial A^k_{ij}}}_{\\text{gradients via backprop}} $$
+       <p><b>Eqn. 1 (&sect;3) &mdash; neuron importance weights.</b> Back-propagate the class-$c$ score $y^c$ to the last conv feature maps, then average each map's gradients over its $Z$ spatial cells to get one weight $\\alpha_k^c$ per map.</p>
+       $$ L^c_{\\text{Grad-CAM}} \\;=\\; \\text{ReLU}\\!\\Big( \\sum_k \\alpha_k^c \\, A^k \\Big) $$
+       <p><b>Eqn. 2 (&sect;3) &mdash; the localization map.</b> Weight each feature map by its importance, sum over maps $k$, and ReLU. The ReLU keeps only <i>positive</i> influence: the paper applies it "because we are only interested in the features that have a positive influence on the class of interest ... Negative pixels are likely to belong to other categories" (&sect;3).</p>
+       $$ Z \\;=\\; \\sum_i \\sum_j 1 \\qquad\\qquad w_k^c \\;=\\; \\sum_i \\sum_j \\frac{\\partial Y^c}{\\partial A^k_{ij}} \\;=\\; Z\\,\\alpha_k^c $$
+       <p><b>Relation to CAM (&sect;3, Eqns. 9&ndash;11).</b> For the global-average-pooling architecture that Class Activation Mapping (CAM) requires, the paper derives that CAM's learned class weight $w_k^c$ equals the summed gradient &mdash; identical to $\\alpha_k^c$ "up to a proportionality constant $1/Z$ that gets normalized-out during visualization." So Grad-CAM is a strict <b>generalization of CAM to any CNN</b>, with no architecture restriction. ($Z$ = number of pixels in a feature map.)</p>
+       $$ L^c_{\\text{Guided Grad-CAM}} \\;=\\; \\big(L^c_{\\text{Grad-CAM}}\\!\\uparrow\\big) \\;\\odot\\; G_{\\text{Guided-Backprop}} $$
+       <p><b>Guided Grad-CAM (&sect;3).</b> Bilinearly upsample the coarse map $L^c_{\\text{Grad-CAM}}$ (here $\\uparrow$) to input resolution and take the <b>element-wise product</b> ($\\odot$) with a Guided-Backpropagation pixel map $G$. The result is both <i>high-resolution</i> (sharp pixel detail from Guided Backprop) and <i>class-discriminative</i> (the where-it-looked localization from Grad-CAM).</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> turns a whole grid of gradients into one number per feature map. For map $k$, look at
        how much each of its cells would raise the class-$c$ score, then average those over the grid. A map whose

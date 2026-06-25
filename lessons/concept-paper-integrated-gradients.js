@@ -143,6 +143,30 @@
        <p><b>In practice you cannot do a perfect integral</b>, so you approximate it with a <b>Riemann sum</b>: a
        finite average of the gradient at $m$ evenly spaced points along the path (&sect;5, Eqn. 3). The paper
        notes "20 to 300 steps are enough to approximate the integral (within 5%)."</p>`,
+    architecture:
+      `<p>Integrated Gradients is not a network &mdash; it is a <b>procedure wrapped around any differentiable
+       model</b> $F$. The "architecture" is the per-attribution algorithm (&sect;5, Eqn. 3). It treats $F$ as a
+       black box exposed through one operation: an input-gradient call $\\nabla_x F$.</p>
+       <p><b>Inputs.</b> A scalar-output model $F$ (one class score or one regression value), the input $x \\in
+       \\mathbb{R}^n$ to explain, a baseline $x' \\in \\mathbb{R}^n$ meaning "no signal" (all-zeros), and a step
+       count $m$ (paper: $20$&ndash;$300$).</p>
+       <p><b>Data flow, step by step:</b></p>
+       <ol>
+        <li><b>Build the path.</b> For $k = 1 \\ldots m$, set $\\alpha_k = k/m$ and form the interpolated point
+        $\\tilde{x}_k = x' + \\alpha_k\\,(x - x')$ &mdash; a straight line of $m$ points from baseline to input.</li>
+        <li><b>Gradient at each point.</b> Mark $\\tilde{x}_k$ as requiring grad, run a forward pass $F(\\tilde
+        {x}_k)$, then a backward pass to get the input-gradient $g_k = \\nabla_x F(\\tilde{x}_k) \\in \\mathbb
+        {R}^n$. One forward + one backward per step; $m$ gradient calls total.</li>
+        <li><b>Average (the integral).</b> Accumulate $\\bar{g} = \\tfrac{1}{m}\\sum_{k=1}^{m} g_k$ &mdash; the
+        Riemann-sum estimate of $\\int_0^1 \\nabla_x F\\, d\\alpha$.</li>
+        <li><b>Scale by travel distance.</b> Element-wise multiply: $\\text{IG} = (x - x') \\odot \\bar{g} \\in
+        \\mathbb{R}^n$, one attribution per input feature.</li>
+        <li><b>Verify Completeness.</b> Check $\\sum_i \\text{IG}_i \\approx F(x) - F(x')$; the gap shrinks as $m$
+        grows.</li>
+       </ol>
+       <p><b>Output.</b> An attribution vector in $\\mathbb{R}^n$, the same shape as the input, summing to the
+       prediction gap. <b>Cost.</b> $m$ forward+backward passes through $F$ &mdash; no retraining, no extra layers,
+       no change to the model. The whole method "just needs a few calls to the standard gradient operator."</p>`,
     symbols: [
       { sym: "$F$", desc: "the <b>network's output</b> as a function of the input &mdash; a single number (e.g. the score for one class, or one regression output)." },
       { sym: "$x$", desc: "the <b>input</b> being explained: the actual feature vector whose prediction we want to attribute." },
@@ -153,11 +177,29 @@
       { sym: "$\\int_0^1 \\cdots\\, d\\alpha$", desc: "the <b>integral</b> over the path: continuously sum the value of what is inside as $\\alpha$ sweeps from $0$ to $1$. It measures total accumulated change along the path." },
       { sym: "$\\text{IG}_i(x)$", desc: "the <b>Integrated-Gradients attribution</b> for feature $i$: one number saying how much feature $i$ contributed to the prediction gap $F(x) - F(x')$." },
       { sym: "$m$", desc: "the <b>number of steps</b> in the Riemann sum &mdash; how many evenly spaced points along the path we sample. More steps means a closer approximation." },
+      { sym: "$k$", desc: "the <b>step index</b> in the Riemann sum, running $1 \\ldots m$. At step $k$ the path variable is $\\alpha = k/m$." },
+      { sym: "$n$", desc: "the <b>number of input features</b> (the dimension of $x$). The Completeness sum $\\sum_{i=1}^{n}$ runs over all $n$ features." },
+      { sym: "$F_A,\\; F_B$", desc: "<b>two networks</b> with different internal implementations. If they compute the same output for every input (functionally equivalent), Implementation Invariance demands they get identical attributions." },
+      { sym: "$\\nabla_x F$", desc: "the <b>input-gradient vector</b>: all $n$ partials $\\partial F/\\partial x_i$ at once. One backward pass returns it; the algorithm calls it $m$ times along the path." },
+      { sym: "“Sensitivity”", desc: "the &sect;2.1 axiom: a feature that (alone) changes the prediction from the baseline must get non-zero credit. IG satisfies it because Completeness does." },
+      { sym: "“Implementation Invariance”", desc: "the &sect;2.2 axiom: attributions depend only on the function $F$ computes, not on how it is wired. IG satisfies it because it uses only input-gradients." },
       { sym: "“baseline”", desc: "a plain term: the reference input the attribution is measured against. Changing it changes the explanation; pick one that means \"no information.\"" },
       { sym: "“completeness”", desc: "a plain term, the key property: the per-feature attributions <b>sum to</b> $F(x) - F(x')$. Nothing is double-counted or dropped." },
       { sym: "“saturation”", desc: "a plain term: a region where the output is <b>flat</b>, so the gradient is near zero, even though the feature is important. IG looks along the whole path, so it sees the non-flat part too." }
     ],
-    formula: `$$ \\text{IG}_i(x) \\;=\\; (x_i - x'_i)\\,\\int_{\\alpha=0}^{1} \\frac{\\partial F\\!\\left(x' + \\alpha\\,(x - x')\\right)}{\\partial x_i}\\, d\\alpha \\quad\\text{(\\S3, Eqn. 1)} \\qquad\\qquad \\text{IG}_i^{\\text{approx}}(x) \\;=\\; (x_i - x'_i)\\,\\sum_{k=1}^{m} \\frac{\\partial F\\!\\left(x' + \\tfrac{k}{m}(x - x')\\right)}{\\partial x_i}\\,\\frac{1}{m} \\quad\\text{(\\S5, Eqn. 3)} $$`,
+    formula:
+      `$$ \\text{IG}_i(x) \\;=\\; (x_i - x'_i)\\,\\int_{\\alpha=0}^{1} \\frac{\\partial F\\!\\left(x' + \\alpha\\,(x - x')\\right)}{\\partial x_i}\\, d\\alpha $$
+       <p>&sect;3, <b>Equation 1</b> &mdash; the definition: feature $i$'s attribution is the path integral of its partial derivative from baseline $x'$ to input $x$, scaled by the travel distance $(x_i - x'_i)$.</p>
+       $$ \\text{IG}_i^{\\text{approx}}(x) \\;=\\; (x_i - x'_i)\\,\\sum_{k=1}^{m} \\frac{\\partial F\\!\\left(x' + \\tfrac{k}{m}(x - x')\\right)}{\\partial x_i}\\,\\frac{1}{m} $$
+       <p>&sect;5, <b>Equation 3</b> &mdash; the Riemann-sum approximation: replace the integral by an average of the gradient at $m$ evenly spaced points $\\alpha = \\tfrac{k}{m}$ along the path. This is what the code runs.</p>
+       $$ \\sum_{i=1}^{n} \\text{IG}_i(x) \\;=\\; F(x) - F(x') $$
+       <p>&sect;3, <b>Proposition 1 (Completeness axiom)</b> &mdash; the per-feature attributions sum exactly to the prediction gap between input and baseline. Holds whenever $F$ is differentiable almost everywhere; nothing is double-counted or dropped.</p>
+       $$ \\big(x_i \\neq x'_i\\big)\\;\\wedge\\;\\big(F(x) \\neq F(x')\\big)\\;\\Longrightarrow\\;\\text{IG}_i(x) \\neq 0 $$
+       <p>&sect;2.1, <b>Sensitivity(a) axiom</b> &mdash; if input and baseline differ in just feature $i$ and the network gives them different predictions, feature $i$ must get a non-zero attribution. Completeness implies Sensitivity. Plain gradients can violate this at saturation.</p>
+       $$ F_A(z) = F_B(z)\\;\\;\\forall z \\;\\Longrightarrow\\; \\text{IG}^{A}(x) = \\text{IG}^{B}(x) $$
+       <p>&sect;2.2, <b>Implementation Invariance axiom</b> &mdash; two networks $F_A, F_B$ that compute the same function for every input get identical attributions. IG depends only on $F$'s input-gradients, so it is invariant by construction (&sect;2.2 / Theorem 1); methods using internal node values are not.</p>
+       $$ \\text{IG is the } \\textbf{unique} \\text{ path method that is symmetry-preserving} \\quad (\\text{Aumann-Shapley}) $$
+       <p>&sect;4, <b>Theorem 1</b> &mdash; among all path-integral attribution methods, the straight-line path is the only one that treats symmetric features identically; it is the Aumann-Shapley cost-sharing solution from economics.</p>`,
     whatItDoes:
       `<p><b>The integral form</b> (left, &sect;3, Equation 1) is the definition. Read it right-to-left: walk the
        path from $x'$ to $x$; at each point take the slope of the output along feature $i$; average those slopes

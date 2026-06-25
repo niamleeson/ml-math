@@ -134,6 +134,33 @@
        gradient &mdash; producing <b>second derivatives</b> (a Hessian-vector product). The paper notes you can
        drop this second-order term for a cheaper <b>first-order approximation</b> (see Results) at a small cost
        in accuracy.</p>`,
+    architecture:
+      `<p>MAML is not a network architecture &mdash; it is a <b>bi-level training loop</b> wrapped around <i>any</i>
+       gradient-trained model $f_\\theta$ (here a small multi-layer perceptron: $1 \\to 40 \\to 40 \\to 1$ with ReLU,
+       &sect;5.1). The structure is two nested loops sharing one weight vector $\\theta$.</p>
+       <p><b>Algorithm 1 (general MAML) / Algorithm 2 (supervised).</b> Inputs: task distribution $p(\\mathcal{T})$,
+       inner step size $\\alpha$, meta step size $\\beta$. Initialize $\\theta$ randomly, then repeat until done:</p>
+       <ol>
+        <li><b>Sample a batch of tasks</b> $\\mathcal{T}_i \\sim p(\\mathcal{T})$ (here 4 sine tasks per meta-iteration).</li>
+        <li><b>Inner loop &mdash; for each task $\\mathcal{T}_i$ independently:</b>
+          <ul>
+            <li>Draw $K$ <b>support</b> datapoints $\\mathcal{D} = \\{x^{(j)}, y^{(j)}\\}$ from $\\mathcal{T}_i$.</li>
+            <li>Evaluate the support-set gradient $\\nabla_\\theta \\mathcal{L}_{\\mathcal{T}_i}(f_\\theta)$ and form
+            the adapted weights $\\theta'_i = \\theta - \\alpha \\nabla_\\theta \\mathcal{L}_{\\mathcal{T}_i}(f_\\theta)$
+            (one step, or $N$ chained steps for multi-step adaptation). The step is a <b>functional</b> update &mdash;
+            new tensors, not an in-place optimizer step &mdash; so the inner gradient stays in the computation graph.</li>
+            <li>Draw a fresh <b>query</b> set $\\mathcal{D}'_i$ from the same task for scoring.</li>
+          </ul>
+        </li>
+        <li><b>Outer loop (meta-update) &mdash; once per batch:</b> sum each task's <i>query</i> loss at its adapted
+        weights $\\theta'_i$, then apply $\\theta \\leftarrow \\theta - \\beta \\nabla_\\theta \\sum_i
+        \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i})$. This single backward pass differentiates <b>through</b> every
+        task's inner step (the second-order meta-gradient); $\\beta$ is realized by an Adam meta-optimizer.</li>
+       </ol>
+       <p><b>Data flow:</b> $\\theta \\xrightarrow{\\text{inner grad on support}} \\theta'_i \\xrightarrow{\\text{forward
+       on query}} \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i})$, and the meta-gradient flows the reverse path all the way
+       back to $\\theta$. Test time uses only the inner loop: take the trained $\\theta$, adapt one (or a few) steps on a
+       new task's $K$ points, predict.</p>`,
     symbols: [
       { sym: "$\\theta$", desc: "the <b>shared initialization</b> &mdash; the single weight vector MAML meta-learns. Every task starts adapting from here. This is what the outer loop trains." },
       { sym: "$\\theta'_i$", desc: "the <b>task-adapted weights</b> for task $\\mathcal{T}_i$: $\\theta$ after taking one (or a few) inner gradient steps on that task's data." },
@@ -145,9 +172,45 @@
       { sym: "$\\alpha$", desc: "the <b>inner step size</b> (fine-tuning learning rate): how big the per-task adaptation step is. The paper uses $\\alpha = 0.01$ for the sinusoid task." },
       { sym: "$\\beta$", desc: "the <b>meta step size</b>: the learning rate of the outer loop that updates $\\theta$ across tasks." },
       { sym: "“support set”", desc: "a plain term, not a symbol: the few points used for the <b>inner</b> adaptation step (computing $\\theta'_i$)." },
-      { sym: "“query set”", desc: "a plain term: <i>fresh</i> points from the same task used to score the adapted weights $\\theta'_i$ &mdash; this is the loss the meta-update minimizes." }
+      { sym: "“query set”", desc: "a plain term: <i>fresh</i> points from the same task used to score the adapted weights $\\theta'_i$ &mdash; this is the loss the meta-update minimizes." },
+      { sym: "$N$", desc: "the <b>number of inner gradient steps</b> in the inner loop. The paper allows \"one or more\" (&sect;2.2); the sinusoid experiment uses $N=1$. $\\theta_i^{(k)}$ is the weight vector after $k$ inner steps." },
+      { sym: "$I$", desc: "the <b>identity matrix</b>. FOMAML replaces the Hessian factor $I - \\alpha\\nabla^2\\mathcal{L}$ with $I$, i.e. drops the second-order term." },
+      { sym: "$\\nabla^2_\\theta$", desc: "the <b>Hessian</b>: the matrix of second partial derivatives of the loss. It appears in the exact meta-gradient and is what FOMAML omits." },
+      { sym: "$x^{(j)}, y^{(j)}$", desc: "an <b>input/target pair</b> drawn from a task (e.g. one $(x, A\\sin(x+\\phi))$ point). Used in the loss definitions $\\mathcal{L}_{\\mathcal{T}_i}$ (Eq. 2 / Eq. 3)." }
     ],
-    formula: `$$ \\theta'_i = \\theta - \\alpha \\nabla_\\theta \\mathcal{L}_{\\mathcal{T}_i}(f_\\theta) \\quad\\text{(inner update, \\S2.2)} \\qquad\\qquad \\theta \\leftarrow \\theta - \\beta \\nabla_\\theta \\sum_{\\mathcal{T}_i \\sim p(\\mathcal{T})} \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i}) \\quad\\text{(Eqn. 1)} $$`,
+    formula:
+      `<p>$$ \\theta'_i = \\theta - \\alpha \\, \\nabla_\\theta \\, \\mathcal{L}_{\\mathcal{T}_i}(f_\\theta) $$</p>
+       <p><b>Inner-loop adaptation</b> (&sect;2.2). One gradient-descent step on task $\\mathcal{T}_i$'s loss from the
+       shared init $\\theta$, with inner step size $\\alpha$, giving the task-adapted weights $\\theta'_i$.</p>
+
+       <p>$$ \\min_\\theta \\; \\sum_{\\mathcal{T}_i \\sim p(\\mathcal{T})} \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i})
+       \\;=\\; \\sum_{\\mathcal{T}_i \\sim p(\\mathcal{T})} \\mathcal{L}_{\\mathcal{T}_i}\\!\\big(f_{\\theta - \\alpha \\nabla_\\theta \\mathcal{L}_{\\mathcal{T}_i}(f_\\theta)}\\big) $$</p>
+       <p><b>Meta-objective</b> (&sect;2.2). Minimize, over the <i>pre-adaptation</i> $\\theta$, the sum of each task's
+       loss evaluated at its <i>post-adaptation</i> weights $\\theta'_i$. Expanding $\\theta'_i$ (right side) shows the
+       objective is a function of $\\theta$ through the inner step.</p>
+
+       <p>$$ \\theta \\leftarrow \\theta - \\beta \\, \\nabla_\\theta \\sum_{\\mathcal{T}_i \\sim p(\\mathcal{T})}
+       \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i}) $$</p>
+       <p><b>Meta-update</b> (the paper's <b>Equation 1</b>, &sect;2.2). SGD on the meta-objective with meta step size
+       $\\beta$. Because $\\theta'_i$ already contains $\\nabla_\\theta\\mathcal{L}$, this differentiates a gradient &mdash;
+       the <b>second-order meta-gradient</b> that flows back through the inner step.</p>
+
+       <p>$$ \\nabla_\\theta \\, \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i}) =
+       \\big(I - \\alpha \\nabla^2_\\theta \\mathcal{L}^{\\text{sup}}_{\\mathcal{T}_i}(f_\\theta)\\big)\\,
+       \\nabla_{\\theta'_i} \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i})
+       \\;\\;\\xrightarrow{\\text{FOMAML}}\\;\\; \\nabla_{\\theta'_i} \\mathcal{L}_{\\mathcal{T}_i}(f_{\\theta'_i}) $$</p>
+       <p><b>First-order approximation (FOMAML)</b> (&sect;5.2). The exact meta-gradient carries the Hessian factor
+       $I - \\alpha\\nabla^2_\\theta\\mathcal{L}^{\\text{sup}}$ (chain rule through the inner step). FOMAML drops the
+       Hessian &mdash; replaces that factor with the identity $I$ &mdash; so the meta-gradient is just the loss gradient
+       evaluated at the adapted weights $\\theta'_i$. The paper reports this is "nearly the same" in accuracy with
+       "roughly" a "33% speed-up."</p>
+
+       <p>$$ \\theta_i^{(0)} = \\theta, \\qquad \\theta_i^{(k)} = \\theta_i^{(k-1)} - \\alpha \\, \\nabla_{\\theta_i^{(k-1)}}
+       \\mathcal{L}_{\\mathcal{T}_i}\\!\\big(f_{\\theta_i^{(k-1)}}\\big), \\qquad \\theta'_i = \\theta_i^{(N)} $$</p>
+       <p><b>Multi-step inner adaptation</b> (&sect;2.2: "one or more gradient updates"). Chain $N$ inner steps instead of
+       one; the adapted weights $\\theta'_i$ are the output of the last step. The meta-gradient then back-propagates
+       through all $N$ steps. (Eq. 2 / Eq. 3 give the task loss $\\mathcal{L}_{\\mathcal{T}_i}$ &mdash; mean-squared error
+       for regression and cross-entropy for classification &mdash; shown in <i>What it does</i>.)</p>`,
     whatItDoes:
       `<p><b>The inner update</b> (left, &sect;2.2; shown unnumbered in the paper) is ordinary fine-tuning: take
        the shared weights $\\theta$, compute task $\\mathcal{T}_i$'s loss gradient, and step downhill by $\\alpha$
@@ -157,7 +220,15 @@
        measured at $\\theta'_i$, but the step is on $\\theta$. Because $\\theta'_i$ is a function of $\\theta$
        (through the inner gradient), the chain rule pushes the meta-gradient <b>through</b> the inner step.
        Computing it differentiates a gradient, so it needs second derivatives. The effect on $\\theta$: not "fit
-       the average task," but "sit at a point from which one gradient step reaches any task."</p>`,
+       the average task," but "sit at a point from which one gradient step reaches any task."</p>
+       <p><b>The task loss $\\mathcal{L}_{\\mathcal{T}_i}$</b> that both updates use is problem-specific (&sect;3.1). For
+       <b>regression</b> it is squared error (the paper's <b>Equation 2</b>):
+       $$ \\mathcal{L}_{\\mathcal{T}_i}(f_\\phi) = \\sum_{x^{(j)}, y^{(j)} \\sim \\mathcal{T}_i} \\big\\lVert f_\\phi(x^{(j)}) - y^{(j)} \\big\\rVert_2^2, $$
+       the sum of squared gaps between prediction and target (our code averages it via <code>nn.MSELoss</code>). For
+       <b>classification</b> it is cross-entropy (the paper's <b>Equation 3</b>):
+       $$ \\mathcal{L}_{\\mathcal{T}_i}(f_\\phi) = -\\sum_{x^{(j)}, y^{(j)} \\sim \\mathcal{T}_i} y^{(j)} \\log f_\\phi(x^{(j)}) + (1 - y^{(j)}) \\log\\!\\big(1 - f_\\phi(x^{(j)})\\big). $$
+       The MAML loop is identical either way &mdash; only $\\mathcal{L}_{\\mathcal{T}_i}$ changes &mdash; which is what
+       "model-agnostic" means.</p>`,
     derivation:
       `<p><b>Short recap &mdash; the meta-learning framing lives in the fs-meta-learning concept lesson.</b> Here
        we make the "gradient through a gradient" concrete. Take one inner step and write the post-adaptation

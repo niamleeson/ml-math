@@ -147,6 +147,29 @@
        spread). Far from any training point nothing pins the output down, so different masks pull it in
        different directions and the $T$ runs scatter widely (large spread). That scatter is the model telling
        you it is extrapolating.</p>`,
+    architecture:
+      `<p>There is no new <i>network</i> &mdash; the architecture is an ordinary dropout multi-layer perceptron.
+       The contribution is the <b>test-time procedure</b> layered on top of it. Component by component:</p>
+       <ul>
+        <li><b>Trained network ($L$ weight layers).</b> A standard feed-forward net of $L$ layers, with
+        <code>nn.Dropout</code> applied <i>before every weight layer</i> at rate $p$. Layer $i$ holds a learned
+        weight matrix $\\mathbf{M}_i$ of size $K_i \\times K_{i-1}$ and a nonlinearity $\\sigma$. Trained once with
+        the usual dropout objective $\\mathcal{L}_{\\text{dropout}}$ &mdash; nothing special.</li>
+        <li><b>Mask sampler (the posterior $q$).</b> At each forward pass, every column $j$ of every $\\mathbf{M}_i$
+        is kept or zeroed by an independent draw $z_{i,j}\\sim\\mathrm{Bernoulli}(p_i)$, giving a sampled weight
+        set $\\widehat{\\mathbf{W}}_1^t,\\ldots,\\widehat{\\mathbf{W}}_L^t$. One mask draw = one sample from the
+        approximate weight posterior.</li>
+        <li><b>The MC loop ($T$ passes).</b> For a test input $\\mathbf{x}^*$, run the network $T$ times, each with
+        a fresh mask draw, collecting outputs $\\hat{\\mathbf{y}}^*_1,\\ldots,\\hat{\\mathbf{y}}^*_T$. Dropout must
+        stay <b>ON</b> (in PyTorch: keep <code>net.train()</code>, do not call <code>net.eval()</code>).</li>
+        <li><b>Aggregator.</b> Reduce the $T$ outputs to a <b>mean</b> (the prediction, Eq. 6) and a
+        <b>variance / standard deviation</b> (the uncertainty), optionally adding the precision term
+        $\\tau^{-1}\\mathbf{I}_D$ for data noise.</li>
+       </ul>
+       <p><b>Per-test-input procedure:</b> (1) put net in train mode so dropout is active; (2) loop $t = 1\\ldots T$,
+       sampling a mask and running one forward pass each time; (3) stack the $T$ outputs; (4) take their mean as
+       the prediction and their spread as the uncertainty. Training cost is unchanged; test cost is $T\\times$ a
+       normal forward pass.</p>`,
     symbols: [
       { sym: "$\\mathbf{x}^*$", desc: "a <b>test input</b> &mdash; a new point where we want a prediction and an uncertainty." },
       { sym: "$\\mathbf{y}^*$", desc: "the (unknown) <b>output</b> at the test input; $\\hat{\\mathbf{y}}^*$ is the network's predicted output." },
@@ -157,10 +180,50 @@
       { sym: "$\\tau$", desc: "the <b>model precision</b>: a positive number set by the user (tied to the observation-noise level and weight decay). Its reciprocal $\\tau^{-1}$ is added to the variance to account for noise in the data itself. In our small demo we report only the run-to-run spread and omit this constant." },
       { sym: "$\\mathbf{I}_D$", desc: "the <b>identity matrix</b> of size $D$ (the output dimension); $\\tau^{-1}\\mathbf{I}_D$ just adds the constant $\\tau^{-1}$ to each output's variance." },
       { sym: "$\\mathbb{E}$", desc: "<b>expected value</b> (a probability-weighted average). $\\mathbb{E}_{q}(\\mathbf{y}^*)$ is the predictive mean under the dropout distribution $q$." },
-      { sym: "“variance / standard deviation”", desc: "plain terms: <b>variance</b> is the average squared distance of the $T$ outputs from their mean; <b>standard deviation</b> is its square root, in the same units as the output. Either one measures the spread &mdash; the uncertainty." }
+      { sym: "“variance / standard deviation”", desc: "plain terms: <b>variance</b> is the average squared distance of the $T$ outputs from their mean; <b>standard deviation</b> is its square root, in the same units as the output. Either one measures the spread &mdash; the uncertainty." },
+      { sym: "$\\mathcal{L}_{\\text{dropout}}$", desc: "the <b>dropout training objective</b> (Eq. 1): the loss you actually minimise when training with dropout." },
+      { sym: "$N$", desc: "the <b>number of training examples</b>; $\\frac{1}{N}\\sum_i$ averages the per-example loss." },
+      { sym: "$E(\\mathbf{y}_i, \\hat{\\mathbf{y}}_i)$", desc: "the <b>per-example loss</b> between the true target $\\mathbf{y}_i$ and the network's output $\\hat{\\mathbf{y}}_i$ (e.g. squared error)." },
+      { sym: "$\\lambda$", desc: "the <b>weight-decay</b> coefficient &mdash; the strength of the $L_2$ penalty on the weights. Also enters the precision $\\tau$." },
+      { sym: "$\\mathbf{W}_i, \\mathbf{b}_i$", desc: "the <b>weight matrix and bias</b> of layer $i$; $\\lVert\\cdot\\rVert_2^2$ is the sum of their squared entries (the $L_2$ norm squared)." },
+      { sym: "$L$", desc: "the <b>number of weight layers</b> in the network." },
+      { sym: "$\\mathbf{M}_i$", desc: "the <b>learned (variational) weight matrix</b> of layer $i$, size $K_i \\times K_{i-1}$. Dropout multiplies it by a random column mask to produce the masked weights $\\widehat{\\mathbf{W}}_i$." },
+      { sym: "$z_{i,j}$", desc: "an <b>on/off Bernoulli switch</b> for column $j$ of layer $i$: $1$ keeps the column, $0$ zeroes it. $z_{i,j}\\sim\\mathrm{Bernoulli}(p_i)$." },
+      { sym: "$K_i$", desc: "the <b>number of units</b> (columns) in layer $i$." },
+      { sym: "$\\boldsymbol{\\omega}$", desc: "the <b>full set of (random) network weights</b> $\\{\\mathbf{W}_i\\}$; $q(\\boldsymbol{\\omega})$ is the dropout approximate posterior over them and $p(\\boldsymbol{\\omega})$ the prior." },
+      { sym: "$q(\\boldsymbol{\\omega}), p(\\boldsymbol{\\omega})$", desc: "the <b>approximate posterior</b> $q$ (induced by dropout) and the <b>prior</b> $p$ over weights." },
+      { sym: "$\\mathrm{KL}(q \\,\\Vert\\, p)$", desc: "the <b>Kullback&ndash;Leibler divergence</b> &mdash; a non-negative measure of how far $q$ is from $p$; the regulariser in the variational objective." },
+      { sym: "$\\mathbf{X}, \\mathbf{Y}$", desc: "the <b>training inputs and targets</b> (all of them, stacked); $p(\\mathbf{Y}\\mid\\mathbf{X}, \\boldsymbol{\\omega})$ is the data likelihood." },
+      { sym: "$\\mathbf{K}(\\mathbf{x}, \\mathbf{y})$", desc: "the <b>covariance function</b> of the deep Gaussian process the dropout network approximates: it measures how correlated the outputs at inputs $\\mathbf{x}$ and $\\mathbf{y}$ are." },
+      { sym: "$\\sigma(\\cdot)$", desc: "the network's <b>nonlinearity</b> (activation function), e.g. ReLU; it appears inside the GP covariance integral." },
+      { sym: "$\\mathbf{w}, b$", desc: "a single <b>weight vector and bias</b> integrated over their prior $p(\\mathbf{w})p(b)$ inside the GP covariance." },
+      { sym: "$p$", desc: "the dropout <b>keep-probability</b> (a unit is kept with probability $p$); also a factor in the precision $\\tau$." },
+      { sym: "$l$", desc: "the <b>prior length-scale</b> &mdash; how far apart inputs must be before their outputs decorrelate; a factor in $\\tau$." },
+      { sym: "$\\operatorname{logsumexp}$", desc: "<b>log-of-sum-of-exponentials</b>, $\\log\\sum_t e^{(\\cdot)_t}$ &mdash; a numerically stable way to average likelihoods across the $T$ passes." }
     ],
-    formula: `$$ \\mathbb{E}_{q(\\mathbf{y}^*\\mid\\mathbf{x}^*)}(\\mathbf{y}^*) \\;\\approx\\; \\frac{1}{T}\\sum_{t=1}^{T} \\hat{\\mathbf{y}}^*\\!\\big(\\mathbf{x}^*, \\widehat{\\mathbf{W}}_1^t, \\ldots, \\widehat{\\mathbf{W}}_L^t\\big) \\quad\\text{(predictive mean, Eq. 6)} $$
-$$ \\mathrm{Var}_{q(\\mathbf{y}^*\\mid\\mathbf{x}^*)}(\\mathbf{y}^*) \\;\\approx\\; \\tau^{-1}\\mathbf{I}_D \\;+\\; \\frac{1}{T}\\sum_{t=1}^{T} \\hat{\\mathbf{y}}^{*\\top}\\hat{\\mathbf{y}}^* \\;-\\; \\mathbb{E}(\\mathbf{y}^*)^{\\top}\\,\\mathbb{E}(\\mathbf{y}^*) \\quad\\text{(predictive variance, \\S4)} $$`,
+    formula: `$$ \\mathcal{L}_{\\text{dropout}} \\;:=\\; \\frac{1}{N}\\sum_{i=1}^{N} E\\big(\\mathbf{y}_i, \\hat{\\mathbf{y}}_i\\big) \\;+\\; \\lambda \\sum_{i=1}^{L} \\big(\\lVert \\mathbf{W}_i \\rVert_2^2 + \\lVert \\mathbf{b}_i \\rVert_2^2\\big) $$
+<p class="cap">The ordinary dropout training objective (&sect;2, Eq. 1): average per-example loss $E$ plus $L_2$ weight decay $\\lambda$. Nothing Bayesian on its face.</p>
+
+$$ \\mathbf{W}_i \\;=\\; \\mathbf{M}_i \\cdot \\mathrm{diag}\\big([\\,z_{i,j}\\,]_{j=1}^{K_i}\\big), \\qquad z_{i,j} \\sim \\mathrm{Bernoulli}(p_i) $$
+<p class="cap">The variational distribution $q(\\boldsymbol{\\omega})$ over weights (&sect;3): each weight matrix is a learned matrix $\\mathbf{M}_i$ with whole columns randomly switched off by Bernoulli draws $z_{i,j}$ &mdash; this <i>is</i> dropout, recast as sampling weights.</p>
+
+$$ -\\!\\int q(\\boldsymbol{\\omega})\\,\\log p(\\mathbf{Y}\\mid\\mathbf{X}, \\boldsymbol{\\omega})\\, d\\boldsymbol{\\omega} \\;+\\; \\mathrm{KL}\\big(q(\\boldsymbol{\\omega}) \\,\\Vert\\, p(\\boldsymbol{\\omega})\\big) $$
+<p class="cap">The variational objective (&sect;3, Eq. 3): an expected negative log-likelihood plus the Kullback&ndash;Leibler divergence of $q$ from the prior. The paper's core result: minimising this over $q$ is, up to a constant, the same as minimising $\\mathcal{L}_{\\text{dropout}}$ &mdash; so a dropout network minimises the KL to a deep Gaussian process.</p>
+
+$$ \\mathbf{K}(\\mathbf{x}, \\mathbf{y}) \\;=\\; \\int p(\\mathbf{w})\\,p(b)\\,\\sigma(\\mathbf{w}^{\\top}\\mathbf{x} + b)\\,\\sigma(\\mathbf{w}^{\\top}\\mathbf{y} + b)\\, d\\mathbf{w}\\, db $$
+<p class="cap">The deep Gaussian process covariance (&sect;3) that the dropout network approximates: integrate the product of nonlinearities $\\sigma$ over the weight/bias prior. The network's nonlinearity is exactly this $\\sigma$.</p>
+
+$$ \\mathbb{E}_{q(\\mathbf{y}^*\\mid\\mathbf{x}^*)}(\\mathbf{y}^*) \\;\\approx\\; \\frac{1}{T}\\sum_{t=1}^{T} \\hat{\\mathbf{y}}^*\\!\\big(\\mathbf{x}^*, \\widehat{\\mathbf{W}}_1^t, \\ldots, \\widehat{\\mathbf{W}}_L^t\\big) $$
+<p class="cap">The predictive mean (&sect;4, Eq. 6): average $T$ stochastic forward passes, each with a fresh dropout mask. This is "MC dropout."</p>
+
+$$ \\mathrm{Var}_{q(\\mathbf{y}^*\\mid\\mathbf{x}^*)}(\\mathbf{y}^*) \\;\\approx\\; \\tau^{-1}\\mathbf{I}_D \\;+\\; \\frac{1}{T}\\sum_{t=1}^{T} \\hat{\\mathbf{y}}^{*\\top}\\hat{\\mathbf{y}}^* \\;-\\; \\mathbb{E}(\\mathbf{y}^*)^{\\top}\\,\\mathbb{E}(\\mathbf{y}^*) $$
+<p class="cap">The predictive variance (&sect;4): the sample second moment of the $T$ outputs minus the squared mean (the sample variance), plus the data-noise term $\\tau^{-1}\\mathbf{I}_D$.</p>
+
+$$ \\tau \\;=\\; \\frac{p\\,l^2}{2N\\lambda} $$
+<p class="cap">The model precision (&sect;4, Eq. 7) that sets $\\tau^{-1}$: built from the dropout keep-probability $p$, prior length-scale $l$, dataset size $N$, and weight-decay $\\lambda$. It ties the Bayesian noise term back to the quantities you already chose when training.</p>
+
+$$ \\log p(\\mathbf{y}^*\\mid\\mathbf{x}^*, \\mathbf{X}, \\mathbf{Y}) \\;\\approx\\; \\operatorname*{logsumexp}_{t=1}^{T}\\!\\Big(\\!-\\tfrac{1}{2}\\tau\\lVert \\mathbf{y}^* - \\hat{\\mathbf{y}}^*_t \\rVert^2\\Big) - \\log T - \\tfrac{1}{2}\\log 2\\pi - \\tfrac{1}{2}\\log \\tau^{-1} $$
+<p class="cap">The predictive log-likelihood (&sect;4, Eq. 8) used to score regression: a $\\log\\sum\\exp$ over the $T$ passes, the metric the paper reports improving over prior methods.</p>`,
     whatItDoes:
       `<p><b>The first line (Equation 6)</b> is the prediction: run the network $T$ times with dropout ON and
        <b>average</b> the outputs. Each pass uses a different random mask $\\widehat{\\mathbf{W}}_i^t$, so the

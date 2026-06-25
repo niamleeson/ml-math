@@ -149,13 +149,45 @@
        <b>fast gradient sign method</b> — nudge every input feature by a small $\\epsilon$ in the direction that
        <i>increases</i> the loss — and train on the original and the perturbed input together. This smooths the
        predictive distribution. The recommended $\\epsilon$ is about 1% of the input range.</p>`,
+    architecture:
+      `<p>The method is an <b>ensemble of $M$ independently-initialized probabilistic networks</b> — no shared
+       weights, no communication between them. Component by component:</p>
+       <ul>
+        <li><b>One probabilistic member (regression).</b> A small feed-forward network (multi-layer perceptron).
+        In our run: input dimension $1 \\rightarrow$ hidden $50 \\rightarrow$ hidden $50 \\rightarrow$ output
+        dimension <b>2</b>, with ReLU (rectified-linear) activations between layers. The two output numbers are
+        split into a <b>mean head</b> $\\mu_\\theta(x)$ (used raw) and a <b>variance head</b> $\\sigma_\\theta^2(x)$
+        (passed through softplus $\\log(1+e^z)$ plus a $10^{-6}$ floor to stay positive, &sect;2.2.1). So each
+        member outputs a full Gaussian $p_\\theta(y\\mid x) = \\mathcal{N}\\big(\\mu_\\theta(x),\\,
+        \\sigma_\\theta^2(x)\\big)$, not a point. (For classification the head is instead a $K$-way softmax.)</li>
+        <li><b>The ensemble.</b> $M$ such members (default $M = 5$), each a separate copy of the same architecture
+        but with <b>different random initial weights</b> and a different data shuffle. They are trained
+        <b>independently and in parallel</b> by the Gaussian NLL loss (Eqn. 1), optionally with the adversarial
+        term (&sect;2.3). Random initialization is the <i>only</i> source of diversity — there is no bagging and no
+        weight sharing.</li>
+        <li><b>The combination layer (test time only).</b> Not a trained layer — a fixed rule. The $M$ member
+        Gaussians are treated as a uniform mixture $\\tfrac1M\\sum_m p_{\\theta_m}$ and collapsed to one Gaussian by
+        the &sect;2.4 moment-matching formulas: $\\mu_*$ is the mean of the member means, $\\sigma_*^2$ is the
+        average member variance plus the spread of the member means.</li>
+       </ul>
+       <p><b>Data flow:</b> input $x \\rightarrow$ (in parallel) the $M$ members $\\rightarrow$ $M$ pairs
+       $(\\mu_m, \\sigma_m^2) \\rightarrow$ &sect;2.4 combination $\\rightarrow$ single predictive Gaussian
+       $(\\mu_*, \\sigma_*^2)$. <b>Algorithm 1</b> is exactly this: initialize $M$ nets, train each on
+       minibatches (each step minimizing $\\ell(\\theta_m, x, y) + \\ell(\\theta_m, x', y)$ with the FGSM
+       adversarial copy $x'$), then combine at prediction time.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> to the network (here a single number, the one-dimensional regression input)." },
       { sym: "$y$", desc: "the <b>true target</b> we want to predict for input $x$." },
       { sym: "$\\theta$", desc: "the <b>weights</b> of one network. Each ensemble member $m$ has its own weights $\\theta_m$." },
       { sym: "$\\mu_\\theta(x)$", desc: "the network's <b>predicted mean</b> for input $x$ — its best single guess of $y$. The first of the two outputs." },
       { sym: "$\\sigma_\\theta^2(x)$", desc: "the network's <b>predicted variance</b> for input $x$ — how spread-out it thinks the target is, i.e. how unsure it is. The second output, forced positive. (Variance = the square of the standard deviation; standard deviation = the typical distance from the mean.)" },
-      { sym: "$p_\\theta(y \\mid x)$", desc: "the <b>probability</b> the network assigns to target $y$ given $x$: a Gaussian (bell curve) with mean $\\mu_\\theta(x)$ and variance $\\sigma_\\theta^2(x)$." },
+      { sym: "$p_\\theta(y \\mid x)$", desc: "the <b>probability</b> the network (weights $\\theta$) assigns to target $y$ given $x$: a Gaussian (bell curve) with mean $\\mu_\\theta(x)$ and variance $\\sigma_\\theta^2(x)$." },
+      { sym: "$q(y \\mid x)$", desc: "the <b>true</b> (data-generating) distribution of the target — the thing $p_\\theta$ is trying to match." },
+      { sym: "$S(p_\\theta, q)$", desc: "a <b>scoring rule</b>: a number measuring how good the predicted distribution $p_\\theta$ is against outcomes drawn from $q$. <b>Proper</b> means it is largest only when $p_\\theta = q$ (&sect;2.2), so maximizing it (equivalently minimizing the loss $\\mathcal{L} = -S$) drives the model toward calibrated probabilities." },
+      { sym: "$\\mathcal{L}(\\theta)$", desc: "the <b>training loss</b>: minus the proper scoring rule, $-S(p_\\theta, q)$. With the log-likelihood score this is the negative log-likelihood." },
+      { sym: "$\\ell(\\theta, x, y)$", desc: "the <b>per-example loss</b> (here the Gaussian negative log-likelihood) for one input-target pair — used both on the original input $x$ and the adversarial copy $x'$." },
+      { sym: "$\\nabla_x$", desc: "the <b>gradient with respect to the input</b> $x$ — the vector of partial derivatives of the loss in each input direction, used by the fast gradient sign method." },
+      { sym: "$x'$", desc: "the <b>adversarial input</b>: the original $x$ nudged by $\\epsilon$ in the sign of the input gradient (&sect;2.3)." },
       { sym: "NLL", desc: "<b>negative log-likelihood</b>: minus the logarithm of $p_\\theta(y\\mid x)$. Small NLL means the model assigned high probability to the true target. Minimizing it is the training goal." },
       { sym: "softplus", desc: "the function $\\log(1 + e^{z})$ — a smooth way to turn any real number $z$ into a <b>positive</b> one. Used so the predicted variance can never be zero or negative." },
       { sym: "$M$", desc: "the <b>number of networks</b> in the ensemble. The paper recommends $M = 5$." },
@@ -163,9 +195,19 @@
       { sym: "$\\sigma_*^2(x)$", desc: "the <b>ensemble variance</b>: the combined spread of the mixture of $M$ members — the ensemble's overall uncertainty." },
       { sym: "$\\epsilon$", desc: "the <b>adversarial step size</b>: how far each input feature is nudged in the fast gradient sign method. Default about 1% of the input range (&sect;2.3)." }
     ],
-    formula: `$$ -\\log p_\\theta(y_n \\mid x_n) = \\frac{\\log \\sigma_\\theta^2(x_n)}{2} + \\frac{(y_n - \\mu_\\theta(x_n))^2}{2\\,\\sigma_\\theta^2(x_n)} + \\text{constant} \\quad\\text{(Eqn. 1, \\S2.2.1)} $$
+    formula: `$$ \\mathcal{L}(\\theta) = -S(p_\\theta, q), \\qquad
+                   S(p_\\theta, q) \\le S(q, q)\\ \\text{ with equality iff } p_\\theta(y\\mid x) = q(y\\mid x) $$
+                <div class="cap">Proper-scoring-rule training objective (&sect;2.2). $S$ is a <b>proper scoring rule</b>: a score rewarding the predicted distribution $p_\\theta$ that is maximized only by the true distribution $q$. Training minimizes the loss $\\mathcal{L} = -S$, so the network is driven toward calibrated probabilities. The canonical choice is the log-likelihood score $S(p_\\theta,(y,x)) = \\log p_\\theta(y\\mid x)$ (Gibbs inequality makes it proper) — minimizing $-S$ is exactly maximum likelihood.</div>
+                $$ -\\log p_\\theta(y_n \\mid x_n) = \\frac{\\log \\sigma_\\theta^2(x_n)}{2} + \\frac{(y_n - \\mu_\\theta(x_n))^2}{2\\,\\sigma_\\theta^2(x_n)} + \\text{constant} $$
+                <div class="cap">Gaussian negative-log-likelihood loss, the log-likelihood proper scoring rule for the <b>mean+variance head</b> (Eqn. 1, &sect;2.2.1). The network outputs $\\mu_\\theta(x)$ and $\\sigma_\\theta^2(x)\\gt 0$; this is the per-example loss with the constant $\\tfrac12\\log(2\\pi)$ dropped.</div>
+                $$ x' = x + \\epsilon\\,\\operatorname{sign}\\!\\big(\\nabla_x\\, \\ell(\\theta, x, y)\\big), \\qquad
+                   \\ell(\\theta, x_n, y_n) + \\ell(\\theta, x_n', y_n) $$
+                <div class="cap">Adversarial-training augmentation via the <b>fast gradient sign method</b> (&sect;2.3): perturb the input by a small step $\\epsilon$ in the gradient-sign direction that <i>increases</i> the loss, then train on the original and perturbed input together. Default $\\epsilon = 1\\%$ of the input range. $\\ell$ is the per-example Gaussian NLL above.</div>
+                $$ p(y\\mid x) = \\frac{1}{M}\\sum_{m=1}^{M} p_{\\theta_m}(y\\mid x) $$
+                <div class="cap">The ensemble as a <b>uniformly-weighted mixture</b> of the $M$ members' predictive distributions (&sect;2.4).</div>
                 $$ \\mu_*(x) = \\frac{1}{M}\\sum_{m=1}^{M} \\mu_{\\theta_m}(x), \\qquad
-                   \\sigma_*^2(x) = \\frac{1}{M}\\sum_{m=1}^{M}\\Big(\\sigma_{\\theta_m}^2(x) + \\mu_{\\theta_m}^2(x)\\Big) - \\mu_*^2(x) \\quad\\text{(\\S2.4)} $$`,
+                   \\sigma_*^2(x) = \\frac{1}{M}\\sum_{m=1}^{M}\\Big(\\sigma_{\\theta_m}^2(x) + \\mu_{\\theta_m}^2(x)\\Big) - \\mu_*^2(x) $$
+                <div class="cap">Approximating that mixture by a single Gaussian whose mean and variance match the mixture's (&sect;2.4): ensemble mean = average of member means; ensemble variance = average member variance + disagreement of the member means.</div>`,
     whatItDoes:
       `<p><b>The loss</b> (top, the paper's <b>Equation 1</b>, &sect;2.2.1) is the Gaussian negative
        log-likelihood for one example. Read the two terms. The second term, $(y - \\mu)^2 / (2\\sigma^2)$,

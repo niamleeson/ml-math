@@ -141,6 +141,27 @@
        pinned down, predictions are confident. Where data is absent, only the prior speaks, the $\\sigma$ stay
        large, and sampled networks disagree &mdash; so predictive uncertainty <b>grows away from the data</b>
        (&sect;5.2).</p>`,
+    architecture:
+      `<p>Bayes by Backprop is not a new network topology &mdash; it is a <b>drop-in replacement for the weights</b> of
+       any feed-forward net. The structure is best read as one Bayesian layer, then the loss it feeds.</p>
+       <p><b>The Bayesian linear layer (&sect;3.2).</b> An ordinary linear layer of shape $n_{\\text{out}} \\times
+       n_{\\text{in}}$ stores one weight matrix $W$ and one bias $b$. A Bayesian layer <b>doubles</b> the parameters:
+       for every scalar weight it stores a mean $\\mu$ and a raw spread $\\rho$ (so two tensors $\\mu_W, \\rho_W$ of
+       shape $n_{\\text{out}} \\times n_{\\text{in}}$, plus $\\mu_b, \\rho_b$ of shape $n_{\\text{out}}$). On each
+       forward pass it (1) maps $\\rho$ to a positive $\\sigma = \\log(1+\\exp(\\rho))$, (2) draws fresh noise
+       $\\epsilon \\sim \\mathcal{N}(0,I)$ of the same shape, (3) forms the sampled weight
+       $w = \\mu + \\sigma\\circ\\epsilon$, and (4) applies the usual $W x + b$. It also exposes a $\\text{KL}(\\cdot)$
+       method returning the closed-form Gaussian KL of its $(\\mu,\\sigma)$ against the prior.</p>
+       <p><b>The network.</b> Stack these layers exactly like ordinary ones. The lesson uses
+       $1 \\to 64 \\to 64 \\to 1$ with ReLU between the hidden layers, but the recipe is topology-agnostic &mdash; the
+       paper's MNIST nets are deeper (e.g. two hidden layers of 400&ndash;1200 units, &sect;5.1). The whole network's
+       KL is just the <b>sum</b> of its layers' KL terms.</p>
+       <p><b>Data flow per training step.</b> input $x$ &rarr; sample all layer weights (one $\\epsilon$ draw per
+       layer) &rarr; forward to a prediction &rarr; likelihood cost $-\\log P(\\mathcal{D}|\\mathbf{w})$ (for Gaussian
+       regression, scaled squared error) &rarr; add the summed KL (optionally reweighted per minibatch, &sect;3.4)
+       &rarr; one <code>.backward()</code> &rarr; Adam step on every $\\mu$ and $\\rho$. At <b>test time</b> the
+       sampling does double duty: run the net $S$ times on the same input and the per-point standard deviation of the
+       $S$ outputs is the <b>predictive uncertainty</b>.</p>`,
     symbols: [
       { sym: "$w$", desc: "a single <b>weight</b> of the network. In an ordinary network this is one fixed number; here it is a random draw from a small Gaussian." },
       { sym: "$\\mu$", desc: "the <b>mean</b> of a weight's distribution &mdash; its typical (most likely) value. One $\\mu$ per weight, and it is trainable." },
@@ -152,25 +173,71 @@
       { sym: "$P(\\mathbf{w})$", desc: "the <b>prior</b> over weights &mdash; a simple distribution chosen before seeing data (the paper uses a scale mixture of two Gaussians, &sect;3.3; we use a single Gaussian in code)." },
       { sym: "$P(\\mathcal{D}\\,|\\,\\mathbf{w})$", desc: "the <b>likelihood</b>: how probable the training data $\\mathcal{D}$ is under a given set of weights $\\mathbf{w}$. Higher means the weights fit the data better." },
       { sym: "$\\mathcal{D}$", desc: "the <b>training data</b> (all input&ndash;target pairs)." },
+      { sym: "$f(\\mathbf{w},\\theta)$", desc: "the <b>per-sample cost</b> $\\log q(\\mathbf{w}|\\theta) - \\log P(\\mathbf{w}) - \\log P(\\mathcal{D}|\\mathbf{w})$ &mdash; one Monte-Carlo draw's contribution to the free energy $\\mathcal{F}$ (&sect;3.1)." },
+      { sym: "$n$", desc: "the <b>number of Monte-Carlo samples</b> of the weights used to approximate the expectation in Eqn. 2 (the code uses 2)." },
+      { sym: "$t(\\theta,\\epsilon)$", desc: "the <b>deterministic transform</b> that builds a weight from the parameters and the noise; here $t(\\theta,\\epsilon) = \\mu + \\sigma\\circ\\epsilon$. Used to state Proposition 1." },
+      { sym: "$\\Delta_{\\mu},\\ \\Delta_{\\rho}$", desc: "the <b>gradients</b> of the cost with respect to the mean $\\mu$ and the raw spread $\\rho$ (Eqns. 3&ndash;4); the parameters step against these." },
+      { sym: "$\\alpha$", desc: "the <b>learning rate</b> in the update $\\mu \\leftarrow \\mu - \\alpha\\Delta_{\\mu}$, $\\rho \\leftarrow \\rho - \\alpha\\Delta_{\\rho}$ (Eqns. 5&ndash;6)." },
+      { sym: "$\\circ$", desc: "<b>elementwise (Hadamard) multiplication</b> &mdash; each weight's $\\sigma$ multiplies its own noise $\\epsilon$." },
+      { sym: "$\\pi$", desc: "the <b>mixing weight</b> of the scale-mixture prior (Eqn. 7): the probability mass on the broad Gaussian vs the narrow one." },
+      { sym: "$\\sigma_1,\\ \\sigma_2$", desc: "the two <b>prior standard deviations</b> in the scale mixture (Eqn. 7): $\\sigma_1$ broad, $\\sigma_2 \\ll 1$ a narrow spike around zero." },
+      { sym: "$M$", desc: "the <b>number of minibatches</b> the data is split into for the KL reweighting scheme (&sect;3.4)." },
+      { sym: "$\\mathcal{D}_i,\\ \\pi_i$", desc: "the $i$-th <b>minibatch</b> and its <b>KL weight</b> $\\pi_i = 2^{M-i}/(2^{M}-1)$, with $\\sum_i \\pi_i = 1$ (&sect;3.4)." },
       { sym: "“KL divergence”", desc: "Kullback&ndash;Leibler divergence, written $\\text{KL}[q\\,\\|\\,P]$: a non-negative number measuring how far the distribution $q$ is from the distribution $P$. Zero only when they are identical. Here it is the complexity cost." },
       { sym: "“ELBO”", desc: "the <b>evidence lower bound</b>: a quantity that lower-bounds the data's log-probability. Maximizing it (equivalently, minimizing the variational free energy $\\mathcal{F}$) is the training objective." },
       { sym: "“reparameterization”", desc: "rewriting a random draw $w \\sim \\mathcal{N}(\\mu,\\sigma^2)$ as a deterministic function of fixed noise, $w = \\mu + \\sigma\\epsilon$, so gradients can pass through the sample into $\\mu$ and $\\sigma$." }
     ],
-    formula: `$$ \\mathcal{F}(\\mathcal{D}, \\theta) \\;=\\; \\underbrace{\\text{KL}\\big[\\,q(\\mathbf{w}\\,|\\,\\theta)\\;\\|\\;P(\\mathbf{w})\\,\\big]}_{\\text{complexity cost}} \\;-\\; \\underbrace{\\mathbb{E}_{q(\\mathbf{w}|\\theta)}\\!\\big[\\log P(\\mathcal{D}\\,|\\,\\mathbf{w})\\big]}_{\\text{likelihood cost}} \\qquad\\text{(Eqn. 1, \\S3)} $$`,
+    formula: `$$ \\mathcal{F}(\\mathcal{D}, \\theta) \\;=\\; \\underbrace{\\text{KL}\\big[\\,q(\\mathbf{w}\\,|\\,\\theta)\\;\\|\\;P(\\mathbf{w})\\,\\big]}_{\\text{complexity cost}} \\;-\\; \\underbrace{\\mathbb{E}_{q(\\mathbf{w}|\\theta)}\\!\\big[\\log P(\\mathcal{D}\\,|\\,\\mathbf{w})\\big]}_{\\text{likelihood cost}} $$
+       <p>Eqn. 1, &sect;3 &mdash; the <b>variational free energy</b> (negative ELBO). The exact training objective: a KL complexity cost against the prior, minus the expected log-likelihood of the data.</p>
+
+       $$ \\mathcal{F}(\\mathcal{D}, \\theta) \\;\\approx\\; \\sum_{i=1}^{n} \\log q(\\mathbf{w}^{(i)}\\,|\\,\\theta) \\;-\\; \\log P(\\mathbf{w}^{(i)}) \\;-\\; \\log P(\\mathcal{D}\\,|\\,\\mathbf{w}^{(i)}) $$
+       <p>Eqn. 2, &sect;3.1 &mdash; the <b>Monte-Carlo cost</b>. The intractable expectation is replaced by an average over $n$ weight samples $\\mathbf{w}^{(i)} \\sim q(\\mathbf{w}|\\theta)$; write $f(\\mathbf{w},\\theta) = \\log q(\\mathbf{w}|\\theta) - \\log P(\\mathbf{w}) - \\log P(\\mathcal{D}|\\mathbf{w})$ for one sample's cost.</p>
+
+       $$ \\frac{\\partial}{\\partial \\theta}\\, \\mathbb{E}_{q(\\mathbf{w}|\\theta)}\\!\\big[f(\\mathbf{w},\\theta)\\big] \\;=\\; \\mathbb{E}_{q(\\epsilon)}\\!\\left[\\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\mathbf{w}}\\,\\frac{\\partial \\mathbf{w}}{\\partial \\theta} \\;+\\; \\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\theta}\\right] $$
+       <p>Proposition 1, &sect;3.1 &mdash; the <b>unbiased gradient estimator</b>. If a weight is written $\\mathbf{w} = t(\\theta, \\epsilon)$ with $\\epsilon \\sim q(\\epsilon)$ independent of $\\theta$, the derivative of the expectation equals the expectation of the derivative, so a sampled gradient is unbiased.</p>
+
+       $$ \\mathbf{w} \\;=\\; \\mu \\;+\\; \\log(1+\\exp(\\rho))\\,\\circ\\,\\epsilon, \\qquad \\epsilon \\sim \\mathcal{N}(0, I) $$
+       <p>&sect;3.2 &mdash; the <b>reparameterized Gaussian weight</b>. The spread is $\\sigma = \\log(1+\\exp(\\rho))$ (softplus, kept positive); $\\circ$ is elementwise multiply; the variational parameters are $\\theta = (\\mu, \\rho)$.</p>
+
+       $$ \\Delta_{\\mu} \\;=\\; \\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\mathbf{w}} + \\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\mu}, \\qquad \\Delta_{\\rho} \\;=\\; \\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\mathbf{w}}\\,\\frac{\\epsilon}{1+\\exp(-\\rho)} + \\frac{\\partial f(\\mathbf{w},\\theta)}{\\partial \\rho} $$
+       <p>Eqns. 3&ndash;4, &sect;3.2 &mdash; the <b>gradient updates</b> for the mean and the raw spread. The shared factor $\\partial f/\\partial \\mathbf{w}$ "is exactly the gradients found by the usual backpropagation algorithm"; the rest are cheap chain-rule terms. Parameters then step $\\mu \\leftarrow \\mu - \\alpha\\Delta_{\\mu}$, $\\rho \\leftarrow \\rho - \\alpha\\Delta_{\\rho}$ (Eqns. 5&ndash;6).</p>
+
+       $$ P(\\mathbf{w}) \\;=\\; \\prod_{j} \\Big[\\, \\pi\\,\\mathcal{N}(\\mathbf{w}_j \\,|\\, 0, \\sigma_1^2) \\;+\\; (1-\\pi)\\,\\mathcal{N}(\\mathbf{w}_j \\,|\\, 0, \\sigma_2^2) \\,\\Big] $$
+       <p>Eqn. 7, &sect;3.3 &mdash; the <b>scale-mixture prior</b>. Each weight is independently drawn from a mix of two zero-mean Gaussians: a broad one ($\\sigma_1$) and a narrow spike ($\\sigma_2 \\ll 1$), with mixing weight $\\pi$. (Our code uses a single $\\mathcal{N}(0,1)$ for simplicity.)</p>
+
+       $$ \\mathcal{F}_i^{\\pi}(\\mathcal{D}_i, \\theta) \\;=\\; \\pi_i\\,\\text{KL}\\big[q(\\mathbf{w}|\\theta)\\,\\|\\,P(\\mathbf{w})\\big] \\;-\\; \\mathbb{E}_{q(\\mathbf{w}|\\theta)}\\!\\big[\\log P(\\mathcal{D}_i|\\mathbf{w})\\big], \\qquad \\pi_i = \\frac{2^{M-i}}{2^{M}-1} $$
+       <p>Eqns. 8&ndash;9, &sect;3.4 &mdash; the <b>minibatch KL reweighting</b>. Across $M$ minibatches with $\\pi \\in [0,1]^M$ and $\\sum_{i=1}^{M}\\pi_i = 1$, the per-batch costs sum to the full $\\mathcal{F}$ in expectation: $\\mathbb{E}_M[\\sum_i \\mathcal{F}_i^{\\pi}] = \\mathcal{F}(\\mathcal{D},\\theta)$. The geometric weights $\\pi_i$ lean on the prior early and the data later.</p>`,
     whatItDoes:
-      `<p>This is the <b>variational free energy</b> (the negative ELBO), the single cost training minimizes
-       (&sect;3, Equation 1). Read it as a tug-of-war between two terms.</p>
-       <p>The <b>complexity cost</b> $\\text{KL}[q\\,\\|\\,P]$ measures how far the learned weight distribution $q$
-       has drifted from the simple prior $P$. It is a regularizer: it resists wild, overconfident weights and,
-       crucially, it lets the spreads $\\sigma$ stay <b>large</b> when nothing forces them smaller.</p>
-       <p>The <b>likelihood cost</b> $-\\mathbb{E}_q[\\log P(\\mathcal{D}|\\mathbf{w})]$ rewards weights that explain
-       the data. For regression with Gaussian noise this is just the (sampled) mean-squared error scaled by the
-       noise level. It pulls the $\\mu$ toward values that fit, and shrinks $\\sigma$ wherever data pins the weights
-       down.</p>
-       <p>Because the expectation $\\mathbb{E}_q[\\cdot]$ cannot be computed exactly, we approximate it by drawing a
-       few weight samples $w = \\mu + \\sigma\\epsilon$ and averaging &mdash; the Monte-Carlo objective (&sect;3.1,
-       Equation 2). The balance of the two terms is what produces honest uncertainty: confident where data is dense,
-       unsure where it is absent.</p>`,
+      `<p><b>Eqn. 1 (the objective).</b> The <b>variational free energy</b> (negative ELBO) is a tug-of-war between
+       two terms. The <b>complexity cost</b> $\\text{KL}[q\\,\\|\\,P]$ measures how far the learned weight distribution
+       $q$ has drifted from the prior $P$ &mdash; a regularizer that resists overconfident weights and lets the
+       spreads $\\sigma$ stay <b>large</b> when nothing forces them smaller. The <b>likelihood cost</b>
+       $-\\mathbb{E}_q[\\log P(\\mathcal{D}|\\mathbf{w})]$ rewards weights that explain the data; for Gaussian-noise
+       regression it is the (sampled) squared error scaled by the noise. It pulls the $\\mu$ toward a good fit and
+       shrinks $\\sigma$ wherever data pins the weights down.</p>
+       <p><b>Eqn. 2 (making it computable).</b> The expectation $\\mathbb{E}_q[\\cdot]$ has no closed form, so we draw
+       $n$ weight samples and average their per-sample cost $f(\\mathbf{w},\\theta)$. Crucially, the <i>same</i>
+       sampled $\\mathbf{w}$ appears in all three log-terms, so the KL is estimated by Monte Carlo too &mdash; the
+       method never needs a closed-form KL (though our simple Gaussian-vs-Gaussian code uses one).</p>
+       <p><b>Proposition 1 (why the sampled gradient is trustworthy).</b> Naively, differentiating an expectation
+       whose distribution depends on $\\theta$ is hard. Writing the weight as $\\mathbf{w} = t(\\theta,\\epsilon)$
+       with $\\epsilon$ drawn from a fixed noise distribution moves the $\\theta$-dependence <i>inside</i> $f$, so the
+       gradient of the expectation equals the expectation of the gradient. A single noisy draw is therefore an
+       <b>unbiased</b> estimate of the true gradient &mdash; it points the right way on average.</p>
+       <p><b>The reparameterized sample and Eqns. 3&ndash;4 (the actual updates).</b> Each weight is built
+       deterministically as $\\mathbf{w} = \\mu + \\log(1+\\exp(\\rho))\\circ\\epsilon$. The gradients
+       $\\Delta_{\\mu}, \\Delta_{\\rho}$ then share one factor, $\\partial f/\\partial \\mathbf{w}$, which is exactly
+       what ordinary backprop already computes for the weight; the extra pieces (a $+1$ for $\\mu$, and the softplus
+       derivative $\\epsilon/(1+e^{-\\rho})$ for $\\rho$) are cheap chain-rule factors. So "Bayes by Backprop" really
+       is just backprop plus two scalar multiplies per weight.</p>
+       <p><b>Eqn. 7 (the prior).</b> Rather than one Gaussian, the paper puts a <b>scale mixture</b> on each weight:
+       a broad Gaussian ($\\sigma_1$) that permits large weights, plus a narrow spike ($\\sigma_2 \\ll 1$) that pulls
+       most weights toward zero &mdash; a soft, differentiable "spike-and-slab" sparsity prior.</p>
+       <p><b>Eqns. 8&ndash;9 (minibatching).</b> With minibatches the single whole-network KL must not be counted once
+       per batch. The fix weights the KL by $\\pi_i$ on batch $i$, with $\\sum_i \\pi_i = 1$, so that across an epoch
+       the reweighted batch costs sum (in expectation) to the full free energy. The geometric choice
+       $\\pi_i = 2^{M-i}/(2^{M}-1)$ front-loads the prior (large $\\pi_1$) and lets the data dominate later batches.
+       Our code uses the simpler full-batch $\\text{KL}/N$ scaling.</p>`,
     derivation:
       `<p>Where does Equation 1 come from? We want the true Bayesian posterior over weights,
        $P(\\mathbf{w}|\\mathcal{D})$, but it is intractable. So we pick a tractable family $q(\\mathbf{w}|\\theta)$

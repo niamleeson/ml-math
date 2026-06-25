@@ -1,11 +1,11 @@
 /* Paper lesson — "Siamese Neural Networks for One-shot Image Recognition", Koch, Zemel & Salakhutdinov 2015.
    Self-contained: lesson + CODE + CODEVIZ merged by id "paper-siamese".
    GROUNDED from the official PDF (cs.toronto.edu/~rsalakhu/papers/oneshot1.pdf), read directly:
-   Sec 3.1 Model (twin nets, weight tying, p = sigmoid(sum alpha_j |h1_j - h2_j|)),
-   Sec 3.2 Learning (regularized cross-entropy loss), Sec 4.3 One-shot (argmax_c p(c)),
-   Tables 1-3 (verification + one-shot 20-way numbers). The metric-learning math lives in concept
-   fs-metric-learning; here we recap. Track B (architecture): build the twin shared-weight encoder,
-   the weighted-L1 + sigmoid head, BCE on same/different pairs, then N-way one-shot by nearest similarity. */
+   Sec 3.1 Model (twin nets, weight tying, per-layer conv max-pool eqs, p = sigmoid(sum alpha_j |h1_j - h2_j|)),
+   Sec 3.2 Learning (regularized cross-entropy loss L, momentum+L2 weight update, decayed LR, affine distortions),
+   Sec 4.3 One-shot (C* = argmax_c p^(c)), Fig 4 (best convnet architecture), Tables 1-3 numbers.
+   The metric-learning math lives in concept fs-metric-learning; here we recap. Track B (architecture): build the
+   twin shared-weight encoder, the weighted-L1 + sigmoid head, BCE on same/different pairs, then N-way one-shot. */
 (function () {
   window.LESSONS.push({
     id: "paper-siamese",
@@ -134,6 +134,27 @@
        similarity to class $c$. Predict the class with the highest score: $C^{*} = \\arg\\max_c\\, p(c)$. If
        verification features learned on known classes are good, they place the test image nearest the support
        image of its true class &mdash; even for classes the network never trained on.</p>`,
+    architecture:
+      `<p>The paper's <b>best convolutional twin</b> (Fig. 4) is a single encoder applied to each image; the two
+       copies join only at the L1 distance. Input is a <b>1-channel 105&times;105</b> binary character image.
+       The general form (&sect;3.1): a stack of convolutional layers, each ReLU then $2\\times 2$ max-pool with
+       stride 2; the number of filters is a multiple of 16; filter sizes vary and stride is 1. The final conv
+       map is flattened to a vector, then a fully-connected layer with a sigmoid gives the embedding $h$.</p>
+       <p><b>Best encoder, layer by layer (Fig. 4):</b></p>
+       <ul>
+        <li><b>Input:</b> 1 @ 105&times;105.</li>
+        <li><b>Conv 64 @ 10&times;10</b> + ReLU &rarr; feature maps 64 @ 96&times;96; <b>max-pool 2&times;2</b> &rarr; 64 @ 48&times;48.</li>
+        <li><b>Conv 128 @ 7&times;7</b> + ReLU &rarr; 128 @ 42&times;42; <b>max-pool 2&times;2</b> &rarr; 128 @ 21&times;21.</li>
+        <li><b>Conv 128 @ 4&times;4</b> + ReLU &rarr; 128 @ 18&times;18; <b>max-pool 2&times;2</b> &rarr; 128 @ 9&times;9.</li>
+        <li><b>Conv 256 @ 4&times;4</b> + ReLU &rarr; 256 @ 6&times;6.</li>
+        <li><b>Flatten &rarr; fully-connected 4096</b> + sigmoid: this is the embedding vector $h$ (one per twin).</li>
+       </ul>
+       <p><b>Siamese join:</b> the two 4096-vectors $h_1, h_2$ meet at the <b>L1 component-wise distance</b>
+       $|h_1 - h_2|$; a final fully-connected layer with weights $\\alpha_j$ and a sigmoid maps that distance to
+       the single output probability $p$. Hyperparameters were searched (Whetlab): filter sizes 3&times;3 to
+       20&times;20, filter counts 16&ndash;256, fully-connected widths 128&ndash;4096. In our toy code the same
+       structure is shrunk to an 8&times;8 input with two conv+pool blocks and a 64-dim embedding so it runs on
+       CPU; the join (abs-difference &rarr; Linear &rarr; sigmoid) is identical to the paper's.</p>`,
     symbols: [
       { sym: "$x_1, x_2$", desc: "the two <b>input images</b> of a pair fed to the twin networks." },
       { sym: "$h_1, h_2$", desc: "the <b>top-layer feature vectors</b> (embeddings) the shared encoder produces for $x_1$ and $x_2$. The paper writes them $h_{1,L-1}$ and $h_{2,L-1}$ &mdash; the hidden vector at the second-to-last layer." },
@@ -145,10 +166,38 @@
       { sym: "$y$", desc: "the <b>pair label</b>: $y = 1$ if the two images are the same class, $y = 0$ if different (&sect;3.2)." },
       { sym: "$\\{x_c\\}_{c=1}^{C}$", desc: "the <b>support set</b>: one labelled example image per candidate class $c$, for $c = 1 \\dots C$. \"N-way\" means $C = N$ classes." },
       { sym: "$p(c)$", desc: "the similarity score between the test image and the support image of class $c$." },
-      { sym: "$C^{*}$", desc: "the <b>predicted class</b>: the support class with the highest similarity, $C^{*} = \\arg\\max_c p(c)$ (&sect;4.3)." },
+      { sym: "$C^{*}$", desc: "the <b>predicted class</b>: the support class with the highest similarity, $C^{*} = \\arg\\max_c p^{(c)}$ (&sect;4.3). $C$ is the number of candidate classes (\"N-way\" $= C$)." },
+      { sym: "$a_{1,m}^{(k)}, a_{2,m}^{(k)}$", desc: "the $k$-th <b>convolutional feature map</b> in a layer for the first / second twin (&sect;3.1), after ReLU and $2\\times 2$ max-pool." },
+      { sym: "$\\mathbf{W}_{l-1,l}^{(k)}$", desc: "the <b>shared convolution weights</b> (a 3-D tensor of filters) connecting layer $l-1$ to layer $l$; the $\\star$ is the <b>valid convolution</b>; $\\mathbf{b}_l$ is the layer's bias." },
+      { sym: "$\\mathbf{h}_{(l-1)}$", desc: "the <b>activations of the previous layer</b> $l-1$ fed into the convolution; $h_{1,L-1}^{(j)}$ is coordinate $j$ of the final ($L-1$) feature vector." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>regularized binary cross-entropy loss</b> on a pair (&sect;3.2): the log-loss of the verifier plus the $L2$ penalty." },
+      { sym: "$\\mathbf{y}, \\mathbf{p}$", desc: "the minibatch <b>label vector</b> ($y=1$ same class, $y=0$ different, &sect;3.2) and the verifier's <b>predicted-probability vector</b>; $x_1^{(i)}, x_2^{(i)}$ are the $i$-th pair in the minibatch." },
+      { sym: "$\\boldsymbol{\\lambda}^{T}|\\mathbf{w}|^2$", desc: "the <b>$L2$ weight-regularization</b> term; $\\lambda_j$ is the layer-wise penalty weight, $\\mathbf{w}$ the network weights (&sect;3.2)." },
+      { sym: "$\\Delta \\mathbf{w}_{kj}^{(T)}$", desc: "the <b>weight update step</b> at epoch $T$ for weight $w_{kj}$; $\\nabla w_{kj}$ is the loss gradient w.r.t. that weight (&sect;3.2)." },
+      { sym: "$\\eta_j, \\mu_j$", desc: "the <b>per-layer learning rate</b> $\\eta_j$ (decayed by 1%/epoch, $\\eta_j^{(T)}=0.99\\,\\eta_j^{(T-1)}$) and <b>momentum</b> $\\mu_j$ (ramped up linearly), &sect;3.2." },
+      { sym: "$T = (\\theta, \\rho_x, \\rho_y, s_x, s_y, t_x, t_y)$", desc: "a random <b>affine distortion</b> (rotation $\\theta$, shear $\\rho$, scale $s$, translation $t$) applied independently to each image for augmentation (&sect;4.1)." },
       { sym: "“weight tying” / “twin networks”", desc: "plain terms, not symbols: the two encoder copies use <b>the same shared weights</b>, so they compute the identical function on each image." }
     ],
-    formula: `$$ p \\;=\\; \\sigma\\!\\left( \\sum_{j} \\alpha_j \\,\\big| h_{1,j} - h_{2,j} \\big| \\right) \\qquad\\text{(Section 3.1, weighted-}L1\\text{ + sigmoid head)} $$`,
+    formula: `$$ a_{1,m}^{(k)} = \\text{max-pool}\\!\\Big( \\max\\big(0,\\; \\mathbf{W}_{l-1,l}^{(k)} \\star \\mathbf{h}_{1,(l-1)} + \\mathbf{b}_l \\big),\\; 2 \\Big), \\qquad a_{2,m}^{(k)} = \\text{max-pool}\\!\\Big( \\max\\big(0,\\; \\mathbf{W}_{l-1,l}^{(k)} \\star \\mathbf{h}_{2,(l-1)} + \\mathbf{b}_l \\big),\\; 2 \\Big) $$
+       <p class="cap">&sect;3.1 &mdash; one convolutional layer of each twin: $k$-th filter map = ReLU ($\\max(0,\\cdot)$) of the valid convolution ($\\star$) of shared weights $\\mathbf{W}_{l-1,l}^{(k)}$ with the previous layer $\\mathbf{h}_{(l-1)}$ plus bias $\\mathbf{b}_l$, then $2\\times 2$ max-pooling. The <b>same</b> $\\mathbf{W}$ and $\\mathbf{b}$ act on both twins (weight tying).</p>
+
+       $$ p \\;=\\; \\sigma\\!\\left( \\sum_{j} \\alpha_j \\,\\big| h_{1,L-1}^{(j)} - h_{2,L-1}^{(j)} \\big| \\right) $$
+       <p class="cap">&sect;3.1 &mdash; the similarity head: weighted $L1$ distance between the two twins' final feature vectors (layer $L-1$), one learned weight $\\alpha_j$ per coordinate, through a sigmoid $\\sigma$ to a probability $p \\in (0,1)$ that the pair is the <b>same</b> class.</p>
+
+       $$ \\mathcal{L}(x_1^{(i)}, x_2^{(i)}) \\;=\\; \\mathbf{y}(x_1^{(i)}, x_2^{(i)}) \\log \\mathbf{p}(x_1^{(i)}, x_2^{(i)}) \\;+\\; \\big(1 - \\mathbf{y}(x_1^{(i)}, x_2^{(i)})\\big) \\log\\big(1 - \\mathbf{p}(x_1^{(i)}, x_2^{(i)})\\big) \\;+\\; \\boldsymbol{\\lambda}^{T} |\\mathbf{w}|^2 $$
+       <p class="cap">&sect;3.2 &mdash; the regularized binary cross-entropy objective on the verifier: same-class label $y=1$ rewards large $p$, different-class label $y=0$ rewards small $p$, plus an $L2$ weight penalty $\\boldsymbol{\\lambda}^{T}|\\mathbf{w}|^2$ (layer-wise weights $\\lambda_j$).</p>
+
+       $$ \\mathbf{w}_{kj}^{(T)}(x_1^{(i)}, x_2^{(i)}) = \\mathbf{w}_{kj}^{(T)} + \\Delta \\mathbf{w}_{kj}^{(T)}(x_1^{(i)}, x_2^{(i)}) + 2\\lambda_j |\\mathbf{w}_{kj}|, \\qquad \\Delta \\mathbf{w}_{kj}^{(T)}(x_1^{(i)}, x_2^{(i)}) = -\\eta_j \\nabla w_{kj}^{(T)} + \\mu_j \\Delta \\mathbf{w}_{kj}^{(T-1)} $$
+       <p class="cap">&sect;3.2 &mdash; the SGD update at epoch $T$: weight $w_{kj}$ (between neuron $j$ and neuron $k$ in the next layer) moves by a momentum step $\\Delta w_{kj}$ (learning rate $\\eta_j$ on the gradient $\\nabla w_{kj}$ plus momentum $\\mu_j$ times the previous step) and the $L2$ shrink $2\\lambda_j|w_{kj}|$.</p>
+
+       $$ \\eta_j^{(T)} \\;=\\; 0.99\\,\\eta_j^{(T-1)} $$
+       <p class="cap">&sect;3.2 &mdash; learning-rate schedule: the per-layer rate is decayed uniformly by 1% each epoch (momentum is instead increased linearly toward its target $\\mu_j$).</p>
+
+       $$ \\mathbf{x}_1' = T_1(\\mathbf{x}_1), \\quad \\mathbf{x}_2' = T_2(\\mathbf{x}_2), \\qquad T = (\\theta,\\, \\rho_x,\\, \\rho_y,\\, s_x,\\, s_y,\\, t_x,\\, t_y) $$
+       <p class="cap">&sect;4.1 &mdash; data augmentation: each image of a pair gets its own random affine transform $T$ (rotation $\\theta$, shear $\\rho$, scale $s$, translation $t$); each component is applied with probability 0.5.</p>
+
+       $$ C^{*} \\;=\\; \\arg\\max_{c}\\; \\mathbf{p}^{(c)} $$
+       <p class="cap">&sect;4.3 &mdash; the one-shot $N$-way rule: given a test image $\\mathbf{x}$ and a support set of one example $\\mathbf{x}_c$ per candidate class $c=1\\dots C$, score each pair and predict the class of highest similarity. No retraining.</p>`,
     whatItDoes:
       `<p>Read it inside-out. For each coordinate $j$, take the <b>absolute gap</b> between the two embeddings,
        $|h_{1,j} - h_{2,j}|$ &mdash; small if the two images agree on that feature, large if they disagree.
@@ -158,7 +207,17 @@
        <p>After training, the learned $\\alpha_j$ orient the head so that <b>small total distance gives high
        $p$</b> (likely same) and <b>large distance gives low $p$</b> (likely different). The $\\alpha_j$ let the
        model up-weight discriminative features and ignore noisy ones &mdash; it does not treat every coordinate
-       equally.</p>`,
+       equally.</p>
+       <p><b>The conv equations (&sect;3.1)</b> just say how each $h$ is built: every layer is "convolve with shared
+       filters, add bias, ReLU, then halve the resolution with $2\\times 2$ max-pool" &mdash; and the <i>same</i>
+       $\\mathbf{W},\\mathbf{b}$ run on both twins. <b>The loss $\\mathcal{L}$ (&sect;3.2)</b> is ordinary
+       logistic log-loss: when the pair really is the same ($y=1$) it scores $\\log p$ (so the optimizer pushes
+       $p$ up); when different ($y=0$) it scores $\\log(1-p)$ (pushes $p$ down); the extra $\\boldsymbol{\\lambda}^T|\\mathbf{w}|^2$
+       gently shrinks the weights to fight overfitting. <b>The update equation</b> is plain momentum SGD with an
+       $L2$ shrink: each weight moves opposite its gradient (rate $\\eta_j$), keeps a fraction $\\mu_j$ of last
+       step's motion, and is pulled toward zero by $2\\lambda_j|w_{kj}|$; the rate decays 1%/epoch. <b>The
+       one-shot rule (&sect;4.3)</b> reuses the trained head as-is: score the query against each support image and
+       take the $\\arg\\max$ &mdash; the single highest-similarity class wins.</p>`,
     derivation:
       `<p><b>Short recap &mdash; full metric-learning math lives in the concept lesson.</b> Why does a
        <i>similarity</i> objective (rather than a classifier) generalize to brand-new classes? A normal
