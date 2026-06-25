@@ -157,6 +157,34 @@
        $\\epsilon$-greedily, store the transition, sample a minibatch, set each target $y_j$ (using $r_j$ alone
        on terminal steps and $r_j + \\gamma \\max_{a'} Q(s',a';\\theta^-)$ otherwise), and take one gradient step
        on the squared error.</p>`,
+    architecture:
+      `<p>DQN's network is a <b>convolutional Q-network</b> that maps a stack of game frames to one value per
+       action in a single forward pass &mdash; so a single pass over a state scores every action at once
+       (&sect;4.1, "Model Architecture"). All hidden layers use the <b>ReLU</b> rectifier nonlinearity.</p>
+       <p><b>Input &mdash; preprocessed, stacked frames.</b> The raw Atari screen is a $210 \\times 160$ RGB image.
+       The preprocessing map $\\phi$ converts each frame to grayscale, down-samples to $110 \\times 84$, and crops
+       an $84 \\times 84$ playing region. To give the network motion information (one frame cannot tell which way
+       the ball is moving), $\\phi$ <b>stacks the last 4 frames</b>, producing an $84 \\times 84 \\times 4$ tensor as
+       the state.</p>
+       <ol>
+        <li><b>Conv 1:</b> 16 filters of size $8 \\times 8$, stride 4, over the $84 \\times 84 \\times 4$ input, then
+        ReLU. (Stride 4 because consecutive screen pixels carry little new information.)</li>
+        <li><b>Conv 2:</b> 32 filters of size $4 \\times 4$, stride 2, then ReLU.</li>
+        <li><b>Fully-connected hidden:</b> the conv feature maps are flattened into a dense layer of 256 ReLU
+        units.</li>
+        <li><b>Output:</b> a fully-connected <b>linear</b> layer with <b>one output per valid action</b> (4&ndash;18
+        across the seven games) &mdash; the estimated $Q(s,a)$ for each action $a$. No softmax: these are values,
+        not probabilities.</li>
+       </ol>
+       <p><b>Why one head per action (not state-action input).</b> A naive design feeds $(s,a)$ in and outputs one
+       scalar, requiring a separate forward pass per action. DQN instead outputs all $|A|$ action-values at once,
+       so a single pass yields the full $\\max_{a'} Q(s',a')$ needed for the Bellman target &mdash; far cheaper.</p>
+       <p><b>2015 Nature variant.</b> The Nature follow-up deepens this to <b>three</b> conv layers (32 filters
+       $8\\times8$/stride 4, 64 filters $4\\times4$/stride 2, 64 filters $3\\times3$/stride 1), a 512-unit FC hidden
+       layer, then the per-action output, and adds the <b>separate target network</b> $Q(\\cdot;\\theta^-)$ synced
+       every $C = 10000$ steps. <b>On CartPole</b> (our build) there are no pixels: the state is already a
+       4-number vector, so we drop the conv stack and use a small fully-connected net
+       $4 \\to 64 \\to 64 \\to 2$ with the same per-action output head and the same target-net + replay machinery.</p>`,
     symbols: [
       { sym: "$s,\\,s_t$", desc: "the <b>state</b>: what the agent observes at time $t$. In Atari it is preprocessed game pixels; on CartPole it is a 4-number vector (cart position, cart velocity, pole angle, pole angular velocity)." },
       { sym: "$a,\\,a_t$", desc: "the <b>action</b> chosen at time $t$, from a small discrete set (CartPole: push left or push right)." },
@@ -174,16 +202,21 @@
       { sym: "$\\epsilon$", desc: "the <b>exploration rate</b> (Greek 'epsilon') of $\\epsilon$-greedy: with probability $\\epsilon$ take a uniformly random action, else act greedily on $Q$. Usually decayed from $1$ toward a small floor." },
       { sym: "$\\mathbb{E}[\\cdot]$", desc: "the <b>expectation</b> (average) — over the random next state $s'$ in Eq. 1, and over sampled transitions in the loss." },
       { sym: "$\\rho(\\cdot)$", desc: "the <b>behavior distribution</b>: the distribution of states and actions the agent actually visits, over which the loss is averaged (&sect;3)." },
-      { sym: "$\\text{done}$", desc: "a $0/1$ flag that is $1$ when $s'$ is terminal (the episode ended). The factor $(1-\\text{done})$ zeros the bootstrap term, since there is no future after a terminal state." }
+      { sym: "$\\text{done}$", desc: "a $0/1$ flag that is $1$ when $s'$ is terminal (the episode ended). The factor $(1-\\text{done})$ zeros the bootstrap term, since there is no future after a terminal state." },
+      { sym: "$\\phi$", desc: "the <b>preprocessing map</b> (&sect;4.1): turns the raw Atari screen into the network's input by graying, down-sampling, cropping to $84\\times84$, and stacking the last 4 frames into an $84\\times84\\times4$ tensor (so the net can see motion). Skipped on CartPole, whose state is already a 4-number vector." },
+      { sym: "$N$", desc: "the <b>capacity</b> of the replay memory $\\mathcal{D}$ in transitions — the paper uses $N = 1{,}000{,}000$ most-recent frames." },
+      { sym: "$C$", desc: "the <b>target-network sync interval</b>: in the 2015 Nature version the target weights are reset $\\theta^- \\leftarrow \\theta$ every $C$ steps (paper uses $C = 10000$)." }
     ],
     formula:
-      `$$ L_i(\\theta_i) = \\mathbb{E}_{s,a\\sim\\rho(\\cdot)}\\!\\Big[\\big(\\, y_i - Q(s,a;\\theta_i)\\,\\big)^2\\Big],
+      `$$ Q^*(s,a) = \\mathbb{E}_{s'\\sim\\varepsilon}\\!\\Big[\\, r + \\gamma \\max_{a'} Q^*(s',a') \\;\\Big|\\; s,a \\,\\Big] \\qquad\\text{(Eq. 1 — Bellman-optimality identity for the optimal action-value $Q^*$)} $$
+       $$ L_i(\\theta_i) = \\mathbb{E}_{s,a\\sim\\rho(\\cdot)}\\!\\Big[\\big(\\, y_i - Q(s,a;\\theta_i)\\,\\big)^2\\Big],
          \\qquad y_i = \\mathbb{E}_{s'}\\!\\Big[\\, r + \\gamma \\max_{a'} Q(s',a';\\theta_{i-1}) \\,\\Big]
          \\qquad\\text{(Eq. 2)} $$
        $$ \\nabla_{\\theta_i} L_i(\\theta_i) = \\mathbb{E}_{s,a,s'}\\!\\Big[\\big(\\, r + \\gamma \\max_{a'} Q(s',a';\\theta_{i-1}) - Q(s,a;\\theta_i)\\,\\big)\\,\\nabla_{\\theta_i} Q(s,a;\\theta_i)\\Big]
          \\qquad\\text{(Eq. 3)} $$
        $$ \\text{(modern target-network form, what we implement)}\\quad
-          L(\\theta) = \\big(\\, \\underbrace{r + \\gamma\\,(1-\\text{done})\\max_{a'} Q(s',a';\\theta^-)}_{\\text{target } y\\;(\\text{no gradient})} - Q(s,a;\\theta)\\,\\big)^2 $$`,
+          L(\\theta) = \\big(\\, \\underbrace{r + \\gamma\\,(1-\\text{done})\\max_{a'} Q(s',a';\\theta^-)}_{\\text{target } y\\;(\\text{no gradient})} - Q(s,a;\\theta)\\,\\big)^2 $$
+       $$ \\theta^- \\leftarrow \\theta \\;\\text{ every } C \\text{ steps} \\qquad\\text{(2015 Nature target-network sync; the paper uses } C = 10000\\text{)} $$`,
     whatItDoes:
       `<p><b>Equation 2</b> is the heart of DQN. It says: <i>predict the action's value, then nudge the
        prediction toward the immediate reward plus the discounted best value of where you landed.</i> The

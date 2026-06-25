@@ -2,8 +2,9 @@
    Xinlei Chen and Kaiming He, FAIR 2020.
    Self-contained: lesson + CODE + CODEVIZ merged by id "paper-simsiam".
    GROUNDED from arXiv:2011.10566 (abstract) and the ar5iv HTML mirror (Section 3 Method:
-   Eqn. 1 negative cosine, Eqn. 2/4 symmetrized loss with stop-gradient; Section 4 Empirical Study:
-   Figure 2 collapse ablation; Section 5 hypothesis). Track B (architecture): build the siamese
+   Eqn. 1 negative cosine, Eqn. 2 symmetrized loss, Eqn. 3 stop-gradient term, Eqn. 4 symmetrized loss
+   with stop-gradient; Section 5 hypothesis: Eqns. 5-10 EM-like reformulation; Section 4 Empirical Study:
+   Figure 2 collapse ablation, 67.7% linear probe with stop-gradient). Track B (architecture): build the siamese
    encoder f + predictor h + negative-cosine loss with stop-gradient by hand on nn primitives;
    pretrain on an MNIST subset; the ABLATION removes the stop-gradient and the loss collapses to -1
    with output std -> 0. Cross-links: paper-simclr (uses negatives), paper-byol (uses a momentum
@@ -142,6 +143,25 @@
        of the (L2-normalized) outputs goes to $\\approx 0$. With stop-gradient, that std sits healthily around
        $1/\\sqrt{d}$ for $d$-dimensional outputs — the value you get when vectors are spread out on the unit
        hypersphere rather than piled at one point.</p>`,
+    architecture:
+      `<p>SimSiam (§3, Figure 1) has exactly two learnable modules, run as two weight-sharing branches.</p>
+       <p><b>Data flow (one step).</b> One image $x$ → augment twice → views $x_1, x_2$ → <b>shared encoder</b> $f$
+       → encodings $z_1 = f(x_1),\\ z_2 = f(x_2)$. The <b>predictor</b> $h$ runs on each encoding →
+       $p_1 = h(z_1),\\ p_2 = h(z_2)$. The loss matches each <i>prediction</i> to the <i>other</i> view's encoding,
+       with that encoding <b>stop-gradiented</b>: $\\tfrac12\\mathcal{D}(p_1, \\mathrm{sg}(z_2)) + \\tfrac12\\mathcal{D}(p_2, \\mathrm{sg}(z_1))$.</p>
+       <p><b>Encoder $f$ = backbone + projection MLP.</b> The paper uses a ResNet-50 backbone followed by a
+       <b>3-layer projection MLP</b>, batch-norm on every fully-connected layer (including the output layer), no
+       ReLU on the output, output dimension <b>$2048$</b>. (Our lesson code substitutes a tiny conv net + a small
+       projection so it runs on MNIST.)</p>
+       <p><b>Predictor $h$ = bottleneck MLP, one side's asymmetry.</b> A <b>2-layer MLP</b>: input $2048$ →
+       hidden <b>$512$</b> (a deliberate <i>bottleneck</i>, narrower than in/out) with batch-norm + ReLU → output
+       $2048$, no batch-norm and no ReLU on the output. $h$ is the <i>only</i> thing that breaks the symmetry
+       between the two branches; §4.2 reports the method fails without it.</p>
+       <p><b>The two branches and the stop-gradient.</b> The branches are <i>identical weights</i> but <i>not</i>
+       symmetric in the gradient: on each term, the prediction branch ($p$ side, encoder + predictor) receives
+       gradient, while the target branch ($z$ side) is frozen by <code>stopgrad</code>. There is <b>no second
+       network</b>: unlike BYOL's momentum encoder, the target is the same encoder $f$ with its gradient cut.
+       What you keep at the end is $z = f(x)$; the predictor $h$ is discarded after pretraining.</p>`,
     symbols: [
       { sym: "$x_1,\\ x_2$", desc: "the two <b>augmented views</b> of one image — the same picture distorted two different ways (random crop / colour / blur)." },
       { sym: "$f(\\cdot)$", desc: "the shared <b>encoder</b> (backbone + projection MLP; a small conv net here). Maps a view to its representation $z = f(x)$. The same weights process both views." },
@@ -153,10 +173,27 @@
       { sym: "$\\mathrm{stopgrad}(\\cdot)$", desc: "the <b>stop-gradient</b> (a.k.a. <code>detach</code>): in the forward pass it is the identity (passes the value through), but in the backward pass it returns <b>zero gradient</b>. It freezes its argument into a constant <i>target</i>." },
       { sym: "$\\mathcal{L}$", desc: "the <b>symmetrized loss</b> (Eqn. 4): the average of the two negative-cosine terms, each with its target stop-gradiented." },
       { sym: "$d$", desc: "the <b>output dimension</b> of the (L2-normalized) representation. A healthy, non-collapsed output has per-channel std $\\approx 1/\\sqrt{d}$; a collapsed one has std $\\approx 0$." },
-      { sym: "collapse", desc: "the <b>trivial solution</b> where the network outputs the <i>same constant vector for every image</i>. Then all pairs match, the loss reaches its floor $-1$, but the representation is useless." }
+      { sym: "collapse", desc: "the <b>trivial solution</b> where the network outputs the <i>same constant vector for every image</i>. Then all pairs match, the loss reaches its floor $-1$, but the representation is useless." },
+      { sym: "$\\theta$", desc: "the <b>encoder's weights</b> in the EM-like view (§5). One of the two variables being optimized; by analogy to k-means it plays the role of the <b>cluster centers</b>." },
+      { sym: "$\\eta_x$", desc: "the <b>per-image target representation</b> (§5): an auxiliary variable, one vector per image $x$, that the encoder output is matched to. By analogy to k-means it is the <b>assignment</b> of image $x$. The stop-gradient is what holds it constant." },
+      { sym: "$\\mathcal{F}_\\theta(\\cdot)$", desc: "the <b>encoder as a function of its weights</b> $\\theta$ in §5 (the same network as $f$, written to make the $\\theta$-dependence explicit)." },
+      { sym: "$\\mathcal{T},\\ \\mathcal{T}'$", desc: "a <b>random augmentation</b> drawn from the augmentation distribution; $\\mathcal{T}'$ denotes a single fresh sample. Two independent draws give the two views." },
+      { sym: "$\\mathbb{E}_{\\mathcal{T}}[\\cdot]$", desc: "the <b>expectation over augmentations</b>: the average of the encoder output across all distortions of an image. Eqn. 9's ideal target; the predictor $h$ is hypothesized to approximate it." }
     ],
-    formula: `$$ \\mathcal{D}(p_1, z_2) = -\\,\\frac{p_1}{\\lVert p_1\\rVert_2}\\cdot\\frac{z_2}{\\lVert z_2\\rVert_2} \\qquad\\text{(Eqn. 1)} $$
-$$ \\mathcal{L} = \\tfrac{1}{2}\\,\\mathcal{D}\\big(p_1,\\ \\mathrm{stopgrad}(z_2)\\big) + \\tfrac{1}{2}\\,\\mathcal{D}\\big(p_2,\\ \\mathrm{stopgrad}(z_1)\\big) \\qquad\\text{(Eqn. 4, \\S3)} $$`,
+    formula: `$$ \\mathcal{D}(p_1, z_2) = -\\,\\frac{p_1}{\\lVert p_1\\rVert_2}\\cdot\\frac{z_2}{\\lVert z_2\\rVert_2} $$
+<p>(Eqn. 1, \\S3) — the <b>negative cosine similarity</b>: L2-normalize both vectors, take their dot product (the cosine of the angle, in $[-1,1]$), and negate so "most aligned" is the minimum $-1$.</p>
+$$ \\mathcal{L} = \\tfrac{1}{2}\\,\\mathcal{D}(p_1, z_2) + \\tfrac{1}{2}\\,\\mathcal{D}(p_2, z_1) $$
+<p>(Eqn. 2, \\S3) — the <b>symmetrized loss</b> <i>before</i> the fix: each view predicts the other, averaged. As written (no stop-gradient) its easy minimizer is the collapsed constant — this is the form the next step repairs.</p>
+$$ \\mathcal{D}\\big(p_1,\\ \\mathrm{stopgrad}(z_2)\\big) $$
+<p>(Eqn. 3, \\S3) — the <b>stop-gradient</b> applied to one term: $z_2$ is treated as a constant, so no gradient flows into the encoder through the target side.</p>
+$$ \\mathcal{L} = \\tfrac{1}{2}\\,\\mathcal{D}\\big(p_1,\\ \\mathrm{stopgrad}(z_2)\\big) + \\tfrac{1}{2}\\,\\mathcal{D}\\big(p_2,\\ \\mathrm{stopgrad}(z_1)\\big) $$
+<p>(Eqn. 4, \\S3) — the <b>SimSiam loss</b>: Eqn. 2 with every <i>target</i> stop-gradiented. This is what the code minimizes; deleting the two <code>stopgrad</code>s gives back Eqn. 2 and collapse.</p>
+$$ \\mathcal{L}(\\theta, \\eta) = \\mathbb{E}_{x,\\mathcal{T}}\\Big[\\,\\big\\lVert \\mathcal{F}_\\theta(\\mathcal{T}(x)) - \\eta_x \\big\\rVert_2^2\\,\\Big] \\qquad \\min_{\\theta,\\eta}\\ \\mathcal{L}(\\theta, \\eta) $$
+<p>(Eqns. 5–6, \\S5, hypothesis) — the <b>EM-like reformulation</b>: a single squared-error loss over <i>two</i> sets of variables — the encoder weights $\\theta$ and a per-image <b>target</b> $\\eta_x$. By analogy to k-means, $\\theta$ is like the cluster centers and $\\eta_x$ like the assignment of image $x$.</p>
+$$ \\theta^{t} \\leftarrow \\arg\\min_{\\theta}\\ \\mathcal{L}(\\theta, \\eta^{t-1}) \\qquad\\qquad \\eta^{t} \\leftarrow \\arg\\min_{\\eta}\\ \\mathcal{L}(\\theta^{t}, \\eta) $$
+<p>(Eqns. 7–8, \\S5) — <b>alternate</b>: hold the targets $\\eta$ fixed and update the encoder $\\theta$ (Eqn. 7), then hold $\\theta$ fixed and update the targets $\\eta$ (Eqn. 8). Because $\\eta^{t-1}$ is a constant in Eqn. 7, the <b>stop-gradient is a natural consequence</b> — no gradient flows to it.</p>
+$$ \\eta_x^{t} \\leftarrow \\mathbb{E}_{\\mathcal{T}}\\big[\\,\\mathcal{F}_{\\theta^{t}}(\\mathcal{T}(x))\\,\\big] \\qquad\\Longrightarrow\\qquad \\eta_x^{t} \\leftarrow \\mathcal{F}_{\\theta^{t}}(\\mathcal{T}'(x)) $$
+<p>(Eqns. 9–10, \\S5) — solving Eqn. 8 gives the target as the <b>expectation over augmentations</b> (Eqn. 9); SimSiam approximates it by a <b>single sampled augmentation</b> $\\mathcal{T}'$ (Eqn. 10). The predictor $h$ is hypothesized to fill the gap, learning $h(z_1) \\approx \\mathbb{E}_{\\mathcal{T}}[f(\\mathcal{T}(x))]$ while the sampling is spread across epochs.</p>`,
     whatItDoes:
       `<p><b>Eqn. 1</b> measures how aligned two vectors are. L2-normalize $p_1$ and $z_2$ (so only direction
        counts), take their dot product (the cosine of the angle between them), and negate it. The value is in

@@ -181,6 +181,34 @@
        output as the "data" for a second denoising autoencoder; repeat. This greedily initializes a deep network
        (the <b>SdA-3</b> of the experiments), which is then fine-tuned with labels for classification. Corruption
        is used only during this unsupervised feature-learning, never when passing representations upward.</p>`,
+    architecture:
+      `<p>The denoising autoencoder is a <b>single hidden-layer</b> network with a corruption stage bolted onto its
+       input. Component by component, following the data through Figure 1:</p>
+       <ul>
+        <li><b>Input.</b> A clean vector $x \\in [0,1]^d$ ($d=784$ for a flattened 28x28 MNIST image; each entry a
+        pixel intensity). It plays two roles: it is corrupted into the encoder input, and it is kept aside as the
+        reconstruction <b>target</b>.</li>
+        <li><b>Corruption stage $q_D$.</b> A stochastic, parameter-free map $\\tilde x \\sim q_D(\\tilde x \\mid x)$.
+        For <b>masking noise</b>, draw a fresh 0/1 mask each step that zeroes $\\nu d$ randomly chosen components and
+        leaves the rest untouched: $\\tilde x = x \\odot m$. This sits ONLY on the path into the encoder.</li>
+        <li><b>Encoder $f_\\theta$.</b> One affine map plus a nonlinearity: $y = s(W\\tilde x + b)$. $W$ is a
+        $d' \\times d$ weight matrix, $b$ a $d'$-vector bias, $s$ the elementwise sigmoid. Output is the <b>code</b>
+        $y \\in [0,1]^{d'}$. The code may be <b>over-complete</b> ($d' \\ge d$) because corruption — not a bottleneck
+        — blocks the copy cheat. (In our notebook: <code>Linear(784, H)</code> then ReLU, $H=512$.)</li>
+        <li><b>Decoder $g_{\\theta'}$.</b> A second affine map plus sigmoid back to input size:
+        $z = s(W'y + b')$, with $W'$ a $d \\times d'$ matrix (optionally <b>tied</b>, $W'=W^{T}$) and $b'$ a
+        $d$-vector. Output $z \\in [0,1]^d$ is the <b>reconstruction</b>. (Notebook: <code>Linear(H, 784)</code>
+        then sigmoid.)</li>
+        <li><b>Loss head.</b> $L_H(x,z)$ (cross-entropy, Eq. 2) or squared error, comparing $z$ to the <b>clean</b>
+        $x$ — the corrupted $\\tilde x$ never appears in the loss. This single wiring choice is the whole method.</li>
+        <li><b>Data flow.</b> $x \\xrightarrow{q_D} \\tilde x \\xrightarrow{f_\\theta} y \\xrightarrow{g_{\\theta'}} z$,
+        then $L_H(x,z)$ closes back onto the original clean $x$. Parameters $\\theta,\\theta'$ are learned by
+        stochastic gradient descent (Eq. 5).</li>
+        <li><b>Stacking into a deep net (§2.4).</b> After training, take the code $y=f_\\theta(x)$ of the
+        <b>uncorrupted</b> input as the "data" for a second denoising autoencoder; repeat to get the 3-layer
+        <b>SdA-3</b>. The stack is then capped with a supervised output layer and fine-tuned end to end. Corruption
+        is applied at each layer's own training but never when passing representations upward.</li>
+       </ul>`,
     symbols: [
       { sym: "$x$", desc: "the <b>clean input</b> — a 28x28 MNIST image flattened to a $d=784$-number vector, each entry a pixel intensity in $[0,1]$. This is also the reconstruction <b>target</b>." },
       { sym: "$\\tilde x$", desc: "the <b>corrupted input</b> (\\\"x-tilde\\\"): $x$ with a random fraction $\\nu$ of its components forced to $0$ (masking noise). The encoder sees THIS, not $x$." },
@@ -196,23 +224,54 @@
       { sym: "manifold", desc: "a <b>manifold</b> is a curved low-dimensional sheet inside a high-dimensional space; real digits cluster near one. Denoising = projecting corrupted points back onto it (Fig. 2)." },
       { sym: "linear probe", desc: "a one-layer <b>linear classifier</b> trained on a FROZEN encoder's code. Its accuracy measures how linearly useful (good) the learned features are. (Our evaluation, not the paper's exact protocol.)" }
     ],
-    formula: `$$ \\text{Plain AE (Eq. 1):}\\quad \\theta^\\star,\\theta'^\\star = \\arg\\min_{\\theta,\\theta'} \\tfrac{1}{n}\\sum_{i=1}^{n} L\\big(x^{(i)},\\, g_{\\theta'}(f_\\theta(x^{(i)}))\\big) $$
+    formula: `$$ \\text{Encoder (§2.2):}\\quad y = f_\\theta(x) = s(Wx + b),\\qquad \\theta=\\{W,b\\},\\ \\ W\\in\\mathbb{R}^{d'\\times d} $$
+$$ \\text{Decoder (§2.2):}\\quad z = g_{\\theta'}(y) = s(W'y + b'),\\qquad \\theta'=\\{W',b'\\},\\ \\ \\text{tied: } W'=W^{T} $$
+$$ \\text{Plain AE objective (Eq. 1):}\\quad \\theta^\\star,\\theta'^\\star = \\arg\\min_{\\theta,\\theta'} \\tfrac{1}{n}\\sum_{i=1}^{n} L\\big(x^{(i)},\\, g_{\\theta'}(f_\\theta(x^{(i)}))\\big) $$
 $$ \\text{Reconstruction cross-entropy (Eq. 2):}\\quad L_H(x,z) = -\\sum_{k=1}^{d}\\big[\\, x_k \\log z_k + (1-x_k)\\log(1-z_k)\\,\\big] $$
-$$ \\text{Denoising AE (Eq. 5):}\\quad \\arg\\min_{\\theta,\\theta'}\\ \\mathbb{E}_{q^0(X,\\tilde X)}\\Big[\\, L_H\\big(\\,X,\\ g_{\\theta'}(f_\\theta(\\tilde X))\\,\\big)\\Big],\\qquad \\tilde x \\sim q_D(\\tilde x \\mid x) $$`,
+$$ \\text{Plain AE in expectation form (Eq. 3):}\\quad \\theta^\\star,\\theta'^\\star = \\arg\\min_{\\theta,\\theta'}\\ \\mathbb{E}_{q^0(X)}\\big[\\, L_H\\big(X,\\ g_{\\theta'}(f_\\theta(X))\\big)\\,\\big] $$
+$$ \\text{Stochastic corruption (§2.3):}\\quad \\tilde x \\sim q_D(\\tilde x \\mid x)\\quad\\text{(masking noise: }\\nu d\\text{ components chosen at random and forced to }0\\text{)} $$
+$$ \\text{Corrupted encoder pass (§2.3):}\\quad y = f_\\theta(\\tilde x) = s(W\\tilde x + b),\\qquad z = g_{\\theta'}(y) = s(W'y + b') $$
+$$ \\text{Joint distribution (Eq. 4):}\\quad q^0(X,\\tilde X,Y) = q^0(X)\\, q_D(\\tilde X \\mid X)\\, \\delta_{f_\\theta(\\tilde X)}(Y) $$
+$$ \\text{Denoising AE objective (Eq. 5):}\\quad \\arg\\min_{\\theta,\\theta'}\\ \\mathbb{E}_{q^0(X,\\tilde X)}\\Big[\\, L_H\\big(\\,X,\\ g_{\\theta'}(f_\\theta(\\tilde X))\\,\\big)\\Big]\\quad\\text{(target is the CLEAN }X\\text{)} $$
+$$ \\text{Manifold operator (§4.1):}\\quad p(X \\mid \\tilde X) = B_{\\,g_{\\theta'}(f_\\theta(\\tilde X))}(X)\\quad\\text{— maps corrupted }\\tilde X\\text{ back toward the data manifold} $$
+$$ \\text{Variational lower bound (§4.2, Eq. 6-7):}\\quad \\log p(\\tilde X) \\ \\ge\\ \\max_{q^\\star} L(q^\\star,\\tilde X),\\qquad L \\to \\mathbb{E}_{q^0(X,\\tilde X,Y)}\\big[\\log p(X\\mid Y=f_\\theta(\\tilde X))\\big] $$`,
     whatItDoes:
-      `<p><b>Eq. 1</b> is the plain autoencoder: encode each clean $x$, decode it, and make the reconstruction
-       match the same clean $x$ — averaged over all examples. The input is also the target.</p>
+      `<p><b>Encoder / decoder (§2.2).</b> $y=s(Wx+b)$ takes the input to a code: multiply by a weight matrix, add a
+       bias, squash each number through the sigmoid into $(0,1)$. $z=s(W'y+b')$ runs the same kind of step back to
+       input size to produce the reconstruction. "Tied weights" ($W'=W^T$) is the optional choice to reuse the
+       encoder matrix transposed as the decoder matrix, halving the parameters.</p>
+       <p><b>Eq. 1</b> is the plain autoencoder: encode each clean $x$, decode it, and make the reconstruction
+       match the same clean $x$ — averaged over all $n$ examples. The input is also the target.</p>
        <p><b>Eq. 2</b> is the loss used: a pixel-wise <b>cross-entropy</b> $L_H$. Treat each pixel value $x_k$ as a
        probability (\\\"how on is this pixel\\\"); the term $-[x_k\\log z_k + (1-x_k)\\log(1-z_k)]$ is smallest when the
        reconstructed $z_k$ equals the true $x_k$, and blows up when they disagree. Summed over the $d$ pixels it
-       is zero only for a perfect reconstruction. (Squared error works too; both reach $0$ when $z=x$.)</p>
+       is zero only for a perfect reconstruction. (Squared error $\\lVert x-z\\rVert^2$ works too; both reach $0$ when $z=x$.)</p>
+       <p><b>Eq. 3</b> just rewrites Eq. 1 as an <b>expectation</b> over the empirical data distribution $q^0(X)$
+       (the uniform spread over your $n$ training inputs) — the same objective, in the notation the denoising
+       version (Eq. 5) extends.</p>
+       <p><b>Corruption + corrupted pass (§2.3).</b> $\\tilde x \\sim q_D(\\tilde x \\mid x)$ is the random rule that
+       damages the input: <b>masking noise</b> picks $\\nu d$ components at random and forces them to $0$. The
+       encoder/decoder then run on $\\tilde x$ instead of $x$: $y=s(W\\tilde x+b)$, $z=s(W'y+b')$ — same machinery,
+       corrupted input.</p>
+       <p><b>Eq. 4</b> bookkeeps the whole stochastic pipeline as one joint distribution
+       $q^0(X,\\tilde X,Y)=q^0(X)\\,q_D(\\tilde X\\mid X)\\,\\delta_{f_\\theta(\\tilde X)}(Y)$: draw a clean $X$, corrupt it to
+       $\\tilde X$, then $Y$ is the <i>deterministic</i> code of $\\tilde X$ (the delta $\\delta$ puts all mass on
+       $Y=f_\\theta(\\tilde X)$). It is the object the expectation in Eq. 5 is taken over.</p>
        <p><b>Eq. 5</b> is the only change that defines the paper — and it is a small one. The reconstruction is
        built from the <b>corrupted</b> input ($g_{\\theta'}(f_\\theta(\\tilde X))$, note the tilde inside), but the
        loss still compares it to the <b>clean</b> $X$. The expectation $\\mathbb{E}_{q^0(X,\\tilde X)}$ averages over
        both the data and the random corruption: for each training step you draw an example AND a fresh random
        corruption of it. So the network is rewarded for <b>undoing</b> the corruption — for outputting the clean
        digit given a damaged one. Because copying the (damaged) input no longer matches the (clean) target, the
-       identity solution is dead, and the encoder is forced to learn structure that fills the blanks.</p>`,
+       identity solution is dead, and the encoder is forced to learn structure that fills the blanks.</p>
+       <p><b>Manifold operator (§4.1).</b> $p(X\\mid\\tilde X)=B_{g_{\\theta'}(f_\\theta(\\tilde X))}(X)$ reads the trained
+       network as a <b>stochastic operator</b> (the $B$ is a Bernoulli with mean equal to the decoder output): it
+       takes a corrupted point — typically <i>off</i> the data manifold — and pushes it back to a high-probability
+       point on or near the manifold. The farther off $\\tilde X$ is, the bigger the corrective step it learns.</p>
+       <p><b>Variational bound (§4.2, Eq. 6-7).</b> The paper shows Eq. 5 also <b>falls out of a generative model</b>:
+       training the denoising AE maximizes a variational lower bound on $\\log p(\\tilde X)$, which reduces to
+       $\\mathbb{E}_{q^0}[\\log p(X\\mid Y=f_\\theta(\\tilde X))]$ — the same reconstruction term. So "corrupt then
+       denoise" is not an ad-hoc trick; it is variational inference in a particular generative model.</p>`,
     derivation:
       `<p>The underlying autoencoder math — encoder/decoder, reconstruction loss, and why a narrow bottleneck (or
        a regularizer) is what normally stops a plain AE from copying — is owned by the <b>mod-autoencoder</b>

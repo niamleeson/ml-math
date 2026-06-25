@@ -166,6 +166,38 @@
        distribution stays spread across images and informative. The center is itself updated by an EMA of the
        batch-mean teacher logits (Eqn. 4). After pretraining you <b>freeze</b> the student encoder and read
        its features with a <b>linear probe</b> or k-NN — the standard label-free evaluation.</p>`,
+    architecture:
+      `<p>DINO is two identical-shape networks plus a few scalar operations — no labels, no negatives, no
+       memory bank (§3).</p>
+       <ul>
+        <li><b>Backbone (student and teacher).</b> Both $g_{\\theta_s}$ and $g_{\\theta_t}$ are the <b>same
+        architecture</b> with different weights. The paper's main model is a <b>Vision Transformer (ViT)</b>:
+        the image is cut into non-overlapping <b>patches</b> (16×16 or 8×8), each patch is linearly embedded,
+        a learned <b>[CLS] token</b> is prepended, position embeddings are added, and a stack of
+        Transformer self-attention blocks runs over the sequence. The representation used downstream is the
+        <b>[CLS]-token output</b>. (DINO also works with a ResNet backbone; ViT is the headline.)</li>
+        <li><b>Projection head.</b> On top of the backbone sits a <b>3-layer MLP</b> (hidden dim 2048) with
+        GELU, then $\\ell_2$-normalization, then a weight-normalized linear layer to <b>$K$ output logits</b>.
+        Paper default <b>$K = 65536$</b>. These $K$ logits — <i>not</i> the backbone features — are what the
+        softmax-with-temperature acts on. The head is <b>discarded after pretraining</b>; only the backbone is
+        kept for evaluation.</li>
+        <li><b>Multi-crop data flow.</b> From one image, build <b>2 global crops</b> ($224^2$, &gt;50% area)
+        and <b>several local crops</b> ($96^2$, &lt;50% area). <b>All</b> crops (the set $V$) go through the
+        <b>student</b>; <b>only the 2 global crops</b> go through the <b>teacher</b> (Eqn. 3). This
+        "local-to-global" correspondence is the learning signal: small local views must predict the teacher's
+        view of the whole object.</li>
+        <li><b>Teacher branch.</b> Teacher logits are <b>centered</b> (subtract $c$) then <b>sharpened</b>
+        (small $\\tau_t$) before softmax (Eqn. 1), all under <b>stop-gradient</b>. The teacher's weights are
+        never trained by backprop — they are an <b>EMA</b> of the student, $\\theta_t\\leftarrow\\lambda\\theta_t
+        +(1-\\lambda)\\theta_s$, with $\\lambda$ on a cosine schedule $0.996\\to 1$.</li>
+        <li><b>Loss + two EMAs per step.</b> Cross-entropy (Eqn. 2) couples each teacher (global) view to each
+        <i>other</i> student view and is symmetrized. After the student gradient step, two EMA updates run with
+        no gradients: the <b>center</b> $c$ (Eqn. 4, momentum $m$) and the <b>teacher weights</b> $\\theta_t$
+        (momentum $\\lambda$).</li>
+       </ul>
+       <p>Our demo shrinks this to fit a CPU notebook: a small conv encoder instead of a ViT, $K=256$, and two
+       global-style views instead of full multi-crop — but the wiring (student/teacher, centering, sharpening,
+       cross-entropy, center EMA, teacher EMA) is identical.</p>`,
     symbols: [
       { sym: "$g_{\\theta_s},\\ g_{\\theta_t}$", desc: "the <b>student</b> and <b>teacher</b> networks (encoder + projection head). Same shape, different weights. Each outputs a length-$K$ vector of raw scores (logits)." },
       { sym: "$\\theta_s,\\ \\theta_t$", desc: "the student / teacher <b>weights</b>. Only $\\theta_s$ is trained by gradient descent; $\\theta_t$ is updated by EMA (no gradients ever)." },
@@ -177,16 +209,25 @@
       { sym: "softmax", desc: "the function $\\text{softmax}(z)_k = e^{z_k}/\\sum_j e^{z_j}$ — turns logits into a probability distribution (owner: <b>ml-softmax</b>)." },
       { sym: "$H(a,b)$", desc: "the <b>cross-entropy</b> $H(a,b) = -\\sum_k a^{(k)}\\log b^{(k)}$ between two distributions $a$ (target) and $b$ (prediction). Smallest when $b$ matches $a$ (owner: <b>dl-cross-entropy</b>)." },
       { sym: "$c$", desc: "the <b>center</b>: a length-$K$ running mean of teacher logits, subtracted from the teacher logits before its softmax. This is the <b>centering</b> operation." },
-      { sym: "$m$", desc: "the <b>center momentum</b> in $[0,1]$ — the EMA rate for updating $c$ (Eqn. 4). Paper default $m=0.9$." },
+      { sym: "$m$", desc: "the <b>center momentum</b> in $[0,1]$ — the EMA rate for updating $c$ (Eqn. 4). Paper default $m=0.9$ in the released code / Algorithm 1; the appendix ablation sweeps $m\\in\\{0,0.9,0.99,0.999\\}$. We use $m=0.9$ in the demo." },
       { sym: "$\\overline{g_t} = \\frac{1}{B}\\sum_{i=1}^{B} g_{\\theta_t}(x_i)$", desc: "the <b>batch mean</b> of the teacher logits over the $B$ images in the batch — what the center $c$ chases." },
       { sym: "$\\lambda$", desc: "the <b>teacher EMA rate</b> (momentum) in $[0,1]$, close to $1$. $\\theta_t \\leftarrow \\lambda\\theta_t + (1-\\lambda)\\theta_s$. Paper: cosine schedule $0.996 \\to 1$." },
       { sym: "$h(P_t)$", desc: "the <b>entropy</b> of the teacher distribution, $h(P_t) = -\\sum_k P_t^{(k)}\\log P_t^{(k)}$. High = spread out; low = peaky. Centering raises it; sharpening lowers it." },
       { sym: "$D_{KL}(P_t \\Vert P_s)$", desc: "the <b>Kullback–Leibler divergence</b> $\\sum_k P_t^{(k)}\\log\\frac{P_t^{(k)}}{P_s^{(k)}}$ — how far the student distribution is from the teacher's. $\\ge 0$, and $=0$ only when $P_s=P_t$." },
       { sym: "stop-gradient (sg)", desc: "treating the teacher branch as a fixed constant during backprop — no gradient flows into $\\theta_t$. Gradients update only the student $\\theta_s$." }
     ],
-    formula: `$$ P_s(x)^{(k)} = \\frac{\\exp\\!\\big(g_{\\theta_s}(x)^{(k)}/\\tau_s\\big)}{\\sum_{j=1}^{K}\\exp\\!\\big(g_{\\theta_s}(x)^{(j)}/\\tau_s\\big)} \\qquad P_t(x)^{(k)} = \\frac{\\exp\\!\\big((g_{\\theta_t}(x)^{(k)}-c^{(k)})/\\tau_t\\big)}{\\sum_{j=1}^{K}\\exp\\!\\big((g_{\\theta_t}(x)^{(j)}-c^{(j)})/\\tau_t\\big)} \\quad\\text{(softmax + temp, \\S3 Eqn. 1; centering folded into }P_t\\text{)} $$
-$$ \\min_{\\theta_s}\\; H\\big(P_t(x),\\,P_s(x')\\big),\\qquad H(a,b) = -\\sum_{k} a^{(k)}\\log b^{(k)} \\qquad\\text{(cross-entropy distillation loss, \\S3 Eqn. 2)} $$
-$$ c \\;\\leftarrow\\; m\\,c + (1-m)\\,\\frac{1}{B}\\sum_{i=1}^{B} g_{\\theta_t}(x_i) \\quad\\text{(center update, \\S3 Eqn. 4)} \\qquad\\qquad H(P_t,P_s) = h(P_t) + D_{KL}(P_t\\Vert P_s) \\quad\\text{(\\S5.3 Eqn. 5)} $$`,
+    formula: `$$ P_s(x)^{(k)} = \\frac{\\exp\\!\\big(g_{\\theta_s}(x)^{(k)}/\\tau_s\\big)}{\\sum_{j=1}^{K}\\exp\\!\\big(g_{\\theta_s}(x)^{(j)}/\\tau_s\\big)} \\qquad P_t(x)^{(k)} = \\frac{\\exp\\!\\big((g_{\\theta_t}(x)^{(k)}-c^{(k)})/\\tau_t\\big)}{\\sum_{j=1}^{K}\\exp\\!\\big((g_{\\theta_t}(x)^{(j)}-c^{(j)})/\\tau_t\\big)} $$
+<div class="cap">Softmax-with-temperature for the student and teacher output distributions (\\S3 Eqn. 1). The teacher's logits have the center $c$ subtracted first (centering) and use a smaller temperature $\\tau_t$ (sharpening); the student uses $\\tau_s$.</div>
+$$ H(a,b) = -\\sum_{k} a^{(k)}\\log b^{(k)} \\qquad\\quad \\min_{\\theta_s}\\; H\\big(P_t(x),\\,P_s(x)\\big) $$
+<div class="cap">Cross-entropy distillation loss between a fixed teacher target and the student (\\S3 Eqn. 2). The student is trained ($\\min_{\\theta_s}$) to match the teacher's distribution; the teacher is a stop-gradient target.</div>
+$$ \\min_{\\theta_s}\\; \\sum_{x\\in\\{x_1^g,\\,x_2^g\\}}\\;\\sum_{\\substack{x'\\in V\\\\ x'\\neq x}} H\\big(P_t(x),\\,P_s(x')\\big) $$
+<div class="cap">Multi-crop loss (\\S3 Eqn. 3): summed over the two global crops $x_1^g,x_2^g$ passed to the teacher and every other view $x'$ in the full set $V$ (global + local crops) passed to the student. A view never supervises its own student copy ($x'\\neq x$).</div>
+$$ c \\;\\leftarrow\\; m\\,c + (1-m)\\,\\frac{1}{B}\\sum_{i=1}^{B} g_{\\theta_t}(x_i) $$
+<div class="cap">Center update (\\S3 Eqn. 4): the center $c$ is an exponential moving average of the batch-mean teacher logits, with center momentum $m$.</div>
+$$ \\theta_t \\;\\leftarrow\\; \\lambda\\,\\theta_t + (1-\\lambda)\\,\\theta_s $$
+<div class="cap">Teacher exponential-moving-average update (\\S3, Algorithm 1): the teacher weights track the student with momentum $\\lambda$ (cosine schedule $0.996\\to 1$). No gradient ever flows into $\\theta_t$.</div>
+$$ H(P_t,P_s) = h(P_t) + D_{KL}(P_t\\Vert P_s) $$
+<div class="cap">Collapse decomposition (\\S5.3 Eqn. 5): the loss splits into the teacher's own entropy $h(P_t)$ (set by centering vs sharpening) plus the KL divergence the student drives to $0$.</div>`,
     whatItDoes:
       `<p><b>The two softmaxes (Eqn. 1)</b> turn the student's and teacher's logits into probability
        distributions. Dividing the logits by the temperature $\\tau$ before exponentiating controls how peaky

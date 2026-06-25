@@ -145,6 +145,35 @@
        <p>After pretraining, you <b>freeze</b> the encoder and train a single <b>linear classifier</b> on its
        frozen features — the standard <b>linear-evaluation protocol</b> ("linear probe") that measures
        representation quality.</p>`,
+    architecture:
+      `<p>The full pipeline (paper §2.1 Figure 1, §2.2 Implementation Details), component by component. Data flows
+       left to right; the two branches share <i>all</i> weights — a true <b>twin</b>, not two separate networks.</p>
+       <ol>
+        <li><b>Two-view augmentation.</b> Each image $x$ is distorted twice by the same random pipeline $\\mathcal{T}$
+        (random crop + resize, flip, colour jitter, grayscale, Gaussian blur, solarization) → views $Y^A, Y^B$. A
+        batch is $N$ images, so $Y^A$ and $Y^B$ are each $N$ images.</li>
+        <li><b>Twin encoder $f_\\theta$ (shared weights).</b> A <b>ResNet-50</b> with the final classification layer
+        removed → a representation $h$ of <b>2048 units</b>. Both views pass through the <i>same</i> $f_\\theta$. The
+        representation $h$ is what you keep for downstream tasks (the linear probe reads $h$).</li>
+        <li><b>Projector (high-dimensional).</b> A 3-layer MLP mapping $2048 \\to 8192 \\to 8192 \\to 8192$. The first
+        two linear layers each carry <b>batch normalization + ReLU</b>; the third is linear. Output: the embeddings
+        $Z^A, Z^B$, each $N\\times D$ with $D = 8192$. Barlow Twins <b>benefits from very large $D$</b> — the opposite
+        of SimCLR/BYOL, whose projectors shrink to ~128–256 dims. (Our small run uses $D=128$ to fit MNIST.)</li>
+        <li><b>Batch normalization on the embeddings.</b> Before forming the matrix, each of the $D$ embedding
+        dimensions is <b>mean-centered along the batch</b> ("each unit has mean output 0 over the batch"). This is
+        the per-column standardization that makes the matrix entries true correlations — it is a structural part of
+        the method, not an afterthought.</li>
+        <li><b>Cross-correlation matrix $\\mathcal{C}$ (Eqn. 2).</b> $\\mathcal{C} = (Z^A_{\\text{norm}})^\\top
+        Z^B_{\\text{norm}}$ normalized per dimension — a $D\\times D = 8192\\times 8192$ matrix computed by a single
+        matrix multiply across the batch (Algorithm 1).</li>
+        <li><b>Barlow Twins loss (Eqn. 1).</b> Push $\\mathcal{C}\\to I$: the on-diagonal invariance term
+        $\\sum_i(1-\\mathcal{C}_{ii})^2$ plus $\\lambda=5\\cdot10^{-3}$ times the off-diagonal redundancy term
+        $\\sum_{i\\neq j}\\mathcal{C}_{ij}^2$. The gradient flows back symmetrically through both branches.</li>
+       </ol>
+       <p><b>What is deliberately absent.</b> No <b>negatives</b> (no contrast against other images), no <b>predictor
+       network</b>, no <b>stop-gradient</b>, no <b>momentum / moving-average</b> copy of the weights, no
+       $2N$-stacking of views. The anti-collapse force lives entirely in the off-diagonal term of the loss — the
+       only "machinery" is the $D\\times D$ matrix and its target $I$.</p>`,
     symbols: [
       { sym: "$Z^A,\\ Z^B$", desc: "the two <b>batches of embeddings</b> — the network's output vectors for the two distorted views of the batch. Each is an $N\\times D$ matrix: $N$ images (rows), $D$ output dimensions (columns)." },
       { sym: "$N$", desc: "the number of <b>images</b> in the batch. (Unlike SimCLR there is no $2N$: the two views are kept as two separate $N$-row batches $Z^A,Z^B$, not stacked.)" },

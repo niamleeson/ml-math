@@ -193,33 +193,87 @@
       { sym: "$b$", desc: "the <b>baseline</b> (Williams' $b_{ij}$): a value subtracted from the return before weighting. Must NOT depend on the action $a_t$; then it leaves the gradient unbiased but cuts its variance. We use a running mean of returns." },
       { sym: "$\\alpha$", desc: "the <b>learning rate</b> / step size (Greek 'alpha'). Williams' nonnegative rate factor $\\alpha_{ij}$." },
       { sym: "$d^\\pi(s)$", desc: "the <b>(discounted) state-visitation distribution</b> under policy $\\pi$: how often state $s$ is visited when following $\\pi$ (Sutton et al., §1). Its gradient does NOT appear in the policy-gradient theorem — the key fact." },
-      { sym: "$Q^\\pi(s,a)$", desc: "the <b>action-value</b>: the expected return from taking action $a$ in state $s$ and then following $\\pi$. In bare REINFORCE the sampled return $G_t$ stands in for $Q^\\pi$." }
+      { sym: "$Q^\\pi(s,a)$", desc: "the <b>action-value</b>: the expected return from taking action $a$ in state $s$ and then following $\\pi$. In bare REINFORCE the sampled return $G_t$ stands in for $Q^\\pi$." },
+      { sym: "$W,\\,w_{ij}$", desc: "Williams' weight matrix $W$ (all parameters of the connectionist network) and a single weight $w_{ij}$ (on the input line carrying $x_j$ into unit $i$). $W$ is Williams' name for $\\theta$." },
+      { sym: "$g_i(\\xi,\\mathbf{w}^i,\\mathbf{x}^i)$", desc: "the <b>output distribution of unit $i$</b>: $\\Pr\\{y_i=\\xi\\}$, the probability mass (or density) of the unit emitting value $\\xi$ given its weights $\\mathbf{w}^i$ and input $\\mathbf{x}^i$. The connectionist counterpart of $\\pi(a\\mid s)$." },
+      { sym: "$y_i$", desc: "the <b>random output of unit $i$</b> — the action the stochastic unit emits (for a Bernoulli unit, $0$ or $1$)." },
+      { sym: "$x_j$", desc: "the $j$-th component of the unit's input vector $\\mathbf{x}^i$ (an upstream unit's output or an environment input)." },
+      { sym: "$s_i = \\sum_j w_{ij}x_j$", desc: "the unit's <b>weighted-sum input</b> (Williams eq. 2): the dot product of its weights and inputs, before the squashing function." },
+      { sym: "$p_i = f_i(s_i)$", desc: "the <b>distribution parameter</b> of unit $i$ (Williams eq. 1): the squashing function $f_i$ applied to $s_i$. For a Bernoulli unit $p_i=\\Pr\\{y_i=1\\}$; $f_i$ logistic gives $f_i'(s_i)=p_i(1-p_i)$." },
+      { sym: "$f_i,\\,f_i'$", desc: "the unit's <b>differentiable squashing function</b> and its derivative — e.g. the logistic $1/(1+e^{-s_i})$ (Williams eq. 3)." },
+      { sym: "$b_{ij},\\,\\bar r$", desc: "Williams' <b>reinforcement baseline</b> $b_{ij}$ (must be conditionally independent of $y_i$) and the <b>reinforcement-comparison</b> running average $\\bar r$ (Williams eqs. 9–10): $\\bar r(t)=\\gamma r(t-1)+(1-\\gamma)\\bar r(t-1)$. Both play the role of our $b$." },
+      { sym: "$e_{ij}(t),\\,k$", desc: "the characteristic eligibility of weight $w_{ij}$ <b>at time step $t$</b>, and $k$ = the number of steps in an episode. Episodic REINFORCE (eq. 11) sums $e_{ij}(t)$ over $t=1\\dots k$." },
+      { sym: "$\\mu,\\,\\sigma$", desc: "the <b>mean and standard deviation</b> of a Gaussian unit (Williams §6): a unit can emit a real-valued output $y\\sim\\mathcal{N}(\\mu,\\sigma^2)$; $\\sigma$ controls how much it explores. Eligibilities: $\\partial\\ln g/\\partial\\mu=(y-\\mu)/\\sigma^2$, $\\partial\\ln g/\\partial\\sigma=((y-\\mu)^2-\\sigma^2)/\\sigma^3$ (eqs. 12)." },
+      { sym: "$\\rho$", desc: "Sutton et al.'s <b>objective</b> (the long-run average or start-state expected return) — their name for $J(\\theta)$ in the MDP setting." }
     ],
     formula:
-      `$$ \\nabla_\\theta J(\\theta) \\;=\\; \\mathbb{E}\\Big[\\,\\nabla_\\theta \\log \\pi(a_t\\mid s_t;\\theta)
-         \\;\\big(G_t - b\\big)\\Big] \\qquad\\text{(REINFORCE estimator, with baseline $b$)} $$
+      `$$ E\\{r\\mid W\\} \\qquad\\text{(Williams §3: the performance measure — expected reinforcement, to be maximized over the weights } W\\text{)} $$
        $$ \\Delta w_{ij} = \\alpha_{ij}\\,(r - b_{ij})\\,e_{ij},\\qquad
-         e_{ij} = \\frac{\\partial \\ln g_i}{\\partial w_{ij}} \\qquad\\text{(Williams 1992, §4)} $$
+         e_{ij} = \\frac{\\partial \\ln g_i}{\\partial w_{ij}} \\qquad\\text{(Williams §4: the REINFORCE update; } e_{ij} \\text{ = the characteristic eligibility)} $$
+       $$ E\\{\\Delta W\\mid W\\} = \\alpha\\,\\nabla_{W} E\\{r\\mid W\\}
+         \\qquad\\text{(Williams §4, Theorem 1: the average update follows the gradient of expected reward — exactly, when } \\alpha_{ij}=\\alpha\\text{)} $$
+       $$ \\frac{\\partial \\ln g_i}{\\partial p_i} = \\frac{y_i - p_i}{p_i(1 - p_i)}
+         \\qquad\\text{(Williams §4 eq. 5: characteristic eligibility of a Bernoulli unit's parameter } p_i\\text{)} $$
+       $$ \\frac{\\partial \\ln g_i}{\\partial w_{ij}} = \\frac{y_i - p_i}{p_i(1 - p_i)}\\,f_i'(s_i)\\,x_j
+         \\;\\xrightarrow{\\;f_i=\\text{logistic}\\;}\\; (y_i - p_i)\\,x_j
+         \\qquad\\text{(Williams §4 eqs. 6, 7: same eligibility for a Bernoulli-logistic weight)} $$
+       $$ \\Delta w_{ij} = \\alpha\\,(r - \\bar r)\\,(y_i - p_i)\\,x_j,\\qquad
+         \\bar r(t) = \\gamma\\,r(t-1) + (1-\\gamma)\\,\\bar r(t-1)
+         \\qquad\\text{(Williams §4 eqs. 9, 10: reinforcement comparison — the running-mean baseline } \\bar r\\text{)} $$
+       $$ \\Delta w_{ij} = \\alpha_{ij}\\,(r - b_{ij})\\sum_{t=1}^{k} e_{ij}(t)
+         \\qquad\\text{(Williams §5 eq. 11: EPISODIC REINFORCE — sum the eligibility over the episode's } k \\text{ steps; Theorem 2 gives the same gradient guarantee)} $$
+       $$ \\frac{\\partial \\ln g}{\\partial \\mu} = \\frac{y - \\mu}{\\sigma^2},\\qquad
+         \\frac{\\partial \\ln g}{\\partial \\sigma} = \\frac{(y - \\mu)^2 - \\sigma^2}{\\sigma^3}
+         \\qquad\\text{(Williams §6 eqs. 12; eligibilities of a Gaussian unit's mean and spread)} $$
+       $$ \\nabla_\\theta J(\\theta) \\;=\\; \\mathbb{E}\\Big[\\,\\sum_t \\nabla_\\theta \\log \\pi(a_t\\mid s_t;\\theta)
+         \\;\\big(G_t - b\\big)\\Big] \\qquad\\text{(the modern episodic-return form we implement; } G_t \\text{ = the return that follows } a_t\\text{, } b \\text{ = baseline)} $$
        $$ \\frac{\\partial \\rho}{\\partial \\theta} \\;=\\; \\sum_s d^\\pi(s) \\sum_a
          \\frac{\\partial \\pi(s,a)}{\\partial \\theta}\\,Q^\\pi(s,a)
-         \\qquad\\text{(Sutton et al. 2000, Theorem 1, eq. 2)} $$`,
+         \\qquad\\text{(Sutton et al. 2000, Theorem 1 eq. 2: the Policy Gradient Theorem — note NO } \\partial d^\\pi/\\partial\\theta \\text{ term)} $$`,
     whatItDoes:
-      `<p>The <b>first line</b> is the REINFORCE estimator you implement. Read it as: the gradient of expected
-       return equals the <i>average</i>, over sampled steps, of "the direction that makes the chosen action
-       more likely" ($\\nabla\\log\\pi$) times "how good the outcome was" ($G_t - b$). Because it is an
-       expectation, you estimate it by <b>sampling episodes</b> and averaging — no environment model needed.
-       Subtracting the baseline $b$ recenters "how good" around the average, which is why it lowers variance.</p>
-       <p>The <b>second line</b> is Williams' per-weight connectionist version: increment each weight by
-       (rate) $\\times$ (reward minus baseline) $\\times$ (characteristic eligibility $e_{ij} = \\partial\\ln
-       g_i/\\partial w_{ij}$). The acronym names the three factors — REward Increment = Nonnegative Factor
-       $\\times$ Offset Reinforcement $\\times$ Characteristic Eligibility. The eligibility $e_{ij}$ is just
-       $\\nabla\\log\\pi$ for one weight.</p>
-       <p>The <b>third line</b> is Sutton et al.'s Policy Gradient Theorem. It says the long-horizon gradient
-       sums, over states $s$ (weighted by how often $\\pi$ visits them, $d^\\pi(s)$) and actions $a$, the
-       term $(\\partial\\pi(s,a)/\\partial\\theta)\\,Q^\\pi(s,a)$. The decisive feature: there is <b>no
-       $\\partial d^\\pi(s)/\\partial\\theta$ term</b> — the messy "how does changing $\\theta$ change where
-       I end up?" effect cancels out. That is exactly why you can estimate the gradient from samples drawn by
-       running the current policy, and why $G_t$ (an unbiased sample of $Q^\\pi$) can replace $Q^\\pi$.</p>`,
+      `<ul>
+        <li><b>$E\\{r\\mid W\\}$ (§3)</b> — the <b>goal</b>: the expected reward you would get on average if the
+        network's weights were $W$. Learning = searching $W$ to make this as large as possible.</li>
+        <li><b>$\\Delta w_{ij}=\\alpha_{ij}(r-b_{ij})e_{ij}$ (§4)</b> — the <b>update</b>: nudge each weight by
+        (rate) $\\times$ (reward minus baseline) $\\times$ (characteristic eligibility). The acronym names the
+        three factors — <i>REward Increment = Nonnegative Factor $\\times$ Offset Reinforcement $\\times$
+        Characteristic Eligibility</i>. The eligibility $e_{ij}=\\partial\\ln g_i/\\partial w_{ij}$ is just
+        $\\nabla\\log\\pi$ for one weight: the direction that makes the output the unit just produced more
+        likely.</li>
+        <li><b>$E\\{\\Delta W\\mid W\\}=\\alpha\\,\\nabla_W E\\{r\\mid W\\}$ (Theorem 1)</b> — <b>why it works</b>:
+        average that simple sampled update over all the randomness and it points <i>exactly</i> along the
+        gradient of expected reward. So REINFORCE is <b>unbiased</b> gradient ascent, even though it never
+        builds or stores the gradient. Equivalently $(r-b_{ij})\\partial\\ln g_i/\\partial w_{ij}$ is an
+        unbiased estimate of $\\partial E\\{r\\mid W\\}/\\partial w_{ij}$ — for ANY baseline $b$ not depending on
+        the action.</li>
+        <li><b>$\\partial\\ln g_i/\\partial p_i=(y_i-p_i)/(p_i(1-p_i))$ (eq. 5)</b> — what the eligibility is for
+        a <b>Bernoulli unit</b>: large and positive when the unit fired ($y_i=1$) but didn't expect to (small
+        $p_i$). Via the chain rule (eq. 6) and the logistic identity $f_i'=p_i(1-p_i)$, it collapses to the
+        clean <b>$(y_i-p_i)x_j$</b> (eq. 7) — "(actual minus expected output) times input."</li>
+        <li><b>$\\Delta w_{ij}=\\alpha(r-\\bar r)(y_i-p_i)x_j$, $\\bar r(t)=\\gamma r(t-1)+(1-\\gamma)\\bar r(t-1)$
+        (eqs. 9–10)</b> — <b>reinforcement comparison</b>: the concrete Bernoulli update with the baseline set
+        to a running average $\\bar r$ of recent rewards. This is exactly the running-mean baseline we use in
+        code.</li>
+        <li><b>$\\Delta w_{ij}=\\alpha_{ij}(r-b_{ij})\\sum_{t=1}^k e_{ij}(t)$ (eq. 11)</b> — <b>episodic
+        REINFORCE</b>: when reward arrives only at the end of a $k$-step episode, accumulate the eligibility
+        over the whole episode, then scale by $(r-b)$. Theorem 2 proves this still follows the gradient. This is
+        the line our CartPole loop implements (the eligibility sum $=\\sum_t\\nabla\\log\\pi$, weighted by the
+        return).</li>
+        <li><b>$\\partial\\ln g/\\partial\\mu=(y-\\mu)/\\sigma^2$, $\\partial\\ln g/\\partial\\sigma=((y-\\mu)^2-
+        \\sigma^2)/\\sigma^3$ (eqs. 12)</b> — eligibilities for a <b>Gaussian (continuous-action) unit</b>: the
+        mean shifts toward outputs that earned reward; the spread $\\sigma$ grows or shrinks to control how much
+        the unit explores. This is how REINFORCE handles continuous actions.</li>
+        <li><b>$\\nabla_\\theta J=\\mathbb{E}[\\sum_t\\nabla_\\theta\\log\\pi(a_t\\mid s_t)(G_t-b)]$</b> — the
+        <b>modern episodic-return form</b> you implement: gradient of expected return = average over sampled
+        steps of "direction that makes the chosen action more likely" times "the return that followed,
+        recentered by the baseline." Because it is an expectation, you estimate it by sampling episodes — no
+        environment model needed.</li>
+        <li><b>$\\partial\\rho/\\partial\\theta=\\sum_s d^\\pi(s)\\sum_a(\\partial\\pi(s,a)/\\partial\\theta)
+        Q^\\pi(s,a)$ (Sutton et al., eq. 2)</b> — the <b>Policy Gradient Theorem</b> for full MDPs. Decisive
+        feature: there is <b>no $\\partial d^\\pi(s)/\\partial\\theta$ term</b> — the "how does changing $\\theta$
+        change where I end up?" effect cancels. That is why the gradient is estimable from on-policy samples,
+        and why $G_t$ (an unbiased sample of $Q^\\pi$) can replace $Q^\\pi$.</li>
+      </ul>`,
     derivation:
       `<p><b>Short recap — full derivation in the <code>rl-policy-gradients</code> concept lesson.</b> The
        log-derivative trick is the whole engine. Start from $J(\\theta) = \\mathbb{E}_{\\tau\\sim\\pi}[G(\\tau)]
@@ -240,6 +294,34 @@
        <i>unbiased</i> estimate of $\\partial E\\{r\\mid W\\}/\\partial w$ for any such $b$) and Sutton et al.'s
        eq. (2) generalizes the unbiasedness to the MDP case. The full baseline-variance proof and the
        bias&ndash;variance picture live in the <b>rl-policy-gradients</b> concept lesson — we only recap here.</p>`,
+    architecture:
+      `<p>There is no deep network to draw — REINFORCE is an <b>algorithm wrapped around a stochastic policy</b>.
+       Two pieces: the policy (the thing that acts) and the Monte-Carlo update (the thing that learns).</p>
+       <p><b>1. The stochastic policy.</b> Williams' building block (§2) is a <b>stochastic semilinear unit</b>:
+       it forms a weighted sum $s_i = \\sum_j w_{ij}x_j$ (eq. 2), squashes it $p_i = f_i(s_i)$ (eq. 1) — for a
+       <b>Bernoulli-logistic unit</b>, $f_i$ is the logistic function (eq. 3) — and then <b>draws the output
+       $y_i$ at random</b> from that distribution. The randomness IS the exploration: there is no separate
+       $\\epsilon$-greedy rule. Our CartPole policy is the same idea with a categorical head: state (4 numbers)
+       &rarr; <code>nn.Linear(4,128)</code> &rarr; <code>tanh</code> &rarr; <code>nn.Linear(128,2)</code>
+       &rarr; logits &rarr; <code>Categorical</code> &rarr; sampled action. The weights $W$ are <i>all</i> the
+       learnable parameters; the unit's pmf $g_i(\\xi,\\mathbf{w}^i,\\mathbf{x}^i)=\\Pr\\{y_i=\\xi\\}$ is what we
+       differentiate.</p>
+       <p><b>2. The Monte-Carlo return.</b> REINFORCE is <b>on-policy and episodic</b>: it does not bootstrap a
+       value estimate, it uses the <i>actual sampled return</i>. The per-episode loop is:
+       <b>(a) roll out</b> a full episode with the current policy, recording at each step the action's
+       log-prob $\\log\\pi(a_t\\mid s_t)$ (= $\\ln g_i$, whose gradient is the characteristic eligibility
+       $e_{ij}$) and the reward $r_t$; <b>(b) credit each action</b> with the return that <i>follows</i> it,
+       $G_t=\\sum_{k\\ge0}\\gamma^k r_{t+k}$, computed backward as $G\\leftarrow r+\\gamma G$ — this is the
+       eligibility-sum $\\sum_{t=1}^k e_{ij}(t)$ of episodic REINFORCE (§5, eq. 11) weighted by reward;
+       <b>(c) subtract the baseline</b> $b$ (a running mean of returns, the reinforcement-comparison $\\bar r$
+       of §4 eq. 10) to get the advantage $G_t-b$; <b>(d) one gradient step</b> on the loss
+       $-\\sum_t\\log\\pi(a_t\\mid s_t)(G_t-b)$ — gradient ascent on reward.</p>
+       <p><b>Data flow per episode:</b> state &rarr; policy net &rarr; sampled action &rarr; environment &rarr;
+       reward &rarr; (after the episode) backward return accumulation &rarr; baseline subtraction &rarr; one
+       optimizer step. No critic, no replay buffer, no model of the environment — the only "memory" is the
+       single running-mean baseline accumulator. Williams' connectionist version (§4) needs even less: one
+       <b>eligibility accumulator</b> $\\sum_t e_{ij}(t)$ per weight, updated online as the episode runs and
+       multiplied by $(r-b)$ once the reward arrives.</p>`,
     example:
       `<p>Work one REINFORCE policy-gradient term by hand &mdash; the exact case the notebook's first cell
        recomputes. Take $\\gamma = 0.99$ and a short $3$-step CartPole episode (every step gives reward

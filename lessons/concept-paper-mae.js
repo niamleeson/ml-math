@@ -156,6 +156,38 @@
        refinement: use <b>per-patch normalized pixels</b> as the target (subtract each patch's own mean,
        divide by its own standard deviation), which "improves representation quality." We include both options
        in the notebook.</p>`,
+    architecture:
+      `<p>MAE has four components and an explicit <b>asymmetry</b>: a heavy ViT <b>encoder</b> that runs on the
+       small visible subset, and a separate, deliberately small <b>decoder</b> that runs on the full sequence.
+       Data flow for one $H\\times H$ image (paper defaults in brackets, §3, §4.1, Table 1):</p>
+       <ul>
+        <li><b>Patch embedding.</b> Cut into $N=(H/P)^2$ non-overlapping $P\\times P$ patches [$P=16$, so $N=196$
+        for $224\\times 224$]; a single <code>Linear</code> projects each flattened patch ($D=P^2 C$ values) to a
+        token of width $d_{\\text{enc}}$ [ViT-Large: $d_{\\text{enc}}=1024$, 24 blocks; ViT-Huge: $1280$, 32
+        blocks]. Add fixed <b>sine-cosine position embeddings</b>.</li>
+        <li><b>Random masking.</b> Sample a uniform random permutation of the $N$ indices, keep the first
+        $N_{\\text{vis}}=(1-r)N$ as visible, mask the rest [$r=0.75\\Rightarrow N_{\\text{vis}}=49$]. Record the
+        inverse permutation so tokens can be un-shuffled later.</li>
+        <li><b>Encoder (visible only).</b> A <b>standard ViT</b> — stacks of {multi-head self-attention +
+        MLP, each with LayerNorm and residual connections} — but applied to the $N_{\\text{vis}}$ visible
+        tokens <i>only</i>. No mask token ever enters here. Cost scales with the short length $N_{\\text{vis}}$,
+        giving the 2.8–4.1x wall-clock speed-up (Table 2) and ~3.3x fewer FLOPs (Table 1c) vs. encoding the full
+        image.</li>
+        <li><b>Re-assemble + mask tokens.</b> A <code>Linear</code> maps encoder output to the decoder width
+        $d_{\\text{dec}}$ [512]. Build the full length-$N$ sequence: encoded visible tokens in their original
+        slots, and a single <b>shared, learned mask-token vector</b> copied into every masked slot. Add
+        <b>position embeddings to all $N$ slots</b> (so the decoder knows <i>which</i> blank each mask token
+        fills) and un-shuffle to image order.</li>
+        <li><b>Decoder (full sequence) + pixel head.</b> A <b>lightweight</b> ViT [depth 8 blocks, width 512 —
+        far smaller than the encoder, ~9% of its per-token FLOPs] over all $N$ tokens, then a <code>Linear</code>
+        head maps each token to its $D=P^2 C$ pixels. The decoder exists only for pretraining and is
+        <b>discarded</b> afterwards; the encoder is the kept feature extractor.</li>
+        <li><b>Loss.</b> Pixel MSE on the masked patches only (the formula), with the optional per-patch
+        normalized target.</li>
+       </ul>
+       <p>Sizes scale by encoder choice (ViT-B/L/H); the <i>decoder is fixed-small regardless</i>, which is the
+       point of the asymmetry. Our notebook uses a tiny version ($P=7$, $N=16$, $d_{\\text{enc}}=64$, encoder
+       depth 3, $d_{\\text{dec}}=32$, decoder depth 2) — same shape, small numbers.</p>`,
     symbols: [
       { sym: "$P$", desc: "the <b>patch size</b>: the side length, in pixels, of each square patch the image is cut into (e.g. $P=16$ for 16x16 patches, or $P=7$ in our tiny demo)." },
       { sym: "$N$", desc: "the <b>total number of patches</b> in one image, $N=(H/P)^2$ for an $H\\times H$ image. The image becomes a length-$N$ sequence of patch tokens." },
@@ -164,11 +196,23 @@
       { sym: "$\\mathcal{M}$", desc: "the <b>masked set</b>: the indices of the hidden patches (there are $rN$ of them). The loss is averaged over exactly these patches." },
       { sym: "$x_i$", desc: "the <b>true pixels of patch $i$</b> — the original patch flattened to a vector of length $P^2$ (times the number of colour channels)." },
       { sym: "$\\hat{x}_i$", desc: "the <b>decoder's predicted pixels for patch $i$</b> — same shape as $x_i$. We only care about $\\hat{x}_i$ for $i$ in the masked set $\\mathcal{M}$." },
+      { sym: "$\\tilde{x}_i$", desc: "the <b>per-patch normalized target</b> for patch $i$ — patch $i$'s pixels after subtracting that patch's own mean and dividing by its own standard deviation (the optional target, §4.1)." },
+      { sym: "$H,\\ C,\\ D$", desc: "$H$ is the <b>image side length</b> in pixels; $C$ is the <b>number of colour channels</b> (3 for RGB, 1 for our grayscale demo); $D=P^2 C$ is the <b>number of values in one patch vector</b>." },
+      { sym: "$\\mu_i,\\ \\sigma_i^2,\\ \\epsilon$", desc: "$\\mu_i$ and $\\sigma_i^2$ are the <b>mean and variance of the pixels within patch $i$</b> (used to normalize that patch); $\\epsilon$ is a tiny constant added under the square root for numerical safety." },
+      { sym: "$d_{\\text{enc}},\\ d_{\\text{dec}}$", desc: "the <b>token (embedding) widths</b> of the encoder and decoder. The paper's decoder is much narrower ($d_{\\text{dec}}=512$) than the encoder (e.g. $d_{\\text{enc}}=1024$ for ViT-Large) — the asymmetry." },
       { sym: "mask token", desc: "a single <b>shared, learned vector</b> that stands in for every masked patch in the decoder's input. The same vector is reused for all blanks; its position embedding tells the decoder which blank it is." },
       { sym: "encoder / decoder", desc: "the <b>encoder</b> is a ViT run on visible patches only (kept after training, it is the feature extractor). The <b>decoder</b> is a smaller, separate Transformer used only to reconstruct pixels during pretraining, then discarded." },
       { sym: "linear probe", desc: "a way to measure feature quality: <b>freeze</b> the trained encoder and train only one linear classifier on top of its (frozen) features. Good features give high probe accuracy with no fine-tuning." }
     ],
-    formula: `$$ \\mathcal{L} \\;=\\; \\frac{1}{|\\mathcal{M}|}\\sum_{i\\in\\mathcal{M}} \\big\\lVert \\hat{x}_i - x_i \\big\\rVert_2^2 \\qquad\\text{(MSE on masked patches only, \\S3 Reconstruction target)} $$`,
+    formula: `<p>MAE is deliberately light on math — the whole method is one loss plus the patch/mask
+       bookkeeping. Here are all the equations it relies on (§3, Approach).</p>
+       $$ N \\;=\\; \\left(\\tfrac{H}{P}\\right)^2 \\qquad\\text{(number of patches: an $H\\times H$ image cut into $P\\times P$ patches, §3 Masking; paper uses $H=224,\\ P=16\\Rightarrow N=196$)} $$
+       $$ N_{\\text{vis}} \\;=\\; (1-r)\\,N, \\qquad |\\mathcal{M}| \\;=\\; r\\,N \\qquad\\text{(visible vs. masked counts at mask ratio $r$; default $r=0.75\\Rightarrow N_{\\text{vis}}=49$, §3 Masking)} $$
+       $$ \\mathcal{L} \\;=\\; \\frac{1}{|\\mathcal{M}|}\\sum_{i\\in\\mathcal{M}} \\big\\lVert \\hat{x}_i - x_i \\big\\rVert_2^2 \\qquad\\text{(pixel MSE on masked patches only — the core loss, §3 Reconstruction target)} $$
+       $$ \\tilde{x}_i \\;=\\; \\frac{x_i - \\mu_i}{\\sqrt{\\sigma_i^2 + \\epsilon}}, \\qquad \\mu_i = \\frac{1}{D}\\sum_{j=1}^{D} x_{i,j}, \\qquad \\sigma_i^2 = \\frac{1}{D}\\sum_{j=1}^{D}(x_{i,j}-\\mu_i)^2 \\qquad\\text{(optional per-patch normalized target: subtract each patch's own mean, divide by its own std, §4.1 / Table 1d)} $$
+       <p>With the normalized-pixel option the loss uses $\\tilde{x}_i$ in place of $x_i$ (predicting each
+       patch's z-scored pixels), which the paper reports "improves representation quality." $D=P^2\\cdot C$ is the
+       number of values in a patch.</p>`,
     whatItDoes:
       `<p>The equation is a <b>mean squared error</b> computed over the <b>masked patches only</b>. For each
        masked patch $i$ (those in the set $\\mathcal{M}$), take the decoder's predicted pixel vector

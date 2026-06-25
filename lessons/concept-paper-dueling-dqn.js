@@ -144,6 +144,41 @@
        entering the shared layers is rescaled by $1/\\sqrt{2}$ for stability, and gradients are clipped to norm
        $\\le 10$. They also build the dueling head on top of <b>Double DQN</b>, not vanilla DQN, in their main
        experiments.</p>`,
+    architecture:
+      `<p>The dueling network is the <b>standard DQN convolutional tower with a forked head</b>. Only the head
+       changes; the body is byte-for-byte the same shared backbone (&sect;4, "Models").</p>
+       <p><b>Input.</b> A stack of preprocessed Atari frames (DQN's usual 4 grayscale frames), fed to a shared
+       convolutional backbone with parameters $\\theta$.</p>
+       <p><b>Shared convolutional backbone (parameters $\\theta$):</b></p>
+       <ul>
+        <li><b>Conv 1:</b> 32 filters, $8\\times 8$, stride 4, ReLU.</li>
+        <li><b>Conv 2:</b> 64 filters, $4\\times 4$, stride 2, ReLU.</li>
+        <li><b>Conv 3:</b> 64 filters, $3\\times 3$, stride 1, ReLU. The flattened output is the shared feature
+        vector that both streams read.</li>
+       </ul>
+       <p><b>Fork into two streams</b> (this is the whole contribution &mdash; the backbone above is shared, the
+       two branches below are separate):</p>
+       <ul>
+        <li><b>Value stream (parameters $\\beta$):</b> one fully-connected layer of <b>512</b> units + ReLU, then
+        a linear layer to a <b>single scalar</b> $V(s;\\theta,\\beta)$ &mdash; "how good is this state".</li>
+        <li><b>Advantage stream (parameters $\\alpha$):</b> one fully-connected layer of <b>512</b> units + ReLU,
+        then a linear layer to <b>$|\\mathcal{A}|$ outputs</b> $A(s,a;\\theta,\\alpha)$ &mdash; one advantage per
+        action.</li>
+       </ul>
+       <p><b>Aggregation layer.</b> The two streams are merged by the <b>Eq. 9</b> rule into the
+       $|\\mathcal{A}|$-vector of action-values $Q(s,a;\\theta,\\alpha,\\beta)$: broadcast the scalar $V$ across all
+       actions and add the <i>mean-centered</i> advantage. This layer has no parameters &mdash; it is a fixed
+       combine. The agent then acts $\\arg\\max_a Q(s,a)$.</p>
+       <p><b>Two training-stability details (&sect;4).</b> (i) Because both streams send gradients back into the
+       <i>last shared conv layer</i>, the combined gradient entering the backbone is <b>rescaled by
+       $1/\\sqrt{2}$</b>. (ii) Gradients are <b>clipped to norm $\\le 10$</b>. The main experiments build this
+       head on the <b>Double DQN</b> target (Eq. 6), not vanilla DQN.</p>
+       <p><b>Parameter-matched baseline.</b> So that the gain is from the <i>shape</i> and not extra capacity, the
+       single-stream comparison network uses <b>1024</b> units in its first fully-connected layer, giving both
+       architectures roughly the same parameter count.</p>
+       <p>Our CartPole lesson keeps this exact topology but swaps the conv tower for a 2-layer
+       <code>nn.Linear</code> body (CartPole's input is 4 numbers, not pixels); the forked value/advantage head
+       and the Eq. 9 aggregation are identical to the paper's.</p>`,
     symbols: [
       { sym: "$s$", desc: "the current <b>state</b> (for CartPole: cart position, cart velocity, pole angle, pole angular velocity)." },
       { sym: "$a$", desc: "an <b>action</b> (for CartPole: push the cart left or right). $a'$ is a dummy action variable summed/maxed over." },
@@ -160,13 +195,25 @@
       { sym: "$A(s,a;\\theta,\\alpha)$", desc: "the advantage stream's output for action $a$: the raw (pre-centering) per-action advantage estimate." },
       { sym: "$|\\mathcal{A}|$", desc: "the <b>number of actions</b> (the size of the action set $\\mathcal{A}$). For CartPole, $|\\mathcal{A}| = 2$. It is the divisor in the mean over actions." },
       { sym: "$\\frac{1}{|\\mathcal{A}|}\\sum_{a'} A(s,a';\\theta,\\alpha)$", desc: "the <b>mean advantage</b> over all actions in state $s$ &mdash; the baseline that gets subtracted in Eq. 9 to fix identifiability." },
-      { sym: "$\\max_{a'}$", desc: "the largest value over all actions $a'$ &mdash; the baseline subtracted in the alternative Eq. 8." }
+      { sym: "$\\max_{a'}$", desc: "the largest value over all actions $a'$ &mdash; the baseline subtracted in the alternative Eq. 8." },
+      { sym: "$r$", desc: "the immediate <b>reward</b> received after taking action $a$ in state $s$ and landing in next state $s'$." },
+      { sym: "$s'$, $a'$", desc: "the <b>next state</b> reached after the transition, and an action evaluated there (the bootstrap looks one step ahead into $s'$)." },
+      { sym: "$\\gamma$", desc: "the <b>discount factor</b> (Greek 'gamma'), between 0 and 1: how much future reward is worth relative to immediate reward." },
+      { sym: "$\\theta_i$", desc: "the <b>online</b> network parameters at training iteration $i$ &mdash; the weights being updated by gradient descent." },
+      { sym: "$\\theta^-$", desc: "the <b>target</b> network parameters: a periodically-frozen copy of $\\theta$ used to compute the bootstrap target, for stability." },
+      { sym: "$y_i^{\\,\\text{DQN}}$, $y_i^{\\,\\text{DDQN}}$", desc: "the <b>bootstrap targets</b> the loss regresses toward: DQN uses $\\max$ of the target net (Eq. 5); Double-DQN selects the action with the online net but evaluates it with the target net (Eq. 6)." },
+      { sym: "$L_i(\\theta_i)$", desc: "the <b>loss</b> at iteration $i$: the mean squared temporal-difference error between the target $y_i$ and the network's $Q(s,a;\\theta_i)$ (Eqs. 4–5)." },
+      { sym: "$\\arg\\max_{a'}$", desc: "the <b>action</b> that attains the maximum (not the value) &mdash; used in the Double-DQN target to pick which next action to evaluate." }
     ],
     formula:
-      `$$ A^\\pi(s,a) = Q^\\pi(s,a) - V^\\pi(s) \\qquad\\text{(Eq. 3)} $$
-       $$ Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + A(s,a;\\theta,\\alpha) \\qquad\\text{(Eq. 7, naive — unidentifiable)} $$
-       $$ Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + \\Big(A(s,a;\\theta,\\alpha) - \\max_{a'\\in|\\mathcal{A}|} A(s,a';\\theta,\\alpha)\\Big) \\qquad\\text{(Eq. 8, max variant)} $$
-       $$ \\boxed{\\,Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + \\Big(A(s,a;\\theta,\\alpha) - \\tfrac{1}{|\\mathcal{A}|}\\textstyle\\sum_{a'} A(s,a';\\theta,\\alpha)\\Big)\\,} \\qquad\\text{(Eq. 9, used)} $$`,
+      `$$ A^\\pi(s,a) = Q^\\pi(s,a) - V^\\pi(s) \\qquad\\text{(Eq. 3 — advantage = action-value minus state-value)} $$
+       $$ V^\\pi(s) = \\mathbb{E}_{a\\sim\\pi(s)}\\big[Q^\\pi(s,a)\\big], \\qquad \\mathbb{E}_{a\\sim\\pi(s)}\\big[A^\\pi(s,a)\\big] = 0 \\qquad\\text{(§3 — state-value is the action-average of }Q\\text{, so advantage averages to zero)} $$
+       $$ L_i(\\theta_i) = \\mathbb{E}_{s,a,r,s'}\\Big[\\big(y_i^{\\,\\text{DQN}} - Q(s,a;\\theta_i)\\big)^2\\Big] \\qquad\\text{(Eqs. 4–5 — the squared temporal-difference loss the head is trained under)} $$
+       $$ y_i^{\\,\\text{DQN}} = r + \\gamma \\max_{a'} Q(s',a';\\theta^-) \\qquad\\text{(Eq. 5 — DQN bootstrap target; }\\theta^-\\text{ is the frozen target network)} $$
+       $$ y_i^{\\,\\text{DDQN}} = r + \\gamma\\, Q\\big(s',\\, \\arg\\max_{a'} Q(s',a';\\theta_i);\\ \\theta^-\\big) \\qquad\\text{(Eq. 6 — Double-DQN target the paper's main agent uses)} $$
+       $$ Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + A(s,a;\\theta,\\alpha) \\qquad\\text{(Eq. 7, naive sum — unidentifiable)} $$
+       $$ Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + \\Big(A(s,a;\\theta,\\alpha) - \\max_{a'\\in|\\mathcal{A}|} A(s,a';\\theta,\\alpha)\\Big) \\qquad\\text{(Eq. 8, max variant — pins }V\\text{ to the best action's }Q\\text{)} $$
+       $$ \\boxed{\\,Q(s,a;\\theta,\\alpha,\\beta) = V(s;\\theta,\\beta) + \\Big(A(s,a;\\theta,\\alpha) - \\tfrac{1}{|\\mathcal{A}|}\\textstyle\\sum_{a'} A(s,a';\\theta,\\alpha)\\Big)\\,} \\qquad\\text{(Eq. 9, mean variant — the aggregation actually used)} $$`,
     whatItDoes:
       `<p><b>Equation 9</b> is the dueling aggregation &mdash; the one you implement. Read it left to right:
        take the shared scalar $V(s)$ and add, for each action, that action's advantage <b>after subtracting the

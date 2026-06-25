@@ -119,6 +119,30 @@
        $\\theta^-$. Double DQN moves only the SELECTION over to $\\theta$. That single change &mdash; pick
        with the online net, score with the target net &mdash; is the entire method.</p>`,
 
+    architecture:
+      `<p><b>No new network &mdash; Double DQN reuses DQN's existing two-network setup unchanged.</b> The
+       architecture IS the standard DQN; only the target computation is rewired.</p>
+       <ul>
+         <li><b>Online network $Q(s,a;\\theta)$.</b> The convolutional / MLP value network being trained.
+         It maps a state to one value per discrete action. Its weights $\\theta$ are updated by gradient
+         descent on the TD loss EVERY step. It also drives $\\epsilon$-greedy behaviour during data
+         collection. (For Atari the paper uses DQN's exact net: 3 conv layers then 2 fully-connected layers,
+         one output per action; for CartPole in this lesson it is a small MLP.)</li>
+         <li><b>Target network $Q(s,a;\\theta^-)$.</b> An identical-shaped copy of the online net. Its weights
+         $\\theta^-$ are NOT trained &mdash; they are HARD-COPIED from $\\theta$ every $\\tau$ steps
+         ($\\tau = 10{,}000$ in the paper) and held frozen in between. This lag is what makes $\\theta^-$ a
+         (partly) independent second estimate.</li>
+         <li><b>Replay buffer.</b> Stores past transitions $(S_t, A_t, R_{t+1}, S_{t+1}, \\text{done})$;
+         minibatches are sampled i.i.d. from it to train the online net. Standard DQN plumbing, unchanged.</li>
+       </ul>
+       <p><b>Data flow for one update.</b> Sample a batch from the buffer &rarr; feed $S_{t+1}$ through the
+       ONLINE net and take $\\arg\\max_a$ to pick the next action (SELECT) &rarr; feed $S_{t+1}$ through the
+       TARGET net and read THAT action's value via an index/gather, not a max (EVALUATE) &rarr; form
+       $Y^{DoubleDQN}_t = R_{t+1} + \\gamma\\,(\\text{evaluated value})$ &rarr; regress
+       $Q(S_t,A_t;\\theta)$ toward it with one gradient step on $\\theta$ &rarr; every $\\tau$ steps copy
+       $\\theta \\to \\theta^-$. DQN's data flow is identical except its next-state value is a single
+       $\\max_a Q(S_{t+1},a;\\theta^-)$ through the target net alone.</p>`,
+
     symbols: [
       { sym: "$S_t,\\ S_{t+1}$", desc: "the state at time-step $t$ and the next state. A state is everything the agent observes (e.g. CartPole's position, velocity, pole angle, angular velocity)." },
       { sym: "$a$", desc: "an action, drawn from a small DISCRETE set (e.g. push-left / push-right). The subscript on $\\max_a$ / $\\arg\\max_a$ means 'over all next actions $a$'." },
@@ -135,7 +159,16 @@
     ],
 
     formula:
-      `$$ Y^{DoubleDQN}_t \\;=\\; R_{t+1} \\;+\\; \\gamma\\, Q\\!\\Big(S_{t+1},\\ \\underbrace{\\arg\\max_{a} Q(S_{t+1},a;\\theta_t)}_{\\text{SELECT with online }\\theta},\\ \\ \\theta^-_t\\Big) $$`,
+      `$$ Y^{Q}_t \\;=\\; R_{t+1} \\;+\\; \\gamma\\, \\max_{a} Q(S_{t+1}, a; \\theta_t) $$
+       <p>Standard Q-learning target (Eq. 2): bootstrap with the $\\max$ over next-action values from the SAME weights $\\theta_t$ used to act.</p>
+       $$ Y^{DQN}_t \\;=\\; R_{t+1} \\;+\\; \\gamma\\, \\max_{a} Q(S_{t+1}, a; \\theta^-_t) $$
+       <p>DQN target (Eq. 3): identical, but the $\\max$ is evaluated with the slowly-updated TARGET network $\\theta^-_t$. The single $\\max$ both SELECTS and EVALUATES with $\\theta^-$ &mdash; the source of the upward bias.</p>
+       $$ Y^{DoubleQ}_t \\;=\\; R_{t+1} \\;+\\; \\gamma\\, Q\\!\\Big(S_{t+1},\\ \\arg\\max_{a} Q(S_{t+1}, a; \\theta_t);\\ \\theta'_t\\Big) $$
+       <p>General Double Q-learning target (Eq. 4): SELECT the action with $\\theta_t$ (inner $\\arg\\max$), EVALUATE it with an INDEPENDENT second set $\\theta'_t$ (outer $Q$). Decoupling the two jobs onto independent estimates removes the bias.</p>
+       $$ Y^{DoubleDQN}_t \\;=\\; R_{t+1} \\;+\\; \\gamma\\, Q\\!\\Big(S_{t+1},\\ \\underbrace{\\arg\\max_{a} Q(S_{t+1},a;\\theta_t)}_{\\text{SELECT with online }\\theta},\\ \\ \\underbrace{\\theta^-_t}_{\\text{EVALUATE with target }\\theta^-}\\Big) $$
+       <p>Double DQN target (Section 4, the paper's method): set $\\theta'_t = \\theta^-_t$. The online net $\\theta_t$ selects, the existing DQN target net $\\theta^-_t$ evaluates &mdash; a second network for free.</p>
+       $$ \\max_{a} Q_t(s,a) \\;\\ge\\; V_*(s) + \\sqrt{\\dfrac{C}{\\,m-1\\,}}, \\qquad \\tfrac{1}{m}\\!\\sum_{a}\\big(Q_t(s,a)-V_*(s)\\big)^2 = C $$
+       <p>Overestimation lower bound (Theorem 1): when all $m$ actions share true value $V_*(s)$ and the estimates are unbiased ($\\sum_a (Q_t-V_*)=0$) with average squared error $C\\gt 0$, the $\\max$ overestimates by at LEAST $\\sqrt{C/(m-1)}$. The bound is tight; the double estimator's corresponding lower bound is zero.</p>`,
 
     whatItDoes:
       `<p>This is the Double DQN target (Section 4, the change from Equation 3 to its Double form). Read it
@@ -157,9 +190,9 @@
        full argument lives here.</p>
        <ul class="steps">
          <li><b>Set up the worst case.</b> Suppose at some state the TRUE value of every one of $m$ actions
-         is identical, call it $V_*$. Our estimates $Q_t(s,a)$ are UNBIASED &mdash; on average each equals
-         $V_*$ &mdash; but noisy, with their errors summing to a fixed total squared error
-         $\\sum_a (Q_t(s,a)-V_*)^2 = C$ for some $C \\gt 0$.</li>
+         is identical, call it $V_*$. Our estimates $Q_t(s,a)$ are UNBIASED across actions
+         ($\\sum_a (Q_t(s,a)-V_*) = 0$) &mdash; but noisy, with a fixed AVERAGE squared error
+         $\\frac{1}{m}\\sum_a (Q_t(s,a)-V_*)^2 = C$ for some $C \\gt 0$ over the $m$ actions.</li>
          <li><b>Take the $\\max$.</b> The Q-learning target uses $\\max_a Q_t(s,a)$. Even though every
          estimate AVERAGES to $V_*$, the maximum of several noisy numbers is almost always ABOVE their
          common mean &mdash; the $\\max$ cherry-picks the largest positive error.</li>

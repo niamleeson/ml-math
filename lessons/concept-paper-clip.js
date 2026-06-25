@@ -146,20 +146,57 @@
        act like the rows of a classifier weight matrix. Embed the image with $I(\\cdot)$, compute its cosine
        similarity to each of the $C$ prompt embeddings, and predict the $\\arg\\max$. No fine-tuning, no labelled
        images of those classes — the alignment learned from captions does the work.</p>`,
+    architecture:
+      `<p><b>Dual-encoder (two-tower) contrastive model</b> (§2.4–2.5). The two towers never share weights; they
+       only meet in the shared embedding space.</p>
+       <p><b>1 · Image encoder.</b> Either a modified <b>ResNet</b> (ResNet-50 family, with antialiased
+       blur-pool, ResNet-D stem, and an attention-pooling head replacing global average pooling) or a <b>Vision
+       Transformer</b> (ViT-B/32, ViT-B/16, ViT-L/14). Input image → feature vector $I^f\\in\\mathbb{R}^{d_i}$.</p>
+       <p><b>2 · Text encoder.</b> A <b>Transformer</b>: 63M params, 12 layers, 512-wide, 8 attention heads, over a
+       49,152-token byte-pair-encoded vocabulary, max context 76 tokens. The caption is bracketed by [SOS]/[EOS];
+       the activation at the [EOS] position is the text feature $T^f\\in\\mathbb{R}^{d_t}$.</p>
+       <p><b>3 · Linear projections.</b> $W_i$ maps $I^f$ and $W_t$ maps $T^f$ into the <b>same</b> $d$-dim joint
+       multimodal embedding; each output is <b>L2-normalized</b> to the unit sphere. No nonlinear projection head
+       (unlike SimCLR) — a single linear layer per tower.</p>
+       <p><b>4 · Contrastive pretraining.</b> Trained from scratch on <b>WIT</b> — 400 million (image, text) pairs
+       scraped from the public internet (§2.2) — with a <b>very large minibatch of 32,768</b> for 32 epochs. The
+       other pairs in each batch are the negatives, so a huge batch gives ~32k negatives per positive. A single
+       <b>learned temperature</b> scalar $t=\\log(1/\\tau)$ scales the logits. Loss: symmetric cross-entropy over
+       the $N\\times N$ similarity grid (Figure 3).</p>
+       <p><b>5 · Inference (zero-shot).</b> Both towers freeze. The text tower turns class-name prompts into a
+       "classifier weight matrix" of $C$ embeddings; the image tower embeds the image; prediction is the
+       $\\arg\\max$ cosine similarity (§3.1). Our lesson replaces the ResNet/ViT and Transformer with small MLPs on
+       toy feature vectors so the contrastive mechanism is the focus.</p>`,
     symbols: [
       { sym: "$I(\\cdot)$", desc: "the <b>image encoder</b> (a ResNet or Vision Transformer in the paper). Maps an image to a vector, then projects it into the shared embedding space." },
       { sym: "$T(\\cdot)$", desc: "the <b>text encoder</b> (a Transformer over caption tokens). Maps a piece of text to a vector in the <i>same</i> shared embedding space." },
+      { sym: "$I^f,\\ T^f$", desc: "the raw <b>feature vectors</b> out of the image and text towers, <i>before</i> projection: $I^f\\in\\mathbb{R}^{N\\times d_i}$, $T^f\\in\\mathbb{R}^{N\\times d_t}$. They live in different-sized spaces." },
+      { sym: "$W_i,\\ W_t$", desc: "the <b>linear projection</b> matrices: $W_i\\in\\mathbb{R}^{d_i\\times d}$ and $W_t\\in\\mathbb{R}^{d_t\\times d}$ map image and text features into the shared $d$-dim joint embedding." },
+      { sym: "$d_i,\\ d_t$", desc: "the (different) output dimensions of the image-feature space and the text-feature space before projection." },
       { sym: "$I_i$", desc: "the L2-normalized <b>image embedding</b> of the $i$-th image in the batch (unit length)." },
       { sym: "$T_k$", desc: "the L2-normalized <b>text embedding</b> of the $k$-th caption in the batch (unit length)." },
       { sym: "$N$", desc: "the number of real <b>(image, text) pairs</b> in the minibatch. There are $N$ positives (the diagonal) and $N^2-N$ negatives (off-diagonal)." },
       { sym: "$d$", desc: "the dimension of the <b>joint embedding space</b> that both encoders project into." },
       { sym: "$\\mathrm{sim}(u,v)$", desc: "<b>cosine similarity</b> $= u^\\top v / (\\lVert u\\rVert\\,\\lVert v\\rVert)$: the cosine of the angle between two vectors, in $[-1,1]$. Since $I_i,T_k$ are unit-length, this is just the dot product $I_i^\\top T_k$. ($u^\\top v$ is the dot product; $\\lVert u\\rVert$ is the length of $u$.)" },
       { sym: "$\\tau$", desc: "the <b>temperature</b>: a positive number that divides every similarity before the softmax. The paper learns it as a log-parameterized scalar (it stores $\\log(1/\\tau)$). Small $\\tau$ → sharper contrast." },
-      { sym: "$L_{ik}$", desc: "the <b>logit</b> grid: $L_{ik} = \\mathrm{sim}(I_i, T_k)/\\tau$, an $N\\times N$ matrix. The diagonal $L_{ii}$ holds the true pairs." },
+      { sym: "$t$", desc: "the <b>learned log-temperature</b> stored as a parameter, $t=\\log(1/\\tau)$; the logits are multiplied by $\\exp(t)=1/\\tau$ (Figure 3), clipped so $1/\\tau\\le 100$." },
+      { sym: "$L_{ik}$", desc: "the <b>logit</b> grid: $L_{ik} = \\mathrm{sim}(I_i, T_k)\\cdot\\exp(t) = \\mathrm{sim}(I_i, T_k)/\\tau$, an $N\\times N$ matrix. The diagonal $L_{ii}$ holds the true pairs." },
       { sym: "$\\text{CE}$", desc: "<b>cross-entropy</b>: the standard classification loss $-\\log$ of the softmax probability the model assigns to the correct class. Here the 'correct class' for row $i$ is column $i$." },
+      { sym: "$C$", desc: "the number of candidate <b>classes</b> at zero-shot time. Each class name is written as a text prompt and embedded by $T(\\cdot)$ into one of $C$ prompt vectors $T_e^{(c)}$." },
       { sym: "$\\arg\\max$", desc: "<b>argument of the maximum</b>: the index of the largest entry. Zero-shot prediction is the class whose text embedding has the largest cosine similarity to the image." }
     ],
-    formula: `$$ L \\;=\\; \\tfrac{1}{2}\\,\\big[\\,\\underbrace{\\text{CE}_{\\text{row}}\\big(L,\\ \\text{labels}=[0,1,\\dots,N\\!-\\!1]\\big)}_{\\text{image} \\to \\text{text}} \\;+\\; \\underbrace{\\text{CE}_{\\text{col}}\\big(L,\\ \\text{labels}=[0,1,\\dots,N\\!-\\!1]\\big)}_{\\text{text} \\to \\text{image}}\\,\\big], \\qquad L_{ik} = \\frac{\\mathrm{sim}(I_i, T_k)}{\\tau} \\qquad\\text{(§2.3, Figure 3)} $$`,
+    formula: `$$ I^f = \\text{image\\_encoder}(I) \\in \\mathbb{R}^{N\\times d_i}, \\qquad T^f = \\text{text\\_encoder}(T) \\in \\mathbb{R}^{N\\times d_t} $$
+       <p>The two towers (§2.4–2.5, Figure 3): an image encoder (ResNet or Vision Transformer) gives image features $I^f$; a text encoder (Transformer) gives text features $T^f$. They live in different-sized spaces ($d_i$ vs $d_t$).</p>
+       $$ I_e = \\frac{I^f W_i}{\\lVert I^f W_i\\rVert_2}, \\qquad T_e = \\frac{T^f W_t}{\\lVert T^f W_t\\rVert_2} $$
+       <p>Linear projections $W_i\\in\\mathbb{R}^{d_i\\times d}$ and $W_t\\in\\mathbb{R}^{d_t\\times d}$ map both into the <b>same</b> $d$-dim joint embedding, then each row is L2-normalized to unit length (Figure 3). $I_e,T_e$ are $N\\times d$.</p>
+       $$ \\mathrm{sim}(I_i, T_k) \\;=\\; I_{e,i}^\\top T_{e,k} \\;=\\; \\cos\\angle(I_{e,i}, T_{e,k}) \\;\\in\\; [-1, 1] $$
+       <p>Because both embeddings are unit length, the dot product equals the <b>cosine similarity</b> — the cosine of the angle between the image and text vectors (§2.3).</p>
+       $$ \\text{logits} \\;=\\; I_e\\, T_e^\\top \\cdot \\exp(t), \\qquad L_{ik} = \\mathrm{sim}(I_i,T_k)\\cdot \\exp(t) = \\frac{\\mathrm{sim}(I_i,T_k)}{\\tau} $$
+       <p>The $N\\times N$ similarity grid is scaled by a <b>learned temperature</b>. The paper stores $t=\\log(1/\\tau)$ as a parameter and multiplies by $\\exp(t)=1/\\tau$ (Figure 3); $\\exp(t)$ is clipped so $1/\\tau\\le 100$ (§2.5).</p>
+       $$ L \\;=\\; \\tfrac{1}{2}\\,\\big[\\,\\underbrace{\\text{CE}_{\\text{row}}\\big(\\text{logits},\\ \\text{labels}=[0,1,\\dots,N\\!-\\!1]\\big)}_{\\text{loss\\_i: image} \\to \\text{text (axis }0)} \\;+\\; \\underbrace{\\text{CE}_{\\text{col}}\\big(\\text{logits},\\ \\text{labels}=[0,1,\\dots,N\\!-\\!1]\\big)}_{\\text{loss\\_t: text} \\to \\text{image (axis }1)}\\,\\big] $$
+       <p>The <b>symmetric cross-entropy</b> objective (§2.3, Figure 3): the diagonal (label $i$ for row/col $i$) is the true pair. One cross-entropy across rows (each image picks its text), one across columns (each text picks its image), averaged — InfoNCE both ways.</p>
+       $$ \\hat{y} \\;=\\; \\arg\\max_{c \\in \\{1,\\dots,C\\}} \\; \\mathrm{sim}\\!\\big(I_e,\\ T_e^{(c)}\\big), \\qquad T_e^{(c)} = T(\\text{“a photo of a } \\{\\text{class}_c\\}\\text{.”}) $$
+       <p>Zero-shot classification (§3.1): embed each of the $C$ class names as a text prompt, embed the image, and predict the class whose prompt embedding has the largest cosine similarity to the image — no trained classifier head.</p>`,
     whatItDoes:
       `<p>Read the $N\\times N$ logit grid $L$ twice. <b>Row-wise</b> (image→text): each row $i$ is a softmax over
        "which of the $N$ texts is image $i$'s caption?"; the correct answer is text $i$ (the diagonal), so the

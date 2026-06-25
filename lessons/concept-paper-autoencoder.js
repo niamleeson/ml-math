@@ -167,6 +167,40 @@
        and trains it <b>directly</b> with backprop — a "modern torch autoencoder" — and still reproduces the
        paper's qualitative result: the learned 2-D code separates MNIST digit classes better than the first
        two principal components (Fig. 3).</p>`,
+    architecture:
+      `<p>An autoencoder is a <b>symmetric encoder + decoder</b> stack with a narrow <b>code layer</b>
+       in the middle (Fig. 1). The encoder shrinks the input through successively smaller layers down
+       to the code; the decoder is its <b>mirror image</b>, growing the code back out to the input size.
+       After RBM pretraining the stack is <b>unrolled</b>: the decoder is initialized with the encoder's
+       weights <i>transposed</i> ($W_1,\\dots,W_4$ going up; $W_4^{\\top},\\dots,W_1^{\\top}$ coming down),
+       so the two halves are tied at the start of fine-tuning.</p>
+       <p><b>The three-stage build (Fig. 1):</b></p>
+       <ol>
+        <li><b>Pretraining</b> — learn a stack of RBMs, one layer at a time. Each RBM has visible units
+        (the layer below) and hidden feature-detector units; train it with Eqn. 2; its hidden activations
+        become the "data" that trains the next RBM. For the face net the RBMs are sized
+        $2000\\!-\\!1000\\!-\\!500\\!-\\!30$.</li>
+        <li><b>Unrolling</b> — stack the trained RBMs into an encoder ($x \\to 2000 \\to 1000 \\to 500 \\to 30$)
+        and append the transposed mirror as the decoder ($30 \\to 500 \\to 1000 \\to 2000 \\to \\hat x$),
+        with the <b>30-unit code layer</b> in the middle.</li>
+        <li><b>Fine-tuning</b> — backpropagate the reconstruction error (cross-entropy for $[0,1]$ pixels)
+        through the whole encoder-decoder to untie and polish all the weights.</li>
+       </ol>
+       <p><b>Code-layer units are linear; all other units logistic.</b> The paper notes that across its
+       experiments the code-layer activations are kept linear while the rest use the logistic sigmoid.</p>
+       <p><b>The paper's concrete autoencoders</b> (input dimension on the left, code in bold):</p>
+       <ul>
+        <li><b>Curves</b> (synthetic, 28×28): $(28{\\times}28)\\!-\\!400\\!-\\!200\\!-\\!100\\!-\\!50\\!-\\!25\\!-\\!\\mathbf{6}$
+        + symmetric decoder; trained on 20,000 images, tested on 10,000.</li>
+        <li><b>MNIST digits, 30-D code</b>: $784\\!-\\!1000\\!-\\!500\\!-\\!250\\!-\\!\\mathbf{30}$ + mirror.</li>
+        <li><b>MNIST digits, 2-D code</b> (Fig. 3): $784\\!-\\!1000\\!-\\!500\\!-\\!250\\!-\\!\\mathbf{2}$ + mirror.</li>
+        <li><b>Olivetti faces</b> (grayscale patches): $625\\!-\\!2000\\!-\\!1000\\!-\\!500\\!-\\!\\mathbf{30}$ + mirror.</li>
+        <li><b>Documents</b> (newswire, Fig. 4): $2000\\!-\\!500\\!-\\!250\\!-\\!125\\!-\\!\\mathbf{10}$ + mirror.</li>
+        <li><b>MNIST classification net</b>: $784\\!-\\!500\\!-\\!500\\!-\\!2000\\!-\\!10$ (pretrain then backprop, 1.2% error).</li>
+       </ul>
+       <p><b>What our notebook builds</b> is a smaller modern version of the MNIST 2-D net —
+       $784\\!-\\!256\\!-\\!64\\!-\\!\\mathbf{2}\\!-\\!64\\!-\\!256\\!-\\!784$ with a final sigmoid — trained
+       <b>directly</b> by backprop (no RBM pretraining), which still reproduces the Fig. 3 effect.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> data point — here a 28×28 MNIST image flattened to a 784-number vector, each entry a pixel intensity in $[0,1]$." },
       { sym: "$z$", desc: "the <b>code</b> (also bottleneck / latent): the small middle-layer vector the encoder produces. In our run $z$ has 2 numbers; the paper uses 2 (Fig 3) and 30." },
@@ -177,15 +211,27 @@
       { sym: "reconstruction error", desc: "how far $\\hat x$ is from $x$. The training objective. Paper uses pixel <b>cross-entropy</b>; we use <b>mean-squared error</b> (MSE) — both push $\\hat x \\to x$." },
       { sym: "$p_i,\\ \\hat p_i$", desc: "from the paper's cross-entropy: $p_i$ is the true intensity of pixel $i$ and $\\hat p_i$ is the intensity of its reconstruction (both in $[0,1]$)." },
       { sym: "RBM", desc: "<b>restricted Boltzmann machine</b>: a two-layer (visible pixels ↔ hidden features) energy-based model the paper stacks to <b>pretrain</b> the deep autoencoder. We skip it (modern init trains directly)." },
+      { sym: "$C$", desc: "the paper's <b>cross-entropy reconstruction error</b> summed over pixels; the loss backpropagated during fine-tuning. Smallest when every $\\hat p_i = p_i$." },
       { sym: "$E(\\mathbf{v},\\mathbf{h})$", desc: "the RBM <b>energy</b> of a joint config of visible units $\\mathbf{v}$ (pixels) and hidden units $\\mathbf{h}$ (features); Eqn. 1. Lower energy = more probable." },
+      { sym: "$v_i,\\ h_j$", desc: "the binary state of visible pixel $i$ and hidden feature $j$ in the RBM (each $0$ or $1$). For continuous data $v_i$ is real-valued (Gaussian) instead." },
       { sym: "$w_{ij}$", desc: "the RBM weight between visible unit $i$ and hidden unit $j$. The thing pretraining learns (Eqn. 2). $b_i,\\ b_j$ are the corresponding biases." },
+      { sym: "$\\sigma(x)$", desc: "the <b>logistic sigmoid</b> $1/(1+e^{-x})$ — squashes any real number to $(0,1)$. Gives each RBM unit's on-probability, and ends the decoder so $\\hat x\\in[0,1]$." },
       { sym: "$\\varepsilon$", desc: "the <b>learning rate</b> in the RBM weight update (Eqn. 2): how big a step to take per update." },
       { sym: "$\\langle\\cdot\\rangle_{\\text{data}},\\ \\langle\\cdot\\rangle_{\\text{recon}}$", desc: "averages of $v_i h_j$ when the network is driven by real <b>data</b> vs by its own reconstruction (\\\"confabulation\\\"); their difference drives Eqn. 2." },
       { sym: "PCA", desc: "<b>principal components analysis</b>: the linear baseline. Its $k$-number code is the projection onto the top $k$ directions of greatest variance. The autoencoder's nonlinear cousin." }
     ],
-    formula: `$$ \\text{reconstruct } \\hat x = \\text{Decoder}\\big(\\,z\\,\\big),\\quad z = \\text{Encoder}(x); \\qquad \\min_{\\theta}\\ \\sum_{\\text{images}} \\big\\lVert x - \\hat x \\big\\rVert^2 \\quad\\text{(reconstruction MSE we train)} $$
-$$ \\text{Paper's pixel cross-entropy (fine-tuning):}\\quad -\\sum_i p_i \\log \\hat p_i \\;-\\; \\sum_i (1-p_i)\\,\\log(1-\\hat p_i) $$
-$$ E(\\mathbf{v},\\mathbf{h}) = -\\!\\!\\sum_{i\\,\\in\\,\\text{pixels}}\\!\\! b_i v_i \\;-\\!\\! \\sum_{j\\,\\in\\,\\text{features}}\\!\\! b_j h_j \\;-\\; \\sum_{i,j} v_i h_j w_{ij}\\ \\ \\text{(RBM energy, Eqn. 1)};\\qquad \\Delta w_{ij} = \\varepsilon\\big(\\langle v_i h_j\\rangle_{\\text{data}} - \\langle v_i h_j\\rangle_{\\text{recon}}\\big)\\ \\ \\text{(Eqn. 2)} $$`,
+    formula: `$$ z = \\text{Encoder}(x), \\qquad \\hat x = \\text{Decoder}(z), \\qquad \\min_{\\theta}\\ \\sum_{\\text{images}} \\big\\lVert x - \\hat x \\big\\rVert^2 $$
+<p class="cap">The autoencoder objective we train: encode $x$ to a small code $z$, decode back to $\\hat x$, minimize squared reconstruction error over all images (no labels). This is the lasting idea; everything below is the paper's 2006 training recipe.</p>
+$$ C \\;=\\; -\\sum_i p_i \\log \\hat p_i \\;-\\; \\sum_i (1-p_i)\\,\\log(1-\\hat p_i) $$
+<p class="cap">The paper's pixel cross-entropy reconstruction error used to <b>fine-tune</b> (§p.507): each pixel intensity $p_i\\in[0,1]$ is treated as a probability; minimized when $\\hat p_i = p_i$. (For real-valued, non-Gaussian pixels in $[0,1]$ the paper uses this multiclass-style cross-entropy.)</p>
+$$ E(\\mathbf{v},\\mathbf{h}) \\;=\\; -\\!\\!\\sum_{i\\,\\in\\,\\text{pixels}}\\!\\! b_i v_i \\;-\\!\\! \\sum_{j\\,\\in\\,\\text{features}}\\!\\! b_j h_j \\;-\\; \\sum_{i,j} v_i h_j\\, w_{ij} $$
+<p class="cap">RBM <b>energy</b> of a joint configuration of visible pixels $\\mathbf{v}$ and hidden features $\\mathbf{h}$ (<b>Eqn. 1</b>); $b_i,b_j$ are biases, $w_{ij}$ the symmetric weight. The model assigns each image a probability that falls as its energy rises.</p>
+$$ p(h_j{=}1\\mid \\mathbf{v}) = \\sigma\\!\\Big(b_j + \\textstyle\\sum_i v_i w_{ij}\\Big), \\qquad p(v_i{=}1\\mid \\mathbf{h}) = \\sigma\\!\\Big(b_i + \\textstyle\\sum_j h_j w_{ij}\\Big), \\qquad \\sigma(x)=\\frac{1}{1+e^{-x}} $$
+<p class="cap">RBM conditional sampling (§p.506): each hidden feature turns on with the logistic probability of its weighted input; visible pixels are reconstructed the same way. Running these two in turn produces the model's "confabulation".</p>
+$$ \\Delta w_{ij} \\;=\\; \\varepsilon\\big(\\langle v_i h_j\\rangle_{\\text{data}} - \\langle v_i h_j\\rangle_{\\text{recon}}\\big) $$
+<p class="cap">Contrastive-divergence <b>weight update</b> (<b>Eqn. 2</b>): raise $w_{ij}$ when pixel $i$ and feature $j$ fire together more under real <b>data</b> than under the model's <b>reconstruction</b>; $\\varepsilon$ is the learning rate. The same rule updates the biases. This trains one RBM; stacking them pretrains the deep net.</p>
+$$ \\text{Gaussian visible unit (real-valued data): } v_i \\sim \\mathcal{N}\\!\\Big(b_i + \\textstyle\\sum_j h_j w_{ij},\\ 1\\Big) $$
+<p class="cap">For continuous inputs the visible units are linear with unit-variance Gaussian noise (§p.506, "For continuous data"): mean $b_i+\\sum_j h_j w_{ij}$. The hidden update rule is unchanged. Lets the same RBM machinery model real-valued pixels.</p>`,
     whatItDoes:
       `<p><b>The objective we train</b> (top line) says: encode each image to a code $z$, decode it back to
        $\\hat x$, and make $\\hat x$ match $x$ in squared distance — summed over all images. There is no

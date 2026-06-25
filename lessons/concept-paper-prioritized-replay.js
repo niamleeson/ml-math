@@ -140,6 +140,50 @@
        normalized by $1/\\max_i w_i$ <i>"so that they only scale the update downwards"</i> (&sect;3.4).</p>
        <p>That is the complete recipe: priority $\\to$ probability $\\to$ IS-weight, wrapped around an ordinary
        DQN update.</p>`,
+    architecture:
+      `<p>Prioritized replay is not a new network &mdash; it is a <b>data structure plus a per-iteration
+       procedure</b> bolted onto a Double-DQN agent. Two pieces matter: the loop (Algorithm 1) and the
+       <b>sum-tree</b> that makes it fast.</p>
+
+       <p><b>Algorithm 1 &mdash; Double DQN with proportional prioritization (&sect;3.3, per timestep $t$):</b></p>
+       <ol>
+        <li><b>Act &amp; store.</b> Observe $(S_{t-1}, A_{t-1}, R_t, \\gamma_t, S_t)$ and insert it into the replay
+        memory $\\mathcal{H}$ with priority $p_t = \\max_{i \\lt t} p_i$ &mdash; the current <b>maximum</b>, so every
+        new transition is guaranteed at least one replay (its true $|\\delta|$ is unknown until it is sampled).</li>
+        <li><b>Every $K$ steps, learn from a minibatch of size $k$.</b> For each $j = 1 \\ldots k$:
+          <ul>
+            <li><b>Sample</b> index $j \\sim P(j) = p_j^{\\alpha} / \\sum_i p_i^{\\alpha}$ (Eqn. 1).</li>
+            <li><b>Compute the IS-weight</b> $w_j = (N\\,P(j))^{-\\beta} / \\max_i w_i$.</li>
+            <li><b>Compute the TD-error</b> with the Double-DQN target:
+            $\\delta_j = R_j + \\gamma_j\\,Q_{\\text{target}}(S_j, \\arg\\max_a Q(S_j,a)) - Q(S_{j-1}, A_{j-1})$.</li>
+            <li><b>Write the priority back:</b> $p_j \\leftarrow |\\delta_j|$ (plus $\\epsilon$ in practice).</li>
+            <li><b>Accumulate</b> the weighted gradient $\\Delta \\leftarrow \\Delta + w_j\\,\\delta_j\\,\\nabla_\\theta
+            Q(S_{j-1}, A_{j-1})$.</li>
+          </ul>
+        </li>
+        <li><b>Step the weights:</b> $\\theta \\leftarrow \\theta + \\eta\\,\\Delta$, reset $\\Delta \\leftarrow 0$.
+        Periodically copy $\\theta$ into the target network. (The paper uses a $4\\times$-reduced step size
+        $\\eta$ versus the DQN baseline, to compensate for the IS-reweighting.)</li>
+       </ol>
+
+       <p><b>The sum-tree (&sect; Appendix; the implementation enabler).</b> A naive buffer would need
+       $O(N)$ work every sample &mdash; recompute $\\sum_k p_k^{\\alpha}$ and search the cumulative
+       distribution &mdash; which is hopeless for $N = 10^6$ transitions. The fix is a <b>binary sum-tree</b>:</p>
+       <ul>
+        <li><b>Leaves</b> hold the per-transition priorities $p_i^{\\alpha}$, in the same slots as the
+        transitions.</li>
+        <li><b>Each internal node</b> stores the <i>sum</i> of its two children's values; the <b>root</b> therefore
+        holds the total priority mass $\\sum_k p_k^{\\alpha}$ for free (no re-summing).</li>
+        <li><b>Sampling</b> a minibatch of $k$: split $[0, p_{\\text{total}}]$ into $k$ equal segments, draw one
+        uniform value in each, and <b>retrieve</b> by walking root&rarr;leaf &mdash; at each node go left if the
+        value is $\\le$ the left child's sum, else subtract that sum and go right. Each retrieval is the tree depth,
+        $O(\\log N)$.</li>
+        <li><b>Updating</b> a priority after a replay: overwrite the leaf, then add the delta up the path to the
+        root, again $O(\\log N)$.</li>
+       </ul>
+       <p>So the entire sample-and-update cycle is $O(\\log N)$ per transition instead of $O(N)$ &mdash; the data
+       structure is what makes prioritization practical at scale. (The rank-based variant instead buckets
+       transitions by rank and samples a bucket, a different but similarly cheap scheme.)</p>`,
     symbols: [
       { sym: "$\\delta_i$", desc: "the <b>TD-error</b> (temporal-difference error) of transition $i$: target minus prediction, $\\big(R_t + \\gamma \\max_a Q(S_t,a)\\big) - Q(S_{t-1},A_{t-1})$. Its size measures how 'surprising' the transition is." },
       { sym: "$|\\delta_i|$", desc: "the <b>absolute value</b> of the TD-error &mdash; surprise magnitude, ignoring sign. Big = the network was very wrong here." },
@@ -152,9 +196,34 @@
       { sym: "$\\beta$", desc: "the <b>bias-correction exponent</b>, annealed from a start value $\\beta_0$ up to $1$ by end of training. $\\beta = 0$ = no correction; $\\beta = 1$ = full correction. Paper uses $\\beta_0 = 0.4$ (proportional)." },
       { sym: "$\\max_i w_i$", desc: "the <b>largest weight</b> in the sampled batch; the paper divides all $w_i$ by it (so the max becomes $1$) for stability &mdash; updates only ever scale <i>down</i>, never up." },
       { sym: "$\\gamma$", desc: "the <b>discount factor</b> $\\in [0,1]$ in the bootstrap target: how much future value counts versus immediate reward." },
-      { sym: "$Q(S,a)$", desc: "the network's estimated <b>action-value</b>: expected discounted return from taking action $a$ in state $S$ and acting well after." }
+      { sym: "$Q(S,a)$", desc: "the network's estimated <b>action-value</b>: expected discounted return from taking action $a$ in state $S$ and acting well after." },
+      { sym: "$Q_{\\text{target}}$", desc: "the <b>target network</b>: a periodically-frozen copy of $Q$ used to form the bootstrap target, which stabilizes training. The Double-DQN rule selects the action with $Q$ but evaluates it with $Q_{\\text{target}}$." },
+      { sym: "$\\mathrm{rank}(i)$", desc: "the <b>rank</b> of transition $i$ when all transitions are sorted by $|\\delta|$ in descending order (rank $1$ = largest error). Used by the rank-based priority $p_i = 1/\\mathrm{rank}(i)$." },
+      { sym: "$\\Delta$", desc: "the <b>accumulated gradient</b> over a minibatch: the running sum of weighted per-sample gradients $w_j\\,\\delta_j\\,\\nabla_\\theta Q$ applied in one parameter step." },
+      { sym: "$\\theta,\\ \\eta$", desc: "$\\theta$ = the Q-network's <b>weights</b>; $\\eta$ = the <b>step size</b> (learning rate). The paper reduces $\\eta$ by $4\\times$ versus the DQN baseline to offset the IS-reweighting." },
+      { sym: "$p_{\\text{total}}$", desc: "the <b>total priority mass</b> $\\sum_k p_k^{\\alpha}$, held at the <b>root</b> of the sum-tree; the interval $[0, p_{\\text{total}}]$ is what sampling draws from." }
     ],
-    formula: `$$ P(i) = \\frac{p_i^{\\alpha}}{\\sum_k p_k^{\\alpha}} \\quad\\text{(Eqn. 1)} \\qquad\\qquad w_i = \\left(\\frac{1}{N}\\cdot\\frac{1}{P(i)}\\right)^{\\beta} \\quad\\text{(\\S 3.4)} $$`,
+    formula:
+      `$$ \\delta_t = R_t + \\gamma_t \\max_a Q(S_t, a) \\;-\\; Q(S_{t-1}, A_{t-1}). $$
+       <p>The <b>TD-error</b> (&sect;3.2): one-step bootstrap target minus current prediction. Its magnitude $|\\delta|$ is the "surprise" each transition carries.</p>
+
+       $$ p_i = |\\delta_i| + \\epsilon. $$
+       <p>The <b>proportional priority</b> (&sect;3.3): absolute TD-error plus a tiny floor $\\epsilon \\gt 0$ so no transition's priority ever reaches exactly $0$.</p>
+
+       $$ p_i = \\frac{1}{\\mathrm{rank}(i)}. $$
+       <p>The <b>rank-based priority</b> alternative (&sect;3.3): rank transitions by $|\\delta|$ (rank $1$ = largest), and let priority fall off as $1/\\mathrm{rank}$ &mdash; more robust to outliers than the proportional form.</p>
+
+       $$ P(i) = \\frac{p_i^{\\alpha}}{\\sum_k p_k^{\\alpha}} \\quad\\text{(Eqn. 1, \\S 3.3)}. $$
+       <p>The <b>sampling probability</b>: priorities raised to the power $\\alpha$ and normalized to sum to $1$. The exponent $\\alpha \\in [0,1]$ controls how sharply you prioritize &mdash; $\\alpha = 0$ gives uniform replay, $\\alpha = 1$ samples in direct proportion to priority (paper: $\\alpha = 0.6$ proportional, $0.7$ rank-based).</p>
+
+       $$ w_i = \\left(\\frac{1}{N}\\cdot\\frac{1}{P(i)}\\right)^{\\beta} \\Big/ \\max_j w_j \\quad\\text{(\\S 3.4)}. $$
+       <p>The <b>importance-sampling (IS) weight</b>, normalized by the batch maximum. It down-weights over-sampled transitions to undo the bias from non-uniform sampling; dividing by $\\max_j w_j$ keeps the largest weight at $1$ so updates only ever scale <i>down</i> (paper: $\\beta_0 = 0.4$ proportional, $0.5$ rank-based).</p>
+
+       $$ \\beta : \\beta_0 \\longrightarrow 1 \\quad\\text{(linearly, over training)}. $$
+       <p><b>Annealing $\\beta$</b> (&sect;3.4): start at $\\beta_0 \\lt 1$ (partial correction, less variance early) and reach $\\beta = 1$ (full unbiased correction) by the end, when unbiased updates matter most near convergence.</p>
+
+       $$ \\Delta \\;\\leftarrow\\; \\Delta + w_i\\,\\delta_i\\,\\nabla_\\theta Q(S_{i-1}, A_{i-1}); \\qquad \\theta \\leftarrow \\theta + \\eta\\,\\Delta. $$
+       <p>The <b>weighted gradient update</b> (Algorithm 1): the per-sample gradient is scaled by both its IS-weight $w_i$ and its TD-error $\\delta_i$ before the step. Targets use the <b>Double-DQN</b> form, $\\delta_i = R_i + \\gamma_i\\,Q_{\\text{target}}(S_i, \\arg\\max_a Q(S_i,a)) - Q(S_{i-1},A_{i-1})$.</p>`,
     whatItDoes:
       `<p><b>Eqn. 1</b> turns priorities into a probability distribution over the buffer. Raise each priority to
        the power $\\alpha$, then divide by the sum of all raised priorities so they add to $1$. A high-priority
