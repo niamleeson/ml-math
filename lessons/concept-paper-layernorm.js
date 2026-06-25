@@ -132,33 +132,92 @@
        it does the same thing for a batch of 1, a batch of 1000, at train time and at test time. See
        <code>dl-batchnorm</code> for the BN side of this contrast.</p>`,
 
+    architecture:
+      `<p><b>Where the normalization sits.</b> Layer Normalization is not a network of its own &mdash; it is a tiny
+       operation dropped <i>inside</i> a layer, between the linear map and the nonlinearity. The data flow through
+       one normalized layer is:</p>
+       <ol>
+         <li><b>Linear map.</b> A weight matrix turns the previous layer's output $h^l$ into the summed inputs
+         $a_i^l=(w_i^l)^{\\top}h^l$ &mdash; a vector of $H$ numbers (Eq. 1).</li>
+         <li><b>LayerNorm.</b> Compute $\\mu^l,\\sigma^l$ over those $H$ numbers (Eq. 3), normalize, then apply the
+         per-feature gain $g$ (length $H$) and bias $b$ (length $H$) (Eq. 5). No statistics cross between examples,
+         so there are <b>no running buffers and no train/eval branch</b> &mdash; the parameter count added is just
+         $2H$ ($g$ and $b$).</li>
+         <li><b>Activation.</b> The nonlinearity $f$ (ReLU, tanh, GELU, ...) follows.</li>
+       </ol>
+       <p><b>In an RNN.</b> A recurrent cell computes $a^t=W_{hh}h^{t-1}+W_{xh}x^t$ at every time step; LN is
+       inserted right there, normalizing $a^t$ with that step's own $\\mu^t,\\sigma^t$ (Eq. 4) before the cell's
+       activation. The <b>same</b> $g,b$ are reused across all time steps. This stabilizes the hidden-state
+       dynamics that BN cannot easily touch (the batch at step $t$ is ill-defined for variable-length sequences).</p>
+       <p><b>In a Transformer.</b> Each Transformer block has two sub-layers &mdash; multi-head self-attention and a
+       position-wise feed-forward network &mdash; each wrapped in a residual connection plus a LayerNorm over the
+       model dimension $d_{model}$ (the feature axis), applied independently at every sequence position. The
+       original Transformer placed LN <i>after</i> the residual add ("post-LN", $\\text{LN}(x+\\text{Sublayer}(x))$);
+       most modern large language models move it <i>before</i> the sub-layer ("pre-LN", $x+\\text{Sublayer}(\\text{LN}(x))$)
+       for more stable training. Either way the normalization is exactly this paper's Eq. 3 + Eq. 5 over the feature
+       axis &mdash; which is why LN, not BN, is the normalization inside every Transformer (step 4 of the
+       <code>mini-gpt</code> capstone).</p>`,
+
     symbols: [
       { sym: "feature / hidden unit", desc: "one slot in a layer's output vector. A layer with $H$ hidden units produces $H$ numbers for each example." },
       { sym: "mini-batch", desc: "the small group of training examples (say 8 or 32) processed together in one gradient-descent step." },
       { sym: "$H$", desc: "the number of hidden units (features) in the layer. LN averages over these $H$ values." },
       { sym: "$l$", desc: "the layer index (superscript). $\\mu^l$ and $\\sigma^l$ are the statistics for layer $l$." },
       { sym: "$a_i$", desc: "the summed input to the $i$-th hidden unit, for one training case (the number before the activation function). $a_i^l$ is the $i$-th of the $H$ values being normalized." },
+      { sym: "$w_i^l$", desc: "the weight vector (row $i$ of the weight matrix) of layer $l$. The summed input is $a_i^l=(w_i^l)^{\\top}h^l$ (Eq. 1)." },
+      { sym: "$h^l$", desc: "the output vector of layer $l$ (the input to the next linear map). $h_i$ is one of its entries." },
       { sym: "$\\mu^l$", desc: "layer mean: the average of the $H$ values $a_1,\\dots,a_H$ for this one example (Eq. 3). One number per example, shared across all features." },
       { sym: "$\\sigma^l$", desc: "layer standard deviation: the square root of the average squared distance of the $H$ values from $\\mu^l$, for this one example (Eq. 3)." },
       { sym: "$\\epsilon$", desc: "epsilon, a tiny constant (e.g. $10^{-5}$) added inside the square root so we never divide by zero when the values are all equal." },
       { sym: "$g_i$", desc: "the learned gain for feature $i$: one number per feature, multiplied into the normalized value. Trained by gradient descent (Eq. 5)." },
       { sym: "$b_i$", desc: "the learned bias for feature $i$: one number per feature, added after scaling. Trained by gradient descent (Eq. 5)." },
       { sym: "$f$", desc: "the activation (nonlinearity), e.g. ReLU or tanh, applied after the gain/bias. LN normalizes the summed input before $f$." },
-      { sym: "$h_i$", desc: "the layer's output for feature $i$: the normalized value scaled by $g_i$, shifted by $b_i$, then passed through the activation $f$." }
+      { sym: "$h_i$", desc: "the layer's output for feature $i$: the normalized value scaled by $g_i$, shifted by $b_i$, then passed through the activation $f$." },
+      { sym: "$\\mu_i^l,\\,\\sigma_i^l$", desc: "BatchNorm's per-FEATURE mean and standard deviation (note the subscript $i$): for feature $i$, taken over the data distribution / mini-batch (Eq. 2). Contrast LN's $\\mu^l,\\sigma^l$, which have no $i$ because they are per-example over features." },
+      { sym: "$\\mathbb{E}_{x\\sim P(x)}$", desc: "expectation (average) over the data distribution $P(x)$ — i.e. averaging across examples. BatchNorm's statistics are such averages; LayerNorm's are not." },
+      { sym: "$\\odot$", desc: "elementwise (Hadamard) product: multiply two vectors entry by entry. Used in the RNN form $g/\\sigma^t\\odot(a^t-\\mu^t)$." },
+      { sym: "$W_{hh},\\,W_{xh}$", desc: "an RNN's recurrent weight matrix ($W_{hh}$, on the previous hidden state) and input weight matrix ($W_{xh}$, on the current input). Together they form $a^t=W_{hh}h^{t-1}+W_{xh}x^t$." },
+      { sym: "$a^t,\\,\\mu^t,\\,\\sigma^t$", desc: "the summed inputs at time step $t$ in an RNN and their per-step mean/standard deviation over the $H$ units (Eq. 4). LN normalizes each step using only that step's own values." },
+      { sym: "$x^t,\\,h^{t-1}$", desc: "the input at time step $t$ and the hidden state carried from the previous step $t-1$ in an RNN." },
+      { sym: "$d_{model}$", desc: "a Transformer's feature/model dimension — the axis LayerNorm normalizes over at each sequence position." }
     ],
 
     formula:
-      `$$\\mu^l=\\frac{1}{H}\\sum_{i=1}^{H}a_i^l,\\qquad
-        \\sigma^l=\\sqrt{\\frac{1}{H}\\sum_{i=1}^{H}\\big(a_i^l-\\mu^l\\big)^2}\\qquad(\\text{Eq. 3})$$
-       $$h_i=f\\!\\left(\\frac{g_i}{\\sigma_i}\\,(a_i-\\mu_i)+b_i\\right)\\qquad(\\text{transform, Eq. 5})$$`,
+      `$$a_i^l=\\big(w_i^l\\big)^{\\top}h^l\\qquad(\\text{Eq. 1: the summed input to unit }i\\text{, before the activation})$$
+       <p>Per-sample mean and standard deviation over the $H$ features of <b>one</b> example:</p>
+       $$\\mu^l=\\frac{1}{H}\\sum_{i=1}^{H}a_i^l,\\qquad
+         \\sigma^l=\\sqrt{\\frac{1}{H}\\sum_{i=1}^{H}\\big(a_i^l-\\mu^l\\big)^2}\\qquad(\\text{Eq. 3: LN statistics, summed over features})$$
+       <p>Normalize, then apply the learned per-feature gain $g_i$ and bias $b_i$ and the activation $f$:</p>
+       $$h_i=f\\!\\left(\\frac{g_i}{\\sigma^l}\\,\\big(a_i-\\mu^l\\big)+b_i\\right)\\qquad(\\text{Eq. 5: scaled, shifted, normalized output})$$
+       <p><b>Contrast &mdash; Batch Normalization</b> uses the <i>same</i> affine form but the mean and standard
+       deviation are taken <b>per feature over the data distribution / mini-batch</b>, not over the features:</p>
+       $$\\bar a_i^l=\\frac{g_i}{\\sigma_i^l}\\big(a_i^l-\\mu_i^l\\big),\\qquad
+         \\mu_i^l=\\mathbb{E}_{x\\sim P(x)}\\!\\big[a_i^l\\big],\\quad
+         \\sigma_i^l=\\sqrt{\\mathbb{E}_{x\\sim P(x)}\\!\\big[(a_i^l-\\mu_i^l)^2\\big]}\\qquad(\\text{Eq. 2: BatchNorm})$$
+       <p>The subscript $i$ on BN's $\\mu_i^l,\\sigma_i^l$ (one per feature, expectation over examples) versus the
+       <i>absent</i> $i$ on LN's $\\mu^l,\\sigma^l$ (one per example, sum over features) is the entire difference:
+       LN normalizes <b>over features per example</b>, BN normalizes <b>over the batch per feature</b>.</p>
+       <p><b>Inside an RNN</b> (Section 3.1), with recurrent input $a^t=W_{hh}h^{t-1}+W_{xh}x^t$, LN normalizes
+       that vector at <b>each time step</b> using the step's own $H$ summed inputs ($\\odot$ is elementwise):</p>
+       $$h^t=f\\!\\left[\\frac{g}{\\sigma^t}\\odot\\big(a^t-\\mu^t\\big)+b\\right],\\quad
+         \\mu^t=\\frac{1}{H}\\sum_{i=1}^{H}a_i^t,\\quad
+         \\sigma^t=\\sqrt{\\frac{1}{H}\\sum_{i=1}^{H}\\big(a_i^t-\\mu^t\\big)^2}\\qquad(\\text{Eq. 4: LN inside an RNN})$$`,
 
     whatItDoes:
-      `<p>Equation 3 measures the center ($\\mu^l$) and spread ($\\sigma^l$) of the $H$ feature values of a
-       <b>single example</b> &mdash; the sum runs over the features $i=1\\dots H$, <b>not</b> over the batch. The
-       transform (Eq. 5) then re-centers and re-scales each value to mean $0$ / standard deviation $\\approx 1$,
-       multiplies by the learned gain $g_i$, adds the learned bias $b_i$, and applies the activation $f$. Because
-       $\\mu^l,\\sigma^l$ come only from this example's own features, the result is identical no matter how many
-       other examples are in the batch &mdash; including none (batch size 1). (Section 3.)</p>`,
+      `<p><b>Eq. 1</b> is just the ordinary layer: each unit's pre-activation $a_i^l$ is a weighted sum of the
+       previous layer's outputs. <b>Eq. 3</b> measures the center ($\\mu^l$) and spread ($\\sigma^l$) of the $H$
+       feature values of a <b>single example</b> &mdash; the sum runs over the features $i=1\\dots H$, <b>not</b>
+       over the batch. <b>Eq. 5</b> then re-centers and re-scales each value to mean $0$ / standard deviation
+       $\\approx 1$, multiplies by the learned gain $g_i$, adds the learned bias $b_i$, and applies the activation
+       $f$. Because $\\mu^l,\\sigma^l$ come only from this example's own features, the result is identical no matter
+       how many other examples are in the batch &mdash; including none (batch size 1). (Section 3.)</p>
+       <p><b>Eq. 2</b> is the BatchNorm it is contrasted against: identical affine $g/\\sigma\\cdot(a-\\mu)+b$, but
+       its $\\mu_i^l,\\sigma_i^l$ are <i>per feature</i>, averaged over the data distribution / mini-batch (the
+       expectation $\\mathbb{E}_{x\\sim P(x)}$). That is why BN's statistics depend on the batch and must be
+       estimated by running averages at test time, while LN's do not. <b>Eq. 4</b> shows LN inside an RNN:
+       at each time step it normalizes that step's summed inputs $a^t$ with the step's own $\\mu^t,\\sigma^t$,
+       reusing the same $g,b$ across all steps &mdash; so the normalization is well-defined for sequences of any
+       length. (Section 3.1.)</p>`,
 
     derivation:
       `<p>The mechanics of <i>why</i> normalizing the pre-activations stabilizes training &mdash; and the gradient

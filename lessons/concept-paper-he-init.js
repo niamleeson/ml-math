@@ -138,6 +138,29 @@
        scaled by $(\\tfrac12)^L=1/2^L$ &mdash; standard deviation $1/\\sqrt{2^L}$, exactly the paper's statement.
        He's $2/n$ restores the multiplier to 1.</p>`,
 
+    architecture:
+      `<p>This is a theory + activation paper, not a new network topology; its two "components" are an
+       <b>activation function</b> and an <b>initialization rule</b>, plus the deep plain-CNN they are tested on.</p>
+       <ul>
+         <li><b>PReLU activation (Sec. 2.1).</b> Drop-in replacement for ReLU at every nonlinearity. Per output
+         channel $i$ it carries one extra scalar $a_i$ (the negative slope). Forward: $f(y_i)=\\max(0,y_i)+a_i\\min(0,y_i)$.
+         Backward: $a_i$ gets a gradient (eq. 2) and is updated by momentum SGD (eq. 4) with <i>no</i> weight decay
+         (so $a_i$ is not pulled toward 0). Channel-shared variant uses one $a$ per layer. Cost: negligible &mdash;
+         a handful of extra parameters total.</li>
+         <li><b>He initialization rule (Sec. 2.2).</b> A procedure run once, before training, on each layer's weight
+         tensor: compute fan-in $n_l$ (for a conv, $k_l^2 c_l$ = kernel area &times; input channels), set
+         $\\sigma=\\sqrt{2/n_l}$, draw weights i.i.d. from $\\mathcal{N}(0,\\sigma^2)$, biases 0. The forward
+         derivation (eqs. 6&ndash;10) and the backward derivation (eqs. 12&ndash;14) each yield a stable-variance
+         condition; the fan-in (forward) form is the default.</li>
+         <li><b>Test architecture.</b> Both are validated on very deep plain convolutional stacks &mdash; the
+         22- and 30-layer models of Sec. 2.3 / Fig. 3 (used to show Xavier stalls while He converges), and the
+         large VGG-style "model A/B/C" nets of Sec. 3 that reach the 4.94% ImageNet top-5 result. No residual or
+         normalization layers are required for the init to make these trainable from scratch.</li>
+       </ul>
+       <p><b>Data flow per layer.</b> $x_l \\xrightarrow{\\;W_l\\;} y_l=W_l x_l \\xrightarrow{\\;\\text{PReLU/ReLU}\\;} x_{l+1}$.
+       The init fixes $\\mathrm{Var}[W_l]$ so $\\mathrm{Var}[y_l]$ is preserved along this chain; PReLU changes the
+       nonlinearity box (and, with slope $a$, the init generalizes to $2/((1+a^2)n_l)$).</p>`,
+
     symbols: [
       { sym: "$l$", desc: "the layer index. Quantities with subscript $l$ belong to layer $l$; $l-1$ is the previous layer that feeds it." },
       { sym: "$y_l$", desc: "the pre-activation of layer $l$: the result $W_l x_l$ before the activation function is applied. Its variance is what we balance." },
@@ -148,17 +171,40 @@
       { sym: "$\\mathbb{E}[\\,\\cdot\\,]$", desc: "expectation (mean / average). $\\mathbb{E}[x_l^2]$ is the mean square of $x_l$; for a mean-zero variable it equals the variance, but ReLU outputs are not mean-zero." },
       { sym: "ReLU", desc: "rectified linear unit: the activation $f(y)=\\max(0,y)$ — pass positives through, zero out negatives. It deletes the negative half of its input, which halves the variance." },
       { sym: "fan-in / fan-out", desc: "the number of inputs feeding an output (fan-in) and the number of outputs an input feeds (fan-out). He init uses fan-in for the forward case." },
-      { sym: "$a_i$", desc: "PReLU's learned negative slope for channel $i$: how much of a negative input passes through. $a_i=0$ recovers ReLU; $a_i=1$ makes a plain line (identity)." }
+      { sym: "$\\hat n_l$", desc: "the fan-out of layer $l$ used in the backward (gradient) derivation, $\\hat n_l=k_l^2 d_l$ (kernel area times number of output channels $d_l$). The backward condition is $\\tfrac12\\hat n_l\\mathrm{Var}[w_l]=1$ (eq. 14)." },
+      { sym: "$\\Delta x_l$", desc: "the gradient (error signal) flowing backward at layer $l$ — the backward-pass counterpart of $x_l$. Its variance must also stay stable; eq. (12) gives its recurrence." },
+      { sym: "$\\sigma$", desc: "the standard deviation of the initial weights: $\\sigma=\\sqrt{2/n_l}$ for He init (the square root of the variance $2/n_l$)." },
+      { sym: "$a_i$", desc: "PReLU's learned negative slope for channel $i$: how much of a negative input passes through. $a_i=0$ recovers ReLU; $a_i=1$ makes a plain line (identity)." },
+      { sym: "$\\mathcal{E}$", desc: "the training loss (error/objective). $\\partial\\mathcal{E}/\\partial a_i$ is its gradient with respect to PReLU's slope, used to update $a_i$." },
+      { sym: "$\\mu$, $\\epsilon$", desc: "the momentum coefficient $\\mu$ and learning rate $\\epsilon$ in PReLU's slope update (eq. 4), $\\Delta a_i:=\\mu\\Delta a_i+\\epsilon\\,\\partial\\mathcal{E}/\\partial a_i$." }
     ],
 
     formula:
-      `$$\\mathrm{Var}[y_l]=\\tfrac{1}{2}\\,n_l\\,\\mathrm{Var}[w_l]\\,\\mathrm{Var}[y_{l-1}]
-        \\quad\\text{(eq. 8)}$$
-       $$\\tfrac{1}{2}\\,n_l\\,\\mathrm{Var}[w_l]=1
+      `$$f(y_i)=\\begin{cases} y_i, & y_i\\gt 0\\\\ a_i\\,y_i, & y_i\\le 0\\end{cases}
+        \\;=\\;\\max(0,y_i)+a_i\\,\\min(0,y_i)\\quad\\text{(eq. 1)}$$
+       <p class="cap"><b>PReLU (Sec. 2.1, eq. 1).</b> A rectifier with a <i>learned</i> negative slope $a_i$ per channel; $a_i=0$ is plain ReLU, $a_i=1$ is the identity line.</p>
+       $$\\Delta a_i \\;:=\\; \\mu\\,\\Delta a_i + \\epsilon\\,\\dfrac{\\partial \\mathcal{E}}{\\partial a_i}
+        \\quad\\text{(eq. 4)}$$
+       <p class="cap"><b>PReLU update (Sec. 2.1, eq. 4).</b> The slope $a_i$ is trained by momentum SGD like any other weight ($\\mu$ momentum, $\\epsilon$ learning rate); no weight decay is used on it.</p>
+       $$\\mathrm{Var}[y_l]=n_l\\,\\mathrm{Var}[w_l\\,x_l]\\quad\\text{(eq. 6)}
+        \\qquad\\Longrightarrow\\qquad
+        \\mathrm{Var}[y_l]=n_l\\,\\mathrm{Var}[w_l]\\,\\mathbb{E}\\!\\left[x_l^2\\right]\\quad\\text{(eq. 7)}$$
+       <p class="cap"><b>Forward variance (Sec. 2.2, eqs. 6&ndash;7).</b> One output sums $n_l$ independent products; with $w_l$ zero-mean its single-term variance is $\\mathrm{Var}[w_l]\\,\\mathbb{E}[x_l^2]$ &mdash; the mean <i>square</i> of the input, because the ReLU input is not mean-zero.</p>
+       $$\\mathbb{E}\\!\\left[x_l^2\\right]=\\tfrac{1}{2}\\,\\mathrm{Var}[y_{l-1}]
+        \\qquad\\Longrightarrow\\qquad
+        \\mathrm{Var}[y_l]=\\tfrac{1}{2}\\,n_l\\,\\mathrm{Var}[w_l]\\,\\mathrm{Var}[y_{l-1}]\\quad\\text{(eq. 8)}$$
+       <p class="cap"><b>The factor of $\\tfrac12$ (Sec. 2.2, eq. 8).</b> $x_l=\\max(0,y_{l-1})$ keeps only the positive half of a symmetric $y_{l-1}$, so its mean square is half the previous variance &mdash; this is exactly what a linear (Xavier) analysis misses.</p>
+       $$\\mathrm{Var}[y_L]=\\mathrm{Var}[y_1]\\left(\\prod_{l=2}^{L}\\tfrac{1}{2}\\,n_l\\,\\mathrm{Var}[w_l]\\right)\\quad\\text{(eq. 9)}$$
+       <p class="cap"><b>Depth recurrence (Sec. 2.2, eq. 9).</b> Stacking $L$ layers multiplies the per-layer factors; a product far from 1 makes the signal vanish or explode exponentially in depth.</p>
+       $$\\tfrac{1}{2}\\,n_l\\,\\mathrm{Var}[w_l]=1\\;\\;\\forall l
         \\;\\;\\Longrightarrow\\;\\;
         \\boxed{\\;\\mathrm{Var}[w_l]=\\dfrac{2}{n_l}\\;,\\quad
-        \\text{std}=\\sqrt{\\dfrac{2}{n_l}}\\;}
-        \\quad\\text{(eq. 10)}$$`,
+        \\text{std}=\\sqrt{\\dfrac{2}{n_l}}\\;}\\quad\\text{(eq. 10)}$$
+       <p class="cap"><b>He condition &amp; result (Sec. 2.2, eq. 10).</b> Force every per-layer factor to 1 &rArr; zero-mean Gaussian weights with variance $2/n_l$ (fan-in $n_l$). The factor of 2 vs Xavier's $\\mathrm{Var}[w]=1/n$ exactly cancels ReLU's $\\tfrac12$.</p>
+       $$\\mathrm{Var}[\\Delta x_l]=\\tfrac{1}{2}\\,\\hat n_l\\,\\mathrm{Var}[w_l]\\,\\mathrm{Var}[\\Delta x_{l+1}]\\quad\\text{(eq. 12)}
+        \\;\\;\\Longrightarrow\\;\\;
+        \\tfrac{1}{2}\\,\\hat n_l\\,\\mathrm{Var}[w_l]=1\\quad\\text{(eq. 14)}$$
+       <p class="cap"><b>Backward pass (Sec. 2.2, eqs. 12&amp;14).</b> The same argument on the gradient $\\Delta x_l$ gives the same $\\tfrac12$, now with fan-out $\\hat n_l=k_l^2 d_l$ in place of fan-in; either condition keeps a deep rectifier net stable, so the fan-in form is used by convention.</p>`,
 
     whatItDoes:
       `<p>The first line (eq. 8) is the layer-to-layer rule for activation variance under ReLU: the variance gets

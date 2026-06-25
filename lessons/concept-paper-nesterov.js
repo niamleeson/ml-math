@@ -142,6 +142,30 @@
        more responsive correction is what lets NAG use a larger $\\mu$ without oscillating — and, on
        smooth convex problems, accelerates the error from $1/k$ to $1/k^2$.</p>`,
 
+    architecture:
+      `<p>NAG is an <b>optimizer</b>, so its "architecture" is a per-iteration procedure, not a network. State
+       carried between steps: the parameter vector $\\theta$ and one <b>velocity buffer</b> $v$ (same shape as
+       $\\theta$), initialized $v_0=0$. Two fixed scalars: learning rate $\\varepsilon$ and momentum $\\mu$.</p>
+       <p><b>Look-ahead form (the conceptual procedure, eqs. (3)-(4)) — each step $t$:</b></p>
+       <ol>
+         <li><b>Look ahead:</b> $\\tilde\\theta = \\theta_t + \\mu v_t$ — advance by the decayed velocity only.</li>
+         <li><b>Measure the slope there:</b> $g = \\nabla f(\\tilde\\theta)$ — a fresh gradient at the look-ahead point.</li>
+         <li><b>Update velocity:</b> $v_{t+1} = \\mu v_t - \\varepsilon g$ — decay old velocity, subtract the scaled gradient.</li>
+         <li><b>Step parameters:</b> $\\theta_{t+1} = \\theta_t + v_{t+1}$.</li>
+       </ol>
+       <p><b>PyTorch buffer form (the data flow actually shipped) — each step $t$:</b> the gradient is taken at the
+       <i>current</i> $\\theta_t$ (so the model is evaluated only once per step), and the look-ahead is folded into the
+       buffer arithmetic:</p>
+       <ol>
+         <li>$g = \\nabla f(\\theta_t)$ — one backward pass at the current parameters.</li>
+         <li>$b \\leftarrow \\mu b + g$ — update the velocity buffer (on step 1, $b \\leftarrow g$).</li>
+         <li>$d = g + \\mu b$ — combine current gradient with the decayed buffer (this is the look-ahead, algebraically).</li>
+         <li>$\\theta \\leftarrow \\theta - \\varepsilon d$ — single in-place parameter step under <code>no_grad()</code>.</li>
+       </ol>
+       <p>The two forms produce identical $\\theta$ trajectories; the buffer form is preferred because it needs only one
+       gradient evaluation per step. Per parameter tensor the optimizer stores exactly one buffer, so memory overhead is
+       1× the parameter count — the same as classical momentum.</p>`,
+
     symbols: [
       { sym: "$\\theta_t$", desc: "theta: the parameter (weight) vector at step $t$. $\\theta_{t+1}$ is its value after the update." },
       { sym: "$v_t$", desc: "the velocity vector at step $t$: a decayed running sum of past update directions, i.e. accumulated momentum." },
@@ -152,16 +176,38 @@
       { sym: "$L$", desc: "the Lipschitz constant of the gradient ('smoothness'): the gradient changes by at most $L$ times how far you move. Bigger $L$ = more curved bowl." },
       { sym: "$k$", desc: "the iteration / step number. Convergence rates are stated as a function of $k$ (or $T$): how the error shrinks as $k$ grows." },
       { sym: "convex", desc: "bowl-shaped: any chord lies above the surface, so there is a single global minimum and no false local minima." },
-      { sym: "$O(1/k^2)$", desc: "'order 1 over k squared': after $k$ steps the gap to the minimum value is at most a constant times $1/k^2$. Compare GD's $O(1/k)$." }
+      { sym: "$O(1/k^2)$", desc: "'order 1 over k squared': after $k$ steps the gap to the minimum value is at most a constant times $1/k^2$. Compare GD's $O(1/k)$." },
+      { sym: "$f^\\star$", desc: "the minimum value of the loss $f$ (its value at the optimum). The 'error' being bounded is $f(\\theta_k)-f^\\star$, how far above the best value you still are." },
+      { sym: "$\\theta^\\star$", desc: "a minimizer: a parameter vector achieving $f(\\theta^\\star)=f^\\star$. $\\lVert\\theta_0-\\theta^\\star\\rVert$ is the start-to-solution distance in the rate constant." },
+      { sym: "$b_t$", desc: "PyTorch's velocity buffer at step $t$ (written $b$ to distinguish from $v$): related to $v$ but stored in the algebraically-equivalent buffer form $b\\leftarrow\\mu b+g$." },
+      { sym: "$d_t$", desc: "the combined update direction in the buffer form, $d=\\nabla f(\\theta_t)+\\mu b_{t+1}$; the parameters move by $-\\varepsilon d_t$." },
+      { sym: "$T$", desc: "the total number of iterations (used interchangeably with $k$ in the paper's rate statements $O(1/T)$, $O(1/T^2)$)." },
+      { sym: "$\\sigma$", desc: "sigma: the variance (noise level) of the stochastic gradient estimate. It drives the $\\sigma/\\sqrt T$ term that acceleration cannot improve." }
     ],
 
     formula:
-      `$$\\textbf{Classical momentum (CM):}\\qquad
+      `$$\\textbf{Classical momentum (CM), eqs. (1)-(2):}\\qquad
         v_{t+1}=\\mu v_t-\\varepsilon\\,\\nabla f(\\theta_t),\\qquad
         \\theta_{t+1}=\\theta_t+v_{t+1}$$
-       $$\\textbf{Nesterov accelerated gradient (NAG):}\\qquad
+       <p>Heavy-ball (Polyak 1964): build a velocity from the gradient <i>at the current point</i> $\\theta_t$, then step.</p>
+       $$\\textbf{Nesterov accelerated gradient (NAG), eqs. (3)-(4):}\\qquad
         v_{t+1}=\\mu v_t-\\varepsilon\\,\\nabla f(\\theta_t+\\mu v_t),\\qquad
-        \\theta_{t+1}=\\theta_t+v_{t+1}$$`,
+        \\theta_{t+1}=\\theta_t+v_{t+1}$$
+       <p>The <b>only</b> change vs CM: the gradient is measured at the <b>look-ahead point</b> $\\theta_t+\\mu v_t$ — where the pure momentum step would land — not at $\\theta_t$.</p>
+       $$\\textbf{PyTorch buffer form (algebraically equal to (3)-(4)):}\\qquad
+        b_{t+1}=\\mu b_t+\\nabla f(\\theta_t),\\qquad
+        d_t=\\nabla f(\\theta_t)+\\mu b_{t+1},\\qquad
+        \\theta_{t+1}=\\theta_t-\\varepsilon\\,d_t$$
+       <p>How <code>torch.optim.SGD(nesterov=True)</code> implements the same update with one velocity buffer $b$, without a second model evaluation at the look-ahead point.</p>
+       $$\\textbf{Convergence (smooth convex), Nesterov 1983:}\\qquad
+        f(\\theta_k)-f^\\star \\;\\le\\; \\frac{2L\\,\\lVert\\theta_0-\\theta^\\star\\rVert^2}{(k+1)^2}
+        \\;=\\; O\\!\\left(\\tfrac{1}{k^2}\\right)
+        \\qquad\\text{vs. GD: } O\\!\\left(\\tfrac{1}{k}\\right)$$
+       <p>NAG's error falls like $1/k^2$ — a quadratic speedup over gradient descent's $1/k$ — with constant set by the smoothness $L$ and the squared distance from start to solution (Sutskever et al. 2013, §2, attributing the rate to Nesterov 1983).</p>
+       $$\\textbf{Stochastic rates (Sutskever et al. 2013, §2):}\\qquad
+        \\text{SGD: } O\\!\\left(\\tfrac{L}{T}+\\tfrac{\\sigma}{\\sqrt T}\\right),\\qquad
+        \\text{accelerated (Lan 2010): } O\\!\\left(\\tfrac{L}{T^2}+\\tfrac{\\sigma}{\\sqrt T}\\right)$$
+       <p>With gradient noise of variance $\\sigma$ the acceleration only helps the early $L/T$ term; the $\\sigma/\\sqrt T$ noise term is identical, so the asymptotic advantage is lost.</p>`,
 
     whatItDoes:
       `<p>Both methods build a velocity by blending old velocity (scaled by $\\mu$) with a downhill push

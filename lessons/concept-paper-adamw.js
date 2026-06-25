@@ -124,6 +124,34 @@
        <i>never</i> divided by $\\sqrt{\\hat v_t}$. Every weight is now decayed by the same fraction each step,
        independent of its gradient history.</p>`,
 
+    architecture:
+      `<p>AdamW is not a network &mdash; it is a per-iteration <b>update procedure</b>. The "architecture" is the
+       data flow of one step, exactly as printed in <b>Algorithm 2</b>. State carried across steps: the parameters
+       $\\theta$, the first moment $m$, the second moment $v$ (all same shape as $\\theta$), and the step counter $t$.
+       Initialize $t=0$, $m_0=0$, $v_0=0$.</p>
+       <p><b>One step, line by line (Algorithm 2):</b></p>
+       <ol>
+         <li>L4 &mdash; $t \\leftarrow t+1$.</li>
+         <li>L5 &mdash; $\\nabla f_t(\\theta_{t-1}) \\leftarrow \\text{SelectBatch}(\\theta_{t-1})$: draw a minibatch and
+         backprop to get the loss gradient.</li>
+         <li>L6 &mdash; <b>THE FORK.</b> Adam+L2: $g_t \\leftarrow \\nabla f_t(\\theta_{t-1}) + \\lambda\\theta_{t-1}$
+         (decay folded in). AdamW: $g_t \\leftarrow \\nabla f_t(\\theta_{t-1})$ (loss gradient only). Every later line
+         is identical &mdash; this branch is the whole difference.</li>
+         <li>L7 &mdash; $m_t \\leftarrow \\beta_1 m_{t-1} + (1-\\beta_1)g_t$ (first moment).</li>
+         <li>L8 &mdash; $v_t \\leftarrow \\beta_2 v_{t-1} + (1-\\beta_2)g_t^2$ (second moment).</li>
+         <li>L9 &mdash; $\\hat m_t \\leftarrow m_t/(1-\\beta_1^t)$ (bias-correct first moment).</li>
+         <li>L10 &mdash; $\\hat v_t \\leftarrow v_t/(1-\\beta_2^t)$ (bias-correct second moment).</li>
+         <li>L11 &mdash; $\\eta_t \\leftarrow \\text{SetScheduleMultiplier}(t)$: the schedule/warmup multiplier (flat run uses $1$).</li>
+         <li>L12 &mdash; <b>parameter update.</b> Adam+L2:
+         $\\theta_t \\leftarrow \\theta_{t-1} - \\eta_t(\\alpha\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon) + \\lambda\\theta_{t-1})$.
+         AdamW: $\\theta_t \\leftarrow \\theta_{t-1} - \\eta_t\\,\\alpha\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)
+         - \\eta_t\\,\\lambda\\,\\theta_{t-1}$ &mdash; the decay is a separate subtraction, OUTSIDE the adaptive scaling.</li>
+       </ol>
+       <p><b>The same template gives SGDW</b> (Algorithm 1): replace the adaptive term with momentum $m_t$, so the
+       AdamW update line becomes $\\theta_t \\leftarrow \\theta_{t-1} - m_t - \\eta_t\\lambda\\theta_{t-1}$ &mdash;
+       decoupled decay layered onto SGD-with-momentum the same way. Wrapping either in cosine warm restarts gives
+       AdamWR / SGDWR.</p>`,
+
     symbols: [
       { sym: "weight decay", desc: "shrinking every weight toward zero by a fixed fraction each step ($\\theta\\leftarrow(1-\\lambda)\\theta$), applied directly to the weight. A form of regularization (it discourages large weights)." },
       { sym: "L2 regularization", desc: "adding a penalty $\\tfrac{\\lambda}{2}\\lVert\\theta\\rVert^2$ to the loss, which adds $\\lambda\\theta$ into the gradient. Identical to weight decay for plain SGD, but NOT for Adam." },
@@ -138,12 +166,57 @@
       { sym: "$\\epsilon$", desc: "epsilon, a tiny constant (default $10^{-8}$) added to $\\sqrt{\\hat v_t}$ so we never divide by zero." },
       { sym: "$\\alpha$", desc: "the base learning rate (step size), default $0.001$ in the paper. PyTorch calls this $\\text{lr}$." },
       { sym: "$\\lambda$", desc: "the weight-decay factor: the fraction by which each weight is shrunk per step. PyTorch calls this $\\text{weight\\_decay}$. (After decoupling, its best value no longer depends on $\\alpha$.)" },
-      { sym: "$\\eta_t$", desc: "the schedule multiplier: a single number (often from a warmup/decay schedule) multiplying the whole update at step $t$. With a flat schedule $\\eta_t=1$." }
+      { sym: "$\\eta_t$", desc: "the schedule multiplier: a single number (often from a warmup/decay schedule) multiplying the whole update at step $t$. With a flat schedule $\\eta_t=1$." },
+      { sym: "$\\nabla f_t(\\theta)$", desc: "the gradient of the minibatch loss $f_t$ with respect to $\\theta$ at step $t$ &mdash; what backprop returns. In AdamW this IS $g_t$; in Adam+L2, $g_t=\\nabla f_t+\\lambda\\theta$." },
+      { sym: "$\\mathbf{M}_t$", desc: "the per-step preconditioner: the matrix the optimizer multiplies the gradient by. For SGD it is the identity $\\mathbf{I}$; for adaptive methods (Adam) it is diagonal with $\\mathbf{M}_t\\ne k\\mathbf{I}$ &mdash; that non-identity is exactly the condition of Proposition 2." },
+      { sym: "$\\lambda'$", desc: "the L2 coefficient Proposition 2 searches for: the penalty weight that would make L2 regularization reproduce weight decay. The proposition shows no such $\\lambda'$ exists for adaptive optimizers." },
+      { sym: "$T_{\\text{cur}},\\ T_i$", desc: "warm-restart counters in the cosine schedule (App. B.2): $T_{\\text{cur}}$ is epochs since the last restart, $T_i$ is the length of the current restart cycle. Their ratio drives $\\eta_t$ from 1 down to 0." },
+      { sym: "$\\lambda_{\\text{norm}}$", desc: "normalized weight decay (App. B.1): the run-independent decay you actually pick. The real $\\lambda$ is recovered as $\\lambda_{\\text{norm}}\\sqrt{b/(BT)}$." },
+      { sym: "$b,\\ B,\\ T$", desc: "in the normalized-decay formula: $b$ = batch size, $B$ = total number of training points, $T$ = total number of epochs." }
     ],
 
     formula:
-      `$$\\theta_t \\leftarrow \\theta_{t-1} - \\eta_t\\left(\\alpha\\,
-        \\frac{\\hat m_t}{\\sqrt{\\hat v_t}+\\epsilon} \\;+\\; \\lambda\\,\\theta_{t-1}\\right)$$`,
+      `$$g_t \\leftarrow \\nabla f_t(\\theta_{t-1}) \\;+\\; \\lambda\\,\\theta_{t-1}
+        \\qquad\\text{vs.}\\qquad g_t \\leftarrow \\nabla f_t(\\theta_{t-1})$$
+       <p>The single fork (Algorithm 2, line 6). LEFT &mdash; "Adam with L2 regularization": the penalty
+       $\\lambda\\theta_{t-1}$ is folded <i>into</i> the gradient, so it flows through $m_t,v_t$ and inherits the
+       adaptive scaling. RIGHT &mdash; AdamW: $g_t$ is the loss gradient ONLY; the decay is held out for line 12.</p>
+
+       $$\\theta_t \\leftarrow \\theta_{t-1} - \\eta_t\\Big(\\alpha\\,\\tfrac{\\hat m_t}{\\sqrt{\\hat v_t}+\\epsilon}
+        \\;+\\; \\lambda\\,\\theta_{t-1}\\Big)
+        \\quad\\text{(L2)} \\qquad \\theta_t \\leftarrow \\theta_{t-1} - \\eta_t\\,\\alpha\\,
+        \\tfrac{\\hat m_t}{\\sqrt{\\hat v_t}+\\epsilon} \\;-\\; \\eta_t\\,\\lambda\\,\\theta_{t-1}
+        \\quad\\text{(AdamW)}$$
+       <p>The parameter update (Algorithm 2, line 12), shown for both. With L2 the $\\lambda\\theta_{t-1}$ written here
+       does nothing extra &mdash; the decay already entered via $g_t$ above and got divided by $\\sqrt{\\hat v_t}$.
+       In AdamW the decay term $\\eta_t\\,\\lambda\\,\\theta_{t-1}$ is a <b>separate</b> subtraction, never touched by
+       $\\sqrt{\\hat v_t}$, so every weight shrinks by the same fraction. This contrast is the entire paper.</p>
+
+       $$m_t \\leftarrow \\beta_1 m_{t-1} + (1-\\beta_1)g_t \\qquad
+        v_t \\leftarrow \\beta_2 v_{t-1} + (1-\\beta_2)g_t^2$$
+       <p>The Adam moment updates (Algorithm 2, lines 7&ndash;8): exponential moving averages of the gradient and
+       the squared gradient.</p>
+
+       $$\\hat m_t \\leftarrow \\frac{m_t}{1-\\beta_1^t} \\qquad
+        \\hat v_t \\leftarrow \\frac{v_t}{1-\\beta_2^t}$$
+       <p>Bias correction (Algorithm 2, lines 9&ndash;10): undoes the cold-start shrink from initializing
+       $m_0=v_0=0$.</p>
+
+       $$\\theta_{t+1} = (1-\\lambda)\\,\\theta_t - \\alpha\\,\\nabla f_t(\\theta_t)$$
+       <p>The paper's definition of plain weight decay (Eq. 1, §2). AdamW is built to recover this uniform
+       $(1-\\eta_t\\lambda)$ shrinkage of every weight; the L2 form cannot, for adaptive methods.</p>
+
+       $$\\theta_{t+1} \\leftarrow \\theta_t - \\alpha\\,\\mathbf{M}_t\\nabla f_t(\\theta_t)\\ \\text{(no decay)}
+        \\qquad \\theta_{t+1} \\leftarrow (1-\\lambda)\\theta_t - \\alpha\\,\\mathbf{M}_t\\nabla f_t(\\theta_t)\\ \\text{(decay)}$$
+       <p><b>Proposition 2</b> (§2): for any preconditioner $\\mathbf{M}_t \\ne k\\mathbf{I}$ (i.e. adaptive scaling),
+       there is <b>no</b> L2 coefficient $\\lambda'$ for which $f_t(\\theta)+\\tfrac{\\lambda'}{2}\\lVert\\theta\\rVert^2$
+       reproduces the weight-decay iterate. L2 $\\ne$ weight decay for adaptive optimizers.</p>
+
+       $$\\eta_t = 0.5 + 0.5\\cos\\!\\big(\\pi\\,T_{\\text{cur}}/T_i\\big) \\qquad
+        \\lambda = \\lambda_{\\text{norm}}\\sqrt{b/(BT)}$$
+       <p>LEFT &mdash; the cosine schedule multiplier $\\eta_t$ used by AdamWR with warm restarts (App. B.2).
+       RIGHT &mdash; normalized weight decay (App. B.1): $b$ = batch size, $B$ = total training points,
+       $T$ = total epochs, so the chosen $\\lambda$ scales with the amount of training.</p>`,
 
     whatItDoes:
       `<p>This is the AdamW parameter update, line 12 of <b>Algorithm 2</b> in the paper. The first term inside

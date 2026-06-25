@@ -139,6 +139,36 @@
        (which RMSProp and Adam later fix) is that because the sum <i>only grows</i>, every coordinate's rate
        eventually decays toward zero, so plain Adagrad can stall on very long runs.</p>`,
 
+    architecture:
+      `<p>Adagrad is an <b>optimizer</b>, so its "architecture" is the per-iteration procedure rather than a
+       network of layers. The paper's Algorithm 1 (Figure 1, Section 3) keeps three pieces of state across
+       rounds:</p>
+       <ul>
+         <li><b>$g_{1:t}$</b> &mdash; the concatenated history of subgradients (conceptually; in code we only
+         keep the running squared sum, one scalar $s_i=\\lVert g_{1:t,i}\\rVert_2$ per coordinate).</li>
+         <li><b>$s\\in\\mathbb{R}^d$ / $H_t\\in\\mathbb{R}^{d\\times d}$</b> &mdash; the per-coordinate scale
+         vector and the proximal matrix $H_t=\\delta I+\\operatorname{diag}(s_t)$ built from it.</li>
+         <li><b>$x_t$</b> &mdash; the current parameter vector, initialized to $0$.</li>
+       </ul>
+       <p>Each round $t=1\\dots T$ runs this pipeline:</p>
+       <ol>
+         <li><b>Forward / suffer loss.</b> Predict with $x_t$, incur $f_t(x_t)$.</li>
+         <li><b>Backward.</b> Receive a subgradient $g_t\\in\\partial f_t(x_t)$.</li>
+         <li><b>Accumulate.</b> Append $g_t$ to the history; update each coordinate's scale
+         $s_{t,i}=\\lVert g_{1:t,i}\\rVert_2=\\sqrt{\\sum_{s\\le t} g_{s,i}^2}$ and set
+         $H_t=\\delta I+\\operatorname{diag}(s_t)$, $\\psi_t(x)=\\tfrac12\\langle x,H_t x\\rangle$.</li>
+         <li><b>Update.</b> Take the preconditioned step, in one of two equivalent flavors the paper analyzes:
+         the <b>composite mirror-descent</b> update (eq. (4))
+         $x_{t+1}=\\arg\\min_{x}\\{\\eta\\langle g_t,x\\rangle+\\eta\\varphi(x)+B_{\\psi_t}(x,x_t)\\}$, or the
+         <b>primal-dual subgradient</b> update (eq. (3)) using the averaged gradient
+         $\\bar g_t=\\tfrac1t\\sum_\\tau g_\\tau$. With no regularizer and no constraint both reduce to the
+         per-coordinate rule $x_{t+1,i}=x_{t,i}-\\eta\\,g_{t,i}/(\\sqrt{\\sum_{s\\le t} g_{s,i}^2}+\\delta)$.</li>
+       </ol>
+       <p>The only structural choice is <b>diagonal vs full</b> $H_t$: diagonal keeps one number per coordinate
+       (linear time, Algorithm 1) and is what is used in practice; the full version (Algorithm 2) uses the root
+       of the whole outer-product matrix $G_t$ and costs $O(d^2)$&ndash;$O(d^3)$, so it is mainly of theoretical
+       interest.</p>`,
+
     symbols: [
       { sym: "$t$", desc: "the timestep / update counter, $t=1,2,3,\\dots$. It indexes the rounds of online or stochastic optimization." },
       { sym: "$i$", desc: "the coordinate (parameter) index: which single weight we are talking about. Adagrad treats each coordinate separately." },
@@ -149,17 +179,63 @@
       { sym: "$G_t$", desc: "the outer-product matrix $G_t=\\sum_{\\tau=1}^{t} g_\\tau g_\\tau^{\\top}$ that accumulates gradient information. Diagonal Adagrad uses only its diagonal, $\\operatorname{diag}(G_t)_{ii}=\\sum_{s=1}^t g_{s,i}^2$." },
       { sym: "$\\operatorname{diag}(G_t)$", desc: "the diagonal of $G_t$ as a matrix (zeros off the diagonal). Its $i$-th diagonal entry is the running sum of squared gradients for coordinate $i$." },
       { sym: "$\\delta$", desc: "delta: a small fixed constant $\\ge 0$ added to the denominator (eq. (5)) so we never divide by zero. The paper notes it can be set to 0; in PyTorch this is the eps argument." },
-      { sym: "$\\Pi_{\\mathcal{X}}$", desc: "projection onto the feasible set $\\mathcal{X}$ (it snaps a point back into the allowed region). For ordinary unconstrained training $\\mathcal{X}=\\mathbb{R}^d$, so this does nothing and we drop it." },
+      { sym: "$H_t$", desc: "the proximal (preconditioner) matrix of eq. (5), $H_t=\\delta I+\\operatorname{diag}(G_t)^{1/2}$ (diagonal) or $\\delta I+G_t^{1/2}$ (full). Dividing the gradient step by $H_t$ is what gives each coordinate its own rate; $I$ is the identity matrix." },
+      { sym: "$s_t$", desc: "the per-coordinate scale vector in Algorithm 1, $s_{t,i}=\\lVert g_{1:t,i}\\rVert_2=\\sqrt{\\sum_{s\\le t} g_{s,i}^2}$. It is the diagonal that builds $H_t$." },
+      { sym: "$\\psi_t$", desc: "the proximal term (a strongly-convex function), here $\\psi_t(x)=\\tfrac12\\langle x,H_t x\\rangle$. Adagrad's whole idea is to adapt $\\psi_t$ to the data each round instead of fixing it." },
+      { sym: "$\\varphi$", desc: "phi: a fixed regularizer added to every round's loss ($\\phi_t=f_t+\\varphi$), e.g. an $\\ell_1$ penalty. Set $\\varphi\\equiv 0$ for plain unregularized training." },
+      { sym: "$\\bar g_t$", desc: "the running average gradient $\\bar g_t=\\tfrac1t\\sum_{\\tau=1}^t g_\\tau$ used by the primal-dual subgradient update (eq. (3))." },
+      { sym: "$B_{\\psi}$", desc: "the Bregman divergence of $\\psi$, $B_\\psi(x,y)=\\psi(x)-\\psi(y)-\\langle\\nabla\\psi(y),x-y\\rangle$: a 'distance' induced by $\\psi$ that the composite mirror-descent update (eq. (4)) uses to stay near $x_t$." },
+      { sym: "$\\Pi_{\\mathcal{X}}$", desc: "projection onto the feasible set $\\mathcal{X}$ (it snaps a point back into the allowed region). For ordinary unconstrained training $\\mathcal{X}=\\mathbb{R}^d$, so this does nothing and we drop it. The superscript (e.g. $\\Pi^{G_t^{1/2}}_{\\mathcal{X}}$) means the projection measures distance in the Mahalanobis norm $\\lVert\\cdot\\rVert_A=\\sqrt{\\langle\\cdot,A\\,\\cdot\\rangle}$ instead of the plain norm." },
+      { sym: "$d$", desc: "the dimension: the number of parameters / coordinates. Sums $\\sum_{i=1}^d$ run over all coordinates." },
+      { sym: "$T$", desc: "the total number of rounds (timesteps) in the online run; the regret is measured over $t=1,\\dots,T$." },
+      { sym: "$f_t$, $\\phi_t$", desc: "the loss seen at round $t$. $f_t(x)$ is the (convex) data loss; $\\phi_t(x)=f_t(x)+\\varphi(x)$ adds a fixed regularizer $\\varphi$. The learner picks $x_t$ before seeing $f_t$." },
+      { sym: "$x^*$", desc: "the single best fixed predictor chosen in hindsight (the one minimizing total loss). Regret compares the learner's running loss against this $x^*$." },
+      { sym: "$R(T)$, $R_\\phi(T)$", desc: "the regret after $T$ rounds: total loss of the learner minus total loss of the best fixed $x^*$ (eq. (2)). Sub-linear regret, $R(T)=o(T)$, means the learner's average loss approaches the best fixed predictor's." },
+      { sym: "$g_{1:T,i}$", desc: "the vector $(g_{1,i},g_{2,i},\\dots,g_{T,i})$ of coordinate $i$'s gradient across all $T$ rounds (the $i$-th row of the concatenated gradient matrix). Its $\\ell_2$ norm $\\lVert g_{1:T,i}\\rVert_2=\\sqrt{\\sum_{t} g_{t,i}^2}$ is the square root of that coordinate's lifetime accumulated squared gradient." },
+      { sym: "$\\lVert\\cdot\\rVert_2$, $\\lVert\\cdot\\rVert_\\infty$", desc: "the Euclidean (sum-of-squares, square-rooted) norm and the max-absolute-entry norm of a vector, respectively." },
+      { sym: "$D_\\infty$, $D_2$", desc: "the diameter of the feasible set $\\mathcal{X}$ measured in the $\\infty$-norm ($D_\\infty=\\sup_{x}\\lVert x-x^*\\rVert_\\infty$) and the $2$-norm. They appear as the leading constant in the regret bounds and fix the recommended step size $\\eta$." },
       { sym: "sparse", desc: "mostly zeros: a feature vector where only a few entries are non-zero on any given example (e.g. bag-of-words text)." },
       { sym: "regret", desc: "an online-learning score: how much worse your running total loss is than the single best fixed predictor chosen in hindsight. Lower is better; the paper proves Adagrad's grows slowly." }
     ],
 
     formula:
-      `$$x_{t+1}=\\Pi_{\\mathcal{X}}^{\\operatorname{diag}(G_t)^{1/2}}\\Big(x_t-\\eta\\,\\operatorname{diag}(G_t)^{-1/2}\\,g_t\\Big)
-        \\qquad\\text{(eq. (1), Section 1.1)}$$
-       <p>Coordinate-by-coordinate, dropping the projection (unconstrained training) and adding the small
-       constant $\\delta$ from eq. (5), this is:</p>
-       $$x_{t+1,i}=x_{t,i}-\\frac{\\eta}{\\sqrt{\\sum_{s=1}^{t} g_{s,i}^2}\\;+\\;\\delta}\\;g_{t,i}.$$`,
+      `$$G_t=\\sum_{\\tau=1}^{t} g_\\tau g_\\tau^{\\top}
+        \\qquad\\text{(Section 1.1): the outer-product matrix that accumulates every gradient seen so far.}$$
+       <p>The paper's full-matrix update (Section 1.1, just above eq. (1)) pre-multiplies the step by the
+       inverse square root of $G_t$ &mdash; a per-direction rescaling by accumulated gradient size:</p>
+       $$x_{t+1}=\\Pi_{\\mathcal{X}}^{G_t^{1/2}}\\Big(x_t-\\eta\\,G_t^{-1/2}\\,g_t\\Big)
+        \\qquad\\text{(full matrix; }\\Pi^{G_t^{1/2}}_{\\mathcal{X}}\\text{ is projection in the Mahalanobis norm).}$$
+       <p>That full matrix root is "computationally impractical in high dimensions," so Adagrad specializes to
+       the <b>diagonal</b> of $G_t$ &mdash; this is eq. (1), the version everyone uses:</p>
+       $$x_{t+1}=\\Pi_{\\mathcal{X}}^{\\operatorname{diag}(G_t)^{1/2}}\\Big(x_t-\\eta\\,\\operatorname{diag}(G_t)^{-1/2}\\,g_t\\Big)
+        \\qquad\\text{(eq. (1), Section 1.1).}$$
+       <p>The proximal matrix is regularized by a small constant $\\delta\\ge 0$ so it is invertible from the
+       first step (eq. (5), diagonal and full forms):</p>
+       $$H_t=\\delta I+\\operatorname{diag}(G_t)^{1/2}\\quad\\text{(diagonal)},\\qquad
+         H_t=\\delta I+G_t^{1/2}\\quad\\text{(full)}\\qquad\\text{(eq. (5), Section 1.1).}$$
+       <p>Writing eq. (1) one coordinate at a time, dropping the projection (unconstrained training) and using
+       the $\\delta$ of eq. (5), gives the per-coordinate accumulated-squared-gradient update you code:</p>
+       $$x_{t+1,i}=x_{t,i}-\\frac{\\eta}{\\sqrt{\\sum_{s=1}^{t} g_{s,i}^2}\\;+\\;\\delta}\\;g_{t,i}
+        \\qquad\\text{(here }\\operatorname{diag}(G_t)_{ii}=\\sum_{s=1}^{t} g_{s,i}^2\\text{).}$$
+       <p><b>The regret it is known for.</b> Regret is the running excess loss over the best fixed predictor
+       $x^*$ chosen in hindsight (Section 1.1; the composite version is eq. (2)):</p>
+       $$R(T)=\\sum_{t=1}^{T} f_t(x_t)-\\inf_{x\\in\\mathcal{X}}\\sum_{t=1}^{T} f_t(x),
+        \\qquad
+        R_\\phi(T)\\triangleq\\sum_{t=1}^{T}\\big[\\phi_t(x_t)-\\phi_t(x^*)\\big]\\quad\\text{(eq. (2)).}$$
+       <p>Diagonal Adagrad's headline bound (Corollary 1 / Corollary 6, composite mirror descent with
+       $\\eta=D_\\infty/\\sqrt{2}$, where $D_\\infty=\\sup_{x\\in\\mathcal{X}}\\lVert x-x^*\\rVert_\\infty$):</p>
+       $$R_\\phi(T)\\;\\le\\;\\sqrt{2}\\,D_\\infty\\sum_{i=1}^{d}\\lVert g_{1:T,i}\\rVert_2
+        \\qquad\\text{(Corollary 1): regret scales with }\\textstyle\\sum_i\\sqrt{\\sum_{t} g_{t,i}^2}\\text{, not }\\sqrt{dT}.$$
+       <p>This $\\sum_i\\lVert g_{1:T,i}\\rVert_2$ equals the infimum of $\\sum_t\\langle g_t,\\operatorname{diag}(s)^{-1}g_t\\rangle$
+       over diagonal matrices $s\\succeq 0$ &mdash; i.e. Adagrad's bound matches the <b>best diagonal proximal
+       function chosen in hindsight</b>. The general primal-dual form keeping $\\delta$ is Theorem 5:</p>
+       $$R_\\phi(T)\\le\\frac{\\delta}{\\eta}\\lVert x^*\\rVert_2^2
+         +\\frac{1}{\\eta}\\lVert x^*\\rVert_\\infty^2\\sum_{i=1}^{d}\\lVert g_{1:T,i}\\rVert_2
+         +\\eta\\sum_{i=1}^{d}\\lVert g_{1:T,i}\\rVert_2
+        \\qquad\\text{(Theorem 5, primal-dual update (3)).}$$
+       <p>For comparison the non-adaptive baseline (online gradient descent, eq. (6)) only achieves
+       $R\\le\\sqrt{2}\\,D_2\\sqrt{\\sum_{t=1}^{T}\\lVert g_t\\rVert_2^2}$, which can be a factor of $\\sqrt{d}$
+       worse on sparse, heavy-tailed features.</p>`,
 
     whatItDoes:
       `<p>The first line is the paper's eq. (1): it is ordinary gradient descent, except the step is

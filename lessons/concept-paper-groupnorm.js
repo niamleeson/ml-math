@@ -128,6 +128,30 @@
        <p>Because steps 1&ndash;3 never look at other examples, GN gives the same answer whether the batch holds
        256 images or 1 &mdash; train and test included.</p>`,
 
+    architecture:
+      `<p><b>GN as a layer (per-group channel normalization).</b> A GroupNorm layer is parameterized by two numbers
+       &mdash; the channel count $C$ (fixed by the preceding conv) and the group count $G$ (a hyperparameter,
+       default 32, with $C$ divisible by $G$) &mdash; plus two learned vectors $\\gamma,\\beta\\in\\mathbb{R}^{C}$.
+       It is a drop-in replacement for a BatchNorm layer and carries <b>no running statistics buffer</b>, since it
+       never aggregates across examples. The forward pass is the few-line reshape&ndash;reduce&ndash;reshape the
+       paper highlights:</p>
+       <ol>
+         <li><b>Input.</b> An activation tensor of shape $(N,C,H,W)$ from the previous conv layer.</li>
+         <li><b>Reshape into groups.</b> View it as $(N,G,C/G,H,W)$ &mdash; the $C$ channels are split into $G$
+         contiguous groups of $C/G$ channels each. This grouping is the only structural difference from the other
+         three normalizers.</li>
+         <li><b>Reduce.</b> Compute mean $\\mu$ and biased variance $\\sigma^2$ over axes $(2,3,4)$ &mdash; the
+         $C/G$ channels and the $H\\times W$ pixels &mdash; keeping axes $(N,G)$. This yields one $(\\mu,\\sigma)$
+         per example per group, i.e. $N\\cdot G$ statistics, each pooled over $m=(C/G)\\,H\\,W$ values.</li>
+         <li><b>Normalize and reshape back.</b> $\\hat{x}=(x-\\mu)/\\sqrt{\\sigma^2+\\epsilon}$, broadcasting the
+         per-group statistics; then view back to $(N,C,H,W)$.</li>
+         <li><b>Per-channel affine.</b> Multiply by $\\gamma$ and add $\\beta$, each reshaped to $(1,C,1,1)$ so the
+         scale/shift is applied <b>per channel</b>, not per group &mdash; $C$ scales and $C$ shifts total.</li>
+       </ol>
+       <p>Cost is one reduction over the activations and a $\\Theta(C)$ affine; no parameters or buffers grow with
+       the batch. In a network, GN slots wherever BatchNorm would go &mdash; typically conv &rarr; GN &rarr; ReLU
+       inside a ResNet block &mdash; and the identical code path runs at train and test time.</p>`,
+
     symbols: [
       { sym: "channel", desc: "one feature map produced by a convolution layer (e.g. an edge detector's output grid). A conv layer with $C$ channels outputs $C$ such grids per image." },
       { sym: "pixel", desc: "one spatial location $(h,w)$ inside a feature map; a channel of size $H\\times W$ has $H\\cdot W$ pixels." },
@@ -147,20 +171,32 @@
     ],
 
     formula:
-      `$$\\hat{x}_i=\\frac{1}{\\sigma_i}\\,(x_i-\\mu_i)\\qquad\\text{(Eq. 1)}$$
+      `$$\\hat{x}_i=\\frac{1}{\\sigma_i}\\,(x_i-\\mu_i)\\qquad\\text{(Eq. 1, the generic normalize step)}$$
+       Generic step every method in this family shares: re-center by the set mean and re-scale by the set standard deviation.
        $$\\mu_i=\\frac{1}{m}\\sum_{k\\in\\mathcal{S}_i}x_k,\\qquad
         \\sigma_i=\\sqrt{\\frac{1}{m}\\sum_{k\\in\\mathcal{S}_i}(x_k-\\mu_i)^2+\\epsilon}\\qquad\\text{(Eq. 2)}$$
-       $$\\mathcal{S}_i=\\Big\\{\\,k \\;\\Big|\\; k_N=i_N,\\;\\Big\\lfloor\\tfrac{k_C}{C/G}\\Big\\rfloor=\\Big\\lfloor\\tfrac{i_C}{C/G}\\Big\\rfloor\\,\\Big\\}\\qquad\\text{(Eq. 7)}$$
-       $$\\text{then per channel: } y_i=\\gamma\\,\\hat{x}_i+\\beta$$`,
+       Mean and standard deviation are taken over the <b>pooling set</b> $\\mathcal{S}_i$, whose size is $m=\\lvert\\mathcal{S}_i\\rvert$. The whole identity of a normalization method is the single choice of $\\mathcal{S}_i$ below.
+       $$\\mathcal{S}_i=\\{\\,k \\mid k_C=i_C\\,\\}\\qquad\\text{(Eq. 3, BatchNorm: same channel, pool over } N,H,W)$$
+       BatchNorm: fix the channel, pool over all examples and spatial positions &mdash; the only choice that reaches across the batch.
+       $$\\mathcal{S}_i=\\{\\,k \\mid k_N=i_N\\,\\}\\qquad\\text{(Eq. 4, LayerNorm: same example, pool over } C,H,W)$$
+       LayerNorm: fix the example, pool over all of its channels and pixels &mdash; one group spanning every channel.
+       $$\\mathcal{S}_i=\\{\\,k \\mid k_N=i_N,\\;k_C=i_C\\,\\}\\qquad\\text{(Eq. 5, InstanceNorm: same example and channel, pool over } H,W)$$
+       InstanceNorm: fix the example <i>and</i> the channel, pool over only the spatial grid &mdash; each channel normalized alone.
+       $$\\mathcal{S}_i=\\Big\\{\\,k \\;\\Big|\\; k_N=i_N,\\;\\Big\\lfloor\\tfrac{k_C}{C/G}\\Big\\rfloor=\\Big\\lfloor\\tfrac{i_C}{C/G}\\Big\\rfloor\\,\\Big\\}\\qquad\\text{(Eq. 7, GroupNorm: same example and channel-group)}$$
+       GroupNorm: fix the example and pool over $H,W$ and the $C/G$ channels of one group; integer-dividing the channel index by the group width $C/G$ selects the group. With $G=1$ this is LayerNorm; with $G=C$ it is InstanceNorm; $G=32$ (default) sits between.
+       $$y_i=\\gamma\\,\\hat{x}_i+\\beta\\qquad\\text{(Eq. 6, learned per-channel scale and shift)}$$
+       Same affine restore step as BatchNorm: one learned $\\gamma,\\beta$ pair <b>per channel</b>, applied after normalizing.`,
 
     whatItDoes:
-      `<p>Equations 1 and 2 are the generic normalize step: center by the set mean $\\mu_i$ and divide by the set
-       standard deviation $\\sigma_i$. The whole identity of a normalization method lives in <b>Equation 7</b>,
-       which defines the pooling set $\\mathcal{S}_i$: it keeps the same example ($k_N=i_N$) and the same
-       <b>group</b> of channels &mdash; two channels fall in one group when $\\lfloor k_C/(C/G)\\rfloor$ equals
-       $\\lfloor i_C/(C/G)\\rfloor$, i.e. integer-dividing the channel index by the group width gives the same
-       group number. (Section 3.1.) The final learned per-channel $\\gamma,\\beta$ then restore the layer's full
-       expressive power.</p>`,
+      `<p>Equations 1 and 2 are the generic normalize step shared by the whole family: center by the set mean
+       $\\mu_i$ and divide by the set standard deviation $\\sigma_i$. The entire identity of a method is then the
+       single choice of pooling set $\\mathcal{S}_i$. BatchNorm (Eq. 3) fixes the channel and pools across the
+       batch ($k_C=i_C$); LayerNorm (Eq. 4) fixes the example and pools all its channels ($k_N=i_N$);
+       InstanceNorm (Eq. 5) fixes both ($k_N=i_N,k_C=i_C$). <b>GroupNorm (Eq. 7)</b> keeps the same example
+       ($k_N=i_N$) and the same <b>group</b> of channels &mdash; two channels fall in one group when
+       $\\lfloor k_C/(C/G)\\rfloor$ equals $\\lfloor i_C/(C/G)\\rfloor$, i.e. integer-dividing the channel index by
+       the group width gives the same group number (Section 3.1). The final learned per-channel $\\gamma,\\beta$
+       (Eq. 6) then restore the layer's full expressive power.</p>`,
 
     derivation:
       `<p>Why normalizing to mean 0 / variance 1 (before the learned $\\gamma,\\beta$) stabilizes training &mdash;

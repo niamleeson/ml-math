@@ -129,22 +129,54 @@
        "unbounded above and bounded below" (Section 4). It is closely related to <b>GELU</b>, which gates with the
        Gaussian cumulative distribution instead of the sigmoid &mdash; see <code>paper-gelu</code>.</p>`,
 
+    architecture:
+      `<p>This is an activation-function paper, so the "architecture" is two things: how the function was
+       <b>found</b>, and how it <b>slots into a network</b>.</p>
+       <p><b>1. The search structure (Section 3).</b> A candidate activation is built as a small tree of operations.
+       The search composes:</p>
+       <ul>
+         <li><b>Unary functions</b> applied to a single input (e.g. $x$, $-x$, $|x|$, $x^2$, $e^x$, $\\sigma(x)$,
+         $\\tanh(x)$, $\\max(x,0)$, $\\min(x,0)$, $\\sin(x)$, and constants).</li>
+         <li><b>Binary functions</b> combining two of those (e.g. $a+b$, $a\\cdot b$, $a-b$, $a/(1+ b)$,
+         $\\max(a,b)$, $\\min(a,b)$, and gated forms $\\sigma(a)\\cdot b$).</li>
+       </ul>
+       <p>An <b>RNN controller</b> (the same idea as neural architecture search) proposes candidate functions; each is
+       used as the activation in a small child network trained on CIFAR-10; the child's validation accuracy is the
+       reward used to update the controller with reinforcement learning. Exhaustive search covers the smallest trees.
+       The winning structure is the gated binary form $b\\cdot\\sigma(a)$ with $a=b=x$ scaled by $\\beta$ &mdash; i.e.
+       $x\\cdot\\sigma(\\beta x)$, Swish.</p>
+       <p><b>2. Swish inside a layer.</b> Swish is a pointwise (elementwise) activation, a drop-in replacement for
+       ReLU. For a linear layer producing pre-activations $z = Wx+b$, the layer output is $\\sigma(\\beta z)\\odot z$
+       applied elementwise ($\\odot$ is elementwise multiply). It carries no extra weights when $\\beta$ is fixed; the
+       <b>Swish-$\\beta$</b> variant adds <i>one</i> learnable scalar $\\beta$ <b>per channel</b>, trained jointly with
+       the network's other parameters. The paper notes replacing ReLU with Swish is "just a simple one line code
+       change" (Section 4).</p>`,
+
     symbols: [
       { sym: "activation function", desc: "the small nonlinear curve applied to each number after a linear layer; without it a deep network collapses to one linear function." },
       { sym: "$x$", desc: "the input to the activation: one pre-activation number (the output of a linear layer for one unit)." },
       { sym: "$\\sigma(z)$", desc: "the sigmoid (logistic) function $\\sigma(z)=1/(1+e^{-z})$, which squashes any real number $z$ into the open interval $(0,1)$. Here it acts as a soft gate." },
       { sym: "$\\beta$", desc: "beta, a parameter controlling the sharpness of the gate. $\\beta=0$ gives the line $x/2$; $\\beta=1$ is SiLU; $\\beta\\to\\infty$ approaches ReLU. It may be fixed or learned per channel." },
       { sym: "$f(x)$", desc: "the Swish output, $f(x)=x\\cdot\\sigma(\\beta x)$ (Section 4)." },
-      { sym: "$f'(x)$", desc: "the derivative (slope) of Swish with respect to $x$, used in backpropagation: $f'(x)=\\beta f(x)+\\sigma(\\beta x)\\,(1-\\beta f(x))$ (Section 4)." },
+      { sym: "$f'(x)$", desc: "the derivative (slope) of Swish with respect to $x$, used in backpropagation: $f'(x)=\\sigma(\\beta x)+\\beta x\\,\\sigma(\\beta x)(1-\\sigma(\\beta x))=\\beta f(x)+\\sigma(\\beta x)(1-\\beta f(x))$ (Section 4)." },
+      { sym: "$\\partial f/\\partial \\beta$", desc: "the derivative of Swish with respect to the gate-sharpness parameter $\\beta$, equal to $x^2\\,\\sigma(\\beta x)(1-\\sigma(\\beta x))$; used to train $\\beta$ by gradient descent when it is a learnable parameter (Section 4)." },
       { sym: "ReLU", desc: "Rectified Linear Unit, $\\max(0,x)$ — the hard-cornered baseline activation Swish is compared against." },
       { sym: "SiLU / SiL", desc: "Sigmoid-weighted Linear Unit (Elfwing et al., 2017): exactly Swish with $\\beta=1$. PyTorch's $\\texttt{nn.SiLU}$ / $\\texttt{F.silu}$." },
       { sym: "self-gated", desc: "an activation where the input multiplies a gate computed from that same input (here $\\sigma(\\beta x)$), rather than from a separate signal." },
-      { sym: "non-monotonic", desc: "not always increasing: as $x$ rises through the negative region, Swish first goes DOWN (the 'bump') before turning back up — ReLU never does this." }
+      { sym: "non-monotonic", desc: "not always increasing: as $x$ rises through the negative region, Swish first goes DOWN (the 'bump') before turning back up — ReLU never does this." },
+      { sym: "$z=Wx+b$", desc: "the pre-activation: the output of a linear layer (weight matrix $W$ times input $x$ plus bias $b$) that Swish is applied to elementwise." },
+      { sym: "$\\odot$", desc: "elementwise (Hadamard) multiplication — multiply two equal-shaped tensors entry by entry. In a layer Swish computes $\\sigma(\\beta z)\\odot z$." }
     ],
 
     formula:
-      `$$f(x)=x\\cdot\\sigma(\\beta x)=\\frac{x}{1+e^{-\\beta x}}\\qquad(\\text{Section 4})$$
-       $$f'(x)=\\beta\\,f(x)+\\sigma(\\beta x)\\,\\big(1-\\beta\\,f(x)\\big)\\qquad(\\text{derivative, Section 4})$$`,
+      `$$f(x)=x\\cdot\\sigma(\\beta x)=\\frac{x}{1+e^{-\\beta x}},\\qquad \\sigma(z)=\\frac{1}{1+e^{-z}}\\qquad(\\text{Swish, Section 4})$$
+       <p>Swish: the input $x$ times its own sigmoid gate. $\\beta$ is "either a constant or a trainable parameter" (Section 4).</p>
+       $$f'(x)=\\sigma(\\beta x)+\\beta x\\,\\sigma(\\beta x)\\big(1-\\sigma(\\beta x)\\big)=\\beta\\,f(x)+\\sigma(\\beta x)\\big(1-\\beta\\,f(x)\\big)\\qquad(\\text{derivative, Section 4})$$
+       <p>The derivative, used in backpropagation. Left form is the paper's; right form is the same thing regrouped using $x\\,\\sigma(\\beta x)=f(x)$ (see Derivation). Both equal each other.</p>
+       $$f(x)\\Big|_{\\beta=0}=\\tfrac{x}{2},\\qquad f(x)\\Big|_{\\beta=1}=x\\cdot\\sigma(x)=\\mathrm{SiLU}(x),\\qquad \\lim_{\\beta\\to\\infty}f(x)=\\mathrm{ReLU}(x)=\\max(0,x)$$
+       <p>The three limiting cases (Section 4): at $\\beta=0$ the gate is stuck at $0.5$ so Swish is the line $x/2$; at $\\beta=1$ it is exactly the Sigmoid-weighted Linear Unit (SiLU) of Elfwing et al. (2017) &mdash; PyTorch's $\\texttt{F.silu}$; as $\\beta\\to\\infty$ the sigmoid becomes a 0-1 step and Swish approaches ReLU.</p>
+       $$\\beta \\text{ trainable (per channel):}\\quad \\frac{\\partial f}{\\partial \\beta}=x^2\\,\\sigma(\\beta x)\\big(1-\\sigma(\\beta x)\\big)\\qquad(\\text{learnable-}\\beta\\text{ Swish, Section 4})$$
+       <p>When $\\beta$ is a learned parameter ("Swish with a trainable $\\beta$", Section 4), the model tunes the gate sharpness itself; this is its gradient with respect to $\\beta$, so $\\beta$ updates by gradient descent like any weight. "The degree of interpolation can be controlled by the model if $\\beta$ is set as a trainable parameter" (Section 4).</p>`,
 
     whatItDoes:
       `<p>The first line is Swish: take the input $x$ and multiply it by its own sigmoid gate $\\sigma(\\beta x)$.

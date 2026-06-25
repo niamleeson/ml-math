@@ -152,16 +152,42 @@
       { sym: "$f(\\theta)$", desc: "the objective (loss) being minimized as a function of the weights $\\theta$. Lower is better." },
       { sym: "ravine / ill-conditioned", desc: "a loss surface much steeper in some directions (the walls) than others (the floor). Plain SGD bounces across the steep walls while crawling along the shallow floor." },
       { sym: "velocity", desc: "the accumulated, decayed sum of past downhill steps that momentum carries between iterations — the optimizer's 'speed and direction', not the instantaneous gradient." },
-      { sym: "lookahead", desc: "in NAG, the point $\\theta_t+\\mu v_t$ you would reach by applying the decayed velocity before computing the gradient — 'look before you leap'." }
+      { sym: "lookahead", desc: "in NAG, the point $\\theta_t+\\mu v_t$ you would reach by applying the decayed velocity before computing the gradient — 'look before you leap'." },
+      { sym: "$\\lambda$", desc: "lambda: an eigenvalue of the loss's curvature (Hessian) along one eigen-direction — how steep the bowl is in that direction. Large $\\lambda$ = a steep wall, small $\\lambda$ = the shallow floor. Used in Theorem 2.1." },
+      { sym: "$\\mu_{\\text{eff}}$", desc: "the effective momentum NAG uses along an eigen-direction, $\\mu(1-\\lambda\\varepsilon)$: smaller than $\\mu$ where curvature $\\lambda$ is high, which is how NAG self-damps the steep directions (Theorem 2.1)." },
+      { sym: "$R$", desc: "the condition number of the curvature at the minimum: the ratio of the largest to the smallest eigenvalue. Large $R$ = a long narrow ravine; it is what makes plain SGD slow." },
+      { sym: "$\\mu_{\\max}$", desc: "the cap on the momentum schedule in eq. (5); the experiments swept it over $\\{0.999,0.995,0.99,0.9,0\\}$ (with $0$ being plain SGD)." },
+      { sym: "$t$", desc: "the iteration (step) index. In eq. (5) it indexes the parameter update; $\\lfloor t/250\\rfloor$ bumps the momentum every 250 updates." },
+      { sym: "$T$", desc: "the total number of iterations, used in the convergence-rate bounds ($O(1/T)$, $O(1/T^2)$): how fast the loss falls as you run longer." },
+      { sym: "$L$", desc: "the Lipschitz constant of the gradient $\\nabla f$ — a smoothness bound (roughly the largest curvature). It scales the deterministic part of the stochastic convergence rate." },
+      { sym: "$\\sigma$", desc: "sigma: the standard deviation (noise) of the stochastic gradient estimate. The $\\sigma/\\sqrt{T}$ term dominates late in training and is the same for SGD and accelerated methods, erasing the asymptotic advantage." }
     ],
 
     formula:
-      `$$\\textbf{Classical momentum (eqs. 1-2):}\\quad
+      `$$\\textbf{Classical momentum (CM), eqs. (1)-(2):}\\quad
         v_{t+1}=\\mu v_t-\\varepsilon\\nabla f(\\theta_t),\\qquad
         \\theta_{t+1}=\\theta_t+v_{t+1}$$
-       $$\\textbf{Nesterov accelerated gradient (eqs. 3-4):}\\quad
+       <p>Eqs. (1)-(2), Section 2: keep a velocity, decay it by $\\mu$, subtract a learning-rate-sized gradient step taken AT the current point $\\theta_t$, then move by the velocity.</p>
+       $$\\textbf{Nesterov accelerated gradient (NAG), eqs. (3)-(4):}\\quad
         v_{t+1}=\\mu v_t-\\varepsilon\\nabla f(\\theta_t+\\mu v_t),\\qquad
-        \\theta_{t+1}=\\theta_t+v_{t+1}$$`,
+        \\theta_{t+1}=\\theta_t+v_{t+1}$$
+       <p>Eqs. (3)-(4), Section 2: identical to CM except the gradient is evaluated at the <b>lookahead</b> point $\\theta_t+\\mu v_t$ (after the decayed velocity is applied). The paper notes this is NAG "rewritten" into momentum form; it differs from CM "only in the precise update of the velocity vector $v$".</p>
+       $$\\textbf{Velocity as a decayed sum of past gradients:}\\quad
+        v_{t+1}=-\\varepsilon\\sum_{i=0}^{t}\\mu^{\\,t-i}\\,\\nabla f(\\theta_i)\\quad(\\text{from }v_0=0)$$
+       <p>Unrolling eq. (1): the velocity is a geometrically weighted sum of all past gradients, amplified by about $\\tfrac{1}{1-\\mu}$ along directions of persistent descent.</p>
+       $$\\textbf{Theorem 2.1 — NAG = CM with rescaled momentum:}\\quad
+        \\mu_{\\text{eff}}=\\mu\\,(1-\\lambda\\varepsilon)$$
+       <p>Theorem 2.1 (Section 2.1): on a positive-definite quadratic, along each eigen-direction NAG behaves exactly like CM but with an effective momentum $\\mu(1-\\lambda\\varepsilon)$, where $\\lambda$ is that direction's eigenvalue (curvature). So NAG automatically uses <i>smaller</i> momentum in high-curvature directions ($\\lambda$ large), which is what damps the oscillation; when $\\varepsilon\\lambda\\ll 1$ the two methods coincide.</p>
+       $$\\textbf{Polyak acceleration:}\\quad
+        \\mu=\\frac{\\sqrt{R}-1}{\\sqrt{R}+1}\\;\\Rightarrow\\;\\text{convergence in } \\sqrt{R}\\text{ times fewer iterations}$$
+       <p>Section 2: Polyak (1964) showed CM with this $\\mu$ reaches a given accuracy in $\\sqrt{R}$ times fewer steps than steepest descent, where $R$ is the condition number at the minimum.</p>
+       $$\\textbf{Momentum schedule, eq. (5):}\\quad
+        \\mu_t=\\min\\!\\Big(1-2^{-1-\\log_2(\\lfloor t/250\\rfloor+1)},\\ \\mu_{\\max}\\Big),\\qquad
+        \\mu_{\\max}\\in\\{0.999,0.995,0.99,0.9,0\\}$$
+       <p>Eq. (5), Section 3: the "slowly increasing" momentum schedule used in the experiments — $\\mu$ rises toward $\\mu_{\\max}$ as training proceeds (it amounts to $\\mu_t\\approx 1-3/(t+5)$, following Nesterov 1983).</p>
+       $$\\textbf{Convergence rates (smooth convex):}\\quad
+        \\text{GD: }O(1/T),\\qquad \\text{NAG: }O(1/T^2)$$
+       <p>Section 2: for general smooth (non-strongly) convex $f$ with deterministic gradients, NAG attains $O(1/T^2)$ versus gradient descent's $O(1/T)$. In the <b>stochastic</b> setting these rates become $O(L/T+\\sigma/\\sqrt{T})$ for SGD and $O(L/T^2+\\sigma/\\sqrt{T})$ for an accelerated method — equal once the noise term $\\sigma/\\sqrt{T}$ dominates, so the acceleration only helps in the early "transient phase".</p>`,
 
     whatItDoes:
       `<p>The first line (CM) says: shrink the old velocity to $\\mu v_t$, subtract a fresh learning-rate-sized

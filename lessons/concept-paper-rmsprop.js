@@ -142,6 +142,31 @@
        "mini-batch version of rprop": it averages gradients (so it survives mini-batch noise, unlike rprop) and
        it forgets the past (so the step does not vanish, unlike AdaGrad).</p>`,
 
+    architecture:
+      `<p>RMSProp is an <b>optimizer</b>, so its "architecture" is a per-iteration procedure, applied
+       <i>element-wise and independently</i> to every parameter. State and data flow per update step $t$:</p>
+       <ul>
+         <li><b>Persistent state (one tensor per parameter, same shape as the parameter).</b> The MeanSquare
+         buffer $s$, initialized to all zeros. This is the only extra memory RMSProp keeps &mdash; it is what
+         makes RMSProp a <i>stateful</i> optimizer, unlike plain SGD which keeps no state. (Compare: AdaGrad
+         keeps one accumulator $G$; Adam keeps two, a first- and second-moment buffer.)</li>
+         <li><b>Inputs to each step.</b> The current gradient $g_t = \\partial E/\\partial \\theta$ (computed
+         upstream by backprop / autograd), plus the hyperparameters $\\rho$ (decay), $\\alpha$ (learning rate),
+         $\\epsilon$ (stabilizer).</li>
+         <li><b>Stage 1 &mdash; accumulate.</b> $s \\leftarrow \\rho\\,s + (1-\\rho)\\,g_t^2$. Element-wise square,
+         element-wise blend into the buffer. No cross-parameter interaction; no matrix operations.</li>
+         <li><b>Stage 2 &mdash; normalize.</b> Form the per-element denominator $\\sqrt{s}+\\epsilon$ (element-wise
+         square root), then the normalized direction $g_t / (\\sqrt{s}+\\epsilon)$.</li>
+         <li><b>Stage 3 &mdash; step.</b> $\\theta \\leftarrow \\theta - \\alpha\\,g_t/(\\sqrt{s}+\\epsilon)$,
+         an in-place update done under <code>torch.no_grad()</code> so the optimizer's own arithmetic is not
+         tracked by autograd.</li>
+       </ul>
+       <p><b>Data flow across steps:</b> loss &rarr; backward() produces $g_t$ &rarr; Stage 1 folds $g_t^2$ into
+       $s$ &rarr; Stages 2&ndash;3 use the updated $s$ to scale $g_t$ and move $\\theta$ &rarr; zero the
+       gradients &rarr; repeat. Because $s$ carries forward, each step's denominator reflects a running window
+       of recent gradient magnitudes rather than just the current one. There are no layers, no learnable
+       weights inside the optimizer, and no bias-correction term (unlike Adam).</p>`,
+
     symbols: [
       { sym: "$t$", desc: "the timestep / update counter, incremented by one on each update." },
       { sym: "$\\theta_t$", desc: "theta: the parameter (weight) vector after the update at step $t$. $\\theta_{t-1}$ is its value before this step." },
@@ -158,9 +183,27 @@
     ],
 
     formula:
-      `$$s_t = \\rho\\,s_{t-1} + (1-\\rho)\\,g_t^2
-        \\qquad\\text{(slide 6e: }\\text{MeanSquare}(w,t)=0.9\\,\\text{MeanSquare}(w,t{-}1)+0.1\\,g_t^2\\text{)}$$
-       $$\\theta_t = \\theta_{t-1} - \\frac{\\alpha}{\\sqrt{s_t}+\\epsilon}\\,g_t$$`,
+      `$$\\text{MeanSquare}(w,t)=0.9\\,\\text{MeanSquare}(w,t{-}1)+0.1\\left(\\frac{\\partial E}{\\partial w}(t)\\right)^2$$
+       <p>Slide 6e, verbatim &mdash; the moving average of the squared gradient. In this lesson's
+       notation $s_t = \\rho\\,s_{t-1} + (1-\\rho)\\,g_t^2$ with $\\rho=0.9$ (so the new squared gradient
+       gets weight $1-\\rho=0.1$).</p>
+       $$\\theta_t = \\theta_{t-1} - \\frac{\\alpha}{\\sqrt{s_t}+\\epsilon}\\,g_t$$
+       <p>The parameter step (slide 6e in words: "Dividing the gradient by $\\sqrt{\\text{MeanSquare}(w,t)}$
+       makes the learning work much better"). $\\epsilon$ is outside the square root, matching
+       $\\texttt{torch.optim.RMSprop}$.</p>
+       $$G_t = G_{t-1} + g_t^2,\\qquad \\theta_t = \\theta_{t-1} - \\frac{\\alpha}{\\sqrt{G_t}+\\epsilon}\\,g_t
+         \\qquad\\text{(AdaGrad, for contrast)}$$
+       <p>AdaGrad's accumulator $G_t$ is an <b>unbounded sum</b> of all past squared gradients &mdash; it only
+       grows, so $\\alpha/\\sqrt{G_t}\\to 0$ and the step vanishes. RMSProp's single change is replacing this
+       sum with the <b>bounded decaying average</b> $s_t$ above. (AdaGrad is shown for contrast; it is not in
+       Hinton's slides, which only cover rprop and rmsprop.)</p>
+       $$\\Delta w_{ij} = -\\,\\varepsilon\\,g_{ij}\\,\\frac{\\partial E}{\\partial w_{ij}},\\qquad
+         g_{ij}(t)=\\begin{cases} g_{ij}(t{-}1)+0.05 & \\text{if }\\tfrac{\\partial E}{\\partial w_{ij}}(t)\\,\\tfrac{\\partial E}{\\partial w_{ij}}(t{-}1)\\gt 0\\\\[2pt] g_{ij}(t{-}1)\\times 0.95 & \\text{otherwise}\\end{cases}$$
+       <p>Slide 6d, the per-connection adaptive-gain rule RMSProp's lineage builds on: a local gain $g_{ij}$
+       (start 1) grows additively when consecutive gradient signs agree, shrinks multiplicatively when they
+       disagree. rprop (slide 6d) is the same idea using only the gradient's sign, multiplying the step by
+       1.2 (signs agree) or 0.5 (disagree), with step sizes clamped between a millionth and 50. RMSProp is
+       "a mini-batch version of rprop" that achieves this robustness via the bounded average $s_t$ instead.</p>`,
 
     whatItDoes:
       `<p>The top line keeps a decaying running average $s_t$ of each weight's squared gradient &mdash; the

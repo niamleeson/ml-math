@@ -129,11 +129,38 @@
        network &mdash; and because successive snapshots sit in different valleys, <b>averaging their predictions
        gives a free ensemble</b> (Section 4.3). One training run, several models.</p>`,
 
+    architecture:
+      `<p>SGDR is not a network architecture &mdash; it is a <b>per-iteration learning-rate procedure</b> that wraps
+       any SGD optimizer. There is no new layer, weight, or forward pass; the entire method is the schedule that
+       sets $\\eta_t$ each step. Its state and per-step procedure:</p>
+       <ul>
+         <li><b>Fixed inputs:</b> $\\eta_{max}$ (the optimizer's base learning rate), $\\eta_{min}$ (default $0$),
+         the first-run length $T_0$, and the multiplier $T_{mult}$ (default $1$).</li>
+         <li><b>Mutable state (two counters):</b> $T_{cur}$ &mdash; epochs since the last restart, init $0$; and
+         $T_i$ &mdash; the current run's length, init $T_0$. These are the ONLY things the schedule remembers.</li>
+       </ul>
+       <p><b>Data flow each training step:</b></p>
+       <ol>
+         <li>Read the two counters &rarr; compute $\\eta_t$ from Eq. (5).</li>
+         <li>Hand $\\eta_t$ to the optimizer; it runs the ordinary momentum-SGD update (Eqs. 3&ndash;4) on the model
+         weights. The weights and the schedule counters are the two separate pieces of state.</li>
+         <li>Advance the clock: $T_{cur}\\mathrel{+}= \\Delta$ (one batch's fraction of an epoch).</li>
+         <li>If $T_{cur}\\ge T_i$ &rarr; <b>restart</b>: set $T_{cur}=0$ and $T_i=T_{mult}\\,T_i$; weights pass
+         through untouched. Optionally checkpoint the weights here &mdash; that snapshot is a usable model.</li>
+       </ol>
+       <p>So the "architecture" is a tiny stateful wrapper (two integers) feeding a scalar into an unchanged
+       optimizer; <code>torch.optim.lr_scheduler.CosineAnnealingWarmRestarts</code> is exactly this object.</p>`,
+
     symbols: [
       { sym: "learning rate", desc: "the step size in gradient descent: how far the weights move along the (negative) gradient each update. SGDR schedules this value over time." },
       { sym: "warm restart", desc: "resetting the learning rate back up to its maximum while KEEPING the current weights and momentum (only the learning rate restarts, not the model). 'Warm' because we don't start from scratch." },
       { sym: "epoch", desc: "one full pass over the training set. The paper measures schedule length in epochs, but $T_{cur}$ is updated every mini-batch, so it can be fractional." },
-      { sym: "$\\eta_t$", desc: "eta-t: the learning rate at time $t$ &mdash; the quantity the schedule outputs. (The paper writes $\\eta_t$; PyTorch calls it the optimizer's lr.)" },
+      { sym: "$x_t$", desc: "the model's weight vector (all trainable parameters) at iteration $t$. SGDR updates this only through the ordinary SGD step; the schedule never touches the weights." },
+      { sym: "$\\nabla f_t(x_t)$", desc: "the gradient of the loss $f_t$ on the current mini-batch with respect to the weights $x_t$ &mdash; the downhill direction the SGD update follows. The subscript $t$ marks that each step sees a different mini-batch." },
+      { sym: "$H_t^{-1}$", desc: "the inverse Hessian (inverse matrix of second derivatives of the loss) at step $t$. Appears only in Eq. (2), the second-order method the paper contrasts against; SGDR does NOT compute it." },
+      { sym: "$v_t$", desc: "the momentum velocity at step $t$: a running blend of past gradient directions (Eq. 3). The momentum-SGD update steps the weights by $v_{t+1}$ instead of the raw gradient." },
+      { sym: "$\\mu_t$", desc: "mu-t: the momentum coefficient (typically $\\approx 0.9$) weighting how much of the previous velocity carries forward in Eq. (3)." },
+      { sym: "$\\eta_t$", desc: "eta-t: the learning rate at time $t$ &mdash; the quantity the schedule outputs and the only thing SGDR sets. (The paper writes $\\eta_t$; PyTorch calls it the optimizer's lr.)" },
       { sym: "$\\eta_{min}^{i}$", desc: "the MINIMUM learning rate within run $i$ (the bottom of the cosine curve). Default $0$ in the paper. Often written just $\\eta_{min}$." },
       { sym: "$\\eta_{max}^{i}$", desc: "the MAXIMUM learning rate within run $i$ (the top of the cosine, the value the learning rate jumps back to at a restart). Equals the optimizer's base learning rate; kept constant across runs in the paper." },
       { sym: "$T_{cur}$", desc: "T-current: how many epochs have elapsed SINCE THE LAST RESTART (updated every batch, so it can be fractional, e.g. 0.1). Resets to $0$ at each restart." },
@@ -143,11 +170,40 @@
     ],
 
     formula:
-      `$$\\eta_t = \\eta_{min}^{i} + \\tfrac{1}{2}\\left(\\eta_{max}^{i}-\\eta_{min}^{i}\\right)
-        \\left(1 + \\cos\\!\\left(\\frac{T_{cur}}{T_i}\\,\\pi\\right)\\right)$$`,
+      `$$x_{t+1} = x_t - \\eta_t\\,\\nabla f_t(x_t)$$
+       <p>Eq. (1), §1 &mdash; plain stochastic gradient descent: step the weights $x$ downhill along the
+       mini-batch gradient $\\nabla f_t$, scaled by the learning rate $\\eta_t$. SGDR changes only how $\\eta_t$ is
+       set over time; this update is untouched.</p>
+
+       $$x_{t+1} = x_t - \\eta_t\\,H_t^{-1}\\,\\nabla f_t(x_t)$$
+       <p>Eq. (2), §1 &mdash; the second-order ideal (precondition the gradient by the inverse Hessian $H_t^{-1}$),
+       quoted by the paper only to contrast: warm restarts are a cheap first-order alternative to such curvature
+       methods.</p>
+
+       $$v_{t+1} = \\mu_t\\,v_t - \\eta_t\\,\\nabla f_t(x_t) \\qquad x_{t+1} = x_t + v_{t+1}$$
+       <p>Eqs. (3)&ndash;(4), §1 &mdash; SGD with Nesterov momentum: keep a velocity $v$ that blends the past
+       direction (weight $\\mu_t$) with the new gradient, then step by it. This is the actual optimizer SGDR wraps;
+       $\\eta_t$ still comes from the schedule below.</p>
+
+       $$\\eta_t = \\eta_{min}^{i} + \\tfrac{1}{2}\\left(\\eta_{max}^{i}-\\eta_{min}^{i}\\right)
+        \\left(1 + \\cos\\!\\left(\\frac{T_{cur}}{T_i}\\,\\pi\\right)\\right)$$
+       <p>Eq. (5), §3 &mdash; THE method: cosine annealing with warm restarts. Within run $i$ the learning rate
+       slides from $\\eta_{max}^{i}$ (at $T_{cur}=0$, since $\\cos 0=1$) down to $\\eta_{min}^{i}$ (at
+       $T_{cur}=T_i$, since $\\cos\\pi=-1$) along half a cosine. At a restart $T_{cur}$ snaps to $0$, jumping
+       $\\eta_t$ back to $\\eta_{max}$.</p>
+
+       $$T_{cur} \\to 0,\\qquad T_i \\to T_{mult}\\,T_i \\quad\\text{when } T_{cur}=T_i$$
+       <p>The restart rule, §3 &mdash; when the run finishes, reset the within-run clock $T_{cur}$ to $0$ and grow
+       the next run's length by the factor $T_{mult}$. Unrolled, the $i$-th run has length
+       $T_i = T_0\\,(T_{mult})^{i}$, so with $T_{mult}=1$ all runs are equal length and with $T_{mult}=2$ they
+       double each time.</p>`,
 
     whatItDoes:
-      `<p>This is <b>Eq. (5)</b> of the paper (Section 3): the learning rate at any moment within a run. Read the
+      `<p><b>Eqs. (1)&ndash;(4)</b> are the optimizer SGDR rides on top of: Eq. (1) is one plain SGD step, Eqs.
+       (3)&ndash;(4) are the same step with Nesterov momentum (a velocity that smooths the direction), and Eq. (2)
+       is the second-order ideal SGDR cheaply approximates. None of these change &mdash; SGDR only feeds them a
+       time-varying $\\eta_t$.</p>
+       <p><b>Eq. (5)</b> of the paper (Section 3) is that $\\eta_t$: the learning rate at any moment within a run. Read the
        cosine factor $\\cos(\\pi\\,T_{cur}/T_i)$: at the start of a run $T_{cur}=0$, so $\\cos(0)=1$ and the bracket
        $(1+\\cos)=2$, giving $\\eta_t=\\eta_{max}$ (top of the curve). At the end $T_{cur}=T_i$, so
        $\\cos(\\pi)=-1$, the bracket is $0$, and $\\eta_t=\\eta_{min}$ (bottom). In between, the cosine slides

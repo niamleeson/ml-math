@@ -133,16 +133,40 @@
       { sym: "$\\nabla_{\\mathbf{v}}L$", desc: "the gradient with respect to the direction parameter $\\mathbf{v}$ (how the loss changes if we rotate the weight)." },
       { sym: "conditioning", desc: "how well-shaped the loss surface is for gradient descent. 'Better conditioned' means a single step size works well in all directions, so you can use a larger learning rate without diverging." },
       { sym: "Batch Normalization (BN)", desc: "the prior method this paper contrasts with: it normalizes a layer's outputs using mean and variance computed across the mini-batch, which couples the examples together." },
-      { sym: "data-dependent initialization", desc: "the paper's startup trick: run one mini-batch through the net and set $g$ and the biases so each neuron's pre-activation begins with mean 0 and variance 1." }
+      { sym: "data-dependent initialization", desc: "the paper's startup trick: run one mini-batch through the net and set $g$ and the biases so each neuron's pre-activation begins with mean 0 and variance 1." },
+      { sym: "$\\mathbf{x}$", desc: "the input vector fed to the neuron during the initialization forward pass (one example's features)." },
+      { sym: "$t$", desc: "the neuron's pre-activation before scaling: $t=\\mathbf{v}\\cdot\\mathbf{x}/\\lVert\\mathbf{v}\\rVert$, the input dotted with the unit direction. Used only in the data-dependent init." },
+      { sym: "$\\mu[t]$", desc: "the mean of the pre-activation $t$ over the one initialization mini-batch (average across examples)." },
+      { sym: "$\\sigma[t]$", desc: "the standard deviation of the pre-activation $t$ over the initialization mini-batch (spread across examples)." },
+      { sym: "$b$", desc: "the neuron's bias: the constant added after the weighted sum. Set during init to $-\\mu[t]/\\sigma[t]$ so the pre-activation has mean 0." },
+      { sym: "$M_{\\mathbf{w}}$", desc: "the projection matrix $I-\\mathbf{w}\\mathbf{w}^{\\top}/\\lVert\\mathbf{w}\\rVert^{2}$ that removes the component of a vector along $\\mathbf{w}$; the paper uses it to write the $\\mathbf{v}$-gradient as a single projection of $\\nabla_{\\mathbf{w}}L$." },
+      { sym: "$I$", desc: "the identity matrix (leaves a vector unchanged when multiplied), used inside the projection matrix $M_{\\mathbf{w}}$." }
     ],
 
     formula:
       `$$\\mathbf{w}=\\frac{g}{\\lVert\\mathbf{v}\\rVert}\\,\\mathbf{v},
         \\qquad\\text{so that}\\qquad \\lVert\\mathbf{w}\\rVert=g.$$
+       <p>The reparameterization (Eq. 2, Section 2): the weight $\\mathbf{w}$ is a length $g$ times the unit
+       direction $\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$, which forces $\\lVert\\mathbf{w}\\rVert=g$.</p>
        $$\\nabla_{g}L=\\frac{\\nabla_{\\mathbf{w}}L\\cdot\\mathbf{v}}{\\lVert\\mathbf{v}\\rVert},
         \\qquad
         \\nabla_{\\mathbf{v}}L=\\frac{g}{\\lVert\\mathbf{v}\\rVert}\\,\\nabla_{\\mathbf{w}}L
-        -\\frac{g\\,\\nabla_{g}L}{\\lVert\\mathbf{v}\\rVert^{2}}\\,\\mathbf{v}.$$`,
+        -\\frac{g\\,\\nabla_{g}L}{\\lVert\\mathbf{v}\\rVert^{2}}\\,\\mathbf{v}.$$
+       <p>The gradients (Eq. 3, Section 2.1): $\\nabla_g L$ projects the ordinary gradient $\\nabla_{\\mathbf{w}}L$
+       onto the direction $\\mathbf{v}$; $\\nabla_{\\mathbf{v}}L$ is the same gradient scaled by
+       $g/\\lVert\\mathbf{v}\\rVert$ with its component along $\\mathbf{v}$ subtracted out, so it is perpendicular
+       to $\\mathbf{v}$. An equivalent form given in the paper writes
+       $\\nabla_{\\mathbf{v}}L=\\frac{g}{\\lVert\\mathbf{v}\\rVert}M_{\\mathbf{w}}\\,\\nabla_{\\mathbf{w}}L$ with the
+       projection matrix $M_{\\mathbf{w}}=I-\\frac{\\mathbf{w}\\mathbf{w}^{\\top}}{\\lVert\\mathbf{w}\\rVert^{2}}$.</p>
+       $$t=\\frac{\\mathbf{v}\\cdot\\mathbf{x}}{\\lVert\\mathbf{v}\\rVert},
+        \\qquad
+        g\\leftarrow\\frac{1}{\\sigma[t]},
+        \\qquad
+        b\\leftarrow-\\frac{\\mu[t]}{\\sigma[t]}.$$
+       <p>The data-dependent initialization (Section 3): for each neuron, compute the pre-activation
+       $t=\\mathbf{v}\\cdot\\mathbf{x}/\\lVert\\mathbf{v}\\rVert$ over one mini-batch, then set the length $g$ and
+       bias $b$ from the batch mean $\\mu[t]$ and standard deviation $\\sigma[t]$ of $t$ so that the post-init
+       pre-activation $y=g\\,t+b$ starts with mean $0$ and variance $1$ across that batch.</p>`,
 
     whatItDoes:
       `<p>The top equation (Eq. 2, Section 2) is the whole reparameterization: build the weight $\\mathbf{w}$ as a
@@ -152,7 +176,12 @@
        direction $\\mathbf{v}$ to update the length $g$. The second takes the part of $\\nabla_{\\mathbf{w}}L$
        that is <b>perpendicular</b> to $\\mathbf{v}$ (the subtraction removes the component along $\\mathbf{v}$)
        and scales it by $g/\\lVert\\mathbf{v}\\rVert$ &mdash; so updating $\\mathbf{v}$ only ever rotates the weight,
-       never lengthens it.</p>`,
+       never lengthens it.</p>
+       <p>The last block (Section 3) is the data-dependent initialization. After sampling $\\mathbf{v}$, it pushes
+       one mini-batch through, measures the pre-activation $t=\\mathbf{v}\\cdot\\mathbf{x}/\\lVert\\mathbf{v}\\rVert$
+       for each neuron, and chooses $g=1/\\sigma[t]$ and $b=-\\mu[t]/\\sigma[t]$. Dividing by $\\sigma[t]$ rescales
+       the pre-activation to unit variance and subtracting $\\mu[t]/\\sigma[t]$ re-centers it to zero mean &mdash;
+       so every neuron starts in a healthy range, the one-time benefit batch norm gives for free.</p>`,
 
     derivation:
       `<p>There is no separate concept lesson for this primitive, so here is the full reasoning.</p>

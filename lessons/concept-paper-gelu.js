@@ -139,23 +139,42 @@
       { sym: "$\\sigma(z)$", desc: "the logistic sigmoid $1/(1+e^{-z})$, an S-shaped function from 0 to 1. The cheapest approximation uses $\\Phi(x)\\approx\\sigma(1.702x)$." },
       { sym: "$\\sqrt{2/\\pi}$", desc: "a fixed constant (about 0.7979) inside the tanh approximation; $\\pi$ is the circle constant 3.14159…" },
       { sym: "$0.044715$", desc: "a fixed fitted constant in the tanh approximation, multiplying the cubic term $x^3$ to better match the exact curve away from zero." },
-      { sym: "ReLU", desc: "rectified linear unit, $\\max(0,x)$: the hard-gating baseline GELU is contrasted against — it keeps positive inputs and zeroes negative ones, with a non-smooth kink at 0." }
+      { sym: "ReLU", desc: "rectified linear unit, $\\max(0,x)$: the hard-gating baseline GELU is contrasted against — it keeps positive inputs and zeroes negative ones, with a non-smooth kink at 0." },
+      { sym: "$m$", desc: "a random 0/1 mask in the paper's stochastic motivation, drawn $m\\sim\\mathrm{Bernoulli}(\\Phi(x))$ (i.e. $m=1$ with probability $\\Phi(x)$). Averaging $m\\cdot x$ gives the deterministic GELU $x\\Phi(x)$." },
+      { sym: "$\\mathbb{E}[\\cdot]$", desc: "the expected (average) value over the random mask $m$. The expectation of $m\\cdot x$ is what defines GELU." },
+      { sym: "$\\mu,\\ \\sigma$", desc: "the mean and standard deviation of the normal whose CDF $\\Phi_{\\mu,\\sigma}$ does the gating. The paper fixes $\\mu=0,\\ \\sigma=1$ (standard normal) but notes they may be learned." },
+      { sym: "SiLU", desc: "Sigmoid Linear Unit, $x\\,\\sigma(x)$: the variant from replacing the normal CDF with the logistic CDF $\\sigma$. Distinct from GELU's sigmoid approximation $x\\,\\sigma(1.702x)$, which has the extra 1.702 factor." }
     ],
 
     formula:
-      `$$\\mathrm{GELU}(x)=x\\,\\Phi(x)=x\\cdot\\tfrac12\\!\\left[\\,1+\\operatorname{erf}\\!\\left(\\frac{x}{\\sqrt{2}}\\right)\\right]$$
+      `<p><b>Stochastic motivation (Section 2).</b> Multiply the input by a random 0/1 mask $m$ drawn so that
+       it is 1 with probability $\\Phi(x)$ and 0 otherwise; GELU is the <i>expected</i> output of that mask:</p>
+       $$\\mathbb{E}\\!\\left[m\\cdot x\\right]=\\Phi(x)\\cdot(1\\cdot x)+\\bigl(1-\\Phi(x)\\bigr)\\cdot(0\\cdot x)=x\\,\\Phi(x)$$
+       <p><b>Exact definition (Section 2, "GELU Formulation"):</b></p>
+       $$\\mathrm{GELU}(x)=x\\,\\Phi(x)=x\\cdot\\tfrac12\\!\\left[\\,1+\\operatorname{erf}\\!\\left(\\frac{x}{\\sqrt{2}}\\right)\\right]$$
        <p><b>tanh approximation (Section 2):</b></p>
        $$\\mathrm{GELU}(x)\\approx 0.5\\,x\\left(1+\\tanh\\!\\left[\\sqrt{2/\\pi}\\,\\bigl(x+0.044715\\,x^{3}\\bigr)\\right]\\right)$$
        <p><b>sigmoid approximation (Section 2):</b></p>
-       $$\\mathrm{GELU}(x)\\approx x\\,\\sigma(1.702\\,x)$$`,
+       $$\\mathrm{GELU}(x)\\approx x\\,\\sigma(1.702\\,x)$$
+       <p><b>General CDF form (Section 2).</b> $\\Phi$ can be the CDF of any normal with mean $\\mu$ and standard
+       deviation $\\sigma$; these may even be learned. The paper fixes $\\mu=0,\\ \\sigma=1$ throughout. Replacing
+       $\\Phi$ with the logistic CDF $\\sigma$ gives the Sigmoid Linear Unit (SiLU):</p>
+       $$\\mathrm{GELU}_{\\mu,\\sigma}(x)=x\\,\\Phi_{\\mu,\\sigma}(x),\\qquad \\mathrm{SiLU}(x)=x\\,\\sigma(x)$$`,
 
     whatItDoes:
-      `<p>The top equation (Section 2, "GELU Formulation") is the exact definition: multiply the input $x$ by the
-       probability $\\Phi(x)$ that a standard-normal draw lies at or below $x$, written in closed form with the
-       error function. Big positive inputs pass through (their $\\Phi\\approx1$); very negative inputs are
+      `<p>The <b>first equation</b> is the paper's motivation: it imagines randomly keeping ($m=1$) or zeroing
+       ($m=0$) the input, where "keep" happens with probability $\\Phi(x)$. Averaging that random behavior gives
+       the deterministic activation $x\\,\\Phi(x)$ &mdash; so GELU is the <i>expected</i> output of a stochastic
+       gate, blending dropout-style zeroing with the input's own value.</p>
+       <p>The <b>second equation</b> (Section 2, "GELU Formulation") is the exact definition: multiply the input
+       $x$ by the probability $\\Phi(x)$ that a standard-normal draw lies at or below $x$, written in closed form
+       with the error function. Big positive inputs pass through (their $\\Phi\\approx1$); very negative inputs are
        suppressed (their $\\Phi\\approx0$); inputs near zero are halved ($\\Phi(0)=\\tfrac12$). The two
-       approximations replace the erf with a cheaper <code>tanh</code> or sigmoid that trace nearly the same
-       curve &mdash; the paper offers them "if greater feedforward speed is worth the cost of exactness."</p>`,
+       <b>approximations</b> replace the erf with a cheaper <code>tanh</code> or sigmoid that trace nearly the same
+       curve &mdash; the paper offers them "if greater feedforward speed is worth the cost of exactness." The
+       <b>last equation</b> says the gating CDF need not be the standard normal: any mean $\\mu$ / standard
+       deviation $\\sigma$ (even learned) works, and swapping in the logistic CDF $\\sigma$ yields the SiLU
+       $x\\,\\sigma(x)$.</p>`,
 
     derivation:
       `<p>The general "what is an activation function and why must it be nonlinear" picture is owned by the
