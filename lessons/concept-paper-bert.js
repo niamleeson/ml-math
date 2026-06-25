@@ -150,14 +150,46 @@
        linear map to a score (logit) per vocabulary word &mdash; and softmax + cross-entropy against the true
        word is the loss. That is exactly the language-model loss of the <b>dl-language-model</b> concept, just
        applied at the masked slots with two-sided context.</p>`,
+    architecture:
+      `<p>BERT is "a multi-layer bidirectional Transformer encoder" (&sect;3) &mdash; the encoder block from
+       <b>paper-transformer</b> (multi-head self-attention &rarr; position-wise feed-forward, each wrapped in
+       residual + LayerNorm), stacked $L$ times with <b>no causal mask</b> so every position attends to every
+       other. Three sizes parameterize it: $L$ = number of stacked layers, $H$ = hidden width, $A$ = number of
+       attention heads; the feed-forward inner size is fixed at $4H$.</p>
+       <ul>
+        <li><b>BERT-BASE:</b> $L=12$, $H=768$, $A=12$ &mdash; $110$M parameters (sized to match GPT for a fair
+        comparison).</li>
+        <li><b>BERT-LARGE:</b> $L=24$, $H=1024$, $A=16$ &mdash; $340$M parameters.</li>
+       </ul>
+       <p><b>Input side (&sect;3.2).</b> Text is split by <b>WordPiece</b> (sub-word tokenization, 30,000-token
+       vocabulary). Every sequence starts with the special <code>[CLS]</code> token and uses <code>[SEP]</code>
+       to mark sentence boundaries: <code>[CLS]</code> A <code>[SEP]</code> B <code>[SEP]</code>. Each token's
+       input vector is the sum of three width-$H$ embeddings &mdash; token + segment (which sentence) + position
+       &mdash; as in the formula panel. The final hidden vector over <code>[CLS]</code>, written $\\mathbf{C}$,
+       is the pooled summary used for sentence-level outputs (e.g. NSP, and downstream classification).</p>
+       <p><b>Two heads on one trunk.</b> The same encoder feeds two pre-training heads at once: the <b>MLM head</b>
+       (a linear map $H \\to V$ at masked positions) and the <b>NSP head</b> (a binary linear map on
+       $\\mathbf{C}$). No task-specific architecture is bolted on.</p>
+       <p><b>Pre-train &rarr; fine-tune paradigm (&sect;3, Figure 1).</b> First <i>pre-train</i> the encoder on
+       large unlabeled text with MLM + NSP. Then <i>fine-tune</i>: initialize from the pre-trained weights, add a
+       small task-specific output layer, and update <i>all</i> parameters on the labeled downstream data. One
+       architecture, swap only the top layer &mdash; sentence-pair tasks read $\\mathbf{C}$, token-level tasks
+       (e.g. SQuAD span prediction) read the per-token $\\mathbf{h}_i$. See <b>paper-transformer</b> for the
+       encoder block internals this lesson reuses.</p>`,
     symbols: [
       { sym: "token", desc: "one unit of input &mdash; a word or sub-word piece. BERT's input is a sequence of tokens; a few are special, like <code>[MASK]</code> and <code>[CLS]</code>." },
       { sym: "$[\\text{MASK}]$", desc: "a special placeholder token that replaces a hidden word in the input. The model's job is to predict what word was there." },
+      { sym: "$[\\text{CLS}]$", desc: "the special <b>classification</b> token placed first in every sequence. Its final hidden vector $\\mathbf{C}$ is the pooled summary used for sentence-level outputs (NSP, downstream classification) (&sect;3.2)." },
+      { sym: "$[\\text{SEP}]$", desc: "a special <b>separator</b> token marking sentence boundaries in a pair: <code>[CLS]</code> A <code>[SEP]</code> B <code>[SEP]</code> (&sect;3.2)." },
+      { sym: "WordPiece", desc: "the sub-word tokenizer BERT uses (30,000-token vocabulary). Rare words split into known pieces, so $V$ stays bounded (&sect;3.2)." },
+      { sym: "$\\mathbf{E}^{\\text{token}}, \\mathbf{E}^{\\text{segment}}, \\mathbf{E}^{\\text{position}}$", desc: "the three learned width-$H$ embeddings whose <b>sum</b> is each token's input vector $\\mathbf{E}_i$ &mdash; the WordPiece id, the sentence (A/B) it belongs to, and its absolute position (&sect;3.2)." },
+      { sym: "$\\mathbf{C}$", desc: "the final hidden vector above <code>[CLS]</code> (the pooled vector $\\mathbf{h}_0$); the NSP head and downstream classifiers read it." },
       { sym: "bidirectional", desc: "a plain term: using context on <b>both</b> sides of a position. Opposite of <b>left-to-right / causal / unidirectional</b>, which uses only the words before the position." },
-      { sym: "MLM", desc: "<b>Masked Language Model</b>: the training objective of hiding some input tokens and predicting them from the surrounding (two-sided) context." },
-      { sym: "$V$", desc: "the <b>vocabulary size</b>: how many distinct tokens the model knows. The MLM head outputs one score per vocabulary token, so it has $V$ outputs." },
+      { sym: "MLM", desc: "<b>Masked Language Model</b>: the pre-training objective of hiding some input tokens and predicting them from the surrounding (two-sided) context (&sect;3.1)." },
+      { sym: "NSP", desc: "<b>Next Sentence Prediction</b>: the second pre-training objective &mdash; a binary classifier on $\\mathbf{C}$ deciding whether sentence B is the true continuation of A (IsNext vs. NotNext), 50% each at training time (&sect;3.1)." },
+      { sym: "$V$", desc: "the <b>vocabulary size</b> (WordPiece, $\\approx 30{,}000$): how many distinct tokens the model knows. The MLM head outputs one score per vocabulary token, so it has $V$ outputs." },
       { sym: "$L$", desc: "the number of <b>stacked encoder layers</b> (Transformer blocks). BERT-BASE uses $L=12$, BERT-LARGE $L=24$ (&sect;3)." },
-      { sym: "$d_{\\text{model}}$ (a.k.a. $H$)", desc: "the <b>hidden width</b>: length of every token vector. BERT-BASE uses $768$, BERT-LARGE $1024$ (&sect;3)." },
+      { sym: "$H$ (a.k.a. $d_{\\text{model}}$)", desc: "the <b>hidden width</b>: length of every token vector. BERT-BASE uses $H=768$, BERT-LARGE $H=1024$; the feed-forward inner size is $4H$ (&sect;3)." },
       { sym: "$A$", desc: "the number of <b>attention heads</b> per layer (paper-transformer's $h$). BERT-BASE $12$, BERT-LARGE $16$ (&sect;3)." },
       { sym: "$M$", desc: "the set of <b>masked positions</b> chosen for a sentence (about 15% of its tokens). The MLM loss is summed only over $M$." },
       { sym: "$x_i$", desc: "the <b>original</b> (true) token at position $i$ &mdash; the target the model must reconstruct when $i$ is masked." },
@@ -165,7 +197,27 @@
       { sym: "$\\mathrm{softmax}$", desc: "turns a row of scores into positive weights summing to $1$: $\\mathrm{softmax}(z)_j = e^{z_j}/\\sum_l e^{z_l}$. Here it makes the head's $V$ logits a probability over words." },
       { sym: "causal mask", desc: "a plain term: a rule applied inside attention forbidding a position from attending to positions <i>after</i> it (used by left-to-right models). BERT omits it; the ablation re-adds it." }
     ],
-    formula: `$$ \\mathcal{L}_{\\text{MLM}} \\;=\\; -\\frac{1}{|M|}\\sum_{i \\in M} \\log \\hat{p}_i\\big[x_i\\big], \\qquad \\hat{p}_i \\;=\\; \\mathrm{softmax}\\big(W\\,\\mathbf{h}_i + b\\big) \\quad\\text{(\\S 3.1, Masked LM)} $$`,
+    formula: `<p><b>(a) Input embedding (&sect;3.2).</b> Each token's input vector is the sum of three learned
+       embeddings of width $H$ &mdash; the WordPiece token id, the segment (sentence A vs. B), and the absolute
+       position:</p>
+       $$ \\mathbf{E}_i \\;=\\; \\mathbf{E}^{\\text{token}}_i \\;+\\; \\mathbf{E}^{\\text{segment}}_i \\;+\\; \\mathbf{E}^{\\text{position}}_i \\;\\in\\; \\mathbb{R}^{H} \\qquad\\text{(\\S 3.2, input representation)} $$
+       <p>A whole sequence is laid out as <code>[CLS]</code> $A_1\\ldots A_m$ <code>[SEP]</code> $B_1\\ldots B_n$
+       <code>[SEP]</code>. Stacking the encoder gives final hidden vectors $\\mathbf{h}_i \\in \\mathbb{R}^{H}$;
+       call the one above <code>[CLS]</code> the pooled vector $\\mathbf{C} = \\mathbf{h}_0$.</p>
+       <p><b>(b) Masking scheme (&sect;3.1).</b> Choose $15\\%$ of token positions. Each chosen position $i$ is
+       corrupted in the input by one of three cases, then its <i>original</i> word $x_i$ is the prediction
+       target:</p>
+       $$ \\text{input}_i \\;=\\; \\begin{cases} [\\text{MASK}] & \\text{with prob. } 0.8 \\\\ \\text{random token} & \\text{with prob. } 0.1 \\\\ x_i \\ (\\text{unchanged}) & \\text{with prob. } 0.1 \\end{cases} \\qquad\\text{(\\S 3.1, 80/10/10)} $$
+       <p><b>(c) Masked-LM loss (&sect;3.1).</b> "The final hidden vectors corresponding to the mask tokens are
+       fed into an output softmax over the vocabulary." With $M$ the masked positions and $V$ the WordPiece
+       vocabulary:</p>
+       $$ \\hat{p}_i \\;=\\; \\mathrm{softmax}\\big(W_{\\text{mlm}}\\,\\mathbf{h}_i + b_{\\text{mlm}}\\big) \\in \\mathbb{R}^{V}, \\qquad \\mathcal{L}_{\\text{MLM}} \\;=\\; -\\frac{1}{|M|}\\sum_{i \\in M} \\log \\hat{p}_i\\big[x_i\\big] $$
+       <p><b>(d) Next-Sentence-Prediction loss (&sect;3.1).</b> A binary softmax on the pooled <code>[CLS]</code>
+       vector $\\mathbf{C}$ predicts whether sentence $B$ truly follows $A$ ($y \\in \\{\\text{IsNext},
+       \\text{NotNext}\\}$, $50\\%$ each at training time):</p>
+       $$ \\hat{q} \\;=\\; \\mathrm{softmax}\\big(W_{\\text{nsp}}\\,\\mathbf{C} + b_{\\text{nsp}}\\big) \\in \\mathbb{R}^{2}, \\qquad \\mathcal{L}_{\\text{NSP}} \\;=\\; -\\log \\hat{q}\\big[y\\big] $$
+       <p>Pre-training minimizes $\\mathcal{L}_{\\text{MLM}} + \\mathcal{L}_{\\text{NSP}}$. Our tiny build
+       implements (b)&ndash;(c); (a) and (d) are stated here in full but kept out of the toy run for clarity.</p>`,
     whatItDoes:
       `<p>Read it right to left. $\\mathbf{h}_i$ is the encoder's output vector at position $i$ &mdash; a
        summary of that slot built from the <b>whole sentence on both sides</b>, because there is no causal

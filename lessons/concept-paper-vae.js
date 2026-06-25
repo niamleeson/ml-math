@@ -130,11 +130,38 @@
        draw. The trick (&sect;2.3, Eqn. 4): write $z = \\mu + \\sigma\\odot\\epsilon$ with
        $\\epsilon\\sim N(0,I)$ fixed. Now the sample is a deterministic, differentiable function of the
        encoder's outputs, and the randomness lives in $\\epsilon$, which carries no parameters.</p>
-       <p><b>Step 4 &mdash; the closed-form KL.</b> Because both the encoder Gaussian and the prior are
-       Gaussian, the KL term has an exact formula (Appendix B) &mdash; no sampling needed. So the practical
-       per-datapoint objective (Eqn. 7) is: <i>analytic KL</i> $+$ <i>one Monte-Carlo sample of the
-       reconstruction</i>. That whole thing is differentiable; maximize it with stochastic gradient ascent
-       (equivalently, minimize its negative). Encoder and decoder train jointly, end to end.</p>`,
+       <p><b>Step 4 &mdash; the closed-form KL and the SGVB estimator.</b> Because both the encoder Gaussian and
+       the prior are Gaussian, the KL term has an exact formula (Appendix B) &mdash; no sampling needed. So the
+       practical per-datapoint estimator (Eqn. 7, $\\widetilde{\\mathcal{L}}^{B}$) is: <i>analytic KL</i> $+$
+       <i>a single Monte-Carlo sample of the reconstruction</i> ($L{=}1$). Averaging this over a minibatch and
+       rescaling by $N/M$ gives the dataset estimator (Eqn. 8). That whole thing is differentiable; maximize it
+       with stochastic gradient ascent (equivalently, minimize its negative). Encoder and decoder train jointly,
+       end to end &mdash; the paper's <b>AEVB</b> algorithm.</p>`,
+    architecture:
+      `<p>The VAE is a single feed-forward graph with one stochastic node in the middle. Data flows
+       <b>encoder &rarr; reparameterized sample &rarr; decoder</b>, and the loss attaches two terms to that
+       graph (Appendix C gives the MLP forms).</p>
+       <p><b>1. Encoder $q_\\phi(z\\mid x)$ &mdash; the recognition network (Appendix C.2).</b> An MLP maps the
+       input $x$ through a shared hidden layer, then <b>splits into two heads</b> that output, per latent
+       dimension $j$, a mean $\\mu_j$ and a log-variance $\\log\\sigma_j^2$. Together these define a diagonal
+       Gaussian $q_\\phi(z\\mid x) = N(\\mu,\\sigma^2 I)$. We predict $\\log\\sigma^2$ rather than $\\sigma$ so
+       the head's output is unconstrained on the whole real line; then $\\sigma = e^{\\frac{1}{2}\\log\\sigma^2}$.</p>
+       <p><b>2. Latent sampling via reparameterization (&sect;2.4, Eqn. 4).</b> Draw fixed noise
+       $\\epsilon\\sim N(0,I)$ and form $z = \\mu + \\sigma\\odot\\epsilon$. This is the stochastic node, but
+       written so gradients still flow to $\\mu,\\sigma$ (the noise carries no parameters). Latent dimension is
+       $J$ (e.g. $20$).</p>
+       <p><b>3. Decoder $p_\\theta(x\\mid z)$ &mdash; the generative network (Appendix C.1).</b> An MLP maps the
+       code $z$ back up through a hidden layer to the data dimension, ending in a sigmoid. For binary/normalized
+       pixels this is a <b>Bernoulli</b> likelihood: the outputs $y$ are per-pixel probabilities and
+       $\\log p_\\theta(x\\mid z) = \\sum_i\\big[x_i\\log y_i + (1-x_i)\\log(1-y_i)\\big]$ &mdash; exactly the
+       negative binary cross-entropy.</p>
+       <p><b>How the loss attaches.</b> The <b>reconstruction</b> term is that Bernoulli log-likelihood
+       (BCE between decoder output $y$ and input $x$, summed over pixels), evaluated at the sampled $z$. The
+       <b>KL</b> term is computed directly from the encoder's heads $(\\mu,\\log\\sigma^2)$ via the Appendix-B
+       closed form &mdash; it touches the encoder only, never the decoder. Summing the two gives the negative
+       ELBO; backpropagation flows from the reconstruction back <i>through the reparameterized $z$</i> into both
+       networks, while the KL term adds its gradient straight to the encoder heads. To <b>generate</b>, discard
+       the encoder: draw $z\\sim p(z)=N(0,I)$ and run the decoder alone.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input datapoint</b> (here a 784-pixel MNIST image) we want to model and rebuild." },
       { sym: "$z$", desc: "the <b>latent variable</b> (the code): a short hidden vector assumed to have generated $x$. We never observe it; we infer a distribution over it." },
@@ -149,24 +176,52 @@
       { sym: "$\\odot$", desc: "<b>element-wise multiply</b>: multiply matching entries of two vectors." },
       { sym: "$D_{KL}(q\\,\\Vert\\,p)$", desc: "the <b>Kullback&ndash;Leibler (KL) divergence</b>: a non-negative number measuring how far the encoder's Gaussian $q$ is from the prior $p$. It is $0$ exactly when they match, and grows as they differ." },
       { sym: "$\\mathcal{L}(\\theta,\\phi;x)$", desc: "the <b>variational lower bound</b>, a.k.a. the <b>ELBO</b> (Evidence Lower BOund): a computable quantity that never exceeds $\\log p_\\theta(x)$. We <i>maximize</i> it (so we minimize $-\\mathcal{L}$)." },
-      { sym: "$\\mathbb{E}_{q_\\phi}[\\cdot]$", desc: "the <b>expectation</b> (average) of the bracketed quantity over codes $z$ drawn from the encoder $q_\\phi(z\\mid x)$." }
+      { sym: "$\\mathbb{E}_{q_\\phi}[\\cdot]$", desc: "the <b>expectation</b> (average) of the bracketed quantity over codes $z$ drawn from the encoder $q_\\phi(z\\mid x)$." },
+      { sym: "$g_\\phi(\\epsilon,x)$", desc: "the <b>reparameterization map</b> (Eqn. 4): the deterministic, differentiable function that turns fixed noise $\\epsilon$ and input $x$ into a sample $z$. For the Gaussian encoder it is $\\mu + \\sigma\\odot\\epsilon$." },
+      { sym: "$J$", desc: "the <b>number of latent dimensions</b> &mdash; the length of the code $z$ (and of $\\mu$, $\\sigma$). The Appendix-B KL sums over $j = 1,\\dots,J$." },
+      { sym: "$L$", desc: "the number of <b>Monte-Carlo samples</b> of $z$ used to estimate the reconstruction term per datapoint (Eqn. 7). In practice $L = 1$ once minibatches are large enough." },
+      { sym: "$N,\\,M$", desc: "the <b>full-dataset size</b> $N$ and the <b>minibatch size</b> $M$. Eqn. 8 rescales the minibatch average by $N/M$ so it estimates the full-dataset bound." },
+      { sym: "$\\widetilde{\\mathcal{L}}^{B}$", desc: "the <b>SGVB estimator</b> (Eqn. 7): the practical estimate of $\\mathcal{L}$ that keeps the KL analytic and Monte-Carlo-samples only the reconstruction." }
     ],
-    formula: `$$ \\mathcal{L}(\\theta,\\phi;x) \\;=\\; -\\,D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z)\\big) \\;+\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\qquad\\text{(Eqn. 3)} $$
-$$ z \\;=\\; \\mu + \\sigma\\odot\\epsilon,\\quad \\epsilon\\sim N(0,I) \\;\\;\\text{(Eqn. 4)} \\qquad -D_{KL} = \\tfrac{1}{2}\\sum_{j=1}^{J}\\big(1 + \\log\\sigma_j^2 - \\mu_j^2 - \\sigma_j^2\\big) \\;\\;\\text{(App. B)} $$`,
+    formula: `<p><b>&sect;2.2 &mdash; the exact identity (Eqn. 1).</b> The log-evidence splits into the bound plus the gap to the true posterior:</p>
+$$ \\log p_\\theta(x) \\;=\\; D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z\\mid x)\\big) \\;+\\; \\mathcal{L}(\\theta,\\phi;x) \\qquad\\text{(Eqn. 1)} $$
+<p>The first term is a KL divergence, so it is $\\ge 0$; therefore $\\mathcal{L} \\le \\log p_\\theta(x)$ &mdash; $\\mathcal{L}$ is a <b>lower bound</b>, and tightening it pushes $q_\\phi$ toward the true posterior $p_\\theta(z\\mid x)$.</p>
+<p><b>The bound itself (Eqn. 2 and its split, Eqn. 3).</b></p>
+$$ \\mathcal{L}(\\theta,\\phi;x) \\;=\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x,z) - \\log q_\\phi(z\\mid x)\\big] \\qquad\\text{(Eqn. 2)} $$
+$$ \\mathcal{L}(\\theta,\\phi;x) \\;=\\; -\\,D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z)\\big) \\;+\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\qquad\\text{(Eqn. 3)} $$
+<p>Eqn. 3 is the working form: a <b>KL regularizer</b> (encoder toward prior) plus a <b>reconstruction</b> (expected log-likelihood of $x$).</p>
+<p><b>&sect;2.4 &mdash; the reparameterization trick.</b> Replace the random draw $z\\sim q_\\phi$ with a deterministic, differentiable map of fixed noise $\\epsilon$:</p>
+$$ z \\;=\\; g_\\phi(\\epsilon,x) \\;=\\; \\mu + \\sigma\\odot\\epsilon,\\qquad \\epsilon\\sim N(0,I) \\qquad\\text{(Eqn. 4)} $$
+<p><b>&sect;2.3 &mdash; the SGVB estimator (Eqn. 7).</b> Use Eqn. 4 to turn the expectation into a sample average; with a Gaussian encoder and prior the KL is analytic, so only the reconstruction is sampled ($L$ draws, $L{=}1$ in practice):</p>
+$$ \\widetilde{\\mathcal{L}}^{B}(\\theta,\\phi;x) \\;=\\; -\\,D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z)\\big) \\;+\\; \\frac{1}{L}\\sum_{l=1}^{L}\\log p_\\theta(x\\mid z^{(l)}),\\qquad z^{(l)}=\\mu+\\sigma\\odot\\epsilon^{(l)} \\qquad\\text{(Eqn. 7)} $$
+<p><b>Appendix B &mdash; the closed-form Gaussian KL.</b> For encoder $q_\\phi(z\\mid x)=N(\\mu,\\sigma^2 I)$ against prior $p_\\theta(z)=N(0,I)$, over $J$ latent dimensions:</p>
+$$ -\\,D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z)\\big) \\;=\\; \\tfrac{1}{2}\\sum_{j=1}^{J}\\big(1 + \\log\\sigma_j^2 - \\mu_j^2 - \\sigma_j^2\\big) \\qquad\\text{(App. B)} $$
+<p><b>Eqn. 8 &mdash; the minibatch objective.</b> Average the per-point bound over a minibatch of $M$ points and rescale to the full dataset of $N$:</p>
+$$ \\mathcal{L}(\\theta,\\phi;X) \\;\\approx\\; \\widetilde{\\mathcal{L}}^{M} \\;=\\; \\frac{N}{M}\\sum_{i=1}^{M}\\widetilde{\\mathcal{L}}\\big(\\theta,\\phi;x^{(i)}\\big) \\qquad\\text{(Eqn. 8)} $$
+<p>This whole quantity is differentiable in $(\\theta,\\phi)$ &mdash; maximize it by stochastic gradient ascent (equivalently minimize $-\\widetilde{\\mathcal{L}}^{M}$). That is the <b>AEVB</b> algorithm.</p>`,
     whatItDoes:
-      `<p><b>Eqn. 3 (the ELBO)</b> is the whole objective, written as two terms we maximize together:</p>
+      `<p><b>Eqn. 1</b> says the only reason $\\mathcal{L}$ falls short of the true log-evidence
+       $\\log p_\\theta(x)$ is the KL gap $D_{KL}(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z\\mid x))$ to the true
+       posterior. That gap is $\\ge 0$, so $\\mathcal{L}$ is a genuine lower bound, and raising it both improves
+       the model and sharpens the encoder.</p>
+       <p><b>Eqn. 3 (the ELBO)</b> is the working objective &mdash; two terms maximized together:</p>
        <ul>
         <li>$-D_{KL}\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p_\\theta(z)\\big)$ &mdash; the <b>regularizer</b>. It is
-        large (close to $0$, its maximum) when the encoder's Gaussian sits near the prior. This is what makes
-        all the codes pile up near $N(0,I)$ so the latent space is smooth and samplable.</li>
-        <li>$\\mathbb{E}_{q_\\phi}[\\log p_\\theta(x\\mid z)]$ &mdash; the <b>reconstruction</b> term. It is
-        large when codes drawn from the encoder decode back to the original $x$ with high probability.</li>
+        largest (at $0$) when the encoder's Gaussian sits on the prior. This is what makes the codes pile up
+        near $N(0,I)$ so the latent space is smooth and samplable.</li>
+        <li>$\\mathbb{E}_{q_\\phi}[\\log p_\\theta(x\\mid z)]$ &mdash; the <b>reconstruction</b> term, large
+        when codes drawn from the encoder decode back to the original $x$ with high probability.</li>
        </ul>
        <p>The two pull against each other: reconstruction wants codes spread out and informative; the KL term
        wants them squeezed toward the prior. The balance is the VAE.</p>
-       <p><b>Eqn. 4</b> is the reparameterization: it replaces the non-differentiable “sample $z$”
-       with the differentiable $\\mu + \\sigma\\epsilon$. <b>Appendix B</b> gives the KL in closed form, so the
-       first term needs no sampling at all &mdash; you plug $\\mu$ and $\\log\\sigma^2$ straight in.</p>`,
+       <p><b>Eqn. 4</b> is the reparameterization: it rewrites the non-differentiable “sample $z$” as
+       $z=\\mu+\\sigma\\odot\\epsilon$ with the randomness isolated in a parameter-free $\\epsilon\\sim N(0,I)$.
+       <b>Eqn. 7</b> (the SGVB estimator $\\widetilde{\\mathcal{L}}^{B}$) then estimates Eqn. 3 by keeping the
+       KL <i>analytic</i> and Monte-Carlo-sampling only the reconstruction &mdash; in practice with a single
+       draw, $L{=}1$. <b>Appendix B</b> supplies that analytic KL in closed form, so you plug $\\mu$ and
+       $\\log\\sigma^2$ straight in &mdash; no sampling for the first term at all. <b>Eqn. 8</b> averages over a
+       minibatch and rescales by $N/M$ to estimate the full-dataset bound, which is what stochastic gradient
+       ascent actually steps on.</p>`,
     derivation:
       `<p><b>Short recap &mdash; full math in the concept lesson.</b> Why is Eqn. 3 a valid <i>lower</i> bound,
        and why does the trick let gradients through? Start from $\\log p_\\theta(x)$ and multiply inside by

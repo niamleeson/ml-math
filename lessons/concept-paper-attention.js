@@ -102,26 +102,45 @@
     // ★ HOW IT WORKS ★
     walkthrough:
       `<p>Think of attention as a soft lookup table. You hold a <b>query</b> (what you are looking for). The table
-       has rows, each with a <b>key</b> (a label saying what that row is about) and a <b>value</b> (the content
-       stored there). Instead of returning one row, attention returns a <i>blend</i> of all the values, weighted
-       by how well the query matches each key.</p>
+       has rows, each with a <b>key</b> (a label for that row) and a <b>value</b> (its content). Instead of
+       returning one row, attention returns a <i>blend</i> of all the values, weighted by how well the query
+       matches each key. Trace one query through Equation (1):</p>
        <ol>
-         <li><b>Score.</b> For one query, take the <b>dot product</b> with every key. The dot product of two
-         vectors is large when they point the same way, so it measures match. With many queries at once this is
-         the matrix product $QK^\\top$: row $i$, column $j$ is "how well query $i$ matches key $j$".</li>
-         <li><b>Scale.</b> Divide every score by $\\sqrt{d_k}$, where $d_k$ is the length of the key/query
-         vectors. This is the paper's key detail; the next paragraph says why.</li>
-         <li><b>Softmax.</b> Turn each query's row of scores into <b>weights</b> that are all positive and sum to
-         1, by applying the softmax function across the keys. Big scores get most of the weight.</li>
-         <li><b>Weighted sum.</b> Multiply the weights by the values and add them up: each query's output is a
-         convex combination (a weighted average) of all the value vectors. As a matrix product, that is
-         (weights)$\\,V$.</li>
+         <li><b>Score.</b> Dot the query with every key. The dot product is large when two vectors point the same
+         way, so it measures match. For all queries at once this is the matrix $QK^\\top$.</li>
+         <li><b>Scale.</b> Divide every score by $\\sqrt{d_k}$ (the query/key length). See <code>derivation</code>
+         for why this exact factor.</li>
+         <li><b>Softmax.</b> Across the keys, turn each query's row of scores into positive weights that sum to 1.
+         Big scores get most of the weight.</li>
+         <li><b>Blend.</b> Each query's output is those weights times the values &mdash; a weighted average of all
+         value vectors. As a matrix product, (weights)$\\,V$.</li>
        </ol>
-       <p><b>Why the $\\sqrt{d_k}$?</b> Suppose each entry of the query and key is roughly independent with mean
-       0 and variance 1. A dot product sums $d_k$ such products, so its variance grows like $d_k$ and its typical
-       size grows like $\\sqrt{d_k}$. If those raw scores get large, the softmax becomes nearly one-hot and its
-       gradient nearly vanishes &mdash; learning stalls. Dividing by $\\sqrt{d_k}$ rescales the scores back to
-       variance about 1, keeping the softmax in a healthy range (Section 3.2.1).</p>`,
+       <p>One such operation is one "head". The <code>architecture</code> field shows how the model stacks $h$ of
+       them (multi-head) and follows each attention block with a per-position feed-forward network.</p>`,
+
+    architecture:
+      `<p>The attention block has three parts, each a piece of one of the three equations above.</p>
+       <p><b>Q, K, V.</b> Every token is turned into three vectors. A <b>query</b> $Q$ says "what I want"; a
+       <b>key</b> $K$ says "what I offer"; a <b>value</b> $V$ says "what I pass on if chosen". In self-attention
+       all three come from the same tokens through separate learned linear maps. Queries and keys must share length
+       $d_k$ so their dot product is defined; values use length $d_v$, which sets the output width.</p>
+       <p><b>The single-head flow (Equation 1), in order:</b></p>
+       <ul>
+         <li><b>Dot-product score</b> $QK^\\top$, shape $(n_q,n_k)$: entry $(i,j)$ is query $i$ dotted with key $j$ &mdash; a raw match score.</li>
+         <li><b>Scale</b> by $1/\\sqrt{d_k}$. The score is a sum of $d_k$ unit-variance products, so its spread grows like $\\sqrt{d_k}$; dividing pulls it back to spread $\\approx1$ and stops the softmax from saturating.</li>
+         <li><b>Softmax over keys</b> (the last axis): each query's row becomes positive weights that sum to 1 &mdash; the attention map.</li>
+         <li><b>Weighted sum</b> of values: multiply the weight matrix by $V$. Each query's output is a convex blend of all value vectors, shape $(n_q,d_v)$.</li>
+       </ul>
+       <p><b>Multi-head (Equation set 2).</b> One attention can only average one way. The model runs $h$ heads in
+       parallel: head $i$ first projects $Q,K,V$ down with its own learned matrices $W_i^{Q},W_i^{K},W_i^{V}$
+       (from $d_{\\mathrm{model}}=512$ to $d_k=d_v=64$), then runs scaled dot-product attention. Each head can
+       specialize on a different relationship (e.g. one tracks the previous word, another tracks the subject). The
+       $h=8$ head outputs are <b>concatenated</b> back to width $h\\,d_v=512$ and mixed by one final projection
+       $W^{O}$. Total cost is similar to one full-width head because each head is $1/h$ as wide.</p>
+       <p><b>Position-wise feed-forward (Equation 3).</b> After attention mixes information <i>across</i> positions,
+       the FFN transforms each position <i>independently</i>: a linear map up to $d_{ff}=2048$, a ReLU, then a
+       linear map back down to $d_{\\mathrm{model}}=512$. Same weights at every position. Attention moves
+       information between tokens; the FFN does the per-token nonlinear processing.</p>`,
 
     symbols: [
       { sym: "token", desc: "one unit of the input sequence (a word or sub-word). Attention operates over a set of tokens." },
@@ -139,18 +158,43 @@
       { sym: "$QK^\\top$", desc: "the raw score matrix, shape $(n_q, n_k)$: entry $(i,j)$ is the dot product of query $i$ with key $j$ — how well they match." },
       { sym: "$\\sqrt{d_k}$", desc: "the square root of $d_k$; dividing the scores by it keeps the dot products from growing large and saturating the softmax (Section 3.2.1)." },
       { sym: "softmax", desc: "a function that turns a row of real numbers into positive weights that sum to 1; here applied across keys so each query's weights form a distribution." },
-      { sym: "attention map", desc: "the $(n_q, n_k)$ matrix of softmax weights after scaling — how much each query attends to each key. Each row sums to 1." }
+      { sym: "attention map", desc: "the $(n_q, n_k)$ matrix of softmax weights after scaling — how much each query attends to each key. Each row sums to 1." },
+      { sym: "$d_{\\mathrm{model}}$", desc: "the model's main embedding width — the length of each token vector flowing between layers. In the paper, $d_{\\mathrm{model}}=512$." },
+      { sym: "$h$", desc: "the number of attention heads run in parallel. In the paper, $h=8$, and $d_k=d_v=d_{\\mathrm{model}}/h=64$." },
+      { sym: "$\\mathrm{head}_i$", desc: "the output of the $i$-th attention head: scaled dot-product attention on $Q,K,V$ after each is projected by that head's own learned matrices." },
+      { sym: "$W_i^{Q},W_i^{K},W_i^{V}$", desc: "per-head learned projection matrices, shapes $d_{\\mathrm{model}}\\times d_k$, $d_{\\mathrm{model}}\\times d_k$, $d_{\\mathrm{model}}\\times d_v$ — they map full-width vectors down into head $i$'s subspace." },
+      { sym: "$\\mathrm{Concat}$", desc: "stacking the $h$ head outputs side by side along the feature axis, giving width $h\\,d_v$ (which equals $d_{\\mathrm{model}}$ here)." },
+      { sym: "$W^{O}$", desc: "the output projection, shape $h\\,d_v\\times d_{\\mathrm{model}}$, that mixes the concatenated heads back into one $d_{\\mathrm{model}}$-wide vector." },
+      { sym: "$x$", desc: "in the feed-forward network, the $d_{\\mathrm{model}}$-wide vector at one position (the attention output for that token)." },
+      { sym: "$W_1,b_1$", desc: "the first feed-forward layer: weight $d_{\\mathrm{model}}\\times d_{ff}$ and bias, expanding each position from width $d_{\\mathrm{model}}$ up to $d_{ff}$." },
+      { sym: "$W_2,b_2$", desc: "the second feed-forward layer: weight $d_{ff}\\times d_{\\mathrm{model}}$ and bias, projecting back down to width $d_{\\mathrm{model}}$." },
+      { sym: "$d_{ff}$", desc: "the inner (hidden) width of the position-wise feed-forward network. In the paper, $d_{ff}=2048$." },
+      { sym: "$\\max(0,\\cdot)$", desc: "the ReLU nonlinearity: keep positive values, set negatives to 0. The only nonlinearity inside the feed-forward network." }
     ],
 
     formula:
-      `$$\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\!\\left(\\frac{QK^{\\top}}{\\sqrt{d_k}}\\right)V$$`,
+      `<p><b>(1) Scaled dot-product attention</b> &mdash; the core operation (Equation&nbsp;1, §3.2.1):</p>
+       $$\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\!\\left(\\frac{QK^{\\top}}{\\sqrt{d_k}}\\right)V$$
+       <p><b>(2) Multi-head attention</b> &mdash; run $h$ attentions in parallel on learned projections, concatenate, project once more (§3.2.2):</p>
+       $$\\mathrm{MultiHead}(Q,K,V)=\\mathrm{Concat}(\\mathrm{head}_1,\\dots,\\mathrm{head}_h)\\,W^{O}$$
+       $$\\mathrm{head}_i=\\mathrm{Attention}\\!\\left(QW_i^{Q},\\,KW_i^{K},\\,VW_i^{V}\\right)$$
+       <p>with projection shapes $W_i^{Q}\\in\\mathbb{R}^{d_{\\mathrm{model}}\\times d_k}$, $W_i^{K}\\in\\mathbb{R}^{d_{\\mathrm{model}}\\times d_k}$, $W_i^{V}\\in\\mathbb{R}^{d_{\\mathrm{model}}\\times d_v}$, and $W^{O}\\in\\mathbb{R}^{h\\,d_v\\times d_{\\mathrm{model}}}$. The paper uses $h=8$, $d_k=d_v=d_{\\mathrm{model}}/h=64$, $d_{\\mathrm{model}}=512$.</p>
+       <p><b>(3) Position-wise feed-forward network</b> &mdash; applied to each position separately after attention (Equation&nbsp;2, §3.3):</p>
+       $$\\mathrm{FFN}(x)=\\max(0,\\,xW_1+b_1)\\,W_2+b_2$$
+       <p>Input and output have width $d_{\\mathrm{model}}=512$; the inner layer has width $d_{ff}=2048$. The $\\max(0,\\cdot)$ is a ReLU.</p>`,
 
     whatItDoes:
-      `<p>This is <b>Equation (1)</b> of the paper (Section 3.2.1). Read it right to left through the softmax:
-       $QK^\\top$ scores every query against every key; dividing by $\\sqrt{d_k}$ keeps those scores at a sane
-       scale; the softmax turns each query's row of scores into weights that sum to 1; and multiplying by $V$
-       returns, for each query, the weighted average of the value vectors. The output has shape $(n_q, d_v)$ —
-       one value-sized vector per query.</p>`,
+      `<p><b>Equation (1), in words.</b> $QK^\\top$ scores every query against every key; dividing by $\\sqrt{d_k}$
+       keeps those scores at a sane scale; the softmax turns each query's row of scores into weights that sum to 1;
+       multiplying by $V$ returns, for each query, the weighted average of the value vectors. Output shape
+       $(n_q,d_v)$ — one value-sized vector per query.</p>
+       <p><b>Equation set (2), in words.</b> Instead of one attention over full-width vectors, project $Q,K,V$ into
+       $h$ smaller subspaces with learned matrices, run scaled dot-product attention separately in each (the
+       heads), glue the $h$ outputs together, and apply one more learned projection $W^{O}$. Result: the model
+       attends to several kinds of relationships at once for about the same compute as one full head.</p>
+       <p><b>Equation (2)/FFN, in words.</b> Take each position's vector on its own, push it through a one-hidden-layer
+       network (widen to $d_{ff}$, ReLU, narrow back to $d_{\\mathrm{model}}$). This adds per-token nonlinear
+       processing on top of the cross-token mixing that attention provides.</p>`,
 
     derivation:
       `<p>The intuition behind attention &mdash; soft, content-based lookup, and how dot-product scores become a

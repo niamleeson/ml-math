@@ -127,6 +127,30 @@
        $D^*_G(x) = p_{\\text{data}}(x) / (p_{\\text{data}}(x) + p_g(x))$. Plugging that back, the game's value is
        minimized only when $p_g = p_{\\text{data}}$ &mdash; the fakes match the real distribution &mdash; at which
        point $D^* = \\tfrac12$ everywhere (it can only guess) and $V = -\\log 4$.</p>`,
+    architecture:
+      `<p>GAN has <b>three moving parts</b>: two networks and the game that couples them.</p>
+       <ul>
+        <li><b>Generator $G(z;\\theta_g)$.</b> Input: a noise vector $z\\sim p_z$ (fixed simple prior). A neural net
+        (here an MLP: $z\\!\\to\\!256\\!\\to\\!512\\!\\to\\!784$, <code>tanh</code> output) maps it to a fake sample in data
+        space. Its outputs implicitly define the distribution $p_g$. $G$ has no access to real data &mdash; it only
+        ever sees gradients passed back <i>through</i> $D$.</li>
+        <li><b>Discriminator $D(x;\\theta_d)$.</b> Input: a sample $x$ (real or fake). A neural net
+        ($784\\!\\to\\!512\\!\\to\\!256\\!\\to\\!1$ logit) outputs one number $D(x)\\in[0,1]$ = its estimated probability
+        that $x$ is <b>real</b>. It is a binary real-vs-fake classifier.</li>
+        <li><b>The adversarial loop</b> (Algorithm 1, &sect;3). Each iteration alternates two opposed updates that
+        share no gradients through $G(z)$:
+          <ul>
+            <li><b>$D$-step</b> ($k$ times, often $k=1$): gradient <i>ascent</i> on $V$ &mdash; pull $D(x)\\to 1$ on a
+            real minibatch and $D(G(z))\\to 0$ on a fake one. The fakes are <b>detached</b> so this step moves only
+            $\\theta_d$.</li>
+            <li><b>$G$-step</b> (once): gradient <i>descent</i> for $G$ &mdash; in practice <i>ascend</i>
+            $\\log D(G(z))$ (non-saturating) to push $D(G(z))\\to 1$, fooling the current $D$. Moves only $\\theta_g$.</li>
+          </ul>
+        </li>
+        <li><b>The value-function game.</b> The two steps are the two players of one objective
+        $\\min_G \\max_D V(D,G)$: there is no separate target distribution to fit and no likelihood &mdash; $D$ <i>is</i>
+        the learned, moving loss that teaches $G$. At equilibrium $p_g = p_{\\text{data}}$ and $D\\equiv\\tfrac12$.</li>
+       </ul>`,
     symbols: [
       { sym: "$G(z;\\theta_g)$", desc: "the <b>generator</b>: a neural net (weights $\\theta_g$) that maps a noise vector $z$ to a fake data sample. Implicitly defines a distribution $p_g$ over its outputs." },
       { sym: "$D(x;\\theta_d)$", desc: "the <b>discriminator</b>: a neural net (weights $\\theta_d$) outputting a single number in $[0,1]$ &mdash; its estimated probability that $x$ is <b>real</b> (from $p_{\\text{data}}$) rather than from $G$." },
@@ -138,10 +162,19 @@
       { sym: "$\\mathbb{E}_{x\\sim p_{\\text{data}}}[\\cdot]$", desc: "an <b>expectation</b> &mdash; the average of the bracketed quantity over many samples $x$ drawn from $p_{\\text{data}}$. In code it is just the mean over a real-data minibatch." },
       { sym: "$\\min_G \\max_D$", desc: "the <b>minimax</b> structure: the discriminator maximizes $V$ (best detector) while the generator minimizes it (best forger)." },
       { sym: "$D^*_G(x)$", desc: "the <b>optimal discriminator</b> for a fixed $G$ (Proposition 1): $D^*_G = p_{\\text{data}}/(p_{\\text{data}}+p_g)$." },
+      { sym: "$\\mathrm{JSD}(p_{\\text{data}}\\,\\|\\,p_g)$", desc: "the <b>Jensen-Shannon divergence</b>: a symmetric measure of how far two distributions are apart. It is $\\ge 0$ and equals $0$ only when they are identical. Theorem 1 shows $G$'s objective is $C(G)=-\\log 4 + 2\\,\\mathrm{JSD}$, so minimizing it drives $p_g$ toward $p_{\\text{data}}$." },
+      { sym: "$C(G)$", desc: "the <b>generator's objective</b> after substituting the optimal $D^*_G$ into $V$ (Theorem 1): $C(G)=\\max_D V(D,G)$. Its global minimum is $-\\log 4$, attained iff $p_g=p_{\\text{data}}$." },
       { sym: "$k$", desc: "a plain term: the number of discriminator gradient steps taken per single generator step in Algorithm 1 (often $k=1$)." },
       { sym: "“mode collapse”", desc: "a plain term, not a symbol: a failure where $G$ produces only a few kinds of sample (e.g. one digit) instead of the full variety &mdash; it found a narrow output that fools $D$ and got stuck there." }
     ],
-    formula: `$$ \\min_G \\max_D V(D,G) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x)\\big] + \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z))\\big)\\big] \\qquad\\text{(Eq. 1, \\S3)} $$`,
+    formula: `<p><b>1. The minimax value function</b> (Eq. 1, &sect;3) &mdash; the whole game in one line. $D$ maximizes it, $G$ minimizes it:</p>
+       $$ \\min_G \\max_D V(D,G) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x)\\big] + \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z))\\big)\\big] $$
+       <p><b>2. The optimal discriminator</b> for a fixed $G$ (Proposition 1, &sect;4.1) &mdash; the best detector compares the two densities at each point:</p>
+       $$ D^*_G(x) = \\frac{p_{\\text{data}}(x)}{p_{\\text{data}}(x) + p_g(x)} $$
+       <p><b>3. The non-saturating generator loss</b> (&sect;3) &mdash; in practice $G$ <i>maximizes</i> this instead of <i>minimizing</i> $\\log(1 - D(G(z)))$ (same fixed point, far stronger early gradient):</p>
+       $$ \\max_{G}\\; \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log D(G(z))\\big] $$
+       <p><b>4. The global optimum</b> (Theorem 1, &sect;4.1) &mdash; substitute $D^*_G$ into $V$ and the generator's objective becomes a divergence, minimized only when the fakes match the data:</p>
+       $$ C(G) = -\\log 4 + 2\\cdot \\mathrm{JSD}\\big(p_{\\text{data}}\\,\\|\\,p_g\\big), \\qquad C(G)=-\\log 4 \\iff p_g = p_{\\text{data}} $$`,
     whatItDoes:
       `<p>Read each piece. The first term, $\\mathbb{E}_{x\\sim p_{\\text{data}}}[\\log D(x)]$, is the average of
        $\\log D(x)$ over <b>real</b> samples: it is large when $D$ confidently calls real data "real"
@@ -153,17 +186,28 @@
        i.e. to <i>fool</i> $D$. That tug-of-war <b>is</b> the training signal: no likelihood, just the two
        averages, both computed from minibatches and differentiated by back-propagation.</p>`,
     derivation:
-      `<p><b>Short recap &mdash; full math in the concept lesson.</b> Why does this game land at
-       $p_g = p_{\\text{data}}$? Fix $G$ and find the $D$ that maximizes $V$. The objective is an average of
-       $p_{\\text{data}}(x)\\log D(x) + p_g(x)\\log(1 - D(x))$ over $x$. For each $x$ this has the form
-       $a\\log y + b\\log(1-y)$, which is maximized at $y = a/(a+b)$. Hence (Proposition 1):</p>
+      `<p><b>Step 1 &mdash; the optimal discriminator (Proposition 1).</b> Fix $G$ and find the $D$ that maximizes
+       $V$. Write both expectations as integrals over the same variable $x$ (push the $z$-expectation through
+       $G$ so the fake term is an integral over data space too):</p>
+       <p>$$ V(D,G) = \\int_x \\Big[\\, p_{\\text{data}}(x)\\,\\log D(x) + p_g(x)\\,\\log\\big(1 - D(x)\\big) \\,\\Big]\\, dx. $$</p>
+       <p>$D$ may choose its value freely at each $x$, so we maximize the <b>integrand</b> pointwise. For fixed
+       constants $a = p_{\\text{data}}(x)$, $b = p_g(x)$, the function $y\\mapsto a\\log y + b\\log(1-y)$ has derivative
+       $a/y - b/(1-y)$; set it to $0$ to get $a(1-y) = by$, i.e. $y = a/(a+b)$. Hence</p>
        <p>$$ D^*_G(x) = \\frac{p_{\\text{data}}(x)}{p_{\\text{data}}(x) + p_g(x)}. $$</p>
-       <p>Substitute $D^*_G$ back into $V$. After algebra (Theorem 1) the generator's objective becomes</p>
-       <p>$$ C(G) = -\\log 4 + 2\\cdot \\mathrm{JSD}\\big(p_{\\text{data}}\\,\\|\\,p_g\\big), $$</p>
-       <p>where $\\mathrm{JSD}$ is the <b>Jensen-Shannon divergence</b>, a symmetric "distance" between two
-       distributions that is $\\ge 0$ and equals $0$ only when they are identical. So $C(G)$ is smallest exactly
-       when $p_g = p_{\\text{data}}$, giving the global optimum $C(G) = -\\log 4$. The full Proposition-1 and
-       Theorem-1 proofs are derived in the <b>dl-gan</b> concept lesson &mdash; we only recap them here.</p>`,
+       <p><b>Step 2 &mdash; the global optimum (Theorem 1).</b> Substitute $D^*_G$ back into $V$. Each term becomes
+       $\\log\\frac{p_{\\text{data}}}{p_{\\text{data}}+p_g}$ and $\\log\\frac{p_g}{p_{\\text{data}}+p_g}$. Add and
+       subtract $\\log 2$ inside each to turn them into Kullback-Leibler divergences against the mixture
+       $\\tfrac12(p_{\\text{data}}+p_g)$, which package into the Jensen-Shannon divergence:</p>
+       <p>$$ C(G) = \\max_D V(D,G) = -\\log 4 + 2\\cdot \\mathrm{JSD}\\big(p_{\\text{data}}\\,\\|\\,p_g\\big). $$</p>
+       <p>Since $\\mathrm{JSD}\\ge 0$ with equality only when $p_g = p_{\\text{data}}$, the minimum is
+       $C(G) = -\\log 4$, attained uniquely there &mdash; the generator's distribution equals the data's.</p>
+       <p><b>Step 3 &mdash; why the non-saturating $G$ loss.</b> The paper's game minimizes $\\log(1 - D(G(z)))$.
+       Early in training $G$'s fakes are obvious, so $D(G(z))\\approx 0$. There $\\log(1-D(G(z)))\\approx \\log 1 = 0$
+       and its slope $-1/(1-D(G(z)))\\approx -1$ &mdash; the value is <i>flat near zero pull</i> in the region $G$
+       lives in, so $\\theta_g$ barely moves: the loss <b>saturates</b>. Switching $G$ to <b>maximize
+       $\\log D(G(z))$</b> keeps the same fixed point ($D(G(z))\\to 1$) but its slope $1/D(G(z))$ is <i>huge</i> when
+       $D(G(z))\\approx 0$ &mdash; a strong gradient exactly when $G$ is losing badly and most needs to learn. The
+       full Proposition-1 / Theorem-1 proofs are also in the <b>dl-gan</b> concept lesson.</p>`,
     example:
       `<p>Work the optimal discriminator and one value-function evaluation by hand, with real numbers
        (these are recomputed in the notebook's first cell).</p>

@@ -144,10 +144,46 @@
        <b>residual connection</b> (add the input back, the same "$+x$" trick as ResNet) followed by
        <b>Layer Normalization</b> (re-center and re-scale each token's vector). All sub-layers output the
        same dimension $d_{\\text{model}}=512$ so the residual add lines up. Stack $N=6$ such layers.</p>`,
+    architecture:
+      `<p>The full model is an <b>encoder-decoder</b> (Figure 1). Translation is the running example: the
+       encoder reads the source sentence; the decoder writes the target one token at a time. Sizes used by the
+       base model: $d_{\\text{model}}=512$, $h=8$ heads, $d_k=d_v=64$, feed-forward inner width $d_{ff}=2048$,
+       and $N=6$ layers in each stack.</p>
+       <p><b>Input to each stack.</b> Tokens become vectors by a learned <b>embedding</b>, scaled by
+       $\\sqrt{d_{\\text{model}}}$ (&sect;3.4), then the sinusoidal <b>positional encoding</b> $PE$ is
+       <b>added</b> (&sect;3.5). This sum $x_0 = \\sqrt{d_{\\text{model}}}\\,\\mathrm{Embed} + PE$ is the only
+       place order enters the otherwise permutation-invariant model.</p>
+       <p><b>Encoder stack ($N=6$ identical layers).</b> Each layer has <b>two</b> sub-layers, each wrapped as
+       $\\mathrm{LayerNorm}(x+\\mathrm{Sublayer}(x))$ (&sect;3.1):</p>
+       <ol>
+        <li><b>Multi-head self-attention</b> &mdash; $Q,K,V$ all come from the previous layer's output, so every
+        position attends to every position (&sect;3.2.2).</li>
+        <li><b>Position-wise feed-forward network</b> $\\mathrm{FFN}(x)=\\max(0,xW_1+b_1)W_2+b_2$ &mdash; the
+        same two-layer network applied independently at each position, widening to $d_{ff}=2048$ and back
+        (&sect;3.3).</li>
+       </ol>
+       <p><b>Decoder stack ($N=6$ identical layers).</b> Each layer has <b>three</b> sub-layers, each again
+       residual+LayerNorm wrapped:</p>
+       <ol>
+        <li><b>Masked</b> multi-head self-attention &mdash; identical to the encoder's, but position $t$ may not
+        attend to positions $\\gt t$. The disallowed scores are set to $-\\infty$ before the softmax so their
+        weights vanish; this keeps prediction <b>auto-regressive</b> (the model cannot peek at future tokens it
+        has not generated yet) (&sect;3.2.3).</li>
+        <li><b>Encoder-decoder attention</b> &mdash; the queries $Q$ come from the decoder, but the keys $K$ and
+        values $V$ come from the <b>encoder</b>'s final output, letting each output position look over the whole
+        input sentence (&sect;3.2.3).</li>
+        <li><b>Position-wise feed-forward network</b> &mdash; same $\\mathrm{FFN}$ as the encoder.</li>
+       </ol>
+       <p><b>Output head (&sect;3.4).</b> The decoder's top-layer vectors pass through a <b>linear</b> layer then
+       <b>softmax</b> to produce a probability over the vocabulary for the next token. The paper <b>ties</b>
+       three weight matrices &mdash; the input embedding, the output embedding, and this pre-softmax linear &mdash;
+       into one shared matrix. This lesson builds only the <b>encoder</b> tower (the left half) plus the toy task's
+       output linear; the masked and encoder-decoder attention are read here but built in the mini-GPT capstone.</p>`,
     symbols: [
       { sym: "token", desc: "one unit of input &mdash; a word or sub-word piece. A sequence is a list of tokens." },
       { sym: "$d_{\\text{model}}$", desc: "the <b>model width</b>: the length of every token vector throughout the encoder. The paper uses $512$; the residual add forces every sub-layer to keep this width." },
-      { sym: "$N$", desc: "the number of <b>stacked encoder layers</b> (identical blocks). The paper uses $N=6$." },
+      { sym: "$N$", desc: "the number of <b>stacked layers</b> (identical blocks) in each tower. The paper uses $N=6$ for both encoder and decoder." },
+      { sym: "$\\sqrt{d_{\\text{model}}}$", desc: "the <b>embedding scale</b>: the token embeddings are multiplied by this before the positional encoding is added (&sect;3.4), so the embedding and $PE$ magnitudes are comparable." },
       { sym: "$Q, K, V$", desc: "the <b>query</b>, <b>key</b>, and <b>value</b> matrices: rows are the per-token query / key / value vectors. Query = what a token looks for; key = what a token offers; value = what it passes on when attended to." },
       { sym: "$d_k,\\ d_v$", desc: "the <b>per-head</b> width of the key/query and the value. With $h$ heads, $d_k=d_v=d_{\\text{model}}/h$ (here $64$)." },
       { sym: "$\\mathrm{softmax}$", desc: "turns a row of scores into positive weights that sum to $1$: $\\mathrm{softmax}(z)_j = e^{z_j}/\\sum_l e^{z_l}$. Here it makes each token's attention over the others a probability distribution." },
@@ -161,21 +197,42 @@
       { sym: "$pos$", desc: "the <b>position index</b> of a token in the sequence ($0,1,2,\\dots$)." },
       { sym: "$\\mathrm{LayerNorm}$", desc: "<b>Layer Normalization</b>: re-center and re-scale each token's vector to mean $0$, variance $1$ (then a learned scale/shift). Applied per token, over its features." },
       { sym: "$\\mathrm{Sublayer}(x)$", desc: "either the multi-head self-attention or the feed-forward network &mdash; the function whose output is added back to its input $x$ (the residual) before LayerNorm." },
+      { sym: "$\\mathrm{FFN},\\ W_1, W_2, b_1, b_2, d_{ff}$", desc: "the <b>position-wise feed-forward network</b> $\\mathrm{FFN}(x)=\\max(0,xW_1+b_1)W_2+b_2$ (&sect;3.3): $W_1$ widens $d_{\\text{model}}\\to d_{ff}$, a $\\mathrm{ReLU}$ ($\\max(0,\\cdot)$) follows, then $W_2$ projects $d_{ff}\\to d_{\\text{model}}$. The paper uses inner width $d_{ff}=2048$." },
+      { sym: "masking ($-\\infty$)", desc: "the <b>causal mask</b> in the decoder's first sub-layer (&sect;3.2.3): scores for positions $\\gt t$ are set to $-\\infty$ before the softmax, so their attention weights become $0$ and position $t$ cannot see the future." },
+      { sym: "auto-regressive", desc: "generating one token at a time, each conditioned only on tokens already produced. The causal mask is what enforces it &mdash; the decoder never attends to tokens it has not yet generated." },
       { sym: "permutation-invariant", desc: "a plain term: an operation whose output does not depend on input order. Plain self-attention is permutation-invariant, which is exactly why positional encoding is needed." }
     ],
-    formula: `$$ \\mathrm{MultiHead}(Q,K,V) = \\mathrm{Concat}(\\mathrm{head}_1,\\dots,\\mathrm{head}_h)\\,W^O, \\qquad \\mathrm{head}_i = \\mathrm{Attention}(QW_i^Q,\\,KW_i^K,\\,VW_i^V) \\quad\\text{(\\S 3.2.2)} $$
-$$ PE_{(pos,\\,2i)} = \\sin\\!\\Big(\\tfrac{pos}{10000^{\\,2i/d_{\\text{model}}}}\\Big), \\qquad PE_{(pos,\\,2i+1)} = \\cos\\!\\Big(\\tfrac{pos}{10000^{\\,2i/d_{\\text{model}}}}\\Big) \\quad\\text{(\\S 3.5)} $$`,
+    formula: `$$ \\mathrm{Attention}(Q,K,V) = \\mathrm{softmax}\\!\\Big(\\tfrac{QK^\\top}{\\sqrt{d_k}}\\Big)V \\quad\\text{(Eq. 1, \\S 3.2.1 — scaled dot-product attention; recapped, derived in paper-attention)} $$
+$$ \\mathrm{MultiHead}(Q,K,V) = \\mathrm{Concat}(\\mathrm{head}_1,\\dots,\\mathrm{head}_h)\\,W^O, \\qquad \\mathrm{head}_i = \\mathrm{Attention}(QW_i^Q,\\,KW_i^K,\\,VW_i^V) \\quad\\text{(\\S 3.2.2 — } h \\text{ heads in parallel)} $$
+$$ W_i^Q,\\,W_i^K \\in \\mathbb{R}^{d_{\\text{model}}\\times d_k}, \\quad W_i^V \\in \\mathbb{R}^{d_{\\text{model}}\\times d_v}, \\quad W^O \\in \\mathbb{R}^{h d_v \\times d_{\\text{model}}}, \\qquad d_k = d_v = d_{\\text{model}}/h = 64 \\quad\\text{(\\S 3.2.2 — projection shapes)} $$
+$$ \\mathrm{FFN}(x) = \\max(0,\\,xW_1 + b_1)\\,W_2 + b_2 \\quad\\text{(\\S 3.3 — position-wise feed-forward; inner width } d_{ff}=2048,\\ \\mathrm{ReLU}) $$
+$$ \\mathrm{LayerNorm}\\big(x + \\mathrm{Sublayer}(x)\\big) \\quad\\text{(\\S 3.1 — residual connection then Layer Normalization, wrapping every sub-layer)} $$
+$$ PE_{(pos,\\,2i)} = \\sin\\!\\Big(\\tfrac{pos}{10000^{\\,2i/d_{\\text{model}}}}\\Big), \\qquad PE_{(pos,\\,2i+1)} = \\cos\\!\\Big(\\tfrac{pos}{10000^{\\,2i/d_{\\text{model}}}}\\Big) \\quad\\text{(\\S 3.5 — sinusoidal positional encoding, added to embeddings)} $$
+$$ x_0 = \\sqrt{d_{\\text{model}}}\\;\\mathrm{Embed}(\\text{tokens}) + PE, \\qquad p(\\text{next token}) = \\mathrm{softmax}(z\\,W_{\\text{embed}}^\\top) \\quad\\text{(\\S 3.4 — embeddings scaled by } \\sqrt{d_{\\text{model}}}\\text{; weights tied to the final linear+softmax}) $$`,
     whatItDoes:
-      `<p><b>Top line (multi-head attention, &sect;3.2.2).</b> Project $Q,K,V$ into $h$ separate
-       lower-dimensional spaces with the learned matrices $W_i^Q,W_i^K,W_i^V$; run the scaled dot-product
-       attention $\\mathrm{Attention}(\\cdot)=\\mathrm{softmax}(QK^\\top/\\sqrt{d_k})V$ <i>inside each</i>
-       space to get $\\mathrm{head}_i$; concatenate the $h$ results and mix them with $W^O$. The win:
-       $h$ heads attend in $h$ different ways at once, for the same total compute as one full-width head.</p>
-       <p><b>Bottom line (positional encoding, &sect;3.5).</b> Build a fixed table indexed by position $pos$
-       and feature $i$. Even features are sine waves, odd features are cosine waves, and the wavelength grows
-       geometrically with $i$ (from $2\\pi$ up to $10000\\cdot 2\\pi$). <b>Add</b> this table to the token
-       embeddings. Now two tokens with identical content but different positions get different inputs, so the
-       order-blind attention can tell them apart. The paper chose sines over learned position vectors because
+      `<p><b>Eq. 1 — scaled dot-product attention (&sect;3.2.1).</b> $QK^\\top$ scores every query against every
+       key; divide by $\\sqrt{d_k}$ so the scores do not blow up with dimension; softmax each row into weights
+       that sum to $1$; multiply by $V$ to get a weighted average of the values. Recapped here; the
+       $\\sqrt{d_k}$ derivation is the <b>paper-attention</b> lesson.</p>
+       <p><b>Multi-head attention (&sect;3.2.2).</b> Project $Q,K,V$ into $h$ separate lower-dimensional spaces
+       with the learned matrices $W_i^Q,W_i^K,W_i^V$; run Eq. 1 <i>inside each</i> space to get
+       $\\mathrm{head}_i$; concatenate the $h$ results and mix them with $W^O$. The win: $h$ heads attend in
+       $h$ different ways at once, for the same total compute as one full-width head, because each head is only
+       $d_k=d_v=d_{\\text{model}}/h$ wide.</p>
+       <p><b>Feed-forward network (&sect;3.3).</b> $\\max(0,xW_1+b_1)W_2+b_2$ is a two-layer perceptron with a
+       $\\mathrm{ReLU}$ in the middle, applied <i>independently and identically at every position</i>. It widens
+       each token's vector to $d_{ff}=2048$, applies the nonlinearity, and projects back to $d_{\\text{model}}$
+       &mdash; this is where per-token nonlinear processing happens, between attention's mixing steps.</p>
+       <p><b>Sublayer wrapper (&sect;3.1).</b> $\\mathrm{LayerNorm}(x+\\mathrm{Sublayer}(x))$ adds the sub-layer's
+       input back (a residual, so gradients flow through deep stacks) and then normalizes each token's vector.
+       Every sub-layer in both towers is wrapped this way; because the residual <b>adds</b> $x$, every sub-layer
+       must output width $d_{\\text{model}}$.</p>
+       <p><b>Positional encoding + embedding scaling (&sect;3.5, &sect;3.4).</b> Build a fixed table indexed by
+       position $pos$ and feature $i$: even features are sine waves, odd features are cosine waves, and the
+       wavelength grows geometrically with $i$ (from $2\\pi$ up to $10000\\cdot 2\\pi$). <b>Add</b> this table to
+       the token embeddings (themselves scaled by $\\sqrt{d_{\\text{model}}}$ so the two terms are comparable in
+       size). Now two tokens with identical content but different positions get different inputs, so the
+       order-blind attention can tell them apart. The paper chose sinusoids over learned position vectors because
        "it may allow the model to extrapolate to sequence lengths longer than the ones encountered during
        training" (&sect;3.5).</p>`,
     derivation:

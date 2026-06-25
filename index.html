@@ -1336,8 +1336,9 @@ const App = (function () {
   function renderPaper(l, id, prev, next) {
     const howItWorks =
       section("", "🔬", "How it works", l.walkthrough) +
+      section("", "🏛️", "The architecture — component by component", l.architecture) +
       symbolsTable(l.symbols) +
-      (l.formula ? `<div class="card"><h3>➗ The key equation</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes || ""}</div>` : "") +
+      (l.formula ? `<div class="card"><h3>➗ Key equations</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes || ""}</div>` : "") +
       section("deriv", "📜", "Why it's true", l.derivation) +
       section("example", "🔢", "Worked example — real numbers", l.example) +
       section("", "🪜", "The recipe — what you'll build", l.recipe) +

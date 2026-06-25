@@ -118,6 +118,31 @@
        fixed <b>running</b> statistics &mdash; a moving average of the means and variances seen during training
        &mdash; so the output for a given input is deterministic.</p>`,
 
+    // ★ THE BN TRANSFORM AS A LAYER ★
+    architecture:
+      `<p>BN is not a loss term or an optimizer trick &mdash; it is a <b>layer</b> you insert into the network,
+       with its own learned parameters and its own train/test behavior.</p>
+       <ul>
+         <li><b>Placement: before the nonlinearity.</b> The paper inserts BN on the pre-activation. A block
+         $z=g(Wu+b)$ becomes $z=g(\\mathrm{BN}(Wu))$. Because BN subtracts the mean, the bias $b$ is redundant
+         and is <b>dropped</b> &mdash; the shift $\\beta$ takes its place.</li>
+         <li><b>What is normalized (fully-connected layer):</b> each feature independently, over the batch
+         dimension. For an activation tensor of shape (batch $m$, features $d$), you compute $d$ means and $d$
+         variances &mdash; one per feature, pooled across the $m$ examples.</li>
+         <li><b>What is normalized (convolutional layer, Section 3.2):</b> to respect the convolutional
+         property &mdash; the same filter applied at every location &mdash; BN normalizes <b>per channel
+         (feature map)</b>, pooling jointly over the batch <i>and</i> all spatial positions. For a tensor of
+         shape (batch $m$, channels $C$, height $p$, width $q$) the effective sample count per channel is
+         $m'=m\\cdot p\\cdot q$, and there is one statistic per channel, not per pixel.</li>
+         <li><b>Learned parameters:</b> exactly <b>two per normalized unit</b> &mdash; scale $\\gamma$ and shift
+         $\\beta$. That is two per feature for a fully-connected layer, and two per channel $(\\gamma^{(k)},
+         \\beta^{(k)})$ for a conv layer, regardless of spatial size.</li>
+         <li><b>Train vs test:</b> in <b>training</b> the layer uses the current mini-batch's $\\mu_B,
+         \\sigma^2_B$ and updates running averages of them; at <b>test</b> time it freezes those running
+         (population) statistics into the single affine map from Section 3.1, so predictions no longer depend
+         on which other examples share the batch.</li>
+       </ul>`,
+
     symbols: [
       { sym: "internal covariate shift", desc: "the problem BN fixes: the distribution (typical size and spread) of a layer's inputs keeps changing during training because the layers below it keep updating their weights." },
       { sym: "mini-batch", desc: "the small group of training examples (say 32 or 64) processed together in one gradient-descent step." },
@@ -129,29 +154,72 @@
       { sym: "$\\epsilon$", desc: "epsilon, a tiny constant (e.g. $10^{-5}$) added inside the square root so we never divide by zero when the variance is near zero." },
       { sym: "$\\gamma$", desc: "the learned scale: one number per feature, multiplied into the normalized value. Trained by gradient descent." },
       { sym: "$\\beta$", desc: "the learned shift: one number per feature, added after scaling. Trained by gradient descent." },
-      { sym: "$y_i$", desc: "the BN layer's output for example $i$: the normalized value scaled by $\\gamma$ and shifted by $\\beta$." },
-      { sym: "running stats", desc: "the running (population) mean and variance: a moving average of the batch means and variances kept during training, used in place of the batch's own statistics at inference time." }
+      { sym: "$y_i$", desc: "the BN layer's output for example $i$: the normalized value scaled by $\\gamma$ and shifted by $\\beta$ ($y_i=\\gamma\\hat{x}_i+\\beta$)." },
+      { sym: "$\\mathrm{E}[x]$", desc: "population mean used at inference: the average of the batch means $\\mu_B$ seen during training, $\\mathrm{E}[x]=\\mathrm{E}_{\\mathcal{B}}[\\mu_B]$ (Section 3.1)." },
+      { sym: "$\\operatorname{Var}[x]$", desc: "population variance used at inference: the average batch variance, corrected to be unbiased, $\\operatorname{Var}[x]=\\tfrac{m}{m-1}\\,\\mathrm{E}_{\\mathcal{B}}[\\sigma^2_B]$ (Section 3.1)." },
+      { sym: "running stats", desc: "the running estimates of $\\mathrm{E}[x]$ and $\\operatorname{Var}[x]$: a moving average of the batch means and variances kept during training, used in place of the batch's own statistics at inference." },
+      { sym: "$m'$", desc: "for a convolutional BN layer (Section 3.2), the effective number of values normalized per channel: $m'=m\\cdot p\\cdot q$, the batch size $m$ times the spatial height $p$ and width $q$." },
+      { sym: "$\\gamma^{(k)},\\beta^{(k)}$", desc: "the scale and shift for channel (feature map) $k$ in a conv BN layer: one pair per channel, shared across all spatial locations (Section 3.2)." }
     ],
 
     formula:
-      `$$\\mu_B=\\frac{1}{m}\\sum_{i=1}^{m}x_i,\\qquad
-        \\sigma^2_B=\\frac{1}{m}\\sum_{i=1}^{m}(x_i-\\mu_B)^2$$
-       $$\\hat{x}_i=\\frac{x_i-\\mu_B}{\\sqrt{\\sigma^2_B+\\epsilon}},\\qquad
-        y_i=\\gamma\\,\\hat{x}_i+\\beta\\equiv \\mathrm{BN}_{\\gamma,\\beta}(x_i)$$`,
+      `<p><b>Algorithm 1 — the Batch Normalizing Transform</b> (training; one feature, mini-batch
+       $\\mathcal{B}=\\{x_1\\dots x_m\\}$):</p>
+       $$\\mu_B=\\frac{1}{m}\\sum_{i=1}^{m}x_i
+         \\quad\\text{(mini-batch mean)}\\qquad
+         \\sigma^2_B=\\frac{1}{m}\\sum_{i=1}^{m}(x_i-\\mu_B)^2
+         \\quad\\text{(mini-batch variance)}$$
+       $$\\hat{x}_i=\\frac{x_i-\\mu_B}{\\sqrt{\\sigma^2_B+\\epsilon}}
+         \\quad\\text{(normalize)}\\qquad
+         y_i=\\gamma\\,\\hat{x}_i+\\beta\\equiv \\mathrm{BN}_{\\gamma,\\beta}(x_i)
+         \\quad\\text{(scale and shift)}$$
+       <p><b>Inference</b> (Section 3.1, Algorithm 2) uses fixed <b>population</b> statistics instead of the
+       batch. They come from the per-batch statistics seen during training, with an <b>unbiased</b> variance
+       correction (the $\\tfrac{m}{m-1}$ factor):</p>
+       $$\\mathrm{E}[x]=\\mathrm{E}_{\\mathcal{B}}[\\mu_B]\\qquad
+         \\operatorname{Var}[x]=\\frac{m}{m-1}\\,\\mathrm{E}_{\\mathcal{B}}[\\sigma^2_B]$$
+       <p>Because $\\mathrm{E}[x]$ and $\\operatorname{Var}[x]$ are now constants, the whole transform collapses
+       into a single fixed affine map (no per-example statistics, so the output is deterministic):</p>
+       $$y=\\frac{\\gamma}{\\sqrt{\\operatorname{Var}[x]+\\epsilon}}\\,x
+         +\\Big(\\beta-\\frac{\\gamma\\,\\mathrm{E}[x]}{\\sqrt{\\operatorname{Var}[x]+\\epsilon}}\\Big)$$`,
 
     whatItDoes:
-      `<p>The two top equations measure the feature's center ($\\mu_B$) and spread ($\\sigma^2_B$) over the
-       batch. The bottom-left equation re-centers and re-scales every value to mean $0$, variance $\\approx 1$.
-       The bottom-right equation then lets the network choose its own center ($\\beta$) and spread ($\\gamma$),
-       learned during training. (Algorithm 1, Section 3.)</p>`,
+      `<p><b>Training.</b> $\\mu_B$ and $\\sigma^2_B$ measure the feature's center and spread over the batch.
+       The normalize step re-centers and re-scales every value to mean $0$, variance $\\approx 1$. The
+       scale-and-shift step then lets the network pick its own center ($\\beta$) and spread ($\\gamma$), both
+       learned by gradient descent (Algorithm 1, Section 3).</p>
+       <p><b>Inference.</b> A single test example has no batch, so BN swaps in fixed population statistics
+       $\\mathrm{E}[x],\\operatorname{Var}[x]$ estimated during training, with the $\\tfrac{m}{m-1}$ unbiased
+       correction so the estimate is not systematically too small. Folding the four steps together gives one
+       constant affine map $y=ax+b$ &mdash; cheap and deterministic (Section 3.1, Algorithm 2).</p>`,
 
     derivation:
-      `<p>The math of <i>why</i> normalizing stabilizes training &mdash; and the full gradient through
-       $\\mu_B$, $\\sigma^2_B$, $\\hat{x}_i$, $\\gamma$, $\\beta$ &mdash; is derived in the
-       <code>dl-batchnorm</code> concept lesson. Recap of the key idea: by fixing the input distribution of
-       each layer to mean 0 / variance 1 before the learned $\\gamma,\\beta$, the gradients no longer depend on
-       the scale of the layers below, so a larger learning rate stays stable. See that lesson for the
-       backward pass.</p>`,
+      `<p><b>Why the learnable $\\gamma,\\beta$ (Section 3).</b> Plain normalization forces every BN output to
+       mean $0$, variance $1$. That can hurt: feeding mean-0/variance-1 values into a sigmoid pins it to its
+       near-linear middle, throwing away the nonlinearity. The fix is to make the transform able to
+       <i>represent the identity</i>. Adding the learned pair $\\gamma,\\beta$ does exactly that: choosing
+       $\\gamma=\\sqrt{\\sigma^2_B+\\epsilon}$ and $\\beta=\\mu_B$ gives $y_i=x_i$, recovering the original
+       inputs. So BN can normalize when that helps and undo it when it does not &mdash; it never costs the
+       layer representational power.</p>
+       <p><b>The backward pass (Section 3).</b> BN is differentiable, so it trains end to end. Writing $g$ for
+       an upstream gradient $\\partial\\ell/\\partial(\\cdot)$, the chain rule through the four steps gives:</p>
+       $$g_{\\hat{x}_i}=g_{y_i}\\,\\gamma\\qquad
+         g_{\\sigma^2_B}=\\sum_{i=1}^{m}g_{\\hat{x}_i}\\,(x_i-\\mu_B)\\,
+           \\frac{-1}{2}(\\sigma^2_B+\\epsilon)^{-3/2}$$
+       $$g_{\\mu_B}=\\Big(\\sum_{i=1}^{m}g_{\\hat{x}_i}\\,\\frac{-1}{\\sqrt{\\sigma^2_B+\\epsilon}}\\Big)
+           +g_{\\sigma^2_B}\\,\\frac{\\sum_{i}-2(x_i-\\mu_B)}{m}$$
+       $$g_{x_i}=g_{\\hat{x}_i}\\,\\frac{1}{\\sqrt{\\sigma^2_B+\\epsilon}}
+           +g_{\\sigma^2_B}\\,\\frac{2(x_i-\\mu_B)}{m}
+           +g_{\\mu_B}\\,\\frac{1}{m},\\qquad
+         g_\\gamma=\\sum_{i=1}^{m}g_{y_i}\\,\\hat{x}_i,\\qquad
+         g_\\beta=\\sum_{i=1}^{m}g_{y_i}$$
+       <p>The key consequence: $\\mu_B$ and $\\sigma^2_B$ depend on every example in the batch, so the gradient
+       $g_{x_i}$ subtracts off the mean and variance components. This is what makes BN scale-invariant. For any
+       scalar $a$, scaling the weights by $a$ leaves the output unchanged, and the paper shows the gradient
+       obeys $\\partial\\,\\mathrm{BN}(aWu)/\\partial u=\\partial\\,\\mathrm{BN}(Wu)/\\partial u$ while
+       $\\partial\\,\\mathrm{BN}(aWu)/\\partial(aW)=\\tfrac{1}{a}\\,\\partial\\,\\mathrm{BN}(Wu)/\\partial W$.
+       Bigger weights get proportionally smaller gradients, so a high learning rate cannot blow them up &mdash;
+       that is the mechanism behind "much higher learning rates" (Section 3.3).</p>`,
 
     example:
       `<p><b>Worked numbers</b> (one feature, batch of 3, $\\epsilon$ tiny enough to ignore):</p>

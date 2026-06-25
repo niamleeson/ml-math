@@ -113,6 +113,47 @@
        <p>When the block keeps the same shape, the shortcut is a bare wire. When it changes the number of
        channels or downsamples (stride $\\gt 1$), the input no longer matches the output shape, so a small
        $1\\times1$ convolution $W_s$ is placed on the shortcut to reshape it first.</p>`,
+    architecture:
+      `<p><b>Two block designs.</b></p>
+       <ul>
+        <li><b>Basic block (2 layers)</b>, used in ResNet-18/34: two $3\\times3$ convolutions, each followed by
+        Batch Normalization, with a ReLU between them, then the shortcut add, then a final ReLU. In symbols
+        $\\mathcal{F} = W_2\\,\\sigma(W_1 x)$, output $\\sigma(\\mathcal{F} + x)$.</li>
+        <li><b>Bottleneck block (3 layers)</b>, used in ResNet-50/101/152: a $1\\times1$ conv, a $3\\times3$ conv,
+        then a $1\\times1$ conv. The first $1\\times1$ <b>reduces</b> the channel count, the $3\\times3$ does the
+        spatial work cheaply at that reduced width, and the last $1\\times1$ <b>restores</b> (e.g.
+        $256 \\to 64 \\to 64 \\to 256$). This keeps the costly $3\\times3$ on a thin tensor, so a much deeper net
+        costs about the same as a shallower basic-block net. Here the identity shortcut matters extra: replacing
+        it with a projection would connect the two <i>high-dimensional</i> ends and double the block's cost and
+        size.</li>
+       </ul>
+       <p><b>Two shortcut types.</b> When input and output shapes match, the shortcut is a parameter-free
+       <b>identity</b> wire. When a block doubles channels and/or downsamples, dimensions differ, so the input
+       is sent through a <b>projection</b> $W_s$ (a $1\\times1$ conv, stride 2) to match. The paper tests three
+       policies (&sect;3.2): <b>A</b> zero-pad the extra channels (parameter-free), <b>B</b> projection only
+       where dimensions increase / identity elsewhere, <b>C</b> projection on every shortcut. All three beat the
+       plain net; B is slightly better than A; the gain from C is marginal, so <i>projections are not
+       essential</i> &mdash; identity shortcuts carry the weight.</p>
+       <p><b>Downsampling and channel rule (VGG-style, &sect;3.3).</b> No pooling between stages; instead the
+       first block of each new stage uses a $3\\times3$ conv with <b>stride 2</b> to halve the feature-map size,
+       and the channel count <b>doubles</b> at the same time. Halving spatial size while doubling channels keeps
+       the per-layer compute roughly constant across stages.</p>
+       <p><b>Full ResNet-50 (Table 1).</b> The same template scales 18 &rarr; 152 layers by changing block type
+       and repeat counts:</p>
+       <ul>
+        <li><b>conv1:</b> $7\\times7$, 64 filters, stride 2 &rarr; output $112\\times112$.</li>
+        <li><b>pool:</b> $3\\times3$ max pool, stride 2 &rarr; output $56\\times56$.</li>
+        <li><b>conv2_x</b> (output $56\\times56$): bottleneck $[1\\times1,64\\;|\\;3\\times3,64\\;|\\;1\\times1,256]\\times3$.</li>
+        <li><b>conv3_x</b> (output $28\\times28$): bottleneck $[1\\times1,128\\;|\\;3\\times3,128\\;|\\;1\\times1,512]\\times4$.</li>
+        <li><b>conv4_x</b> (output $14\\times14$): bottleneck $[1\\times1,256\\;|\\;3\\times3,256\\;|\\;1\\times1,1024]\\times6$.</li>
+        <li><b>conv5_x</b> (output $7\\times7$): bottleneck $[1\\times1,512\\;|\\;3\\times3,512\\;|\\;1\\times1,2048]\\times3$.</li>
+        <li><b>head:</b> global average pool &rarr; 1000-dimensional fully-connected layer &rarr; softmax.</li>
+       </ul>
+       <p>The depth variants differ only in stage repeat counts &mdash; ResNet-18: basic blocks
+       $2,2,2,2$; ResNet-34: basic $3,4,6,3$; ResNet-50: bottleneck $3,4,6,3$; ResNet-101: bottleneck
+       $3,4,23,3$; ResNet-152: bottleneck $3,8,36,3$. Compute (FLOPs, billions): 18-layer $1.8$, 34-layer
+       $3.6$, 50-layer $3.8$, 101-layer $7.6$, 152-layer $11.3$ &mdash; the 152-layer net is 8&times; deeper than
+       VGG-19 yet lower complexity (VGG-19 is $19.6$ billion FLOPs).</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> vector (or feature map) fed into the block &mdash; and the value carried, unchanged, along the shortcut." },
       { sym: "$y$", desc: "the <b>output</b> of the block (before the final ReLU in the paper's Eqn. 1 notation): the residual plus the shortcut." },
@@ -124,7 +165,13 @@
       { sym: "$W_s$", desc: "the <b>projection shortcut</b>: a learnable linear map (a $1\\times1$ convolution) used only when $x$ and $F$ have different shapes, to match dimensions." },
       { sym: "“degradation problem”", desc: "a plain term, not a symbol: a deeper plain network reaching <i>higher training error</i> than a shallower one &mdash; an <b>optimization</b> failure, not overfitting." }
     ],
-    formula: `$$ \\mathbf{y} = \\mathcal{F}(\\mathbf{x}, \\{W_i\\}) + \\mathbf{x} \\qquad\\text{(Eqn. 1)} \\qquad\\qquad \\mathbf{y} = \\mathcal{F}(\\mathbf{x}, \\{W_i\\}) + W_s\\,\\mathbf{x} \\quad\\text{(Eqn. 2)} $$`,
+    formula: `<p><b>Identity-shortcut building block</b> (Eqn. 1, &sect;3.2): run the input through the weight layers, then add the input back.</p>
+       $$ \\mathbf{y} = \\mathcal{F}(\\mathbf{x}, \\{W_i\\}) + \\mathbf{x} $$
+       <p><b>Projection-shortcut block</b> (Eqn. 2, &sect;3.2): used only when $\\mathbf{x}$ and $\\mathcal{F}$ have different shapes; $W_s$ is a $1\\times1$ linear map that reshapes the input first.</p>
+       $$ \\mathbf{y} = \\mathcal{F}(\\mathbf{x}, \\{W_i\\}) + W_s\\,\\mathbf{x} $$
+       <p><b>The residual function itself</b> (&sect;3.2): in the paper's two-layer block, with $\\sigma$ the ReLU and biases dropped for clarity.</p>
+       $$ \\mathcal{F} = W_2\\,\\sigma(W_1\\,\\mathbf{x}) $$
+       <p>The second nonlinearity is applied <i>after</i> the addition, i.e. the block's final output is $\\sigma(\\mathbf{y})$ (&sect;3.2).</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the residual building block: run the input $x$ through the block's weight layers
        to get the residual $\\mathcal{F}(x,\\{W_i\\})$, then <b>add the input back</b>. (A final ReLU,
@@ -135,17 +182,29 @@
        projection $W_s$ by the shortcut connections to match the dimensions." So $W_s x$ reshapes the input
        (a $1\\times1$ conv) before the add.</p>`,
     derivation:
-      `<p><b>Short recap &mdash; full math in the concept lesson.</b> The reason a deep residual stack trains
-       while a plain one stalls is the gradient. Write the block (dropping the final ReLU, as is standard for
-       this argument) as $y = x + F(x)$ and differentiate the output with respect to the input:</p>
+      `<p><b>Why reformulate the target as a residual?</b> The paper's argument is a thought experiment
+       (&sect;3.1). Take a shallow net that trains well, and build a deeper one from it by adding extra layers.
+       There <i>exists</i> a deeper solution that is no worse: make the added layers the <b>identity mapping</b>
+       (copy input to output) and reuse the shallow weights below. So a deeper net should never have higher
+       <i>training</i> error than its shallow prefix &mdash; yet in practice solvers cannot find that solution.
+       That gap is the <b>degradation problem</b>.</p>
+       <p>Residual learning makes the identity solution trivial to reach. Ask the layers to compute
+       $\\mathcal{F}(x) = H(x) - x$ instead of $H(x)$ directly; then output $= \\mathcal{F}(x) + x$. To get an
+       identity block you only have to drive $\\mathcal{F}(x)$ to $0$ &mdash; just push the weights small &mdash;
+       which is far easier than fitting a perfect identity through a stack of nonlinear layers. As the paper
+       puts it: "if an identity mapping were optimal, it would be easier to push the residual to zero than to
+       fit an identity mapping by a stack of nonlinear layers." It is a <b>preconditioning</b>: if the optimal
+       $H$ is near identity, the solver starts near the answer. Measured layer responses back this up &mdash;
+       residual functions have <i>smaller</i> magnitude than the non-residual ones (Fig. 7), i.e. they really
+       are close to $0$.</p>
+       <p><b>The gradient view (recap).</b> Write the block (dropping the final ReLU for this argument) as
+       $y = x + F(x)$ and differentiate output with respect to input:</p>
        <p>$$ \\frac{\\partial y}{\\partial x} = 1 + \\frac{\\partial F(x)}{\\partial x}. $$</p>
-       <p>That leading <b>"+1"</b> is a clean gradient highway: during back-propagation the gradient is
-       multiplied by $(1 + \\partial F/\\partial x)$ instead of just $\\partial F/\\partial x$, so even when
-       $\\partial F/\\partial x$ is tiny the gradient still passes through nearly undamped. Stack many blocks
-       and the gradient flows from output to input along that highway instead of vanishing to $0$.</p>
-       <p>The vanishing-gradient setup, the per-layer Jacobian product, and the gradient-norm-vs-depth
-       experiment are derived in full in the <b>dl-resnet</b> concept lesson &mdash; head there for the
-       "+1 highway" math; we only recap it here.</p>`,
+       <p>The leading <b>"+1"</b> is a gradient highway: in back-propagation the gradient is multiplied by
+       $(1 + \\partial F/\\partial x)$ rather than $\\partial F/\\partial x$ alone, so even a tiny
+       $\\partial F/\\partial x$ lets the gradient pass through nearly undamped. Stack many blocks and the
+       gradient reaches the early layers instead of vanishing to $0$. The vanishing-gradient setup and the
+       per-layer Jacobian product are derived in full in the <b>dl-resnet</b> concept lesson.</p>`,
     example:
       `<p>Work one block by hand with tiny vectors so the "$+ x$" is concrete. Let the block's input be
        $x = [0.5,\\,-0.3]$, and suppose its two weight layers compute the residual
@@ -178,10 +237,14 @@
        deeper than VGG nets but still having lower complexity." Their headline number: <b>"An ensemble of
        these residual nets achieves 3.57% error on the ImageNet test set. This result won the 1st place on
        the ILSVRC 2015 classification task."</b> They also report a "28% relative improvement on the COCO
-       object detection dataset" from the deeper representations, and analysis on CIFAR-10 "with 100 and 1000
-       layers."</p>
-       <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODEVIZ
-       panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+       object detection dataset" from the deeper representations.</p>
+       <p><b>Single-model ImageNet validation error (top-1 / top-5, paper's tables):</b> ResNet-34
+       24.52% / 7.46%, ResNet-50 22.85% / 6.71%, ResNet-101 21.75% / 6.05%, ResNet-152 21.43% / 5.71% &mdash;
+       deeper is steadily better, the opposite of the plain-net degradation. <b>On CIFAR-10</b> a 110-layer
+       residual net reaches 6.43% error; pushed to 1202 layers it still optimizes (training error below 0.1%)
+       but test error rises to 7.93% &mdash; here the limit is overfitting, not degradation.</p>
+       <p><i>These are the paper's reported figures. The numbers in the CODEVIZ panel below are from our own
+       tiny run &mdash; not the paper's results.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

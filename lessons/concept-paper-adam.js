@@ -129,8 +129,38 @@
        </ol>
        <p><b>Why the division helps.</b> Dividing the direction $\\hat m_t$ by the recent gradient size
        $\\sqrt{\\hat v_t}$ makes the actual step roughly $\\pm\\alpha$ no matter how steep or flat this weight's
-       loss is. The paper (Section 2.1) calls this a <b>trust region</b>: the effective step is bounded by
-       $\\alpha$, so $\\alpha$ sets the scale of movement directly, which is why one value works across weights.</p>`,
+       loss is. The paper (Section 2.1) writes the effective step as $\\Delta_t=\\alpha\\cdot\\hat m_t/\\sqrt{\\hat v_t}$
+       and calls $\\hat m_t/\\sqrt{\\hat v_t}$ the <b>signal-to-noise ratio</b>. It bounds this step: when
+       $(1-\\beta_1)=\\sqrt{1-\\beta_2}$ then $|\\hat m_t/\\sqrt{\\hat v_t}|\\lt1$ so $|\\Delta_t|\\lt\\alpha$, and in
+       common cases $\\hat m_t/\\sqrt{\\hat v_t}\\approx\\pm1$ (because $|\\mathbb{E}[g]/\\sqrt{\\mathbb{E}[g^2]}|\\le1$),
+       so $|\\Delta_t|$ is approximately bounded by $\\alpha$. This is a <b>trust region</b>: $\\alpha$ sets the scale of movement
+       directly, which is why one value works across weights. As the gradient direction grows uncertain near an
+       optimum the ratio shrinks, so steps shrink automatically &mdash; a built-in <b>annealing</b>.</p>`,
+
+    // ★ PER-ITERATION STRUCTURE ★
+    architecture:
+      `<p>Adam is not a network &mdash; its "architecture" is the fixed sequence of operations run once per
+       optimization step, on each parameter independently. Per iteration $t$ (Algorithm 1):</p>
+       <ol>
+         <li><b>Get the gradient.</b> $g_t=\\nabla_\\theta f_t(\\theta_{t-1})$ &mdash; the slope of this
+         mini-batch's loss at the current weights. This is the only new information each step.</li>
+         <li><b>Update the two biased moments.</b> Fold $g_t$ into the first moment $m_t$ (the
+         <b>momentum</b> term, a smoothed average of the gradient = the <i>direction</i> to move) and fold
+         $g_t^2$ into the second moment $v_t$ (a smoothed average of the squared gradient = a per-parameter
+         <i>scale</i>, how large this weight's gradients have recently been). Each weight gets its own
+         $m_t,v_t$ &mdash; this is what makes the step sizes per-parameter.</li>
+         <li><b>Bias-correct.</b> Rescale to $\\hat m_t,\\hat v_t$ to undo the zero-initialization bias
+         (Section 3, below).</li>
+         <li><b>Take the step.</b> $\\theta_t=\\theta_{t-1}-\\alpha\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$.</li>
+       </ol>
+       <p>So Adam is exactly <b>momentum</b> (the $m_t$ direction) combined with <b>RMSProp</b>'s per-parameter
+       scaling (dividing by $\\sqrt{v_t}$), plus the bias correction that neither of those has. State is two
+       vectors per parameter ($m,v$) plus the scalar counter $t$ &mdash; memory is linear in the number of
+       parameters, and every operation is element-wise.</p>
+       <p>The paper notes a <b>mathematically equivalent, slightly faster ordering</b> (end of Section 2) that
+       folds the corrections into the learning rate: precompute $\\alpha_t=\\alpha\\,\\sqrt{1-\\beta_2^{\\,t}}/(1-\\beta_1^{\\,t})$,
+       then step $\\theta_t=\\theta_{t-1}-\\alpha_t\\,m_t/(\\sqrt{v_t}+\\hat\\epsilon)$ using the un-corrected
+       $m_t,v_t$. Same result, fewer operations.</p>`,
 
     symbols: [
       { sym: "$t$", desc: "the timestep / update counter, starting at 0 and incremented to 1 on the first update. It appears as the exponent in the bias-correction factors." },
@@ -170,15 +200,17 @@
        <p>Start the average at $v_0=0$ and unroll $v_t=\\beta_2 v_{t-1}+(1-\\beta_2)g_t^2$ to a sum over all past
        gradients (the paper's eq. (1)):</p>
        $$v_t=(1-\\beta_2)\\sum_{i=1}^{t}\\beta_2^{\\,t-i}\\,g_i^2.$$
-       <p>Take expectations. If the true second moment $\\mathbb{E}[g_i^2]$ is (roughly) constant $=\\mathbb{E}[g^2]$,
-       you can pull it out of the sum (eqs. (2)&ndash;(4)):</p>
-       $$\\mathbb{E}[v_t]=\\mathbb{E}[g^2]\\,(1-\\beta_2)\\sum_{i=1}^{t}\\beta_2^{\\,t-i}
-        =\\mathbb{E}[g^2]\\,(1-\\beta_2^{\\,t}).$$
-       <p>The geometric sum $(1-\\beta_2)\\sum_{i=1}^{t}\\beta_2^{\\,t-i}=1-\\beta_2^{\\,t}$ is the only leftover
-       factor. So the raw average $v_t$ underestimates the true $\\mathbb{E}[g^2]$ by exactly $1-\\beta_2^{\\,t}$.
-       Dividing by it &mdash; i.e. $\\hat v_t=v_t/(1-\\beta_2^{\\,t})$ &mdash; makes the estimate unbiased. This
-       matters most early on ($\\beta_2^{\\,t}$ is still near 1, so the factor is tiny) and especially when
-       $\\beta_2$ is close to 1; without it the first steps would be far too large.</p>`,
+       <p>Take expectations of both sides (eqs. (2)&ndash;(4)). The paper pulls the true second moment
+       $\\mathbb{E}[g_t^2]$ out of the sum, collecting any change-over-time into a residual $\\zeta$ (zeta):</p>
+       $$\\mathbb{E}[v_t]=\\mathbb{E}[g_t^2]\\,(1-\\beta_2)\\sum_{i=1}^{t}\\beta_2^{\\,t-i}+\\zeta
+        =\\mathbb{E}[g_t^2]\\,(1-\\beta_2^{\\,t})+\\zeta.$$
+       <p>Here $\\zeta=0$ if the true second moment is <b>stationary</b> (does not change with time); otherwise
+       $\\zeta$ stays small because the moving average gives tiny weight to gradients far in the past. The
+       geometric sum $(1-\\beta_2)\\sum_{i=1}^{t}\\beta_2^{\\,t-i}=1-\\beta_2^{\\,t}$ is the only leftover factor. So
+       the raw average $v_t$ underestimates the true $\\mathbb{E}[g_t^2]$ by exactly $1-\\beta_2^{\\,t}$. Dividing by
+       it &mdash; i.e. $\\hat v_t=v_t/(1-\\beta_2^{\\,t})$ &mdash; removes the bias. This matters most early on
+       ($\\beta_2^{\\,t}$ is still near 1, so the factor is tiny) and especially when $\\beta_2$ is close to 1
+       (needed for sparse gradients); the paper notes that without it those early steps would be far too large.</p>`,
 
     example:
       `<p><b>Worked numbers</b> &mdash; one Adam step on a single weight, paper defaults
