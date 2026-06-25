@@ -186,8 +186,8 @@
         transitions during a walk would signal memorization rather than genuine learning &mdash; DCGAN's walks
         are smooth.</li>
         <li><b>Vector arithmetic:</b> by analogy to word embeddings (where
-        $\\text{vector(``King'')} - \\text{vector(``Man'')} + \\text{vector(``Woman'')}$ lands near
-        $\\text{vector(``Queen'')}$), DCGAN does arithmetic <i>in the latent space</i>. Averaging the $z$
+        $\\text{vector(\\textrm{“King”})} - \\text{vector(\\textrm{“Man”})} + \\text{vector(\\textrm{“Woman”})}$ lands near
+        $\\text{vector(\\textrm{“Queen”})}$), DCGAN does arithmetic <i>in the latent space</i>. Averaging the $z$
         vectors of several exemplars per concept and computing, e.g., (smiling woman) $-$ (neutral woman) $+$
         (neutral man), then feeding the result through $G$, yields a <b>smiling man</b>. This shows the latent
         space encodes meaningful, linearly-composable semantic directions.</li>
