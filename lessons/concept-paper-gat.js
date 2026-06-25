@@ -131,6 +131,28 @@
        ("heads") and combine. On hidden layers, <b>concatenate</b> the $K$ outputs (Eqn. 5), giving a
        length-$KF'$ vector. On the final layer, <b>average</b> them instead (Eqn. 6), so the output stays
        length-$F'$.</p>`,
+    architecture:
+      `<p>GAT is a <b>stack of graph attentional layers</b> (&sect;2.1). One layer is: a shared linear map
+       $W$ (shape $F'\\times F$) applied to every node &rarr; a per-edge LeakyReLU attention score
+       $e_{ij}=\\text{LeakyReLU}(\\vec{a}^{\\top}[W\\vec{h}_i\\|W\\vec{h}_j])$ over neighbors $\\mathcal{N}_i$
+       (Eqns 1, 3) &rarr; a per-row softmax giving $\\alpha_{ij}$ that sum to 1 (Eqn 2) &rarr; the
+       $\\alpha$-weighted neighbor sum through a nonlinearity $\\sigma$ (Eqn 4). $K$ <b>heads</b> run this
+       in parallel and are <b>concatenated</b> on hidden layers (Eqn 5, width $\\to KF'$) and <b>averaged</b>
+       on the output (Eqn 6, width $\\to F'$). Every step is parallel across edges &mdash; no
+       eigen-decomposition, no full-graph prerequisite, so the layer is <b>inductive</b>.</p>
+       <p><b>Cora / Citeseer (transductive, 2 layers, &sect;3.3):</b></p>
+       <ul>
+        <li><b>Layer 1:</b> $K\\!=\\!8$ heads, $F'\\!=\\!8$ features each, <b>concatenated</b> &rarr; $64$
+        features, then an <b>ELU</b> (Exponential Linear Unit) nonlinearity.</li>
+        <li><b>Output layer:</b> a single head computing $C$ features ($C$ = number of classes), then a
+        <b>softmax</b>. (Pubmed is identical but uses $K\\!=\\!8$ <b>averaged</b> output heads.)</li>
+        <li><b>Regularization:</b> dropout $p\\!=\\!0.6$ on both layers' inputs <i>and</i> on the normalized
+        $\\alpha$; $L_2$ weight decay $\\lambda\\!=\\!0.0005$ (Pubmed $\\lambda\\!=\\!0.001$).</li>
+       </ul>
+       <p><b>PPI (inductive, 3 layers, &sect;3.3):</b> first two layers $K\\!=\\!4$ heads $\\times\\,F'\\!=\\!256$
+       features ($=1024$, ELU) with <b>skip connections</b> between intermediate layers; output layer
+       $K\\!=\\!6$ heads $\\times\\,121$ features, <b>averaged</b>, then a logistic <b>sigmoid</b> for the
+       multi-label task. No dropout or $L_2$ needed (the dataset is large enough).</p>`,
     symbols: [
       { sym: "$\\vec{h}_i$", desc: "the <b>input feature vector</b> of node $i$ (length $F$). The set of all of them is the layer's input." },
       { sym: "$\\vec{h}_i'$", desc: "the <b>output feature vector</b> of node $i$ (length $F'$, or $KF'$ if heads are concatenated) produced by this layer." },
@@ -146,21 +168,40 @@
       { sym: "$\\alpha_{ij}$", desc: "the <b>normalized attention coefficient</b> (Eqn. 2-3): $e_{ij}$ run through a softmax over $i$'s neighbors, so $\\alpha_{ij}\\ge0$ and $\\sum_{j\\in\\mathcal{N}_i}\\alpha_{ij}=1$." },
       { sym: "softmax$_j$", desc: "the <b>softmax</b> over the neighbor index $j$: exponentiate each score and divide by the sum of exponentials, turning raw scores into weights that sum to 1." },
       { sym: "$\\sigma$", desc: "an <b>elementwise nonlinearity</b> applied after aggregation (the paper uses ELU on hidden layers; softmax/sigmoid produces the final class scores)." },
-      { sym: "$K$", desc: "the number of independent <b>attention heads</b> run in parallel and then combined (by concatenation on hidden layers, by averaging on the output)." }
+      { sym: "$K$", desc: "the number of independent <b>attention heads</b> run in parallel and then combined (by concatenation on hidden layers, by averaging on the output)." },
+      { sym: "$W^{k}$ / $\\alpha_{ij}^{k}$", desc: "the <b>per-head</b> weight matrix and attention coefficient of head $k$ (Eqns 5-6). Each of the $K$ heads has its own independent $W^{k}$ and $\\alpha^{k}$." },
+      { sym: "$\\big\\|_{k=1}^{K}$", desc: "<b>concatenation over heads</b> (Eqn 5): stack the $K$ heads' length-$F'$ outputs end to end into one length-$KF'$ vector." },
+      { sym: "$\\mathbb{R}^{2F'}$", desc: "the space of real vectors of length $2F'$ &mdash; where the attention weight vector $\\vec{a}$ lives, matching the concatenated pair $[W\\vec{h}_i\\|W\\vec{h}_j]$." },
+      { sym: "ELU", desc: "<b>Exponential Linear Unit</b>: the nonlinearity $\\sigma$ the paper uses on hidden layers ($x$ for $x\\gt0$, $e^{x}-1$ for $x\\le0$); the output layer uses softmax (single-label) or sigmoid (multi-label) instead." }
     ],
-    formula: `$$ \\alpha_{ij} \\;=\\; \\frac{\\exp\\!\\Big(\\text{LeakyReLU}\\big(\\vec{a}^{\\top}\\,[\\,W\\vec{h}_i \\,\\|\\, W\\vec{h}_j\\,]\\big)\\Big)}{\\displaystyle\\sum_{k\\in\\mathcal{N}_i}\\exp\\!\\Big(\\text{LeakyReLU}\\big(\\vec{a}^{\\top}\\,[\\,W\\vec{h}_i \\,\\|\\, W\\vec{h}_k\\,]\\big)\\Big)} \\qquad\\text{(Eqn. 3)} $$
-$$ \\vec{h}_i' \\;=\\; \\sigma\\!\\Big(\\textstyle\\sum_{j\\in\\mathcal{N}_i}\\alpha_{ij}\\,W\\vec{h}_j\\Big) \\qquad\\text{(Eqn. 4)} $$`,
+    formula: `$$ e_{ij} \\;=\\; a\\big(W\\vec{h}_i,\\; W\\vec{h}_j\\big) $$
+<p class="cap">&sect;2.1, Eqn (1): the <b>raw attention score</b> &mdash; a shared mechanism $a$ rates how relevant neighbor $j$'s transformed features $W\\vec{h}_j$ are to node $i$.</p>
+$$ \\alpha_{ij} \\;=\\; \\text{softmax}_j\\big(e_{ij}\\big) \\;=\\; \\frac{\\exp(e_{ij})}{\\displaystyle\\sum_{k\\in\\mathcal{N}_i}\\exp(e_{ik})} $$
+<p class="cap">&sect;2.1, Eqn (2): <b>normalize</b> the scores with a softmax over $i$'s neighbors $\\mathcal{N}_i$, so $\\alpha_{ij}\\ge0$ and $\\sum_{j}\\alpha_{ij}=1$.</p>
+$$ \\alpha_{ij} \\;=\\; \\frac{\\exp\\!\\Big(\\text{LeakyReLU}\\big(\\vec{a}^{\\top}\\,[\\,W\\vec{h}_i \\,\\|\\, W\\vec{h}_j\\,]\\big)\\Big)}{\\displaystyle\\sum_{k\\in\\mathcal{N}_i}\\exp\\!\\Big(\\text{LeakyReLU}\\big(\\vec{a}^{\\top}\\,[\\,W\\vec{h}_i \\,\\|\\, W\\vec{h}_k\\,]\\big)\\Big)} $$
+<p class="cap">&sect;2.1, Eqn (3): the <b>fully expanded</b> coefficient &mdash; $a$ is a single-layer net: concatenate $[W\\vec{h}_i\\,\\|\\,W\\vec{h}_j]$, dot with learnable $\\vec{a}\\in\\mathbb{R}^{2F'}$, pass through LeakyReLU (negative slope $0.2$), then softmax.</p>
+$$ \\vec{h}_i' \\;=\\; \\sigma\\!\\Big(\\textstyle\\sum_{j\\in\\mathcal{N}_i}\\alpha_{ij}\\,W\\vec{h}_j\\Big) $$
+<p class="cap">&sect;2.1, Eqn (4): the <b>output</b> &mdash; node $i$'s new feature is the $\\alpha$-weighted sum of its neighbors' transformed features, passed through a nonlinearity $\\sigma$.</p>
+$$ \\vec{h}_i' \\;=\\; \\big\\|_{k=1}^{K}\\;\\sigma\\!\\Big(\\textstyle\\sum_{j\\in\\mathcal{N}_i}\\alpha_{ij}^{k}\\,W^{k}\\vec{h}_j\\Big) $$
+<p class="cap">&sect;2.1, Eqn (5): <b>multi-head, concatenated</b> (hidden layers) &mdash; run $K$ independent heads, each with its own $\\alpha^k,W^k$, and stack their outputs end to end into a length-$KF'$ vector.</p>
+$$ \\vec{h}_i' \\;=\\; \\sigma\\!\\Big(\\tfrac{1}{K}\\textstyle\\sum_{k=1}^{K}\\sum_{j\\in\\mathcal{N}_i}\\alpha_{ij}^{k}\\,W^{k}\\vec{h}_j\\Big) $$
+<p class="cap">&sect;2.1, Eqn (6): <b>multi-head, averaged</b> (final layer) &mdash; concatenation no longer makes sense for predictions, so average the $K$ heads and apply $\\sigma$ (softmax for classes, sigmoid for multi-label), keeping the output length $F'$.</p>`,
     whatItDoes:
-      `<p><b>Equation 3</b> is the full attention coefficient, the paper's central formula. Read it inside-out:
-       transform $i$ and $j$ ($W\\vec{h}_i$, $W\\vec{h}_j$), concatenate them, dot with the learnable vector
-       $\\vec{a}$, squash with LeakyReLU &mdash; that is the raw score $e_{ij}$. The fraction is a
-       <b>softmax</b> over $i$'s neighbors: the numerator is $\\exp(e_{ij})$ and the denominator sums
-       $\\exp(e_{ik})$ over all neighbors $k$, so the $\\alpha_{ij}$ are weights that sum to 1. Unlike GCN's
-       fixed $1/\\sqrt{d_i d_j}$, every quantity here is <b>learned from the node features</b>, so the layer
-       can give an informative neighbor more weight and a noisy one less.</p>
-       <p><b>Equation 4</b> uses those weights: node $i$'s new vector is the $\\alpha$-weighted average of its
-       neighbors' transformed features, passed through $\\sigma$. So the whole layer is "score each neighbor,
-       normalize the scores into weights, take the weighted average."</p>`,
+      `<p><b>Equation 1</b> says: a shared scorer $a$ reads the transformed features of node $i$ and neighbor
+       $j$ and emits one number $e_{ij}$ &mdash; "how much should $i$ attend to $j$?" &mdash; before any
+       normalization. <b>Equation 2</b> turns the row of scores into a probability distribution with a
+       <b>softmax</b> over $i$'s neighbors, so the weights are non-negative and sum to 1.</p>
+       <p><b>Equation 3</b> spells out $a$: transform $i$ and $j$ ($W\\vec{h}_i$, $W\\vec{h}_j$), concatenate
+       them, dot with the learnable vector $\\vec{a}$, squash with LeakyReLU &mdash; that is $e_{ij}$ &mdash;
+       then apply the Eqn-2 softmax. Unlike GCN's fixed $1/\\sqrt{d_i d_j}$, every quantity here is
+       <b>learned from the node features</b>, so the layer can give an informative neighbor more weight and a
+       noisy one less. <b>Equation 4</b> uses those weights: node $i$'s new vector is the $\\alpha$-weighted
+       average of its neighbors' transformed features, passed through $\\sigma$. So one head is "score each
+       neighbor, normalize into weights, take the weighted average."</p>
+       <p><b>Equations 5-6</b> run $K$ independent heads for stability. On hidden layers (Eqn 5) the heads are
+       <b>concatenated</b> &mdash; each keeps its own view, width grows to $KF'$. On the final layer (Eqn 6)
+       concatenation no longer makes sense for a prediction, so the heads are <b>averaged</b> and then passed
+       through $\\sigma$ (softmax for single-label classes, sigmoid for multi-label).</p>`,
     derivation:
       `<p><b>Why a softmax of LeakyReLU scores?</b> (Full derivation here &mdash; there is no separate concept
        lesson for this layer; <code>conceptLink</code> is null.) Two requirements drive the form.</p>

@@ -147,6 +147,34 @@
        (nodes with the same role embed alike). A <b>DFS-like</b> walk roams across the community, so co-occurring
        nodes tend to be from the <i>same densely-connected region</i> &mdash; this yields <b>homophily</b>
        (community members embed alike). So $q$ is the dial between role-similarity and community-similarity.</p>`,
+    architecture:
+      `<p>node2vec is a <b>two-component pipeline</b> &mdash; a <b>biased-walk sampler</b> that turns the graph
+       into node "sentences", feeding a <b>skip-gram</b> network that turns those sentences into embeddings.
+       There are no neural layers in the sampler; the only learned weights are the two embedding tables. The
+       paper's <b>Algorithm 1</b> (<code>LearnFeatures</code> calling <code>node2vecWalk</code>, &sect;3.2.2) runs
+       three sequential stages:</p>
+       <p><b>Component 1 &mdash; bias preprocessing (Algorithm 1, stage 1).</b> Walk the graph once. For every
+       directed edge $(t,v)$ and every neighbor $x$ of $v$, classify $d_{tx}\\in\\{0,1,2\\}$ and store the
+       unnormalized weight $\\pi_{vx}=\\alpha_{pq}(t,x)\\,w_{vx}$ (the $1/p,\\,1,\\,1/q$ table times the edge
+       weight). Normalize per source state $(t,v)$ into a transition distribution and build an <b>alias table</b>
+       so each later sampling step is $O(1)$. Cost $O(a^2|V|)$ for average degree $a$ and $|V|$ nodes &mdash;
+       this is the only place $p,q$ enter.</p>
+       <p><b>Component 2 &mdash; biased walk generation (Algorithm 1, stage 2).</b> From <i>every</i> node, start
+       $r$ walks of fixed length $\\ell$. The walk state is the <b>pair</b> $(t,v)$ = (previous, current) node,
+       not just $v$ &mdash; that is what makes it 2nd-order. At each step, alias-sample the next node $x$ from the
+       precomputed distribution for $(t,v)$, then slide the state to $(v,x)$. Output: $r|V|$ walks, each a
+       sequence of node ids &mdash; the "corpus".</p>
+       <p><b>Component 3 &mdash; skip-gram with negative sampling (Algorithm 1, stage 3).</b> Two embedding
+       tables, $f$ (target) and an output/context table, each $|V|\\times d$ for embedding dimension $d$. Slide a
+       window of size $k$ over each walk to form (center, context) pairs; for each, the center's row from $f$ is
+       dotted with the context's row, plus a handful of sampled <b>negative</b> nodes, through a logistic loss
+       that approximates Eqn. 4's $-\\log Z_u$ term. Stochastic-gradient updates pull co-occurring nodes'
+       vectors together and push negatives apart. The trained table $f$ is the node-embedding output.</p>
+       <p><b>Data flow:</b> graph &rarr; (bias table $\\pi$, alias tables) &rarr; biased walks &rarr; windowed
+       skip-gram pairs &rarr; SGD on two embedding tables &rarr; $f$. All three stages parallelize over nodes,
+       which is what makes node2vec scale to millions of nodes (&sect;3.2.2). Swapping $p,q$ touches only
+       Component 1; Components 2&ndash;3 are unchanged &mdash; the same machinery that gives the BFS&harr;DFS
+       interpolation.</p>`,
     symbols: [
       { sym: "$t$", desc: "the <b>previous</b> node &mdash; the one the walk just came from before reaching $v$. The bias looks back at $t$, which is what makes the walk 2nd-order." },
       { sym: "$v$", desc: "the <b>current</b> node where the walk sits; we are choosing its next step." },
@@ -159,24 +187,35 @@
       { sym: "$\\pi_{vx}$", desc: "the <b>unnormalized transition weight</b> to $x$. Dividing each $\\pi_{vx}$ by the sum over all candidates gives the actual next-step probability." },
       { sym: "$f(u)$", desc: "the <b>embedding</b> (feature vector) of node $u$ &mdash; the thing we are learning. A short list of numbers." },
       { sym: "$N_S(u)$", desc: "the <b>network neighborhood</b> of $u$ produced by sampling strategy $S$ &mdash; the set of nodes that co-occur with $u$ in the walks (its skip-gram context)." },
-      { sym: "$Z_u$", desc: "the <b>partition function</b> $\\sum_{w\\in V}\\exp(f(w)\\cdot f(u))$ &mdash; the softmax denominator that normalizes the probabilities. Expensive, so it is approximated (negative sampling)." },
+      { sym: "$Z_u$", desc: "the <b>partition function</b> $\\sum_{v\\in V}\\exp(f(v)\\cdot f(u))$ &mdash; the per-node softmax denominator that normalizes the embedding probabilities (Eqn. 3). Sums over <i>all</i> nodes, so it is expensive and is approximated by negative sampling." },
+      { sym: "$V$", desc: "the <b>set of all nodes</b> in the graph; $|V|$ is the node count. The objective sums over every $u\\in V$." },
+      { sym: "$E$", desc: "the <b>set of edges</b>. The walk can only step to $x$ if $(v,x)\\in E$; otherwise the transition probability is $0$." },
+      { sym: "$c_i$", desc: "the <b>$i$-th node visited</b> on a walk; $c_{i-1}=v$ is the current node and the next node $c_i=x$ is drawn from $\\Pr(c_i=x\\mid c_{i-1}=v)$." },
+      { sym: "$Z$", desc: "the <b>walk normalizing constant</b> &mdash; the sum of $\\pi_{vx}$ over $v$'s neighbors, turning the unnormalized weights into a next-step probability. (Distinct from the embedding partition function $Z_u$.)" },
       { sym: "BFS / DFS", desc: "<b>Breadth-First / Depth-First Search</b>: two classic ways to explore a graph &mdash; BFS sweeps the immediate neighbors first; DFS plunges outward along a path. node2vec's $q$ interpolates between these two behaviors." }
     ],
-    formula: `$$ \\alpha_{pq}(t,x) \\;=\\; \\begin{cases} \\dfrac{1}{p} & \\text{if } d_{tx}=0 \\\\[4pt] 1 & \\text{if } d_{tx}=1 \\\\[4pt] \\dfrac{1}{q} & \\text{if } d_{tx}=2 \\end{cases} \\qquad \\pi_{vx}=\\alpha_{pq}(t,x)\\,w_{vx} \\qquad\\text{(\\S 3.2.2)} $$
-$$ \\max_{f}\\;\\sum_{u\\in V}\\Big[-\\log Z_u + \\sum_{n_i\\in N_S(u)} f(n_i)\\cdot f(u)\\Big] \\qquad\\text{(Eqn. 2, \\S 3.1)} $$`,
+    formula: `$$ \\max_{f}\\;\\sum_{u\\in V}\\;\\log\\Pr\\!\\big(N_S(u)\\mid f(u)\\big) \\qquad\\text{(Eqn. 1, \\S 3.1 — the skip-gram objective: each node's vector should predict its sampled neighborhood)} $$
+$$ \\Pr\\!\\big(N_S(u)\\mid f(u)\\big)\\;=\\;\\prod_{n_i\\in N_S(u)}\\Pr\\!\\big(n_i\\mid f(u)\\big) \\qquad\\text{(Eqn. 2, \\S 3.1 — conditional-independence assumption: factor the neighborhood over its members)} $$
+$$ \\Pr\\!\\big(n_i\\mid f(u)\\big)\\;=\\;\\frac{\\exp\\!\\big(f(n_i)\\cdot f(u)\\big)}{\\displaystyle\\sum_{v\\in V}\\exp\\!\\big(f(v)\\cdot f(u)\\big)}\\;=\\;\\frac{\\exp\\!\\big(f(n_i)\\cdot f(u)\\big)}{Z_u} \\qquad\\text{(Eqn. 3, \\S 3.1 — symmetric softmax; }Z_u\\text{ is the partition function)} $$
+$$ \\max_{f}\\;\\sum_{u\\in V}\\Big[-\\log Z_u + \\sum_{n_i\\in N_S(u)} f(n_i)\\cdot f(u)\\Big]\\,,\\qquad Z_u=\\sum_{v\\in V}\\exp\\!\\big(f(u)\\cdot f(v)\\big) \\qquad\\text{(Eqn. 4, \\S 3.1 — combine 1–3, take logs; trained by negative sampling)} $$
+$$ \\Pr\\!\\big(c_i=x \\mid c_{i-1}=v\\big)\\;=\\;\\begin{cases}\\dfrac{\\pi_{vx}}{Z} & \\text{if }(v,x)\\in E\\\\[4pt] 0 & \\text{otherwise}\\end{cases} \\qquad\\text{(\\S 3.2.2 — the walk's next-step distribution; }Z\\text{ normalizes over }v\\text{'s neighbors)} $$
+$$ \\pi_{vx}=\\alpha_{pq}(t,x)\\cdot w_{vx}\\,,\\qquad \\alpha_{pq}(t,x) \\;=\\; \\begin{cases} \\dfrac{1}{p} & \\text{if } d_{tx}=0 \\\\[4pt] 1 & \\text{if } d_{tx}=1 \\\\[4pt] \\dfrac{1}{q} & \\text{if } d_{tx}=2 \\end{cases} \\qquad\\text{(\\S 3.2.2 — the 2nd-order search bias: return parameter }p\\text{, in-out parameter }q\\text{)} $$`,
     whatItDoes:
-      `<p><b>Top equation (the bias, &sect;3.2.2).</b> Standing at $v$ having come from $t$, score each
-       candidate next node $x$ by a single number that depends <i>only</i> on $x$'s distance from the previous
-       node $t$: <b>$1/p$ for going back</b> ($d{=}0$), <b>$1$ for a local sideways step</b> ($d{=}1$), and
-       <b>$1/q$ for an outward step</b> ($d{=}2$). Multiply by the edge weight, normalize across all candidates,
-       and sample. That is the entire transition rule &mdash; three cases.</p>
-       <p><b>Bottom equation (the objective, Eqn. 2).</b> This is skip-gram, restated for graphs. Start from
-       Eqn. (1), $\\max_f\\sum_u\\log\\Pr(N_S(u)\\mid f(u))$ &mdash; "make each node's vector predict the nodes
-       it co-occurs with on the walks." Two assumptions (conditional independence of the neighbors, and a
-       symmetric softmax $\\Pr(n_i\\mid f(u))=\\exp(f(n_i)\\cdot f(u))/Z_u$) collapse it to Eqn. (2): for every
-       node, <b>pull its vector toward the vectors of its walk-neighbors</b> ($f(n_i)\\cdot f(u)$, the dot
-       product, large) while the partition function $Z_u$ pushes it away from everyone else. The bias decides
-       <i>who</i> ends up in $N_S(u)$; the objective does the pulling.</p>`,
+      `<p><b>The objective (Eqns. 1&ndash;4).</b> This is skip-gram, restated for graphs. <b>Eqn. 1</b>,
+       $\\max_f\\sum_u\\log\\Pr(N_S(u)\\mid f(u))$, says "make each node's vector predict the nodes it co-occurs
+       with on the walks." <b>Eqn. 2</b> assumes the neighbors are conditionally independent, so the
+       neighborhood probability factors into a <i>product</i> over individual neighbors. <b>Eqn. 3</b> models
+       each factor with a symmetric softmax $\\exp(f(n_i)\\cdot f(u))/Z_u$ &mdash; a node is "close" when the dot
+       product of the two vectors is large, and $Z_u$ normalizes over all nodes. <b>Eqn. 4</b> takes logs of the
+       product and substitutes the softmax: for every node, <b>pull its vector toward the vectors of its
+       walk-neighbors</b> ($f(n_i)\\cdot f(u)$ large) while the $-\\log Z_u$ term pushes it away from everyone
+       else. The bias decides <i>who</i> ends up in $N_S(u)$; this objective does the pulling.</p>
+       <p><b>The walk's next step (&sect;3.2.2).</b> $\\Pr(c_i=x\\mid c_{i-1}=v)$ is the bias table, normalized.
+       Standing at $v$ having come from $t$, score each candidate next node $x$ by a single number that depends
+       <i>only</i> on $x$'s distance from the <i>previous</i> node $t$: <b>$1/p$ for going back</b> ($d{=}0$),
+       <b>$1$ for a local sideways step</b> ($d{=}1$), and <b>$1/q$ for an outward step</b> ($d{=}2$). Multiply
+       by the edge weight $w_{vx}$ to get $\\pi_{vx}$, divide by $Z$ (the sum over $v$'s neighbors), and sample.
+       That is the entire transition rule &mdash; three cases.</p>`,
     derivation:
       `<p><b>Why three cases &mdash; and exactly $1/p,1,1/q$ &mdash; suffice (&sect;3.2.2).</b> Because the walk
        is 2nd-order, the candidate $x$ can only be at distance $0$, $1$, or $2$ from the previous node $t$:</p>

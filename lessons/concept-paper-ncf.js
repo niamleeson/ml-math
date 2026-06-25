@@ -142,6 +142,36 @@
        <b>negatively sample</b>: "we uniformly sample them from unobserved interactions in each iteration"
        (&sect;3.1), a few negatives per positive. Then train with <b>binary cross-entropy</b> (also called log
        loss), the standard loss for a yes/no probability.</p>`,
+    architecture:
+      `<p>NeuMF is <b>two parallel towers</b> that meet at one output neuron (paper Figure 3). Input is a
+       (user id, item id) pair, each a one-hot vector turned into a dense embedding by lookup.</p>
+       <p><b>Shared input layer.</b> Two one-hot vectors: user $v_u^U$ (length = number of users) and item
+       $v_i^I$ (length = number of items).</p>
+       <p><b>GMF tower (left).</b></p>
+       <ul>
+        <li><b>GMF embedding layer:</b> $p_u^G = P_G^\\top v_u^U$ and $q_i^G = Q_G^\\top v_i^I$, each length $K$
+        (the predictive-factor count, e.g. $8$).</li>
+        <li><b>Element-wise product layer:</b> $\\phi^{GMF} = p_u^G \\odot q_i^G$ &mdash; a length-$K$ vector,
+        entry $k$ is $p_{u,k}^G\\,q_{i,k}^G$. No summation here (that is the point: the sum is deferred to $h$).</li>
+       </ul>
+       <p><b>MLP tower (right).</b></p>
+       <ul>
+        <li><b>MLP embedding layer (separate tables):</b> $p_u^M, q_i^M$ &mdash; their own embeddings, often
+        wider (e.g. $16$).</li>
+        <li><b>Concatenation:</b> $z_1 = [p_u^M; q_i^M]$ &mdash; length $2\\times$ the MLP embedding size.</li>
+        <li><b>Fully-connected tower:</b> hidden layers $\\phi_\\ell = \\text{ReLU}(W_\\ell^\\top \\phi_{\\ell-1}+b_\\ell)$.
+        The paper uses a <b>tower</b> shape &mdash; each layer halves the width (e.g. $32\\!\\to\\!16\\!\\to\\!8$) &mdash;
+        producing $\\phi^{MLP}$.</li>
+       </ul>
+       <p><b>NeuMF fusion layer (top).</b> Concatenate the two tower outputs, $[\\phi^{GMF}; \\phi^{MLP}]$
+       (length $K$ plus the MLP's last width), apply the single output weight $h$ (a linear map to one unit),
+       then the sigmoid &mdash; one scalar $\\hat{y}_{ui}\\in(0,1)$.</p>
+       <p><b>Why two towers, two embedding sets.</b> A single shared embedding would force one vector to serve
+       both a multiplicative match (GMF) and a non-linear match (MLP); the paper found separate embeddings give
+       NeuMF more flexibility (&sect;3.4). <b>Optional pre-training:</b> train GMF and MLP alone, copy their
+       weights in, and blend the two output weights with $\\alpha$ (Eq. 13); we skip it in the small run.</p>
+       <p><b>Training:</b> binary cross-entropy (Eq. 7) over observed positives plus negatively-sampled
+       unobserved pairs, optimized with Adam (mini-batch stochastic gradient descent).</p>`,
     symbols: [
       { sym: "$u,\\ i$", desc: "a <b>user</b> index and an <b>item</b> index." },
       { sym: "$p_u$", desc: "the <b>user embedding</b>: a length-$K$ latent-factor vector for user $u$ (its raw form before the score)." },
@@ -152,6 +182,13 @@
       { sym: "$\\sigma$", desc: "the <b>sigmoid</b> function $\\sigma(z)=1/(1+e^{-z})$: squashes any real number into $(0,1)$, read as a probability of interaction." },
       { sym: "$\\hat{y}_{ui}$", desc: "the <b>predicted score</b>: the model's probability that user $u$ interacts with item $i$." },
       { sym: "$y_{ui}$", desc: "the <b>label</b>: $1$ for an observed interaction (positive), $0$ for a negatively-sampled unobserved pair." },
+      { sym: "$f,\\ \\Theta_f$", desc: "the learned <b>interaction function</b> $f$ (GMF / MLP / NeuMF) and its parameters $\\Theta_f$ (the general NCF model, &sect;3.1)." },
+      { sym: "$v_u^U,\\ v_i^I$", desc: "the <b>one-hot input vectors</b> for user $u$ and item $i$ (a single $1$ at the id, $0$ elsewhere)." },
+      { sym: "$P,\\ Q$", desc: "the <b>user / item embedding matrices</b>; a lookup $P^\\top v_u^U$ returns the user embedding $p_u$ (likewise $Q$ for items)." },
+      { sym: "$a_{out}$", desc: "the <b>output activation</b> of GMF (&sect;3.2). With $a_{out}=\\sigma$ you get a probability; with $a_{out}=$ identity and $h$ all-ones, plain matrix factorization." },
+      { sym: "$\\mathcal{Y},\\ \\mathcal{Y}^-$", desc: "the set of <b>observed</b> interactions (positives, label $1$) and the set of <b>sampled unobserved</b> pairs (negatives, label $0$)." },
+      { sym: "$L,\\ \\ell$", desc: "the <b>number of layers</b> in the MLP tower and the <b>layer index</b> $\\ell=1,\\ldots,L$." },
+      { sym: "$\\alpha$", desc: "the <b>pre-training trade-off</b> (Eq. 13) that blends the GMF and MLP output weights when initializing NeuMF (the paper uses $0.5$)." },
       { sym: "$[\\,\\cdot\\,;\\,\\cdot\\,]$", desc: "<b>concatenation</b>: stack two vectors end-to-end into one longer vector." },
       { sym: "$z_1=[p_u;q_i]$", desc: "the MLP input: the user and item embeddings <b>concatenated</b> (not multiplied)." },
       { sym: "$W_\\ell,\\ b_\\ell,\\ a$", desc: "the MLP layer $\\ell$'s <b>weight matrix</b> $W_\\ell$, <b>bias</b> $b_\\ell$, and <b>activation</b> $a$ (here ReLU)." },
@@ -159,8 +196,19 @@
       { sym: "Hit Ratio (HR@K)", desc: "fraction of test users whose held-out true item lands in the top $K$ of the ranked list. A recall-style hit/miss metric." },
       { sym: "NDCG@K", desc: "<b>Normalized Discounted Cumulative Gain</b> @ $K$: rewards putting the true item <i>higher</i> in the top $K$. If the true item is at rank $r$ (counting from $1$), its score is $1/\\log_2(r+1)$, else $0$. Higher = ranked nearer the top." }
     ],
-    formula: `$$ \\hat{y}_{ui} = \\sigma\\!\\big(h^\\top(p_u \\odot q_i)\\big) \\quad\\text{(GMF, \\S3.2)} \\qquad\\qquad \\hat{y}_{ui} = \\sigma\\!\\big(h^\\top\\,[\\,\\phi^{GMF};\\ \\phi^{MLP}\\,]\\big) \\quad\\text{(NeuMF, \\S3.4)} $$
-       $$ \\phi^{GMF}=p_u^G \\odot q_i^G, \\qquad \\phi^{MLP}=a_L\\!\\big(W_L^\\top\\,a_{L-1}(\\cdots a_2(W_2^\\top[p_u^M;q_i^M]+b_2)\\cdots)+b_L\\big) $$`,
+    formula: `$$ \\hat{y}_{ui} = f\\!\\big(P^\\top v_u^U,\\; Q^\\top v_i^I \\,\\big|\\, P, Q, \\Theta_f\\big) $$
+       <p>General NCF predictive model (&sect;3.1, Eq. 3): embed the one-hot user id $v_u^U$ and item id $v_i^I$ with embedding matrices $P,Q$, then a learned interaction function $f$ (parameters $\\Theta_f$) maps the pair to a score.</p>
+       $$ L = -\\!\\!\\sum_{(u,i)\\in\\mathcal{Y}\\cup\\mathcal{Y}^-}\\!\\! \\Big[\\, y_{ui}\\,\\log \\hat{y}_{ui} + (1-y_{ui})\\,\\log(1-\\hat{y}_{ui}) \\,\\Big] $$
+       <p>Binary cross-entropy / log loss for implicit feedback (&sect;3.1.1, Eq. 7): observed interactions $\\mathcal{Y}$ are label $1$; negatives $\\mathcal{Y}^-$ are uniformly sampled from unobserved pairs each iteration.</p>
+       $$ \\hat{y}_{ui} = a_{out}\\!\\big(h^\\top(p_u \\odot q_i)\\big) = \\sigma\\!\\big(h^\\top(p_u \\odot q_i)\\big) $$
+       <p>GMF &mdash; Generalized Matrix Factorization (&sect;3.2, Eq. 9): element-wise product of the embeddings, a learned output weight $h$, and the sigmoid $a_{out}=\\sigma$. With $a_{out}=$ identity and $h=[1,\\ldots,1]$ this is exactly plain matrix factorization $p_u^\\top q_i$.</p>
+       $$ z_1 = [\\,p_u;\\,q_i\\,], \\qquad \\phi_\\ell(z_{\\ell-1}) = a_\\ell\\!\\big(W_\\ell^\\top z_{\\ell-1} + b_\\ell\\big), \\qquad \\hat{y}_{ui} = \\sigma\\!\\big(h^\\top \\phi_L(z_{L-1})\\big) $$
+       <p>MLP tower (&sect;3.3, Eq. 10): concatenate the embeddings into $z_1$, push through $L$ fully-connected layers with activation $a_\\ell$ (the paper uses ReLU), then a sigmoid output.</p>
+       $$ \\phi^{GMF}=p_u^G \\odot q_i^G, \\qquad \\phi^{MLP}=a_L\\!\\big(W_L^\\top\\,a_{L-1}(\\cdots a_2(W_2^\\top[p_u^M;q_i^M]+b_2)\\cdots)+b_L\\big) $$
+       $$ \\hat{y}_{ui} = \\sigma\\!\\big(h^\\top\\,[\\,\\phi^{GMF};\\ \\phi^{MLP}\\,]\\big) $$
+       <p>NeuMF fusion (&sect;3.4, Eq. 12): run the GMF and MLP branches with <b>separate</b> embeddings (superscripts $G$, $M$), concatenate their outputs, then one final weight $h$ and sigmoid.</p>
+       $$ h \\leftarrow \\big[\\,\\alpha\\,h^{GMF};\\ (1-\\alpha)\\,h^{MLP}\\,\\big] $$
+       <p>Optional pre-training trade-off (&sect;3.4, Eq. 13): initialize NeuMF's final layer by blending the separately pre-trained GMF and MLP output weights with $\\alpha$ (the paper uses $\\alpha=0.5$).</p>`,
     whatItDoes:
       `<p><b>GMF (left).</b> Multiply the user and item embeddings entry-by-entry ($p_u \\odot q_i$), weight the
        result with the learned vector $h$, and squash with the sigmoid. The learned $h$ is the only difference

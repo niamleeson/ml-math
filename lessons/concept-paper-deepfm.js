@@ -133,6 +133,35 @@
        same size $k$ even though raw fields differ in cardinality; and "the latent feature vectors ($V$) in FM
        now serve as network weights which are learned and used to compress the input field vectors to the
        embedding vectors." One table, two consumers, trained jointly.</p>`,
+    architecture:
+      `<p>DeepFM is one network with a <b>shared bottom</b> and two parallel heads, summed before the
+       sigmoid (Fig. 1, &sect;2.1). Data flows bottom to top:</p>
+       <ul>
+        <li><b>1. Sparse input.</b> The raw record is $m$ categorical <b>fields</b> (user-id, app-category,
+        hour, ...), each one-hot. Field $i$ contributes a one-hot block whose width is that field's
+        cardinality; widths differ across fields.</li>
+        <li><b>2. Embedding layer (Eqn. 3).</b> Each field is mapped to a dense length-$k$ vector $e_i$ by a
+        lookup in the latent table $V$ &mdash; the FM latent vectors $V_i$ <i>are</i> these embedding weights.
+        Two design choices the paper calls out (&sect;2.1.2): (i) every $e_i$ has the <b>same</b> size $k$ even
+        though the input fields differ in width; (ii) "the latent feature vectors ($V$) in FM now serve as
+        network weights." The stacked vectors form $a^{(0)} = [e_1,\\dots,e_m]$, length $m\\,k$. <b>This single
+        $a^{(0)}$ is the only input to both heads</b> &mdash; the shared-embedding design.</li>
+        <li><b>3a. FM head (&sect;2.1.1, Eqn. 2).</b> An <b>Addition unit</b> computes the order-1 term
+        $\\langle w,x\\rangle$; <b>Inner-Product units</b> compute the order-2 term, summing $\\langle
+        V_{j_1},V_{j_2}\\rangle x_{j_1}x_{j_2}$ over all feature pairs. Output: the scalar $y_{FM}$. (The code
+        evaluates the order-2 sum with the $O(kd)$ square-of-sum identity rather than enumerating pairs.)</li>
+        <li><b>3b. Deep head (&sect;2.1.2, Eqns. 4 and $y_{DNN}$).</b> The same $a^{(0)}$ feeds a stack of
+        $|H|$ fully-connected layers, each $a^{(l+1)}=\\sigma(W^{(l)}a^{(l)}+b^{(l)})$ with a nonlinearity
+        $\\sigma$ (ReLU). A final affine layer projects $a^{(H)}$ to the scalar $y_{DNN}$. Depth is what
+        captures interactions of order higher than two.</li>
+        <li><b>4. Output (Eqn. 1).</b> The two scalars are <b>added</b> (not concatenated),
+        $y_{FM}+y_{DNN}$, and the sigmoid maps the sum to the predicted CTR $\\hat{y}\\in(0,1)$. The whole
+        network &mdash; embedding table, FM head, deep head &mdash; is trained jointly by backprop, so the
+        shared embeddings receive gradients from both the low-order and the high-order signals.</li>
+       </ul>
+       <p>Reference shape (the lesson's small build): $m=5$ fields, $k=8$, so $a^{(0)}$ has length $40$; the
+       deep head is $40 \\to 64 \\to 32 \\to 1$ with ReLU and dropout. The FM head reuses the same length-$8$
+       embeddings, no extra parameters beyond the order-1 weights $w$ and bias.</p>`,
     symbols: [
       { sym: "$\\hat{y}$", desc: "the <b>predicted click probability</b> (CTR), a number between $0$ and $1$." },
       { sym: "$\\sigma$", desc: "the <b>sigmoid</b> function $\\sigma(z)=1/(1+e^{-z})$: squashes any real score into a $(0,1)$ probability. (In the deep layers, $\\sigma$ also denotes the ReLU nonlinearity, per the paper's notation.)" },
@@ -147,10 +176,20 @@
       { sym: "$a^{(0)}$", desc: "the <b>embedding layer output</b> (Eqn. 3): all field embeddings concatenated, $[e_1,\\dots,e_m]$. The shared input to FM and to the deep part." },
       { sym: "$a^{(l)}$", desc: "the activation (output) of the $l$-th hidden layer of the deep component; $a^{(l+1)}=\\sigma(W^{(l)}a^{(l)}+b^{(l)})$." },
       { sym: "$W^{(l)}, b^{(l)}$", desc: "the weight matrix and bias of the $l$-th deep layer." },
+      { sym: "$|H|$", desc: "the <b>number of hidden layers</b> in the deep component; the output layer is the $(|H|{+}1)$-th, giving $y_{DNN}$." },
+      { sym: "$d$", desc: "the total number of <b>features</b> (the dimension of the sparse input $x$); the FM order-2 sum runs over feature pairs $1 \\le j_1 \\lt j_2 \\le d$." },
       { sym: "“order-2 / order-3 interaction”", desc: "plain terms: an order-2 (pairwise) interaction is a signal from <b>two</b> features together; order-3 from <b>three</b> together. FM reaches order-2; depth reaches higher." }
     ],
     formula: `$$ \\hat{y} = \\sigma\\big(y_{FM} + y_{DNN}\\big) \\qquad\\text{(Eqn. 1)} $$
-$$ y_{FM} = \\langle w, x\\rangle + \\sum_{i=1}^{d}\\sum_{j=i+1}^{d} \\langle V_i, V_j\\rangle\\, x_i\\, x_j \\qquad\\text{(Eqn. 2)} $$`,
+<p>The combined prediction (&sect;2.1): low-order score plus high-order score, squashed by the sigmoid into a click probability.</p>
+$$ y_{FM} = \\langle w, x\\rangle + \\sum_{j_1=1}^{d}\\sum_{j_2=j_1+1}^{d} \\langle V_{j_1}, V_{j_2}\\rangle\\, x_{j_1}\\, x_{j_2} \\qquad\\text{(Eqn. 2)} $$
+<p>The FM component (&sect;2.1.1): the order-1 linear term $\\langle w,x\\rangle$ plus the order-2 sum over all feature pairs $(j_1,j_2)$ of latent-vector inner products weighted by the two feature values.</p>
+$$ a^{(0)} = [\\,e_1,\\,e_2,\\,\\dots,\\,e_m\\,] \\qquad\\text{(Eqn. 3)} $$
+<p>The embedding layer (&sect;2.1.2): the $m$ field embeddings $e_i$ (each length $k$) concatenated into the deep network's input $a^{(0)}$ &mdash; the same vectors the FM component uses.</p>
+$$ a^{(l+1)} = \\sigma\\big(W^{(l)} a^{(l)} + b^{(l)}\\big) \\qquad\\text{(Eqn. 4)} $$
+<p>The hidden-layer recurrence (&sect;2.1.2): each deep layer applies an affine map then a nonlinearity $\\sigma$; $l$ indexes layer depth.</p>
+$$ y_{DNN} = \\sigma\\big(W^{(|H|+1)} a^{(H)} + b^{(|H|+1)}\\big) $$
+<p>The deep output (&sect;2.1.2): after $|H|$ hidden layers, a final affine map produces the scalar deep score $y_{DNN}$.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the whole model in one line: compute a low-order score $y_{FM}$ and a high-order
        score $y_{DNN}$ from the <i>same</i> embeddings, <b>add</b> them, and apply the sigmoid to get a click

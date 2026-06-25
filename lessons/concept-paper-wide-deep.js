@@ -134,6 +134,27 @@
        outputs are averaged at the end. In joint training each part can be smaller, because it only needs to
        cover what the other part cannot. (The paper even uses different optimizers per part: FTRL with L1
        regularization for the sparse wide part, AdaGrad for the deep part.)</p>`,
+    architecture:
+      `<p>The model is two branches that meet at a single output unit (Fig. 1, left = wide, right = deep).
+       Data flows as follows.</p>
+       <p><b>Wide branch (left).</b> Input is the sparse feature vector $[\\mathbf{x},\\phi(\\mathbf{x})]$:
+       the raw features $\\mathbf{x}$ <i>plus</i> the cross-product features $\\phi(\\mathbf{x})$ from Eqn. 1
+       (in the Google Play system, the cross of installed-apps and impression-apps). A single linear layer
+       reads this with weights $\\mathbf{w}_{\\text{wide}}$ &rarr; one scalar logit. No hidden layers; it is
+       just $\\mathbf{w}_{\\text{wide}}^{\\top}[\\mathbf{x},\\phi(\\mathbf{x})]$.</p>
+       <p><b>Deep branch (right).</b> Each sparse, high-cardinality categorical feature is first mapped to a
+       dense <b>embedding</b> &mdash; the paper learns a <b>32-dimensional</b> embedding per categorical
+       feature. All embeddings are <b>concatenated</b> with the continuous (dense) features into one vector of
+       <b>~1200 dimensions</b>; this is $a^{(0)}$. That vector passes through <b>3 ReLU hidden layers</b>,
+       each applying Eqn. 2 $a^{(l+1)}=f(W^{(l)}a^{(l)}+b^{(l)})$ with $f=$ ReLU. The final hidden
+       activations $a^{(l_f)}$ are read into one scalar logit by $\\mathbf{w}_{\\text{deep}}$.</p>
+       <p><b>The join (output unit).</b> The wide logit and the deep logit are <b>added</b>, a shared bias $b$
+       is added, and one <b>sigmoid</b> $\\sigma$ produces $P(Y=1\\mid\\mathbf{x})$ (Eqn. 3). The whole graph
+       is trained under <b>one</b> binary-cross-entropy loss (joint training), using <b>mini-batch
+       stochastic optimization</b> that back-propagates into both branches at once &mdash; with <b>FTRL +
+       L1</b> updating the wide weights and <b>AdaGrad</b> updating the deep weights and embeddings. (Our
+       toy code uses 5-dim embeddings, a 2-layer MLP, and a single Adam optimizer &mdash; smaller than the
+       paper, same shape.)</p>`,
     symbols: [
       { sym: "$\\mathbf{x}$", desc: "the <b>feature vector</b> &mdash; the raw input features (the wide part also sees the cross-product features $\\phi(\\mathbf{x})$ appended)." },
       { sym: "$\\mathbf{w}$", desc: "the <b>weights</b> of the wide linear model (one weight per feature, including each cross-product feature)." },

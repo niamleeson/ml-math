@@ -152,6 +152,43 @@
        $\\Delta$; if it already does, that triple costs nothing. The paper also <b>sharpens</b> training with
        <b>hard negatives</b> &mdash; items somewhat related to the query but not the true positive &mdash; and
        makes them <i>harder over epochs</i> (a curriculum), so the model keeps having something to learn.</p>`,
+    architecture:
+      `<p>PinSAGE is a <b>$K$-layer stack of the importance-pooling <code>convolve</code></b> (Algorithm 1) topped by
+       a small output MLP, trained with the max-margin loss. The experiments use <b>$K=2$</b> convolution layers.</p>
+       <p><b>Inputs.</b> Each node (pin) starts with a feature vector of <b>4,352</b> dimensions &mdash; the
+       concatenation of a <b>4,096-d visual embedding</b> (from a VGG-style image network), a <b>256-d textual
+       annotation embedding</b>, and the <b>log node degree</b> (&sect;3.1/&sect;4). Call this layer-$0$
+       representation $\\mathbf{h}_u^{(0)}$.</p>
+       <p><b>The two stacked convolution layers (Algorithm 2).</b> Layer $k$ runs <code>convolve</code> on every node
+       using the previous layer's outputs as inputs &mdash; "the inputs to the convolutions at layer $k$ depend on
+       the representations output from layer $k-1$." Each layer $k$ has its <i>own</i> parameters
+       $\\mathbf{Q}^{(k)},\\mathbf{q}^{(k)}$ (the per-neighbor transform) and $\\mathbf{W}^{(k)},\\mathbf{w}^{(k)}$
+       (the self+neighbor combine):</p>
+       <ul>
+        <li><b>Layer 1:</b> $\\mathbf{h}_u^{(0)}\\;(4{,}352\\text{-d})\\;\\longrightarrow\\;\\mathbf{h}_u^{(1)}\\;(d=1{,}024\\text{-d})$.
+        The per-neighbor transform $\\mathrm{ReLU}(\\mathbf{Q}^{(1)}\\mathbf{h}_v+\\mathbf{q}^{(1)})$ produces a hidden
+        vector of size $m=2{,}048$ before importance pooling; the combine step outputs $d=1{,}024$.</li>
+        <li><b>Layer 2:</b> $\\mathbf{h}_u^{(1)}\\;(1{,}024\\text{-d})\\;\\longrightarrow\\;\\mathbf{h}_u^{(2)}\\;(1{,}024\\text{-d})$,
+        same shapes ($m=2{,}048$ hidden, $d=1{,}024$ out). Two layers means each node sees its <b>2-hop</b>
+        importance neighborhood.</li>
+       </ul>
+       <p><b>Importance neighborhoods feed every layer.</b> Before convolving, PinSAGE precomputes, for each node,
+       its <b>top-$T$</b> random-walk neighbors and their <b>$L_1$-normalized visit counts</b>
+       $\\boldsymbol{\\alpha}$; experiments use $T=50$. The same weighted-mean aggregator $\\gamma$ runs at both
+       layers.</p>
+       <p><b>Output head (Algorithm 2, lines 18&ndash;20).</b> The final layer-$K$ vector is mapped to the
+       <b>1,024-d</b> embedding by a two-layer MLP:
+       $\\mathbf{z}_u=\\mathbf{G}_2\\,\\mathrm{ReLU}(\\mathbf{G}_1\\mathbf{h}_u^{(K)}+\\mathbf{g})$. These $\\mathbf{z}_u$
+       are what the ranking loss compares and what serves recommendations (nearest neighbors in embedding space).</p>
+       <p><b>Minibatch construction (Algorithm 2).</b> For a minibatch of target nodes $\\mathcal{M}$, PinSAGE walks
+       <i>backward</i>: it builds the sets $\\mathcal{S}^{(k)}$ of all nodes whose representations are needed at each
+       layer (the $k$-hop importance neighborhoods of $\\mathcal{M}$), so only that small induced subgraph &mdash;
+       not the 3-billion-node graph &mdash; is loaded and convolved per step. A producer&ndash;consumer pipeline
+       overlaps this CPU graph-gathering with GPU model compute.</p>
+       <p><b>Training head.</b> Embeddings are optimized with the max-margin ranking loss (Eqn. 1) over
+       (query, positive, negative) triples, with a curriculum that adds <b>$n-1$ hard negatives</b> per item at
+       epoch $n$. Our lesson code implements the two novel pieces &mdash; importance pooling and the margin loss
+       &mdash; on a tiny graph; it does not reproduce these production dimensions.</p>`,
     symbols: [
       { sym: "$u$", desc: "the <b>node</b> (item) whose new embedding we are computing in this convolution." },
       { sym: "$\\mathcal{N}(u)$", desc: "the <b>neighborhood</b> of $u$: the <b>top $T$</b> nodes with the highest normalized random-walk visit counts from $u$ (not all graph neighbors)." },
@@ -164,6 +201,12 @@
       { sym: "$\\mathbf{n}_u$", desc: "the <b>aggregated neighborhood vector</b>: the importance-weighted mean of the transformed neighbors." },
       { sym: "$\\mathbf{W},\\mathbf{w}$", desc: "the <b>weight matrix and bias of the combine step</b> that mixes a node's own vector with its neighborhood vector $\\mathbf{n}_u$." },
       { sym: "$\\mathbf{z}_u^{\\text{new}}$", desc: "the <b>output embedding</b> of $u$ after one convolution ($L_2$-normalized to unit length)." },
+      { sym: "$K$", desc: "the <b>number of stacked convolution layers</b> &mdash; the depth of message passing (PinSAGE uses $K=2$, giving each node a 2-hop neighborhood)." },
+      { sym: "$\\mathbf{h}_u^{(k)}$", desc: "the representation of node $u$ <b>after layer $k$</b>; $\\mathbf{h}_u^{(0)}$ is the input feature (visual + text + log-degree, 4,352-d) and layer $k$ takes layer $k-1$'s outputs as inputs." },
+      { sym: "$\\mathbf{Q}^{(k)},\\mathbf{W}^{(k)}$", desc: "the <b>per-layer copies</b> of the transform and combine weights &mdash; each of the $K$ layers has its own $\\mathbf{Q},\\mathbf{q},\\mathbf{W},\\mathbf{w}$." },
+      { sym: "$m,\\;d$", desc: "the <b>hidden dimension</b> $m$ (output of the per-neighbor transform, $2{,}048$) and the <b>convolution output dimension</b> $d$ ($1{,}024$, shared across layers and the final embedding)." },
+      { sym: "$\\mathbf{G}_1,\\mathbf{G}_2,\\mathbf{g}$", desc: "the <b>output-head MLP</b> weights/bias that map the final layer-$K$ vector to the served embedding: $\\mathbf{z}_u=\\mathbf{G}_2\\,\\mathrm{ReLU}(\\mathbf{G}_1\\mathbf{h}_u^{(K)}+\\mathbf{g})$." },
+      { sym: "$\\mathcal{M},\\;\\mathcal{S}^{(k)}$", desc: "a training <b>minibatch</b> $\\mathcal{M}$ of target nodes, and the sets $\\mathcal{S}^{(k)}$ of all nodes whose representations are needed at layer $k$ (the $k$-hop importance neighborhoods) &mdash; only this induced subgraph is loaded per step." },
       { sym: "$q,\\;i,\\;n_k$", desc: "a training <b>triple</b>: the <b>query</b> item $q$, a <b>positive</b> (related) item $i$, and a sampled <b>negative</b> item $n_k$." },
       { sym: "$\\mathbf{z}_q\\!\\cdot\\!\\mathbf{z}_i$", desc: "the <b>dot product</b> (inner product) of two embeddings &mdash; the similarity score. Larger means more related." },
       { sym: "$\\Delta$", desc: "the <b>margin</b>: how much farther the negative must be from the query than the positive before the loss is satisfied (zero)." },

@@ -126,6 +126,40 @@
        any node, including ones added after training. That is what makes the method <b>inductive</b>, the
        direct contrast to the <b>transductive</b> GCN (<code>paper-gcn</code>), which does a single dense
        propagation over the entire fixed graph and learns embeddings tied to that one graph's nodes.</p>`,
+    architecture:
+      `<p>GraphSAGE is a <b>$K$-layer sample-and-aggregate stack</b> plus a task head, trained on
+       <b>minibatches</b> (Algorithm 2, &sect;3.1). Component by component:</p>
+       <ul>
+        <li><b>Input layer ($k{=}0$).</b> Each node $v$ starts as its raw feature vector
+        $\\mathbf{h}_v^0 = \\mathbf{x}_v$ (e.g. text/attribute features, dimension $d_0$).</li>
+        <li><b>$K$ SAGE layers</b> (the paper uses $K{=}2$, so a node sees a <b>2-hop</b> neighborhood). Each
+        layer $k$ has its own weight matrix $\\mathbf{W}^k$ mapping $\\mathrm{CONCAT}$ of dimension
+        $2 d_{k-1}$ down to $d_k$, plus the chosen aggregator's parameters. One layer = SAMPLE &rarr;
+        AGGREGATE &rarr; CONCAT-with-self &rarr; $\\mathbf{W}^k$ &rarr; $\\sigma$ &rarr; L2-normalize.</li>
+        <li><b>Fixed-size neighbor sampling.</b> Before aggregating, layer $i$ replaces the true neighbor set
+        with a <b>uniform sample of size $S_i$</b> (redrawn each pass, with replacement if the node has fewer
+        than $S_i$ neighbors). With $K{=}2$ the receptive field is $S_1{\\times}S_2$ nodes, capped at
+        $\\le 500$ &mdash; constant per node regardless of degree.</li>
+        <li><b>Aggregator (one of three, plugged into line 4).</b>
+         <ul>
+          <li><b>Mean</b> &mdash; element-wise average; in the convolutional variant (Eq. 2) self is folded into
+          the mean and the concat is skipped.</li>
+          <li><b>Max-pool</b> (Eq. 3) &mdash; each neighbor through one fully-connected layer
+          $\\sigma(\\mathbf{W}_{\\text{pool}}\\mathbf{h}_u + \\mathbf{b})$, then element-wise max. Trainable and
+          symmetric.</li>
+          <li><b>LSTM</b> &mdash; larger capacity, but not order-invariant, so neighbors are fed in a
+          <b>random permutation</b> each time to approximate a symmetric set function.</li>
+         </ul></li>
+        <li><b>Task head.</b> The final embedding $\\mathbf{z}_v = \\mathbf{h}_v^K$ feeds either a supervised
+        classifier (cross-entropy) or the unsupervised graph loss $J_{\\mathcal{G}}$ (Eq. 1).</li>
+        <li><b>Inductive minibatch training (Algorithm 2).</b> Two stages per minibatch: first a
+        <b>sampling pass</b> walks <i>outward</i> from the batch's "layer-$K$" target nodes, sampling
+        $S_K, \\ldots, S_1$ neighbors hop by hop to collect exactly the nodes needed; then an
+        <b>aggregation pass</b> runs lines 4&ndash;7 <i>inward</i>, computing each required
+        $\\mathbf{h}^k$ only once. Because the only parameters are the shared $\\mathbf{W}^k$ (and aggregator
+        weights) &mdash; never a per-node row &mdash; the trained stack runs unchanged on brand-new nodes or a
+        whole unseen graph.</li>
+       </ul>`,
     symbols: [
       { sym: "$v$", desc: "the <b>target node</b> we are computing an embedding for (e.g. one paper in a citation graph)." },
       { sym: "$u$", desc: "a <b>neighbor</b> node of $v$ &mdash; one of the nodes connected to $v$ by an edge." },
@@ -140,10 +174,33 @@
       { sym: "$\\sigma$", desc: "a <b>nonlinearity</b>; here the <b>ReLU</b> (Rectified Linear Unit): keep positive entries, zero out negatives." },
       { sym: "$\\mathbf{z}_v$", desc: "the <b>final embedding</b> of $v$ after all $K$ layers ($\\mathbf{z}_v = \\mathbf{h}_v^K$), used by the downstream task." },
       { sym: "$\\|\\cdot\\|_2$", desc: "the <b>L2 norm</b> (Euclidean length). Dividing by it puts every embedding on the unit sphere." },
+      { sym: "$\\mathrm{MEAN}(\\cdot)$", desc: "the <b>element-wise average</b> of a set of vectors &mdash; the mean aggregator (Eq. 2 folds self into this set)." },
+      { sym: "$\\max(\\cdot)$", desc: "the <b>element-wise maximum</b> over a set of vectors &mdash; the pooling step in the max-pool aggregator (Eq. 3)." },
+      { sym: "$\\mathbf{W}_{\\text{pool}}$", desc: "the <b>weight matrix of the max-pool aggregator's fully-connected layer</b> (Eq. 3), applied to each neighbor before the max." },
+      { sym: "$\\mathbf{b}$", desc: "the <b>bias vector</b> of that max-pool fully-connected layer (Eq. 3)." },
+      { sym: "$J_{\\mathcal{G}}(\\mathbf{z}_u)$", desc: "the <b>unsupervised graph-based loss</b> (Eq. 1) for node $u$'s embedding &mdash; minimized to make embeddings of nearby nodes similar." },
+      { sym: "$\\mathbf{z}_u, \\mathbf{z}_v$", desc: "the <b>final embeddings</b> of an <b>anchor</b> node $u$ and a node $v$ that <b>co-occurs near $u$ on a short random walk</b> (the positive pair in Eq. 1)." },
+      { sym: "$v_n$", desc: "a <b>negative-sample node</b> drawn from $P_n$ &mdash; one that should be <i>pushed away</i> from $u$ in Eq. 1." },
+      { sym: "$P_n(v)$", desc: "the <b>negative-sampling distribution</b> over nodes (Eq. 1)." },
+      { sym: "$Q$", desc: "the <b>number of negative samples</b> per positive pair in the loss (Eq. 1)." },
+      { sym: "$\\mathbb{E}[\\cdot]$", desc: "<b>expected value</b> (average) &mdash; here over negative samples $v_n \\sim P_n$ in Eq. 1." },
+      { sym: "$S_i$", desc: "the <b>fixed neighbor sample size at layer $i$</b>; per-batch cost is $\\prod_i S_i$. The paper uses $S_1 S_2 \\le 500$." },
       { sym: "“inductive”", desc: "a plain term: the model is a <i>function</i> that generalizes to <b>nodes/graphs not seen in training</b> &mdash; opposite of <b>transductive</b> (a fixed per-node table needing the whole graph up front)." }
     ],
-    formula: `$$ \\mathbf{h}_{N(v)}^{k} \\leftarrow \\mathrm{aggregate}_k\\big(\\{\\mathbf{h}_u^{k-1},\\, \\forall u \\in N(v)\\}\\big) \\qquad\\text{(Alg. 1, line 4)} $$
-$$ \\mathbf{h}_v^{k} \\leftarrow \\sigma\\big(\\mathbf{W}^{k}\\cdot \\mathrm{concat}(\\mathbf{h}_v^{k-1},\\, \\mathbf{h}_{N(v)}^{k})\\big) \\qquad\\text{(Alg. 1, line 5)} $$`,
+    formula: `$$ \\mathbf{h}_{N(v)}^{k} \\leftarrow \\mathrm{AGGREGATE}_k\\big(\\{\\mathbf{h}_u^{k-1},\\, \\forall u \\in N(v)\\}\\big) $$
+<p class="cap">Alg. 1 line 4 (&sect;3.1) &mdash; <b>aggregate</b> the sampled neighbors' previous-layer vectors into one neighborhood vector.</p>
+$$ \\mathbf{h}_v^{k} \\leftarrow \\sigma\\big(\\mathbf{W}^{k}\\cdot \\mathrm{CONCAT}(\\mathbf{h}_v^{k-1},\\, \\mathbf{h}_{N(v)}^{k})\\big) $$
+<p class="cap">Alg. 1 line 5 (&sect;3.1) &mdash; <b>combine</b>: concatenate self with the neighborhood vector, apply the shared weights $\\mathbf{W}^k$, squash with nonlinearity $\\sigma$.</p>
+$$ \\mathbf{h}_v^{k} \\leftarrow \\mathbf{h}_v^{k} \\,/\\, \\lVert \\mathbf{h}_v^{k} \\rVert_2 $$
+<p class="cap">Alg. 1 line 7 (&sect;3.1) &mdash; <b>L2-normalize</b> each layer's output onto the unit sphere; the final layer gives $\\mathbf{z}_v = \\mathbf{h}_v^{K}$.</p>
+$$ \\mathbf{h}_v^{k} \\leftarrow \\sigma\\big(\\mathbf{W}\\cdot \\mathrm{MEAN}(\\{\\mathbf{h}_v^{k-1}\\} \\cup \\{\\mathbf{h}_u^{k-1},\\, \\forall u \\in N(v)\\})\\big) $$
+<p class="cap">Eq. 2 (&sect;3.3) &mdash; the <b>mean aggregator</b> (the "convolutional" variant): fold self <i>into</i> the element-wise mean of the neighbors instead of concatenating.</p>
+$$ \\mathrm{AGGREGATE}_k^{\\text{pool}} = \\max\\big(\\{\\sigma(\\mathbf{W}_{\\text{pool}}\\,\\mathbf{h}_{u_i}^{k} + \\mathbf{b}),\\, \\forall u_i \\in N(v)\\}\\big) $$
+<p class="cap">Eq. 3 (&sect;3.3) &mdash; the <b>max-pool aggregator</b>: push each neighbor through a single fully-connected layer, then take an element-wise max across neighbors. (The third aggregator, <b>LSTM</b>, has no closed form &mdash; an LSTM is applied to a <i>random permutation</i> of the neighbors to mimic a symmetric function; see architecture.)</p>
+$$ J_{\\mathcal{G}}(\\mathbf{z}_u) = -\\log\\!\\big(\\sigma(\\mathbf{z}_u^{\\top}\\mathbf{z}_v)\\big) \\;-\\; Q\\cdot \\mathbb{E}_{v_n \\sim P_n(v)}\\big[\\log\\!\\big(\\sigma(-\\mathbf{z}_u^{\\top}\\mathbf{z}_{v_n})\\big)\\big] $$
+<p class="cap">Eq. 1 (&sect;3.2) &mdash; the <b>unsupervised graph-based loss</b>: pull together embeddings of nodes $u,v$ that co-occur on a short random walk (first term), and push apart $u$ from $Q$ negative-sampled nodes $v_n$ (second term). Replaceable by a supervised loss (e.g. cross-entropy) when labels exist.</p>
+$$ \\text{per-batch cost } = O\\!\\left(\\textstyle\\prod_{i=1}^{K} S_i\\right) $$
+<p class="cap">&sect;3.1 / &sect;4 &mdash; the <b>fixed-size neighbor sampling</b>: at layer $i$ draw a uniform sample of $S_i$ neighbors of each node, so the receptive field (and cost) is bounded regardless of node degree. The paper uses $K{=}2$ with $S_1\\cdot S_2 \\le 500$.</p>`,
     whatItDoes:
       `<p>These two lines are <b>one GraphSAGE layer</b> (Algorithm 1 in &sect;3.1). <b>Line 4 (aggregate):</b>
        collapse the sampled neighbors' current vectors into a single neighborhood vector $\\mathbf{h}_{N(v)}^k$

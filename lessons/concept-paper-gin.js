@@ -152,6 +152,33 @@
        collapsing a multiset to a plain <b>set</b> and forgetting multiplicity entirely. Figure 2 ranks them: SUM
        (full multiset) &gt; MEAN (distribution only) &gt; MAX (set only). Figure 3 gives explicit neighbourhoods
        that mean/max confuse but sum separates. Hence GIN uses SUM.</p>`,
+    architecture:
+      `<p>GIN stacks identical message-passing layers, sum-pools after every layer, concatenates those pools, and
+       classifies. Data flow for one graph with node-feature matrix $H^{(0)}$ (one row per node) and adjacency
+       $A$:</p>
+       <ul>
+        <li><b>Per-layer GIN block (Eqn. 4.1), repeated $K$ times.</b> Each block, $k=1\\dots K$:
+         <ul>
+          <li><b>Neighbour SUM:</b> $A\\,H^{(k-1)}$ &mdash; row $v$ becomes $\\sum_{u\\in N(v)} h_u^{(k-1)}$.</li>
+          <li><b>Self-term:</b> add $(1+\\epsilon^{(k)})\\,H^{(k-1)}$, with $\\epsilon^{(k)}$ a learnable scalar
+          (the paper uses GIN-$\\epsilon$ learned, or GIN-0 with $\\epsilon=0$).</li>
+          <li><b>MLP:</b> a <b>2-layer</b> perceptron Linear&nbsp;&rarr;&nbsp;<b>BatchNorm</b>&nbsp;&rarr;&nbsp;ReLU&nbsp;&rarr;&nbsp;Linear&nbsp;&rarr;&nbsp;BatchNorm&nbsp;&rarr;&nbsp;ReLU, mapping
+          to the hidden width. BatchNorm sits on every hidden layer.</li>
+         </ul>
+        The paper uses <b>5 GNN layers</b> total (the input layer plus 4 GIN blocks).</li>
+        <li><b>Hidden width.</b> 16 or 32 units for the bioinformatics graphs (MUTAG, PTC, NCI1, PROTEINS), 64 for the
+        social-network graphs (COLLAB, IMDB, REDDIT).</li>
+        <li><b>Graph readout (Eqn. 4.2).</b> After each layer $k=0\\dots K$, pool all node vectors with a per-layer
+        READOUT (the paper sum-pools for bioinformatics, mean-pools for social datasets), then <b>concatenate</b> the
+        $K+1$ pooled vectors into one graph vector $h_G$. Concatenating across layers (Jumping-Knowledge) keeps both
+        shallow/local and deep/global structure.</li>
+        <li><b>Classifier head.</b> A dense layer on $h_G$ (with <b>dropout</b> $\\in\\{0,0.5\\}$ after it), then
+        softmax cross-entropy over graph classes.</li>
+        <li><b>Optimization.</b> Adam, initial learning rate $0.01$, decayed by $0.5$ every 50 epochs.</li>
+       </ul>
+       <p>Our Track-B build keeps the spine &mdash; $\\mathrm{MLP}((1+\\epsilon)H + A H)$ per layer, sum-pool, concat,
+       linear head &mdash; but shrinks it ($K=2$, hidden $=16$, no BatchNorm/dropout) so the SUM-vs-MEAN ablation is
+       the only moving part.</p>`,
     symbols: [
       { sym: "$G$", desc: "a <b>graph</b>: a set of <b>nodes</b> (vertices) joined by <b>edges</b>. The thing we want to represent or classify." },
       { sym: "$v,\\,u$", desc: "<b>nodes</b>. $v$ is the centre node being updated; $u$ ranges over its neighbours." },
@@ -165,9 +192,37 @@
       { sym: "$\\epsilon^{(k)}$", desc: "a small scalar (the <b>self-weight offset</b>) that scales the node's own vector as $(1+\\epsilon)$. Can be fixed at 0 or learned; a nonzero $\\epsilon$ helps keep the centre node distinguishable from its neighbours." },
       { sym: "WL test", desc: "the <b>Weisfeiler-Lehman graph-isomorphism test</b>: a classic algorithm that repeatedly re-colours each node by hashing the multiset of its neighbours' colours. It is the upper bound on how well any message-passing GNN can tell graphs apart." },
       { sym: "$h_G$", desc: "the <b>whole-graph representation</b>, built by a READOUT that pools all node vectors (Eqn. 4.2). Fed to a classifier for graph-level tasks." },
-      { sym: "$\\mathrm{READOUT}$", desc: "the <b>graph-pooling</b> function that combines all node vectors into one graph vector; GIN sums nodes at each layer and concatenates across layers (injective pooling)." }
+      { sym: "$\\mathrm{READOUT}$", desc: "the <b>graph-pooling</b> function that combines all node vectors into one graph vector; GIN sums nodes at each layer and concatenates across layers (injective pooling)." },
+      { sym: "$a_v^{(k)}$", desc: "the <b>aggregated neighbour summary</b> for node $v$ at layer $k$ &mdash; the output of $\\mathrm{AGGREGATE}^{(k)}$ before it is combined with $v$'s own vector (Eqn. 2.1)." },
+      { sym: "$K$", desc: "the <b>number of message-passing layers</b> (rounds). After $K$ layers a node sees its $K$-hop neighbourhood; the paper uses 5 GNN layers." },
+      { sym: "$A$", desc: "the <b>adjacency matrix</b>: $A_{vu}=1$ if nodes $v,u$ are joined by an edge, else $0$. The product $A\\,H$ computes, in row $v$, the SUM of $v$'s neighbours' feature rows." },
+      { sym: "$H^{(k)}$", desc: "the <b>node-feature matrix at layer $k$</b>: one row per node, row $v$ being $h_v^{(k)}$. $H^{(0)}$ is the input features." },
+      { sym: "$X$", desc: "a <b>multiset of features</b> (e.g. a node's neighbour features) on which the aggregator acts; $x\\in X$ is one element." },
+      { sym: "$f$", desc: "the per-element <b>feature map</b> applied to each $x$ before summing; chosen/learned so that $\\sum_{x\\in X} f(x)$ is injective on multisets (Lemma 5). The MLP realizes $f$." },
+      { sym: "$h(X)$", desc: "the <b>multiset fingerprint</b> $\\sum_{x\\in X} f(x)$: a unique vector summary of the multiset $X$ when $f$ is chosen as in Lemma 5." },
+      { sym: "$\\phi,\\,g$", desc: "$g$ is an arbitrary <b>multiset function</b> we want to compute; Lemma 5 shows it factors as $g(X)=\\phi(h(X))$ &mdash; first the injective sum, then a function $\\phi$ (also learnable). The outer MLP plays $\\phi$." },
+      { sym: "$c$", desc: "the <b>centre node</b>'s own feature in the pair-map $h(c,X)$ of Corollary 6 (the $(1+\\epsilon)f(c)$ self-term); distinct from its neighbour multiset $X$." },
+      { sym: "$W$", desc: "a <b>linear weight matrix</b>. Lemma 7 uses it to show a single linear layer $\\mathrm{ReLU}(Wx)$ summed over a multiset cannot be injective for any $W$." }
     ],
-    formula: `$$ h_v^{(k)} = \\mathrm{MLP}^{(k)}\\!\\left( \\big(1+\\epsilon^{(k)}\\big)\\cdot h_v^{(k-1)} \\;+\\; \\sum_{u\\in N(v)} h_u^{(k-1)} \\right) \\qquad\\text{(Eqn. 4.1, §4.1)} $$`,
+    formula:
+      `$$ a_v^{(k)} = \\mathrm{AGGREGATE}^{(k)}\\!\\Big(\\big\\{\\, h_u^{(k-1)} : u\\in N(v) \\,\\big\\}\\Big), \\qquad h_v^{(k)} = \\mathrm{COMBINE}^{(k)}\\!\\big( h_v^{(k-1)},\\, a_v^{(k)} \\big) $$
+       <p class="cap">&sect;2, Eqn. 2.1 &mdash; the general message-passing template: every GNN layer AGGREGATES the neighbour multiset, then COMBINES it with the node's own vector.</p>
+       $$ a_v^{(k)} = \\mathrm{MAX}\\!\\Big(\\big\\{\\, \\mathrm{ReLU}\\big(W\\, h_u^{(k-1)}\\big) : u\\in N(v) \\,\\big\\}\\Big) $$
+       <p class="cap">&sect;2, Eqn. 2.2 &mdash; the GraphSAGE max-pool aggregator (one variant GIN is shown to be stronger than).</p>
+       $$ h_v^{(k)} = \\mathrm{ReLU}\\!\\Big( W \\cdot \\mathrm{MEAN}\\big\\{\\, h_u^{(k-1)} : u\\in N(v)\\cup\\{v\\} \\,\\big\\}\\Big) $$
+       <p class="cap">&sect;2, Eqn. 2.3 &mdash; the GCN mean aggregator (the other weaker variant; mean is non-injective on multisets).</p>
+       $$ h_G = \\mathrm{READOUT}\\!\\Big(\\big\\{\\, h_v^{(K)} : v\\in G \\,\\big\\}\\Big) $$
+       <p class="cap">&sect;2, Eqn. 2.4 &mdash; the generic graph-level readout: pool all final node vectors into one graph vector.</p>
+       $$ h_v^{(k)} = \\mathrm{MLP}^{(k)}\\!\\left( \\big(1+\\epsilon^{(k)}\\big)\\cdot h_v^{(k-1)} \\;+\\; \\sum_{u\\in N(v)} h_u^{(k-1)} \\right) $$
+       <p class="cap"><b>&sect;4.1, Eqn. 4.1 &mdash; the GIN update (the paper's core).</b> SUM the neighbours, add the $(1+\\epsilon)$-scaled self-term, push through an MLP. SUM + MLP is the injective aggregator.</p>
+       $$ h_G = \\mathrm{CONCAT}\\!\\Big( \\mathrm{READOUT}\\big(\\big\\{\\, h_v^{(k)} : v\\in G \\,\\big\\}\\big) \\;\\big|\\; k=0,1,\\dots,K \\Big) $$
+       <p class="cap">&sect;4.2, Eqn. 4.2 &mdash; the GIN graph-level readout: sum-pool nodes at <i>every</i> layer $k$ and CONCATENATE across layers (Jumping-Knowledge style), so local and global structure both survive.</p>
+       $$ h(X) = \\sum_{x\\in X} f(x), \\qquad g(X) = \\phi\\!\\left( \\sum_{x\\in X} f(x) \\right) $$
+       <p class="cap">Lemma 5 &mdash; for a countable feature space there is a map $f$ making the SUM $h(X)$ a <i>unique</i> fingerprint of any bounded multiset $X$; every multiset function $g$ factors through that sum.</p>
+       $$ h(c, X) = \\big(1+\\epsilon\\big)\\cdot f(c) + \\sum_{x\\in X} f(x) $$
+       <p class="cap">Corollary 6 &mdash; for irrational $\\epsilon$, this pair-map is injective in the (centre node $c$, neighbour multiset $X$) pair &mdash; the form GIN realizes with $\\epsilon^{(k)}$ and the MLP.</p>
+       $$ \\exists\\, X_1\\ne X_2 \\;\\text{such that}\\; \\sum_{x\\in X_1} \\mathrm{ReLU}(W x) = \\sum_{x\\in X_2} \\mathrm{ReLU}(W x) \\quad \\text{for every } W $$
+       <p class="cap">Lemma 7 &mdash; a <i>single</i> linear layer cannot separate all multisets even with SUM; hence the per-element map must be a real MLP, not one Linear.</p>`,
     whatItDoes:
       `<p><b>Equation 4.1</b> is one GIN layer, read inside-out. (1) <b>SUM the neighbours:</b>
        $\\sum_{u\\in N(v)} h_u^{(k-1)}$ adds up the current vectors of all of $v$'s neighbours &mdash; a sum, not an

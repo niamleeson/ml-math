@@ -139,6 +139,36 @@
        <b>symmetrically</b> &mdash; only co-occurrence within distance $w$ matters. Training nudges each node's
        vector toward the vectors of the nodes it walks alongside, so nodes with overlapping neighborhoods end up
        close. Feed those vectors to a logistic regression and you can classify nodes.</p>`,
+    architecture:
+      `<p>DeepWalk is not a neural network with layers; it is a <b>two-stage pipeline</b> wrapped around the
+       skip-gram model. Its only learned parameters are the embedding matrix $\\Phi\\in\\mathbb{R}^{|V|\\times d}$
+       (and an auxiliary tree of binary classifiers for the softmax).</p>
+       <p><b>Component 1 &mdash; truncated random-walk generator (Algorithm 1).</b> Inputs: graph $G(V,E)$,
+       window $w$, dimension $d$, walks-per-vertex $\\gamma$, length $t$. Procedure, line by line:</p>
+       <ul>
+        <li><b>L1.</b> Initialize $\\Phi$ by sampling from a uniform distribution $\\mathcal{U}^{|V|\\times d}$.</li>
+        <li><b>L2.</b> Build a binary tree $T$ from $V$ (the hierarchical-softmax tree; vertices become leaves).</li>
+        <li><b>L3-4.</b> Repeat $\\gamma$ times: shuffle the vertices into an order $\\mathcal{O}$ (shuffling
+        speeds up stochastic-gradient convergence).</li>
+        <li><b>L5-6.</b> For each vertex $v_i$ in $\\mathcal{O}$, generate one walk
+        $\\mathcal{W}_{v_i}=\\text{RandomWalk}(G,v_i,t)$ &mdash; $t$ steps, each to a uniformly-random neighbor.</li>
+        <li><b>L7.</b> Feed that walk straight into <code>SkipGram</code>, updating $\\Phi$ online.</li>
+       </ul>
+       <p><b>Component 2 &mdash; skip-gram updater (Algorithm 2).</b> For each walk $\\mathcal{W}_{v_i}$:</p>
+       <ul>
+        <li><b>L1.</b> For each center vertex $v_j$ in the walk,</li>
+        <li><b>L2.</b> for each context vertex $u_k$ in the window $\\mathcal{W}_{v_i}[\\,j-w:j+w\\,]$,</li>
+        <li><b>L3.</b> form the loss $J(\\Phi)=-\\log\\Pr(u_k\\mid\\Phi(v_j))$, with the probability computed by
+        the hierarchical-softmax tree (Eqn. 3) so it costs $O(\\log|V|)$ not $O(|V|)$,</li>
+        <li><b>L4.</b> and take a gradient step $\\Phi=\\Phi-\\alpha\\,\\partial J/\\partial\\Phi$ (learning rate
+        $\\alpha$), updating both $v_j$'s row and the tree-node classifiers on $u_k$'s root-to-leaf path.</li>
+       </ul>
+       <p><b>Data flow.</b> graph $\\to$ ($\\gamma$ passes) random walks $\\to$ (sliding window $w$)
+       (center, context) pairs $\\to$ skip-gram SGD on $\\Phi$ $\\to$ a frozen $|V|\\times d$ embedding table
+       $\\to$ an off-the-shelf classifier. Because Algorithm 1 emits walks one at a time and SkipGram updates
+       $\\Phi$ immediately, DeepWalk is <b>online</b> and trivially parallel over walks. Our code swaps the
+       hierarchical-softmax tree for <b>negative sampling</b> &mdash; the same $O(\\log|V|)$-style speedup with a
+       second embedding table <code>ctx</code> instead of a tree.</p>`,
     symbols: [
       { sym: "$G=(V,E)$", desc: "the <b>graph</b>: $V$ is the set of nodes (vertices), $E$ the set of edges (connections). $N=|V|$ is the number of nodes." },
       { sym: "$\\Phi(v)$", desc: "the <b>embedding</b> of node $v$ &mdash; the mapping $\\Phi: v\\in V\\mapsto\\mathbb{R}^{d}$ that assigns each node a short dense vector of $d$ real numbers. This is the thing we learn." },
@@ -150,23 +180,46 @@
       { sym: "$v_i$", desc: "the <b>center node</b> at position $i$ in a walk &mdash; the one whose embedding $\\Phi(v_i)$ we condition on." },
       { sym: "$\\{v_{i-w},\\dots,v_{i+w}\\}$", desc: "the <b>context</b>: the nodes inside the window around $v_i$ (excluding $v_i$ itself). Skip-gram asks $\\Phi(v_i)$ to predict these." },
       { sym: "$\\Pr(\\cdot\\mid\\Phi(v_i))$", desc: "the model's <b>probability</b> of the context nodes given the center's embedding. Maximizing it (minimizing its negative log) is the training objective." },
+      { sym: "$\\Phi:v\\mapsto\\mathbb{R}^{|V|\\times d}$", desc: "the explicit <b>type of the embedding map</b> (&sect;3.3): it sends each of the $|V|$ vertices to a row of $d$ reals, i.e. $\\Phi$ <i>is</i> the $|V|\\times d$ parameter matrix that DeepWalk learns." },
+      { sym: "$u_k$", desc: "a single <b>context vertex</b> being predicted from the center (Algorithm 2 / Eqn. 3) &mdash; the per-pair partner of $v_j$ inside the window. Same role as a $v_j$ in Eqn. 2's product, named $u_k$ in the softmax and pseudocode." },
+      { sym: "$v_j$", desc: "the <b>center vertex</b> in the SkipGram pseudocode (Algorithm 2) whose embedding $\\Phi(v_j)$ does the predicting &mdash; the same role as $v_i$ in Eqn. 2." },
+      { sym: "$(b_0,\\dots,b_{\\lceil\\log|V|\\rceil})$", desc: "the <b>root-to-leaf path</b> in the hierarchical-softmax binary tree for context vertex $u_k$: $b_0$ is the root, $b_{\\lceil\\log|V|\\rceil}=u_k$ is its leaf. Eqn. 3 multiplies one branch probability per tree node on this path." },
+      { sym: "$\\lceil\\log|V|\\rceil$", desc: "the <b>tree depth</b> &mdash; the number of binary decisions from root to any leaf in a balanced tree over $|V|$ vertices. This is why hierarchical softmax costs $O(\\log|V|)$ instead of $O(|V|)$." },
+      { sym: "$J(\\Phi)$ and $\\alpha$", desc: "the <b>per-pair loss</b> $J(\\Phi)=-\\log\\Pr(u_k\\mid\\Phi(v_j))$ minimized by SkipGram, and the <b>learning rate</b> $\\alpha$ in the gradient step $\\Phi=\\Phi-\\alpha\\,\\partial J/\\partial\\Phi$ (Algorithm 2)." },
       { sym: "power law / Zipf's law", desc: "a <b>heavy-tailed frequency pattern</b>: a few items (hub nodes; words like \\\"the\\\") appear hugely often, most are rare. Both random-walk node frequency and natural-language word frequency follow it &mdash; the reason word2vec transfers to graphs." }
     ],
-    formula: `$$ \\underset{\\Phi}{\\text{minimize}}\\quad -\\log\\,\\Pr\\!\\Big(\\,\\{v_{i-w},\\dots,v_{i-1},v_{i+1},\\dots,v_{i+w}\\}\\;\\Big|\\;\\Phi(v_i)\\Big) \\qquad\\text{(Eqn. 2, \\S 3.3)} $$
-$$ \\Pr\\!\\Big(\\{v_{i-w},\\dots,v_{i+w}\\}\\mid\\Phi(v_i)\\Big)=\\!\\!\\prod_{\\substack{j=i-w\\\\ j\\neq i}}^{\\,i+w}\\!\\!\\Pr\\big(v_j\\mid\\Phi(v_i)\\big) \\qquad\\text{(independence assumption, \\S 3.3)} $$`,
+    formula: `$$ \\Phi:\\; v\\in V\\;\\longmapsto\\;\\mathbb{R}^{\\,|V|\\times d} $$
+<p class="cap">The embedding map (&sect;3.3): every vertex $v$ gets a row of $d$ learned real numbers; $\\Phi$ is the $|V|\\times d$ matrix we optimize.</p>
+$$ \\Pr\\!\\Big(v_i \\,\\Big|\\, \\big(\\Phi(v_1),\\Phi(v_2),\\dots,\\Phi(v_{i-1})\\big)\\Big) \\qquad\\text{(Eqn. 1, \\S 3.2)} $$
+<p class="cap">The original language-modeling target: predict the next walk vertex $v_i$ from the embeddings of all vertices seen so far. Maximizing this over a whole walk is the starting objective.</p>
+$$ \\underset{\\Phi}{\\text{minimize}}\\quad -\\log\\,\\Pr\\!\\Big(\\,\\{v_{i-w},\\dots,v_{i-1},v_{i+1},\\dots,v_{i+w}\\}\\;\\Big\\backslash\\;v_i \\;\\Big|\\;\\Phi(v_i)\\Big) \\qquad\\text{(Eqn. 2, \\S 3.2)} $$
+<p class="cap">The relaxed SkipGram-over-walks objective: drop order, use a symmetric window, and predict the surrounding vertices (the set minus $v_i$ itself) from the center's embedding $\\Phi(v_i)$. This is what DeepWalk actually minimizes.</p>
+$$ \\Pr\\!\\Big(\\{v_{i-w},\\dots,v_{i+w}\\}\\!\\setminus\\! v_i \\,\\Big|\\, \\Phi(v_i)\\Big)=\\!\\!\\prod_{\\substack{j=i-w\\\\ j\\neq i}}^{\\,i+w}\\!\\!\\Pr\\big(v_j\\mid\\Phi(v_i)\\big) \\qquad\\text{(conditional-independence factorization, \\S 3.2)} $$
+<p class="cap">Make Eqn. 2 tractable: assume the context vertices are conditionally independent given the center, so the joint splits into a product of one-vertex-at-a-time terms (its log becomes a sum of per-pair terms).</p>
+$$ \\Pr\\big(u_k\\mid\\Phi(v_j)\\big)=\\prod_{l=1}^{\\lceil \\log |V|\\rceil}\\Pr\\big(b_l\\mid\\Phi(v_j)\\big) \\qquad\\text{(Eqn. 3, hierarchical softmax, \\S 3.4.1)} $$
+<p class="cap">Each per-pair term is still a softmax over all $|V|$ vertices &mdash; too slow. Assign vertices to the leaves of a binary tree; predicting $u_k$ becomes a product over the $\\lceil\\log|V|\\rceil$ tree nodes $(b_0{=}\\text{root},\\dots,b_{\\lceil\\log|V|\\rceil}{=}u_k)$ on the root-to-leaf path, cutting cost from $O(|V|)$ to $O(\\log|V|)$. Each $\\Pr(b_l\\mid\\Phi(v_j))$ is a binary classifier assigned to $b_l$'s parent.</p>`,
     whatItDoes:
-      `<p><b>Top equation (the objective, Eqn. 2).</b> Slide a window of half-width $w$ along a walk. At each
-       center node $v_i$, score how well its embedding $\\Phi(v_i)$ <i>predicts the nodes around it</i>, and
-       adjust $\\Phi$ to make that prediction more likely (minimize the negative log-probability). Repeat over
-       every center in every walk. The key relaxation versus a true language model: it <b>ignores the order</b>
-       of the context nodes and treats the window <b>symmetrically</b> &mdash; only \\\"these nodes co-occur near
-       $v_i$\\\" matters, not where.</p>
-       <p><b>Bottom equation (why it is tractable).</b> Predicting a whole set of context nodes at once is hard,
-       so skip-gram <b>assumes the context nodes are conditionally independent</b> given the center: the joint
-       probability factors into a <i>product</i> of one-node-at-a-time probabilities $\\Pr(v_j\\mid\\Phi(v_i))$.
-       Taking the log turns the product into a sum, so training reduces to: for each (center, context) pair, make
-       the dot product of their vectors large. The paper computes each $\\Pr(v_j\\mid\\Phi(v_i))$ with
-       <b>hierarchical softmax</b> for speed; we use the equivalent <b>negative sampling</b> in code.</p>`,
+      `<p><b>1. The map $\\Phi$.</b> $\\Phi:v\\mapsto\\mathbb{R}^{|V|\\times d}$ just declares what we are learning:
+       a table with one length-$d$ row per vertex. Everything else updates this table.</p>
+       <p><b>2. Eqn. 1 (the language-model starting point).</b> Read straight off natural language: predict the
+       next vertex $v_i$ in a walk from the embeddings of the vertices already seen. This is the ordered,
+       growing-prefix objective &mdash; faithful to a language model but awkward for graphs, which is why the
+       paper relaxes it next.</p>
+       <p><b>3. Eqn. 2 (the SkipGram-over-walks objective DeepWalk minimizes).</b> Slide a window of half-width
+       $w$ along a walk. At each center node $v_i$, score how well its embedding $\\Phi(v_i)$ <i>predicts the
+       surrounding nodes</i> (the window set with $v_i$ removed), and adjust $\\Phi$ to make that more likely
+       (minimize the negative log-probability). Two relaxations versus Eqn. 1: it <b>predicts context from the
+       center</b> (not the next vertex from the prefix), and it <b>ignores order</b>, treating the window
+       <b>symmetrically</b> &mdash; only \\\"these nodes co-occur near $v_i$\\\" matters.</p>
+       <p><b>4. The conditional-independence factorization.</b> Predicting a whole set of context nodes at once
+       is hard, so DeepWalk <b>assumes the context nodes are conditionally independent</b> given the center: the
+       joint probability factors into a <i>product</i> of one-node-at-a-time probabilities $\\Pr(v_j\\mid\\Phi(v_i))$.
+       Taking the log turns the product into a sum, so training reduces to per-(center, context)-pair updates.</p>
+       <p><b>5. Eqn. 3 (hierarchical softmax).</b> Each per-pair term $\\Pr(u_k\\mid\\Phi(v_j))$ is still a softmax
+       over all $|V|$ vertices &mdash; $O(|V|)$ per step. Put the vertices at the leaves of a binary tree; then
+       predicting $u_k$ becomes a <i>product of branch decisions</i> down its root-to-leaf path
+       $(b_0,\\dots,b_{\\lceil\\log|V|\\rceil})$, each a tiny binary classifier, for $O(\\log|V|)$ cost. Our code
+       reaches the same speedup with <b>negative sampling</b> instead of the tree.</p>`,
     derivation:
       `<p><b>From a language model to a graph (&sect;3.1&rarr;3.3).</b> A language model estimates
        $\\Pr(v_i\\mid v_1,\\dots,v_{i-1})$ &mdash; the next token given the prefix. DeepWalk's Eqn. 1 writes this
@@ -181,13 +234,16 @@ $$ \\Pr\\!\\Big(\\{v_{i-w},\\dots,v_{i+w}\\}\\mid\\Phi(v_i)\\Big)=\\!\\!\\prod_{
         $[i-w, i+w]$ and treat its nodes as an unordered set. That yields Eqn. 2.</li>
        </ul>
        <p>To make Eqn. 2 computable, assume the context nodes are <b>conditionally independent</b> given the
-       center (bottom formula). The joint becomes a product over context nodes; the log becomes a sum of
-       per-pair terms. Each term, $\\Pr(v_j\\mid\\Phi(v_i))$, is a softmax over all nodes &mdash; the same
-       softmax word2vec uses &mdash; which is why the speedups (hierarchical softmax, or negative sampling)
-       apply unchanged. The full skip-gram softmax derivation lives in <code>paper-word2vec</code>; here we
-       recap and link, not re-derive. The one graph-specific ingredient is the <b>power-law</b> observation
-       (&sect;3.2): because walk node-frequency is Zipfian like word frequency, the frequency-aware tree /
-       sampling that word2vec relies on is well-matched to graphs.</p>`,
+       center (the factorization formula). The joint becomes a product over context nodes; the log becomes a sum
+       of per-pair terms. Each term $\\Pr(u_k\\mid\\Phi(v_j))$ is a softmax over all $|V|$ nodes &mdash; the same
+       softmax word2vec uses &mdash; costing $O(|V|)$ per update. The paper's speedup is <b>hierarchical
+       softmax</b> (Eqn. 3): assign vertices to the leaves of a binary tree, so predicting $u_k$ becomes a
+       <i>product of $\\lceil\\log|V|\\rceil$ branch probabilities</i> down the root-to-leaf path
+       $(b_0{=}\\text{root},\\dots,b_{\\lceil\\log|V|\\rceil}{=}u_k)$, each a binary classifier on a tree node. That
+       drops the cost to $O(\\log|V|)$. The full skip-gram softmax derivation lives in <code>paper-word2vec</code>;
+       here we recap and link, not re-derive. The one graph-specific ingredient is the <b>power-law</b>
+       observation (&sect;3.2): because walk node-frequency is Zipfian like word frequency, the frequency-aware
+       tree (and our negative sampling) that word2vec relies on is well-matched to graphs.</p>`,
     example:
       `<p>Turn <b>one length-5 walk into skip-gram pairs</b> by hand, with window half-width $w=2$. Suppose a
        random walk produced the node sequence</p>

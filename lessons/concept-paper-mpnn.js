@@ -138,6 +138,39 @@
        $M_t(h_v^t,h_w^t,e_{vw})=A_{e_{vw}}h_w^t$ (an edge-type matrix times the neighbour) and a Gated Recurrent
        Unit for $U_t$; the interaction network of Battaglia et al. uses a neural net on concatenated states for
        $M$ and the sum readout $R=f\\!\\big(\\sum_v h_v^T\\big)$.</p>`,
+    architecture:
+      `<p>The general <b>MPNN framework</b> (&sect;2) is not a fixed network but a template with three pluggable
+       learned components, run in two phases on a graph $G$:</p>
+       <ul>
+        <li><b>Input layer.</b> Each node $v$ gets an initial state $h_v^0\\in\\mathbb{R}^d$ from its raw features
+        (atom type/charge, ...). Each edge $(v,w)$ carries a feature vector $e_{vw}$ (bond type). The paper uses
+        hidden width $d$ throughout.</li>
+        <li><b>Message block $M_t$ (Eqn. 1).</b> For every directed edge $w\\!\\to\\!v$, compute a message
+        $M_t(h_v^t,h_w^t,e_{vw})$; sum all messages into $v$ to form $m_v^{t+1}$. In their best model $M_t$ is the
+        <b>edge network</b>: a small net $A$ turns $e_{vw}$ into a $d\\times d$ matrix, and the message is
+        $A(e_{vw})\\,h_w$. Shape: $[d\\times d]\\cdot[d]\\to[d]$.</li>
+        <li><b>Update block $U_t$ (Eqn. 2).</b> Combine $h_v^t$ and $m_v^{t+1}$ into the next state $h_v^{t+1}$.
+        They use a <b>Gated Recurrent Unit cell</b> shared across all $T$ steps (weight tying), treating $m_v$ as
+        input and $h_v$ as the GRU hidden state.</li>
+        <li><b>Stack depth.</b> Repeat the message+update blocks for $T$ rounds ($3\\le T\\le 8$ in the paper);
+        $T$ is the receptive field in hops. Optional <b>multiple towers</b> (&sect;5, Eqn. 5) split the $d$-dim
+        state into $k$ width-$d/k$ copies, run message passing on each in parallel, then mix with a shared net
+        $g$ &mdash; cutting cost from $O(d^2)$ toward $O(d^2/k)$ per edge.</li>
+        <li><b>Readout block $R$ (Eqn. 3).</b> Pool the final states $\\{h_v^T\\}$ into one graph vector with a
+        permutation-invariant operator, then a network to the target. Two choices used: the simple <b>sum
+        readout</b> $\\hat{y}=\\mathrm{NN}(\\sum_v h_v^T)$ (GG-NN style; what we build), or the stronger
+        <b>set2set</b> pool (Vinyals et al. 2015), an LSTM-based order-invariant attention over the node set run
+        for $M$ steps ($1\\le M\\le 12$).</li>
+        <li><b>Optional graph augmentation (&sect;5).</b> Add <b>virtual edges</b> between distant atoms (so signal
+        need not hop bond-by-bond), or a <b>master node</b> connected to every atom by a special edge type, giving
+        a global shortcut.</li>
+        <li><b>Output.</b> One number (or class logits) per graph &mdash; on QM9 (130k molecules, 13 properties)
+        the same backbone predicts each of the 13 quantum-chemical targets.</li>
+       </ul>
+       <p>Data flow: <i>features &rarr; embed to $h^0$ &rarr; [message $M_t$ &rarr; aggregate (sum) &rarr; update
+       $U_t$] &times; $T$ &rarr; readout $R$ &rarr; $\\hat{y}$.</i> Naming the three blocks $M/U/R$ <i>is</i>
+       naming a specific graph net; the table above (in <b>formula</b>) fills them in for GG-NN, interaction
+       networks, and DTNN to show they are all this one architecture.</p>`,
     symbols: [
       { sym: "$G$", desc: "the <b>graph</b> (here, a molecule): a set of nodes (atoms) and edges (bonds)." },
       { sym: "$v,\\,w$", desc: "<b>nodes</b> (atoms). $w\\in N(v)$ means $w$ is a <b>neighbour</b> of $v$ &mdash; the two are joined by an edge." },
@@ -149,15 +182,45 @@
       { sym: "$U_t$", desc: "the <b>vertex (node) update function</b> at step $t$: a learned function $U_t(h_v^t,m_v^{t+1})$ that produces the node's next state (Eqn. 2). Often a Gated Recurrent Unit cell." },
       { sym: "$T$", desc: "the <b>number of message-passing rounds</b> (time steps). After $T$ rounds, information has spread up to $T$ hops across the graph." },
       { sym: "$R$", desc: "the <b>readout function</b>: pools the final node states $\\{h_v^T\\}$ into a single graph-level prediction $\\hat{y}$ (Eqn. 3). Must be invariant to node order; simplest valid choice is sum-then-network." },
-      { sym: "$\\hat{y}$", desc: "the <b>graph-level prediction</b> &mdash; one output for the whole molecule (e.g. a predicted energy)." }
+      { sym: "$\\hat{y}$", desc: "the <b>graph-level prediction</b> &mdash; one output for the whole molecule (e.g. a predicted energy)." },
+      { sym: "$d$", desc: "the <b>hidden width</b>: the length of each node state vector $h_v^t\\in\\mathbb{R}^d$." },
+      { sym: "$A(e_{vw})$", desc: "the <b>edge network</b>: a small neural net mapping the edge feature $e_{vw}$ to a $d\\times d$ matrix, used as the message $M=A(e_{vw})\\,h_w$ (&sect;5)." },
+      { sym: "$x_v$", desc: "node $v$'s <b>raw input features</b> (kept around as an extra input to some update functions, e.g. interaction networks)." },
+      { sym: "$\\odot$", desc: "<b>elementwise (Hadamard) product</b> of two vectors &mdash; multiply matching entries (used in the DTNN message)." },
+      { sym: "$k$", desc: "the <b>number of towers</b> (&sect;5, Eqn. 5): the state is split into $k$ width-$d/k$ copies processed in parallel." },
+      { sym: "$g$", desc: "the <b>shared mixing network</b> that recombines the $k$ towers after each round (&sect;5, Eqn. 5)." }
     ],
-    formula: `$$
-      \\underbrace{m_v^{t+1} = \\sum_{w\\in N(v)} M_t\\!\\left(h_v^t,\\,h_w^t,\\,e_{vw}\\right)}_{\\text{message + aggregate (Eqn. 1)}}
-      \\qquad
-      \\underbrace{h_v^{t+1} = U_t\\!\\left(h_v^t,\\,m_v^{t+1}\\right)}_{\\text{update (Eqn. 2)}}
-      \\qquad
-      \\underbrace{\\hat{y} = R\\!\\left(\\{\\,h_v^T \\mid v\\in G\\,\\}\\right)}_{\\text{readout (Eqn. 3)}}
-    $$`,
+    formula: `$$ m_v^{t+1} \\;=\\; \\sum_{w\\in N(v)} M_t\\!\\left(h_v^t,\\,h_w^t,\\,e_{vw}\\right) $$
+      <p><b>&sect;2, Eqn. 1 &mdash; message + aggregate.</b> At step $t$, node $v$ collects a learned message
+      $M_t$ from each neighbour $w$ (a function of both endpoint states and the edge), and <b>sums</b> them into
+      one incoming vector $m_v^{t+1}$. The sum makes it invariant to neighbour order.</p>
+      $$ h_v^{t+1} \\;=\\; U_t\\!\\left(h_v^t,\\,m_v^{t+1}\\right) $$
+      <p><b>&sect;2, Eqn. 2 &mdash; vertex update.</b> A learned update $U_t$ folds the aggregated message into
+      $v$'s old state to give its next state. Eqns. 1&ndash;2 run for $T$ rounds, spreading signal $T$ hops.</p>
+      $$ \\hat{y} \\;=\\; R\\!\\left(\\{\\,h_v^T \\mid v\\in G\\,\\}\\right) $$
+      <p><b>&sect;2, Eqn. 3 &mdash; readout.</b> After $T$ rounds, pool <i>all</i> final node states into one
+      graph-level prediction. $R$ "must be invariant to permutations of the node states in order for the MPNN to
+      be invariant to graph isomorphism" (&sect;2).</p>
+      $$ M\\!\\left(h_v,h_w,e_{vw}\\right) \\;=\\; A(e_{vw})\\,h_w $$
+      <p><b>&sect;5 &mdash; the edge-network message (their best $M$).</b> A neural network $A$ maps the edge
+      feature $e_{vw}$ to a $d\\times d$ matrix, which transforms the neighbour state before summing. This is the
+      message we build in code.</p>
+      $$ \\text{GG-NN:}\\quad M_t = A_{e_{vw}}\\,h_w^t, \\qquad U_t = \\mathrm{GRU}\\!\\left(h_v^t,\\,m_v^{t+1}\\right) $$
+      <p><b>&sect;2 instance &mdash; Gated Graph Neural Network (Li et al. 2016).</b> Message = an edge-label matrix
+      times the neighbour; update = a Gated Recurrent Unit cell. (Readout uses gated skip-connections to all
+      hidden states.)</p>
+      $$ \\text{Interaction Net:}\\quad M = \\mathrm{NN}\\!\\left([h_v,h_w,e_{vw}]\\right),\\quad U = \\mathrm{NN}\\!\\left([h_v,x_v,m_v]\\right),\\quad R = f\\!\\Big(\\sum_{v\\in G} h_v^T\\Big) $$
+      <p><b>&sect;2 instance &mdash; Interaction Network (Battaglia et al. 2016).</b> Message and update are neural
+      nets on concatenations; readout is a network on the <b>summed</b> node states &mdash; the plain sum readout.</p>
+      $$ \\text{DTNN:}\\quad M_t = \\tanh\\!\\Big(W^{fc}\\big((W^{cf}h_w^t+b_1)\\odot(W^{df}e_{vw}+b_2)\\big)\\Big),\\quad U_t = h_v^t + m_v^{t+1},\\quad R = \\sum_v \\mathrm{NN}(h_v^T) $$
+      <p><b>&sect;2 instance &mdash; Deep Tensor Neural Network (Sch&uuml;tt et al. 2017).</b> Message gates the
+      neighbour against the edge ($\\odot$ is elementwise product); update is a residual add; readout sums a
+      per-node network.</p>
+      $$ \\text{Towers (&sect;5, Eqn. 5):}\\quad \\big(h_v^{t,1},\\dots,h_v^{t,k}\\big) \\;=\\; g\\!\\big(\\tilde h_v^{t,1},\\dots,\\tilde h_v^{t,k}\\big) $$
+      <p><b>&sect;5, Eqn. 5 &mdash; multiple towers.</b> Split each $d$-dim state into $k$ copies of size $d/k$,
+      run message passing on each separately, then mix them with a shared network $g$ &mdash; a speed/scaling
+      trick. (The paper's set2set readout, from Vinyals et al. 2015, is stated in words; it gives no explicit
+      equations, so none are transcribed here.)</p>`,
     whatItDoes:
       `<p>These three equations (Section 2) <i>are</i> the framework. <b>Eqn. 1</b> says: to update node $v$,
        first collect a message from every neighbour $w$ &mdash; each message is the learned function $M_t$ of the

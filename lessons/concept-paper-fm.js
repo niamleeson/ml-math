@@ -134,6 +134,41 @@
        large, sparse vectors FMs target. <b>Lemma 3.1</b> fixes this with a square-of-sum-minus-sum-of-squares
        identity (below), dropping the cost to <b>linear time $O(k\\,n)$</b>. That reformulation is the part you
        implement and verify.</p>`,
+    architecture:
+      `<p>An FM is not a layered network &mdash; it is a <b>closed-form scoring function</b> plus an SGD training
+       loop. Its three components and the data flow (&sect;III-A1, &sect;III-C):</p>
+       <p><b>Parameters (Eq. 2).</b> Three blocks of learnable numbers:</p>
+       <ul>
+        <li>$w_0 \\in \\mathbb{R}$ &mdash; one scalar (the global bias).</li>
+        <li>$w \\in \\mathbb{R}^{n}$ &mdash; one weight per feature ($n$ numbers).</li>
+        <li>$V \\in \\mathbb{R}^{n \\times k}$ &mdash; the factor matrix: row $i$ is feature $i$'s length-$k$ vector
+        $v_i$. This is the only "deep" part &mdash; $n \\times k$ numbers that generate all $\\binom{n}{2}$ pair
+        weights.</li>
+       </ul>
+       <p><b>Forward pass (one prediction).</b> Given a feature vector $x \\in \\mathbb{R}^{n}$:</p>
+       <ol>
+        <li><b>Linear branch:</b> $w_0 + x\\!\\cdot\\! w$ &mdash; a single dot product, $O(n)$.</li>
+        <li><b>Interaction branch (Lemma 3.1, the $O(k\\,n)$ form):</b> for each factor $f$, compute the weighted
+        sum $s_f = \\sum_i v_{i,f} x_i$ (the matrix-vector product $x V$, giving a length-$k$ vector), square it,
+        subtract the diagonal correction $\\sum_i v_{i,f}^2 x_i^2$ (the product $(x^2)(V^2)$), sum over $f$, and
+        halve.</li>
+        <li><b>Output:</b> add the two branches &mdash; that scalar is $\\hat{y}(x)$. The output head depends on
+        the task (&sect;III-B): use $\\hat{y}$ raw for <b>regression</b>, $\\operatorname{sign}(\\hat{y})$ for
+        <b>binary classification</b>, or rank items by $\\hat{y}$ for <b>ranking</b>.</li>
+       </ol>
+       <p><b>Training algorithm (&sect;III-C).</b> Because $\\hat{y}$ is a closed-form differentiable expression,
+       parameters are fit by <b>stochastic gradient descent</b> (the paper's reference implementation is libFM):</p>
+       <ol>
+        <li>Pick an example $(x, y)$; run the forward pass.</li>
+        <li>Form the loss gradient (square loss for regression, logit/hinge for classification, pairwise for
+        ranking), each with an $L2$ regularization term.</li>
+        <li>Multiply by the model gradient (Eq. 4). The trick that keeps each step cheap: the inner sum
+        $\\sum_{j} v_{j,f} x_j$ in the $v_{i,f}$ gradient does <b>not</b> depend on $i$, so it is computed once per
+        factor during the forward pass and reused for all features &mdash; every gradient then costs $O(1)$.</li>
+        <li>Update $w_0, w, V$ by a small step against the gradient; repeat. A full sweep of parameter updates is
+        $O(k\\,n)$, or $O(k\\,m(x))$ when $x$ has only $m(x)$ non-zeros &mdash; the sums skip the zeros entirely,
+        which is why FMs are fast on sparse data.</li>
+       </ol>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input feature vector</b>, $n$ real numbers $x_1,\\dots,x_n$. In recommenders it is usually very <b>sparse</b> (almost all entries are zero)." },
       { sym: "$n$", desc: "the <b>number of features</b> (the length of $x$)." },
@@ -146,10 +181,27 @@
       { sym: "$\\langle v_i, v_j \\rangle$", desc: "the <b>dot product</b> (inner product) of two feature vectors, $\\sum_{f=1}^{k} v_{i,f}\\, v_{j,f}$ (Eqn. 3). This single number is the FM's weight for the interaction between features $i$ and $j$." },
       { sym: "$v_{i,f}$", desc: "the $f$-th entry of feature $i$'s factor vector (a single number)." },
       { sym: "$i \\lt j$", desc: "the index condition under the pairwise sum: count <b>each unordered pair once</b> (the pair $(i,j)$ but not also $(j,i)$, and never $(i,i)$)." },
-      { sym: "$O(k\\,n)$", desc: "<b>linear time</b>: the prediction's cost grows in proportion to (number of factors) &times; (number of features), not the square of the feature count. The point of Lemma 3.1." }
+      { sym: "$O(k\\,n)$", desc: "<b>linear time</b>: the prediction's cost grows in proportion to (number of factors) &times; (number of features), not the square of the feature count. The point of Lemma 3.1." },
+      { sym: "$\\frac{\\partial}{\\partial \\theta}\\hat{y}(x)$", desc: "the <b>gradient</b> of the prediction with respect to a parameter $\\theta$ &mdash; how much $\\hat{y}$ changes when that one parameter wiggles. SGD multiplies this by the loss gradient to update $\\theta$ (Eq. 4)." },
+      { sym: "$\\theta$", desc: "a <b>stand-in for any one model parameter</b> &mdash; it can be $w_0$, some $w_i$, or some $v_{i,f}$. Eq. 4 gives the gradient case-by-case for each kind." },
+      { sym: "$m(x)$", desc: "the <b>number of non-zero entries</b> in the feature vector $x$. Under sparsity $m(x) \\ll n$, so an update costs $O(k\\,m(x))$ &mdash; the sums skip the zeros." },
+      { sym: "$d$", desc: "the <b>degree</b> of the FM: the highest order of interaction it models. $d=2$ is the pairwise model (Eq. 1); the general $d$-way FM (Eq. 5) reaches up to $d$-feature interactions." },
+      { sym: "$l$", desc: "an <b>interaction order</b> in the $d$-way FM, running from $2$ up to $d$ (e.g. $l=3$ is a triple-feature interaction)." },
+      { sym: "$v^{(l)}_{i,f}$", desc: "the factor parameters for the <b>$l$-th order</b> interactions: a separate factor matrix $V^{(l)}$ per order, so each order is factorized (by PARAFAC) on its own (Eq. 5, 6)." },
+      { sym: "$k_l$", desc: "the <b>number of factors used for order $l$</b> in the $d$-way FM &mdash; each interaction order gets its own factor count (Eq. 6)." }
     ],
-    formula: `$$ \\hat{y}(x) \\;=\\; w_0 \\;+\\; \\sum_{i=1}^{n} w_i\\, x_i \\;+\\; \\sum_{i=1}^{n}\\sum_{j=i+1}^{n} \\langle v_i, v_j \\rangle\\, x_i\\, x_j \\qquad\\text{(Eqn. 1)} $$
-$$ \\sum_{i=1}^{n}\\sum_{j=i+1}^{n} \\langle v_i, v_j \\rangle\\, x_i x_j \\;=\\; \\tfrac{1}{2}\\sum_{f=1}^{k}\\!\\left[\\Big(\\sum_{i=1}^{n} v_{i,f}\\, x_i\\Big)^{\\!2} - \\sum_{i=1}^{n} v_{i,f}^{2}\\, x_i^{2}\\right] \\qquad\\text{(Lemma 3.1)} $$`,
+    formula: `$$ \\hat{y}(x) \\;=\\; w_0 \\;+\\; \\sum_{i=1}^{n} w_i\\, x_i \\;+\\; \\sum_{i=1}^{n}\\sum_{j=i+1}^{n} \\langle v_i, v_j \\rangle\\, x_i\\, x_j \\qquad\\text{(Eq. 1 — the degree-2 FM)} $$
+<p>The model parameters (Eq. 2): a bias, one weight per feature, and one factor vector per feature.</p>
+$$ w_0 \\in \\mathbb{R}, \\qquad w \\in \\mathbb{R}^{n}, \\qquad V \\in \\mathbb{R}^{n\\times k} \\qquad\\text{(Eq. 2)} $$
+<p>The interaction weight for pair $(i,j)$ is the dot product of the two factor vectors (Eq. 3).</p>
+$$ \\langle v_i, v_j \\rangle \\;:=\\; \\sum_{f=1}^{k} v_{i,f}\\, \\cdot\\, v_{j,f} \\qquad\\text{(Eq. 3)} $$
+<p>The pairwise term reformulated to run in linear time $O(k\\,n)$ instead of $O(k\\,n^2)$ (Lemma 3.1).</p>
+$$ \\sum_{i=1}^{n}\\sum_{j=i+1}^{n} \\langle v_i, v_j \\rangle\\, x_i x_j \\;=\\; \\tfrac{1}{2}\\sum_{f=1}^{k}\\!\\left[\\Big(\\sum_{i=1}^{n} v_{i,f}\\, x_i\\Big)^{\\!2} - \\sum_{i=1}^{n} v_{i,f}^{2}\\, x_i^{2}\\right] \\qquad\\text{(Lemma 3.1)} $$
+<p>The gradient of the FM, split by which parameter we differentiate against (Eq. 4) — this is what SGD uses.</p>
+$$ \\frac{\\partial}{\\partial \\theta}\\,\\hat{y}(x) \\;=\\; \\begin{cases} 1, & \\text{if } \\theta = w_0 \\\\[4pt] x_i, & \\text{if } \\theta = w_i \\\\[4pt] x_i \\sum_{j=1}^{n} v_{j,f}\\, x_j \\;-\\; v_{i,f}\\, x_i^{2}, & \\text{if } \\theta = v_{i,f} \\end{cases} \\qquad\\text{(Eq. 4)} $$
+<p>The general $d$-way FM: degree-2 generalized to interactions among up to $d$ features, each order factorized by PARAFAC (Eq. 5).</p>
+$$ \\hat{y}(x) \\;=\\; w_0 + \\sum_{i=1}^{n} w_i x_i \\;+\\; \\sum_{l=2}^{d}\\sum_{i_1=1}^{n}\\!\\cdots\\!\\sum_{i_l=i_{l-1}+1}^{n}\\Big(\\prod_{j=1}^{l} x_{i_j}\\Big)\\Big(\\sum_{f=1}^{k_l}\\prod_{j=1}^{l} v^{(l)}_{i_j,f}\\Big) \\qquad\\text{(Eq. 5)} $$
+$$ V^{(l)} \\in \\mathbb{R}^{n\\times k_l}, \\qquad k_l \\in \\mathbb{N}_0^{+} \\qquad\\text{(Eq. 6 — the $l$-th order PARAFAC factors)} $$`,
     whatItDoes:
       `<p><b>Eqn. 1</b> is the whole 2-way model: bias, plus a linear weight per feature, plus &mdash; for every
        unordered pair $(i,j)$ &mdash; the product $x_i x_j$ scaled by the factorized weight
@@ -158,7 +210,16 @@ $$ \\sum_{i=1}^{n}\\sum_{j=i+1}^{n} \\langle v_i, v_j \\rangle\\, x_i x_j \\;=\\
        each factor $f$ you compute one weighted sum $\\sum_i v_{i,f} x_i$, square it, then subtract the
        "diagonal" terms $\\sum_i v_{i,f}^2 x_i^2$ that the square accidentally included, and halve. Read in
        words: <b>"square of the sum, minus sum of the squares, over two."</b> Both sums run once over the $n$
-       features, repeated for each of the $k$ factors &mdash; so the cost is $O(k\\,n)$, not $O(k\\,n^2)$.</p>`,
+       features, repeated for each of the $k$ factors &mdash; so the cost is $O(k\\,n)$, not $O(k\\,n^2)$.</p>
+       <p><b>Eq. 4</b> is the gradient SGD needs, one case per parameter type. For the bias it is $1$ (the bias
+       enters $\\hat{y}$ added straight on). For a linear weight $w_i$ it is just $x_i$. For a factor entry
+       $v_{i,f}$ it is $x_i\\sum_j v_{j,f} x_j - v_{i,f} x_i^2$ &mdash; the same square-of-sum-minus-diagonal shape
+       as the forward pass. Crucially the inner sum $\\sum_j v_{j,f} x_j$ does not depend on $i$, so it is
+       computed once and reused, making each gradient $O(1)$.</p>
+       <p><b>Eq. 5</b> generalizes the model from pairs to a $d$-way FM: keep the bias and linear part, then for
+       every interaction order $l$ from $2$ to $d$ add the product of $l$ feature values weighted by a factorized
+       $l$-way coefficient (its own factor matrix $V^{(l)}$ per order, Eq. 6). $d=2$ recovers Eq. 1; the same
+       Lemma-3.1 argument keeps even the $d$-way model linear-time.</p>`,
     derivation:
       `<p>This identity is the heart of the lemma, so we derive it in full (the paper's proof, &sect;III-A4).
        Start by noting that the pairwise sum over $i \\lt j$ is exactly <b>half</b> of the full sum over all

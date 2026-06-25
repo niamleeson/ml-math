@@ -137,6 +137,39 @@
        $\\hat{x}_{ui} = \\langle w_u, h_i\\rangle = \\sum_{f=1}^{k} w_{uf} h_{if}$, a $k$-dimensional dot
        product of a user-factor row $w_u$ and an item-factor row $h_i$. The derivative of $\\hat{x}_{uij}$ is
        then simple: $(h_{if} - h_{jf})$ for $w_u$, $w_{uf}$ for $h_i$, and $-w_{uf}$ for $h_j$.</p>`,
+    architecture:
+      `<p>BPR is a <b>training criterion plus a learning algorithm</b> that wraps an existing scoring model, not a
+        new network. Three layers stack on top of each other.</p>
+       <p><b>1. The scoring model (here, matrix factorization, &sect;4.3.1).</b> Two parameter blocks make up
+        $\\Theta = (W, H)$: a user-factor matrix $W$ of shape $\\lvert U\\rvert \\times k$ (one length-$k$ row
+        $w_u$ per user) and an item-factor matrix $H$ of shape $\\lvert I\\rvert \\times k$ (one length-$k$ row
+        $h_i$ per item). $k$ is the latent dimension. The full score matrix is $\\hat{X} = W H^t$; a single score
+        is the dot product $\\hat{x}_{ui} = \\langle w_u, h_i\\rangle$. (Any model that outputs a real score
+        $\\hat{x}_{ui}$ &mdash; e.g. the adaptive kNN of &sect;4.3.2 &mdash; can be dropped in here.)</p>
+       <p><b>2. The pairwise head (&sect;4.3).</b> Given a triple $(u,i,j)$, take two scores from the model and
+        subtract: $\\hat{x}_{uij} = \\hat{x}_{ui} - \\hat{x}_{uj}$. Pass that single number through $\\ln\\sigma$.
+        This is what turns a point-scoring model into a ranking model &mdash; the only structural addition BPR
+        makes.</p>
+       <p><b>3. The LearnBPR training loop (&sect;4.2, Fig. 4), per iteration:</b></p>
+       <ol>
+        <li><b>Initialize</b> $\\Theta$ (small random $W$, $H$).</li>
+        <li><b>Bootstrap-sample</b> one triple $(u,i,j)$ uniformly at random with replacement from $D_S$: pick a
+         user $u$, one of their observed positives $i \\in I_u^+$, and a non-observed negative $j \\notin I_u^+$
+         (reject and resample if the drawn $j$ is actually a positive).</li>
+        <li><b>Forward:</b> $\\hat{x}_{ui} = \\langle w_u, h_i\\rangle$, $\\hat{x}_{uj} = \\langle w_u, h_j\\rangle$,
+         $\\hat{x}_{uij} = \\hat{x}_{ui} - \\hat{x}_{uj}$.</li>
+        <li><b>Update</b> each affected parameter:
+         $\\Theta \\leftarrow \\Theta + \\alpha\\left(\\sigma(-\\hat{x}_{uij})\\,\\partial_\\Theta \\hat{x}_{uij}
+         + \\lambda_\\Theta \\Theta\\right)$. With MF, only $w_u$, $h_i$, $h_j$ move; their gradients are
+         $(h_i - h_j)$, $w_u$, $-w_u$ respectively (the paper uses separate regularizers $\\lambda_W$ for $W$,
+         $\\lambda_{H^+}$ for positive $h_i$, $\\lambda_{H^-}$ for negative $h_j$).</li>
+        <li><b>Repeat until convergence;</b> because triples are bootstrap-sampled, you can stop after a fraction
+         of a full pass &mdash; on the order of $m\\cdot\\lvert S\\rvert$ single steps, where $\\lvert S\\rvert$ is
+         the number of observed positives.</li>
+       </ol>
+       <p><b>Evaluation layer.</b> After training, score the held-out positives against the negatives and compute
+        the average AUC (&sect;6.2). BPR-Opt is the differentiable surrogate for exactly this AUC, so optimizing
+        the former drives the latter up.</p>`,
     symbols: [
       { sym: "$u,\\ i,\\ j$", desc: "a <b>user</b> $u$, an <b>observed positive</b> item $i$ (the user interacted with it), and a <b>non-observed</b> item $j$ (sampled as a negative)." },
       { sym: "$I_u^+$", desc: "the set of items user $u$ has interacted with (their observed positives). $j \\notin I_u^+$ means item $j$ was not observed for $u$." },
@@ -149,10 +182,41 @@
       { sym: "$\\lVert\\Theta\\rVert^2$", desc: "the <b>squared $L_2$ norm</b>: the sum of the squares of all parameters. Penalizing it discourages large weights (overfitting)." },
       { sym: "$w_u,\\ h_i$", desc: "the <b>latent-factor row vectors</b> for user $u$ and item $i$, each of length $k$. Their dot product is the score." },
       { sym: "$w_{uf},\\ h_{if}$", desc: "the $f$-th <b>component</b> (factor) of $w_u$ and $h_i$; $f$ runs from $1$ to $k$, the number of latent factors." },
+      { sym: "$k$", desc: "the <b>latent dimension</b> (rank) of the factorization: the length of every user-factor and item-factor row." },
+      { sym: "$\\hat{X},\\ W,\\ H$", desc: "the <b>score matrix</b> $\\hat{X} = WH^t$ and its two factors: $W$ (user factors, $\\lvert U\\rvert\\times k$) and $H$ (item factors, $\\lvert I\\rvert\\times k$). Together $\\Theta = (W, H)$." },
+      { sym: "$\\Sigma_\\Theta$", desc: "the <b>covariance matrix</b> of the Gaussian prior on $\\Theta$; the paper sets it to $\\lambda_\\Theta I$ to leave a single regularization hyperparameter." },
+      { sym: "$z_u$", desc: "the <b>AUC normalizing constant</b> for user $u$: $1/(\\lvert U\\rvert\\,\\lvert I_u^+\\rvert\\,\\lvert I\\setminus I_u^+\\rvert)$, turning the pair count into a per-user fraction." },
       { sym: "$\\alpha$", desc: "the <b>learning rate</b>: the step size for each stochastic gradient update in LearnBPR." },
       { sym: "AUC", desc: "<b>area under the ROC (receiver operating characteristic) curve</b>: here, the fraction of (positive, negative) pairs the model ranks in the correct order. $0.5$ = random guessing, $1.0$ = perfect ranking (&sect;4.1.1, &sect;6.2)." }
     ],
-    formula: `$$ \\text{BPR-Opt} := \\sum_{(u,i,j)\\in D_S} \\ln \\sigma(\\hat{x}_{uij}) \\;-\\; \\lambda_\\Theta\\,\\lVert\\Theta\\rVert^2 \\qquad\\text{(Section 4.1)} $$`,
+    formula:
+      `$$ \\hat{x}_{uij} := \\hat{x}_{ui} - \\hat{x}_{uj} $$
+       <p>The <b>pairwise score</b> (&sect;4.3): how much more the model likes the observed positive $i$ than the
+        sampled negative $j$ for user $u$. Positive means the pair is ranked the right way.</p>
+       $$ p(i \\gt_u j \\mid \\Theta) := \\sigma(\\hat{x}_{uij}), \\qquad \\sigma(x) := \\frac{1}{1 + e^{-x}} $$
+       <p>The probability user $u$ prefers $i$ over $j$ (&sect;4.1): the logistic sigmoid turns the score
+        difference into a number in $(0,1)$.</p>
+       $$ p(\\Theta \\mid \\gt_u) \\propto p(\\gt_u \\mid \\Theta)\\, p(\\Theta), \\qquad p(\\Theta) \\sim N(0, \\Sigma_\\Theta),\\ \\ \\Sigma_\\Theta = \\lambda_\\Theta I $$
+       <p>The Bayesian formulation (&sect;4.1): maximize the posterior of the correct ranking, with a zero-mean
+        Gaussian prior on the parameters whose covariance is set to $\\lambda_\\Theta I$.</p>
+       $$ \\text{BPR-Opt} := \\ln p(\\Theta \\mid \\gt_u) = \\sum_{(u,i,j)\\in D_S} \\ln \\sigma(\\hat{x}_{uij}) \\;-\\; \\lambda_\\Theta\\,\\lVert\\Theta\\rVert^2 $$
+       <p>The <b>BPR-Opt criterion</b> (&sect;4.1) &mdash; the maximum-a-posteriori (MAP) estimator from the
+        Bayesian formulation: log-likelihood that all pairs in $D_S$ are ordered correctly, minus the $L_2$
+        penalty coming from the Gaussian prior. <b>Maximize</b> it.</p>
+       $$ \\hat{X} := W H^t, \\qquad \\hat{x}_{ui} = \\langle w_u, h_i\\rangle = \\sum_{f=1}^{k} w_{uf}\\, h_{if} $$
+       <p>The <b>BPR-MF instantiation</b> (&sect;4.3.1): score user $u$ on item $i$ by the dot product of their
+        $k$-dimensional latent-factor rows $w_u$ and $h_i$. The MF derivative used below is $(h_{if}-h_{jf})$ for
+        $w_{uf}$, $w_{uf}$ for $h_{if}$, and $-w_{uf}$ for $h_{jf}$.</p>
+       $$ \\Theta \\leftarrow \\Theta + \\alpha\\left( \\frac{e^{-\\hat{x}_{uij}}}{1 + e^{-\\hat{x}_{uij}}}\\cdot \\frac{\\partial}{\\partial\\Theta}\\hat{x}_{uij} + \\lambda_\\Theta\\,\\Theta \\right) $$
+       <p>The <b>LearnBPR bootstrap-SGD update</b> (Fig. 4, &sect;4.2): draw a triple $(u,i,j)$ uniformly at
+        random from $D_S$ and take one ascent step. The weight $\\frac{e^{-\\hat{x}_{uij}}}{1+e^{-\\hat{x}_{uij}}}
+        = \\sigma(-\\hat{x}_{uij})$ is large when the pair is ranked wrong, near $0$ once it is confidently right.</p>
+       $$ \\text{AUC}(u) = \\sum_{(u,i,j)\\in D_S} z_u\\,\\delta(\\hat{x}_{uij} \\gt 0), \\qquad z_u = \\frac{1}{\\lvert U\\rvert\\,\\lvert I_u^+\\rvert\\,\\lvert I \\setminus I_u^+\\rvert} $$
+       $$ \\text{AUC} := \\frac{1}{\\lvert U\\rvert}\\sum_{u\\in U} \\text{AUC}(u) $$
+       <p>The <b>AUC connection</b> (Eqn. 1 &amp; Eqn. 2, &sect;4.1.1, &sect;6.2): $\\text{AUC}(u)$ counts the
+        fraction of that user's (positive, negative) pairs ranked correctly, normalized by $z_u$; the average AUC
+        is the mean over users. BPR-Opt differs from AUC only in replacing the non-differentiable step loss
+        $\\delta(\\hat{x}_{uij}\\gt 0)$ (the Heaviside $H(x)$) with the smooth surrogate $\\ln\\sigma(\\hat{x}_{uij})$.</p>`,
     whatItDoes:
       `<p>Read it left to right. For every training pair $(u,i,j)$, the model produces a pairwise score
        $\\hat{x}_{uij}$; $\\ln \\sigma(\\hat{x}_{uij})$ rewards getting that pair's order right (it rises toward

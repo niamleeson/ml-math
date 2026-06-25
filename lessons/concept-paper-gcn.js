@@ -93,11 +93,11 @@
       `<p>Before the reveal, sketch the one matrix you must build by hand. Fill in the <code>TODO</code>s:</p>
        <ul>
         <li>Take the adjacency matrix $A$ (1 if nodes $i,j$ are connected, else 0).</li>
-        <li>TODO: add self-loops &mdash; <code>Ahat = A + torch.eye(n)</code>  <i># $\\hat{A}=A+I_N$</i></li>
-        <li>TODO: degrees of $\\hat{A}$ &mdash; <code>deg = Ahat.sum(1)</code>, then
-        <code>Dinv = torch.diag(deg.pow(-0.5))</code>  <i># $\\hat{D}^{-1/2}$</i></li>
-        <li>TODO: the propagation matrix &mdash; <code>S = Dinv @ Ahat @ Dinv</code>
-        <i># $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$</i></li>
+        <li>TODO: add self-loops &mdash; <code>Atil = A + torch.eye(n)</code>  <i># $\\tilde{A}=A+I_N$</i></li>
+        <li>TODO: degrees of $\\tilde{A}$ &mdash; <code>deg = Atil.sum(1)</code>, then
+        <code>Dinv = torch.diag(deg.pow(-0.5))</code>  <i># $\\tilde{D}^{-1/2}$</i></li>
+        <li>TODO: the propagation matrix &mdash; <code>S = Dinv @ Atil @ Dinv</code>
+        <i># $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$</i></li>
         <li>One GCN layer is then <code>relu(S @ H @ W)</code> &mdash; mix, transform, squash.</li>
        </ul>
        <p>Then stack two such layers, compute cross-entropy on the 2 labeled nodes only, and predict every
@@ -114,37 +114,94 @@
        But raw $A H$ has two problems the paper fixes (&sect;2.2):</p>
        <ul>
         <li><b>A node forgets itself.</b> $A$ has zeros on its diagonal, so $A H$ drops node $i$'s own vector.
-        Fix: add a <b>self-loop</b> to every node &mdash; use $\\hat{A} = A + I_N$, where $I_N$ is the identity
+        Fix: add a <b>self-loop</b> to every node &mdash; use $\\tilde{A} = A + I_N$, where $I_N$ is the identity
         matrix (1s on the diagonal). Now each node's sum includes itself.</li>
         <li><b>High-degree nodes blow up.</b> A node with 50 neighbours produces a sum 50&times; larger than a
-        node with one neighbour, which destabilizes training. Fix: <b>normalize by degree</b>. Let $\\hat{D}$
-        be the diagonal <b>degree matrix</b> of $\\hat{A}$ ($\\hat{D}_{ii}$ = how many connections node $i$ has,
-        counting its self-loop). Multiplying by $\\hat{D}^{-1/2}$ on both sides &mdash;
-        $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ &mdash; turns the raw neighbour-<i>sum</i> into a balanced,
+        node with one neighbour, which destabilizes training. Fix: <b>normalize by degree</b>. Let $\\tilde{D}$
+        be the diagonal <b>degree matrix</b> of $\\tilde{A}$ ($\\tilde{D}_{ii}$ = how many connections node $i$ has,
+        counting its self-loop). Multiplying by $\\tilde{D}^{-1/2}$ on both sides &mdash;
+        $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ &mdash; turns the raw neighbour-<i>sum</i> into a balanced,
         degree-aware <b>weighted average</b>. The two-sided (symmetric) form scales the edge between $i$ and
-        $j$ by $1/\\sqrt{\\hat{d}_i\\,\\hat{d}_j}$.</li>
+        $j$ by $1/\\sqrt{\\tilde{d}_i\\,\\tilde{d}_j}$.</li>
        </ul>
-       <p>Call that fixed, precomputed matrix $S = \\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ (the paper's
-       <b>renormalized adjacency</b>; the swap from $I_N + D^{-1/2}AD^{-1/2}$ to this self-looped form is the
-       <b>renormalization trick</b>, just before Eqn. 8). One GCN <b>layer</b> then does three things: (1) mix
+       <p>Call that fixed, precomputed matrix $S = \\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ (the paper's
+       <b>renormalized adjacency</b> $\\hat{A}$; the swap from $I_N + D^{-1/2}AD^{-1/2}$ to this self-looped form
+       is the <b>renormalization trick</b>, just before Eqn. 8). One GCN <b>layer</b> then does three things: (1) mix
        &mdash; multiply by $S$ to average each node with its neighbours; (2) transform &mdash; multiply by a
        learned weight matrix $W$; (3) squash &mdash; apply a nonlinearity $\\sigma$ (ReLU). Stacking $L$ layers
        lets information travel $L$ hops across the graph: after two layers a node has heard from its neighbours'
        neighbours.</p>`,
+    architecture:
+      `<p>The model in the paper (&sect;3.1, Figure 1) is a <b>2-layer GCN</b> over a fixed graph. Sizes:
+       $N$ nodes, input feature dimension $C$ (columns of $X$), hidden width $H$, and $F$ output classes.</p>
+       <ul>
+        <li><b>Precompute (no parameters):</b> from adjacency $A$ build $\\tilde{A}=A+I_N$, the diagonal degree
+        matrix $\\tilde{D}$ ($\\tilde{D}_{ii}=\\sum_j\\tilde{A}_{ij}$), and the renormalized adjacency
+        $\\hat{A}=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ &mdash; one $N\\times N$ (sparse) matrix, fixed for
+        the whole run.</li>
+        <li><b>Inputs:</b> node features $X$ ($N\\times C$). In the citation experiments $X$ is the bag-of-words
+        rows; with no features it degrades to the $N\\times N$ identity (one-hot node ids).</li>
+        <li><b>Layer 1 (graph conv + ReLU):</b> $\\;\\hat{A}\\,X\\,W^{(0)}\\;$ then ReLU, with weight
+        $W^{(0)}$ of shape $C\\times H$. Output: $N\\times H$ hidden node embeddings. (Dropout is applied to the
+        input and the hidden layer.)</li>
+        <li><b>Layer 2 (graph conv + softmax):</b> $\\;\\hat{A}\\,(\\cdot)\\,W^{(1)}\\;$ with weight $W^{(1)}$ of
+        shape $H\\times F$, then a <b>row-wise softmax</b>. Output: $Z$, an $N\\times F$ matrix of per-node class
+        probabilities.</li>
+       </ul>
+       <p><b>Data flow:</b> $X \\;\\xrightarrow{\\hat{A}\\,\\cdot\\,W^{(0)},\\,\\mathrm{ReLU}}\\; H^{(1)}
+       \\;\\xrightarrow{\\hat{A}\\,\\cdot\\,W^{(1)},\\,\\mathrm{softmax}}\\; Z$. Only $W^{(0)}$ and $W^{(1)}$ are
+       learned (just two small dense matrices); $\\hat{A}$ is fixed, so each layer is one sparse matrix product
+       and the forward pass costs $O(|\\mathcal{E}|)$ &mdash; linear in the number of edges. Two layers means each
+       node's prediction depends on its <b>2-hop</b> neighbourhood. The cross-entropy loss (Eqn. 10) is read off
+       only the rows of $Z$ for labeled nodes; gradients still flow through $\\hat{A}$ to every node, so the
+       handful of labels updates the whole graph's representations. Trained full-batch with Adam.</p>`,
     symbols: [
       { sym: "$A$", desc: "the <b>adjacency matrix</b> ($N\\times N$): $A_{ij}=1$ if nodes $i$ and $j$ are connected by an edge, else $0$. $N$ is the number of nodes." },
       { sym: "$I_N$", desc: "the <b>identity matrix</b> of size $N$: 1s on the diagonal, 0s elsewhere. Adding it puts a <b>self-loop</b> on every node." },
-      { sym: "$\\hat{A}$", desc: "the <b>adjacency with self-loops</b>: $\\hat{A} = A + I_N$. Now multiplying by it keeps each node's own vector, not just its neighbours'." },
-      { sym: "$\\hat{D}$", desc: "the <b>degree matrix</b> of $\\hat{A}$: a diagonal matrix with $\\hat{D}_{ii} = \\sum_j \\hat{A}_{ij}$ = the number of connections of node $i$ (including its self-loop)." },
-      { sym: "$\\hat{D}^{-1/2}$", desc: "the inverse square root of the degree matrix (each diagonal entry $1/\\sqrt{\\hat{D}_{ii}}$). Used on both sides to normalize." },
-      { sym: "$\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$", desc: "the <b>renormalized (symmetric-normalized) adjacency</b> &mdash; we abbreviate it $S$. The fixed matrix that turns 'sum your neighbours' into a degree-balanced weighted average. Precomputed once." },
-      { sym: "$H^{(l)}$", desc: "the <b>node representations at layer $l$</b>: an $N\\times d$ matrix whose row $i$ is node $i$'s feature vector. $H^{(0)}=X$, the input node features." },
-      { sym: "$W^{(l)}$", desc: "the <b>learnable weight matrix</b> of layer $l$: a shared linear map applied to every node's vector (this is what training updates)." },
+      { sym: "$\\tilde{A}$", desc: "the <b>adjacency with self-loops</b>: $\\tilde{A} = A + I_N$ (the paper's tilde). Multiplying by it keeps each node's own vector, not just its neighbours'." },
+      { sym: "$\\tilde{D}$", desc: "the <b>degree matrix</b> of $\\tilde{A}$: a diagonal matrix with $\\tilde{D}_{ii} = \\sum_j \\tilde{A}_{ij}$ = the number of connections of node $i$ (including its self-loop)." },
+      { sym: "$\\tilde{D}^{-1/2}$", desc: "the inverse square root of the degree matrix (each diagonal entry $1/\\sqrt{\\tilde{D}_{ii}}$). Used on both sides to normalize." },
+      { sym: "$\\hat{A} = \\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$", desc: "the <b>renormalized (symmetric-normalized) adjacency</b> &mdash; the paper's $\\hat{A}$ in Eqn. 9; we also call it $S$. The fixed matrix that turns 'sum your neighbours' into a degree-balanced weighted average. Precomputed once." },
+      { sym: "$L$", desc: "the <b>normalized graph Laplacian</b> $L = I_N - D^{-1/2}AD^{-1/2}$ (here $D$ is the degree matrix of the plain $A$, no self-loops). Its eigenbasis defines the spectral convolution." },
+      { sym: "$U,\\ \\Lambda$", desc: "the <b>eigenvectors</b> ($U$) and diagonal matrix of <b>eigenvalues</b> ($\\Lambda$) of $L$, from $L = U\\Lambda U^{\\top}$. The spectral filter acts in the $U$ basis (Eqn. 3)." },
+      { sym: "$g_\\theta,\\ \\theta$", desc: "the <b>spectral filter</b> and its parameters; $\\theta'_k$ are the Chebyshev coefficients, tied to a single $\\theta$ in the first-order model (Eqns. 4-7)." },
+      { sym: "$T_k,\\ \\tilde{\\Lambda},\\ \\tilde{L},\\ \\lambda_{\\max}$", desc: "the <b>Chebyshev polynomials</b> $T_k$ evaluated at the rescaled Laplacian $\\tilde{L}=\\tfrac{2}{\\lambda_{\\max}}L-I_N$ (and $\\tilde{\\Lambda}$ for its eigenvalues); $\\lambda_{\\max}$ is the largest eigenvalue of $L$, approximated as $2$." },
+      { sym: "$X$", desc: "the <b>input node features</b>: an $N\\times C$ matrix ($C$ = feature dimension). $H^{(0)}=X$. With no features it is the $N\\times N$ identity (one-hot node ids)." },
+      { sym: "$H^{(l)}$", desc: "the <b>node representations at layer $l$</b>: an $N\\times d$ matrix whose row $i$ is node $i$'s feature vector. $H^{(0)}=X$." },
+      { sym: "$W^{(l)},\\ \\Theta$", desc: "the <b>learnable weight matrices</b> ($W^{(0)}$ is $C\\times H$, $W^{(1)}$ is $H\\times F$); $\\Theta$ is the per-channel filter parameters in Eqn. 8. This is what training updates." },
       { sym: "$\\sigma$", desc: "an <b>activation function</b>, the ReLU (Rectified Linear Unit): keep positives, zero out negatives. The paper's Eqn. 2 uses $\\sigma=$ ReLU for hidden layers." },
-      { sym: "$Z$", desc: "the <b>output</b>: each node's class scores (turned into probabilities by a softmax in the final layer)." },
+      { sym: "$Z$", desc: "the <b>output</b>: an $N\\times F$ matrix, each node's class probabilities ($Z_{lf}$ = predicted probability of class $f$ for node $l$, after the row-wise softmax)." },
+      { sym: "$Y,\\ F$", desc: "$Y$ the <b>one-hot true labels</b> ($Y_{lf}=1$ if node $l$ is class $f$) and $F$ the <b>number of classes</b>, both used in the cross-entropy loss (Eqn. 10)." },
       { sym: "$\\mathcal{Y}_L$", desc: "the set of <b>labeled node indices</b> &mdash; the few nodes whose true class we know and on which the loss is computed (Eqn. 10)." }
     ],
-    formula: `$$ H^{(l+1)} = \\sigma\\!\\left( \\hat{D}^{-\\frac{1}{2}}\\,\\hat{A}\\,\\hat{D}^{-\\frac{1}{2}}\\, H^{(l)}\\, W^{(l)} \\right) \\qquad\\text{(Eqn. 2)} \\qquad \\hat{A} = A + I_N $$`,
+    formula:
+      `<p><b>The renormalization trick (the layer-wise propagation rule), Eqn. 2.</b> One graph-convolution layer:</p>
+       $$ H^{(l+1)} = \\sigma\\!\\left( \\tilde{D}^{-\\frac{1}{2}}\\,\\tilde{A}\\,\\tilde{D}^{-\\frac{1}{2}}\\, H^{(l)}\\, W^{(l)} \\right), \\qquad \\tilde{A} = A + I_N, \\qquad \\tilde{D}_{ii} = \\sum_j \\tilde{A}_{ij}. $$
+       <p>Add a self-loop to every node ($\\tilde{A}=A+I_N$), symmetric-normalize by the self-looped degree, mix, transform by the learned $W^{(l)}$, squash by $\\sigma$ (ReLU). This is the only equation you implement.</p>
+
+       <p><b>Where $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ comes from &mdash; the spectral motivation (&sect;2.1).</b> A spectral graph convolution is a multiplication in the basis of the graph Laplacian's eigenvectors (Eqn. 3):</p>
+       $$ g_\\theta \\star x = U\\, g_\\theta\\, U^{\\top} x, \\qquad L = I_N - D^{-\\frac{1}{2}} A D^{-\\frac{1}{2}} = U \\Lambda U^{\\top}. $$
+       <p>$U$ are the eigenvectors of the normalized Laplacian $L$ and $\\Lambda$ its eigenvalues; $g_\\theta$ is a filter applied in that basis. Computing $U$ needs a full eigendecomposition &mdash; expensive and non-local.</p>
+
+       <p><b>Chebyshev approximation (&sect;2.1, Eqns. 4-5).</b> Approximate the filter by a truncated $K$-th order Chebyshev polynomial $T_k$ in the rescaled Laplacian, which avoids ever forming $U$:</p>
+       $$ g_{\\theta'}(\\Lambda) \\approx \\sum_{k=0}^{K} \\theta'_k\\, T_k(\\tilde{\\Lambda}), \\qquad
+          g_{\\theta'} \\star x \\approx \\sum_{k=0}^{K} \\theta'_k\\, T_k(\\tilde{L})\\, x, \\qquad
+          \\tilde{L} = \\tfrac{2}{\\lambda_{\\max}} L - I_N. $$
+       <p>This is already $K$-localized (each node reads only its $K$-hop neighbourhood) and cheap.</p>
+
+       <p><b>First-order approximation (&sect;2.2, Eqns. 6-7).</b> Take $K=1$ and $\\lambda_{\\max}\\approx 2$, then tie the two filter weights ($\\theta = \\theta'_0 = -\\theta'_1$) to limit overfitting:</p>
+       $$ g_{\\theta'} \\star x \\approx \\theta'_0\\, x - \\theta'_1\\, D^{-\\frac{1}{2}} A D^{-\\frac{1}{2}} x
+          \\;\\;\\longrightarrow\\;\\; g_\\theta \\star x \\approx \\theta\\,\\big( I_N + D^{-\\frac{1}{2}} A D^{-\\frac{1}{2}} \\big) x. $$
+       <p>The operator $I_N + D^{-1/2}AD^{-1/2}$ has eigenvalues in $[0,2]$; stacking it repeatedly is numerically unstable. The <b>renormalization trick</b> replaces it with $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ (using $\\tilde{A}=A+I_N$), giving the multi-channel filter (Eqn. 8) that becomes Eqn. 2:</p>
+       $$ Z = \\tilde{D}^{-\\frac{1}{2}}\\,\\tilde{A}\\,\\tilde{D}^{-\\frac{1}{2}}\\, X\\, \\Theta. $$
+
+       <p><b>The 2-layer semi-supervised model (&sect;3.1, Eqn. 9).</b> With $\\hat{A} = \\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ precomputed once:</p>
+       $$ Z = f(X, A) = \\mathrm{softmax}\\!\\Big( \\hat{A}\\; \\mathrm{ReLU}\\big( \\hat{A}\\, X\\, W^{(0)} \\big)\\, W^{(1)} \\Big). $$
+       <p>First layer mixes one hop and transforms input features $X$ by $W^{(0)}$; ReLU; second layer mixes a second hop and maps to class scores by $W^{(1)}$; a per-node softmax gives class probabilities.</p>
+
+       <p><b>Semi-supervised cross-entropy loss (&sect;3.1, Eqn. 10).</b> Summed over the labeled nodes only:</p>
+       $$ \\mathcal{L} = -\\sum_{l \\in \\mathcal{Y}_L} \\sum_{f=1}^{F} Y_{lf}\\, \\ln Z_{lf}. $$
+       <p>$\\mathcal{Y}_L$ is the set of labeled node indices, $F$ the number of classes, $Y$ the one-hot true labels, $Z$ the predicted probabilities. Unlabeled nodes get no direct supervision &mdash; the graph carries the signal.</p>`,
     whatItDoes:
       `<p><b>Equation 2</b> is one graph-convolution layer, read right-to-left. Start with the current node
        representations $H^{(l)}$. (1) <b>Transform:</b> $H^{(l)} W^{(l)}$ applies the learned linear map to every
@@ -157,7 +214,7 @@
     derivation:
       `<p><b>Short recap &mdash; the message-passing view lives in the concept lesson.</b> The mod-gnn lesson
        builds the intuition that a GNN layer is "each node averages its neighbours, then squishes." GCN is the
-       cleanest instance of that: the averaging is the fixed matrix $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$
+       cleanest instance of that: the averaging is the fixed matrix $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$
        and the squish is $\\sigma$, with one shared weight $W$ in between. Head to <b>mod-gnn</b> for the
        message-passing framing.</p>
        <p>Where does the specific matrix $S$ come from? The paper <i>motivates</i> it from <b>spectral graph
@@ -166,8 +223,8 @@
        filter with a first-order (linear) <b>Chebyshev polynomial</b>, set $K=1$ and $\\lambda_{\\max}\\approx 2$,
        which collapses the convolution to a single term $I_N + D^{-1/2}AD^{-1/2}$. Repeatedly applying that
        operator is numerically unstable (its eigenvalues can grow), so they apply the <b>renormalization
-       trick</b> (just before Eqn. 8): replace it with $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ using
-       $\\hat{A}=A+I_N$, which keeps eigenvalues in a stable range. That is exactly the $S$ in Eqn. 2. You can
+       trick</b> (just before Eqn. 8): replace it with $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ using
+       $\\tilde{A}=A+I_N$, which keeps eigenvalues in a stable range. That is exactly the $S$ in Eqn. 2. You can
        take the spectral derivation on faith &mdash; the layer stands on its own as "normalized neighbour
        averaging."</p>`,
     example:

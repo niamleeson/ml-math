@@ -161,10 +161,19 @@
       { sym: "$\\mu$", desc: "the <b>global average rating</b> across all observed cells (used in the bias model, Equations 3-4)." },
       { sym: "$b_u,\\ b_i$", desc: "the <b>user bias and item bias</b>: how far user $u$ (resp. item $i$) tends to rate above or below the global average $\\mu$ (Equation 3)." }
     ],
-    formula: `$$ \\hat{r}_{ui} \\;=\\; q_i^\\top p_u \\qquad\\text{(Equation 1: predict by dot product)} $$
-              $$ \\min_{q_*,\\,p_*} \\;\\sum_{(u,i)\\in\\kappa} \\big(r_{ui} - q_i^\\top p_u\\big)^2 \\;+\\; \\lambda\\big(\\lVert q_i\\rVert^2 + \\lVert p_u\\rVert^2\\big) \\qquad\\text{(Equation 2: regularized squared error)} $$
-              $$ e_{ui} \\;\\stackrel{\\text{def}}{=}\\; r_{ui} - q_i^\\top p_u, \\qquad q_i \\leftarrow q_i + \\gamma\\,(e_{ui}\\,p_u - \\lambda\\,q_i), \\qquad p_u \\leftarrow p_u + \\gamma\\,(e_{ui}\\,q_i - \\lambda\\,p_u) \\qquad\\text{(SGD updates)} $$
-              $$ \\hat{r}_{ui} \\;=\\; \\mu + b_u + b_i + q_i^\\top p_u \\qquad\\text{(Equation 4: with biases)} $$`,
+    formula: `$$ \\hat{r}_{ui} \\;=\\; q_i^\\top p_u $$
+              <p>Equation 1 (&sect;"A Basic Matrix Factorization Model"): the predicted rating is the inner product of the item vector $q_i$ and the user vector $p_u$.</p>
+              $$ \\min_{q_*,\\,p_*} \\;\\sum_{(u,i)\\in\\kappa} \\big(r_{ui} - q_i^\\top p_u\\big)^2 \\;+\\; \\lambda\\big(\\lVert q_i\\rVert^2 + \\lVert p_u\\rVert^2\\big) $$
+              <p>Equation 2: minimize the squared error on the known ratings $\\kappa$ plus a $\\lambda$-weighted penalty on the factor lengths (regularization against overfitting).</p>
+              $$ e_{ui} \\;\\stackrel{\\text{def}}{=}\\; r_{ui} - q_i^\\top p_u $$
+              $$ q_i \\leftarrow q_i + \\gamma\\,(e_{ui}\\,p_u - \\lambda\\,q_i), \\qquad p_u \\leftarrow p_u + \\gamma\\,(e_{ui}\\,q_i - \\lambda\\,p_u) $$
+              <p>Stochastic gradient descent (&sect;"Learning Algorithms"): per observed rating, compute the prediction error $e_{ui}$, then step each factor against the gradient of Equation 2 (learning rate $\\gamma$). This is what we implement.</p>
+              $$ b_{ui} \\;=\\; \\mu + b_i + b_u $$
+              <p>Equation 3 (&sect;"Adding biases"): a first-order approximation of the bias in rating $r_{ui}$ &mdash; global average $\\mu$, plus item bias $b_i$, plus user bias $b_u$.</p>
+              $$ \\hat{r}_{ui} \\;=\\; \\mu + b_i + b_u + q_i^\\top p_u $$
+              <p>Equation 4: biases extend Equation 1 &mdash; the rating splits into global average, item bias, user bias, and the interaction $q_i^\\top p_u$, so the dot product only models the leftover.</p>
+              $$ \\min_{p_*,\\,q_*,\\,b_*} \\;\\sum_{(u,i)\\in\\kappa} \\big(r_{ui} - \\mu - b_u - b_i - p_u^\\top q_i\\big)^2 \\;+\\; \\lambda\\big(\\lVert p_u\\rVert^2 + \\lVert q_i\\rVert^2 + b_u^2 + b_i^2\\big) $$
+              <p>Equation 5: the bias model's training objective &mdash; the same regularized squared error, now also learning $b_u, b_i$ (the biases are penalized too).</p>`,
     whatItDoes:
       `<p>Equation 1 says: to score a (user, item) pair, line up their two vectors and take the dot product.
        That single number is the predicted rating.</p>
