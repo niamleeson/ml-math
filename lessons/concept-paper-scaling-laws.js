@@ -150,6 +150,35 @@
        size (examples processed together) and $S$ is the number of training steps. Spend a fixed $C$ optimally and
        the laws say the best model size grows as a power of compute, $N \\propto C^{0.73}$ (Table 6). In words:
        <b>give a bigger budget mostly to a bigger model, and stop training before the data runs dry.</b></p>`,
+    architecture:
+      `<p>There is no single model to build &mdash; this is an empirical study &mdash; but it has a concrete
+       <b>experimental scaling setup</b>, and that setup is the "architecture" the paper exercises.</p>
+       <p><b>The model family.</b> Every run is a <b>decoder-only Transformer</b> language model (the GPT family):
+       a stack of $n_{\\text{layer}}$ identical blocks, each with masked multi-head self-attention of width
+       $d_{\\text{attn}}$ and a feed-forward sub-layer of width $d_{\\text{ff}}$, all of residual width
+       $d_{\\text{model}}$. Trained with an autoregressive cross-entropy objective (predict the next token) on
+       WebText2, with a fixed context length of $n_{\\text{ctx}} = 1024$ tokens. The size knob is the
+       non-embedding parameter count $N \\approx 12\\,n_{\\text{layer}}\\,d_{\\text{model}}^2$ (Eq 2.1).</p>
+       <p><b>The scan.</b> The experiment varies <i>one</i> resource at a time across many orders of magnitude while
+       keeping the others from being the bottleneck:</p>
+       <ul>
+        <li><b>Size axis ($N$):</b> models from $\\sim 768$ up to $\\sim 1.5$ billion non-embedding parameters,
+        with width $d_{\\text{model}}$, depth $n_{\\text{layer}}$, attention width, and feed-forward width all
+        scanned &mdash; the finding that <b>shape barely matters</b> comes from varying these independently.</li>
+        <li><b>Data axis ($D$):</b> training-token counts swept, each run early-stopped, to fit $L(D)$.</li>
+        <li><b>Compute axis ($C$):</b> compute measured as $C \\approx 6NBS$ floating-point operations (six per
+        parameter per token: roughly two for the forward pass and four for the backward pass), reported in
+        PF-days (peta-FLOP-days).</li>
+       </ul>
+       <p><b>The batch-size control.</b> To make compute comparisons fair, the paper introduces the <b>critical
+       batch size</b> $B_{\\text{crit}}(L)$ (Eq 1.4) &mdash; the batch above which extra parallelism buys little
+       and below which extra steps are wasted. Actual steps $S$ and compute $C$ are converted to a
+       <b>minimum-steps</b> $S_{\\min}$ and <b>minimum-compute</b> $C_{\\min}$ (Eq 5.4) by correcting for how far
+       $B$ sits from $B_{\\text{crit}}$. The clean compute law $L(C_{\\min})$ (Eq 1.3) and the allocation rule
+       $N \\propto C^{0.73}$ (Eq 1.7) are all stated in these batch-corrected units.</p>
+       <p><b>The data flow of the study.</b> train a grid of Transformers &rarr; record each run's test loss and
+       learning curve &rarr; fit the single-resource power laws (Eqs 1.1&ndash;1.3) and the combined surfaces
+       (Eqs 1.5&ndash;1.6) &rarr; derive the budget rule (Eqs 1.7&ndash;1.8) from those fitted exponents.</p>`,
     symbols: [
       { sym: "$L$", desc: "the <b>test cross-entropy loss</b>, in nats per token: the average surprise of the model on held-out text. A nat is the natural-log unit of information. Lower is a better next-token predictor. This is the quantity every law predicts." },
       { sym: "$N$", desc: "the <b>model size</b>, defined (&sect;2.1, Eq 2.1) as the number of <b>non-embedding</b> parameters &mdash; the trainable weights, excluding the token-embedding and positional-embedding lookup tables. Roughly $N \\approx 12\\,n_{\\text{layer}}\\,d_{\\text{model}}^2$." },
@@ -160,10 +189,34 @@
       { sym: "$N_c,\\ D_c,\\ C_c^{\\min}$", desc: "the <b>scale constants</b> for each law &mdash; reference values that set where the line sits. Fitted to $N_c \\approx 8.8\\times10^{13}$ params, $D_c \\approx 5.4\\times10^{13}$ tokens, $C_c^{\\min} \\approx 3.1\\times10^{8}$ PF-days (Table 5). The paper notes these are tokenization-dependent." },
       { sym: "$B$", desc: "the <b>batch size</b>: how many sequences the model processes together in one training step (a term in the compute estimate $C \\approx 6NBS$)." },
       { sym: "$S$", desc: "the <b>number of training steps</b> (parameter updates) taken (the other term in $C \\approx 6NBS$)." },
+      { sym: "$B_{\\text{crit}}(L)$", desc: "the <b>critical batch size</b> (Eq 1.4): the batch size at which training is near-optimal &mdash; bigger batches waste compute, smaller batches waste steps. It is a function of the current loss $L$, and rises (a larger usable batch) as $L$ falls." },
+      { sym: "$B_*,\\ \\alpha_B$", desc: "the <b>scale constant and exponent of the critical-batch-size law</b> $B_{\\text{crit}} = B_*/L^{1/\\alpha_B}$ (Eq 1.4). Fitted to $B_* \\approx 2\\times10^{8}$ tokens and $\\alpha_B \\approx 0.21$ (Table 5)." },
+      { sym: "$S_{\\min}$", desc: "the <b>minimum number of steps</b> needed to reach a loss, $S_{\\min} = S/(1 + B_{\\text{crit}}/B)$ (Eq 5.4): actual steps $S$ corrected for batch size relative to $B_{\\text{crit}}$. Used in the learning-curve law (Eq 1.6)." },
+      { sym: "$\\alpha_S,\\ S_c$", desc: "the <b>exponent and scale constant of the step term</b> in the learning-curve law $L(N,S)$ (Eq 1.6). Fitted to $\\alpha_S \\approx 0.76$ and $S_c \\approx 2.1\\times10^{3}$ steps (Table 5)." },
+      { sym: "$d_{\\text{model}},\\ n_{\\text{layer}},\\ d_{\\text{attn}},\\ d_{\\text{ff}}$", desc: "the <b>Transformer shape parameters</b>: residual stream width, number of layers, attention width, and feed-forward width. They enter the non-embedding count $N \\approx 12\\,n_{\\text{layer}}\\,d_{\\text{model}}^2$ (Eq 2.1); the paper finds loss depends very weakly on how a fixed $N$ is split among them." },
       { sym: "“power law”", desc: "a plain term, not a symbol: a relationship $y = a\\,x^{k}$ where $y$ is a constant times $x$ raised to a fixed exponent $k$. On log-log axes it plots as a straight line of slope $k$." },
       { sym: "“sample-efficient”", desc: "a plain term: reaching a given loss with fewer training tokens. The paper finds larger models are more sample-efficient &mdash; they extract more from each token." }
     ],
-    formula: `$$ L(N) = \\left( \\frac{N_c}{N} \\right)^{\\alpha_N} \\;\\text{(Eq 1.1)} \\qquad L(D) = \\left( \\frac{D_c}{D} \\right)^{\\alpha_D} \\;\\text{(Eq 1.2)} \\qquad L(C_{\\min}) = \\left( \\frac{C_c^{\\min}}{C_{\\min}} \\right)^{\\alpha_C^{\\min}} \\;\\text{(Eq 1.3)} $$ $$ L(N, D) = \\left[ \\left( \\frac{N_c}{N} \\right)^{\\alpha_N / \\alpha_D} + \\frac{D_c}{D} \\right]^{\\alpha_D} \\;\\text{(Eq 1.5)} $$`,
+    formula: `<p>$$ L(N) = \\left( \\frac{N_c}{N} \\right)^{\\alpha_N}, \\qquad \\alpha_N \\approx 0.076,\\ \\ N_c \\approx 8.8\\times10^{13}\\ \\text{params}. $$</p>
+       <p><b>Eq 1.1</b> &mdash; loss vs. model size $N$ (non-embedding parameters), with data and training not the bottleneck.</p>
+       <p>$$ L(D) = \\left( \\frac{D_c}{D} \\right)^{\\alpha_D}, \\qquad \\alpha_D \\approx 0.095,\\ \\ D_c \\approx 5.4\\times10^{13}\\ \\text{tokens}. $$</p>
+       <p><b>Eq 1.2</b> &mdash; loss vs. dataset size $D$ (training tokens), for a large model with early stopping.</p>
+       <p>$$ L(C_{\\min}) = \\left( \\frac{C_c^{\\min}}{C_{\\min}} \\right)^{\\alpha_C^{\\min}}, \\qquad \\alpha_C^{\\min} \\approx 0.050,\\ \\ C_c^{\\min} \\approx 3.1\\times10^{8}\\ \\text{PF-days}. $$</p>
+       <p><b>Eq 1.3</b> &mdash; loss vs. optimally-allocated training compute $C_{\\min}$.</p>
+       <p>$$ B_{\\text{crit}}(L) = \\frac{B_*}{L^{1/\\alpha_B}}, \\qquad B_* \\approx 2\\times10^{8}\\ \\text{tokens},\\ \\ \\alpha_B \\approx 0.21. $$</p>
+       <p><b>Eq 1.4 / &sect;5.1</b> &mdash; the <b>critical batch size</b>: the batch size that gives a near-optimal trade-off between training-time (steps) and compute. It rises as a power law as the loss $L$ falls, so larger, better-trained models tolerate larger batches.</p>
+       <p>$$ L(N, D) = \\left[ \\left( \\frac{N_c}{N} \\right)^{\\alpha_N / \\alpha_D} + \\frac{D_c}{D} \\right]^{\\alpha_D}. $$</p>
+       <p><b>Eq 1.5</b> &mdash; the combined size-and-data law: the scarcer resource dominates; the boundary where adding parameters stops helping (overfitting).</p>
+       <p>$$ L(N, S) = \\left( \\frac{N_c}{N} \\right)^{\\alpha_N} + \\left( \\frac{S_c}{S_{\\min}} \\right)^{\\alpha_S}, \\qquad \\alpha_S \\approx 0.76,\\ \\ S_c \\approx 2.1\\times10^{3}. $$</p>
+       <p><b>Eq 1.6 / &sect;5.1</b> &mdash; the learning curve: loss as a function of model size $N$ and the number of training steps $S$, where $S_{\\min}$ is the minimum-steps measure (Eq 5.4 below).</p>
+       <p>$$ N \\approx \\frac{2\\,d_{\\text{model}}\\,n_{\\text{layer}}\\,(2 d_{\\text{attn}} + d_{\\text{ff}})}{1} \\approx 12\\,n_{\\text{layer}}\\,d_{\\text{model}}^{2}, \\qquad C \\approx 6 N B S. $$</p>
+       <p><b>Eq 2.1 / &sect;2.1</b> &mdash; the count of non-embedding parameters $N$, and the per-training compute estimate $C$ in floating-point operations ($B$ = batch size, $S$ = steps).</p>
+       <p>$$ S_{\\min}(S) = \\frac{S}{1 + B_{\\text{crit}}(L)/B}, \\qquad C_{\\min} = \\frac{C}{1 + B/B_{\\text{crit}}(L)}. $$</p>
+       <p><b>Eq 5.4 / &sect;5.1</b> &mdash; the minimum steps and minimum compute to reach a loss, obtained by correcting actual steps $S$ and compute $C$ for the batch size relative to $B_{\\text{crit}}$.</p>
+       <p>$$ N_{\\text{opt}} \\propto C_{\\min}^{\\,0.73}, \\quad B_{\\text{crit}} \\propto C_{\\min}^{\\,0.24}, \\quad S_{\\min} \\propto C_{\\min}^{\\,0.03}, \\quad D_{\\text{opt}} \\propto C_{\\min}^{\\,0.27}. $$</p>
+       <p><b>Eq 1.7 / &sect;6</b> &mdash; the <b>compute-optimal allocation</b>: how to split a fixed budget. The optimal model size scales as $N \\propto C^{0.73}$ &mdash; most of a bigger budget buys a bigger model; the number of steps barely grows, so you stop well before convergence.</p>
+       <p>$$ \\alpha_C^{\\min} = \\frac{1}{\\,1/\\alpha_S + 1/\\alpha_B + 1/\\alpha_N\\,} \\approx 0.050. $$</p>
+       <p><b>Eq 1.8 / &sect;6</b> &mdash; the compute exponent is fixed by the other three exponents (size, data-steps, and batch), tying every law together.</p>`,
     whatItDoes:
       `<p><b>Each single-variable law (Eqs 1.1&ndash;1.3)</b> says the same thing for a different resource: as you
        scale that resource up, the loss comes down as that resource raised to a small negative power. Because the

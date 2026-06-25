@@ -192,6 +192,47 @@
        make the model over-confident (probabilities near $0$ or $1$), which destabilizes RL, so the paper clamps
        them: "clamping the CoT probabilities to lie within the 40-60 percent range led to better and more robust
        behavior" (&sect;4.1).</p>`,
+    architecture:
+      `<p>There is no new neural network here &mdash; the "architecture" is a <b>two-stage training pipeline</b> wired
+       on top of an existing transformer language model. Component by component, with the data that flows between them:</p>
+
+       <p><b>Shared ingredients (built once):</b></p>
+       <ul>
+        <li><b>Pre-trained LM &rarr; helpful RLHF model.</b> A standard transformer language model, first turned into a
+        <i>helpful-only</i> assistant by ordinary RLHF. It is helpful but will comply with harmful requests &mdash; the
+        starting point for both stages (&sect;3.1).</li>
+        <li><b>Constitution.</b> A fixed list of $16$ written principles (Appendix C). One principle is sampled at random
+        each time the model critiques, revises, or judges. This is the only human input about harm (&sect;4.1).</li>
+       </ul>
+
+       <p><b>Stage 1 &mdash; SL-CAI (supervised), Critique &rarr; Revision &rarr; Supervised Learning (&sect;3):</b></p>
+       <ol>
+        <li><b>Sampler.</b> Feed a red-team prompt to the helpful model; sample answer $y_0$.</li>
+        <li><b>Critique head (same model, prompted).</b> Append a fixed critique-request + a sampled principle; the model
+        emits critique $c$ naming the harm.</li>
+        <li><b>Revision head (same model, prompted).</b> Append a fixed revision-request; the model emits revised answer
+        $y_1$. Because $y_1$ has the same format as $y_0$, this block <i>loops</i> back to the critique head $0$&ndash;$n$
+        times, producing $y_1,y_2,\\dots$ (&sect;3.1).</li>
+        <li><b>Fine-tuner.</b> Collect final revisions (plus helpfulness samples) and maximum-likelihood fine-tune the
+        pre-trained LM on them &rarr; the <b>SL-CAI model</b> (&sect;3.2).</li>
+       </ol>
+
+       <p><b>Stage 2 &mdash; RL-CAI / RLAIF (reinforcement), AI Comparisons &rarr; Preference Model &rarr; RL (&sect;4):</b></p>
+       <ol>
+        <li><b>Pair sampler.</b> From the SL-CAI model, sample a pair of answers $(A,B)$ for each prompt.</li>
+        <li><b>Feedback model.</b> A separate LM is shown the prompt, $A$, $B$, and a random principle as a multiple-choice
+        question; its answer-choice log-probs $\\ell_A,\\ell_B$ are softmax-normalized to a soft label $p_A$, ensembled
+        over the $16$ principles, and (for the CoT variant) clamped to $[0.40,0.60]$ (&sect;4.1).</li>
+        <li><b>Comparison dataset.</b> Each $(prompt, A, B, p_A)$ becomes one soft-labeled preference example.</li>
+        <li><b>Preference model (PM).</b> A transformer with a scalar-score head $r(\\cdot)$, trained on the comparison
+        dataset with the logistic ranking loss. It replaces RLHF's human-trained reward model (&sect;4.2).</li>
+        <li><b>RL loop.</b> PPO-family policy gradient optimizes the assistant policy $\\pi_\\theta$ to maximize
+        $r_{\\text{total}} = r_{\\text{PM}} - \\lambda_{\\text{KL}} D_{\\mathrm{KL}}(\\pi_\\theta\\Vert\\pi_0)$ &rarr; the final
+        <b>RL-CAI model</b> (&sect;4.2).</li>
+       </ol>
+       <p>Data flow end to end: prompt &rarr; (Stage 1) self-critique/revise &rarr; SL-CAI weights &rarr; (Stage 2)
+       self-judged comparisons &rarr; PM scores &rarr; RL-optimized RL-CAI assistant. The two stages run once, in order;
+       the only human-authored object touched at inference-design time is the constitution.</p>`,
     symbols: [
       { sym: "“constitution”", desc: "a plain term, not a symbol: the short written list of principles that defines harmless behavior. The paper used $16$ principles (&sect;4.1, Appendix C). It is the ONLY human input about harm in the whole method." },
       { sym: "“principle”", desc: "a plain term: one rule from the constitution, e.g. 'choose the response that is least harmful, unethical, or illegal.' One principle is randomly sampled each time the model critiques, revises, or judges (&sect;4.1)." },
@@ -202,9 +243,52 @@
       { sym: "“feedback model”", desc: "a plain term: the AI model that, given a prompt, two candidate answers, and a principle, outputs which answer is more harmless. Its choice probabilities become the preference labels (&sect;4.1)." },
       { sym: "“preference model” (PM)", desc: "a plain term: a network trained on the AI-generated comparisons that assigns a scalar score to any single answer; used as the reward signal in the RL stage (&sect;4.2). It is the AI-feedback analogue of RLHF's reward model." },
       { sym: "“evasive”", desc: "a plain term: an answer that dodges the question ('I cannot help with that') instead of engaging. Standard RLHF inadvertently rewarded evasiveness; a goal of Constitutional AI is to be harmless WITHOUT being evasive (&sect;1.1, &sect;4.4)." },
-      { sym: "“chain-of-thought” (CoT)", desc: "a plain term: prompting the feedback model to reason step by step before answering. It improves judgments but yields over-confident probabilities, so the paper clamps them to the $40$&ndash;$60\\%$ range (&sect;4.1)." }
+      { sym: "“chain-of-thought” (CoT)", desc: "a plain term: prompting the feedback model to reason step by step before answering. It improves judgments but yields over-confident probabilities, so the paper clamps them to the $40$&ndash;$60\\%$ range (&sect;4.1)." },
+      { sym: "$\\theta$", desc: "the trainable parameters (weights) of the language model. $\\theta_{\\text{SL-CAI}}$ is the parameter setting after the supervised stage; in the RL stage $\\theta$ continues to be updated." },
+      { sym: "$y_0,\\ c,\\ y_1$", desc: "the three pieces of one critique/revise round (&sect;3.1): $y_0$ the original sampled answer, $c$ the model's critique of it, $y_1$ the revised answer. Repeating gives $y_2,y_3,\\dots$" },
+      { sym: "$p_\\theta(y\\mid \\text{prompt})$", desc: "the probability the model with parameters $\\theta$ assigns to producing answer $y$ given the prompt. $\\log p_\\theta$ summed over the data is the maximum-likelihood (cross-entropy) fine-tuning objective." },
+      { sym: "$A,\\ B$", desc: "the two candidate answers sampled from the SL-CAI model for one prompt in the RL stage; the feedback model judges which of the pair is more harmless (&sect;4.1)." },
+      { sym: "$\\ell_A,\\ \\ell_B$", desc: "the log-probabilities the feedback model assigns to picking answer-choice 'A' versus 'B' in the multiple-choice harmlessness question (&sect;4.1). They are the raw scores fed into the softmax." },
+      { sym: "$p_A,\\ p_B$", desc: "the normalized (softmax) probabilities that answer $A$ resp. $B$ is the more harmless one; $p_A+p_B=1$. These soft values are the preference-model targets (&sect;4.1)." },
+      { sym: "$p_{\\text{feedback}}(\\cdot)$", desc: "the feedback model's output probability for a token/answer-choice, conditioned on the prompt, both answers, and the sampled principle (&sect;4.1)." },
+      { sym: "$\\bar p_A$", desc: "the preference probability averaged (ensembled) over the $16$ constitutional principles; the bar denotes the mean. Ensembling makes the label more robust (&sect;4.1)." },
+      { sym: "$\\operatorname{clamp}(x,a,b)$", desc: "clip $x$ into the interval $[a,b]$: return $a$ if $x\\lt a$, $b$ if $x\\gt b$, else $x$. Used to force chain-of-thought probabilities into $[0.40,0.60]$ (&sect;4.1)." },
+      { sym: "$r(\\cdot),\\ r_{\\text{PM}}(y)$", desc: "the scalar score the preference model assigns to a single answer (higher = more preferred / harmless). $r_{\\text{PM}}(y)$ is that score used as the RL reward (Bai et al. 2022; &sect;4.2)." },
+      { sym: "$\\sigma(z)$", desc: "the logistic sigmoid $1/(1+e^{-z})$, which turns a score difference $r(A)-r(B)$ into a win probability for the preference-model loss." },
+      { sym: "$\\mathcal{L}_{\\text{PM}}$", desc: "the preference-model training loss: a logistic (cross-entropy) ranking loss that rewards $r(\\cdot)$ for scoring the AI-preferred answer above the other, weighted by the soft targets $p_A,p_B$." },
+      { sym: "$r_{\\text{total}}(y)$", desc: "the full RL reward for an answer (Bai et al. 2022, eq. 4.1): the preference-model score minus a KL penalty. The policy is optimized to maximize it." },
+      { sym: "$\\lambda_{\\text{KL}}$", desc: "a small positive coefficient weighting the KL penalty in the RL reward (Bai et al. 2022 report $\\lambda_{\\text{KL}}=0.001$). It controls how far the policy may drift from the initial model." },
+      { sym: "$D_{\\mathrm{KL}}(\\pi_\\theta\\Vert\\pi_0)$", desc: "the Kullback&ndash;Leibler divergence between the current policy $\\pi_\\theta$ and the frozen starting policy $\\pi_0$ &mdash; a penalty that keeps RL from straying too far and degrading fluency." },
+      { sym: "$\\pi_\\theta,\\ \\pi_0$", desc: "$\\pi_\\theta$ is the assistant policy being trained by RL (parameters $\\theta$); $\\pi_0$ is the initial (pre-RL) policy held fixed as the KL anchor." }
     ],
-    formula: `$$ \\underbrace{\\text{prompt} \\xrightarrow{\\text{sample}} \\text{response} \\xrightarrow{\\text{critique req.}} \\text{critique} \\xrightarrow{\\text{revision req.}} \\text{revision}}_{\\textbf{Stage 1: SL-CAI critique/revise loop (\\S3.1), repeatable}} \\;\\Rightarrow\\; \\text{fine-tune} $$ $$ \\underbrace{(\\text{ans } A,\\ \\text{ans } B) \\xrightarrow{\\text{feedback model} + \\text{principle}} p_A,\\,p_B \\;\\to\\; \\text{preference model } r(\\cdot) \\xrightarrow{\\text{RL}} \\text{policy}}_{\\textbf{Stage 2: RL-CAI / RLAIF (\\S4.1-4.2)}} $$`,
+    formula: `<p><b>This paper is largely procedural</b> &mdash; it states its method in prose and prompts, not closed-form
+       equations, and it borrows the preference-model and RL machinery wholesale from its predecessor "Training a
+       Helpful and Harmless Assistant" (Bai et al., 2022). Below we make the math that the procedure <i>implies</i>
+       explicit, flagging which lines are written in the paper versus carried over from the cited RLHF setup.</p>
+
+       <p><b>Stage 1 &mdash; SL-CAI critique&rarr;revise loop (&sect;3.1), the data-flow the paper describes in words:</b></p>
+       $$ \\text{prompt} \\xrightarrow{\\text{sample}} \\text{response}\\ y_0 \\xrightarrow{\\text{critique req.}} \\text{critique}\\ c \\xrightarrow{\\text{revision req.}} \\text{revision}\\ y_1 $$
+       <p class="cap">Pipeline of the supervised stage (&sect;3.1). One prompt is turned into a cleaned answer by two fixed instruction appends. Because $y_1$ is formatted like $y_0$, the loop can repeat: $y_1 \\to c' \\to y_2 \\to \\dots$</p>
+
+       $$ \\theta_{\\text{SL-CAI}} \\;=\\; \\arg\\max_{\\theta}\\ \\sum_{i}\\ \\log p_\\theta\\!\\left(y^{(i)}_{\\text{final-revision}} \\mid \\text{prompt}^{(i)}\\right) $$
+       <p class="cap">SL-CAI fine-tuning objective (&sect;3.2). Ordinary maximum-likelihood (cross-entropy) fine-tuning of the pre-trained model on its own final revised answers (mixed with helpfulness samples). The paper states this as "finetune," not as an equation.</p>
+
+       <p><b>Stage 2 &mdash; RL-CAI / RLAIF, AI-feedback preference probability (&sect;4.1), written explicitly:</b></p>
+       $$ p_A \\;=\\; \\frac{\\exp\\big(\\ell_A\\big)}{\\exp\\big(\\ell_A\\big) + \\exp\\big(\\ell_B\\big)}, \\qquad p_B = 1 - p_A, \\qquad \\ell_X = \\log p_{\\text{feedback}}\\!\\big(\\text{“}X\\text{”} \\mid \\text{prompt},\\,A,\\,B,\\,\\text{principle}\\big) $$
+       <p class="cap">The feedback model is shown the prompt, the two answers $A,B$, and a principle, then asked which is more harmless. The paper: "we then compute the log probability of the responses (A) and (B) ... with the normalized probabilities as targets" (&sect;4.1). Normalizing the two answer-choice log-probs $\\ell_A,\\ell_B$ through a softmax gives the soft label $p_A$.</p>
+
+       $$ \\bar p_A \\;=\\; \\frac{1}{16}\\sum_{j=1}^{16} p_A^{(j)} \\qquad\\text{(ensemble over the 16 principles, \\S4.1)} $$
+       <p class="cap">The paper randomly samples one of $16$ principles per label and reports that ensembling over principles "led to notably more robust PM behavior" (&sect;4.1). The averaged probability is the soft preference target.</p>
+
+       $$ p_A^{\\text{CoT}} \\;\\leftarrow\\; \\operatorname{clamp}\\!\\big(p_A,\\ 0.40,\\ 0.60\\big) \\;=\\; \\min\\!\\big(0.60,\\ \\max(0.40,\\ p_A)\\big) $$
+       <p class="cap">Chain-of-thought clamp (&sect;4.1). When the feedback model reasons step-by-step it becomes over-confident ($p_A$ near $0$ or $1$); "clamping the CoT probabilities to lie within the 40-60 percent range led to better and more robust behavior."</p>
+
+       <p><b>Preference-model training and RL reward &mdash; inherited from Bai et al. 2022 (the process &sect;4 references):</b></p>
+       $$ \\mathcal{L}_{\\text{PM}} \\;=\\; -\\,\\mathbb{E}_{(A,B)}\\Big[\\, p_A\\,\\log\\sigma\\!\\big(r(A)-r(B)\\big) + p_B\\,\\log\\sigma\\!\\big(r(B)-r(A)\\big)\\Big], \\qquad \\sigma(z)=\\frac{1}{1+e^{-z}} $$
+       <p class="cap">Logistic ranking loss: the preference model $r(\\cdot)$ scores a single answer so the AI-preferred answer scores higher. With soft targets $p_A,p_B$ this is the cross-entropy form of the standard RLHF PM loss; the paper trains the PM "following the process in [Bai et al., 2022]" (&sect;1.2, &sect;4.2).</p>
+
+       $$ r_{\\text{total}}(y) \\;=\\; r_{\\text{PM}}(y) \\;-\\; \\lambda_{\\text{KL}}\\,D_{\\mathrm{KL}}\\!\\big(\\pi_\\theta(\\cdot\\mid x)\\ \\Vert\\ \\pi_0(\\cdot\\mid x)\\big) $$
+       <p class="cap">RL reward used in the RL-CAI stage, from the cited RLHF setup (Bai et al. 2022, eq. 4.1): the PM score minus a KL penalty that keeps the policy $\\pi_\\theta$ near the initial policy $\\pi_0$. The assistant is then optimized to maximize this with PPO-family policy-gradient RL (&sect;4.2).</p>`,
     whatItDoes:
       `<p>There is no single equation to plug numbers into &mdash; this is an alignment <i>procedure</i>, not a
        closed-form law. The two lines above are the procedure written as data flow. Read them as:</p>

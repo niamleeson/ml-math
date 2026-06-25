@@ -137,18 +137,75 @@
        short (just the answer being generated), so that cross-attention is far cheaper than full self-attention
        over everything. That is the whole trick: pay quadratic cost only <i>within</i> each small passage, never
        <i>across</i> the whole set.</p>`,
+    architecture:
+      `<p>FiD is a standard <b>encoder-decoder Transformer</b> (the paper initializes from a pretrained <b>T5</b> or
+       <b>BART</b>, &sect;3) with one custom data-routing rule bolted on. Trace the data flow:</p>
+       <ol>
+        <li><b>Inputs &mdash; $N$ marked passage strings.</b> A separate retriever (DPR / BM25) returns $N$ passages.
+        Each is formatted with marker tokens into
+        $P_i = [\\,\\texttt{question:}\\ q;\\ \\texttt{title:}\\ t_i;\\ \\texttt{context:}\\ c_i\\,]$. The
+        <code>question:</code> / <code>title:</code> / <code>context:</code> tokens tell the model which span is the
+        query, which is the document title, and which is the passage body &mdash; the only input-side change FiD
+        makes to the base seq2seq model.</li>
+        <li><b>Shared encoder, run $N$ times (the branch point).</b> ONE set of encoder weights $\\text{Enc}$ is
+        applied to each $P_i$ separately &mdash; a stack of standard Transformer encoder blocks (self-attention +
+        feed-forward, with the base model's hidden width and depth). Because each call sees only one passage, the
+        $N$ encodings $E_1,\\dots,E_N$ are computed independently and in parallel; no cross-passage attention exists
+        in the encoder. This is the structural choice that makes encoder cost $N\\ell^2$ (linear in $N$).</li>
+        <li><b>Concatenation (the merge point).</b> The $N$ encodings are stacked end to end into one memory
+        $M = [E_1;\\dots;E_N]$ of length $\\sum_i \\lvert P_i\\rvert$. This join &mdash; not the encoder &mdash; is
+        where the passages first sit in a shared tensor.</li>
+        <li><b>Decoder with cross-attention over $M$ (the fusion point).</b> Standard Transformer decoder blocks
+        (masked self-attention over generated tokens + cross-attention into the encoder memory + feed-forward). The
+        cross-attention key/value set is the <i>full</i> concatenation $M$, so each generated token can attend to any
+        token of any passage. This is the single place evidence from different passages combines &mdash;
+        "fusion-in-decoder."</li>
+        <li><b>Output head.</b> The decoder generates the answer text autoregressively (a tied / linear projection to
+        the vocabulary), trained by the cross-entropy objective in the formula panel.</li>
+       </ol>
+       <p><b>Why fusion-in-decoder scales:</b> the expensive quadratic operation (self-attention) is confined to
+       within a single short passage and never spans the whole set, so adding passages adds cost only linearly; the
+       decoder's cross-attention over $M$ is also linear in $N$ and cheap because the answer (the decoder query) is
+       short. That asymmetry &mdash; quadratic <i>within</i> a passage, linear <i>across</i> passages &mdash; is what
+       lets the same architecture read 100 passages.</p>`,
     symbols: [
       { sym: "$N$", desc: "the <b>number of retrieved passages</b> fed to the reader for one question. The paper scales this up to 100." },
       { sym: "$P_i$", desc: "the $i$-th <b>retrieved passage</b> (its text, plus the question and title, with the <code>question:</code> / <code>title:</code> / <code>context:</code> marker tokens)." },
+      { sym: "$q,\\ t_i,\\ c_i$", desc: "the pieces of $P_i$: the <b>question</b> $q$ (same for all passages), the <b>title</b> $t_i$ and the <b>context</b> (body text) $c_i$ of passage $i$, prefixed by the <code>question:</code> / <code>title:</code> / <code>context:</code> marker tokens." },
+      { sym: "$\\ell$", desc: "the <b>length (token count) of one passage</b>. Used in the cost argument: each passage's encoder self-attention costs $\\sim\\ell^2$." },
       { sym: "$\\text{Enc}(\\cdot)$", desc: "the <b>encoder</b>: the part of the sequence-to-sequence model that turns a token sequence into a sequence of vectors. The SAME encoder is reused for every passage." },
       { sym: "$E_i$", desc: "the <b>encoding of passage</b> $P_i$: $E_i = \\text{Enc}(P_i)$. A sequence of vectors, one per token of passage $i$. Computed independently of the other passages." },
       { sym: "$[\\,E_1; \\dots; E_N\\,]$", desc: "the <b>concatenation</b> of all passage encodings, laid end to end into one long memory sequence. The semicolon means \"stack these sequences one after another.\"" },
       { sym: "$M$", desc: "the fused <b>memory</b> the decoder reads: $M = [\\,E_1; E_2; \\dots; E_N\\,]$. Length = sum of all passage lengths." },
       { sym: "$\\text{Dec}(\\cdot)$", desc: "the <b>decoder</b>: writes the answer token by token. Its <b>cross-attention</b> attends over the memory $M$ &mdash; this is where evidence from different passages is fused." },
       { sym: "“cross-attention”", desc: "a plain term: the decoder layer that lets the answer-in-progress attend to the encoder memory $M$. In FiD it ranges over the concatenation of all passages, so the decoder can pull a clue from any passage." },
-      { sym: "“open-domain QA”", desc: "open-domain question answering: answering a question without being told which document contains the answer; you must retrieve evidence first." }
+      { sym: "“open-domain QA”", desc: "open-domain question answering: answering a question without being told which document contains the answer; you must retrieve evidence first." },
+      { sym: "$\\mathcal{L},\\ y_j,\\ \\theta$", desc: "the <b>training loss</b> $\\mathcal{L}$: sequence-to-sequence cross-entropy. $y_j$ is the $j$-th <b>answer token</b>, $y_{\\lt j}$ the answer tokens before it, and $\\theta$ the <b>model parameters</b>. FiD maximizes $\\log p_\\theta(y_j \\mid y_{\\lt j}, M)$ &mdash; no new loss is introduced." }
     ],
-    formula: `$$ E_i = \\text{Enc}(P_i)\\ \\ \\text{(each passage encoded independently, \\S3)} \\qquad\\qquad \\text{answer} = \\text{Dec}\\big(\\,[\\,E_1; E_2; \\dots; E_N\\,]\\,\\big)\\ \\ \\text{(decoder fuses the concatenation, \\S3)} $$`,
+    formula:
+      `<p>FiD has <b>no numbered display equations</b> &mdash; &sect;3 (Method) states the design in three prose
+       sentences. We transcribe each into a faithful formula. (The model trains with ordinary sequence-to-sequence
+       cross-entropy on the answer text, written below.)</p>
+       $$ P_i = [\\,\\texttt{question:}\\ q\\ ;\\ \\texttt{title:}\\ t_i\\ ;\\ \\texttt{context:}\\ c_i\\,] $$
+       <p>Input formatting (&sect;3): "we add special tokens question:, title: and context: before the question,
+       title and text of each passage." For passage $i$, the question $q$, its title $t_i$ and its text $c_i$ are
+       concatenated into one marked string $P_i$.</p>
+       $$ E_i = \\text{Enc}(P_i), \\qquad i = 1, \\dots, N $$
+       <p>Independent per-passage encoding (&sect;3): "each retrieved passage and its title are concatenated with the
+       question, and processed <i>independently</i> from other passages by the encoder." The SAME encoder runs $N$
+       times; passage $i$'s self-attention sees only passage $i$.</p>
+       $$ M = [\\,E_1;\\ E_2;\\ \\dots;\\ E_N\\,], \\qquad \\text{answer} = \\text{Dec}(M) $$
+       <p>Decoder fusion (&sect;3): "the decoder performs attention over the <i>concatenation</i> of the resulting
+       representations of all the retrieved passages." The encodings are laid end to end into one memory $M$; the
+       decoder's cross-attention ranges over all of it &mdash; evidence from different passages fuses here.</p>
+       $$ \\underbrace{N \\cdot \\ell^2}_{\\text{FiD: linear in } N} \\;\\;\\lt\\;\\; \\underbrace{(N\\ell)^2 = N^2\\ell^2}_{\\text{encode-together: quadratic in } N} $$
+       <p>Cost (&sect;3): "the computation time of the model grows <i>linearly</i> with the number of passages,
+       instead of quadratically." Encoding each length-$\\ell$ passage alone costs $N\\ell^2$; gluing all $N$ into one
+       length-$N\\ell$ input would cost $(N\\ell)^2$.</p>
+       $$ \\mathcal{L} = -\\sum_{j} \\log p_\\theta\\!\\left(y_j \\mid y_{\\lt j},\\, M\\right) $$
+       <p>Training objective: ordinary sequence-to-sequence cross-entropy &mdash; maximize the log-likelihood of the
+       answer tokens $y_j$ given the previous tokens and the fused memory $M$. (FiD adds no new loss; the novelty is
+       the routing above.)</p>`,
     whatItDoes:
       `<p><b>The left equation</b> says: run the encoder once per passage, separately. Passage $i$ never sees
        passage $j$. This is the source of the linear cost &mdash; the encoder's expensive self-attention is paid

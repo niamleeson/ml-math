@@ -206,6 +206,38 @@
        on many BIG-bench tasks the score barely moves from 8B to 62B, then jumps sharply at 540B &mdash;
        "certain capabilities of the model only emerge once a certain scale is reached" (&sect;6.2). And with
        chain-of-thought prompting, multi-step reasoning becomes strong (&sect;6.3).</p>`,
+    architecture:
+      `<p>PaLM is a single <b>decoder-only Transformer</b> (left-to-right next-token prediction). One token's
+       vector of width $d_{\\text{model}}$ flows through a stack of identical <b>parallel blocks</b>, then a
+       final LayerNorm, then the shared output embedding turns the hidden vector into scores over the 256k
+       SentencePiece vocabulary. Walking one block, the data flow is:</p>
+       <ol>
+        <li><b>One shared LayerNorm.</b> $x \\to \\text{LayerNorm}(x)$ (no bias term). The single normalized
+        vector feeds <i>both</i> sublayers below.</li>
+        <li><b>Attention branch (multi-query).</b> From $\\text{LayerNorm}(x)$ project queries to shape
+        $[k, h]$ (one per head, $k = 48$ heads at 540B) but keys and values only to $[1, h]$ &mdash; a single
+        shared key and value across all heads. Apply RoPE to the queries and keys (rotating them by position),
+        do masked causal dot-product attention, recombine the heads. Head size is fixed at $h = 256$, so
+        $k\\,h = 48 \\times 256 = 12288$, smaller than $d_{\\text{model}} = 18432$.</li>
+        <li><b>MLP branch (SwiGLU).</b> From the <i>same</i> $\\text{LayerNorm}(x)$, two input matrices $W, V$
+        produce $xW$ and $xV$; gate $\\text{Swish}(xW)\\odot xV$; project back down. Hidden width set to
+        $\\tfrac{2}{3}$ of a plain $4 d_{\\text{model}}$ MLP to keep parameters matched.</li>
+        <li><b>Residual sum.</b> $y = x + (\\text{attention output}) + (\\text{MLP output})$. Because both
+        branches read the identical normalized input, their input projections fuse into one matmul.</li>
+       </ol>
+       <p><b>The three sizes (Table 1)</b>, all with head size $h = 256$ and no biases:</p>
+       <table class="dims">
+        <tr><th>Model</th><th>Layers</th><th>$d_{\\text{model}}$</th><th>Heads $k$</th><th>Parameters</th></tr>
+        <tr><td>PaLM 8B</td><td>32</td><td>4096</td><td>16</td><td>8.63B</td></tr>
+        <tr><td>PaLM 62B</td><td>64</td><td>8192</td><td>32</td><td>62.50B</td></tr>
+        <tr><td>PaLM 540B</td><td>118</td><td>18432</td><td>48</td><td>540.35B</td></tr>
+       </table>
+       <p><b>Pathways / hardware (&sect;4).</b> PaLM 540B does not fit on one chip, so it is sharded across
+       <b>6144 TPU v4 chips</b> arranged as <b>two pods of 3072 chips</b>, connected by the Pathways runtime.
+       Within a pod, parameters are split with a combination of tensor (within-layer) and data parallelism;
+       across the two pods, Pathways pipelines gradient communication so the chips stay busy. The reported
+       efficiency is <b>46.2% model FLOPs utilization</b> and <b>57.8% hardware FLOPs utilization</b>. It is
+       pretrained on a <b>780-billion-token</b> corpus (&sect;3).</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input vector</b> for one token entering a transformer block (its current hidden representation, a list of $d_{\\text{model}}$ numbers)." },
       { sym: "$\\text{LayerNorm}(\\cdot)$", desc: "<b>layer normalization</b>: rescale a vector to zero mean and unit variance across its entries, then apply a learned scale. In PaLM there is no additive bias term (the 'no biases' choice)." },
@@ -214,7 +246,7 @@
       { sym: "$\\text{Swish}(z)$", desc: "a smooth activation, $\\text{Swish}(z) = z\\,\\sigma(z)$ with $\\sigma$ the logistic sigmoid $\\sigma(z)=1/(1+e^{-z})$. Like a soft ReLU: it passes large positive $z$ through and squashes negatives toward 0, but smoothly." },
       { sym: "$\\sigma(z)$", desc: "the <b>logistic sigmoid</b>, $\\sigma(z)=1/(1+e^{-z})$: squashes any real number into the open interval $(0, 1)$. It is the gate's 'how much to let through' knob." },
       { sym: "$W,\\ V$", desc: "the <b>two input weight matrices</b> of the SwiGLU MLP. $x$ is mapped by both: $xW$ goes through Swish to form the gate, $xV$ is the value being gated. A plain MLP has only one such matrix." },
-      { sym: "$\\cdot$", desc: "in $\\text{Swish}(xW)\\cdot xV$, this is <b>elementwise multiplication</b>: multiply the two equal-length vectors entry by entry. This is the 'gating' operation." },
+      { sym: "$\\odot$", desc: "in $\\text{Swish}(xW)\\odot xV$, this is <b>elementwise (Hadamard) multiplication</b>: multiply the two equal-length vectors entry by entry. This is the 'gating' operation. (The paper writes it with a plain dot; $\\odot$ makes the elementwise meaning explicit.)" },
       { sym: "$d_{\\text{model}}$", desc: "the <b>model width</b>: the length of each token's hidden vector. PaLM 540B uses $d_{\\text{model}} = 18432$ (Table 1)." },
       { sym: "$k,\\ h$", desc: "in the attention description, $k$ is the <b>number of attention heads</b> and $h$ the <b>head size</b>. Multi-query projects key/value to shape $[1, h]$ (shared) and query to $[k, h]$ (per-head)." },
       { sym: "“dense (model)”", desc: "a plain term: every parameter is used for every token. Contrast with a sparse mixture-of-experts model, where each token uses only a few of many expert sub-networks." },
@@ -223,7 +255,7 @@
       { sym: "“MFU (model FLOPs utilization)”", desc: "a plain term: the fraction of the hardware's peak floating-point throughput that is spent on useful model arithmetic. PaLM reports 46.2% (&sect;4). Higher means less idle/communication waste." },
       { sym: "“emergent / discontinuous”", desc: "a plain term: an ability that is nearly absent at small scale, then appears as a sharp jump past a scale threshold &mdash; not a smooth, gradual climb." }
     ],
-    formula: `$$ \\textbf{SwiGLU (MLP activation, §2): }\\quad \\text{SwiGLU}(x) = \\text{Swish}(xW)\\,\\cdot\\, xV, \\qquad \\text{Swish}(z) = z\\,\\sigma(z),\\ \\ \\sigma(z)=\\tfrac{1}{1+e^{-z}}. $$ $$ \\textbf{Serial block (standard): }\\quad y = x + \\text{MLP}\\big(\\text{LayerNorm}(x + \\text{Attention}(\\text{LayerNorm}(x)))\\big). $$ $$ \\textbf{Parallel block (PaLM, §2): }\\quad y = x + \\text{MLP}\\big(\\text{LayerNorm}(x)\\big) + \\text{Attention}\\big(\\text{LayerNorm}(x)\\big). $$`,
+    formula: `$$ \\textbf{SwiGLU (MLP activation, §2): }\\quad \\text{SwiGLU}(x) = \\text{Swish}(xW)\\,\\odot\\, xV, \\qquad \\text{Swish}(z) = z\\,\\sigma(z),\\ \\ \\sigma(z)=\\tfrac{1}{1+e^{-z}}. $$ $$ \\textbf{Serial block (standard): }\\quad y = x + \\text{MLP}\\big(\\text{LayerNorm}(x + \\text{Attention}(\\text{LayerNorm}(x)))\\big). $$ $$ \\textbf{Parallel block (PaLM, §2): }\\quad y = x + \\text{MLP}\\big(\\text{LayerNorm}(x)\\big) + \\text{Attention}\\big(\\text{LayerNorm}(x)\\big). $$ $$ \\textbf{Multi-query attention (§2): }\\quad Q \\to [k, h]\\ \\text{(per head)},\\qquad K,\\,V \\to [1, h]\\ \\text{(shared across all heads)}. $$`,
     whatItDoes:
       `<p><b>The SwiGLU line</b> says the MLP non-linearity is a <b>gate times a value</b>. The input is split
        down two learned linear maps. One map's output is passed through Swish to produce a soft per-entry

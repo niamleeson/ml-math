@@ -136,6 +136,33 @@
        below). This keeps the policy in the region where the reward model is trustworthy.</p>
        <p>The paper also adds an optional pretraining term ($\\gamma \\gt 0$, called "PPO-ptx") that mixes in the
        original language-modeling objective to avoid forgetting; with $\\gamma = 0$ it is plain "PPO."</p>`,
+    architecture:
+      `<p>There is no new neural network here &mdash; every stage reuses the GPT-3 Transformer (decoder-only) backbone.
+       What is novel is the <b>three-model pipeline</b> and how data flows through it (&sect;3, Figure 2). The base
+       model comes in three sizes: <b>1.3B, 6B, and 175B</b> parameters (&sect;3.5).</p>
+       <p><b>Component flow: GPT-3 base &rarr; SFT &rarr; reward model &rarr; PPO policy.</b></p>
+       <ol>
+        <li><b>GPT-3 base (pretrained).</b> A decoder-only Transformer trained on internet text with next-token
+        prediction. Input: prompt tokens $x$. Output: a probability distribution over the next token. This is the raw
+        material for all three stages.</li>
+        <li><b>SFT model $\\pi^{\\text{SFT}}$.</b> The base model fine-tuned (same architecture, updated weights) on
+        human-written demonstrations $(x, \\text{demonstration})$ with ordinary supervised next-token loss. It serves
+        two roles downstream: it is the <i>initialization</i> of the PPO policy, and the <i>fixed reference</i> the KL
+        penalty measures against.</li>
+        <li><b>Reward model $r_\\theta(x, y)$.</b> A separate copy of the Transformer whose final unembedding head is
+        <i>replaced by a single linear layer outputting one scalar</i> &mdash; the reward. The paper uses a <b>6B</b>
+        reward model (not 175B: "we found that 175B RM training could be unstable", &sect;3.5). Input: a full
+        (prompt, output) sequence $(x, y)$. Output: one number. It is trained with the pairwise ranking loss
+        (Equation 1) on comparison data, then <b>frozen</b>.</li>
+        <li><b>PPO policy $\\pi_\\phi^{\\text{RL}}$.</b> A third copy of the Transformer, <i>initialized from the SFT
+        model</i>, that is the only network updated in Stage 3. Data flow per RL step: sample prompt $x$ &rarr; policy
+        generates output $y$ &rarr; frozen reward model scores $r_\\theta(x, y)$ &rarr; subtract the per-token KL
+        penalty to $\\pi^{\\text{SFT}}$ &rarr; PPO uses this shaped reward (plus, for PPO-ptx, a pretraining-gradient
+        term) to update $\\phi$ (Equation 2). The SFT model and reward model stay frozen throughout.</li>
+       </ol>
+       <p>So at RL time <b>three copies</b> of the Transformer are in play at once: the trainable policy, the frozen
+       SFT reference (for the KL term), and the frozen reward model (for the score). The result, after Stage 3, is the
+       <b>InstructGPT</b> model.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>prompt</b> (the user's input / instruction)." },
       { sym: "$y$", desc: "an <b>output</b> (completion / answer) the model produces for prompt $x$." },

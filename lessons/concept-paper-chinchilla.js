@@ -124,56 +124,112 @@
        <p><b>2. The question.</b> For a fixed $C$, choose $N$ (and therefore $D = C / (6N)$) to minimize the final
        training loss $L$. Call the minimizers the <b>compute-optimal</b> $N_{\\text{opt}}(C)$ and
        $D_{\\text{opt}}(C)$.</p>
-       <p><b>3. The answer.</b> The paper estimates how these optima grow with the budget. It writes them as power
-       laws, $N_{\\text{opt}} \\propto C^{a}$ and $D_{\\text{opt}} \\propto C^{b}$, and fits the exponents three
-       independent ways (&sect;3, Approaches 1&ndash;3). All three land near $a \\approx b \\approx 0.5$. Because
-       the two exponents are about <i>equal</i>, the recipe is: when you get more compute, grow the model and the
-       data <b>together, in roughly equal proportion</b> &mdash; not the model alone.</p>
+       <p><b>3. The answer.</b> To find the optimum, the paper fits a <b>parametric loss surface</b>
+       $\\hat{L}(N,D) = E + A/N^{\\alpha} + B/D^{\\beta}$ (Eq. 2, constants in Eq. 10) and minimizes it under the
+       budget. The minimizers come out as power laws, $N_{\\text{opt}} = G(C/6)^{a}$ and
+       $D_{\\text{opt}} = G^{-1}(C/6)^{b}$ (Eq. 4), with exponents $a = \\beta/(\\alpha+\\beta)$ and
+       $b = \\alpha/(\\alpha+\\beta)$. Estimated three independent ways (&sect;3, Approaches 1&ndash;3), all land
+       near $a \\approx b \\approx 0.5$. Because the two exponents are about <i>equal</i>, the recipe is: when you
+       get more compute, grow the model and the data <b>together, in roughly equal proportion</b> &mdash; not the
+       model alone.</p>
        <p><b>Why earlier models lost.</b> A model like Gopher (280B parameters) sat far to the large-$N$ side of
        this trade-off: too many parameters, too few tokens for its budget. Chinchilla (70B parameters, 1.4
        trillion tokens) sits near the optimum at the <i>same</i> budget &mdash; and wins (Abstract).</p>`,
+    architecture:
+      `<p>There is no novel model architecture here &mdash; Chinchilla and Gopher share the same Transformer family.
+       The "architecture" of this paper is its <b>fitting / experimental pipeline</b> for recovering the optimal
+       allocation. It has three stages.</p>
+       <p><b>1. The training sweep (the data the fit consumes).</b> DeepMind trains a large family of models &mdash;
+       parameter counts from roughly 70M up to over 10B, each on a range of token counts &mdash; spanning more than
+       400 runs. Every run records its final loss together with its $(N, D)$, and the compute is tracked via
+       $C \\approx 6ND$. This grid of $(N, D, L)$ points is the raw material.</p>
+       <p><b>2. Three estimation heads (the methods that read the sweep).</b> The same data is analyzed three
+       independent ways, each producing an estimate of the exponents $a, b$:</p>
+       <ul>
+        <li><b>Approach 1 &mdash; minimum over training curves.</b> For each fixed FLOP budget, read off the model
+        size whose training curve reaches the lowest loss; trace how that optimal $N$ moves with $C$.</li>
+        <li><b>Approach 2 &mdash; IsoFLOP profiles.</b> Hold compute fixed, sweep model size $N$ (with $D$ forced by
+        $C \\approx 6ND$), and find the bottom of the resulting loss-vs-$N$ "U" at several budgets.</li>
+        <li><b>Approach 3 &mdash; parametric fit.</b> Fit the closed-form surface
+        $\\hat{L}(N,D) = E + A/N^{\\alpha} + B/D^{\\beta}$ (Eq. 2) to all runs by minimizing a Huber loss in
+        log-space, recovering $E, A, B, \\alpha, \\beta$ (Eq. 10); then derive $a, b, G$ analytically (Eq. 4).</li>
+       </ul>
+       <p><b>3. The validation run (the proof by construction).</b> The three heads agree on
+       $a \\approx b \\approx 0.5$. The pipeline outputs a prediction at Gopher's compute &mdash; a smaller, more
+       data-rich model &mdash; and the authors actually train it: <b>Chinchilla</b>, 70B parameters, 1.4T tokens
+       (Table 1), same Transformer recipe and compute as Gopher. It then beats Gopher and larger models on
+       downstream tasks (Abstract), closing the loop.</p>`,
     symbols: [
       { sym: "$C$", desc: "the <b>compute budget</b>: total training computation, measured in <b>FLOPs</b> (floating-point operations &mdash; the count of multiply-and-add arithmetic the whole training run performs). This is the resource you are spending." },
       { sym: "$N$", desc: "the <b>model size</b>: the number of trainable <b>parameters</b> (the weights). Bigger $N$ means a more expressive model but more compute per token." },
       { sym: "$D$", desc: "the <b>training data size</b>: the number of <b>tokens</b> the model is trained on. A token is a small chunk of text (roughly a word-piece). More tokens means more to learn from but more compute." },
       { sym: "FLOPs", desc: "<b>floating-point operations</b> &mdash; the unit of $C$. One multiply-and-add on real numbers is counted here as arithmetic the hardware does; total FLOPs is the size of the training run." },
       { sym: "$L$", desc: "the <b>loss</b>: the model's average prediction error on text, the cross-entropy of next-token prediction. Lower is better. The paper minimizes $L$ over the choice of $N$ and $D$ at fixed $C$." },
+      { sym: "$\\hat{L}(N,D)$", desc: "the <b>fitted (predicted) loss</b>: the paper's parametric formula that predicts loss from model size $N$ and data $D$, written $\\hat{L} = E + A/N^{\\alpha} + B/D^{\\beta}$ (&sect;3.3, Eq. 2). The hat marks it as a fit, not the raw measured loss." },
+      { sym: "$E$", desc: "the <b>irreducible loss</b>: the floor the fit approaches with an infinitely large model and infinite data — the entropy of natural text the model can never beat. Fitted value $E = 1.69$ (&sect;3.3, Eq. 10)." },
+      { sym: "$A$", desc: "the <b>model-size penalty coefficient</b>: how strongly finite parameters raise the loss in the term $A/N^{\\alpha}$. Fitted value $A = 406.4$ (Eq. 10)." },
+      { sym: "$B$", desc: "the <b>data penalty coefficient</b>: how strongly finite training tokens raise the loss in the term $B/D^{\\beta}$. Fitted value $B = 410.7$ (Eq. 10)." },
+      { sym: "$\\alpha$", desc: "the <b>model-size exponent</b> in the loss fit: how fast the size penalty $A/N^{\\alpha}$ shrinks as $N$ grows. Fitted value $\\alpha = 0.34$ (Eq. 10). Note this is the loss-fit exponent, distinct from the budget exponents $a, b$." },
+      { sym: "$\\beta$", desc: "the <b>data exponent</b> in the loss fit: how fast the data penalty $B/D^{\\beta}$ shrinks as $D$ grows. Fitted value $\\beta = 0.28$ (Eq. 10)." },
+      { sym: "$G$", desc: "the <b>allocation coefficient</b>: the constant that splits the budget between size and data in the closed form, $G = (\\alpha A / \\beta B)^{1/(\\alpha+\\beta)}$ (&sect;3.3, Eq. 4). It sets how much of a given budget goes to $N$ versus $D$." },
       { sym: "$N_{\\text{opt}}(C)$", desc: "the <b>compute-optimal model size</b>: the $N$ that minimizes loss for a given budget $C$. The paper finds $N_{\\text{opt}} \\propto C^{a}$." },
       { sym: "$D_{\\text{opt}}(C)$", desc: "the <b>compute-optimal token count</b>: the $D$ that minimizes loss for a given budget $C$. The paper finds $D_{\\text{opt}} \\propto C^{b}$." },
       { sym: "$a$", desc: "the <b>exponent for model size</b> in $N_{\\text{opt}} \\propto C^{a}$. The paper's three approaches give $a = 0.50$, $0.49$, and $0.46$ (&sect;3)." },
       { sym: "$b$", desc: "the <b>exponent for token count</b> in $D_{\\text{opt}} \\propto C^{b}$. The paper's three approaches give $b = 0.50$, $0.51$, and $0.54$ (&sect;3). That $a \\approx b$ is the equal-scaling result." },
       { sym: "$\\propto$", desc: "the <b>“proportional to”</b> symbol: $y \\propto x^{a}$ means $y$ equals some constant times $x^{a}$. We care about the exponent $a$, not the constant." }
     ],
-    formula: `$$ C \\approx 6\\,N\\,D \\quad\\text{(compute relation, \\S3.3 / App. F)} \\qquad\\qquad N_{\\text{opt}} \\propto C^{\\,a},\\quad D_{\\text{opt}} \\propto C^{\\,b},\\quad a \\approx b \\approx 0.5 \\quad\\text{(\\S3, Approaches 1–3)} $$`,
+    formula:
+      `$$ \\hat{L}(N, D) \\;\\triangleq\\; E \\;+\\; \\frac{A}{N^{\\alpha}} \\;+\\; \\frac{B}{D^{\\beta}} $$
+       <p>Parametric loss fit (&sect;3.3, Eq. 2): predicted loss as an irreducible floor $E$ plus two power-law penalties — one for finite model size $N$, one for finite data $D$.</p>
+       $$ E = 1.69,\\quad A = 406.4,\\quad B = 410.7,\\quad \\alpha = 0.34,\\quad \\beta = 0.28 $$
+       <p>The fitted constants (&sect;3.3, Eq. 10) — the values recovered by fitting the form above to all of DeepMind's training runs (Approach 3).</p>
+       $$ C \\;\\approx\\; 6\\,N\\,D $$
+       <p>Compute constraint (&sect;3.3 / App. F): total training FLOPs in terms of parameters $N$ and tokens $D$; the factor 6 is forward + backward, multiply-accumulate.</p>
+       $$ N_{\\text{opt}}(C) = G\\left(\\frac{C}{6}\\right)^{a},\\qquad D_{\\text{opt}}(C) = G^{-1}\\left(\\frac{C}{6}\\right)^{b} $$
+       <p>Compute-optimal model size and token count (&sect;3.3, Eq. 4): minimize the loss fit subject to $C \\approx 6ND$, and the minimizers come out as power laws of the budget.</p>
+       $$ G = \\left(\\frac{\\alpha A}{\\beta B}\\right)^{\\frac{1}{\\alpha+\\beta}},\\qquad a = \\frac{\\beta}{\\alpha+\\beta},\\qquad b = \\frac{\\alpha}{\\alpha+\\beta} $$
+       <p>The closed-form exponents and coefficient (&sect;3.3, Eq. 4). With the fitted $\\alpha,\\beta$ this gives $a \\approx b \\approx 0.5$, so $N_{\\text{opt}} \\propto C^{a}$ and $D_{\\text{opt}} \\propto C^{b}$ grow about equally.</p>
+       $$ a \\approx b \\approx 0.5 \\quad\\text{(Approaches 1–3: } a = 0.50, 0.49, 0.46;\\; b = 0.50, 0.51, 0.54\\text{)} $$
+       <p>The headline exponents (&sect;3, Table 2): three independent estimation methods all land near one-half — scale $N$ and $D$ equally.</p>`,
     whatItDoes:
-      `<p><b>The compute relation</b> $C \\approx 6ND$ (left) is the budget constraint. It ties the three
-       quantities together: pick any two and the third is fixed. So once $C$ is set, choosing the model size $N$
-       automatically pins the token count to $D = C / (6N)$. Bigger model, fewer tokens &mdash; that is the
-       trade-off the rest of the result navigates.</p>
-       <p><b>The scaling laws</b> $N_{\\text{opt}} \\propto C^{a}$ and $D_{\\text{opt}} \\propto C^{b}$ (right) are
-       the answer to "where on that trade-off is the loss lowest." Each says: as the budget $C$ grows, the
-       optimal size and the optimal token count grow as power laws of $C$. The load-bearing finding is that the
-       two exponents are <b>about equal</b> ($a \\approx b \\approx 0.5$). Equal exponents mean: scale $N$ and $D$
-       <i>together</i>. Double the compute, and you should put roughly half the gain into a bigger model and half
-       into more data &mdash; which works out to doubling each (since $0.5 + 0.5 = 1$, and $C = 6ND$). Putting it
-       <i>all</i> into $N$, as earlier models did, lands off the optimum.</p>`,
+      `<p><b>The loss fit</b> $\\hat{L}(N,D) = E + A/N^{\\alpha} + B/D^{\\beta}$ (Eq. 2) is the engine. It says final
+       loss is an unbeatable floor $E$ plus two penalties: one that fades as the model grows ($A/N^{\\alpha}$) and
+       one that fades as you read more data ($B/D^{\\beta}$). Fitting it to all of DeepMind's runs gives
+       $E=1.69,\\ A=406.4,\\ B=410.7,\\ \\alpha=0.34,\\ \\beta=0.28$ (Eq. 10). With this closed form you can
+       <i>predict</i> the loss of a run you never trained.</p>
+       <p><b>The compute relation</b> $C \\approx 6ND$ is the budget constraint. It ties the three quantities
+       together: once $C$ is set, choosing the model size $N$ automatically pins the token count to
+       $D = C / (6N)$. Bigger model, fewer tokens &mdash; that is the trade-off.</p>
+       <p><b>The closed-form optima</b> $N_{\\text{opt}} = G(C/6)^{a}$ and $D_{\\text{opt}} = G^{-1}(C/6)^{b}$
+       (Eq. 4) are what you get by minimizing the loss fit <i>subject to</i> the budget. The exponents fall out of
+       the fit: $a = \\beta/(\\alpha+\\beta)$ and $b = \\alpha/(\\alpha+\\beta)$, which sum to 1 and, with the
+       fitted $\\alpha,\\beta$, both land near $0.5$. The load-bearing finding is that the two exponents are
+       <b>about equal</b> ($a \\approx b \\approx 0.5$). Equal exponents mean: scale $N$ and $D$ <i>together</i>.
+       Double the compute and you double each (since $a + b \\approx 1$ and $C = 6ND$). Putting it <i>all</i> into
+       $N$, as earlier models did, lands off the optimum.</p>`,
     derivation:
-      `<p>There is no concept lesson to defer to here (<code>conceptLink</code> is null), so we reason it out from
-       the two grounded facts. We are <b>not</b> re-deriving the paper's fitted constants &mdash; only showing why
-       <i>equal</i> exponents are the natural consequence of a fixed budget.</p>
-       <p><b>The constraint.</b> Compute is fixed at $C \\approx 6ND$. Take logarithms (turning the product into a
+      `<p>We show two things: (i) why $a + b \\approx 1$ is forced by the budget, and (ii) where the paper's
+       closed form $a = \\beta/(\\alpha+\\beta)$ comes from. We are <b>not</b> re-fitting the constants
+       $E, A, B, \\alpha, \\beta$ &mdash; those are measured (Eq. 10); we take them as given.</p>
+       <p><b>The accounting half.</b> Compute is fixed at $C \\approx 6ND$. Take logarithms (product becomes a
        sum): $\\log C \\approx \\log 6 + \\log N + \\log D$. So along the fixed-budget line, $\\log N$ and
-       $\\log D$ must move in <b>opposite</b> directions by equal amounts &mdash; spend more on size, spend less on
-       data.</p>
-       <p><b>The optima are power laws.</b> The paper models the loss as a smooth function of $N$ and $D$ and finds
-       (empirically, &sect;3) that the minimizers obey $N_{\\text{opt}} \\propto C^{a}$ and
-       $D_{\\text{opt}} \\propto C^{b}$. Plug these back into the constraint:</p>
-       <p>$$ C \\approx 6 \\, N_{\\text{opt}} \\, D_{\\text{opt}} \\propto C^{a} \\cdot C^{b} = C^{\\,a+b}. $$</p>
-       <p>For this to hold as $C$ varies, the exponents must satisfy $a + b \\approx 1$. That is a hard accounting
-       fact, not a measurement. The <b>measurement</b> is <i>where</i> on that line the loss bottoms out: the paper
-       finds it sits near $a \\approx b \\approx 0.5$ &mdash; the balanced point, not an edge. Three independent
-       approaches (&sect;3) agree: Approach 1 gives $a=0.50, b=0.50$; Approach 2 gives $a=0.49, b=0.51$; Approach 3
-       gives $a=0.46, b=0.54$. The split is roughly even, so size and data should grow together.</p>`,
+       $\\log D$ move in <b>opposite</b> directions by equal amounts. If the optima are power laws
+       $N_{\\text{opt}} \\propto C^{a}$, $D_{\\text{opt}} \\propto C^{b}$, plugging into the constraint gives
+       $C \\propto C^{a} C^{b} = C^{a+b}$, so $a + b \\approx 1$. That is a hard fact, not a measurement.</p>
+       <p><b>The minimization half.</b> The split between $a$ and $b$ comes from the loss fit
+       $\\hat{L} = E + A/N^{\\alpha} + B/D^{\\beta}$ (Eq. 2). Substitute the budget $D = C/(6N)$ to write loss along
+       the line as a function of $N$ alone:</p>
+       <p>$$ \\hat{L}(N) = E + \\frac{A}{N^{\\alpha}} + B\\left(\\frac{6N}{C}\\right)^{\\beta}. $$</p>
+       <p>Set the derivative to zero. The size term falls like $N^{-\\alpha}$ and the data term rises like
+       $N^{\\beta}$, so at the minimum the two penalties balance: $\\alpha A N^{-\\alpha} = \\beta B (6/C)^{\\beta}
+       N^{\\beta}$. Solving for $N$ gives a power of $C$ with exponent $a = \\beta/(\\alpha+\\beta)$, and by the
+       budget $b = \\alpha/(\\alpha+\\beta)$, with coefficient $G = (\\alpha A/\\beta B)^{1/(\\alpha+\\beta)}$ &mdash;
+       exactly Eq. 4. Note $a + b = 1$ automatically, matching the accounting half.</p>
+       <p><b>Plug in the numbers.</b> With $\\alpha = 0.34$ and $\\beta = 0.28$:
+       $a = 0.28/(0.34+0.28) = 0.28/0.62 \\approx 0.45$ and $b = 0.34/0.62 \\approx 0.55$ &mdash; the parametric
+       Approach 3 estimate ($a=0.46, b=0.54$). The other two methods agree: Approach 1 gives $a=0.50, b=0.50$;
+       Approach 2 gives $a=0.49, b=0.51$ (&sect;3, Table 2). All three land near one-half, so size and data should
+       grow together.</p>`,
     example:
       `<p>Let's plug Chinchilla's own numbers (Table 1) into the compute relation $C \\approx 6ND$, so the budget
        arithmetic is concrete. Chinchilla has $N = 70$ billion parameters and was trained on $D = 1.4$ trillion
@@ -211,9 +267,11 @@
        </ol>`,
     results:
       `<p><b>The exponents.</b> Three independent estimation methods (&sect;3) agree that size and data should scale
-       about equally: Approach 1 finds "$a=0.50$ and $b=0.50$"; Approach 2 finds "$a=0.49$ and $b=0.51$"; Approach
-       3 finds "$a=0.46$ and $b=0.54$." Table 2's summary: "as compute budget increases, model size and the amount
-       of training data should be increased in approximately equal proportions."</p>
+       about equally: <b>Approach 1</b> (minimum over training-loss curves) finds "$a=0.50$ and $b=0.50$";
+       <b>Approach 2</b> (IsoFLOP profiles &mdash; sweep $N$ at several fixed FLOP budgets) finds "$a=0.49$ and
+       $b=0.51$"; <b>Approach 3</b> (fitting the parametric loss $\\hat{L} = E + A/N^{\\alpha} + B/D^{\\beta}$,
+       Eq. 2/10) finds "$a=0.46$ and $b=0.54$." Table 2's summary: "as compute budget increases, model size and the
+       amount of training data should be increased in approximately equal proportions."</p>
        <p><b>The headline.</b> From the Abstract: "Chinchilla uniformly and significantly outperforms Gopher
        (280B), GPT-3 (175B), Jurassic-1 (178B), and Megatron-Turing NLG (530B) on a large range of downstream
        evaluation tasks." It also "reaches a state-of-the-art average accuracy of 67.5% on the MMLU benchmark,

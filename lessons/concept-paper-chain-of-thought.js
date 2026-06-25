@@ -154,6 +154,40 @@
        <b>emergent ability of model scale</b>: roughly absent below the threshold, useful above it. Plotted as
        accuracy against model size, standard prompting and chain-of-thought prompting track each other for small
        models, then the chain-of-thought curve pulls sharply away as the model grows (Figure 2).</p>`,
+    architecture:
+      `<p><b>There is no new model architecture in this paper</b> &mdash; the model is an off-the-shelf, frozen
+       large language model (a decoder-style Transformer), and chain-of-thought prompting touches only the
+       <i>text fed into it</i>. What follows is the <b>procedure</b>: the data flow of building the prompt and
+       reading the output, and exactly what differs from standard prompting.</p>
+       <p><b>Inputs / components.</b></p>
+       <ul>
+        <li><b>A frozen language model</b> $p_\\theta$. The paper evaluates several off-the-shelf families &mdash;
+        GPT-3 (350M&ndash;175B parameters), LaMDA (422M&ndash;137B), PaLM (8B&ndash;540B), plus UL2&nbsp;20B and Codex
+        &mdash; with <b>no fine-tuning</b>. The same model serves standard and chain-of-thought prompting; only the
+        prompt differs.</li>
+        <li><b>$n$ hand-written exemplars.</b> A human composes $n = 8$ triples $\\langle x, c, y\\rangle$ once
+        ($n = 4$ for AQuA), reused for every test question in that benchmark.</li>
+       </ul>
+       <p><b>Pipeline (per test question), standard vs. chain-of-thought.</b></p>
+       <ol>
+        <li><b>Build the prompt.</b> Concatenate the $n$ exemplars, then append the query $x_{\\text{query}}$ ending
+        in an answer cue (e.g. <code>A:</code>).
+          <ul>
+           <li><i>Standard:</i> each exemplar is the pair $\\langle x, y\\rangle$ &mdash; question then answer.</li>
+           <li><i>Chain-of-thought (the only change):</i> each exemplar is the triple $\\langle x, c, y\\rangle$
+           &mdash; question, then the reasoning steps $c$, then answer.</li>
+          </ul></li>
+        <li><b>Single forward generation.</b> Feed the prompt to $p_\\theta$ and decode greedily (one output, no
+        sampling/voting). Under standard prompting the model emits an answer directly; under chain-of-thought it first
+        emits its own reasoning $\\hat c$, then the answer $\\hat y$.</li>
+        <li><b>Parse the answer.</b> Take the final answer from the end of the generated text. (For arithmetic, an
+        external calculator can be applied post-hoc to the equations written in $\\hat c$.)</li>
+       </ol>
+       <p><b>What changed vs. standard prompting:</b> exactly one thing &mdash; the exemplars carry the middle term $c$,
+       so the model is shown (and then imitates) the act of writing intermediate steps before answering. No weights,
+       architecture, decoding rule, or training data change. The payoff of that single change is gated by scale
+       (&sect;3.2): below $\\sim$100B parameters the generated chains are "fluent but illogical"; above it they become
+       reliable enough to raise end-to-end accuracy.</p>`,
     symbols: [
       { sym: "“token”", desc: "a plain term: the unit a language model reads and predicts &mdash; a word or word-piece. The eight exemplars of text are just tokens prepended to your question." },
       { sym: "“in-context learning”", desc: "a plain term: steering a frozen (untrained) model by putting examples of the task in the input text. The model infers the pattern and continues it. No weights change." },
@@ -162,20 +196,67 @@
       { sym: "“chain of thought”", desc: "the paper's term (&sect;2): &ldquo;a series of intermediate natural language reasoning steps that lead to the final output.&rdquo; The model's written-out work, in plain language, before the answer." },
       { sym: "“emergent ability”", desc: "a plain term used by the paper (&sect;3.2): a capability that is essentially absent in small models and appears once the model is large enough &mdash; here, past about 100B (billion) parameters." },
       { sym: "“multi-step reasoning”", desc: "a plain term: a task whose answer requires chaining several intermediate deductions (e.g. a grade-school math word problem), as opposed to a one-step lookup or classification." },
+      { sym: "$e$", desc: "our notation for one exemplar: the triple $\\langle x, c, y\\rangle$ placed in the prompt (&sect;2)." },
+      { sym: "$x$", desc: "the input &mdash; the task question in an exemplar (and $x_{\\text{query}}$ is the real question you append after the exemplars)." },
+      { sym: "$c$", desc: "the chain of thought &mdash; the intermediate natural-language reasoning steps inserted between the question and the answer (&sect;2). $\\hat c$ is the chain the model generates at test time." },
+      { sym: "$y$", desc: "the output &mdash; the final answer in an exemplar. $\\hat y$ is the answer the model generates at test time." },
+      { sym: "$n$", desc: "the number of exemplars in the prompt: $n = 8$ in the paper, $n = 4$ for the AQuA benchmark (&sect;3.1)." },
+      { sym: "$\\Vert$", desc: "string concatenation &mdash; gluing the exemplars and the query together into one prompt." },
+      { sym: "$p_\\theta$", desc: "the language model's next-token probability, with frozen parameters $\\theta$. The model maximizes $p_\\theta(c, y \\mid \\text{prompt})$ by greedy decoding; $\\theta$ is never updated (in-context learning, not training)." },
+      { sym: "$\\#\\theta$", desc: "the model's parameter count. The emergence finding (&sect;3.2) is that chain of thought helps only once $\\#\\theta \\gtrsim$ 100 billion." },
+      { sym: "$\\text{acc}_{\\text{CoT}}, \\text{acc}_{\\text{std}}$", desc: "accuracy with chain-of-thought prompting vs. standard prompting. Their difference is non-positive for small models and positive past the scale threshold (&sect;3.2)." },
       { sym: "$k$", desc: "in OUR toy illustration only (not the paper): the number of intermediate steps a problem decomposes into." },
       { sym: "$p$", desc: "in OUR toy illustration only (not the paper): the probability the model gets one single step right. The whole-problem success is then $p^k$ if every step must be correct." }
     ],
-    formula: `$$ \\text{exemplar} \\;=\\; \\big\\langle\\, \\text{input},\\ \\underbrace{\\text{chain of thought}}_{\\text{intermediate reasoning steps}},\\ \\text{output} \\,\\big\\rangle \\qquad (\\text{Section 2}) $$`,
+    formula:
+      `<p><b>This is an empirical prompting paper: it has essentially no equations.</b> Section&nbsp;2 introduces a
+       method, not a derived law &mdash; the only "math" is the <i>structure</i> of an exemplar and of the prompt
+       built from exemplars. We formalize that structure here, plus the conditional-generation view and the
+       emergence-at-scale finding. None of these is a closed-form result the paper proves; they are notation we use to
+       make the method precise.</p>
+
+       $$ e \\;=\\; \\big\\langle\\, x,\\ \\underbrace{c}_{\\text{chain of thought}},\\ y \\,\\big\\rangle \\qquad (\\text{Section 2}) $$
+       <p>One chain-of-thought <b>exemplar</b> is a triple: input question $x$, chain of thought $c$ (intermediate
+       natural-language reasoning steps), and final output $y$. Standard prompting drops the middle term and uses only
+       $\\langle x, y\\rangle$.</p>
+
+       $$ \\text{prompt} \\;=\\; e_1 \\,\\Vert\\, e_2 \\,\\Vert\\, \\cdots \\,\\Vert\\, e_n \\,\\Vert\\, x_{\\text{query}} \\qquad n = 8 \\;\\; (n = 4 \\text{ for AQuA},\\ \\text{Section 3.1}) $$
+       <p>The full prompt is $n$ exemplars concatenated ($\\Vert$ = string concatenation), followed by the real
+       question $x_{\\text{query}}$ ending in an answer cue. The paper uses $n = 8$ ($n = 4$ for the harder AQuA
+       benchmark).</p>
+
+       $$ (\\hat{c},\\ \\hat{y}) \\;=\\; \\arg\\max_{c,\\,y}\\; p_\\theta\\!\\left(c,\\,y \\mid \\text{prompt}\\right) \\qquad (\\text{greedy decoding, Section 3.1}) $$
+       <p>Given the prompt, the model with parameters $\\theta$ generates its own chain of thought $\\hat{c}$ and then
+       its answer $\\hat{y}$. The paper samples by <b>greedy decoding</b> (take the highest-probability token at each
+       step) &mdash; one output per question. Nothing in $\\theta$ is updated; this is in-context learning, not
+       training.</p>
+
+       $$ \\text{acc}_{\\text{CoT}}(\\theta) - \\text{acc}_{\\text{std}}(\\theta) \\;\\begin{cases} \\le 0, & \\#\\theta \\ \\lt\\ \\sim\\!100\\text{B} \\\\[2pt] \\gt 0, & \\#\\theta \\ \\gtrsim\\ 100\\text{B} \\end{cases} \\qquad (\\text{emergence, Section 3.2}) $$
+       <p>The central empirical finding, written as a sign: the accuracy gain from chain-of-thought prompting over
+       standard prompting is non-positive for small models and becomes positive only once the parameter count
+       $\\#\\theta$ reaches roughly 100 billion. This is a measured pattern across models, <b>not</b> a proven
+       inequality &mdash; it is the paper's "emergent ability of model scale."</p>
+
+       <p><i>The toy-model equation $P = p^{\\,k}$ below (whole-problem success when $k$ steps each succeed with
+       probability $p$) is OUR illustration of why decomposition helps &mdash; it is not from the paper.</i></p>`,
     whatItDoes:
-      `<p>The "formula" here is not an equation &mdash; this is a prompting result, not a derived law. It is the
-       <b>structure of one exemplar</b> (&sect;2). Read left to right: the <b>input</b> is the task question; the
-       <b>chain of thought</b> is the inserted reasoning &mdash; the new part &mdash; written as intermediate natural
-       language steps; the <b>output</b> is the final answer. Standard prompting uses only the two ends,
-       $\\langle \\text{input}, \\text{output} \\rangle$. Chain-of-thought prompting keeps the middle.</p>
-       <p>You assemble a few of these triples (eight in the paper; four for AQuA), append your real input ending in
-       an answer cue, and let the model continue. Having seen the pattern, the model generates its own chain of
-       thought and then its answer. The single change &mdash; keeping the middle term &mdash; is what converts a flat
-       reasoning curve into a steep one, but only for models large enough to use it (&sect;3.2).</p>`,
+      `<p>None of these is a derived law &mdash; this is a prompting result. Each line just states a piece of the
+       method in words.</p>
+       <ul>
+        <li><b>Exemplar $e = \\langle x, c, y\\rangle$ (&sect;2).</b> Read left to right: $x$ is the task question;
+        $c$ is the inserted reasoning &mdash; the new part &mdash; written as intermediate natural-language steps;
+        $y$ is the final answer. Standard prompting uses only the two ends, $\\langle x, y\\rangle$; chain-of-thought
+        prompting keeps the middle term $c$.</li>
+        <li><b>The prompt is a concatenation (&sect;3.1).</b> You glue $n$ such triples together, append your real
+        input $x_{\\text{query}}$ ending in an answer cue, and let the model continue. $n = 8$ in the paper, $4$ for
+        AQuA.</li>
+        <li><b>Generation $(\\hat c, \\hat y) = \\arg\\max\\, p_\\theta(c, y \\mid \\text{prompt})$.</b> Having seen the
+        pattern, the frozen model (parameters $\\theta$ unchanged) generates its own chain of thought $\\hat c$ then its
+        answer $\\hat y$, picking the most-likely token at each step (greedy decoding).</li>
+        <li><b>The emergence sign (&sect;3.2).</b> Keeping the middle term $c$ converts a flat reasoning curve into a
+        steep one &mdash; but the accuracy gain over standard prompting is positive only once $\\#\\theta \\gtrsim$ 100
+        billion parameters. Below that it is zero or negative.</li>
+       </ul>`,
     derivation:
       `<p>This is an <b>empirical, behavioral</b> paper: there is no theorem to prove. "Why it is true" here means
        "why decomposing a multi-step problem into written steps should help," argued with a small, explicit toy model

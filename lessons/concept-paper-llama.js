@@ -183,6 +183,36 @@
        <p>Put together: a decoder-only Transformer, normalized with RMSNorm at each sub-layer input, using SwiGLU
        feed-forward blocks and RoPE attention, trained on 1.4 trillion public tokens &mdash; small model, lots of
        tokens, cheap to serve.</p>`,
+    architecture:
+      `<p>LLaMA is a <b>decoder-only Transformer</b>: a stack of identical blocks, each with two sub-layers
+       (self-attention, then feed-forward), wrapped in residual skip-connections. The three tweaks change
+       <i>where</i> the norm sits, <i>what</i> the feed-forward looks like, and <i>how</i> position enters
+       attention. Data flow through one block, for a hidden state $x$ of width $d$:</p>
+       <ol>
+        <li><b>RMSNorm (pre-norm) &rarr; Attention &rarr; residual add.</b>
+        $\\;h = x + \\mathrm{Attention}(\\mathrm{RMSNorm}(x))$. The norm is on the <i>input</i>, so the skip path
+        $x \\to h$ is never normalized — a clean gradient highway end to end.</li>
+        <li><b>Inside attention: RoPE.</b> Queries and keys are split into $d/2$ coordinate pairs and each pair
+        is rotated by an angle $m\\,\\theta_k$ set by the token's position $m$ (no absolute position vectors are
+        added). Scores then depend only on relative distance $m-n$.</li>
+        <li><b>RMSNorm (pre-norm) &rarr; SwiGLU feed-forward &rarr; residual add.</b>
+        $\\;y = h + \\mathrm{FFN}_{\\text{SwiGLU}}(\\mathrm{RMSNorm}(h))$, with hidden width
+        $d_{\\text{ff}} = \\tfrac{2}{3}\\cdot 4d$.</li>
+       </ol>
+       <p>A final RMSNorm precedes the output projection to vocabulary logits. The four released sizes (&sect;2, Table 2):</p>
+       <table class="arch-table">
+        <thead><tr><th>Model (params)</th><th>$d$ (dimension)</th><th>heads</th><th>layers</th><th>learning rate</th><th>batch</th><th>tokens</th></tr></thead>
+        <tbody>
+         <tr><td>6.7B</td><td>4096</td><td>32</td><td>32</td><td>$3.0\\times 10^{-4}$</td><td>4M</td><td>1.0T</td></tr>
+         <tr><td>13.0B</td><td>5120</td><td>40</td><td>40</td><td>$3.0\\times 10^{-4}$</td><td>4M</td><td>1.0T</td></tr>
+         <tr><td>32.5B</td><td>6656</td><td>52</td><td>60</td><td>$1.5\\times 10^{-4}$</td><td>4M</td><td>1.4T</td></tr>
+         <tr><td>65.2B</td><td>8192</td><td>64</td><td>80</td><td>$1.5\\times 10^{-4}$</td><td>4M</td><td>1.4T</td></tr>
+        </tbody>
+       </table>
+       <p>Per-head dimension is constant at $d/\\text{heads} = 128$ across all four sizes (e.g. $4096/32 = 128$,
+       $8192/64 = 128$). Scaling proceeds by widening $d$ and deepening the layer count together, not by changing
+       the head width. The two largest models see 1.4T tokens; even the smallest sees 1.0T — far past
+       Chinchilla's compute-optimal stopping point, which is the paper's deliberate train-longer choice.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input vector</b> to a normalization layer: the $d$ numbers (the hidden state) for one token at one layer. RMSNorm and LayerNorm both transform this vector." },
       { sym: "$d$", desc: "the <b>model dimension</b> (hidden size): how many numbers represent each token at a layer. In LLaMA it ranges from $4096$ (the 7B model) to $8192$ (the 65B model), per Table 2." },
@@ -195,9 +225,35 @@
       { sym: "“LayerNorm”", desc: "a plain term: <b>layer normalization</b>. Re-centers a vector to mean zero, rescales to unit variance, then applies a learned scale and shift. The baseline LLaMA replaces with RMSNorm." },
       { sym: "“SwiGLU”", desc: "a plain term: a <b>gated activation</b> for the feed-forward block. It splits the input into two linear projections and uses one (passed through a smooth Swish/SiLU curve) to gate the other by element-wise multiplication, replacing the plain ReLU." },
       { sym: "“RoPE”", desc: "a plain term: <b>Rotary Position Embedding</b>. Encodes a token's position by rotating its query and key vectors by an angle proportional to position, so attention scores depend only on the <i>relative</i> distance between tokens." },
-      { sym: "“inference budget”", desc: "a plain term: the compute spent each time the trained model runs to answer a query (as opposed to the one-time training budget). For a deployed model it is paid billions of times, so it can dwarf the training cost." }
+      { sym: "“inference budget”", desc: "a plain term: the compute spent each time the trained model runs to answer a query (as opposed to the one-time training budget). For a deployed model it is paid billions of times, so it can dwarf the training cost." },
+      { sym: "$W, V, W_2$", desc: "the three <b>weight matrices</b> of the SwiGLU feed-forward block. $W$ and $V$ project the input up to the hidden width $d_{\\text{ff}}$ (one becomes the gate, one the value); $W_2$ projects back down to $d$. The plain ReLU feed-forward used only two matrices, which is why LLaMA shrinks $d_{\\text{ff}}$ to keep the parameter count comparable." },
+      { sym: "$d_{\\text{ff}}$", desc: "the <b>feed-forward hidden width</b>: how wide the vector gets inside the feed-forward block. LLaMA sets $d_{\\text{ff}} = \\tfrac{2}{3}\\cdot 4d = \\tfrac{8}{3}d$ (&sect;2.2)." },
+      { sym: "$\\odot$", desc: "<b>element-wise (Hadamard) multiplication</b>: multiply two equal-length vectors entry by entry. In SwiGLU the gated branch $\\mathrm{Swish}_1(xW)$ multiplies the value branch $xV$ this way." },
+      { sym: "$\\mathrm{Swish}_1(z),\\ \\sigma(z)$", desc: "the <b>Swish-1 / SiLU</b> activation, $\\mathrm{Swish}_1(z) = z\\,\\sigma(z)$, where $\\sigma(z) = 1/(1+e^{-z})$ is the <b>logistic sigmoid</b> (a smooth S-curve from 0 to 1). It is the smooth gate inside SwiGLU." },
+      { sym: "$m,\\ n$", desc: "the <b>absolute token positions</b> (1st token, 2nd token, …) of a query and a key. RoPE rotates each by an angle set by its position; the resulting attention score depends only on the difference $m-n$." },
+      { sym: "$\\theta_k$", desc: "the <b>rotation frequency</b> for the $k$-th coordinate pair, $\\theta_k = 10000^{-2(k-1)/d}$. Low-index pairs rotate fast (short wavelength), high-index pairs rotate slowly (long wavelength), so different pairs encode position at different scales." },
+      { sym: "$R(m,\\theta)$", desc: "the <b>2-D rotation matrix</b> that turns a coordinate pair by angle $m\\theta$. Applied pairwise across the query/key vector, it is how RoPE injects position." },
+      { sym: "$q,\\ k$", desc: "a <b>query</b> and a <b>key</b> vector in self-attention (before RoPE rotation). Attention compares a query against keys to decide where to attend." },
+      { sym: "$\\beta_1,\\ \\beta_2$", desc: "the two <b>AdamW momentum decay rates</b> (for the running mean and running variance of the gradient). LLaMA uses $\\beta_1 = 0.9$, $\\beta_2 = 0.95$ (&sect;2)." },
+      { sym: "$\\eta_{\\max},\\ \\eta_{\\text{final}}$", desc: "the <b>peak and final learning rates</b>. LLaMA warms up to $\\eta_{\\max}$ over 2000 steps, then decays on a cosine schedule down to $\\eta_{\\text{final}} = 0.1\\,\\eta_{\\max}$ (10% of peak)." }
     ],
-    formula: `$$ \\mathrm{RMSNorm}(x)_i \\;=\\; \\frac{x_i}{\\mathrm{RMS}(x)} \\, g_i, \\qquad \\mathrm{RMS}(x) \\;=\\; \\sqrt{\\frac{1}{d}\\sum_{j=1}^{d} x_j^{2} \\,+\\, \\epsilon}. $$ $$ \\text{Contrast: } \\;\\; \\mathrm{LayerNorm}(x)_i \\;=\\; \\frac{x_i - \\mu}{\\sigma}\\, g_i + b_i, \\qquad \\mu = \\frac{1}{d}\\sum_j x_j, \\;\\; \\sigma = \\sqrt{\\frac{1}{d}\\sum_j (x_j-\\mu)^2}. $$`,
+    formula: `<p><b>Tweak 1 — RMSNorm (pre-normalization, &sect;2.2).</b> The LLaMA paper <i>cites</i> RMSNorm (Zhang and Sennrich, 2019) but <b>does not print its formula</b>; the equation below is the standard definition from that source, shown so you can see exactly what changed. LayerNorm is given underneath only for contrast.</p>
+       $$ \\mathrm{RMSNorm}(x)_i \\;=\\; \\frac{x_i}{\\mathrm{RMS}(x)} \\, g_i, \\qquad \\mathrm{RMS}(x) \\;=\\; \\sqrt{\\frac{1}{d}\\sum_{j=1}^{d} x_j^{2} \\,+\\, \\epsilon}. $$
+       $$ \\text{Contrast: } \\;\\; \\mathrm{LayerNorm}(x)_i \\;=\\; \\frac{x_i - \\mu}{\\sigma}\\, g_i + b_i, \\qquad \\mu = \\frac{1}{d}\\sum_j x_j, \\;\\; \\sigma = \\sqrt{\\frac{1}{d}\\sum_j (x_j-\\mu)^2}. $$
+       <p>And LLaMA puts the norm on the <i>input</i> of each sub-layer (pre-norm), so the residual stays a clean highway: $\\;x_{\\text{out}} = x + \\mathrm{Sublayer}(\\mathrm{RMSNorm}(x))\\;$ — versus the original post-norm $\\;x_{\\text{out}} = \\mathrm{LayerNorm}(x + \\mathrm{Sublayer}(x))$.</p>
+
+       <p><b>Tweak 2 — SwiGLU feed-forward (&sect;2.2).</b> The paper says it replaces ReLU with SwiGLU "and uses a dimension of $2/3 \\cdot 4d$ instead of $4d$ as in PaLM." It does <b>not</b> print the SwiGLU formula either; this is the standard definition from Shazeer (2020), where $\\mathrm{Swish}_1$ (also called SiLU) is the smooth gate $\\mathrm{Swish}_1(z) = z\\,\\sigma(z)$ with $\\sigma$ the logistic sigmoid:</p>
+       $$ \\mathrm{FFN}_{\\text{SwiGLU}}(x) \\;=\\; \\big(\\, \\mathrm{Swish}_1(xW) \\,\\odot\\, (xV) \\,\\big)\\, W_2, \\qquad \\mathrm{Swish}_1(z) \\;=\\; z\\,\\sigma(z) \\;=\\; \\frac{z}{1+e^{-z}}. $$
+       $$ \\text{hidden width } \\; d_{\\text{ff}} \\;=\\; \\tfrac{2}{3}\\cdot 4d \\;=\\; \\tfrac{8}{3}\\,d \\qquad (\\text{shrunk because SwiGLU uses three matrices } W, V, W_2 \\text{ instead of two}). $$
+       <p>Here $\\odot$ is element-wise multiplication: $xW$ is passed through the Swish gate and multiplied entry-by-entry by the linear projection $xV$, then mapped back down by $W_2$.</p>
+
+       <p><b>Tweak 3 — Rotary Position Embeddings, RoPE (&sect;2.2).</b> The paper cites RoPE (Su et al., 2021) and does not print its formula; this is the standard definition from that source. RoPE rotates each consecutive pair of coordinates of a query (or key) vector by an angle proportional to the token's absolute position $m$. For one 2-D pair $(x_1, x_2)$ at position $m$ with angular frequency $\\theta$:</p>
+       $$ R(m,\\theta)\\begin{pmatrix} x_1 \\\\ x_2 \\end{pmatrix} \\;=\\; \\begin{pmatrix} \\cos m\\theta & -\\sin m\\theta \\\\ \\sin m\\theta & \\cos m\\theta \\end{pmatrix}\\begin{pmatrix} x_1 \\\\ x_2 \\end{pmatrix}, \\qquad \\theta_k \\;=\\; 10000^{-2(k-1)/d}, \\;\\; k = 1,\\ldots,\\tfrac{d}{2}. $$
+       $$ \\langle\\, R(m,\\theta)\\,q,\\; R(n,\\theta)\\,k \\,\\rangle \\;=\\; \\langle\\, R(m-n,\\theta)\\,q,\\; k \\,\\rangle \\;=\\; g(q, k,\\; m-n). $$
+       <p>The second line is the whole point: because the two rotations combine into a single rotation by $m-n$, the attention score between a query at position $m$ and a key at position $n$ depends only on their <b>relative</b> distance $m-n$, never on absolute $m$ or $n$.</p>
+
+       <p><b>Optimizer (&sect;2, training).</b> AdamW, with the LLaMA hyperparameters:</p>
+       $$ \\beta_1 = 0.9,\\;\\; \\beta_2 = 0.95,\\;\\; \\text{weight decay} = 0.1,\\;\\; \\text{grad-clip} = 1.0,\\;\\; \\text{warmup} = 2000 \\text{ steps}, \\;\\; \\eta_{\\text{final}} = 0.1\\,\\eta_{\\max}\\ (\\text{cosine}). $$`,
     whatItDoes:
       `<p><b>The RMSNorm equation (top)</b> says: take each entry $x_i$, divide it by the root mean square of the
        whole vector, then multiply by a learned gain $g_i$. Dividing by $\\mathrm{RMS}(x)$ forces the output to have
@@ -210,7 +266,20 @@
        speed and simplicity &mdash; one fewer pass over the vector and fewer learned parameters &mdash; with
        essentially the same training stability. When a vector already happens to have mean near zero, the two give
        nearly the same result; the gap grows when the vector's mean is far from zero, because only LayerNorm removes
-       it. The CODEVIZ shows exactly this on a toy vector.</p>`,
+       it. The CODEVIZ shows exactly this on a toy vector.</p>
+       <p><b>The SwiGLU equation</b> says: send the input through two separate linear maps, $xW$ and $xV$. Pass the
+       first through the smooth Swish gate $\\mathrm{Swish}_1(z) = z\\,\\sigma(z)$ &mdash; a soft on/off valve, near
+       zero for very negative inputs and near $z$ for very positive ones &mdash; then multiply it entry-by-entry into
+       the second ($\\odot$) and project back down with $W_2$. The gate lets the network <i>modulate</i> how much of
+       each value-feature passes, which a plain ReLU cannot. Three matrices instead of two is why LLaMA shrinks the
+       hidden width to $d_{\\text{ff}} = \\tfrac{2}{3}\\cdot 4d$, keeping the parameter count about the same.</p>
+       <p><b>The RoPE equations</b> say: rotate each coordinate pair of a query/key by an angle equal to its position
+       times a per-pair frequency $\\theta_k$. The second line is the payoff &mdash; two rotations by $m$ and $n$
+       compose into one rotation by $m-n$, so the score $\\langle R(m)q, R(n)k\\rangle$ depends on $q$, $k$ and the
+       <i>relative</i> distance $m-n$ alone. Position enters as a rotation, and only relative position survives.</p>
+       <p><b>The optimizer line</b> lists LLaMA's AdamW settings: momentum decays $\\beta_1 = 0.9$, $\\beta_2 = 0.95$;
+       weight decay $0.1$; gradients clipped to norm $1.0$; 2000 warmup steps; cosine schedule decaying to 10% of
+       peak.</p>`,
     derivation:
       `<p>This is a <b>read-only</b> paper, and the RMSNorm formula above is a <i>definition</i> (from Zhang and
        Sennrich, 2019), not a theorem to prove. So "why it is true" here means "why dropping the mean-subtraction

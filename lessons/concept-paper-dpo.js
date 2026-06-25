@@ -149,6 +149,37 @@
        currently gets <i>wrong</i>: its weight is $\\sigma(\\hat r(y_l)-\\hat r(y_w))$, which is large when the
        implicit reward ranks the dispreferred answer above the preferred one. The paper describes this term as
        measuring "how incorrectly the implicit reward model orders the completions" (&sect;4).</p>`,
+    architecture:
+      `<p>DPO has <b>no new network</b>. The "architecture" is the <i>training pipeline</i>, and its whole point
+       is that it deletes a stage of RLHF.</p>
+       <p><b>RLHF pipeline (3 stages, with a reinforcement-learning loop):</b></p>
+       <ol>
+        <li><b>Supervised fine-tuning (SFT).</b> Train the base language model on high-quality responses to get
+        $\\pi_{\\text{ref}}$.</li>
+        <li><b>Reward model.</b> Train a <i>separate</i> network $r_\\phi(x,y)$ on the preference pairs by
+        maximum likelihood under Bradley-Terry (Eqn. 1).</li>
+        <li><b>RL fine-tuning (PPO).</b> A loop: <i>sample</i> answers from the current policy, <i>score</i> them
+        with $r_\\phi$, then take a PPO step toward high reward under the KL penalty (Eqn. 3). Needs a value
+        network, reward-model forward passes, on-policy sampling, and careful tuning &mdash; the unstable part.</li>
+       </ol>
+       <p><b>DPO pipeline (2 stages, no loop):</b></p>
+       <ol>
+        <li><b>Same SFT</b> to get the frozen reference $\\pi_{\\text{ref}}$.</li>
+        <li><b>One supervised loss.</b> For each preference pair $(x,y_w,y_l)$ in a fixed offline dataset, run two
+        forward passes of the trainable policy $\\pi_\\theta$ and two of the frozen $\\pi_{\\text{ref}}$ to get four
+        sequence log-probabilities, form the implicit reward margin
+        $\\beta[\\log\\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)}-\\log\\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)}]$,
+        and take a gradient step on $-\\log\\sigma(\\text{margin})$ (Eqn. 7). Plain backprop.</li>
+       </ol>
+       <p><b>Why the reinforcement-learning loop disappears.</b> The RL loop existed for two reasons, and the
+       algebra removes both. (1) <b>No reward model</b>: Eqn. 5 writes the reward as a function of the policy
+       itself, so there is nothing left to fit. (2) <b>No sampling loop</b>: the only reason RLHF had to sample
+       on-policy is the intractable partition function $Z(x)$ inside the optimal policy (Eqn. 4) &mdash; you
+       cannot evaluate that policy in closed form. But $Z(x)$ is the <i>same</i> for $y_w$ and $y_l$, so it
+       <b>cancels</b> in the preference difference (Eqn. 6). With no $Z(x)$ and no separate reward network, the
+       objective collapses to a static, fully-offline classification loss over the labeled pairs &mdash; ordinary
+       supervised learning, no environment interaction. The only "extra" cost over plain SFT is the second
+       (frozen) reference model held in memory for its log-probabilities.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>prompt</b> (the input the model must respond to)." },
       { sym: "$y_w,\\;y_l$", desc: "a <b>preference pair</b>: $y_w$ is the response a human <b>preferred</b> (the 'winner', subscript $w$), $y_l$ the <b>dispreferred</b> one (the 'loser', subscript $l$), both for the same prompt $x$." },
@@ -156,6 +187,11 @@
       { sym: "$\\pi_{\\text{ref}}$", desc: "the <b>reference</b> policy: a <b>frozen</b> copy of the model (usually after supervised fine-tuning) that we must not drift too far from. It does not change during training." },
       { sym: "$\\beta$", desc: "a positive <b>temperature</b>: how tightly the policy is tied to the reference. Larger $\\beta$ keeps the policy closer to $\\pi_{\\text{ref}}$; smaller lets it move more. The paper sweeps $\\beta\\in\\{0.05,0.1,1,5\\}$ for sentiment (&sect;6.1)." },
       { sym: "$r(x,y)$", desc: "the <b>reward</b>: a score for how good response $y$ is for prompt $x$. RLHF trains a network for this; DPO never does &mdash; it reads it implicitly off the policy." },
+      { sym: "$r_\\phi,\\;r^*$", desc: "specific rewards: $r_\\phi$ is the <b>learned reward model</b> (a separate network with parameters $\\phi$) that RLHF optimizes in Eqn. 3; $r^*$ is the (unknown) <b>true</b> reward that generates human preferences in Bradley-Terry (Eqn. 1)." },
+      { sym: "$\\pi^*,\\;\\pi_r$", desc: "the <b>optimal policy</b> for a given reward: $\\pi_r$ is the closed-form optimum of Eqn. 3 for reward $r$ (Eqn. 4), and $\\pi^*$ is that optimum for the true reward $r^*$ (used in Eqn. 6)." },
+      { sym: "$y_1,\\;y_2$", desc: "two generic candidate responses to a prompt being compared in the Bradley-Terry model (Eqn. 1); $(y_w,y_l)$ is the special case where the comparison outcome is known." },
+      { sym: "$\\nabla_\\theta$", desc: "the <b>gradient</b> with respect to the policy parameters $\\theta$ &mdash; the direction of steepest increase used to update the model." },
+      { sym: "$\\mathcal{D}$", desc: "the <b>dataset</b> of preference triples $(x,y_w,y_l)$ the loss averages over (the symbol $\\sim\\mathcal{D}$ means 'sampled from the dataset')." },
       { sym: "$\\hat r(x,y)$", desc: "the <b>implicit reward</b> DPO uses: $\\hat r(x,y)=\\beta\\log\\frac{\\pi_\\theta(y|x)}{\\pi_{\\text{ref}}(y|x)}$. It is just the (scaled) log-ratio of policy to reference &mdash; no separate model." },
       { sym: "$\\sigma$", desc: "the <b>logistic (sigmoid) function</b> $\\sigma(z)=\\tfrac{1}{1+e^{-z}}$, which squashes any real number into $(0,1)$ &mdash; here, a probability that the preferred answer wins." },
       { sym: "$Z(x)$", desc: "the <b>partition function</b>: the normalizer $\\sum_y \\pi_{\\text{ref}}(y|x)\\exp(\\tfrac{1}{\\beta}r(x,y))$ that makes the optimal policy a valid distribution. It cancels in the preference difference &mdash; the trick that lets DPO avoid it." },
@@ -163,7 +199,20 @@
       { sym: "$p^*(y_1\\succ y_2|x)$", desc: "the <b>preference probability</b>: the chance a human prefers $y_1$ over $y_2$ for prompt $x$. The symbol $\\succ$ reads 'is preferred to'." },
       { sym: "“implicit reward margin”", desc: "a plain term, not a symbol: $\\hat r(x,y_w)-\\hat r(x,y_l)$, the gap between the implicit reward of the preferred and dispreferred response. DPO training makes it grow." }
     ],
-    formula: `$$ \\mathcal{L}_{\\text{DPO}}(\\pi_\\theta;\\pi_{\\text{ref}}) = -\\,\\mathbb{E}_{(x,y_w,y_l)\\sim\\mathcal{D}}\\left[\\log\\sigma\\!\\left(\\beta\\log\\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta\\log\\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)}\\right)\\right] \\qquad\\text{(Eqn. 7, \\S4)} $$`,
+    formula: `$$ p^*(y_1\\succ y_2\\,|\\,x) = \\frac{\\exp\\big(r^*(x,y_1)\\big)}{\\exp\\big(r^*(x,y_1)\\big)+\\exp\\big(r^*(x,y_2)\\big)} = \\sigma\\big(r^*(x,y_1)-r^*(x,y_2)\\big) $$
+       <p class="cap"><b>Eqn. 1 (&sect;3) &mdash; Bradley-Terry model.</b> The chance a human prefers $y_1$ over $y_2$ is the logistic of the two answers' reward gap.</p>
+       $$ \\max_{\\pi_\\theta}\\;\\mathbb{E}_{x\\sim\\mathcal{D},\\,y\\sim\\pi_\\theta(y|x)}\\big[r_\\phi(x,y)\\big]\\;-\\;\\beta\\,\\mathbb{D}_{\\mathrm{KL}}\\!\\big[\\pi_\\theta(y|x)\\,\\|\\,\\pi_{\\text{ref}}(y|x)\\big] $$
+       <p class="cap"><b>Eqn. 3 (&sect;3) &mdash; KL-constrained RLHF objective.</b> Maximize expected reward while staying within KL distance $\\beta$ of the reference policy.</p>
+       $$ \\pi_r(y|x)=\\frac{1}{Z(x)}\\,\\pi_{\\text{ref}}(y|x)\\,\\exp\\!\\Big(\\tfrac{1}{\\beta}\\,r(x,y)\\Big),\\qquad Z(x)=\\sum_{y}\\pi_{\\text{ref}}(y|x)\\,\\exp\\!\\Big(\\tfrac{1}{\\beta}\\,r(x,y)\\Big) $$
+       <p class="cap"><b>Eqn. 4 (&sect;4) &mdash; closed-form optimal policy.</b> The objective in Eqn. 3 is solved exactly by the reference tilted by the exponentiated reward; $Z(x)$ is the (intractable) partition function.</p>
+       $$ r(x,y)=\\beta\\log\\frac{\\pi_r(y|x)}{\\pi_{\\text{ref}}(y|x)}+\\beta\\log Z(x) $$
+       <p class="cap"><b>Eqn. 5 (&sect;4) &mdash; implicit reward.</b> Invert Eqn. 4 to read the reward straight off any policy: "your language model is secretly a reward model."</p>
+       $$ p^*(y_w\\succ y_l\\,|\\,x)=\\sigma\\!\\left(\\beta\\log\\frac{\\pi^*(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)}-\\beta\\log\\frac{\\pi^*(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)}\\right) $$
+       <p class="cap"><b>Eqn. 6 (&sect;4) &mdash; Bradley-Terry in policy form.</b> Substitute Eqn. 5 into Eqn. 1; the $\\beta\\log Z(x)$ offset is identical for both answers and <b>cancels</b>.</p>
+       $$ \\mathcal{L}_{\\text{DPO}}(\\pi_\\theta;\\pi_{\\text{ref}}) = -\\,\\mathbb{E}_{(x,y_w,y_l)\\sim\\mathcal{D}}\\left[\\log\\sigma\\!\\left(\\beta\\log\\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta\\log\\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)}\\right)\\right] $$
+       <p class="cap"><b>Eqn. 7 (&sect;4) &mdash; the DPO loss.</b> Fit $\\pi_\\theta$ by maximum likelihood under Eqn. 6: a binary-cross-entropy loss over preference pairs. This is the whole method.</p>
+       $$ \\nabla_\\theta\\mathcal{L}_{\\text{DPO}} = -\\beta\\,\\mathbb{E}_{(x,y_w,y_l)\\sim\\mathcal{D}}\\Big[\\underbrace{\\sigma\\big(\\hat r_\\theta(x,y_l)-\\hat r_\\theta(x,y_w)\\big)}_{\\text{weight: high when ordering is wrong}}\\big(\\nabla_\\theta\\log\\pi_\\theta(y_w|x)-\\nabla_\\theta\\log\\pi_\\theta(y_l|x)\\big)\\Big] $$
+       <p class="cap"><b>Gradient of Eqn. 7 (&sect;4).</b> Raise $\\log\\pi_\\theta(y_w|x)$, lower $\\log\\pi_\\theta(y_l|x)$, weighted by $\\sigma(\\hat r_\\theta(y_l)-\\hat r_\\theta(y_w))$ &mdash; large exactly when the implicit reward orders the pair incorrectly. Here $\\hat r_\\theta(x,y)=\\beta\\log\\frac{\\pi_\\theta(y|x)}{\\pi_{\\text{ref}}(y|x)}$.</p>`,
     whatItDoes:
       `<p>Read the inside of $\\sigma$ first. The two terms are the implicit rewards
        $\\hat r(x,y_w)=\\beta\\log\\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)}$ and

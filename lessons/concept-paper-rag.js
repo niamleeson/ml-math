@@ -151,6 +151,38 @@
        to one document for the entire answer, so the sum over documents wraps the whole sequence.
        <b>RAG-Token</b> may use a different document for each token, so the sum sits inside, per
        token. Both let gradients flow into the generator and the query encoder.</p>`,
+    architecture:
+      `<p>RAG is two trained modules plus a fixed index, wired so a single forward pass retrieves
+       documents and marginalizes the generator over them.</p>
+       <p><b>1. Document index (non-parametric memory, &sect;2.2).</b> The knowledge source is the
+       December 2018 Wikipedia dump, split into <b>21 million</b> 100-word chunks. Each chunk $z$ is
+       encoded once, offline, by the document encoder $\\mathrm{BERT}_d$ (BERT-base) into a vector
+       $d(z)$. All 21M vectors are stored in a <b>FAISS</b> Maximum Inner Product Search index, which
+       returns approximate top-$K$ neighbours in sub-linear time. This index is built once and
+       <b>frozen</b> &mdash; never recomputed during training.</p>
+       <p><b>2. Query encoder (&sect;2.2).</b> A second BERT-base, $\\mathrm{BERT}_q$, maps the input
+       query $x$ to a vector $q(x)$. The retriever score for a document is the inner product
+       $d(z)^\\top q(x)$; a softmax over the top-$K$ scores gives $p_\\eta(z|x)$. The retriever is a
+       <b>DPR bi-encoder</b>: two separate BERT-base towers (~110M parameters each), initialized from
+       a DPR model already trained for open-domain QA.</p>
+       <p><b>3. Generator (&sect;2.3).</b> <b>BART-large</b> (~400M parameters), a pre-trained
+       encoder-decoder transformer. For each retrieved document $z$, its tokens are
+       <b>concatenated</b> with the input $x$ and fed to BART, which decodes the answer token by token
+       to produce $p_\\theta(y_i \\mid x, z, y_{1:i-1})$. BART runs once per retrieved document
+       ($K$ forward passes).</p>
+       <p><b>4. Marginalization head (the novel composition, &sect;2 / &sect;2.1).</b> The $K$ generator
+       outputs are combined with the retriever weights $p_\\eta(z|x)$ &mdash; sum-outside-product for
+       RAG-Sequence, sum-inside-product for RAG-Token &mdash; into a single answer distribution
+       $p(y|x)$. No new parameters; it is just the weighted sum.</p>
+       <p><b>Data flow:</b> $x \\rightarrow q(x) \\rightarrow$ MIPS over the frozen index
+       $\\rightarrow$ top-$K$ documents $z_1{\\ldots}z_K$ with weights $p_\\eta(z|x)
+       \\rightarrow$ BART reads each $[x;z_k] \\rightarrow$ marginalize $\\rightarrow p(y|x)$.</p>
+       <p><b>End-to-end training (&sect;2.4).</b> Minimize $\\sum_j -\\log p(y_j|x_j)$ with ordinary
+       backprop. Gradients update <b>only</b> $\\mathrm{BERT}_q$ (the query encoder) and <b>BART</b>
+       (the generator). The document encoder $\\mathrm{BERT}_d$ and the FAISS index are held
+       <b>fixed</b>, so the 21M-vector index never has to be rebuilt mid-training &mdash; the paper
+       found re-encoding documents periodically was expensive and not needed for strong results. Total
+       trainable parameters: ~626M (vs. an 11B-parameter T5 baseline).</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> (the query / question), e.g. \"capital of france\"." },
       { sym: "$y$", desc: "the <b>output sequence</b> (the answer). $y_i$ is its $i$-th token; $y_{1:i-1}$ are the tokens already generated before position $i$." },
@@ -163,9 +195,24 @@
       { sym: "$\\mathrm{top}\\text{-}k$", desc: "the set of the $K$ documents with the highest retriever scores. $K$ is small (the paper tries values like 5 and 10)." },
       { sym: "“MIPS”", desc: "a plain term: <b>Maximum Inner Product Search</b> &mdash; the operation of finding the stored vectors whose inner product with the query is largest. This is how the top-$k$ documents are found, in sub-linear time." },
       { sym: "$N$", desc: "the <b>length</b> of the answer $y$ in tokens; the product $\\prod_i^N$ runs over the answer's tokens." },
+      { sym: "$\\mathrm{BERT}_d,\\ \\mathrm{BERT}_q$", desc: "the two encoders of the DPR bi-encoder: $\\mathrm{BERT}_d$ turns a document into $d(z)$, $\\mathrm{BERT}_q$ turns the query into $q(x)$. \"Bi-encoder\" = two separate BERT towers, one per side." },
+      { sym: "BART", desc: "a plain term: the pre-trained encoder-decoder transformer (BART-large, ~400M parameters) used as the generator; it reads the input concatenated with a retrieved document and decodes the answer." },
+      { sym: "$p'_\\theta(y_i \\mid x, y_{1:i-1})$", desc: "the <b>RAG-Token transition probability</b> (&sect;2.5): the per-token answer probability after folding in the document sum $\\sum_z p_\\eta(z|x)\\,p_\\theta(\\cdot)$, used as the score inside standard beam search." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>training loss</b>: the negative marginal log-likelihood $\\sum_j -\\log p(y_j \\mid x_j)$ summed over training pairs $(x_j, y_j)$ &mdash; minimized by gradient descent." },
       { sym: "“parametric memory”", desc: "a plain term: knowledge stored <i>inside the model's weights</i>. \"Non-parametric memory\" is the opposite: knowledge stored <i>outside</i>, in the searchable document store." }
     ],
-    formula: `$$ p_{\\text{RAG-Seq}}(y \\mid x) \\;\\approx\\; \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, \\prod_i^N p_\\theta(y_i \\mid x, z, y_{1:i-1}) \\quad\\text{(\\S2.1)} \\qquad p_{\\text{RAG-Tok}}(y \\mid x) \\;\\approx\\; \\prod_i^N \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, p_\\theta(y_i \\mid x, z, y_{1:i-1}) \\quad\\text{(\\S2.1)} $$`,
+    formula: `$$ p(y \\mid x) \\;=\\; \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, p_\\theta(y \\mid x, z) $$
+       <p>The core idea (&sect;2): treat the retrieved document $z$ as a latent variable and marginalize &mdash; the answer probability is the retriever weight times the generator probability, summed over the top-$K$ documents.</p>
+       $$ p_{\\text{RAG-Sequence}}(y \\mid x) \\;\\approx\\; \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, \\prod_i^N p_\\theta(y_i \\mid x, z, y_{1:i-1}) $$
+       <p>RAG-Sequence (&sect;2.1): one document for the whole answer &mdash; the sum over documents sits <i>outside</i> the per-token product.</p>
+       $$ p_{\\text{RAG-Token}}(y \\mid x) \\;\\approx\\; \\prod_i^N \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, p_\\theta(y_i \\mid x, z, y_{1:i-1}) $$
+       <p>RAG-Token (&sect;2.1): a possibly different document per token &mdash; the sum sits <i>inside</i> the product, re-weighting documents at every position.</p>
+       $$ p_\\eta(z \\mid x) \\;\\propto\\; \\exp\\!\\big(d(z)^\\top q(x)\\big), \\qquad d(z) = \\mathrm{BERT}_d(z), \\quad q(x) = \\mathrm{BERT}_q(x) $$
+       <p>DPR retriever (&sect;2.2): relevance is the inner product of a BERT document embedding and a BERT query embedding (a bi-encoder); a softmax over these scores gives the document distribution. The top-$K$ are found by Maximum Inner Product Search (MIPS).</p>
+       $$ p'_\\theta(y_i \\mid x, y_{1:i-1}) \\;=\\; \\sum_{z \\in \\text{top-}k(p(\\cdot|x))} p_\\eta(z \\mid x)\\, p_\\theta(y_i \\mid x, z, y_{1:i-1}) $$
+       <p>RAG-Token decoding (&sect;2.5): fold the document sum into a single per-token transition probability, then run standard beam search.</p>
+       $$ \\mathcal{L} \\;=\\; \\sum_j -\\log p(y_j \\mid x_j) $$
+       <p>Training objective (&sect;2.4): minimize the negative marginal log-likelihood of each target answer $y_j$. Only the query encoder $\\mathrm{BERT}_q$ and the BART generator are updated; the document encoder and index are kept fixed.</p>`,
     whatItDoes:
       `<p>Both equations say the same plain thing: the answer probability is an <b>average over the
        top-$K$ retrieved documents</b>, weighted by how relevant the retriever thinks each one is.

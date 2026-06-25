@@ -144,6 +144,33 @@
        <b>Equation 5</b>); $P_i$ is the average router probability for expert $i$ (soft, differentiable,
        <b>Equation 6</b>). Their product is small when load is even and large when one expert hogs traffic. The
        paper sets $\\alpha = 10^{-2}$.</p>`,
+    architecture:
+      `<p>A Transformer block alternates a self-attention sub-layer with a position-wise <b>feed-forward network
+       (FFN)</b>. The Switch Transformer leaves attention untouched and <b>replaces the single dense FFN with a
+       Switch (Mixture-of-Experts) layer</b> (&sect;2). From the paper: "we replace the dense feed forward
+       network (FFN) ... with a sparse Switch FFN layer." Both encoder and decoder blocks can use it (in the
+       paper, typically every other FFN is swapped).</p>
+       <p><b>Inside the Switch FFN layer:</b></p>
+       <ul>
+        <li><b>$N$ expert FFNs in parallel.</b> Each expert $E_i$ is its own full feed-forward network
+        ($\\text{Linear} \\to \\text{ReLU} \\to \\text{Linear}$, inner width $d_{ff}$), identical in shape to the
+        dense FFN it replaces. They share no weights, so the layer holds $N\\times$ the FFN parameters.</li>
+        <li><b>One router</b> &mdash; a small linear map $W_r$ of shape $d_{model}\\times N$ producing one logit
+        per expert, softmaxed (Eqn 1).</li>
+        <li><b>Top-1 dispatch.</b> Each token independently goes to the single $\\arg\\max$ expert (Eqn 2); its
+        output is scaled by the gate $p_i(x)$ and written back to that token's position.</li>
+        <li><b>Capacity buffer.</b> Each expert has a fixed-size slot count (Eqn 3); on a distributed setup the
+        experts sit on different devices, so the buffer must be static. Overflow tokens are dropped and ride the
+        <b>residual connection</b> forward unchanged.</li>
+       </ul>
+       <p><b>Data flow for one token:</b> input $x$ &rarr; router softmax &rarr; pick top-1 expert &rarr; (if
+       within that expert's capacity) run $E_i(x)$ and scale by $p_i(x)$, else pass $x$ through unchanged &rarr;
+       add residual &rarr; layer-norm, exactly as a normal Transformer FFN sub-layer.</p>
+       <p><b>Sparse routing at ~constant FLOPs.</b> Because each token activates only <b>one</b> expert, the
+       compute per token is essentially that of a <i>single</i> dense FFN regardless of how many experts $N$ the
+       layer holds. So $N$ scales the <b>parameter count</b> (and memory / device count) while leaving the
+       <b>per-token FLOPs</b> nearly fixed &mdash; the whole point of sparsity. This decoupling is what lets the
+       paper push to trillion-parameter models at the compute budget of a much smaller dense model.</p>`,
     symbols: [
       { sym: "“expert”", desc: "a plain term: one of the $N$ parallel feed-forward sub-networks inside the Switch layer. Each token is processed by exactly one of them." },
       { sym: "“router”", desc: "a plain term: a tiny linear layer (weights $W_r$) that scores how well each expert suits a token, then a softmax picks the best one." },
@@ -157,10 +184,36 @@
       { sym: "$P_i$", desc: "the <b>mean router probability for expert $i$</b> (Eqn 6): average $p_i(x)$ over all tokens. Soft and differentiable &mdash; this factor carries the gradient in the aux loss." },
       { sym: "$\\alpha$", desc: "the <b>aux-loss weight</b>. The paper uses $\\alpha = 10^{-2}$: large enough to balance load, small enough not to overwhelm the main task loss." }
     ],
-    formula: `$$ p_i(x) = \\frac{e^{h(x)_i}}{\\sum_{j=1}^{N} e^{h(x)_j}} \\;\\;\\text{(Eqn 1)} \\qquad \\text{loss} = \\alpha \\cdot N \\cdot \\sum_{i=1}^{N} f_i\\, P_i \\;\\;\\text{(Eqn 4)} \\qquad f_i = \\frac{1}{T}\\sum_{x\\in B}\\mathbb{1}\\{\\arg\\max p(x)=i\\} \\;\\;\\text{(Eqn 5)} \\qquad P_i = \\frac{1}{T}\\sum_{x\\in B} p_i(x) \\;\\;\\text{(Eqn 6)} $$`,
+    formula:
+      `<p>$$ p_i(x) = \\frac{e^{h(x)_i}}{\\sum_{j=1}^{N} e^{h(x)_j}}, \\qquad h(x) = W_r\\, x. $$</p>
+       <p><b>&sect;2.1, Equation 1</b> &mdash; the router softmax: turn the router logits $h(x)=W_r x$ into a
+       probability $p_i(x)$ per expert.</p>
+       <p>$$ y = p_i(x)\\, E_i(x), \\qquad i = \\arg\\max_{j} p_j(x). $$</p>
+       <p><b>&sect;2.1, Equation 2</b> &mdash; top-1 ($k=1$) routing: send the token only to its single
+       highest-probability expert $E_i$, then scale that expert's output by the gate value $p_i(x)$.</p>
+       <p>$$ \\text{expert capacity} = \\Big(\\frac{\\text{tokens per batch}}{\\text{number of experts}}\\Big)
+       \\times \\text{capacity factor}. $$</p>
+       <p><b>&sect;2.2, Equation 3</b> &mdash; each expert's fixed buffer size; a capacity factor $\\gt 1.0$ adds
+       slack for uneven routing, and tokens past the buffer are dropped (passed through the residual).</p>
+       <p>$$ \\text{loss} = \\alpha \\cdot N \\cdot \\sum_{i=1}^{N} f_i \\cdot P_i. $$</p>
+       <p><b>&sect;2.2, Equation 4</b> &mdash; the load-balancing auxiliary loss, added to the task loss
+       ($\\alpha = 10^{-2}$); minimized when token traffic is spread evenly across the $N$ experts.</p>
+       <p>$$ f_i = \\frac{1}{T}\\sum_{x \\in \\mathcal{B}} \\mathbb{1}\\{\\arg\\max p(x) = i\\}. $$</p>
+       <p><b>&sect;2.2, Equation 5</b> &mdash; $f_i$, the dispatch fraction: the fraction of the $T$ tokens in
+       batch $\\mathcal{B}$ whose top-1 expert is $i$ (a hard, non-differentiable count).</p>
+       <p>$$ P_i = \\frac{1}{T}\\sum_{x \\in \\mathcal{B}} p_i(x). $$</p>
+       <p><b>&sect;2.2, Equation 6</b> &mdash; $P_i$, the mean router probability for expert $i$ over the batch
+       (soft and differentiable &mdash; the factor that carries the gradient in Equation 4).</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the router: a softmax over experts. <b>Top-1</b> just takes the $\\arg\\max$ &mdash;
        one expert per token. This is the whole simplification over older multi-expert MoE.</p>
+       <p><b>Equation 2</b> is the layer output, $y = p_i(x)\\,E_i(x)$: run only the chosen expert, then multiply
+       its output by the router's own probability $p_i(x)$. That multiply is the <b>differentiable-routing
+       trick</b> &mdash; the $\\arg\\max$ pick itself has no gradient, but the gate factor $p_i(x)$ is a smooth
+       function of $W_r$. So when the chosen expert lowers the task loss, the gradient flows back through $p_i(x)$
+       and teaches the router to raise that probability; the routing becomes trainable end-to-end.</p>
+       <p><b>Equation 3</b> sets each expert's fixed buffer size so the dispatch tensor has a static shape (needed
+       when experts live on separate devices); overflow tokens are dropped to the residual.</p>
        <p><b>Equation 4</b> is the load-balancing aux loss. Read $f_i \\cdot P_i$ as "how many tokens went there"
        times "how confident the router was about going there." Summed and scaled, it is smallest when both are
        spread evenly across experts &mdash; i.e. $f_i \\approx P_i \\approx 1/N$. The $N$ factor makes the ideal

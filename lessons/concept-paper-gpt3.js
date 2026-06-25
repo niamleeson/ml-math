@@ -160,7 +160,64 @@
        different task next prompt and the same frozen weights handle that one instead. The "learning" lives in the
        forward pass over the prompt, not in the weights &mdash; which is exactly why no gradient updates are
        needed.</p>`,
+    architecture:
+      `<p>GPT-3 introduces <b>no new architecture</b>: it is "the same model and architecture as GPT-2"
+       (&sect;2.1), a <b>decoder-only (autoregressive) Transformer</b>. The paper inherits GPT-2's "modified
+       initialization, pre-normalization, and reversible tokenization," with one change to attention. The whole
+       contribution is what happens when you scale that architecture up to 175 billion parameters.</p>
+       <p><b>One block (repeated $L$ times).</b> Each Transformer block has two sub-layers, each wrapped in a
+       residual connection with <b>pre-normalization</b> (LayerNorm applied to the input of each sub-layer):</p>
+       <ul>
+        <li><b>Masked multi-head self-attention</b> over the previous tokens (causal mask, so position $t$ can only
+        see positions $\\le t$ &mdash; this is what makes it autoregressive). The block uses $n_{\\text{heads}}$
+        heads, each of dimension $d_{\\text{head}}$.</li>
+        <li><b>Position-wise feed-forward network</b> of width $d_{\\text{ff}} = 4 \\times d_{\\text{model}}$
+        (&sect;2.1: "the feedforward layer four times the size of the bottleneck layer").</li>
+       </ul>
+       <p><b>Attention pattern (the one architectural tweak).</b> "we use <b>alternating dense and locally banded
+       sparse attention patterns</b> in the layers of the transformer, similar to the Sparse Transformer" (&sect;2.1).
+       So some layers attend densely to all previous tokens; others use a banded/sparse pattern that attends only to
+       a local window &mdash; alternating layer by layer, which keeps long-context attention affordable.</p>
+       <p><b>Data flow.</b> token ids &rarr; token embedding $W_e$ + learned positional embedding $W_p$ &rarr; a stack
+       of $L$ identical blocks (attention then feed-forward, each residual + pre-norm) &rarr; final LayerNorm &rarr;
+       project to the vocabulary with the tied embedding $W_e$ &rarr; softmax over the next token. Context window
+       $n_{\\text{ctx}} = 2048$ tokens for every model.</p>
+       <p><b>The GPT-3 family &mdash; Table 2.1</b> ("Sizes, architectures, and learning hyper-parameters... All
+       models were trained for a total of 300 billion tokens"). Eight sizes span three orders of magnitude, from
+       125M to 175B parameters:</p>
+       <table class="arch">
+        <thead><tr><th>Model</th><th>$n_{\\text{params}}$</th><th>$n_{\\text{layers}}$</th><th>$d_{\\text{model}}$</th><th>$n_{\\text{heads}}$</th><th>$d_{\\text{head}}$</th><th>batch</th><th>learning rate</th></tr></thead>
+        <tbody>
+         <tr><td>GPT-3 Small</td><td>125M</td><td>12</td><td>768</td><td>12</td><td>64</td><td>0.5M</td><td>$6.0\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 Medium</td><td>350M</td><td>24</td><td>1024</td><td>16</td><td>64</td><td>0.5M</td><td>$3.0\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 Large</td><td>760M</td><td>24</td><td>1536</td><td>16</td><td>96</td><td>0.5M</td><td>$2.5\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 XL</td><td>1.3B</td><td>24</td><td>2048</td><td>24</td><td>128</td><td>1M</td><td>$2.0\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 2.7B</td><td>2.7B</td><td>32</td><td>2560</td><td>32</td><td>80</td><td>1M</td><td>$1.6\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 6.7B</td><td>6.7B</td><td>32</td><td>4096</td><td>32</td><td>128</td><td>2M</td><td>$1.2\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 13B</td><td>13.0B</td><td>40</td><td>5140</td><td>40</td><td>128</td><td>2M</td><td>$1.0\\times10^{-4}$</td></tr>
+         <tr><td>GPT-3 175B</td><td>175.0B</td><td>96</td><td>12288</td><td>96</td><td>128</td><td>3.2M</td><td>$0.6\\times10^{-4}$</td></tr>
+        </tbody>
+       </table>
+       <p>Reading the flagship row: <b>GPT-3 175B</b> stacks $n_{\\text{layers}} = 96$ blocks, with hidden width
+       $d_{\\text{model}} = 12288$, $n_{\\text{heads}} = 96$ attention heads each of size $d_{\\text{head}} = 128$
+       (note $96 \\times 128 = 12288 = d_{\\text{model}}$), and a feed-forward width $d_{\\text{ff}} = 4 \\times 12288
+       = 49152$. ($d_{\\text{model}}$ is the width of each "bottleneck" layer; $d_{\\text{head}}$ is the dimension of
+       each attention head; values are transcribed verbatim from Table 2.1, including the 13B row's printed $5140$.)
+       The model is partitioned across GPUs "along both the depth and width dimension" (&sect;2.1) to fit.</p>`,
     symbols: [
+      { sym: "$\\mathcal{L}(\\theta)$", desc: "the <b>training objective</b> &mdash; the total log-likelihood the model maximizes over the corpus. Larger means the model assigns higher probability to the real next tokens. This is the only training signal (next-token prediction)." },
+      { sym: "$\\theta$", desc: "the full set of model <b>parameters (weights)</b> &mdash; 175 billion numbers for GPT-3 (Table 2.1). Training adjusts $\\theta$; in-context learning leaves $\\theta$ <b>frozen</b>." },
+      { sym: "$u_t$", desc: "the <b>token at position $t$</b> in a text sequence. $u_{\\lt t}$ (written $u_1,\\ldots,u_{t-1}$) is all the tokens before it; the model predicts $u_t$ from them." },
+      { sym: "$T$", desc: "the <b>length</b> (number of tokens) of the training sequence the sum runs over." },
+      { sym: "$p_{\\theta}(u_t \\mid u_{\\lt t})$", desc: "the <b>probability the model assigns to the next token</b> $u_t$ given all previous tokens, using its current weights $\\theta$. Computed by a softmax over the vocabulary." },
+      { sym: "$h_t^{(\\ell)}$", desc: "the <b>hidden state</b> (a $d_{\\text{model}}$-dimensional vector) for position $t$ after Transformer block $\\ell$. $h_t^{(0)}$ is the input embedding; $h_t^{(L)}$ is the final layer's output, projected to the vocabulary." },
+      { sym: "$W_e,\\; W_p$", desc: "the <b>token embedding matrix</b> $W_e$ (maps each token id to a vector, and is reused/tied to project back to vocabulary logits) and the learned <b>positional embedding</b> $W_p$ (adds a vector for the token's position)." },
+      { sym: "$L$ (= $n_{\\text{layers}}$)", desc: "the <b>number of stacked Transformer blocks</b>. $L = 96$ for GPT-3 175B; ranges from 12 (Small) to 96 (175B) across the family (Table 2.1)." },
+      { sym: "$d_{\\text{model}}$", desc: "the <b>hidden width</b> &mdash; the size of each token's vector inside the network (the \"bottleneck\" layer). $12288$ for GPT-3 175B (Table 2.1)." },
+      { sym: "$n_{\\text{heads}},\\; d_{\\text{head}}$", desc: "the <b>number of attention heads</b> and the <b>dimension of each head</b>. For GPT-3 175B: $96$ heads of size $128$ (and $96 \\times 128 = d_{\\text{model}}$) (Table 2.1)." },
+      { sym: "$d_{\\text{ff}}$", desc: "the <b>width of the feed-forward sub-layer</b> inside each block, set to $4 \\times d_{\\text{model}}$ (&sect;2.1)." },
+      { sym: "$n_{\\text{ctx}}$", desc: "the <b>context window</b> &mdash; the maximum number of tokens the model can attend to at once: $2048$ for every GPT-3 size (&sect;2.1). This bounds how many demonstrations few-shot can fit." },
+      { sym: "$x_{\\text{query}},\\; \\hat{y}$", desc: "the <b>new input</b> to be answered and the model's <b>predicted output</b> (its highest-probability continuation given the prompt)." },
       { sym: "<b>token</b>", desc: "the atomic unit of text the model reads and predicts &mdash; a word or word-piece. GPT-3's context window holds 2048 tokens (&sect;2.1)." },
       { sym: "<b>parameter (weight)</b>", desc: "one of the network's tunable numbers. GPT-3 has 175 billion of them (Abstract). In-context learning leaves every one of them <b>unchanged</b>." },
       { sym: "<b>autoregressive language model</b>", desc: "a model that generates text one token at a time, each token conditioned on all previous tokens. GPT-3 is autoregressive; its job is next-token prediction (&sect;2.1)." },
@@ -172,10 +229,30 @@
       { sym: "<b>gradient update</b>", desc: "a small change to a weight computed from a labeled example via backpropagation. The repeated phrase in this paper is that few-shot involves \"no gradient updates\" &mdash; none of these happen." },
       { sym: "<b>zero-shot / one-shot / few-shot</b>", desc: "the three evaluation settings (&sect;2), distinguished only by $K$ = 0, 1, or many demonstrations in the prompt. All three forbid weight updates." }
     ],
-    formula: `$$ \\text{output} \\;=\\; \\text{GPT-3}\\big(\\,\\underbrace{\\text{task description}}_{\\text{instruction}} \\;,\\; \\underbrace{(x_1, y_1),\\,\\ldots\\,,(x_K, y_K)}_{K\\ \\text{demonstrations}} \\;,\\; \\underbrace{x_{\\text{query}}}_{\\text{the new input}}\\,\\big) $$ $$ K = 0 \\;\\Rightarrow\\; \\text{zero-shot} \\qquad K = 1 \\;\\Rightarrow\\; \\text{one-shot} \\qquad K \\in [10, 100] \\;\\Rightarrow\\; \\text{few-shot} \\qquad (\\text{weights frozen throughout}) $$`,
+    formula: `$$ \\mathcal{L}(\\theta) \\;=\\; \\sum_{t=1}^{T} \\log p_{\\theta}\\!\\left(u_t \\,\\mid\\, u_{t-1}, u_{t-2}, \\ldots, u_1\\right) $$
+       <p class="cap">The <b>autoregressive language-modeling objective</b> the model is trained on (the standard GPT / GPT-2 objective, &sect;2.1: "the same model and architecture as GPT-2"). Maximize, over parameters $\\theta$, the sum over positions $t$ of the log-probability the model assigns to the actual next token $u_t$ given all the tokens before it. This is the <i>only</i> training signal &mdash; predict the next token, over and over, across the corpus (about 300 billion tokens, Table 2.1).</p>
+
+       $$ p_{\\theta}(u_t \\mid u_{\\lt t}) \\;=\\; \\operatorname{softmax}\\!\\big(W_e\\, h_t^{(L)}\\big), \\qquad h_t^{(0)} = W_e\\,u_t + W_p[t], \\quad h^{(\\ell)} = \\text{TransformerBlock}_{\\ell}\\!\\big(h^{(\\ell-1)}\\big) $$
+       <p class="cap">How that next-token probability is computed (decoder-only Transformer, &sect;2.1): embed each token and its position, pass through $L$ stacked Transformer blocks, then project the final hidden state $h_t^{(L)}$ back to the vocabulary with the tied embedding matrix $W_e$ and a softmax. $L = 96$ blocks for the 175B model (Table 2.1).</p>
+
+       $$ \\text{output} \\;=\\; \\text{GPT-3}\\big(\\,\\underbrace{\\text{task description}}_{\\text{instruction}} \\;,\\; \\underbrace{(x_1, y_1),\\,\\ldots\\,,(x_K, y_K)}_{K\\ \\text{demonstrations}} \\;,\\; \\underbrace{x_{\\text{query}}}_{\\text{the new input}}\\,\\big) $$
+       <p class="cap">The <b>in-context learning</b> formalization (&sect;2). The prediction for a new input is a single forward pass over a prompt that concatenates an instruction, $K$ demonstration pairs, and the query &mdash; the same trained $\\theta$, never modified.</p>
+
+       $$ \\hat{y} \\;=\\; \\arg\\max_{y}\\; p_{\\theta}\\!\\left(y \\,\\mid\\, \\text{task description},\\; (x_1,y_1),\\ldots,(x_K,y_K),\\; x_{\\text{query}}\\right) \\qquad (\\theta \\text{ frozen}) $$
+       <p class="cap">The same protocol as a conditional probability: the answer is the highest-probability continuation given the description, the $K$ demonstrations, and the query &mdash; all as conditioning text. Crucially $\\theta$ is <b>frozen</b> (&sect;2: "no weight updates are allowed").</p>
+
+       $$ K = 0 \\;\\Rightarrow\\; \\text{zero-shot} \\qquad K = 1 \\;\\Rightarrow\\; \\text{one-shot} \\qquad K \\in [10, 100] \\;\\Rightarrow\\; \\text{few-shot} \\qquad (\\text{weights frozen throughout}) $$
+       <p class="cap">The three settings (&sect;2) differ only by the count $K$ of demonstrations in the prompt, bounded by the $n_{\\text{ctx}} = 2048$-token context window. No setting allows a gradient update.</p>`,
     whatItDoes:
-      `<p>This is not an equation to solve &mdash; it is a description of the <b>protocol</b>, written in the
-       paper's own terms (&sect;2). It says: the model's prediction for a new input $x_{\\text{query}}$ is produced
+      `<p><b>The training objective $\\mathcal{L}(\\theta)$.</b> In words: go through the corpus token by token, and
+       for each position add up the log of the probability the model gave to the token that <i>actually</i> came
+       next. Maximizing that sum means "make the real next token as likely as possible, everywhere." That single
+       objective &mdash; next-token prediction &mdash; is all GPT-3 is trained on. The forward-pass equation says
+       <i>how</i> that probability is produced: embed the tokens and their positions, push them through $L$ stacked
+       Transformer blocks, and softmax the last hidden state over the vocabulary.</p>
+       <p><b>The in-context protocol.</b> The remaining equations are not something to solve &mdash; they describe the
+       <b>protocol</b>, in the paper's own terms (&sect;2). They say: the model's prediction for a new input
+       $x_{\\text{query}}$ is produced
        by a single forward pass over a prompt that concatenates the task description, $K$ demonstration pairs
        $(x_i, y_i)$, and the query. The integer $K$ is the only knob that distinguishes zero-, one-, and few-shot.</p>
        <p>The load-bearing phrase is "<b>weights frozen throughout</b>." Contrast it with fine-tuning, where you
@@ -231,9 +308,10 @@
        2, 4, 8, 16. Our run gives accuracy 0.000 at K = 0, 0.325 at K = 1, and 0.952 at K = 16 &mdash; the climbing
        in-context curve. Those are <b>our small-scale numbers, not the paper's reported results.</b></p>`,
     recipe:
-      `<p>This is a read-only paper &mdash; no architecture to assemble (GPT-3 is "the same model and architecture
-       as GPT-2," &sect;2.1). Instead, here is the <b>evaluation protocol</b> the paper uses to test in-context
-       learning &mdash; the recipe you would follow yourself:</p>
+      `<p>This is a read-only paper &mdash; no <i>novel</i> architecture to assemble (GPT-3 is "the same model and
+       architecture as GPT-2," &sect;2.1; see the Architecture section for the decoder-only Transformer it scales up).
+       Instead, here is the <b>evaluation protocol</b> the paper uses to test in-context learning &mdash; the recipe
+       you would follow yourself:</p>
        <ol>
         <li><b>Freeze the model.</b> Take a single pre-trained autoregressive language model and make <i>no</i>
         further weight changes. Every setting below uses the same frozen weights.</li>

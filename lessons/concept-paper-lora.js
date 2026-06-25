@@ -137,6 +137,29 @@
        $\\tfrac{\\alpha}{r}\\,B A\\, x$.</p>
        <p>That is the entire method: freeze $W_0$, learn a low-rank $B A$ that starts at zero and is scaled by
        $\\alpha/r$. The only trainable parameters are $B$ and $A$.</p>`,
+    architecture:
+      `<p>LoRA is not a new network &mdash; it is a small <b>side-path bolted onto chosen weight matrices</b> of an
+       existing Transformer. Here is where the pieces attach and how data flows.</p>
+       <p><b>Where it attaches (&sect;4.2, &sect;7.1).</b> A Transformer block has a self-attention sub-layer with four
+       projection matrices &mdash; query $W_q$, key $W_k$, value $W_v$, and output $W_o$ &mdash; followed by a
+       feed-forward (MLP) sub-layer. The paper treats each of $W_q, W_k, W_v, W_o$ as one matrix of size
+       $d_{\\text{model}} \\times d_{\\text{model}}$ (the per-head slicing is ignored for adaptation). LoRA is added
+       to a <i>subset</i> of these. The main experiments adapt <b>only $W_q$ and $W_v$</b> (the query and value
+       projections) in every attention layer and leave $W_k$, $W_o$, and the entire MLP frozen.</p>
+       <p><b>The per-matrix module.</b> For an adapted matrix $W_0$ of shape $d_{\\text{model}}\\times d_{\\text{model}}$,
+       LoRA adds two factors: a <b>down-projection</b> $A$ of shape $r \\times d_{\\text{model}}$ (random Gaussian)
+       and an <b>up-projection</b> $B$ of shape $d_{\\text{model}} \\times r$ (zeros). At inference time the input
+       $x$ takes two parallel routes &mdash; the frozen $W_0 x$ and the side-path $\\tfrac{\\alpha}{r} B(A x)$
+       &mdash; whose outputs are summed (Eq. 3). The side-path is the only place gradients flow.</p>
+       <p><b>Rank choice (&sect;7.2).</b> $r$ is tiny &mdash; the paper finds $r \\in \\{1, 2, 4, 8\\}$ already
+       competitive, with $r = 4$ used for the headline GPT-3 175B run, and even $r_q = r_v = 1$ matching full
+       fine-tuning on several tasks. Larger $r$ rarely helps because the needed update has low intrinsic rank.
+       The scaling constant $\\alpha$ is set once (to the first $r$ tried) and not tuned.</p>
+       <p><b>Whole-model picture.</b> Stack this side-path on $W_q$ and $W_v$ across all $L$ attention layers.
+       Total trainable parameters $= 2 \\times L_{\\text{LoRA}} \\times d_{\\text{model}} \\times r$ &mdash; for GPT-3
+       ($d_{\\text{model}} = 12288$, 96 layers, $r = 4$) this is a few million numbers versus 175 billion. After
+       training, every $B A$ is merged back into its $W_0$, so the deployed model is structurally identical to
+       the original Transformer &mdash; same layers, same latency.</p>`,
     symbols: [
       { sym: "$W_0$", desc: "the <b>frozen pretrained weight matrix</b> of one layer, shape $d \\times k$. It maps a length-$k$ input to a length-$d$ output and is NOT trained during LoRA." },
       { sym: "$x$", desc: "the <b>input</b> to the layer (a length-$k$ vector, or a batch of them)." },
@@ -148,21 +171,56 @@
       { sym: "$d, k$", desc: "the <b>output and input sizes</b> of the layer. $W_0$ and $\\Delta W$ are $d \\times k$; $B$ is $d \\times r$; $A$ is $r \\times k$." },
       { sym: "$\\alpha$", desc: "the <b>LoRA scaling constant</b> (a fixed number, not trained). The update is multiplied by $\\alpha / r$. The paper calls $\\alpha$ \"a constant in $r$.\"" },
       { sym: "$\\alpha / r$", desc: "the <b>scale factor</b> applied to the update. Dividing by $r$ keeps the update's magnitude steady as you change the rank, so the learning rate need not be re-tuned per $r$." },
+      { sym: "$\\Phi$", desc: "the <b>entire set of model weights</b> being optimized. In full fine-tuning (Eq. 1) you search over all of $\\Phi$; $|\\Phi_0|$ is the pretrained model's parameter count (e.g. 175 billion)." },
+      { sym: "$\\Phi_0$", desc: "the <b>pretrained weights</b>, kept frozen in LoRA. The adapted model uses $\\Phi_0 + \\Delta\\Phi(\\Theta)$ (Eq. 2)." },
+      { sym: "$\\Theta$", desc: "the <b>small set of trainable LoRA parameters</b> (all the $B$'s and $A$'s). The update is a function $\\Delta\\Phi(\\Theta)$ of $\\Theta$, with $|\\Theta| \\ll |\\Phi_0|$." },
+      { sym: "$\\Delta\\Phi(\\Theta)$", desc: "the <b>whole-model weight update</b> produced by $\\Theta$ &mdash; the collection of per-layer $\\Delta W = B A$ terms. Eq. 2's model-level view of Eq. 3." },
+      { sym: "$\\mathcal{Z}$", desc: "the <b>training dataset</b> of context-target pairs $(x, y)$ the likelihood is summed over." },
+      { sym: "$x, y$", desc: "a <b>training example</b>: input context $x$ and target sequence $y$; $y_t$ is its $t$-th token and $y_{&lt;t}$ the tokens before it." },
+      { sym: "$P_{\\Phi}(y_t \\mid x, y_{&lt;t})$", desc: "the model's <b>probability of the next token</b> $y_t$ given the context and previous tokens; the objective maximizes its log over the data (Eqs. 1, 2)." },
+      { sym: "$W_q, W_k, W_v, W_o$", desc: "the four <b>self-attention projection matrices</b> (query, key, value, output), each $d_{\\text{model}}\\times d_{\\text{model}}$. LoRA's main runs adapt only $W_q$ and $W_v$." },
+      { sym: "$d_{\\text{model}}$", desc: "the <b>Transformer hidden size</b> &mdash; the width of each attention projection ($12288$ for GPT-3 175B)." },
+      { sym: "$L_{\\text{LoRA}}$", desc: "the <b>number of Transformer layers</b> that receive a LoRA adapter; trainable params $= 2\\, L_{\\text{LoRA}}\\, d_{\\text{model}}\\, r$." },
+      { sym: "$W, W'$", desc: "the <b>merged weight</b> $W = W_0 + B A$ shipped at inference, and $W'$ after swapping in a different task's adapter $B' A'$ (&sect;4.2)." },
       { sym: "“rank”", desc: "a plain term: the number of independent directions a matrix can span. A product $B A$ with inner dimension $r$ has rank at most $r$, so a small $r$ means a \"simple\" (low-rank) update." },
       { sym: "“frozen”", desc: "a plain term: a parameter whose gradient is turned off (<code>requires_grad=False</code>), so the optimizer never changes it." }
     ],
-    formula: `$$ h = W_0\\, x + \\Delta W\\, x = W_0\\, x + \\tfrac{\\alpha}{r}\\, B\\, A\\, x, \\qquad B \\in \\mathbb{R}^{d\\times r},\\; A \\in \\mathbb{R}^{r\\times k},\\; r \\ll \\min(d,k) \\quad\\text{(Eqn. 3, \\S4.1; with the }\\alpha/r\\text{ scaling of \\S4.1)} $$`,
+    formula:
+      `$$ \\max_{\\Phi}\\; \\sum_{(x,y)\\in\\mathcal{Z}} \\sum_{t=1}^{|y|} \\log\\, P_{\\Phi}\\!\\left(y_t \\mid x,\\, y_{&lt;t}\\right). $$
+       <p class="cap">Eq. 1 (&sect;2.1) &mdash; <b>full fine-tuning</b>: pick a whole new weight set $\\Phi$ (size $|\\Phi_0|$, e.g. 175B) to maximize the log-likelihood of each next token $y_t$. One full copy of $\\Phi$ per task.</p>
+
+       $$ \\max_{\\Theta}\\; \\sum_{(x,y)\\in\\mathcal{Z}} \\sum_{t=1}^{|y|} \\log\\, P_{\\Phi_0 + \\Delta\\Phi(\\Theta)}\\!\\left(y_t \\mid x,\\, y_{&lt;t}\\right), \\qquad |\\Theta| \\ll |\\Phi_0|. $$
+       <p class="cap">Eq. 2 (&sect;2.2) &mdash; <b>LoRA's objective</b>: freeze $\\Phi_0$ and optimize only a small set $\\Theta$ that produces the update $\\Delta\\Phi(\\Theta)$. The trainable count $|\\Theta|$ can be a tiny fraction of $|\\Phi_0|$ (the paper: as low as $0.01\\%$).</p>
+
+       $$ h = W_0\\, x + \\Delta W\\, x = W_0\\, x + \\tfrac{\\alpha}{r}\\, B\\, A\\, x, \\qquad B \\in \\mathbb{R}^{d\\times r},\\; A \\in \\mathbb{R}^{r\\times k},\\; r \\ll \\min(d,k). $$
+       <p class="cap">Eq. 3 (&sect;4.1) &mdash; the <b>per-layer low-rank update</b> (with the $\\alpha/r$ scaling of &sect;4.1): the frozen part $W_0 x$ plus a correction routed through a width-$r$ bottleneck $B A$. $A$ is random Gaussian, $B$ is zero, so $\\Delta W = B A = 0$ at the start of training.</p>
+
+       $$ |\\Theta| \\;=\\; 2 \\times L_{\\text{LoRA}} \\times d_{\\text{model}} \\times r. $$
+       <p class="cap">&sect;4.2 &mdash; <b>trainable-parameter count</b> when LoRA adapts the query and value projections ($W_q, W_v$) of $L_{\\text{LoRA}}$ Transformer layers. The factor $2$ is the two matrices per layer; each $d_{\\text{model}}\\times d_{\\text{model}}$ matrix contributes $2\\, d_{\\text{model}}\\, r$ via its $B$ and $A$.</p>
+
+       $$ W \\;=\\; W_0 + B A \\qquad\\Longrightarrow\\qquad W' \\;=\\; W - B A + B' A'. $$
+       <p class="cap">&sect;4.2 &mdash; <b>zero-latency merge and task switch</b>: after training, fold $B A$ into $W_0$ once to ship a single matrix $W$ (no extra layers, no inference slowdown). To switch tasks, subtract $B A$ and add another adapter $B' A'$ &mdash; a cheap, low-memory operation.</p>`,
     whatItDoes:
-      `<p>The equation says: pass the input $x$ through the <b>frozen</b> layer ($W_0 x$) and <b>add</b> a small
-       learned correction ($\\tfrac{\\alpha}{r} B A x$). The correction is computed in two cheap steps: first
-       $A x$ squeezes the length-$k$ input down to a tiny length-$r$ vector, then $B$ expands that back up to
-       length $d$. So the update flows through a narrow bottleneck of width $r$ &mdash; that is what makes it
-       low-rank and cheap.</p>
-       <p>Because $B$ starts at zero, the correction starts at zero and the adapted model is identical to the
-       frozen model at step 0; training then grows the correction. Because only $B$ and $A$ carry gradients,
-       the optimizer touches just $r(d+k)$ numbers instead of $d \\times k$. And because the correction is plain
-       addition, after training you can compute $W_0 + \\tfrac{\\alpha}{r}B A$ once and ship a single matrix &mdash;
-       no extra layers, no slowdown at inference (&sect;4.2).</p>`,
+      `<p><b>Eqs. 1 and 2 (the objective).</b> Eq. 1 is ordinary fine-tuning: find weights $\\Phi$ that make the
+       model assign high probability to each correct next token across the data &mdash; but $\\Phi$ is the whole
+       175-billion-parameter set. Eq. 2 is the same likelihood objective with the weights rewritten as
+       $\\Phi_0 + \\Delta\\Phi(\\Theta)$: the pretrained $\\Phi_0$ is held fixed and you optimize only the small
+       $\\Theta$. The constraint $|\\Theta| \\ll |\\Phi_0|$ is the whole point &mdash; you get fine-tuning's goal
+       while moving a tiny number of knobs.</p>
+       <p><b>Eq. 3 (the per-layer update).</b> Pass the input $x$ through the <b>frozen</b> layer ($W_0 x$) and
+       <b>add</b> a small learned correction ($\\tfrac{\\alpha}{r} B A x$). The correction is computed in two cheap
+       steps: first $A x$ squeezes the length-$k$ input down to a tiny length-$r$ vector, then $B$ expands that
+       back up to length $d$. So the update flows through a narrow bottleneck of width $r$ &mdash; that is what
+       makes it low-rank and cheap. Because $B$ starts at zero, the correction starts at zero and the adapted
+       model is identical to the frozen model at step 0; training then grows it. Only $B$ and $A$ carry gradients,
+       so the optimizer touches just $r(d+k)$ numbers instead of $d \\times k$.</p>
+       <p><b>The parameter-count formula.</b> $2 \\times L_{\\text{LoRA}} \\times d_{\\text{model}} \\times r$ just adds up
+       those per-layer costs over every adapted layer: two matrices ($W_q, W_v$) per layer, each costing
+       $2\\, d_{\\text{model}}\\, r$.</p>
+       <p><b>The merge $W = W_0 + B A$.</b> Because the correction is plain addition, after training you fold
+       $\\tfrac{\\alpha}{r}B A$ into $W_0$ once and ship a single matrix &mdash; no extra layers, no slowdown at
+       inference. Swapping tasks means subtracting one adapter and adding another, $W' = W - B A + B' A'$
+       (&sect;4.2).</p>`,
     derivation:
       `<p><b>Short recap &mdash; the transfer-learning framing (freeze a pretrained model, adapt it to a new task)
        lives in the fs-transfer-learning concept lesson.</b> Here we make precise <i>why a low-rank update is
