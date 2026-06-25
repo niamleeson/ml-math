@@ -417,6 +417,8 @@
 
   a.inlink { color: var(--accent); cursor: pointer; text-decoration: none; }
   a.inlink:hover { text-decoration: underline; }
+  a.lessonlink, a.paperlink { color: var(--accent); cursor: pointer; text-decoration: none; font-size: 13px; white-space: nowrap; }
+  a.lessonlink:hover, a.paperlink:hover { text-decoration: underline; }
 
   #welcome h2 { font-size: 32px; margin-top: 0; }
   #welcome .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 20px; }
@@ -1289,6 +1291,12 @@ const App = (function () {
     const m = { primitive: ["🔨 Build from scratch", "tb-a"], architecture: ["🧩 Compose with PyTorch", "tb-b"], "read-only": ["📖 Read-only", "tb-r"] };
     const t = m[track]; return t ? `<span class="trackbadge ${t[1]}">${t[0]}</span>` : "";
   }
+  // Rule: whenever we link a paper, link to its in-app lesson too — UNLESS that lesson
+  // is the page currently open. Returns "" when the target has no lesson or is the current page.
+  function lessonRefLink(paperId, currentId) {
+    if (!paperId || paperId === currentId || !byId[paperId]) return "";
+    return `<a class="lessonlink" onclick="App.open('${paperId}')">📘 lesson</a>`;
+  }
   function paperCard(l) {
     const p = l.paper || {};
     const links = [];
@@ -1354,10 +1362,13 @@ const App = (function () {
   function renderCapstone(l, id, prev, next) {
     const steps = (l.steps || []).map(s => {
       const lp = byId[s.paper], name = lp ? lp.title : s.paper;
-      const link = lp ? `<a onclick="App.open('${s.paper}')">${name}</a>` : `${name} <i>(coming soon)</i>`;
       const src = lp && lp.paper && (lp.paper.arxiv || lp.paper.url || lp.paper.pdf);
-      const plink = src ? ` <a class="paperlink" href="${src}" target="_blank" rel="noopener">📄 paper</a>` : "";
-      return `<li>${link}${s.builds ? ` — ${s.builds}` : ""}${plink}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
+      // Whenever we link a paper, link its in-app lesson too — unless that lesson is
+      // the page we're already on (here the page is the capstone, so it never is).
+      const llink = lessonRefLink(s.paper, id) || (lp ? "" : `<i>lesson coming soon</i>`);
+      const plink = src ? `<a class="paperlink" href="${src}" target="_blank" rel="noopener">📄 paper</a>` : "";
+      const refs = [llink, plink].filter(Boolean).join(" · ");
+      return `<li><b>${name}</b>${s.builds ? ` — ${s.builds}` : ""}${refs ? ` — ${refs}` : ""}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
     }).join("");
     return `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">🏗️ ${l.title}</h2>` +
