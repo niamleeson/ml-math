@@ -121,11 +121,37 @@
        soft-target term &mdash; they scale as $1/T^2$. So the paper rescales: "it is important to multiply them
        by $T^2$ when using both hard and soft targets &hellip; the relative contributions of the hard and soft
        targets remain roughly unchanged." Without this, a high temperature would silently mute the soft term.</p>`,
+    architecture:
+      `<p>Distillation is not a new network &mdash; it is a <b>training setup with two models</b> and a
+       <b>two-term loss</b>. The data flow, component by component:</p>
+       <ul>
+        <li><b>Teacher</b> (the "cumbersome" model) &mdash; a large network or an ensemble, already trained on
+        the hard labels. For each transfer input $x$ it produces logits $v = (v_1, \\ldots, v_N)$. It is
+        <b>frozen</b>: no gradients flow into it. Soft targets $q^{\\text{teacher}}_T = \\mathrm{softmax}(v / T)$
+        are computed once, under <code>no_grad</code>, at the high temperature $T$.</li>
+        <li><b>Student</b> (the "distilled" model) &mdash; a much smaller network with the <b>same $N$ output
+        classes</b>. For each input it produces logits $z = (z_1, \\ldots, z_N)$. These logits feed <b>two
+        softmax heads at once</b>, sharing the same logits but different temperatures:</li>
+        <li><b>Soft head</b> &mdash; $q^{\\text{student}}_T = \\mathrm{softmax}(z / T)$ at the <b>same high $T$</b>
+        as the teacher. Loss term 1: $\\mathrm{CE}(q^{\\text{student}}_T,\\, q^{\\text{teacher}}_T)$, scaled by
+        $T^2$. (In code: <code>kl_div(log_softmax(z/T), softmax(v/T)) * T*T</code>.)</li>
+        <li><b>Hard head</b> &mdash; $p^{\\text{student}} = \\mathrm{softmax}(z)$ at $T=1$. Loss term 2:
+        $\\mathrm{CE}(p^{\\text{student}},\\, y)$ against the true one-hot label $y$.</li>
+        <li><b>Combiner</b> &mdash; the total loss is the weighted average
+        $\\mathcal{L} = \\alpha\\, T^2\\, (\\text{soft CE}) + (1-\\alpha)\\,(\\text{hard CE})$. Only the
+        student's weights are updated.</li>
+        <li><b>Inference</b> &mdash; after training, the soft head is discarded; the student runs the hard head
+        alone at $T=1$, exactly like an ordinary classifier.</li>
+       </ul>
+       <p>So the same student logits $z$ fan out to two heads during training (high-$T$ soft + $T{=}1$ hard) and
+       collapse to one head ($T{=}1$) at test time; the teacher contributes only frozen targets.</p>`,
     symbols: [
       { sym: "$z_i$", desc: "the <b>logit</b> for class $i$ &mdash; the network's raw, unbounded score for that class, before any softmax." },
       { sym: "$q_i$", desc: "the <b>softened probability</b> of class $i$: the temperature-scaled softmax output. At $T=1$ it is the ordinary class probability." },
       { sym: "$T$", desc: "the <b>temperature</b> &mdash; a positive number you divide the logits by. $T=1$ is the normal softmax; larger $T$ flattens (softens) the distribution; the paper says it is \"normally set to 1\"." },
-      { sym: "$K$", desc: "the <b>number of classes</b> (the length of the logit vector)." },
+      { sym: "$K$", desc: "the <b>number of classes</b> (the length of the logit vector). The paper's matching-logits derivation (&sect;2.1) calls this same count $N$." },
+      { sym: "$v_i$", desc: "the <b>teacher logit</b> for class $i$ &mdash; the cumbersome model's raw score, the soft-target counterpart of the student's $z_i$ (paper notation, &sect;2.1)." },
+      { sym: "$N$", desc: "the <b>number of classes</b> in the matching-logits derivation (&sect;2.1) &mdash; the same count as $K$; appears in $1/(N T^2)$." },
       { sym: "$\\sum_j$", desc: "a <b>sum over all classes</b> $j = 1 \\ldots K$ &mdash; the softmax denominator that normalizes the probabilities to add up to $1$." },
       { sym: "teacher", desc: "a plain term: the big (or ensembled) trained model whose softened probabilities are the targets." },
       { sym: "student", desc: "a plain term: the small model being trained to copy the teacher (also called the \"distilled\" model)." },
@@ -133,7 +159,17 @@
       { sym: "$\\alpha$", desc: "a plain weight in $[0,1]$ that mixes the two loss terms: $\\alpha$ on the soft-target term, $1-\\alpha$ on the hard-label term (our notation, not a paper symbol)." },
       { sym: "KL", desc: "the <b>Kullback&ndash;Leibler divergence</b> &mdash; a measure of how far the student's distribution is from the teacher's. Minimizing it (with fixed teacher) equals the soft-target cross-entropy up to a constant." }
     ],
-    formula: `$$ q_i = \\frac{\\exp(z_i / T)}{\\sum_j \\exp(z_j / T)} \\qquad\\text{(Eqn. 1, \\S2)} \\qquad\\qquad \\mathcal{L} = \\alpha\\, T^2\\, \\mathrm{CE}\\big(q^{\\text{student}}_T,\\; q^{\\text{teacher}}_T\\big) \\;+\\; (1-\\alpha)\\, \\mathrm{CE}\\big(p^{\\text{student}},\\; y\\big) $$`,
+    formula:
+      `$$ q_i = \\frac{\\exp(z_i / T)}{\\sum_j \\exp(z_j / T)} $$
+       <p class="cap">Eqn. 1 (&sect;2) &mdash; the <b>temperature-softened softmax</b>: divide each logit by $T$, then normalize. $T=1$ is the ordinary softmax; larger $T$ softens the distribution.</p>
+       $$ \\mathcal{L} \\;=\\; \\alpha\\, T^2\\, \\mathrm{CE}\\big(q^{\\text{student}}_T,\\; q^{\\text{teacher}}_T\\big) \\;+\\; (1-\\alpha)\\, \\mathrm{CE}\\big(p^{\\text{student}},\\; y\\big) $$
+       <p class="cap">&sect;2 (in words in the paper; written out here) &mdash; the <b>distillation objective</b>: a weighted average of the soft-target cross-entropy at temperature $T$ (scaled by $T^2$) and the hard-label cross-entropy (at $T=1$).</p>
+       $$ \\frac{\\partial C}{\\partial z_i} \\;=\\; \\frac{1}{T}\\,(q_i - p_i) \\;=\\; \\frac{1}{T}\\!\\left(\\frac{e^{z_i/T}}{\\sum_j e^{z_j/T}} \\;-\\; \\frac{e^{v_i/T}}{\\sum_j e^{v_j/T}}\\right) $$
+       <p class="cap">Eqn. 2 (&sect;2.1) &mdash; the gradient of the soft cross-entropy w.r.t. a student logit $z_i$, with $v_i$ the teacher logits. The $1/T$ is the chain-rule factor.</p>
+       $$ \\frac{\\partial C}{\\partial z_i} \\;\\approx\\; \\frac{1}{T}\\!\\left(\\frac{1 + z_i/T}{N + \\sum_j z_j/T} \\;-\\; \\frac{1 + v_i/T}{N + \\sum_j v_j/T}\\right) $$
+       <p class="cap">Eqn. 3 (&sect;2.1) &mdash; the high-$T$ approximation: for $T$ large, $e^{x/T}\\approx 1 + x/T$.</p>
+       $$ \\frac{\\partial C}{\\partial z_i} \\;\\approx\\; \\frac{1}{N\\,T^2}\\,(z_i - v_i) $$
+       <p class="cap">Eqn. 4 (&sect;2.1) &mdash; if the logits are zero-meaned per case ($\\sum_j z_j = \\sum_j v_j = 0$), high-$T$ distillation reduces to minimizing $\\tfrac{1}{2}(z_i - v_i)^2$, i.e. <b>matching logits</b>. The $1/T^2$ here is exactly what the $T^2$ multiplier in $\\mathcal{L}$ cancels.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the softened softmax: divide each logit by $T$, then take the normal softmax.
        At $T=1$ it is the ordinary probability; at $T \\gt 1$ it spreads probability mass toward the
@@ -143,21 +179,39 @@
        and teacher's <i>softened</i> distributions (both at temperature $T$), multiplied by $T^2$ to undo the
        $1/T^2$ gradient shrinkage. The second term is the ordinary cross-entropy between the student's
        <i>un-softened</i> output $p^{\\text{student}}$ (at $T=1$) and the true label $y$. The weight $\\alpha$
-       trades the two off.</p>`,
+       trades the two off.</p>
+       <p><b>Equations 2&ndash;4</b> trace the soft-target gradient $\\partial C/\\partial z_i$: it starts as
+       $\\tfrac{1}{T}(q_i - p_i)$ (Eqn. 2), and in the high-$T$ limit with zero-meaned logits collapses to
+       $\\tfrac{1}{N T^2}(z_i - v_i)$ (Eqn. 4). That last form says two things at once: the gradient scales as
+       $1/T^2$ (hence the $T^2$ multiplier), and high-temperature distillation is just <b>matching the
+       student's logits $z_i$ to the teacher's logits $v_i$</b>.</p>`,
     derivation:
       `<p><b>Why the $T^2$ factor?</b> (No separate concept lesson owns this &mdash; here is the full
        argument.) Look at the gradient of the soft cross-entropy with respect to a student logit $z_k$. With
        student softened probability $q_k = \\mathrm{softmax}(z/T)_k$ and teacher target $p_k$, the standard
        softmax-cross-entropy gradient is</p>
-       <p>$$ \\frac{\\partial \\mathrm{CE}}{\\partial z_k} = \\frac{1}{T}\\,(q_k - p_k). $$</p>
-       <p>The $1/T$ comes from the chain rule: the loss depends on $z_k$ only through $z_k / T$, so each
-       derivative picks up a factor $1/T$. The paper analyzes the high-$T$ limit (&sect;2): when $T$ is large
-       compared to the logits, the softmax is nearly linear and $q_k - p_k$ is itself roughly proportional to
-       $1/T$. Multiply the two: the gradient magnitude scales as $1/T \\times 1/T = 1/T^2$. So as you soften,
-       the soft-target term quietly fades.</p>
-       <p>To keep the soft term pulling its weight next to the (un-scaled) hard term, multiply the soft loss
-       by $T^2$. That cancels the $1/T^2$, so &mdash; in the paper's words &mdash; "the relative contributions
-       of the hard and soft targets remain roughly unchanged" no matter what $T$ you pick.</p>
+       <p>$$ \\frac{\\partial C}{\\partial z_i} = \\frac{1}{T}\\,(q_i - p_i) = \\frac{1}{T}\\!\\left(\\frac{e^{z_i/T}}{\\sum_j e^{z_j/T}} - \\frac{e^{v_i/T}}{\\sum_j e^{v_j/T}}\\right). \\qquad\\text{(Eqn. 2)} $$</p>
+       <p>Here $p_i = \\mathrm{softmax}(v/T)_i$ is the frozen teacher target and $v_i$ the teacher logits. The
+       $1/T$ comes from the chain rule: the loss depends on $z_i$ only through $z_i / T$, so each derivative
+       picks up a factor $1/T$.</p>
+       <p><b>The high-temperature limit &mdash; matching logits.</b> Now take $T$ large compared to the logits.
+       Then $e^{x/T} \\approx 1 + x/T$, and Eqn. 2 becomes</p>
+       <p>$$ \\frac{\\partial C}{\\partial z_i} \\approx \\frac{1}{T}\\!\\left(\\frac{1 + z_i/T}{N + \\sum_j z_j/T} - \\frac{1 + v_i/T}{N + \\sum_j v_j/T}\\right). \\qquad\\text{(Eqn. 3)} $$</p>
+       <p>If the logits are <b>zero-meaned</b> for each transfer case ($\\sum_j z_j = \\sum_j v_j = 0$), both
+       denominators collapse to $N$ and this simplifies to</p>
+       <p>$$ \\frac{\\partial C}{\\partial z_i} \\approx \\frac{1}{N\\,T^2}\\,(z_i - v_i). \\qquad\\text{(Eqn. 4)} $$</p>
+       <p>This is exactly the gradient of $\\tfrac{1}{2}(z_i - v_i)^2$ (up to the $1/(NT^2)$ scale). So in the
+       paper's words, "in the high temperature limit, distillation is equivalent to minimizing
+       $\\tfrac{1}{2}(z_i - v_i)^2$, provided the logits are zero-meaned" &mdash; the student is simply pulled to
+       <b>match the teacher's logits</b>. Logit-matching (an older compression trick) is a special case of
+       distillation, not a separate method.</p>
+       <p><b>Why the $T^2$ factor?</b> Eqn. 4 also exposes the gradient's scale: it shrinks as $1/T^2$. So as
+       you soften, the soft-target term quietly fades. To keep the soft term pulling its weight next to the
+       (un-scaled) hard term, multiply the soft loss by $T^2$. That cancels the $1/T^2$, so &mdash; in the
+       paper's words &mdash; "the relative contributions of the hard and soft targets remain roughly unchanged"
+       no matter what $T$ you pick. (At intermediate $T$, where the logits are not small relative to $T$,
+       distillation pays <i>less</i> attention to very negative logits; the paper notes this can be an
+       advantage, since those logits are noisier.)</p>
        <p>(In code we minimize the Kullback&ndash;Leibler divergence to the fixed teacher, which differs from
        the soft cross-entropy only by a constant in the teacher, so it has the same gradient with respect to
        the student.)</p>`,
@@ -239,6 +293,7 @@
       "Write the softened-softmax equation (Eqn. 1) from memory, and say what $T$ does.",
       "Why must the soft-target loss be multiplied by $T^2$?",
       "What two terms make up the distillation loss, and which temperature does each use?",
+      "In the high-temperature limit (with zero-meaned logits), what simpler objective does distillation reduce to?",
       "What is \"dark knowledge\" &mdash; what information do the wrong-class probabilities carry?",
       "At inference time, what temperature does the student use?"
     ],

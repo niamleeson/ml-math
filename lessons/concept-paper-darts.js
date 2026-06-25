@@ -129,10 +129,42 @@
        network you replace each edge's mixture with its single strongest operation: take the <b>argmax</b> over
        $\\alpha^{(i,j)}$ (retaining the top-$k$ strongest operations per node). Then you retrain that discrete
        child network from scratch.</p>`,
+    architecture:
+      `<p>DARTS is an <b>algorithm</b> wrapped around a <b>search-space structure</b>. Both have a definite shape.</p>
+       <p><b>The search space &mdash; a cell as a directed acyclic graph (&sect;2.1).</b> The unit being searched is a
+       <b>cell</b>, not the whole network. A cell is a DAG of $N$ ordered nodes. The first two nodes are the outputs
+       of the two previous cells (its inputs); the remaining nodes are intermediate. Each node $x^{(j)}$ is the
+       <b>sum of its incoming edges</b> (Eqn. 1): for every earlier node $i \\lt j$, an operation $o^{(i,j)}$ is
+       applied to $x^{(i)}$ and the results are added. The <b>cell output</b> is the concatenation of all
+       intermediate nodes. Every edge draws its operation from the candidate set $\\mathcal{O}$: $3\\times3$ and
+       $5\\times5$ separable convolutions, $3\\times3$ and $5\\times5$ dilated separable convolutions, $3\\times3$
+       max-pool, $3\\times3$ average-pool, identity (skip-connect), and <b>zero</b> (no connection). The full
+       network is a <b>stack of these cells</b>; the paper learns two cell types &mdash; a <b>normal cell</b> (stride 1,
+       keeps resolution) and a <b>reduction cell</b> (stride 2 at the input edges, halves resolution) placed at
+       $1/3$ and $2/3$ of the network depth.</p>
+       <p><b>The relaxed model.</b> Replace every edge's single operation by the mixed operation $\\bar{o}^{(i,j)}$
+       (Eqn. 2). The whole super-network now carries two parameter sets: the ordinary weights $w$ (inside the
+       conv/linear ops) and one architecture vector $\\alpha^{(i,j)}$ per edge (length $|\\mathcal{O}|$). Both are
+       continuous, so the entire model is differentiable end-to-end.</p>
+       <p><b>The search procedure &mdash; per-iteration (Algorithm 1).</b> Until convergence, repeat:</p>
+       <ol>
+        <li><b>Update $\\alpha$</b> by descending $\\nabla_{\\alpha}\\mathcal{L}_{\\text{val}}(w - \\xi\\nabla_w
+        \\mathcal{L}_{\\text{train}}(w,\\alpha),\\,\\alpha)$ &mdash; the one-step approximate architecture gradient
+        (Eqn. 7), with $\\xi = 0$ for first-order and $\\xi \\gt 0$ for second-order (the Hessian term via the finite
+        difference of Eqn. 8).</li>
+        <li><b>Update $w$</b> by descending $\\nabla_w \\mathcal{L}_{\\text{train}}(w,\\alpha)$ &mdash; an ordinary
+        gradient step on the training split.</li>
+       </ol>
+       <p><b>Derive the discrete cell (&sect;2.4).</b> When the search ends: for each intermediate node keep the
+       strongest non-zero incoming edges (top-$2$ in the paper), and on each kept edge replace the mixture by its
+       $\\arg\\max_{o}\\alpha^{(i,j)}_o$ operation. This yields a concrete normal cell and reduction cell, which are
+       stacked into a larger network and <b>retrained from scratch</b> for the final evaluation.</p>`,
     symbols: [
       { sym: "$\\mathcal{O}$", desc: "the <b>candidate operation set</b>: the fixed menu of operations (e.g. $3\\times3$ convolution, max-pool, skip-connect, zero) the search may place on an edge." },
       { sym: "$o(\\cdot)$", desc: "a single <b>candidate operation</b> from $\\mathcal{O}$ &mdash; a function applied to the input feature on an edge." },
       { sym: "$(i,j)$", desc: "an <b>edge</b> from node $i$ to node $j$ in the cell's computation graph; the search decides which operation lives on it." },
+      { sym: "$x^{(j)}$", desc: "the feature at <b>node $j$</b> of the cell: the sum of every incoming edge's operation applied to its source node $x^{(i)}$ (Eqn. 1)." },
+      { sym: "$i \\lt j$", desc: "the edge-ordering rule: node $j$ receives edges only from <b>earlier</b> nodes $i$, which keeps the cell a directed <i>acyclic</i> graph." },
       { sym: "$x$", desc: "the <b>input</b> feature fed into the edge's operation." },
       { sym: "$\\alpha^{(i,j)}_{o}$", desc: "an <b>architecture parameter</b>: one real number per candidate op $o$ on edge $(i,j)$. Higher means that op gets more weight in the mixture. The whole collection $\\alpha$ <i>is</i> the (continuous) architecture." },
       { sym: "$\\bar{o}^{(i,j)}(x)$", desc: "the <b>mixed operation</b> on edge $(i,j)$: the softmax-weighted blend of every candidate op applied to $x$ (Eqn. 2)." },
@@ -142,10 +174,32 @@
       { sym: "$\\mathcal{L}_{\\text{val}}$", desc: "the loss on the held-out <b>validation</b> split; the outer objective that $\\alpha$ minimizes." },
       { sym: "$w^{*}(\\alpha)$", desc: "the <b>best weights for a given architecture</b>: the $w$ that minimizes $\\mathcal{L}_{\\text{train}}$ when the architecture is fixed at $\\alpha$. Found exactly only at convergence; approximated by one step." },
       { sym: "$\\xi$", desc: "the inner <b>step size</b> in the one-step approximation. $\\xi = 0$ gives first-order DARTS (no inner step); $\\xi \\gt 0$ gives second-order DARTS (keeps a Hessian term)." },
+      { sym: "$w'$", desc: "the <b>one-step-updated weights</b> $w' = w - \\xi\\nabla_w\\mathcal{L}_{\\text{train}}(w,\\alpha)$: the result of a single training step, standing in for $w^{*}(\\alpha)$ (Eqn. 6)." },
+      { sym: "$\\nabla_{\\alpha}$, $\\nabla_{w}$", desc: "the <b>gradient</b> (vector of partial derivatives) of a loss with respect to $\\alpha$ or $w$ &mdash; the direction of steepest increase, which gradient descent moves against." },
+      { sym: "$\\nabla^{2}_{\\alpha,w}\\mathcal{L}_{\\text{train}}$", desc: "the <b>second-order (mixed Hessian) term</b>: the matrix of second derivatives of the training loss, once w.r.t. $\\alpha$ and once w.r.t. $w$. It appears when differentiating through the one-step inner update (Eqn. 7)." },
+      { sym: "$\\epsilon$", desc: "a small <b>finite-difference step size</b> used to approximate the Hessian-vector product by two nearby gradient evaluations (Eqn. 8)." },
+      { sym: "$w^{\\pm}$", desc: "the two <b>perturbed weight points</b> $w^{\\pm} = w \\pm \\epsilon\\,\\nabla_{w'}\\mathcal{L}_{\\text{val}}(w',\\alpha)$ at which the training-loss $\\alpha$-gradient is evaluated for the finite difference (Eqn. 8)." },
+      { sym: "$N$", desc: "the number of <b>nodes in a cell</b> (its DAG has $N$ ordered nodes: two input nodes plus the intermediate ones)." },
+      { sym: "top-$k$", desc: "keep the $k$ <b>strongest</b> incoming operations per node when discretizing ($k = 2$ in the paper, &sect;2.4)." },
       { sym: "argmax", desc: "a plain term: pick the index of the largest entry. Used on $\\alpha$ at the end to turn the soft mixture into one discrete operation per edge." }
     ],
-    formula: `$$ \\bar{o}^{(i,j)}(x) \\;=\\; \\sum_{o \\in \\mathcal{O}} \\frac{\\exp\\!\\big(\\alpha^{(i,j)}_{o}\\big)}{\\sum_{o' \\in \\mathcal{O}} \\exp\\!\\big(\\alpha^{(i,j)}_{o'}\\big)} \\; o(x) \\qquad\\text{(Eqn. 2, §2.2)} $$
-$$ \\min_{\\alpha}\\; \\mathcal{L}_{\\text{val}}\\big(w^{*}(\\alpha),\\, \\alpha\\big) \\quad\\text{s.t.}\\quad w^{*}(\\alpha) = \\arg\\min_{w}\\; \\mathcal{L}_{\\text{train}}(w, \\alpha) \\qquad\\text{(Eqns. 3-4, §2.2)} $$`,
+    formula: `$$ x^{(j)} \\;=\\; \\sum_{i \\lt j} o^{(i,j)}\\!\\big(x^{(i)}\\big) \\qquad\\text{(Eqn. 1, §2.1)} $$
+<p>Each intermediate node is the sum of its incoming edges' operations applied to the source nodes &mdash; the cell's directed-graph structure.</p>
+$$ \\bar{o}^{(i,j)}(x) \\;=\\; \\sum_{o \\in \\mathcal{O}} \\frac{\\exp\\!\\big(\\alpha^{(i,j)}_{o}\\big)}{\\sum_{o' \\in \\mathcal{O}} \\exp\\!\\big(\\alpha^{(i,j)}_{o'}\\big)} \\; o(x) \\qquad\\text{(Eqn. 2, §2.2)} $$
+<p>The continuous relaxation: each edge's operation becomes a softmax-weighted <i>mixture</i> of every candidate op, parameterized by the architecture vector $\\alpha^{(i,j)}$.</p>
+$$ \\min_{\\alpha}\\; \\mathcal{L}_{\\text{val}}\\big(w^{*}(\\alpha),\\, \\alpha\\big) \\qquad\\text{(Eqn. 3, §2.2)} $$
+$$ \\text{s.t.}\\quad w^{*}(\\alpha) \\;=\\; \\arg\\min_{w}\\; \\mathcal{L}_{\\text{train}}(w, \\alpha) \\qquad\\text{(Eqn. 4, §2.2)} $$
+<p>The bi-level objective: the outer problem chooses $\\alpha$ to minimize the validation loss, subject to the inner constraint that $w$ is the best weights on the training loss for that $\\alpha$.</p>
+$$ \\nabla_{\\alpha}\\, \\mathcal{L}_{\\text{val}}\\big(w^{*}(\\alpha),\\, \\alpha\\big) \\;\\approx\\; \\nabla_{\\alpha}\\, \\mathcal{L}_{\\text{val}}\\big(\\,w - \\xi\\,\\nabla_{w}\\mathcal{L}_{\\text{train}}(w,\\alpha),\\; \\alpha\\,\\big) \\qquad\\text{(Eqns. 5-6, §2.3)} $$
+<p>The one-step approximation: instead of solving the inner problem to convergence, replace $w^{*}(\\alpha)$ by a single gradient step of $w$ with inner step size $\\xi$.</p>
+$$ \\nabla_{\\alpha}\\mathcal{L}_{\\text{val}}\\big(w',\\alpha\\big) \\;-\\; \\xi\\, \\nabla^{2}_{\\alpha,w}\\mathcal{L}_{\\text{train}}(w,\\alpha)\\; \\nabla_{w'}\\mathcal{L}_{\\text{val}}\\big(w',\\alpha\\big), \\qquad w' = w - \\xi\\,\\nabla_{w}\\mathcal{L}_{\\text{train}}(w,\\alpha) \\qquad\\text{(Eqn. 7, §2.3)} $$
+<p>Differentiating the one step by the chain rule produces a <b>second-order</b> term &mdash; a Hessian (matrix of second derivatives) of the training loss, multiplied by the validation gradient.</p>
+$$ \\nabla^{2}_{\\alpha,w}\\mathcal{L}_{\\text{train}}(w,\\alpha)\\; \\nabla_{w'}\\mathcal{L}_{\\text{val}}(w',\\alpha) \\;\\approx\\; \\frac{\\nabla_{\\alpha}\\mathcal{L}_{\\text{train}}(w^{+},\\alpha) - \\nabla_{\\alpha}\\mathcal{L}_{\\text{train}}(w^{-},\\alpha)}{2\\,\\epsilon}, \\qquad w^{\\pm} = w \\pm \\epsilon\\,\\nabla_{w'}\\mathcal{L}_{\\text{val}}(w',\\alpha) \\qquad\\text{(Eqn. 8, §2.3)} $$
+<p>The expensive Hessian-vector product is approximated by a finite difference of two gradients, costing only two extra forward/backward passes.</p>
+$$ \\xi = 0 \\;\\;\\Longrightarrow\\;\\; \\nabla_{\\alpha}\\,\\mathcal{L}_{\\text{val}}(w,\\alpha) \\qquad\\text{(first-order approximation, §2.3)} $$
+<p>Setting the inner step size $\\xi = 0$ drops the second-order term entirely: the cheap <b>first-order</b> variant just takes the $\\alpha$-gradient of the validation loss at the current weights.</p>
+$$ o^{(i,j)} \\;=\\; \\arg\\max_{o \\in \\mathcal{O}}\\; \\alpha^{(i,j)}_{o} \\qquad\\text{(discretization, §2.4)} $$
+<p>After the search, each edge's mixture collapses to its single strongest operation by argmax over $\\alpha$ (retaining the top-$k$ per node); the derived discrete cell is then retrained from scratch.</p>`,
     whatItDoes:
       `<p><b>Equation 2</b> is the continuous relaxation. It says: the operation on an edge is no longer "pick one";
        it is the <b>softmax-weighted average of every candidate op</b>. Run $x$ through each op $o$, weight the

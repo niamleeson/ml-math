@@ -127,6 +127,30 @@
        vector dot-product accumulates the partial products into an FP32 value, which is converted to FP16
        before writing to memory," and "Large reductions &hellip; should be carried out in FP32," such as
        batch-normalization statistics and softmax.</p>`,
+    architecture:
+      `<p>Mixed precision is not a model; it is a <b>per-iteration training procedure</b> that wraps any
+       network. The state it maintains: one <b>FP32 master copy</b> $w_{32}$ of every weight (the trusted
+       value) plus a transient <b>FP16 copy</b> $w_{16}$ used only for the passes. Data flow through one
+       step (the three techniques wired into the loop, &sect;3):</p>
+       <ol>
+        <li><b>Cast down.</b> Round the master $w_{32}\\to w_{16}$ (FP16). Activations and gradients also
+        live in FP16.</li>
+        <li><b>Forward (FP16).</b> Run the network in FP16 to produce the loss $L$. Inside any layer that
+        does a large reduction &mdash; matrix-multiply dot products, batch-norm statistics, softmax &mdash;
+        accumulate in <b>FP32</b> and write the result back to FP16 (technique 3, &sect;3.3).</li>
+        <li><b>Scale.</b> Form $\\tilde{L} = S\\cdot L$ (technique 2, &sect;3.2).</li>
+        <li><b>Backward (FP16).</b> Back-propagate $\\tilde{L}$; every gradient is born multiplied by $S$,
+        so values that would underflow below $2^{-24}$ instead land in the FP16 range.</li>
+        <li><b>Unscale.</b> Divide every gradient by $S$ (in FP32) to recover its true magnitude, before any
+        clipping.</li>
+        <li><b>Master update.</b> Apply the optimizer step to $w_{32}$ (technique 1, &sect;3.1); the tiny
+        update accumulates in FP32 instead of right-shifting to zero in FP16.</li>
+       </ol>
+       <p>The loop returns to step 1. The three techniques sit at three distinct points: FP32 accumulation
+       inside the forward/backward math (3.3), scale/unscale bracketing the backward pass (3.2), and the
+       FP32 master copy holding the weights across the cast-down at the top and the update at the bottom
+       (3.1). FP32 master weights add ~50% to weight storage, but because activations dominate, total
+       training memory still drops by nearly 2x.</p>`,
     symbols: [
       { sym: "FP16", desc: "<b>16-bit floating point</b> (half precision): 2 bytes per number, fast and small, but a narrow range &mdash; anything with magnitude below $2^{-24}$ rounds to $0$." },
       { sym: "FP32", desc: "<b>32-bit floating point</b> (single precision): 4 bytes per number, the safe default with a wide range and about 24 bits of precision." },
@@ -136,9 +160,24 @@
       { sym: "$g$", desc: "a <b>gradient</b>: the derivative of the loss with respect to a weight or activation. The thing that can underflow to $0$ in FP16." },
       { sym: "$L$", desc: "the <b>loss</b>: the scalar the network minimizes." },
       { sym: "$S$", desc: "the <b>loss-scaling factor</b>: a large constant the loss is multiplied by before back-propagation, then divided out of the gradients afterward (e.g. $S = 1024$)." },
-      { sym: "$2^{-24}$", desc: "the <b>smallest positive value FP16 can represent</b>; anything smaller becomes exactly $0$ (the underflow threshold)." }
+      { sym: "$2^{-24}$", desc: "the <b>smallest positive value FP16 can represent</b>; anything smaller becomes exactly $0$ (the underflow threshold)." },
+      { sym: "$w_{32}$", desc: "the <b>FP32 master copy</b> of a weight: the trusted single-precision value the optimizer updates and accumulates into." },
+      { sym: "$w_{16}$", desc: "the <b>FP16 working copy</b> of a weight: $w_{32}$ rounded to half precision, used only in the forward and backward passes." },
+      { sym: "$2^{11}=2048$", desc: "the <b>vanishing-update ratio</b>: FP16 keeps an 11-bit significand, so once a weight is $\\ge 2048$ times its update, adding the update in FP16 changes nothing (&sect;3.1)." },
+      { sym: "$\\tilde{L}$", desc: "the <b>scaled loss</b> $\\tilde{L} = S\\cdot L$: the loss multiplied by $S$ before back-propagation." },
+      { sym: "$\\mathrm{acc}_{32}$", desc: "an <b>FP32 accumulator</b>: the running total of a reduction (dot product, batch-norm sum, softmax) kept in FP32, then rounded to FP16 on write (&sect;3.3)." },
+      { sym: "$a_i,\\,b_i$", desc: "the <b>FP16 elements</b> being multiplied and summed in a dot product; their partial products are accumulated into $\\mathrm{acc}_{32}$." }
     ],
-    formula: `$$ \\tilde{L} = S \\cdot L \\;\\;\\Longrightarrow\\;\\; \\frac{\\partial \\tilde{L}}{\\partial w} = S \\cdot \\frac{\\partial L}{\\partial w} \\qquad\\text{(loss scaling, §3.2)}, \\qquad\\quad w_{32} \\leftarrow w_{32} - \\eta\\,\\frac{1}{S}\\,\\frac{\\partial \\tilde{L}}{\\partial w} \\qquad\\text{(FP32 master update, §3.1)} $$`,
+    formula: `$$ x_{\\mathrm{FP16}} = 0 \\quad\\text{whenever}\\quad |x| \\lt 2^{-24} . $$
+       <p class="cap">Underflow threshold (&sect;3.1): the smallest positive (subnormal) FP16 magnitude is $2^{-24}\\approx 5.96\\times10^{-8}$; anything below it stores as exactly $0$. Figure 2b reports that "approximately 5% of weight gradient values have exponents smaller than $-24$," and Figure 3 (&sect;3.2) shows "67% of values are zero" in one network's activation gradients.</p>
+       $$ w_{16} + u \\;=\\; w_{16} \\qquad\\text{whenever}\\qquad \\frac{|w|}{|u|} \\;\\ge\\; 2^{11} = 2048 . $$
+       <p class="cap">Vanishing-update analysis (&sect;3.1): FP16 keeps an $11$-bit significand (10 stored mantissa bits + 1 implicit bit). Aligning binary points to add a tiny update $u$ to a much larger weight $w$ right-shifts $u$; once $w$ is $\\ge 2048\\,(=2^{11})$ times $u$, $u$ shifts past the last kept bit and the addition does nothing.</p>
+       $$ w_{32} \\;\\xrightarrow{\\text{round}}\\; w_{16}, \\qquad w_{32} \\;\\leftarrow\\; w_{32} - \\eta\\, u, \\qquad u = \\frac{1}{S}\\,\\frac{\\partial \\tilde{L}}{\\partial w}. $$
+       <p class="cap">FP32 master copy (&sect;3.1): hold every weight in FP32; round to $w_{16}$ only for the forward/backward passes, but apply the optimizer step to $w_{32}$, where the tiny $u$ survives and accumulates across steps.</p>
+       $$ \\tilde{L} = S \\cdot L \\;\\;\\Longrightarrow\\;\\; \\frac{\\partial \\tilde{L}}{\\partial w} = S \\cdot \\frac{\\partial L}{\\partial w}, \\qquad g \\;\\leftarrow\\; \\frac{1}{S}\\,\\frac{\\partial \\tilde{L}}{\\partial w}. $$
+       <p class="cap">Loss scaling (&sect;3.2): multiply the loss by a constant $S$ before back-propagation; by the chain rule every gradient comes out multiplied by the same $S$, lifting small values above the $2^{-24}$ floor. Unscale (divide by $S$) right after the backward pass, before clipping or the update. The paper used $S$ from $8$ to $32768$ (e.g. $8$ for Multibox SSD, $128$ for bigLSTM); FP16's max representable value is $65504$, so $S$ must not overflow it.</p>
+       $$ \\mathrm{acc}_{32} \\;=\\; \\sum_{i} a_i^{\\,(16)} b_i^{\\,(16)} \\quad(\\text{in FP32}), \\qquad \\text{store } \\mathrm{round}_{16}(\\mathrm{acc}_{32}). $$
+       <p class="cap">FP32 accumulation of reductions (&sect;3.3): an FP16 dot product "accumulates the partial products into an FP32 value, which is converted to FP16 before writing to memory." Large reductions &mdash; sums across a vector, batch-normalization statistics, softmax &mdash; read/write FP16 but accumulate the running total in FP32.</p>`,
     whatItDoes:
       `<p><b>Left (loss scaling).</b> Replace the loss $L$ with a scaled loss $\\tilde{L} = S\\cdot L$ before
        back-propagation. Because the derivative is linear, every gradient $\\partial L / \\partial w$ comes

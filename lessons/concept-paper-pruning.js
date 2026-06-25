@@ -129,6 +129,30 @@
        wins after retraining, so the paper uses L2. <b>Dead neurons (&sect;3.5):</b> once a neuron loses all
        its input or all its output connections it contributes nothing, and retraining with regularization
        drives its remaining weights to zero too &mdash; it is pruned away for free.</p>`,
+    architecture:
+      `<p>This is an <b>algorithm</b> that wraps any trained network, not a new layer type. The procedure, as a
+       loop (&sect;3, &sect;3.4):</p>
+       <ol>
+        <li><b>Initial training.</b> Train the dense network with <b>L2</b> regularization
+        ($\\min_W L(W) + \\lambda\\sum_i w_i^2$, &sect;3.1) to convergence. Output: trained weights $W^{(0)}$.</li>
+        <li><b>Prune (per layer).</b> For each layer, compute the weight standard deviation $\\sigma$, set the
+        threshold $\\tau = q\\,\\sigma$ (&sect;4), and form the binary mask $m_i = \\mathbb{1}[|w_i| \\ge \\tau]$.
+        Apply it: $W \\leftarrow m \\odot W$. The dense matrix becomes sparse.</li>
+        <li><b>Dropout fix-up (&sect;3.2).</b> Because connections were removed, recompute each layer's
+        connection count $C_i = N_i N_{i-1}$ and lower the dropout rate to $D_r = D_o\\sqrt{C_{ir}/C_{io}}$ for
+        retraining.</li>
+        <li><b>Retrain the survivors (&sect;3.3).</b> Resume gradient descent from $m \\odot W^{(0)}$ (do NOT
+        re-initialize), re-applying the mask after every optimizer step so pruned weights stay zero. In very
+        deep nets, freeze CONV layers while retraining FC layers and vice-versa to avoid vanishing gradients.</li>
+        <li><b>Dead-neuron cleanup (&sect;3.5).</b> Neurons left with no input or no output connections are
+        dropped for free &mdash; regularization zeros their remaining weights during retraining.</li>
+        <li><b>Iterate (&sect;3.4).</b> Steps 2&ndash;5 are one iteration. Repeat &mdash; prune a little more,
+        retrain &mdash; to push sparsity higher than any single aggressive cut.</li>
+       </ol>
+       <p>Pruning is applied <b>per layer</b> (the threshold uses each layer's own $\\sigma$), giving
+       unstructured sparsity: individual weights vanish, not whole neurons or channels. The networks pruned in
+       the paper are standard CNNs/MLPs (LeNet-300-100, LeNet-5, AlexNet, VGG-16); the method changes their
+       <i>connectivity</i>, not their layer types.</p>`,
     symbols: [
       { sym: "$w_i$", desc: "a single <b>weight</b>: one learnable number on a connection between two neurons. Pruning decides, per weight, keep or delete." },
       { sym: "$|w_i|$", desc: "the <b>absolute value</b> (size, ignoring sign) of the weight. The pruning importance score: small size means the connection barely affects the output." },
@@ -138,9 +162,41 @@
       { sym: "$m_i$", desc: "the <b>binary mask</b> for weight $i$: $m_i = 1$ if $|w_i| \\ge \\tau$ (keep), else $m_i = 0$ (prune). The pruned weight is $m_i\\,w_i$." },
       { sym: "“sparsity”", desc: "a plain term: the fraction of weights set to zero. 0.9 sparsity means 90% of weights are pruned and 10% remain." },
       { sym: "“L1 / L2 regularization”", desc: "penalties added to the loss to keep weights small: L1 penalizes the sum of $|w_i|$, L2 the sum of $w_i^2$. The paper uses L2 (best after retraining, &sect;3.1)." },
-      { sym: "“co-adaptation”", desc: "a plain term: neighboring weights learn to work together. Re-initializing pruned layers breaks this, so the paper keeps the surviving weights (&sect;3.3)." }
+      { sym: "“co-adaptation”", desc: "a plain term: neighboring weights learn to work together. Re-initializing pruned layers breaks this, so the paper keeps the surviving weights (&sect;3.3)." },
+      { sym: "$m \\odot W$", desc: "the <b>masked weights</b>: elementwise (Hadamard) product of the binary mask and the weight matrix &mdash; survivors kept, pruned entries forced to zero." },
+      { sym: "$L(W)$", desc: "the <b>data loss</b> (e.g. cross-entropy) the network minimizes during training and retraining." },
+      { sym: "$R(W),\\ \\lambda$", desc: "the <b>regularization penalty</b> on weight size and its strength. $R_{L1}=\\sum_i|w_i|$, $R_{L2}=\\sum_i w_i^2$; $\\lambda$ scales how hard the penalty pulls weights toward zero (&sect;3.1)." },
+      { sym: "$C_i,\\ N_i$", desc: "the <b>connection count</b> of layer $i$ and its <b>neuron count</b>: $C_i = N_i\\,N_{i-1}$ (Eq. 1, &sect;3.2)." },
+      { sym: "$D_o,\\ D_r$", desc: "the <b>original</b> and <b>retraining dropout rates</b>. After pruning, $D_r = D_o\\sqrt{C_{ir}/C_{io}}$ &mdash; fewer connections means less co-adaptation to drop out (Eq. 2, &sect;3.2)." },
+      { sym: "$C_{io},\\ C_{ir}$", desc: "the connection count of layer $i$ <b>originally</b> ($o$) and <b>after pruning / retraining</b> ($r$); their ratio sets the dropout adjustment." },
+      { sym: "$m_{ij}$", desc: "the mask entry for the connection from neuron $i$ to neuron $j$. A neuron is dead when all its input or all its output mask entries are zero (&sect;3.5)." }
     ],
-    formula: `$$ \\tau = q \\cdot \\sigma \\qquad m_i = \\begin{cases} 1 & |w_i| \\ge \\tau \\\\ 0 & |w_i| \\lt \\tau \\end{cases} \\qquad w_i \\leftarrow m_i\\, w_i $$`,
+    formula:
+      `$$ W^{(0)} = \\text{train}(W),\\quad m = \\text{prune}(W^{(0)}),\\quad W^\\star = \\text{retrain}(m \\odot W^{(0)}) $$
+       <p>The three-step procedure (&sect;3, Abstract): train to learn which connections matter, prune to a sparse
+       mask $m$, then retrain the survivors. $\\odot$ is elementwise (Hadamard) product.</p>
+       $$ \\tau = q \\cdot \\sigma $$
+       <p>Per-layer pruning threshold (&sect;4): quality parameter $q$ times the layer's weight standard
+       deviation $\\sigma$. Larger $q$ deletes more.</p>
+       $$ m_i = \\mathbb{1}[\\,|w_i| \\ge \\tau\\,] = \\begin{cases} 1 & |w_i| \\ge \\tau \\\\ 0 & |w_i| \\lt \\tau \\end{cases} \\qquad w_i \\leftarrow m_i\\, w_i $$
+       <p>Binary mask by magnitude (&sect;3): keep weight $i$ iff its size is at least the threshold, then zero
+       the rest. $\\mathbb{1}[\\cdot]$ is the indicator (1 if true, else 0).</p>
+       $$ \\min_W\\; L(W) + \\lambda\\, R(W), \\qquad R_{L1}(W) = \\sum_i |w_i|, \\qquad R_{L2}(W) = \\sum_i w_i^2 $$
+       <p>Regularized training objective (&sect;3.1): data loss $L$ plus a weight penalty $R$ scaled by
+       $\\lambda$. L1 drives more weights toward zero (better right after pruning); L2 wins after retraining, so
+       the paper uses L2.</p>
+       $$ \\text{repeat: } \\; W \\leftarrow \\text{retrain}(m \\odot W), \\; m \\leftarrow \\text{prune}(W) $$
+       <p>Iterative pruning (&sect;3.4): one prune+retrain pass is one iteration; repeating reaches far higher
+       sparsity (AlexNet 5&times; &rarr; 9&times;) than a single aggressive cut.</p>
+       $$ C_i = N_i\\, N_{i-1} \\qquad D_r = D_o\\,\\sqrt{\\dfrac{C_{ir}}{C_{io}}} $$
+       <p>Dropout-rate adjustment after pruning (&sect;3.2, Eq. 1&ndash;2): $C_i$ is the connection count of layer
+       $i$ (its neurons $N_i$ times the previous layer's $N_{i-1}$); since pruning removes connections, the
+       retraining dropout $D_r$ is scaled down from the original $D_o$ by the square root of the surviving
+       connection ratio.</p>
+       $$ \\text{neuron } j \\text{ pruned} \\iff \\textstyle\\sum_i m_{ij} = 0 \\;\\text{ or }\\; \\sum_k m_{jk} = 0 $$
+       <p>Dead-neuron pruning (&sect;3.5): a neuron with no surviving input connections or no surviving output
+       connections contributes nothing; retraining with regularization drives its remaining weights to zero, so
+       it is removed for free.</p>`,
     whatItDoes:
       `<p>The magnitude criterion in three short pieces. First set the <b>threshold</b> $\\tau$ to a small
        quality factor $q$ times the layer's weight spread $\\sigma$ (&sect;4). Second, build a <b>mask</b>:

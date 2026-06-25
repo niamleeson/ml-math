@@ -127,6 +127,40 @@
        <p>$$ I * W \\approx (\\mathrm{sign}(I) \\circledast \\mathrm{sign}(W)) \\odot K\\alpha, $$</p>
        <p>where $\\circledast$ is convolution done with XNOR and bitcount, and $K$ holds the per-location input
        scales $\\beta$.</p>`,
+    architecture:
+      `<p>The novel building block is a single <b>binarized convolutional layer</b>, plus a deliberate
+       <b>reordering</b> of the operations inside a CNN block (§3.2, "Block Structure", Fig. 1).</p>
+       <p><b>A normal CNN block</b> runs the operations in this order:</p>
+       <p style="text-align:center"><code>Convolution &rarr; BatchNorm &rarr; Activation &rarr; Pooling</code></p>
+       <p><b>An XNOR-Net block</b> reorders them to <code>B&ndash;A&ndash;C&ndash;P</code>:</p>
+       <p style="text-align:center"><code>BatchNorm &rarr; BinActiv (binarize input) &rarr; BinConv (binary convolution) &rarr; Pooling</code></p>
+       <p>Two reasons for the reorder:</p>
+       <ul>
+        <li><b>BatchNorm first.</b> Normalizing to zero mean before binarizing means thresholding at $0$ (the
+        sign function) splits the data near its center, so fewer values are misclassified by the sign &mdash;
+        less quantization error.</li>
+        <li><b>Pooling last (after the convolution), not on binary values.</b> Max-pooling a $\\pm1$ tensor is
+        nearly useless: most windows contain a $+1$, so the pooled output is almost all $+1$ and information is
+        lost. Pooling the real-valued convolution output instead keeps that information.</li>
+       </ul>
+       <p><b>Inside the binarized layer (the data flow):</b></p>
+       <ol>
+        <li><b>BatchNorm</b> the real input feature map $I$ (channels $c$, spatial $w\\times h$).</li>
+        <li><b>Binarize the input:</b> $\\mathrm{sign}(I)$ gives a $\\pm1$ tensor; separately compute the
+        per-location input scales $K = A * k$ from $A=\\tfrac{1}{c}\\sum_i|I_{:,:,i}|$ (Eqn. 11 setup). $K$ is
+        computed <i>once</i> and reused across all output filters.</li>
+        <li><b>Binarize the weights:</b> $B=\\mathrm{sign}(W)$ (Eqn. 4) with one scale $\\alpha=\\mathrm{mean}(|W|)$
+        per output filter (Eqn. 6). These are stored as 1 bit each (32&times; memory saving).</li>
+        <li><b>Binary convolution:</b> slide $\\mathrm{sign}(W)$ over $\\mathrm{sign}(I)$ using
+        <b>XNOR + popcount</b> ($\\circledast$) instead of multiply-add, then multiply by $K\\alpha$
+        (Eqn. 11). The expensive inner product is now bit operations &mdash; the source of the $58\\times$
+        speedup.</li>
+        <li><b>Pool</b> the real-valued result, then feed the next block.</li>
+       </ol>
+       <p>Stacking these blocks turns a standard network (the paper uses AlexNet and ResNet-18 on ImageNet)
+       into a binary network. Training keeps a <b>real-valued copy</b> of every weight: the forward pass
+       binarizes, but gradients update the underlying floats (a straight-through estimator), because
+       $\\mathrm{sign}$ has zero gradient almost everywhere.</p>`,
     symbols: [
       { sym: "$W$", desc: "the <b>real-valued weight filter</b>, flattened to a vector of $n$ numbers." },
       { sym: "$n$", desc: "the <b>number of weights</b> in the filter (its length once flattened)." },
@@ -144,10 +178,39 @@
       { sym: "$\\circledast$", desc: "<b>binary convolution</b>: the same sliding dot product as normal convolution, but computed with XNOR and bitcount instead of floating-point multiply-add." },
       { sym: "$\\odot$", desc: "<b>element-wise multiply</b> (the Hadamard product): multiply two arrays position by position." },
       { sym: "$K$", desc: "the array of <b>per-location input scales</b> $\\beta$, one per output position, computed by averaging absolute input values over each window." },
+      { sym: "$\\oplus$", desc: "<b>multiplication-free convolution</b> (Eqn. 1): convolution with a $\\pm1$ filter, so each multiply becomes an add or subtract." },
+      { sym: "$I$", desc: "the <b>full input feature map</b> to a layer: a tensor with $c$ channels and spatial size $w\\times h$. ($X$ is one flattened patch of it.)" },
+      { sym: "$H$", desc: "the <b>binary input sign vector</b>, $H=\\mathrm{sign}(X)$: the input's analogue of $B$ (each entry $\\pm1$)." },
+      { sym: "$C$", desc: "the <b>elementwise sign-product</b> $\\mathrm{sign}(X)\\odot\\mathrm{sign}(W)=H\\odot B$ (Eqn. 9): the binary part of the input&times;weight approximation." },
+      { sym: "$\\gamma$", desc: "the <b>combined scale</b> $\\gamma=\\beta\\alpha$ (Eqn. 10): the product of the input scale $\\beta$ and the weight scale $\\alpha$." },
+      { sym: "$A$", desc: "the <b>channel-averaged absolute input</b>, $A=\\tfrac{1}{c}\\sum_i|I_{:,:,i}|$: a 2D map of the average input magnitude across channels." },
+      { sym: "$k$", desc: "the <b>averaging filter</b> with every entry $k_{ij}=1/(wh)$: convolving $A$ with it spreads the input scale over each window to build $K$." },
+      { sym: "$c$", desc: "the <b>number of input channels</b> of the feature map." },
+      { sym: "$w, h$", desc: "the <b>width and height</b> of the convolution window (so $N_W = wh$ for a single channel)." },
+      { sym: "$S$", desc: "the <b>speedup factor</b> $S=\\tfrac{64\\,cN_W}{cN_W+64}$: how much faster the bitwise convolution is than floating-point ($\\approx 62.27\\times$ theory, $58\\times$ measured)." },
+      { sym: "$N_W, N_I$", desc: "the <b>number of weight elements per filter</b> ($N_W$) and <b>output locations</b> ($N_I$) — they count the operations in the speedup formula." },
       { sym: "XNOR", desc: "a plain term, not a symbol: a bit operation that returns $1$ when its two input bits are <b>equal</b>, else $0$ &mdash; it detects sign agreement." },
       { sym: "popcount", desc: "a plain term: <b>population count</b>, the number of $1$ bits in a value &mdash; used here to count how many signs agreed." }
     ],
-    formula: `$$ J(B,\\alpha)=\\lVert W-\\alpha B\\rVert^2 \\;\\;\\text{(Eqn. 2)} \\qquad B=\\mathrm{sign}(W)\\;\\;\\text{(Eqn. 4)} \\qquad \\alpha^{*}=\\frac{1}{n}\\lVert W\\rVert_{\\ell 1}=\\mathrm{mean}(|W|)\\;\\;\\text{(Eqn. 6)} $$`,
+    formula:
+      `<p>$$ I * W \\approx (I \\oplus B)\\,\\alpha \\qquad\\text{(§3.1, Eqn. 1)} $$</p>
+       <p>The whole binary-weight idea in one line: a real convolution is approximated by a multiplication-free convolution $\\oplus$ with a $\\pm1$ filter $B$, then a single scale $\\alpha$.</p>
+       <p>$$ J(B,\\alpha) = \\lVert W - \\alpha B \\rVert^2 \\qquad\\text{(§3.1, Eqn. 2)} $$</p>
+       <p>The objective: pick the binary filter $B$ and one positive scale $\\alpha$ that best reconstruct the real filter $W$ in squared error.</p>
+       <p>$$ B^{*} = \\operatorname*{arg\\,max}_{B}\\,\\{W^{\\top}B\\}\\;\\;\\text{s.t. } B\\in\\{+1,-1\\}^{n} \\;\\;\\Longrightarrow\\;\\; B^{*} = \\mathrm{sign}(W) \\qquad\\text{(§3.1, Eqn. 4)} $$</p>
+       <p>The optimal binary filter is just the elementwise sign of $W$: matching signs maximizes the overlap $W^{\\top}B$, which is what minimizing the error reduces to.</p>
+       <p>$$ \\alpha^{*} = \\frac{1}{n}\\lVert W\\rVert_{\\ell 1} = \\mathrm{mean}(|W|) \\qquad\\text{(§3.1, Eqn. 6)} $$</p>
+       <p>The optimal scale is the average absolute weight — the cheapest possible correction (one number per filter) and provably the best one.</p>
+       <p>$$ \\lVert X\\odot W - \\beta\\alpha\\,H\\odot B\\rVert \\;\\;\\text{minimized over } H,B\\in\\{+1,-1\\}^{n},\\;\\beta,\\alpha\\in\\mathbb{R}^{+} \\qquad\\text{(§3.2, Eqn. 7)} $$</p>
+       <p>Binarize the input too: approximate the elementwise product $X\\odot W$ by two sign vectors $H,B$ times two scales $\\beta$ (input) and $\\alpha$ (weight).</p>
+       <p>$$ C^{*} = \\mathrm{sign}(X)\\odot\\mathrm{sign}(W) = H^{*}\\odot B^{*}, \\qquad \\gamma^{*} \\approx \\Big(\\tfrac{1}{n}\\lVert X\\rVert_{\\ell 1}\\Big)\\Big(\\tfrac{1}{n}\\lVert W\\rVert_{\\ell 1}\\Big) = \\beta^{*}\\alpha^{*} \\qquad\\text{(§3.2, Eqns. 9–10)} $$</p>
+       <p>Solving Eqn. 7: the optimal signs are the two sign vectors, and the optimal combined scale is the product of the two mean magnitudes $\\beta^{*}\\alpha^{*}$.</p>
+       <p>$$ I * W \\approx \\big(\\mathrm{sign}(I) \\circledast \\mathrm{sign}(W)\\big) \\odot K\\alpha \\qquad\\text{(§3.2, Eqn. 11)} $$</p>
+       <p>The full XNOR convolution: $\\circledast$ is convolution done with <b>XNOR + bitcount (popcount)</b> instead of floating-point multiply-add; $K$ holds the per-location input scales $\\beta$ and $\\alpha$ the weight scale.</p>
+       <p>$$ A = \\frac{1}{c}\\sum_{i}|I_{:,:,i}|,\\qquad K = A * k,\\quad k_{ij}=\\frac{1}{wh} \\qquad\\text{(§3.2, how } K \\text{ is built)} $$</p>
+       <p>$K$ is computed once per layer: average the absolute input across the $c$ channels to get $A$, then convolve with an averaging filter $k$ (all entries $1/(wh)$) so each output location gets its own input scale $\\beta$.</p>
+       <p>$$ S = \\frac{c\\,N_{W}N_{I}}{\\tfrac{1}{64}c\\,N_{W}N_{I} + N_{I}} = \\frac{64\\,c\\,N_{W}}{c\\,N_{W} + 64} \\qquad\\text{(§3.2, speedup)} $$</p>
+       <p>The speedup argument: a CPU does 64 binary ops per clock, so the bitwise convolution is $\\approx 64\\times$ cheaper per operation. With $c=256$ channels and a $3\\times3$ filter ($N_{W}=9$) this gives a theoretical $62.27\\times$, and the paper measures $58\\times$ in one convolution. Memory drops $32\\times$ (1 bit per weight instead of a 32-bit float).</p>`,
     whatItDoes:
       `<p><b>Equation 2</b> states the goal: find the binary filter $B$ and the single scale $\\alpha$ whose
        scaled product $\\alpha B$ is as close as possible (in squared error) to the real filter $W$.</p>

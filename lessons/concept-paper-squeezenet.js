@@ -141,19 +141,109 @@
        <p>So data flows <b>wide&nbsp;$\\rightarrow$&nbsp;thin&nbsp;(squeeze)&nbsp;$\\rightarrow$&nbsp;wide&nbsp;(expand)</b>.
        The expensive spatial filtering happens while the tensor is thin, which is where the parameter savings come
        from. SqueezeNet is just a stack of these Fire modules with a small classifier on top.</p>`,
+    architecture:
+      `<p><b>The Fire module</b> (&sect;3.2, Figure&nbsp;1) &mdash; the reusable block. Input: a tensor of $C$
+       channels at height $H$, width $W$.</p>
+       <ol>
+        <li><b>Squeeze layer</b>: a $1\\times1$ convolution $C \\to s_{1\\times1}$ (so $s_{1\\times1}$ filters, each
+        $1\\times1\\times C$), then ReLU. Output: $s_{1\\times1}$ channels at $H\\times W$ &mdash; the thin waist.</li>
+        <li><b>Expand layer</b> (two convolutions in parallel, both reading the $s_{1\\times1}$ squeezed channels):
+        <ul>
+         <li>a $1\\times1$ convolution $s_{1\\times1} \\to e_{1\\times1}$;</li>
+         <li>a $3\\times3$ convolution $s_{1\\times1} \\to e_{3\\times3}$ with padding $1$ (so $H,W$ are preserved and
+         the two outputs are the same spatial size).</li>
+        </ul></li>
+        <li><b>Concatenate</b> the two expand outputs along the channel axis &rarr; $e_{1\\times1}+e_{3\\times3}$
+        channels at $H\\times W$, then ReLU. (The paper uses no bottleneck-bias trick; just plain convs + ReLU.)</li>
+       </ol>
+       <p>Constraint: $s_{1\\times1} \\lt e_{1\\times1}+e_{3\\times3}$, so the module narrows before it widens.</p>
+
+       <p><b>The SqueezeNet macroarchitecture</b> (&sect;3.3, Table&nbsp;1) &mdash; one $3\\times3$ stem convolution,
+       eight Fire modules with three max-pools placed late (Strategy&nbsp;3), a final $1\\times1$ convolution to the
+       class count, then global average pooling and softmax. There are <b>no fully-connected layers</b>; the
+       classifier is the $1\\times1$ <code>conv10</code> followed by averaging. Input is a $224\\times224\\times3$
+       ImageNet image:</p>
+       <ul>
+        <li><b>conv1</b>: $3\\times3$ conv, stride&nbsp;2, $\\to 64$ channels &rarr; ReLU.</li>
+        <li><b>maxpool1</b>: $3\\times3$, stride&nbsp;2.</li>
+        <li><b>fire2</b>: $s_{1\\times1}{=}16$, $e_{1\\times1}{=}64$, $e_{3\\times3}{=}64$ (out&nbsp;128).</li>
+        <li><b>fire3</b>: $16,\\,64,\\,64$ (out&nbsp;128).</li>
+        <li><b>fire4</b>: $32,\\,128,\\,128$ (out&nbsp;256).</li>
+        <li><b>maxpool4</b>: $3\\times3$, stride&nbsp;2.</li>
+        <li><b>fire5</b>: $32,\\,128,\\,128$ (out&nbsp;256).</li>
+        <li><b>fire6</b>: $48,\\,192,\\,192$ (out&nbsp;384).</li>
+        <li><b>fire7</b>: $48,\\,192,\\,192$ (out&nbsp;384).</li>
+        <li><b>fire8</b>: $64,\\,256,\\,256$ (out&nbsp;512).</li>
+        <li><b>maxpool8</b>: $3\\times3$, stride&nbsp;2.</li>
+        <li><b>fire9</b>: $64,\\,256,\\,256$ (out&nbsp;512).</li>
+        <li><b>conv10</b>: $1\\times1$ conv $\\to 1000$ channels (one per ImageNet class) &rarr; ReLU.</li>
+        <li><b>avgpool10</b>: $13\\times13$ global average pool &rarr; a length-1000 vector &rarr; softmax.</li>
+       </ul>
+       <p>Note the squeeze widths grow with depth ($16\\to32\\to48\\to64$) while the expand widths grow in step
+       ($\\text{base}_e{=}128$, $\\text{incr}_e{=}128$ every $\\text{freq}{=}2$ modules, $\\text{pct}_{3\\times3}{=}0.5$
+       so $e_{1\\times1}=e_{3\\times3}$), and every Fire module here sits at SR&nbsp;$=0.125$ (e.g. fire2:
+       $16/128$). The three pools are concentrated late, keeping the activation maps large for most of the network.
+       The paper also studies two variants &mdash; "simple bypass" (a residual skip around alternate Fire modules)
+       and "complex bypass" (a $1\\times1$ conv on the skip where channel counts differ) &mdash; with the simple
+       bypass giving the best reported accuracy (&sect;6).</p>
+       <p>The CODE panel builds a <i>scaled-down</i> version of this for a toy task: a $3\\times3$ stem, four Fire
+       modules, one mid-network max-pool (downsample late), global average pool, and a linear classifier &mdash; the
+       same skeleton, smaller widths.</p>`,
     symbols: [
       { sym: "$C$", desc: "the number of <b>input channels</b> to a Fire module (how many feature maps come in). A 'feature map' is one filtered version of the image." },
       { sym: "$s_{1\\times1}$", desc: "the number of $1\\times1$ filters in the <b>squeeze</b> layer &mdash; i.e. how many channels the squeeze layer outputs. Kept small (this is the thin waist of the module)." },
       { sym: "$e_{1\\times1}$", desc: "the number of $1\\times1$ filters in the <b>expand</b> layer." },
       { sym: "$e_{3\\times3}$", desc: "the number of $3\\times3$ filters in the <b>expand</b> layer. The module's output has $e_{1\\times1}+e_{3\\times3}$ channels." },
-      { sym: "SR", desc: "the <b>squeeze ratio</b> (&sect;5.2): squeeze width divided by expand width, $s_{1\\times1} / (e_{1\\times1}+e_{3\\times3})$. A small SR means a very thin squeeze (fewer parameters); a large SR means a wider squeeze (more parameters)." },
+      { sym: "SR", desc: "the <b>squeeze ratio</b> (&sect;5.2): squeeze width divided by expand width, $s_{1\\times1} / (e_{1\\times1}+e_{3\\times3})$. A small SR means a very thin squeeze (fewer parameters); a large SR means a wider squeeze (more parameters). SqueezeNet uses SR&nbsp;$=0.125$." },
+      { sym: "$a, b, k$", desc: "in the convolution rule: $a$ = a layer's input-channel count, $b$ = its output-channel count, $k$ = its filter side length (so a $k\\times k$ filter has area $k^2$). The layer holds $a\\,b\\,k^2$ weights plus $b$ biases." },
+      { sym: "$H, W$", desc: "the <b>height</b> and <b>width</b> (in pixels) of a feature map. Padding the $3\\times3$ expand by 1 keeps $H$ and $W$ unchanged so the two expand outputs can be concatenated." },
+      { sym: "$\\text{pct}_{3\\times3}$", desc: "(&sect;5.1) the fraction of expand filters that are $3\\times3$, i.e. $e_{3\\times3}/(e_{1\\times1}+e_{3\\times3})$. SqueezeNet uses $0.5$, so the two expand widths are equal." },
+      { sym: "$\\text{base}_e,\\ \\text{incr}_e,\\ \\text{freq}$", desc: "(&sect;5.1) the macroarchitecture knobs that set each Fire module's expand width: it starts at $\\text{base}_e$ ($=128$) and grows by $\\text{incr}_e$ ($=128$) every $\\text{freq}$ ($=2$) modules. $i$ indexes the Fire module." },
       { sym: "“channel”", desc: "one feature map &mdash; one of the stacked 2-D arrays a convolution layer produces. More channels = more capacity but more parameters." },
       { sym: "“squeeze layer”", desc: "the $1\\times1$-only convolution that REDUCES the channel count from $C$ down to the small $s_{1\\times1}$." },
       { sym: "“expand layer”", desc: "the parallel $1\\times1$ and $3\\times3$ convolutions whose channel outputs are concatenated to INCREASE the channel count back up." },
       { sym: "ReLU", desc: "the activation $\\max(0,x)$: keep positive numbers, replace negatives with zero. Applied after both the squeeze and the expand step." },
       { sym: "“parameter”", desc: "a single learned weight stored by the network. A convolution layer holds $(\\text{in channels})\\times(\\text{out channels})\\times(\\text{filter area})$ weights, plus one bias per output channel." }
     ],
-    formula: `$$ \\#\\text{params(Fire)} \\;=\\; \\underbrace{C\\cdot s_{1\\times1}\\cdot 1^2}_{\\text{squeeze }1\\times1} \\;+\\; \\underbrace{s_{1\\times1}\\cdot e_{1\\times1}\\cdot 1^2}_{\\text{expand }1\\times1} \\;+\\; \\underbrace{s_{1\\times1}\\cdot e_{3\\times3}\\cdot 3^2}_{\\text{expand }3\\times3} \\;+\\; \\underbrace{(s_{1\\times1}+e_{1\\times1}+e_{3\\times3})}_{\\text{biases}} $$`,
+    formula:
+      `$$ \\text{params}(\\text{conv}) \\;=\\; a\\cdot b\\cdot k^2 \\;+\\; b $$
+       <p>The standard convolution weight rule (used throughout the paper, never written as a numbered equation): a
+       convolution layer with $a$ input channels, $b$ output channels, and a $k\\times k$ filter holds $a\\,b\\,k^2$
+       weights plus $b$ biases. Everything below is this rule applied and summed.</p>
+
+       $$ \\text{Strategy 1:}\\quad \\frac{\\text{params}(3\\times3\\text{ filter})}{\\text{params}(1\\times1\\text{ filter})} \\;=\\; \\frac{3^2}{1^2} \\;=\\; 9 $$
+       <p>&sect;3.1, Strategy&nbsp;1 (replace $3\\times3$ with $1\\times1$ filters): a $3\\times3$ filter has $9\\times$ as
+       many weights as a $1\\times1$ filter for the same channel counts, so prefer $1\\times1$ wherever possible.</p>
+
+       $$ \\text{cost of the }3\\times3\\text{ expand} \\;=\\; \\underbrace{s_{1\\times1}}_{\\text{inputs}}\\cdot e_{3\\times3}\\cdot 3^2 \\qquad\\text{not}\\qquad \\underbrace{C}_{\\text{full inputs}}\\cdot e_{3\\times3}\\cdot 3^2 $$
+       <p>&sect;3.1, Strategy&nbsp;2 (decrease input channels to $3\\times3$ filters): the squeeze layer makes the
+       costly $3\\times3$ filters read only $s_{1\\times1}$ channels instead of the module's full $C$, cutting their
+       weight count by a factor $C / s_{1\\times1}$.</p>
+
+       $$ \\text{Fire: } x \\in \\mathbb{R}^{C\\times H\\times W} \\;\\xrightarrow{\\;1\\times1\\text{ squeeze}\\;}\\; \\mathbb{R}^{s_{1\\times1}\\times H\\times W} \\;\\xrightarrow[\\text{concat}]{\\;1\\times1\\,\\|\\,3\\times3\\text{ expand}\\;}\\; \\mathbb{R}^{(e_{1\\times1}+e_{3\\times3})\\times H\\times W} $$
+       <p>&sect;3.2 (the Fire module): squeeze the $C$ input channels down to $s_{1\\times1}$ with a $1\\times1$-only
+       layer, then expand back out by running a $1\\times1$ ($\\to e_{1\\times1}$) and a $3\\times3$ ($\\to e_{3\\times3}$)
+       convolution in parallel and concatenating along the channel axis. Height $H$ and width $W$ are preserved.</p>
+
+       $$ s_{1\\times1} \\;\\lt\\; (e_{1\\times1} + e_{3\\times3}) $$
+       <p>&sect;3.2 (the squeeze constraint): the squeeze width is set below the total expand width, so the squeeze
+       layer genuinely limits the number of input channels reaching the $3\\times3$ filters.</p>
+
+       $$ \\text{SR} \\;=\\; \\frac{s_{1\\times1}}{\\,e_{1\\times1} + e_{3\\times3}\\,} \\;\\in\\; [0,1] $$
+       <p>&sect;5.2 (squeeze ratio): the ratio of squeeze-layer width to expand-layer width. SqueezeNet uses
+       SR&nbsp;$=0.125$. Small SR = a very thin squeeze = fewer parameters but less capacity; large SR = a wider
+       squeeze = more parameters.</p>
+
+       $$ \\text{pct}_{3\\times3} \\;=\\; \\frac{e_{3\\times3}}{\\,e_{1\\times1} + e_{3\\times3}\\,}, \\qquad e_i \\;=\\; \\text{base}_e \\;+\\; \\Big(\\text{incr}_e \\cdot \\big\\lfloor \\tfrac{i}{\\text{freq}} \\big\\rfloor\\Big) $$
+       <p>&sect;5.1 (the macroarchitecture metaparameters that generate the whole net): $\\text{pct}_{3\\times3}$ is
+       the fraction of expand filters that are $3\\times3$ (SqueezeNet uses $0.5$, so $e_{1\\times1}=e_{3\\times3}$);
+       the expand width of Fire module $i$ starts at $\\text{base}_e$ and grows by $\\text{incr}_e$ every $\\text{freq}$
+       modules. SqueezeNet uses $\\text{base}_e=128$, $\\text{incr}_e=128$, $\\text{freq}=2$.</p>
+
+       $$ \\text{params(Fire)} \\;=\\; \\underbrace{C\\cdot s_{1\\times1}\\cdot 1^2}_{\\text{squeeze }1\\times1} \\;+\\; \\underbrace{s_{1\\times1}\\cdot e_{1\\times1}\\cdot 1^2}_{\\text{expand }1\\times1} \\;+\\; \\underbrace{s_{1\\times1}\\cdot e_{3\\times3}\\cdot 3^2}_{\\text{expand }3\\times3} \\;+\\; \\underbrace{(s_{1\\times1}+e_{1\\times1}+e_{3\\times3})}_{\\text{biases}} $$
+       <p>The parameter count of one Fire module: the convolution rule above summed over its three convolutions plus
+       their biases. The squeeze width $s_{1\\times1}$ multiplies <i>both</i> expand terms, so it is the dominant
+       lever on the module's size (it follows from the &sect;3.2 structure; the paper states no closed-form for it).</p>`,
     whatItDoes:
       `<p>This counts the learned weights in one Fire module. There is no single equation in the paper for this
        (the paper gives the module structure in &sect;3.2 and Figure&nbsp;1); the count below follows directly from

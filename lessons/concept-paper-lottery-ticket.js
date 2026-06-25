@@ -138,27 +138,85 @@
        paper reports this trains worse &mdash; "when randomly reinitialized, winning tickets perform far worse,
        meaning structure alone cannot explain a winning ticket's success" (&sect;2). So the specific starting
        values $\\theta_0$, paired with that mask, are what win.</p>`,
+    architecture:
+      `<p>There is no new <i>layer</i> here &mdash; the contribution is an <b>algorithm</b> wrapped around ordinary
+       dense networks. So this section has two parts: the networks the paper prunes, and the Iterative Magnitude
+       Pruning (IMP) loop itself.</p>
+       <p><b>The networks pruned (&sect;2&ndash;3).</b> All are standard feed-forward nets, pruned <i>per layer</i>:</p>
+       <ul>
+        <li><b>LeNet-300-100</b> on MNIST: input $784 \\to$ fully-connected $300 \\to$ fully-connected $100 \\to$
+        output $10$, ReLU between layers. About <b>266K</b> parameters. This is the workhorse of &sect;2.</li>
+        <li><b>Conv-2 / Conv-4 / Conv-6</b> on CIFAR-10: $2$, $4$, or $6$ convolutional $3\\times 3$ layers with
+        max-pooling after every two convolutions, then two fully-connected layers ($256 \\to 256 \\to 10$). These
+        show the effect holds beyond fully-connected nets (&sect;3).</li>
+       </ul>
+       <p><b>The IMP algorithm (the actual contribution, &sect;1&ndash;2).</b> State carried across rounds: the
+       saved init $\\theta_0$ and a binary mask $m$ (one bit per weight, all $1$s at the start). Per round
+       $r = 1 \\dots n$:</p>
+       <ol>
+        <li><b>Reset + mask.</b> Load $\\theta_0$ into the net and apply the current mask: weights $\\gets m \\odot \\theta_0$.</li>
+        <li><b>Train.</b> Run $j$ gradient steps. After <i>every</i> step, re-apply the mask
+        ($\\text{weight} \\gets m \\odot \\text{weight}$) so pruned entries stay exactly $0$ &mdash; the optimizer's
+        momentum/decay would otherwise nudge them off zero.</li>
+        <li><b>Prune.</b> Among the weights still alive ($m_i = 1$), rank by trained magnitude $|\\theta_j|$ and
+        flip $m_i \\gets 0$ for the smallest $p^{1/n}\\%$. The mask only ever loses bits, never regains them.</li>
+       </ol>
+       <p>After $n$ rounds the mask has compounded down to high sparsity ($P_m = \\lVert m \\rVert_0 / |\\theta|$).
+       The final winning ticket is one more reset-and-train on $m \\odot \\theta_0$. The <b>random-reinit control</b>
+       is the same flow but step 1 fills survivors with a fresh draw $\\theta_0' \\sim \\mathcal{D}_\\theta$ instead of
+       the saved $\\theta_0$ &mdash; identical mask, identical training, only the starting weights differ.</p>
+       <p><b>In this lesson's code</b> the pruned net is a smaller student MLP ($D{=}40 \\to 300 \\to 300 \\to 6$,
+       ReLU) trained by SGD with momentum on a hard random-teacher task, and IMP runs $n{=}13$ rounds keeping
+       $70\\%$ of survivors each round ($0.7^{13} \\approx 1\\%$ remaining) &mdash; our small stand-in for the
+       paper's LeNet, not its architecture.</p>`,
     symbols: [
       { sym: "$f(x;\\theta)$", desc: "the <b>network</b> as a function: it maps input $x$ to an output using the weight vector $\\theta$." },
       { sym: "$\\theta$", desc: "<b>theta</b>, the full vector of the network's weights (all of them, stacked into one long list)." },
       { sym: "$\\theta_0$", desc: "<b>theta-zero</b>, the weights at the very start &mdash; the random <b>initialization</b>, before any training. The winning ticket resets to these." },
       { sym: "$\\theta_j$", desc: "<b>theta-j</b>, the weights after training for $j$ steps. Their magnitudes choose the mask; their values are then thrown away." },
       { sym: "$j$", desc: "the number of training <b>iterations</b> (gradient steps) run before pruning." },
+      { sym: "$\\mathcal{D}_\\theta$", desc: "the <b>initialization distribution</b> the weights are drawn from (e.g. a Gaussian or Kaiming/He init). $\\theta_0 \\sim \\mathcal{D}_\\theta$ means \"$\\theta_0$ is one random draw from it.\"" },
       { sym: "$m$", desc: "the <b>mask</b>: a vector of $0$s and $1$s, one per weight. $1$ = keep this connection, $0$ = prune (delete) it." },
       { sym: "$m \\odot \\theta$", desc: "<b>element-wise product</b>: multiply each weight by its mask entry, so kept weights pass through and pruned ones become $0$. This is how the mask is applied." },
       { sym: "$f(x; m \\odot \\theta_0)$", desc: "the <b>winning ticket</b>: the masked subnetwork whose surviving weights are reset to their original init $\\theta_0$." },
       { sym: "$p\\%$", desc: "the <b>pruning rate</b>: the fraction of (still-surviving) weights removed, chosen as the smallest by absolute value." },
       { sym: "$n$", desc: "the number of <b>rounds</b> in Iterative Magnitude Pruning; each round prunes $p^{1/n}\\%$ of the survivors." },
+      { sym: "$\\tau_r$", desc: "the <b>pruning threshold</b> in round $r$: the magnitude below which surviving weights are zeroed (the $p^{1/n}\\%$-smallest survivor's value)." },
+      { sym: "$j',\\,a'$", desc: "the winning ticket's <b>stopping time</b> $j'$ (steps to its best accuracy) and its <b>test accuracy</b> $a'$. The hypothesis wants $j' \\le j$ and $a' \\ge a$." },
+      { sym: "$a$", desc: "the <b>dense network's</b> test accuracy &mdash; the bar the ticket must match." },
+      { sym: "$\\theta_0',\\,a'_{\\text{rand}}$", desc: "$\\theta_0'$ is a <b>fresh random init</b> drawn for the random-reinit control; $a'_{\\text{rand}}$ is that control's accuracy, which the paper finds below $a'$." },
       { sym: "$\\lVert m \\rVert_0$", desc: "the <b>count of $1$s</b> in the mask (the number of weights kept). The subscript $0$ means \"how many entries are non-zero.\"" },
       { sym: "$|\\theta|$", desc: "the total number of weights in the dense network (the length of $\\theta$)." },
       { sym: "$P_m$", desc: "<b>sparsity level</b>: the fraction of weights remaining, $P_m = \\lVert m \\rVert_0 / |\\theta|$. Small $P_m$ means very sparse (e.g. $P_m \\approx 0.05$ keeps 5&percnt;)." },
       { sym: "“winning ticket”", desc: "a plain term, not a symbol: the sparse subnetwork-plus-original-init that trains alone to full accuracy." }
     ],
-    formula: `$$ \\exists\\; m \\in \\{0,1\\}^{|\\theta|} \\;\\;\\text{such that}\\;\\; \\text{training}\\; f(x;\\, m \\odot \\theta_0) \\;\\text{gives}\\quad j' \\le j,\\qquad a' \\ge a,\\qquad \\lVert m \\rVert_0 \\ll |\\theta|. $$`,
+    formula:
+      `$$ \\exists\\; m \\in \\{0,1\\}^{|\\theta|} \\;\\;\\text{such that}\\;\\; \\text{training}\\; f(x;\\, m \\odot \\theta_0) \\;\\text{gives}\\quad j' \\le j,\\qquad a' \\ge a,\\qquad \\lVert m \\rVert_0 \\ll |\\theta|. $$
+       <p><b>The formal hypothesis (&sect;1).</b> Some $0/1$ mask $m$ exists for which the reset-to-init
+       subnetwork $f(x; m \\odot \\theta_0)$ trains at least as fast ($j' \\le j$) to at least the dense accuracy
+       ($a' \\ge a$) while keeping far fewer weights ($\\lVert m \\rVert_0 \\ll |\\theta|$).</p>
+
+       $$ \\theta_0 \\sim \\mathcal{D}_\\theta, \\qquad \\theta \\xleftarrow{\\;\\text{train } j \\text{ iters}\\;} \\theta_j, \\qquad m = \\text{Prune}_{p\\%}\\!\\big(\\,|\\theta_j|\\,\\big), \\qquad \\text{winning ticket} = f(x;\\, m \\odot \\theta_0). $$
+       <p><b>The four-step identification procedure (&sect;1).</b> Draw an init $\\theta_0$, train $j$ steps to
+       $\\theta_j$, build the mask $m$ by pruning the smallest-magnitude $p\\%$ of $\\theta_j$, then <i>reset</i> the
+       survivors to $\\theta_0$ &mdash; not $\\theta_j$ &mdash; to form the ticket.</p>
+
+       $$ \\text{round } r = 1 \\dots n: \\quad \\theta \\gets m \\odot \\theta_0,\\;\\; \\text{train } j \\text{ steps},\\;\\; m \\gets m \\odot \\mathbb{1}\\!\\left[\\,|\\theta_j| \\gt \\tau_r\\,\\right],\\qquad \\tau_r = \\big(p^{1/n}\\%\\big)\\text{-smallest survivor}. $$
+       <p><b>Iterative Magnitude Pruning (&sect;1&ndash;2).</b> Each of $n$ rounds resets to $\\theta_0$, trains,
+       then prunes only $p^{1/n}\\%$ of the survivors (threshold $\\tau_r$), so the network is whittled down
+       gradually instead of in one cut.</p>
+
+       $$ \\theta_0' \\sim \\mathcal{D}_\\theta, \\qquad f(x;\\, m \\odot \\theta_0') \\;\\;\\text{(same mask } m\\text{, fresh init)} \\;\\;\\Longrightarrow\\;\\; a'_{\\text{rand}} \\lt a' . $$
+       <p><b>The random-reinitialization control (&sect;2).</b> Keep the winning ticket's mask $m$ but fill the
+       survivors with a fresh draw $\\theta_0'$; the paper finds this trains worse ($a'_{\\text{rand}} \\lt a'$),
+       so structure alone cannot explain a ticket's success &mdash; the specific init $\\theta_0$ matters.</p>
+
+       $$ P_m = \\frac{\\lVert m \\rVert_0}{|\\theta|}. $$
+       <p><b>Sparsity level.</b> The fraction of weights remaining; small $P_m$ means very sparse.</p>`,
     whatItDoes:
-      `<p>This is the <b>formal hypothesis</b> (&sect;1). Read it left to right. "There exists a mask $m$" of
-       $0$s and $1$s such that, when you train the masked, reset-to-init subnetwork $f(x; m \\odot \\theta_0)$,
-       three things hold:</p>
+      `<p><b>Equation 1, the formal hypothesis.</b> Read it left to right. "There exists a mask $m$" of $0$s and
+       $1$s such that, when you train the masked, reset-to-init subnetwork $f(x; m \\odot \\theta_0)$, three things
+       hold:</p>
        <ul>
         <li>$j' \\le j$ &mdash; it reaches its best accuracy in <b>no more</b> training steps than the full
         network ($j'$ is the ticket's stopping time, $j$ the full net's). <b>Just as fast.</b></li>
@@ -169,7 +227,19 @@
        </ul>
        <p>Informally (&sect;1): "dense, randomly-initialized, feed-forward networks contain subnetworks
        (winning tickets) that &mdash; when trained in isolation &mdash; reach test accuracy comparable to the
-       original network in a similar number of iterations."</p>`,
+       original network in a similar number of iterations."</p>
+       <p><b>Equation 2, the four-step procedure.</b> Reads as a pipeline: sample an init from the distribution
+       $\\mathcal{D}_\\theta$, train it to $\\theta_j$, set $m$ to drop the smallest-magnitude $p\\%$ of those
+       trained weights, then form the ticket by masking the <i>init</i> $\\theta_0$. The trained weights are used
+       only to <i>choose</i> $m$; the values that get trained next are $\\theta_0$.</p>
+       <p><b>Equation 3, Iterative Magnitude Pruning.</b> The loop body: reset to $\\theta_0$, train $j$ steps,
+       then knock out the bottom $p^{1/n}\\%$ of surviving magnitudes (everything below the threshold $\\tau_r$).
+       Because each round prunes only a small slice, $n$ rounds compound to deep sparsity while the net keeps
+       re-optimizing around what remains.</p>
+       <p><b>Equation 4, the control.</b> Same mask $m$, but the survivors get a <i>new</i> random draw
+       $\\theta_0'$. The paper reports the resulting accuracy $a'_{\\text{rand}}$ falls below the ticket's $a'$ &mdash;
+       isolating the original init as the cause.</p>
+       <p><b>Equation 5, $P_m$,</b> just names the x-axis of every figure: what fraction of weights is left.</p>`,
     derivation:
       `<p>This is an <b>empirical hypothesis</b>, not a theorem &mdash; the paper supports it by experiment, so
        there is no algebra to prove. But the <b>mechanism</b> of the procedure is exact and worth pinning down.</p>

@@ -132,6 +132,30 @@
        a few values dominate. <b>Huffman coding</b> is a lossless scheme that gives the common symbols short
        codewords and rare symbols long ones, so the average bits per symbol drops. Applying it to the indices
        and the sparse-position differences "saves 20%&ndash;30% of network storage" on top of stages 1&ndash;2.</p>`,
+    architecture:
+      `<p>Deep Compression is not a network &mdash; it is a <b>three-stage compression pipeline</b> (&sect;1,
+       Fig. 1) applied to an <i>already-trained</i> network. Data flows left to right; the size shrinks at
+       each stage and accuracy is restored by retraining inside the first two stages.</p>
+       <p><b>Stage 1 &mdash; Pruning + sparse storage (&sect;2).</b> Train normally, zero every weight whose
+       magnitude is below a threshold, retrain the survivors, repeat. This drops the connection count
+       <b>9x&ndash;13x</b>. The survivors are kept in <b>compressed-sparse-row / column (CSR / CSC)</b>
+       format: for a matrix with $a$ non-zeros and $n$ rows it stores <b>$2a + n + 1$</b> numbers (the
+       values, their column indices, and row pointers). To make the indices cheap, the paper stores the
+       <b>index difference</b> (gap to the previous non-zero) instead of the absolute index, encoded in
+       <b>5 bits for fully-connected layers and 8 bits for convolutional layers</b>; when a gap exceeds the
+       budget ($\\gt 2^5$ or $2^8$) it inserts a <b>zero-padding</b> filler so no difference overflows.</p>
+       <p><b>Stage 2 &mdash; Trained quantization / weight sharing (&sect;3).</b> Per layer, run 1-D k-means
+       (Eqn. 2) on the surviving scalar weights to get a <b>codebook</b> of $k$ shared centroids. Each weight
+       is replaced by an <b>index</b> into that codebook: $\\log_2 k$ bits each. The paper uses <b>5-bit FC
+       (32 centroids) and 8-bit CONV (256 centroids)</b>. Centroids are <b>linearly initialized</b> between
+       the min and max weight, then <b>fine-tuned</b> by gradient descent &mdash; the gradients of all weights
+       sharing a centroid are summed (Eqn. 3) and the assignments stay fixed.</p>
+       <p><b>Stage 3 &mdash; Huffman coding (&sect;4).</b> The centroid indices and the index-difference symbols
+       are non-uniformly distributed, so a static <b>Huffman code</b> (short codewords for frequent symbols)
+       losslessly removes a further <b>20%&ndash;30%</b>. No retraining; this stage is pure entropy coding.</p>
+       <p><b>Networks compressed (&sect;5).</b> The pipeline is demonstrated on <b>LeNet-300-100</b> and
+       <b>LeNet-5</b> (MNIST), and on <b>AlexNet</b> (240MB &rarr; 6.9MB, <b>35x</b>) and <b>VGG-16</b>
+       (552MB &rarr; 11.3MB, <b>49x</b>) on ImageNet &mdash; in every case with no loss of accuracy.</p>`,
     symbols: [
       { sym: "$w$", desc: "a single <b>weight</b> &mdash; one connection's value, originally a 32-bit floating-point number." },
       { sym: "$n$", desc: "the <b>number of weights</b> (connections) in the layer being compressed." },
@@ -146,7 +170,8 @@
       { sym: "$I_{ij}$", desc: "the <b>cluster index</b> of weight $W_{ij}$ &mdash; which centroid it was assigned to." },
       { sym: "$C_k$", desc: "the value of the $k$-th centroid being fine-tuned (the thing the gradient in Eqn. 3 updates)." },
       { sym: "$\\mathcal{L}$", desc: "the <b>loss</b> (the training objective being minimized)." },
-      { sym: "$\\mathbb{1}(\\cdot)$", desc: "the <b>indicator</b>: 1 if the condition inside is true, 0 otherwise. Here it selects weights belonging to cluster $k$." }
+      { sym: "$\\mathbb{1}(\\cdot)$", desc: "the <b>indicator</b>: 1 if the condition inside is true, 0 otherwise. Here it selects weights belonging to cluster $k$." },
+      { sym: "$a$", desc: "the <b>number of non-zero weights</b> in a pruned (sparse) matrix. A compressed-sparse-row matrix with $a$ non-zeros and $n$ rows stores $2a + n + 1$ numbers (&sect;2)." }
     ],
     formula: `$$ \\arg\\min_{C} \\; \\sum_{i=1}^{k} \\sum_{w \\in c_i} |\\,w - c_i\\,|^2 \\qquad\\text{(Eqn. 2, k-means objective)} $$
 $$ r = \\frac{n\\,b}{n\\,\\log_2(k) + k\\,b} \\qquad\\text{(Eqn. 1, compression rate)} \\qquad\\qquad

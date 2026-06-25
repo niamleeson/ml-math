@@ -145,6 +145,39 @@
        backward pass, pretend the rounding was the identity function and pass the gradient through unchanged.
        Forward rounds; backward acts as if it did not. That one trick is what makes quantization-aware training
        trainable.</p>`,
+    architecture:
+      `<p>This paper has two distinct structures: the <b>integer-only inference engine</b> (what ships to the
+       device) and the <b>quantization-aware training graph</b> (what produces the ranges and robust weights).</p>
+       <p><b>A. Inference engine &mdash; one quantized layer (&sect;2).</b> Each tensor (weights $w$, input
+       activations, output activations) is stored as <b>uint8</b> with its own pair $(S, Z)$ from Eq. 1.
+       For a Linear / Conv layer the data flow is:</p>
+       <ol>
+        <li><b>Inputs:</b> uint8 activations $q_1$ with $(S_1, Z_1)$; uint8 weights $q_2$ with $(S_2, Z_2)$.</li>
+        <li><b>Integer accumulate:</b> compute $\\sum_j q_1 q_2$ and the zero-point correction terms into an
+        <b>int32</b> accumulator (Eq. 7) &mdash; all integer multiply-adds.</li>
+        <li><b>Bias add:</b> add the bias, kept in <b>int32</b> (higher precision than the int8 weights).</li>
+        <li><b>Rescale:</b> multiply the int32 accumulator by $M = S_1 S_2 / S_3$ (Eq. 5), realized as the
+        fixed-point $M = 2^{-n} M_0$ (Eq. 6) &mdash; one fixed-point multiply + a bit-shift.</li>
+        <li><b>Requantize:</b> add $Z_3$, clamp to $[0,255]$, emit <b>uint8</b> activations for the next layer.</li>
+        <li><b>Fused activation:</b> ReLU/ReLU6 folds into the clamp; the activation function never needs float.</li>
+       </ol>
+       <p>So every layer is uint8-in &rarr; int32-accumulate &rarr; uint8-out, with one $M$-rescale per layer and
+       no floating-point arithmetic anywhere on the device.</p>
+       <p><b>B. Training graph &mdash; quantization-aware training (&sect;3).</b> Start from the ordinary float
+       network and rewrite each weighted layer:</p>
+       <ol>
+        <li><b>Master weights</b> stay in float32 and are what the optimizer updates.</li>
+        <li><b>Weight fake-quant</b> (Eq. 12) before the matmul, with range $[a,b] = [\\min w, \\max w]$ of that
+        weight tensor &mdash; per-tensor, recomputed each step.</li>
+        <li><b>Activation fake-quant</b> (Eq. 12) after the layer (and after a folded ReLU), with range $[a,b]$
+        tracked by an <b>exponential moving average</b> of observed min/max across batches.</li>
+        <li><b>Batch-norm folding (&sect;3.2):</b> BN scale/shift are folded into the conv weights <i>before</i>
+        the weight fake-quant, so training simulates the same folded weights inference will use.</li>
+        <li><b>Backward:</b> the round inside every fake-quant uses the <b>straight-through estimator</b>
+        (gradient = identity on $[a,b]$, $0$ outside); gradients reach the float master weights normally.</li>
+       </ol>
+       <p>After training, the collected $(a,b)$ ranges give each tensor's $(S,Z)$, and the float master weights are
+       rounded once to the uint8 values the inference engine in (A) consumes.</p>`,
     symbols: [
       { sym: "$r$", desc: "a <b>real</b> number (float32) &mdash; an actual weight or activation value, e.g. $1.5$." },
       { sym: "$q$", desc: "the <b>quantized integer</b> that stands in for $r$ &mdash; one of a small set, e.g. an int8 value in $0\\ldots255$." },
@@ -155,11 +188,29 @@
       { sym: "$s$", desc: "the fake-quant <b>step size</b> $s = (b-a)/(n-1)$ &mdash; same idea as $S$, written for the $[a,b]$, $n$-level form (Eq. 12)." },
       { sym: "$\\hat{r}$", desc: "the <b>fake-quantized</b> value: $r$ rounded onto the integer grid and mapped back to a real number. Close to $r$, but pinned to a grid point." },
       { sym: "$M$", desc: "the rescale <b>multiplier</b> $M = S_1 S_2 / S_3$ (Eq. 5) &mdash; the single real factor left over after an integer matrix multiply; implemented as a fixed-point shift." },
+      { sym: "$S_1, S_2, S_3$", desc: "the scales of the two input tensors ($S_1$ activations, $S_2$ weights) and the output tensor ($S_3$) of a matmul. Their combination $S_1 S_2 / S_3$ is $M$." },
+      { sym: "$Z_1, Z_2, Z_3$", desc: "the zero-points of the two inputs and the output of a matmul &mdash; the integers that map to real $0$ for each tensor (Eq. 7)." },
+      { sym: "$M_0,\\ n$", desc: "the fixed-point form of $M$: $M = 2^{-n} M_0$ with $M_0 \\in [0.5,1)$ a normalized fraction and $n \\ge 0$ the bit-shift count (Eq. 6). (This $n$ is the shift, not the level count.)" },
+      { sym: "$N$", desc: "the inner (summed) dimension of the integer matmul in Eq. 7 &mdash; how many integer multiply-adds accumulate per output entry." },
+      { sym: "$a_2^{(k)},\\ \\bar a_1^{(i)}$", desc: "the integer column/row sums of the quantized inputs ($a_2^{(k)}=\\sum_i q_2$, $\\bar a_1^{(i)}=\\sum_j q_1$); the zero-point-correction terms in Eq. 7." },
       { sym: "“fake quantization”", desc: "a plain term: round-to-grid-then-map-back inserted in the forward pass during training, so the net experiences int8 error while still training in float." },
       { sym: "“straight-through estimator (STE)”", desc: "a plain term: in back-propagation, treat the (non-differentiable) round as the identity and pass the gradient through unchanged." },
       { sym: "“exponential moving average (EMA)”", desc: "a plain term: a running average that decays old values, used to track an activation tensor's real range $[a,b]$ across training batches." }
     ],
-    formula: `$$ r = S\\,(q - Z) \\qquad\\text{(Eq. 1, §2.1)} \\qquad\\qquad q(r;a,b,n) = \\left\\lfloor \\frac{\\text{clamp}(r;a,b) - a}{s} \\right\\rceil s + a,\\ \\ s = \\frac{b-a}{n-1} \\quad\\text{(Eq. 12, §3)} $$`,
+    formula: `<p>$$ r = S\\,(q - Z) $$</p>
+      <p>Eq. 1 (&sect;2.1) &mdash; the affine quantization map: real value $r$ from integer $q$ via scale $S$ (a positive real) and zero-point $Z$ (an integer). Invert it to quantize: $q = Z + \\text{round}(r/S)$.</p>
+      <p>$$ S_3\\,(q_3 - Z_3) = \\sum_{j} S_1 (q_1^{(j)} - Z_1)\\, S_2 (q_2^{(j)} - Z_2) $$</p>
+      <p>&sect;2.2 &mdash; substitute Eq. 1 into a real matrix-multiply entry $r_3 = \\sum_j r_1^{(j)} r_2^{(j)}$. Every $q$, $Z$ is an integer; only the scales are real.</p>
+      <p>$$ M \\;:=\\; \\frac{S_1 S_2}{S_3} $$</p>
+      <p>Eq. 5 (&sect;2.2) &mdash; the rescale <b>multiplier</b>: the single real factor left after pulling the scales out of the integer sum. The paper shows $M \\in (0, 1)$.</p>
+      <p>$$ M = 2^{-n} M_0, \\qquad M_0 \\in [0.5, 1) $$</p>
+      <p>Eq. 6 (&sect;2.2) &mdash; write $M$ as a normalized fixed-point fraction $M_0$ times a power of two, so applying $M$ is a fixed-point multiply plus a bit-shift by $n$ &mdash; no float needed.</p>
+      <p>$$ q_3^{(i,k)} = Z_3 + M\\Big( N Z_1 Z_2 - Z_1 a_2^{(k)} - Z_2 \\bar{a}_1^{(i)} + \\sum_{j=1}^{N} q_1^{(i,j)} q_2^{(j,k)} \\Big) $$</p>
+      <p>Eq. 7 (&sect;2.2) &mdash; the integer-only output of one matmul entry: an integer sum $\\sum q_1 q_2$ (plus integer zero-point corrections, where $a_2^{(k)}=\\sum_i q_2$ and $\\bar a_1^{(i)}=\\sum_j q_1$), rescaled once by $M$ and offset by $Z_3$.</p>
+      <p>$$ \\text{clamp}(r;a,b) := \\min(\\max(r,a),b), \\qquad s := \\frac{b-a}{n-1}, \\qquad q(r;a,b,n) = \\left\\lfloor \\frac{\\text{clamp}(r;a,b) - a}{s} \\right\\rceil s + a $$</p>
+      <p>Eq. 12 (&sect;3) &mdash; the <b>simulated / fake quantization</b> used in the training forward pass: clamp $r$ to $[a,b]$, round to the nearest of $n$ grid points of step $s$, map back to a real value on the grid ($\\lfloor\\cdot\\rceil$ = round-to-nearest).</p>
+      <p>$$ \\frac{\\partial\\, q(r;a,b,n)}{\\partial r} \\;\\approx\\; 1 \\quad\\text{for } r \\in [a,b] \\qquad\\text{(straight-through estimator)} $$</p>
+      <p>The round in Eq. 12 is flat (true derivative $0$), so quantization-aware training defines its gradient as the identity on the in-range interval &mdash; backprop "passes straight through" the round. The paper states backprop "happens as usual"; it does not name this trick, which the field calls the straight-through estimator (STE).</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the whole quantization scheme in one line. It says: to recover the real value,
        take the integer $q$, subtract the zero-point $Z$ (so the integer that means "zero" maps to $0$), and
