@@ -163,6 +163,31 @@
        (feed-forward network) maps each output embedding to a box &mdash; "the normalized center coordinates,
        height and width of the box w.r.t. the input image" (&sect;3.2) &mdash; and a softmax class label (with the
        extra $\\varnothing$ class). All $N$ are produced <b>in parallel</b>.</p>`,
+    architecture:
+      `<p>DETR is three stages in a line &mdash; <b>CNN backbone &rarr; transformer encoder-decoder &rarr; prediction
+       FFNs</b> &mdash; with <b>no anchors and no NMS</b> anywhere (&sect;3.2, Fig. 2).</p>
+       <p><b>1. CNN backbone.</b> A ResNet (the paper uses ResNet-50 / ResNet-101) maps the input image
+       $x_{\\text{img}}\\in\\mathbb{R}^{3\\times H_0\\times W_0}$ to a feature map
+       $f\\in\\mathbb{R}^{C\\times H\\times W}$ with $C=2048$ channels and $H=H_0/32,\\ W=W_0/32$ (a $32\\times$ downsample).</p>
+       <p><b>2. Transformer encoder.</b> A $1\\!\\times\\!1$ convolution reduces the channels from $C=2048$ to the
+       transformer width $d=256$, giving $z_0\\in\\mathbb{R}^{d\\times H\\times W}$. The spatial grid is flattened into a
+       sequence of length $H\\!\\cdot\\!W$ ($d$-dimensional tokens). A <b>fixed sine positional encoding</b> is added at
+       each attention layer (the transformer is permutation-invariant, so position must be injected). The encoder is
+       <b>6 layers</b>, each a standard multi-head self-attention block (8 heads) + feed-forward sublayer; self-attention
+       lets every image location attend to every other &mdash; global context.</p>
+       <p><b>3. Transformer decoder.</b> <b>6 layers</b>. Its inputs are $N=100$ <b>object queries</b>: $N$ learned
+       positional embeddings (vectors in $\\mathbb{R}^d$), one per output slot, the same for every image. Each decoder
+       layer does (a) <b>self-attention</b> across the $N$ queries &mdash; how DETR reasons about object relations and
+       avoids two queries claiming one object &mdash; and (b) <b>cross-attention</b> from the queries into the encoder
+       output. Unlike the original autoregressive transformer, DETR <b>decodes all $N$ queries in parallel</b> (one
+       shot, not left-to-right). The output is $N$ embeddings of dimension $d$.</p>
+       <p><b>4. Prediction FFN heads.</b> A <b>shared</b> head is applied to each of the $N$ output embeddings
+       independently: a <b>3-layer perceptron with ReLU and hidden dimension $d$</b> predicts the normalized box
+       $(c_x,c_y,w,h)\\in[0,1]^4$, and a single <b>linear layer + softmax</b> predicts the class label over the real
+       classes plus the extra $\\varnothing$ (\\\"no object\\\") class. Result: a fixed set of $N$ (class, box) predictions,
+       no post-processing.</p>
+       <p><b>Auxiliary losses.</b> The paper adds the prediction FFNs + Hungarian loss after <i>every</i> decoder layer
+       (shared-weight heads) to help training &mdash; \\\"auxiliary decoding losses\\\" (&sect;3.2).</p>`,
     symbols: [
       { sym: "$N$", desc: "the <b>fixed number of predictions</b> DETR always emits (paper uses $N=100$); larger than the max objects expected in any image." },
       { sym: "$y_i$", desc: "the $i$-th <b>ground-truth object</b>, a pair (class $c_i$, box $b_i$); the truth set is padded with $\\varnothing$ to size $N$." },
@@ -176,15 +201,23 @@
       { sym: "$\\hat p_{\\sigma(i)}(c_i)$", desc: "the <b>probability</b> the assigned prediction gives to target $i$'s true class &mdash; used directly in the matching cost (not its log)." },
       { sym: "$\\mathcal{L}_{\\text{match}}$", desc: "the <b>matching cost</b> of one pred-target pair: $-\\hat p(c_i) + \\mathcal{L}_{\\text{box}}$ for real objects; used only to <i>rank</i> assignments." },
       { sym: "$\\mathcal{L}_{\\text{Hungarian}}$", desc: "the <b>training loss</b> on the matched pairs: an NLL class term $-\\log\\hat p(c_i)$ plus the box loss (Eq. 2)." },
-      { sym: "$\\mathcal{L}_{\\text{box}}$", desc: "the <b>box loss</b>: $\\lambda_{\\text{iou}}\\mathcal{L}_{\\text{iou}} + \\lambda_{L1}\\lVert b_i-\\hat b\\rVert_1$ &mdash; generalized-IoU plus L1 (&sect;3.1.1)." },
-      { sym: "$\\lambda_{\\text{iou}},\\,\\lambda_{L1}$", desc: "scalar <b>weights</b> balancing the IoU and L1 terms of the box loss." },
+      { sym: "$\\mathcal{L}_{\\text{box}}$", desc: "the <b>box loss</b>: $\\lambda_{\\text{iou}}\\mathcal{L}_{\\text{iou}} + \\lambda_{L1}\\lVert b_i-\\hat b\\rVert_1$ &mdash; generalized-IoU plus L1 (&sect;3.1.1, Eq. 3)." },
+      { sym: "$\\mathcal{L}_{\\text{iou}}$", desc: "the <b>generalized-IoU (GIoU) loss</b>, $1-\\text{GIoU}$ &mdash; a scale-invariant box overlap penalty (&sect;3.1.1)." },
+      { sym: "$\\lambda_{\\text{iou}},\\,\\lambda_{L1}$", desc: "scalar <b>weights</b> balancing the IoU and L1 terms of the box loss (paper: $\\lambda_{\\text{iou}}=2,\\ \\lambda_{L1}=5$)." },
+      { sym: "$\\lVert b_i-\\hat b\\rVert_1$", desc: "the <b>L1 distance</b> (sum of absolute differences) between the true and predicted box 4-vectors $(c_x,c_y,w,h)$." },
+      { sym: "$b\\cap\\hat b,\\ b\\cup\\hat b$", desc: "the <b>intersection</b> and <b>union</b> areas of the true and predicted boxes; $\\lvert\\cdot\\rvert$ is area." },
+      { sym: "$B(b,\\hat b)$", desc: "the <b>smallest enclosing box</b> that contains both $b$ and $\\hat b$ &mdash; the term that makes GIoU informative even when boxes do not overlap." },
+      { sym: "$d$", desc: "the <b>transformer width</b> (embedding dimension), $d=256$ in the paper; also the FFN hidden size." },
+      { sym: "$C,\\ H,\\ W$", desc: "the backbone feature map's <b>channels, height, width</b>: $C=2048$, $H=H_0/32$, $W=W_0/32$ for input size $H_0\\times W_0$." },
       { sym: "object query", desc: "a plain term: one of the $N$ <b>learned input vectors</b> to the decoder; each becomes one output slot (a learned positional embedding)." },
       { sym: "NMS", desc: "a plain term: <b>Non-Maximum Suppression</b> &mdash; a post-processing step that deletes overlapping duplicate boxes. DETR needs none." },
       { sym: "Hungarian algorithm", desc: "a plain term: a classic method that finds the minimum-cost <b>one-to-one</b> assignment in a cost matrix (here, predictions &harr; targets)." }
     ],
-    formula: `$$ \\hat\\sigma \\;=\\; \\arg\\min_{\\sigma \\in \\mathfrak{S}_N} \\; \\sum_{i=1}^{N} \\mathcal{L}_{\\text{match}}\\big(y_i,\\, \\hat y_{\\sigma(i)}\\big) \\qquad\\text{(\\S3.1, Eq.\\,1 — optimal bipartite matching)} $$
-              $$ \\mathcal{L}_{\\text{match}}\\big(y_i,\\hat y_{\\sigma(i)}\\big) \\;=\\; -\\,\\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\hat p_{\\sigma(i)}(c_i) \\;+\\; \\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\mathcal{L}_{\\text{box}}\\big(b_i,\\hat b_{\\sigma(i)}\\big) \\qquad\\text{(\\S3.1 — the matching cost)} $$
-              $$ \\mathcal{L}_{\\text{Hungarian}}(y,\\hat y) \\;=\\; \\sum_{i=1}^{N} \\Big[\\, -\\log \\hat p_{\\hat\\sigma(i)}(c_i) \\;+\\; \\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\mathcal{L}_{\\text{box}}\\big(b_i,\\hat b_{\\hat\\sigma(i)}\\big) \\,\\Big] \\qquad\\text{(\\S3.1, Eq.\\,2 — the set/training loss)} $$`,
+    formula: `$$ \\hat\\sigma \\;=\\; \\arg\\min_{\\sigma \\in \\mathfrak{S}_N} \\; \\sum_{i}^{N} \\mathcal{L}_{\\text{match}}\\big(y_i,\\, \\hat y_{\\sigma(i)}\\big) \\qquad\\text{(\\S3.1, Eq.\\,1 — optimal bipartite matching, solved by the Hungarian algorithm)} $$
+              $$ \\mathcal{L}_{\\text{match}}\\big(y_i,\\hat y_{\\sigma(i)}\\big) \\;=\\; -\\,\\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\hat p_{\\sigma(i)}(c_i) \\;+\\; \\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\mathcal{L}_{\\text{box}}\\big(b_i,\\hat b_{\\sigma(i)}\\big) \\qquad\\text{(\\S3.1 — the per-pair matching cost: class probability + box loss)} $$
+              $$ \\mathcal{L}_{\\text{Hungarian}}(y,\\hat y) \\;=\\; \\sum_{i=1}^{N} \\Big[\\, -\\log \\hat p_{\\hat\\sigma(i)}(c_i) \\;+\\; \\mathbb{1}_{\\{c_i\\neq\\varnothing\\}}\\,\\mathcal{L}_{\\text{box}}\\big(b_i,\\hat b_{\\hat\\sigma(i)}\\big) \\,\\Big] \\qquad\\text{(\\S3.1, Eq.\\,2 — the Hungarian/set training loss: class NLL + box loss)} $$
+              $$ \\mathcal{L}_{\\text{box}}\\big(b_i,\\hat b_{\\sigma(i)}\\big) \\;=\\; \\lambda_{\\text{iou}}\\,\\mathcal{L}_{\\text{iou}}\\big(b_i,\\hat b_{\\sigma(i)}\\big) \\;+\\; \\lambda_{L1}\\,\\big\\lVert b_i - \\hat b_{\\sigma(i)} \\big\\rVert_1 \\qquad\\text{(\\S3.1.1, Eq.\\,3 — box loss: generalized-IoU term + L1 term; }\\lambda_{\\text{iou}}{=}2,\\ \\lambda_{L1}{=}5\\text{)} $$
+              $$ \\mathcal{L}_{\\text{iou}}\\big(b_i,\\hat b_{\\sigma(i)}\\big) \\;=\\; 1 - \\left( \\frac{\\lvert b_i \\cap \\hat b_{\\sigma(i)} \\rvert}{\\lvert b_i \\cup \\hat b_{\\sigma(i)} \\rvert} \\;-\\; \\frac{\\big\\lvert B(b_i,\\hat b_{\\sigma(i)}) \\setminus (b_i \\cup \\hat b_{\\sigma(i)}) \\big\\rvert}{\\big\\lvert B(b_i,\\hat b_{\\sigma(i)}) \\big\\rvert} \\right) \\qquad\\text{(\\S3.1.1 — generalized IoU; }B(\\cdot,\\cdot)\\text{ is the smallest box enclosing both)} $$`,
     whatItDoes:
       `<p><b>Eq. 1 &mdash; the match.</b> Over <i>every</i> way $\\sigma$ to pair the $N$ predictions one-to-one
        with the $N$ (padded) targets, pick the pairing $\\hat\\sigma$ whose total cost is smallest. The indicator

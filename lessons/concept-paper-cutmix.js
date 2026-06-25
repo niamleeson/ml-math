@@ -146,6 +146,42 @@
        Mixup's "locally ambiguous and unnatural" blends, while still deleting a region like Cutout &mdash; but
        filling it with informative pixels instead of zeros.</p>`,
 
+    architecture:
+      `<p>CutMix is not a network &mdash; it is a <b>per-batch data transform</b> inserted between the data loader
+       and the forward pass. The backbone (ResNet-50, etc.) is unchanged; only the inputs and the loss target are
+       transformed. The full procedure is the paper's <b>Appendix A, Algorithm 1</b> ("Pseudo-code of CutMix"),
+       which runs once per training minibatch:</p>
+       <ol>
+         <li><b>Get a minibatch.</b> <code>input, target = get_minibatch()</code> &mdash; images
+         $[N,C,H,W]$ and their labels (line 2).</li>
+         <li><b>Shuffle to get the partner batch.</b> <code>input_s, target_s = shuffle_minibatch(input, target)</code>
+         &mdash; a permuted copy supplies each image's "image B" partner $x_B,y_B$ (line 4). No second data load
+         is needed; B comes from the same batch.</li>
+         <li><b>Sample the mixing weight.</b> $\\lambda\\sim\\mathrm{Unif}(0,1)$ &mdash; i.e.
+         $\\mathrm{Beta}(\\alpha,\\alpha)$ with $\\alpha=1$ (line 5).</li>
+         <li><b>Build the box (Eq. 2).</b> Random center $r_x\\sim\\mathrm{Unif}(0,W)$,
+         $r_y\\sim\\mathrm{Unif}(0,H)$; sides $r_w=W\\sqrt{1-\\lambda}$, $r_h=H\\sqrt{1-\\lambda}$; then clip and round
+         the corners $x_1,x_2\\in[0,W]$, $y_1,y_2\\in[0,H]$ (lines 6&ndash;13).</li>
+         <li><b>Paste the patch (Eq. 1, image part).</b>
+         <code>input[:, :, x1:x2, y1:y2] = input_s[:, :, x1:x2, y1:y2]</code> &mdash; overwrite the rectangle of
+         every image with the same rectangle of its partner. This realizes $M\\odot x_A+(\\mathbf{1}-M)\\odot x_B$
+         by in-place slicing instead of an explicit mask (line 14).</li>
+         <li><b>Re-fit the area weight.</b> $\\lambda\\leftarrow 1-\\dfrac{(x_2-x_1)(y_2-y_1)}{WH}$ &mdash; the
+         exact image-A pixel fraction after clipping (line 15).</li>
+         <li><b>Mix the labels (Eq. 1, label part).</b>
+         $\\text{target}\\leftarrow\\lambda\\,\\text{target}+(1-\\lambda)\\,\\text{target\\_s}$ (line 16).</li>
+         <li><b>Forward + loss + update.</b> <code>output = model(input)</code>, then the area-weighted loss
+         $\\lambda\\,\\mathrm{CE}(\\text{output},y_A)+(1-\\lambda)\\,\\mathrm{CE}(\\text{output},y_B)$, then a normal
+         gradient step (lines 18&ndash;20).</li>
+       </ol>
+       <p><b>Where it sits among the alternatives.</b> All three "regional/blend" augmentations swap in at the same
+       point (transform the batch, then train as usual) and differ only in the transform:
+       <b>Cutout</b> zeros a rectangle (label unchanged); <b>Mixup</b> replaces the whole image with the pixel
+       average $\\lambda x_A+(1-\\lambda)x_B$ and mixes the label by $\\lambda$; <b>CutMix</b> splices a real
+       rectangle and mixes the label by the same $\\lambda$ (now an area ratio). Cost is negligible &mdash; a
+       shuffle, a slice-copy, and one extra cross-entropy term &mdash; so it adds no parameters and almost no
+       compute to the backbone.</p>`,
+
     symbols: [
       { sym: "$x_A,\\,x_B$", desc: "the two input images being combined. Each is a tensor of shape (channels C, height H, width W). $x_A$ is the base; a patch of $x_B$ is pasted into it." },
       { sym: "$y_A,\\,y_B$", desc: "the class labels of $x_A$ and $x_B$. Written as one-hot vectors (a vector that is 1 at the true class and 0 elsewhere) so they can be blended." },

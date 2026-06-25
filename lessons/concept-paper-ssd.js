@@ -127,6 +127,36 @@
        (background). The whole thing is trained with one loss that sums a <b>localization</b> term (how wrong
        the offsets are) and a <b>confidence</b> term (how wrong the class scores are), normalized by the
        number of matched boxes. (&sect;2.2.2)</p>`,
+    architecture:
+      `<p>SSD is a single feed-forward convolutional network, structured in three stages (&sect;3, &sect;2.1).</p>
+       <p><b>1. Base network (VGG-16).</b> The backbone is <b>VGG-16</b> pre-trained on ImageNet (ILSVRC
+       CLS-LOC), truncated before its classification head. SSD converts the two fully-connected layers
+       <b>fc6</b> and <b>fc7</b> into <b>convolutional</b> layers (subsampling their parameters), changes
+       <code>pool5</code> from $2\\times2$-stride-2 to $3\\times3$-stride-1, and uses the <b>&agrave; trous
+       (dilated/atrous) algorithm</b> to fill the resulting "holes" so the receptive field is preserved at
+       higher resolution. The original dropout layers and the <code>fc8</code> classification layer are
+       removed. The early feature map <b>conv4_3</b> (512 channels) is taken as the first prediction source;
+       because its activations have a different scale, it is <b>L2-normalized</b> and rescaled by a factor
+       (learned, initialized to 20) before prediction. The converted <b>conv7 / fc7</b> (1024 channels) is the
+       second source. (&sect;3.1)</p>
+       <p><b>2. Extra feature layers.</b> Appended after the base network is a cascade of extra convolutional
+       layers (<b>conv8_2, conv9_2, conv10_2, conv11_2</b>) whose spatial resolution <b>progressively
+       decreases</b>. Each added block is a $1\\times1$ conv (reduce channels) followed by a $3\\times3$
+       stride-2 conv (halve resolution). This gives the multi-scale pyramid: an early high-resolution map sees
+       small image patches (small objects), a late low-resolution map sees large patches (large objects).
+       The paper illustrates this with $8\\times8$ and $4\\times4$ example maps (Fig. 1). (&sect;2.1)</p>
+       <p><b>3. Per-map convolutional predictors.</b> At each of the six chosen feature maps SSD attaches a
+       small <b>$3\\times3\\times p$ convolutional kernel</b> ($p$ = that map's channel count) that, for every
+       cell and every default box, outputs <b>$(C{+}1)$ class scores</b> (the $C$ categories plus background)
+       and <b>4 box offsets</b> $(\\Delta cx, \\Delta cy, \\Delta w, \\Delta h)$. A map of size $m\\times n$ with
+       $k$ default boxes per cell therefore emits $(C{+}1{+}4)\\,k\\,m\\,n$ numbers. For <b>SSD300</b>:
+       conv4_3, conv10_2, conv11_2 use <b>4</b> boxes per cell (dropping $a_r{=}3,\\tfrac13$); conv7, conv8_2,
+       conv9_2 use <b>6</b> &mdash; <b>8732 default boxes total</b>. All predictions are concatenated and run
+       through <b>non-maximum suppression</b> at inference to produce the final detections. (&sect;2.1,
+       &sect;3.1)</p>
+       <p>Data flow: <code>image &rarr; VGG conv4_3 (norm) &rarr; fc6/fc7 (atrous) &rarr; conv8_2 &rarr; conv9_2
+       &rarr; conv10_2 &rarr; conv11_2</code>, with a $3\\times3$ class+box predictor tapped off each of the six
+       boxed feature maps in parallel, then NMS over all 8732 boxes.</p>`,
     symbols: [
       { sym: "default box (anchor)", desc: "a plain term, not a symbol: a fixed rectangle of preset size and shape, centered on a feature-map cell, used as the starting guess for a detection." },
       { sym: "IoU / Jaccard overlap", desc: "<b>Intersection over Union</b>: area of overlap between two boxes divided by area of their union. 0 means disjoint, 1 means identical. SSD calls a default box a positive match when this exceeds 0.5." },
@@ -141,11 +171,29 @@
       { sym: "$N$", desc: "the <b>number of matched default boxes</b> (positives); the loss is divided by $N$ to average. If $N = 0$ the loss is set to $0$." },
       { sym: "$L_{\\text{conf}},\\, L_{\\text{loc}}$", desc: "the <b>confidence loss</b> (softmax over class scores) and the <b>localization loss</b> (smooth-L1 over box offsets)." },
       { sym: "$\\alpha$", desc: "the weight balancing the two loss terms; set to $1$ by cross-validation in the paper." },
-      { sym: "$l,\\, g,\\, d$", desc: "the <b>predicted</b> box ($l$), the <b>ground-truth</b> box ($g$), and the <b>default</b> box ($d$); offsets are predicted relative to $d$." }
+      { sym: "$l,\\, g,\\, d$", desc: "the <b>predicted</b> box ($l$), the <b>ground-truth</b> box ($g$), and the <b>default</b> box ($d$); offsets are predicted relative to $d$." },
+      { sym: "$l_i^m$", desc: "the network's <b>predicted offset</b> for default box $i$ along coordinate $m \\in \\{cx, cy, w, h\\}$ (center-x, center-y, width, height)." },
+      { sym: "$\\hat{g}_j^m$", desc: "the <b>encoded ground-truth offset</b> for ground-truth box $j$: center shift divided by the default box's size, or log of the size ratio (Eqn 2). This is the target $l_i^m$ should match." },
+      { sym: "$d_i^{cx}, d_i^{cy}, d_i^{w}, d_i^{h}$", desc: "the <b>default box's</b> own center coordinates and width/height &mdash; the reference frame offsets are measured against." },
+      { sym: "$\\operatorname{smooth_{L1}}$", desc: "the <b>smooth-L1</b> (Huber) loss: squared error for small residuals, absolute error for large ones &mdash; less sensitive to outlier offsets than plain L2." },
+      { sym: "$c_i^p,\\ \\hat{c}_i^p$", desc: "the raw <b>class-$p$ confidence score</b> for box $i$ ($c$) and its <b>softmax-normalized</b> probability ($\\hat{c}$); $\\hat{c}_i^0$ is the background probability." },
+      { sym: "$Pos,\\ Neg$", desc: "the sets of <b>positive</b> (matched) and <b>negative</b> (background) default boxes; the confidence loss sums over both, localization only over $Pos$." },
+      { sym: "$C$", desc: "the number of object <b>categories</b>; the predictor outputs $C{+}1$ scores per box (categories plus background)." }
     ],
-    formula: `$$ s_k = s_{\\min} + \\frac{s_{\\max} - s_{\\min}}{m - 1}\\,(k - 1), \\quad k \\in [1, m] \\qquad\\text{(Eqn. 4)} $$
-$$ w_k^a = s_k\\sqrt{a_r}, \\qquad h_k^a = \\frac{s_k}{\\sqrt{a_r}} \\qquad\\text{(box width/height per aspect ratio)} $$
-$$ L(x,c,l,g) = \\frac{1}{N}\\Big( L_{\\text{conf}}(x,c) + \\alpha\\, L_{\\text{loc}}(x,l,g) \\Big) \\qquad\\text{(Eqn. 1, the MultiBox loss)} $$`,
+    formula: `$$ s_k = s_{\\min} + \\frac{s_{\\max} - s_{\\min}}{m - 1}\\,(k - 1), \\quad k \\in [1, m] \\qquad\\text{(Eqn. 4, default-box scales)} $$
+<p>Even spacing of box scales across the $m$ prediction feature maps, from $s_{\\min}=0.2$ on the first map to $s_{\\max}=0.9$ on the last (&sect;2.2.3).</p>
+$$ w_k^a = s_k\\sqrt{a_r}, \\qquad h_k^a = \\frac{s_k}{\\sqrt{a_r}}, \\qquad a_r \\in \\{1, 2, 3, \\tfrac{1}{2}, \\tfrac{1}{3}\\}, \\qquad s'_k = \\sqrt{s_k\\, s_{k+1}} $$
+<p>Box width/height for each aspect ratio (area fixed at $s_k^2$), plus one extra square box of scale $s'_k$ for $a_r{=}1$ &mdash; 6 default boxes per cell (&sect;2.2.3).</p>
+$$ L(x,c,l,g) = \\frac{1}{N}\\Big( L_{\\text{conf}}(x,c) + \\alpha\\, L_{\\text{loc}}(x,l,g) \\Big) \\qquad\\text{(Eqn. 1, the MultiBox loss)} $$
+<p>The single training objective: confidence loss plus $\\alpha$ times localization loss, averaged over the $N$ matched default boxes ($L{=}0$ if $N{=}0$), with $\\alpha{=}1$ by cross-validation (&sect;2.2.2).</p>
+$$ L_{\\text{loc}}(x,l,g) = \\sum_{i \\in Pos}^{N}\\ \\sum_{m \\in \\{cx,cy,w,h\\}} x_{ij}^{k}\\ \\operatorname{smooth_{L1}}\\!\\big(l_i^{m} - \\hat{g}_j^{m}\\big) \\qquad\\text{(Eqn. 2, localization loss)} $$
+<p>Smooth-L1 between the predicted offset $l_i^m$ and the encoded ground-truth offset $\\hat{g}_j^m$, summed over matched positives and the four box coordinates (&sect;2.2.2).</p>
+$$ \\hat{g}_j^{cx} = \\frac{g_j^{cx} - d_i^{cx}}{d_i^{w}}, \\quad \\hat{g}_j^{cy} = \\frac{g_j^{cy} - d_i^{cy}}{d_i^{h}}, \\quad \\hat{g}_j^{w} = \\log\\frac{g_j^{w}}{d_i^{w}}, \\quad \\hat{g}_j^{h} = \\log\\frac{g_j^{h}}{d_i^{h}} $$
+<p>How the ground-truth box $g$ is encoded as offsets relative to the default box $d$: center shifts normalized by box size, sizes in log-ratio (&sect;2.2.2). The network regresses these four numbers.</p>
+$$ L_{\\text{conf}}(x,c) = -\\sum_{i \\in Pos}^{N} x_{ij}^{p}\\,\\log(\\hat{c}_i^{p})\\ -\\ \\sum_{i \\in Neg} \\log(\\hat{c}_i^{0}), \\qquad \\hat{c}_i^{p} = \\frac{\\exp(c_i^{p})}{\\sum_{p}\\exp(c_i^{p})} \\quad\\text{(Eqn. 3)} $$
+<p>Softmax cross-entropy over class confidences: positives pay for the right class $p$, negatives pay for predicting background (class $0$) (&sect;2.2.2).</p>
+$$ \\frac{\\#\\,\\text{negatives}}{\\#\\,\\text{positives}} \\le 3 \\qquad\\text{(hard negative mining, } \\S 2.2.4) $$
+<p>After matching, the vast majority of default boxes are background; keep only the negatives with the highest confidence loss so the negative-to-positive ratio is at most $3{:}1$ (&sect;2.2.4).</p>`,
     whatItDoes:
       `<p><b>Eqn 4</b> sets the default-box <b>size</b> at each feature-map level. It spaces the scales
        <b>evenly</b> from $s_{\\min}=0.2$ (smallest boxes, on the first/highest-resolution map) up to

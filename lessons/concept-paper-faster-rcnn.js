@@ -146,6 +146,41 @@
        anchors and a box-regression term <i>only over the positive ones</i>. Then the RPN's top-scoring boxes
        become the proposals fed to the Fast R-CNN detector, and a 4-step scheme (&sect;3.2) trains the two to
        share one backbone.</p>`,
+    architecture:
+      `<p>Faster R-CNN is one network with a <b>shared backbone</b> feeding <b>two heads</b> &mdash; the RPN
+       (proposes boxes) and the Fast R-CNN detector (classifies + refines them). Data flows top to bottom.</p>
+       <p><b>1. Shared backbone (the conv trunk).</b> An ImageNet-pretrained CNN &mdash; <b>ZF</b> (5 conv
+       layers, 256-d) or <b>VGG-16</b> (13 conv layers, 512-d) &mdash; runs <i>once</i> over the whole image.
+       The image's shorter side is rescaled to <b>s=600</b> pixels (&sect;3.3); the trunk's total stride is
+       <b>16</b>, so a $600$-px image yields a feature map of about $W\\times H \\approx 38\\times50$ cells with
+       $C$ channels ($256$ for ZF, $512$ for VGG). This single feature map feeds <i>both</i> heads &mdash; that
+       sharing is what makes proposals "nearly cost-free".</p>
+       <p><b>2. RPN head (branch A).</b> Slide an $n\\times n$ ($n{=}3$) conv over the feature map &rarr; ReLU
+       &rarr; an intermediate vector ($256$-d ZF / $512$-d VGG) per location. Two sibling $1\\times1$ convs
+       branch off: <b>cls</b> ($2k$ channels = objectness object/background per anchor) and <b>reg</b> ($4k$
+       channels = the four deltas $(t_x,t_y,t_w,t_h)$ per anchor), with $k=9$ anchors (3 scales $128^2,256^2,
+       512^2$ &times; 3 ratios $1{:}1,1{:}2,2{:}1$) per cell &mdash; about $WHk\\approx17{,}000$ anchors total.
+       Decode (inverse of Eq 2), score, apply <b>NMS</b> at IoU $0.7$, and keep the top proposals (~$2{,}000$
+       train, ~$300$ test).</p>
+       <p><b>3. RoI pooling (the join).</b> Each RPN proposal is projected onto the <i>same</i> shared feature
+       map and <b>RoI-pooled</b> into a fixed $H'\\times W'$ (e.g. $7\\times7$) grid &mdash; so a box of any size
+       becomes a fixed-length feature vector that the detector head can consume (this is the Fast R-CNN
+       mechanism this paper reuses).</p>
+       <p><b>4. Fast R-CNN head (branch B).</b> The pooled feature goes through two fully-connected layers, then
+       two sibling outputs: a <b>softmax</b> over the $C{+}1$ object classes (the actual category, plus
+       background) and a <b>per-class box regressor</b> (a second $(t_x,t_y,t_w,t_h)$ that refines the proposal).
+       So the RPN says <i>where</i> (objectness + coarse box), the detector says <i>what</i> (class + fine box).
+       "The RPN module tells the Fast R-CNN module where to look" (&sect;3).</p>
+       <p><b>4-step alternating training (&sect;3.2)</b> &mdash; how the two heads come to share one backbone:</p>
+       <ul>
+        <li><b>Step 1.</b> Train the <b>RPN</b> alone end-to-end, backbone initialized from ImageNet.</li>
+        <li><b>Step 2.</b> Train a <b>separate Fast R-CNN</b> detector on step-1's proposals, its backbone also
+        ImageNet-initialized &mdash; <i>no sharing yet</i> (the two have separate conv trunks at this point).</li>
+        <li><b>Step 3.</b> Re-init the RPN from the <b>detector's backbone</b>, <b>freeze the shared conv
+        layers</b>, and fine-tune only the RPN-specific layers &mdash; now both share that backbone.</li>
+        <li><b>Step 4.</b> Keep the shared conv layers <b>frozen</b> and fine-tune only the <b>Fast R-CNN-specific
+        layers</b>. The result is one unified network with shared features.</li>
+       </ul>`,
     symbols: [
       { sym: "$W \\times H$", desc: "the <b>width</b> and <b>height</b> of the shared convolutional feature map (in feature cells, not image pixels). The RPN slides over these $WH$ positions." },
       { sym: "$C$", desc: "the number of <b>channels</b> in the shared feature map (e.g. 512 for VGG-16's last conv layer)." },

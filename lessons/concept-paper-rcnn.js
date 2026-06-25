@@ -134,33 +134,96 @@
        computation is shared between overlapping proposals. That is why the paper reports the heavy cost
        "13s/image on a GPU or 53s/image on a CPU" for features; this per-region redundancy is the
        motivation for Fast R-CNN.</p>`,
+    architecture:
+      `<p>R-CNN is a <b>three-module pipeline</b> (&sect;2.1), not a single end-to-end network. Data flows
+       strictly left to right; the only learned pieces are the CNN, the per-class SVMs, and the per-class
+       box regressors.</p>
+       <p><b>Module 1 &mdash; region proposals (non-learned).</b> Input: the raw image. <b>Selective search</b>
+       groups similar pixels at multiple scales into ~2000 category-independent candidate boxes
+       $P^1,\\dots,P^{\\sim 2000}$. No parameters; the same proposals are reused for every class.</p>
+       <p><b>Module 2 &mdash; CNN feature extractor.</b> For each proposal: add $p=16$ px of context padding,
+       <b>warp</b> the crop to a fixed $227\\times227$ RGB input (aspect ratio ignored), and forward it through
+       the CNN. The CNN is AlexNet-style: five convolutional layers ($\\text{conv}_1\\!\\dots\\!\\text{conv}_5$,
+       with max-pooling and local response normalization) producing the $\\mathrm{pool}_5$ feature map, then two
+       fully connected layers $\\text{fc}_6,\\text{fc}_7$. The output is a <b>$4096$-dimensional</b> feature
+       vector $\\phi(P)$ per region. This forward pass runs <b>once per proposal</b> &mdash; the ~2000&times;
+       redundancy that makes R-CNN slow.</p>
+       <p><b>Module 3 &mdash; classify + refine.</b> Two parallel heads consume the features:
+       (a) a <b>class-specific linear SVM</b> $w_c$ per object class scores $\\phi(P)$, giving one confidence
+       per class; (b) a <b>class-specific bounding-box regressor</b> reads the $\\mathrm{pool}_5$ features
+       $\\phi_5(P)$ and outputs $\\big(d_x,d_y,d_w,d_h\\big)$ to nudge $P$ toward a tighter box $\\hat{G}$.</p>
+       <p><b>Post-processing.</b> Per class, scored-and-refined boxes pass through <b>greedy non-maximum
+       suppression</b>: sort by SVM score, keep the top box, drop any remaining box whose IoU with a kept box
+       exceeds the learned threshold, repeat. The survivors are the final detections.</p>
+       <p><b>Training data flow.</b> The CNN is pre-trained on ILSVRC2012 <i>classification</i>, then
+       fine-tuned on detection (proposals labelled by IoU $\\ge 0.5$). The SVMs are trained afterward on the
+       frozen features (negatives below IoU $0.3$); the box regressors are trained on proposals with IoU
+       $\\gt 0.6$ to a ground-truth box via the ridge-regression objective.</p>`,
     symbols: [
       { sym: "$P$", desc: "a <b>proposal</b> box from selective search, written as its center and size $(P_x, P_y, P_w, P_h)$ &mdash; $x,y$ the center, $w,h$ the width and height." },
       { sym: "$G$", desc: "the <b>ground-truth</b> box we want $P$ to match, $(G_x, G_y, G_w, G_h)$ &mdash; same center/size form as $P$." },
-      { sym: "$(d_x, d_y, d_w, d_h)$", desc: "the four numbers the <b>bounding-box regressor</b> outputs: a learned shift of the center ($d_x,d_y$) and a learned log-scale of the size ($d_w,d_h$)." },
-      { sym: "$(t_x, t_y, t_w, t_h)$", desc: "the regression <b>targets</b> &mdash; the ideal transform that would move $P$ exactly onto $G$. We train $d_\\star$ to predict these $t_\\star$." },
-      { sym: "IoU", desc: "<b>Intersection over Union</b>: area of overlap of two boxes divided by area of their union. $1$ = identical boxes, $0$ = no overlap; the standard score for 'does this box fit?'." },
+      { sym: "$\\hat{G}$", desc: "the <b>predicted</b> box after applying box regression to $P$: $(\\hat{G}_x,\\hat{G}_y,\\hat{G}_w,\\hat{G}_h)$, the refined output of Appendix C eqs. (1)&ndash;(4)." },
+      { sym: "$d_x(P),d_y(P),d_w(P),d_h(P)$", desc: "the four learned <b>transform functions</b> the bounding-box regressor outputs for proposal $P$: a center shift ($d_x,d_y$, applied scaled by $P_w,P_h$) and a log-scale of the size ($d_w,d_h$)." },
+      { sym: "$(t_x, t_y, t_w, t_h)$", desc: "the regression <b>targets</b> &mdash; the ideal transform that would move $P$ exactly onto $G$. We train $d_\\star(P)$ to predict these $t_\\star$." },
+      { sym: "$\\phi(P)$", desc: "the <b>$4096$-dim CNN feature vector</b> of warped proposal $P$ (output of fc$_7$); the input the SVMs classify." },
+      { sym: "$\\phi_5(P)$", desc: "the proposal's <b>$\\mathrm{pool}_5$ features</b> (after the 5th conv layer) &mdash; the input to the box-regression linear model in Appendix C." },
+      { sym: "$w_c$", desc: "the learned weight vector of the <b>linear SVM for class $c$</b>; its score is $w_c^\\top\\phi(P)$." },
+      { sym: "$w_\\star$", desc: "the learned weight vector for the box-regression transform $\\star\\in\\{x,y,w,h\\}$, so $d_\\star(P)=w_\\star^\\top\\phi_5(P)$." },
+      { sym: "$\\lambda$", desc: "the <b>ridge-regression penalty</b> on $\\lVert w_\\star\\rVert^2$ when fitting the box regressors; the paper uses $\\lambda=1000$." },
+      { sym: "$\\tau$", desc: "the <b>IoU threshold</b> in non-maximum suppression: a lower-scoring box overlapping a kept box by more than $\\tau$ is discarded (a learned, per-class value)." },
+      { sym: "IoU", desc: "<b>Intersection over Union</b>: $\\mathrm{area}(A\\cap B)/\\mathrm{area}(A\\cup B)$, overlap divided by union of two boxes. $1$ = identical, $0$ = no overlap. ($A\\cap B$ is the overlapping region; $A\\cup B$ is the combined region.)" },
       { sym: "mAP", desc: "<b>mean Average Precision</b>: the standard detection accuracy score &mdash; average precision per class, then averaged over classes. Higher is better." },
       { sym: "SVM", desc: "<b>Support Vector Machine</b>: a linear classifier. R-CNN trains one per object class on the 4096-dim CNN features to score each region." },
       { sym: "selective search", desc: "a plain term, not a symbol: a <b>non-learned</b> algorithm that groups similar pixels into ~2000 candidate region boxes; R-CNN consumes its boxes as proposals." },
       { sym: "warp", desc: "resize a region of any shape to the fixed $227\\times227$ input the CNN requires (stretching aspect ratio if needed)." }
     ],
-    formula: `$$ t_x = \\frac{G_x - P_x}{P_w}, \\quad t_y = \\frac{G_y - P_y}{P_h}, \\quad t_w = \\log\\!\\frac{G_w}{P_w}, \\quad t_h = \\log\\!\\frac{G_h}{P_h} \\qquad\\text{(Appendix C)} $$`,
+    formula: `$$ \\text{image} \\;\\xrightarrow{\\text{selective search}}\\; \\{P^1,\\dots,P^{\\sim 2000}\\} \\;\\xrightarrow{\\text{warp to }227\\times227}\\; \\phi(P^i)\\in\\mathbb{R}^{4096} \\;\\xrightarrow{\\text{per-class SVM}}\\; s_c = w_c^\\top \\phi(P^i) $$
+       <p>The R-CNN pipeline (&sect;2.1&ndash;2.2): a fixed selective-search step proposes ~2000 boxes $P^i$; each is warped to $227\\times227$ and pushed through the CNN to a $4096$-dim feature $\\phi(P^i)$; a class-specific linear SVM $w_c$ scores it. The CNN runs once per proposal.</p>
+
+       $$ \\mathrm{IoU}(A,B) = \\frac{\\mathrm{area}(A \\cap B)}{\\mathrm{area}(A \\cup B)} = \\frac{\\mathrm{area}(A \\cap B)}{\\mathrm{area}(A)+\\mathrm{area}(B)-\\mathrm{area}(A \\cap B)} $$
+       <p>Intersection-over-Union overlap (&sect;2.3 / used throughout). Labels proposals during training (positive if $\\mathrm{IoU}\\ge 0.5$ for fine-tuning; SVM negatives below $0.3$; box-regressor trained on proposals with $\\mathrm{IoU}\\gt 0.6$ to a ground-truth box) and drives non-maximum suppression at test time.</p>
+
+       $$ \\hat{G}_x = P_w\\, d_x(P) + P_x, \\quad \\hat{G}_y = P_h\\, d_y(P) + P_y, \\quad \\hat{G}_w = P_w \\exp\\!\\big(d_w(P)\\big), \\quad \\hat{G}_h = P_h \\exp\\!\\big(d_h(P)\\big) $$
+       <p>Bounding-box regression transforms, Appendix C eqs. (1)&ndash;(4): the four learned functions $d_x,d_y,d_w,d_h$ shift the proposal center (scaled by its width/height) and scale its size (in log space) to predict box $\\hat{G}$.</p>
+
+       $$ d_\\star(P) = w_\\star^\\top \\, \\phi_5(P), \\qquad \\star \\in \\{x,y,w,h\\} $$
+       <p>Appendix C eq. (5): each transform is a <b>linear</b> function of the proposal's $\\mathrm{pool}_5$ CNN features $\\phi_5(P)$, with a learned weight vector $w_\\star$.</p>
+
+       $$ t_x = \\frac{G_x - P_x}{P_w}, \\quad t_y = \\frac{G_y - P_y}{P_h}, \\quad t_w = \\log\\frac{G_w}{P_w}, \\quad t_h = \\log\\frac{G_h}{P_h} $$
+       <p>Appendix C eqs. (6)&ndash;(9): the regression <b>targets</b> &mdash; the ideal transform that would move proposal $P$ exactly onto ground truth $G$. These invert the transforms above.</p>
+
+       $$ w_\\star = \\arg\\min_{\\hat{w}_\\star} \\sum_{i} \\big(t_\\star^i - \\hat{w}_\\star^\\top \\phi_5(P^i)\\big)^2 + \\lambda \\, \\lVert \\hat{w}_\\star \\rVert^2 \\qquad (\\lambda = 1000) $$
+       <p>Appendix C eq. (5'): the weights are fit by <b>ridge regression</b> (least squares with an $L_2$ penalty $\\lambda$) of the targets $t_\\star$ on the $\\mathrm{pool}_5$ features.</p>
+
+       $$ \\text{NMS: keep highest-scoring box; reject any lower-scoring box with } \\mathrm{IoU} \\gt \\tau \\text{ to a kept box (per class)} $$
+       <p>Greedy non-maximum suppression (&sect;2.2): applied per class at test time, it removes duplicate detections of the same object by discarding lower-scoring boxes that overlap a kept box above a learned IoU threshold $\\tau$.</p>`,
     whatItDoes:
-      `<p>These four equations define the <b>box-regression targets</b>: how to turn the proposal box $P$ into
-       the ground-truth box $G$. The regressor learns to output $(d_x,d_y,d_w,d_h)$ that match these
-       $(t_x,t_y,t_w,t_h)$.</p>
+      `<p>Reading the equations of the <code>formula</code> block in order:</p>
        <ul>
-        <li><b>$t_x,t_y$ &mdash; the center shift, made scale-free.</b> The raw gap $G_x-P_x$ is divided by the
-        proposal's width $P_w$ (and $G_y-P_y$ by its height $P_h$), so the target is a <i>fraction of the box
-        size</i>, not pixels. A big box and a small box that are equally "half a width off" get the same
-        target.</li>
-        <li><b>$t_w,t_h$ &mdash; the size correction, in log space.</b> $\\log(G_w/P_w)$ is $0$ when the widths
-        already match, positive to grow, negative to shrink. Using the log makes "double the width" and
-        "halve the width" symmetric and keeps the size positive after the update.</li>
-       </ul>
-       <p>To apply a predicted transform you invert these: new center $= P_x + P_w\\,d_x$, new width
-       $= P_w\\,e^{d_w}$, and likewise for $y,h$.</p>`,
+        <li><b>The pipeline line</b> says: image &rarr; ~2000 selective-search proposals &rarr; warp each to
+        $227\\times227$ &rarr; a $4096$-dim CNN feature $\\phi(P^i)$ &rarr; a per-class linear SVM score
+        $w_c^\\top\\phi$. It is the whole method as a chain of maps.</li>
+        <li><b>IoU</b> measures how well two boxes overlap (shared area over combined area); it labels
+        proposals in training and decides which detections NMS throws away.</li>
+        <li><b>The transforms $\\hat{G}=\\dots$</b> say how to <i>apply</i> a predicted shift: move the center
+        by $P_w d_x$ / $P_h d_y$ and scale the size by $e^{d_w}$ / $e^{d_h}$ to get the refined box.</li>
+        <li><b>$d_\\star(P)=w_\\star^\\top\\phi_5(P)$</b> says each shift is just a linear function (a dot
+        product) of the proposal's $\\mathrm{pool}_5$ features.</li>
+        <li><b>The targets $t_\\star$</b> define the ideal shift &mdash; the transform that would put $P$
+        exactly on $G$ &mdash; that $d_\\star$ is trained to predict:
+          <ul>
+            <li><b>$t_x,t_y$ &mdash; the center shift, made scale-free.</b> The gap $G_x-P_x$ is divided by the
+            proposal width $P_w$ (and $G_y-P_y$ by height $P_h$), so the target is a fraction of the box size,
+            not pixels &mdash; a big and a small box "half a width off" get the same target.</li>
+            <li><b>$t_w,t_h$ &mdash; the size correction, in log space.</b> $\\log(G_w/P_w)$ is $0$ when widths
+            match, positive to grow, negative to shrink; the log makes growing and shrinking symmetric.</li>
+          </ul>
+        </li>
+        <li><b>The $\\arg\\min$ (ridge regression)</b> says: fit $w_\\star$ by least squares to the targets,
+        plus a penalty $\\lambda\\lVert w_\\star\\rVert^2$ that keeps the weights small.</li>
+        <li><b>NMS</b> says: per class, keep the highest-scoring box and delete any lower-scoring box that
+        overlaps it by more than $\\tau$, removing duplicate detections of one object.</li>
+       </ul>`,
     derivation:
       `<p><b>Short recap &mdash; the IoU math lives in the concept lesson.</b> Why parameterize the box this way
        instead of regressing the four raw corner pixels? Because the same object can appear at any size. If

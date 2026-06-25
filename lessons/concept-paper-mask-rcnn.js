@@ -137,13 +137,58 @@
        distance-weighted average in the formula below. When $(y,x)$ sits exactly on a grid point this returns
        that point; off-grid it slides smoothly between neighbours &mdash; which is exactly why a sub-pixel
        shift of the RoI produces a sub-pixel change in the output instead of a sudden jump.</p>`,
+    architecture:
+      `<p>Mask R-CNN = <b>Faster R-CNN</b> + a <b>parallel FCN mask head</b>, with <b>RoIAlign</b> replacing
+       RoIPool as the crop. The data flows in two stages (&sect;3).</p>
+       <p><b>Shared backbone.</b> A convolutional backbone &mdash; ResNet-50/101 (the paper tests both a
+       <b>C4</b> variant, which crops from stage-4 features, and an <b>FPN</b> variant, a Feature Pyramid
+       Network giving multi-scale features) &mdash; turns the input image into one shared feature map of
+       stride 16 (C4) or several pyramid levels (FPN).</p>
+       <p><b>Stage 1 &mdash; Region Proposal Network (RPN).</b> A small sliding network over the feature map
+       proposes class-agnostic candidate boxes (RoIs) from anchors. Unchanged from Faster R-CNN.</p>
+       <p><b>The crop &mdash; RoIAlign (this is where the new operator sits).</b> For each proposed RoI,
+       RoIAlign crops a fixed-size feature grid from the shared map using bilinear interpolation at exact
+       (un-rounded) coordinates &mdash; "x/16 instead of [x/16]," four regularly sampled points per bin. This
+       single operator feeds <b>all three</b> stage-2 heads. The box/class branch uses a <b>7&times;7</b>
+       RoIAlign crop; the mask branch uses a larger crop (14&times;14) so its mask has spatial detail.</p>
+       <p><b>Stage 2 &mdash; three heads in parallel</b> (all reading the same RoIAlign crop):</p>
+       <ul>
+        <li><b>Classification head</b> &mdash; fully-connected layers &rarr; a softmax over the $K\\!+\\!1$
+        classes (objects + background). It alone decides the label $k$. Loss $L_{cls}$.</li>
+        <li><b>Box-regression head</b> &mdash; fully-connected layers &rarr; 4 box-offset numbers per class,
+        refining the proposal. Loss $L_{box}$. (Both heads inherited from Faster R-CNN.)</li>
+        <li><b>Mask head (new) &mdash; a small FCN.</b> It is fully convolutional, so it preserves spatial
+        layout and predicts a mask pixel-to-pixel. Two concrete designs (Fig. 4):
+          <ul>
+            <li><b>C4 head:</b> the RoIAlign crop &rarr; ResNet's <b>res5</b> stage &rarr; a <b>2&times;2
+            deconvolution, stride 2</b> (doubles resolution) &rarr; a <b>1&times;1 conv</b> emitting $K$
+            channels.</li>
+            <li><b>FPN head:</b> the RoIAlign crop &rarr; <b>four 3&times;3 convolutions, 256 channels</b>
+            each (ReLU) &rarr; a <b>2&times;2 deconvolution, stride 2</b> &rarr; a <b>1&times;1 conv</b>
+            emitting $K$ channels.</li>
+          </ul>
+          The output is a <b>$K\\times m\\times m$</b> tensor ($m=28$ in the paper) &mdash; $K$ class-specific
+          $m\\times m$ binary masks. A <b>per-pixel sigmoid</b> turns each into "inside the object?"
+          probabilities; $L_{mask}$ is the average binary cross-entropy on only class $k$'s mask. At test
+          time you read off the channel for the class the classification head chose, resize that
+          $m\\times m$ mask to the box, and threshold at $0.5$.</li>
+       </ul>
+       <p><b>Why this layout matters:</b> the mask head is <i>parallel</i>, not cascaded, so masks do not feed
+       back into classification; and because it is an FCN with a per-class sigmoid, mask and class are
+       decoupled. The whole stage-2 quality hinges on RoIAlign delivering a pixel-aligned crop.</p>`,
     symbols: [
       { sym: "$L$", desc: "the total <b>multi-task loss</b> minimized during training &mdash; the sum of the three head losses below." },
       { sym: "$L_{cls}$", desc: "the <b>classification loss</b>: how wrong the class label is for the region (inherited unchanged from Faster R-CNN)." },
       { sym: "$L_{box}$", desc: "the <b>bounding-box regression loss</b>: how wrong the refined box coordinates are (also inherited from Faster R-CNN)." },
       { sym: "$L_{mask}$", desc: "the <b>mask loss</b>: the average <b>binary cross-entropy</b> (per-pixel sigmoid) over the predicted mask, defined <i>only</i> on the mask for the ground-truth class." },
-      { sym: "$K$", desc: "the number of object <b>classes</b>; the mask branch emits one $m\\times m$ mask per class, so a $K\\times m\\times m$ output." },
-      { sym: "$m$", desc: "the mask <b>resolution</b>: each per-class mask is an $m\\times m$ grid (the paper uses $m=14$ or $28$)." },
+      { sym: "$K$", desc: "the number of object <b>classes</b>; the mask branch emits one $m\\times m$ mask per class, so a $K\\times m\\times m$ output (often written $Km^2$)." },
+      { sym: "$m$", desc: "the mask <b>resolution</b>: each per-class mask is an $m\\times m$ grid (the paper's mask head outputs $m=28$)." },
+      { sym: "$k$", desc: "the <b>ground-truth class</b> index of an RoI; $L_{mask}$ is computed on only the $k$-th mask channel." },
+      { sym: "$i,\\,j$", desc: "the <b>pixel row and column</b> indices inside an $m\\times m$ mask, each running $1\\ldots m$." },
+      { sym: "$z_{k,i,j}$", desc: "the raw mask-head <b>logit</b> (pre-sigmoid score) for class $k$ at pixel $(i,j)$." },
+      { sym: "$\\sigma$", desc: "the <b>sigmoid</b> function $\\sigma(z)=1/(1+e^{-z})$ &mdash; squashes a logit into a probability in $(0,1)$, applied per pixel." },
+      { sym: "$\\hat{p}_{k,i,j}$", desc: "the <b>predicted probability</b> that pixel $(i,j)$ of class $k$'s mask is inside the object: $\\hat{p}=\\sigma(z)$." },
+      { sym: "$y_{i,j}$", desc: "the <b>ground-truth mask label</b> at pixel $(i,j)$: $1$ if that pixel is inside the object, else $0$." },
       { sym: "$F$", desc: "the shared convolutional <b>feature map</b> that regions are cropped from (one channel in our toy; many in practice)." },
       { sym: "$(y,x)$", desc: "a <b>continuous</b> sampling location on $F$ (row $y$, column $x$); RoIAlign keeps it fractional, RoIPool rounds it." },
       { sym: "$dx,\\,dy$", desc: "the <b>fractional offsets</b> of the sample point from its lower-left grid neighbour: $dx=x-\\lfloor x\\rfloor$, $dy=y-\\lfloor y\\rfloor$ &mdash; the bilinear blend weights." },
@@ -153,7 +198,15 @@
       { sym: "FCN", desc: "a plain term: <b>Fully Convolutional Network</b> &mdash; a net of only convolutions that outputs a spatial map (here, the per-RoI mask)." }
     ],
     formula: `$$ L = L_{cls} + L_{box} + L_{mask} \\qquad\\text{(\\S3, the multi-task loss)} $$
-              $$ F(y,x) = (1-dx)(1-dy)\\,v_{00} + dx\\,(1-dy)\\,v_{01} + (1-dx)\\,dy\\,v_{10} + dx\\,dy\\,v_{11} \\qquad\\text{(bilinear sample, \\S3 RoIAlign)} $$`,
+              <p>The total loss on each sampled RoI is the sum of the three head losses, trained jointly.</p>
+              $$ \\text{mask branch output} \\;\\in\\; \\mathbb{R}^{K \\times m \\times m}, \\qquad \\hat{p}_{k,i,j} = \\sigma(z_{k,i,j}) = \\frac{1}{1 + e^{-z_{k,i,j}}} \\qquad\\text{(\\S3, Mask Representation: per-pixel sigmoid)} $$
+              <p>The FCN mask head emits $K$ independent $m\\times m$ masks (one per class), each pixel squashed by a per-pixel sigmoid $\\sigma$ into an "inside the object?" probability $\\hat{p}$ &mdash; no softmax across classes.</p>
+              $$ L_{mask} = -\\frac{1}{m^2} \\sum_{i=1}^{m} \\sum_{j=1}^{m} \\Big[\\, y_{i,j}\\,\\log \\hat{p}_{k,i,j} \\;+\\; (1-y_{i,j})\\,\\log\\big(1-\\hat{p}_{k,i,j}\\big) \\,\\Big] \\qquad\\text{(\\S3: average binary cross-entropy, only on the ground-truth class }k\\text{)} $$
+              <p>$L_{mask}$ is the <b>average binary cross-entropy</b> over the $m\\times m$ pixels of <i>only</i> the ground-truth class $k$'s mask; the other $K\\!-\\!1$ mask channels contribute nothing. This <b>decouples mask from class</b> &mdash; the classification head alone picks $k$.</p>
+              $$ \\text{RoIAlign: bin coordinate} = \\tfrac{x}{16} \\quad\\text{(no rounding)} \\qquad\\text{vs.}\\qquad \\text{RoIPool: bin coordinate} = \\big\\lfloor \\tfrac{x}{16} \\big\\rfloor \\quad\\text{(quantized)} \\qquad\\text{(\\S3, RoIAlign)} $$
+              <p>On a stride-16 feature map RoIAlign keeps the exact fractional coordinate $x/16$; RoIPool rounds it to $\\lfloor x/16\\rfloor$ &mdash; the source of the misalignment.</p>
+              $$ F(y,x) = (1-dx)(1-dy)\\,v_{00} + dx\\,(1-dy)\\,v_{01} + (1-dx)\\,dy\\,v_{10} + dx\\,dy\\,v_{11} \\qquad\\text{(bilinear sample, \\S3 RoIAlign)} $$
+              <p>RoIAlign reads each bin's value with <b>bilinear interpolation</b> &mdash; a smooth weighted blend of the four nearest grid features &mdash; at four regularly sampled points per bin, with no rounding anywhere.</p>`,
     whatItDoes:
       `<p><b>Top line &mdash; the multi-task loss (&sect;3).</b> Mask R-CNN trains all three heads at once by
        adding their losses. $L_{cls}$ and $L_{box}$ are exactly Faster R-CNN's. The new term $L_{mask}$ is

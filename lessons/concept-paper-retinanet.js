@@ -128,6 +128,27 @@
        prepends a class-weight $\\alpha_t$ (Eqn 5) &mdash; the same per-class balancing as weighted cross
        entropy &mdash; because it gave a small extra gain. With $\\gamma=0$ the factor is always 1 and focal
        loss is <b>exactly</b> cross entropy (&sect;3), which is your code's sanity check.</p>`,
+    architecture:
+      `<p>RetinaNet (&sect;4) is one unified network = a <b>backbone</b> that builds a multi-scale feature pyramid,
+       plus <b>two small subnets</b> attached to every pyramid level &mdash; one for classification, one for box
+       regression. It was kept deliberately plain to prove the <i>loss</i>, not the design, closed the gap.</p>
+       <p><b>Backbone &mdash; ResNet + Feature Pyramid Network (FPN).</b> A ResNet-50 or ResNet-101 feeds an FPN
+       (details in <code>paper-fpn</code>) that emits pyramid levels $P_3$ through $P_7$, each with $C=256$
+       channels. $P_3$&ndash;$P_5$ come from ResNet stages via top-down + lateral connections; $P_6$ is a
+       $3\\times 3$ stride-2 conv on $C_5$; $P_7$ is a ReLU then a $3\\times 3$ stride-2 conv on $P_6$. Level
+       $P_l$ has resolution $2^l$ smaller than the input, so coarse levels catch big objects and fine levels
+       catch small ones.</p>
+       <p><b>Anchors.</b> At each location of each level there are $A=9$ anchor boxes: 3 aspect ratios
+       $\\{1{:}2, 1{:}1, 2{:}1\\}$ &times; 3 scales $\\{2^{0}, 2^{1/3}, 2^{2/3}\\}$. Anchor areas run from $32^2$
+       on $P_3$ to $512^2$ on $P_7$ (covering ~32&ndash;813 pixels). Summed over the pyramid this is the
+       <b>~100k anchors per image</b> the focal loss is computed on &mdash; the source of the extreme imbalance.</p>
+       <p><b>Classification subnet.</b> A small fully-convolutional head, <i>shared across all pyramid levels</i>:
+       four $3\\times 3$ conv layers with $C=256$ filters each and ReLU, then a final $3\\times 3$ conv with $KA$
+       filters and a <b>sigmoid</b>, predicting object presence for $K$ classes at each of the $A$ anchors per
+       location. Its final bias gets the prior-$\\pi$ init $b=-\\log((1-\\pi)/\\pi)$, $\\pi=0.01$.</p>
+       <p><b>Box regression subnet.</b> Identical four-conv structure (separate weights), ending in a $4A$-filter
+       linear conv that outputs the 4 box-offset values per anchor. It is class-agnostic and trained with a
+       <b>smooth-L1</b> loss; the total training loss is focal loss (classification) + smooth-L1 (regression).</p>`,
     symbols: [
       { sym: "$p$", desc: "the model's predicted probability that the label is 1 (its sigmoid output, between 0 and 1)." },
       { sym: "$y$", desc: "the true binary label, either 1 (foreground / object) or 0 (background)." },
@@ -137,9 +158,34 @@
       { sym: "$(1-p_t)^\\gamma$", desc: "the MODULATING FACTOR: near 0 for easy examples (so their loss nearly vanishes), near 1 for hard ones (so their loss stays)." },
       { sym: "$\\alpha_t$", desc: "an optional per-class weight (alpha), like weighted cross entropy: $\\alpha$ for the rare positive class, $1-\\alpha$ for the negative. The paper used $\\alpha=0.25$ together with $\\gamma=2$." },
       { sym: "$\\text{FL}(p_t)$", desc: "the FOCAL LOSS: cross entropy times the modulating factor (and the class weight)." },
+      { sym: "$b$", desc: "the bias of the final classification conv layer, initialized to $-\\log((1-\\pi)/\\pi)$ so the network starts predicting 'background' for every anchor." },
+      { sym: "$\\pi$", desc: "the prior foreground probability the network is initialized to predict; the paper sets $\\pi=0.01$ (one object box per ~100 anchors)." },
+      { sym: "$x$", desc: "a raw output logit (pre-sigmoid score) in the alternative form; $\\sigma(x)=p$." },
+      { sym: "$\\sigma$", desc: "the sigmoid function $\\sigma(z)=1/(1+e^{-z})$, turning a logit into a probability." },
+      { sym: "$x_t$", desc: "the signed logit $x_t=y\\,x$ with $y\\in\\{\\pm 1\\}$, positive when the model leans toward the correct class (Appendix A)." },
+      { sym: "$p_t^{*}$", desc: "the shifted probability $\\sigma(\\gamma x_t+\\beta)$ used by the alternative focal loss $\\text{FL}^{*}$ (Appendix A)." },
+      { sym: "$\\beta$", desc: "a shift hyperparameter in the alternative form $\\text{FL}^{*}$; the paper used $\\beta=1$." },
+      { sym: "$K$", desc: "the number of object classes; the classification subnet outputs $KA$ scores per spatial location." },
+      { sym: "$A$", desc: "the number of anchor boxes per spatial location per pyramid level; RetinaNet uses $A=9$ (3 scales × 3 aspect ratios)." },
+      { sym: "$C$", desc: "the channel width of the FPN feature maps and the subnet conv layers; RetinaNet uses $C=256$." },
+      { sym: "$P_3..P_7$", desc: "the FPN pyramid levels RetinaNet attaches its subnets to; level $P_l$ has $2^l$ smaller resolution than the input." },
       { sym: "AP", desc: "Average Precision, the standard object-detection accuracy score on COCO (higher is better)." }
     ],
-    formula: `$$\\text{FL}(p_t) = -\\,\\alpha_t\\,(1-p_t)^{\\gamma}\\,\\log(p_t)$$`,
+    formula:
+      `$$\\text{CE}(p, y) = \\begin{cases} -\\log(p) & \\text{if } y = 1 \\\\ -\\log(1-p) & \\text{otherwise} \\end{cases}$$
+       <p>Binary <b>cross entropy</b> (&sect;3, Eqn 1): the standard yes/no loss on the model's probability $p$ that the label is 1.</p>
+       $$p_t = \\begin{cases} p & \\text{if } y = 1 \\\\ 1-p & \\text{otherwise} \\end{cases} \\qquad\\Longrightarrow\\qquad \\text{CE}(p_t) = -\\log(p_t)$$
+       <p>The $p_t$ shorthand (&sect;3, Eqn 2): the probability of the <b>true</b> class. Cross entropy collapses to the single clean form $-\\log(p_t)$.</p>
+       $$\\text{CE}(p_t) = -\\,\\alpha_t\\,\\log(p_t)$$
+       <p>$\\alpha$-balanced cross entropy (&sect;3, Eqn 3): a per-class weight $\\alpha_t$ to offset frequency &mdash; the common baseline focal loss is measured against.</p>
+       $$\\text{FL}(p_t) = -\\,(1-p_t)^{\\gamma}\\,\\log(p_t)$$
+       <p>The core <b>focal loss</b> (&sect;3, Eqn 4): cross entropy times the <b>modulating factor</b> $(1-p_t)^\\gamma$, which crushes the loss of well-classified ($p_t\\to 1$) examples and spares hard ones &mdash; this is the class-imbalance fix, with $\\gamma$ tuning how hard easy examples are down-weighted.</p>
+       $$\\text{FL}(p_t) = -\\,\\alpha_t\\,(1-p_t)^{\\gamma}\\,\\log(p_t)$$
+       <p>The $\\alpha$-balanced focal loss actually trained (&sect;3, Eqn 5): focusing factor and class weight combined; the paper uses $\\gamma=2$, $\\alpha=0.25$.</p>
+       $$b = -\\log\\!\\left(\\frac{1-\\pi}{\\pi}\\right), \\quad \\pi = 0.01$$
+       <p><b>Prior $\\pi$ initialization</b> (&sect;3.3 / &sect;4.1): set the final classification conv's bias $b$ so the model <i>starts</i> predicting foreground probability $\\pi=0.01$ for every anchor, stopping the ~100k mostly-background anchors from blowing up the first iteration's loss.</p>
+       $$x_t = y\\,x, \\qquad p_t^{*} = \\sigma(\\gamma\\,x_t + \\beta), \\qquad \\text{FL}^{*} = -\\,\\frac{\\log(p_t^{*})}{\\gamma}$$
+       <p>The alternative form $\\text{FL}^{*}$ (Appendix A, Eqns 6&ndash;8) on the raw logit $x$ with $y\\in\\{\\pm 1\\}$; with $\\gamma=2$, $\\beta=1$ it reaches 33.8 AP, nearly matching Eqn 5's 34.0 (the paper's numbers).</p>`,
     whatItDoes:
       `<p>This is the alpha-balanced focal loss the paper actually trains with (&sect;3, <b>Eqn 5</b>); dropping
        $\\alpha_t$ gives the core focal loss of <b>Eqn 4</b>, $\\text{FL}(p_t)=-(1-p_t)^\\gamma\\log(p_t)$. Read

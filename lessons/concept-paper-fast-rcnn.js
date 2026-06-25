@@ -128,6 +128,35 @@
        that is less sensitive to outliers than the $L_2$ loss used in R-CNN and SPPnet" and notes that with
        plain $L_2$, "training &hellip; can require careful tuning of learning rates in order to prevent
        exploding gradients" (&sect;2.3).</p>`,
+    architecture:
+      `<p>Fast R-CNN is a <b>single-stage network</b> (Fig. 1). Data flows top to bottom; the convolutional
+       trunk runs <b>once per image</b> and every RoI branches off the shared feature map.</p>
+       <ol>
+        <li><b>Input.</b> One whole image, plus a set of <b>object proposals</b> (RoIs) from an external
+        algorithm (e.g. Selective Search) &mdash; given, not learned in this paper.</li>
+        <li><b>Convolutional backbone (shared, run once).</b> Several conv + max-pool layers (e.g. VGG16&rsquo;s
+        13 conv layers) map the $H_\\text{img}\\times W_\\text{img}\\times3$ image to one <b>conv feature map</b>
+        of shape $H_f\\times W_f\\times C$ (for VGG16, $C=512$, downsampled by a stride of 16).</li>
+        <li><b>RoI projection.</b> Each proposal box is scaled by the backbone stride onto the feature map,
+        becoming an $h\\times w$ rectangle of feature cells (different $h,w$ per RoI).</li>
+        <li><b>RoI pooling layer (&sect;2.1).</b> Each $h\\times w$ RoI is max-pooled into a <b>fixed</b>
+        $H\\times W$ grid (VGG16 uses $7\\times7$), independently per channel &rarr; an $H\\times W\\times C$
+        tensor of identical shape for every RoI.</li>
+        <li><b>Fully-connected layers (shared head).</b> Flatten to $H\\,W\\,C$ and pass through two FC layers
+        (VGG16: two $4096$-wide FCs, each + ReLU) &rarr; the per-RoI feature vector $\\phi$.</li>
+        <li><b>Two sibling output heads</b> (both read $\\phi$):
+          <ul>
+            <li><b>Classification head:</b> FC $\\to$ <b>softmax</b> over $K{+}1$ classes &rarr; $p\\in\\mathbb{R}^{K+1}$.</li>
+            <li><b>Bounding-box regression head:</b> FC $\\to$ $4K$ outputs &rarr; per-class offsets
+            $t^u=(t_x,t_y,t_w,t_h)$.</li>
+          </ul>
+        </li>
+       </ol>
+       <p><b>Training</b> backpropagates the single multi-task loss (Eqn. 1) through both heads, the FC layers,
+       <i>and</i> the conv backbone end-to-end &mdash; one network, one stage, no SVMs or disk caches. (For
+       test-time speed &sect;3 optionally compresses the big FC layers with <b>truncated SVD</b>, factoring an
+       FC weight matrix into two smaller ones; this is an inference optimization, not part of the model
+       definition.)</p>`,
     symbols: [
       { sym: "$p = (p_0,\\dots,p_K)$", desc: "the <b>softmax probability vector</b> over $K+1$ classes the classifier head outputs for a region ($K$ object classes plus class $0$ = background). $p_u$ is the probability assigned to the true class $u$." },
       { sym: "$u$", desc: "the <b>true class label</b> of the region (an integer). By convention $u=0$ is the catch-all <b>background</b> class; $u\\ge 1$ means a real object." },
@@ -139,10 +168,21 @@
       { sym: "$[u\\ge 1]$", desc: "the <b>Iverson bracket</b>: equals $1$ when $u\\ge 1$ (a real object) and $0$ when $u=0$ (background). It <b>switches off the box loss for background regions</b>, which have no ground-truth box." },
       { sym: "$\\text{smooth}_{L_1}(x)$", desc: "the <b>smooth-L1 / Huber-like</b> function: $0.5x^2$ if $|x|\\lt 1$, else $|x|-0.5$ (Eqn. 3). Quadratic near $0$, linear in the tails." },
       { sym: "$h\\times w$ / $H\\times W$", desc: "the RoI&rsquo;s rectangle size on the feature map ($h$ rows, $w$ cols) and the <b>fixed pooled output</b> size ($H$ rows, $W$ cols, e.g. $7\\times7$)." },
+      { sym: "$x_{c,r,s}$ / $y_{c,i,j}$", desc: "in the RoI-pool formula: $x_{c,r,s}$ is the feature-map value at channel $c$, row $r$, col $s$ (inside the RoI); $y_{c,i,j}$ is the pooled output at channel $c$, output-grid cell $(i,j)$." },
+      { sym: "$\\text{bin}(i,j)$", desc: "the half-open sub-window of feature-map cells that output cell $(i,j)$ maxes over &mdash; rows $[\\lfloor i\\,h/H\\rfloor,\\lfloor(i{+}1)h/H\\rfloor)$, cols $[\\lfloor j\\,w/W\\rfloor,\\lfloor(j{+}1)w/W\\rfloor)$ (the $\\lfloor\\cdot\\rfloor$ floor is the coordinate quantization)." },
+      { sym: "$\\phi$", desc: "the <b>fully-connected feature vector</b> for a RoI: the flattened $H\\times W$ pooled features after the shared fully-connected layers. Both sibling heads read from $\\phi$." },
+      { sym: "$W_\\text{cls},b_\\text{cls}$ / $W_\\text{box}^{u},b_\\text{box}^{u}$", desc: "the <b>weights and biases</b> of the two sibling heads: the classifier ($W_\\text{cls}\\in\\mathbb{R}^{(K+1)\\times\\dim\\phi}$) and the per-class box regressor ($W_\\text{box}^{u}\\in\\mathbb{R}^{4\\times\\dim\\phi}$, a separate $4{\\times}\\dim\\phi$ block for each object class $u$)." },
+      { sym: "$K$ / $K+1$", desc: "$K$ = number of <b>object classes</b>; $K{+}1$ adds the background class, so the softmax is over $K{+}1$ outputs and the regressor has $4K$ outputs (four per object class)." },
       { sym: "“RoI”", desc: "a plain term: <b>Region of Interest</b> &mdash; one candidate box (region proposal) projected onto the shared feature map." }
     ],
-    formula: `$$ L(p,u,t^u,v) \\;=\\; L_\\text{cls}(p,u) \\;+\\; \\lambda\\,[u\\ge 1]\\,L_\\text{loc}(t^u,v) \\qquad\\text{(Eqn. 1, } L_\\text{cls}(p,u)=-\\log p_u\\text{)} $$
-$$ L_\\text{loc}(t^u,v) = \\!\\!\\sum_{i\\in\\{x,y,w,h\\}}\\!\\!\\text{smooth}_{L_1}(t^u_i - v_i) \\;\\;\\text{(Eqn. 2)}, \\qquad \\text{smooth}_{L_1}(x)=\\begin{cases}0.5\\,x^2 & |x|\\lt 1\\\\[2pt]|x|-0.5 & \\text{otherwise}\\end{cases}\\;\\;\\text{(Eqn. 3)} $$`,
+    formula: `$$ y_{c,i,j} \\;=\\; \\max_{(r,s)\\,\\in\\,\\text{bin}(i,j)} x_{c,r,s}, \\qquad \\text{bin}(i,j)=\\Big[\\big\\lfloor i\\tfrac{h}{H}\\big\\rfloor,\\big\\lfloor (i{+}1)\\tfrac{h}{H}\\big\\rfloor\\Big)\\times\\Big[\\big\\lfloor j\\tfrac{w}{W}\\big\\rfloor,\\big\\lfloor (j{+}1)\\tfrac{w}{W}\\big\\rfloor\\Big) $$
+<p class="cap">RoI max pooling (&sect;2.1): each output cell $(i,j)$ of the fixed $H\\times W$ grid is the max over its sub-window of size $\\approx h/H\\times w/W$ inside the $h\\times w$ RoI, done independently per channel $c$.</p>
+$$ p \\;=\\; \\operatorname{softmax}(W_\\text{cls}\\,\\phi + b_\\text{cls}) \\in \\mathbb{R}^{K+1}, \\qquad t^u \\;=\\; W_\\text{box}^{u}\\,\\phi + b_\\text{box}^{u} \\;=\\; (t^u_x,t^u_y,t^u_w,t^u_h) $$
+<p class="cap">The two sibling heads (&sect;2): a softmax classifier over $K{+}1$ classes and a per-class bounding-box regressor (four numbers for each of the $K$ object classes), both fed the same fully-connected feature $\\phi$.</p>
+$$ L(p,u,t^u,v) \\;=\\; L_\\text{cls}(p,u) \\;+\\; \\lambda\\,[u\\ge 1]\\,L_\\text{loc}(t^u,v) \\qquad\\text{(Eqn. 1, } L_\\text{cls}(p,u)=-\\log p_u\\text{)} $$
+<p class="cap">The multi-task loss (Eqn. 1): classification log-loss plus, for non-background RoIs only, the box-regression loss weighted by $\\lambda$.</p>
+$$ L_\\text{loc}(t^u,v) = \\!\\!\\sum_{i\\in\\{x,y,w,h\\}}\\!\\!\\text{smooth}_{L_1}(t^u_i - v_i) \\;\\;\\text{(Eqn. 2)}, \\qquad \\text{smooth}_{L_1}(x)=\\begin{cases}0.5\\,x^2 & |x|\\lt 1\\\\[2pt]|x|-0.5 & \\text{otherwise}\\end{cases}\\;\\;\\text{(Eqn. 3)} $$
+<p class="cap">The localization loss (Eqn. 2) sums smooth-L1 (Eqn. 3) over the four box coordinates; smooth-L1 is quadratic for $|x|\\lt 1$ and linear beyond, capping the gradient at $\\pm1$.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the heart of the paper: one loss for the whole detector. Add the
        <b>classification</b> log-loss $L_\\text{cls}(p,u)=-\\log p_u$ (penalizes giving the true class a low

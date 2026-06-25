@@ -148,6 +148,35 @@
        final set of feature maps is called $\\{P_2, P_3, P_4, P_5\\}$." (&sect;3) Every $P$ level has the same
        channel count: "We set $d=256$ in this paper and thus all extra convolutional layers have 256-channel
        outputs. There are no non-linearities in these extra layers." (&sect;3)</p>`,
+    architecture:
+      `<p>FPN is a <b>neck</b>: it sits between a backbone and a detector head, and the same pyramid feeds
+       both stages of a two-stage detector. Here is the whole assembly, component by component.</p>
+       <p><b>1. Bottom-up pathway (the backbone).</b> A ResNet runs its normal forward pass. FPN taps the
+       <b>last residual block of each stage</b> &mdash; conv2, conv3, conv4, conv5 outputs &mdash; giving
+       $\\{C_2, C_3, C_4, C_5\\}$ at strides $\\{4, 8, 16, 32\\}$. (&sect;3) "We do not include conv1 into the
+       pyramid due to its large memory footprint." (&sect;3) So the finest tapped level is stride-4 $C_2$.</p>
+       <p><b>2. Top-down pathway + lateral merges (the FPN proper).</b> Start with $M_5 = \\text{Conv}_{1\\times1}(C_5)$.
+       For $\\ell = 4,3,2$: $2\\times$ nearest-neighbor upsample $M_{\\ell+1}$, $1\\times1$-project $C_{\\ell}$ to
+       $d=256$, add, then $3\\times3$-smooth to get $P_{\\ell}$. Output: $\\{P_2, P_3, P_4, P_5\\}$, all
+       $256$-channel, at strides $\\{4,8,16,32\\}$. No non-linearities in these extra layers. (&sect;3)</p>
+       <p><b>3a. FPN &rarr; RPN (the Region Proposal Network, the first stage).</b> (&sect;4.1) The RPN head is
+       "the same design ($3\\times3$ conv and two sibling $1\\times1$ convs)" &mdash; one $1\\times1$ for
+       objectness, one for box regression &mdash; and its <b>parameters are shared across all pyramid levels</b>.
+       Because each level already targets one scale, every level uses a <b>single anchor scale</b>: areas
+       $\\{32^2, 64^2, 128^2, 256^2, 512^2\\}$ on $\\{P_2, P_3, P_4, P_5, P_6\\}$, where "$P_6$ is simply a
+       stride-two subsampling of $P_5$" added to cover the largest anchors. With $3$ aspect ratios
+       $\\{1{:}2, 1{:}1, 2{:}1\\}$ per level, "in total there are $15$ anchors over the pyramid." (&sect;4.1)
+       Anchors are matched to ground-truth boxes by intersection-over-union, exactly as in the original RPN.</p>
+       <p><b>3b. FPN &rarr; Fast R-CNN (the box head, the second stage).</b> (&sect;4.2) Given the RoIs proposed
+       above, each RoI is assigned to <b>one</b> pyramid level by the level-assignment rule
+       $k = \\lfloor k_0 + \\log_2(\\sqrt{wh}/224)\\rfloor$ with $k_0 = 4$ (Eq. 1): big RoIs read off coarse,
+       semantic levels; small RoIs read off fine, high-resolution levels. From that level, RoI pooling
+       extracts $7\\times7$ features, followed by "two hidden $1{,}024$-d fully-connected (fc) layers" and the
+       classification + box-regression outputs &mdash; one shared head for all levels (replacing the conv5
+       head of the single-scale Faster R-CNN). (&sect;4.2)</p>
+       <p><b>Data flow end to end:</b> image &rarr; backbone $\\{C_2..C_5\\}$ &rarr; FPN $\\{P_2..P_6\\}$ &rarr;
+       shared RPN head over all levels &rarr; RoIs &rarr; per-RoI level pick by Eq. 1 &rarr; RoI pool $\\to 7\\times7$
+       &rarr; two $1024$-d fc &rarr; class + box. The pyramid is built once and reused by both heads.</p>`,
     symbols: [
       { sym: "feature map", desc: "a plain term, not a symbol: the network's internal grid of numbers describing the image at one layer, with a width (channels), a height, and a width. Early maps are fine-detailed but shallow; deep maps are coarse but semantic." },
       { sym: "$C_2, C_3, C_4, C_5$", desc: "the <b>bottom-up</b> feature maps &mdash; the output of each backbone stage in the normal forward pass. $C_2$ is the highest-resolution (shallowest), $C_5$ the lowest-resolution (deepest, most semantic)." },
@@ -160,10 +189,25 @@
       { sym: "$1\\times1$ convolution", desc: "a convolution with a $1\\times1$ kernel: it mixes channels per pixel and leaves height/width unchanged. FPN uses it on the lateral path to re-project the bottom-up map to $d$ channels so the add is possible." },
       { sym: "$3\\times3$ convolution", desc: "a convolution with a $3\\times3$ kernel applied to each merged map. It smooths the blocky artifacts (aliasing) that nearest-neighbor upsampling leaves behind, producing the final $P$ level." },
       { sym: "$d$", desc: "the shared channel count of every pyramid level and every extra FPN conv layer; $d=256$ in the paper. Fixing it makes all $P$ levels interchangeable to the detector head." },
-      { sym: "element-wise addition ($+$)", desc: "add two equal-shaped tensors position by position. The merge is a plain sum (not a concatenation), so the two maps MUST already match in resolution and channel count." }
+      { sym: "element-wise addition ($+$)", desc: "add two equal-shaped tensors position by position. The merge is a plain sum (not a concatenation), so the two maps MUST already match in resolution and channel count." },
+      { sym: "$M_{\\ell}$", desc: "the running <b>merged</b> top-down map at level $\\ell$ (the pyramid state before the final $3\\times3$ smoothing). $M_5$ starts the iteration; each $M_{\\ell}$ becomes $P_{\\ell}$ after the smoothing conv." },
+      { sym: "RoI (region of interest)", desc: "a candidate box on the input image (proposed by the RPN) that the second-stage head will classify and refine. In Fast R-CNN each RoI is read off one pyramid level." },
+      { sym: "$w, h$", desc: "the <b>width and height of an RoI</b>, in input-image pixels. They set which pyramid level $P_k$ the RoI is pooled from via the level-assignment rule (Eq. 1, &sect;4.2)." },
+      { sym: "$k$", desc: "the pyramid <b>level index</b> an RoI is assigned to: read features off $P_k$. Computed from the RoI size by Eq. 1 and clamped to the available levels $\\{2,3,4,5\\}$." },
+      { sym: "$k_0$", desc: "the target level for a canonical $224\\times224$ RoI; the paper sets $k_0=4$ (matching the single-scale Faster R-CNN that uses $C_4$). It anchors the level-assignment rule." },
+      { sym: "$224$", desc: "the canonical ImageNet pre-training image size (in pixels). It is the reference RoI side length in Eq. 1: an RoI of area $224^2$ maps to level $k_0$." },
+      { sym: "anchor", desc: "a fixed reference box of a given scale and aspect ratio that the RPN classifies as object/not and regresses. FPN uses ONE scale per level: areas $\\{32^2,..,512^2\\}$ on $\\{P_2,..,P_6\\}$, $\\times 3$ aspect ratios = $15$ anchors total." },
+      { sym: "$P_6$", desc: "an extra coarsest level used only by the RPN, formed by stride-2 subsampling of $P_5$, to host the largest ($512^2$) anchors. Not part of the $\\{P_2..P_5\\}$ used by the Fast R-CNN head." },
+      { sym: "RPN (Region Proposal Network)", desc: "the first-stage network that scans the pyramid with a shared $3\\times3$-conv + two $1\\times1$-conv head and outputs candidate object boxes (RoIs) for the second stage." }
     ],
-    formula: `$$ P_{\\ell} = \\text{Conv}_{3\\times3}\\Big(\\; \\underbrace{\\text{Conv}_{1\\times1}(C_{\\ell})}_{\\text{lateral: location}} \\;+\\; \\underbrace{\\text{Upsample}_{2\\times}(M_{\\ell+1})}_{\\text{top-down: semantics}} \\;\\Big), \\qquad M_{\\ell} = \\text{Conv}_{1\\times1}(C_{\\ell}) + \\text{Upsample}_{2\\times}(M_{\\ell+1}) $$
-$$ M_5 = \\text{Conv}_{1\\times1}(C_5) \\quad\\text{(start the iteration on the coarsest map; \\S3)} $$`,
+    formula: `$$ M_5 = \\text{Conv}_{1\\times1}(C_5) \\qquad\\text{(\\S3 — start the top-down iteration on the coarsest backbone map } C_5\\text{)} $$
+<p>The top-down recursion for $\\ell = 4, 3, 2$ (build the running merged map $M_{\\ell}$ from the next-coarser $M_{\\ell+1}$ and the same-level backbone map $C_{\\ell}$):</p>
+$$ M_{\\ell} \\;=\\; \\underbrace{\\text{Conv}_{1\\times1}(C_{\\ell})}_{\\text{lateral: location}} \\;+\\; \\underbrace{\\text{Upsample}^{\\text{nn}}_{2\\times}(M_{\\ell+1})}_{\\text{top-down: semantics}} $$
+<p>&sect;3 — the lateral connection: $1\\times1$-project the bottom-up map $C_{\\ell}$ to $d=256$ channels, $2\\times$ nearest-neighbor-upsample the coarser merged map, and add element-wise.</p>
+$$ P_{\\ell} \\;=\\; \\text{Conv}_{3\\times3}(M_{\\ell}), \\qquad d = 256, \\quad \\text{no non-linearities in the extra layers} $$
+<p>&sect;3 — the final $3\\times3$ smoothing conv on each merged map gives the output pyramid level $P_{\\ell}$ (reduces aliasing from upsampling). Every $P$ level has $d=256$ channels.</p>
+$$ k \\;=\\; \\Big\\lfloor\\, k_0 + \\log_2\\!\\big(\\sqrt{w\\,h}\\,/\\,224\\big) \\,\\Big\\rfloor, \\qquad k_0 = 4 $$
+<p>&sect;4.2, Eq. (1) — the <b>level-assignment rule</b> for Fast R-CNN: a region-of-interest (RoI) of width $w$ and height $h$ (in input-image pixels) is read off pyramid level $P_k$. $224$ is the canonical ImageNet pre-training size; $k_0=4$ is the level a $224\\times224$ RoI maps to, so larger RoIs go to coarser (higher-$k$) levels, smaller ones to finer levels. $k$ is clamped to the available levels $\\{2,3,4,5\\}$.</p>`,
     whatItDoes:
       `<p>Read the merge equation from <b>right to left and top to bottom</b>. $M_{\\ell}$ is the merged
        top-down map at level $\\ell$ (the running pyramid state before the final smoothing conv). To build
@@ -176,7 +220,14 @@ $$ M_5 = \\text{Conv}_{1\\times1}(C_5) \\quad\\text{(start the iteration on the 
        map has no coarser map above it, so it is just $C_5$ re-projected to $256$ channels. Then a final
        $3\\times3$ convolution on each $M_{\\ell}$ smooths the upsampling artifacts to give the output level
        $P_{\\ell}$. Because the operation is an <b>add</b>, the two maps must already match in resolution
-       (hence the upsample) and channels (hence the $1\\times1$); that shape-matching is the whole trick.</p>`,
+       (hence the upsample) and channels (hence the $1\\times1$); that shape-matching is the whole trick.</p>
+       <p>The <b>level-assignment rule</b> $k = \\lfloor k_0 + \\log_2(\\sqrt{wh}/224)\\rfloor$ (Eq. 1) says, in
+       words: take an RoI of width $w$ and height $h$; its <b>geometric-mean side</b> is $\\sqrt{wh}$. Divide
+       by the reference size $224$ and take $\\log_2$ — so the RoI's size relative to $224$ becomes a number
+       of "octaves" (doublings). Add the base level $k_0=4$ and floor it. The effect: an RoI of side $224$
+       gives $\\log_2(1)=0$, so $k=4$ (read off $P_4$); doubling the RoI's side adds $1$ to $k$ (coarser
+       level); halving it subtracts $1$ (finer level). It routes each box to the pyramid level whose receptive
+       scale matches the box, then clamps $k$ to the available $\\{2,3,4,5\\}$.</p>`,
     derivation:
       `<p>This lesson has no separate concept owner (<code>conceptLink</code> is null), so here is the full
        "why," all from &sect;3.</p>
@@ -197,7 +248,16 @@ $$ M_5 = \\text{Conv}_{1\\times1}(C_5) \\quad\\text{(start the iteration on the 
        that nearest-neighbor $2\\times$ upsampling stamps into the top-down term. The paper also drops
        non-linearities from these extra layers, keeping the pyramid a simple linear feature transform.</p>
        <p><b>Why nearest-neighbor upsampling?</b> "for simplicity" (&sect;3) &mdash; it has no parameters and
-       the following $3\\times3$ conv cleans up its artifacts, so a fancier learned upsampler buys little.</p>`,
+       the following $3\\times3$ conv cleans up its artifacts, so a fancier learned upsampler buys little.</p>
+       <p><b>Why the level-assignment rule $k=\\lfloor k_0+\\log_2(\\sqrt{wh}/224)\\rfloor$?</b> (&sect;4.2) Each
+       pyramid level has a fixed stride, so it "sees" objects at one scale band well. A large RoI cropped from
+       a fine, high-resolution level would cover a huge grid with little semantic context; a small RoI cropped
+       from a coarse level would land on just a pixel or two and lose all detail. The rule matches RoI size to
+       level scale on a $\\log_2$ (octave) axis, so the box is pooled where features are at the right
+       resolution. The constants come from the single-scale Faster R-CNN it generalizes: that system reads all
+       RoIs off $C_4$, and a $224\\times224$ RoI (ImageNet's pre-training size) is the "canonical" box &mdash;
+       so the paper sets $k_0=4$, making the rule reduce to $k=4$ for a $224$-sided RoI and shift by one level
+       per octave of size change. The floor and the clamp keep $k$ an integer in $\\{2,3,4,5\\}$.</p>`,
     example:
       `<p>Work one merge step by hand on toy shapes, level $\\ell = 4$ (build $M_4$ from $C_4$ and the
        coarser $M_5$). Use channel-count $d = 256$ throughout. (Every shape and the addition below is
@@ -223,7 +283,21 @@ $$ M_5 = \\text{Conv}_{1\\times1}(C_5) \\quad\\text{(start the iteration on the 
         unchanged &mdash; it is purely a smoothing step.</li>
        </ul>
        <p>So one level converts a coarse $(256,2,2)$ semantic map plus a fine $(512,4,4)$ location map into a
-       fused $(256,4,4)$ pyramid level $P_4$ &mdash; high-resolution AND semantically strong.</p>`,
+       fused $(256,4,4)$ pyramid level $P_4$ &mdash; high-resolution AND semantically strong.</p>
+       <p><b>Now the level-assignment rule (Eq. 1), $k = \\lfloor k_0 + \\log_2(\\sqrt{wh}/224)\\rfloor$ with
+       $k_0=4$.</b> Three RoIs:</p>
+       <ul class="steps">
+        <li><b>A $224\\times224$ RoI.</b> $\\sqrt{wh}=\\sqrt{224\\cdot224}=224$, so $224/224=1$,
+        $\\log_2 1 = 0$, and $k=\\lfloor 4+0\\rfloor = \\mathbf{4}$ &mdash; read off $P_4$. This is the
+        canonical box, as designed.</li>
+        <li><b>A large $448\\times448$ RoI.</b> $\\sqrt{wh}=448$, $448/224=2$, $\\log_2 2 = 1$, so
+        $k=\\lfloor 4+1\\rfloor = \\mathbf{5}$ &mdash; a doubling of side bumps it to the coarser, more
+        semantic $P_5$.</li>
+        <li><b>A small $50\\times50$ RoI.</b> $\\sqrt{wh}=50$, $50/224\\approx0.223$,
+        $\\log_2 0.223 \\approx -2.16$, so $k=\\lfloor 4-2.16\\rfloor = \\lfloor 1.84\\rfloor = 1$, which is
+        below the finest level, so it <b>clamps to $\\mathbf{2}$</b> &mdash; the small box reads off the
+        high-resolution $P_2$.</li>
+       </ul>`,
     recipe:
       `<ol>
         <li><b>Run the bottom-up backbone</b> and collect the per-stage maps $\\{C_2, C_3, C_4, C_5\\}$ with

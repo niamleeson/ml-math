@@ -121,6 +121,36 @@
        <p><b>6. Training.</b> The whole tensor is trained with one <b>multi-part squared-error loss</b>
        (Eqn. 3, &sect;2.2) that handles coordinates, sizes, confidence, and classes together &mdash; so the
        single network is optimized end to end for detection.</p>`,
+    architecture:
+      `<p>YOLO is <b>one feed-forward convolutional network</b> &mdash; image in, the
+       $7 \\times 7 \\times 30$ detection tensor out &mdash; with no branches, region proposals, or
+       per-region passes (&sect;2.1). The design is inspired by GoogLeNet but, instead of GoogLeNet's
+       inception modules, it stacks <b>$1 \\times 1$ reduction layers followed by $3 \\times 3$
+       convolutions</b> (a $1\\times1$ conv mixes channels cheaply to shrink the depth before the
+       expensive $3\\times3$ conv).</p>
+       <p><b>The full stack, in order (&sect;2.1, Fig. 3):</b></p>
+       <ol>
+        <li><b>Input:</b> a $448 \\times 448 \\times 3$ RGB image. (Detection wants finer detail than
+        classification, so the input is doubled from the $224\\times224$ used to pretrain the backbone.)</li>
+        <li><b>24 convolutional layers</b> &mdash; the feature extractor. They progressively halve the
+        spatial size (via stride-2 convs and max-pooling) while growing the channel count, alternating
+        $1\\times1$ reductions with $3\\times3$ convs. Output of the conv stack is a
+        $7 \\times 7 \\times 1024$ feature map.</li>
+        <li><b>2 fully connected layers</b> &mdash; the detector head. The first FC flattens the
+        $7\\times7\\times1024$ map into a long vector; the final FC outputs $7 \\cdot 7 \\cdot 30 = 1470$
+        numbers, reshaped to the $7 \\times 7 \\times 30$ grid tensor.</li>
+       </ol>
+       <p><b>Activations.</b> Every layer except the last uses a <b>leaky ReLU</b>: $\\phi(x)=x$ if
+       $x \\gt 0$, else $0.1x$ (so negative inputs leak through at one-tenth strength instead of dying at
+       $0$). The <b>final layer is linear</b> &mdash; it must emit raw box coordinates and probabilities,
+       not a clamped activation. The box outputs are parametrized to land in $[0,1]$ by construction:
+       $w, h$ are normalized by image size, and $x, y$ are offsets within a cell.</p>
+       <p><b>Fast YOLO.</b> A smaller, faster variant swaps the 24-conv backbone for <b>9 convolutional
+       layers</b> with fewer filters; everything else (the FC head, the loss, the output shape) is
+       identical. This is the variant the paper clocks at "155 frames per second" (abstract).</p>
+       <p><b>Pretraining.</b> The first 20 conv layers are pretrained as a classifier on ImageNet at
+       $224\\times224$, then 4 more conv layers and the 2 FC layers are added and the whole network is
+       fine-tuned end to end for detection at $448\\times448$ (&sect;2.2).</p>`,
     symbols: [
       { sym: "$S$", desc: "the grid is $S \\times S$ cells across the image. The paper uses $S = 7$ for Pascal VOC." },
       { sym: "$B$", desc: "the number of bounding boxes each cell predicts. The paper uses $B = 2$." },
@@ -136,6 +166,7 @@
       { sym: "$\\mathbb{1}_{ij}^{\\text{noobj}}$", desc: "indicator: 1 if box $j$ of cell $i$ is <i>not</i> responsible for any object (a background box), else 0." },
       { sym: "$\\lambda_{\\text{coord}}$", desc: "weight that <b>up-weights</b> the coordinate loss so localization matters more. The paper sets $\\lambda_{\\text{coord}} = 5$." },
       { sym: "$\\lambda_{\\text{noobj}}$", desc: "weight that <b>down-weights</b> the confidence loss for the many empty boxes, so they do not overwhelm training. The paper sets $\\lambda_{\\text{noobj}} = 0.5$." },
+      { sym: "$\\phi(x)$", desc: "the <b>leaky ReLU</b> activation used on every layer but the last: passes positives straight through ($x$) and lets negatives leak at one-tenth ($0.1x$) instead of zeroing them. The final layer uses a plain linear activation." },
       { sym: "NMS", desc: "<b>non-maximal suppression</b>: a post-processing step that keeps the highest-scoring box and deletes lower-scoring boxes that overlap it too much &mdash; one box per object." },
       { sym: "mAP", desc: "<b>mean Average Precision</b>: the standard single-number object-detection accuracy score (higher is better)." }
     ],
@@ -148,7 +179,10 @@
 \\end{aligned}
 \\qquad\\text{(Eqn. 3, \\S2.2)}
 $$
-$$ \\Pr(\\text{Class}_i \\mid \\text{Object}) * \\Pr(\\text{Object}) * \\text{IOU}_{\\text{pred}}^{\\text{truth}} = \\Pr(\\text{Class}_i) * \\text{IOU}_{\\text{pred}}^{\\text{truth}} \\qquad\\text{(Eqn. 1)} $$`,
+$$ \\Pr(\\text{Class}_i \\mid \\text{Object}) * \\Pr(\\text{Object}) * \\text{IOU}_{\\text{pred}}^{\\text{truth}} = \\Pr(\\text{Class}_i) * \\text{IOU}_{\\text{pred}}^{\\text{truth}} \\qquad\\text{(Eqn. 1)} $$
+$$ \\text{confidence} = \\Pr(\\text{Object}) * \\text{IOU}_{\\text{pred}}^{\\text{truth}} \\qquad\\text{(box objectness, \\S2)} $$
+$$ \\text{prediction tensor shape} = S \\times S \\times (B \\cdot 5 + C) = 7 \\times 7 \\times 30 \\qquad\\text{(\\S2, VOC: } S{=}7,\\, B{=}2,\\, C{=}20\\text{)} $$
+$$ \\phi(x) = \\begin{cases} x & \\text{if } x \\gt 0 \\\\ 0.1\\,x & \\text{otherwise} \\end{cases} \\qquad\\text{(leaky ReLU, all but final layer; \\S2.2)} $$`,
     whatItDoes:
       `<p><b>Eqn. 3</b> is one sum-of-squared-errors loss with five terms, all over the grid. <b>Line 1</b>
        penalizes the box-centre error $(x, y)$, but only for the box <i>responsible</i> for an object

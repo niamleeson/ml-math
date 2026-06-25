@@ -146,31 +146,98 @@
        $10$ magnitudes, $11$ probabilities), and a 5-sub-policy policy is
        $(16\\times10\\times11)^{10}\\approx2.9\\times10^{32}$ possibilities (&sect;3). You cannot try them
        all; the RL controller samples the promising regions.</p>`,
+    architecture:
+      `<p>AutoAugment has two structural pieces: the <b>policy</b> (the object being searched) and the
+       <b>controller + search loop</b> (the machine that searches). Both are specified in &sect;3.</p>
+       <p><b>1. The policy, component by component (the search space).</b></p>
+       <ul>
+        <li><b>operation</b> = a triple $(t, p, m)$: one of <b>16</b> transforms $t$ (ShearX, ShearY,
+        TranslateX, TranslateY, Rotate, AutoContrast, Invert, Equalize, Solarize, Posterize, Contrast,
+        Color, Brightness, Sharpness, Cutout, SamplePairing), a probability $p$ from <b>11</b> evenly
+        spaced buckets, and a magnitude $m$ from <b>10</b> evenly spaced buckets. Setting $p=0$ gives an
+        implicit identity (do nothing).</li>
+        <li><b>sub-policy</b> = <b>2</b> operations applied in sequence.</li>
+        <li><b>policy</b> = <b>5</b> sub-policies. At training time, one sub-policy is chosen uniformly at
+        random per image (&sect;3).</li>
+       </ul>
+       <p><b>2. The controller (the sampler).</b> A <b>one-layer LSTM (recurrent neural network) with 100
+       hidden units</b> emits a candidate policy as a fixed-length sequence of <b>30 softmax decisions</b>
+       = 5 sub-policies $\\times$ 2 operations $\\times$ 3 choices per operation (transform type, magnitude
+       bucket, probability bucket). Each softmax's sampled token is fed back in as the next step's input, so
+       the controller builds the policy autoregressively. Weights are initialized uniformly in $[-0.1,
+       0.1]$ (&sect;3).</p>
+       <p><b>3. The search loop (one iteration).</b></p>
+       <ol>
+        <li><b>Sample:</b> the controller $\\pi_\\theta$ emits the 30 tokens &rarr; one candidate policy.</li>
+        <li><b>Train child:</b> a small <b>child network</b> is trained from scratch with that policy applied
+        to its training data, to convergence.</li>
+        <li><b>Reward:</b> measure the child's <b>validation accuracy</b> on a held-out split &rarr; scalar
+        reward $R$.</li>
+        <li><b>Update controller:</b> because the policy tokens are discrete (no gradient from $R$ to the
+        choices), update $\\theta$ by a <b>policy-gradient RL</b> method &mdash; the paper uses <b>Proximal
+        Policy Optimization (PPO)</b> with learning rate $0.00035$, an entropy penalty of weight $0.00001$,
+        and a reward baseline = exponential moving average of past rewards (decay $0.95$) &mdash; to make
+        high-reward token sequences more likely (&sect;3).</li>
+       </ol>
+       <p><b>4. After the search.</b> The controller samples about <b>15,000 policies</b> per dataset; the
+       best-performing sub-policies are concatenated into one final policy (the paper combines the top
+       sub-policies into a 25-sub-policy policy) and used to train the final large model. The child models
+       and the RL search are the expensive part; once found, applying the policy is cheap.</p>`,
     symbols: [
       { sym: "policy", desc: "the full augmentation recipe being searched: a set of <b>5 sub-policies</b> (&sect;3)." },
       { sym: "sub-policy", desc: "a sequence of <b>2 operations</b> applied one after the other to an image." },
       { sym: "operation", desc: "one transform together with how often and how hard to apply it: the triple (transform, probability, magnitude)." },
+      { sym: "$S_j$", desc: "the $j$-th <b>sub-policy</b> in a policy ($j=1,\\\\dots,5$); a pair of operations $(o_{j,1}, o_{j,2})$." },
+      { sym: "$o$", desc: "an <b>operation</b> written as a triple $(t, p, m)$." },
       { sym: "$t$", desc: "the <b>transform</b> chosen for an operation &mdash; one of the <b>16</b> image operations (e.g. Rotate, ShearX, Color)." },
       { sym: "$p$", desc: "the <b>probability</b> of applying that operation to a given image; discretized into <b>11</b> evenly spaced values (&sect;3)." },
       { sym: "$m$", desc: "the <b>magnitude</b> (strength) of the transform; discretized into <b>10</b> evenly spaced values (&sect;3)." },
       { sym: "$K$", desc: "the number of <b>transforms</b> available, $K=16$ in the paper's search space (&sect;3)." },
       { sym: "$R$", desc: "the <b>reward</b>: the <b>validation accuracy</b> of a child model trained with a sampled policy &mdash; the signal the controller maximizes (&sect;3)." },
-      { sym: "controller", desc: "the <b>recurrent neural network (RNN)</b> that samples candidate policies; trained by reinforcement learning." },
-      { sym: "PPO", desc: "<b>Proximal Policy Optimization</b>, the RL algorithm used to update the controller from the reward $R$ (&sect;3). See the PPO paper lesson." },
+      { sym: "controller", desc: "the <b>recurrent neural network (RNN)</b> &mdash; a one-layer LSTM with 100 hidden units &mdash; that samples candidate policies; trained by reinforcement learning (&sect;3)." },
+      { sym: "$\\\\pi_\\\\theta$", desc: "the controller's <b>stochastic policy</b>: a distribution over the 30 discrete tokens of a candidate augmentation policy, parameterized by weights $\\\\theta$." },
+      { sym: "$\\\\theta$", desc: "the <b>controller's parameters</b> (LSTM + softmax weights) updated by reinforcement learning to raise expected reward." },
+      { sym: "$a_k$", desc: "the $k$-th <b>action / token</b> the controller samples ($k=1,\\\\dots,30$): a transform, magnitude, or probability choice for one of the 10 operations." },
+      { sym: "$b$", desc: "the <b>reward baseline</b>: an exponential moving average of past rewards (decay $0.95$) subtracted from $R$ to reduce gradient variance (&sect;3)." },
+      { sym: "PPO", desc: "<b>Proximal Policy Optimization</b>, the policy-gradient RL algorithm used to update the controller from the reward $R$ (learning rate $0.00035$, entropy weight $0.00001$; &sect;3). See the PPO paper lesson." },
       { sym: "child model", desc: "the small network trained from scratch with a candidate policy, whose validation accuracy becomes the reward $R$." }
     ],
-    formula: `$$ \\#\\text{policies} \\;=\\; \\big(\\,K \\times (\\#\\text{magnitudes}) \\times (\\#\\text{probabilities})\\,\\big)^{\\,(\\#\\text{ops per sub-policy})\\,\\times\\,(\\#\\text{sub-policies})} \\;=\\; (16\\times 10\\times 11)^{2\\times 5} \\;=\\; (16\\times10\\times11)^{10} \\;\\approx\\; 2.9\\times10^{32} $$
-$$ \\text{controller objective:}\\quad \\max_{\\theta}\\; \\mathbb{E}_{\\,\\text{policy}\\,\\sim\\,\\pi_\\theta}\\big[\\,R\\,\\big], \\qquad R = \\text{validation accuracy of the child model (}\\S 3\\text{, optimized with PPO)} $$`,
+    formula: `$$ \\text{policy} \\;=\\; \\{\\,S_1, S_2, S_3, S_4, S_5\\,\\}, \\qquad S_j \\;=\\; \\big(\\,o_{j,1},\\, o_{j,2}\\,\\big), \\qquad o \\;=\\; (\\,t,\\; p,\\; m\\,) $$
+<div class="cap">&sect;3 search space: a <b>policy</b> is 5 sub-policies $S_j$; each sub-policy is 2 operations $o$; each operation is a triple (transform $t$, probability $p$, magnitude $m$).</div>
+
+$$ t \\in \\{1,\\dots,16\\}, \\qquad p \\in \\Big\\{\\tfrac{0}{10}, \\tfrac{1}{10}, \\dots, \\tfrac{10}{10}\\Big\\}\\ (11\\ \\text{values}), \\qquad m \\in \\{0,1,\\dots,9\\}\\ (10\\ \\text{values}) $$
+<div class="cap">&sect;3 discretization: 16 transforms, probability bucketed into 11 evenly spaced values, magnitude into 10. This makes the space finite and countable.</div>
+
+$$ \\#\\text{policies} \\;=\\; \\big(\\,K \\times (\\#\\text{magnitudes}) \\times (\\#\\text{probabilities})\\,\\big)^{\\,(\\#\\text{ops per sub-policy})\\,\\times\\,(\\#\\text{sub-policies})} \\;=\\; (16\\times 10\\times 11)^{2\\times 5} \\;=\\; (16\\times10\\times11)^{10} \\;\\approx\\; 2.9\\times10^{32} $$
+<div class="cap">&sect;3 search-space size: $1760$ choices per operation, raised to the $2\\times5=10$ operations in a policy.</div>
+
+$$ \\text{controller (RNN) emits } 5\\times 2\\times 3 = 30 \\text{ softmax tokens:}\\quad \\pi_\\theta(\\text{policy}) \\;=\\; \\prod_{k=1}^{30} \\pi_\\theta\\!\\big(a_k \\mid a_{1:k-1}\\big) $$
+<div class="cap">&sect;3 controller: a one-layer LSTM autoregressively samples 30 categorical actions $a_k$ (transform, magnitude, probability for each of the 10 operations).</div>
+
+$$ \\text{objective:}\\quad \\max_{\\theta}\\; J(\\theta) = \\mathbb{E}_{\\,\\text{policy}\\,\\sim\\,\\pi_\\theta}\\big[\\,R\\,\\big], \\qquad R = \\text{validation accuracy of the child model} $$
+<div class="cap">&sect;3 learning objective: tune controller parameters $\\theta$ so sampled policies maximize expected reward $R$ (the child's validation accuracy). Optimized with PPO.</div>
+
+$$ \\nabla_\\theta J(\\theta) \\;\\approx\\; \\big(R - b\\big)\\,\\sum_{k=1}^{30} \\nabla_\\theta \\log \\pi_\\theta\\!\\big(a_k \\mid a_{1:k-1}\\big), \\qquad b = 0.95\\,b_{\\text{prev}} + 0.05\\,R $$
+<div class="cap">Policy-gradient update (REINFORCE form underlying the PPO objective): push up the log-probability of the sampled tokens in proportion to reward above a moving-average baseline $b$ (&sect;3).</div>`,
     whatItDoes:
-      `<p>The <b>first line</b> counts the search space (&sect;3). Each <b>operation</b> picks one of
-       $16$ transforms, one of $10$ magnitudes, and one of $11$ probabilities &rarr; $16\\times10\\times11
-       = 1760$ choices. A <b>sub-policy</b> chains $2$ operations &rarr; $1760^2$. A <b>policy</b> stacks
-       $5$ sub-policies &rarr; $1760^{10} = (16\\times10\\times11)^{10}\\approx2.9\\times10^{32}$. That huge
+      `<p>The <b>first two lines</b> define the search space: a policy is exactly $5$ sub-policies $S_j$,
+       each $2$ operations $o=(t,p,m)$, with the transform $t$ from $16$ choices, the probability $p$ from
+       $11$ buckets, the magnitude $m$ from $10$ buckets. Bucketing $p$ and $m$ is what makes the space
+       finite.</p>
+       <p>The <b>third line</b> counts that space. Each <b>operation</b> has $16\\times10\\times11 = 1760$
+       choices. A <b>sub-policy</b> chains $2$ operations &rarr; $1760^2$. A <b>policy</b> stacks $5$
+       sub-policies &rarr; $1760^{10} = (16\\times10\\times11)^{10}\\approx2.9\\times10^{32}$. That huge
        number is <i>why</i> you cannot grid-search and need a learned sampler.</p>
-       <p>The <b>second line</b> is the learning objective: tune the controller's parameters $\\theta$ so
+       <p>The <b>fourth line</b> is the controller: an LSTM that produces a policy as $30$ softmax tokens
+       ($5\\times2\\times3$), each token conditioned on the ones before it &mdash; so the probability of a
+       whole policy is the product of the $30$ per-token probabilities.</p>
+       <p>The <b>fifth line</b> is the learning objective: tune the controller's parameters $\\theta$ so
        that the policies it samples have high expected reward $R$, where $R$ is just the validation accuracy
-       of a child model trained under that policy. Because the policy choices are discrete (no gradient from
-       $R$), the controller is optimized with the RL algorithm PPO.</p>`,
+       of a child model trained under that policy.</p>
+       <p>The <b>sixth line</b> is the update rule. Because the policy choices are discrete (no gradient from
+       $R$ back to the tokens), the controller is trained by policy gradient: scale the gradient of each
+       sampled token's log-probability by how much the reward $R$ beat the running baseline $b$. PPO is the
+       stable variant of this update the paper actually uses.</p>`,
     derivation:
       `<p>There is no theorem to prove &mdash; AutoAugment is a <b>method</b>, so the "why" is the design
        logic of each piece. Two things are worth deriving carefully: the <b>search-space count</b> and
