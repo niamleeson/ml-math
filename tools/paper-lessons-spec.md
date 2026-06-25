@@ -55,8 +55,10 @@ path) — see `tools/capstone-spec.md`. You write ONE self-contained file `lesso
     track: "primitive" | "architecture" | "read-only",
     paper: {                               // ALL from the fetched source
       authors: "...", org: "...", year: <n>, venue: "...",
-      citations: "... (<source>, <YYYY-MM>)",
-      arxiv: "https://arxiv.org/abs/<id>", code: "<official repo if any>"
+      citations: "",                       // ONLY if you fetched a real number; else "" (never invent one)
+      arxiv: "https://arxiv.org/abs/<id>", // REQUIRED for arXiv papers
+      url: "<published source / official PDF>",  // REQUIRED for NON-arXiv papers (backprop, LeNet, AlexNet, LSTM, GPT...) — every lesson MUST have a readable paper link (arxiv OR url)
+      code: "<official repo if any>"
     },
     conceptLink: "<existing concept-lesson id or null>",   // math owner; recap+link, don't re-derive
     partOf: [ { capstone: "capstone-<id>", step: <n>, builds: "<the component>" } ],  // [] if standalone

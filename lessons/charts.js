@@ -17,6 +17,7 @@
   function fin(v) { return typeof v === "number" && isFinite(v); }
 
   function drawBars(ctx, cv, s) {
+    if ((!s.values || !s.values.length) && s.series && s.series.length) return drawGroupedBars(ctx, cv, s);
     const c = PAL(), W = cv.width, H = cv.height, pad = 38, bw = W - pad - 14, bh = H - pad - 26;
     const vals = (s.values || []).map(Number), labs = s.labels || [], n = vals.length || 1;
     const max = Math.max(...vals.filter(fin), 1e-9), min = Math.min(0, ...vals.filter(fin));
@@ -32,6 +33,31 @@
       ctx.fillStyle = c.dim; ctx.textAlign = "center"; ctx.fillText(labs[i] != null ? labs[i] : "", x + w / 2, 12 + bh + 13);
       ctx.fillStyle = c.ink; ctx.fillText((s.valueLabels && s.valueLabels[i] != null) ? s.valueLabels[i] : v, x + w / 2, (v >= 0 ? y : y + Math.abs(hh)) - 3);
     });
+  }
+  // Grouped/multi-series bars from a `series:[{name,color,points:[[x,y]]}]` spec (forgiving alias for line-style data).
+  function drawGroupedBars(ctx, cv, s) {
+    const c = PAL(), W = cv.width, H = cv.height, pad = 38, bw = W - pad - 14, bh = H - pad - 26;
+    const series = s.series || [];
+    const xset = [];
+    series.forEach(se => (se.points || []).forEach(p => { if (!xset.includes(p[0])) xset.push(p[0]); }));
+    xset.sort((a, b) => a - b);
+    const n = xset.length || 1, g = series.length || 1, allY = [];
+    series.forEach(se => (se.points || []).forEach(p => { if (fin(p[1])) allY.push(p[1]); }));
+    const max = Math.max(...allY, 1e-9), min = Math.min(0, ...allY), span = max - min || 1;
+    ctx.strokeStyle = c.bd; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(pad, 12); ctx.lineTo(pad, 12 + bh); ctx.lineTo(pad + bw, 12 + bh); ctx.stroke();
+    const zero = 12 + bh - (-min / span) * bh, slot = bw / n, gw = slot * 0.8 / g;
+    ctx.font = "10px sans-serif";
+    const labs = s.labels || xset;
+    xset.forEach((xv, i) => {
+      series.forEach((se, gi) => {
+        const pt = (se.points || []).find(p => p[0] === xv); if (!pt || !fin(pt[1])) return;
+        const v = pt[1], x = pad + i * slot + slot * 0.1 + gi * gw, hh = (v / span) * bh, y = v >= 0 ? zero - hh : zero;
+        ctx.fillStyle = se.color || c.ac; ctx.fillRect(x, y, gw * 0.9, Math.abs(hh) || 1);
+      });
+      ctx.fillStyle = c.dim; ctx.textAlign = "center"; ctx.fillText(labs[i] != null ? labs[i] : xv, pad + i * slot + slot / 2, 12 + bh + 13);
+    });
+    if (g > 1) legend(ctx, cv, series.map(se => ({ name: se.name || "", color: se.color || c.ac })));
   }
   function frame(ctx, cv, padL, padT, padB) {
     ctx.strokeStyle = PAL().bd; ctx.lineWidth = 1; ctx.beginPath();
@@ -123,7 +149,7 @@
     ctx.fillStyle = c.dim; ctx.textAlign = "right"; (s.rows || []).forEach((l, i) => ctx.fillText(l, left - 5, top + i * ch + ch / 2 + 3));
     ctx.textAlign = "center"; (s.cols || []).forEach((l, j) => ctx.fillText(l, left + j * cw + cw / 2, top - 6));
   }
-  const DRAW = { bars: drawBars, hist: drawBars, line: drawLine, scatter: drawScatter, roc: drawRoc, confusion: drawConfusion, heatmap: drawHeatmap };
+  const DRAW = { bar: drawBars, bars: drawBars, hist: drawBars, line: drawLine, scatter: drawScatter, roc: drawRoc, confusion: drawConfusion, heatmap: drawHeatmap };
   window.Charts = {
     draw(canvas, spec) {
       if (!canvas || !spec || !DRAW[spec.type]) return false;

@@ -1,0 +1,538 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - button "Toggle theme" [ref=e4] [cursor=pointer]: 🌙
+      - heading "📐 ML Math Tutor" [level=1] [ref=e5]
+      - paragraph [ref=e6]: The maths of ML, DL & AI — from zero.
+      - textbox "Search lessons…" [ref=e7]
+      - paragraph [ref=e8]: Number = how commonly used in practice (0–10). Greener = more common. 10 = everywhere · 0 = niche.
+      - generic [ref=e9]:
+        - link "🗺️ Concept map" [ref=e10] [cursor=pointer]:
+          - /url: graph.html
+        - link "🚀 Applications" [ref=e11] [cursor=pointer]:
+          - /url: applications.html
+        - link "🧩 Playbook" [ref=e12] [cursor=pointer]:
+          - /url: playbook.html
+        - link "🛠️ ML Lab" [ref=e13] [cursor=pointer]:
+          - /url: sim.html
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: ▼
+          - generic [ref=e18]: Foundations & Linear Algebra
+          - generic [ref=e19]: 0/23
+        - list [ref=e20]:
+          - listitem [ref=e21] [cursor=pointer]:
+            - generic [ref=e22]: ✓
+            - generic [ref=e23]: Vectors
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e24]': "10"
+          - listitem [ref=e25] [cursor=pointer]:
+            - generic [ref=e26]: ✓
+            - generic [ref=e27]: The dot product (inner product)
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e28]': "10"
+          - listitem [ref=e29] [cursor=pointer]:
+            - generic [ref=e30]: ✓
+            - generic [ref=e31]: Matrices
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e32]': "10"
+          - listitem [ref=e33] [cursor=pointer]:
+            - generic [ref=e34]: ✓
+            - generic [ref=e35]: Matrix × vector
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e36]': "10"
+          - listitem [ref=e37] [cursor=pointer]:
+            - generic [ref=e38]: ✓
+            - generic [ref=e39]: Norms (the length of a vector)
+            - 'generic "How commonly used in practice: 9/10 (10 = used everywhere, 0 = niche)" [ref=e40]': "9"
+          - listitem [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: ✓
+            - generic [ref=e43]: Derivatives (slope)
+            - 'generic "How commonly used in practice: 9/10 (10 = used everywhere, 0 = niche)" [ref=e44]': "9"
+          - listitem [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: ✓
+            - generic [ref=e47]: The gradient (slope in many directions)
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e48]': "10"
+          - listitem [ref=e49] [cursor=pointer]:
+            - generic [ref=e50]: ✓
+            - generic [ref=e51]: The chain rule
+            - 'generic "How commonly used in practice: 9/10 (10 = used everywhere, 0 = niche)" [ref=e52]': "9"
+          - listitem [ref=e53] [cursor=pointer]:
+            - generic [ref=e54]: ✓
+            - generic [ref=e55]: Eigenvalues & eigenvectors
+            - 'generic "How commonly used in practice: 6/10 (10 = used everywhere, 0 = niche)" [ref=e56]': "6"
+          - listitem [ref=e57] [cursor=pointer]:
+            - generic [ref=e58]: ✓
+            - generic [ref=e59]: Matrix × matrix
+            - 'generic "How commonly used in practice: 10/10 (10 = used everywhere, 0 = niche)" [ref=e60]': "10"
+          - listitem [ref=e61] [cursor=pointer]:
+            - generic [ref=e62]: ✓
+            - generic [ref=e63]: Transpose
+            - 'generic "How commonly used in practice: 9/10 (10 = used everywhere, 0 = niche)" [ref=e64]': "9"
+          - listitem [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: ✓
+            - generic [ref=e67]: Identity & diagonal matrices
+            - 'generic "How commonly used in practice: 7/10 (10 = used everywhere, 0 = niche)" [ref=e68]': "7"
+          - listitem [ref=e69] [cursor=pointer]:
+            - generic [ref=e70]: ✓
+            - generic [ref=e71]: Matrix inverse
+            - 'generic "How commonly used in practice: 6/10 (10 = used everywhere, 0 = niche)" [ref=e72]': "6"
+          - listitem [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]: ✓
+            - generic [ref=e75]: Determinant
+            - 'generic "How commonly used in practice: 4/10 (10 = used everywhere, 0 = niche)" [ref=e76]': "4"
+          - listitem [ref=e77] [cursor=pointer]:
+            - generic [ref=e78]: ✓
+            - generic [ref=e79]: Cofactor expansion
+            - 'generic "How commonly used in practice: 4/10 (10 = used everywhere, 0 = niche)" [ref=e80]': "4"
+          - listitem [ref=e81] [cursor=pointer]:
+            - generic [ref=e82]: ✓
+            - generic [ref=e83]: Trace
+            - 'generic "How commonly used in practice: 4/10 (10 = used everywhere, 0 = niche)" [ref=e84]': "4"
+          - listitem [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]: ✓
+            - generic [ref=e87]: Rank & linear independence
+            - 'generic "How commonly used in practice: 5/10 (10 = used everywhere, 0 = niche)" [ref=e88]': "5"
+          - listitem [ref=e89] [cursor=pointer]:
+            - generic [ref=e90]: ✓
+            - generic [ref=e91]: Positive semi-definite matrices
+            - 'generic "How commonly used in practice: 5/10 (10 = used everywhere, 0 = niche)" [ref=e92]': "5"
+          - listitem [ref=e93] [cursor=pointer]:
+            - generic [ref=e94]: ✓
+            - generic [ref=e95]: Spectral theorem
+            - 'generic "How commonly used in practice: 4/10 (10 = used everywhere, 0 = niche)" [ref=e96]': "4"
+          - listitem [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: ✓
+            - generic [ref=e99]: Singular Value Decomposition (SVD)
+            - 'generic "How commonly used in practice: 7/10 (10 = used everywhere, 0 = niche)" [ref=e100]': "7"
+          - listitem [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]: ✓
+            - generic [ref=e103]: The Jacobian
+            - 'generic "How commonly used in practice: 7/10 (10 = used everywhere, 0 = niche)" [ref=e104]': "7"
+          - listitem [ref=e105] [cursor=pointer]:
+            - generic [ref=e106]: ✓
+            - generic [ref=e107]: The Hessian
+            - 'generic "How commonly used in practice: 4/10 (10 = used everywhere, 0 = niche)" [ref=e108]': "4"
+          - listitem [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]: ✓
+            - generic [ref=e111]: "Matrix calculus: gradient identities"
+      - generic [ref=e113] [cursor=pointer]:
+        - generic [ref=e114]: ▼
+        - generic [ref=e115]: Probability & Statistics
+        - generic [ref=e116]: 0/23
+      - generic [ref=e118] [cursor=pointer]:
+        - generic [ref=e119]: ▼
+        - generic [ref=e120]: Probability (advanced)
+        - generic [ref=e121]: 0/5
+      - generic [ref=e123] [cursor=pointer]:
+        - generic [ref=e124]: ▼
+        - generic [ref=e125]: Machine Learning (CS229)
+        - generic [ref=e126]: 0/34
+      - generic [ref=e128] [cursor=pointer]:
+        - generic [ref=e129]: ▼
+        - generic [ref=e130]: Classical ML (beyond the cheat sheet)
+        - generic [ref=e131]: 0/14
+      - generic [ref=e133] [cursor=pointer]:
+        - generic [ref=e134]: ▼
+        - generic [ref=e135]: Deep Learning (CS230)
+        - generic [ref=e136]: 0/32
+      - generic [ref=e138] [cursor=pointer]:
+        - generic [ref=e139]: ▼
+        - generic [ref=e140]: PyTorch (a complete course)
+        - generic [ref=e141]: 0/20
+      - generic [ref=e143] [cursor=pointer]:
+        - generic [ref=e144]: ▼
+        - generic [ref=e145]: Modern Deep Learning & AI
+        - generic [ref=e146]: 0/14
+      - generic [ref=e148] [cursor=pointer]:
+        - generic [ref=e149]: ▼
+        - generic [ref=e150]: Few-shot & Transfer Learning
+        - generic [ref=e151]: 0/6
+      - generic [ref=e153] [cursor=pointer]:
+        - generic [ref=e154]: ▼
+        - generic [ref=e155]: Learning from Unlabeled Data (semi- & self-supervised)
+        - generic [ref=e156]: 0/9
+      - generic [ref=e158] [cursor=pointer]:
+        - generic [ref=e159]: ▼
+        - generic [ref=e160]: Artificial Intelligence (CS221)
+        - generic [ref=e161]: 0/33
+      - generic [ref=e163] [cursor=pointer]:
+        - generic [ref=e164]: ▼
+        - generic [ref=e165]: Reinforcement Learning
+        - generic [ref=e166]: 0/20
+      - generic [ref=e168] [cursor=pointer]:
+        - generic [ref=e169]: ▼
+        - generic [ref=e170]: Doing ML for Real — the skills that matter (2026)
+        - generic [ref=e171]: 0/9
+      - generic [ref=e173] [cursor=pointer]:
+        - generic [ref=e174]: ▼
+        - generic [ref=e175]: Metrics & Evaluation — measuring models, data & statistics
+        - generic [ref=e176]: 0/22
+      - generic [ref=e178] [cursor=pointer]:
+        - generic [ref=e179]: ▼
+        - generic [ref=e180]: Data Wrangling
+        - generic [ref=e181]: 0/29
+      - generic [ref=e183] [cursor=pointer]:
+        - generic [ref=e184]: ▼
+        - generic [ref=e185]: Apache Spark (big-data processing)
+        - generic [ref=e186]: 0/11
+      - generic [ref=e188] [cursor=pointer]:
+        - generic [ref=e189]: ▼
+        - generic [ref=e190]: Feature Engineering
+        - generic [ref=e191]: 0/20
+      - generic [ref=e193] [cursor=pointer]:
+        - generic [ref=e194]: ▼
+        - generic [ref=e195]: Papers · Foundations & Optimization
+        - generic [ref=e196]: 0/4
+      - generic [ref=e198] [cursor=pointer]:
+        - generic [ref=e199]: ▼
+        - generic [ref=e200]: Papers · Computer Vision
+        - generic [ref=e201]: 0/2
+      - generic [ref=e203] [cursor=pointer]:
+        - generic [ref=e204]: ▼
+        - generic [ref=e205]: Papers · Sequence & NLP
+        - generic [ref=e206]: 0/1
+      - generic [ref=e208] [cursor=pointer]:
+        - generic [ref=e209]: ▼
+        - generic [ref=e210]: Papers · Transformers & LLMs
+        - generic [ref=e211]: 0/2
+      - generic [ref=e213] [cursor=pointer]:
+        - generic [ref=e214]: ▼
+        - generic [ref=e215]: Papers · Generative Models
+        - generic [ref=e216]: 0/4
+      - generic [ref=e218] [cursor=pointer]:
+        - generic [ref=e219]: ▼
+        - generic [ref=e220]: Papers · Reinforcement Learning
+        - generic [ref=e221]: 0/1
+  - main [ref=e222]:
+    - generic [ref=e223]:
+      - generic [ref=e224]: PyTorch (a complete course)
+      - 'heading "Tensors: PyTorch''s core data structure" [level=2] [ref=e225]'
+      - paragraph [ref=e226]: A tensor is an n-dimensional array, like a numpy array but with GPU and autograd built in.
+      - generic [ref=e227]: "🧩 Best to read first: Vectors, Matrices"
+      - link "🗺️ See where this fits in the concept map →" [ref=e229] [cursor=pointer]:
+        - /url: graph.html#pt-tensors
+      - link "⚡ Open practice notebook in Colab" [ref=e230] [cursor=pointer]:
+        - /url: https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/pt-tensors.ipynb
+      - generic [ref=e231]:
+        - heading "🎯 When to reach for it" [level=3] [ref=e232]
+        - paragraph [ref=e233]: Always. The tensor is the substrate of everything in PyTorch.
+        - list [ref=e234]:
+          - listitem [ref=e235]: "Every piece of data you feed a model is a tensor: a batch of images, a sequence of token ids, a table of features."
+          - listitem [ref=e236]: Every weight and bias inside a model is a tensor.
+          - listitem [ref=e237]: Every intermediate result, loss value, and gradient is a tensor.
+        - paragraph [ref=e238]: "If you know numpy, you already know most of this. A PyTorch tensor adds two things numpy lacks: it can live on a GPU (Graphics Processing Unit) for fast math, and it can track operations so PyTorch can compute gradients automatically (autograd)."
+      - generic [ref=e239]:
+        - heading "🚀 Where it's used in practice" [level=3] [ref=e240]
+        - paragraph [ref=e241]:
+          - text: "In any real model: the input batch (shape"
+          - code [ref=e242]: "[batch, channels, height, width]"
+          - text: for images), the model parameters, and the loss are all tensors. You spend most of your PyTorch time shaping, moving, and indexing tensors. Get comfortable here and the rest of the course is mostly choosing which operations to apply.
+      - generic [ref=e243]:
+        - heading "💻 Implement it in code — PyTorch" [level=3] [ref=e244]
+        - paragraph [ref=e245]:
+          - text: This runs in Google Colab (torch is preinstalled). It creates tensors several ways, prints each tensor's
+          - code [ref=e246]: shape
+          - text: ","
+          - code [ref=e247]: dtype
+          - text: ", and"
+          - code [ref=e248]: device
+          - text: ", does a numpy round-trip that demonstrates the shared-memory aliasing, moves a tensor to the GPU if one is available, and finishes with numpy-style indexing and slicing."
+        - generic [ref=e249]:
+          - generic [ref=e250]:
+            - generic [ref=e251]: PyTorch
+            - button "Copy" [ref=e252] [cursor=pointer]
+          - code [ref=e254]: "import torch import numpy as np torch.manual_seed(0) # reproducible randn # ---- CREATION: many ways to make a tensor ---- a = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) # from a Python list -> float32 by default z = torch.zeros(2, 3) # all zeros o = torch.ones(2, 3) # all ones r = torch.arange(0, 12) # 0,1,2,...,11 (a range, int64) g = torch.randn(2, 3) # standard-normal random I = torch.eye(3) # 3x3 identity matrix print(\"a =\\n\", a) print(\"arange:\", r) print(\"identity:\\n\", I) # ---- SHAPE / DTYPE / DEVICE: the bookkeeping on every tensor ---- print(\"shape :\", a.shape) # torch.Size([2, 3]) print(\"ndim :\", a.ndim) # 2 print(\"numel :\", a.numel()) # 6 total elements print(\"dtype :\", a.dtype) # torch.float32 (the default for floats) print(\"device:\", a.device) # cpu # ---- DTYPES: float32 default, and converting ---- i = torch.tensor([1, 2, 3]) # int literals -> int64 print(\"int tensor dtype :\", i.dtype) # torch.int64 f = i.to(torch.float32) # cast to float32 print(\"after .to(float32):\", f.dtype) # torch.float32 b = torch.tensor([1, 0, 2]).bool() # nonzero -> True print(\"bool tensor:\", b) # ---- NUMPY ROUND-TRIP + the SHARED-MEMORY gotcha ---- npy = np.array([1.0, 2.0, 3.0]) # numpy defaults to float64 t = torch.from_numpy(npy) # SHARES the same memory buffer print(\"from_numpy dtype:\", t.dtype) # torch.float64 (note: not float32!) t[0] = 99.0 # mutate the torch tensor... print(\"numpy array is now:\", npy) # ...and the numpy array changed too: [99. 2. 3.] safe = torch.tensor(npy) # torch.tensor COPIES -> independent back = a.numpy() # .numpy() also shares memory (CPU tensors) print(\"back to numpy shape:\", back.shape) # ---- DEVICES: move to GPU if one is available ---- device = \"cuda\" if torch.cuda.is_available() else \"cpu\" print(\"using device:\", device) a_dev = a.to(device) # copy onto the chosen device print(\"a is on:\", a_dev.device) a_back = a_dev.cpu() # bring it back to CPU (e.g. before .numpy()) # ---- INDEXING / SLICING: numpy-like ---- print(\"first row :\", a[0]) # [1., 2., 3.] print(\"second column :\", a[:, 1]) # [2., 5.] print(\"top-left 2x2 :\\n\", a[:2, :2]) print(\"positive mask :\", a[a > 3]) # boolean indexing -> [4., 5., 6.] print(\"single element :\", a[0, 2].item()) # .item() -> plain Python float 3.0"
+          - generic [ref=e255]: ▶ Not runnable here — PyTorch needs a Python/GPU runtime. Copy it into a notebook (Colab works) to run.
+      - generic [ref=e256]:
+        - heading "📊 Visualize the data & results" [level=3] [ref=e257]
+        - paragraph [ref=e258]: ❓ How much memory does the same 1000-element tensor take in each dtype?
+        - generic [ref=e259]:
+          - button "📊 Chart" [ref=e260] [cursor=pointer]
+          - button "💻 Code that made it" [ref=e261] [cursor=pointer]
+        - generic [ref=e264]: Memory for a 1000-element tensor by dtype
+        - paragraph [ref=e266]: Each element of a 1000-element tensor costs 8 bytes in float64, 4 in float32, 2 in float16, 1 in int8. PyTorch defaults to float32 (4000 bytes here) — half the memory of numpy's float64 default, with precision to spare for deep learning. Halving the dtype halves the memory.
+      - generic [ref=e267]:
+        - heading "⚠️ Production pitfalls" [level=3] [ref=e268]
+        - list [ref=e269]:
+          - listitem [ref=e270]:
+            - generic [ref=e271]:
+              - code [ref=e272]: from_numpy
+              - text: SHARES memory.
+            - code [ref=e273]: torch.from_numpy(a)
+            - text: and the numpy array
+            - code [ref=e274]: a
+            - text: point at the same buffer. Mutating one changes the other. Same for
+            - code [ref=e275]: .numpy()
+            - text: going the other way. Use
+            - code [ref=e276]: .clone()
+            - text: (or
+            - code [ref=e277]: torch.tensor(a)
+            - text: ", which copies) if you want an independent tensor."
+          - listitem [ref=e278]:
+            - text: Default dtype surprise. numpy defaults to
+            - code [ref=e279]: float64
+            - text: ;
+            - code [ref=e280]: torch.tensor([1.0, 2.0])
+            - text: defaults to
+            - code [ref=e281]: float32
+            - text: ". Mixing them can silently upcast or raise a dtype error. Be explicit:"
+            - code [ref=e282]: .to(torch.float32)
+            - text: .
+          - listitem [ref=e283]:
+            - text: CPU/GPU device mismatch. An operation between a tensor on
+            - code [ref=e284]: cuda
+            - text: and one on
+            - code [ref=e285]: cpu
+            - text: raises "Expected all tensors to be on the same device". Move both with
+            - code [ref=e286]: .to(device)
+            - text: .
+          - listitem [ref=e287]:
+            - text: Gradients need floats. Only floating-point tensors can have gradients. An
+            - code [ref=e288]: int64
+            - text: tensor with
+            - code [ref=e289]: requires_grad=True
+            - text: raises an error. Cast to float first.
+          - listitem [ref=e290]:
+            - generic [ref=e291]:
+              - text: Use
+              - code [ref=e292]: .item()
+              - text: for a Python scalar.
+            - text: A one-element tensor still prints like
+            - code [ref=e293]: tensor(3.)
+            - text: . Call
+            - code [ref=e294]: .item()
+            - text: to get the plain Python number
+            - code [ref=e295]: "3.0"
+            - text: .
+      - generic [ref=e296]:
+        - generic [ref=e297]: 🔬
+        - text: Under the hood — the math & intuition
+      - generic [ref=e298]:
+        - heading "💡 The big idea" [level=3] [ref=e299]
+        - paragraph [ref=e300]:
+          - text: "A tensor is just a flat block of numbers in memory plus a small amount of bookkeeping: its shape (how many along each dimension), its dtype (what kind of number —"
+          - code [ref=e301]: float32
+          - text: ","
+          - code [ref=e302]: int64
+          - text: ","
+          - code [ref=e303]: bool
+          - text: ), and its device (where the numbers live —
+          - code [ref=e304]: cpu
+          - text: or
+          - code [ref=e305]: cuda
+          - text: ). Everything else is operations on that block.
+      - generic [ref=e306]:
+        - heading "🪜 Building up to it" [level=3] [ref=e307]
+        - paragraph [ref=e308]: "Think of it as numpy arrays you already met in fnd-vector and fnd-matrix, extended:"
+        - list [ref=e309]:
+          - listitem [ref=e310]: A 0-D tensor is a scalar (one number). A 1-D tensor is a vector. A 2-D tensor is a matrix. A 4-D tensor is a batch of color images.
+          - listitem [ref=e311]:
+            - code [ref=e312]: .ndim
+            - text: tells you how many dimensions;
+            - code [ref=e313]: .shape
+            - text: gives the size along each;
+            - code [ref=e314]: .numel()
+            - text: is the total number of elements.
+          - listitem [ref=e315]:
+            - text: The data is stored contiguously — one long row in memory. The shape just tells PyTorch how to walk that row. This is why
+            - code [ref=e316]: reshape
+            - text: "is usually free: the numbers do not move, only the bookkeeping changes."
+      - generic [ref=e317]:
+        - heading "📜 Why it's true — derivation & intuition" [level=3] [ref=e318]
+        - paragraph [ref=e319]: How creation, dtype, device, and shape fit together.
+        - list [ref=e320]:
+          - listitem [ref=e321]:
+            - text: Creation.
+            - code [ref=e322]: torch.tensor(data)
+            - text: "copies a Python list or numpy array into a new tensor and infers the dtype. Factory functions build common patterns without you typing the numbers:"
+            - code [ref=e323]: torch.zeros
+            - text: ","
+            - code [ref=e324]: torch.ones
+            - text: ","
+            - code [ref=e325]: torch.arange(0, 10)
+            - text: (a range),
+            - code [ref=e326]: torch.randn
+            - text: (standard-normal random),
+            - code [ref=e327]: torch.eye(3)
+            - text: (identity matrix).
+          - listitem [ref=e328]:
+            - text: dtype. The default for float data is
+            - code [ref=e329]: float32
+            - text: — half the memory of
+            - code [ref=e330]: float64
+            - text: "and plenty of precision for deep learning. You can request others:"
+            - code [ref=e331]: float64
+            - text: ","
+            - code [ref=e332]: int64
+            - text: ","
+            - code [ref=e333]: bool
+            - text: . Convert with
+            - code [ref=e334]: .to(torch.float32)
+            - text: .
+          - listitem [ref=e335]:
+            - text: device. A tensor lives on the CPU by default.
+            - code [ref=e336]: x.to('cuda')
+            - text: (or
+            - code [ref=e337]: x.to(device)
+            - text: ) copies it to the GPU;
+            - code [ref=e338]: x.cpu()
+            - text: brings it back. All tensors in one operation must share a device.
+          - listitem [ref=e339]:
+            - text: "Indexing. Exactly numpy-style:"
+            - code [ref=e340]: x[0]
+            - text: first row,
+            - code [ref=e341]: x[:, 1]
+            - text: second column,
+            - code [ref=e342]: x[1:3]
+            - text: a slice,
+            - code [ref=e343]: x[x > 0]
+            - text: a boolean mask. Slicing returns a view sharing memory; fancy indexing copies.
+      - generic [ref=e344]:
+        - heading "🔢 Concrete example (real numbers)" [level=3] [ref=e345]
+        - paragraph [ref=e346]: "Build a 2-by-3 tensor of zeros, fill its first row, then inspect it:"
+        - list [ref=e347]:
+          - listitem [ref=e348]:
+            - code [ref=e349]: x = torch.zeros(2, 3)
+            - text: → two rows, three columns, all
+            - code [ref=e350]: "0.0"
+            - text: ", dtype"
+            - code [ref=e351]: float32
+            - text: .
+          - listitem [ref=e352]:
+            - code [ref=e353]: x[0] = torch.tensor([1.0, 2.0, 3.0])
+            - text: → first row becomes
+            - code [ref=e354]: "[1, 2, 3]"
+            - text: .
+          - listitem [ref=e355]:
+            - code [ref=e356]: x.shape
+            - text: is
+            - code [ref=e357]: torch.Size([2, 3])
+            - text: ","
+            - code [ref=e358]: x.ndim
+            - text: is
+            - code [ref=e359]: "2"
+            - text: ","
+            - code [ref=e360]: x.numel()
+            - text: is
+            - code [ref=e361]: "6"
+            - text: ","
+            - code [ref=e362]: x.dtype
+            - text: is
+            - code [ref=e363]: torch.float32
+            - text: ","
+            - code [ref=e364]: x.device
+            - text: is
+            - code [ref=e365]: cpu
+            - text: .
+          - listitem [ref=e366]:
+            - code [ref=e367]: x[0, 2].item()
+            - text: returns the plain Python float
+            - code [ref=e368]: "3.0"
+            - text: .
+      - generic [ref=e369]:
+        - heading "✏️ Practice — 8 problems" [level=3] [ref=e370]
+        - paragraph [ref=e371]: Try each one yourself first, then reveal the worked solution. Every step says what to do and why.
+        - generic [ref=e372]:
+          - generic [ref=e373]:
+            - generic [ref=e374]: "1"
+            - generic [ref=e375]:
+              - text: Type this in Colab. Create three tensors and print each one's
+              - code [ref=e376]: .shape
+              - text: and
+              - code [ref=e377]: .dtype
+              - text: ": (a) a 2×3 tensor of zeros in"
+              - code [ref=e378]: float32
+              - text: ; (b) a 1-D tensor holding 0,1,2,3,4 built with
+              - code [ref=e379]: torch.arange
+              - text: ; (c) a 3×3 identity matrix.
+          - button "Show step-by-step solution ▾" [ref=e380] [cursor=pointer]
+        - generic [ref=e381]:
+          - generic [ref=e382]:
+            - generic [ref=e383]: "2"
+            - generic [ref=e384]:
+              - text: Type this in Colab. Make a 1-D tensor of the numbers 0..11 with
+              - code [ref=e385]: torch.arange
+              - text: ", reshape it to 3×4, then to 4×3, then flatten it back to 1-D. Print the shape at each step."
+          - button "Show step-by-step solution ▾" [ref=e386] [cursor=pointer]
+        - generic [ref=e387]:
+          - generic [ref=e388]:
+            - generic [ref=e389]: "3"
+            - generic [ref=e390]:
+              - text: Type this in Colab. Build a 4×4 tensor of 0..15 (use
+              - code [ref=e391]: torch.arange(16).reshape(4, 4)
+              - text: "). Then slice out: row index 1; column index 2; and the top-left 2×2 block. Print each."
+          - button "Show step-by-step solution ▾" [ref=e392] [cursor=pointer]
+        - generic [ref=e393]:
+          - generic [ref=e394]:
+            - generic [ref=e395]: "4"
+            - generic [ref=e396]:
+              - text: Type this in Colab. Create a column vector of shape
+              - code [ref=e397]: (3, 1)
+              - text: holding 1,2,3 and a row vector of shape
+              - code [ref=e398]: (1, 4)
+              - text: holding 10,20,30,40. Add them. Before you run it, predict the output shape; then verify with
+              - code [ref=e399]: .shape
+              - text: .
+          - button "Show step-by-step solution ▾" [ref=e400] [cursor=pointer]
+        - generic [ref=e401]:
+          - generic [ref=e402]:
+            - generic [ref=e403]: "5"
+            - generic [ref=e404]:
+              - text: Type this in Colab. Make a 3×4 tensor of random values with
+              - code [ref=e405]: torch.randn(3, 4)
+              - text: ". Compute the mean of each column and the sum of each row. (Hint: reductions take a"
+              - code [ref=e406]: dim
+              - text: argument.)
+          - button "Show step-by-step solution ▾" [ref=e407] [cursor=pointer]
+        - generic [ref=e408]:
+          - generic [ref=e409]:
+            - generic [ref=e410]: "6"
+            - generic [ref=e411]:
+              - text: Type this in Colab. Pick a device string (
+              - code [ref=e412]: "\"cuda\""
+              - text: if a GPU is available, else
+              - code [ref=e413]: "\"cpu\""
+              - text: ). Create a
+              - code [ref=e414]: float32
+              - text: tensor on that device, print its
+              - code [ref=e415]: .device
+              - text: ", move it to the CPU, and print"
+              - code [ref=e416]: .device
+              - text: again.
+          - button "Show step-by-step solution ▾" [ref=e417] [cursor=pointer]
+        - generic [ref=e418]:
+          - generic [ref=e419]:
+            - generic [ref=e420]: "7"
+            - generic [ref=e421]:
+              - text: Type this in Colab. Create
+              - code [ref=e422]: a = np.array([1, 2, 3])
+              - text: and
+              - code [ref=e423]: t = torch.from_numpy(a)
+              - text: . Set
+              - code [ref=e424]: t[0] = 99
+              - text: and print
+              - code [ref=e425]: a
+              - text: — notice they share memory. Then make an independent copy and show that mutating it does not touch
+              - code [ref=e426]: a
+              - text: .
+          - button "Show step-by-step solution ▾" [ref=e427] [cursor=pointer]
+        - generic [ref=e428]:
+          - generic [ref=e429]:
+            - generic [ref=e430]: "8"
+            - generic [ref=e431]:
+              - text: Type this in Colab. Try to create
+              - code [ref=e432]: w = torch.tensor([1, 2, 3], requires_grad=True)
+              - text: and observe the error. Then fix it so
+              - code [ref=e433]: w
+              - text: is a float tensor that requires gradients, and print
+              - code [ref=e434]: w.requires_grad
+              - text: and
+              - code [ref=e435]: w.dtype
+              - text: .
+          - button "Show step-by-step solution ▾" [ref=e436] [cursor=pointer]
+      - button "Mark this lesson complete" [ref=e437] [cursor=pointer]
+      - generic [ref=e438]:
+        - 'button "← Previous PyTorch: tensors, autograd, and neural nets that run as you write them" [ref=e439] [cursor=pointer]':
+          - generic [ref=e440]: ← Previous
+          - text: "PyTorch: tensors, autograd, and neural nets that run as you write them"
+        - button "Next → Operating on tensors" [ref=e441] [cursor=pointer]:
+          - generic [ref=e442]: Next →
+          - text: Operating on tensors

@@ -647,6 +647,19 @@
 <script src="lessons/concept-paper-vae.js"></script>
 <script src="lessons/concept-paper-ddpm.js"></script>
 <script src="lessons/concept-paper-ppo.js"></script>
+<!-- Papers — foundational, Wave 2 -->
+<script src="lessons/concept-paper-wgan.js"></script>
+<script src="lessons/concept-paper-cgan.js"></script>
+<script src="lessons/concept-paper-unet.js"></script>
+<script src="lessons/concept-paper-cfg.js"></script>
+<script src="lessons/concept-paper-gae.js"></script>
+<script src="lessons/concept-paper-a2c.js"></script>
+<script src="lessons/concept-paper-dqn.js"></script>
+<script src="lessons/concept-paper-double-dqn.js"></script>
+<script src="lessons/concept-paper-dueling-dqn.js"></script>
+<script src="lessons/concept-paper-prioritized-replay.js"></script>
+<script src="lessons/concept-paper-simclr.js"></script>
+<script src="lessons/concept-paper-moco.js"></script>
 <script src="lessons/concept-dl-inception.js"></script>
 <script src="lessons/concept-dl-receptive-field.js"></script>
 <script src="lessons/concept-dl-language-model.js"></script>
@@ -1065,7 +1078,8 @@ const App = (function () {
   function paperCard(l) {
     const p = l.paper || {};
     const links = [];
-    if (p.arxiv) links.push(`<a href="${p.arxiv}" target="_blank" rel="noopener">📄 arXiv</a>`);
+    const paperUrl = p.arxiv || p.url || p.pdf;
+    if (paperUrl) links.push(`<a href="${paperUrl}" target="_blank" rel="noopener">📄 Read the paper</a>`);
     if (p.code) links.push(`<a href="${p.code}" target="_blank" rel="noopener">💻 Official code</a>`);
     const meta = [p.authors, p.org, p.venue, p.year, p.citations].filter(Boolean).join(" · ");
     return `<div class="papercard"><div class="pc-top">${trackBadge(l.track)}</div>` +
@@ -1127,7 +1141,9 @@ const App = (function () {
     const steps = (l.steps || []).map(s => {
       const lp = byId[s.paper], name = lp ? lp.title : s.paper;
       const link = lp ? `<a onclick="App.open('${s.paper}')">${name}</a>` : `${name} <i>(coming soon)</i>`;
-      return `<li>${link}${s.builds ? ` — ${s.builds}` : ""}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
+      const src = lp && lp.paper && (lp.paper.arxiv || lp.paper.url || lp.paper.pdf);
+      const plink = src ? ` <a class="paperlink" href="${src}" target="_blank" rel="noopener">📄 paper</a>` : "";
+      return `<li>${link}${s.builds ? ` — ${s.builds}` : ""}${plink}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
     }).join("");
     return `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">🏗️ ${l.title}</h2>` +
