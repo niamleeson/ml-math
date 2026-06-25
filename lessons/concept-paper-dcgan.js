@@ -142,6 +142,59 @@
        small spatial extent with many channels (e.g. $4\\times4$), then apply <b>four</b> fractionally-strided
        convolutions that each roughly <b>double</b> the spatial size &mdash; $4\\to8\\to16\\to32\\to64$ &mdash;
        while shrinking the channel count, ending at a $64\\times64$ image.</p>`,
+    architecture:
+      `<p>DCGAN's whole contribution <i>is</i> the architecture, so this is the core of the lesson. There are
+       three pieces: the five <b>guidelines</b> (&sect;3), the concrete <b>generator</b> (Fig. 1), and the
+       <b>latent space</b> (&sect;6).</p>
+
+       <p><b>1. The five architecture guidelines (&sect;3, "Architecture guidelines for stable Deep Convolutional
+       GANs", quoted verbatim):</b></p>
+       <ul>
+        <li><b>Replace pooling with strided convolutions.</b> Discriminator uses <b>strided</b> convolutions to
+        downsample; generator uses <b>fractional-strided</b> (transposed) convolutions to upsample. The network
+        <i>learns</i> its own spatial down/upsampling instead of using fixed, non-learnable pooling.</li>
+        <li><b>Batchnorm in both $G$ and $D$.</b> Renormalizes each layer's activations per mini-batch &mdash;
+        stabilizes training and helps stop mode collapse. <b>Exception (&sect;3):</b> do NOT apply it to the
+        generator's <i>output</i> layer or the discriminator's <i>input</i> layer.</li>
+        <li><b>Remove fully-connected hidden layers.</b> The only non-conv step is projecting $z$ into the first
+        small spatial tensor; everything else is convolutional.</li>
+        <li><b>ReLU in $G$ for all layers except the output, which uses Tanh.</b> Tanh bounds pixels to
+        $[-1,1]$.</li>
+        <li><b>LeakyReLU in $D$ for all layers</b> (slope $0.2$, &sect;4) &mdash; keeps gradient alive on
+        negative pre-activations.</li>
+       </ul>
+
+       <p><b>2. The generator (Fig. 1), component by component:</b></p>
+       <ul>
+        <li><b>Input:</b> a 100-dimensional noise vector $z$ drawn from a <i>uniform</i> distribution, shaped
+        $(N, 100, 1, 1)$.</li>
+        <li><b>Project &amp; reshape:</b> a first (fractionally-strided) convolution lifts the $1\\times1$
+        latent to a small spatial extent &mdash; e.g. $4\\times4$ with many channels &mdash; with <b>no
+        fully-connected layer</b>.</li>
+        <li><b>Four fractionally-strided convolutions</b> each roughly <b>double</b> the spatial size and shrink
+        the channel count: $4\\to8\\to16\\to32\\to64$. Each (except the last) is followed by BatchNorm + ReLU.</li>
+        <li><b>Output:</b> a $64\\times64\\times3$ image (3 RGB channels in the paper) via Tanh, with no
+        BatchNorm on this final layer.</li>
+       </ul>
+       <p>The <b>discriminator</b> mirrors this in reverse: strided <code>Conv2d</code> layers halve the spatial
+       size with LeakyReLU(0.2), BatchNorm on hidden layers only, ending in a single real/fake logit.</p>
+
+       <p><b>3. Latent-space walk &amp; vector arithmetic (&sect;6):</b></p>
+       <ul>
+        <li><b>Walking the manifold:</b> smoothly interpolating between two $z$ vectors produces a smooth
+        sequence of generated images (e.g. one bedroom morphing into another). The paper notes that <i>sharp</i>
+        transitions during a walk would signal memorization rather than genuine learning &mdash; DCGAN's walks
+        are smooth.</li>
+        <li><b>Vector arithmetic:</b> by analogy to word embeddings (where
+        $\\text{vector(``King'')} - \\text{vector(``Man'')} + \\text{vector(``Woman'')}$ lands near
+        $\\text{vector(``Queen'')}$), DCGAN does arithmetic <i>in the latent space</i>. Averaging the $z$
+        vectors of several exemplars per concept and computing, e.g., (smiling woman) $-$ (neutral woman) $+$
+        (neutral man), then feeding the result through $G$, yields a <b>smiling man</b>. This shows the latent
+        space encodes meaningful, linearly-composable semantic directions.</li>
+       </ul>
+
+       <p>Note (&sect;3): the upsampling here is correctly a <i>fractionally-strided convolution</i>; the paper
+       explicitly flags the common name "deconvolution" as incorrect.</p>`,
     symbols: [
       { sym: "$G$", desc: "the <b>generator</b> network: maps a noise vector $z$ to a fake image $G(z)$. In DCGAN it is all transposed-convolutions." },
       { sym: "$D$", desc: "the <b>discriminator</b> network: takes an image and outputs the probability it is <i>real</i>. In DCGAN it is all strided-convolutions." },
@@ -152,13 +205,35 @@
       { sym: "$D(x)$", desc: "the discriminator's <b>score</b> for image $x$: a number in $(0,1)$, its estimated probability that $x$ is real." },
       { sym: "$V(D,G)$", desc: "the <b>value function</b> of the minimax game: $D$ tries to maximize it, $G$ tries to minimize it." },
       { sym: "$\\mathbb{E}$", desc: "the <b>expected value</b> (average) over the distribution written in the subscript &mdash; in practice the mean over a mini-batch." },
+      { sym: "$p_g(x)$", desc: "the <b>generator's distribution</b> over images &mdash; the distribution of $G(z)$ as $z$ ranges over its prior. The training goal is $p_g = p_{\\text{data}}$." },
+      { sym: "$D^{*}(x)$", desc: "the <b>optimal discriminator</b> for a fixed generator $G$: $D^{*}(x)=p_{\\text{data}}(x)/(p_{\\text{data}}(x)+p_g(x))$, equal to $\\tfrac12$ when $p_g=p_{\\text{data}}$." },
+      { sym: "$H_{\\text{in}},\\,H_{\\text{out}}$", desc: "the input / output <b>spatial side length</b> (height = width here) of a convolutional feature map, in pixels." },
+      { sym: "$k,\\,s,\\,p$", desc: "a convolution's <b>kernel size</b> $k$, <b>stride</b> $s$, and <b>padding</b> $p$. DCGAN's upsampling layers use $k=4,\\,s=2,\\,p=1$ to exactly double the spatial size." },
       { sym: "stride", desc: "a plain term: how many pixels the convolution kernel jumps each step. Stride $2$ in a normal conv <b>halves</b> the spatial size; stride $2$ in a <b>transposed</b> conv roughly <b>doubles</b> it." },
       { sym: "fractionally-strided / transposed convolution", desc: "an <b>upsampling</b> convolution (<code>nn.ConvTranspose2d</code>): it enlarges the feature map. Often mis-called a 'deconvolution' &mdash; the paper flags that name as wrong." },
       { sym: "BatchNorm", desc: "Batch Normalization: rescales a layer's outputs to zero mean / unit variance over the mini-batch, stabilizing training (concept <b>dl-batchnorm</b>)." },
       { sym: "ReLU / LeakyReLU", desc: "Rectified Linear Unit: $\\max(0,x)$. <b>Leaky</b> ReLU instead uses a small slope (here $0.2$) for $x\\lt0$ so the gradient never fully dies." },
       { sym: "Tanh", desc: "the hyperbolic-tangent activation, squashing values into $(-1,1)$ &mdash; used on the generator's output to match $[-1,1]$-scaled pixels." }
     ],
-    formula: `$$ \\min_{G}\\;\\max_{D}\\; V(D,G) \\;=\\; \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x)\\big] \\;+\\; \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z))\\big)\\big] $$`,
+    formula:
+      `<p><b>DCGAN is an architectural paper &mdash; it introduces essentially no new equations.</b> It
+       <i>inherits</i> the GAN objective from Goodfellow 2014 (the paper cites it but does not even reprint it)
+       and contributes a convolutional architecture instead. The one number you actually compute when
+       <i>building</i> that architecture is a convolution-shape formula. Here are the relevant equations.</p>
+       $$ \\min_{G}\\;\\max_{D}\\; V(D,G) \\;=\\; \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x)\\big] \\;+\\; \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z))\\big)\\big] $$
+       <p>The <b>GAN minimax value function</b> &mdash; <i>inherited</i> unchanged from the original GAN paper
+       (Goodfellow 2014), derived in full in concept <b>dl-gan</b>. DCGAN does not modify it; it only swaps in
+       convolutional $G$ and $D$.</p>
+       $$ D^{*}(x) \\;=\\; \\frac{p_{\\text{data}}(x)}{p_{\\text{data}}(x) + p_g(x)} $$
+       <p>The <b>optimal discriminator</b> for a fixed $G$ (also from <b>dl-gan</b>, not new in DCGAN) &mdash;
+       substituting it back makes $G$'s objective the Jensen&ndash;Shannon divergence between the real and
+       generated distributions, minimized when $p_g = p_{\\text{data}}$.</p>
+       $$ H_{\\text{out}} \\;=\\; (H_{\\text{in}} - 1)\\,s - 2p + k $$
+       <p>The <b>output spatial size of a fractionally-strided (transposed) convolution</b> &mdash; the actual
+       arithmetic DCGAN's all-convolutional generator forces you to do. With $k=4,\\,s=2,\\,p=1$ this gives
+       $H_{\\text{out}} = 2H_{\\text{in}}$, the clean &times;2 upsampling that chains $4\\to8\\to16\\to32\\to64$
+       (Fig. 1). This is convolution arithmetic, not a contribution of the paper, but it is the math you must
+       get right to build the network.</p>`,
     whatItDoes:
       `<p>This is the <b>GAN minimax objective</b> &mdash; DCGAN keeps it unchanged from the original GAN paper
        and only swaps in convolutional $G$ and $D$. Read it as a game over the value function $V(D,G)$:</p>

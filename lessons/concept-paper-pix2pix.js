@@ -156,13 +156,45 @@
        <p><b>The noise.</b> A vanilla GAN feeds in a random noise vector $z$ for variety. Here the authors report
        (&sect;3.1) that "the generator simply learned to <b>ignore the noise</b>", so they instead "provide noise
        only in the form of <b>dropout</b>, applied on several layers &hellip; at both training and test time."</p>`,
+    architecture:
+      `<p>pix2pix is two convolutional networks. The paper's appendix gives both as compact stacks, where
+       <b>Ck</b> = a Convolution&ndash;BatchNorm&ndash;ReLU block with <b>k</b> output filters, and <b>CDk</b> = the
+       same plus <b>Dropout</b> (50%). All convolutions are <b>4&times;4</b> with stride <b>2</b> (so each block halves
+       or, transposed, doubles the spatial size). Operating resolution is <b>256&times;256</b>.</p>
+       <p><b>Generator &mdash; U-Net (&sect;6.1.1).</b> An encoder that downsamples to a 1&times;1 bottleneck and a decoder
+       that upsamples back, with a <b>skip connection</b> concatenating each encoder layer $i$ onto decoder layer
+       $n-i$ (so every decoder block's input channels double).</p>
+       <ul>
+        <li><b>Encoder (8 down-blocks):</b> <code>C64 - C128 - C256 - C512 - C512 - C512 - C512 - C512</code>
+        &mdash; 256&times;256 &rarr; 128 &rarr; 64 &rarr; 32 &rarr; 16 &rarr; 8 &rarr; 4 &rarr; 2 &rarr; 1. The first
+        <code>C64</code> has <b>no BatchNorm</b>; all use LeakyReLU(0.2).</li>
+        <li><b>Decoder (7 up-blocks + output):</b> <code>CD512 - CD512 - CD512 - C512 - C256 - C128 - C64</code>
+        (the first three carry <b>dropout</b> as the noise source), each a <code>ConvTranspose2d</code> with ReLU,
+        then a final transposed conv to the output channels followed by <b>Tanh</b> (pixels in $[-1,1]$). Because of
+        the skips, each decoder block's input has <b>twice</b> the listed channels.</li>
+       </ul>
+       <p><b>Discriminator &mdash; 70&times;70 PatchGAN (&sect;6.1.2).</b> Input is the <b>concatenated pair</b>
+       $(x,\\text{output})$ (so 6 channels for RGB). Stack <code>C64 - C128 - C256 - C512</code> (first <code>C64</code>
+       no BatchNorm, all LeakyReLU(0.2)), then a final convolution to a <b>1-channel grid</b> of logits passed
+       through a sigmoid &mdash; <b>no flatten, no fully-connected layer</b>. Each grid cell has a <b>70&times;70</b>
+       receptive field, so it classifies one 70&times;70 patch real/fake; the loss averages over the grid. This is
+       the <b>Markovian</b> assumption: pixels more than a patch apart are treated as independent. It has far fewer
+       parameters than a full-image discriminator and runs on images of any size.</p>
+       <p><b>Training (&sect;3.3).</b> Alternate one $D$ step and one $G$ step (standard GAN). Optimizer Adam,
+       learning rate <b>2e-4</b>, momentum $\\beta_1=0.5$; minibatch SGD. $G$ minimizes
+       $\\mathcal{L}_{cGAN}(G,D)+\\lambda\\,\\mathcal{L}_{L1}(G)$ while $D$ maximizes $\\mathcal{L}_{cGAN}$; dropout is
+       left <b>on at test time</b> to inject noise.</p>
+       <p><b>Our toy build (CODE below)</b> is a miniature of this: a 2-down/2-up U-Net (16&rarr;8&rarr;4 then back)
+       with one <code>torch.cat</code> skip and dropout-as-noise, and a 3-layer PatchGAN emitting a 4&times;4 logit
+       grid &mdash; the same shapes, scaled down to run on CPU.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input image</b> being translated (the edges, the label map, the grayscale photo). It is the <b>condition</b>: both $G$ and $D$ see it." },
       { sym: "$y$", desc: "the <b>ground-truth output image</b> &mdash; the correct translation of $x$ (the real photo, the color image)." },
       { sym: "$z$", desc: "the <b>noise</b> input that would give a vanilla GAN its variety. In pix2pix it is supplied as <b>dropout</b> rather than an explicit vector, because $G$ learned to ignore an input $z$." },
       { sym: "$G(x,z)$", desc: "the <b>generator</b>'s output: a U-Net that maps the input image $x$ (with dropout noise) to a generated output image. Written $G(x)$ once we fold the noise into dropout." },
       { sym: "$D(x,y)$", desc: "the <b>discriminator</b>'s score for a <b>pair</b>: it takes the input $x$ <b>and</b> a candidate output, and returns the probability the pair is a <b>real</b> $(x,y)$ translation rather than $(x, G(x))$. PatchGAN returns one such score <i>per patch</i>." },
-      { sym: "$\\mathcal{L}_{cGAN}(G,D)$", desc: "the <b>conditional-GAN loss</b> (Eq. 1): the usual min-max game, but every term is conditioned on the input image $x$." },
+      { sym: "$\\mathcal{L}_{cGAN}(G,D)$", desc: "the <b>conditional-GAN loss</b> (Eq. 1): the usual min-max game, but every term is conditioned on the input image $x$ &mdash; $D$ judges the pair $(x,\\cdot)$." },
+      { sym: "$\\mathcal{L}_{GAN}(G,D)$", desc: "the <b>unconditional</b> GAN loss (Eq. 2): the same game but $D$ sees only the output, never the input $x$. Used as an ablation; pix2pix's objective uses the conditional Eq. 1 instead." },
       { sym: "$\\mathcal{L}_{L1}(G)$", desc: "the <b>L1 reconstruction loss</b> (Eq. 3): the expected <b>sum of absolute differences</b> $\\lVert y - G(x,z)\\rVert_1$ between the true and generated pixels. Pulls the output toward the ground truth." },
       { sym: "$\\lVert\\cdot\\rVert_1$", desc: "the <b>L1 norm</b>: add up the absolute values of all entries. For an image, the total absolute pixel-by-pixel difference. (Contrast L2, which squares first &mdash; L2 blurs more.)" },
       { sym: "$\\lambda$", desc: "the <b>weight</b> on the L1 term in the combined objective (Eq. 4). The paper uses $\\lambda = 100$ &mdash; the L1 term is heavily weighted relative to the GAN term." },
@@ -172,8 +204,13 @@
       { sym: "PatchGAN", desc: "a plain term: a discriminator that classifies each $N\\times N$ <b>patch</b> of the (paired) image as real/fake and averages, instead of scoring the whole image once. Also called a <b>Markovian</b> discriminator." }
     ],
     formula: `$$ \\mathcal{L}_{cGAN}(G,D) = \\mathbb{E}_{x,y}\\big[\\log D(x,y)\\big] + \\mathbb{E}_{x,z}\\big[\\log\\big(1 - D(x,G(x,z))\\big)\\big] \\qquad\\text{(Eq. 1, \\S3.1)} $$
-$$ \\mathcal{L}_{L1}(G) = \\mathbb{E}_{x,y,z}\\big[\\,\\lVert y - G(x,z)\\rVert_1\\,\\big] \\qquad\\text{(Eq. 3)} $$
-$$ G^{*} = \\arg\\min_{G}\\max_{D}\\; \\mathcal{L}_{cGAN}(G,D) + \\lambda\\,\\mathcal{L}_{L1}(G) \\qquad\\text{(Eq. 4,\\;}\\lambda=100\\text{)} $$`,
+<p>The conditional-GAN objective: $D$ judges the <b>pair</b> $(x,\\cdot)$, so both terms are conditioned on the input image $x$.</p>
+$$ \\mathcal{L}_{GAN}(G,D) = \\mathbb{E}_{y}\\big[\\log D(y)\\big] + \\mathbb{E}_{x,z}\\big[\\log\\big(1 - D(G(x,z))\\big)\\big] \\qquad\\text{(Eq. 2, \\S3.1)} $$
+<p>The <b>unconditional</b> variant (used only in the ablation of \\S4.2): $D$ sees the output image alone, never the input $x$. pix2pix uses Eq. 1, not this.</p>
+$$ \\mathcal{L}_{L1}(G) = \\mathbb{E}_{x,y,z}\\big[\\,\\lVert y - G(x,z)\\rVert_1\\,\\big] \\qquad\\text{(Eq. 3, \\S3.1)} $$
+<p>The L1 reconstruction term: expected sum of absolute pixel differences between the true output $y$ and the generated $G(x,z)$. Anchors $G$ to the ground truth.</p>
+$$ G^{*} = \\arg\\min_{G}\\max_{D}\\; \\mathcal{L}_{cGAN}(G,D) + \\lambda\\,\\mathcal{L}_{L1}(G) \\qquad\\text{(Eq. 4, \\S3.1,\\;}\\lambda=100\\text{)} $$
+<p>The full objective: solve the adversarial min&ndash;max on the cGAN term <b>and</b> minimize $\\lambda=100$ times the L1 term &mdash; sharp (GAN) and faithful (L1) at once.</p>`,
     whatItDoes:
       `<p><b>Eq. 1</b> is the conditional-GAN game on <b>image pairs</b>. The first term
        $\\mathbb{E}_{x,y}[\\log D(x,y)]$ is large when $D$ confidently calls a <b>real</b> pair real

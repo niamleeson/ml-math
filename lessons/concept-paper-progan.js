@@ -164,6 +164,44 @@
        discriminator's activation magnitudes from spiraling upward in an arms race, the generator renormalizes
        each <i>pixel's</i> feature vector to (roughly) unit length after each $3\\times3$ convolution &mdash; the
        formula is in the panel below.</p>`,
+    architecture:
+      `<p><b>Two mirror-image networks that grow in lockstep.</b> The generator $G$ and discriminator $D$ are
+       symmetric: $G$ runs low&rarr;high resolution, $D$ runs high&rarr;low. Both start tiny and gain a matching
+       block per resolution doubling.</p>
+
+       <p><b>Generator $G$ (noise &rarr; image), bottom-up:</b></p>
+       <ul>
+        <li><b>Input:</b> a latent vector $z\\in\\mathbb{R}^{512}$, normalized by pixel norm, reshaped/convolved to
+        a $512$-channel <b>$4\\times4$</b> feature map (the first block uses a $4\\times4$ conv then a $3\\times3$
+        conv).</li>
+        <li><b>Per-resolution block</b> (repeated for $8,16,\\ldots,1024$): <i>nearest-neighbor upsample $\\times2$</i>
+        &rarr; <code>EqualizedConv2d</code> $3\\times3$ &rarr; Leaky ReLU($0.2$) &rarr; <b>pixel norm</b> &rarr; a
+        second $3\\times3$ conv + Leaky ReLU + pixel norm. Channel counts taper as resolution rises (512 at
+        4&ndash;16, then halving: 256, 128, 64, 32, 16 down to 1024&times;1024).</li>
+        <li><b>toRGB:</b> a $1\\times1$ equalized conv maps the final feature map to $3$ RGB channels. During a
+        transition, the previous resolution's toRGB output is upsampled and blended with the new block's toRGB via
+        the $\\alpha$ fade-in.</li>
+       </ul>
+
+       <p><b>Discriminator $D$ (image &rarr; score), top-down (mirror of $G$):</b></p>
+       <ul>
+        <li><b>fromRGB:</b> a $1\\times1$ equalized conv turns the input RGB image into features. During a
+        transition the new fromRGB is faded in symmetrically.</li>
+        <li><b>Per-resolution block:</b> two $3\\times3$ equalized convs + Leaky ReLU, then <i>average-pool
+        $\\div2$</i> to halve resolution. (No pixel norm in $D$.)</li>
+        <li><b>Minibatch-stddev layer</b> inserted toward the end (at the $4\\times4$ stage): appends the one
+        constant variation feature map (§3) before the final convs.</li>
+        <li><b>Head:</b> a $3\\times3$ conv, then a $4\\times4$ conv collapsing to $1\\times1$, then a linear layer
+        producing the single real/fake score.</li>
+       </ul>
+
+       <p><b>Training schedule (the growth curriculum).</b> Train $G$/$D$ at $4\\times4$ until stable, then for each
+       new resolution run a two-phase cycle: (1) a <b>transition phase</b> where the new block fades in
+       ($\\alpha:0\\to1$ over a fixed number of images shown), then (2) a <b>stabilization phase</b> at full weight
+       ($\\alpha=1$) before adding the next resolution. Repeat $4\\to8\\to16\\to\\cdots\\to1024$. The whole training
+       uses the WGAN-GP loss plus the §A.1 drift term, Adam ($\\alpha_{\\text{lr}}=0.001,\\beta_1=0,\\beta_2=0.99$),
+       and Leaky ReLU $0.2$. The minibatch shrinks as resolution grows (high-res images cost more memory), which is
+       part of why stabilization matters.</p>`,
     symbols: [
       { sym: "$G$", desc: "the <b>generator</b>: maps a noise vector to a fake image. In ProGAN it grows layer-by-layer from 4&times;4 up to 1024&times;1024." },
       { sym: "$D$", desc: "the <b>discriminator</b>: reads an image and scores how real it looks. Grows as a mirror image of $G$." },
@@ -177,9 +215,53 @@
       { sym: "$\\mathbf{b}_{x,y}$", desc: "the <b>pixel-normalized</b> feature vector at $(x,y)$ &mdash; $\\mathbf{a}_{x,y}$ rescaled to roughly unit length." },
       { sym: "$N$", desc: "the <b>number of feature maps (channels)</b> at that layer &mdash; the length of the per-pixel feature vector." },
       { sym: "$\\epsilon$", desc: "a tiny constant ($10^{-8}$) added inside a square root for numerical safety, so we never divide by zero." },
-      { sym: "minibatch", desc: "a plain term: the small batch of images processed together in one training step. Minibatch <b>stddev</b> measures spread <i>across</i> that batch." }
+      { sym: "minibatch", desc: "a plain term: the small batch of images processed together in one training step. Minibatch <b>stddev</b> measures spread <i>across</i> that batch." },
+      { sym: "$N_b$", desc: "the <b>minibatch size</b>: how many images are processed together. The minibatch stddev (§3) takes the std over these $N_b$ images." },
+      { sym: "$a^{(i)}_{c,x,y}$", desc: "the activation of feature/channel $c$ at spatial location $(x,y)$ for the $i$-th image in the minibatch." },
+      { sym: "$\\bar a_{c,x,y}$", desc: "the <b>mean</b> of that activation over the $N_b$ images in the minibatch (used to compute the per-feature std)." },
+      { sym: "$\\sigma_{c,x,y}$", desc: "the <b>standard deviation</b> of feature $c$ at location $(x,y)$ taken across the minibatch (§3)." },
+      { sym: "$s$", desc: "the <b>single scalar</b> from averaging every $\\sigma_{c,x,y}$ over all channels $C$ and locations $H\\times W$; it is replicated into one constant feature map appended in $D$ (§3)." },
+      { sym: "$C, H, W$", desc: "the number of <b>channels</b>, the feature-map <b>height</b>, and <b>width</b> at the layer where the minibatch-stddev average is taken." },
+      { sym: "$a^{(j)}_{x,y}$", desc: "the $j$-th channel value of the feature vector at pixel $(x,y)$ in the generator (used inside the pixel-norm root-mean-square, §4.2)." },
+      { sym: "$L$", desc: "the <b>base discriminator loss</b> — the WGAN-GP loss (recap: paper-wgan)." },
+      { sym: "$L'$", desc: "the <b>actual loss</b> used: $L$ plus the small drift term (Appendix A.1)." },
+      { sym: "$\\epsilon_{\\text{drift}}$", desc: "the tiny weight ($0.001$) on the drift term that keeps $D$'s output near zero (Appendix A.1)." },
+      { sym: "$\\mathbb{E}_{x\\in\\mathbb{P}_r}[\\cdot]$", desc: "the <b>expectation</b> (average) over real images $x$ drawn from the real-data distribution $\\mathbb{P}_r$." },
+      { sym: "$D(x)$", desc: "the discriminator's <b>scalar score</b> for an image $x$ (squared in the drift term)." }
     ],
-    formula: `$$ \\hat{w}_i = \\frac{w_i}{c}, \\qquad c = \\sqrt{\\dfrac{2}{\\text{fan\\_in}}} \\qquad\\text{(equalized learning rate, §4.1)} $$`,
+    formula: `
+      <p>ProGAN keeps the GAN objective and instead adds <b>four</b> mechanisms, each with its own formula.
+      Here they are in paper order.</p>
+
+      $$ \\text{out}_{\\text{transition}} = (1-\\alpha)\\cdot \\text{upsample}(\\text{old\\_rgb}) \\;+\\; \\alpha\\cdot \\text{new\\_layer} , \\qquad \\alpha: 0 \\to 1 $$
+      <p><b>(§2, Fig. 2) Progressive-growing fade-in.</b> During a resolution transition the output is a linear
+      blend of the previous resolution's RGB (nearest-neighbor upsampled) and the new block's RGB; the blend
+      weight $\\alpha$ ramps linearly from $0$ (old path only) to $1$ (new block only), so the new layers fade in
+      like a residual block and never shock the trained low-res layers.</p>
+
+      $$ \\sigma_{c,x,y} = \\sqrt{\\frac{1}{N_b}\\sum_{i=1}^{N_b}\\big(a^{(i)}_{c,x,y}-\\bar a_{c,x,y}\\big)^2}, \\qquad s = \\frac{1}{C\\,H\\,W}\\sum_{c,x,y}\\sigma_{c,x,y} $$
+      <p><b>(§3) Minibatch standard deviation.</b> Compute the std $\\sigma_{c,x,y}$ of each feature $c$ at each
+      spatial location $(x,y)$ <i>across the minibatch</i> of $N_b$ images, average all those stds to one scalar
+      $s$, then replicate $s$ and concatenate it as one extra constant feature map near the end of $D$. No learnable
+      parameters; it lets $D$ see how much variety a batch has.</p>
+
+      $$ \\hat{w}_i = \\frac{w_i}{c}, \\qquad c = \\sqrt{\\dfrac{2}{\\text{fan\\_in}}} $$
+      <p><b>(§4.1) Equalized learning rate.</b> Store each weight as a plain $\\mathcal{N}(0,1)$ draw; at every
+      forward pass rescale it by the per-layer He constant $c$ (the paper writes $\\hat w_i = w_i/c$). The He scale
+      is $c=\\sqrt{2/\\text{fan\\_in}}$, with $\\text{fan\\_in}=(\\text{in\\_channels})\\times k_h\\times k_w$. This
+      gives every layer the same dynamic range, so Adam moves all layers at the same learning speed.</p>
+
+      $$ \\mathbf{b}_{x,y} = \\frac{\\mathbf{a}_{x,y}}{\\sqrt{\\dfrac{1}{N}\\displaystyle\\sum_{j=0}^{N-1}\\big(a^{(j)}_{x,y}\\big)^2 + \\epsilon}}, \\qquad \\epsilon = 10^{-8} $$
+      <p><b>(§4.2) Pixelwise feature vector normalization (generator only).</b> After each $3\\times3$ conv in $G$,
+      divide each pixel's feature vector $\\mathbf{a}_{x,y}$ (its $N$ channel values) by the root-mean-square of its
+      own entries, so every pixel's feature vector has roughly unit length. This stops $G$ and $D$ activation
+      magnitudes from spiraling upward in an arms race.</p>
+
+      $$ L' = L \\;+\\; \\epsilon_{\\text{drift}}\\,\\mathbb{E}_{x\\in\\mathbb{P}_r}\\big[D(x)^2\\big], \\qquad \\epsilon_{\\text{drift}} = 0.001 $$
+      <p><b>(Appendix A.1) Loss.</b> The base objective $L$ is the WGAN-GP loss (recap: <b>paper-wgan</b>). ProGAN
+      adds a tiny drift term that keeps the discriminator's output from drifting away from zero. Trained with Adam
+      ($\\alpha_{\\text{lr}}=0.001,\\ \\beta_1=0,\\ \\beta_2=0.99,\\ \\epsilon=10^{-8}$) and Leaky ReLU slope $0.2$
+      in all layers except the last (linear).</p>`,
     whatItDoes:
       `<p>This is the <b>equalized learning rate</b> rule (&sect;4.1) &mdash; the most "math-shaped" of ProGAN's
        tricks, so we make it the worked equation. Read it left to right:</p>

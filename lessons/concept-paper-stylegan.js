@@ -133,6 +133,34 @@
        regularization</b> &mdash; during training, switch from $\\mathbf{w}_A$ to a second $\\mathbf{w}_B$ at a
        random layer &mdash; forces each layer's style to act on its own, "preventing the network from assuming that
        adjacent styles are correlated." That is also the <b>style mixing</b> you can do at test time.</p>`,
+    architecture:
+      `<p>StyleGAN's generator has <b>two parts</b> (Fig. 1): a <b>mapping network</b> $f$ and a
+       <b>synthesis network</b> $g$. The discriminator is unchanged from the progressive-growing baseline.</p>
+       <p><b>Mapping network $f$ ($\\mathcal{Z}\\to\\mathcal{W}$).</b> Input $\\mathbf{z}\\in\\mathbb{R}^{512}$ (normalized
+       onto the unit hypersphere) &rarr; <b>8 fully-connected layers</b> (512&rarr;512 each, with LeakyReLU) &rarr;
+       output $\\mathbf{w}\\in\\mathbb{R}^{512}$. That is the entire mapping net &mdash; no convolutions, no image.</p>
+       <p><b>Synthesis network $g$ (the image generator).</b> Unlike a traditional generator, it does <i>not</i> take
+       $\\mathbf{z}$ as input. It starts from a single <b>learned constant</b> tensor of shape $4{\\times}4{\\times}512$.
+       It then climbs through <b>9 resolutions</b> (4&sup2; &rarr; 1024&sup2;), <b>two convolution blocks per
+       resolution</b> = <b>18 layers total</b>, with bilinear upsampling between resolutions. <b>Each layer</b>
+       runs the same micro-pipeline:</p>
+       <ul>
+        <li><b>(a) Convolution</b> ($3{\\times}3$) on the running feature map.</li>
+        <li><b>(b) Add noise:</b> $\\mathbf{x}\\leftarrow\\mathbf{x}+B\\,\\boldsymbol{\\varepsilon}$ &mdash; a fresh
+        single-channel Gaussian image $\\boldsymbol{\\varepsilon}$, scaled per-channel by learned $B$.</li>
+        <li><b>(c) AdaIN</b> (Eq. 1): normalize each channel, then apply the style $\\mathbf{y}=A(\\mathbf{w})$ from a
+        per-layer affine $A$. This is the <i>only</i> place $\\mathbf{w}$ enters.</li>
+        <li><b>(d) Nonlinearity</b> (LeakyReLU).</li>
+       </ul>
+       <p>A final $1{\\times}1$ convolution (\"toRGB\") maps the last feature map to a 3-channel image. So a single
+       $\\mathbf{w}$ fans out to <b>18 style inputs</b> (and 18 noise inputs), one per layer.</p>
+       <p><b>Contrast &mdash; traditional generator.</b> A standard GAN generator (e.g. the progressive-growing
+       baseline) feeds $\\mathbf{z}$ <b>through the first layer</b> as the sole input, then stacks
+       convolution&rarr;upsample blocks; there is no mapping network, no intermediate $\\mathcal{W}$, no per-layer
+       style or noise. All variation must be squeezed through that one bottom input, which entangles attributes.
+       StyleGAN moves $\\mathbf{z}$'s influence out of the input and into <b>per-layer AdaIN styles</b>, and adds
+       <b>per-layer noise</b> for stochastic detail &mdash; this is the whole architectural change (params: 26.2M vs
+       23.1M, &sect;2).</p>`,
     symbols: [
       { sym: "$\\mathbf{z}$", desc: "the <b>input noise / latent vector</b> (512-D), drawn from a fixed Gaussian &mdash; same role as in any GAN." },
       { sym: "$\\mathbf{w}$", desc: "the <b>intermediate latent</b> (512-D), the output of the mapping network $f(\\mathbf{z})$. Lives in space $\\mathcal{W}$, claimed to be less <b>entangled</b> (one number &rarr; one attribute) than $\\mathcal{Z}$." },
@@ -146,9 +174,39 @@
       { sym: "AdaIN", desc: "a plain term: <b>adaptive instance normalization</b> &mdash; normalize a feature map to mean 0 / std 1, then re-scale and shift it by a style $(\\mathbf{y}_s,\\mathbf{y}_b)$ that is <i>computed from</i> $\\mathbf{w}$ (the \"adaptive\" part). 'Instance' = normalize each sample's each channel on its own." },
       { sym: "$B$", desc: "the per-layer <b>noise</b> input: a single-channel Gaussian-noise image, scaled by a learned per-channel factor and added after each convolution &mdash; supplies stochastic detail." },
       { sym: "“entangled”", desc: "a plain term: when one latent number controls several unrelated image attributes at once, so you cannot change one factor (e.g. pose) without disturbing others (e.g. hair). StyleGAN aims for the opposite &mdash; <b>disentangled</b> control." },
-      { sym: "FID", desc: "a plain term: <b>Fr&eacute;chet Inception Distance</b>, a score for how close generated images are to real ones &mdash; <i>lower is better</i>. The paper reports it in Table 1." }
+      { sym: "FID", desc: "a plain term: <b>Fr&eacute;chet Inception Distance</b>, a score for how close generated images are to real ones &mdash; <i>lower is better</i>. The paper reports it in Table 1." },
+      { sym: "$\\mathcal{Z},\\mathcal{W}$", desc: "the <b>input latent space</b> $\\mathcal{Z}$ (where $\\mathbf{z}$ lives, a fixed Gaussian) and the <b>intermediate latent space</b> $\\mathcal{W}$ (where $\\mathbf{w}=f(\\mathbf{z})$ lives, claimed less entangled)." },
+      { sym: "$\\boldsymbol{\\varepsilon}$", desc: "a <b>single-channel Gaussian noise image</b> $\\mathcal{N}(0,\\mathbf{I})$ drawn fresh per layer; scaled by $B$ and added after each convolution." },
+      { sym: "$\\bar{\\mathbf{w}}$", desc: "the <b>average</b> intermediate latent &mdash; the mean of $f(\\mathbf{z})$ over many random $\\mathbf{z}$ (the \"center of mass\", i.e. the average/most typical face)." },
+      { sym: "$\\psi$", desc: "the <b>truncation factor</b> ($\\psi\\lt 1$): how far $\\mathbf{w}$ is kept from the average $\\bar{\\mathbf{w}}$. Smaller $\\psi$ = closer to the mean face = higher quality but less variety." },
+      { sym: "$G,\\,g$", desc: "$G$ is the <b>whole generator</b> from $\\mathbf{z}$; $g$ is the <b>synthesis network</b> alone (takes $\\mathbf{w}$, not $\\mathbf{z}$) &mdash; used in the path-length metrics." },
+      { sym: "slerp, lerp", desc: "plain terms: <b>spherical</b> linear interpolation (slerp, used in $\\mathcal{Z}$ on the Gaussian sphere) and ordinary <b>linear</b> interpolation (lerp, used in the flat space $\\mathcal{W}$) between two latents at fraction $t$." },
+      { sym: "$d(\\cdot,\\cdot)$", desc: "a learned <b>perceptual image distance</b> (VGG-based) measuring how different two generated images look." },
+      { sym: "$\\epsilon,\\,t$", desc: "$\\epsilon=10^{-4}$ is a tiny step along the interpolation path; $t\\sim U(0,1)$ is a random position on that path." },
+      { sym: "$l_{\\mathcal{Z}},\\,l_{\\mathcal{W}}$", desc: "the <b>perceptual path length</b> in $\\mathcal{Z}$ and in $\\mathcal{W}$ (Eq. 2, 3): average perceptual change per unit step. Smaller = smoother = more disentangled." },
+      { sym: "$H(Y_i\\mid X_i)$", desc: "the <b>conditional entropy</b> of true attribute label $Y_i$ given the SVM's predicted side $X_i$ &mdash; the extra uncertainty about $Y_i$ once you know which side of the hyperplane a point falls on." }
     ],
-    formula: `$$ \\mathrm{AdaIN}(\\mathbf{x}_i,\\mathbf{y}) \\;=\\; \\mathbf{y}_{s,i}\\,\\frac{\\mathbf{x}_i - \\mu(\\mathbf{x}_i)}{\\sigma(\\mathbf{x}_i)} \\;+\\; \\mathbf{y}_{b,i} \\qquad\\text{(Eq. 1, \\S2)} $$`,
+    formula: `$$ \\mathbf{w} \\;=\\; f(\\mathbf{z}), \\qquad f:\\mathcal{Z}\\!\\to\\!\\mathcal{W},\\quad \\mathbf{z}\\in\\mathbb{R}^{512},\\ \\mathbf{w}\\in\\mathbb{R}^{512} $$
+       <p>(&sect;2) The <b>mapping network</b> $f$ &mdash; an 8-layer fully-connected network (MLP) &mdash; turns the input noise $\\mathbf{z}$ into the intermediate latent $\\mathbf{w}$.</p>
+
+       $$ \\mathbf{y} \\;=\\; (\\mathbf{y}_s,\\mathbf{y}_b) \\;=\\; A(\\mathbf{w}) $$
+       <p>(&sect;2) A learned <b>affine transform</b> $A$ (one per layer) maps $\\mathbf{w}$ to that layer's <b>style</b>: a per-channel scale $\\mathbf{y}_s$ and bias $\\mathbf{y}_b$.</p>
+
+       $$ \\mathrm{AdaIN}(\\mathbf{x}_i,\\mathbf{y}) \\;=\\; \\mathbf{y}_{s,i}\\,\\frac{\\mathbf{x}_i - \\mu(\\mathbf{x}_i)}{\\sigma(\\mathbf{x}_i)} \\;+\\; \\mathbf{y}_{b,i} $$
+       <p>(<b>Eq. 1</b>, &sect;2) <b>Adaptive instance normalization</b>: normalize feature map $\\mathbf{x}_i$ to mean 0 / std 1, then re-scale by $\\mathbf{y}_{s,i}$ and shift by $\\mathbf{y}_{b,i}$. Applied after every convolution.</p>
+
+       $$ \\mathbf{x} \\;\\leftarrow\\; \\mathbf{x} \\;+\\; B\\,\\boldsymbol{\\varepsilon}, \\qquad \\boldsymbol{\\varepsilon}\\sim\\mathcal{N}(0,\\mathbf{I}) $$
+       <p>(&sect;2) <b>Per-layer noise injection</b>: a single-channel Gaussian noise image $\\boldsymbol{\\varepsilon}$ is broadcast to all channels with a learned per-channel scaling factor $B$, added after each convolution &mdash; supplies stochastic detail.</p>
+
+       $$ \\bar{\\mathbf{w}} \\;=\\; \\mathbb{E}_{\\mathbf{z}\\sim P(\\mathbf{z})}\\big[f(\\mathbf{z})\\big], \\qquad \\mathbf{w}' \\;=\\; \\bar{\\mathbf{w}} \\;+\\; \\psi\\,(\\mathbf{w}-\\bar{\\mathbf{w}}),\\quad \\psi\\lt 1 $$
+       <p>(<b>Appendix B</b>) <b>Truncation trick in $\\mathcal{W}$</b>: pull $\\mathbf{w}$ toward the average $\\bar{\\mathbf{w}}$ by factor $\\psi$ &mdash; trades variety for quality. $\\psi=0$ gives the mean face; $\\psi=1$ leaves $\\mathbf{w}$ untouched.</p>
+
+       $$ l_{\\mathcal{Z}} \\;=\\; \\mathbb{E}\\!\\left[\\tfrac{1}{\\epsilon^2}\\, d\\big(G(\\mathrm{slerp}(\\mathbf{z}_1,\\mathbf{z}_2;t)),\\, G(\\mathrm{slerp}(\\mathbf{z}_1,\\mathbf{z}_2;t+\\epsilon))\\big)\\right] $$
+       $$ l_{\\mathcal{W}} \\;=\\; \\mathbb{E}\\!\\left[\\tfrac{1}{\\epsilon^2}\\, d\\big(g(\\mathrm{lerp}(f(\\mathbf{z}_1),f(\\mathbf{z}_2);t)),\\, g(\\mathrm{lerp}(f(\\mathbf{z}_1),f(\\mathbf{z}_2);t+\\epsilon))\\big)\\right] $$
+       <p>(<b>Eq. 2 &amp; 3</b>, &sect;4.1) <b>Perceptual path length</b>: the average perceptual image change $d(\\cdot,\\cdot)$ per small step $\\epsilon$ along an interpolation path ($t\\sim U(0,1)$, $\\epsilon=10^{-4}$). Spherical interpolation (slerp) in $\\mathcal{Z}$; linear (lerp) in $\\mathcal{W}$. A smaller, smoother path indicates a more disentangled latent space.</p>
+
+       $$ \\text{separability} \\;=\\; \\exp\\!\\Big(\\textstyle\\sum_i H(Y_i\\mid X_i)\\Big) $$
+       <p>(&sect;4.2) <b>Linear separability</b>: fit a linear SVM per binary attribute $i$; $H(Y_i\\mid X_i)$ is the conditional entropy (extra information needed to recover the true label $Y_i$ given the SVM's side $X_i$). Lower means attributes are more linearly separable in latent space &mdash; better disentanglement.</p>`,
     whatItDoes:
       `<p>Read it left to right, for one channel $i$. The fraction
        $\\dfrac{\\mathbf{x}_i - \\mu(\\mathbf{x}_i)}{\\sigma(\\mathbf{x}_i)}$ <b>normalizes</b> the feature map:

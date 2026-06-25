@@ -150,6 +150,36 @@
        for each single generator step. The generator then descends the (approximate) Wasserstein distance by
        minimizing $-\\,\\mathbb{E}[f_w(G(z))]$ &mdash; pushing its fakes toward higher critic scores. The optimizer
        is <b>RMSProp</b> (lr $5\\times10^{-5}$); the paper found momentum methods like Adam destabilize the critic.</p>`,
+    architecture:
+      `<p>WGAN reuses a GAN's two-network layout but changes the judge and the training loop. <b>Two networks:</b></p>
+       <ul>
+        <li><b>Generator $g_\\theta$.</b> Maps a noise vector $z\\sim p(z)$ (the paper uses dimension 100) through a
+        deconvolutional / DCGAN-style stack to a sample the size of a real image. Final activation $\\tanh$ so
+        pixels land in $[-1,1]$. This is architecturally <i>identical</i> to a DCGAN generator &mdash; the WGAN
+        change is not here.</li>
+        <li><b>Critic $f_w$.</b> Same backbone as a DCGAN discriminator (conv $\\to$ LeakyReLU stack) but the
+        <b>final layer outputs a single unbounded real score with NO sigmoid</b>. It is a scalar-valued function,
+        not a $[0,1]$ classifier &mdash; it plays the 1-Lipschitz $f$ of Eq. 2.</li>
+       </ul>
+       <p><b>Data flow per generator step:</b> sample a minibatch of $m$ real images and $m$ noise vectors $\\to$
+       generator turns noise into $m$ fakes $\\to$ critic scores both batches $\\to$ losses are differences of the
+       per-batch mean scores (no log, no labels, no cross-entropy).</p>
+       <p><b>Training procedure (Algorithm 1), defaults $\\alpha=5\\times10^{-5}$, $c=0.01$, $m=64$,
+       $n_{\\text{critic}}=5$:</b></p>
+       <ol>
+        <li><b>Inner critic loop &mdash; repeat $n_{\\text{critic}}=5$ times:</b> sample $m$ reals $x^{(i)}$ and $m$
+        noises $z^{(i)}$; compute the critic gradient
+        $g_w\\!\\leftarrow\\!\\nabla_w[\\tfrac1m\\sum f_w(x^{(i)})-\\tfrac1m\\sum f_w(g_\\theta(z^{(i)}))]$; update
+        $w\\!\\leftarrow\\!w+\\alpha\\cdot\\mathrm{RMSProp}(w,g_w)$; then <b>clip</b>
+        $w\\!\\leftarrow\\!\\mathrm{clip}(w,-c,c)$.</li>
+        <li><b>One generator step:</b> sample $m$ fresh noises; compute
+        $g_\\theta\\!\\leftarrow\\!-\\nabla_\\theta\\tfrac1m\\sum f_w(g_\\theta(z^{(i)}))$; update
+        $\\theta\\!\\leftarrow\\!\\theta-\\alpha\\cdot\\mathrm{RMSProp}(\\theta,g_\\theta)$.</li>
+        <li>Repeat until convergence. The clipped critic gap is logged as a <b>Wasserstein-distance estimate</b>
+        whose curve tracks sample quality (Fig. 3).</li>
+       </ol>
+       <p><b>Why $n_{\\text{critic}}\\!>\\!1$:</b> the gap only equals the Wasserstein distance when the critic
+       reaches the supremum of Eq. 2, so the critic is trained to near-optimality between each generator move.</p>`,
     symbols: [
       { sym: "$\\mathbb{P}_r$", desc: "the <b>real-data distribution</b> &mdash; the true distribution of images we want to imitate ($r$ for 'real')." },
       { sym: "$\\mathbb{P}_g$ / $\\mathbb{P}_\\theta$", desc: "the <b>generator's distribution</b> &mdash; the distribution of fake samples $G(z)$. Written $\\mathbb{P}_\\theta$ to stress it depends on the generator's parameters $\\theta$." },
@@ -165,9 +195,24 @@
       { sym: "$n_{\\text{critic}}$", desc: "how many <b>critic updates per generator update</b> &mdash; the critic must well-approximate the supremum, so it is trained more. The paper uses $5$." },
       { sym: "$G(z)$ / $g_\\theta(z)$", desc: "the <b>generator</b>: maps a noise vector $z$ to a fake sample. $\\theta$ are its parameters." },
       { sym: "$\\alpha$", desc: "the <b>learning rate</b>. The paper uses $\\alpha = 5\\times10^{-5}$ with RMSProp." },
+      { sym: "$m$", desc: "the <b>minibatch size</b> &mdash; how many real images (and noise vectors) are sampled per update. The paper's default is $m = 64$." },
+      { sym: "$g_w$ / $g_\\theta$", desc: "the <b>gradients</b> of the objective with respect to the critic weights $w$ and the generator parameters $\\theta$ &mdash; the directions fed to RMSProp in Algorithm 1." },
+      { sym: "$\\mathrm{RMSProp}$", desc: "the <b>optimizer</b> (Root-Mean-Square Propagation): scales each step by a running average of recent squared gradients. The paper deliberately avoids momentum methods like Adam, which destabilized the critic." },
+      { sym: "$\\mathrm{clip}(w,-c,c)$", desc: "<b>clamp</b> each weight into $[-c,c]$ &mdash; values above $c$ become $c$, below $-c$ become $-c$. Applied after every critic update to enforce (approximate) Lipschitzness." },
+      { sym: "$z \\sim p(z)$", desc: "a <b>noise vector</b> drawn from a fixed prior $p(z)$ (e.g. Gaussian) &mdash; the generator's input." },
+      { sym: "$\\mathcal{W}$", desc: "the <b>weight set</b> &mdash; the box $[-c,c]^{\\dim}$ that the critic's weights are confined to by clipping; the maximization in Eq. 3 is over $w\\in\\mathcal{W}$." },
       { sym: "JS / KL / TV", desc: "<b>Jensen&ndash;Shannon</b>, <b>Kullback&ndash;Leibler</b>, and <b>Total-Variation</b> distances &mdash; the older ways to compare distributions. The paper shows all three are discontinuous where Wasserstein is smooth." }
     ],
-    formula: `$$ \\max_{w\\in\\mathcal{W}}\\; \\mathbb{E}_{x\\sim\\mathbb{P}_r}\\big[f_w(x)\\big] \\;-\\; \\mathbb{E}_{z\\sim p(z)}\\big[f_w(g_\\theta(z))\\big] $$`,
+    formula: `$$ W(\\mathbb{P}_r, \\mathbb{P}_g) = \\inf_{\\gamma \\in \\Pi(\\mathbb{P}_r,\\mathbb{P}_g)} \\mathbb{E}_{(x,y)\\sim\\gamma}\\big[\\,\\lVert x - y\\rVert\\,\\big] $$
+       <p class="cap"><b>Eq. 1 (&sect;2), Earth-Mover / Wasserstein-1 distance.</b> The cheapest cost &mdash; mass times travel distance &mdash; over all transport plans $\\gamma$ that reshape $\\mathbb{P}_g$ into $\\mathbb{P}_r$.</p>
+       $$ W(\\mathbb{P}_r, \\mathbb{P}_\\theta) = \\sup_{\\lVert f\\rVert_L \\le 1} \\mathbb{E}_{x\\sim\\mathbb{P}_r}\\big[f(x)\\big] - \\mathbb{E}_{x\\sim\\mathbb{P}_\\theta}\\big[f(x)\\big] $$
+       <p class="cap"><b>Eq. 2 (&sect;3), Kantorovich&ndash;Rubinstein duality.</b> The same distance as a maximization over all 1-Lipschitz functions $f$: the gap of average scores on real vs. fake.</p>
+       $$ \\max_{w\\in\\mathcal{W}}\\; \\mathbb{E}_{x\\sim\\mathbb{P}_r}\\big[f_w(x)\\big] \\;-\\; \\mathbb{E}_{z\\sim p(z)}\\big[f_w(g_\\theta(z))\\big] $$
+       <p class="cap"><b>Eq. 3 (&sect;3), WGAN critic objective.</b> Replace "all 1-Lipschitz $f$" with a network $f_w$ over weights $w\\in\\mathcal{W}$ and maximize the gap &mdash; the trainable, network-based version of Eq. 2.</p>
+       $$ w \\leftarrow \\mathrm{clip}(w,\\,-c,\\,c) $$
+       <p class="cap"><b>Weight-clipping constraint (Algorithm 1, &sect;3).</b> After every critic update, clamp each weight into $[-c,c]$ (default $c=0.01$) &mdash; the crude stand-in that keeps $f_w$ (approximately) Lipschitz so Eq. 2 holds.</p>
+       $$ g_w \\leftarrow \\nabla_w\\Big[\\tfrac1m\\textstyle\\sum_{i=1}^{m} f_w(x^{(i)}) - \\tfrac1m\\sum_{i=1}^{m} f_w(g_\\theta(z^{(i)}))\\Big], \\qquad g_\\theta \\leftarrow -\\nabla_\\theta\\,\\tfrac1m\\textstyle\\sum_{i=1}^{m} f_w(g_\\theta(z^{(i)})) $$
+       <p class="cap"><b>Critic and generator gradients (Algorithm 1).</b> The critic ascends the score gap; the generator descends $-\\mathbb{E}[f_w(G(z))]$, pushing its fakes toward higher critic scores. Both use RMSProp updates $w\\leftarrow w+\\alpha\\cdot\\mathrm{RMSProp}(w,g_w)$, $\\theta\\leftarrow\\theta-\\alpha\\cdot\\mathrm{RMSProp}(\\theta,g_\\theta)$ with $\\alpha=5\\times10^{-5}$.</p>`,
     whatItDoes:
       `<p>This is the <b>WGAN critic objective (Eq. 3)</b> &mdash; the practical, network-based version of the
        Kantorovich&ndash;Rubinstein dual (Eq. 2). Read it as a two-player game over the average critic scores:</p>

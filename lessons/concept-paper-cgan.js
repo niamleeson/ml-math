@@ -133,6 +133,39 @@
        <p><b>Why this gives control.</b> Because $D$ checks realism <i>per class</i>, $G$ cannot get away with
        producing, say, only 7s for every label: a 7 handed in under the label "2" is caught. So $G$ is forced to
        map the label slot to the matching class. After training, you set $y$ to the class you want and $G$ obeys.</p>`,
+    architecture:
+      `<p>The conditioning mechanism (&sect;3.2) is "feed $y$ into <b>both</b> the discriminator and generator as an
+       additional input layer." Concretely, two nets, each with the label $y$ wired in:</p>
+       <p><b>Conditional generator $G(z\\,|\\,y)$ &mdash; the MNIST net (&sect;4.1).</b></p>
+       <ul>
+        <li><b>Inputs:</b> a noise prior $z$ of dimensionality <b>100</b>, drawn from a uniform distribution; and the
+        label $y$ (one-hot over the 10 classes).</li>
+        <li><b>Two input branches:</b> $z$ is mapped to a <b>ReLU</b> layer of size <b>200</b>; $y$ is mapped to a
+        <b>ReLU</b> layer of size <b>1000</b>. (Each modality gets its own first layer rather than being concatenated
+        raw.)</li>
+        <li><b>Merge:</b> both branches feed a <b>second, combined ReLU</b> hidden layer of dimensionality
+        <b>1200</b> &mdash; the joint representation that mixes "what class" with "which sample."</li>
+        <li><b>Output:</b> a sigmoid layer producing the <b>784</b>-dim ($28\\times 28$) MNIST image.</li>
+       </ul>
+       <p><b>Conditional discriminator $D(x\\,|\\,y)$ &mdash; the MNIST net (&sect;4.1).</b> Built from <b>maxout</b> units
+       (a maxout unit takes the max over several linear "pieces"):</p>
+       <ul>
+        <li><b>Two input branches:</b> the image $x$ maps to a maxout layer with <b>240 units, 5 pieces</b>; the label
+        $y$ maps to a maxout layer with <b>50 units, 5 pieces</b>.</li>
+        <li><b>Joint layer:</b> both feed a maxout layer with <b>240 units, 4 pieces</b>, then a sigmoid producing one
+        real-vs-fake-for-class-$y$ probability. (Trained with stochastic gradient descent, dropout 0.5, Adam-style
+        momentum, per &sect;4.1.)</li>
+       </ul>
+       <p><b>The data-flow contrast with the unconditional GAN.</b> In a plain GAN, $G$'s only input is $z$ and $D$'s
+       only input is $x$ &mdash; no label enters either net, so there is no slot to request a class. cGAN adds exactly
+       one wire to each: $y$ alongside $z$ into $G$, and $y$ alongside $x$ into $D$. Everything else (alternating $D$
+       then $G$ updates, the non-saturating $G$ objective, the BCE losses) is identical.</p>
+       <p><b>The minimal build (the notebook).</b> The lesson's code uses the simplest faithful version of the same
+       mechanism: instead of separate branches, it <b>concatenates</b> the one-hot $y$ directly onto the input &mdash;
+       $G$ takes <code>cat([z, onehot(y)])</code> through an MLP to 784 pixels, $D$ takes <code>cat([x, onehot(y)])</code>
+       through an MLP to one logit. Widening each net's first <code>nn.Linear</code> by $K$ (the number of classes) is
+       what makes room for the one-hot. This concatenation is the same "$y$ as additional input" idea as the paper's
+       branched net.</p>`,
     symbols: [
       { sym: "$G(z|y)$", desc: "the <b>conditional generator</b>: a neural net that takes a noise vector $z$ <b>and</b> a condition $y$ (here the class label) and outputs a fake sample meant to be of class $y$. The bar \"$|$\" reads \"given $y$\"." },
       { sym: "$D(x|y)$", desc: "the <b>conditional discriminator</b>: a neural net that takes a sample $x$ <b>and</b> the condition $y$ and outputs a number in $[0,1]$ &mdash; the probability $x$ is a <b>real</b> example <i>of class $y$</i>." },
@@ -141,12 +174,24 @@
       { sym: "$z$", desc: "the <b>noise / latent vector</b>: random input to $G$, the source of variety <i>within</i> a requested class (different 7s for the same label)." },
       { sym: "$p_z(z)$", desc: "the <b>prior</b> over the noise &mdash; a fixed simple distribution we sample $z$ from. The paper uses a uniform unit hypercube of dimension 100 (&sect;4.1); not learned." },
       { sym: "$p_{\\text{data}}(x)$", desc: "the <b>true data distribution</b> (real MNIST images, with their labels). Conditioning slices it into per-class distributions $p_{\\text{data}}(x|y)$." },
+      { sym: "$p_g(x|y)$", desc: "the <b>generator's per-class distribution</b>: the distribution of samples $G(z|y)$ produces for condition $y$. At the optimum it should equal $p_{\\text{data}}(x|y)$ for every $y$." },
+      { sym: "$D^*(x|y)$", desc: "the <b>optimal conditional discriminator</b> for a fixed $G$ and fixed $y$: the density ratio $p_{\\text{data}}(x|y)/(p_{\\text{data}}(x|y)+p_g(x|y))$. Equals $\\tfrac12$ when the two per-class densities match." },
+      { sym: "$C(G)$", desc: "the <b>generator's cost at the optimal $D$</b> (per class): $-\\log 4 + 2\\,\\mathrm{JSD}(p_{\\text{data}}(\\cdot|y)\\,\\|\\,p_g(\\cdot|y))$. Minimized at $-\\log 4$ when generator matches data per class." },
+      { sym: "$\\mathrm{JSD}(\\cdot\\,\\|\\,\\cdot)$", desc: "the <b>Jensen&ndash;Shannon divergence</b>: a symmetric, non-negative \"distance\" between two distributions that is zero only when they are identical." },
       { sym: "$V(D,G)$", desc: "the <b>value function</b> of the game: one scalar that $D$ maximizes and $G$ minimizes. In Eq. (2) it is the conditional version." },
       { sym: "$\\mathbb{E}_{x\\sim p_{\\text{data}}}[\\cdot]$", desc: "an <b>expectation</b> &mdash; the average of the bracketed quantity over many real samples $x$. In code it is the mean over a real-data minibatch." },
       { sym: "$\\min_G\\max_D$", desc: "the <b>minimax</b> structure (unchanged from the GAN): $D$ maximizes $V$ (best class-aware detector), $G$ minimizes it (best class-aware forger)." },
       { sym: "“conditioning”", desc: "a plain term: making a network's output depend on an extra given input. Here, both $G$ and $D$ are conditioned on $y$ by concatenating it to their inputs." }
     ],
-    formula: `$$ \\min_G \\max_D V(D,G) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x\\,|\\,y)\\big] + \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z\\,|\\,y))\\big)\\big] \\qquad\\text{(Eq. 2, \\S3.2)} $$`,
+    formula:
+      `$$ \\min_G \\max_D V(D,G) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x)\\big] + \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z))\\big)\\big] $$
+       <p><b>Eq. (1), &sect;3.1 &mdash; the plain (unconditional) GAN.</b> The two-player minimax value function: $D$ pushes $\\log D(x)$ up on reals and $\\log(1-D(G(z)))$ up on fakes; $G$ fights back. Neither term sees any label, so which mode $G$ produces is uncontrolled.</p>
+       $$ \\min_G \\max_D V(D,G) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D(x\\,|\\,y)\\big] + \\mathbb{E}_{z\\sim p_z(z)}\\big[\\log\\big(1 - D(G(z\\,|\\,y))\\big)\\big] $$
+       <p><b>Eq. (2), &sect;3.2 &mdash; the conditional GAN.</b> Letter-for-letter Eq. (1), but $D(x)\\to D(x\\,|\\,y)$ and $G(z)\\to G(z\\,|\\,y)$: both players are now conditioned on the auxiliary information $y$ (the class label). The condition $y$ is fed into both nets "<i>as additional input layer</i>" (&sect;3.2) &mdash; in the build, $y$ is concatenated to $z$ for $G$ and to $x$ for $D$. This single change is the entire mechanism of controllable generation.</p>
+       $$ D^*(x\\,|\\,y) = \\frac{p_{\\text{data}}(x\\,|\\,y)}{p_{\\text{data}}(x\\,|\\,y) + p_g(x\\,|\\,y)} $$
+       <p><b>Optimal conditional discriminator (Prop. 1 of the GAN paper, applied per condition $y$).</b> For a fixed $G$ and a fixed label $y$, the $D$ that maximizes Eq. (2) at each point $x$ is this density ratio &mdash; the per-class version of the plain-GAN optimum.</p>
+       $$ C(G) = -\\log 4 + 2\\cdot\\mathrm{JSD}\\big(p_{\\text{data}}(\\cdot\\,|\\,y)\\,\\|\\,p_g(\\cdot\\,|\\,y)\\big) $$
+       <p><b>Generator objective at the optimal $D$, per class (Thm. 1, applied per condition).</b> Substituting $D^*$ back leaves the generator minimizing the Jensen&ndash;Shannon divergence between the real and generated <i>per-class</i> distributions. Its minimum, $-\\log 4$, is reached only when $p_g(x\\,|\\,y)=p_{\\text{data}}(x\\,|\\,y)$ for <b>every</b> class $y$ &mdash; the formal statement of "generates the right class on demand." (cGAN does not re-prove these last two; they follow from the GAN paper by holding $y$ fixed.)</p>`,
     whatItDoes:
       `<p>Compare it to the plain GAN (Eq. 1): it is <b>letter-for-letter the same game</b>, except $D(x)$ became
        $D(x|y)$ and $G(z)$ became $G(z|y)$ &mdash; both players now also see the label $y$.</p>

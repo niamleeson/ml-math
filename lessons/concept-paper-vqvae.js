@@ -137,6 +137,36 @@
         codebook vector (the <b>commitment loss</b>, weighted by $\\beta$) so the encoder "commits" instead
         of hopping between symbols.</li>
        </ol>`,
+    architecture:
+      `<p>The model is <b>encoder &rarr; quantizer (codebook) &rarr; decoder</b>, plus a separately-trained
+       <b>learned prior</b> for generation. Concretely, with the paper's image hyper-parameters (&sect;4.1):</p>
+       <ol>
+        <li><b>Encoder</b> $z_e(x)$. Input image $x$ (e.g. $128\\times128\\times3$) &rarr; <b>2 strided
+        convolutions</b> (stride $2$, $4\\times4$ window) that downsample, &rarr; <b>2 residual $3\\times3$
+        blocks</b>; all layers have <b>256 hidden units</b>. Output is a spatial grid of $D$-dimensional
+        vectors $z_e(x)$ — one vector per grid cell (for ImageNet $128\\times128$ the grid is $32\\times32$).</li>
+        <li><b>Quantizer + codebook</b> $e\\in\\mathbb{R}^{K\\times D}$. A learned table of $K$ embedding
+        vectors (the paper uses $K=512$ for images). Each encoder vector is replaced by its <b>nearest</b>
+        codebook row (Eqn. 2): compute squared distance to all $K$ rows, take $\\arg\\min$, gather the matched
+        $e_k$. The latent is now a <b>grid of integer indices</b> $k$ into the table — discrete symbols. The
+        forward pass outputs $z_q(x)$; the backward pass uses the straight-through identity so the encoder
+        still gets a gradient.</li>
+        <li><b>Decoder</b> $\\hat x$. Takes the quantized grid $z_q(x)$ &rarr; <b>2 residual $3\\times3$
+        blocks</b> &rarr; <b>2 transposed convolutions</b> (stride $2$, $4\\times4$ window) that upsample back
+        to image resolution. May be <b>conditioned</b> on side info (e.g. speaker identity for speech).</li>
+        <li><b>Learned prior (PixelCNN / WaveNet).</b> After the VQ-VAE is trained and frozen, encode the
+        dataset into its grids of symbols, then fit an <b>autoregressive</b> model over those symbols —
+        <b>PixelCNN</b> (with spatial masking) over the 2-D image-symbol map, or <b>WaveNet</b> over the 1-D
+        audio-symbol sequence. To generate, <b>ancestrally sample</b> a fresh symbol grid from this prior,
+        look up the codebook vectors, and run the decoder. This is the "learnt rather than static" prior of
+        the abstract — it replaces the uniform prior used during VQ-VAE training.</li>
+       </ol>
+       <p><b>Data flow:</b> $x\\xrightarrow{\\text{conv enc}}z_e(x)\\xrightarrow{\\text{nearest-}e\\text{ snap}}
+       z_q(x)\\xrightarrow{\\text{deconv dec}}\\hat x$; and for sampling
+       $\\text{prior}\\Rightarrow\\text{symbol grid}\\Rightarrow\\text{codebook lookup}\\Rightarrow z_q
+       \\Rightarrow\\text{decoder}\\Rightarrow$ new sample. Training: ADAM, learning rate $2\\times10^{-4}$,
+       batch size $128$, evaluated at $250{,}000$ steps (&sect;4). For speech the discrete space is
+       $128$-dim at $25$&nbsp;Hz (a $640\\times$ temporal downsample).</p>`,
     symbols: [
       { sym: "$x$", desc: "the input (here a 28&times;28 MNIST digit image)." },
       { sym: "$z_e(x)$", desc: "<b>encoder output</b> — the continuous vector(s) the encoder produces before quantization, in $\\mathbb{R}^D$." },
@@ -149,12 +179,29 @@
       { sym: "$\\lVert \\cdot \\rVert_2^2$", desc: "<b>squared Euclidean distance</b> — sum of squared differences between two vectors." },
       { sym: "$\\operatorname{sg}[\\cdot]$", desc: "<b>stop-gradient</b>: identity in the forward pass, but treated as a constant (zero gradient) in the backward pass. It freezes whatever is inside it during back-propagation." },
       { sym: "$\\beta$", desc: "the <b>commitment cost</b> — a weight on the commitment loss. The paper uses $\\beta=0.25$ in all experiments (&sect;3.2)." },
-      { sym: "$\\log p(x\\mid z_q(x))$", desc: "the <b>reconstruction</b> log-likelihood — how well the decoder rebuilds $x$ from the quantized code. In practice a reconstruction error (e.g. mean-squared error) plays this role." }
+      { sym: "$\\log p(x\\mid z_q(x))$", desc: "the <b>reconstruction</b> log-likelihood — how well the decoder rebuilds $x$ from the quantized code. In practice a reconstruction error (e.g. mean-squared error) plays this role." },
+      { sym: "$q(z=k\\mid x)$", desc: "the <b>posterior</b> over symbols given the input — here a hard <b>one-hot</b>: $1$ on the nearest index $k$, $0$ elsewhere (Eqn. 1)." },
+      { sym: "$p(z_q(x))$", desc: "the <b>prior</b> over latents. Uniform over the $K$ symbols during VQ-VAE training; replaced by a learned autoregressive prior (PixelCNN / WaveNet) for generation." },
+      { sym: "$\\hat x$", desc: "the <b>reconstruction</b> — the decoder's output image given $z_q(x)$." },
+      { sym: "$D_{\\mathrm{KL}}(q\\,\\Vert\\,p)$", desc: "<b>Kullback-Leibler divergence</b> from the prior $p$ to the posterior $q$; with a one-hot $q$ and uniform $p$ it equals the constant $\\log K$ and so contributes no gradient (&sect;3.1)." }
     ],
     formula:
-      `$$L=\\underbrace{\\log p\\!\\left(x\\mid z_q(x)\\right)}_{\\text{reconstruction}}
+      `$$q(z=k\\mid x)=\\begin{cases}1 & k=\\arg\\min_j\\lVert z_e(x)-e_j\\rVert_2\\\\[2pt] 0 & \\text{otherwise}\\end{cases}$$
+       <p class="cap"><b>Eqn. 1 (&sect;3.1)</b> — the posterior over symbols is a hard <b>one-hot</b>: it puts probability $1$ on the single nearest codebook index $k$ and $0$ on every other.</p>
+
+       $$z_q(x)=e_k,\\qquad k=\\arg\\min_j\\lVert z_e(x)-e_j\\rVert_2$$
+       <p class="cap"><b>Eqn. 2 (&sect;3.1)</b> — the <b>vector quantization</b>: snap the encoder output $z_e(x)$ to its nearest codebook vector $e_k$; that vector $z_q(x)$ is what the decoder receives.</p>
+
+       $$L=\\underbrace{\\log p\\!\\left(x\\mid z_q(x)\\right)}_{\\text{reconstruction}}
         +\\underbrace{\\bigl\\lVert \\operatorname{sg}[z_e(x)]-e\\bigr\\rVert_2^2}_{\\text{codebook (VQ) loss}}
-        +\\underbrace{\\beta\\,\\bigl\\lVert z_e(x)-\\operatorname{sg}[e]\\bigr\\rVert_2^2}_{\\text{commitment loss}}$$`,
+        +\\underbrace{\\beta\\,\\bigl\\lVert z_e(x)-\\operatorname{sg}[e]\\bigr\\rVert_2^2}_{\\text{commitment loss}}$$
+       <p class="cap"><b>Eqn. 3 (&sect;3.2)</b> — the full objective: reconstruction (trains decoder, and encoder via the straight-through gradient) $+$ codebook loss (moves $e$, $\\operatorname{sg}$ freezes the encoder) $+$ commitment loss weighted by $\\beta$ (moves the encoder, $\\operatorname{sg}$ freezes $e$). Paper uses $\\beta=0.25$.</p>
+
+       $$\\frac{\\partial z_q(x)}{\\partial z_e(x)}\\;\\approx\\;1\\quad\\Longleftrightarrow\\quad z_q(x)=z_e(x)+\\operatorname{sg}\\!\\bigl[z_q(x)-z_e(x)\\bigr]$$
+       <p class="cap"><b>Straight-through estimator (&sect;3.2)</b> — the snap has no real gradient, so we <i>copy</i> the gradient from the decoder input $z_q(x)$ straight back to the encoder output $z_e(x)$, i.e. treat the snap as the identity on the backward pass. The right-hand form is the one-line code identity ($\\operatorname{sg}=$ stop-gradient).</p>
+
+       $$\\log p(x)\\;\\geq\\;\\log p\\!\\left(x\\mid z_q(x)\\right)\\,p\\!\\left(z_q(x)\\right),\\qquad D_{\\mathrm{KL}}\\!\\left(q\\,\\Vert\\,p\\right)=\\log K\\ \\text{(uniform prior)}$$
+       <p class="cap"><b>Log-likelihood bound / prior (&sect;3.1-3.2)</b> — with a one-hot posterior and a <b>uniform</b> prior over the $K$ symbols, the KL term is the constant $\\log K$ and drops out of the gradient; after training, a <b>learned</b> autoregressive prior (PixelCNN / WaveNet) replaces the uniform one for generation.</p>`,
     whatItDoes:
       `<p>This is Eqn. 3 of the paper (&sect;3.2) — the whole VQ-VAE objective, three terms added together:</p>
        <ul>

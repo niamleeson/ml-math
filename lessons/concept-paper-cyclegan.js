@@ -133,6 +133,42 @@
        look real) plus $\\lambda$ times the cycle loss (make round trips return home). The paper uses
        $\\lambda = 10$. You minimize over $G,F$ and maximize over $D_X,D_Y$ &mdash; the same minimax structure
        as a plain GAN, now with the cycle anchor.</p>`,
+    architecture:
+      `<p>CycleGAN is <b>four networks</b> trained together: two generators and two discriminators, wired into
+       two cycles (&sect;3, Fig. 3).</p>
+       <p><b>The two cycles (data flow).</b></p>
+       <ul>
+        <li><b>Forward cycle:</b> $x \\xrightarrow{G} G(x) \\xrightarrow{F} F(G(x)) = \\hat{x} \\approx x$. A real
+        $X$ image is translated to $Y$ by $G$, then back to $X$ by $F$; the reconstruction $\\hat{x}$ must match
+        the original $x$.</li>
+        <li><b>Backward cycle:</b> $y \\xrightarrow{F} F(y) \\xrightarrow{G} G(F(y)) = \\hat{y} \\approx y$. The
+        symmetric path through the same two generators.</li>
+        <li>$D_Y$ judges whether $G(x)$ looks like a real $Y$; $D_X$ judges whether $F(y)$ looks like a real
+        $X$. Each generator is trained to fool its matching discriminator <i>and</i> to make the round trip
+        close.</li>
+       </ul>
+       <p><b>Generator</b> $G$ and $F$ (identical architecture, &sect;4; from Johnson et&nbsp;al.'s style-transfer
+       net). Channel-by-channel for the 128&times;128 version:</p>
+       <ul>
+        <li><code>c7s1-64</code> &mdash; a 7&times;7 convolution, stride&nbsp;1, 64 filters, reflection-padded.</li>
+        <li><code>d128, d256</code> &mdash; two stride-2 down-sampling convolutions (3&times;3), halving spatial
+        size, growing channels to 256.</li>
+        <li><code>R256 &times; 6</code> &mdash; <b>six residual blocks</b> at 256 channels (the bulk of the
+        network; <b>nine</b> blocks for 256&times;256 inputs).</li>
+        <li><code>u128, u64</code> &mdash; two fractionally-strided (stride-&frac12;) convolutions that
+        up-sample back to full resolution.</li>
+        <li><code>c7s1-3</code> &mdash; a final 7&times;7 conv to 3 RGB channels.</li>
+        <li>Every conv (except the output) uses <b>instance normalization</b> + ReLU.</li>
+       </ul>
+       <p><b>Discriminator</b> $D_X, D_Y$ &mdash; a <b>70&times;70 PatchGAN</b> (&sect;4): the stack
+       <code>C64-C128-C256-C512</code> of 4&times;4 stride-2 convolutions (LeakyReLU 0.2; instance norm on all but
+       the first), ending in a 1-channel map. It classifies each overlapping 70&times;70 <i>patch</i> as
+       real/fake (not the whole image), so it scores local texture and is fully convolutional.</p>
+       <p><b>Training details</b> (&sect;4): Adam, learning rate $0.0002$, batch size $1$; the rate is held for 100
+       epochs then linearly decayed to $0$ over 100 more. Discriminators see a <b>buffer of the last 50</b>
+       generated images (not just the freshest) to damp oscillation. The adversarial term uses the least-squares
+       (LSGAN) form for stability. <i>(In the Track B code below we replace all convolutions with small MLPs on a
+       2-D toy task &mdash; the same four-network, two-cycle wiring at toy scale.)</i></p>`,
     symbols: [
       { sym: "$X,\\ Y$", desc: "the two <b>domains</b> (e.g. horse photos and zebra photos). We have an unordered <b>collection</b> of samples from each &mdash; nothing in $X$ is matched to anything in $Y$." },
       { sym: "$x \\sim p_{\\text{data}}(x)$", desc: "a sample drawn from domain $X$ (the notation $\\sim p_{\\text{data}}(x)$ means “drawn from the data distribution of $X$”)." },
@@ -147,10 +183,29 @@
       { sym: "$\\mathcal{L}_{\\text{GAN}}$", desc: "the <b>adversarial loss</b> (Eq. 1): the standard GAN value function, recapped from <b>paper-gan</b> / <b>dl-gan</b>." },
       { sym: "$\\mathcal{L}_{\\text{cyc}}$", desc: "the <b>cycle-consistency loss</b> (Eq. 2): the sum of the two round-trip $L_1$ errors. The paper's key term." },
       { sym: "$\\lambda$", desc: "a plain weight: how strongly the cycle loss counts against the adversarial losses in the total objective. The paper sets $\\lambda = 10$ (&sect;3.3)." },
+      { sym: "$\\mathbb{E}_{x\\sim p_{\\text{data}}(x)}[\\cdot]$", desc: "the <b>expected (average) value</b> of the bracketed quantity when $x$ is drawn from $X$'s data distribution &mdash; in practice, the mean over a minibatch." },
+      { sym: "$\\log D_Y(y)$", desc: "the (natural) log of the discriminator's score on a real $Y$ image; the adversarial loss (Eq. 1) rewards $D_Y$ for pushing this toward $\\log 1 = 0$ on reals." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>full objective</b> $\\mathcal{L}(G,F,D_X,D_Y)$ (Eq. 3): the two adversarial losses plus $\\lambda\\,\\mathcal{L}_{\\text{cyc}}$." },
+      { sym: "$G^{*},\\ F^{*}$", desc: "the <b>solution</b> generators &mdash; the $G,F$ that minimize $\\mathcal{L}$ while $D_X,D_Y$ maximize it (Eq. 4, the minimax optimum)." },
+      { sym: "$\\hat{x},\\ \\hat{y}$", desc: "the <b>cycle reconstructions</b> $\\hat{x}=F(G(x))$ and $\\hat{y}=G(F(y))$; cycle consistency drives $\\hat{x}\\to x$ and $\\hat{y}\\to y$ (Fig. 3)." },
+      { sym: "$\\mathcal{L}_{\\text{identity}}$", desc: "the <b>optional identity loss</b> (&sect;5.2): $\\mathbb{E}_y\\|G(y)-y\\|_1 + \\mathbb{E}_x\\|F(x)-x\\|_1$, added with weight $0.5\\lambda$ to keep a generator from altering inputs already in its target domain (helps preserve color)." },
       { sym: "“PatchGAN”", desc: "a plain term, not a symbol: a discriminator that classifies overlapping image <i>patches</i> (the paper uses 70×70) as real/fake rather than the whole image, so it focuses on local texture. (Architecture detail, &sect;4.)" },
       { sym: "“instance normalization”", desc: "a plain term: a per-image normalization layer (like batch norm but computed per single example), standard in style-transfer generators; used in CycleGAN's generator (&sect;4)." }
     ],
-    formula: `$$ \\mathcal{L}_{\\text{cyc}}(G,F) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\|F(G(x))-x\\|_1\\big] + \\mathbb{E}_{y\\sim p_{\\text{data}}(y)}\\big[\\|G(F(y))-y\\|_1\\big] \\qquad\\text{(Eq. 2, \\S3.2)} $$`,
+    formula:
+      `$$ \\mathcal{L}_{\\text{GAN}}(G,D_Y,X,Y) = \\mathbb{E}_{y\\sim p_{\\text{data}}(y)}\\big[\\log D_Y(y)\\big] + \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log\\!\\big(1-D_Y(G(x))\\big)\\big] $$
+       <p>Eq. 1 (&sect;3.1) &mdash; the <b>forward adversarial loss</b>: the ordinary GAN game for the direction $G:X\\to Y$. $G$ minimizes it (make $G(x)$ fool $D_Y$); $D_Y$ maximizes it (tell real $y$ from fakes).</p>
+       $$ \\mathcal{L}_{\\text{GAN}}(F,D_X,Y,X) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\log D_X(x)\\big] + \\mathbb{E}_{y\\sim p_{\\text{data}}(y)}\\big[\\log\\!\\big(1-D_X(F(y))\\big)\\big] $$
+       <p>Eq. 1 again, for the <b>backward direction</b> $F:Y\\to X$ with discriminator $D_X$. Same form, roles of $X$ and $Y$ swapped.</p>
+       $$ \\mathcal{L}_{\\text{cyc}}(G,F) = \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\|F(G(x))-x\\|_1\\big] + \\mathbb{E}_{y\\sim p_{\\text{data}}(y)}\\big[\\|G(F(y))-y\\|_1\\big] $$
+       <p>Eq. 2 (&sect;3.2) &mdash; the <b>cycle-consistency loss</b>, the paper's key term: the forward round-trip error $\\|F(G(x))-x\\|_1$ plus the backward round-trip error $\\|G(F(y))-y\\|_1$, both in $L_1$ (summed absolute differences).</p>
+       $$ \\mathcal{L}(G,F,D_X,D_Y) = \\mathcal{L}_{\\text{GAN}}(G,D_Y,X,Y) + \\mathcal{L}_{\\text{GAN}}(F,D_X,Y,X) + \\lambda\\,\\mathcal{L}_{\\text{cyc}}(G,F) $$
+       <p>Eq. 3 (&sect;3.3) &mdash; the <b>full objective</b>: both adversarial losses plus the cycle loss weighted by $\\lambda$ (the paper uses $\\lambda = 10$).</p>
+       $$ G^{*},F^{*} = \\arg\\min_{G,F}\\ \\max_{D_X,D_Y}\\ \\mathcal{L}(G,F,D_X,D_Y) $$
+       <p>Eq. 4 (&sect;3.3) &mdash; the <b>optimization</b>: a minimax game. Minimize over the two generators, maximize over the two discriminators.</p>
+       $$ \\mathcal{L}_{\\text{identity}}(G,F) = \\mathbb{E}_{y\\sim p_{\\text{data}}(y)}\\big[\\|G(y)-y\\|_1\\big] + \\mathbb{E}_{x\\sim p_{\\text{data}}(x)}\\big[\\|F(x)-x\\|_1\\big] $$
+       <p><b>Optional identity loss</b> (&sect;5.2) &mdash; when an input is <i>already</i> in the target domain, the generator should leave it unchanged: $G(y)\\approx y$ and $F(x)\\approx x$. Added with weight $0.5\\lambda$ to help preserve color/composition (e.g. photo&rarr;painting). Not part of the core objective.</p>
+       <p><b>Least-squares variant used in practice</b> (&sect;4): for stability they replace the $\\log$ adversarial loss with a least-squares (LSGAN) form &mdash; $G$ minimizes $\\mathbb{E}_x\\big[(D_Y(G(x))-1)^2\\big]$, and $D_Y$ minimizes $\\mathbb{E}_y\\big[(D_Y(y)-1)^2\\big] + \\mathbb{E}_x\\big[D_Y(G(x))^2\\big]$.</p>`,
     whatItDoes:
       `<p>Read each half. The first term, $\\mathbb{E}_{x}[\\|F(G(x))-x\\|_1]$, is the average <b>forward
        round-trip error</b>: send $x$ through $G$ then back through $F$, and measure how far the result is from

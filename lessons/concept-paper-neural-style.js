@@ -149,6 +149,31 @@
        together: the photo's <i>arrangement</i> survives while the painting's <i>texture</i> is painted onto it.</p>
        <p><b>Why "average pooling".</b> They replace VGG's max-pooling with <b>average</b> pooling because it gives
        smoother gradients to the image and slightly nicer results &mdash; a small but quoted detail.</p>`,
+    architecture:
+      `<p>There is <b>no new network</b> &mdash; the method reuses a frozen, pretrained <b>VGG-19</b> as a fixed
+       feature extractor and puts the optimization on the <i>image</i>. The pieces:</p>
+       <ul>
+        <li><b>Backbone: VGG-19 feature stack.</b> The paper uses the <b>16 convolutional</b> and <b>5 pooling</b>
+        layers of the 19-layer VGG network (the <b>fully-connected layers are dropped</b> &mdash; only the
+        convolutional feature extractor is used). All weights are <b>frozen</b>; the net is never trained here.</li>
+        <li><b>Pooling swap.</b> Each <b>max-pooling</b> layer is replaced by <b>average pooling</b>, which the
+        authors report gives smoother image gradients and slightly more pleasing results.</li>
+        <li><b>Layer responses.</b> Pass an image in; at conv layer $l$ you read a feature stack $F^l$ of shape
+        $N_l\\times M_l$ &mdash; $N_l$ channels (filters), each flattened over $M_l=H\\cdot W$ spatial positions.</li>
+        <li><b>Content tap: one deep layer.</b> Content is read at <code>conv4_2</code>; the content loss (Eq. 1)
+        is an MSE between the generated image's $F^l$ and the photo's $P^l$ at this single layer.</li>
+        <li><b>Style taps: five layers.</b> Style is read at <code>conv1_1, conv2_1, conv3_1, conv4_1, conv5_1</code>.
+        At each, the Gram matrix $G^l$ (Eq. 3, shape $N_l\\times N_l$) is the style descriptor; the per-layer error
+        $E_l$ (Eq. 4) is summed with weights $w_l=1/5$ (Eq. 5). Spanning shallow-to-deep layers captures style at
+        multiple scales.</li>
+        <li><b>Input normalization.</b> Images are ImageNet-normalized (the channel statistics the pretrained VGG
+        expects) before entering the stack.</li>
+        <li><b>The variable &amp; the solver.</b> The <b>output image $\\vec{x}$ is the only learnable tensor</b>
+        (a leaf with gradients enabled), initialized from the content photo or white noise. Gradients of
+        $\\mathcal{L}_{total}$ (Eq. 7) flow through the frozen CNN back to the <b>pixels</b>, and an optimizer
+        (the paper uses <b>L-BFGS</b>) descends them. The data flow each step:
+        <i>pixels &rarr; VGG features &rarr; content + Gram losses &rarr; backprop to pixels &rarr; pixel update</i>.</li>
+       </ul>`,
     symbols: [
       { sym: "$\\vec{p}$", desc: "the <b>content image</b> (the photo whose layout/objects we want to keep)." },
       { sym: "$\\vec{a}$", desc: "the <b>style image</b> (the painting whose textures/colours we want to borrow)." },

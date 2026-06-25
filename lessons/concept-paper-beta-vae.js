@@ -149,6 +149,35 @@
        latent dimension and leave the rest unused. So the bottleneck pressure converts into pressure toward
        a <b>factor-aligned, disentangled</b> code &mdash; at the cost of some reconstruction sharpness,
        since you are spending fewer bits.</p>`,
+    architecture:
+      `<p><b>The model is an ordinary VAE; the only architectural change is the single scalar $\\beta$ in the
+       loss.</b> There are no new layers, no new networks &mdash; $\\beta$-VAE = VAE + one knob. The paper's
+       actual networks (Table 1) vary by dataset:</p>
+       <ul>
+        <li><b>Encoder</b> $q_\\phi(z\\mid x)=N(\\mu(x),\\sigma(x))$: maps an image to the <i>mean</i> and
+        <i>variance</i> of a Gaussian over the latent code. For the synthetic <b>2D shapes</b> dataset it is a
+        fully-connected net: input $4096$ (flattened $64\\times64$), two hidden layers of $1200$ units with
+        ReLU. For the image datasets (chairs, celebA, 3D faces) it is convolutional: four conv layers
+        ($32,32,64,64$ channels, $4\\times4$ kernels, stride $2$) then a $256$-unit FC layer, ReLU throughout.</li>
+        <li><b>Latent $z$</b>: a small vector. $10$ latents for 2D shapes (the metric uses $10$); $32$ latents
+        for chairs / celebA / 3D faces. The prior is the isotropic unit Gaussian $p(z)=N(0,I)$ &mdash;
+        factorised, which is what makes the KL pressure encourage independent axes.</li>
+        <li><b>Reparameterization</b>: sample $z=\\mu+\\sigma\\odot\\varepsilon$, $\\varepsilon\\sim N(0,I)$, so
+        gradients flow through the random draw (recapped from <b>mod-vae</b>).</li>
+        <li><b>Decoder</b> $p_\\theta(x\\mid z)$: mirrors the encoder (FC $1200,1200,1200,4096$ with Tanh for 2D
+        shapes; deconv reverse of the encoder for the image nets) and outputs the image likelihood &mdash;
+        <b>Bernoulli</b> (binary cross-entropy) for 2D shapes / chairs / 3D faces, <b>Gaussian</b> for celebA.</li>
+        <li><b>The $\\beta$ knob</b>: a single non-negative scalar multiplying the KL term in the loss (Eq. 4).
+        $\\beta=1$ recovers the VAE; the paper uses large values where the data demands it &mdash;
+        $\\beta=4$ for the 2D-shapes metric, and as high as $\\beta=250$ (celebA), $\\beta=20$ (3D faces),
+        $\\beta=5$ (chairs) for the qualitative traversals. Optimisers: Adagrad ($\\text{lr}=10^{-2}$) for 2D
+        shapes, Adam ($\\text{lr}=10^{-4}$) for the image datasets.</li>
+       </ul>
+       <p><b>Disentanglement-metric module (separate from the VAE):</b> a <i>low-capacity linear</i> classifier
+       (softmax output, negative-log-likelihood loss, Adagrad) trained on the averaged latent differences
+       $z^{b}_{\\text{diff}}$ to predict which generative factor was held fixed. Its accuracy is the score. It is
+       kept deliberately linear so it cannot disentangle on its own &mdash; any success must come from the
+       VAE's representation.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input image</b> we encode and try to rebuild." },
       { sym: "$z$", desc: "the <b>latent code</b>: a short hidden vector. We want each of its dimensions to capture one independent factor of the data." },
@@ -161,11 +190,21 @@
       { sym: "$\\epsilon$", desc: "the <b>information budget</b>: the small cap we place on the KL in the constrained problem. A smaller $\\epsilon$ (tighter budget) corresponds to a larger $\\beta$." },
       { sym: "$\\beta$", desc: "the <b>star of the paper</b>: the weight on the KL term, equal to the <b>Lagrange multiplier</b> of the budget constraint. $\\beta = 1$ is the ordinary VAE; $\\beta \\gt 1$ presses harder on the bottleneck to disentangle." },
       { sym: "$\\mathbb{E}_{q_\\phi}[\\cdot]$", desc: "the <b>expectation</b> (average) of the bracketed quantity over codes $z$ drawn from the encoder." },
+      { sym: "$p_\\theta(z)$", desc: "in Eq. 1, the <b>marginal over codes</b> the generative model defines; the objective maximizes the data likelihood $p_\\theta(x\\mid z)$ averaged over it." },
+      { sym: "$D$", desc: "the <b>dataset</b> $\\{X,V,W\\}$: images $X$, conditionally independent ground-truth factors $V$, and conditionally dependent factors $W$. $x\\sim D$ means sampling an image from it." },
+      { sym: "$v$ / $w$", desc: "the <b>ground-truth generative factors</b>: $v$ are the conditionally <i>independent</i> ones (e.g. scale, rotation, position) we want disentangled; $w$ are the conditionally dependent ones, allowed to stay entangled." },
+      { sym: "$y$", desc: "in the metric, the <b>index of the factor held fixed</b> across an image pair (sampled uniformly from the $K$ independent factors); the linear classifier tries to recover it." },
+      { sym: "$z_{1,l}, z_{2,l}$", desc: "the <b>latent means</b> $\\mu(x)$ inferred for the two images in pair $l$, which share factor $y$ but differ on all others." },
+      { sym: "$z^{l}_{\\text{diff}}$ / $z^{b}_{\\text{diff}}$", desc: "the <b>absolute latent difference</b> $\\lvert z_{1,l}-z_{2,l}\\rvert$ for one pair, and its <b>average over $L$ pairs</b> &mdash; the input to the disentanglement classifier (Eq. 5)." },
+      { sym: "$\\mu(x), \\sigma(x)$", desc: "the encoder's predicted <b>mean and standard deviation</b> of the Gaussian code for input $x$; the metric uses $z=\\mu(x)$." },
       { sym: "disentangled", desc: "<b>jargon:</b> a representation where each latent dimension responds to exactly one independent generative factor of the data (e.g. one axis = rotation only), so moving it changes that factor and nothing else." }
     ],
-    formula: `$$ \\max_{\\theta,\\phi}\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\quad\\text{subject to}\\quad D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)\\big) \\lt \\epsilon \\qquad\\text{(constrained problem, \\S3)} $$
-$$ \\mathcal{F}(\\theta,\\phi,\\beta;x) \\;=\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\;-\\; \\beta\\,\\big(D_{KL}(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)) - \\epsilon\\big) \\qquad\\text{(Lagrangian)} $$
-$$ \\boxed{\\;\\mathcal{L}(\\theta,\\phi;x,\\beta) \\;=\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\;-\\; \\beta\\, D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)\\big)\\;} \\qquad\\text{(\\beta-ELBO; \\beta{=}1 is the VAE)} $$`,
+    formula: `$$ \\max_{\\theta}\\; \\mathbb{E}_{p_\\theta(z)}\\!\\big[p_\\theta(x\\mid z)\\big] \\qquad\\text{(Eq. 1, \\S2): the generative goal &mdash; maximize the data likelihood under the latent model.} $$
+$$ \\max_{\\phi,\\theta}\\; \\mathbb{E}_{x\\sim D}\\Big[\\,\\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big]\\Big] \\quad\\text{subject to}\\quad D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)\\big) \\lt \\epsilon \\qquad\\text{(Eq. 2, \\S2): constrained optimization &mdash; maximize reconstruction with the KL kept under a budget }\\epsilon. $$
+$$ \\mathcal{F}(\\theta,\\phi,\\beta;x,z) \\;=\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\;-\\; \\beta\\,\\big(D_{KL}(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)) - \\epsilon\\big) \\qquad\\text{(Eq. 3, \\S2): the KKT Lagrangian; }\\beta\\text{ is the multiplier on the budget constraint.} $$
+$$ \\boxed{\\;\\mathcal{F}(\\theta,\\phi,\\beta;x,z) \\;\\ge\\; \\mathcal{L}(\\theta,\\phi;x,z,\\beta) \\;=\\; \\mathbb{E}_{q_\\phi(z\\mid x)}\\!\\big[\\log p_\\theta(x\\mid z)\\big] \\;-\\; \\beta\\, D_{KL}\\!\\big(q_\\phi(z\\mid x)\\,\\Vert\\,p(z)\\big)\\;} \\qquad\\text{(Eq. 4, \\S2): the }\\beta\\text{-VAE objective; }\\beta{=}1\\text{ is the ordinary VAE, }\\beta\\gt 1\\text{ trades reconstruction for disentanglement.} $$
+$$ z^{l}_{\\text{diff}} = \\lvert z_{1,l} - z_{2,l}\\rvert,\\qquad z^{b}_{\\text{diff}} = \\frac{1}{L}\\sum_{l=1}^{L} z^{l}_{\\text{diff}},\\qquad \\text{score} = \\operatorname{acc}\\big(\\,p(y\\mid z^{b}_{\\text{diff}})\\,\\big) \\qquad\\text{(Eq. 5, \\S3 / App. A.4): the disentanglement metric.} $$
+<p>The metric (Eq. 5): pick a factor $y$ to hold fixed; generate image pairs $(x_{1,l},x_{2,l})$ that share factor $y$ but differ on all others; encode each to its latent mean $z=\\mu(x)$; take the absolute latent difference $z^{l}_{\\text{diff}}=\\lvert z_{1,l}-z_{2,l}\\rvert$; average over $L$ pairs to get $z^{b}_{\\text{diff}}$; train a low-capacity <b>linear</b> classifier (softmax, negative-log-likelihood loss) to predict which factor $y$ was held fixed. Its accuracy is the disentanglement score. If the code is disentangled, the latent for the fixed factor barely varies, so $\\big[z^{b}_{\\text{diff}}\\big]_y$ is small and the classifier's job is easy.</p>`,
     whatItDoes:
       `<p>The boxed equation is the whole method. It is the VAE's ELBO with <b>one weight $\\beta$</b> on the
        KL term:</p>
