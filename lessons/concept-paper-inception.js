@@ -131,6 +131,37 @@
        &rarr; $3\\times3$, branch 3 becomes $1\\times1$ (shrink) &rarr; $5\\times5$, and the pool branch gets a
        $1\\times1$ projection after it. The expensive spatial convolution now runs on far fewer input channels.
        (The $1\\times1$ idea comes from Lin et al.'s "Network in Network".)</p>`,
+    architecture:
+      `<p><b>The Inception module (the repeated block).</b> Four parallel branches read the same input $x$,
+       each kept at the input's $H\\times W$ by same-padding, then concatenated on the channel axis:</p>
+       <ul>
+        <li><b>Branch a:</b> $1\\times1$ conv $\\to c_1$ channels.</li>
+        <li><b>Branch b:</b> $1\\times1$ reduce $(C_{in}\\to c_{3r})$, ReLU, $\\to 3\\times3$ conv $(c_{3r}\\to c_3)$, pad 1.</li>
+        <li><b>Branch c:</b> $1\\times1$ reduce $(C_{in}\\to c_{5r})$, ReLU, $\\to 5\\times5$ conv $(c_{5r}\\to c_5)$, pad 2.</li>
+        <li><b>Branch d:</b> $3\\times3$ max-pool (stride 1, pad 1) $\\to 1\\times1$ pool-proj $(C_{in}\\to p)$.</li>
+       </ul>
+       <p>Output channels $= c_1 + c_3 + c_5 + p$. The Table-1 columns are exactly these six numbers per module:
+       <code>#1×1, #3×3 reduce, #3×3, #5×5 reduce, #5×5, pool proj</code>.</p>
+       <p><b>The 22-layer GoogLeNet (Table 1).</b> Input $224\\times224\\times3$ RGB (mean-subtracted). A plain
+       convolutional stem first, then 9 Inception modules interleaved with stride-2 max-pools, then a global head.
+       "22 layers deep when counting only layers with parameters (or 27 layers if we also count pooling)"; ~100
+       total independent building blocks. Stage by stage (output size · params · ops):</p>
+       <ul>
+        <li><b>conv $7\\times7$/2</b> &rarr; $112\\times112\\times64$ (2.7K, 34M); <b>max-pool $3\\times3$/2</b> &rarr; $56\\times56\\times64$.</li>
+        <li><b>conv $3\\times3$/1</b> (with a $1\\times1$ reduce) &rarr; $56\\times56\\times192$ (112K, 360M); <b>max-pool $3\\times3$/2</b> &rarr; $28\\times28\\times192$.</li>
+        <li><b>(3a)</b> &rarr; $28\\times28\\times256$ [64, (96)128, (16)32, 32] (159K, 128M); <b>(3b)</b> &rarr; $28\\times28\\times480$ [128, (128)192, (32)96, 64] (380K, 304M); <b>max-pool /2</b> &rarr; $14\\times14$.</li>
+        <li><b>(4a)</b> &rarr; $14\\times14\\times512$ [192, (96)208, (16)48, 64]; <b>(4b)</b>, <b>(4c)</b> &rarr; $512$; <b>(4d)</b> &rarr; $14\\times14\\times528$; <b>(4e)</b> &rarr; $14\\times14\\times832$ [256, (160)320, (32)128, 128] (840K, 170M); <b>max-pool /2</b> &rarr; $7\\times7$.</li>
+        <li><b>(5a)</b> &rarr; $7\\times7\\times832$; <b>(5b)</b> &rarr; $7\\times7\\times1024$ [384, (192)384, (48)128, 128] (1388K, 71M).</li>
+       </ul>
+       <p><b>Global average pooling head.</b> Instead of a large fully-connected stack, a $7\\times7$ <b>average pool</b>
+       collapses each of the 1024 channels to one number ($1\\times1\\times1024$); "a move from fully connected layers
+       to average pooling improved the top-1 accuracy by about 0.6%." A dropout, one linear layer, and softmax give
+       the 1000 class scores. Whole net: ~5M parameters &mdash; "12&times; fewer parameters than" AlexNet &mdash;
+       under a ~1.5 billion multiply-add inference budget.</p>
+       <p><b>Two auxiliary classifiers (training only).</b> Identical side-heads attach to the outputs of modules
+       <b>(4a)</b> and <b>(4d)</b>: average pool $5\\times5$/3 &rarr; $1\\times1$ conv (128 filters) &rarr; FC 1024 + ReLU
+       &rarr; dropout 70% &rarr; linear + softmax. Their losses are added with weight $0.3$ to fight vanishing
+       gradients in the deep net; "at inference time, these auxiliary networks are discarded."</p>`,
     symbols: [
       { sym: "$C_{in}$", desc: "the <b>number of input channels</b> (feature maps) entering the module &mdash; e.g. $192$ for GoogLeNet module (3a)." },
       { sym: "$C_{out}$", desc: "the <b>number of output channels</b> a branch produces (its number of filters)." },
@@ -139,10 +170,24 @@
       { sym: "$1\\times1$ convolution", desc: "a convolution with a $1\\times1$ kernel: it does <b>no spatial mixing</b>, only a learned linear combination across channels at each pixel. Used here as a cheap <b>channel reducer</b> (bottleneck)." },
       { sym: "“reduce” / “bottleneck”", desc: "plain terms: the $1\\times1$ layer that <b>shrinks</b> $C_{in}$ to a small number before an expensive $3\\times3$ or $5\\times5$ runs. '#3×3 reduce' and '#5×5 reduce' in Table 1 are these channel counts." },
       { sym: "“pool-proj”", desc: "the $1\\times1$ <b>projection</b> placed after the pooling branch to cut its channel count before concatenation." },
-      { sym: "concatenation ($\\oplus$)", desc: "stacking the four branch outputs along the <b>channel axis</b> (<code>dim=1</code> in PyTorch's $N,C,H,W$ tensors). Total output channels $=$ sum of the four branch channel counts." },
+      { sym: "concatenation ($\\Vert$, $\\oplus$)", desc: "stacking the four branch outputs along the <b>channel axis</b> (<code>dim=1</code> in PyTorch's $N,C,H,W$ tensors). Total output channels $=$ sum of the four branch channel counts." },
+      { sym: "$C_{1\\times1}, C_{3\\times3}, C_{5\\times5}, P_{3\\times3}$", desc: "the four <b>branch operators</b> of the module: the $1\\times1$, $3\\times3$, $5\\times5$ convolution branches and the $3\\times3$ max-pool branch, each applied to the same input $x$." },
+      { sym: "$c_1, c_3, c_5, p$", desc: "the <b>output channel counts</b> of the four branches (the <code>#1×1</code>, <code>#3×3</code>, <code>#5×5</code>, <code>pool proj</code> columns of Table 1). The concatenated module emits $c_1+c_3+c_5+p$ channels." },
+      { sym: "$c_{3r}, c_{5r}$", desc: "the <b>reduce widths</b>: the small channel counts the $1\\times1$ shrinks to before the $3\\times3$ / $5\\times5$ (the <code>#3×3 reduce</code> / <code>#5×5 reduce</code> columns). For module (3a): $c_{3r}{=}96$, $c_{5r}{=}16$." },
+      { sym: "$r$", desc: "a generic <b>reduce width</b> in the cost formula &mdash; the number of channels the $1\\times1$ bottleneck leaves before the expensive $k\\times k$ conv ($r \\ll C_{in}$)." },
+      { sym: "$\\mathcal{L}, \\mathcal{L}_{\\text{main}}, \\mathcal{L}_{\\text{aux}}$", desc: "the <b>training losses</b>: the main softmax loss plus the two auxiliary-classifier softmax losses, combined as $\\mathcal{L}_{\\text{main}} + 0.3\\,\\mathcal{L}_{\\text{aux1}} + 0.3\\,\\mathcal{L}_{\\text{aux2}}$. The aux heads are dropped at inference." },
       { sym: "FLOP / MAC", desc: "a <b>floating-point operation</b>; here we count <b>multiply-accumulates</b> (MACs) &mdash; one multiply plus one add per filter weight per output pixel. The cost metric the bottleneck slashes." }
     ],
-    formula: `$$ \\text{cost}(k\\text{-conv}) \\;=\\; \\underbrace{H\\cdot W}_{\\text{output pixels}} \\cdot \\underbrace{k^2\\, C_{in}\\, C_{out}}_{\\text{MACs per pixel}} \\qquad\\text{(standard conv cost; } \\S 4 \\text{ counts these)} $$`,
+    formula: `$$ y \\;=\\; \\big[\\, C_{1\\times1}(x)\\,\\big\\Vert\\, C_{3\\times3}(x)\\,\\big\\Vert\\, C_{5\\times5}(x)\\,\\big\\Vert\\, P_{3\\times3}(x)\\,\\big] \\qquad\\text{(\\S4: the naive Inception module &mdash; four parallel branches concatenated on the channel axis)} $$
+       <p>The next stage's input is "all those layers with their output filter banks concatenated into a single output vector." All four read the same $x$; same-padding keeps $H\\times W$ fixed so they stack. Output channels $= c_{1} + c_{3} + c_{5} + p$.</p>
+       $$ \\text{cost}(k\\text{-conv}) \\;=\\; \\underbrace{H\\cdot W}_{\\text{output pixels}} \\cdot \\underbrace{k^2\\, C_{in}\\, C_{out}}_{\\text{MACs per pixel}} \\qquad\\text{(\\S4: standard convolution cost; weights} = k^2 C_{in} C_{out}) $$
+       <p>Cost is linear in $C_{in}$ and $C_{out}$, quadratic in kernel size $k$. The motivation (\\S3): "if two convolutional layers are chained, any uniform increase in the number of their filters results in a <b>quadratic</b> increase of computation" &mdash; so naively widening every layer is unaffordable.</p>
+       $$ \\text{cost}_{\\text{naive}}\\;=\\; H W\\, k^2\\, C_{in}\\, C_{out} \\qquad\\text{vs.}\\qquad \\text{cost}_{\\text{bottleneck}}\\;=\\; \\underbrace{H W\\cdot 1^2\\, C_{in}\\, r}_{1\\times1\\text{ reduce}} \\;+\\; \\underbrace{H W\\, k^2\\, r\\, C_{out}}_{k\\times k\\text{ on } r\\text{ channels}} $$
+       <p>(\\S4) The $1\\times1$ "reduce" shrinks $C_{in}\\to r$ <i>before</i> the expensive $k\\times k$ runs: "$1\\times1$ convolutions are used to compute reductions before the expensive $3\\times3$ and $5\\times5$ convolutions." With $r \\ll C_{in}$ the second term collapses.</p>
+       $$ \\frac{\\text{cost}_{\\text{naive}}}{\\text{cost}_{\\text{bottleneck}}} \\;=\\; \\frac{k^2\\, C_{in}\\, C_{out}}{C_{in}\\, r \\,+\\, k^2\\, r\\, C_{out}} \\;=\\; \\frac{k^2\\, C_{in}\\, C_{out}}{r\\,(C_{in} + k^2 C_{out})} \\qquad\\text{(savings ratio; the } H W \\text{ cancels)} $$
+       <p>The saving grows with $k^2$ (bigger kernels) and with how aggressively $r$ undercuts $C_{in}$ &mdash; which is why the $5\\times5$ branch ($k^2{=}25$, $192\\to16$) gains far more than the $3\\times3$ branch.</p>
+       $$ \\mathcal{L} \\;=\\; \\mathcal{L}_{\\text{main}} \\;+\\; 0.3\\,\\mathcal{L}_{\\text{aux1}} \\;+\\; 0.3\\,\\mathcal{L}_{\\text{aux2}} \\qquad\\text{(\\S5: training loss with two auxiliary classifiers, each weighted } 0.3) $$
+       <p>The two auxiliary softmax heads (at modules 4a, 4d) inject gradient mid-network during training; "the losses of the auxiliary classifiers were weighted by 0.3" and "at inference time, these auxiliary networks are discarded."</p>`,
     whatItDoes:
       `<p>This is the <b>multiply-accumulate (MAC) count</b> of one convolution: for every one of the $H\\cdot W$
        output pixels, the layer does $k^2\\,C_{in}\\,C_{out}$ multiply-adds (each of the $C_{out}$ filters slides a

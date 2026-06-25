@@ -148,6 +148,59 @@
        <p>Stacking all of this gives the <b>ConvNeXt block</b> (Figure 4): <code>x &rarr; depthwise 7&times;7 conv
        &rarr; LayerNorm &rarr; 1&times;1 conv to 4&times;dim &rarr; GELU &rarr; 1&times;1 conv back to dim &rarr;
        (+ x)</code>. That last block is what you implement.</p>`,
+    architecture:
+      `<p><b>Be honest about the contribution.</b> ConvNeXt introduces <i>no new equation</i>. Its contribution is
+       an <b>empirical modernization roadmap</b>: a controlled, one-change-at-a-time ablation that walks a plain
+       ResNet-50 to a transformer-grade design using only known ConvNet ingredients. The architecture <i>is</i> the
+       roadmap, so we lay it out as the paper's own sequence of steps, each with the ImageNet-1K top-1 accuracy it
+       lands at (&sect;2, Figure 2; the paper's numbers). The reference target is Swin-T at $81.3\\%$.</p>
+       <p><b>The roadmap (each row = one design change, then re-measure):</b></p>
+       <ul class="steps">
+        <li><b>Start &mdash; ResNet-50, modern recipe (&sect;2.1): $\\mathbf{78.8\\%}$.</b> No architecture change yet;
+        just AdamW, ~300 epochs, Mixup/CutMix/RandAugment, stochastic depth, label smoothing. The original ResNet-50
+        was $76.1\\%$, so the recipe alone is <b>$+2.7\\%$</b>.</li>
+        <li><b>1. Stage compute ratio $(3,4,6,3)\\to(3,3,9,3)$ (&sect;2.2): $79.4\\%$ ($+0.6$).</b> Re-balance blocks
+        per stage to Swin's $1{:}1{:}3{:}1$ split.</li>
+        <li><b>2. Patchify stem (&sect;2.2): $79.5\\%$ ($+0.1$).</b> Replace the $7\\times7$ stride-2 conv + maxpool
+        with a single $4\\times4$ stride-4 conv (non-overlapping patches, like ViT).</li>
+        <li><b>3a. ResNeXt-ify &mdash; depthwise conv (&sect;2.3): $78.3\\%$ ($-1.2$).</b> Switching to depthwise conv
+        <i>alone</i> first <i>drops</i> accuracy (it cuts capacity)&hellip;</li>
+        <li><b>3b. &hellip;then widen $64\\to96$ base channels (&sect;2.3): $80.5\\%$ ($+2.2$).</b> Spending the FLOPs
+        the depthwise conv freed on width more than recovers the dip. (Net of 3a+3b: $+2.0$ over step 2.)</li>
+        <li><b>4. Inverted bottleneck (&sect;2.4): $80.6\\%$ ($+0.1$).</b> Make the block narrow&rarr;wide&rarr;narrow
+        ($4\\times$ expansion in the middle), the transformer-MLP shape.</li>
+        <li><b>5a. Move depthwise conv up (&sect;2.5): $79.9\\%$ ($-0.7$).</b> Put the spatial conv at the top of the
+        block so the $1\\times1$ convs run at the narrow width &mdash; a temporary dip that pays off next&hellip;</li>
+        <li><b>5b. Large $7\\times7$ kernel (&sect;2.5): $80.6\\%$ ($+0.7$).</b> Enlarge the depthwise filter
+        $3\\times3\\to7\\times7$ to imitate global mixing; $7\\times7$ is the sweet spot (bigger saturates).</li>
+        <li><b>6a. ReLU $\\to$ GELU (&sect;2.6): $80.6\\%$ ($\\pm0$).</b> Smoother activation; no harm, sets up&hellip;</li>
+        <li><b>6b. Fewer activations (&sect;2.6): $81.3\\%$ ($+0.7$).</b> Keep <i>one</i> GELU per block (in the MLP),
+        not one after every conv &mdash; the single biggest micro-design win, matching Swin-T here.</li>
+        <li><b>6c. Fewer normalization layers (&sect;2.6): $81.4\\%$ ($+0.1$).</b> One norm per block, not three.</li>
+        <li><b>6d. BatchNorm $\\to$ LayerNorm (&sect;2.6): $81.5\\%$ ($+0.1$).</b> Normalize per-token, like transformers.</li>
+        <li><b>6e. Separate downsampling layers (&sect;2.6): $\\mathbf{82.0\\%}$ ($+0.5$).</b> Between stages, a
+        LayerNorm + $2\\times2$ stride-2 conv instead of downsampling inside a residual block. <b>This is ConvNeXt-T</b>,
+        now past Swin-T's $81.3\\%$.</li>
+       </ul>
+       <p><b>The resulting ConvNeXt block (Figure 4), in data-flow order:</b><br>
+       <code>x &rarr; DWConv 7&times;7 (groups=C) &rarr; LayerNorm &rarr; 1&times;1 conv C&rarr;4C &rarr; GELU &rarr;
+       1&times;1 conv 4C&rarr;C &rarr; + x</code>. Exactly one norm and one activation; spatial mixing (depthwise)
+       and channel mixing (the $1\\times1$ MLP) are separated, mirroring a transformer's attention-then-MLP split.
+       The official code adds a learnable per-channel <b>Layer Scale</b> ($\\gamma$, init $10^{-6}$) and stochastic
+       depth on the residual branch (&sect;3.1).</p>
+       <p><b>Full-network shape.</b> A patchify stem, then <b>four stages</b> of stacked ConvNeXt blocks at widths
+       $C_1,C_2,C_3,C_4$, with a downsampling layer (LN + $2\\times2$ stride-2 conv) between stages; finally global
+       average pool &rarr; LayerNorm &rarr; linear head. The variants differ only in per-stage <b>width $C$</b> and
+       <b>depth $B$</b> (blocks per stage):</p>
+       <ul>
+        <li><b>ConvNeXt-T:</b> $C=(96,192,384,768)$, $B=(3,3,9,3)$ &mdash; ~$29$M params, ~$4.5$ GFLOPs (Swin-T scale).</li>
+        <li><b>ConvNeXt-S:</b> $C=(96,192,384,768)$, $B=(3,3,27,3)$ &mdash; deeper stage 3.</li>
+        <li><b>ConvNeXt-B:</b> $C=(128,256,512,1024)$, $B=(3,3,27,3)$ (Swin-B scale).</li>
+        <li><b>ConvNeXt-L:</b> $C=(192,384,768,1536)$, $B=(3,3,27,3)$.</li>
+        <li><b>ConvNeXt-XL:</b> $C=(256,512,1024,2048)$, $B=(3,3,27,3)$ (used for the $87.8\\%$ ImageNet-22K result).</li>
+       </ul>
+       <p>The toy network you build is this shape shrunk to one stage at width $C=32$ with a few blocks &mdash; the
+       block is faithful; only the depth, width, and stage count are toy-sized.</p>`,
     symbols: [
       { sym: "$C$ (or $\\text{dim}$)", desc: "the <b>channel width</b> of a stage: how many feature maps flow through the block. ConvNeXt-T uses $96,192,384,768$ across its four stages." },
       { sym: "$7\\times7$", desc: "the <b>kernel size</b> of the depthwise conv: each filter looks at a $7\\times7$ window of pixels. Large, to imitate a transformer's global mixing (&sect;2.5)." },
@@ -155,16 +208,30 @@
       { sym: "$1\\times1$ conv", desc: "a <b>convolution with a $1\\times1$ window</b>: it mixes <i>channels</i> at each pixel but not space. Mathematically a per-pixel <code>nn.Linear</code> on the channel vector." },
       { sym: "inverted bottleneck", desc: "a block whose <b>middle is wider than its ends</b>: narrow&rarr;wide&rarr;narrow. The $1\\times1$ convs expand to $4\\times$ then contract &mdash; the transformer MLP's shape (&sect;2.4)." },
       { sym: "$r=4$", desc: "the <b>expansion ratio</b>: the hidden width in the middle is $4\\times$ the block's channel width (the value the ablation changes to $1$)." },
-      { sym: "GELU", desc: "<b>Gaussian Error Linear Unit</b>: a smooth activation, $\\text{GELU}(x)=x\\,\\Phi(x)$ where $\\Phi$ is the standard-normal CDF. A smoother stand-in for ReLU, standard in transformers (&sect;2.6)." },
+      { sym: "GELU", desc: "<b>Gaussian Error Linear Unit</b>: a smooth activation, $\\text{GELU}(z)=z\\,\\Phi(z)$ where $\\Phi$ is the standard-normal CDF. A smoother stand-in for ReLU, standard in transformers (&sect;2.6)." },
+      { sym: "$\\Phi$, $\\operatorname{erf}$", desc: "<b>standard-normal CDF</b> $\\Phi(z)=\\tfrac12(1+\\operatorname{erf}(z/\\sqrt2))$; $\\operatorname{erf}$ is the error function. Together they define GELU's smooth gate." },
+      { sym: "$\\gamma$ (Layer Scale)", desc: "a <b>learnable per-channel multiplier</b> on the block's residual branch (init $10^{-6}$, &sect;3.1), applied elementwise via $\\odot$ before the residual add." },
+      { sym: "$\\odot$", desc: "<b>elementwise (per-channel) product</b> &mdash; how the Layer-Scale gain $\\gamma$ multiplies the residual branch." },
       { sym: "LN (LayerNorm)", desc: "<b>Layer Normalization</b>: re-center and re-scale each <i>position's channel vector</i> (per-token), unlike BatchNorm which normalizes across the batch. ConvNeXt uses LN, copying transformers (&sect;2.6)." },
       { sym: "BN (BatchNorm)", desc: "<b>Batch Normalization</b>: normalizes each channel using statistics across the <i>batch</i>. The classic ConvNet norm that ConvNeXt replaces with LayerNorm." },
       { sym: "patchify stem", desc: "the first layer: a <b>$4\\times4$ stride-$4$ conv</b> that cuts the image into non-overlapping $4\\times4$ patches, mirroring ViT's patch embedding (&sect;2.2)." },
       { sym: "stage ratio $(3,3,9,3)$", desc: "the <b>number of blocks in each of the four stages</b>, re-balanced from ResNet's $(3,4,6,3)$ to match Swin's $1{:}1{:}3{:}1$ compute split (&sect;2.2)." },
-      { sym: "Layer Scale", desc: "a small <b>learnable per-channel multiplier</b> (initialized to $10^{-6}$) on the block's residual branch, borrowed from transformer training to stabilize deep nets (&sect;3.1)." },
       { sym: "stochastic depth", desc: "a <b>regularizer that randomly drops whole residual branches</b> during training (rate $0.1$ for ConvNeXt-T), so the network trains as an ensemble of shallower paths (&sect;3.1)." }
     ],
-    formula: `$$ \\text{ConvNeXtBlock}(x) \\;=\\; x \\;+\\; W_2\\,\\big(\\,\\text{GELU}\\big(\\,W_1\\,\\,\\text{LN}\\big(\\,\\text{DWConv}_{7\\times7}(x)\\,\\big)\\,\\big)\\,\\big) \\qquad\\text{(\\S 2.6, Figure 4)} $$
-$$ \\text{DWConv}_{7\\times7}:\\ C\\to C\\ \\text{(depthwise)}, \\qquad W_1:\\ C\\to rC, \\qquad W_2:\\ rC\\to C, \\qquad r=4 $$`,
+    formula: `<p><b>This paper is design-driven, not equation-driven.</b> It introduces <i>no new mathematical
+       formulation</i>; its contribution is an empirical roadmap (see <b>architecture</b>). The little formal math
+       there is is the definition of the ConvNeXt block, transcribed below.</p>
+$$ \\text{ConvNeXtBlock}(x) \\;=\\; x \\;+\\; \\gamma \\odot W_2\\,\\big(\\,\\text{GELU}\\big(\\,W_1\\,\\,\\text{LN}\\big(\\,\\text{DWConv}_{7\\times7}(x)\\,\\big)\\,\\big)\\,\\big) \\qquad\\text{(\\S 2.6 / \\S 3.1, Figure 4)} $$
+<p>The block: depthwise spatial mixing, one LayerNorm, an inverted-bottleneck MLP, and a residual add (the
+   $\\gamma$ Layer-Scale multiplier is &sect;3.1's optional per-channel gain).</p>
+$$ \\text{DWConv}_{7\\times7}:\\ C\\to C\\ \\text{(depthwise, one filter per channel)}, \\qquad W_1:\\ C\\to rC, \\qquad W_2:\\ rC\\to C, \\qquad r=4 $$
+<p>Channel bookkeeping inside the block: the depthwise conv keeps width $C$; $W_1$ expands to $rC=4C$; $W_2$
+   projects back to $C$ (&sect;2.4).</p>
+$$ \\text{GELU}(z) \\;=\\; z\\,\\Phi(z), \\qquad \\Phi(z)=\\tfrac{1}{2}\\Big(1+\\operatorname{erf}\\!\\big(z/\\sqrt{2}\\big)\\Big) $$
+<p>The activation that replaces ReLU (&sect;2.6): $\\Phi$ is the standard-normal CDF, so GELU is a smooth gate.</p>
+$$ \\text{Downsample (between stages)}:\\ \\ \\text{LN} \\;\\to\\; \\text{Conv}_{2\\times2,\\ \\text{stride }2} \\qquad\\text{(\\S 2.6)} $$
+<p>The separate downsampling layer that halves spatial size and changes width between the four stages (the final
+   $+0.5\\%$ step), instead of downsampling inside a residual block.</p>`,
     whatItDoes:
       `<p>The block transforms its input $x$ (a feature map with $C$ channels) and adds the result back to $x$ &mdash;
        the <b>residual connection</b>, inherited from ResNet. Reading the inner expression from the inside out:</p>

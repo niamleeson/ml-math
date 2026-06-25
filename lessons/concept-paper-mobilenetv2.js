@@ -135,6 +135,47 @@
        space (the wide middle, where the expand+depthwise ReLU6s live). So the rule is: <b>non-linearities on the
        wide layers, linear on the thin bottleneck.</b> The paper states that adding a non-linearity in the
        bottleneck "indeed hurts the performance by several percent" (&sect;3.2, &sect;3.3 / Fig.&nbsp;6a).</p>`,
+    architecture:
+      `<p><b>One block (Table&nbsp;1).</b> The inverted-residual bottleneck takes a thin $h\\times w\\times d'$ tensor
+       and runs three layers, each $\\to$ BatchNorm:</p>
+       <ul>
+        <li><b>Expand</b> &mdash; $1\\times1$ conv, $d' \\to t\\,d'$ channels, then ReLU6. Output $h\\times w\\times t d'$.</li>
+        <li><b>Depthwise</b> &mdash; $3\\times3$ depthwise conv (groups $= t d'$), stride $s$, then ReLU6. Output
+        $\\tfrac{h}{s}\\times\\tfrac{w}{s}\\times t d'$. Stride $s\\!=\\!2$ halves the spatial size.</li>
+        <li><b>Project (linear)</b> &mdash; $1\\times1$ conv, $t d' \\to d''$ channels, <b>no activation</b>. Output
+        $\\tfrac{h}{s}\\times\\tfrac{w}{s}\\times d''$.</li>
+        <li><b>Skip</b> &mdash; if $s\\!=\\!1$ and $d'\\!=\\!d''$, add the input back (thin-to-thin).</li>
+       </ul>
+       <p><b>Inverted vs classic residual.</b> A classic ResNet bottleneck goes <i>wide&nbsp;&rarr;&nbsp;narrow&nbsp;&rarr;&nbsp;wide</i>
+       and skips between the <b>wide</b> ends, so the thick tensors must be kept in memory across the skip. The
+       inverted block goes <i>narrow&nbsp;&rarr;&nbsp;wide&nbsp;&rarr;&nbsp;narrow</i> and skips between the <b>thin</b> ends:
+       the wide tensor exists only briefly inside the block and never crosses a skip, so the data living between
+       blocks (and on the residual path) is always thin &mdash; the source of V2's memory and compute savings
+       (&sect;3.2, &sect;5).</p>
+       <p><b>The full network (Table&nbsp;2).</b> A $224^2\\times3$ image flows through a stride-2 stem conv, then seven
+       groups of bottleneck blocks (the row's first block uses the listed stride $s$, the rest stride&nbsp;1; $t$ is
+       the per-group expansion, $c$ the output channels, $n$ the repeat count), then a $1\\times1$ conv to 1280
+       channels, global average pool, and a linear classifier:</p>
+       <table class="archtable">
+        <thead><tr><th>Input</th><th>Operator</th><th>$t$</th><th>$c$</th><th>$n$</th><th>$s$</th></tr></thead>
+        <tbody>
+         <tr><td>$224^2\\times3$</td><td>conv2d $3\\times3$</td><td>&ndash;</td><td>32</td><td>1</td><td>2</td></tr>
+         <tr><td>$112^2\\times32$</td><td>bottleneck</td><td>1</td><td>16</td><td>1</td><td>1</td></tr>
+         <tr><td>$112^2\\times16$</td><td>bottleneck</td><td>6</td><td>24</td><td>2</td><td>2</td></tr>
+         <tr><td>$56^2\\times24$</td><td>bottleneck</td><td>6</td><td>32</td><td>3</td><td>2</td></tr>
+         <tr><td>$28^2\\times32$</td><td>bottleneck</td><td>6</td><td>64</td><td>4</td><td>2</td></tr>
+         <tr><td>$14^2\\times64$</td><td>bottleneck</td><td>6</td><td>96</td><td>3</td><td>1</td></tr>
+         <tr><td>$14^2\\times96$</td><td>bottleneck</td><td>6</td><td>160</td><td>3</td><td>2</td></tr>
+         <tr><td>$7^2\\times160$</td><td>bottleneck</td><td>6</td><td>320</td><td>1</td><td>1</td></tr>
+         <tr><td>$7^2\\times320$</td><td>conv2d $1\\times1$</td><td>&ndash;</td><td>1280</td><td>1</td><td>1</td></tr>
+         <tr><td>$7^2\\times1280$</td><td>avgpool $7\\times7$</td><td>&ndash;</td><td>&ndash;</td><td>1</td><td>&ndash;</td></tr>
+         <tr><td>$1\\times1\\times1280$</td><td>conv2d $1\\times1$ (classifier)</td><td>&ndash;</td><td>$k$</td><td>&ndash;</td><td>&ndash;</td></tr>
+        </tbody>
+       </table>
+       <p>Every expansion uses $t=6$ except the very first bottleneck group, which uses $t=1$ (no expansion). The
+       width multiplier and input-resolution knobs from V1 carry over to scale this table up or down (&sect;3.2,
+       Table&nbsp;2). Our notebook builds a deliberately tiny version of this skeleton (a stem plus five
+       inverted-residual blocks with 6&ndash;8-channel bottlenecks) to keep the toy run fast.</p>`,
     symbols: [
       { sym: "$d'$", desc: "the number of <b>input channels</b> to the block (the thin width coming in). Written $d_i$ in the paper." },
       { sym: "$d''$", desc: "the number of <b>output channels</b> of the block (the thin width going out). Written $d_j$ in the paper." },
@@ -147,7 +188,18 @@
       { sym: "“inverted residual”", desc: "a residual block whose skip connection joins the THIN ends (around the wide middle), the reverse of a normal ResNet block that skips its wide ends." },
       { sym: "“manifold of interest”", desc: "the low-dimensional curved surface the meaningful data lies on inside the channel space; the paper's reason a ReLU on a thin layer can destroy information (&sect;3.1)." }
     ],
-    formula: `$$ \\text{cost(inverted-residual block)} \\;=\\; \\underbrace{h\\cdot w\\cdot d'\\cdot t}_{\\text{wide tensor size}}\\;\\big(\\,\\underbrace{d'}_{\\text{expand }1\\times1}\\;+\\;\\underbrace{k^{2}}_{\\text{depthwise }k\\times k}\\;+\\;\\underbrace{d''}_{\\text{project }1\\times1}\\,\\big) \\quad\\text{(\\S 3.2)} $$`,
+    formula: `$$ y \\;=\\; \\operatorname{ReLU6}(x) \\;=\\; \\min\\!\\big(\\max(0,\\,x),\\;6\\big) $$
+      <p>The activation used everywhere a non-linearity appears (&sect;4): an ordinary ReLU clamped at 6, for robust 8-bit inference.</p>
+      $$ \\text{cost(standard }k\\times k\\text{ conv)} \\;=\\; h\\cdot w\\cdot d'\\cdot d''\\cdot k^{2} $$
+      <p>A full convolution that mixes all $d'$ inputs into all $d''$ outputs at every spatial position &mdash; the baseline V2 cuts down (&sect;2).</p>
+      $$ \\text{cost(depthwise-separable, Eqn 1)} \\;=\\; h\\cdot w\\cdot d'\\,\\big(k^{2} + d''\\big) $$
+      <p>MobileNetV1's block: a per-channel $k\\times k$ depthwise filter ($k^2$ term) plus a $1\\times1$ pointwise mix ($d''$ term). Cheaper than the standard conv by roughly a factor $k^2$ (&sect;2, Eqn&nbsp;1).</p>
+      $$ \\text{Table 1 (bottleneck operator):}\\quad h\\times w\\times d' \\;\\xrightarrow[\\text{ReLU6}]{1\\times1}\\; h\\times w\\times t d' \\;\\xrightarrow[\\text{ReLU6}]{3\\times3\\text{ dw},\\,s}\\; \\tfrac{h}{s}\\times\\tfrac{w}{s}\\times t d' \\;\\xrightarrow[\\text{linear}]{1\\times1}\\; \\tfrac{h}{s}\\times\\tfrac{w}{s}\\times d'' $$
+      <p>The exact operator-and-shape sequence of one inverted-residual block: expand $1\\times1$ (ReLU6) &rarr; depthwise $3\\times3$ stride $s$ (ReLU6) &rarr; project $1\\times1$ (LINEAR) (Table&nbsp;1, &sect;3.2).</p>
+      $$ y \\;=\\; \\begin{cases} \\mathcal{F}(x) + x, & \\text{stride }s=1 \\text{ and } d'=d'' \\\\[2pt] \\mathcal{F}(x), & \\text{otherwise} \\end{cases} $$
+      <p>The inverted residual: add the thin input $x$ back to the block output $\\mathcal{F}(x)$ only when the shapes match &mdash; the skip joins the two thin bottleneck ends (&sect;3.2).</p>
+      $$ \\text{cost(inverted-residual block)} \\;=\\; \\underbrace{h\\cdot w\\cdot d'\\cdot t}_{\\text{wide tensor size}}\\;\\big(\\,\\underbrace{d'}_{\\text{expand }1\\times1}\\;+\\;\\underbrace{k^{2}}_{\\text{depthwise }k\\times k}\\;+\\;\\underbrace{d''}_{\\text{project }1\\times1}\\,\\big) $$
+      <p>The total multiply-adds of one whole block: the wide-tensor size $h w d' t$ times the sum of the three steps' per-element costs (&sect;3.2).</p>`,
     whatItDoes:
       `<p>This counts the multiply-adds of one whole inverted-residual block (&sect;3.2). The shared factor
        $h\\cdot w\\cdot d'\\cdot t$ is the size of the wide intermediate tensor &mdash; spatial area $h\\cdot w$ times

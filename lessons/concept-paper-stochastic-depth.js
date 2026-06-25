@@ -131,6 +131,33 @@
        \\mathrm{id}(H_{\\ell-1}^{\\text{Test}})\\big). $$
        This is exactly the expectation-matching rescale used by Dropout (see <code>paper-dropout</code>):
        train with random on/off, test with the expected value.</p>`,
+    architecture:
+      `<p>Stochastic depth is a <b>drop-in modification of a ResNet</b>, not a new backbone &mdash; it changes
+       how each residual block behaves during training, leaving the layer structure untouched. The paper's
+       CIFAR network (&sect;3 / &sect;4):</p>
+       <ul>
+        <li><b>Stem.</b> A single $3\\times 3$ convolution producing 16 feature-map channels, then Batch
+        Normalization and ReLU.</li>
+        <li><b>Three stages</b> of residual blocks with widening channels: <b>16 &rarr; 32 &rarr; 64</b>
+        filters. Each stage is a stack of <b>18 residual blocks</b>, so the network has $L = 54$ residual
+        blocks total (the "ResNet-110": $2$ convolutions per block $\\times 54 + $ stem $+$ classifier
+        $\\approx 110$ weight layers). Spatial resolution is halved (stride-2) entering the 32- and 64-channel
+        stages.</li>
+        <li><b>Each residual block</b> $f_\\ell$ is the standard two-layer function: $3\\times 3$ conv &rarr;
+        BatchNorm &rarr; ReLU &rarr; $3\\times 3$ conv &rarr; BatchNorm, added to the identity skip, then a
+        final ReLU. When channel count or stride changes at a stage boundary, the skip uses a $1\\times 1$
+        projection convolution so shapes match.</li>
+        <li><b>Head.</b> Global average pooling over the $64$-channel final map, then a linear
+        (fully-connected) classifier to the class logits.</li>
+       </ul>
+       <p><b>The stochastic-depth wrapper.</b> Every residual block is assigned a survival probability $p_\\ell$
+       from the linear schedule $p_\\ell = 1 - (\\ell/L)(1 - p_L)$ (Eqn. 4), indexed by its <i>global</i> depth
+       $\\ell$ across all three stages (not reset per stage). At training time each block draws an independent
+       Bernoulli coin <b>per mini-batch, shared across the batch</b> (one coin per block, not per example): on
+       tails the block returns its skip and its convolutions are never executed (Eqn. 3) &mdash; that skipped
+       compute is the speedup. At test time all blocks are present and each residual is scaled by its $p_\\ell$
+       (Eqn. 5). With $L = 54$ and $p_L = 0.5$ the expected training depth is $E(\\tilde L) \\approx 40$ of the
+       $54$ blocks, while the deployed network is the full $54$-block ResNet.</p>`,
     symbols: [
       { sym: "$\\ell$", desc: "the <b>block index</b>, counting residual blocks from $1$ (first) to $L$ (last)." },
       { sym: "$L$", desc: "the <b>total number of residual blocks</b> in the network (its full depth, in blocks)." },
@@ -145,7 +172,19 @@
       { sym: "$\\tilde{L}$", desc: "the <b>random number of blocks that survive</b> on a given mini-batch (so the effective training depth). $E(\\tilde{L}) = \\sum_\\ell p_\\ell$ is its expected value." },
       { sym: "$E(\\cdot)$", desc: "the <b>expected value</b> (long-run average over the random coin flips) &mdash; see the <code>prob-expectation</code> concept lesson." }
     ],
-    formula: `$$ p_\\ell \\;=\\; 1 - \\frac{\\ell}{L}\\,(1 - p_L) \\qquad\\text{(Eqn. 4, linear survival schedule)} $$`,
+    formula:
+      `$$ H_\\ell = \\mathrm{ReLU}\\big(f_\\ell(H_{\\ell-1}) + \\mathrm{id}(H_{\\ell-1})\\big) $$
+       <p>&sect;2, Eqn. 1 &mdash; the ordinary <b>ResNet residual block</b>: add the residual function's output to the identity skip, then ReLU. This is the baseline stochastic depth modifies.</p>
+       $$ H_\\ell = \\mathrm{ReLU}\\big(b_\\ell\\, f_\\ell(H_{\\ell-1}) + \\mathrm{id}(H_{\\ell-1})\\big),\\qquad b_\\ell \\sim \\mathrm{Bernoulli}(p_\\ell) $$
+       <p>&sect;3, Eqn. 2 &mdash; the <b>stochastic residual block</b>: gate the residual function by a Bernoulli coin $b_\\ell$ that is $1$ ("survive") with probability $p_\\ell$ and $0$ ("drop") otherwise. The skip is always present.</p>
+       $$ H_\\ell = \\mathrm{id}(H_{\\ell-1}) = H_{\\ell-1} \\qquad (b_\\ell = 0) $$
+       <p>&sect;3, Eqn. 3 &mdash; when the coin is tails the residual term vanishes and the block collapses to the bare identity skip (the input is already post-ReLU, so it passes through unchanged): no convolution, no gradient work.</p>
+       $$ p_\\ell \\;=\\; 1 - \\frac{\\ell}{L}\\,(1 - p_L) $$
+       <p>&sect;3, Eqn. 4 &mdash; the <b>linear survival-probability decay</b>: $p_\\ell$ slides from $p_0 = 1$ at the input to $p_L$ (the paper uses $0.5$) at the last block, so early blocks are almost always kept and deep blocks dropped most.</p>
+       $$ E(\\tilde{L}) \\;=\\; \\sum_{\\ell=1}^{L} p_\\ell \\;=\\; \\frac{3L-1}{4} \\;\\approx\\; \\frac{3L}{4} \\quad (p_L = 0.5) $$
+       <p>&sect;3 &mdash; the <b>expected network depth</b>: the mean number of surviving blocks is the sum of survival probabilities (linearity of expectation). With the linear schedule and $p_L = 0.5$ it closes to $(3L-1)/4 \\approx 3L/4$ &mdash; the source of the training speedup.</p>
+       $$ H_\\ell^{\\text{Test}} = \\mathrm{ReLU}\\big(p_\\ell\\, f_\\ell(H_{\\ell-1}^{\\text{Test}}; W_\\ell) + H_{\\ell-1}^{\\text{Test}}\\big) $$
+       <p>&sect;3, Eqn. 5 &mdash; <b>test-time rescaling</b>: keep every block but scale each residual function $f_\\ell$ by its survival probability $p_\\ell$, so the deterministic test pass equals the training expectation (the Dropout expectation-matching trick).</p>`,
     whatItDoes:
       `<p><b>Equation 4</b> sets each block's survival probability as a straight line in depth. At the first
        block ($\\ell$ small) the fraction $\\ell/L$ is near $0$, so $p_\\ell \\approx 1$ &mdash; almost never

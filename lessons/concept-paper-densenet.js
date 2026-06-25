@@ -71,8 +71,12 @@
         <li><b>Transition layers</b> (in &sect;3) &mdash; how blocks are joined: a $1\\times1$ conv + $2\\times2$
         average pool that shrinks the feature maps between dense blocks.</li>
        </ul>
-       <p><b>Skim:</b> the exact ImageNet architecture table, the bottleneck (DenseNet-B) and compression
-       (DenseNet-C) refinements, and the experiment tables &mdash; the core math is two short equations.</p>`,
+       <p><b>Then add</b> the two efficiency refinements (both in &sect;3): the <b>bottleneck</b> $H_\\ell$
+       (DenseNet-B: a $1\\times1$ conv to $4k$ maps before the $3\\times3$ conv) and <b>compression</b>
+       (DenseNet-C: a transition emits only $\\lfloor\\theta m\\rfloor$ channels, $\\theta=0.5$); together they
+       give DenseNet-BC. The Architecture panel below has the full DenseNet-121/169/201/264 table.</p>
+       <p><b>Skim:</b> the experiment tables &mdash; the core math is the handful of equations in the Formula panel.</p>`,
+
 
     // PREDICT + ATTEMPT
     predict:
@@ -122,6 +126,42 @@
        <p>Feature maps can only be concatenated if they share spatial height and width, so a deep DenseNet is
        split into several <b>dense blocks</b>; between them sit <b>transition layers</b> (a $1\\times1$
        convolution plus $2\\times2$ average pooling, &sect;3) that downsample before the next block.</p>`,
+    architecture:
+      `<p>A full DenseNet stacks four parts: a <b>stem</b>, alternating <b>dense blocks</b> and
+       <b>transition layers</b>, and a <b>classification head</b>. Inside a block every layer is densely
+       connected (Eqn. 2); between blocks a transition shrinks the spatial size so the next block can
+       concatenate cleanly.</p>
+       <p><b>One layer (DenseNet-BC, the deep variant).</b> Each $H_\\ell$ is a two-stage <b>bottleneck</b>:</p>
+       <ul>
+        <li>$1\\times1$ stage: BN &rarr; ReLU &rarr; $1\\times1$ conv producing $4k$ feature maps &mdash; this
+        squashes the large concatenated input ($k_0 + k(\\ell-1)$ channels) down to a fixed $4k$.</li>
+        <li>$3\\times3$ stage: BN &rarr; ReLU &rarr; $3\\times3$ conv producing exactly $k$ new maps, appended to
+        the shared pool.</li>
+       </ul>
+       <p><b>Transition layer.</b> BN &rarr; $1\\times1$ conv emitting $\\lfloor\\theta m\\rfloor$ channels
+       (compression, $\\theta=0.5$) &rarr; $2\\times2$ average pool, stride 2 (halves height and width).</p>
+       <p><b>ImageNet table (Table 1).</b> All four ImageNet models use growth rate $k=32$, a
+       $7\\times7$ stride-2 stem then $3\\times3$ stride-2 max pool, and four dense blocks separated by three
+       transitions; only the per-block layer counts $[b_1, b_2, b_3, b_4]$ differ:</p>
+       <table class="arch">
+        <thead><tr><th>Stage</th><th>Output</th><th>Operation</th><th>121</th><th>169</th><th>201</th><th>264</th></tr></thead>
+        <tbody>
+         <tr><td>Convolution</td><td>$112\\times112$</td><td>$7\\times7$ conv, stride 2</td><td colspan="4">same for all</td></tr>
+         <tr><td>Pooling</td><td>$56\\times56$</td><td>$3\\times3$ max pool, stride 2</td><td colspan="4">same for all</td></tr>
+         <tr><td>Dense Block (1)</td><td>$56\\times56$</td><td>[$1\\times1$ conv, $3\\times3$ conv]</td><td>$\\times6$</td><td>$\\times6$</td><td>$\\times6$</td><td>$\\times6$</td></tr>
+         <tr><td>Transition (1)</td><td>$56\\to28$</td><td>$1\\times1$ conv; $2\\times2$ avg pool, stride 2</td><td colspan="4">same for all</td></tr>
+         <tr><td>Dense Block (2)</td><td>$28\\times28$</td><td>[$1\\times1$ conv, $3\\times3$ conv]</td><td>$\\times12$</td><td>$\\times12$</td><td>$\\times12$</td><td>$\\times12$</td></tr>
+         <tr><td>Transition (2)</td><td>$28\\to14$</td><td>$1\\times1$ conv; $2\\times2$ avg pool, stride 2</td><td colspan="4">same for all</td></tr>
+         <tr><td>Dense Block (3)</td><td>$14\\times14$</td><td>[$1\\times1$ conv, $3\\times3$ conv]</td><td>$\\times24$</td><td>$\\times32$</td><td>$\\times48$</td><td>$\\times64$</td></tr>
+         <tr><td>Transition (3)</td><td>$14\\to7$</td><td>$1\\times1$ conv; $2\\times2$ avg pool, stride 2</td><td colspan="4">same for all</td></tr>
+         <tr><td>Dense Block (4)</td><td>$7\\times7$</td><td>[$1\\times1$ conv, $3\\times3$ conv]</td><td>$\\times16$</td><td>$\\times32$</td><td>$\\times32$</td><td>$\\times48$</td></tr>
+         <tr><td>Classification</td><td>$1\\times1$</td><td>$7\\times7$ global avg pool; 1000-D fully-connected, softmax</td><td colspan="4">same for all</td></tr>
+        </tbody>
+       </table>
+       <p>So the model names count weight layers: $121 = 1\\,(\\text{stem}) + 2(6+12+24+16) + 3\\,(\\text{transitions}) + 1\\,(\\text{fc})$,
+       and likewise for 169, 201, 264 (each bottleneck layer is two convs, hence the $2\\times$). For CIFAR/SVHN the
+       paper instead uses <b>three</b> equal-sized dense blocks on $32\\times32$ images, with configs like
+       $L=40, k=12$; $L=100, k=12$; and the best DenseNet-BC $L=190, k=40$ (&sect;3, Experiments).</p>`,
     symbols: [
       { sym: "$x_0$", desc: "the <b>block input</b> &mdash; the feature map(s) entering the dense block (the paper writes the input image / earlier-block output as $x_0$). It has $k_0$ channels." },
       { sym: "$x_\\ell$", desc: "the output of the $\\ell$-th layer inside the block: exactly $k$ feature maps (channels) produced by $H_\\ell$." },
@@ -129,11 +169,29 @@
       { sym: "$[x_0, x_1, \\ldots, x_{\\ell-1}]$", desc: "<b>concatenation</b> along the channel axis of all feature maps produced by layers $0$ through $\\ell-1$ &mdash; stacked, not summed, so nothing is lost." },
       { sym: "$k$", desc: "the <b>growth rate</b>: the fixed number of new feature maps each layer adds to the shared pool. Small $k$ keeps the network thin; it controls how fast channels grow." },
       { sym: "$k_0$", desc: "the number of channels in the <b>block input</b> $x_0$ (e.g. $1$ for a grayscale image, $3$ for RGB, or whatever the previous block output)." },
-      { sym: "$L$", desc: "the number of layers in the block. An $L$-layer dense block has $L(L+1)/2$ direct connections (abstract)." },
+      { sym: "$L$", desc: "the number of layers in the block. An $L$-layer dense block has $L(L+1)/2$ direct connections (abstract). (In the architecture names like DenseNet-121, $L$ instead counts total weight layers.)" },
+      { sym: "$C_\\ell^{\\text{in}}$", desc: "the number of input channels (feature maps) layer $\\ell$ sees: $k_0 + k(\\ell-1)$ &mdash; just a name for that count used in the formula." },
+      { sym: "$4k$", desc: "the number of feature maps the <b>bottleneck</b> $1\\times1$ convolution produces (DenseNet-B): four times the growth rate, a fixed width that tames the growing concatenated input before the $3\\times3$ conv." },
+      { sym: "$\\theta$", desc: "the <b>compression factor</b> ($0 \\lt \\theta \\le 1$) in a transition layer: it keeps a fraction $\\theta$ of the incoming channels. The paper uses $\\theta = 0.5$ (DenseNet-C). $\\theta = 1$ means no compression." },
+      { sym: "$m$", desc: "the number of feature maps entering a <b>transition layer</b> (the channel count output by the preceding dense block); the transition emits $\\lfloor\\theta m\\rfloor$ of them." },
+      { sym: "$\\lfloor\\,\\cdot\\,\\rfloor$", desc: "the floor function &mdash; round down to the nearest whole number (a channel count must be an integer)." },
       { sym: "ReLU", desc: "a plain term: the Rectified Linear Unit nonlinearity &mdash; keep positive values, set negatives to $0$." },
-      { sym: "“transition layer”", desc: "a plain term, not a symbol: the $1\\times1$ convolution + $2\\times2$ average pool placed <i>between</i> dense blocks to shrink the feature-map size so the next block can start fresh." }
+      { sym: "BN", desc: "a plain term: Batch Normalization &mdash; rescale each channel's activations to roughly zero mean and unit variance over the batch, stabilizing training." },
+      { sym: "“transition layer”", desc: "a plain term, not a symbol: BN + a $1\\times1$ convolution (emitting $\\lfloor\\theta m\\rfloor$ channels) + $2\\times2$ average pool, placed <i>between</i> dense blocks to shrink the feature-map size so the next block can start fresh." }
     ],
-    formula: `$$ x_\\ell = H_\\ell(x_{\\ell-1}) + x_{\\ell-1} \\quad\\text{(Eqn. 1, ResNet)} \\qquad\\qquad x_\\ell = H_\\ell\\big([\\,x_0, x_1, \\ldots, x_{\\ell-1}\\,]\\big) \\quad\\text{(Eqn. 2, DenseNet)} $$`,
+    formula:
+      `$$ x_\\ell = H_\\ell(x_{\\ell-1}) + x_{\\ell-1}. $$
+       <p>&sect;3, Eqn. 1 &mdash; ResNet (shown for contrast): the layer's output is <b>summed</b> with the previous output through an identity skip connection.</p>
+       $$ x_\\ell = H_\\ell\\big([\\,x_0, x_1, \\ldots, x_{\\ell-1}\\,]\\big). $$
+       <p>&sect;3, Eqn. 2 &mdash; <b>dense connectivity</b>: layer $\\ell$ receives the <b>concatenation</b> of the feature maps of all preceding layers $0, 1, \\ldots, \\ell-1$. $[\\,\\cdot\\,]$ denotes concatenation along the channel axis.</p>
+       $$ H_\\ell(\\cdot) = \\text{Conv}_{3\\times3}\\big(\\,\\text{ReLU}(\\,\\text{BN}(\\cdot)\\,)\\,\\big). $$
+       <p>&sect;3 &mdash; the <b>composite function</b> $H_\\ell$: Batch Normalization (BN), then a ReLU nonlinearity, then a $3\\times3$ convolution (the pre-activation order from ResNet-v2).</p>
+       $$ C_\\ell^{\\text{in}} = k_0 + k\\,(\\ell-1). $$
+       <p>&sect;3 &mdash; <b>channel-count rule</b>: with block input $k_0$ channels and <b>growth rate</b> $k$ (each layer adds $k$ maps), layer $\\ell$ sees $k_0 + k(\\ell-1)$ input channels; the block outputs $k_0 + kL$ channels.</p>
+       $$ H_\\ell^{\\text{BC}}(\\cdot) = \\underbrace{\\text{Conv}_{3\\times3}\\,\\text{ReLU}\\,\\text{BN}}_{\\text{outputs } k}\\;\\Big(\\underbrace{\\text{Conv}_{1\\times1}\\,\\text{ReLU}\\,\\text{BN}}_{\\text{outputs } 4k}(\\cdot)\\Big). $$
+       <p>&sect;3 &mdash; the <b>bottleneck</b> layer (DenseNet-B): a $1\\times1$ convolution first reduces the many concatenated inputs to $4k$ feature maps, then the $3\\times3$ convolution produces the usual $k$. Cuts computation.</p>
+       $$ m_{\\text{out}} = \\lfloor \\theta\\, m \\rfloor, \\qquad 0 \\lt \\theta \\le 1. $$
+       <p>&sect;3 &mdash; <b>transition layer with compression</b> (DenseNet-C): a transition takes a block's $m$ output channels and a $1\\times1$ convolution emits $\\lfloor\\theta m\\rfloor$ of them (paper uses $\\theta=0.5$), followed by $2\\times2$ average pooling. DenseNet-BC = bottleneck + compression.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> (shown for contrast) is ResNet's residual block: run the previous layer's output
        through $H_\\ell$ and <b>add</b> the previous output back. The two tensors must have the same shape, and

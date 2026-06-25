@@ -120,6 +120,37 @@
        $y = H(x)$. The paper's training trick (§2.2) is to initialize $b_T$ <b>negative</b> so that at the
        start $T \\approx 0$ and the whole deep stack behaves like a chain of identity wires; gradients reach
        the early layers, and the network gradually opens gates only where transformation helps.</p>`,
+    architecture:
+      `<p>A highway network is a <b>stack of equal-width highway blocks</b> wrapped between an input projection
+       and an output head. Concretely (the configuration used in the lesson's code):</p>
+       <ul>
+        <li><b>Stem (input projection).</b> A single plain layer $\\mathrm{relu}(W_{\\text{stem}}x)$ maps the
+        raw input into the block width $n$. Its job is to set the working dimensionality once, since every
+        highway block below must preserve it (the dimension-matching constraint, §2).</li>
+        <li><b>The highway block</b> (the repeated unit). Each block holds <b>two independent affine maps of
+        the same shape</b> $n\\times n$:
+         <ul>
+          <li>$H = W_H x + b_H$ followed by ReLU — the <b>transform</b> branch, the value a plain layer would output.</li>
+          <li>$T = W_T x + b_T$ followed by sigmoid — the <b>transform-gate</b> branch, a per-unit number in $(0,1)$.</li>
+         </ul>
+         The block's output is the element-wise blend $y = H\\cdot T + x\\cdot(1 - T)$ (Eqn. 3). The carry gate
+         $C = 1 - T$ is not a separate layer — it is computed from $T$. So a block has roughly <b>twice</b> the
+         parameters of a plain layer (two weight matrices instead of one).</li>
+        <li><b>Carry-bias init.</b> Every block's gate bias $b_T$ is initialized <b>negative</b> (e.g. $-2$),
+        so at step 0 each block is approximately the identity $y \\approx x$ and the whole stack is a chain of
+        near-identity wires (§2.2).</li>
+        <li><b>Depth.</b> The blocks are stacked deep — the paper trains stacks of <b>over 100 layers</b>
+        (preliminary runs to 900); the lesson stacks 40. Because every block keeps width $n$, the carry path
+        $x$ always has a matching shape to add back.</li>
+        <li><b>Head (output).</b> A final plain linear map $W_{\\text{head}}\\colon n \\to K$ produces the $K$
+        class logits, read by cross-entropy.</li>
+        <li><b>Data flow.</b> $x \\to \\text{stem} \\to \\text{block}_1 \\to \\cdots \\to \\text{block}_L \\to
+        \\text{head} \\to \\text{logits}$. Forward, information can ride the carry path straight through; backward,
+        the near-identity Jacobian (Eqn. 5) lets the gradient reach $\\text{block}_1$ undamped.</li>
+        <li><b>Changing width.</b> To resize the representation between stacks, the paper inserts a separate
+        <b>plain</b> layer (or sub-sampling / zero-padding) — never inside a highway block, which must stay
+        square so the carry term fits.</li>
+       </ul>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input</b> vector to the layer — and the value carried, unchanged, along the carry path when the gate is closed." },
       { sym: "$y$", desc: "the <b>output</b> of the highway layer: the gated blend of the transform and the carried input." },
@@ -129,9 +160,31 @@
       { sym: "$\\sigma$", desc: "the <b>sigmoid</b> (logistic) function $\\sigma(z) = 1/(1 + e^{-z})$: squashes any real number into $(0,1)$, acting as a soft on/off switch." },
       { sym: "$b_T$", desc: "the <b>bias of the transform gate</b>. Initialized to a <i>negative</i> value (e.g. $-2$) so that early in training $T \\approx 0$ and the net defaults to carrying its input — the key trick (§2.2)." },
       { sym: "$\\cdot$", desc: "<b>element-wise (Hadamard) multiplication</b>: multiply matching units, not a dot product. Each unit's transformed value is scaled by that unit's own gate." },
+      { sym: "$W_T^{\\top}\\mathbf{x} + b_T$", desc: "the <b>gate pre-activation</b>: the transform gate's affine map before the sigmoid. $W_T^{\\top}$ is the gate weight matrix (transposed) and $b_T$ its bias." },
+      { sym: "$d\\mathbf{y}/d\\mathbf{x}$", desc: "the layer's <b>Jacobian</b> — the matrix of output-vs-input derivatives. Equals identity $I$ when the gate is closed ($T=0$) and $H'$ when open ($T=1$) (§2, Eqn. 5)." },
+      { sym: "$I$", desc: "the <b>identity matrix</b>: the Jacobian of a closed-gate (carry) layer. Multiplying the back-propagated gradient by $I$ leaves it unchanged — no vanishing." },
+      { sym: "$H'(\\mathbf{x}, W_H)$", desc: "the <b>derivative (Jacobian) of the transform</b> $H$: the layer's Jacobian when the gate is fully open ($T=1$)." },
+      { sym: "$\\dim(\\cdot)$", desc: "the <b>dimensionality</b> (number of units) of a vector. The dimension-matching note (§2) requires $\\dim(x)=\\dim(y)=\\dim(H)=\\dim(T)$ so the carry term $x$ can be added." },
+      { sym: "$W_{\\text{stem}},\\, W_{\\text{head}}$", desc: "the <b>input-projection</b> and <b>output</b> plain-layer weight matrices that wrap the highway stack: stem maps input into width $n$; head maps width $n$ to $K$ class logits." },
       { sym: "$\\ln K$", desc: "a plain term, not from the paper: the cross-entropy loss of <b>random guessing</b> over $K$ equally-likely classes. A net stuck at $\\ln K$ has learned nothing." }
     ],
-    formula: `$$ \\mathbf{y} = H(\\mathbf{x}, W_H)\\cdot T(\\mathbf{x}, W_T) + \\mathbf{x}\\cdot\\big(1 - T(\\mathbf{x}, W_T)\\big) \\qquad\\text{(Eqn. 3)} $$`,
+    formula:
+      `$$ \\mathbf{y} = H(\\mathbf{x}, W_H) $$
+       <p>A <b>plain</b> feedforward layer (§2, Eqn. 1): one affine map $W_H$ plus a nonlinearity, applied to every unit — no option to pass the input through.</p>
+       $$ \\mathbf{y} = H(\\mathbf{x}, W_H)\\cdot T(\\mathbf{x}, W_T) + \\mathbf{x}\\cdot C(\\mathbf{x}, W_C) $$
+       <p>The <b>highway layer</b> with two independent gates (§2, Eqn. 2): the <b>transform gate</b> $T$ weights the transformed value $H(x)$ and the <b>carry gate</b> $C$ weights the raw input $x$. "$\\cdot$" is element-wise (per-unit) multiplication.</p>
+       $$ \\mathbf{y} = H(\\mathbf{x}, W_H)\\cdot T(\\mathbf{x}, W_T) + \\mathbf{x}\\cdot\\big(1 - T(\\mathbf{x}, W_T)\\big) $$
+       <p>Tying the gates with $C = 1 - T$ (§2, Eqn. 3) leaves a single learned gate: at each unit the output is a convex blend of "transform" and "carry."</p>
+       $$ T(\\mathbf{x}) = \\sigma\\!\\left(W_T^{\\top}\\mathbf{x} + b_T\\right), \\qquad \\sigma(z) = \\frac{1}{1 + e^{-z}} $$
+       <p>The transform gate is a <b>sigmoid</b> (§2): it squashes the pre-activation into $(0,1)$, a soft per-unit on/off switch, learned by gradient descent.</p>
+       $$ \\mathbf{y} = \\begin{cases} \\mathbf{x}, & \\text{if } T(\\mathbf{x}, W_T) = 0 \\\\ H(\\mathbf{x}, W_H), & \\text{if } T(\\mathbf{x}, W_T) = 1 \\end{cases} $$
+       <p>Boundary cases (§2, Eqn. 4): a closed gate makes the layer the <b>identity</b> $y = x$; a fully open gate makes it the plain transform $y = H(x)$. The layer interpolates smoothly between them.</p>
+       $$ \\frac{d\\mathbf{y}}{d\\mathbf{x}} = \\begin{cases} I, & \\text{if } T(\\mathbf{x}, W_T) = 0 \\\\ H'(\\mathbf{x}, W_H), & \\text{if } T(\\mathbf{x}, W_T) = 1 \\end{cases} $$
+       <p>The layer's Jacobian (§2, Eqn. 5): when the gate is closed it is the identity matrix $I$, so the gradient passes backward undamped — this is why a near-closed deep stack escapes the vanishing gradient.</p>
+       $$ \\dim(\\mathbf{x}) = \\dim(\\mathbf{y}) = \\dim\\!\\big(H(\\mathbf{x}, W_H)\\big) = \\dim\\!\\big(T(\\mathbf{x}, W_T)\\big) $$
+       <p><b>Dimension-matching note</b> (§2): because the carry term adds the raw $x$ back, $x$, $y$, $H$ and $T$ must all share the same size. To change width the paper uses a plain layer (or sub-sampling / zero-padding) between highway stacks.</p>
+       $$ b_T \\lt 0 \\quad (\\text{e.g. } -1, -3) \\;\\Longrightarrow\\; T \\approx 0 \\text{ at init} \\;\\Longrightarrow\\; \\mathbf{y} \\approx \\mathbf{x} $$
+       <p><b>Bias initialization</b> (§2.2): set the transform-gate bias $b_T$ to a negative value so the network starts <i>biased toward carrying</i> its input — the whole deep stack begins as a chain of near-identity wires, and gradients reach the first layer.</p>`,
     whatItDoes:
       `<p>This is the highway layer (Eqn. 3, after tying $C = 1 - T$). Read it as a <b>per-unit dimmer
        switch</b>. For each unit, the gate $T$ is a knob between 0 and 1. At $T = 1$ the unit takes the fully

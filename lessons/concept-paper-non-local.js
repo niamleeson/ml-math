@@ -137,6 +137,28 @@
        $z_i = W_z\\,y_i + x_i$. The <b>residual</b> $+\\,x_i$ means the block <i>adds</i> long-range
        information on top of the original features. Initialize $W_z = 0$ and the block starts as the exact
        identity, so it can be dropped into a pre-trained network without disturbing it (&sect;3.3).</p>`,
+    architecture:
+      `<p><b>The non-local block as a self-attention generalization.</b> Inside one block the data flows
+       (&sect;3.3, Fig. 2): the input $x$ ($C$ channels over $N$ positions) splits into three $1\\times1$
+       convolutions $\\theta, \\phi, g$, each producing an inner dimension $\\hat C = C/2$ (the <b>bottleneck</b>
+       that halves channels and roughly halves compute). The query $\\theta(x)$ and key $\\phi(x)$ form the
+       $N\\times N$ affinity matrix $f$; normalizing by $C(x)$ (softmax in the embedded-Gaussian case) gives the
+       attention weights, which mix the value $g(x)$ into $y$ (Eqn. 1). A final $1\\times1$ conv $W_z$ projects
+       $y$ from $\\hat C$ back to $C$ channels, and the residual adds $x$ (Eqn. 6). This is exactly
+       scaled-dot-product self-attention &mdash; query, key, value, softmax, weighted sum &mdash; <b>generalized</b>
+       so that the four $f$ choices (Eqns. 2-5) and even non-softmax normalizers ($C(x)=N$) all fit the same
+       template; self-attention is one instantiation (embedded Gaussian).</p>
+       <p><b>Subsampling trick.</b> To cut the $N\\times N$ cost, max-pool $\\phi$ and $g$ along positions
+       (halving each spatial side), shrinking the affinity to $N\\times \\tfrac{N}{4}$ &mdash; a $\\sim4\\times$
+       reduction with the non-local behavior preserved.</p>
+       <p><b>Where it inserts in a ResNet (C2D / I3D backbone).</b> The block is a <b>residual add</b>, so it
+       drops in <i>between</i> existing residual blocks without changing tensor shapes. For Kinetics video, the
+       paper adds <b>5 non-local blocks to a ResNet-50/101 backbone</b>: <b>3 in stage res$_4$ and 2 in stage
+       res$_3$</b>, placed on every other residual block. They are inserted into the <b>earlier/middle</b>
+       stages (res$_3$/res$_4$) rather than after res$_5$, because at res$_5$ the spatial resolution is too
+       small for long-range mixing to help. Each added block is identity at initialization (zero-init $W_z$), so
+       a pre-trained ResNet keeps its behavior and the non-local blocks are then fine-tuned to add global
+       context. The full network is an "NL-I3D": a 3D-inflated ResNet with these non-local blocks interleaved.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input feature map</b> to the block: $N$ positions, each a $C$-dimensional vector. For an image $N = H\\times W$; for a video $N = T\\times H\\times W$." },
       { sym: "$x_i$", desc: "the <b>feature vector at the output position $i$</b> &mdash; the position we are computing a new value for." },
@@ -150,11 +172,23 @@
       { sym: "$W_\\theta,\\,W_\\phi,\\,W_g$", desc: "the three <b>learned embedding matrices</b> ($1\\times1$ convolutions) producing query, key, and value." },
       { sym: "$W_z$", desc: "the <b>output projection</b> ($1\\times1$ convolution) that maps $y_i$ back to $C$ channels; initialized to <b>zero</b> so the block begins as the identity (Eqn. 6)." },
       { sym: "$z_i$", desc: "the <b>block output at position $i$</b>: the projected response plus the residual, $z_i = W_z\\,y_i + x_i$ (Eqn. 6)." },
-      { sym: "$\\mathrm{softmax}$", desc: "the function that turns the affinities into weights that are positive and <b>sum to $1$</b> over $j$ &mdash; here it <i>is</i> the Gaussian normalization $f / C(x)$." }
+      { sym: "$\\mathrm{softmax}$", desc: "the function that turns the affinities into weights that are positive and <b>sum to $1$</b> over $j$ &mdash; here it <i>is</i> the Gaussian normalization $f / C(x)$." },
+      { sym: "$N$", desc: "the <b>number of positions</b> in the feature map ($H\\times W$ for an image, $T\\times H\\times W$ for a video); also the constant normalizer $C(x)=N$ for the dot-product (Eqn. 4) and concatenation (Eqn. 5) forms." },
+      { sym: "$w_f$", desc: "the <b>learned projection vector</b> in the concatenation affinity (Eqn. 5): it maps the concatenated $[\\theta(x_i),\\phi(x_j)]$ to a scalar before the ReLU." },
+      { sym: "$\\hat C$", desc: "the <b>inner (bottleneck) channel count</b>, set to $C/2$, used by $\\theta,\\phi,g$ to roughly halve the block's computation; $W_z$ projects $\\hat C$ back up to $C$." }
     ],
     formula: `$$ y_i = \\frac{1}{C(x)} \\sum_{\\forall j} f(x_i, x_j)\\, g(x_j) \\quad\\text{(Eqn. 1, generic non-local operation)} $$
-$$ f(x_i, x_j) = \\exp\\!\\big(\\theta(x_i)^\\top \\phi(x_j)\\big), \\quad C(x) = \\sum_{\\forall j} f(x_i, x_j) \\quad\\text{(Eqn. 3, embedded Gaussian)} $$
-$$ z_i = W_z\\, y_i + x_i \\quad\\text{(Eqn. 6, the non-local block: projection + residual)} $$`,
+<p>Generic non-local operation: the response at position $i$ is a normalized weighted sum of the value $g(x_j) = W_g x_j$ over <i>all</i> positions $j$. The four instantiations below differ only in the affinity $f$ and its normalizer $C(x)$.</p>
+$$ f(x_i, x_j) = e^{\\,x_i^\\top x_j}, \\qquad C(x) = \\sum_{\\forall j} f(x_i, x_j) \\quad\\text{(Eqn. 2, Gaussian)} $$
+<p>Gaussian: affinity is the exponentiated dot product of the <i>raw</i> features; $C(x)$ is the sum of affinities, so $f/C$ is a softmax over $j$.</p>
+$$ f(x_i, x_j) = e^{\\,\\theta(x_i)^\\top \\phi(x_j)}, \\qquad \\theta(x_i)=W_\\theta x_i,\\;\\; \\phi(x_j)=W_\\phi x_j, \\qquad C(x) = \\sum_{\\forall j} f(x_i, x_j) \\quad\\text{(Eqn. 3, embedded Gaussian)} $$
+<p>Embedded Gaussian: same as Gaussian but on learned $1\\times1$-conv embeddings $\\theta$ (query) and $\\phi$ (key). With this $C(x)$, $y=\\mathrm{softmax}(\\theta(x)^\\top\\phi(x))\\,g(x)$ &mdash; exactly self-attention.</p>
+$$ f(x_i, x_j) = \\theta(x_i)^\\top \\phi(x_j), \\qquad C(x) = N \\quad\\text{(Eqn. 4, dot product)} $$
+<p>Dot product: no exponentiation; the normalizer is the fixed position count $N$, so $f/C$ is a plain average of raw affinities (no softmax competition). Works comparably &mdash; "the attentional behavior (due to softmax) is not essential."</p>
+$$ f(x_i, x_j) = \\mathrm{ReLU}\\!\\big(w_f^\\top\\, [\\,\\theta(x_i),\\, \\phi(x_j)\\,]\\big), \\qquad C(x) = N \\quad\\text{(Eqn. 5, concatenation)} $$
+<p>Concatenation: stack the two embeddings, project with a learned vector $w_f$, and rectify; again normalized by $N$.</p>
+$$ z_i = W_z\\, y_i + x_i \\quad\\text{(Eqn. 6, the non-local block: projection + residual)} $$
+<p>Non-local block: project $y_i$ back to $C$ channels with a $1\\times1$ conv $W_z$ and add the input. Zero-init $W_z$ so the fresh block is the identity &mdash; safe to insert into a pre-trained net.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> says: the new feature at position $i$ is a <b>weighted average of the value
        vectors $g(x_j)$ at all positions</b>, where each weight is the affinity $f(x_i,x_j)$ and $C(x)$

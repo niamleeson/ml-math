@@ -138,6 +138,41 @@
        <p><b>4. The head.</b> "A final 1&times;1 convolution is used to map each 64-component feature vector
        to the desired number of classes." A 1&times;1 conv is just a per-pixel linear classifier over the
        channels. "In total the network has 23 convolutional layers" (Sec. 2).</p>`,
+    architecture:
+      `<p><b>The full U-Net, component by component (Sec. 2, Fig. 1).</b> Input is a $572\\times572$
+       single-channel tile; output is a $388\\times388$ two-class (or $K$-class) map. All $3\\times3$ convs
+       are <b>unpadded ("valid")</b>, so each shaves a 1-pixel border; sizes below are the paper's.</p>
+       <p><b>Contracting path (encoder) &mdash; 4 down-steps.</b> Each step is a <b>double conv</b>
+       (two $3\\times3$ convs, each + ReLU) followed by a <b>$2\\times2$ max-pool, stride 2</b>. Channels
+       <b>double</b> at every step; spatial size halves:</p>
+       <ul class="steps">
+        <li>Block 1: $1\\to64$ ch, $572\\to568$; pool $\\to284$.</li>
+        <li>Block 2: $64\\to128$ ch, $284\\to280$; pool $\\to140$.</li>
+        <li>Block 3: $128\\to256$ ch, $140\\to136$; pool $\\to68$.</li>
+        <li>Block 4: $256\\to512$ ch, $68\\to64$; pool $\\to32$.</li>
+       </ul>
+       <p><b>Bottleneck.</b> Double conv $512\\to1024$ channels: $32\\to28$. This $28\\times28\\times1024$ map
+       is the most context-rich, lowest-resolution point of the U.</p>
+       <p><b>Expanding path (decoder) &mdash; 4 up-steps.</b> Each step is: a <b>$2\\times2$ up-convolution</b>
+       (transposed conv) that doubles spatial size and <b>halves channels</b>; a <b>concatenation</b> of the
+       <b>center-cropped</b> encoder map from the same level (the skip connection); then a <b>double conv</b>
+       that brings channels back down:</p>
+       <ul class="steps">
+        <li>Up-conv $1024\\to512$, $28\\to56$; concat enc-block-4 (cropped to $56$) $\\to1024$ ch; double conv $\\to512$ ch, $56\\to52$.</li>
+        <li>Up-conv $512\\to256$, $52\\to104$; concat enc-3 $\\to512$ ch; double conv $\\to256$ ch, $104\\to100$.</li>
+        <li>Up-conv $256\\to128$, $100\\to200$; concat enc-2 $\\to256$ ch; double conv $\\to128$ ch, $200\\to196$.</li>
+        <li>Up-conv $128\\to64$, $196\\to392$; concat enc-1 (cropped from $568$ to $392$) $\\to128$ ch; double conv $\\to64$ ch, $392\\to388$.</li>
+       </ul>
+       <p><b>Head.</b> A single <b>$1\\times1$ convolution</b> maps each 64-component pixel vector to the
+       per-class logits, giving the $388\\times388\\times K$ output. <b>Counting convs:</b> $4$ encoder
+       blocks $\\times2$ + bottleneck $\\times2$ + $4$ decoder blocks $\\times2$ + the $1\\times1$ head
+       $= 8+2+8+1 = 21$ regular convs plus the $4$ $2\\times2$ up-convs counted in &mdash; the paper states
+       <b>"in total the network has 23 convolutional layers."</b></p>
+       <p><b>Overlap-tile strategy (Sec. 2, Fig. 2).</b> Because valid convs make the output smaller than the
+       input, to segment an arbitrarily large image the network is run on <b>overlapping tiles</b>: to predict
+       the pixels in one output tile it needs an input window padded with the surrounding context. At the
+       image's outer edge that context does not exist, so the <b>missing border is extrapolated by mirroring</b>
+       the input. This yields seamless segmentation of large images with limited GPU memory.</p>`,
     symbols: [
       { sym: "encoder / contracting path", desc: "the <b>downward</b> left half of the U: repeated (conv, conv, pool) that shrinks the image and grows the channel count, capturing context." },
       { sym: "decoder / expanding path", desc: "the <b>upward</b> right half of the U: repeated (up-conv, concatenate skip, conv, conv) that restores full resolution." },
@@ -155,7 +190,12 @@
       { sym: "$d_1(\\mathbf{x}),\\,d_2(\\mathbf{x})$", desc: "distances from pixel $\\mathbf{x}$ to the <b>nearest</b> and <b>second-nearest</b> object border &mdash; both small exactly in the thin gaps between touching cells." },
       { sym: "$w_0,\\,\\sigma$", desc: "constants of the weight map; the paper sets $w_0=10$ and $\\sigma\\approx5$ pixels (Sec. 3)." }
     ],
-    formula: `$$ E = \\sum_{\\mathbf{x}\\in\\Omega} w(\\mathbf{x})\\,\\log\\big(p_{\\ell(\\mathbf{x})}(\\mathbf{x})\\big) \\quad\\text{(Eq. 1)}, \\qquad w(\\mathbf{x}) = w_c(\\mathbf{x}) + w_0\\,\\exp\\!\\left(-\\frac{\\big(d_1(\\mathbf{x})+d_2(\\mathbf{x})\\big)^2}{2\\sigma^2}\\right) \\quad\\text{(Eq. 2)}. $$`,
+    formula: `$$ p_k(\\mathbf{x}) = \\frac{\\exp\\!\\big(a_k(\\mathbf{x})\\big)}{\\sum_{k'=1}^{K} \\exp\\!\\big(a_{k'}(\\mathbf{x})\\big)} $$
+       <p>The pixel-wise <b>soft-max</b> (Sec. 3): it turns the network's raw class scores $a_k(\\mathbf{x})$ at pixel $\\mathbf{x}$ into probabilities over the $K$ classes that sum to 1, with $p_{\\ell(\\mathbf{x})}$ the probability of the true class $\\ell(\\mathbf{x})$.</p>
+       $$ E = \\sum_{\\mathbf{x}\\in\\Omega} w(\\mathbf{x})\\,\\log\\big(p_{\\ell(\\mathbf{x})}(\\mathbf{x})\\big) \\quad\\text{(Eq. 1)} $$
+       <p>The training <b>energy</b> (Eq. 1, Sec. 3): a weighted soft-max cross-entropy summed over every pixel $\\mathbf{x}$ in the image domain $\\Omega$; maximizing it pushes the true-class probability toward 1 at each pixel.</p>
+       $$ w(\\mathbf{x}) = w_c(\\mathbf{x}) + w_0\\,\\exp\\!\\left(-\\frac{\\big(d_1(\\mathbf{x})+d_2(\\mathbf{x})\\big)^2}{2\\sigma^2}\\right) \\quad\\text{(Eq. 2)} $$
+       <p>The <b>weight map</b> (Eq. 2, Sec. 3): a class-balancing term $w_c$ plus a Gaussian bump (paper sets $w_0=10$, $\\sigma\\approx5$ pixels) that spikes where a pixel is near two object borders at once &mdash; the thin gap between touching cells &mdash; forcing a clean separating line.</p>`,
     whatItDoes:
       `<p>Eq. 1 is the training <b>energy</b>: for every pixel $\\mathbf{x}$ it takes the (log) soft-max
        probability the network assigned to that pixel's <i>correct</i> class $\\ell(\\mathbf{x})$, weights

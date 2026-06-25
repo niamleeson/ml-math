@@ -139,6 +139,46 @@
        $(\\alpha\\cdot\\beta^2\\cdot\\gamma^2)^\\phi$. Forcing $\\alpha\\cdot\\beta^2\\cdot\\gamma^2\\approx 2$
        makes the compute grow by about $2^\\phi$ &mdash; one clean rule: <b>add 1 to $\\phi$, roughly double the
        FLOPS.</b></p>`,
+    architecture:
+      `<p>Compound scaling needs a <b>good baseline</b> to scale. The authors do not hand-design it: they run a
+       <b>multi-objective neural architecture search</b> (the same search space as MnasNet) that optimizes both
+       accuracy and compute via the objective $\\text{ACC}(m)\\times[\\text{FLOPS}(m)/T]^{\\,w}$ with $w=-0.07$
+       and a target $T = 400$M FLOPS (&sect;4). The search returns <b>EfficientNet-B0</b>.</p>
+       <p><b>The B0 building block: MBConv (mobile inverted bottleneck).</b> Each main stage is built from
+       <b>MBConv</b> blocks &mdash; an inverted residual from MobileNetV2 with an added <b>squeeze-and-excitation
+       (SE)</b> channel-attention step. One MBConv block does: <b>(1) expand</b> the channels by a factor (the
+       number after "MBConv": <code>MBConv1</code> = expand &times;1, <code>MBConv6</code> = expand &times;6) with a
+       1&times;1 convolution; <b>(2) depthwise convolution</b> (a $k\\times k$ filter applied per-channel, far
+       cheaper than a full conv; $k\\in\\{3,5\\}$ in B0); <b>(3) SE</b> &mdash; pool to one value per channel, learn
+       per-channel gates, reweight the channels; <b>(4) project</b> back down to the output channels with a
+       1&times;1 convolution; plus a <b>residual skip</b> when input and output shapes match.</p>
+       <p><b>EfficientNet-B0 (Table 1), input $224\\times224$, 9 stages top to bottom:</b></p>
+       <table class="arch">
+        <tr><th>Stage</th><th>Operator</th><th>Resolution</th><th>Channels</th><th>Layers</th></tr>
+        <tr><td>1</td><td>Conv 3&times;3</td><td>224&times;224</td><td>32</td><td>1</td></tr>
+        <tr><td>2</td><td>MBConv1, k3&times;3</td><td>112&times;112</td><td>16</td><td>1</td></tr>
+        <tr><td>3</td><td>MBConv6, k3&times;3</td><td>112&times;112</td><td>24</td><td>2</td></tr>
+        <tr><td>4</td><td>MBConv6, k5&times;5</td><td>56&times;56</td><td>40</td><td>2</td></tr>
+        <tr><td>5</td><td>MBConv6, k3&times;3</td><td>28&times;28</td><td>80</td><td>3</td></tr>
+        <tr><td>6</td><td>MBConv6, k5&times;5</td><td>14&times;14</td><td>112</td><td>3</td></tr>
+        <tr><td>7</td><td>MBConv6, k5&times;5</td><td>14&times;14</td><td>192</td><td>4</td></tr>
+        <tr><td>8</td><td>MBConv6, k3&times;3</td><td>7&times;7</td><td>320</td><td>1</td></tr>
+        <tr><td>9</td><td>Conv 1&times;1 &amp; Pooling &amp; FC</td><td>7&times;7</td><td>1280</td><td>1</td></tr>
+       </table>
+       <p>B0 has about <b>5.3M parameters and 0.39B FLOPS</b> and reaches <b>77.1% ImageNet top-1</b> (&sect;4 /
+       Table 2). The two stage-1/stage-9 "stem and head" convolutions bracket seven MBConv stages; spatial size
+       halves at each downsampling stage (224 &rarr; 112 &rarr; 56 &rarr; 28 &rarr; 14 &rarr; 7) while channels
+       grow (32 &rarr; 320 &rarr; 1280).</p>
+       <p><b>B0 &rarr; B7: the family.</b> The two-step recipe scales this one baseline. <b>STEP 1</b> fixes
+       $\\phi=1$ and grid-searches the proportions once, giving $\\alpha=1.2,\\ \\beta=1.1,\\ \\gamma=1.15$.
+       <b>STEP 2</b> holds those fixed and dials $\\phi$ up: $\\phi$ from $1$ to $7$ produces
+       <b>EfficientNet-B1 &hellip; B7</b>. Each step multiplies every stage's layer count by $d=\\alpha^\\phi$
+       (rounded to whole layers) and every channel count by $w=\\beta^\\phi$, and enlarges the input resolution by
+       $r=\\gamma^\\phi$ &mdash; so the input grows from B0's $224$ px (e.g. $\\sim240$ at B1, $\\sim260$ at B2,
+       $\\sim300$ at B3, on up toward $\\sim600$ at B7, following $224\\cdot\\gamma^\\phi$). The block structure
+       (which MBConv, which kernel) is unchanged; only depth, width, and resolution scale. The top of the family,
+       <b>B7</b>, reaches <b>84.3% top-1, while being 8.4&times; smaller and 6.1&times; faster than the best prior
+       ConvNet</b> (Abstract).</p>`,
     symbols: [
       { sym: "$\\mathcal{N}$", desc: "the whole <b>network</b> (the ConvNet), written as a composition of its stages." },
       { sym: "$\\bigodot$", desc: "<b>compose in order</b>: chain the stages back-to-back, output of one feeding the next." },
@@ -154,8 +194,17 @@
       { sym: "FLOPS", desc: "a plain term: <b>FLoating-point OPerationS</b>, the count of multiply/add operations &mdash; a hardware-independent proxy for how expensive the network is to run." },
       { sym: "$\\alpha\\cdot\\beta^2\\cdot\\gamma^2 \\approx 2$", desc: "the <b>balance constraint</b>: the per-step FLOPS growth factor is held near $2$, so each $+1$ in $\\phi$ roughly doubles the compute." }
     ],
-    formula: `$$ \\text{depth: } d = \\alpha^{\\phi} \\qquad \\text{width: } w = \\beta^{\\phi} \\qquad \\text{resolution: } r = \\gamma^{\\phi} $$
-$$ \\text{s.t. } \\ \\alpha\\cdot\\beta^{2}\\cdot\\gamma^{2} \\approx 2, \\qquad \\alpha \\ge 1,\\ \\beta \\ge 1,\\ \\gamma \\ge 1 \\qquad\\text{(Eqn. 3, \\S3.3)} $$`,
+    formula: `$$ \\mathcal{N} \\;=\\; \\bigodot_{i=1\\ldots s}\\ \\mathcal{F}_i^{L_i}\\big(X_{\\langle H_i,\\,W_i,\\,C_i\\rangle}\\big) $$
+<p class="cap">A ConvNet as a chain of $s$ stages; stage $i$ repeats its layer pattern $\\mathcal{F}_i$ a total of $L_i$ times on a feature map of size $H_i\\times W_i$ with $C_i$ channels (Eqn. 1, \\S3.1).</p>
+$$ \\max_{d,\\,w,\\,r}\\ \\ \\text{Accuracy}\\big(\\mathcal{N}(d,w,r)\\big) $$
+$$ \\text{s.t. } \\ \\mathcal{N}(d,w,r) = \\bigodot_{i=1\\ldots s}\\ \\hat{\\mathcal{F}}_i^{\\,d\\cdot\\hat{L}_i}\\big(X_{\\langle r\\cdot\\hat{H}_i,\\ r\\cdot\\hat{W}_i,\\ w\\cdot\\hat{C}_i\\rangle}\\big) $$
+$$ \\text{Memory}(\\mathcal{N}) \\le \\text{target\\_memory}, \\qquad \\text{FLOPS}(\\mathcal{N}) \\le \\text{target\\_flops} $$
+<p class="cap">Model scaling as a constrained optimization: pick one depth/width/resolution triple $(d,w,r)$ that maximizes accuracy of the FIXED baseline $\\hat{\\mathcal{F}}_i,\\hat{L}_i,\\hat{H}_i,\\hat{W}_i,\\hat{C}_i$, subject to memory and compute (FLOPS) budgets (Eqn. 2, \\S3.1).</p>
+$$ \\text{depth: } d = \\alpha^{\\phi} \\qquad \\text{width: } w = \\beta^{\\phi} \\qquad \\text{resolution: } r = \\gamma^{\\phi} $$
+$$ \\text{s.t. } \\ \\alpha\\cdot\\beta^{2}\\cdot\\gamma^{2} \\approx 2, \\qquad \\alpha \\ge 1,\\ \\beta \\ge 1,\\ \\gamma \\ge 1 $$
+<p class="cap">The compound scaling rule: one dial $\\phi$ raises three fixed bases, so $(d,w,r)$ grow in locked proportion; the balance constraint pins the per-step compute growth near $2$ (Eqn. 3, \\S3.3). Grid search gives $\\alpha=1.2,\\ \\beta=1.1,\\ \\gamma=1.15$ (\\S4).</p>
+$$ \\text{FLOPS multiplier} \\;=\\; d\\cdot w^{2}\\cdot r^{2} \\;=\\; \\alpha^{\\phi}\\cdot(\\beta^{\\phi})^{2}\\cdot(\\gamma^{\\phi})^{2} \\;=\\; \\big(\\alpha\\cdot\\beta^{2}\\cdot\\gamma^{2}\\big)^{\\phi} \\;\\approx\\; 2^{\\phi} $$
+<p class="cap">FLOPS scaling (\\S3.3): a regular convolution's cost is linear in depth ($d$) but quadratic in width ($w^2$) and resolution ($r^2$); doubling depth doubles FLOPS, doubling width OR resolution quadruples them. Under the constraint, total compute grows by about $2^\\phi$ &mdash; each $+1$ in $\\phi$ roughly doubles the FLOPS.</p>`,
     whatItDoes:
       `<p>The equation says: <b>turn one dial $\\phi$, and all three knobs move together</b>. Depth becomes
        $\\alpha^\\phi$ times deeper, width $\\beta^\\phi$ times wider, resolution $\\gamma^\\phi$ times larger.

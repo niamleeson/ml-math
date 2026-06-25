@@ -125,6 +125,46 @@
        each pointwise layer is followed by <b>Batch Normalization</b> (a per-channel rescale that stabilizes
        training) and a <b>ReLU</b> (Rectified Linear Unit: keep positives, zero negatives), as shown in
        Fig.&nbsp;3.</p>`,
+    architecture:
+      `<p>The full <b>MobileNet body</b> (Table&nbsp;1) is one ordinary $3\\times3$ convolution at the front, then
+       <b>13 depthwise-separable blocks</b>, then average-pool &rarr; fully-connected &rarr; softmax. Each
+       "Conv dw" row is a depthwise filter and the "Conv" $1\\times1$ row right below it is its pointwise mixer;
+       that dw + pw pair is one separable block. Down-sampling is done by stride-2 depthwise convs (and the
+       first conv), which halve the spatial side; channel counts double as resolution halves. Every conv
+       (depthwise and pointwise) is followed by BatchNorm + ReLU (Fig.&nbsp;3) &mdash; omitted from the table for
+       brevity. Counting the dw rows below gives 13 separable blocks (one of them written as "5&times;" at the
+       $14\\times14$ stage).</p>
+       <table class="arch">
+        <thead><tr><th>Type / Stride</th><th>Filter shape</th><th>Input size</th></tr></thead>
+        <tbody>
+         <tr><td>Conv / s2</td><td>$3\\times3\\times3\\times32$</td><td>$224\\times224\\times3$</td></tr>
+         <tr><td>Conv dw / s1</td><td>$3\\times3\\times32$ dw</td><td>$112\\times112\\times32$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times32\\times64$</td><td>$112\\times112\\times32$</td></tr>
+         <tr><td>Conv dw / s2</td><td>$3\\times3\\times64$ dw</td><td>$112\\times112\\times64$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times64\\times128$</td><td>$56\\times56\\times64$</td></tr>
+         <tr><td>Conv dw / s1</td><td>$3\\times3\\times128$ dw</td><td>$56\\times56\\times128$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times128\\times128$</td><td>$56\\times56\\times128$</td></tr>
+         <tr><td>Conv dw / s2</td><td>$3\\times3\\times128$ dw</td><td>$56\\times56\\times128$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times128\\times256$</td><td>$28\\times28\\times128$</td></tr>
+         <tr><td>Conv dw / s1</td><td>$3\\times3\\times256$ dw</td><td>$28\\times28\\times256$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times256\\times256$</td><td>$28\\times28\\times256$</td></tr>
+         <tr><td>Conv dw / s2</td><td>$3\\times3\\times256$ dw</td><td>$28\\times28\\times256$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times256\\times512$</td><td>$14\\times14\\times256$</td></tr>
+         <tr><td>$5\\times$ Conv dw / s1</td><td>$3\\times3\\times512$ dw</td><td>$14\\times14\\times512$</td></tr>
+         <tr><td>$5\\times$ Conv / s1</td><td>$1\\times1\\times512\\times512$</td><td>$14\\times14\\times512$</td></tr>
+         <tr><td>Conv dw / s2</td><td>$3\\times3\\times512$ dw</td><td>$14\\times14\\times512$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times512\\times1024$</td><td>$7\\times7\\times512$</td></tr>
+         <tr><td>Conv dw / s2</td><td>$3\\times3\\times1024$ dw</td><td>$7\\times7\\times1024$</td></tr>
+         <tr><td>Conv / s1</td><td>$1\\times1\\times1024\\times1024$</td><td>$7\\times7\\times1024$</td></tr>
+         <tr><td>Avg Pool / s1</td><td>Pool $7\\times7$</td><td>$7\\times7\\times1024$</td></tr>
+         <tr><td>FC / s1</td><td>$1024\\times1000$</td><td>$1\\times1\\times1024$</td></tr>
+         <tr><td>Softmax / s1</td><td>Classifier</td><td>$1\\times1\\times1000$</td></tr>
+        </tbody>
+       </table>
+       <p>So the model is: 1 standard conv + 13 separable blocks (each = depthwise + pointwise) = 27 conv
+       layers, plus the pooling/FC/softmax head. The width multiplier $\\alpha$ scales every channel count in
+       this table by $\\alpha$; the resolution multiplier $\\rho$ scales every "Input size" spatial dimension by
+       $\\rho$.</p>`,
     symbols: [
       { sym: "$D_K$", desc: "the <b>kernel size</b>: the side length of the square filter window. MobileNet uses $D_K = 3$ (a $3\\times3$ filter)." },
       { sym: "$M$", desc: "the number of <b>input channels</b> (input feature maps) fed into the convolution." },
@@ -137,7 +177,22 @@
       { sym: "$\\alpha$", desc: "the <b>width multiplier</b> ($0\\lt\\alpha\\le1$): thins every layer, turning $M\\to\\alpha M$ and $N\\to\\alpha N$. Cost scales by $\\alpha^2$." },
       { sym: "$\\rho$", desc: "the <b>resolution multiplier</b> ($0\\lt\\rho\\le1$): shrinks the input image, turning $D_F\\to\\rho D_F$. Cost scales by $\\rho^2$." }
     ],
-    formula: `$$ \\underbrace{D_K\\cdot D_K\\cdot M\\cdot D_F\\cdot D_F + M\\cdot N\\cdot D_F\\cdot D_F}_{\\text{depthwise separable (eqn. 5)}} \\;\\Big/\\; \\underbrace{D_K\\cdot D_K\\cdot M\\cdot N\\cdot D_F\\cdot D_F}_{\\text{standard conv (eqn. 2)}} \\;=\\; \\frac{1}{N} + \\frac{1}{D_K^{2}} $$`,
+    formula: `$$ \\mathbf{G}_{k,l,n} = \\sum_{i,j,m} \\mathbf{K}_{i,j,m,n}\\cdot \\mathbf{F}_{k+i-1,\\,l+j-1,\\,m} $$
+       <p>What one standard convolution computes (&sect;3.1, eqn&nbsp;1): output pixel $(k,l)$ of output channel $n$ sums the kernel $\\mathbf{K}$ against the input $\\mathbf{F}$ over the spatial window $(i,j)$ AND all input channels $m$.</p>
+       $$ D_K\\cdot D_K\\cdot M\\cdot N\\cdot D_F\\cdot D_F $$
+       <p>Cost of that standard convolution in multiply-adds (&sect;3.1, eqn&nbsp;2): kernel area $\\times$ input channels $\\times$ output channels $\\times$ feature-map area.</p>
+       $$ \\hat{\\mathbf{G}}_{k,l,m} = \\sum_{i,j} \\hat{\\mathbf{K}}_{i,j,m}\\cdot \\mathbf{F}_{k+i-1,\\,l+j-1,\\,m} $$
+       <p>The depthwise convolution (&sect;3.1, eqn&nbsp;3): each input channel $m$ gets its own single filter $\\hat{\\mathbf{K}}$; there is no sum over channels, so channels are filtered but never mixed.</p>
+       $$ D_K\\cdot D_K\\cdot M\\cdot D_F\\cdot D_F $$
+       <p>Cost of the depthwise step (&sect;3.1, eqn&nbsp;4): the $N$ factor is gone &mdash; only $M$ channels, each filtered once.</p>
+       $$ D_K\\cdot D_K\\cdot M\\cdot D_F\\cdot D_F \\;+\\; M\\cdot N\\cdot D_F\\cdot D_F $$
+       <p>Cost of the full <b>depthwise-separable</b> convolution (&sect;3.1, eqn&nbsp;5): the depthwise step (left) plus the $1\\times1$ pointwise step $M\\cdot N\\cdot D_F\\cdot D_F$ (right) that does the channel mixing.</p>
+       $$ \\frac{D_K\\cdot D_K\\cdot M\\cdot D_F\\cdot D_F + M\\cdot N\\cdot D_F\\cdot D_F}{D_K\\cdot D_K\\cdot M\\cdot N\\cdot D_F\\cdot D_F} \\;=\\; \\frac{1}{N} + \\frac{1}{D_K^{2}} $$
+       <p>The reduction ratio (&sect;3.1): separable cost over standard cost. Almost everything cancels, leaving $\\tfrac1N+\\tfrac1{D_K^2}$ &mdash; "8 to 9 times less computation" for the $3\\times3$ filters MobileNet uses.</p>
+       $$ D_K\\cdot D_K\\cdot \\alpha M\\cdot D_F\\cdot D_F \\;+\\; \\alpha M\\cdot \\alpha N\\cdot D_F\\cdot D_F $$
+       <p>With the <b>width multiplier</b> $\\alpha$ (&sect;3.3, eqn&nbsp;6): every channel count $M,N$ is thinned to $\\alpha M,\\alpha N$ ($0\\lt\\alpha\\le1$). The pointwise term has two $\\alpha$ factors, so cost scales by roughly $\\alpha^2$.</p>
+       $$ D_K\\cdot D_K\\cdot \\alpha M\\cdot \\rho D_F\\cdot \\rho D_F \\;+\\; \\alpha M\\cdot \\alpha N\\cdot \\rho D_F\\cdot \\rho D_F $$
+       <p>Adding the <b>resolution multiplier</b> $\\rho$ (&sect;3.3, eqn&nbsp;7): the feature-map side $D_F$ is shrunk to $\\rho D_F$ ($0\\lt\\rho\\le1$). The two $\\rho$ factors scale cost by $\\rho^2$. Together $\\alpha$ and $\\rho$ dial total cost by about $\\alpha^2\\rho^2$.</p>`,
     whatItDoes:
       `<p>The top is the cost of the cheap two-step version (eqn&nbsp;5); the bottom is the cost of the standard
        convolution it replaces (eqn&nbsp;2). Divide and almost everything cancels &mdash; the shared

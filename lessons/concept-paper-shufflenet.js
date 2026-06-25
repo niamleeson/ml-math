@@ -141,19 +141,96 @@
        pointwise <i>group</i> $1\\times1$ conv (with BatchNorm + ReLU), then channel shuffle, then a $3\\times3$
        <b>depthwise</b> conv (BatchNorm, no ReLU), then a second pointwise group $1\\times1$ conv (BatchNorm), and
        finally add the input shortcut and apply ReLU.</p>`,
+    architecture:
+      `<p><b>The ShuffleNet unit</b> (&sect;3.2, Fig.&nbsp;2). A residual bottleneck with the two $1\\times1$ layers
+       made <i>group</i> convolutions and the $3\\times3$ made <i>depthwise</i>. Two forms:</p>
+       <p><b>(b) Stride-1 unit</b> (output same size as input, $c$ channels in and out, bottleneck width $m$):</p>
+       <pre>x ──┐
+     │   1x1 GConv (groups=g, c->m) ── BN ── ReLU
+     │   channel shuffle (g)
+     │   3x3 DWConv (depthwise, groups=m, stride=1, pad=1) ── BN        # no ReLU
+     │   1x1 GConv (groups=g, m->c) ── BN
+     └──▶ (+) add shortcut ── ReLU ──▶ out      (Fig. 2b)</pre>
+       <p><b>(c) Stride-2 unit</b> (downsampling, used as the first block of each stage). The depthwise conv uses
+       stride 2; the shortcut path gets a $3\\times3$ <b>average pool</b> (stride 2) to match spatial size; and the
+       merge is <b>channel concatenation</b> instead of addition (so the channel count grows for free):</p>
+       <pre>x ──┐
+     │   3x3 AvgPool (stride=2)  ─────────────────────────────┐  (shortcut)
+     │                                                        │
+     │   1x1 GConv (groups=g) ── BN ── ReLU                   │
+     │   channel shuffle (g)                                  │
+     │   3x3 DWConv (stride=2, pad=1) ── BN                    │
+     │   1x1 GConv (groups=g) ── BN                            │
+     └──▶ concat([main, shortcut]) ── ReLU ──▶ out  (Fig. 2c)</pre>
+       <p>Per &sect;3.2 the bottleneck width is $m=\\tfrac14$ of the unit's output channels, and (per the paper) the
+       <i>first</i> pointwise conv of the stride-2 stage-entry units is sometimes left dense ($g$ groups can be
+       skipped there because the input channel count is small).</p>
+
+       <p><b>The full network</b> (&sect;3.3, Table&nbsp;1). Input $224\\times224$; a $3\\times3$ stride-2 conv and a
+       $3\\times3$ stride-2 max-pool, then three <b>stages</b> of ShuffleNet units (each stage starts with one
+       stride-2 unit, then several stride-1 units), then global average pool and a fully-connected classifier. The
+       output channels per stage are chosen <i>per $g$</i> so that the total stays near 140&nbsp;MFLOPs (the "1&times;"
+       budget) for every group count:</p>
+       <pre>Layer        Output    KSize Stride Repeat   Output channels for g = 1 / 2 / 3 / 4 / 8
+Image        224x224    -     -     -        3
+Conv1        112x112   3x3    2     1        24   (same for all g)
+MaxPool       56x56    3x3    2     -        24
+Stage2        28x28     -     2     1        144 / 200 / 240 / 272 / 384   (stride-2 unit)
+              28x28     -     1     3        144 / 200 / 240 / 272 / 384   (3 stride-1 units)
+Stage3        14x14     -     2     1        288 / 400 / 480 / 544 / 768   (stride-2 unit)
+              14x14     -     1     7        288 / 400 / 480 / 544 / 768   (7 stride-1 units)
+Stage4         7x7      -     2     1        576 / 800 / 960 /1088 /1536   (stride-2 unit)
+               7x7      -     1     3        576 / 800 / 960 /1088 /1536   (3 stride-1 units)
+GlobalPool     1x1     7x7    -     -
+FC               -      -     -     -        1000  (ImageNet classes)
+Complexity (1x): ~143 / 140 / 137 / 142 / 137 MFLOPs</pre>
+       <p>The channel widths grow with $g$ because grouping makes each $1\\times1$ cheaper, so at a fixed FLOP budget
+       you can afford <i>more</i> channels &mdash; the lever behind Table&nbsp;2's "more groups, lower error" result.
+       "ShuffleNet $s\\times$" scales all channel counts by $s$, giving roughly $s^{2}$ the compute (e.g. 0.5&times;
+       is ~38&nbsp;MFLOPs, 0.25&times; ~13&nbsp;MFLOPs).</p>`,
     symbols: [
       { sym: "$h, w$", desc: "the <b>height and width</b> of the feature map in pixels &mdash; it has $h\\times w$ spatial positions." },
       { sym: "$c$", desc: "the number of <b>channels</b> (feature maps) entering the bottleneck block." },
       { sym: "$m$", desc: "the <b>bottleneck width</b>: the number of channels inside the block, between the two $1\\times1$ layers (smaller than $c$)." },
       { sym: "$g$", desc: "the <b>number of groups</b> in a group convolution. $g=1$ is an ordinary dense convolution; larger $g$ means more, smaller, independent groups and roughly $g$ times less compute." },
       { sym: "$n$", desc: "the number of channels <b>per group</b> on the shuffle's input, so the layer has $g\\times n$ channels total." },
+      { sym: "$a, b$", desc: "the <b>input and output channel counts</b> of a generic convolution, used in the dense vs group cost formulas ($a\\to b$ channels)." },
+      { sym: "$i, j$", desc: "in channel shuffle, the <b>group index</b> $i\\in\\{0,\\dots,g-1\\}$ and the <b>within-group position</b> $j\\in\\{0,\\dots,n-1\\}$ of a channel; the op sends index $i\\,n+j$ to $j\\,g+i$." },
       { sym: "“pointwise convolution”", desc: "a $1\\times1$ convolution: no spatial window; at each pixel it linearly combines the input channels into each output channel. The expensive part once depthwise is cheap." },
       { sym: "“group convolution”", desc: "a convolution that splits input and output channels into $g$ groups and connects only matching groups, so it costs about $\\tfrac1g$ of a dense one but the groups don't mix." },
       { sym: "“pointwise group convolution”", desc: "the two combined: a $1\\times1$ convolution done group-wise &mdash; ShuffleNet's cheap replacement for the dense $1\\times1$." },
       { sym: "“depthwise convolution”", desc: "the extreme group conv where groups equals the channel count: each channel is filtered by its own $3\\times3$ filter, no channel mixing (from MobileNet)." },
       { sym: "“channel shuffle”", desc: "the parameter-free reshape&rarr;transpose&rarr;flatten permutation that interleaves the groups so the next group conv sees channels from every previous group." }
     ],
-    formula: `$$ \\text{ResNet: } hw(2cm+9m^{2}) \\qquad \\text{ResNeXt: } hw\\!\\left(2cm+\\tfrac{9m^{2}}{g}\\right) \\qquad \\text{ShuffleNet: } hw\\!\\left(\\tfrac{2cm}{g}+9m\\right) $$`,
+    formula:
+      `<p><b>1. Dense (ordinary) $1\\times1$ convolution cost.</b> Turning $a$ input channels into $b$ output
+       channels on an $h\\times w$ map, every output reads every input at every pixel:</p>
+       $$ \\mathrm{FLOPs}_{\\text{dense}} \\;=\\; h\\,w\\,a\\,b. $$
+       <p class="cap">(&sect;3.2, the baseline pointwise cost ShuffleNet attacks.)</p>
+
+       <p><b>2. Group convolution cost.</b> Split both channel sides into $g$ groups and connect only matching
+       groups; each group is a small dense conv of size $\\tfrac{a}{g}\\times\\tfrac{b}{g}$, and there are $g$ of
+       them:</p>
+       $$ \\mathrm{FLOPs}_{\\text{group}} \\;=\\; g \\cdot h\\,w\\,\\frac{a}{g}\\,\\frac{b}{g} \\;=\\; \\frac{h\\,w\\,a\\,b}{g}
+          \\;=\\; \\frac{1}{g}\\,\\mathrm{FLOPs}_{\\text{dense}}. $$
+       <p class="cap">(&sect;3.2 &mdash; the $\\tfrac1g$ saving; pointwise <i>group</i> convolution applies this to the
+       expensive $1\\times1$ layers.)</p>
+
+       <p><b>3. Channel shuffle</b> (&sect;3.1, Fig.&nbsp;1). With $g$ groups of $n$ channels (so $g\\,n$ channels
+       total), index a channel by group $i\\in\\{0,\\dots,g-1\\}$ and position $j\\in\\{0,\\dots,n-1\\}$. The op
+       reshapes the flat index to the grid $(i,j)$, <b>transposes</b> to $(j,i)$, and flattens back:</p>
+       $$ \\underbrace{k = i\\,n + j}_{\\text{input index}} \\;\\xrightarrow[\\text{transpose}]{\\text{reshape}\\,(g,n)\\to(n,g)}\\;
+          \\underbrace{k' = j\\,g + i}_{\\text{output index}}. $$
+       <p class="cap">(&sect;3.1 &mdash; the parameter-free reshape&rarr;transpose&rarr;flatten permutation; channel
+       $i\\,n+j$ moves to position $j\\,g+i$, interleaving the groups.)</p>
+
+       <p><b>4. Bottleneck FLOP comparison</b> (&sect;3.2) for one block on an $h\\times w$ map with input channels
+       $c$ and bottleneck width $m$ &mdash; two $1\\times1$ layers ($2cm$) plus one $3\\times3$ layer:</p>
+       $$ \\text{ResNet: } hw\\!\\left(2cm+9m^{2}\\right) \\qquad
+          \\text{ResNeXt: } hw\\!\\left(2cm+\\tfrac{9m^{2}}{g}\\right) \\qquad
+          \\text{ShuffleNet: } hw\\!\\left(\\tfrac{2cm}{g}+9m\\right). $$
+       <p class="cap">(&sect;3.2 &mdash; ResNeXt groups only the $3\\times3$; ShuffleNet groups the $1\\times1$ layers
+       <i>and</i> makes the $3\\times3$ depthwise, collapsing $9m^{2}\\to9m$.)</p>`,
     whatItDoes:
       `<p>These are the multiply-add costs of one bottleneck block of each type, on an $h\\times w$ map with input
        channels $c$ and bottleneck width $m$ (&sect;3.2). Read each as "two $1\\times1$ layers plus one $3\\times3$

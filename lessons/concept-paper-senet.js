@@ -122,6 +122,41 @@
        shortcut: the paper states "Squeeze and Excitation both act before summation with the identity branch"
        (&sect;3, Fig. 3). Because the sigmoid can output $\\approx 1$ everywhere, the block can learn to do
        nothing &mdash; so adding it is safe.</p>`,
+    architecture:
+      `<p>The SE block is a small <b>add-on module</b> wrapped around any transform $F_{tr}$ (here a convolution,
+       Eqn. 1) that outputs $U \\in \\mathbb{R}^{H\\times W\\times C}$. Its internal data flow:</p>
+       <pre>U  (B, C, H, W)                       feature maps from a conv stage
+  |
+  |  F_sq  : global average pool over H,W   (Eqn. 2)
+  v
+z  (B, C)                              one global summary per channel
+  |
+  |  FC1   : Linear  C -> C/r           W_1, shape (C/r, C)
+  |  delta : ReLU
+  |  FC2   : Linear  C/r -> C           W_2, shape (C, C/r)
+  |  sigma : Sigmoid                    (Eqn. 3, excitation)
+  v
+s  (B, C)                              per-channel gates in (0,1)
+  |
+  |  F_scale : reshape s -> (B,C,1,1), broadcast-multiply U  (Eqn. 4)
+  v
+~X (B, C, H, W)                        recalibrated feature maps</pre>
+       <p><b>Where it inserts.</b> An SE block is dropped in immediately after the transform whose channels it
+       recalibrates &mdash; it does not replace anything. The paper shows two integrations:</p>
+       <ul>
+        <li><b>SE-Inception (Fig. 2).</b> The whole Inception module plays the role of $F_{tr}$; the SE block
+        wraps it, squeezing and re-scaling the Inception module's output channels before they pass on.</li>
+        <li><b>SE-ResNet (Fig. 3).</b> $F_{tr}$ is the residual branch (its $1\\times1$&ndash;$3\\times3$&ndash;$1\\times1$
+        bottleneck convolutions). The SE block recalibrates that branch's output, and only <i>then</i> is the result
+        added to the identity shortcut: "Squeeze and Excitation both act before summation with the identity branch."
+        Gating the residual branch (not the shortcut) is what keeps the near-identity fallback safe.</li>
+       </ul>
+       <p><b>Cost.</b> Each block adds two FC matrices, $2C^2/r$ weights; summed over all blocks this is Eqn. 5.
+       With the default <b>reduction ratio $r=16$</b>, SE-ResNet-50 adds $\\approx 2.5$M parameters
+       ($\\approx 10\\%$ over ResNet-50's 25.6M) for a $0.26\\%$ relative compute increase. The &sect;6.1 ablation
+       sweeps $r \\in \\{2,4,8,16,32\\}$: top-1 error is essentially flat from $r=2$ (22.29%, 45.7M params) to
+       $r=16$ (22.28%, 28.1M) and only degrades at $r=32$ (22.72%, 26.9M) &mdash; so $r=16$ is chosen as the
+       best accuracy/complexity balance.</p>`,
     symbols: [
       { sym: "$U$", desc: "the <b>input feature maps</b> to the SE block: the output of a preceding convolution, $C$ channels each of size $H\\times W$." },
       { sym: "$C$", desc: "the <b>number of channels</b> (feature maps) in $U$." },
@@ -136,10 +171,25 @@
       { sym: "$r$", desc: "the <b>reduction ratio</b>: how hard the bottleneck squeezes the middle layer. Default $r=16$ (&sect;6.1)." },
       { sym: "$\\delta$", desc: "the <b>ReLU</b> (Rectified Linear Unit) nonlinearity between the two FC layers: keep positives, zero out negatives." },
       { sym: "$\\sigma$", desc: "the <b>sigmoid</b> (logistic) function, squashing every output into $(0,1)$ so each gate is a valid &lsquo;volume&rsquo; in $[0,1]$." },
-      { sym: "$\\tilde{x}_c$", desc: "the <b>recalibrated $c$-th channel</b>: the original map $u_c$ scaled by its gate, $s_c\\,u_c$." }
+      { sym: "$\\tilde{x}_c$", desc: "the <b>recalibrated $c$-th channel</b>: the original map $u_c$ scaled by its gate, $s_c\\,u_c$." },
+      { sym: "$F_{tr}$", desc: "the <b>transform</b> the SE block wraps &mdash; here a convolution (Eqn. 1) producing $U$ from the input $X$." },
+      { sym: "$X$", desc: "the <b>input</b> to the transform $F_{tr}$: $C'$ channels (the previous layer's output), each map $x^s$." },
+      { sym: "$x^s$", desc: "the <b>$s$-th input channel</b> map fed into the convolution (Eqn. 1)." },
+      { sym: "$C'$", desc: "the <b>number of input channels</b> to $F_{tr}$ (may differ from the output count $C$)." },
+      { sym: "$\\mathbf{v}_c$", desc: "the <b>$c$-th convolution filter</b>; $\\mathbf{v}_c^{\\,s}$ is its kernel slice acting on input channel $x^s$ (Eqn. 1). $*$ is convolution." },
+      { sym: "$S$", desc: "the <b>number of stages</b> in the network, indexed by $s$ in the parameter-cost sum (Eqn. 5)." },
+      { sym: "$N_s,\\,C_s$", desc: "the <b>number of SE blocks</b> in stage $s$ and that stage's <b>output channel count</b> (Eqn. 5)." }
     ],
-    formula: `$$ z_c = F_{sq}(u_c) = \\frac{1}{H\\,W}\\sum_{i=1}^{H}\\sum_{j=1}^{W} u_c(i,j) \\quad\\text{(Eqn. 2, squeeze)} $$
-$$ s = F_{ex}(z) = \\sigma\\!\\big(W_2\\,\\delta(W_1 z)\\big) \\quad\\text{(Eqn. 3, excitation)} \\qquad\\qquad \\tilde{x}_c = F_{scale}(u_c, s_c) = s_c \\cdot u_c \\quad\\text{(Eqn. 4, scale)} $$`,
+    formula: `$$ u_c = \\mathbf{v}_c * X = \\sum_{s=1}^{C'} \\mathbf{v}_c^{\\,s} * x^s \\quad\\text{(Eqn. 1, the transform } F_{tr}\\text{ that produces } U) $$
+<p>Eqn. 1 is the ordinary convolution the SE block sits on top of: channel $c$ of the output, $u_c$, is the sum over the $C'$ input channels of each input map $x^s$ convolved with that filter's $s$-th kernel slice $\\mathbf{v}_c^{\\,s}$. The SE block then recalibrates this $U$.</p>
+$$ z_c = F_{sq}(u_c) = \\frac{1}{H\\,W}\\sum_{i=1}^{H}\\sum_{j=1}^{W} u_c(i,j) \\quad\\text{(Eqn. 2, squeeze: global average pooling)} $$
+<p>Eqn. 2 collapses each $H\\times W$ channel map to one number — its global average — giving the length-$C$ descriptor $z$.</p>
+$$ s = F_{ex}(z, W) = \\sigma\\!\\big(W_2\\,\\delta(W_1 z)\\big), \\qquad W_1 \\in \\mathbb{R}^{\\frac{C}{r}\\times C},\\; W_2 \\in \\mathbb{R}^{C\\times\\frac{C}{r}} \\quad\\text{(Eqn. 3, excitation: FC–ReLU–FC–sigmoid)} $$
+<p>Eqn. 3 turns the $C$ summaries into $C$ gates in $(0,1)$: $W_1$ reduces width $C\\to C/r$ (reduction ratio $r$), $\\delta$ is ReLU, $W_2$ restores $C/r\\to C$, $\\sigma$ is the sigmoid.</p>
+$$ \\tilde{x}_c = F_{scale}(u_c, s_c) = s_c \\cdot u_c \\quad\\text{(Eqn. 4, scale: per-channel recalibration)} $$
+<p>Eqn. 4 multiplies each channel's whole feature map by its scalar gate $s_c$ — channels are turned up (gate near $1$) or down (gate near $0$).</p>
+$$ \\text{extra params} = \\frac{2}{r}\\sum_{s=1}^{S} N_s\\,C_s^{2} \\quad\\text{(Eqn. 5, SE parameter cost)} $$
+<p>Eqn. 5 sums the two FC matrices ($2C_s^2/r$ weights each block) over all $N_s$ blocks in every stage $s$. For SE-ResNet-50 this is $\\approx 2.5$M extra parameters ($\\approx 10\\%$) at only a $0.26\\%$ relative increase in computation (3.87 vs 3.86 GFLOPs).</p>`,
     whatItDoes:
       `<p><b>Equation 2 (squeeze)</b> averages every pixel of channel $c$ into one number $z_c$ &mdash; the
        channel's global activity. Do this for all $C$ channels to get the vector $z$.</p>
