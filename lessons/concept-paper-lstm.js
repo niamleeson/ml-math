@@ -191,7 +191,20 @@
       { sym: "$\\tanh$", desc: "the hyperbolic tangent, squashing any real number into $(-1,1)$ — used for the candidate $g$ and for the memory readout." },
       { sym: "$\\odot$", desc: "the Hadamard (element-wise) product: multiply two equal-length vectors entry by entry. This is how a gate scales a flow, slot by slot." },
       { sym: "$W_{ih}$, $b_{ih}$", desc: "the input-to-gates weight matrix (shape $4H\\times d$) and bias (length $4H$). Maps $x_t$ to the four stacked gate pre-activations." },
-      { sym: "$W_{hh}$, $b_{hh}$", desc: "the hidden-to-gates (recurrent) weight matrix (shape $4H\\times H$) and bias (length $4H$). Maps $h_{t-1}$ to the same four blocks. PyTorch keeps two separate biases." }
+      { sym: "$W_{hh}$, $b_{hh}$", desc: "the hidden-to-gates (recurrent) weight matrix (shape $4H\\times H$) and bias (length $4H$). Maps $h_{t-1}$ to the same four blocks. PyTorch keeps two separate biases." },
+      { sym: "$c_j$ (the cell)", desc: "the 1997 paper's $j$-th memory cell — the whole unit (gates + CEC). Subscript $j$ indexes cells." },
+      { sym: "$s_{c_j}(t)$", desc: "the internal state of cell $c_j$ at time $t$ (the paper's name for what the modern form calls $c_t$). Held by the CEC; starts at $s_{c_j}(0)=0$." },
+      { sym: "$y^{c_j}(t)$", desc: "the OUTPUT of cell $c_j$ (what leaves the box), $y^{c_j}=y^{\\mathrm{out}_j}h(s_{c_j})$. The modern $h_t$ is the vector of these." },
+      { sym: "$y^{\\mathrm{in}_j}$, $y^{\\mathrm{out}_j}$", desc: "the 1997 input-gate and output-gate activations (sigmoid in $[0,1]$). Same role as modern $i_t$ and $o_t$." },
+      { sym: "$\\mathrm{net}_{c_j}$, $\\mathrm{net}_{\\mathrm{in}_j}$, $\\mathrm{net}_{\\mathrm{out}_j}$", desc: "the net inputs (weighted sums $\\sum_u w_{\\cdot u}y^u(t-1)$ over all non-output units $u$) feeding the cell, input gate, and output gate." },
+      { sym: "$g$", desc: "the 1997 input-squashing function, range $[-2,2]$ (§5.6). Shapes the candidate content before the input gate. The modern form replaces it with $\\tanh$ (range $[-1,1]$)." },
+      { sym: "$h$ (the function)", desc: "the 1997 output-squashing function, range $[-1,1]$ (§5.6), applied to $s_{c_j}$ before the output gate. (Distinct from the hidden-state vector $h_t$.)" },
+      { sym: "$w_{jj}$", desc: "the self-recurrent weight on the CEC unit. The paper requires it $=1.0$ (with linear $f_j$) so error neither grows nor shrinks." },
+      { sym: "$f_j$, $f_j'$", desc: "the activation of CEC unit $j$ and its derivative. The CEC condition $f_j'\\,w_{jj}=1$ forces $f_j(x)=x$ (identity)." },
+      { sym: "$\\vartheta_u(t)$", desc: "the backpropagated error signal arriving at unit $u$ at time $t$ (§3.1). The ratio $\\partial\\vartheta_v(t-q)/\\partial\\vartheta_u(t)$ is the error back-flow over $q$ steps." },
+      { sym: "$q$", desc: "the number of time steps the error is propagated back; the back-flow factor is a product of $q$ terms (eq 3.2), hence exponential growth/decay in $q$." },
+      { sym: "$\\mathrm{net}_v(t)$, $w_{uv}$, $f'_{\\max}$", desc: "a unit's net input, the weight from unit $u$ to $v$, and the max of $f'$ ($=0.25$ for the logistic sigmoid) — the ingredients of the vanishing-gradient bound." },
+      { sym: "blocks / size $S$", desc: "a memory cell block: $S$ cells sharing one input gate and one output gate (Fig. 2; experiments use $S=2$)." }
     ],
 
     formula:
@@ -249,16 +262,23 @@
        $f_t\\!=\\!1$ everywhere and it collapses back to the 1997 CEC update in part C.</p>`,
 
     whatItDoes:
-      `<p>The first four lines build the three <b>gates</b> ($i,f,o$ via sigmoid, each a valve in $[0,1]$) and the
-       <b>candidate</b> ($g$ via $\\tanh$, the proposed new content). Each is just a linear map of the input $x_t$
-       and the previous output $h_{t-1}$, then a squashing function.</p>
-       <p>The fifth line is the heart: the new memory $c_t$ <b>keeps</b> $f_t$ of the old memory and <b>adds</b>
-       $i_t$ of the new candidate. The sixth line <b>reads out</b> a gated, $\\tanh$-squashed view of the memory as
-       the output $h_t$.</p>
-       <p><b>Mapping to the 1997 paper:</b> the input gate $i$ and output gate $o$ are the paper's two gates; the
-       $c_t = f\\odot c_{t-1}+\\dots$ self-loop with $f\\!\\to\\!1$ is the <b>Constant Error Carousel</b> (weight-$1$
-       self-connection). The explicit forget gate $f$ is the 1999/2000 generalization of that fixed weight-$1$
-       loop. These equations are PyTorch's <code>nn.LSTMCell</code> definition, which we match exactly.</p>`,
+      `<p><b>Block A (§3.1)</b> says, in words: the error signal you send back $q$ steps is a <b>product of $q$
+       factors</b>, each factor being a unit's derivative times a weight. Multiply $q$ numbers all smaller than $1$
+       and you get something tiny — the gradient <b>vanishes</b>; all bigger than $1$ and it <b>explodes</b>. That is
+       why a plain RNN cannot connect events far apart in time.</p>
+       <p><b>Block B (§3.2)</b> is the cure stated as a demand: make one self-connected unit's back-flow factor
+       exactly $1$. The only way ($f'_j w_{jj}=1$ integrated) is a <b>linear unit that copies itself</b> — identity
+       activation, self-weight $1.0$. Error then rides this <b>Constant Error Carousel</b> back through time without
+       shrinking.</p>
+       <p><b>Block C (§4.1)</b> wraps that bare carousel in two valves so the network controls it. The input gate
+       $y^{\\mathrm{in}}$ decides how much new content $g(\\mathrm{net}_c)$ to add; the state accumulates it onto the
+       weight-$1$ self-loop $s_{c}(t)=s_{c}(t\\!-\\!1)+y^{\\mathrm{in}}g(\\cdot)$; the output gate $y^{\\mathrm{out}}$
+       decides how much of the squashed state $h(s_c)$ to reveal as the cell's output $y^{c}$.</p>
+       <p><b>Block D</b> is the modern reading: the gates' linear maps are written with explicit $x_t,h_{t-1}$ weight
+       matrices, and the always-keep self-loop becomes a learned <b>forget gate</b> $f_t$ — so the new memory
+       <b>keeps</b> $f_t$ of the old and <b>adds</b> $i_t$ of the candidate, then reads out a gated $\\tanh$ view.
+       Setting $f_t\\!\\equiv\\!1$ recovers Block C exactly. These are PyTorch's <code>nn.LSTMCell</code> equations,
+       which the CODE block matches to machine precision.</p>`,
 
     derivation:
       `<p>The full modern LSTM derivation &mdash; why each gate exists and how BPTT flows through the cell &mdash; is
@@ -308,12 +328,21 @@
        </ol>`,
 
     results:
-      `<p>The 1997 paper reports that LSTM <b>learns long-time-lag tasks that plain RNNs and earlier methods cannot</b>
-       &mdash; bridging gaps of well over $1000$ time steps on its toy benchmarks, while standard recurrent nets fail
-       past roughly $10$ steps. We do not quote exact table numbers from memory; see the paper's experiment sections
-       for the specific lags and success rates. (Source: "Long Short-Term Memory", Neural Computation 9(8), 1997, as
-       summarized on Wikipedia.) The numbers in our CODEVIZ are our own small-scale run, not the paper's reported
-       figures.</p>`,
+      `<p>From the paper's experiment sections (read directly):</p>
+       <ul>
+         <li><b>Multiplication problem (Exp 5, Table 8).</b> Minimal lag $50$, sequence length $T=100$: LSTM reached
+         the stopping criterion with test MSE $0.0223$ (139 of 2560 sequences wrong) after $482{,}000$ training
+         sequences, or MSE $0.0139$ (14 of 2560 wrong) after $1{,}273{,}000$ — solving a task needing
+         <b>continuous-valued, nonintegrative</b> processing across the gap.</li>
+         <li><b>Temporal order (Exp 6, Table 9).</b> Classifying sequences of length $100$&ndash;$110$ by the order of
+         two (6a) or three (6b) relevant symbols separated by $\\ge 30$ steps: task 6a — 1 of 2560 wrong after
+         $31{,}390$ sequences; task 6b — 2 of 2560 wrong after $571{,}100$ sequences. These had
+         <b>never been solved by previous recurrent-net algorithms</b>.</li>
+       </ul>
+       <p>The paper's broader claim across its benchmarks: LSTM bridges minimal time lags of well over $1000$ steps,
+       where conventional BPTT/RTRL nets fail past roughly $10$. (Source: "Long Short-Term Memory", Neural Computation
+       9(8):1735-1780, 1997, Tables 8&ndash;9 and §5.6.) The numbers in our CODEVIZ are our own small-scale run, not
+       the paper's reported figures.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -122,6 +122,56 @@
        <p>Unlike Batch Normalization, none of this looks at other examples in the batch. The weight is normalized
        deterministically from $g$ and $\\mathbf{v}$ alone, so the method works for one example at a time.</p>`,
 
+    architecture:
+      `<p>Look at one neuron and rebuild it part by part. In a plain layer the neuron owns a single weight vector
+       $\\mathbf{w}$ (one number per input feature) and a bias $b$, and computes
+       $y=\\phi(\\mathbf{w}\\cdot\\mathbf{x}+b)$ &mdash; the input dotted with the weight, plus the bias, run through
+       an activation $\\phi$. Weight normalization keeps the same neuron and the same output, but <b>swaps what is
+       stored</b>.</p>
+       <ol>
+         <li><b>The trained parameters become $\\mathbf{v}$, $g$, and $b$.</b> Instead of storing $\\mathbf{w}$, the
+         neuron stores a <i>direction vector</i> $\\mathbf{v}$ (same shape as $\\mathbf{w}$, one entry per input), a
+         single <i>length scalar</i> $g$, and the bias $b$. These three are the variables the optimizer updates;
+         $\\mathbf{w}$ itself is never stored &mdash; it is recomputed every forward pass. (Eq. 2.)</li>
+         <li><b>Rebuild the weight: $\\mathbf{w}=\\frac{g}{\\lVert\\mathbf{v}\\rVert}\\,\\mathbf{v}$.</b> First take the
+         length of the direction, $\\lVert\\mathbf{v}\\rVert$ (square root of the sum of its squared entries). Divide
+         $\\mathbf{v}$ by it to get a unit vector $\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$ (length exactly $1$), then
+         multiply by $g$. The result has length exactly $g$, so $g$ alone is the neuron's weight magnitude and
+         $\\mathbf{v}$ alone is its pattern. (Eq. 2.)</li>
+         <li><b>Forward: $y=\\phi(\\mathbf{w}\\cdot\\mathbf{x}+b)$.</b> With the rebuilt $\\mathbf{w}$, the neuron
+         computes its output exactly as before &mdash; dot with the input, add the bias, apply the activation.
+         Nothing downstream changes; a weight-normalized layer is a drop-in replacement for an ordinary one.</li>
+       </ol>
+       <p><b>For a whole layer.</b> A linear layer is a stack of these neurons: its weight is a matrix with one
+       <i>row</i> per output neuron. So $\\mathbf{v}$ is a matrix of the same shape, the norm is taken
+       <b>per row</b> (over the input dimension), and there is one $g$ per row &mdash; in PyTorch terms, $\\mathbf{v}$
+       is <code>weight_v</code> with shape $(\\text{out},\\text{in})$ and $g$ is <code>weight_g</code> with shape
+       $(\\text{out},1)$, so the division broadcasts cleanly down each row.</p>
+       <p><b>Where the gradients go.</b> Autograd flows the usual $\\nabla_{\\mathbf{w}}L$ back through the rebuild
+       step and splits it into two updates: $\\nabla_g L=\\nabla_{\\mathbf{w}}L\\cdot\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$
+       (the part of the gradient along the direction, which moves the length) and
+       $\\nabla_{\\mathbf{v}}L=\\frac{g}{\\lVert\\mathbf{v}\\rVert}\\nabla_{\\mathbf{w}}L-\\frac{g\\,\\nabla_g L}{\\lVert\\mathbf{v}\\rVert^{2}}\\mathbf{v}$
+       (the part perpendicular to the direction, which rotates it without lengthening). So the two trained
+       parameters update along two non-interfering axes. (Eq. 3, Section 2.1.)</p>
+       <p><b>The mean-only batch-norm variant (Section 4).</b> The paper also pairs the reparameterization with a
+       cheap centering step. Compute the raw pre-activation $t=\\mathbf{w}\\cdot\\mathbf{x}$, subtract only its
+       minibatch <i>mean</i> $\\mu[t]$ (no division by standard deviation, unlike full batch norm), then add the
+       bias: $\\tilde{t}=t-\\mu[t]+b$ and $y=\\phi(\\tilde{t})$. Keeping just the mean keeps the per-example noise
+       small while still centering the gradients &mdash; a lighter complement to weight norm.</p>
+       <p><b>The data-dependent initialization step (Section 3).</b> Before training, the parameters are seeded so
+       every neuron starts in a healthy range. First sample $\\mathbf{v}$ from a small normal distribution and fix
+       its direction. Then push one mini-batch through and, per neuron, measure the pre-activation
+       $t=\\mathbf{v}\\cdot\\mathbf{x}/\\lVert\\mathbf{v}\\rVert$ over that batch &mdash; its mean $\\mu[t]$ and
+       standard deviation $\\sigma[t]$. Set the length to $g\\leftarrow 1/\\sigma[t]$ and the bias to
+       $b\\leftarrow -\\mu[t]/\\sigma[t]$, so the post-init pre-activation $y=(t-\\mu[t])/\\sigma[t]$ starts with mean
+       $0$ and variance $1$ across that batch. After this one-time pass, $g$ and $b$ become ordinary trained
+       parameters and training proceeds normally.</p>
+       <p><b>Per-step data flow (after init).</b> Each forward pass: (1) read $\\mathbf{v},g,b$; (2) compute
+       $\\lVert\\mathbf{v}\\rVert$ and rebuild $\\mathbf{w}=g\\,\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$; (3) output
+       $y=\\phi(\\mathbf{w}\\cdot\\mathbf{x}+b)$. Each backward pass: autograd returns $\\nabla_{\\mathbf{w}}L$, the
+       rebuild step splits it into $\\nabla_g L$ and $\\nabla_{\\mathbf{v}}L$, and the optimizer steps $g$ and
+       $\\mathbf{v}$ (and $b$) &mdash; never touching any other example in the batch.</p>`,
+
     symbols: [
       { sym: "$\\mathbf{w}$", desc: "the weight vector of one neuron: the list of numbers the layer multiplies its input by (one per input feature)." },
       { sym: "$\\mathbf{v}$", desc: "the new direction parameter: a vector whose direction is used after dividing out its own length. Trained by gradient descent." },

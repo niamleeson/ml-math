@@ -149,6 +149,60 @@
        arms separated by a peak at EMC $= n$: descend, peak, descend. That is the double-descent curve. The
        over-parameterized arm can end up <i>below</i> the best classical point, which is why "just make it bigger"
        works in practice.</p>`,
+    architecture:
+      `<p>This is a theory / empirical paper, so the "architecture" is not a single layer stack &mdash; it is an
+       <b>experimental pipeline</b> that <i>sweeps</i> a model family along one axis and reads off test error.
+       Double descent is a property of the <b>sweep</b>, not of any one network. Here is the pipeline component
+       by component (&sect;4&ndash;6).</p>
+       <ol>
+        <li><b>The model family being swept.</b> The paper does not study one fixed network; it studies a
+        <i>family</i> indexed by a width parameter $k$, then runs every member.
+         <ul>
+          <li><b>ResNet18</b> with the four stages widened to $[k, 2k, 4k, 8k]$ convolutional channels; the
+          standard ResNet18 is $k = 64$, and they sweep $k$ from very thin (e.g. $k = 1$) up to and past $k = 64$.</li>
+          <li><b>5-layer CNNs</b> (four conv layers of width $[k, 2k, 4k, 8k]$ plus a fully-connected head),
+          swept the same way.</li>
+          <li><b>6-layer Transformers</b> (encoder&ndash;decoder, Vaswani et al. 2017) for translation, scaled by
+          the embedding width $d_{\\text{model}}$ with feed-forward width $d_{\\text{ff}} = 4\\,d_{\\text{model}}$.</li>
+         </ul>
+        Each value of the index ($k$ or $d_{\\text{model}}$) is one <b>point</b> on the x-axis; the whole sweep is
+        the experiment.</li>
+        <li><b>The axis varied to cross the interpolation threshold.</b> The same double-descent shape appears
+        along <i>three</i> different sweep axes &mdash; this is the paper's unifying move:
+         <ul>
+          <li><b>Model-wise</b> (&sect;4): hold data and epochs fixed, sweep <b>width</b> $k$. Test error peaks
+          where width first makes the net able to interpolate the training set.</li>
+          <li><b>Epoch-wise</b> (&sect;5): hold the (large) model and data fixed, sweep <b>training time</b> in
+          epochs. Training longer raises effective complexity, so a fixed big model walks through under-, critical-,
+          and over-parameterized regimes <i>over the course of training</i>.</li>
+          <li><b>Sample-wise</b> (&sect;6): hold model and epochs fixed, sweep <b>training-set size</b> $n$. Near
+          the threshold, adding samples pushes the curve so that <i>more data hurts</i> &mdash; the title effect.</li>
+         </ul></li>
+        <li><b>Effective Model Complexity (EMC) is the common x-coordinate.</b> Width, epochs, and sample size are
+        three knobs, but they map onto <i>one</i> ruler: EMC, the largest training set the procedure can fit to
+        near-zero error (tolerance $\\epsilon = 0.1$). The pipeline's job is to slide EMC from below $n$ to above
+        $n$ &mdash; whichever knob does the sliding &mdash; and watch the test-error curve descend, <b>peak at
+        EMC $\\approx n$</b>, and descend again. The interpolation threshold is the single point where EMC $= n$.</li>
+        <li><b>Label noise (optional, but it sharpens the peak).</b> A fraction $p$ of training labels is
+        randomly corrupted (uniform random label with probability $p$; the paper shows $p = 10\\%, 15\\%, 20\\%$),
+        sampled <b>once</b> and frozen for all of training. Forcing the net to interpolate these wrong labels at
+        the threshold is what makes the test-error spike dramatic; with clean labels the peak is faint.</li>
+        <li><b>Training procedure (the rest of $\\mathcal{T}$).</b> For images: Adam at learning rate $0.0001$ for
+        $4000$ epochs (or SGD with an inverse-square-root schedule, $\\sim$500K steps), batch size $128$, on
+        <b>CIFAR-10 / CIFAR-100</b> ($50000$ training images). For translation: Transformers on IWSLT'14 De&rarr;En
+        and WMT'14 En&rarr;Fr, $\\sim$80K gradient steps, $10\\%$ label smoothing, no dropout. The optimizer, epoch
+        count, and these choices are <i>part of</i> $\\mathcal{T}$, which is exactly why EMC &mdash; not raw
+        parameter count &mdash; is the right x-axis.</li>
+        <li><b>The measured quantity.</b> At every point of the sweep the pipeline records <b>train error</b> and
+        <b>test error</b> (for translation, per-token perplexity). Train error pinpoints the threshold (it first
+        hits $\\approx 0$ exactly where EMC $= n$); test error traces the double-descent curve: descend &rarr;
+        <b>peak at the threshold</b> &rarr; descend again.</li>
+       </ol>
+       <p>So the "architecture" to picture is a <b>loop</b>: for each setting of one axis, train a member of the
+       model family to completion, log train/test error, and plot error against effective complexity. The famous
+       curve is what that loop draws &mdash; an emergent property of the sweep, not a layer diagram. Our Track B
+       reproduction below is exactly this pipeline shrunk to a random-feature regression whose width $D$ is the
+       swept axis.</p>`,
     symbols: [
       { sym: "$n$", desc: "the <b>number of training samples</b> (labeled examples the model fits to). The interpolation threshold is measured relative to this." },
       { sym: "EMC", desc: "<b>Effective Model Complexity</b> (&sect;2, Definition 1): the <i>largest number of training samples</i> a training procedure can fit to near-zero training error. A single number, in the same units as $n$, that stands in for 'how powerful is this procedure'." },

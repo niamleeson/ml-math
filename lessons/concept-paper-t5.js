@@ -159,10 +159,67 @@
        your party &lt;Y&gt; week."</code> &rarr; target <code>"&lt;X&gt; for inviting &lt;Y&gt; last
        &lt;Z&gt;"</code>. Note this is already text-to-text, so pre-training and fine-tuning share one
        format.</p>`,
+    architecture:
+      `<p>T5 is a <b>standard Transformer encoder-decoder</b> (&sect;2.1) with three deliberate
+       simplifications, fed by one big corpus and instantiated at five sizes. Component by component:</p>
+       <p><b>Embedding.</b> A single shared <code>nn.Embedding(vocab, d_model)</code> token table (no
+       absolute or sinusoidal position vectors are added — position lives only in attention, below). The
+       vocabulary is a 32,000-piece SentencePiece set plus the sentinel tokens. The same embedding matrix
+       is tied to the output projection.</p>
+       <p><b>Encoder stack.</b> $L$ identical blocks. Each block = [simplified LayerNorm &rarr; multi-head
+       <b>bidirectional self-attention</b> (with the relative position bias added to every logit) &rarr;
+       residual add] then [LayerNorm &rarr; feed-forward (<code>Linear(d_model, d_ff)</code> &rarr; ReLU
+       &rarr; <code>Linear(d_ff, d_model)</code>) &rarr; residual add]. Dropout is applied in the
+       feed-forward, on the residual connection, on the attention weights, and at the input/output of the
+       whole stack (rate 0.1 in the baseline).</p>
+       <p><b>Decoder stack.</b> $L$ blocks, each with <i>three</i> sub-components instead of two:
+       [LayerNorm &rarr; <b>causal (masked) self-attention</b> (+ relative position bias) &rarr; residual]
+       then [LayerNorm &rarr; <b>cross-attention</b> into the final encoder hidden states $H$ (no mask)
+       &rarr; residual] then [LayerNorm &rarr; feed-forward &rarr; residual]. A final LayerNorm + the tied
+       output matrix $W$ produce vocabulary logits.</p>
+       <p><b>The three simplifications vs the 2017 Transformer.</b> (1) <b>LayerNorm</b> with no additive
+       bias, rescale-only, on the <i>input</i> of each sub-component (pre-norm). (2) The
+       <b>simplified relative position bias</b> — a learned scalar per (bucket, head) added to attention
+       logits, 32 log-spaced buckets up to offset 128, <i>shared across all layers</i> but separate per
+       head — replacing sinusoidal position encodings. (3) The whole thing is pre-trained with
+       <b>span corruption</b> rather than left-to-right language modeling or BERT-style single-token
+       masking.</p>
+       <p><b>The C4 corpus (&sect;3.1.1).</b> Pre-training data is the <b>Colossal Clean Crawled Corpus</b>
+       — about <b>750&nbsp;GB</b> of English text scraped from one month (April 2019) of <b>Common
+       Crawl</b> and aggressively cleaned: keep only lines ending in terminal punctuation, drop pages with
+       fewer than 3 sentences or any line under 5 words, strip pages with profanity / code (curly braces,
+       "Javascript") / "lorem ipsum" / boilerplate legal text, deduplicate by discarding repeated
+       three-sentence spans, and keep only pages detected as English with probability &ge; 0.99. It is
+       orders of magnitude larger and cleaner than prior pre-training corpora.</p>
+       <p><b>The five model sizes (&sect;3.6 scaling).</b> All share $d_{kv}=64$ except the two largest;
+       all use $L$ encoder blocks <i>and</i> $L$ decoder blocks. The baseline is <b>Base</b>, sized so
+       each stack matches BERT<sub>BASE</sub> (hence ~2&times; BERT's parameters: two stacks, not one):</p>
+       <ul>
+        <li><b>T5-Small</b> — ~60M params: $L$=6, $d_{model}$=512, $d_{ff}$=2048, $d_{kv}$=64, 8 heads.</li>
+        <li><b>T5-Base</b> — ~220M (the baseline): $L$=12, $d_{model}$=768, $d_{ff}$=3072, $d_{kv}$=64,
+        12 heads. Each stack ≈ BERT<sub>BASE</sub>.</li>
+        <li><b>T5-Large</b> — ~770M: $L$=24, $d_{model}$=1024, $d_{ff}$=4096, $d_{kv}$=64, 16 heads.</li>
+        <li><b>T5-3B</b> — ~2.8B: $L$=24, $d_{model}$=1024, $d_{ff}$=16384, $d_{kv}$=128, 32 heads.</li>
+        <li><b>T5-11B</b> — ~11B: $L$=24, $d_{model}$=1024, $d_{ff}$=65536, $d_{kv}$=128, 128 heads.</li>
+       </ul>
+       <p>The toy <code>TinyT5</code> in the CODE panel keeps this exact shape at miniature scale
+       ($d_{model}$=64, 4 heads, $L$=2) so the relative-position-bias ablation is the only moving part.</p>`,
     symbols: [
       { sym: "text-to-text", desc: "the plain-English framing: the model always takes a string as input and produces a string as output. Every task is expressed this way." },
       { sym: "task-prefix", desc: "a short string (e.g. <code>\"translate English to German:\"</code> or our toy <code>&lt;rev&gt;</code>) prepended to the input to tell the one shared model which task to perform." },
       { sym: "encoder / decoder", desc: "the <b>encoder</b> reads the whole input with bidirectional self-attention; the <b>decoder</b> writes the output one token at a time (causal self-attention + cross-attention into the encoder)." },
+      { sym: "$x,\\ y$", desc: "the input string and target string. In T5 <i>everything</i> is a string: $x$ is the (prefixed) input, $y$ is the answer the decoder must produce token by token." },
+      { sym: "$\\Sigma^{*}$", desc: "the set of all finite token strings over the vocabulary $\\Sigma$. Writing $x,y\\in\\Sigma^{*}$ just says both input and output are token strings." },
+      { sym: "$\\Vert$", desc: "string concatenation: $\\text{prefix}\\,\\Vert\\,x$ is the task-prefix glued onto the front of the input." },
+      { sym: "$\\theta$", desc: "all the model's learnable parameters (every weight matrix, embedding, gain, and position scalar)." },
+      { sym: "$p_\\theta(y_t\\mid\\cdot)$", desc: "the model's predicted probability of the next target token $y_t$, given everything to its left and the encoded input." },
+      { sym: "$y_{\\lt t}$", desc: "the target tokens already generated before position $t$ — what the decoder conditions on at step $t$ (teacher forcing during training)." },
+      { sym: "$\\mathcal{L}(\\theta)$", desc: "the training loss: summed negative log-probability (cross-entropy) of the target tokens. The one objective shared by pre-training and every downstream task." },
+      { sym: "$H$", desc: "the encoder's output hidden states — context-aware vectors for the whole input that the decoder cross-attends into." },
+      { sym: "$W$", desc: "the output projection matrix mapping a decoder vector to a logit per vocabulary token (tied to the input embedding)." },
+      { sym: "$g$", desc: "the learned per-feature gain (scale) vector in T5's LayerNorm; there is no matching additive bias." },
+      { sym: "$d_{model},\\ d_{ff},\\ d_{kv}$", desc: "the model width (token-vector size), the feed-forward inner width, and the per-head key/value width. The five T5 sizes scale these (and the layer count $L$ and head count)." },
+      { sym: "$L$", desc: "the number of blocks in <i>each</i> stack (encoder has $L$, decoder has $L$). 6 / 12 / 24 across the Small / Base / Large-and-up sizes." },
       { sym: "$i,\\ j$", desc: "token positions: $i$ is the <b>query</b> position (the token doing the looking), $j$ is the <b>key</b> position (a token being looked at)." },
       { sym: "$j - i$", desc: "the <b>relative position</b> (signed offset) of key $j$ from query $i$. Negative = key is to the left (past), positive = key is to the right (future). T5's bias depends only on this, not on $i$ or $j$ alone." },
       { sym: "$\\mathrm{bucket}(j-i)$", desc: "the function that bins a signed offset into one of a small number of buckets — small offsets get their own bucket, large ones are merged (logarithmically), so the table stays small. The paper uses 32 buckets, max offset 128." },
@@ -173,32 +230,45 @@
       { sym: "sentinel token", desc: "a special placeholder token (written <code>&lt;X&gt;, &lt;Y&gt;, &lt;Z&gt;</code>) that marks where a corrupted span was removed in the input and labels that span in the target." },
       { sym: "span corruption", desc: "the unsupervised pre-training objective: drop 15% of tokens, replace each dropped contiguous span by one sentinel, and train the model to regenerate the dropped spans." }
     ],
-    formula: `$$ y \\;=\\; \\mathrm{Model}\\big(\\,\\text{prefix} \\,\\Vert\\, x\\,\\big), \\qquad x,\\,y \\in \\Sigma^{*} \\qquad\\text{(\\S 2.4: the text-to-text framework — input string} \\to \\text{output string, one model)} $$
-<p class="cap">Every task is the same map: a string in, a string out. <span class="mathlit">prefix</span> is a short task tag prepended to the input <span class="mathlit">x</span>; <span class="mathlit">y</span> is the answer written as plain text (even a class label or a number). <span class="mathlit">$\\Sigma^{*}$</span> = all token strings.</p>
-$$ \\mathcal{L}(\\theta) \\;=\\; -\\sum_{t=1}^{|y|} \\log p_\\theta\\big(y_t \\,\\big|\\, y_{\\lt t},\\; \\text{prefix} \\,\\Vert\\, x\\big) \\qquad\\text{(one shared next-token cross-entropy loss for ALL tasks)} $$
-<p class="cap">The single training objective: maximize the probability of each target token <span class="mathlit">$y_t$</span> given the already-written target <span class="mathlit">$y_{\\lt t}$</span> and the encoded input. No task-specific heads — the decoder generates the label as text.</p>
-$$ \\text{Encoder: } H = \\mathrm{Enc}(\\text{prefix} \\,\\Vert\\, x); \\qquad \\text{Decoder step } t:\\; p_\\theta(\\cdot\\mid y_{\\lt t}, H) = \\mathrm{softmax}\\big(W\\, \\mathrm{Dec}(y_{\\lt t}, H)_t\\big) \\qquad\\text{(\\S 2.1: encoder-decoder)} $$
-<p class="cap">The encoder reads the whole input bidirectionally into hidden states <span class="mathlit">H</span>; the decoder attends to its own past (causally) and to <span class="mathlit">H</span> (cross-attention), then a tied output matrix <span class="mathlit">W</span> projects to vocabulary logits.</p>
-$$ \\mathrm{logit}_{i,j} \\;=\\; \\frac{q_i \\cdot k_j}{\\sqrt{d_k}} \\;+\\; b_{\\,h,\\;\\mathrm{bucket}(j-i)} \\qquad\\text{(\\S 2.1: simplified relative position bias added to each attention logit)} $$
-<p class="cap">Scaled dot-product attention with one extra term: a learned scalar <span class="mathlit">$b$</span> chosen by which bucket the signed offset <span class="mathlit">$j-i$</span> falls in, per head <span class="mathlit">$h$</span>, shared across all layers. This is T5's only position signal — nothing is added to the embeddings.</p>
-$$ \\alpha_{i,\\cdot} \\;=\\; \\mathrm{softmax}_j\\big(\\mathrm{logit}_{i,j}\\big); \\qquad \\mathrm{bucket}(0{:}127)\\ \\text{exact-then-log}, \\quad |\\text{buckets}| = 32,\\ \\text{max offset} = 128 \\qquad\\text{(\\S 2.1: 32 log-spaced buckets)} $$
-<p class="cap">Softmax over keys gives the attention weights. The bucket function gives small offsets their own bucket and merges far ones logarithmically; offsets beyond 128 all share one bucket.</p>
-$$ \\mathrm{LN}(x) \\;=\\; g \\odot \\frac{x}{\\sqrt{\\tfrac{1}{d}\\sum_k x_k^{2}}} \\qquad\\text{(\\S 2.1: RMS-style LayerNorm — rescale only, NO additive bias, on each sub-component's input)} $$
-<p class="cap">T5's simplified Layer Normalization: divide each token vector by its root-mean-square and multiply by a learned per-feature gain <span class="mathlit">g</span>. No mean-subtraction bias term — "activations are only rescaled."</p>
-$$ x_{\\text{corrupt}}: \\;\\langle X\\rangle \\;\\text{replaces each dropped contiguous span (drop rate } 15\\%,\\ \\text{mean span } 3); \\quad y: \\;\\langle X\\rangle\\,\\text{span}_X\\;\\langle Y\\rangle\\,\\text{span}_Y\\;\\langle Z\\rangle \\qquad\\text{(\\S 3.1.4: span-corruption denoising)} $$
-<p class="cap">Pre-training game: drop 15% of tokens (in spans of mean length 3), swap each dropped span for one unique sentinel <span class="mathlit">$\\langle X\\rangle,\\langle Y\\rangle,\\dots$</span> in the input, and train the model to emit the dropped spans — each tagged by its sentinel, ending with a final sentinel. Figure 2: input "Thank you $\\langle X\\rangle$ me to your party $\\langle Y\\rangle$ week." $\\to$ target "$\\langle X\\rangle$ for inviting $\\langle Y\\rangle$ last $\\langle Z\\rangle$".</p>`,
+    formula: `$$ y \\;=\\; \\mathrm{Model}\\big(\\,\\text{prefix} \\,\\Vert\\, x\\,\\big), \\qquad x,\\,y \\in \\Sigma^{*} $$
+<div class="cap">\\S 2.4: the <b>text-to-text framework</b> — every task is the same map, a string in and a string out. Here $\\text{prefix}$ is a short task tag prepended (the $\\Vert$ is string concatenation) to the input $x$; $y$ is the answer written as plain text (even a class label or a number); $\\Sigma^{*}$ is the set of all token strings.</div>
+$$ \\mathcal{L}(\\theta) \\;=\\; -\\sum_{t=1}^{|y|} \\log p_\\theta\\big(y_t \\,\\big|\\, y_{\\lt t},\\; \\text{prefix} \\,\\Vert\\, x\\big) $$
+<div class="cap">One shared next-token cross-entropy loss for ALL tasks: maximize the probability of each target token $y_t$ given the already-written target $y_{\\lt t}$ (all targets before position $t$) and the encoded input. No task-specific heads — the decoder generates the label as text.</div>
+$$ H = \\mathrm{Enc}(\\text{prefix} \\,\\Vert\\, x); \\qquad p_\\theta(\\cdot\\mid y_{\\lt t}, H) = \\mathrm{softmax}\\big(W\\, \\mathrm{Dec}(y_{\\lt t}, H)_t\\big) $$
+<div class="cap">\\S 2.1: the <b>encoder-decoder</b>. The encoder reads the whole input bidirectionally into hidden states $H$; at step $t$ the decoder attends to its own past (causally) and to $H$ (cross-attention), then the output matrix $W$ projects the decoder's vector to vocabulary logits and a softmax gives the next-token distribution.</div>
+$$ \\mathrm{logit}_{i,j} \\;=\\; \\frac{q_i \\cdot k_j}{\\sqrt{d_k}} \\;+\\; b_{\\,h,\\;\\mathrm{bucket}(j-i)} $$
+<div class="cap">\\S 2.1: the <b>simplified relative position bias</b>. Ordinary scaled dot-product attention with one extra term: a learned scalar $b$ chosen by which bucket the signed offset $j-i$ falls in, for head $h$, shared across all layers. This is T5's only position signal — nothing is added to the embeddings.</div>
+$$ \\alpha_{i,\\cdot} \\;=\\; \\mathrm{softmax}_j\\big(\\mathrm{logit}_{i,j}\\big), \\qquad |\\text{buckets}| = 32,\\quad \\text{max offset} = 128 $$
+<div class="cap">\\S 2.1: softmax over keys $j$ gives the attention weights for query $i$. The $\\mathrm{bucket}$ function gives small offsets their own bucket and merges far ones logarithmically; all offsets beyond 128 share one bucket (32 buckets total).</div>
+$$ \\mathrm{LN}(x) \\;=\\; g \\odot \\frac{x}{\\sqrt{\\tfrac{1}{d}\\sum_{k=1}^{d} x_k^{2}}} $$
+<div class="cap">\\S 2.1: T5's <b>simplified Layer Normalization</b> — divide each token vector $x$ by its root-mean-square and multiply ($\\odot$ = elementwise) by a learned per-feature gain $g$. No additive bias term: "activations are only rescaled," applied to the input of each sub-component.</div>
+$$ x \\;\\xrightarrow{\\text{drop }15\\%,\\ \\text{mean span }3}\\; x_{\\text{corrupt}}\\ (\\text{each dropped span} \\to \\langle X\\rangle), \\qquad y = \\langle X\\rangle\\,\\text{span}_X\\;\\langle Y\\rangle\\,\\text{span}_Y\\;\\langle Z\\rangle $$
+<div class="cap">\\S 3.1.4: the <b>span-corruption (masked-span) denoising</b> objective. Drop 15% of tokens in spans of mean length 3, swap each dropped contiguous span for one unique sentinel token $\\langle X\\rangle,\\langle Y\\rangle,\\dots$ in the input, and train the model to emit the dropped spans, each tagged by its sentinel and ending with a final sentinel. Figure 2: input "Thank you $\\langle X\\rangle$ me to your party $\\langle Y\\rangle$ week." becomes target "$\\langle X\\rangle$ for inviting $\\langle Y\\rangle$ last $\\langle Z\\rangle$".</div>`,
     whatItDoes:
-      `<p>The equation is ordinary scaled dot-product attention with <b>one extra term</b>. The first
-       part, $q_i\\!\\cdot\\! k_j/\\sqrt{d_k}$, is the usual content match: how much query token $i$
-       wants key token $j$ based on their vectors. The second part, $b_{h,\\,\\mathrm{bucket}(j-i)}$, is
-       a single learned number that depends <i>only</i> on the relative offset $j-i$ (binned into a
-       bucket) and the head $h$. Adding it <i>before</i> the softmax lets the model learn position
-       preferences directly in attention — e.g. a head can learn "attend more to the token immediately
-       to my left" by giving the bucket for offset $-1$ a large positive scalar. Because the term is the
-       <i>same scalar</i> for every query/key pair sharing a relative offset, and is shared across
-       layers, it costs almost nothing: just (number of buckets) &times; (number of heads) parameters.
-       Remove this term and attention sees only content, with no notion of order — which is exactly the
-       ablation below.</p>`,
+      `<p><b>Framework equation ($y=\\mathrm{Model}(\\text{prefix}\\Vert x)$).</b> Says the model is a single
+       function from string to string; the only thing that changes between translation, classification,
+       and QA is the <i>prefix</i> and the data, never the architecture or loss.</p>
+       <p><b>Loss equation ($\\mathcal{L}$).</b> The whole model is trained by next-token prediction:
+       sum, over each target position, the negative log-probability the model assigned to the correct
+       token. One loss for pre-training and every fine-tuning task — no per-task heads.</p>
+       <p><b>Encoder-decoder equation.</b> The encoder turns the input into context vectors $H$ once; the
+       decoder then generates left-to-right, at each step combining its own past with $H$ and projecting
+       through $W$ to a distribution over the vocabulary.</p>
+       <p><b>Attention-logit equation.</b> Ordinary scaled dot-product attention with <b>one extra term</b>.
+       The first part, $q_i\\!\\cdot\\! k_j/\\sqrt{d_k}$, is the usual content match. The second part,
+       $b_{h,\\,\\mathrm{bucket}(j-i)}$, is a single learned number depending <i>only</i> on the relative
+       offset $j-i$ (binned) and the head $h$. Adding it <i>before</i> the softmax lets a head learn
+       "attend to the token just to my left" by giving offset $-1$ a large positive scalar. Because the
+       same scalar serves every pair sharing an offset and is shared across layers, it costs only
+       (buckets) &times; (heads) parameters. Remove it and attention sees only content, with no notion of
+       order — the ablation below.</p>
+       <p><b>Bucket/softmax equation.</b> The attention weights are a softmax over keys; the 32-bucket
+       function keeps the position table tiny by merging far offsets logarithmically.</p>
+       <p><b>LayerNorm equation.</b> Each token vector is divided by its own root-mean-square and rescaled
+       by a learned gain $g$ — no bias term — stabilizing activations before each sub-component.</p>
+       <p><b>Span-corruption equation.</b> Defines the pre-training game: corrupt the input by hiding 15%
+       of tokens behind sentinels (in spans of mean length 3) and have the decoder reconstruct exactly
+       the hidden spans — itself a text-to-text task, so it uses the very same model and loss.</p>`,
     derivation:
       `<p>This is a Track-B architecture paper, so the "why it's true" is a design rationale, not a
        theorem; the underlying attention math is owned by <b>paper-transformer</b> / mod-llm and only

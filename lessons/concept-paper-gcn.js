@@ -48,7 +48,7 @@
         node's vector with its neighbours' vectors using a fixed <b>normalized adjacency matrix</b>, then apply
         a learned linear map and a nonlinearity. The abstract states the model "scales linearly in the number
         of graph edges."</li>
-        <li><b>The renormalization trick.</b> Add a self-loop to every node ($\\hat{A} = A + I$) and normalize
+        <li><b>The renormalization trick.</b> Add a self-loop to every node ($\\tilde{A} = A + I$) and normalize
         symmetrically by node degree. This keeps the operation numerically stable when you stack several layers
         (it constrains the eigenvalues to a safe range).</li>
         <li><b>End-to-end semi-supervised learning on graphs.</b> Train the whole network with an ordinary
@@ -68,7 +68,7 @@
       `<p><b>Read closely:</b></p>
        <ul>
         <li><b>&sect;2 &amp; &sect;2.2 (Fast Approximate Convolutions on Graphs)</b> &mdash; this is the core.
-        It derives the layer-wise rule (<b>Eqn. 2</b>), introduces self-loops $\\hat{A}=A+I_N$, and gives the
+        It derives the layer-wise rule (<b>Eqn. 2</b>), introduces self-loops $\\tilde{A}=A+I_N$, and gives the
         <b>renormalization trick</b> (the line just before <b>Eqn. 8</b>). This is the math you will transcribe
         and implement.</li>
         <li><b>&sect;3.1 (Example)</b> &mdash; the concrete two-layer model (<b>Eqn. 9</b>) and the
@@ -205,9 +205,9 @@
     whatItDoes:
       `<p><b>Equation 2</b> is one graph-convolution layer, read right-to-left. Start with the current node
        representations $H^{(l)}$. (1) <b>Transform:</b> $H^{(l)} W^{(l)}$ applies the learned linear map to every
-       node. (2) <b>Mix:</b> multiplying on the left by $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ replaces each
+       node. (2) <b>Mix:</b> multiplying on the left by $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ replaces each
        node's vector with a degree-normalized average of itself and its neighbours (the self-loop from
-       $\\hat{A}=A+I_N$ is what keeps "itself" in the average). (3) <b>Squash:</b> $\\sigma$ (ReLU) adds the
+       $\\tilde{A}=A+I_N$ is what keeps "itself" in the average). (3) <b>Squash:</b> $\\sigma$ (ReLU) adds the
        nonlinearity. Stack these and information flows one extra hop per layer. Because $S$ is precomputed and
        the only learned object is the small matrix $W^{(l)}$, the whole layer is one sparse matrix product
        &mdash; hence "scales linearly in the number of edges."</p>`,
@@ -231,11 +231,11 @@
       `<p>Work one GCN layer by hand on a tiny <b>3-node path graph</b>: nodes $0-1-2$, with edges $0\\!-\\!1$
        and $1\\!-\\!2$ (node 1 is the middle). So</p>
        <p>$$ A = \\begin{bmatrix} 0&1&0 \\\\ 1&0&1 \\\\ 0&1&0 \\end{bmatrix}, \\qquad
-            \\hat{A} = A + I_3 = \\begin{bmatrix} 1&1&0 \\\\ 1&1&1 \\\\ 0&1&1 \\end{bmatrix}. $$</p>
+            \\tilde{A} = A + I_3 = \\begin{bmatrix} 1&1&0 \\\\ 1&1&1 \\\\ 0&1&1 \\end{bmatrix}. $$</p>
        <ul class="steps">
-        <li><b>Degrees of $\\hat{A}$.</b> Row sums: node 0 has $\\hat{d}_0=2$, node 1 (the hub) has
-        $\\hat{d}_1=3$, node 2 has $\\hat{d}_2=2$. So $\\hat{D}^{-1/2}=\\mathrm{diag}(1/\\sqrt2,\\,1/\\sqrt3,\\,1/\\sqrt2)$.</li>
-        <li><b>Renormalized adjacency $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$.</b> Each entry $S_{ij}=\\hat{A}_{ij}/\\sqrt{\\hat{d}_i\\hat{d}_j}$:
+        <li><b>Degrees of $\\tilde{A}$.</b> Row sums: node 0 has $\\tilde{d}_0=2$, node 1 (the hub) has
+        $\\tilde{d}_1=3$, node 2 has $\\tilde{d}_2=2$. So $\\tilde{D}^{-1/2}=\\mathrm{diag}(1/\\sqrt2,\\,1/\\sqrt3,\\,1/\\sqrt2)$.</li>
+        <li><b>Renormalized adjacency $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$.</b> Each entry $S_{ij}=\\tilde{A}_{ij}/\\sqrt{\\tilde{d}_i\\tilde{d}_j}$:
         $$ S = \\begin{bmatrix} 1/2 & 1/\\sqrt6 & 0 \\\\ 1/\\sqrt6 & 1/3 & 1/\\sqrt6 \\\\ 0 & 1/\\sqrt6 & 1/2 \\end{bmatrix}
              \\approx \\begin{bmatrix} 0.500 & 0.408 & 0 \\\\ 0.408 & 0.333 & 0.408 \\\\ 0 & 0.408 & 0.500 \\end{bmatrix}. $$
         (Check: $1/2$ is the self-weight of a degree-2 node, $1/\\sqrt6\\approx0.408$ is the hub edge $1/\\sqrt{2\\cdot3}$.)</li>
@@ -251,8 +251,8 @@
     recipe:
       `<ol>
         <li><b>Build the propagation matrix once.</b> From the adjacency $A$: add self-loops
-        $\\hat{A}=A+I_N$; take degrees $\\hat{d}_i=\\sum_j\\hat{A}_{ij}$; form $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$.
-        $S$ is fixed (no parameters) and precomputed.</li>
+        $\\tilde{A}=A+I_N$; take degrees $\\tilde{d}_i=\\sum_j\\tilde{A}_{ij}$; form $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$
+        (the paper's $\\hat{A}$). $S$ is fixed (no parameters) and precomputed.</li>
         <li><b>Define one GCN layer:</b> <code>H_next = relu(S @ H @ W)</code> &mdash; mix ($S$), transform
         ($W$, learnable), squash (ReLU).</li>
         <li><b>Stack two layers</b> (Eqn. 9): $Z = \\mathrm{softmax}\\big(S\\,\\mathrm{ReLU}(S X W^{(0)})\\,W^{(1)}\\big)$.
@@ -280,7 +280,7 @@
        cross-entropy, Adam) already ship in PyTorch, so you <b>import</b> them and build only the novel
        composition. <b>Import:</b> <code>nn.Parameter</code>, <code>torch.relu</code>,
        <code>F.cross_entropy</code>, and <code>torch.optim.Adam</code>. <b>Build by hand:</b> the renormalized
-       adjacency $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ from raw tensors (self-loops, degree, the symmetric
+       adjacency $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ from raw tensors (self-loops, degree, the symmetric
        normalization), the GCN layer <code>S @ H @ W</code>, the 2-layer model, and the <b>ablation</b> that
        removes the mixing. No graph library (no PyG/DGL) &mdash; the whole point is to see the layer is one
        matrix product. The spectral / message-passing motivation is recapped from <b>mod-gnn</b>, not
@@ -289,12 +289,12 @@
       `<ul>
         <li><b>Forgetting the self-loop.</b> If you normalize the bare $A$ (no $+I_N$), each node averages only
         its neighbours and <i>drops its own features</i>, so its identity is lost after one layer. <b>Fix:</b>
-        $\\hat{A}=A+I_N$ before normalizing.</li>
-        <li><b>Normalizing $A$ instead of $\\hat{A}$.</b> The degrees in $\\hat{D}$ must be the <i>row sums of
-        $\\hat{A}$</i> (which include the self-loop), not of $A$. Using $A$'s degrees mis-scales every edge.</li>
-        <li><b>One-sided (row) normalization.</b> $\\hat{D}^{-1}\\hat{A}$ (a plain neighbour mean) is <i>not</i>
-        the paper's operator. GCN uses the <b>symmetric</b> $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$, which
-        weights each edge by $1/\\sqrt{\\hat{d}_i\\hat{d}_j}$ &mdash; it down-weights edges to high-degree hubs.</li>
+        $\\tilde{A}=A+I_N$ before normalizing.</li>
+        <li><b>Normalizing $A$ instead of $\\tilde{A}$.</b> The degrees in $\\tilde{D}$ must be the <i>row sums of
+        $\\tilde{A}$</i> (which include the self-loop), not of $A$. Using $A$'s degrees mis-scales every edge.</li>
+        <li><b>One-sided (row) normalization.</b> $\\tilde{D}^{-1}\\tilde{A}$ (a plain neighbour mean) is <i>not</i>
+        the paper's operator. GCN uses the <b>symmetric</b> $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$, which
+        weights each edge by $1/\\sqrt{\\tilde{d}_i\\tilde{d}_j}$ &mdash; it down-weights edges to high-degree hubs.</li>
         <li><b>Loss on all nodes.</b> In the semi-supervised setting the cross-entropy is summed over the
         <i>labeled</i> set $\\mathcal{Y}_L$ only (Eqn. 10). Computing it over unlabeled nodes (whose labels you
         do not have, or that you cheated by peeking at) is wrong.</li>
@@ -303,9 +303,9 @@
         three layers is usually best.</li>
       </ul>`,
     recall: [
-      "Write the layer-wise propagation rule (Eqn. 2) from memory, including $\\hat{A}=A+I_N$.",
+      "Write the layer-wise propagation rule (Eqn. 2) from memory, including $\\tilde{A}=A+I_N$.",
       "Why add the self-loop $I_N$ before normalizing?",
-      "What does the symmetric normalization $\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ do that a raw neighbour-sum does not?",
+      "What does the symmetric normalization $\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ do that a raw neighbour-sum does not?",
       "In semi-supervised training, which nodes does the cross-entropy loss (Eqn. 10) run over?",
       "What is over-smoothing, and how many layers typically avoid it?"
     ],
@@ -323,24 +323,24 @@
         ],
         answer: `<p>With $S=I_N$ the unlabeled nodes collapse to roughly chance accuracy &mdash; the model can
                  only memorize the 2 labeled nodes because nothing carries their signal outward. Restoring
-                 $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ lets each layer average neighbours, so after two hops
+                 $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ lets each layer average neighbours, so after two hops
                  every node has heard from a labeled one and the accuracy jumps to ~100%. Since the only change
                  was $S$ vs $I$, this isolates the <b>graph convolution</b> (message passing), not extra
                  parameters, as the reason a handful of labels generalizes. The CODEVIZ panel shows exactly this
                  contrast.</p>`
       },
       {
-        q: `For the 3-node path graph in the worked example ($\\hat{A}=\\begin{bmatrix}1&1&0\\\\1&1&1\\\\0&1&1\\end{bmatrix}$),
+        q: `For the 3-node path graph in the worked example ($\\tilde{A}=\\begin{bmatrix}1&1&0\\\\1&1&1\\\\0&1&1\\end{bmatrix}$),
             compute the renormalized weight $S_{12}$ on the edge between the hub (node 1, degree 3) and node 2
             (degree 2). Why is it smaller than node 2's self-weight $S_{22}$?`,
         steps: [
-          { do: `Use $S_{ij}=\\hat{A}_{ij}/\\sqrt{\\hat{d}_i\\hat{d}_j}$. Here $\\hat{A}_{12}=1$, $\\hat{d}_1=3$, $\\hat{d}_2=2$, so $S_{12}=1/\\sqrt{3\\cdot2}=1/\\sqrt6\\approx0.408$.`, why: `The symmetric normalization divides each edge by the geometric mean of the two endpoints' degrees.` },
-          { do: `Compute the self-weight: $S_{22}=\\hat{A}_{22}/\\sqrt{\\hat{d}_2\\hat{d}_2}=1/\\sqrt{2\\cdot2}=1/2=0.5$.`, why: `A self-loop is an edge from a node to itself, normalized by its own degree on both sides.` },
+          { do: `Use $S_{ij}=\\tilde{A}_{ij}/\\sqrt{\\tilde{d}_i\\tilde{d}_j}$. Here $\\tilde{A}_{12}=1$, $\\tilde{d}_1=3$, $\\tilde{d}_2=2$, so $S_{12}=1/\\sqrt{3\\cdot2}=1/\\sqrt6\\approx0.408$.`, why: `The symmetric normalization divides each edge by the geometric mean of the two endpoints' degrees.` },
+          { do: `Compute the self-weight: $S_{22}=\\tilde{A}_{22}/\\sqrt{\\tilde{d}_2\\tilde{d}_2}=1/\\sqrt{2\\cdot2}=1/2=0.5$.`, why: `A self-loop is an edge from a node to itself, normalized by its own degree on both sides.` },
           { do: `Compare: $0.408 \\lt 0.5$, so the edge to the higher-degree hub is down-weighted relative to node 2's own contribution.`, why: `Symmetric normalization deliberately damps connections to high-degree hubs, preventing them from dominating every neighbour's average.` }
         ],
         answer: `<p>$S_{12}=1/\\sqrt{3\\cdot2}=1/\\sqrt6\\approx0.408$, while node 2's self-weight is
                  $S_{22}=1/\\sqrt{2\\cdot2}=0.5$. The edge to the hub is smaller because the symmetric
-                 normalization divides by $\\sqrt{\\hat{d}_i\\hat{d}_j}$, so a connection to a high-degree node
+                 normalization divides by $\\sqrt{\\tilde{d}_i\\tilde{d}_j}$, so a connection to a high-degree node
                  (degree 3) is penalized more than a self-loop on a low-degree node (degree 2). This is exactly
                  the "don't let hubs dominate" behavior that makes GCN stable.</p>`
       },
@@ -366,7 +366,7 @@
     lib: "PyTorch",
     runnable: false,
     explain:
-      `<p>Track B: we <b>build</b> the renormalized adjacency $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ and the
+      `<p>Track B: we <b>build</b> the renormalized adjacency $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ and the
        graph-convolution layer <code>S @ H @ W</code> by hand from raw torch tensors &mdash; no graph library.
        The first cell recomputes the worked example on the 3-node path graph ($S$, then $SHW$, then ReLU),
        so you can check the layer. We then make a tiny <b>two-community graph</b> (Karate-club style),
@@ -486,7 +486,7 @@ print(f"trained on {len(train_idx)} labels; full-graph node-classification accur
         ]
       }
     ],
-    caption: "Our small run, not the paper's reported numbers. A synthetic 30-node graph in two communities (dense within, sparse between); only 2 nodes are labeled (one per community), and accuracy is measured on all 30. The GCN that uses the renormalized adjacency $S=\\hat{D}^{-1/2}\\hat{A}\\hat{D}^{-1/2}$ reaches 100% within ~2 epochs &mdash; two hops of neighbour-averaging carry the 2 labels across the whole graph. The ABLATION replaces $S$ with the identity (each node sees only itself, a plain per-node MLP): it hovers near chance (~40-50%) and never climbs, because the 28 unlabeled nodes receive no label signal. Same weights, optimizer, labels, epochs; the only difference is the neighbour mixing.",
+    caption: "Our small run, not the paper's reported numbers. A synthetic 30-node graph in two communities (dense within, sparse between); only 2 nodes are labeled (one per community), and accuracy is measured on all 30. The GCN that uses the renormalized adjacency $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$ reaches 100% within ~2 epochs &mdash; two hops of neighbour-averaging carry the 2 labels across the whole graph. The ABLATION replaces $S$ with the identity (each node sees only itself, a plain per-node MLP): it hovers near chance (~40-50%) and never climbs, because the 28 unlabeled nodes receive no label signal. Same weights, optimizer, labels, epochs; the only difference is the neighbour mixing.",
     code: `import torch, torch.nn as nn, torch.nn.functional as F, numpy as np
 
 # Does the normalized-adjacency mixing (S) actually spread a few labels? Compare a GCN

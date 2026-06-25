@@ -237,8 +237,15 @@
        <p>Backward-pass recomputation (Section 3.1 / Appendix): rather than save the $N\\times N$ matrices $S,P$ for the gradient, keep only the output $O$ and the softmax statistics $(m,\\ell)$ and rebuild $S,P$ block-by-block in SRAM. Extra FLOPs, but no $O(N^2)$ HBM read — the same IO win as the forward pass.</p>`,
 
     whatItDoes:
-      `<p>This is the online-softmax block-combine of Section 3.1 (Algorithm 1, line 11), written for one query row absorbing
-       a new key/value block $j$. In words: take the larger of the running max $m$ and the new block's max $\\tilde m$ to get
+      `<p><b>Equation by equation.</b> The first block ($S,P,O$) is plain attention: score every query against every key,
+       softmax each row, weight the values — but it forces the $N\\times N$ matrices into memory. The second block (stable
+       softmax) just says "subtract the row max before exponentiating" so nothing overflows. The third block (online softmax)
+       is the engine: it shows two pieces of a row can be merged exactly by rescaling each to a shared max. The fourth block
+       (the running update) applies that merge one tile at a time. The fifth (IO complexity) counts the slow HBM reads/writes:
+       standard pays $\\Theta(Nd+N^2)$, FlashAttention $\\Theta(N^2d^2/M)$ — fewer because $M\\gg d$. The sixth (backward) says
+       the gradient is computed by recomputing tiles from $(O,m,\\ell)$ instead of storing $S,P$.</p>
+       <p><b>The running update in detail</b> (Section 3.1, Algorithm 1, line 12), one query row absorbing a new
+       key/value block $j$: take the larger of the running max $m$ and the new block's max $\\tilde m$ to get
        $m^{\\text{new}}$. Rescale the running normalizer $\\ell$ down by $e^{m-m^{\\text{new}}}$ (correcting it from the old
        max to the new one) and add the block's own normalizer $\\tilde\\ell$, also corrected. Do the same to the running
        output $O$: rescale the old accumulated values by $e^{m-m^{\\text{new}}}$, add the new block's weighted values

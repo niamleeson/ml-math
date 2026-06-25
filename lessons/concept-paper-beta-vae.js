@@ -206,7 +206,12 @@ $$ \\boxed{\\;\\mathcal{F}(\\theta,\\phi,\\beta;x,z) \\;\\ge\\; \\mathcal{L}(\\t
 $$ z^{l}_{\\text{diff}} = \\lvert z_{1,l} - z_{2,l}\\rvert,\\qquad z^{b}_{\\text{diff}} = \\frac{1}{L}\\sum_{l=1}^{L} z^{l}_{\\text{diff}},\\qquad \\text{score} = \\operatorname{acc}\\big(\\,p(y\\mid z^{b}_{\\text{diff}})\\,\\big) \\qquad\\text{(Eq. 5, \\S3 / App. A.4): the disentanglement metric.} $$
 <p>The metric (Eq. 5): pick a factor $y$ to hold fixed; generate image pairs $(x_{1,l},x_{2,l})$ that share factor $y$ but differ on all others; encode each to its latent mean $z=\\mu(x)$; take the absolute latent difference $z^{l}_{\\text{diff}}=\\lvert z_{1,l}-z_{2,l}\\rvert$; average over $L$ pairs to get $z^{b}_{\\text{diff}}$; train a low-capacity <b>linear</b> classifier (softmax, negative-log-likelihood loss) to predict which factor $y$ was held fixed. Its accuracy is the disentanglement score. If the code is disentangled, the latent for the fixed factor barely varies, so $\\big[z^{b}_{\\text{diff}}\\big]_y$ is small and the classifier's job is easy.</p>`,
     whatItDoes:
-      `<p>The boxed equation is the whole method. It is the VAE's ELBO with <b>one weight $\\beta$</b> on the
+      `<p><b>Eq. 1</b> states the generative goal: find decoder parameters that make the observed images likely
+       under the latent model. <b>Eq. 2</b> turns that into the real objective &mdash; rebuild the data as well
+       as possible <i>subject to</i> the encoder spending at most $\\epsilon$ worth of information (its KL from
+       the prior). <b>Eq. 3</b> is the Lagrangian of that constrained problem; <b>Eq. 4</b> drops the constant
+       and is the boxed $\\beta$-VAE objective.</p>
+       <p>The boxed equation (Eq. 4) is the whole method. It is the VAE's ELBO with <b>one weight $\\beta$</b> on the
        KL term:</p>
        <ul>
         <li>$\\mathbb{E}_{q_\\phi}[\\log p_\\theta(x\\mid z)]$ &mdash; the <b>reconstruction</b> term, large
@@ -219,7 +224,12 @@ $$ z^{l}_{\\text{diff}} = \\lvert z_{1,l} - z_{2,l}\\rvert,\\qquad z^{b}_{\\text
        special case. Raise $\\beta$ and the second term dominates: the encoder must match the independent
        prior more strictly, which (when it can still reconstruct) pushes one factor per latent axis &mdash;
        disentanglement &mdash; while reconstructions soften. Lower the budget too far and the encoder gives
-       up and matches the prior for <i>everything</i> (posterior collapse), carrying no information at all.</p>`,
+       up and matches the prior for <i>everything</i> (posterior collapse), carrying no information at all.</p>
+       <p><b>Eq. 5</b> (the metric) says, in words: hold one factor fixed across an image pair, encode both,
+       look at how little the latents differ for that factor, and let a <i>linear</i> classifier read off which
+       factor was fixed &mdash; high accuracy means the code put that factor on its own axis. It scores
+       disentanglement directly, because (unlike reconstruction error) the data log-likelihood is a poor proxy
+       for it.</p>`,
     derivation:
       `<p><b>Short recap &mdash; full ELBO math in the concept lesson.</b> The base ELBO (why the
        reconstruction-minus-KL quantity is a valid lower bound on $\\log p_\\theta(x)$, and why the

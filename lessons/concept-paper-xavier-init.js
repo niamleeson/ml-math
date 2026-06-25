@@ -190,6 +190,10 @@
       { sym: "$\\mathrm{Var}(W)$", desc: "the variance of the (shared) random weights in a layer — the single number this paper tells us how to set." },
       { sym: "$z^i$ / $\\mathbf{z}^i$", desc: "the activation vector of layer $i$ — the layer's output after the activation function. Eq. (8) asks its variance be equal across all layers $i$." },
       { sym: "$\\partial \\text{Cost}/\\partial s^i$", desc: "the back-propagated gradient at layer $i$: the error signal sent backward. Eq. (9) asks its variance be equal across all layers." },
+      { sym: "$\\partial \\text{Cost}/\\partial w^i$", desc: "the gradient on the weights of layer $i$ (eq. 3, $=z^i_l\\,\\partial\\text{Cost}/\\partial s^i_k$): what gradient descent actually uses to update the weights. Its variance is eq. (7)/(14)." },
+      { sym: "$\\mathbf{s}^i$ / $s^i_k$", desc: "the pre-activation (the argument fed into the activation function) of layer $i$: $\\mathbf{s}^i=\\mathbf{z}^i W^i+\\mathbf{b}^i$. $f(\\mathbf{s}^i)$ gives the next layer's activations $\\mathbf{z}^{i+1}$." },
+      { sym: "$d$", desc: "the depth: the number of layers. Appears as the exponent in eqs. (13)/(14), which is why a per-layer factor $\\neq 1$ vanishes or explodes." },
+      { sym: "$J^i$", desc: "the Jacobian of layer $i$ (eq. 17): the matrix $\\partial\\mathbf{z}^{i+1}/\\partial\\mathbf{z}^i$ mapping one layer's activations to the next. Its average singular value is the per-layer variance ratio (0.8 normalized vs 0.5 standard)." },
       { sym: "$f$, $f'(0)$", desc: "the activation function (e.g. tanh) and its slope at 0. The paper assumes a symmetric activation with $f'(0)=1$, so near initialization the layer behaves linearly (eq. 4: $f'(s)\\approx 1$)." },
       { sym: "$U[-r,\\,r]$", desc: "the uniform distribution between $-r$ and $+r$: every value in that range equally likely. Its variance is $r^2/3$." },
       { sym: "linear regime", desc: "the assumption that, right after random init, inputs to tanh are small, so tanh acts almost like the identity line $f(s)\\approx s$. This makes the variance algebra exact." },
@@ -301,15 +305,35 @@
        </ol>`,
 
     results:
-      `<p>Quoted from the paper (Section 5): on the Shapeset-$3\\times2$ task the baseline RBF SVM "obtained
-       59.47% test error, while on the same set we obtained 50.47% with a depth five hyperbolic tangent network
-       with normalized initialization." Table 1 also reports, for 5-hidden-layer nets, tanh with standard init
-       at <b>27.15%</b> versus tanh with normalized init ("Tanh N") at <b>15.60%</b> on Shapeset-$3\\times2$ (and
-       1.76% &rarr; 1.64% on MNIST). The paper's qualitative conclusion: "for tanh networks, the proposed
-       normalized initialization can be quite helpful, presumably because the layer-to-layer transformations
-       maintain magnitudes of activations (flowing upward) and gradients (flowing backward)." (Source:
-       proceedings.mlr.press/v9/glorot10a, Section 5 and Table 1.) The CODEVIZ numbers below are our own small
-       run, not the paper's reported results.</p>`,
+      `<p><b>Saturation of activations (Sections 3&ndash;4.2.2).</b> The diagnostic experiments are the heart of
+       the diagnosis:</p>
+       <ul>
+         <li><b>Sigmoid (Figure 2).</b> Watching mean &plusmn; std of activations during training, the <i>top</i>
+         hidden layer is "quickly... pushed to their lower saturation value of 0", which stalls all learning;
+         it only slowly desaturates around epoch 100. An output of 0 is a saturated sigmoid, and because the
+         sigmoid is not symmetric around 0 this is a trap deep nets fall into &mdash; the paper concludes
+         sigmoid "should be avoided when initializing from small random weights."</li>
+         <li><b>Tanh (Figure 3).</b> Symmetric activations don't saturate the top layer, but with the standard
+         init $U[-1/\\sqrt n,1/\\sqrt n]$ a "sequentially occurring saturation phenomenon" appears: layer 1
+         saturates first, then layer 2, propagating upward.</li>
+         <li><b>End-of-training histograms (Figure 4).</b> tanh shows important saturation of the lower layers
+         (modes at $\\pm1$); softsign keeps activations in its non-linear "knees" around $(-0.6,-0.8)$ and
+         $(0.6,0.8)$, never fully saturating &mdash; one reason softsign is more robust to init (Table 1).</li>
+         <li><b>Activation & gradient propagation (Figures 6&ndash;7).</b> With standard init the activation
+         histograms' 0-peak <i>increases</i> for higher layers (signal collapses toward 0) and the
+         back-propagated gradient's 0-peak grows for lower layers (gradient vanishes downward); with normalized
+         init both stay flat across layers. The Jacobian singular-value ratio (eq. 17) is $\\approx 0.8$ with
+         normalized init but drops to $\\approx 0.5$ with standard init.</li>
+       </ul>
+       <p><b>Error numbers.</b> Quoted from the paper (Section 5): on Shapeset-$3\\times2$ the baseline RBF SVM
+       "obtained 59.47% test error, while on the same set we obtained 50.47% with a depth five hyperbolic tangent
+       network with normalized initialization." Table 1 (5-hidden-layer nets) reports tanh with standard init at
+       <b>27.15%</b> versus tanh normalized ("Tanh N") at <b>15.60%</b> on Shapeset-$3\\times2$, and 1.76%
+       &rarr; 1.64% on MNIST; softsign 16.27 &rarr; 16.06 (Shapeset); sigmoid is worst at 82.61. The paper's
+       qualitative conclusion: "for tanh networks, the proposed normalized initialization can be quite helpful,
+       presumably because the layer-to-layer transformations maintain magnitudes of activations (flowing upward)
+       and gradients (flowing backward)." (Source: proceedings.mlr.press/v9/glorot10a, Sections 3&ndash;5,
+       Table 1.) The CODEVIZ numbers below are our own small run, not the paper's reported results.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

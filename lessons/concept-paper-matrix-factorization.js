@@ -146,6 +146,44 @@
        model $\\hat{r}_{ui} = \\mu + b_u + b_i + q_i^\\top p_u$ (Equation 4), so the dot product only has to
        explain the leftover. Our from-scratch build focuses on the bias-free core (Equations 1-2) and the
        SGD rule, which is the piece PyTorch does not ship as one call.</p>`,
+    architecture:
+      `<p>There is no neural network here. The "model" is a pair of factor matrices and the "architecture" is
+       the learning procedure that fills them in. The paper (&sect;"Learning Algorithms") gives <b>two</b> ways
+       to minimize Equation 2 &mdash; stochastic gradient descent and alternating least squares.</p>
+       <p><b>The model (the parameters).</b> Two matrices: a user-factor matrix $P$ of shape (users &times; $f$),
+       whose row $u$ is $p_u$, and an item-factor matrix $Q$ of shape (items &times; $f$), whose row $i$ is
+       $q_i$. The full prediction matrix is $\\hat{R} = P\\,Q^\\top$ (cell $(u,i)$ is $q_i^\\top p_u$). The bias
+       model adds a scalar $\\mu$, a user-bias vector $b_u$, and an item-bias vector $b_i$.</p>
+       <p><b>Method A &mdash; Stochastic gradient descent</b> (the paper credits Simon Funk with popularizing it).
+       It "loops through all ratings in the training set." One pass (epoch) is:</p>
+       <ol>
+        <li><b>For each observed rating</b> $(u,i)\\in\\kappa$ (shuffled):</li>
+        <li>&nbsp;&nbsp;<b>Predict and score the error.</b> $\\hat{r}_{ui} = q_i^\\top p_u$, then
+        $e_{ui} = r_{ui} - q_i^\\top p_u$.</li>
+        <li>&nbsp;&nbsp;<b>Step both factors</b> "by a magnitude proportional to $\\gamma$ in the opposite
+        direction of the gradient": $q_i \\leftarrow q_i + \\gamma(e_{ui}p_u - \\lambda q_i)$ and
+        $p_u \\leftarrow p_u + \\gamma(e_{ui}q_i - \\lambda p_u)$, using the <i>old</i> $p_u$ in the $q_i$ step.</li>
+        <li><b>Repeat</b> for several epochs. The paper notes SGD "combines implementation ease with a
+        relatively fast running time."</li>
+       </ol>
+       <p><b>Method B &mdash; Alternating least squares (ALS).</b> Because both $q_i$ and $p_u$ are unknown,
+       Equation 2 is <i>not convex</i>. But "if we fix one of the unknowns, the optimization problem becomes
+       quadratic and can be solved optimally." ALS exploits this by rotating:</p>
+       <ol>
+        <li><b>Fix all $p_u$, solve for every $q_i$.</b> With the user factors held constant, each item factor
+        $q_i$ is the solution of an ordinary (ridge-regularized) least-squares problem &mdash; solved exactly,
+        and independently per item.</li>
+        <li><b>Fix all $q_i$, solve for every $p_u$.</b> Symmetrically, each user factor is now a least-squares
+        solve.</li>
+        <li><b>Alternate</b> until convergence. Each rotation "decreases Equation 2 until convergence."</li>
+       </ol>
+       <p><b>When ALS beats SGD.</b> The paper says "in general stochastic gradient descent is easier and faster
+       than ALS," but ALS is favorable in two cases: (1) <b>parallelization</b> &mdash; each $q_i$ is computed
+       independently of the other items (and each $p_u$ independently of the other users), giving "potentially
+       massive parallelization"; (2) <b>dense / implicit-feedback data</b>, where the training set is not
+       sparse, so looping over every single training case (as SGD does) "would not be practical" &mdash; ALS
+       handles such cases efficiently.</p>
+       <p>Our from-scratch notebook implements Method A (SGD) on the bias-free core.</p>`,
     symbols: [
       { sym: "$r_{ui}$", desc: "the <b>actual rating</b> user $u$ gave item $i$ (e.g. a star rating). Known only for the observed cells." },
       { sym: "$\\hat{r}_{ui}$", desc: "the model's <b>predicted rating</b> for user $u$ on item $i$ (the hat means \"estimate\")." },
@@ -159,7 +197,10 @@
       { sym: "$e_{ui}$", desc: "the <b>prediction error</b> on one observed cell, $e_{ui} = r_{ui} - q_i^\\top p_u$ (paper's definition in \"Learning Algorithms\")." },
       { sym: "$\\gamma$", desc: "the <b>learning rate</b>: the step size for each gradient update. Larger $\\gamma$ moves faster but can overshoot." },
       { sym: "$\\mu$", desc: "the <b>global average rating</b> across all observed cells (used in the bias model, Equations 3-4)." },
-      { sym: "$b_u,\\ b_i$", desc: "the <b>user bias and item bias</b>: how far user $u$ (resp. item $i$) tends to rate above or below the global average $\\mu$ (Equation 3)." }
+      { sym: "$b_u,\\ b_i$", desc: "the <b>user bias and item bias</b>: how far user $u$ (resp. item $i$) tends to rate above or below the global average $\\mu$ (Equation 3)." },
+      { sym: "$b_{ui}$", desc: "the <b>combined bias</b> for the pair $(u,i)$: the first-order baseline $\\mu + b_i + b_u$ before any factor interaction (Equation 3)." },
+      { sym: "$P,\\ Q$", desc: "the <b>factor matrices</b>: $P$ stacks all user vectors $p_u$ (one per row, shape users $\\times f$); $Q$ stacks all item vectors $q_i$ (shape items $\\times f$)." },
+      { sym: "$\\hat{R}$", desc: "the <b>full predicted ratings matrix</b>, $\\hat{R} = P\\,Q^\\top$; its $(u,i)$ entry is the prediction $q_i^\\top p_u$." }
     ],
     formula: `$$ \\hat{r}_{ui} \\;=\\; q_i^\\top p_u $$
               <p>Equation 1 (&sect;"A Basic Matrix Factorization Model"): the predicted rating is the inner product of the item vector $q_i$ and the user vector $p_u$.</p>

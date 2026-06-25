@@ -132,6 +132,50 @@
        extra leaf. Larger $\\alpha$ forces a smaller tree. $\\alpha$ is chosen by cross-validation. In the code
        below we implement steps 1&ndash;3 fully and control size with a depth limit (the simplest stand-in for
        pruning); the pruning <i>criterion</i> is transcribed and explained here.</p>`,
+    architecture:
+      `<p>A trained CART model is a <b>binary tree</b> &mdash; not a layered network of weights, but a flowchart of
+       yes/no questions. Walk its parts in the order the greedy builder creates them.</p>
+       <p><b>Root node (holds all the data).</b> The tree starts as a single node $m=$ root whose data set
+       $Q_m$ is <i>every</i> training row, $n_m$ rows in all. Its impurity is $H(Q_m) = \\sum_k p_{mk}(1 - p_{mk})$,
+       the Gini mix of all the labels. The whole tree is built by repeatedly turning a node into a question.</p>
+       <p><b>Internal node = one binary, axis-aligned split.</b> The builder turns a node into an
+       <b>internal node</b> by attaching a single split $\\theta = (j, t)$: pick <b>one</b> feature index $j$ and
+       <b>one</b> threshold $t$. The test is $x_j \\le t$ &mdash; it looks at a single coordinate, so the boundary
+       it draws is a flat cut perpendicular to axis $j$ (this is what <b>axis-aligned</b> means). The split is
+       chosen greedily to drive impurity down: among every feature and every candidate threshold (midpoints
+       between consecutive distinct values), the builder keeps the $\\theta$ that <b>minimizes</b> the
+       row-fraction-weighted child impurity
+       $G(Q_m,\\theta) = \\frac{n_m^{\\text{left}}}{n_m} H(Q_m^{\\text{left}}) + \\frac{n_m^{\\text{right}}}{n_m} H(Q_m^{\\text{right}})$.
+       The node stores just two numbers, $j$ and $t$, plus pointers to its two children.</p>
+       <p><b>Left and right children (the recursive partition).</b> The chosen split routes the node's rows into
+       two disjoint subsets: $Q_m^{\\text{left}} = \\{(x,y) \\in Q_m : x_j \\le t\\}$ goes to the <b>left</b> child
+       and $Q_m^{\\text{right}}$ (the rest, $x_j \\gt t$) goes to the <b>right</b> child, with
+       $n_m^{\\text{left}} + n_m^{\\text{right}} = n_m$. The <i>same</i> procedure &mdash; measure impurity, find
+       the best split &mdash; is then applied to each child independently. Recursing this way carves the feature
+       space into <b>axis-aligned boxes</b>, one box per leaf, each box the intersection of the $x_j \\le t$ /
+       $x_j \\gt t$ tests on the path that reaches it.</p>
+       <p><b>Leaf node (stores a prediction, not a split).</b> When a branch stops growing, its node becomes a
+       <b>leaf</b>: it has no children and no split, only a stored answer. For <b>classification</b> the answer is
+       the <b>majority class</b> of the rows that landed there (the $k$ with the largest $p_{mk}$); for
+       <b>regression</b> it is the node <b>mean</b> $\\bar{y}_m = \\frac{1}{n_m}\\sum_{y \\in Q_m} y$. A leaf is
+       where impurity has been pushed low enough that one constant answer is good enough.</p>
+       <p><b>Stopping rule (when a node becomes a leaf instead of splitting).</b> The recursion halts and emits a
+       leaf when any guard fires: the node is <b>pure</b> ($H(Q_m) = 0$, all one class), a <b>maximum depth</b> is
+       reached, the node has <b>too few rows</b> to split, or no split lowers impurity by enough. Without such a
+       rule the tree would grow until every leaf holds a single row &mdash; perfect on training data, overfit on
+       new data.</p>
+       <p><b>Cost-complexity pruning (collapsing subtrees after the build).</b> CART deliberately grows the tree
+       large, then <b>prunes</b> it back. It scores a tree by
+       $R_\\alpha(T) = R(T) + \\alpha\\,|\\widetilde{T}|$, training impurity plus a per-leaf fine
+       $\\alpha \\ge 0$. The <b>weakest-link</b> rule collapses whole subtrees in order of their effective
+       $\\alpha_{\\text{eff}}(t) = \\frac{R(t) - R(T_t)}{|T_t| - 1}$ &mdash; the internal node $t$ whose branch
+       buys the least impurity per leaf is turned back into a leaf first &mdash; and $\\alpha$ is picked by
+       cross-validation. Pruning shrinks the structure without changing how any surviving split works.</p>
+       <p><b>Prediction = routing one sample root&rarr;leaf.</b> To predict for a new $x$, start at the root and at
+       each internal node apply its stored test: go <b>left</b> if $x_j \\le t$, else <b>right</b>. Follow the
+       pointers down until you hit a leaf, then return that leaf's stored class (or mean). The sample never
+       touches a split it does not pass through, so inference walks just one root-to-leaf path &mdash; about
+       $O(\\log n)$ comparisons for a balanced tree, no arithmetic over all the data.</p>`,
     symbols: [
       { sym: "$Q_m$", desc: "the set of training rows that have reached node $m$ &mdash; the data the node must split. $n_m$ is how many rows it has." },
       { sym: "$k$", desc: "a class label index (e.g. $k=0$ or $k=1$ for two classes). The sum $\\sum_k$ runs over all classes." },

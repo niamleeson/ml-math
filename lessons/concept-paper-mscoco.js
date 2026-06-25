@@ -177,6 +177,51 @@
        </ol>
        <p>The order is the whole trick: <b>cheap, coarse questions first; expensive, precise work last, and only
        where it is needed.</b> Each stage hands a smaller, cleaner job to the next.</p>`,
+    architecture:
+      `<p>COCO has no neural network, so its "architecture" is the <b>annotation pipeline</b> (&sect;4, Figure 3) and
+       the <b>design principles</b> that shape what gets annotated. Think of it as a data-flow diagram: a raw image
+       enters, three stages of human labeling transform it, and a fully-annotated image &mdash; every instance of
+       every present category traced as a pixel mask &mdash; comes out. Every stage runs on <b>Amazon Mechanical
+       Turk</b> (AMT) crowd workers.</p>
+       <p><b>The three-stage annotation pipeline (data flow, left to right).</b></p>
+       <ol>
+        <li><b>Stage 1 &mdash; Category labeling (&sect;4.1).</b>
+        <i>Input:</i> a raw image. <i>Task:</i> a worker marks which of the 91 categories are <i>present</i>,
+        navigating via the 11 super-categories (e.g. "animal", "vehicle") so whole groups can be dismissed at a
+        glance; only one instance of each present category must be flagged. <i>Output:</i> the set of present
+        categories. <i>Cost:</i> the paper uses 8 annotators per image (the most worker-hours of any stage,
+        because every image must be scanned for all categories). This answers "<b>what is here?</b>"</li>
+        <li><b>Stage 2 &mdash; Instance spotting (&sect;4.2).</b>
+        <i>Input:</i> the image plus its present-category list. <i>Task:</i> a worker places a marker (a cross) on
+        <b>every separate instance</b> of each present category &mdash; all the people, all the cups. <i>Output:</i>
+        one marker per object instance (counts and rough locations). <i>Cost:</i> 8 workers per image, but each is
+        cheap. This answers "<b>how many, and roughly where?</b>" and guarantees no instance is missed before the
+        expensive step.</li>
+        <li><b>Stage 3 &mdash; Instance segmentation (&sect;4.3).</b>
+        <i>Input:</i> the image plus every instance marker. <i>Task:</i> a trained worker traces the precise pixel
+        outline of each marked instance with a custom segmentation interface. <i>Output:</i> one per-instance
+        segmentation mask per object. <i>Cost:</i> the skilled, slow step, so it runs last and only on
+        already-confirmed, already-located instances; a separate pass of 3&ndash;5 workers verifies each mask's
+        quality. This answers "<b>exactly which pixels?</b>"</li>
+       </ol>
+       <p>The connections matter: each stage's output is the next stage's input, narrowing the work. Stage 1 filters
+       <i>which categories</i>, stage 2 enumerates <i>which instances</i>, stage 3 traces <i>which pixels</i> &mdash;
+       a coarse-to-fine cascade so the costly tracing only ever touches pre-filtered, pre-located targets.</p>
+       <p><b>The three design principles the pipeline serves.</b></p>
+       <ul>
+        <li><b>Non-iconic images.</b> Collect messy, real, everyday photos rather than clean posed shots, so the
+        benchmark contains the hard case (small, occluded, off-center objects) it claims to measure (&sect;1, &sect;3.2).</li>
+        <li><b>Objects in context.</b> Keep objects in their natural surroundings, with many object types co-occurring
+        per image (3.5 categories and 7.7 instances per image on average, &sect;5), to test contextual reasoning
+        &mdash; the dataset's name, "Common Objects in Context."</li>
+        <li><b>Per-instance segmentation.</b> Label every instance with a precise pixel mask, not a bounding box, so
+        localization can be measured tightly and overlapping instances kept apart &mdash; "to measure either kind of
+        localization performance it is essential for the dataset to have every instance of every object category
+        labeled and fully segmented" (&sect;1).</li>
+       </ul>
+       <p>(<b>Evaluation, &sect;7,</b> sits downstream of all this: detections are scored against the masks/boxes by
+       IoU, the one formula above. It is how the annotated dataset becomes a benchmark, not part of the annotation
+       pipeline itself.)</p>`,
     symbols: [
       { sym: "“iconic image”", desc: "a plain term, not a symbol: a clean, posed photo of a single object, centered and unobstructed (like a stock photo). The paper says systems do &ldquo;fairly well&rdquo; on these (&sect;1)." },
       { sym: "“non-iconic image”", desc: "the realistic opposite: an everyday photo where the object is small, off-center, partially occluded (blocked by another object), or amid clutter. COCO deliberately favors these (&sect;3.2)." },

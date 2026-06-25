@@ -290,17 +290,26 @@
        $$ r_{\\text{total}}(y) \\;=\\; r_{\\text{PM}}(y) \\;-\\; \\lambda_{\\text{KL}}\\,D_{\\mathrm{KL}}\\!\\big(\\pi_\\theta(\\cdot\\mid x)\\ \\Vert\\ \\pi_0(\\cdot\\mid x)\\big) $$
        <p class="cap">RL reward used in the RL-CAI stage, from the cited RLHF setup (Bai et al. 2022, eq. 4.1): the PM score minus a KL penalty that keeps the policy $\\pi_\\theta$ near the initial policy $\\pi_0$. The assistant is then optimized to maximize this with PPO-family policy-gradient RL (&sect;4.2).</p>`,
     whatItDoes:
-      `<p>There is no single equation to plug numbers into &mdash; this is an alignment <i>procedure</i>, not a
-       closed-form law. The two lines above are the procedure written as data flow. Read them as:</p>
-       <p><b>Stage 1 (top line):</b> take a prompt, sample an answer, then transform that answer with two fixed
-       requests &mdash; critique then revise &mdash; to get a cleaner answer. The double arrow means: do this for
-       many prompts and fine-tune on the cleaned answers. The loop is <i>repeatable</i>: feed the revision back in
-       to critique it again.</p>
-       <p><b>Stage 2 (bottom line):</b> for a prompt, sample two answers $A$ and $B$; a feedback model plus a random
-       principle assigns them harmlessness probabilities $p_A, p_B$; these soft labels train a preference model
-       $r(\\cdot)$ that scores any single answer; reinforcement learning then pushes the assistant to produce answers
-       with high $r$. This is exactly the RLHF pipeline from the InstructGPT lesson, with the human comparison label
-       swapped for the feedback model's probabilities &mdash; that swap is all that "RLAIF" means.</p>`,
+      `<p>Each equation above, in words:</p>
+       <ul>
+        <li><b>SL-CAI loop &amp; fine-tune objective.</b> Sample answer $y_0$, critique it ($c$), rewrite it ($y_1$),
+        optionally repeat; then fine-tune the model by maximizing the log-probability $\\log p_\\theta$ of its own final
+        revisions. The fine-tune line is just supervised cross-entropy on cleaned answers.</li>
+        <li><b>AI-feedback preference probability.</b> The feedback model scores the two answer choices with log-probs
+        $\\ell_A,\\ell_B$; the softmax turns them into $p_A$ (and $p_B=1-p_A$), the soft chance that $A$ is the more
+        harmless answer. This is the AI label that replaces a human's pick.</li>
+        <li><b>Ensemble.</b> Average $p_A$ over the $16$ principles to get $\\bar p_A$ &mdash; a less noisy label than any
+        single principle gives.</li>
+        <li><b>CoT clamp.</b> If the feedback model reasoned step-by-step, clip its probability into $[0.40,0.60]$ so the
+        target never becomes near-certain.</li>
+        <li><b>PM loss.</b> Train the preference model $r(\\cdot)$ so that $\\sigma(r(A)-r(B))$ matches the soft label
+        $p_A$: the AI-preferred answer is pushed to a higher scalar score.</li>
+        <li><b>RL reward.</b> Optimize the assistant to maximize the PM score minus a KL leash to the starting model.</li>
+       </ul>
+       <p>This is exactly the RLHF pipeline from the InstructGPT lesson, with the human comparison label swapped for the
+       feedback model's probabilities $p_A,p_B$ &mdash; that swap is all that "RLAIF" means. The first three RL-stage
+       lines ($p_A$, $\\bar p_A$, the clamp) are the genuinely new, CAI-specific math; the PM loss and RL reward are
+       carried over from the cited RLHF setup (Bai et al. 2022).</p>`,
     derivation:
       `<p>This is a <b>method</b> paper, so "why it is true" is really "why each design choice makes sense," checked
        by reasoning rather than algebra.</p>

@@ -142,6 +142,58 @@
        lookahead $\\theta_t+\\mu v_t$ (NAG) &mdash; is the whole distinction. Both then add the new velocity to
        $\\theta_t$.</p>`,
 
+    // ★ THE PROCEDURE, COMPONENT BY COMPONENT ★
+    architecture:
+      `<p>Momentum is not a new model &mdash; it is a small piece of <b>optimizer state</b> bolted onto plain
+       gradient descent and a fixed five-step procedure run once per iteration. Here is the whole machine,
+       component by component (Section 2, eqs. 1&ndash;4).</p>
+       <ol>
+         <li><b>The velocity vector $v_t$ (the one piece of state).</b> Alongside the parameters $\\theta_t$ the
+         optimizer carries a second tensor $v_t$ of <i>exactly the same shape</i> &mdash; one velocity number
+         per weight. It is initialized to all zeros ($v_0=0$) and, crucially, <b>persists across iterations</b>:
+         it is never re-zeroed. It holds the optimizer's running "speed and direction", a decayed accumulation
+         of every past gradient step, not the instantaneous gradient. The paper describes CM as a method that
+         "accumulates a velocity vector in directions of persistent reduction in the objective across iterations."</li>
+         <li><b>The momentum coefficient $\\mu$ (the decay knob).</b> A scalar in $[0,1]$ that says what
+         fraction of the previous velocity survives into this step. Each iteration the old velocity is first
+         scaled to $\\mu v_t$ before anything is added &mdash; so a single gradient's influence fades
+         geometrically as $\\mu,\\mu^2,\\mu^3,\\dots$. At $\\mu=0$ no velocity survives and the whole procedure
+         collapses to plain SGD; at $\\mu=0.9$ ninety percent carries over, giving an effective step of about
+         $\\tfrac{1}{1-\\mu}=10\\times$ along a persistent direction.</li>
+         <li><b>The learning rate $\\varepsilon$ (the gradient gain).</b> A scalar $\\varepsilon\\gt 0$ that scales
+         how much of <i>this</i> step's gradient is injected into the velocity. In this paper $\\varepsilon$
+         lives <i>inside</i> the velocity update ($-\\varepsilon\\nabla f$), so it never multiplies the parameter
+         step directly; the parameter step is just "add the velocity".</li>
+         <li><b>The gradient evaluation point (the ONE place CM and NAG differ).</b> Each step needs one
+         gradient $\\nabla f$. <b>CM</b> evaluates it at the <i>current</i> parameters: $g=\\nabla f(\\theta_t)$
+         &mdash; "where am I now". <b>NAG</b> first applies the decayed velocity to form the <b>lookahead</b>
+         point $\\theta_t+\\mu v_t$ (a partial update toward where the velocity is about to carry you, in the
+         paper's words "similar to $\\theta_{t+1}$ but missing the as yet unknown correction") and evaluates
+         there: $g=\\nabla f(\\theta_t+\\mu v_t)$. The paper's reason (Section 2.1): if $\\mu v_t$ is about to
+         overshoot, the gradient at the lookahead "will point back towards $\\theta_t$ more strongly than
+         $\\nabla f(\\theta_t)$ does, thus providing a larger and more timely correction to $v_t$ than CM,"
+         which is why NAG is "more tolerant of large values of $\\mu$." Everything else in the procedure is
+         identical.</li>
+         <li><b>The velocity update (decay then accumulate).</b> Combine the two scalars and the gradient into a
+         new velocity: $v_{t+1}=\\mu v_t-\\varepsilon g$ (eq. 1 / eq. 3). Read it as "keep $\\mu$ of the old
+         velocity, then push it $\\varepsilon$ further downhill". Along a direction of persistent descent the
+         fresh $-\\varepsilon g$ keeps the same sign as the carried velocity, so they reinforce and $v$ grows;
+         across an oscillating direction the sign flips and the terms partly cancel, so $v$ stays small.</li>
+         <li><b>The parameter update (move by the velocity).</b> Finally step the weights by the brand-new
+         velocity: $\\theta_{t+1}=\\theta_t+v_{t+1}$ (eq. 2 / eq. 4). Note it adds $v_{t+1}$, the velocity you
+         just computed, not the old $v_t$ &mdash; the decay-and-accumulate happens <i>before</i> the move.</li>
+       </ol>
+       <p><b>Data flow per step.</b> The state $(\\theta_t, v_t)$ enters; you pick the evaluation point
+       ($\\theta_t$ for CM, the lookahead $\\theta_t+\\mu v_t$ for NAG); compute one gradient $g$ there; fold it
+       into the velocity $v_{t+1}=\\mu v_t-\\varepsilon g$; then move $\\theta_{t+1}=\\theta_t+v_{t+1}$; and hand
+       the updated state $(\\theta_{t+1}, v_{t+1})$ to the next iteration. Exactly one gradient evaluation and
+       two cheap vector operations per step, and exactly one extra tensor ($v$) of memory &mdash; the cost over
+       plain SGD is tiny, which is the practical reason momentum is nearly free to add. In code this is a single
+       loop body under <code>torch.no_grad()</code>: read <code>p</code> and the velocity buffer <code>v</code>,
+       compute <code>g</code> (at <code>p</code>, or at <code>p + mu*v</code> for NAG), set
+       <code>v = mu*v - lr*g</code>, then <code>p += v</code> &mdash; with the buffer surviving to the next
+       iteration so the accumulation is never lost.</p>`,
+
     symbols: [
       { sym: "$\\theta_t$", desc: "theta: the parameter (weight) vector after step $t$; $\\theta_{t+1}$ is its value after the next update. In code this is the tensor you are optimizing." },
       { sym: "$v_t$", desc: "the velocity vector at step $t$: a running, decayed accumulation of past (negative) gradient steps. It is what carries the optimizer forward; it starts at zero." },

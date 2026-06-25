@@ -130,6 +130,42 @@
        slightly negative output (the curve dips below zero around $x\\approx-0.75$ before rising back to 0),
        which is why GELU is mildly non-monotonic.</p>`,
 
+    architecture:
+      `<p><b>Where GELU sits in a network.</b> GELU is a <b>pointwise (element-wise) nonlinearity</b>: it takes
+       one scalar pre-activation and returns one scalar, applied independently to every entry of a tensor. It
+       occupies the exact slot that <b>ReLU</b> or <b>ELU</b> would &mdash; immediately after a linear (or
+       convolutional) layer and before the next one. The paper drops it into otherwise-standard fully-connected,
+       convolutional, and residual architectures unchanged, reporting it <i>"matches or exceeds models with ReLUs
+       or ELUs across tasks."</i></p>
+       <p><b>Component-by-component data flow</b> through one block, for an input vector $h$:</p>
+       <ol>
+         <li><b>Linear / conv layer:</b> compute the pre-activation $z = Wh + b$ (a matrix multiply for a dense
+         layer, or a convolution). This is the only place learned weights live.</li>
+         <li><b>GELU (this component):</b> apply $\\mathrm{GELU}$ to <i>each</i> entry $z_i$ independently:
+         $a_i = z_i\\,\\Phi(z_i)$. Nothing mixes across entries &mdash; it is a per-element map, so the output
+         $a$ has exactly the same shape as $z$.</li>
+         <li><b>Next layer:</b> feed $a$ into the following linear / conv layer, and repeat.</li>
+       </ol>
+       <p><b>The forward maps, per element.</b> Exact form (PyTorch default):</p>
+       $$a = z\\cdot\\tfrac12\\!\\left[\\,1+\\operatorname{erf}\\!\\left(\\frac{z}{\\sqrt{2}}\\right)\\right]$$
+       <p>Cheaper approximations that slot into the same position, when feedforward speed matters:</p>
+       $$a \\approx 0.5\\,z\\left(1+\\tanh\\!\\left[\\sqrt{2/\\pi}\\,\\bigl(z+0.044715\\,z^{3}\\bigr)\\right]\\right)
+       \\qquad\\text{or}\\qquad a \\approx z\\,\\sigma(1.702\\,z)$$
+       <p><b>The gating interpretation.</b> Read $\\Phi(z)$ as a <b>soft gate</b>: it is the probability that a
+       standard-normal variable (mean 0, variance 1) is $\\le z$, a number between 0 and 1. GELU multiplies the
+       input by that probability, $z\\cdot\\Phi(z)$ &mdash; so the input passes through scaled by how large it is
+       relative to a bell curve, rather than being hard-switched on or off by its sign as in ReLU. Big positive
+       inputs are gated open ($\\Phi\\approx1$), strongly negative inputs gated shut ($\\Phi\\approx0$), and inputs
+       near zero are passed at about half strength ($\\Phi(0)=\\tfrac12$).</p>
+       <p><b>No learned parameters.</b> GELU adds <i>nothing</i> to train: it fixes the gating normal at
+       $\\mu=0,\\ \\sigma=1$ and, as the paper notes, <i>"does not introduce any new hyperparameters."</i> All the
+       block's learning stays in the surrounding $W,b$; GELU is a fixed function the gradient simply flows back
+       through (it is differentiable everywhere, which is its advantage over ReLU's kink). The paper mentions one
+       optional <b>variant</b> that occupies the same slot: replacing the Gaussian CDF with the logistic CDF
+       $\\sigma$ gives the <b>SiLU</b> (Sigmoid Linear Unit), $a = z\\,\\sigma(z)$ &mdash; the self-gated,
+       sigmoid-gated cousin (later popularized as Swish), distinct from GELU's own sigmoid <i>approximation</i>
+       $z\\,\\sigma(1.702z)$ by the missing $1.702$ factor.</p>`,
+
     symbols: [
       { sym: "$x$", desc: "the scalar input to the activation — the neuron's weighted sum (a 'pre-activation'). GELU is applied element-wise, one value at a time." },
       { sym: "$\\Phi(x)$", desc: "capital Phi: the standard normal cumulative distribution function (CDF). It is the probability that a draw from a mean-0, variance-1 bell curve is at most $x$. Ranges from 0 to 1; equals 0.5 at $x=0$." },
