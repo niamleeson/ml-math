@@ -1,27 +1,23 @@
 /* Paper lesson — "MobileNetV2: Inverted Residuals and Linear Bottlenecks", Sandler et al. 2018.
    Self-contained: lesson + CODE + CODEVIZ merged by id "paper-mobilenetv2".
-   GROUNDED from arXiv:1801.04381 via the ar5iv HTML mirror:
-     - abstract (inverted residual; remove non-linearities in narrow layers)
-     - §3.2 "Linear Bottlenecks" (two manifold properties; linear projection is crucial)
-     - §3.3 "Inverted residuals" (shortcut between thin bottlenecks; why 'inverted')
-     - §4 + Table 1 (the bottleneck block transforms, ReLU6, expansion factor t)
-     - Table 2 (the MobileNetV2 body: t, c, n, s rows)
-     - §6.1 Table 4 (ImageNet top-1 / MAdds / params)
-     - Fig. 6(a) ablation (non-linear bottleneck hurts by several percent)
+   GROUNDED from arXiv:1801.04381 (abstract) and the ar5iv HTML mirror
+   (Sect. 3.1 manifold/linear-bottleneck argument; Sect. 3.2 inverted residual; Table 1 bottleneck
+   operator; the block-cost expression h*w*d'*t(d'+k^2+d''); Eqn 1 depthwise-separable cost;
+   Sect. 3.3 / Fig. 6a linear-vs-ReLU ablation; Sect. 6.1 / Table 4 ImageNet results).
    Track B (architecture): build the inverted-residual + linear-bottleneck block from nn.Conv2d,
-   work the t=6 channel arithmetic, and ablate linear vs ReLU projection. */
+   show its param/FLOP efficiency, and ABLATE linear bottleneck vs ReLU bottleneck on toy data. */
 (function () {
   window.LESSONS.push({
     id: "paper-mobilenetv2",
     title: "MobileNetV2 — Inverted Residuals and Linear Bottlenecks (2018)",
-    tagline: "Expand thin to fat, filter cheaply, project back to thin with NO activation — and shortcut between the thin ends.",
+    tagline: "Expand thin channels, filter cheaply, project back down with NO ReLU, and skip-connect the thin ends.",
     module: "Papers · Computer Vision",
     track: "architecture",
     paper: {
       authors: "Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen",
-      org: "Google",
+      org: "Google Inc.",
       year: 2018,
-      venue: "arXiv:1801.04381 (Jan 2018); CVPR 2018",
+      venue: "CVPR 2018 (arXiv:1801.04381)",
       citations: "",
       arxiv: "https://arxiv.org/abs/1801.04381",
       url: "https://arxiv.org/abs/1801.04381",
@@ -29,293 +25,282 @@
     },
     conceptLink: null,
     partOf: [],
-    prereqs: ["dl-conv", "pt-cnn", "pt-nn-module", "dl-batchnorm"],
+    prereqs: ["dl-conv", "pt-cnn", "pt-nn-module", "dl-batchnorm", "dl-resnet", "dl-activations", "paper-mobilenet"],
 
     // WHY READ IT
     problem:
-      `<p><b>MobileNet V1</b> (the previous paper, <code>paper-mobilenet</code>) made convolutions cheap with the
-       <b>depthwise-separable convolution</b> &mdash; a per-channel spatial filter (the "depthwise" step) followed
-       by a $1\\times1$ channel-mixer (the "pointwise" step). That cut compute ~8-9x. But V1 was still a plain stack
-       of these blocks: no <b>residual connections</b> (the "skip" shortcuts that let a block learn a small change
-       on top of its input, which made very deep nets trainable in ResNet, <code>paper-resnet</code>).</p>
-       <p>The obvious fix &mdash; bolt ResNet-style shortcuts onto MobileNet &mdash; runs into a tension the V2
-       paper opens on. To keep a model small you want <b>thin</b> layers (few channels). But the authors observed
-       (&sect;3.2) that putting a <b>ReLU</b> (Rectified Linear Unit: keep positives, zero negatives) on a thin,
-       low-dimensional layer <i>destroys information</i>: once you zero out the negative part inside a cramped
-       space, you cannot get the lost structure back. So the naive "thin layers + ReLU + skip" block throws away
-       exactly the signal it is trying to carry.</p>
-       <blockquote>"It is important to remove non-linearities in the narrow layers in order to maintain
-       representational power." (abstract)</blockquote>`,
+      `<p>MobileNet&nbsp;V1 (see the <code>paper-mobilenet</code> lesson) already made convolutions cheap with the
+       <b>depthwise-separable convolution</b> &mdash; a per-channel spatial filter (the <b>depthwise</b> step)
+       followed by a $1\\times1$ channel mixer (the <b>pointwise</b> step). But V1 was still a plain stack: no
+       <b>residual connections</b> (the ResNet trick of adding a layer's input back to its output so deep nets
+       train), and every layer ran ReLU on every feature. This paper opens on a subtler problem (&sect;1, &sect;3.1):
+       <b>where you put the ReLU matters</b>. A <b>ReLU</b> (Rectified Linear Unit: keep positives, zero negatives)
+       throws away every negative value. In a <b>wide</b> layer that is fine &mdash; the information that fits
+       through is spread over many channels. But in a <b>narrow</b> ("low-dimensional") layer, zeroing the
+       negatives can collapse the data and <i>destroy</i> information you can never get back.</p>
+       <p>So the question is: how do you keep layers thin (thin = cheap and small) <i>and</i> add residual
+       connections <i>and</i> not let ReLU wreck the thin layers? MobileNetV2's answer is the <b>inverted residual
+       with a linear bottleneck</b>.</p>`,
     contribution:
       `<ul>
-        <li><b>The linear bottleneck.</b> Make the network's "carried" representation a <b>thin</b> tensor, but
-        do the final $1\\times1$ projection down to that thin shape with <b>no activation function</b> (it is
-        <i>linear</i>). The paper's experiments show a ReLU there "hurts the performance by several percent"
-        (&sect;6, Fig.&nbsp;6a). Non-linearity belongs in the <i>wide</i> middle, not the thin ends.</li>
-        <li><b>The inverted residual.</b> The block goes thin &rarr; <b>expand</b> ($1\\times1$ up to $t$ times
-        wider) &rarr; depthwise $3\\times3$ filter &rarr; <b>project</b> ($1\\times1$ back down, linear). The
-        residual <b>shortcut connects the two thin ends</b>, not the wide middle. ResNet skips between the
-        <i>fat</i> layers; here it is the reverse &mdash; hence "<b>inverted</b>" (&sect;3.3).</li>
-        <li><b>ReLU6 and a clean memory story.</b> Activations are <b>ReLU6</b> ($\\min(\\max(0,x),6)$, a ReLU
-        capped at 6) "because of its robustness when used with low-precision computation" (&sect;4). Because the
-        wide tensor never has to be fully materialized, the block is also memory-efficient.</li>
+        <li><b>The linear bottleneck.</b> Keep the channel count low at the block's two ends (the
+        "bottleneck"), but make the final $1\\times1$ projection <b>linear</b> &mdash; <i>no</i> ReLU after it
+        (&sect;3.2). The paper argues a ReLU on a thin layer destroys information, so the thin layers stay linear.</li>
+        <li><b>The inverted residual.</b> A block goes thin &rarr; <b>expand</b> (a $1\\times1$ convolution that
+        multiplies the channels by an expansion factor $t$) &rarr; depthwise filter the wide tensor &rarr;
+        <b>project</b> back to thin. The <b>residual skip connection runs between the thin ends</b>, not the wide
+        middle &mdash; the reverse ("inverted") of a normal ResNet block, which skips between its wide ends
+        (&sect;3.2, abstract).</li>
+        <li><b>A memory- and compute-efficient family.</b> Because the wide tensor only exists briefly inside the
+        block and the data flowing between blocks is thin, MobileNetV2 reaches higher accuracy than V1 at
+        <i>fewer</i> parameters and multiply-adds (Table&nbsp;4).</li>
       </ul>`,
     whyItMattered:
-      `<p>The inverted-residual / linear-bottleneck block became <i>the</i> standard mobile building block.
-       MobileNetV3, EfficientNet (its "MBConv" block is exactly this, plus squeeze-and-excitation), and most
-       modern on-device vision backbones are stacks of it. The two lessons of the paper &mdash; "don't put a
-       ReLU on a thin layer" and "skip between the thin ends" &mdash; are now folded into how efficient nets are
-       designed by default.</p>`,
+      `<p>The inverted-residual + linear-bottleneck block became the default building block for efficient vision.
+       MobileNetV3, EfficientNet, and the "MBConv" blocks used throughout mobile and edge models are all this
+       block with tweaks. The idea that <b>you should not put a ReLU on a low-dimensional layer</b> reshaped how
+       people design narrow layers everywhere, and the thin-data-between-blocks design is why these nets are light
+       on both compute and memory on a phone.</p>`,
 
     // READING GUIDE
     readingGuide:
       `<p><b>Read closely:</b></p>
        <ul>
-        <li><b>&sect;3.2 (Linear Bottlenecks)</b> &mdash; the heart of the lesson: the two properties of the
-        "manifold of interest" and the argument that a ReLU on a low-dimensional layer loses information, so the
-        projection must be linear.</li>
-        <li><b>&sect;3.3 (Inverted residuals)</b> &mdash; where the shortcut goes (between the thin bottlenecks)
-        and why it is "inverted" versus the classical residual block.</li>
-        <li><b>Table 1</b> &mdash; the exact bottleneck block: $1\\times1$ expand (ReLU6) &rarr; $3\\times3$
-        depthwise (ReLU6) &rarr; $1\\times1$ project (<b>linear</b>), with the channel arithmetic
-        $k\\to tk\\to k'$.</li>
-        <li><b>Table 2</b> &mdash; the full body, to see the expansion factor $t$, output channels $c$, repeats
-        $n$, and stride $s$ per stage.</li>
-        <li><b>Fig.&nbsp;6(a)</b> &mdash; the key ablation: linear vs ReLU bottleneck (the effect you reproduce
-        in miniature). <b>Fig.&nbsp;3-4</b> picture the inverted shape.</li>
+        <li><b>&sect;3.1 (Linear Bottlenecks)</b> &mdash; the information argument: ReLU preserves a low-dimensional
+        "manifold of interest" only if it lies in a low-dimensional subspace, so a non-linearity on a thin layer
+        loses information. This is <i>why</i> the bottleneck is linear.</li>
+        <li><b>&sect;3.2 (Inverted Residuals)</b> and <b>Table&nbsp;1</b> &mdash; the block: expand $1\\times1$ (ReLU6)
+        &rarr; depthwise $3\\times3$ (ReLU6) &rarr; project $1\\times1$ (<b>linear</b>), with the shortcut between
+        the thin bottlenecks. Table&nbsp;1 lists the exact operator sequence and shapes.</li>
+        <li><b>The block-cost expression</b> in &sect;3.2 &mdash; $h\\cdot w\\cdot d'\\cdot t(d'+k^2+d'')$ &mdash; and
+        <b>Eqn&nbsp;1</b> (the depthwise-separable cost it builds on).</li>
+        <li><b>Fig.&nbsp;6(a)</b> (&sect;3.3 ablation) &mdash; linear bottleneck vs a ReLU bottleneck: the linear one
+        wins, the paper's headline design check.</li>
+        <li><b>Table&nbsp;4</b> (&sect;6.1) &mdash; ImageNet accuracy vs params vs multiply-adds against V1,
+        ShuffleNet, NASNet.</li>
        </ul>
-       <p><b>Skim:</b> &sect;5's memory-bound inference math and &sect;6.2-6.3's detection/segmentation
-       (SSDLite, DeepLabv3) results unless you need a specific downstream task.</p>`,
+       <p><b>Skim:</b> &sect;5 (memory-efficient inference) and the detection/segmentation sections (&sect;6.2&ndash;6.3)
+       unless you need SSDLite or DeepLab specifics.</p>`,
 
     // PREDICT + ATTEMPT
     predict:
-      `<p>You will build the inverted-residual block two ways: once with the final projection <b>linear</b> (as
-       the paper prescribes), and once with a <b>ReLU</b> stuck on that projection. The thin bottleneck carries
-       only a few channels. Before running: do you expect the ReLU-on-the-projection version to be <i>better</i>
-       (more non-linearity usually helps), <i>about the same</i>, or <i>worse</i>? Write your guess, then check it
-       against the ablation &mdash; and against the paper's "hurts by several percent" claim.</p>`,
+      `<p>A block takes a <b>thin</b> tensor (say 6 channels), expands it to a wide one, filters it, and projects
+       back to thin. The last step is a $1\\times1$ projection. Before reading: if you put a <b>ReLU</b> after that
+       projection (which sits on the thin 6-channel layer), do you expect the network to do <i>better</i>,
+       <i>about the same</i>, or <i>worse</i> than if the projection is <b>linear</b> (no ReLU)? Write your guess,
+       then check it against the ablation &mdash; where the only difference between two otherwise identical nets is
+       that one ReLUs its bottleneck and the other does not.</p>`,
     attempt:
-      `<p>Before the reveal, sketch the block. Fill in the <code>TODO</code>s for
-       <code>InvertedResidual(in_ch, out_ch, stride, t=6)</code>:</p>
+      `<p>Before the reveal, sketch the block you will build. Fill in the <code>TODO</code>s:</p>
        <ul>
-        <li>TODO: <b>expand</b> &mdash; a $1\\times1$ <code>nn.Conv2d(in_ch, in_ch*t, 1, bias=False)</code> +
-        BatchNorm + <b>ReLU6</b>. This widens the thin input by the expansion factor $t$.</li>
-        <li>TODO: <b>depthwise</b> &mdash; a $3\\times3$ <code>nn.Conv2d(in_ch*t, in_ch*t, 3, stride=stride,
-        padding=1, groups=in_ch*t, bias=False)</code> + BatchNorm + <b>ReLU6</b>. Filters each of the wide
-        channels on its own.</li>
-        <li>TODO: <b>project</b> &mdash; a $1\\times1$ <code>nn.Conv2d(in_ch*t, out_ch, 1, bias=False)</code> +
-        BatchNorm and <b>NO activation</b> (this is the linear bottleneck). It squeezes back down to thin.</li>
-        <li>TODO: the <b>residual</b> &mdash; add the input back (<code>x + block(x)</code>) <i>only</i> when
-        <code>stride==1 and in_ch==out_ch</code> (otherwise the shapes do not match).</li>
+        <li><code>InvertedResidual(nn.Module)</code> from <code>in_ch</code> &rarr; <code>out_ch</code> with
+        expansion factor <code>t=6</code> and a <code>stride</code>.</li>
+        <li>TODO: the <b>expand</b> step &mdash; a $1\\times1$ <code>nn.Conv2d(in_ch, in_ch*t, 1, bias=False)</code>,
+        then BatchNorm, then ReLU6. This widens the thin input to <code>in_ch*t</code> channels.</li>
+        <li>TODO: the <b>depthwise</b> step &mdash; a $3\\times3$ <code>nn.Conv2d(hid, hid, 3, stride=stride,
+        padding=1, groups=hid, bias=False)</code>, then BatchNorm, then ReLU6. (<code>groups=hid</code> filters
+        each channel on its own &mdash; the depthwise trick from V1.)</li>
+        <li>TODO: the <b>project</b> step &mdash; a $1\\times1$ <code>nn.Conv2d(hid, out_ch, 1, bias=False)</code>,
+        then BatchNorm, and <b>NO ReLU</b> (the linear bottleneck).</li>
+        <li>TODO: the <b>residual</b> &mdash; if <code>stride==1</code> and <code>in_ch==out_ch</code>, add the
+        block's input back to its output. This shortcut runs between the thin bottleneck ends.</li>
        </ul>
-       <p>Then build the <b>ablation</b> twin: identical, but with a ReLU6 after the projection. Predict which
-       trains better.</p>`,
+       <p>Then build the <b>ablation</b> twin: the same block but with a ReLU6 added after the projection, and
+       predict which net reaches higher test accuracy.</p>`,
 
     // ★ HOW IT WORKS ★
     walkthrough:
-      `<p>Picture the block as an hourglass laid flat: <b>thin &rarr; fat &rarr; thin</b>. The tensor that travels
-       between blocks is the thin one; the fat part lives only inside a block.</p>
+      `<p>Start from where V1 left off. V1's depthwise-separable block does a per-channel $3\\times3$ filter then a
+       $1\\times1$ mix, with a ReLU after each. MobileNetV2 reorganizes this into a block whose <b>input and output
+       are thin</b> and whose <b>middle is wide</b> (&sect;3.2):</p>
        <ol>
-        <li><b>Expand</b> (&sect;3.3). Start from a thin input with $k$ channels. A $1\\times1$ convolution widens
-        it to $tk$ channels, where $t$ is the <b>expansion factor</b> (default $t=6$). Then BatchNorm and ReLU6.
-        Now you have a roomy, high-dimensional space to work in.</li>
-        <li><b>Depthwise filter</b>. A single $3\\times3$ depthwise convolution (each of the $tk$ channels filtered
-        on its own, no cross-channel mixing &mdash; the V1 trick) does the spatial work, optionally with stride to
-        downsample. Then BatchNorm and ReLU6. The non-linearity is applied <i>here</i>, in the wide space, where
-        &sect;3.2 says ReLU can keep information.</li>
-        <li><b>Project</b> (the <b>linear bottleneck</b>, &sect;3.2). A $1\\times1$ convolution squeezes the $tk$
-        channels back down to a thin $k'$ output. BatchNorm, but <b>no ReLU</b>. This is the crucial step: a ReLU
-        on this thin, low-dimensional output would zero half its coordinates and "destroy too much information"
-        (&sect;3.2). Leaving it linear preserves what the wide layers computed.</li>
-        <li><b>Inverted residual</b> (&sect;3.3). When the block keeps the same shape (stride 1, $k'=k$), add the
-        input straight onto the output: $y = x + \\text{project}(\\text{dw}(\\text{expand}(x)))$. The shortcut
-        runs <b>between the two thin ends</b>. Classical ResNet residuals connect the <i>wide</i> layers; here it
-        is the bottlenecks that are connected &mdash; the inverted picture, and it is cheaper because the thing
-        being added and stored is thin.</li>
+        <li><b>Expand</b> &mdash; a $1\\times1$ convolution multiplies the channel count by the <b>expansion factor</b>
+        $t$ (default $t=6$). A thin $d'$-channel input becomes a wide $t\\,d'$-channel tensor. Then BatchNorm + ReLU6.
+        (The paper gives the example: 64 channels in, expand by 6 to 384, &sect;3.2.) <b>ReLU6</b> is just
+        $\\min(\\max(0,x),6)$ &mdash; a ReLU capped at 6, chosen for robustness in low-precision (8-bit) inference
+        (&sect;4).</li>
+        <li><b>Depthwise filter</b> &mdash; a $3\\times3$ depthwise convolution (each of the $t\\,d'$ channels filtered
+        on its own) does the spatial work on the <i>wide</i> tensor, where it is cheap per channel. Then BatchNorm
+        + ReLU6. A stride here downsamples.</li>
+        <li><b>Project (linear)</b> &mdash; a $1\\times1$ convolution maps the wide $t\\,d'$ channels back down to a
+        thin $d''$-channel output, then BatchNorm and <b>no activation</b>. This is the <b>linear bottleneck</b>.</li>
+        <li><b>Residual</b> &mdash; when the block keeps the same shape (stride&nbsp;1 and $d'=d''$), add the input
+        back to the output. The skip thus connects the two <b>thin</b> ends &mdash; the "inverted" residual (a
+        normal ResNet skip connects wide ends).</li>
        </ol>
-       <p>The intuition for the linear projection (&sect;3.2): the useful signal is assumed to lie on a
-       low-dimensional <b>manifold</b> (a curved low-dimensional surface) inside the channel space. Two facts the
-       paper states: (1) if that manifold survives a ReLU with non-zero volume, the ReLU acted as a plain linear
-       map on it anyway; (2) a ReLU only fully preserves a manifold if it sits in a low-dimensional subspace. In a
-       cramped thin layer those conditions fail, so the ReLU clips away real structure. Make the projection linear
-       and the structure survives.</p>`,
+       <p>Why is the projection linear? The paper's argument (&sect;3.1): the data of interest lives on a
+       low-dimensional <b>manifold</b> (a curved surface) inside the channel space. A ReLU zeroes every negative
+       coordinate; if the layer is <b>thin</b>, that collapse can fold or erase part of the manifold and the
+       information is gone for good. ReLU only safely preserves such a manifold when it sits in a high-dimensional
+       space (the wide middle, where the expand+depthwise ReLU6s live). So the rule is: <b>non-linearities on the
+       wide layers, linear on the thin bottleneck.</b> The paper states that adding a non-linearity in the
+       bottleneck "indeed hurts the performance by several percent" (&sect;3.2, &sect;3.3 / Fig.&nbsp;6a).</p>`,
     symbols: [
-      { sym: "$k$", desc: "the number of <b>input channels</b> to the block &mdash; the thin width entering the bottleneck." },
-      { sym: "$k'$", desc: "the number of <b>output channels</b> the block produces &mdash; again thin (in Table 1 the project step maps $tk \\to k'$)." },
-      { sym: "$t$", desc: "the <b>expansion factor</b>: how many times wider the inner layer is than the input. Default $t=6$ in MobileNetV2 (Table 2). The first block uses $t=1$." },
-      { sym: "$tk$", desc: "the <b>expanded (inner) channel count</b> &mdash; the wide middle of the block, where the depthwise filter and the ReLU6 live." },
-      { sym: "$s$", desc: "the <b>stride</b> of the depthwise convolution: $s=1$ keeps the spatial size (and allows the residual add), $s=2$ halves it (downsample, no residual)." },
-      { sym: "“manifold of interest”", desc: "the paper's term for the low-dimensional curved surface in channel-space on which the genuinely useful activations lie. The design tries not to crush it." },
-      { sym: "“linear bottleneck”", desc: "the thin output layer of the block whose $1\\times1$ projection has NO activation function (it is a plain linear map), so it does not clip information." },
-      { sym: "“inverted residual”", desc: "a residual block whose skip connection joins the THIN bottleneck layers, with the wide (expanded) layer in the middle &mdash; the reverse of a classical ResNet block." },
-      { sym: "“ReLU6”", desc: "a ReLU clamped at 6: $\\min(\\max(0,x),6)$. Keeps positives but caps them at 6; chosen for robustness in low-precision (e.g. 8-bit) arithmetic (&sect;4)." },
-      { sym: "“depthwise convolution”", desc: "a convolution where each channel is filtered by its own kernel with no cross-channel mixing (set <code>groups</code> to the channel count). Inherited from MobileNetV1." }
+      { sym: "$d'$", desc: "the number of <b>input channels</b> to the block (the thin width coming in). Written $d_i$ in the paper." },
+      { sym: "$d''$", desc: "the number of <b>output channels</b> of the block (the thin width going out). Written $d_j$ in the paper." },
+      { sym: "$t$", desc: "the <b>expansion factor</b>: the $1\\times1$ expand layer multiplies the input channels to $t\\,d'$. Default $t=6$ across the network (&sect;3.2)." },
+      { sym: "$k$", desc: "the depthwise <b>kernel size</b> (the side of the square filter window). MobileNetV2 uses $k=3$." },
+      { sym: "$h,\\,w$", desc: "the <b>height and width</b> in pixels of the feature map the block operates on (its spatial size)." },
+      { sym: "ReLU6", desc: "the activation $\\min(\\max(0,x),6)$: an ordinary ReLU (keep positives, zero negatives) whose output is also clamped at 6, chosen for robust 8-bit inference (&sect;4)." },
+      { sym: "“expansion layer”", desc: "the first $1\\times1$ convolution; widens the thin input from $d'$ to $t\\,d'$ channels (with BatchNorm + ReLU6)." },
+      { sym: "“(linear) bottleneck”", desc: "the thin layer at the block's ends. The final $1\\times1$ projection that lands on it has NO activation &mdash; that is what 'linear' means here." },
+      { sym: "“inverted residual”", desc: "a residual block whose skip connection joins the THIN ends (around the wide middle), the reverse of a normal ResNet block that skips its wide ends." },
+      { sym: "“manifold of interest”", desc: "the low-dimensional curved surface the meaningful data lies on inside the channel space; the paper's reason a ReLU on a thin layer can destroy information (&sect;3.1)." }
     ],
-    formula: `$$ \\text{Inverted residual (Table 1, } s=1,\\, k'=k\\text{):}\\quad y \\;=\\; x \\;+\\; \\underbrace{P_{\\text{linear}}}_{tk\\to k}\\Big(\\;\\text{ReLU6}\\big(\\,\\text{DW}_{3\\times3}\\,\\text{ReLU6}(\\underbrace{E}_{k\\to tk}\\,x)\\big)\\Big) $$`,
+    formula: `$$ \\text{cost(inverted-residual block)} \\;=\\; \\underbrace{h\\cdot w\\cdot d'\\cdot t}_{\\text{wide tensor size}}\\;\\big(\\,\\underbrace{d'}_{\\text{expand }1\\times1}\\;+\\;\\underbrace{k^{2}}_{\\text{depthwise }k\\times k}\\;+\\;\\underbrace{d''}_{\\text{project }1\\times1}\\,\\big) \\quad\\text{(\\S 3.2)} $$`,
     whatItDoes:
-      `<p>Read it inside-out, matching Table&nbsp;1. $E$ is the <b>expand</b> $1\\times1$ convolution taking the
-       thin $k$ channels up to $tk$; a ReLU6 follows. $\\text{DW}_{3\\times3}$ is the <b>depthwise</b> spatial
-       filter on those $tk$ channels, with another ReLU6. $P_{\\text{linear}}$ is the <b>project</b> $1\\times1$
-       convolution taking $tk$ back down to the thin output &mdash; and it has <b>no</b> ReLU, which is the whole
-       point of the linear bottleneck. Finally, when the input and output shapes match ($s=1$ and $k'=k$), the
-       input $x$ is added back &mdash; the inverted-residual skip, joining the two thin ends. (When $s=2$ or
-       $k'\\neq k$ the shapes differ, so the $x+$ term is dropped and the block is just the three convs.)</p>`,
+      `<p>This counts the multiply-adds of one whole inverted-residual block (&sect;3.2). The shared factor
+       $h\\cdot w\\cdot d'\\cdot t$ is the size of the wide intermediate tensor &mdash; spatial area $h\\cdot w$ times
+       its $t\\,d'$ channels, with one $d'$ pulled out front. Inside the bracket are the three steps' per-element
+       costs: the expand $1\\times1$ contributes $d'$ (it reads $d'$ input channels), the depthwise $k\\times k$
+       contributes $k^2$ (its window, no channel mixing), and the project $1\\times1$ contributes $d''$ (it writes
+       $d''$ output channels). Add them and multiply by the wide-tensor size. The block builds on the
+       depthwise-separable cost of V1 (<b>Eqn&nbsp;1</b>: $h\\cdot w\\cdot d'(k^2+d'')$); the new $t$ and the extra
+       expand term are the price of the expansion, bought back by keeping the data thin between blocks.</p>`,
     derivation:
-      `<p>There is no separate concept lesson to defer to (<code>conceptLink</code> is null), so here is why each
-       choice follows from the paper's argument (&sect;3.2-3.3).</p>
-       <p><b>Why expand first?</b> A depthwise convolution cannot mix channels and is cheap, but on its own it has
-       little capacity. Run it in a <i>wide</i> space and it has many independent feature channels to filter, so
-       the block as a whole is expressive while staying cheap. The expansion is what gives the block its power.</p>
-       <p><b>Why is the projection linear?</b> &sect;3.2 reasons about the "manifold of interest." A ReLU
-       $\\max(0,x)$ zeros every negative coordinate. In a <i>high</i>-dimensional space that loses little (the
-       manifold has room to route around the clipped axes), which is why the expand and depthwise steps keep their
-       ReLU6. But the projection's output is <i>low</i>-dimensional &mdash; thin by design. There, zeroing
-       coordinates collapses the manifold and the information is gone for good. The two stated properties make this
-       precise: (1) a manifold that survives ReLU with non-zero volume was only linearly transformed anyway, and
-       (2) ReLU preserves a manifold only when it lies in a low-dimensional subspace of a <i>larger</i> space.
-       Neither holds for a cramped thin output, so the only safe choice is to drop the non-linearity there. The
-       paper calls using linear layers "crucial."</p>
-       <p><b>Why invert the residual?</b> A residual add needs matching shapes. The thin bottlenecks are the stable
-       inter-block shape, so connecting them is natural &mdash; and far cheaper to add and store than the wide
-       middle. ResNet connected the wide layers because <i>its</i> bottleneck was the thin middle; MobileNetV2
-       flips which layers are thin, so the connection flips with it (&sect;3.3).</p>`,
+      `<p>The expression is just the sum of three layer costs sharing the wide-tensor size. Recall a $1\\times1$
+       convolution on an $h\\times w$ map from $a$ to $b$ channels costs $h\\cdot w\\cdot a\\cdot b$ multiply-adds, and
+       a depthwise $k\\times k$ on $c$ channels costs $h\\cdot w\\cdot c\\cdot k^2$ (each channel its own filter, no
+       mixing &mdash; the V1 result). The wide tensor has $t\\,d'$ channels. So:</p>
+       <p><b>Expand</b> ($1\\times1$, $d'\\to t\\,d'$): $\\;h\\,w\\,d'\\,(t\\,d') = h\\,w\\,d'\\,t\\cdot d'$.</p>
+       <p><b>Depthwise</b> ($k\\times k$ on $t\\,d'$ channels): $\\;h\\,w\\,(t\\,d')\\,k^2 = h\\,w\\,d'\\,t\\cdot k^2$.</p>
+       <p><b>Project</b> ($1\\times1$, $t\\,d'\\to d''$): $\\;h\\,w\\,(t\\,d')\\,d'' = h\\,w\\,d'\\,t\\cdot d''$.</p>
+       <p>Every term carries the common factor $h\\,w\\,d'\\,t$. Pull it out:</p>
+       <p>$$ h\\,w\\,d'\\,t\\,\\big(d' + k^2 + d''\\big). $$</p>
+       <p>That is the paper's block cost. (Strictly, the depthwise term should use the post-stride spatial size if
+       the block downsamples; for stride&nbsp;1, $h\\,w$ is shared by all three. The lesson uses a stride-1 block so
+       the algebra is exact.) This is self-contained &mdash; no separate concept lesson to defer to.</p>`,
     example:
-      `<p>Trace the channel sizes through one block with the default expansion factor. Take an input with $k=24$
-       channels, expansion $t=6$, stride $s=1$, output $k'=24$, on a $14\\times14$ feature map.</p>
+      `<p>Work one stride-1 block by hand with paper-style numbers. Take a $14\\times14$ feature map, a thin
+       bottleneck of $d'=24$ channels in and $d''=24$ out, expansion $t=6$, kernel $k=3$. So the wide middle has
+       $t\\,d' = 6\\cdot24 = \\mathbf{144}$ channels.</p>
        <ul class="steps">
-        <li><b>Input:</b> $14\\times14\\times \\mathbf{24}$ (thin).</li>
-        <li><b>Expand</b> ($1\\times1$ conv, ReLU6): channels $\\to tk = 6\\cdot24 = \\mathbf{144}$. Tensor is now
-        $14\\times14\\times144$ (fat).</li>
-        <li><b>Depthwise</b> ($3\\times3$, stride 1, ReLU6): keeps $\\mathbf{144}$ channels and the $14\\times14$
-        size (each channel filtered on its own).</li>
-        <li><b>Project</b> ($1\\times1$ conv, <b>linear, no ReLU</b>): channels $\\to k' = \\mathbf{24}$. Tensor is
-        back to $14\\times14\\times24$ (thin).</li>
-        <li><b>Residual:</b> $s=1$ and $k'=k=24$, so add the input: output $= x + \\text{project}(\\dots)$, shape
-        $14\\times14\\times\\mathbf{24}$. The skip joined the thin $24$-channel ends; the $144$-channel layer was
-        never connected.</li>
+        <li><b>Expand</b> ($1\\times1$, $24\\to144$): $h\\,w\\,d'(t\\,d') = 14\\cdot14\\cdot24\\cdot144 =
+        196\\cdot24\\cdot144 = \\mathbf{677376}$ multiply-adds.</li>
+        <li><b>Depthwise</b> ($3\\times3$ on 144 channels): $h\\,w\\,(t\\,d')\\,k^2 = 196\\cdot144\\cdot9 =
+        \\mathbf{254016}$.</li>
+        <li><b>Project</b> ($1\\times1$, $144\\to24$): $h\\,w\\,(t\\,d')\\,d'' = 196\\cdot144\\cdot24 =
+        \\mathbf{677376}$.</li>
+        <li><b>Block total</b>: $677376 + 254016 + 677376 = \\mathbf{1608768}$. Check with the closed form:
+        $h\\,w\\,d'\\,t(d'+k^2+d'') = 196\\cdot24\\cdot6\\cdot(24+9+24) = 28224\\cdot57 = \\mathbf{1608768}$. Exact match.</li>
        </ul>
-       <p>Now the <b>parameter</b> arithmetic of the three $1\\times1$/depthwise weights (no bias; BatchNorm
-       carries the shift):</p>
-       <ul class="steps">
-        <li><b>Expand</b> $1\\times1$: $k\\cdot tk = 24\\cdot144 = \\mathbf{3456}$ weights.</li>
-        <li><b>Depthwise</b> $3\\times3$: $3\\cdot3\\cdot tk = 9\\cdot144 = \\mathbf{1296}$ weights (one $3\\times3$
-        kernel per channel).</li>
-        <li><b>Project</b> $1\\times1$: $tk\\cdot k' = 144\\cdot24 = \\mathbf{3456}$ weights.</li>
-        <li><b>Block total:</b> $3456+1296+3456 = \\mathbf{8208}$ convolution weights. The notebook recomputes
-        every one of these and asserts they match.</li>
-       </ul>`,
+       <p>For comparison, a single ordinary $3\\times3$ convolution doing $24\\to24$ on the same map costs
+       $h\\,w\\,d'\\,d''\\,k^2 = 196\\cdot24\\cdot24\\cdot9 = \\mathbf{1016064}$, and V1's depthwise-separable block
+       (Eqn&nbsp;1, $h\\,w\\,d'(k^2+d'') = 196\\cdot24\\cdot33$) costs $\\mathbf{155232}$. The inverted-residual block
+       costs more <i>per block</i> than V1's because of the $t=6$ expansion &mdash; but it carries a residual and a
+       linear bottleneck, lets the whole network stay thinner between blocks, and so the <i>full</i> MobileNetV2
+       still ends up smaller and more accurate than V1 (Table&nbsp;4). The notebook recomputes all of these.</p>`,
     recipe:
       `<ol>
-        <li><b>Build the inverted-residual block</b> (<code>InvertedResidual(in_ch, out_ch, stride, t=6)</code>):
-        $1\\times1$ expand to <code>in_ch*t</code> &rarr; BatchNorm &rarr; ReLU6; then $3\\times3$ depthwise
-        (<code>groups=in_ch*t</code>, the given stride) &rarr; BatchNorm &rarr; ReLU6; then $1\\times1$ project to
-        <code>out_ch</code> &rarr; BatchNorm <i>only</i> (linear). Add the input when
-        <code>stride==1 and in_ch==out_ch</code>.</li>
-        <li><b>Recompute the worked example</b>: confirm the $24\\to144\\to144\\to24$ shapes and the $3456,1296,
-        3456$ (total $8208$) weight counts in a cell.</li>
-        <li><b>Build the ablation twin</b>: identical block but with a ReLU6 after the project step (a non-linear
-        bottleneck).</li>
-        <li><b>Stack a few blocks</b> into a tiny net with a global-average-pool + linear classification head.</li>
-        <li><b>Train both</b> (linear vs non-linear bottleneck) on toy data with identical depth/width/seed and
-        compare test accuracy &mdash; the linear-bottleneck net should win, reproducing Fig.&nbsp;6(a)'s effect.</li>
+        <li><b>Build the inverted-residual block</b> (<code>InvertedResidual</code>): expand $1\\times1$ &rarr;
+        BatchNorm &rarr; ReLU6; depthwise $3\\times3$ (<code>groups=hid</code>, with <code>stride</code>) &rarr;
+        BatchNorm &rarr; ReLU6; project $1\\times1$ &rarr; BatchNorm &rarr; <b>(no activation)</b>.</li>
+        <li><b>Add the inverted residual</b>: if <code>stride==1</code> and <code>in_ch==out_ch</code>, return
+        <code>x + block(x)</code>; otherwise just <code>block(x)</code>. The skip joins the thin ends.</li>
+        <li><b>Stack a few blocks</b> with thin bottleneck widths and a small classifier head (global average pool
+        then a linear layer) into a tiny MobileNetV2-style net.</li>
+        <li><b>Build the ablation twin</b>: the identical net but with a ReLU6 added after every projection (a
+        non-linear bottleneck). Keep depth, widths, optimizer, data, and seed identical.</li>
+        <li><b>Train both</b> on toy data and compare test accuracy: the linear-bottleneck net should clearly beat
+        the ReLU-bottleneck one &mdash; the paper's "non-linearity in the bottleneck hurts" result.</li>
       </ol>`,
     results:
-      `<p>On ImageNet classification (&sect;6.1, Table&nbsp;4) the paper quotes <b>MobileNetV2</b> (width
-       multiplier 1.0, $224\\times224$ input) at <b>72.0%</b> top-1 accuracy using <b>300</b> million multiply-adds
-       ("MAdds") and <b>3.4</b> million parameters; the larger <b>MobileNetV2 (1.4)</b> variant reaches
-       <b>74.7%</b> top-1 with <b>585</b>M MAdds and <b>6.9</b>M parameters. For the design choices, the linear-vs-
-       non-linear ablation (Fig.&nbsp;6a) reports that "using non-linear layers in bottlenecks indeed hurts the
-       performance by several percent," and the shortcut ablation (Fig.&nbsp;6b) finds the bottleneck-to-bottleneck
-       connection works best.</p>
-       <p><i>These are the paper's reported figures, quoted from its tables/figures. The numbers in the CODEVIZ
-       panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+      `<p>The paper's main ImageNet table (Table&nbsp;4, &sect;6.1) quotes MobileNetV2 at <b>72.0%</b> top-1 accuracy
+       with <b>3.4M</b> parameters and <b>300M</b> multiply-adds, versus MobileNetV1 at <b>70.6%</b> with
+       <b>4.2M</b> parameters and <b>575M</b> multiply-adds &mdash; <i>higher</i> accuracy at <i>fewer</i>
+       parameters and roughly half the compute. It also lists ShuffleNet&nbsp;(1.5) at 71.5% / 3.4M / 292M and
+       NASNet-A at 74.0% / 5.3M / 564M, and a wider MobileNetV2&nbsp;(1.4) at <b>74.7%</b> / 6.9M / 585M. On the
+       design choice itself, the linear-bottleneck ablation (&sect;3.3, Fig.&nbsp;6a) shows that putting a
+       non-linearity in the bottleneck "hurts the performance by several percent."</p>
+       <p><i>These are the paper's reported figures, quoted from its tables. The numbers in the CODEVIZ panel below
+       are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: convolutions, BatchNorm, and ReLU6 already ship in
-       PyTorch, so you <b>import</b> them and build only the novel composition. <b>Import:</b>
-       <code>nn.Conv2d</code> (its <code>groups</code> argument gives the depthwise behaviour),
-       <code>nn.BatchNorm2d</code>, <code>nn.ReLU6</code>, the optimizer. <b>Build by hand:</b> the
-       inverted-residual block (expand &rarr; depthwise &rarr; <b>linear</b> project, with the thin-to-thin skip),
-       the $t=6$ channel/parameter arithmetic of the worked example, and the <b>ablation</b> that adds a ReLU6 to
-       the projection. The manifold/linear-bottleneck argument is given in full here (no separate concept lesson).
-       For the depthwise-separable convolution this block is built from, see <code>paper-mobilenet</code>; for the
-       classical residual it inverts, see <code>paper-resnet</code>.</p>`,
+       PyTorch, so you <b>import</b> them and build only the novel composition. <b>Import:</b> <code>nn.Conv2d</code>
+       (its <code>groups</code> argument gives the depthwise step), <code>nn.BatchNorm2d</code>,
+       <code>nn.ReLU6</code>, and the optimizer. <b>Build by hand:</b> the inverted-residual block (expand &rarr;
+       depthwise &rarr; <i>linear</i> project, with the thin-to-thin skip), the block-cost counting that confirms
+       $h\\,w\\,d'\\,t(d'+k^2+d'')$, and the <b>ablation</b> that adds a ReLU6 on the bottleneck. The cost algebra
+       and the manifold/linear-bottleneck argument are covered here in full (no separate concept lesson). For the
+       depthwise-separable groundwork this builds on, see <code>paper-mobilenet</code>.</p>`,
     pitfalls:
       `<ul>
-        <li><b>Putting an activation on the projection.</b> The $1\\times1$ project step ends in BatchNorm and
-        <b>nothing else</b> &mdash; it is the <i>linear</i> bottleneck. Adding a ReLU/ReLU6 there is the exact
-        mistake the paper warns against ("hurts by several percent", Fig.&nbsp;6a). The expand and depthwise steps
-        <i>do</i> get ReLU6; only the projection is linear. <b>Fix:</b> no activation after project.</li>
-        <li><b>Adding the residual when shapes do not match.</b> The skip is valid only when
-        <code>stride==1 and in_ch==out_ch</code>. With a stride-2 (downsampling) block or a channel change, the
-        input and output have different shapes and <code>x + out</code> will error or be wrong. <b>Fix:</b> gate
-        the add on both conditions.</li>
-        <li><b>Forgetting <code>groups=hidden</code> on the depthwise conv.</b> The middle conv must be depthwise
-        (<code>groups</code> equal to the expanded channel count $tk$). Without it you get an expensive full
-        convolution and lose the efficiency that motivates the whole block.</li>
-        <li><b>Expanding the wrong layer / wrong $t$.</b> The expansion factor multiplies the <i>input</i>
-        channels: inner width is <code>in_ch * t</code>, not <code>out_ch * t</code>. The default is $t=6$; the
-        very first MobileNetV2 block uses $t=1$ (no expansion). Mixing these up changes every downstream shape.</li>
-        <li><b>Confusing "inverted" with V1.</b> MobileNetV2 is V1's depthwise-separable idea <i>plus</i> the
-        expand-project bottleneck and the thin-to-thin residual. The residual and the expansion are the new parts;
-        the depthwise filter is inherited. Don't describe V2 as just "V1 with skips."</li>
+        <li><b>Putting a ReLU after the projection.</b> The whole point is that the bottleneck is <b>linear</b>:
+        BatchNorm yes, activation no. Adding <code>nn.ReLU6</code> after the project $1\\times1$ turns it into a
+        non-linear bottleneck and (per the paper, and the ablation here) costs several points of accuracy.
+        <b>Fix:</b> only the expand and depthwise steps get ReLU6.</li>
+        <li><b>Skipping the wrong layers.</b> The residual connects the <b>thin</b> input and output of the block
+        (around the wide middle), and <i>only</i> when <code>stride==1</code> and <code>in_ch==out_ch</code> so the
+        shapes match. Adding a skip across a downsampling or channel-changing block (mismatched shapes) crashes or
+        needs a projection shortcut. <b>Fix:</b> gate the add on <code>stride==1 and in_ch==out_ch</code>.</li>
+        <li><b>Forgetting <code>groups=hid</code> on the depthwise conv.</b> Without it the $3\\times3$ becomes a
+        full convolution on the wide tensor &mdash; enormously more expensive and no longer depthwise.</li>
+        <li><b>Confusing per-block cost with whole-net cost.</b> One inverted-residual block costs <i>more</i> than
+        one V1 separable block (because of the $t$ expansion). MobileNetV2 wins at the <i>network</i> level by
+        keeping the data thin between blocks; don't conclude the block is cheaper in isolation.</li>
+        <li><b>Using plain ReLU instead of ReLU6.</b> The paper uses ReLU6 ($\\min(\\max(0,x),6)$) for low-precision
+        robustness (&sect;4). Plain ReLU trains fine on toy data but is not the paper's choice; keep ReLU6 to match.</li>
       </ul>`,
     recall: [
-      "List the three convolutions of the block in order and say which one has NO activation.",
-      "Define the expansion factor $t$ and give its default value.",
-      "Why must the projection be linear? State the low-dimensional manifold argument in one sentence.",
-      "Between which layers does the inverted-residual shortcut connect, and why is that the reverse of ResNet?",
-      "For $k=24$, $t=6$, write the channel sizes through expand, depthwise, and project."
+      "Write the inverted-residual block cost $h\\,w\\,d'\\,t(d'+k^2+d'')$ from memory and name which step each bracket term is.",
+      "Why is the bottleneck projection LINEAR (no ReLU)? State the manifold argument in one sentence.",
+      "Between which layers does the inverted residual's skip connection run, and under what shape condition?",
+      "What is ReLU6 and why did the paper pick it?"
     ],
     practice: [
       {
-        q: `<b>The ablation.</b> You have a working tiny MobileNetV2 whose blocks use a <i>linear</i> bottleneck
-            (no activation on the projection). Add a ReLU6 after every projection step (a non-linear bottleneck),
-            keep everything else identical, and retrain. What happens to the test accuracy, and what does the
-            comparison demonstrate about the paper's central claim?`,
+        q: `<b>The ablation.</b> You have a working tiny MobileNetV2 whose blocks use a <i>linear</i> bottleneck.
+            Add a ReLU6 after every projection $1\\times1$ (making the bottleneck non-linear), keep everything else
+            identical, and retrain. What happens to the parameter count and the test accuracy, and what does the
+            comparison demonstrate?`,
         steps: [
-          { do: `Change exactly one thing: in <code>InvertedResidual</code>, apply a ReLU6 to the output of the project $1\\times1$ conv. Keep depth, widths, expansion $t$, optimizer, data, and seed identical.`, why: `An honest ablation varies only linear-vs-ReLU bottleneck, so any accuracy gap is attributable to it &mdash; mirroring Fig. 6(a).` },
-          { do: `Train both the linear-bottleneck and non-linear-bottleneck nets and compare test accuracy.`, why: `&sect;3.2 predicts the ReLU clips information in the thin output, so the non-linear version should be worse.` },
-          { do: `Note that the wide expand/depthwise layers keep their ReLU6 in BOTH nets &mdash; only the thin projection differs.`, why: `The claim is specifically about non-linearity in the NARROW layer; ReLU in the wide layers is fine and stays.` }
+          { do: `Change one thing only: add <code>nn.ReLU6</code> after the project conv's BatchNorm. Keep depth, bottleneck widths, expansion $t$, optimizer, data, and seed identical.`, why: `An honest ablation isolates the linear-vs-ReLU bottleneck; any accuracy gap is attributable to it alone.` },
+          { do: `Note the parameter counts.`, why: `A ReLU has no parameters, so the two nets have the <b>same</b> parameter count &mdash; the difference is purely the activation, not capacity.` },
+          { do: `Train both and compare test accuracy.`, why: `The linear-bottleneck net should clearly win &mdash; the paper's claim that a non-linearity in the thin bottleneck destroys information and hurts performance.` }
         ],
-        answer: `<p>The non-linear-bottleneck net trains to <b>lower</b> test accuracy than the linear-bottleneck
-                 one, even though it has the "extra" non-linearity that usually helps. Because the two nets are
-                 identical except for the activation on the thin projection, this isolates the linear bottleneck as
-                 the cause: a ReLU on a low-dimensional layer zeros coordinates the layer cannot afford to lose, so
-                 it "destroys too much information" (&sect;3.2). This is the same qualitative effect as the paper's
-                 Fig.&nbsp;6(a) ("hurts by several percent"). The CODEVIZ panel shows the two training curves.</p>`
+        answer: `<p>The two nets have <b>identical</b> parameter counts (a ReLU adds none), yet the linear-bottleneck
+                 net reaches clearly <b>higher</b> test accuracy. In our run the linear bottleneck hit ~0.77 while
+                 the ReLU bottleneck stalled at ~0.43 on a 12-class toy task with thin (6&ndash;8 channel)
+                 bottlenecks. Because the only difference is the activation on the thin projection, this isolates
+                 the linear bottleneck as the cause: a ReLU on a low-dimensional layer zeroes negatives and folds
+                 away part of the data manifold, information the network cannot recover. That is exactly the
+                 &sect;3.3 / Fig.&nbsp;6a result. The CODEVIZ panel shows the gap.</p>`
       },
       {
-        q: `A MobileNetV2 block takes $k=32$ input channels, uses expansion $t=6$, stride $s=1$, and outputs
-            $k'=32$ channels on an $8\\times8$ map. Give the channel size after each of the three steps, say whether
-            the residual add fires, and count the convolution weights of the block.`,
+        q: `An inverted-residual block runs on a $7\\times7$ map with thin bottleneck $d'=d''=64$, expansion
+            $t=6$, kernel $k=3$. Compute the wide-middle channel count and the block's multiply-adds, then compare
+            to one ordinary $3\\times3$ convolution doing $64\\to64$ on the same map.`,
         steps: [
-          { do: `Expand: channels $\\to tk = 6\\cdot32 = 192$; weights $= k\\cdot tk = 32\\cdot192 = 6144$.`, why: `The expand $1\\times1$ conv maps $k\\to tk$; a $1\\times1$ conv has $\\text{in}\\cdot\\text{out}$ weights.` },
-          { do: `Depthwise $3\\times3$: stays $192$ channels; weights $= 9\\cdot192 = 1728$.`, why: `Depthwise keeps the channel count and has one $3\\times3$ kernel per channel: $9\\cdot tk$.` },
-          { do: `Project (linear): channels $\\to k' = 32$; weights $= tk\\cdot k' = 192\\cdot32 = 6144$.`, why: `The project $1\\times1$ conv maps $tk\\to k'$ with NO activation.` },
-          { do: `Residual: $s=1$ and $k'=k=32$, so the add fires.`, why: `The thin-to-thin skip is valid exactly when stride is 1 and the channel count is unchanged.` }
+          { do: `Wide channels: $t\\,d' = 6\\cdot64 = 384$.`, why: `The expand $1\\times1$ multiplies the input channels by $t$ (the paper's own 64&rarr;384 example, &sect;3.2).` },
+          { do: `Block cost: $h\\,w\\,d'\\,t(d'+k^2+d'') = 7\\cdot7\\cdot64\\cdot6\\,(64+9+64) = 18816\\cdot137$.`, why: `Plug into the closed-form block cost; the bracket is expand $d'$ + depthwise $k^2$ + project $d''$.` },
+          { do: `Standard conv: $h\\,w\\,d'\\,d''\\,k^2 = 49\\cdot64\\cdot64\\cdot9$.`, why: `One full $3\\times3$ conv mixes all channels at every position.` }
         ],
-        answer: `<p>Channels go $32 \\to \\mathbf{192} \\to \\mathbf{192} \\to \\mathbf{32}$. The residual add
-                 <b>fires</b> ($s=1$, $k'=k$), so output $= x + \\text{project}(\\dots)$ with shape
-                 $8\\times8\\times32$. Weights: $6144 + 1728 + 6144 = \\mathbf{14016}$. Notice the projection is the
-                 linear bottleneck (no ReLU), and the skip joins the thin $32$-channel ends, never the wide $192$.</p>`
+        answer: `<p>The wide middle is $384$ channels. The block costs $18816\\cdot137 = \\mathbf{2{,}577{,}792}$
+                 multiply-adds. A single standard $3\\times3$ conv ($64\\to64$) costs $49\\cdot64\\cdot64\\cdot9 =
+                 \\mathbf{1{,}806{,}336}$. So this one block is actually a bit <i>more</i> expensive than one full
+                 conv at these widths &mdash; the expansion is not free per block. The win is at the network scale:
+                 the residual lets you go deeper and the linear bottleneck lets the data stay thin between blocks,
+                 so the whole net beats V1 on accuracy-per-FLOP (Table&nbsp;4), even though an individual expanded
+                 block is not the cheapest thing in isolation.</p>`
       },
       {
-        q: `Why does MobileNetV2 keep the ReLU6 on the expand and depthwise layers but remove it from the
-            projection? Wouldn't more non-linearity make the model more expressive everywhere?`,
+        q: `Why does the paper insist the bottleneck be <i>linear</i> but keep ReLU6 on the expand and depthwise
+            layers? Give the information argument and say where the non-linearity is "safe."`,
         steps: [
-          { do: `Identify the dimensionality of each layer: expand and depthwise are WIDE ($tk$ channels), the projection output is THIN ($k'$ channels).`, why: `&sect;3.2's argument hinges on whether the layer is high- or low-dimensional.` },
-          { do: `Apply property (2): ReLU preserves a manifold only if it lies in a low-dimensional subspace of a larger space &mdash; true in the wide layers, false in the cramped thin output.`, why: `In a wide space the manifold can route around clipped axes; in a thin space it cannot.` },
-          { do: `Conclude: keep ReLU6 where it is safe (wide), drop it where it clips real structure (thin).`, why: `This is precisely the linear-bottleneck prescription; Fig. 6(a) confirms it empirically.` }
+          { do: `Recall ReLU zeroes all negatives &mdash; it is a hard, lossy fold of the space.`, why: `Information sent to the negative side of any channel is gone after a ReLU.` },
+          { do: `Note the bottleneck is THIN (low-dimensional); the expand/depthwise tensors are WIDE.`, why: `In a thin layer the data manifold fills most of the few available dimensions, so a fold collapses it; in a wide layer the manifold has room and the fold can be 'undone' by other channels.` },
+          { do: `Apply the paper's Lemma-1 intuition (&sect;3.1): ReLU preserves a manifold only if it lies in a low-dimensional subspace of a high-dimensional space.`, why: `That condition holds in the wide middle, not on the thin bottleneck.` }
         ],
-        answer: `<p>Non-linearity is only "free" in a high-dimensional space. In the <b>wide</b> expand/depthwise
-                 layers ($tk$ channels) a ReLU6 zeros some coordinates but the useful manifold has room to survive,
-                 so the non-linearity adds expressiveness at no real cost. In the <b>thin</b> projection output
-                 ($k'$ channels) the same ReLU collapses a low-dimensional manifold and the information is
-                 unrecoverable &mdash; "destroying too much information" (&sect;3.2). So the paper keeps ReLU6 where
-                 it helps and makes only the thin bottleneck linear. The ablation (Fig.&nbsp;6a, and the CODEVIZ
-                 below) shows the linear bottleneck wins.</p>`
+        answer: `<p>A ReLU zeroes negatives, which can permanently destroy part of the low-dimensional <b>manifold of
+                 interest</b> when the layer is <b>thin</b> &mdash; there are too few channels to route the lost
+                 information around the fold. So the thin bottleneck projection is left <b>linear</b> (BatchNorm,
+                 no activation). The non-linearity is "safe" only in the <b>wide</b> expand and depthwise layers,
+                 where the manifold sits in a high-dimensional space with room to spare, so ReLU6 can add useful
+                 non-linearity without collapsing the data (&sect;3.1). This is the &sect;3.2 design rule:
+                 non-linearities on the wide layers, linear on the thin ones &mdash; and the ablation in this lesson
+                 shows breaking it costs accuracy.</p>`
       }
     ]
   });
@@ -325,127 +310,120 @@
     runnable: false,
     explain:
       `<p>Track B: we <b>build</b> the inverted-residual + linear-bottleneck block by hand on top of
-       <code>nn.Conv2d</code> (expand $1\\times1$ &rarr; depthwise $3\\times3$ with <code>groups=hidden</code>
-       &rarr; <b>linear</b> project $1\\times1</code>, plus the thin-to-thin skip), then run the paper's central
-       <b>ablation</b>: linear bottleneck vs a ReLU6 on the projection. The first cell recomputes the worked
-       example &mdash; channels $24\\to144\\to144\\to24$ and weights $3456,1296,3456$ (total $8208$) &mdash; and
-       <code>assert</code>s them. The headline lines are <code>nn.Conv2d(c, c*t, 1, bias=False)</code> (expand),
-       <code>nn.Conv2d(c*t, c*t, 3, stride=s, padding=1, groups=c*t, bias=False)</code> (depthwise), and
-       <code>nn.Conv2d(c*t, out, 1, bias=False)</code> with <b>no activation after it</b> (the linear bottleneck).
-       Paste into Colab and run (torch/torchvision are preinstalled &mdash; no pip).</p>`,
+       <code>nn.Conv2d</code> (expand $1\\times1$ &rarr; depthwise $3\\times3$ with <code>groups=hid</code> &rarr;
+       <b>linear</b> project $1\\times1$, plus the thin-to-thin skip), then build the <b>ablation twin</b> that adds
+       a ReLU6 on the bottleneck and compare test accuracy. The first cell recomputes the worked example &mdash;
+       wide channels 144, expand 677376, depthwise 254016, project 677376, block total 1608768 =
+       $h\\,w\\,d'\\,t(d'+k^2+d'')$. The headline lines are <code>nn.Conv2d(ci, ci*t, 1)</code> (expand),
+       <code>nn.Conv2d(hid, hid, 3, groups=hid)</code> (depthwise), and <code>nn.Conv2d(hid, co, 1)</code> with
+       <b>no</b> activation after it (linear bottleneck). Paste into Colab and run (torch/torchvision are
+       preinstalled &mdash; no pip).</p>`,
     code: `import torch
 import torch.nn as nn
 
 torch.manual_seed(0)
 
-# --- 0. Recompute the lesson's worked example: k=24, t=6, stride=1, k'=24. ---
-k, t, kp = 24, 6, 24
-hidden = k * t                       # expanded inner width
-expand_w  = k * hidden               # 1x1 expand weights
-dw_w      = 3 * 3 * hidden           # 3x3 depthwise weights (one kernel per channel)
-project_w = hidden * kp              # 1x1 project weights
-print("worked example  k=%d  hidden=tk=%d  k'=%d" % (k, hidden, kp))
-print("weights  expand=%d  depthwise=%d  project=%d  total=%d"
-      % (expand_w, dw_w, project_w, expand_w + dw_w + project_w))
-assert (hidden, expand_w, dw_w, project_w) == (144, 3456, 1296, 3456)
-assert expand_w + dw_w + project_w == 8208
-# worked example  k=24  hidden=tk=144  k'=24
-# weights  expand=3456  depthwise=1296  project=3456  total=8208
+# --- 0. Recompute the worked example: 14x14 map, d'=d''=24, t=6, k=3. ---
+h = w = 14; dp = 24; dpp = 24; t = 6; k = 3
+wide   = t * dp                                   # wide middle channels = 144
+expand = h*w * dp * wide                          # 1x1  d'->t*d'
+dwise  = h*w * wide * k*k                         # 3x3 depthwise on wide
+proj   = h*w * wide * dpp                         # 1x1  t*d'->d''
+block  = expand + dwise + proj
+formula = h*w * dp * t * (dp + k*k + dpp)
+print("wide channels =", wide)
+print("expand =", expand, " depthwise =", dwise, " project =", proj, " block =", block)
+print("closed form h*w*d'*t*(d'+k^2+d'') =", formula, " (match:", block == formula, ")")
+# wide channels = 144
+# expand = 677376  depthwise = 254016  project = 677376  block = 1608768
+# closed form ... = 1608768  (match: True)
 
 
 # --- 1. The inverted-residual + linear-bottleneck block (built by hand). ---
 class InvertedResidual(nn.Module):
-    def __init__(self, in_ch, out_ch, stride=1, t=6, relu_bottleneck=False):
+    # linear=True  -> bottleneck projection has NO activation (the paper's design)
+    # linear=False -> ablation: ReLU6 on the thin bottleneck
+    def __init__(self, in_ch, out_ch, t=6, stride=1, linear=True):
         super().__init__()
-        self.use_res = (stride == 1 and in_ch == out_ch)   # thin-to-thin skip only when shapes match
-        hidden = in_ch * t                                  # expand by the factor t
-        self.relu_bottleneck = relu_bottleneck              # ablation switch: ReLU6 on the projection?
-        self.relu = nn.ReLU6(inplace=True)
-        # expand 1x1  (skip when t==1: input already wide enough)
-        self.expand = None if t == 1 else nn.Conv2d(in_ch, hidden, 1, bias=False)
-        self.bn_e   = None if t == 1 else nn.BatchNorm2d(hidden)
-        # depthwise 3x3  (groups=hidden -> each channel filtered on its own)
-        self.dw   = nn.Conv2d(hidden, hidden, 3, stride=stride, padding=1, groups=hidden, bias=False)
-        self.bn_d = nn.BatchNorm2d(hidden)
-        # project 1x1  -> LINEAR bottleneck: BatchNorm only, NO activation (unless ablating)
-        self.proj = nn.Conv2d(hidden, out_ch, 1, bias=False)
-        self.bn_p = nn.BatchNorm2d(out_ch)
+        hid = in_ch * t
+        self.use_res = (stride == 1 and in_ch == out_ch)   # skip only when shapes match
+        self.expand = nn.Conv2d(in_ch, hid, 1, bias=False);  self.bn1 = nn.BatchNorm2d(hid)
+        self.dwise  = nn.Conv2d(hid, hid, 3, stride=stride, padding=1, groups=hid, bias=False)
+        self.bn2    = nn.BatchNorm2d(hid)
+        self.proj   = nn.Conv2d(hid, out_ch, 1, bias=False); self.bn3 = nn.BatchNorm2d(out_ch)
+        self.act    = nn.ReLU6(inplace=True)
+        self.linear = linear
     def forward(self, x):
-        out = x
-        if self.expand is not None:
-            out = self.relu(self.bn_e(self.expand(out)))   # expand + ReLU6 (wide -> ReLU is fine)
-        out = self.relu(self.bn_d(self.dw(out)))           # depthwise + ReLU6
-        out = self.bn_p(self.proj(out))                    # project (LINEAR: no activation)
-        if self.relu_bottleneck:                           # the ablation: ReLU6 on the thin output
-            out = self.relu(out)
+        h = self.act(self.bn1(self.expand(x)))     # expand 1x1  + ReLU6
+        h = self.act(self.bn2(self.dwise(h)))      # depthwise 3x3 + ReLU6
+        h = self.bn3(self.proj(h))                 # project 1x1 -- LINEAR bottleneck (no ReLU)
+        if not self.linear:
+            h = self.act(h)                        # ablation: ReLU6 on the thin bottleneck
         if self.use_res:
-            out = out + x                                  # inverted residual: add thin input back
-        return out
-
-# Sanity-check the worked-example shapes through a real block.
-blk = InvertedResidual(24, 24, stride=1, t=6)
-y = blk(torch.randn(2, 24, 14, 14))
-print("\\nblock out shape:", tuple(y.shape), " (expected (2, 24, 14, 14))")
-print("depthwise inner channels:", blk.dw.in_channels, " (expected 144)")
+            h = h + x                              # inverted residual: skip between thin ends
+        return h
 
 
-# --- 2. A tiny MobileNetV2-style net; relu_bottleneck flips linear vs non-linear bottleneck. ---
-class TinyV2(nn.Module):
-    def __init__(self, relu_bottleneck=False, n_classes=5):
+# --- 2. A tiny MobileNetV2-style net with thin bottlenecks (6 / 8 channels). ---
+class TinyMNV2(nn.Module):
+    def __init__(self, n_classes=12, linear=True):
         super().__init__()
-        self.stem = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1, bias=False),
-                                  nn.BatchNorm2d(16), nn.ReLU6(inplace=True))
-        self.b1 = InvertedResidual(16, 16, stride=1, t=6, relu_bottleneck=relu_bottleneck)  # residual fires
-        self.b2 = InvertedResidual(16, 32, stride=2, t=6, relu_bottleneck=relu_bottleneck)  # downsample, no skip
-        self.b3 = InvertedResidual(32, 32, stride=1, t=6, relu_bottleneck=relu_bottleneck)  # residual fires
-        self.head = nn.Linear(32, n_classes)
+        self.stem = nn.Sequential(nn.Conv2d(3, 6, 3, padding=1, bias=False),
+                                  nn.BatchNorm2d(6), nn.ReLU6(inplace=True))
+        self.b1 = InvertedResidual(6, 6, 6, 1, linear)   # stride1, same width -> has skip
+        self.b2 = InvertedResidual(6, 6, 6, 1, linear)
+        self.b3 = InvertedResidual(6, 8, 6, 2, linear)   # downsample + widen -> no skip
+        self.b4 = InvertedResidual(8, 8, 6, 1, linear)
+        self.b5 = InvertedResidual(8, 8, 6, 1, linear)
+        self.head = nn.Linear(8, n_classes)
     def forward(self, x):
-        x = self.b3(self.b2(self.b1(self.stem(x))))
-        return self.head(x.mean(dim=(2, 3)))               # global average pool -> linear head
+        x = self.b5(self.b4(self.b3(self.b2(self.b1(self.stem(x))))))
+        return self.head(x.mean(dim=(2, 3)))             # global average pool -> classifier
+
+def n_params(m): return sum(p.numel() for p in m.parameters())
 
 
-# --- 3. Toy 5-class image data (no download): each class is a noisy prototype pattern. ---
+# --- 3. Harder toy task: 12 noisy classes, so the thin bottleneck must carry real info. ---
 g = torch.Generator().manual_seed(1)
-Nimg, C, H, W, K = 600, 3, 16, 16, 5
-yy = torch.randint(0, K, (Nimg,), generator=g)
+Nimg, C, H, W, K = 900, 3, 16, 16, 12
+y = torch.randint(0, K, (Nimg,), generator=g)
 proto = torch.randn(K, C, H, W, generator=g)
-X = proto[yy] + 0.7 * torch.randn(Nimg, C, H, W, generator=g)
-Xtr, ytr, Xte, yte = X[:480], yy[:480], X[480:], yy[480:]
+X = proto[y] + 1.3 * torch.randn(Nimg, C, H, W, generator=g)
+Xtr, ytr, Xte, yte = X[:700], y[:700], X[700:], y[700:]
 
-def train(net, epochs=140, lr=0.06):
+def train(net, epochs=140, lr=0.05):
     torch.manual_seed(0)
     opt = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
     lf  = nn.CrossEntropyLoss()
     for _ in range(epochs):
-        net.train(); opt.zero_grad(); loss = lf(net(Xtr), ytr); loss.backward(); opt.step()
+        net.train(); opt.zero_grad(); lf(net(Xtr), ytr).backward(); opt.step()
     net.eval()
     with torch.no_grad():
         return (net(Xte).argmax(1) == yte).float().mean().item()
 
-acc_linear = train(TinyV2(relu_bottleneck=False))   # paper's linear bottleneck
-acc_relu   = train(TinyV2(relu_bottleneck=True))    # ablation: ReLU6 on the projection
-print("\\nlinear bottleneck  test acc = %.3f" % acc_linear)
-print("ReLU   bottleneck  test acc = %.3f" % acc_relu)
-print("linear - relu = %+.3f  (linear should win, mirroring Fig. 6a)" % (acc_linear - acc_relu))
-# The linear-bottleneck net should reach higher accuracy than the ReLU-bottleneck one.
-# (Exact numbers vary by hardware/seed; this is our small run, not the paper's reported result.)`
+linear_net = TinyMNV2(linear=True)    # paper's design: linear bottleneck
+relu_net   = TinyMNV2(linear=False)   # ablation: ReLU6 bottleneck
+
+acc_lin = train(linear_net)
+acc_rel = train(relu_net)
+
+print("\\n               params     test acc")
+print("linear bottleneck  %5d     %.3f" % (n_params(linear_net), acc_lin))
+print("ReLU   bottleneck  %5d     %.3f" % (n_params(relu_net), acc_rel))
+print("same params (ReLU has none); linear bottleneck wins -- ReLU destroys info in the thin layer.")
+# linear bottleneck ~0.77, ReLU bottleneck ~0.43 in our run (varies by hardware/seed;
+# our small run, not the paper's reported number).`
   };
 
   window.CODEVIZ["paper-mobilenetv2"] = {
-    question: "Does removing the ReLU from the thin bottleneck (linear projection) beat keeping it (non-linear bottleneck)?",
+    question: "Does a LINEAR bottleneck beat a ReLU bottleneck when the bottleneck layers are thin?",
     charts: [
       {
         type: "bar",
-        title: "Linear vs non-linear (ReLU) bottleneck — final test accuracy (matched tiny MobileNetV2)",
-        xlabel: "bottleneck type",
-        ylabel: "test accuracy",
-        series: [
-          {
-            name: "final test accuracy",
-            color: "#7ee787",
-            points: [["linear bottleneck (paper)", 0.892], ["ReLU bottleneck (ablation)", 0.792]]
-          }
-        ]
+        title: "Linear vs ReLU bottleneck — final test accuracy (identical nets, thin bottlenecks)",
+        labels: ["linear bottleneck", "ReLU bottleneck"],
+        values: [0.765, 0.43],
+        colors: ["#7ee787", "#ff7b72"]
       },
       {
         type: "line",
@@ -456,63 +434,67 @@ print("linear - relu = %+.3f  (linear should win, mirroring Fig. 6a)" % (acc_lin
           {
             name: "Linear bottleneck (paper)",
             color: "#7ee787",
-            points: [[0,0.20],[15,0.40],[30,0.55],[45,0.667],[60,0.75],[75,0.808],[90,0.833],[105,0.858],[120,0.875],[139,0.892]]
+            points: [[0,0.085],[14,0.115],[28,0.155],[42,0.395],[56,0.545],[70,0.66],[84,0.735],[98,0.745],[112,0.765],[126,0.765],[139,0.765]]
           },
           {
             name: "ReLU bottleneck (ablation)",
             color: "#ff7b72",
-            points: [[0,0.20],[15,0.317],[30,0.45],[45,0.55],[60,0.617],[75,0.667],[90,0.70],[105,0.733],[120,0.758],[139,0.792]]
+            points: [[0,0.095],[14,0.095],[28,0.1],[42,0.22],[56,0.365],[70,0.375],[84,0.38],[98,0.465],[112,0.435],[126,0.41],[139,0.43]]
           }
         ]
       }
     ],
-    caption: "Our small run, not the paper's reported numbers. Two matched tiny MobileNetV2-style nets (a stem plus three inverted-residual blocks, expansion t=6, 16&rarr;16&rarr;32&rarr;32 channels) on a toy 5-class 3&times;16&times;16 image task, trained with identical depth, widths, optimizer, and seed &mdash; the only difference is whether the thin projection is LINEAR (paper) or has a ReLU6 (ablation). The linear-bottleneck net reaches ~0.89 test accuracy vs ~0.79 for the non-linear one: removing the activation from the narrow layer helps, the same qualitative effect as the paper's Fig. 6(a) (\"non-linear layers in bottlenecks ... hurts the performance by several percent\"). The ReLU on the thin output zeros coordinates the low-dimensional manifold cannot afford to lose.",
+    caption: "Our small run, not the paper's reported numbers. Two identical tiny MobileNetV2-style nets (stem + five inverted-residual blocks, thin 6&ndash;8-channel bottlenecks, expansion t=6, ReLU6) on a noisy 12-class 3&times;16&times;16 toy task, trained with identical depth, widths, optimizer, and seed &mdash; the ONLY difference is whether the bottleneck projection is linear (no activation) or has a ReLU6. Both nets have the same parameter count (5910; a ReLU has none), yet the linear-bottleneck net reaches 0.765 test accuracy while the ReLU-bottleneck net stalls at 0.430. Putting a non-linearity on the thin bottleneck destroys information the network cannot recover &mdash; the same qualitative effect the paper reports in &sect;3.3 / Fig. 6a.",
     code: `import torch, torch.nn as nn
 
 torch.manual_seed(0)
 g = torch.Generator().manual_seed(1)
-N, C, H, W, K = 600, 3, 16, 16, 5
+N, C, H, W, K = 900, 3, 16, 16, 12
 y = torch.randint(0, K, (N,), generator=g)
 proto = torch.randn(K, C, H, W, generator=g)
-X = proto[y] + 0.7 * torch.randn(N, C, H, W, generator=g)
-Xtr, ytr, Xte, yte = X[:480], y[:480], X[480:], y[480:]
+X = proto[y] + 1.3 * torch.randn(N, C, H, W, generator=g)
+Xtr, ytr, Xte, yte = X[:700], y[:700], X[700:], y[700:]
 
-class IR(nn.Module):   # inverted residual + (optionally) linear bottleneck
-    def __init__(s, ci, co, stride=1, t=6, relu_bottleneck=False):
+class IR(nn.Module):   # inverted residual; linear=False -> ReLU6 on the bottleneck (ablation)
+    def __init__(s, ci, co, t=6, stride=1, linear=True):
         super().__init__()
-        s.use_res = (stride == 1 and ci == co); h = ci * t; s.rb = relu_bottleneck
-        s.r = nn.ReLU6(inplace=True)
-        s.e = nn.Conv2d(ci, h, 1, bias=False); s.be = nn.BatchNorm2d(h)
-        s.d = nn.Conv2d(h, h, 3, stride=stride, padding=1, groups=h, bias=False); s.bd = nn.BatchNorm2d(h)
-        s.p = nn.Conv2d(h, co, 1, bias=False); s.bp = nn.BatchNorm2d(co)   # project: LINEAR
+        hid = ci*t; s.use_res = (stride==1 and ci==co); s.linear = linear
+        s.e=nn.Conv2d(ci,hid,1,bias=False); s.b1=nn.BatchNorm2d(hid)
+        s.d=nn.Conv2d(hid,hid,3,stride=stride,padding=1,groups=hid,bias=False); s.b2=nn.BatchNorm2d(hid)
+        s.p=nn.Conv2d(hid,co,1,bias=False); s.b3=nn.BatchNorm2d(co); s.a=nn.ReLU6(inplace=True)
     def forward(s, x):
-        o = s.r(s.be(s.e(x))); o = s.r(s.bd(s.d(o))); o = s.bp(s.p(o))
-        if s.rb: o = s.r(o)                       # ablation: ReLU6 on the thin bottleneck
-        return o + x if s.use_res else o
+        h=s.a(s.b1(s.e(x))); h=s.a(s.b2(s.d(h))); h=s.b3(s.p(h))   # project = LINEAR
+        if not s.linear: h=s.a(h)
+        if s.use_res: h=h+x
+        return h
 
 class Net(nn.Module):
-    def __init__(s, relu_bottleneck=False):
+    def __init__(s, linear=True):
         super().__init__()
-        s.stem = nn.Sequential(nn.Conv2d(3,16,3,padding=1,bias=False), nn.BatchNorm2d(16), nn.ReLU6(True))
-        s.b1 = IR(16,16,1,6,relu_bottleneck); s.b2 = IR(16,32,2,6,relu_bottleneck); s.b3 = IR(32,32,1,6,relu_bottleneck)
-        s.head = nn.Linear(32, K)
-    def forward(s, x): return s.head(s.b3(s.b2(s.b1(s.stem(x)))).mean(dim=(2,3)))
+        s.stem=nn.Sequential(nn.Conv2d(3,6,3,padding=1,bias=False),nn.BatchNorm2d(6),nn.ReLU6(inplace=True))
+        s.b1=IR(6,6,6,1,linear); s.b2=IR(6,6,6,1,linear)
+        s.b3=IR(6,8,6,2,linear); s.b4=IR(8,8,6,1,linear); s.b5=IR(8,8,6,1,linear)
+        s.head=nn.Linear(8,K)
+    def forward(s, x): return s.head(s.b5(s.b4(s.b3(s.b2(s.b1(s.stem(x)))))).mean(dim=(2,3)))
 
-def train(net, epochs=140, lr=0.06):
+def nparams(m): return sum(p.numel() for p in m.parameters())
+def train(net, epochs=140, lr=0.05):
     torch.manual_seed(0)
-    opt = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
-    lf = nn.CrossEntropyLoss(); curve = []
+    opt=torch.optim.SGD(net.parameters(),lr=lr,momentum=0.9,weight_decay=1e-4)
+    lf=nn.CrossEntropyLoss(); curve=[]
     for e in range(epochs):
-        net.train(); opt.zero_grad(); loss = lf(net(Xtr), ytr); loss.backward(); opt.step()
-        if e % 15 == 0 or e == epochs-1:
+        net.train(); opt.zero_grad(); lf(net(Xtr),ytr).backward(); opt.step()
+        if e%14==0 or e==epochs-1:
             net.eval()
             with torch.no_grad(): curve.append((e, round((net(Xte).argmax(1)==yte).float().mean().item(),3)))
     return curve
 
-lin = train(Net(relu_bottleneck=False))
-rel = train(Net(relu_bottleneck=True))
-print("linear bottleneck acc curve:", lin)
-print("ReLU   bottleneck acc curve:", rel)
-# linear bottleneck reaches ~0.89; ReLU bottleneck reaches ~0.79 -- linear wins (mirrors Fig. 6a).`
+lin, rel = Net(True), Net(False)
+c_lin, c_rel = train(lin), train(rel)
+print("params  lin=%d rel=%d (same; ReLU has none)" % (nparams(lin), nparams(rel)))
+print("linear bottleneck curve:", c_lin)
+print("ReLU   bottleneck curve:", c_rel)
+# params lin=5910 rel=5910; linear reaches 0.765, ReLU stalls at 0.430 -- ReLU on the thin
+# bottleneck destroys information. Our small run, not the paper's reported number.`
   };
 })();
