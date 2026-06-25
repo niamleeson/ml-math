@@ -17,7 +17,7 @@
       org: "Université de Montréal (DIRO)",
       year: 2014,
       venue: "arXiv:1406.2661 (Jun 2014); NIPS 2014",
-      citations: "arXiv lists the paper; exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1406.2661",
       code: "https://github.com/goodfeli/adversarial"
     },

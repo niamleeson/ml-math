@@ -22,7 +22,7 @@
       org: "University of California, Berkeley",
       year: 2015,
       venue: "arXiv:1506.02438 (Jun 2015); ICLR 2016",
-      citations: "exact citation count not fetched from the source, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1506.02438",
       code: "https://github.com/joschu/modular_rl"
     },

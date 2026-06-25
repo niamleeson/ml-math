@@ -15,7 +15,7 @@
       org: "Microsoft Research",
       year: 2015,
       venue: "arXiv:1512.03385 (Dec 2015); CVPR 2016",
-      citations: "arXiv lists the paper; exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1512.03385",
       code: "https://github.com/KaimingHe/deep-residual-networks"
     },

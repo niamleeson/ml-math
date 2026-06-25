@@ -20,7 +20,7 @@
       org: "Courant Institute, New York University & Facebook AI Research (per the paper's author affiliations)",
       year: 2017,
       venue: "arXiv:1701.07875 (Jan 2017); ICML 2017",
-      citations: "arXiv lists the paper; an exact citation count was not fetched, so it is omitted here to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1701.07875",
       code: "https://github.com/martinarjovsky/WassersteinGAN"
     },

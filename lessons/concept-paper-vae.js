@@ -18,7 +18,7 @@
       org: "Universiteit van Amsterdam (Machine Learning Group)",
       year: 2013,
       venue: "arXiv:1312.6114 (Dec 2013); ICLR 2014",
-      citations: "arXiv lists the paper; exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1312.6114",
       code: "https://github.com/y0ast/Variational-Autoencoder (community); the paper's experiments use the AEVB algorithm."
     },

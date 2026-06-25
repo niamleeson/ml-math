@@ -19,7 +19,7 @@
       org: "OpenAI",
       year: 2017,
       venue: "arXiv:1707.06347 (Jul 2017; v2 Aug 2017)",
-      citations: "exact citation count not fetched from the source, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1707.06347",
       code: "https://github.com/openai/baselines"
     },

@@ -18,7 +18,7 @@
       org: "Facebook AI Research (FAIR)",
       year: 2019,
       venue: "arXiv:1911.05722 (Nov 2019); CVPR 2020",
-      citations: "arXiv lists the paper; exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1911.05722",
       code: "https://github.com/facebookresearch/moco"
     },

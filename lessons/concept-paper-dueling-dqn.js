@@ -22,7 +22,7 @@
       org: "Google DeepMind",
       year: 2016,
       venue: "arXiv:1511.06581 (Nov 2015; v3 Apr 2016). Published at ICML 2016.",
-      citations: "exact citation count not fetched from the source, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1511.06581",
       code: "(no official repo linked in the paper)"
     },

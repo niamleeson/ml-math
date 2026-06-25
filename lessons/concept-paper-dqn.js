@@ -24,7 +24,7 @@
       org: "DeepMind",
       year: 2013,
       venue: "NIPS 2013 Deep Learning Workshop (arXiv:1312.5602)",
-      citations: "exact citation count not fetched from the source, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1312.5602",
       code: "no official repo released with the 2013 workshop paper"
     },

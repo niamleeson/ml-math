@@ -20,7 +20,7 @@
       org: "University of Freiburg, Germany",
       year: 2015,
       venue: "arXiv:1505.04597 (May 2015); MICCAI 2015",
-      citations: "Citation count not fetched, so omitted here to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1505.04597",
       code: "https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/"
     },

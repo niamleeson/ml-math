@@ -18,7 +18,7 @@
       org: "Google Research, Brain team",
       year: 2022,
       venue: "arXiv:2207.12598 (Jul 2022); a short version appeared at the NeurIPS 2021 Workshop on Deep Generative Models and Downstream Applications",
-      citations: "Citation count not fetched, so omitted here to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/2207.12598",
       code: "No official code repository is listed on the abstract page; omitted to avoid inventing a URL."
     },

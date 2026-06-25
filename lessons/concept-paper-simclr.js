@@ -18,7 +18,7 @@
       org: "Google Research, Brain Team",
       year: 2020,
       venue: "arXiv:2002.05709 (Feb 2020); ICML 2020",
-      citations: "Exact citation count not fetched from the source, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/2002.05709",
       code: "https://github.com/google-research/simclr"
     },

@@ -21,7 +21,7 @@
       org: "Université de Montréal (DIRO); Flickr / Yahoo Inc.",
       year: 2014,
       venue: "arXiv:1411.1784 (Nov 2014)",
-      citations: "exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1411.1784",
       code: ""
     },

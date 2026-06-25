@@ -16,7 +16,7 @@
       org: "Google DeepMind",
       year: 2015,
       venue: "arXiv:1511.05952 (Nov 2015); ICLR 2016",
-      citations: "exact citation count not shown on the fetched arXiv page, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1511.05952",
       code: ""
     },

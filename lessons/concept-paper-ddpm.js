@@ -17,7 +17,7 @@
       org: "UC Berkeley",
       year: 2020,
       venue: "arXiv:2006.11239 (Jun 2020); NeurIPS 2020",
-      citations: "Citation count not fetched, so omitted here to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/2006.11239",
       code: "https://github.com/hojonathanho/diffusion"
     },

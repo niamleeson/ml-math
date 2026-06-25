@@ -1,3 +1,6 @@
 node_modules/
 screenshots/
 .DS_Store
+.playwright-mcp/
+pt-tensors-new-template.png
+*.png

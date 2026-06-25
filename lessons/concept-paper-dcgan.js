@@ -19,7 +19,7 @@
       org: "indico Research & Facebook AI Research (per the paper's author affiliations)",
       year: 2015,
       venue: "arXiv:1511.06434 (Nov 2015); ICLR 2016",
-      citations: "arXiv lists the paper; exact citation count was not fetched, so it is omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1511.06434",
       code: "https://github.com/Newmu/dcgan_code"
     },

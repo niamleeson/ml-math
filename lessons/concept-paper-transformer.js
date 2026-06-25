@@ -17,7 +17,7 @@
       org: "Google Brain, Google Research, University of Toronto",
       year: 2017,
       venue: "arXiv:1706.03762 (Jun 2017); NeurIPS 2017",
-      citations: "Very highly cited; exact count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1706.03762",
       code: "https://github.com/tensorflow/tensor2tensor"
     },

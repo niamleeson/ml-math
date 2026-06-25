@@ -16,7 +16,7 @@
       org: "Visual Geometry Group (VGG), University of Oxford",
       year: 2014,
       venue: "arXiv:1409.1556 (Sep 2014; final Apr 2015); ICLR 2015",
-      citations: "arXiv lists the paper; exact citation count not fetched, so omitted to avoid an invented number.",
+      citations: "",
       arxiv: "https://arxiv.org/abs/1409.1556",
       code: "https://www.robots.ox.ac.uk/~vgg/research/very_deep/ (official models)"
     },
