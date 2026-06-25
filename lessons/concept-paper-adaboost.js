@@ -125,6 +125,35 @@
        factor of 2 cancels in the vote threshold. We implement the $\\alpha_t$ form because it is the one
        scikit-learn uses, which lets us verify an exact match.</p>`,
 
+    architecture:
+      `<p>AdaBoost is not a layered network &mdash; it is an <b>iterative algorithm</b> wrapped around a black-box
+       weak learner. Its "architecture" is the per-round loop of Figure 2 plus the two state vectors it carries.</p>
+       <p><b>State carried across rounds:</b></p>
+       <ul>
+         <li><b>Weight vector $\\mathbf{w}^t = (w^t_1,\\dots,w^t_N)$</b> &mdash; one nonnegative weight per training
+         example, initialized to $D(i)$ (uniform $1/N$). This is the only thing that changes between rounds.</li>
+         <li><b>Hypothesis list $h_1,\\dots,h_T$ with vote weights $\\alpha_1,\\dots,\\alpha_T$</b> &mdash; appended to,
+         one per round, and combined at the end.</li>
+       </ul>
+       <p><b>One round $t$ (the repeating block, Figure 2 Steps 1-5):</b></p>
+       <ol>
+         <li><b>Normalize</b> $\\mathbf{w}^t$ into a distribution $p^t_i = w^t_i/\\sum_j w^t_j$.</li>
+         <li><b>WeakLearn call</b> &mdash; hand $p^t$ to the weak learner (the swappable component; here a depth-1
+         decision stump found by scanning every feature&times;threshold&times;polarity for the smallest weighted error).
+         Returns $h_t$.</li>
+         <li><b>Score</b> $h_t$: weighted error $\\epsilon_t=\\sum_i p^t_i|h_t(x_i)-y_i|$.</li>
+         <li><b>Trust</b>: $\\beta_t=\\epsilon_t/(1-\\epsilon_t)$, equivalently vote weight $\\alpha_t=\\tfrac12\\ln(1/\\beta_t)$.</li>
+         <li><b>Reweight</b>: multiply each $w^t_i$ by $e^{-\\alpha_t y_i h_t(x_i)}$ (paper: $\\beta_t^{1-|h_t(x_i)-y_i|}$),
+         then renormalize by $Z_t$. Misclassified examples gain weight, feeding back into Step 1 of the next round.</li>
+       </ol>
+       <p><b>Combiner (run once, after $T$ rounds):</b> a single linear-threshold unit over the $T$ stump outputs &mdash;
+       $H(x)=\\operatorname{sign}(\\sum_t \\alpha_t h_t(x))$. The paper notes (Theorem 8) this is exactly a
+       <b>two-layer feed-forward network</b>: layer 1 is the $T$ weak hypotheses, layer 2 is the weighted-majority
+       threshold. <b>Data flow:</b> the weight vector is the feedback channel &mdash; each round's errors steer the
+       next round's distribution, so successive stumps specialize on what earlier ones missed. AdaBoost is the
+       "dual" of the <b>Hedge</b>$(\\beta)$ on-line allocation algorithm (Figure 1): there the weights sit on
+       <i>strategies</i> and rise with success; here they sit on <i>examples</i> and rise with failure.</p>`,
+
     symbols: [
       { sym: "weak classifier", desc: "a classifier that is only slightly better than random guessing (error a little below 1/2). Also called a 'rule-of-thumb' or 'weak hypothesis' in the paper." },
       { sym: "decision stump", desc: "the simplest weak classifier: a one-question rule of the form 'predict +1 if feature f is above (or below) threshold t, else -1'. A depth-1 decision tree." },
@@ -138,17 +167,33 @@
       { sym: "$\\beta_t$", desc: "beta: the paper's weight-shrink factor, $\\epsilon_t/(1-\\epsilon_t)$. A smaller error gives a smaller $\\beta_t$, so correct examples are shrunk more." },
       { sym: "$\\alpha_t$", desc: "alpha: the modern vote weight (how much stump $h_t$ is trusted), $\\tfrac12\\ln\\frac{1-\\epsilon_t}{\\epsilon_t}$. Equal to $\\tfrac12\\ln(1/\\beta_t)$." },
       { sym: "$\\gamma$", desc: "gamma: the weak classifier's 'edge' over random guessing, defined by $\\epsilon_t = 1/2 - \\gamma_t$. A bigger edge means a better stump." },
-      { sym: "$h_f$", desc: "the final classifier: the weighted-majority vote of all $T$ stumps." }
+      { sym: "$D_t(i)$", desc: "the distribution over examples at round $t$ in the modern textbook form &mdash; the same object as $p^t_i$ (a normalized weight). $D_t(i)$ and $D_{t+1}(i)$ are the before/after of one round's reweighting." },
+      { sym: "$Z_t$", desc: "the normalizer (partition function) for round $t$: the sum of all unnormalized new weights, dividing by which keeps $D_{t+1}$ a valid distribution (sums to 1)." },
+      { sym: "$h_f$ / $H$", desc: "the final classifier: the weighted-majority vote of all $T$ stumps. The paper writes $h_f$ (with a $\\{0,1\\}$ threshold); the modern $\\pm1$ form writes $H(x)=\\operatorname{sign}(\\sum_t\\alpha_t h_t(x))$." }
     ],
 
     formula:
-      `$$\\epsilon_t=\\sum_{i=1}^{N} p^t_i\\,\\bigl|h_t(x_i)-y_i\\bigr|
-        \\qquad
-        \\alpha_t=\\tfrac12\\ln\\frac{1-\\epsilon_t}{\\epsilon_t}=\\tfrac12\\ln\\frac{1}{\\beta_t}$$
-       $$w^{t+1}_i \\;=\\; w^t_i\\,e^{-\\alpha_t\\,y_i\\,h_t(x_i)}
-        \\qquad\\Longleftrightarrow\\qquad
-        w^{t+1}_i \\;=\\; w^t_i\\,\\beta_t^{\\,1-|h_t(x_i)-y_i|}$$
-       $$h_f(x)=\\operatorname{sign}\\!\\Bigl(\\textstyle\\sum_{t=1}^{T}\\alpha_t\\,h_t(x)\\Bigr)$$`,
+      `$$p^t_i \\;=\\; \\frac{w^t_i}{\\sum_{j=1}^{N} w^t_j}$$
+       <p>The distribution over examples this round &mdash; normalize the weights to sum to 1 (Figure 2, Step 1; Eq. 1 for <b>Hedge</b>).</p>
+       $$\\epsilon_t=\\sum_{i=1}^{N} p^t_i\\,\\bigl|h_t(x_i)-y_i\\bigr|$$
+       <p>Weighted error of the round-$t$ weak classifier $h_t$ &mdash; total weight of the examples it gets wrong (Figure 2, Step 3).</p>
+       $$\\beta_t \\;=\\; \\frac{\\epsilon_t}{1-\\epsilon_t}
+         \\qquad
+         \\alpha_t \\;=\\; \\tfrac12\\ln\\frac{1-\\epsilon_t}{\\epsilon_t} \\;=\\; \\tfrac12\\ln\\frac{1}{\\beta_t}$$
+       <p>The vote weight. Paper uses $\\beta_t$ (Figure 2, Step 4); the modern $\\pm1$ form uses $\\alpha_t=\\tfrac12\\ln(1/\\beta_t)$, so $\\ln(1/\\beta_t)=2\\alpha_t$.</p>
+       $$D_{t+1}(i) \\;=\\; \\frac{D_t(i)\\,\\exp\\!\\bigl(-\\alpha_t\\,y_i\\,h_t(x_i)\\bigr)}{Z_t}
+         \\qquad
+         Z_t \\;=\\; \\sum_{i=1}^{N} D_t(i)\\,\\exp\\!\\bigl(-\\alpha_t\\,y_i\\,h_t(x_i)\\bigr)$$
+       <p>The modern textbook reweight ($\\pm1$ labels): grow the weight of misclassified examples ($y_i h_t(x_i)=-1$), shrink the rest, then divide by the normalizer $Z_t$ so $D_{t+1}$ stays a distribution.</p>
+       $$w^{t+1}_i \\;=\\; w^t_i\\,\\beta_t^{\\,1-|h_t(x_i)-y_i|}$$
+       <p>The paper's exact Step 5 (Figure 2, $\\{0,1\\}$ labels): exponent is $1$ for correct examples (multiply by $\\beta_t\\lt1$), $0$ for wrong ones (leave unchanged). Same update as the $D_{t+1}$ form.</p>
+       $$H(x) \\;=\\; \\operatorname{sign}\\!\\Bigl(\\textstyle\\sum_{t=1}^{T}\\alpha_t\\,h_t(x)\\Bigr)$$
+       <p>The final classifier &mdash; the sign of the trust-weighted vote of all $T$ weak classifiers (modern $\\pm1$ form of Figure 2's $h_f$).</p>
+       $$\\epsilon \\;=\\; \\Pr_{i\\sim D}\\bigl[H(x_i)\\neq y_i\\bigr]
+         \\;\\le\\; \\prod_{t=1}^{T} 2\\sqrt{\\epsilon_t(1-\\epsilon_t)}
+         \\;=\\; \\prod_{t=1}^{T}\\sqrt{1-4\\gamma_t^2}
+         \\;\\le\\; \\exp\\!\\Bigl(-2\\textstyle\\sum_{t=1}^{T}\\gamma_t^2\\Bigr)$$
+       <p>The training-error bound (Theorem 6, Eq. 14; rewritten via $\\epsilon_t=\\tfrac12-\\gamma_t$ as Eq. 21). Falls to zero exponentially in $T$ when every $\\gamma_t\\gt0$.</p>`,
 
     whatItDoes:
       `<p>The first line measures how wrong this stump is ($\\epsilon_t$) and turns that into a <b>vote weight</b>

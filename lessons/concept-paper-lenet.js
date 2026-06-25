@@ -138,9 +138,63 @@
        back-propagation. That is the paper's central point: the feature extractor is <i>learned</i>, not
        hand-built. The paper notes LeNet-5 has 340,908 connections but only about 60,000 free parameters,
        thanks to weight sharing.</p>`,
+    architecture:
+      `<p>LeNet-5 has <b>7 layers with trainable weights</b>, not counting the input (&sect;II-B). Convolutional
+       layers are <b>Cx</b>, sub-sampling layers <b>Sx</b>, fully-connected layers <b>Fx</b>. Sizes and the
+       paper's exact parameter / connection counts:</p>
+       <table class="lenet-arch" style="border-collapse:collapse;width:100%;font-size:0.92em">
+        <thead><tr style="text-align:left;border-bottom:1px solid currentColor">
+          <th>Layer</th><th>Type</th><th>Maps &times; size</th><th>Kernel</th><th>Trainable params</th><th>Connections</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b>INPUT</b></td><td>image</td><td>1 &times; 32&times;32</td><td>&mdash;</td><td>0</td><td>&mdash;</td></tr>
+          <tr><td><b>C1</b></td><td>conv</td><td>6 &times; 28&times;28</td><td>5&times;5</td><td>156</td><td>122,304</td></tr>
+          <tr><td><b>S2</b></td><td>subsample</td><td>6 &times; 14&times;14</td><td>2&times;2</td><td>12</td><td>5,880</td></tr>
+          <tr><td><b>C3</b></td><td>conv</td><td>16 &times; 10&times;10</td><td>5&times;5</td><td>1,516</td><td>151,600</td></tr>
+          <tr><td><b>S4</b></td><td>subsample</td><td>16 &times; 5&times;5</td><td>2&times;2</td><td>32</td><td>2,000</td></tr>
+          <tr><td><b>C5</b></td><td>conv</td><td>120 &times; 1&times;1</td><td>5&times;5</td><td>48,120</td><td>48,120</td></tr>
+          <tr><td><b>F6</b></td><td>full</td><td>84 units</td><td>&mdash;</td><td>10,164</td><td>10,164</td></tr>
+          <tr><td><b>OUTPUT</b></td><td>RBF</td><td>10 units</td><td>&mdash;</td><td>(fixed)</td><td>840</td></tr>
+        </tbody>
+       </table>
+       <p style="font-size:0.9em"><i>Totals (paper): 340,908 connections but only about 60,000 free parameters,
+       thanks to weight sharing. The OUTPUT RBF prototypes are 10 fixed $84$-number vectors (840 inputs), set by
+       hand and initially held fixed, so they count as connections, not free weights.</i></p>
+
+       <p><b>Why each count is what it is.</b></p>
+       <ul>
+        <li><b>C1:</b> 6 kernels of $5\\times5$ + 1 bias each $= 6\\times(25+1) = 156$ params; each of the
+        $6\\times28\\times28$ outputs has 26 connections $\\Rightarrow 156\\times784 = 122{,}304$ connections.</li>
+        <li><b>S2:</b> 2 params (one coefficient $\\beta$ + one bias) per map $\\times 6 = 12$ params.</li>
+        <li><b>C5:</b> 120 units, each fully wired to all $16\\times5\\times5=400$ S4 inputs + bias $\\Rightarrow
+        120\\times(400+1) = 48{,}120$.</li>
+        <li><b>F6:</b> 84 units $\\times (120+1) = 10{,}164$.</li>
+       </ul>
+
+       <p><b>The C3 partial-connection scheme (Table I).</b> C3 does <i>not</i> connect every S2 map to every C3
+       map. Instead each of the 16 C3 maps draws from a chosen subset of the 6 S2 maps, which (a) keeps the
+       connection count down and (b) <b>breaks symmetry</b> so different maps are forced to learn different
+       features (&sect;II-B). The pattern, reading the 16 columns of Table I:</p>
+       <ul>
+        <li><b>C3 maps 0&ndash;5</b> (first 6): each takes every <b>contiguous subset of 3</b> S2 maps &mdash;
+        $\\{0,1,2\\},\\{1,2,3\\},\\ldots,\\{5,0,1\\}$ (wrapping).</li>
+        <li><b>C3 maps 6&ndash;11</b> (next 6): each takes every <b>contiguous subset of 4</b> S2 maps.</li>
+        <li><b>C3 maps 12&ndash;14</b> (next 3): each takes a <b>discontinuous subset of 4</b> S2 maps.</li>
+        <li><b>C3 map 15</b> (last 1): takes <b>all 6</b> S2 maps.</li>
+       </ul>
+       <p style="font-size:0.9em">Counting the input maps gives $6\\!\\times\\!3 + 6\\!\\times\\!4 + 3\\!\\times\\!4 + 1\\!\\times\\!6 = 60$
+       distinct $5\\times5$ kernels, so $60\\times25 + 16$ biases $= 1{,}516$ params; $\\times 10\\times10$ output
+       positions $= 151{,}600$ connections &mdash; matching the paper. (Our PyTorch <code>nn.Conv2d(6,16,5)</code>
+       below uses <b>full</b> connectivity instead, the modern default &mdash; a faithful simplification.)</p>`,
     symbols: [
       { sym: "$n$", desc: "the side length (in pixels) of a square feature map going <i>into</i> a layer (e.g. $n=32$ at the input)." },
       { sym: "$k$", desc: "the side length of the convolution filter (the <b>kernel</b>); LeNet-5 uses $k=5$ throughout." },
+      { sym: "$u,\\,v$", desc: "the row and column index of a unit <i>inside</i> an output feature map (which output pixel we are computing)." },
+      { sym: "$p,\\,q$", desc: "offsets that range over the receptive field &mdash; $0\\ldots k-1$ for the $5\\times5$ conv, $0\\ldots1$ for the $2\\times2$ pool." },
+      { sym: "$x_{u,v}$", desc: "the squashed output of the feature-map unit at position $(u,v)$." },
+      { sym: "$w_{p,q}$", desc: "the convolution <b>kernel</b> weight at offset $(p,q)$ &mdash; one shared $5\\times5$ grid of numbers reused at every position in the map." },
+      { sym: "$b$", desc: "the trainable <b>bias</b> added to a unit's weighted sum before squashing (one per feature map, shared across positions)." },
+      { sym: "$\\beta$", desc: "the single trainable <b>coefficient</b> a sub-sampling map multiplies its $2\\times2$ average by (one per S-map; modern average pooling drops it)." },
       { sym: "INPUT / Cx / Sx / Fx", desc: "the paper's layer labels: <b>Cx</b> = convolutional layer, <b>Sx</b> = sub-sampling (pooling) layer, <b>Fx</b> = fully-connected layer, with $x$ the layer index." },
       { sym: "feature map", desc: "the 2-D output of one filter &mdash; a grid showing where in the image that filter's pattern was found. A convolutional layer produces several, one per filter." },
       { sym: "receptive field", desc: "the small patch of the previous layer a single neuron is connected to (here 5&times;5 for convs, 2&times;2 for sub-sampling)." },
@@ -153,7 +207,30 @@
       { sym: "$y_i$", desc: "the output of RBF unit $i$ in the OUTPUT layer: the squared Euclidean distance between F6's 84-vector and unit $i$'s stored prototype (Eqn. 7). Smaller $y_i$ = better match to class $i$." },
       { sym: "$w_{ij}$", desc: "the $j$-th component of the prototype vector stored in output RBF unit $i$ (a fixed 7&times;12 bitmap of the digit, hence 84 numbers)." }
     ],
-    formula: `$$ \\text{(squash, Eqn. 6)}\\quad f(a) = A\\,\\tanh(S\\,a) \\qquad\\qquad \\text{(RBF output, Eqn. 7)}\\quad y_i = \\sum_{j}\\,(x_j - w_{ij})^2 $$`,
+    formula:
+      `<p><b>1 &mdash; Convolution feature map (&sect;II-A).</b> A unit at position $(u,v)$ in a feature map
+       computes a weighted sum over its $5\\times5$ receptive field, using the <i>same</i> kernel weights $w$
+       and bias $b$ everywhere in the map, then squashes. (The paper states it in words; here it is in symbols
+       &mdash; the kernel is "the set of connection weights used by the units in the feature map".)</p>
+       $$ x_{u,v} \\;=\\; f\\!\\left(b \\;+\\; \\sum_{p=0}^{k-1}\\sum_{q=0}^{k-1} w_{p,q}\\,\\cdot\\,\\text{input}_{\\,u+p,\\;v+q}\\right),\\qquad k = 5. $$
+       <p style="margin-top:-2px"><i>One shared kernel slides over the whole input &mdash; that is the convolution. Each feature map has its own kernel.</i></p>
+
+       <p><b>2 &mdash; Sub-sampling / pooling (&sect;II-A, layers S2 &amp; S4).</b> Each S-unit averages a
+       non-overlapping $2\\times2$ block, multiplies by ONE trainable coefficient $\\beta$, adds ONE trainable
+       bias $b$ (both shared per map), and squashes. This halves height and width.</p>
+       $$ x_{u,v} \\;=\\; f\\!\\left(\\beta\\,\\cdot\\,\\tfrac{1}{4}\\!\\sum_{p=0}^{1}\\sum_{q=0}^{1}\\text{input}_{\\,2u+p,\\;2v+q} \\;+\\; b\\right). $$
+       <p style="margin-top:-2px"><i>(Modern <code>AvgPool2d</code> drops the trainable $\\beta$ and $b$ &mdash; a plain average. That is why each S-layer has so few parameters: S2 has just $2\\times6=12$, S4 has $2\\times16=32$.)</i></p>
+
+       <p><b>3 &mdash; The squashing function (Eqns. 5 &amp; 6).</b> Every unit's weighted sum $a_i$ is passed
+       through a scaled hyperbolic tangent to get its output $x_i$:</p>
+       $$ x_i = f(a_i)\\quad(\\text{Eqn. 5}),\\qquad f(a) = A\\,\\tanh(S\\,a)\\quad(\\text{Eqn. 6}). $$
+       <p style="margin-top:-2px"><i>The paper sets $A = 1.7159$ (the plateau height) and $S = 2/3$ (the slope at the origin), chosen so that $f(1)=1$ and $f(-1)=-1$ (Appendix A).</i></p>
+
+       <p><b>4 &mdash; The RBF output layer (Eqn. 7).</b> Each of the 10 output units stores a fixed prototype
+       vector $w_i$ (a $7\\times12$ stylized bitmap of digit $i$, hence 84 numbers) and reports the squared
+       Euclidean distance from F6's 84-vector $x$:</p>
+       $$ y_i = \\sum_{j} (x_j - w_{ij})^2. $$
+       <p style="margin-top:-2px"><i>The class with the <b>smallest</b> $y_i$ (the closest prototype) is the prediction. The paper reads $y_i$ as "the unnormalized negative log-likelihood of a Gaussian" centered on the prototype.</i></p>`,
     whatItDoes:
       `<p><b>Eqn. 6</b> is the nonlinearity applied after every weighted sum inside the network. Each unit
        computes $a_i = (\\text{inputs}\\cdot\\text{weights}) + \\text{bias}$, then outputs

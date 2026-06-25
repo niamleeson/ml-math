@@ -158,7 +158,56 @@
        only from sums of $g_i$ and $h_i$. Pick the split (feature + threshold) with the largest gain; stop when
        the best gain is below $\\gamma$ (negative gain means the split is not worth a new leaf). That is the
        whole tree-growing loop.</p>`,
+    architecture:
+      `<p>XGBoost has two layers of structure: the <b>model</b> (an additive ensemble of trees) and the
+       <b>algorithms</b> that grow each tree fast on sparse, large data.</p>
+
+       <p><b>A. The model &mdash; a boosted tree ensemble (&sect;2.1, Eq. 1).</b> The predictor is a sum of $K$
+       regression trees, $\\hat{y}_i = \\sum_{k=1}^{K} f_k(x_i)$. Each tree $f_k(x) = w_{q(x)}$ has two parts:
+       a <b>structure</b> $q$ (the internal decision nodes that route an example to one of $T$ leaves) and a
+       <b>leaf-weight vector</b> $w\\in\\mathbb{R}^T$ (the score each leaf outputs). An example flows down a tree
+       through feature-threshold tests until it reaches a leaf, reads off that leaf's weight, and the final
+       prediction adds those weights across all $K$ trees. Trees are added <b>one per boosting round</b>; once
+       added, earlier trees are frozen.</p>
+
+       <p><b>B. Per-round tree growing.</b> At round $t$: (1) compute $g_i,h_i$ for every example at the current
+       prediction; (2) grow one tree by the greedy split-finder below, scoring candidate splits with the gain
+       (Eq. 7) and setting each final leaf to $w_j^\\ast=-G_j/(H_j+\\lambda)$ (Eq. 5); (3) scale the new tree by
+       the learning rate $\\eta$ and add it to the ensemble (&sect;2.3 shrinkage); (4) repeat. Column subsampling
+       optionally hides a random subset of features from each tree/level.</p>
+
+       <p><b>C. Split-finding algorithms (&sect;3).</b></p>
+       <ul>
+        <li><b>Exact greedy (Algorithm 1).</b> For each feature, sort the examples by that feature and sweep
+        every threshold, accumulating running $G_L,H_L$ (with $G_R,H_R$ as the complement). Score each candidate
+        with Eq. 7 and keep the global best. Exact but needs all sorted values in memory.</li>
+        <li><b>Approximate (Algorithm 2).</b> Instead of every threshold, propose a small set of candidate split
+        points from <b>percentiles of the feature distribution</b>, then bucket examples and score only those
+        bucket boundaries. The <i>global</i> variant proposes candidates once per tree; the <i>local</i> variant
+        re-proposes after each split (fewer candidates needed, more overhead).</li>
+        <li><b>Weighted quantile sketch (&sect;3.3).</b> The percentiles are computed with the <b>hessian $h_i$
+        as each example's weight</b>, via the weighted rank $r_k$ above &mdash; because the second-order
+        objective is exactly a squared loss weighted by $h_i$. A novel sketch data structure supports merge and
+        prune with provable error, so candidates stay good even on huge data.</li>
+       </ul>
+
+       <p><b>D. Sparsity-aware split finding (&sect;4, Algorithm 3).</b> Real data is sparse (missing values,
+       one-hot zeros). Every split node learns a <b>default direction</b>: examples whose split feature is
+       missing all go down the default branch. The finder enumerates <b>only the non-missing entries</b> of a
+       feature (so cost scales with the number of present values, not the full row count), and tries putting all
+       missing examples to the left, then to the right, keeping whichever default gives the higher gain. This
+       gives a large speedup on sparse inputs while handling missingness in a principled, data-driven way.</p>
+
+       <p><b>E. Systems for scale (&sect;5).</b> Data is stored once in <b>compressed sparse column (CSC)
+       "blocks"</b> with each column pre-sorted by feature value, so sorting is not repeated every round and
+       split-finding parallelizes across features. <b>Cache-aware prefetching</b> reads gradient statistics into
+       a thread-local buffer to hide cache misses, and <b>out-of-core</b> blocks are column-compressed and
+       sharded across disks with prefetch threads &mdash; together these "scale beyond billions of examples"
+       (abstract).</p>`,
     symbols: [
+      { sym: "$\\phi$", desc: "the <b>whole ensemble model</b> (Greek phi): $\\phi(x_i)=\\sum_{k=1}^{K} f_k(x_i)$, the sum of all $K$ trees' outputs &mdash; the final prediction $\\hat{y}_i$." },
+      { sym: "$K$", desc: "the <b>number of trees</b> in the ensemble (one tree is added per boosting round)." },
+      { sym: "$q$", desc: "the <b>tree structure</b> &mdash; the internal decision nodes that map an input $x$ to a leaf index, $q:\\mathbb{R}^m\\to\\{1,\\dots,T\\}$. A tree is the pair (structure $q$, leaf weights $w$)." },
       { sym: "$y_i$", desc: "the <b>true label</b> of training example $i$ (the number or class we want to predict)." },
       { sym: "$\\hat{y}_i^{(t-1)}$", desc: "the model's <b>current prediction</b> for example $i$ after the first $t-1$ trees, before this round's tree is added." },
       { sym: "$f_t$", desc: "the <b>$t$-th tree</b> we are about to add &mdash; a regression tree mapping an input $x_i$ to a leaf value." },
@@ -174,10 +223,30 @@
       { sym: "$G_j,\\,H_j$", desc: "the <b>leaf sums</b> $G_j=\\sum_{i\\in I_j} g_i$ and $H_j=\\sum_{i\\in I_j} h_i$ &mdash; the only statistics a leaf needs." },
       { sym: "$G_L,H_L,\\;G_R,H_R$", desc: "the gradient/hessian sums of the <b>left</b> and <b>right</b> children of a candidate split (and $G=G_L+G_R$, $H=H_L+H_R$ for the parent)." },
       { sym: "$\\eta$", desc: "the <b>shrinkage / learning rate</b> (Greek eta, &sect;2.3): each new tree's contribution is scaled by $\\eta\\lt1$ so later trees can still help." },
-      { sym: "$\\mathcal{L}_{\\text{split}}$", desc: "the <b>split gain</b> (Eq. 7): how much the objective drops if a leaf is split into $I_L$ and $I_R$. Larger is better; below $0$ means do not split." }
+      { sym: "$\\mathcal{L}_{\\text{split}}$", desc: "the <b>split gain</b> (Eq. 7): how much the objective drops if a leaf is split into $I_L$ and $I_R$. Larger is better; below $0$ means do not split." },
+      { sym: "$r_k(z)$", desc: "the <b>hessian-weighted rank</b> of value $z$ on feature $k$ (&sect;3.3): the fraction of total hessian weight from examples whose feature-$k$ value is $\\lt z$. The weighted quantile sketch spaces candidate split points evenly in $r_k$." }
     ],
-    formula: `$$ \\mathcal{L}(\\phi) = \\sum_i l(\\hat{y}_i, y_i) + \\sum_k \\Omega(f_k), \\quad \\Omega(f)=\\gamma T + \\tfrac12\\lambda\\lVert w\\rVert^2 \\qquad\\text{(Eq. 2)} $$
-$$ \\mathcal{L}_{\\text{split}} = \\tfrac12\\!\\left[\\frac{G_L^2}{H_L+\\lambda} + \\frac{G_R^2}{H_R+\\lambda} - \\frac{(G_L+G_R)^2}{H_L+H_R+\\lambda}\\right] - \\gamma \\qquad\\text{(Eq. 7)} $$`,
+    formula: `$$ \\hat{y}_i = \\phi(x_i) = \\sum_{k=1}^{K} f_k(x_i), \\qquad f_k(x) = w_{q(x)}, \\quad q:\\mathbb{R}^m\\!\\to\\!\\{1,\\dots,T\\},\\; w\\in\\mathbb{R}^{T} \\qquad\\text{(Eq. 1)} $$
+<p style="margin:.2em 0 .9em">The model is a sum of $K$ regression trees. Tree structure $q$ routes an input to one of its $T$ leaves; that leaf's weight $w_{q(x)}$ is the tree's output (&sect;2.1).</p>
+$$ \\mathcal{L}(\\phi) = \\sum_i l(\\hat{y}_i, y_i) + \\sum_k \\Omega(f_k), \\qquad \\Omega(f)=\\gamma T + \\tfrac12\\lambda\\lVert w\\rVert^2 \\qquad\\text{(Eq. 2)} $$
+<p style="margin:.2em 0 .9em">The regularized objective: training loss plus a per-tree complexity penalty &mdash; $\\gamma$ per leaf and an L2 (sum-of-squares) penalty $\\tfrac12\\lambda\\lVert w\\rVert^2$ on the leaf weights (&sect;2.1).</p>
+$$ \\mathcal{L}^{(t)} = \\sum_{i=1}^{n} l\\!\\left(y_i,\\, \\hat{y}_i^{(t-1)} + f_t(x_i)\\right) + \\Omega(f_t) \\qquad\\text{(Eq. 3, round $t$)} $$
+<p style="margin:.2em 0 .9em">At boosting round $t$ we add one tree $f_t$ on top of the fixed prediction $\\hat{y}_i^{(t-1)}$ from the previous $t-1$ trees (&sect;2.2).</p>
+$$ \\mathcal{L}^{(t)} \\simeq \\sum_{i=1}^{n}\\Big[\\, l(y_i,\\hat{y}_i^{(t-1)}) + g_i\\, f_t(x_i) + \\tfrac12 h_i\\, f_t^2(x_i)\\,\\Big] + \\Omega(f_t) $$
+$$ g_i = \\partial_{\\hat{y}^{(t-1)}}\\, l(y_i,\\hat{y}_i^{(t-1)}), \\qquad h_i = \\partial^2_{\\hat{y}^{(t-1)}}\\, l(y_i,\\hat{y}_i^{(t-1)}) $$
+<p style="margin:.2em 0 .9em">Second-order Taylor expansion of the loss around the current prediction: $g_i$ is the gradient (slope), $h_i$ the hessian (curvature) of the loss for example $i$ (&sect;2.2).</p>
+$$ \\tilde{\\mathcal{L}}^{(t)} = \\sum_{j=1}^{T}\\Big[\\, G_j\\, w_j + \\tfrac12 (H_j+\\lambda)\\, w_j^2\\,\\Big] + \\gamma T, \\qquad G_j=\\!\\!\\sum_{i\\in I_j}\\! g_i,\\;\\; H_j=\\!\\!\\sum_{i\\in I_j}\\! h_i \\qquad\\text{(Eq. 4)} $$
+<p style="margin:.2em 0 .9em">Drop the constant $l(y_i,\\hat{y}_i^{(t-1)})$ and group examples by leaf $I_j=\\{i:q(x_i)=j\\}$: the objective becomes one independent quadratic per leaf in the leaf weight $w_j$ (&sect;2.2).</p>
+$$ w_j^\\ast = -\\frac{G_j}{H_j+\\lambda} \\qquad\\text{(Eq. 5, optimal leaf weight)} $$
+<p style="margin:.2em 0 .9em">Minimizing each leaf quadratic $a w + \\tfrac12 b w^2$ at $w^\\ast=-a/b$ gives the closed-form best leaf value (&sect;2.2).</p>
+$$ \\tilde{\\mathcal{L}}^{(t)}(q) = -\\tfrac12 \\sum_{j=1}^{T} \\frac{G_j^2}{H_j+\\lambda} + \\gamma T \\qquad\\text{(Eq. 6, structure score)} $$
+<p style="margin:.2em 0 .9em">Plugging $w_j^\\ast$ back in scores a fixed tree shape $q$ &mdash; lower is better. This is the impurity function for tree growing (&sect;2.2).</p>
+$$ \\mathcal{L}_{\\text{split}} = \\tfrac12\\!\\left[\\frac{G_L^2}{H_L+\\lambda} + \\frac{G_R^2}{H_R+\\lambda} - \\frac{(G_L+G_R)^2}{H_L+H_R+\\lambda}\\right] - \\gamma \\qquad\\text{(Eq. 7, split gain)} $$
+<p style="margin:.2em 0 .9em">Loss reduction from splitting one leaf into left ($I_L$) and right ($I_R$) children: child scores minus parent score, minus the per-leaf cost $\\gamma$. The greedy grower keeps the largest-gain split (&sect;2.2).</p>
+$$ \\hat{y}_i^{(t)} = \\hat{y}_i^{(t-1)} + \\eta\\, f_t(x_i), \\qquad 0\\lt\\eta\\le 1 \\qquad\\text{(&sect;2.3, shrinkage)} $$
+<p style="margin:.2em 0 .9em">Shrinkage scales each new tree by a learning rate $\\eta$ so no single tree dominates; combined with <b>column (feature) subsampling</b> &mdash; sampling a subset of features per tree/level &mdash; these are XGBoost's two extra anti-overfitting knobs (&sect;2.3).</p>
+$$ r_k(z) = \\frac{1}{\\sum_{(x,h)\\in D_k} h}\\sum_{\\substack{(x,h)\\in D_k\\\\ x\\lt z}} h \\qquad\\text{(&sect;3.3, weighted rank)} $$
+<p style="margin:.2em 0 0">Weighted quantile sketch: candidate split points for the approximate algorithm are chosen so this hessian-weighted rank is evenly spaced. The hessian $h_i$ is the weight because Eq. 3 rearranges into a weighted squared loss with label $g_i/h_i$ and weight $h_i$ (&sect;3.3).</p>`,
     whatItDoes:
       `<p><b>Equation 2</b> is the thing XGBoost minimizes: the sum of the per-example losses <b>plus</b> a
        penalty $\\Omega$ on every tree. $\\Omega = \\gamma T + \\tfrac12\\lambda\\lVert w\\rVert^2$ charges

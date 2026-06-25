@@ -138,33 +138,98 @@
        layers to $0$ with probability $0.5$, so the net cannot rely on any single neuron and learns redundant,
        robust features. A small <b>Local Response Normalization</b> (&sect;3.3) between early conv layers gave a
        further minor gain.</p>`,
+    architecture:
+      `<p>AlexNet has <b>eight layers with weights</b> (&sect;3.5): five convolutional then three fully-connected,
+       ending in a <b>1000-way softmax</b>. The whole net is <b>split across two GTX 580 GPUs</b> (3&nbsp;GB each):
+       each GPU holds half the kernels of every layer, and the two halves talk only at certain layers (conv3 and
+       the FC layers read from both GPUs; conv2, conv4, conv5 read only from their own GPU). Input is a
+       $224\\times224\\times3$ image. <b>~60 million parameters, ~650,000 neurons.</b></p>
+       <table>
+        <tr><th>Layer</th><th>Kernels / units</th><th>Kernel size</th><th>Stride</th><th>After it</th></tr>
+        <tr><td><b>conv1</b></td><td>96 kernels</td><td>$11\\times11\\times3$</td><td>4</td><td>ReLU &rarr; LRN &rarr; overlapping max-pool</td></tr>
+        <tr><td><b>conv2</b></td><td>256 kernels</td><td>$5\\times5\\times48$</td><td>1</td><td>ReLU &rarr; LRN &rarr; overlapping max-pool</td></tr>
+        <tr><td><b>conv3</b></td><td>384 kernels</td><td>$3\\times3\\times256$</td><td>1</td><td>ReLU (no pool/norm; reads both GPUs)</td></tr>
+        <tr><td><b>conv4</b></td><td>384 kernels</td><td>$3\\times3\\times192$</td><td>1</td><td>ReLU (no pool/norm)</td></tr>
+        <tr><td><b>conv5</b></td><td>256 kernels</td><td>$3\\times3\\times192$</td><td>1</td><td>ReLU &rarr; overlapping max-pool</td></tr>
+        <tr><td><b>fc6</b></td><td>4096 neurons</td><td>&mdash;</td><td>&mdash;</td><td>ReLU &rarr; dropout $p=0.5$</td></tr>
+        <tr><td><b>fc7</b></td><td>4096 neurons</td><td>&mdash;</td><td>&mdash;</td><td>ReLU &rarr; dropout $p=0.5$</td></tr>
+        <tr><td><b>fc8</b></td><td>1000 neurons</td><td>&mdash;</td><td>&mdash;</td><td>1000-way softmax</td></tr>
+       </table>
+       <p><b>Kernel sizes shrink with depth</b> &mdash; $11\\times11$ at conv1, $5\\times5$ at conv2, $3\\times3$ for
+       conv3&ndash;5 &mdash; while channel count grows ($3\\to96\\to256\\to384\\to384\\to256$), the standard
+       "deeper layers see smaller, more abstract patches over more feature channels" pattern. The third
+       dimension of each kernel ($\\times3$, $\\times48$, $\\times256$, $\\times192$) is its input-channel depth;
+       where it is half the previous layer's channel count (e.g. conv2's $\\times48$, half of 96) that reflects
+       the per-GPU split. <b>LRN follows conv1 and conv2 only</b>; <b>overlapping max-pooling ($s=2,z=3$) follows
+       both LRN layers and conv5</b>; <b>ReLU follows every conv and FC layer</b>; <b>dropout sits on fc6 and
+       fc7</b>. Fig. 2's per-layer neuron counts are 253,440&ndash;186,624&ndash;64,896&ndash;64,896&ndash;43,264
+       (conv1&ndash;5) then 4096&ndash;4096&ndash;1000.</p>`,
     symbols: [
-      { sym: "$f(x)=\\max(0,x)$", desc: "the <b>ReLU</b> (Rectified Linear Unit) activation: output the input if it is positive, otherwise output $0$. \"$\\max$\" means take the larger of the two values." },
+      { sym: "$f(x)=\\max(0,x)$", desc: "the <b>ReLU</b> (Rectified Linear Unit) activation: output the input if it is positive, otherwise output $0$. \"$\\max$\" means take the larger of the two values (&sect;3.1)." },
       { sym: "$x$", desc: "in the ReLU, a single neuron's pre-activation value (the linear output before the nonlinearity)." },
-      { sym: "stride", desc: "how many pixels the filter moves between applications. A stride of $4$ hops 4 pixels at a time, shrinking the output (a plain term, not a symbol)." },
-      { sym: "$W$ (input size)", desc: "the width (or height) in pixels of the layer's input feature map &mdash; e.g. $224$ for the first layer." },
-      { sym: "$K$ (kernel size)", desc: "the width/height of the square filter &mdash; e.g. $11$ for the first conv layer's $11\\times11$ kernels." },
-      { sym: "$S$ (stride)", desc: "the stride, the step in pixels between filter positions &mdash; $4$ in the first layer." },
-      { sym: "$P$ (padding)", desc: "how many zero pixels are added around the border before convolving. $P=0$ means \"no padding,\" so the output is smaller than the input." },
-      { sym: "$O$ (output size)", desc: "the width/height in pixels of the layer's output feature map, computed by the formula below." },
+      { sym: "$a^{i}_{x,y}$", desc: "in Local Response Normalization (&sect;3.3), the raw (pre-normalization) activity of kernel $i$ at spatial position $(x,y)$, after the ReLU has been applied." },
+      { sym: "$b^{i}_{x,y}$", desc: "the response-normalized activity of kernel $i$ at $(x,y)$ &mdash; what LRN outputs in place of $a^{i}_{x,y}$." },
+      { sym: "$i,\\,j$", desc: "channel (kernel-map) indices. $i$ is the channel being normalized; $j$ runs over the $n$ neighbouring channels at the same spatial location." },
+      { sym: "$N$", desc: "the total number of kernels (channels) in the layer &mdash; the sum's index $j$ is clamped to the valid range $[\\,0,\\,N-1\\,]$." },
+      { sym: "$k,\\,n,\\,\\alpha,\\,\\beta$", desc: "the LRN constants the paper fixes by validation: $k=2$ (offset that avoids dividing by zero), $n=5$ (number of adjacent channels summed over), $\\alpha=10^{-4}$ (scale), $\\beta=0.75$ (exponent) (&sect;3.3)." },
+      { sym: "$s,\\,z$", desc: "overlapping-pooling parameters (&sect;3.4): pooling units are spaced $s$ pixels apart, each summarizing a $z\\times z$ window. AlexNet uses $s=2,\\,z=3$, so $s\\lt z$ makes adjacent windows overlap." },
       { sym: "$p$ (dropout)", desc: "the dropout probability: the chance each neuron is set to $0$ during a training step. AlexNet uses $p=0.5$ on the first two fully-connected layers (&sect;4.2)." },
-      { sym: "$b^{i}_{x,y}$", desc: "in Local Response Normalization (&sect;3.3), the normalized activity of the kernel at position $(x,y)$ in channel $i$." },
-      { sym: "$a^{i}_{x,y}$", desc: "the raw (pre-normalization) activity of kernel $i$ at position $(x,y)$." },
-      { sym: "$k,\\,n,\\,\\alpha,\\,\\beta$", desc: "the LRN constants the paper fixes by validation: $k=2$, $n=5$ (neighbouring channels summed over), $\\alpha=10^{-4}$, $\\beta=0.75$ (&sect;3.3)." }
+      { sym: "$w,\\,v$", desc: "in the weight-update rule (&sect;5), $w$ is a weight and $v$ is its <b>momentum</b> variable (a running average of past gradients)." },
+      { sym: "$\\epsilon$", desc: "the learning rate &mdash; how big a step each update takes (initialized at $0.01$, divided by $10$ when validation error stalls; &sect;5)." },
+      { sym: "$\\langle \\partial L/\\partial w \\,|_{w_i}\\rangle_{D_i}$", desc: "the gradient of the loss $L$ with respect to weight $w$, averaged over the $i$-th mini-batch $D_i$ of 128 examples (&sect;5)." },
+      { sym: "$\\mathbf{p}_j,\\,\\lambda_j$", desc: "in PCA colour augmentation (&sect;4.1), the $j$-th eigenvector and eigenvalue of the $3\\times3$ RGB pixel covariance matrix." },
+      { sym: "$\\alpha_j$", desc: "in PCA colour augmentation, a random scalar drawn once per image from a Gaussian $\\mathcal{N}(0,\\,0.1^2)$ that jitters the colour along eigenvector $\\mathbf{p}_j$." },
+      { sym: "stride", desc: "how many pixels a conv filter moves between applications. A stride of $4$ hops 4 pixels at a time, shrinking the output (a plain term)." },
+      { sym: "$W,K,P,S,O$", desc: "conv output-size arithmetic (recapped from <b>dl-conv</b>): input width $W$, kernel size $K$, padding $P$, stride $S$, and resulting output width $O$." }
     ],
     formula:
-      `$$ f(x) = \\max(0,\\,x) \\qquad\\text{(ReLU, §3.1)} \\qquad\\qquad O = \\left\\lfloor \\frac{W - K + 2P}{S} \\right\\rfloor + 1 \\qquad\\text{(conv output size)} $$`,
+      `$$ f(x) = \\max(0,\\,x) \\qquad\\text{(ReLU non-saturating nonlinearity, §3.1)} $$
+       <p>Each neuron's output is its input if positive, else $0$. Non-saturating (gradient $1$ on the
+       positive side), so deep nets train several times faster than with $\\tanh$ or the logistic sigmoid
+       (the paper reports $6\\times$ fewer iterations to 25% training error on CIFAR-10, Fig. 1).</p>
+       $$ b^{\\,i}_{x,y} \\;=\\; a^{\\,i}_{x,y} \\Big/ \\Big( k + \\alpha \\!\\! \\sum_{j=\\max(0,\\,i-n/2)}^{\\min(N-1,\\,i+n/2)} \\!\\! \\big(a^{\\,j}_{x,y}\\big)^{2} \\Big)^{\\beta} \\qquad\\text{(Local Response Normalization, §3.3)} $$
+       <p>Divides each activation by a term built from the squared activations of its $n=5$ neighbouring
+       channels at the same pixel &mdash; a "brightness normalization" / lateral inhibition that makes big
+       activations compete across channels. Constants $k=2,\\,\\alpha=10^{-4},\\,\\beta=0.75$. Reduces top-1 / top-5
+       error by 1.4% / 1.2%.</p>
+       $$ \\text{Overlapping max-pooling: grid of units spaced } s \\text{ apart, each pooling a } z\\times z \\text{ window, with } s\\lt z \\;\\;(s=2,\\,z=3) \\qquad\\text{(§3.4)} $$
+       <p>Traditional pooling uses $s=z$ (non-overlapping). Setting $s=2,\\,z=3$ makes pooling windows overlap;
+       this lowers top-1 / top-5 error by 0.4% / 0.3% and slightly resists overfitting. (Max-pooling outputs the
+       largest value in each window.)</p>
+       $$ \\text{Dropout: zero each FC-layer neuron with probability } p=0.5 \\text{ at train time; at test time scale all outputs by } 0.5 \\qquad\\text{(regularizer, §4.2)} $$
+       $$ I_{x,y} \\;\\leftarrow\\; I_{x,y} + \\big[\\mathbf{p}_1,\\mathbf{p}_2,\\mathbf{p}_3\\big]\\,\\big[\\alpha_1\\lambda_1,\\,\\alpha_2\\lambda_2,\\,\\alpha_3\\lambda_3\\big]^{\\!\\top},\\quad \\alpha_j\\sim\\mathcal{N}(0,\\,0.1^2) \\qquad\\text{(PCA colour augmentation, §4.1)} $$
+       <p>The two regularizers (&sect;4). <b>Dropout</b> on the first two fully-connected layers stops neurons
+       co-adapting. <b>Data augmentation</b>: random $224\\times224$ crops + horizontal reflections from each
+       $256\\times256$ image (enlarging the training set $2048\\times$), plus the <b>PCA colour jitter</b> above
+       that shifts each pixel's RGB along the principal components of the dataset's colour covariance.</p>
+       $$ v_{i+1} := 0.9\\,v_i - 0.0005\\,\\epsilon\\,w_i - \\epsilon\\,\\Big\\langle \\tfrac{\\partial L}{\\partial w}\\Big|_{w_i}\\Big\\rangle_{D_i}, \\qquad w_{i+1} := w_i + v_{i+1} \\qquad\\text{(SGD with momentum + weight decay, §5)} $$
+       <p>The optimizer: stochastic gradient descent, batch size 128, momentum $0.9$, weight decay $0.0005$.</p>
+       $$ O = \\left\\lfloor \\frac{W - K + 2P}{S} \\right\\rfloor + 1 \\qquad\\text{(conv output size — recap from dl-conv, used to size the layers)} $$`,
     whatItDoes:
-      `<p>The <b>left</b> equation is the <b>ReLU</b>: for each value $x$ flowing through the network, output
-       $x$ if it is positive and $0$ otherwise. This is the nonlinearity AlexNet introduced to the architecture;
-       its gradient is $1$ for positive inputs (so learning does not stall) and $0$ for negatives.</p>
-       <p>The <b>right</b> equation gives the <b>spatial output size</b> of a convolutional layer. Read it as:
-       take the input width $W$, subtract the kernel size $K$, add back twice the padding $P$, divide by the
-       stride $S$, take the floor ($\\lfloor\\cdot\\rfloor$ means round down to a whole number), and add $1$.
-       It tells you how many times a $K\\times K$ filter, stepping $S$ pixels at a time, fits across a
-       $W$-pixel-wide input &mdash; i.e. the width (and height) of the feature map the layer produces. This is
-       the arithmetic you must get right to size every layer of the network; it is derived in full in the
-       <b>dl-conv</b> concept lesson.</p>`,
+      `<p><b>ReLU (&sect;3.1).</b> For each value $x$ flowing through the network, output $x$ if positive and $0$
+       otherwise. Its gradient is $1$ for positive inputs (so learning never stalls) and $0$ for negatives &mdash;
+       unlike $\\tanh$, whose gradient vanishes for large inputs. This is what makes the deep net train fast.</p>
+       <p><b>Local Response Normalization (&sect;3.3).</b> Each activation $a^{i}_{x,y}$ is divided by a quantity
+       built from the squared activations of its $n=5$ neighbouring <i>channels</i> at the same pixel $(x,y)$. So
+       a neuron that fires strongly while its neighbours-in-channel fire weakly stays strong; if many channels
+       fire strongly at that pixel they damp each other ("lateral inhibition"). The $+k$ keeps the denominator
+       from being zero; $\\alpha$ and $\\beta$ tune the strength.</p>
+       <p><b>Overlapping pooling (&sect;3.4).</b> Lay a grid of pooling units $s=2$ pixels apart, each taking the
+       max over a $z\\times z=3\\times3$ window. Because $s\\lt z$, the windows overlap. Pooling shrinks the feature
+       map and adds translation tolerance; the overlap gives a small accuracy and overfitting benefit.</p>
+       <p><b>Dropout (&sect;4.2).</b> During training, each first-/second-FC-layer neuron is zeroed with
+       probability $0.5$ on every forward pass, so the net cannot lean on any one neuron. At test time you keep
+       all neurons but multiply their outputs by $0.5$ (an approximate average over all the "thinned" nets).</p>
+       <p><b>PCA colour augmentation (&sect;4.1).</b> Add to every pixel a small colour shift along the principal
+       components $\\mathbf{p}_j$ of the dataset's RGB covariance, scaled by the eigenvalue $\\lambda_j$ and a
+       per-image random $\\alpha_j\\sim\\mathcal{N}(0,0.1^2)$ &mdash; teaching the net that object identity is
+       invariant to changes in illumination colour and intensity.</p>
+       <p><b>Weight update (&sect;5).</b> SGD with momentum: $v$ accumulates $0.9$ of its previous value minus the
+       (weight-decayed) gradient times the learning rate $\\epsilon$, and $w$ steps by $v$. The $-0.0005\\,\\epsilon
+       \\,w_i$ term is weight decay, which the paper found reduced training error, not just a regularizer.</p>
+       <p><b>Conv output size.</b> Take input width $W$, subtract kernel size $K$, add twice the padding $P$,
+       divide by stride $S$, floor it ($\\lfloor\\cdot\\rfloor$ = round down), add $1$. It tells you the width and
+       height of the feature map each conv layer produces &mdash; the arithmetic you need to size every layer.</p>`,
     derivation:
       `<p><b>Short recap &mdash; full derivation in the dl-conv concept lesson.</b> Why
        $O = \\lfloor (W - K + 2P)/S \\rfloor + 1$? Imagine sliding a $K$-wide window across a $W$-wide row (after
@@ -209,11 +274,11 @@
       </ol>`,
     results:
       `<p>From the abstract (quoted): "On the test data, we achieved top-1 and top-5 error rates of
-       <b>39.7% and 18.9%</b> which is considerably better than the previous state-of-the-art results"
-       (on the LSVRC-2010 split). In the body, the network "achieves top-1 and top-5 test set error rates of
-       37.5% and 17.0%." (The often-cited <b>15.3%</b> top-5 figure is AlexNet's score in the separate
-       ILSVRC-2012 <i>competition</i> using an ensemble of several such nets &mdash; a different number from a
-       different setup; we quote the paper's own table figures here to stay grounded.)</p>
+       <b>37.5% and 17.0%</b> which is considerably better than the previous state-of-the-art" (on the ImageNet
+       LSVRC-2010 split). The abstract also reports the model "has 60 million parameters and 650,000 neurons."
+       (The often-cited <b>15.3%</b> top-5 figure is AlexNet's score in the separate ILSVRC-2012 <i>competition</i>
+       using an ensemble of several such nets, vs. 26.2% for the second-best entry &mdash; a different number from
+       a different setup; we quote the paper's own figures here to stay grounded.)</p>
        <p><i>These are the paper's reported figures, quoted from the fetched text. The accuracy printed by the
        CODE and shown in the CODEVIZ panel below is from our own tiny CIFAR-10 run &mdash; not the paper's
        reported number.</i></p>`,
@@ -237,8 +302,8 @@
         <li><b>Putting dropout in the wrong place.</b> The paper drops the <i>fully-connected</i> layers
         (&sect;4.2), not the conv layers, and only during training. <b>Fix:</b> <code>nn.Dropout</code> before
         the first two FC layers, and call <code>net.eval()</code> at test time so dropout is off.</li>
-        <li><b>Confusing the paper's reported numbers.</b> 39.7%/18.9% is ILSVRC-2010 (abstract); 15.3% top-5
-        is the 2012 <i>competition</i> ensemble. Quote the right one for the setup, and never compare our toy
+        <li><b>Confusing the paper's reported numbers.</b> 37.5%/17.0% top-1/top-5 is LSVRC-2010 (abstract);
+        15.3% top-5 is the 2012 <i>competition</i> ensemble. Quote the right one for the setup, and never compare our toy
         CIFAR-10 accuracy to ImageNet figures &mdash; different datasets.</li>
         <li><b>Dead ReLUs / exploding tanh.</b> Too high a learning rate can push many ReLU units permanently
         negative (always outputting $0$), or saturate tanh. <b>Fix:</b> a moderate learning rate and normalized

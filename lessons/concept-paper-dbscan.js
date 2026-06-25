@@ -141,6 +141,35 @@
        grab everything density-reachable from it (Lemma 2 guarantees that <i>is</i> the cluster); otherwise call
        it noise (it may be reclaimed later as a border point) and move on.</p>`,
 
+    architecture:
+      `<p>DBSCAN has no model "layers"; its structure is a <b>region-query expansion engine</b> &mdash; an outer scan
+       wrapped around a flood-fill that repeatedly issues Eps-neighborhood queries. The paper gives it as two
+       routines (Section 4.1).</p>
+       <p><b>Component 1 &mdash; the region query, $N_{Eps}(\\text{point})$.</b> The one primitive everything calls:
+       given a point, return all database points within $Eps$. Backed by a spatial index (the paper uses an
+       <b>R*-tree</b>): an R*-tree query touches only $O(\\log n)$ tree nodes, so one region query costs
+       $O(\\log n)$, and the $n$ queries total $O(n\\log n)$.</p>
+       <p><b>Component 2 &mdash; DBSCAN (the outer driver).</b> Mark all points UNCLASSIFIED. Walk the points in order;
+       for each still-UNCLASSIFIED point, call ExpandCluster with the next cluster id. If ExpandCluster returns
+       true (a cluster was grown), advance the cluster id; otherwise the point keeps its NOISE label and the scan
+       continues.</p>
+       <p><b>Component 3 &mdash; ExpandCluster (the flood-fill).</b> Region-query the point to get its $seeds$.</p>
+       <ul>
+         <li>If $|seeds| \\lt MinPts$, the point is not core &mdash; label it NOISE and return false (no cluster).</li>
+         <li>Otherwise it is core: assign the whole $seeds$ set the current cluster id, remove the point itself
+         from $seeds$, then loop: pop a $seeds$ point $current$ and region-query it. If $|N_{Eps}(current)|\\ge MinPts$
+         ($current$ is core), append each of its neighbors that is still UNCLASSIFIED or NOISE to $seeds$
+         (UNCLASSIFIED ones get queued; NOISE ones are reclaimed as border points but not re-queued) and re-label
+         every UNCLASSIFIED/NOISE result point to the cluster id. Repeat until $seeds$ is empty, then return true.</li>
+       </ul>
+       <p><b>Data flow:</b> outer scan &rarr; ExpandCluster &rarr; region query &rarr; (if core) new seeds appended back into the
+       same queue &rarr; region query again, until the dense region is exhausted. Border points are reached but, being
+       non-core, never enqueue their own neighbors, so growth halts exactly at the cluster's density boundary.
+       <b>Order sensitivity:</b> the result is order-independent (Lemma 2) <i>except</i> for border points that sit in
+       two clusters' reach &mdash; those go to whichever cluster visits them first. Because $Eps$ and $MinPts$ are global, two
+       clusters of different density merge if they sit closer than $Eps$; the paper notes a recursive call with a
+       higher $MinPts$ can re-separate them, though this is rarely needed.</p>`,
+
     symbols: [
       { sym: "clustering", desc: "grouping data points so that points in the same group are more similar to each other than to points in other groups." },
       { sym: "$D$", desc: "the database — the whole set of data points being clustered." },
@@ -154,20 +183,49 @@
       { sym: "noise point", desc: "a point that belongs to no cluster — isolated, with too sparse a neighborhood to be reached. Labeled $-1$. Definition 6." },
       { sym: "directly density-reachable", desc: "$p$ is directly density-reachable from $q$ when $p$ is in $q$'s Eps-neighborhood AND $q$ is a core point. Definition 2. Not symmetric in general." },
       { sym: "density-reachable", desc: "$p$ is density-reachable from $q$ if a chain of directly-density-reachable steps leads from $q$ to $p$. Definition 3. This carries a cluster along arbitrary shapes." },
-      { sym: "density-connected", desc: "$p$ and $q$ are density-connected if some point $o$ can density-reach both of them. Definition 4. This relation IS symmetric; it joins border points of the same cluster." }
+      { sym: "density-connected", desc: "$p$ and $q$ are density-connected if some point $o$ can density-reach both of them. Definition 4. This relation IS symmetric; it joins border points of the same cluster." },
+      { sym: "$o$", desc: "the 'witness' point in Definition 4: the common core point that density-reaches both $p$ and $q$, certifying that they are density-connected." },
+      { sym: "$C$ (a cluster)", desc: "a cluster: a non-empty subset of $D$ that is maximal under density-reachability and internally density-connected. Definition 5." },
+      { sym: "$C_1,\\dots,C_k$", desc: "the $k$ clusters DBSCAN finds; $k$ is discovered, not supplied. Noise (Definition 6) is every point in none of them." },
+      { sym: "$dist(S_1,S_2)$", desc: "the distance between two point sets $S_1,S_2$: the smallest point-to-point distance across the two sets, $\\min\\{dist(p,q)\\mid p\\in S_1,q\\in S_2\\}$. Section 4.1; explains why one global $Eps$ separates clusters whose gap exceeds $Eps$." },
+      { sym: "$k\\text{-dist}(p)$", desc: "the distance from $p$ to its $k$-th nearest neighbor. Sorting these descending gives the 'sorted $k$-dist graph' whose first valley sets $Eps$ (Section 4.2). The paper fixes $k=MinPts=4$ for 2-D data." }
     ],
 
     formula:
-      `$$N_{Eps}(p)=\\{\\,q\\in D \\;\\mid\\; dist(p,q)\\le Eps\\,\\}\\qquad\\text{(Definition 1)}$$
-       $$p\\text{ is a core point}\\iff |N_{Eps}(p)|\\ge MinPts\\qquad\\text{(Definition 2, core-point condition)}$$`,
+      `$$N_{Eps}(p)=\\{\\,q\\in D \\;\\mid\\; dist(p,q)\\le Eps\\,\\}\\qquad\\text{(Definition 1: Eps-neighborhood)}$$
+       <p>The Eps-neighborhood of $p$ is every database point within radius $Eps$ of $p$ (and $p$ counts itself).</p>
+       $$|N_{Eps}(p)|\\ge MinPts\\qquad\\text{(core-point condition)}$$
+       <p>If $p$'s neighborhood holds at least $MinPts$ points, $p$ is a <b>core point</b>.</p>
+       $$p\\text{ directly density-reachable from }q \\iff p\\in N_{Eps}(q)\\;\\wedge\\;|N_{Eps}(q)|\\ge MinPts\\qquad\\text{(Definition 2)}$$
+       <p>$p$ is <b>directly density-reachable</b> from $q$ when $p$ lies in $q$'s neighborhood (condition 1) AND $q$ is a core point (condition 2). Not symmetric unless both are core.</p>
+       $$p\\text{ density-reachable from }q \\iff \\exists\\,p_1,\\dots,p_n,\\;p_1=q,\\;p_n=p:\\;p_{i+1}\\text{ directly density-reachable from }p_i\\qquad\\text{(Definition 3)}$$
+       <p>$p$ is <b>density-reachable</b> from $q$ if a chain of directly-density-reachable hops links $q$ to $p$. Transitive, but not symmetric.</p>
+       $$p\\text{ density-connected to }q \\iff \\exists\\,o:\\;p\\text{ density-reachable from }o\\;\\wedge\\;q\\text{ density-reachable from }o\\qquad\\text{(Definition 4)}$$
+       <p>$p$ and $q$ are <b>density-connected</b> if some point $o$ density-reaches both. This relation IS symmetric.</p>
+       $$C\\neq\\varnothing,\\;\\;C\\subseteq D \\text{ is a cluster} \\iff \\begin{cases}(1)\\;\\forall\\,p,q:\\;p\\in C\\;\\wedge\\;q\\text{ density-reachable from }p\\;\\Rightarrow\\;q\\in C &\\text{(Maximality)}\\\\[2pt](2)\\;\\forall\\,p,q\\in C:\\;p\\text{ density-connected to }q &\\text{(Connectivity)}\\end{cases}\\qquad\\text{(Definition 5)}$$
+       <p>A <b>cluster</b> $C$ (wrt $Eps$, $MinPts$) is a non-empty set that is maximal under density-reachability and internally density-connected.</p>
+       $$\\text{noise}=\\{\\,p\\in D \\;\\mid\\; \\forall i:\\;p\\notin C_i\\,\\}\\qquad\\text{(Definition 6)}$$
+       <p><b>Noise</b> is every point of $D$ belonging to none of the clusters $C_1,\\dots,C_k$ (labeled $-1$ in code).</p>
+       $$dist(S_1,S_2)=\\min\\{\\,dist(p,q)\\mid p\\in S_1,\\;q\\in S_2\\,\\}\\qquad\\text{(Section 4.1: distance between two point sets)}$$
+       <p>Two sets at the thinnest cluster's density separate only if this gap exceeds $Eps$ — the reason one global $Eps$ works.</p>`,
 
     whatItDoes:
-      `<p>The top line (Definition 1) defines the <b>Eps-neighborhood</b>: collect every database point $q$ whose
-       distance to $p$ is at most the radius $Eps$. The bottom line (the core-point condition inside Definition 2)
-       is the single decision the whole algorithm pivots on: if that neighborhood holds at least $MinPts$ points,
-       $p$ is a <b>core point</b> and a cluster can grow through it; otherwise it cannot seed or extend a cluster.
-       Everything else — reachability, connectivity, the final clusters — is built from repeatedly applying
-       these two rules.</p>`,
+      `<p>Read top to bottom, the formulas are a ladder, each rung built from the one above:</p>
+       <ul>
+         <li><b>Def 1</b> collects every database point within radius $Eps$ of $p$ — its neighborhood.</li>
+         <li>The <b>core-point condition</b> is the single decision the whole algorithm pivots on: if that
+         neighborhood holds at least $MinPts$ points, $p$ is a <b>core point</b> and a cluster can grow through it.</li>
+         <li><b>Def 2</b> says you may step from $q$ to $p$ only when $p$ is in $q$'s neighborhood AND $q$ is core —
+         growth flows out of dense points, never into them, which is why the relation is one-way.</li>
+         <li><b>Def 3</b> chains those single steps, so a cluster can snake along any shape one dense hop at a time.</li>
+         <li><b>Def 4</b> makes two points "connected" if a common core point reaches both — a symmetric tie that
+         binds together border points sitting on opposite edges of the same cluster.</li>
+         <li><b>Def 5</b> then says a cluster is exactly a maximal, density-connected set: maximal so it grabs
+         everything reachable, connected so it does not accidentally fuse two separate groups.</li>
+         <li><b>Def 6</b> declares everything in no cluster to be noise — the explicit outlier label k-means lacks.</li>
+         <li>The set-distance line explains the global-parameter trick: with one $Eps$, two clusters stay apart
+         only if the nearest pair across them is farther than $Eps$.</li>
+       </ul>`,
 
     derivation:
       `<p>Why does "maximal set of density-connected points" actually define clean clusters? The intuition and the

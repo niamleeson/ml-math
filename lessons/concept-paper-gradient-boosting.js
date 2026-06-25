@@ -127,6 +127,36 @@
        $0\\lt\\nu\\le 1$. (For squared loss the line-search scale $\\rho_m$ is $1$, so the update is simply
        $F_m = F_{m-1} + \\nu\\,h_m$.) Shrinking each step is regularization: it trades more trees for better
        generalization. Repeat $M$ times and the residuals shrink stage by stage.</p>`,
+    architecture:
+      `<p>Gradient boosting has no neural-network "layers" &mdash; it is an <b>iterative additive procedure</b>, so
+       its architecture is the per-round loop of ALGORITHM 1 plus the shape of the final model. Here is the whole
+       method component by component.</p>
+       <p><b>The final model (the data flow at prediction time).</b> A trained model is a constant plus a sum of
+       $M$ shrunken trees: $F_M(\\mathbf{x}) = F_0 + \\nu\\sum_{m=1}^{M}\\rho_m\\,h(\\mathbf{x};\\mathbf{a}_m)$. To
+       predict, you push $\\mathbf{x}$ through <i>every</i> tree, scale each tree's leaf output by
+       $\\nu\\rho_m$, and add them all to $F_0$. The trees are <b>sequential, not parallel</b>: tree $m$ was fit
+       to the errors left by trees $1..m-1$, so order matters (unlike a random forest's independent, averaged
+       trees).</p>
+       <p><b>The base learner $h(\\mathbf{x};\\mathbf{a}_m)$.</b> A single $J$-terminal-node regression tree
+       (Eq. 15): $h(\\mathbf{x}) = \\sum_{j=1}^{J} b_j\\,\\mathbf{1}(\\mathbf{x}\\in R_j)$ &mdash; it partitions
+       input space into $J$ disjoint regions $R_j$ (the leaves) and outputs a constant $b_j$ per region. Tree
+       <b>depth / $J$</b> controls how complex one step can be; it is a separate knob from the learning rate.</p>
+       <p><b>The per-round pipeline (ALGORITHM 1, one iteration).</b> Each round is four stages wired in series:
+       (1) <b>compute pseudo-responses</b> $\\tilde y_i = -g_m(\\mathbf{x}_i)$ &mdash; the
+       negative gradient of the loss at the current model (line 3);
+       (2) <b>fit a tree</b> to $\\{(\\mathbf{x}_i,\\tilde y_i)\\}$ by least squares, which carves out the leaf
+       regions $R_{jm}$ (line 4);
+       (3) <b>line search</b> for the step length $\\rho_m$ &mdash; or, with trees, a <i>separate</i> optimal
+       leaf value $\\gamma_{jm}$ in each region (Eq. 18), e.g. a mean (LS), a median (LAD), or a Newton step
+       (logistic);
+       (4) <b>shrink and add</b>: $F_m = F_{m-1} + \\nu\\,\\rho_m\\,h_m$ (Eq. 36). The running model $F$ is the
+       only state carried between rounds.</p>
+       <p><b>What plugging in a loss changes.</b> The skeleton is fixed; only the <b>init $F_0$</b>, the
+       <b>pseudo-response</b> (line 3), and the <b>leaf value</b> (line 5 / Eq. 18) depend on the loss. Squared
+       error &rarr; mean init, residual gradient, mean leaves (<code>LS_Boost</code>). Absolute error &rarr;
+       median init, sign gradient, median leaves (<code>LAD_TreeBoost</code>). Logistic &rarr; log-odds init,
+       $2y/(1+e^{2yF})$ gradient, Newton leaves (<code>L2_TreeBoost</code>). One architecture, three boosting
+       machines.</p>`,
     symbols: [
       { sym: "$F(\\mathbf{x})$", desc: "the <b>model's prediction</b> at input $\\mathbf{x}$ &mdash; the thing we optimize, viewed as a value we can nudge up or down." },
       { sym: "$F_{m-1}(\\mathbf{x})$", desc: "the boosted model after $m-1$ rounds (the running sum of all trees added so far, each already shrunk)." },
@@ -135,13 +165,45 @@
       { sym: "$y_i$", desc: "the true target value for training example $i$." },
       { sym: "$g_m(\\mathbf{x}_i)$", desc: "the <b>gradient</b> of the loss with respect to the prediction at point $i$, at the current model: $\\big[\\partial L(y_i,F(\\mathbf{x}_i))/\\partial F(\\mathbf{x}_i)\\big]_{F=F_{m-1}}$ (Eq. 7)." },
       { sym: "$\\tilde y_i$", desc: "the <b>pseudo-response</b> (ALGORITHM 1, line 3): the negative gradient $-g_m(\\mathbf{x}_i)$. For squared loss this equals the residual $y_i - F_{m-1}(\\mathbf{x}_i)$." },
-      { sym: "$h(\\mathbf{x};\\mathbf{a}_m)$", desc: "the <b>weak (base) learner</b> added at round $m$ &mdash; here a small regression tree, fit by least squares to the pseudo-responses. $\\mathbf{a}_m$ are its split parameters." },
-      { sym: "$\\rho_m$", desc: "the <b>line-search</b> multiplier (ALGORITHM 1, line 5): the step length along the tree direction. For squared loss $\\rho_m=1$." },
+      { sym: "$h(\\mathbf{x};\\mathbf{a}_m)$", desc: "the <b>weak (base) learner</b> added at round $m$ &mdash; here a small regression tree, fit by least squares to the pseudo-responses. $\\mathbf{a}_m$ are its split parameters (split variables and split locations)." },
+      { sym: "$\\beta_m$", desc: "the <b>expansion coefficient</b> on the $m$-th base learner in the additive model (Eq. 2). In the steepest-descent realization it is folded into the line-search step $\\rho_m$." },
+      { sym: "$\\rho_m$", desc: "the <b>line-search</b> multiplier (ALGORITHM 1, line 5; Eq. 8): the step length along the tree direction that minimizes the true loss. For squared loss $\\rho_m=1$." },
+      { sym: "$J,\\;R_j,\\;b_j$", desc: "the regression tree's <b>number of leaves</b> $J$, its <b>leaf regions</b> $R_j$ (disjoint partitions of input space), and the constant <b>output</b> $b_j$ per region (Eq. 15): $h(\\mathbf{x})=\\sum_j b_j\\,\\mathbf{1}(\\mathbf{x}\\in R_j)$." },
+      { sym: "$\\gamma_{jm}$", desc: "the <b>optimal leaf value</b> for region $R_{jm}$ at round $m$ (Eq. 18): the constant added in that leaf that minimizes the loss &mdash; a mean (LS), a weighted median (LAD, Eq. 14), or a Newton step (logistic, Eq. 23)." },
       { sym: "$\\nu$", desc: "the <b>learning rate</b> (shrinkage, &sect;5 Eq. 36), $0\\lt\\nu\\le 1$: each tree is scaled by $\\nu$ before being added. Smaller $\\nu$ = smaller steps = needs more trees but generalizes better (Greek 'nu')." },
       { sym: "$M$", desc: "the <b>number of boosting rounds</b> (trees). Friedman shows decreasing $\\nu$ increases the best $M$ (Table 1)." },
       { sym: "“function space”", desc: "a plain phrase, not a symbol: treating the whole vector of predictions $\\{F(\\mathbf{x}_i)\\}$ as the variable we run gradient descent on, instead of a fixed list of weights." }
     ],
-    formula: `$$ \\tilde y_i = -\\left[\\frac{\\partial L(y_i, F(\\mathbf{x}_i))}{\\partial F(\\mathbf{x}_i)}\\right]_{F=F_{m-1}} \\;\\;\\text{(Alg. 1, line 3)} \\qquad\\qquad F_m(\\mathbf{x}) = F_{m-1}(\\mathbf{x}) + \\nu\\cdot\\rho_m\\,h(\\mathbf{x};\\mathbf{a}_m),\\;\\; 0\\lt\\nu\\le 1 \\;\\;\\text{(Eq. 36)} $$`,
+    formula: `$$ F(\\mathbf{x};\\{\\beta_m,\\mathbf{a}_m\\}_1^M) = \\sum_{m=1}^{M} \\beta_m\\, h(\\mathbf{x};\\mathbf{a}_m) $$
+       <p class="cap">The <b>additive expansion</b> the paper fits (Eq. 2): the model is a weighted sum of $M$ base learners $h(\\mathbf{x};\\mathbf{a}_m)$ (each a small regression tree), with expansion coefficients $\\beta_m$.</p>
+       $$ (\\beta_m,\\mathbf{a}_m) = \\arg\\min_{\\beta,\\mathbf{a}} \\sum_{i=1}^{N} L\\big(y_i,\\; F_{m-1}(\\mathbf{x}_i) + \\beta\\, h(\\mathbf{x}_i;\\mathbf{a})\\big) \\qquad F_m(\\mathbf{x}) = F_{m-1}(\\mathbf{x}) + \\beta_m\\, h(\\mathbf{x};\\mathbf{a}_m) $$
+       <p class="cap">The ideal <b>greedy-stagewise</b> step and update (Eqs. 9-10): at round $m$ pick the learner that most reduces the loss, holding all earlier terms fixed. For most losses this joint fit is intractable, which motivates the gradient trick below.</p>
+       $$ -g_m(\\mathbf{x}_i) = -\\left[\\frac{\\partial L(y_i,\\,F(\\mathbf{x}_i))}{\\partial F(\\mathbf{x}_i)}\\right]_{F(\\mathbf{x})=F_{m-1}(\\mathbf{x})} \\qquad\\Longrightarrow\\qquad \\tilde y_i = -g_m(\\mathbf{x}_i) $$
+       <p class="cap">The <b>pseudo-response = negative functional gradient</b> (Eq. 7): the steepest-descent direction for the loss at training point $i$, evaluated at the current model $F_{m-1}$. The tree is fit to these $\\tilde y_i$ (Algorithm 1, line 3).</p>
+       $$ \\mathbf{a}_m = \\arg\\min_{\\mathbf{a},\\beta} \\sum_{i=1}^{N}\\big[\\,\\tilde y_i - \\beta\\, h(\\mathbf{x}_i;\\mathbf{a})\\,\\big]^2 \\qquad \\rho_m = \\arg\\min_{\\rho} \\sum_{i=1}^{N} L\\big(y_i,\\; F_{m-1}(\\mathbf{x}_i) + \\rho\\, h(\\mathbf{x}_i;\\mathbf{a}_m)\\big) $$
+       <p class="cap"><b>Base-learner fit then line search</b> (Eqs. 11-12 / Algorithm 1, lines 4-5): fit the tree to the pseudo-responses by <i>least squares</i> (the generalizable stand-in for $-\\mathbf{g}_m$), then choose the step length $\\rho_m$ that minimizes the <i>real</i> loss along that direction.</p>
+       $$ F_m(\\mathbf{x}) = F_{m-1}(\\mathbf{x}) + \\nu\\cdot\\rho_m\\, h(\\mathbf{x};\\mathbf{a}_m),\\qquad 0\\lt\\nu\\le 1 $$
+       <p class="cap"><b>Shrinkage</b> (Eq. 36): scale every step by the learning rate $\\nu$ before adding it. This replaces line 6 of Algorithm 1 and is the regularizer; smaller $\\nu$ needs a larger $M$ (Table 1).</p>
+       <hr>
+       <p class="cap"><b>ALGORITHM 1 — <code>Gradient_Boost</code> (the generic loop, §3):</b></p>
+       $$ \\begin{aligned}
+          &\\textbf{1.}\\;\\; F_0(\\mathbf{x}) = \\arg\\min_{\\rho} \\textstyle\\sum_{i=1}^{N} L(y_i,\\rho) \\\\[2pt]
+          &\\textbf{2.}\\;\\; \\textbf{For } m = 1 \\textbf{ to } M \\textbf{ do:} \\\\
+          &\\quad\\textbf{3.}\\;\\; \\tilde y_i = -\\big[\\partial L(y_i,F(\\mathbf{x}_i))/\\partial F(\\mathbf{x}_i)\\big]_{F=F_{m-1}},\\;\\; i=1,\\dots,N \\\\
+          &\\quad\\textbf{4.}\\;\\; \\mathbf{a}_m = \\arg\\min_{\\mathbf{a},\\beta} \\textstyle\\sum_{i=1}^{N}[\\tilde y_i - \\beta\\, h(\\mathbf{x}_i;\\mathbf{a})]^2 \\\\
+          &\\quad\\textbf{5.}\\;\\; \\rho_m = \\arg\\min_{\\rho} \\textstyle\\sum_{i=1}^{N} L(y_i, F_{m-1}(\\mathbf{x}_i) + \\rho\\, h(\\mathbf{x}_i;\\mathbf{a}_m)) \\\\
+          &\\quad\\textbf{6.}\\;\\; F_m(\\mathbf{x}) = F_{m-1}(\\mathbf{x}) + \\rho_m\\, h(\\mathbf{x};\\mathbf{a}_m) \\\\
+          &\\textbf{7.}\\;\\; \\textbf{endFor}
+          \\end{aligned} $$
+       <p class="cap">Six lines: init to the best constant; each round compute the pseudo-response, fit a tree to it, line-search the step, add it. Shrinkage (Eq. 36) replaces line 6 with $F_m=F_{m-1}+\\nu\\,\\rho_m h$.</p>
+       <hr>
+       <p class="cap"><b>Special cases (same loop, different line 3):</b></p>
+       $$ \\textbf{LS (squared error)}\\;\\; L=\\tfrac12(y-F)^2:\\quad \\tilde y_i = y_i - F_{m-1}(\\mathbf{x}_i),\\quad \\rho_m=\\beta_m \\;\\;(\\text{Alg. 2 } \\texttt{LS\\_Boost},\\, F_0=\\bar y) $$
+       <p class="cap">§4.1: the pseudo-response is just the ordinary <b>residual</b>, so boosting = iteratively fitting the leftover error.</p>
+       $$ \\textbf{LAD (absolute error)}\\;\\; L=|y-F|:\\quad \\tilde y_i = \\operatorname{sign}\\!\\big(y_i - F_{m-1}(\\mathbf{x}_i)\\big)\\;\\;(\\text{Eq. 13}),\\qquad \\gamma_{jm} = \\operatorname{median}_{\\mathbf{x}_i\\in R_{jm}}\\{\\,y_i - F_{m-1}(\\mathbf{x}_i)\\,\\}\\;\\;(\\text{Eq. 14}) $$
+       <p class="cap">§4.2 (<code>LAD_TreeBoost</code>): fit the tree to the <b>sign</b> of the residual; each leaf outputs the <b>median</b> residual.</p>
+       $$ \\textbf{Logistic (two-class)}\\;\\; L=\\log\\!\\big(1+e^{-2yF}\\big),\\, y\\in\\{-1,1\\}:\\quad \\tilde y_i = \\frac{2 y_i}{1 + \\exp\\!\\big(2 y_i F_{m-1}(\\mathbf{x}_i)\\big)}\\;\\;(\\text{Eq. 22}),\\qquad \\gamma_{jm} = \\frac{\\sum_{\\mathbf{x}_i\\in R_{jm}} \\tilde y_i}{\\sum_{\\mathbf{x}_i\\in R_{jm}} |\\tilde y_i|\\,(2-|\\tilde y_i|)}\\;\\;(\\text{Eq. 23}) $$
+       <p class="cap">§4.5 (<code>L2_TreeBoost</code>): negative binomial log-likelihood; the leaf value is a single <b>Newton-Raphson</b> step (Eq. 23), with $F_0=\\tfrac12\\log\\frac{1+\\bar y}{1-\\bar y}$. Probabilities recovered via $p_+(\\mathbf{x})=1/(1+e^{-2F_M(\\mathbf{x})})$.</p>`,
     whatItDoes:
       `<p><b>Left (ALGORITHM 1, line 3) &mdash; the functional gradient step.</b> Compute, for each training
        point, the negative gradient of the loss with respect to that point's prediction, evaluated at the

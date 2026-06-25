@@ -125,6 +125,34 @@
        before each pool: config A has 11 weight layers (8 conv + 3 fully-connected), and the depth grows up to
        config E with 19 (D is "VGG-16", E is "VGG-19"). The clean result &mdash; deeper is better, holding the
        block constant &mdash; is the paper's point.</p>`,
+    architecture:
+      `<p><b>The fixed primitives (&sect;2.1).</b> Input is a $224\\times224$ RGB image with the per-channel mean
+       subtracted. The body is a stack of $3\\times3$ convs (stride 1, pad 1, ReLU after each), broken into five
+       groups by five $2\\times2$ max-pool layers (stride 2). Each pool halves height and width, so the spatial
+       size runs $224 \\to 112 \\to 56 \\to 28 \\to 14 \\to 7$. The channel width <b>doubles</b> after each pool:
+       $64 \\to 128 \\to 256 \\to 512 \\to 512$. After the conv body, three fully-connected (FC) layers
+       <b>$4096 \\to 4096 \\to 1000$</b> end in a $1000$-way soft-max (one logit per ImageNet class). ReLU
+       follows every hidden layer; dropout $0.5$ sits on the first two FC layers.</p>
+       <p><b>The configuration table (Table 1) &mdash; same recipe, growing depth.</b> The six columns differ
+       <i>only</i> in how many conv layers sit in each group:</p>
+       <table class="arch">
+        <tr><th>Config</th><th>Name</th><th>Weight layers</th><th>Conv layers</th><th>Per-group conv counts</th><th>Notes</th></tr>
+        <tr><td>A</td><td>VGG-11</td><td>11</td><td>8</td><td>1&middot;1&middot;2&middot;2&middot;2</td><td>baseline</td></tr>
+        <tr><td>A-LRN</td><td>VGG-11 (LRN)</td><td>11</td><td>8</td><td>1&middot;1&middot;2&middot;2&middot;2</td><td>A + Local Response Norm (no gain, dropped)</td></tr>
+        <tr><td>B</td><td>VGG-13</td><td>13</td><td>10</td><td>2&middot;2&middot;2&middot;2&middot;2</td><td>&mdash;</td></tr>
+        <tr><td>C</td><td>VGG-16 (C)</td><td>16</td><td>13</td><td>2&middot;2&middot;3&middot;3&middot;3</td><td>uses three $1\\times1$ convs</td></tr>
+        <tr><td>D</td><td>VGG-16</td><td>16</td><td>13</td><td>2&middot;2&middot;3&middot;3&middot;3</td><td>all $3\\times3$ (the famous one)</td></tr>
+        <tr><td>E</td><td>VGG-19</td><td>19</td><td>16</td><td>2&middot;2&middot;4&middot;4&middot;4</td><td>deepest</td></tr>
+       </table>
+       <p>The five "per-group conv counts" are the number of $3\\times3$ convs before each of the five pools.
+       "Weight layers" = conv layers + 3 FC layers (e.g. config D: $13 + 3 = 16$). Pooling, ReLU and dropout have
+       no weights and are not counted. Config C swaps three of D's $3\\times3$ convs for $1\\times1$ convs (a
+       per-pixel linear channel mixing with an added non-linearity); D's all-$3\\times3$ version performed
+       slightly better and became the canonical "VGG-16".</p>
+       <p><b>Parameter counts (Table 2).</b> Almost all of the weight lives in the three FC layers &mdash; the
+       first FC alone maps $512 \\cdot 7 \\cdot 7 = 25088$ inputs to $4096$ ($\\approx 103$M weights), so depth in
+       the conv body barely changes the total: A/A-LRN $\\approx 133$M, B $\\approx 133$M, C $\\approx 134$M,
+       <b>D (VGG-16) $\\approx 138$M</b>, E (VGG-19) $\\approx 144$M parameters.</p>`,
     symbols: [
       { sym: "$3\\times3$", desc: "the filter (kernel) size: a small $3\\times3$ patch of weights slid across the image. VGG uses this size for <b>every</b> convolution." },
       { sym: "$C$", desc: "the number of <b>channels</b> (feature maps). In the parameter count, the layer maps $C$ input channels to $C$ output channels." },
@@ -134,17 +162,51 @@
       { sym: "max-pooling", desc: "a downsampling layer that takes the maximum over each small window. VGG uses a $2\\times2$ window with stride 2, which halves height and width." },
       { sym: "ReLU", desc: "Rectified Linear Unit, the non-linearity applied after each conv: $\\mathrm{ReLU}(z)=\\max(0,z)$ &mdash; keep positives, zero out negatives." },
       { sym: "$n^2 C^2$", desc: "the weight count of one $n\\times n$ conv layer mapping $C$ channels to $C$ channels: $n^2$ weights per channel-pair, times $C\\times C$ pairs. (Bias terms are ignored in this comparison.)" },
-      { sym: "weight layer", desc: "a layer with learnable weights (a conv or a fully-connected layer). \"VGG-16\" means 16 weight layers; pooling and ReLU have none and are not counted." }
+      { sym: "weight layer", desc: "a layer with learnable weights (a conv or a fully-connected layer). \"VGG-16\" means 16 weight layers; pooling and ReLU have none and are not counted." },
+      { sym: "$m$", desc: "the number of stacked $3\\times3$ conv layers in the receptive-field rule $R_m = 1 + 2m$." },
+      { sym: "$R_m$", desc: "the side length of the effective receptive field after $m$ stacked stride-1 $3\\times3$ convs: $R_m = 1 + 2m$ pixels." },
+      { sym: "$1\\times1$ conv", desc: "a convolution with a single-pixel filter (config C): it mixes channels at each pixel as a linear map, plus a ReLU, without enlarging the receptive field." },
+      { sym: "$z_k$", desc: "the $k$-th logit (raw pre-soft-max score) for class $k$, produced by the final $1000$-unit FC layer." },
+      { sym: "$\\hat{y}_k$", desc: "the soft-max probability for class $k$: $e^{z_k} / \\sum_j e^{z_j}$, normalizing the logits into a distribution over the $1000$ classes." },
+      { sym: "$y_k$", desc: "the one-hot ground-truth label for class $k$ ($1$ for the correct class, $0$ otherwise) in the cross-entropy loss." },
+      { sym: "$\\mathcal{L}$", desc: "the multinomial logistic regression (soft-max cross-entropy) training loss, $-\\sum_k y_k \\log \\hat{y}_k$ (&sect;3.1)." }
     ],
-    formula: `$$ \\underbrace{3\\,(3^2 C^2) = 27\\,C^2}_{\\text{three stacked }3\\times3\\text{ convs}} \\quad\\lt\\quad \\underbrace{7^2 C^2 = 49\\,C^2}_{\\text{one }7\\times7\\text{ conv}} \\qquad\\text{(} \\S 2.3\\text{, same }7\\times7\\text{ receptive field)} $$`,
+    formula:
+      `$$ \\text{conv: }3\\times3,\\;\\; \\text{stride }=1,\\;\\; \\text{pad}=1 \\qquad \\text{pool: }2\\times2,\\;\\; \\text{stride }=2 $$
+       <p>The fixed building block (&sect;2.1): <i>every</i> convolution is a $3\\times3$ filter with stride 1 and
+       zero-padding 1 (so height and width are preserved); the only downsampling is $2\\times2$ max-pooling with
+       stride 2 (which halves height and width). A ReLU follows every conv.</p>
+       $$ R_m = 1 + 2m \\qquad\\Longrightarrow\\qquad m=2 \\Rightarrow 5\\times5,\\quad m=3 \\Rightarrow 7\\times7 $$
+       <p>Receptive-field argument (&sect;2.3): stacking $m$ stride-1 $3\\times3$ convs gives an effective
+       receptive field of $R_m = 1+2m$ on a side &mdash; so <b>two</b> stacked $3\\times3$ convs see a $5\\times5$
+       patch, and <b>three</b> see a $7\\times7$ patch, just like one big filter of that size.</p>
+       $$ \\underbrace{3\\,(3^2 C^2) = 27\\,C^2}_{\\text{three stacked }3\\times3\\text{ convs}} \\quad\\lt\\quad \\underbrace{7^2 C^2 = 49\\,C^2}_{\\text{one }7\\times7\\text{ conv}} $$
+       <p>Parameter-count comparison at the three-layer scale (&sect;2.3), $C$ in and $C$ out channels, biases
+       ignored: the stack costs $27C^2$, the single $7\\times7$ costs $49C^2$ &mdash; the paper notes the
+       $7\\times7$ has "81% more" parameters ($49/27 \\approx 1.81$), for the <i>same</i> $7\\times7$ receptive
+       field.</p>
+       $$ \\underbrace{2\\,(3^2 C^2) = 18\\,C^2}_{\\text{two stacked }3\\times3\\text{ convs}} \\quad\\lt\\quad \\underbrace{5^2 C^2 = 25\\,C^2}_{\\text{one }5\\times5\\text{ conv}} $$
+       <p>The same comparison at the two-layer scale (same $5\\times5$ receptive field): $18C^2$ vs $25C^2$, so
+       the single $5\\times5$ has $\\approx 39\\%$ more weights ($25/18 \\approx 1.39$).</p>
+       $$ \\mathcal{L} = -\\sum_{k=1}^{1000} y_k \\,\\log \\hat{y}_k, \\qquad \\hat{y}_k = \\frac{e^{z_k}}{\\sum_{j} e^{z_j}} $$
+       <p>Training objective (&sect;3.1): the multinomial logistic regression (soft-max cross-entropy) loss,
+       optimized by mini-batch gradient descent with momentum $0.9$, $L_2$ weight decay $5\\times10^{-4}$,
+       dropout $0.5$ on the first two fully-connected layers, batch size $256$, learning rate $10^{-2}$ decreased
+       by $10\\times$ when validation accuracy plateaued.</p>`,
     whatItDoes:
-      `<p>The formula counts the learnable weights of two ways to cover the same $7\\times7$ receptive field, for
-       $C$ input and $C$ output channels. <b>Left:</b> three stacked $3\\times3$ convolutions &mdash; each costs
-       $3^2 C^2 = 9 C^2$ weights ($9$ per channel-pair, $C^2$ pairs), and there are three of them, so
-       $3\\times 9 C^2 = 27 C^2$. <b>Right:</b> one $7\\times7$ convolution &mdash; $7^2 C^2 = 49 C^2$. The
-       stack reaches the <i>same</i> receptive field with about $27/49 \\approx 55\\%$ of the weights (the
-       single $7\\times7$ has $81\\%$ more), <i>and</i> inserts extra ReLUs between layers, making it more
-       expressive. Smaller and deeper wins both ways &mdash; the paper's core trade.</p>`,
+      `<p><b>The block equations</b> ($3\\times3$, stride 1, pad 1; $2\\times2$ pool, stride 2) say: every conv
+       keeps the spatial size, and only pooling shrinks it &mdash; so depth and downsampling are decoupled.</p>
+       <p><b>The receptive-field rule</b> $R_m = 1 + 2m$ says: each stacked $3\\times3$ conv widens the input
+       window an output value sees by one pixel on each side, so $m=2$ reaches $5\\times5$ and $m=3$ reaches
+       $7\\times7$ &mdash; a stack of small filters matches one big filter's reach.</p>
+       <p><b>The parameter-count formulas</b> compare two ways to cover the <i>same</i> receptive field, for $C$
+       in/out channels. Three stacked $3\\times3$ convs cost $27 C^2$ ($9 C^2$ each) versus $49 C^2$ for one
+       $7\\times7$ &mdash; the single big filter has $81\\%$ more weights; at the two-layer scale it is $18 C^2$
+       vs $25 C^2$ ($\\approx 39\\%$ more). The stack reaches the same reach with fewer weights <i>and</i> extra
+       ReLUs between layers, so it is cheaper and more expressive &mdash; the paper's core trade.</p>
+       <p><b>The training loss</b> $\\mathcal{L} = -\\sum_k y_k \\log \\hat{y}_k$ is the soft-max cross-entropy: it
+       pushes the predicted probability $\\hat{y}_k$ of the correct class toward $1$, minimized by momentum SGD
+       with weight decay and dropout (&sect;3.1).</p>`,
     derivation:
       `<p><b>Short recap &mdash; the full "filters &times; weights" parameter-counting rule lives in the
        <code>dl-cnn-params</code> concept lesson.</b> One convolution layer with a $k\\times k$ filter,

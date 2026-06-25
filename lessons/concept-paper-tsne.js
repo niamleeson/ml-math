@@ -132,6 +132,37 @@
        lets dissimilar points sit at a <i>large but finite</i> distance, so clusters separate cleanly instead of
        crowding into the center.</p>`,
 
+    architecture:
+      `<p>t-SNE is not a layered network — it is an <b>iterative optimization pipeline</b>. Its structure is a fixed
+       <b>build-once</b> stage that produces the high-D affinity matrix $P$, followed by a <b>gradient-descent loop</b>
+       that moves the map $Y$. The data flow:</p>
+       <p><b>Stage A &mdash; build $P$ once (high-D, off the original data).</b></p>
+       <ul>
+         <li><b>Pairwise squared distances.</b> From the $n\\times d$ data $X$, form the $n\\times n$ matrix of
+         $\\|x_i-x_j\\|^2$.</li>
+         <li><b>Per-row perplexity search.</b> For each row $i$, binary-search $\\beta_i=1/2\\sigma_i^2$ until the
+         row's perplexity $2^{H(P_i)}$ matches the target (5-50). Output: the conditional $p_{j|i}$ (Eq. 1). Inner
+         loop is the $\\text{Perp}/H$ pair from Section 2.</li>
+         <li><b>Symmetrize.</b> $p_{ij}=(p_{j|i}+p_{i|j})/2n$ (Section 3.1). Output: a fixed, symmetric $n\\times n$
+         joint $P$ that sums to 1; the diagonal is zero.</li>
+         <li><b>Early exaggeration.</b> Multiply $P$ by a constant (e.g. 4) for the first ~100 iterations so tight
+         clusters form first; then divide it back out.</li>
+       </ul>
+       <p><b>Stage B &mdash; the map-optimization loop (repeats each iteration, over $Y$).</b></p>
+       <ul>
+         <li><b>Init.</b> $Y$ = small random Gaussian, $n\\times 2$.</li>
+         <li><b>Forward: $Q$ from $Y$.</b> Compute map squared distances, the Student-t numerator
+         $\\text{num}_{ij}=(1+\\|y_i-y_j\\|^2)^{-1}$ with zero diagonal, and normalize to $q_{ij}$ (Eq. 4).</li>
+         <li><b>Backward: gradient.</b> Form $(p_{ij}-q_{ij})$, multiply by $\\text{num}_{ij}$ and the displacement
+         $(y_i-y_j)$, sum over $j$, scale by 4 (Eq. 5).</li>
+         <li><b>Update with momentum.</b> $Y^{(t)} = Y^{(t-1)} - \\eta\\,\\delta C/\\delta Y + \\alpha(t)(Y^{(t-1)}
+         -Y^{(t-2)})$, with momentum $\\alpha\\approx0.5$ early, $\\approx0.8$ later (Section 3.4); re-center $Y$.</li>
+         <li><b>Loop.</b> Repeat ~600-1000 iterations; the final $Y$ is the 2-D map.</li>
+       </ul>
+       <p>The two stages connect at the subtraction $(p_{ij}-q_{ij})$: $P$ is computed once and frozen; only $Q$ and
+       $Y$ change each step. The Section 5 extension (random-walk / Barnes-Hut neighbor approximation) replaces the
+       dense $P$ build for datasets above ~10,000 points but does not change this loop.</p>`,
+
     symbols: [
       { sym: "$x_i, x_j$", desc: "two data points in the original high-dimensional space (e.g. two 64-pixel digit images)." },
       { sym: "$y_i, y_j$", desc: "the same two points placed on the 2-D map; these coordinates are what we solve for." },
@@ -139,7 +170,9 @@
       { sym: "$\\sigma_i$", desc: "the width (standard deviation) of the Gaussian bell centered on point $x_i$; chosen per point so its row hits the target perplexity ('sigma')." },
       { sym: "$p_{j|i}$", desc: "the high-D conditional probability that $i$ would pick $j$ as its neighbor (the bar means 'given $i$'); the Gaussian height at $x_j$, row-normalized (Eq. 1)." },
       { sym: "$p_{ij}$", desc: "the symmetrized high-D joint probability $(p_{j|i}+p_{i|j})/2n$; one number per unordered pair (Section 3.1)." },
+      { sym: "$q_{j|i}$", desc: "the SNE map conditional probability that $i$ picks $j$ as neighbor, from a Gaussian over map distances with fixed variance (Section 2); t-SNE replaces this conditional with the joint $q_{ij}$ below." },
       { sym: "$q_{ij}$", desc: "the 2-D map joint probability for the pair, from the heavy-tailed Student-t shape (Eq. 4)." },
+      { sym: "$P_i, Q_i$", desc: "the high-D and map conditional distributions over all neighbors of point $i$ (the rows used in the SNE cost, Eq. 2)." },
       { sym: "$n$", desc: "the number of data points. The $2n$ in $p_{ij}$ makes the whole $P$ matrix sum to 1." },
       { sym: "$H(P_i)$", desc: "the Shannon entropy of row $i$ in bits, $-\\sum_j p_{j|i}\\log_2 p_{j|i}$ — high when the neighbor probabilities are spread evenly, low when concentrated." },
       { sym: "$\\text{Perp}(P_i)$", desc: "the perplexity of row $i$, $2^{H(P_i)}$ — a smooth count of how many effective neighbors point $i$ has. The user sets a target; the binary search picks $\\sigma_i$ to match it." },
@@ -151,12 +184,24 @@
     formula:
       `$$p_{j|i} \\;=\\; \\frac{\\exp\\!\\big(-\\|x_i - x_j\\|^2 / 2\\sigma_i^2\\big)}
         {\\sum_{k\\neq i}\\exp\\!\\big(-\\|x_i - x_k\\|^2 / 2\\sigma_i^2\\big)},
-        \\qquad p_{ij} = \\frac{p_{j|i} + p_{i|j}}{2n}\\quad\\text{(Eq. 1; Section 3.1)}$$
+        \\qquad q_{j|i} \\;=\\; \\frac{\\exp\\!\\big(-\\|y_i - y_j\\|^2\\big)}
+        {\\sum_{k\\neq i}\\exp\\!\\big(-\\|y_i - y_k\\|^2\\big)}\\quad\\text{(Eq. 1 and SNE map prob.; Section 2)}$$
+       <p style="margin:.2em 0 .4em">High-D Gaussian conditional (Eq. 1) and SNE's Gaussian map conditional, both row-normalized with the self-term excluded.</p>
+       $$\\text{Perp}(P_i) \\;=\\; 2^{H(P_i)},\\qquad H(P_i) \\;=\\; -\\sum_{j} p_{j|i}\\,\\log_2 p_{j|i}\\quad\\text{(Section 2)}$$
+       <p style="margin:.2em 0 .4em">Perplexity = $2$ raised to the Shannon entropy of row $i$; the binary search picks $\\sigma_i$ so this hits the user's target (effective neighbor count).</p>
+       $$C \\;=\\; \\sum_i \\text{KL}(P_i\\,\\|\\,Q_i) \\;=\\; \\sum_i\\sum_j p_{j|i}\\,\\log\\frac{p_{j|i}}{q_{j|i}}\\quad\\text{(Eq. 2, SNE cost)}$$
+       <p style="margin:.2em 0 .4em">Original SNE objective: a sum of per-point Kullback-Leibler divergences over the conditional distributions.</p>
+       $$p_{ij} \\;=\\; \\frac{p_{j|i} + p_{i|j}}{2n},\\qquad
+        q_{ij} \\;=\\; \\frac{\\exp\\!\\big(-\\|y_i - y_j\\|^2\\big)}{\\sum_{k\\neq l}\\exp\\!\\big(-\\|y_k - y_l\\|^2\\big)}\\quad\\text{(symmetrized }p_{ij}\\text{; Eq. 3 Gaussian }q_{ij}\\text{; Section 3.1)}$$
+       <p style="margin:.2em 0 .4em">Symmetric SNE: symmetrized high-D joint $p_{ij}$ (divide by $2n$ so $P$ sums to 1 and outliers still contribute), with a Gaussian joint $q_{ij}$ (Eq. 3) before t-SNE swaps in the heavy tail.</p>
+       $$C \\;=\\; \\text{KL}(P\\,\\|\\,Q) \\;=\\; \\sum_i\\sum_j p_{ij}\\,\\log\\frac{p_{ij}}{q_{ij}}\\quad\\text{(symmetric-SNE / t-SNE cost; Section 3.1)}$$
+       <p style="margin:.2em 0 .4em">A single KL divergence between the two joint distributions $P$ and $Q$ — the objective t-SNE minimizes.</p>
        $$q_{ij} \\;=\\; \\frac{\\big(1 + \\|y_i - y_j\\|^2\\big)^{-1}}
-        {\\sum_{k\\neq l}\\big(1 + \\|y_k - y_l\\|^2\\big)^{-1}}\\quad\\text{(Eq. 4)}$$
-       $$C = \\text{KL}(P\\,\\|\\,Q) = \\sum_{i\\neq j} p_{ij}\\log\\frac{p_{ij}}{q_{ij}},
-        \\qquad \\frac{\\delta C}{\\delta y_i} = 4\\sum_{j}\\big(p_{ij}-q_{ij}\\big)\\big(y_i-y_j\\big)
-        \\big(1+\\|y_i-y_j\\|^2\\big)^{-1}\\quad\\text{(Eq. 5)}$$`,
+        {\\sum_{k\\neq l}\\big(1 + \\|y_k - y_l\\|^2\\big)^{-1}}\\quad\\text{(Eq. 4, Student-t map prob.; Section 3.3)}$$
+       <p style="margin:.2em 0 .4em">t-SNE's heavy-tailed Student-t (one degree of freedom = Cauchy) map joint — replaces the Gaussian $q_{ij}$ to cure crowding.</p>
+       $$\\frac{\\delta C}{\\delta y_i} \\;=\\; 4\\sum_{j}\\big(p_{ij}-q_{ij}\\big)\\big(y_i-y_j\\big)
+        \\big(1+\\|y_i-y_j\\|^2\\big)^{-1}\\quad\\text{(Eq. 5; Section 3.4)}$$
+       <p style="margin:.2em 0 .4em">Gradient of the t-SNE cost (derived in Appendix A): a sum of spring forces moving each map point $y_i$.</p>`,
 
     whatItDoes:
       `<p>The <b>first line</b> builds the high-D neighbor probabilities. $p_{j|i}$ (Eq. 1) is a Gaussian over

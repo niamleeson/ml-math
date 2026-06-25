@@ -140,11 +140,53 @@
        observed targets $\\mathbf{y}$ &mdash; a property of the Gaussian. To predict <i>noisy</i> targets $y_*$
        rather than the latent $f_*$, add $\\sigma_n^2$ to the variance (Algorithm 2.1 note).</p>`,
 
+    architecture:
+      `<p>A GP is not a layered network &mdash; it is a <b>probabilistic pipeline</b> built around one
+       covariance function. The structure (Section 2.2, graphical model Figure 2.3):</p>
+       <ul>
+         <li><b>Inputs layer.</b> Each input $\\mathbf{x}_i$ (and each test input $\\mathbf{x}_*$) sits at the
+         bottom. Inputs are observed; they index the random variables.</li>
+         <li><b>Latent Gaussian field.</b> Above each input is a latent function value $f_i=f(\\mathbf{x}_i)$.
+         These are unobserved random variables. The GP prior makes <i>every finite collection</i> of them
+         jointly Gaussian, with covariances set entirely by the kernel: $\\operatorname{cov}(f_p,f_q)=k(\\mathbf{x}_p,\\mathbf{x}_q)$.
+         The kernel (eq. 2.31) is the single shared component that wires every node to every other node.</li>
+         <li><b>Observations layer.</b> Each observed target $y_i=f_i+\\varepsilon_i$ hangs off its latent
+         $f_i$ through independent Gaussian noise $\\varepsilon_i\\sim\\mathcal{N}(0,\\sigma_n^2)$ (eqs. 2.1&ndash;2.2).
+         Given $f_i$, the observation $y_i$ is conditionally independent of everything else &mdash; noise enters
+         only on the diagonal, $K+\\sigma_n^2 I$ (eq. 2.20).</li>
+       </ul>
+       <p><b>Data flow (no iterative training):</b></p>
+       <ol>
+         <li><b>Prior assembly.</b> The kernel populates the joint covariance block matrix in eq. (2.21),
+         coupling training targets $\\mathbf{y}$ and test latents $\\mathbf{f}_*$.</li>
+         <li><b>Conditioning = "training".</b> One Gaussian-conditioning step (a single linear solve against
+         $K+\\sigma_n^2 I$, done via a Cholesky factor) turns the prior into the posterior (eqs. 2.23&ndash;2.24).
+         There are no weights to learn and no gradient descent &mdash; the cost is the $O(n^3)$ Cholesky.</li>
+         <li><b>Prediction.</b> Each test point flows through the same kernel to get its covariance vector
+         $\\mathbf{k}_*$, then a dot product yields the mean (eq. 2.25) and a quadratic form yields the variance
+         (eq. 2.26).</li>
+         <li><b>Hyperparameter loop (optional, Chapter 5).</b> The kernel's $(\\ell,\\sigma_f,\\sigma_n)$ are
+         tuned by maximizing the log marginal likelihood (eq. 2.30) &mdash; the only "training" the model does,
+         and it sits outside the prediction path.</li>
+       </ol>
+       <p>So the "architecture" is: <i>kernel &rarr; joint Gaussian (eq. 2.21) &rarr; condition on data
+       (eqs. 2.23&ndash;2.24) &rarr; mean + variance per test point</i>. Algorithm 2.1 (in the
+       <code>recipe</code> field) is the numerically careful Cholesky implementation of this flow.</p>`,
+
     symbols: [
       { sym: "$\\mathbf{x}, \\mathbf{x}'$", desc: "two input points (covariates). In our 1-D toy they are single numbers; the kernel measures how correlated the function's values at them are." },
       { sym: "$\\mathbf{x}_*$", desc: "a test input — the new point where we want a prediction. The star subscript always marks the test side." },
       { sym: "$y$", desc: "an observed target: the true function value plus noise, $y=f(\\mathbf{x})+\\varepsilon$ (eq. 2.1). $\\mathbf{y}$ is the column vector of all $n$ training targets." },
       { sym: "$f, f_*$", desc: "the latent (noise-free) function value at a training input and at the test input $\\mathbf{x}_*$ respectively. We predict $f_*$, then optionally add noise for $y_*$." },
+      { sym: "$\\mathcal{GP}$", desc: "Gaussian process: a distribution over functions such that any finite set of function values is jointly Gaussian (Definition 2.1). Written $\\mathcal{GP}(m,k)$ — fully specified by a mean function $m$ and covariance function $k$." },
+      { sym: "$m(\\mathbf{x})$", desc: "the mean function of the GP, $m(\\mathbf{x})=\\mathbb{E}[f(\\mathbf{x})]$ (eq. 2.13): the prior expected value of the function at $\\mathbf{x}$. We take it to be zero everywhere." },
+      { sym: "$\\mathbf{f}, \\mathbf{f}_*$", desc: "the vectors of latent function values at all training inputs and at all test inputs $X_*$ respectively. (Lowercase non-bold $f_*$ is the single-test-point version.)" },
+      { sym: "$X, X_*$", desc: "the matrices of all training inputs and all test inputs. $K(X,X_*)$ etc. denote the covariance matrices evaluated at every pair of points from the two sets." },
+      { sym: "$\\operatorname{cov}(\\mathbf{f}_*)$", desc: "the predictive (posterior) covariance matrix over the test latent values (eq. 2.24); its diagonal entries are the pointwise predictive variances $\\mathbb{V}[f_*]$." },
+      { sym: "$\\delta_{pq}$", desc: "the Kronecker delta: equals 1 if $p=q$ and 0 otherwise. In eq. (2.31) it places the noise variance $\\sigma_n^2$ only on the diagonal (a point is noisy only with respect to itself)." },
+      { sym: "$\\log p(\\mathbf{y}\\mid X)$", desc: "the log marginal likelihood (log evidence) of the targets given the inputs (eq. 2.30): how well the chosen kernel and hyperparameters explain the data, used to tune $(\\ell,\\sigma_f,\\sigma_n)$." },
+      { sym: "$|K+\\sigma_n^2 I|$", desc: "the determinant of the noisy kernel matrix; its log is the complexity-penalty term of the marginal likelihood (large when the model is flexible)." },
+      { sym: "$n$", desc: "the number of training observations." },
       { sym: "$\\varepsilon$", desc: "epsilon: the observation noise, assumed independent Gaussian with zero mean and variance $\\sigma_n^2$, i.e. $\\varepsilon\\sim\\mathcal{N}(0,\\sigma_n^2)$ (eq. 2.2)." },
       { sym: "$k(\\mathbf{x},\\mathbf{x}')$", desc: "the covariance function / kernel: a number saying how correlated the function values at $\\mathbf{x}$ and $\\mathbf{x}'$ are. Larger = more correlated = forced to be more similar." },
       { sym: "$K$", desc: "the $n\\times n$ kernel (Gram) matrix of all training-to-training covariances, $K_{ij}=k(\\mathbf{x}_i,\\mathbf{x}_j)$. Symmetric and positive semi-definite." },
@@ -161,9 +203,28 @@
     ],
 
     formula:
-      `$$\\bar f_* \\;=\\; \\mathbf{k}_*^\\top\\,(K+\\sigma_n^2 I)^{-1}\\,\\mathbf{y} \\qquad\\text{(eq. 2.25, predictive mean)}$$
-       $$\\mathbb{V}[f_*] \\;=\\; k(\\mathbf{x}_*,\\mathbf{x}_*)\\;-\\;\\mathbf{k}_*^\\top\\,(K+\\sigma_n^2 I)^{-1}\\,\\mathbf{k}_* \\qquad\\text{(eq. 2.26, predictive variance)}$$
-       $$k(x,x') \\;=\\; \\sigma_f^2\\,\\exp\\!\\Big(-\\tfrac{1}{2\\ell^2}\\,(x-x')^2\\Big) \\qquad\\text{(eq. 2.31, squared-exponential / RBF kernel)}$$`,
+      `$$f(\\mathbf{x}) \\;\\sim\\; \\mathcal{GP}\\big(m(\\mathbf{x}),\\,k(\\mathbf{x},\\mathbf{x}')\\big),\\qquad
+        m(\\mathbf{x})=\\mathbb{E}[f(\\mathbf{x})],\\quad
+        k(\\mathbf{x},\\mathbf{x}')=\\mathbb{E}\\big[(f(\\mathbf{x})-m(\\mathbf{x}))(f(\\mathbf{x}')-m(\\mathbf{x}'))\\big]$$
+       <p>The GP prior: a distribution over functions, fully specified by a mean function and a covariance function (eqs. 2.13&ndash;2.14). We take $m(\\mathbf{x})=0$.</p>
+       $$\\begin{bmatrix}\\mathbf{y}\\\\ \\mathbf{f}_*\\end{bmatrix} \\;\\sim\\;
+        \\mathcal{N}\\!\\left(\\mathbf{0},\\;
+        \\begin{bmatrix} K(X,X)+\\sigma_n^2 I & K(X,X_*) \\\\ K(X_*,X) & K(X_*,X_*)\\end{bmatrix}\\right)$$
+       <p>The joint Gaussian of the noisy training targets $\\mathbf{y}$ and the test latent values $\\mathbf{f}_*$ under the prior (eq. 2.21).</p>
+       $$\\mathbf{f}_*\\mid X,\\mathbf{y},X_* \\;\\sim\\; \\mathcal{N}\\big(\\bar{\\mathbf{f}}_*,\\,\\operatorname{cov}(\\mathbf{f}_*)\\big)$$
+       $$\\bar{\\mathbf{f}}_* \\;=\\; K(X_*,X)\\,[K(X,X)+\\sigma_n^2 I]^{-1}\\,\\mathbf{y} \\qquad\\text{(eq. 2.23, predictive mean)}$$
+       $$\\operatorname{cov}(\\mathbf{f}_*) \\;=\\; K(X_*,X_*)\\;-\\;K(X_*,X)\\,[K(X,X)+\\sigma_n^2 I]^{-1}\\,K(X,X_*) \\qquad\\text{(eq. 2.24, predictive covariance)}$$
+       <p>Condition the joint Gaussian on the observed $\\mathbf{y}$ to get the predictive (posterior) distribution at the test inputs (eqs. 2.22&ndash;2.24).</p>
+       $$\\bar f_* \\;=\\; \\mathbf{k}_*^\\top\\,(K+\\sigma_n^2 I)^{-1}\\,\\mathbf{y} \\qquad\\text{(eq. 2.25, single test point)}$$
+       $$\\mathbb{V}[f_*] \\;=\\; k(\\mathbf{x}_*,\\mathbf{x}_*)\\;-\\;\\mathbf{k}_*^\\top\\,(K+\\sigma_n^2 I)^{-1}\\,\\mathbf{k}_* \\qquad\\text{(eq. 2.26)}$$
+       <p>Same two equations in compact notation for a single test point $\\mathbf{x}_*$, with $K=K(X,X)$ and $\\mathbf{k}_*=K(X,\\mathbf{x}_*)$.</p>
+       $$\\bar f(\\mathbf{x}_*) \\;=\\; \\sum_{i=1}^{n}\\alpha_i\\,k(\\mathbf{x}_i,\\mathbf{x}_*),\\qquad
+        \\boldsymbol\\alpha=(K+\\sigma_n^2 I)^{-1}\\mathbf{y}$$
+       <p>The mean as a linear predictor: a weighted sum of kernels centered on the training points &mdash; a manifestation of the representer theorem (eq. 2.27).</p>
+       $$\\log p(\\mathbf{y}\\mid X) \\;=\\; -\\tfrac{1}{2}\\,\\mathbf{y}^\\top(K+\\sigma_n^2 I)^{-1}\\mathbf{y}\\;-\\;\\tfrac{1}{2}\\log\\!\\big|K+\\sigma_n^2 I\\big|\\;-\\;\\tfrac{n}{2}\\log 2\\pi$$
+       <p>The log marginal likelihood: a data-fit term, a complexity penalty (log-determinant), and a normalizing constant. Used to learn hyperparameters in Chapter 5 (eq. 2.30).</p>
+       $$k_y(x_p,x_q) \\;=\\; \\sigma_f^2\\,\\exp\\!\\Big(-\\tfrac{1}{2\\ell^2}\\,(x_p-x_q)^2\\Big)\\;+\\;\\sigma_n^2\\,\\delta_{pq} \\qquad\\text{(eq. 2.31, squared-exponential / RBF kernel)}$$
+       <p>The squared-exponential (RBF) covariance with hyperparameters $(\\ell,\\sigma_f,\\sigma_n)$: signal correlation that decays as a Gaussian bump with distance, plus a noise term ($\\delta_{pq}=1$ iff $p=q$) on the diagonal (eq. 2.31).</p>`,
 
     whatItDoes:
       `<p>The first line is the prediction: blend the training targets $\\mathbf{y}$, weighting each by how

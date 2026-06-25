@@ -162,6 +162,38 @@
          aside test set."</li>
        </ol>`,
 
+    architecture:
+      `<p><b>Forest-RI (§4) — the algorithm, component by component.</b> There are no layers or weights; the
+       "architecture" is a bagging loop wrapping a CART-style tree whose split search is restricted to a fresh
+       random feature subset at every node. Inputs: training set $\\{(\\mathbf{x}_i,y_i)\\}_{i=1}^n$ with $M$
+       features; hyper-parameters $B$ (number of trees) and $F$ (features offered per split).</p>
+       <ol>
+         <li><b>Forest loop (build $B$ trees).</b> For $k=1\\ldots B$, draw a <b>bootstrap sample</b> $T_k$ of
+         $n$ rows WITH replacement; the ~one-third of rows not in $T_k$ are tree $k$'s out-of-bag set $O_k$.
+         The pair (bootstrap indices, per-node feature draws) is exactly the randomness vector $\\Theta_k$.</li>
+         <li><b>Tree growth (recursive node builder).</b> At each node holding rows $S$:
+           <ul>
+             <li><b>Random feature subset.</b> Draw $F$ of the $M$ features at random (Breiman: $F=1$ or
+             $F=\\lfloor\\log_2 M+1\\rfloor$, "the first integer less than $\\log_2 M+1$", §4). This per-node
+             redraw is the decorrelation mechanism.</li>
+             <li><b>Split search.</b> Among only those $F$ features, scan candidate thresholds and pick the
+             one minimizing the children's size-weighted <b>Gini impurity</b> $1-\\sum_c p_c^2$.</li>
+             <li><b>Recurse / stop.</b> Partition $S$ by the chosen split and recurse on both children. Grow
+             to maximum size — pure leaves, <b>no pruning</b>. A node becomes a leaf when its rows are one
+             class (or no useful split exists), storing the majority label.</li>
+           </ul>
+         </li>
+         <li><b>Prediction head (aggregation).</b> Route $\\mathbf{x}$ down all $B$ trees to leaves; classify by
+         <b>majority vote</b> $H(\\mathbf{x})=\\arg\\max_c\\sum_k I(h(\\mathbf{x},\\Theta_k)=c)$ (average for
+         regression).</li>
+         <li><b>OOB monitor (free validation, §3.1).</b> In parallel, score each training point with only the
+         trees whose $T_k$ omitted it; the resulting error rate is the OOB estimate of $PE^*$, and the same
+         OOB votes feed internal strength, correlation, and variable-importance estimates.</li>
+       </ol>
+       <p>Data flow: rows $\\to$ (bootstrap) $\\to$ per-tree node-recursion with random-$F$ Gini splits $\\to$ $B$
+       independent trees $\\to$ vote/average. Forest-RC (§5&ndash;6) swaps the single-feature split for a split
+       on a <i>random linear combination</i> of $L$ features; the rest of the architecture is identical.</p>`,
+
     symbols: [
       { sym: "feature", desc: "one input measurement (a coordinate of $\\mathbf{x}$). A split asks a yes/no question about one feature, e.g. 'feature 2 $\\le$ 0.5?'." },
       { sym: "bootstrap sample", desc: "a same-size training set drawn from the original WITH replacement; some rows repeat, about a third are left out (the out-of-bag points)." },
@@ -181,7 +213,45 @@
     ],
 
     formula:
-      `$$PE^* \\;\\le\\; \\frac{\\bar\\rho\\,(1-s^2)}{s^2}$$`,
+      `<p><b>The forest predictor (Definition 1.1).</b> A random forest is a collection of tree classifiers
+       $\\{h(\\mathbf{x},\\Theta_k)\\}_{k\\ge 1}$ with i.i.d. randomness vectors $\\Theta_k$; the prediction is the
+       majority vote:</p>
+       $$H(\\mathbf{x}) \\;=\\; \\arg\\max_{c}\\;\\sum_{k=1}^{B} I\\!\\big(h(\\mathbf{x},\\Theta_k)=c\\big).$$
+       <p>Each tree $h(\\cdot,\\Theta_k)$ is grown on a bootstrap resample using a fresh random subset of $F$
+       features at every node (Forest-RI, §4); for regression the vote becomes an average
+       $\\frac1B\\sum_k h(\\mathbf{x},\\Theta_k)$.</p>
+
+       <p><b>Margin function (eq. 1, §2.1).</b> Over an ensemble $h_1,\\ldots,h_K$, with $av_k$ the average over
+       trees and $I(\\cdot)$ the indicator:</p>
+       $$mg(\\mathbf{X},Y) \\;=\\; av_k\\,I\\!\\big(h_k(\\mathbf{X})=Y\\big)\\;-\\;\\max_{j\\ne Y}\\,av_k\\,I\\!\\big(h_k(\\mathbf{X})=j\\big).$$
+       <p>How much the vote for the true class $Y$ beats the best wrong class $j$; larger = more confident.</p>
+
+       <p><b>Generalization error (eq. 2, §2.1).</b> The probability the margin is negative:</p>
+       $$PE^* \\;=\\; P_{\\mathbf{X},Y}\\big(mg(\\mathbf{X},Y)\\lt 0\\big).$$
+
+       <p><b>Convergence — no overfitting (Theorem 1.2, eq. 1).</b> As $B\\to\\infty$, for almost all sequences
+       $\\Theta_1,\\ldots$ the error $PE^*$ converges (a.s.) to a fixed limit:</p>
+       $$PE^* \\;\\to\\; P_{\\mathbf{X},Y}\\!\\Big(P_{\\Theta}\\big(h(\\mathbf{X},\\Theta)=Y\\big)-\\max_{j\\ne Y}P_{\\Theta}\\big(h(\\mathbf{X},\\Theta)=j\\big)\\lt 0\\Big).$$
+       <p>Adding trees never increases error — it settles to a limit (Strong Law of Large Numbers).</p>
+
+       <p><b>Forest margin, strength, and the bound (Definitions 2.1&ndash;2.4, eqs. 2&ndash;8, Theorem 2.3).</b>
+       The single-forest margin and the <b>strength</b> $s$ (expected margin):</p>
+       $$mr(\\mathbf{X},Y) \\;=\\; P_{\\Theta}\\big(h(\\mathbf{X},\\Theta)=Y\\big)-\\max_{j\\ne Y}P_{\\Theta}\\big(h(\\mathbf{X},\\Theta)=j\\big),
+       \\qquad s \\;=\\; E_{\\mathbf{X},Y}\\,mr(\\mathbf{X},Y).$$
+       <p>Chebyshev on the margin gives $PE^*\\le \\operatorname{var}(mr)/s^2$ (eq. 4). With the <b>raw margin</b>
+       $rmg(\\Theta,\\mathbf{X},Y)=I(h=Y)-I(h=\\hat\\jmath)$ (Def 2.2) and $\\bar\\rho$ the mean correlation between
+       two trees' raw margins (eq. 7), bounding $\\operatorname{var}(mr)\\le\\bar\\rho(1-s^2)$ (eqs. 7&ndash;8) yields:</p>
+       $$PE^* \\;\\le\\; \\frac{\\bar\\rho\\,(1-s^2)}{s^2} \\qquad\\text{(Theorem 2.3)},
+       \\qquad c/s^2 \\;=\\; \\bar\\rho/s^2 \\quad\\text{(Definition 2.4).}$$
+       <p>Error is small when trees are <b>strong</b> (large $s$) and <b>decorrelated</b> (small $\\bar\\rho$); the
+       $c/s^2$ ratio is the single guiding quantity — "the smaller it is&hellip; the better." In the two-class
+       case the margin simplifies to $mr(\\mathbf{X},Y)=2P_{\\Theta}(h(\\mathbf{X},\\Theta)=Y)-1$.</p>
+
+       <p><b>Out-of-bag (OOB) error estimate (§3.1).</b> Each bootstrap leaves out about a third of the data.
+       For training point $(\\mathbf{x}_i,y_i)$, vote only over the trees whose bootstrap $T_k$ did NOT contain it:</p>
+       $$\\widehat{PE}^*_{\\text{oob}} \\;=\\; \\frac1n\\sum_{i=1}^{n} I\\!\\Big(\\arg\\max_{c}\\!\\!\\sum_{k:\\,i\\notin T_k}\\!\\! I\\big(h(\\mathbf{x}_i,\\Theta_k)=c\\big)\\;\\ne\\; y_i\\Big).$$
+       <p>This OOB error rate estimates $PE^*$ with no held-out test set — "removes the need for a set aside
+       test set" (§3.1); it is unbiased but tends to overestimate until enough trees accumulate.</p>`,
 
     whatItDoes:
       `<p>This is <b>Theorem 2.3</b>: an upper bound on the forest's generalization error $PE^*$. It says the

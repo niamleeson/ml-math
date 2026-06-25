@@ -149,6 +149,43 @@
        which original feature was active. Because the histogram already stores discrete bins, this merge is
        <b>lossless</b>. The payoff: histogram building drops from $O(\\#\\text{data}\\times\\#\\text{feature})$ to
        $O(\\#\\text{data}\\times\\#\\text{bundle})$, and $\\#\\text{bundle}\\ll\\#\\text{feature}$ (&sect;4).</p>`,
+    architecture:
+      `<p>LightGBM is not a neural network &mdash; it is a <b>gradient-boosting decision-tree (GBDT) system</b>,
+       so its "architecture" is the per-iteration training pipeline and the four components that data flows
+       through. The components, in the order they touch the data:</p>
+       <p><b>A. Pre-training data layout (once, before any tree).</b></p>
+       <ul>
+        <li><b>Feature binning.</b> Each of the $m$ raw feature columns is discretized into a fixed number of
+        bins (LightGBM default $\\le 255$, fitting one byte). Histograms are built over <i>bins</i>, never raw
+        values.</li>
+        <li><b>EFB bundling (Algorithms 3&ndash;4).</b> A conflict graph over features is built; features are
+        sorted by degree (or by nonzero count) and greedily packed into <b>exclusive feature bundles</b> under a
+        conflict budget $K$ (controlled by $\\gamma$). Each bundle is then merged with the <b>offset trick</b>:
+        running bin-range offsets place each member feature's nonzero bins in a disjoint range, so $m$ columns
+        become $\\#\\text{bundle}\\ll m$ stored columns. This is a one-time $O(\\#\\text{feature}^2)$ preprocess.</li>
+       </ul>
+       <p><b>B. Per boosting iteration (repeated for each new tree).</b> Data flow:
+       gradients &rarr; GOSS row sample &rarr; histogram build over bundles &rarr; leaf-wise split &rarr; new tree.</p>
+       <ul>
+        <li><b>1. Gradients.</b> Predict with the current ensemble; compute each row's negative gradient $g_i$ of
+        the loss (the GBDT learning signal; math owner <code>cls-gradient-boosting</code>).</li>
+        <li><b>2. GOSS row subsampling (Algorithm 2).</b> Sort rows by $|g_i|$; <code>topSet</code> = top
+        $a\\cdot|I|$ rows (weight $1$); <code>randSet</code> = random $b\\cdot|I|$ of the rest (weight
+        $\\text{fact}=\\frac{1-a}{b}$). The tree is built on <code>topSet &cup; randSet</code> only &mdash; far
+        fewer rows enter the histograms.</li>
+        <li><b>3. Histogram split finder (Algorithm 1).</b> For the rows in the current node, accumulate a
+        per-bin gradient sum and count into a histogram for each bundle; the best split is the bin boundary
+        maximizing variance gain. Cost $O(\\#\\text{data}\\times\\#\\text{bundle})$ to build,
+        $O(\\#\\text{bin}\\times\\#\\text{bundle})$ to scan. A child histogram can be obtained by <b>histogram
+        subtraction</b> (parent minus sibling), halving the work.</li>
+        <li><b>4. Leaf-wise (best-first) growth.</b> Instead of a level-by-level expansion, a priority queue of
+        leaves is kept; the leaf with the largest loss reduction is split next, until <code>num_leaves</code> /
+        <code>max_depth</code> caps stop growth. The result is one new tree.</li>
+        <li><b>5. Append.</b> Add the tree (scaled by the learning rate) to the ensemble; repeat.</li>
+       </ul>
+       <p>Net effect: GOSS shrinks the <i>rows</i> dimension and EFB shrinks the <i>features</i> dimension of the
+       dominant histogram-build cost $O(\\#\\text{data}\\times\\#\\text{feature})$, while histograms + leaf-wise
+       growth make each split cheap and each tree accurate.</p>`,
     symbols: [
       { sym: "$g_i$", desc: "the <b>gradient</b> of the loss at row $i$ under the current ensemble &mdash; how wrong the model still is there. Large $|g_i|$ = poorly fit; small $|g_i|$ = already well-trained." },
       { sym: "$a$", desc: "the <b>top fraction kept</b> by GOSS: keep all rows in the top $a\\times100\\%$ by $|g_i|$ (the large-gradient set). Paper used $a\\in\\{0.05,0.1\\}$." },
@@ -163,10 +200,30 @@
       { sym: "$A$", desc: "the kept <b>large-gradient</b> subset (the top $a\\times100\\%$)." },
       { sym: "$B$", desc: "the <b>randomly sampled</b> subset of the remaining small-gradient rows, $|B|=b\\times|A^c|$." },
       { sym: "$A_l,A_r,B_l,B_r$", desc: "the parts of $A$ and $B$ falling <b>left/right</b> of the threshold $d$ (Eqn. 1)." },
-      { sym: "$\\tilde V_j(d)$", desc: "GOSS's <b>estimated variance gain</b> computed over only $A\\cup B$, with $B$'s gradients amplified by $\\frac{1-a}{b}$ (Eqn. 1)." }
+      { sym: "$\\tilde V_j(d)$", desc: "GOSS's <b>estimated variance gain</b> computed over only $A\\cup B$, with $B$'s gradients amplified by $\\frac{1-a}{b}$ (Eqn. 1)." },
+      { sym: "$E(d)$", desc: "the <b>GOSS approximation error</b> $|\\tilde V_j(d)-V_j(d)|$ &mdash; how far GOSS's estimated gain is from the exact gain (Theorem 3.2, Eqn. 2)." },
+      { sym: "$C_{a,b}$", desc: "the constant $\\frac{1-a}{\\sqrt b}\\max_{x_i\\in A^c}|g_i|$ in the error bound &mdash; grows with the largest small-gradient magnitude and the amplification (Theorem 3.2)." },
+      { sym: "$D$", desc: "$\\max(\\bar g^j_l(d),\\bar g^j_r(d))$, the larger of the two sides' <b>mean absolute gradient</b>, appearing in the error bound (Theorem 3.2)." },
+      { sym: "$\\delta$", desc: "the <b>failure probability</b>: the error bound (Eqn. 2) holds with probability at least $1-\\delta$." },
+      { sym: "$n$", desc: "the <b>total number of training rows</b>; the dominant error term shrinks like $O(1/\\sqrt n)$." },
+      { sym: "$\\#\\text{bundle}$", desc: "the number of <b>exclusive feature bundles</b> EFB produces, with $\\#\\text{bundle}\\ll\\#\\text{feature}$ (&sect;4)." },
+      { sym: "$K,\\ \\gamma$", desc: "EFB's <b>conflict budget</b>: $K$ caps the total conflicts allowed in a bundle (Alg. 3); $\\gamma$ is the maximal conflict rate, trading a little accuracy for fewer bundles." },
+      { sym: "$\\text{binRanges}[j]$", desc: "the <b>offset</b> added to feature $j$'s bins when merging a bundle (Alg. 4), so members occupy disjoint bin ranges." }
     ],
-    formula: `$$ V_{j|O}(d) = \\frac{1}{n_O}\\left( \\frac{\\big(\\sum_{\\{x_i\\in O:\\,x_{ij}\\le d\\}} g_i\\big)^2}{n^j_{l|O}(d)} + \\frac{\\big(\\sum_{\\{x_i\\in O:\\,x_{ij}\\gt d\\}} g_i\\big)^2}{n^j_{r|O}(d)} \\right) \\quad\\text{(Definition 3.1, exact variance gain)} $$
-$$ \\tilde V_j(d) = \\frac{1}{n}\\left( \\frac{\\big(\\sum_{x_i\\in A_l} g_i + \\frac{1-a}{b}\\sum_{x_i\\in B_l} g_i\\big)^2}{n^j_l(d)} + \\frac{\\big(\\sum_{x_i\\in A_r} g_i + \\frac{1-a}{b}\\sum_{x_i\\in B_r} g_i\\big)^2}{n^j_r(d)} \\right) \\quad\\text{(Eqn. 1, GOSS estimate)} $$`,
+    formula: `$$ \\text{cost}(\\text{Alg. 1}) = \\underbrace{O(\\#\\text{data}\\times\\#\\text{feature})}_{\\text{build histograms}} \\;+\\; \\underbrace{O(\\#\\text{bin}\\times\\#\\text{feature})}_{\\text{scan for best split}} \\quad\\text{(§2, Algorithm 1 — histogram split finder; }\\#\\text{bin}\\ll\\#\\text{data}\\text{, so building dominates)} $$
+<p>The histogram-based finder bins each feature, then for each bin accumulates the gradient sum and row count; the best split is read off the few hundred bins instead of every raw value.</p>
+$$ V_{j|O}(d) = \\frac{1}{n_O}\\left( \\frac{\\big(\\sum_{\\{x_i\\in O:\\,x_{ij}\\le d\\}} g_i\\big)^2}{n^j_{l|O}(d)} + \\frac{\\big(\\sum_{\\{x_i\\in O:\\,x_{ij}\\gt d\\}} g_i\\big)^2}{n^j_{r|O}(d)} \\right) \\quad\\text{(Definition 3.1 — exact variance gain a split is scored by)} $$
+<p>Sum of gradients on each side, squared, divided by that side's row count, summed, divided by $n_O$. The tree picks $d^*_j=\\arg\\max_d V_{j|O}(d)$ over feature $j$ and splits on the best $(j^*,d^*)$.</p>
+$$ \\tilde V_j(d) = \\frac{1}{n}\\left( \\frac{\\big(\\sum_{x_i\\in A_l} g_i + \\frac{1-a}{b}\\sum_{x_i\\in B_l} g_i\\big)^2}{n^j_l(d)} + \\frac{\\big(\\sum_{x_i\\in A_r} g_i + \\frac{1-a}{b}\\sum_{x_i\\in B_r} g_i\\big)^2}{n^j_r(d)} \\right) \\quad\\text{(Eqn. 1 — GOSS estimate over } A\\cup B) $$
+<p>The same score from only the GOSS subset: large-gradient rows $A$ count once; sampled small-gradient rows $B$ are amplified by the factor below to normalize their gradient sum back to the size of the full small-gradient set $A^c$.</p>
+$$ \\text{fact} = \\frac{1-a}{b}, \\qquad \\text{topN}=a\\cdot\\lvert I\\rvert, \\qquad \\text{randN}=b\\cdot\\lvert I\\rvert \\quad\\text{(Algorithm 2 — GOSS amplification factor and sample sizes)} $$
+<p>Keep the top $a$ fraction by $\\lvert g_i\\rvert$ (set $A$), randomly sample $b$ of the rest (set $B$, with $\\lvert B\\rvert=b\\,\\lvert A^c\\rvert$), and weight every sampled row by $\\frac{1-a}{b}$; the next tree fits on $A\\cup B$ with those weights.</p>
+$$ E(d)=\\lvert \\tilde V_j(d)-V_j(d)\\rvert \\;\\le\\; C_{a,b}^{2}\\,\\ln(1/\\delta)\\cdot\\max\\!\\Big(\\tfrac{1}{n^j_l(d)},\\tfrac{1}{n^j_r(d)}\\Big) \\;+\\; 2\\,D\\,C_{a,b}\\sqrt{\\tfrac{\\ln(1/\\delta)}{n}},\\qquad C_{a,b}=\\frac{1-a}{\\sqrt{b}}\\max_{x_i\\in A^c}\\lvert g_i\\rvert \\quad\\text{(Eqn. 2, Theorem 3.2 — GOSS error bound)} $$
+<p>With probability $\\ge 1-\\delta$ the GOSS approximation error is bounded; for balanced splits it is dominated by the second term, which decays like $O(1/\\sqrt{n})\\to 0$ — so GOSS "will not lose much training accuracy" (§3.2).</p>
+$$ \\text{merge}_i \\;=\\; F[j].\\text{bin}[i] + \\text{binRanges}[j]\\quad\\text{if } F[j].\\text{bin}[i]\\neq 0; \\qquad O(\\#\\text{data}\\times\\#\\text{feature})\\;\\longrightarrow\\;O(\\#\\text{data}\\times\\#\\text{bundle}) \\quad\\text{(Algorithm 4 — EFB offset merge; §4)} $$
+<p>Exclusive Feature Bundling gives each feature in a bundle an offset (running bin total) so nonzero values land in disjoint bin ranges; e.g. A in $[0,10)$, B offset by $10$ into $[10,30)$, bundle spans $[0,30]$. The merge is lossless and cuts histogram cost from per-feature to per-bundle ($\\#\\text{bundle}\\ll\\#\\text{feature}$).</p>
+$$ \\text{leaf-wise growth: each step split } \\ell^*=\\arg\\max_{\\ell\\in\\text{leaves}} \\Delta\\text{loss}(\\ell), \\quad\\text{capped by num-leaves / max-depth} \\quad\\text{(§5.1, best-first growth [32])} $$
+<p>Unlike level-wise growth (split every node at a depth), LightGBM grows the single leaf with the largest loss reduction first — usually lower error for a fixed leaf budget, at the risk of deeper, lopsided trees.</p>`,
     whatItDoes:
       `<p><b>Definition 3.1</b> is how a GBDT scores a candidate split: for the rows going left and the rows
        going right, take the <i>sum of gradients</i>, square it, divide by that side's row count, add the two

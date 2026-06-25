@@ -133,6 +133,33 @@
        starting centers can trap the loop in a poor partition. That is why the starting centers matter — the
        ablation below shows random starts landing in much worse optima than the smarter <b>k-means++</b> starts.</p>`,
 
+    architecture:
+      `<p>k-means is not a network &mdash; its "architecture" is Lloyd's <b>per-iteration loop</b> (the paper's
+       <b>Method I</b>), an alternating-minimization procedure over two blocks of variables: the assignment
+       $\\{S_i\\}$ and the centers $\\{\\mu_i\\}$. State carried across iterations is just the $k\\times d$ matrix of
+       centers; everything else is recomputed each pass.</p>
+       <p><b>Inputs.</b> Data $X$ ($n$ points in $d$ dimensions), the cluster count $k$, and $k$ initial centers.</p>
+       <p><b>Data flow of one iteration</b> (centers in &rarr; lower-distortion centers out):</p>
+       <ol>
+         <li><b>Distance block.</b> Compute the $n\\times k$ matrix of squared distances $\\lVert x-\\mu_i\\rVert^2$
+         from every point to every center. (In code: broadcast $X$ against the centers and square-sum over the
+         $d$ coordinate axis.)</li>
+         <li><b>Assignment block (nearest-neighbor condition).</b> Take the row-wise $\\arg\\min$ of that matrix to
+         get each point's label $c(x)$; this partitions the data into clusters $S_1,\\dots,S_k$ &mdash; the
+         <b>Voronoi cells</b> of the current centers. Reading off the chosen distances and summing gives the
+         current distortion $J$.</li>
+         <li><b>Update block (centroid condition).</b> For each cluster, average its assigned points to get the
+         new center $\\mu_i=\\text{mean}(S_i)$. Empty clusters carry their old center forward (or are re-seeded).</li>
+         <li><b>Convergence gate.</b> If the centers moved by less than a tolerance (equivalently, the assignment
+         stopped changing), halt; otherwise feed the new centers back into the distance block.</li>
+       </ol>
+       <p><b>Outer wrapper (the practical algorithm).</b> Because the loop only finds a <i>local</i> minimum,
+       production k-means wraps it in a restart loop: run from several initializations (a good one is
+       <b>k-means++</b>, which spreads the seeds out) and keep the run with the lowest final $J$. This is exactly
+       scikit-learn's <code>n_init</code> &times; <code>max_iter</code> structure.</p>
+       <p><b>Outputs.</b> The final centers $\\{\\mu_i\\}$, the labels $c(x)$, and the converged distortion $J$
+       (scikit-learn's <code>inertia_</code>).</p>`,
+
     symbols: [
       { sym: "$n$", desc: "the number of data points." },
       { sym: "$k$", desc: "the number of clusters / centers you ask for — a value you choose in advance." },
@@ -142,26 +169,66 @@
       { sym: "$\\mu_i$", desc: "mu-i: the center (centroid) of cluster $i$ — a vector, set to the mean of the points in $S_i$." },
       { sym: "$\\lVert x-\\mu_i\\rVert^2$", desc: "squared Euclidean distance from point $x$ to center $\\mu_i$: the sum of squared differences in each coordinate. The double bars are the L2 norm (ordinary straight-line length)." },
       { sym: "$J$", desc: "the distortion (also: within-cluster sum of squares, WCSS, or sklearn's 'inertia'): the total squared distance from every point to its assigned center. This is what k-means minimizes." },
+      { sym: "$J^{(t)}$", desc: "the value of the distortion $J$ at iteration $t$. The convergence claim is $J^{(t+1)}\\le J^{(t)}$ — it never goes up from one pass to the next." },
+      { sym: "$c(x)$", desc: "the assignment function: the index $i$ of the cluster that point $x$ is currently assigned to (its nearest center). The assign step sets $c(x)=\\arg\\min_i\\lVert x-\\mu_i\\rVert^2$." },
+      { sym: "$D$", desc: "Lloyd's original 1-D quantization distortion — the mean squared error between the signal and its quantized value, averaged over the input density. The multi-point, multi-dimensional version of $D$ is $J$." },
+      { sym: "$q_n$", desc: "in Lloyd's PCM setup, the $n$-th output level (quantum) — the single value every input in region $R_n$ is rounded to. It plays the role of a center $\\mu_i$." },
+      { sym: "$R_n$", desc: "the $n$-th quantization region: the set of input amplitudes mapped to level $q_n$. It plays the role of a cluster $S_i$." },
+      { sym: "$p(x)$", desc: "the probability density of the input signal's amplitude in Lloyd's continuous formulation. Replacing the integral $\\int(\\cdot)\\,p(x)\\,dx$ by a sum over a finite dataset turns Lloyd's quantizer into k-means." },
       { sym: "$\\arg\\min$", desc: "'the argument that minimizes' — the choice of clusters/centers that makes the quantity smallest, not the smallest value itself." },
       { sym: "centroid", desc: "the mean (average) of a set of points; the single point whose total squared distance to that set is smallest." },
       { sym: "distortion / inertia / WCSS", desc: "three names for the same number $J$ — total within-cluster squared error. 'Inertia' is scikit-learn's term." }
     ],
 
     formula:
-      `$$J(\\{S_i\\},\\{\\mu_i\\})=\\sum_{i=1}^{k}\\ \\sum_{x\\in S_i}\\ \\lVert x-\\mu_i\\rVert^2,
-        \\qquad \\mu_i=\\frac{1}{|S_i|}\\sum_{x\\in S_i}x.$$
-       $$\\text{k-means: }\\ \\arg\\min_{\\{S_i\\},\\{\\mu_i\\}}\\ J
+      `$$D=\\sum_{n}\\int_{R_n}(x-q_n)^2\\,p(x)\\,dx.$$
+       <p class="cap">Lloyd's original 1-D PCM distortion (§II): the mean squared quantization error, where
+       region $R_n$ of the input is mapped to output level $q_n$ and $p(x)$ is the signal's amplitude density.
+       Machine-learning k-means is this with the integral over the density replaced by a sum over a finite,
+       $d$-dimensional dataset and $(x-q_n)^2$ replaced by $\\lVert x-\\mu_i\\rVert^2$.</p>
+
+       $$J(\\{S_i\\},\\{\\mu_i\\})=\\sum_{i=1}^{k}\\ \\sum_{x\\in S_i}\\ \\lVert x-\\mu_i\\rVert^2.$$
+       <p class="cap">The objective (within-cluster sum of squares / distortion). Sum, over every cluster $i$ and
+       every point $x$ in it, the squared distance from $x$ to that cluster's center. k-means seeks the clusters
+       and centers that minimize this.</p>
+
+       $$c(x)=\\arg\\min_{i}\\ \\lVert x-\\mu_i\\rVert^2.$$
+       <p class="cap">Assignment step (Lloyd's nearest-neighbor / minimum-distortion condition). With the centers
+       fixed, each point is assigned to the center it is nearest to. $c(x)$ is the index of $x$'s chosen cluster.</p>
+
+       $$\\mu_i=\\frac{1}{|S_i|}\\sum_{x\\in S_i}x.$$
+       <p class="cap">Update step (Lloyd's centroid condition). With the assignment fixed, each center moves to the
+       mean of its assigned points. The mean is exactly the point that minimizes that cluster's squared error.</p>
+
+       $$J^{(t+1)}\\ \\le\\ J^{(t)}\\quad\\text{for every iteration }t,\\qquad J\\ge 0.$$
+       <p class="cap">Convergence (monotone-decrease argument). Each step minimizes $J$ over its own variable while
+       holding the other fixed, so neither step can raise $J$; the distortion is non-increasing and bounded below
+       by $0$, and since only finitely many partitions of $n$ points into $k$ groups exist, the loop reaches a
+       fixed point — a local minimum of $J$.</p>
+
+       $$\\arg\\min_{\\{S_i\\},\\{\\mu_i\\}}\\ J
         \\quad\\Longleftrightarrow\\quad
-        \\begin{cases}\\text{assign: } x\\mapsto \\arg\\min_i\\lVert x-\\mu_i\\rVert^2\\\\[2pt]
-                      \\text{update: } \\mu_i\\leftarrow \\text{mean}(S_i)\\end{cases}$$`,
+        \\begin{cases}\\text{assign: } x\\mapsto c(x)=\\arg\\min_i\\lVert x-\\mu_i\\rVert^2\\\\[2pt]
+                      \\text{update: } \\mu_i\\leftarrow \\text{mean}(S_i)\\end{cases}$$
+       <p class="cap">Putting it together: minimizing the distortion is equivalent to alternating the two
+       conditions above until the centers stop moving.</p>`,
 
     whatItDoes:
-      `<p>The top line defines the <b>distortion</b> $J$: add up, over every cluster and every point in it, the
-       squared distance from that point to its center; and it says each center is the mean of its cluster. The
-       bottom line says minimizing $J$ is equivalent to repeating two greedy moves — assign each point to its
-       nearest center, then set each center to its cluster's mean — because those are exactly the two conditions
-       an optimum must satisfy. Lloyd derived this for 1-D PCM levels; replacing the integral over the signal
-       density by a sum over a finite dataset gives the modern k-means objective above.</p>`,
+      `<p>In words, equation by equation:</p>
+       <ul>
+         <li><b>The PCM integral $D$.</b> "On average, how far off is the rounded signal from the true one?" —
+         the mean squared error of a 1-D quantizer, averaged over how often each input value occurs.</li>
+         <li><b>The objective $J$.</b> The same idea for a finite set of $d$-dimensional points: total squared
+         distance from every point to its assigned center. Smaller $J$ = tighter clusters.</li>
+         <li><b>The assignment $c(x)=\\arg\\min_i\\lVert x-\\mu_i\\rVert^2$.</b> "Snap each point to whichever
+         center is closest." With centers fixed, this is the choice that makes $J$ as small as it can be.</li>
+         <li><b>The update $\\mu_i=\\text{mean}(S_i)$.</b> "Move each center to the average of the points that
+         chose it." With the assignment fixed, the mean is the single best center for that cluster.</li>
+         <li><b>The convergence line $J^{(t+1)}\\le J^{(t)}$.</b> "The error can only fall." Each step improves
+         $J$ over one variable and can't hurt it, so the loop settles to a local minimum.</li>
+       </ul>
+       <p>Lloyd proved the two conditions for 1-D PCM levels; replacing the integral over the signal density by a
+       sum over a finite dataset gives the modern k-means objective.</p>`,
 
     derivation:
       `<p>The general "what clustering is and how k-means alternates" picture is owned by the
