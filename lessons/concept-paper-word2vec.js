@@ -1,9 +1,10 @@
 /* Paper lesson — word2vec / skip-gram (Mikolov et al., 2013).
-   Grounded from arXiv:1301.3781 (abstract + ar5iv HTML, Section 3.2, Eq. 5).
-   NOTE: 1301.3781 introduces the skip-gram ARCHITECTURE + complexity (Eq.5) and the analogy
-   result (king-man+woman~queen, intro). The explicit softmax probability p(w_O|w_I) is written
-   out in the companion paper "Distributed Representations" (arXiv:1310.4546, Eq.2); we attribute
-   it there and recap the math from the dl-word2vec concept lesson — not invented here.
+   Grounded from arXiv:1301.3781 (the original "Efficient Estimation" paper: CBOW Eq.4,
+   skip-gram Eq.5, the model architectures in Section 3, the analogy result in Section 1) AND
+   the companion arXiv:1310.4546 "Distributed Representations of Words and Phrases" (the skip-gram
+   training objective Eq.1, the full softmax Eq.2, the hierarchical softmax Eq.3, the
+   negative-sampling objective Eq.4, and the subsampling rule Eq.5). Each equation is captioned
+   with its paper + equation number. Nothing here is invented.
    Track A (primitive): build skip-gram + full-softmax objective from raw tensors; verify the loss
    equals F.cross_entropy with torch.allclose; train on a tiny corpus; show nearest-neighbor words. */
 (function () {
@@ -133,47 +134,111 @@
        Huffman tree (Section 2.1), cutting the output cost from $V$ to about $\\log_2 V$. We use the plain softmax
        in code because our toy vocabulary is tiny, and verify it against PyTorch's cross-entropy.</p>`,
 
+    architecture:
+      `<p>Both models are deliberately shallow &mdash; a lookup-table embedding plus a single output projection,
+       with <b>no nonlinear hidden layer</b> (that is the speed trick over older NNLMs). The whole model is just
+       <b>two weight matrices</b>:</p>
+       <ul>
+         <li><b>Input embedding matrix</b> $\\mathbf{V}\\in\\mathbb{R}^{W\\times D}$ &mdash; row $w$ is the input
+         vector $v_w$ (also written $e_w$). Selected by a 1-of-$W$ one-hot lookup, so the "projection layer" is just
+         picking a row. <i>This is the table we keep as the final word vectors.</i></li>
+         <li><b>Output embedding matrix</b> $\\mathbf{V'}\\in\\mathbb{R}^{W\\times D}$ &mdash; row $w$ is the output
+         vector $v'_w$ ($\\theta_w$). It scores candidate context words via the dot product $v'_w{}^{\\top} v_{w_I}$
+         and feeds the softmax. Discarded after training.</li>
+       </ul>
+       <p><b>CBOW (Continuous Bag-of-Words, §3.1 of 1301.3781).</b> Data flow: take the $N$ context words around a
+       gap, look up their input vectors, <b>average them</b> into a single $D$-vector (order is ignored &mdash; hence
+       "bag"), then run that average through the output matrix + softmax to predict the missing <b>center</b> word.
+       One softmax per position. Cost: Eq. 4.</p>
+       <p><b>Skip-gram (§3.2 of 1301.3781) &mdash; what we build.</b> The mirror image: look up the <b>one center
+       word's</b> input vector $v_{w_I}$, and use it to predict <b>each</b> surrounding context word independently
+       through the output matrix + softmax. For each center the model samples a window $R\\in[1,C]$ and uses the $R$
+       words on each side, so nearer words are used more often. More predictions per center (Eq. 5 has the factor
+       $C$), but it produces better rare-word vectors.</p>
+       <p><b>Output head, three options.</b> The $W$-way softmax (Eq. 2) is exact but $O(W)$. The paper replaces it
+       with either <b>hierarchical softmax</b> (Eq. 3 &mdash; a binary Huffman tree of sigmoids, $O(\\log_2 W)$) or
+       <b>negative sampling</b> (Eq. 4 &mdash; one real plus $k$ noise binary classifications, $O(k)$).
+       <b>Subsampling</b> (Eq. 5) optionally drops frequent words from the stream first. Our code uses the plain
+       full softmax because the toy vocabulary is tiny.</p>`,
+
     symbols: [
-      { sym: "$V$", desc: "vocabulary size: the number of distinct words. The softmax has one term per word, so it runs over all $V$." },
-      { sym: "$D$", desc: "embedding dimension: how many numbers are in each word's vector (e.g. 100-300 in the paper; 8 in our toy run)." },
-      { sym: "$C$", desc: "the maximum window size: the farthest a context word can be from the center. The paper uses $C=10$ (Section 3.2)." },
-      { sym: "$c$", desc: "the center (current) word — the one we look out from to predict its neighbors." },
-      { sym: "$t$ (or $w_O$)", desc: "a target/context word: a word actually sitting in the window around the center. $w_O$ = 'output word'." },
-      { sym: "$w_I$", desc: "the input word — another name for the center word $c$ (the model's input)." },
-      { sym: "$e_c$ (or $v_{w_I}$)", desc: "the input/center vector: the embedding of the center word, read from the input table. This is what we keep as the word's final vector." },
-      { sym: "$\\theta_t$ (or $v'_{w_O}$)", desc: "the output/context vector for word $t$, read from a separate output table; used only to score targets during training (Greek 'theta')." },
-      { sym: "$\\theta_t^\\top e_c$", desc: "the dot product (sum of element-wise products) of the two vectors — the raw score of target $t$ given center $c$. High when the vectors agree." },
+      { sym: "$W$ (or $V$)", desc: "vocabulary size: the number of distinct words. The full softmax sums one term per word, so it runs over all $W$. (1310.4546 writes $W$; 1301.3781 writes $V$.)" },
+      { sym: "$D$", desc: "embedding dimension: how many numbers are in each word's vector (100-1000 in the paper; 8 in our toy run)." },
+      { sym: "$C$", desc: "the maximum window size: the farthest a context word can be from the center; the actual window is sampled up to $C$ (Section 3.2 of 1301.3781)." },
+      { sym: "$c$", desc: "in the objective Eq. 1, the half-window: context words run over offsets $-c \\le j \\le c$, $j \\ne 0$. (Also used informally for the 'center' word.)" },
+      { sym: "$T$", desc: "the number of training words (corpus length); the skip-gram objective averages the log-probability over all $T$ positions $t = 1\\ldots T$." },
+      { sym: "$t$ (subscript)", desc: "a position index into the corpus; $w_t$ is the center word at position $t$ and $w_{t+j}$ a context word $j$ steps away." },
+      { sym: "$w_I$ (input)", desc: "the input/center word — the one we look out from to predict its neighbors." },
+      { sym: "$w_O$ (output)", desc: "a target/output word: a context word actually sitting in the window around $w_I$." },
+      { sym: "$v_{w}$ (or $e_w$)", desc: "the INPUT vector of word $w$, read from the input table. This is what we keep as the word's final embedding ($v_{w_I}$ for the center)." },
+      { sym: "$v'_{w}$ (or $\\theta_w$)", desc: "the OUTPUT vector of word $w$, read from a separate output table; used only to score targets during training (prime mark distinguishes it from the input vector)." },
+      { sym: "$v'_{w_O}{}^{\\top} v_{w_I}$", desc: "the dot product (sum of element-wise products) of the output vector of $w_O$ with the input vector of $w_I$ — the raw score of target $w_O$ given center $w_I$. High when the vectors agree." },
       { sym: "$\\exp$", desc: "the exponential function $e^{(\\cdot)}$, which turns any real score into a positive number so it can act like an unnormalized probability." },
-      { sym: "$j$", desc: "an index running over every word in the vocabulary; the denominator sum adds one $\\exp(\\text{score})$ term per word $j$." },
-      { sym: "$p(w_O \\mid w_I)$", desc: "the model's probability of seeing context word $w_O$ given center word $w_I$ (the bar means 'given'). The thing skip-gram tries to make large for true neighbors." },
-      { sym: "$Q$", desc: "the per-training-example computational cost (number of operations); Eq. 5 gives it for skip-gram." }
+      { sym: "$p(w_O \\mid w_I)$", desc: "the model's probability of seeing context word $w_O$ given center word $w_I$ (the bar means 'given'). Skip-gram makes this large for true neighbors." },
+      { sym: "$\\sigma$", desc: "the sigmoid (logistic) function $\\sigma(x) = 1/(1+\\exp(-x))$, squashing any real number into $(0,1)$; used by negative sampling and hierarchical softmax." },
+      { sym: "$k$", desc: "the number of negative (noise) samples drawn per true (center, context) pair in negative sampling (typically 5-20)." },
+      { sym: "$P_n(w)$", desc: "the noise distribution that negative samples are drawn from: the paper uses the unigram frequency raised to the $3/4$ power, $U(w)^{3/4}/Z$." },
+      { sym: "$L(w)$", desc: "the length of the path from the root of the Huffman tree to the leaf for word $w$ (hierarchical softmax)." },
+      { sym: "$n(w,j)$", desc: "the $j$-th node on the root-to-$w$ path in the Huffman tree; $n(w,1)$ is the root, $n(w,L(w))$ is $w$'s leaf." },
+      { sym: "$\\mathrm{ch}(n)$", desc: "a fixed (e.g. left) child of internal node $n$ in the Huffman tree." },
+      { sym: "$[\\![x]\\!]$", desc: "the indicator: $+1$ if $x$ is true, $-1$ if false; it flips the sign of the dot product depending on which way the path branches." },
+      { sym: "$f(w_i)$", desc: "the (relative) frequency of word $w_i$ in the corpus; used in the subsampling rule." },
+      { sym: "$t$ (threshold)", desc: "the subsampling threshold (Eq. 5 of 1310.4546), typically $\\approx 10^{-5}$. Distinct from the position index $t$." },
+      { sym: "$P(w_i)$", desc: "in subsampling, the probability that an occurrence of word $w_i$ is DISCARDED before training, to down-weight very frequent words." },
+      { sym: "$N$", desc: "in the CBOW cost Eq. 4, the number of context words averaged at the projection layer." },
+      { sym: "$Q$", desc: "the per-training-example computational cost (number of operations); Eq. 4 gives it for CBOW, Eq. 5 for skip-gram." }
     ],
 
     formula:
-      `$$p(w_O \\mid w_I) \\;=\\; \\frac{\\exp\\!\\big(\\theta_{w_O}^{\\top}\\, e_{w_I}\\big)}
-        {\\sum_{j=1}^{V} \\exp\\!\\big(\\theta_{j}^{\\top}\\, e_{w_I}\\big)}
-        \\qquad\\text{(softmax objective)}$$
-       $$Q \\;=\\; C \\times \\big(D + D\\log_2 V\\big)\\qquad\\text{(skip-gram complexity, Eq. 5)}$$`,
+      `$$\\frac{1}{T}\\sum_{t=1}^{T}\\ \\sum_{-c\\,\\le\\, j\\,\\le\\, c,\\ j\\neq 0} \\log p\\big(w_{t+j}\\mid w_t\\big)$$
+       <p class="cap">Skip-gram training objective &mdash; <b>1310.4546 Eq. 1</b>. Average, over every position $t$ and every neighbor $w_{t+j}$ within the window $\\pm c$ (skipping the center, $j\\neq0$), of the log-probability the model assigns to that neighbor given the center $w_t$. We maximize this.</p>
+       $$p(w_O \\mid w_I) \\;=\\; \\frac{\\exp\\!\\big(v'_{w_O}{}^{\\top}\\, v_{w_I}\\big)}
+        {\\sum_{w=1}^{W} \\exp\\!\\big(v'_{w}{}^{\\top}\\, v_{w_I}\\big)}$$
+       <p class="cap">Full softmax for $p(w_O\\mid w_I)$ &mdash; <b>1310.4546 Eq. 2</b>. Score the target with the input-vs-output dot product, exponentiate, and normalize over all $W$ words. Exact but costs $O(W)$ per step.</p>
+       $$\\log \\sigma\\big(v'_{w_O}{}^{\\top} v_{w_I}\\big)\\;+\\;\\sum_{i=1}^{k}\\mathbb{E}_{\\,w_i \\sim P_n(w)}\\Big[\\log \\sigma\\big(-\\,v'_{w_i}{}^{\\top} v_{w_I}\\big)\\Big]$$
+       <p class="cap">Negative-sampling objective replacing $\\log p(w_O\\mid w_I)$ &mdash; <b>1310.4546 Eq. 4</b>. Push the true pair's score up ($\\log\\sigma$) and $k$ random noise words' scores down ($\\log\\sigma$ of the negated dot product). Noise comes from $P_n(w)=U(w)^{3/4}/Z$ (unigram raised to the $3/4$ power). Costs $O(k)$, not $O(W)$.</p>
+       $$p(w \\mid w_I) \\;=\\; \\prod_{j=1}^{L(w)-1} \\sigma\\!\\Big(\\,[\\![\\,n(w,j+1)=\\mathrm{ch}(n(w,j))\\,]\\!]\\;\\cdot\\; v'_{n(w,j)}{}^{\\top} v_{w_I}\\Big)$$
+       <p class="cap">Hierarchical softmax &mdash; <b>1310.4546 Eq. 3</b>. Instead of one $W$-way choice, walk the root-to-leaf path of word $w$ in a binary (Huffman) tree, making a sigmoid left/right decision at each of $L(w)-1$ internal nodes. The indicator $[\\![\\cdot]\\!]\\in\\{+1,-1\\}$ flips the dot product's sign by branch direction. Costs $O(\\log_2 W)$.</p>
+       $$P(w_i) \\;=\\; 1 - \\sqrt{\\dfrac{t}{f(w_i)}}$$
+       <p class="cap">Subsampling of frequent words &mdash; <b>1310.4546 Eq. 5</b>, threshold $t\\approx10^{-5}$. Probability that a given occurrence of $w_i$ is DISCARDED before training; words more frequent than $t$ get dropped more often, sharpening rare-word vectors and speeding training.</p>
+       $$Q \\;=\\; N\\times D \\;+\\; D\\times\\log_2 V \\qquad\\text{(CBOW)}\\qquad\\qquad Q \\;=\\; C\\times\\big(D + D\\log_2 V\\big)\\qquad\\text{(skip-gram)}$$
+       <p class="cap">Per-example training cost &mdash; <b>1301.3781 Eq. 4 (CBOW)</b> and <b>Eq. 5 (skip-gram)</b>. Both drop the old NNLM hidden layer; the $\\log_2 V$ output term (hierarchical softmax) replaces a $V$ term, so cost grows with $\\log V$, not $V$.</p>`,
 
     whatItDoes:
-      `<p>The <b>top</b> equation is the skip-gram training objective: it scores the true context word $w_O$ by the
-       dot product $\\theta_{w_O}^\\top e_{w_I}$ (top), and divides by the same exponentiated score summed over
-       <i>all</i> $V$ words (bottom), giving a probability between 0 and 1 that adds to 1 across the vocabulary.
-       Training maximizes this for the words that really appear in the window. (The 1301.3781 paper describes this
-       in words in Section 3.2; the explicit formula is Eq. 2 of the companion arXiv:1310.4546.)</p>
-       <p>The <b>bottom</b> equation, <b>Eq. 5</b> of the paper, is the cost $Q$ of one training example: $C$
-       context predictions, each costing a $D$-dimensional lookup plus a $D\\log_2 V$ output evaluation (the
-       $\\log_2 V$ comes from the hierarchical softmax). The point is that there is <i>no</i> $V$ or hidden-layer
-       term &mdash; that is why it scales.</p>`,
+      `<p><b>Eq. 1 (objective).</b> Slide over the whole corpus; at every center word, sum the log-probability it
+       gives to each true neighbor inside the window, and average. Maximizing it makes real neighbors likely.</p>
+       <p><b>Eq. 2 (full softmax).</b> Turns the input-vs-output dot product into a probability: exponentiate the
+       true target's score, divide by the same exponentiated score summed over <i>all</i> $W$ words. Valid
+       distribution, but the denominator touches every word &mdash; $O(W)$ per step.</p>
+       <p><b>Eq. 4 (negative sampling).</b> A cheap stand-in for $\\log p(w_O\\mid w_I)$: treat it as binary
+       classification. One term pushes the <i>true</i> (center, context) dot product up via $\\log\\sigma$; $k$
+       terms push <i>random noise</i> words' dot products down via $\\log\\sigma$ of the negated score. Noise is
+       drawn from the unigram$^{3/4}$ distribution. Only $k{+}1$ dot products, not $W$.</p>
+       <p><b>Eq. 3 (hierarchical softmax).</b> Another cheap stand-in: arrange words as leaves of a binary tree and
+       make a sigmoid left/right decision at each node on the root-to-leaf path; the path probability is their
+       product. Only $\\log_2 W$ decisions instead of a $W$-way normalization.</p>
+       <p><b>Eq. 5 (subsampling).</b> Before training, randomly throw away occurrences of very common words ("the",
+       "a") with probability $1-\\sqrt{t/f(w_i)}$, so frequent words stop dominating and rare-word vectors sharpen.</p>
+       <p><b>Eqs. 4 &amp; 5 of 1301.3781 (cost).</b> $Q$ is the per-example op count. Both architectures drop the
+       NNLM hidden layer, and the output term is $D\\log_2 V$ (hierarchical softmax), not $D\\,V$ &mdash; so cost grows
+       with $\\log V$, which is why it scales to billions of words.</p>`,
 
     derivation:
-      `<p>The full math of the softmax and why maximizing log-likelihood pulls co-occurring words together is
-       derived in the <code>dl-word2vec</code> concept lesson. Short recap: exponentiating makes every score
-       positive, and dividing by the sum forces the $V$ probabilities to add to 1, so the expression is a valid
-       probability distribution over the next word. The negative log of that probability is exactly the
-       <b>cross-entropy</b> loss between the model's distribution and a one-hot "the answer is $w_O$" target &mdash;
-       which is why our hand-written loss matches <code>F.cross_entropy</code> in the CODE. See the concept lesson
-       for the gradient.</p>`,
+      `<p><b>Softmax = cross-entropy.</b> Exponentiating makes every score positive; dividing by the sum forces the
+       $W$ probabilities to add to 1, a valid distribution. The negative log of that probability,
+       $-\\log p(w_O\\mid w_I) = \\log\\sum_w \\exp(v'_w{}^\\top v_{w_I}) - v'_{w_O}{}^\\top v_{w_I}$, is exactly the
+       <b>cross-entropy</b> against a one-hot "answer is $w_O$" target &mdash; which is why our hand-written
+       $\\log\\sum\\exp$ loss matches <code>F.cross_entropy</code> in the CODE.</p>
+       <p><b>Why negative sampling (Eq. 4) is a valid replacement.</b> The $O(W)$ normalizer is the only expensive
+       part. Negative sampling sidesteps it: instead of asking "which of $W$ words?", it asks $k{+}1$ independent
+       yes/no questions &mdash; "is this the real context word?" for the true pair, and "is this noise?" for $k$
+       words sampled from $P_n(w)$. Maximizing $\\log\\sigma(\\text{true})+\\sum\\log\\sigma(-\\text{noise})$ drives
+       true dot products positive and noise dot products negative. It does not compute the softmax, but it learns
+       the same vector geometry far more cheaply (a simplification of Noise-Contrastive Estimation; §2.2).</p>
+       <p><b>Why hierarchical softmax (Eq. 3) normalizes for free.</b> The leaf probabilities of a binary tree of
+       sigmoid decisions automatically sum to 1 (each node splits probability between its two children), so no
+       explicit $\\sum_w$ is needed &mdash; only the $L(w)-1\\approx\\log_2 W$ nodes on one path are touched.</p>
+       <p>The full gradient is derived in the <code>dl-word2vec</code> concept lesson.</p>`,
 
     example:
       `<p><b>Worked numbers</b> for one (center, target) pair with a tiny $D=2$, $V=3$ vocabulary
@@ -190,7 +255,14 @@
          [0.15428,\\,0.69144,\\,0.15428]$ (they sum to $1$).</li>
          <li><b>Loss</b> for true target $1$: $-\\ln(0.69144) = 0.36898$.</li>
        </ul>
-       <p>The CODE cell recomputes these exact numbers and prints them.</p>`,
+       <p>The CODE cell recomputes these exact numbers and prints them.</p>
+       <p><b>Same pair under negative sampling (Eq. 4)</b> with one noise word, say word $0$ (score $1$).
+       True term $\\log\\sigma(2.5)=\\ln(0.92414)=-0.07889$; noise term $\\log\\sigma(-1)=\\ln(0.26894)=-1.31326$.
+       Objective $=-0.07889-1.31326=-1.39215$ (we maximize it). Notice it never summed over the whole vocabulary
+       &mdash; just the true word plus one sampled noise word.</p>
+       <p><b>Subsampling (Eq. 5)</b> for a frequent word with $f=0.01$ and $t=10^{-5}$:
+       $P(\\text{drop})=1-\\sqrt{10^{-5}/0.01}=1-\\sqrt{0.001}=1-0.03162=0.96838$ &mdash; that occurrence is dropped
+       about 97% of the time. A rare word with $f=10^{-5}$ gives $P=1-\\sqrt{1}=0$, never dropped.</p>`,
 
     recipe:
       `<p><b>Skip-gram training, as numbered steps (Section 3.2):</b></p>

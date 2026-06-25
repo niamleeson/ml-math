@@ -132,6 +132,30 @@
        want $2L+1$ vectors; it wants one. ELMo collapses $R_k$ into a single vector with a <b>learned weighted
        sum</b>: the task learns one weight $s_j$ per layer (passed through a softmax so they are positive and
        add to 1) and one overall scale $\\gamma$. That weighted sum is Equation (1) below.</p>`,
+    architecture:
+      `<p>The pre-trained biLM (&sect;3.4), from the bottom up:</p>
+       <ul>
+        <li><b>Character-CNN input layer (context-independent token vector $x_k^{LM}$, layer 0).</b> Instead of
+        a word lookup table, each token is built from its <i>characters</i>. A character convolution applies
+        <b>2048 character n-gram convolutional filters</b>, followed by <b>two highway layers</b> (gated
+        residual layers), then a <b>linear projection down to 512 dimensions</b>. Building words from characters
+        means the model can represent any token, including ones it never saw in training (out-of-vocabulary
+        words), purely from spelling.</li>
+        <li><b>L = 2 stacked biLSTM layers.</b> On top of the character vectors sit two LSTM layers in each
+        direction. Each LSTM layer has <b>4096 hidden units</b> internally but is <b>projected back down to 512
+        dimensions</b> before being passed up. A <b>residual (skip) connection</b> links layer 1 to layer 2.
+        Forward and backward LSTMs are separate stacks (the bidirectionality is two one-directional models, not
+        one peeking network); the model is the CNN-BIG-LSTM of Jozefowicz et al. with halved dimensions for
+        compute.</li>
+        <li><b>Shared softmax output.</b> Both directions predict the next/previous token through the SAME tied
+        softmax over the vocabulary ($\\Theta_s$), and share the same character input layer ($\\Theta_x$).</li>
+        <li><b>Per-token output: the set $R_k$.</b> Running a sentence through this gives, for each token, the
+        $2L+1 = 5$ representations of $R_k$ &mdash; the layer-0 character vector plus the forward&oplus;backward
+        concatenation of each of the 2 LSTM layers &mdash; which Equation (1) then blends.</li>
+        <li><b>Training.</b> Trained on the 1B Word Benchmark for 10 epochs; the forward/backward average
+        <b>perplexity is 39.7</b>. After training the biLM is FROZEN; only the per-task weights $s_j^{task}$,
+        the scale $\\gamma^{task}$, and the downstream task model are learned afterward.</li>
+       </ul>`,
     symbols: [
       { sym: "$t_k$", desc: "the k-th token (word or character-built piece) in the sentence" },
       { sym: "$N$", desc: "number of tokens in the sentence" },
@@ -143,9 +167,24 @@
       { sym: "$R_k$", desc: "the SET of all 2L+1 representations the biLM produces for token k" },
       { sym: "$s_j^{task}$", desc: "the learned, softmax-normalized weight on layer j (positive, sum to 1) — how much this task trusts layer j" },
       { sym: "$\\gamma^{task}$", desc: "one learned scalar that scales the whole combined ELMo vector — lets the task rescale ELMo to match its own activations" },
-      { sym: "$\\text{ELMo}_k^{task}$", desc: "the final single contextual vector for token k, for this task" }
+      { sym: "$\\text{ELMo}_k^{task}$", desc: "the final single contextual vector for token k, for this task" },
+      { sym: "$p(t_k \\mid \\cdots)$", desc: "the language model's predicted probability of token k given the conditioning tokens; the objective maximizes its log" },
+      { sym: "$\\Theta_x$", desc: "the token (character-CNN) input parameters, SHARED between the forward and backward language models" },
+      { sym: "$\\Theta_s$", desc: "the softmax output-layer parameters, SHARED between the forward and backward directions" },
+      { sym: "$\\overrightarrow{\\Theta}_{LSTM},\\ \\overleftarrow{\\Theta}_{LSTM}$", desc: "the LSTM parameters for the forward and backward stacks; these are SEPARATE (not shared)" },
+      { sym: "$x_k$", desc: "the task model's own input word vector for token k, to which ELMo is concatenated in a downstream model (&sect;3.3)" },
+      { sym: "$h_k$", desc: "the task model's output hidden state for token k, to which ELMo is optionally concatenated at the output (&sect;3.3)" },
+      { sym: "$\\lambda$", desc: "the L2-regularization strength on the ELMo weights w in a downstream model (&sect;3.3)" }
     ],
-    formula: `$$\\text{ELMo}_k^{task} = E(R_k;\\Theta^{task}) = \\gamma^{task}\\sum_{j=0}^{L} s_j^{task}\\, h_{k,j}^{LM}$$`,
+    formula:
+      `$$\\sum_{k=1}^{N}\\Big( \\log p(t_k \\mid t_1,\\dots,t_{k-1};\\ \\Theta_x, \\overrightarrow{\\Theta}_{LSTM}, \\Theta_s)\\ +\\ \\log p(t_k \\mid t_{k+1},\\dots,t_N;\\ \\Theta_x, \\overleftarrow{\\Theta}_{LSTM}, \\Theta_s) \\Big)$$
+       <p>The biLM training objective (&sect;3.1): jointly maximise the forward log-likelihood (predict $t_k$ from the tokens before it) plus the backward log-likelihood (predict $t_k$ from the tokens after it). The token-embedding parameters $\\Theta_x$ and the softmax parameters $\\Theta_s$ are SHARED across both directions; only the LSTM parameters $\\overrightarrow{\\Theta}_{LSTM}, \\overleftarrow{\\Theta}_{LSTM}$ are separate.</p>
+       $$R_k = \\{ x_k^{LM},\\ \\overrightarrow{h}_{k,j}^{LM},\\ \\overleftarrow{h}_{k,j}^{LM} \\mid j=1,\\dots,L \\} = \\{ h_{k,j}^{LM} \\mid j=0,\\dots,L \\}$$
+       <p>The set of $2L+1$ representations the biLM produces for token $k$ (&sect;3.2): layer 0 is the context-independent token vector $h_{k,0}^{LM}=x_k^{LM}$; for $j\\gt 0$, $h_{k,j}^{LM}=[\\overrightarrow{h}_{k,j}^{LM}; \\overleftarrow{h}_{k,j}^{LM}]$ is the forward and backward hidden states concatenated.</p>
+       $$\\text{ELMo}_k^{task} = E(R_k;\\Theta^{task}) = \\gamma^{task}\\sum_{j=0}^{L} s_j^{task}\\, h_{k,j}^{LM}$$
+       <p>Equation (1), &sect;3.2: collapse the whole set $R_k$ into ONE vector for a task — a softmax-weighted sum of all $L+1$ layers (weights $s_j^{task}$ sum to 1) times a learned scalar $\\gamma^{task}$. This is the heart of the paper.</p>
+       $$[\\,x_k;\\ \\text{ELMo}_k^{task}\\,] \\longrightarrow \\text{task model} \\qquad (\\text{optionally } [\\,h_k;\\ \\text{ELMo}_k^{task}\\,] \\text{ at the output})$$
+       <p>How ELMo is added to a downstream model (&sect;3.3): freeze the biLM, then concatenate the ELMo vector with the task's usual input word vector $x_k$ and feed that into the existing task RNN. Some tasks also concatenate ELMo into the task model's output layer $h_k$. ELMo gets dropout and optional $L2$ regularization $\\lambda\\lVert w\\rVert_2^2$.</p>`,
     whatItDoes:
       `<p>This is <b>Equation (1), &sect;3.2</b>, transcribed from the paper. In words: the contextual vector for
        token $k$ is a <b>weighted average of all the biLM layers</b>, then scaled. Read it left to right:</p>

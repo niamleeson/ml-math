@@ -143,6 +143,41 @@
        <p>So the dot product of two word vectors is trained to equal the log of how often the words co-occur.
        Words with similar co-occurrence profiles end up with similar vectors.</p>`,
 
+    architecture:
+      `<p>GloVe is not a deep network — it is a <b>single log-bilinear regression layer</b> over a precomputed
+       count matrix, plus a per-iteration training procedure. Its "architecture" is the data structures and the
+       update loop (Section 3, Section 4.2).</p>
+       <p><b>Parameters (the whole model).</b> For a vocabulary of size $V$ and embedding dimension $D$:</p>
+       <ul>
+         <li><b>Word-vector table $W$</b> — shape $(V, D)$. One row $w_i$ per word.</li>
+         <li><b>Context-vector table $\\tilde W$</b> — shape $(V, D)$. One row $\\tilde w_j$ per word, a <i>separate</i>
+         set used while training. When $X$ is symmetric, $W$ and $\\tilde W$ end up equivalent up to random
+         initialization.</li>
+         <li><b>Bias vectors $b$ and $\\tilde b$</b> — length $V$ each (one scalar per word).</li>
+       </ul>
+       <p>The only operation is the bilinear score $w_i^\\top \\tilde w_j + b_i + \\tilde b_j$ — no hidden layers, no
+       nonlinearity. There is nothing else: GloVe has roughly $2VD + 2V$ parameters.</p>
+       <p><b>Input: the global co-occurrence matrix $X$</b> — shape $(V, V)$, built <b>once</b> before training by a
+       single pass over the corpus. The paper uses a symmetric context window of 10 words to the left and 10 to the
+       right, with a decreasing weight: a word pair $d$ positions apart contributes $1/d$ to the count (so closer
+       words matter more). On a 6-billion-token corpus with a 400k vocabulary this pass takes about 85 minutes
+       (Section 4.6). The matrix is sparse — zero entries are 75-95% of cells — and only nonzero entries are used.</p>
+       <p><b>Per-iteration training procedure (the "forward/backward pass").</b> The optimizer is <b>AdaGrad</b>
+       (Duchi et al., 2011) with initial learning rate $0.05$, stochastically sampling the nonzero entries of $X$:</p>
+       <ol>
+         <li>Pick a nonzero entry $(i,j)$. Compute the residual $r = w_i^\\top \\tilde w_j + b_i + \\tilde b_j - \\log X_{ij}$
+         (the bilinear forward pass) and the weight $f(X_{ij})$ (Eq. 9).</li>
+         <li>Accumulate the loss $f(X_{ij})\\,r^2$ (Eq. 8) and form the shared gradient factor $g = 2 f(X_{ij})\\,r$.</li>
+         <li>Backprop to the four parameter groups: $w_i \\leftarrow w_i - \\eta\\,g\\,\\tilde w_j$,
+         $\\tilde w_j \\leftarrow \\tilde w_j - \\eta\\,g\\,w_i$, $b_i \\leftarrow b_i - \\eta\\,g$,
+         $\\tilde b_j \\leftarrow \\tilde b_j - \\eta\\,g$, where AdaGrad scales $\\eta$ per-parameter by the inverse
+         square root of accumulated squared gradients.</li>
+       </ol>
+       <p><b>Hyperparameters (Section 4):</b> dimension $D$ up to 600 with diminishing returns past $\\sim$200;
+       50 iterations for $D \\lt 300$, 100 otherwise; $x_{\\max}=100$, $\\alpha=3/4$.</p>
+       <p><b>Output (the embedding).</b> After training, the embedding for a word is the <b>sum</b> $w_i + \\tilde w_i$
+       of its two vectors — the paper reports this gives a small boost, especially on the semantic analogy task.</p>`,
+
     symbols: [
       { sym: "$V$", desc: "vocabulary size: the number of distinct words. The matrix $X$ is $V\\times V$ and the sum in $J$ runs over word pairs $i,j$ from $1$ to $V$." },
       { sym: "$X_{ij}$", desc: "the co-occurrence count: how many times word $j$ appears in the context of word $i$ across the whole corpus (we weight by $1/$distance, so closer words count more)." },
@@ -157,12 +192,35 @@
       { sym: "$f(X_{ij})$", desc: "the weighting function (Eq. 9): how much each pair contributes to the loss. It is $0$ at $0$, rises, and flattens at $1$ for frequent pairs, so rare and very common pairs are both down-weighted." },
       { sym: "$x_{\\max}$", desc: "the cutoff count at which $f$ reaches its maximum of $1$. The paper fixes $x_{\\max}=100$ (Section 3.1, Figure 1)." },
       { sym: "$\\alpha$", desc: "the exponent shaping $f$ below the cutoff. The paper uses $\\alpha=3/4$, which it found 'gives a modest improvement over a linear version with $\\alpha=1$' (Section 3.1)." },
-      { sym: "$J$", desc: "the total cost (objective) that training minimizes — the weighted sum of squared residuals over all word pairs (Eq. 8)." }
+      { sym: "$J$", desc: "the total cost (objective) that training minimizes — the weighted sum of squared residuals over all word pairs (Eq. 8)." },
+      { sym: "$F$", desc: "the unknown function (Eqs. 1-5) the derivation seeks: it maps the word vectors to the co-occurrence ratio. Imposing linearity, a dot product, and a homomorphism pins it down to $\\exp$." },
+      { sym: "$D$", desc: "the embedding dimension — the length of each word vector $w_i$. The paper uses up to 600, with diminishing returns past about 200." },
+      { sym: "$r_{ij}$", desc: "the frequency rank of the word pair $(i,j)$ — its position when all pairs are sorted by count. Used in the complexity analysis's power-law model $X_{ij}=k/r_{ij}^{\\alpha}$ (Eq. 17)." },
+      { sym: "$|X|$", desc: "the number of nonzero entries in the co-occurrence matrix — what GloVe's cost actually scales with (it skips the zeros). Bounded by $O(|V|^2)$, but tighter in practice." },
+      { sym: "$|C|$", desc: "the corpus size: the total number of words (tokens) in the training text. The window-based methods scale with this." },
+      { sym: "$\\zeta$", desc: "the Riemann zeta function, $\\zeta(s)=\\sum_{n\\ge 1} n^{-s}$. It appears (Eq. 21) when the count sum is evaluated as a generalized harmonic number for large $|X|$." }
     ],
 
     formula:
-      `$$J \\;=\\; \\sum_{i,j=1}^{V} f\\!\\big(X_{ij}\\big)\\,\\big(\\,w_i^{\\top}\\tilde w_j + b_i + \\tilde b_j - \\log X_{ij}\\,\\big)^{2}\\qquad\\text{(Eq. 8)}$$
-       $$f(x) \\;=\\; \\begin{cases}\\,(x/x_{\\max})^{\\alpha} & \\text{if } x \\lt x_{\\max}\\\\[2pt] \\,1 & \\text{otherwise}\\end{cases}\\qquad x_{\\max}=100,\\ \\alpha=\\tfrac{3}{4}\\qquad\\text{(Eq. 9)}$$`,
+      `$$P_{ij} \\;=\\; P(j\\mid i) \\;=\\; \\frac{X_{ij}}{X_i},\\qquad X_i \\;=\\; \\sum_{k} X_{ik}$$
+       <p>The co-occurrence matrix $X$ and its probabilities (Section 3): $X_{ij}$ counts how often word $j$ occurs in the context of word $i$; $P_{ij}$ is the conditional probability, $X_i$ is the row total.</p>
+       $$F\\!\\big(w_i,\\,w_j,\\,\\tilde w_k\\big) \\;=\\; \\frac{P_{ik}}{P_{jk}}\\qquad\\text{(Eq. 1)}$$
+       <p>The starting demand: some function $F$ of the word vectors must reproduce the co-occurrence-probability <b>ratio</b> $P_{ik}/P_{jk}$ — the quantity Table 1 shows carries the meaning (8.9 for <i>solid</i> vs <i>ice/steam</i>, $\\approx 1$ for irrelevant <i>water</i>).</p>
+       $$F\\!\\big((w_i-w_j)^{\\top}\\tilde w_k\\big) \\;=\\; \\frac{P_{ik}}{P_{jk}}\\qquad\\text{(Eq. 3)}$$
+       <p>Restrict $F$ to the vector <b>difference</b> $w_i-w_j$ (vector spaces are linear) and take a <b>dot product</b> to keep a scalar (Eqs. 2-3).</p>
+       $$F\\!\\big(w_i^{\\top}\\tilde w_k\\big) \\;=\\; P_{ik} \\;=\\; \\frac{X_{ik}}{X_i}\\qquad\\text{(Eq. 5)}$$
+       <p>Requiring $F$ to be a homomorphism from $(\\mathbb{R},+)$ to $(\\mathbb{R}_{\\gt 0},\\times)$ — turning subtraction of vectors into division of ratios (Eq. 4) — solves to $F=\\exp$, so each side matches one probability (Eq. 5).</p>
+       $$w_i^{\\top}\\tilde w_k \\;=\\; \\log\\!\\big(P_{ik}\\big) \\;=\\; \\log\\!\\big(X_{ik}\\big) - \\log\\!\\big(X_i\\big)\\qquad\\text{(Eq. 6)}$$
+       <p>Taking logs of Eq. 5: the dot product equals $\\log P_{ik}$. This is the central insight that <b>motivates</b> the whole model — fitting dot products to log co-occurrence probabilities.</p>
+       $$w_i^{\\top}\\tilde w_k + b_i + \\tilde b_k \\;=\\; \\log\\!\\big(X_{ik}\\big)\\qquad\\text{(Eq. 7)}$$
+       <p>The $\\log X_i$ term depends only on $i$, so absorb it into a bias $b_i$; add $\\tilde b_k$ to restore the word$\\leftrightarrow$context symmetry. Now the target is simply $\\log X_{ik}$.</p>
+       $$J \\;=\\; \\sum_{i,j=1}^{V} f\\!\\big(X_{ij}\\big)\\,\\big(\\,w_i^{\\top}\\tilde w_j + b_i + \\tilde b_j - \\log X_{ij}\\,\\big)^{2}\\qquad\\text{(Eq. 8)}$$
+       <p>Eq. 7 holds only approximately, so cast it as <b>weighted least squares</b>: sum the squared residual over all word pairs, each weighted by $f(X_{ij})$. This is the GloVe objective.</p>
+       $$f(x) \\;=\\; \\begin{cases}\\,(x/x_{\\max})^{\\alpha} & \\text{if } x \\lt x_{\\max}\\\\[2pt] \\,1 & \\text{otherwise}\\end{cases}\\qquad x_{\\max}=100,\\ \\alpha=\\tfrac{3}{4}\\qquad\\text{(Eq. 9)}$$
+       <p>The weighting function: $f(0)=0$, rising as a power law below the cutoff $x_{\\max}=100$ then flat at $1$, so empty pairs cost nothing and very frequent pairs (like "the/and") do not dominate. The paper found $\\alpha=3/4$ beats the linear $\\alpha=1$.</p>
+       $$X_{ij} \\;=\\; \\frac{k}{(r_{ij})^{\\alpha}},\\qquad |C| \\;\\sim\\; \\frac{|X|}{1-\\alpha} + \\zeta(\\alpha)\\,|X|^{\\alpha} + O(1)\\qquad\\text{(Eqs. 17, 21)}$$
+       $$|X| \\;=\\; \\begin{cases}\\,O(|C|) & \\text{if } \\alpha \\lt 1\\\\[2pt] \\,O\\!\\big(|C|^{1/\\alpha}\\big) & \\text{if } \\alpha \\gt 1\\end{cases}\\qquad\\Longrightarrow\\qquad |X| = O\\!\\big(|C|^{0.8}\\big)\\qquad\\text{(Eq. 22)}$$
+       <p><b>Complexity (Section 3.2).</b> Cost scales with the number of nonzero entries $|X|$, trivially bounded by $O(|V|^2)$. Modeling counts as a power law of frequency rank $r_{ij}$ (Eq. 17, here a different exponent than $f$'s $\\alpha$) and summing via the generalized harmonic number / Riemann zeta function $\\zeta$ (Eqs. 18-21) gives the tighter bound Eq. 22. For the studied corpora the fit gives an exponent of $1.25$, so $|X| = O(|C|^{0.8})$ — better than the worst-case $O(|V|^2)$ and even better than the window methods' $O(|C|)$ in the corpus size $|C|$.</p>`,
 
     whatItDoes:
       `<p><b>Eq. 8</b> is the GloVe objective. For each pair of words $(i,j)$ it measures how far the model's

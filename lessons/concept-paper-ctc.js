@@ -174,12 +174,42 @@
        trailing blank, so $p(l|x)=\\alpha_T(|l'|)+\\alpha_T(|l'|-1)$ (&sect;4.1, Eq. 8). The training loss is
        the negative log of this (&sect;4.2, Eq. 12): $O^{ML}=-\\sum \\ln p(z|x)$ &mdash; ordinary
        maximum-likelihood, differentiable end to end.</p>`,
+    architecture:
+      `<p><b>The CTC network = an RNN body + a CTC output layer.</b> Component by component, following
+       &sect;3.1 and &sect;5.2:</p>
+       <ul>
+        <li><b>Input layer.</b> One real-valued feature vector per frame; the input space is $(\\mathbb{R}^m)^T$
+        (the TIMIT run used $m=26$ MFCC + energy + derivative coefficients per $10$ms frame).</li>
+        <li><b>Recurrent hidden body &mdash; bidirectional LSTM.</b> The paper uses a <b>BLSTM</b>: two LSTM
+        layers reading the sequence in opposite directions (forward and backward), so each frame's
+        representation sees both past and future context. The TIMIT model had $100$ LSTM blocks per
+        direction, with peepholes and forget gates, tanh cell activations and logistic gates. The body is a
+        continuous map $N_w:(\\mathbb{R}^m)^T\\to(\\mathbb{R}^n)^T$ &mdash; <i>same length out as in</i>: one
+        output vector per input frame. (The paper stresses any RNN architecture works; BLSTM just scored
+        best.)</li>
+        <li><b>Softmax output layer &mdash; the CTC layer.</b> $K=|L|+1$ units: one per label plus <b>one extra
+        blank unit</b> $b$. A softmax over these $K$ activations gives $y^t$ at every frame &mdash; a
+        per-frame distribution over labels-and-blank. TIMIT: input size $26$, output size $62$ ($61$ phonemes
+        $+$ blank), $114{,}662$ weights total. There must be <b>no feedback from the output layer</b>, which
+        is what makes the frames conditionally independent (so Eq. 2's product is valid).</li>
+        <li><b>CTC loss head (no parameters).</b> The $y$ matrix feeds the forward-backward dynamic program:
+        extend the target to $l'$, run the $\\alpha$ recursion (Eq. 6) and $\\beta$ recursion (Eq. 10), read off
+        $p(l|x)$ (Eq. 8), and emit the loss $-\\ln p(l|x)$ (Eq. 12). The error signal sent back into the softmax
+        is $y^t_k-\\frac{1}{y^t_k Z_t}\\sum_{s\\in\\mathrm{lab}(z,k)}\\hat\\alpha_t(s)\\hat\\beta_t(s)$ (Eq. 16),
+        which then flows into the RNN by <b>backpropagation through time</b>.</li>
+       </ul>
+       <p><b>Data flow:</b> frames $x_{1:T}\\to$ BLSTM $\\to$ per-frame logits $u^t\\to$ softmax $y^t\\to$
+       forward-backward over $l'\\to$ scalar loss; gradients flow $y\\to$ BLSTM $\\to$ weights. <b>Decoding</b> at
+       test time reads the labelling off $y$ directly: <i>best-path</i> (Eq. 4, take the top symbol per frame
+       then apply $\\mathcal{B}$) or <i>prefix-search</i> (a forward-backward-based search over label prefixes),
+       so <b>no external aligner or HMM</b> is needed.</p>`,
     symbols: [
       { sym: "$T$", desc: "the number of <b>input frames</b> (time steps the RNN reads); far larger than the label count." },
       { sym: "$L$", desc: "the <b>label alphabet</b> (e.g. the letters or phonemes); $|L|$ is its size." },
       { sym: "$b$ (blank)", desc: "the special extra output symbol meaning <b>\\\"emit no label here\\\"</b>; the softmax has one unit for it on top of $L$. Written $\\varnothing$ or a dash in path examples." },
       { sym: "$K = |L|+1$", desc: "the number of <b>softmax outputs</b> per frame: every label plus the blank." },
-      { sym: "$y^t_k$", desc: "the <b>softmax probability</b> the network gives to symbol $k$ at frame $t$ (each $y^t$ sums to $1$ over the $K$ symbols)." },
+      { sym: "$u^t_k$", desc: "the <b>unnormalised output</b> (pre-softmax activation) of unit $k$ at frame $t$; the softmax turns the $K$ of these into $y^t$." },
+      { sym: "$y^t_k$", desc: "the <b>softmax probability</b> the network gives to symbol $k$ at frame $t$: $y^t_k=\\exp(u^t_k)/\\sum_{k'}\\exp(u^t_{k'})$ (each $y^t$ sums to $1$ over the $K$ symbols)." },
       { sym: "$\\pi$ (path)", desc: "one full length-$T$ string of symbols, one per frame &mdash; a single frame-by-frame alignment." },
       { sym: "$p(\\pi|x)$", desc: "the <b>probability of a path</b>: the product of the per-frame probabilities it uses, $\\prod_t y^t_{\\pi_t}$ (Eq. 2)." },
       { sym: "$\\mathcal{B}$", desc: "the many-to-one <b>collapse map</b>: merge runs of the same label, then delete blanks. Maps a path to a label string." },
@@ -189,13 +219,24 @@
       { sym: "$l'_s$", desc: "the symbol at <b>position $s$</b> of the extended sequence ($s$ runs $1\\ldots|l'|$)." },
       { sym: "$\\alpha_t(s)$", desc: "the <b>forward variable</b>: total probability of all path-prefixes that, by frame $t$, have covered the first $s$ positions of $l'$ (Eq. 5)." },
       { sym: "$\\bar\\alpha_t(s)$", desc: "the <b>two-term merge</b> $\\alpha_{t-1}(s)+\\alpha_{t-1}(s-1)$: staying put plus stepping one position forward (Eq. 7)." },
-      { sym: "$p(l|x)$", desc: "the <b>labelling probability</b>: the alignment sum $\\sum_{\\pi\\in\\mathcal{B}^{-1}(l)}p(\\pi|x)$, computed by the forward pass (Eq. 3 = Eq. 8)." },
-      { sym: "$O^{ML}$", desc: "the <b>training objective</b> (&sect;4.2, Eq. 12): $-\\sum_{(x,z)}\\ln p(z|x)$ &mdash; negative log-likelihood, minimised by gradient descent." },
-      { sym: "forward-backward", desc: "a plain term: a <b>dynamic program</b> that sums over all alignments by sweeping forward ($\\alpha$) and backward ($\\beta$) through the lattice in linear time." }
+      { sym: "$\\beta_t(s)$", desc: "the <b>backward variable</b> (Eq. 9): total probability of the <i>suffix</i> $l'_{s:|l'|}$ from frame $t$ onward &mdash; the mirror of $\\alpha$, swept from the last frame backward. Initialised $\\beta_T(|l'|)=y^T_b$, $\\beta_T(|l'|-1)=y^T_{l_{|l|}}$." },
+      { sym: "$\\bar\\beta_t(s)$", desc: "the backward two-term merge $\\beta_{t+1}(s)+\\beta_{t+1}(s+1)$ (Eq. 11), with the symmetric skip $\\beta_{t+1}(s+2)$ allowed unless $l'_s$ is blank or $l'_{s+2}=l'_s$ (Eq. 10)." },
+      { sym: "$\\mathrm{lab}(l,k)$", desc: "the <b>set of positions</b> $\\{s:l'_s=k\\}$ where label $k$ appears in $l'$ &mdash; the positions summed in the gradient (Eq. 15)." },
+      { sym: "$C_t,\\,D_t$", desc: "the <b>rescaling sums</b> $C_t=\\sum_s\\alpha_t(s)$, $D_t=\\sum_s\\beta_t(s)$ used to normalise $\\hat\\alpha=\\alpha/C_t$, $\\hat\\beta=\\beta/D_t$ each frame so long products do not underflow (&sect;4.2); then $\\ln p(l|x)=\\sum_t\\ln C_t$." },
+      { sym: "$p(l|x)$", desc: "the <b>labelling probability</b>: the alignment sum $\\sum_{\\pi\\in\\mathcal{B}^{-1}(l)}p(\\pi|x)$, computed by the forward pass (Eq. 3 = Eq. 8 = Eq. 14)." },
+      { sym: "$O^{ML}$", desc: "the <b>training objective / CTC loss</b> (&sect;4.2, Eq. 12): $-\\sum_{(x,z)}\\ln p(z|x)$ &mdash; negative log-likelihood, minimised by gradient descent." },
+      { sym: "$\\mathrm{LER}$", desc: "the <b>label error rate</b> (&sect;2.1, Eq. 1): mean normalised edit distance $\\frac{1}{Z}\\sum \\mathrm{ED}(h(x),z)$ between predicted and target strings &mdash; the test-time error measure (not the training loss)." }
     ],
-    formula: `$$ p(l|x) \\;=\\; \\sum_{\\pi \\,\\in\\, \\mathcal{B}^{-1}(l)} p(\\pi|x) \\;=\\; \\sum_{\\pi \\,\\in\\, \\mathcal{B}^{-1}(l)} \\;\\prod_{t=1}^{T} y^{t}_{\\pi_t} \\qquad\\text{(\\S3.1, Eq.\\,3 \\& Eq.\\,2 — the alignment sum)} $$
-              $$ \\alpha_t(s) \\;=\\; \\begin{cases} \\bar\\alpha_t(s)\\, y^{t}_{l'_s} & \\text{if } l'_s = b \\text{ or } l'_{s-2}=l'_s \\\\[2pt] \\big(\\bar\\alpha_t(s) + \\alpha_{t-1}(s-2)\\big)\\, y^{t}_{l'_s} & \\text{otherwise} \\end{cases} \\qquad\\text{(\\S4.1, Eq.\\,6 — the forward recursion)} $$
-              $$ \\bar\\alpha_t(s) \\;=\\; \\alpha_{t-1}(s) + \\alpha_{t-1}(s-1) \\quad\\text{(Eq.\\,7)}, \\qquad p(l|x) = \\alpha_T(|l'|) + \\alpha_T(|l'|-1) \\quad\\text{(Eq.\\,8)} $$`,
+    formula: `$$ y^{t}_k \\;=\\; \\frac{\\exp\\!\\big(u^{t}_k\\big)}{\\sum_{k'=1}^{K}\\exp\\!\\big(u^{t}_{k'}\\big)}, \\quad k \\in L' = L \\cup \\{b\\},\\;\\; K=|L|+1 \\qquad\\text{(\\S3.1 — per-frame softmax over the labels plus blank)} $$
+              $$ p(\\pi|x) \\;=\\; \\prod_{t=1}^{T} y^{t}_{\\pi_t}, \\qquad \\forall\\,\\pi \\in (L')^{T} \\qquad\\text{(\\S3.1, Eq.\\,2 — probability of one length-}T\\text{ path }\\pi\\text{)} $$
+              $$ \\mathcal{B}\\big(a\\,\\text{-}\\,a\\,b\\,\\text{-}\\big) \\;=\\; \\mathcal{B}\\big(\\text{-}\\,a\\,a\\,\\text{-}\\,\\text{-}\\,a\\,b\\,b\\big) \\;=\\; a\\,a\\,b \\qquad\\text{(\\S3.1 — collapse map }\\mathcal{B}\\text{: merge repeats, then delete blanks)} $$
+              $$ p(l|x) \\;=\\; \\sum_{\\pi \\,\\in\\, \\mathcal{B}^{-1}(l)} p(\\pi|x) \\;=\\; \\sum_{\\pi \\,\\in\\, \\mathcal{B}^{-1}(l)} \\;\\prod_{t=1}^{T} y^{t}_{\\pi_t} \\qquad\\text{(\\S3.1, Eq.\\,3 — labelling probability = sum over its paths)} $$
+              $$ \\alpha_1(1)=y^{1}_b,\\quad \\alpha_1(2)=y^{1}_{l_1},\\quad \\alpha_1(s)=0\\;\\;\\forall s\\gt 2 \\qquad\\text{(\\S4.1 — forward initialisation on the extended sequence }l'\\text{)} $$
+              $$ \\alpha_t(s) \\;=\\; \\begin{cases} \\bar\\alpha_t(s)\\, y^{t}_{l'_s} & \\text{if } l'_s = b \\text{ or } l'_{s-2}=l'_s \\\\[2pt] \\big(\\bar\\alpha_t(s) + \\alpha_{t-1}(s-2)\\big)\\, y^{t}_{l'_s} & \\text{otherwise} \\end{cases}, \\quad \\bar\\alpha_t(s) = \\alpha_{t-1}(s) + \\alpha_{t-1}(s-1) \\qquad\\text{(\\S4.1, Eq.\\,6 \\& 7 — forward }\\alpha\\text{ recursion)} $$
+              $$ \\beta_T(|l'|)=y^{T}_b,\\quad \\beta_T(|l'|-1)=y^{T}_{l_{|l|}},\\quad \\beta_T(s)=0\\;\\;\\forall s\\lt|l'|-1 \\qquad\\text{(\\S4.1 — backward initialisation)} $$
+              $$ \\beta_t(s) \\;=\\; \\begin{cases} \\bar\\beta_t(s)\\, y^{t}_{l'_s} & \\text{if } l'_s = b \\text{ or } l'_{s+2}=l'_s \\\\[2pt] \\big(\\bar\\beta_t(s) + \\beta_{t+1}(s+2)\\big)\\, y^{t}_{l'_s} & \\text{otherwise} \\end{cases}, \\quad \\bar\\beta_t(s) = \\beta_{t+1}(s) + \\beta_{t+1}(s+1) \\qquad\\text{(\\S4.1, Eq.\\,10 \\& 11 — backward }\\beta\\text{ recursion)} $$
+              $$ p(l|x) \\;=\\; \\alpha_T(|l'|) + \\alpha_T(|l'|-1) \\;=\\; \\sum_{s=1}^{|l'|} \\frac{\\alpha_t(s)\\,\\beta_t(s)}{y^{t}_{l'_s}} \\qquad\\text{(\\S4.1, Eq.\\,8 \\& 14 — read off the labelling probability)} $$
+              $$ O^{ML} \\;=\\; -\\!\\!\\sum_{(x,z)\\in S} \\ln p(z|x), \\qquad \\frac{\\partial \\ln p(l|x)}{\\partial y^{t}_k} = \\frac{1}{p(l|x)\\,(y^{t}_k)^2}\\sum_{s\\in \\mathrm{lab}(l,k)} \\alpha_t(s)\\,\\beta_t(s) \\qquad\\text{(\\S4.2, Eq.\\,12 \\& 15 — the CTC loss and its gradient)} $$`,
     whatItDoes:
       `<p><b>The alignment sum (Eq. 3).</b> The top line is CTC's definition of "how likely is the string $l$?":
        add up the probabilities of <i>every</i> path that collapses to $l$. Each path's probability (Eq. 2) is

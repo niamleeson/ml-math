@@ -137,6 +137,36 @@
        left-to-right giving $\\overrightarrow{h}_j$, a backward RNN reads right-to-left giving
        $\\overleftarrow{h}_j$, and they are concatenated, $h_j = [\\overrightarrow{h}_j^{\\top}; \\overleftarrow{h}_j^{\\top}]^{\\top}$,
        so $h_j$ knows the words on both sides of position $j$.</p>`,
+    architecture:
+      `<p>Three components, in data-flow order (&sect;3, Fig. 1). Let $n$ be the RNN hidden size and $m$ the
+       embedding size.</p>
+       <ol>
+        <li><b>Encoder &mdash; bidirectional RNN (&sect;3.2).</b> The source words $x_1\\ldots x_{T_x}$ are
+        embedded, then read by two RNNs (the paper uses gated units, Appendix A.2): a <b>forward</b> RNN
+        produces $\\overrightarrow{h}_1\\ldots\\overrightarrow{h}_{T_x}$ (each in $\\mathbb{R}^{n}$) reading
+        left-to-right, and a <b>backward</b> RNN produces $\\overleftarrow{h}_1\\ldots\\overleftarrow{h}_{T_x}$
+        reading right-to-left. They are concatenated per position into <b>annotations</b>
+        $h_j = [\\overrightarrow{h}_j^{\\top}; \\overleftarrow{h}_j^{\\top}]^{\\top}\\in\\mathbb{R}^{2n}$. Output:
+        a matrix of $T_x$ annotations, one per source word &mdash; <i>not</i> a single summary vector.</li>
+        <li><b>Alignment / attention model (&sect;3.1, Eqns. 5-7).</b> A small single-hidden-layer perceptron
+        with learned weights $W_a\\in\\mathbb{R}^{n'\\times n}$ (on the decoder state), $U_a\\in\\mathbb{R}^{n'\\times 2n}$
+        (on each annotation), and $v_a\\in\\mathbb{R}^{n'}$ (collapse to a scalar). At decoder step $i$ it scores
+        every annotation, $e_{ij}=v_a^{\\top}\\tanh(W_a s_{i-1}+U_a h_j)$ (Eqn. 7); softmaxes the $T_x$ scores
+        into weights $\\alpha_{ij}$ (Eqn. 6); and returns the context $c_i=\\sum_j\\alpha_{ij}h_j\\in\\mathbb{R}^{2n}$
+        (Eqn. 5). The term $U_a h_j$ does not depend on $i$, so it is precomputed once per sentence; only
+        $W_a s_{i-1}$ is recomputed each step.</li>
+        <li><b>Decoder &mdash; gated RNN with attention (&sect;3.1, Appendix A.1.1).</b> A unidirectional gated
+        unit. Per output step $i$: (a) the attention block above yields $c_i,\\alpha_{i\\cdot}$ from $s_{i-1}$;
+        (b) the state updates $s_i = f(s_{i-1}, y_{i-1}, c_i)$ via update/reset gates over inputs
+        $[\\,\\text{embed}(y_{i-1}); c_i\\,]$; (c) the output $p(y_i\\mid\\cdots)=g(y_{i-1}, s_i, c_i)$ (Eqn. 4)
+        is a (maxout + softmax) classifier over the target vocabulary. The loop runs until an end token is
+        emitted.</li>
+       </ol>
+       <p><b>Data flow:</b> source words &rarr; embeddings &rarr; BiRNN annotations $\\{h_j\\}$ (computed once)
+       &rarr; [per step $i$: attention($s_{i-1}$, $\\{h_j\\}$) &rarr; $c_i$ &rarr; gated decoder state $s_i$
+       &rarr; softmax over vocabulary &rarr; $y_i$]. The single connection that makes this "attention" rather
+       than seq2seq is that $c_i$ is rebuilt every step from <i>all</i> annotations, instead of one fixed
+       encoder summary feeding every step.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>source sentence</b>: the input sequence of $T_x$ words being translated." },
       { sym: "$T_x$", desc: "the <b>source length</b> &mdash; how many words (and hence annotations $h_j$) the source has." },
@@ -150,9 +180,30 @@
       { sym: "$c_i$", desc: "the <b>context vector</b> for output word $i$: the attention-weighted average of all annotations, $\\sum_j \\alpha_{ij} h_j$ (Eqn. 5). Recomputed at every output step." },
       { sym: "$W_a, U_a, v_a$", desc: "the <b>learned weights</b> of the alignment network: $W_a$ maps the decoder state, $U_a$ maps each annotation, and $v_a$ collapses the hidden vector to one scalar score." },
       { sym: "$f,\\ g$", desc: "the decoder's <b>state-update</b> ($s_i = f(s_{i-1}, y_{i-1}, c_i)$, a gated RNN) and <b>output</b> ($p(y_i\\mid\\ldots) = g(\\cdots)$, a softmax classifier over the vocabulary) functions." },
+      { sym: "$s_i$", desc: "the <b>decoder hidden state after</b> emitting word $i$ &mdash; produced by the gated update $f$ from $s_{i-1}$, the previous word $y_{i-1}$, and the context $c_i$ (Eqn. 4 uses it inside $g$)." },
+      { sym: "$z_i,\\ r_i$", desc: "the gated decoder unit's <b>update gate</b> and <b>reset gate</b> (Appendix A.1.1), each a sigmoid of the previous word, previous state, and context. $z_i$ decides how much of the new candidate state to keep; $r_i$ decides how much past state feeds the candidate." },
+      { sym: "$\\tilde{s}_i$", desc: "the <b>candidate state</b> in the gated decoder unit: $\\tanh$ of the previous word, the reset-gated previous state, and the context; blended with $s_{i-1}$ by $z_i$ to give $s_i$." },
+      { sym: "$W,U,C,\\,W_z,U_z,C_z,\\,W_r,U_r,C_r$", desc: "the <b>learned weight matrices</b> of the gated decoder unit (Appendix A.1.1): the $W$'s act on the embedded previous word $e(y_{i-1})$, the $U$'s on the previous state, and the $C$'s on the context $c_i$, for the candidate state and the two gates respectively." },
+      { sym: "$e(\\cdot)$", desc: "the <b>word-embedding</b> lookup turning a target word $y_{i-1}$ into its dense vector (distinct from the alignment score $e_{ij}$)." },
+      { sym: "$\\odot$", desc: "<b>elementwise (Hadamard) product</b> of two vectors &mdash; multiply matching components, used by the decoder gates." },
+      { sym: "$\\sigma$", desc: "the <b>logistic sigmoid</b> $1/(1+e^{-x})$, squashing each gate value into $(0,1)$." },
+      { sym: "$n,\\ m,\\ n'$", desc: "the <b>RNN hidden size</b> ($n$, so an annotation $h_j$ has dimension $2n$), the word-<b>embedding size</b> ($m$), and the <b>alignment-network hidden size</b> ($n'$, the width of $v_a$)." },
       { sym: "“softmax”", desc: "a plain term: turns a list of real scores into positive numbers that sum to 1 by exponentiating and dividing by the total &mdash; here it converts alignment scores into attention weights." }
     ],
-    formula: `$$ c_i = \\sum_{j=1}^{T_x}\\alpha_{ij}\\,h_j \\;\\text{(Eqn. 5)} \\qquad \\alpha_{ij} = \\frac{\\exp(e_{ij})}{\\sum_{k=1}^{T_x}\\exp(e_{ik})} \\;\\text{(Eqn. 6)} \\qquad e_{ij} = v_a^{\\top}\\tanh\\!\\big(W_a s_{i-1} + U_a h_j\\big) \\;\\text{(Eqn. 7)} $$`,
+    formula: `$$ p(y_i \\mid y_1,\\ldots,y_{i-1}, x) = g(y_{i-1},\\, s_i,\\, c_i) $$
+       <p class="cap">The decoder's per-word output (&sect;3.1, Eqn. 4): the probability of target word $y_i$ depends on the previous word, the decoder state $s_i$, and the <i>per-word</i> context $c_i$ &mdash; $g$ is a (softmax) classifier over the vocabulary.</p>
+       $$ s_i = f\\big(s_{i-1},\\, y_{i-1},\\, c_i\\big) $$
+       <p class="cap">The decoder state update (&sect;3.1): a gated RNN $f$ folds the previous state, previous word, and current context into the new state $s_i$. Unlike plain seq2seq, $c_i$ is distinct for each output step $i$.</p>
+       $$ c_i = \\sum_{j=1}^{T_x}\\alpha_{ij}\\,h_j $$
+       <p class="cap">The context vector (&sect;3.1, Eqn. 5): a weighted average of all $T_x$ source annotations $h_j$, recomputed for every output word $i$.</p>
+       $$ \\alpha_{ij} = \\frac{\\exp(e_{ij})}{\\sum_{k=1}^{T_x}\\exp(e_{ik})} $$
+       <p class="cap">The attention weights (&sect;3.1, Eqn. 6): a softmax over the alignment scores, so $\\alpha_{ij}\\ge 0$ and $\\sum_j \\alpha_{ij}=1$ &mdash; a soft selection over source positions.</p>
+       $$ e_{ij} = a(s_{i-1},\\, h_j) = v_a^{\\top}\\tanh\\!\\big(W_a s_{i-1} + U_a h_j\\big) $$
+       <p class="cap">The additive alignment score (&sect;3.1, Eqn. 7): a one-hidden-layer perceptron $a$ scores how well annotation $h_j$ matches decoder state $s_{i-1}$. Inputs are <i>added</i> inside the $\\tanh$ &mdash; hence "additive" attention.</p>
+       $$ h_j = \\big[\\,\\overrightarrow{h}_j^{\\top};\\ \\overleftarrow{h}_j^{\\top}\\,\\big]^{\\top} $$
+       <p class="cap">The bidirectional-encoder annotation (&sect;3.2): the forward-RNN state at $j$ concatenated with the backward-RNN state at $j$, so $h_j$ summarizes the source on <i>both</i> sides of position $j$.</p>
+       $$ s_i = (1-z_i)\\odot s_{i-1} + z_i\\odot\\tilde{s}_i,\\quad \\tilde{s}_i = \\tanh\\!\\big(W e(y_{i-1}) + U[r_i\\odot s_{i-1}] + C c_i\\big) $$
+       <p class="cap">The gated decoder unit (Appendix A.1.1): the update gate $z_i=\\sigma(W_z e(y_{i-1}) + U_z s_{i-1} + C_z c_i)$ and reset gate $r_i=\\sigma(W_r e(y_{i-1}) + U_r s_{i-1} + C_r c_i)$ make $f$ a GRU that blends the old state with a candidate $\\tilde{s}_i$ ($\\odot$ is elementwise product, $\\sigma$ the logistic sigmoid).</p>`,
     whatItDoes:
       `<p>Read the three equations right-to-left, the order they are computed.</p>
        <p><b>Eqn. 7</b> is the <b>scorer</b>: for output step $i$ and source position $j$, push the decoder

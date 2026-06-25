@@ -139,14 +139,54 @@
        word ends up <i>closest in time</i> to where the first output word is generated, so short-range dependencies
        become easy for gradient descent to learn. The paper calls this reducing the "minimal time lag."</p>`,
 
+    architecture:
+      `<p><b>The deep LSTM encoder-decoder, component by component (Section 3.4).</b> Two separate stacks of LSTMs,
+       each <b>4 layers deep</b> with <b>1000 cells per layer</b>, plus embeddings and an output softmax:</p>
+       <ol>
+         <li><b>Input embedding.</b> Each source token (from an input vocabulary of <b>160,000</b> words) is mapped to
+         a <b>1000-dimensional</b> learned word vector.</li>
+         <li><b>Encoder stack.</b> A 4-layer LSTM reads the embedded source tokens left to right — but on the
+         <b>reversed</b> source order (Section 3.3). Layer 1 reads the embeddings; each higher layer reads the hidden
+         states of the layer below. The encoder emits no output words. After the last token (the
+         $\\langle\\text{EOS}\\rangle$ marker), its full state &mdash; the hidden and cell state of all 4 layers,
+         <b>8000 real numbers</b> total &mdash; is the fixed context vector $v$.</li>
+         <li><b>State hand-off.</b> $v$ is copied in as the <b>initial</b> hidden+cell state of the decoder stack.
+         This single vector is the <i>only</i> path by which the input reaches the decoder (the bottleneck attention
+         later removes).</li>
+         <li><b>Decoder stack.</b> A <i>second</i>, independent 4-layer LSTM (different weights from the encoder).
+         At each step it takes the embedding of the previous output token (during training, the true previous target
+         &mdash; teacher forcing; at test time, its own previous prediction) and updates its 4-layer state.</li>
+         <li><b>Output projection + softmax.</b> A linear map $W^{yh}$ turns the top decoder layer's hidden state into
+         one logit per output word (output vocabulary of <b>80,000</b>), and a softmax gives the next-token
+         distribution $p(y_t\\mid v, y_{\\lt t})$.</li>
+         <li><b>Decoding loop.</b> A left-to-right <b>beam search</b> (beam size $B$, typically 2&ndash;12) keeps the
+         $B$ best partial hypotheses, extending and re-pruning each step until $\\langle\\text{EOS}\\rangle$.</li>
+       </ol>
+       <p><b>Size.</b> The full model has <b>384M parameters</b>, of which <b>64M</b> are the pure recurrent
+       connections (32M in the encoder LSTM, 32M in the decoder LSTM); the rest are the large input/output embedding
+       and softmax matrices. Our CODE builds a <b>1-layer</b> toy version of exactly this shape so it trains in a
+       browser; the deep 4-layer stack and 160k/80k vocabularies are the paper's, not ours.</p>`,
+
     symbols: [
       { sym: "$x_1,\\dots,x_T$", desc: "the input sequence: $T$ tokens (e.g. source-language words). $T$ is the input length." },
       { sym: "$y_1,\\dots,y_{T'}$", desc: "the output sequence: $T'$ tokens. Its length $T'$ can differ from the input length $T$." },
       { sym: "$T$", desc: "the number of tokens in the input." },
       { sym: "$T'$", desc: "the number of tokens in the output (read 'T-prime'); generally not equal to $T$." },
       { sym: "$v$", desc: "the context vector: the encoder LSTM's final hidden state (with its cell state). One fixed-length vector that summarizes the whole input." },
+      { sym: "$\\langle\\text{EOS}\\rangle$", desc: "the end-of-sequence token appended to every sentence; it lets the model define a probability over output sequences of any length and tells the decoder when to stop." },
       { sym: "$p(y_t \\mid v, y_1,\\dots,y_{t-1})$", desc: "the model's probability of the next output token $y_t$ given the context $v$ and all previously generated tokens (the bar means 'given')." },
       { sym: "$\\prod_{t=1}^{T'}$", desc: "a product over the $T'$ output steps: multiply the per-step probabilities together to get the probability of the whole output." },
+      { sym: "$\\operatorname{sigm}$ / $\\sigma$", desc: "the logistic sigmoid $1/(1+e^{-z})$ ('sigm' is the paper's spelling); squashes any real number into $(0,1)$." },
+      { sym: "$\\operatorname{softmax}$", desc: "turns a vector of real-valued logits $z$ into a probability distribution: $\\operatorname{softmax}(z)_w = e^{z_w}/\\sum_{w'} e^{z_{w'}}$ (each entry in $(0,1)$, all summing to 1)." },
+      { sym: "$W^{hx},\\ W^{hh},\\ W^{yh}$", desc: "weight matrices of the plain RNN: input-to-hidden, hidden-to-hidden, and hidden-to-output. In the LSTM the gate-specific $W_i,W_f,W_g,W_o,U_\\cdot$ play the analogous role." },
+      { sym: "$h_t^{\\text{enc}},\\ h_t^{\\text{dec}}$", desc: "the encoder's and decoder's hidden state at step $t$; the encoder's final one (with its cell state) is $v$." },
+      { sym: "$z_t,\\ z_{t,w}$", desc: "the decoder's output logits at step $t$ ($z_t = W^{yh} h_t^{\\text{dec}}$): $z_{t,w}$ is the raw score for vocabulary word $w$ before the softmax." },
+      { sym: "$\\mathcal{V}$", desc: "the output vocabulary (set of possible output tokens); $|\\mathcal{V}|$ is its size (80,000 in the paper)." },
+      { sym: "$\\mathcal{S}$", desc: "the training set of (target sentence $T$, source sentence $S$) pairs; $|\\mathcal{S}|$ is the number of pairs." },
+      { sym: "$T,\\ S$", desc: "in the objective, $T$ is a target (output) sentence and $S$ is its source (input) sentence — uppercase, distinct from the lowercase length $T$ above." },
+      { sym: "$\\hat{T}$", desc: "the decoded translation: the output sentence the model picks, i.e. $\\arg\\max_T p(T\\mid S)$ (approximated by beam search)." },
+      { sym: "$\\arg\\max_T$", desc: "the value of $T$ that maximizes the expression — here, the most probable output sequence." },
+      { sym: "$B$", desc: "the beam width: how many partial hypotheses the beam-search decoder keeps at each step (e.g. 1, 2, or 12)." },
       { sym: "$h_t$", desc: "the LSTM hidden state at step $t$: a vector summarizing the sequence up to step $t$ (also the cell's output)." },
       { sym: "$c_t$", desc: "the LSTM cell state at step $t$: the cell's internal memory, separate from $h_t$; the gates decide what to keep in it." },
       { sym: "$i_t,\\ f_t,\\ o_t$", desc: "the input, forget, and output gates of the LSTM at step $t$ — numbers in $(0,1)$ that control how much new info enters, how much memory is kept, and how much memory is read out." },
@@ -157,26 +197,72 @@
     ],
 
     formula:
-      `$$p\\big(y_1,\\dots,y_{T'} \\mid x_1,\\dots,x_T\\big)
+      `$$h_t = \\operatorname{sigm}\\!\\big(W^{hx} x_t + W^{hh} h_{t-1}\\big),
+        \\qquad y_t = W^{yh} h_t \\qquad\\text{(Section 2: the plain-RNN recurrence seq2seq generalizes)}$$
+       <p>The vanilla RNN: at each step the hidden state $h_t$ is a squashed linear mix of the current input $x_t$
+       and the previous hidden state $h_{t-1}$, and an output $y_t$ is read off it. The paper swaps this fragile cell
+       for an LSTM (below) but keeps the same read-in / read-out shape.</p>
+       $$v = h_T^{\\text{enc}} \\;=\\; \\text{Encoder-LSTM}\\big(x_1,\\dots,x_T,\\langle\\text{EOS}\\rangle\\big)
+         \\qquad\\text{(Section 2: the encoder squashes the whole input into one fixed vector }v)$$
+       <p>The encoder LSTM reads the input (terminated by the end-of-sequence token $\\langle\\text{EOS}\\rangle$) and
+       emits no words; only its <i>final</i> hidden+cell state is kept, and that pair is the context vector $v$.</p>
+       $$p\\big(y_1,\\dots,y_{T'} \\mid x_1,\\dots,x_T\\big)
         \\;=\\; \\prod_{t=1}^{T'} p\\big(y_t \\mid v,\\, y_1,\\dots,y_{t-1}\\big)
         \\qquad\\text{(Eq. 1, Section 2)}$$
+       <p>The decoder factorizes the output sequence's probability as a product of per-step conditionals, each one
+       conditioned on $v$ and the tokens generated so far. Every $\\langle\\text{EOS}\\rangle$-terminated sequence of
+       any length gets a well-defined probability.</p>
+       $$p\\big(y_t \\mid v, y_1,\\dots,y_{t-1}\\big)
+         \\;=\\; \\operatorname{softmax}\\!\\big(W^{yh} h_t^{\\text{dec}}\\big)
+         \\;=\\; \\frac{\\exp\\!\\big(z_{t,\\,y_t}\\big)}{\\sum_{w=1}^{|\\mathcal{V}|}\\exp\\!\\big(z_{t,\\,w}\\big)},
+         \\qquad z_t = W^{yh} h_t^{\\text{dec}}
+         \\qquad\\text{(Section 2: the per-step softmax over the vocabulary)}$$
+       <p>Each decoder step projects its hidden state $h_t^{\\text{dec}}$ to one logit $z_{t,w}$ per vocabulary word
+       $w$, then a softmax turns the logits into a probability distribution over the whole vocabulary $\\mathcal{V}$;
+       the probability of the actual token $y_t$ is the highlighted factor of Eq. 1.</p>
+       $$\\frac{1}{|\\mathcal{S}|}\\sum_{(T,S)\\in\\mathcal{S}} \\log p\\big(T \\mid S\\big)
+         \\qquad\\text{(Section 2: the training objective — maximize average log-likelihood of correct translations)}$$
+       <p>Training maximizes, over the training set $\\mathcal{S}$ of (target $T$, source $S$) pairs, the average log
+       probability the model assigns to the correct translation. Maximizing this sum of logs is exactly minimizing the
+       summed per-token cross-entropy.</p>
+       $$\\hat{T} \\;=\\; \\arg\\max_{T} \\; p\\big(T \\mid S\\big)
+         \\qquad\\text{(Section 2: decode by finding the most likely translation)}$$
+       <p>At test time we want the single most probable output sequence. Exact $\\arg\\max$ over all sequences is
+       intractable, so the paper approximates it with a left-to-right <b>beam search</b>: keep the $B$ highest
+       log-probability partial hypotheses, extend each by every vocabulary word, re-prune to the top $B$, and finish a
+       hypothesis when it emits $\\langle\\text{EOS}\\rangle$. The paper found a beam of $B=2$ already captures most of
+       the gain, and even $B=1$ (greedy) works well (Section 3.6).</p>
        $$\\begin{aligned}
          i_t &= \\sigma(W_i x_t + U_i h_{t-1} + b_i), &\\quad f_t &= \\sigma(W_f x_t + U_f h_{t-1} + b_f)\\\\
          g_t &= \\tanh(W_g x_t + U_g h_{t-1} + b_g), &\\quad o_t &= \\sigma(W_o x_t + U_o h_{t-1} + b_o)\\\\
          c_t &= f_t \\odot c_{t-1} + i_t \\odot g_t, &\\quad h_t &= o_t \\odot \\tanh(c_t)
-       \\end{aligned}\\qquad\\text{(the LSTM cell it uses)}$$`,
+       \\end{aligned}\\qquad\\text{(the LSTM cell that replaces the plain-RNN recurrence above)}$$`,
 
     whatItDoes:
-      `<p>The <b>top</b> equation (<b>Eq. 1</b> of the paper) says the probability of the whole output sequence is the
-       <i>product</i> of the per-step probabilities, where each step is conditioned on the context vector $v$ and the
-       tokens already generated. The decoder LSTM produces exactly these per-step distributions: it factorizes one
-       hard problem ("produce the whole sentence") into many easy ones ("produce the next word"). The paper's first
-       LSTM computes $v$; the second computes this product.</p>
-       <p>The <b>bottom</b> block is the LSTM cell the paper relies on (it cites Graves' formulation rather than
-       printing the gates). It is here so the worked example below has something concrete to compute, and so you can
-       see what <code>nn.LSTM</code> does inside: the forget gate $f_t$ decides how much old memory $c_{t-1}$ to keep,
-       the input gate $i_t$ decides how much new content $g_t$ to write, and the output gate $o_t$ decides how much of
-       the memory to expose as the hidden state $h_t$. Full derivation lives in <code>dl-lstm-gru</code> /
+      `<p><b>RNN recurrence</b> ($h_t=\\operatorname{sigm}(W^{hx}x_t+W^{hh}h_{t-1})$, $y_t=W^{yh}h_t$): the standard
+       recurrent net the paper generalizes &mdash; the hidden state at each step blends the current input and the last
+       hidden state, then projects to an output. It works only when input and output align step-for-step; seq2seq
+       breaks that limitation by using two of these (an LSTM version), one to read and one to write.</p>
+       <p><b>Encoder</b> ($v=h_T^{\\text{enc}}$): run the encoder LSTM over the whole (reversed) input; its final
+       hidden+cell state is the single fixed vector $v$ &mdash; the entire input compressed to 8000 numbers in the
+       paper.</p>
+       <p><b>Eq. 1</b> (the product): the probability of the whole output sequence equals the <i>product</i> of the
+       per-step probabilities, each conditioned on $v$ and the tokens already generated. The decoder LSTM produces
+       exactly these per-step distributions: it factorizes one hard problem ("produce the whole sentence") into many
+       easy ones ("produce the next word").</p>
+       <p><b>Per-step softmax</b>: each decoder step projects its hidden state to one logit per vocabulary word, and
+       the softmax normalizes those logits into a probability distribution over all words; the probability of the
+       actual next word $y_t$ is one factor of Eq. 1.</p>
+       <p><b>Training objective</b> ($\\frac{1}{|\\mathcal{S}|}\\sum \\log p(T\\mid S)$): make the correct target
+       sentences as probable as possible on average over the training set &mdash; equivalently, minimize summed
+       per-token cross-entropy by backprop through both LSTMs.</p>
+       <p><b>Decoding</b> ($\\hat{T}=\\arg\\max_T p(T\\mid S)$): at test time, output the most probable sequence;
+       since that search is intractable, approximate it with a small beam search.</p>
+       <p><b>The LSTM cell block</b> is the cell the paper relies on (it cites Graves' formulation rather than printing
+       the gates). It is here so the worked example below has something concrete to compute, and so you can see what
+       <code>nn.LSTM</code> does inside: the forget gate $f_t$ decides how much old memory $c_{t-1}$ to keep, the
+       input gate $i_t$ decides how much new content $g_t$ to write, and the output gate $o_t$ decides how much of the
+       memory to expose as the hidden state $h_t$. Full derivation lives in <code>dl-lstm-gru</code> /
        <code>paper-lstm</code>.</p>`,
 
     derivation:

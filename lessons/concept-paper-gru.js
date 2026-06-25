@@ -128,6 +128,35 @@
        flows back through that near-identity link without being repeatedly shrunk. That is the same "carry the signal"
        trick as the LSTM, achieved with one gate fewer and one state fewer.</p>`,
 
+    architecture:
+      `<p><b>The GRU cell, component by component.</b> Let $d$ be the hidden size and $m$ the input size. One cell holds
+       three learned linear maps, each producing a $d$-vector from the concatenation $[h_{t-1}, x_t]$ (an $(m+d)$-vector):</p>
+       <ul>
+         <li><b>Reset-gate map</b> $W_r$ (shape $d\\times(m{+}d)$, i.e. $W_r=[U_r\\;|\\;W_r^{x}]$) $\\to$ sigmoid $\\to r_t\\in(0,1)^d$.</li>
+         <li><b>Update-gate map</b> $W_z$ (shape $d\\times(m{+}d)$) $\\to$ sigmoid $\\to z_t\\in(0,1)^d$.</li>
+         <li><b>Candidate map</b> $W$ (shape $d\\times(m{+}d)$), but its hidden block multiplies the GATED state
+         $r_t\\odot h_{t-1}$, not $h_{t-1}$ $\\to$ tanh $\\to \\tilde{h}_t\\in(-1,1)^d$.</li>
+       </ul>
+       <p><b>Data flow inside one step.</b></p>
+       <ol>
+         <li>Inputs arrive: previous state $h_{t-1}\\in\\mathbb{R}^d$ and current input $x_t\\in\\mathbb{R}^m$.</li>
+         <li>$r_t$ and $z_t$ are computed in parallel from $[h_{t-1},x_t]$ (two independent sigmoid gates).</li>
+         <li>The reset gate modulates the state: $r_t\\odot h_{t-1}$, which feeds the candidate map; the candidate
+         $\\tilde{h}_t$ is formed by tanh.</li>
+         <li>The update gate mixes old and candidate at a single convex-combination node:
+         $h_t=(1-z_t)\\odot h_{t-1}+z_t\\odot\\tilde{h}_t$ (PyTorch write-convention). The $\\odot h_{t-1}$ term is a
+         near-identity skip connection when $z_t\\approx 0$ — the highway that carries memory and gradient across steps.</li>
+         <li>$h_t$ is emitted as BOTH the cell output and the recurrent state passed to step $t{+}1$ — there is no
+         output gate and no separate memory cell.</li>
+       </ol>
+       <p><b>Sequence / Encoder-Decoder use (1406.1078).</b> The cell is unrolled over a sequence, sharing the same
+       $W_r,W_z,W$ at every step. The RNN Encoder-Decoder stacks two such GRU RNNs: an <b>encoder</b> reads the source
+       tokens $x_1\\dots x_{T}$ into a fixed-length summary $c$ (its final hidden state), and a <b>decoder</b> GRU
+       generates the target tokens conditioned on $c$, the two trained jointly to maximize conditional log-likelihood.
+       <b>Parameter count of one cell:</b> $3\\,d\\,(m+d)$ weights plus $3d$ biases (or $6d$ if input and hidden biases
+       are kept separate, as in PyTorch) — exactly $3/4$ of an LSTM's $4\\,d\\,(m+d)$, since the GRU has three gate/candidate
+       maps where the LSTM has four.</p>`,
+
     symbols: [
       { sym: "$x^{&lt;t&gt;}$", desc: "input vector at time step $t$; the superscript $^{&lt;t&gt;}$ means 'at step $t$'." },
       { sym: "$h^{&lt;t&gt;}$", desc: "hidden state (the running summary) at step $t$; for the GRU it is also the output." },
@@ -137,17 +166,44 @@
       { sym: "$\\sigma$", desc: "logistic sigmoid $\\sigma(a)=1/(1+e^{-a})$ — squashes any number into $(0,1)$, so gates act as soft valves." },
       { sym: "$\\phi$", desc: "the candidate's squashing function; here $\\tanh$, which maps any number into $(-1,1)$." },
       { sym: "$\\odot$", desc: "elementwise (Hadamard) product: multiply two vectors entry by entry." },
-      { sym: "$W_r,W_z,W$", desc: "input-to-gate weight matrices (learned) for reset, update, and candidate." },
-      { sym: "$U_r,U_z,U$", desc: "state-to-gate weight matrices (learned) for reset, update, and candidate." }
+      { sym: "$W_r,W_z,W$", desc: "input-to-gate weight matrices (learned) for reset, update, and candidate. In the compact $[h_{t-1},x_t]$ form, each is the concatenation $[U_\\bullet\\,|\\,W_\\bullet^{x}]$ acting on the stacked vector." },
+      { sym: "$U_r,U_z,U$", desc: "state-to-gate weight matrices (learned) for reset, update, and candidate (the hidden block of each $W_\\bullet$)." },
+      { sym: "$c_t,\\tilde{c}_t$", desc: "LSTM only (shown for contrast): the protected memory cell and its candidate. The GRU has NO such separate cell." },
+      { sym: "$i_t,f_t,o_t$", desc: "LSTM only (shown for contrast): input, forget, and output gates. The GRU replaces $i_t,f_t$ with the single $z_t$ and has no output gate $o_t$." }
     ],
 
     formula:
-      `$$\\begin{aligned}
-        r_j &= \\sigma\\!\\big([W_r x]_j + [U_r h^{&lt;t-1&gt;}]_j\\big) &&\\text{(reset gate, eq. 5)}\\\\
-        z_j &= \\sigma\\!\\big([W_z x]_j + [U_z h^{&lt;t-1&gt;}]_j\\big) &&\\text{(update gate, eq. 6)}\\\\
-        \\tilde{h}_j^{&lt;t&gt;} &= \\phi\\!\\big([W x]_j + [U\\,(r \\odot h^{&lt;t-1&gt;})]_j\\big) &&\\text{(candidate, eq. 8)}\\\\
-        h_j^{&lt;t&gt;} &= z_j\\,h_j^{&lt;t-1&gt;} + (1-z_j)\\,\\tilde{h}_j^{&lt;t&gt;} &&\\text{(blend, eq. 7)}
-       \\end{aligned}$$`,
+      `<p><b>The four GRU equations</b> (Cho et al. 2014, §2.3, eqs 5-8; here in compact vector form, with
+       $[\\,\\cdot\\,]_j$ meaning "the $j$-th entry"). $\\sigma$ is the logistic sigmoid (squashes into $(0,1)$),
+       $\\phi=\\tanh$, and $\\odot$ is elementwise multiply.</p>
+       $$r_t = \\sigma\\!\\big(W_r\\,[h_{t-1}, x_t]\\big) \\qquad\\text{(reset gate, eq. 5)}$$
+       <p>Reset gate $r_t$: a per-dimension valve in $[0,1]$. Near $0$ it forces the candidate to ignore the
+       previous state and reset from the current input alone.</p>
+       $$z_t = \\sigma\\!\\big(W_z\\,[h_{t-1}, x_t]\\big) \\qquad\\text{(update gate, eq. 6)}$$
+       <p>Update gate $z_t$: a per-dimension valve in $[0,1]$ deciding how much old state carries over vs. how much
+       fresh content is written.</p>
+       $$\\tilde{h}_t = \\tanh\\!\\big(W\\,[\\,r_t \\odot h_{t-1},\\; x_t\\,]\\big) \\qquad\\text{(candidate, eq. 8)}$$
+       <p>Candidate $\\tilde{h}_t$: proposed new content; the old state enters it ONLY through $r_t \\odot h_{t-1}$,
+       so the reset gate controls how much past context the candidate may use.</p>
+       $$h_t = (1-z_t)\\odot h_{t-1} + z_t \\odot \\tilde{h}_t \\qquad\\text{(interpolation, eq. 7 — write-convention)}$$
+       <p>Interpolation: the new state is a per-dimension weighted average of the old state and the candidate. NOTE the
+       label convention below — in the paper's own eq. 7 it is written $h_t = z_t\\,h_{t-1} + (1-z_t)\\,\\tilde{h}_t$,
+       i.e. $z_t\\to 1$ KEEPS the old state; the form above is the equivalent "write" labeling where $z_t\\to 1$ WRITES
+       the candidate. Same family, labels swapped on which side wears $z$ vs $(1-z)$.</p>
+       <p><b>The same four lines, indexed (paper's eq. 5-8, verbatim from Cho et al. 2014 §2.3):</b></p>
+       $$\\begin{aligned}
+        r_j &= \\sigma\\!\\big([W_r x]_j + [U_r h_{t-1}]_j\\big) &&\\text{(eq. 5)}\\\\
+        z_j &= \\sigma\\!\\big([W_z x]_j + [U_z h_{t-1}]_j\\big) &&\\text{(eq. 6)}\\\\
+        \\tilde{h}_j^{&lt;t&gt;} &= \\phi\\!\\big([W x]_j + [U\\,(r \\odot h_{t-1})]_j\\big) &&\\text{(eq. 8)}\\\\
+        h_j^{&lt;t&gt;} &= z_j\\,h_j^{&lt;t-1&gt;} + (1-z_j)\\,\\tilde{h}_j^{&lt;t&gt;} &&\\text{(eq. 7)}
+       \\end{aligned}$$
+       <p><b>Contrast with the LSTM</b> (fewer gates, no separate memory cell). The LSTM carries two states — a hidden
+       state $h_t$ and a protected memory cell $c_t$ — updated with three gates (input $i$, forget $f$, output $o$):</p>
+       $$c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t, \\qquad h_t = o_t \\odot \\tanh(c_t).$$
+       <p>The GRU collapses this to ONE state and TWO gates: the single update gate $z_t$ plays the combined role of the
+       LSTM's input and forget gates ($i_t$ and $1-f_t$ tied together as $z_t$ and $1-z_t$), there is NO output gate
+       (the state $h_t$ is exposed directly), and there is NO separate memory cell $c_t$ — the hidden state IS the
+       memory.</p>`,
 
     whatItDoes:
       `<p>Two gates and one candidate. The <b>reset gate</b> $r$ controls how much of the old state feeds the

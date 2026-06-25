@@ -132,7 +132,7 @@
        recorded trajectory</i>. A trajectory that ended up earning a lot has large early $\\hat R_t$ values; a
        poor one has small values. The model thus sees, at every action, a label saying "this action belonged to
        a future worth $\\hat R_t$."</p>
-       <p><b>2. Interleave into one stream.</b> The trajectory becomes (Section 3, Eq. 1):</p>
+       <p><b>2. Interleave into one stream.</b> The trajectory becomes (Section 3, Eq. 2):</p>
        <p>$$ \\tau = (\\hat R_1,\\, s_1,\\, a_1,\\, \\hat R_2,\\, s_2,\\, a_2,\\, \\ldots,\\, \\hat R_T,\\, s_T,\\, a_T). $$</p>
        <p>So an episode of length $T$ becomes a sequence of $3T$ tokens.</p>
        <p><b>3. Embed each modality, add a timestep position.</b> Each token type gets its <b>own linear
@@ -156,9 +156,47 @@
        $(\\hat R_2, s_2)$ and repeat. The decrement keeps the conditioning honest &mdash; it always says "here is
        how much return I still expect you to earn." Ask for a bigger number and the model imitates the
        higher-return slices of the data; that is the entire control knob.</p>`,
+    architecture:
+      `<p>Component by component, the way the $3K$ tokens flow through the network (Section 3). "Modality"
+       just means token type &mdash; return-to-go, state, or action.</p>
+       <ol>
+        <li><b>Input window: the last $K$ timesteps.</b> At any moment the model is fed the most recent $K$
+        timesteps, which is $3K$ tokens (a return-to-go, a state, and an action for each). $K$ is the
+        <b>context length</b>; a longer window helps markedly (Section 5.3 ablation).</li>
+        <li><b>Three modality-specific embeddings (a linear layer each).</b> Each token type has its <i>own</i>
+        learned projection to the embedding dimension $d$:
+          <ul>
+           <li><b>return-to-go</b> $\\hat R_t$ (a scalar) &rarr; a <code>Linear(1, d)</code>;</li>
+           <li><b>state</b> $s_t$ &rarr; a <code>Linear</code> for vector states, or a <b>convolutional encoder</b>
+           when the state is an image (e.g. Atari pixels);</li>
+           <li><b>action</b> $a_t$ &rarr; a linear/embedding layer.</li>
+          </ul>
+          Each projection is followed by <b>layer normalization</b>.</li>
+        <li><b>Per-timestep position embedding (not the standard one).</b> A learned embedding is indexed by the
+        <i>timestep</i> and added to all three tokens of that step. The paper flags this as different from a
+        vanilla Transformer positional embedding, because here <b>one timestep maps to three tokens</b> &mdash;
+        the three tokens of step $t$ share the same position vector, rather than getting three consecutive
+        position indices.</li>
+        <li><b>GPT causal Transformer stack.</b> The $3K$ position-augmented token embeddings pass through a
+        stack of standard <b>GPT</b> decoder blocks &mdash; multi-head <b>self-attention with a causal (triangular)
+        mask</b>, then a position-wise feed-forward sublayer, with residual connections and layer norm
+        (the block internals are owned by <code>mod-transformer</code> / <code>paper-gpt</code>). The causal mask
+        is what makes generation autoregressive: token at position $i$ sees only positions $\\le i$.</li>
+        <li><b>Action prediction head.</b> The hidden state at each <b>state-token</b> position (positions
+        $2, 5, 8, \\ldots$ in the stream) is fed to a linear head that outputs the action prediction $\\hat a_t$
+        &mdash; class logits for discrete actions, or a continuous action vector. (Heads for predicting states or
+        returns are possible but unused in the core model; only the action loss is optimized.)</li>
+       </ol>
+       <p><b>Data flow in one line:</b> $(\\hat R, s, a)$ tokens &rarr; per-modality Linear/Conv + LayerNorm &rarr;
+       add timestep embedding &rarr; interleave to a length-$3K$ sequence &rarr; causal GPT blocks &rarr; read the
+       state-token outputs &rarr; action head &rarr; $\\hat a_t$.</p>`,
     symbols: [
       { sym: "$t$", desc: "the <b>timestep</b> index within an episode (one play-through), counting $1, 2, \\ldots, T$ in the paper's notation." },
       { sym: "$T$", desc: "the <b>episode length</b> (the last timestep). The trajectory has $T$ timesteps and so $3T$ tokens." },
+      { sym: "$K$", desc: "the <b>context length</b> &mdash; how many of the most recent timesteps the model attends over at once. The Transformer sees the last $K$ timesteps, i.e. $3K$ tokens. A larger $K$ helps (Section 5.3)." },
+      { sym: "$\\hat a_t$", desc: "the model's <b>predicted action</b> at step $t$ (with a hat), as opposed to the recorded action $a_t$ it is trained to match." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>training loss</b>: the per-timestep action-prediction error averaged over the $K$ predicted actions in a sampled subsequence." },
+      { sym: "$\\ell$", desc: "the <b>per-action loss</b>: <b>cross-entropy</b> between predicted and true action for discrete actions, or <b>squared error</b> $\\lVert \\hat a_t - a_t \\rVert^2$ for continuous actions (Section 3)." },
       { sym: "$s_t$", desc: "the <b>state</b> at step $t$ &mdash; what the agent observes (in our toy grid: an integer cell position)." },
       { sym: "$a_t$", desc: "the <b>action</b> taken at step $t$ (in our toy grid: LEFT or RIGHT). This is what the model predicts." },
       { sym: "$r_t$", desc: "the <b>reward</b> received at step $t$ &mdash; the immediate scalar feedback from the environment." },
@@ -173,9 +211,10 @@
     ],
     formula:
       `$$ \\hat R_t \\;=\\; \\sum_{t'=t}^{T} r_{t'} \\qquad\\text{(return-to-go, Section 3)} $$
-       $$ \\tau \\;=\\; \\big(\\hat R_1,\\, s_1,\\, a_1,\\; \\hat R_2,\\, s_2,\\, a_2,\\; \\ldots,\\; \\hat R_T,\\, s_T,\\, a_T\\big) \\qquad\\text{(trajectory representation, Section 3)} $$
-       $$ a_t \\;=\\; \\text{DecisionTransformer}\\big(\\hat R_{\\le t},\\, s_{\\le t},\\, a_{\\lt t}\\big) \\qquad\\text{(predict the action at state token }s_t\\text{, Section 3)} $$
-       $$ \\hat R_{t+1} \\;=\\; \\hat R_t - r_t \\qquad\\text{(test-time target decrement, Algorithm 1)} $$`,
+       $$ \\tau \\;=\\; \\big(\\hat R_1,\\, s_1,\\, a_1,\\; \\hat R_2,\\, s_2,\\, a_2,\\; \\ldots,\\; \\hat R_T,\\, s_T,\\, a_T\\big) \\qquad\\text{(trajectory representation, Eq. 2)} $$
+       $$ \\hat a_t \\;=\\; \\text{DecisionTransformer}\\big(\\hat R_{t-K+1:t},\\, s_{t-K+1:t},\\, a_{t-K+1:t-1}\\big) \\qquad\\text{(autoregressive GPT predicts the action at state token }s_t\\text{ from the last }K\\text{ timesteps, Section 3)} $$
+       $$ \\mathcal{L} \\;=\\; \\frac{1}{K}\\sum_{t} \\ell\\big(\\hat a_t,\\, a_t\\big), \\qquad \\ell = \\text{cross-entropy (discrete)} \\;\\text{ or }\\; \\lVert \\hat a_t - a_t \\rVert^2 \\text{ (MSE, continuous)} \\qquad\\text{(training loss, Section 3)} $$
+       $$ \\hat R_{t+1} \\;=\\; \\hat R_t - r_t \\qquad\\text{(test-time / eval target-return decrement, Algorithm 1)} $$`,
     whatItDoes:
       `<p><b>Return-to-go</b> $\\hat R_t = \\sum_{t'=t}^{T} r_{t'}$ stamps every action with "the future this
        action led to was worth this much." It is a <i>suffix sum</i> of the reward list &mdash; at the first

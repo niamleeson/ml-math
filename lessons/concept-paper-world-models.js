@@ -159,6 +159,41 @@
        danger is that C may learn to exploit imperfections in M's dream; the fix is to <b>raise the temperature
        $\\tau$</b>, making the dream more stochastic and harder to game. The paper's Table 2 sweeps $\\tau$ and
        finds the best <i>real-game</i> transfer at $\\tau = 1.15$.</p>`,
+    architecture:
+      `<p>The agent is three stacked models (§2, Figures 1&ndash;2). Data flows
+       <b>frame &rarr; V &rarr; $z$</b>, then <b>$[z, a] \\rightarrow$ M $\\rightarrow h$ and next-$z$
+       distribution</b>, then <b>$[z, h] \\rightarrow$ C $\\rightarrow a$</b>, and $a$ goes back to the
+       environment (and into M). Concretely, per the paper's experiments:</p>
+       <ul>
+        <li><b>V &mdash; convolutional VAE (§2.1, Appendix A).</b> <b>Encoder:</b> input frame
+        $64\\times64\\times3$ &rarr; <b>4 convolutional layers</b> (stride 2, ReLU) &rarr; two linear heads
+        producing the latent mean $\\mu$ and log-variance, from which $z$ is sampled. <b>Decoder:</b> a linear
+        layer then <b>4 deconvolution layers</b> (stride 2) back to a $64\\times64\\times3$ reconstruction.
+        Latent size $N_z = 32$ for CarRacing, $N_z = 64$ for VizDoom. The encoder is diagonal-Gaussian (no
+        cross-channel correlation in the latent). Trained alone to reconstruct; then frozen.</li>
+        <li><b>M &mdash; MDN-RNN (§2.2, Appendix A).</b> An <b>LSTM</b> (256 hidden units for CarRacing, 512 for
+        VizDoom) takes the concatenation $[z_t, a_t]$ as input and carries hidden state $h_t$. Its output passes
+        through a <b>Mixture Density Network head</b> that emits, for <b>$K = 5$ Gaussian components</b>, the
+        mixing weights $\\pi_k$, means $\\mu_k$, and standard deviations $\\sigma_k$ &mdash; a
+        <b>diagonal (factored) Gaussian</b> per component, i.e. an independent $K$-mixture for <i>each</i>
+        dimension of $z_{t+1}$ ("we did not model the correlation parameter between each element of $z$ ... a
+        diagonal covariance matrix of a factored Gaussian", §2.2). The VizDoom variant adds a <b>done flag</b>
+        output predicting episode termination. Trained alone on V's encoded rollouts; then frozen.</li>
+        <li><b>C &mdash; linear controller (§2.3).</b> A <b>single linear layer with no hidden units</b>:
+        $a_t = W_c[z_t\\,h_t] + b_c$, with $\\tanh$ squashing for bounded continuous actions. It reads the
+        concatenation of V's current latent $z_t$ and M's hidden state $h_t$. Parameter counts:
+        <b>867</b> (CarRacing), <b>1{,}088</b> (VizDoom) &mdash; the only reward-trained weights.</li>
+       </ul>
+       <p><b>Training order and signals.</b> V (unsupervised, reconstruction) &rarr; M (unsupervised, mixture
+       log-likelihood on $z$-sequences) &rarr; C (reward, via <b>CMA-ES</b>: population 64, each candidate
+       evaluated over 16 episodes, fitness = average cumulative reward; Appendix A). The reward signal touches
+       <i>only</i> the &lt;1{,}100 controller weights; all perception/memory capacity is learned without
+       reward.</p>
+       <p><b>The dream loop (§4).</b> Swap the real environment for M itself: C reads $[z, h]$ and emits $a$; M
+       consumes $[z, a]$, updates $h$, and emits a next-$z$ mixture; a <b>temperature-$\\tau$ sample</b> of that
+       mixture becomes the next $z$ (in VizDoom, M also dreams the reward and done flag). C is evolved entirely
+       in this loop &mdash; "wrap M as an OpenAI Gym environment" &mdash; then the winning $W_c, b_c$ are dropped
+       back into the real game.</p>`,
     symbols: [
       { sym: "$z_t$", desc: "the <b>latent vector</b> at time $t$: V's compressed code of the current frame (for CarRacing, a 32-number summary of the screen). The agent works in $z$-space, not raw pixels." },
       { sym: "$h_t$", desc: "the <b>hidden state</b> (memory) of the recurrent model M at time $t$: a running summary of everything seen so far, used to predict the future and fed to the controller." },
@@ -171,17 +206,38 @@
       { sym: "$\\tau$", desc: "the <b>temperature</b> (Greek 'tau'): a knob on M's sampling. $\\tau=1$ samples as learned; $\\tau\\lt1$ makes the dream more deterministic; $\\tau\\gt1$ makes it more stochastic/uncertain — used to stop C from exploiting the dream (§2.2, §4)." },
       { sym: "$W_c,\\;b_c$", desc: "the controller's <b>weight matrix</b> and <b>bias vector</b>: the only reward-trained parameters. For CarRacing this is just 867 numbers total." },
       { sym: "$[z_t\\,h_t]$", desc: "the <b>concatenation</b> of the latent and the memory: the controller's input — what the agent currently sees ($z$) plus where things are heading ($h$)." },
+      { sym: "$N_z,\\;K$", desc: "$N_z$ is the <b>number of latent dimensions</b> ($32$ for CarRacing, $64$ for VizDoom); $K$ is the <b>number of Gaussian components</b> in M's mixture ($5$ in the paper). M outputs an independent $K$-mixture per latent dimension." },
+      { sym: "$x,\\;\\hat{x}$", desc: "the <b>input frame</b> $x$ and V's <b>reconstruction</b> $\\hat{x}$; the VAE's L² loss is their squared distance." },
+      { sym: "$D_{\\mathrm{KL}}$", desc: "the <b>Kullback–Leibler divergence</b>: how far V's latent distribution $q(z\\mid x)$ is from a unit Gaussian $\\mathcal{N}(0,I)$ — the VAE's regularizer." },
       { sym: "CMA-ES", desc: "<b>Covariance-Matrix Adaptation Evolution Strategy</b>: a gradient-free optimizer. It samples many candidate $W_c$, scores each by the reward it earns, and shifts the search toward the good ones — used because C is small (§2.3)." }
     ],
     formula:
-      `$$ \\textbf{M (next-latent distribution, §2.2):}\\quad
-         P(z_{t+1}\\mid a_t, z_t, h_t) \\;=\\; \\sum_{k=1}^{K}\\pi_k\\,
-         \\mathcal{N}\\!\\big(z_{t+1};\\,\\mu_k,\\,\\sigma_k^2\\big),
-         \\qquad \\sum_{k=1}^{K}\\pi_k = 1 $$
+      `$$ \\textbf{V (VAE objective, §2.1):}\\quad
+         \\mathcal{L}_V \\;=\\; \\underbrace{\\lVert x - \\hat{x}\\rVert_2^2}_{\\text{L}^2\\ \\text{reconstruction}}
+         \\;+\\; \\underbrace{D_{\\mathrm{KL}}\\!\\big(q(z\\mid x)\\,\\Vert\\,\\mathcal{N}(0,I)\\big)}_{\\text{KL to a unit Gaussian}} $$
+       <p>V is a convolutional VAE: reconstruct the frame (L² loss) while keeping its latent code close to a unit
+       Gaussian (KL). Full VAE math is the <code>mod-vae</code> lesson; here we only use the latent $z$ (§2.1).</p>
+       $$ \\textbf{M (next-latent distribution, §2.2):}\\quad
+         P(z_{t+1}\\mid a_t, z_t, h_t) \\;=\\; \\prod_{j=1}^{N_z}\\;\\sum_{k=1}^{K}\\pi_{k}^{(j)}\\,
+         \\mathcal{N}\\!\\big(z_{t+1}^{(j)};\\,\\mu_{k}^{(j)},\\,(\\sigma_{k}^{(j)})^2\\big),
+         \\qquad \\sum_{k=1}^{K}\\pi_{k}^{(j)} = 1 $$
+       <p>A <b>diagonal / factored</b> mixture of $K$ Gaussians: an independent $K$-component mixture for each of
+       the $N_z$ latent dimensions $j$ ("a diagonal covariance matrix of a factored Gaussian", §2.2). $K = 5$ in
+       the paper. Below we drop the per-dimension index $j$ for readability.</p>
+       $$ \\textbf{M training loss (mixture negative log-likelihood):}\\quad
+         \\mathcal{L}_M \\;=\\; -\\sum_{t}\\;\\log\\!\\sum_{k=1}^{K}\\pi_{k}\\,
+         \\mathcal{N}\\!\\big(z_{t+1};\\,\\mu_{k},\\,\\sigma_{k}^2\\big) $$
+       <p>Train M to assign high probability to the <i>true</i> next latent under its predicted mixture
+       (mixture-density-network loss). M's parameters $(\\pi_k,\\mu_k,\\sigma_k)$ are the LSTM-head outputs.</p>
        $$ \\textbf{C (controller, Eq. 1 / §2.3):}\\quad
          a_t \\;=\\; W_c\\,[z_t\\,\\;h_t] + b_c $$
-       $$ \\textbf{Temperature sampling from M:}\\quad
-         \\pi_k \\propto \\pi_k^{1/\\tau}, \\qquad \\sigma_k \\rightarrow \\tau\\,\\sigma_k $$`,
+       <p>The whole policy: one linear layer on the concatenated latent and memory (with $\\tanh$ for bounded
+       actions). 867 parameters for CarRacing, 1,088 for VizDoom &mdash; optimized by CMA-ES, not backprop.</p>
+       $$ \\textbf{Temperature sampling from M (§2.2, §4):}\\quad
+         \\pi_k \\;\\propto\\; \\pi_k^{1/\\tau}, \\qquad \\sigma_k \\;\\rightarrow\\; \\tau\\,\\sigma_k $$
+       <p>When dreaming, raise the temperature $\\tau$ to flatten the mixing weights and widen each Gaussian,
+       making sampled futures more uncertain so C cannot exploit M's flaws. The $\\tau$-scaling is the paper's
+       knob; the exact $1/\\tau$ / $\\tau\\sigma$ form is the standard implementation it describes.</p>`,
     whatItDoes:
       `<p>The <b>first line</b> is M's prediction of the next latent. It is a <b>mixture of $K$ Gaussians</b>: a
        weighted sum of bell curves. Each component $k$ has a weight $\\pi_k$ (how much it counts, all summing to

@@ -135,6 +135,40 @@
        feeds them <b>concat pooling</b>: it concatenates the hidden state at the <i>last</i> time step with
        both the <b>max-pooled</b> and the <b>mean-pooled</b> hidden states over the sequence &mdash; so no
        signal from any position is lost when a document is squeezed into one vector.</p>`,
+    architecture:
+      `<p><b>The reused backbone: AWD-LSTM language model (&sect;3, Merity et al. 2017).</b> ULMFiT's encoder
+       is a 3-layer <b>LSTM</b> (a recurrent net that carries a memory cell across time steps) wrapped in heavy
+       dropout regularization &mdash; the "AWD" = ASGD Weight-Dropped. Concrete dimensions the paper uses:</p>
+       <ul>
+        <li><b>Embedding layer:</b> <code>nn.Embedding(V, 400)</code> &mdash; each token id maps to a
+        <b>400-dimensional</b> vector ($V$ = vocabulary size).</li>
+        <li><b>3 stacked LSTM layers</b>, <b>1150 hidden units</b> each (the middle layer outputs 1150, the top
+        layer projects back to 400 to tie with the embedding). Data flows
+        embedding (400) &rarr; LSTM&#8321; (1150) &rarr; LSTM&#8322; (1150) &rarr; LSTM&#8323; (400), producing one hidden
+        state $\\mathbf{h}_t$ per time step.</li>
+        <li><b>Five dropout knobs</b> (the AWD regularization): embedding dropout 0.05, input dropout 0.4,
+        weight-drop on the recurrent weights 0.5, hidden/between-layer dropout 0.3, and output dropout 0.4.
+        Trained with <b>BPTT</b> (backprop through time) over windows of length 70.</li>
+       </ul>
+       <p><b>Stage-1/2 LM head:</b> a single <b>tied</b> linear decoder $\\mathbf{W}$ of shape
+       $(400 \\to V)$ that turns each hidden state into a next-token distribution via softmax (weight-tied to the
+       embedding matrix). This head is used for next-word prediction during pretraining (Stage 1) and
+       target-text LM fine-tuning (Stage 2), then <b>discarded</b>.</p>
+       <p><b>Stage-3 classifier head (&sect;3.3):</b> the LM decoder is replaced by two extra linear blocks on
+       top of the encoder, fed by <b>concat pooling</b>:</p>
+       <ul>
+        <li><b>Concat pooling</b> &mdash; collapse the sequence of hidden states $H$ into one vector
+        $\\mathbf{h}_c = [\\mathbf{h}_T,\\ \\operatorname{maxpool}(H),\\ \\operatorname{meanpool}(H)]$, of width
+        $3\\times$ the hidden size.</li>
+        <li><b>Block 1:</b> Linear &rarr; <b>BatchNorm</b> &rarr; <b>Dropout</b> &rarr; <b>ReLU</b> (intermediate
+        nonlinear layer).</li>
+        <li><b>Block 2:</b> Linear &rarr; BatchNorm &rarr; Dropout &rarr; <b>Softmax</b> over the class labels.</li>
+       </ul>
+       <p>So the full Stage-3 graph is: tokens &rarr; Embedding(400) &rarr; 3&times;LSTM &rarr; concat pooling
+       (3&times;hidden) &rarr; linear+BN+ReLU block &rarr; linear+BN+softmax &rarr; class probabilities. Only this
+       head is randomly initialized; everything below it is transferred from the LM. (Our notebook uses a plain
+       <code>nn.LSTM</code> with smaller dimensions and a 2-linear ReLU head &mdash; same wiring, no AWD dropout
+       machinery.)</p>`,
     symbols: [
       { sym: "$\\theta$", desc: "the model's <b>parameters</b> (all its weights) &mdash; the numbers gradient descent updates." },
       { sym: "$\\theta_t$", desc: "the parameters <b>at training iteration $t$</b>; $\\theta_{t-1}$ are the previous step's." },
@@ -151,14 +185,26 @@
       { sym: "$\\mathit{ratio}$", desc: "how many times <b>smaller the lowest rate is than the peak</b>: the schedule's minimum is $\\eta_{max}/\\mathit{ratio}$. Default $32$." },
       { sym: "$\\eta_{max}$", desc: "the <b>peak learning rate</b>, reached exactly at iteration $\\mathit{cut}$. Default $0.01$." },
       { sym: "$\\eta_t$", desc: "the <b>learning rate at iteration $t$</b> produced by the STLR schedule." },
+      { sym: "$\\mathbf{h}_t$", desc: "the LSTM's <b>hidden state at time step $t$</b> &mdash; the encoder's vector summary of the sequence up to position $t$." },
+      { sym: "$\\mathbf{h}_T$", desc: "the hidden state at the <b>last</b> time step $T$ (the end of the document); one of the three pieces concat pooling keeps." },
+      { sym: "$H$", desc: "the full <b>set of hidden states</b> $\\{\\mathbf{h}_1,\\dots,\\mathbf{h}_T\\}$ over the whole sequence, the input to max- and mean-pooling." },
+      { sym: "$\\mathbf{h}_c$", desc: "the <b>concat-pooled document vector</b> (&sect;3.3): $[\\mathbf{h}_T,\\ \\operatorname{maxpool}(H),\\ \\operatorname{meanpool}(H)]$, fed to the classifier head; width $3\\times$ the hidden size." },
+      { sym: "$\\operatorname{maxpool}/\\operatorname{meanpool}$", desc: "element-wise <b>max</b> / <b>mean</b> of the hidden states across all time steps &mdash; capture the strongest and the average signal in the sequence." },
+      { sym: "$V$", desc: "the <b>vocabulary size</b>: number of distinct tokens; the LM decoder outputs a distribution over these $V$ tokens." },
       { sym: "“catastrophic forgetting”", desc: "a plain term, not a symbol: when fine-tuning overwrites the useful general knowledge the model gained in pretraining. The three tricks exist to prevent it." },
       { sym: "“concat pooling”", desc: "a plain term (&sect;3.3): forming the document vector by concatenating the last hidden state with the max-pooled and mean-pooled hidden states over the sequence." }
     ],
-    formula: `$$ \\theta^{l}_{t} = \\theta^{l}_{t-1} - \\eta^{l}\\,\\nabla_{\\theta^{l}} J(\\theta) \\qquad\\text{(Eqn. 2 — discriminative fine-tuning)} $$
+    formula: `$$ \\theta_{t} = \\theta_{t-1} - \\eta\\,\\nabla_{\\theta} J(\\theta) $$
+              <p class="cap">Eqn. 1 (&sect;3.1) — ordinary SGD: one global learning rate $\\eta$ for every parameter.</p>
+              $$ \\theta^{l}_{t} = \\theta^{l}_{t-1} - \\eta^{l}\\,\\nabla_{\\theta^{l}} J(\\theta), \\qquad \\eta^{l-1} = \\eta^{l}/2.6 $$
+              <p class="cap">Eqn. 2 (&sect;3.1) — discriminative fine-tuning: split $\\theta$ per layer $l$; each layer gets its own rate $\\eta^l$, with the heuristic that each lower layer learns $2.6\\times$ slower.</p>
               $$ \\mathit{cut} = \\left\\lfloor T\\cdot \\mathit{cut\\_frac}\\right\\rfloor,\\quad
                  p = \\begin{cases} t/\\mathit{cut}, & t \\lt \\mathit{cut}\\\\[4pt]
                  1 - \\dfrac{t-\\mathit{cut}}{\\mathit{cut}\\,(1/\\mathit{cut\\_frac}-1)}, & \\text{otherwise}\\end{cases},\\quad
-                 \\eta_t = \\eta_{max}\\cdot\\dfrac{1 + p\\,(\\mathit{ratio}-1)}{\\mathit{ratio}} \\qquad\\text{(Eqn. 3 — STLR)} $$`,
+                 \\eta_t = \\eta_{max}\\cdot\\dfrac{1 + p\\,(\\mathit{ratio}-1)}{\\mathit{ratio}} $$
+              <p class="cap">Eqn. 3 (&sect;3.1) — slanted triangular learning rates: $\\eta_t$ rises linearly to $\\eta_{max}$ at iteration $\\mathit{cut}$, then decays linearly. Defaults $\\mathit{cut\\_frac}=0.1$, $\\mathit{ratio}=32$, $\\eta_{max}=0.01$.</p>
+              $$ \\mathbf{h}_c = \\left[\\,\\mathbf{h}_T,\\ \\operatorname{maxpool}(H),\\ \\operatorname{meanpool}(H)\\,\\right] $$
+              <p class="cap">Concat pooling (&sect;3.3) — the document vector $\\mathbf{h}_c$ concatenates the last hidden state $\\mathbf{h}_T$ with the max- and mean-pooled hidden states over the sequence $H=\\{\\mathbf{h}_1,\\dots,\\mathbf{h}_T\\}$, so no positional signal is lost.</p>`,
     whatItDoes:
       `<p><b>Equation 2 (discriminative fine-tuning)</b> is just ordinary gradient descent
        $\\theta_t = \\theta_{t-1} - \\eta\\,\\nabla_\\theta J(\\theta)$ (Eqn 1) <i>split per layer</i>: each layer

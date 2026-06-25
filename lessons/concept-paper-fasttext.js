@@ -138,6 +138,38 @@
        3.2). Different n-grams can collide into the same bucket, but in practice this costs little and caps the table
        size.</p>`,
 
+    architecture:
+      `<p>fastText is word2vec's skip-gram with the whole-word <b>input lookup</b> swapped for a <b>subword
+       front end</b>. Component by component, with the toy shapes from the CODE cell ($D=16$ embedding
+       dimension, $K=4096$ n-gram buckets, $V$ context-vocabulary size):</p>
+       <ol>
+         <li><b>Tokenizer / n-gram extractor (Section 3.2).</b> Input: a raw word string. Wrap it in boundary
+         markers <code>&lt;</code>&hellip;<code>&gt;</code>, slide windows of length $3\\le n\\le 6$ over the
+         wrapped string, and add the whole word as one special token. Output: the n-gram bag $\\mathcal{G}_w$ (a
+         small list of strings). This is the only piece word2vec does not have.</li>
+         <li><b>Hashing layer (Section 3.2).</b> Each n-gram string is hashed to a bucket index in
+         $\\{0,\\dots,K-1\\}$ with $K = 2\\cdot10^{6}$ in the paper. Output: a small set of integer row indices.
+         Collisions are accepted to cap memory.</li>
+         <li><b>Subword (input) embedding table $\\mathbf{Z}$.</b> A learnable matrix of shape $(K, D)$, one row
+         $\\mathbf{z}_g$ per bucket. Gather the rows for the word's n-gram indices.</li>
+         <li><b>Sum-pool to the word vector.</b> Add the gathered rows:
+         $\\mathbf{u}_w=\\sum_{g\\in\\mathcal{G}_w}\\mathbf{z}_g$, a single $D$-vector. This <i>replaces</i>
+         word2vec's single-row input lookup $\\mathbf{u}_{w}$ &mdash; everything downstream is unchanged.</li>
+         <li><b>Context (output) embedding table $\\mathbf{V}$.</b> A learnable matrix of shape $(V, D)$, one row
+         $\\mathbf{v}_c$ per context word &mdash; identical to word2vec's output table (no subwords on the context
+         side).</li>
+         <li><b>Scorer + loss.</b> Dot the summed center vector with each candidate context row,
+         $s(w,c)=\\mathbf{u}_w^\\top\\mathbf{v}_c=\\sum_{g}\\mathbf{z}_g^\\top\\mathbf{v}_c$, and feed the one true
+         context plus a few sampled negatives through the negative-sampling logistic loss
+         $\\ell(x)=\\log(1+e^{-x})$. Gradients flow back through the sum into <i>every</i> n-gram row, so each
+         $\\mathbf{z}_g$ is updated by every word that contains it.</li>
+       </ol>
+       <p><b>Data flow:</b> word &rarr; n-gram bag &rarr; hashed bucket ids &rarr; gather rows of $\\mathbf{Z}$
+       &rarr; sum &rarr; center vector $\\mathbf{u}_w$ &rarr; dot with $\\mathbf{V}$ rows &rarr; logistic
+       negative-sampling loss. The single architectural change versus word2vec is steps 1&ndash;4 (the subword
+       front end producing $\\mathbf{u}_w$); steps 5&ndash;6 are word2vec verbatim. At inference a word's vector is
+       just step 4's sum, so an OOV word still yields a vector from its (shared) n-gram rows.</p>`,
+
     symbols: [
       { sym: "$w$", desc: "a word (e.g. 'where'). In skip-gram it can be the center word $w_t$ or a context word $w_c$." },
       { sym: "$c$", desc: "a context word (or its index); the word sitting near the center inside the window. fastText scores the center against it." },

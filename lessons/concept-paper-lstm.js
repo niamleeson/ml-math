@@ -1,10 +1,12 @@
 /* Paper lesson — LSTM (Hochreiter & Schmidhuber, 1997).
    Source: "Long Short-Term Memory", Neural Computation 9(8):1735-1780, 1997. NO arXiv.
-   Grounding: metadata, the constant error carousel (CEC), and the input/output gate roles were
-   fetched from the Wikipedia "Long short-term memory" article (en.wikipedia.org/wiki/Long_short-term_memory),
-   which attributes them to the 1997 paper; paper.url points at the official published PDF
-   (bioinf.jku.at/publications/older/2604.pdf). The official PDF host returned ECONNREFUSED in the
-   authoring environment, so the prose is grounded from the Wikipedia mirror, not pure recall — flagged honestly.
+   Grounding: the actual published PDF was read for this enrichment. paper.url (bioinf.jku.at/.../2604.pdf)
+   returned ECONNREFUSED, but the identical published PDF was fetched from the CMU course mirror
+   (deeplearning.cs.cmu.edu/F23/document/readings/LSTM.pdf) and read page by page. The original 1997
+   equations below (CEC condition f'_j(net_j)·w_jj=1; integrated CEC f_j(x)=x, w_jj=1; gate nets;
+   cell state s_c(t)=s_c(t-1)+y^in·g(net_c); cell output y^c=y^out·h(s_c); the vanishing-gradient
+   factors eq 3.1/3.2; ranges g∈[-2,2], h∈[-1,1]) are transcribed directly from §3.1, §3.2, §4.1
+   and §5.6 of that PDF (pp. 1739-1745, 1763).
    HONEST NOTE: the FORGET gate is NOT in the 1997 paper. It was added by Gers, Schmidhuber & Cummins (1999/2000).
    PyTorch's nn.LSTMCell implements the modern forget-gate variant, so the from-scratch cell here INCLUDES the
    forget gate to make the torch.allclose oracle pass; the lesson states this distinction explicitly.
@@ -143,6 +145,40 @@
        a shrinking weight, so it does not vanish. The gates are what let the network <i>choose</i> to open that
        carousel exactly when a value needs to survive a long gap.</p>`,
 
+    // ★ ARCHITECTURE ★ (structural view — distinct from the step-by-step walkthrough)
+    architecture:
+      `<p>The paper builds the network in three nested layers: the protected scalar (CEC) → wrap it in gates to make
+       one <b>memory cell</b> (Fig. 1) → group cells into <b>blocks</b> inside a 3-layer net (Fig. 2).</p>
+       <p><b>1. The memory cell (Fig. 1), left to right.</b> One cell $c_j$ is a horizontal pipeline:</p>
+       <ul>
+         <li><b>Input squashing</b> $g$: the cell net $\\mathrm{net}_{c_j}=\\sum_u w_{c_j u}y^u(t\\!-\\!1)$ enters a
+         $g$-unit (range $[-2,2]$) producing the candidate content.</li>
+         <li><b>Input gate</b> $\\mathrm{in}_j$: a sigmoid unit (its own net $\\mathrm{net}_{\\mathrm{in}_j}$, weights
+         $w_{\\mathrm{in}_j i}$) multiplies the candidate — the node "$g\\,y^{\\mathrm{in}_j}$" in the figure. This is
+         the write valve.</li>
+         <li><b>The CEC</b>: a central linear unit with a <b>fixed self-recurrent weight $1.0$</b> (drawn as the
+         "1.0" self-loop). It accumulates: $s_{c_j}(t)=s_{c_j}(t\\!-\\!1)+y^{\\mathrm{in}_j}g(\\mathrm{net}_{c_j})$.
+         This is the long-term store; error rides it back unchanged.</li>
+         <li><b>Output squashing</b> $h$ (range $[-1,1]$): squashes the stored state $s_{c_j}$.</li>
+         <li><b>Output gate</b> $\\mathrm{out}_j$: a sigmoid unit ($\\mathrm{net}_{\\mathrm{out}_j}$, weights
+         $w_{\\mathrm{out}_j i}$) multiplies the squashed state — node "$h\\,y^{\\mathrm{out}_j}$" — yielding the cell
+         output $y^{c_j}=y^{\\mathrm{out}_j}h(s_{c_j})$ that leaves the box (outgoing weights $w_{i c_j}$). This is the
+         read valve.</li>
+       </ul>
+       <p><b>2. Memory cell blocks (Fig. 2).</b> Cells are grouped into <b>blocks of size $S$</b> (the experiments use
+       $S\\!=\\!2$): all cells in a block <b>share one input gate and one output gate</b>, so a block stores an
+       $S$-dimensional fact under one read/write decision.</p>
+       <p><b>3. The full net (Fig. 2).</b> A standard 3-layer topology — input layer → hidden layer containing the
+       memory-cell blocks (plus optional ordinary hidden units) → output layer. Connectivity is dense: every gate
+       unit and every cell receives connections from all non-output units (inputs, other cells, gates), so a gate can
+       condition its open/close decision on the rest of the net's state. The output layer reads from the memory
+       cells.</p>
+       <p><b>4. Training (truncated BPTT).</b> Learning is gradient descent, but error is <b>truncated</b>: it flows
+       only (a) through connections into output units and (b) through the fixed weight-$1$ self-loops <i>inside</i>
+       the CECs. The moment error "wants" to leave a cell or gate via a normal connection, it is cut off. This keeps
+       the update $O(1)$ per weight per step yet still bridges very long lags, because the surviving path — the CEC —
+       is exactly the non-vanishing one.</p>`,
+
     symbols: [
       { sym: "$x_t$", desc: "the input vector at time step $t$ (e.g. one token's features). Length $d$ = input size." },
       { sym: "$h_{t-1}$, $h_t$", desc: "the hidden state (the cell's public output) before and after this step. Length $H$ = hidden size. This is what later layers read." },
@@ -159,14 +195,58 @@
     ],
 
     formula:
-      `$$\\begin{aligned}
-        i_t &= \\sigma\\!\\big(W_{ii}x_t + b_{ii} + W_{hi}h_{t-1} + b_{hi}\\big) \\\\
-        f_t &= \\sigma\\!\\big(W_{if}x_t + b_{if} + W_{hf}h_{t-1} + b_{hf}\\big) \\\\
-        g_t &= \\tanh\\!\\big(W_{ig}x_t + b_{ig} + W_{hg}h_{t-1} + b_{hg}\\big) \\\\
-        o_t &= \\sigma\\!\\big(W_{io}x_t + b_{io} + W_{ho}h_{t-1} + b_{ho}\\big) \\\\
-        c_t &= f_t \\odot c_{t-1} + i_t \\odot g_t \\\\
-        h_t &= o_t \\odot \\tanh(c_t)
-      \\end{aligned}$$`,
+      `<p><b>A. The vanishing-gradient analysis the paper is built to defeat (§3.1).</b> Error propagated back
+       $q$ steps from unit $u$ to unit $v$ scales by this factor (eq 3.1, the recursion; eq 3.2, its closed form):</p>
+       $$\\frac{\\partial \\vartheta_v(t-q)}{\\partial \\vartheta_u(t)}=
+         \\begin{cases}
+           f_v'(\\mathrm{net}_v(t-1))\\,w_{uv} & q=1 \\\\[4pt]
+           f_v'(\\mathrm{net}_v(t-q))\\sum_{l=1}^{n}\\dfrac{\\partial \\vartheta_l(t-q+1)}{\\partial \\vartheta_u(t)}\\,w_{lv} & q\\gt 1
+         \\end{cases}$$
+       <p>Eq 3.1 — the per-step error back-flow factor; iterating it gives the product of $q$ such terms.</p>
+       $$\\frac{\\partial \\vartheta_v(t-q)}{\\partial \\vartheta_u(t)}=
+         \\sum_{l_1=1}^{n}\\cdots\\sum_{l_{q-1}=1}^{n}\\ \\prod_{m=1}^{q} f_{l_m}'(\\mathrm{net}_{l_m}(t-m))\\,w_{l_m l_{m-1}}$$
+       <p>Eq 3.2 — the closed form: a product of $q$ factors. If each $|f'\\,w|\\lt 1$ the product <b>vanishes</b>
+       exponentially in $q$; if $\\gt 1$ it <b>explodes</b>. For the logistic sigmoid $f'_{\\max}=0.25$, so weights
+       below $4.0$ guarantee decay. This is the problem.</p>
+       <p><b>B. The Constant Error Carousel (§3.2) — the fix.</b> Force a single self-connected unit $j$ to back-flow
+       error with factor exactly $1$:</p>
+       $$f_j'(\\mathrm{net}_j(t))\\,w_{jj}=1.0$$
+       <p>The constant-error-flow requirement. Integrating it gives $f_j(\\mathrm{net}_j(t))=\\mathrm{net}_j(t)/w_{jj}$,
+       so $f_j$ must be <b>linear</b> and the activation constant:</p>
+       $$y^{j}(t+1)=f_j(\\mathrm{net}_j(t+1))=f_j(w_{jj}\\,y^{j}(t))=y^{j}(t)$$
+       <p>Satisfied by the <b>identity</b> $f_j(x)=x$ with $w_{jj}=1.0$ — the unit copies itself forward forever. This
+       fixed weight-$1$ self-loop is the <b>CEC</b>, LSTM's core.</p>
+       <p><b>C. The 1997 memory cell with input & output gates (§4.1).</b> The CEC is wrapped in two multiplicative
+       gates. Gate activations and their net inputs:</p>
+       $$\\begin{aligned}
+         y^{\\mathrm{out}_j}(t) &= f_{\\mathrm{out}_j}\\!\\big(\\mathrm{net}_{\\mathrm{out}_j}(t)\\big), &
+         \\mathrm{net}_{\\mathrm{out}_j}(t) &= \\textstyle\\sum_u w_{\\mathrm{out}_j u}\\,y^{u}(t-1) \\\\
+         y^{\\mathrm{in}_j}(t) &= f_{\\mathrm{in}_j}\\!\\big(\\mathrm{net}_{\\mathrm{in}_j}(t)\\big), &
+         \\mathrm{net}_{\\mathrm{in}_j}(t) &= \\textstyle\\sum_u w_{\\mathrm{in}_j u}\\,y^{u}(t-1) \\\\
+         \\mathrm{net}_{c_j}(t) &= \\textstyle\\sum_u w_{c_j u}\\,y^{u}(t-1)
+       \\end{aligned}$$
+       <p>Each gate $f_{\\mathrm{in}},f_{\\mathrm{out}}$ is a logistic sigmoid in $[0,1]$; the nets are weighted sums
+       over all non-output units $u$ (one step delayed).</p>
+       $$s_{c_j}(0)=0,\\qquad s_{c_j}(t)=s_{c_j}(t-1)+y^{\\mathrm{in}_j}(t)\\,g\\!\\big(\\mathrm{net}_{c_j}(t)\\big)\\quad(t\\gt 0)$$
+       <p>The internal cell-state update: the <b>weight-$1$ self-loop</b> $s_{c_j}(t-1)$ (the CEC) plus the new content
+       $g(\\mathrm{net}_{c_j})$ scaled by the input gate $y^{\\mathrm{in}_j}$. No forget gate in 1997: the old state is
+       always kept in full.</p>
+       $$y^{c_j}(t)=y^{\\mathrm{out}_j}(t)\\,h\\!\\big(s_{c_j}(t)\\big)$$
+       <p>The cell output: the output gate $y^{\\mathrm{out}_j}$ times a squashed view $h$ of the protected state.
+       Here $g$ squashes the input to $[-2,2]$ and $h$ squashes the readout to $[-1,1]$ (§5.6).</p>
+       <p><b>D. The modern forget-gate variant (Gers et al. 1999/2000; what PyTorch ships and you build).</b> Replace
+       the always-keep self-loop with a learned forget gate $f_t$, and write the gate nets with explicit
+       $\\{x_t,h_{t-1}\\}$ weight matrices:</p>
+       $$\\begin{aligned}
+         i_t &= \\sigma\\!\\big(W_{ii}x_t + b_{ii} + W_{hi}h_{t-1} + b_{hi}\\big) \\\\
+         f_t &= \\sigma\\!\\big(W_{if}x_t + b_{if} + W_{hf}h_{t-1} + b_{hf}\\big) \\\\
+         g_t &= \\tanh\\!\\big(W_{ig}x_t + b_{ig} + W_{hg}h_{t-1} + b_{hg}\\big) \\\\
+         o_t &= \\sigma\\!\\big(W_{io}x_t + b_{io} + W_{ho}h_{t-1} + b_{ho}\\big) \\\\
+         c_t &= f_t \\odot c_{t-1} + i_t \\odot g_t \\\\
+         h_t &= o_t \\odot \\tanh(c_t)
+       \\end{aligned}$$
+       <p>The modern cell — PyTorch's <code>nn.LSTMCell</code> definition, matched exactly in the CODE block. Set
+       $f_t\\!=\\!1$ everywhere and it collapses back to the 1997 CEC update in part C.</p>`,
 
     whatItDoes:
       `<p>The first four lines build the three <b>gates</b> ($i,f,o$ via sigmoid, each a valve in $[0,1]$) and the
