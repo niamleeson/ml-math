@@ -7,7 +7,89 @@
     title: "Feeding data: Dataset and DataLoader",
     tagline: "Wrap your data in a Dataset, hand it to a DataLoader, and get batched, shuffled, augmented, parallel-loaded tensors that keep the GPU (Graphics Processing Unit) busy.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-minibatch", "dl-data-augmentation"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>write a custom map-style <code>Dataset</code> by implementing <code>__len__</code> and <code>__getitem__</code>, returning one <code>(x, y)</code> pair with the right dtypes (<code>float32</code> input, <code>long</code> label);</li>
+<li>wrap any dataset in a <code>DataLoader</code> to get batched, shuffled, parallel-loaded tensors, and pull one batch with <code>next(iter(loader))</code> knowing its shape and dtype;</li>
+<li>build separate train/eval <code>transforms.Compose</code> pipelines (augment train only) and write a custom <code>collate_fn</code> for variable-length data.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>Dataset</code>, <code>TensorDataset</code>, <code>DataLoader</code>, <code>transforms.Compose</code> / <code>ToTensor</code> / <code>Normalize</code>, <code>datasets.MNIST</code>, a custom <code>collate_fn</code> with <code>pad_sequence</code>.</p>`,
+
+    concept: `<p>PyTorch splits data feeding into two jobs with a clean seam between them. A <b><code>Dataset</code></b> answers exactly one question — "give me sample number <code>i</code> as an <code>(x, y)</code> pair" — and hides where the data actually lives (a NumPy array, image files on disk, a database). A <b><code>DataLoader</code></b> wraps that <code>Dataset</code> and turns it into an <b>iterator over batches</b>: it batches, shuffles, loads in parallel across worker processes, and hands ready-to-use tensors to your training loop.</p>
+<p>A map-style <code>Dataset</code> is the whole contract in two methods: <code>__len__(self)</code> returns how many samples there are, and <code>__getitem__(self, i)</code> returns one <code>(x, y)</code> pair as tensors. Because of this split, the same DataLoader machinery — batching, shuffling, parallel workers, pinned memory — works for images, text, audio, or tabular data without change. You write a tiny Dataset; you get an industrial data pipeline.</p>
+<p>When you write <code>for xb, yb in loader:</code>, three things happen under the hood:</p>
+<ul>
+<li><b>Index generation.</b> A sampler yields the order of indices — a fresh random permutation each epoch when <code>shuffle=True</code> (for the <i>train</i> loader only), or <code>0,1,2,...</code> when <code>shuffle=False</code> — then chops them into lists of <code>batch_size</code>.</li>
+<li><b>Fetching.</b> For each index the loader calls your <code>__getitem__</code>, which loads, transforms, and returns one sample. With <code>num_workers &gt; 0</code> this runs in parallel worker processes that prefetch the next batches while the GPU (Graphics Processing Unit) trains on the current one — exactly what keeps a fast GPU fed (see <code>dl-minibatch</code>).</li>
+<li><b>Collating.</b> The per-sample pairs are merged into one batch by the <code>collate_fn</code>. The default <code>torch.stack</code> turns <code>batch_size</code> tensors of shape <code>(C, H, W)</code> into one <code>(batch_size, C, H, W)</code>. For variable-length data (sentences of different lengths) <code>torch.stack</code> fails, so you pass a custom <code>collate_fn</code> that pads each sequence to the batch's longest length.</li>
+</ul>`,
+
+    apiTable: [
+      { sig: "class MyDS(Dataset): __len__, __getitem__", does: "The whole map-style <code>Dataset</code> contract: how many samples, and sample <code>i</code> as one <code>(x, y)</code> pair of tensors.", snippet: "def __getitem__(self, i):\n    return self.X[i], self.y[i]" },
+      { sig: "TensorDataset(X, y)", does: "A ready-made <code>Dataset</code> over in-memory tensors — no custom class needed when the data already fits in tensors.", snippet: "ds = TensorDataset(X, y)" },
+      { sig: "DataLoader(ds, batch_size, shuffle, ...)", does: "Wraps a <code>Dataset</code> into an iterator over batches: batching, shuffling, parallel loading.", snippet: "DataLoader(ds, batch_size=64, shuffle=True)" },
+      { sig: "next(iter(loader))", does: "Pull a single collated batch — the quick way to check shapes and dtypes before training.", snippet: "xb, yb = next(iter(loader))" },
+      { sig: "num_workers= / pin_memory= / drop_last=", does: "Parallel worker processes prefetch batches; <code>pin_memory</code> speeds the CPU&rarr;GPU copy; <code>drop_last</code> drops a short final batch.", snippet: "DataLoader(ds, num_workers=2, pin_memory=True, drop_last=True)" },
+      { sig: "transforms.Compose([...])", does: "Chain image transforms applied inside <code>__getitem__</code>. Use a separate pipeline per split.", snippet: "Compose([ToTensor(), Normalize(m, s)])" },
+      { sig: "ToTensor() / Normalize(mean, std)", does: "<code>ToTensor</code> maps uint8 <code>0..255</code> to float <code>0..1</code> as <code>(C, H, W)</code>; <code>Normalize</code> zero-centers with the dataset's stats.", snippet: "transforms.Normalize((0.1307,), (0.3081,))" },
+      { sig: "RandomCrop / RandomHorizontalFlip", does: "Random augmentations — <b>train transform only</b>, never the eval transform.", snippet: "transforms.RandomHorizontalFlip()" },
+      { sig: "datasets.MNIST(root, train, transform=)", does: "A built-in torchvision <code>Dataset</code> that downloads MNIST and applies your <code>transform</code> per sample.", snippet: "datasets.MNIST('./data', train=True, download=True, transform=tf)" },
+      { sig: "DataLoader(ds, collate_fn=pad_collate)", does: "A custom <code>collate_fn</code> merges variable-length samples — pad with <code>pad_sequence</code> before stacking.", snippet: "pad_sequence(seqs, batch_first=True, padding_value=0)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>A custom Dataset over NumPy arrays.</b> Implement just <code>__len__</code> and <code>__getitem__</code>. Cast inside <code>__getitem__</code> so every sample comes out with the dtype the model and loss expect: <code>float32</code> features, a <code>long</code> class index (<code>nn.CrossEntropyLoss</code> wants indices). This is the most common starting point — a tiny Dataset over arrays.`,
+        code: `import numpy as np\nimport torch\nfrom torch.utils.data import Dataset, DataLoader\n\ntorch.manual_seed(0)\ndevice = "cuda" if torch.cuda.is_available() else "cpu"\n\nclass ArrayDataset(Dataset):\n    def __init__(self, X, y):\n        self.X = np.asarray(X, dtype=np.float32)\n        self.y = np.asarray(y, dtype=np.int64)\n    def __len__(self):\n        return len(self.X)\n    def __getitem__(self, i):\n        x = torch.from_numpy(self.X[i])\n        y = torch.tensor(self.y[i], dtype=torch.long)\n        return x, y\n\nX = np.random.randn(500, 3).astype(np.float32)\ny = (X[:, 0] + X[:, 1] > 0).astype(np.int64)\nds = ArrayDataset(X, y)\nprint("dataset size:", len(ds), "| one sample:", ds[0][0].shape, ds[0][1].item())`,
+        output: `dataset size: 500 | one sample: torch.Size([3]) 0`
+      },
+      {
+        explain: `<b>Wrap it in a DataLoader and pull one batch.</b> The loader batches, shuffles the <i>train</i> set, prefetches with worker processes, and pins memory for a faster GPU copy. <code>next(iter(loader))</code> grabs one collated batch: the default collate stacks 64 <code>(3,)</code> inputs into <code>(64, 3)</code> and the labels into <code>(64,)</code>.`,
+        code: `loader = DataLoader(\n    ds,\n    batch_size=64,\n    shuffle=True,                 # shuffle the TRAIN loader only\n    num_workers=2,                # parallel workers prefetch batches\n    pin_memory=(device == "cuda"),# faster CPU->GPU copy on GPU\n    drop_last=False,              # keep the final short batch\n)\n\nxb, yb = next(iter(loader))\nprint("batch x:", xb.shape, xb.dtype, "| batch y:", yb.shape, yb.dtype)`,
+        output: `batch x: torch.Size([64, 3]) torch.float32 | batch y: torch.Size([64]) torch.int64`
+      },
+      {
+        explain: `<b>The torchvision MNIST pipeline with split-specific transforms.</b> The train transform augments (random crop) then normalizes; the eval transform is deterministic — same <code>Normalize</code>, no randomness. Shuffle the train loader, not the eval loader. The image batch comes out channels-first as <code>(N, 1, 28, 28)</code>.`,
+        code: `from torchvision import datasets, transforms\n\ntrain_tf = transforms.Compose([\n    transforms.RandomCrop(28, padding=2),       # augmentation: TRAIN ONLY\n    transforms.ToTensor(),                      # uint8 0..255 -> float (1,28,28)\n    transforms.Normalize((0.1307,), (0.3081,)), # zero-center with MNIST stats\n])\neval_tf = transforms.Compose([\n    transforms.ToTensor(),\n    transforms.Normalize((0.1307,), (0.3081,)),\n])\n\ntrain_ds = datasets.MNIST(root="./data", train=True,  download=True, transform=train_tf)\ntest_ds  = datasets.MNIST(root="./data", train=False, download=True, transform=eval_tf)\ntrain_loader = DataLoader(train_ds, batch_size=128, shuffle=True)   # shuffle TRAIN\ntest_loader  = DataLoader(test_ds,  batch_size=256, shuffle=False)  # NOT eval\n\nimgs, labels = next(iter(train_loader))\nprint("MNIST batch:", imgs.shape, imgs.dtype, "| labels:", labels.shape)`,
+        output: `MNIST batch: torch.Size([128, 1, 28, 28]) torch.float32 | labels: torch.Size([128])`
+      },
+      {
+        explain: `<b>A custom <code>collate_fn</code> for variable-length data.</b> Different-length sequences break the default <code>torch.stack</code>. Pass a <code>collate_fn</code> that pads each sequence to the batch's longest length with <code>pad_sequence(..., batch_first=True)</code>, returning one rectangular <code>(B, max_len)</code> tensor plus the true lengths.`,
+        code: `from torch.nn.utils.rnn import pad_sequence\n\nclass SeqDataset(Dataset):\n    def __init__(self, seqs, labels):\n        self.seqs, self.labels = seqs, labels\n    def __len__(self):  return len(self.seqs)\n    def __getitem__(self, i):\n        return torch.tensor(self.seqs[i], dtype=torch.long), self.labels[i]\n\ndef pad_collate(batch):\n    seqs, labels = zip(*batch)\n    lengths = torch.tensor([len(s) for s in seqs])\n    padded  = pad_sequence(seqs, batch_first=True, padding_value=0)\n    return padded, lengths, torch.tensor(labels)\n\nseq_ds = SeqDataset([[1, 2, 3], [4, 5], [6, 7, 8, 9]], [0, 1, 0])\nseq_loader = DataLoader(seq_ds, batch_size=3, collate_fn=pad_collate)\npadded, lengths, lbls = next(iter(seq_loader))\nprint("padded sequences:", padded.shape, "| true lengths:", lengths.tolist())`,
+        output: `padded sequences: torch.Size([3, 4]) | true lengths: [3, 2, 4]`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The Dataset block prints <code>dataset size: 500</code> and a one-sample line whose feature is <code>torch.Size([3])</code> — proof that <code>__getitem__</code> returns a single <code>(x, y)</code> pair, not a batch.</li>
+<li>The DataLoader batch reads <code>torch.Size([64, 3]) torch.float32</code> for <code>x</code> and <code>torch.Size([64]) torch.int64</code> for <code>y</code>: the default collate stacked 64 samples and your <code>__getitem__</code> dtypes (<code>float32</code> input, <code>long</code> label) flowed straight through.</li>
+<li>The MNIST batch is <code>torch.Size([128, 1, 28, 28])</code> — channels-first <code>(N, C, H, W)</code>, the shape every <code>nn.Conv2d</code> expects — with labels <code>torch.Size([128])</code>.</li>
+<li>The padded batch is <code>torch.Size([3, 4])</code> with lengths <code>[3, 2, 4]</code>: every sequence was padded up to the longest (4) so they stack into one rectangle, while the true lengths are kept for masking.</li>
+</ul>
+<p>The MNIST step downloads ~10&nbsp;MB the first time. On Windows or in some notebooks set <code>num_workers=0</code> (or guard iteration with <code>if __name__ == "__main__":</code>). Set <code>torch.manual_seed(0)</code> first if you want the shuffled order to match a teammate's.</p>`,
+
+    cheatsheet: [
+      { code: "class DS(Dataset): __len__, __getitem__", note: "the whole map-style Dataset contract" },
+      { code: "ds = TensorDataset(X, y)", note: "instant Dataset over in-memory tensors" },
+      { code: "DataLoader(ds, batch_size=64, shuffle=True)", note: "batch + shuffle (TRAIN loader only)" },
+      { code: "xb, yb = next(iter(loader))", note: "grab one batch to check shapes/dtypes" },
+      { code: "DataLoader(..., num_workers=2, pin_memory=True)", note: "parallel prefetch + fast GPU copy" },
+      { code: "transforms.Compose([ToTensor(), Normalize(m, s)])", note: "image pipeline; one per split, augment TRAIN only" },
+      { code: "datasets.MNIST('./data', train=True, transform=tf)", note: "built-in torchvision Dataset" },
+      { code: "DataLoader(ds, collate_fn=pad_collate)", note: "custom collate for variable-length data" },
+      { code: "pad_sequence(seqs, batch_first=True)", note: "pad to the batch's longest length, then stack" }
+    ],
+
+    deeper: `<p>The DataLoader is the PyTorch <i>how</i>; the <i>why</i> lives in the concept lessons:</p>
+<ul>
+<li>why we train on small shuffled <b>batches</b> rather than the whole dataset at once — the variance/throughput trade-off — is in <a onclick="App.open('dl-minibatch')">mini-batch training</a>;</li>
+<li>why random crops, flips, and jitter (the <code>RandomCrop</code> / <code>RandomHorizontalFlip</code> transforms here, train-only) make a model generalize better is in <a onclick="App.open('dl-data-augmentation')">data augmentation</a>.</li>
+</ul>
+<p>Keep the seam clean — a Dataset that returns one correctly-typed sample, a DataLoader that batches and shuffles it — and the same pipeline carries you from a toy NumPy array to ImageNet without rewrites.</p>`,
 
     whenToUse:
       `<p><b>Use <code>torch.utils.data</code> for any real dataset.</b> The moment you train on more than a

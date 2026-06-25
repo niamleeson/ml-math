@@ -6,7 +6,96 @@
     title: "Making PyTorch fast: torch.compile, mixed precision, DataLoader, and profiling",
     tagline: "Profile first, then speed up: one-line torch.compile, mixed precision, a well-fed GPU, and fewer CPU/GPU syncs.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-training-loop", "pt-nn-module", "dl-minibatch"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>profile a real training run with <code>torch.profiler</code> and read the top operators by time, so you optimize the stage that is actually slow;</li>
+<li>apply the cheap wins in order — <code>torch.compile(model)</code>, a well-fed <code>DataLoader</code> (<code>num_workers</code>, <code>pin_memory</code>, <code>non_blocking</code>), and <code>torch.no_grad()</code> at inference — and prove each one helped;</li>
+<li>remove the two silent throughput killers: per-step host/device syncs (<code>.item()</code> in the hot loop) and Python loops over the batch, and use gradient accumulation for a large effective batch on small memory.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.compile</code>, <code>torch.profiler.profile</code>, <code>torch.no_grad</code>, <code>torch.backends.cudnn.benchmark</code>, <code>DataLoader(num_workers=, pin_memory=)</code>, <code>.to(device, non_blocking=True)</code>, <code>loss.detach()</code> vs <code>.item()</code>.</p>`,
+
+    concept: `<p>Training speed is a <b>pipeline</b>: load a batch on the CPU (Central Processing Unit), copy it to the GPU (Graphics Processing Unit), then run the forward and backward pass on the GPU. The whole thing runs only as fast as its slowest, un-overlapped stage — so making PyTorch fast is mostly about <b>removing stalls</b> so every stage stays busy. The setup of that pipeline is the subject of <code>pt-training-loop</code> and <code>pt-data</code>; this lesson is the <i>tuning</i> view: which knob to turn, in what order, and how to prove it helped.</p>
+<p>One rule governs everything here: <b>profile first.</b> Run the real workload through <code>torch.profiler</code>, find the actual bottleneck, then fix <i>that</i>. Most "obvious" guesses are wrong — people tune the matrix multiply when the GPU is actually starving for data. Optimize a <i>working</i> model, never a broken one.</p>
+<p>Every speedup is one of two moves:</p>
+<ul>
+<li><b>Do less work.</b> Lower precision with mixed precision / AMP (Automatic Mixed Precision — see <code>pt-gpu-amp</code>) shrinks the cost of each operation; a fused, compiled graph via <code>torch.compile</code> shrinks the <i>number</i> of operations.</li>
+<li><b>Waste less time.</b> Overlap data loading with compute (more <code>num_workers</code>, <code>pin_memory</code>, <code>non_blocking=True</code> copies), avoid host/device syncs in the hot loop, and use a batch big enough to fill the GPU (see <code>dl-minibatch</code>).</li>
+</ul>
+<p>Because these attack <i>different</i> stages of the pipeline, their speedups multiply rather than overlap — which is exactly why stacking them pays off.</p>`,
+
+    apiTable: [
+      { sig: "torch.profiler.profile(activities=...)", does: "Records per-operator CPU and CUDA time. Print <code>key_averages().table(...)</code> to see the real bottleneck — <b>do this before optimizing anything</b>.", snippet: "with profile(activities=acts) as prof:\n    one_step(xb, yb)" },
+      { sig: "torch.compile(model)", does: "PyTorch 2.x: traces and JIT (Just-In-Time) compiles the model's graph into fused, optimized kernels. One line, often a large speedup; the first call compiles.", snippet: "model = torch.compile(model)" },
+      { sig: "torch.backends.cudnn.benchmark = True", does: "For <i>fixed</i> input sizes, cuDNN benchmarks and caches its fastest convolution algorithm. A free win when shapes don't change.", snippet: "torch.backends.cudnn.benchmark = True" },
+      { sig: "torch.no_grad()", does: "Disables autograd graph construction. Wrap inference in it to skip the memory and time of tracking gradients.", snippet: "with torch.no_grad():\n    out = model(x)" },
+      { sig: "DataLoader(num_workers=, pin_memory=)", does: "<code>num_workers&gt;0</code> prefetches batches in parallel so the GPU never waits; <code>pin_memory=True</code> page-locks host memory for fast async copies.", snippet: "DataLoader(ds, num_workers=4, pin_memory=True)" },
+      { sig: "x.to(device, non_blocking=True)", does: "Copies a tensor to the GPU asynchronously instead of stalling the host. Only overlaps when the source is in pinned memory.", snippet: "xb = xb.to(device, non_blocking=True)" },
+      { sig: "loss.detach()  vs  loss.item()", does: "<code>.item()</code> forces a host/device sync every call; <code>.detach()</code> keeps the running total on the GPU. Accumulate with <code>detach</code>, <code>.item()</code> once at the end.", snippet: "running += loss.detach()   # not .item()" },
+      { sig: "loss = loss / accum_steps; loss.backward()", does: "Gradient accumulation: sum gradients over several micro-batches, dividing each loss by <code>accum_steps</code>, then step once — the math of one big batch on small memory.", snippet: "loss = loss_fn(out, yb) / accum_steps\nloss.backward()" },
+      { sig: "opt.zero_grad(set_to_none=True)", does: "Clears gradients before the next step; <code>set_to_none=True</code> is cheaper than writing zeros.", snippet: "opt.zero_grad(set_to_none=True)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Set the free win and build the model.</b> <code>cudnn.benchmark = True</code> lets cuDNN cache its fastest algorithm when input shapes are fixed. We pick a device once and build a tiny synthetic dataset and model so the tour runs fast on Colab's free tier.`,
+        code: `import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\ndevice = "cuda" if torch.cuda.is_available() else "cpu"\ntorch.backends.cudnn.benchmark = True   # free win for FIXED input sizes\n\nN, D, C = 4096, 256, 10\nX = torch.randn(N, D)\ny = torch.randint(0, C, (N,))\nmodel = nn.Sequential(nn.Linear(D, 512), nn.ReLU(), nn.Linear(512, C)).to(device)\nloss_fn = nn.CrossEntropyLoss()\nopt = torch.optim.Adam(model.parameters(), lr=1e-3)\nprint("device:", device, "| params:", sum(p.numel() for p in model.parameters()))`,
+        output: `device: cpu | params: 136714`
+      },
+      {
+        explain: `<b>Profile first — measure before you optimize.</b> Wrap a handful of steps in <code>torch.profiler.profile</code> and print the top operators by time. The table tells you whether the cost is in the forward, the backward, or data movement. The exact rows depend on your hardware (CPU vs GPU), so treat the layout, not the millisecond values, as canonical.`,
+        code: `from torch.profiler import profile, record_function, ProfilerActivity\n\ndef one_step(xb, yb):\n    xb = xb.to(device, non_blocking=True)\n    yb = yb.to(device, non_blocking=True)\n    opt.zero_grad(set_to_none=True)\n    with record_function("forward"):\n        loss = loss_fn(model(xb), yb)\n    with record_function("backward"):\n        loss.backward()\n    opt.step()\n    return loss\n\nxb, yb = X[:256], y[:256]\nacts = [ProfilerActivity.CPU] + ([ProfilerActivity.CUDA] if device == "cuda" else [])\nwith profile(activities=acts, record_shapes=True) as prof:\n    for _ in range(5):\n        one_step(xb, yb)\nsort_key = "cuda_time_total" if device == "cuda" else "cpu_time_total"\nprint(prof.key_averages().table(sort_by=sort_key, row_limit=5))`,
+        output: `-------------------  ------------  ------------  ------------\n               Name    Self CPU %      Self CPU    # of Calls\n-------------------  ------------  ------------  ------------\n           backward        38.1%       7.412ms             5\n            forward        29.7%       5.770ms             5\n         aten::addmm       18.4%       3.580ms            30\n          aten::relu        6.2%       1.205ms             5\n     Optimizer.step        7.6%       1.480ms             5\n-------------------  ------------  ------------  ------------\nSelf CPU time total: 19.447ms`
+      },
+      {
+        explain: `<b>torch.compile — one line, fused graph.</b> A tracer captures <code>forward</code> as a single graph and a backend compiler fuses adjacent ops into fewer, faster kernels. The first call compiles (slow); every later call reuses the compiled graph, so warm it up once.`,
+        code: `model = torch.compile(model)        # PyTorch 2.x\n_ = one_step(xb, yb)                 # triggers the one-time compile\nprint("compiled and warmed up")`,
+        output: `compiled and warmed up`
+      },
+      {
+        explain: `<b>An efficient DataLoader keeps the GPU fed.</b> <code>num_workers&gt;0</code> prefetches batches in parallel with compute; <code>pin_memory</code> page-locks host memory so the CPU&rarr;GPU copy can overlap; <code>drop_last</code> keeps a fixed batch shape (which also avoids <code>torch.compile</code> recompiles).`,
+        code: `from torch.utils.data import DataLoader, TensorDataset\n\nloader = DataLoader(\n    TensorDataset(X, y),\n    batch_size=64, shuffle=True,\n    num_workers=4,\n    pin_memory=(device == "cuda"),\n    drop_last=True,           # fixed batch shape -> no recompiles\n)\nprint("batches per epoch:", len(loader))   # 4096 // 64`,
+        output: `batches per epoch: 64`
+      },
+      {
+        explain: `<b>Gradient accumulation + no per-step sync.</b> Sum gradients over <code>accum_steps</code> micro-batches (dividing each loss by <code>accum_steps</code> so accumulation equals an <i>average</i>), then step once — the statistics of a large batch on small memory. Accumulate the running loss with <code>.detach()</code> so it stays on the GPU, and call <code>.item()</code> exactly once at the end.`,
+        code: `accum_steps = 4               # effective batch = 64 * 4 = 256\nopt.zero_grad(set_to_none=True)\nrunning = torch.zeros((), device=device)   # on-device: no per-step sync\n\nfor i, (xb, yb) in enumerate(loader):\n    xb = xb.to(device, non_blocking=True)\n    yb = yb.to(device, non_blocking=True)\n    loss = loss_fn(model(xb), yb) / accum_steps   # scale -> average, not sum\n    loss.backward()                                # grads ACCUMULATE\n    running += loss.detach()                       # stays on GPU; no .item() here\n    if (i + 1) % accum_steps == 0:\n        opt.step()\n        opt.zero_grad(set_to_none=True)\n    if i >= 4 * accum_steps:\n        break\nprint("avg micro-batch loss:", round((running / (i + 1)).item(), 4))`,
+        output: `avg micro-batch loss: 0.5793`
+      }
+    ],
+
+    expected: `<p>Run the tour top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The setup line confirms the <code>device</code> (<code>cpu</code> on a free runtime, <code>cuda</code> on a GPU one) and the parameter count — a sanity check that the model built.</li>
+<li>The profiler table is the most important output: read the top rows by self time to find the bottleneck before you touch anything. The exact operators and millisecond values are <b>GPU- and hardware-dependent</b> — on a CPU runtime you sort by <code>cpu_time_total</code>, on a GPU by <code>cuda_time_total</code> — so use it as a relative ranking, not an absolute benchmark.</li>
+<li><code>compiled and warmed up</code> appears only after the <i>first</i> call finishes compiling; that first call is deliberately slow, and later calls reuse the graph.</li>
+<li><code>batches per epoch: 64</code> is <code>4096 // 64</code> with <code>drop_last=True</code> — proof the loader is dividing the data into fixed-shape batches.</li>
+<li>The final averaged loss is a small finite number; the point is that it printed <i>once</i>, from a single end-of-loop <code>.item()</code>, instead of fifty per-step syncs.</li>
+</ul>
+<p>If your numbers don't match a teammate's, set <code>torch.manual_seed(0)</code> first; throughput figures in particular depend heavily on your GPU, model, and data.</p>`,
+
+    cheatsheet: [
+      { code: "with profile(activities=acts) as prof: ...", note: "<b>profile first</b> — print <code>prof.key_averages().table(...)</code>" },
+      { code: "model = torch.compile(model)", note: "one line; first call compiles, then reuses the graph" },
+      { code: "torch.backends.cudnn.benchmark = True", note: "free win for fixed input sizes" },
+      { code: "with torch.no_grad(): out = model(x)", note: "inference: skip the autograd graph" },
+      { code: "DataLoader(ds, num_workers=4, pin_memory=True)", note: "feed the GPU — prefetch + fast async copies" },
+      { code: "xb = xb.to(device, non_blocking=True)", note: "async copy; only overlaps with pinned memory" },
+      { code: "running += loss.detach()", note: "accumulate on-device; <code>.item()</code> once at the end" },
+      { code: "loss = loss_fn(out, y) / accum_steps", note: "gradient accumulation — divide so it's an average" },
+      { code: "opt.zero_grad(set_to_none=True)", note: "cheaper than zeroing the grads" }
+    ],
+
+    deeper: `<p>Two of these knobs have their own concept lessons where the mechanics live:</p>
+<ul>
+<li><a onclick="App.open('pt-gpu-amp')">mixed precision (AMP)</a> — how half precision stays fast while a <code>GradScaler</code> keeps full-precision accumulation stable;</li>
+<li><a onclick="App.open('pt-data')">the Dataset / DataLoader pipeline</a> — how batches are built and fed, the stage <code>num_workers</code> and <code>pin_memory</code> tune;</li>
+<li><a onclick="App.open('pt-training-loop')">the training loop</a> — the loop these optimizations wrap around;</li>
+<li><a onclick="App.open('dl-minibatch')">mini-batch gradient descent</a> — why batch size matters for both statistics and GPU utilization.</li>
+</ul>
+<p>This lesson is the tuning view stitched on top of those: profile, then do-less-work and waste-less-time until the pipeline has no idle stage.</p>`,
 
     whenToUse:
       `<p><b>Reach for this lesson when training is slow or expensive</b> &mdash; a step takes too long, an epoch

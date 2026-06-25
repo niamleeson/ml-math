@@ -15,7 +15,87 @@
     title: "The PyTorch ecosystem — what to reach for",
     tagline: "The course finale: the libraries around PyTorch, and when to use each.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-training-loop", "pt-nn-module", "pt-save-load", "dl-attention", "dl-cnn-params", "mod-llm"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>place any tool in the three rings of the ecosystem &mdash; core PyTorch, domain libraries, high-level frameworks &mdash; and reach for the right one for the job;</li>
+<li>organize a training job into a <code>LightningModule</code> + <code>Trainer</code> and know that it runs the <i>exact</i> five steps you wrote by hand;</li>
+<li>load a pretrained model from Hugging Face (a <code>pipeline</code> or <code>from_pretrained</code> + its own tokenizer) and skip training entirely.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>lightning.LightningModule</code>, <code>lightning.Trainer</code>, <code>transformers.pipeline</code>, <code>AutoModel.from_pretrained</code>, <code>torchvision.models</code>.</p>`,
+
+    concept: `<p>PyTorch is a small, sharp core &mdash; tensors and autograd &mdash; surrounded by a huge ecosystem. The skill is not memorizing every library; it is knowing the <b>three rings</b> and reaching for the right one:</p>
+<ul>
+<li><b>Core PyTorch</b> &mdash; <code>torch</code>, <code>torch.nn</code>, autograd, the loop you wrote by hand. Maximum control; everything else is built on it. Reach for it to learn, to debug, or to build what the frameworks do not support.</li>
+<li><b>Domain libraries</b> &mdash; <code>torchvision</code> (image models, datasets, transforms), <code>torchaudio</code> (audio), and the Hugging Face stack for text. They hand you the data plumbing and ready architectures.</li>
+<li><b>High-level frameworks</b> &mdash; <b>PyTorch Lightning</b> (organize your code into a <code>LightningModule</code>, get multi-GPU, AMP, checkpointing, logging for free), fastai, Ignite, Accelerate, and Hugging Face <code>transformers</code> + <code>Trainer</code>.</li>
+</ul>
+<p>A framework does not change the math. Lightning's <code>Trainer.fit()</code> calls the <i>exact</i> five steps you learned &mdash; <code>zero_grad</code>, forward, loss, <code>backward</code>, <code>step</code> &mdash; but it owns the <code>for epoch / for batch</code> scaffolding and the device/precision plumbing. You supply only what changes per project: <code>training_step</code> and <code>configure_optimizers</code>. Flags like <code>devices=4</code> or <code>precision="16-mixed"</code> swap in DDP or AMP without touching your step. The Hugging Face <code>Trainer</code> is the same idea one ring out, specialized for Transformers and paired with <code>from_pretrained</code> so you often skip training a model from scratch.</p>
+<p>The catch: frameworks save time only <i>after</i> the fundamentals are solid. When something breaks inside the hidden loop, you need the raw loop from this course to find it. Versus alternatives, <b>Keras/TensorFlow</b> trades flexibility for a simpler production path and <b>JAX</b> is the functional, just-in-time-compiled choice for TPUs and cutting-edge research; PyTorch sits in the middle and dominates today.</p>`,
+
+    apiTable: [
+      { sig: "class M(L.LightningModule): ...", does: "Bundle the model + <code>training_step</code> + <code>configure_optimizers</code>. The <code>Trainer</code> supplies the loop.", snippet: "import lightning as L\nclass LitNet(L.LightningModule): ..." },
+      { sig: "training_step(self, batch, batch_idx)", does: "Compute and <code>return</code> the loss for one batch. Lightning calls <code>backward()</code> + <code>step()</code> for you.", snippet: "def training_step(self, batch, i):\n    x, y = batch\n    return F.cross_entropy(self(x), y)" },
+      { sig: "configure_optimizers(self)", does: "Return the optimizer (and optional scheduler) Lightning will drive.", snippet: "return torch.optim.Adam(self.parameters(), lr=1e-2)" },
+      { sig: "L.Trainer(max_epochs=, devices=, precision=)", does: "The engine that runs the loop. Flags toggle multi-GPU, AMP, accumulation, logging &mdash; without touching your step.", snippet: "trainer = L.Trainer(max_epochs=5, devices=1)" },
+      { sig: "trainer.fit(model, train_dl, val_dl)", does: "Run the whole loop &mdash; you never write <code>for batch</code>, <code>.to(device)</code>, or <code>zero_grad</code> yourself.", snippet: "trainer.fit(LitNet(), train_dl)" },
+      { sig: "pipeline(task)", does: "Hugging Face one-liner: download a pretrained model + tokenizer and run a task end to end &mdash; zero training.", snippet: "clf = pipeline(\"sentiment-analysis\")" },
+      { sig: "AutoModel.from_pretrained(name)", does: "Download a pretrained backbone. Pair with its own <code>AutoTokenizer</code> to avoid train/serve skew.", snippet: "bert = AutoModel.from_pretrained(\"bert-base-uncased\")" },
+      { sig: "torchvision.models.resnet18(weights=\"DEFAULT\")", does: "A ready architecture with pretrained ImageNet weights &mdash; fine-tune instead of training from scratch.", snippet: "model = torchvision.models.resnet18(weights=\"DEFAULT\")" },
+      { sig: "torch.onnx.export(model, x, path, opset_version=)", does: "The deployment ring: write a portable ONNX artifact to hand to other runtimes.", snippet: "torch.onnx.export(model, x, \"m.onnx\", opset_version=17)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>A minimal <code>LightningModule</code>.</b> Two hooks are the whole contract: <code>training_step</code> returns a loss, <code>configure_optimizers</code> returns the optimizer. The <code>__mro__</code> check confirms it subclasses <code>LightningModule</code>. Colab auto-installs <code>lightning</code>.`,
+        code: `import torch, torch.nn as nn, torch.nn.functional as F\nimport lightning as L\n\nclass LitNet(L.LightningModule):\n    def __init__(self):\n        super().__init__()\n        self.net = nn.Linear(4, 2)        # raw logits (no softmax)\n    def forward(self, x):\n        return self.net(x)\n    def training_step(self, batch, batch_idx):\n        x, y = batch\n        return F.cross_entropy(self(x), y)   # Lightning runs backward()+step()\n    def configure_optimizers(self):\n        return torch.optim.Adam(self.parameters(), lr=1e-2)\n\nm = LitNet()\nprint(type(m).__mro__[1].__name__)`,
+        output: `LightningModule`
+      },
+      {
+        explain: `<b>The <code>Trainer</code> runs the loop.</b> Wrap synthetic tensors in a <code>DataLoader</code> and call <code>fit</code> &mdash; no <code>for batch</code>, no <code>.to(device)</code> in your code. Flipping <code>devices=4, precision="16-mixed"</code> would turn on multi-GPU + AMP without any other change.`,
+        code: `from torch.utils.data import TensorDataset, DataLoader\ntorch.manual_seed(0)\nX = torch.randn(100, 4)\ny = torch.randint(0, 2, (100,))\ntrain_dl = DataLoader(TensorDataset(X, y), batch_size=16, shuffle=True)\n\ntrainer = L.Trainer(max_epochs=2, accelerator="cpu", devices=1,\n                    logger=False, enable_checkpointing=False)\ntrainer.fit(LitNet(), train_dl)\nprint("done")`,
+        output: `done`
+      },
+      {
+        explain: `<b>The framework does not change the math.</b> The same update done by hand: the explicit five steps Lightning's <code>training_step</code> hides. Seeing them raw is the fundamentals the lesson insists on.`,
+        code: `torch.manual_seed(0)\nmodel = nn.Linear(4, 2)\nopt = torch.optim.Adam(model.parameters(), lr=1e-2)\nx = torch.randn(8, 4)\ny = torch.randint(0, 2, (8,))\nopt.zero_grad()                       # 1\nlogits = model(x)                     # 2 forward\nloss = F.cross_entropy(logits, y)     # 3 loss\nloss.backward()                       # 4 backward\nopt.step()                            # 5 step\nprint(round(loss.item(), 4))`,
+        output: `0.7311`
+      },
+      {
+        explain: `<b>Hugging Face, no training.</b> One <code>pipeline</code> call downloads a pretrained model + its tokenizer and runs the task. The result is a list of dicts with a label and a confidence score.`,
+        code: `from transformers import pipeline\nclf = pipeline("sentiment-analysis")\nout = clf("PyTorch's ecosystem makes shipping fast.")\nprint(out[0]["label"])\nprint(round(out[0]["score"], 2))`,
+        output: `POSITIVE\n1.0`
+      },
+      {
+        explain: `<b>A pretrained backbone with its own tokenizer.</b> Pair <code>AutoTokenizer</code> with <code>AutoModel.from_pretrained</code> so preprocessing matches the model. BERT-base emits a 768-dim hidden state per token; the four tokens are <code>[CLS] hello pytorch [SEP]</code>.`,
+        code: `from transformers import AutoTokenizer, AutoModel\ntok = AutoTokenizer.from_pretrained("bert-base-uncased")\nbert = AutoModel.from_pretrained("bert-base-uncased")\nenc = tok("hello pytorch", return_tensors="pt")\nwith torch.no_grad():\n    out = bert(**enc)\nprint(out.last_hidden_state.shape)`,
+        output: `torch.Size([1, 4, 768])`
+      }
+    ],
+
+    expected: `<p>Run the tour in Colab (the setup cell installs <code>lightning</code> and <code>transformers</code>):</p>
+<ul>
+<li>The first block prints <code>LightningModule</code> &mdash; the class you wrote is indeed a Lightning module, with just two hooks defined.</li>
+<li><code>done</code> prints after <code>fit</code> ran the entire 2-epoch loop for you &mdash; you never wrote the batch loop, device moves, or <code>zero_grad/backward/step</code>.</li>
+<li>The raw-loop block prints the same loss (<code>0.7311</code> at seed 0) the framework would compute &mdash; direct proof the math is identical; only the boilerplate differs.</li>
+<li>The pipeline prints <code>POSITIVE</code> with a score near <code>1.0</code> on a clearly positive sentence, using a model you never trained.</li>
+<li>The BERT shape is <code>[1, 4, 768]</code>: batch 1, four tokens, 768 hidden dim. The exact loss/score can shift slightly with library versions; the shapes and labels are what matter.</li>
+</ul>`,
+
+    cheatsheet: [
+      { code: "class LitNet(L.LightningModule): ...", note: "model + two hooks" },
+      { code: "def training_step(self, batch, i): return loss", note: "Lightning runs backward()+step()" },
+      { code: "def configure_optimizers(self): return Adam(...)", note: "the optimizer the Trainer drives" },
+      { code: "L.Trainer(max_epochs=5, devices=1).fit(model, dl)", note: "runs the loop; devices=4 -> multi-GPU" },
+      { code: "clf = pipeline('sentiment-analysis')", note: "pretrained model + tokenizer, zero training" },
+      { code: "AutoModel.from_pretrained('bert-base-uncased')", note: "backbone; pair with its AutoTokenizer" },
+      { code: "torchvision.models.resnet18(weights='DEFAULT')", note: "ready architecture + pretrained weights" },
+      { code: "torch.onnx.export(model, x, 'm.onnx', opset_version=17)", note: "portable export for deployment" }
+    ],
+
+    deeper: `<p>The frameworks organize away the loop you built in <code>pt-training-loop</code>, but the pieces are exactly the course's fundamentals: a model is the <a onclick="App.open('dl-cnn-params')">layered architecture</a> from <code>pt-nn-module</code>, and the Hugging Face Transformers you load with <code>from_pretrained</code> are stacks of the <a onclick="App.open('dl-attention')">attention</a> mechanism scaled up into <a onclick="App.open('mod-llm')">large language models</a>. The deployment ring &mdash; ONNX export, TorchServe &mdash; is covered in <code>pt-save-load</code> and <code>pt-deployment</code>. Lightning's <code>devices=4</code> flag is the <code>pt-distributed</code> lesson's DDP, turned on by a single argument. The lesson stands: more code buys control, less code buys speed on standard tasks &mdash; but only the fundamentals let you debug when an abstraction leaks.</p>`,
 
     whenToUse: `<p>You have written the raw loop. Now: when do you keep writing it, and when do you let a library do the work?</p>
 <ul>

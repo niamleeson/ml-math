@@ -6,7 +6,96 @@
     title: "Building models with torch.nn: nn.Module, layers, and parameters",
     tagline: "Subclass nn.Module, declare layers in __init__, wire them in forward, and PyTorch tracks every weight for you.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-forward-prop", "dl-neuron", "dl-init"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>build a model by subclassing <code>nn.Module</code> &mdash; call <code>super().__init__()</code>, declare layers in <code>__init__</code>, wire them in <code>forward</code> &mdash; and run it with <code>model(x)</code> (never <code>model.forward(x)</code>);</li>
+<li>count a model's trainable parameters two ways: by hand with <code>in*out + out</code> per <code>nn.Linear</code>, and with <code>sum(p.numel() for p in model.parameters())</code>;</li>
+<li>read a model's structure and checkpoint keys (<code>print(model)</code>, <code>state_dict()</code>), and build the same straight stack with <code>nn.Sequential</code>.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.Module</code>, <code>super().__init__()</code>, <code>nn.Linear</code>, <code>nn.ReLU</code>, <code>forward</code>, <code>model.parameters()</code> / <code>named_parameters()</code>, <code>state_dict()</code>, <code>nn.Sequential</code>, <code>model.apply</code>.</p>`,
+
+    concept: `<p>An <code>nn.Module</code> bundles two things: the <b>state</b> (its weight tensors, called parameters) and the <b>computation</b> (how to turn an input into an output). You define both in one class, and the pattern never changes: <b>declare the layers in <code>__init__</code></b>, then <b>describe the data flow in <code>forward</code></b>. PyTorch does the rest &mdash; it finds every parameter, tracks gradients, and lets you save, load, and move the whole model with one call.</p>
+<p>The magic is <b>auto-registration</b>. <code>nn.Module</code> overrides Python's attribute assignment: when you write <code>self.fc1 = nn.Linear(4, 8)</code>, the base class notices the value is a <code>Module</code> and records it in an internal registry. That is exactly why layers must live on <code>self</code> in <code>__init__</code> &mdash; a layer built inside <code>forward</code> is never assigned to <code>self</code>, so it is never registered, never appears in <code>model.parameters()</code>, and <b>never trains</b>. <code>model.parameters()</code> walks that registry and yields every parameter tensor; each has <code>requires_grad=True</code>, so <code>loss.backward()</code> fills its <code>.grad</code> and the optimizer (which you handed <code>model.parameters()</code>) updates it.</p>
+<p>Two more rules follow from this:</p>
+<ul>
+<li><b>Call <code>model(x)</code>, not <code>model.forward(x)</code>.</b> <code>model(x)</code> invokes <code>nn.Module.__call__</code>, which runs registered hooks and respects train/eval mode <i>around</i> your <code>forward</code>; calling <code>.forward</code> directly skips all of that.</li>
+<li><b>Start with <code>nn.Sequential</code> for a straight chain</b> &mdash; layer, then layer, with one input and output &mdash; and graduate to subclassing the moment the data flow stops being a single line (skip connections, branching, multiple inputs).</li>
+</ul>
+<p>The running example is a two-layer Multi-Layer Perceptron (MLP), <code>Linear(784&rarr;256) &rarr; ReLU &rarr; Linear(256&rarr;10)</code> &mdash; the math is <a onclick="App.open('dl-forward-prop')">forward propagation</a>.</p>`,
+
+    apiTable: [
+      { sig: "class Net(nn.Module):", does: "Subclass the base class for every model and layer. Your network <i>is</i> a Python class.", snippet: "class MLP(nn.Module): ..." },
+      { sig: "super().__init__()", does: "MUST be the first line of <code>__init__</code> &mdash; it sets up the registries; skip it and assignment errors.", snippet: "def __init__(self):\n    super().__init__()" },
+      { sig: "self.fc = nn.Linear(in_f, out_f)", does: "A fully-connected layer: weight of shape <code>(out, in)</code> plus bias of length <code>out</code>. Assigning to <code>self</code> registers it.", snippet: "self.fc1 = nn.Linear(784, 256)" },
+      { sig: "nn.ReLU()", does: "A parameter-free activation, <code>max(0, z)</code> &mdash; adds nonlinearity with zero weights.", snippet: "self.relu = nn.ReLU()" },
+      { sig: "def forward(self, x):", does: "Define the data flow: input tensor in, output tensor out. PyTorch calls it via <code>model(x)</code>.", snippet: "return self.fc2(self.relu(self.fc1(x)))" },
+      { sig: "model(x)", does: "Run a forward pass <i>plus</i> hooks and train/eval machinery. Never call <code>model.forward(x)</code>.", snippet: "logits = model(x)" },
+      { sig: "model.parameters() / named_parameters()", does: "Iterate every registered weight tensor (with names) &mdash; what you hand to an optimizer.", snippet: "sum(p.numel() for p in model.parameters())" },
+      { sig: "model.state_dict()", does: "Ordered dict mapping each parameter name to its tensor &mdash; the contents of a checkpoint.", snippet: "list(model.state_dict().keys())" },
+      { sig: "nn.Sequential(*layers)", does: "Glue a straight chain of layers without writing a class &mdash; one input, one output.", snippet: "nn.Sequential(nn.Linear(784,256), nn.ReLU(), nn.Linear(256,10))" },
+      { sig: "model.apply(fn)", does: "Walk every submodule and run <code>fn</code> on it &mdash; the usual way to (re)initialize weights.", snippet: "model.apply(init_weights)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Subclass <code>nn.Module</code> and declare the layers.</b> <code>super().__init__()</code> comes first to set up the registries; then each <code>nn.Linear</code> / <code>nn.ReLU</code> assigned to <code>self</code> is auto-registered. <code>forward</code> wires them into the data flow. <code>print(model)</code> shows the module tree.`,
+        code: `import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\n\nclass MLP(nn.Module):\n    def __init__(self, in_dim=784, hidden=256, out_dim=10):\n        super().__init__()\n        self.fc1 = nn.Linear(in_dim, hidden)\n        self.relu = nn.ReLU()\n        self.fc2 = nn.Linear(hidden, out_dim)\n    def forward(self, x):\n        return self.fc2(self.relu(self.fc1(x)))\n\nmodel = MLP()\nprint(model)`,
+        output: `MLP(\n  (fc1): Linear(in_features=784, out_features=256, bias=True)\n  (relu): ReLU()\n  (fc2): Linear(in_features=256, out_features=10, bias=True)\n)`
+      },
+      {
+        explain: `<b>Parameters are auto-registered.</b> <code>model.parameters()</code> yields every registered weight tensor; here the total is <code>784*256+256 + 256*10+10 = 203530</code>. Each parameter has <code>requires_grad=True</code>, and <code>state_dict()</code> names them &mdash; that naming is what a checkpoint saves.`,
+        code: `n_params = sum(p.numel() for p in model.parameters())\nprint("trainable parameters:", n_params)\nprint("fc1.weight requires_grad:", model.fc1.weight.requires_grad)\nprint("state_dict keys:", list(model.state_dict().keys()))`,
+        output: `trainable parameters: 203530\nfc1.weight requires_grad: True\nstate_dict keys: ['fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias']`
+      },
+      {
+        explain: `<b>A forward pass &mdash; call the module.</b> A batch of 8 inputs of 784 features each maps to <code>(8, 10)</code> logits. Use <code>model(x)</code>, never <code>model.forward(x)</code>, so the hooks and train/eval machinery run around your <code>forward</code>.`,
+        code: `x = torch.randn(8, 784)\nlogits = model(x)               # NOT model.forward(x)\nprint("output shape:", logits.shape)`,
+        output: `output shape: torch.Size([8, 10])`
+      },
+      {
+        explain: `<b>The same network as <code>nn.Sequential</code>.</b> For a straight stack you can skip the class entirely. Same layers mean the same registered parameters, so the count is identical (<code>203530</code>) and the output shape matches.`,
+        code: `seq = nn.Sequential(\n    nn.Linear(784, 256),\n    nn.ReLU(),\n    nn.Linear(256, 10),\n)\nprint("sequential parameters:", sum(p.numel() for p in seq.parameters()))\nprint("sequential output:", seq(x).shape)`,
+        output: `sequential parameters: 203530\nsequential output: torch.Size([8, 10])`
+      },
+      {
+        explain: `<b>Controlling weight initialization.</b> <code>model.apply(fn)</code> walks every submodule; here we re-init each <code>nn.Linear</code> with Kaiming-normal weights and zero biases. Confirm <code>fc1.bias</code> is now all zeros &mdash; the math behind a good init is <code>dl-init</code>.`,
+        code: `def init_weights(m):\n    if isinstance(m, nn.Linear):\n        nn.init.kaiming_normal_(m.weight, nonlinearity="relu")\n        nn.init.zeros_(m.bias)\n\nmodel.apply(init_weights)\nprint("fc1.bias all zeros:", bool(torch.all(model.fc1.bias == 0)))`,
+        output: `fc1.bias all zeros: True`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom and read each printout against its note:</p>
+<ul>
+<li><code>print(model)</code> shows the module tree &mdash; <code>fc1</code>, <code>relu</code>, <code>fc2</code> &mdash; proving all three layers were registered (a layer built in <code>forward</code> would be absent).</li>
+<li><code>trainable parameters: 203530</code> matches the by-hand sum <code>(784*256+256) + (256*10+10)</code>; <code>requires_grad: True</code> confirms the optimizer will update them; the four <code>state_dict</code> keys are exactly what a checkpoint stores.</li>
+<li><code>output shape: torch.Size([8, 10])</code> &mdash; a batch of 8 turned into 8 rows of 10 logits, proving the forward wiring is correct.</li>
+<li>The <code>nn.Sequential</code> version prints the <i>same</i> <code>203530</code> and <code>(8, 10)</code> &mdash; same layers, same parameters.</li>
+<li><code>fc1.bias all zeros: True</code> shows <code>model.apply</code> reached every submodule and re-initialized it.</li>
+</ul>
+<p>The structure and counts are deterministic. The actual weight <i>values</i> depend on <code>torch.manual_seed(0)</code> and are identical on CPU and GPU given the same seed; without the seed, init differs every run.</p>`,
+
+    cheatsheet: [
+      { code: "class Net(nn.Module): ...", note: "every model subclasses nn.Module" },
+      { code: "super().__init__()", note: "FIRST line of __init__ (sets up registration)" },
+      { code: "self.fc = nn.Linear(in, out)", note: "declare layers on self in __init__ -> registered" },
+      { code: "def forward(self, x): return ...", note: "the data flow; PyTorch calls it via model(x)" },
+      { code: "logits = model(x)", note: "forward pass &mdash; NOT model.forward(x)" },
+      { code: "sum(p.numel() for p in model.parameters())", note: "count trainable params (in*out + out per Linear)" },
+      { code: "list(model.state_dict().keys())", note: "named weight tensors -> what a checkpoint stores" },
+      { code: "nn.Sequential(L1, nn.ReLU(), L2)", note: "quick straight stack, no class" },
+      { code: "model.apply(init_fn)", note: "walk every submodule (e.g. re-init weights)" }
+    ],
+
+    deeper: `<p>An <code>nn.Module</code> is the code form of the network math:</p>
+<ul>
+<li>each <code>nn.Linear</code> is a layer of <a onclick="App.open('dl-neuron')">neurons</a> computing <code>Wx + b</code>, and stacking them with a <code>ReLU</code> between is <a onclick="App.open('dl-forward-prop')">forward propagation</a>;</li>
+<li>the registered parameters carry <code>requires_grad=True</code> so <a onclick="App.open('dl-backprop')">backprop</a> can fill their <code>.grad</code> &mdash; autograd (<code>pt-autograd</code>) is the engine, the optimizer the updater;</li>
+<li>how those weights start out &mdash; Kaiming/Xavier &mdash; is the subject of <a onclick="App.open('dl-init')">weight initialization</a>, which is why <code>model.apply</code> with <code>nn.init.*</code> matters.</li>
+</ul>
+<p>The class packages the math; the registries are what let one <code>.parameters()</code> call, one <code>.backward()</code>, and one <code>.to(device)</code> drive the whole network at once.</p>`,
 
     whenToUse:
       `<p><b>This is the foundation of every PyTorch model you will ever write.</b> The class

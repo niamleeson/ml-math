@@ -11,7 +11,85 @@
     title: "Deploying a trained model",
     tagline: "Take the trained weights out of the notebook: export to a Python-free runtime (TorchScript / ONNX), quantize to int8, and serve it behind an API.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-save-load", "pt-nn-module", "skill-monitoring", "skill-limitations"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>put a model in serving mode (<code>eval()</code> + <code>inference_mode()</code>) and export it to a Python-free graph with TorchScript &mdash; knowing when to <code>trace</code> and when to <code>script</code>;</li>
+<li>export to ONNX (Open Neural Network Exchange), run it with ONNX Runtime, and verify the outputs match PyTorch across the boundary;</li>
+<li>shrink and speed up a model with dynamic int8 quantization, and sketch a minimal serving endpoint.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.jit.trace/script</code>, <code>torch.jit.save/load</code>, <code>torch.onnx.export</code>, <code>onnxruntime.InferenceSession</code>, <code>torch.ao.quantization.quantize_dynamic</code>.</p>`,
+
+    concept: `<p>A trained model in a notebook is the <i>start</i> of the work, not the end. The notebook gives you weights that work; production demands a graph that is fast, portable, observable, and cheap to run. Three moves get you there.</p>
+<p><b>1. Export</b> &mdash; freeze the model into a standalone graph that no longer needs Python or the training code. Your model is Python that executes a sequence of tensor operations; TorchScript captures that sequence as a static <i>graph</i> and saves it with the weights, so a C++ runtime can replay it directly. ONNX freezes it into a framework-neutral file other engines can run. Either way the result is a single artifact you drop onto a server, a phone, or a C++ binary.</p>
+<p>The key distinction is <b>trace vs script</b>. <code>torch.jit.trace</code> runs the model once on an example and records only the operations that actually executed &mdash; a data-dependent <code>if</code> is baked to whichever branch that example took. <code>torch.jit.script</code> compiles the Python source of <code>forward()</code> instead, so branches and loops survive. Rule of thumb: <b>script</b> when behavior depends on the data, <b>trace</b> for straight-line tensor math.</p>
+<p><b>2. Make it cheaper</b> &mdash; quantization stores weights as 8-bit integers instead of 32-bit floats: the file shrinks ~4x (4 bytes &rarr; 1 byte) and integer math is cheaper, while you watch accuracy to confirm the trade is worth it.</p>
+<p><b>3. Serve it well</b> &mdash; <code>model.eval()</code> once at load and every prediction inside <code>torch.inference_mode()</code> (correctness and no wasted autograd graph), request batching for throughput, and monitoring for drift (see <code>skill-monitoring</code>).</p>`,
+
+    apiTable: [
+      { sig: "model.eval()", does: "Switch to inference mode: dropout off, batch-norm uses running stats. The non-negotiable first step before export.", snippet: "model = model.eval()" },
+      { sig: "torch.jit.trace(model, example)", does: "Record the ops that run on one example. Fast, but freezes data-dependent control flow. Use for straight-line code.", snippet: "ts = torch.jit.trace(model, x)" },
+      { sig: "torch.jit.script(model)", does: "Compile the Python <code>forward()</code> into a graph, preserving <code>if</code>/loops. Use when behavior depends on the data.", snippet: "ts = torch.jit.script(model)" },
+      { sig: "ts.save(path) / torch.jit.load(path)", does: "Persist and reload the graph + weights. The reloaded module runs <i>without</i> the original Python class.", snippet: "ts.save(\"m.ts\"); torch.jit.load(\"m.ts\")" },
+      { sig: "torch.onnx.export(model, x, path, opset_version=)", does: "Trace the model into a portable ONNX file. Pin the opset; mark variable dims with <code>dynamic_axes</code>.", snippet: "torch.onnx.export(model, x, \"m.onnx\", opset_version=17)" },
+      { sig: "ort.InferenceSession(path).run(out, feed)", does: "Run the ONNX graph with ONNX Runtime &mdash; no PyTorch installed. The production inference path.", snippet: "sess = ort.InferenceSession(\"m.onnx\")" },
+      { sig: "quantize_dynamic(model, {nn.Linear}, qint8)", does: "Store Linear weights as int8 (1 byte) instead of float32 &mdash; ~4x smaller, faster. Re-validate accuracy.", snippet: "torch.ao.quantization.quantize_dynamic(m, {nn.Linear}, dtype=torch.qint8)" },
+      { sig: "torch.inference_mode()", does: "A stricter, faster <code>no_grad()</code>: skips autograd bookkeeping you never use at serving, cutting memory and latency.", snippet: "with torch.inference_mode():\n    logits = model(x)" },
+      { sig: "onnx.checker.check_model(onnx.load(path))", does: "Structural validity check on the exported ONNX file before shipping.", snippet: "onnx.checker.check_model(onnx.load(\"m.onnx\"))" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Build the classifier and put it in serving mode.</b> <code>eval()</code> is the famous must-do: it turns dropout off and batch-norm to running stats. We grab a reference output under <code>inference_mode()</code> to compare every exported artifact against.`,
+        code: `import torch, torch.nn as nn, numpy as np, os\ntorch.manual_seed(0)\n\nclass Net(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)\n        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)\n        self.pool  = nn.MaxPool2d(2)\n        self.fc1   = nn.Linear(32 * 8 * 8, 128)\n        self.fc2   = nn.Linear(128, 10)\n    def forward(self, x):\n        x = self.pool(torch.relu(self.conv1(x)))\n        x = self.pool(torch.relu(self.conv2(x)))\n        x = x.flatten(1)\n        x = torch.relu(self.fc1(x))\n        return self.fc2(x)\n\nmodel = Net().eval()\nn = sum(p.numel() for p in model.parameters())\nprint("params:", n, "| fp32 MB:", round(n * 4 / 1e6, 3))\nx = torch.randn(1, 3, 32, 32)\nwith torch.inference_mode():\n    ref = model(x)`,
+        output: `params: 268650 | fp32 MB: 1.075`
+      },
+      {
+        explain: `<b>Export to TorchScript, save, reload.</b> <code>trace</code> records the ops for this input; the saved graph carries its own ops and weights, so the reloaded module runs without the <code>Net</code> class. Always check it reproduces the original numerically.`,
+        code: `ts = torch.jit.trace(model, x)\nts.save("model_ts.pt")\nreloaded = torch.jit.load("model_ts.pt")   # no Net class needed\nwith torch.inference_mode():\n    print("TorchScript matches:", torch.allclose(reloaded(x), ref, atol=1e-5))`,
+        output: `TorchScript matches: True`
+      },
+      {
+        explain: `<b>Export to ONNX and run it with ONNX Runtime.</b> Pin <code>opset_version</code> and mark the batch dim dynamic. <code>onnx.checker</code> validates the structure; then compare the runtime's output to PyTorch &mdash; numeric drift across this boundary is a classic deployment bug.`,
+        code: `import onnx, onnxruntime as ort\ntorch.onnx.export(\n    model, x, "model.onnx",\n    input_names=["input"], output_names=["logits"],\n    opset_version=17,\n    dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}})\nonnx.checker.check_model(onnx.load("model.onnx"))\nsess = ort.InferenceSession("model.onnx", providers=["CPUExecutionProvider"])\nonnx_out = sess.run(["logits"], {"input": x.numpy()})[0]\nprint("ONNX matches:", np.allclose(onnx_out, ref.numpy(), atol=1e-4))`,
+        output: `ONNX matches: True`
+      },
+      {
+        explain: `<b>Dynamic int8 quantization.</b> One line converts the Linear weights to 8-bit integers. Save both state dicts and compare bytes &mdash; about a 4x shrink. Always re-validate accuracy on a held-out set before shipping int8.`,
+        code: `qmodel = torch.ao.quantization.quantize_dynamic(\n    model, {nn.Linear}, dtype=torch.qint8).eval()\ntorch.save(model.state_dict(),  "fp32.pt")\ntorch.save(qmodel.state_dict(), "int8.pt")\nprint("fp32 KB:", round(os.path.getsize("fp32.pt") / 1e3, 1))\nprint("int8 KB:", round(os.path.getsize("int8.pt") / 1e3, 1))`,
+        output: `fp32 KB: 1078.0\nint8 KB: 283.1`
+      },
+      {
+        explain: `<b>Serve it.</b> A minimal endpoint loads the exported graph in <code>eval()</code> mode, shares the <i>same</i> preprocessing as training (no train/serve skew), and runs each request inside <code>inference_mode()</code>. This sketch prints; in production it would be a FastAPI <code>/predict</code> route.`,
+        code: `served = torch.jit.load("model_ts.pt").eval()\ndef preprocess(pixels):\n    t = torch.tensor(pixels).float().reshape(1, 3, 32, 32)\n    return (t - 0.5) / 0.5            # match training normalization\nwith torch.inference_mode():\n    logits = served(x)\nprint("predicted class:", logits.argmax(1).item())`,
+        output: `predicted class: 4`
+      }
+    ],
+
+    expected: `<p>Run the tour top to bottom (Colab auto-installs <code>onnx</code> + <code>onnxruntime</code>):</p>
+<ul>
+<li>The model has <code>268650</code> parameters &mdash; at float32 (4 bytes each) that is <code>1.075 MB</code>, the number the size chart reproduces.</li>
+<li><code>TorchScript matches: True</code> proves the reloaded graph &mdash; with no <code>Net</code> class in scope &mdash; computes the same output as eager PyTorch.</li>
+<li><code>ONNX matches: True</code> proves the portable ONNX graph, run by a non-PyTorch engine, agrees within <code>1e-4</code>. If this ever prints <code>False</code>, suspect an unsupported op or an opset mismatch.</li>
+<li>The int8 state dict is roughly a quarter the size of the float32 one &mdash; the ~4x shrink, on disk.</li>
+<li>The final line prints a class index (an untrained model, so the actual value is arbitrary). With <code>torch.manual_seed(0)</code> set, it is reproducible; the predicted class itself is meaningless until the model is trained.</li>
+</ul>`,
+
+    cheatsheet: [
+      { code: "model.eval()", note: "must-do before export and at serving" },
+      { code: "ts = torch.jit.trace(model, example)", note: "straight-line code; freezes control flow" },
+      { code: "ts = torch.jit.script(model)", note: "keeps data-dependent if/loops" },
+      { code: "ts.save('m.ts') / torch.jit.load('m.ts')", note: "runs without the Python class" },
+      { code: "torch.onnx.export(model, x, 'm.onnx', opset_version=17)", note: "portable; pin the opset, set dynamic_axes" },
+      { code: "ort.InferenceSession('m.onnx').run(out, feed)", note: "run with no PyTorch installed" },
+      { code: "quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)", note: "int8 -> ~4x smaller; re-validate accuracy" },
+      { code: "with torch.inference_mode(): ...", note: "no autograd graph per request" },
+      { code: "np.allclose(onnx_out, torch_out, atol=1e-4)", note: "verify across the export boundary" }
+    ],
+
+    deeper: `<p>The deployment moves rest on ideas from earlier lessons. <code>eval()</code> matters because <a onclick="App.open('dl-dropout')">dropout</a> and <a onclick="App.open('dl-batchnorm')">batch-norm</a> behave differently in training vs inference &mdash; ship in <code>train()</code> mode and predictions are wrong and non-deterministic. The exported graph is the same forward pass you built in <code>pt-nn-module</code>, just frozen and stripped of Python; saving and loading weights is the subject of <code>pt-save-load</code>. Quantization trades a little numerical precision for memory and speed: each weight becomes an integer plus a scale, with the real value approximately <code>scale * (q - zero_point)</code> &mdash; usually a tiny rounding error, but one you must measure, never assume.</p>`,
 
     whenToUse:
       `<p>The moment a model stops being a research artifact and starts being a <b>product</b>. Reach for this whenever you must:</p>

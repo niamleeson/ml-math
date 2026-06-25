@@ -4,7 +4,95 @@
     title: "Autograd: PyTorch's automatic differentiation",
     tagline: "PyTorch records every operation, then computes all the gradients for you with one .backward() call.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-backprop", "dl-forward-prop", "fnd-chain", "fnd-gradient"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>set <code>requires_grad=True</code> on a leaf tensor, run a forward computation, call <code>.backward()</code>, and read the gradient off <code>.grad</code> &mdash; and hand-check it against the analytic derivative;</li>
+<li>explain the dynamic computation graph: how <code>grad_fn</code> links record each op and how <code>.backward()</code> walks them in reverse (reverse-mode autodiff = backprop);</li>
+<li>diagnose the famous gotchas: gradients <i>accumulate</i> (so you must <code>zero_grad</code>), a graph is freed after one backward (<code>retain_graph</code>), and <code>torch.no_grad()</code> turns tracking off at inference.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>requires_grad</code>, <code>.backward()</code>, <code>.grad</code>, <code>grad_fn</code>, <code>.grad.zero_()</code>, <code>retain_graph=True</code>, <code>torch.no_grad()</code>, <code>.detach()</code>.</p>`,
+
+    concept: `<p>When you do math on a tensor that has <code>requires_grad=True</code>, PyTorch quietly records each operation into a <b>computational graph</b> &mdash; a directed graph of who-was-computed-from-whom. The graph is <b>dynamic</b>: it is built fresh, on the fly, as your Python code runs, so loops, <code>if</code> branches, and varying shapes are all fine &mdash; the graph is whatever your code actually did this time.</p>
+<p>Calling <code>.backward()</code> on a scalar output walks that graph <i>backwards</i>, applying the <a onclick="App.open('fnd-chain')">chain rule</a> at each node, and deposits the gradient into every leaf's <code>.grad</code>. That backward walk is <b>reverse-mode automatic differentiation</b> &mdash; which is exactly <a onclick="App.open('dl-backprop')">backpropagation</a>, automated. You almost never call it by hand, but understanding it is the difference between debugging a training loop in minutes versus hours.</p>
+<p>Three pieces make it work:</p>
+<ul>
+<li><b><code>requires_grad=True</code></b> on a leaf tensor says "track me &mdash; I am something we may want gradients for";</li>
+<li><b><code>grad_fn</code></b> &mdash; every tensor produced by a tracked op carries a reference to the function that made it (<code>&lt;PowBackward0&gt;</code>, <code>&lt;AddBackward0&gt;</code>); these links <i>are</i> the edges of the graph;</li>
+<li><b><code>.backward()</code></b> starts at the output and follows the <code>grad_fn</code> chain back to the leaves, multiplying local derivatives along the way and accumulating into each leaf's <code>.grad</code>.</li>
+</ul>
+<p>The running example: $y = x^3 + 2x$, whose derivative is $3x^2 + 2$. At $x = 2$ that is $3\\cdot 4 + 2 = 14$ &mdash; and <code>x.grad</code> reads exactly <code>14.0</code>.</p>`,
+
+    apiTable: [
+      { sig: "torch.tensor(v, requires_grad=True)", does: "Make a leaf tensor autograd will track. Must be <b>floating-point</b> &mdash; ints cannot carry gradients.", snippet: "x = torch.tensor(2.0, requires_grad=True)" },
+      { sig: "y = f(x)", does: "Any op on a tracked tensor builds graph nodes and gives the result a <code>grad_fn</code>.", snippet: "y = x**3 + 2*x" },
+      { sig: "y.grad_fn", does: "The backward function that produced <code>y</code> &mdash; one edge of the graph. Leaves have <code>None</code>.", snippet: "y.grad_fn   # <AddBackward0 object ...>" },
+      { sig: "y.backward()", does: "Run reverse-mode autodiff from this scalar back through the graph, filling each leaf's <code>.grad</code>.", snippet: "y.backward()" },
+      { sig: "x.grad", does: "Where the accumulated gradient lands, on leaf tensors with <code>requires_grad=True</code>.", snippet: "x.grad      # tensor(14.)" },
+      { sig: "x.grad.zero_()", does: "Clear stale gradients &mdash; gradients ADD up, so zero before each backward (this is <code>optimizer.zero_grad()</code>).", snippet: "x.grad.zero_()" },
+      { sig: "y.backward(retain_graph=True)", does: "Keep the graph alive so a genuine second backward can run; otherwise the graph is freed after the first.", snippet: "y.backward(retain_graph=True)" },
+      { sig: "with torch.no_grad():", does: "Turn off graph construction for the block &mdash; inference / parameter updates; the output is detached.", snippet: "with torch.no_grad():\n    w -= 0.1 * w.grad" },
+      { sig: "x.detach()", does: "Return a tensor sharing the data but cut out of the graph &mdash; freezes that path (no gradient flows back).", snippet: "frozen = x.detach()" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>A leaf tensor and a forward computation.</b> Set <code>requires_grad=True</code> so PyTorch tracks operations on <code>x</code>. As Python runs <code>x**3 + 2*x</code> it builds the graph node by node; the result <code>y</code> carries a <code>grad_fn</code> (here <code>AddBackward0</code>), the edge that built it.`,
+        code: `import torch\n\nx = torch.tensor(2.0, requires_grad=True)\ny = x**3 + 2*x                      # y = 8 + 4 = 12\nprint("y         =", y.item())\nprint("y.grad_fn =", y.grad_fn)`,
+        output: `y         = 12.0\ny.grad_fn = <AddBackward0 object at 0x7f...>`
+      },
+      {
+        explain: `<b>Backward &mdash; reverse-mode autodiff fills <code>.grad</code>.</b> <code>y.backward()</code> seeds <code>dy/dy = 1</code> and walks the graph in reverse, multiplying local derivatives. The result in <code>x.grad</code> matches the analytic derivative $3x^2 + 2 = 14$ at $x = 2$.`,
+        code: `y.backward()\nprint("x.grad   =", x.grad.item())\nprint("analytic =", 3*x.item()**2 + 2)`,
+        output: `x.grad   = 14.0\nanalytic = 14.0`
+      },
+      {
+        explain: `<b>The #1 gotcha: gradients ACCUMULATE.</b> A second <code>backward()</code> on a freshly recomputed <code>y</code> <i>adds into</i> <code>x.grad</code> rather than replacing it &mdash; so it becomes <code>14 + 14 = 28</code>. This pile-up is the bug behind countless broken training loops.`,
+        code: `y2 = x**3 + 2*x\ny2.backward()\nprint("after 2nd backward (no zero):", x.grad.item())`,
+        output: `after 2nd backward (no zero): 28.0`
+      },
+      {
+        explain: `<b>The fix: zero the gradient first.</b> <code>x.grad.zero_()</code> clears the stale value so the next backward sees a clean slate and lands on <code>14</code> again. In a real model this single line is <code>optimizer.zero_grad()</code> at the top of the loop.`,
+        code: `x.grad.zero_()                      # optimizer.zero_grad() in a model\ny3 = x**3 + 2*x\ny3.backward()\nprint("after zero_grad + backward :", x.grad.item())`,
+        output: `after zero_grad + backward : 14.0`
+      },
+      {
+        explain: `<b>Inference with <code>torch.no_grad()</code>.</b> Inside the block PyTorch builds no graph, so the output has <code>requires_grad=False</code> and <code>grad_fn=None</code> &mdash; saving memory and time at evaluation. (<code>.detach()</code> does the same for a single tensor.)`,
+        code: `with torch.no_grad():\n    z = x**3 + 2*x              # computed, but NO graph is built\nprint("z.requires_grad =", z.requires_grad)\nprint("z.grad_fn       =", z.grad_fn)`,
+        output: `z.requires_grad = False\nz.grad_fn       = None`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom and check each line against the calculus:</p>
+<ul>
+<li><code>y = 12.0</code> is the forward value $2^3 + 2\\cdot2$; <code>y.grad_fn</code> being an <code>AddBackward0</code> object proves a graph was recorded (a leaf would show <code>None</code>).</li>
+<li><code>x.grad = 14.0</code> equals the hand-derived <code>analytic = 14.0</code> &mdash; direct proof that <code>.backward()</code> computes the true derivative $3x^2 + 2$.</li>
+<li><code>after 2nd backward (no zero): 28.0</code> shows accumulation: the same gradient 14 added on top of itself. This is the famous bug.</li>
+<li>After <code>x.grad.zero_()</code> the value is back to <code>14.0</code> &mdash; the fix, which in a model is <code>optimizer.zero_grad()</code>.</li>
+<li>The <code>no_grad</code> block prints <code>False</code> and <code>None</code>: no graph was built, so there is nothing to differentiate.</li>
+</ul>
+<p>There is no randomness here, so no seed is needed and the numbers are identical on CPU and GPU; only the <code>grad_fn</code> object's memory address in the printout varies.</p>`,
+
+    cheatsheet: [
+      { code: "x = torch.tensor(2.0, requires_grad=True)", note: "track a leaf (must be float)" },
+      { code: "y = x**3 + 2*x", note: "ops build the graph; y gets a grad_fn" },
+      { code: "y.backward()", note: "reverse-mode autodiff -> fills x.grad" },
+      { code: "x.grad", note: "the gradient lands here (on leaves)" },
+      { code: "x.grad.zero_()", note: "gradients ACCUMULATE -> zero before each backward" },
+      { code: "y.backward(retain_graph=True)", note: "keep the graph for a 2nd backward" },
+      { code: "with torch.no_grad(): ...", note: "no graph at inference -> saves memory" },
+      { code: "x.detach()", note: "cut a tensor out of the graph (freeze a path)" }
+    ],
+
+    deeper: `<p>Autograd is the engine that automates the math from these lessons:</p>
+<ul>
+<li><code>.backward()</code> <i>is</i> <a onclick="App.open('dl-backprop')">backpropagation</a> &mdash; the hand-cranked chain-rule sweep, executed for you;</li>
+<li>each node multiplies a local derivative via the <a onclick="App.open('fnd-chain')">chain rule</a>, and contributions from every path back to a leaf <a onclick="App.open('fnd-gradient')">sum into its gradient</a>;</li>
+<li>the forward pass it records is <a onclick="App.open('dl-forward-prop')">forward propagation</a> &mdash; autograd just remembers it so the backward walk has a graph to follow.</li>
+</ul>
+<p>That is why "autograd = backprop, automated": the calculus is the <code>dl-*</code> theory; PyTorch's contribution is recording the graph so you never write the sweep by hand.</p>`,
     whenToUse:
       `<p><b>Autograd runs under every gradient-based model you will ever train in PyTorch.</b> Any time you call <code>loss.backward()</code> and then step an optimizer, autograd is the engine doing the work. You almost never call it by hand &mdash; but understanding it is the difference between debugging a training loop in minutes versus hours.</p>
        <p>You reach for autograd <i>directly</i> when you need a gradient that is not just "weights w.r.t. loss":</p>

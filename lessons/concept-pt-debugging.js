@@ -6,7 +6,100 @@
     title: "Debugging PyTorch: the errors everyone hits, and a method to find them",
     tagline: "Most of your PyTorch time is debugging — so learn the greatest-hits errors, their fixes, and one method: overfit a single batch first.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-tensor-ops", "pt-autograd", "pt-nn-module", "dl-cross-entropy", "dl-optimizers"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>read the three greatest-hits <code>RuntimeError</code> messages &mdash; shape mismatch, device mismatch, in-place autograd &mdash; and turn each into its one-line fix;</li>
+<li>run the <b>overfit-one-batch</b> sanity check to decide in seconds whether a stuck loss is a wiring bug or a data/learning-rate problem;</li>
+<li>instrument any failing line by printing <code>shape</code>/<code>dtype</code>/<code>device</code>, checking gradient norms, and switching on anomaly detection to localize a <code>NaN</code>.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>x.shape</code> / <code>x.dtype</code> / <code>x.device</code>, <code>optimizer.zero_grad()</code>, <code>torch.isfinite</code> / <code>torch.isnan</code>, <code>p.grad.norm()</code>, <code>torch.nn.utils.clip_grad_norm_</code>, <code>torch.autograd.set_detect_anomaly(True)</code>.</p>`,
+
+    concept: `<p>Writing a PyTorch model is the easy part; getting it to actually train is where the time goes. The good news: PyTorch errors feel random but come from a <b>small, fixed set</b> of mismatches. Almost every message maps to one of four things:</p>
+<ul>
+<li><b>shape</b> &mdash; dimensions that do not line up (a matmul whose inner sizes disagree, a forgotten flatten);</li>
+<li><b>device</b> &mdash; one tensor on <code>cuda</code>, another on <code>cpu</code>;</li>
+<li><b>dtype</b> &mdash; the wrong number type (<code>nn.CrossEntropyLoss</code> wants <code>long</code> class indices and raw logits, not floats and not one-hot &mdash; see <code>dl-cross-entropy</code>);</li>
+<li><b>gradient</b> &mdash; a grad that is missing (a detached graph, see <code>pt-autograd</code>), exploding (lower the learning rate, see <code>dl-optimizers</code>), or never zeroed.</li>
+</ul>
+<p>So the cure is not memorizing messages &mdash; it is a <b>routine</b> that exposes the mismatch. Set a seed so the failure repeats every run. Then <b>overfit a single batch</b>: a correctly wired model can memorize one small batch and drive its loss to nearly zero, which proves the forward pass, loss, <code>backward()</code>, and optimizer are all connected. If it cannot, the bug is in the wiring, not the data &mdash; stop tuning the learning rate.</p>
+<p>When the routine still hides the source, <b>print shapes, dtypes, and devices</b> at the failing line, <b>check gradient norms</b> (all-zero means no signal is reaching the weights; huge means it is about to explode), and turn on <code>torch.autograd.set_detect_anomaly(True)</code> to make the backward pass name the exact operation that produced a <code>NaN</code> or an illegal in-place edit.</p>`,
+
+    apiTable: [
+      { sig: "x.shape / x.dtype / x.device", does: "The first three things to print on any <code>RuntimeError</code> &mdash; most messages answer themselves once you see size, number type, and location.", snippet: "print(x.shape, x.dtype, x.device)" },
+      { sig: "try: ... except RuntimeError as e:", does: "Catch and read the message. <code>str(e).splitlines()[0]</code> gives the one line that names the mismatched shapes or devices.", snippet: "except RuntimeError as e:\n    print(str(e).splitlines()[0])" },
+      { sig: "optimizer.zero_grad()", does: "Clears <code>.grad</code> before <code>backward()</code>. Forgetting it makes gradients accumulate across steps &mdash; the #1 \"loss won't move\" bug.", snippet: "optimizer.zero_grad()" },
+      { sig: "nn.CrossEntropyLoss()(logits, targets)", does: "Wants <b>raw logits</b> <code>(N, C)</code> (no softmax) and <b>long</b> class indices <code>(N,)</code> in <code>[0, C-1]</code> &mdash; not one-hot, not floats.", snippet: "loss_fn(model(xb), yb)   # yb dtype long" },
+      { sig: "torch.isfinite(loss) / torch.isnan(x).any()", does: "Detect a <code>NaN</code>/<code>inf</code> loss or bad inputs the instant they appear, so you stop instead of training on garbage.", snippet: "if not torch.isfinite(loss): break" },
+      { sig: "p.grad.norm()  (per parameter)", does: "The gradient-norm check. All ~0 &rarr; no signal reaching the weights (detached graph / missing requires_grad); huge &rarr; about to explode.", snippet: "sum(p.grad.norm()**2 for p in m.parameters())**0.5" },
+      { sig: "torch.nn.utils.clip_grad_norm_(params, max_norm)", does: "Rescales all gradients so their combined L2 norm is at most <code>max_norm</code> &mdash; the standard guard against exploding gradients that cause <code>NaN</code> loss.", snippet: "clip_grad_norm_(model.parameters(), 1.0)" },
+      { sig: "torch.autograd.set_detect_anomaly(True)", does: "Makes the backward pass report the exact forward op that produced a <code>NaN</code> or an in-place violation. Slow &mdash; use only while hunting.", snippet: "torch.autograd.set_detect_anomaly(True)" },
+      { sig: "overfit one batch", does: "Train on a single fixed batch until the loss collapses to ~0. If it can, the wiring is correct; if it cannot, the bug is the model/loss, not the data.", snippet: "for _ in range(200): step(xb, yb)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Reproduce a shape mismatch, then fix it.</b> An <code>nn.Linear</code> needs its <code>in_features</code> to equal the input's last dimension. Catch the <code>RuntimeError</code>, read its first line &mdash; it names both matrix shapes &mdash; then print <code>x.shape</code> and size the layer to match.`,
+        code: `import torch\nimport torch.nn as nn\ntorch.manual_seed(0)\n\nx = torch.randn(16, 20)            # batch of 16, 20 features\nbad_layer = nn.Linear(10, 4)       # WRONG: expects 10 in-features\ntry:\n    bad_layer(x)\nexcept RuntimeError as e:\n    print("CAUGHT:", str(e).splitlines()[0])\nprint("x.shape =", tuple(x.shape))\ngood_layer = nn.Linear(20, 4)      # in_features now matches\nprint("fixed:", tuple(good_layer(x).shape))`,
+        output: `CAUGHT: mat1 and mat2 shapes cannot be multiplied (16x20 and 10x4)\nx.shape = (16, 20)\nfixed: (16, 4)`
+      },
+      {
+        explain: `<b>The overfit-one-batch sanity check.</b> Build a tiny model and train on ONE fixed batch. <code>nn.CrossEntropyLoss</code> takes raw logits and <code>long</code> class indices. If the loss collapses toward 0, the forward pass, loss, <code>backward()</code>, and optimizer step are all wired correctly.`,
+        code: `model = nn.Sequential(nn.Linear(20, 32), nn.ReLU(), nn.Linear(32, 3))\nopt = torch.optim.Adam(model.parameters(), lr=1e-2)\nloss_fn = nn.CrossEntropyLoss()    # raw logits + long indices\nxb = torch.randn(16, 20)\nyb = torch.randint(0, 3, (16,))    # class indices in [0, 2]\n\nfor step in range(200):\n    opt.zero_grad()                # clear grads -- forgetting this is the #1 bug\n    loss = loss_fn(model(xb), yb)\n    loss.backward(); opt.step()\n    if step % 50 == 0:\n        print(step, round(loss.item(), 4))\nprint("final:", round(loss.item(), 5))`,
+        output: `0 1.1726\n50 0.0009\n100 0.0002\n150 0.0001\nfinal: 7e-05`
+      },
+      {
+        explain: `<b>Print shapes/dtypes/devices, then check gradient norms.</b> The two cheapest debug tools. The triple confirms the input is what you think; the total gradient norm after <code>backward()</code> proves signal is reaching the weights (all-zero means it is not).`,
+        code: `xb = torch.randn(16, 20)\nyb = torch.randint(0, 3, (16,))\nprint("xb:", tuple(xb.shape), xb.dtype, xb.device)\nprint("yb:", tuple(yb.shape), yb.dtype)\n\nopt.zero_grad()\nloss = loss_fn(model(xb), yb)\nloss.backward()\ntotal = sum(p.grad.norm()**2 for p in model.parameters()) ** 0.5\nprint("grad_norm:", round(float(total), 4))`,
+        output: `xb: (16, 20) torch.float32 cpu\nyb: (16,) torch.int64\ngrad_norm: 0.0103`
+      },
+      {
+        explain: `<b>Guard against a NaN loss and let anomaly detection find it.</b> Switch on <code>set_detect_anomaly(True)</code> while hunting, check every loss with <code>torch.isfinite</code>, and clip gradients between <code>backward()</code> and <code>step()</code> so a single huge update cannot blow training up.`,
+        code: `torch.autograd.set_detect_anomaly(True)   # slow; only while hunting\n\ndef guarded_step(logits, target):\n    loss = loss_fn(logits, target)\n    if not torch.isfinite(loss):          # NaN / inf guard\n        raise FloatingPointError("non-finite loss -- lower lr / clip")\n    loss.backward()\n    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)\n    return loss\n\nopt.zero_grad()\nloss = guarded_step(model(xb), yb)\nopt.step()\nprint("guarded step ok, loss:", round(loss.item(), 4))`,
+        output: `guarded step ok, loss: 0.0001`
+      },
+      {
+        explain: `<b>The silent broadcasting bug &mdash; no error, wrong answer.</b> Subtracting a <code>(4, 1)</code> tensor from a <code>(4,)</code> tensor broadcasts to a <code>(4, 4)</code> outer-product grid instead of an elementwise difference. Nothing raises; the loss is just meaningless. Match the shapes to fix it.`,
+        code: `pred = torch.randn(4, 1)           # shape (4, 1)\ntarget = torch.randn(4)            # shape (4,)\nwrong = pred - target              # broadcasts to (4, 4)!\nright = pred.squeeze(1) - target   # shapes match -> (4,)\nprint("wrong:", tuple(wrong.shape), " right:", tuple(right.shape))`,
+        output: `wrong: (4, 4)  right: (4,)`
+      },
+      {
+        explain: `<b>An in-place op that breaks autograd, and the fix.</b> Editing a leaf tensor that requires grad in place corrupts the backward graph, so PyTorch raises. Do the manual weight edit inside <code>torch.no_grad()</code> (or use the out-of-place <code>w = w + 1</code>).`,
+        code: `w = torch.randn(3, requires_grad=True)\ntry:\n    w += 1                         # in-place on a leaf -> RuntimeError\nexcept RuntimeError as e:\n    print("CAUGHT:", str(e).splitlines()[0])\nwith torch.no_grad():              # FIX: untracked edit\n    w += 1\nprint("fixed, requires_grad:", w.requires_grad)`,
+        output: `CAUGHT: a leaf Variable that requires grad is being used in an in-place operation.\nfixed, requires_grad: True`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each block against its note:</p>
+<ul>
+<li>The shape block prints <code>mat1 and mat2 shapes cannot be multiplied (16x20 and 10x4)</code> &mdash; the message itself tells you <code>in_features</code> must be 20, and the fixed layer outputs <code>(16, 4)</code>.</li>
+<li>The overfit-one-batch loop is the key proof: the loss falls from ~1.17 to ~7e-05. Reaching ~0 on one batch means the model, loss, <code>backward()</code>, and optimizer are wired correctly &mdash; if it ever stalls high, the bug is the wiring, not the data.</li>
+<li>The shape/dtype/device line confirms <code>torch.int64</code> labels (what <code>CrossEntropyLoss</code> requires), and a non-zero <code>grad_norm</code> proves signal is reaching the weights; an all-zero norm would mean a detached graph.</li>
+<li>The broadcasting block prints <code>wrong: (4, 4)</code> with no error raised &mdash; direct proof of a silent bug &mdash; next to the corrected <code>(4,)</code>.</li>
+<li>The in-place block catches <code>a leaf Variable that requires grad is being used in an in-place operation.</code> and then edits safely under <code>torch.no_grad()</code>.</li>
+</ul>
+<p>Exact loss values shift without <code>torch.manual_seed(0)</code>; on a GPU runtime the device line reads <code>cuda:0</code> instead of <code>cpu</code>.</p>`,
+
+    cheatsheet: [
+      { code: "print(x.shape, x.dtype, x.device)", note: "first move on any RuntimeError" },
+      { code: "except RuntimeError as e: print(str(e).splitlines()[0])", note: "read the one line that names the mismatch" },
+      { code: "for _ in range(200): step(xb, yb)  # one batch", note: "overfit one batch &rarr; loss ~0 means wiring is correct" },
+      { code: "optimizer.zero_grad()", note: "before every backward(); forgetting it accumulates grads" },
+      { code: "loss_fn = nn.CrossEntropyLoss()  # logits + long", note: "no softmax; targets dtype long, shape (N,)" },
+      { code: "if not torch.isfinite(loss): break", note: "NaN/inf guard &mdash; stop, lower lr, clip" },
+      { code: "sum(p.grad.norm()**2 for p in m.parameters())**0.5", note: "total grad norm: ~0 = no signal, huge = exploding" },
+      { code: "torch.nn.utils.clip_grad_norm_(params, 1.0)", note: "cap exploding gradients (between backward and step)" },
+      { code: "torch.autograd.set_detect_anomaly(True)", note: "names the op that made a NaN / in-place error (slow)" }
+    ],
+
+    deeper: `<p>The four mismatch classes each trace back to a concept lesson:</p>
+<ul>
+<li><b>Gradient bugs</b> &mdash; a missing or exploding grad &mdash; are really autograd-graph questions: see <a onclick="App.open('pt-autograd')">autograd</a> for how the graph is built and where <code>detach()</code> cuts it, and <a onclick="App.open('dl-optimizers')">optimizers</a> for why a too-high learning rate diverges.</li>
+<li><b>The <code>CrossEntropyLoss</code> dtype/shape rules</b> &mdash; raw logits, <code>long</code> indices, no softmax &mdash; come straight from <a onclick="App.open('dl-cross-entropy')">cross-entropy</a>, which derives why the loss applies <code>log_softmax</code> internally.</li>
+</ul>
+<p>The overfit-one-batch test works because a network has far more parameters than a single batch has examples, so it can memorize that batch exactly &mdash; the same capacity that normally causes overfitting, repurposed here as a wiring diagnostic.</p>`,
 
     whenToUse:
       `<p><b>Constantly.</b> Writing a PyTorch model is the easy part; getting it to actually train is where the time

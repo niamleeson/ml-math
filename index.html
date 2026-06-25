@@ -251,6 +251,25 @@
   .quiz .answer { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
   .quiz.open .answer { display: block; }
 
+  /* ---- PyTorch course template: API table, code walkthrough, cheat-sheet ---- */
+  .api-table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+  .api-table td { padding: 9px 10px; border-top: 1px solid var(--border); vertical-align: top; }
+  .api-table tr:first-child td { border-top: none; }
+  .api-table td.api-sig { width: 38%; white-space: normal; }
+  .api-table td.api-sig code { color: var(--accent); font-weight: 600; }
+  .api-eg { margin: 7px 0 0; background: var(--bg); border-radius: 8px; padding: 6px 10px; overflow-x: auto; }
+  .api-eg code { color: var(--ink-dim); font-size: 12.5px; }
+  .tour-step { margin: 0 0 14px; padding: 0 0 13px; border-bottom: 1px solid var(--border); }
+  .tour-step:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .tour-explain { margin-bottom: 8px; }
+  .tour-out { background: var(--bg); border-left: 3px solid #7ee787; padding: 7px 11px; margin-top: 7px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: pre-wrap; color: var(--ink-dim); border-radius: 0 8px 8px 0; }
+  .cheat-row { display: flex; gap: 14px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .cheat-row:first-child { border-top: none; }
+  .cheat-row code { color: var(--accent); white-space: pre-wrap; font-size: 13px; }
+  .cheat-note { color: var(--ink-dim); font-size: 13px; }
+  .card.objective { border-left: 3px solid var(--accent); }
+
   .card.practice h3 { color: var(--warn); }
   .problem { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0; background: var(--bg); }
   .problem .qrow { display: flex; gap: 10px; align-items: flex-start; }
@@ -1156,6 +1175,51 @@ const App = (function () {
       practiceBlock(l.practice) + navRow(id, prev, next);
   }
 
+  // ---- PyTorch course template (template: "pytorch") ----
+  function apiTableBlock(list) {
+    if (!list || !list.length) return "";
+    const rows = list.map(a =>
+      `<tr><td class="api-sig"><code>${escapeHtml(a.sig)}</code></td>` +
+      `<td>${a.does || ""}${a.snippet ? `<pre class="api-eg"><code class="language-python">${escapeHtml(a.snippet)}</code></pre>` : ""}</td></tr>`).join("");
+    return `<div class="card"><h3>🧩 The API, piece by piece</h3>` +
+      `<p class="hint">The functions and methods this lesson uses. Skim now; you'll meet each one in the walkthrough below.</p>` +
+      `<table class="api-table">${rows}</table></div>`;
+  }
+  function codeTourBlock(list) {
+    if (!list || !list.length) return "";
+    const steps = list.map(s =>
+      `<div class="tour-step"><div class="tour-explain">${s.explain || ""}</div>` +
+      (s.code ? `<pre><code class="language-python">${escapeHtml(s.code)}</code></pre>` : "") +
+      (s.output ? `<div class="tour-out">${escapeHtml(s.output)}</div>` : "") + `</div>`).join("");
+    return `<div class="card"><h3>📖 Code walkthrough — read it line by line</h3>` +
+      `<p class="hint">The canonical example in small chunks: read the note, then the code it describes, then the output. Type each chunk into Colab as you go.</p>` +
+      steps + `</div>`;
+  }
+  function cheatsheetBlock(list) {
+    if (!list || !list.length) return "";
+    const rows = list.map(c =>
+      `<div class="cheat-row"><code>${escapeHtml(c.code)}</code><span class="cheat-note">${c.note || ""}</span></div>`).join("");
+    return `<div class="card"><h3>🗒️ Cheat-sheet — the lines worth memorizing</h3>${rows}</div>`;
+  }
+  function renderPyTorch(l, id, prev, next) {
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      prereqLinks(l.prereqs) + graphLink(id) + colabBtn(id) +
+      section("objective", "🎯", "What you'll be able to do", l.objective) +
+      section("idea", "🧠", "The concept", l.concept) +
+      apiTableBlock(l.apiTable) +
+      codeTourBlock(l.codeTour) +
+      section("example", "🔎", "What you should see when you run it", l.expected) +
+      codeVizBlock(id) +
+      section("pitfalls", "⚠️", "Gotchas &amp; fixes", l.pitfalls) +
+      practiceBlock(l.practice) +
+      cheatsheetBlock(l.cheatsheet) +
+      (l.deeper ? `<div class="uh-divider"><span class="uh-ic">🔬</span> Go deeper — the math behind it</div>` +
+        section("deriv", "📐", "Go deeper", l.deeper) : "") +
+      navRow(id, prev, next);
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -1180,6 +1244,7 @@ const App = (function () {
     let html;
     if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
+    else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
     else { html =
       `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +

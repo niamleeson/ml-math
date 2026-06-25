@@ -11,7 +11,77 @@
     title: "The PyTorch training loop",
     tagline: "The hand-written loop at the heart of every PyTorch project.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-backprop", "dl-optimizers", "dl-minibatch", "dl-cross-entropy", "dl-dropout", "dl-batchnorm", "dl-early-stopping"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>write the five-step per-batch update — <code>zero_grad</code> &rarr; forward &rarr; loss &rarr; <code>backward</code> &rarr; <code>step</code> — in the correct order, from memory;</li>
+<li>wrap data in a <code>TensorDataset</code> + <code>DataLoader</code> and loop over epochs and batches, moving each batch to the device;</li>
+<li>switch correctly between <code>model.train()</code> and <code>model.eval()</code>, wrap validation in <code>torch.no_grad()</code>, and accumulate <code>loss.item()</code> to track train/validation loss and accuracy.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>optimizer.zero_grad</code>, <code>loss.backward</code>, <code>optimizer.step</code>, <code>model.train</code> / <code>model.eval</code>, <code>torch.no_grad</code>, <code>loss.item</code>, <code>.to(device)</code>, <code>DataLoader</code>.</p>`,
+
+    concept: `<p>Unlike Keras' one-call <code>model.fit()</code>, PyTorch makes you <b>write the training loop yourself</b>. That is the point: you see every step and can change any of them — a custom loss schedule, two optimizers, gradient clipping, odd logging. The same skeleton runs in research scripts, production jobs, and fine-tuning runs; frameworks like PyTorch Lightning just wrap it.</p>
+<p>Training is one simple cycle repeated many times: <b>guess, measure the error, find which way to nudge each weight, nudge.</b> One full pass over the data is an <b>epoch</b>; inside it you walk the data in small <b>batches</b> from a <code>DataLoader</code>. For each batch you run five steps in a fixed order:</p>
+<ul>
+<li><code>optimizer.zero_grad()</code> — clear last batch's gradients (PyTorch <i>accumulates</i> them by design);</li>
+<li><code>pred = model(x)</code> — the forward pass builds the autograd graph (see <code>dl-forward-prop</code>);</li>
+<li><code>loss = criterion(pred, y)</code> — score the guess against the labels (see <code>dl-cross-entropy</code>);</li>
+<li><code>loss.backward()</code> — autograd walks the graph backward and fills each weight's <code>.grad</code> (see <code>dl-backprop</code>);</li>
+<li><code>optimizer.step()</code> — nudge every weight downhill using those slopes (see <code>dl-optimizers</code>).</li>
+</ul>
+<p>After all batches you run a <b>validation pass</b> on held-out data with no weight updates — <code>model.eval()</code> plus <code>torch.no_grad()</code> — to see how the model does on data it never learned from (the early-stopping signal, <code>dl-early-stopping</code>).</p>`,
+
+    apiTable: [
+      { sig: "optimizer.zero_grad()", does: "Reset every parameter's <code>.grad</code> to zero. PyTorch <i>adds</i> new gradients onto old ones, so call this first in every batch.", snippet: "optimizer.zero_grad()" },
+      { sig: "pred = model(x)", does: "Forward pass: the model's guess. This also records the autograd graph used by <code>backward()</code>.", snippet: "pred = model(xb)" },
+      { sig: "loss = criterion(pred, y)", does: "Score the guess against the labels as one number. <code>nn.CrossEntropyLoss</code> wants raw logits + integer labels.", snippet: "loss = criterion(pred, yb)" },
+      { sig: "loss.backward()", does: "Backpropagate: fill every weight's <code>.grad</code> with the slope of the loss.", snippet: "loss.backward()" },
+      { sig: "optimizer.step()", does: "Update each weight using its <code>.grad</code>, e.g. plain SGD does <code>w -= lr * w.grad</code>.", snippet: "optimizer.step()" },
+      { sig: "model.train() / model.eval()", does: "Switch dropout and batch-norm modes. Train mode drops units / uses batch stats; eval mode keeps all units / uses running stats.", snippet: "model.train()   # or model.eval()" },
+      { sig: "with torch.no_grad():", does: "Disable graph building for the block — the validation-pass habit: less memory, faster.", snippet: "with torch.no_grad():\n    pred = model(xb)" },
+      { sig: "loss.item()", does: "Pull out the plain Python number with no graph attached. Accumulate this, not the raw <code>loss</code> tensor.", snippet: "total += loss.item() * len(xb)" },
+      { sig: "x.to(device) / model.to(device)", does: "Move tensors and the model to the same device. A CPU/GPU mismatch raises an error.", snippet: "xb, yb = xb.to(device), yb.to(device)" },
+      { sig: "for xb, yb in loader:", does: "Iterate a <code>DataLoader</code>, which hands you batched, shuffled tensors one batch at a time.", snippet: "for xb, yb in train_dl:\n    ..." }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Seed, device, and a tiny synthetic dataset.</b> Two Gaussian blobs in 8-D give a clean 2-class problem. We seed for reproducibility and pick the device once so every batch and the model agree on where they live.`,
+        code: `import torch\nimport torch.nn as nn\nfrom torch.utils.data import TensorDataset, DataLoader\n\ntorch.manual_seed(0)\ndevice = "cuda" if torch.cuda.is_available() else "cpu"\n\nN, D = 1000, 8\ncenters = torch.randn(2, D) * 2.0\ny = torch.randint(0, 2, (N,))          # class labels 0 / 1\nX = centers[y] + torch.randn(N, D)     # features near each class center\nprint(X.shape, y.shape, device)`,
+        output: `torch.Size([1000, 8]) torch.Size([1000]) cpu`
+      },
+      {
+        explain: `<b>Split into train/validation DataLoaders.</b> Wrap the tensors in a <code>TensorDataset</code>, then a <code>DataLoader</code> per split. The train loader shuffles each epoch; the validation loader does not (a fixed, reproducible pass).`,
+        code: `ntr = 800\ntrain_ds = TensorDataset(X[:ntr], y[:ntr])\nval_ds   = TensorDataset(X[ntr:], y[ntr:])\ntrain_dl = DataLoader(train_ds, batch_size=32, shuffle=True)\nval_dl   = DataLoader(val_ds,   batch_size=64)\nprint(len(train_ds), len(val_ds))`,
+        output: `800 200`
+      },
+      {
+        explain: `<b>Model, loss, optimizer.</b> A small MLP that outputs <b>raw logits</b> (no softmax — <code>CrossEntropyLoss</code> adds log-softmax itself). Move the model to the device. Adam adapts the step size per parameter.`,
+        code: `model = nn.Sequential(\n    nn.Linear(D, 32), nn.ReLU(), nn.Dropout(0.2),\n    nn.Linear(32, 2),                  # raw logits (no softmax!)\n).to(device)\ncriterion = nn.CrossEntropyLoss()      # expects logits + int labels\noptimizer = torch.optim.Adam(model.parameters(), lr=1e-2)\nprint(model)`,
+        output: `Sequential(\n  (0): Linear(in_features=8, out_features=32, bias=True)\n  (1): ReLU()\n  (2): Dropout(p=0.2, inplace=False)\n  (3): Linear(in_features=32, out_features=2, bias=True)\n)`
+      },
+      {
+        explain: `<b>One reusable <code>run_epoch</code> helper.</b> It sets <code>train()</code> / <code>eval()</code> from the flag, picks <code>enable_grad()</code> vs <code>no_grad()</code>, runs the five-step update only when training, and accumulates <code>loss.item()</code> (the graph-free number) plus correct counts. It returns mean loss and accuracy.`,
+        code: `def run_epoch(loader, train):\n    model.train() if train else model.eval()\n    total_loss, correct, n = 0.0, 0, 0\n    ctx = torch.enable_grad() if train else torch.no_grad()\n    with ctx:\n        for xb, yb in loader:\n            xb, yb = xb.to(device), yb.to(device)\n            if train:\n                optimizer.zero_grad()        # 1. clear old grads\n            pred = model(xb)                 # 2. forward\n            loss = criterion(pred, yb)       # 3. measure error\n            if train:\n                loss.backward()              # 4. backprop\n                optimizer.step()             # 5. update weights\n            total_loss += loss.item() * len(xb)   # .item() -> no graph\n            correct += (pred.argmax(1) == yb).sum().item()\n            n += len(xb)\n    return total_loss / n, correct / n`,
+        output: `# (defines run_epoch — no output yet)`
+      },
+      {
+        explain: `<b>The epoch loop.</b> Each epoch trains on the train loader, then validates on the held-out loader, printing both losses and accuracies. Train loss falls and accuracy climbs as the model learns to separate the two blobs.`,
+        code: `EPOCHS = 15\nfor epoch in range(1, EPOCHS + 1):\n    tr_loss, tr_acc = run_epoch(train_dl, train=True)\n    va_loss, va_acc = run_epoch(val_dl,   train=False)\n    print(f"epoch {epoch:2d} | "\n          f"train loss {tr_loss:.3f} acc {tr_acc:.3f} | "\n          f"val loss {va_loss:.3f} acc {va_acc:.3f}")`,
+        output: `epoch  1 | train loss 0.382 acc 0.851 | val loss 0.171 acc 0.955\nepoch  2 | train loss 0.180 acc 0.945 | val loss 0.112 acc 0.965\n...\nepoch 15 | train loss 0.071 acc 0.979 | val loss 0.069 acc 0.975\n(numbers approximate; loss falls and accuracy rises over the run)`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed block against its note:</p>
+<ul>
+<li>The dataset block prints <code>torch.Size([1000, 8]) torch.Size([1000]) cpu</code> — 1000 samples of 8 features, 1000 labels, and the device you're on.</li>
+<li>The split prints <code>800 200</code>, confirming 800 training and 200 validation samples.</li>
+<li>The model print shows the four layers in order, ending in <code>Linear(..., out_features=2)</code> — two raw logits, no softmax.</li>
+<li>The epoch loop prints one line per epoch. <b>Train loss falls</b> (roughly 0.38 &rarr; 0.07) and <b>accuracy rises</b> toward ~0.98; validation tracks close behind because the two blobs are easy to separate. That train/val gap is what you watch for overfitting (see <code>dl-early-stopping</code>).</li>
+</ul>
+<p>On a GPU runtime the device line reads <code>cuda</code> and training is faster, but the numbers are the same. Without <code>torch.manual_seed(0)</code> the exact per-epoch values will differ from a teammate's — seed first to match.</p>`,
 
     whenToUse: `<p>Use this loop for <b>every model you train in PyTorch</b>. Unlike Keras <code>model.fit()</code>, PyTorch does not hide training behind one call. You write the loop yourself.</p>
 <p>That is the point. You see every step. You can change any step. Need a custom loss schedule, two optimizers, gradient clipping, or odd logging? You just edit the loop. This template is the starting point you adapt for any task — classification, regression, vision, text.</p>`,
@@ -279,7 +349,27 @@ print(run_epoch(dl, train=True))    # e.g. (0.70..., 0.55...)</code></pre>`
 # epoch 1  loss 0.70..  acc 0.5..
 # epoch 5  loss 0.55..  acc 0.7..   (loss falls, accuracy climbs)</code></pre>`
       }
-    ]
+    ],
+
+    cheatsheet: [
+      { code: "for epoch in range(EPOCHS):", note: "outer loop — one full pass over the data per epoch" },
+      { code: "for xb, yb in loader:", note: "inner loop — one batch from the <code>DataLoader</code>" },
+      { code: "optimizer.zero_grad()", note: "clear grads FIRST — PyTorch accumulates them" },
+      { code: "pred = model(xb); loss = criterion(pred, yb)", note: "forward, then score against labels" },
+      { code: "loss.backward(); optimizer.step()", note: "backprop fills <code>.grad</code>, then step updates weights" },
+      { code: "model.train()  /  model.eval()", note: "set BEFORE the pass — dropout & batch-norm depend on it" },
+      { code: "with torch.no_grad(): ...", note: "wrap validation — no graph, less memory, faster" },
+      { code: "total += loss.item() * len(xb)", note: ".item() drops the graph — avoids the cross-epoch memory leak" },
+      { code: "xb, yb = xb.to(device), yb.to(device)", note: "move every batch to the model's device" }
+    ],
+
+    deeper: `<p>The loop is the PyTorch <i>how</i>; the math behind each step lives in the concept lessons:</p>
+<ul>
+<li><a onclick="App.open('dl-backprop')">backpropagation</a> — what <code>loss.backward()</code> computes by walking the autograd graph;</li>
+<li><a onclick="App.open('dl-optimizers')">optimizers</a> — the update rules <code>optimizer.step()</code> applies (SGD, momentum, Adam);</li>
+<li><a onclick="App.open('dl-minibatch')">mini-batches</a> — why we update on small batches instead of the whole dataset;</li>
+<li><a onclick="App.open('dl-early-stopping')">early stopping</a> — reading the validation curve to know when to stop.</li>
+</ul>`
   });
 
   window.CODE["pt-training-loop"] = {

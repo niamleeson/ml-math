@@ -6,7 +6,89 @@
     title: "Distributed training: DataParallel, DistributedDataParallel (DDP), and sharding",
     tagline: "Replicate the model on every GPU, split the batch, and all-reduce the gradients so all copies stay in sync — DDP is the standard way.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-training-loop", "dl-minibatch", "dl-optimizers", "spark-intro"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>explain data parallelism &mdash; replicate the model on every Graphics Processing Unit (GPU), split the batch, average gradients &mdash; and why <code>DistributedDataParallel</code> (DDP) beats the legacy <code>nn.DataParallel</code>;</li>
+<li>write a DDP training script: <code>init_process_group</code>, a <code>DistributedSampler</code> with <code>set_epoch</code>, the <code>DDP</code> wrapper, and rank-0 guards for logging/saving;</li>
+<li>compute the effective batch size, apply the linear learning-rate scaling rule, and reproduce the same effect on one GPU with gradient accumulation.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.distributed.init_process_group</code>, <code>DistributedSampler</code>, <code>DistributedDataParallel</code>, <code>dist.all_reduce</code>, <code>torchrun</code>.</p>`,
+
+    concept: `<p><b>Data parallelism</b> is how nearly every large model is trained. Put a full copy of the model on every GPU, give each copy a different slice of the batch, let each compute gradients on its slice, then <b>average the gradients across all copies</b> so every replica stays identical. It is the same &ldquo;map then combine&rdquo; shape as a Spark job (see <code>spark-intro</code>): the workers are GPUs, the shard is a slice of the batch, and the combine step is averaging gradients.</p>
+<p>That averaging is an <b>all-reduce</b>: every GPU contributes its gradient tensor, they are summed and divided by N, and the same averaged result goes back to every GPU. Because all copies start equal and apply the same averaged gradient, they take the same optimizer step and remain byte-for-byte identical forever &mdash; only gradients ever need syncing, never the weights themselves.</p>
+<p>Two scaling walls send you here:</p>
+<ul>
+<li><b>The compute wall</b> &mdash; the dataset is huge and one epoch takes hours. Throw 4, 8, or 64 GPUs at it and finish roughly that many times faster. The tool is <b>DDP</b> (data parallelism).</li>
+<li><b>The memory wall</b> &mdash; the model itself (weights plus optimizer state and activations) does not fit on one GPU. Plain replication is impossible; you must <b>shard</b> the model with Fully Sharded Data Parallel (FSDP) or DeepSpeed/ZeRO.</li>
+</ul>
+<p>With N GPUs the <b>effective batch size</b> is N times the per-GPU local batch. A bigger batch has less gradient noise, so the <b>linear scaling rule</b> raises the learning rate by N (with a short warmup). If you only have one GPU, <b>gradient accumulation</b> &mdash; sum gradients over K micro-batches, step once &mdash; gives the same effective batch at 1/K the peak memory.</p>`,
+
+    apiTable: [
+      { sig: "dist.init_process_group(backend=\"nccl\")", does: "Join the process group. <code>nccl</code> is the fast GPU backend; <code>gloo</code> runs on CPU. <code>torchrun</code> sets the env vars it reads.", snippet: "import torch.distributed as dist\ndist.init_process_group(backend=\"nccl\")" },
+      { sig: "dist.get_rank() / get_world_size()", does: "This process's GPU index (0..N-1) and the total number of processes N. Rank 0 is the lead that logs and saves.", snippet: "rank = dist.get_rank()\nN = dist.get_world_size()" },
+      { sig: "DistributedSampler(ds, num_replicas, rank)", does: "Hands each rank a <i>disjoint</i> shard of the dataset. Without it every GPU sees the same batches.", snippet: "sampler = DistributedSampler(ds, num_replicas=N, rank=rank)" },
+      { sig: "sampler.set_epoch(epoch)", does: "Mixes the epoch into the shuffle seed. Call it every epoch or the shuffle is identical across epochs.", snippet: "for e in range(epochs):\n    sampler.set_epoch(e)" },
+      { sig: "DistributedDataParallel(model, device_ids=[lr])", does: "Wrap the model: broadcasts weights from rank 0, then averages gradients via all-reduce inside <code>backward()</code>.", snippet: "model = DDP(model, device_ids=[local_rank])" },
+      { sig: "dist.all_reduce(t, op=ReduceOp.SUM)", does: "The collective DDP uses: sums each rank's tensor and returns the same result to all of them.", snippet: "dist.all_reduce(t, op=dist.ReduceOp.SUM)" },
+      { sig: "model.module.state_dict()", does: "Unwraps the DDP/DataParallel wrapper to the plain model's keys so the checkpoint loads into a bare model.", snippet: "torch.save(model.module.state_dict(), \"m.pt\")" },
+      { sig: "dist.destroy_process_group()", does: "Clean shutdown of the group at the end of the run.", snippet: "dist.destroy_process_group()" },
+      { sig: "nn.DataParallel(model)", does: "Legacy single-process API: GPU-0-bottlenecked and serialized by the GIL. Avoid in new code &mdash; use DDP.", snippet: "dp = nn.DataParallel(model)   # legacy" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Compute the effective batch and the per-rank shard.</b> With a local batch of 32 across 8 GPUs the optimizer steps on 256 examples; the <code>DistributedSampler</code> gives each rank 1/8 of an 80,000-image dataset.`,
+        code: `local_batch = 32\nworld_size = 8\nprint("effective batch:", local_batch * world_size)\nprint("images per GPU/epoch:", 80000 // world_size)`,
+        output: `effective batch: 256\nimages per GPU/epoch: 10000`
+      },
+      {
+        explain: `<b>The <code>DistributedSampler</code> hands each rank a disjoint shard.</b> No real cluster is needed to see it: build the sampler for two ranks and print the indices each owns. They never overlap &mdash; that is what splits the work instead of repeating it N times.`,
+        code: `import torch\nfrom torch.utils.data import TensorDataset\nfrom torch.utils.data.distributed import DistributedSampler\n\nds = TensorDataset(torch.arange(12))\ns0 = DistributedSampler(ds, num_replicas=4, rank=0, shuffle=False)\ns1 = DistributedSampler(ds, num_replicas=4, rank=1, shuffle=False)\nprint("rank 0:", list(s0))\nprint("rank 1:", list(s1))`,
+        output: `rank 0: [0, 4, 8]\nrank 1: [1, 5, 9]`
+      },
+      {
+        explain: `<b>The <code>set_epoch</code> gotcha.</b> A shuffling sampler reuses the same seed each epoch unless told otherwise, so the shuffle repeats &mdash; a famous silent bug. <code>set_epoch</code> mixes the epoch into the seed.`,
+        code: `s = DistributedSampler(ds, num_replicas=2, rank=0, shuffle=True)\ns.set_epoch(0)\nprint(list(s))\ns.set_epoch(0)\nprint(list(s))      # same -> the bug\ns.set_epoch(1)\nprint(list(s))      # different -> correct`,
+        output: `[8, 0, 4, 6, 10]\n[8, 0, 4, 6, 10]\n[2, 6, 0, 10, 8]`
+      },
+      {
+        explain: `<b>The linear scaling rule.</b> With N GPUs the effective batch is N times larger and the gradient is less noisy, so scale the base learning rate by N. <code>param_groups</code> is the source of truth for what the optimizer will use.`,
+        code: `import torch.nn as nn\nbase_lr, world_size = 0.1, 8\nscaled_lr = base_lr * world_size\nmodel = nn.Linear(10, 2)\nopt = torch.optim.SGD(model.parameters(), lr=scaled_lr, momentum=0.9)\nprint("scaled lr:", opt.param_groups[0]["lr"])`,
+        output: `scaled lr: 0.8`
+      },
+      {
+        explain: `<b>One real <code>all_reduce</code> on the CPU <code>gloo</code> backend.</b> A single-process group is the only DDP-family primitive you can actually run on Colab. With one rank, <code>SUM</code> returns the same tensor &mdash; proof the collective call works. The real DDP wrapper does this for every gradient tensor.`,
+        code: `import os, torch\nimport torch.distributed as dist\nos.environ["MASTER_ADDR"] = "127.0.0.1"\nos.environ["MASTER_PORT"] = "29500"\ndist.init_process_group("gloo", rank=0, world_size=1)\nt = torch.tensor([1.0, 2.0, 3.0])\ndist.all_reduce(t, op=dist.ReduceOp.SUM)\nprint(t)\nprint("world size:", dist.get_world_size())\ndist.destroy_process_group()`,
+        output: `tensor([1., 2., 3.])\nworld size: 1`
+      }
+    ],
+
+    expected: `<p>None of these blocks needs more than one device, so they all run on free Colab:</p>
+<ul>
+<li>The effective batch is <code>256</code> and the per-rank shard is <code>10000</code> &mdash; the two numbers that drive learning-rate scaling and step counts.</li>
+<li>Rank 0 owns indices <code>[0, 4, 8]</code> and rank 1 owns <code>[1, 5, 9]</code> &mdash; <b>disjoint</b>, proving the sampler splits the data rather than repeating it.</li>
+<li>The first two <code>set_epoch(0)</code> prints are <i>identical</i> (the bug) and the <code>set_epoch(1)</code> print differs (the fix). Exact indices depend on the PyTorch version; the point is same-vs-different.</li>
+<li>The scaled learning rate reads <code>0.8</code> = 0.1 &times; 8.</li>
+<li>The <code>all_reduce</code> over one rank returns the input unchanged and <code>world size: 1</code> &mdash; the collective ran. On a real N-GPU launch with <code>torchrun</code> this same call averages gradients across all N.</li>
+</ul>
+<p>The full DDP script in the CODE panel is <code>runnable:false</code>: it needs multiple GPUs, so copy it to a multi-GPU box and launch with <code>torchrun --standalone --nproc_per_node=4 ddp_train.py</code>.</p>`,
+
+    cheatsheet: [
+      { code: "dist.init_process_group(backend=\"nccl\")", note: "join the group (gloo on CPU)" },
+      { code: "rank, N = dist.get_rank(), dist.get_world_size()", note: "this GPU's index; total GPUs" },
+      { code: "DistributedSampler(ds, num_replicas=N, rank=rank)", note: "disjoint shard per rank" },
+      { code: "sampler.set_epoch(epoch)", note: "every epoch or the shuffle repeats" },
+      { code: "model = DDP(model, device_ids=[local_rank])", note: "wrap: grads all-reduced in backward()" },
+      { code: "lr = base_lr * world_size", note: "linear scaling rule" },
+      { code: "if rank == 0: torch.save(model.module.state_dict(), ...)", note: "save once, unwrap with .module" },
+      { code: "DataLoader(..., drop_last=True)", note: "equal step counts -> no all-reduce deadlock" },
+      { code: "torchrun --standalone --nproc_per_node=4 ddp_train.py", note: "one process per GPU" }
+    ],
+
+    deeper: `<p>The math under data parallelism is just the gradient of the average loss. The averaged gradient all-reduce produces is exactly the gradient you would compute on the <b>concatenated</b> big batch &mdash; which is why DDP on N GPUs equals one run at the larger effective batch, and why the <a onclick="App.open('dl-minibatch')">mini-batch</a> learning-rate scaling applies. Each replica then runs the ordinary <a onclick="App.open('dl-optimizers')">optimizer</a> step on that shared gradient. The speed trick is overlap: gradients become ready layer by layer during the backward pass (last layer first), and DDP fires each layer's all-reduce the moment it is ready, hiding communication under compute &mdash; something <code>nn.DataParallel</code> cannot do.</p>`,
 
     whenToUse:
       `<p><b>Reach for distributed training when one Graphics Processing Unit (GPU) is too slow or too small.</b>

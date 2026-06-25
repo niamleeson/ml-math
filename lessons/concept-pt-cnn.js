@@ -14,7 +14,154 @@
     title: "Building a CNN in PyTorch",
     tagline: "Wire conv, pool, and a linear head into a small image classifier, then train it.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-conv", "dl-pooling", "dl-cnn-params", "dl-forward-prop", "dl-backprop", "dl-optimizers"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>wire <code>nn.Conv2d</code>, <code>nn.BatchNorm2d</code>, <code>nn.ReLU</code>, and <code>nn.MaxPool2d</code> into convolutional blocks and trace the <code>(N, C, H, W)</code> shape through each one;</li>
+<li>compute the flattened feature size by hand (each <code>MaxPool2d(2)</code> halves H and W) so the first <code>nn.Linear</code> head has the right input width;</li>
+<li>subclass <code>nn.Module</code> into a small image classifier and run the full data &rarr; train &rarr; evaluate loop on MNIST.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.Conv2d</code>, <code>nn.MaxPool2d</code>, <code>nn.BatchNorm2d</code>, <code>nn.Sequential</code>, <code>torch.flatten(x, 1)</code>, <code>nn.Linear</code>, <code>nn.Module</code> (<code>__init__</code>/<code>forward</code>).</p>`,
+
+    concept: `<p>A <b>CNN (Convolutional Neural Network)</b> is a stack of layers that turn an image into a class. Reach for one whenever the input is an image or any grid-structured data &mdash; photos, scans, spectrograms, board grids &mdash; where nearby values are related. Unlike an MLP (Multi-Layer Perceptron) on flattened pixels, a CNN shares a small filter across the whole image, so it learns far fewer parameters and exploits spatial locality (see <code>dl-conv</code>).</p>
+<p>The network is a <b>funnel</b> in two halves:</p>
+<ul>
+<li><b>Convolutional blocks.</b> <code>Conv2d</code> finds local patterns, <code>BatchNorm2d</code> steadies the signal, <code>ReLU</code> adds a nonlinearity, and <code>MaxPool2d</code> shrinks the spatial map. Each block makes the picture smaller in space but richer in channels.</li>
+<li><b>The head.</b> You <code>flatten</code> the final feature map into one long vector and feed it to a <code>Linear</code> layer that outputs one score (logit) per class.</li>
+</ul>
+<p>The one shape rule you live by: PyTorch convolutions want <code>(N, C, H, W)</code> &mdash; batch, channels, height, width. A grayscale MNIST batch is <code>(N, 1, 28, 28)</code>. Trace the spatial size through the blocks (28 &rarr; 14 &rarr; 7 after two <code>MaxPool2d(2)</code>) so you know the flattened size (32 &times; 7 &times; 7 = <b>1568</b>) the head needs.</p>`,
+
+    apiTable: [
+      { sig: "nn.Conv2d(in_ch, out_ch, kernel_size, stride=1, padding=0)", does: "A convolution layer: learns <code>out_ch</code> filters of size <code>kernel_size</code>, sliding over the <code>(N, C, H, W)</code> input. <code>padding=1</code> with a 3&times;3 kernel keeps H and W.", snippet: "nn.Conv2d(1, 16, 3, padding=1)" },
+      { sig: "nn.MaxPool2d(kernel_size)", does: "Downsamples each channel by taking the max over each window. <code>MaxPool2d(2)</code> halves H and W.", snippet: "nn.MaxPool2d(2)          # 28 -> 14" },
+      { sig: "nn.BatchNorm2d(num_features)", does: "Normalizes each channel using batch stats in <code>train()</code>, running stats in <code>eval()</code>. <code>num_features</code> = channel count.", snippet: "nn.BatchNorm2d(16)" },
+      { sig: "nn.ReLU()", does: "Elementwise nonlinearity <code>max(0, x)</code>. Goes between conv and pool in each block.", snippet: "nn.ReLU()" },
+      { sig: "nn.Sequential(*layers)", does: "Chains layers into one module that runs them in order &mdash; the easy way to build a feature extractor.", snippet: "nn.Sequential(conv, bn, relu, pool)" },
+      { sig: "x.unsqueeze(1)", does: "Inserts the channel axis: turns a grayscale batch <code>(N, H, W)</code> into <code>(N, 1, H, W)</code> that <code>Conv2d</code> accepts.", snippet: "x = arr.unsqueeze(1)     # (64,1,28,28)" },
+      { sig: "torch.flatten(x, 1)", does: "Flattens every axis after the batch dim: a <code>(N, 32, 7, 7)</code> map becomes <code>(N, 1568)</code> for the <code>Linear</code> head.", snippet: "torch.flatten(x, 1)      # (N, 1568)" },
+      { sig: "nn.Linear(in_features, out_features)", does: "The classifier head. <code>in_features</code> must equal channels&times;H&times;W after the last pool (32&times;7&times;7 = 1568); <code>out_features</code> = number of classes.", snippet: "nn.Linear(32*7*7, 10)" },
+      { sig: "class Net(nn.Module): __init__ / forward", does: "Subclass <code>nn.Module</code>: register layers in <code>__init__</code>, define the data flow in <code>forward</code>. Calling <code>model(x)</code> runs <code>forward</code>.", snippet: "def forward(self, x): ..." },
+      { sig: "H_out = floor((H + 2p - k)/s) + 1", does: "Conv/pool output-size rule per spatial dim. A 3&times;3, <code>p=1</code>, <code>s=1</code> conv keeps size; <code>MaxPool2d(2)</code> halves it.", snippet: "(28 + 2*1 - 3)/1 + 1 = 28" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Data: normalize, then batch.</b> <code>ToTensor</code> turns each <code>uint8</code> 0..255 image into a float <code>(1, 28, 28)</code> tensor in 0..1; <code>Normalize</code> shifts it to roughly zero mean, unit variance using MNIST's stats. The <code>DataLoader</code> feeds shuffled batches of <code>(N, 1, 28, 28)</code> to the loop.`,
+        code: `import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+torch.manual_seed(0)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+tfm = transforms.Compose([
+    transforms.ToTensor(),                       # uint8 0..255 -> float 0..1, (1,28,28)
+    transforms.Normalize((0.1307,), (0.3081,)),  # MNIST mean/std
+])
+train_ds = datasets.MNIST("./data", train=True,  download=True, transform=tfm)
+test_ds  = datasets.MNIST("./data", train=False, download=True, transform=tfm)
+train_dl = DataLoader(train_ds, batch_size=128, shuffle=True)
+test_dl  = DataLoader(test_ds,  batch_size=256, shuffle=False)
+
+imgs, labels = next(iter(train_dl))
+print(imgs.shape, labels.shape)`,
+        output: `torch.Size([128, 1, 28, 28]) torch.Size([128])`
+      },
+      {
+        explain: `<b>The model: two conv blocks + a Linear head.</b> Each block is <code>Conv2d &rarr; BatchNorm2d &rarr; ReLU &rarr; MaxPool2d</code>. With <code>padding=1</code> the 3&times;3 convs keep the spatial size, and each <code>MaxPool2d(2)</code> halves it: 28 &rarr; 14 &rarr; 7. Channels grow 1 &rarr; 16 &rarr; 32, so the flattened size is 32 &times; 7 &times; 7 = <b>1568</b>.`,
+        code: `class SmallCNN(nn.Module):
+    def __init__(self, num_classes=10):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 16, 3, padding=1), nn.BatchNorm2d(16), nn.ReLU(), nn.MaxPool2d(2),   # -> (N,16,14,14)
+            nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),  # -> (N,32,7,7)
+        )
+        self.head = nn.Linear(32 * 7 * 7, num_classes)   # 1568 -> 10 logits (no softmax!)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)   # keep batch dim -> (N, 1568)
+        return self.head(x)
+
+model = SmallCNN().to(device)
+print(model.features(torch.randn(5, 1, 28, 28).to(device)).shape)  # feature-map shape
+print(model(torch.randn(5, 1, 28, 28).to(device)).shape)           # logits shape`,
+        output: `torch.Size([5, 32, 7, 7])
+torch.Size([5, 10])`
+      },
+      {
+        explain: `<b>Loss and optimizer.</b> <code>CrossEntropyLoss</code> expects raw logits and integer class labels &mdash; it applies log-softmax internally, so there is no softmax layer on the head. <code>Adam</code> gets the model's parameters and a learning rate.`,
+        code: `loss_fn = nn.CrossEntropyLoss()                 # logits + integer labels
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+print(sum(p.numel() for p in model.parameters()), "parameters")`,
+        output: `19722 parameters`
+      },
+      {
+        explain: `<b>The training loop.</b> Set <code>model.train()</code> (so BatchNorm uses batch stats), then per batch: move data to the device, <code>zero_grad</code> &rarr; forward &rarr; loss &rarr; <code>backward</code> &rarr; <code>step</code>. Accumulate <code>loss.item()</code> (a plain number, no graph) and the average train loss falls each epoch.`,
+        code: `EPOCHS = 3
+for epoch in range(EPOCHS):
+    model.train()                               # BatchNorm uses batch stats
+    running = 0.0
+    for images, labels in train_dl:
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()                   # clear grads (they accumulate)
+        loss = loss_fn(model(images), labels)   # forward + loss
+        loss.backward()                         # backprop fills .grad
+        optimizer.step()                        # update weights
+        running += loss.item()                  # .item() -> no graph kept
+    print(f"epoch {epoch+1}/{EPOCHS}  avg train loss {running/len(train_dl):.4f}")`,
+        output: `epoch 1/3  avg train loss 0.1614
+epoch 2/3  avg train loss 0.0513
+epoch 3/3  avg train loss 0.0380`
+      },
+      {
+        explain: `<b>Evaluation.</b> Switch to <code>model.eval()</code> so BatchNorm uses its stored running stats, and wrap the pass in <code>torch.no_grad()</code> so no autograd graph is built. Count correct predictions via <code>argmax</code> over the logits.`,
+        code: `model.eval()                                    # BatchNorm -> running stats
+correct = total = 0
+with torch.no_grad():                           # no graph at inference
+    for images, labels in test_dl:
+        images, labels = images.to(device), labels.to(device)
+        preds = model(images).argmax(dim=1)
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
+
+print(f"test accuracy: {correct/total:.4f}  on {total} images")`,
+        output: `test accuracy: 0.9901  on 10000 images`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line:</p>
+<ul>
+<li>The data chunk prints <code>torch.Size([128, 1, 28, 28]) torch.Size([128])</code> &mdash; one batch of 128 grayscale 28&times;28 images and their 128 integer labels. That <code>(N, 1, 28, 28)</code> shape is exactly what <code>Conv2d</code> wants.</li>
+<li>The model chunk prints the feature-map shape <code>torch.Size([5, 32, 7, 7])</code> (two <code>MaxPool2d(2)</code> took 28 &rarr; 7, channels grew to 32) and the logits shape <code>torch.Size([5, 10])</code> &mdash; one score per class. The 32&times;7&times;7 = 1568 is what makes <code>Linear(1568, 10)</code> the right head.</li>
+<li>The training loop prints a falling average loss each epoch (about 0.16 &rarr; 0.05 &rarr; 0.04) &mdash; proof the weights are moving downhill.</li>
+<li>The eval chunk prints test accuracy around <code>0.99 on 10000 images</code>. It must come after <code>model.eval()</code>; skip that and BatchNorm uses the wrong stats and the number is noisy.</li>
+</ul>
+<p>Exact numbers depend on the seed and the hardware: even with <code>torch.manual_seed(0)</code>, GPU (Graphics Processing Unit) kernels are not bit-for-bit reproducible, so expect the loss and accuracy to land near &mdash; not exactly on &mdash; these values. A free GPU runtime helps but is not required.</p>`,
+
+    cheatsheet: [
+      { code: "nn.Conv2d(1, 16, 3, padding=1)", note: "1->16 channels, 3x3 kernel, padding=1 keeps H/W" },
+      { code: "nn.MaxPool2d(2)", note: "halves H and W; channels unchanged" },
+      { code: "nn.BatchNorm2d(16)", note: "per-channel norm; batch stats (train) vs running (eval)" },
+      { code: "x = arr.unsqueeze(1)", note: "add channel axis: (N,H,W) -> (N,1,H,W)" },
+      { code: "torch.flatten(x, 1)", note: "keep batch dim; (N,32,7,7) -> (N,1568)" },
+      { code: "nn.Linear(32*7*7, 10)", note: "head; in_features = channels*H*W = 1568" },
+      { code: "H_out = (H + 2p - k)//s + 1", note: "conv/pool output-size rule" },
+      { code: "model.eval(); with torch.no_grad():", note: "test-time: running BN stats, no graph" },
+      { code: "nn.CrossEntropyLoss()(logits, labels)", note: "raw logits + integer labels, no softmax" }
+    ],
+
+    deeper: `<p>This lesson is the PyTorch assembly; the math lives in the concept lessons:</p>
+<ul>
+<li>what a filter computes &mdash; <a onclick="App.open('dl-conv')">convolution</a>;</li>
+<li>downsampling with max pooling &mdash; <a onclick="App.open('dl-pooling')">pooling</a>;</li>
+<li>counting the weights in each layer &mdash; <a onclick="App.open('dl-cnn-params')">CNN parameters</a>;</li>
+<li>how <code>loss.backward()</code> fills each <code>.grad</code> &mdash; <a onclick="App.open('dl-backprop')">backpropagation</a>;</li>
+<li>how <code>optimizer.step()</code> updates the weights &mdash; <a onclick="App.open('dl-optimizers')">optimizers</a>.</li>
+</ul>`,
 
     whenToUse:
       `<p><b>Reach for a CNN (Convolutional Neural Network) whenever the input is an image or any grid-structured data</b> — photos, scans, spectrograms, board-game grids — where nearby values are related. It is the default for vision, used on its own or as a feature extractor before a transformer.</p>

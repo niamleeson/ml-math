@@ -4,7 +4,105 @@
     title: "Loss functions and optimizers",
     tagline: "The two pieces that turn a model into learning: a loss to score it, an optimizer to fix it.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-cross-entropy", "dl-optimizers", "ml-gradient-descent"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>pick the right loss for the task — <code>nn.MSELoss</code> for regression, <code>nn.CrossEntropyLoss</code> for single-label classification, <code>nn.BCEWithLogitsLoss</code> for binary/multi-label — and feed it the shapes and dtypes it expects;</li>
+<li>construct an optimizer over <code>model.parameters()</code> and run the three-step update <code>zero_grad()</code> &rarr; <code>backward()</code> &rarr; <code>step()</code> every iteration;</li>
+<li>attach a learning-rate scheduler and step it once per epoch, and avoid the famous gotchas (double softmax, one-hot targets, skipped <code>zero_grad</code>).</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.MSELoss</code> / <code>nn.CrossEntropyLoss</code> / <code>nn.BCEWithLogitsLoss</code>, <code>torch.optim.SGD</code> / <code>Adam</code> / <code>AdamW</code>, <code>optimizer.zero_grad/step</code>, <code>loss.backward</code>, <code>torch.optim.lr_scheduler.StepLR</code>.</p>`,
+
+    concept: `<p>Learning is a feedback loop with two parts. A <b>loss function</b> turns the model's output into a single number — how wrong it is right now. An <b>optimizer</b> reads the gradients of that number and nudges every weight to make it smaller. Pick the loss right and wire the optimizer right, and the rest is plumbing.</p>
+<p>The loss you choose is decided by the task. <b>Regression</b> (predict a number) uses <code>nn.MSELoss</code>, the mean of squared differences. <b>Single-label classification</b> uses <code>nn.CrossEntropyLoss</code>, which takes raw <b>logits</b> of shape <code>(N, C)</code> and integer class targets of shape <code>(N,)</code> — it does log-softmax then negative log-likelihood in one numerically stable step, so your model must <i>not</i> end in a softmax. <b>Binary or multi-label</b> (each label independent) uses <code>nn.BCEWithLogitsLoss</code>, which applies the sigmoid internally. The math of why cross-entropy is the right classification loss is in <code>dl-cross-entropy</code>.</p>
+<p>The optimizer is attached to the model's parameters once: <code>opt = torch.optim.Adam(model.parameters(), lr=1e-3)</code>. From then on it remembers where they live, and for adaptive methods like Adam keeps running statistics of past gradients to size each parameter's step automatically. Reach for <code>Adam</code> or <code>AdamW</code> first — they "just work" with little tuning; use plain <code>SGD</code> with momentum when you want the very best final accuracy and have time to tune. Why Adam improves on plain gradient descent is in <code>dl-optimizers</code>.</p>
+<p>Every step runs the same three lines, in order: <code>optimizer.zero_grad()</code> clears last step's gradients (PyTorch <i>accumulates</i> them), <code>loss.backward()</code> fills every parameter's <code>.grad</code>, and <code>optimizer.step()</code> moves each parameter one step downhill.</p>`,
+
+    apiTable: [
+      { sig: "nn.MSELoss()(pred, target)", does: "Mean squared error for regression. <code>pred</code> and <code>target</code> are floats of the same shape.", snippet: "nn.MSELoss()(preds, target)   # tensor(0.4167)" },
+      { sig: "nn.CrossEntropyLoss()(logits, target)", does: "Single-label classification. Takes raw <b>logits</b> <code>(N, C)</code> + integer targets <code>(N,)</code>; applies log-softmax internally (no softmax in your model).", snippet: "nn.CrossEntropyLoss()(logits, targets)" },
+      { sig: "nn.BCEWithLogitsLoss()(logits, target)", does: "Binary / multi-label cross-entropy. Takes logits and applies the sigmoid internally; targets are floats in {0,1}.", snippet: "nn.BCEWithLogitsLoss()(logit, y.float())" },
+      { sig: "nn.NLLLoss()(log_probs, target)", does: "Negative log-likelihood; expects <i>already</i> log-probabilities (e.g. from <code>F.log_softmax</code>). <code>CrossEntropyLoss</code> = LogSoftmax + NLLLoss.", snippet: "nn.NLLLoss()(F.log_softmax(x, 1), y)" },
+      { sig: "torch.optim.SGD(params, lr, momentum=)", does: "Plain stochastic gradient descent — the textbook update. Add <code>momentum=0.9</code> in practice.", snippet: "torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)" },
+      { sig: "torch.optim.Adam(params, lr=1e-3)", does: "Adaptive optimizer — sizes each parameter's step from moving averages of the gradient. The default first choice.", snippet: "torch.optim.Adam(model.parameters(), lr=1e-3)" },
+      { sig: "torch.optim.AdamW(params, lr, weight_decay=)", does: "Adam with correct (decoupled) weight decay; the modern default for transformers.", snippet: "torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)" },
+      { sig: "optimizer.zero_grad() / .step()", does: "Clear last step's accumulated grads; then move every parameter one step downhill using the filled <code>.grad</code>.", snippet: "opt.zero_grad(); loss.backward(); opt.step()" },
+      { sig: "loss.backward()", does: "Backpropagate: fill every parameter's <code>.grad</code> with the slope of the loss with respect to it.", snippet: "loss.backward()" },
+      { sig: "lr_scheduler.StepLR(opt, step_size, gamma)", does: "Multiply the learning rate by <code>gamma</code> every <code>step_size</code> epochs. Call <code>scheduler.step()</code> once per epoch.", snippet: "sched = StepLR(opt, step_size=1, gamma=0.5)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Set up the tiny 3-class problem.</b> Sixty points, four features each, with integer class labels 0/1/2 — <i>not</i> one-hot. <code>CrossEntropyLoss</code> wants integer indices, so <code>torch.randint</code> gives exactly the right target shape <code>(N,)</code> and dtype (long).`,
+        code: `import torch
+import torch.nn as nn
+
+torch.manual_seed(0)  # reproducible
+
+N, D_in, C = 60, 4, 3
+X = torch.randn(N, D_in)
+y = torch.randint(0, C, (N,))   # class labels 0/1/2, shape (N,), dtype long
+print(X.shape, y.shape, y.dtype)`,
+        output: `torch.Size([60, 4]) torch.Size([60]) torch.int64`
+      },
+      {
+        explain: `<b>Build a model that outputs raw logits.</b> Two linear layers with a ReLU between them. The last layer emits one score per class — shape <code>(N, C)</code> — with <b>no softmax</b>. That is deliberate: <code>CrossEntropyLoss</code> adds the log-softmax itself, so a softmax here would double it.`,
+        code: `model = nn.Sequential(
+    nn.Linear(D_in, 16),
+    nn.ReLU(),
+    nn.Linear(16, C),   # raw logits, no softmax
+)
+print(model(X).shape)   # (N, C) logits`,
+        output: `torch.Size([60, 3])`
+      },
+      {
+        explain: `<b>Pick the loss and the optimizer.</b> <code>CrossEntropyLoss</code> is built once and called like a function. <code>Adam</code> is handed the model's parameters and a learning rate — this is the wiring that lets <code>step()</code> know which tensors to move.`,
+        code: `criterion = nn.CrossEntropyLoss()        # applies log-softmax INTERNALLY
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)`,
+        output: ``
+      },
+      {
+        explain: `<b>The three-step update, in a loop.</b> Each step: forward to get logits, measure the loss, then the canonical trio — <code>zero_grad()</code> clears old grads, <code>backward()</code> fills every <code>.grad</code>, <code>step()</code> nudges the weights downhill. Print loss and train accuracy every 4 steps to watch it fall.`,
+        code: `for step in range(20):
+    logits = model(X)                    # (N, C) raw logits
+    loss = criterion(logits, y)          # logits + integer targets
+
+    optimizer.zero_grad()                # 1. clear old grads (else they accumulate)
+    loss.backward()                      # 2. backprop: fill every .grad
+    optimizer.step()                     # 3. one downhill step
+
+    if step % 4 == 0:
+        acc = (logits.argmax(1) == y).float().mean().item()
+        print(f"step {step:2d}  loss {loss.item():.4f}  train_acc {acc:.2f}")`,
+        output: `step  0  loss 1.1146  train_acc 0.32
+step  4  loss 0.9216  train_acc 0.58
+step  8  loss 0.7714  train_acc 0.72
+step 12  loss 0.6512  train_acc 0.85
+step 16  loss 0.5559  train_acc 0.92`
+      },
+      {
+        explain: `<b>The gotcha, spelled out.</b> The two wrong ways to call the loss — softmaxing first (double softmax) and passing one-hot targets — are flagged in comments. The right call is raw logits plus integer indices, exactly as the loop above does.`,
+        code: `# WRONG: softmax before CrossEntropyLoss -> double softmax, training degrades.
+#   bad = nn.CrossEntropyLoss()(torch.softmax(logits, dim=1), y)
+# WRONG: one-hot targets -> CrossEntropyLoss wants class indices, not one-hot.
+#   y_onehot = torch.nn.functional.one_hot(y, C).float()  # do NOT pass this
+# RIGHT: raw logits + integer indices, exactly as above.
+print("done. the model has NO softmax layer -- CrossEntropyLoss adds it.")`,
+        output: `done. the model has NO softmax layer -- CrossEntropyLoss adds it.`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The setup block prints <code>torch.Size([60, 4]) torch.Size([60]) torch.int64</code> — the targets are a 1-D <i>long</i> tensor of class indices, which is exactly what <code>CrossEntropyLoss</code> expects (not one-hot rows).</li>
+<li>The model's output is <code>torch.Size([60, 3])</code> — one raw logit per class, with no softmax applied.</li>
+<li>The training loop's loss falls steadily — about <code>1.11</code> at step 0 down to roughly <code>0.56</code> by step 16 — while train accuracy climbs from chance (~0.32) toward 0.92. That downward loss is the whole point: the three-step update is working.</li>
+<li>The final line confirms the model has no softmax layer; the loss supplies the log-softmax itself.</li>
+</ul>
+<p>The exact numbers depend on <code>torch.manual_seed(0)</code> — set it first or your run will differ from this one. On a GPU runtime the math is identical; only tiny floating-point differences may appear.</p>`,
+
     whenToUse:
       `<p><b>Every trained model needs both.</b> A <b>loss function</b> turns the model's output into one
         number — how wrong it is right now. An <b>optimizer</b> reads the gradients of that number and
@@ -251,7 +349,25 @@ for epoch in range(4):
 # 0.0125
 # 0.00625</code></pre>`
       }
-    ]
+    ],
+
+    cheatsheet: [
+      { code: "crit = nn.MSELoss()                 # regression", note: "mean of squared differences; float pred & target, same shape" },
+      { code: "crit = nn.CrossEntropyLoss()        # single-label", note: "raw logits <code>(N,C)</code> + integer targets <code>(N,)</code>; <b>no softmax</b> in the model" },
+      { code: "crit = nn.BCEWithLogitsLoss()       # binary/multi-label", note: "logits + float targets in {0,1}; sigmoid applied inside" },
+      { code: "opt = torch.optim.Adam(model.parameters(), lr=1e-3)", note: "default first choice; pass the model's params!" },
+      { code: "opt = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)", note: "textbook update; tune for best final accuracy" },
+      { code: "opt.zero_grad(); loss.backward(); opt.step()", note: "the three-step update, every iteration, in this order" },
+      { code: "sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.5)", note: "shrink lr; call <code>sched.step()</code> once per epoch" },
+      { code: "w_new = w - lr * w.grad", note: "what plain SGD's <code>step()</code> does under the hood" }
+    ],
+
+    deeper: `<p>The PyTorch wiring above sits on three pieces of theory:</p>
+<ul>
+<li><b>Why we descend the gradient.</b> The update <code>w &larr; w - &eta; &nabla;L</code> walks downhill because the gradient points uphill — see <a onclick="App.open('ml-gradient-descent')">gradient descent</a>.</li>
+<li><b>Why cross-entropy is the right classification loss.</b> The log-softmax-then-negative-log-likelihood that <code>CrossEntropyLoss</code> computes is derived in <a onclick="App.open('dl-cross-entropy')">cross-entropy</a>.</li>
+<li><b>How Adam improves on plain gradient descent.</b> The per-parameter adaptive step from moving averages of the gradient is in <a onclick="App.open('dl-optimizers')">optimizers</a>.</li>
+</ul>`
   });
 
   window.CODE["pt-loss-optim"] = {

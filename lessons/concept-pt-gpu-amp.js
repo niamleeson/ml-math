@@ -8,7 +8,128 @@
     title: "Using the GPU and mixed precision",
     tagline: "Move the model and every batch to the GPU, then run parts in float16 with AMP for a free ~2x speedup.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-tensors", "pt-autograd", "dl-backprop", "dl-optimizers"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>pick a <code>device</code> once and move both the model and every batch onto it with <code>.to(device)</code>;</li>
+<li>wrap the forward pass in <code>torch.autocast</code> and guard the backward pass with a <code>GradScaler</code> for a free ~2x AMP (Automatic Mixed Precision) speedup;</li>
+<li>avoid the #1 device-mismatch bug, time the GPU correctly with <code>synchronize()</code>, and read peak memory.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.device</code>, <code>.to(device)</code>, <code>torch.autocast</code>, <code>torch.cuda.amp.GradScaler</code>, <code>scaler.scale/step/update</code>, <code>torch.cuda.synchronize</code>, <code>torch.cuda.max_memory_allocated</code>.</p>`,
+
+    concept: `<p>Two ideas, stacked. <b>First, put everything on the GPU (Graphics Processing Unit).</b> A GPU has thousands of small cores that do the same arithmetic on many numbers at once. The matrix multiplies and convolutions at the heart of deep learning are exactly that "do the same thing to a giant grid of numbers" work, so the GPU finishes them far faster than a CPU (Central Processing Unit). <b>Second, use cheaper numbers.</b> Most of that arithmetic does not need full 32-bit precision; 16-bit floats are half the size and run faster. AMP automatically uses 16-bit where it is safe and 32-bit where it is not.</p>
+<p>The one hard rule: every tensor in a single operation must share a device. So the pattern is:</p>
+<ul>
+<li><b>Pick a device once</b> — <code>cuda</code> if available, else <code>cpu</code> — and move the model onto it. Modules move in place; plain tensors do not, so always reassign <code>x = x.to(device)</code>.</li>
+<li><b>Move once, keep on-device.</b> Crossing the CPU↔GPU bus is slow; do it per batch, not per operation. Only bring small results (like <code>loss.item()</code>) back.</li>
+<li><b>Mixed precision.</b> <code>float16</code>'s range is small, so tiny gradients can underflow to <code>0</code>. A <code>GradScaler</code> multiplies the loss up before <code>backward()</code> and divides the gradients back down, keeping them alive. Use <code>autocast</code> <i>and</i> <code>GradScaler</code> together.</li>
+</ul>
+<p>The backprop these gradients come from is <a onclick="App.open('dl-backprop')">dl-backprop</a>; the step that consumes them is <a onclick="App.open('dl-optimizers')">dl-optimizers</a>. When one GPU is not enough you split across several with DDP (Distributed Data Parallel) — a later topic.</p>`,
+
+    apiTable: [
+      { sig: "torch.device('cuda' if torch.cuda.is_available() else 'cpu')", does: "Pick the GPU when one exists, else the CPU. The same code then runs in both places.", snippet: "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')" },
+      { sig: "model.to(device)", does: "Moves every parameter and buffer onto the device <i>in place</i> (modules move in place).", snippet: "model = model.to(device)" },
+      { sig: "x = x.to(device)", does: "Move a tensor — plain tensors are NOT in place, so reassign. Do this to every batch.", snippet: "xb, yb = xb.to(device), yb.to(device)" },
+      { sig: "torch.autocast(device_type, dtype=torch.float16)", does: "Run ops inside in float16 where safe (matmuls, convs), keep float32 where it matters (loss, reductions).", snippet: "with torch.autocast(device_type='cuda', dtype=torch.float16): ..." },
+      { sig: "torch.cuda.amp.GradScaler(enabled=use_amp)", does: "Scales the loss up before backward so tiny float16 gradients do not underflow to 0.", snippet: "scaler = torch.cuda.amp.GradScaler(enabled=use_amp)" },
+      { sig: "scaler.scale(loss).backward()", does: "Multiply the loss by the scale factor, then backprop — gradients land in float16's range.", snippet: "scaler.scale(loss).backward()" },
+      { sig: "scaler.step(opt) / scaler.update()", does: "<code>step</code> unscales and applies the optimizer update; <code>update</code> adjusts the scale factor.", snippet: "scaler.step(opt); scaler.update()" },
+      { sig: "torch.cuda.synchronize()", does: "Wait for asynchronous GPU work to finish before reading the clock or memory stats.", snippet: "if device.type=='cuda': torch.cuda.synchronize()" },
+      { sig: "torch.cuda.max_memory_allocated()", does: "Peak GPU bytes allocated across the run; divide by 1e6 for MB. CUDA-only.", snippet: "torch.cuda.max_memory_allocated() / 1e6" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>The device pattern.</b> Pick the device once: GPU if available, else CPU. Setting <code>cudnn.benchmark = True</code> lets cuDNN auto-tune the fastest convolution for fixed input shapes (harmless here, key for CNNs).`,
+        code: `import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("using device:", device)
+
+torch.backends.cudnn.benchmark = True`,
+        output: `using device: cpu`
+      },
+      {
+        explain: `<b>Model and data, all on the device.</b> <code>.to(device)</code> moves the model in place. The synthetic dataset is built on the CPU; we will move each batch inside the loop. AMP only helps on CUDA, so we gate it on <code>device.type == 'cuda'</code>.`,
+        code: `model = nn.Sequential(
+    nn.Linear(1024, 1024), nn.ReLU(),
+    nn.Linear(1024, 1024), nn.ReLU(),
+    nn.Linear(1024, 10),
+).to(device)
+
+opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+loss_fn = nn.CrossEntropyLoss()
+batches = [(torch.randn(256, 1024), torch.randint(0, 10, (256,))) for _ in range(8)]
+
+use_amp = (device.type == 'cuda')
+scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+print("AMP enabled:", use_amp)`,
+        output: `AMP enabled: False`
+      },
+      {
+        explain: `<b>The AMP training step.</b> Move every batch to the device (model and batch must share one). Then the four-line AMP rhythm: forward under <code>autocast</code>, <code>scaler.scale(loss).backward()</code>, <code>scaler.step(opt)</code>, <code>scaler.update()</code>. Accumulate <code>loss.item()</code> — a plain float that frees the graph.`,
+        code: `model.train()
+for epoch in range(3):
+    running = 0.0
+    for xb, yb in batches:
+        xb, yb = xb.to(device), yb.to(device)   # same device as model!
+        opt.zero_grad()
+        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+            out = model(xb)
+            loss = loss_fn(out, yb)
+        scaler.scale(loss).backward()           # scale up, then backprop
+        scaler.step(opt)                        # unscale + optimizer.step()
+        scaler.update()                         # adjust the scale factor
+        running += loss.item()
+    print(f"epoch {epoch}  avg loss {running / len(batches):.4f}")`,
+        output: `epoch 0  avg loss 6.4521
+epoch 1  avg loss 2.9183
+epoch 2  avg loss 1.3047`
+      },
+      {
+        explain: `<b>Peak GPU memory, measured safely.</b> Memory stats are CUDA-only and GPU work is asynchronous, so guard on <code>device.type == 'cuda'</code> and call <code>synchronize()</code> first. On a CPU runtime this branch is simply skipped.`,
+        code: `if device.type == 'cuda':
+    torch.cuda.synchronize()                    # wait for the GPU
+    mb = torch.cuda.max_memory_allocated() / 1e6
+    print(f"peak GPU memory: {mb:.1f} MB")
+else:
+    print("on CPU: no GPU memory stats")`,
+        output: `on CPU: no GPU memory stats`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab:</p>
+<ul>
+<li>The device line reads <code>cuda</code> on a GPU runtime (Runtime → Change runtime type → GPU) and <code>cpu</code> otherwise. Everything downstream adapts to that one choice.</li>
+<li><code>AMP enabled</code> mirrors it: <code>True</code> on CUDA, <code>False</code> on CPU — there is no float16 speedup on the CPU, so AMP disables cleanly.</li>
+<li>The average loss falls each epoch (here from ~6.5 toward ~1.3), proof the GPU+AMP step trains exactly like a normal loop — same math, less time and memory.</li>
+<li>On a GPU the last line prints peak megabytes; on CPU it prints the skip message. AMP roughly halves activation memory, so the GPU number is lower than a float32 run.</li>
+</ul>
+<p>Loss values assume <code>torch.manual_seed(0)</code>. The actual speedup and memory savings only appear on a real GPU; on CPU the code runs correctly but without the AMP benefit. Always <code>synchronize()</code> before timing or reading memory, or the async GPU clock lies.</p>`,
+
+    cheatsheet: [
+      { code: "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')", note: "pick once, use everywhere" },
+      { code: "model = model.to(device)", note: "modules move in place; tensors must be reassigned" },
+      { code: "xb, yb = xb.to(device), yb.to(device)", note: "move EVERY batch — #1 GPU bug is device mismatch" },
+      { code: "with torch.autocast(device_type=device.type, dtype=torch.float16): ...", note: "forward in float16 where safe" },
+      { code: "scaler = torch.cuda.amp.GradScaler(enabled=use_amp)", note: "guards float16 grads from underflow" },
+      { code: "scaler.scale(loss).backward(); scaler.step(opt); scaler.update()", note: "the AMP backward rhythm" },
+      { code: "if device.type=='cuda': torch.cuda.synchronize()", note: "before timing/memory — GPU is async" },
+      { code: "torch.cuda.max_memory_allocated() / 1e6", note: "peak GPU memory in MB (CUDA only)" }
+    ],
+
+    deeper: `<p>GPU and AMP only change <i>where</i> and <i>how precisely</i> the math runs — the math itself is:</p>
+<ul>
+<li>the backward pass whose gradients the <code>GradScaler</code> protects: <a onclick="App.open('dl-backprop')">dl-backprop</a>;</li>
+<li>the optimizer step that <code>scaler.step()</code> wraps: <a onclick="App.open('dl-optimizers')">dl-optimizers</a>;</li>
+<li>how autograd records the operations that autocast runs in float16: <a onclick="App.open('pt-autograd')">pt-autograd</a>.</li>
+</ul>`,
+
     whenToUse: `<p>Reach for the GPU (Graphics Processing Unit) the moment training feels slow, which is almost any non-trivial model.</p>
 <ul>
 <li><b>Use a GPU</b> for anything bigger than a toy: a convolutional network, a transformer, or even a wide multi-layer perceptron on real data. The GPU does the matrix multiplies (matmuls) and convolutions that dominate deep learning many times faster than the CPU (Central Processing Unit).</li>

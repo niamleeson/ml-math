@@ -8,7 +8,98 @@
     title: "Tensors: PyTorch's core data structure",
     tagline: "A tensor is an n-dimensional array, like a numpy array but with GPU and autograd built in.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["fnd-vector", "fnd-matrix"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>create tensors from Python lists and with the <code>zeros</code> / <code>ones</code> / <code>arange</code> / <code>randn</code> factories, and read their <code>.shape</code>, <code>.dtype</code>, and <code>.device</code>;</li>
+<li>reshape, index, and slice a tensor and know what shape comes out before you run it;</li>
+<li>move a tensor between CPU and GPU, and convert to and from NumPy knowing exactly when memory is shared.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.tensor</code>, <code>torch.zeros/ones/arange/randn/eye</code>, <code>.reshape</code>, <code>.to(device)</code>, <code>.numpy()</code> / <code>torch.from_numpy</code>.</p>`,
+
+    concept: `<p>A <b>tensor</b> is PyTorch's one and only data structure: an n-dimensional grid of numbers, just like a NumPy array. A single value is a 0-D tensor, a list of values is 1-D, a table is 2-D, and a batch of colour images is 4-D with shape <code>[batch, channels, height, width]</code>. <i>Everything</i> in PyTorch is a tensor — your input data, every weight in the model, every gradient, and the final loss.</p>
+<p>A tensor differs from a NumPy array in two ways that matter for the rest of this course:</p>
+<ul>
+<li><b>It can live on a GPU (Graphics Processing Unit).</b> Call <code>.to("cuda")</code> and the same arithmetic runs on the graphics card — often tens of times faster for the big matrix multiplies in a network.</li>
+<li><b>It can remember how it was computed.</b> Give it <code>requires_grad=True</code> and PyTorch records every operation so it can later compute gradients automatically. That recording is <b>autograd</b>, the subject of <code>pt-autograd</code>.</li>
+</ul>
+<p>Three properties define any tensor, and you will check them constantly while debugging:</p>
+<ul>
+<li><b>shape</b> — the size along each axis (a <code>[2, 3]</code> tensor has 2 rows, 3 columns);</li>
+<li><b>dtype</b> — the number type. <code>float32</code> for almost all model math; <code>int64</code> for indices and class labels;</li>
+<li><b>device</b> — where it physically lives: <code>cpu</code> or <code>cuda</code>.</li>
+</ul>`,
+
+    apiTable: [
+      { sig: "torch.tensor(data)", does: "Build a tensor from a Python list or number. The dtype is inferred — decimals give <code>float32</code>, whole numbers give <code>int64</code>.", snippet: "torch.tensor([[1., 2.], [3., 4.]])" },
+      { sig: "torch.zeros(*shape) / ones / full", does: "A tensor of the given shape filled with 0, 1, or a constant. The everyday way to allocate.", snippet: "torch.zeros(2, 3)        # 2x3 of 0.0" },
+      { sig: "torch.arange(n) / linspace(a, b, n)", does: "Evenly spaced 1-D values: like Python <code>range</code>, or <code>n</code> points from <code>a</code> to <code>b</code>.", snippet: "torch.arange(5)          # [0,1,2,3,4]" },
+      { sig: "torch.randn(*shape)", does: "Random values from a standard normal — the usual test data. Seed it for reproducibility.", snippet: "torch.manual_seed(0)\ntorch.randn(3, 4)" },
+      { sig: "t.shape / t.dtype / t.device", does: "The three properties you sanity-check on every tensor: size per axis, number type, location.", snippet: "t.shape                  # torch.Size([3, 4])" },
+      { sig: "t.reshape(*shape)", does: "Same data, new shape. Use <code>-1</code> to let PyTorch infer one axis (often to flatten).", snippet: "x.reshape(3, 4); x.reshape(-1)" },
+      { sig: "t.mean(dim=) / sum(dim=) / max(dim=)", does: "Reduce along an axis. The <code>dim</code> you name is the one that <i>collapses</i>.", snippet: "x.mean(dim=0)            # one mean per column" },
+      { sig: "t.to(device) / .cpu() / .cuda()", does: "Return a copy of the tensor on another device. Reassign the result to keep it.", snippet: "t = t.to('cuda')" },
+      { sig: "t.numpy() / torch.from_numpy(a)", does: "Bridge to and from NumPy. The two share memory unless you <code>.clone()</code>.", snippet: "torch.from_numpy(np.ones(3))" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Import and make your first tensor.</b> <code>torch.tensor</code> turns a nested Python list into a 2-D tensor. The decimal points matter: they make it a <code>float32</code> tensor, the default for model math. Always glance at the printed <code>shape</code>, <code>dtype</code>, <code>device</code> line.`,
+        code: `import torch\n\nx = torch.tensor([[1., 2., 3.],\n                  [4., 5., 6.]])\nprint(x)\nprint(x.shape, x.dtype, x.device)`,
+        output: `tensor([[1., 2., 3.],\n        [4., 5., 6.]])\ntorch.Size([2, 3]) torch.float32 cpu`
+      },
+      {
+        explain: `<b>The factory functions.</b> You rarely type numbers by hand. These build common tensors directly. Watch the dtype: <code>arange</code> gives integers (<code>int64</code>), while <code>zeros</code>/<code>ones</code> give floats.`,
+        code: `zeros = torch.zeros(2, 3)\nones  = torch.ones(2, 3)\nseq   = torch.arange(6)        # 0..5\nprint(zeros.shape, ones.shape)\nprint(seq, seq.dtype)`,
+        output: `torch.Size([2, 3]) torch.Size([2, 3])\ntensor([0, 1, 2, 3, 4, 5]) torch.int64`
+      },
+      {
+        explain: `<b>Reshape — same data, new shape.</b> <code>reshape</code> rearranges the six values into a new layout; <code>-1</code> means "you work out this axis." The element count never changes, so a reshape that doesn't multiply out will raise.`,
+        code: `x = torch.arange(6)\nprint(x.reshape(2, 3))\nprint(x.reshape(3, 2))\nprint(x.reshape(-1).shape)      # flatten back to 1-D`,
+        output: `tensor([[0, 1, 2],\n        [3, 4, 5]])\ntensor([[0, 1],\n        [2, 3],\n        [4, 5]])\ntorch.Size([6])`
+      },
+      {
+        explain: `<b>Index and slice — exactly like NumPy.</b> The first index is the row axis; <code>:</code> keeps a whole axis while you pick along another. This is how you pull a row, a column, or a sub-block out of a batch of data.`,
+        code: `g = torch.arange(16).reshape(4, 4)\nprint(g[1])         # row 1\nprint(g[:, 2])      # column 2\nprint(g[:2, :2])    # top-left 2x2 block`,
+        output: `tensor([4, 5, 6, 7])\ntensor([ 2,  6, 10, 14])\ntensor([[0, 1],\n        [4, 5]])`
+      },
+      {
+        explain: `<b>Device and the NumPy bridge.</b> Build the device string once and use it everywhere — that one habit prevents most CPU/GPU errors later. <code>from_numpy</code> shares memory with the array, so writing through the tensor also changes the array; call <code>.clone()</code> when you need an independent copy.`,
+        code: `import numpy as np\ndevice = 'cuda' if torch.cuda.is_available() else 'cpu'\nt = torch.ones(3, device=device)\nprint(t.device)\n\na = np.array([1, 2, 3])\nshared = torch.from_numpy(a)\nshared[0] = 99\nprint(a)            # the array changed too`,
+        output: `cpu\n[99  2  3]`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The first block prints a 2&times;3 grid and the line <code>torch.Size([2, 3]) torch.float32 cpu</code> — that triple (shape, dtype, device) is what you sanity-check on every tensor.</li>
+<li><code>arange(6)</code> prints with dtype <code>torch.int64</code>, a reminder that integer factories are <i>not</i> floats — this is what later breaks gradient code that expects <code>float32</code>.</li>
+<li>Every reshape keeps exactly six elements; only the brackets move. If a reshape ever raises, the element counts don't match.</li>
+<li>The final block prints <code>[99  2  3]</code> for the NumPy array even though you only wrote to the tensor — direct proof the buffer is shared.</li>
+</ul>
+<p>On a GPU runtime the device line reads <code>cuda:0</code> instead of <code>cpu</code>. If random examples don't match a teammate's, set <code>torch.manual_seed(0)</code> first.</p>`,
+
+    cheatsheet: [
+      { code: "x = torch.tensor([1., 2., 3.])", note: "from a list; decimals → float32" },
+      { code: "torch.zeros(2,3) / ones / arange(n) / randn(2,3)", note: "factory tensors" },
+      { code: "x.shape, x.dtype, x.device", note: "the three things to always check" },
+      { code: "x.reshape(3, 4)   /   x.reshape(-1)", note: "new shape / flatten (-1 infers an axis)" },
+      { code: "x[1], x[:, 2], x[:2, :2]", note: "row, column, sub-block" },
+      { code: "x.mean(dim=0) / x.sum(dim=1)", note: "reduce along an axis (dim collapses)" },
+      { code: "x = x.to(device)", note: "move to cpu/cuda — reassign the result!" },
+      { code: "torch.from_numpy(a) / x.numpy()", note: "NumPy bridge — shares memory; .clone() to break it" },
+      { code: "torch.manual_seed(0)", note: "reproducible randomness" }
+    ],
+
+    deeper: `<p>A tensor is just the computational form of math objects you already know:</p>
+<ul>
+<li>a 1-D tensor is a <a onclick="App.open('fnd-vector')">vector</a>;</li>
+<li>a 2-D tensor is a <a onclick="App.open('fnd-matrix')">matrix</a>;</li>
+<li>3-D and beyond simply add more axes (an "n-way array").</li>
+</ul>
+<p>Deep learning lives on tensors because a forward pass is a chain of matrix multiplications and elementwise functions (see <code>dl-forward-prop</code>), and those are exactly the operations a GPU runs in parallel across thousands of cores. Get fluent at shaping and moving tensors and the rest of the course is mostly choosing which operation to apply.</p>`,
     whenToUse: `<p>Always. The tensor is the substrate of everything in PyTorch.</p>
 <ul>
 <li>Every piece of data you feed a model is a tensor: a batch of images, a sequence of token ids, a table of features.</li>

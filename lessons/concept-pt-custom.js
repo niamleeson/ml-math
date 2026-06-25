@@ -6,7 +6,96 @@
     title: "Extending PyTorch: custom layers, losses, and autograd Functions",
     tagline: "Write your own nn.Module layer with learnable nn.Parameters, a custom loss function, and — when you need a hand-written gradient — a torch.autograd.Function verified by gradcheck.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-nn-module", "pt-autograd", "dl-backprop"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>write a reusable layer as an <code>nn.Module</code> subclass whose learnable weights are <code>nn.Parameter</code> tensors, so the optimizer actually trains them;</li>
+<li>write a custom loss as a plain function of differentiable torch ops and let autograd backpropagate it for free;</li>
+<li>drop down to a <code>torch.autograd.Function</code> with a hand-written <code>forward</code>/<code>backward</code> when you must own the gradient, and verify the math with <code>gradcheck</code>.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.Module</code> + <code>nn.Parameter</code>, <code>register_buffer</code>, <code>torch.autograd.Function</code> (<code>forward</code>/<code>backward</code>), <code>ctx.save_for_backward</code>, <code>Fn.apply</code>, <code>torch.autograd.gradcheck</code>.</p>`,
+
+    concept: `<p>PyTorch is extensible at <b>three layers</b>, and the whole skill is knowing how far down you must go. Most of the time you never touch the backward pass at all.</p>
+<ul>
+<li><b>A custom layer</b> is an <code>nn.Module</code> subclass that holds its weights as <code>nn.Parameter</code> tensors and writes the math in <code>forward</code> with ordinary differentiable ops (a from-scratch <code>Linear</code> is just <code>x @ W.t() + b</code>). Because the ops are differentiable, autograd builds the backward pass automatically — see <code>pt-nn-module</code> and <code>pt-autograd</code>.</li>
+<li><b>A custom loss</b> is even simpler: a function (or tiny module) that takes prediction and target and returns one scalar built from differentiable ops, e.g. <code>((pred - target) ** 2).mean()</code>. You write only the forward formula.</li>
+<li><b>A custom autograd Function</b> is the heavy tool. Reach for <code>torch.autograd.Function</code> only when you must <i>hand-write the gradient</i>: a non-differentiable step (rounding, argmax), a smarter or more stable derivative, a fused backward, or a bridge to non-PyTorch code. You write an explicit <code>forward</code> and <code>backward</code> — so <i>you</i> are the gradient, and you check it with <code>gradcheck</code>.</li>
+</ul>
+<p><b>Rule of thumb:</b> if you can express your idea with differentiable torch ops, write a plain <code>nn.Module</code> or function and let autograd (the engine from <code>dl-backprop</code>) do the rest. Only own the backward when you have to.</p>
+<p>Two supporting pieces round it out: <code>nn.Parameter</code> wraps a tensor so it registers as a trainable weight (forget it and the optimizer never sees the tensor), and <code>register_buffer</code> holds <i>non-learnable</i> state — a running mean, a mask — that still moves with <code>model.to(device)</code> and saves in the checkpoint.</p>`,
+
+    apiTable: [
+      { sig: "class L(nn.Module): def __init__(self): super().__init__()", does: "Subclass <code>nn.Module</code> for a reusable block; call <code>super().__init__()</code> first so registration works.", snippet: "class MyLinear(nn.Module):\n    def __init__(self, i, o):\n        super().__init__()" },
+      { sig: "self.W = nn.Parameter(t)", does: "Wrap a tensor as a <b>learnable</b> weight: registers it into <code>parameters()</code> and sets <code>requires_grad=True</code>. A bare tensor is never trained.", snippet: "self.W = nn.Parameter(torch.randn(o, i) * 0.1)" },
+      { sig: "def forward(self, x): return x @ self.W.t() + self.b", does: "The math, in plain differentiable ops — autograd derives the backward for free, no gradient to write.", snippet: "return x @ self.W.t() + self.b" },
+      { sig: "self.register_buffer(name, t)", does: "Register <b>non-learnable</b> state: moves with <code>.to(device)</code> and saves in <code>state_dict</code>, but the optimizer never updates it.", snippet: "self.register_buffer('call_count', torch.zeros(1))" },
+      { sig: "def my_mse(pred, target): return ((pred-target)**2).mean()", does: "A custom loss is just a scalar-returning function of differentiable ops; autograd backpropagates it.", snippet: "loss = my_mse(model(x), y)" },
+      { sig: "class F(torch.autograd.Function)", does: "Base class for an op with a <i>hand-written</i> forward and backward; subclass it only when you must own the gradient.", snippet: "class Square(torch.autograd.Function):\n    ..." },
+      { sig: "@staticmethod def forward(ctx, x)", does: "The forward computation. Stash whatever <code>backward</code> needs on <code>ctx</code>; return the output.", snippet: "ctx.save_for_backward(x)\nreturn x * x" },
+      { sig: "@staticmethod def backward(ctx, grad_output)", does: "Return one gradient per input by the chain rule: <code>grad_output</code> times the local derivative. Read saved tensors back.", snippet: "(x,) = ctx.saved_tensors\nreturn grad_output * 2 * x" },
+      { sig: "Fn.apply(x)", does: "How you actually call a custom Function — never <code>Fn.forward</code> directly; <code>.apply</code> records it on the autograd graph.", snippet: "y = Square.apply(x)" },
+      { sig: "torch.autograd.gradcheck(fn, (x,))", does: "Verify a hand-written backward against a numerical finite-difference estimate. Use <code>float64</code> inputs with <code>requires_grad=True</code>.", snippet: "torch.autograd.gradcheck(Square.apply, (x,))" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>A custom layer: a from-scratch Linear.</b> Subclass <code>nn.Module</code>, call <code>super().__init__()</code> first, then hold the weight and bias as <code>nn.Parameter</code> so they land in <code>parameters()</code> and the optimizer trains them. A <code>register_buffer</code> counter is non-learnable state that still travels with the model. The forward is pure differentiable ops, so autograd writes the backward for you.`,
+        code: `import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\n\nclass MyLinear(nn.Module):\n    def __init__(self, in_features, out_features):\n        super().__init__()\n        self.weight = nn.Parameter(torch.randn(out_features, in_features) * 0.1)\n        self.bias   = nn.Parameter(torch.zeros(out_features))\n        self.register_buffer("call_count", torch.zeros(1))\n    def forward(self, x):\n        self.call_count += 1\n        return x @ self.weight.t() + self.bias\n\nlayer = MyLinear(4, 3)\nprint("params :", [n for n, _ in layer.named_parameters()])\nprint("buffers:", [n for n, _ in layer.named_buffers()])\nprint("state  :", list(layer.state_dict().keys()))`,
+        output: `params : ['weight', 'bias']\nbuffers: ['call_count']\nstate  : ['weight', 'bias', 'call_count']`
+      },
+      {
+        explain: `<b>A custom loss is just a function.</b> Build it from differentiable torch ops and it backpropagates with no extra code. Here we confirm a hand-rolled mean-squared error matches the built-in <code>nn.MSELoss</code> exactly — same reduction (mean over all elements).`,
+        code: `def my_mse(pred, target):\n    return ((pred - target) ** 2).mean()\n\npred   = torch.randn(8, 3)\ntarget = torch.randn(8, 3)\nprint(round(float(my_mse(pred, target)), 4))\nprint(round(float(nn.MSELoss()(pred, target)), 4))`,
+        output: `1.8945\n1.8945`
+      },
+      {
+        explain: `<b>A custom autograd Function: square, with a hand-written gradient.</b> Use this only when you must own the backward. <code>forward</code> saves its input with <code>ctx.save_for_backward</code>; <code>backward</code> reads it back and returns <code>grad_output * 2 * x</code> — the chain rule for $f(x)=x^2$. Call it via <code>.apply</code>, never <code>forward</code> directly.`,
+        code: `class Square(torch.autograd.Function):\n    @staticmethod\n    def forward(ctx, x):\n        ctx.save_for_backward(x)\n        return x * x\n    @staticmethod\n    def backward(ctx, grad_output):\n        (x,) = ctx.saved_tensors\n        return grad_output * 2 * x\n\nx = torch.tensor([3.0], requires_grad=True)\ny = Square.apply(x)\ny.backward()\nprint(x.grad)        # 2*x at x=3`,
+        output: `tensor([6.])`
+      },
+      {
+        explain: `<b>Verify the backward with <code>gradcheck</code>.</b> A hand-written gradient is just code, and code has bugs. <code>gradcheck</code> compares your analytic backward against a numerical finite-difference estimate. It needs the headroom of 64-bit floats, so make the input <code>float64</code> with <code>requires_grad=True</code>.`,
+        code: `gx = torch.randn(5, dtype=torch.float64, requires_grad=True)\nok = torch.autograd.gradcheck(Square.apply, (gx,), eps=1e-6, atol=1e-4)\nprint("gradcheck passed:", ok)`,
+        output: `gradcheck passed: True`
+      },
+      {
+        explain: `<b>Train the custom layer with the custom loss.</b> Because <code>weight</code> and <code>bias</code> are <code>nn.Parameter</code>s, <code>model.parameters()</code> feeds them to Adam and they update. Clear grads each step (<code>zero_grad</code>) — they accumulate by default — and the loss falls to near zero. The buffer has counted every forward call.`,
+        code: `torch.manual_seed(1)\nX = torch.randn(64, 4)\ntrue_W = torch.randn(3, 4); true_b = torch.randn(3)\nY = X @ true_W.t() + true_b\n\nmodel = MyLinear(4, 3)\nopt = torch.optim.Adam(model.parameters(), lr=0.1)\nfor step in range(200):\n    opt.zero_grad()\n    loss = my_mse(model(X), Y)\n    loss.backward(); opt.step()\n    if step % 50 == 0:\n        print(f"step {step:3d}  loss {loss.item():.4f}")\nprint("final loss:", round(my_mse(model(X), Y).item(), 5))\nprint("forward calls:", int(model.call_count.item()))`,
+        output: `step   0  loss 4.1273\nstep  50  loss 0.0061\nstep 100  loss 0.0000\nstep 150  loss 0.0000\nfinal loss: 0.0\nforward calls: 201`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each block against its note:</p>
+<ul>
+<li>The first block proves the registration rules: <code>weight</code> and <code>bias</code> appear in <code>named_parameters()</code> (the optimizer will train them), <code>call_count</code> appears only in <code>named_buffers()</code> (non-learnable), and <i>all three</i> appear in the <code>state_dict</code> (everything is checkpointed). Swap an <code>nn.Parameter</code> for a bare tensor and it silently drops out of the first list.</li>
+<li>The custom loss prints the <i>same</i> number as <code>nn.MSELoss</code> — your formula matches PyTorch's mean reduction.</li>
+<li><code>Square.apply</code> backprop gives <code>x.grad = tensor([6.])</code> at $x=3$, exactly $2x$ — the hand-written backward is correct.</li>
+<li><code>gradcheck</code> prints <code>True</code>. It only works on <code>float64</code> inputs (finite differences need 64-bit headroom); on <code>float32</code> it reports spurious mismatches.</li>
+<li>The training loss falls from ~4 to ~0, proving the <code>nn.Parameter</code> weights really are being optimized, and the buffer counted all 201 forward calls.</li>
+</ul>
+<p>If your numbers differ slightly, check the seeds (<code>torch.manual_seed(0)</code> for the layer/loss, <code>manual_seed(1)</code> for the training data).</p>`,
+
+    cheatsheet: [
+      { code: "class L(nn.Module): super().__init__()", note: "subclass for a reusable layer; <code>super().__init__()</code> FIRST" },
+      { code: "self.W = nn.Parameter(torch.randn(o, i))", note: "learnable weight — registers + sets <code>requires_grad=True</code>" },
+      { code: "self.register_buffer('m', tensor)", note: "non-learnable state; moves & saves, never trained" },
+      { code: "def my_loss(pred, y): return (...).mean()", note: "a loss is any differentiable scalar function" },
+      { code: "class F(torch.autograd.Function)", note: "own the gradient: hand-write <code>forward</code> + <code>backward</code>" },
+      { code: "ctx.save_for_backward(x) ... ctx.saved_tensors", note: "stash forward tensors that backward needs" },
+      { code: "return grad_output * local_deriv", note: "backward: one grad per input, by the chain rule" },
+      { code: "y = Fn.apply(x)", note: "call a custom Function via <code>.apply</code>, NOT <code>.forward</code>" },
+      { code: "torch.autograd.gradcheck(Fn.apply, (x,))", note: "verify backward; use <code>float64</code> + <code>requires_grad</code>" }
+    ],
+
+    deeper: `<p>The mechanism under these extension points is ordinary reverse-mode autodiff:</p>
+<ul>
+<li><a onclick="App.open('dl-backprop')">backpropagation</a> is the chain rule applied across the whole graph — exactly what your custom <code>backward</code> implements for one op;</li>
+<li><a onclick="App.open('pt-autograd')">autograd</a> is PyTorch's tape that records differentiable ops and replays them in reverse, which is why a custom <code>nn.Module</code> or loss needs no backward at all;</li>
+<li><a onclick="App.open('pt-nn-module')">nn.Module</a> is the container whose <code>parameters()</code> / <code>state_dict()</code> machinery your <code>nn.Parameter</code>s and buffers plug into.</li>
+</ul>
+<p>For a custom <code>Linear</code> the gradients autograd computes are $\\frac{\\partial \\mathcal{L}}{\\partial W} = (\\frac{\\partial \\mathcal{L}}{\\partial y})^{\\top} x$ and $\\frac{\\partial \\mathcal{L}}{\\partial x} = \\frac{\\partial \\mathcal{L}}{\\partial y}\\, W$ — you write only the forward and get these for free.</p>`,
 
     whenToUse:
       `<p>PyTorch ships hundreds of layers and losses. Most of the time you should just use the built-ins.

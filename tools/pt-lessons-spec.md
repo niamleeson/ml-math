@@ -1,3 +1,44 @@
+# NEW PAGE TEMPLATE (template: "pytorch") — the 9-section coding-course layout
+
+PyTorch lessons now render through `renderPyTorch()` in index.html (gated by `template: "pytorch"`),
+NOT the math-cheat-sheet layout. Gold standard: `lessons/concept-pt-tensors.js`. Each lesson sets
+`template: "pytorch"` and provides these fields (in addition to id/title/tagline/module/prereqs and the
+existing CODE/CODEVIZ/practice). The page renders strictly in this order:
+
+1. `objective`  (HTML) — 🎯 "What you'll be able to do": a `<ul>` of 3 concrete, checkable skills, then
+   a bold "The API you'll own:" line listing the key calls. Keep it to ~5 lines.
+2. `concept`    (HTML) — 🧠 "The concept": the plain-English explanation (the "bunch of reading"),
+   tied to the DL math via `dl-*` cross-links. 2–4 short paragraphs / lists. No code dumps.
+3. `apiTable`   (array) — 🧩 "The API, piece by piece": `[{ sig, does, snippet }]`, 6–10 rows. `sig` =
+   the call signature (plain text, escaped on render); `does` = one-line HTML description (may use
+   `<code>`); `snippet` = a tiny one/two-line usage example (plain text, escaped on render).
+4. `codeTour`   (array) — 📖 "Code walkthrough": `[{ explain, code, output }]`, 4–6 chunks that together
+   reproduce the lesson's canonical example. `explain` = HTML note opening with a bold lead-in; `code` =
+   the chunk's real PyTorch (plain text, newlines preserved, escaped on render); `output` = the exact
+   printed result (plain text). The chunks in order ARE the runnable program.
+5. `expected`   (HTML) — 🔎 "What you should see when you run it": a `<ul>` reading the printed output
+   back to the learner — what each line means and what it proves. Mention the GPU/seed caveats.
+6. (CODEVIZ chart auto-renders here.)
+7. `pitfalls`   (HTML) — ⚠️ "Gotchas & fixes": REUSE the lesson's existing `pitfalls` field (error → cause
+   → fix `<ul>`). Keep it.
+8. `practice`   (array) — ⌨️ the hands-on coding tasks (already authored; keep as-is).
+9. `cheatsheet` (array) — 🗒️ "Cheat-sheet": `[{ code, note }]`, 6–9 rows. `code` = the line worth
+   memorizing (plain text); `note` = a short reminder (HTML allowed).
+10. `deeper`    (HTML, optional) — 🔬 "Go deeper" (folded): links to the `dl-*`/`fnd-*` math lessons via
+    `<a onclick="App.open('id')">…</a>`; the theory, not restated.
+
+Authoring rules for the new fields:
+- `sig`, `snippet`, `code`, `output`, and cheatsheet `code` are rendered through `escapeHtml()`, so write
+  them as PLAIN text with REAL `<` and `>` (do NOT pre-escape) — and inside `code`/`snippet`/`output`
+  keep literal newlines. `does`, `explain`, `note`, `objective`, `concept`, `expected`, `deeper` are HTML
+  (use `<code>`, `<b>`, `<ul>`; escape a literal `<` before a letter as `&lt;`).
+- KEEP the existing `pitfalls` and `practice`. You may leave the old narrative fields (whenToUse,
+  application, bigIdea, buildup, derivation, example) in the file — they are ignored by the new template.
+- Numbers in `output` must be correct; seed with `torch.manual_seed(0)` where there's randomness.
+- Run `node --check lessons/concept-<id>.js`.
+
+---
+
 # Authoring a "PyTorch (a complete course)" lesson
 
 You write ONE self-contained file `lessons/concept-<id>.js` for one PyTorch topic. This module is

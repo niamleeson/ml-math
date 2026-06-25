@@ -11,7 +11,148 @@
     title: "Saving and loading models",
     tagline: "Save the state_dict (just the learned numbers), reload it into a fresh model, and call eval() — the safe, portable way.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-tensors", "pt-tensor-ops", "dl-dropout", "dl-batchnorm", "dl-optimizers"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>save just the learned numbers with <code>torch.save(model.state_dict(), path)</code> and reload them into a fresh model with <code>load_state_dict</code>;</li>
+<li>call <code>model.eval()</code> after loading so dropout and batch-norm behave for inference, and verify outputs match the original;</li>
+<li>write a full checkpoint (model + optimizer + epoch + loss) to resume training, and use <code>map_location</code>, <code>strict=False</code>, and <code>weights_only=True</code> on load.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>model.state_dict()</code>, <code>torch.save</code>, <code>torch.load</code>, <code>load_state_dict</code>, <code>model.eval()</code>, <code>map_location</code>, <code>strict=False</code>, <code>weights_only=True</code>.</p>`,
+
+    concept: `<p>A trained model is two things: <b>code</b> (the class that defines the layers) and <b>numbers</b> (the learned weights). Only the numbers are precious — the code already lives in your repository. So PyTorch's recommended save is just the numbers: <code>model.state_dict()</code>, a plain dictionary mapping each parameter name (like <code>"fc1.weight"</code>) to its tensor. To restore, you re-run your code to build a fresh, randomly-initialized model, then pour the saved numbers back in with <code>load_state_dict</code>.</p>
+<p>Separating numbers from code is what makes the file portable: it survives refactors, file moves, and machine changes, because it never depended on your code's location. Two layers build on top of that:</p>
+<ul>
+<li><b>Checkpoint to resume training.</b> A checkpoint is just a bigger dictionary — the model's <code>state_dict</code>, the optimizer's <code>state_dict</code> (so Adam's momentum survives), the current epoch, and the last loss — saved together so you pick up exactly where you stopped.</li>
+<li><b>Load for inference.</b> Rebuild the class, <code>load_state_dict</code>, then call <code>eval()</code> so dropout (see <a onclick="App.open('dl-dropout')">dl-dropout</a>) and batch-norm (see <a onclick="App.open('dl-batchnorm')">dl-batchnorm</a>) switch from training to inference behaviour, and wrap the forward in <code>torch.no_grad()</code>.</li>
+</ul>
+<p>The one rule to remember: <b>save the <code>state_dict</code></b>, not the whole model object — pickling the object stores the class by reference and breaks on any refactor.</p>`,
+
+    apiTable: [
+      { sig: "model.state_dict()", does: "An <code>OrderedDict</code> mapping each dotted parameter name (<code>fc1.weight</code>) and buffer to its tensor. The numbers, not the code.", snippet: "sd = model.state_dict()" },
+      { sig: "torch.save(obj, path)", does: "Pickle any object — a <code>state_dict</code> or a whole checkpoint dictionary — to a <code>.pt</code> file.", snippet: "torch.save(model.state_dict(), 'm.pt')" },
+      { sig: "torch.load(path, weights_only=True)", does: "Load a <code>.pt</code> file. <code>weights_only=True</code> refuses to unpickle code, for safety.", snippet: "sd = torch.load('m.pt', weights_only=True)" },
+      { sig: "model.load_state_dict(sd)", does: "Copy each saved tensor into the parameter with the same key, <i>by name</i>. Architecture must match.", snippet: "model.load_state_dict(sd)" },
+      { sig: "model.eval()", does: "Flip every submodule's <code>training</code> flag off: dropout stops zeroing, batch-norm uses stored stats. Do this after loading.", snippet: "model.eval()" },
+      { sig: "torch.load(path, map_location='cpu')", does: "Redirect every saved tensor to a device as it deserializes — load a GPU-trained file on a CPU box.", snippet: "torch.load('m.pt', map_location='cpu')" },
+      { sig: "load_state_dict(sd, strict=False)", does: "Copy only the keys that match; return the missing / unexpected key lists (partial / transfer load).", snippet: "model.load_state_dict(sd, strict=False)" },
+      { sig: "optimizer.state_dict() / load_state_dict", does: "Save and restore the optimizer's per-parameter running averages so a resumed run does not lurch.", snippet: "opt.load_state_dict(ckpt['optim'])" },
+      { sig: "with torch.no_grad():", does: "Disable autograd at inference — no graph is built, saving memory.", snippet: "with torch.no_grad(): out = model(x)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Train a tiny model, peek at its state_dict.</b> The model has a dropout layer (which behaves differently in train vs eval). After a few steps the <code>state_dict</code> is just the four named tensors — the numbers worth saving.`,
+        code: `import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(4, 8)
+        self.drop = nn.Dropout(0.5)
+        self.fc2 = nn.Linear(8, 1)
+    def forward(self, x):
+        return self.fc2(self.drop(torch.relu(self.fc1(x))))
+
+x = torch.randn(16, 4); y = torch.randn(16, 1)
+model = Net()
+opt   = torch.optim.Adam(model.parameters(), lr=0.05)
+lossf = nn.MSELoss()
+
+model.train()
+for epoch in range(20):
+    opt.zero_grad(); loss = lossf(model(x), y); loss.backward(); opt.step()
+print("state_dict keys:", list(model.state_dict().keys()))`,
+        output: `state_dict keys: ['fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias']`
+      },
+      {
+        explain: `<b>Save the numbers, reload into a fresh model.</b> <code>torch.save(model.state_dict(), ...)</code> writes just the tensors. Build a brand-new <code>Net()</code> (random weights), <code>load_state_dict</code> with <code>weights_only=True</code>, then call <code>eval()</code> — the famous must-do. With dropout off, the reloaded model is byte-for-byte identical to the original.`,
+        code: `torch.save(model.state_dict(), "m.pt")
+
+model.eval()
+with torch.no_grad():
+    out_original = model(x)
+
+reloaded = Net()                               # fresh random weights
+reloaded.load_state_dict(torch.load("m.pt", weights_only=True))
+reloaded.eval()                                # the famous must-do
+with torch.no_grad():
+    out_reloaded = reloaded(x)
+
+print("outputs match:", torch.allclose(out_original, out_reloaded))`,
+        output: `outputs match: True`
+      },
+      {
+        explain: `<b>Save a full checkpoint, then resume.</b> A checkpoint bundles the model state, the optimizer state (so Adam's momentum survives), the epoch, and the loss into one dictionary. To resume, push each piece back into fresh objects and set <code>start_epoch = ckpt['epoch'] + 1</code>.`,
+        code: `torch.save({
+    "epoch": epoch,
+    "model": model.state_dict(),
+    "optim": opt.state_dict(),
+    "loss":  loss.item(),
+}, "ckpt.pt")
+
+ckpt = torch.load("ckpt.pt", weights_only=True)
+model2 = Net(); opt2 = torch.optim.Adam(model2.parameters(), lr=0.05)
+model2.load_state_dict(ckpt["model"])
+opt2.load_state_dict(ckpt["optim"])
+start_epoch = ckpt["epoch"] + 1
+print(f"resuming from epoch {start_epoch}, last loss {ckpt['loss']:.4f}")`,
+        output: `resuming from epoch 20, last loss 0.8743`
+      },
+      {
+        explain: `<b>Keep training from the checkpoint.</b> Switch back to <code>model2.train()</code> and run more steps. Because the optimizer state was restored, Adam's running averages stay warm and the resumed steps continue smoothly instead of lurching.`,
+        code: `model2.train()
+for epoch in range(start_epoch, start_epoch + 5):
+    opt2.zero_grad()
+    loss = lossf(model2(x), y)
+    loss.backward()
+    opt2.step()
+print("loss after resume:", round(loss.item(), 4))`,
+        output: `loss after resume: 0.8011`
+      },
+      {
+        explain: `<b>Load onto the CPU with map_location.</b> A GPU-trained file saves tensors tagged <code>cuda</code>; loading on a CPU-only box errors unless you remap. <code>map_location="cpu"</code> redirects every tensor to the CPU as it deserializes, before any absent GPU is touched.`,
+        code: `cpu_model = Net()
+cpu_model.load_state_dict(
+    torch.load("m.pt", map_location="cpu", weights_only=True)
+)
+cpu_model.eval()
+print("loaded onto:", next(cpu_model.parameters()).device)`,
+        output: `loaded onto: cpu`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab:</p>
+<ul>
+<li>The first print lists exactly four keys — <code>fc1.weight</code>, <code>fc1.bias</code>, <code>fc2.weight</code>, <code>fc2.bias</code> — the named tensors a <code>state_dict</code> stores (note: no dropout, because dropout has no learned parameters).</li>
+<li><code>outputs match: True</code> is the whole point: reload the same numbers and call <code>eval()</code>, and the model is identical. Skip the <code>eval()</code> and dropout would randomly zero units, so the two would disagree.</li>
+<li>The resume line reports epoch <code>20</code> (the loop saved at epoch 19; resume is the next one) and the last loss — proof the checkpoint round-tripped.</li>
+<li>The final <code>cpu</code> confirms <code>map_location</code> landed the weights on the CPU even from a (simulated) GPU file.</li>
+</ul>
+<p>Exact loss values assume <code>torch.manual_seed(0)</code>; the <code>True</code> and the device string do not depend on the seed. <code>weights_only=True</code> is the safe default in recent PyTorch.</p>`,
+
+    cheatsheet: [
+      { code: "torch.save(model.state_dict(), 'm.pt')", note: "save the NUMBERS, not the model object" },
+      { code: "model.load_state_dict(torch.load('m.pt', weights_only=True))", note: "rebuild class first, then pour numbers in" },
+      { code: "model.eval()", note: "after loading! dropout/batch-norm -> inference mode" },
+      { code: "with torch.no_grad(): out = model(x)", note: "inference: no graph, less memory" },
+      { code: "torch.load('m.pt', map_location='cpu')", note: "load a GPU-trained file on a CPU box" },
+      { code: "model.load_state_dict(sd, strict=False)", note: "partial/transfer load; returns missing/unexpected keys" },
+      { code: "ckpt = {'epoch':e, 'model':m.state_dict(), 'optim':opt.state_dict(), 'loss':loss.item()}", note: "checkpoint = bigger dict; keep optimizer state for clean resume" },
+      { code: "start_epoch = ckpt['epoch'] + 1; model.train()", note: "resume at the next epoch, in training mode" }
+    ],
+
+    deeper: `<p>The save/load mechanics rest on behaviour you can study deeper:</p>
+<ul>
+<li>why <code>eval()</code> changes the answer — what dropout actually does at train vs inference: <a onclick="App.open('dl-dropout')">dl-dropout</a>;</li>
+<li>batch-norm's stored running statistics that <code>eval()</code> switches to: <a onclick="App.open('dl-batchnorm')">dl-batchnorm</a>;</li>
+<li>why the optimizer carries per-parameter state worth checkpointing: <a onclick="App.open('dl-optimizers')">dl-optimizers</a>.</li>
+</ul>`,
 
     whenToUse:
       `<p>Every project, in three situations:</p>

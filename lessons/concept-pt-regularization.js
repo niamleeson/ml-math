@@ -4,7 +4,95 @@
     title: "Regularization in PyTorch: fighting overfitting",
     tagline: "Dropout, batch norm, weight decay, early stopping, and grad clipping — the tools that keep a PyTorch model from memorizing the training set.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["ml-regularization", "dl-dropout", "dl-batchnorm", "dl-early-stopping", "dl-optimizers", "pt-autograd"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>drop the four in-model / in-optimizer regularizers into a network &mdash; <code>nn.Dropout</code>, <code>nn.BatchNorm1d</code>, and decoupled weight decay via <code>AdamW</code> &mdash; and explain what each one limits;</li>
+<li>flip <code>model.train()</code> / <code>model.eval()</code> correctly so dropout and batch norm behave right in each phase (the #1 regularization bug);</li>
+<li>hand-code the training-loop regularizers: early stopping that snapshots and restores the <i>best</i> <code>state_dict</code>, and gradient clipping with <code>clip_grad_norm_</code>.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.Dropout(p)</code>, <code>nn.BatchNorm1d/2d</code>, <code>optim.AdamW(..., weight_decay=)</code>, <code>model.train()/eval()</code>, <code>torch.no_grad()</code>, <code>nn.utils.clip_grad_norm_</code>, <code>copy.deepcopy(model.state_dict())</code>.</p>`,
+
+    concept: `<p><b>Overfitting</b> is when training accuracy is much higher than validation accuracy: the model has memorized the training data (including its noise) instead of learning the pattern that generalizes. Modern networks have far more parameters than you have data, so left alone they will overfit &mdash; which makes regularization a part of <i>almost every</i> real model. The math of <i>why</i> these techniques work lives in the concept lessons <code>ml-regularization</code> (the bias/variance trade-off and the L2 penalty), <code>dl-dropout</code>, <code>dl-batchnorm</code>, and <code>dl-early-stopping</code>; this lesson is the <i>how</i>.</p>
+<p>Every technique here is a different way to <b>limit effective capacity</b> or <b>add training variety</b> so memorizing is harder than learning the real signal:</p>
+<ul>
+<li><b>Dropout</b> randomly zeros some activations each step so no single unit can be relied on (<code>nn.Dropout(p)</code>).</li>
+<li><b>Batch normalization</b> standardizes each layer's inputs and acts as a mild regularizer (<code>nn.BatchNorm1d/2d</code>).</li>
+<li><b>Weight decay / L2</b> gently shrinks every weight toward zero each step, keeping the function smooth (<code>weight_decay=</code> on the optimizer).</li>
+<li><b>Early stopping</b> halts training when validation loss stops improving and restores the best weights (see <code>dl-early-stopping</code>).</li>
+<li><b>Gradient clipping</b> caps the gradient size so a few huge updates cannot blow up training (<code>clip_grad_norm_</code>).</li>
+</ul>
+<p>PyTorch wires these in at three places: <b>in the model</b> (Dropout / BatchNorm layers, controlled by the module's mode), <b>in the optimizer</b> (<code>weight_decay</code>, applied during <code>step()</code>), and <b>in the training loop</b> (early stopping and gradient clipping, which you code by hand). The two layer-based tools are <b>mode-dependent</b>: they do one thing in <code>train()</code> and a different thing in <code>eval()</code> &mdash; that single fact is the source of most regularization bugs.</p>`,
+
+    apiTable: [
+      { sig: "nn.Dropout(p)", does: "A layer that, in <b>train</b> mode, zeros each activation with probability <code>p</code> and rescales survivors by <code>1/(1-p)</code>; in <b>eval</b> mode it is a pass-through (identity).", snippet: "drop = nn.Dropout(0.5)\ndrop(x)   # train: ~half zeroed; eval: x unchanged" },
+      { sig: "nn.BatchNorm1d(num_features)", does: "Normalizes each feature across the batch. <b>Train:</b> uses this batch's stats and updates running averages; <b>eval:</b> uses the stored running mean/variance.", snippet: "bn = nn.BatchNorm1d(64)\nbn(x)   # needs batch_size > 1 in train mode" },
+      { sig: "model.train() / model.eval()", does: "Flip the module's mode. <code>train()</code> turns dropout on and batch norm onto batch stats; <code>eval()</code> makes dropout a no-op and batch norm use running stats.", snippet: "model.train()   # before training\nmodel.eval()    # before validation / inference" },
+      { sig: "torch.optim.AdamW(params, weight_decay=)", does: "Adam with <b>decoupled</b> weight decay &mdash; the correct way to do L2 with Adam (plain <code>Adam(weight_decay=)</code> distorts it).", snippet: "optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)" },
+      { sig: "nn.utils.clip_grad_norm_(params, max_norm)", does: "Rescales all gradients so their combined L2 norm is at most <code>max_norm</code>. Call it between <code>backward()</code> and <code>step()</code>.", snippet: "loss.backward()\nnn.utils.clip_grad_norm_(model.parameters(), 1.0)\nopt.step()" },
+      { sig: "torch.no_grad()", does: "Context manager that skips autograd bookkeeping &mdash; use it around validation / inference to save memory and time.", snippet: "model.eval()\nwith torch.no_grad():\n    val = loss_fn(model(Xva), yva)" },
+      { sig: "copy.deepcopy(model.state_dict())", does: "Snapshot the model's weights so early stopping can <b>restore the best epoch</b>, not the last one.", snippet: "best_state = copy.deepcopy(model.state_dict())\nmodel.load_state_dict(best_state)" },
+      { sig: "nn.CrossEntropyLoss()", does: "Classification loss for the regularized classifier; wants <b>raw logits</b> (no softmax) and <code>long</code> class indices.", snippet: "loss = nn.CrossEntropyLoss()(logits, y)   # y is long, shape (N,)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Set the seed and build a problem that's easy to overfit.</b> A handful of training samples with mostly noise features is the cleanest way to make overfitting (and the cure) visible. Only two of the <code>D</code> features actually drive the label; the rest is noise a high-capacity model will happily memorize.`,
+        code: `import copy\nimport torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\n\nN_TRAIN, N_VAL, D = 64, 400, 200\ndef make(n):\n    X = torch.randn(n, D)\n    logits = 1.5 * X[:, 0] - 1.2 * X[:, 1]   # only 2 features matter; rest is noise\n    y = (torch.rand(n) < torch.sigmoid(logits)).long()\n    return X, y\nXtr, ytr = make(N_TRAIN)\nXva, yva = make(N_VAL)\nprint(Xtr.shape, ytr.shape)`,
+        output: `torch.Size([64, 200]) torch.Size([64])`
+      },
+      {
+        explain: `<b>Put the regularizers INSIDE the model.</b> <code>BatchNorm1d</code> and <code>Dropout</code> are layers you place in the network; both are mode-dependent. The final <code>Linear</code> emits 2 raw logits &mdash; <code>CrossEntropyLoss</code> wants logits, not probabilities.`,
+        code: `model = nn.Sequential(\n    nn.Linear(D, 64),\n    nn.BatchNorm1d(64),   # train: batch stats; eval: running stats\n    nn.ReLU(),\n    nn.Dropout(0.5),      # train: drops 50%; eval: pass-through\n    nn.Linear(64, 2),\n)\nprint([type(m).__name__ for m in model])`,
+        output: `['Linear', 'BatchNorm1d', 'ReLU', 'Dropout', 'Linear']`
+      },
+      {
+        explain: `<b>Pick the loss and a DECOUPLED-weight-decay optimizer.</b> <code>AdamW</code> subtracts a plain fraction of each weight after the Adam step &mdash; the correct form of L2 with Adam. That's the third regularizer (after batch norm and dropout) and it lives in the optimizer, not the model.`,
+        code: `loss_fn = nn.CrossEntropyLoss()\noptimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)\nprint(optimizer.__class__.__name__,\n      optimizer.param_groups[0]['weight_decay'])`,
+        output: `AdamW 0.01`
+      },
+      {
+        explain: `<b>The training loop with the two by-hand regularizers.</b> Each epoch: <code>model.train()</code> &rarr; <code>zero_grad()</code> &rarr; <code>backward()</code> &rarr; <b>clip the gradient norm</b> &rarr; <code>step()</code>. Then <code>model.eval()</code> under <code>torch.no_grad()</code> to score validation. Early stopping snapshots the <i>best</i> <code>state_dict</code> and breaks once validation hasn't improved for <code>patience</code> epochs.`,
+        code: `best_val = float("inf")\nbest_state = copy.deepcopy(model.state_dict())\npatience, since_best = 15, 0\n\nfor epoch in range(200):\n    model.train()                       # dropout ON, batchnorm uses batch stats\n    optimizer.zero_grad()               # grads accumulate -> always zero first\n    loss = loss_fn(model(Xtr), ytr)\n    loss.backward()\n    nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)\n    optimizer.step()\n\n    model.eval()                        # dropout OFF, batchnorm uses running stats\n    with torch.no_grad():\n        val_loss = loss_fn(model(Xva), yva).item()\n\n    if val_loss < best_val - 1e-4:\n        best_val = val_loss\n        best_state = copy.deepcopy(model.state_dict())   # new best -> snapshot\n        since_best = 0\n    else:\n        since_best += 1\n        if since_best >= patience:\n            print(f"early stop at epoch {epoch} (best val loss {best_val:.4f})")\n            break`,
+        output: `early stop at epoch 41 (best val loss 0.6487)`
+      },
+      {
+        explain: `<b>Restore the best weights before you use the model.</b> The weights from the final epoch are <i>worse</i> than the best ones &mdash; that's exactly why early stopping kept a snapshot. Load it back, switch to <code>eval()</code>, and score under <code>torch.no_grad()</code>.`,
+        code: `model.load_state_dict(best_state)       # RESTORE the best weights\nmodel.eval()\nwith torch.no_grad():\n    val_acc = (model(Xva).argmax(1) == yva).float().mean().item()\nprint(f"restored best val loss = {best_val:.4f} | val accuracy = {val_acc:.3f}")`,
+        output: `restored best val loss = 0.6487 | val accuracy = 0.628`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The data block prints <code>torch.Size([64, 200]) torch.Size([64])</code> &mdash; 64 training rows in a 200-dimensional space, deliberately few samples per feature so the model <i>can</i> overfit.</li>
+<li>The layer list confirms the three in-network pieces are wired in order: <code>BatchNorm1d</code> then <code>ReLU</code> then <code>Dropout</code> between the two linears.</li>
+<li>The optimizer line reads <code>AdamW 0.01</code> &mdash; decoupled weight decay is active; that is the L2 regularizer.</li>
+<li>The loop ends with an <code>early stop at epoch ...</code> line: validation loss stopped improving for <code>patience</code> epochs, so training halted instead of running all 200.</li>
+<li>The final line restores the best snapshot and reports its validation loss and accuracy &mdash; proof you kept the <i>best</i> epoch's weights, not the last one's.</li>
+</ul>
+<p>Because dropout and batch norm are mode-dependent, the same input gives different outputs in <code>train()</code> vs <code>eval()</code>; always call <code>model.eval()</code> before scoring. Exact loss/accuracy numbers shift slightly with PyTorch version and hardware &mdash; the seed (<code>torch.manual_seed(0)</code>) keeps a single run reproducible, and on a GPU runtime the math runs the same but the device line would read <code>cuda:0</code>.</p>`,
+
+    cheatsheet: [
+      { code: "self.drop = nn.Dropout(0.5)", note: "drop layer; train zeros ~half, eval passes through" },
+      { code: "self.bn = nn.BatchNorm1d(64)", note: "normalize features; needs batch_size > 1 in train" },
+      { code: "model.train()  /  model.eval()", note: "the mode switch dropout & batchnorm depend on" },
+      { code: "optim.AdamW(p, lr=1e-3, weight_decay=1e-2)", note: "decoupled L2 — prefer over Adam(weight_decay=)" },
+      { code: "with torch.no_grad(): ...", note: "wrap validation / inference — skips grad bookkeeping" },
+      { code: "nn.utils.clip_grad_norm_(p, 1.0)", note: "between backward() and step(); caps exploding grads" },
+      { code: "best = copy.deepcopy(model.state_dict())", note: "snapshot best epoch for early stopping" },
+      { code: "model.load_state_dict(best)", note: "restore the BEST weights, not the last ones" }
+    ],
+
+    deeper: `<p>This lesson is the <i>how</i>; the <i>why</i> is in the math concept lessons:</p>
+<ul>
+<li><a onclick="App.open('ml-regularization')">ml-regularization</a> &mdash; the bias/variance trade-off and why the L2 penalty (weight decay) makes a smaller-weight model generalize better.</li>
+<li><a onclick="App.open('dl-dropout')">dl-dropout</a> &mdash; why randomly zeroing activations prevents co-adaptation, and the <code>1/(1-p)</code> rescaling.</li>
+<li><a onclick="App.open('dl-batchnorm')">dl-batchnorm</a> &mdash; how standardizing each layer's inputs (and the running statistics) stabilizes and regularizes training.</li>
+<li><a onclick="App.open('dl-early-stopping')">dl-early-stopping</a> &mdash; why stopping at the lowest validation loss trades a few epochs for the best-generalizing model.</li>
+</ul>`,
     whenToUse:
       `<p><b>Reach for regularization whenever training accuracy is much higher than validation accuracy.</b> That gap <i>is</i> overfitting: the model has memorized the training data (including its noise) instead of learning the pattern that generalizes. In practice this is <b>almost every real model</b> — modern networks have far more parameters than you have data, so left alone they will overfit.</p>
        <p>The math of <i>why</i> these techniques work lives in the concept lessons — <code>ml-regularization</code> (the bias/variance trade-off and L2 penalty), <code>dl-dropout</code>, <code>dl-batchnorm</code>, and <code>dl-early-stopping</code>. This lesson is about <b>how</b>: the exact PyTorch lines, and the one mode switch that trips up everybody.</p>

@@ -13,7 +13,137 @@
     title: "Transfer learning with torchvision.models",
     tagline: "Start from a model pretrained on millions of images, then teach it your task with very little data.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-tensors", "pt-tensor-ops", "dl-optimizers", "fs-transfer-learning", "fe-deep-learning-features"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>load a <code>resnet18</code> pretrained on ImageNet and grab the exact preprocessing the weights expect with <code>weights.transforms()</code>;</li>
+<li>freeze the backbone with <code>requires_grad = False</code> and swap <code>model.fc</code> for a new <code>nn.Linear</code> sized to your classes;</li>
+<li>hand the optimizer <b>only</b> the head's parameters, train in feature-extraction mode, then switch to full fine-tuning at a small learning rate.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>resnet18(weights=ResNet18_Weights.DEFAULT)</code>, <code>weights.transforms()</code>, <code>param.requires_grad = False</code>, <code>model.fc = nn.Linear(in, n)</code>, <code>optim.Adam(model.fc.parameters(), ...)</code>, <code>model.eval()</code> / <code>model.train()</code>.</p>`,
+
+    concept: `<p>A deep image network learns its features in layers: early layers detect edges and colours, middle layers detect textures and parts, late layers detect whole objects. The early and middle features are <b>generic</b> — useful for almost any image task. <b>Transfer learning</b> keeps those learned layers (the <b>backbone</b>) and only replaces the last layer (the <b>head</b>) that maps features to your specific classes. For images this is the <i>default</i>: training from scratch is the exception.</p>
+<p>There are two modes, on a spectrum from "reuse everything" to "adapt everything":</p>
+<ul>
+<li><b>Feature extraction.</b> Freeze the entire backbone, replace the final layer with a fresh <code>nn.Linear</code> sized to your classes, and train <b>only the head</b>. The backbone is a fixed feature extractor. Fast, label-efficient, the right first try on small data.</li>
+<li><b>Fine-tuning.</b> Unfreeze some or all of the backbone and train it too, but with a <b>small learning rate</b> so the good pretrained weights only adjust gently. More capacity, needs more data and care — often a second phase after training the head.</li>
+</ul>
+<p>Two practical pieces tie it together: use <code>weights.transforms()</code> so inputs match what the model expects, and give the optimizer <b>only the parameters you intend to train</b>. The theory of why reused representations transfer is <a onclick="App.open('fs-transfer-learning')">fs-transfer-learning</a> and <a onclick="App.open('fe-deep-learning-features')">fe-deep-learning-features</a>; this lesson is the HOW in PyTorch.</p>`,
+
+    apiTable: [
+      { sig: "resnet18(weights=ResNet18_Weights.DEFAULT)", does: "Downloads the architecture <i>and</i> ImageNet-trained weights. <code>DEFAULT</code> picks the best available set.", snippet: "model = resnet18(weights=ResNet18_Weights.DEFAULT)" },
+      { sig: "weights.transforms()", does: "Returns the exact resize / center-crop / normalize pipeline the weights expect. Use it on every input.", snippet: "preprocess = ResNet18_Weights.DEFAULT.transforms()" },
+      { sig: "for p in model.parameters(): p.requires_grad = False", does: "Freezes the backbone — autograd stops computing or storing gradients for those tensors.", snippet: "for p in model.parameters(): p.requires_grad = False" },
+      { sig: "model.fc.in_features", does: "The input size of the final layer (512 for resnet18), so you can size a new head.", snippet: "in_features = model.fc.in_features   # 512" },
+      { sig: "model.fc = nn.Linear(in_features, num_classes)", does: "Swaps the 1000-way ImageNet head for a fresh layer sized to your classes (created with <code>requires_grad=True</code>).", snippet: "model.fc = nn.Linear(in_features, 5)" },
+      { sig: "optim.Adam(model.fc.parameters(), lr)", does: "Optimizer over <b>only</b> the head — not <code>model.parameters()</code>. Avoids wasting work on frozen tensors.", snippet: "optim.Adam(model.fc.parameters(), lr=1e-3)" },
+      { sig: "model.eval() / model.fc.train()", does: "Frozen backbone in <code>eval()</code> so batch-norm uses stored stats; head in <code>train()</code> so it learns.", snippet: "model.eval(); model.fc.train()" },
+      { sig: "named_parameters()", does: "Iterate <code>(name, param)</code> pairs to confirm which tensors still require grad.", snippet: "[n for n, p in model.named_parameters() if p.requires_grad]" },
+      { sig: "optim.Adam(model.parameters(), lr=1e-4)", does: "Fine-tuning phase: unfreeze all, rebuild the optimizer over everything, use a <b>small</b> learning rate.", snippet: "optim.Adam(model.parameters(), lr=1e-4)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Load a pretrained model and its transforms.</b> <code>ResNet18_Weights.DEFAULT</code> downloads the architecture plus ImageNet weights. The <code>weights</code> object also carries <code>transforms()</code> — the exact preprocessing the model was trained on. Feed inputs any other way and accuracy collapses.`,
+        code: `import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision.models import resnet18, ResNet18_Weights
+
+torch.manual_seed(0)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+NUM_CLASSES = 5
+
+weights = ResNet18_Weights.DEFAULT
+model = resnet18(weights=weights)
+preprocess = weights.transforms()
+print(model.fc)`,
+        output: `Linear(in_features=512, out_features=1000, bias=True)`
+      },
+      {
+        explain: `<b>Freeze the backbone, swap the head.</b> Setting <code>requires_grad = False</code> on every parameter makes autograd treat them as constants. Reading <code>model.fc.in_features</code> (512) lets you build a fresh <code>nn.Linear</code> sized to your classes — created with <code>requires_grad=True</code> by default, so only it will train.`,
+        code: `for param in model.parameters():
+    param.requires_grad = False              # feature-extraction mode
+
+in_features = model.fc.in_features           # 512
+model.fc = nn.Linear(in_features, NUM_CLASSES)
+model = model.to(device)
+
+trainable = [n for n, p in model.named_parameters() if p.requires_grad]
+print("trainable parameters:", trainable)`,
+        output: `trainable parameters: ['fc.weight', 'fc.bias']`
+      },
+      {
+        explain: `<b>Optimizer sees only the head.</b> Pass <code>model.fc.parameters()</code>, not <code>model.parameters()</code> — handing it the frozen backbone wastes bookkeeping on gradient-less tensors. <code>CrossEntropyLoss</code> expects raw logits and integer class indices, no softmax.`,
+        code: `optimizer = optim.Adam(model.fc.parameters(), lr=1e-3)   # NOT model.parameters()
+criterion = nn.CrossEntropyLoss()
+print("params the optimizer manages:",
+      len(optimizer.param_groups[0]['params']))`,
+        output: `params the optimizer manages: 2`
+      },
+      {
+        explain: `<b>Train the head.</b> A tiny synthetic batch (resnet18 wants <code>3x224x224</code> inputs) stands in for a real <code>ImageFolder</code> + <code>DataLoader</code>. Put the backbone in <code>eval()</code> so its batch-norm uses stored stats, but the head in <code>train()</code>. The standard loop: <code>zero_grad</code>, forward, <code>backward</code> (grads flow only into the head), <code>step</code>.`,
+        code: `x = torch.randn(16, 3, 224, 224, device=device)
+y = torch.randint(0, NUM_CLASSES, (16,), device=device)
+
+model.eval()        # frozen backbone -> stored batch-norm stats
+model.fc.train()    # head is training
+for epoch in range(5):
+    optimizer.zero_grad()
+    logits = model(x)
+    loss = criterion(logits, y)
+    loss.backward()
+    optimizer.step()
+    print(f"epoch {epoch}: loss = {loss.item():.4f}")`,
+        output: `epoch 0: loss = 1.7234
+epoch 1: loss = 1.4892
+epoch 2: loss = 1.2961
+epoch 3: loss = 1.1377
+epoch 4: loss = 1.0044`
+      },
+      {
+        explain: `<b>Phase two: full fine-tuning.</b> Unfreeze everything, rebuild the optimizer over <code>model.parameters()</code> with a <b>small</b> learning rate (<code>1e-4</code>), and switch to <code>model.train()</code>. A large rate like <code>1e-2</code> here would take big steps and wreck the good ImageNet features.`,
+        code: `for param in model.parameters():
+    param.requires_grad = True
+optimizer = optim.Adam(model.parameters(), lr=1e-4)   # small lr for fine-tuning
+model.train()
+optimizer.zero_grad()
+loss = criterion(model(x), y)
+loss.backward()
+optimizer.step()
+print("after one fine-tune step:", round(loss.item(), 4))`,
+        output: `after one fine-tune step: 0.9043`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab:</p>
+<ul>
+<li>The first print is the ImageNet head, <code>Linear(in_features=512, out_features=1000)</code> — 512 features in, 1000 classes out — exactly what you replace.</li>
+<li>After freezing and swapping, <code>trainable parameters</code> is just <code>['fc.weight', 'fc.bias']</code>: the whole backbone is frozen, only the new head trains. The optimizer correspondingly manages just <code>2</code> tensors.</li>
+<li>The head-only loss falls from ~1.72 (near ln(5) ≈ 1.61, a random 5-way guess) toward ~1.00, proof the head is learning even though the backbone is frozen.</li>
+<li>The fine-tune step prints one more small loss — the whole network now adapting gently at <code>lr=1e-4</code>.</li>
+</ul>
+<p>Exact numbers assume <code>torch.manual_seed(0)</code> and the synthetic batch; on real data and a GPU the values differ but the <i>shape</i> (loss falling from ~ln(num_classes)) is what matters. The first run downloads the pretrained weights, so expect a short pause.</p>`,
+
+    cheatsheet: [
+      { code: "model = resnet18(weights=ResNet18_Weights.DEFAULT)", note: "architecture + best ImageNet weights" },
+      { code: "preprocess = weights.transforms()", note: "exact resize/crop/normalize the weights expect" },
+      { code: "for p in model.parameters(): p.requires_grad = False", note: "freeze the backbone (feature extraction)" },
+      { code: "model.fc = nn.Linear(model.fc.in_features, num_classes)", note: "swap head; new layer trains by default" },
+      { code: "optim.Adam(model.fc.parameters(), lr=1e-3)", note: "optimizer over the HEAD only, not model.parameters()" },
+      { code: "model.eval(); model.fc.train()", note: "frozen backbone uses stored batch-norm stats" },
+      { code: "for p in model.parameters(): p.requires_grad = True", note: "unfreeze for fine-tuning phase two" },
+      { code: "optim.Adam(model.parameters(), lr=1e-4)", note: "SMALL lr when fine-tuning the backbone" }
+    ],
+
+    deeper: `<p>This lesson is the PyTorch HOW. The theory behind it:</p>
+<ul>
+<li>why reusing learned representations across tasks works: <a onclick="App.open('fs-transfer-learning')">fs-transfer-learning</a>;</li>
+<li>why a deep network's inner layers make such good general features: <a onclick="App.open('fe-deep-learning-features')">fe-deep-learning-features</a>;</li>
+<li>the gradient-descent update the head (and later the backbone) is trained with: <a onclick="App.open('dl-optimizers')">dl-optimizers</a>.</li>
+</ul>`,
     whenToUse: `<p>Reach for transfer learning whenever a good pretrained model already exists for your kind of data — which, for images, is almost always.</p>
 <ul>
 <li><b>Small labeled datasets.</b> You have hundreds or a few thousand labeled examples, not millions. Training a deep network from random weights would overfit; a pretrained one already knows edges, textures, and shapes.</li>

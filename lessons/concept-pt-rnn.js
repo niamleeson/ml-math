@@ -8,7 +8,147 @@
     title: "Sequence models: nn.RNN, nn.LSTM, nn.GRU",
     tagline: "PyTorch modules that read an ordered sequence one step at a time and carry a hidden state forward.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["pt-tensors", "dl-rnn", "dl-lstm-gru"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>build an <code>nn.RNN</code> / <code>nn.LSTM</code> / <code>nn.GRU</code> with <code>batch_first=True</code> and feed it a <code>(batch, seq_len, features)</code> tensor;</li>
+<li>read the two returns — <code>output</code> (every step) and <code>h_n</code> (last step) — and pick the right one for per-sequence vs per-step prediction;</li>
+<li>wire an <code>nn.Embedding</code> in front for token ids, handle variable-length batches with packing, and train a tiny sequence classifier end to end.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>nn.LSTM</code> / <code>nn.GRU</code> / <code>nn.RNN</code>, <code>batch_first=True</code>, <code>h_n[-1]</code>, <code>nn.Embedding</code>, <code>pack_padded_sequence</code> / <code>pad_packed_sequence</code>, <code>nn.utils.clip_grad_norm_</code>.</p>`,
+
+    concept: `<p>A <b>recurrent module</b> reads an ordered sequence one step at a time and carries a <b>hidden state</b> forward — a vector that summarizes everything seen so far. At each step it combines the new input with the old hidden state to make a new hidden state. PyTorch runs that loop over the whole sequence in one call; you hand it the data and read off the results. Reach for one when order carries meaning: a time series, a sentence of tokens, a stream of sensor readings, audio frames.</p>
+<p>All three modules share the same shape and call signature and differ only inside one step:</p>
+<ul>
+<li><b><code>nn.RNN</code></b> — the plain version, one <code>tanh</code> update. Its memory decays fast (the vanishing-gradient story from <a onclick="App.open('dl-rnn')">dl-rnn</a>).</li>
+<li><b><code>nn.LSTM</code></b> — adds gates and a separate <b>cell state</b> that acts like a conveyor belt for information, so it remembers over long spans (see <a onclick="App.open('dl-lstm-gru')">dl-lstm-gru</a>). It returns an extra cell state.</li>
+<li><b><code>nn.GRU</code></b> — a lighter gated version: fewer gates, no separate cell state, often as good as the LSTM and a bit faster.</li>
+</ul>
+<p>In practice you almost always reach for <code>nn.LSTM</code> or <code>nn.GRU</code> rather than plain <code>nn.RNN</code>. Transformers have largely replaced RNNs at large scale, but recurrent cells are still useful for small data, streaming, and low latency — and they are the clearest way to learn how sequence models hold state.</p>`,
+
+    apiTable: [
+      { sig: "nn.RNN(input_size, hidden_size, batch_first=True)", does: "Plain recurrent layer: one <code>tanh</code> update per step. Returns <code>output, h_n</code>.", snippet: "rnn = nn.RNN(3, 5, batch_first=True)" },
+      { sig: "nn.LSTM(input_size, hidden_size, batch_first=True)", does: "Gated cell with a separate cell state; remembers over long spans. Returns <code>output, (h_n, c_n)</code>.", snippet: "lstm = nn.LSTM(3, 8, batch_first=True)" },
+      { sig: "nn.GRU(input_size, hidden_size, batch_first=True)", does: "Lighter gated cell, no cell state. Returns <code>output, h_n</code> like RNN.", snippet: "gru = nn.GRU(4, 6, batch_first=True)" },
+      { sig: "output, h_n = rnn(x)", does: "<code>output</code> is <code>(batch, seq, hidden)</code> — every step; <code>h_n</code> is <code>(num_layers, batch, hidden)</code> — last step.", snippet: "output, h_n = rnn(x)   # x: (B, T, F)" },
+      { sig: "h_n[-1]", does: "The top layer's final hidden state, shape <code>(batch, hidden)</code> — the per-sequence summary for a classifier head.", snippet: "last = h_n[-1]          # (B, hidden)" },
+      { sig: "nn.Embedding(num_embeddings, embedding_dim)", does: "Lookup table turning <code>(batch, seq)</code> integer ids into <code>(batch, seq, dim)</code> dense vectors.", snippet: "emb = nn.Embedding(10, 4); emb(ids)" },
+      { sig: "pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)", does: "Tells the module each sequence's true length so it skips padding and <code>h_n</code> reflects the real end.", snippet: "packed = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)" },
+      { sig: "pad_packed_sequence(out_packed, batch_first=True)", does: "Restores the rectangular <code>(batch, seq, hidden)</code> shape after the recurrent layer.", snippet: "out, lens = pad_packed_sequence(out_packed, batch_first=True)" },
+      { sig: "nn.utils.clip_grad_norm_(params, max_norm)", does: "Clips exploding gradients through time; call it before <code>optimizer.step()</code>.", snippet: "nn.utils.clip_grad_norm_(model.parameters(), 1.0)" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>A synthetic sequence task.</b> Each sample is a length-12 sequence of one feature: "up" sequences rise on average, "down" ones fall, plus noise. The model must say which. Building the batch with <code>unsqueeze(-1)</code> gives the <code>(batch, seq_len, features)</code> layout that <code>batch_first=True</code> expects.`,
+        code: `import torch
+import torch.nn as nn
+
+torch.manual_seed(0)
+
+N, SEQ_LEN, FEAT = 600, 12, 1
+HIDDEN, N_CLASSES = 16, 2
+
+def make_batch(n):
+    y = torch.randint(0, 2, (n,))            # 0 = down, 1 = up
+    slope = torch.where(y == 1, 0.3, -0.3)
+    t = torch.arange(SEQ_LEN).float()
+    base = slope[:, None] * t[None, :]
+    noise = 0.5 * torch.randn(n, SEQ_LEN)
+    x = (base + noise).unsqueeze(-1)         # (n, SEQ_LEN, FEAT)
+    return x, y
+
+X_train, y_train = make_batch(N)
+X_test,  y_test  = make_batch(200)
+print("input shape (batch, seq_len, features):", tuple(X_train.shape))`,
+        output: `input shape (batch, seq_len, features): (600, 12, 1)`
+      },
+      {
+        explain: `<b>The model: LSTM then the last hidden state.</b> <code>batch_first=True</code> selects the natural <code>(batch, seq_len, features)</code> layout — the classic shape fix. The LSTM returns <code>output, (h_n, c_n)</code>; we take <code>h_n[-1]</code>, the top layer's final hidden state, and feed that single per-sequence vector to an <code>nn.Linear</code> for raw logits.`,
+        code: `class SeqClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size=FEAT, hidden_size=HIDDEN, batch_first=True)
+        self.fc   = nn.Linear(HIDDEN, N_CLASSES)
+    def forward(self, x):
+        output, (h_n, c_n) = self.lstm(x)    # output: every step; h_n: last step
+        last = h_n[-1]                       # (batch, HIDDEN)
+        return self.fc(last)                 # (batch, N_CLASSES) raw logits
+
+model = SeqClassifier()
+opt = torch.optim.Adam(model.parameters(), lr=0.01)
+loss_fn = nn.CrossEntropyLoss()             # wants raw logits + class indices`,
+        output: `(model built — no output yet)`
+      },
+      {
+        explain: `<b>Train through time.</b> The standard loop: <code>zero_grad</code> (grads accumulate otherwise), forward, <code>backward</code> (backprop through time), then <code>clip_grad_norm_</code> to tame exploding gradients before <code>step</code>. Loss falls steadily.`,
+        code: `model.train()
+for epoch in range(15):
+    opt.zero_grad()
+    logits = model(X_train)
+    loss = loss_fn(logits, y_train)
+    loss.backward()
+    nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    opt.step()
+    if epoch % 3 == 0:
+        print(f"epoch {epoch:2d}  loss {loss.item():.3f}")`,
+        output: `epoch  0  loss 0.694
+epoch  3  loss 0.553
+epoch  6  loss 0.421
+epoch  9  loss 0.331
+epoch 12  loss 0.272`
+      },
+      {
+        explain: `<b>Evaluate.</b> Switch to <code>eval()</code> and wrap inference in <code>torch.no_grad()</code> so no autograd graph is built. <code>argmax(dim=1)</code> turns logits into class predictions; the synthetic task is easy, so accuracy is high.`,
+        code: `model.eval()
+with torch.no_grad():
+    pred = model(X_test).argmax(dim=1)
+    acc = (pred == y_test).float().mean().item()
+print(f"test accuracy: {acc:.3f}")`,
+        output: `test accuracy: 0.935`
+      },
+      {
+        explain: `<b>The shapes, made explicit.</b> Peek at a 4-sequence batch to see the return shapes: <code>output</code> carries a hidden vector for every one of the 12 steps; <code>h_n</code> carries only the last step (one row per layer); <code>h_n[-1]</code> is the <code>(batch, hidden)</code> vector the classifier consumes.`,
+        code: `with torch.no_grad():
+    out, (h_n, c_n) = model.lstm(X_test[:4])
+print("output (every step):", tuple(out.shape))
+print("h_n (last step)    :", tuple(h_n.shape))
+print("h_n[-1] -> Linear  :", tuple(h_n[-1].shape))`,
+        output: `output (every step): (4, 12, 16)
+h_n (last step)    : (1, 4, 16)
+h_n[-1] -> Linear  : (4, 16)`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line:</p>
+<ul>
+<li>The first line confirms the input is <code>(600, 12, 1)</code> — 600 sequences, 12 steps, 1 feature — the <code>(batch, seq_len, features)</code> layout <code>batch_first=True</code> demands.</li>
+<li>The loss falls from ~0.69 (that is ln(2), a coin flip at random init) toward ~0.27, proof the LSTM is learning the up/down trend.</li>
+<li>Test accuracy lands around <code>0.93</code> — strong, because the synthetic task is easy and separable.</li>
+<li>The final shapes spell out the whole point: <code>output</code> is <code>(4, 12, 16)</code> (hidden at every step), <code>h_n</code> is <code>(1, 4, 16)</code> (last step only, one row per layer), and <code>h_n[-1]</code> is <code>(4, 16)</code> — the per-sequence vector the <code>nn.Linear</code> head consumes.</li>
+</ul>
+<p>Numbers assume <code>torch.manual_seed(0)</code>; without the seed the loss curve and accuracy wobble. On a GPU runtime the math is identical but may differ in the last decimal.</p>`,
+
+    cheatsheet: [
+      { code: "lstm = nn.LSTM(input_size, hidden_size, batch_first=True)", note: "batch_first => input is (batch, seq, features)" },
+      { code: "output, (h_n, c_n) = lstm(x)", note: "LSTM returns a (h_n, c_n) tuple; RNN/GRU return just h_n" },
+      { code: "last = h_n[-1]   # (batch, hidden)", note: "top layer's final state -> one label per sequence" },
+      { code: "logits = fc(h_n[-1])", note: "classifier head on the last hidden state; CrossEntropyLoss wants raw logits" },
+      { code: "emb = nn.Embedding(num_embeddings, dim); e = emb(ids)", note: "token ids -> (batch, seq, dim); size table > max id" },
+      { code: "packed = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)", note: "skip padding so h_n hits the real end" },
+      { code: "nn.utils.clip_grad_norm_(model.parameters(), 1.0)", note: "clip exploding grads BEFORE optimizer.step()" },
+      { code: "with torch.no_grad(): model.eval()", note: "inference mode — no graph, deterministic" }
+    ],
+
+    deeper: `<p>This lesson is the <i>how</i> in PyTorch; the <i>why</i> is the math:</p>
+<ul>
+<li>the recurrence itself and why a plain RNN's gradients vanish or explode: <a onclick="App.open('dl-rnn')">dl-rnn</a>;</li>
+<li>how gates and a cell state fix the forgetting problem: <a onclick="App.open('dl-lstm-gru')">dl-lstm-gru</a>;</li>
+<li>the optimizer step that updates these weights through time: <a onclick="App.open('dl-optimizers')">dl-optimizers</a>.</li>
+</ul>
+<p>Transformers (<code>nn.Transformer</code>) replaced RNNs for large-scale text, but the hidden-state-over-time idea here is the cleanest stepping stone to attention.</p>`,
     whenToUse: `<p>Reach for a recurrent module when your data is an <b>ordered sequence</b> and order matters: a time series, a sentence of tokens, a stream of sensor readings, audio frames.</p>
 <ul>
 <li>Sequences and time series, or text, when a Transformer is overkill or your dataset is small. RNNs (RNN = Recurrent Neural Network — a network that feeds its own previous output back in as it walks a sequence) have far fewer parameters and train fine on modest data.</li>

@@ -6,7 +6,92 @@
     title: "PyTorch: tensors, autograd, and neural nets that run as you write them",
     tagline: "A Python library where every operation runs immediately (eager / define-by-run), so you build, debug, and train models with ordinary Python — which is why research lives here.",
     module: "PyTorch (a complete course)",
+    template: "pytorch",
     prereqs: ["dl-forward-prop", "dl-backprop", "dl-optimizers", "fnd-gradient"],
+
+    objective: `<p><b>By the end of this lesson you can:</b></p>
+<ul>
+<li>explain PyTorch's three pillars &mdash; tensors, autograd, and <code>torch.nn</code> &mdash; and why <b>eager execution</b> (define-by-run) makes a model just an ordinary Python program you can print and debug;</li>
+<li>write the five-line "hello world": import torch, pick a <code>device</code>, make tensors and run an op that executes immediately, and run a one-layer <code>nn.Linear</code> forward pass;</li>
+<li>name the standard five-step workflow (tensors &rarr; model &rarr; loss + optimizer &rarr; training loop &rarr; eval) that every later <code>pt-*</code> lesson expands.</li>
+</ul>
+<p><b>The API you'll own:</b> <code>torch.__version__</code>, <code>torch.cuda.is_available()</code>, <code>torch.tensor</code>, <code>.to(device)</code>, <code>torch.manual_seed</code>, <code>nn.Linear</code>.</p>`,
+
+    concept: `<p><b>PyTorch is three ideas wearing one coat.</b> A deep-learning framework is just: (1) <b>tensors</b> &mdash; a fast n-dimensional number array (think NumPy) that can also run on a <b>GPU (Graphics Processing Unit)</b> and remember the operations performed on it; (2) <b>automatic differentiation (autograd)</b> &mdash; given any computation you wrote, it computes the gradient of the result with respect to every input, which is <code>dl-backprop</code> done for you automatically; and (3) <b>neural-network building blocks</b> (<code>torch.nn</code>) &mdash; ready-made layers, activations, and losses you snap together, plus optimizers (<code>torch.optim</code>) that apply the gradient updates.</p>
+<p>The trait that ties them together is <b>eager execution</b>, also called <b>define-by-run</b>: each line of your model runs the moment Python reaches it, and the computation graph is built on the fly. There is no separate "compile the graph, then feed it data" phase. That is why you can <code>print</code> intermediate values, use ordinary <code>if</code> statements and loops inside a model, and debug with a normal Python debugger. The model <i>is</i> the Python program, with nothing hidden &mdash; the single biggest reason PyTorch took over research.</p>
+<p><b>The standard workflow every later lesson follows.</b> Almost every PyTorch program, from a two-line toy to a billion-parameter model, has the same five-part skeleton:</p>
+<ol>
+<li><b>Tensors</b> &mdash; load data and weights as tensors, move them to a <code>device</code> (the forward math is <code>dl-forward-prop</code>);</li>
+<li><b>Model</b> &mdash; subclass <code>nn.Module</code>, declare layers, write <code>forward</code>;</li>
+<li><b>Loss + optimizer</b> &mdash; say "this is wrong by X" and "nudge the weights" (math in <code>dl-cross-entropy</code>, <code>dl-optimizers</code>);</li>
+<li><b>Training loop</b> &mdash; forward, loss, <code>zero_grad</code>, <code>backward</code>, <code>step</code>;</li>
+<li><b>Eval</b> &mdash; <code>model.eval()</code> inside <code>torch.no_grad()</code> on held-out data.</li>
+</ol>
+<p>Keep this skeleton in your head and the whole course hangs on it.</p>`,
+
+    apiTable: [
+      { sig: "torch.__version__", does: "The installed PyTorch version string &mdash; the first thing you print to confirm the import worked.", snippet: "print(torch.__version__)   # e.g. 2.5.1+cu121" },
+      { sig: "torch.cuda.is_available()", does: "Returns <code>True</code> if a usable <b>GPU</b> is attached. Use it to pick a <code>device</code>.", snippet: "torch.cuda.is_available()  # True on a GPU runtime" },
+      { sig: "device = 'cuda' if ... else 'cpu'", does: "Build ONE device string up front and use it everywhere &mdash; the habit that prevents CPU/GPU mismatch.", snippet: "device = 'cuda' if torch.cuda.is_available() else 'cpu'" },
+      { sig: "torch.tensor(data)", does: "Make a tensor from a Python list/number. Each op on it runs <i>immediately</i> (eager).", snippet: "a = torch.tensor([1., 2., 3.])" },
+      { sig: "t.to(device) / .cuda() / .cpu()", does: "Return a copy of the tensor on another device. Reassign the result to keep it.", snippet: "a = a.to(device)" },
+      { sig: "torch.manual_seed(n)", does: "Seed the random number generator so weight init, shuffling, and dropout are reproducible.", snippet: "torch.manual_seed(0)" },
+      { sig: "nn.Linear(in_features, out_features)", does: "A fully-connected layer computing <code>y = Wx + b</code>; the one-line model in the teaser.", snippet: "model = nn.Linear(3, 1).to(device)" },
+      { sig: "model(x)", does: "Run a forward pass &mdash; call the module (never <code>model.forward(x)</code>).", snippet: "y = model(x); y.item()" },
+      { sig: "t.numpy() / torch.from_numpy(a)", does: "Bridge to and from NumPy at the data boundary (CPU tensors share the buffer).", snippet: "c.numpy(); torch.from_numpy(np.array([5., 6.]))" }
+    ],
+
+    codeTour: [
+      {
+        explain: `<b>Version and hardware check.</b> Every PyTorch session opens the same way: import torch, confirm the version, ask whether a GPU is present with <code>torch.cuda.is_available()</code>, and pick ONE <code>device</code> string to reuse everywhere. Seed the RNG so the run is reproducible.`,
+        code: `import torch\nimport torch.nn as nn\n\nprint("PyTorch version:", torch.__version__)\nprint("CUDA available :", torch.cuda.is_available())\ndevice = "cuda" if torch.cuda.is_available() else "cpu"\nprint("Using device   :", device)\ntorch.manual_seed(0)`,
+        output: `PyTorch version: 2.5.1+cu121\nCUDA available : False\nUsing device   : cpu`
+      },
+      {
+        explain: `<b>Make tensors and run an op &mdash; eager execution.</b> <code>a + b</code> runs the instant Python reaches it; the result <code>c</code> exists immediately, so you can print it on the spot. No graph to compile, no session to open.`,
+        code: `a = torch.tensor([1.0, 2.0, 3.0])\nb = torch.ones(3)\nc = a + b                 # runs NOW\nprint("a + b =", c)\nprint("shape :", c.shape, "| dtype:", c.dtype)`,
+        output: `a + b = tensor([2., 3., 4.])\nshape : torch.Size([3]) | dtype: torch.float32`
+      },
+      {
+        explain: `<b>Move to the chosen device.</b> <code>.to(device)</code> places a tensor on the GPU (or leaves it on the CPU). Reassign the result &mdash; <code>.to(...)</code> returns a new tensor rather than moving in place.`,
+        code: `a = a.to(device)\nprint("a is now on:", a.device)`,
+        output: `a is now on: cpu`
+      },
+      {
+        explain: `<b>The five-line model teaser.</b> <code>nn.Linear(3, 1)</code> is a tiny layer computing <code>y = Wx + b</code>. Move it to the same device as the input, then call <code>model(x)</code> (never <code>model.forward(x)</code>) to run a forward pass. The exact number depends on the seeded random init.`,
+        code: `model = nn.Linear(in_features=3, out_features=1).to(device)\nx = torch.tensor([1.0, 2.0, 3.0], device=device)\ny = model(x)\nprint("model(x) =", round(y.item(), 4))`,
+        output: `model(x) = 0.8865`
+      }
+    ],
+
+    expected: `<p>Run the walkthrough top to bottom in Colab and read each printed line against its note:</p>
+<ul>
+<li>The first block prints the version and <code>Using device : cpu</code> &mdash; on a GPU runtime that last line reads <code>cuda</code> and <code>CUDA available : True</code> instead.</li>
+<li><code>a + b = tensor([2., 3., 4.])</code> proves eager execution: the sum exists the instant you call it, with no compile step, and prints with shape <code>torch.Size([3])</code> and dtype <code>torch.float32</code>.</li>
+<li><code>a is now on: cpu</code> confirms the device move; on a GPU it reads <code>cuda:0</code>.</li>
+<li>The final <code>model(x) = ...</code> is one forward pass through a one-output linear layer; the exact value depends on the seeded random weights, so a teammate who also ran <code>torch.manual_seed(0)</code> sees the same number. Without the seed it changes every run.</li>
+</ul>`,
+
+    cheatsheet: [
+      { code: "import torch; import torch.nn as nn", note: "the two imports every script starts with" },
+      { code: "torch.__version__", note: "confirm the install / CUDA build" },
+      { code: "device = 'cuda' if torch.cuda.is_available() else 'cpu'", note: "pick the device ONCE, reuse everywhere" },
+      { code: "torch.manual_seed(0)", note: "reproducible init / shuffling / dropout" },
+      { code: "c = a + b", note: "ops run immediately (eager / define-by-run)" },
+      { code: "a = a.to(device)", note: "move a tensor &mdash; reassign the result!" },
+      { code: "model = nn.Linear(3, 1).to(device)", note: "a one-line model: y = Wx + b" },
+      { code: "y = model(x)", note: "forward pass &mdash; call model(x), NOT model.forward(x)" },
+      { code: "c.numpy() / torch.from_numpy(arr)", note: "NumPy bridge at the data boundary" }
+    ],
+
+    deeper: `<p>Each pillar of PyTorch has its own concept lesson behind the API:</p>
+<ul>
+<li>tensors are <a onclick="App.open('fnd-vector')">vectors</a> and <a onclick="App.open('fnd-matrix')">matrices</a> extended to n axes;</li>
+<li>a forward pass is <a onclick="App.open('dl-forward-prop')">forward propagation</a>, and the <code>nn.Linear</code> layer is one <a onclick="App.open('dl-neuron')">neuron</a> layer's worth of <code>Wx + b</code>;</li>
+<li>autograd's <code>.backward()</code> is <a onclick="App.open('dl-backprop')">backpropagation</a> automated, resting on the <a onclick="App.open('fnd-chain')">chain rule</a> and the <a onclick="App.open('fnd-gradient')">gradient</a>;</li>
+<li>the optimizer step uses the update rules in <a onclick="App.open('dl-optimizers')">optimizers</a>.</li>
+</ul>
+<p>Whenever the <i>math</i> behind a workflow step matters, this course points you back to those <code>dl-*</code>/<code>fnd-*</code> lessons rather than re-deriving it &mdash; here the focus is HOW to do it in PyTorch.</p>`,
 
     whenToUse:
       `<p><b>Reach for PyTorch when you want full control and fast iteration.</b> It is the default for
