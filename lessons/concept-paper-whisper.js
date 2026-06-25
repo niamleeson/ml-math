@@ -165,6 +165,37 @@
        <b>force</b> the early tokens (e.g. set the task to <code>&lt;|translate|&gt;</code>) to steer the model, or
        <b>let it predict</b> them (e.g. the language) to get zero-shot detection. One model, one objective, many
        tasks — selected by a handful of tokens.</p>`,
+    architecture:
+      `<p>Whisper is a <b>deliberately plain encoder-decoder Transformer</b> (§2.2). Trace the data from waveform to
+       text:</p>
+       <p><b>1. Audio front end (feature extraction).</b> Resample to <b>16 kHz</b>. Compute an <b>80-channel
+       log-magnitude Mel spectrogram</b> using <b>25 ms</b> analysis windows with a <b>10 ms</b> stride, then
+       globally scale to roughly [-1, 1]. A 30-second clip (Whisper's fixed window) becomes a grid of shape
+       <b>80 &times; 3000</b> (80 frequency channels, 3000 time frames).</p>
+       <p><b>2. Convolutional stem.</b> Two 1-D convolutions over the spectrogram, each with <b>filter width 3</b>
+       and <b>GELU</b> activation; the <b>second conv has stride 2</b>, halving the time axis to <b>1500</b> frames
+       of width $d_{\\text{model}}$. <b>Sinusoidal position embeddings</b> are then added.</p>
+       <p><b>3. Transformer encoder.</b> A stack of standard pre-activation residual Transformer blocks
+       (multi-head self-attention + MLP), with a final layer normalization. Output: <b>1500 audio feature
+       vectors</b> — this is $\\text{enc}(x)$, what the decoder attends to.</p>
+       <p><b>4. Transformer decoder.</b> An autoregressive Transformer of the <b>same width and same number of
+       blocks</b> as the encoder, with <b>learned position embeddings</b> and <b>tied input/output token
+       embeddings</b>. Each block does causal self-attention over previous tokens, <b>cross-attention</b> to the
+       encoder features, then an MLP. A final softmax over the vocabulary gives the next-token distribution.</p>
+       <p><b>5. Vocabulary and multitask prefix.</b> The text tokenizer is GPT-2's <b>byte-level BPE</b> (refit, same
+       size, for multilingual), <b>plus the special control tokens</b>: <code>&lt;|startoftranscript|&gt;</code>,
+       <b>99 language tokens</b>, <code>&lt;|nospeech|&gt;</code>, <code>&lt;|transcribe|&gt;</code>,
+       <code>&lt;|translate|&gt;</code>, <code>&lt;|notimestamps|&gt;</code>, <b>timestamp tokens</b> (one per 20 ms),
+       <code>&lt;|startofprev|&gt;</code>, and <code>&lt;|endoftext|&gt;</code>. The decoder produces the control
+       prefix and the text as one sequence.</p>
+       <p><b>6. Model sizes (Table 1).</b> Five widths, encoder and decoder always matched:
+       Tiny (4 blocks, width 384, 6 heads, 39M params), Base (6 / 512 / 8, 74M), Small (12 / 768 / 12, 244M),
+       Medium (24 / 1024 / 16, 769M), Large (32 / 1280 / 20, 1550M).</p>
+       <p><b>7. Training (§2.4).</b> One next-token cross-entropy objective over all 680,000 hours, AdamW with linear
+       LR decay, gradient-norm clipping, FP16 with dynamic loss scaling, batch 256 segments, 2–3 epochs, no
+       augmentation in V1. Crucially, <b>no fine-tuning per benchmark</b> — every downstream evaluation is zero-shot.
+       The architecture is intentionally off-the-shelf; the contribution is the data and the token format, not the
+       network.</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>audio input</b>, represented as an 80-channel <b>log-Mel spectrogram</b> — a grid of [frequency band] &times; [time frame] energies, log-scaled (§2.2)." },
       { sym: "$\\text{enc}(x)$", desc: "the <b>encoder</b> output: a sequence of audio feature vectors the decoder attends to. A plain Transformer encoder over the spectrogram, after a two-convolution stem." },
@@ -176,9 +207,24 @@
       { sym: "$\\langle\\text{task}\\rangle$", desc: "the <b>task token</b>: <code>&lt;|transcribe|&gt;</code> (same-language text) or <code>&lt;|translate|&gt;</code> (English text)." },
       { sym: "$\\langle\\text{ts}\\rangle$", desc: "the <b>timestamp control</b>: <code>&lt;|notimestamps|&gt;</code> for plain text, else <b>timestamp tokens</b> at 20 ms resolution interleaved with the text." },
       { sym: "$\\langle\\text{eot}\\rangle$", desc: "the <code>&lt;|endoftext|&gt;</code> (end-of-transcript) token: tells the decoder to stop." },
-      { sym: "$P(\\cdot\\mid\\cdot)$", desc: "the decoder's <b>next-token probability</b>: a softmax over the vocabulary given the audio and the tokens so far. Trained by cross-entropy (next-token prediction)." }
+      { sym: "$P(\\cdot\\mid\\cdot)$", desc: "the decoder's <b>next-token probability</b>: a softmax over the vocabulary given the audio and the tokens so far. Trained by cross-entropy (next-token prediction)." },
+      { sym: "$\\theta$", desc: "the <b>model parameters</b> (encoder + decoder Transformer weights), shared across all tasks and languages — one network, selected by the prefix tokens, not per-task weights." },
+      { sym: "$\\mathcal{D}$", desc: "the <b>training set</b>: 680,000 hours of (audio, transcript) pairs, each cut to a 30-second segment, mixing transcription and translation across languages (§2.1)." },
+      { sym: "$N$", desc: "the number of hours of training data <b>for one language</b> (the x-axis of the scaling trend in §3.5)." },
+      { sym: "$\\langle\\text{nospeech}\\rangle$", desc: "the <code>&lt;|nospeech|&gt;</code> token: emitted after the language slot when the clip has <b>no speech</b> — i.e. voice-activity detection (§2.3)." },
+      { sym: "$\\langle\\text{prev}\\rangle$", desc: "the <code>&lt;|startofprev|&gt;</code> token plus the <b>previous segment's transcript</b>, optionally prepended as context; its loss is masked so the model conditions on but does not predict it (§2.3)." }
     ],
-    formula: `$$ P\\big(y_{1:T}\\mid x\\big) \\;=\\; \\prod_{t=1}^{T} P\\big(y_t \\,\\big|\\, y_{\\lt t},\\, \\text{enc}(x)\\big), \\qquad y_{1:4} = \\big[\\,\\langle\\text{sot}\\rangle,\\ \\langle\\text{lang}\\rangle,\\ \\langle\\text{task}\\rangle,\\ \\langle\\text{ts}\\rangle\\,\\big] \\ \\text{(§2.3)} $$`,
+    formula: `$$ \\hat{\\theta} \\;=\\; \\arg\\max_{\\theta}\\; \\sum_{(x,\\,y)\\in\\mathcal{D}} \\sum_{t=1}^{T} \\log P_{\\theta}\\big(y_t \\,\\big|\\, y_{\\lt t},\\, \\text{enc}(x)\\big) $$
+       <p>The <b>only</b> objective (§2.4): maximize next-token log-likelihood over all 680,000 hours. There is no task-specific loss — every example, every language, transcription or translation, contributes one term in this same sum. ("AdamW, linear LR decay, no augmentation"; the loss equation itself is not written out in the paper — it is plain next-token cross-entropy.)</p>
+       $$ P_{\\theta}\\big(y_{1:T}\\mid x\\big) \\;=\\; \\prod_{t=1}^{T} P_{\\theta}\\big(y_t \\,\\big|\\, y_{\\lt t},\\, \\text{enc}(x)\\big) $$
+       <p>The <b>autoregressive factorization</b> the decoder computes (chain rule): the whole-sequence probability is the product of per-token conditionals, each cross-attending to the encoded audio $\\text{enc}(x)$. Standard for any encoder-decoder Transformer (see paper-transformer).</p>
+       $$ y \\;=\\; \\big[\\,\\underbrace{\\langle\\text{prev}\\rangle?,\\ \\langle\\text{sot}\\rangle,\\ \\langle\\text{lang}\\rangle,\\ \\langle\\text{nospeech}\\rangle?,\\ \\langle\\text{task}\\rangle,\\ \\langle\\text{ts}\\rangle}_{\\text{control prefix}},\\ \\underbrace{t_1, w_1, w_2, \\ldots, t_2, \\ldots}_{\\text{(timestamp,)\\ text}},\\ \\langle\\text{eot}\\rangle\\,\\big] $$
+       <p>The <b>multitask token format</b> (§2.3, Fig. 1) — the paper's true "formula." A control prefix declares language, speech/no-speech, task, and timestamp mode; then text (optionally interleaved with start/end timestamp tokens $t_i$ quantized to 20 ms); then end-of-transcript. The "$?$" marks optional slots. This sequence <i>is</i> the multitask interface.</p>
+       $$ x \\;\\in\\; \\mathbb{R}^{80 \\times 3000}, \\qquad \\text{enc}(x) \\;\\in\\; \\mathbb{R}^{1500 \\times d_{\\text{model}}} $$
+       <p>Front-end shapes (§2.2): a 30-second clip at 16 kHz becomes an 80-channel log-Mel spectrogram of 3000 frames (10 ms hop), which the two-conv stem (the second conv has <b>stride 2</b>) downsamples to 1500 audio feature vectors of width $d_{\\text{model}}$.</p>
+       $$ \\text{WER}(N) \\;\\approx\\; \\text{WER}(16N) \\,\\cdot\\, 2 \\quad\\text{(per-language; §3.5, empirical)} $$
+       <p>The one quantitative <b>scaling trend</b> the paper reports: per-language word error rate roughly <b>halves for every 16× increase</b> in that language's training hours. Described in words, not as a fitted equation — this is an honest paraphrase, not a precise law.</p>
+       <p><b>Be honest:</b> Whisper is mostly an empirical / data-scale paper. The four boxes above are essentially <i>one</i> idea (autoregressive next-token modeling over a multitask token sequence) plus the input shapes and a stated scaling trend. The contribution is the <b>680,000-hour weakly-supervised data</b> and the <b>token interface</b>, not new mathematics.</p>`,
     whatItDoes:
       `<p>The equation is just the standard <b>autoregressive</b> factorization of a sequence (the same one any
        Transformer language model uses): the probability of the whole token sequence is the product of each

@@ -181,6 +181,55 @@
        the tree. The paper stresses this density: "to our knowledge no existing vision dataset offers images
        of 147 dog categories" (Section 2). That combination &mdash; broad coverage, many images per concept,
        high label accuracy, all organized by a meaningful tree &mdash; is what made ImageNet new.</p>`,
+    architecture:
+      `<p>ImageNet has no neural network to diagram. Its "architecture" is the <b>construction pipeline</b> &mdash;
+       the data-flow that turns the WordNet dictionary plus the open web into a clean, hierarchical image
+       database. Trace it stage by stage; each stage's <i>output</i> is the next stage's <i>input</i>.</p>
+
+       <p><b>Stage 0 &mdash; Synset selection (the skeleton).</b> Input: WordNet's &sim;80,000 noun synsets and its
+       is-a relation. The authors pick 12 subtrees to populate first (mammal, bird, fish, reptile, amphibian,
+       vehicle, furniture, musical instrument, geological formation, tool, flower, fruit; Section 2). Output: a
+       target list of synsets to fill, each already wired into the inherited is-a tree (husky &rarr; working dog
+       &rarr; dog &rarr; canine &rarr; carnivore &rarr; placental &rarr; mammal, the Figure 1 branch). Every later
+       stage runs <i>per synset</i>.</p>
+
+       <p><b>Stage 1 &mdash; Candidate collection (Section 3.1), the recall stage.</b> For one synset, three
+       sub-steps fan out search queries to <i>multiple internet image search engines</i> and merge the results
+       into a candidate pool:</p>
+       <ul>
+        <li><b>(1a) Base queries</b> = the synset's own WordNet synonyms (e.g. {dog, domestic dog, Canis
+        familiaris}).</li>
+        <li><b>(1b) Query expansion</b> = append a word from the <i>parent synset's gloss</i> (definition) when
+        that word also appears in the target synset's gloss. The paper's worked example: "whippet", gloss "a
+        small slender dog of greyhound type developed in England", expands to "whippet dog" and "whippet
+        greyhound".</li>
+        <li><b>(1c) Translation</b> = translate the queries into Chinese, Spanish, Dutch and Italian using the
+        WordNets in those languages, to pull images from non-English pages.</li>
+       </ul>
+       <p>After intra-synset duplicate removal, the pool holds "over 10K images on average" per synset &mdash;
+       but at only "around 10%" precision (Section 3.1). High recall, low precision: the pool is &sim;90% noise.</p>
+
+       <p><b>Stage 2 &mdash; Crowd verification (Section 3.2), the precision stage.</b> The noisy pool is fed to
+       <b>Amazon Mechanical Turk (AMT)</b>. A labeling task shows a worker candidate images plus the synset's
+       definition (with a Wikipedia link) and asks, per image, "does this contain the object?" Quality control
+       is by <b>redundancy + majority voting</b>: many independent workers vote on the same image, and an image
+       is kept only if it wins "a convincing majority of the votes". Because workers agree more on easy concepts
+       than hard ones, the number of required votes is set <i>per category</i> via a <b>confidence table</b>
+       (Figure 7): votes accumulate until the per-image confidence passes a pre-set threshold &mdash; few votes
+       for "cat", many more for "Burmese cat". Output: a verified, &sim;99.7%-precision set of images for that
+       synset.</p>
+
+       <p><b>Stage 3 &mdash; Hierarchical assembly.</b> Repeat Stages 1&ndash;2 across every target synset and
+       hang each verified image bucket on its WordNet node. Because the nodes were already connected by is-a in
+       Stage 0, the result is automatically a <i>tree of buckets</i>, not a flat list: 12 subtrees, 5247 synsets,
+       3.2 million images in the 2009 snapshot, with the stated goal of growing toward &sim;50 million images over
+       &sim;50K synsets (Sections 3, 5.1).</p>
+
+       <p>So the full data flow is: <code>WordNet synsets + is-a tree &rarr; per-synset multi-engine search +
+       query expansion + translation &rarr; &gt;10K noisy candidates &rarr; AMT majority voting with a
+       per-category confidence threshold &rarr; &sim;99.7%-clean buckets &rarr; assembled into the WordNet
+       hierarchy.</code> Recall comes from search; precision comes from the crowd; structure comes from
+       WordNet.</p>`,
     symbols: [
       { sym: "WordNet", desc: "a large, hand-built lexical database of English. It groups words into synonym sets (synsets) and links those sets by relations &mdash; here, mainly the 'is-a' relation (a husky is-a dog). It is the pre-existing structure ImageNet borrows as its skeleton. The paper: 'There are around 80,000 noun synsets in WordNet.' (Section 2.)" },
       { sym: "synset", desc: "short for 'synonym set': one node of WordNet &mdash; a single concept named by all the words that mean it (e.g. {dog, domestic dog, Canis familiaris}). In ImageNet, each noun synset becomes one labeled bucket of images. Defined verbatim in Section 2." },
@@ -189,18 +238,60 @@
       { sym: "Amazon Mechanical Turk (AMT)", desc: "an online marketplace where requesters post small tasks ('label this image') and many people complete them for small payments. ImageNet uses it for the cleaning stage. The paper: 'an online platform on which one can put up tasks for users to complete and to get paid.' (Section 3.2.)" },
       { sym: "crowdsourcing", desc: "a plain term: getting a large job done by distributing many tiny pieces of it across many people. ImageNet's verification &mdash; checking millions of candidate images &mdash; is crowdsourced through AMT." },
       { sym: "precision", desc: "for a labeled image bucket, the fraction of images in it that are actually correct (truly show the concept). The paper reports 'An average of 99.7% precision' across 80 sampled synsets (Figure 4) &mdash; i.e., about 997 of every 1000 images in a synset are right." },
-      { sym: "ILSVRC", desc: "the ImageNet Large Scale Visual Recognition Challenge: a yearly competition (started after this paper) to classify images into 1000 ImageNet categories. NOT mentioned in the 2009 paper &mdash; included here only as later context for why ImageNet mattered." }
+      { sym: "ILSVRC", desc: "the ImageNet Large Scale Visual Recognition Challenge: a yearly competition (started after this paper) to classify images into 1000 ImageNet categories. NOT mentioned in the 2009 paper &mdash; included here only as later context for why ImageNet mattered." },
+      { sym: "$\\#Y,\\ \\#N$", desc: "the number of 'yes' votes and 'no' votes a candidate image receives from Amazon Mechanical Turk workers (Section 3.2, Figure 7). The confidence table maps $(\\#Y, \\#N)$ to a probability the image is a good example of the concept; an image is kept once that confidence clears a per-category threshold." },
+      { sym: "$D_C$", desc: "the query-to-class distance used in the Section 4.1 object-recognition demo (Naive-Bayes Nearest-Neighbor). Smaller means the query image looks more like class $C$." },
+      { sym: "$d_i$", desc: "the $i$-th local feature descriptor (a SIFT descriptor) extracted from the query image; the image is represented as a bag of these descriptors, $i = 1,\\dots,M$ (Section 4.1)." },
+      { sym: "$d_i^{C}$", desc: "the nearest neighbor of descriptor $d_i$ among all the descriptors drawn from images of class $C$ (Section 4.1). The closer each $d_i$ is to its class-$C$ neighbor, the smaller $D_C$." },
+      { sym: "$M$", desc: "the number of local descriptors extracted from the query image &mdash; the length of its bag-of-features representation (Section 4.1)." },
+      { sym: "$p(x \\mid c)$", desc: "in the Section 4.3 localization demo, the likelihood that image patch $x$ belongs to category $c$; the bounding box is drawn around the region of highest accumulated likelihood." },
+      { sym: "$z_i$", desc: "a latent 'topic' in the non-parametric graphical model of the Section 4.3 localization demo; $p(x \\mid c)$ is obtained by marginalizing over these topics, $p(x\\mid c)=\\sum_i p(x\\mid z_i,c)\\,p(z_i\\mid c)$." }
     ],
     formula:
-      `<p>This is a dataset paper: there is no governing equation to transcribe. Instead, the "formula" is the
-       <b>structural recipe</b> &mdash; what a labeled bucket is and how the buckets nest. In words: each WordNet
-       noun synset $s$ is a labeled set of images $I(s)$, and the synsets are connected by the is-a relation, so
-       the images of a concept are also (loosely) instances of its parents:</p>
+      `<p><b>Be honest up front: this is a dataset paper, and it is light on math.</b> It has no governing
+       loss, no training objective, no model equation in its main contribution. The headline content is
+       <i>quantitative facts and a construction pipeline</i>, not derivations. So the "formula" here is in
+       four honest parts: (1) the structural recipe of the dataset, (2) the few reported numbers, (3) the
+       crowd-voting confidence scheme, and (4) the two genuine equations that appear &mdash; both only in the
+       small application demos of Section 4, not in the dataset itself.</p>
+
+       <p><b>(1) The structural recipe (the dataset's "definition", not an equation the paper writes).</b>
+       Each WordNet noun synset $s$ is a labeled set of images $I(s)$, and the synsets are connected by the
+       is-a relation, so the images of a concept are also (loosely) instances of its parents:</p>
        $$ \\text{ImageNet} \\;=\\; \\{\\, (s,\\; I(s)) \\;:\\; s \\in \\text{WordNet noun synsets} \\,\\}, \\qquad
           s \\xrightarrow{\\;\\text{is-a}\\;} \\text{parent}(s). $$
-       <p>Read it as: ImageNet is a set of (concept, image-bucket) pairs, wired into WordNet's is-a tree. The
-       only "numbers" are the reported counts (5247 synsets, 3.2 million images, &sim;600 images per synset),
-       quoted from the paper &mdash; not derived.</p>`,
+       <p>Read it as: ImageNet is a set of (concept, image-bucket) pairs, wired into WordNet's is-a tree.</p>
+
+       <p><b>(2) The reported numbers (quoted, not derived).</b> The only quantitative claims in the dataset
+       part are counts and rates the paper measures: 12 subtrees, 5247 synsets, 3.2 million images, &sim;600
+       images per synset (Abstract / Section 2); &sim;80,000 WordNet noun synsets, target &sim;50 million
+       images at 500&ndash;1000 per synset (Abstract / Section 2); &gt;10K candidate images per synset at
+       &sim;10% raw search accuracy (Section 3.1); distribution &mdash; "About 20% of the synsets have very
+       few images. Over 50% synsets have more than 500 images" (Figure 2); average image size &sim;400 &times;
+       350 (Section 2.1); and the quality headline "An average of 99.7% precision" over 80 sampled synsets,
+       with "&sim; 99% precision" overall (Figure 4 / Section 2.1).</p>
+
+       <p><b>(3) The crowd-verification confidence scheme (Section 3.2, Figure 7).</b> Each candidate image is
+       voted on by multiple Amazon Mechanical Turk workers. From the per-image counts of "yes" votes $\\#Y$
+       and "no" votes $\\#N$, the paper builds a <b>confidence table</b> giving the probability the image is a
+       good example of the concept &mdash; e.g. with $\\#Y\\!=\\!3,\\ \\#N\\!=\\!0$ the table reads confidence
+       $0.99$ for "Cat" but only $0.90$ for the harder "Burmese cat" (Figure 7, right). An image is kept once
+       its confidence passes a <b>per-category threshold</b>; harder synsets demand more agreeing votes to
+       reach the same confidence. (The paper publishes the table, not a closed-form equation for it.)</p>
+
+       <p><b>(4) The two genuine equations &mdash; only in the Section 4 application demos.</b> First, the
+       non-parametric object-recognition demo (Section 4.1) scores a query image (with descriptors
+       $d_1,\\dots,d_M$) against an object class $C$ by the Naive-Bayes Nearest-Neighbor distance:</p>
+       $$ D_C \\;=\\; \\sum_{i=1}^{M} \\lVert\\, d_i - d_i^{C} \\,\\rVert^2, $$
+       <p>where $d_i^{C}$ is the nearest neighbor of descriptor $d_i$ among all images of class $C$ (Section 4.1).
+       Second, the automatic-localization demo (Section 4.3) scores an image patch $x$ under category $c$ by
+       marginalizing over latent topics $z_i$:</p>
+       $$ p(x \\mid c) \\;=\\; \\sum_i p(x \\mid z_i, c)\\, p(z_i \\mid c), $$
+       <p>and puts a bounding box around the region of highest accumulated likelihood (Section 4.3). The
+       tree-based-classification demo (Section 4.2) adds the <b>tree-max classifier</b>: the score of a query at
+       a node is the <i>maximum</i> classifier response over that node and all of its subtree's synsets &mdash; a
+       max, stated in words rather than as a labelled equation. These three appear only to <i>illustrate</i> that
+       the dataset is useful; none is a contribution of the dataset itself.</p>`,
     whatItDoes:
       `<p>The structure above says ImageNet is two things at once: a pile of labeled images, and a tree relating
        the labels. That duality is the whole point. As a <b>pile of labeled images</b> it is training fuel: a

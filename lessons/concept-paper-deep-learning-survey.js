@@ -229,6 +229,56 @@
        with RNNs that use reinforcement learning to decide where to look," from RNNs that learn "strategies for
        selectively attending to one part at a time" (an early statement of <b>attention</b>), and ultimately from
        "systems that combine representation learning with complex reasoning." (&sect;Future.)</p>`,
+
+    // ★ ARCHITECTURE — a structured MAP of the review (a survey has no single model; this is the map) ★
+    architecture:
+      `<p>A survey has no single network to diagram. Its "architecture" is the <b>structure of the review itself</b> —
+       how its sections fit together into one argument, and which concept lesson owns the math of each. Read this as
+       the floor-plan of the paper.</p>
+
+       <p><b>The spine: one idea, one engine, two families.</b></p>
+       <ul>
+        <li><b>The idea — representation learning</b> (Intro). The whole review hangs off this: replace the
+        hand-built <b>feature extractor</b> with learned layers. Old pipeline: raw data &rarr; <i>human-designed</i>
+        feature extractor &rarr; shallow classifier. New pipeline: raw data &rarr; <i>learned</i> layer 1 &rarr;
+        layer 2 &rarr; &hellip; &rarr; layer L &rarr; classifier, every arrow trained. The contrast with hand
+        features is the lesson <code>fe-what-is-a-feature</code>; the simple module each arrow is built from is the
+        neuron, <code>dl-neuron</code>, and a full forward sweep is <code>dl-forward-prop</code>.</li>
+        <li><b>The engine — backpropagation</b> (&sect;Backprop). One algorithm trains every arrow, by the chain rule
+        run backward (the equations now in <i>formula</i>: forward $z_l=\\sum w\\,y$, $y_l=f(z_l)$; backward
+        $\\partial E/\\partial y_k=\\sum w\\,\\partial E/\\partial z_l$ and weight gradient $y_k\\,\\partial E/\\partial z_l$).
+        The full derivation is the lesson <code>dl-backprop</code>; the optimiser that consumes the gradient is
+        <code>ml-gradient-descent</code> (stochastic gradient descent), and the labelled-data setting it sits in is
+        <code>ml-supervised</code>. The modern non-linearity that made deep stacks trainable is the ReLU,
+        $f(z)=\\max(z,0)$.</li>
+       </ul>
+
+       <p><b>Family 1 — convolutional nets, for array data</b> (&sect;ConvNets, &sect;Image understanding). Built on
+       "four key ideas ... local connections, shared weights, pooling and the use of many layers." A unit looks at a
+       small patch; the same filter bank slides everywhere (that sliding "is a discrete convolution"); pooling merges
+       nearby responses for "invariance to small shifts." Data flow: image &rarr; [conv + ReLU &rarr; pool] stacked
+       many times &rarr; classifier. The convolution operation itself is the lesson <code>dl-conv</code>. Headline
+       quoted result: on ImageNet ("about a million images ... 1,000 classes"), deep ConvNets were "almost halving
+       the error rates."</p>
+
+       <p><b>Family 2 — recurrent nets, for sequences</b> (&sect;RNNs). Process one element at a time, carrying a
+       hidden "state vector" $s_t$ that summarises the past; reuse the same parameters $(U,V,W)$ at every step.
+       Unrolled in time it is "a very deep feedforward network in which all the layers share the same weights," so the
+       same backprop trains it — but the shared-weight depth makes gradients "explode or vanish." The base recurrent
+       net is the lesson <code>dl-rnn</code>; the headline fix — the LSTM memory cell that "acts like an accumulator
+       or a gated leaky neuron" — is <code>dl-lstm-gru</code>. Word inputs to these nets are learned vectors
+       (distributed representations), the lesson <code>dl-word-embeddings</code>.</p>
+
+       <p><b>The closing outlook — where the map points next</b> (&sect;Future). Stated as the authors' bets, not
+       results: unsupervised learning ("we expect [it] to become far more important in the longer term"), selective
+       <i>attention</i>, ConvNet+RNN systems trained end-to-end with reinforcement learning, and combining
+       representation learning with reasoning. The unsupervised-learning thread is the lesson
+       <code>unl-overview</code>.</p>
+
+       <p><b>One-line floor-plan:</b> Intro (representation learning) &rarr; &sect;Supervised + &sect;Backprop (the
+       shared training engine) &rarr; &sect;ConvNets / &sect;Image (family 1, arrays) &rarr; &sect;Distributed +
+       &sect;RNNs (family 2, sequences) &rarr; &sect;Future (the bets). Read each box for the <i>why</i>; open its
+       linked lesson for the <i>how</i>.</p>`,
     symbols: [
       { sym: "“representation”", desc: "a plain term: the set of numbers a system uses to stand for an input. Raw pixels are one representation of an image; a list of learned features (\"is there an edge here?\") is a higher-level one. Deep learning learns a stack of ever-more-abstract representations." },
       { sym: "“representation learning”", desc: "the review's central idea (Intro): \"a set of methods that allows a machine to be fed with raw data and to automatically discover the representations needed for detection or classification.\" The opposite of hand-designing features." },
@@ -250,7 +300,24 @@
       { sym: "“unsupervised learning”", desc: "learning structure from data without labels. The review's main bet for the future: \"we expect unsupervised learning to become far more important in the longer term.\" (&sect;Future.)" },
       { sym: "“end-to-end”", desc: "a plain term: training a whole pipeline (e.g. ConvNet + RNN) jointly from raw input to final output, with no hand-engineered stages in between. The review expects future progress from end-to-end systems. (&sect;Future.)" }
     ],
-    formula: `$$ \\text{raw input} \\;\\xrightarrow{\\;\\text{layer 1}\\;}\\; \\text{features}_1 \\;\\xrightarrow{\\;\\text{layer 2}\\;}\\; \\text{features}_2 \\;\\xrightarrow{\\;\\cdots\\;}\\; \\text{features}_L \\;\\xrightarrow{\\;\\text{classifier}\\;}\\; \\text{output} $$ $$ f(z) = \\max(z, 0) \\quad\\text{(the ReLU non-linearity in each module, } \\S\\text{Backprop)} $$`,
+    formula: `<p><b>This is a review, not a method paper</b> — it introduces no new math. What follows is the handful of
+       equations and quantities the review actually writes down (mostly in the Figure 1 caption and the Backprop
+       section), transcribed faithfully. The deep math behind each lives in the linked concept lessons.</p>
+       $$ \\text{raw input} \\;\\xrightarrow{\\;\\text{layer 1}\\;}\\; \\text{features}_1 \\;\\xrightarrow{\\;\\text{layer 2}\\;}\\; \\text{features}_2 \\;\\xrightarrow{\\;\\cdots\\;}\\; \\text{features}_L \\;\\xrightarrow{\\;\\text{classifier}\\;}\\; \\text{output} $$
+       <p>The review's thesis as a picture (Intro): a deep net is a chain of learned representations, each arrow one trained layer.</p>
+       $$ f(z) = \\max(z, 0) $$
+       <p>The rectified linear unit (ReLU), "the half-wave rectifier", the one concrete non-linearity the review puts in its body text (&sect;Backprop; Fig. 1 caption writes it $f(z)=\\max(0,z)$, same function). It "typically learns much faster in networks with many layers."</p>
+       $$ z_l \\;=\\; \\sum_{k} w_{kl}\\, y_k, \\qquad y_l \\;=\\; f(z_l) $$
+       <p>The forward pass of one unit (Fig. 1c): total input $z_l$ is a weighted sum of the outputs $y_k$ of the units in the layer below; the output $y_l$ applies the non-linearity $f$. ("For simplicity, we have omitted bias terms.")</p>
+       $$ \\frac{\\partial E}{\\partial y_l} \\;=\\; y_l - t_l \\qquad\\text{for the cost } \\; E \\;=\\; \\tfrac{1}{2}\\,(y_l - t_l)^2 $$
+       <p>The output-layer error derivative (Fig. 1d): differentiating the squared-error cost gives $y_l - t_l$, where $t_l$ is the target value.</p>
+       $$ \\frac{\\partial E}{\\partial z_l} \\;=\\; \\frac{\\partial E}{\\partial y_l}\\, f'(z_l), \\qquad \\frac{\\partial E}{\\partial y_k} \\;=\\; \\sum_{l} w_{kl}\\,\\frac{\\partial E}{\\partial z_l} $$
+       <p>The backward pass (Fig. 1d): convert the error derivative w.r.t. a unit's output into one w.r.t. its input by multiplying by the gradient of $f$; the error derivative w.r.t. a unit in the layer below is the weighted sum of the error derivatives w.r.t. the inputs above. This is "nothing more than a practical application of the chain rule." (&sect;Backprop.)</p>
+       $$ \\frac{\\partial E}{\\partial w_{kl}} \\;=\\; y_k\\,\\frac{\\partial E}{\\partial z_l} $$
+       <p>The weight gradient (Fig. 1d): "once the $\\partial E/\\partial z_l$ is known, the error-derivative for the weight $w_{kl}$ on the connection from unit $k$ in the layer below is just $y_k\\,\\partial E/\\partial z_l$."</p>
+       $$ o_t \\;=\\; g(s_t), \\qquad s_t \\;=\\; F(s_{t-1},\\, x_t),\\quad \\text{same parameters } (U, V, W) \\text{ at every step} $$
+       <p>The recurrent net (Fig. 5): output $o_t$ depends on all previous inputs $x_{t'}$ ($t' \\le t$) through a state $s_t$; "the same parameters (matrices $U, V, W$) are used at each time step," so unrolling it gives "a very deep feedforward network in which all the layers share the same weights." (&sect;RNNs.)</p>
+       <p><b>Stated quantities (all quoted, none ours):</b> object nets have "a depth of 5 to 20" non-linear layers (&sect;Backprop); recent ConvNets have "10 to 20 layers of ReLUs, hundreds of millions of weights, and billions of connections" (&sect;Image understanding); ImageNet is "about a million images ... 1,000 different classes," where deep ConvNets were "almost halving the error rates of the best competing approaches" (&sect;Image understanding).</p>`,
     whatItDoes:
       `<p>The first line is the review's whole thesis as a picture, not an equation: a deep net is a <b>chain of
        representations</b>. Each arrow is one learned layer that transforms the representation below it into a

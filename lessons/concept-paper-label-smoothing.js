@@ -145,6 +145,34 @@
        literally adds "stay a bit closer to uniform" as a soft constraint, which is exactly a pull against
        over-confidence.</p>`,
 
+    architecture:
+      `<p><b>Where it plugs in.</b> Label smoothing is <i>not</i> a layer or a block &mdash; it is a one-line
+       change to the <b>training loss / target</b> at the classifier's <b>softmax cross-entropy head</b>.
+       The network is untouched: it still ends in a linear layer producing $K$ logits
+       $z=[z_1,\\dots,z_K]$, still applies softmax $p(k)=e^{z_k}/\\sum_i e^{z_i}$, and still computes
+       cross-entropy against a target. The <i>only</i> thing that changes is which target vector you feed
+       that cross-entropy.</p>
+       <ol>
+         <li><b>Forward pass &mdash; unchanged.</b> Inputs &rarr; (any backbone: convolutions, Transformer
+         blocks, an MLP, whatever) &rarr; final linear head &rarr; logits $z\\in\\mathbb{R}^{K}$ &rarr;
+         softmax &rarr; predicted distribution $p$. No new parameters, no new layers, no change to the
+         model's shape.</li>
+         <li><b>Target construction &mdash; the one modification.</b> Instead of the one-hot target
+         $\\delta_{k,y}$, build the smoothed target $q'(k)=(1-\\epsilon)\\delta_{k,y}+\\epsilon/K$ (uniform
+         reference $u(k)=1/K$). This is a cheap elementwise op on the label vector with no learnable
+         parameters.</li>
+         <li><b>Loss head.</b> Compute $H(q',p)=-\\sum_k q'(k)\\log p(k)$ &mdash; the same cross-entropy
+         operator, just fed $q'$ in place of the one-hot. The backward gradient at the logits keeps its
+         familiar form $\\partial\\ell/\\partial z_k = p(k)-q'(k)$; it now subtracts the smoothed target,
+         which is what stops the true logit from being pushed infinitely high.</li>
+       </ol>
+       <p><b>Net effect on the pipeline.</b> Training: swap one-hot &rarr; smoothed target at the loss.
+       <b>Inference: completely unchanged</b> &mdash; you deploy the same softmax classifier. Because it
+       touches only the target distribution, the same line drops into <i>any</i> architecture that ends in
+       a softmax cross-entropy (Inception, ResNet, Transformer), which is why it reads as a regularizer
+       against over-confidence rather than a model-structure change. In PyTorch the entire "architecture
+       delta" collapses to one argument: <code>nn.CrossEntropyLoss(label_smoothing=eps)</code>.</p>`,
+
     symbols: [
       { sym: "$K$", desc: "the number of classes (e.g. 1000 for ImageNet, 5 in our toy example)." },
       { sym: "$y$", desc: "the index of the true class for a given training example." },

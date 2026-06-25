@@ -156,6 +156,39 @@
        correct transcript &mdash; one loss, end to end. The paper notes that "on convergence, the $\\alpha_i$
        distribution is typically very sharp" (&sect;3.2): the Speller learns to point attention at the few
        audio chunks it is currently spelling, sweeping left-to-right like Fig. 2.</p>`,
+    architecture:
+      `<p>LAS is one network with two stacked sub-modules (paper's Fig. 1, &sect;4 gives the exact sizes).</p>
+       <p><b>1 &mdash; Listener (acoustic encoder), &sect;3.1 + &sect;4.</b> Input is $T$ log-mel filter-bank
+       frames, one vector every 10&nbsp;ms.</p>
+       <ul>
+        <li><b>Bottom layer:</b> a single plain <b>BiLSTM</b> (forward + backward LSTM) over the raw
+        frames &mdash; output length still $T$.</li>
+        <li><b>3 pyramidal BiLSTM (pBLSTM) layers</b> on top, <b>512 nodes each</b> (256 per direction).
+        Each pBLSTM first <b>concatenates the two outputs at adjacent time steps</b> of the layer below
+        (Eqn 5) &mdash; so the input width doubles and the <b>time length halves</b> &mdash; then runs a BiLSTM
+        over that. Time goes $T \\to T/2 \\to T/4 \\to T/8$.</li>
+        <li><b>Output:</b> $h=(h_1,\\ldots,h_U)$ with $U \\approx T/2^3 = T/8$ feature vectors &mdash; the
+        $8\\times$ time reduction (&sect;3.1) the Speller attends over. Cuts attention cost from $O(TS)$ to
+        $O(US)$.</li>
+       </ul>
+       <p><b>2 &mdash; Speller (attention character decoder), &sect;3.2 + &sect;4.</b> Runs once per output
+       character $i$, conditioned on all previous characters (Eqn 1).</p>
+       <ul>
+        <li><b>Decoder RNN:</b> a <b>2-layer LSTM, 512 nodes each</b>, holding state $s_i$. Updated by
+        $s_i=\\text{RNN}(s_{i-1}, y_{i-1}, c_{i-1})$ &mdash; previous state, previous character (embedded),
+        previous context (Eqn 7).</li>
+        <li><b>AttentionContext (content-based attention):</b> two small <b>MLPs</b> $\\phi$ (on $s_i$) and
+        $\\psi$ (on each $h_u$); their inner product is the energy $e_{i,u}$ (Eqn 9), a softmax over the $U$
+        encoder steps gives weights $\\alpha_{i,u}$ (Eqn 10), and the context $c_i=\\sum_u \\alpha_{i,u}h_u$
+        is the weighted sum of Listener features (Eqn 11). Recomputed at every step (Eqn 6).</li>
+        <li><b>CharacterDistribution:</b> an <b>MLP with a softmax</b> over the character vocabulary
+        (letters, space, &lt;sos&gt;/&lt;eos&gt;), taking $[s_i; c_i]$ and emitting
+        $P(y_i\\mid x, y_{&lt;i})$ (Eqn 8).</li>
+       </ul>
+       <p><b>Training:</b> Listener and Speller are trained <b>jointly, end-to-end</b>, maximizing the
+       log-probability of the correct character sequence (one cross-entropy loss). A sampling trick
+       (&sect;3.3) sometimes feeds the model's own previous prediction $\\tilde y_i$ instead of the
+       ground-truth character, to close the train/inference gap. Decoding uses beam search (beam width 32).</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input audio</b>: a sequence of $T$ acoustic frames (the paper uses log-mel filter-bank features, one vector every 10 ms)." },
       { sym: "$T$", desc: "the <b>input length</b> &mdash; the number of audio frames (hundreds to thousands for one utterance)." },
@@ -173,7 +206,16 @@
       { sym: "“softmax”", desc: "a plain term: exponentiate a list of scores and divide by their total, giving positive numbers that sum to 1 &mdash; here it turns energies into attention weights." },
       { sym: "“BiLSTM”", desc: "a <b>bidirectional Long Short-Term Memory</b> RNN: two LSTMs, one reading the sequence forwards and one backwards, concatenated, so each output sees both past and future context." }
     ],
-    formula: `$$ h_i^{j} = \\text{pBLSTM}\\!\\Big(h_{i-1}^{j},\\ \\big[\\,h_{2i}^{j-1},\\ h_{2i+1}^{j-1}\\,\\big]\\Big) \\;\\text{(Eqn 5)} \\qquad e_{i,u} = \\langle\\phi(s_i),\\,\\psi(h_u)\\rangle \\;\\text{(Eqn 9)} \\qquad \\alpha_{i,u} = \\frac{\\exp(e_{i,u})}{\\sum_{u'}\\exp(e_{i,u'})} \\;\\text{(Eqn 10)} \\qquad c_i = \\sum_{u}\\alpha_{i,u}\\,h_u \\;\\text{(Eqn 11)} $$`,
+    formula: `$$ P(y\\mid x) = \\prod_i P\\!\\big(y_i \\mid x,\\, y_{&lt;i}\\big) \\qquad\\text{(Eqn 1 — chain rule; each character conditions on all earlier ones)} $$
+       <p class="cap">The whole transcript probability is the product of per-character probabilities; the &ldquo;$y_{&lt;i}$&rdquo; is exactly what CTC drops and LAS keeps.</p>
+       $$ h = \\text{Listen}(x) \\qquad P(y\\mid x) = \\text{AttendAndSpell}(h,\\,y) \\qquad\\text{(Eqns 2-3 — the two-function split: encoder, then attention decoder)} $$
+       <p class="cap">&sect;3: the Listener encodes audio $x$ into a shorter feature sequence $h$; the Speller decodes characters from $h$.</p>
+       $$ h_i^{j} = \\text{pBLSTM}\\!\\Big(h_{i-1}^{j},\\ \\big[\\,h_{2i}^{j-1},\\ h_{2i+1}^{j-1}\\,\\big]\\Big) \\qquad\\text{(Eqn 5 — pyramidal BiLSTM; halves the time resolution each layer)} $$
+       <p class="cap">&sect;3.1: step $i$ of layer $j$ <b>concatenates two adjacent steps</b> $2i,2i{+}1$ of the layer below, so length halves; stacking 3 pBLSTMs gives $2^3=8\\times$ fewer steps.</p>
+       $$ c_i = \\text{AttentionContext}(s_i,\\,h) \\qquad s_i = \\text{RNN}(s_{i-1},\\,y_{i-1},\\,c_{i-1}) \\qquad P\\!\\big(y_i\\mid x, y_{&lt;i}\\big) = \\text{CharacterDistribution}(s_i,\\,c_i) \\qquad\\text{(Eqns 6-8 — the Speller recurrence)} $$
+       <p class="cap">&sect;3.2: get the context (Eqn 6), advance the 2-layer LSTM state from previous state/character/context (Eqn 7), and emit the next character from $[s_i;c_i]$ via an MLP-softmax (Eqn 8 — the character output distribution).</p>
+       $$ e_{i,u} = \\langle\\phi(s_i),\\,\\psi(h_u)\\rangle \\qquad \\alpha_{i,u} = \\frac{\\exp(e_{i,u})}{\\sum_{u'}\\exp(e_{i,u'})} \\qquad c_i = \\sum_{u}\\alpha_{i,u}\\,h_u \\qquad\\text{(Eqns 9-11 — content-based attention)} $$
+       <p class="cap">&sect;3.2: scalar energy as an inner product of two MLP outputs (Eqn 9), softmax over encoder steps (Eqn 10), context as the weighted sum of Listener features (Eqn 11).</p>`,
     whatItDoes:
       `<p>Two ideas, four equations.</p>
        <p><b>Eqn 5 (the pyramid).</b> To build step $i$ of pyramid layer $j$, take <b>two consecutive

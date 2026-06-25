@@ -156,10 +156,47 @@
        waveform: "We use the Griffin-Lim algorithm to synthesize waveform from the predicted spectrogram"; they
        found "raising the predicted magnitudes by a power of 1.2 before feeding to Griffin-Lim reduces
        artifacts." The authors flag it as temporary: "our choice of Griffin-Lim is for simplicity" (&sect;3.4).</p>`,
+    architecture:
+      `<p>Tacotron is one attention seq2seq with three stages (&sect;3, Fig. 1); all sizes from Table 1 (&sect;4).</p>
+       <p><b>1. Encoder (&sect;3.2) &mdash; characters &rarr; annotations $h_j$.</b></p>
+       <ul>
+        <li><b>Character embedding:</b> each character &rarr; a <b>256-D</b> embedding.</li>
+        <li><b>Pre-net:</b> FC-256-ReLU &rarr; Dropout(0.5) &rarr; FC-128-ReLU &rarr; Dropout(0.5). A non-linear bottleneck that aids convergence and generalization.</li>
+        <li><b>CBHG (&sect;3.1):</b> the encoder representation. In order:
+          <ul>
+            <li><b>C</b>onvolution <b>B</b>ank: $K=16$ sets of 1-D convolutions (the $k$-th set = filters of width $k$, 128 channels, ReLU), outputs stacked.</li>
+            <li><b>Max-pool</b> along time, stride 1, width 2 (preserves time resolution, adds local invariance).</li>
+            <li>Two conv projections (conv-3-128-ReLU &rarr; conv-3-128-Linear), then a <b>residual</b> add back to the pre-net output.</li>
+            <li><b>H</b>ighway network: 4 layers of FC-128-ReLU (gated high-level features).</li>
+            <li>Bidirectional <b>G</b>RU, 128 cells each direction &rarr; 256-D annotations $h_j$ (forward + backward context).</li>
+          </ul>
+        </li>
+       </ul>
+       <p><b>2. Attention-based decoder (&sect;3.3) &mdash; annotations &rarr; mel frames.</b> Per step $i$:</p>
+       <ul>
+        <li><b>Decoder pre-net</b> on the previous frame $y_{i-1}$ (same FC-256 &rarr; FC-128 with dropout). Step 0 is fed an all-zero $\\langle\\text{GO}\\rangle$ frame.</li>
+        <li><b>Attention RNN:</b> a 1-layer GRU (256 cells) produces the attention query $s_{i-1}$.</li>
+        <li><b>Content-based tanh attention:</b> score every annotation, softmax over characters, build context $c_i=\\sum_j\\alpha_{ij}h_j$.</li>
+        <li><b>Decoder RNN:</b> concat $[c_i;\\,\\text{attn-RNN output}]$ into a 2-layer GRU (256 cells) with vertical residual connections.</li>
+        <li><b>Output:</b> a linear layer emits $r$ <b>(=2)</b> frames of the <b>80-band mel</b> spectrogram at once, dividing the step count by $r$.</li>
+       </ul>
+       <p><b>3. Post-processing net + vocoder (&sect;3.4) &mdash; mel &rarr; waveform.</b></p>
+       <ul>
+        <li><b>Post-net:</b> a second CBHG ($K=8$) sees the whole decoded mel sequence (forward + backward) and converts it to a <b>linear-scale</b> magnitude spectrogram, correcting decoder errors.</li>
+        <li><b>Griffin-Lim:</b> a training-free iterative algorithm reconstructs the waveform from that magnitude spectrogram; magnitudes are raised to the power <b>1.2</b> first to reduce artifacts. (A deliberate placeholder, &sect;3.4.)</li>
+       </ul>
+       <p><b>Training (&sect;4):</b> end-to-end with an $\\ell_1$ loss on the mel target plus an $\\ell_1$ loss on the linear post-net target (equal weights), Adam with learning-rate decay (0.001 &rarr; 0.0001).</p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>input character sequence</b> (the text, one symbol per character), of length $T_x$." },
       { sym: "$T_x$", desc: "the <b>number of input characters</b> &mdash; and hence the number of annotations $h_j$ the encoder produces." },
       { sym: "$h_j$", desc: "the <b>encoder annotation</b> for character position $j$: a vector summarizing character $j$ in context. Tacotron produces these with a CBHG module; our toy build uses a bidirectional GRU." },
+      { sym: "$H$", desc: "the <b>full matrix of encoder annotations</b>, with column $j$ equal to $h_j$ &mdash; the CBHG output the attention reads over." },
+      { sym: "$P$", desc: "the <b>input to a CBHG module</b> (the pre-net output in the encoder): the sequence the convolution bank, highway, and bidirectional GRU process." },
+      { sym: "$K$", desc: "the <b>number of filter widths in the CBHG convolution bank</b>: the $k$-th set has filters of width $k$ for $k=1,\\ldots,K$ ($K=16$ in the encoder, $K=8$ in the post-net, &sect;3.1)." },
+      { sym: "$\\|$", desc: "<b>concatenation</b> &mdash; here, stacking the $K$ convolution-bank outputs together along the channel axis (&sect;3.1)." },
+      { sym: "$\\hat{Y}, Y$", desc: "the <b>predicted</b> and <b>ground-truth mel-scale spectrograms</b> (the seq2seq target); $\\hat{Y}$ is what the decoder emits, $Y$ is the L1 target (&sect;4)." },
+      { sym: "$\\hat{Z}, Z$", desc: "the <b>predicted</b> and <b>ground-truth linear-scale magnitude spectrograms</b> (the post-net target); $\\hat{Z}$ is fed to Griffin-Lim, $Z$ is the second L1 target (&sect;4)." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>total training loss</b>: the $\\ell_1$ error on the mel target plus the $\\ell_1$ error on the linear target, with equal weights (&sect;4)." },
       { sym: "$y_i$", desc: "the <b>$i$-th output block</b>: a group of $r$ spectrogram frames emitted at decoder step $i$ (each frame is a vector of per-frequency energies for one time slice)." },
       { sym: "$r$", desc: "the <b>reduction factor</b>: how many spectrogram frames the decoder predicts per step. Larger $r$ means fewer decoder steps. The paper uses $r=2$ (&sect;3.3, Table 1)." },
       { sym: "$s_{i-1}$", desc: "the <b>decoder hidden state</b> just before emitting block $i$ &mdash; the decoder's running memory of the audio produced so far; it is the query that decides which characters to read." },
@@ -172,7 +209,18 @@
       { sym: "“Griffin-Lim”", desc: "a plain term: a classic, training-free iterative algorithm that recovers a time-domain <b>waveform</b> from a magnitude spectrogram by guessing and refining the missing phase. Tacotron's (placeholder) vocoder." },
       { sym: "“softmax”", desc: "a plain term: turns a list of real scores into positive numbers that sum to 1 (exponentiate, then divide by the total) &mdash; here it converts alignment scores into attention weights." }
     ],
-    formula: `$$ e_{ij} = v^{\\top}\\tanh\\!\\big(W s_{i-1} + U h_j\\big) \\qquad \\alpha_{ij} = \\frac{\\exp(e_{ij})}{\\sum_{k=1}^{T_x}\\exp(e_{ik})} \\qquad c_i = \\sum_{j=1}^{T_x}\\alpha_{ij}\\,h_j $$`,
+    formula: `$$ H = \\mathrm{CBHG}\\big(\\mathrm{prenet}(\\mathrm{Embed}(x))\\big), \\qquad h_j = H_{:,j} $$
+       <p>Encoder (&sect;3.2): characters $x$ are embedded, passed through a pre-net, then a CBHG module, giving one annotation $h_j$ per character.</p>
+       $$ \\mathrm{CBHG}(P) = \\mathrm{BiGRU}\\Big(\\mathrm{Highway}\\big(\\underbrace{\\mathrm{Conv1D}_{1\\times3}\\big(\\mathrm{MaxPool}_{s=1}(\\,\\|_{k=1}^{K}\\,\\mathrm{Conv1D}_{k}(P))\\big) + P}_{\\text{conv bank} \\to \\text{pool} \\to \\text{proj} + \\text{residual}}\\big)\\Big) $$
+       <p>The CBHG module (&sect;3.1): a bank of $K$ 1-D convolutions (the $k$-th set has filters of width $k$) is concatenated ($\\|$), max-pooled with stride 1, projected, added back to the input $P$ via a residual connection, run through a highway network, and topped with a bidirectional GRU.</p>
+       $$ e_{ij} = v^{\\top}\\tanh\\!\\big(W s_{i-1} + U h_j\\big) \\qquad \\alpha_{ij} = \\frac{\\exp(e_{ij})}{\\sum_{k=1}^{T_x}\\exp(e_{ik})} \\qquad c_i = \\sum_{j=1}^{T_x}\\alpha_{ij}\\,h_j $$
+       <p>Content-based tanh attention (&sect;3.3): score each character $j$ against decoder query $s_{i-1}$, softmax over the $T_x$ characters, then context = weighted average of annotations. Same additive form as Bahdanau.</p>
+       $$ s_i = \\mathrm{DecoderRNN}\\big([\\,c_i\\,;\\,\\mathrm{prenet}(y_{i-1})\\,],\\, s_{i-1}\\big), \\qquad \\hat{y}_i = \\mathrm{Linear}(s_i) \\in \\mathbb{R}^{r\\times 80}, \\qquad y_0 = \\mathbf{0}\\;(\\langle\\text{GO}\\rangle) $$
+       <p>Decoder step (&sect;3.3): concatenate context $c_i$ with the pre-net of the previous frame, update a stack of residual GRUs, and a linear layer emits a block of $r$ mel frames at once; the first step is fed an all-zero $\\langle\\text{GO}\\rangle$ frame. The paper uses $r=2$, 80 mel bands.</p>
+       $$ \\hat{Z} = \\mathrm{CBHG}_{\\text{post}}(\\hat{Y}), \\qquad \\text{waveform} = \\mathrm{GriffinLim}\\big(\\hat{Z}^{\\,1.2}\\big) $$
+       <p>Post-processing net + vocoder (&sect;3.4): a CBHG converts the predicted mel spectrogram $\\hat{Y}$ to a linear-scale magnitude spectrogram $\\hat{Z}$, then Griffin-Lim reconstructs a waveform; magnitudes are raised to the power 1.2 first to reduce artifacts.</p>
+       $$ \\mathcal{L} = \\underbrace{\\|\\hat{Y} - Y\\|_1}_{\\text{mel (seq2seq)}} + \\underbrace{\\|\\hat{Z} - Z\\|_1}_{\\text{linear (post-net)}} $$
+       <p>Training loss (&sect;4): a simple $\\ell_1$ (mean-absolute-error) loss on both the mel-scale seq2seq target and the linear-scale post-net target, with equal weights.</p>`,
     whatItDoes:
       `<p>These are the three steps of <b>content-based attention</b> (&sect;3.3) &mdash; the same
        "score &rarr; softmax &rarr; weighted sum" skeleton as Bahdanau, here mapping <i>characters</i> to

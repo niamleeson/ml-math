@@ -136,6 +136,35 @@
        <p><b>Training.</b> Because there are far more frames than letters and no one says which frame is which
        letter, the network is trained with the <b>CTC loss</b>, which sums the probability over every valid
        alignment of the target string to the frames (&sect;2; full math in <code>paper-ctc</code>).</p>`,
+    architecture:
+      `<p>Deep Speech is a stack of <b>5 hidden layers</b> on top of a spectrogram input, ending in a softmax
+       and a CTC objective (&sect;2). Component by component, in the order data flows:</p>
+       <ol>
+        <li><b>Input: spectrogram + context.</b> The waveform becomes a spectrogram $x$ where $x_{t,p}$ is the
+        power of frequency bin $p$ at frame $t$ (20&nbsp;ms window, 10&nbsp;ms stride). At each frame $t$ the
+        first layer receives $x_t$ <i>spliced with $C$ context frames on each side</i>, $C\\in\\{5,7,9\\}$, so its
+        input width is $(2C+1)$ frames of frequency bins.</li>
+        <li><b>Layers 1&ndash;3: feed-forward, per frame.</b> Three fully-connected layers applied independently
+        at every time step, each $h^{(l)}_t = g(W^{(l)}h^{(l-1)}_t + b^{(l)})$ with the clipped ReLU
+        $g(z)=\\min\\{\\max\\{0,z\\},20\\}$. No information crosses time yet.</li>
+        <li><b>Layer 4: bidirectional recurrent.</b> The single layer that moves information <i>along time</i>.
+        Two independent hidden sequences: a forward state $h^{(f)}$ computed for $t=1\\ldots T$ using its own
+        recurrent matrix $W^{(f)}_r$, and a backward state $h^{(b)}$ computed for $t=T\\ldots 1$ using $W^{(b)}_r$.
+        (The paper uses a plain RNN recurrence, not an LSTM/GRU, to keep it fast on GPUs.)</li>
+        <li><b>Combine + Layer 5.</b> The two directions are <i>summed</i>, $h^{(4)}_t = h^{(f)}_t + h^{(b)}_t$
+        (not concatenated), and a fifth feed-forward layer $h^{(5)}_t = g(W^{(5)}h^{(4)}_t + b^{(5)})$ mixes them.</li>
+        <li><b>Layer 6: softmax output.</b> A linear map plus softmax over the alphabet
+        $\\{a,\\ldots,z,\\text{space},\\text{apostrophe},\\text{blank}\\}$ produces $\\hat{y}_{t,k}=\\mathbb{P}(c_t=k\\mid x)$
+        at every frame &mdash; a $T\\times V$ stack of per-frame character distributions.</li>
+        <li><b>Training objective: CTC.</b> The whole stack is trained by the CTC loss
+        $\\mathcal{L}(\\hat{y},y)$, which sums probability over all alignments of the target $y$ to the $T$
+        frames; gradients $\\nabla_{\\hat{y}}\\mathcal{L}$ flow back through the softmax into all 5 layers.</li>
+        <li><b>Decoding: beam search + N-gram LM.</b> At test time the per-frame stack is decoded by a beam
+        search that maximises $Q(c)=\\log\\mathbb{P}(c\\mid x)+\\alpha\\log\\mathbb{P}_{\\text{lm}}(c)+\\beta\\,\\text{word\\_count}(c)$,
+        fusing the acoustic RNN with a separately-trained N-gram language model (&sect;2.2; beam size 1000&ndash;8000).</li>
+       </ol>
+       <p>Engineering that lets this scale (&sect;3&ndash;4, context not new math): a custom multi-GPU
+       data-parallel trainer, and <b>synthetic noise</b> added to the audio to make the model robust.</p>`,
     symbols: [
       { sym: "$x$ / $x_t$", desc: "the input spectrogram, and its column (frame) at time step $t$ — energy per frequency band in one short audio window." },
       { sym: "$t$, $T$", desc: "time-step index and total number of frames in the utterance." },
@@ -147,11 +176,43 @@
       { sym: "$W^{(f)}_r$, $W^{(b)}_r$", desc: "the recurrent weight matrices that carry the forward / backward state from the neighbouring time step." },
       { sym: "$c_t$", desc: "the character emitted at frame $t$, drawn from $\\{a,\\ldots,z,\\text{space},\\text{apostrophe},\\text{blank}\\}$." },
       { sym: "$\\hat{y}_{t,k} = \\mathbb{P}(c_t=k\\mid x)$", desc: "the softmax output: probability that frame $t$ is character $k$, given the whole input." },
+      { sym: "$\\mathcal{L}(\\hat{y}, y)$", desc: "the CTC loss: the error between the softmax stack $\\hat{y}$ and the ground-truth character sequence $y$; $\\nabla_{\\hat{y}}\\mathcal{L}$ is its gradient w.r.t. the network outputs." },
+      { sym: "$y$", desc: "the ground-truth target character sequence (the transcript) used to compute the CTC loss." },
+      { sym: "$Q(c)$", desc: "the decode-time objective maximised over candidate character strings $c$ by beam search: RNN score plus language-model score plus a length reward." },
+      { sym: "$\\mathbb{P}_{\\text{lm}}(c)$", desc: "the probability of string $c$ under a separately-trained N-gram language model." },
+      { sym: "$\\alpha$, $\\beta$", desc: "cross-validated weights in $Q(c)$: $\\alpha$ weights the language-model score, $\\beta$ rewards word count to offset the LM's bias toward short strings." },
+      { sym: "$\\text{word\\_count}(c)$", desc: "the number of words in candidate string $c$ — the length term in the decode objective $Q(c)$." },
       { sym: "CTC", desc: "Connectionist Temporal Classification — the loss that scores a target string by summing over all frame-to-letter alignments (see paper-ctc)." },
       { sym: "WER", desc: "Word Error Rate — the standard ASR score: edits (insert/delete/substitute words) needed to fix the output, divided by the number of reference words. Lower is better." }
     ],
     formula:
-      `$$h^{(6)}_{t,k} \\;=\\; \\hat{y}_{t,k} \\;\\equiv\\; \\mathbb{P}(c_t = k \\mid x) \\;=\\; \\frac{\\exp\\!\\left(W^{(6)}_k h^{(5)}_t + b^{(6)}_k\\right)}{\\sum_{j}\\exp\\!\\left(W^{(6)}_j h^{(5)}_t + b^{(6)}_j\\right)}$$`,
+      `$$h^{(l)}_t \\;=\\; g\\!\\left(W^{(l)} h^{(l-1)}_t + b^{(l)}\\right), \\qquad l = 1,2,3$$
+       <p>The three non-recurrent layers (&sect;2): each applies a weight matrix and the clipped-ReLU
+       nonlinearity to the previous layer's activation, independently at every time step $t$. Layer 1 reads the
+       spectrogram frame $x_t$ spliced with $C$ context frames on each side, $C\\in\\{5,7,9\\}$.</p>
+       $$g(z) \\;=\\; \\min\\{\\max\\{0,z\\},\\,20\\}$$
+       <p>The clipped rectified-linear activation (&sect;2): zero for negatives, identity on $[0,20]$, capped at
+       20 so the deep stack's activations cannot blow up.</p>
+       $$h^{(f)}_t \\;=\\; g\\!\\left(W^{(4)} h^{(3)}_t + W^{(f)}_r h^{(f)}_{t-1} + b^{(4)}\\right)$$
+       $$h^{(b)}_t \\;=\\; g\\!\\left(W^{(4)} h^{(3)}_t + W^{(b)}_r h^{(b)}_{t+1} + b^{(4)}\\right)$$
+       <p>The bidirectional recurrent layer 4 (&sect;2): a forward state $h^{(f)}$ swept left&rarr;right (carries
+       $h^{(f)}_{t-1}$) and a backward state $h^{(b)}$ swept right&larr;left (carries $h^{(b)}_{t+1}$), so each
+       output sees the whole utterance &mdash; past and future sound.</p>
+       $$h^{(4)}_t \\;=\\; h^{(f)}_t + h^{(b)}_t, \\qquad h^{(5)}_t \\;=\\; g\\!\\left(W^{(5)} h^{(4)}_t + b^{(5)}\\right)$$
+       <p>Combine the two directions by addition, then a fifth feed-forward layer mixes them (&sect;2).</p>
+       $$h^{(6)}_{t,k} \\;=\\; \\hat{y}_{t,k} \\;\\equiv\\; \\mathbb{P}(c_t = k \\mid x) \\;=\\; \\frac{\\exp\\!\\left(W^{(6)}_k h^{(5)}_t + b^{(6)}_k\\right)}{\\sum_{j}\\exp\\!\\left(W^{(6)}_j h^{(5)}_t + b^{(6)}_j\\right)}$$
+       <p>The softmax output layer 6 (&sect;2): a probability over the character alphabet
+       $c_t\\in\\{a,\\ldots,z,\\text{space},\\text{apostrophe},\\text{blank}\\}$ at every frame $t$.</p>
+       $$\\mathcal{L}(\\hat{y}, y), \\qquad \\nabla_{\\hat{y}}\\,\\mathcal{L}(\\hat{y}, y)$$
+       <p>The CTC loss (&sect;2): given the softmax stack $\\hat{y}$ and the ground-truth character sequence $y$,
+       it scores $y$ by summing the probability over every frame-to-letter alignment, and supplies the gradient
+       $\\nabla_{\\hat{y}}\\mathcal{L}$ back to the network. The forward&ndash;backward dynamic program is owned by
+       <code>paper-ctc</code>.</p>
+       $$Q(c) \\;=\\; \\log \\mathbb{P}(c \\mid x) \\;+\\; \\alpha \\, \\log \\mathbb{P}_{\\text{lm}}(c) \\;+\\; \\beta \\, \\text{word\\_count}(c)$$
+       <p>The N-gram language-model integration (&sect;2.2): at decode time a beam search maximises $Q(c)$ over
+       character strings $c$, trading off the RNN score $\\log\\mathbb{P}(c\\mid x)$, the language-model score
+       $\\log\\mathbb{P}_{\\text{lm}}(c)$ (weight $\\alpha$), and a word-count reward (weight $\\beta$) that
+       counteracts the LM's bias toward shorter strings; $\\alpha,\\beta$ are set by cross-validation.</p>`,
     whatItDoes:
       `<p>This is the <b>output layer</b> (the softmax) from &sect;2. It reads the final hidden vector
        $h^{(5)}_t$ at frame $t$ and turns it into a probability distribution over the alphabet: the numerator

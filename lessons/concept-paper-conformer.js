@@ -136,6 +136,40 @@
        <p><b>4. Second half-step feed-forward + LayerNorm (Macaron, back slice).</b> Run the second FFN, add back
        half of it, and finish with a LayerNorm: $y = \\mathrm{LayerNorm}\\big(x'' + \\tfrac{1}{2}\\,\\mathrm{FFN}(x'')\\big)$.
        Stack many such blocks (after a convolution-subsampling front end) to form the encoder.</p>`,
+    architecture:
+      `<p><b>The Conformer encoder, end to end (&sect;2, Figure 1).</b> An audio feature sequence (log-mel
+       spectrogram frames) flows through:</p>
+       <ol>
+        <li><b>Convolution subsampling front end.</b> A small convolutional stack that downsamples the input in
+        time (the paper's "SpecAug + convolution subsampling" front end), shrinking the frame rate before the
+        expensive blocks run.</li>
+        <li><b>Linear projection + dropout.</b> Project the subsampled features to the encoder width $d$.</li>
+        <li><b>$N$ stacked Conformer blocks.</b> The body of the encoder. Each block is the four-line Macaron
+        structure of Equation 1 (below).</li>
+       </ol>
+       <p><b>One Conformer block, module by module</b> (each is a <i>pre-norm residual</i> &mdash; LayerNorm sits
+       <i>inside</i> the module before its first weight layer, and the residual adds back to the block input):</p>
+       <ul>
+        <li><b>Feed-Forward module #1 (half-step, &sect;2.3).</b> LayerNorm &rarr; Linear $d\\!\\to\\!4d$ &rarr; Swish
+        &rarr; dropout &rarr; Linear $4d\\!\\to\\!d$ &rarr; dropout. Added back as $\\tfrac{1}{2}$ a residual:
+        $\\tilde{x}=x+\\tfrac{1}{2}\\mathrm{FFN}(x)$.</li>
+        <li><b>Multi-Headed Self-Attention module (&sect;2.1).</b> LayerNorm &rarr; multi-head self-attention with
+        <b>relative sinusoidal positional encoding</b> (Transformer-XL scheme) &rarr; dropout. Full residual:
+        $x'=\\tilde{x}+\\mathrm{MHSA}(\\tilde{x})$. The <b>global</b> path.</li>
+        <li><b>Convolution module (&sect;2.2, Figure 2).</b> LayerNorm &rarr; <b>pointwise</b> Conv1d (width $1$,
+        expansion factor $2$: $d\\!\\to\\!2d$ channels) &rarr; <b>GLU</b> (gated linear unit: splits the $2d$ channels
+        into a value half and a gate half, output $d$ channels) &rarr; <b>depthwise</b> Conv1d (kernel $32$, one
+        filter per channel &mdash; the local time mixing) &rarr; <b>BatchNorm</b> &rarr; <b>Swish</b> &rarr;
+        <b>pointwise</b> Conv1d ($d\\!\\to\\!d$) &rarr; dropout. Full residual: $x''=x'+\\mathrm{Conv}(x')$. The
+        <b>local</b> path. (BatchNorm here, not LayerNorm &mdash; it follows the depthwise conv.)</li>
+        <li><b>Feed-Forward module #2 (half-step) + final LayerNorm.</b> Same FFN shape as #1, half residual, then a
+        closing LayerNorm: $y=\\mathrm{LayerNorm}(x''+\\tfrac{1}{2}\\mathrm{FFN}(x''))$.</li>
+       </ul>
+       <p><b>Three published sizes (&sect;3, Table 1).</b> Small: $N=16$ blocks, encoder dim $d=144$, $4$ heads,
+       conv kernel $32$, $10.3$M params. Medium: $N=16$, $d=256$, $4$ heads, $30.7$M. Large: $N=17$, $d=512$,
+       $8$ heads, $118.8$M. All use depthwise-conv kernel size $32$. The encoder feeds a single-LSTM decoder in the
+       paper's ASR setup. <i>Our notebook builds ONE block at toy width $d=16$ with $4$ heads and kernel $15$ &mdash;
+       not the paper's dimensions.</i></p>`,
     symbols: [
       { sym: "$x_i$", desc: "the <b>input</b> to the block at time position $i$ &mdash; one vector per audio frame in the sequence." },
       { sym: "$\\tilde{x}_i$", desc: "the input after the <b>first half-step FFN</b> residual has been added." },

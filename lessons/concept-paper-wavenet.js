@@ -166,6 +166,35 @@
        outputs pass through a couple of $1\\times1$ convolutions and a softmax to the 256-way per-sample
        distribution. The paper uses "both residual and parameterised skip connections ... throughout the network,
        to speed up convergence and enable training of much deeper models."</p>`,
+    architecture:
+      `<p>WaveNet is a <b>stack of identical gated residual blocks</b> fed by causal convolutions and finished by a
+       skip-connection output head. Data flow, top to bottom (&sect;2.1-2.5):</p>
+       <ul>
+        <li><b>Input.</b> The raw waveform is $\\mu$-law quantized to <b>256 levels</b> (&sect;2.2) and fed in as a
+        1-D, time-indexed signal. A first <b>causal</b> convolution (left-padded, so position $t$ reads only inputs
+        $\\le t$) lifts it to the residual channel width.</li>
+        <li><b>Stacked dilated causal blocks.</b> A sequence of residual blocks whose <b>dilation doubles</b>
+        $1,2,4,\\dots,512$ and then <b>repeats</b> (the paper's pattern: "$1,2,4,\\dots,512,\\,1,2,4,\\dots,512,\\,
+        \\dots$"). Each $1,2,\\dots,512$ block has a <b>1024-sample receptive field</b> (&sect;2.1); stacking several
+        such blocks multiplies the total reach while keeping the network shallow and fully parallel to train.</li>
+        <li><b>Inside one block.</b> (1) two dilated causal convolutions of the block input &mdash; a "filter"
+        branch $W_{f,k}$ and a "gate" branch $W_{g,k}$; (2) the <b>gated activation</b>
+        $\\mathbf{z}=\\tanh(W_{f,k}*\\mathbf{x})\\odot\\sigma(W_{g,k}*\\mathbf{x})$ (Eq.&nbsp;2, &sect;2.3); (3) a
+        $1\\times1$ conv producing two outputs &mdash; one added back to the block input (<b>residual</b>) to form
+        the next block's input, and one tapped off as a <b>skip</b> connection (&sect;2.4). When conditioning is
+        used, the global $V_{*,k}^{\\top}\\mathbf{h}$ (Eq.&nbsp;3) or local $V_{*,k}*\\mathbf{y}$ (Eq.&nbsp;4) bias is
+        added <i>inside</i> both $\\tanh$ and $\\sigma$ before the multiply.</li>
+        <li><b>Output head.</b> <b>Sum all skip connections</b>, then $\\mathrm{ReLU}\\to 1\\times1\\text{ conv}\\to
+        \\mathrm{ReLU}\\to 1\\times1\\text{ conv}$ down to <b>256 logits per time step</b>, and a <b>softmax</b> giving
+        the categorical distribution over the 256 $\\mu$-law levels (&sect;2.2).</li>
+        <li><b>Two run modes.</b> <i>Training</i> is a single parallel forward pass producing all $T$ conditionals at
+        once (causality makes this a valid likelihood). <i>Generation</i> is strictly sequential: sample $x_t$ from
+        the head, append it, recompute, repeat &mdash; the known speed cost later addressed by Parallel WaveNet.</li>
+        <li><b>Conditioning paths (&sect;2.5).</b> <b>Global</b>: one latent $\\mathbf{h}$ (speaker id) projected and
+        broadcast to every step. <b>Local</b>: a lower-rate series $\\mathbf{h}_t$ (linguistic/$F_0$ features)
+        upsampled to audio rate by a learned transposed convolution, $\\mathbf{y}=f(\\mathbf{h})$, then injected per
+        step.</li>
+       </ul>`,
     symbols: [
       { sym: "$\\mathbf{x}$", desc: "the <b>waveform</b>, a sequence of audio samples $x_1,\\dots,x_T$ in time order (here 16,000 per second)." },
       { sym: "$x_t$", desc: "the <b>$t$-th audio sample</b> &mdash; one amplitude value the model predicts (after $\\mu$-law quantization, one of 256 levels)." },
@@ -182,14 +211,28 @@
       { sym: "$\\tanh$", desc: "the <b>hyperbolic tangent</b>, squashing into $(-1,1)$ &mdash; the <b>content</b> branch of the gated unit." },
       { sym: "$\\odot$", desc: "<b>element-wise (Hadamard) multiplication</b> &mdash; multiply two equal-shaped tensors position-by-position." },
       { sym: "$*$", desc: "<b>convolution</b> &mdash; here a <i>dilated causal</i> convolution (left-padded so it never reads the future)." },
+      { sym: "$L$", desc: "the <b>number of stacked dilated layers</b> (depth). With $k=2$ and doubling dilation the receptive field is $2^{L}$." },
+      { sym: "$V_{f,k},\\,V_{g,k}$", desc: "the <b>conditioning weights</b> (filter / gate branches) that inject extra information $\\mathbf{h}$ or $\\mathbf{y}$ into the gated unit (Eqs.&nbsp;3-4, &sect;2.5)." },
+      { sym: "$\\mathbf{h}$", desc: "the <b>conditioning input</b> &mdash; a single global latent (e.g. a speaker embedding, for Eq.&nbsp;3) or a lower-rate time series $\\mathbf{h}_t$ (e.g. linguistic features, for Eq.&nbsp;4)." },
+      { sym: "$\\mathbf{y}$", desc: "the <b>upsampled conditioning series</b> $\\mathbf{y}=f(\\mathbf{h})$ &mdash; the local time series $\\mathbf{h}$ stretched (learned transposed convolution) to the audio sample rate (&sect;2.5)." },
+      { sym: "$V^{\\top}\\mathbf{h}$", desc: "a <b>projected global vector broadcast over all time steps</b> &mdash; the same bias added at every $t$ in global conditioning (Eq.&nbsp;3)." },
       { sym: "$\\mu$", desc: "the <b>$\\mu$-law parameter</b>, set to $\\mu=255$ &mdash; controls the logarithmic companding that lets 256 levels represent the amplitude well." },
       { sym: "causal", desc: "a convolution whose output at $t$ depends only on inputs at times $\\le t$ &mdash; never the future. Implemented by left-padding the time axis." },
       { sym: "dilated", desc: "a convolution that skips inputs with a fixed gap $d$, so a short filter spans a wide region; doubling $d$ per layer grows the receptive field exponentially." },
       { sym: "$\\mu$-law companding", desc: "a logarithmic transform (Eq. below) that COMpresses then exPANDs amplitude, giving fine resolution to quiet sounds; lets 256 quantization levels suffice." }
     ],
-    formula: `$$ p(\\mathbf{x}) \\;=\\; \\prod_{t=1}^{T} p\\big(x_t \\,\\big|\\, x_1, x_2, \\dots, x_{t-1}\\big) \\qquad\\text{(Eq.\\ 1: autoregressive factorization)} $$
+    formula: `$$ p(\\mathbf{x}) \\;=\\; \\prod_{t=1}^{T} p\\big(x_t \\,\\big|\\, x_1, x_2, \\dots, x_{t-1}\\big) \\qquad\\text{(Eq.\\ 1: autoregressive factorization, \\S2)} $$
+<p class="cap">Eq.&nbsp;1 (&sect;2): the likelihood of the whole waveform is the product, over every time step, of each sample's distribution given all earlier samples (chain rule).</p>
+$$ R \\;=\\; 1 + \\sum_{\\ell=1}^{L} (k-1)\\,d_\\ell \\;\\xrightarrow[\\;d_\\ell = 2^{\\ell-1}\\;]{k=2}\\; 2^{L} \\qquad\\text{(receptive field of a dilated causal stack, \\S2.1)} $$
+<p class="cap">&sect;2.1: a $k,d$ causal conv reaches back $(k-1)d$; reaches add across layers, so doubling $d$ ($1,2,4,\\dots,512$) makes the receptive field grow <b>exponentially</b> ($2^{L}$) &mdash; the paper's $1,2,4,\\dots,512$ block has size $1024$.</p>
 $$ \\mathbf{z} \\;=\\; \\tanh\\!\\big(W_{f,k} * \\mathbf{x}\\big) \\;\\odot\\; \\sigma\\!\\big(W_{g,k} * \\mathbf{x}\\big) \\qquad\\text{(Eq.\\ 2: gated activation unit, \\S2.3)} $$
-$$ f(x_t) \\;=\\; \\operatorname{sign}(x_t)\\,\\frac{\\ln\\!\\big(1+\\mu\\,|x_t|\\big)}{\\ln\\!\\big(1+\\mu\\big)},\\qquad \\mu=255 \\qquad\\text{(\\(\\mu\\)-law companding, \\S2.2)} $$`,
+<p class="cap">Eq.&nbsp;2 (&sect;2.3): a $\\tanh$ "content" branch times a $\\sigma$ "gate" branch, element-wise &mdash; a learned input-dependent volume knob, better than ReLU for audio.</p>
+$$ \\mathbf{z} \\;=\\; \\tanh\\!\\big(W_{f,k} * \\mathbf{x} + V_{f,k}^{\\top}\\mathbf{h}\\big) \\;\\odot\\; \\sigma\\!\\big(W_{g,k} * \\mathbf{x} + V_{g,k}^{\\top}\\mathbf{h}\\big) \\qquad\\text{(Eq.\\ 3: global conditioning, \\S2.5)} $$
+<p class="cap">Eq.&nbsp;3 (&sect;2.5): <b>global</b> conditioning &mdash; a single latent $\\mathbf{h}$ (e.g. a speaker embedding) is projected by $V_{*,k}$ and <b>broadcast over all time steps</b>, biasing both branches.</p>
+$$ \\mathbf{z} \\;=\\; \\tanh\\!\\big(W_{f,k} * \\mathbf{x} + V_{f,k} * \\mathbf{y}\\big) \\;\\odot\\; \\sigma\\!\\big(W_{g,k} * \\mathbf{x} + V_{g,k} * \\mathbf{y}\\big),\\qquad \\mathbf{y}=f(\\mathbf{h}) \\qquad\\text{(Eq.\\ 4: local conditioning, \\S2.5)} $$
+<p class="cap">Eq.&nbsp;4 (&sect;2.5): <b>local</b> conditioning &mdash; a lower-rate time series $\\mathbf{h}_t$ (e.g. linguistic features) is upsampled to audio rate, $\\mathbf{y}=f(\\mathbf{h})$ (a learned transposed convolution, which beat plain repetition), then convolved in. Here $*$ on $\\mathbf{y}$ is a $1\\times1$ conv.</p>
+$$ f(x_t) \\;=\\; \\operatorname{sign}(x_t)\\,\\frac{\\ln\\!\\big(1+\\mu\\,|x_t|\\big)}{\\ln\\!\\big(1+\\mu\\big)},\\qquad \\mu=255 \\qquad\\text{(\\(\\mu\\)-law companding \\(\\to\\) 256-way softmax, \\S2.2)} $$
+<p class="cap">&sect;2.2: logarithmic companding squashes the $[-1,1]$ amplitude so quiet sounds get more resolution; the result is binned into <b>256 levels</b> and predicted with a <b>256-way softmax</b>.</p>`,
     whatItDoes:
       `<p><b>Eq.&nbsp;1 (the factorization)</b> says: the probability of the whole waveform equals the product, over
        every time step, of that sample's probability <i>given all the samples before it</i>. It is an exact rewrite

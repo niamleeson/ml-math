@@ -159,6 +159,36 @@
        throw those away: re-run k-means on the <i>trained model's own</i> internal features (iteration 2 clusters
        the 6th Transformer layer into 500 clusters), and pre-train again on these better targets. A weak teacher
        still produced a student good enough to be a better teacher &mdash; the bootstrap that makes HuBERT work.</p>`,
+    architecture:
+      `<p>HuBERT is a single network &mdash; <b>CNN waveform encoder &rarr; BERT Transformer &rarr; projection &rarr;
+       codeword softmax</b> &mdash; trained against <i>offline</i> k-means targets. Trace one waveform through it
+       (&sect;III; encoder reused from wav2vec 2.0).</p>
+       <ul>
+        <li><b>Convolutional waveform encoder (the "front end").</b> Raw 16&nbsp;kHz audio goes through <b>7</b>
+        1-D convolution layers, each <b>512</b> channels, with kernel widths $[10,3,3,3,3,2,2]$ and strides
+        $[5,2,2,2,2,2,2]$. The strides multiply to $5\\times2^6 = 320$, so the audio is downsampled $320\\times$ &mdash;
+        one output vector per <b>20&nbsp;ms</b> of audio. These per-20&nbsp;ms vectors are the <b>frames</b> $X$ the
+        rest of the model works on. (HuBERT borrows this encoder unchanged from <b>paper-wav2vec2</b>.)</li>
+        <li><b>Span masking on the encoder output.</b> Before the Transformer, pick $p=8\\%$ of frames as span
+        <b>starts</b> and overwrite a run of $l=10$ frames each with a single learned <code>[MASK]</code> embedding,
+        giving the corrupted sequence $\\tilde X$. Masking happens on the CNN output, not the raw waveform.</li>
+        <li><b>BERT Transformer encoder (the "context model").</b> A stack of standard <b>bidirectional</b>
+        Transformer blocks (multi-head self-attention with <b>no causal mask</b> + feed-forward, residual +
+        LayerNorm) reads $\\tilde X$ and emits a context vector $o_t$ per frame. Three sizes (Table I):
+        <b>BASE</b> 12 layers / hidden 768 / FFN 3072 / 8 heads (95M params); <b>LARGE</b> 24 / 1024 / 4096 / 16
+        (317M); <b>X-LARGE</b> 48 / 1280 / 5120 / 16 (964M).</li>
+        <li><b>Projection + codebook (the "prediction head", Eq 3).</b> A learned matrix $A$ projects $o_t$ into a
+        codeword space, where it is scored by <b>cosine similarity</b> against a learned <b>codeword embedding</b>
+        $e_c$ for each of the $C$ clusters; divide by temperature $\\tau=0.1$ and softmax to get
+        $p_f(c\\mid\\tilde X,t)$. With a <i>cluster ensemble</i> there is one projection $A^{(k)}$ and one codebook
+        per clustering $k$ (Eq 2).</li>
+        <li><b>Targets are offline, not part of the net.</b> The k-means model $h$ that produces the labels
+        $Z=h(X)$ sits <i>outside</i> the trainable network: it is run once per iteration and its labels are held
+        fixed while the CNN+Transformer+head train by gradient descent. After a round, k-means is re-run on the
+        Transformer's own layer-6 features to make the next round's labels (iterate).</li>
+       </ul>
+       <p>For fine-tuning on a labeled task the codeword head is discarded and a task head (e.g. a CTC character
+       classifier for speech recognition) replaces it on top of the same encoder.</p>`,
     symbols: [
       { sym: "frame", desc: "one short slice of audio (e.g. 25 ms of waveform, stepped every 20 ms). Speech is processed as a sequence of frames; HuBERT predicts a cluster label for masked frames." },
       { sym: "$X$", desc: "the input speech &mdash; the sequence of frame features (or the raw waveform fed to the encoder)." },
@@ -171,7 +201,8 @@
       { sym: "$M$", desc: "the set of <b>masked frame positions</b> ($\\approx$ from $p=8\\%$ span starts of length $l=10$). The masked loss $L_m$ sums only over $M$." },
       { sym: "$o_t$", desc: "the encoder's <b>output vector</b> at frame $t$ &mdash; a context-aware summary built from the whole sequence on both sides (no causal mask)." },
       { sym: "$e_c$", desc: "the learned <b>embedding (codeword) of cluster $c$</b>. The model scores its output against every $e_c$ to decide which cluster a frame belongs to." },
-      { sym: "$A$", desc: "a learned <b>projection matrix</b> mapping the encoder output $o_t$ into the codeword space before comparison (Eq 3)." },
+      { sym: "$A$", desc: "a learned <b>projection matrix</b> mapping the encoder output $o_t$ into the codeword space before comparison (Eq 3). With a cluster ensemble there is one $A^{(k)}$ per clustering $k$." },
+      { sym: "$\\{Z^{(k)}\\}_k$", desc: "an optional <b>ensemble of clusterings</b> (e.g. k-means at several values of $C$); $z_t^{(k)}$ is frame $t$'s label under clustering $k$. Eq 2 sums the masked loss over all $k$." },
       { sym: "$\\mathrm{sim}(a,b)$", desc: "<b>cosine similarity</b> between vectors $a$ and $b$: $\\frac{a\\cdot b}{\\lVert a\\rVert\\,\\lVert b\\rVert}$, ranging $-1$ to $1$. Large when they point the same way." },
       { sym: "$\\tau$", desc: "the <b>temperature</b> ($\\tau=0.1$) dividing the similarities before softmax; small $\\tau$ sharpens the distribution." },
       { sym: "$p_f(c\\mid\\tilde X,t)$", desc: "the model's predicted <b>probability</b> that frame $t$'s cluster is $c$, given the corrupted input (Eq 3)." },
@@ -179,11 +210,17 @@
       { sym: "$\\alpha$", desc: "the <b>weight</b> on the masked loss in $L=\\alpha L_m+(1-\\alpha)L_u$. HuBERT uses $\\alpha=1$ (masked-only); the ablation varies it (&sect;V-D)." },
       { sym: "MFCC", desc: "<b>Mel-Frequency Cepstral Coefficients</b>: a classic 39-dimensional summary of the sound in a frame; iteration-1 k-means clusters these (&sect;IV-B)." }
     ],
-    formula: `$$ L_m(f;X,M,Z)\\;=\\;-\\!\\!\\sum_{t\\in M}\\log p_f\\big(z_t \\,\\big|\\, \\tilde X,\\,t\\big),
+    formula: `$$ Z \\;=\\; h(X) \\;=\\; [\\,z_1,\\ldots,z_T\\,], \\qquad z_t \\in [C] \\quad\\text{(\\S II-A: offline k-means acoustic units)} $$
+      <p>The clustering model $h$ (k-means) turns the audio $X$ into a per-frame sequence of discrete cluster IDs &mdash; the "hidden unit" targets.</p>
+      $$ L_m(f;X,M,Z)\\;=\\;-\\!\\!\\sum_{t\\in M}\\log p_f\\big(z_t \\,\\big|\\, \\tilde X,\\,t\\big),
       \\qquad L \\;=\\; \\alpha\\,L_m + (1-\\alpha)\\,L_u \\quad\\text{(\\S II-B, Eq. 1)} $$
-      $$ p_f\\big(c \\,\\big|\\, \\tilde X,\\,t\\big)\\;=\\;
-      \\frac{\\exp\\!\\big(\\mathrm{sim}(A\\,o_t,\\,e_c)/\\tau\\big)}
-           {\\sum_{c'=1}^{C}\\exp\\!\\big(\\mathrm{sim}(A\\,o_t,\\,e_{c'})/\\tau\\big)} \\quad\\text{(\\S II-B, Eq. 3)} $$`,
+      <p>Masked-prediction cross-entropy over masked frames $M$ (HuBERT minimises $-\\sum\\log p_f$; the paper writes Eq 1 with $+\\sum\\log p_f$). $L_u$ is the same sum over <i>unmasked</i> frames; $\\alpha$ trades them off ($\\alpha=1$ = masked-only).</p>
+      $$ L_m\\big(f;X,\\{Z^{(k)}\\}_k,M\\big)\\;=\\;-\\!\\!\\sum_{t\\in M}\\sum_{k}\\log p_f^{(k)}\\big(z_t^{(k)} \\,\\big|\\, \\tilde X,\\,t\\big) \\quad\\text{(\\S II-B, Eq. 2)} $$
+      <p>Optional <b>cluster ensemble</b>: use several k-means models $\\{Z^{(k)}\\}$ (e.g. different $C$) and sum the masked cross-entropy over all of them &mdash; multiple target codebooks at once.</p>
+      $$ p_f^{(k)}\\big(c \\,\\big|\\, \\tilde X,\\,t\\big)\\;=\\;
+      \\frac{\\exp\\!\\big(\\mathrm{sim}(A^{(k)}\\,o_t,\\,e_c)/\\tau\\big)}
+           {\\sum_{c'=1}^{C}\\exp\\!\\big(\\mathrm{sim}(A^{(k)}\\,o_t,\\,e_{c'})/\\tau\\big)} \\quad\\text{(\\S II-B, Eq. 3)} $$
+      <p>Each prediction is a softmax over the $C$ codewords: project the encoder output $o_t$ by $A^{(k)}$, score by cosine similarity to each codeword $e_c$, sharpen by temperature $\\tau=0.1$. (Single codebook = drop the $k$ superscript.)</p>`,
     whatItDoes:
       `<p><b>The bottom line first (Eq 3).</b> At frame $t$ the encoder gives a vector $o_t$. Project it with $A$,
        measure its <b>cosine similarity</b> to every cluster's learned codeword $e_c$, sharpen by the temperature

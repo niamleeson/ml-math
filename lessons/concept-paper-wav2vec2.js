@@ -131,7 +131,37 @@
        <p><b>Step 6 — keep the codebook diverse (§3.2).</b> A second loss, the <b>diversity loss</b>, pushes the
        model to use all codebook entries roughly equally (otherwise it could collapse onto a few). Together
        they are minimized end-to-end. Afterward, fine-tune with a CTC head on a little labeled audio.</p>`,
+    architecture:
+      `<p>Three trained components feed one objective; the same encoder output flows into <i>two</i> branches
+       (context and quantizer).</p>
+       <p><b>1. Feature encoder $f:\\mathcal{X}\\to\\mathcal{Z}$ (CNN).</b> Input: raw waveform $\\mathbf{X}$.
+       <b>7 convolutional blocks</b>, each = temporal conv &rarr; layer-norm &rarr; GELU. Channels 512;
+       strides (5,2,2,2,2,2,2); kernel widths (10,3,3,3,3,2,2); receptive field 25&nbsp;ms, hop ~20&nbsp;ms.
+       Output: latent frames $\\mathbf{z}_1,\\dots,\\mathbf{z}_T$ at 49&nbsp;Hz.</p>
+       <p><b>2a. Masking + context network $g:\\mathcal{Z}\\to\\mathcal{C}$ (Transformer).</b> Masked latents
+       $\\tilde{\\mathbf{z}}_t$ (hidden frames swapped for the learned mask vector $\\mathbf{m}$) enter a
+       Transformer with a convolutional relative-positional embedding (kernel 128, 16 groups). <b>Base:</b>
+       12 blocks, model dim 768, FFN 3072, 8 heads. <b>Large:</b> 24 blocks, dim 1024, FFN 4096, 16 heads.
+       Output: context vectors $\\mathbf{c}_t$ — the side that makes the prediction.</p>
+       <p><b>2b. Quantizer $\\mathcal{Z}\\to\\mathcal{Q}$ (product quantization, parallel branch).</b> The <i>same</i>
+       (unmasked) latent $\\mathbf{z}_t$ is linearly projected to logits over $G=2$ codebooks of $V=320$ entries;
+       a Gumbel-softmax (temperature $\\tau$, annealed $2\\!\\to\\!0.5$) picks one entry per group (straight-through:
+       hard forward, soft backward). The $G$ chosen sub-vectors are concatenated and linearly mapped to the
+       quantized target $\\mathbf{q}_t$ — the side being predicted.</p>
+       <p><b>3. Objective.</b> Contrastive loss $\\mathcal{L}_m$ pulls $\\mathbf{c}_t$ toward its own $\\mathbf{q}_t$
+       and away from $K=100$ distractor targets; diversity loss $\\mathcal{L}_d$ keeps codebook use even;
+       $\\mathcal{L}=\\mathcal{L}_m+\\alpha\\mathcal{L}_d$.</p>
+       <p><b>Two-stage use.</b> <i>Pretrain</i> all three components on unlabeled audio with $\\mathcal{L}$. Then
+       <i>fine-tune</i>: drop the quantizer, add a randomly-initialized linear <b>CTC</b> head on top of
+       $\\mathbf{c}_t$, and train on a little labeled audio (connectionist temporal classification needs no
+       frame-level alignment). Inference decodes the CTC outputs, optionally with a language model.</p>`,
     symbols: [
+      { sym: "$\\mathbf{X}$", desc: "the raw input audio waveform — the encoder's input." },
+      { sym: "$f:\\mathcal{X}\\to\\mathcal{Z}$", desc: "the CNN feature encoder — maps the waveform X to the latent frame sequence Z." },
+      { sym: "$g:\\mathcal{Z}\\to\\mathcal{C}$", desc: "the Transformer context network — maps the (masked) latents Z to context vectors C." },
+      { sym: "$T$", desc: "number of latent time frames produced by the feature encoder (~49 per second of audio)." },
+      { sym: "$\\mathbf{m}$", desc: "the single shared learned mask vector that replaces a latent frame when that frame is masked." },
+      { sym: "$\\tilde{\\mathbf{z}}_t$", desc: "the latent at time t after masking: the mask vector m if t is masked, else z_t." },
       { sym: "$\\mathbf{z}_t$", desc: "latent frame t — the CNN feature encoder's output vector for one ~20 ms slice of raw audio." },
       { sym: "$\\mathbf{c}_t$", desc: "context vector at time t — the Transformer context network's output, having seen the (partly masked) whole sequence." },
       { sym: "$\\mathbf{q}_t$", desc: "the true quantized target at time t — z_t snapped to codebook entries (product quantization)." },
@@ -144,17 +174,32 @@
       { sym: "$\\mathcal{L}_d$", desc: "the diversity loss — encourages equal use of all codebook entries." },
       { sym: "$G$", desc: "number of codebook groups in product quantization (paper: G=2). The latent is split into G parts, each quantized separately." },
       { sym: "$V$", desc: "number of entries per codebook group (paper: V=320). So G·V possible codes per group-product." },
+      { sym: "$l_{g,v}$", desc: "the logit (pre-softmax score) for choosing entry v in codebook group g, computed from z_t by a linear layer." },
+      { sym: "$n_k$", desc: "Gumbel noise added to the logits: n_k = -log(-log(u_k)) with u_k uniform on (0,1); makes argmax sampling differentiable." },
+      { sym: "$p_{g,v}$", desc: "the Gumbel-softmax probability of group g selecting entry v — softmax of (logit + Gumbel noise)/tau." },
+      { sym: "$\\tau$", desc: "Gumbel-softmax temperature (Greek 'tau'); annealed high→low (paper: 2→0.5) so picks sharpen during training." },
       { sym: "$\\bar{p}_{g,v}$", desc: "the batch-averaged soft-assignment probability of group g picking entry v — used by the diversity loss." },
       { sym: "$H(\\bar{p}_g)$", desc: "the entropy of group g's average usage distribution — high when entries are used evenly." },
       { sym: "$\\alpha$", desc: "weight on the diversity loss in the total objective (paper: alpha=0.1)." }
     ],
     formula:
-      `$$\\mathcal{L}=\\mathcal{L}_m+\\alpha\\,\\mathcal{L}_d \\qquad(\\text{Eqn. 2})$$
+      `$$f:\\;\\mathcal{X}\\to\\mathcal{Z},\\qquad \\mathbf{z}_1,\\dots,\\mathbf{z}_T=f(\\mathbf{X})$$
+       <p>Feature encoder (§2): a CNN maps the raw audio waveform $\\mathbf{X}$ to a sequence of $T$ latent frames $\\mathbf{z}_t$ (7 conv blocks, one frame per ~20&nbsp;ms).</p>
+       $$\\tilde{\\mathbf{z}}_t=\\begin{cases}\\mathbf{m}&\\text{if }t\\text{ is masked}\\\\\\mathbf{z}_t&\\text{otherwise}\\end{cases}$$
+       <p>Masking (§4.2): replace each masked latent with one shared learned mask vector $\\mathbf{m}$. Start frames are sampled at proportion $p=0.065$ and $M=10$ frames are hidden per start (~49% masked).</p>
+       $$g:\\;\\mathcal{Z}\\to\\mathcal{C},\\qquad \\mathbf{c}_1,\\dots,\\mathbf{c}_T=g(\\tilde{\\mathbf{z}}_1,\\dots,\\tilde{\\mathbf{z}}_T)$$
+       <p>Context network (§2): a Transformer maps the (masked) latents to context vectors $\\mathbf{c}_t$, each having attended over the whole sequence (Base: 12 blocks/768-dim; Large: 24/1024).</p>
+       $$p_{g,v}=\\frac{\\exp\\!\\big((l_{g,v}+n_v)/\\tau\\big)}{\\sum_{k=1}^{V}\\exp\\!\\big((l_{g,k}+n_k)/\\tau\\big)},\\qquad n_k=-\\log(-\\log u_k),\\;\\; u_k\\sim\\mathcal{U}(0,1)$$
+       <p>Product quantization via Gumbel-softmax (§2): for each of $G$ codebook groups, logits $l_{g,v}$ over $V$ entries are perturbed by Gumbel noise $n$ and softmaxed at temperature $\\tau$. Forward pass picks $\\arg\\max_v p_{g,v}$ (hard); backward uses the soft $p_{g,v}$ (straight-through). The chosen entries concatenate to the quantized target $\\mathbf{q}_t$. Paper: $G=2$, $V=320$; $\\tau$ annealed $2\\!\\to\\!0.5$.</p>
+       $$\\mathcal{L}=\\mathcal{L}_m+\\alpha\\,\\mathcal{L}_d \\qquad(\\text{Eqn. 2})$$
+       <p>Total objective (§3.2): contrastive loss plus the diversity loss weighted by $\\alpha=0.1$.</p>
        $$\\mathcal{L}_m=-\\log\\frac{\\exp\\!\\big(\\text{sim}(\\mathbf{c}_t,\\mathbf{q}_t)/\\kappa\\big)}
         {\\sum_{\\mathbf{\\tilde{q}}\\sim\\mathbf{Q}_t}\\exp\\!\\big(\\text{sim}(\\mathbf{c}_t,\\mathbf{\\tilde{q}})/\\kappa\\big)}
         \\qquad(\\text{Eqn. 3})$$
+       <p>Contrastive loss (§3.2): identify the true quantized target $\\mathbf{q}_t$ among $\\mathbf{Q}_t=\\{$true $+\\,K{=}100$ distractors$\\}$ by cosine similarity $\\text{sim}(\\mathbf{a},\\mathbf{b})=\\mathbf{a}^{\\top}\\mathbf{b}/(\\lVert\\mathbf{a}\\rVert\\,\\lVert\\mathbf{b}\\rVert)$ over temperature $\\kappa=0.1$.</p>
        $$\\mathcal{L}_d=\\frac{1}{GV}\\sum_{g=1}^{G}-H(\\bar{p}_g)
-        =\\frac{1}{GV}\\sum_{g=1}^{G}\\sum_{v=1}^{V}\\bar{p}_{g,v}\\log\\bar{p}_{g,v}\\qquad(\\text{Eqn. 4})$$`,
+        =\\frac{1}{GV}\\sum_{g=1}^{G}\\sum_{v=1}^{V}\\bar{p}_{g,v}\\log\\bar{p}_{g,v}\\qquad(\\text{Eqn. 4})$$
+       <p>Diversity loss (§3.2): minus the averaged per-group entropy of codebook usage; minimizing it drives usage toward uniform so all $G\\times V$ codes are used.</p>`,
     whatItDoes:
       `<p><b>Eqn. 3 ($\\mathcal{L}_m$)</b> is a softmax cross-entropy that asks: "out of the true target and all
        its decoys, how confidently does $\\mathbf{c}_t$ point at the TRUE quantized target $\\mathbf{q}_t$?"

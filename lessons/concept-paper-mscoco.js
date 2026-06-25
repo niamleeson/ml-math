@@ -190,7 +190,22 @@
       { sym: "“mAP” (mean Average Precision)", desc: "the standard detection score. <b>AP</b> (Average Precision) summarizes how well a detector ranks correct detections for one category; <b>mAP</b> averages AP across all categories. COCO's evaluation also averages over several IoU strictness levels, so a high COCO mAP demands accurate localization, not just rough hits." },
       { sym: "“crowdsourcing”", desc: "splitting a large labeling job across many online workers. COCO's annotations were produced by crowd workers through the three-stage pipeline (&sect;4)." }
     ],
-    formula: `$$ \\text{IoU}(A, B) \\;=\\; \\frac{\\text{area}(A \\cap B)}{\\text{area}(A \\cup B)} \\qquad \\text{(the overlap score COCO uses to judge a detection, §7)} $$`,
+    formula: `<p><b>COCO is a dataset paper, so it is light on math.</b> It introduces no learning objective and proves no
+       theorem. Its one real equation is the <b>scoring rule</b> for a detection; the rest of its "key numbers" are
+       <i>reported dataset statistics</i>, which we state as quoted facts. Here are both.</p>
+       $$ \\text{IoU}(A, B) \\;=\\; \\frac{\\text{area}(A \\cap B)}{\\text{area}(A \\cup B)} $$
+       <p>The one equation (&sect;7): <b>Intersection over Union</b> of a predicted region $A$ and the true region
+       $B$ &mdash; the area where they overlap divided by the area they jointly cover. A detection counts as correct
+       when this clears a threshold; the paper "impose[s] the standard requirement that intersection over union
+       between predicted and ground truth boxes is at least $0.5$," then "measure[s] the intersection over union of
+       the predicted and ground truth segmentation masks" (&sect;7).</p>
+       $$ \\text{(scale, Abstract)}\\quad 2.5\\text{M labeled instances},\\;\\; 328\\text{k images},\\;\\; 91\\text{ object categories} $$
+       <p>Quoted from the Abstract: "a total of 2.5 million labeled instances in 328k images," over "91 objects
+       types that would be easily recognizable by a 4 year old" (organized into 11 super-categories, &sect;4).</p>
+       $$ \\text{(crowding, §5)}\\quad \\overline{\\text{instances/image}}:\\;\\; \\text{COCO }7.7 \\;\\gt\\; \\text{ImageNet }3.0 \\;\\gt\\; \\text{PASCAL }2.3, \\qquad \\overline{\\text{categories/image}} \\approx 3.5 $$
+       <p>Quoted from &sect;5: "MS COCO contains considerably more object instances per image (7.7) as compared to
+       ImageNet (3.0) and PASCAL (2.3)"; "on average our dataset contains 3.5 categories and 7.7 instances per
+       image." These are the paper's reported figures, not a computation of ours.</p>`,
     whatItDoes:
       `<p>A dataset paper has no learning equation, but it does fix how a detection is <b>scored</b>, and that one
        formula is worth stating. <b>Intersection over Union (IoU)</b> compares a predicted region $A$ (a box or a

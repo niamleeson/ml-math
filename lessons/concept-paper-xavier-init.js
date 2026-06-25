@@ -151,6 +151,37 @@
        layer means the back-propagated gradient is multiplied by less than 1 at every step, so it
        <b>shrinks geometrically with depth</b> &mdash; exactly the vanishing the paper measures in Figure 7.</p>`,
 
+    architecture:
+      `<p>This is a <b>method/analysis</b> paper, not a new model &mdash; the "architecture" is the per-layer
+       initialization procedure applied to a standard <b>deep feedforward net</b>, plus the diagnostic
+       experimental setup the authors run to validate it.</p>
+       <p><b>The networks studied (Section 2.3).</b> Plain feedforward (dense) nets with <b>1 to 5 hidden
+       layers</b>, <b>1000 hidden units per layer</b>, a <b>softmax</b> output with a logistic-regression top,
+       trained by stochastic back-propagation on <b>mini-batches of size 10</b>, cost = negative log-likelihood
+       $-\\log P(y\\mid x)$, learning rate tuned on a validation set. Three activations are compared: the
+       logistic <b>sigmoid</b> $1/(1+e^{-x})$, the <b>hyperbolic tangent</b> $\\tanh(x)$, and the <b>softsign</b>
+       $x/(1+|x|)$. The best depth was always 5 except for the sigmoid (depth 4). Datasets: <b>Shapeset-$3\\times2$</b>
+       (synthetic shapes, online/infinite, $32\\times32$ grey), <b>MNIST</b>, <b>CIFAR-10</b>, and <b>Small-ImageNet</b>
+       ($37\\times37$ grey).</p>
+       <p><b>The per-layer initialization procedure (the contribution).</b> For each layer $i$ with input width
+       $n_i$ and output width $n_{i+1}$:</p>
+       <ol>
+         <li>Compute the half-width $r=\\sqrt6/\\sqrt{n_i+n_{i+1}}$ (eq. 16).</li>
+         <li>Draw every weight independently from $U[-r,\\,r]$, giving $\\mathrm{Var}(W^i)=2/(n_i+n_{i+1})$ (eq. 12).</li>
+         <li>Set the biases $\\mathbf{b}^i$ to 0.</li>
+         <li>Repeat for all layers, so each layer multiplies the signal/gradient variance by a per-layer factor
+         near 1 in both directions.</li>
+       </ol>
+       <p>A layer's forward computation is $\\mathbf{s}^i=\\mathbf{z}^i W^i+\\mathbf{b}^i$ then $\\mathbf{z}^{i+1}=f(\\mathbf{s}^i)$
+       (the symmetric activation $f$ with $f'(0)=1$). Backward, the gradient flows through eqs. (2)&ndash;(3):
+       $\\partial\\text{Cost}/\\partial s^i_k=f'(s^i_k)\\,W^{i+1}_{k,\\bullet}\\,\\partial\\text{Cost}/\\partial s^{i+1}$ and
+       $\\partial\\text{Cost}/\\partial w^i_{l,k}=z^i_l\\,\\partial\\text{Cost}/\\partial s^i_k$.</p>
+       <p><b>The diagnostic apparatus.</b> The authors instrument every layer and watch, across depth and across
+       training: (i) histograms / mean &plusmn; std of activation values (Figures 2&ndash;4, 6, 10), (ii) histograms
+       and std of back-propagated gradients (Figures 7&ndash;9), and (iii) the average singular value of each layer's
+       Jacobian $J^i=\\partial\\mathbf{z}^{i+1}/\\partial\\mathbf{z}^i$ (eq. 17) &mdash; $\\approx 0.8$ with normalized
+       init versus $\\approx 0.5$ with standard init. This monitoring is the paper's real "method".</p>`,
+
     symbols: [
       { sym: "$W$", desc: "the weight matrix of one layer: the grid of numbers the layer multiplies its input by. We choose its random starting values." },
       { sym: "$n_\\text{in}$", desc: "the layer's fan-in: how many inputs feed each output unit (the paper writes $n_i$, the size of layer $i$). More inputs means each output is a sum of more terms." },
@@ -166,12 +197,47 @@
     ],
 
     formula:
-      `$$\\textbf{Forward (eq. 10):}\\quad n_\\text{in}\\,\\mathrm{Var}(W)=1
+      `$$\\textbf{One layer (linear regime, eq. 4):}\\quad f'(s^i_k)\\approx 1,\\qquad
+        \\mathbf{s}^i=\\mathbf{z}^i W^i+\\mathbf{b}^i,\\quad \\mathbf{z}^{i+1}=f(\\mathbf{s}^i).$$
+       <p>Near initialization tanh acts like the identity, so a layer is just a linear map; this makes the variance algebra exact.</p>
+       $$\\textbf{Forward activation variance (eq. 5):}\\quad
+         \\mathrm{Var}[z^i]=\\mathrm{Var}[x]\\prod_{i'=0}^{i-1} n_{i'}\\,\\mathrm{Var}[W^{i'}].$$
+       <p>The variance of layer $i$'s activations equals the input variance times the product, over all earlier layers, of each layer's per-layer factor $n_{i'}\\mathrm{Var}[W^{i'}]$.</p>
+       $$\\textbf{Back-propagated gradient variance (eq. 6):}\\quad
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^i}\\right]
+         =\\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^d}\\right]
+         \\prod_{i'=i}^{d} n_{i'+1}\\,\\mathrm{Var}[W^{i'}].$$
+       <p>The gradient variance at layer $i$ is the top-layer gradient variance times the product, over later layers, of $n_{i'+1}\\mathrm{Var}[W^{i'}]$ (uses fan-out).</p>
+       $$\\textbf{Weight-gradient variance (eq. 7):}\\quad
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial w^i}\\right]
+         =\\prod_{i'=0}^{i-1} n_{i'}\\mathrm{Var}[W^{i'}]
+          \\prod_{i'=i}^{d-1} n_{i'+1}\\mathrm{Var}[W^{i'}]\\;
+          \\mathrm{Var}[x]\\,\\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^d}\\right].$$
+       <p>The variance of the gradient on the weights themselves combines a forward product and a backward product.</p>
+       $$\\textbf{Equal-variance goals (eqs. 8, 9):}\\quad
+         \\forall i,i':\\ \\mathrm{Var}[z^i]=\\mathrm{Var}[z^{i'}],\\qquad
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^i}\\right]
+         =\\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^{i'}}\\right].$$
+       <p>The design targets: keep activation variance equal across layers (forward), and gradient variance equal across layers (backward).</p>
+       $$\\textbf{Forward (eq. 10):}\\quad n_\\text{in}\\,\\mathrm{Var}(W)=1
         \\qquad\\textbf{Backward (eq. 11):}\\quad n_\\text{out}\\,\\mathrm{Var}(W)=1$$
+       <p>Setting each per-layer factor to 1 is exactly the condition that makes those products collapse to 1.</p>
        $$\\textbf{Compromise (eq. 12):}\\quad \\mathrm{Var}(W)=\\frac{2}{n_\\text{in}+n_\\text{out}}$$
+       <p>The two conditions disagree unless every layer is the same width, so use the average of the two denominators.</p>
+       $$\\textbf{Same-init products (eqs. 13, 14):}\\quad
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^i}\\right]
+         =\\big[n\\,\\mathrm{Var}(W)\\big]^{\\,d-i}\\mathrm{Var}[x],\\quad
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial w^i}\\right]
+         =\\big[n\\,\\mathrm{Var}(W)\\big]^{\\,d}\\mathrm{Var}[x]\\,
+         \\mathrm{Var}\\!\\left[\\tfrac{\\partial\\text{Cost}}{\\partial s^d}\\right].$$
+       <p>When all layers share width $n$ and the same init, the per-layer factor $n\\,\\mathrm{Var}(W)$ is raised to a power of the depth — so any value other than 1 vanishes or explodes geometrically.</p>
+       $$\\textbf{Why standard init fails (eq. 15):}\\quad n\\,\\mathrm{Var}(W)=\\tfrac13\\ \\lt\\ 1.$$
+       <p>The old heuristic $U[-1/\\sqrt n,1/\\sqrt n]$ gives a per-layer factor of $1/3$, so the back-propagated gradient shrinks by $1/3$ at every layer.</p>
        $$\\textbf{Sampling rule (eq. 16):}\\quad
          W\\sim U\\!\\left[-\\frac{\\sqrt6}{\\sqrt{n_\\text{in}+n_\\text{out}}},\\;
-         +\\frac{\\sqrt6}{\\sqrt{n_\\text{in}+n_\\text{out}}}\\right]$$`,
+         +\\frac{\\sqrt6}{\\sqrt{n_\\text{in}+n_\\text{out}}}\\right]$$
+       $$\\textbf{Layer Jacobian (eq. 17):}\\quad J^i=\\frac{\\partial \\mathbf{z}^{i+1}}{\\partial \\mathbf{z}^i}.$$
+       <p>The matrix of partial derivatives mapping one layer's activations to the next; its average singular value is the per-layer volume/variance ratio the paper monitors ($\\approx 0.8$ for normalized init, dropping to $\\approx 0.5$ for standard init).</p>`,
 
     whatItDoes:
       `<p>The first line says: to keep the signal from shrinking or growing as it passes <i>forward</i> through
@@ -200,9 +266,10 @@
        argument gives a per-layer factor $n_\\text{out}\\,\\mathrm{Var}(W)$; keeping the gradient variance constant
        (eq. 9) needs $n_\\text{out}\\,\\mathrm{Var}(W)=1$.</p>
        <p><b>Step 4 — compromise (eq. 12).</b> The two ask for $\\mathrm{Var}(W)=1/n_\\text{in}$ and
-       $\\mathrm{Var}(W)=1/n_\\text{out}$. They agree only when $n_\\text{in}=n_\\text{out}$. The paper takes the
-       harmonic-style average by using the <i>sum</i> of fan-in and fan-out in the denominator:
-       $\\mathrm{Var}(W)=2/(n_\\text{in}+n_\\text{out})$, which reduces to $1/n$ when the widths are equal.</p>
+       $\\mathrm{Var}(W)=1/n_\\text{out}$. They agree only when $n_\\text{in}=n_\\text{out}$. The paper splits the
+       difference (its words: "as a compromise between these two constraints") by using the <i>sum</i> of fan-in
+       and fan-out in the denominator: $\\mathrm{Var}(W)=2/(n_\\text{in}+n_\\text{out})$, which reduces to $1/n$
+       when the widths are equal &mdash; satisfying both eq. (10) and eq. (11) at once.</p>
        <p><b>Step 5 — sampling rule (eq. 16).</b> A draw from $U[-r,r]$ has variance $r^2/3$ (standard fact for
        a uniform distribution). Solve $r^2/3 = 2/(n_\\text{in}+n_\\text{out})$:
        $r = \\sqrt{6/(n_\\text{in}+n_\\text{out})} = \\sqrt6/\\sqrt{n_\\text{in}+n_\\text{out}}$, which is eq. (16).</p>`,
