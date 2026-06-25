@@ -51,7 +51,62 @@ function splitLines(s) {
   return lines.map((ln, i) => i < lines.length - 1 ? ln + "\n" : ln);
 }
 
-let written = 0;
+// --- data preview: when a notebook trains on a real dataset, prepend a cell that
+// shows the data's structure BEFORE it gets used — column names + a few rows for
+// tabular data, sample images for image data. Keeps learners from training on a
+// black box. Returns [] for notebooks that build their own toy/synthetic arrays. ---
+function firstLoader(code, tokens) {
+  let best = null, bestIdx = Infinity;
+  tokens.forEach(t => {
+    const m = new RegExp("\\b" + t + "\\b").exec(code);
+    if (m && m.index < bestIdx) { bestIdx = m.index; best = t; }
+  });
+  return best;
+}
+function dataPreviewCells(code) {
+  if (!code) return [];
+  const intro = "## First, look at the data\n\nBefore training on it, see what each example actually contains.";
+  const imageGrid = "fig, axes = plt.subplots(1, 5, figsize=(8, 2))\nfor ax, (image, label) in zip(axes, samples):\n    ax.imshow(image, cmap=\"gray\")\n    ax.set_title(str(label))\n    ax.axis(\"off\")\nplt.show()";
+
+  // 1) real tabular classification — has named feature columns and class labels
+  let t = firstLoader(code, ["load_breast_cancer", "load_wine", "load_iris"]);
+  if (t) return [mdCell(intro + " Each row is one example; the columns are its features, plus a class label."),
+    codeCell(`from sklearn.datasets import ${t}\n\ndata = ${t}(as_frame=True)\nprint("rows x columns:", data.frame.shape)\nprint("feature columns:", list(data.data.columns))\nprint("target classes :", list(data.target_names))\ndata.frame.head()`)];
+
+  // 2) real tabular regression — named columns, but a continuous target
+  t = firstLoader(code, ["fetch_california_housing", "load_diabetes"]);
+  if (t) return [mdCell(intro + " Each row is one example; the columns are its features, and the target is a continuous value."),
+    codeCell(`from sklearn.datasets import ${t}\n\ndata = ${t}(as_frame=True)\nprint("rows x columns:", data.frame.shape)\nprint("feature columns:", list(data.data.columns))\nprint("target summary:")\nprint(data.target.describe())\ndata.frame.head()`)];
+
+  // 3) sklearn image data — no columns; each sample is a pixel grid
+  if (firstLoader(code, ["load_digits"])) return [mdCell(intro + " These are **images, not table columns** — each sample is an 8x8 grid of pixel intensities (0–16)."),
+    codeCell(`from sklearn.datasets import load_digits\n\ndigits = load_digits()\nprint("image array:", digits.images.shape, " labels:", digits.target.shape)\nsamples = list(zip(digits.images, digits.target))\n${imageGrid}`)];
+  if (firstLoader(code, ["fetch_olivetti_faces"])) return [mdCell(intro + " These are **face images, not table columns** — each sample is a 64x64 grayscale picture."),
+    codeCell(`from sklearn.datasets import fetch_olivetti_faces\n\nfaces = fetch_olivetti_faces()\nprint("image array:", faces.images.shape, " labels:", faces.target.shape)\nsamples = list(zip(faces.images, faces.target))\n${imageGrid}`)];
+
+  // 4) torchvision image datasets — download a few raw samples to look at
+  t = firstLoader(code, ["FashionMNIST", "CIFAR100", "CIFAR10", "MNIST"]);
+  if (t) return [mdCell(intro + " These are **images, not table columns**. We pull a few raw samples from the " + t + " dataset to see them before any transforms."),
+    codeCell(`import torchvision\n\npreview = torchvision.datasets.${t}(root="./data", train=True, download=True)\nprint("dataset: ${t}   samples:", len(preview))\nfirst_image, first_label = preview[0]\nprint("one sample:", first_image.size, "image,  label =", first_label)\nprint("classes:", getattr(preview, "classes", "(digit labels 0-9)"))\nsamples = [preview[i] for i in range(5)]\n${imageGrid}`)];
+
+  // 5) seaborn bundled dataset — a real DataFrame with named columns
+  const sns = /\b(?:sns|seaborn)\.load_dataset\(\s*["']([^"']+)["']/.exec(code);
+  if (sns) return [mdCell(intro + " It's a real table — here are its columns and the first few rows."),
+    codeCell(`import seaborn as sns\n\ndata = sns.load_dataset("${sns[1]}")\nprint("rows x columns:", data.shape)\nprint("columns:", list(data.columns))\ndata.head()`)];
+
+  // 6) sklearn synthetic generators — real "training data" but with no real-world
+  // column names. Note that, so learners don't hunt for meaning that isn't there.
+  // Guard: skip when make_* is a locally-defined helper, not the sklearn generator.
+  const synth = ["make_classification", "make_blobs", "make_moons", "make_circles", "make_regression"];
+  t = firstLoader(code, synth);
+  if (t && !new RegExp("def\\s+" + t).test(code)) {
+    return [mdCell(intro + " This lesson trains on **synthetic** data built by `" + t + "(...)` in the code below. There are no real-world column names — the features are unnamed numeric dimensions. As the cell runs, watch the shape of `X` (rows × features) and the labels in `y`.")];
+  }
+
+  return [];   // file reads with unknown paths / hand-built toy arrays: nothing safe to preview
+}
+
+let written = 0, skipped = 0;
 const outDir = path.join(ROOT, "notebooks");
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -74,6 +129,10 @@ L.forEach(l => {
   if (pips.size) setup += "\n!pip install -q " + [...pips].join(" ");
   setup += "\nimport numpy as np, matplotlib.pyplot as plt";
   cells.push(codeCell(setup));
+
+  // Peek at the data before any cell uses it (real datasets only).
+  const usedCode = ((code && code.code) || "") + "\n" + ((viz && viz.code) || "");
+  dataPreviewCells(usedCode).forEach(c => cells.push(c));
 
   // Feature-Engineering "reproduce the problem -> apply the fix" demo (tools/fe-demos/<id>.py).
   // Shows raw data + the problem it causes, then engineered data + the fix, with before/after numbers.
@@ -108,7 +167,18 @@ L.forEach(l => {
   }
 
   const nb = { cells, metadata: { kernelspec: { name: "python3", display_name: "Python 3" }, language_info: { name: "python" }, colab: { provenance: [] } }, nbformat: 4, nbformat_minor: 5 };
-  fs.writeFileSync(path.join(outDir, id + ".ipynb"), JSON.stringify(nb, null, 1));
+  // Don't clobber hand-enhanced step-by-step walkthroughs. A notebook that carries
+  // metadata.enhanced_walkthrough has been rewritten by hand into a multi-cell, paced
+  // version; the auto-generator must leave it alone. Delete that flag to let it regenerate.
+  const outPath = path.join(outDir, id + ".ipynb");
+  if (fs.existsSync(outPath)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(outPath, "utf8"));
+      if (existing.metadata && existing.metadata.enhanced_walkthrough) { skipped++; return; }
+    } catch (e) { /* unreadable/old file — fall through and regenerate it */ }
+  }
+  fs.writeFileSync(outPath, JSON.stringify(nb, null, 1));
   written++;
 });
 console.log("wrote", written, "notebooks to notebooks/  (lessons:", L.length + ")");
+if (skipped) console.log("skipped", skipped, "hand-enhanced notebooks (metadata.enhanced_walkthrough)");
