@@ -137,6 +137,35 @@
        automates exactly this: it records the forward operations on a <b>tape</b> and replays them in reverse,
        applying the local derivative at each step.</p>`,
 
+    architecture:
+      `<p><b>The net (a layered, feed-forward stack).</b> The paper's networks are layers of units stacked
+       bottom-to-top:</p>
+       <ul>
+         <li><b>Input layer (bottom).</b> One unit per input feature; its outputs $y_i$ are just the data values.</li>
+         <li><b>One or more hidden layers (middle).</b> Units with no target of their own. Each receives a weighted
+         sum from the layer below and passes a sigmoid output up. The Fig. 1 symmetry net uses a single hidden layer
+         of just <b>two</b> units; the Fig. 4 family-tree net is a <b>five-layer</b> net (24 inputs &rarr; 6 &rarr; 12
+         &rarr; 6 &rarr; output).</li>
+         <li><b>Output layer (top).</b> Units whose outputs are compared to the targets $d_j$ to form the error $E$.</li>
+       </ul>
+       <p><b>Connections.</b> Every weight $w_{ji}$ runs from a lower unit $i$ to a higher unit $j$. The paper allows
+       any number of intermediate layers and even connections that skip layers, but <i>forbids</i> connections within
+       a layer or from higher to lower layers (the net is acyclic / feed-forward). A <b>bias</b> is handled as an
+       extra always-on input of value 1, so its weight is learned like any other weight.</p>
+       <p><b>Two passes over this structure.</b></p>
+       <ol>
+         <li><b>Forward pass</b> (bottom &rarr; top): each layer's states are set in parallel from the layer below via
+         eq (1) then eq (2); layers are processed in order until the output layer has values. Then eq (3) gives $E$.</li>
+         <li><b>Backward pass</b> (top &rarr; bottom): the same wiring is traversed in reverse. Start the error signal
+         at the output with eq (4), convert output-sensitivity to input-sensitivity (the delta) with eq (5), read off
+         each weight's gradient with eq (6), and send the error signal down one layer with eq (7) &mdash; the
+         <i>transpose</i> use of the very same weights. Repeat for successively earlier layers.</li>
+       </ol>
+       <p>The two passes touch every weight exactly once each, so one forward + one backward sweep yields
+       $\\partial E/\\partial w$ for the whole net; eq (8) (or eq (9) with momentum) then updates every weight. Fig. 5
+       notes a recurrent net run for $T$ iterations is equivalent to this kind of layered net unrolled into $T$ layers
+       with weights tied across layers.</p>`,
+
     symbols: [
       { sym: "unit", desc: "one artificial neuron: it forms a weighted sum of its inputs and squashes it through a smooth curve (here the sigmoid). The paper calls them 'neurone-like units'." },
       { sym: "hidden unit", desc: "a unit in a middle layer. No target is given for it, so it has no obvious error signal — training hidden units is the problem this paper solves." },
@@ -163,8 +192,9 @@
        $$\\text{backward:}\\quad \\frac{\\partial E}{\\partial y_j}=y_j-d_j\\;(4)\\qquad
         \\frac{\\partial E}{\\partial x_j}=\\frac{\\partial E}{\\partial y_j}\\,y_j(1-y_j)\\;(5)$$
        $$\\frac{\\partial E}{\\partial w_{ji}}=\\frac{\\partial E}{\\partial x_j}\\,y_i\\;(6)\\qquad
-        \\frac{\\partial E}{\\partial y_i}=\\sum_j \\frac{\\partial E}{\\partial x_j}\\,w_{ji}\\;(7)\\qquad
-        \\Delta w=-\\varepsilon\\,\\frac{\\partial E}{\\partial w}\\;(8)$$`,
+        \\frac{\\partial E}{\\partial y_i}=\\sum_j \\frac{\\partial E}{\\partial x_j}\\,w_{ji}\\;(7)$$
+       $$\\text{update:}\\quad \\Delta w=-\\varepsilon\\,\\frac{\\partial E}{\\partial w}\\;(8)\\qquad
+        \\Delta w(t)=-\\varepsilon\\,\\frac{\\partial E}{\\partial w(t)}+\\alpha\\,\\Delta w(t-1)\\;(9)$$`,
 
     whatItDoes:
       `<p>Equations (1)-(3) are the <b>forward pass</b>: stack weighted sums and sigmoids to get the outputs, then
@@ -172,7 +202,9 @@
        the output, (5) pushes it through the sigmoid (note $y_j(1-y_j)$ is the sigmoid's derivative, read straight
        off the output), (6) turns an error signal into a weight gradient (the <b>delta rule</b>), and (7)
        propagates the error signal down to the previous layer so the process can repeat. Equation (8) takes the
-       gradient and steps every weight a little downhill. (Equations are numbered as in the paper.)</p>`,
+       gradient and steps every weight a little downhill; equation (9) is the <b>acceleration (momentum)</b> variant
+       &mdash; it adds a fraction $\\alpha$ of the previous step $\\Delta w(t-1)$ to speed up descent without giving
+       up the locality of the rule. (Equations are numbered as in the paper.)</p>`,
 
     derivation:
       `<p>The full derivation of why each step is exactly the chain rule &mdash; including why the sigmoid's

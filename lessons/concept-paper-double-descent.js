@@ -152,8 +152,10 @@
     symbols: [
       { sym: "$n$", desc: "the <b>number of training samples</b> (labeled examples the model fits to). The interpolation threshold is measured relative to this." },
       { sym: "EMC", desc: "<b>Effective Model Complexity</b> (&sect;2, Definition 1): the <i>largest number of training samples</i> a training procedure can fit to near-zero training error. A single number, in the same units as $n$, that stands in for 'how powerful is this procedure'." },
-      { sym: "$\\mathcal{T}$", desc: "a <b>training procedure</b>: the whole recipe &mdash; model architecture, size, optimizer, number of epochs &mdash; that maps a training set to a fitted model. EMC is a property of $\\mathcal{T}$, not just of the model's parameter count." },
-      { sym: "$\\epsilon$", desc: "a small <b>error tolerance</b> ('near-zero'). EMC counts samples the procedure fits to training error below $\\epsilon$." },
+      { sym: "$\\mathcal{T}$", desc: "a <b>training procedure</b>: the whole recipe &mdash; model architecture, size, optimizer, number of epochs &mdash; that maps a training set $S$ to a fitted classifier $\\mathcal{T}(S)$. EMC is a property of $\\mathcal{T}$, not just of the model's parameter count." },
+      { sym: "$\\mathcal{D}$", desc: "the <b>data distribution</b> the samples are drawn from. $S \\sim \\mathcal{D}^n$ means a training set $S$ of $n$ independent draws from $\\mathcal{D}$." },
+      { sym: "$\\text{Error}_S(\\cdot)$", desc: "the <b>mean training error</b> of a fitted model evaluated on the same training set $S$ it was fit on. EMC asks how large $S$ can be while this stays $\\le \\epsilon$." },
+      { sym: "$\\epsilon$", desc: "a small <b>error tolerance</b> ('near-zero'); the paper heuristically uses $\\epsilon = 0.1$. EMC counts samples the procedure fits to training error below $\\epsilon$." },
       { sym: "$D$", desc: "in our reproduction, the <b>model size</b> we sweep: the number of random features. More features = more capacity = higher EMC. The interpolation threshold lands at $D \\approx n$." },
       { sym: "“interpolation threshold”", desc: "a plain term: the model size at which the model first fits the training set <b>exactly</b> (training error hits zero). Formally, where EMC $= n$. The test-error peak sits here." },
       { sym: "“over-parameterized”", desc: "a plain term: having <b>more parameters than training examples</b> ($D \\gt n$), so the model can fit the data in many different ways. The second descent happens here." },
@@ -161,7 +163,33 @@
       { sym: "“label noise”", desc: "a plain term: training labels that are randomly corrupted / mislabeled. The paper adds it (e.g. 15%) because it <b>sharpens</b> the peak &mdash; forcing the model to interpolate wrong labels is what makes the threshold so bad." },
       { sym: "“minimum-norm solution”", desc: "a plain term: when many weight vectors fit the data exactly (the over-parameterized case), the one with the <b>smallest size</b> ($\\sum w_i^2$). It is the smoothest such fit, and it is why the second descent generalizes well." }
     ],
-    formula: `$$ \\text{EMC}_{\\mathcal{D},\\epsilon}(\\mathcal{T}) := \\max\\Big\\{\\, n \\;\\Big|\\; \\mathbb{E}_{S \\sim \\mathcal{D}^n}\\big[\\text{Error}_S(\\mathcal{T}(S))\\big] \\le \\epsilon \\,\\Big\\} \\quad\\text{(\\S2, Definition 1)} $$`,
+    formula: `<p><b>This is an EMPIRICAL paper.</b> Its core contribution is a measured <i>phenomenon</i> &mdash;
+       the double-descent risk curve (test error descends, peaks at the interpolation threshold, then descends
+       again) &mdash; not a theorem with a derived closed-form equation. The math below is the paper's two formal
+       objects: one <b>definition</b> (EMC) and one <b>hypothesis</b> (the regimes / the peak). Everything else
+       in the paper is experimental evidence for that hypothesis.</p>
+
+       $$ \\text{EMC}_{\\mathcal{D},\\epsilon}(\\mathcal{T}) \\;:=\\; \\max\\Big\\{\\, n \\;\\Big|\\; \\mathbb{E}_{S \\sim \\mathcal{D}^n}\\big[\\text{Error}_S(\\mathcal{T}(S))\\big] \\le \\epsilon \\,\\Big\\} $$
+       <p>(&sect;2, Definition 1) <b>Effective Model Complexity.</b> The largest training-set size $n$ for which
+       the procedure $\\mathcal{T}$, run on a random size-$n$ sample $S$ from distribution $\\mathcal{D}$, still
+       achieves expected training error $\\text{Error}_S(\\mathcal{T}(S))$ at or below the small tolerance
+       $\\epsilon$ (the paper heuristically uses $\\epsilon = 0.1$). In words: how many examples can this procedure
+       fit to (near-)zero error.</p>
+
+       $$ \\text{EMC}_{\\mathcal{D},\\epsilon}(\\mathcal{T}) \\;\\ll\\; n \\;\\;\\Longrightarrow\\;\\; \\partial_{\\text{complexity}}\\,\\text{TestError} \\,\\lt\\, 0 \\qquad\\text{(under-parameterized)} $$
+       <p>(&sect;2, Hypothesis 1, first regime) When EMC is <b>sufficiently smaller</b> than $n$, any perturbation
+       of $\\mathcal{T}$ that <i>increases</i> its effective complexity <b>decreases</b> test error &mdash; the
+       classical downhill arm of the U-curve.</p>
+
+       $$ \\text{EMC}_{\\mathcal{D},\\epsilon}(\\mathcal{T}) \\;\\gg\\; n \\;\\;\\Longrightarrow\\;\\; \\partial_{\\text{complexity}}\\,\\text{TestError} \\,\\lt\\, 0 \\qquad\\text{(over-parameterized)} $$
+       <p>(&sect;2, Hypothesis 1, second regime) When EMC is <b>sufficiently larger</b> than $n$, increasing
+       effective complexity <b>again decreases</b> test error &mdash; the modern second descent.</p>
+
+       $$ \\text{EMC}_{\\mathcal{D},\\epsilon}(\\mathcal{T}) \\;\\approx\\; n \\;\\;\\Longrightarrow\\;\\; \\partial_{\\text{complexity}}\\,\\text{TestError} \\;\\;\\text{may be}\\;\\; \\lt 0 \\;\\text{ or }\\; \\gt 0 \\qquad\\text{(critically parameterized)} $$
+       <p>(&sect;2, Hypothesis 1, third regime) When EMC $\\approx n$ &mdash; the <b>interpolation threshold</b>
+       &mdash; a perturbation that increases complexity <i>might decrease or increase</i> test error. This is
+       where the <b>test-error peak</b> lives: the procedure is just barely able to interpolate all $n$ points
+       (including noisy ones), so the fit is wildly sensitive and generalizes worst.</p>`,
     whatItDoes:
       `<p>The formula is the definition of <b>Effective Model Complexity</b> (&sect;2, Definition 1), read inside
        out. $\\mathcal{T}(S)$ is the model you get by running the training procedure $\\mathcal{T}$ on a training

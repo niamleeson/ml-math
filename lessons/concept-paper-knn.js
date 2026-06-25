@@ -121,6 +121,30 @@
        that knows the true distribution &mdash; and let $R$ be the large-sample error rate of the NN rule.
        For two classes the theorem gives $R^* \\le R \\le 2R^*(1-R^*)$, and since $2R^*(1-R^*) \\le 2R^*$, the
        NN rule is never worse than twice the best-possible error.</p>`,
+    architecture:
+      `<p>This is a theory paper, so the "architecture" is the <b>logical pipeline</b> from rule to bound,
+       not a network. Four pieces stack on top of each other:</p>
+       <ol>
+        <li><b>The rule (&sect;II).</b> Input: $n$ labelled pairs $(x_i, \\theta_i)$ in a metric space $(X, d)$,
+        plus a query $x$. Step 1: find the nearest neighbor $x_n'$ by Eqn. 1, $\\min_i d(x_i, x) = d(x_n', x)$.
+        Step 2: output its label $\\theta_n'$. No fitting, no density estimate; the other $n-1$ labels are
+        discarded.</li>
+        <li><b>The Bayes reference (&sect;IV).</b> Build the optimal yardstick from the true statistics:
+        posteriors $\\hat{\\eta}_i(x)$ (Eqn. 4), conditional risk $r^*(x) = \\min_i \\sum_j \\hat{\\eta}_i L(i,j)$
+        (Eqn. 6), and the floor $R^* = E\\,r^*(x)$ (Eqn. 7). This is the "lowest possible error" the NN rule
+        is graded against.</li>
+        <li><b>The convergence lemma (&sect;V).</b> The hinge: as $n \\to \\infty$, $x_n' \\to x$ with probability
+        one in any separable metric space (Eqn. 9 drives the proof). So the neighbor's label becomes an
+        independent draw from the true class-probabilities <i>at $x$</i> — even for pathological
+        distributions like the Cantor set.</li>
+        <li><b>The bound (&sect;VI).</b> Feed the converged conditional NN risk $r(x) = 2r^*(1-r^*)$
+        (Eqn. 21) into $R = E[r(x)]$ (Eqns. 24–25), drop the variance, and read off
+        $R^* \\le R \\le 2R^*(1-R^*) \\le 2R^*$ (Eqn. 13). The $M$-class branch (&sect;VI, Eqns. 31–38) replaces
+        the $2r^*(1-r^*)$ step with a Cauchy–Schwarz inequality to reach $R \\le R^*(2 - \\frac{M}{M-1}R^*)$.</li>
+       </ol>
+       <p>Two side branches hang off this spine: the <b>admissibility</b> argument (&sect;III, Eqn. 2) showing
+       1-NN can strictly beat $k$-NN on some distributions, and the <b>worked triangle example</b> (&sect;VII,
+       Eqn. 41) giving an exact finite-$n$ risk $R(n) = \\tfrac13 + \\frac{1}{(n+1)(n+2)}$.</p>`,
     symbols: [
       { sym: "$x$", desc: "the new, <b>unlabelled</b> point we want to classify (the query). Lives in a space $X$ with a distance function." },
       { sym: "$(x_i, \\theta_i)$", desc: "the $i$-th <b>labelled training example</b>: a point $x_i$ together with its known class $\\theta_i$." },
@@ -131,10 +155,35 @@
       { sym: "$R^*$", desc: "the <b>Bayes risk</b>: the error rate of the optimal rule that knows the true data distribution. The lowest error any rule can reach &mdash; a floor." },
       { sym: "$R$", desc: "the <b>large-sample NN risk</b>: the NN rule's error rate as the number of training points goes to infinity (Eqn. 11, $R = \\lim_{n\\to\\infty} R(n)$)." },
       { sym: "$r^*(x)$", desc: "the <b>conditional Bayes risk at $x$</b>: the chance the optimal rule is wrong <i>at that one point</i>. Averaging $r^*(x)$ over all $x$ gives $R^*$." },
-      { sym: "$\\hat{\\eta}_i(x)$", desc: "the <b>posterior probability</b> of class $i$ given $x$ &mdash; how likely class $i$ is, having seen the point $x$ (Bayes theorem, Eqn. 4)." }
+      { sym: "$\\hat{\\eta}_i(x)$", desc: "the <b>posterior probability</b> of class $i$ given $x$ &mdash; how likely class $i$ is, having seen the point $x$ (Bayes theorem, Eqn. 4). For $M=2$, $\\hat{\\eta}_2 = 1 - \\hat{\\eta}_1$." },
+      { sym: "$\\eta_i$", desc: "the <b>prior probability</b> of class $i$ &mdash; how common class $i$ is before seeing any features. The $\\eta_i$ are non-negative and sum to $1$." },
+      { sym: "$f_i(x)$", desc: "the <b>class-conditional density</b>: how likely the features $x$ are if the true class is $i$. The overall density is $f(x) = \\sum_i \\eta_i f_i(x)$ (Eqn. 8)." },
+      { sym: "$L(i, j)$", desc: "the <b>loss</b> of guessing class $j$ when the truth is $i$. The paper uses 0&ndash;1 loss (Eqn. 12): $0$ if correct, $1$ if wrong." },
+      { sym: "$r(x)$", desc: "the <b>conditional NN risk at $x$</b>: the large-sample chance the NN rule is wrong at that one point. For two classes $r(x) = 2r^*(x)(1-r^*(x))$ (Eqn. 21); averaging it gives $R$." },
+      { sym: "$R(n)$", desc: "the <b>finite-sample NN risk</b> with exactly $n$ training points (Eqn. 10). $R = \\lim_{n\\to\\infty} R(n)$ is its large-sample limit." },
+      { sym: "$\\mathrm{Var}\\,r^*(x)$", desc: "the <b>variance of the conditional Bayes risk</b> across the feature space. It is $\\ge 0$, and dropping it is exactly what turns Eqn. 25 into the upper bound (Eqn. 26)." },
+      { sym: "$n$", desc: "the <b>number of labelled training examples</b>. The bound is asymptotic: it holds as $n \\to \\infty$." }
     ],
-    formula: `$$ R^* \\;\\le\\; R \\;\\le\\; 2R^*\\,(1 - R^*) \\;\\le\\; 2R^* \\qquad\\text{(Theorem, Eqn. 13, for } M=2\\text{)} $$
-              $$ R^* \\;\\le\\; R \\;\\le\\; R^*\\!\\left(2 - \\frac{M}{M-1}\\,R^*\\right) \\qquad\\text{(Eqn. 29, general } M\\text{ classes)} $$`,
+    formula: `$$ \\min_i d(x_i, x) \\;=\\; d(x_n', x), \\qquad i = 1, 2, \\dots, n $$
+              <p>&sect;II, Eqn. 1 — the <b>nearest-neighbor decision rule</b>: $x_n'$ is the training point closest to $x$ under metric $d$; the NN rule outputs its label $\\theta_n'$.</p>
+              $$ \\hat{\\eta}_i(x) \\;=\\; \\frac{\\eta_i f_i(x)}{\\sum_j \\eta_j f_j(x)}, \\qquad i = 1, \\dots, M $$
+              <p>&sect;IV, Eqn. 4 — Bayes posterior: probability class $i$ generated $x$, from prior $\\eta_i$ and class density $f_i$.</p>
+              $$ r^*(x) \\;=\\; \\min_i \\Big\\{ \\textstyle\\sum_{i=1}^{M} \\hat{\\eta}_i(x)\\,L(i, j) \\Big\\}, \\qquad R^* \\;=\\; E\\,r^*(x) $$
+              <p>&sect;IV, Eqns. 6–7 — conditional Bayes risk at $x$ (pick the class of minimum expected loss) and the overall <b>Bayes risk</b> $R^*$ as its expectation.</p>
+              $$ R(n) \\;=\\; E\\big[\\,L(\\theta, \\theta_n')\\,\\big], \\qquad R \\;=\\; \\lim_{n\\to\\infty} R(n) $$
+              <p>&sect;VI, Eqns. 10–11 — the $n$-sample NN risk and its large-sample limit $R$, with the 0–1 loss $L = \\big[\\begin{smallmatrix} 0 & 1 \\\\ 1 & 0 \\end{smallmatrix}\\big]$ (Eqn. 12).</p>
+              $$ r(x) \\;=\\; 2\\,\\hat{\\eta}_1(x)\\,\\hat{\\eta}_2(x) \\;=\\; 2\\,\\hat{\\eta}_1(x)\\,(1 - \\hat{\\eta}_1(x)) \\;=\\; 2\\,r^*(x)\\,(1 - r^*(x)) $$
+              <p>&sect;VI, Eqns. 20–21 ($M=2$) — the limiting conditional NN risk: an error needs the two independent draws (query class, neighbor class) to disagree.</p>
+              $$ R \\;=\\; E\\big[\\,2\\,r^*(x)\\,(1 - r^*(x))\\,\\big] \\;=\\; 2R^*(1 - R^*) \\;-\\; 2\\,\\mathrm{Var}\\,r^*(x) $$
+              <p>&sect;VI, Eqns. 24–25 — the headline derivation: take the expectation of $r(x)$, then expand using $R^* = E\\,r^*$ and $E[(r^*)^2] = (R^*)^2 + \\mathrm{Var}\\,r^*$.</p>
+              $$ R^* \\;\\le\\; R \\;\\le\\; 2R^*\\,(1 - R^*) \\;\\le\\; 2R^* \\qquad (M = 2) $$
+              <p>&sect;VI, Eqn. 13 (with Eqn. 26) — the <b>main theorem</b>: drop the non-negative variance term to get the upper bound; $R \\ge R^*$ because Bayes is optimal. "These bounds are the tightest possible."</p>
+              $$ \\sum_{i=1}^{M} \\hat{\\eta}_i^2(x) \\;\\ge\\; \\frac{(r^*(x))^2}{M-1} + (1 - r^*(x))^2 $$
+              <p>&sect;VI, Eqn. 35 — the Cauchy–Schwarz step that powers the $M$-class extension, applied to $r(x) = 1 - \\sum_i \\hat{\\eta}_i^2(x)$ (Eqn. 31) with $r^*(x) = 1 - \\max_i \\hat{\\eta}_i(x)$ (Eqn. 32).</p>
+              $$ R^* \\;\\lt\\; R \\;\\lt\\; R^*\\!\\left(2 - \\frac{M}{M-1}\\,R^*\\right) \\qquad (\\text{general } M) $$
+              <p>&sect;VI, Eqns. 29 &amp; 38 — the $M$-category bound, from $R = 2R^* - \\frac{M}{M-1}(R^*)^2 - \\frac{M}{M-1}\\mathrm{Var}\\,r^*$ (Eqn. 37).</p>
+              $$ R(n) \\;=\\; \\tfrac{1}{3} + \\frac{1}{(n+1)(n+2)} \\;\\xrightarrow[n\\to\\infty]{}\\; \\tfrac{1}{3} \\qquad \\Big(R^* = \\tfrac14 \\le R = \\tfrac13 \\le 2R^*(1-R^*) = \\tfrac38\\Big) $$
+              <p>&sect;VII, Eqns. 41–44 — the worked triangle-density example: an exact finite-$n$ NN risk that converges to its limit as $1/n^2$ and sits inside the bound.</p>`,
     whatItDoes:
       `<p>Both lines sandwich the NN error rate $R$ between two values built only from the Bayes error $R^*$.</p>
        <p>The <b>left</b> inequality $R^* \\le R$ is the easy half: no rule can beat the optimal rule, so the

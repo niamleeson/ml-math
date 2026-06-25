@@ -136,22 +136,38 @@
       { sym: "$Q_m$", desc: "the set of training rows that have reached node $m$ &mdash; the data the node must split. $n_m$ is how many rows it has." },
       { sym: "$k$", desc: "a class label index (e.g. $k=0$ or $k=1$ for two classes). The sum $\\sum_k$ runs over all classes." },
       { sym: "$p_{mk}$", desc: "the <b>fraction</b> of rows in node $m$ whose label is class $k$: $p_{mk} = \\frac{1}{n_m}\\sum_{y \\in Q_m} \\mathbb{1}(y = k)$. The $p_{mk}$ over all classes sum to $1$." },
-      { sym: "$H(Q_m)$", desc: "the <b>impurity</b> of node $m$ &mdash; how class-mixed its rows are. Here the <b>Gini impurity</b>. $0$ means pure (one class)." },
+      { sym: "$H(Q_m)$", desc: "the <b>impurity</b> of node $m$ &mdash; how mixed/spread its rows are. For classification it is the <b>Gini impurity</b> ($0$ = pure, one class); for regression it is the within-node variance (MSE) or mean absolute deviation (MAE)." },
+      { sym: "$\\bar{y}_m$", desc: "the <b>mean</b> of the target values $y$ in node $m$ (regression). A regression leaf predicts $\\bar{y}_m$; the MSE impurity measures squared spread around it." },
+      { sym: "$\\operatorname{median}(y)_m$", desc: "the <b>median</b> target value in node $m$ (regression). The MAE leaf predicts this and impurity is the mean absolute deviation around it &mdash; more outlier-robust than MSE." },
       { sym: "$\\theta = (j, t)$", desc: "a candidate <b>split</b>: feature index $j$ and threshold value $t$. Rows go left if $x_j \\le t$, right otherwise." },
       { sym: "$Q_m^{\\text{left}}, Q_m^{\\text{right}}$", desc: "the rows sent to the left child ($x_j \\le t$) and the right child ($x_j \\gt t$) by split $\\theta$. Their sizes are $n_{\\text{left}}$ and $n_{\\text{right}}$, with $n_{\\text{left}} + n_{\\text{right}} = n_m$." },
       { sym: "$G(Q_m, \\theta)$", desc: "the <b>score</b> of split $\\theta$: the weighted-average impurity of its two children. The best split minimizes it." },
       { sym: "$T$", desc: "a tree (a particular set of splits and leaves)." },
       { sym: "$R(T)$", desc: "the tree's total training impurity &mdash; the sample-weighted impurity summed over its leaves. Lower $R(T)$ = better fit to training data." },
       { sym: "$|\\widetilde{T}|$", desc: "the number of <b>leaves</b> (terminal nodes) in tree $T$ &mdash; a measure of tree size / complexity." },
-      { sym: "$\\alpha$", desc: "the <b>cost-complexity</b> parameter, $\\alpha \\ge 0$: the penalty (the 'fine') charged per leaf. $\\alpha = 0$ keeps the full tree; larger $\\alpha$ prunes more." }
+      { sym: "$\\alpha$", desc: "the <b>cost-complexity</b> parameter, $\\alpha \\ge 0$: the penalty (the 'fine') charged per leaf. $\\alpha = 0$ keeps the full tree; larger $\\alpha$ prunes more." },
+      { sym: "$T_t$, $\\alpha_{\\text{eff}}(t)$", desc: "$T_t$ is the subtree (branch) rooted at internal node $t$; $\\alpha_{\\text{eff}}(t) = \\frac{R(t) - R(T_t)}{|T_t| - 1}$ is the $\\alpha$ at which keeping that branch stops paying off &mdash; the <b>weakest link</b> (smallest $\\alpha_{\\text{eff}}$) is pruned first." }
     ],
-    formula: `$$ \\text{(Gini impurity)}\\quad H(Q_m) = \\sum_k p_{mk}\\,(1 - p_{mk}) \\qquad \\text{(split score)}\\quad G(Q_m, \\theta) = \\frac{n_{\\text{left}}}{n_m}\\,H\\!\\left(Q_m^{\\text{left}}\\right) + \\frac{n_{\\text{right}}}{n_m}\\,H\\!\\left(Q_m^{\\text{right}}\\right) $$
-$$ \\text{(cost-complexity pruning)}\\quad R_\\alpha(T) = R(T) + \\alpha\\,|\\widetilde{T}| $$`,
+    formula: `$$ \\text{(Gini impurity, classification)}\\quad H(Q_m) = \\sum_k p_{mk}\\,(1 - p_{mk}) \\;=\\; 1 - \\sum_k p_{mk}^2 $$
+<p>Classification impurity (scikit-learn trees §"Classification criteria"; same Gini form as Wikipedia "Decision tree learning"). $p_{mk}$ is the fraction of class $k$ in node $m$. It is $0$ for a pure node and largest for an even mix.</p>
+$$ \\text{(weighted split objective)}\\quad G(Q_m, \\theta) = \\frac{n_m^{\\text{left}}}{n_m}\\,H\\!\\left(Q_m^{\\text{left}}(\\theta)\\right) + \\frac{n_m^{\\text{right}}}{n_m}\\,H\\!\\left(Q_m^{\\text{right}}(\\theta)\\right), \\qquad \\theta^{*} = \\operatorname*{arg\\,min}_{\\theta}\\; G(Q_m, \\theta) $$
+<p>Split objective (scikit-learn trees §"Splitting criteria"). A split $\\theta=(j,t_m)$ sends rows with $x_j \\le t_m$ left and the rest right; $G$ is the row-fraction-weighted average of the two child impurities, and CART picks the $\\theta$ that minimizes it. Works for any impurity $H$ &mdash; classification or regression.</p>
+$$ \\text{(regression: node mean)}\\quad \\bar{y}_m = \\frac{1}{n_m}\\sum_{y \\in Q_m} y \\qquad \\text{(regression: variance / MSE impurity)}\\quad H(Q_m) = \\frac{1}{n_m}\\sum_{y \\in Q_m} (y - \\bar{y}_m)^2 $$
+<p>Regression criterion (scikit-learn trees §"Regression criteria", the CART variance/MSE rule). The leaf predicts the node mean $\\bar{y}_m$; impurity is the mean squared error around that mean (the within-node variance). Plugged into the same $G(Q_m,\\theta)$, minimizing it is the regression analogue of Gini reduction.</p>
+$$ \\text{(MAE alternative)}\\quad H(Q_m) = \\frac{1}{n_m}\\sum_{y \\in Q_m} \\left| y - \\operatorname{median}(y)_m \\right| $$
+<p>Mean-absolute-error variant (scikit-learn trees §"Regression criteria"): the leaf predicts the node median and impurity is mean absolute deviation &mdash; more robust to outliers than MSE.</p>
+$$ \\text{(cost-complexity pruning)}\\quad R_\\alpha(T) = R(T) + \\alpha\\,|\\widetilde{T}|, \\qquad \\alpha_{\\text{eff}}(t) = \\frac{R(t) - R(T_t)}{|T_t| - 1} $$
+<p>Cost-complexity pruning (scikit-learn trees §"Minimal cost-complexity pruning"; CART's weakest-link rule). $R(T)$ is the total sample-weighted leaf impurity, $|\\widetilde{T}|$ the leaf count, $\\alpha \\ge 0$ the per-leaf fine. The effective $\\alpha_{\\text{eff}}(t)$ of an internal node $t$ is the price at which pruning its subtree $T_t$ breaks even; the weakest link (smallest $\\alpha_{\\text{eff}}$) is collapsed first, and $\\alpha$ is chosen by cross-validation.</p>`,
     whatItDoes:
       `<p><b>Gini impurity</b> $H(Q_m) = \\sum_k p_{mk}(1 - p_{mk})$ scores how mixed a node is. Each class
        contributes $p_{mk}(1 - p_{mk})$, which is the chance you pick a row of class $k$ times the chance the
        next pick is <i>not</i> class $k$. The sum is $0$ when one class owns the node and maximal when classes
        are evenly split. (Equivalently $H = 1 - \\sum_k p_{mk}^2$.)</p>
+       <p><b>The regression criterion</b> swaps Gini for <b>within-node variance</b>: the leaf predicts the node
+       mean $\\bar{y}_m$ and the impurity is the mean squared error $H(Q_m) = \\frac1{n_m}\\sum (y - \\bar{y}_m)^2$
+       (an MAE variant uses the node median and mean absolute deviation). The "R" in CART &mdash; same greedy
+       split search, just a different $H$ plugged into $G$. A regression split therefore minimizes the
+       weighted variance of the two halves, i.e. it maximizes the variance it explains.</p>
        <p><b>The split score</b> $G(Q_m, \\theta)$ asks "if I split here, how impure are the two halves on
        average?" Each child's impurity is weighted by its share of the rows, so a split that sends most rows
        into a nearly-pure child scores low. CART picks the $\\theta$ with the <b>smallest</b> $G$ &mdash;

@@ -1,8 +1,9 @@
 /* Paper lesson — Support-Vector Networks (Cortes & Vapnik, 1995), Machine Learning 20, 273–297.
    No arXiv (1995). Grounded from the Springer-hosted PDF of the article
-   (https://link.springer.com/content/pdf/10.1007/BF00994018.pdf): the optimal-hyperplane dual
-   (eqs. 15–18), the Soft Margin Hyperplane section (eqs. 21–30), and the Convolution-of-the-
-   Dot-Product / kernel section (eqs. 33–37). NumPy is the honest tool here (no torch.nn equivalent):
+   (https://link.springer.com/content/pdf/10.1007/BF00994018.pdf): linear separability (eqs. 9–10),
+   the margin (eq. 13), the optimal-hyperplane primal + dual (eqs. 14–18), the Soft Margin Hyperplane
+   section (eqs. 21–30), and the Convolution-of-the-Dot-Product / kernel section (eqs. 31–37, plus the
+   RBF kernel of §5 eq. 36). NumPy is the honest tool here (no torch.nn equivalent):
    Track A (primitive) builds a soft-margin SVM from scratch via simplified SMO and VERIFIES it against
    sklearn.svm.SVC on a 2-D dataset (same weights, same support vectors, same boundary).
    Self-contained: lesson + CODE + CODEVIZ merged by id "paper-svm". */
@@ -135,6 +136,28 @@
        <code>f(x) = sign(&sum;<sub>i</sub> y<sub>i</sub> &alpha;<sub>i</sub> K(x<sub>i</sub>, x) + b)</code> (eq. 33). A
        straight boundary in the kernel's hidden feature space is a <i>curved</i> boundary in the original space.</p>`,
 
+    architecture:
+      `<p>The paper draws the trained classifier as a <b>two-layer network</b> (Figs. 1, 3, 4) — structurally a feed-forward
+       perceptron with one hidden layer, but with the hidden units fixed to the support vectors rather than learned freely.</p>
+       <p><b>Layer 0 — input.</b> The raw input vector $\\mathbf x\\in\\mathbb R^{n}$ (e.g. a $16\\times16$ digit flattened to
+       256 values in the experiments of §6).</p>
+       <p><b>Non-linear transform (implicit).</b> Conceptually $\\mathbf x$ is mapped into an $N$-dimensional feature space
+       $\\phi:\\mathbb R^{n}\\to\\mathbb R^{N}$ (eq. 31). The trick is that this map is never computed: the order of operations is
+       <i>interchanged</i> so the network instead compares $\\mathbf x$ to stored support vectors via the kernel.</p>
+       <p><b>Hidden layer — the support vectors.</b> $s$ hidden units, one per support vector $\\mathbf x_k$. Each unit computes a
+       single similarity $u_k=K(\\mathbf x_k,\\mathbf x)$ (Fig. 4) — the "comparison" layer. The count $s$ is data-driven, not a
+       hyperparameter: it is the number of points with $\\alpha_k\\gt0$ (in §6, on the order of 127–200 per digit classifier).</p>
+       <p><b>Output layer — linear vote.</b> A single output unit forms the weighted sum
+       $\\sum_{k} y_k\\,\\alpha_k\\,u_k+b$ with weights $y_k\\alpha_k$ (the Lagrange multipliers, Fig. 4), then applies
+       $\\operatorname{sign}(\\cdot)$ to emit the $\\pm1$ class (eq. 33).</p>
+       <p><b>How it is built (the per-iteration training procedure, §2–3).</b> Form the matrix $D_{ij}=y_iy_jK(\\mathbf x_i,\\mathbf x_j)$,
+       then solve the dual quadratic/convex program for $\\Lambda$ by the paper's chunking scheme: split the data into portions, solve
+       the QP on the first portion, keep its support vectors, add the next portion plus any points that violate $y_i(\\mathbf w\\cdot\\mathbf x_i+b)\\ge1$,
+       re-solve, and repeat. $W(\\Lambda)$ increases monotonically until the whole set is covered. The surviving $\\alpha_k\\gt0$ become the
+       hidden units; $b$ is recovered from any margin support vector.</p>
+       <p><b>Multi-class (§6).</b> For 10-digit recognition the network is ten such one-vs-rest classifiers sharing the same
+       pre-processing and kernel; the predicted digit is the class with the maximum output.</p>`,
+
     symbols: [
       { sym: "$x_i$", desc: "the $i$-th training point (a vector of features)." },
       { sym: "$y_i$", desc: "its class label, either $+1$ or $-1$ (two-class problem)." },
@@ -147,10 +170,49 @@
       { sym: "$\\alpha_i$", desc: "the dual variable (Lagrange multiplier) for point $i$; $>0$ only for support vectors." },
       { sym: "$K(u,v)$", desc: "the kernel: a similarity function standing in for a dot-product in a hidden feature space." },
       { sym: "$D_{ij}$", desc: "the matrix $y_i y_j K(x_i,x_j)$ that defines the dual's quadratic term (eq. 18)." },
-      { sym: "$W(A)$", desc: "the dual objective (eq. 15 / 30) we MAXIMIZE over the vector $A=(\\alpha_1,\\dots,\\alpha_\\ell)$." }
+      { sym: "$W(\\Lambda)$", desc: "the dual objective (eq. 15 / 30) we MAXIMIZE over the multiplier vector $\\Lambda=(\\alpha_1,\\dots,\\alpha_\\ell)$." },
+      { sym: "$\\Lambda$", desc: "the column vector of all dual variables $(\\alpha_1,\\dots,\\alpha_\\ell)$; matrix-form name for $A$." },
+      { sym: "$\\mathbf Y$", desc: "the column vector of all labels $(y_1,\\dots,y_\\ell)$; the balance constraint is $\\Lambda^{\\mathsf T}\\mathbf Y=0$ (eq. 17)." },
+      { sym: "$\\mathbf 1$", desc: "the all-ones vector; $\\Lambda^{\\mathsf T}\\mathbf 1=\\sum_i\\alpha_i$ is the linear reward term." },
+      { sym: "$\\ell$", desc: "the number of training points (the paper writes $\\ell$ for the sample size)." },
+      { sym: "$\\rho$", desc: "the margin width — the gap between the two classes' projections, $2/\\lVert w\\rVert$ (eq. 13)." },
+      { sym: "$\\alpha_{\\max}$", desc: "the largest multiplier $\\max_i\\alpha_i$; appears in the paper's exact soft-margin dual (eq. 30)." },
+      { sym: "$\\delta$", desc: "the scalar upper bound in the QP form $0\\le\\Lambda\\le\\delta\\mathbf 1$ (eq. 29); at the optimum $\\delta=\\alpha_{\\max}$, and $C$ plays its role as the box cap." },
+      { sym: "$\\phi$", desc: "the feature map $\\phi:\\mathbb R^{n}\\to\\mathbb R^{N}$ sending an input to feature space (eq. 31); never computed explicitly." },
+      { sym: "$n$", desc: "the input dimension (length of $x$); $256$ in the digit experiments." },
+      { sym: "$N$", desc: "the (possibly huge or infinite) feature-space dimension after $\\phi$." },
+      { sym: "$d$", desc: "the degree of the polynomial kernel $(u\\cdot v+1)^d$ (eq. 37)." },
+      { sym: "$\\sigma$", desc: "the width parameter of the radial-basis (Gaussian) kernel $\\exp(-\\lVert u-v\\rVert^2/\\sigma^2)$ (eq. 36)." },
+      { sym: "$u_k$", desc: "the hidden-unit output for support vector $k$: the similarity $K(x_k,x)$ (Fig. 4)." }
     ],
 
-    formula: `$$\\text{maximize}\\quad W(A)=\\sum_{i=1}^{\\ell}\\alpha_i-\\tfrac12\\sum_{i=1}^{\\ell}\\sum_{j=1}^{\\ell}\\alpha_i\\alpha_j\\,y_i y_j\\,K(x_i,x_j)\\quad\\text{s.t.}\\ \\ 0\\le\\alpha_i\\le C,\\ \\ \\sum_{i=1}^{\\ell}\\alpha_i y_i=0$$`,
+    formula:
+      `$$\\mathbf w\\cdot\\mathbf x_i+b\\ge 1\\ \\ \\text{if}\\ y_i=1,\\qquad \\mathbf w\\cdot\\mathbf x_i+b\\le -1\\ \\ \\text{if}\\ y_i=-1$$
+       <p>Linear separability (eq. 9): every point sits at least one unit on its own side of the boundary.</p>
+       $$y_i\\,(\\mathbf w\\cdot\\mathbf x_i+b)\\ \\ge\\ 1,\\qquad i=1,\\dots,\\ell$$
+       <p>The two cases written as one inequality (eq. 10), used as the constraint throughout.</p>
+       $$\\rho(\\mathbf w_0,b_0)=\\frac{2}{\\lVert \\mathbf w_0\\rVert}=\\frac{2}{\\sqrt{\\mathbf w_0\\cdot \\mathbf w_0}}$$
+       <p>Margin width of the optimal hyperplane (eq. 13): wider margin means smaller $\\lVert \\mathbf w\\rVert$.</p>
+       $$\\min_{\\mathbf w,\\,b}\\ \\tfrac12\\,\\mathbf w\\cdot\\mathbf w\\qquad\\text{subject to}\\quad y_i\\,(\\mathbf w\\cdot\\mathbf x_i+b)\\ge 1$$
+       <p>Maximum-margin <b>primal</b> (§2, eqs. 10+13): a quadratic program — maximizing the margin is minimizing $\\mathbf w\\cdot\\mathbf w$.</p>
+       $$\\mathbf w_0=\\sum_{i=1}^{\\ell} y_i\\,\\alpha_i^{0}\\,\\mathbf x_i,\\qquad \\alpha_i^{0}\\ge 0$$
+       <p>The solution is a linear combination of training points (eq. 14); only support vectors have $\\alpha_i^{0}\\gt 0$.</p>
+       $$\\text{maximize}\\quad W(\\Lambda)=\\Lambda^{\\mathsf T}\\mathbf 1-\\tfrac12\\,\\Lambda^{\\mathsf T}\\mathbf D\\,\\Lambda\\quad\\text{s.t.}\\ \\ \\Lambda\\ge\\mathbf 0,\\ \\ \\Lambda^{\\mathsf T}\\mathbf Y=0,\\quad D_{ij}=y_i y_j\\,\\mathbf x_i\\cdot \\mathbf x_j$$
+       <p>The Wolfe <b>dual</b> in matrix form (§2, eqs. 15–18). Written out, $W=\\sum_i\\alpha_i-\\tfrac12\\sum_i\\sum_j\\alpha_i\\alpha_j\\,y_i y_j\\,\\mathbf x_i\\cdot\\mathbf x_j$ — the data enter <i>only</i> as dot-products $\\mathbf x_i\\cdot\\mathbf x_j$.</p>
+       $$\\xi_i\\ge 0,\\qquad y_i\\,(\\mathbf w\\cdot\\mathbf x_i+b)\\ge 1-\\xi_i$$
+       <p>Soft-margin constraints (§3, eqs. 22–23): slack $\\xi_i$ lets a point intrude into or cross the corridor.</p>
+       $$\\min_{\\mathbf w,\\,b,\\,\\xi}\\ \\tfrac12\\,\\mathbf w\\cdot\\mathbf w+C\\sum_{i=1}^{\\ell}\\xi_i\\qquad\\text{subject to}\\quad y_i\\,(\\mathbf w\\cdot\\mathbf x_i+b)\\ge 1-\\xi_i,\\ \\ \\xi_i\\ge 0$$
+       <p>Soft-margin <b>primal</b> (§3, eqs. 24–25 with $F(u)=u$, $\\sigma=1$): pay a linear penalty $C\\sum\\xi_i$ for the slack. A solution now exists for <i>any</i> dataset.</p>
+       $$\\text{maximize}\\quad \\sum_{i=1}^{\\ell}\\alpha_i-\\tfrac12\\sum_{i=1}^{\\ell}\\sum_{j=1}^{\\ell}\\alpha_i\\alpha_j\\,y_i y_j\\,\\mathbf x_i\\cdot \\mathbf x_j\\quad\\text{s.t.}\\ \\ \\sum_{i=1}^{\\ell}\\alpha_i y_i=0,\\ \\ 0\\le\\alpha_i\\le C$$
+       <p>Soft-margin <b>dual</b> — the box-constrained form solved in practice (§3, the box $0\\le\\Lambda\\le\\delta\\mathbf 1$ of eq. 29). The slack penalty enters the dual purely as the cap $\\alpha_i\\le C$.</p>
+       $$W(\\Lambda)=\\Lambda^{\\mathsf T}\\mathbf 1-\\tfrac12\\Big[\\Lambda^{\\mathsf T}\\mathbf D\\,\\Lambda+\\frac{\\alpha_{\\max}^{2}}{C}\\Big],\\qquad \\Lambda\\ge\\mathbf 0,\\ \\ \\Lambda^{\\mathsf T}\\mathbf Y=0$$
+       <p>The paper's exact soft-margin dual (eq. 30), with $\\alpha_{\\max}=\\max_i\\alpha_i$; the extra $\\alpha_{\\max}^2/C$ term makes the soft-margin solution unique and exist for any data set.</p>
+       $$f(\\mathbf x)=\\operatorname{sign}\\!\\Big(\\sum_{i=1}^{\\ell} y_i\\,\\alpha_i\\,K(\\mathbf x_i,\\mathbf x)+b\\Big)$$
+       <p>Decision function in terms of support vectors (§4, eq. 33): classify a new point by a weighted vote of similarities to the support vectors.</p>
+       $$K(\\mathbf u,\\mathbf v)=\\phi(\\mathbf u)\\cdot\\phi(\\mathbf v),\\qquad D_{ij}=y_i y_j\\,K(\\mathbf x_i,\\mathbf x_j)$$
+       <p>The <b>kernel trick</b> (§4, eqs. 34, and the dual's $D$ matrix): replace every dot-product by a kernel $K$ that equals an inner product in a feature space $\\phi$ — without ever building $\\phi$ (Mercer's condition, eq. 35).</p>
+       $$K(\\mathbf u,\\mathbf v)=(\\mathbf u\\cdot\\mathbf v+1)^{d},\\qquad K(\\mathbf u,\\mathbf v)=\\exp\\!\\Big(-\\frac{\\lVert \\mathbf u-\\mathbf v\\rVert^{2}}{\\sigma^{2}}\\Big)$$
+       <p>The two kernels the paper names: the degree-$d$ polynomial (eq. 37 / 39) and the radial-basis / Gaussian potential function (eq. 36, §5), giving polynomial and RBF decision surfaces from one solver.</p>`,
 
     whatItDoes:
       `<p>This is the <b>soft-margin dual</b> (the paper's eq. 15 with the box constraint of eq. 29; in matrix form

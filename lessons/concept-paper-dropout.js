@@ -126,6 +126,35 @@
        because the test path stays a clean, unscaled network. (In code we write the drop probability as
        <code>p_drop</code>, so the keep probability is $p = 1-p_{\\text{drop}}$ and we divide by $p$.)</p>`,
 
+    architecture:
+      `<p>Dropout is not a network of its own &mdash; it is a stateless <b>layer you insert between</b> existing
+       layers. The host network is a standard feed-forward stack of $L$ hidden layers (Section 4): each layer
+       $l$ holds a weight matrix $W^{(l)}$ and bias $\\mathbf{b}^{(l)}$, takes the previous layer's output vector
+       $\\mathbf{y}^{(l)}$, computes $\\mathbf{z}^{(l+1)} = W^{(l+1)}\\mathbf{y}^{(l)} + \\mathbf{b}^{(l+1)}$, and
+       applies an activation $f$. A dropout layer sits on the data path between two such layers (commonly right
+       after a hidden layer's activation) and adds <b>no parameters</b> &mdash; only a hyperparameter $p$.</p>
+       <p><b>Per-forward-pass data flow through one dropout layer (Figure 3b):</b></p>
+       <ol>
+         <li><b>In:</b> the activation vector $\\mathbf{y}^{(l)}$ of the layer above (dimension = that layer's width).</li>
+         <li><b>Mask:</b> sample a same-shaped 0/1 vector $\\mathbf{r}^{(l)}$, each entry an independent
+         Bernoulli($p$) draw. A new mask is sampled for every example / every step.</li>
+         <li><b>Gate:</b> elementwise-multiply, $\\tilde{\\mathbf{y}}^{(l)} = \\mathbf{r}^{(l)} * \\mathbf{y}^{(l)}$,
+         zeroing the dropped units. (Inverted dropout also divides the survivors by $p$ here.)</li>
+         <li><b>Out:</b> the thinned vector $\\tilde{\\mathbf{y}}^{(l)}$, same dimension, fed to layer $l+1$'s linear map.</li>
+       </ol>
+       <p><b>Two execution modes share one set of weights:</b></p>
+       <ul>
+         <li><b>Train:</b> mask active &rarr; each step instantiates a different randomly thinned sub-network.
+         Gradients flow only through the kept units; dropped units get zero gradient that step.</li>
+         <li><b>Test:</b> mask removed, all units present; either scale the weights $W_{test}^{(l)} = p\\,W^{(l)}$
+         (paper) or do nothing (inverted dropout). The result is one deterministic network approximating the
+         average over all $2^{n}$ thinned sub-networks.</li>
+       </ul>
+       <p><b>Where it goes in the stack:</b> the paper's MNIST nets place dropout after each hidden layer with
+       $p=0.5$ on hidden units and $p=0.8$ (drop 20%) on the inputs (Sections 6.1.1, 7.3). Dropout pairs well
+       with max-norm: constrain each hidden unit's incoming weight vector to $\\lVert\\mathbf{w}\\rVert_2 \\le c$
+       (Section 5.1), which let the paper reach 1.05% MNIST error.</p>`,
+
     symbols: [
       { sym: "unit (neuron)", desc: "one node in a layer: it computes a weighted sum of its inputs plus a bias, then applies a nonlinearity. A layer has many units." },
       { sym: "overfitting", desc: "fitting the training data's noise instead of its true pattern, so training error is low but test (new-data) error is high." },
@@ -140,17 +169,26 @@
       { sym: "$\\mathbf{w}_i^{(l+1)}, b_i^{(l+1)}$", desc: "the incoming weight vector and bias of unit $i$ in layer $l+1$." },
       { sym: "$z_i^{(l+1)}, y_i^{(l+1)}$", desc: "unit $i$'s pre-activation (weighted sum) and post-activation output $f(z_i^{(l+1)})$." },
       { sym: "$f$", desc: "the activation function, e.g. the logistic sigmoid $f(x)=1/(1+e^{-x})$ or ReLU." },
-      { sym: "$W_{test}^{(l)} = pW^{(l)}$", desc: "the test-time weight-scaling rule: multiply trained weights by the keep probability $p$ so the un-dropped test network matches the training-time expected input." }
+      { sym: "$W_{test}^{(l)} = pW^{(l)}$", desc: "the test-time weight-scaling rule: multiply trained weights by the keep probability $p$ so the un-dropped test network matches the training-time expected input." },
+      { sym: "$2^{n}$", desc: "the number of distinct thinned sub-networks hidden inside one net with $n$ droppable units (each unit is either kept or dropped). Dropout trains this whole family with shared weights; the scaled test net approximates their average." },
+      { sym: "$\\mathbb{E}_{\\mathbf{r}}[\\cdot]$", desc: "expectation (average) over the random dropout mask $\\mathbf{r}$ &mdash; i.e. averaging an output over all the masks dropout could draw." }
     ],
 
     formula:
-      `$$\\textbf{Standard layer:}\\qquad z_i^{(l+1)} = \\mathbf{w}_i^{(l+1)}\\mathbf{y}^{(l)} + b_i^{(l+1)},\\qquad
+      `$$z_i^{(l+1)} = \\mathbf{w}_i^{(l+1)}\\mathbf{y}^{(l)} + b_i^{(l+1)},\\qquad
         y_i^{(l+1)} = f\\!\\left(z_i^{(l+1)}\\right)$$
-       $$\\textbf{With dropout (train):}\\qquad r_j^{(l)} \\sim \\mathrm{Bernoulli}(p),\\qquad
-        \\tilde{\\mathbf{y}}^{(l)} = \\mathbf{r}^{(l)} * \\mathbf{y}^{(l)},$$
+       <p>Standard feed-forward layer, no dropout (Section 4): unit $i$'s pre-activation is the weighted sum of layer $l$'s outputs plus a bias, then an activation $f$.</p>
+       $$r_j^{(l)} \\sim \\mathrm{Bernoulli}(p),\\qquad
+        \\tilde{\\mathbf{y}}^{(l)} = \\mathbf{r}^{(l)} * \\mathbf{y}^{(l)}$$
+       <p>Dropout, training (Section 4, Figure 3b): draw an independent 0/1 mask, one Bernoulli($p$) per unit, and elementwise-multiply ($*$) it into the layer's outputs to get the thinned vector $\\tilde{\\mathbf{y}}^{(l)}$ &mdash; a fresh mask each forward pass.</p>
        $$z_i^{(l+1)} = \\mathbf{w}_i^{(l+1)}\\tilde{\\mathbf{y}}^{(l)} + b_i^{(l+1)},\\qquad
         y_i^{(l+1)} = f\\!\\left(z_i^{(l+1)}\\right)$$
-       $$\\textbf{Test:}\\qquad W_{test}^{(l)} = p\\,W^{(l)}\\quad(\\text{used with no dropping})$$`,
+       <p>The thinned outputs $\\tilde{\\mathbf{y}}^{(l)}$ &mdash; not $\\mathbf{y}^{(l)}$ &mdash; feed the next layer (Section 4). Backprop runs only through this sampled sub-network.</p>
+       $$W_{test}^{(l)} = p\\,W^{(l)}\\qquad(\\text{network run with no dropping})$$
+       <p>Test-time weight scaling (Section 4, Figure 2): every unit is now present, so its incoming sum is on average $1/p$ too large; multiplying the outgoing weights by the keep probability $p$ restores the expected input the unit saw in training.</p>
+       $$\\text{a net of } n \\text{ units } = \\text{ a collection of } 2^{n} \\text{ thinned sub-networks (shared weights)};\\quad
+        \\mathbb{E}_{\\mathbf{r}}\\!\\left[\\,y_{\\text{train}}\\,\\right] = y_{\\text{test}}$$
+       <p>Ensemble / model-averaging view (Section 1.1): a network with $n$ units is $2^{n}$ thinned sub-networks that share weights and are each trained rarely. The single scaled-weight test network is a cheap approximate <i>average</i> over all of them &mdash; its output equals the expected output under the dropout noise, one network for the price of an ensemble.</p>`,
 
     whatItDoes:
       `<p>The first line is an ordinary layer. The dropout lines insert a random 0/1 mask $\\mathbf{r}^{(l)}$

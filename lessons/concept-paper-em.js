@@ -130,6 +130,26 @@
        Raising $Q$ raises $L$ by <i>at least</i> as much, because the $H$ term can only drop (Lemma 1, via Jensen's
        inequality). The walkthrough math is owned by the <code>ml-em</code> concept lesson; the recap above is short.</p>`,
 
+    architecture:
+      `<p>EM is an <b>algorithm</b>, not a network — its "architecture" is the per-iteration procedure (Section 2),
+       a fixed-point map $\\phi^{(p+1)}=M(\\phi^{(p)})$ that loops two stages over the data:</p>
+       <ol>
+         <li><b>Inputs.</b> Observed data $\\mathbf{y}$, a complete-data model $f(\\mathbf{x}\\mid\\phi)$ whose hidden
+         part is easy to fit, and an initial parameter $\\phi^{(0)}$.</li>
+         <li><b>E-stage (build the bound).</b> From $\\phi^{(p)}$ compute the posterior over the hidden part
+         $k(\\mathbf{x}\\mid\\mathbf{y},\\phi^{(p)})$, and use it to form $Q(\\phi'\\mid\\phi^{(p)})$ (Eq. 2.17). For a
+         Gaussian mixture this stage <i>is</i> the $N\\times K$ responsibility matrix $\\gamma$ — one forward pass:
+         evaluate every component density, weight by $\\pi$, normalize each row.</li>
+         <li><b>M-stage (climb the bound).</b> Set $\\phi^{(p+1)}=\\arg\\max_\\phi Q(\\phi\\mid\\phi^{(p)})$ (Eq. 2.18).
+         For a GMM this is closed form: aggregate the responsibility-weighted statistics
+         $N_k,\\ \\sum_i\\gamma_{ik}x_i,\\ \\sum_i\\gamma_{ik}(x_i-\\mu_k)(x_i-\\mu_k)^\\top$ into new $\\pi,\\mu,\\Sigma$.</li>
+         <li><b>Monitor + loop.</b> Record $L=\\log g(\\mathbf{y}\\mid\\phi^{(p)})$ <i>before</i> the M-stage; repeat
+         E&rarr;M until $L$ stops rising. Theorem 1 guarantees $L$ is non-decreasing along this loop.</li>
+       </ol>
+       <p>Data flow per cycle: parameters $\\to$ (E) responsibilities $\\gamma$ $\\to$ (M) weighted sufficient
+       statistics $\\to$ updated parameters. The <b>GEM</b> variant relaxes the M-stage to <i>any</i> step that
+       raises $Q$ (not necessarily the maximizer) and still inherits the monotone guarantee.</p>`,
+
     symbols: [
       { sym: "$\\mathbf{y}$", desc: "the observed (incomplete) data — what you actually measure. In our mixture, the point values." },
       { sym: "$\\mathbf{x}$", desc: "the complete data — the observed data PLUS the hidden parts. In our mixture, each point together with the label of which Gaussian produced it." },
@@ -144,14 +164,36 @@
       { sym: "$\\gamma_{ik}$ (gamma)", desc: "the responsibility: the posterior probability that point $i$ came from cluster $k$, given the current model. This IS the E-step output for a mixture; the rows sum to 1." },
       { sym: "$\\pi_k$ (pi)", desc: "the mixing weight of cluster $k$ — its overall share of the population. The $\\pi_k$ sum to 1." },
       { sym: "$\\mu_k,\\ \\sigma_k^2$", desc: "the mean and variance (centre and spread) of cluster $k$'s Gaussian bell curve." },
+      { sym: "$\\Sigma_k$", desc: "the covariance matrix of cluster $k$'s Gaussian (multivariate spread). In 1-D it is just the scalar variance $\\sigma_k^2$." },
+      { sym: "$\\mathcal{N}(x;\\mu,\\Sigma)$", desc: "the Gaussian (normal) density at $x$ with mean $\\mu$ and covariance $\\Sigma$; in 1-D, $\\tfrac{1}{\\sqrt{2\\pi\\sigma^2}}e^{-(x-\\mu)^2/2\\sigma^2}$." },
+      { sym: "$\\mathcal{X}(\\mathbf{y})$", desc: "the set of all complete-data values $\\mathbf{x}$ that are consistent with the observed $\\mathbf{y}$ — what Eq. 1.1 integrates over to get $g$." },
+      { sym: "$k(\\mathbf{x}\\mid\\mathbf{y},\\phi)$", desc: "the conditional density of the hidden part given the observed data, $f(\\mathbf{x}\\mid\\phi)/g(\\mathbf{y}\\mid\\phi)$ (Eq. 2.5) — the posterior EM uses to average out the unknowns." },
+      { sym: "$H(\\phi'\\mid\\phi)$", desc: "the expected log-conditional $E(\\log k(\\mathbf{x}\\mid\\mathbf{y},\\phi')\\mid\\mathbf{y},\\phi)$ (a cross-entropy term, Eq. 3.1); $L=Q-H$, and Jensen gives $H(\\phi'\\mid\\phi)\\le H(\\phi\\mid\\phi)$." },
       { sym: "$N_k$", desc: "the effective count of cluster $k$: $\\sum_i \\gamma_{ik}$, the total responsibility mass it owns (a soft, fractional count)." },
       { sym: "$M(\\phi)$", desc: "the EM map: one full E+M cycle viewed as a function taking old parameters to new ones (Eq. 3.4). Theorem 1 is stated in terms of it." }
     ],
 
     formula:
-      `$$\\textbf{E-step (Eq. 2.17): }\\; Q(\\phi'\\mid\\phi^{(p)}) \\;=\\; E\\!\\big(\\log f(\\mathbf{x}\\mid\\phi') \\,\\big|\\, \\mathbf{y},\\,\\phi^{(p)}\\big)$$
-       $$\\textbf{M-step: }\\; \\phi^{(p+1)} \\;=\\; \\arg\\max_{\\phi}\\; Q(\\phi\\mid\\phi^{(p)})
-         \\qquad\\textbf{Monotone (Thm 1, Eq. 3.7): }\\; L\\big(M(\\phi)\\big) \\;\\ge\\; L(\\phi)$$`,
+      `$$g(\\mathbf{y}\\mid\\phi) \\;=\\; \\int_{\\mathcal{X}(\\mathbf{y})} f(\\mathbf{x}\\mid\\phi)\\, d\\mathbf{x}
+         \\qquad\\qquad L(\\phi) \\;=\\; \\log g(\\mathbf{y}\\mid\\phi)$$
+       <p style="margin:.2em 0 .6em">Complete-data density $f(\\mathbf{x}\\mid\\phi)$ vs observed-data likelihood $g$, got by integrating the hidden parts out over all complete data $\\mathbf{x}$ consistent with $\\mathbf{y}$ (Eq. 1.1); $L$ is its log (Eq. 2.4). $g$ is the awkward thing we actually want to maximize.</p>
+       $$\\textbf{E-step (Eq. 2.17): }\\; Q(\\phi'\\mid\\phi^{(p)}) \\;=\\; E\\!\\big(\\log f(\\mathbf{x}\\mid\\phi') \\,\\big|\\, \\mathbf{y},\\,\\phi^{(p)}\\big)$$
+       <p style="margin:.2em 0 .6em">Form the expected complete-data log-likelihood, averaging the hidden parts under the current posterior $k(\\mathbf{x}\\mid\\mathbf{y},\\phi^{(p)})$. For a mixture this expectation is carried entirely by the responsibilities (the posterior over labels) computed below.</p>
+       $$\\textbf{M-step (Eq. 2.18): }\\; \\phi^{(p+1)} \\;=\\; \\arg\\max_{\\phi}\\; Q(\\phi\\mid\\phi^{(p)})$$
+       <p style="margin:.2em 0 .6em">Re-fit by maximizing $Q$ as if the soft-filled hidden parts were data — an ordinary (weighted) maximum-likelihood fit.</p>
+       $$\\log g(\\mathbf{y}\\mid\\phi') \\;=\\; Q(\\phi'\\mid\\phi^{(p)}) \\;-\\; H(\\phi'\\mid\\phi^{(p)}),
+         \\qquad H(\\phi'\\mid\\phi) = E\\!\\big(\\log k(\\mathbf{x}\\mid\\mathbf{y},\\phi') \\,\\big|\\, \\mathbf{y},\\phi\\big)$$
+       <p style="margin:.2em 0 .6em">Lower-bound / ELBO view (Eqs. 3.1&ndash;3.2): splitting $\\log f=\\log g+\\log k$ gives $L(\\phi')=Q-H$. By <b>Jensen's inequality</b> $H(\\phi'\\mid\\phi)\\le H(\\phi\\mid\\phi)$ (Lemma 1: the $H$ term — a cross-entropy — is minimized at $\\phi'=\\phi$), so $Q(\\phi'\\mid\\phi)$ is a tight lower bound on $L(\\phi')$ that touches it at $\\phi'=\\phi$. Maximizing $Q$ pushes that bound — and hence $L$ — up.</p>
+       $$\\textbf{Monotone increase (Thm 1, Eq. 3.7): }\\; L\\big(M(\\phi)\\big) \\;\\ge\\; L(\\phi)$$
+       <p style="margin:.2em 0 .6em">Every EM/GEM cycle $M(\\phi)$ never lowers the observed-data log-likelihood — the loop climbs to a local maximum with no step size to tune.</p>
+       $$\\textbf{GMM E-step (responsibility): }\\;
+         \\gamma_{ik} \\;=\\; \\frac{\\pi_k\\,\\mathcal{N}(x_i;\\,\\mu_k,\\Sigma_k)}{\\sum_{j=1}^{K}\\pi_j\\,\\mathcal{N}(x_i;\\,\\mu_j,\\Sigma_j)},
+         \\qquad N_k \\;=\\; \\sum_{i=1}^{N}\\gamma_{ik}$$
+       <p style="margin:.2em 0 .6em">The Gaussian-mixture instantiation of the E-step: $\\gamma_{ik}$ is the posterior probability that point $i$ came from component $k$ (rows sum to 1); $N_k$ is the soft (effective) count of component $k$.</p>
+       $$\\pi_k \\;=\\; \\frac{N_k}{N}, \\qquad
+         \\mu_k \\;=\\; \\frac{1}{N_k}\\sum_{i=1}^{N}\\gamma_{ik}\\,x_i, \\qquad
+         \\Sigma_k \\;=\\; \\frac{1}{N_k}\\sum_{i=1}^{N}\\gamma_{ik}\\,(x_i-\\mu_k)(x_i-\\mu_k)^{\\top}$$
+       <p style="margin:.2em 0 .6em">The closed-form GMM M-step: responsibility-weighted weight, mean, and covariance for each component (in 1-D, $\\Sigma_k$ is the scalar variance $\\sigma_k^2$). The observed-data log-likelihood recorded each cycle is $L=\\sum_i\\log\\!\\big(\\sum_k \\pi_k\\,\\mathcal{N}(x_i;\\mu_k,\\Sigma_k)\\big)$.</p>`,
 
     whatItDoes:
       `<p>The <b>E-step</b> (Eq. 2.17) builds $Q$: it takes the complete-data log-likelihood $\\log f(\\mathbf{x}\\mid\\phi')$

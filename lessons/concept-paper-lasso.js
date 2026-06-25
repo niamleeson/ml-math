@@ -155,6 +155,30 @@
        length, which is $1$ for standardized features). Repeat the full sweep until the coefficients stop
        moving. Each single-coordinate step is exactly the orthonormal soft-threshold solution, which is why the
        loop is so short.</p>`,
+    architecture:
+      `<p>The lasso is an <b>estimator plus a solver</b>, not a layered network. Its "architecture" is the
+       per-iteration coordinate-descent procedure that turns the L1-penalized objective into a sequence of
+       one-line soft-threshold updates.</p>
+       <p><b>Inputs / preprocessing.</b> A design matrix $X$ ($N$ rows $\\times\\ p$ columns) and target $y$.
+       Center each feature column to mean $0$ and scale it (and center $y$), so every feature's squared length is
+       the same and the single threshold $\\gamma$ is applied fairly across coefficients.</p>
+       <p><b>State.</b> One coefficient vector $\\beta \\in \\mathbb{R}^p$, initialized to $0$ (all features off).</p>
+       <p><b>One coordinate update</b> (the repeated building block), for feature $j$:</p>
+       <ol>
+        <li><b>Partial residual</b> &mdash; remove feature $j$'s current contribution from the error:
+        $r^{(j)} = y - X\\beta + X_{:,j}\\,\\beta_j$.</li>
+        <li><b>Correlate</b> feature $j$ with that residual: $\\rho_j = \\tfrac{1}{N}\\,X_{:,j}^\\top r^{(j)}$.</li>
+        <li><b>Soft-threshold</b> and write back: $\\beta_j \\leftarrow S(\\rho_j,\\,\\lambda)\\ /\\ (\\text{feature }j\\text{'s squared length})$,
+        where the squared length is $1$ for standardized features.</li>
+       </ol>
+       <p><b>Sweep and convergence.</b> Apply the update to $j = 1,\\dots,p$ in turn (one full <i>sweep</i>), then
+       repeat sweeps until $\\beta$ stops moving. Each single step is exactly the orthonormal closed form
+       $S(\\hat\\beta_j^{\\,\\text{OLS}},\\gamma)$ applied to the partial residual, which is why the loop is so
+       short and why it provably converges to the lasso solution.</p>
+       <p><b>Output / path.</b> The fitted sparse $\\beta$ at a given $\\lambda$. Sweeping $\\lambda$ from $0$ upward
+       and recording $\\beta$ each time traces the <b>coefficient paths</b> &mdash; the curves along which features
+       drop to exactly zero one by one (the CODEVIZ panel). The original 1996 paper solved the same problem with a
+       quadratic-programming / "shooting" routine; coordinate descent reaches the identical optimum more simply.</p>`,
     symbols: [
       { sym: "$N$", desc: "the number of training examples (rows of the data)." },
       { sym: "$p$", desc: "the number of predictors / features (columns of the design matrix $X$)." },
@@ -167,13 +191,21 @@
       { sym: "$t$", desc: "the lasso <b>budget</b>: the largest the L1 norm is allowed to be. Small $t$ = tight budget = more coefficients forced to zero." },
       { sym: "$\\lambda$", desc: "the penalty strength (<b>lambda</b>) in the equivalent penalized form. Large $\\lambda$ pushes harder toward zero and is equivalent to a small budget $t$." },
       { sym: "$S(z,\\gamma)$", desc: "the <b>soft-thresholding operator</b>: pull the number $z$ toward zero by the threshold $\\gamma$, and clip at zero so it cannot cross. Equals $\\operatorname{sign}(z)\\max(|z|-\\gamma,0)$." },
-      { sym: "$\\gamma$", desc: "the threshold fed to $S$ &mdash; the amount each value is pulled toward zero. In the lasso it is tied to $\\lambda$ (here $\\gamma=\\lambda$ for standardized features)." },
+      { sym: "$\\gamma$", desc: "the threshold fed to $S$ &mdash; the amount each value is pulled toward zero. It is tied to the penalty strength: in the orthonormal formula above $\\gamma = N\\lambda$, while in the per-coordinate update on mean-scaled (RSS divided by $N$) standardized features it reduces to $\\gamma = \\lambda$." },
       { sym: "$\\rho_j$", desc: "the correlation between feature $j$ and the <b>partial residual</b> (the leftover error after removing feature $j$'s current contribution). It is what gets soft-thresholded in the coordinate-descent update." },
       { sym: "$(\\,\\cdot\\,)_+$", desc: "the <b>positive part</b>: $\\max(\\,\\cdot\\,,\\,0)$. Keeps a value if positive, otherwise returns $0$." },
       { sym: "$\\operatorname{sign}(z)$", desc: "the sign of $z$: $+1$ if positive, $-1$ if negative, $0$ if zero. It records the direction so $S$ can pull toward zero from either side." }
     ],
-    formula: `$$ \\text{(lasso, constraint form)}\\quad \\hat\\beta = \\arg\\min_{\\beta}\\ \\|y - X\\beta\\|_2^2 \\quad \\text{subject to}\\quad \\sum_{j=1}^{p} |\\beta_j| \\le t $$
-$$ \\text{(orthonormal solution = soft-threshold, } X^\\top X = I) \\quad \\hat\\beta_j = S\\!\\left(\\hat\\beta_j^{\\,\\text{OLS}},\\,\\gamma\\right) = \\operatorname{sign}\\!\\left(\\hat\\beta_j^{\\,\\text{OLS}}\\right)\\,\\left(\\,\\bigl|\\hat\\beta_j^{\\,\\text{OLS}}\\bigr| - \\gamma\\,\\right)_+ $$`,
+    formula: `$$ \\hat\\beta \\;=\\; \\arg\\min_{\\beta}\\ \\tfrac{1}{N}\\,\\|y - X\\beta\\|_2^2 \\quad \\text{subject to}\\quad \\|\\beta\\|_1 = \\sum_{j=1}^{p} |\\beta_j| \\;\\le\\; t $$
+<p class="cap">Lasso, <b>constraint form</b> (Tibshirani 1996, §2): minimize the (mean) residual sum of squares subject to an L1 budget $t$ on the coefficients. Set $t$ large and the constraint is inactive (plain OLS); shrink $t$ and coefficients are forced to zero.</p>
+$$ \\hat\\beta \\;=\\; \\arg\\min_{\\beta\\in\\mathbb{R}^p}\\ \\left\\{\\ \\tfrac{1}{N}\\,\\|y - X\\beta\\|_2^2 \\;+\\; \\lambda\\,\\|\\beta\\|_1\\ \\right\\}, \\qquad \\lambda \\ge 0 $$
+<p class="cap"><b>Lagrangian / penalized form</b> (§2): the budget $t$ is replaced by a penalty of strength $\\lambda$. Every $t$ corresponds to some $\\lambda$ (the map is data-dependent); large $\\lambda$ ≡ small $t$.</p>
+$$ S(z,\\gamma) \\;=\\; \\operatorname{sign}(z)\\,\\max\\!\\bigl(|z|-\\gamma,\\ 0\\bigr) \\;=\\; \\operatorname{sign}(z)\\,\\bigl(|z|-\\gamma\\bigr)_+ $$
+<p class="cap"><b>Soft-thresholding operator</b>: pull $z$ toward zero by the threshold $\\gamma$, and clip at zero so it cannot cross. The only nonlinearity in the whole algorithm.</p>
+$$ \\text{(orthonormal design, } X^\\top X = I)\\qquad \\hat\\beta_j \\;=\\; S\\!\\left(\\hat\\beta_j^{\\,\\text{OLS}},\\ \\gamma\\right) \\;=\\; \\operatorname{sign}\\!\\left(\\hat\\beta_j^{\\,\\text{OLS}}\\right)\\bigl(\\,|\\hat\\beta_j^{\\,\\text{OLS}}| - \\gamma\\,\\bigr)_+, \\qquad \\gamma = N\\lambda $$
+<p class="cap"><b>Lasso, orthonormal solution</b>: each lasso coefficient is its OLS value soft-thresholded by $\\gamma = N\\lambda$. Coefficients with $|\\hat\\beta_j^{\\,\\text{OLS}}| \\le \\gamma$ become <b>exactly zero</b> (selection); the rest are pulled toward zero by $\\gamma$ (shrinkage).</p>
+$$ \\text{(ridge, orthonormal design)}\\qquad \\hat\\beta_j^{\\,\\text{ridge}} \\;=\\; \\frac{\\hat\\beta_j^{\\,\\text{OLS}}}{1 + N\\lambda} $$
+<p class="cap"><b>Ridge contrast (L2)</b>: the same OLS coefficient is multiplied by a single shrink factor $1/(1+N\\lambda)\\lt 1$ — a <b>uniform shrink</b> applied to every coefficient that approaches but <b>never reaches exactly zero</b>, so ridge shrinks but never selects.</p>`,
     whatItDoes:
       `<p><b>The constraint form (Section 2 of the paper)</b> says: among all coefficient vectors whose absolute
        values sum to at most $t$, pick the one with the smallest squared prediction error. The budget $t$ is the

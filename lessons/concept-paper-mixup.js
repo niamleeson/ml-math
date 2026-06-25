@@ -140,6 +140,30 @@
        Minimization</b>: train not just on the $n$ points but on a cloud of interpolated points around them, so
        the model is forced to give sane answers in the gaps it never literally saw.</p>`,
 
+    architecture:
+      `<p>mixup adds <b>no layers and no parameters</b> &mdash; it is a one-block data transform inserted between
+       the data loader and the loss. The network $f$ is whatever classifier you already have (the paper uses
+       PreAct ResNet-18, WideResNet-28-10, ResNet-50/101); mixup only changes the $(\\tilde{x},\\tilde{y})$ pair
+       fed in. The per-batch data flow (Figure 1a):</p>
+       <ol>
+         <li><b>Input.</b> A mini-batch of $B$ real inputs $X$ (e.g. shape $B\\times C\\times H\\times W$ for images)
+         and one-hot labels $Y$ (shape $B\\times K$ for $K$ classes).</li>
+         <li><b>Sample one weight.</b> Draw a single scalar $\\lambda\\sim\\mathrm{Beta}(\\alpha,\\alpha)$ for the
+         whole batch (the reference recipe). $\\alpha$ is the only added hyperparameter.</li>
+         <li><b>Pair the batch with itself.</b> Generate a random permutation of the $B$ indices to get partner
+         inputs $X'$ and partner labels $Y'$ &mdash; no second data loader needed.</li>
+         <li><b>Blend (the mixup block).</b> $\\tilde{X}=\\lambda X+(1-\\lambda)X'$ and
+         $\\tilde{Y}=\\lambda Y+(1-\\lambda)Y'$ &mdash; the same $\\lambda$ on inputs and labels, computed
+         elementwise; output shapes are identical to the inputs.</li>
+         <li><b>Forward + loss.</b> $\\tilde{X}\\to f\\to$ logits; soft-target cross-entropy
+         $-\\sum_k \\tilde{Y}_k\\log\\mathrm{softmax}(f(\\tilde{X}))_k$ against the blended label.</li>
+         <li><b>Backward + step.</b> Standard backprop and optimizer step through $f$ unchanged. A fresh $\\lambda$
+         and a fresh permutation are drawn every batch.</li>
+       </ol>
+       <p><b>Train vs. test asymmetry.</b> The mixup block is active <i>only at training time</i>; at evaluation
+       the network runs on real, un-mixed inputs with the ordinary forward pass. Net cost over ERM: one Beta draw,
+       one permutation, and two elementwise blends per batch &mdash; negligible compute, no extra weights.</p>`,
+
     symbols: [
       { sym: "$(x_i,y_i)$", desc: "a training example: input $x_i$ (e.g. an image as a vector of pixels) and its label $y_i$ as a one-hot vector (all zeros, a single 1 in the true class slot)." },
       { sym: "$n$", desc: "the number of training examples." },
@@ -148,18 +172,47 @@
       { sym: "$\\lambda$", desc: "lambda: the mixing weight, a number in $[0,1]$. $\\lambda=1$ gives back example $i$ exactly; $\\lambda=0$ gives example $j$; $\\lambda=0.5$ is a half-and-half blend." },
       { sym: "$\\mathrm{Beta}(\\alpha,\\alpha)$", desc: "the Beta distribution on $[0,1]$ with both shape parameters equal to $\\alpha$. It is the source of the random $\\lambda$. Symmetric about $0.5$ because the two parameters are equal." },
       { sym: "$\\alpha$", desc: "alpha: the single mixup hyperparameter ($\\alpha\\gt0$). Small $\\alpha$ → $\\lambda$ near 0 or 1 (mild mixing); $\\alpha=1$ → $\\lambda$ uniform; large $\\alpha$ → $\\lambda$ near 0.5 (strong mixing). The paper recommends $\\alpha\\in[0.1,0.4]$." },
-      { sym: "$R(f)$ / empirical risk", desc: "the average loss $\\frac1n\\sum_i \\ell(f(x_i),y_i)$ that ERM minimizes (eq (1) in the paper). $f$ is the model, $\\ell$ the per-example loss." },
-      { sym: "ERM", desc: "Empirical Risk Minimization: minimize average loss on exactly the $n$ training points. The baseline mixup improves on." },
-      { sym: "VRM", desc: "Vicinal Risk Minimization: minimize average loss over a 'vicinity' cloud of virtual points around each training point, rather than only the points themselves. mixup is one such vicinity (interpolate two points)." },
+      { sym: "$f$", desc: "the model / classifier being trained; $f(x)$ is its prediction on input $x$." },
+      { sym: "$\\ell(\\cdot,\\cdot)$", desc: "the per-example loss (e.g. cross-entropy): how wrong a prediction is versus the target." },
+      { sym: "$P(x,y)$", desc: "the true (unknown) joint data distribution that examples are really drawn from." },
+      { sym: "$R(f)$", desc: "the expected (true) risk $\\int \\ell(f(x),y)\\,\\mathrm{d}P(x,y)$ — average loss over the true distribution $P$; what we actually want small but cannot compute." },
+      { sym: "$\\delta(\\cdot)$", desc: "the Dirac delta: a unit spike of probability mass placed exactly at one point and zero everywhere else." },
+      { sym: "$P_\\delta(x,y)$", desc: "the empirical distribution: $\\frac1n\\sum_i\\delta(x=x_i,y=y_i)$ — a spike of mass $1/n$ on each training point, nothing in between." },
+      { sym: "$R_\\delta(f)$", desc: "the empirical risk $\\frac1n\\sum_i \\ell(f(x_i),y_i)$ that ERM minimizes (paper eq (1)) — $R(f)$ evaluated against $P_\\delta$." },
+      { sym: "$\\nu(\\cdot\\mid x_i,y_i)$", desc: "a vicinity distribution: probability spread in a small region around training point $(x_i,y_i)$, replacing its Dirac spike." },
+      { sym: "$P_\\nu(\\tilde{x},\\tilde{y})$", desc: "the VRM smoothed data distribution $\\frac1n\\sum_i\\nu(\\tilde{x},\\tilde{y}\\mid x_i,y_i)$ — the empirical distribution with each spike replaced by a vicinity." },
+      { sym: "$\\mu(\\tilde{x},\\tilde{y}\\mid x_i,y_i)$", desc: "mixup's specific vicinity distribution: a Beta-weighted interpolation between $(x_i,y_i)$ and every other point $(x_j,y_j)$ (Section 2)." },
+      { sym: "$\\mathbb{E}_{\\lambda}[\\cdot]$", desc: "the expectation (average) over the random mixing weight $\\lambda\\sim\\mathrm{Beta}(\\alpha,\\alpha)$." },
+      { sym: "$B$ / $K$", desc: "$B$ = the mini-batch size (number of examples per batch); $K$ = the number of classes (length of each one-hot label vector)." },
+      { sym: "ERM", desc: "Empirical Risk Minimization: minimize average loss on exactly the $n$ training points (integrate the loss against the spiky $P_\\delta$). The baseline mixup improves on." },
+      { sym: "VRM", desc: "Vicinal Risk Minimization: minimize average loss against the smoothed $P_\\nu$ — a 'vicinity' cloud of virtual points around each training point, not only the points themselves. mixup is one such vicinity (interpolate two points)." },
       { sym: "convex combination", desc: "a weighted average $\\lambda a+(1-\\lambda)b$ with $\\lambda\\in[0,1]$: the weights are non-negative and add to 1, so the result lies on the segment between $a$ and $b$." }
     ],
 
     formula:
-      `<p><b>The mixup construction (Section 2):</b></p>
+      `<p><b>The mixup construction (Section 2) &mdash; what the network actually trains on:</b></p>
        $$\\tilde{x}=\\lambda\\,x_i+(1-\\lambda)\\,x_j,\\qquad \\tilde{y}=\\lambda\\,y_i+(1-\\lambda)\\,y_j,\\qquad \\lambda\\sim\\mathrm{Beta}(\\alpha,\\alpha)$$
-       <p>where $(x_i,y_i)$ and $(x_j,y_j)$ are two examples drawn at random from the training data and
-       $\\lambda\\in[0,1]$. For comparison, the ERM empirical risk it replaces is the paper's eq (1):</p>
-       $$R(f)=\\frac1n\\sum_{i=1}^{n}\\ell\\bigl(f(x_i),\\,y_i\\bigr)$$`,
+       <p>Section 2: $(x_i,y_i)$ and $(x_j,y_j)$ are two examples drawn at random from the training data,
+       $\\lambda\\in[0,1]$. Take the <i>same</i> $\\lambda$-weighted blend of both inputs and one-hot labels.</p>
+       <p><b>The objective being replaced &mdash; ERM (Section 2).</b> The learner wants the <i>expected</i> (true)
+       risk, an integral over the unknown data distribution $P$:</p>
+       $$R(f)=\\int \\ell\\bigl(f(x),\\,y\\bigr)\\,\\mathrm{d}P(x,y)$$
+       <p>Section 2: $P$ is unknown, so it is approximated by the <b>empirical distribution</b> $P_\\delta$, which
+       places a Dirac spike of mass $\\tfrac1n$ on each training point and zero elsewhere:</p>
+       $$P_\\delta(x,y)=\\frac1n\\sum_{i=1}^{n}\\delta(x=x_i,\\;y=y_i)$$
+       <p>Section 2 (eq 1): integrating $R(f)$ against $P_\\delta$ gives the <b>empirical risk</b> that ERM minimizes
+       &mdash; average loss on exactly the $n$ points:</p>
+       $$R_\\delta(f)=\\frac1n\\sum_{i=1}^{n}\\ell\\bigl(f(x_i),\\,y_i\\bigr)$$
+       <p><b>The Vicinal Risk Minimization (VRM) view that mixup adopts (Section 2).</b> VRM replaces each Dirac
+       spike with a <i>vicinity distribution</i> $\\nu$ spread around the point, giving a smoothed data
+       distribution:</p>
+       $$P_\\nu(\\tilde{x},\\tilde{y})=\\frac1n\\sum_{i=1}^{n}\\nu\\bigl(\\tilde{x},\\tilde{y}\\mid x_i,y_i\\bigr)$$
+       <p>Section 2: minimizing loss against samples from $P_\\nu$ is VRM. mixup's specific, data-agnostic choice of
+       vicinity is "draw a second point $x_j$ and a weight $\\lambda$, then interpolate":</p>
+       $$\\mu(\\tilde{x},\\tilde{y}\\mid x_i,y_i)=\\frac1n\\sum_{j=1}^{n}\\mathbb{E}_{\\lambda}\\Bigl[\\delta\\bigl(\\tilde{x}=\\lambda x_i+(1-\\lambda)x_j,\\;\\tilde{y}=\\lambda y_i+(1-\\lambda)y_j\\bigr)\\Bigr],\\qquad \\lambda\\sim\\mathrm{Beta}(\\alpha,\\alpha)$$
+       <p>Section 2: this is the mixup vicinity. So ERM (integrate against the spiky $P_\\delta$) versus VRM
+       (integrate against the smoothed $P_\\nu$/$\\mu$) is exactly the contrast mixup turns on: the only change is
+       <i>which distribution you draw training points from</i>.</p>`,
 
     whatItDoes:
       `<p>The top pair of equations (Section 2) says: to make one training example, pick two real examples, draw a

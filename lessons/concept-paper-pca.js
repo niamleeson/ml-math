@@ -139,14 +139,34 @@
        $\\|u\\|=1$ turns "maximize $u^\\top \\Sigma u$" into exactly $\\Sigma u = \\lambda u$ &mdash; the eigenvector
        equation &mdash; and the variance captured is the eigenvalue $\\lambda$ itself.</p>`,
 
+    architecture:
+      `<p>PCA has no trained layers &mdash; it is a fixed linear-algebra pipeline. The "architecture" is the
+       data-flow from raw points to compressed codes and back, with the exact shapes at each stage.</p>
+       <ol>
+         <li><b>Input.</b> Data matrix $X$ of shape $n\\times d$ ($n$ points, $d$ features).</li>
+         <li><b>Center.</b> Compute mean $\\bar x$ (length $d$); subtract row-wise to get $\\tilde X$ ($n\\times d$). $\\bar x$ is stored &mdash; it is needed to reconstruct later.</li>
+         <li><b>Covariance.</b> $C=\\frac1n\\tilde X^\\top\\tilde X$ &mdash; a $d\\times d$ symmetric PSD matrix. This is the only place the $n$ points are summarized; everything downstream uses just $C$.</li>
+         <li><b>Eigensolver.</b> Factor $C=V\\Lambda V^\\top$. Output: eigenvectors $V$ ($d\\times d$, orthonormal columns) and eigenvalues $\\Lambda$ (sorted descending). Equivalently, take the SVD $\\tilde X=U S W^\\top$ and read $V=W$, $\\lambda_j=s_j^2/n$ &mdash; numerically preferred, no explicit $C$.</li>
+         <li><b>Truncate.</b> Keep the first $k$ columns $U_k$ ($d\\times k$) &mdash; the encoder/decoder weight matrix (one matrix serves both directions because it is orthonormal).</li>
+         <li><b>Encode (project).</b> $Z=\\tilde X\\,U_k$, shape $n\\times k$ &mdash; the bottleneck codes.</li>
+         <li><b>Decode (reconstruct).</b> $\\hat X=Z\\,U_k^\\top+\\bar x$, back to $n\\times d$. The round-trip $U_kU_k^\\top$ is the rank-$k$ orthogonal projector onto the principal subspace.</li>
+       </ol>
+       <p>Read as a network it is a <b>linear autoencoder with tied, orthonormal weights</b>: encoder $U_k^\\top$, no
+       nonlinearity, decoder $U_k$, bottleneck width $k$. A linear autoencoder trained to minimize squared
+       reconstruction error recovers exactly this subspace &mdash; PCA is its closed-form optimum.</p>`,
+
     symbols: [
       { sym: "$x_i$", desc: "the $i$-th data point: a vector of the measured features for one item (e.g. $[\\text{height},\\text{weight}]$). There are $n$ of them." },
       { sym: "$\\bar x$", desc: "the mean vector: the average of all the $x_i$, computed feature by feature. It is the centre of the cloud." },
       { sym: "$\\tilde x_i$", desc: "the centred point $x_i - \\bar x$: the data shifted so its mean sits at the origin. $\\tilde X$ stacks these as rows." },
       { sym: "$n$", desc: "the number of data points (rows). $d$ is the number of features (columns / original dimensions)." },
       { sym: "$\\Sigma$", desc: "Sigma: the $d\\times d$ covariance matrix, $\\frac{1}{n-1}\\tilde X^\\top \\tilde X$. Symmetric; entry $(j,k)$ is the covariance of features $j$ and $k$; the diagonal holds variances." },
-      { sym: "$u_j$", desc: "the $j$-th principal component: a unit-length direction (eigenvector of $\\Sigma$). $U_k$ is the matrix whose columns are the top $k$ of them." },
-      { sym: "$\\lambda_j$", desc: "lambda: the $j$-th eigenvalue of $\\Sigma$, equal to the variance of the data when projected onto $u_j$. Sorted $\\lambda_1\\ge\\lambda_2\\ge\\cdots\\ge 0$." },
+      { sym: "$u_j$ ($v_j$)", desc: "the $j$-th principal component: a unit-length direction (eigenvector of the covariance matrix). The formula calls it $v_j$; the walkthrough/derivation call the same thing $u_j$. $U_k$ is the matrix whose columns are the top $k$ of them." },
+      { sym: "$w$", desc: "a generic unit-length candidate direction in the variance-maximization objective $\\max_{\\|w\\|=1} w^\\top C w$. The optimal $w$ is the top eigenvector $v_1$." },
+      { sym: "$C$ ($\\Sigma$)", desc: "the $d\\times d$ covariance matrix. The formula writes it $C=\\frac1n\\tilde X^\\top\\tilde X$; the rest of the lesson and the CODE cell write $\\Sigma=\\frac{1}{n-1}\\tilde X^\\top\\tilde X$ (same eigenvectors, eigenvalues scaled by $\\frac{n-1}{n}$)." },
+      { sym: "$\\Lambda,\\ V$", desc: "the eigen-decomposition $C=V\\Lambda V^\\top$: $V$ has the eigenvectors as columns (orthogonal), $\\Lambda$ is the diagonal matrix of eigenvalues." },
+      { sym: "$\\lambda_j$", desc: "lambda: the $j$-th eigenvalue of the covariance matrix, equal to the variance of the data when projected onto $u_j$. Sorted $\\lambda_1\\ge\\lambda_2\\ge\\cdots\\ge 0$." },
+      { sym: "Rayleigh quotient", desc: "the ratio $\\frac{w^\\top C w}{w^\\top w}$; maximizing it over all $w$ gives the top eigenvector $v_1$ and value $\\lambda_1$. It is the unit-norm objective written without the constraint." },
       { sym: "$Z$", desc: "the scores: the centred data projected onto the top components, $Z=\\tilde X U_k$. The compressed, $k$-dimensional coordinates of each point." },
       { sym: "$\\hat X$", desc: "the reconstruction $Z U_k^\\top + \\bar x$: the best rank-$k$ approximation of the original data, mapped back to the original space." },
       { sym: "variance", desc: "the average squared distance of a set of numbers from their mean — how spread out they are along a direction." },
@@ -156,10 +176,20 @@
     ],
 
     formula:
-      `$$\\Sigma=\\frac{1}{n-1}\\tilde X^\\top \\tilde X,\\qquad
-        \\Sigma\\,u_j=\\lambda_j\\,u_j,\\qquad \\lambda_1\\ge\\lambda_2\\ge\\cdots\\ge 0$$
-       $$u_1=\\arg\\max_{\\|u\\|=1} u^\\top\\Sigma\\,u
-        \\;=\\;\\arg\\min_{\\|u\\|=1}\\sum_{i=1}^{n}\\big\\|\\tilde x_i-(\\tilde x_i^\\top u)\\,u\\big\\|^2$$`,
+      `$$\\tilde x_i = x_i-\\bar x,\\qquad \\bar x=\\frac1n\\sum_{i=1}^{n} x_i$$
+       <p><b>1. Centering</b> (Pearson 1901): subtract the feature means so the cloud sits at the origin. $\\tilde X$ stacks the centred rows $\\tilde x_i$. The best-fit line is proven to pass through $\\bar x$, so this step is mandatory.</p>
+       $$C=\\frac1n\\,\\tilde X^\\top \\tilde X=\\frac1n\\sum_{i=1}^{n}\\tilde x_i\\,\\tilde x_i^\\top$$
+       <p><b>2. Covariance matrix</b> (Hotelling 1933): the $d\\times d$ symmetric, positive-semi-definite matrix whose $(j,k)$ entry is the covariance of features $j$ and $k$. (Statisticians use the unbiased $\\frac{1}{n-1}$ for the sample covariance; the eigenvectors are identical, only the eigenvalue scale changes by $\\frac{n-1}{n}$. The CODE cell uses $\\frac{1}{n-1}$ to match sklearn.)</p>
+       $$C\\,v_j=\\lambda_j\\,v_j,\\qquad C=V\\Lambda V^\\top,\\qquad \\lambda_1\\ge\\lambda_2\\ge\\cdots\\ge\\lambda_d\\ge 0$$
+       <p><b>3. Eigen-decomposition:</b> the principal directions are the eigenvectors $v_j$ of $C$, with eigenvalues $\\lambda_j$ sorted descending. The spectral theorem makes $V$ orthogonal ($V^\\top V=I$).</p>
+       $$w_1=\\arg\\max_{\\|w\\|=1} w^\\top C\\,w
+        \\;=\\;\\arg\\max_{w\\neq 0}\\frac{w^\\top C\\,w}{w^\\top w}$$
+       <p><b>4. Variance-maximization objective</b> (Hotelling 1933): the first component maximizes the projected variance $w^\\top C w$ under $\\|w\\|=1$. Equivalently it maximizes the <b>Rayleigh quotient</b> $\\dfrac{w^\\top C w}{w^\\top w}$, whose maximizer is the top eigenvector $v_1$ and whose maximum value is $\\lambda_1$. A Lagrange multiplier on $\\|w\\|=1$ turns this directly into $C w=\\lambda w$ (see Derivation).</p>
+       $$Z=\\tilde X\\,U_k,\\qquad \\hat X=Z\\,U_k^\\top+\\bar x=\\tilde X\\,U_k U_k^\\top+\\bar x$$
+       <p><b>5. Projection &amp; reconstruction:</b> stack the top-$k$ eigenvectors as columns of $U_k$. The scores $Z$ are the centred data projected onto them; $\\hat X$ maps the $k$-D code back to the original space (the best rank-$k$ approximation).</p>
+       $$\\min_{U_k^\\top U_k=I}\\sum_{i=1}^{n}\\big\\|\\tilde x_i-U_kU_k^\\top\\tilde x_i\\big\\|^2
+        \\;\\equiv\\;\\max_{U_k^\\top U_k=I}\\operatorname{tr}\\!\\big(U_k^\\top C\\,U_k\\big)$$
+       <p><b>6. Equivalence to minimizing reconstruction error</b> (Pearson 1901 = Hotelling 1933): minimizing the summed squared perpendicular distance to the $k$-D subspace is the <i>same</i> optimization as maximizing the captured variance $\\operatorname{tr}(U_k^\\top C U_k)=\\lambda_1+\\cdots+\\lambda_k$, because total variance $=$ captured $+$ leftover error is fixed. Both are solved by the top-$k$ eigenvectors; the residual error equals the dropped eigenvalues $\\lambda_{k+1}+\\cdots+\\lambda_d$.</p>`,
 
     whatItDoes:
       `<p>The top line says: build the covariance matrix and take its eigenvectors, sorted by eigenvalue. The bottom
