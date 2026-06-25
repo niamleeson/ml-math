@@ -128,7 +128,37 @@
        <p>After pretraining (§2.3), you <b>freeze</b> $f$ and train a single <b>linear classifier</b> on its
        frozen features — the <b>linear evaluation protocol</b>, a.k.a. the "linear probe." A good linear probe
        accuracy means the unlabelled pretraining baked the useful structure into $h$.</p>`,
+    architecture:
+      `<p>SimCLR (§2.1, Fig. 2) is <b>four components</b> in series, plus an evaluation stage. There is no memory
+       bank and no momentum encoder — every negative comes from the current batch.</p>
+       <ol>
+        <li><b>Stochastic augmentation module $\\mathcal{T}$.</b> For each image $x$, sample two transforms
+        $t, t' \\sim \\mathcal{T}$ and apply them to make a positive pair of <b>views</b> $\\tilde{x}_i = t(x)$,
+        $\\tilde{x}_j = t'(x)$. The <b>augmentation family</b> $\\mathcal{T}$ the paper found critical is the
+        composition: <i>random crop</i> (then resize back to the original size) → <i>random colour distortion</i>
+        (brightness, contrast, saturation, hue) → <i>random Gaussian blur</i> (applied with probability $0.5$,
+        $\\sigma \\in [0.1, 2.0]$). Random crop + colour distortion is the key pairing (§3).</li>
+        <li><b>Base encoder $f(\\cdot)$.</b> A convolutional net (the paper uses ResNet-50, and wider variants up
+        to ResNet-50 4$\\times$) with "no constraints on the architecture." It maps a view to the
+        <b>representation</b> $h = f(\\tilde{x}) \\in \\mathbb{R}^d$, taken after the global average-pooling layer.
+        $h$ is what you keep.</li>
+        <li><b>Projection head $g(\\cdot)$.</b> A small MLP with <b>one hidden layer</b> and ReLU,
+        $z = g(h) = W^{(2)}\\sigma(W^{(1)} h)$, mapping to a $128$-dimensional latent space. The contrastive loss
+        acts on $z$. <b>$g$ is used only during pretraining and thrown away afterward</b> — probing $h$ beats
+        probing $z$.</li>
+        <li><b>Contrastive loss (NT-Xent).</b> $\\ell_2$-normalize the $2N$ projections, build the $2N\\times 2N$
+        cosine-similarity matrix, scale by temperature $\\tau$, and apply the per-pair NT-Xent loss (Eqn. 1)
+        with the self term masked out. The other $2(N-1)$ views in the batch are the negatives — so a
+        <b>large batch</b> supplies many negatives (the paper varies $N$ from $256$ up to $8192$, the
+        <b>large-batch negatives</b> that contrastive learning benefits from).</li>
+       </ol>
+       <p><b>Optimization (§4):</b> trained with the <b>LARS</b> optimizer (which keeps the very large batches
+       stable), and <b>global batch normalization</b> — aggregating BN statistics across all devices so the model
+       can't cheat by leaking the positive pair through per-device BN stats.</p>
+       <p><b>Linear evaluation stage (§2.3):</b> after pretraining, discard $g$, <b>freeze</b> $f$, and train a
+       single linear classifier on the frozen $h$ — the "linear probe" that measures representation quality.</p>`,
     symbols: [
+      { sym: "$t,\\ t',\\ \\mathcal{T}$", desc: "$\\mathcal{T}$ is the <b>augmentation family</b> (crop + colour distortion + blur); $t$ and $t'$ are two transforms drawn from it, applied to the same image to make the two views." },
       { sym: "$\\tilde{x}_i,\\ \\tilde{x}_j$", desc: "the two <b>augmented views</b> of one image — the same picture distorted two different ways. They form one <b>positive pair</b>." },
       { sym: "$f(\\cdot)$", desc: "the <b>base encoder</b> (a conv net, e.g. ResNet). Maps a view to a representation $h = f(\\tilde{x})$. This $h$ is what you keep and probe." },
       { sym: "$h$", desc: "the <b>representation</b>: the encoder's output vector that summarizes an image. The thing you actually want." },
@@ -141,9 +171,20 @@
       { sym: "$\\mathrm{sim}(u,v)$", desc: "<b>cosine similarity</b> $= u^\\top v / (\\lVert u\\rVert\\,\\lVert v\\rVert)$: the cosine of the angle between two vectors, in $[-1,1]$. Big when they point the same direction. ($u^\\top v$ is the dot product; $\\lVert u\\rVert$ is the length of $u$.)" },
       { sym: "$\\tau$", desc: "the <b>temperature</b>: a positive number that divides every similarity before the softmax. Small $\\tau$ → sharper contrast (negatives weigh more); large $\\tau$ → softer." },
       { sym: "$\\mathbb{1}_{[k\\neq i]}$", desc: "the <b>indicator function</b>: equals $1$ when $k\\neq i$ and $0$ when $k = i$. It removes the trivial self-similarity (a vector with itself) from the denominator." },
-      { sym: "$\\ell(i,j)$", desc: "the per-positive-pair loss — a $-\\log$ of the softmax probability that view $i$'s nearest match (among all non-self views) is its true partner $j$." }
+      { sym: "$\\ell(i,j)$", desc: "the per-positive-pair loss — a $-\\log$ of the softmax probability that view $i$'s nearest match (among all non-self views) is its true partner $j$." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>total batch loss</b>: $\\ell(i,j)$ averaged over both directions of all $N$ positive pairs in the batch (Algorithm 1)." }
     ],
-    formula: `$$ \\ell_{i,j} = -\\log \\frac{\\exp\\!\\big(\\mathrm{sim}(z_i, z_j)/\\tau\\big)}{\\displaystyle\\sum_{k=1}^{2N} \\mathbb{1}_{[k\\neq i]}\\,\\exp\\!\\big(\\mathrm{sim}(z_i, z_k)/\\tau\\big)} \\qquad\\text{(NT-Xent, \\S2.1, Eqn. 1)} $$`,
+    formula:
+      `$$ \\tilde{x}_i = t(x), \\qquad \\tilde{x}_j = t'(x), \\qquad t \\sim \\mathcal{T},\\ t' \\sim \\mathcal{T} $$
+       <p>§2.1 — the <b>two-augmentation pipeline</b>: sample two transforms $t, t'$ from the augmentation family $\\mathcal{T}$ and apply them to the same image $x$ to make a positive pair of views $(\\tilde{x}_i, \\tilde{x}_j)$.</p>
+       $$ h_i = f(\\tilde{x}_i) \\in \\mathbb{R}^d, \\qquad z_i = g(h_i) = W^{(2)}\\,\\sigma\\!\\big(W^{(1)} h_i\\big) $$
+       <p>§2.1 — the <b>encoder</b> $f$ produces the representation $h$ (kept), and the <b>projection head</b> $g$ (an MLP, one hidden layer, $\\sigma=$ ReLU) maps it to $z$ where the loss lives (discarded after training).</p>
+       $$ \\mathrm{sim}(u,v) = \\frac{u^\\top v}{\\lVert u\\rVert\\,\\lVert v\\rVert} $$
+       <p>§2.1 — <b>cosine similarity</b>: the dot product of the $\\ell_2$-normalized vectors $u$ and $v$ (the cosine of the angle between them, in $[-1,1]$).</p>
+       $$ \\ell_{i,j} = -\\log \\frac{\\exp\\!\\big(\\mathrm{sim}(z_i, z_j)/\\tau\\big)}{\\displaystyle\\sum_{k=1}^{2N} \\mathbb{1}_{[k\\neq i]}\\,\\exp\\!\\big(\\mathrm{sim}(z_i, z_k)/\\tau\\big)} $$
+       <p>§2.1, Eqn. 1 — the <b>NT-Xent</b> (normalized temperature-scaled cross-entropy) loss for one positive pair $(i,j)$. The denominator's $2N-1$ terms (the indicator $\\mathbb{1}_{[k\\neq i]}$ drops the self term) are the $2(N-1)$ <b>negatives</b> plus the positive — every other view in the batch.</p>
+       $$ \\mathcal{L} = \\frac{1}{2N}\\sum_{k=1}^{N}\\big[\\,\\ell(2k\\!-\\!1,\\,2k) + \\ell(2k,\\,2k\\!-\\!1)\\,\\big] $$
+       <p>§2.1, Algorithm 1 — the <b>total batch loss</b>: average the per-pair loss over both directions of all $N$ positive pairs (each of the $2N$ views serves once as the anchor).</p>`,
     whatItDoes:
       `<p>Read it as a <b>classification</b> problem with one right answer. Fix view $i$ (the "anchor"). Look at
        its similarity to <b>every other view</b> $k$ in the batch (all $2N-1$ of them; the

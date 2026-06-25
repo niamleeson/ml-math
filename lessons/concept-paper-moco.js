@@ -135,6 +135,37 @@
        </ol>
        <p>The loss that ties it together is <b>InfoNCE</b> (Eqn. 1): a $(K{+}1)$-way softmax classifier whose
        job is to pick the one positive key out of the $1$ positive $+$ $K$ negatives.</p>`,
+    architecture:
+      `<p>MoCo has three components plus the contrastive head. The pretext task is <b>instance
+       discrimination</b>: a query and a key are a positive pair iff they are two augmented views of the
+       <i>same</i> source image (&sect;3.4).</p>
+       <ol>
+        <li><b>Query encoder $f_q$.</b> A backbone (the paper uses a <b>ResNet-50</b>) whose final
+        fully-connected layer, after global average pooling, outputs a fixed <b>$C=128$-D</b> vector; that
+        vector is <b>L2-normalized</b> &mdash; this normalized $128$-D vector is "the representation." Trained by
+        backprop. Input view $x^q$ is a <b>$224{\\times}224$ random-resized crop</b> of the image with random
+        color jitter, horizontal flip, and grayscale conversion.</li>
+        <li><b>Key / momentum encoder $f_k$.</b> An <b>identical-architecture copy</b> of $f_q$ (same ResNet-50
+        &rarr; $128$-D &rarr; L2-norm). It is <i>not</i> trained by gradients; its weights $\\theta_k$ are an
+        exponential moving average of $\\theta_q$ (Eqn. 2, $m=0.999$). It encodes a <i>second</i> augmented view
+        $x^k$ of the same image into the positive key $k_+$. Its forward pass runs under <code>no_grad</code> and
+        the keys are <b>detached</b>.</li>
+        <li><b>Queue (the dictionary).</b> A first-in-first-out buffer holding the last <b>$K=65536$</b> keys as a
+        $C\\times K$ matrix. Each step the current batch's $N$ keys are <b>enqueued</b> and the oldest $N$ are
+        <b>dequeued</b>. The queue is just stored vectors &mdash; no backprop &mdash; so its size is
+        <b>decoupled from the batch size $N$</b> (&sect;3.2).</li>
+        <li><b>Contrastive head (data flow, Algorithm 1).</b> Encode $q=f_q(x^q)$ ($N\\times C$) and
+        $k=f_k(x^k)$ ($N\\times C$, detached). Positive logits $l_{\\text{pos}}=$ row-wise $q\\!\\cdot\\!k_+$
+        (batched matmul, $N\\times 1$); negative logits $l_{\\text{neg}}=q\\,Q^{\\top}$ against the queue
+        ($N\\times K$). Concatenate to $N\\times(1{+}K)$, divide by $\\tau=0.07$, and apply cross-entropy with the
+        <b>all-zeros</b> label (the positive sits in column 0) &mdash; that is exactly Eqn. 1.</li>
+       </ol>
+       <p><b>Per-step flow:</b> two augmentations &rarr; $f_q$/$f_k$ forward &rarr; build $[l_{\\text{pos}},
+       l_{\\text{neg}}]$ &rarr; InfoNCE loss &rarr; SGD on $\\theta_q$ &rarr; momentum-update $\\theta_k$ (Eqn. 2)
+       &rarr; enqueue new keys / dequeue oldest. One implementation detail: <b>shuffling BatchNorm</b> &mdash;
+       the key encoder's mini-batch sample order is shuffled across GPUs before encoding (and unshuffled after),
+       so a query and its positive key never share BN statistics; without it "the model appears to 'cheat' the
+       pretext task" and learns poor representations (&sect;3.4). Our toy MLP has no BatchNorm, so we skip it.</p>`,
     symbols: [
       { sym: "$x^q,\\ x^k$", desc: "the two <b>augmented views</b> of the <i>same</i> source image: $x^q$ is fed to the query encoder, $x^k$ to the key encoder. Different random crops/jitter of one picture." },
       { sym: "$f_q$", desc: "the <b>query encoder</b> &mdash; the network we actually train with gradients. Its parameters are $\\theta_q$." },
@@ -145,6 +176,7 @@
       { sym: "$q\\!\\cdot\\!k$", desc: "the <b>dot product</b> (similarity score) between the query and a key. With both L2-normalized, it equals the <b>cosine similarity</b>, in $[-1,1]$." },
       { sym: "$\\tau$", desc: "the <b>temperature</b>: a small positive number (paper uses $\\tau=0.07$) that divides every similarity. Smaller $\\tau$ &rarr; sharper softmax &rarr; the loss focuses harder on the closest negatives." },
       { sym: "$K$", desc: "the <b>queue size</b> = number of negatives in the dictionary (paper default $K=65536$). Decoupled from the batch size $N$." },
+      { sym: "$C$", desc: "the <b>feature dimension</b> of each encoded vector (paper uses $C=128$): the width of $q$ and every key $k$ after the encoder's final layer and L2-normalization." },
       { sym: "$N$", desc: "the <b>mini-batch size</b>: how many images per training step. Each step enqueues $N$ keys and dequeues the oldest $N$." },
       { sym: "$\\theta_q,\\ \\theta_k$", desc: "the <b>weight vectors</b> of $f_q$ and $f_k$. $\\theta_q$ is updated by the optimizer; $\\theta_k$ by the momentum rule." },
       { sym: "$m$", desc: "the <b>momentum coefficient</b> in $[0,1)$ (paper default $m=0.999$): how much of the <i>old</i> key weights to keep each step. Closer to $1$ = slower-moving, more-consistent key encoder." },

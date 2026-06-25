@@ -127,6 +127,34 @@
        <p>Plugging this into the proper training objective gives a weighted noise-MSE (Eq. 12). The paper then
        <b>drops the weights</b> and trains the plain mean-squared error between the true and predicted noise
        &mdash; that is $L_{\\text{simple}}$, Eq. 14, the formula below.</p>`,
+    architecture:
+      `<p>The only learned component is the noise predictor $\\epsilon_\\theta(x_t,t)$. For images the paper builds
+       it as a <b>U-Net</b> (&sect;4, Appendix B); our toy uses a small multilayer perceptron instead so it runs
+       in seconds. The U-Net is described component by component below.</p>
+       <p><b>Input / output shape.</b> The network maps a noisy image $x_t$ (same height&times;width&times;channels
+       as the data) plus a scalar timestep $t$ to a noise estimate $\\epsilon_\\theta$ of the <b>same shape as
+       the image</b> &mdash; it is image-to-image, not image-to-label. Trained on $32\\times32$ CIFAR-10 and up
+       to $256\\times256$ LSUN.</p>
+       <p><b>U-Net backbone (encoder&ndash;decoder with skips).</b> "A U-Net backbone similar to an unmasked
+       PixelCNN++." An <b>encoder</b> path repeatedly downsamples the image through several resolution levels
+       (e.g. $32\\to16\\to8\\to4$), and a symmetric <b>decoder</b> path upsamples back to full size. Each decoder
+       level receives a <b>skip connection</b> carrying the matching-resolution encoder features, so fine spatial
+       detail is not lost through the bottleneck. Each level is a stack of <b>residual blocks</b> (convolution +
+       skip-add).</p>
+       <p><b>Group normalization throughout.</b> Every residual block uses <b>group normalization</b> (a
+       batch-size-independent normalizer that splits channels into groups) followed by the <b>Swish / SiLU</b>
+       activation $x\\,\\sigma(x)$.</p>
+       <p><b>Self-attention at $16\\times16$.</b> At the $16\\times16$ feature-map resolution the blocks include a
+       <b>self-attention</b> layer, letting every spatial location attend to every other &mdash; capturing
+       long-range structure that local convolutions miss.</p>
+       <p><b>Time embedding (how the one network knows the noise level).</b> The same weights denoise <i>every</i>
+       timestep, so $t$ must be fed in. The scalar $t$ is turned into a vector by the <b>Transformer sinusoidal
+       position embedding</b> (sines and cosines at many frequencies), passed through a small multilayer
+       perceptron, and <b>added into every residual block</b>. This is exactly the $t$-conditioning the toy MLP
+       mimics by concatenating $t/T$, and the ablation in this lesson shows removing it wrecks samples.</p>
+       <p><b>Reverse-step variance.</b> $\\Sigma_\\theta$ is not learned: it is fixed to $\\sigma_t^2\\mathbf{I}$
+       with $\\sigma_t^2 = \\beta_t$ or $\\tilde\\beta_t$ (Eq. 7). Only the mean &mdash; via $\\epsilon_\\theta$
+       &mdash; is learned.</p>`,
     symbols: [
       { sym: "$x_0$", desc: "a <b>clean data point</b> (here a 2-D point; in the paper an image)." },
       { sym: "$x_t$", desc: "the data point after $t$ steps of noising &mdash; a <b>noisy version</b> of $x_0$. $x_T$ is essentially pure noise." },
@@ -138,19 +166,67 @@
       { sym: "$\\epsilon$", desc: "the <b>actual noise</b> drawn from a standard Gaussian $\\mathcal{N}(0,\\mathbf{I})$ and mixed into $x_0$ to make $x_t$. This is the target the network must predict." },
       { sym: "$\\epsilon_\\theta(x_t,t)$", desc: "the <b>noise predictor</b>: the trainable network (parameters $\\theta$) that looks at noisy $x_t$ and timestep $t$ and outputs its guess of $\\epsilon$." },
       { sym: "$\\mu_\\theta(x_t,t)$", desc: "the <b>mean</b> of the learned reverse step, computed from the predicted noise via Eq. 11." },
+      { sym: "$\\Sigma_\\theta(x_t,t)$", desc: "the <b>covariance</b> of the learned reverse step. Not learned in DDPM: fixed to $\\sigma_t^2\\mathbf{I}$." },
+      { sym: "$p_\\theta(x_{t-1}\\mid x_t)$", desc: "the <b>learned reverse step</b>: a Gaussian (parameters $\\theta$) that denoises $x_t$ one step toward $x_{t-1}$ (Eq. 1)." },
+      { sym: "$p(x_T)$", desc: "the <b>prior</b> the reverse process starts from: the standard Gaussian $\\mathcal{N}(0,\\mathbf{I})$ (pure noise)." },
+      { sym: "$q(x_{t-1}\\mid x_t,x_0)$", desc: "the <b>forward-process posterior</b>: the true reverse step when the clean $x_0$ is known &mdash; the target $p_\\theta$ is trained to match (Eqs. 6&ndash;7)." },
+      { sym: "$\\tilde\\mu_t(x_t,x_0)$", desc: "(\"mu-tilde\") the <b>mean of that posterior</b> &mdash; a fixed weighted blend of $x_0$ and $x_t$ (Eq. 7)." },
+      { sym: "$\\tilde\\beta_t$", desc: "(\"beta-tilde\") the <b>variance of that posterior</b>, $\\tilde\\beta_t = \\frac{1-\\bar\\alpha_{t-1}}{1-\\bar\\alpha_t}\\beta_t$ (Eq. 7)." },
+      { sym: "$\\bar\\alpha_{t-1}$", desc: "the running product $\\bar\\alpha$ one step earlier (signal fraction left at step $t-1$)." },
+      { sym: "$\\sigma_t$", desc: "the <b>noise level added back</b> during sampling (Alg. 2). Set to $\\sqrt{\\beta_t}$ or $\\sqrt{\\tilde\\beta_t}$; zero at the final step." },
+      { sym: "$z$", desc: "fresh <b>standard Gaussian noise</b> injected at each sampling step except the last." },
+      { sym: "$L$", desc: "the <b>variational bound</b> (Eq. 3): the upper bound on $-\\log p_\\theta(x_0)$ that is minimized; splits into $L_T + \\sum L_{t-1} + L_0$ (Eq. 5)." },
+      { sym: "$L_{t-1}$", desc: "one <b>per-timestep KL term</b> of $L$ (Eq. 5): the KL divergence between the posterior $q(x_{t-1}\\mid x_t,x_0)$ and the learned step $p_\\theta(x_{t-1}\\mid x_t)$." },
+      { sym: "$\\sigma_t^2$", desc: "the variance used in the KL/sampling; equals $\\beta_t$ or $\\tilde\\beta_t$." },
+      { sym: "$\\theta$", desc: "the <b>trainable parameters</b> of the noise-predictor network." },
       { sym: "$\\mathcal{N}(x;\\,\\mu,\\,\\Sigma)$", desc: "a <b>Gaussian</b> (normal / bell-curve) distribution for $x$ with mean $\\mu$ and variance $\\Sigma$; $\\mathbf{I}$ is the identity (independent, equal-variance components)." },
+      { sym: "$D_{\\mathrm{KL}}(q\\,\\Vert\\,p)$", desc: "the <b>Kullback&ndash;Leibler divergence</b>: a measure of how far distribution $q$ is from $p$; zero when they match." },
       { sym: "$L_{\\text{simple}}$", desc: "the <b>simplified training loss</b> (Eq. 14): the plain mean-squared error between the true noise $\\epsilon$ and the predicted noise $\\epsilon_\\theta$." }
     ],
-    formula: `$$ L_{\\text{simple}}(\\theta) := \\mathbb{E}_{t,\\,x_0,\\,\\epsilon}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta\\big(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon,\\ t\\big)\\big\\rVert^2\\,\\Big] \\qquad\\text{(Eq. 14)} $$`,
+    formula: `$$ q(x_t \\mid x_{t-1}) = \\mathcal{N}\\!\\big(x_t;\\ \\sqrt{1-\\beta_t}\\,x_{t-1},\\ \\beta_t \\mathbf{I}\\big), \\qquad q(x_{1:T}\\mid x_0) = \\prod_{t=1}^{T} q(x_t\\mid x_{t-1}) $$
+       <p>One forward noising step is a Gaussian that shrinks the previous point by $\\sqrt{1-\\beta_t}$ and adds variance $\\beta_t$; the whole forward chain is their product (&sect;2, Eq. 2).</p>
+       $$ q(x_t \\mid x_0) = \\mathcal{N}\\!\\big(x_t;\\ \\sqrt{\\bar\\alpha_t}\\,x_0,\\ (1-\\bar\\alpha_t)\\mathbf{I}\\big), \\qquad \\alpha_t := 1-\\beta_t,\\ \\ \\bar\\alpha_t := \\prod_{s=1}^{t}\\alpha_s $$
+       <p>Closed form: noise $x_0$ to <i>any</i> step $t$ in one shot. Equivalently $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ with $\\epsilon\\sim\\mathcal{N}(0,\\mathbf{I})$ (&sect;2, Eq. 4).</p>
+       $$ p_\\theta(x_{t-1}\\mid x_t) := \\mathcal{N}\\!\\big(x_{t-1};\\ \\mu_\\theta(x_t,t),\\ \\Sigma_\\theta(x_t,t)\\big), \\qquad p_\\theta(x_{0:T}) = p(x_T)\\prod_{t=1}^{T} p_\\theta(x_{t-1}\\mid x_t) $$
+       <p>The learned reverse process: each denoising step is a Gaussian with a network-produced mean $\\mu_\\theta$ (&sect;2, Eq. 1). Generation starts at $p(x_T)=\\mathcal{N}(0,\\mathbf{I})$.</p>
+       $$ \\mathbb{E}\\big[-\\log p_\\theta(x_0)\\big] \\le \\mathbb{E}_q\\!\\left[-\\log p(x_T) - \\sum_{t\\ge 1}\\log \\frac{p_\\theta(x_{t-1}\\mid x_t)}{q(x_t\\mid x_{t-1})}\\right] =: L $$
+       <p>The variational (ELBO) bound that is actually minimized: an upper bound on the negative log-likelihood (&sect;2, Eq. 3).</p>
+       $$ q(x_{t-1}\\mid x_t,x_0) = \\mathcal{N}\\!\\big(x_{t-1};\\ \\tilde\\mu_t(x_t,x_0),\\ \\tilde\\beta_t\\mathbf{I}\\big),\\quad \\tilde\\mu_t = \\frac{\\sqrt{\\bar\\alpha_{t-1}}\\,\\beta_t}{1-\\bar\\alpha_t}x_0 + \\frac{\\sqrt{\\alpha_t}\\,(1-\\bar\\alpha_{t-1})}{1-\\bar\\alpha_t}x_t,\\quad \\tilde\\beta_t = \\frac{1-\\bar\\alpha_{t-1}}{1-\\bar\\alpha_t}\\beta_t $$
+       <p>The forward process posterior &mdash; the <i>true</i> reverse step when $x_0$ is known. Tractable because conditioning on $x_0$ makes it Gaussian (&sect;3.1, Eqs. 6&ndash;7). $L$ splits into $L_T + \\sum_{t\\gt1} L_{t-1} + L_0$ of KL terms (Eq. 5), and each $L_{t-1}$ matches $p_\\theta$ to this posterior.</p>
+       $$ \\mu_\\theta(x_t,t) = \\frac{1}{\\sqrt{\\alpha_t}}\\!\\left(x_t - \\frac{\\beta_t}{\\sqrt{1-\\bar\\alpha_t}}\\,\\epsilon_\\theta(x_t,t)\\right) $$
+       <p>The $\\epsilon$-prediction reparameterization: rather than output the mean, the network predicts the noise $\\epsilon_\\theta$, and the mean is built from it (&sect;3.2, Eq. 11).</p>
+       $$ L_{t-1} - C = \\mathbb{E}_{x_0,\\epsilon}\\!\\left[\\frac{\\beta_t^2}{2\\sigma_t^2\\,\\alpha_t(1-\\bar\\alpha_t)}\\big\\lVert\\epsilon - \\epsilon_\\theta\\big(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon,\\,t\\big)\\big\\rVert^2\\right] $$
+       <p>Substituting Eq. 11 turns the mean-matching KL into a weighted noise mean-squared error (&sect;3.2, Eq. 12).</p>
+       $$ L_{\\text{simple}}(\\theta) := \\mathbb{E}_{t,\\,x_0,\\,\\epsilon}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta\\big(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon,\\ t\\big)\\big\\rVert^2\\,\\Big] $$
+       <p>Drop the per-timestep weight from Eq. 12 &mdash; the simplified training objective the paper actually uses (&sect;3.4, Eq. 14).</p>
+       $$ x_{t-1} = \\frac{1}{\\sqrt{\\alpha_t}}\\!\\left(x_t - \\frac{1-\\alpha_t}{\\sqrt{1-\\bar\\alpha_t}}\\,\\epsilon_\\theta(x_t,t)\\right) + \\sigma_t z, \\qquad z\\sim\\mathcal{N}(0,\\mathbf{I})\\ (t\\gt1),\\ z=0\\ (t=1) $$
+       <p>One sampling step (Algorithm 2): denoise with $\\mu_\\theta$, then add fresh noise $\\sigma_t z$ except at the final step. The paper sets $\\sigma_t^2 = \\beta_t$ or $\\tilde\\beta_t$ (similar results).</p>`,
     whatItDoes:
-      `<p>In words: <b>draw a clean point $x_0$, draw a random timestep $t$, draw fresh noise $\\epsilon$, build
-       the noisy point $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ (Eq. 4), and ask
-       the network to predict that very $\\epsilon$ from $x_t$ and $t$.</b> The loss is the squared error of
-       that prediction, averaged over all three random draws (that is what $\\mathbb{E}_{t,x_0,\\epsilon}$
-       means &mdash; the expectation, or average, over timestep, data point, and noise).</p>
-       <p>The double bars $\\lVert\\cdot\\rVert^2$ are the <b>squared length</b> of the error vector. So the
-       whole objective is just a regression: predict the noise, minimize mean-squared error. No adversary, no
-       balancing &mdash; the source of diffusion's training stability.</p>`,
+      `<p>Each equation in turn:</p>
+       <ul>
+        <li><b>Forward step (Eq. 2):</b> one noising step keeps a $\\sqrt{1-\\beta_t}$ fraction of the point and
+        adds Gaussian noise of variance $\\beta_t$; the full chain multiplies $T$ such steps.</li>
+        <li><b>Closed form (Eq. 4):</b> you can jump straight to step $t$ &mdash; $x_t$ is a fixed blend
+        $\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ of clean signal and fresh noise.</li>
+        <li><b>Reverse process (Eq. 1):</b> generation is a chain of learned Gaussian steps starting from pure
+        noise $p(x_T)$; each step's mean comes from the network.</li>
+        <li><b>Variational bound (Eq. 3):</b> we cannot maximize the data likelihood directly, so we minimize an
+        upper bound $L$ on its negative log &mdash; the same ELBO idea as the VAE.</li>
+        <li><b>Posterior (Eqs. 6&ndash;7):</b> if you knew $x_0$, the true reverse step is a Gaussian with a
+        known mean $\\tilde\\mu_t$ and variance $\\tilde\\beta_t$; $L$ asks the network to match it.</li>
+        <li><b>$\\epsilon$-parameterization (Eq. 11):</b> rewrite that mean so the network only has to predict the
+        noise $\\epsilon_\\theta$ &mdash; everything else is arithmetic.</li>
+        <li><b>Weighted loss (Eq. 12):</b> the resulting per-step objective is a noise mean-squared error scaled
+        by a $t$-dependent weight.</li>
+        <li><b>$L_{\\text{simple}}$ (Eq. 14):</b> drop that weight. <b>Draw a clean point $x_0$, a random
+        timestep $t$, fresh noise $\\epsilon$; build $x_t$; ask the network to predict that very $\\epsilon$;
+        minimize the squared error</b> &mdash; averaged over all three random draws ($\\mathbb{E}_{t,x_0,\\epsilon}$).
+        The double bars $\\lVert\\cdot\\rVert^2$ are the squared length of the error vector.</li>
+        <li><b>Sampling step (Alg. 2):</b> denoise $x_t$ with the predicted noise, then add a little fresh noise
+        $\\sigma_t z$ &mdash; except at the final step, which outputs the mean alone.</li>
+       </ul>
+       <p>The whole training signal is just a regression: predict the noise, minimize mean-squared error. No
+       adversary, no balancing &mdash; the source of diffusion's training stability.</p>`,
     derivation:
       `<p><b>Short recap &mdash; the full score/ELBO derivation is in the concept lesson.</b> Why does
        predicting noise give a valid generative model? The honest objective is the <b>variational bound</b> on

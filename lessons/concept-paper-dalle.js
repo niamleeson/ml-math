@@ -213,6 +213,53 @@
        distributions over images, captions, and the encoded tokens. The ELB is a
        lower bound on the log-likelihood that you maximize because the exact
        log-likelihood is intractable. Equation 1 is shown next.</p>`,
+    architecture:
+      `<p>Two trained components, run in sequence. Stage One's dVAE is trained
+       first; Stage Two's transformer is trained second on the tokens the dVAE
+       produces.</p>
+       <p><b>Component 1 &mdash; the discrete VAE (dVAE), Stage One (&sect;2).</b></p>
+       <ul>
+        <li><b>Encoder.</b> Input: one $256 \\times 256 \\times 3$ RGB image (the $3$
+        is the red-green-blue channels). Output: a $32 \\times 32$ grid of
+        <b>logits</b> &mdash; for each of the $1024$ grid cells, a score over all
+        $8192$ codebook entries. The cell's image token is the codebook index
+        with the highest score (a hard $\\arg\\max$ at inference).</li>
+        <li><b>Codebook.</b> A learned table of $8192$ entries. Each image token is
+        one index $0..8191$ into this table; the grid is $32 \\times 32 = 1024$ such
+        indices.</li>
+        <li><b>Decoder.</b> Input: the $32 \\times 32$ grid of tokens (looked up in
+        the codebook). Output: a reconstructed $256 \\times 256 \\times 3$ RGB image.
+        This is the only component that maps tokens back to pixels.</li>
+        <li><b>Training bottleneck.</b> The hard $\\arg\\max$ is non-differentiable,
+        so during training it is replaced by the temperature-$\\tau$ Gumbel-softmax
+        relaxation $q_\\phi^\\tau$ (&sect;2.1), annealed $\\tau \\to 0$.</li>
+       </ul>
+       <p><b>Component 2 &mdash; the autoregressive transformer, Stage Two
+       (&sect;2.2).</b></p>
+       <ul>
+        <li><b>Type.</b> A $12$-billion-parameter <b>decoder-only sparse
+        transformer</b> (&sect;2.2): one stack that reads a sequence left to right
+        and predicts the next token, with no separate encoder.</li>
+        <li><b>Input sequence.</b> The concatenation [up to $256$ <b>text
+        tokens</b>] then [$1024$ <b>image tokens</b>] &mdash; at most $1280$
+        positions modeled "as a single stream of data." Text tokens come from a
+        vocabulary of $16384$ (byte-pair encoding); image tokens from the
+        $8192$-entry codebook.</li>
+        <li><b>Attention masks.</b> Text-to-text positions use a "standard causal
+        mask" (each text token attends only to earlier text). Image-to-image
+        positions use a <b>row, column, or convolutional</b> attention mask
+        (&sect;2.2) &mdash; sparse patterns matched to the 2-D grid layout, which
+        keep attention affordable over the $1024$ image positions.</li>
+        <li><b>Output head.</b> A categorical distribution over the next token: over
+        the $16384$ text vocabulary while in the text region, over the $8192$ image
+        codebook while in the image region.</li>
+       </ul>
+       <p><b>Data flow at generation.</b> caption text $\\to$ text tokens $\\to$ feed
+       to transformer $\\to$ sample $1024$ image tokens left-to-right (each
+       conditioned on the caption and tokens drawn so far) $\\to$ dVAE decoder
+       $\\to$ $256 \\times 256$ image. The dVAE encoder is used only at training
+       time (to tokenize the dataset); the decoder is used only at generation
+       time.</p>`,
     symbols: [
       { sym: "$x$", desc: "an <b>image</b> (RGB, 256 by 256 pixels). The thing we want to model and, later, generate. (&sect;2, Eq 1.)" },
       { sym: "$y$", desc: "a <b>caption</b> &mdash; the text describing the image, as a sequence of text tokens. (&sect;2, Eq 1.)" },
@@ -223,12 +270,53 @@
       { sym: "$\\beta$", desc: "a <b>weight on the KL term</b> in the bound. \"The bound only holds for $\\beta = 1$, while in practice we find it helpful to use larger values\" (&sect;2). The paper uses $\\beta = 6.6$, which \"promotes better codebook usage.\"" },
       { sym: "$D_{KL}$", desc: "the <b>Kullback-Leibler divergence</b>: a non-negative measure of how far one probability distribution is from another. Zero when they match; larger when they differ. Here it pulls the encoder's token distribution toward the transformer prior." },
       { sym: "$\\tau$", desc: "the <b>Gumbel-softmax temperature</b> (&sect;2.1): a knob that controls how soft the relaxed token choice is. Large $\\tau$ = very soft blend; as $\\tau \\to 0$ the relaxation \"becomes tight\" and recovers the true hard discrete choice." },
+      { sym: "$q_\\phi^\\tau(z \\mid x)$", desc: "the <b>relaxed encoder</b> (&sect;2.1): the differentiable, temperature-$\\tau$ Gumbel-softmax surrogate for $q_\\phi$ used during Stage-One training. It tends to the true discrete $q_\\phi$ as $\\tau \\to 0$." },
+      { sym: "$s_t$", desc: "the <b>$t$-th token of the single stream</b>: the concatenation of the text tokens $y$ followed by the image tokens $z$. The transformer predicts each $s_t$ from $s_1,\\dots,s_{t-1}$ (&sect;2.2)." },
+      { sym: "$T$", desc: "the <b>total stream length</b>: up to $256$ text tokens plus $1024$ image tokens, so $T \\le 1280$ positions (&sect;2.2)." },
       { sym: "“codebook”", desc: "a plain term: the fixed list of 8192 possible image-token values. Every image token is one index into this list. The image alphabet." },
       { sym: "“autoregressive”", desc: "a plain term: generating a sequence one token at a time, left to right, each token conditioned on all previous tokens. Generation here samples the 1024 image tokens this way." }
     ],
-    formula: `$$ \\ln p_{\\theta,\\psi}(x, y) \\;\\geq\\; \\mathbb{E}_{z \\sim q_\\phi(z \\mid x)} \\Big[ \\ln p_\\theta(x \\mid y, z) \\;-\\; \\beta\\, D_{KL}\\big( q_\\phi(y, z \\mid x),\\; p_\\psi(y, z) \\big) \\Big] \\quad \\text{(Eq 1)} $$`,
+    formula: `
+      <p><b>The factorized joint likelihood the model represents (&sect;2).</b> The
+      lower bound (Eq 1, next) is on this joint distribution over image $x$,
+      caption $y$, and image tokens $z$:</p>
+      $$ p_{\\theta,\\psi}(x, y, z) \\;=\\; p_\\theta(x \\mid y, z)\\; p_\\psi(y, z) $$
+      <p>The dVAE decoder $p_\\theta(x\\mid y,z)$ paints pixels from tokens; the
+      transformer prior $p_\\psi(y,z)$ models the text-and-token sequence.</p>
+
+      <p><b>Equation 1 &mdash; the evidence lower bound (ELB) on the data
+      log-likelihood $\\ln p_{\\theta,\\psi}(x,y)$ that the whole two-stage procedure
+      maximizes (&sect;2):</b></p>
+      $$ \\ln p_{\\theta,\\psi}(x, y) \\;\\geq\\; \\mathbb{E}_{z \\sim q_\\phi(z \\mid x)} \\Big[ \\ln p_\\theta(x \\mid y, z) \\;-\\; \\beta\\, D_{KL}\\big( q_\\phi(y, z \\mid x),\\; p_\\psi(y, z) \\big) \\Big] \\quad \\text{(Eq 1)} $$
+      <p>Left: a <b>reconstruction</b> term (decode tokens back to the image).
+      Right: a <b>$\\beta$-weighted KL</b> term pulling the encoder's token
+      distribution toward the transformer prior. The bound is exact at $\\beta=1$;
+      the paper uses $\\beta=6.6$ for "better codebook usage" (&sect;2).</p>
+
+      <p><b>Stage One &mdash; the Gumbel-softmax relaxation (&sect;2.1).</b> The
+      expectation over the discrete $q_\\phi$ is non-differentiable, so it is
+      replaced by one over a soft, temperature-$\\tau$ surrogate $q_\\phi^\\tau$:</p>
+      $$ \\mathbb{E}_{z \\sim q_\\phi(z \\mid x)}[\\,\\cdot\\,] \\;\\longrightarrow\\; \\mathbb{E}_{z \\sim q_\\phi^\\tau(z \\mid x)}[\\,\\cdot\\,], \\qquad q_\\phi^\\tau \\to q_\\phi \\;\\text{ as }\\; \\tau \\to 0 $$
+      <p>"The relaxation becomes tight as the temperature $\\tau \\to 0$" (&sect;2.1):
+      train with the soft version, anneal $\\tau$ down to recover crisp discrete
+      tokens.</p>
+
+      <p><b>Stage Two &mdash; the autoregressive prior over the joint stream
+      (&sect;2.2).</b> With Stage One fixed, the transformer factorizes the prior
+      $p_\\psi(y,z)$ left-to-right over the concatenation of the $|y|\\le 256$ text
+      tokens then the $1024$ image tokens $z$:</p>
+      $$ p_\\psi(y, z) \\;=\\; \\prod_{t} p_\\psi\\big(s_t \\mid s_{1}, \\dots, s_{t-1}\\big), \\qquad (s_1,\\dots,s_T) = (\\underbrace{y_1,\\dots,y_{|y|}}_{\\text{text}},\\, \\underbrace{z_1,\\dots,z_{1024}}_{\\text{image}}) $$
+      <p>Each token $s_t$ is predicted from all earlier tokens; generation samples
+      the $1024$ image tokens in exactly this order. (This per-token factorization
+      is the standard autoregressive form the paper trains; the paper states the
+      single-stream modeling, &sect;2 &amp; &sect;2.2.)</p>`,
     whatItDoes:
-      `<p>Equation 1 says: the (log of the) likelihood the model assigns to a
+      `<p><b>The factorized joint.</b> $p_{\\theta,\\psi}(x,y,z) = p_\\theta(x\\mid y,z)\\,p_\\psi(y,z)$
+       says the model generates data in two parts: the transformer prior $p_\\psi$
+       produces a (caption, image-token) sequence, and the decoder $p_\\theta$ turns
+       those tokens into pixels. The two factors are exactly the two trained
+       components.</p>
+       <p><b>Equation 1</b> says: the (log of the) likelihood the model assigns to a
        caption-image pair $(x, y)$ is <b>at least</b> the right-hand side, which
        has two readable parts inside the average over the encoder's tokens
        $z \\sim q_\\phi(z \\mid x)$.</p>
@@ -249,7 +337,18 @@
        toward one shared goal: tokens that both reconstruct images well and form
        sequences the transformer can model. The weight $\\beta$ tunes how hard the
        agreement term is pushed; the paper sets it above 1 (to $6.6$) for "better
-       codebook usage," noting the bound is exact only at $\\beta = 1$.</p>`,
+       codebook usage," noting the bound is exact only at $\\beta = 1$.</p>
+       <p><b>The relaxation expression</b>
+       $\\mathbb{E}_{z\\sim q_\\phi} \\to \\mathbb{E}_{z\\sim q_\\phi^\\tau}$ says: swap the
+       discrete sampling of tokens (which blocks gradients) for a soft,
+       temperature-$\\tau$ blend that is differentiable, then anneal $\\tau \\to 0$
+       so the soft blend hardens back into the true token choice. It is how Stage
+       One is actually trained.</p>
+       <p><b>The autoregressive factorization</b>
+       $p_\\psi(y,z) = \\prod_t p_\\psi(s_t \\mid s_{\\lt t})$ says: model the whole
+       text-then-image stream one token at a time, each token's probability
+       conditioned on every token before it. This is what makes generation a
+       left-to-right sampling loop over the $1024$ image tokens.</p>`,
     derivation:
       `<p>This is a <b>result paper</b> with no single equation to derive from
        first principles; the contribution is the architecture. But the shape of

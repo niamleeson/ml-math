@@ -146,6 +146,37 @@
        frozen features — the <b>linear evaluation protocol</b> (the "linear probe"), the standard way to
        measure representation quality. A good probe accuracy means the label-free, negative-free pretraining
        baked useful structure into the encoder.</p>`,
+    architecture:
+      `<p>BYOL (§3, Fig. 2) is <b>two networks of identical shape, different weights</b>, plus a loss that
+       only the online side back-propagates through. Data flows left to right; one image makes two views.</p>
+       <p><b>Online network (weights $\\theta$, trained by gradient descent) — three stages:</b></p>
+       <ul>
+        <li><b>Encoder $f_\\theta$.</b> A convolutional net; in the paper a <b>ResNet-50</b>. Input view $v$ →
+        representation $y_\\theta = f_\\theta(v)$ (a 2048-dim vector for ResNet-50). <i>This is the only part
+        you keep and probe after pretraining.</i></li>
+        <li><b>Projector $g_\\theta$.</b> A small MLP: <b>Linear → BatchNorm → ReLU → Linear</b>, hidden size
+        <b>4096</b>, output dimension <b>256</b>. Maps $y_\\theta$ → projection $z_\\theta = g_\\theta(y_\\theta)$
+        (256-dim), the space where the loss lives.</li>
+        <li><b>Predictor $q_\\theta$.</b> <i>Only on the online side.</i> Same architecture as $g_\\theta$
+        (Linear → BN → ReLU → Linear, hidden 4096, out 256). Maps $z_\\theta$ → prediction
+        $q_\\theta(z_\\theta)$. This asymmetry — predictor on one side only — is a key collapse-preventer.</li>
+       </ul>
+       <p><b>Target network (weights $\\xi$, NOT trained by gradients) — two stages, no predictor:</b></p>
+       <ul>
+        <li><b>Encoder $f_\\xi$</b> then <b>projector $g_\\xi$</b> (same shapes as $f_\\theta, g_\\theta$).
+        The other view $v'$ → target projection $z'_\\xi = g_\\xi(f_\\xi(v'))$ (256-dim).</li>
+        <li><b>Stop-gradient $\\mathrm{sg}(\\cdot)$.</b> The whole target branch is detached: the loss treats
+        $z'_\\xi$ as a constant, so gradients update only $\\theta$, never $\\xi$.</li>
+       </ul>
+       <p><b>Loss & connection.</b> Both $q_\\theta(z_\\theta)$ and $z'_\\xi$ are L2-normalized to unit length,
+       then their squared distance is the normalized-MSE loss (Eqn. 2). The loss is <b>symmetrized</b>:
+       run $v$ through online / $v'$ through target, then swap the two views and add the second loss.</p>
+       <p><b>Target-weight update (the cross-link between the two networks).</b> After every optimizer step on
+       $\\theta$, the target weights are nudged toward the online weights by the EMA rule (Eqn. 1)
+       $\\xi \\leftarrow \\tau\\,\\xi + (1-\\tau)\\,\\theta$ with $\\tau$ near 1 — the only way $\\xi$ ever changes.
+       So the online net perpetually chases a slow, lagging copy of itself, and never the other way round.</p>
+       <p>(In our <b>Track B</b> code the encoder is a tiny 2-conv net and the projector/predictor are
+       Linear → ReLU → Linear at width 128 / dim 64 — same wiring as the paper, shrunk to run on MNIST.)</p>`,
     symbols: [
       { sym: "$\\theta$", desc: "the <b>online</b> network's weights — the ones trained by gradient descent. The online encoder $f_\\theta$ is what you keep and probe at the end." },
       { sym: "$\\xi$", desc: "the <b>target</b> network's weights. NOT trained by gradients; updated only by the EMA rule (Eqn. 1) toward $\\theta$. The Greek letter xi (a slow-moving copy)." },
@@ -162,8 +193,9 @@
       { sym: "stop-gradient", desc: "treating a quantity as a fixed constant during backprop — no gradient flows into it. Here the whole target branch is stop-gradient (gradients only update $\\theta$)." },
       { sym: "$\\tau$", desc: "the EMA <b>decay rate</b> in $[0,1]$, close to $1$. Larger $\\tau$ → the target moves more slowly. (Different from SimCLR's temperature, also written $\\tau$ — here it is a momentum.)" }
     ],
-    formula: `$$ \\mathcal{L}_{\\theta,\\xi} \\;=\\; \\big\\lVert \\bar{q}_\\theta(z_\\theta) - \\bar{z}'_\\xi \\big\\rVert_2^2 \\;=\\; 2 - 2\\cdot\\frac{\\big\\langle q_\\theta(z_\\theta),\\, z'_\\xi \\big\\rangle}{\\big\\lVert q_\\theta(z_\\theta)\\big\\rVert_2 \\cdot \\big\\lVert z'_\\xi\\big\\rVert_2} \\qquad\\text{(prediction loss, \\S3, Eqn. 2)} $$
-$$ \\xi \\;\\leftarrow\\; \\tau\\,\\xi + (1-\\tau)\\,\\theta \\qquad\\text{(target EMA update, \\S3, Eqn. 1)} \\qquad\\qquad \\mathcal{L}^{\\text{BYOL}}_{\\theta,\\xi} = \\mathcal{L}_{\\theta,\\xi} + \\tilde{\\mathcal{L}}_{\\theta,\\xi}\\ \\text{(symmetrized)} $$`,
+    formula: `$$ z_\\theta = g_\\theta(f_\\theta(v)), \\qquad z'_\\xi = g_\\xi(f_\\xi(v')), \\qquad \\bar{q}_\\theta(z_\\theta) = \\frac{q_\\theta(z_\\theta)}{\\lVert q_\\theta(z_\\theta)\\rVert_2}, \\qquad \\bar{z}'_\\xi = \\frac{z'_\\xi}{\\lVert z'_\\xi\\rVert_2} \\qquad\\text{(online/target projections; L2-normalized prediction & target, \\S3)} $$
+$$ \\mathcal{L}_{\\theta,\\xi} \\;=\\; \\big\\lVert \\bar{q}_\\theta(z_\\theta) - \\bar{z}'_\\xi \\big\\rVert_2^2 \\;=\\; 2 - 2\\cdot\\frac{\\big\\langle q_\\theta(z_\\theta),\\, \\mathrm{sg}(z'_\\xi) \\big\\rangle}{\\big\\lVert q_\\theta(z_\\theta)\\big\\rVert_2 \\cdot \\big\\lVert z'_\\xi\\big\\rVert_2} \\qquad\\text{(normalized-MSE prediction loss; }\\mathrm{sg}=\\text{stop-gradient on the target, \\S3, Eqn. 2)} $$
+$$ \\mathcal{L}^{\\text{BYOL}}_{\\theta,\\xi} = \\mathcal{L}_{\\theta,\\xi} + \\tilde{\\mathcal{L}}_{\\theta,\\xi} \\qquad\\text{(symmetrized loss: swap }v\\leftrightarrow v'\\text{ and add, \\S3)} \\qquad\\qquad \\xi \\;\\leftarrow\\; \\tau\\,\\xi + (1-\\tau)\\,\\theta \\qquad\\text{(target EMA update, \\S3, Eqn. 1)} $$`,
     whatItDoes:
       `<p><b>The prediction loss (Eqn. 2)</b> is a <b>squared distance between two unit vectors</b>: the
        online prediction $\\bar{q}_\\theta(z_\\theta)$ and the target projection $\\bar{z}'_\\xi$, both

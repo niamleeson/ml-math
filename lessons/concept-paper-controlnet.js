@@ -150,6 +150,36 @@
        when the training starts" (&sect;3.1). Yet the zero convolution still <b>learns</b>: even though its weight is
        zero, the gradient of its output with respect to that weight depends on the (nonzero) input, so the weight
        gets a nonzero update and the conditioning pathway <b>progressively grows from zero</b>.</p>`,
+    architecture:
+      `<p>ControlNet wraps a frozen Stable Diffusion U-Net. The U-Net is a denoiser with three parts: a downsampling
+       <b>encoder</b>, a <b>middle block</b>, and an upsampling <b>decoder</b>, with <b>skip connections</b> carrying
+       encoder features across to the matching decoder level. ControlNet leaves all of this <b>locked</b> and bolts a
+       trainable control pathway alongside it (&sect;3.2).</p>
+       <p><b>Condition encoder $\\mathcal{E}$ (Eq. 4).</b> The raw control image (an edge map, depth map, pose, etc.) is
+       a $512\\times512$ pixel-space image $\\mathbf{c}_i$. A tiny encoder &mdash; <b>four convolution layers</b> with
+       $4\\times4$ kernels, $2\\times2$ strides, channels $16\\!\\to\\!32\\!\\to\\!64\\!\\to\\!128$, ReLU between &mdash;
+       shrinks it $8\\times$ to a $64\\times64$ feature map $\\mathbf{c}_f$ that matches Stable Diffusion's latent
+       resolution. This $\\mathbf{c}_f$ is the conditioning signal $\\mathbf{c}$ fed into the ControlNet blocks.</p>
+       <p><b>The locked copy.</b> Stable Diffusion's U-Net encoder has <b>12 blocks</b> arranged in 4 resolutions
+       ($64\\times64$, $32\\times32$, $16\\times16$, $8\\times8$, three blocks each) plus <b>1 middle block</b> &mdash;
+       13 blocks total. All are <b>frozen</b>; this is the protected backbone.</p>
+       <p><b>The trainable copy.</b> ControlNet makes a trainable clone of those same <b>12 encoder blocks + 1 middle
+       block</b> (13 copies), each initialized from the frozen weights ($\\Theta_c$). The encoded condition
+       $\\mathbf{c}_f$ is injected into the trainable copy through a zero convolution and flows down through it,
+       mirroring the frozen encoder's resolutions.</p>
+       <p><b>The zero convolutions (13 of them).</b> Each trainable block's output passes through its own
+       $1\\times1$ <b>zero convolution</b> and is <b>added into the corresponding skip connection</b> of the frozen
+       decoder &mdash; the 12 encoder skip connections plus the 1 middle-block output. So the control pathway only
+       ever <i>adds a correction</i> into the frozen decoder; it never rewrites it. Because all 13 zero convolutions
+       start at zero, the added corrections are zero at init and the whole network reproduces the unmodified Stable
+       Diffusion output (Eq. 3), then grows the control in as training proceeds.</p>
+       <p><b>Data flow, end to end:</b> control image $\\mathbf{c}_i$ &rarr; encoder $\\mathcal{E}$ &rarr;
+       $\\mathbf{c}_f$ &rarr; (added via a zero conv into) the trainable copy of the encoder + middle block &rarr;
+       each block's output &rarr; its zero convolution &rarr; added into the matching skip connection / middle output
+       of the <b>frozen</b> decoder &rarr; denoised latent. The frozen decoder and the original text-prompt
+       cross-attention are untouched; only the trainable copy and the 13 zero convolutions are learned (Eq. 5).</p>
+       <p><i>Our notebook below illustrates the mechanism on a single tiny block (one frozen block, one trainable copy,
+       two zero convolutions) rather than the full 13-block U-Net &mdash; the zero-convolution math is identical.</i></p>`,
     symbols: [
       { sym: "$\\mathbf{x}$", desc: "the <b>input feature map</b> to the block &mdash; the stack of channel images flowing in from the previous layer." },
       { sym: "$\\mathbf{y}$", desc: "the <b>output feature map</b> of the original frozen block: $\\mathbf{y}=\\mathcal{F}(\\mathbf{x};\\Theta)$ (Eq. 1)." },
@@ -161,9 +191,34 @@
       { sym: "$\\mathcal{Z}(\\cdot;\\cdot)$", desc: "a <b>zero convolution</b>: a $1\\times1$ convolution with weight AND bias initialized to zero. At init it outputs zero for any input." },
       { sym: "$\\Theta_{z1},\\ \\Theta_{z2}$", desc: "the parameters of the <b>two zero-convolution instances</b> &mdash; one on the condition path, one on the output path (&sect;3.1)." },
       { sym: "“$1\\times1$ convolution”", desc: "a plain term: a convolution with a one-pixel window. It re-mixes the channels at each pixel independently &mdash; a per-pixel linear map plus bias. Zero weight and bias &rarr; zero output." },
-      { sym: "“locked / trainable copy”", desc: "plain terms: the <b>locked copy</b> is the frozen original ($\\Theta$); the <b>trainable copy</b> is the clone that learns ($\\Theta_c$)." }
+      { sym: "“locked / trainable copy”", desc: "plain terms: the <b>locked copy</b> is the frozen original ($\\Theta$); the <b>trainable copy</b> is the clone that learns ($\\Theta_c$)." },
+      { sym: "$w_{o,i},\\ p_i$", desc: "in the gradient analysis: $w_{o,i}$ is the weight from input channel $i$ to output channel $o$ of a $1\\times1$ conv, and $p_i$ is input channel $i$ at a pixel. The output is $o=\\sum_i w_{o,i}p_i + b_o$, so $\\partial o/\\partial w_{o,i}=p_i$." },
+      { sym: "$\\mathbf{c}_i$", desc: "the <b>raw condition image</b> in pixel space ($512\\times512$): the edge map, depth map, pose, or segmentation before encoding (&sect;3.2)." },
+      { sym: "$\\mathbf{c}_f$", desc: "the <b>encoded condition</b> ($64\\times64$ latent), output of $\\mathcal{E}$ (Eq. 4); this is the conditioning $\\mathbf{c}$ fed into the ControlNet blocks." },
+      { sym: "$\\mathcal{E}(\\cdot)$", desc: "the <b>condition encoder</b>: four $4\\times4$ stride-$2$ conv layers (channels $16\\!\\to\\!32\\!\\to\\!64\\!\\to\\!128$, ReLU) mapping $\\mathbf{c}_i$ to $\\mathbf{c}_f$ (Eq. 4)." },
+      { sym: "$\\mathbf{z}_0,\\ \\mathbf{z}_t$", desc: "the clean image latent $\\mathbf{z}_0$ and the noisy latent $\\mathbf{z}_t$ at diffusion timestep $\\mathbf{t}$ (Eq. 5)." },
+      { sym: "$\\mathbf{t}$", desc: "the <b>diffusion timestep</b> &mdash; how much noise has been added; input to the denoiser (Eq. 5)." },
+      { sym: "$\\mathbf{c}_t$", desc: "the <b>text-prompt condition</b> (the text embedding) given to the denoiser, separate from the spatial condition $\\mathbf{c}_f$ (Eq. 5)." },
+      { sym: "$\\boldsymbol{\\epsilon},\\ \\boldsymbol{\\epsilon}_\\theta$", desc: "$\\boldsymbol{\\epsilon}$ is the true Gaussian noise added to the latent; $\\boldsymbol{\\epsilon}_\\theta$ is the network's predicted noise. The loss is their squared difference (Eq. 5)." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>denoising training loss</b>: expected squared error between true and predicted noise (Eq. 5)." },
+      { sym: "$\\boldsymbol{\\epsilon}_{prd},\\ \\boldsymbol{\\epsilon}_{uc},\\ \\boldsymbol{\\epsilon}_c$", desc: "in classifier-free guidance: the final predicted noise, the <b>unconditioned</b> prediction, and the <b>conditioned</b> prediction (&sect;4)." },
+      { sym: "$\\beta_{cfg}$", desc: "the <b>classifier-free guidance weight</b> &mdash; how strongly to push from the unconditioned toward the conditioned prediction (&sect;4)." }
     ],
-    formula: `$$ \\mathbf{y}_c = \\mathcal{F}(\\mathbf{x};\\Theta) + \\mathcal{Z}\\!\\big(\\mathcal{F}(\\mathbf{x} + \\mathcal{Z}(\\mathbf{c};\\Theta_{z1});\\,\\Theta_c);\\,\\Theta_{z2}\\big) \\quad\\text{(Eq. 2)} \\qquad\\Longrightarrow\\qquad \\mathbf{y}_c = \\mathbf{y} \\;\\text{ at init} \\quad\\text{(Eq. 3)} $$`,
+    formula:
+      `$$ \\mathbf{y} = \\mathcal{F}(\\mathbf{x}; \\Theta) $$
+       <p class="cap">&sect;3.1, Eq. 1 &mdash; one frozen neural block: it maps an input feature map $\\mathbf{x}\\in\\mathbb{R}^{h\\times w\\times c}$ to output $\\mathbf{y}$ using locked pretrained parameters $\\Theta$.</p>
+       $$ \\mathbf{y}_c = \\mathcal{F}(\\mathbf{x};\\Theta) \\;+\\; \\mathcal{Z}\\!\\big(\\mathcal{F}(\\mathbf{x} + \\mathcal{Z}(\\mathbf{c};\\Theta_{z1});\\,\\Theta_c);\\,\\Theta_{z2}\\big) $$
+       <p class="cap">&sect;3.1, Eq. 2 &mdash; the ControlNet block: frozen output plus a control branch. The condition $\\mathbf{c}$ passes through zero convolution $\\mathcal{Z}(\\cdot;\\Theta_{z1})$, is added to $\\mathbf{x}$, runs through the trainable copy $\\mathcal{F}(\\cdot;\\Theta_c)$, then through a second zero convolution $\\mathcal{Z}(\\cdot;\\Theta_{z2})$, and is added back. $\\mathcal{Z}(\\cdot;\\cdot)$ is a $1\\times1$ convolution with weight AND bias initialized to zero.</p>
+       $$ \\mathbf{y}_c = \\mathbf{y} \\qquad (\\text{at the first training step}) $$
+       <p class="cap">&sect;3.1, Eq. 3 &mdash; at init both $\\mathcal{Z}$ terms are zero, so the whole control branch vanishes and the conditioned output equals the frozen output. No harmful noise on step one.</p>
+       $$ \\frac{\\partial\\, \\mathcal{Z}(\\mathbf{p};\\Theta_z)_{\\,o}}{\\partial\\, w_{o,i}} \\;=\\; p_i \\;\\neq\\; 0 $$
+       <p class="cap">&sect;3.1, gradient analysis (zero convs still learn) &mdash; one output channel of a $1\\times1$ conv is $o=\\sum_i w_{o,i}\\,p_i + b_o$. The gradient w.r.t. weight $w_{o,i}$ is the input $p_i$, which is generally nonzero even when every $w=0$. So the optimizer moves the weights off zero and the connector stops being a no-op &mdash; the parameters "progressively grow from zero." (The gradient w.r.t. the input is $w_{o,i}=0$ at step one, so no noise leaks through this path until the weights move.)</p>
+       $$ \\mathbf{c}_f = \\mathcal{E}(\\mathbf{c}_i) $$
+       <p class="cap">&sect;3.2, Eq. 4 &mdash; condition encoder: a tiny network $\\mathcal{E}$ (four $4\\times4$-kernel, $2\\times2$-stride conv layers, channels $16\\!\\to\\!32\\!\\to\\!64\\!\\to\\!128$, ReLU) maps the $512\\times512$ pixel-space condition image $\\mathbf{c}_i$ to a $64\\times64$ latent conditioning vector $\\mathbf{c}_f$ that matches Stable Diffusion's latent size.</p>
+       $$ \\mathcal{L} = \\mathbb{E}_{\\mathbf{z}_0,\\,\\mathbf{t},\\,\\mathbf{c}_t,\\,\\mathbf{c}_f,\\,\\boldsymbol{\\epsilon}}\\!\\left[\\;\\big\\lVert\\,\\boldsymbol{\\epsilon} - \\boldsymbol{\\epsilon}_\\theta(\\mathbf{z}_t,\\,\\mathbf{t},\\,\\mathbf{c}_t,\\,\\mathbf{c}_f)\\,\\big\\rVert_2^2\\;\\right] $$
+       <p class="cap">&sect;3.2, Eq. 5 &mdash; the diffusion training loss (a standard denoising objective): the network $\\boldsymbol{\\epsilon}_\\theta$ predicts the noise $\\boldsymbol{\\epsilon}$ added to the noisy latent $\\mathbf{z}_t$ at timestep $\\mathbf{t}$, now also given the text condition $\\mathbf{c}_t$ and the ControlNet spatial condition $\\mathbf{c}_f$.</p>
+       $$ \\boldsymbol{\\epsilon}_{prd} = \\boldsymbol{\\epsilon}_{uc} + \\beta_{cfg}\\,(\\boldsymbol{\\epsilon}_c - \\boldsymbol{\\epsilon}_{uc}) $$
+       <p class="cap">&sect;4, classifier-free guidance &mdash; at sampling time the predicted noise pushes away from the unconditioned prediction $\\boldsymbol{\\epsilon}_{uc}$ toward the conditioned one $\\boldsymbol{\\epsilon}_c$, scaled by the guidance weight $\\beta_{cfg}$. The paper adds the ControlNet condition only to $\\boldsymbol{\\epsilon}_c$ (CFG Resolution Weighting $w_i = 64/h_i$ per block resolution).</p>`,
     whatItDoes:
       `<p><b>The structure</b> (Eq. 2) reads left to right as a picture. The frozen block $\\mathcal{F}(\\mathbf{x};\\Theta)$
        runs untouched. In parallel, the condition $\\mathbf{c}$ goes through the first zero convolution

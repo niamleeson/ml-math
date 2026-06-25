@@ -138,6 +138,38 @@
        layers every coordinate has been transformed by data-dependent functions of the others. Because each
        layer is invertible with a cheap log-det, the whole stack is too: the total $\\log|\\det|$ is just the
        <b>sum</b> of the per-layer $\\sum_j s_j$ terms.</p>`,
+    architecture:
+      `<p>Real NVP is a <b>stack of invertible coupling layers</b> wrapped in a multi-scale structure (&sect;3).
+       Data flows data&nbsp;&rarr;&nbsp;latent for scoring, and latent&nbsp;&rarr;&nbsp;data (every block run in
+       reverse) for sampling. Component by component:</p>
+       <ul>
+        <li><b>Affine coupling layer</b> (&sect;3.3) &mdash; the repeated unit. Splits its input via a binary
+        <b>mask</b>, feeds the masked-in part through two networks to get a per-coordinate log-scale $s$ and
+        shift $t$, and applies $\\exp(s)\\odot(\\cdot)+t$ to the masked-out part (Eqs. 4&ndash;5). It returns
+        the output <i>and</i> the layer log-det $\\sum_j s_j$ (Eq. 6). Inverse in closed form (Eqs. 9&ndash;10).</li>
+        <li><b>The $s$ and $t$ networks</b> (&sect;3.3, &sect;4) &mdash; for images, <b>deep convolutional
+        residual networks</b> (the paper uses 4 residual blocks at 32&times;32, 2 at 64&times;64; hidden width
+        starts at 32&ndash;64 feature maps and doubles at coarser scales). They are never inverted, so they can
+        be arbitrarily expressive. A shared trunk outputs both $s$ and $t$.</li>
+        <li><b>Two mask patterns</b> (&sect;3.4) &mdash; a <b>checkerboard</b> spatial mask (1 where the pixel
+        coordinate sum is odd) and a <b>channel-wise</b> mask (half the channels). Layers <b>alternate</b> the
+        mask so every coordinate is eventually transformed (&sect;3.5).</li>
+        <li><b>Squeeze</b> (&sect;3.4) &mdash; reshapes an $s\\times s\\times c$ feature map into
+        $\\tfrac{s}{2}\\times\\tfrac{s}{2}\\times 4c$, trading spatial resolution for channels so channel-wise
+        masking has more channels to split.</li>
+        <li><b>Multi-scale with factoring out</b> (&sect;3.6, Eqs. 14&ndash;16) &mdash; at each scale: a few
+        checkerboard coupling layers, a squeeze, a few channel-wise coupling layers, then <b>factor out half
+        the dimensions</b> as final latents $z^{(i)}$ and pass the rest to the next, coarser scale. This keeps
+        compute manageable and gives latents at multiple resolutions. The final $4\\times4\\times c$ scale gets
+        4 checkerboard coupling layers.</li>
+        <li><b>Batch normalization in the flow</b> (&sect;3.7) &mdash; inserted as its own invertible affine
+        step; its diagonal log-det $-\\tfrac12\\sum_i\\log(\\tilde\\sigma_i^2+\\epsilon)$ is added to the total.</li>
+        <li><b>Objective</b> &mdash; the summed log-det of every block plus $\\log p_Z(z)$ gives the exact
+        log-likelihood (Eq. 1), trained with ADAM (batch 64, weight decay $5\\times10^{-5}$).</li>
+       </ul>
+       <p><b>In our 2-D toy build</b> the same skeleton shrinks to its essentials: $D=2$, so no squeeze or
+       multi-scale is needed; $s,t$ are small MLPs instead of conv-residual nets; the two masks become
+       $(1,0)$ and $(0,1)$; and we stack 6 alternating coupling layers.</p>`,
     symbols: [
       { sym: "$x$", desc: "a <b>data point</b> &mdash; a $D$-dimensional vector (here a 2-D toy point; in the paper an image flattened to $D$ numbers)." },
       { sym: "$z$", desc: "the <b>latent code</b>: where $x$ lands after the full forward map, $z = f(x)$. It is meant to follow the simple base distribution." },
@@ -155,9 +187,28 @@
       { sym: "$p_Z(z)$", desc: "the fixed, simple <b>base density</b> we map to &mdash; here a standard Gaussian $\\mathcal{N}(0,\\mathbf{I})$ (mean $0$, identity variance, independent coordinates)." },
       { sym: "$\\frac{\\partial f(x)}{\\partial x^{\\top}}$", desc: "the <b>Jacobian matrix</b> of $f$ at $x$: the grid of all partial derivatives $\\partial f_i / \\partial x_j$. It captures how $f$ stretches space near $x$." },
       { sym: "$\\det$", desc: "the <b>determinant</b> of a matrix &mdash; a single number giving the factor by which it scales volume. For a triangular matrix it equals the product of the diagonal." },
-      { sym: "$\\log|\\det J|$", desc: "the <b>log-absolute-determinant</b> of the Jacobian: the volume-change correction term. For a coupling layer it equals $\\sum_j s(x_{1:d})_j$." }
+      { sym: "$\\log|\\det J|$", desc: "the <b>log-absolute-determinant</b> of the Jacobian: the volume-change correction term. For a coupling layer it equals $\\sum_j s(x_{1:d})_j$." },
+      { sym: "$\\mathbb{I}_d$", desc: "the $d\\times d$ <b>identity matrix</b> &mdash; the top-left block of the coupling Jacobian, because the first $d$ coordinates are copied." },
+      { sym: "$\\operatorname{diag}(\\cdot)$", desc: "a <b>diagonal matrix</b> with the given vector on its diagonal &mdash; here $\\exp(s)$, the per-coordinate scales (the bottom-right Jacobian block)." },
+      { sym: "$s\\times s\\times c$", desc: "the shape of an image <b>feature map</b>: $s$ spatial rows, $s$ columns, $c$ channels. The <b>squeeze</b> reshapes it to $\\tfrac{s}{2}\\times\\tfrac{s}{2}\\times 4c$." },
+      { sym: "$z^{(i)}$", desc: "the latent dimensions <b>factored out</b> at scale $i$ in the multi-scale architecture; the full latent is their concatenation $z=(z^{(1)},\\dots,z^{(L)})$ ($L$ scales)." },
+      { sym: "$\\tilde\\mu,\\ \\tilde\\sigma^{2}$", desc: "the <b>batch mean and variance</b> used by the batch-normalization flow step; $\\epsilon$ is a small constant for numerical stability." }
     ],
-    formula: `$$ \\log\\big(p_X(x)\\big) = \\log\\big(p_Z(f(x))\\big) + \\log\\!\\left(\\left|\\det\\!\\left(\\frac{\\partial f(x)}{\\partial x^{\\top}}\\right)\\right|\\right) \\qquad\\text{(Eq. 1, change of variables)} $$`,
+    formula:
+      `$$ \\log\\big(p_X(x)\\big) = \\log\\big(p_Z(f(x))\\big) + \\log\\!\\left(\\left|\\det\\!\\left(\\frac{\\partial f(x)}{\\partial x^{\\top}}\\right)\\right|\\right) $$
+       <p>Eqs. 1&ndash;3 (&sect;3.1): the <b>exact</b> log-likelihood of $x$ = log base-density at $z=f(x)$ + the log volume-change (log-absolute-Jacobian-determinant). The whole objective.</p>
+       $$ y_{1:d} = x_{1:d}, \\qquad y_{d+1:D} = x_{d+1:D} \\odot \\exp\\!\\big(s(x_{1:d})\\big) + t(x_{1:d}) $$
+       <p>Eqs. 4&ndash;5 (&sect;3.3): the <b>affine coupling layer</b> forward. Copy the first $d$ coordinates; scale ($\\exp s$) and shift ($t$) the rest, with $s,t$ arbitrary nets of the copied part.</p>
+       $$ \\frac{\\partial y}{\\partial x^{\\top}} = \\begin{bmatrix} \\mathbb{I}_d & 0 \\\\[2pt] \\dfrac{\\partial y_{d+1:D}}{\\partial x_{1:d}^{\\top}} & \\operatorname{diag}\\!\\big(\\exp[s(x_{1:d})]\\big) \\end{bmatrix} $$
+       <p>Eq. 8 (&sect;3.3): the <b>Jacobian is triangular</b> &mdash; identity top-left, zero top-right, diagonal bottom-right; the messy $s,t$ derivatives sit below the diagonal and never enter the determinant.</p>
+       $$ \\log\\!\\left|\\det \\frac{\\partial y}{\\partial x^{\\top}}\\right| = \\sum_{j} s\\big(x_{1:d}\\big)_j $$
+       <p>Eq. 6 (&sect;3.3): the <b>cheap log-determinant</b>. A triangular matrix's determinant is the product of its diagonal, so the log-det is just the sum of the log-scales &mdash; no $O(D^3)$ work.</p>
+       $$ x_{1:d} = y_{1:d}, \\qquad x_{d+1:D} = \\big(y_{d+1:D} - t(y_{1:d})\\big) \\odot \\exp\\!\\big(\\!-s(y_{1:d})\\big) $$
+       <p>Eqs. 9&ndash;10 (&sect;3.3): the <b>exact inverse</b>. Since $y_{1:d}=x_{1:d}$, recompute the same $s,t$ and undo the affine map &mdash; $s,t$ themselves are never inverted.</p>
+       $$ x \\;\\xrightarrow{\\ \\text{squeeze}\\ }\\; \\big[\\,s\\times s\\times c\\,\\big] \\;\\longmapsto\\; \\Big[\\tfrac{s}{2}\\times\\tfrac{s}{2}\\times 4c\\Big], \\qquad z = \\big(z^{(1)}, z^{(2)}, \\dots, z^{(L)}\\big) $$
+       <p>&sect;3.4&ndash;3.6: the <b>squeeze + multi-scale</b>. Squeezing trades each $2\\times2$ spatial block for 4 channels; after each scale half the dimensions are <b>factored out</b> as final latents $z^{(i)}$ (Eqs. 14&ndash;16) so deeper layers act on a smaller tensor.</p>
+       $$ x \\mapsto \\frac{x - \\tilde\\mu}{\\sqrt{\\tilde\\sigma^{2} + \\epsilon}}, \\qquad \\log|\\det| = -\\tfrac12 \\sum_i \\log\\!\\big(\\tilde\\sigma_i^{2} + \\epsilon\\big) $$
+       <p>&sect;3.7: <b>batch normalization as a flow step</b> &mdash; it too is an invertible affine rescaling, so its (also cheap, diagonal) log-det is simply added into Eq. 1.</p>`,
     whatItDoes:
       `<p>In words: <b>the exact log-likelihood of a data point $x$ equals the log-likelihood of where it lands
        under the simple base distribution, plus the log of how much the map stretched volume there.</b> The

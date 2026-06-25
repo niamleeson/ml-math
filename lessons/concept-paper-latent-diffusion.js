@@ -141,25 +141,75 @@
        <p><b>At generation time:</b> encode the prompt; start from a pure-noise latent; run the reverse
        denoising steps (DDPM/Alg. 2) in the small latent, attending to the prompt each step; then run the
        cheap-to-evaluate decoder $\\mathcal{D}$ <b>once</b> to turn the final clean latent into a full image.</p>`,
+    architecture:
+      `<p>Three trained components wired in two stages &mdash; this is the Stable Diffusion blueprint.</p>
+       <p><b>Stage 1 &mdash; Perceptual autoencoder (&sect;3.1), trained once then frozen.</b></p>
+       <ul>
+        <li><b>Encoder $\\mathcal{E}$:</b> a convolutional net that downsamples $x\\in\\mathbb{R}^{H\\times W\\times 3}$ by
+        $f=2^m$ along each spatial axis to a latent $z\\in\\mathbb{R}^{h\\times w\\times c}$ ($h=H/f$, $w=W/f$). The
+        paper sweeps $f\\in\\{1,2,4,8,16,32\\}$; Stable Diffusion uses $f{=}8$ with $c{=}4$.</li>
+        <li><b>Latent regularizer:</b> either <i>KL-reg</i> (a slight KL-penalty toward $\\mathcal{N}(0,\\mathbf{I})$,
+        VAE-style) or <i>VQ-reg</i> (a vector-quantization layer folded into the decoder, VQGAN-style). Keeps the
+        latent smooth and bounded so diffusion sits naturally on it.</li>
+        <li><b>Decoder $\\mathcal{D}$:</b> a mirror convolutional net (transpose-convs) that upsamples $z$ back to
+        $\\tilde x\\in\\mathbb{R}^{H\\times W\\times 3}$. Trained with reconstruction + perceptual (LPIPS) + a
+        patch-based adversarial loss so reconstructions stay on the image manifold.</li>
+       </ul>
+       <p><b>Stage 2 &mdash; Latent denoiser + conditioning, trained on the frozen latents.</b></p>
+       <ul>
+        <li><b>Denoising U-Net $\\epsilon_\\theta$:</b> a time-conditional convolutional U-Net over latent-shaped
+        tensors $h\\times w\\times c$. Standard encoder/bottleneck/decoder with skip connections and residual blocks;
+        the timestep $t$ enters via a sinusoidal embedding added to each block. It predicts the added noise.</li>
+        <li><b>Cross-attention layers:</b> interleaved with the U-Net's residual blocks. At layer $i$, the flattened
+        feature map $\\varphi_i(z_t)\\in\\mathbb{R}^{N\\times d_\\epsilon^i}$ provides the queries $Q$; the condition
+        encoding $\\tau_\\theta(y)\\in\\mathbb{R}^{M\\times d_\\tau}$ provides keys $K$ and values $V$; the attention
+        output is mixed back into the feature map. This is the only place the condition touches the image.</li>
+        <li><b>Condition encoder $\\tau_\\theta$:</b> a domain-specific network mapping the raw condition $y$ to a
+        sequence of $M$ vectors. For text it is a transformer (Stable Diffusion uses a frozen CLIP/BERT-style text
+        encoder); for class labels or layouts it is a small embedder. Output $\\tau_\\theta(y)\\in\\mathbb{R}^{M\\times d_\\tau}$
+        feeds every cross-attention layer.</li>
+       </ul>
+       <p><b>Data flow at sampling:</b> $y \\xrightarrow{\\tau_\\theta} \\tau_\\theta(y)$; start $z_T\\sim\\mathcal{N}(0,\\mathbf{I})$
+       in latent shape; for $t=T\\dots1$ run $\\epsilon_\\theta(z_t,t,\\tau_\\theta(y))$ (U-Net + cross-attention) to take
+       one reverse step; finally $\\tilde x=\\mathcal{D}(z_0)$ &mdash; the decoder runs once. The expensive U-Net loop
+       lives entirely in the small latent; only the cheap decoder ever touches full resolution.</p>`,
     symbols: [
       { sym: "$x$", desc: "an <b>image</b> in pixel space, $\\mathbb{R}^{H\\times W\\times 3}$ ($H$ tall, $W$ wide, 3 RGB colour channels)." },
       { sym: "$\\mathcal{E}$", desc: "the <b>encoder</b>: a trained network that compresses an image $x$ into a small latent $z=\\mathcal{E}(x)$." },
       { sym: "$\\mathcal{D}$", desc: "the <b>decoder</b>: the partner network that reconstructs an image $\\tilde x=\\mathcal{D}(z)$ from a latent. $\\mathcal{E}$ and $\\mathcal{D}$ form the autoencoder, trained once and frozen." },
+      { sym: "$\\tilde x$", desc: "the <b>reconstruction</b> $\\tilde x=\\mathcal{D}(\\mathcal{E}(x))$ &mdash; the image you get back after encoding then decoding. The autoencoder is trained to make $\\tilde x\\approx x$." },
       { sym: "$z$", desc: "the <b>latent</b>: the compressed representation $z=\\mathcal{E}(x)\\in\\mathbb{R}^{h\\times w\\times c}$. Much smaller than $x$ spatially. The diffusion runs entirely on $z$." },
+      { sym: "$h,w,c$", desc: "the <b>latent dimensions</b>: height $h=H/f$, width $w=W/f$, and channel count $c$ of the latent $z$. (Stable Diffusion: $f{=}8$, $c{=}4$.)" },
+      { sym: "$x_t$", desc: "the <b>noisy pixel image</b> at timestep $t$ in the original pixel-space DDPM (Eq. 1) &mdash; the thing $z_t$ replaces once we move into the latent." },
       { sym: "$f$", desc: "the <b>downsampling factor</b> $f=H/h=W/w$: how many times smaller the latent is along each spatial axis. The paper tries $f\\in\\{1,2,4,8,16,32\\}$; $f{=}4$ means the latent is $4\\times$ smaller in height and width." },
       { sym: "$z_t$", desc: "the latent after $t$ steps of DDPM noising &mdash; a <b>noisy version of $z$</b>. Plays the role $x_t$ played in pixel-space DDPM." },
       { sym: "$t$", desc: "the diffusion <b>timestep</b>; larger $t$ = noisier latent. Fed to the U-Net so it knows the noise level." },
       { sym: "$\\epsilon$", desc: "the <b>actual Gaussian noise</b> $\\mathcal{N}(0,\\mathbf{I})$ mixed into $z$ to make $z_t$; the target the U-Net must predict." },
       { sym: "$\\epsilon_\\theta(z_t,t,\\,\\cdot)$", desc: "the <b>denoising U-Net</b> (parameters $\\theta$): a time-conditional convolutional network that looks at the noisy latent $z_t$ (and the condition) and predicts the noise $\\epsilon$." },
       { sym: "$y$", desc: "the <b>conditioning input</b> &mdash; e.g. a text prompt, a class label, or a layout." },
-      { sym: "$\\tau_\\theta(y)$", desc: "the <b>condition encoder</b> output: $y$ run through a domain-specific encoder (e.g. a transformer for text) into a sequence $\\mathbb{R}^{M\\times d_\\tau}$ of $M$ vectors the U-Net can attend to." },
-      { sym: "$\\varphi_i(z_t)$", desc: "the <b>flattened intermediate feature map</b> of the U-Net at layer $i$ &mdash; the image-side representation that forms the attention queries." },
-      { sym: "$Q,K,V$", desc: "the attention <b>query, key, value</b> matrices: $Q=W_Q^{(i)}\\varphi_i(z_t)$ (from the image latent), $K=W_K^{(i)}\\tau_\\theta(y)$ and $V=W_V^{(i)}\\tau_\\theta(y)$ (from the condition). $W_Q,W_K,W_V$ are learned projections." },
-      { sym: "$d$", desc: "the <b>key dimension</b>; dividing the scores by $\\sqrt{d}$ keeps the softmax well-scaled (the standard attention normalizer)." },
+      { sym: "$\\tau_\\theta$", desc: "the <b>domain-specific condition encoder</b> (parameters part of $\\theta$): the network that turns the raw condition $y$ into something the U-Net can attend to (e.g. a transformer for text). Trained jointly with $\\epsilon_\\theta$." },
+      { sym: "$\\tau_\\theta(y)$", desc: "the <b>condition encoder output</b>: a sequence $\\tau_\\theta(y)\\in\\mathbb{R}^{M\\times d_\\tau}$ of $M$ vectors (each of width $d_\\tau$) that supplies the keys and values in cross-attention." },
+      { sym: "$\\varphi_i(z_t)$", desc: "the <b>flattened intermediate feature map</b> of the U-Net at layer $i$, $\\varphi_i(z_t)\\in\\mathbb{R}^{N\\times d_\\epsilon^i}$ &mdash; the image-side representation that forms the attention queries." },
+      { sym: "$Q,K,V$", desc: "the attention <b>query, key, value</b> matrices: $Q=W_Q^{(i)}\\varphi_i(z_t)$ (from the image latent), $K=W_K^{(i)}\\tau_\\theta(y)$ and $V=W_V^{(i)}\\tau_\\theta(y)$ (from the condition). $W_Q^{(i)},W_K^{(i)},W_V^{(i)}$ are learned projections." },
+      { sym: "$N,M$", desc: "the <b>sequence lengths</b>: $N$ = number of spatial positions in the flattened U-Net feature map (the queries), $M$ = number of condition vectors / prompt tokens (the keys/values)." },
+      { sym: "$d_\\epsilon^i,\\,d_\\tau,\\,d$", desc: "the <b>widths</b>: $d_\\epsilon^i$ = channel width of U-Net feature map $\\varphi_i$; $d_\\tau$ = width of each condition vector; $d$ = the common attention dimension the projections map into." },
+      { sym: "$d$", desc: "the <b>attention/key dimension</b>; dividing the scores by $\\sqrt{d}$ keeps the softmax well-scaled (the standard attention normalizer)." },
       { sym: "$\\|\\cdot\\|_2^2$", desc: "the <b>squared length</b> (sum of squares) of a vector &mdash; the mean-squared-error measure of the noise-prediction error." },
-      { sym: "$L_{LDM}$", desc: "the <b>latent diffusion loss</b>: the DDPM noise-prediction MSE, evaluated on the latent $z_t$ rather than the pixel $x_t$." }
+      { sym: "$L_{DM}$", desc: "the <b>pixel-space DDPM loss</b> (Eq. 1): the original noise-prediction MSE evaluated on $x_t$, before moving to the latent." },
+      { sym: "$L_{LDM}$", desc: "the <b>latent diffusion loss</b> (Eq. 2/3): the DDPM noise-prediction MSE, evaluated on the latent $z_t$ rather than the pixel $x_t$." }
     ],
-    formula: `$$ L_{LDM} := \\mathbb{E}_{\\mathcal{E}(x),\\,y,\\,\\epsilon\\sim\\mathcal{N}(0,1),\\,t}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta\\big(z_t,\\ t,\\ \\tau_\\theta(y)\\big)\\big\\rVert_2^2\\,\\Big] \\qquad\\text{(Eq. 3; Eq. 2 is the same without } \\tau_\\theta(y)\\text{)} $$`,
+    formula: `$$ z = \\mathcal{E}(x), \\qquad \\tilde{x} = \\mathcal{D}(z) = \\mathcal{D}\\big(\\mathcal{E}(x)\\big), \\qquad f = H/h = W/w = 2^m $$
+      <p class="cap">&sect;3.1 &mdash; the <b>perceptual autoencoder</b>: encoder $\\mathcal{E}$ compresses image $x\\in\\mathbb{R}^{H\\times W\\times 3}$ to latent $z\\in\\mathbb{R}^{h\\times w\\times c}$, decoder $\\mathcal{D}$ reconstructs it; $f$ is the per-axis downsampling factor. The latent is regularized by either <i>KL-reg</i> (a slight KL-penalty toward a standard normal, "similar to a VAE") or <i>VQ-reg</i> (a vector-quantization layer in the decoder). Trained once with a perceptual + patch-adversarial loss, then frozen.</p>
+      $$ L_{DM} := \\mathbb{E}_{x,\\,\\epsilon\\sim\\mathcal{N}(0,1),\\,t}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta(x_t,\\,t)\\big\\rVert_2^2\\,\\Big] $$
+      <p class="cap">Eq. 1 (&sect;3.2) &mdash; the <b>pixel-space DDPM loss</b> we start from: predict the noise $\\epsilon$ added to a noisy image $x_t$, with squared error, averaged over images, noise draws, and timesteps $t\\sim\\{1,\\dots,T\\}$.</p>
+      $$ L_{LDM} := \\mathbb{E}_{\\mathcal{E}(x),\\,\\epsilon\\sim\\mathcal{N}(0,1),\\,t}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta(z_t,\\,t)\\big\\rVert_2^2\\,\\Big] $$
+      <p class="cap">Eq. 2 (&sect;3.2) &mdash; the <b>latent diffusion loss</b>: Eq. 1 with one swap, $x_t \\to z_t$. The same noise-MSE, but the time-conditional U-Net $\\epsilon_\\theta$ now denoises the small latent $z_t$ obtained from $\\mathcal{E}$.</p>
+      $$ L_{LDM} := \\mathbb{E}_{\\mathcal{E}(x),\\,y,\\,\\epsilon\\sim\\mathcal{N}(0,1),\\,t}\\Big[\\,\\big\\lVert\\,\\epsilon - \\epsilon_\\theta\\big(z_t,\\,t,\\,\\tau_\\theta(y)\\big)\\big\\rVert_2^2\\,\\Big] $$
+      <p class="cap">Eq. 3 (&sect;3.3) &mdash; the <b>conditional</b> latent loss: $\\epsilon_\\theta$ additionally sees $\\tau_\\theta(y)$, the encoded condition. $\\tau_\\theta$ (the domain-specific encoder) and $\\epsilon_\\theta$ are trained jointly.</p>
+      $$ \\text{Attention}(Q,K,V) = \\text{softmax}\\!\\Big(\\frac{QK^\\top}{\\sqrt{d}}\\Big)\\cdot V $$
+      <p class="cap">&sect;3.3 &mdash; the <b>cross-attention</b> the condition enters through, inserted into the U-Net's intermediate layers (standard scaled dot-product attention).</p>
+      $$ Q = W_Q^{(i)}\\cdot\\varphi_i(z_t), \\qquad K = W_K^{(i)}\\cdot\\tau_\\theta(y), \\qquad V = W_V^{(i)}\\cdot\\tau_\\theta(y) $$
+      <p class="cap">&sect;3.3 &mdash; how $Q,K,V$ are formed: the <b>query comes from the U-Net</b> (flattened feature map $\\varphi_i(z_t)\\in\\mathbb{R}^{N\\times d_\\epsilon^i}$) and the <b>keys/values come from the condition encoder</b> $\\tau_\\theta(y)\\in\\mathbb{R}^{M\\times d_\\tau}$. Projections $W_Q^{(i)}\\in\\mathbb{R}^{d\\times d_\\epsilon^i}$, $W_K^{(i)},W_V^{(i)}\\in\\mathbb{R}^{d\\times d_\\tau}$ are learned. So the image latent asks the questions and the prompt supplies the answers.</p>`,
     whatItDoes:
       `<p>In words: <b>encode the image to a latent $z=\\mathcal{E}(x)$, noise that latent to a random timestep
        $t$ giving $z_t$, encode the condition with $\\tau_\\theta(y)$, and ask the U-Net to predict the noise

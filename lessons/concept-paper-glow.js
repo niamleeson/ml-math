@@ -150,23 +150,70 @@
        add $\\log p_z(z)$ to get the exact $\\log p(x)$ you maximize. The 1&times;1 convolution is the cheap,
        <i>learned</i> mixing that lets information flow between the coupling halves &mdash; the paper's
        contribution.</p>`,
+    architecture:
+      `<p>Glow is a <b>multi-scale flow</b> (Figure 2) with $L$ <i>levels</i>, each containing $K$ identical
+       <b>steps of flow</b>, with squeeze and split operations between levels.</p>
+       <p><b>One step of flow</b> (the inner block, repeated $K$ times per level), applied to a feature map of
+       shape $c\\times h\\times w$:</p>
+       <ol>
+        <li><b>Actnorm</b> &mdash; per-channel affine $y=s\\odot x+b$ ($2c$ learned parameters), $s,b$
+        data-initialized on the first batch. Log-det $h\\cdot w\\cdot\\operatorname{sum}(\\log|s|)$.</li>
+        <li><b>Invertible 1&times;1 convolution</b> &mdash; a learned $c\\times c$ matrix $W$ applied at every
+        pixel (optionally LU-parameterized as $P\\,L\\,(U+\\operatorname{diag}(s))$). Log-det
+        $h\\cdot w\\cdot\\log|\\det W|$.</li>
+        <li><b>Affine coupling</b> &mdash; split channels into halves $(x_a,x_b)$; a small 3-conv ResNet-style
+        net (Conv3&times;3 &rarr; ReLU &rarr; Conv1&times;1 &rarr; ReLU &rarr; Conv3&times;3, last layer
+        zero-initialized so the step starts as the identity) reads $x_b$ and outputs $(\\log s, t)$;
+        $y_a=\\exp(\\log s)\\odot x_a+t$, $y_b=x_b$. Log-det $\\operatorname{sum}(\\log|s|)$.</li>
+       </ol>
+       <p><b>The multi-scale wrapper</b> (one <i>level</i>), inherited from Real NVP:</p>
+       <ol>
+        <li><b>Squeeze:</b> reshape each $2\\times2$ spatial block into the channel dimension, trading spatial
+        resolution for channels: $c\\times h\\times w \\to 4c\\times \\tfrac{h}{2}\\times \\tfrac{w}{2}$. This gives
+        the 1&times;1 convolution more channels to mix.</li>
+        <li><b>K steps of flow:</b> apply the actnorm &rarr; 1&times;1 conv &rarr; coupling block $K$ times.</li>
+        <li><b>Split:</b> factor out half the channels as final latent variables $z_i$ (modeled directly by the
+        Gaussian) and pass the other half to the next, finer-resolution level. This is the "progressive"
+        hierarchy &mdash; coarse latents are split off early, fine detail flows deeper.</li>
+       </ol>
+       <p>Repeat squeeze &rarr; $K$ steps &rarr; split for $L-1$ levels, then a final level with no split. All the
+       split-off $z_i$ together form $z$, scored under a standard Gaussian $p_z(z)$. The total
+       $\\log p_\\theta(x)$ is $\\log p_z(z)$ plus every step's accumulated log-determinant (Eq. 7). Sampling runs
+       every operation in reverse: draw $z\\sim\\mathcal N(0,I)$, then unsplit / reverse-steps / unsqueeze back to
+       an image. (The published model uses $L=3$&ndash;$6$ levels and $K=32$ steps per level for large images.)</p>`,
     symbols: [
       { sym: "$x$", desc: "a data point (an image): a tensor of $c$ channels by $h\\times w$ pixels." },
       { sym: "$z$", desc: "the latent code, $z = f(x)$: the data run all the way forward through the flow, living in a simple standard-Gaussian space." },
       { sym: "$p_z(z)$", desc: "the base density: the standard-Gaussian probability of the latent $z$." },
       { sym: "$p_\\theta(x)$", desc: "the model's probability of the data point $x$ — the thing we maximize (here $\\theta$ are all learnable parameters)." },
       { sym: "$h, w, c$", desc: "the height, width, and number of channels of the feature map at a layer." },
+      { sym: "$h_i$", desc: "the activation (feature map) after layer $i$ of the flow; $h_0 = x$ and $h_K = z$, so $dh_i/dh_{i-1}$ is layer $i$'s Jacobian." },
+      { sym: "$K, L$", desc: "$K$ = number of steps of flow per level; $L$ = number of multi-scale levels." },
       { sym: "$x_{i,j}$", desc: "the length-$c$ vector of channel values at one spatial position (pixel) $(i,j)$." },
       { sym: "Jacobian", desc: "the matrix of all partial derivatives of a layer's outputs with respect to its inputs; its determinant measures the local volume change the layer applies." },
       { sym: "$\\det$", desc: "determinant of a square matrix: the signed factor by which it scales volume. $|\\det|$ is its absolute value." },
       { sym: "$\\log|\\det W|$", desc: "the log of the absolute determinant of the 1×1-conv matrix $W$ — the per-pixel volume-change of that layer." },
       { sym: "$s, b$", desc: "actnorm's learned per-channel scale and bias." },
       { sym: "$W$", desc: "the learned $c\\times c$ matrix of the invertible 1×1 convolution (generalizes a channel permutation matrix)." },
+      { sym: "$P, L, U$", desc: "the LU-decomposition factors of $W$ (Eq. 10): a fixed permutation matrix $P$, a unit-lower-triangular $L$, and a zero-diagonal upper-triangular $U$ (with a separate diagonal $s$)." },
       { sym: "$\\odot$", desc: "element-wise (Hadamard) multiplication." },
       { sym: "$\\log s, t$", desc: "the per-element log-scale and shift the coupling network produces from the unchanged half." },
       { sym: "bits/dimension", desc: "negative log-likelihood divided by the number of values in $x$ and converted to base-2 bits — the standard flow score; lower means the model assigns higher probability to the data." }
     ],
-    formula: `$$ \\log p_\\theta(x) \\;=\\; \\log p_z(z) \\;+\\; \\sum_{i=1}^{K} \\log\\left|\\det\\left(\\frac{d\\,h_i}{d\\,h_{i-1}}\\right)\\right| \\qquad\\text{(Eq. 7)} \\qquad\\quad \\log\\left|\\det W\\right|_{\\text{1x1 conv}} = h\\cdot w\\cdot\\log|\\det W| \\quad\\text{(Eq. 9)} $$`,
+    formula: `$$ \\log p_\\theta(x) \\;=\\; \\log p_\\theta(z) \\;+\\; \\log\\left|\\det\\!\\left(\\frac{dz}{dx}\\right)\\right| $$
+       <p>Change of variables (Eq. 6): the exact log-density of a data point equals the base log-density of its latent plus the log-absolute-determinant of the map's Jacobian $dz/dx$.</p>
+       $$ \\log p_\\theta(x) \\;=\\; \\log p_\\theta(z) \\;+\\; \\sum_{i=1}^{K} \\log\\left|\\det\\!\\left(\\frac{d\\,h_i}{d\\,h_{i-1}}\\right)\\right| $$
+       <p>Composed flow (Eq. 7): for a stack $x=h_0 \\to h_1 \\to \\dots \\to h_K=z$ the correction is the sum of each layer's log-determinant. This is the full training objective (maximized).</p>
+       $$ \\log\\left|\\det\\!\\left(\\frac{d\\,h_i}{d\\,h_{i-1}}\\right)\\right| \\;=\\; \\operatorname{sum}\\!\\left(\\log\\left|\\operatorname{diag}\\!\\left(\\frac{d\\,h_i}{d\\,h_{i-1}}\\right)\\right|\\right) $$
+       <p>Triangular shortcut (Eq. 8): if a layer's Jacobian is triangular, its log-determinant is just the sum of logs of its diagonal — the trick every flow layer below exploits.</p>
+       $$ \\textbf{Actnorm (\\S3.1):}\\quad y_{i,j}=s\\odot x_{i,j}+b \\;;\\quad x_{i,j}=(y_{i,j}-b)/s \\;;\\quad \\log\\det = h\\cdot w\\cdot\\operatorname{sum}(\\log|s|) $$
+       <p>Table 1, row 1: per-channel scale-and-shift; forward, reverse, and log-determinant. Same $s$ at all $h\\cdot w$ pixels gives the $h\\cdot w$ factor.</p>
+       $$ \\textbf{Invertible 1x1 conv (\\S3.2):}\\quad y_{i,j}=W x_{i,j} \\;;\\quad x_{i,j}=W^{-1} y_{i,j} \\;;\\quad \\log\\det = h\\cdot w\\cdot\\log|\\det W| $$
+       <p>Table 1, row 2 / Eq. 9: multiply each pixel's channel vector by a learned $c\\times c$ matrix $W$; reverse multiplies by $W^{-1}$; the per-pixel $\\log|\\det W|$ is summed over all $h\\cdot w$ pixels.</p>
+       $$ W = P\\,L\\,(U+\\operatorname{diag}(s)) \\qquad\\Longrightarrow\\qquad \\log|\\det W| = \\operatorname{sum}(\\log|s|) $$
+       <p>LU decomposition (Eqs. 10&ndash;11): factor $W$ into a fixed permutation $P$, unit-lower-triangular $L$, zero-diagonal upper-triangular $U$, and a diagonal $s$. Then $\\log|\\det W|$ is just $\\operatorname{sum}(\\log|s|)$, dropping the cost from $O(c^3)$ to $O(c)$.</p>
+       $$ \\textbf{Affine coupling (\\S3.3):}\\quad (\\log s, t)=\\mathrm{NN}(x_b),\\; s=\\exp(\\log s);\\quad y_a=s\\odot x_a+t,\\; y_b=x_b;\\quad \\log\\det=\\operatorname{sum}(\\log|s|) $$
+       <p>Table 1, row 3: split channels $x=(x_a,x_b)$, let a net read $x_b$ to scale-and-shift $x_a$, pass $x_b$ through; the triangular Jacobian gives $\\log\\det=\\operatorname{sum}(\\log|s|)$.</p>`,
     whatItDoes:
       `<p>The first equation (Eq. 7) is the training objective: the exact log-probability of a data point is
        the base Gaussian log-probability of its latent $z$, plus the sum over the $K$ layers of each layer's

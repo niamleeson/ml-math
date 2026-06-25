@@ -144,6 +144,29 @@
        On those steps the network learns the unconditional $\\epsilon_\\theta(z_\\lambda) = \\epsilon_\\theta(z_\\lambda,\\varnothing)$;
        on the rest it learns the conditional $\\epsilon_\\theta(z_\\lambda,c)$. One set of weights, two behaviors,
        selected by what you pass for $c$.</p>`,
+    architecture:
+      `<p><b>One network, two modes.</b> CFG adds <i>nothing</i> to the diffusion backbone &mdash; the same
+       noise-predictor $\\epsilon_\\theta$ (a U-Net for images; here a small MLP) is reused unchanged. The only
+       structural addition is a <b>conditioning channel</b>: an embedding table with one row per class
+       <i>plus one extra row for the null token</i> $\\varnothing$. Whatever you pass as $c$ &mdash; a real class
+       id or $\\varnothing$ &mdash; is embedded and fed into the network alongside the noisy point $z_\\lambda$
+       and the noise level $\\lambda$. Passing a class id makes it conditional; passing $\\varnothing$ makes it
+       unconditional. No second network, no classifier.</p>
+       <p><b>Data flow (one denoising step):</b> $(z_\\lambda,\\ \\lambda,\\ c) \\to$ embed $c$ and $\\lambda$
+       $\\to$ concatenate with $z_\\lambda$ $\\to$ network body $\\to$ a noise prediction the same shape as
+       $z_\\lambda$. The network is called <b>twice</b> at sampling time on the same $z_\\lambda$ &mdash; once
+       with the real $c$, once with $\\varnothing$ &mdash; and the two outputs are combined by Eq. 6.</p>
+       <p><b>Algorithm 1 (joint training)</b>, per step: (1) draw a data/label pair $(x,c)$; (2) <b>with
+       probability $p_{\\text{uncond}}$ set $c\\leftarrow\\varnothing$</b>; (3) draw a noise level $\\lambda$ and
+       noise $\\epsilon$; (4) form $z_\\lambda = \\alpha_\\lambda x + \\sigma_\\lambda\\epsilon$ (Eq. 1); (5) take a
+       gradient step on $\\lVert\\epsilon_\\theta(z_\\lambda,c)-\\epsilon\\rVert^2$ (Eq. 5). Exactly ordinary
+       diffusion training plus one line &mdash; step (2).</p>
+       <p><b>Algorithm 2 (guided sampling)</b>, per reverse step from level $\\lambda_t$ to the next
+       $\\lambda_{t+1}$: (1) start at $z_1\\sim\\mathcal{N}(0,I)$; (2) compute the guided estimate
+       $\\tilde\\epsilon_t=(1+w)\\epsilon_\\theta(z_t,c)-w\\,\\epsilon_\\theta(z_t)$ (Eq. 6) &mdash; the two calls;
+       (3) predict the clean point $\\tilde x_t=(z_t-\\sigma_{\\lambda_t}\\tilde\\epsilon_t)/\\alpha_{\\lambda_t}$;
+       (4) sample $z_{t+1}\\sim\\mathcal{N}(\\tilde\\mu,\\tilde\\sigma^2)$ from the ancestral transition. Eq. 6 is
+       the only insertion into an otherwise standard sampler.</p>`,
     symbols: [
       { sym: "$z_\\lambda$", desc: "the <b>noisy data point</b> at noise level $\\lambda$ (the paper's name for what paper-ddpm called $x_t$). Read it as \"the partially-noised sample.\"" },
       { sym: "$\\lambda$", desc: "the <b>log signal-to-noise ratio</b> (log-SNR): a number that indexes how noisy $z_\\lambda$ is. High $\\lambda$ = little noise; low $\\lambda$ = mostly noise. It plays the role of the timestep $t$." },
@@ -156,9 +179,31 @@
       { sym: "$w$", desc: "the <b>guidance strength</b> (the \"guidance scale\"): a non-negative knob. $w=0$ gives the plain conditional model; larger $w$ pushes harder toward the condition, sharpening samples and reducing diversity." },
       { sym: "$p_{\\text{uncond}}$", desc: "the <b>drop probability</b>: the chance, each training step, that the label $c$ is replaced by $\\varnothing$. The paper found $p_{\\text{uncond}}\\in\\{0.1,0.2\\}$ worked best ($0.5$ degraded results)." },
       { sym: "$p(c\\mid z_\\lambda)$", desc: "the <b>implicit classifier</b>: the probability the noisy point is class $c$, which Bayes' rule writes as the ratio $p(z_\\lambda\\mid c)/p(z_\\lambda)$ &mdash; never trained directly, only implied by the two score estimates." },
-      { sym: "$\\nabla\\log p$", desc: "the <b>score</b>: the gradient of the log-density, pointing toward higher-probability regions. The noise predictor is a scaled negative score." }
+      { sym: "$\\nabla\\log p$", desc: "the <b>score</b>: the gradient of the log-density, pointing toward higher-probability regions. The noise predictor is a scaled negative score." },
+      { sym: "$x$", desc: "a <b>clean data point</b> (before any noise is added) &mdash; here a 1-D value near $-2$ or $+2$; in the paper, an image." },
+      { sym: "$\\epsilon$", desc: "the <b>true added noise</b> $\\sim\\mathcal{N}(0,I)$ that corrupts $x$ into $z_\\lambda$. The network is trained to predict exactly this." },
+      { sym: "$\\alpha_\\lambda$", desc: "the <b>signal scale</b> at level $\\lambda$, with $\\alpha_\\lambda^2 = 1/(1+e^{-\\lambda})$ (Eq. 1): how much of the clean point survives. $\\alpha_\\lambda^2+\\sigma_\\lambda^2=1$." },
+      { sym: "$\\theta$", desc: "the <b>trainable parameters</b> (weights) of the single shared noise-predictor network." },
+      { sym: "$\\tilde x_\\theta$", desc: "the <b>predicted clean point</b> recovered from $z_\\lambda$ and the guided noise estimate, $(z_\\lambda-\\sigma_\\lambda\\tilde\\epsilon_\\theta)/\\alpha_\\lambda$ &mdash; used inside the sampling step." },
+      { sym: "$\\tilde\\mu,\\ \\tilde\\sigma^2$", desc: "the <b>mean and variance of the reverse transition</b> in Algorithm 2 &mdash; the ancestral-sampling step that draws the next, less-noisy point from $\\tilde x_\\theta$." },
+      { sym: "$v$", desc: "the <b>sampler variance knob</b>: log-interpolates the reverse-step variance between its two natural bounds. (A sampling hyperparameter, not part of the guidance idea.)" }
     ],
-    formula: `$$ \\tilde\\epsilon_\\theta(z_\\lambda, c) \\;=\\; (1+w)\\,\\epsilon_\\theta(z_\\lambda, c) \\;-\\; w\\,\\epsilon_\\theta(z_\\lambda) \\qquad\\text{(Eq. 6)} $$`,
+    formula: `$$ q(z_\\lambda \\mid x) = \\mathcal{N}\\!\\big(\\alpha_\\lambda x,\\ \\sigma_\\lambda^2 I\\big), \\qquad \\alpha_\\lambda^2 = \\frac{1}{1+e^{-\\lambda}},\\quad \\sigma_\\lambda^2 = 1-\\alpha_\\lambda^2 $$
+       <p class="cap">&sect;2, Eq. 1 &mdash; the <b>forward (noising) process</b>: a clean point $x$ becomes $z_\\lambda = \\alpha_\\lambda x + \\sigma_\\lambda\\epsilon$ at log-SNR level $\\lambda$. As $\\lambda$ drops, $\\alpha_\\lambda\\to 0$ and the point dissolves into noise.</p>
+       $$ \\mathbb{E}_{\\epsilon,\\lambda}\\big[\\,\\lVert \\epsilon_\\theta(z_\\lambda, c) - \\epsilon \\rVert_2^2\\,\\big], \\qquad z_\\lambda = \\alpha_\\lambda x + \\sigma_\\lambda\\epsilon,\\ \\ \\epsilon\\sim\\mathcal{N}(0,I) $$
+       <p class="cap">&sect;2, Eq. 5 &mdash; the <b>training objective</b>: the network predicts the noise $\\epsilon$ that was added (mean-squared error). The label $c$ rides along as an extra input.</p>
+       $$ \\epsilon_\\theta(z_\\lambda) \\approx -\\sigma_\\lambda\\,\\nabla_{z_\\lambda}\\log p(z_\\lambda) $$
+       <p class="cap">&sect;3 &mdash; <b>noise prediction is a scaled (negative) score</b>: the trained $\\epsilon_\\theta$ is, up to the factor $-\\sigma_\\lambda$, the gradient of the log-density. This is the bridge between "predict the noise" and "follow the score."</p>
+       $$ \\tilde\\epsilon_\\theta(z_\\lambda, c) = \\epsilon_\\theta(z_\\lambda, c) - w\\,\\sigma_\\lambda\\,\\nabla_{z_\\lambda}\\log p_\\theta(c \\mid z_\\lambda), \\qquad \\tilde p_\\theta(z_\\lambda\\mid c) \\propto p_\\theta(z_\\lambda\\mid c)\\,p_\\theta(c\\mid z_\\lambda)^{w} $$
+       <p class="cap">&sect;3, classifier-guidance <b>baseline</b> (Dhariwal &amp; Nichol): the score is nudged by $w$ times a <i>classifier's</i> gradient $\\nabla\\log p(c\\mid z)$, which over-weights the conditional density by power $w$. This is what CFG reproduces without a classifier.</p>
+       $$ \\nabla_{z_\\lambda}\\log p^{i}(c \\mid z_\\lambda) = -\\frac{1}{\\sigma_\\lambda}\\big[\\,\\epsilon^{*}(z_\\lambda, c) - \\epsilon^{*}(z_\\lambda)\\,\\big] $$
+       <p class="cap">&sect;3.2 &mdash; the <b>implicit classifier</b>: by Bayes' rule the classifier gradient equals (conditional $-$ unconditional) noise prediction, divided by $-\\sigma_\\lambda$. No classifier is trained; it is implied by the two score estimates.</p>
+       $$ \\tilde\\epsilon_\\theta(z_\\lambda, c) = (1+w)\\,\\epsilon_\\theta(z_\\lambda, c) - w\\,\\epsilon_\\theta(z_\\lambda) = \\epsilon_\\theta(z_\\lambda, c) + w\\big[\\,\\epsilon_\\theta(z_\\lambda, c) - \\epsilon_\\theta(z_\\lambda)\\,\\big] $$
+       <p class="cap">&sect;3.2, Eq. 6 &mdash; the <b>classifier-free guided estimate</b> (substitute the implicit classifier into the baseline): conditional prediction pushed $w$ extra copies of the (conditional $-$ unconditional) difference. This is the one line you implement at sampling time.</p>
+       $$ \\nabla_{z_\\lambda}\\log p(c\\mid z_\\lambda) = \\nabla_{z_\\lambda}\\log p(z_\\lambda\\mid c) - \\nabla_{z_\\lambda}\\log p(z_\\lambda) \\quad\\Longleftarrow\\quad p(c\\mid z_\\lambda) \\propto \\frac{p(z_\\lambda\\mid c)}{p(z_\\lambda)} $$
+       <p class="cap">&sect;3.2 &mdash; equivalent <b>score form</b>: the same statement in score language &mdash; the guidance direction is the difference of the conditional and unconditional scores, since Bayes turns $p(c\\mid z)$ into the density ratio.</p>
+       $$ \\tilde x_\\theta(z_\\lambda, c) = \\frac{z_\\lambda - \\sigma_\\lambda\\,\\tilde\\epsilon_\\theta(z_\\lambda, c)}{\\alpha_\\lambda}, \\qquad z_{\\lambda'} \\sim \\mathcal{N}\\!\\big(\\tilde\\mu_{\\lambda'\\mid\\lambda}(z_\\lambda, \\tilde x_\\theta),\\ (\\tilde\\sigma_{\\lambda'\\mid\\lambda}^2)^{1-v}(\\sigma_{\\lambda\\mid\\lambda'}^2)^{v}\\big) $$
+       <p class="cap">Alg. 2 &mdash; the <b>sampling step</b>: turn the guided noise estimate into a predicted clean point $\\tilde x_\\theta$, then take one ancestral-sampling reverse step (mean $\\tilde\\mu$, log-interpolated variance with knob $v$) toward the next, less-noisy level $\\lambda'$.</p>`,
     whatItDoes:
       `<p>In words: the <b>guided noise estimate</b> $\\tilde\\epsilon_\\theta$ is a <b>weighted blend</b> of the
        conditional and unconditional predictions &mdash; but with weights that <b>sum to one</b>

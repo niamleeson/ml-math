@@ -159,6 +159,36 @@
        <p><b>Conditioning (&sect;2.3, Eq. 3-4).</b> To generate a <i>specific</i> class, feed a vector $h$ (e.g. a
        one-hot class label) into the gate as a learned bias (Eq. 4): $h$ shifts both the tanh and sigmoid
        pre-activations, biasing every pixel's distribution toward that class.</p>`,
+    architecture:
+      `<p>The Gated PixelCNN is a stack of identical <b>gated residual blocks</b> built around <b>two coupled
+       convolutional stacks</b> that together cover the full legal context with <b>no blind spot</b> (&sect;2.2).</p>
+       <p><b>Input.</b> The $n\\times n$ image (channels $1$ or $3$). Each pixel value is discretized to $256$
+       intensity levels; the model's final output per pixel is a <b>256-way softmax</b> over those levels.</p>
+       <p><b>Vertical stack (sees the rows strictly above).</b> An $n\\times n$ convolution that is masked so it only
+       reaches rows above the current one. Because no row of the current pixel is touched, this stack needs <i>no</i>
+       within-row mask &mdash; the paper implements it as a convolution over the upper rows (in practice a
+       $\\lceil n/2\\rceil\\times n$ filter padded so its output aligns one row down). Its receptive field grows as a
+       rectangle covering everything above.</p>
+       <p><b>Horizontal stack (sees pixels to the left in the current row).</b> A $1\\times n$ convolution masked to
+       reach only positions left of (and, in mask-B layers, including) the current pixel. <b>Crucially, every
+       horizontal-stack layer also takes the vertical stack's output as input</b> (added in after a $1\\times1$
+       convolution that projects the vertical features). This coupling is the blind-spot fix: the horizontal stack
+       alone would miss the above-right wedge, but the vertical stack supplies exactly those pixels.</p>
+       <p><b>Inside each block.</b> Each stack's convolution produces <b>$2p$ feature maps</b>, split into two
+       $p$-sized halves that feed the <b>gated activation unit</b> (Eq. 2): one half through $\\tanh$ (content), the
+       other through $\\sigma$ (gate), multiplied element-wise $\\odot$. In the conditional model, the bias
+       $V_{k,f}^{\\top}h$ / $V_{k,g}^{\\top}h$ (Eq. 4) &mdash; or a spatial map $V*s$ (Eq. 5) &mdash; is added before
+       the nonlinearities. The horizontal stack uses a <b>residual connection</b> (its block output is added back to
+       its input); the vertical stack does not (the paper found residuals there did not help).</p>
+       <p><b>Data flow per block:</b> vertical-conv &rarr; gate &rarr; (next vertical layer); vertical output also
+       &rarr; $1\\times1$ conv &rarr; added into horizontal-conv &rarr; gate &rarr; $1\\times1$ conv &rarr; residual
+       add &rarr; (next horizontal layer). Stack many such blocks.</p>
+       <p><b>Output head.</b> The final horizontal-stack features pass through ReLU + $1\\times1$ convolutions down to
+       the per-pixel logits: a $256$-way softmax for each colour channel. For RGB, the three channels are themselves
+       ordered (R &rarr; G &rarr; B) so green conditions on red and blue on both, via the channel structure of the
+       masks.</p>
+       <p><i>(Our toy code below uses a single masked stack and binary pixels for clarity &mdash; it deliberately
+       keeps the blind spot and a 1-way sigmoid instead of the 256-way softmax, to isolate the masking idea.)</i></p>`,
     symbols: [
       { sym: "$x$", desc: "the <b>image</b>, viewed as a flat sequence of pixels $x_1,\\dots,x_{n^2}$ in raster-scan order (top row left-to-right, then the next row, ...)." },
       { sym: "$x_i$", desc: "the <b>$i$-th pixel</b> in that ordering &mdash; a single pixel value the model predicts." },
@@ -169,7 +199,9 @@
       { sym: "$h$", desc: "the <b>conditioning vector</b> in the conditional model $p(x\\mid h)$ &mdash; e.g. a one-hot class label or an embedding; it biases every pixel's distribution." },
       { sym: "$W_{k,f}$", desc: "the <b>convolution weights of the 'filter' (content) branch</b> at layer $k$ &mdash; the $f$ branch goes through $\\tanh$. ($*$ below denotes convolution.)" },
       { sym: "$W_{k,g}$", desc: "the <b>convolution weights of the 'gate' branch</b> at layer $k$ &mdash; the $g$ branch goes through $\\sigma$ (sigmoid) and multiplies the content." },
-      { sym: "$V_{k,f},\\,V_{k,g}$", desc: "weight matrices that map the conditioning vector $h$ into the filter and gate branches (Eq. 4), letting $h$ shift each pre-activation." },
+      { sym: "$V_{k,f},\\,V_{k,g}$", desc: "weights that inject the conditioning into the filter and gate branches at layer $k$: as linear maps $V_{k,f}^{\\top}h$ (Eq. 4) or as convolutions $V_{k,f}*s$ on a spatial map (Eq. 5)." },
+      { sym: "$s$", desc: "the <b>spatial conditioning map</b> in the location-dependent model (Eq. 5) &mdash; same height/width as the feature maps, so conditioning can differ per pixel." },
+      { sym: "$m(\\cdot)$", desc: "the <b>deconvolutional network</b> that maps the conditioning vector $h$ to the spatial map $s=m(h)$ (Eq. 5)." },
       { sym: "$\\sigma$", desc: "the <b>sigmoid</b> function $\\sigma(z)=1/(1+e^{-z})$, squashing into $(0,1)$ &mdash; used as the <b>gate</b> (how much content passes)." },
       { sym: "$\\tanh$", desc: "the <b>hyperbolic tangent</b>, squashing into $(-1,1)$ &mdash; the <b>content</b> branch of the gate." },
       { sym: "$\\odot$", desc: "<b>element-wise (Hadamard) multiplication</b> &mdash; multiply two equal-shaped tensors position-by-position." },
@@ -180,7 +212,15 @@
       { sym: "bits/dim", desc: "<b>bits per dimension</b>: the negative log-likelihood in base 2 divided by the number of pixel sub-values &mdash; lower is better; the paper's headline metric (Tables 1-2)." }
     ],
     formula: `$$ p(x) \\;=\\; \\prod_{i=1}^{n^{2}} p\\big(x_i \\,\\big|\\, x_1, x_2, \\dots, x_{i-1}\\big) \\qquad\\text{(Eq. 1)} $$
-$$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x\\big) \\;\\odot\\; \\sigma\\!\\big(W_{k,g} * x\\big) \\qquad\\text{(Eq. 2: gated activation)} $$`,
+<p>The whole-image likelihood as a product of per-pixel conditionals in raster order (&sect;2). Each factor is a masked-convolution classifier; nothing later than $x_i$ may enter the $i$-th factor.</p>
+$$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x\\big) \\;\\odot\\; \\sigma\\!\\big(W_{k,g} * x\\big) \\qquad\\text{(Eq. 2: gated activation unit)} $$
+<p>The gated activation that replaces a ReLU at layer $k$ (&sect;2.1): a $\\tanh$ "content" branch multiplied element-wise by a $\\sigma$ "gate" branch. $*$ is a (masked) convolution, $\\odot$ is element-wise product.</p>
+$$ p(x \\mid h) \\;=\\; \\prod_{i=1}^{n^{2}} p\\big(x_i \\,\\big|\\, x_1, \\dots, x_{i-1},\\, h\\big) \\qquad\\text{(Eq. 3)} $$
+<p>The conditional model (&sect;2.3): the same factorization, but every conditional is additionally conditioned on a vector $h$ (e.g. a one-hot class label) so generation can be steered.</p>
+$$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x + V_{k,f}^{\\top} h\\big) \\;\\odot\\; \\sigma\\!\\big(W_{k,g} * x + V_{k,g}^{\\top} h\\big) \\qquad\\text{(Eq. 4: conditional gate)} $$
+<p>How $h$ enters the gate (&sect;2.3): a learned linear map $V_{k,f}^{\\top} h$ / $V_{k,g}^{\\top} h$ adds a location-independent bias to both pre-activations, shifting every pixel's distribution toward the conditioned class.</p>
+$$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x + V_{k,f} * s\\big) \\;\\odot\\; \\sigma\\!\\big(W_{k,g} * x + V_{k,g} * s\\big),\\qquad s = m(h) \\qquad\\text{(Eq. 5: location-dependent)} $$
+<p>The location-dependent variant (&sect;2.3): instead of a single bias, a deconvolutional network $m(\\cdot)$ maps $h$ to a spatial feature map $s$ that is convolved in, so the conditioning can vary per pixel.</p>`,
     whatItDoes:
       `<p><b>Eq. 1 (the factorization)</b> says: the probability of the whole image equals the product, over every
        pixel in raster order, of that pixel's probability <i>given all the pixels before it</i>. It is an exact

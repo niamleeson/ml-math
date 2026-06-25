@@ -125,6 +125,36 @@
        version is <b>SMLD</b>. Choose a shrinking drift that keeps total variance near one &mdash; that is the
        <b>Variance Preserving</b> (VP) SDE (Eq. 11), and its discrete version is exactly <b>DDPM</b>
        (paper-ddpm). Same framework, two dials.</p>`,
+    architecture:
+      `<p><b>Score network $s_\\theta(x,t) \\approx \\nabla_x \\log p_t(x)$.</b> The only learned component. It is a
+       function that takes a (possibly noised) point $x$ and a time $t$ and returns a vector of the same
+       dimension as $x$ &mdash; an estimate of the score at that point and time. The paper uses a time-conditioned
+       U-Net (NCSN++ for the VE SDE, DDPM++ for the VP SDE) for images; here we use a small MLP for 2-D points.
+       Component by component for our build:</p>
+       <ul>
+        <li><b>Input.</b> Concatenate the point $x \\in \\mathbb{R}^2$ with the scalar time $t \\in [0,1]$ &rarr; a
+        3-vector. (Image models instead use a learned <b>time embedding</b> &mdash; sinusoidal features of $t$
+        fed into every residual block.)</li>
+        <li><b>Body.</b> Three hidden layers of width $128$ with <code>SiLU</code> nonlinearities
+        (<code>Linear(3,128) &rarr; SiLU &rarr; Linear(128,128) &rarr; SiLU &rarr; Linear(128,128) &rarr; SiLU</code>).</li>
+        <li><b>Output head.</b> <code>Linear(128,2)</code> &mdash; a 2-vector, the predicted score $s_\\theta(x,t)$,
+        matched against the target $-z/\\sigma_t$ by Eq. 7.</li>
+       </ul>
+       <p><b>Data flow (train then sample), component by component:</b></p>
+       <ol>
+        <li><b>Schedule (no parameters).</b> A fixed map $t \\mapsto \\sigma_t$ (VE: geometric) or
+        $t \\mapsto \\beta(t)$ (VP). This sets the noise level; it is chosen, not learned.</li>
+        <li><b>Forward / perturbation (no parameters).</b> Draw clean $x_0$, time $t$, noise $z$; form the noised
+        point via the kernel ($x_t = x_0 + \\sigma_t z$ for VE). Produces the network's training input.</li>
+        <li><b>Score network (the parameters).</b> $s_\\theta(x_t,t)$ predicts the score; the loss (Eq. 7) pushes
+        it toward the known kernel score.</li>
+        <li><b>Reverse integrator (no parameters).</b> The Euler&ndash;Maruyama loop for Eq. 6 (or the
+        probability-flow ODE, Eq. 13): repeatedly call $s_\\theta$, take a drift step
+        $-g(t)^2 s_\\theta\\,dt$, and (for the SDE) add a noise kick $g(t)\\,d\\bar w$, stepping $t$ from $1$ to $0$.</li>
+       </ol>
+       <p>So the architecture is one trainable block (the score network) wrapped by three fixed numerical
+       pieces (schedule, perturbation kernel, integrator). Swapping the schedule from VE to VP is what turns
+       this same diagram from SMLD into DDPM.</p>`,
     symbols: [
       { sym: "$x$", desc: "a data point (here a 2-D vector); during diffusion it is the noised version at time $t$." },
       { sym: "$t$", desc: "continuous time, running $0$ (clean data) to $1$ (pure noise). NOT a discrete step index." },
@@ -138,11 +168,24 @@
       { sym: "$\\lambda(t)$", desc: "a positive weighting function over time in the loss; balances how much each noise level counts." },
       { sym: "$\\sigma_t$", desc: "the noise scale at time $t$ (for the VE SDE, the standard deviation added to the data)." },
       { sym: "$\\beta(t)$", desc: "the VP SDE's noise-rate schedule; the continuous-time version of DDPM's $\\beta_t$." },
-      { sym: "$z$", desc: "a fresh standard-normal noise vector, $z \\sim \\mathcal{N}(0, I)$, used to perturb a clean point." }
+      { sym: "$z$", desc: "a fresh standard-normal noise vector, $z \\sim \\mathcal{N}(0, I)$, used to perturb a clean point." },
+      { sym: "$p_{0t}(x(t)\\mid x(0))$", desc: "the PERTURBATION KERNEL: the (Gaussian) density of the noised point $x(t)$ given the clean point $x(0)$; known in closed form, so its score can be computed exactly." },
+      { sym: "$\\theta$", desc: "the trainable weights of the score network; $\\theta^*$ is the optimal setting found by minimizing Eq. 7." },
+      { sym: "$\\sigma^2(t)$", desc: "the variance of the noise added by time $t$; for the VE SDE $g(t)^2 = d\\sigma^2(t)/dt$." }
     ],
     formula:
-      `$$\\underbrace{d x = \\bigl[f(x,t) - g(t)^2\\,\\nabla_x \\log p_t(x)\\bigr]\\,dt + g(t)\\,d\\bar{w}}_{\\text{reverse-time SDE (Eq. 6)}}
-        \\qquad\\text{forward (Eq. 5): } d x = f(x,t)\\,dt + g(t)\\,d w$$`,
+      `$$d x = f(x,t)\\,dt + g(t)\\,d w$$
+       <p><b>Forward SDE (&sect;3.1, Eq. 5).</b> The noising process: drift $f(x,t)$ plus random kick $g(t)\\,dw$ dissolves data into noise as time $t$ runs $0 \\to 1$.</p>
+       $$d x = \\bigl[f(x,t) - g(t)^2\\,\\nabla_x \\log p_t(x)\\bigr]\\,dt + g(t)\\,d\\bar{w}$$
+       <p><b>Reverse-time SDE (&sect;3.2, Eq. 6).</b> Time-reversal of Eq. 5 (Anderson 1982); the one new, learned term is the score $\\nabla_x \\log p_t(x)$. Integrate from $t=1$ down to $0$ to generate.</p>
+       $$\\theta^* = \\arg\\min_\\theta\\; \\mathbb{E}_{t}\\Bigl\\{\\lambda(t)\\,\\mathbb{E}_{x(0)}\\,\\mathbb{E}_{x(t)\\mid x(0)}\\bigl[\\,\\lVert s_\\theta(x(t),t) - \\nabla_{x(t)} \\log p_{0t}(x(t)\\mid x(0)) \\rVert_2^2\\,\\bigr]\\Bigr\\}$$
+       <p><b>Denoising score matching objective (&sect;3.3, Eq. 7).</b> Match the network $s_\\theta$ to the per-sample score of the Gaussian perturbation kernel $p_{0t}(x(t)\\mid x(0))$, averaged over time with positive weight $\\lambda(t)$. The minimizer equals the true marginal score.</p>
+       $$d x = \\sqrt{\\tfrac{d}{dt}\\,\\sigma^2(t)}\\; d w \\qquad (f = 0,\\;\\; g(t) = \\sqrt{\\tfrac{d}{dt}\\,\\sigma^2(t)})$$
+       <p><b>Variance Exploding (VE) SDE (&sect;3.4, Eq. 9).</b> Zero drift; variance grows without bound. Its discretization is <b>SMLD / NCSN</b>. Perturbation kernel $p_{0t}(x(t)\\mid x(0)) = \\mathcal{N}\\bigl(x(0),\\,[\\sigma^2(t)-\\sigma^2(0)]\\,I\\bigr)$.</p>
+       $$d x = -\\tfrac{1}{2}\\,\\beta(t)\\,x\\,dt + \\sqrt{\\beta(t)}\\; d w \\qquad (f = -\\tfrac{1}{2}\\beta(t)x,\\;\\; g(t) = \\sqrt{\\beta(t)})$$
+       <p><b>Variance Preserving (VP) SDE (&sect;3.4, Eq. 11).</b> Shrinking drift keeps total variance near $1$. Its discretization is exactly <b>DDPM</b>. Kernel mean $x(0)\\,e^{-\\frac{1}{2}\\int_0^t \\beta(s)\\,ds}$ with variance approaching $I$.</p>
+       $$d x = \\Bigl[f(x,t) - \\tfrac{1}{2}\\,g(t)^2\\,\\nabla_x \\log p_t(x)\\Bigr]\\,dt$$
+       <p><b>Probability-flow ODE (&sect;4.3, Eq. 13).</b> A deterministic ODE with the <b>same marginals</b> $p_t(x)$ as the reverse SDE (note the $\\tfrac{1}{2}$ on $g^2$ and no noise term). Enables exact likelihoods and fast deterministic sampling.</p>`,
     whatItDoes:
       `<p>The <b>forward SDE</b> (Eq. 5, &sect;3.1) is the noising rule: each instant, push $x$ by
        $f(x,t)\\,dt$ and add a random kick $g(t)\\,dw$. Repeat to dissolve data into noise.</p>
