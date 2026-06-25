@@ -13,6 +13,10 @@ path) — see `tools/capstone-spec.md`. You write ONE self-contained file `lesso
    (this renders reliably; note `arxiv.org/html/<id>` and the PDF often fail to parse — prefer ar5iv).
    If you do not know the arXiv id, web-search the title first. Write the explanation FROM the fetched
    text. Cite the section you are summarizing.
+   FALLBACK: if ar5iv serves only a PDF wrapper / nav chrome (common for some 2014-2017 papers), read the
+   official PDF directly via `https://arxiv.org/pdf/<id>` with the Read tool — that is a canonical ground
+   source. Older papers (pre-2010, no arXiv) — web-search the published source; ground metadata + method
+   from it; the code oracle still guarantees the implementation is correct.
 2. METADATA from the fetched source only — authors, year, venue, and (if shown) citation count. Stamp
    citations with the date and source, e.g. "210k+ (Semantic Scholar, 2026-06)". NEVER invent a number.
 3. TRANSCRIBE the key equation from the paper (note its equation/section number). Do NOT recall it.
