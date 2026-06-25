@@ -142,6 +142,35 @@
        through the entire unrolled chain. Because the targets are only reward, value, and policy, the model is pushed to
        be <b>value-equivalent</b> — it predicts the things planning consumes — without any pressure to reconstruct
        observations.</p>`,
+    architecture:
+      `<p>MuZero is <b>three networks</b> plus an <b>MCTS planner</b> that runs on top of them. All three share the same
+       trunk style as AlphaZero: for board games and Atari each is built from a stack of <b>16 residual blocks with 256
+       hidden planes</b> (convolutional). Below, "obs" is the input observation, "hidden state" is the learned latent.</p>
+       <ul>
+        <li><b>Representation network $h_\\theta$ — obs &rarr; $s^0$.</b> Input: the stacked recent observations
+         ($o_1,\\dots,o_t$; for Atari, 32 stacked frames downsampled to a $6\\times6$ spatial grid; for board games, the
+         board planes). A convolutional residual tower maps this to the initial hidden state $s^0$. The hidden state is
+         <b>min-max scaled to $[0,1]$</b> ($s_{\\text{scaled}}=(s-\\min s)/(\\max s-\\min s)$) so it lives on the same range
+         as the action input.</li>
+        <li><b>Dynamics network $g_\\theta$ — $(s^{k-1},a^k)$ &rarr; $(r^k,s^k)$.</b> The action is encoded
+         <b>spatially as bias planes</b> at the hidden-state resolution (a one-hot plane per action, tiled) and
+         <b>concatenated</b> onto the previous hidden state along the channel dimension. A residual tower then produces the
+         next hidden state $s^k$ (again min-max scaled to $[0,1]$); a small head emits the scalar reward $r^k$. This is a
+         <b>recurrent latent step</b> — the same block is applied again to imagine deeper.</li>
+        <li><b>Prediction network $f_\\theta$ — $s^k$ &rarr; $(p^k,v^k)$.</b> Two heads off the hidden state: a
+         <b>policy head</b> giving a distribution over actions $p^k$, and a <b>value head</b> giving the scalar value $v^k$.
+         For Atari, reward and value are predicted as a <b>categorical distribution over a discrete support</b> (601 bins
+         spanning $[-300,300]$) rather than a raw scalar; board games use squared error on a scalar.</li>
+        <li><b>MCTS planner (Appendix B) — wraps $h$, $g$, $f$.</b> The root is $s^0=h(o)$. Each simulation: (1)
+         <b>select</b> a path by the pUCT rule using normalized $\\bar Q$, prior $P$, and visit counts $N$; (2)
+         <b>expand</b> the leaf with one call to $g$ (child reward + hidden state) and one to $f$ (child prior + value);
+         (3) <b>back up</b> the discounted return $G^k$ along the path, updating $N$ and $Q$. After the simulation budget,
+         act by root visit counts $\\pi$ (with temperature $T$).</li>
+       </ul>
+       <p><b>Data flow:</b> obs $\\xrightarrow{h}s^0\\xrightarrow{g,a^1}s^1\\xrightarrow{g,a^2}s^2\\dots$, with $f$ tapped at
+       every $s^k$ to give $(p^k,v^k)$ for the search, and $g$ also emitting $r^k$ at every step. Training unrolls this
+       exact chain $K=5$ steps and backpropagates the Eq. 1 loss end-to-end through all three networks jointly (parameters
+       $\\theta$).</p>`,
     symbols: [
       { sym: "$o_t$", desc: "observation at real timestep $t$ (e.g. the Atari frame stack, or the encoded board)." },
       { sym: "$t$", desc: "real environment timestep — actual moves the agent has played." },
@@ -163,9 +192,34 @@
       { sym: "$N(s,a)$", desc: "visit count: how many simulations passed through action $a$ at node $s$ in the tree." },
       { sym: "$Q(s,a)$", desc: "mean backed-up value of action $a$ at node $s$ — the search's running estimate of how good that move is." },
       { sym: "$P(s,a)$", desc: "policy prior from $f$ at node $s$ — biases the search toward moves the network thinks are good." },
-      { sym: "$c_1,\\,c_2$", desc: "pUCT exploration constants; the paper uses $c_1=1.25$, $c_2=19652$ (Appendix B)." }
+      { sym: "$c_1,\\,c_2$", desc: "pUCT exploration constants; the paper uses $c_1=1.25$, $c_2=19652$ (Appendix B)." },
+      { sym: "$c$", desc: "L2 weight-decay coefficient on $\\theta$ in the loss (Eq. 1)." },
+      { sym: "$n$", desc: "horizon of the n-step value target; Atari uses $n=10$, board games bootstrap from the final outcome." },
+      { sym: "$\\nu_{t+n}$", desc: "bootstrap value at the end of the n-step return — the value estimate used to truncate the sum in $z_t$." },
+      { sym: "$T$", desc: "temperature applied to the root visit counts when forming the acting/target policy $\\pi$; decayed over training (1 &rarr; 0.5 &rarr; 0.25)." },
+      { sym: "$G^k$", desc: "the bootstrapped, discounted return backed up from a search leaf at depth $l$ to depth $k$ along the simulation path." },
+      { sym: "$l$", desc: "the depth of the expanded leaf reached in a given MCTS simulation (used as the upper limit in the backup sum)." },
+      { sym: "$\\bar{Q}(s,a)$", desc: "the min-max normalized $Q$ used inside pUCT, rescaled by the min/max $Q$ over the whole current tree (Appendix B)." }
     ],
-    formula: `$$l_t(\\theta)=\\sum_{k=0}^{K}\\Big[\\,l^{r}\\!\\big(u_{t+k},\\,r^{k}_{t}\\big)+l^{v}\\!\\big(z_{t+k},\\,v^{k}_{t}\\big)+l^{p}\\!\\big(\\pi_{t+k},\\,p^{k}_{t}\\big)\\,\\Big]+c\\,\\lVert\\theta\\rVert^{2}$$`,
+    formula:
+      `$$s^{0}=h_{\\theta}(o_{1},\\dots,o_{t})$$
+       <p>Representation (&sect;3). Encode the observation history into the <b>initial hidden state</b> $s^0$ — the root of the search tree.</p>
+       $$r^{k},\\,s^{k}=g_{\\theta}\\big(s^{k-1},\\,a^{k}\\big)$$
+       <p>Dynamics (&sect;3). The learned "rules": given the previous hidden state and an imagined action, emit the immediate <b>reward</b> $r^k$ and the <b>next hidden state</b> $s^k$. Applied recurrently to imagine forward.</p>
+       $$p^{k},\\,v^{k}=f_{\\theta}\\big(s^{k}\\big)$$
+       <p>Prediction (&sect;3). From any hidden state, read off a <b>policy</b> $p^k$ (action prior) and a <b>value</b> $v^k$ — the AlphaZero head, but on a learned latent state.</p>
+       $$l_{t}(\\theta)=\\sum_{k=0}^{K}\\Big[\\,l^{r}\\!\\big(u_{t+k},\\,r^{k}_{t}\\big)+l^{v}\\!\\big(z_{t+k},\\,v^{k}_{t}\\big)+l^{p}\\!\\big(\\pi_{t+k},\\,p^{k}_{t}\\big)\\,\\Big]+c\\,\\lVert\\theta\\rVert^{2}$$
+       <p>Combined loss (Eq. 1, &sect;3). Unroll the model $K=5$ steps and at every step penalize wrong reward, wrong value, and wrong policy, plus L2 weight decay $c\\lVert\\theta\\rVert^2$. There is NO observation-reconstruction term.</p>
+       $$z_{t}=u_{t+1}+\\gamma\\,u_{t+2}+\\dots+\\gamma^{n-1}u_{t+n}+\\gamma^{n}\\,\\nu_{t+n}$$
+       <p>Value target (&sect;3). The n-step return: $n$ discounted observed rewards plus a bootstrap value $\\nu_{t+n}$ (Atari uses $n=10$; board games use the final game outcome).</p>
+       $$a^{k}=\\arg\\max_{a}\\Big[\\,Q(s,a)+P(s,a)\\,\\frac{\\sqrt{\\sum_{b}N(s,b)}}{1+N(s,a)}\\Big(c_{1}+\\log\\tfrac{\\sum_{b}N(s,b)+c_{2}+1}{c_{2}}\\Big)\\Big]$$
+       <p>pUCT selection (Eq. 2, Appendix B). At each tree node pick the action balancing exploitation $Q$ against an exploration bonus driven by the prior $P$ and visit counts $N$; $c_1=1.25$, $c_2=19652$.</p>
+       $$G^{k}=\\sum_{\\tau=0}^{l-1-k}\\gamma^{\\tau}\\,r_{k+1+\\tau}+\\gamma^{\\,l-k}\\,v^{l},\\qquad Q(s,a)\\leftarrow\\frac{N(s,a)\\,Q(s,a)+G}{N(s,a)+1}$$
+       <p>Value backup (Appendix B). Along the simulation path from leaf depth $l$ back to depth $k$, accumulate discounted imagined rewards and bootstrap with the leaf value $v^l$, then update each edge's running mean $Q$ and increment $N$.</p>
+       $$\\bar{Q}(s,a)=\\frac{Q(s,a)-\\min_{s',a'\\in\\text{tree}}Q(s',a')}{\\max_{s',a'\\in\\text{tree}}Q(s',a')-\\min_{s',a'\\in\\text{tree}}Q(s',a')}$$
+       <p>Normalized Q (Appendix B). Because learned rewards/values have unknown scale, the $Q$ used inside pUCT is min-max normalized over all values seen in the current tree.</p>
+       $$\\pi(a\\mid s)=\\frac{N(s,a)^{1/T}}{\\sum_{b}N(s,b)^{1/T}}$$
+       <p>Acting / policy target (&sect;3). The move played and the policy training target both come from the root visit counts, with temperature $T$ controlling exploration ($T$ decayed over training).</p>`,
     whatItDoes:
       `<p>This is the MuZero training loss (Eq. 1, &sect;3). Read it as: <b>unroll the model $K$ steps from real step
        $t$, and at every imagined step $k$ add three penalties</b> — for getting the reward wrong, the value wrong, and

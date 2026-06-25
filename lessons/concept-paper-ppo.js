@@ -136,6 +136,34 @@
        of one-step temporal-difference (TD) errors (Eqs. 11-12). Algorithm 1 ties it together: collect $T$
        steps with the old policy, compute advantages, then optimize the surrogate for $K$ epochs of minibatch
        SGD before refreshing $\\theta_{old}$.</p>`,
+    architecture:
+      `<p>PPO is an <b>actor-critic</b> method, not a network architecture in itself &mdash; the paper is
+       deliberately agnostic about the net. Its structure is a <b>per-iteration optimization loop</b> wrapped
+       around two function approximators.</p>
+       <p><b>The two heads (&sect;6).</b> A <b>policy (actor)</b> $\\pi_\\theta$ and a <b>value (critic)</b>
+       $V_\\theta$. For the continuous-control experiments the policy is a fully-connected MLP with <b>two
+       hidden layers of 64 units and tanh nonlinearities</b>, outputting the mean of a Gaussian with a
+       variable (state-independent) standard deviation; the value function is a separate net (the paper does
+       <i>not</i> share parameters there, so its $c_1$ is irrelevant and it uses no entropy bonus). For Atari
+       it reuses the convolutional network of [Mni+16] with shared policy/value parameters &mdash; the case
+       where Eq. 9's combined $L^{CLIP+VF+S}$ loss applies.</p>
+       <p><b>Algorithm 1 &mdash; the per-iteration procedure (&sect;5).</b> Each outer iteration:</p>
+       <ol>
+        <li><b>Collect (parallel actors).</b> Run the old policy $\\pi_{\\theta_{old}}$ in the environment for
+        $T$ timesteps, across $N$ parallel actors &mdash; yielding $NT$ transitions. $T$ is much shorter than
+        an episode, so the rollout is a fixed-length segment, not a full trajectory.</li>
+        <li><b>Estimate advantages.</b> Compute $\\hat{A}_1,\\dots,\\hat{A}_T$ for every actor with truncated
+        GAE (Eqs. 11-12) from the recorded rewards and critic values $V(s_t)$; form value targets
+        $V_t^{targ}$ for the critic.</li>
+        <li><b>Optimize (multiple epochs of minibatch SGD).</b> Construct the surrogate loss
+        ($L^{CLIP}$, or $L^{CLIP+VF+S}$ when parameters are shared) on those $NT$ samples and optimize it with
+        Adam for <b>$K$ epochs</b> over <b>minibatches of size $M \\le NT$</b> &mdash; the data efficiency that
+        sets PPO apart from one-update-per-sample policy gradient. The clip (Eq. 7) is what keeps reusing the
+        same batch across epochs safe.</li>
+        <li><b>Refresh.</b> Set $\\theta_{old} \\leftarrow \\theta$ and repeat.</li>
+       </ol>
+       <p>Only step 3's loss changes from a vanilla policy-gradient implementation &mdash; "few lines of code
+       change" (&sect;7) &mdash; which is the paper's central simplicity claim.</p>`,
     symbols: [
       { sym: "$\\theta$", desc: "the parameters (weights) of the current policy network being optimized (Greek 'theta')." },
       { sym: "$\\theta_{old}$", desc: "the parameters of the policy that COLLECTED the current batch of data. Frozen during the update; $\\theta$ moves away from it, then $\\theta_{old}\\leftarrow\\theta$ after." },
@@ -155,18 +183,56 @@
       { sym: "$V(s)$", desc: "the critic's estimated <b>value</b> of state $s$: the expected discounted future return from $s$." },
       { sym: "$\\gamma$", desc: "the <b>discount factor</b> (Greek 'gamma') in $[0,1)$: how much future reward counts relative to immediate reward." },
       { sym: "$\\lambda$", desc: "the <b>GAE parameter</b> (Greek 'lambda') in $[0,1]$: trades bias against variance in the advantage estimate." },
-      { sym: "$\\delta_t$", desc: "the one-step <b>TD (temporal-difference) error</b> $\\delta_t = r_t + \\gamma V(s_{t+1}) - V(s_t)$ (Eq. 12) — the building block GAE sums." }
+      { sym: "$\\delta_t$", desc: "the one-step <b>TD (temporal-difference) error</b> $\\delta_t = r_t + \\gamma V(s_{t+1}) - V(s_t)$ (Eq. 12) — the building block GAE sums." },
+      { sym: "$\\hat{g}$", desc: "the <b>policy-gradient estimator</b> (Eq. 1): the empirical-mean gradient that plain policy gradient ascends." },
+      { sym: "$\\nabla_\\theta$", desc: "the gradient (vector of partial derivatives) with respect to the policy parameters $\\theta$." },
+      { sym: "$L^{PG}(\\theta)$", desc: "the <b>vanilla policy-gradient objective</b> $\\hat{\\mathbb{E}}_t[\\log\\pi_\\theta(a_t\\mid s_t)\\hat{A}_t]$ (Eq. 2), whose gradient is $\\hat{g}$." },
+      { sym: "$r_t$", desc: "the scalar <b>reward</b> received at step $t$ (distinct from the ratio $r_t(\\theta)$, which always carries its $(\\theta)$ argument)." },
+      { sym: "$\\mathrm{KL}[\\,p,\\,q\\,]$", desc: "the <b>Kullback–Leibler divergence</b>: how far the new policy $q$ has moved from the old policy $p$ as probability distributions over actions." },
+      { sym: "$\\delta$", desc: "TRPO's <b>trust-region radius</b> (Eq. 4): the maximum allowed mean KL between old and new policy (distinct from the TD error $\\delta_t$)." },
+      { sym: "$\\beta$", desc: "the <b>KL-penalty coefficient</b> (Greek 'beta', Eqs. 5, 8): weights the KL penalty; in the adaptive variant it is halved or doubled each update." },
+      { sym: "$d_{targ}$", desc: "the <b>target KL value</b> (&sect;4): the per-update KL the adaptive penalty steers toward; $\\beta$ adjusts when the measured $d$ strays by a factor of $1.5$." },
+      { sym: "$L^{KLPEN}(\\theta)$", desc: "the <b>adaptive-KL-penalty surrogate</b> (Eq. 8): an alternative to clipping that subtracts $\\beta\\,\\mathrm{KL}$; the paper found it no better than clipping." },
+      { sym: "$V_t^{targ}$", desc: "the <b>value target</b> the critic regresses toward in $L_t^{VF}$ — the empirical return (GAE advantage plus baseline)." },
+      { sym: "$N,\\,T,\\,K,\\,M$", desc: "Algorithm 1's sizes: $N$ parallel actors, $T$ timesteps per actor (rollout length, $\\ll$ episode), $K$ optimization epochs per batch, $M$ minibatch size ($M \\le NT$)." }
     ],
     formula:
-      `$$ L^{CLIP}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\Big[\\, \\min\\!\\big(\\, r_t(\\theta)\\,\\hat{A}_t,\\;
+      `$$ \\hat{g} = \\hat{\\mathbb{E}}_t\\!\\big[\\, \\nabla_\\theta \\log \\pi_\\theta(a_t\\mid s_t)\\, \\hat{A}_t \\,\\big]
+         \\qquad\\text{(Eq. 1)} $$
+       <p>The standard policy-gradient estimator (&sect;2.1): nudge $\\theta$ to raise the log-probability of actions with positive advantage.</p>
+       $$ L^{PG}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\big[\\, \\log \\pi_\\theta(a_t\\mid s_t)\\, \\hat{A}_t \\,\\big]
+         \\qquad\\text{(Eq. 2)} $$
+       <p>The differentiable objective whose gradient is Eq. 1 (&sect;2.1); multiple SGD steps on it cause "destructively large policy updates".</p>
+       $$ \\underset{\\theta}{\\text{maximize}}\\;\\; \\hat{\\mathbb{E}}_t\\!\\Big[\\, \\tfrac{\\pi_\\theta(a_t\\mid s_t)}{\\pi_{\\theta_{old}}(a_t\\mid s_t)}\\, \\hat{A}_t \\,\\Big]
+         \\quad\\text{s.t.}\\quad \\hat{\\mathbb{E}}_t\\!\\big[\\, \\mathrm{KL}[\\pi_{\\theta_{old}}(\\cdot\\mid s_t),\\, \\pi_\\theta(\\cdot\\mid s_t)] \\,\\big] \\le \\delta
+         \\qquad\\text{(Eqs. 3-4)} $$
+       <p>TRPO (&sect;2.2): maximize the importance-sampled surrogate <i>subject to a hard trust-region constraint</i> on the mean KL between old and new policy.</p>
+       $$ \\underset{\\theta}{\\text{maximize}}\\;\\; \\hat{\\mathbb{E}}_t\\!\\Big[\\, \\tfrac{\\pi_\\theta(a_t\\mid s_t)}{\\pi_{\\theta_{old}}(a_t\\mid s_t)}\\, \\hat{A}_t \\;-\\; \\beta\\, \\mathrm{KL}[\\pi_{\\theta_{old}}(\\cdot\\mid s_t),\\, \\pi_\\theta(\\cdot\\mid s_t)] \\,\\Big]
+         \\qquad\\text{(Eq. 5)} $$
+       <p>TRPO's penalty (unconstrained) form (&sect;2.2): a fixed $\\beta$ is hard to pick, which motivates PPO.</p>
+       $$ r_t(\\theta) = \\frac{\\pi_\\theta(a_t\\mid s_t)}{\\pi_{\\theta_{old}}(a_t\\mid s_t)},
+         \\qquad L^{CPI}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\big[\\, r_t(\\theta)\\, \\hat{A}_t \\,\\big]
+         \\qquad\\text{(Eq. 6)} $$
+       <p>The probability ratio and the unclipped surrogate (&sect;3); $r_t(\\theta_{old}) = 1$.</p>
+       $$ L^{CLIP}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\Big[\\, \\min\\!\\big(\\, r_t(\\theta)\\,\\hat{A}_t,\\;
          \\text{clip}\\big(r_t(\\theta),\\, 1-\\epsilon,\\, 1+\\epsilon\\big)\\,\\hat{A}_t \\,\\big) \\,\\Big]
          \\qquad\\text{(Eq. 7)} $$
+       <p>PPO's headline clipped surrogate (&sect;3), with $\\epsilon = 0.2$ &mdash; the pessimistic minimum of the raw and clipped terms.</p>
+       $$ L^{KLPEN}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\Big[\\, \\tfrac{\\pi_\\theta(a_t\\mid s_t)}{\\pi_{\\theta_{old}}(a_t\\mid s_t)}\\, \\hat{A}_t \\;-\\; \\beta\\, \\mathrm{KL}[\\pi_{\\theta_{old}}(\\cdot\\mid s_t),\\, \\pi_\\theta(\\cdot\\mid s_t)] \\,\\Big]
+         \\qquad\\text{(Eq. 8)} $$
+       <p>The <b>adaptive-KL-penalty variant</b> (&sect;4): an alternative to clipping. After each update set $d = \\hat{\\mathbb{E}}_t[\\mathrm{KL}[\\pi_{\\theta_{old}},\\pi_\\theta]]$; if $d \\lt d_{targ}/1.5$ then $\\beta \\leftarrow \\beta/2$, if $d \\gt d_{targ}\\times 1.5$ then $\\beta \\leftarrow \\beta\\times 2$. The paper found it performs no better than clipping.</p>
        $$ L_t^{CLIP+VF+S}(\\theta) = \\hat{\\mathbb{E}}_t\\!\\big[\\, L^{CLIP}_t(\\theta)
-         \\;-\\; c_1\\,L_t^{VF}(\\theta) \\;+\\; c_2\\,S[\\pi_\\theta](s_t) \\,\\big]
+         \\;-\\; c_1\\,L_t^{VF}(\\theta) \\;+\\; c_2\\,S[\\pi_\\theta](s_t) \\,\\big],
+         \\qquad L_t^{VF} = \\big(V_\\theta(s_t) - V_t^{targ}\\big)^2
          \\qquad\\text{(Eq. 9)} $$
+       <p>The combined objective with shared policy+value network (&sect;5): clipped policy term, minus a value-function squared-error loss, plus an entropy bonus.</p>
+       $$ \\hat{A}_t = -V(s_t) + r_t + \\gamma r_{t+1} + \\cdots + \\gamma^{T-t+1} r_{T-1} + \\gamma^{T-t} V(s_T)
+         \\qquad\\text{(Eq. 10)} $$
+       <p>The finite-horizon advantage over a length-$T$ segment (&sect;5); the $\\lambda=1$ special case of GAE below.</p>
        $$ \\hat{A}_t = \\delta_t + (\\gamma\\lambda)\\,\\delta_{t+1} + \\cdots + (\\gamma\\lambda)^{T-t+1}\\delta_{T-1},
          \\qquad \\delta_t = r_t + \\gamma V(s_{t+1}) - V(s_t)
-         \\qquad\\text{(Eqs. 11-12)} $$`,
+         \\qquad\\text{(Eqs. 11-12)} $$
+       <p>The truncated Generalized Advantage Estimation used by PPO (&sect;5): a $(\\gamma\\lambda)$-weighted sum of one-step TD errors $\\delta_t$.</p>`,
     whatItDoes:
       `<p><b>Equation 7</b> is the heart of PPO. The ratio $r_t(\\theta)$ measures how far the new policy moved
        on the action that was actually sampled. The objective takes the $\\min$ of two things: the raw

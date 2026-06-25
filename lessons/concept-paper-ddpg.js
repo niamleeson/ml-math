@@ -141,6 +141,32 @@
        that produces smooth, physically plausible exploration in control tasks. And because it learns from a replay
        buffer of <i>old</i> transitions, DDPG is <b>off-policy</b>: the noisy behavior policy generates data, the
        clean target policy is what is learned.</p>`,
+    architecture:
+      `<p>DDPG is built from <b>four neural networks</b> (two learned, two slow-moving copies) plus two
+       non-network components &mdash; a replay buffer and an exploration-noise process (&sect;3, &sect;7 supp.).</p>
+       <p><b>Actor $\\mu(s\\mid\\theta^\\mu)$ &mdash; the deterministic policy.</b> Input: the state vector $s$.
+       Two hidden fully-connected layers of <b>400</b> then <b>300</b> ReLU units, then a <code>tanh</code> output
+       layer (one unit per action dimension) bounding each action to $[-1,1]$, scaled to the action range. Output:
+       a single continuous action $a=\\mu(s)$. <b>Batch normalization</b> on the state input and every hidden layer.</p>
+       <p><b>Critic $Q(s,a\\mid\\theta^Q)$ &mdash; the Q-network.</b> Input: state $s$. The <b>action $a$ is injected
+       at the second hidden layer</b>, not at the input &mdash; the first hidden layer (400 units, ReLU, batch-norm)
+       sees only $s$; the action is concatenated in before the second hidden layer (300 units, ReLU). Output: a
+       single scalar $Q(s,a)$, the estimated action-value. Critic weights carry $L_2$ weight decay $10^{-2}$.</p>
+       <p><b>Target actor $\\mu'$ and target critic $Q'$ &mdash; identical architectures, slow weights.</b> Each is a
+       same-shape copy of its live network, initialized $\\theta^{Q'}\\!\\leftarrow\\theta^{Q}$,
+       $\\theta^{\\mu'}\\!\\leftarrow\\theta^{\\mu}$, and thereafter updated only by the soft update
+       $\\theta'\\leftarrow\\tau\\theta+(1-\\tau)\\theta'$. They are used <i>only</i> to build the critic's Bellman
+       target $y_i$ &mdash; never to act.</p>
+       <p><b>Replay buffer $\\mathcal{R}$.</b> A finite ring of past transitions $(s,a,r,s')$ (paper size $10^6$);
+       each update samples a uniform minibatch of $N$ (low-dim: $64$).</p>
+       <p><b>Ornstein&ndash;Uhlenbeck noise $\\mathcal{N}$.</b> A mean-reverting process ($\\theta_{\\text{ou}}=0.15$,
+       $\\sigma=0.2$) added to the actor's output at acting time to drive temporally correlated exploration.</p>
+       <p><b>Data flow each step:</b> state $s\\to$ actor $\\mu\\to$ action $+\\,\\mathcal{N}\\to$ environment $\\to$
+       transition stored in $\\mathcal{R}$. On update, a minibatch from $\\mathcal{R}\\to$ target actor $\\mu'$ and
+       target critic $Q'$ build $y_i\\to$ critic $Q$ regresses to $y_i\\to$ actor $\\mu$ ascends $Q$ via Eq. 6 $\\to$
+       both targets soft-update. <b>Optimizer:</b> Adam, actor lr $10^{-4}$, critic lr $10^{-3}$; $\\gamma=0.99$,
+       $\\tau=0.001$. (Pixel variant: 3 conv layers of 32 filters feeding two 200-unit FC layers; our notebook uses
+       smaller 64-unit hidden layers on the low-dimensional Pendulum state.)</p>`,
     symbols: [
       { sym: "$s,\\,a,\\,r,\\,s'$", desc: "a transition: state $s$, the action taken $a$, the reward received $r$, and the next state $s'$ (written $s_{i+1}$ for the $i$-th sample). One row stored in the replay buffer." },
       { sym: "$Q(s,a\\mid\\theta^Q)$", desc: "the <b>critic</b>: a network that estimates the action-value &mdash; the expected discounted future reward of taking action $a$ in state $s$. $\\theta^Q$ are its weights." },
@@ -156,18 +182,38 @@
       { sym: "$\\nabla_{\\theta^\\mu} J$", desc: "the gradient of the actor's objective $J$ (expected return) with respect to the actor weights &mdash; the <b>deterministic policy gradient</b> we ascend." },
       { sym: "$\\nabla_a Q(s,a)$", desc: "the gradient of the critic's value with respect to the <b>action</b>: which way to change the action to raise $Q$. The 'uphill' direction the actor is pushed." },
       { sym: "$\\nabla_{\\theta^\\mu}\\mu(s)$", desc: "the gradient of the actor's <b>output action</b> with respect to its weights: how to change the weights to move the action that way." },
-      { sym: "$\\mathcal{N}$", desc: "the <b>exploration noise</b> added to the actor's action at acting time &mdash; an Ornstein&ndash;Uhlenbeck (OU) process, giving temporally correlated (smooth) exploration." }
+      { sym: "$\\mathcal{N}$", desc: "the <b>exploration noise</b> added to the actor's action at acting time &mdash; an Ornstein&ndash;Uhlenbeck (OU) process, giving temporally correlated (smooth) exploration." },
+      { sym: "$Q^\\mu(s,a)$", desc: "the true action-value <i>under policy $\\mu$</i> &mdash; the quantity the critic $Q(\\cdot\\mid\\theta^Q)$ approximates; it satisfies the Bellman equation." },
+      { sym: "$L(\\theta^Q)$", desc: "the <b>critic loss</b>: the mean-squared error between the critic's prediction $Q(s_i,a_i)$ and the Bellman target $y_i$, averaged over the minibatch (Eq. 4)." },
+      { sym: "$J$", desc: "the actor's objective: the <b>expected return</b> when acting with policy $\\mu$. DDPG ascends $\\nabla_{\\theta^\\mu} J$ (Eq. 6)." },
+      { sym: "$\\theta_{\\text{ou}},\\,\\sigma$", desc: "the OU process parameters: $\\theta_{\\text{ou}}=0.15$ is the mean-reversion rate (how fast noise pulls back to $0$); $\\sigma=0.2$ is the noise scale (paper, &sect;7 supp.)." },
+      { sym: "$W_t$", desc: "standard <b>Brownian motion</b> (a Wiener process) &mdash; the random driving term inside the Ornstein&ndash;Uhlenbeck stochastic differential equation." },
+      { sym: "$E$", desc: "the <b>environment</b> (the MDP's transition + reward dynamics); the expectation in the Bellman equation is over the next reward and state drawn from $E$." }
     ],
     formula:
-      `$$ y_i = r_i + \\gamma\\, Q'\\!\\big(s_{i+1},\\, \\mu'(s_{i+1}\\mid\\theta^{\\mu'}) \\,\\big|\\, \\theta^{Q'}\\big)
-         \\qquad\\text{(critic Bellman target, §3)} $$
+      `$$ Q^\\mu(s_t,a_t) = \\mathbb{E}_{r_t,\\,s_{t+1}\\sim E}\\big[\\,r_t + \\gamma\\,Q^\\mu\\big(s_{t+1},\\,\\mu(s_{t+1})\\big)\\,\\big] $$
+       <p class="cap">The recursive <b>Bellman equation</b> the critic must satisfy (&sect;2): for a deterministic policy $\\mu$ the expectation over the action drops out, so $Q^\\mu$ depends only on the environment $E$ &mdash; this is what makes off-policy learning possible.</p>
+       $$ y_t = r(s_t,a_t) + \\gamma\\, Q\\big(s_{t+1},\\,\\mu(s_{t+1})\\mid\\theta^{Q}\\big) \\qquad\\text{(Eq. 5)} $$
+       $$ L(\\theta^Q) = \\frac{1}{N}\\sum_i\\big(\\,y_i - Q(s_i,a_i\\mid\\theta^Q)\\,\\big)^2 \\qquad\\text{(critic MSE loss, Eq. 4)} $$
+       <p class="cap">The critic is trained by regressing $Q$ onto the one-step <b>Bellman target</b> $y_i$, averaged over a minibatch of $N$ transitions sampled from the replay buffer (&sect;3).</p>
+       $$ y_i = r_i + \\gamma\\, Q'\\!\\big(s_{i+1},\\, \\mu'(s_{i+1}\\mid\\theta^{\\mu'}) \\,\\big|\\, \\theta^{Q'}\\big) $$
+       <p class="cap">The <b>actual target used in Algorithm 1</b>: the next action comes from the <i>target actor</i> $\\mu'$ and is scored by the <i>target critic</i> $Q'$ &mdash; the slow-moving copies &mdash; not the live networks. This is the version implemented in the code.</p>
        $$ \\nabla_{\\theta^\\mu} J \\;\\approx\\; \\frac{1}{N}\\sum_i\\,
          \\nabla_a Q(s,a\\mid\\theta^Q)\\big|_{\\,s=s_i,\\,a=\\mu(s_i)}\\;\\;
          \\nabla_{\\theta^\\mu}\\,\\mu(s\\mid\\theta^\\mu)\\big|_{\\,s=s_i}
-         \\qquad\\text{(deterministic policy gradient, Eq. 6)} $$
+         \\qquad\\text{(Eq. 6)} $$
+       <p class="cap">The <b>deterministic policy gradient</b> &mdash; the heart of DDPG. Chain the critic's slope in the action $\\nabla_a Q$ through the actor's slope in its weights $\\nabla_{\\theta^\\mu}\\mu$, averaged over the minibatch. No $\\arg\\max$ over actions.</p>
        $$ \\theta^{Q'} \\leftarrow \\tau\\,\\theta^{Q} + (1-\\tau)\\,\\theta^{Q'}, \\qquad
-          \\theta^{\\mu'} \\leftarrow \\tau\\,\\theta^{\\mu} + (1-\\tau)\\,\\theta^{\\mu'}
-         \\qquad\\text{(soft target update, §3)} $$`,
+          \\theta^{\\mu'} \\leftarrow \\tau\\,\\theta^{\\mu} + (1-\\tau)\\,\\theta^{\\mu'}, \\qquad \\tau \\ll 1 $$
+       <p class="cap">The <b>soft target update</b> (&sect;3): each step the target weights creep a tiny fraction $\\tau$ (paper: $0.001$) toward the live weights &mdash; an exponential moving average that keeps the regression target nearly stationary.</p>
+       $$ a_t = \\mu(s_t\\mid\\theta^\\mu_t) + \\mathcal{N}_t \\qquad\\text{(exploration policy, Eq. 7)} $$
+       <p class="cap">Because $\\mu$ is deterministic, exploration is injected by adding noise $\\mathcal{N}_t$ to the action at acting time (&sect;3).</p>
+       $$ d\\,\\mathcal{N}_t = \\theta_{\\text{ou}}\\,(\\mu_{\\text{ou}} - \\mathcal{N}_t)\\,dt + \\sigma\\,dW_t,
+          \\qquad \\theta_{\\text{ou}}=0.15,\\;\\sigma=0.2,\\;\\mu_{\\text{ou}}=0 $$
+       <p class="cap">The <b>Ornstein&ndash;Uhlenbeck process</b> that generates $\\mathcal{N}$ (&sect;3, &sect;7 supp.): a mean-reverting random walk ($W_t$ = Brownian motion) giving temporally correlated noise &mdash; smooth, inertia-friendly exploration. (The paper cites this process but does not print the SDE; this is its standard form.)</p>
+       $$ \\mathcal{R} = \\{\\,(s_i,a_i,r_i,s_{i+1})\\,\\}, \\qquad |\\mathcal{R}| \\le 10^6,
+          \\qquad (s_i,a_i,r_i,s_{i+1}) \\sim \\text{Uniform}(\\mathcal{R}) $$
+       <p class="cap">The <b>replay buffer</b> $\\mathcal{R}$ (&sect;3): a finite cache (paper: $10^6$ transitions) of past experience; minibatches are drawn uniformly, decorrelating samples and making learning off-policy.</p>`,
     whatItDoes:
       `<p><b>Equation 6 is the heart of DDPG.</b> It says: to improve the actor, take the critic's slope with
        respect to the action ($\\nabla_a Q$ &mdash; "which way should I move the action to get more value?") and

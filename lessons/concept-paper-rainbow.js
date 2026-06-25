@@ -133,6 +133,43 @@
        same KL loss as its priority. Dueling (3) shapes the network HEAD, and noisy nets (6) replace
        $\\epsilon$-greedy. That is all six, in one agent.</p>`,
 
+    architecture:
+      `<p><b>The integrated agent, component by component</b> ("The Integrated Agent"). One network, fed a stack
+       of recent Atari frames, producing a categorical return DISTRIBUTION per action.</p>
+       <ul>
+         <li><b>Shared convolutional encoder $f_\\xi$.</b> The DQN body: three convolutional layers
+         (32, 64, 64 channels) that turn the raw $84\\times84$ stacked-frame input into a feature vector
+         $\\phi=f_\\xi(s)$. Shared by both heads.</li>
+         <li><b>Dueling distributional head (two streams, on atoms).</b> The encoder feeds two streams instead
+         of one Q-head:
+           <ul>
+             <li><b>Value stream</b> $v_\\eta$ &mdash; outputs $N=51$ numbers (one per atom).</li>
+             <li><b>Advantage stream</b> $a_\\psi$ &mdash; outputs $N\\times N_{\\text{actions}}$ numbers
+             (per atom, per action).</li>
+           </ul>
+         Per atom $i$ they combine as $v_\\eta^i + a_\\psi^i(a) - \\bar a_\\psi^i$ (mean-subtracted advantage), and a
+         softmax OVER ACTIONS turns the per-atom logits into the probability vector $p_\\theta(s,a)$ &mdash; a
+         distribution over the $51$ return atoms $\\mathbf{z}$ for each action.</li>
+         <li><b>NoisyNet linear layers.</b> Every fully-connected layer in BOTH streams is a noisy linear layer
+         (Eq. 4): each has ordinary weights plus learnable noisy weights scaled by factorised Gaussian noise,
+         resampled each forward pass. This is the ONLY exploration mechanism &mdash; $\\epsilon$-greedy is removed
+         ($\\epsilon=0$).</li>
+         <li><b>Target network $\\bar\\theta$.</b> A frozen copy of the whole network, synced every 32K frames,
+         used to build the target distribution $d_t^{(n)}$.</li>
+         <li><b>Data flow to the loss.</b> (i) Sample a minibatch from PRIORITIZED replay, where each stored
+         transition already carries the $n$-step ($n=3$) return $R_t^{(n)}$ and the state $S_{t+n}$. (ii) DOUBLE:
+         online net selects $a^*_{t+n}=\\arg\\max q_\\theta(S_{t+n},\\cdot)$ (its Q-value is the atom-weighted mean
+         of its distribution); the TARGET net supplies that action's distribution $p_{\\bar\\theta}(S_{t+n},a^*)$.
+         (iii) Shift the atoms by $R_t^{(n)}+\\gamma_t^{(n)}\\mathbf{z}$ and PROJECT back onto the fixed grid with
+         $\\Phi_{\\mathbf{z}}$ to get $\\Phi_{\\mathbf{z}}d_t^{(n)}$. (iv) Loss is the KL divergence to the online
+         distribution $p_\\theta(S_t,A_t)$; that same KL value becomes each transition's new replay priority
+         $p_t$.</li>
+       </ul>
+       <p>So the six components occupy six distinct slots: encoder + dueling head (3) produce $p_\\theta$;
+       NoisyNets (6) sit inside its layers; the target folds in double (1), multi-step (4) and distributional (5);
+       and prioritized replay (2) decides which samples reach the loss. A single hyper-parameter set runs all 57
+       Atari games (Table 1).</p>`,
+
     symbols: [
       { sym: "$q_\\theta(s,a)$", desc: "the network's estimate of the action-value &mdash; the expected discounted return of taking action $a$ in state $s$ then acting greedily &mdash; with weights $\\theta$ ('theta'). The base DQN quantity." },
       { sym: "$\\gamma$", desc: "the discount factor ('gamma'), $0\\le\\gamma\\lt1$. A reward $k$ steps ahead is worth $\\gamma^{k}$ now. $\\gamma_t^{(k)}$ is the discount accumulated over $k$ steps (it becomes $0$ once an episode ends)." },
@@ -147,12 +184,53 @@
       { sym: "$\\Phi_{\\mathbf{z}}$", desc: "the projection ('Phi') that snaps the shifted target distribution $d_t^{(n)}$ back onto the fixed atom grid $\\mathbf{z}$, so it can be compared to $p_\\theta$." },
       { sym: "$D_{\\mathrm{KL}}(\\cdot\\,\\|\\,\\cdot)$", desc: "the Kullback-Leibler divergence &mdash; a non-negative measure of how different two probability distributions are ($0$ when identical). The distributional loss minimizes it; it is also the priority." },
       { sym: "$p_t,\\ \\omega$", desc: "the prioritized-replay priority of transition $t$ and its exponent ('omega'). $p_t\\propto(\\text{loss})^{\\omega}$ with $\\omega=0.5$ (Table 1): surprising transitions are replayed more." },
-      { sym: "$v,\\ a$ (streams)", desc: "the dueling network's two heads: the state-VALUE stream $v$ (one number per state) and the ADVANTAGE stream $a$ (one per action), recombined into the per-action output." },
-      { sym: "$\\mathbf{W}_{noisy},\\mathbf{b}_{noisy},\\ \\epsilon$", desc: "in a noisy linear layer (Eq. 4): extra LEARNABLE noisy weight/bias matrices, each multiplied elementwise ($\\odot$) by fresh random noise $\\epsilon$, added on top of the ordinary linear map for exploration." }
+      { sym: "$v_\\eta,\\ a_\\psi$ (streams)", desc: "the dueling network's two heads: the state-VALUE stream $v_\\eta$ (with parameters $\\eta$, 'eta'; one output per atom) and the ADVANTAGE stream $a_\\psi$ (parameters $\\psi$, 'psi'; one output per atom per action), recombined into the per-action output. $\\bar a_\\psi$ is the advantage averaged over actions." },
+      { sym: "$f_\\xi,\\ \\phi$", desc: "the shared convolutional encoder $f_\\xi$ (parameters $\\xi$, 'xi') and the feature vector $\\phi=f_\\xi(s)$ it produces from the input frames. The full network weights are $\\theta=\\{\\xi,\\eta,\\psi\\}$." },
+      { sym: "$z^i,\\ N,\\ V_{\\min},V_{\\max}$", desc: "the $i$-th atom value, the number of atoms $N=51$, and the support endpoints $V_{\\min}=-10,\\,V_{\\max}=10$. Atoms are evenly spaced: $z^i=V_{\\min}+(i-1)(V_{\\max}-V_{\\min})/(N-1)$." },
+      { sym: "$N_{\\text{actions}}$", desc: "the number of available actions in the state &mdash; the count the advantage is averaged over in the dueling decomposition." },
+      { sym: "$\\mathbf{W},\\mathbf{b}$ vs. $\\mathbf{W}_{\\text{noisy}},\\mathbf{b}_{\\text{noisy}}$", desc: "in a noisy linear layer (Eq. 4): the ordinary weight/bias plus extra LEARNABLE noisy weight/bias matrices, multiplied elementwise ($\\odot$) by fresh factorised-Gaussian noise $\\varepsilon^w,\\varepsilon^b$, added on top of the ordinary linear map for exploration." }
     ],
 
     formula:
-      `$$ \\underbrace{R_t^{(n)} \\equiv \\sum_{k=0}^{n-1}\\gamma_t^{(k)}\\,R_{t+k+1}}_{\\text{Eq. 2: multi-step return}} \\qquad\\Longrightarrow\\qquad \\underbrace{D_{\\mathrm{KL}}\\!\\Big(\\,\\Phi_{\\mathbf{z}}\\,d_t^{(n)}\\ \\big\\|\\ p_\\theta(S_t,A_t)\\,\\Big)}_{\\text{integrated Rainbow loss}}, \\quad d_t^{(n)}=\\big(R_t^{(n)}+\\gamma_t^{(n)}\\mathbf{z},\\ p_{\\bar\\theta}(S_{t+n},a^*_{t+n})\\big) $$`,
+      `<p><b>Base DQN loss (Background).</b> Regress the online value toward a one-step bootstrap built from the slow target net.</p>
+       $$ \\big(R_{t+1} + \\gamma_{t+1}\\,\\max_{a'} q_{\\bar\\theta}(S_{t+1},a') \\;-\\; q_\\theta(S_t,A_t)\\big)^2 $$
+       <p class="cap">Background: the squared temporal-difference (TD) error every extension below modifies.</p>
+
+       <p><b>1. Double Q-learning target</b> (component 1). Decouple action SELECTION (online net) from action EVALUATION (target net) to kill the $\\max$ over-estimation bias.</p>
+       $$ \\big(R_{t+1} + \\gamma_{t+1}\\,q_{\\bar\\theta}\\!\\big(S_{t+1},\\ \\arg\\max_{a'} q_\\theta(S_{t+1},a')\\big) \\;-\\; q_\\theta(S_t,A_t)\\big)^2 $$
+       <p class="cap">"Extensions to DQN" &mdash; double Q-learning: online net picks $a'$, target net scores it.</p>
+
+       <p><b>2. Prioritized replay priority</b> (component 2). Sample a transition with probability proportional to its absolute TD error raised to the power $\\omega$.</p>
+       $$ p_t \\;\\propto\\; \\big|\\,R_{t+1} + \\gamma_{t+1}\\,\\max_{a'} q_{\\bar\\theta}(S_{t+1},a') \\;-\\; q_\\theta(S_t,A_t)\\,\\big|^{\\,\\omega}, \\qquad \\omega = 0.5 $$
+       <p class="cap">"Extensions to DQN" &mdash; prioritized replay; importance-sampling exponent $\\beta$ annealed $0.4\\to1.0$.</p>
+
+       <p><b>3. Dueling decomposition</b> (component 3). Split the head into a state-value stream $v_\\eta$ and an advantage stream $a_\\psi$ over a shared encoder $f_\\xi$, recombined with a mean-subtracted advantage.</p>
+       $$ q_\\theta(s,a) \\;=\\; v_\\eta\\big(f_\\xi(s)\\big) \\;+\\; a_\\psi\\big(f_\\xi(s),a\\big) \\;-\\; \\frac{1}{N_{\\text{actions}}}\\sum_{a'} a_\\psi\\big(f_\\xi(s),a'\\big), \\qquad \\theta=\\{\\xi,\\eta,\\psi\\} $$
+       <p class="cap">"Extensions to DQN" &mdash; dueling networks: subtracting the mean advantage makes the split identifiable.</p>
+
+       <p><b>4. Multi-step ($n$-step) return</b> (component 4, <b>Eq. 2</b>). Sum the next $n$ discounted real rewards before bootstrapping; plug into a double-Q loss with a $\\gamma_t^{(n)}$ bootstrap. Rainbow uses $n=3$.</p>
+       $$ R_t^{(n)} \\;\\equiv\\; \\sum_{k=0}^{n-1} \\gamma_t^{(k)}\\,R_{t+k+1} $$
+       $$ \\big(R_t^{(n)} + \\gamma_t^{(n)}\\,q_{\\bar\\theta}\\!\\big(S_{t+n},\\ \\arg\\max_{a'} q_\\theta(S_{t+n},a')\\big) \\;-\\; q_\\theta(S_t,A_t)\\big)^2 $$
+       <p class="cap">Eq. 2 (multi-step return) and the $n$-step double-Q loss it feeds.</p>
+
+       <p><b>5. Distributional RL / C51</b> (component 5). Predict a categorical distribution over $N=51$ fixed return atoms $z^i$; build a projected Bellman-target distribution $d_t^{(n)}$ and minimize the KL divergence to the prediction.</p>
+       $$ z^i \\;=\\; V_{\\min} + (i-1)\\,\\frac{V_{\\max}-V_{\\min}}{N-1}, \\qquad i\\in\\{1,\\dots,N\\},\\ \\ N=51,\\ \\ [V_{\\min},V_{\\max}]=[-10,10] $$
+       $$ d_t^{(n)} \\;=\\; \\Big(R_t^{(n)} + \\gamma_t^{(n)}\\,\\mathbf{z},\\ \\ p_{\\bar\\theta}\\big(S_{t+n},a^*_{t+n}\\big)\\Big) $$
+       $$ D_{\\mathrm{KL}}\\!\\Big(\\,\\Phi_{\\mathbf{z}}\\,d_t^{(n)}\\ \\big\\|\\ p_\\theta(S_t,A_t)\\,\\Big) $$
+       <p class="cap">"Extensions to DQN" &mdash; C51: atom support $z^i$, target distribution $d_t^{(n)}$, projected by $\\Phi_{\\mathbf{z}}$, matched by KL.</p>
+
+       <p>The C51 probabilities are produced by a softmax of the dueling-distributional head (per atom $i$, over actions):</p>
+       $$ p_\\theta^i(s,a) \\;=\\; \\frac{\\exp\\!\\big(v_\\eta^i(\\phi) + a_\\psi^i(\\phi,a) - \\bar a_\\psi^i(s)\\big)}{\\sum_j \\exp\\!\\big(v_\\eta^j(\\phi) + a_\\psi^j(\\phi,a) - \\bar a_\\psi^j(s)\\big)}, \\qquad \\bar a_\\psi^i(s)=\\tfrac{1}{N_{\\text{actions}}}\\textstyle\\sum_{a'} a_\\psi^i(\\phi,a') $$
+       <p class="cap">"The Integrated Agent" &mdash; dueling streams output per-atom logits; softmax over actions gives $p_\\theta$.</p>
+
+       <p><b>6. NoisyNets layer</b> (component 6, <b>Eq. 4</b>). Add learnable noisy weight/bias matrices, each multiplied elementwise by fresh random noise, on top of the ordinary linear map &mdash; learned exploration replacing $\\epsilon$-greedy.</p>
+       $$ y \\;=\\; (\\mathbf{b} + \\mathbf{W}x) \\;+\\; \\big(\\mathbf{b}_{\\text{noisy}}\\odot\\varepsilon^{b} \\;+\\; (\\mathbf{W}_{\\text{noisy}}\\odot\\varepsilon^{w})\\,x\\big) $$
+       <p class="cap">Eq. 4 (noisy linear layer); $\\odot$ is elementwise product, $\\varepsilon^w,\\varepsilon^b$ are factorised Gaussian noise, $\\sigma_0=0.5$.</p>
+
+       <p><b>The combined Rainbow loss</b> ("The Integrated Agent"). Three components fold into ONE target distribution &mdash; multi-step (4) shifts the atoms, double (1) picks $a^*_{t+n}$, distributional (5) carries the target net's distribution &mdash; and the agent minimizes its KL to the prediction; prioritized replay (2) reuses THIS KL as the priority $p_t$.</p>
+       $$ \\mathcal{L} \\;=\\; D_{\\mathrm{KL}}\\!\\Big(\\,\\Phi_{\\mathbf{z}}\\,d_t^{(n)}\\ \\big\\|\\ p_\\theta(S_t,A_t)\\,\\Big), \\quad d_t^{(n)}=\\big(R_t^{(n)}+\\gamma_t^{(n)}\\mathbf{z},\\ p_{\\bar\\theta}(S_{t+n},a^*_{t+n})\\big),\\quad a^*_{t+n}=\\arg\\max_{a'} q_\\theta(S_{t+n},a') $$
+       $$ p_t \\;\\propto\\; \\mathcal{L}^{\\,\\omega}, \\qquad \\omega=0.5 $$
+       <p class="cap">"The Integrated Agent" &mdash; the single loss carrying double + multi-step + distributional; its KL is also the replay priority. Dueling (3) shapes $p_\\theta$; NoisyNets (6) replace $\\epsilon$-greedy.</p>`,
 
     whatItDoes:
       `<p>The left piece (<b>Equation 2</b>) is the MULTI-STEP return: walk $n$ real steps, summing the

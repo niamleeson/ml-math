@@ -154,6 +154,45 @@
        the paper) does the identical advantage update but waits for all parallel environments, averages their
        gradients, and applies <i>one</i> update — easier to run on a GPU and equally effective. We implement the
        advantage update in a single process here, which is A2C with one environment.</p>`,
+    architecture:
+      `<p><b>One shared body, two heads.</b> The paper uses a single network whose lower layers are shared and
+       whose two outputs are the policy and the value (§4): "a convolutional neural network that has one softmax
+       output for the policy $\\pi(a_t\\mid s_t;\\theta)$ and one linear output for the value function
+       $V(s_t;\\theta_v)$, with all non-output layers shared."</p>
+       <p><b>The Atari shared body (§5 / experimental setup).</b> The convolutional feature extractor is:</p>
+       <ul>
+        <li><b>Input:</b> 4 stacked $84\\times84$ grayscale frames (the standard Atari preprocessing).</li>
+        <li><b>Conv 1:</b> $16$ filters, $8\\times8$ kernel, stride $4$, then a rectifier (ReLU) nonlinearity.</li>
+        <li><b>Conv 2:</b> $32$ filters, $4\\times4$ kernel, stride $2$, then a rectifier nonlinearity.</li>
+        <li><b>Fully connected:</b> $256$ hidden units, rectifier nonlinearity &mdash; this is the shared
+        feature vector $h$.</li>
+       </ul>
+       <p><b>The two output heads</b> branch off $h$:</p>
+       <ul>
+        <li><b>Policy head (actor):</b> a linear layer to the action logits, then a <b>softmax</b> &rarr;
+        $\\pi(a\\mid s;\\theta)$, a probability over the discrete actions.</li>
+        <li><b>Value head (critic):</b> a single <b>linear</b> output &rarr; the scalar $V(s;\\theta_v)$.</li>
+       </ul>
+       <p>A <b>recurrent (LSTM) variant</b> adds $256$ LSTM cells after the final hidden layer before the two
+       heads, giving the agent memory across timesteps. (Our CartPole build below swaps the conv stack for a
+       small <code>nn.Linear</code> body since the input is a 4-number vector, not pixels &mdash; the two-head
+       structure is identical.)</p>
+       <p><b>A3C asynchronous workers vs A2C synchronous.</b> A3C runs <b>16 parallel actor-learner threads</b>
+       on one multi-core CPU (no GPU). Each thread:</p>
+       <ul>
+        <li>holds a <i>local copy</i> $\\theta',\\theta_v'$ synced from the shared global parameters
+        $\\theta,\\theta_v$;</li>
+        <li>rolls out its own environment for up to $t_{max}$ steps, computes the backward bootstrapped return
+        $R \\leftarrow r_i + \\gamma R$ (seeded with $0$ at a terminal state, else with $V(s_{t_{max}})$);</li>
+        <li>accumulates the policy gradient $d\\theta$ and value gradient $d\\theta_v$ over the rollout, then
+        <b>asynchronously</b> applies them to the shared global parameters with <b>Shared RMSProp</b>
+        (decay $0.99$; learning rate sampled from $\\mathrm{LogUniform}(10^{-4},10^{-2})$, annealed to $0$).</li>
+       </ul>
+       <p>Because the 16 threads are in different states at any instant, their pooled updates are de-correlated &mdash;
+       this is what replaces DQN's replay buffer. <b>A2C</b> (the community's synchronous variant) keeps the same
+       two-head network and identical advantage update but <i>waits</i> for all parallel environments, averages
+       their gradients, and applies a <b>single</b> synchronous update &mdash; simpler and more GPU-friendly. Our
+       implementation below is A2C with a single environment.</p>`,
     symbols: [
       { sym: "$\\pi(a\\mid s;\\theta)$", desc: "the <b>policy</b> (Greek 'pi'): the probability the actor network, with parameters $\\theta$, takes action $a$ in state $s$." },
       { sym: "$V(s;\\theta_v)$", desc: "the <b>critic's value</b> of state $s$: the expected discounted future return from $s$, predicted by the value network with parameters $\\theta_v$. The 'baseline' subtracted to form the advantage." },
@@ -173,10 +212,18 @@
     formula:
       `$$ A(s_t,a_t;\\theta,\\theta_v) = \\sum_{i=0}^{k-1}\\gamma^i r_{t+i}
          + \\gamma^k V(s_{t+k};\\theta_v) - V(s_t;\\theta_v)
-         \\;=\\; R_t - V(s_t;\\theta_v) \\qquad\\text{(§4)} $$
-       $$ \\nabla_{\\theta'}\\log\\pi(a_t\\mid s_t;\\theta')\\,\\big(R_t - V(s_t;\\theta_v)\\big)
-         \\;+\\; \\beta\\,\\nabla_{\\theta'}H\\big(\\pi(s_t;\\theta')\\big) \\qquad\\text{(§4, actor update)} $$
-       $$ \\text{value loss:}\\quad \\big(R_t - V(s_t;\\theta_v)\\big)^2 \\qquad\\text{(Algorithm S3)} $$`,
+         \\;=\\; R_t - V(s_t;\\theta_v) \\qquad\\text{(§4, advantage estimate: n-step return − baseline)} $$
+       <p class="cap">The advantage: the $k$-step bootstrapped return minus the critic's baseline $V(s_t)$.</p>
+       $$ \\nabla_{\\theta'}\\log\\pi(a_t\\mid s_t;\\theta')\\,\\big(R_t - V(s_t;\\theta_v)\\big) \\qquad\\text{(§4, actor-critic policy gradient)} $$
+       <p class="cap">The actor-critic policy gradient: the score function $\\nabla_{\\theta'}\\log\\pi(a_t\\mid s_t;\\theta')$ weighted by the advantage $A(s_t,a_t)$.</p>
+       $$ +\\;\\beta\\,\\nabla_{\\theta'}H\\big(\\pi(s_t;\\theta')\\big) \\qquad\\text{(§4, entropy regularization)} $$
+       <p class="cap">The entropy bonus $\\beta\\,H(\\pi(s_t))$ added to the objective &mdash; its gradient keeps the policy exploratory; the paper uses $\\beta = 0.01$.</p>
+       $$ L_v(\\theta_v) = \\big(R_t - V(s_t;\\theta_v)\\big)^2 \\qquad\\text{(Algorithm S3, value loss)} $$
+       <p class="cap">The critic's value loss: squared error between the bootstrapped return $R_t$ and the prediction $V(s_t)$.</p>
+       $$ L(\\theta,\\theta_v) = \\underbrace{-\\,\\log\\pi(a_t\\mid s_t;\\theta)\\,A(s_t,a_t)}_{\\text{policy term}}
+          \\;+\\; \\underbrace{\\tfrac12\\big(R_t - V(s_t;\\theta_v)\\big)^2}_{\\text{value term}}
+          \\;-\\; \\underbrace{\\beta\\,H\\big(\\pi(s_t;\\theta)\\big)}_{\\text{entropy bonus}} $$
+       <p class="cap">The combined objective minimized on the shared-body network: policy loss $+$ value loss $-$ entropy bonus (the loss form we implement; the paper writes the policy and entropy parts as the <i>gradient</i> to <i>ascend</i>, so the sign on the policy/entropy terms flips when written as a loss to descend).</p>`,
     whatItDoes:
       `<p>The <b>first line</b> defines the advantage. The summation plus the $\\gamma^k V(s_{t+k})$ bootstrap is
        the n-step return $R_t$; subtracting the critic's baseline $V(s_t)$ gives $A = R_t - V(s_t)$. The

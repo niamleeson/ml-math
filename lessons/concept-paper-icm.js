@@ -142,6 +142,31 @@
        transition is unpredictable, so curiosity is high everywhere and the agent explores broadly; as a
        region becomes familiar, its forward error falls, its curiosity bonus shrinks, and the agent is pulled
        toward the still-novel frontier &mdash; directed exploration, with no extrinsic reward required.</p>`,
+    architecture:
+      `<p>ICM is an add-on bolted onto any policy. Two networks run side by side: the <b>policy</b>
+       $\\pi(s_t;\\theta_P)$ that picks actions, and the <b>Intrinsic Curiosity Module</b> that scores how
+       surprising each transition was. The ICM itself is three pieces sharing one encoder (&sect;2.2, Figure 2):</p>
+       <ul>
+        <li><b>Feature encoder $\\phi$.</b> Maps a raw state $s_t$ to a feature vector $\\phi(s_t)$. In the
+        paper this is <b>four convolutional layers</b> (32 filters each, $3\\times3$ kernels, stride $2$,
+        ELU nonlinearity), flattened to a <b>288-dimensional</b> feature vector. The same encoder (shared
+        weights) embeds both $s_t$ and $s_{t+1}$. <i>On our toy chain the encoder is an
+        <code>nn.Embedding</code> instead of a CNN, but it plays the identical role.</i></li>
+        <li><b>Inverse model $g$ (Eqs. 2-3).</b> Takes the two feature vectors, concatenated
+        $[\\phi(s_t),\\,\\phi(s_{t+1})]$, through a fully-connected layer (256 units) to a softmax over actions,
+        producing $\\hat{a}_t$. Its loss $L_I$ against the true $a_t$ flows back into the encoder &mdash; this
+        is the <b>only</b> gradient that shapes $\\phi$, forcing it to keep just the action-relevant detail.</li>
+        <li><b>Forward model $f$ (Eqs. 4-5).</b> Takes $[\\phi(s_t),\\,a_t]$ (features concatenated with the
+        one-hot action) through fully-connected layers ($256\\to288$ units) to predict $\\hat{\\phi}(s_{t+1})$.
+        Its loss $L_F$ trains $f$ only; the encoder target $\\phi(s_{t+1})$ is <b>detached</b> so $L_F$ never
+        reshapes $\\phi$.</li>
+       </ul>
+       <p><b>Data flow.</b> $s_t,s_{t+1}\\to$ shared encoder $\\to \\phi(s_t),\\phi(s_{t+1})$. The inverse model
+       consumes both to predict $\\hat{a}_t$ (and trains $\\phi$). The forward model consumes $\\phi(s_t)$ and
+       $a_t$ to predict $\\hat{\\phi}(s_{t+1})$; its error against $\\phi(s_{t+1})$ is the <b>intrinsic reward
+       $r^i_t$ (Eq. 6)</b> that is fed back to the policy and added to the extrinsic reward. The whole stack
+       &mdash; policy ($\\theta_P$), inverse ($\\theta_I$), forward ($\\theta_F$) &mdash; is trained jointly by
+       the single objective in Eq. 7.</p>`,
     symbols: [
       { sym: "$s_t$", desc: "the raw <b>state</b> (observation) at timestep $t$ — e.g. a game frame, or a position on our toy chain." },
       { sym: "$a_t$", desc: "the <b>action</b> the agent took in state $s_t$." },
@@ -163,14 +188,22 @@
       { sym: "$\\pi(s_t;\\theta_P)$", desc: "the <b>policy</b> (Greek 'pi'): the rule mapping a state to an action distribution, trained to maximize the expected sum of rewards $r_t = r^e_t + r^i_t$." }
     ],
     formula:
-      `$$ r^i_t \\;=\\; \\frac{\\eta}{2}\\,\\big\\lVert \\hat{\\phi}(s_{t+1}) - \\phi(s_{t+1}) \\big\\rVert_2^2,
-         \\qquad \\eta \\gt 0 \\qquad\\text{(Eq. 6 — the intrinsic reward)} $$
+      `$$ \\max_{\\theta_P}\\; \\mathbb{E}_{\\pi(s_t;\\,\\theta_P)}\\!\\Big[\\textstyle\\sum_t r_t\\Big],
+         \\qquad r_t = r^e_t + r^i_t \\qquad\\text{(Eq. 1 — the policy's objective: maximize total reward)} $$
+       $$ \\hat{a}_t \\;=\\; g\\big(\\phi(s_t),\\,\\phi(s_{t+1});\\,\\theta_I\\big)
+         \\qquad\\text{(Eq. 2 — inverse model: guess the action from the two states)} $$
+       $$ \\min_{\\theta_I}\\; L_I\\big(\\hat{a}_t,\\,a_t\\big)
+         \\qquad\\text{(Eq. 3 — inverse-model loss; this is what LEARNS the feature space } \\phi) $$
+       $$ \\hat{\\phi}(s_{t+1}) \\;=\\; f\\big(\\phi(s_t),\\,a_t;\\,\\theta_F\\big)
+         \\qquad\\text{(Eq. 4 — forward model: predict next-state features)} $$
        $$ L_F\\big(\\phi(s_t),\\,\\hat{\\phi}(s_{t+1})\\big) \\;=\\; \\tfrac{1}{2}\\,\\big\\lVert \\hat{\\phi}(s_{t+1}) - \\phi(s_{t+1}) \\big\\rVert_2^2
          \\qquad\\text{(Eq. 5 — forward-model loss)} $$
+       $$ r^i_t \\;=\\; \\frac{\\eta}{2}\\,\\big\\lVert \\hat{\\phi}(s_{t+1}) - \\phi(s_{t+1}) \\big\\rVert_2^2,
+         \\qquad \\eta \\gt 0 \\qquad\\text{(Eq. 6 — the intrinsic reward = forward-model error)} $$
        $$ \\min_{\\theta_P,\\,\\theta_I,\\,\\theta_F}\\;
          \\Big[\\, -\\lambda\\,\\mathbb{E}_{\\pi(s_t;\\theta_P)}\\!\\Big[\\textstyle\\sum_t r_t\\Big]
          \\;+\\; (1-\\beta)\\,L_I \\;+\\; \\beta\\,L_F \\,\\Big]
-         \\qquad\\text{(Eq. 7 — combined objective)} $$`,
+         \\qquad\\text{(Eq. 7 — combined ICM objective: } \\max(\\lambda\\,\\mathbb{E}[\\textstyle\\sum r_t] - L)) $$`,
     whatItDoes:
       `<p><b>Equation 6</b> is the heart of ICM. It says the <b>intrinsic reward is the prediction error</b>:
        take the forward model's guess $\\hat{\\phi}(s_{t+1})$ and the real next features $\\phi(s_{t+1})$,

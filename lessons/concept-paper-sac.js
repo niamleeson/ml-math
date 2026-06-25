@@ -145,6 +145,34 @@
        trick</b> $a = \\tanh(\\mu_\\phi(s) + \\sigma_\\phi(s)\\odot\\epsilon)$, $\\epsilon\\sim\\mathcal{N}(0,I)$
        (Eqs. 11-12), and the $\\tanh$ keeps actions in $[-1,1]$ with a log-likelihood correction (Appendix C).
        Reparameterization lets the policy gradient flow through the sampled action into the critic.</p>`,
+    architecture:
+      `<p>SAC is an <b>actor-critic</b>: one stochastic actor network plus a set of Q-critics, all small
+       multilayer perceptrons (MLPs). The paper's MuJoCo configuration (Appendix D, Table 1) uses
+       <b>2 hidden layers of 256 units with ReLU</b> for every network. The data flows around a
+       <b>replay buffer</b> $\\mathcal{D}$, so training is off-policy.</p>
+       <ul>
+        <li><b>Actor (policy) $\\pi_\\phi$.</b> Input: state $s$. A shared MLP body, then two heads producing the
+        <b>mean</b> $\\mu_\\phi(s)$ and <b>log-std</b> $\\log\\sigma_\\phi(s)$ of a Gaussian over the
+        pre-squash action. Sampling: $u = \\mu + \\sigma\\odot\\epsilon$ with $\\epsilon\\sim\\mathcal{N}(0,I)$
+        (reparameterization), then $a = \\tanh(u)$ to bound the action in $[-1,1]$, with the $\\tanh$
+        log-likelihood correction (Appendix C). Output: an action $a$ AND its log-probability $\\log\\pi_\\phi(a\\mid s)$.</li>
+        <li><b>Twin critics $Q_{\\theta_1}, Q_{\\theta_2}$.</b> Two independently initialized MLPs, each taking
+        the concatenated $[s,a]$ and outputting a scalar soft Q-value. Wherever a Q-value feeds a target or the
+        actor loss, SAC uses $\\min(Q_{\\theta_1}, Q_{\\theta_2})$ &mdash; the clipped-double-Q overestimation guard.</li>
+        <li><b>Target networks.</b> In the <b>v1</b> paper a separate <b>value network</b> $V_\\psi$ with a
+        Polyak-averaged <b>target</b> $V_{\\bar\\psi}$ supplies the bootstrap value; the critics regress to
+        $\\hat{Q} = r + \\gamma V_{\\bar\\psi}(s')$ (Eqs. 7-8). The <b>v2</b> follow-up
+        (arXiv:1812.05905) found the separate $V$ network <b>unnecessary</b> and instead keeps
+        <b>target copies of the two critics</b> $Q_{\\bar\\theta_1}, Q_{\\bar\\theta_2}$, forming the target directly:
+        $y = r + \\gamma\\big(\\min_i Q_{\\bar\\theta_i}(s',a') - \\alpha\\log\\pi_\\phi(a'\\mid s')\\big)$. All target
+        weights are slow Polyak averages ($\\tau = 0.005$). Our notebook follows this v2 twin-target design.</li>
+        <li><b>Temperature $\\alpha$.</b> A single scalar. In v1 it is a fixed hyperparameter; in v2 it becomes a
+        learned parameter with its own optimizer, trained by the loss $J(\\alpha)$ (Eq. 18) to hold the policy's
+        entropy at a target $\\bar{\\mathcal{H}}$.</li>
+        <li><b>Update loop (per minibatch from $\\mathcal{D}$).</b> (1) critic step: regress both $Q_{\\theta_i}$ to
+        the soft target; (2) actor step: minimize $\\alpha\\log\\pi - \\min(Q_{\\theta_1},Q_{\\theta_2})$ via
+        reparameterized samples; (3) v2 only: temperature step on $J(\\alpha)$; (4) Polyak soft-update the targets.</li>
+       </ul>`,
     symbols: [
       { sym: "$\\pi(\\cdot\\mid s_t)$", desc: "the <b>policy</b> (Greek 'pi') as a DISTRIBUTION over actions in state $s_t$ — SAC's actor is stochastic, so it returns a spread of actions, not one." },
       { sym: "$r(s_t,a_t)$", desc: "the <b>reward</b> received for taking action $a_t$ in state $s_t$ at step $t$." },
@@ -163,19 +191,47 @@
       { sym: "$\\min(Q_{\\theta_1}, Q_{\\theta_2})$", desc: "the <b>clipped double-Q</b>: take the SMALLER of the two critics. Overestimated values rarely agree, so the min is a pessimistic, less-biased estimate." },
       { sym: "$f_\\phi(\\epsilon; s)$", desc: "the <b>reparameterized policy</b> (Eqs. 11-12): a network with parameters $\\phi$ that turns noise $\\epsilon$ and state $s$ into an action, $a = \\tanh(\\mu_\\phi(s) + \\sigma_\\phi(s)\\odot\\epsilon)$ — so gradients flow through the sample." },
       { sym: "$\\epsilon\\sim\\mathcal{N}(0,I)$", desc: "standard <b>Gaussian noise</b> (Greek 'epsilon'): the externalized randomness of the reparameterization trick, sampled independently of $\\phi$ so the action is a differentiable function of $\\phi$." },
-      { sym: "$\\tanh(\\cdot)$", desc: "the <b>squashing function</b>: maps the unbounded Gaussian sample into $[-1,1]$ so actions stay in a valid range. It adds a log-likelihood correction (Appendix C)." }
+      { sym: "$\\tanh(\\cdot)$", desc: "the <b>squashing function</b>: maps the unbounded Gaussian sample into $[-1,1]$ so actions stay in a valid range. It adds a log-likelihood correction (Appendix C)." },
+      { sym: "$\\mu_\\phi(s),\\,\\sigma_\\phi(s)$", desc: "the actor network's outputs: the <b>mean</b> $\\mu$ and <b>standard deviation</b> $\\sigma$ of the pre-squash Gaussian, both functions of the state $s$ with parameters $\\phi$. $\\odot$ is elementwise multiply." },
+      { sym: "$J_Q(\\theta)$", desc: "the <b>critic loss</b> (Eq. 7): the mean-squared error between a critic's prediction $Q_\\theta(s,a)$ and the soft target $\\hat{Q}$. Minimizing it trains the Q-network." },
+      { sym: "$\\hat{Q}(s_t,a_t)$", desc: "the <b>soft Q target</b> (Eq. 8): $r + \\gamma\\,V_{\\bar\\psi}(s_{t+1})$ — the bootstrapped value the critics regress toward." },
+      { sym: "$V_{\\bar\\psi}$", desc: "the <b>target value network</b> (parameters $\\bar\\psi$, a slow Polyak average of $\\psi$). In v1 it stabilizes the Q target; v2 DROPS this separate network and uses the target critics' min directly." },
+      { sym: "$\\mathcal{D}$", desc: "the <b>replay buffer</b> (script 'D'): the store of past $(s,a,r,s')$ transitions. SAC is off-policy, so updates sample minibatches from $\\mathcal{D}$ rather than fresh rollouts." },
+      { sym: "$J_\\pi(\\phi)$", desc: "the <b>actor loss</b> (Eq. 13): the expected $\\alpha\\log\\pi - \\min(Q_{\\theta_1},Q_{\\theta_2})$ over reparameterized samples. Minimizing it is the soft policy-improvement step in practice." },
+      { sym: "$J(\\alpha)$", desc: "the <b>temperature loss</b> (v2 Eq. 18): $\\mathbb{E}[-\\alpha\\log\\pi - \\alpha\\bar{\\mathcal{H}}]$. Minimizing it auto-tunes $\\alpha$ so the policy's entropy tracks a target $\\bar{\\mathcal{H}}$." },
+      { sym: "$\\bar{\\mathcal{H}}$", desc: "the <b>target entropy</b> (v2): the minimum average entropy the policy must keep (a constant, often $-\\dim(\\text{action})$). The auto-tuning loss pushes the policy's entropy toward it." }
     ],
     formula:
       `$$ J(\\pi) = \\sum_{t=0}^{T} \\mathbb{E}_{(s_t,a_t)\\sim\\rho_\\pi}\\Big[\\, r(s_t,a_t)
          \\;+\\; \\alpha\\,\\mathcal{H}\\big(\\pi(\\cdot\\mid s_t)\\big) \\,\\Big]
          \\qquad\\text{(Eq. 1, the maximum-entropy objective)} $$
-       $$ V(s_t) = \\mathbb{E}_{a_t\\sim\\pi}\\big[\\, Q(s_t,a_t) - \\alpha\\log\\pi(a_t\\mid s_t) \\,\\big],
-         \\qquad
-         \\mathcal{T}^\\pi Q(s_t,a_t) = r(s_t,a_t) + \\gamma\\,\\mathbb{E}_{s_{t+1}}\\!\\big[\\,V(s_{t+1})\\,\\big]
-         \\quad\\text{(Eqs. 3, 2)} $$
+       <p class="cap">The total reward PLUS $\\alpha$ times the policy entropy, summed over time. This is what SAC maximizes (&sect;3.2).</p>
+       $$ V(s_t) = \\mathbb{E}_{a_t\\sim\\pi}\\big[\\, Q(s_t,a_t) - \\alpha\\log\\pi(a_t\\mid s_t) \\,\\big]
+         \\qquad\\text{(Eq. 3, the soft state-value function)} $$
+       <p class="cap">The soft value = expected Q minus the entropy penalty $\\alpha\\log\\pi$, so the entropy bonus is folded into the value (&sect;4.1).</p>
+       $$ \\mathcal{T}^\\pi Q(s_t,a_t) \\triangleq r(s_t,a_t) + \\gamma\\,\\mathbb{E}_{s_{t+1}\\sim p}\\!\\big[\\,V(s_{t+1})\\,\\big]
+         \\qquad\\text{(Eq. 2, the soft Bellman backup)} $$
+       <p class="cap">The critic's target: immediate reward plus the discounted soft value of the next state (&sect;4.1).</p>
        $$ \\pi_{\\text{new}} = \\arg\\min_{\\pi'\\in\\Pi}\\, D_{\\text{KL}}\\!\\bigg(\\,\\pi'(\\cdot\\mid s_t)\\;\\Big\\|\\;
          \\frac{\\exp\\!\\big(\\tfrac{1}{\\alpha}Q^{\\pi_{\\text{old}}}(s_t,\\cdot)\\big)}{Z^{\\pi_{\\text{old}}}(s_t)}\\,\\bigg)
-         \\qquad\\text{(Eq. 4, soft policy improvement)} $$`,
+         \\qquad\\text{(Eq. 4, soft policy improvement)} $$
+       <p class="cap">Project the policy onto $\\exp(Q/\\alpha)$ normalized by $Z$ &mdash; the KL-divergence minimization that improves the policy toward high-Q actions without collapsing (&sect;4.2).</p>
+       $$ J_Q(\\theta) = \\mathbb{E}_{(s_t,a_t)\\sim\\mathcal{D}}\\!\\Big[\\tfrac{1}{2}\\big(Q_\\theta(s_t,a_t) - \\hat{Q}(s_t,a_t)\\big)^2\\Big],
+         \\qquad
+         \\hat{Q}(s_t,a_t) = r(s_t,a_t) + \\gamma\\,\\mathbb{E}_{s_{t+1}}\\!\\big[\\,V_{\\bar\\psi}(s_{t+1})\\,\\big]
+         \\quad\\text{(Eqs. 7-8, soft Q loss)} $$
+       <p class="cap">Each critic is regressed by mean-squared error to the bootstrapped soft target $\\hat{Q}$, sampled from the replay buffer $\\mathcal{D}$ (&sect;4.2).</p>
+       $$ a_t = f_\\phi(\\epsilon_t; s_t) = \\tanh\\!\\big(\\mu_\\phi(s_t) + \\sigma_\\phi(s_t)\\odot\\epsilon_t\\big),
+         \\quad \\epsilon_t\\sim\\mathcal{N}(0,I)
+         \\qquad\\text{(Eqs. 11-12, reparameterized squashed-Gaussian actor)} $$
+       <p class="cap">The actor outputs a mean and std; the action is a $\\tanh$-squashed Gaussian sample written as a differentiable function of noise $\\epsilon$, so the policy gradient flows through it (&sect;4.2, App. C).</p>
+       $$ J_\\pi(\\phi) = \\mathbb{E}_{s_t\\sim\\mathcal{D},\\,\\epsilon_t\\sim\\mathcal{N}}\\!\\big[\\,\\alpha\\log\\pi_\\phi\\!\\big(f_\\phi(\\epsilon_t;s_t)\\mid s_t\\big)
+         - \\min_{i=1,2} Q_{\\theta_i}\\!\\big(s_t, f_\\phi(\\epsilon_t;s_t)\\big)\\,\\big]
+         \\qquad\\text{(Eq. 13 + twin-Q min, actor loss)} $$
+       <p class="cap">Minimize $\\alpha\\log\\pi - \\min(Q_{\\theta_1},Q_{\\theta_2})$: pull the policy toward high-Q actions while the $\\alpha\\log\\pi$ term keeps it stochastic; the $\\min$ of the two critics curbs overestimation (&sect;4.2).</p>
+       $$ J(\\alpha) = \\mathbb{E}_{a_t\\sim\\pi_t}\\!\\big[\\,-\\alpha\\log\\pi_t(a_t\\mid s_t) - \\alpha\\,\\bar{\\mathcal{H}}\\,\\big]
+         \\qquad\\text{(v2 Eq. 18, automatic temperature tuning)} $$
+       <p class="cap">The follow-up (arXiv:1812.05905) learns $\\alpha$ instead of fixing it: minimize $J(\\alpha)$ to drive the policy's average entropy toward a target $\\bar{\\mathcal{H}}$ &mdash; raise $\\alpha$ when entropy is too low, lower it when too high.</p>`,
     whatItDoes:
       `<p><b>Equation 1</b> is the heart of SAC. Read it as "total reward, plus $\\alpha$ times total entropy."
        The first part is ordinary RL: get reward. The second part, $\\alpha\\mathcal{H}(\\pi)$, pays the agent

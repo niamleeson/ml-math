@@ -147,6 +147,40 @@
        advantage estimator for $0 \\lt \\lambda \\lt 1$ makes a compromise between bias and variance, controlled
        by parameter $\\lambda$." In practice $\\lambda \\approx 0.95$ keeps most of the variance reduction while
        paying only a little bias &mdash; and the whole thing is one backward pass over a rollout.</p>`,
+    architecture:
+      `<p>GAE is an <b>estimator</b>, not a network &mdash; but it lives inside a concrete <b>actor-critic</b>
+       system with two pieces and a fixed per-iteration loop. The paper (&sect;6) uses simple feedforward nets.</p>
+       <p><b>Two components (both plain feedforward, tanh hidden units):</b></p>
+       <ul>
+        <li><b>Policy $\\pi_\\theta(a\\mid s)$ (the actor).</b> Maps a state to a distribution over actions. For the
+        hard 3D locomotion tasks (biped / quadruped) it is a feedforward net with <b>three hidden layers of
+        $100$, $50$, $25$ tanh units</b> and a linear output (over $10^4$ parameters). For cart-pole the policy is
+        just <b>linear</b>. Discrete actions &rarr; a categorical (softmax) head; continuous joint torques &rarr; a
+        Gaussian head.</li>
+        <li><b>Value function $V_\\phi(s)$ (the critic).</b> Same <b>$100$&ndash;$50$&ndash;$25$ tanh</b> body with a
+        single linear output for the 3D tasks; for cart-pole a <b>single $20$-unit hidden layer</b>. It outputs the
+        scalar $V(s)$ that the TD residual $\\delta_t^V$ (Eq. 11) and hence all of GAE is built from.</li>
+       </ul>
+       <p><b>Per-iteration algorithm (the data flow that glues them):</b></p>
+       <ol>
+        <li><b>Collect a rollout</b> by running the current policy $\\pi_\\theta$ in the environment; record
+        $(s_t, a_t, r_t)$ and the critic's $V_\\phi(s_t)$ at every step.</li>
+        <li><b>Compute TD residuals</b> $\\delta_t^V = r_t + \\gamma V_\\phi(s_{t+1}) - V_\\phi(s_t)$ (Eq. 11),
+        zeroing the bootstrap at terminal steps.</li>
+        <li><b>Accumulate GAE backward</b> in one pass: $\\hat{A}_t = \\delta_t^V + \\gamma\\lambda\\,\\hat{A}_{t+1}$
+        (the recursive form of Eq. 16).</li>
+        <li><b>Update the policy</b> along $g^\\gamma = \\mathbb{E}[\\sum_t \\hat{A}_t \\nabla_\\theta\\log\\pi_\\theta(a_t\\mid s_t)]$
+        (Eq. 19), in the paper via a <b>trust-region (TRPO) step</b> &mdash; a KL-constrained surrogate update
+        (&sect;6.1).</li>
+        <li><b>Fit the critic</b> $V_\\phi$ to the returns $\\hat{A}_t + V_\\phi(s_t)$ by regression
+        $\\min_\\phi \\sum_n \\lVert V_\\phi(s_n) - \\hat{V}_n\\rVert^2$ (Eq. 28), again under a trust-region KL
+        constraint between the old and new value functions (Eq. 29, &sect;5).</li>
+        <li><b>Repeat.</b> A better critic sharpens $\\delta_t^V$, which sharpens the GAE advantage, which sharpens
+        the policy &mdash; the two networks co-train.</li>
+       </ol>
+       <p>So the architecture is: <b>state &rarr; (policy head, value head) &rarr; rollout &rarr; TD residuals
+       &rarr; GAE advantage &rarr; trust-region updates to both heads.</b> GAE is the connective tissue between
+       critic and actor.</p>`,
     symbols: [
       { sym: "$s_t$", desc: "the <b>state</b> at timestep $t$ &mdash; what the agent observes (for CartPole: cart position, cart velocity, pole angle, pole angular velocity)." },
       { sym: "$a_t$", desc: "the <b>action</b> the agent took at step $t$ (for CartPole: push left or right)." },
@@ -164,18 +198,28 @@
       { sym: "$\\mathbb{E}[\\cdot]$", desc: "the <b>expectation</b> (average) over the randomness of the policy and environment &mdash; what you would get if you could average over infinitely many rollouts." },
       { sym: "$\\sum_{l=0}^{\\infty}$", desc: "a sum over future offsets $l = 0, 1, 2, \\ldots$; in a finite episode the sum stops at the last step (the rollout is truncated)." },
       { sym: "$\\pi$ / $\\pi_\\theta$", desc: "the <b>policy</b> (Greek 'pi'): the rule mapping a state to a distribution over actions, parameterized by network weights $\\theta$ (Greek 'theta')." },
-      { sym: "$g$", desc: "the <b>policy gradient</b> (Eq. 19): the direction to move $\\theta$ to increase expected reward, $\\mathbb{E}[\\sum_t \\nabla_\\theta \\log\\pi_\\theta(a_t\\mid s_t)\\,\\hat{A}_t]$." }
+      { sym: "$g$ / $g^\\gamma$", desc: "the <b>policy gradient</b> (Eqs. 1, 6, 19): the direction to move $\\theta$ to increase expected reward, $\\mathbb{E}[\\sum_t \\nabla_\\theta \\log\\pi_\\theta(a_t\\mid s_t)\\,\\hat{A}_t]$. $g^\\gamma$ is the discounted version that weights each action by its advantage." },
+      { sym: "$\\Psi_t$", desc: "the <b>generic weight</b> in the policy gradient (Eq. 1, Greek 'Psi'): any quantity that scores how good action $a_t$ was &mdash; the full return, the action-value, or (best) the advantage. GAE is a choice of $\\Psi_t$." },
+      { sym: "$\\nabla_\\theta$", desc: "the <b>gradient</b> with respect to the policy weights $\\theta$ &mdash; the vector of partial derivatives telling you which way to nudge each weight." },
+      { sym: "$V_\\phi(s)$ / $\\phi$", desc: "the critic network with weights $\\phi$ (Greek 'phi') &mdash; the trainable approximation of $V(s)$ fit by regression (Eq. 28) under a trust-region constraint (Eq. 29)." }
     ],
     formula:
-      `$$ \\delta_t^V = r_t + \\gamma\\,V(s_{t+1}) - V(s_t) \\qquad\\text{(Eq. 11)} $$
-       $$ \\hat{A}_t^{(k)} = \\sum_{l=0}^{k-1} \\gamma^l\\,\\delta_{t+l}^V
+      `$$ g = \\mathbb{E}\\!\\left[\\sum_{t=0}^{\\infty} \\Psi_t\\,\\nabla_\\theta \\log\\pi_\\theta(a_t\\mid s_t)\\right] \\qquad\\text{(Eq. 1 — the policy gradient; $\\Psi_t$ is any advantage-like weight)} $$
+       $$ V^{\\pi,\\gamma}(s_t) := \\mathbb{E}\\!\\left[\\sum_{l=0}^{\\infty}\\gamma^l r_{t+l}\\right],\\quad
+          Q^{\\pi,\\gamma}(s_t,a_t) := \\mathbb{E}\\!\\left[\\sum_{l=0}^{\\infty}\\gamma^l r_{t+l}\\right],\\quad
+          A^{\\pi,\\gamma}(s_t,a_t) := Q^{\\pi,\\gamma}(s_t,a_t) - V^{\\pi,\\gamma}(s_t) \\qquad\\text{(Eqs. 4-5)} $$
+       $$ g^\\gamma := \\mathbb{E}\\!\\left[\\sum_{t=0}^{\\infty} A^{\\pi,\\gamma}(s_t,a_t)\\,\\nabla_\\theta \\log\\pi_\\theta(a_t\\mid s_t)\\right] \\qquad\\text{(Eq. 6 — choosing $\\Psi_t = $ the advantage)} $$
+       $$ \\delta_t^V = r_t + \\gamma\\,V(s_{t+1}) - V(s_t) \\qquad\\text{(Eq. 11 — the one-step TD residual)} $$
+       $$ \\hat{A}_t^{(1)} = \\delta_t^V,\\qquad \\hat{A}_t^{(2)} = \\delta_t^V + \\gamma\\,\\delta_{t+1}^V,\\qquad
+          \\hat{A}_t^{(k)} = \\sum_{l=0}^{k-1} \\gamma^l\\,\\delta_{t+l}^V
          = -V(s_t) + r_t + \\gamma r_{t+1} + \\cdots + \\gamma^{k-1} r_{t+k-1} + \\gamma^k V(s_{t+k})
-         \\qquad\\text{(Eq. 14)} $$
+         \\qquad\\text{(Eqs. 11-14 — the $k$-step estimators)} $$
        $$ \\boxed{\\;\\hat{A}_t^{GAE(\\gamma,\\lambda)} \\;:=\\; (1-\\lambda)\\big(\\hat{A}_t^{(1)} + \\lambda\\,\\hat{A}_t^{(2)} + \\lambda^2\\,\\hat{A}_t^{(3)} + \\cdots\\big)
-         \\;=\\; \\sum_{l=0}^{\\infty} (\\gamma\\lambda)^l\\,\\delta_{t+l}^V\\;} \\qquad\\text{(Eq. 16)} $$
-       $$ \\lambda = 0:\\;\\; \\hat{A}_t = \\delta_t \\;\\text{(Eq. 17)} \\qquad
-          \\lambda = 1:\\;\\; \\hat{A}_t = \\sum_{l=0}^{\\infty}\\gamma^l\\,\\delta_{t+l}
-          = \\sum_{l=0}^{\\infty}\\gamma^l r_{t+l} - V(s_t) \\;\\text{(Eq. 18)} $$`,
+         \\;=\\; \\sum_{l=0}^{\\infty} (\\gamma\\lambda)^l\\,\\delta_{t+l}^V\\;} \\qquad\\text{(Eq. 16 — the GAE estimator)} $$
+       $$ \\lambda = 0:\\;\\; \\hat{A}_t^{GAE(\\gamma,0)} = \\delta_t \\;\\text{(Eq. 17 — low-variance TD)} \\qquad
+          \\lambda = 1:\\;\\; \\hat{A}_t^{GAE(\\gamma,1)} = \\sum_{l=0}^{\\infty}\\gamma^l\\,\\delta_{t+l}
+          = \\sum_{l=0}^{\\infty}\\gamma^l r_{t+l} - V(s_t) \\;\\text{(Eq. 18 — high-variance Monte-Carlo)} $$
+       $$ g^\\gamma \\;\\approx\\; \\mathbb{E}\\!\\left[\\sum_{t=0}^{\\infty} \\hat{A}_t^{GAE(\\gamma,\\lambda)}\\,\\nabla_\\theta \\log\\pi_\\theta(a_t\\mid s_t)\\right] \\qquad\\text{(Eq. 19 — the policy gradient driven by GAE; exact at $\\lambda = 1$)} $$`,
     whatItDoes:
       `<p><b>Equation 11</b> is the ingredient: the one-step TD error $\\delta_t$ &mdash; "what I got plus where
        I think I landed, minus where I thought I started." <b>Equation 14</b> stacks $k$ of these into a k-step

@@ -137,6 +137,42 @@
        and &sect;6 solves the constrained step with a conjugate-gradient natural-gradient direction plus a line
        search that backtracks until the KL constraint holds &mdash; all via Fisher-vector products, so the full
        Hessian is never formed. The paper used $\\delta = 0.01$ for the locomotion experiments (&sect;8).</p>`,
+    architecture:
+      `<p>TRPO is an <b>algorithm</b>, not a network: its "architecture" is the fixed per-iteration procedure that
+       turns a batch of rollouts into one constrained policy update. The paper gives two versions.</p>
+       <p><b>Theoretical scheme &mdash; Algorithm 1 (&sect;3).</b> The guaranteed-monotonic-improvement loop, using
+       the <i>penalty</i> form. Per iteration $i$:</p>
+       <ol>
+         <li><b>Estimate advantages.</b> Compute $A_{\\pi_i}(s,a)$ for all states/actions under the current policy.</li>
+         <li><b>Maximize the lower bound.</b> Set
+         $\\pi_{i+1}=\\arg\\max_\\pi\\big[L_{\\pi_i}(\\pi)-C\\,D_{KL}^{\\max}(\\pi_i,\\pi)\\big]$ (Eq. 9). Because the
+         bound is tight at $\\pi_i$, this cannot lower the true return &mdash; that is the monotonic guarantee.</li>
+       </ol>
+       <p>The penalty constant $C=\\tfrac{4\\epsilon\\gamma}{(1-\\gamma)^2}$ is so large that this takes tiny steps,
+       which motivates the practical version.</p>
+       <p><b>Practical algorithm (&sect;6) &mdash; one update per batch.</b> Per iteration:</p>
+       <ol>
+         <li><b>Sample.</b> Collect trajectories from $\\pi_{\\theta_{old}}$ (the <i>single-path</i> estimator) or
+         branch rollouts from sampled states (the lower-variance <i>vine</i> estimator). Estimate $Q_{\\theta_{old}}(s,a)$
+         (or advantages) and the old action probabilities.</li>
+         <li><b>Build the constrained objective</b> (Eq. 14): the importance-sampled surrogate as a function of
+         $\\theta$, with the mean-KL constraint $\\bar D_{KL}\\le\\delta$ over the sampled states.</li>
+         <li><b>Compute the policy gradient</b> $g=\\nabla_\\theta L_{\\theta_{old}}(\\theta)\\big|_{\\theta_{old}}$
+         by back-propagating the surrogate.</li>
+         <li><b>Conjugate gradient for the natural direction.</b> Solve $A\\,s=g$ for the search direction
+         $s\\approx A^{-1}g$, where $A$ is the Fisher information matrix (Hessian of the KL). CG needs only
+         <b>Fisher-vector products</b> $v\\mapsto Av$ &mdash; the full $A$ is never formed, so this scales to large
+         networks (typically ~10&ndash;20 CG iterations).</li>
+         <li><b>Scale to the trust-region boundary.</b> Set the maximal step length
+         $\\sqrt{2\\delta/(s^{\\top}As)}$, the largest move along $s$ whose quadratic-approx KL equals $\\delta$.</li>
+         <li><b>Line search (backtracking).</b> Shrink the step by $\\beta^{j}$ ($\\beta\\in(0,1)$, $j=0,1,2,\\dots$)
+         until the surrogate actually improves AND the true mean KL $\\le\\delta$ &mdash; correcting for the
+         quadratic approximation's error. Accept that $\\theta$.</li>
+         <li><b>Advance.</b> $\\theta_{old}\\leftarrow\\theta$ and repeat.</li>
+       </ol>
+       <p>For locomotion the policy was a small multilayer perceptron (continuous Gaussian actions); for Atari a
+       convolutional policy of ~33,500 parameters over discrete actions. The algorithm body is identical across
+       both &mdash; only the policy network and action distribution change.</p>`,
     symbols: [
       { sym: "$\\pi,\\,\\tilde\\pi$", desc: "the OLD policy $\\pi$ (which collected the data) and a candidate NEW policy $\\tilde\\pi$ (Greek 'pi'). A policy maps each state to a probability distribution over actions." },
       { sym: "$\\theta,\\,\\theta_{old}$", desc: "the parameters (weights) of the new and old policy networks (Greek 'theta'). $\\theta$ moves away from the frozen $\\theta_{old}$, then $\\theta_{old}\\leftarrow\\theta$." },
@@ -153,18 +189,34 @@
       { sym: "$\\beta$", desc: "the <b>step length</b> along the ascent direction (Greek 'beta'). The line search shrinks $\\beta$ until the KL constraint holds — the largest $\\beta$ inside the trust region." }
     ],
     formula:
-      `$$ \\eta(\\tilde\\pi) \\;\\ge\\; L_\\pi(\\tilde\\pi) \\;-\\; C\\, D_{KL}^{\\max}(\\pi,\\tilde\\pi),
-         \\qquad C=\\frac{4\\epsilon\\gamma}{(1-\\gamma)^2}
-         \\qquad\\text{(Theorem 1, Eq. 9)} $$
+      `$$ \\eta(\\pi) = \\mathbb{E}_{s_0,a_0,\\dots}\\!\\left[\\,\\sum_{t=0}^{\\infty}\\gamma^t\\, r(s_t)\\,\\right] $$
+       <p class="cap">The TRUE objective: the expected discounted return of policy $\\pi$ (&sect;2). Cannot be evaluated for a new policy without fresh rollouts.</p>
+       $$ L_\\pi(\\tilde\\pi) \\;=\\; \\eta(\\pi) \\;+\\; \\sum_s \\rho_\\pi(s)\\sum_a \\tilde\\pi(a\\mid s)\\, A_\\pi(s,a) $$
+       <p class="cap">The <b>surrogate objective</b> (&sect;2, Eq. 3): uses the OLD policy's visitation $\\rho_\\pi$, so it matches $\\eta$ in value and gradient AT $\\pi$ but drifts away from it.</p>
+       $$ \\eta(\\tilde\\pi) \\;\\ge\\; L_\\pi(\\tilde\\pi) \\;-\\; \\frac{4\\epsilon\\gamma}{(1-\\gamma)^2}\\, D_{TV}^{\\max}(\\pi,\\tilde\\pi)^2 $$
+       <p class="cap">The <b>monotonic-improvement bound</b> in total-variation form (Theorem 1, Eq. 8), with $\\epsilon=\\max_{s,a}|A_\\pi(s,a)|$.</p>
+       $$ \\eta(\\tilde\\pi) \\;\\ge\\; L_\\pi(\\tilde\\pi) \\;-\\; C\\, D_{KL}^{\\max}(\\pi,\\tilde\\pi),
+         \\qquad C=\\frac{4\\epsilon\\gamma}{(1-\\gamma)^2} $$
+       <p class="cap">Same bound upgraded to KL via Pinsker's inequality (Eq. 9). Maximizing this lower bound cannot decrease the true return — the monotonic-improvement guarantee.</p>
        $$ \\underset{\\theta}{\\text{maximize}}\\;\\; L_{\\theta_{old}}(\\theta)
          \\qquad\\text{subject to}\\qquad
-         \\bar D_{KL}^{\\,\\rho_{\\theta_{old}}}(\\theta_{old},\\theta) \\;\\le\\; \\delta
-         \\qquad\\text{(Eq. 12)} $$
+         \\bar D_{KL}^{\\,\\rho_{\\theta_{old}}}(\\theta_{old},\\theta) \\;\\le\\; \\delta $$
+       <p class="cap">The practical <b>trust-region constraint</b> (Eq. 12): swap the KL penalty for a hard average-KL budget $\\delta$. The KL ball is the trust region.</p>
        $$ \\underset{\\theta}{\\text{maximize}}\\;\\;
          \\mathbb{E}_{s\\sim\\rho_{\\theta_{old}},\\,a\\sim q}\\!\\left[\\,
          \\frac{\\pi_\\theta(a\\mid s)}{q(a\\mid s)}\\, Q_{\\theta_{old}}(s,a)\\,\\right]
-         \\;\\;\\text{s.t.}\\;\\; \\mathbb{E}_{s\\sim\\rho_{\\theta_{old}}}\\!\\big[D_{KL}(\\pi_{\\theta_{old}}\\,\\|\\,\\pi_\\theta)\\big]\\le\\delta
-         \\qquad\\text{(Eq. 14)} $$`,
+         \\;\\;\\text{s.t.}\\;\\; \\mathbb{E}_{s\\sim\\rho_{\\theta_{old}}}\\!\\big[D_{KL}(\\pi_{\\theta_{old}}(\\cdot\\mid s)\\,\\|\\,\\pi_\\theta(\\cdot\\mid s))\\big]\\le\\delta $$
+       <p class="cap">The <b>sample-based surrogate</b> (Eq. 14): the importance-sampling ratio $\\pi_\\theta/q$ re-weights the old policy's samples; constraint is the mean KL over visited states.</p>
+       $$ \\underset{\\theta}{\\text{maximize}}\\;\\; g^{\\top}(\\theta-\\theta_{old})
+         \\qquad\\text{s.t.}\\qquad
+         \\tfrac{1}{2}(\\theta-\\theta_{old})^{\\top} A(\\theta_{old})\\,(\\theta-\\theta_{old}) \\;\\le\\; \\delta $$
+       <p class="cap">Local <b>quadratic approximation</b> (Eq. 17, &sect;7): linearize the surrogate ($g=\\nabla_\\theta L$) and second-order-expand the KL. $A(\\theta_{old})$ is the <b>Fisher information matrix</b> — the Hessian of the average KL at $\\theta_{old}$.</p>
+       $$ A_{ij} \\;=\\; \\frac{1}{N}\\sum_n \\frac{\\partial^2}{\\partial\\theta_i\\,\\partial\\theta_j}\\,
+         D_{KL}\\!\\big(\\pi_{\\theta_{old}}(\\cdot\\mid s_n)\\,\\|\\,\\pi_\\theta(\\cdot\\mid s_n)\\big)\\Big|_{\\theta=\\theta_{old}} $$
+       <p class="cap">The <b>Fisher information matrix</b> (&sect;6) entrywise. Conjugate gradient solves $A s = g$ for the natural-gradient direction $s = A^{-1}g$ using only Fisher-vector products — never forming $A$.</p>
+       $$ \\theta \\;=\\; \\theta_{old} \\;+\\; \\beta^{j}\\,\\sqrt{\\frac{2\\delta}{s^{\\top} A\\, s}}\\; s,
+         \\qquad \\beta\\in(0,1) $$
+       <p class="cap">The <b>step and line search</b> (&sect;6, App. C): the unscaled natural step has length $\\sqrt{2\\delta/(s^\\top A s)}$ (largest step hitting the KL boundary); then backtrack by $\\beta^{j}$, $j=0,1,2,\\dots$, until the surrogate improves AND mean KL $\\le\\delta$.</p>`,
     whatItDoes:
       `<p><b>Equation 9 (Theorem 1)</b> is the theoretical heart. It says the true return of any new policy is
        <b>at least</b> the surrogate value minus $C$ times the KL-divergence from the old policy. Because the bound

@@ -183,6 +183,34 @@
        choice. Interestingly, the paper found the <i>SL</i> policy $p_\\sigma$ gave better search priors than the
        stronger RL policy $p_\\rho$, "presumably because humans select a diverse beam of promising moves" (&sect;4),
        while the value network derived from the RL policy was the better evaluator.</p>`,
+    architecture:
+      `<p>AlphaGo is <b>four convolutional networks plus one search</b> (Figure 1). The board is fed in as a
+       $19\\times19$ &ldquo;image&rdquo; with multiple feature planes (stone colours, liberties, recent moves;
+       Extended Data Table 2). Components, with their data flow:</p>
+       <p><b>Shared convolutional body.</b> Both the policy and value networks pass the board through many
+       convolutional layers (small filters slid over the $19\\times19$ grid) with rectifier (ReLU)
+       non-linearities, building up an abstract representation of the position before their output heads diverge.</p>
+       <ul>
+        <li><b>SL policy network $p_\\sigma$.</b> A <b>13-layer</b> convolutional network ending in a <b>softmax
+        over all legal moves</b> &mdash; output is a probability map over the $19\\times19$ board, $p_\\sigma(a\\,|\\,s)$.
+        Trained by supervised learning (Eq 1) on 30M KGS positions. The paper swept $128/192/256/384$ filters per
+        layer (Figure 2a); more filters gave higher accuracy but slower evaluation ($\\approx 3$ ms per move).</li>
+        <li><b>Fast rollout policy $p_\\pi$.</b> NOT a deep net &mdash; a <b>linear softmax over small hand-crafted
+        pattern features</b> (Extended Data Table 4). Far weaker (24.2% move accuracy) but $\\approx 1500\\times$
+        faster ($2\\ \\mu\\text{s}$ per move), so it can play games out to the end inside the search.</li>
+        <li><b>RL policy network $p_\\rho$.</b> <b>Identical architecture</b> to $p_\\sigma$ (13 conv layers + softmax),
+        weights initialised to $\\rho = \\sigma$, then trained by self-play policy gradient (Eq 2).</li>
+        <li><b>Value network $v_\\theta$.</b> Same convolutional body as the policy network, but the output head is
+        a <b>single scalar</b> $v_\\theta(s) \\in [-1,1]$ instead of a move-probability map &mdash; the predicted
+        outcome of the position. Trained by regression (Eq 4) on 30M distinct self-play positions.</li>
+       </ul>
+       <p><b>The MCTS that ties them together (Figure 3).</b> A search tree whose every edge $(s,a)$ stores three
+       numbers &mdash; action value $Q(s,a)$, visit count $N(s,a)$, prior $P(s,a)$. Each simulation runs the
+       four-step loop: <b>select</b> down the tree by $\\arg\\max(Q+u)$ (Eq 5); <b>expand</b> a new leaf and fill
+       its priors from one forward pass of $p_\\sigma$; <b>evaluate</b> the leaf by blending $v_\\theta(s_L)$ with a
+       $p_\\pi$ rollout (Eq 6); <b>back up</b> the result along the path, updating $N$ and $Q$ (Eqs 7&ndash;8). The
+       policy/value forward passes run on GPUs while simulations run asynchronously on CPUs; the match version used
+       40 search threads, 48 CPUs and 8 GPUs (the distributed version 1202 CPUs and 176 GPUs, &sect;4).</p>`,
     symbols: [
       { sym: "$s$", desc: "a <b>state</b> &mdash; a board position. $s_t$ is the position at step $t$ of a simulation; $s_L$ is the <b>leaf</b> position where a simulation stops growing the tree." },
       { sym: "$a$", desc: "an <b>action</b> &mdash; a legal move (where to place a stone). An <b>edge</b> $(s,a)$ in the tree is the move $a$ taken from board $s$." },
@@ -190,6 +218,9 @@
       { sym: "$p_\\pi(a \\,|\\, s)$", desc: "the <b>fast rollout policy</b>: a small, fast, weaker policy used to play games to the end quickly inside the search. $\\pi$ are its weights." },
       { sym: "$p_\\rho(a \\,|\\, s)$", desc: "the <b>reinforcement-learning (RL) policy network</b>: same shape as $p_\\sigma$ but improved by self-play to win games. $\\rho$ are its weights, started at $\\rho = \\sigma$." },
       { sym: "$v_\\theta(s)$", desc: "the <b>value network</b>: a deep network that outputs one number estimating the game outcome (who wins) from board $s$. $\\theta$ are its weights." },
+      { sym: "$v^{p}(s)$", desc: "the <b>true value function</b> under a policy $p$ (Eq 3): the expected outcome $\\mathbb{E}[z_t]$ from board $s$ when both players follow $p$ until the game ends at step $T$. The value network $v_\\theta$ is trained to approximate $v^{p_\\rho}$ (the value under the RL policy)." },
+      { sym: "$\\mathbb{E}[\\cdot]$", desc: "the <b>expectation</b> (average) operator &mdash; here the average game outcome $z_t$ over all ways the game could play out from $s$ under policy $p$." },
+      { sym: "$\\sigma,\\ \\pi,\\ \\rho,\\ \\theta$", desc: "the <b>weight vectors</b> being trained: $\\sigma$ for the SL policy, $\\pi$ for the fast rollout policy, $\\rho$ for the RL policy, $\\theta$ for the value network. $\\Delta$ before a symbol means &ldquo;the update applied to those weights&rdquo;." },
       { sym: "$z,\\ z_t,\\ z_L$", desc: "a game <b>outcome</b> from the current player's view: $+1$ for a win, $-1$ for a loss. $z_t$ is the terminal reward seen at step $t$; $z_L$ is the result of the rollout from leaf $s_L$." },
       { sym: "$Q(s,a)$", desc: "the <b>action value</b> of edge $(s,a)$ &mdash; the mean leaf evaluation over all simulations that passed through it (Eq 8). The search's current estimate of how good move $a$ is from $s$." },
       { sym: "$N(s,a)$", desc: "the <b>visit count</b> of edge $(s,a)$ &mdash; how many simulations have used that move (Eq 7). The final move is the one with the largest $N$ at the root." },
@@ -200,7 +231,20 @@
       { sym: "“rollout”", desc: "a plain term: playing a game from a position to the end quickly (here with $p_\\pi$) and using who won as a rough score for that position." },
       { sym: "“MCTS”", desc: "<b>Monte Carlo Tree Search</b> &mdash; a planning method that grows a tree by running many simulated games, concentrating its effort on promising moves." }
     ],
-    formula: `$$ a_t = \\arg\\max_a \\big( Q(s_t,a) + u(s_t,a) \\big), \\qquad u(s,a) \\propto \\frac{P(s,a)}{1 + N(s,a)} \\;\\text{(Eq 5)} $$ $$ V(s_L) = (1-\\lambda)\\, v_\\theta(s_L) + \\lambda\\, z_L \\;\\text{(Eq 6)} $$ $$ N(s,a) = \\sum_{i=1}^{n} \\mathbf{1}(s,a,i), \\qquad Q(s,a) = \\frac{1}{N(s,a)} \\sum_{i=1}^{n} \\mathbf{1}(s,a,i)\\, V(s_L^i) \\;\\text{(Eqs 7, 8)} $$`,
+    formula: `$$ \\Delta\\sigma \\propto \\frac{\\partial \\log p_\\sigma(a \\,|\\, s)}{\\partial \\sigma} \\;\\text{(Eq 1)} $$
+       <p>SL policy network (&sect;1): maximum-likelihood gradient ascent &mdash; raise the log-probability the network gives the human expert's move $a$ in board $s$.</p>
+       $$ \\Delta\\rho \\propto \\frac{\\partial \\log p_\\rho(a_t \\,|\\, s_t)}{\\partial \\rho}\\, z_t \\;\\text{(Eq 2)} $$
+       <p>RL policy network (&sect;2): policy gradient &mdash; weight each move's log-probability gradient by the self-play outcome $z_t$ ($+1$ win, $-1$ loss), so winning moves are pushed up and losing moves down.</p>
+       $$ v^{p}(s) = \\mathbb{E}\\big[\\, z_t \\,\\mid\\, s_t = s,\\ a_{t \\dots T} \\sim p \\,\\big] \\;\\text{(Eq 3)} $$
+       <p>Value function (&sect;3): the expected game outcome from board $s$ when both players follow policy $p$ to the end &mdash; what the value network is trained to approximate.</p>
+       $$ \\Delta\\theta \\propto \\frac{\\partial v_\\theta(s)}{\\partial \\theta}\\,\\big( z - v_\\theta(s) \\big) \\;\\text{(Eq 4)} $$
+       <p>Value network (&sect;3): regression by gradient descent on squared error &mdash; move the prediction $v_\\theta(s)$ toward the actual self-play outcome $z$.</p>
+       $$ a_t = \\arg\\max_a \\big( Q(s_t,a) + u(s_t,a) \\big), \\qquad u(s,a) \\propto \\frac{P(s,a)}{1 + N(s,a)} \\;\\text{(Eq 5)} $$
+       <p>MCTS selection / PUCT (&sect;4): at each step descend to the move with the largest action value $Q$ plus an exploration bonus $u$ that scales with the policy prior $P$ and decays as the visit count $N$ grows.</p>
+       $$ V(s_L) = (1-\\lambda)\\, v_\\theta(s_L) + \\lambda\\, z_L \\;\\text{(Eq 6)} $$
+       <p>Leaf evaluation (&sect;4): blend the value network's estimate $v_\\theta(s_L)$ with a fast-rollout outcome $z_L$; best mix $\\lambda = 0.5$ (&sect;5).</p>
+       $$ N(s,a) = \\sum_{i=1}^{n} \\mathbf{1}(s,a,i), \\qquad Q(s,a) = \\frac{1}{N(s,a)} \\sum_{i=1}^{n} \\mathbf{1}(s,a,i)\\, V(s_L^i) \\;\\text{(Eqs 7, 8)} $$
+       <p>Back-up (&sect;4): $N$ counts the simulations that used edge $(s,a)$; $Q$ is the mean leaf evaluation over them. After the budget is spent, AlphaGo plays the most-visited root move.</p>`,
     whatItDoes:
       `<p><b>Eq (5) is the selection rule</b> &mdash; how each simulation decides which move to follow. It picks
        the move with the largest $Q + u$. The first term $Q$ is exploitation: favour moves that have looked good.

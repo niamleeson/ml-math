@@ -144,6 +144,36 @@
        Since off-policy methods learn from arbitrary stored transitions regardless of which policy produced
        them, you can drop the relabeled copies straight into the replay buffer and run any off-policy learner
        (DQN here, DDPG for the robot) unchanged (&sect;3.3, Algorithm 1).</p>`,
+    architecture:
+      `<p>HER is not a network &mdash; it is a <b>relabeling wrapper</b> bolted around an unchanged off-policy
+       learner. Three components plus the relabel loop:</p>
+       <ol>
+        <li><b>Goal-conditioned value/policy network (UVFA, &sect;2.4).</b> The only change to the base RL net is
+        its <i>input</i>: it consumes the concatenation $(s \\,\\|\\, g)$ instead of just $s$.
+        <ul>
+         <li><i>Discrete (bit-flip, our DQN):</i> $Q(s,a,g)$ is a multilayer perceptron (MLP) &mdash;
+         <code>Linear(2n &rarr; 256) &rarr; ReLU &rarr; Linear(256 &rarr; n)</code> &mdash; mapping the $2n$-long input
+         $(s\\|g)$ to $n$ action-values (one per flippable bit). Greedy action $\\arg\\max_a Q(s,a,g)$.</li>
+         <li><i>Continuous (robot, DDPG &sect;2.3, &sect;4.1):</i> two MLPs with ReLU &mdash; an <b>actor</b>
+         $\\pi(s,g)\\!\\to\\!a$ and a <b>critic</b> $Q(s,a,g)$ &mdash; each also fed the concatenated goal. Both
+         are trained from the same replay buffer; the actor maximizes the critic.</li>
+        </ul></li>
+        <li><b>Replay buffer $R$.</b> A standard off-policy buffer of transitions, but each transition carries its
+        goal: $(s_t\\|g,\\, a_t,\\, r_t,\\, s_{t+1}\\|g)$. HER simply inserts <i>extra</i> relabeled entries into the
+        same buffer; the learner never knows which entries are real vs. hindsight.</li>
+        <li><b>Off-policy learner (interchangeable).</b> DQN / DDPG / NAF / SDQN, untouched. It samples
+        minibatches from $R$ and regresses $Q(s,a,g)$ to the Bellman target $y$ (DQN form) or runs the
+        actor&ndash;critic updates (DDPG form). The goal $g$ stored in each transition is used on <i>both</i> sides
+        of the target.</li>
+       </ol>
+       <p><b>Per-episode data flow (Algorithm 1).</b> (1) Sample a goal $g$ and start $s_0$; roll out the
+       behavior policy $\\pi_b(s_t\\|g)$ for $T$ steps, observing $s_1,\\ldots,s_T$. (2) <b>First pass &mdash; real
+       goal:</b> store each $(s_t\\|g,\\,a_t,\\,r_t,\\,s_{t+1}\\|g)$ in $R$. (3) <b>Second pass &mdash; relabel:</b>
+       sample replay goals $G := \\mathbb{S}(\\text{episode})$ (e.g. <code>final</code> &rArr; $G=\\{m(s_T)\\}$); for
+       every transition and every $g'\\in G$, recompute $r' := r(s_t,a_t,g')$ and store the hindsight copy
+       $(s_t\\|g',\\,a_t,\\,r',\\,s_{t+1}\\|g')$. (4) <b>Learn:</b> run $N$ minibatch optimization steps on the
+       mixed buffer. The dynamics $s_t\\!\\to\\!s_{t+1}$ are byte-for-byte identical across the real and relabeled
+       copies &mdash; only the goal-tag and its derived reward differ, which is why the wrapper is sound.</p>`,
     symbols: [
       { sym: "$s,\\,s_t$", desc: "the <b>state</b> at time $t$ — what the agent observes. In bit-flipping it is a length-$n$ vector of $0$/$1$ bits." },
       { sym: "$a,\\,a_t$", desc: "the <b>action</b> at time $t$. In bit-flipping, action $i \\in \\{0,\\ldots,n-1\\}$ flips the $i$-th bit." },
@@ -160,20 +190,49 @@
       { sym: "$m(s)$", desc: "the <b>state-to-goal map</b>: turns a state into the goal it achieves. The <code>final</code> strategy uses $g' = m(s_T)$; in bit-flipping $m$ is the identity ($\\mathcal{G} = \\mathcal{S}$)." },
       { sym: "$\\|$", desc: "<b>concatenation</b>: $s \\,\\|\\, g$ stacks the goal vector onto the state vector, giving the goal-conditioned net its $(s, g)$ input (Algorithm 1)." },
       { sym: "$\\gamma$", desc: "the <b>discount factor</b> (Greek 'gamma') in $[0,1]$: how much a reward one step later is worth relative to now. We use $0.98$." },
-      { sym: "$k$", desc: "the <b>number of extra relabel goals</b> per transition (the <code>future</code>/<code>episode</code>/<code>random</code> strategies sample $k$ of them); it sets the ratio of hindsight data to normal data (&sect;4.5)." }
+      { sym: "$k$", desc: "the <b>number of extra relabel goals</b> per transition (the <code>future</code>/<code>episode</code>/<code>random</code> strategies sample $k$ of them); it sets the ratio of hindsight data to normal data (&sect;4.5). Best at $k = 4$ or $8$." },
+      { sym: "$\\pi(s,g)$", desc: "the <b>goal-conditioned policy</b>: in DDPG (&sect;2.3) a deterministic actor net mapping $(s,g)$ to an action; in DQN the implicit greedy policy $\\pi_Q(s,g) = \\arg\\max_a Q(s,a,g)$." },
+      { sym: "$\\pi_b$", desc: "the <b>behavior (exploration) policy</b> that actually generates episodes: $\\epsilon$-greedy over $Q$ (DQN) or the actor plus noise $\\pi(s,g) + \\mathcal{N}(0,1)$ (DDPG, &sect;2.3)." },
+      { sym: "$\\mathcal{L}$", desc: "the <b>critic / Q-network loss</b>: mean squared Bellman error $\\mathbb{E}[(Q(s,a,g) - y)^2]$ minimized by gradient descent (&sect;2.2)." },
+      { sym: "$\\mathcal{L}_a$", desc: "the <b>DDPG actor loss</b> $-\\mathbb{E}_s\\,Q(s,\\pi(s,g),g)$ (&sect;2.3): minimizing it pushes the actor toward actions the critic rates highly." },
+      { sym: "$y$", desc: "the <b>regression target (Bellman target)</b> each stored transition is trained toward: $r + \\gamma(1-\\text{done})\\max_{a'}Q(s',a',g)$ (DQN) or $r + \\gamma\\,Q(s',\\pi(s',g),g)$ (DDPG)." },
+      { sym: "$R_t$", desc: "the <b>return</b>: the discounted sum of future rewards $\\sum_{i\\ge t}\\gamma^{i-t} r_i$ from step $t$ onward; $Q$ estimates its expectation (&sect;2.1)." },
+      { sym: "$\\mathcal{N}(0,1)$", desc: "<b>Gaussian exploration noise</b> (mean $0$, variance $1$) added to the deterministic DDPG actor to generate diverse episodes (&sect;2.3)." },
+      { sym: "$\\epsilon$", desc: "in DQN, the <b>exploration probability</b> of $\\epsilon$-greedy; in the robotic goal predicate (&sect;4.1), the <b>tolerance</b> radius: a state counts as the goal if the object is within $\\epsilon$ of the target." },
+      { sym: "$s_{\\text{object}}$", desc: "in the robotic tasks (&sect;4.1), the <b>object's position</b> read out of the full state $s$; the goal predicate is $f_g(s) = [\\,|g - s_{\\text{object}}| \\le \\epsilon\\,]$." }
     ],
     formula:
-      `$$ \\textbf{Sparse binary reward (bit-flipping, §3.1):}\\qquad
+      `$$ \\textbf{Goal-conditioned value (UVFA, §2.4):}\\qquad
+         Q^{\\pi}(s_t, a_t, g) = \\mathbb{E}\\!\\left[\\,R_t \\mid s_t, a_t, g\\,\\right],
+         \\qquad \\pi : \\mathcal{S} \\times \\mathcal{G} \\to \\mathcal{A},
+         \\qquad r_t = r_g(s_t, a_t) $$
+       <div class="cap">§2.4: the policy and value function take the goal $g$ as an extra input — the same net answers "how good is $a$ in $s$ <i>if the goal were</i> $g$?" for any $g$. This is what makes relabeling type-check.</div>
+       $$ \\textbf{Sparse binary reward, bit-flipping (§3.1):}\\quad
          r_g(s,a) = -\\,[\\,s \\neq g\\,]
-         \\;=\\; \\begin{cases} 0 & \\text{if } s = g \\\\ -1 & \\text{if } s \\neq g \\end{cases} $$
+         \\;=\\; \\begin{cases} 0 & \\text{if } s = g \\\\ -1 & \\text{if } s \\neq g \\end{cases}
+         \\qquad
+         \\textbf{general (§3.2):}\\quad r(s,a,g) = -\\,[\\,f_g(s') = 0\\,] $$
+       <div class="cap">§3.1 / §3.2: $-1$ until the (next) state satisfies the goal, then $0$. The goal predicate $f_g(s) = [s = g]$ (bit-flip) or $f_g(s) = [\\,|g - s_{\\text{object}}| \\le \\epsilon\\,]$ (robot, §4.1) says whether a state <i>is</i> the goal; the map $m$ obeys $f_{m(s)}(s) = 1$.</div>
        $$ \\textbf{HER relabel (Algorithm 1):}\\qquad
          \\underbrace{(s_t \\,\\|\\, g,\\; a_t,\\; r_t,\\; s_{t+1} \\,\\|\\, g)}_{\\text{store with the REAL goal}}
          \\;\\;\\text{and}\\;\\;
          \\underbrace{(s_t \\,\\|\\, g',\\; a_t,\\; r',\\; s_{t+1} \\,\\|\\, g')}_{\\text{store with the HINDSIGHT goal } g'},
-         \\quad r' = r(s_t, a_t, g') $$
-       $$ \\textbf{final strategy:}\\quad g' = m(s_T) \\qquad
-          \\textbf{the Bellman target each copy is then trained on (recap of }\\texttt{rl-dqn}\\textbf{):}\\quad
-          y = r + \\gamma\\,(1-\\text{done})\\,\\max_{a'} Q(s', a', g) $$`,
+         \\quad r' := r(s_t, a_t, g') $$
+       <div class="cap">Algorithm 1: store every transition twice — once with the real goal $g$ (standard replay), once per relabel goal $g' \\in \\mathbb{S}(\\text{episode})$ with its <b>recomputed</b> reward $r'$. "$\\|$" denotes concatenation onto the net input.</div>
+       $$ \\textbf{Goal-sampling strategies } \\mathbb{S} \\textbf{ (§4.5):}\\quad
+         \\underbrace{g' = m(s_T)}_{\\texttt{final}}, \\quad
+         \\underbrace{g' = m(s_i),\\, i \\gt t}_{\\texttt{future}\\;(k)}, \\quad
+         \\underbrace{g' = m(s_i),\\, i \\in \\text{ep}}_{\\texttt{episode}\\;(k)}, \\quad
+         \\underbrace{g' = m(s_j),\\, j \\in \\text{all}}_{\\texttt{random}\\;(k)} $$
+       <div class="cap">§4.5: <code>final</code> = the achieved final state; <code>future</code> = $k$ states seen later in the same episode (best, $k\\in\\{4,8\\}$); <code>episode</code> = $k$ states from the same episode; <code>random</code> = $k$ states from anywhere in training. $k$ sets the hindsight-to-normal data ratio.</div>
+       $$ \\textbf{DQN target each copy is trained on (§2.2, recap of }\\texttt{rl-dqn}\\textbf{):}\\quad
+          \\mathcal{L} = \\mathbb{E}\\big[(Q(s,a,g) - y)^2\\big],\\quad
+          y = r + \\gamma\\,(1-\\text{done})\\,\\max_{a'} Q(s', a', g) $$
+       <div class="cap">§2.2: discrete actions (bit-flip). Greedy policy $\\pi_Q(s,g) = \\arg\\max_a Q(s,a,g)$; $\\epsilon$-greedy behavior; a slow target net supplies $y$.</div>
+       $$ \\textbf{DDPG actor–critic (continuous actions, robot; §2.3):}\\quad
+          y = r + \\gamma\\,Q\\big(s', \\pi(s', g),\\, g\\big),\\qquad
+          \\mathcal{L}_a = -\\,\\mathbb{E}_s\\,Q\\big(s, \\pi(s, g),\\, g\\big) $$
+       <div class="cap">§2.3: the robotic tasks use DDPG — a critic $Q(s,a,g)$ trained on the same regression but with the actor's action $\\pi(s',g)$ in the bootstrap, and a deterministic actor $\\pi(s,g)$ trained to maximize $Q$ (minimize $\\mathcal{L}_a$). Behavior policy adds noise: $\\pi_b(s,g) = \\pi(s,g) + \\mathcal{N}(0,1)$.</div>`,
     whatItDoes:
       `<p>The first line is the <b>honest reward</b>: $-1$ for "not there yet", $0$ for "there" &mdash; nothing
        else. No shaping, no distance, no hints.</p>
