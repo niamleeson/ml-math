@@ -230,7 +230,7 @@ print(f"Var(Y) simulated = {VarY_sim:8.4f}   theory E[N]Var(X)+E[X]^2Var(N) = {V
   };
 
   window.CODEVIZ["probx-random-sum"] = {
-    question: "What does each random-sum formula actually compute? One diagram per formula: Wald's mean, the two-part variance, and the shape of Y itself.",
+    question: "How do you READ a random sum? The two formulas as bar charts, the shape of Y itself, and how that shape changes when the count vs the pieces drive the wobble.",
     charts: [
       {
         type: "bars",
@@ -238,7 +238,8 @@ print(f"Var(Y) simulated = {VarY_sim:8.4f}   theory E[N]Var(X)+E[X]^2Var(N) = {V
         labels: ["E[N] = 5", "E[X] = 3", "E[Y] = E[N]*E[X]"],
         values: [5, 3, 15],
         valueLabels: ["5", "3", "15"],
-        colors: ["#4ea1ff", "#ffb454", "#7ee787"]
+        colors: ["#4ea1ff", "#ffb454", "#7ee787"],
+        interpret: "Each bar is one factor in the mean formula. Read it left to right: the blue bar is the average count (5 pieces), the orange bar is the average piece value (3), and the green bar is their product, E[Y]=15. <b>The takeaway:</b> the mean of the total is just average-count times average-piece, nothing more. You never needed the full count distribution, only its mean."
       },
       {
         type: "bars",
@@ -246,7 +247,8 @@ print(f"Var(Y) simulated = {VarY_sim:8.4f}   theory E[N]Var(X)+E[X]^2Var(N) = {V
         labels: ["within-count E[N]*Var(X)", "between-count (E[X])^2*Var(N)", "total Var(Y)"],
         values: [20, 45, 65],
         valueLabels: ["20", "45", "65"],
-        colors: ["#4ea1ff", "#c89bff", "#7ee787"]
+        colors: ["#4ea1ff", "#c89bff", "#7ee787"],
+        interpret: "Bar height is variance (spread squared). The blue bar is the wobble from the pieces if the count were fixed (20); the purple bar is the EXTRA wobble from not knowing how many pieces there are (45); the green bar is their sum, Var(Y)=65. <b>Read it as a budget:</b> here the between-count term is the bigger slice, so most of the spread comes from the random count, not the pieces. Forgetting the purple bar would underreport spread by more than half."
       },
       {
         type: "bars",
@@ -254,10 +256,29 @@ print(f"Var(Y) simulated = {VarY_sim:8.4f}   theory E[N]Var(X)+E[X]^2Var(N) = {V
         labels: ["0-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35", "35-40"],
         values: [0.0879, 0.2062, 0.2532, 0.2069, 0.1310, 0.0678, 0.0293, 0.0117],
         valueLabels: ["0.088", "0.206", "0.253", "0.207", "0.131", "0.068", "0.029", "0.012"],
-        colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"]
+        colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "This is the actual shape of the total Y. The x-axis is the value of Y in bins; bar height is the fraction of trials landing in each bin. The mass peaks in the green bins straddling the predicted mean E[Y]=15, and the right tail is longer than the left (Y can never go below 0). <b>Conclusion:</b> the simulated centre and spread match the formulas; the histogram bars are illustrative but the mean and variance are exact."
+      },
+      {
+        type: "bars",
+        title: "VARIANT - count dominates: same E[Y]=15 but big Var(N), spread blows up, spike at Y=0",
+        labels: ["0-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35", "35-40"],
+        values: [0.30, 0.13, 0.12, 0.12, 0.11, 0.09, 0.07, 0.06],
+        valueLabels: ["0.30", "0.13", "0.12", "0.12", "0.11", "0.09", "0.07", "0.06"],
+        colors: ["#ff7b72", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. Same mean E[Y]=15, but now the count N is very erratic (large Var(N)), so the between-count term dominates. <b>How to recognise it:</b> the distribution is flat and wide, and there is a tall red spike in the first bin because a highly variable count is often 0, forcing Y=0. <b>Conclusion:</b> two random sums can share a mean yet look completely different — when the count drives the wobble you get this fat, spiky shape, and reporting only E[Y] hides the risk."
+      },
+      {
+        type: "bars",
+        title: "VARIANT - count fixed (N=5 exactly): between-count term is 0, Y is tight and bell-like",
+        labels: ["0-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35", "35-40"],
+        values: [0.001, 0.04, 0.30, 0.42, 0.18, 0.05, 0.008, 0.001],
+        valueLabels: ["0.001", "0.04", "0.30", "0.42", "0.18", "0.05", "0.008", "0.001"],
+        colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. Now the count is FIXED at exactly 5, so Var(N)=0 and the between-count term vanishes; only the within-count spread survives (just an ordinary sum of 5 pieces). <b>How to recognise it:</b> the shape is tight and symmetric, hugging the mean E[Y]=15 with almost no mass in the tails and no spike at 0. <b>Conclusion:</b> a fixed count is the calm case; comparing it to the canonical chart above shows exactly how much extra spread the random count was adding."
       }
     ],
-    caption: "First bar set: Wald's identity multiplies the average count (5) by the average piece (3) to get E[Y]=15. Second: the variance is two stacked contributions, the within-count spread E[N]Var(X)=20 plus the between-count spread (E[X])^2Var(N)=45, summing to Var(Y)=65. Third: the simulated distribution of Y piles up around the predicted mean E[Y]=15 (green bars), with spread matching Var(Y)=65 (the simulated histogram is illustrative; the means and variances are the exact formulas).",
+    caption: "First two bars decode the formulas; the last three show the shape of Y itself and how it morphs as the count goes from random (canonical), to wildly random (count dominates), to fixed (between-count term zero). Each chart has its own read-it guide below it.",
     code: `import numpy as np
 rng = np.random.default_rng(7)
 

@@ -216,20 +216,51 @@ print(f"beam wins by  {b_lp - g_lp:+.4f} log-prob")
   };
 
   window.CODEVIZ["dl-beam-search"] = {
-    question: "On the toy model, how does the best sequence log-probability beam search finds change as we widen the beam B from 1 (greedy) up to 8?",
+    question: "How do you read a beam-search diagram — does a wider beam always help, and what does length normalization fix?",
     charts: [
       {
         type: "bars",
-        title: "Best sequence log-probability vs beam width B (higher = better; B=1 is greedy)",
+        title: "Ideal: best log-probability rises as beam width B grows (B=1 is greedy)",
         xlabel: "beam width B",
-        ylabel: "best log-probability found",
+        ylabel: "best log-probability found (higher = better)",
         labels: ["B=1 (greedy)", "B=2", "B=4", "B=8"],
         values: [-6.357, -6.235, -5.808, -4.311],
         valueLabels: ["-6.357", "-6.235", "-5.808", "-4.311"],
-        colors: ["#9aa7b4", "#4ea1ff", "#4ea1ff", "#7ee787"]
+        colors: ["#9aa7b4", "#4ea1ff", "#4ea1ff", "#7ee787"],
+        interpret: "<b>x = beam width B; y = best log-prob (closer to 0 is better).</b> Real numbers from the toy model (seed 11). Bars must never drop as B grows, because a wider beam keeps every path a narrower one did — so widening can only find an equal-or-better sequence. The grey B=1 bar (greedy) is the worst: it commits early and cannot recover. <b>Read it as:</b> beam beats greedy, and bigger B helps here."
+      },
+      {
+        type: "line",
+        title: "Realistic: diminishing returns — log-prob plateaus, then text gets blander",
+        xlabel: "beam width B",
+        ylabel: "best log-probability found",
+        series: [{ name: "best log-prob", color: "#ffb454", points: [[1, -6.36], [2, -6.24], [4, -5.81], [8, -4.31], [16, -4.20], [32, -4.18], [64, -4.17]] }],
+        interpret: "<b>Illustrative shape.</b> On real translation systems the curve climbs fast then flattens: most of the gain is captured by modest B, and pushing B much higher barely improves log-prob while costing compute roughly proportional to B. Worse, very large B often returns blander, shorter, repetitive text. <b>Read a flattening curve as:</b> stop widening — you are paying compute for nothing, which is why systems settle near B≈10."
+      },
+      {
+        type: "bars",
+        title: "Failure mode: no length normalization — short answer cheats and wins",
+        xlabel: "candidate (alpha = 0, raw summed log-prob)",
+        ylabel: "score (higher = preferred)",
+        labels: ["short: 'Go.' (2 tok)", "full: 'Please go now.' (4 tok)"],
+        values: [-1.2, -2.0],
+        valueLabels: ["-1.20 (wins)", "-2.00"],
+        colors: ["#ff7b72", "#9aa7b4"],
+        interpret: "<b>Each bar is a candidate's summed log-prob with alpha=0 (no normalization).</b> Every extra token adds another negative log-prob, so the longer, better translation scores lower purely for being long — the short answer wins unfairly (red). <b>Recognise this</b> when beam output is clipped/truncated: the search is biased toward short sequences. The fix is dividing by Ty^alpha."
+      },
+      {
+        type: "bars",
+        title: "Fixed: length normalization (alpha = 0.7) — full sentence catches up",
+        xlabel: "candidate (alpha = 0.7, length-normalized)",
+        ylabel: "normalized score (higher = preferred)",
+        labels: ["short: 'Go.' (2 tok)", "full: 'Please go now.' (4 tok)"],
+        values: [-0.74, -0.76],
+        valueLabels: ["-0.74", "-0.76 (now nearly tied)"],
+        colors: ["#9aa7b4", "#7ee787"],
+        interpret: "<b>Same two candidates, now divided by Ty^0.7.</b> Real numbers: -1.2/2^0.7 ≈ -0.74 and -2.0/4^0.7 ≈ -0.76, so the gap nearly closes and a slightly higher alpha tips it to the full sentence (green). <b>Read it as:</b> normalization converts total log-prob into an (almost) per-token average, removing the short-sequence bias so length no longer decides the winner."
       }
     ],
-    caption: "Best log-probability the decoder finds, computed for real with numpy over the fixed-seed toy model (seed 11). The bars are non-decreasing in B: B=1 (greedy) scores -6.357, and each wider beam does at least as well (-6.235, -5.808, -4.311). Greedy is the worst because it commits early and cannot recover; widening the beam explores more partial sequences and uncovers higher-probability outputs — beam beats greedy. The gain comes at compute cost roughly proportional to B, which is why translation systems settle near B=10 rather than going arbitrarily large.",
+    caption: "Ideal (bars rise with B) plus three variants: diminishing returns, the short-sequence-bias failure at alpha=0, and the same case fixed by length normalization at alpha=0.7.",
     code: `import numpy as np
 
 VOCAB = ["the", "cat", "dog", "sat", "ran", "<eos>"]

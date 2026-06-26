@@ -119,26 +119,67 @@ print("check two 3x3 stride-1 layers, R2 =", receptive_field([(3, 1), (3, 1)])[-
   };
 
   window.CODEVIZ["dl-receptive-field"] = {
-    question: "How fast does the receptive field grow with depth — for an all-stride-1 3x3 net versus one with a few stride-2 layers?",
-    charts: [{
-      type: "line",
-      title: "Receptive field vs depth: all-stride-1 vs strided 3x3 nets",
-      xlabel: "layer depth k",
-      ylabel: "receptive field (input pixels)",
-      series: [
-        {
-          name: "all 3x3 stride-1 (linear)",
-          color: "#4ea1ff",
-          points: [[1, 3], [2, 5], [3, 7], [4, 9], [5, 11], [6, 13], [7, 15], [8, 17], [9, 19], [10, 21], [11, 23], [12, 25]]
-        },
-        {
-          name: "3x3 with stride-2 at layers 3,6,9 (faster)",
-          color: "#ff7b72",
-          points: [[1, 3], [2, 5], [3, 7], [4, 11], [5, 15], [6, 19], [7, 27], [8, 35], [9, 43], [10, 59], [11, 75], [12, 91]]
-        }
-      ]
-    }],
-    caption: "Both nets use 3x3 filters. The all-stride-1 net grows the receptive field linearly (3, 5, 7, ... 25). Adding a stride-2 layer at depths 3, 6, and 9 multiplies every later layer's contribution, so the receptive field reaches 91 pixels by layer 12 instead of 25 — far cheaper context than stacking stride-1 layers.",
+    question: "How fast does the receptive field grow with depth — for an all-stride-1 3x3 net versus one with a few stride-2 layers, and what do other growth patterns look like?",
+    charts: [
+      {
+        type: "line",
+        title: "Ideal: stride-2 layers multiply growth — linear vs accelerating",
+        xlabel: "layer depth k",
+        ylabel: "receptive field (input pixels)",
+        series: [
+          {
+            name: "all 3x3 stride-1 (linear)",
+            color: "#4ea1ff",
+            points: [[1, 3], [2, 5], [3, 7], [4, 9], [5, 11], [6, 13], [7, 15], [8, 17], [9, 19], [10, 21], [11, 23], [12, 25]]
+          },
+          {
+            name: "3x3 with stride-2 at layers 3,6,9 (faster)",
+            color: "#ff7b72",
+            points: [[1, 3], [2, 5], [3, 7], [4, 11], [5, 15], [6, 19], [7, 27], [8, 35], [9, 43], [10, 59], [11, 75], [12, 91]]
+          }
+        ],
+        interpret: "<b>Real numbers from the formula.</b> X-axis is depth (layer index k); y-axis is the receptive field — the side length, in original input pixels, that one neuron at that depth can see. The blue line is a straight line: every plain 3x3 stride-1 layer adds exactly 2 (3, 5, 7, ... 25). The red line <b>bends upward</b> at each stride-2 layer (depths 3, 6, 9), because a stride multiplies the contribution of every later layer — reaching 91 by layer 12 instead of 25. Read a <b>steeper, kinked curve</b> as 'this net buys large context cheaply via strides.'"
+      },
+      {
+        type: "line",
+        title: "Variant — receptive field too small for the object (illustrative)",
+        xlabel: "layer depth k",
+        ylabel: "receptive field (input pixels)",
+        series: [
+          {
+            name: "all 3x3 stride-1 receptive field",
+            color: "#4ea1ff",
+            points: [[1, 3], [2, 5], [3, 7], [4, 9], [5, 11], [6, 13], [7, 15], [8, 17]]
+          },
+          {
+            name: "object size = 32 px (target)",
+            color: "#ff7b72",
+            points: [[1, 32], [8, 32]]
+          }
+        ],
+        interpret: "<b>Illustrative diagnosis.</b> The flat red line is the size of the object you must recognise (32 px); the blue line is the receptive field you actually have. The blue curve <b>never reaches the red line</b> within 8 layers (it tops out at 17), so the deepest neuron literally cannot see the whole object — no amount of training fixes that. Recognise this failure mode when your growth curve stays <b>below the object-size line</b>. Fix: add depth, strides, or dilation to lift the blue curve over the red."
+      },
+      {
+        type: "line",
+        title: "Variant — theoretical vs effective receptive field (illustrative)",
+        xlabel: "distance from center of patch (pixels)",
+        ylabel: "influence on the output neuron",
+        series: [
+          {
+            name: "theoretical (formula): flat, all equal",
+            color: "#9aa7b4",
+            points: [[-8, 1], [-4, 1], [0, 1], [4, 1], [8, 1]]
+          },
+          {
+            name: "effective: Gaussian, center dominates",
+            color: "#7ee787",
+            points: [[-8, 0.05], [-6, 0.15], [-4, 0.4], [-2, 0.8], [0, 1.0], [2, 0.8], [4, 0.4], [6, 0.15], [8, 0.05]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> Here the x-axis is position within the receptive field (0 = center) and the y-axis is how much each input pixel actually influences the output. The grey line is what the formula implies — every pixel in the patch counts equally. The green bell shows reality: influence is <b>Gaussian-shaped, concentrated at the center</b> and fading to near zero at the edges. Read this as a warning: the formula gives the <b>maximum</b> reach, but the <i>effective</i> receptive field is smaller, so leave headroom when sizing layers."
+      }
+    ],
+    caption: "All nets use 3x3 filters. The first chart is the real formula output (linear stride-1 vs accelerating strided growth, 25 vs 91 pixels by layer 12). The other two are variants you may meet: a receptive field that falls short of the object, and the gap between the theoretical and the effective (center-weighted) receptive field. Variants are illustrative.",
     code: `import numpy as np
 
 def receptive_field(layers):

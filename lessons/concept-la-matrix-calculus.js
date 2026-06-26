@@ -273,18 +273,37 @@ print("normal-equations gradient max abs:", np.max(np.abs(2 * X.T @ (X @ w - y))
   };
 
   window.CODEVIZ["la-matrix-calculus"] = {
-    question: "Do the analytic gradient identities actually match the numbers? Compare each to a numerical finite-difference gradient.",
+    question: "How do you read a gradient-check bar chart: which heights say 'identity correct', and which say 'you have a bug'?",
     charts: [
       {
         type: "bars",
-        title: "Analytic vs numerical gradient: max abs error per identity (all near machine/FD precision)",
+        title: "Ideal: all five identities correct (max abs error ~1e-9, the FD floor)",
         labels: ["grad b^T x", "grad x^T A x", "grad tr(AB)", "grad tr(ABA^T C)", "grad |A|"],
         values: [8.04e-11, 1.21e-10, 2.41e-10, 2.98e-9, 7.93e-10],
         valueLabels: ["8.0e-11", "1.2e-10", "2.4e-10", "3.0e-9", "7.9e-10"],
-        colors: ["#4ea1ff", "#7ee787", "#ffb454", "#c89bff", "#ff7b72"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Each bar is one identity; its height is the largest disagreement between the closed-form gradient and a finite-difference (FD) gradient. <b>Heights are all tiny &mdash; 1e-11 to 1e-9</b>, which is the FD rounding floor, not real error. <b>Read it as:</b> every bar this short means analytic == numerical, so all five rules are implemented correctly. These are the real computed numbers for this lesson's code; this is the target you want every gradient check to look like."
+      },
+      {
+        type: "bars",
+        title: "Bug: wrong layout on tr(AB) (used B instead of B^T) spikes to O(1)",
+        labels: ["grad b^T x", "grad x^T A x", "grad tr(AB)", "grad tr(ABA^T C)", "grad |A|"],
+        values: [8.04e-11, 1.21e-10, 3.7, 2.98e-9, 7.93e-10],
+        valueLabels: ["8.0e-11", "1.2e-10", "3.7", "3.0e-9", "7.9e-10"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72", "#7ee787", "#7ee787"],
+        interpret: "Illustrative. Four bars stay at the ~1e-9 floor, but the <b>tr(AB) bar leaps to ~3.7 &mdash; ten orders of magnitude taller</b>. That is the signature of a real mistake: here using B where denominator layout requires B-transpose. <b>Read it as:</b> one bar towering over the others (anything well above ~1e-5) localizes the broken identity. A transpose/layout slip flips entries, so the error is O(1), not subtle &mdash; the chart points straight at the culprit."
+      },
+      {
+        type: "bars",
+        title: "Tool artifact: FD step h too small (|A| near-singular) gives a fake spike",
+        labels: ["grad b^T x", "grad x^T A x", "grad tr(AB)", "grad tr(ABA^T C)", "grad |A|"],
+        values: [8.04e-11, 1.21e-10, 2.41e-10, 2.98e-9, 0.004],
+        valueLabels: ["8.0e-11", "1.2e-10", "2.4e-10", "3.0e-9", "4e-3"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ffb454"],
+        interpret: "Illustrative. The |A| bar is raised to ~1e-3 &mdash; bigger than the others but nowhere near the O(1) of a real bug. This is a <b>numerical artifact</b>, not a wrong identity: a too-small FD step (the nudge size h) on a near-singular matrix loses precision, and the determinant gradient involves the inverse, which blows up near singular. <b>Read it as:</b> a mid-height orange bar (1e-5 to 1e-2) usually means the <i>check</i> is shaky (bad step size, ill-conditioned input), not the formula. Fix by differentiating log of the determinant or tuning the step before concluding the rule is wrong."
       }
     ],
-    caption: "Every analytic identity matches its finite-difference gradient to ~1e-9 or better on random matrices, confirming all five rules hold.",
+    caption: "How to read a gradient-check chart: all bars at the ~1e-9 floor means every identity is correct; one bar spiking to O(1) localizes a real bug (e.g. a layout/transpose slip); a mid-height bar usually flags a numerical artifact in the check itself, not a wrong rule.",
     code: `import numpy as np
 rng = np.random.default_rng(0)
 

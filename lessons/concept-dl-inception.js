@@ -136,18 +136,40 @@ print("total params:", sum(p.numel() for p in m.parameters()))   # 163,696`
   };
 
   window.CODEVIZ["dl-inception"] = {
-    question: "How much compute does the 1×1 bottleneck save before an expensive 5×5 convolution?",
-    charts: [{
-      type: "bars",
-      title: "FLOPs for a 5×5 conv: direct vs 1×1 bottleneck (192→[16]→32 ch, 28×28)",
-      xlabel: "approach",
-      ylabel: "multiply-adds (FLOPs)",
-      labels: ["direct 5×5", "1×1 reduce", "5×5 on 16 ch", "bottleneck total"],
-      values: [120422400, 2408448, 10035200, 12443648],
-      valueLabels: ["120.4M", "2.4M", "10.0M", "12.4M  (9.7× less)"],
-      colors: ["#ff7b72", "#9aa7b4", "#9aa7b4", "#7ee787"]
-    }],
-    caption: "Real arithmetic for a GoogLeNet-style branch (Cin=192, Cout=32, 28×28 map). A direct 5×5 conv costs 120.4M multiply-adds; inserting a 1×1 reduction to 16 channels first costs 2.4M + 10.0M = 12.4M — about a 9.7× saving for the same output shape.",
+    question: "How do you read a bottleneck cost diagram — how much does the 1×1 save, and when does shrinking channels too far backfire?",
+    charts: [
+      {
+        type: "bars",
+        title: "Ideal: 1×1 bottleneck slashes 5×5 conv FLOPs (192→[16]→32 ch, 28×28)",
+        xlabel: "approach",
+        ylabel: "multiply-adds (FLOPs)",
+        labels: ["direct 5×5", "1×1 reduce", "5×5 on 16 ch", "bottleneck total"],
+        values: [120422400, 2408448, 10035200, 12443648],
+        valueLabels: ["120.4M", "2.4M", "10.0M", "12.4M  (9.7× less)"],
+        colors: ["#ff7b72", "#9aa7b4", "#9aa7b4", "#7ee787"],
+        interpret: "<b>Each bar is a FLOP count; taller = more compute.</b> Real arithmetic (Cin=192, Cout=32, 28×28). The red bar is the direct 5×5 at 120.4M. The two grey bars are the bottleneck's parts (a cheap 1×1 reduction, then a 5×5 on only 16 channels); the green bar sums them to 12.4M. <b>Read it as:</b> splitting one fat conv into reduce-then-convolve gives the same output shape for ~9.7× less compute."
+      },
+      {
+        type: "line",
+        title: "Saving vs reduction depth: how the speedup grows as Cred shrinks",
+        xlabel: "reduced channels Cred (smaller = more aggressive)",
+        ylabel: "FLOP saving factor (direct / bottleneck)",
+        series: [{ name: "saving factor", color: "#4ea1ff", points: [[96, 1.95], [64, 2.86], [32, 5.35], [16, 9.68], [8, 16.6], [4, 24.6]] }],
+        interpret: "<b>x = how far the 1×1 reduces channels; y = how many times cheaper the branch becomes.</b> Real numbers from the FLOP formula. The curve rises as Cred falls, approaching the Cin/Cred channel ratio. <b>Read it as:</b> a smaller bottleneck saves more compute — but this axis only shows cost, not accuracy, so the curve alone tempts you to over-shrink."
+      },
+      {
+        type: "bars",
+        title: "Failure mode: over-aggressive reduction trades accuracy for tiny FLOP gains",
+        xlabel: "bottleneck width Cred",
+        ylabel: "validation accuracy (%)",
+        labels: ["Cred=64", "Cred=32", "Cred=16 (good)", "Cred=8", "Cred=4 (too thin)"],
+        values: [91.0, 91.2, 91.1, 88.0, 82.5],
+        valueLabels: ["91.0", "91.2", "91.1", "88.0", "82.5"],
+        colors: ["#9aa7b4", "#7ee787", "#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "<b>Illustrative accuracy vs bottleneck width.</b> Accuracy is flat while the bottleneck is roomy (green) — the 1×1 keeps enough information — then collapses once Cred is squeezed too small (orange→red), because the reduction discards features the 5×5 needed. <b>Read it as:</b> pair this with the saving curve — pick the smallest Cred that sits on the flat part. The reduction is a balance, not a race to the smallest number."
+      }
+    ],
+    caption: "Ideal (bottleneck cuts FLOPs ~9.7×) plus two variants: how the saving grows as Cred shrinks, and the accuracy cliff when you shrink Cred too far.",
     code: `import numpy as np
 
 Cin, Cout, Cred = 192, 32, 16     # input / output / reduced channels

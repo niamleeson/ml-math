@@ -236,11 +236,11 @@ for step in range(60):
   };
 
   window.CODEVIZ["dl-resnet"] = {
-    question: "As a gradient back-propagates through a 50-layer network, does it survive to the early layers WITH vs WITHOUT skip connections?",
+    question: "Read these like a practitioner: what does a healthy residual net look like, and what do the failure modes that skip connections fix look like?",
     charts: [
       {
         type: "line",
-        title: "Gradient norm at each layer depth, 50-layer net: plain vs residual",
+        title: "Ideal: gradient norm vs depth, 50-layer net (plain collapses, residual survives)",
         xlabel: "layer depth (1 = first layer, near input)",
         ylabel: "gradient norm",
         series: [
@@ -253,11 +253,35 @@ for step in range(60):
             name: "Residual",
             color: "#7ee787",
             points: [[1,1.099],[2,1.1106],[3,1.1128],[4,1.0955],[5,1.0994],[6,1.091],[7,1.0892],[8,1.0851],[9,1.0679],[10,1.0734],[11,1.0884],[12,1.0922],[13,1.0763],[14,1.0631],[15,1.0528],[16,1.0602],[17,1.0628],[18,1.0689],[19,1.0625],[20,1.043],[21,1.0259],[22,1.0251],[23,1.0326],[24,1.0206],[25,1.0312],[26,1.0284],[27,1.0575],[28,1.0516],[29,1.0335],[30,1.0467],[31,1.0465],[32,1.0391],[33,1.0315],[34,1.0325],[35,1.0272],[36,1.0303],[37,1.0289],[38,1.0417],[39,1.0413],[40,1.0242],[41,1.008],[42,0.9933],[43,0.9769],[44,0.9811],[45,0.9933],[46,0.9871],[47,0.9978],[48,1.0048],[49,1.0167],[50,1.0]]
-          }
-        ]
+        },
+        ],
+        interpret: "X is layer depth (1 = nearest the input, 50 = output where back-prop starts); Y is the size (norm) of the gradient reaching that layer. <b>Red (plain)</b> sits flat at 0 for the first ~45 layers and only spikes at the output end: the gradient died on the way back, so early layers get no learning signal &mdash; the vanishing-gradient / degradation problem. <b>Green (residual)</b> stays flat near 1 the whole way: the skip's '+1' highway carries the gradient back undamped. <b>Read it as:</b> a healthy ResNet's green line is roughly horizontal near 1; a flat-zero line on the input side is the disease skips cure. This is a real backward pass (numpy), same Jacobians in both runs."
+      },
+      {
+        type: "line",
+        title: "The disease skips fix: training error, deep plain vs deep residual (degradation problem)",
+        xlabel: "training epoch",
+        ylabel: "training error",
+        series: [
+          { name: "Plain 20-layer", color: "#9aa7b4", points: [[0,0.66],[5,0.34],[10,0.2],[15,0.13],[20,0.09],[25,0.07],[30,0.06]] },
+          { name: "Plain 56-layer", color: "#ff7b72", points: [[0,0.66],[5,0.42],[10,0.31],[15,0.26],[20,0.23],[25,0.21],[30,0.2]] },
+          { name: "Residual 56-layer", color: "#7ee787", points: [[0,0.66],[5,0.28],[10,0.15],[15,0.09],[20,0.06],[25,0.04],[30,0.03]] }
+        ],
+        interpret: "X is epoch, Y is <b>training</b> error (not test). Illustrative shapes (CIFAR-style), but qualitatively what He et al. reported. The <b>red deeper plain net (56 layers) trains WORSE than the grey shallower plain net (20)</b> &mdash; deeper should never raise <i>training</i> error, so this is not overfitting, it is the degradation problem: the deep plain stack can't even optimize. <b>Green</b> is the same 56-layer depth as residual blocks, and it now trains best of all. <b>Read it as:</b> if your deeper model's training curve sits ABOVE a shallower one, suspect degradation and switch to residual blocks."
+      },
+      {
+        type: "line",
+        title: "Misuse: skips fix optimization, not overfitting (train vs val gap stays)",
+        xlabel: "training epoch",
+        ylabel: "error",
+        series: [
+          { name: "Residual train", color: "#7ee787", points: [[0,0.6],[5,0.25],[10,0.12],[15,0.06],[20,0.03],[25,0.02],[30,0.01]] },
+          { name: "Residual val", color: "#ffb454", points: [[0,0.62],[5,0.33],[10,0.26],[15,0.24],[20,0.25],[25,0.27],[30,0.29]] }
+        ],
+        interpret: "Same residual net, but now showing <b>train (green) vs validation (orange)</b> error. Illustrative. Training error dives toward 0 (skips made optimization easy), yet validation flattens and then creeps UP &mdash; a widening generalization gap. <b>Read it as:</b> skip connections cured the training problem but did nothing for overfitting; a green-near-zero / orange-rising-apart pattern means you still need regularization, augmentation, or early stopping. A common mistake is to expect ResNet alone to close this gap."
       }
     ],
-    caption: "One real backward pass through a 50-layer linearized net (numpy), starting from a unit-norm gradient at the output (layer 50). PLAIN: each layer multiplies the back-flowing gradient by a sub-unit Jacobian (gain 0.15), so the norm collapses to ~0 by layer ~46 and the first 45 layers see essentially no gradient (the vanishing-gradient problem). RESIDUAL: the skip adds a '+1' to every layer's Jacobian, so the gradient passes through nearly undamped and the norm stays in [0.98, 1.11] all the way back to layer 1 &mdash; an O(1) highway. Same Jacobians in both runs; the only difference is the skip connection.",
+    caption: "How to read residual-net diagrams: the ideal gradient-vs-depth curve (plain dies, residual survives), the degradation problem skips were invented to fix (deeper plain trains worse), and the trap that skips fix optimization but not overfitting.",
     code: `import numpy as np
 
 rng = np.random.default_rng(0)

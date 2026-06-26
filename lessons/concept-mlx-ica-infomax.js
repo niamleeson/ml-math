@@ -279,20 +279,54 @@ for r in range(2):
   };
 
   window.CODEVIZ["mlx-ica-infomax"] = {
-    question: "After running Bell-Sejnowski ICA, how well does each recovered source match its true source, compared with the raw mixed signals it started from?",
+    question: "After running Bell-Sejnowski ICA, how well does each recovered source match its true source — and how do you read the diagrams that tell you whether the unmixing actually worked?",
     charts: [
       {
         type: "bars",
-        title: "Absolute correlation with the true sources: recovered (after ICA) vs mixed (before)",
+        title: "Healthy: |correlation| with the true sources — recovered (after ICA) vs mixed (before)",
         xlabel: "signal",
         ylabel: "|correlation| with best-matching true source",
         labels: ["recovered\\nsource 1", "recovered\\nsource 2", "mixed\\nmic 1", "mixed\\nmic 2"],
         values: [1.000, 1.000, 0.818, 0.928],
         valueLabels: ["1.000", "1.000", "0.818", "0.928"],
-        colors: ["#7ee787", "#7ee787", "#ffb454", "#ffb454"]
+        colors: ["#7ee787", "#7ee787", "#ffb454", "#ffb454"],
+        interpret: "Each bar is how strongly one signal lines up with the best-matching true source: 1.0 means a perfect match, 0 means no relation. The two orange bars are the raw mics BEFORE unmixing — each is a blend, so it only correlates 0.82 / 0.93 with a true source. The two green bars are the recovered signals AFTER ICA, both at 1.000 — every recovered source is one true source (up to scale and sign). <b>Read it as:</b> green clearly taller than orange = the unmixing separated the blend; this is the success case (real numbers, seed 0)."
+      },
+      {
+        type: "line",
+        title: "Healthy ascent: log-likelihood climbs each epoch and levels off (convergence)",
+        xlabel: "epoch",
+        ylabel: "log-likelihood ℓ(W)  (higher = better)",
+        series: [
+          { name: "ℓ(W) per epoch", color: "#7ee787",
+            points: [[0,-3.10],[2,-2.20],[4,-1.55],[6,-1.10],[8,-0.78],[10,-0.55],[12,-0.40],[14,-0.30],[16,-0.23],[18,-0.18],[20,-0.15],[24,-0.12],[28,-0.10],[32,-0.09],[36,-0.085],[40,-0.083]] }
+        ],
+        interpret: "Gradient ASCENT maximizes the log-likelihood, so a healthy run goes UP and then flattens — the curve rising and plateauing means W has settled near A⁻¹ and extra epochs buy almost nothing. <b>Read it as:</b> monotone-up-then-flat = converged; stop here. (Illustrative shape — the y-values are a typical ascent trajectory, not seed-exact.)"
+      },
+      {
+        type: "line",
+        title: "Diverging: ascent sign flipped (or step too big) — likelihood falls toward -∞",
+        xlabel: "epoch",
+        ylabel: "log-likelihood ℓ(W)  (higher = better)",
+        series: [
+          { name: "ℓ(W) collapsing", color: "#ff7b72",
+            points: [[0,-3.10],[2,-3.9],[4,-5.2],[6,-7.5],[8,-11.0],[10,-16.5],[12,-25.0],[14,-38.0],[16,-58.0],[18,-90.0],[20,-140.0]] }
+        ],
+        interpret: "Same axes, but the curve plunges instead of climbing. This happens if you SUBTRACT the gradient (descent instead of ascent) or use too large a step: as det W → 0 the log|W| term drives ℓ toward -∞ and W collapses to singular. <b>Read it as:</b> a downward / exploding curve means the update sign or learning rate is wrong — flip the sign or anneal α. (Illustrative shape.)"
+      },
+      {
+        type: "bars",
+        title: "Failure on Gaussian sources: ICA cannot separate — recovered stays as blended as the mics",
+        xlabel: "signal",
+        ylabel: "|correlation| with best-matching true source",
+        labels: ["recovered\\nsource 1", "recovered\\nsource 2", "mixed\\nmic 1", "mixed\\nmic 2"],
+        values: [0.74, 0.69, 0.81, 0.88],
+        valueLabels: ["0.74", "0.69", "0.81", "0.88"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#ffb454"],
+        interpret: "Same bar chart as the healthy case, but the green success bars never appear: the recovered signals (red) sit around 0.7 — no better, even slightly worse, than the raw mics (orange). With GAUSSIAN sources the likelihood is flat under rotation, so ICA has nothing to climb toward and W lands on an arbitrary rotation, not the true unmixing. <b>Read it as:</b> recovered bars NOT clearly above the mixed bars = separation failed; suspect Gaussian (or sub-Gaussian) sources. (Illustrative.)"
       }
     ],
-    caption: "Real numbers (seed 0): two Laplace sources mixed by A = [[1,0.7],[0.4,1]], then unmixed by the Bell-Sejnowski update over 40 epochs. Each MIXED mic correlates only 0.818 / 0.928 with a true source (it is a blend of both). After ICA, each RECOVERED source correlates 1.000 with its true source &mdash; the unmixing worked. (The match is up to scale/sign/order: W @ A came out [[1.901,-0.015],[0.033,1.988]], a clean scaled permutation, so W = A^-1 up to scale and reordering.)",
+    caption: "Charts 1 and 4 use the |correlation| bar view (recovered vs raw mics); charts 2 and 3 are the log-likelihood ascent curve. Each has its own interpret on how to read it. Real numbers (seed 0) in chart 1: two Laplace sources mixed by A = [[1,0.7],[0.4,1]], unmixed by 40 epochs of Bell-Sejnowski; W @ A came out [[1.901,-0.015],[0.033,1.988]], a clean scaled permutation, so W = A^-1 up to scale/sign/order.",
     code: `import numpy as np
 np.random.seed(0)
 

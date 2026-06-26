@@ -174,7 +174,23 @@ jensen_gap(np.log, Xpos, "  uniform(1, 5)")
             color: "#7ee787",
             points: [[0.5,1.6487]]
           }
-        ]
+        ],
+        interpret: "x is the input, y is f(x)=e^x; the blue curve bows UP (convex). The orange chord joins the two outcomes x1=-1 and x2=2 and stays ABOVE the curve between them. At x=E[X]=0.5 the chord height is E[f(X)]=3.879 (red dot) and the curve height is f(E[X])=1.649 (green dot). <b>Read it as:</b> red sitting above green is the whole inequality — for a convex f, averaging-then-mapping (chord) overshoots mapping-then-averaging (curve). The vertical red-to-green distance IS the Jensen gap (+2.230)."
+      },
+      {
+        type: "line",
+        title: "Concave log x: chord lies BELOW the curve — Jensen flips to E[f(X)] <= f(E[X])",
+        xlabel: "x",
+        ylabel: "f(x) = log x",
+        series: [
+          { name: "f(x) = log x (concave curve)", color: "#4ea1ff",
+            points: [[1.0,0.0],[1.4,0.3365],[1.8,0.5878],[2.2,0.7885],[2.6,0.9555],[3.0,1.0986],[3.4,1.2238],[3.8,1.3350],[4.2,1.4351],[4.6,1.5261],[5.0,1.6094]] },
+          { name: "chord from (1, log1) to (5, log5)", color: "#ffb454",
+            points: [[1.0,0.0],[5.0,1.6094]] },
+          { name: "E[f(X)] = 0.805 (chord at x=E[X]=3)", color: "#ff7b72", points: [[3.0,0.8047]] },
+          { name: "f(E[X]) = 1.099 (curve at x=3)", color: "#7ee787", points: [[3.0,1.0986]] }
+        ],
+        interpret: "Same setup, concave f(x)=log x with two-point X=1 or 5 so E[X]=3. Now the curve bows DOWN, so the orange chord sits BELOW it. The chord height E[f(X)]=0.805 (red) is now UNDER the curve height f(E[X])=1.099 (green). <b>Read it as:</b> red below green = the flipped inequality E[f(X)] ≤ f(E[X]) for concave f — this is the log E ≥ E log step behind the EM/ELBO bound. (Two-point illustrative case; gap -0.294.)"
       },
       {
         type: "bars",
@@ -184,10 +200,33 @@ jensen_gap(np.log, Xpos, "  uniform(1, 5)")
         labels: ["e^x: E[f(X)]", "e^x: f(E[X])", "log: E[f(X)]", "log: f(E[X])"],
         values: [3.8785, 1.6487, 1.0141, 1.1010],
         valueLabels: ["3.879", "1.649", "1.014", "1.101"],
-        colors: ["#7ee787", "#4ea1ff", "#ff7b72", "#4ea1ff"]
+        colors: ["#7ee787", "#4ea1ff", "#ff7b72", "#4ea1ff"],
+        interpret: "Each pair compares the two sides of Jensen for one f. For convex e^x the E[f(X)] bar (green) towers over f(E[X]) (blue) — gap up. For concave log the E[f(X)] bar (red) sits just BELOW f(E[X]) (blue) — gap down, and small because Uniform(1,5) has modest spread. <b>Read it as:</b> which colored bar beats blue tells you the inequality direction; convex → E[f(X)] wins, concave → f(E[X]) wins. (e^x pair is the two-point case; log pair is sampled, seed 0.)"
+      },
+      {
+        type: "bars",
+        title: "Equality case: as X's spread shrinks the gap collapses to 0 (convex e^x)",
+        xlabel: "std(X)",
+        ylabel: "Jensen gap  E[f(X)] - f(E[X])",
+        labels: ["1.00", "0.50", "0.25", "0.00 (constant X)"],
+        values: [0.6491, 0.1338, 0.0318, 0.0000],
+        valueLabels: ["+0.649", "+0.134", "+0.032", "0.000"],
+        colors: ["#7ee787", "#7ee787", "#ffb454", "#9aa7b4"],
+        interpret: "Here y is the Jensen gap itself for convex e^x, as we squeeze the spread of X (Normal with shrinking std). The gap stays ≥ 0 (Jensen never breaks for convex f) but shrinks as X concentrates, and hits exactly 0 when X is constant (grey bar) — nothing to average, so both sides agree. <b>Read it as:</b> more spread = bigger gap; zero spread = equality. (Real numbers, seed 0.)"
+      },
+      {
+        type: "line",
+        title: "Pitfall: sigmoid is convex then concave — Jensen needs ONE curvature over X's range",
+        xlabel: "x",
+        ylabel: "f(x) = 1/(1+e^-x)  (sigmoid)",
+        series: [
+          { name: "sigmoid (convex for x<0, concave for x>0)", color: "#c89bff",
+            points: [[-6,0.0025],[-5,0.0067],[-4,0.018],[-3,0.0474],[-2,0.1192],[-1,0.2689],[0,0.5],[1,0.7311],[2,0.8808],[3,0.9526],[4,0.982],[5,0.9933],[6,0.9975]] }
+        ],
+        interpret: "The sigmoid curves UP on the left (x<0) and DOWN on the right (x>0), with the inflection at x=0. Jensen needs f to bow the SAME way across every value X can take; if X straddles 0 here, neither the convex (≥) nor the concave (≤) bound is guaranteed. <b>Read it as:</b> an S-shape (or any curve that switches bend) is a red flag — restrict to one side, or split the expectation, before quoting a Jensen direction. (Illustrative.)"
       }
     ],
-    caption: "Top: the canonical Jensen picture for convex f(x)=e^x. Take a two-point X equal to x1=-1 or x2=2 each with probability 1/2, so E[X]=0.5. The straight orange chord joins the two curve points and lies ABOVE the blue curve everywhere between them. At x=E[X]=0.5 the chord value E[f(X)]=(e^-1+e^2)/2=3.879 (red dot) sits ABOVE f(E[X])=e^0.5=1.649 (green dot) — exactly Jensen's E[f(X)] >= f(E[X]) for convex f, gap +2.230. Bottom: the same overshoot as bars (green over blue), plus the concave case f(x)=log x with X~Uniform(1,5) where E[f(X)]=1.014 sits BELOW f(E[X])=1.101 (red under blue), the flipped E[f(X)] <= f(E[X]). Curving up lifts the average above the curve; curving down drops it below.",
+    caption: "Five views, each with its own interpret. Chart 1: the canonical convex chord-above-curve picture (e^x, two-point X=-1 or 2, E[X]=0.5, gap +2.230). Chart 2: the concave mirror image (log x, two-point X=1 or 5, chord below curve, gap -0.294). Chart 3: both directions as bars. Chart 4: the equality/variant case — the gap shrinks to 0 as X's spread vanishes (real, seed 0). Chart 5: the sigmoid pitfall — a curve that changes curvature, where no single Jensen direction holds.",
     code: `import numpy as np
 
 # --- CONVEX f(x) = e^x : the canonical Jensen chord-above-curve picture ---

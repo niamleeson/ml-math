@@ -292,18 +292,54 @@ print("PERPLEXITY = exp(CE)  = %.2f" % perplexity)
   };
 
   window.CODEVIZ["dl-language-model"] = {
-    question: "On a small corpus, how does held-out perplexity change as we go from a unigram to a bigram to a trigram model? Does more context always help?",
-    charts: [{
-      type: "bars",
-      title: "Held-out perplexity: unigram vs bigram vs trigram (add-one smoothing, lower is better)",
-      xlabel: "n-gram order",
-      ylabel: "held-out perplexity",
-      labels: ["unigram (n=1)", "bigram (n=2)", "trigram (n=3)"],
-      values: [9.30, 4.17, 4.68],
-      valueLabels: ["9.30", "4.17", "4.68"],
-      colors: ["#4ea1ff", "#7ee787", "#ffb454"]
-    }],
-    caption: "Eight short training sentences, two held-out test sentences, add-one smoothing, vocabulary |V| = 11. Perplexity DROPS from 9.30 (unigram) to 4.17 (bigram) because one word of context helps a lot — then RISES to 4.68 (trigram) because trigram counts are too sparse on this tiny corpus and the model overfits. That U-shape is the n-gram bias–variance tradeoff: bigger n sees more context but has far less data per context. Numbers below are real Python outputs.",
+    question: "On a small corpus, how does held-out perplexity change as we go from a unigram to a bigram to a trigram model? Does more context always help — and how do you spot when it does not?",
+    charts: [
+      {
+        type: "bars",
+        title: "Ideal (this corpus): U-shape — perplexity dips at bigram, then rises",
+        xlabel: "n-gram order",
+        ylabel: "held-out perplexity",
+        labels: ["unigram (n=1)", "bigram (n=2)", "trigram (n=3)"],
+        values: [9.30, 4.17, 4.68],
+        valueLabels: ["9.30", "4.17", "4.68"],
+        colors: ["#4ea1ff", "#7ee787", "#ffb454"],
+        interpret: "<b>The real numbers from this lesson's 8-sentence corpus.</b> The x-axis is the n-gram order (how many words of context); the y-axis is held-out perplexity, where <b>lower is better</b>. Perplexity drops sharply from unigram (9.30) to bigram (4.17) — one word of context helps a lot. Then it <b>rises</b> at trigram (4.68): the green bar is the best (lowest) and the orange trigram bar turning back up is the tell-tale sign of <b>overfitting from sparse counts</b>. Read this as: the bigram is the sweet spot here."
+      },
+      {
+        type: "bars",
+        title: "Variant — enough data: perplexity falls monotonically with n (illustrative)",
+        xlabel: "n-gram order",
+        ylabel: "held-out perplexity",
+        labels: ["unigram (n=1)", "bigram (n=2)", "trigram (n=3)"],
+        values: [180, 95, 70],
+        valueLabels: ["180", "95", "70"],
+        colors: ["#4ea1ff", "#7ee787", "#7ee787"],
+        interpret: "<b>Illustrative shape</b> for a large corpus (e.g. millions of words). Same axes. When every trigram context has plenty of examples, more context keeps helping, so each bar is <b>shorter than the last</b> — no upturn. Recognise it by the steady downward staircase. Conclusion: with enough data you can safely raise n; the U-shape above is a small-data symptom, not a law."
+      },
+      {
+        type: "bars",
+        title: "Variant — no smoothing: one unseen pair sends perplexity to infinity",
+        xlabel: "n-gram order",
+        ylabel: "held-out perplexity",
+        labels: ["unigram (n=1)", "bigram (n=2)", "trigram (n=3)"],
+        values: [9.30, 60, 100],
+        valueLabels: ["9.30", "∞ (60 = inf)", "∞ (100 = inf)"],
+        colors: ["#4ea1ff", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Illustrative</b> — the bars are clipped because the true value is infinite (a bar cannot draw infinity). With <b>no smoothing</b>, any word-pair unseen in training gets probability 0, and a single 0 in the product makes the whole sentence probability 0 and perplexity <b>infinite</b>. Recognise it by perplexity that is fine for unigrams but <b>explodes (red) the moment context is added</b>, because higher orders hit unseen runs. The fix is add-one (Laplace) smoothing, which is why every other chart here uses it."
+      },
+      {
+        type: "bars",
+        title: "Variant — neural LM beats the best n-gram (illustrative)",
+        xlabel: "model",
+        ylabel: "held-out perplexity",
+        labels: ["best n-gram (bigram)", "RNN LM", "Transformer LM"],
+        values: [4.17, 3.1, 2.4],
+        valueLabels: ["4.17", "3.10", "2.40"],
+        colors: ["#ffb454", "#7ee787", "#7ee787"],
+        interpret: "<b>Illustrative</b> comparison on the <i>same</i> test set and vocabulary (the only fair way to compare perplexity). The orange bar is the best n-gram from the first chart; the green bars are neural models that remember long-range context an n-gram cannot. Read the <b>shorter green bars</b> as 'less surprised by real text.' Conclusion: when context beyond n-1 words matters, a neural LM lowers perplexity further — the motivation for moving past n-grams."
+      }
+    ],
+    caption: "Eight short training sentences, two held-out test sentences, add-one smoothing, vocabulary |V| = 11. The first chart is the real result; the other three are variants you may meet for the same concept (each labelled illustrative). Numbers in the first chart are real Python outputs.",
     code: `import math
 from collections import Counter
 
