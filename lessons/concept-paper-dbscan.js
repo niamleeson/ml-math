@@ -282,6 +282,46 @@
        size of the database." Average run-time complexity is $O(n \\log n)$ with a spatial index (Section 4.1).
        (Source: KDD-96 PDF, pp. 230–231.)</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> DBSCAN is unsupervised, so "working" is not a single accuracy
+       number &mdash; it is <i>agreement with a trusted oracle plus the right qualitative behavior</i>. The
+       primary check here is the <b>Adjusted Rand Index (ARI)</b> between <i>your</i> labels and
+       <code>sklearn.cluster.DBSCAN</code> on the same two-moons + noise set with the same $Eps,MinPts$. ARI
+       scores two partitions ignoring label names; <b>ARI $=1.0$</b> means identical clustering up to
+       relabeling, and <b>ARI $\\approx 0$</b> is the no-skill baseline (random label agreement). Secondary,
+       interpretable targets: number of clusters found ($=2$) and number of noise points.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) Recompute the worked core-point example: with
+         $Eps=1.0,MinPts=4$, $|N_{Eps}(A)|=4$ so $A$ is core, and $|N_{Eps}(E)|=1$ so $E$ is noise &mdash; a
+         known-answer unit test for <code>region_query</code> and the core test. (2) Confirm $p$ is in its own
+         neighborhood ($dist(p,p)=0\\le Eps$), so the count includes the point itself (matches sklearn's
+         <code>min_samples</code> convention). (3) On a trivial blob far from a lone outlier, check you get
+         exactly one cluster plus one $-1$. (4) Every label is either $-1$ or a valid cluster id; no point
+         left UNVISITED.</li>
+         <li><b>Expected range.</b> A correct build should hit <b>ARI $=1.0$</b> vs sklearn on the lesson's run
+         ($Eps=0.2,MinPts=5$, <code>make_moons</code> noise $=0.06$, seed $0$, $20$ added outliers) &mdash;
+         recovering <b>2 clusters</b> + noise. ARI $=1.0$ is the target (this is our small reproduction, not a
+         paper number); ARI noticeably below $1$ but above $\\sim0.9$ is usually just border-point tie-breaking
+         (compare as a partition, allow relabeling); ARI well below that is a real bug. The paper's own claim is
+         qualitative: DBSCAN "discovers all clusters (according to definition 5) and detects the noise points
+         (according to definition 6)" where CLARANS splits them (Section 5).</li>
+         <li><b>Ablation &mdash; prove the density idea earns its keep.</b> The central knob is $Eps$ (the density
+         radius). Sweep it: $Eps$ far too small (e.g. $0.01$) $\\Rightarrow$ no point reaches $MinPts$ neighbors
+         $\\Rightarrow$ <b>0 clusters, everything noise</b>; $Eps$ far too large (e.g. $2.0$) $\\Rightarrow$ core
+         points bridge the gap $\\Rightarrow$ the two moons <b>merge into 1 cluster</b>. Only an $Eps$ in the
+         sorted-$k$-dist valley (here $\\approx0.2$) yields the correct 2 + noise. Also ablate the method itself:
+         run k-means $k=2$ on the same points &mdash; it must cut convex Voronoi cells, so it slices each
+         crescent. If your DBSCAN matches k-means' split, density-reachability is not wired in.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>Everything labeled $-1$:</b> $Eps$ too small, or an
+         off-by-one that drops $p$ from its own neighborhood so nothing passes the core test. <b>One giant
+         cluster swallowing the noise:</b> $Eps$ too large, or features unscaled so one axis dominates the
+         distance. <b>ARI $\\ne1$ but cluster count is right:</b> border points assigned to the other cluster
+         (order-dependent &mdash; expected; compare as a partition). <b>Cluster count drifts run to run on the
+         same data/seed:</b> non-deterministic visiting order touching <i>core</i> points (a real bug &mdash; only
+         border assignment may vary). <b>k-means and DBSCAN give the same split:</b> your expansion never follows
+         density chains &mdash; check that core points enqueue their neighbors.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> <code>scikit-learn</code> ships this as <code>sklearn.cluster.DBSCAN</code>

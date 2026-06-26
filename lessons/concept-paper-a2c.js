@@ -306,6 +306,40 @@
        problems as well as on a new task of navigating random 3D mazes using a visual input" (Abstract).</p>
        <p><i>These are the paper's reported figures, quoted from the Abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny CartPole run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The primary metric is <b>episode return</b> (undiscounted sum of
+       rewards) averaged over recent episodes. On our build that is CartPole-v1, where return = steps the pole
+       stays up, capped at $500$; the <b>no-skill baseline is a random policy</b>, which scores roughly $20$&ndash;$25$,
+       and <b>&ldquo;solved&rdquo; is average return $\\ge 475$</b>. The paper's own benchmark is Atari (Table 1): A3C
+       reached a mean human-normalized score of <b>496.8%</b> vs <b>463.6%</b> for Prioritized DQN &mdash; there
+       &ldquo;better than trivial&rdquo; means beating a random agent (0%) and then beating the prior DQN SOTA.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Recompute the worked example numerically &mdash;
+        $R_t = 1 + 0.99 + 0.99^2(19.5) = 21.1019$, $A = 3.1019$, $-\\log(0.6)\\cdot A = 1.5846$ (the notebook's first
+        cell). Check the policy head's softmax output sums to $1$ and $V(s)$ is a finite scalar. Verify the loss at
+        init: with $2$ actions the policy entropy starts near $\\ln 2 \\approx 0.693$ and the advantage is near zero
+        (an untrained critic), so the policy term is small. Confirm <code>adv.detach()</code> is in the policy loss
+        (gradient must not flow through $V$ there).</li>
+        <li><b>Expected range.</b> A correct build should climb from $\\sim 22$ toward the $475$&ndash;$500$ solved
+        band within roughly $100$ updates on CartPole (a rule of thumb, not a paper claim &mdash; the paper's reported
+        number is the $496.8\\%$ Atari mean, not a CartPole figure). If the return is still stuck near $20$&ndash;$30$
+        after many updates, that is &ldquo;probably a bug,&rdquo; not tuning; a plateau around $100$&ndash;$200$ is
+        usually a tuning/variance issue (entropy, learning rate, rollout length).</li>
+        <li><b>Ablation &mdash; prove the advantage earns its keep.</b> The paper's central idea is the
+        <b>baseline-subtracted advantage</b> $A = R - V$ (the &ldquo;A&rdquo; in A3C/A2C). Turn it off: weight the
+        policy gradient by the raw return $R$ instead (<code>use_baseline=False</code>), keeping net / returns / lr /
+        entropy / seed identical. The return curve should get <b>noisier and slower</b> and reach the solved line less
+        reliably in the same budget (our CODEVIZ green vs red). If removing the baseline does <i>not</i> hurt, the
+        advantage is not actually wired in. Secondary knob: drop the entropy bonus ($\\beta = 0$) and watch for early
+        collapse to a near-deterministic action.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Return flat at random ($\\sim 20$) &mdash; the policy is not
+        learning (advantage sign flipped, gradient not flowing, or rewards/returns misaligned). Loss or return goes
+        <b>NaN</b> &mdash; learning rate too high or the value loss exploded; lower lr and clip the gradient norm.
+        Policy entropy crashes to near $0$ early and the return freezes &mdash; premature collapse from a missing or
+        too-small entropy bonus. Return rises then <b>oscillates wildly</b> &mdash; high-variance updates, the symptom
+        of training on the raw return with no baseline (the red ablation curve). Critic value loss not falling &mdash;
+        wrong bootstrap at the rollout boundary (seed $R$ with $0$ on terminal steps, else $V(s_{last})$).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

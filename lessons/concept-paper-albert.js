@@ -291,6 +291,45 @@ $$ p(n) = \\frac{1/n}{\\sum_{k=1}^{N} 1/k}, \\qquad N = 3 $$
        numbers in the CODE and CODEVIZ panels below are from our own tiny MLM run &mdash; not the paper's
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> ALBERT has two things to verify: an <i>exact parameter count</i> and a
+       <i>learning</i> metric. (1) Parameter arithmetic is deterministic, so it is a known-answer check: the
+       factorized embedding must equal $V\\times E+E\\times H$ exactly (ALBERT-base: $30000\\times128+128\\times768=3{,}938{,}304$,
+       a $5.85\\times$ cut from $V\\times H=23{,}040{,}000$). (2) The model metric is <b>masked-token accuracy</b> on
+       the held-out MLM task (the paper's own pre-training objective; downstream it would be GLUE/RACE/SQuAD). The
+       no-skill baseline is random guessing $=1/V$ (for the tiny $V=32$ vocab, ~$3\\%$ &mdash; matching the
+       CODEVIZ curves' step-0 values ~0.028&ndash;0.034), and the cross-entropy at init should be about
+       $-\\ln(1/V)=\\ln 32\\approx3.47$.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) Print the param counts and assert the factorized
+         embedding equals $V\\times E+E\\times H$ and the shared model stores one block's weights, not $L$ (shared
+         should be ~$L\\times$ fewer encoder params than not-shared). (2) Check output shape is
+         $(B,\\text{SEQ},V)$ and that initial loss $\\approx\\ln V$. (3) Overfit a single batch with masking
+         turned up &mdash; masked-token accuracy should climb toward ~1.0; if it cannot memorize one batch, the
+         masking/loss wiring is broken (loss must be computed over masked positions only).</li>
+         <li><b>Expected range.</b> On the tiny arithmetic-progression MLM, a correct build reaches roughly
+         ~0.80 masked-token accuracy shared and ~0.87 not-shared by step ~600 (our run, approximate, not the
+         paper's). Far above the ~$3\\%$ random baseline means it is learning; stuck near $3\\%$ means it is not.
+         For the paper's headline, quote it as-is: ALBERT-base 12M vs BERT-base 108M params (~$9\\times$ fewer),
+         new SOTA on GLUE/RACE/SQuAD (abstract, Table 1) &mdash; do not reproduce these on the toy model.</li>
+         <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central trick is <b>cross-layer
+         parameter sharing</b>. Toggle it OFF (one block looped $L$ times &rarr; an <code>nn.ModuleList</code> of
+         $L$ distinct blocks), changing nothing else (same $E,H,L$, data, optimizer, seed). The parameter count
+         must jump (~37k &rarr; ~138k in our run, ~$3.7\\times$) and accuracy must rise only modestly
+         (~0.80 &rarr; ~0.87) &mdash; the small-cost/large-cut trade of Table 4. If sharing changes the param count
+         but not by ~$L\\times$ on the encoder, the block is being duplicated rather than reused. Separately, the
+         SOP-vs-NSP ablation is conceptual here: an NSP-trained model scores ~52% (chance) on SOP while an
+         SOP-trained one scores ~86.5% (paper, &sect;3.1, Table 5).</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>Accuracy stuck at ~$1/V$ (~3%)</i> &rarr; labels/targets
+         misaligned, loss not restricted to masked positions, or learning rate dead. <i>Shared and not-shared have
+         the same param count</i> &rarr; the "shared" path is still instantiating $L$ blocks. <i>Residual-add shape
+         mismatch</i> &rarr; forgot the <code>Linear(E,H)</code> up-projection, so width-$E$ vectors hit the
+         width-$H$ encoder. <i>Loss starts far from $\\ln V$</i> &rarr; head dimension wrong ($H\\to V$) or logits
+         not over the full vocab. <i>Tiny-vocab embedding "saving" looks negligible</i> &rarr; expected, not a bug:
+         the factorization win scales with $V$ ($\\approx H/E$ only when $V\\gg H$); read it from the large worked
+         example.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the Transformer primitives ship in PyTorch and you

@@ -319,6 +319,56 @@
        single recipe combined <b>Text Infilling + Sentence Shuffling</b>. (Source: arXiv:1910.13461, abstract +
        Sections 4&ndash;5, Table 1.)</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The real eval is two-sided: an <b>understanding</b> score and a
+       <b>generation</b> score. The paper measures GLUE / SQuAD accuracy and exact-match (where it "matches RoBERTa")
+       and <b>ROUGE</b> on summarization (where it claims "gains of up to 6 ROUGE") plus <b>BLEU</b> for translation
+       (a "1.1 BLEU increase"). For OUR Track-B build the metric is <b>held-out per-token reconstruction accuracy</b>
+       of the denoiser. Define "better than trivial" first: random guessing on the toy vocabulary of 10 tokens is
+       <b>0.10</b> (chance) &mdash; anything near that means the model learned nothing.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+         <li><b>Overfit one batch.</b> Train on a single fixed batch with no held-out set; reconstruction accuracy
+         should climb toward 1.0 and the cross-entropy toward 0. If it plateaus near chance, the encoder&ndash;decoder
+         wiring or the causal mask is wrong.</li>
+         <li><b>Loss at init.</b> For a $K$-way softmax the untrained per-token loss should be about $-\\ln(1/K)=\\ln 13\\approx 2.56$
+         (vocab $K=13$). Far above that at step 0 = bad init or a label/shape mismatch.</li>
+         <li><b>The <code>torch.allclose</code> oracle.</b> The CODE already checks one
+         <code>nn.TransformerEncoderLayer</code> step equals a hand-written attention + FFN pass &mdash; that must
+         print <code>True</code> before you trust the imported block.</li>
+         <li><b>Reproduce the worked loss.</b> $p=[0.9,0.5,0.4]\\Rightarrow\\mathcal{L}=1.71480$; if the CODE prints
+         anything else your cross-entropy reduction is off.</li>
+         <li><b>Shape/mask check.</b> Encoder gets NO causal mask, decoder gets a strictly-upper triangular
+         $-\\infty$ mask; confirm the decoder cannot see future tokens.</li>
+       </ul>
+       <p><b>3. Expected range (approximate).</b> On the toy run both corruptions climb well above the 0.10 chance
+       floor &mdash; the CODEVIZ shows text-infilling reaching $\\approx 0.80$ and plain masking $\\approx 0.94$ by
+       step 400 (OUR numbers, seed 0, not the paper's). If held-out accuracy stays near 0.10&ndash;0.15 that is
+       "probably a bug"; landing in the 0.6&ndash;0.95 band is the expected ballpark and the exact value is tuning.
+       At real scale the relevant anchors are the paper's reported "matches RoBERTa on GLUE/SQuAD" and "up to 6 ROUGE"
+       (arXiv:1910.13461) &mdash; do not expect a toy run to produce ROUGE/BLEU.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> BART's headline component is the
+       <b>denoising encoder&ndash;decoder objective</b>, and its signature corruption is <b>Text Infilling</b>. Two
+       knobs to turn off: (a) swap text-infilling for plain token masking (the built-in ablation) and confirm the
+       <i>difficulty</i> changes &mdash; on real corpora infilling is the stronger pre-training signal (Section 4.3:
+       "BART models using text-infilling perform well on all tasks"); on the toy task masking can look easier because
+       it preserves length. (b) Break the denoising itself: set the decoder target to the <i>corrupted</i>
+       $\\tilde{x}$ instead of the clean $x$, or feed the clean input to the encoder &mdash; reconstruction accuracy
+       should drop to a trivial copy task, proving the model is actually undoing corruption rather than echoing.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Accuracy stuck at $\\approx 0.10$ (chance):</b> labels misaligned, the decoder target is shifted
+         wrong, or the loss is computed against the corrupted sequence &mdash; the model is not learning to
+         reconstruct.</li>
+         <li><b>Loss goes NaN:</b> learning rate too high or a bad $\\mathcal{N}(0,0.02)$-style init; lower the LR.</li>
+         <li><b>Perfect with teacher forcing but garbage when generating freely:</b> exposure bias / drift &mdash;
+         the model only ever saw true previous tokens; check the free-running decode path (the CODE shows both).</li>
+         <li><b>Encoder and decoder accuracy both high but identical regardless of corruption:</b> the causal mask is
+         missing (decoder peeking at the answer) &mdash; verify the triangular mask.</li>
+         <li><b>Train-good, held-out-bad:</b> the toy vocabulary is too small or steps too few; this is overfit, not
+         a wiring bug &mdash; the <i>direction</i> of the ablation is the reproducible signal, not any single number.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> The Transformer block (multi-head self-attention + feed-forward + layer norm)

@@ -298,6 +298,49 @@
        <p><i>These are the paper's reported claims, quoted from the abstract and &sect;1. The numbers in the
        CODEVIZ panel below are from our own tiny Pendulum run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The primary metric is <b>average episode return</b> (sum of rewards
+       per episode, averaged over the last $N$ episodes) on the control task &mdash; here <b>Pendulum-v1</b>,
+       where reward is negative and rises toward $0$ as the pole balances. The no-skill baseline is a
+       <b>random / untrained actor</b>: on Pendulum it earns roughly $-1400$ to $-1500$ per episode. "Working"
+       means the return climbs well above that floor and keeps rising. The paper's headline benchmark is broader:
+       "the same learning algorithm, network architecture and hyper-parameters &hellip; robustly solves more than
+       20 simulated physics tasks" (abstract), competitive with a planner that has full dynamics access.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) Recompute the worked scalars: $y=r+\\gamma
+         Q'(s',\\mu'(s'))=-1.0+0.99\\cdot(-5.0)=-5.95$; critic squared error $(-5.95-(-5.50))^2=0.2025$; Eq. 6
+         term $\\nabla_a Q\\cdot\\nabla_{\\theta^\\mu}\\mu=2.0\\times0.5=1.0$; soft update
+         $0.01\\cdot3+0.99\\cdot2=2.01$ &mdash; a known-answer test for the target, loss, and update. (2)
+         <b>Action range:</b> the actor's tanh output, scaled by <code>act_limit</code>, stays within the
+         environment's bounds. (3) <b>No gradient leaks:</b> the Bellman target is built under
+         <code>torch.no_grad()</code> (no backprop into $Q',\\mu'$), and the actor step touches only the actor's
+         optimizer. (4) <b>Overfit a tiny buffer:</b> on a handful of stored transitions the critic MSE should
+         drive toward $\\approx0$.</li>
+         <li><b>Expected range.</b> The paper gives no Pendulum number (it reports solving $\\gt20$ tasks, not
+         this scalar). In our small run (Pendulum, $\\sim60$ episodes, $\\tau=0.005$, not a paper number) the
+         soft-target agent's return should <b>climb from about $-1480$ toward roughly $-150$</b>; reaching the
+         $-200$ to $-150$ band is "working". As a rule of thumb, return still stuck near $-1100$ to $-1400$ after
+         many episodes means it is not learning (a bug); a steady climb that plateaus higher is normal tuning /
+         seed variance.</li>
+         <li><b>Ablation &mdash; prove the soft target networks earn their keep.</b> The paper's stabilizing
+         contribution is the slow-tracking target network. Turn it off: compute the Bellman target from the
+         <i>live</i> critic and actor ($y=r+\\gamma Q(s',\\mu(s'))$, drop $Q',\\mu'$ and the soft update), keeping
+         networks, replay buffer, OU noise, learning rates, and seed identical. The return should <b>drop</b>
+         &mdash; in our run the no-target agent stays mired near $-1100$ and oscillates instead of converging. If
+         removing the targets does <i>not</i> hurt, they aren't actually in the bootstrap path. A second knob to
+         probe: $\\tau$ too large (toward $1$) collapses the target into the live net and reintroduces the
+         divergence.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>Return flat at the random floor ($\\approx-1400$):</b>
+         not learning &mdash; check the actor update sign ($-Q(s,\\mu(s))$, minimize), that gradients reach $\\mu$,
+         or that exploration noise is actually added. <b>Critic loss or $Q$-values exploding to huge magnitudes:</b>
+         <b>bootstrap divergence</b> &mdash; targets moving as fast as the predictor ($\\tau$ too big, or targets
+         removed). <b>Return climbs then crashes erratically:</b> moving-target instability or LR too high.
+         <b>Agent never improves and actions look frozen:</b> white (independent) noise instead of temporally
+         correlated OU noise, so exploration averages out; or the tanh action wasn't scaled to the action range.
+         <b>Q-values drift far more negative than any achievable return:</b> gradient leaking into the target
+         networks (missing <code>no_grad</code>/<code>detach</code>).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives already ship in PyTorch, so you

@@ -306,6 +306,43 @@
        step.</p>
        <p><i>Those are the paper's reported results, quoted from the Abstract and Section 5. The numbers in the
        CODEVIZ panel below are from our own tiny toy-grid run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The headline metric is the <b>achieved episode return</b> at
+       rollout, and crucially the <b>correlation between the target return you condition on and the return you
+       actually earn</b> (the paper's Figure 4, Section 5.2: "highly correlated"). On the real benchmarks the
+       metric is normalized score on <b>Atari</b>, <b>OpenAI Gym / D4RL</b>, and <b>Key-to-Door</b>, where the
+       bar is "matches or exceeds state-of-the-art model-free offline RL baselines" (Abstract). The trivial
+       baseline is <b>behavioral cloning of the mixed dataset</b> (no return signal) &mdash; it earns the
+       dataset's <i>average</i> return regardless of what you ask for, so beating it means the conditioning
+       actually steers.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Reproduce the worked return-to-go exactly:
+        rewards $[0,0,0,1,1,1,1,0,0,0] \\Rightarrow \\hat R = [4,4,4,4,3,2,1,0,0,0]$ (a suffix sum, dropping by
+        each earned reward). Confirm the action is read off the <b>state-token</b> positions ($2,5,8,\\ldots$ in
+        the $3T$ stream), not the return or action tokens. At init, $K$-way (here 2-way) cross-entropy should be
+        $\\approx -\\ln(1/2) \\approx 0.69$ (rule of thumb). Verify the causal mask actually blocks future tokens
+        &mdash; without it the "prediction" trivially copies the next token and training loss crashes
+        unrealistically fast. Overfit a single batch and watch cross-entropy fall toward $0$.</li>
+        <li><b>Expected range.</b> A correct build should make achieved return <b>track the target</b> up to the
+        environment ceiling: in the lesson's toy grid, target $2\\to\\approx2$, $5\\to\\approx5$, saturating at $7$
+        (the reachable max from the left edge) &mdash; our small run, not a paper number. On the real suites a
+        faithful build should land near the paper's reported normalized scores (arXiv:2106.01345, Section 4;
+        approximate). If achieved return is flat across targets in a build that <i>should</i> condition, that is a
+        bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>return-to-go token</b>. Retrain an identical model with $\\hat R_t$ forced to $0$ everywhere and re-run
+        the target sweep: the achieved return should go <b>flat and target-insensitive</b> (the lesson's run
+        collapses to $\\approx 0$). If steering survives the ablation, the return token was not actually wired
+        into the conditioning. (Second ablation: shrink context length $K\\to1$ and confirm performance drops,
+        per Section 5.3.)</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Achieved return flat vs target</b> &rarr; return token
+        not embedded/attended, or you forgot the test-time decrement $\\hat R_{t+1}=\\hat R_t-r_t$ so inputs drift
+        off-distribution. <b>Return tracks but is offset low everywhere</b> &rarr; predicting the action at the
+        wrong token position. <b>Train loss near zero but rollout is random</b> &rarr; missing causal mask (the
+        model peeked at the future during training). <b>Asking for a target above the data's max gives no gain</b>
+        &rarr; expected: DT recombines logged behavior and cannot exceed the environment/dataset ceiling by
+        planning.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

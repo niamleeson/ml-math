@@ -260,6 +260,39 @@ $$ y_i = \\mathrm{LayerNorm}\\!\\left(x''_i + \\tfrac{1}{2}\\,\\mathrm{FFN}(x''_
        replacing the Macaron pair of half-FFNs with a single FFN raises test-other WER to <b>4.5%</b> (Table 5).</p>
        <p><i>These are the paper's reported figures, quoted from Tables 2&ndash;5. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny toy-sequence run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> For a real Conformer the metric is <b>word error rate</b> (WER &mdash; percent
+       of words wrong, lower is better) on <b>LibriSpeech</b> test-clean / test-other (&sect;3.3). The "better than
+       trivial" floor is a no-skill decoder that emits the most-frequent token: WER near $100\\%$. The real bar is the
+       paper's prior SOTA it beat &mdash; you are aiming at the <b>2.1% / 4.3%</b> region (large model, no LM, Table 2),
+       not at "below 100%". In the toy notebook the metric is instead <b>2-class accuracy</b> on the local-spike task,
+       where the no-skill floor is <b>$50\\%$</b> (random / majority class).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Overfit a single batch &mdash; the loss should fall to near $0$
+        and toy accuracy to $\\approx 1.0$; if it cannot, the block is mis-wired. Check the init loss of the $2$-way
+        head: it should sit near $-\\ln(1/2)\\approx 0.69$ (a rule of thumb for K-way softmax at random). Assert shapes
+        survive the conv module's transposes &mdash; input $(B,T,D)$ out as $(B,T,D)$ &mdash; and that
+        <code>nn.GLU</code> halves the channel axis ($2D\\to D$). Confirm the depthwise conv really is depthwise
+        (<code>groups=D</code>) so its param count is $\\approx D\\cdot k$, not $D^2\\cdot k$.</li>
+        <li><b>Expected range.</b> On the toy task a correct block reaches $\\approx 0.97$ accuracy (our run); below
+        $\\approx 0.85$ with the conv ON suggests a bug, not just tuning. For the real system, anchor to the paper:
+        $\\approx$ <b>2.1% / 4.3%</b> WER (large, no LM) and <b>2.3% / 5.0%</b> (medium, no LM) per Table 2 &mdash;
+        these are the paper's reported figures, treat them as approximate targets. Being many points of WER worse is
+        "probably a bug" (front end, relative positional encoding, or normalization); a point or so is tuning.</li>
+        <li><b>Ablation &mdash; prove the conv module earns its keep.</b> Turn OFF the central component: delete the
+        <code>x = x + conv(x)</code> line (Equation 1, line 3) and rerun, holding depth, width, heads, optimizer, data,
+        and seed fixed. The metric must <b>drop</b> (toy: $\\approx 0.97 \\to 0.74$ in our run); if it does not, the
+        conv module is not wired in or is not helping. This mirrors Table 3, where removing the convolution module is
+        the single most damaging change (test-other WER $4.3\\% \\to 4.9\\%$, &sect;3.4). A second knob: replace the two
+        half-FFNs with one full FFN and confirm a smaller drop (Table 5, $\\to 4.5\\%$).</li>
+        <li><b>Failure signals &amp; what they mean.</b> Toy accuracy <b>stuck at $\\approx 0.5$</b> &rarr; not learning
+        (labels shuffled, head detached, or LR too low). <b>Loss NaN</b> &rarr; LR too high or BatchNorm fed a
+        batch of size $1$ (the conv module's <code>nn.BatchNorm1d</code> needs $\\gt 1$ sample). <b>Conv ON $\\approx$
+        conv OFF</b> &rarr; the conv residual is a no-op (forgot to add it, or fed it the wrong axis order). <b>Train
+        accuracy high, test low</b> &rarr; overfit / leakage (e.g. the spike position correlates with the label across
+        splits). The CODEVIZ's two curves &mdash; conv-on climbing to $\\approx 0.97$, conv-off plateauing near
+        $\\approx 0.74$ &mdash; are the "working" vs "central component disabled" shapes to compare against.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

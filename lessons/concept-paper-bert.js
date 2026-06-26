@@ -295,6 +295,46 @@
        Answering Dataset; F1 is a precision/recall score, higher is better.)</p>
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny corpus run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> Two things are scored. (i) <b>Pre-training health:</b> the
+       masked-LM cross-entropy $\\mathcal{L}_{\\text{MLM}} = -\\frac{1}{|M|}\\sum_{i\\in M}\\log\\hat{p}_i[x_i]$
+       on held-out text, and the top-1 accuracy of the filled <code>[MASK]</code>. The no-skill baseline is
+       a uniform guess over the vocabulary: loss $-\\ln(1/V) = \\ln V$ (for $V\\approx 30{,}000$ WordPiece tokens
+       that is $\\approx 10.3$ nats; for our toy $V{=}11$ it is $\\ln 11\\approx 2.40$) and accuracy $1/V$. (ii)
+       <b>The real BERT claim is downstream:</b> fine-tune and score the <b>GLUE</b> suite &mdash; the paper's
+       headline is GLUE $80.5\\%$, MultiNLI $86.7\\%$, SQuAD v1.1 F1 $93.2$ (abstract / Table 1, quoted above).
+       "Better than trivial" there means beating the majority-class / prior-SOTA per task, not $50\\%$.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) <b>Loss at init</b> should sit near
+        $\\ln V$ &mdash; a random encoder predicts roughly uniformly over the vocab; if step-0 loss is far below
+        that you have a leak (see below). (b) <b>Overfit one batch:</b> train on a single handful of sentences
+        with masking and watch $\\mathcal{L}_{\\text{MLM}}\\to 0$ &mdash; the toy run drives it to $\\approx 0.28$
+        on 8 sentences. (c) <b>Shape/range:</b> the MLM head output is $(B,S,V)$; after softmax each masked row
+        sums to $1$. (d) <b>Known-answer:</b> reproduce the worked example &mdash; softmax of
+        $[0.5,1.0,3.0,0.2,-1.0,0.8]$ gives $\\hat{p}[2]=0.7106$ and loss $0.3417$, matching
+        <code>F.cross_entropy</code> to the digit. (e) <b>Label hygiene:</b> assert the loss is computed only at
+        masked positions (unmasked labels are the <code>ignore_index</code> $-100$).</li>
+        <li><b>3. Expected range.</b> A correct toy build reaches $\\mathcal{L}_{\\text{MLM}}\\approx 0.28$
+        bidirectional (rule of thumb from our 8-sentence run, <i>not</i> a paper number) and fills
+        "the cat <code>[MASK]</code> on the mat" $\\to$ "sat". Real BERT targets are the paper's reported
+        figures &mdash; GLUE $\\approx 80.5\\%$, SQuAD v1.1 F1 $\\approx 93.2$ (approximate, per abstract); landing
+        within a point or two after fine-tuning is "tuning," while being stuck near the $\\ln V$ chance loss, or
+        $20{+}$ GLUE points low, is "probably a bug."</li>
+        <li><b>4. Ablation &mdash; prove bidirectionality earns its keep.</b> The central idea is the
+        <b>no-causal-mask</b> two-sided encoder. Turn the knob: re-add a <b>causal (left-to-right) mask</b> inside
+        attention, change nothing else (data, 15% masking, depth, width, heads, optimizer, seed), and the
+        masked-LM loss must <b>rise</b> &mdash; in our run $\\approx 0.28$ (bidirectional) vs $\\approx 0.66$
+        (causal). If the loss does <i>not</i> get worse, your "bidirectional" model was secretly masked, or the
+        right-hand context is not reaching the masked slot &mdash; the contribution is not wired in.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Loss collapses to ~0 in a few steps</b> (far below
+        $\\ln V$): the target leaked &mdash; you scored "predict $x_i$" while $x_i$ was still in the input at that
+        position, or you forgot to corrupt the chosen slots (&sect;3.1). <b>Loss stuck near $\\ln V$ / accuracy at
+        $1/V$:</b> not learning &mdash; LR too low, the loss is averaged over <i>all</i> positions (a trivial copy
+        task) instead of masked ones, or labels are shuffled. <b>Loss NaN:</b> LR too high or bad init.
+        <b>Bidirectional and causal reach the same loss:</b> the causal mask is not actually applied, so the
+        ablation is a no-op. <b>Train-good, val-bad:</b> the tiny corpus was memorized &mdash; expected at toy
+        scale, but at real scale it signals leakage or overfitting.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

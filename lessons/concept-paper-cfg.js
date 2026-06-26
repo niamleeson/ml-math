@@ -293,6 +293,45 @@
        <p><i>The paper's quantitative ImageNet numbers (FID / Inception-Score tables) are not transcribed here
        to avoid mis-citing a specific value; the abstract's qualitative claim above is the grounded headline.
        The numbers in the CODEVIZ panel below are from our own tiny 1-D run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> CFG's promise is a <b>fidelity-vs-diversity trade-off</b> controlled by
+       $w$, so you measure both together as $w$ rises: a <b>fidelity</b> metric (on images, FID / Inception
+       Score; on our 1-D toy, distance of the sample mean to the conditioned class center $\\lvert\\text{mean}-2.0\\rvert$)
+       and a <b>diversity</b> metric (sample variance / spread). The no-skill baseline is the <b>plain conditional
+       model at $w=0$</b> &mdash; CFG must improve class-typicality past it. The paper's grounded headline
+       (<code>results</code>): higher $w$ gives "decreased sample variety and increased individual sample fidelity,"
+       matching classifier guidance without a classifier.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Recompute Eq. 6 by hand: $\\epsilon_c=(0.30,-0.50),\\
+        \\epsilon_u=(0.10,-0.20)$ give $\\tilde\\epsilon=(0.30,-0.50)$ at $w{=}0$, $(0.50,-0.80)$ at $w{=}1$,
+        $(0.90,-1.40)$ at $w{=}3$ (norm grows $0.583\\to 1.664$) &mdash; a known-answer test for your combination
+        code. (2) At $w=0$, confirm $\\tilde\\epsilon$ <b>exactly equals</b> the conditional prediction (guidance
+        term multiplied by zero). (3) The noise-MSE loss at init for a $d$-dim target should sit near $1$ (the
+        variance of unit Gaussian noise per coordinate); overfit one batch and watch it fall toward $0$. (4) Verify
+        the embedding table has a row for the null token (size = #classes $+1$) and that passing $\\varnothing$
+        yields a <i>different</i> output than passing a real class.</li>
+        <li><b>Expected range.</b> On our 1-D toy (the CODEVIZ panel, our run &mdash; not the paper's numbers):
+        $\\lvert\\text{mean}-2.0\\rvert$ shrinks roughly $0.34 \\to 0.22 \\to 0.14$ as $w = 0 \\to 1 \\to 3$, with
+        spread tightening &mdash; a clear monotone pull toward the conditioned center. The paper reports only the
+        qualitative direction (more $w$ &rarr; more fidelity, less diversity, and over-saturation at very large
+        $w$); treat the exact toy numbers as a rule of thumb, not a paper claim. If the mean does <i>not</i> move
+        toward the center as $w$ grows, that is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; does guidance earn its keep?</b> The central knob is $w$ (and the training drop
+        $p_{\\text{uncond}}$). Set <b>$w=0$</b> (the guidance term vanishes, leaving the plain conditional sampler)
+        and confirm fidelity <b>drops</b> &mdash; samples spread out, mean drifts off-center. Separately set
+        <b>$p_{\\text{uncond}}=0$</b> at training time: the unconditional branch is never learned, so
+        $\\epsilon_\\theta(z_\\lambda)$ is garbage and any $w\\gt 0$ pushes in a meaningless direction (fidelity does
+        NOT improve, often degrades). If turning $w$ up does nothing, the two network calls per step are likely
+        returning the same value (the bracket is zero).</li>
+        <li><b>Failure signals.</b> <b>Raising $w$ has no effect</b> &rarr; only one forward pass per step (reused
+        for both branches, so $\\epsilon_c-\\epsilon_u=0$), or $p_{\\text{uncond}}=0$ so the unconditional branch is
+        untrained. <b>Higher $w$ blurs toward the average instead of sharpening</b> &rarr; sign/weights flipped:
+        you wrote $(1-w)\\epsilon_c + w\\epsilon_u$ (interpolation) instead of $(1+w)\\epsilon_c - w\\epsilon_u$
+        (extrapolation). <b>Samples collapse / over-saturate</b> at large $w$ &rarr; expected, the diversity cost
+        of too much guidance (the paper's own caution). <b>Loss NaN</b> &rarr; LR too high or schedule mis-set.
+        The CODEVIZ scatter &mdash; the class-1 cloud shifting right and tightening as $w$ climbs $0\\to 1\\to 3$ &mdash;
+        is the healthy signature.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

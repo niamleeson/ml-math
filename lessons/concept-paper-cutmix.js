@@ -281,6 +281,45 @@
        CutMix at <b>20.17%</b> top-1 error. (Source: arXiv:1905.04899, Tables 3 and 4.) The paper also reports
        gains on weakly-supervised localization and robustness, which are the "localizable features" of the title.
        The CODEVIZ numbers below are <b>our own small run, not the paper's reported numbers.</b></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> CutMix is an augmentation, so it is judged by the <b>classifier</b> it
+       trains: <b>top-1 error</b> on <b>ImageNet-1K</b> with ResNet-50. The baselines to beat are the
+       <i>no-augmentation</i> run at <b>$23.68\\%$</b> error and the prior augmentations <b>Cutout $22.93\\%$</b> and
+       <b>Mixup $22.58\\%$</b>; CutMix should land below all three at <b>$21.40\\%$</b> (paper, Table 3). The
+       "no-skill" floor is $99.9\\%$ error (random over $1000$ classes). On the toy task here the metric is test
+       accuracy on held-out images, with $50\\%$ as the two-class chance floor.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>The area identity (known-answer test):</b> build the
+        actual binary mask $M$, count the kept image-A pixels, and confirm it equals the closed-form re-fit
+        $1-\\frac{(x_2-x_1)(y_2-y_1)}{WH}$ <i>exactly</i> (max error $0.0$ over thousands of random boxes) &mdash; this
+        is the core correctness oracle. (b) <b>Worked example:</b> $W{=}H{=}32,\\lambda{=}0.6$ must give a $20\\times20$
+        patch, area $400/1024$, re-fit $\\lambda=0.6094$. (c) <b>Pixel realism:</b> a CutMix composite has
+        <b>$0\\%$ faded pixels</b> (every value is a real source pixel) versus Mixup's $100\\%$ &mdash; assert no
+        intermediate pixel values appear. (d) <b>Label validity:</b> $\\lambda\\in[0,1]$ and the soft label sums to $1$.
+        (e) <b>Augment-off equals plain training:</b> with the patch covering $0\\%$ ($\\lambda=1$) CutMix must reduce
+        to ordinary cross-entropy.</li>
+        <li><b>3. Expected range.</b> At paper scale a correct CutMix + ResNet-50 should reach
+        <b>$\\approx 21.4\\%$ top-1 error on ImageNet-1K</b> (paper, Table 3, approximate &mdash; full recipe needed),
+        clearly below the $23.68\\%$ baseline. On the toy task our run gets test accuracy ~<b>0.84</b> with CutMix vs
+        ~<b>0.53</b> with no augmentation, while all three schemes hit train accuracy $1.00$ (rule of thumb, small-run,
+        not a paper claim; toy ordering vs Mixup is noisy). A run that does <i>not</i> beat the no-aug baseline by a
+        clear margin is "probably a bug."</li>
+        <li><b>4. Ablation &mdash; the $\\lambda$ area re-fit.</b> CutMix's honest-label knob is re-computing
+        $\\lambda\\leftarrow 1-\\frac{(x_2-x_1)(y_2-y_1)}{WH}$ after clipping. Turn it off (keep the raw sampled
+        $\\lambda$ for the label) and measure the drift from the true pasted-area fraction: in our run it averages
+        <b>~0.22</b> and reaches <b>~0.78</b> on $16\\times16$, worst for boxes clipped at a border. A second ablation:
+        remove CutMix entirely and confirm the overfitting gap (train ~$1.00$, test ~$0.53$) re-opens &mdash; if test
+        accuracy is unchanged, the augmentation is not actually applied (e.g. you cloned but never pasted, or the box
+        was empty).</li>
+        <li><b>5. Failure signals.</b> <b>Label does not match the picture:</b> the patch covers $(1-\\lambda)^2$
+        instead of $1-\\lambda$ &mdash; you dropped the $\\sqrt{\\cdot}$ in $r_w=W\\sqrt{1-\\lambda}$. <b>Loss
+        explodes / NaN:</b> $\\lambda$ outside $[0,1]$ from a sign error in the re-fit, or an empty box giving a
+        degenerate target. <b>No regularization (test = no-aug baseline):</b> the patch is being pasted from the
+        image into itself (bad <code>perm</code>) or the mixed-loss second term is missing. <b>Train accuracy stuck
+        low:</b> over-strong augmentation (every patch huge) starving the signal &mdash; check the $\\lambda$
+        distribution is uniform, not collapsed. <b>Systematic label bias near borders:</b> the $\\lambda$ re-fit was
+        skipped (the ablation above), over-crediting class B.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -329,6 +329,44 @@
        a single headline accuracy number.</p>
        <p><i>These are the paper's reported, quoted claims. The numbers in the CODEVIZ panel below are from our
        own tiny forward-pass computation &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two things to check. For the <b>algorithm</b> you build, the metric is
+       exactness: your forward $-\\ln p(l|x)$ must equal <b>torch.nn.CTCLoss</b> to floating-point tolerance
+       (<code>np.allclose</code> True) on the tiny $T=4$, target "ab" case &mdash; PyTorch's CTC is the oracle.
+       For a <b>trained</b> CTC model the paper's metric is the <b>label error rate</b> (LER, Eq. 1: mean normalised
+       edit distance), benchmarked on <b>TIMIT</b> phoneme recognition where the paper reports CTC beating a baseline
+       HMM and a hybrid HMM-RNN (abstract). The no-skill floors: a trivial copy/blank-only decoder gives
+       LER $\\approx 100\\%$; the loss floor at init is $\\approx -\\ln p$ for a roughly uniform softmax.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Known-answer unit test:</b> on the worked $y$, the
+        forward must reproduce $\\alpha_1(1)=0.35$, the skip step $\\alpha_2(3)=0.26$, $p(l|x)=0.3304$, and loss
+        $\\mathbf{1.10745}$ &mdash; hard-code and assert these. (b) <b>Cross-check against torch</b> via
+        <code>np.allclose</code> on several random $y$ and targets, remembering CTCLoss wants <code>log_probs</code>
+        of shape $(T,N,C)$ with <code>blank=0</code>. (c) <b>Probability bound:</b> $0\\lt p(l|x)\\le 1$ and the loss
+        $-\\ln p\\ge 0$; a value outside this means a normalisation or indexing bug. (d) <b>Extended-length check:</b>
+        $|l'|=2|l|+1$ and $\\alpha$ has shape $(T,|l'|)$. (e) <b>Overfit one sequence:</b> a real RNN+CTC should drive
+        the loss of a single (x, target) pair toward $0$.</li>
+        <li><b>3. Expected range.</b> The algorithm has an <i>exact</i> target, not a range: loss $\\mathbf{1.10745}$
+        on the "ab" example and $\\mathbf{1.503}$ on the "aa" example, both matching torch (paper-grounded worked
+        numbers). Any mismatch beyond $\\sim 10^{-6}$ is a bug, not tuning. For a trained model, expect the loss to
+        fall well below its $\\approx -\\ln(1/K)$-per-frame init and the TIMIT LER to approach the paper's reported
+        advantage over HMM baselines (approximate &mdash; reproducing needs the full BLSTM setup).</li>
+        <li><b>4. Ablation &mdash; the equal-label skip guard.</b> CTC's load-bearing rule is forbidding the
+        $s{-}2$ skip when <b>$l'_s=l'_{s-2}$</b> (the blank that separates two identical labels). Turn it off
+        (<code>allow_repeat_skip=False</code>) on the repeated target "aa" and confirm the loss <b>wrongly drops</b>
+        from the correct $1.503$ to a bogus $0.402$ &mdash; the buggy version counts paths that collapse to "a", not
+        "aa". If the loss does <i>not</i> change, the guard was never controlling anything (e.g. your target had no
+        adjacent repeats, so the ablation is untested). Equivalently, drop the blank symbol entirely and the model
+        can no longer represent any repeated label.</li>
+        <li><b>5. Failure signals.</b> <b>Loss NaN / $-\\infty$:</b> $p(l|x)=0$ because a target symbol got zero
+        emission probability, or underflow from multiplying many small $y$ over long $T$ (the paper rescales by
+        $C_t=\\sum_s\\alpha_t(s)$ and works in log-space). <b>Loss off by a constant / wrong vs torch:</b> blank-index
+        mismatch (torch defaults <code>blank=0</code>) or feeding raw probabilities instead of log-probabilities.
+        <b>Loss too low on repeated labels:</b> the skip guard is missing (the ablation above). <b>Loss never
+        decreases in training:</b> reading $p$ off only one endpoint instead of both $\\alpha_T(|l'|)+\\alpha_T(|l'|-1)$
+        (Eq. 8), so valid paths are dropped. <b>Decoder emits collapsed garbage:</b> blanks dominate &mdash; the
+        spiky output of Fig. 1 is normal, but all-blank means the model is not committing to labels.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

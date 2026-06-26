@@ -283,6 +283,44 @@ $$ \\text{where}\\quad \\mathcal{C}_{ij} \\;\\triangleq\\; \\frac{\\sum_{b} z^{A
        <p><i>These are the paper's reported figures, quoted from the abstract / Table 5. The numbers in the
        CODEVIZ panel below are from our own tiny MNIST run — not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Barlow Twins is self-supervised, so you evaluate the <b>frozen
+       representation</b>, not the pretraining loss. The standard metric is <b>linear-probe (linear-evaluation)
+       top-1 accuracy</b>: freeze the encoder, train one <code>nn.Linear</code> on its features. The paper's bar
+       is ImageNet linear-probe "on par with current state of the art" (§3); the meaningful no-skill baselines are
+       <b>random-chance</b> top-1 ($=1/\\text{classes}$, i.e. $\\approx 0.1\\%$ on 1000-class ImageNet, $\\approx
+       0.10$ on 10-class MNIST) and a <b>from-scratch</b> net trained on the same few labels &mdash; a good SSL
+       representation must beat both in the low-label regime.</p>
+       <ul>
+         <li><b>Sanity checks before pretraining.</b> (a) <b>Known-answer loss test:</b> feed the lesson's worked
+         $N=4,\\,D=2$ example and confirm $\\mathcal{C}=\\begin{bmatrix}1&amp;0\\\\0&amp;-1\\end{bmatrix}$ and
+         $\\mathcal{L}_{\\mathcal{BT}}=4.0$ at $\\lambda=0.5$. (b) <b>Matrix shape/range:</b> $\\mathcal{C}$ is
+         $D\\times D$ and every entry is in $[-1,1]$; an identical pair of views gives $\\mathcal{C}=I$ and loss
+         $\\approx 0$. (c) <b>Normalize the right axis:</b> standardize each of the $D$ <i>columns</i> across the
+         $N$ rows (per-dimension, along the batch), not per sample. (d) <b>Cross, not self:</b> the matrix is
+         $Z^{A\\top}Z^B$, not $Z^{A\\top}Z^A$.</li>
+         <li><b>Expected range.</b> A correct frozen probe should beat both baselines at every label budget. In our
+         small MNIST run (rule of thumb, not a paper number) the probe reached <b>$\\approx 0.27$&ndash;$0.45$</b>
+         from 20&rarr;300 labels vs <b>$\\approx 0.11$&ndash;0.18</b> from-scratch. If the frozen probe is no
+         better than from-scratch, the representation is not learning &mdash; a bug, not tuning. Anchor the
+         ablation to the paper: dropping the off-diagonal term drops ImageNet top-1 to <b>$\\approx 0.1\\%$</b>
+         (Table 5) &mdash; full collapse.</li>
+         <li><b>Ablation &mdash; prove the off-diagonal term earns its keep.</b> The central knob is
+         <b>$\\lambda$</b> (the redundancy-reduction weight). Set <b>$\\lambda=0$</b> (keep only the diagonal
+         "make views agree" term) and re-pretrain: feature variance should <b>plummet</b> and the probe fall to
+         near chance ($\\approx 0.10$ on 10 classes). If it does <i>not</i> collapse, the off-diagonal term was
+         still active (e.g. you summed the full $\\mathcal{C}^2$ without subtracting the diagonal) &mdash; the
+         ablation isn't real.</li>
+         <li><b>Failure signals &amp; causes.</b> <i>Probe near chance even at $\\lambda=5\\cdot10^{-3}$</i>
+         &rarr; you probed the <i>projector</i> output instead of the frozen <i>encoder</i> features, or
+         normalized rows instead of columns. <i>Loss collapses to ~0 but features are near-constant</i> &rarr;
+         <b>dimensional collapse</b> &mdash; the off-diagonal term is missing or $\\lambda$ is effectively 0.
+         <i>Off-diagonal term swamps the diagonal</i> &rarr; $\\lambda$ too large; it scales $D(D-1)$ terms vs the
+         diagonal's $D$ (paper uses $5\\cdot10^{-3}$). <i>NaN loss</i> &rarr; a zero-variance column divided by
+         std without the $\\epsilon$ guard. <i>It "needs negatives"</i> &rarr; you built a $2N\\times2N$ similarity
+         matrix &mdash; that is SimCLR, not Barlow Twins.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

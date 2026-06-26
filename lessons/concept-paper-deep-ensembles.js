@@ -299,6 +299,47 @@
        <p><i>These are the paper's own statements, quoted from the abstract and the method sections. The numbers in
        the CODEVIZ panel below are from our own tiny one-dimensional run — not the paper's reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Uncertainty methods are judged on <b>calibration</b> and on <b>flagging
+       out-of-distribution (OOD) inputs</b>, not just accuracy. For the regression head you built, the natural score
+       is the held-out <b>Gaussian negative log-likelihood</b> (NLL) — the same loss, evaluated on test data — which
+       rewards a model that is accurate <i>and</i> honest about its variance; report it alongside root-mean-square
+       error (RMSE) of $\\mu_*$. The "no-skill" floor: a model that ignores the input and predicts the global mean
+       with the global target variance — your trained net must beat its NLL or it has learned nothing useful. The
+       paper's own bar (quoted in <i>results</i>) is that the ensemble be "as good or better than approximate Bayesian
+       NNs" on calibration and express "higher uncertainty on out-of-distribution examples."</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Overfit a tiny batch</b> of 4&ndash;8 points with one
+        member and no adversarial term — the NLL should crash toward a large-negative value as $\\mu\\to y$ and
+        $\\sigma^2\\to 0$ on those exact points; if it plateaus high, the head or loss is mis-wired. (2)
+        <b>Check the variance head</b> outputs are strictly positive everywhere (the softplus + $10^{-6}$ floor) —
+        print $\\min \\sigma^2(x)$; a zero or negative value means you used the raw output and the NLL will NaN.
+        (3) <b>Unit-test the &sect;2.4 combination</b> against the worked example: members $(\\mu_1,\\sigma_1^2)=(2.0,0.5)$
+        and $(\\mu_2,\\sigma_2^2)=(4.0,1.0)$ must give $\\mu_*=3.0,\\ \\sigma_*^2=1.75$ (and the single-prediction NLL
+        for $\\mu{=}2,\\sigma^2{=}0.5,y{=}3$ must equal $0.653426$) — these are recomputed in the notebook's first cell.</li>
+        <li><b>Expected range.</b> The paper reports no single headline number to match for 1-D toy regression — it
+        claims relative quality ("as good or better than approximate Bayesian NNs", abstract, quoted). The concrete
+        target for <i>your</i> build is qualitative and from our small run (not a paper claim): inside the training
+        band $[-3,3]$ the ensemble and single net should have <b>similar</b> predicted std (both ~0.11), while the
+        ensemble's std should <b>rise</b> outside the band (outside/inside ratio ~1.9 in our run) — treat the exact
+        ratio as a seed-dependent rule of thumb, not a reproducible constant. A ratio well below 1 for the ensemble
+        is "probably a bug"; a ratio of 1.3 vs 1.9 is "tuning / seed."</li>
+        <li><b>Ablations — prove the key idea earns its keep.</b> The central knob is the <b>ensemble size $M$</b> and
+        the <b>disagreement term</b> of &sect;2.4. Set $M=1$: you zero out the variance-of-the-means term, and the OOD
+        uncertainty should <b>stop growing</b> (in our run it shrinks, ratio ~0.5). If $M=5$ behaves the same as
+        $M=1$ far from the data, your members are not diverse — likely the <b>same seed</b> for every member, so they
+        converged to one solution. A second ablation: replace the &sect;2.4 variance with a plain average
+        $\\tfrac1M\\sum_m\\sigma_m^2$ and confirm OOD uncertainty collapses — that proves the disagreement term, not
+        the averaging, is doing the work.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Loss = NaN</b> after a few steps &rarr; variance went
+        non-positive (missing softplus/floor) or division by a near-zero $\\sigma^2$. <b>NLL won't drop below the
+        constant-mean baseline</b> &rarr; the head is collapsed (predicting one mean for all $x$) or the targets are
+        shuffled. <b>Ensemble std flat or shrinking outside the band</b> (like the single net's red curve in CODEVIZ)
+        &rarr; members are identical: check you set a <b>different random seed per member</b>. <b>Variance runs away to
+        huge values everywhere</b> &rarr; you dropped the $\\tfrac12\\log\\sigma^2$ penalty and the net is dodging hard
+        points by claiming maximal uncertainty.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The pieces already ship in PyTorch, so you <b>import</b>

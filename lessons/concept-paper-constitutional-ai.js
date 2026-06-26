@@ -390,6 +390,46 @@
        <p><i>These are the paper's own statements, transcribed from the abstract and the sections cited. The numbers
        in the CODEVIZ panel below come from a tiny toy critique&rarr;revise loop of our own &mdash; they are an
        illustration of the loop's shape, not the paper's measured results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> This is a read-only alignment-method paper, so "working" is judged by
+       <b>human-preference win rates</b> (crowdworker Elo) on the <b>helpfulness/harmlessness frontier</b> and by a
+       <b>harmlessness preference-model score</b> on held-out <b>red-team prompts</b> (&sect;1.1, Figures 2&ndash;3).
+       The no-skill baselines are the prior pipeline it must beat: the <b>helpful-only RLHF</b> starting model (harmful
+       when asked) and a <b>standard RLHF harmlessness</b> model. The paper's claim is that RL-CAI is "preferred by
+       crowdworkers over those trained with previously collected human feedback labels for harmfulness" (&sect;1) and
+       is "virtually never evasive" (&sect;4.4). A second, cheaper metric is <b>evasiveness rate</b> &mdash; fraction
+       of red-team prompts answered with a bare refusal &mdash; which RL-CAI should drive toward zero.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> You are not training a model here, so the checks are on the
+        <b>pipeline plumbing</b>. (1) Verify the critique&rarr;revise loop reduces a cheap proxy harm score
+        monotonically over rounds (the toy loop: $10\\to6\\to4\\to2\\to1$). (2) Check the feedback-model soft labels are
+        valid probabilities: $p_A+p_B=1$ and, for the chain-of-thought variant, every $p_A\\in[0.40,0.60]$ after the
+        clamp. (3) Confirm the preference-model loss at init matches the theoretical value for a coin-flip judge:
+        with $r(A)=r(B)$, $\\sigma(0)=0.5$, so $\\mathcal{L}_{\\text{PM}}\\approx-\\ln(1/2)\\approx0.69$ (a $2$-way
+        cross-entropy rule of thumb). (4) Spot-check that one principle is actually being sampled per comparison and
+        ensembled over all $16$, not silently fixed to one.</li>
+        <li><b>Expected range.</b> Anchor to the paper's qualitative claims (it reports frontiers, not single scalar
+        scores you can reproduce on a laptop): SL-CAI is "both more helpful and harmless than pre-trained models"
+        (&sect;3.3); RL-CAI sits <i>above</i> the RLHF harmlessness curve at matched helpfulness (&sect;1.1) and is
+        "virtually never evasive" (&sect;4.4). For the toy decay model, a survival fraction $r=0.6$ gives harm
+        $1.0,0.6,0.36,0.216,0.13$ over rounds $0$&ndash;$4$ &mdash; these numbers are <b>ours</b>, an illustration of
+        shape, not the paper's measured curve. A revision curve that is flat or rising means the loop is broken.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The paper's core move is <b>AI feedback in
+        place of human harm labels</b> plus the <b>critique-before-revise</b> step. Turn the critique step OFF (ask the
+        model to "rewrite to be harmless" with no separate critique) and the revised-answer harmlessness should
+        <b>drop</b> &mdash; revisions become shallow and miss subtle harms (&sect;3.1 rationale). A second knob:
+        <b>skip the CoT clamp</b> and feed raw near-$0/1$ feedback probabilities &mdash; RL should become unstable
+        (the paper clamps to $40$&ndash;$60\\%$ precisely to avoid this, &sect;4.1). If neither change hurts, the
+        component is not actually wired into the pipeline.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Harmlessness stuck at the helpful-only baseline</b> &rarr;
+        the AI labels are not flowing into the preference model (labels constant, or PM not trained). <b>RL reward
+        climbs but the model gets evasive</b> &rarr; the constitution / feedback rewards bare refusals; you have
+        reproduced the original RLHF evasiveness trap, not fixed it (&sect;1.1). <b>RL loss / KL blows up</b> &rarr;
+        unclamped over-confident CoT targets or $\\lambda_{\\text{KL}}$ too small (paper uses $0.001$). <b>Harm score
+        flat across revision rounds</b> &rarr; the revise step is a no-op (it returns the original answer). <b>Soft
+        labels collapse to $0/1$</b> &rarr; the CoT clamp was skipped. The toy CODEVIZ's monotone, diminishing-returns
+        decay is the "loop working" shape to compare against.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

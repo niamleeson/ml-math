@@ -365,6 +365,48 @@
        to focus the search.</p>
        <p><i>These are the paper's reported figures, quoted from arXiv:1712.01815. Every number in our notebook
        and CODEVIZ below is from our own tiny Tic-Tac-Toe run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> AlphaZero's primary metric is <b>match win/draw/loss rate</b> against
+       the strongest prior engine for each game, on the standard full-size board. The paper's "must-beat"
+       baselines are <b>Stockfish</b> (chess), <b>Elmo</b> (shogi), and <b>AlphaGo Zero / AlphaGo Lee</b> (Go);
+       a $50\\%$ even score is the no-skill reference. <b>Our build</b> is toy AlphaZero on <b>Tic-Tac-Toe</b>,
+       chosen because optimal play is <i>known</i>, so the metric is concrete: <b>fraction of tactical positions
+       solved optimally</b> (take the immediate win, block the immediate loss) and "never loses a full game."
+       Chance on a 9-square board is far below $1.0$, so a working agent should reach $1.0$ on the tactical set.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Recompute the worked examples</b> (the CODE's first
+        cell): PUCT must give $U_A=0.675,\\,U_B=0.90$ and descend into <b>B</b>; backup with the sign flip must
+        give edge $Q=-0.30$ then $Q=0.325$ &mdash; known-answer unit tests for selection and back-up. (2) <b>Loss
+        at init:</b> with a uniform search target $\\boldsymbol{\\pi}$ over $k$ legal moves the policy term starts
+        near $\\ln k$, and $v$ near $0$ gives a value term near the outcome variance; a wildly different start
+        means mis-wiring. (3) <b>Legal-move masking:</b> the softmax policy must be $0$ on occupied squares and
+        sum to $1$ over empty ones. (4) <b>Value range:</b> the $\\tanh$ head must give $v\\in[-1,1]$, near $+1$ on
+        a won position. (5) <b>Overfit a tiny self-play buffer</b> and watch Eq. (1) loss fall toward $0$.</li>
+        <li><b>Expected range.</b> The paper's targets (quoted in <code>results</code>): AlphaZero "defeated all
+        opponents, losing zero games to Stockfish" (as White $25$&ndash;$25$&ndash;$0$), outperformed Stockfish
+        after $\\approx 4$ h, Elmo after $&lt; 2$ h, AlphaGo Lee after $8$ h &mdash; while searching only
+        $\\approx 80{,}000$ positions/s vs Stockfish's $70$ million. For our toy run: after a handful of
+        self-play+train iterations the <b>guided</b> agent should solve the tactical set at $\\approx 40$
+        simulations/move and never lose Tic-Tac-Toe (rule of thumb, our setup &mdash; not a paper number). If it
+        still loses winnable positions after training, that is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> AlphaZero's central claim is that the
+        <b>learned network makes MCTS strong per simulation</b>. Strip the net out of MCTS &mdash; <i>uniform</i>
+        prior $P$ and a <i>random rollout</i> for the leaf value (<code>use_net=False</code>) &mdash; at the
+        <i>same</i> simulation budget. The guided search should solve the tactical set with far fewer simulations
+        ($\\approx 20$&ndash;$40$) while the unguided one needs many more and still trails (the CODEVIZ curves).
+        If the two curves overlap, the network's prior/value are not actually being used. Second knob:
+        <b>simulation count</b> &mdash; at $1$&ndash;$2$ sims MCTS barely differs from the raw net, so the gap
+        should grow with budget then saturate.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Agent keeps losing winnable games</b> &mdash; the
+        policy is trained toward the raw $\\mathbf{p}$ instead of the search target $\\boldsymbol{\\pi}$, or too
+        few simulations to let the search help. <b>Value head saturates at $\\pm 1$ and never matches outcomes</b>
+        &mdash; wrong $z$ sign (not flipped per player at that stored position). <b>Search optimizes for the
+        wrong side</b> (picks moves good for the opponent) &mdash; the value sign was not flipped at each ply on
+        back-up. <b>Illegal moves get probability</b> &mdash; missing the legal-move mask before softmax.
+        <b>Loss is NaN</b> &mdash; LR too high or $\\log p$ of a masked-to-zero move; clamp/mask before the log.
+        <b>Guided and unguided MCTS score the same</b> &mdash; the network is not wired into the priors/leaf
+        value, so the ablation proves nothing.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

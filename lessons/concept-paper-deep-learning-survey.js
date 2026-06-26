@@ -415,6 +415,45 @@
        Nature 521, 2015). There is no CODEVIZ panel of our own numbers, because a survey gives us nothing of our own
        to measure.</i></p>`,
 
+    evaluation:
+      `<p>This is a <b>read-only survey</b>: there is no system of your own to train, so there is no loss curve or
+       held-out metric to compute here. "Working" means two different things — your <b>understanding</b> of the map is
+       correct, and the <b>concept-lesson builds</b> the review points to actually run. Evaluate both.</p>
+       <ul>
+        <li><b>The metric &amp; benchmark.</b> For the <i>reading</i>, the check is a closed-book recall test: can you
+        reproduce the review's spine — one idea (representation learning), one engine (backprop), two families
+        (ConvNets for arrays, recurrent nets for sequences) — and its quoted numbers <b>with attribution</b>? The
+        "no-skill baseline" is paraphrase without sourcing: if you state "almost halving the error rates" as a fact
+        rather than as the review's ImageNet figure, you have failed the attribution bar. For the <i>methods</i> the
+        review maps, the real metrics live in their own lessons (e.g. top-1/top-5 error on ImageNet for ConvNets,
+        word error rate for speech, perplexity for language models) — not here.</li>
+        <li><b>Sanity checks BEFORE a deep read.</b> (1) <b>Order the image hierarchy</b> from the predict question —
+        edges &rarr; motifs &rarr; parts &rarr; objects — and confirm it against the review's explicit Intro list; if
+        you put parts before edges, you have inverted the compositional argument. (2) <b>Match each section to its
+        data type and architecture</b> in one pass (ConvNets &rarr; images/audio; RNNs &rarr; text/speech) — a cheap
+        test that catches "deep learning = ConvNets." (3) <b>Re-derive the one equation the review writes</b>: the
+        ReLU $f(z)=\\max(z,0)$ and the Fig. 1 backward pass $\\partial E/\\partial z_l = \\partial E/\\partial y_l\\,
+        f'(z_l)$ — if these don't read as "just the chain rule," re-read &sect;Backprop.</li>
+        <li><b>Expected range.</b> The only numbers to anchor to are the review's own quoted figures (reuse
+        <i>results</i>): object nets of "a depth of 5 to 20" non-linear layers; recent ConvNets with "10 to 20 layers
+        of ReLUs, hundreds of millions of weights"; ImageNet as "about a million images ... 1,000 different classes"
+        where deep ConvNets were "almost halving the error rates of the best competing approaches." These are the
+        review's reported figures, not measurements of ours — never present them as freshly produced here. There is no
+        approximate target of our own because there is no run of our own.</li>
+        <li><b>Ablation — the survey's version.</b> A review has no component to switch off; the analogue is to read
+        the closing &sect;Future <b>critically</b>, treating each forecast as a bet and asking which the next decade
+        confirmed. The strongest bet — "we expect unsupervised learning to become far more important in the longer
+        term" — and the <b>attention</b> bet ("strategies for selectively attending to one part at a time") both pay
+        off; flagging which bets came true is the test that you read the section as forecast, not as established
+        result.</li>
+        <li><b>Failure signals &amp; what they mean.</b> If you find yourself looking for "the equation to reproduce"
+        or an <code>allclose</code> to pass, you are treating a survey like a method paper — the deliverable is the
+        map, not an implementation. If you quote "1,000 classes" or "almost halving the error rates" without saying
+        "the review reports," you have dropped attribution (invent nothing). If you cite the &sect;Future bets as facts,
+        you have mistaken 2015 opinion for result. And if you cannot, from memory, name the single training algorithm
+        and the two architecture families, you have not yet absorbed the spine — re-read the abstract.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>read-only survey</b>: there is nothing to implement. There is no PyTorch primitive to

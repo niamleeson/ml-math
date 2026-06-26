@@ -301,6 +301,44 @@
        Duchi, Hazan & Singer, JMLR 12 (2011) 2121&ndash;2159.) The CODEVIZ numbers below are our own small run,
        not the paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Because Adagrad is an <i>optimizer</i>, the primary metric is the
+       <b>training loss reached in a fixed step budget</b> (and the loss-vs-step curve) on a chosen objective &mdash;
+       here the small badly-conditioned least-squares problem (six features scaled $\\times 4$ down to $\\times 0.25$,
+       condition number $\\approx 277$). The no-skill anchors: loss at init ($\\approx 16.5$ here) and, as the
+       informative baseline to beat, <b>plain SGD</b> at a sensible rate. The real <b>oracle baseline is
+       <code>torch.optim.Adagrad</code></b>: a correct from-scratch update must match it to floating-point via
+       <code>torch.allclose</code>. The paper's own claim is <b>regret</b> growing like $\\sum_i\\lVert g_{1:T,i}\\rVert_2$
+       (Corollary 1), provably as good as the best diagonal proximal function in hindsight.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Recompute the two-step worked example with constant gradient
+        $g = 2$, $\\eta = 0.1$, $\\delta \\approx 0$: step 1 gives $G_1 = 4$, $x_1 = -0.1$; step 2 gives $G_2 = 8$,
+        $x_2 = -0.170711$ &mdash; the step must <b>shrink by $\\sqrt 2$</b> even though the gradient never changed.
+        Check $G$ starts at zeros, only ever grows, and is accumulated <b>element-wise per coordinate</b>. Confirm
+        <code>eps</code> ($\\delta$) sits <i>outside</i> the square root, $g/(\\sqrt{G}+\\delta)$, and that the default
+        is $10^{-10}$ (not Adam's $10^{-8}$). Verify <code>zero_grad()</code> runs each step so $g_t$ is not stale.</li>
+        <li><b>Expected range.</b> On the ill-conditioned toy problem a correct Adagrad reaches loss
+        $\\approx 0.0001$ in $60$ steps versus SGD's $\\approx 0.11$ &mdash; <b>hundreds of times lower</b> (our CODEVIZ;
+        small run, not a paper number). The decisive pass/fail is the oracle: <code>torch.allclose(my_w, ref_w,
+        atol=1e-7)</code> should be <b>True</b> after $6$ steps with max abs diff $\\sim 0$. Any visible drift there is a
+        bug (eps placement, sum vs average, missing <code>no_grad</code>), not tuning.</li>
+        <li><b>Ablation &mdash; prove adaptivity earns its keep.</b> The central idea is the <b>per-coordinate
+        accumulated-squared-gradient denominator</b>. Two ablations: (1) replace the lifetime sum
+        $G_t = G_{t-1} + g_t^2$ with a moving average $G_t = 0.9\\,G_{t-1} + 0.1\\,g_t^2$ &mdash; the
+        <code>allclose</code> now returns <b>False</b> because you have built RMSProp, confirming Adagrad is
+        specifically the cumulative sum. (2) Remove adaptivity entirely (divide by a constant, i.e. plain SGD) and the
+        loss on the ill-conditioned problem should regress to the SGD curve ($\\approx 0.11$). If neither change hurts,
+        the per-coordinate scaling is not actually applied.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <code>allclose</code> False with a small constant offset
+        &mdash; $\\delta$/eps inside the root instead of outside, or wrong eps ($10^{-8}$ vs $10^{-10}$). Loss explodes
+        / <b>NaN</b> &mdash; dividing by zero before any gradient history (missing $\\delta$), or $\\eta$ far too large.
+        Loss matches SGD and shows no per-coordinate benefit &mdash; you averaged or reset $G$ instead of summing, so
+        there is no adaptation. Training slows to a crawl on a <b>long</b> run &mdash; expected, not a bug: $G_t$ only
+        grows, so every coordinate's effective rate $\\eta/\\sqrt{G_t}$ decays toward zero (the exact issue RMSProp and
+        Adam fix with a moving average). Memory leak / graph error &mdash; the update was not wrapped in
+        <code>torch.no_grad()</code>.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.optim.Adagrad</code> in one line. Here

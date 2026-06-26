@@ -276,6 +276,51 @@
        action recognition in videos, geo-localization, and many types of fine-grained object classification."</p>
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny toy run — not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>What "working" means here.</b> This is a Track B build that actually trains, so you can measure it
+       directly: two encoders trained with the symmetric loss should let <b>frozen</b> encoders classify
+       <i>held-out</i> images zero-shot, well above chance.</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> The primary metric is <b>zero-shot accuracy on held-out images</b>:
+        embed each class name as a prompt, embed the image, predict $\\arg\\max$ cosine similarity, compare to the
+        true class (no trained head, &sect;3.1). The no-skill floor is the <b>chance rate $1/C$</b> &mdash; here
+        $1/8 = 0.125$ for the toy 8-class set &mdash; and a stronger baseline is <b>random untrained encoders</b>
+        with the same architecture (they should sit at chance). The paper's real-scale analogue: zero-shot CLIP
+        "match[ing] the accuracy of the original ResNet-50 on ImageNet" (Abstract).</li>
+        <li><b>Sanity checks before the full run.</b> Known-answer check on the worked example: the symmetric loss
+        on $S = \\big[[0.9,0.1],[0.2,0.8]\\big]$ at $\\tau=0.5$ must equal <b>0.2220</b> (i2t $=0.2236$, t2i $=0.2204$);
+        the code's cell 0 prints exactly this. Loss-at-init check: before training, with random embeddings on a
+        batch of $N$, each direction is a near-uniform $N$-way softmax, so the symmetric loss should start near
+        $-\\ln(1/N) = \\ln N$ (rule of thumb) &mdash; far from that means mis-scaled logits or a bad temperature init.
+        Shape/range checks: embeddings are unit-length after <code>F.normalize</code> (norm $=1$); the logit grid is
+        $N\\times N$; cosine similarities lie in $[-1,1]$ before the $1/\\tau$ scale. <b>Overfit one batch:</b> train
+        on a single small batch and watch the loss fall toward $0$ as the diagonal of $S$ rises above the
+        off-diagonal &mdash; if it won't overfit, the targets <code>torch.arange(N)</code> or the transpose are
+        wrong.</li>
+        <li><b>Expected range.</b> For the toy run, zero-shot held-out accuracy should land <b>far above
+        $1/8 = 0.125$</b> &mdash; the CODEVIZ shows $\\approx 0.95$ for trained vs $\\approx 0.14$ for random (our toy
+        numbers, seed/hardware-dependent, not the paper's). Anything hovering near $0.125$ after training is
+        "probably a bug"; $0.6$&ndash;$0.9$ is "tuning" (noise level, batch size, epochs, lr). For the real paper the
+        target is approximate and cited: zero-shot matching ResNet-50 on ImageNet (Abstract) &mdash; not reproduced
+        here.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> CLIP's central component is the
+        <b>symmetric</b> contrastive objective. Turn off one half: compute cross-entropy on the <i>rows only</i>
+        (image&rarr;text), dropping the <code>logits.t()</code> (text&rarr;image) term. The text encoder now gets a
+        weak one-sided signal; text&rarr;image retrieval and zero-shot accuracy should <b>drop</b> and the text
+        embeddings degenerate. A second ablation: replace the trained encoders with <b>random untrained</b> ones
+        and redo the same $\\arg\\max$ &mdash; accuracy must collapse to chance, proving the <i>training</i> (not the
+        architecture or the matching rule) built the shared space. If neither ablation lowers the metric, the loss
+        or the freeze isn't wired as intended.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Zero-shot stuck at $\\sim1/C$</b> &rarr; labels shuffled,
+        wrong diagonal targets, or comparing image embeddings against the wrong (un-normalized / training-time)
+        space. <b>Loss NaN or $1/\\tau$ exploding</b> &rarr; temperature learned directly instead of as
+        $\\log(1/\\tau)$ with the clip to $1/\\tau\\le 100$ (&sect;2.5), or lr too high. <b>Collapsed / identical
+        embeddings (all similarities equal)</b> &rarr; missing <code>F.normalize</code>, so the dot product isn't a
+        cosine and the temperature is meaningless; or batch too small to supply real negatives. <b>Train loss falls
+        but text&rarr;image is poor</b> &rarr; the asymmetric (row-only) loss above &mdash; restore the column term.
+        <b>Worked-example loss $\\ne 0.222$</b> &rarr; forgot the $1/\\tau$ scale or averaged the two directions
+        wrong.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

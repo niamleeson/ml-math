@@ -255,6 +255,42 @@ $$ r = \\frac{n\\,b}{n\\,\\log_2(k) + k\\,b} \\qquad\\text{(Eqn. 1, compression 
        saving (&sect;4).</p>
        <p><i>These are the paper's reported figures, quoted from the abstract / &sect;4. The numbers in the
        CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Two metrics, traded off against each other:
+       <b>test accuracy</b> (must not drop) and <b>compression rate</b> $r$ (Eqn. 1, bigger is better),
+       plotted as accuracy vs <b>bits-per-weight</b> $=\\log_2 k$. The paper's benchmarks are MNIST
+       (LeNet-300-100, LeNet-5) and ImageNet (AlexNet, VGG-16); the bar to clear is <b>no accuracy loss</b> at
+       the reported <b>35x&ndash;49x</b> storage reduction (abstract). The "no-skill" anchors: the
+       <b>float32 baseline accuracy</b> is the ceiling you must not fall below, and the trivial-compression
+       point is $k=2$ (1 bit), which forces nearly all distinct weights to collide and should clearly hurt.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Reproduce the worked example exactly:
+        $w=[-0.98,-0.95,0.02,0.05,0.91,1.05]$, $k=2 \\Rightarrow$ centroids $[-0.965, 0.5075]$, assignments
+        $[0,0,1,1,1,1]$, within-cluster sum-of-squares $\\approx 0.9037$, and rate $r\\approx 2.74$. Confirm
+        k-means runs on the <b>scalar weight values</b> (one data point per weight), not on rows/neurons.
+        Check that quantizing with $k=$ (number of distinct weights) leaves accuracy essentially unchanged
+        (a near-no-op), and that centroids are <b>linearly</b> initialized between min and max. Verify the WCSS
+        (Eqn. 2) <i>decreases</i> across k-means iterations.</li>
+        <li><b>Expected range.</b> A correct build should hold accuracy <b>flat from 256 down to about 32
+        clusters (5 bits)</b>, then degrade below that &mdash; the paper's "about 5 bits is enough for
+        fully-connected layers" claim (arXiv:1510.00149, &sect;3; approximate). The lesson's small run held
+        $\\approx 91.3\\%$ down to 5 bits and dropped to $\\approx 80\\%$ at 1 bit (our quantize-and-stop run,
+        not the paper's retrained number). A big accuracy drop already at 32 clusters signals a bug (wrong init,
+        or clustering the wrong axis), not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central knob is the <b>number of
+        shared centroids</b> $k$. Sweep $k \\in \\{256,32,8,2\\}$: accuracy should stay flat to $\\approx 32$ then
+        <b>fall</b> as $k$ shrinks &mdash; this demonstrates weight redundancy is real and that weight sharing is
+        doing the work. A second ablation isolates the <b>linear init</b> claim: swap to random/density init and
+        confirm accuracy at the same $k$ is <i>worse</i> (the paper's reason: large-magnitude weights matter most
+        and other inits crowd centroids near zero).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy collapses even at large $k$</b> &rarr; you
+        clustered feature vectors/rows instead of scalar weights, or replaced weights with indices instead of
+        centroid <i>values</i>. <b>Compression rate $r$ looks tiny</b> &rarr; expected on a small layer (the
+        $k\\,b$ codebook term in Eqn. 1 dominates); $r\\to b/\\log_2 k$ only when $n \\gg k$. <b>Accuracy worse
+        than the paper at 5 bits</b> &rarr; you skipped centroid fine-tuning (Eqn. 3) &mdash; a quantize-and-stop
+        run loses a little more, as our demo does. <b>"Smaller file but no speedup"</b> &rarr; expected: deep
+        compression shrinks storage, not raw multiply-adds, unless the hardware exploits sparsity + codebook.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

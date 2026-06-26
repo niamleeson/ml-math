@@ -280,6 +280,46 @@ frame 4:  [0.5, 0.1, 0.4]</code></pre>
        <i>paper's</i> reported numbers, quoted with their source. Every number in CODEVIZ below is from our own
        toy run, not the paper's.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Speech recognition is scored by <b>word error rate</b> (WER) — the
+       edit distance (insert + delete + substitute words) to fix the output, divided by the number of reference
+       words; lower is better. The paper measures it on the standard <b>Hub5'00</b> conversational-telephone test
+       set. The "better than trivial" bar here is not random (a blank-only decoder gets WER near 100%); it is the
+       <b>prior published result, 18.4%</b> (Vesely et al.), which Deep Speech had to beat. For <i>your</i> toy
+       build the analogous metrics are the held-out <b>CTC loss</b> and <b>exact-match decode rate</b> (how many toy
+       utterances greedy-decode to the right string).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE training.</b> (1) <b>Known-answer CTC test</b> (the oracle in CODE): feed the
+        worked softmax stack for target "hi", $T=4$, and confirm <code>torch.nn.CTCLoss</code> returns
+        <b>$-\\ln 0.478 = 0.738145$</b> (allclose to your hand sum over the 15 collapsing paths). If this is off, your
+        blank index or tensor shapes are wrong before you train anything. (2) <b>Loss at init</b>: for a $V$-way
+        softmax with random weights the per-frame cross-entropy is about $\\ln V$, so a short target's CTC loss should
+        start near a small multiple of $\\ln V$ — wildly larger means bad init or a clamp bug. (3) <b>Overfit the 8
+        toy spectrograms</b> and watch the summed CTC loss head toward ~0; if it sticks, the model isn't learning.
+        (4) Check the <b>blank is class 0</b> and inputs are <code>log_softmax</code> shaped $(T, N, C)$ — the two
+        most common silent bugs.</li>
+        <li><b>Expected range.</b> The paper's anchor (reuse <i>results</i>): <b>16.0% WER</b> on full Hub5'00,
+        "the best published result," vs the prior 18.4% — that is the paper's reported number, not something the toy
+        build reaches. For the toy pipeline the target is qualitative and from our small run (a rule of thumb, not a
+        paper claim): the bidirectional net should reach CTC loss <b>~0.1</b> and decode <b>8/8</b> toy utterances at
+        80 epochs. A loss stuck above ~2 with most decodes wrong is "probably a bug"; 0.1 vs 0.3 is "tuning / seed."</li>
+        <li><b>Ablations — prove the key idea earns its keep.</b> The knob is the recurrent layer's
+        <b>directionality</b>. Re-run with <code>bidirectional=False</code> at the <i>same</i> 80 epochs and confirm
+        the metric <b>drops</b>: in our run the forward-only model is stuck at loss <b>2.446</b> and decodes only
+        <b>1/8</b> (vs 0.097 and 8/8 bidirectional). If unidirectional matches bidirectional, future context isn't
+        wired in (check you concatenate both directions into the output layer). A second ablation: swap the
+        <b>clipped ReLU</b> $g(z)=\\min\\{\\max\\{0,z\\},20\\}$ for a plain ReLU and watch for activation blow-up in a
+        deeper stack — the cap at 20 is what the paper added for stability.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>CTC loss = inf / NaN</b> &rarr; an input length shorter
+        than the target (CTC needs $T \\ge$ target length after the blank-padding rule), or probabilities instead of
+        <code>log_softmax</code>. <b>Loss decreases but every decode is the empty string</b> &rarr; the model
+        collapsed onto the blank (CTC's easy local optimum) — usual with too-high LR or too-few epochs. <b>Greedy
+        decode slips on one frame though loss is low</b> &rarr; expected; greedy takes one best path while the loss
+        sums over all, which is exactly why the paper fuses an N-gram language model ($Q(c)$) for its headline WER.
+        <b>Blank confused with space</b> &rarr; decodes lose word boundaries; remember blank means "emit nothing,"
+        space is a real character.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> We <i>import the plumbing</i> &mdash; <code>nn.Linear</code>,

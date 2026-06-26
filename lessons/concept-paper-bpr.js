@@ -291,6 +291,47 @@
        achievable quality is 1." The exact AUC values appear only in the paper's plots (Figs. 5-6), so we do
        not quote a single headline number here. <i>The numbers in the CODEVIZ panel below are from our own tiny
        run &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> The primary metric is <b>AUC</b> (&sect;4.1.1, &sect;6.2): hold
+       out one positive per user (leave-one-out), and measure the fraction of (held-out-positive, negative) pairs
+       the model ranks in the right order, $\\text{AUC}=\\frac{1}{|U|}\\sum_u\\text{AUC}(u)$. The no-skill baseline
+       is explicit in the paper: "the trivial AUC of a random guess method is $0.5$ and the best achievable
+       quality is $1$" (&sect;6.2). The paper's own benchmarks are the <i>Rossmann</i> shop and a <i>Netflix</i>
+       subsample (&sect;6.1), where "the two BPR optimized methods outperform all other methods" (&sect;6.3, quoted
+       above) &mdash; "better than trivial" means beating $0.5$, and BPR's claim is beating the point-wise SVD-MF /
+       WR-MF baselines at scale.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) <b>AUC at init $\\approx 0.5$:</b> with small random
+        $W,H$ the scores are noise, so step-0 AUC must sit at chance &mdash; if it starts high, your AUC is leaking
+        (see below). (b) <b>Known-answer:</b> reproduce the worked example &mdash; $w_u{=}[0.5,-0.2]$,
+        $h_i{=}[0.4,0.1]$, $h_j{=}[0.2,0.3]$ give $\\hat{x}_{uij}=0.14$, $\\sigma(0.14)=0.5349$, gradient weight
+        $\\sigma(-0.14)=0.4651$, and grad-for-$w_u=[0.093,-0.093]$ (first cell). (c) <b>Sign check:</b> one ascent
+        step must <i>raise</i> $\\hat{x}_{uij}$ ($0.14\\to\\approx 0.177$); if it falls, you minimized $+\\ln\\sigma$
+        instead of $-\\ln\\sigma$. (d) <b>Negative-sampling hygiene:</b> assert every sampled $j\\notin I_u^+$.
+        (e) <b>Overfit:</b> on a tiny matrix AUC should climb well above $0.5$ within a few thousand steps.</li>
+        <li><b>3. Expected range.</b> A correct toy build drives BPR-MF AUC from $\\approx 0.57$ at step 0 to
+        $\\approx 0.92$ (rule of thumb from our 30-user / 40-item / $k{=}8$ run, <i>not</i> a paper number).
+        The paper reports only that AUC lives in $[0.5,1]$ and that BPR beats the baselines (Figs. 5&ndash;6, no
+        single headline value quoted). AUC stuck at $\\approx 0.5$ is "probably a bug"; whether you top out at
+        $0.90$ or $0.94$ on a toy matrix is "tuning / scale," and on a tiny clean matrix the point-wise baseline
+        can legitimately match BPR &mdash; the gap is a large-sparse-noisy-data effect (&sect;6.3).</li>
+        <li><b>4. Ablation &mdash; prove the pairwise criterion earns its keep.</b> The contribution is the
+        <b>criterion</b>, not the model. Swap the pairwise loss $-\\ln\\sigma(\\hat{x}_{ui}-\\hat{x}_{uj})$ for a
+        <b>point-wise</b> baseline (regress $\\hat{x}_{ui}\\to 1$, $\\hat{x}_{uj}\\to 0$, MSE), keeping $W,H,k$,
+        learning rate, and the train/test split identical. At the paper's scale BPR's held-out AUC must come out
+        clearly higher (&sect;6.3); honestly, on our tiny clean matrix the gap shrinks or reverses ($\\approx 0.94$
+        point-wise vs $\\approx 0.92$ BPR), because with few items the 0-target does little harm &mdash; the
+        ablation isolates the <i>training criterion</i> as the only change.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>AUC flat at $\\approx 0.5$:</b> not learning &mdash;
+        sign error (maximizing instead of minimizing $-\\ln\\sigma$), LR too small, or negatives drawn from
+        $I_u^+$ so the model is taught to rank liked items below each other. <b>AUC near $1.0$ immediately:</b>
+        leakage &mdash; the held-out positive (or a training positive) is in the user's <i>negative</i> set when
+        scoring AUC; exclude $\\{i\\}\\cup I_u^{+,\\text{train}}$ from the negatives (Eqn. 2's $E(u)$).
+        <b>Loss NaN / scores exploding:</b> LR too high or no $L_2$ ($\\lambda$) regularization. <b>Gradient
+        weight $\\sigma(-\\hat{x}_{uij})$ near $0$ everywhere early:</b> scores saturated by a bad init &mdash;
+        LearnBPR should put <i>large</i> weight on the pairs it still ranks wrong, so near-zero weight on
+        un-learned pairs means the sigmoid is being fed the wrong sign.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

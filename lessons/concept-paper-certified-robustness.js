@@ -268,6 +268,43 @@
        certified-accuracy-versus-radius shape you reproduce below.</p>
        <p><i>These are the paper's own ImageNet numbers, quoted from the abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny run on a 2D toy task &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The output is a <b>certified-accuracy-versus-$\\ell_2$-radius curve</b>:
+       at each radius $r$, the fraction of test points that are both classified correctly AND certified with
+       $R \\ge r$ (abstentions and wrong predictions count as failures). The paper's setup is ImageNet and
+       CIFAR-10; the no-skill floor is clear &mdash; at $r=0$ you cannot beat clean accuracy, and a coin-flip
+       vote ($\\bar p_A = 0.5$) certifies $R=0$, so <i>any</i> positive certified accuracy at $r\\gt 0$ is the
+       thing trivial methods cannot deliver. Use the paper's prior context as the bar: before this, <i>no</i>
+       certified defense worked at ImageNet scale at all.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Recompute the closed form: $\\bar p_A=0.99,\\ \\sigma=0.5
+        \\Rightarrow R = \\sigma\\,\\Phi^{-1}(0.99) = 1.1632$ (the lesson's worked example) &mdash; a known-answer
+        unit test for your $\\Phi^{-1}$ and radius code. (2) Check $\\bar p_A=0.5 \\Rightarrow R=0$ exactly, and
+        $\\bar p_A\\le 0.5 \\Rightarrow$ <b>abstain</b>. (3) Confirm the lower confidence bound is conservative:
+        $\\bar p_A \\lt k_A/n$ always, and the gap shrinks as $n$ grows. (4) On a point far from the boundary with
+        a noise-robust base net, the vote should be near-unanimous ($k_A/n \\to 1$).</li>
+        <li><b>Expected range.</b> Anchored to the paper's <b>Table 1</b> (quoted in <code>results</code>):
+        certified top-1 ImageNet accuracy is approximately <b>49%</b> at $\\ell_2$ radius $0.5$, <b>37%</b> at
+        $1.0$, <b>19%</b> at $2.0$, <b>12%</b> at $3.0$ &mdash; a monotonically decreasing curve, each at its best
+        $\\sigma$. These are the paper's figures (approximate); reproducing the exact numbers needs their ResNet
+        and noise-augmented training. A curve that does <i>not</i> decrease with radius, or that certifies nothing
+        anywhere, signals a bug, not tuning.</li>
+        <li><b>Ablation &mdash; does smoothing earn its keep?</b> The central knob is the noise level $\\sigma$ and
+        the requirement that the base net be <b>trained under noise</b>. Train the base classifier on clean inputs
+        only, then smooth: the noisy votes collapse to near-random, $\\bar p_A$ hangs around $0.5$, and certified
+        accuracy at every positive radius drops toward zero. Separately, sweeping $\\sigma$ down toward $0$ should
+        <b>cap</b> the maximum certifiable radius (since $R = \\sigma\\,\\Phi^{-1}(\\bar p_A)$ scales with $\\sigma$)
+        &mdash; if shrinking $\\sigma$ does not shrink the reachable radius, smoothing is not wired in.</li>
+        <li><b>Failure signals.</b> Certified accuracy <b>zero at all radii</b> &rarr; base net not trained under
+        noise, or you forgot to add noise at certify time ($\\bar p_A$ stuck near $0.5$). A certified radius that
+        looks <b>too good</b> (larger than a known attack can violate) &rarr; you plugged in the raw fraction
+        $k_A/n$ instead of the conservative lower bound, so the certificate is unsound. <b>$\\Phi^{-1}$ returns
+        NaN / radius blows up</b> &rarr; $\\bar p_A$ rounded to exactly $1$ (need more samples $n$, or clamp).
+        <b>Guarantee fails empirically</b> (an $\\ell_2$ attack inside $R$ flips the label) &rarr; mismatched
+        $\\sigma$ between sampling and certifying, or confidence level not propagated. The
+        $\\sigma=0.25$-capped-at-$R{=}1.0$ versus $\\sigma=1.0$-reaching-$R{=}1.5$ crossover in the CODEVIZ panel
+        is the healthy signature to reproduce.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

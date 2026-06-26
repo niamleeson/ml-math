@@ -250,6 +250,40 @@
        $O(\\sqrt{T})$ bound). (Source: arXiv:1412.6980, ICLR 2015.) The CODEVIZ numbers below are our own small
        run, not the paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Because this is Track A (a from-scratch reimplementation, not a new
+       model), "working" means <i>bit-for-bit agreement with the reference</i>, not a benchmark score. The metric
+       is <code>torch.allclose(my_weights, torch.optim.Adam_weights, atol=1e-7)</code> after several steps from the
+       same start &mdash; PyTorch's <code>torch.optim.Adam</code> is the oracle. The trivial baseline is "any
+       update at all": a wrong optimizer still moves the weights, so a loss-going-down chart proves nothing; only
+       matching the oracle proves you implemented <i>Adam</i> specifically.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) The one-step worked example: from $\\theta_0=0$,
+         $g_1=0.1$, defaults, your step must be exactly $-\\alpha=-0.001$ (and the same for $g_1=10$ &mdash; the
+         first step is $\\pm\\alpha$ regardless of gradient size; this is the scale-invariance signature). (2) Check
+         the bias-correction factors directly: at $t=1$, $1-\\beta_1^{\\,t}=0.1$ and $1-\\beta_2^{\\,t}=0.001$.
+         (3) Confirm $m,v$ are zero-initialized and that <code>step()</code> runs under <code>no_grad</code> (the
+         updated parameter must have <code>requires_grad</code> still set but no grad-fn from the update).</li>
+         <li><b>Expected range.</b> A correct build gives <code>allclose True</code> with max abs diff on the order
+         of $10^{-9}$ (the CODE prints ~7e-9). A diff of $10^{-3}$ or larger is a real bug (likely missing bias
+         correction or wrong $\\epsilon$ placement), not floating-point noise. On the CODEVIZ ill-conditioned toy
+         problem, Adam should reach a far lower loss than SGD in the same 60 steps (our run: ~0.0019 vs ~0.11) &mdash;
+         approximate, our numbers, not the paper's.</li>
+         <li><b>Ablation &mdash; prove the key idea earns its keep.</b> Adam's central additions over RMSProp are
+         the bias-correction factors. Turn them OFF (use $m_t,v_t$ directly instead of $\\hat m_t,\\hat v_t$) and
+         the <code>allclose</code> vs <code>torch.optim.Adam</code> must flip to <b>False</b>, with the mismatch
+         largest at step 1 (where $1-\\beta^{\\,t}$ is smallest) and shrinking as $t$ grows. If it still matches,
+         you were never actually applying the correction. Likewise, removing the per-parameter $\\sqrt{\\hat v_t}$
+         division should make Adam crawl like SGD on the ill-conditioned problem.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>allclose fails only early, converges later</i> &rarr;
+         bias correction missing or mis-applied. <i>allclose fails by a constant factor every step</i> &rarr;
+         $\\epsilon$ inside the sqrt ($\\sqrt{\\hat v_t+\\epsilon}$) instead of outside, or swapped $\\beta_1/\\beta_2$.
+         <i>Weights drift far more than the reference</i> &rarr; forgot <code>zero_grad()</code>, so gradients
+         accumulate and every moment is wrong. <i>NaN weights</i> &rarr; division by a near-zero $\\sqrt{\\hat v_t}$
+         with $\\epsilon$ dropped, or a learning rate far too high. <i>Memory grows each step</i> &rarr; the update
+         was not wrapped in <code>no_grad</code> and autograd is taping the optimizer arithmetic.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.optim.Adam</code> in one line. Here you

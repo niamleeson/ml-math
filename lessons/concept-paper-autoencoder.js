@@ -314,6 +314,59 @@ $$ \\text{Gaussian visible unit (real-valued data): } v_i \\sim \\mathcal{N}\\!\
        <p><i>All of the above are the paper's own reported figures. The numbers in the CODEVIZ panel below are
        from our own tiny MNIST run with a small modern autoencoder — not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> An autoencoder is unsupervised, so there are <b>two</b> things
+       to measure. (1) <b>Reconstruction error</b> &mdash; average squared error per image (or the paper's
+       pixel cross-entropy) between $\\hat x$ and $x$ on held-out images; lower is better. (2) <b>Code
+       quality</b> &mdash; how well the low-dimensional code separates classes, which the paper shows
+       qualitatively (Fig. 3) and you can quantify with a simple classifier (e.g. $k$-NN accuracy) on the
+       2-D code. The honest baseline for BOTH is <b>PCA at the same code size</b>: the autoencoder must beat
+       same-$k$ PCA on reconstruction error, and its code must separate classes better than PCA's. For the
+       $k$-NN separation number, the no-skill floor is majority-class accuracy ($\\approx10\\%$ on 10-way
+       MNIST).</p>
+       <p><b>Sanity checks before the full run.</b></p>
+       <ul>
+         <li><b>Loss-by-hand unit test.</b> Re-run the worked toy: $x=[1,0,0.8,0.2]$,
+         $\\hat x=[0.9,0.1,0.6,0.2]$ &rarr; sum-of-squares $=0.06$, MSE $=0.015$ (CODE cell cell&nbsp;0).
+         If your loss disagrees, fix it before training.</li>
+         <li><b>Shapes &amp; range.</b> The code $z$ must be the bottleneck width (2 here), and $\\hat x$ must
+         match $x$'s shape with every pixel in $[0,1]$ (the final sigmoid guarantees this). Outputs outside
+         $[0,1]$ &rarr; missing sigmoid.</li>
+         <li><b>Overfit a single batch.</b> Train on one mini-batch only; the reconstruction MSE should fall
+         toward $\\approx0$. If it plateaus high, the optimizer/architecture is broken &mdash; not the data.</li>
+         <li><b>Trivial-copy guard.</b> Confirm the code layer is <i>narrower</i> than the input; a wide
+         bottleneck lets MSE go to ~0 while learning nothing.</li>
+       </ul>
+       <p><b>Expected range.</b> The paper's reconstruction wins (Fig. 2, average squared error, lower is
+       better): curves <b>1.44</b> autoencoder vs <b>5.90/7.64</b> PCA; 30-D MNIST <b>3.00</b> vs
+       <b>8.01/13.87</b>; Olivetti faces <b>126</b> vs <b>135</b> (Source: Hinton &amp; Salakhutdinov 2006,
+       Science 313:504, Fig. 2). For codes, Fig. 3 shows the 2-D autoencoder separating digits far more
+       cleanly than the first two principal components. On our toy MNIST run the absolute numbers differ;
+       what should reproduce is the <b>ordering</b> &mdash; nonlinear autoencoder $k$-NN accuracy noticeably
+       <i>above</i> 2-component PCA. The PCA and autoencoder coming out roughly equal is the "something's
+       wrong" signal (approximate; treat the exact $k$-NN figure as a rule of thumb, not a paper claim).</p>
+       <p><b>Ablations &mdash; prove each idea earns its keep.</b> Two knobs, two ablations: <b>(1) the
+       nonlinearity.</b> Replace every activation with identity (the CODE cell's <code>linear=True</code>):
+       the code's class separation must <b>drop to the PCA level</b>, because a linear autoencoder with a
+       $k$-number code <i>is</i> $k$-component PCA. If it doesn't drop, a nonlinearity is still leaking in.
+       <b>(2) the bottleneck.</b> Widen the code toward the input size: reconstruction MSE falls but the code
+       becomes useless (near-copy) &mdash; confirming the squeeze, not raw capacity, is what makes the code
+       meaningful.</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>MSE $\\approx0$ but the code separates nothing</b> &rarr; bottleneck too wide (the net is
+         copying the input through).</li>
+         <li><b>Autoencoder code no better than PCA</b> &rarr; the nonlinearity isn't active (you left
+         identity activations, or the net collapsed to a near-linear map).</li>
+         <li><b>Washed-out reconstructions / MSE won't drop</b> &rarr; missing output sigmoid or an input/output
+         scale mismatch (pixels not in $[0,1]$).</li>
+         <li><b>Loss NaN</b> &rarr; learning rate too high or bad init.</li>
+         <li><b>Identical / collapsed codes for every image</b> &rarr; posterior/representation collapse;
+         lower the LR or check the bottleneck isn't dead (all-zero ReLU).</li>
+         <li><b>PCA "beats" the autoencoder unfairly</b> &rarr; you fit PCA on differently-scaled images or a
+         different code size; match both (same flattened $[0,1]$ images, same $k$).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you

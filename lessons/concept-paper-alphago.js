@@ -348,6 +348,46 @@
        <p><i>All numbers above are the paper's own, transcribed from the abstract and &sect;1&ndash;5. Every number
        in the CODEVIZ panel below comes from a tiny toy MCTS we ran ourselves &mdash; it is an illustration of how
        visit counts concentrate, not any AlphaGo result.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> AlphaGo's primary metric is <b>win rate</b> &mdash; against other Go
+       programs and against human professionals, on the full $19\\times19$ board. The paper's "no-skill" reference
+       points are the prior best programs (Crazy Stone, Zen, Pachi, Fuego, GnuGo) and a $50\\%$ even-match
+       baseline; the bar it cleared was beating a human pro. Component metrics let you check the pieces in
+       isolation: <b>move-prediction accuracy</b> for the policy networks (random over $\\approx 250$ legal moves
+       $\\approx 0.4\\%$; the SL net hit $57.0\\%$, &sect;1) and <b>test MSE</b> for the value network ($v\\in[-1,1]$,
+       so a constant-$0$ predictor gives MSE near the outcome variance). <b>Our build</b> is a toy MCTS, so its
+       check is simply: does the most-visited move converge to the move with the highest hidden win-probability?</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Recompute the worked PUCT step:</b> for the
+        three-move node ($Q=[0.60,0.10,0.20]$, $P=[0.20,0.50,0.30]$, $N=[8,1,3]$, $c=1.5$), the scores must be
+        $0.6333/0.4750/0.3125$ and $\\arg\\max$ must be <b>A</b> &mdash; a known-answer unit test for the
+        selection rule. (2) <b>Priors are a distribution:</b> the policy net's softmax over legal moves should
+        sum to $1$ and be $0$ on illegal points. (3) <b>Value range:</b> $v_\\theta(s)$ must lie in $[-1,1]$; on a
+        clearly won position it should be near $+1$. (4) <b>Back-up arithmetic:</b> after one simulation through
+        an edge, $N$ increments by exactly $1$ and $Q$ equals the running mean of leaf values (Eqs 7&ndash;8).</li>
+        <li><b>Expected range.</b> The paper's targets (quoted in <code>results</code>): single-machine AlphaGo
+        <b>won 494/495 = 99.8%</b> against other programs and beat Fan Hui <b>5&ndash;0</b>; the SL policy reached
+        <b>57.0%</b> move accuracy (55.7% raw board) vs 44.4% prior SOTA; the value net reached <b>test MSE
+        0.234</b> on distinct self-play positions; the best leaf-blend was $\\lambda=0.5$. For our toy MCTS, with
+        move A's hidden win-prob highest, A should collect the large majority of visits within $\\sim$100
+        simulations (rule of thumb, our run &mdash; not a paper number).</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> AlphaGo's central idea is using a
+        <b>learned policy prior $P$ to narrow the search breadth</b>. Knock it out by setting every $P(s,a)$
+        <i>uniform</i>: with $\\approx 250$ legal moves and a fixed budget, simulations spread thinly, $Q$
+        estimates get noisy, and the most-visited move becomes less reliable &mdash; strength should drop sharply
+        (Fig. 2a: "small improvements in [policy] accuracy led to large improvements in playing strength"). A
+        second knob: the leaf-blend $\\lambda$ &mdash; value-only ($\\lambda=0$) or rollout-only ($\\lambda=1$)
+        should each lose to the $\\lambda=0.5$ mix ($\\geq 95\\%$, &sect;5).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Visit counts never concentrate</b> (stay roughly
+        uniform) &mdash; the priors are flat or the exploration constant $c$ is too high, so $u$ never decays.
+        <b>Search fixates on one move immediately</b> &mdash; $c$ too low / no exploration, so an early lucky
+        rollout buries good alternatives. <b>Policy accuracy stuck near $0.4\\%$</b> (chance over legal moves)
+        &mdash; the net is not learning (labels mis-aligned, no gradient). <b>Value net MSE near the
+        outcome-variance floor</b> with train MSE far lower &mdash; overfitting, exactly the "full-game"
+        leakage the paper fixed by using one distinct position per game (test MSE $0.37\\to 0.234$, &sect;3).
+        <b>Search plays the highest-$Q$ rather than most-visited move</b> &mdash; a wiring bug; AlphaGo plays
+        $\\arg\\max N$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

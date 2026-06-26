@@ -319,6 +319,41 @@ $$ \\text{Downsample (between stages)}:\\ \\ \\text{LN} \\;\\to\\; \\text{Conv}_
        and ADE20K segmentation.</p>
        <p><i>These are the paper's reported figures, quoted from Table 1 / Figure 2 / the abstract. The numbers in
        the CODE and CODEVIZ panels below are from our own tiny MNIST-subset run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The system is an image classifier, so the metric is <b>top-1 accuracy</b>
+       (fraction of images whose top prediction is correct). The paper's benchmark is <b>ImageNet-1K</b> at
+       $224^2$; the reference to beat is <b>Swin-T at $81.3\\%$</b> and the prior ConvNet (untouched ResNet-50) at
+       $76.1\\%$. The no-skill floor is <b>$10\\%$</b> (random over $1000$ classes); on your $10$-class MNIST toy the
+       floor is also $10\\%$. "Better than trivial" means clearly above chance and, for the full system, near the
+       paper's roadmap numbers.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Overfit one batch:</b> train on a single minibatch
+        and watch cross-entropy fall toward $0$ and its accuracy hit $100\\%$ &mdash; if it cannot, the block is
+        mis-wired. (b) <b>Loss at init:</b> for $K$-way softmax it should be $\\approx -\\ln(1/K)=\\ln K$
+        ($\\ln 10\\approx 2.30$ for MNIST); a wildly different value flags a bad head or label bug. (c)
+        <b>Shape check:</b> a block must return the <i>same</i> $(N,C,H,W)$ it received (else the residual
+        <code>+ x</code> throws) &mdash; verify with one forward on a dummy tensor. (d) <b>Param-count check:</b>
+        the worked example's first cell prints $1{,}568$ depthwise vs $8{,}192$ channel-mixing weights for $C=32,r=4$;
+        matching those confirms <code>groups=dim</code> and the $4\\times$ expansion are correct.</li>
+        <li><b>3. Expected range.</b> At paper scale, a correct ConvNeXt-T should reach roughly the Table-1 figure,
+        <b>$\\approx 82.1\\%$ top-1 on ImageNet-1K</b> (paper, approximate &mdash; reproducing needs the full ~300-epoch
+        AdamW recipe). On the tiny MNIST subset our run reaches <b>~0.94</b> test accuracy with $r=4$ (rule of thumb,
+        not a paper claim; varies with seed/hardware). Landing far below chance-plus is "probably a bug"; a few points
+        under target is "tuning."</li>
+        <li><b>4. Ablation &mdash; the inverted bottleneck.</b> ConvNeXt's central transformer-borrowed knob is the
+        <b>$4\\times$ inverted-bottleneck expansion</b>. Turn it off by setting the expansion ratio <b>$r=4\\to1$</b>
+        (the two $1\\times1$ convs keep width flat) with everything else &mdash; depth, kernel, norm, GELU, optimizer,
+        seed &mdash; identical, and confirm accuracy <b>drops</b> (our run ~0.94 &rarr; ~0.88). If it does not drop,
+        the wide middle is not actually wired in or not helping. (A second ablation: the modern recipe alone lifts
+        ResNet-50 $76.1\\%\\to78.8\\%$ &mdash; remove AdamW/augmentation and the gain vanishes.)</li>
+        <li><b>5. Failure signals.</b> <b>Accuracy stuck near $10\\%$</b> &rarr; not learning: labels shuffled, head
+        disconnected, or the residual add silently zeroing the signal. <b>Loss NaN</b> &rarr; LR too high or a bad
+        LayerNorm axis. <b>Shape/runtime error on <code>+ x</code></b> &rarr; wrong $7\\times7$ padding (need
+        <code>padding=3</code>) or a missing channels-last <code>permute</code> around <code>nn.LayerNorm</code>.
+        <b>Train-good, val-bad</b> &rarr; overfit (expected on the tiny subset; the augmentation/stochastic-depth
+        recipe is what closes it at scale). <b>$r=1$ matches $r=4$ exactly</b> &rarr; the ablation knob is not
+        threaded through &mdash; the expansion is not really being changed.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -285,6 +285,46 @@
        <p><i>Every number above is quoted from the paper (Abstract, &sect;3, Table 1/2). The numbers in the CODEVIZ
        panel below are a synthetic illustration of the fixed-compute trade-off with arbitrary toy constants &mdash;
        they are NOT the paper's measured loss values or fitted constants.</i></p>`,
+    evaluation:
+      `<p><b>What "working" means here.</b> Read-only scaling paper &mdash; there is no model to train, so "your
+       build" is the two CPU computations: (a) the budget arithmetic $C \\approx 6ND$, and (b) the synthetic
+       fixed-compute loss curve. Both have exact, checkable targets.</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> The quantity to verify is the <b>compute-optimal split</b>: the location
+        of the interior minimum of loss along a fixed-budget line $D = C/(6N)$, and the implied exponents
+        $a, b$ in $N_{\\text{opt}}\\propto C^{a}$, $D_{\\text{opt}}\\propto C^{b}$. The "better than trivial" baseline
+        is the <b>all-into-$N$ allocation</b> the pre-Chinchilla field used (giant model, fixed data): the optimum
+        must sit strictly <i>inside</i>, not at the large-$N$ edge. The paper's own check on real models is
+        Chinchilla (70B, 1.4T tokens) beating Gopher (280B) at <i>equal compute</i> (Abstract).</li>
+        <li><b>Sanity checks before the full run.</b> Known-answer arithmetic from the lesson's worked example:
+        $C = 6 \\times 70\\text{e}9 \\times 1.4\\text{e}12$ must print $\\approx 5.88\\times10^{23}$ FLOPs, and at that
+        same $C$ a 280B model must afford $\\approx 3.5\\times10^{11}$ tokens (a $4\\times$ reduction vs Chinchilla's
+        1.4T). Dimension check: $C/(6N)$ has units of tokens. Shape check on the synthetic curve: loss must be high
+        at <i>both</i> ends of the $N$ sweep and lower in between (a U), so <code>argmin</code> lands in the interior,
+        not at index 0 or the last index. The fitted-loss form is also checkable: at the paper's constants
+        ($E=1.69$, $A=406.4$, $B=410.7$, $\\alpha=0.34$, $\\beta=0.28$, &sect;3.3 Eq. 10) the analytic exponent
+        $a = \\beta/(\\alpha+\\beta) = 0.28/0.62 \\approx 0.45$ must reproduce Approach 3's $a=0.46$.</li>
+        <li><b>Expected range.</b> The paper's reported exponents (approximate, &sect;3 Table 2): three independent
+        methods give $a = 0.50, 0.49, 0.46$ and $b = 0.50, 0.51, 0.54$ &mdash; all near $0.5$, i.e. "scale $N$ and
+        $D$ in approximately equal proportions." Any derived $a$ far from $\\sim0.5$ (say $0.7$ or $0.3$) signals a
+        bug, not tuning. The synthetic toy curve has no claim to match these &mdash; its only target is the
+        <i>shape</i> (interior minimum) and its own printed numbers (e.g. optimum near the lesson's stated toy
+        $N$/loss), which are exact.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The paper's central knob is the
+        <b>budget constraint $C \\approx 6ND$ that couples $N$ and $D$</b>. Turn it OFF: let $D$ be a fixed constant
+        independent of $N$ (the pre-Chinchilla habit) instead of $D = C/(6N)$, and re-minimize. The U-shape
+        <b>flattens or becomes monotone</b> &mdash; loss now just falls with $N$, so "make $N$ as big as possible"
+        wins and the interior optimum vanishes. Recovering the interior minimum <i>only</i> when the coupling is on
+        is the whole point: it is the coupling that forces the equal-scaling trade-off, not the loss fit alone.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>argmin at an edge of the $N$ sweep</b> &rarr; you forgot
+        to substitute $D = C/(6N)$ (so loss is monotone in $N$), or the sweep range is too narrow to contain the
+        minimum. <b>$C$ off by an order of magnitude</b> &rarr; missing the factor 6, or mixing units (billions vs
+        raw counts). <b>Derived $a$ far from $0.5$</b> &rarr; swapped $\\alpha$ and $\\beta$ in
+        $a = \\beta/(\\alpha+\\beta)$, or used the loss-fit exponents where the budget exponents were meant. <b>$a + b
+        \\ne 1$</b> &rarr; a sign or algebra error in the constrained minimization; the budget forces $a + b = 1$
+        exactly (see the Derivation). <b>"Smaller is always better" conclusion</b> &rarr; you dropped the
+        equal-compute condition; the result is about allocation at fixed $C$, not size in the abstract.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

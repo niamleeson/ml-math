@@ -274,6 +274,41 @@
        factor becomes independent of the learning rate</b>, so the two can be tuned separately. (Source:
        arXiv:1711.05101 abstract and Section 4.4.)</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Track A again, so "working" means <i>exact agreement with the
+       reference</i>: <code>torch.allclose(my_theta, torch.optim.AdamW_theta, atol=1e-6)</code> over several steps
+       with weight decay on. <code>torch.optim.AdamW</code> is the oracle. The trivial bar is "the weights move and
+       shrink" &mdash; both AdamW and the buggy Adam+L2 do that, so shrinkage alone proves nothing; only matching
+       <code>AdamW</code> (and <i>not</i> matching <code>Adam(weight_decay=...)</code>) proves you built the
+       <i>decoupled</i> update.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) The one-step worked example: $\\theta=0.5$, $g=0.2$,
+         $\\alpha=0.1$, $\\lambda=0.01$ must give $\\theta_{\\text{new}}=0.3995$ exactly (the adaptive step is $1.0$
+         plus a $0.005$ decay term, scaled by $\\alpha$). (2) Set $\\lambda=0$ and confirm your AdamW reduces to plain
+         Adam &mdash; it should then match <code>torch.optim.Adam</code> too. (3) With the loss gradient set to zero
+         but $\\lambda\\gt0$, one step must shrink the weight by exactly $\\eta_t\\alpha\\lambda\\theta$ (pure decay,
+         no adaptive term) &mdash; a clean known-answer test of the decoupled branch.</li>
+         <li><b>Expected range.</b> A correct build gives <code>allclose True</code> with diffs at the
+         floating-point floor (~$10^{-7}$ at <code>atol=1e-6</code>). A diff of $10^{-3}$+ is a real bug, almost
+         always the decay routed through the gradient. On the CODEVIZ small-gradient-weight demo, under AdamW the
+         decoupled weight should track the large-gradient weight (our run: ends ~$-1.30$, uniform decay); under
+         Adam+L2 it barely reaches 0 (~$-0.10$) &mdash; approximate, our numbers, not the paper's.</li>
+         <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The paper's whole contribution is the single
+         fork at Algorithm 2 line 6: decay applied to the weight vs folded into $g_t$. Move $\\lambda\\theta$ into
+         the gradient ($g\\leftarrow g+\\lambda\\theta$, drop the separate term) and the <code>allclose</code> vs
+         <code>AdamW</code> must flip to <b>False</b> &mdash; and now instead match <code>torch.optim.Adam(weight_decay=\\lambda)</code>.
+         If both still match <code>AdamW</code>, your decay was never actually being applied. Confirm the divergence
+         is largest on weights with the largest $\\hat v_t$ (Proposition 2: large-$\\hat v_t$ weights get decayed
+         less under L2).</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>allclose matches Adam(weight_decay) but not AdamW</i>
+         &rarr; you built Adam+L2 (decay folded into the gradient). <i>allclose fails worst on high-gradient
+         coordinates</i> &rarr; same coupling bug, seen through Proposition 2. <i>Decay too weak/strong by a constant
+         factor</i> &rarr; forgot to multiply the decay by $\\alpha$ (and $\\eta_t$); the effective shrink is
+         $\\eta_t\\alpha\\lambda$, matching PyTorch. <i>Divide-by-zero at $t=1$</i> &rarr; off-by-one step index;
+         $t$ must start at 1 so $1-\\beta^{\\,t}\\ne0$. <i>Early steps far too small</i> &rarr; bias correction
+         dropped.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.optim.AdamW</code> in one line. Here you

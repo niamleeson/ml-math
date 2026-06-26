@@ -286,6 +286,45 @@
        <p><i>The numbers in the CODE and CODEVIZ panels below are from our own tiny run on a 2-D toy classifier
        &mdash; not the paper's reported results. They reproduce the qualitative effect (high success at low
        distortion vs FGSM), not the paper's exact distortions.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> A C&amp;W attack is judged by two numbers together: <b>targeted
+       success rate</b> (fraction of inputs the network now classifies as the chosen target $t$) and the
+       <b>mean $L_2$ distortion</b> $\\lVert\\delta\\rVert_2$ of the perturbations that succeed — lower distortion
+       at equal success is a stronger attack. The paper's setup is MNIST/CIFAR classifiers; the &ldquo;better
+       than trivial&rdquo; baseline is the weaker one-step <b>FGSM</b> (and the prior <b>DeepFool</b> attack).
+       (Reported: <b>100% success</b> with mean $L_2$ <b>1.36 on MNIST, 0.17 on CIFAR</b>, Table IV — below
+       DeepFool's 2.11 / 0.85.)</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Verify the margin loss on the worked logits:
+        $Z=[2.0,0.5,-1.0],t=2,\\kappa=0 \\Rightarrow f=\\max(2.0-(-1.0),0)=3.0$, and the target-winning case
+        $Z=[2.0,0.5,3.0],\\kappa=1 \\Rightarrow f=\\max(-1.0,-1.0)=-1.0$ — the notebook's first cell recomputes both.
+        Check the tanh reparametrization is an identity at init: $x' = \\tfrac12(\\tanh(\\mathrm{arctanh}(2x-1))+1)$
+        should return the clean $x$ (so $\\lVert\\delta\\rVert_2=0$ at step 0). Confirm $x'\\in[0,1]^n$ for
+        <i>any</i> $w$. Confirm the victim classifier hits ~100% clean accuracy first — you can only measure a
+        flip on inputs it gets right.</li>
+        <li><b>3. Expected range.</b> A correct $L_2$ attack should reach <b>near-100% targeted success</b> at a
+        mean $L_2$ <i>well below</i> FGSM's at the same success. Our toy run: C&amp;W hits 100% at mean
+        $L_2\\approx 0.33$ (at $c=0.3$), while FGSM tops out ~93% even at $L_2\\approx 0.57$. Anchor the real
+        target to the paper's <b>1.36 (MNIST) / 0.17 (CIFAR)</b> at 100% (approximate, Table IV of
+        arXiv:1608.04644). Far below 100% success usually means $c$ too small or too few Adam steps (tuning);
+        success at a <i>huge</i> $L_2$ means a wiring bug.</li>
+        <li><b>4. Ablation — prove the key idea earns its keep.</b> The paper's central design choice is the
+        <b>margin loss on logits</b> $Z$ (its $f_6$), chosen over softmax cross-entropy for well-scaled
+        gradients. Turn it OFF: replace $f$ with $\\text{CE}(\\mathrm{softmax}(Z),t)$, everything else identical.
+        A correct comparison shows the search over $c$ become finicky and the perturbations <b>larger / less
+        reliable</b> — the paper measures the softmax gradient swinging from $2^{-20}$ near the clean image to
+        $2^{-1}$ at the adversarial point (Section V-A). If swapping in CE makes <i>no</i> difference, you are
+        probably still reading logits somewhere. Secondary knob: raising $\\kappa$ should buy higher-confidence
+        flips at the cost of more $L_2$.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>$L_2$ stays 0 / no perturbation</b>: $w$ never
+        moved — check it <code>requires_grad</code> and that you optimize $w$, not $x$. <b>Loss NaN / $w\\to\\pm\\infty$</b>:
+        forgot to clamp $x$ into $(0,1)$ before <code>atanh</code> (arctanh blows up at $\\pm1$), or LR too high.
+        <b>Success near 0 at every $c$ with the target logit <i>dropping</i></b>: the margin sign is backwards —
+        it must be $\\max_{i\\neq t}Z_i - Z_t$ (competitor minus target), not the reverse. <b>Success only at
+        enormous $L_2$</b>: optimizing $\\delta$ with per-step clamping instead of the tanh map (the optimizer
+        fights the clip), or $c$ pinned far too large. <b>Distortion never shrinks after the flip</b>: $f$ not
+        clamped at $-\\kappa$, so the loss keeps over-fooling instead of minimizing $\\lVert\\delta\\rVert_2^2$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -282,6 +282,40 @@
        <p><i>These are the paper's reported figures, quoted from the fetched text. The accuracy printed by the
        CODE and shown in the CODEVIZ panel below is from our own tiny CIFAR-10 run &mdash; not the paper's
        reported number.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The system's metric is <b>top-1 / top-5 classification accuracy</b>
+       on held-out images. The paper's setup is <b>ImageNet ILSVRC-2010</b>, 1000 classes; "no-skill" there is
+       random guessing $= 0.1\\%$ top-1 (and $\\approx 0.5\\%$ top-5), and the bar AlexNet had to clear was the
+       prior state of the art. <b>Our build</b> classifies a CIFAR-10 subset (10 classes), so its chance level
+       is $10\\%$ top-1 &mdash; any working net must beat that comfortably; compare ReLU-vs-tanh only on the
+       <i>same</i> CIFAR-10 split, never against ImageNet figures.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Loss at init:</b> a fresh 10-class softmax should
+        start near $-\\ln(1/10)\\approx 2.30$ cross-entropy; if epoch-0 loss is far off, the labels or the
+        flatten dimension are wrong. (2) <b>Overfit one batch:</b> train on a single mini-batch with
+        augmentation off &mdash; loss should fall to near $0$ and that batch's accuracy hit $100\\%$; if it
+        cannot, the net is mis-wired. (3) <b>Shape check:</b> print <code>x.shape</code> before the first
+        <code>nn.Linear</code> and confirm it matches via $O=\\lfloor (W-K+2P)/S\\rfloor + 1$ at every conv/pool
+        ($64\\times4\\times4=1024$ for the lesson's net); and confirm test-time softmax outputs sum to $1$.</li>
+        <li><b>Expected range.</b> On the full ImageNet ILSVRC-2010 task a correct AlexNet reaches the paper's
+        <b>37.5% / 17.0% top-1 / top-5 error</b> (abstract, quoted in <code>results</code>) &mdash; do not expect
+        this from our toy net. For the CIFAR-10 subset, a few epochs landing in roughly the $50$&ndash;$65\\%$
+        test-accuracy range is a healthy ReLU run (rule of thumb, our setup, not a paper claim); stuck near
+        $10\\%$ means it is not learning, while a tiny gap above chance suggests a bug, not just tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> AlexNet's headline trick is the
+        <b>ReLU</b> non-saturating activation. Flip the one knob (<code>act="relu"</code> &rarr;
+        <code>"tanh"</code>) with depth, width, optimizer, data, and seed fixed: the ReLU net's training loss
+        should drop <i>faster</i> in the first epochs (the paper's $6\\times$-faster claim, &sect;3.1, Fig. 1). If
+        tanh trains just as fast, the activation is not actually being swapped. As a second ablation, removing
+        <b>dropout</b> should widen the train-minus-test accuracy gap (more overfitting).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy stuck at $10\\%$</b> (chance) &mdash; labels
+        shuffled, learning rate $0$, or no gradient flow. <b>Loss is NaN</b> &mdash; learning rate too high or
+        bad init; lower the LR and normalize inputs. <b>Many ReLU units permanently output $0$ ("dead ReLUs")</b>
+        &mdash; LR too high pushed them negative; the loss plateaus high. <b>Train accuracy high, test accuracy
+        low</b> &mdash; overfitting or a missing <code>net.eval()</code> leaving dropout on at test time (which
+        also makes the same image give different predictions run to run). <b>A PyTorch shape error at the first
+        FC layer</b> &mdash; the flatten dimension was miscounted.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

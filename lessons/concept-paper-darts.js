@@ -277,6 +277,53 @@ $$ o^{(i,j)} \\;=\\; \\arg\\max_{o \\in \\mathcal{O}}\\; \\alpha^{(i,j)}_{o} \\q
        Treebank a test perplexity of <b>"55.7"</b>.</p>
        <p><i>These are the paper's reported figures, quoted from its abstract and tables. The numbers in the CODE
        and CODEVIZ panels below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> DARTS is judged on the <b>derived discrete child</b>, not the soft
+       super-network. Two numbers matter: (a) <b>search cost</b> in GPU-days &mdash; the whole point; the paper
+       reports CIFAR-10 search in <b>&ldquo;4 GPU days&rdquo;</b> versus <b>&ldquo;2000 GPU days&rdquo;</b> (NASNet-A)
+       and <b>&ldquo;3150 GPU days&rdquo;</b> (AmoebaNet). (b) <b>Final accuracy</b> of the argmax-derived cell after
+       retraining from scratch: the paper reports <b>&ldquo;2.76 &plusmn; 0.09% test error&rdquo;</b> on CIFAR-10 and
+       <b>&ldquo;55.7&rdquo;</b> test perplexity on Penn Treebank. The &ldquo;no-skill&rdquo; bars: a
+       <b>randomly-sampled architecture</b> from the same search space (DARTS should beat random search), and chance
+       (90% error on 10-class CIFAR). On the toy task here, the metric is validation MSE of the retrained derived op.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Softmax check.</b> $\\mathrm{softmax}(\\alpha)$ over the op axis must sum to $1$; with all $\\alpha$
+        equal it must be uniform ($1/|\\mathcal{O}|$ each). The CODE recomputes the worked example
+        $\\mathrm{softmax}([2.0,0.5,0.5,0.5]) = [0.599, 0.1337, 0.1337, 0.1337]$ &mdash; a known-answer unit test.</li>
+        <li><b>Two optimizers, two splits.</b> Verify $\\alpha$ steps on the <b>validation</b> loss and $w$ on the
+        <b>training</b> loss &mdash; a single shared optimizer or shared split silently breaks the bi-level objective.</li>
+        <li><b>Overfit a tiny toy</b> where exactly one op carries the signal (target $= x_0$): the softmax weight on
+        the useful op must climb above the useless ones within tens of steps.</li>
+        <li><b>Gradient on $\\alpha$.</b> Confirm $\\nabla_\\alpha \\mathcal{L}_{\\text{val}}$ is non-zero and flows
+        through the mixture; if $\\alpha$ never moves, the mixed op is detached from $\\alpha$.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The argmax should land on the useful op and its retrained child should reach
+       near-zero validation loss &mdash; our toy run: softmax weight on the useful op rises ~0.27 &rarr; ~0.76, derived
+       op retrains to val MSE <b>~0.0000</b> while a useless op stays ~1.10 (CODE/CODEVIZ; our run, not the paper). For
+       the real task, target the paper's <b>2.76% CIFAR-10 error</b> (approximate, &sect;3) at roughly <b>4 GPU-days</b>
+       of search; an order-of-magnitude worse accuracy or a derived cell no better than random is &ldquo;probably a
+       bug,&rdquo; a few tenths of a percent is &ldquo;tuning / seed variance.&rdquo;</p>
+       <p><b>4. Ablation &mdash; prove the search earns its keep.</b> Take the argmax-derived op and retrain it; then,
+       changing exactly one thing, retrain a <b>useless</b> op the same way (&sect;2.4 derive-and-retrain). The
+       derived op should reach near-zero validation loss and the useless op should stay high (toy run: ~0.0000 vs
+       ~1.10). A stronger NAS-wide ablation: compare the searched cell against a <b>randomly sampled</b> cell from the
+       same space &mdash; if random does just as well, the gradient search added nothing. The knob to toggle is which
+       op $\\alpha$ selects.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>$\\alpha$ collapses onto skip-connect / identity (or another trivial op).</b> This is DARTS's
+        best-known instability (the &ldquo;too many skip-connects&rdquo; failure); the derived cell then
+        under-performs despite a low super-network loss.</li>
+        <li><b>Derived child generalizes far worse than the super-network's validation loss.</b> Expected &mdash; the
+        mixture's loss is <i>not</i> the deployed model's loss; you must argmax-and-retrain (&sect;2.4). If you
+        skipped retraining, that is the bug, not the architecture.</li>
+        <li><b>$\\alpha$ stays uniform / never concentrates</b> &rarr; the $\\alpha$-gradient is not flowing (mixture
+        detached) or the two splits/optimizers are crossed.</li>
+        <li><b>Search overfits</b> (great training loss, poor validation, argmax picks a memorizing op) &rarr; $\\alpha$
+        is being trained on the training split instead of the held-out validation split &mdash; collapses the bi-level
+        structure of Eqns. 3-4.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

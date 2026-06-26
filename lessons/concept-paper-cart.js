@@ -284,6 +284,45 @@ $$ \\text{(cost-complexity pruning)}\\quad R_\\alpha(T) = R(T) + \\alpha\\,|\\wi
        <p><i>No specific headline metric is quoted because none is reproduced from the book here. The numbers in
        the CODE and CODEVIZ below are from our own small run on a toy dataset &mdash; not the book's
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> This is a <b>Track A (primitive)</b> build, so &ldquo;working&rdquo;
+       means two things: the from-scratch split search reproduces a <b>hand-computed reference exactly</b>, and
+       the grown tree's predictions <b>agree with scikit-learn's CART</b> (the oracle). The primary metric is
+       <b>prediction agreement</b> with <code>DecisionTreeClassifier(criterion="gini")</code> on the same data
+       (target: <b>1.0000</b>) plus exact assertions on Gini / split scores. The &ldquo;better than trivial&rdquo;
+       floor is a single-leaf majority-class predictor: weighted training impurity $R(T)=0.5$ at depth 0 (a
+       50/50 mix), which any real split must beat. (The 1984 book reports no single headline metric — its result
+       is methodological.)</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Assert the worked-example numbers (the notebook's first
+        cell does exactly this): parent Gini $=0.5$ on $y=[0,0,0,1,1,1]$; perfect split at $t=4.5$ gives $G=0$;
+        worse split at $t=2.5$ gives $G=0.25$; the right child $\\{0,1,1,1\\}$ has Gini $0.375$; and
+        <code>best_split</code> returns $(j{=}0,\\,t{=}4.5,\\,G{=}0)$. Unit-check <code>gini</code>: a pure node
+        returns $0$, an even two-class mix returns $0.5$, and $H=\\sum_k p_k(1-p_k)$ must equal
+        $1-\\sum_k p_k^2$. Confirm <code>split_score</code> returns &ldquo;no split&rdquo; (<code>None</code>) when
+        a child is empty, so the search skips it instead of dividing by zero.</li>
+        <li><b>3. Expected range.</b> On near-separable blobs, $R(T)$ should drop sharply after the first split
+        and reach $0$ within a couple of levels — our run: <b>$R(T)=0.5000 \\to 0.0323 \\to 0.0000$</b> at depths
+        $0,1,2$, root split (feature 0, threshold $\\approx 1.1712$), train accuracy $\\approx 0.983$ after one
+        split. The agreement metric must be <b>exactly 1.0000</b> against scikit-learn's CART — this is a
+        primitive, so anything below 1.0 is a bug, not tuning (unlike a learned model there is no &ldquo;close
+        enough&rdquo;).</li>
+        <li><b>4. Ablation — prove the key idea earns its keep.</b> CART's two load-bearing choices are the
+        <b>weighted-average</b> child impurity and <b>minimizing</b> (not maximizing) $G$. Ablate the weighting:
+        score splits by the <i>plain</i> mean of the two child Ginis instead of $\\frac{n_L}{n}$/$\\frac{n_R}{n}$
+        — the tree should now <b>disagree with scikit-learn</b> (agreement drops below 1.0) because it
+        over-values peeling off a tiny pure child. Flip <code>best_split</code> to <code>argmax</code> $G$ and it
+        picks the <i>worst</i> split, sending $R(T)$ up instead of down. Either ablation breaking the oracle
+        agreement is the proof the real criterion is what earns the match.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Agreement &lt; 1.0 / wrong root split</b>: usually
+        the unweighted-average bug, or thresholding on raw feature values instead of <b>midpoints</b> between
+        distinct sorted values (then some row partitions are unreachable). <b>Division-by-zero / NaN in
+        $G$</b>: forgot to return <code>None</code> on an empty child. <b>$R(T)$ rising with depth</b>: maximizing
+        $G$ instead of minimizing it. <b>$R(T)$ never reaching 0 on separable data</b>: the search isn't trying
+        every feature, or the recursion stops too early. <b>Tree fits training perfectly but generalizes badly</b>:
+        expected — pure leaves overfit; that is exactly what cost-complexity pruning
+        ($R_\\alpha(T)=R(T)+\\alpha|\\widetilde{T}|$) exists to fix, stood in here by the depth cap.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

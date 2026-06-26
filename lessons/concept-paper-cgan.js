@@ -271,6 +271,46 @@
        is a requested digit), not the likelihood number.</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny run &mdash; not the paper's reported
        results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> cGAN's claim is <b>controllable generation</b>, so the primary metric is
+       <b>class purity</b>: request class $k$, generate a pool, and measure the fraction that actually lands in
+       class $k$ (by a held-out classifier on MNIST; by nearest-center on our toy blobs). Pair it with the mean
+       distance of "class-$k$" samples to the true class-$k$ center. The no-skill baseline is the <b>label-ablated
+       (plain) GAN</b>: with $K$ balanced classes it has no steering, so requesting a class gives purity $\\approx
+       1/K$ &mdash; chance. The paper's own quality number is a Parzen-window log-likelihood of <b>$132 \\pm 1.8$</b>
+       (Table 1, quoted), which they flag as a proof-of-concept, not SOTA &mdash; so judge cGAN on <i>control</i>,
+       not likelihood.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Recompute the worked example: $p_{\\text{data}}(x|y)=0.6,\\
+        p_g(x|y)=0.2 \\Rightarrow D^*(x|y)=0.75$, $\\log 0.75 = -0.2877$, and the equilibrium value $-\\log 4 =
+        -1.3863$ &mdash; a known-answer test for your loss bookkeeping. (2) Check shapes: $G$'s first
+        <code>nn.Linear</code> is $Z+K$ wide and $D$'s is $x\\_\\text{dim}+K$ wide; a one-hot $\\mathtt{cat}$ that
+        doesn't error confirms the wiring. (3) BCE loss at init: with $D$ near chance each term is $-\\log 0.5 =
+        0.693$, so $D$'s total starts near $2\\log 2 = 1.386$. (4) Overfit a tiny subset and confirm $G$ can at
+        least reproduce one class on demand.</li>
+        <li><b>Expected range.</b> A working conditional model should reach <b>purity near $1.0$</b> per requested
+        class, with $D$'s loss <b>parking at $2\\log 2 \\approx 1.386 = -\\log 4$</b> (the GAN equilibrium, reached
+        per class) rather than driving to $0$. On our toy run (CODEVIZ, our numbers &mdash; not the paper's): purity
+        $1.000$, mean error $\\sim 0.21$&ndash;$0.53$ to the requested center, versus the ablated blob sitting
+        $\\sim 1.98$ from any class. The paper's headline is qualitative (Fig. 2: each row is a requested digit);
+        treat the toy numbers as rules of thumb. Purity stuck near $1/K$ is a bug; purity $0.8$&ndash;$0.95$ with
+        a stable plateau is tuning.</li>
+        <li><b>Ablation &mdash; does conditioning earn its keep?</b> The central knob is feeding the label $y$ into
+        <b>both</b> nets. Remove it (shrink both first layers back by $K$, drop the one-hot) and retrain: the
+        generator now has no slot to receive a request, so it emits one undifferentiated mixture of all classes and
+        purity falls to $\\approx 1/K$. A weaker but telling half-ablation &mdash; feed $y$ to $G$ only, not $D$ &mdash;
+        also kills control: with no per-class realism check, $D$ cannot penalize "right sample, wrong label," so
+        $G$ has no pressure to obey the label. Either ablation should drop purity sharply; if it doesn't, the label
+        wasn't actually driving the output.</li>
+        <li><b>Failure signals.</b> <b>Requested class ignored / purity $\\approx 1/K$</b> &rarr; label fed to only
+        one net, or label-fake mismatch in the $D$ step (judge each fake under the <i>same</i> label it was
+        generated with). <b>$D$ loss collapses to $0$ while $G$ loss explodes</b> &rarr; discriminator won, mode
+        collapse &mdash; $G$ emits a few class-agnostic samples; tune LR / step ratio. <b>$D$ loss NaN</b> &rarr; LR
+        too high or missing <code>.detach()</code> on fakes letting the $D$-step corrupt $G$. <b>$G$ separable on
+        scale</b> &rarr; output range mismatch (<code>tanh</code> $[-1,1]$ vs data $[0,1]$); normalize. The healthy
+        signature is the CODEVIZ pair: conditional purity $1.0$ with $D$ loss flat at $\\sim 1.386$, ablated blob
+        far from every class.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

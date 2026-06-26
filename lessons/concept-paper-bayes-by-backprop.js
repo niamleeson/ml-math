@@ -310,6 +310,63 @@
        the CODEVIZ panel below are from our own tiny run on the 1-D regression task &mdash; not the paper's reported
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two metrics, matching the paper's two experiments. (a) <b>Classification
+       accuracy</b> on MNIST, where Bayes by Backprop reports test error in the <b>1.32&ndash;1.36%</b> range vs
+       dropout's <b>1.33&ndash;1.51%</b> and plain SGD's <b>1.83&ndash;1.88%</b> (&sect;5.1) &mdash; "better than
+       trivial" there is 10-class chance = 90% error, and the real bar is beating plain SGD. (b) The metric THIS
+       lesson actually targets is <b>predictive uncertainty calibration</b> on the 1-D regression: the per-point
+       standard deviation across weight samples should be <b>small inside the data band and large in the empty
+       regions</b> (&sect;5.2: "where there are no data, the confidence intervals diverge"). The no-skill baseline is
+       an ordinary deterministic net, whose predictive std is <b>0 everywhere</b> &mdash; so any nonzero
+       far-from-data band that exceeds the in-data band is a win.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+         <li><b>Reproduce the worked numbers.</b> The first CODE cell must print $\\sigma=0.12693$, $w=0.16346$,
+         $\\text{KL}=1.5772$ for $\\mu=0.1,\\rho=-2,\\epsilon=0.5$, prior $\\mathcal{N}(0,1)$. Wrong KL = wrong
+         closed form.</li>
+         <li><b>Gradient flows into the spread.</b> After one <code>.backward()</code>, check
+         <code>w_rho.grad</code> is non-<code>None</code> and nonzero. If it is <code>None</code> you sampled with
+         <code>torch.normal(mu,sigma)</code> instead of $\\mu+\\sigma\\cdot$<code>randn_like</code> &mdash; the
+         reparameterization is broken and the spreads will never train.</li>
+         <li><b>Fresh noise each pass.</b> Two forward passes on the same input must give <i>different</i> outputs;
+         identical outputs mean you reused one $\\epsilon$ draw.</li>
+         <li><b>Overfit the data band.</b> With the KL temporarily down-weighted, the net should fit the 40 training
+         points almost exactly &mdash; if it cannot, the likelihood term is mis-scaled.</li>
+         <li><b>KL is non-negative.</b> The summed <code>net.kl()</code> must always be $\\ge 0$ (it is a divergence);
+         a negative value means a sign error.</li>
+       </ul>
+       <p><b>3. Expected range (approximate).</b> In OUR small run (seed 0, &sect;5.2 toy) the in-data mean
+       predictive std is $\\approx 0.015$ and the far-from-data mean is $\\approx 0.26$ &mdash; a ratio of about
+       <b>17&times;</b> (these are ours, not the paper's). A correct build should land with a clearly larger band
+       outside than inside (ratio comfortably $\\gt 1$, rough order several-to-tens-fold &mdash; a rule of thumb, not
+       a paper claim). A ratio near $1$ means the uncertainty is not growing away from data: probably a bug. For the
+       classification variant, anchor to the paper's $\\approx 1.3\\%$ MNIST error (&sect;5.1) &mdash; not something
+       this 1-D toy produces.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central idea is the <b>learned
+       per-weight spread $\\sigma$</b> that carries uncertainty. Turn it off: clamp every <code>w_rho.fill_(-30)</code>
+       so $\\sigma=$ <code>softplus(-30)</code> $\\approx 0$, collapsing each weight to its mean &mdash; an ordinary
+       point-estimate net. The predictive band MUST drop to $\\approx 0$ everywhere (in our run the far-from-data
+       band falls from $\\approx 0.26$ to $0.000000$). If it does not collapse, the uncertainty was leaking from
+       somewhere other than the weight spreads (e.g. you forgot to also clamp the bias $\\rho$, or you are reading one
+       sample as "uncertainty"). A second knob: drop the KL term entirely &mdash; without the complexity cost the
+       spreads can collapse on their own and the far-from-data band shrinks, showing the KL is what keeps $\\sigma$
+       large where data is absent.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Predictive band is flat (same inside and outside the data):</b> either the spreads collapsed
+         (KL mis-scaled or absent, so $\\sigma\\to 0$ everywhere) or the band is being read from a single forward pass
+         instead of the std across many samples.</li>
+         <li><b>Spreads never change from their init:</b> gradient not flowing into $\\rho$ &mdash; you sampled
+         without the reparameterization trick.</li>
+         <li><b>Everything stays at the prior, fit is terrible:</b> the KL crushes the likelihood &mdash; you counted
+         the whole-network KL once per data point instead of once per pass (or per $1/N$); rescale it.</li>
+         <li><b>Loss NaN:</b> $\\sigma$ went non-positive (you trained $\\sigma$ directly instead of via softplus of
+         $\\rho$), so $\\log\\sigma$ blew up.</li>
+         <li><b>Band is large <i>inside</i> the data too:</b> under-trained or noise level mis-set &mdash; the
+         likelihood is not yet pinning the in-band weights down; train longer or fix the noise scale.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The plumbing already ships in PyTorch, so you <b>import</b>

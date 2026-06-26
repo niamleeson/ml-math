@@ -254,6 +254,56 @@
        networks reached <b>4.9% top-5 validation error</b> on ImageNet (abstract). (Source: arXiv:1502.03167
        abstract.)</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> BN is a layer, not a model, so you measure its <i>effect</i>, not BN
+       itself. Two things to track: (a) the <b>correctness metric</b> &mdash; <code>torch.allclose</code> between
+       your <code>MyBatchNorm1d</code> and <code>nn.BatchNorm1d</code> in BOTH train and eval mode (a boolean: True =
+       provably identical to PyTorch); and (b) the <b>benefit metric</b> &mdash; training loss / steps-to-target with
+       BN vs without, on the same data and learning rate. The paper's own benchmark is ImageNet top-5 error, where a
+       BN ensemble reached <b>4.9%</b> and the headline is <b>14&times; fewer training steps</b> to the same accuracy
+       (arXiv:1502.03167 abstract). "Better than trivial" for the allclose check is simply: it must be exactly
+       <code>True</code>, not "close-ish".</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+         <li><b>Statistics of the output.</b> In train mode, feed a random batch; each feature of the normalized
+         (pre-scale) output should have mean $\\approx 0$ and variance $\\approx 1$ down dim 0. If not, you reduced
+         over the wrong axis.</li>
+         <li><b>Known-answer unit test.</b> Batch <code>[2,4,6]</code> with $\\gamma=2,\\beta=1$ must give
+         $[-1.449,\\,1,\\,3.449]$ (the worked example the CODE recomputes). Any other numbers = a formula bug.</li>
+         <li><b>The allclose oracle.</b> Match PyTorch's defaults exactly: $\\epsilon=10^{-5}$, momentum $0.1$,
+         <b>biased</b> variance ($/m$) for the normalize step but <b>unbiased</b> ($/(m{-}1)$) for the running-var
+         update. Mixing these is the #1 reason allclose fails.</li>
+         <li><b>Identity recovery.</b> Set $\\gamma=\\sqrt{\\sigma^2_B+\\epsilon}$ and $\\beta=\\mu_B$ and confirm the
+         output equals the input &mdash; proof BN can represent the identity and never removes capacity.</li>
+       </ul>
+       <p><b>3. Expected range (approximate).</b> The allclose checks must be <b>True</b> to $\\sim$<code>1e-6</code>;
+       no tolerance beyond float noise is acceptable since BN is an exact closed form. For the benefit demo, OUR small
+       run (CODEVIZ, numpy seed 0) reaches training loss $\\approx 0.034$ with BN vs $\\approx 0.060$ without in the
+       same 40 steps at LR $0.6$ &mdash; these are ours, not the paper's. The qualitative target (anchored to the
+       abstract) is: BN reaches a given loss in noticeably fewer steps and tolerates a higher LR. If BN and no-BN
+       curves are indistinguishable, BN probably is not actually in the forward path.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central component is the
+       <b>per-batch normalization</b>. Turn it off: remove the BN layer (or replace it with identity) and re-run at
+       the <i>same</i> high learning rate. The metric must get WORSE &mdash; slower/less-stable convergence, and at a
+       high enough LR the no-BN net diverges entirely (the practice-section ablation). If removing BN does not hurt,
+       either your data is too well-conditioned to show covariate shift (scale the features unevenly, as the CODEVIZ
+       does) or BN was not wired into the pre-activation. A second knob: drop the learnable $\\gamma,\\beta$ (force
+       mean-0/variance-1 output) and watch accuracy fall on tasks that need a non-unit spread &mdash; confirming the
+       affine pair earns its place.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>allclose True in train but False in eval:</b> the running-mean/var update is wrong &mdash; usually
+         biased-vs-unbiased variance swapped, or you forgot to accumulate running stats across the warm-up steps.</li>
+         <li><b>Every test prediction changes when you reorder the batch:</b> you forgot <code>model.eval()</code>, so
+         BN is still using batch statistics at test time &mdash; the classic hard-to-spot bug.</li>
+         <li><b>NaN / divide-by-zero on a constant feature:</b> $\\epsilon$ dropped from the denominator
+         ($\\sigma^2_B=0$); restore it.</li>
+         <li><b>Loss diverges immediately:</b> reduction over the wrong axis (per-example instead of per-feature), so
+         the layer is normalizing nonsense.</li>
+         <li><b>BN gives no speedup:</b> the input is already well-conditioned, or BN sits after the nonlinearity
+         instead of on the pre-activation $\\mathrm{BN}(Wu)$ &mdash; check placement.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>nn.BatchNorm1d</code> in one line. Here you

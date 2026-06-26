@@ -306,6 +306,49 @@
        samples in the CODEVIZ panel below are from our own tiny run on Fashion-MNIST &mdash; not the paper's
        reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> A GAN has no single "accuracy". Three complementary checks tell you
+       it works: (1) <b>sample quality</b> &mdash; do generated images look like real garments / objects? The
+       paper's own evidence is qualitative (samples on LSUN bedrooms, faces, ImageNet-1k) plus reusing $D$'s
+       features for classification (&sect;5). (2) A cheap proxy used in this lesson: the <b>pixel std of a
+       fixed-noise batch</b> should drift toward the real data's (Fashion-MNIST $\\approx0.66$ here). (3) The
+       no-skill baseline is an <b>untrained generator</b>: its tanh output is near-uniform noise (std near $0$,
+       no structure) and $D$ trivially wins. "Better than trivial" means $G$ moves the samples away from that
+       initial noise toward the real statistics.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) <b>Shape check</b> with the output-size formula:
+         <code>ConvTranspose2d(k=4,s=2,p=1)</code> turns $4\\times4$ into $8\\times8$ via
+         $H_{\\text{out}}=(H_{\\text{in}}-1)s-2p+k=8$ &mdash; assert this against a real
+         <code>nn.ConvTranspose2d</code> probe, and confirm $G$'s end-to-end output is exactly the target image
+         size ($4\\to8\\to16\\to32$). (2) <b>Range check:</b> $G$'s tanh output lies in $[-1,1]$ and real images
+         are normalized to $[-1,1]$ too. (3) <b>Loss at init:</b> with $D$ untrained, $D(x)\\approx0.5$, so
+         <code>BCEWithLogitsLoss</code> on real and on fake each start near $-\\ln(1/2)=\\ln2\\approx0.693$ (a
+         K=2 rule-of-thumb init value). (4) Verify BatchNorm is absent on $G$'s output layer and $D$'s input
+         layer.</li>
+         <li><b>Expected range.</b> The paper reports only qualitative claims &mdash; "a hierarchy of
+         representations from object parts to scenes" (abstract); it gives no scalar to hit. In our tiny run
+         (Fashion-MNIST, $3$ epochs, $8$k images, not a paper number) the convolutional $G$'s fixed-noise sample
+         std should <b>climb toward $\\approx0.66$</b> and samples become recognizable garments; the
+         fully-connected ablation plateaus much lower ($\\sim0.5$) and blurrier. As a rough rule of thumb, if the
+         sample std is still near $0$ after a few hundred steps, $G$ is not learning (likely a bug); if it
+         overshoots wildly or oscillates, training is destabilizing.</li>
+         <li><b>Ablation &mdash; prove the all-convolutional recipe earns its keep.</b> The paper's central idea is
+         the &sect;3 architecture recipe. Turn off its key rule: replace the convolutional $G$ with a
+         <b>fully-connected</b> generator (dense $100\\to256\\to512\\to784$, reshape), keeping $D$, loss, Adam,
+         and data <i>identical</i>. Sample quality should <b>drop</b> &mdash; blurrier, less spatially coherent,
+         lower sample std. If it does <i>not</i> drop, the convolutional inductive bias is not actually doing the
+         work (or something else dominates). Secondary ablations the guidelines predict: BatchNorm on the wrong
+         layers, or Adam $\\beta_1=0.9$ instead of $0.5$, should also visibly hurt stability.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>Loss NaN / exploding:</b> LR too high, missing the
+         $[-1,1]$ scaling, or BatchNorm on the forbidden layers. <b>All samples look identical (collapsed):</b>
+         <b>mode collapse</b> &mdash; $G$ found one image that fools $D$ and ignores $z$ (inherited GAN failure,
+         see <b>dl-gan</b>). <b>$D$ loss crashes to $\\approx0$ while $G$ loss blows up:</b> $D$ won &mdash; $G$'s
+         gradient vanished, often from washed-out samples due to a $[0,1]$ vs $[-1,1]$ range mismatch. <b>Wrong
+         output resolution or a shape error mid-network:</b> the transposed-conv hyperparameters don't chain to
+         the target size &mdash; re-check $H_{\\text{out}}=(H_{\\text{in}}-1)s-2p+k$. <b>Samples stay pure noise:</b>
+         dead gradients in $D$ &mdash; confirm <code>LeakyReLU(0.2)</code>, not plain ReLU, in $D$.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: every primitive ships in PyTorch, so you <b>import</b>

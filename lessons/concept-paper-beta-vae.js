@@ -295,6 +295,48 @@ $$ z^{l}_{\\text{diff}} = \\lvert z_{1,l} - z_{2,l}\\rvert,\\qquad z^{b}_{\\text
        <p><i>The two words "appropriately tuned" carry the whole story: there is a sweet spot. We do not
        restate the paper's metric numbers from memory. The numbers in the CODEVIZ panel below are from our
        own tiny toy run, not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> You score <b>two</b> curves against $\\beta$, because the whole
+       point is a trade-off. (i) <b>Reconstruction error</b> &mdash; summed binary cross-entropy of the rebuilt
+       image (lower = sharper). (ii) <b>Disentanglement</b> &mdash; the paper's linear-classifier metric (Eq. 5):
+       hold one ground-truth factor fixed across an image pair, encode both, and let a <i>low-capacity linear</i>
+       classifier predict which factor was held fixed from the averaged latent difference $z^{b}_{\\text{diff}}$;
+       its accuracy is the score. The no-skill baseline is a classifier reading an <b>entangled</b> code:
+       chance $= 1/K$ for $K$ factors (our toy uses a correlation-<b>gap</b> proxy whose floor is $\\approx 0$).
+       The paper's claim is relative: tuned $\\beta\\gt 1$ "qualitatively outperforms VAE ($\\beta=1$)" and beats
+       InfoGAN / DC-IGN (abstract, quoted above).</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full $\\beta$ sweep.</b> (a) <b>$\\beta=1$ must equal a plain VAE</b>
+        &mdash; if your $\\beta$-VAE at $\\beta{=}1$ does not match your <b>paper-vae</b> loss, the weight is
+        mis-placed. (b) <b>Known-answer KL:</b> for one dim with $\\mu{=}1.0$, $\\log\\sigma^2{=}-0.5108$, the
+        closed form $-\\tfrac12(1+\\log\\sigma^2-\\mu^2-\\sigma^2)$ gives $D_{KL}\\approx 0.5554$, so loss
+        $=10.5554$ at $\\beta{=}1$ and $12.2217$ at $\\beta{=}4$ (recomputed in the first cell). (c) <b>Range:</b>
+        decoder outputs in $[0,1]$ (sigmoid), $D_{KL}\\ge 0$ always. (d) <b>Overfit a tiny batch at $\\beta{=}1$</b>
+        and watch reconstruction BCE fall sharply &mdash; if it will not drop even unregularized, the
+        encoder/decoder wiring is broken before $\\beta$ is even in play.</li>
+        <li><b>3. Expected range.</b> On the toy 2-factor data (rules of thumb from our run, <i>not</i> paper
+        numbers): reconstruction BCE rises with $\\beta$ &mdash; $\\approx 13.7$ ($\\beta{=}1$), $\\approx 18.2$
+        ($\\beta{=}4$), $\\approx 22.7$ ($\\beta{=}8$) &mdash; while the disentanglement gap goes
+        $\\approx 0.17 \\to 0.43 \\to 0.02$ (up at the sweet spot, then crashing). The paper itself reports only
+        that tuned $\\beta\\gt 1$ wins the metric and the qualitative traversals (approximate, no single headline
+        number quoted). Disentanglement that <i>never</i> beats $\\beta{=}1$ at any $\\beta$ is "probably a bug";
+        a sweet spot landing at $\\beta{=}2$ vs $\\beta{=}4$ is "tuning."</li>
+        <li><b>4. Ablation &mdash; prove the $\\beta$ knob earns its keep.</b> The contribution is the single
+        <code>beta *</code> on the KL. Set it back to <b>$\\beta=1$</b> (the ordinary VAE) with everything else
+        identical; the disentanglement score must <b>drop</b> versus the tuned $\\beta\\gt 1$ run (in ours
+        $\\approx 0.17$ vs $\\approx 0.43$) while reconstruction <i>improves</i>. If turning $\\beta$ up changes
+        nothing, the weight is multiplying a mean-reduced KL against a summed reconstruction (so the effective
+        $\\beta$ is off by the pixel count) &mdash; the knob is not actually pressing on the bottleneck.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Blank, identical reconstructions and
+        disentanglement $\\approx 0$ at large $\\beta$:</b> <b>posterior collapse</b> &mdash; the KL tax dominates,
+        the encoder outputs the prior ($\\mu\\to 0$, $\\sigma\\to 1$, active latents $\\to 0$) for every input, so
+        the code carries no information (our $\\beta{=}8$). Fix: lower $\\beta$ or anneal it up (KL warmup).
+        <b>$\\beta\\gt 1$ never disentangles:</b> either the data is already factor-separable in pixels (give it
+        factors entangled across pixels), or the $\\beta$ weighting is inconsistent between the two loss terms.
+        <b>Reconstruction great but the verdict is wrong:</b> you are reading reconstruction as the metric &mdash;
+        $\\beta{=}1$ almost always rebuilds best yet entangles; measure disentanglement explicitly. <b>Loss NaN:</b>
+        $\\log\\sigma^2$ unclamped or LR too high.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

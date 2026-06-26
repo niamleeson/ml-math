@@ -448,6 +448,58 @@
        and &sect;2. The numbers in the CODEVIZ panel below are from OUR small toy
        illustration of the codebook-and-sampling mechanics &mdash; not the paper's
        models or any of its reported results.</i></p>`,
+    evaluation:
+      `<p>This is a <b>read-only</b> paper, so &ldquo;is your build working?&rdquo; splits into two checkable pieces
+       you can verify in spirit: the dVAE (Stage One) and the autoregressive transformer (Stage Two).</p>
+       <p><b>1. Metric &amp; benchmark.</b> (a) For the <b>dVAE</b>: reconstruction quality &mdash; how faithfully the
+       decoder repaints $x$ from its $32\\times32$ tokens (per-pixel error / a perceptual distance) and codebook
+       usage (how many of the $8192$ entries actually get used). (b) For the <b>whole system</b>: the paper's headline
+       claim is <b>zero-shot</b> competitiveness &mdash; tested on a dataset never trained on, it is &ldquo;competitive
+       with previous domain-specific models&rdquo; (Abstract). The standard text-to-image scores are FID (lower is
+       better) and human &ldquo;real vs fake&rdquo; / caption-match preference; the &ldquo;no-skill&rdquo; bar is the
+       prior domain-specific SOTA the paper aims to match zero-shot. (c) A structural check you can do by arithmetic:
+       the dVAE must reduce the transformer context by the paper's stated <b>factor of 192</b> ($64\\times3$, &sect;2)
+       &mdash; the CODE recomputes this exactly.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Compression arithmetic.</b> $256\\times256 / (32\\times32) = 64$ positions, $\\times 3$ channels $= 192$.
+        If your tokenizer grid does not give $1024$ tokens and a $192\\times$ context cut, the dVAE geometry is wrong.</li>
+        <li><b>Transformer loss at init.</b> For a $K$-way softmax over a fresh, untrained head the cross-entropy
+        should start near $-\\ln(1/K)$: $\\approx \\ln 8192 \\approx 9.0$ nats in the image region and
+        $\\approx \\ln 16384 \\approx 9.7$ nats in the text region (rule of thumb). A much lower starting loss means
+        labels leaked or the head is mis-sized.</li>
+        <li><b>dVAE round-trip.</b> Encode then decode a handful of images; the reconstruction should be recognizable.
+        Overfit the dVAE on a single image and watch reconstruction error go toward $0$.</li>
+        <li><b>Gumbel-softmax limit.</b> As the temperature $\\tau \\to 0$, the relaxed $q_\\phi^\\tau$ must approach the
+        hard $\\arg\\max$ choice (&sect;2.1); check that soft and hard token picks agree once $\\tau$ is annealed down.</li>
+        <li><b>Autoregressive masking.</b> Confirm token $t$ cannot see tokens $\\gt t$ (a causal-mask leak makes
+        training loss implausibly low and generation incoherent).</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper reports no single number to reproduce in a notebook here &mdash; its
+       claim is qualitative (&ldquo;competitive&hellip; zero-shot,&rdquo; Abstract) plus the architecture sizes
+       ($32\\times32$ grid, $8192$ codebook, $192\\times$ context reduction, $12$-billion-parameter transformer,
+       $16384$ text vocab, &sect;2/&sect;2.2). Treat those quoted sizes as the targets to match; the only number in
+       the CODE/CODEVIZ panels (the $192$ factor) is the paper's, while the toy codebook and sampler use made-up
+       constants.</p>
+       <p><b>4. Ablation &mdash; prove the discrete bottleneck earns its keep.</b> The central idea is
+       <i>discrete</i> image tokens, which is what lets a language-model transformer model images at all. Ablate it:
+       feed the encoder's <i>continuous</i> activations to the transformer instead of codebook indices. Two things
+       break &mdash; &ldquo;sample the next image token&rdquo; is undefined with no finite alphabet, and the
+       $\\beta$-weighted KL agreement term (Eq 1) no longer matches a distribution over discrete tokens. If a
+       &ldquo;continuous-token&rdquo; variant trains and generates just as well, the discrete codebook was not doing
+       the work the paper claims. (A milder ablation: shrink the codebook far below $8192$ and watch reconstruction
+       and sample quality fall.)</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Blurry / posterized reconstructions</b> &rarr; codebook too small or under-used (collapsed onto a few
+        entries); the paper raises $\\beta$ to $6.6$ specifically for &ldquo;better codebook usage&rdquo; (&sect;2).</li>
+        <li><b>Incoherent samples</b> (locally fine, globally nonsense) &rarr; tokens sampled independently instead of
+        left-to-right autoregressively, or a broken attention mask &mdash; the conditioning is lost.</li>
+        <li><b>Generated images ignore the caption</b> &rarr; the text tokens are not actually conditioning the image
+        region; check that the single stream is text-then-image and attention reaches back into the text.</li>
+        <li><b>Stage-One training stalls / NaNs</b> &rarr; the hard $\\arg\\max$ has no gradient; you forgot the
+        Gumbel-softmax relaxation or annealed $\\tau$ too fast (&sect;2.1).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

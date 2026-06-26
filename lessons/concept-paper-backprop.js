@@ -259,6 +259,37 @@
        (Figs. 2-4). The authors note the procedure can get stuck in <b>local minima</b> but that "in our experience
        with many tasks&hellip; the network very rarely gets stuck." (Source: Nature 323:533-536, 1986.)</p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> Backprop is a primitive, so the metric is not accuracy &mdash; it is
+       <b>gradient correctness</b>: do your hand-built gradients equal a trusted oracle's? The pass/fail bar is
+       <code>torch.allclose(my_grads, torch.autograd_grads, atol=1e-9)</code> on a 2-layer MLP. The "no-skill"
+       baseline is a wrong engine: random or all-zero gradients fail allclose immediately, so a True here is a
+       sharp, binary proof &mdash; not a fuzzy score.</p>
+       <ul>
+         <li><b>Sanity checks before any training.</b> (a) <b>Known-answer unit test:</b> recompute the lesson's
+         worked $1\\to1\\to1$ example and confirm $\\partial E/\\partial w_{oh}\\approx 0.070342$ and
+         $\\partial E/\\partial w_{hi}\\approx 0.005012$ (the <code>example</code> field's exact numbers).
+         (b) <b>Finite-difference gradient check:</b> perturb one weight by $\\pm\\epsilon=10^{-5}$, recompute $E$,
+         and verify $\\partial E/\\partial w \\approx (E(w+\\epsilon)-E(w-\\epsilon))/2\\epsilon$ to ~5 decimals.
+         (c) <b>Shape/range check:</b> sigmoid outputs land in $(0,1)$; every <code>.grad</code> is finite.</li>
+         <li><b>Expected range.</b> The from-scratch gradients should match <code>torch.autograd</code> to
+         machine precision in float64 (allclose <code>atol=1e-9</code> passes). On the lesson's XOR demo, $E$
+         should fall from $\\approx 0.84$ to $\\approx 0.003$ over 2000 sweeps and the four predictions approach
+         $[0,1,1,0]$ (rule-of-thumb targets from our own small run, not paper claims). If allclose fails by more
+         than rounding, it is a <b>bug</b>, not tuning &mdash; the chain-rule plumbing is wrong somewhere.</li>
+         <li><b>Ablation &mdash; prove the backward order earns its keep.</b> The central idea is reverse
+         topological order. Replace the reverse replay with <b>forward-order</b> replay (visit nodes as created):
+         first-layer gradients come out near zero and <code>torch.allclose</code> flips to <b>False</b>. If that
+         ablation still passes, your graph is too shallow to exercise the order &mdash; deepen it.</li>
+         <li><b>Failure signals &amp; causes.</b> <i>allclose False on first-layer weights only</i> &rarr; backward
+         not in reverse topological order, or grads overwritten (<code>=</code>) instead of accumulated
+         (<code>+=</code>), dropping the eq (7) sum. <i>Off by a constant factor of 2</i> &rarr; you dropped the
+         $\\tfrac12$ in $E=\\tfrac12\\sum(y-d)^2$. <i>Sigmoid grads wrong</i> &rarr; you used $x(1-x)$ on the
+         input instead of $y(1-y)$ on the <i>output</i> (eq 5). <i>Gradients grow every step</i> &rarr; you forgot
+         to zero <code>.grad</code> between backward passes. <i>XOR error stalls near $0.5$</i> &rarr; you removed
+         the hidden layer (a single layer provably cannot solve XOR &mdash; the lesson's ablation).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>autograd</code>: call <code>.backward()</code>

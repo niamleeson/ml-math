@@ -287,6 +287,42 @@
        standard image-quality metrics &mdash; higher Inception, lower FID is better.)</p>
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODEVIZ
        panel below are from our own tiny 2-D run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> For real images the paper scores samples with two standard
+       distributional metrics &mdash; <b>FID</b> (Fr&eacute;chet Inception Distance, lower is better) and
+       <b>Inception score</b> (higher is better) &mdash; on unconditional CIFAR-10. The "no-skill" anchor is a
+       large FID (a model that outputs noise scores enormously high); the bar to beat is the paper's reported
+       <b>FID 3.17 / Inception 9.46</b> on CIFAR-10. For the 2-D toy you cannot run Inception, so use a cheap
+       proxy: the <b>fraction of samples within $0.4$ of one of the 8 cluster centers</b> and the
+       <b>mean sample radius</b> (it should climb toward the ring radius $2.0$); a uniform-noise generator
+       would land only a tiny fraction near a cluster.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Verify $\\bar\\alpha_t$ is a <i>decreasing</i> product from
+        near $1$ down toward $0$ (not a sum). Confirm the worked example reproduces exactly:
+        $\\beta=[0.1,0.2,0.3,0.4]$, $x_0=2.0$, $t=2$, $\\epsilon=0.5 \\Rightarrow x_t \\approx 1.9616$.
+        Check the loss is the MSE against the <i>same</i> $\\epsilon$ used to build $x_t$; at init the network
+        outputs $\\approx 0$, so $L_{\\text{simple}} \\approx \\mathbb{E}\\lVert\\epsilon\\rVert^2 \\approx 2$
+        (the data dimension; a rule of thumb, not a paper claim). Overfit a single tiny batch and watch the loss
+        fall toward $0$ &mdash; if it cannot, the network or the $t$-conditioning is mis-wired. Confirm
+        $\\epsilon_\\theta(x_t,t)$ returns the <b>same shape</b> as $x_t$.</li>
+        <li><b>Expected range.</b> On the toy ring a correct build should put roughly $\\gt 0.9$ of samples within
+        $0.4$ of a cluster with the mean radius near $2.0$ (the lesson's run got $\\approx 0.94$ &mdash; our small
+        run, not a paper number). On CIFAR-10 a faithful scaled-up build should approach the paper's
+        <b>FID $\\approx 3.17$</b> (arXiv:2006.11239, abstract; approximate). An FID many times larger, or a toy
+        fraction near chance, signals a bug rather than tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central knob is <b>timestep
+        conditioning</b>: drop $t$ from the network (feed a constant in its place) and retrain identically. The
+        cluster-hit fraction should <b>drop</b> noticeably &mdash; one denoiser cannot invert every noise level
+        without knowing which level it is at. If the metric does <i>not</i> fall, $t$ was never really being used.
+        (A second ablation: predict $x_0$ instead of $\\epsilon$ and watch samples worsen.)</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Loss NaN</b> &rarr; learning rate too high or a
+        $\\sqrt{\\cdot}$ of a negative/zero quantity (check the schedule). <b>Samples stay a diffuse blob</b>
+        (radius never grows toward $2.0$) &rarr; the reverse/sampling step is wrong, or $\\bar\\alpha_t$ is a sum
+        not a product. <b>All samples collapse onto one cluster</b> &rarr; mode collapse from too-few steps or a
+        too-aggressive schedule. <b>Grainy final samples</b> &rarr; you added noise $\\sigma_t z$ at the last step
+        ($t{=}1\\to0$) instead of outputting the mean alone. <b>Loss flat from step 0</b> &rarr; you regressed
+        against a different noise draw than the one used to build $x_t$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

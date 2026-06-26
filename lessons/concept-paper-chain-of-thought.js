@@ -340,6 +340,45 @@
        <p><i>These are the paper's own statements, transcribed from the abstract, &sect;3.2, and &sect;6. The numbers
        in the CODEVIZ panel below come from a small toy illustration of step-decomposition &mdash; not the paper's
        measured results, and using no language model.</i></p>`,
+    evaluation:
+      `<p><b>What "working" means here.</b> This is a read-only prompting result, so "your build" is two separate
+       things to check: (a) the <i>toy compounding model</i> in the code (pure arithmetic &mdash; easy to verify
+       exactly), and (b) if you actually run chain-of-thought on a large model, the <i>prompting setup</i> itself.
+       Below covers both.</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> For a real CoT run the metric is <b>exact-match accuracy on GSM8K</b>
+        grade-school math word problems (parse the final number after the chain, compare to the gold answer), the
+        paper's headline benchmark (&sect;3.1). The "better than trivial" floor is <b>standard few-shot prompting on
+        the same model</b> &mdash; CoT must beat the no-chain baseline, and on small models it does <i>not</i>
+        (&sect;3.2). For the toy model, the "metric" is just the computed whole-problem success $p^k$; the floor is
+        the one-shot value $p^k$ vs the lifted $(p')^k$.</li>
+        <li><b>Sanity checks before the full run.</b> For the toy code: a known-answer check &mdash; $0.8^4$ must
+        print $\\approx 0.410$ and $0.92^4 \\approx 0.716$ (the lesson's worked numbers); and the swept
+        step-by-step curve must lie at-or-above the one-shot curve everywhere and be clipped at $1.0$. For a real
+        CoT run: confirm the prompt is wired right &mdash; print one full prompt and verify each exemplar carries the
+        <i>middle term</i> $c$ (the reasoning), the query ends in the <code>A:</code> cue, and your answer-parser
+        recovers the gold answer on the exemplars themselves (it should be 100% there, since you wrote them).</li>
+        <li><b>Expected range.</b> Quoting the paper (approximate, cite the abstract): "prompting a PaLM 540B with
+        just eight chain-of-thought exemplars achieves state-of-the-art accuracy on the GSM8K benchmark," beating
+        standard prompting by a wide margin at that scale. So at &gt;=100B params expect a <i>large</i> gap CoT-over-
+        standard; below ~100B expect roughly zero or negative gap (&sect;3.2). For the toy model the targets are
+        exact, not approximate: $0.8^4=0.4096$ and $0.92^4\\approx0.7164$ &mdash; any deviation is a coding bug, not
+        tuning.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The paper's one knob is the
+        <b>middle term $c$</b>. Turn it OFF: strip the reasoning from every exemplar so each is back to the pair
+        $\\langle x, y\\rangle$ (standard prompting), keep everything else identical, and re-measure. Accuracy on a
+        large model should <b>drop</b> &mdash; that gap <i>is</i> the chain-of-thought effect. If removing $c$ changes
+        nothing, the model is ignoring the chain (too small, &sect;3.2) or your parser is reading the wrong token. In
+        the toy model the analogous ablation is setting the per-step lift to zero, which collapses the step-by-step
+        curve onto the one-shot $p^k$ curve.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>CoT no better than standard prompting</b> &rarr; model
+        below the ~100B scale threshold, where chains are "fluent but illogical" (&sect;3.2) &mdash; not a bug, an
+        emergence limit; switch to a larger model. <b>Accuracy stuck near the standard baseline despite a huge
+        model</b> &rarr; answer-parser grabbing a number from inside the chain instead of the final answer, or the
+        <code>A:</code> cue missing. <b>Toy: step-by-step curve below one-shot</b> &rarr; lift applied with the wrong
+        sign or not clipped at $1.0$. <b>Toy: numbers don't match $0.410 / 0.716$</b> &rarr; using $k\\ne 4$ or
+        computing $k\\cdot p$ instead of $p^{\\,k}$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

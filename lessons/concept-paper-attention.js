@@ -240,6 +240,49 @@
        0&ndash;100 machine-translation quality score; higher is better. The correctness check for THIS lesson is
        the code oracle below, not a benchmark.</p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> This is a primitive, not a trainable model, so the metric is
+       <b>exactness against an oracle</b>, not a benchmark score. Your <code>my_attention(Q,K,V)</code> must
+       agree numerically with PyTorch's reference <code>F.scaled_dot_product_attention</code>. The pass/fail
+       line is the one in the CODE cell: <code>torch.allclose(mine, ref, atol=1e-6)</code> must be
+       <b>True</b>. There is no "random baseline" to beat &mdash; either the formula matches bit-for-bit
+       (up to float tolerance) or it is wrong.</p>
+       <p><b>Sanity checks before anything else.</b></p>
+       <ul>
+         <li><b>Shapes.</b> For $Q:(n_q,d_k)$, $K:(n_k,d_k)$, $V:(n_k,d_v)$ the attention map must be
+         $(n_q,n_k)$ and the output $(n_q,d_v)$. Wrong output width usually means $d_k$/$d_v$ confused.</li>
+         <li><b>Each weight row sums to 1.</b> <code>amap.sum(-1)</code> should be all $\\approx1.0$. If a
+         <i>column</i> sums to 1 instead, you softmaxed over queries (wrong axis).</li>
+         <li><b>Weights are non-negative and in $[0,1]$</b> &mdash; a softmax cannot produce negatives.</li>
+         <li><b>Known-answer test.</b> Re-run the worked 2-token example ($d_k=d_v=2$, identity $Q,K$):
+         the map should be $\\approx[[0.6698,0.3302],[0.3302,0.6698]]$ and the output
+         $\\approx[[6.698,3.302],[3.302,6.698]]$.</li>
+       </ul>
+       <p><b>Expected range.</b> The oracle check should pass to <code>atol=1e-6</code> exactly &mdash; this
+       is arithmetic, not optimization, so anything beyond float rounding (say a mismatch larger than
+       $10^{-5}$) is a bug, not "tuning." The headline BLEU numbers (28.4 EN&ndash;DE, 41.8 EN&ndash;FR;
+       Source: arXiv:1706.03762 abstract) belong to the full Transformer in <code>paper-transformer</code>,
+       not to this primitive.</p>
+       <p><b>Ablation &mdash; prove the scaling earns its keep.</b> The paper's one new idea here is the
+       $1/\\sqrt{d_k}$ factor. Turn it OFF (the <code>unscaled</code> function in the CODE cell): the
+       allclose vs <code>F.scaled_dot_product_attention</code> now returns <b>False</b>. Then push $d_k$ up
+       (say $d_k=64$, entries $\\sim N(0,1)$): the unscaled scores have spread $\\approx\\sqrt{d_k}=8$, the
+       softmax saturates toward one-hot, and (in a real training loop) its gradient nearly vanishes &mdash;
+       exactly the failure Section 3.2.1 cites. If removing the scale does <i>not</i> change the output, the
+       scaling was never wired in.</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>allclose False but shapes correct</b> &rarr; usually the missing/extra $1/\\sqrt{d_k}$, or
+         softmax over the wrong axis.</li>
+         <li><b>Shape error in the matmul</b> &rarr; you used <code>.T</code> (which flips a batch dim)
+         instead of <code>K.transpose(-2,-1)</code>, or mismatched $d_k$ between $Q$ and $K$.</li>
+         <li><b>Row sums $\\ne 1$</b> &rarr; softmax over queries, not keys (the classic axis bug).</li>
+         <li><b>Weights collapse to nearly one-hot at large $d_k$</b> &rarr; the scale is missing; in
+         training this shows up as a stalled loss (saturated-softmax, vanishing gradient).</li>
+         <li><b>NaNs</b> &rarr; usually a later masking bug (adding $-\\infty$ on an all-masked row); out of
+         scope here, handled in <code>paper-transformer</code>.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>F.scaled_dot_product_attention</code> in one

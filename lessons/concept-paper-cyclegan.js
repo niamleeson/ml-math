@@ -275,6 +275,52 @@
        Cityscapes) shows the GAN-alone and cycle-alone variants both perform far worse than the full model.</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny toy run &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Score two things, because a CycleGAN can fail on either. (a) <b>Realism</b>
+       of the translation: the paper's main quantitative setup is the <b>FCN-score</b> on Cityscapes
+       labels&harr;photos &mdash; run a pre-trained segmenter on $G(x)$ and measure per-pixel accuracy / mean IoU
+       against the source label map &mdash; plus an Amazon Mechanical Turk &ldquo;real vs fake&rdquo; perceptual
+       study on maps&harr;aerial. (b) <b>Cycle fidelity</b>: the mean round-trip error $\\|F(G(x))-x\\|_1$ (what the
+       toy run tracks). The &ldquo;no-skill&rdquo; anchors: a copy/identity map $G(x)=x$ scores near-zero on the FCN
+       realism metric (it never enters domain $Y$); the unpaired baselines CoGAN, SimGAN, BiGAN/ALI are the bars to
+       clear &mdash; the paper reports CycleGAN beats them all on FCN-score.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Loss at init.</b> Each LSGAN discriminator on a 50/50 real/fake batch should start near
+        $D(\\cdot)\\approx 0.5$, so the least-squares term is $\\approx (0.5-1)^2 + (0.5)^2 = 0.5$ per side
+        (rule of thumb, not a paper claim). The cycle $L_1$ starts large (untrained $F\\circ G$ is far from
+        identity).</li>
+        <li><b>Overfit one tiny unpaired batch</b> with $\\lambda$ large: the round-trip $\\|F(G(x))-x\\|_1$ must
+        collapse toward $0$ within a few hundred steps. If it cannot even fit one batch, the cycle term is mis-wired.</li>
+        <li><b>Shape/range checks.</b> $G(x)$ and $F(y)$ must match the image shape; the discriminator must emit a
+        <i>map</i> of logits (70&times;70 PatchGAN), not a single scalar.</li>
+        <li><b>Detach test.</b> Confirm the discriminator step does not update $G,F$ (freeze $G,F$, run one $D$ step,
+        verify their params are unchanged) &mdash; the classic missing-<code>.detach()</code> bug.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The cycle (round-trip) $L_1$ should fall close to $0$ &mdash; in our toy run from
+       ~4.2 to <b>~0.07</b> with the cycle term (CODEVIZ; our run, not the paper). For realism, target beating the
+       unpaired baselines on the FCN-score as the paper reports (it does not publish a single headline FCN number to
+       quote here); a round-trip error stuck high (&gt;1 in toy units) while the adversarial loss looks fine is
+       &ldquo;probably a bug,&rdquo; whereas slightly grainy but plausible translations are &ldquo;tuning.&rdquo;</p>
+       <p><b>4. Ablation &mdash; prove the cycle loss earns its keep.</b> Set $\\lambda = 0$ (drop
+       $\\mathcal{L}_{\\text{cyc}}$ from the generator step) and retrain with everything else identical. The
+       round-trip error must <b>stay large</b> &mdash; our toy run: ~2.3 vs ~0.07 with the cycle term. If dropping
+       the cycle term does <i>not</i> raise the round-trip error, the cycle loss is not wired into the generator
+       update. This is exactly the paper's own ablation (Table on Cityscapes): GAN-alone and cycle-alone both
+       collapse versus the full model.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Round-trip error stays high</b> while $G(x)$ looks realistic &rarr; the adversarial term works but the
+        cycle term is absent or $\\lambda$ too small; the mapping is content-scrambling (the &ldquo;without cycle
+        loss&rdquo; red curve in the CODEVIZ).</li>
+        <li><b>All inputs map to one output</b> (mode collapse) &rarr; the adversarial term dominates and $G$ found
+        one convincing $Y$ image; the cycle anchor should forbid this once weighted properly.</li>
+        <li><b>Loss oscillates / diverges</b> &rarr; GAN instability; the paper's fixes are the LSGAN loss and the
+        50-image history buffer for the discriminator.</li>
+        <li><b>Cycle error $\\to 0$ but outputs look like the input domain</b> &rarr; $G,F$ became near-identity; the
+        discriminators are too weak to push outputs into the target domain. Watch both signals together &mdash; low
+        cycle error alone does <i>not</i> mean &ldquo;working.&rdquo;</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

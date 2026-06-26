@@ -282,6 +282,41 @@
        <p><i>These are the paper's reported figures, quoted from the abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny copy-task run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The paper's metric is <b>BLEU</b> (translation-quality score,
+       higher is better) on English&rarr;French (WMT'14). Its headline numbers (Table 1, all test sentences):
+       <b>RNNsearch-50 = 26.75</b> vs the fixed-vector baseline <b>RNNencdec-50 = 17.82</b> &mdash; so "better than
+       the bottleneck" means clearing ~17.8 BLEU, and the real bar is ~26.8. For the toy build here the practical
+       metric is <b>per-token copy accuracy</b> on the copy task; the no-skill baseline is <b>random guessing</b>
+       $= 1/V$ (with vocab $V$, that is $\\approx 0.2$ for $V=5$), and a correct build should approach
+       $\\approx 1.0$.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (a) <b>Known-answer test:</b> recompute the lesson's worked
+         attention step and confirm $e=[0.603,0.880,1.483]$, $\\alpha=[0.211,0.279,0.510]$, $c=[0.721,0.789]$.
+         (b) <b>Softmax invariant:</b> every row of $\\alpha$ must be $\\ge 0$ and sum to $1$ &mdash; if rows do
+         not sum to 1 you softmaxed the wrong axis. (c) <b>Shapes:</b> $\\alpha$ is $(N,T_{\\text{dec}},T_x)$ and
+         $c$ is $(N,2n)$; the score add needs <code>W(s).unsqueeze(1)+U(H)</code>. (d) <b>Overfit one batch:</b>
+         a handful of copy sequences should reach ~100% accuracy in a few hundred steps.</li>
+         <li><b>Expected range.</b> A correct attention copy model reaches near-perfect token accuracy
+         (our small run: <b>$\\approx 0.999$</b>, rule of thumb, not a paper number) with a clearly
+         <b>diagonal-dominant</b> alignment matrix &mdash; output step $i$ puts its brightest weight on source
+         position $i$. Accuracy stuck well below ~0.9, or a heatmap with no diagonal, is a <b>bug</b>, not tuning.
+         On the paper's real task, anchor to <b>BLEU 26.75</b> (RNNsearch-50, Table 1); being near the 17.82
+         baseline signals the attention is not actually helping.</li>
+         <li><b>Ablation &mdash; prove attention earns its keep.</b> The central knob is the <b>per-step context</b>.
+         Replace it with a <b>single fixed vector</b> (the last encoder state reused for every decoder step,
+         plain seq2seq) and retrain: copy accuracy should <b>drop</b> (later positions worst) and the alignment
+         structure vanish (no per-step weights to form a diagonal). If accuracy does not fall, the context was
+         not actually being recomputed per step &mdash; the attention is not wired in.</li>
+         <li><b>Failure signals &amp; causes.</b> <i>Alignment rows do not sum to 1</i> &rarr; softmax over the
+         wrong axis (batch or hidden instead of the $T_x$ source axis). <i>Every heatmap row identical</i> &rarr;
+         the context is computed once and reused, or you dropped the $W_a s_{i-1}$ query term &mdash; either way
+         the model can't move its gaze as the decoder advances. <i>Shape error or silent wrong broadcast</i> &rarr;
+         missing <code>.unsqueeze(1)</code> on $W_a s$. <i>Early source positions ignored</i> &rarr; encoder is
+         not bidirectional, so early annotations are blind to later context. <i>Accuracy good on train, poor on
+         held-out lengths</i> &rarr; overfit / length leakage.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the RNN primitives ship in PyTorch, so you

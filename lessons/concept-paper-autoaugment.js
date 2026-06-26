@@ -315,6 +315,57 @@ $$ \\nabla_\\theta J(\\theta) \\;\\approx\\; \\big(R - b\\big)\\,\\sum_{k=1}^{30
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;4. The numbers in
        the CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The thing you measure is <b>classification accuracy / error
+       on a held-out set</b> &mdash; in the paper, test error on CIFAR-10, SVHN, and top-1 on ImageNet
+       (&sect;4). The augmentation policy is a <i>training-time</i> intervention, so you score it the same
+       way you would any model: train, then evaluate on clean (un-augmented) validation/test images. The
+       "no-skill" floor is <b>majority-class accuracy</b> (10% for balanced CIFAR-10 / 10-way); the
+       meaningful baseline to beat is the <b>same model trained with NO augmentation</b> &mdash; that head-
+       to-head gap is what "AutoAugment works" means.</p>
+       <p><b>Sanity checks before the full run.</b></p>
+       <ul>
+         <li><b>Eval pipeline is clean.</b> Print a few val images: they must be un-augmented. Augmenting val
+         silently corrupts the metric.</li>
+         <li><b>Loss at init.</b> For a 10-way softmax the initial cross-entropy should be
+         $\\approx-\\ln(1/10)\\approx2.30$ (rule of thumb). Far from this &rarr; bad init or a label bug.</li>
+         <li><b>One sub-policy per image.</b> Apply the policy to one image many times and confirm you see
+         <i>varied</i> outputs (not all 5 sub-policies stacked, not always identical) &mdash; the per-image
+         uniform pick plus per-op probability gate.</li>
+         <li><b>Combinatorics unit test.</b> Recompute $(16\\times10\\times11)^{10}\\approx2.9\\times10^{32}$
+         (the &sect;3 search-space size) &mdash; a cheap known-answer check on your counting.</li>
+         <li><b>Overfit a tiny subset.</b> With augmentation OFF, a handful of images should reach ~100%
+         train accuracy; if it can't, the training loop itself is broken (debug that before judging the
+         policy).</li>
+       </ul>
+       <p><b>Expected range.</b> On the paper's scale, a correct AutoAugment policy reaches <b>1.48% test
+       error on CIFAR-10</b> (PyramidNet+ShakeDrop, &sect;4.1), <b>1.0% on SVHN</b>, and <b>83.5% top-1 on
+       ImageNet</b> with ResNet-50 (&sect;4.2) &mdash; roughly a <b>0.4&ndash;0.6%</b> improvement over the
+       matched no-augmentation baseline (Source: arXiv:1805.09501, abstract &amp; &sect;4). On a toy run
+       like the CODE cell you will NOT hit these absolute numbers; what should reproduce is the
+       <i>direction</i> &mdash; policy &ge; no-aug on a small set. A small lift (a few points) is expected;
+       the policy run scoring <i>below</i> no-aug is the bug-or-too-aggressive signal.</p>
+       <p><b>Ablation &mdash; prove the policy earns its keep.</b> The central knob is the policy itself.
+       Run the identical model, optimizer, epochs, and data <b>with</b> the AutoAugment transform vs
+       <b>with it removed</b> (the CODE cell does exactly this: <code>run(use_policy=True)</code> vs
+       <code>run(use_policy=False)</code>). The augmented run should validate <b>equal-or-higher</b>,
+       especially on a small dataset where overfitting is severe. If the two are identical, the transform
+       is not actually in the training pipeline (or is also leaking into val).</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Val accuracy stuck near 10%</b> (majority class) &rarr; labels shuffled, or the model isn't
+         learning (LR/init).</li>
+         <li><b>Policy run WORSE than no-aug</b> &rarr; over-strong augmentation (magnitudes/probabilities
+         too high destroy label content), or the policy is leaking into the val pipeline.</li>
+         <li><b>Train accuracy high, val low (and no-aug shows the same gap)</b> &rarr; overfitting the small
+         set &mdash; the exact problem augmentation is meant to narrow; if the policy doesn't narrow it, it's
+         not wired in.</li>
+         <li><b>Crash: transform expected PIL got Tensor</b> &rarr; geometric/color ops placed after
+         <code>ToTensor</code>; put the policy first.</li>
+         <li><b>No variety across epochs for one image</b> &rarr; you're applying all sub-policies or a fixed
+         one, not a uniform random pick with probability gates.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The expensive, novel part &mdash; the RL search

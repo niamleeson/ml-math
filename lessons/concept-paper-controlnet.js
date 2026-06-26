@@ -300,6 +300,49 @@
        and ensure that no harmful noise could affect the finetuning." (Quoted from the abstract.)</p>
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;3.1. The numbers in the CODE
        and CODEVIZ panels below are from our own tiny run on toy data &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> A real ControlNet is judged on two axes: <b>condition fidelity</b> &mdash; does
+       the generated image obey the spatial control (edge map, depth, pose, segmentation)? &mdash; and <b>image
+       quality / prompt alignment</b> (FID and CLIP-style scores) on Stable Diffusion across the conditions in &sect;5.
+       The "better than trivial" floor is the <b>frozen base model with no control</b>: it makes good images that
+       <i>ignore</i> the layout, so control fidelity is at chance. The bar to clear is that adding the ControlNet
+       branch raises fidelity <i>without</i> degrading the base model's quality, robustly "with small ($\\lt$50k) and
+       large ($\\gt$1m) datasets" (abstract). In the toy notebook the metric is instead <b>control strength</b>
+       $= \\mathrm{RMS}(\\mathbf{y}_c - \\mathrm{frozen}(\\mathbf{x}))$, whose no-skill value at init is exactly
+       <b>$0$</b> (the branch is a no-op).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> The defining check is <b>Eq. 3 at init</b>:
+        <code>torch.allclose(model(x,c), frozen(x))</code> must be <b>True</b> &mdash; the conditioned output equals
+        the frozen output, $\\mathrm{max}|\\mathbf{y}_c-\\mathbf{y}|=0$. Confirm each zero convolution outputs exactly
+        $0$ for random input <i>yet</i> has a <b>nonzero weight gradient</b> (our run: $\\approx 6.5$) &mdash; that one
+        check proves "safe start" and "still learns" at once. Verify the locked copy is truly frozen
+        (<code>requires_grad=False</code> on every $\\Theta$, and its tensors are unchanged after a step) and that the
+        trainable copy is a real <code>deepcopy</code> (its parameters are <i>not</i> aliased to the frozen block).
+        Overfit a single (input, condition, target) triple &mdash; control strength should climb off $0$ and the loss
+        fall.</li>
+        <li><b>Expected range.</b> The paper reports qualitative success across conditions rather than one scalar you
+        can reproduce on CPU, so anchor to its claims: the branch "progressively grow[s] the parameters from zero" and
+        adds control with "no harmful noise" (abstract). For the toy run, a correct zero-init branch traces control
+        strength $0.0 \\to 0.01 \\to 0.06 \\to 0.51 \\to 0.91 \\to 0.97$ over steps $0$&ndash;$400$ (our numbers, not the
+        paper's). Control strength that starts <i>above</i> $0$ at step $0$ is a bug (bias or weight not zeroed);
+        control strength that never leaves $0$ means gradients are not reaching the branch.</li>
+        <li><b>Ablation &mdash; prove zero-init earns its keep.</b> The central component is the <b>zero
+        initialization</b> of the two $1\\times1$ convolutions. Turn it OFF (use PyTorch's default random init,
+        everything else identical) and re-check step $0$: the identity $\\mathbf{y}_c=\\mathbf{y}$ <b>breaks</b> and the
+        frozen output is perturbed (our run: $\\mathrm{max}|\\mathbf{y}_c-\\mathbf{y}|\\approx 1.13$ vs exactly $0.0$ for
+        zero-init). That perturbation is the "harmful noise" the design eliminates; if random-init shows <i>no</i>
+        perturbation, your zero convolutions were never doing anything. A second knob: unfreeze the locked copy and
+        confirm the backbone now drifts (the corruption ControlNet avoids).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>$\\mathbf{y}_c \\ne \\mathbf{y}$ at init</b> &rarr; a zero
+        conv's <b>bias</b> (or weight) was left nonzero &mdash; zero <i>both</i> (the most common bug). <b>Control
+        strength frozen at $0$ forever</b> &rarr; the branch's parameters have <code>requires_grad=False</code>, or the
+        optimizer was not given them, so no gradient moves the zero convs off zero. <b>Frozen block changes during
+        training</b> &rarr; the copy aliases $\\Theta$ instead of being a <code>deepcopy</code>, so updates leak into
+        the backbone. <b>Loss drops but the image ignores the condition</b> &rarr; the condition path
+        ($\\mathbf{x}+\\mathcal{Z}(\\mathbf{c};\\Theta_{z1})$) is mis-wired and the branch is fitting the target without
+        using $\\mathbf{c}$. The CODEVIZ's left curve (growing from exactly $0$) and right bars ($0.0$ vs
+        $\\approx 1.13$) are the "working" vs "zero-init disabled" shapes to compare against.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

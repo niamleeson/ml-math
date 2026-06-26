@@ -280,6 +280,40 @@ $$ \\mathcal{L}^{\\text{BYOL}}_{\\theta,\\xi} = \\mathcal{L}_{\\theta,\\xi} + \\
        below the full method, and removing the predictor collapses to near-zero accuracy.</p>
        <p><i>These are the paper's reported ImageNet figures, quoted from the abstract / §5. The numbers in
        the CODEVIZ panel below are from our own tiny MNIST run — not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> BYOL is judged by the <b>linear-evaluation protocol</b>: freeze the
+       pretrained online encoder $f_\\theta$, train a single <code>nn.Linear</code> probe on labels, and report
+       <b>top-1 accuracy</b>. The paper's setup is ImageNet (ResNet-50); the &ldquo;better than trivial&rdquo;
+       floors are <b>10% from-scratch / chance-level on 10-way MNIST</b> in our toy run, and on ImageNet the bar
+       is SimCLR/MoCo — which BYOL beats. (Reported: <b>74.3% top-1 with ResNet-50</b>, quoted from the abstract.)</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Verify the worked example: prediction loss
+        $\\mathcal{L}=0.08$ for $a=[3,4],b=[4,3]$ (cos $=0.96$, so $2-2\\cos=0.08$) and one EMA step
+        $\\xi\\leftarrow 0.99(1)+0.01(2)=1.01$ — the notebook's first cell asserts both. Check the L2-normalized
+        prediction and target each have unit length ($\\lVert\\cdot\\rVert_2=1$). Confirm the BYOL loss lives in
+        $[0,4]$ and starts near $2$ (random unit vectors are roughly orthogonal, cos $\\approx 0$). Overfit a
+        single batch and watch the loss fall steadily — a rule of thumb, not a paper claim.</li>
+        <li><b>3. Expected range.</b> A correct build should show the frozen-encoder probe <b>beating
+        from-scratch at every label budget</b> (our run: 0.268 vs 0.110 at 20 labels) and healthy feature
+        std (~0.74). On the real benchmark, anchor to the paper's <b>74.3% / 79.6% ImageNet top-1</b>
+        (approximate, abstract of arXiv:2006.07733). On a tiny MNIST encoder expect only modest absolute
+        accuracy — the probe-beats-scratch <i>gap</i> is the signal, not the absolute number. A probe at chance
+        (~10%) is a bug; a few points below a tuned run is tuning.</li>
+        <li><b>4. Ablation — prove the key idea earns its keep.</b> BYOL's central claim is collapse-avoidance
+        <i>without negatives</i> via the asymmetric <b>predictor</b> + stop-gradient + slow EMA. Turn OFF the
+        predictor (set <code>use_predictor=False</code>, the online side becomes symmetric to the target). A
+        correct build then <b>collapses</b>: feature std crashes toward 0 (our run: ~0.74 → ~0.03) and the probe
+        falls to ~chance. If removing the predictor does <i>not</i> hurt, it was never wired in. Secondary knob:
+        $\\tau=1$ (freeze the target at random init) — the paper's §5 ablation shows this degrades sharply.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Probe stuck at ~10% (chance) + feature std ~0</b>:
+        constant collapse — gradients leaking into the target (forgot <code>torch.no_grad()</code>), or the
+        predictor/EMA missing (the &ldquo;No predictor&rdquo; CODEVIZ bar). <b>Loss not falling / NaN</b>: forgot
+        to L2-normalize before the MSE, or LR too high. <b>Loss → 0 fast but probe at chance</b>: the trivial
+        constant solution — exactly the no-predictor collapse. <b>Probe ≈ from-scratch (no gain)</b>: pretraining
+        learned nothing — check you symmetrized the loss and ran the EMA update <i>after</i> the optimizer step.
+        <b>Probing the wrong vector</b> (projection or prediction instead of the encoder output $f_\\theta(x)$)
+        silently caps accuracy.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

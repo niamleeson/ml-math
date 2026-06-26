@@ -263,6 +263,42 @@
        abstract and Theorem 6; the per-experiment numbers in the paper's later sections are not reproduced here.)
        The CODEVIZ below shows OUR small run, not the paper's numbers.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The primary metric is <b>classification accuracy</b> (or its complement,
+       <b>training error</b>) of the weighted-majority ensemble $H(x)=\\operatorname{sign}(\\sum_t\\alpha_t h_t(x))$,
+       reported <b>round by round</b> as $T$ grows. On our toy 2-D band the no-skill baselines are explicit: a
+       <b>majority-class</b> guess and, more tellingly, a <b>single decision stump</b> (one cut) which tops out at
+       $\\approx 0.7533$ accuracy because the band has two edges. The real <b>oracle baseline</b> is scikit-learn's
+       <code>AdaBoostClassifier</code> (SAMME): a correct build must match it accuracy-for-accuracy at every round.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Recompute the worked one-round example: best stump on
+        $[1,2,3,4,5]$ gives $\\epsilon = 0.2$, $\\alpha = \\tfrac12\\ln 4 = 0.6931$, new weights
+        $[0.125,0.125,0.125,\\mathbf{0.5},0.125]$ &mdash; the misclassified example must carry half the weight. After
+        each reweight, check the weights <b>sum to $1$</b> (renormalized) and are non-negative. Confirm $\\epsilon_t$ is
+        the <b>weighted</b> error (sum of weights of wrong examples), not the unweighted count. Check $\\alpha_t = 0$
+        when $\\epsilon_t = 1/2$ (a useless stump gets no vote).</li>
+        <li><b>Expected range.</b> On the band data a single stump is $\\approx 0.7533$ and the boosted ensemble
+        reaches <b>$1.0$ by round $3$</b> (our CODEVIZ; small run, not a paper number). The paper's headline is not an
+        accuracy figure but the <b>training-error bound</b> (Theorem 6, Eq. 14):
+        $\\epsilon \\le \\prod_t 2\\sqrt{\\epsilon_t(1-\\epsilon_t)} \\le \\exp(-2\\sum_t\\gamma_t^2)$ &mdash; error must fall
+        roughly exponentially in $T$ whenever every stump beats guessing ($\\epsilon_t \\lt 1/2$). If your accuracy is
+        stuck below the single-stump value or your staged scores diverge from sklearn's, that is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove boosting earns its keep.</b> The central idea is <b>adaptive reweighting</b>: each
+        round raises the weight of the misclassified examples so the next stump attacks them. Ablate by comparing
+        <b>$T=1$ (a single stump, $0.7533$) against the full ensemble ($1.0$)</b> &mdash; the gain <i>is</i> boosting. To
+        target the reweighting specifically, fix the weights at uniform every round (skip the $D_{t+1}$ update): every
+        stump then makes the same cut and the ensemble cannot exceed one stump. If turning off reweighting does not
+        drop accuracy, the weight-feedback channel is not wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Accuracy never beats one stump &mdash; reweighting not applied,
+        or the weak learner has no edge on this data (e.g. a checkerboard no axis-aligned stump can split). Weights
+        <b>blow up or vanish</b> &mdash; forgot to renormalize by $Z_t$ each round, which then corrupts $\\epsilon_t$.
+        $\\alpha_t$ goes to $\\pm\\infty$ &mdash; $\\epsilon_t$ hit $0$ or $1$; clip $\\epsilon_t$ into
+        $[10^{-12}, 1-10^{-12}]$. Your staged scores drift from sklearn's &mdash; a label-convention mismatch (the
+        $e^{-\\alpha_t y_i h_t(x_i)}$ form needs $y, h \\in \\{-1,+1\\}$) or using unweighted instead of weighted error.
+        Training error <i>rises</i> with more rounds &mdash; a stump with $\\epsilon_t \\gt 1/2$ was given a positive vote
+        (its polarity should have been flipped).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> scikit-learn ships this as <code>AdaBoostClassifier</code> in one line. Here
