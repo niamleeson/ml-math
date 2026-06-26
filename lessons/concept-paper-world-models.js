@@ -329,6 +329,60 @@
        generalizes back to reality.</p>
        <p><i>These are the paper's reported figures, quoted from §3/Table 1 and §4/Table 2. The numbers in the
        CODEVIZ panel below are from our own tiny toy-environment run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This is RL, so the metric is <b>average cumulative reward over many
+       random episodes</b> (the paper uses 100 trials for CarRacing). The headline test of the paper's claim is
+       <b>transfer</b>: a controller trained inside M's dream, then scored in the <b>real</b> environment. The
+       "no-skill" floor is the reward of a <b>random / zero controller</b> &mdash; any working C must beat it; the
+       upper reference is <b>C trained directly in the real env</b>. The paper's targets: CarRacing <b>906 ± 21</b>
+       (full V+M) vs <b>632 ± 251</b> (V-only) and prior best <b>838 ± 11</b>; VizDoom dream-transfer best at
+       $\\tau=1.15$ &rarr; real <b>1092 ± 556</b> (Results / Tables 1&ndash;2).</p>
+       <p><b>Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>Worked MDN example.</b> The first cell recomputes mixture density at $z{=}1$ = <b>0.5585</b>,
+        $\\tau{=}1$ sample = <b>1.20</b>, $\\tau{=}1.3$ sample = <b>1.26</b>, reweighted
+        $\\pi=(0.657,0.343)$ &mdash; match these before trusting the sampler.</li>
+        <li><b>V reconstructs.</b> After training the VAE, decoded $\\hat{x}\\approx x$ on held-out frames; if not,
+        the latent $z$ is garbage and everything downstream fails.</li>
+        <li><b>M log-likelihood decreases</b> and beats a single-Gaussian/MSE head on the <i>stochastic</i> toy
+        env (where the nudge sign flips) &mdash; that gap is the whole reason for the mixture.</li>
+        <li><b>Mixture head shapes.</b> The $\\pi_k$ pass through softmax and sum to 1; $\\sigma_k=\\exp(\\log\\sigma)\\gt 0$;
+        the NLL is a positive scalar. A known-answer check: feed a target equal to a component mean and confirm
+        its responsibility dominates.</li>
+       </ul>
+       <p><b>Expected range.</b> Qualitatively (the reproducible claim): the <b>dream-trained controller at a
+       moderate $\\tau$ transfers</b> &mdash; its real-env score lands close to the real-trained controller &mdash;
+       while a <b>too-cold $\\tau$ transfers poorly</b>. On our toy reward $-x^2$ (closer to 0 is better) that is
+       roughly real-trained $\\approx -1.4$, dream-$\\tau{=}1.15$ $\\approx -1.6$, dream-$\\tau{=}0.10$
+       $\\approx -3.0$ (our run, not the paper). The paper's actual numbers above are CarRacing/VizDoom &mdash;
+       <i>do not</i> expect them on the toy env; the <b>ordering and the temperature effect</b> are what a correct
+       build reproduces.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The two central ideas are <b>training inside
+       the dream</b> and the <b>mixture-density M</b>.</p>
+       <ul>
+        <li><b>Real-vs-dream training (the paper's §4 ablation):</b> train C in the real env and inside M, score
+        both in the real env. If the dream-trained C does NOT approach the real-trained C, M is too weak or the
+        dream loop is miswired.</li>
+        <li><b>Sweep $\\tau$:</b> a too-low $\\tau$ should make C score high <i>in the dream</i> but
+        <b>drop in reality</b> (it exploited M's blind spots); a moderate $\\tau$ should recover real performance.
+        If raising $\\tau$ changes nothing, temperature isn't actually scaling $\\sigma_k$ AND reshaping
+        $\\pi_k\\propto\\pi_k^{1/\\tau}$.</li>
+        <li><b>Replace the MDN head with a single-Gaussian/MSE head:</b> dreams should go blurry (predict the mean
+        "drive straight") and transfer should worsen &mdash; confirms the mixture earns its keep.</li>
+       </ul>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Huge dream reward, poor real reward:</b> C is exploiting M (the $\\tau=0.10$ pathology) &mdash;
+        raise the temperature.</li>
+        <li><b>Dreams collapse to one trajectory / blurry futures:</b> the MDN collapsed to one component (or you
+        used MSE) &mdash; check the mixture NLL and that distinct modes survive.</li>
+        <li><b>M NLL is NaN:</b> $\\sigma_k$ hit 0 or you summed densities instead of using
+        <code>logsumexp</code> over $\\log\\pi_k+\\log\\mathcal{N}$.</li>
+        <li><b>Both controllers near the random-floor reward:</b> evolution isn't improving C (population/elite or
+        $\\sigma$ wrong), or $[z,h]$ isn't actually fed to C &mdash; nothing is being optimized.</li>
+        <li><b>Dream-trained C fails even at good $\\tau$:</b> V or M wasn't frozen / was trained with reward, or M
+        underfit &mdash; revisit the unsupervised V&rarr;M&rarr;C order.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

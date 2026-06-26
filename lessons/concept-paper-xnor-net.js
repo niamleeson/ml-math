@@ -271,6 +271,55 @@
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Two layers of evaluation. (1) For the <i>building block</i>: the
+       <b>relative reconstruction error</b> $\\lVert W-\\alpha B\\rVert/\\lVert W\\rVert$ of a binarized filter
+       &mdash; cheap, deterministic, and the thing the lesson measures. The "no-skill" baseline is plain
+       $\\mathrm{sign}(W)$ with $\\alpha=1$ (magnitude thrown away); the scaled version must beat it. (2) For the
+       <i>network</i>: ImageNet <b>top-1 / top-5 accuracy</b>, the paper's own benchmark on AlexNet and
+       ResNet-18, with full-precision accuracy as the ceiling and random ($1/1000$) as the floor.</p>
+       <p><b>Sanity checks before any training run.</b></p>
+       <ul>
+         <li><b>Known-answer unit test (the worked example).</b> For $W=[0.8,-0.5,0.3,-0.9,0.2,-0.4]$ verify
+         $\\alpha=\\mathrm{mean}(|W|)=3.1/6\\approx0.5167$, squared error <b>$0.388$ with the scale</b> vs
+         <b>$1.79$ without</b> (Eqns. 4, 6). If these don't match, the scale formula is wrong.</li>
+         <li><b>XNOR/popcount identity.</b> On a small $\\pm1$ vector confirm the bitwise route equals the float
+         dot product: $\\text{dot}=2\\cdot\\mathrm{popcount}(\\mathrm{XNOR})-n$ (encode $+1\\to1,-1\\to0$). A
+         flipped mapping flips the sign &mdash; catch it here.</li>
+         <li><b>Shape/scale checks.</b> $\\alpha$ is computed <i>per output filter</i>
+         (<code>W.abs().mean(dim=(1,2,3))</code>), so it has one entry per output channel and every entry is
+         $\\gt0$; $B=\\mathrm{sign}(W)$ contains only $\\pm1$.</li>
+         <li><b>$\\alpha$ is the minimizer.</b> Sweep $\\alpha$ around $\\mathrm{mean}(|W|)$ and confirm the
+         reconstruction error is a parabola bottoming exactly there (any other scale, including $1.0$, is strictly
+         worse &mdash; Eqn. 6).</li>
+       </ul>
+       <p><b>Expected range.</b> For the block, the scaled binary filter should beat naive sign (our toy CODEVIZ
+       run: relative error $0.6704$ for plain sign $\\to0.6104$ one global $\\alpha\\to0.6006$ per-filter
+       $\\alpha$ &mdash; our own small numbers, not the paper's). For the full network the anchor is the abstract:
+       a Binary-Weight-Network AlexNet is <b>only 2.9% below full-precision top-1</b>, and XNOR-Networks beat
+       BinaryConnect/BinaryNet by <b>more than 16% top-1</b> on ImageNet (arXiv:1603.05279, abstract). Rule of
+       thumb (not a paper claim): binary-weight (real inputs) should land within a few % of full precision; the
+       fully-binary XNOR variant drops more &mdash; a much larger gap means a bug, not just quantization cost.</p>
+       <p><b>Ablation &mdash; prove the scale earns its keep.</b> The paper's central knob is the per-filter
+       $\\alpha=\\mathrm{mean}(|W|)$. Turn it OFF (set $\\alpha=1$, i.e. plain $\\mathrm{sign}(W)$) and the
+       reconstruction error must <b>rise</b> (our run: $0.60\\to0.67$); end-to-end, accuracy must drop. If killing
+       $\\alpha$ changes nothing, the scale isn't actually being applied in the forward pass. Second ablation:
+       per-filter vs one global $\\alpha$ &mdash; per-filter should be at least as good.</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Accuracy near random ($\\approx0.1\\%$ on ImageNet) / loss not falling</b> &rarr; magnitude lost:
+         $\\alpha$ dropped or applied as a global scalar where per-filter is needed, or sign convention flipped.</li>
+         <li><b>Reconstruction error doesn't improve over plain sign</b> &rarr; $\\alpha$ computed but not
+         multiplied back in, or computed over the wrong dims.</li>
+         <li><b>Training won't learn / gradients all zero</b> &rarr; you back-propagated through
+         $\\mathrm{sign}$ (zero gradient almost everywhere); you must keep a real-valued weight and use the
+         straight-through estimator, binarizing only inside <code>forward</code>.</li>
+         <li><b>XNOR dot product off by a constant</b> &rarr; wrong bit encoding ($+1\\to1,-1\\to0$ required) or
+         using $\\mathrm{popcount}$ alone instead of $2\\cdot\\mathrm{popcount}-n$.</li>
+         <li><b>Expected 58&times; speedup not seen</b> &rarr; that figure needs a real bit-packed XNOR kernel; a
+         float <code>conv2d</code> on a $\\pm1$ filter shows the <i>accuracy</i> effect only, not wall-clock time.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the convolution primitive ships in PyTorch, so you

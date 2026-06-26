@@ -263,6 +263,42 @@ $$ \\phi(x) = \\begin{cases} x & \\text{if } x \\gt 0 \\\\ 0.1\\,x & \\text{othe
        errors compared to Fast R-CNN" (abstract) thanks to seeing the whole image at once.</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;2.3. Every number in
        the CODEVIZ panel below is from our own toy run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The system-level score is <b>mAP</b> (mean Average Precision)
+       on <b>Pascal VOC</b> at IoU $\\ge 0.5$ &mdash; the paper's eval setup &mdash; reported alongside
+       <b>frames per second</b>. "Better than trivial" floors: a detector that emits no boxes scores
+       $0$ mAP, and the paper's own real-time bar is "double the mAP of other real-time detectors"
+       (abstract). But you are building only decode + IoU + class-confidence + NMS on a <i>toy</i> grid,
+       not training Darknet, so your real check is <b>exactness</b>: your decode, IoU, and NMS must
+       reproduce the worked example to 3 decimal places.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE any run.</b> Output shape: the head must emit
+        $(1, S, S, B\\cdot5+C) = (1,7,7,30)$ &mdash; wrong depth means $B$ or $C$ is mis-wired. Decode
+        cell (row $3$, col $2$) with $x{=}0.6, y{=}0.4, w{=}0.30, h{=}0.20$ and assert corners
+        $\\approx[0.221, 0.386, 0.521, 0.586]$ (known-answer). IoU of P and the shifted neighbour Q must
+        be $\\approx 0.714$. <b>Clamp test:</b> IoU of two disjoint boxes must be exactly $0$ &mdash; if it
+        is positive, you forgot the $\\max(0,\\cdot)$ and negative overlaps multiplied to a phantom
+        intersection. Range check: every decoded coordinate and every class-specific confidence must lie in
+        $[0,1]$.</li>
+        <li><b>Expected range.</b> On the toy NMS example, NMS must keep exactly $\\{P, R\\}$ (drop the
+        duplicate Q). At the system level, anchor to the paper: base YOLO runs at "45 frames per second"
+        and Fast YOLO at "155 frames per second" (abstract), and NMS "adds 2-3% in mAP" (&sect;2.3). Treat
+        these as the paper's figures, not targets your toy build reaches; a useful <i>rule of thumb</i> (not
+        a paper claim) is that any decode/IoU number off by more than $\\sim0.01$ from the worked example is
+        a bug, not rounding.</li>
+        <li><b>Ablation &mdash; prove NMS earns its keep.</b> NMS is this paper's central post-processing
+        idea, so turn it <b>off</b>: report every above-threshold box instead of suppressing overlaps. The
+        box count per object must <b>rise</b> (toy run: $2 \\to 4$, and $2,4,6,8$ as duplicates pile up in
+        the CODEVIZ panel) while the with-NMS count stays pinned at one box per object. If turning NMS off
+        does <i>not</i> change the counts, your suppression loop is wired wrong or the IoU threshold never
+        fires. This reproduces, on toy data, the paper's "2-3% in mAP" credit for NMS (&sect;2.3).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Every box piles up in the top-left</i> &rarr;
+        you forgot the cell offset $(\\text{col}+x)/S$, so $x,y$ stayed cell-local. <i>All boxes too small</i>
+        &rarr; you divided $w,h$ by $S$ too (only $x,y$ take the offset). <i>Phantom IoU on disjoint boxes</i>
+        &rarr; missing $\\max(0,\\cdot)$ clamp. <i>NMS keeps duplicates</i> &rarr; ranking raw objectness
+        instead of the class-specific score (Eqn. 1), or threshold too high. <i>NMS deletes the separate
+        object R</i> &rarr; threshold too low, suppressing non-overlapping boxes.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

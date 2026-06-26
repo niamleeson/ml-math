@@ -335,6 +335,56 @@
        and gradients (flowing backward)." (Source: proceedings.mlr.press/v9/glorot10a, Sections 3&ndash;5,
        Table 1.) The CODEVIZ numbers below are our own small run, not the paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> This is an <i>initializer</i>, not a model, so the primary check is
+       a <b>variance-stability diagnostic</b>, not a benchmark accuracy. Instrument a deep net (the paper uses
+       depth 1&ndash;5, 1000 units/layer; a 10-layer toy net is fine) and measure, per layer: (i) the activation
+       standard deviation on the forward pass, and (ii) the back-propagated gradient std. The "no-skill" baseline
+       is the paper's standard init $U[-1/\\sqrt n,1/\\sqrt n]$, whose per-layer factor is $n\\,\\mathrm{Var}(W)=1/3\\lt1$
+       (eq. 15) &mdash; under it the signal provably collapses, so any healthy init must beat it. The paper's own
+       Jacobian summary statistic is the average singular value (eq. 17): $\\approx 0.8$ for normalized init vs
+       $\\approx 0.5$ for standard.</p>
+       <p><b>Sanity checks before any deep run.</b></p>
+       <ul>
+         <li><b>Exact-bound check (the lesson's oracle).</b> Confirm your half-width
+         $\\sqrt{6/(n_\\text{in}+n_\\text{out})}$ equals <code>torch.nn.init.xavier_uniform_</code>'s via
+         <code>torch.allclose</code> &mdash; if that fails, your formula is wrong before you test anything else.</li>
+         <li><b>Empirical variance of a single draw.</b> Sample one large $W$ and check
+         $\\mathrm{Var}(W)\\approx 2/(n_\\text{in}+n_\\text{out})$ (eq. 12) and mean $\\approx 0$. For a square layer
+         it should be $\\approx 1/n$.</li>
+         <li><b>One-layer factor.</b> Push unit-variance input through a <i>single</i> linear layer; output
+         variance should stay $\\approx 1$ (the per-layer factor is $\\approx 1$). If one layer already drifts, depth
+         will amplify it.</li>
+       </ul>
+       <p><b>Expected range.</b> A correct Xavier run should hold the activation std in a healthy band across
+       depth (our toy CODEVIZ run: $1.0\\to\\approx0.22$ over 10 tanh layers) while standard init collapses it
+       toward $0$ ($1.0\\to\\approx0.003$); the early-layer gradient should survive (our run: $\\approx4\\times$
+       smaller than the last layer under Xavier vs $\\approx200\\times$ under standard) &mdash; these are our own
+       small-scale numbers, not the paper's. For end-task accuracy the anchor is Table 1: on Shapeset-$3\\times2$,
+       5-layer tanh improves from <b>27.15%</b> (standard) to <b>15.60%</b> (normalized) test error, and on MNIST
+       <b>1.76%</b>&rarr;<b>1.64%</b> (proceedings.mlr.press/v9/glorot10a, Table 1). Std staying flat-ish across
+       layers = healthy; std dropping by more than a few&times; per layer = a scaling bug (rule of thumb, not a
+       paper claim).</p>
+       <p><b>Ablation &mdash; prove the fan-in scaling earns its keep.</b> The central knob is the
+       <i>fan-dependent</i> half-width. Replace eq. (16) with a fan-blind init (e.g. fixed $U[-1,1]$, or the
+       standard $U[-1/\\sqrt n,1/\\sqrt n]$) and re-run the diagnostic: the activation and gradient std must now
+       <b>diverge across depth</b> (collapse or blow up). If they stay stable without the $1/\\sqrt{n_\\text{in}+n_\\text{out}}$
+       scaling, your "Xavier" code path isn't actually applying the scale.</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Activation std decays geometrically with depth</b> (e.g. halving each layer) &rarr; per-layer
+         factor $\\lt1$; weights too small &mdash; likely fan-in/fan-out read off the wrong weight dimension, or
+         $\\sqrt3$/$\\sqrt6$ confusion shrinking the bound.</li>
+         <li><b>Activations saturate at $\\pm1$ and gradients vanish</b> &rarr; per-layer factor $\\gt1$; weights
+         too large (tanh slope $\\approx0$ kills the backward signal) &mdash; you may have put $\\sqrt6$ on a
+         Gaussian, or used $2/n$ where $n$ is only one fan.</li>
+         <li><b>Forward looks fine but training still stalls</b> &rarr; check the backward diagnostic separately;
+         Xavier balances <i>both</i> directions, and a bug can preserve activations while starving early-layer
+         gradients (the paper's Figure 7 failure).</li>
+         <li><b>allclose-vs-PyTorch fails</b> &rarr; formula error; fix this first &mdash; every deeper result is
+         meaningless until the bound matches.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.nn.init.xavier_uniform_</code> in one

@@ -313,6 +313,56 @@
        CODEVIZ panel below are OUR OWN labeled illustration of the robustness <b>gap</b> — not measured numbers
        from the paper.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Whisper is a <b>read-only</b> lesson &mdash; you cannot reproduce the
+       680,000-hour training run &mdash; so "is it working?" has two layers. (1) For the <b>code you actually
+       run</b> (the §2.3 token-format parser), correctness is exact: the assembled control prefix must be
+       <code>&lt;|startoftranscript|&gt;</code> &rarr; language &rarr; task &rarr; timestamp-flag, in that order,
+       and the parser must split off exactly those four control tokens from the text. (2) For the <b>real model</b>
+       (a released checkpoint you load, not train), the paper's primary metric is <b>word error rate (WER)</b>
+       &mdash; the fraction of words wrong &mdash; evaluated <b>zero-shot</b> (no fine-tuning) on each benchmark,
+       headlined by <b>average WER across many out-of-distribution datasets</b> (§3.3, Table 2). The "no-skill"
+       reference is a <b>supervised model matched to Whisper's LibriSpeech WER</b>: equal in-distribution, so any
+       out-of-distribution gap is pure robustness. (A trivial lower bound on any WER task: copying / empty output
+       gives WER near $100\\%$.)</p>
+       <ul>
+         <li><b>Sanity checks before trusting anything.</b> (1) <b>Known-answer parse test</b>: feed the worked
+         example (German, transcribe, no timestamps) and assert the sequence is exactly
+         <code>[&lt;|startoftranscript|&gt;, &lt;|de|&gt;, &lt;|transcribe|&gt;, &lt;|notimestamps|&gt;, "Guten",
+         "Tag", &lt;|endoftext|&gt;]</code> with 4 control tokens + 2 text tokens. (2) Front-end shape check: a
+         30 s, 16 kHz clip &rarr; log-Mel grid $80\\times 3000$, and after the stride-2 conv stem &rarr;
+         $1500\\times d_{\\text{model}}$ encoder features (§2.2). (3) If you load a released checkpoint, run it on
+         one clean LibriSpeech clip and confirm a sensible transcript &mdash; a smoke test that the tokenizer and
+         prefix are wired correctly. (4) Language-ID check: leave the language slot unforced on an English clip and
+         confirm the top predicted language token is <code>&lt;|en|&gt;</code>.</li>
+         <li><b>Expected range.</b> The parser is binary &mdash; it matches the §2.3 order or it doesn't. For the
+         released model, the paper's claim is <b>comparative, not a single number</b>: zero-shot Whisper is "often
+         competitive with prior fully supervised results" and on out-of-distribution data makes "far fewer errors"
+         than matched supervised models (abstract, §3.3). <b>Do not quote a specific WER from memory</b> &mdash;
+         the bars in our CODEVIZ (supervised $3\\to 12$ vs Whisper $3\\to 5.5$) are <i>our illustration of the
+         shape</i>, not the paper's measurements. As a rule of thumb, a correct zero-shot setup should land in the
+         same ballpark as the published checkpoint for that model size; an order-of-magnitude-worse WER signals a
+         broken prefix or front end, not tuning.</li>
+         <li><b>Ablation &mdash; prove the central ideas earn their keep.</b> The two contributions are
+         <b>weak-supervision scale</b> and the <b>multitask token interface</b> &mdash; neither is retrainable
+         here, so ablate <i>conceptually / at inference</i>. (a) <b>Robustness ablation</b> (§3.3 framing): hold
+         LibriSpeech WER fixed against a supervised model, then compare average out-of-distribution WER &mdash; the
+         gap should appear; if a supervised model matched in-distribution is <i>also</i> robust out-of-distribution,
+         the scale claim wouldn't hold. (b) <b>Interface ablation</b>: force the <i>wrong</i> control token &mdash;
+         set task to <code>&lt;|translate|&gt;</code> and the output language flips to English; force the wrong
+         language token and transcription quality should <b>degrade</b>, confirming the prefix actually steers the
+         one shared model.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>Parser mislabels tokens</i> &rarr; control order
+         wrong (task placed before language, or timestamp flag dropped). <i>Garbled / repeated text from the real
+         model</i> &rarr; wrong or out-of-order prefix, or audio not resampled to 16 kHz / wrong Mel front end.
+         <i>Transcript in the wrong language</i> &rarr; a forced language token mismatched to the audio (leave it
+         unforced for zero-shot LID). <i>Output is a translation when you wanted a transcript</i> &rarr; task token
+         set to <code>&lt;|translate|&gt;</code> instead of <code>&lt;|transcribe|&gt;</code>. <i>Low LibriSpeech
+         WER but poor out-of-distribution WER</i> &rarr; that's the <b>supervised baseline's</b> failure mode, the
+         very brittleness Whisper's weak-supervision scale is meant to fix &mdash; if <i>Whisper</i> shows it,
+         suspect a broken inference setup rather than a model limitation.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>read-only</b> paper: its contribution is a <b>680,000-hour weakly-supervised training

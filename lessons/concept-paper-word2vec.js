@@ -287,6 +287,58 @@
        arXiv:1301.3781 abstract and Section 1.) Specific benchmark percentages are in the paper's Section 5 tables;
        we do not quote them from memory.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> word2vec is unsupervised, so you don't score it with a training
+       accuracy &mdash; you measure the <b>geometry of the learned vectors</b>. The paper's own evaluation
+       (Section 4) is the <b>analogy task</b> (King&minus;Man+Woman&asymp;Queen): a question is correct if the
+       nearest vector to $v(b)-v(a)+v(c)$ is the held-out answer $d$. The <b>no-skill baseline is 0%</b> on
+       analogies (random vectors solve none) and, for the training objective, the <b>loss at init equals the
+       uniform-softmax value</b> $-\\ln(1/V)=\\ln V$ &mdash; for $V$ words a correct run starts there and
+       decreases. On the toy corpus we use the qualitative proxy: <b>nearest-neighbor purity</b> (do animals
+       cluster with animals, royalty with royalty) and a clean <b>PCA scatter</b>.</p>
+       <p><b>Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>The cross-entropy oracle.</b> The code's <code>torch.allclose(my_loss, F.cross_entropy(scores,
+        context))</code> must pass &mdash; that IS the proof your hand-rolled $\\log\\sum\\exp$ objective is the
+        softmax cross-entropy (Eq. 2). If it fails, fix the loss before training anything.</li>
+        <li><b>Loss at init.</b> With small random vectors all scores are near 0, so the per-pair loss should
+        start near $\\ln V$ (e.g. $\\approx 1.79$ for $V=6$). The worked example reprints
+        scores $[1,2.5,1]$, softmax $[0.154,0.691,0.154]$, loss $0.369$ &mdash; recompute and match.</li>
+        <li><b>Shapes/ranges.</b> <code>scores</code> is $(B,V)$, softmax rows sum to 1, loss is a positive
+        scalar. Two separate tables of shape $(V,D)$, both with <code>requires_grad=True</code>.</li>
+        <li><b>No self-context.</b> Confirm window pairs skip $j=i$ (a word is not its own neighbor).</li>
+       </ul>
+       <p><b>Expected range.</b> The reproducible target is <b>topic clustering</b>, not a number: after a few
+       hundred steps "cat" should pull kitten/dog/puppy and "king" the royalty/people words, and the loss should
+       fall from $\\approx\\ln V$ to roughly <b>~1.7</b> on this toy corpus (a rule of thumb for our setup, not a
+       paper claim). The paper's own claims are qualitative here &mdash; it reports learning "high quality word
+       vectors from a 1.6 billion words data set" in "less than a day" and the King&minus;Man+Woman&asymp;Queen
+       analogy (Results, arXiv:1301.3781 abstract/Section 1); the benchmark percentages live in its Section 5
+       tables. On so few tokens, exact neighbor <i>ordering</i> is noisy &mdash; judge the clustering, not any
+       single similarity.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b></p>
+       <ul>
+        <li><b>Shuffle the context labels</b> (pair each center with a random word instead of a true neighbor).
+        Co-occurrence signal is destroyed, so the clustering should <b>vanish</b> and the loss plateau near
+        $\\ln V$. If clusters survive shuffled labels, you're reading structure that isn't there.</li>
+        <li><b>Window size $\\to 0$ / tiny corpus:</b> with no real neighbors, no topic structure should form
+        &mdash; confirms the signal comes from co-occurrence, not the optimizer.</li>
+        <li><b>Tie the two tables</b> (input = output): the allclose oracle still passes (it only tests the loss),
+        but the model is a different, more constrained one &mdash; shows the separate-table choice is Section
+        3.2's, not incidental.</li>
+       </ul>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>allclose fails:</b> wrong loss &mdash; usually a missing $\\log\\sum\\exp$ stabilization, indexing
+        the wrong target column, or summing over the wrong axis.</li>
+        <li><b>Loss NaN / inf:</b> you exponentiated raw scores instead of using <code>torch.logsumexp</code> &mdash;
+        overflow.</li>
+        <li><b>Loss flat at $\\ln V$:</b> gradients not flowing (forgot <code>requires_grad</code>, or optimizer
+        not stepping both tables) &mdash; nothing is learning.</li>
+        <li><b>No clusters despite falling loss:</b> self-context not excluded, or every word co-occurs with every
+        word (corpus too uniform) &mdash; there's no topic signal to recover.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships embeddings as <code>nn.Embedding</code> and the softmax loss as

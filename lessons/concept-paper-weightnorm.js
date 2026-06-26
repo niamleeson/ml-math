@@ -298,6 +298,47 @@
        classification (CIFAR-10), generative models, and deep reinforcement learning; the exact per-experiment
        numbers are in the paper's experiments section. (Source: arXiv:1602.07868 abstract.)</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This is a primitive (Track A), so "working" means <b>exact numerical
+       equivalence</b>, not an accuracy score. The primary check is
+       $\\texttt{torch.allclose(mine(x), weight\\_norm(nn.Linear)(x), atol=1e-6)}$ &mdash; your from-scratch
+       $\\mathbf{w}=g\\,\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$ layer must compute the <i>same function</i> as
+       PyTorch's built-in <code>weight_norm</code>. The "no-skill" baseline here is unambiguous: anything other
+       than $\\texttt{True}$ means a bug. The secondary, paper-aligned metric is <b>training stability /
+       conditioning</b>: at a deliberately high learning rate on badly-scaled data, the weight-normalized run
+       should converge while the plain run diverges (the CODEVIZ experiment).</p>
+       <ul>
+         <li><b>Sanity checks before any training.</b> (1) Per-row norm of the rebuilt weight must equal $g$:
+         $\\lVert\\mathbf{w}_{\\text{row}}\\rVert=g$ for every output neuron (the design guarantee
+         $\\lVert\\mathbf{w}\\rVert=g$). (2) Recompute the worked example $\\mathbf{v}=[3,4],\\,g=10\\Rightarrow
+         \\mathbf{w}=[6,8]$ and the Eq. 3 gradients $\\nabla_g L=1.4,\\ \\nabla_{\\mathbf{v}}L=[0.32,-0.24]$ as a
+         known-answer unit test. (3) Confirm the $\\mathbf{v}$-update is perpendicular:
+         $\\mathbf{v}\\cdot\\nabla_{\\mathbf{v}}L\\approx 0$ &mdash; this is the load-bearing property, so check it
+         to machine precision. (4) Scaling $\\mathbf{v}$ by any constant must leave $\\mathbf{w}$ (and the output)
+         unchanged.</li>
+         <li><b>Expected range.</b> The allclose is binary &mdash; expect <code>True</code> at
+         $\\texttt{atol=1e-6}$; if it fails, the bug is structural (wrong norm axis or wrong $g$ shape), not
+         "tuning." For the conditioning demo, our seeded run goes from loss $\\approx 322$ to $\\approx 2.6$ stable
+         (weight-normalized) versus the plain run blowing past $10^6$ within $\\sim 8$ steps &mdash; these are
+         <i>our</i> small-scale numbers, not the paper's. The paper reports only qualitative gains (faster, more
+         stable SGD on CIFAR-10 / VAE / DQN; arXiv:1602.07868 abstract), so do not target a specific accuracy.</li>
+         <li><b>Ablation &mdash; prove the reparameterization earns its keep.</b> The central knob is the
+         length/direction split. Turn it OFF by training the same model with a <b>plain weight $\\mathbf{w}$</b>
+         (no $g,\\mathbf{v}$) from the identical start at the same high learning rate: stability should
+         <b>collapse</b> (the loss diverges). If the plain run is just as stable, your learning rate is too low to
+         expose the conditioning difference &mdash; raise it until plain diverges, then confirm weight-norm still
+         holds. A second ablation: take the norm over the <i>wrong</i> axis &mdash; the allclose flips to
+         <code>False</code>, proving the per-output-row normalization is what matters.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>allclose is <code>False</code></i> &rarr; norm taken
+         over the wrong axis (must be per output row, <code>dim=0</code>/over the input dim), or $g$ copied with
+         the wrong shape (PyTorch stores it as $(\\text{out},1)$). <i>NaN in $\\mathbf{w}$</i> &rarr;
+         $\\lVert\\mathbf{v}\\rVert=0$ (initialize $\\mathbf{v}$ from a normal so it is never the zero vector).
+         <i>Both runs diverge</i> &rarr; learning rate too high even for the well-conditioned case, or the
+         data-dependent init was skipped. <i>$\\mathbf{v}\\cdot\\nabla_{\\mathbf{v}}L\\ne 0$</i> &rarr; the
+         gradient split is wrong &mdash; you are leaking length into the direction update, so the decoupling that
+         makes the method work is broken.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.nn.utils.weight_norm</code> (now also

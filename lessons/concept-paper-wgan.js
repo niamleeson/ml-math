@@ -303,6 +303,48 @@
        numbers in the CODEVIZ panel below are from our own tiny MNIST run &mdash; not the paper's reported
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> For WGAN the headline metric is the paper's own contribution: the
+       <b>critic loss is a meaningful Wasserstein-distance estimate whose curve tracks sample quality</b>
+       (&sect;4, Fig. 3). So you evaluate two things together &mdash; (1) the critic gap
+       $\\mathbb{E}[f_w(\\text{real})]-\\mathbb{E}[f_w(\\text{fake})]$ should <b>shrink monotonically toward
+       $0$</b> as training proceeds, and (2) the generated samples should visibly sharpen as it shrinks (on
+       MNIST, the standard FID/Inception-style proxy, or just eyeballing digits). The "no-skill" reference is the
+       <b>ordinary GAN</b> it replaces: its log-loss saturates at $\\log 2\\approx 0.693$ and tells you
+       <i>nothing</i> about quality &mdash; a flat, uninformative curve is exactly the baseline WGAN beats. The
+       cheapest hard baseline is the worked Example 1: $W=|\\theta|$ (usable slope $\\pm 1$) versus
+       $\\mathrm{JS}=\\log 2$ (slope $0$).</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) <b>Known-answer unit test</b> on Example 1: assert
+         $W(0.5)=0.5$, $W(0.1)=0.1$, $\\mathrm{JS}(0.1)=\\log 2$, and $dW/d\\theta\\approx +1$ while
+         $d\\,\\mathrm{JS}/d\\theta\\approx 0$ (the CODE's first cell does exactly this). (2) Critic output is a
+         <b>raw scalar</b> &mdash; print $f_w(x)$ and confirm it is <i>not</i> bounded in $(0,1)$ (no leftover
+         sigmoid). (3) After one critic step, assert every critic weight lies in $[-c,c]$ with $c=0.01$ (the clip
+         actually fired). (4) Sign check: with an untrained generator the critic gap should grow (critic learns to
+         separate) and the critic <i>loss</i> $-(\\text{real}-\\text{fake})$ should be negative and rising toward
+         $0$ &mdash; if it falls without bound on the clipped run, a sign is flipped.</li>
+         <li><b>Expected range.</b> With clipping, the critic loss should climb smoothly from a small negative
+         value toward $\\approx 0$; our seeded MNIST run goes from $\\approx -0.84$ to $\\approx -0.08$ over 1200
+         steps (<i>our</i> numbers, not the paper's). The paper reports only the <b>qualitative</b> claim &mdash;
+         loss curves "correlate well with the visual quality of the generated samples" (abstract / &sect;4, Fig.
+         3) &mdash; so judge the <i>shape</i> (smooth, monotone toward $0$), not an absolute value. A loss that
+         oscillates wildly or runs to large magnitude is "probably a bug," not tuning.</li>
+         <li><b>Ablation &mdash; prove weight clipping earns its keep.</b> The central knob is the
+         Lipschitz-enforcing <b>weight clip</b>. Turn it OFF (delete <code>p.data.clamp_(-c,c)</code>), change
+         nothing else: the critic is no longer Lipschitz, Eq. 2 stops holding, and the gap should
+         <b>explode</b> instead of settling &mdash; our no-clip run diverges to $\\approx -3.2\\times10^{5}$. If
+         removing the clip <i>doesn't</i> hurt, clipping isn't actually wired into the loop. Secondary ablations
+         the metric should react to: set $n_{\\text{critic}}=1$ (gap no longer a valid distance), or swap RMSProp
+         for Adam (the paper reports critic instability).</li>
+         <li><b>Failure signals &amp; what they mean.</b> <i>Critic loss diverges to large $|\\cdot|$</i> &rarr;
+         clipping missing or $c$ too large (Lipschitz bound broken). <i>Critic loss stuck / gradients vanish</i>
+         &rarr; $c$ too small, starving the critic. <i>Loss falls instead of rising toward $0$, or generator never
+         improves</i> &rarr; sign flip in critic or generator loss. <i>Samples collapse to one digit</i> &rarr;
+         mode collapse &mdash; though WGAN is designed to resist it, too few critic steps
+         ($n_{\\text{critic}}=1$) reintroduces it. <i>Loss curve uninformative / flat like the GAN baseline</i>
+         &rarr; a sigmoid was left on the critic, turning the EM loss back into a saturating classifier.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the layers all ship in PyTorch, so you <b>import</b>

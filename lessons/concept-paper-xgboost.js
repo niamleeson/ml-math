@@ -334,6 +334,60 @@ $$ r_k(z) = \\frac{1}{\\sum_{(x,h)\\in D_k} h}\\sum_{\\substack{(x,h)\\in D_k\\\
        <p><i>These are the paper's own statements, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> XGBoost is a supervised learner, so evaluate it with the standard
+       task metric on a held-out split: <b>RMSE</b> (or MAE) for regression, <b>log-loss / AUC / accuracy</b> for
+       classification. Define "better than trivial" against a baseline: for regression a constant predictor (the
+       train-mean, giving the target's variance as MSE); for binary classification the majority-class accuracy
+       and AUC $=0.5$ (random). The paper's own framing is comparative &mdash; it is "used widely &hellip; to
+       achieve state-of-the-art results" and "scales beyond billions of examples using far fewer resources than
+       existing systems" (abstract) &mdash; so your real target is matching a tuned baseline (e.g. a single tree
+       or first-order GBDT) and then beating it.</p>
+       <p><b>Sanity checks before any full training run.</b></p>
+       <ul>
+         <li><b>Known-answer unit test (the lesson's worked example).</b> With $g=[-2,-3,1,2]$, $h=[1,1,1,1]$,
+         $\\lambda=1$, $\\gamma=0$: the split-after-2 gain must be $\\approx 5.27$ and the leaf values
+         $w_L^\\ast=\\tfrac53\\approx1.667$, $w_R^\\ast=-1.0$ (Eqs. 5, 7). If these don't match, your scorer is
+         wrong before any tree grows.</li>
+         <li><b>Match the library on one tree.</b> Fit <code>xgboost</code> with <code>reg_lambda</code>=$\\lambda$,
+         <code>gamma</code>=$\\gamma$, <code>base_score=0</code>, <code>max_depth=1</code>, one round, and confirm
+         its first split and leaf values agree with your hand math &mdash; the oracle in the CODE cell.</li>
+         <li><b>Derivative spot-check.</b> For squared error verify $g_i=\\hat{y}_i-y_i$, $h_i=1$; for log-loss
+         $g_i=p_i-y_i$, $h_i=p_i(1-p_i)\\in(0,\\tfrac14]$. A constant $h_i=1$ on a classification loss is a
+         classic bug.</li>
+         <li><b>Loss-must-decrease.</b> Train loss should drop monotonically as rounds are added on the training
+         set; a single tree on a tiny dataset should overfit it (near-zero train error).</li>
+       </ul>
+       <p><b>Expected range.</b> There is no single paper accuracy number to hit (the paper's headline is scale
+       and adoption, quoted from the abstract above), so anchor to <i>relative</i> targets: the second-order
+       regularized model should match or beat a first-order GBDT and a single CART on the same data, and your
+       hand-built first-tree gain/predictions should agree with the <code>xgboost</code> library to floating-point
+       tolerance. Rule of thumb (not a paper claim): with sensible $\\eta\\approx0.1$ and enough rounds, val loss
+       should keep improving then plateau; if it never beats the constant baseline, something is unwired.</p>
+       <p><b>Ablation &mdash; prove the second-order, regularized objective earns its keep.</b> Two knobs to turn
+       off: <b>(1) the hessian</b> &mdash; force $h_i=1$ for a varying-curvature loss (log-loss) and confirm the
+       leaf values and val metric get <i>worse</i> (you've thrown away the curvature that sizes each step). <b>(2)
+       regularization</b> &mdash; sweep $\\lambda$ (and $\\gamma$): as $\\lambda$ rises the leaf values shrink
+       toward $0$ and the split gains fall (our toy run: gain $8.0\\to0.15$, $w_L\\,2.5\\to0.05$ as
+       $\\lambda:0\\to100$). If raising $\\lambda$ does <i>not</i> shrink the leaves, $\\lambda$ is in the wrong
+       place (it belongs in the denominator $H+\\lambda$, not added to $G$).</p>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+         <li><b>Every leaf splits / trees explode in size</b> &rarr; you forgot to subtract the parent term
+         $\\frac{(G_L+G_R)^2}{H_L+H_R+\\lambda}$ in Eq. 7 (child scores alone always look positive), or $\\gamma$
+         is $0$ with no depth cap.</li>
+         <li><b>Leaf values blow up / loss goes NaN</b> &rarr; $\\lambda$ on the gradient instead of the
+         denominator, or $H_j+\\lambda\\to0$ (division by a near-zero hessian sum &mdash; raise
+         <code>min_child_weight</code> or $\\lambda$).</li>
+         <li><b>No split ever taken (gain always $\\le0$)</b> &rarr; gain sign read backwards, or $\\gamma$ set too
+         high so every split is pruned.</li>
+         <li><b>Library disagrees with hand math</b> &rarr; mismatched settings: check <code>base_score</code>,
+         <code>reg_lambda</code>, <code>gamma</code>, objective, and that defaults (e.g. $\\lambda=1$, a base
+         margin) aren't shifting the numbers.</li>
+         <li><b>Train metric great, val metric poor</b> &rarr; overfit: lower $\\eta$, add rounds with early
+         stopping, raise $\\lambda$/$\\gamma$, or subsample columns (&sect;2.3).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the boosting framework already exists (concept

@@ -249,6 +249,56 @@ $$ P(Y=1\\mid \\mathbf{x}) = \\sigma\\!\\Big( \\mathbf{w}_{\\text{wide}}^{\\top}
        <p><i>These are the paper's reported figures, quoted from the abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny synthetic run &mdash; our small run, not the paper's
        reported result.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Wide &amp; Deep is a binary CTR/install ranker, so the primary
+       offline metric is <b>ROC-AUC</b> (rank quality) on a held-out test set; the paper reports offline AUC and
+       an online A/B lift in app acquisitions. <b>"Better than trivial"</b> here is <b>AUC = 0.5</b> (random
+       ranking) &mdash; any working ranker must clear that. The two natural baselines to beat are the two
+       ablations the paper itself runs: <b>wide-only</b> and <b>deep-only</b>.</p>
+       <p><b>Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>Loss at init.</b> With all logits near 0, $\\sigma(0)=0.5$, so binary-cross-entropy should start
+        near $-\\ln 0.5 \\approx 0.693$. A wildly different starting loss means a bad init or a label/shape bug
+        (rule of thumb).</li>
+        <li><b>Overfit a tiny batch.</b> Train on ~50 rows with weight decay off; the loss should drop toward 0
+        and train-AUC toward 1.0. If it can't memorize a handful of rows, the join (Eqn. 3) or the joint loss is
+        miswired.</li>
+        <li><b>Cross-feature unit test.</b> Recompute $\\phi$(AND($u_1$,$a_2$)) on the three worked inputs and
+        confirm $[1,0,0]$ &mdash; the cell already prints this. Check logits are scalars per row and
+        $\\sigma(\\text{logit})\\in(0,1)$.</li>
+        <li><b>OOV check.</b> Confirm unseen test pairs map to the shared out-of-vocabulary bucket (no wide weight
+        leaks to them), else the wide part will fake-generalize.</li>
+       </ul>
+       <p><b>Expected range.</b> The qualitative target is the paper's ranking: <b>wide&amp;deep $\\gt$ deep-only
+       $\\gt$ / $\\approx$ wide-only</b>. The paper's Table 1 offline AUCs are <b>0.728</b> (wide&amp;deep),
+       <b>0.722</b> (deep), <b>0.726</b> (wide), with an online <b>+3.9%</b> acquisition lift over wide-only
+       (quoted in Results). Those exact numbers are the Google Play production system &mdash; <i>do not</i> expect
+       them on the toy task; our synthetic run lands around AUC ~0.77 with wide&amp;deep on top. What matters is
+       the <b>ordering</b> and that the gap is real, not the absolute value. If wide&amp;deep does NOT beat both
+       single models, something is off.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central idea is <b>two branches under
+       one joint loss</b>. Turn each off:</p>
+       <ul>
+        <li><b>Drop the deep logit (wide-only):</b> overall AUC should fall and <b>unseen-pair AUC collapses to
+        ~0.5</b> (no generalization) &mdash; isolating the deep part as the generalizer.</li>
+        <li><b>Drop the wide logit (deep-only):</b> memorization of the sharp exception pairs weakens &mdash;
+        isolating the wide cross-feature as the memorizer.</li>
+        <li><b>Break the join (average two sigmoids instead of summing logits):</b> you now have an ensemble; the
+        joint-gradient coupling is gone and the combined model should no longer cleanly beat both parts. If
+        wide&amp;deep matches the ensemble exactly, your "joint" training isn't joint.</li>
+       </ul>
+       <p><b>Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>AUC stuck at ~0.5 overall:</b> labels shuffled, IDs misaligned, or the model isn't learning (LR
+        too small / gradients not flowing into both branches).</li>
+        <li><b>Wide-only AUC well above 0.5 on UNSEEN pairs:</b> test pairs leaked into the wide feature index
+        &mdash; the OOV bucket isn't being used.</li>
+        <li><b>Loss NaN:</b> LR too high or you summed probabilities and took $\\log$ of 0; use
+        <code>BCEWithLogitsLoss</code> on the summed logit.</li>
+        <li><b>wide&amp;deep $\\approx$ deep-only with no memorization gain:</b> the wide branch's gradient isn't
+        reaching it (frozen, detached, or summed after the sigmoid) &mdash; check it's added <i>inside</i>
+        $\\sigma$ as in Eqn. 3.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:
