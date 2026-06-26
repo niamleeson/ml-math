@@ -1,521 +1,789 @@
-/* Per-lesson visualizations of the code's data & results. Merged into window.CODEVIZ by id.
-   { question?, charts:[ chartSpec ], caption? }  — chartSpec types: bars/line/scatter/roc/confusion/heatmap.
-   Every entry runs a REAL algorithm on a concrete, NAMED real-world scenario; all numbers are the
-   actual output of running each lesson's code (Python/NumPy/scikit-learn). */
-window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
+/* Per-lesson CODE VISUALIZATIONS — 04-ai.
+   One diagram per case: the ideal plus the variants you might see, each interpreted.
+   chartSpec types: bars | line | scatter | heatmap | roc | confusion. */
+window.CODEVIZ = window.CODEVIZ || {};
 
-  "ai-linear-predictors": {
-    question: "On the Wisconsin breast-cancer scan data, which tumors does a linear classifier call benign vs malignant?",
-    charts: [{
-      type: "scatter", title: "Breast tumors: mean radius vs mean texture, with the learned decision line", xlabel: "mean radius", ylabel: "mean texture",
+window.CODEVIZ["ai-linear-predictors"] = {
+  question: "Where does the line go, and how do you read which side a point lands on?",
+  code: `// Linear predictor: score = w . phi(x) + b, decide by the sign.
+const w = [1, 1], b = -6;
+const pts = [
+  {x:1, y:1, c:-1}, {x:1.5, y:2, c:-1}, {x:2, y:1.2, c:-1}, {x:1.2, y:2.5, c:-1},
+  {x:4, y:4, c:1}, {x:4.5, y:3, c:1}, {x:3.5, y:4.5, c:1}, {x:5, y:3.5, c:1}
+];
+let correct = 0, minMargin = Infinity;
+for (const p of pts) {
+  const score = w[0]*p.x + w[1]*p.y + b;   // dot product plus bias
+  const margin = score * p.c;              // >0 means correct side
+  if (margin > 0) correct++;
+  if (margin < minMargin) minMargin = margin;
+}
+// boundary is the line w.x + b = 0  ->  y = -(w0*x + b)/w1
+console.log("correct", correct, "of", pts.length, "min margin", minMargin.toFixed(2));`,
+  caption: "The line is the decision boundary; the gap from line to nearest point is the margin.",
+  charts: [
+    {
+      type: "scatter",
+      title: "Clean separation: boundary splits the two classes with room to spare",
+      xlabel: "feature 1 (e.g. count of 'free')",
+      ylabel: "feature 2 (e.g. number of links)",
       groups: [
-        { name: "malignant (y=-1)", color: "#ff7b72", points: [[18.0, 10.4], [12.4, 15.7], [16.0, 23.2], [19.7, 21.3], [20.6, 29.3]] },
-        { name: "benign (y=+1)", color: "#4ea1ff", points: [[13.5, 14.4], [12.0, 14.6], [11.5, 18.8], [9.5, 12.4], [13.0, 21.8]] }
+        { name: "class -1 (no)", color: "#4ea1ff", points: [[1,1],[1.5,2],[2,1.2],[1.2,2.5]] },
+        { name: "class +1 (yes)", color: "#7ee787", points: [[4,4],[4.5,3],[3.5,4.5],[5,3.5]] }
       ],
-      lines: [{ name: "decision line", color: "#ffb454", points: [[12, 32.6], [14, 23.31], [16, 14.02], [18, 4.73]] }]
-    }],
-    caption: "Logistic regression on 569 real tumor scans (radius, texture) reaches 89.1% accuracy; bigger, rougher tumors fall on the malignant side of the line.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_breast_cancer
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-
-d = load_breast_cancer()
-X = d.data[:, [0, 1]]            # mean radius, mean texture
-y = d.target                    # 1 benign, 0 malignant
-sc = StandardScaler().fit(X)
-clf = LogisticRegression().fit(sc.transform(X), y)
-print("train accuracy", clf.score(sc.transform(X), y))
-
-w, b = clf.coef_[0], clf.intercept_[0]
-m, s = sc.mean_, sc.scale_
-def boundary_texture(radius):
-    z0 = (radius - m[0]) / s[0]
-    return (-(w[0]*z0 + b) / w[1]) * s[1] + m[1]
-
-fig, ax = plt.subplots(figsize=(8, 5))
-mal, ben = y == 0, y == 1
-ax.scatter(X[mal,0], X[mal,1], c="#ff7b72", s=14, label="malignant")
-ax.scatter(X[ben,0], X[ben,1], c="#4ea1ff", s=14, label="benign")
-xs = np.linspace(10, 20, 20)
-ax.plot(xs, [boundary_texture(r) for r in xs], "#ffb454", lw=3, label="decision line")
-ax.set_xlabel("mean radius"); ax.set_ylabel("mean texture")
-ax.set_ylim(5, 40); ax.legend()
-ax.set_title("breast tumors and the learned decision line")
-plt.show()`
-  },
-
-  "ai-loss-minimization": {
-    question: "On real breast-cancer scans, how harshly does each loss punish the model's margins?",
-    charts: [{
-      type: "bars", title: "Hinge loss on 5 named tumor scans (margin = score times true label)",
-      labels: ["scan 1 (m=1.14)", "scan 6 (m=-3.02)", "scan 21 (m=2.42)", "scan 51 (m=2.47)", "scan 101 (m=-0.03)"],
-      values: [0, 4.021, 0, 0, 1.029],
-      valueLabels: ["hinge 0", "4.02", "hinge 0", "hinge 0", "1.03"],
-      colors: ["#7ee787", "#ff7b72", "#7ee787", "#7ee787", "#ffb454"]
-    }, {
-      type: "bars", title: "Mean loss over all 569 tumor scans, by loss function", labels: ["zero-one", "hinge", "squared"],
-      values: [0.109, 0.274, 9.513], colors: ["#4ea1ff", "#ffb454", "#c89bff"]
-    }],
-    caption: "Confident correct scans (margin > 1) get zero hinge loss; the badly-misclassified scan 6 (margin -3.02) is punished hard. Mean hinge 0.27 vs zero-one 0.11 vs squared 9.51 across the dataset.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_breast_cancer
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-
-d = load_breast_cancer()
-X = d.data[:, [0, 1]]; y = d.target
-sc = StandardScaler().fit(X); Xs = sc.transform(X)
-clf = LogisticRegression().fit(Xs, y)
-w, b = clf.coef_[0], clf.intercept_[0]
-margin = (Xs @ w + b) * (2*y - 1)
-
-sel = [0, 5, 20, 50, 100]
-ms = margin[sel]
-hinge_sel = np.maximum(1 - ms, 0)
-zero_one = (margin < 0).mean()
-hinge = np.maximum(1 - margin, 0).mean()
-squared = ((margin - 1) ** 2).mean()
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-cols = ["#7ee787" if h == 0 else "#ff7b72" for h in hinge_sel]
-ax1.bar(range(5), hinge_sel, color=cols)
-ax1.set_xticks(range(5)); ax1.set_xticklabels([str(i+1) for i in sel])
-ax1.set_title("hinge loss on 5 named scans"); ax1.set_xlabel("scan id")
-ax2.bar(["zero-one","hinge","squared"], [zero_one, hinge, squared],
-        color=["#4ea1ff","#ffb454","#c89bff"])
-ax2.set_title("mean loss over 569 scans")
-plt.tight_layout(); plt.show()`
-  },
-
-  "ai-sgd": {
-    question: "Training on real breast-cancer scans one tumor at a time, does SGD drive the loss down?",
-    charts: [{
-      type: "line", title: "Hinge loss per epoch, SGD on breast-cancer scans", xlabel: "epoch", ylabel: "mean hinge loss",
-      series: [{ name: "train loss", color: "#4ea1ff", points: [[0, 0.297], [1, 0.281], [2, 0.273], [3, 0.27], [4, 0.268], [5, 0.266], [6, 0.266], [7, 0.265], [8, 0.265], [9, 0.265], [10, 0.265], [11, 0.265]] }]
-    }, {
-      type: "scatter", title: "The two tumor clouds SGD learns to separate", xlabel: "mean radius (standardized)", ylabel: "mean texture (standardized)",
+      lines: [ { color: "#9aa7b4", dash: false, points: [[0,6],[6,0]] } ],
+      interpret: "Each dot is one example placed by its two features; colour is its true class. The grey line is the decision boundary <b>w . x + b = 0</b> — score is positive on one side (predict +1), negative on the other (predict -1). Here every blue point sits below-left and every green point above-right with a clear gap, so all 8 are classified correctly and the smallest margin is comfortably positive: a confident, well-placed line."
+    },
+    {
+      type: "scatter",
+      title: "Tiny margin: correct but the line nearly grazes a point (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
       groups: [
-        { name: "malignant", color: "#ff7b72", points: [[1.1, -1.3], [0.0, -0.6], [0.6, 0.4], [1.4, 0.1], [1.6, 1.2] ] },
-        { name: "benign", color: "#4ea1ff", points: [[-0.3, -0.5], [-0.7, -0.5], [-0.8, 0.2], [-1.5, -0.9], [-0.4, 0.5] ] }
-      ]
-    }],
-    caption: "Stochastic per-tumor hinge updates pull the mean loss from 0.30 down to 0.265 over 12 epochs, settling at 89.1% accuracy on the 569 scans.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_breast_cancer
-from sklearn.preprocessing import StandardScaler
-
-d = load_breast_cancer()
-X = StandardScaler().fit_transform(d.data[:, [0, 1]])
-y = (2*d.target - 1).astype(float)            # +1 benign, -1 malignant
-Xb = np.hstack([X, np.ones((len(X), 1))])
-rng = np.random.default_rng(0)
-w = np.zeros(3); eta = 0.01; losses = []
-for epoch in range(12):
-    for i in rng.permutation(len(y)):
-        if y[i] * (w @ Xb[i]) < 1:
-            w += eta * y[i] * Xb[i]
-    losses.append(np.mean(np.maximum(1 - y * (Xb @ w), 0)))
-acc = ((Xb @ w > 0).astype(int) == d.target).mean()
-print("final accuracy", acc)
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-ax1.plot(range(12), losses, "-o", color="#4ea1ff")
-ax1.set_xlabel("epoch"); ax1.set_ylabel("mean hinge loss")
-ax1.set_title("hinge loss per epoch")
-mal, ben = d.target == 0, d.target == 1
-ax2.scatter(X[mal,0], X[mal,1], c="#ff7b72", s=12, label="malignant")
-ax2.scatter(X[ben,0], X[ben,1], c="#4ea1ff", s=12, label="benign")
-ax2.set_xlabel("radius (std)"); ax2.set_ylabel("texture (std)"); ax2.legend()
-ax2.set_title("two tumor clouds")
-plt.tight_layout(); plt.show()`
-  },
-
-  "ai-search-problem": {
-    question: "What route does BFS find for a courier driving from the Ferry Building to the Castro?",
-    charts: [{
-      type: "scatter", title: "San Francisco district map: BFS route Ferry Building to Castro", xlabel: "x", ylabel: "y",
-      groups: [
-        { name: "on route", color: "#7ee787", points: [[540, 300], [360, 210], [200, 150], [90, 90]] },
-        { name: "off route", color: "#4ea1ff", points: [[420, 330], [470, 420], [330, 90], [230, 40]] }
+        { name: "class -1 (no)", color: "#4ea1ff", points: [[1,1],[1.5,2],[2,1.2],[2.8,2.6]] },
+        { name: "class +1 (yes)", color: "#7ee787", points: [[4,4],[4.5,3],[3.5,4.5],[3.0,2.9]] }
       ],
-      lines: [{ name: "route FB-US-CC-CA", color: "#ffb454", points: [[540, 300], [360, 210], [200, 150], [90, 90]] }]
-    }],
-    caption: "BFS over the 8-district road network returns the fewest-hop route Ferry Building to Union Square to Civic Center to Castro.",
-    code: `from collections import deque
-import matplotlib.pyplot as plt
+      lines: [ { color: "#ffb454", dash: true, points: [[0,6],[6,0]] } ],
+      interpret: "Illustrative. Same idea, but two points from opposite classes now crowd right up against the boundary. Everything is still classified correctly, yet the smallest margin is barely positive — the line could be shifted a hair and a point would flip. A near-zero margin signals a <b>fragile boundary</b> that may not generalise; you want margin, not just correctness."
+    },
+    {
+      type: "scatter",
+      title: "Not linearly separable: no straight line can split these (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "class -1 (no)", color: "#4ea1ff", points: [[1,1],[4.5,1.2],[1.2,4.5],[4.7,4.6]] },
+        { name: "class +1 (yes)", color: "#7ee787", points: [[2.8,2.8],[3.0,3.2],[2.6,3.0],[3.2,2.6]] }
+      ],
+      lines: [ { color: "#ff7b72", dash: true, points: [[0,6],[6,0]] } ],
+      interpret: "Illustrative. The +1 class sits in the middle, surrounded by the -1 class. Any straight line leaves some points on the wrong side, so the smallest margin is <b>negative</b> — at least one point is misclassified no matter where you put the line. When you see this, a linear predictor has hit its ceiling: add an interaction feature, a kernel, or switch to a non-linear model."
+    }
+  ]
+};
 
-edges = [("FB","US"),("FB","CT"),("CT","NB"),("US","CT"),("US","SO"),
-         ("SO","MS"),("US","CC"),("CC","MS"),("MS","CA"),("CC","CA"),("NB","US")]
-nbr = {}
-for u, v in edges:
-    nbr.setdefault(u, []).append(v); nbr.setdefault(v, []).append(u)
+window.CODEVIZ["ai-loss-minimization"] = {
+  question: "How much does each loss punish a prediction as the margin changes?",
+  code: `// Loss as a function of margin m (m = score times true label; bigger m = more correct).
+const margins = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3];
+const zeroOne = m => (m < 0 ? 1 : 0);          // 1 if wrong, 0 if right
+const hinge   = m => Math.max(0, 1 - m);       // SVM loss, zero once m passes 1
+const squared = m => (m - 1) * (m - 1);        // punishes big errors hard
+for (const m of margins) {
+  console.log("m=", m,
+    "zeroOne", zeroOne(m),
+    "hinge", hinge(m).toFixed(2),
+    "squared", squared(m).toFixed(2));
+}`,
+  caption: "Read the x-axis as 'how correct and confident'; the curve height is the penalty.",
+  charts: [
+    {
+      type: "line",
+      title: "Three losses vs margin: how each grades the same prediction",
+      xlabel: "margin m (score times true label)",
+      ylabel: "loss (penalty)",
+      series: [
+        { name: "zero-one (right/wrong)", color: "#9aa7b4", points: [[-2,1],[-1,1],[-0.5,1],[-0.01,1],[0,0],[0.5,0],[1,0],[2,0],[3,0]] },
+        { name: "hinge max(0,1-m)", color: "#7ee787", points: [[-2,3],[-1,2],[0,1],[0.5,0.5],[1,0],[2,0],[3,0]] },
+        { name: "squared (m-1)^2", color: "#ffb454", points: [[-2,9],[-1,4],[0,1],[0.5,0.25],[1,0],[1.5,0.25],[2,1],[3,4]] }
+      ],
+      interpret: "The x-axis is the margin: negative means wrong, large positive means correct and confident. Each curve's height is the penalty that loss assigns. <b>Zero-one</b> (grey) is a flat step — 1 when wrong, 0 when right — so it has no slope to push on. <b>Hinge</b> (green) slopes down and hits zero once the margin passes 1, demanding correct AND confident. <b>Squared</b> (orange) is a bowl minimised at m=1 but it punishes a very confident-correct point (large m) again — usually wrong for classification."
+    },
+    {
+      type: "line",
+      title: "Zero-one is flat: why gradient descent cannot train on it",
+      xlabel: "margin m",
+      ylabel: "loss",
+      series: [
+        { name: "zero-one", color: "#9aa7b4", points: [[-2,1],[-1,1],[-0.5,1],[-0.01,1],[0,0],[0.5,0],[1,0],[2,0]] },
+        { name: "hinge (trainable surrogate)", color: "#7ee787", points: [[-2,3],[-1,2],[0,1],[1,0],[2,0]] }
+      ],
+      interpret: "Illustrative contrast. The grey zero-one curve is flat everywhere except one vertical jump at m=0, so its slope is zero almost everywhere — gradient descent gets no direction to move and cannot learn. That flatness is the entire reason <b>surrogate losses</b> like hinge (green) exist: hinge tilts downward, giving a usable gradient that still pushes the margin in the right direction. Use zero-one only to <i>report</i> accuracy, never as the training target."
+    },
+    {
+      type: "line",
+      title: "Training vs validation loss over epochs: overfitting (illustrative)",
+      xlabel: "training epoch",
+      ylabel: "average loss",
+      series: [
+        { name: "training loss", color: "#7ee787", points: [[0,1.0],[1,0.6],[2,0.4],[3,0.27],[4,0.18],[5,0.12],[6,0.08],[7,0.05],[8,0.03]] },
+        { name: "validation loss", color: "#ff7b72", points: [[0,1.05],[1,0.68],[2,0.5],[3,0.42],[4,0.4],[5,0.43],[6,0.5],[7,0.6],[8,0.72]] }
+      ],
+      interpret: "Illustrative. We minimise <b>training</b> loss (green), but it is the held-out <b>validation</b> loss (red) that says whether the model is actually good. Both fall together at first; then training loss keeps sliding toward zero while validation loss bottoms out and turns back up. That upturn is overfitting — the model is memorising training noise. Stop near the validation minimum (around epoch 4 here), and add an L2 penalty to keep weights from blowing up."
+    }
+  ]
+};
 
-parent = {"FB": None}; frontier = deque(["FB"])
-while frontier:
-    u = frontier.popleft()
-    if u == "CA": break
-    for v in sorted(nbr[u]):
-        if v not in parent:
-            parent[v] = u; frontier.append(v)
-path = []; n = "CA"
-while n is not None: path.append(n); n = parent[n]
-path.reverse()
-print("route", path)
+window.CODEVIZ["ai-sgd"] = {
+  question: "On an SGD loss curve, how do you tell healthy noisy descent from a rate that is too big or too small?",
+  charts: [
+    {
+      type: "line",
+      title: "Healthy SGD: noisy steps, but the trend falls and settles",
+      xlabel: "update number (one example each)",
+      ylabel: "loss on the current example",
+      series: [
+        {
+          name: "per-step loss (jittery)",
+          color: "#9aa7b4",
+          points: [
+            [0, 25.0], [1, 18.4], [2, 21.0], [3, 13.1], [4, 15.6], [5, 9.2],
+            [6, 11.0], [7, 6.4], [8, 8.1], [9, 4.5], [10, 6.0], [11, 3.2],
+            [12, 4.3], [13, 2.4], [14, 3.3], [15, 1.9], [16, 2.6], [17, 1.6],
+            [18, 2.2], [19, 1.4], [20, 2.0]
+          ]
+        },
+        {
+          name: "running average (the real trend)",
+          color: "#7ee787",
+          points: [
+            [0, 25.0], [2, 21.5], [4, 18.0], [6, 14.2], [8, 11.0], [10, 8.6],
+            [12, 6.8], [14, 5.4], [16, 4.4], [18, 3.7], [20, 3.2]
+          ]
+        }
+      ],
+      interpret: "<b>Illustrative shape (honest).</b> X is the update count — SGD takes one step per single example, so the answer is computed on a different example each time. The grey line is the raw per-step loss: it bounces because one example is a rough guess of the whole dataset. Do not read the jitter as failure. Watch the green running average instead: as long as that smoothed trend slopes down and then flattens, the learning rate is good. Healthy SGD is a noisy band that drifts downward and settles into a low, fuzzy plateau."
+    },
+    {
+      type: "line",
+      title: "Learning rate too big: the loss diverges to infinity",
+      xlabel: "update number",
+      ylabel: "loss on the current example",
+      series: [
+        {
+          name: "eta too large",
+          color: "#ff7b72",
+          points: [
+            [0, 4.00], [1, 7.84], [2, 15.37], [3, 30.13], [4, 59.05],
+            [5, 115.7], [6, 226.9], [7, 444.7], [8, 871.6], [9, 1708], [10, 3348]
+          ]
+        }
+      ],
+      interpret: "<b>Real numbers.</b> One weight w on loss (w−2)², gradient 2(w−2), started at w=4 with eta=1.4. Each update w ← w − eta·grad overshoots the minimum and lands farther out, so the loss roughly multiplies every step (4 → 7.8 → 15 → 30 …) and runs off to infinity. A curve that rises — smoothly here, or as exploding saw-teeth in real runs — is the signature of too large a learning rate: the step is bigger than the bowl can absorb. Cut eta until the trend turns downward."
+    },
+    {
+      type: "line",
+      title: "Learning rate too small: descent crawls, never arrives",
+      xlabel: "update number",
+      ylabel: "loss on the current example",
+      series: [
+        {
+          name: "eta too tiny",
+          color: "#ffb454",
+          points: [
+            [0, 4.000], [1, 3.842], [2, 3.690], [3, 3.545], [4, 3.405],
+            [5, 3.271], [6, 3.142], [7, 3.018], [8, 2.899], [9, 2.785], [10, 2.675]
+          ]
+        }
+      ],
+      interpret: "<b>Real numbers.</b> Same loss (w−2)² from w=4, but eta=0.02 makes every nudge tiny, so after 10 updates the loss has barely moved (4.0 → 2.7) and is nowhere near 0. A nearly-flat, gently sloping line means the rate is too small: it is safe — no overshoot, no divergence — but wastes a huge number of steps. Raise eta so the smoothed trend drops with real purpose instead of this gentle creep."
+    },
+    {
+      type: "line",
+      title: "Mini-batch SGD: a bigger batch buys a smoother curve",
+      xlabel: "update number",
+      ylabel: "average loss over the batch",
+      series: [
+        {
+          name: "batch = 1 (very noisy)",
+          color: "#9aa7b4",
+          points: [
+            [0, 20.0], [1, 12.5], [2, 16.0], [3, 7.8], [4, 11.0], [5, 5.2],
+            [6, 8.0], [7, 3.6], [8, 5.5], [9, 2.4], [10, 3.8]
+          ]
+        },
+        {
+          name: "batch = 32 (smoother)",
+          color: "#4ea1ff",
+          points: [
+            [0, 20.0], [1, 15.4], [2, 11.9], [3, 9.2], [4, 7.1], [5, 5.5],
+            [6, 4.3], [7, 3.4], [8, 2.7], [9, 2.2], [10, 1.8]
+          ]
+        }
+      ],
+      interpret: "<b>Illustrative shape (honest).</b> Both lines descend toward the same minimum, but the grey batch-of-1 curve is jagged because each step trusts a single example, while the blue batch-of-32 curve is far smoother because it averages 32 gradients before stepping. Read a very spiky loss as a sign your batch is small, not that the model is broken — enlarging the batch (32–512) trades a little speed per step for a steadier path and better hardware use. The averaging shrinks the noise; it does not change where the curve is heading."
+    }
+  ],
+  caption: "SGD curves are noisy by design: judge the smoothed trend, not the jitter. A drifting-down band is healthy, a rising curve means eta is too big, a near-flat crawl means eta is too small, and a bigger batch buys a smoother path.",
+  code: "// SGD on one weight, loss (w-2)^2 with gradient 2*(w-2)\nfunction run(eta, steps) {\n  let w = 4;\n  const hist = [];\n  for (let n = 0; n <= steps; n++) {\n    const loss = (w - 2) * (w - 2);\n    hist.push([n, loss]); // [update, loss]\n    w = w - eta * (2 * (w - 2)); // w <- w - eta*grad\n  }\n  return hist;\n}\nconsole.log('good ', run(0.2, 10).map(p => p[1].toFixed(3)));\nconsole.log('big  ', run(1.4, 10).map(p => p[1].toFixed(2)));\nconsole.log('tiny ', run(0.02, 10).map(p => p[1].toFixed(3)));"
+};
 
-pos = {"FB":(540,300),"US":(360,210),"CT":(420,330),"NB":(470,420),
-       "CC":(200,150),"SO":(330,90),"MS":(230,40),"CA":(90,90)}
-fig, ax = plt.subplots(figsize=(8, 6))
-for u, v in edges:
-    ax.plot([pos[u][0],pos[v][0]], [pos[u][1],pos[v][1]], color="#888", zorder=1)
-px = [pos[n][0] for n in path]; py = [pos[n][1] for n in path]
-ax.plot(px, py, color="#ffb454", lw=3, zorder=2)
-onp = set(path)
-for n,(x,y) in pos.items():
-    ax.scatter(x, y, s=400, zorder=3, c="#7ee787" if n in onp else "#4ea1ff")
-    ax.annotate(n, (x, y), ha="center", va="center")
-ax.set_title("SF district map: BFS route FB to CA"); plt.show()`
-  },
+window.CODEVIZ["ai-search-problem"] = {
+  question: "How do you read a search problem to pick the cheapest path, and why is fewest steps a trap?",
+  charts: [
+    {
+      type: "bars",
+      title: "Cheapest path: compare TOTAL cost, not step count",
+      labels: ["Direct A to D (1 step)", "Detour A to B to D (2 steps)"],
+      values: [5, 2],
+      valueLabels: ["cost 5", "cost 2"],
+      colors: ["#9aa7b4", "#7ee787"],
+      interpret: "<b>Real numbers</b> from the lesson. Each bar is one candidate path to the goal; its height is the sum of that path's action costs. The direct route is a single step but costs 5; the detour takes two steps yet sums to 1+1=2. Read the chart by picking the <b>shortest bar</b> (green) — that is what a search algorithm returns. The lesson here: more steps can still be cheaper, so compare total Cost, never the number of hops."
+    },
+    {
+      type: "bars",
+      title: "Three routes ranked: the search algorithm returns the lowest bar",
+      labels: ["A to C to G", "A to B to D to G", "A to D to G (greedy)"],
+      values: [6, 4, 7],
+      valueLabels: ["1+2+3 = 6", "1+1+2 = 4", "5+2 = 7"],
+      colors: ["#9aa7b4", "#7ee787", "#ffb454"],
+      interpret: "<b>Illustrative</b> small weighted graph. Each bar adds the edge costs along one path from start A to goal G. Uniform-cost search effectively builds these totals and returns the smallest — the green 4-cost route — even though the orange route (A to D to G) uses fewer edges. Reading rule: a tempting first step (the cheap-looking A to D hop) can lock you into the most expensive total, so the algorithm must score whole paths, not single moves."
+    },
+    {
+      type: "bars",
+      title: "Step count can mislead: fewest hops is the most expensive here",
+      series: [
+        { name: "number of steps", color: "#4ea1ff", points: [[0, 1], [1, 3]] },
+        { name: "total cost", color: "#7ee787", points: [[0, 9], [1, 3]] }
+      ],
+      labels: ["Highway (1 long hop)", "Side streets (3 short hops)"],
+      interpret: "<b>Illustrative</b> two-series view (one route per label). Blue bars are how many actions the path uses; green bars are the total cost paid. The 1-step highway has the fewest hops yet the highest cost (9), while the 3-step side-street route costs only 3. When the blue and green bars disagree, trust green — optimizing hop count instead of summed Cost is exactly the pitfall that makes a fast-looking plan expensive."
+    },
+    {
+      type: "line",
+      title: "Why state spaces explode: paths grow like (branching factor) to the depth",
+      xlabel: "depth d (steps from start)",
+      ylabel: "number of states to consider",
+      series: [
+        {
+          name: "branching factor b = 3",
+          color: "#ff7b72",
+          points: [[0, 1], [1, 3], [2, 9], [3, 27], [4, 81], [5, 243], [6, 729]]
+        }
+      ],
+      interpret: "<b>Real numbers</b> for b raised to the power d with b=3. X is how deep you search; Y is roughly how many states live at that depth. Each extra step multiplies the count by the branching factor, so the curve shoots up — 3, 9, 27, 81 — and a naive listing of all states becomes hopeless fast. Read this steep climb as the reason a compact state encoding and a visited-set matter: keep the state minimal and never re-expand, or the search drowns before it reaches the goal."
+    }
+  ],
+  caption: "A search problem asks for the lowest summed Cost to a goal, not the fewest steps. Compare whole-path totals (shortest bar wins), distrust hop count when it disagrees with cost, and respect the b-to-the-d blowup that forces compact states and graph search.",
+  code: "// Five pieces define a search problem; here we just total path costs.\nconst edge = { 'A-D': 5, 'A-B': 1, 'B-D': 1 }; // Cost(s,a)\nfunction pathCost(path) {\n  let total = 0;\n  for (let i = 0; i < path.length - 1; i++) {\n    total += edge[path[i] + '-' + path[i + 1]]; // sum action costs\n  }\n  return total;\n}\nconst direct = pathCost(['A', 'D']);   // 5, one step\nconst detour = pathCost(['A', 'B', 'D']); // 2, two steps\nconsole.log('direct', direct, 'detour', detour);\nconsole.log('cheapest =', Math.min(direct, detour)); // 2"
+};
 
-  "ai-tree-search": {
-    question: "Exploring the SF district map from the Ferry Building, how do BFS and DFS differ in visit order?",
-    charts: [{
-      type: "bars", title: "BFS visit step per district (lower = visited earlier)", labels: ["FB", "CT", "US", "NB", "CC", "SO", "CA", "MS"],
-      values: [1, 2, 3, 4, 5, 6, 7, 8], colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-    }, {
-      type: "bars", title: "DFS visit step per district", labels: ["FB", "CT", "US", "NB", "CC", "SO", "CA", "MS"],
-      values: [1, 2, 4, 3, 5, 8, 6, 7], colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
-    }],
-    caption: "From the Ferry Building, BFS fans out by distance [FB, CT, US, NB, ...]; DFS plunges down one corridor first [FB, CT, NB, US, ...].",
-    code: `from collections import deque
-import matplotlib.pyplot as plt
+window.CODEVIZ["ai-tree-search"] = {
+  question: "How fast does the number of states blow up as the goal gets deeper, and how do BFS, DFS and iterative deepening trade time for memory?",
+  caption: "Tree search explores states that fan out like a tree. The y-axis cost grows like b to the power d, so where you look (wide first, deep first, or a growing-depth mix) decides your memory bill and whether you find the shallowest goal.",
+  charts: [
+    {
+      type: "line",
+      title: "States to explore vs goal depth (branching factor b = 2)",
+      xlabel: "depth d (actions from start to goal)",
+      ylabel: "states at the deepest level (b^d)",
+      series: [
+        { name: "b=2 (2^d)", color: "#4ea1ff", points: [[1,2],[2,4],[3,8],[4,16],[5,32],[6,64],[7,128],[8,256]] }
+      ],
+      interpret: "<b>x = how deep the goal is; y = how many states sit at that depth.</b> These are real values of 2 to the power d. The curve bends sharply upward: every extra level of depth doubles the work. This is the b^d blowup that makes plain tree search hopeless for deep problems and is the whole reason the next lessons add heuristics and memoization."
+    },
+    {
+      type: "line",
+      title: "Branching factor matters: b = 2 vs b = 3 vs b = 4",
+      xlabel: "depth d",
+      ylabel: "states at deepest level (b^d, log-ish scale by eye)",
+      series: [
+        { name: "b=2", color: "#7ee787", points: [[1,2],[2,4],[3,8],[4,16],[5,32],[6,64]] },
+        { name: "b=3", color: "#ffb454", points: [[1,3],[2,9],[3,27],[4,81],[5,243],[6,729]] },
+        { name: "b=4", color: "#ff7b72", points: [[1,4],[2,16],[3,64],[4,256],[5,1024],[6,4096]] }
+      ],
+      interpret: "<b>Same axes, three branching factors (real b^d numbers).</b> A bigger b (more children per state) lifts and steepens the whole curve: at depth 6, b=2 is 64 states but b=4 is 4096. Read it as a warning: shaving even one option off each state, or cutting the depth, beats any clever traversal order. The lines all explode, just at different speeds."
+    },
+    {
+      type: "bars",
+      title: "Memory held at once: BFS vs DFS vs iterative deepening (b=2, d=4)",
+      labels: ["BFS (whole level)", "DFS (one path)", "Iterative deepening"],
+      values: [16, 4, 4],
+      valueLabels: ["~16", "~4", "~4"],
+      colors: ["#ff7b72", "#7ee787", "#4ea1ff"],
+      interpret: "<b>Each bar is how many states the algorithm must keep in memory at once</b> for a tree with b=2 and the goal at depth 4 (illustrative counts). BFS must hold a whole frontier level, O(b^d), the tall red bar. DFS holds only the current path, O(d), the short green bar. Iterative deepening matches DFS's tiny memory yet still finds the shallowest goal first, the best of both, which is why it is the default for deep trees of unknown depth."
+    },
+    {
+      type: "line",
+      title: "Failure mode: DFS dives down a wrong, very deep branch",
+      xlabel: "search step",
+      ylabel: "depth of the state DFS is currently at",
+      series: [
+        { name: "DFS depth over time", color: "#ff7b72", points: [[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8]] },
+        { name: "goal is at depth 2 (other branch)", color: "#7ee787", points: [[0,2],[8,2]] }
+      ],
+      interpret: "<b>Illustrative.</b> x = search step, y = how deep DFS currently is. The red line keeps climbing: DFS commits to one branch and keeps going deeper. The flat green line marks a shallow goal sitting on a different branch at depth 2. DFS sails right past it and may never come back if the branch is infinite. The fix is a depth limit or iterative deepening, so depth resets and the shallow goal is found."
+    }
+  ],
+  code: "// States to explore at the deepest level grow as b^d.\n// One extra level of depth multiplies the work by b.\nfunction statesAtDepth(b, d) {\n  return Math.pow(b, d);\n}\n\nfor (var d = 1; d <= 8; d++) {\n  console.log('depth ' + d + ': ' + statesAtDepth(2, d) + ' states');\n}\n// depth 1: 2 ... depth 8: 256  -> the b^d blowup"
+};
 
-edges = [("FB","US"),("FB","CT"),("CT","NB"),("US","CT"),("US","SO"),
-         ("SO","MS"),("US","CC"),("CC","MS"),("MS","CA"),("CC","CA"),("NB","US")]
-nbr = {}
-for u, v in edges:
-    nbr.setdefault(u, []).append(v); nbr.setdefault(v, []).append(u)
+window.CODEVIZ["ai-graph-search"] = {
+  question: "Why does remembering solved states turn an exploding tree into a manageable graph, and how does UCS settle nodes in order of cheapest cost?",
+  caption: "Graph search solves each state once and reuses it. UCS always pulls the cheapest frontier node next, so the cost at which each node settles only ever rises, exactly like Dijkstra.",
+  charts: [
+    {
+      type: "bars",
+      title: "UCS settles nodes in increasing cost order (the example graph)",
+      labels: ["S", "A", "C", "B", "G"],
+      values: [0, 1, 3, 3, 5],
+      valueLabels: ["0", "1", "3", "3", "5"],
+      colors: ["#9aa7b4", "#7ee787", "#7ee787", "#7ee787", "#4ea1ff"],
+      interpret: "<b>Each bar is a node; its height is the cheapest cost found to reach it (PastCost), in the order UCS settles them.</b> These are the real costs from the lesson's graph: S=0, then A=1, then C and B at 3, then the goal G at 5. The heights never decrease, that is the key UCS guarantee: once you pop a node it has its final shortest cost, so the first time you pop the goal you are done."
+    },
+    {
+      type: "line",
+      title: "Why remember states: tree search re-expands, graph search does not",
+      xlabel: "states reachable (problem size)",
+      ylabel: "states actually expanded",
+      series: [
+        { name: "tree search (revisits, ~2^n)", color: "#ff7b72", points: [[1,2],[2,4],[3,8],[4,16],[5,32],[6,64]] },
+        { name: "graph search (each once, n)", color: "#7ee787", points: [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6]] }
+      ],
+      interpret: "<b>x = how many distinct states exist; y = how many expansions the search actually does.</b> Illustrative shapes. Tree search (red) re-reaches the same state along many paths, so its work explodes exponentially. Graph search (green) keeps a closed set and touches each state once, so its work is a flat line. The gap between the two curves is exactly what the visited-set buys you."
+    },
+    {
+      type: "line",
+      title: "DP needs an acyclic graph: future-cost recursion that never bottoms out",
+      xlabel: "recursion step",
+      ylabel: "value of FutureCost being computed (diverging)",
+      series: [
+        { name: "acyclic: FutureCost converges", color: "#7ee787", points: [[0,3],[1,3],[2,3],[3,3],[4,3]] },
+        { name: "has a cycle: recursion never settles", color: "#ff7b72", points: [[0,3],[1,5],[2,8],[3,12],[4,17]] }
+      ],
+      interpret: "<b>Illustrative.</b> x = depth of the recursive future-cost computation; y = the value it is trying to pin down. On an acyclic graph (green) the recursion bottoms out and FutureCost(s) settles to a fixed number. Add a cycle (red) and a state depends on itself: the recursion keeps unrolling and the value never settles. This is why dynamic programming requires a DAG; for graphs with loops you must use UCS instead."
+    },
+    {
+      type: "line",
+      title: "Failure mode: a negative edge breaks UCS / Dijkstra",
+      xlabel: "order nodes are settled",
+      ylabel: "cost claimed when settled vs true shortest cost",
+      series: [
+        { name: "cost UCS commits to (settle order)", color: "#ff7b72", points: [[1,2],[2,5],[3,6]] },
+        { name: "true shortest cost (via a later -4 edge)", color: "#7ee787", points: [[1,2],[2,1],[3,6]] }
+      ],
+      interpret: "<b>Illustrative.</b> x = the order UCS settles nodes; y = cost. UCS settles a node (red) the moment it is the cheapest on the frontier, assuming no later path can beat it. But a negative edge discovered afterward (green dips below red at step 2) would have made that node cheaper, and UCS already locked it in wrong. The fix: when edges can be negative, drop Dijkstra/UCS and use Bellman-Ford."
+    }
+  ],
+  code: "// UCS pops the cheapest frontier node each round; the cost it\n// settles each node at only ever rises (Dijkstra's guarantee).\nvar settledCost = { S: 0, A: 1, C: 3, B: 3, G: 5 };\n\nvar order = ['S', 'A', 'C', 'B', 'G'];\nvar prev = -Infinity;\norder.forEach(function (node) {\n  var c = settledCost[node];\n  console.log('settle ' + node + ' at cost ' + c + (c >= prev ? '  (non-decreasing OK)' : '  (BUG)'));\n  prev = c;\n});\n// first time we pop G (cost 5) it is final -> shortest path found"
+};
 
-def bfs(start):
-    seen = [start]; fr = deque([start])
-    while fr:
-        u = fr.popleft()
-        for v in sorted(nbr[u]):
-            if v not in seen: seen.append(v); fr.append(v)
-    return seen
-def dfs(start):
-    seen = []; st = [start]
-    while st:
-        u = st.pop()
-        if u in seen: continue
-        seen.append(u)
-        for v in sorted(nbr[u], reverse=True):
-            if v not in seen: st.append(v)
-    return seen
+window.CODEVIZ["ai-astar"] = {
+  question: "Two searches, same map and same goal — why does A* color in a thin corridor while UCS floods half the grid?",
+  charts: [
+    {
+      type: "scatter",
+      title: "Ideal A*: an admissible heuristic expands a thin corridor toward the goal",
+      xlabel: "grid column (x)",
+      ylabel: "grid row (y)",
+      groups: [
+        { name: "start", color: "#4ea1ff", points: [[1, 2]] },
+        { name: "goal", color: "#ffb454", points: [[5, 2]] },
+        { name: "A* expanded", color: "#7ee787", points: [[1,2],[2,2],[3,2],[4,2],[5,2],[2,1],[2,3],[3,1],[3,3],[4,1],[4,3]] }
+      ],
+      interpret: "<b>Real cells</b> from the lesson grid (start at column 1, goal at column 5, same row 2). The axes are grid position; each green dot is a state A* actually expanded. A* ranks cells by <b>f = g + h</b> (steps paid so far plus the straight-line guess to the goal), so it only opens cells near the lowest-f corridor between start and goal. Read it as: the heuristic <i>pulls</i> the search toward the orange goal, so most of the map is never touched."
+    },
+    {
+      type: "scatter",
+      title: "Plain UCS (h = 0): floods outward in a circle, ignoring the goal",
+      xlabel: "grid column (x)",
+      ylabel: "grid row (y)",
+      groups: [
+        { name: "start", color: "#4ea1ff", points: [[1, 2]] },
+        { name: "goal", color: "#ffb454", points: [[5, 2]] },
+        { name: "UCS expanded", color: "#ff7b72", points: [[1,2],[0,2],[2,2],[1,1],[1,3],[0,1],[0,3],[2,1],[2,3],[1,0],[1,4],[0,0],[0,4],[2,0],[2,4],[3,2],[3,1],[3,3],[3,0],[3,4]] }
+      ],
+      interpret: "Illustrative. With no heuristic (h = 0), A* degrades back to uniform-cost search: it expands by past cost alone, so the red blob grows as an even circle around the start and even spreads <i>away</i> from the goal (left of column 1). Recognise UCS by this symmetric flood. Conclusion: same optimal path, but far more cells opened — exactly the work a good heuristic saves."
+    },
+    {
+      type: "scatter",
+      title: "Greedy best-first (h only): darts at the goal but can take a worse path",
+      xlabel: "grid column (x)",
+      ylabel: "grid row (y)",
+      groups: [
+        { name: "start", color: "#4ea1ff", points: [[1, 2]] },
+        { name: "goal", color: "#ffb454", points: [[5, 2]] },
+        { name: "greedy expanded", color: "#c89bff", points: [[1,2],[2,3],[3,3],[4,3],[4,2],[5,2]] }
+      ],
+      interpret: "Illustrative. Greedy search ranks cells by <b>h alone</b> (the guess to the goal), ignoring what it has already paid. It rushes straight at the orange goal in a tight line, expanding even fewer cells than A*. The catch: dropping the g term means it can commit to a detour and return a <b>non-optimal</b> path. Recognise it by the bee-line shape with no widening — fast, but no cheapest-path guarantee."
+    },
+    {
+      type: "bars",
+      title: "Why f breaks the tie: same g, the heuristic decides (toward-goal vs detour)",
+      labels: ["P toward goal", "Q detour"],
+      values: [5, 8],
+      valueLabels: ["f=5", "f=8"],
+      colors: ["#7ee787", "#ff7b72"],
+      interpret: "<b>Real numbers</b> from the worked example. Both frontier cells cost the same to reach (g = 2), so plain UCS would treat them as equals. A* adds the heuristic: P has h = 3 (f = 5), Q has h = 6 (f = 8). The shorter green bar wins, so A* expands P first and leaves Q for later. The bar height is f = g + h: lower is expanded sooner. This is the single mechanism that steers every chart above toward the goal."
+    }
+  ],
+  caption: "A* expands states in order of f = g + h. An admissible heuristic h focuses the search into a corridor toward the goal instead of flooding outward like UCS.",
+  code: "// A* ranks the frontier by f = g + h on a grid.\n" +
+    "// g = Manhattan steps from start, h = Manhattan steps to goal (admissible).\n" +
+    "const start = [1, 2], goal = [5, 2];\n" +
+    "const g = (r, c) => Math.abs(r - start[0]) + Math.abs(c - start[1]);\n" +
+    "const h = (r, c) => Math.abs(r - goal[0]) + Math.abs(c - goal[1]);\n" +
+    "const f = (r, c) => g(r, c) + h(r, c);\n" +
+    "// Two frontier cells with the SAME past cost g = 2:\n" +
+    "const P = [2, 3];   // a step toward the goal\n" +
+    "const Q = [2, 0];   // a step away (detour)\n" +
+    "console.log('f(P) =', f(...P));   // 5  -> expanded first\n" +
+    "console.log('f(Q) =', f(...Q));   // 8  -> left for later\n" +
+    "// The lowest-f cells form a corridor from start to goal,\n" +
+    "// so A* opens far fewer states than UCS (which uses g only)."
+};
 
-ids = ["FB","CT","US","NB","CC","SO","CA","MS"]
-b, d = bfs("FB"), dfs("FB")
-bstep = [b.index(n)+1 for n in ids]; dstep = [d.index(n)+1 for n in ids]
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-ax1.bar(ids, bstep, color="#4ea1ff"); ax1.set_title("BFS visit step")
-ax2.bar(ids, dstep, color="#ffb454"); ax2.set_title("DFS visit step")
-plt.tight_layout(); plt.show()`
-  },
+window.CODEVIZ["ai-mdp"] = {
+  question: "You tell the robot 'go right' — so why does planning need a bar chart of where it might actually land?",
+  charts: [
+    {
+      type: "bars",
+      title: "Valid transition: outcomes of 'right' sum to 1",
+      labels: ["lands right (0.8)", "slips up (0.2)"],
+      values: [0.8, 0.2],
+      valueLabels: ["0.80", "0.20"],
+      colors: ["#7ee787", "#9aa7b4"],
+      interpret: "<b>Real numbers</b> from the lesson. The bars are the transition probabilities T(s, right, s') — the chance the action 'right' lands the robot in each next state. The intended outcome (lands right) gets 0.8; the slip (goes up) gets 0.2. They <b>must add to 1</b> (0.8 + 0.2 = 1) because something has to happen. Read any MDP action this way: a whole bar chart of maybes, not one certain arrow."
+    },
+    {
+      type: "bars",
+      title: "Cost of randomness: expected reward of 'right' is 4, not 5",
+      labels: ["if it always worked", "expected (with the odds)"],
+      values: [5, 4],
+      valueLabels: ["5.0", "4.0"],
+      colors: ["#9aa7b4", "#ffb454"],
+      interpret: "<b>Real numbers</b> from the worked example. The grey bar is the naive reward you'd assume if 'right' always succeeded (+5). The orange bar is the <b>expected</b> reward once you weight by the odds: 0.8×5 + 0.2×0 = 4. The agent must plan with the orange bar. The gap between 5 and 4 is exactly the price of the action's unreliability — ignore it and your plan is too optimistic."
+    },
+    {
+      type: "bars",
+      title: "Broken MDP: outcomes sum to 1.1, not 1",
+      labels: ["lands right (0.9)", "slips up (0.2)"],
+      values: [0.9, 0.2],
+      valueLabels: ["0.90", "0.20"],
+      colors: ["#ff7b72", "#ff7b72"],
+      interpret: "Illustrative failure case. Here the transition table is mis-specified: 0.9 + 0.2 = 1.1, so it is <b>not a valid probability distribution</b>. Recognise it whenever an action's bars don't sum to exactly 1 (over or under). Conclusion: every value and policy computed from this row is corrupted — re-normalize the transitions before doing anything else."
+    },
+    {
+      type: "line",
+      title: "Discount γ shrinks future rewards (a +10 reward, by the step it arrives)",
+      xlabel: "step the reward arrives",
+      ylabel: "discounted value of a +10 reward",
+      series: [
+        { name: "patient γ = 0.9", color: "#7ee787", points: [[1,10],[2,9],[3,8.1],[4,7.29],[5,6.56],[6,5.9]] },
+        { name: "balanced γ = 0.5", color: "#4ea1ff", points: [[1,10],[2,5],[3,2.5],[4,1.25],[5,0.63],[6,0.31]] },
+        { name: "myopic γ = 0.2", color: "#ffb454", points: [[1,10],[2,2],[3,0.4],[4,0.08],[5,0.02],[6,0]] }
+      ],
+      interpret: "Illustrative, computed from value = 10·γ^(step−1). The x-axis is how many steps away a +10 reward is; the y-axis is what it's worth <i>now</i>. All lines start at 10 (a reward this step counts fully) and decay. A <b>high γ (green, 0.9)</b> stays flat — the agent is patient and values the far future. A <b>low γ (orange, 0.2)</b> crashes to near zero — the agent is myopic and only cares about the next reward. Pick γ to match how far ahead you truly need to plan."
+    }
+  ],
+  caption: "An MDP action is a probability distribution over next states (summing to 1); the agent plans on expected reward, discounting future rewards by γ.",
+  code: "// An MDP action 'right' is a distribution over next states.\n" +
+    "const T = { rightCell: 0.8, upCell: 0.2 };   // transition probs\n" +
+    "const total = Object.values(T).reduce((a, b) => a + b, 0);\n" +
+    "console.log('sum =', total);                 // 1  -> valid\n" +
+    "\n" +
+    "// Rewards for each outcome:\n" +
+    "const reward = { rightCell: 5, upCell: 0 };\n" +
+    "// Plan with the EXPECTED reward, weighting by the odds:\n" +
+    "let expected = 0;\n" +
+    "for (const s in T) expected += T[s] * reward[s];\n" +
+    "console.log('expected =', expected);         // 4, not 5\n" +
+    "\n" +
+    "// Discounting: a +10 reward 'step' moves away loses value.\n" +
+    "const gamma = 0.5;\n" +
+    "for (let step = 1; step <= 4; step++)\n" +
+    "  console.log(step, 10 * Math.pow(gamma, step - 1));  // 10, 5, 2.5, 1.25"
+};
 
-  "ai-graph-search": {
-    question: "Accounting for real driving distances, what is the cheapest route from the Ferry Building to the Castro?",
-    charts: [{
-      type: "bars", title: "UCS cheapest miles to each district when the Castro settles", labels: ["FB", "CT", "US", "NB", "SO", "CC", "MS", "CA"],
-      values: [0.0, 0.9, 1.2, 1.6, 2.2, 2.5, 3.3, 4.1],
-      valueLabels: ["0.0", "0.9", "1.2", "1.6", "2.2", "2.5", "3.3", "4.1"],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ffb454"]
-    }],
-    caption: "Uniform-cost search always pops the cheapest-so-far district; it settles the Castro at 4.1 miles via Ferry Building to Union Square to Civic Center to Castro.",
-    code: `import heapq
-import matplotlib.pyplot as plt
+window.CODEVIZ["ai-policy-value"] = {
+  question: "A policy's value is the discounted sum of the rewards it earns — how do you read that sum off a bar chart, and how does the discount reshape it?",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: discounted reward stream, value V = 17.5 (gamma = 0.5)",
+      labels: ["step 1", "step 2", "step 3"],
+      values: [10, 5, 2.5],
+      valueLabels: ["10", "5", "2.5"],
+      colors: ["#7ee787", "#7ee787", "#7ee787"],
+      interpret: "<b>Real numbers</b> from the lesson: the policy earns reward 10 at every step, with discount gamma = 0.5. The x-axis is the step number; each bar's height is that step's reward AFTER discounting (step i is scaled by gamma to the power i-1). Step 1 keeps its full 10, step 2 shrinks to 10 times 0.5 = 5, step 3 to 10 times 0.25 = 2.5. The <b>value of the policy is the total height</b>, 10 + 5 + 2.5 = 17.5. Read it as: later rewards count for less, so the bars shrink left-to-right and the running total flattens out."
+    },
+    {
+      type: "bars",
+      title: "Variant: patient agent, gamma = 0.9 — bars barely shrink (illustrative)",
+      labels: ["step 1", "step 2", "step 3", "step 4", "step 5"],
+      values: [10, 9, 8.1, 7.29, 6.56],
+      valueLabels: ["10", "9", "8.1", "7.29", "6.56"],
+      colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+      interpret: "Same reward 10 each step, but a discount close to 1 (gamma = 0.9). Because the discount is gentle, the bars fall off slowly and far-off rewards still matter a lot — the value keeps climbing as you add more steps (here already 40.95 over five). Recognise a <b>patient / far-sighted</b> policy by this slow taper: the agent will accept short-term cost for long-term payoff. Watch out — with gamma near 1 and no end, the sum can grow without limit."
+    },
+    {
+      type: "bars",
+      title: "Variant: myopic agent, gamma = 0.2 — only step 1 matters (illustrative)",
+      labels: ["step 1", "step 2", "step 3", "step 4", "step 5"],
+      values: [10, 2, 0.4, 0.08, 0.016],
+      valueLabels: ["10", "2", "0.4", "0.08", "~0"],
+      colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"],
+      interpret: "Same rewards again, but a tiny discount (gamma = 0.2) crushes everything past the first step almost to zero. The value (about 12.5) is dominated by the immediate reward. Recognise a <b>short-sighted / greedy</b> policy by bars that vanish after the first one or two: such an agent ignores the future, which is fine for quick payoffs but blind to a goal that takes many steps to reach."
+    },
+    {
+      type: "bars",
+      title: "Variant: a late penalty drags the value down (illustrative)",
+      labels: ["step 1", "step 2", "step 3", "step 4"],
+      values: [8, 2.5, -3, -3.5],
+      valueLabels: ["+8", "+2.5", "-3", "-3.5"],
+      colors: ["#7ee787", "#7ee787", "#ff7b72", "#ff7b72"],
+      interpret: "Here the policy collects reward early then walks into a penalty later (negative discounted rewards, in red). The value is still the signed total of the bars, 8 + 2.5 - 3 - 3.5 = 4 — much lower than the early steps suggested. The lesson is that <b>value averages over the whole future, good and bad</b>: a plan that looks great for two steps can be a poor policy once a downstream penalty is counted. Always read the full stream, not just the leading bars."
+    }
+  ],
+  caption: "A policy's value is the discounted sum of its rewards; each bar is one step's reward after the gamma-to-the-i-1 discount, and the total height is V.",
+  code: "// Value of a policy = discounted sum of its reward stream\n" +
+    "const rewards = [10, 10, 10];   // reward at each step under the policy\n" +
+    "const gamma = 0.5;              // discount: later rewards count less\n" +
+    "let value = 0;\n" +
+    "const bars = [];\n" +
+    "for (let i = 0; i < rewards.length; i++) {\n" +
+    "  const discounted = rewards[i] * Math.pow(gamma, i);  // gamma^(i-1), i is 0-based here\n" +
+    "  bars.push(discounted);        // [10, 5, 2.5]\n" +
+    "  value += discounted;\n" +
+    "}\n" +
+    "console.log(bars);              // [10, 5, 2.5]\n" +
+    "console.log(value);             // 17.5"
+};
 
-edges = [("FB","US",1.2),("FB","CT",0.9),("CT","NB",0.7),("US","CT",0.6),
-         ("US","SO",1.0),("SO","MS",1.1),("US","CC",1.3),("CC","MS",1.4),
-         ("MS","CA",1.0),("CC","CA",1.6),("NB","US",1.1)]
-nbr = {}
-for u, v, w in edges:
-    nbr.setdefault(u, []).append((v, w)); nbr.setdefault(v, []).append((u, w))
+window.CODEVIZ["ai-qvalue"] = {
+  question: "A Q-value averages reward-plus-future over every place an action might land you — how do you read those weighted outcomes off a bar chart, and how do you compare actions?",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: Q(s,a) = 8 as a sum of two weighted outcomes",
+      labels: ["80%: r=5, V=10", "20%: r=0, V=0", "Q = total"],
+      values: [8, 0, 8],
+      valueLabels: ["8", "0", "8"],
+      colors: ["#7ee787", "#9aa7b4", "#4ea1ff"],
+      interpret: "<b>Real numbers</b> from the lesson, gamma = 0.5. Action a has two possible next states. For each, the contribution is probability times (reward + gamma times next-state value). Good outcome (80%): 0.8 times (5 + 0.5 times 10) = 0.8 times 10 = 8. Bad outcome (20%): 0.2 times (0 + 0) = 0. The <b>Q-value is the sum of the outcome bars</b>, 8 + 0 = 8 (blue). Read it as: the Q-value already folds in HOW LIKELY each landing is — the rare bad outcome barely dents the average here."
+    },
+    {
+      type: "bars",
+      title: "Compare actions: pick argmax over Q (illustrative)",
+      labels: ["action up", "action right", "action down", "action left"],
+      values: [8, 6.4, 3.1, 5.2],
+      valueLabels: ["8", "6.4", "3.1", "5.2"],
+      colors: ["#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+      interpret: "Illustrative. One bar per action available in the SAME state s; each height is that action's Q-value. The agent acts greedily by taking the <b>tallest bar</b> — argmax over a of Q(s,a) — here 'up' with Q = 8. This is what a Q-value is FOR: a state value V(s) tells you a position is worth 8, but these per-action bars tell you WHICH move achieves it. Read the chart as a menu: the best action is simply the highest one."
+    },
+    {
+      type: "bars",
+      title: "Variant: a risky action — high mean Q hides a catastrophe (illustrative)",
+      labels: ["90%: small win", "10%: disaster", "Q (mean)"],
+      values: [9, -8, 1],
+      valueLabels: ["+9", "-8", "+1"],
+      colors: ["#7ee787", "#ff7b72", "#ffb454"],
+      interpret: "Illustrative. The Q-value is still the signed sum of the weighted outcomes: a likely small win contributes +9 but a rare disaster contributes -8, leaving Q = +1 (orange). The danger is that this single averaged number <b>hides the spread</b>: 10% of the time this action is catastrophic. A Q-value answers 'what is the expected return', not 'how risky is it' — when a tall positive bar sits next to a deep red one, the average alone is not enough to act safely."
+    },
+    {
+      type: "bars",
+      title: "Variant: deterministic action — one outcome, probability 1 (illustrative)",
+      labels: ["100%: r=6, V=4", "Q = total"],
+      values: [8, 8],
+      valueLabels: ["8", "8"],
+      colors: ["#9aa7b4", "#4ea1ff"],
+      interpret: "From the quiz: a single certain outcome, gamma = 0.5. With probability 1 the action gives reward 6 then a next-state worth 4, so Q = 1 times (6 + 0.5 times 4) = 6 + 2 = 8. When there is only one possible landing, the sum-over-next-states collapses to a single term and the Q-value is just reward + discounted future value. Recognise the <b>deterministic</b> case by a single full-height outcome bar — no averaging is needed, the world is certain."
+    }
+  ],
+  caption: "Q(s,a) sums probability times (reward + gamma times next-state value) over every possible next state; each bar is one outcome's contribution and the total is the Q-value.",
+  code: "// Q-value: average reward+future over every possible next state\n" +
+    "const gamma = 0.5;\n" +
+    "// each outcome: [probability T, immediate reward, next-state value V]\n" +
+    "const outcomes = [\n" +
+    "  [0.8, 5, 10],   // 80% chance: reward 5, land in a state worth 10\n" +
+    "  [0.2, 0, 0],    // 20% chance: reward 0, land in a state worth 0\n" +
+    "];\n" +
+    "let Q = 0;\n" +
+    "const bars = [];\n" +
+    "for (const [T, reward, vNext] of outcomes) {\n" +
+    "  const term = T * (reward + gamma * vNext);  // weighted contribution\n" +
+    "  bars.push(term);             // [8, 0]\n" +
+    "  Q += term;\n" +
+    "}\n" +
+    "console.log(bars);             // [8, 0]\n" +
+    "console.log(Q);                // 8"
+};
 
-pq = [(0.0, "FB")]; best = {"FB": 0.0}
-while pq:
-    cost, u = heapq.heappop(pq)
-    if cost > best.get(u, 1e9): continue
-    for v, w in nbr[u]:
-        if cost + w < best.get(v, 1e9):
-            best[v] = cost + w; heapq.heappush(pq, (cost + w, v))
-
-order = ["FB","CT","US","NB","SO","CC","MS","CA"]
-vals = [round(best[n], 1) for n in order]
-cols = ["#7ee787"]*7 + ["#ffb454"]
-fig, ax = plt.subplots(figsize=(9, 4))
-ax.bar(order, vals, color=cols)
-for i, v in enumerate(vals): ax.text(i, v, str(v), ha="center", va="bottom")
-ax.set_title("UCS cheapest miles to each district"); plt.show()`
-  },
-
-  "ai-astar": {
-    question: "On a downtown street grid, which blocks does A* explore first when routing a delivery van?",
-    charts: [{
-      type: "heatmap", title: "f = g + h over the 5x7 block grid (SOMA depot to a customer)",
-      rows: ["1st St", "2nd St", "3rd St", "4th St", "5th St"], cols: ["A", "B", "C", "D", "E", "F", "G"],
+window.CODEVIZ["ai-value-iteration"] = {
+  question: "How do you know value iteration has converged — and what does failing to converge look like?",
+  charts: [
+    {
+      type: "line",
+      title: "Healthy convergence: Bellman residual decays to zero",
+      xlabel: "sweep number",
+      ylabel: "max change in V across all states",
+      series: [
+        { name: "max |V_new - V_old|", color: "#7ee787", points: [[0, 8.00], [1, 7.20], [2, 5.18], [3, 3.30], [4, 1.88], [5, 1.05], [6, 0.55], [7, 0.27], [8, 0.13], [9, 0.06], [10, 0.025]] }
+      ],
+      interpret: "The x-axis is the sweep count; the y-axis is the largest change any single state's value made this sweep (the <b>Bellman residual</b>). Each sweep the values move less, and the green curve falls toward zero. Once it drops below a tiny threshold (here ~0.01) the values have stopped moving and the greedy policy is optimal: <b>stop here</b>. Numbers are illustrative of a small gridworld with discount 0.9."
+    },
+    {
+      type: "line",
+      title: "Slow convergence: discount near 1 (gamma = 0.99)",
+      xlabel: "sweep number",
+      ylabel: "max change in V across all states",
+      series: [
+        { name: "gamma = 0.90 (fast)", color: "#7ee787", points: [[0, 8], [2, 5.18], [4, 1.88], [6, 0.55], [8, 0.13], [10, 0.025]] },
+        { name: "gamma = 0.99 (slow)", color: "#ffb454", points: [[0, 8], [2, 7.1], [4, 6.2], [6, 5.4], [8, 4.7], [10, 4.1], [14, 3.1], [18, 2.3], [22, 1.7], [26, 1.3]] }
+      ],
+      interpret: "Same residual axis, two discount factors. The orange curve (gamma 0.99) decays far more slowly because each sweep only shrinks the residual by a factor near gamma, so a discount close to 1 needs many more sweeps to settle. If you cut off at sweep 10 here you would stop with a residual of ~4, a wrong policy. Recognise it by a residual that <b>keeps falling but very gradually</b>; fix by iterating longer or lowering gamma. Illustrative."
+    },
+    {
+      type: "line",
+      title: "Never converges: gamma = 1 with no terminal state",
+      xlabel: "sweep number",
+      ylabel: "max change in V across all states",
+      series: [
+        { name: "residual stays flat / grows", color: "#ff7b72", points: [[0, 1.0], [1, 1.0], [2, 1.0], [3, 1.0], [4, 1.0], [5, 1.0], [6, 1.0], [7, 1.0], [8, 1.0], [9, 1.0], [10, 1.0]] }
+      ],
+      interpret: "Here the residual never shrinks: every sweep changes V by the same amount forever. With discount = 1 and no guaranteed episode end, the value sum has nothing to anchor it, so the backups never settle. Recognise it by a residual that is <b>flat or climbing instead of decaying</b> — the values diverge. Fix by keeping gamma strictly below 1 or ensuring every path reaches a terminal state. Illustrative."
+    },
+    {
+      type: "heatmap",
+      title: "Converged value map: V(s) spreads out from the goal",
+      rows: ["row 0", "row 1", "row 2"],
+      cols: ["col 0", "col 1", "col 2", "col 3 (goal/pit)"],
       matrix: [
-        [10, 8, 8, 8, 8, 8, 10],
-        [8, 6, 6, 6, 6, 6, 8],
-        [6, 4, 4, 4, 4, 4, 6],
-        [8, 6, 6, 6, 6, 6, 8],
-        [10, 8, 8, 8, 8, 8, 10]
-      ], showVals: true
-    }],
-    caption: "Depot at 3rd-and-B and customer at 3rd-and-F both sit at f=4; A* expands the low-f corridor between them first and saves the dark high-f corner blocks for last.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
+        [0.51, 0.65, 0.80, 1.00],
+        [0.40, 0.00, 0.55, -1.00],
+        [0.31, 0.34, 0.43, 0.18]
+      ],
+      showVals: true,
+      interpret: "Each cell is the converged value V(s) of standing in that grid square; greener/larger means a higher expected reward-to-go. The +1 goal at top-right and the -1 pit just below it are the anchors, and value <b>bleeds outward</b> so cells nearer the goal are worth more. The blank center cell is a wall (0). Reading the gradient tells you the optimal policy: always step toward the higher neighbour. Numbers illustrate a converged 3x4 gridworld with discount 0.9."
+    }
+  ],
+  caption: "Watch the Bellman residual (the largest value change per sweep): healthy value iteration drives it to zero.",
+  code: "// Track the Bellman residual each sweep; stop when it is tiny.\n" +
+    "function valueIteration(states, actions, R, T, gamma, tol) {\n" +
+    "  const V = {}; states.forEach(s => V[s] = 0);\n" +
+    "  const residuals = [];\n" +
+    "  for (let sweep = 0; sweep < 1000; sweep++) {\n" +
+    "    let delta = 0;\n" +
+    "    const Vnew = {};\n" +
+    "    for (const s of states) {\n" +
+    "      let best = -Infinity;\n" +
+    "      for (const a of actions(s)) {\n" +
+    "        let q = 0;\n" +
+    "        for (const [sp, p] of T(s, a)) q += p * (R(s, a, sp) + gamma * V[sp]);\n" +
+    "        if (q > best) best = q;\n" +
+    "      }\n" +
+    "      Vnew[s] = best;\n" +
+    "      delta = Math.max(delta, Math.abs(Vnew[s] - V[s]));\n" +
+    "    }\n" +
+    "    Object.assign(V, Vnew);\n" +
+    "    residuals.push(delta);          // this is the y-axis of the line chart\n" +
+    "    if (delta < tol) break;         // converged: residual below threshold\n" +
+    "  }\n" +
+    "  return { V, residuals };\n" +
+    "}\n"
+};
 
-ROWS, COLS = 5, 7
-depot, customer = (2, 1), (2, 5)        # 3rd-and-B, 3rd-and-F
-def manh(a, b): return abs(a[0]-b[0]) + abs(a[1]-b[1])
+window.CODEVIZ["ai-q-learning"] = {
+  question: "How do you read a Q-learning training curve — and spot when exploration or the learning rate is wrong?",
+  charts: [
+    {
+      type: "line",
+      title: "Healthy learning: noisy reward per episode climbs and settles",
+      xlabel: "training episode",
+      ylabel: "total reward collected in the episode",
+      series: [
+        { name: "reward per episode", color: "#7ee787", points: [[0, -22], [20, -8], [40, 3], [60, 14], [80, 21], [100, 26], [120, 29], [140, 30], [160, 31], [180, 30], [200, 31]] }
+      ],
+      interpret: "The x-axis is the episode number; the y-axis is the reward the agent gathered that episode. The green curve <b>rises then flattens</b>: early on the agent wanders and scores poorly, then as its Q-estimates improve it reaches the goal more reliably and reward climbs to a plateau. Small wiggles near the top are exploration (epsilon-greedy occasionally tries a random move). Read a plateau at a good reward as 'learned'. Illustrative of the gridworld."
+    },
+    {
+      type: "line",
+      title: "No exploration: agent gets stuck on a mediocre habit",
+      xlabel: "training episode",
+      ylabel: "total reward collected in the episode",
+      series: [
+        { name: "healthy (epsilon-greedy)", color: "#7ee787", points: [[0, -22], [40, 3], [80, 21], [120, 29], [160, 31], [200, 31]] },
+        { name: "epsilon = 0 (pure greedy)", color: "#ff7b72", points: [[0, -22], [20, -6], [40, 2], [60, 6], [80, 8], [100, 8], [140, 8], [180, 8], [200, 8]] }
+      ],
+      interpret: "Same axes. The red curve climbs a little then <b>flattens far below</b> the green one: with epsilon = 0 the agent always repeats its current best action, so it locks onto the first decent route it found and never discovers the better path. Recognise this failure by an early plateau at a clearly suboptimal reward. Fix it with epsilon-greedy exploration that decays over time. Illustrative."
+    },
+    {
+      type: "line",
+      title: "Learning rate too high / never decayed: reward oscillates",
+      xlabel: "training episode",
+      ylabel: "total reward collected in the episode",
+      series: [
+        { name: "fixed large eta = 0.9", color: "#ffb454", points: [[0, -20], [20, 5], [40, 24], [60, 9], [80, 28], [100, 6], [120, 27], [140, 11], [160, 29], [180, 8], [200, 26]] }
+      ],
+      interpret: "Here the reward jumps up and down forever instead of settling. A large, never-shrinking learning rate makes each update overwrite most of the old Q-estimate with one noisy observation, so the values <b>bounce around the true answer</b> rather than converging. Recognise it by a curve that stays jagged with no narrowing band. Fix by decaying eta as state-action pairs are visited more. Illustrative."
+    },
+    {
+      type: "line",
+      title: "Sparse / delayed reward: long flat start, then slow rise",
+      xlabel: "training episode",
+      ylabel: "total reward collected in the episode",
+      series: [
+        { name: "reward only at the goal", color: "#c89bff", points: [[0, 0], [40, 0], [80, 0.5], [120, 2], [160, 5], [200, 9], [260, 16], [320, 22], [380, 27], [440, 30]] }
+      ],
+      interpret: "When reward arrives only at the very end, credit propagates just one step back per visit, so the curve stays <b>flat for a long time</b> before slowly lifting — learning crawls rather than fails. Recognise it by a long zero/near-zero plateau followed by a late, gradual climb (note the stretched x-axis). Speed it up with reward shaping or eligibility traces. Illustrative."
+    }
+  ],
+  caption: "Plot reward per episode: healthy Q-learning rises to a plateau; the shape of the curve reveals exploration and learning-rate problems.",
+  code: "// Tabular Q-learning; record total reward each episode for the curve.\n" +
+    "function qLearn(env, episodes, gamma, eta, epsilon) {\n" +
+    "  const Q = {};                 // Q[state][action]\n" +
+    "  const q = (s, a) => ((Q[s] || (Q[s] = {}))[a] || 0);\n" +
+    "  const rewards = [];\n" +
+    "  for (let ep = 0; ep < episodes; ep++) {\n" +
+    "    let s = env.reset(), total = 0, done = false;\n" +
+    "    while (!done) {\n" +
+    "      const acts = env.actions(s);\n" +
+    "      // epsilon-greedy: explore a random action, else exploit the best known\n" +
+    "      let a;\n" +
+    "      if (Math.random() < epsilon) a = acts[Math.floor(Math.random() * acts.length)];\n" +
+    "      else a = acts.reduce((b, x) => q(s, x) > q(s, b) ? x : b, acts[0]);\n" +
+    "      const { sp, r, done: d } = env.step(s, a);\n" +
+    "      const bestNext = env.actions(sp).reduce((m, x) => Math.max(m, q(sp, x)), 0);\n" +
+    "      const target = r + gamma * bestNext;\n" +
+    "      Q[s][a] = (1 - eta) * q(s, a) + eta * target;   // the blend update\n" +
+    "      total += r; s = sp; done = d;\n" +
+    "    }\n" +
+    "    rewards.push(total);          // this is the y-axis of the line chart\n" +
+    "  }\n" +
+    "  return { Q, rewards };\n" +
+    "}\n"
+};
 
-f = np.zeros((ROWS, COLS))
-for r in range(ROWS):
-    for c in range(COLS):
-        f[r, c] = manh((r, c), depot) + manh((r, c), customer)
-
-fig, ax = plt.subplots(figsize=(8, 5))
-im = ax.imshow(f, cmap="viridis")
-ax.set_yticks(range(5)); ax.set_yticklabels(["1st","2nd","3rd","4th","5th"])
-ax.set_xticks(range(7)); ax.set_xticklabels(list("ABCDEFG"))
-for r in range(ROWS):
-    for c in range(COLS):
-        ax.text(c, r, int(f[r, c]), ha="center", va="center", color="white")
-ax.set_title("f = g + h over the downtown block grid")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-mdp": {
-    question: "For a warehouse picking robot advancing down an aisle, what immediate reward does each move earn on average?",
-    charts: [{
-      type: "heatmap", title: "Expected immediate reward (rows = move, cols = robot location)",
-      rows: ["advance", "retreat"], cols: ["aisle start", "mid-aisle", "shelf"],
-      matrix: [[0.0, 0.3, 1.0], [0.0, 0.0, 0.4]], showVals: true
-    }],
-    caption: "Each transition row sums to 1; 'advance' beats 'retreat' because it slips toward the shelf (reward +1 for the picked item) more often.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-# states: aisle-start, mid-aisle, shelf ; actions: advance, retreat
-T = np.array([
-    [[0.8,0.2,0.0],[0.0,0.7,0.3],[0.0,0.0,1.0]],   # advance
-    [[1.0,0.0,0.0],[0.6,0.4,0.0],[0.0,0.6,0.4]],   # retreat
-])
-R = np.array([0.0, 0.0, 1.0])          # reward for reaching the shelf
-exp_reward = T @ R                     # [action, state]
-
-fig, ax = plt.subplots(figsize=(7, 3))
-im = ax.imshow(exp_reward, cmap="viridis", aspect="auto")
-ax.set_yticks([0,1]); ax.set_yticklabels(["advance","retreat"])
-ax.set_xticks([0,1,2]); ax.set_xticklabels(["aisle start","mid-aisle","shelf"])
-for a in range(2):
-    for s in range(3):
-        ax.text(s, a, round(exp_reward[a, s], 1), ha="center", va="center", color="white")
-ax.set_title("warehouse robot: expected immediate reward")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-policy-value": {
-    question: "If the warehouse robot always advances down the aisle, what is each spot worth?",
-    charts: [{
-      type: "heatmap", title: "Policy values V(s) for 'always advance', from (I - gamma P) V = r",
-      rows: ["V"], cols: ["aisle start", "mid-aisle", "shelf"],
-      matrix: [[46.38, 72.703, 100.0]], showVals: true
-    }],
-    caption: "Solving the linear Bellman system gives V = [46.38, 72.70, 100.0]; the shelf (reward 10) is worth 100 at gamma 0.9, and spots farther from it are worth less.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-# fixed policy 'always advance' transition matrix
-P = np.array([[0.8,0.2,0.0],
-              [0.0,0.7,0.3],
-              [0.0,0.0,1.0]])
-r = np.array([-0.1, -0.1, 10.0]); gamma = 0.9
-V = np.linalg.solve(np.eye(3) - gamma * P, r)   # (I - gamma P) V = r
-
-fig, ax = plt.subplots(figsize=(7, 2.5))
-im = ax.imshow(V.reshape(1, 3), cmap="viridis", aspect="auto")
-ax.set_yticks([0]); ax.set_yticklabels(["V"])
-ax.set_xticks([0,1,2]); ax.set_xticklabels(["aisle start","mid-aisle","shelf"])
-for s in range(3):
-    ax.text(s, 0, round(V[s], 2), ha="center", va="center", color="white")
-ax.set_title("warehouse: policy values V(s) for always-advance")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-qvalue": {
-    question: "At each aisle spot, should the warehouse robot advance or retreat?",
-    charts: [{
-      type: "heatmap", title: "Q(s,a) = expected reward + gamma V (rows = move, cols = spot)",
-      rows: ["advance", "retreat"], cols: ["aisle start", "mid-aisle", "shelf"],
-      matrix: [[5.04, 8.04, 10.0], [4.5, 5.58, 8.32]], showVals: true
-    }],
-    caption: "Advancing wins everywhere (5.04 > 4.50 at the start, 8.04 > 5.58 mid-aisle): moving toward the shelf has higher Q than backing off.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-T = np.array([
-    [[0.8,0.2,0.0],[0.0,0.7,0.3],[0.0,0.0,1.0]],   # advance
-    [[1.0,0.0,0.0],[0.6,0.4,0.0],[0.0,0.6,0.4]],   # retreat
-])
-R = np.array([0.0, 0.0, 1.0])
-V = np.array([5.0, 8.0, 10.0]); gamma = 0.9
-Q = T @ (R + gamma * V)                 # Q[action, state]
-
-fig, ax = plt.subplots(figsize=(7, 3))
-im = ax.imshow(Q, cmap="viridis", aspect="auto")
-ax.set_yticks([0,1]); ax.set_yticklabels(["advance","retreat"])
-ax.set_xticks([0,1,2]); ax.set_xticklabels(["aisle start","mid-aisle","shelf"])
-for a in range(2):
-    for s in range(3):
-        ax.text(s, a, round(Q[a, s], 2), ha="center", va="center", color="white")
-ax.set_title("warehouse: Q(s,a) = reward + gamma V")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-value-iteration": {
-    question: "On a real 3x4 warehouse floor with a goal shelf and a hazard spill, what is each cell worth and where should the robot go?",
-    charts: [{
-      type: "heatmap", title: "Optimal value V* per floor cell (goal shelf +1, hazard spill -1, wall blocked)",
-      rows: ["row 0", "row 1", "row 2"], cols: ["col 0", "col 1", "col 2", "col 3"],
-      matrix: [
-        [0.509, 0.65, 0.795, 1.0],
-        [0.399, -0.04, 0.486, -1.0],
-        [0.296, 0.254, 0.345, 0.13]
-      ], showVals: true
-    }, {
-      type: "bars", title: "Greedy move per cell (toward the goal shelf, around the spill)",
-      labels: ["(0,0)", "(0,1)", "(0,2)", "(1,0)", "(1,2)", "(2,0)", "(2,1)", "(2,2)", "(2,3)"],
-      values: [4, 4, 4, 1, 1, 1, 4, 1, 3],
-      valueLabels: ["right", "right", "right", "up", "up", "up", "right", "up", "left"],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#4ea1ff", "#ffb454"]
-    }],
-    caption: "Value iteration converges in 27 sweeps on the stochastic floor (0.8 intended, 0.1 each slip); values rise toward the +1 shelf at (0,3), and the policy steers every cell up-and-right while avoiding the -1 spill at (1,3).",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-ROWS, COLS = 3, 4
-WALL, GOAL, HAZARD = (1,1), (0,3), (1,3)
-gamma, step_cost = 0.9, -0.04
-acts = {"up":(-1,0),"down":(1,0),"left":(0,-1),"right":(0,1)}
-def ok(s): return 0<=s[0]<ROWS and 0<=s[1]<COLS and s != WALL
-states = [(r,c) for r in range(ROWS) for c in range(COLS) if (r,c)!=WALL]
-def reward(s): return 1.0 if s==GOAL else (-1.0 if s==HAZARD else step_cost)
-def trans(s, a):                       # 0.8 intended, 0.1 each perpendicular
-    perp = ["left","right"] if a in ("up","down") else ["up","down"]
-    res = {}
-    for p, mv in [(0.8,a),(0.1,perp[0]),(0.1,perp[1])]:
-        d = acts[mv]; ns = (s[0]+d[0], s[1]+d[1])
-        if not ok(ns): ns = s
-        res[ns] = res.get(ns, 0) + p
-    return res
-
-V = {s: 0.0 for s in states}
-for sweep in range(1000):
-    nV, delta = {}, 0
-    for s in states:
-        if s in (GOAL, HAZARD): nV[s] = reward(s); continue
-        nV[s] = reward(s) + gamma * max(
-            sum(p*V[ns] for ns,p in trans(s,a).items()) for a in acts)
-        delta = max(delta, abs(nV[s] - V[s]))
-    V = nV
-    if delta < 1e-8: break
-
-grid = np.full((ROWS, COLS), np.nan)
-for s in states: grid[s] = V[s]
-fig, ax = plt.subplots(figsize=(8, 4))
-im = ax.imshow(grid, cmap="viridis")
-for s in states:
-    ax.text(s[1], s[0], round(V[s], 2), ha="center", va="center", color="white")
-ax.set_title("warehouse floor: optimal value V* per cell")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-q-learning": {
-    question: "Can a warehouse robot learn its way to the goal shelf by trial and error, never told the floor layout?",
-    charts: [{
-      type: "heatmap", title: "Best learned Q-value per floor cell (after 3000 episodes)",
-      rows: ["row 0", "row 1", "row 2"], cols: ["col 0", "col 1", "col 2", "col 3"],
-      matrix: [
-        [0.824, 0.91, 1.0, 1.0],
-        [0.743, 0.0, 0.91, -1.0],
-        [0.666, 0.743, 0.824, 0.743]
-      ], showVals: true
-    }, {
-      type: "bars", title: "Recovered greedy move per cell",
-      labels: ["(0,0)", "(0,1)", "(0,2)", "(1,0)", "(1,2)", "(2,0)", "(2,1)", "(2,2)", "(2,3)"],
-      values: [4, 4, 4, 1, 1, 1, 4, 1, 3],
-      valueLabels: ["right", "right", "right", "up", "up", "up", "right", "up", "left"],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#4ea1ff", "#ffb454"]
-    }],
-    caption: "Starting from the charging dock at (2,0) and exploring epsilon-greedily, Q-learning recovers the same up-and-right policy as value iteration; learned Q-values climb from 0.67 toward 1.0 near the goal shelf.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-ROWS, COLS = 3, 4
-WALL, GOAL, HAZARD = (1,1), (0,3), (1,3)
-gamma = 0.95
-acts = [(-1,0),(1,0),(0,-1),(0,1)]      # up, down, left, right
-def ok(s): return 0<=s[0]<ROWS and 0<=s[1]<COLS and s != WALL
-states = [(r,c) for r in range(ROWS) for c in range(COLS) if (r,c)!=WALL]
-def step(s, ai):
-    d = acts[ai]; ns = (s[0]+d[0], s[1]+d[1])
-    if not ok(ns): ns = s
-    if ns == GOAL: return ns, 1.0, True
-    if ns == HAZARD: return ns, -1.0, True
-    return ns, -0.04, False
-
-rng = np.random.default_rng(1)
-Q = {(s, a): 0.0 for s in states for a in range(4)}
-alpha, eps = 0.5, 0.2
-for ep in range(3000):
-    s = (2, 0)                          # charging dock
-    for t in range(50):
-        greedy = int(np.argmax([Q[(s,i)] for i in range(4)]))
-        a = rng.integers(4) if rng.random() < eps else greedy
-        ns, r, done = step(s, a)
-        nxt = 0 if done else max(Q[(ns,i)] for i in range(4))
-        Q[(s,a)] += alpha * (r + gamma*nxt - Q[(s,a)])
-        s = ns
-        if done: break
-
-grid = np.full((ROWS, COLS), np.nan)
-for s in states: grid[s] = max(Q[(s,i)] for i in range(4))
-grid[GOAL] = 1.0; grid[HAZARD] = -1.0
-fig, ax = plt.subplots(figsize=(8, 4))
-im = ax.imshow(grid, cmap="viridis")
-for r in range(ROWS):
-    for c in range(COLS):
-        if (r,c) != WALL:
-            ax.text(c, r, round(grid[r,c], 2), ha="center", va="center", color="white")
-ax.set_title("warehouse floor: best learned Q per cell")
-fig.colorbar(im, ax=ax); plt.show()`
-  },
-
-  "ai-minimax": {
-    question: "In a tic-tac-toe position where O threatens to win, which square should X play?",
-    charts: [{
-      type: "bars", title: "Minimax value of each X move (O threatens the top row)",
+window.CODEVIZ["ai-minimax"] = {
+  question: "In a tic-tac-toe position where O threatens to win, which square should X play?",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: minimax value of each X move (O threatens the top row)",
       labels: ["sq 2 (block)", "sq 3", "sq 5", "sq 6", "sq 7", "sq 8"],
       values: [0, -1, -1, -1, -1, -1],
       valueLabels: ["0 draw", "-1 loss", "-1 loss", "-1 loss", "-1 loss", "-1 loss"],
-      colors: ["#7ee787", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
-    }],
-    caption: "Position: O at squares 0,1 (top row) with X in the center. Only square 2 blocks the win and backs up to a draw (0); every other X move loses (-1) to optimal O play.",
-    code: `import matplotlib.pyplot as plt
+      colors: ["#7ee787", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+      interpret: "Each bar is one move X can make; the height is the minimax value of that move assuming O then plays perfectly. Higher is better for X (+1 = win, 0 = draw, -1 = loss). Only the green bar (block at square 2) reaches 0 (a draw); every other bar sits at -1 (a forced loss). <b>Read it as: pick the tallest bar.</b> When one move clearly tops the rest, that is the safe play minimax recommends."
+    },
+    {
+      type: "bars",
+      title: "Variant: value flowing up the tree (max of the opponent's mins)",
+      series: [{ name: "value", color: "#4ea1ff", points: [[0, 3], [1, 2]] }],
+      labels: ["Branch A: min(3,8)=3", "Branch B: min(5,2)=2"],
+      interpret: "Illustrative. This is the worked example from the lesson, one level up the tree. X picks between branch A and branch B; under each, the opponent (min) already took the worst-for-you child, so branch A is worth 3 and branch B is worth 2. <b>X takes the max of these: max(3,2)=3, so play A.</b> The pattern to recognise: opponent nodes pull each branch DOWN to its smallest child, then your node picks the LARGEST of what survived."
+    },
+    {
+      type: "bars",
+      title: "Variant: a winning position (one move forces a win)",
+      labels: ["sq 6 (win)", "sq 3", "sq 5", "sq 7"],
+      values: [1, 0, -1, 0],
+      valueLabels: ["+1 win", "0 draw", "-1 loss", "0 draw"],
+      colors: ["#7ee787", "#9aa7b4", "#ff7b72", "#9aa7b4"],
+      interpret: "Illustrative. Here the bars are not all flat at -1: one move reaches +1 (a forced win), some draw (0), one loses (-1). When a +1 bar exists, X has a guaranteed win and minimax will always take it. <b>The shape tells you the position's character:</b> a lone tall +1 means 'winning move available', a sea of -1 means 'losing no matter what', a mix of 0s means 'best you can force is a draw'."
+    },
+    {
+      type: "bars",
+      title: "Variant: perfect opponent (minimax) vs a blundering one",
+      series: [
+        { name: "minimax (assumes perfect O)", color: "#9aa7b4", points: [[0, 0], [1, -1]] },
+        { name: "if O sometimes blunders", color: "#ffb454", points: [[0, 0], [1, 0.4]] }
+      ],
+      labels: ["safe move (block)", "risky move (set a trap)"],
+      interpret: "Illustrative. Minimax (grey) assumes O always finds the best reply, so a 'trap' move that only works if O slips is scored as a loss (-1) and never chosen. Against a real, imperfect opponent (orange) that same move has positive expected value. <b>The gap warns you:</b> minimax is safe but pessimistic; when you KNOW the opponent is weak or random, its worst-case scores leave easy value on the table, and you should switch to expectimax."
+    }
+  ],
+  caption: "Position: O at squares 0,1 (top row) with X in the center. Only square 2 blocks the win and backs up to a draw (0); every other X move loses (-1) to optimal O play.",
+  code: `import matplotlib.pyplot as plt
 
 def winner(b):
     lines = [(0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6)]
@@ -542,16 +810,48 @@ ax.bar([str(i) for i in moves], vals, color=cols)
 for k, v in enumerate(vals): ax.text(k, v, str(v), ha="center", va="bottom")
 ax.set_title("minimax value of each X move"); ax.set_xlabel("square")
 plt.show()`
-  },
+};
 
-  "ai-alpha-beta": {
-    question: "On that same tic-tac-toe position, how many game positions does alpha-beta skip versus full minimax?",
-    charts: [{
-      type: "bars", title: "Game positions examined: alpha-beta vs full minimax", labels: ["alpha-beta", "full minimax"],
-      values: [75, 935], valueLabels: ["75 visited", "935 total"], colors: ["#7ee787", "#ffb454"]
-    }],
-    caption: "Searching the same 'X must block' position, alpha-beta reaches the identical move (block at square 2) while examining only 75 of the 935 reachable positions — pruning cuts the work roughly 12x.",
-    code: `import matplotlib.pyplot as plt
+window.CODEVIZ["ai-alpha-beta"] = {
+  question: "On that same tic-tac-toe position, how many game positions does alpha-beta skip versus full minimax?",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: positions examined, alpha-beta vs full minimax",
+      labels: ["alpha-beta", "full minimax"],
+      values: [75, 935],
+      valueLabels: ["75 visited", "935 total"],
+      colors: ["#7ee787", "#ffb454"],
+      interpret: "Each bar is the number of game positions the algorithm actually looks at to pick the same move. Shorter is better: less work for an identical answer. Alpha-beta (green, 75) examines a small fraction of full minimax (orange, 935) on this position, roughly a 12x saving. <b>Read it as: how much wasted exploration pruning removed.</b> A big gap means lots of branches were provably hopeless and got skipped."
+    },
+    {
+      type: "bars",
+      title: "Variant: pruning depends entirely on move ordering",
+      labels: ["best-first order", "random order", "worst-first order", "no pruning (minimax)"],
+      values: [75, 320, 935, 935],
+      valueLabels: ["75", "320", "935", "935"],
+      colors: ["#7ee787", "#ffb454", "#ff7b72", "#9aa7b4"],
+      interpret: "Illustrative. Same tree, same correct answer every time, but the number of nodes visited swings wildly with the order moves are tried. Trying strong moves first (green) prunes hard; worst-first (red) prunes nothing and matches plain minimax (grey). <b>The takeaway:</b> alpha-beta's speed is not free, it comes from good move ordering. With perfect ordering you reach about b^(d/2) nodes; with bad ordering you save nothing."
+    },
+    {
+      type: "bars",
+      title: "Variant: why one branch gets cut (alpha already secured = 5)",
+      series: [{ name: "value bound", color: "#4ea1ff", points: [[0, 5], [1, 2]] }],
+      labels: ["alpha (secured by A)", "branch B first reply = 2"],
+      interpret: "Illustrative, the lesson's worked example. The left bar is alpha = 5: a draw-or-better X has already locked in via branch A. Branch B is an opponent (min) node, and its first reply already returns 2; since min only goes lower, branch B is at most 2. <b>Because 2 < 5, the rest of branch B cannot change the choice, so it is pruned.</b> The trigger to watch for: at a min node, as soon as a child drops to or below alpha, stop, the remaining children are irrelevant."
+    },
+    {
+      type: "bars",
+      title: "Variant: same time budget buys deeper search",
+      labels: ["minimax depth", "alpha-beta depth"],
+      values: [5, 9],
+      valueLabels: ["5 plies", "~9 plies"],
+      colors: ["#9aa7b4", "#7ee787"],
+      interpret: "Illustrative. Pruning does not just save time at a fixed depth, it lets you spend that saved time going deeper. With the same node budget, alpha-beta (green) can search roughly twice as many plies (half-moves) as plain minimax (grey), because it visits about the square root of the nodes per level. <b>Why it matters:</b> deeper search means better play, which is exactly how alpha-beta made strong chess engines like Deep Blue practical."
+    }
+  ],
+  caption: "Searching the same 'X must block' position, alpha-beta reaches the identical move (block at square 2) while examining only 75 of the 935 reachable positions — pruning cuts the work roughly 12x.",
+  code: `import matplotlib.pyplot as plt
 
 def winner(b):
     lines = [(0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6)]
@@ -594,263 +894,466 @@ ax.text(0, counts["ab"], str(counts["ab"]), ha="center", va="bottom")
 ax.text(1, counts["full"], str(counts["full"]), ha="center", va="bottom")
 ax.set_title("positions examined: alpha-beta vs minimax")
 plt.show()`
-  },
+};
 
-  "ai-expectimax": {
-    question: "For Pac-Man choosing a move, does it matter whether the ghost chases optimally or wanders randomly?",
-    charts: [{
-      type: "bars", title: "Score of each Pac-Man move under each ghost model",
-      labels: ["left (worst-case)", "stay (worst-case)", "right (worst-case)", "left (random)", "stay (random)", "right (random)"],
-      values: [3, 2, -1, 7.67, 4.0, 7.33],
-      colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#7ee787", "#7ee787", "#7ee787"]
-    }],
-    caption: "Each move leads to a chance node over 3 ghost responses. Against a worst-case ghost Pac-Man takes 'left' (worth 3); against a random ghost 'left' is worth 7.67 — the assumed ghost changes every move's value.",
-    code: `import matplotlib.pyplot as plt
+window.CODEVIZ["ai-expectimax"] = {
+  question: "When the other side rolls dice instead of playing to win, do you fear the worst case or average it?",
+  code: `// Expectimax: a chance node AVERAGES its children (weighted by probability);
+// minimax would instead take the WORST child. Compare the two on one node.
+const probs  = [0.5, 0.5];   // random opponent picks each reply equally
+const values = [8, 2];       // leaf values reached after each reply
 
-# each Pac-Man move -> ghost's 3 random responses -> pellet scores
-tree = {"left": [3, 12, 8], "stay": [4, 6, 2], "right": [-1, 9, 14]}
-minimax = {k: min(v) for k, v in tree.items()}             # adversarial ghost
-expecti = {k: sum(v)/len(v) for k, v in tree.items()}      # random ghost
+// expectimax value of the chance node = sum of prob * value
+let expecti = 0;
+for (let i = 0; i < values.length; i++) expecti += probs[i] * values[i];
 
-moves = ["left","stay","right"]
-labels = [m+" (worst)" for m in moves] + [m+" (random)" for m in moves]
-vals = [minimax[m] for m in moves] + [round(expecti[m], 2) for m in moves]
-cols = ["#ff7b72"]*3 + ["#7ee787"]*3
-fig, ax = plt.subplots(figsize=(11, 4))
+// minimax value = the worst (minimum) child, as if the opponent were perfect
+const mini = Math.min(...values);
+
+console.log("expectimax", expecti);  // 0.5*8 + 0.5*2 = 5
+console.log("minimax   ", mini);     // min(8,2) = 2`,
+  caption: "At a chance node expectimax averages the children; minimax takes the worst. Averaging is higher when outcomes vary.",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: chance node value is the probability-weighted average of its children",
+      labels: ["leaf 8 (p=0.5)", "leaf 2 (p=0.5)", "EXPECTIMAX = avg", "minimax = worst"],
+      values: [8, 2, 5, 2],
+      valueLabels: ["8", "2", "5.0", "2"],
+      colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#ffb454"],
+      interpret: "Each bar is a value (height = how good for you). The two grey bars are the leaf outcomes a random opponent reaches with probability 0.5 each. The green bar is the expectimax value of the chance node: <b>0.5x8 + 0.5x2 = 5</b>, sitting between the two outcomes because it is their average. The orange bar is what minimax would report, the worst child (2). Read it as: against a coin-flipping opponent you should expect <b>5</b>, not the pessimistic <b>2</b>."
+    },
+    {
+      type: "bars",
+      title: "Minimax under-rates a random opponent: leaves money on the table (illustrative)",
+      labels: ["safe move", "risky move (expectimax)", "risky move (minimax)"],
+      values: [4, 5, 0],
+      valueLabels: ["4", "5.0", "0"],
+      colors: ["#4ea1ff", "#7ee787", "#ff7b72"],
+      interpret: "Illustrative. A risky move leads to a chance node worth 10 or 0 with equal odds. Expectimax values it at <b>5</b> (green) and so prefers it over the safe move worth 4 (blue). Minimax values the same risky move at its worst child, <b>0</b> (red), and wrongly rejects it. When the other side is truly random, assuming the worst case throws away the better expected play."
+    },
+    {
+      type: "bars",
+      title: "Wrong model the other way: expectimax over-trusts a real adversary (illustrative)",
+      labels: ["true value vs a sharp opponent", "expectimax's optimistic estimate"],
+      values: [2, 5],
+      valueLabels: ["2", "5.0"],
+      colors: ["#7ee787", "#ff7b72"],
+      interpret: "Illustrative. Same node, but now the opponent is a strong player who will steer you to the worst child (value 2, green). Expectimax still averages and reports an optimistic <b>5</b> (red) because it assumes randomness. The gap between the two bars is exploitable: a clever opponent collapses you toward the low outcome. The lesson is to match the node type to reality, average only for genuine chance, minimize for a real adversary."
+    }
+  ]
+};
+
+window.CODEVIZ["ai-csp"] = {
+  question: "How do you tell at a glance whether an assignment satisfies every rule, or quietly breaks one?",
+  code: `// Map colouring CSP: each "neighbours must differ" rule is a 0/1 factor.
+// Weight(assignment) = product of all factors. One zero kills the whole thing.
+const edges = [["A","B"],["A","C"],["B","C"],["B","D"],["C","D"]];
+const colour = { A:"Red", B:"Green", C:"Blue", D:"Red" };  // an assignment
+
+let weight = 1;
+for (const [u, v] of edges) {
+  const factor = (colour[u] !== colour[v]) ? 1 : 0;  // differ? 1 : 0
+  weight *= factor;                                  // product of factors
+}
+console.log("weight", weight);                       // 1 => valid, 0 => broken
+console.log(weight > 0 ? "valid solution" : "invalid: a rule is broken");`,
+  caption: "Each rule is a 0/1 factor; the assignment's weight is their product. A single zero means the whole assignment fails.",
+  charts: [
+    {
+      type: "bars",
+      title: "Ideal: every constraint factor is 1, so the product weight is 1 (solved)",
+      labels: ["A!=B", "A!=C", "B!=C", "B!=D", "C!=D", "WEIGHT (product)"],
+      values: [1, 1, 1, 1, 1, 1],
+      valueLabels: ["1", "1", "1", "1", "1", "1"],
+      colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#4ea1ff"],
+      interpret: "Each green bar is one rule's factor for the assignment A=Red, B=Green, C=Blue, D=Red: it is <b>1</b> when the two neighbours differ. Every adjacent pair has different colours, so all five factors are 1. The blue bar is the total weight, the product 1x1x1x1x1 = <b>1</b>. A weight above zero means every hard constraint holds, this is a valid solution."
+    },
+    {
+      type: "bars",
+      title: "One rule broken: a single zero factor drags the whole weight to 0 (invalid)",
+      labels: ["A!=B", "A!=C", "B!=C", "B!=D", "C!=D", "WEIGHT (product)"],
+      values: [1, 1, 0, 1, 1, 0],
+      valueLabels: ["1", "1", "0", "1", "1", "0"],
+      colors: ["#7ee787", "#7ee787", "#ff7b72", "#7ee787", "#7ee787", "#ff7b72"],
+      interpret: "Illustrative. Now B and C share a colour, so the <b>B!=C</b> factor collapses to <b>0</b> (red). Four factors are still 1, but the weight is a product, so 1x1x<b>0</b>x1x1 = <b>0</b> (red). One broken hard constraint zeroes everything, no matter how many other rules pass. When you see a weight of 0, look for the single red factor, that is your conflict."
+    },
+    {
+      type: "bars",
+      title: "Over-constrained: no colouring works, every option has a zero (unsatisfiable, illustrative)",
+      labels: ["assign B=Red", "assign B=Green", "assign B=Blue"],
+      values: [0, 0, 0],
+      valueLabels: ["0", "0", "0"],
+      colors: ["#ff7b72", "#ff7b72", "#ff7b72"],
+      interpret: "Illustrative. Suppose A, C, and D already use all three colours and B touches all of them. Every colour B could take repeats a neighbour, so the best achievable weight for each choice is <b>0</b> (all red). When a variable's every domain value yields zero, the CSP is <b>unsatisfiable</b>, not just unsolved. The fix is to relax a constraint or report the conflicting set, no amount of search will find a solution."
+    }
+  ]
+};
+
+window.CODEVIZ["ai-csp-search"] = {
+  question: "As backtracking assigns colours, how does forward checking shrink the neighbours' domains — and how do you spot a dead end before wasting effort?",
+  charts: [
+    {
+      type: "bars",
+      title: "Healthy run: domain sizes after each assignment (5-region map, colours R/G/B)",
+      labels: ["A", "B", "C", "D", "E"],
+      values: [1, 2, 2, 1, 2],
+      valueLabels: ["1 (=R)", "2", "2", "1 (=B)", "2"],
+      colors: ["#7ee787", "#9aa7b4", "#9aa7b4", "#7ee787", "#9aa7b4"],
+      interpret: "Each bar is how many colours a region still has left after we set A=R and D=B. <b>A and D dropped to 1</b> (assigned, green). Their neighbours lost the used colour, so they sit at 2 (grey, still has choices). <b>No bar is 0</b>, so the partial assignment is still alive — keep going. This is the shape you want: domains shrink but never empty."
+    },
+    {
+      type: "bars",
+      title: "Dead end: a domain collapses to 0 — backtrack",
+      labels: ["A", "B", "C", "D", "E"],
+      values: [1, 1, 0, 1, 2],
+      valueLabels: ["1 (=R)", "1 (=G)", "0  EMPTY", "1 (=B)", "2"],
+      colors: ["#7ee787", "#7ee787", "#ff7b72", "#7ee787", "#9aa7b4"],
+      interpret: "Illustrative. Same chart, but region <b>C has a bar of 0 (red)</b>: forward checking removed its last colour because every option clashes with an already-assigned neighbour. An empty domain means this branch can never finish — <b>undo the most recent assignment and try another value</b>. Seeing a zero bar early is exactly what forward checking buys you: you fail here instead of deep in a doomed sub-tree."
+    },
+    {
+      type: "bars",
+      title: "Why variable ordering matters: assignments tried before a solution",
+      labels: ["Most-constrained-first", "Naive (fixed) order"],
+      values: [12, 47],
+      valueLabels: ["12", "47"],
+      colors: ["#7ee787", "#ffb454"],
+      interpret: "Illustrative counts for the same map. Shorter green bar = picking the region with the <b>fewest colours left first</b> hits any conflict almost immediately, so it explores few assignments. The taller orange bar = a fixed left-to-right order delays the hard region, so backtracking thrashes through many more dead branches. Same answer, far less work — <b>order by most-constrained variable</b>."
+    }
+  ],
+  caption: "Forward checking prunes neighbours' domains after each choice; an empty domain is the signal to backtrack, and assigning the most-constrained variable first finds those failures soonest.",
+  code: `import matplotlib.pyplot as plt
+
+# 5-region map-colouring CSP; edges = "must differ"
+edges = [("A","B"),("A","D"),("B","C"),("B","D"),("C","E"),("D","E")]
+nbr = {k: set() for k in "ABCDE"}
+for a, b in edges:
+    nbr[a].add(b); nbr[b].add(a)
+
+dom = {k: {"R","G","B"} for k in "ABCDE"}      # full domains
+def forward_check(var, colour, dom):
+    for m in nbr[var]:
+        dom[m].discard(colour)                 # remove clashing colour
+    return dom
+
+dom["A"] = {"R"}; forward_check("A", "R", dom)  # assign A=R
+dom["D"] = {"B"}; forward_check("D", "B", dom)  # assign D=B
+
+regions = list("ABCDE")
+sizes = [len(dom[r]) for r in regions]
+cols = ["#7ee787" if s == 1 else ("#ff7b72" if s == 0 else "#9aa7b4") for s in sizes]
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.bar(regions, sizes, color=cols)
+for i, s in enumerate(sizes): ax.text(i, s, str(s), ha="center", va="bottom")
+ax.set_ylabel("colours left in domain"); ax.set_ylim(0, 3.4)
+ax.set_title("Domain sizes after A=R, D=B (forward checking)")
+plt.show()`
+};
+
+window.CODEVIZ["ai-bayes-net"] = {
+  question: "In the Rain -> WetGrass <- Sprinkler network, how does each cause change the chance of wet grass, and what does the graph actually buy you over one big table?",
+  charts: [
+    {
+      type: "bars",
+      title: "Child CPT: P(WetGrass = true) for each Rain/Sprinkler combination",
+      labels: ["neither", "sprinkler only", "rain only", "rain + sprinkler"],
+      values: [0.05, 0.80, 0.90, 0.99],
+      valueLabels: ["0.05", "0.80", "0.90", "0.99"],
+      colors: ["#9aa7b4", "#4ea1ff", "#ffb454", "#7ee787"],
+      interpret: "Each bar is the wet-grass probability for one setting of its two parents (a row of WetGrass's conditional table). Left to right the causes switch on: <b>with neither cause, wet is rare (0.05)</b>; <b>either cause alone lifts it high (0.80 / 0.90)</b>; <b>both together push it near-certain (0.99)</b>. Reading the table this way shows what an arrow means — a parent being true raises the child's chance."
+    },
+    {
+      type: "bars",
+      title: "Why the graph helps: numbers needed, factored net vs full joint table",
+      labels: ["Bayes net (1+1+4)", "Full joint table (2^3 - 1)"],
+      values: [6, 7],
+      valueLabels: ["6", "7"],
+      colors: ["#7ee787", "#9aa7b4"],
+      interpret: "For 3 binary variables the win is small (6 vs 7), but it grows fast. Green = the net stores one small table per node: <b>1 for Rain, 1 for Sprinkler, 4 for WetGrass's two parents</b>. Grey = one flat table over every combination needs 2^3 - 1 = 7. Add more variables that are mostly independent and the flat table doubles each time while the net barely grows — <b>that gap is the whole point of factoring</b>."
+    },
+    {
+      type: "bars",
+      title: "Explaining away: P(Rain) before vs after learning Sprinkler is ON (grass is wet)",
+      labels: ["P(Rain) prior", "P(Rain | wet, sprinkler on)"],
+      values: [0.30, 0.12],
+      valueLabels: ["0.30", "0.12"],
+      colors: ["#4ea1ff", "#ff7b72"],
+      interpret: "Illustrative. Rain and Sprinkler have no arrow between them, so on their own they are independent. But once you observe the shared effect (wet grass) AND that the sprinkler ran, the sprinkler already explains the wetness, so <b>rain becomes less likely</b> — the bar drops from 0.30 to ~0.12. Two causes that were independent become dependent once their common effect is seen; reason through the graph, not by gut feel."
+    }
+  ],
+  caption: "Each arrow's CPT says how a parent lifts the child's probability; storing one small table per node beats one giant joint table, and observing a shared effect can make independent causes compete (explaining away).",
+  code: `import matplotlib.pyplot as plt
+
+# WetGrass conditional table: P(Wet=true | Rain, Sprinkler)
+def p_wet(rain, spr):
+    if rain and spr:   return 0.99
+    if rain and not spr: return 0.90
+    if not rain and spr: return 0.80
+    return 0.05                       # neither cause
+
+combos = [(False, False), (False, True), (True, False), (True, True)]
+labels = ["neither", "sprinkler only", "rain only", "rain + sprinkler"]
+vals = [p_wet(r, s) for (r, s) in combos]
+cols = ["#9aa7b4", "#4ea1ff", "#ffb454", "#7ee787"]
+
+fig, ax = plt.subplots(figsize=(8, 4))
 ax.bar(labels, vals, color=cols)
-for i, v in enumerate(vals): ax.text(i, v, str(v), ha="center", va="bottom")
-ax.set_title("Pac-Man move score by ghost model (worst-case vs random)")
-plt.tight_layout(); plt.show()`
-  },
-
-  "ai-csp": {
-    question: "Coloring the map of Australia, do these two colorings satisfy every 'neighboring states differ' rule?",
-    charts: [{
-      type: "bars", title: "Constraint violations per coloring (9 shared borders)", labels: ["good coloring", "bad coloring"],
-      values: [0, 1], valueLabels: ["0 (valid)", "1 (SA=NSW clash)"], colors: ["#7ee787", "#ff7b72"]
-    }],
-    caption: "The good coloring of WA, NT, SA, Q, NSW, V, T violates 0 of 9 shared borders; recoloring New South Wales blue makes it clash with South Australia, breaking 1 constraint.",
-    code: `import matplotlib.pyplot as plt
-
-borders = [("WA","NT"),("WA","SA"),("NT","SA"),("NT","Q"),
-           ("SA","Q"),("SA","NSW"),("SA","V"),("Q","NSW"),("NSW","V")]
-def violations(c): return sum(1 for a, b in borders if c[a] == c[b])
-
-good = {"WA":"red","NT":"green","SA":"blue","Q":"red","NSW":"green","V":"red","T":"red"}
-bad = dict(good); bad["NSW"] = "blue"      # now clashes with SA
-vals = [violations(good), violations(bad)]
-
-fig, ax = plt.subplots(figsize=(6, 4))
-ax.bar(["good","bad"], vals, color=["#7ee787","#ff7b72"])
-for i, v in enumerate(vals): ax.text(i, v, str(v), ha="center", va="bottom")
-ax.set_title("Australia map coloring: violations (9 borders)")
-plt.show()`
-  },
-
-  "ai-csp-search": {
-    question: "What valid 3-coloring does backtracking find for the seven states of Australia?",
-    charts: [{
-      type: "bars", title: "Color backtracking assigns to each Australian state (1=red, 2=green, 3=blue)",
-      labels: ["WA", "NT", "SA", "Q", "NSW", "V", "T"], values: [1, 2, 3, 1, 2, 1, 1],
-      valueLabels: ["red", "green", "blue", "red", "green", "red", "red"],
-      colors: ["#ff7b72", "#7ee787", "#4ea1ff", "#ff7b72", "#7ee787", "#ff7b72", "#ff7b72"]
-    }],
-    caption: "Backtracking colors one state at a time and finds a valid map: WA red, NT green, SA blue, then Queensland, NSW, Victoria and Tasmania fit with no neighboring clash.",
-    code: `import matplotlib.pyplot as plt
-
-states = ["WA","NT","SA","Q","NSW","V","T"]
-colors = ["red","green","blue"]
-borders = [("WA","NT"),("WA","SA"),("NT","SA"),("NT","Q"),
-           ("SA","Q"),("SA","NSW"),("SA","V"),("Q","NSW"),("NSW","V")]
-def consistent(var, col, assign):
-    for a, b in borders:
-        if a == var and assign.get(b) == col: return False
-        if b == var and assign.get(a) == col: return False
-    return True
-def backtrack(assign):
-    if len(assign) == len(states): return assign
-    var = next(v for v in states if v not in assign)
-    for col in colors:
-        if consistent(var, col, assign):
-            assign[var] = col
-            if backtrack(assign): return assign
-            del assign[var]
-    return None
-sol = backtrack({})
-
-code_of = {"red":1, "green":2, "blue":3}
-palette = {"red":"#ff7b72","green":"#7ee787","blue":"#4ea1ff"}
-vals = [code_of[sol[s]] for s in states]
-cols = [palette[sol[s]] for s in states]
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.bar(states, vals, color=cols)
-for i, s in enumerate(states): ax.text(i, vals[i], sol[s], ha="center", va="bottom")
-ax.set_title("Australia 3-coloring found by backtracking")
-plt.show()`
-  },
-
-  "ai-bayes-net": {
-    question: "In the classic sprinkler/rain/wet-grass network, how likely is it that the sprinkler ran but it did not rain, given the grass is wet?",
-    charts: [{
-      type: "bars", title: "Sprinkler-Rain-WetGrass network: a marginal probability vs the rest",
-      labels: ["P(Sprinkler=T, Rain=F, WetGrass=T)", "everything else"], values: [0.189, 0.811],
-      valueLabels: ["0.189", "0.811"], colors: ["#ffb454", "#4ea1ff"]
-    }],
-    caption: "Summing the CPTs over the hidden Cloudy node gives P(Sprinkler on, no rain, grass wet) = 0.189; the full joint over the wet-grass cases adds to P(WetGrass=T) = 0.647.",
-    code: `import matplotlib.pyplot as plt
-
-pC = {True: 0.5, False: 0.5}
-pR = {True: 0.8, False: 0.2}            # P(Rain | Cloudy)
-pS = {True: 0.1, False: 0.5}           # P(Sprinkler | Cloudy)
-pW = {(True,True):0.99,(True,False):0.90,(False,True):0.90,(False,False):0.0}
-def joint(c, s, r, w):
-    ps = pS[c] if s else 1 - pS[c]
-    pr = pR[c] if r else 1 - pR[c]
-    pw = pW[(s, r)] if w else 1 - pW[(s, r)]
-    return pC[c] * ps * pr * pw
-
-p = sum(joint(c, True, False, True) for c in (True, False))   # S=T, R=F, W=T
-vals = [round(p, 4), round(1 - p, 4)]
-
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.bar(["P(S=T, R=F, W=T)","everything else"], vals, color=["#ffb454","#4ea1ff"])
 for i, v in enumerate(vals): ax.text(i, v, v, ha="center", va="bottom")
-ax.set_title("sprinkler network: a queried marginal probability")
+ax.set_ylabel("P(WetGrass = true)"); ax.set_ylim(0, 1.1)
+ax.set_title("WetGrass CPT: each parent combination")
 plt.show()`
-  },
+};
 
-  "ai-bayes-inference": {
-    question: "The grass is wet this morning — how likely is it that it rained?",
-    charts: [{
-      type: "bars", title: "Posterior P(Rain | WetGrass = True)", labels: ["Rain = True", "Rain = False"],
-      values: [0.7079, 0.2921], colors: ["#4ea1ff", "#ff7b72"]
-    }],
-    caption: "Summing out Cloudy and Sprinkler and normalizing gives P(Rain | WetGrass) = 0.71 — wet grass is strong evidence of overnight rain, though the sprinkler could explain the other 29%.",
-    code: `import matplotlib.pyplot as plt
+window.CODEVIZ["ai-bayes-inference"] = {
+  question: "A test comes back positive — how should that one fact reshape your belief across the rival hypotheses?",
+  charts: [
+    {
+      type: "bars",
+      title: "Prior P(H): belief BEFORE the test",
+      labels: ["Flu", "Cold", "Healthy"],
+      values: [0.20, 0.30, 0.50],
+      colors: ["#ff7b72", "#ffb454", "#7ee787"],
+      interpret: "Each bar is one hypothesis; the height is its probability before any evidence, and the three sum to 1. Read it as your starting beliefs: <b>Healthy</b> is the front-runner at 0.50, Flu is least likely at 0.20. This is the baseline the evidence will push against — keep it in mind, because the whole point of inference is how much it moves."
+    },
+    {
+      type: "bars",
+      title: "Posterior P(H | +test): belief AFTER a positive test",
+      labels: ["Flu", "Cold", "Healthy"],
+      values: [0.47, 0.39, 0.13],
+      colors: ["#ff7b72", "#ffb454", "#7ee787"],
+      interpret: "Same hypotheses, but now each bar is the probability AFTER seeing a positive test, computed as prior x likelihood / evidence (evidence here is 0.18+0.15+0.05 = 0.38). Compare to the prior: a positive test is far more consistent with Flu (likelihood 0.9) than Healthy (0.1), so <b>Flu jumps 0.20 to 0.47</b> while Healthy collapses 0.50 to 0.13. The tallest bar is your best single guess; mass flowed toward whichever hypothesis best explains the clue."
+    },
+    {
+      type: "bars",
+      title: "Weak evidence: a near-useless test barely moves belief (illustrative)",
+      labels: ["Flu", "Cold", "Healthy"],
+      values: [0.22, 0.30, 0.48],
+      colors: ["#ff7b72", "#ffb454", "#7ee787"],
+      interpret: "Illustrative. Here the test is almost equally likely under every hypothesis (likelihoods roughly 0.45, 0.42, 0.40), so prior x likelihood scales every bar by nearly the same factor. After normalizing, the <b>posterior looks almost identical to the prior</b> — Healthy still leads. The lesson: a flat likelihood carries little information, so the bars barely shift. If your posterior never moves off the prior, your evidence is weak, not your math."
+    },
+    {
+      type: "bars",
+      title: "Explaining away: confirming one cause lowers a rival cause (illustrative)",
+      labels: ["P(Burglary) — prior", "after Alarm", "after Earthquake confirmed"],
+      values: [0.05, 0.38, 0.11],
+      colors: ["#9aa7b4", "#ffb454", "#4ea1ff"],
+      interpret: "Illustrative, and a different shape: each bar is P(Burglary) at a different stage, not three hypotheses. The alarm (a shared effect of burglary OR earthquake) raises burglary from 0.05 to 0.38. Then learning an earthquake actually happened <b>pulls burglary back down to 0.11</b> — the earthquake already explains the alarm, so the rival cause is needed less. A bar that rises on evidence then falls when a competing cause is confirmed is the signature of <b>explaining away</b>."
+    }
+  ],
+  caption: "Inference reshapes prior beliefs into a posterior; the bars show how much, and explaining-away shows rival causes competing.",
+  code: `// Bayes' rule over 3 hypotheses after a positive test.
+const prior = [0.20, 0.30, 0.50];          // P(Flu), P(Cold), P(Healthy)
+const like  = [0.90, 0.50, 0.10];          // P(+ | H) for each
+const joint = prior.map((p, i) => p * like[i]);
+const evidence = joint.reduce((a, b) => a + b, 0);   // P(+) = 0.38
+const post = joint.map(j => j / evidence);           // normalize
+console.log("posterior", post.map(p => p.toFixed(2)));
+// -> [ "0.47", "0.39", "0.13" ]: the positive test lifts Flu, sinks Healthy`
+};
 
-pC = {True: 0.5, False: 0.5}
-pR = {True: 0.8, False: 0.2}
-pS = {True: 0.1, False: 0.5}
-pW = {(True,True):0.99,(True,False):0.90,(False,True):0.90,(False,False):0.0}
-def joint(c, s, r, w):
-    ps = pS[c] if s else 1 - pS[c]
-    pr = pR[c] if r else 1 - pR[c]
-    pw = pW[(s, r)] if w else 1 - pW[(s, r)]
-    return pC[c] * ps * pr * pw
+window.CODEVIZ["ai-hmm"] = {
+  question: "A guard never sees outside but watches whether the director brings an umbrella — how does the belief 'it is raining' shift over five days?",
+  charts: [
+    {
+      type: "line",
+      title: "Filtering: belief P(rain) using only past clues (umbrella on days 1,2,4,5; not 3)",
+      xlabel: "day",
+      ylabel: "P(rain)",
+      series: [
+        { name: "P(rain) filtered", color: "#4ea1ff", points: [[1, 0.8182], [2, 0.8834], [3, 0.1907], [4, 0.7308], [5, 0.8673]] }
+      ],
+      interpret: "The x-axis is the day; the y-axis is the belief P(rain) after that day's clue, between 0 and 1. Each point runs one predict-then-reweight-then-normalize step on the umbrella clue. Read the shape: umbrellas on days 1-2 drive belief up to ~0.88, the <b>no-umbrella day 3 collapses it to 0.19</b>, then umbrellas on 4-5 recover it. A sharp drop or rise marks a clue that disagreed with the running belief; this curve only ever uses clues up to the current day."
+    },
+    {
+      type: "line",
+      title: "Filtering vs smoothing: future clues soften the day-3 dip",
+      xlabel: "day",
+      ylabel: "P(rain)",
+      series: [
+        { name: "filtering (past only)", color: "#4ea1ff", points: [[1, 0.8182], [2, 0.8834], [3, 0.1907], [4, 0.7308], [5, 0.8673]] },
+        { name: "smoothing (all clues)", color: "#7ee787", points: [[1, 0.8673], [2, 0.8204], [3, 0.3075], [4, 0.8204], [5, 0.8673]] }
+      ],
+      interpret: "Two curves over the same days. <b>Blue is filtering</b> (uses only clues so far); <b>green is smoothing</b> (forward-backward, uses every day's clue, past AND future). Look at day 3: filtering crashes to 0.19, but smoothing only dips to ~0.31 because the wet days on either side argue the dry day was a fluke. When the green curve sits higher than the blue at a dip, future evidence is overriding a single odd clue — that is smoothing being more accurate about the past than filtering can be."
+    },
+    {
+      type: "line",
+      title: "Sticky transitions: belief barely reacts to clues (illustrative)",
+      xlabel: "day",
+      ylabel: "P(rain)",
+      series: [
+        { name: "P(rain), stay=0.95", color: "#ffb454", points: [[1, 0.8182], [2, 0.9431], [3, 0.5260], [4, 0.8317], [5, 0.9469]] }
+      ],
+      interpret: "Illustrative. Same clues, but the transition now says the weather almost never changes (stay = 0.95 instead of 0.7). The predict step pulls each day hard toward the previous belief, so the <b>day-3 no-umbrella clue only nudges P(rain) to 0.53</b> instead of crashing to 0.19. A nearly flat curve that shrugs off contrary clues means a sticky transition model is dominating the evidence — too sticky and the model stops listening to its sensors."
+    },
+    {
+      type: "line",
+      title: "Weak emissions: noisy clues leave belief stuck near 0.5 (illustrative)",
+      xlabel: "day",
+      ylabel: "P(rain)",
+      series: [
+        { name: "P(rain), emission near 0.5", color: "#ff7b72", points: [[1, 0.5500], [2, 0.5697], [3, 0.4778], [4, 0.5412], [5, 0.5663]] }
+      ],
+      interpret: "Illustrative. Here the umbrella is almost as likely in sun as in rain (P(umbrella|rain)=0.55, P(umbrella|sun)=0.45), so each clue carries little signal. The belief <b>hovers around 0.5 and never commits</b> to either weather. A filtering curve that stays glued to the 50/50 line is a warning that your observations are nearly uninformative — the clue cannot separate the hidden states, so no amount of filtering will sharpen the belief."
+    }
+  ],
+  caption: "Filtering tracks belief from past clues; smoothing adds future clues, and the transition/emission strengths control how sharply belief reacts.",
+  code: `// HMM forward filtering: belief over hidden rain/sun from umbrella clues.
+const T = [[0.7, 0.3], [0.3, 0.7]];        // transition rain/sun -> rain/sun
+const eUmb = [0.9, 0.2];                    // P(umbrella | rain), P(umbrella | sun)
+let belief = [0.5, 0.5];                    // even prior
+const obs = [true, true, false, true, true];
+const pRain = [];
+for (const saw of obs) {
+  const pr = belief[0]*T[0][0] + belief[1]*T[1][0];   // predict via transition
+  const ps = belief[0]*T[0][1] + belief[1]*T[1][1];
+  const eR = saw ? eUmb[0] : 1 - eUmb[0];
+  const eS = saw ? eUmb[1] : 1 - eUmb[1];
+  let wr = pr*eR, ws = ps*eS, z = wr + ws;            // reweight by clue
+  belief = [wr/z, ws/z];                              // normalize
+  pRain.push(belief[0]);
+}
+console.log(pRain.map(p => p.toFixed(2)));  // ["0.82","0.88","0.19","0.73","0.87"]`
+};
 
-unnorm = {r: sum(joint(c, s, r, True) for c in (True, False) for s in (True, False))
-          for r in (True, False)}
-z = unnorm[True] + unnorm[False]
-post = [unnorm[True] / z, unnorm[False] / z]
+window.CODEVIZ["ai-propositional-logic"] = {
+  question: "How do you read a truth table, and how does it tell you what a knowledge base entails?",
+  code: `// Build the truth table for A, B over 4 connectives, then check entailment.
+// Symbols: A, B. Each row is one model (a full true/false assignment).
+const rows = [[true,true],[true,false],[false,true],[false,false]];
+const T = b => b ? "T" : "F";
+for (const [A, B] of rows) {
+  const AND = A && B, OR = A || B, NOT = !A, IMP = (!A) || B;  // A->B
+  console.log(T(A), T(B), "| AND", T(AND), "OR", T(OR), "NOT-A", T(NOT), "A->B", T(IMP));
+}
+// Entailment KB |= W where KB = {R, R->W}: keep only models where KB is true,
+// then check W in every survivor. Here only the model R=T,W=T survives, and W=T.
+console.log("KB = {R, R->W} entails W:", true);`,
+  caption: "Each row is one model; a connective's column is true/false in that model. Entailment keeps only the rows where the KB holds, then asks if the goal is true in all of them.",
+  charts: [
+    {
+      type: "heatmap",
+      title: "Truth table: every model and what each connective evaluates to",
+      rows: ["A=T B=T", "A=T B=F", "A=F B=T", "A=F B=F"],
+      cols: ["A", "B", "A AND B", "A OR B", "NOT A", "A -> B"],
+      matrix: [
+        [1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 1, 0, 0],
+        [0, 1, 0, 1, 1, 1],
+        [0, 0, 0, 0, 1, 1]
+      ],
+      showVals: true,
+      interpret: "Each <b>row is one model</b> — a full true/false assignment to A and B — and each column is a sentence. A cell is <b>1 (true)</b> or <b>0 (false)</b> for that sentence in that model. Read across a row to evaluate a whole sentence at once. Notice <b>A -> B is 0 only on the second row</b> (A true, B false): an implication fails only when the premise holds but the conclusion does not. Everywhere else it is true, including vacuously when A is false."
+    },
+    {
+      type: "heatmap",
+      title: "Entailment: KB = {R, R->W} keeps one model, and W is true there",
+      rows: ["R=T W=T", "R=T W=F", "R=F W=T", "R=F W=F"],
+      cols: ["R", "R -> W", "KB holds?", "W (goal)"],
+      matrix: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [0, 1, 0, 1],
+        [0, 1, 0, 0]
+      ],
+      showVals: true,
+      interpret: "Same kind of table for the rain example. The third column is <b>1 only when every KB sentence is true</b> (R is true AND R->W is true) — that happens on just the top row. To test <b>KB entails W</b>, look at every row where 'KB holds?' is 1 and check the goal column: here the one surviving model has W = 1, so W is true in every model of the KB. <b>That is entailment.</b> The goal is forced, not merely possible."
+    },
+    {
+      type: "heatmap",
+      title: "Contradiction: KB = {A, NOT A} keeps zero models (illustrative)",
+      rows: ["A=T", "A=F"],
+      cols: ["A", "NOT A", "KB holds?", "anything Q"],
+      matrix: [
+        [1, 0, 0, 1],
+        [0, 1, 0, 0]
+      ],
+      showVals: true,
+      interpret: "Illustrative failure mode. The KB asserts both A and NOT A, so the 'KB holds?' column is <b>0 in every row</b> — no model satisfies an inconsistent knowledge base. With <b>no surviving models</b>, the entailment test ('true in every model where KB holds') is vacuously satisfied for <i>every</i> sentence Q. That is the warning sign: a contradictory KB <b>entails everything</b> and is useless. If your logic suddenly proves both a claim and its negation, check the KB for inconsistency first."
+    },
+    {
+      type: "heatmap",
+      title: "Satisfiable vs valid: A OR B is true in some models, not all (illustrative)",
+      rows: ["A=T B=T", "A=T B=F", "A=F B=T", "A=F B=F"],
+      cols: ["A OR B", "A OR NOT A"],
+      matrix: [
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [0, 1]
+      ],
+      showVals: true,
+      interpret: "Illustrative. Two columns contrast the easy-to-confuse cases. <b>A OR B is satisfiable</b> — true in some models (the top three rows) but <b>0 on the bottom row</b>, so it is not entailed on its own. <b>A OR NOT A is valid (a tautology)</b> — a 1 in <i>every</i> row, true in all models. 'True somewhere' (satisfiable) is a much weaker statement than 'true everywhere' (valid). Entailment needs the strong kind: the goal must be 1 in every model the KB allows."
+    }
+  ]
+};
 
-fig, ax = plt.subplots(figsize=(6, 4))
-ax.bar(["Rain=True","Rain=False"], post, color=["#4ea1ff","#ff7b72"])
-for i, v in enumerate(post): ax.text(i, v, round(v, 4), ha="center", va="bottom")
-ax.set_title("posterior P(Rain | WetGrass=True)")
-plt.show()`
-  },
-
-  "ai-hmm": {
-    question: "A guard never sees outside but watches whether the director brings an umbrella — how does the belief 'it is raining' shift over five days?",
-    charts: [{
-      type: "line", title: "Filtered belief P(rain) over 5 days (umbrella seen on days 1,2,4,5; not 3)", xlabel: "day", ylabel: "P(rain)",
-      series: [{ name: "P(rain)", color: "#4ea1ff", points: [[1, 0.8182], [2, 0.8834], [3, 0.1907], [4, 0.7308], [5, 0.8673]] }]
-    }],
-    caption: "The umbrella-world HMM: an umbrella on days 1 and 2 pushes P(rain) to 0.82 then 0.88; no umbrella on day 3 collapses it to 0.19; umbrellas again on days 4 and 5 recover it to 0.87.",
-    code: `import numpy as np
-import matplotlib.pyplot as plt
-
-T = np.array([[0.7, 0.3], [0.3, 0.7]])   # rain/sun -> rain/sun
-E_umb = np.array([0.9, 0.2])             # P(umbrella | rain), P(umbrella | sun)
-belief = np.array([0.5, 0.5])
-observations = [True, True, False, True, True]
-p_rain = []
-for saw in observations:
-    belief = belief @ T                  # predict
-    e = E_umb if saw else (1 - E_umb)
-    belief = belief * e                  # update by observation
-    belief = belief / belief.sum()       # renormalize
-    p_rain.append(belief[0])
-
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.plot(range(1, 6), p_rain, "-o", color="#4ea1ff")
-ax.set_xticks(range(1, 6)); ax.set_xlabel("day")
-ax.set_ylabel("P(rain)"); ax.set_ylim(0, 1)
-ax.set_title("umbrella world: filtered belief P(rain) over 5 days")
-plt.show()`
-  },
-
-  "ai-propositional-logic": {
-    question: "Given the rules 'if it is raining the streets are wet' and 'if the streets are wet driving is slow', plus 'it is raining', does the knowledge base entail 'driving is slow'?",
-    charts: [{
-      type: "bars", title: "Truth-table check: facts true in every model that satisfies the KB",
-      labels: ["Raining", "StreetsWet", "DrivingSlow"], values: [1, 1, 1],
-      valueLabels: ["true", "true", "true (entailed)"],
-      colors: ["#7ee787", "#7ee787", "#ffb454"]
-    }],
-    caption: "Of the 8 truth assignments, exactly 1 satisfies the KB (Raining implies StreetsWet, StreetsWet implies DrivingSlow, and Raining); DrivingSlow is true in it, so the KB entails DrivingSlow.",
-    code: `import itertools
-import matplotlib.pyplot as plt
-
-symbols = ["Raining", "StreetsWet", "DrivingSlow"]
-def kb(m):
-    r1 = (not m["Raining"]) or m["StreetsWet"]
-    r2 = (not m["StreetsWet"]) or m["DrivingSlow"]
-    return r1 and r2 and m["Raining"]
-
-sat = [dict(zip(symbols, v))
-       for v in itertools.product([False, True], repeat=3)
-       if kb(dict(zip(symbols, v)))]
-truth = [int(all(m[s] for m in sat)) for s in symbols]
-
-fig, ax = plt.subplots(figsize=(7, 4))
-ax.bar(symbols, truth, color=["#7ee787","#7ee787","#ffb454"])
-for i, s in enumerate(symbols):
-    ax.text(i, truth[i], "true" if truth[i] else "false", ha="center", va="bottom")
-ax.set_ylim(0, 1.3)
-ax.set_title("facts true in every KB-satisfying model")
-plt.show()`
-  },
-
-  "ai-inference-rules": {
-    question: "Starting from family facts about Tom, Bob, Ann and Pat, which new relationships does forward chaining derive?",
-    charts: [{
-      type: "bars", title: "Family facts known before vs after forward chaining",
-      labels: ["parent facts", "grandparent(Tom,Ann)", "grandparent(Tom,Pat)", "grandfather(Tom,Ann)", "grandfather(Tom,Pat)"],
-      values: [1, 1, 1, 1, 1],
-      valueLabels: ["given", "derived", "derived", "derived", "derived"],
-      colors: ["#4ea1ff", "#7ee787", "#7ee787", "#ffb454", "#ffb454"]
-    }],
-    caption: "From parent(Tom,Bob), parent(Bob,Ann), parent(Bob,Pat) and male(Tom), forward chaining fires the grandparent and grandfather rules to derive 4 new facts: Tom is grandfather of both Ann and Pat.",
-    code: `import matplotlib.pyplot as plt
-
-facts = {("parent","Tom","Bob"), ("parent","Bob","Ann"),
-         ("parent","Bob","Pat"), ("male","Tom"), ("male","Bob")}
-order = []
-changed = True
-while changed:
-    changed = False
-    for f1 in list(facts):                 # grandparent(X,Z) :- parent(X,Y), parent(Y,Z)
-        if f1[0] == "parent":
-            for f2 in list(facts):
-                if f2[0] == "parent" and f1[2] == f2[1]:
-                    gp = ("grandparent", f1[1], f2[2])
-                    if gp not in facts: facts.add(gp); order.append(gp); changed = True
-    for f in list(facts):                  # grandfather(X,Z) :- grandparent(X,Z), male(X)
-        if f[0] == "grandparent" and ("male", f[1]) in facts:
-            gf = ("grandfather", f[1], f[2])
-            if gf not in facts: facts.add(gf); order.append(gf); changed = True
-print("derived", order)
-
-labels = ["parent facts", "gp(Tom,Ann)", "gp(Tom,Pat)", "gf(Tom,Ann)", "gf(Tom,Pat)"]
-cols = ["#4ea1ff", "#7ee787", "#7ee787", "#ffb454", "#ffb454"]
-fig, ax = plt.subplots(figsize=(9, 4))
-ax.bar(labels, [1]*5, color=cols)
-tags = ["given","derived","derived","derived","derived"]
-for i, t in enumerate(tags): ax.text(i, 1, t, ha="center", va="bottom")
-ax.set_ylim(0, 1.4)
-ax.set_title("family facts before vs after forward chaining")
-plt.show()`
+window.CODEVIZ["ai-inference-rules"] = {
+  question: "How do you read a forward-chaining trace, and how do you know when the derivation is done?",
+  code: `// Forward chaining with modus ponens on a Horn KB.
+// Seeds (known facts) start true; each round fires every rule whose premises hold.
+const rules = [
+  { pre: ["Rain"], con: "Wet" },
+  { pre: ["Sprinkler"], con: "Wet" },
+  { pre: ["Wet"], con: "Slippery" },
+  { pre: ["Wet", "Cold"], con: "Ice" }
+];
+const known = new Set(["Rain", "Cold"]);   // seeds
+let round = 0, changed = true;
+while (changed) {
+  changed = false; round++;
+  for (const r of rules) {
+    if (!known.has(r.con) && r.pre.every(p => known.has(p))) {
+      known.add(r.con); changed = true;     // modus ponens fires
+    }
   }
-
-});
+}
+console.log("rounds", round, "derived", [...known].join(", "));`,
+  caption: "Each round applies modus ponens: any rule whose premises are all known adds its conclusion. The trace ends (saturates) when a full round adds nothing new.",
+  charts: [
+    {
+      type: "heatmap",
+      title: "Forward chaining trace: facts become known round by round",
+      rows: ["Start (seeds)", "After round 1", "After round 2", "After round 3"],
+      cols: ["Rain", "Cold", "Wet", "Slippery", "Ice"],
+      matrix: [
+        [1, 1, 0, 0, 0],
+        [1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1]
+      ],
+      showVals: true,
+      interpret: "Read <b>top to bottom as time</b>: each row is the set of known facts after one round of modus ponens; a column is <b>1 once that fact is derived</b>. The seeds Rain and Cold start at 1. Round 1 fires Rain->Wet, turning Wet on. Round 2 fires Wet->Slippery and Wet AND Cold->Ice. Round 3 adds nothing — the row is identical to round 2, which means the KB has <b>saturated</b> and the derivation is complete. A flat, unchanged final row is your stopping signal."
+    },
+    {
+      type: "bars",
+      title: "New facts derived per round: the count drops to zero at saturation",
+      labels: ["Round 1", "Round 2", "Round 3"],
+      values: [1, 2, 0],
+      valueLabels: ["Wet", "Slippery, Ice", "(none)"],
+      colors: ["#7ee787", "#7ee787", "#9aa7b4"],
+      interpret: "Same run, viewed as how many <b>new</b> facts each round adds. Green bars show productive rounds (round 1 derives Wet; round 2 derives Slippery and Ice). The final <b>grey zero-height bar</b> is the round that fired no new rule — that empty round is exactly the <b>termination condition</b> for forward chaining. When the derivation count hits zero, every entailed Horn fact has already been found and you stop."
+    },
+    {
+      type: "heatmap",
+      title: "Missing seed: without Rain or Sprinkler, nothing downstream fires (illustrative)",
+      rows: ["Start (seed: Cold)", "After round 1"],
+      cols: ["Rain", "Cold", "Wet", "Slippery", "Ice"],
+      matrix: [
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0]
+      ],
+      showVals: true,
+      interpret: "Illustrative. Here the only seed is Cold. <b>Wet has two possible triggers</b> (Rain or Sprinkler) but neither is known, so the rule Rain->Wet can never fire, and the whole chain Wet->Slippery, Wet AND Cold->Ice stays blocked. The table goes <b>flat immediately</b> — round 1 changes nothing. When a forward-chaining run derives far less than you expect, look for a <b>missing premise</b>: an unmet earlier fact silently starves every rule downstream of it."
+    },
+    {
+      type: "bars",
+      title: "Resolution as proof by contradiction: clauses collapse to the empty clause (illustrative)",
+      labels: ["Negate goal + KB", "Resolve pair 1", "Resolve pair 2", "Empty clause []"],
+      values: [4, 3, 2, 0],
+      valueLabels: ["start clauses", "cancel a literal", "cancel a literal", "FALSE: goal proved"],
+      colors: ["#9aa7b4", "#4ea1ff", "#4ea1ff", "#ff7b72"],
+      interpret: "Illustrative, and a different rule. To prove a goal by <b>resolution</b>, you add its negation to the KB and resolve pairs of clauses that share a complementary literal (p in one, NOT p in the other), cancelling it each time. The bars show the working clause set shrinking as literals cancel. Reaching the <b>empty clause [] (red)</b> means the assumptions are contradictory — so the original goal must follow. Unlike modus ponens, resolution is <b>complete</b>: if a fact is entailed, this contradiction always exists. Beware the opposite failure: on hard problems the clause count can <i>explode</i> instead of shrinking."
+    }
+  ]
+};
