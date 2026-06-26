@@ -296,55 +296,85 @@ print("PR-AUC:", round(pr_auc, 3))`
   };
 
   window.CODEVIZ["met-survival"] = {
-    question: "On real load_diabetes data, treating the target as a time-to-event score, how well does each predictor's risk ranking match reality — i.e. what is the C-index for a real feature, a fitted model, and pure random?",
+    question: "From one concrete censored dataset of 8 machines, what does the Kaplan-Meier survival curve S(t) = product of (1 - d_i/n_i) look like, what is the per-step hazard d_i/n_i, and what C-index does an imperfect risk score earn over the comparable pairs?",
     charts: [
       {
+        type: "line",
+        title: "Kaplan-Meier survival curve S(t) = product of (1 - d_i/n_i) over time",
+        xlabel: "time t (months)",
+        ylabel: "S(t) = P(survive past t)",
+        series: [
+          {
+            name: "S(t) step curve",
+            color: "#4ea1ff",
+            points: [[0, 1.0], [2, 1.0], [2, 0.875], [3, 0.875], [3, 0.75], [6, 0.75], [6, 0.6], [7, 0.6], [7, 0.45], [9, 0.45], [9, 0.225], [12, 0.225], [12, 0.0]]
+          }
+        ]
+      },
+      {
         type: "bars",
-        title: "C-index (concordance) by predictor — diabetes target as event time",
-        xlabel: "predictor",
-        ylabel: "C-index (0.5 = random, 1.0 = perfect)",
-        labels: ["BMI feature (as risk)", "fitted linear model", "random score"],
-        values: [0.695, 0.755, 0.504],
-        valueLabels: ["0.695", "0.755", "0.504"],
-        colors: ["#4ea1ff", "#7ee787", "#9aa7b4"]
+        title: "Per-step survival factor (1 - d_i/n_i): the terms multiplied to build S(t)",
+        xlabel: "event time t (n_i at risk, d_i events)",
+        ylabel: "factor 1 - d_i/n_i (closer to 1 = gentler drop)",
+        labels: ["t=2 (8,1)", "t=3 (7,1)", "t=6 (5,1)", "t=7 (4,1)", "t=9 (2,1)", "t=12 (1,1)"],
+        values: [0.875, 0.857, 0.800, 0.750, 0.500, 0.000],
+        valueLabels: ["0.875", "0.857", "0.800", "0.750", "0.500", "0.000"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ffb454", "#ffb454", "#ff7b72"]
+      },
+      {
+        type: "bars",
+        title: "Discrete hazard h_i = d_i/n_i: the conditional event rate at each step",
+        xlabel: "event time t (n_i at risk, d_i events)",
+        ylabel: "hazard d_i/n_i (chance of failing at t given alive)",
+        labels: ["t=2 (8,1)", "t=3 (7,1)", "t=6 (5,1)", "t=7 (4,1)", "t=9 (2,1)", "t=12 (1,1)"],
+        values: [0.125, 0.143, 0.200, 0.250, 0.500, 1.000],
+        valueLabels: ["0.125", "0.143", "0.200", "0.250", "0.500", "1.000"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#ffb454", "#ff7b72"]
+      },
+      {
+        type: "bars",
+        title: "C-index = (concordant + 0.5*tied) / comparable = 19/21 = 0.905",
+        xlabel: "comparable-pair outcome",
+        ylabel: "number of comparable pairs",
+        labels: ["concordant (ranked right)", "discordant (ranked wrong)", "tied"],
+        values: [19, 2, 0],
+        valueLabels: ["19", "2", "0"],
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
       }
     ],
-    caption: "We treat each patient's diabetes-progression target as an event 'time' and ask: does a predictor give the patient who reaches the event sooner the higher risk? Computed over all comparable pairs with numpy. A single real feature (BMI, used as a risk score) already ranks risk well above chance at C = 0.695; a fitted linear model that combines all ten features does better at C = 0.755; a random score sits at C = 0.504 — the coin-flip value that tells you a model has no ranking signal. The gap from 0.5 is exactly what the C-index is meant to measure.",
+    caption: "One concrete dataset: 8 machines with observed times 2,3,4,6,7,9,12 months, where t=4 and t=8 are CENSORED (still running, no event). Chart 1 is the Kaplan-Meier survival curve: at each event time t we multiply S by the factor (1 - d_i/n_i), where n_i is the number still at risk just before t and d_i is the events at t. The curve only steps DOWN at event times (2,3,6,7,9,12) and stays flat through censoring; it falls 1.0 -> 0.875 -> 0.75 -> 0.6 -> 0.45 -> 0.225 -> 0.0. Chart 2 breaks out those product factors term by term: each bar is one (1 - d_i/n_i); the bars shrink toward 0 as the at-risk set n_i thins out, and the final t=12 factor is exactly 0 (the last machine fails: 1 - 1/1). Chart 3 is the matching discrete hazard h_i = d_i/n_i = 1 - factor: the conditional chance of failing at t given you reached it, rising from 0.125 to 1.0 as fewer machines remain. Chart 4 scores an imperfect risk ranking with the C-index: of the 21 comparable pairs (one machine had its event before the other's observed time), 19 are concordant (earlier-failing machine got the higher risk) and 2 are discordant, so C = 19/21 = 0.905 - well above the 0.5 coin-flip line. All numbers computed with numpy from the dataset below.",
     code: `import numpy as np
-from sklearn.datasets import load_diabetes
-from sklearn.linear_model import LinearRegression
 
-d = load_diabetes()
-X, y = d.data, d.target            # treat target as event 'time'
-names = d.feature_names
+# 8 machines: observed time t, event indicator delta (1=failed, 0=censored)
+t     = np.array([ 2,  3,  4,  6,  7,  8,  9, 12])
+delta = np.array([ 1,  1,  0,  1,  1,  0,  1,  1])   # t=4, t=8 are censored
 
-def c_index(risk, time):
-    """Fraction of comparable pairs ranked correctly (Harrell's C).
-    Pair (i,j) comparable when time[i] < time[j]; concordant when the
-    earlier-event row got the higher risk. Ties count as half."""
-    n = len(time); num = 0.0; den = 0.0
-    for i in range(n):
-        for j in range(n):
-            if time[i] < time[j]:          # i reaches the event first
-                den += 1
-                if   risk[i] > risk[j]: num += 1.0
-                elif risk[i] == risk[j]: num += 0.5
-    return num / den
+# ---- Kaplan-Meier: S(t) = product over event times of (1 - d_i/n_i) ----
+event_times = sorted(set(t[delta == 1]))   # [2, 3, 6, 7, 9, 12]
+S = 1.0
+factors, hazards, surv = [], [], [(0, 1.0)]
+for et in event_times:
+    n_i = np.sum(t >= et)                   # at risk just before et
+    d_i = np.sum((t == et) & (delta == 1))  # events exactly at et
+    factor = 1 - d_i / n_i                   # survival factor for this step
+    S *= factor
+    factors.append(round(factor, 3))         # chart 2
+    hazards.append(round(d_i / n_i, 3))      # chart 3: hazard = 1 - factor
+    surv.append((et, round(S, 3)))           # chart 1
+print("factors :", factors)   # -> [0.875, 0.857, 0.8, 0.75, 0.5, 0.0]
+print("hazards :", hazards)   # -> [0.125, 0.143, 0.2, 0.25, 0.5, 1.0]
+print("S(t)    :", surv)      # -> 1.0 .875 .75 .6 .45 .225 .0
 
-# 1) a single REAL feature as a risk score. BMI rises with progression,
-#    so as a 'risk' (high = sooner event) we use -BMI.
-risk_feature = -X[:, names.index("bmi")]
-c_feature = c_index(risk_feature, y)
-
-# 2) a fitted linear model: predict the time, risk = -predicted_time
-pred_time = LinearRegression().fit(X, y).predict(X)
-c_model = c_index(-pred_time, y)
-
-# 3) a random score -> should land near 0.5
-rng = np.random.default_rng(0)
-c_random = c_index(rng.standard_normal(len(y)), y)
-
-print(round(c_feature, 3), round(c_model, 3), round(c_random, 3))
-# -> 0.695  0.755  0.504`
+# ---- C-index over comparable pairs for an imperfect risk score ----
+risk = np.array([0.90, 0.62, 0.55, 0.70, 0.45, 0.40, 0.50, 0.30])  # high = sooner
+conc = disc = tie = 0
+for i in range(len(t)):
+    for j in range(len(t)):
+        if delta[i] == 1 and t[i] < t[j]:    # i's event precedes j's observed time
+            if   risk[i] > risk[j]: conc += 1
+            elif risk[i] == risk[j]: tie += 1
+            else:                    disc += 1
+C = (conc + 0.5 * tie) / (conc + disc + tie)
+print("C-index :", conc, disc, tie, round(C, 3))  # -> 19 2 0 0.905`
   };
 })();

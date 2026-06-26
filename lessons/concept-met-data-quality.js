@@ -277,39 +277,82 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
   };
 
   window.CODEVIZ["met-data-quality"] = {
-    question: "Splitting load_wine in half (rows are ordered by cultivar, so the halves are genuinely different wines), which features drift, and which cross the PSI 0.25 alarm line?",
-    charts: [{
-      type: "bars",
-      title: "PSI per feature: first half vs second half of load_wine (alarm at 0.25)",
-      xlabel: "feature",
-      ylabel: "PSI (Population Stability Index)",
-      labels: ["proline", "alcalinity_of_ash", "hue", "flavanoids", "total_phenols", "color_intensity", "ash", "alarm = 0.25"],
-      values: [4.283, 3.318, 2.379, 2.361, 1.852, 0.824, 0.190, 0.25],
-      valueLabels: ["4.283", "3.318", "2.379", "2.361", "1.852", "0.824", "0.190", "0.25"],
-      colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#7ee787", "#ffb454"]
-    }],
-    caption: "Real numbers from load_wine (178 wines, 13 chemical features), whose rows are ordered by cultivar. Splitting at row 89 puts cultivars {0, start of 1} in the reference half and {end of 1, 2} in the current half, so the two halves really are different wines. PSI (10 quantile bins, edges fixed from the reference half) is huge for chemistry that separates the cultivars: proline 4.28, alcalinity_of_ash 3.32, hue 2.38, flavanoids 2.36, total_phenols 1.85 — all far above the 0.25 alarm line. Only 'ash' (0.19) stays under it, the lone stable feature. This is exactly what a drift dashboard would flag.",
+    question: "Score one concrete 10-row 'orders' table: what is each quality dimension worth, how does completeness = non-null/total break down, why does the z-score miss an outlier the IQR catches, and how do PSI's per-bin terms add up to a moderate drift?",
+    charts: [
+      {
+        type: "bars",
+        title: "Data-quality scorecard: one rate per dimension for the orders table (10 rows x 4 columns)",
+        xlabel: "quality dimension",
+        ylabel: "score (good rows / total, higher = cleaner)",
+        labels: ["completeness", "validity", "uniqueness", "consistency"],
+        values: [0.975, 0.900, 0.800, 0.900],
+        valueLabels: ["0.975", "0.900", "0.800", "0.900"],
+        colors: ["#7ee787", "#ffb454", "#ff7b72", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "completeness = non-null / total cells = 39 / 40 = 0.975 (term by term)",
+        xlabel: "term",
+        ylabel: "count of cells (and the resulting rate)",
+        labels: ["non-null cells", "total cells", "= rate 0.975"],
+        values: [39, 40, 0.975],
+        valueLabels: ["39", "40", "0.975"],
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Outlier rules disagree on x=40 in [10,12,11,13,12,40]: z-score score vs cutoff vs the IQR fence",
+        xlabel: "quantity (z-score side vs IQR side)",
+        ylabel: "value",
+        labels: ["|z| of 40", "z cutoff (3)", "value 40", "IQR upper fence (16)"],
+        values: [2.3, 3.0, 40, 16],
+        valueLabels: ["2.3 (not flagged)", "3.0", "40 (flagged)", "16"],
+        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "PSI per-bin terms (a-e)*ln(a/e) sum to 0.228 -> moderate shift: e=[.25,.25,.25,.25], a=[.10,.20,.30,.40]",
+        xlabel: "bin (and the total)",
+        ylabel: "contribution to PSI",
+        labels: ["bin 1", "bin 2", "bin 3", "bin 4", "PSI total", "alarm = 0.25"],
+        values: [0.137, 0.011, 0.009, 0.071, 0.228, 0.25],
+        valueLabels: ["0.137", "0.011", "0.009", "0.071", "0.228", "0.25"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ff7b72"]
+      }
+    ],
+    caption: "Four diagrams, one per key formula, all from concrete numbers. (1) SCORECARD: each quality dimension is a rate of good rows over total on a 10-row, 4-column orders table. Completeness 0.975 (39 of 40 cells filled), validity 0.900 (9 of 10 statuses in the allowed set, 9 of 10 emails contain '@'), uniqueness 0.800 (8 distinct emails of 10 rows -> 2 duplicate customers), consistency 0.900 (9 of 10 rows have ship_date >= order_date). Uniqueness is the worst dimension, so that is where you act. (2) COMPLETENESS broken into its terms: numerator non-null = 39, denominator total = 40, ratio = 0.975 -- the rate is just one bar divided by the next. (3) OUTLIER rules on the lesson's column [10,12,11,13,12,40]: the z-score of 40 is only 2.3, under the cutoff of 3, so z MISSES it (the single big value inflated sigma); the IQR upper fence is 16, and 40 > 16, so the IQR rule CATCHES it. Same value, opposite verdict -- that robustness is why IQR is the default on skewed data. (4) PSI summed term by term: each per-bin (a-e)*ln(a/e) is positive; 0.137 + 0.011 + 0.009 + 0.071 = 0.228, which lands in the 0.1-0.25 moderate band, just under the 0.25 alarm line. Every number here is computed, not invented.",
     code: `import numpy as np
-from sklearn.datasets import load_wine
 
-d = load_wine()                                  # 178 wines, 13 features, ordered by cultivar
-X, names = d.data, list(d.feature_names)
+# ---- (1)+(2) Quality scorecard on a concrete 10-row 'orders' table ----
+N = 10
+amount = [120, 95, 110, 130, 105, 900, 100, np.nan, 115, 125]          # 1 null cell
+status = ["paid","paid","shipped","paid","XXXX","paid","shipped","paid","paid","refunded"]
+email  = ["a@b.com","c@d.com","a@b.com","e@f.com","g@h.com","noemail","i@j.com","k@l.com","a@b.com","m@n.com"]
+ship   = ["2024-01-02","2024-01-03","2024-01-01","2024-01-05","2024-01-04","2024-01-02","2024-01-09","2024-01-06","2024-01-07","2024-01-08"]
+order  = ["2024-01-01","2024-01-02","2024-01-03","2024-01-04","2024-01-04","2024-01-01","2024-01-08","2024-01-05","2024-01-06","2024-01-08"]
 
-half = len(X) // 2                               # 89
-ref, cur = X[:half], X[half:]                    # halves are genuinely different cultivars
+cols = [amount, status, email, ship]
+nonnull = sum(0 if (isinstance(v, float) and np.isnan(v)) else 1 for c in cols for v in c)
+total   = sum(len(c) for c in cols)
+completeness = nonnull / total                                          # 39 / 40 = 0.975
 
-def psi(r, c, bins=10):
-    q = np.quantile(r, np.linspace(0, 1, bins + 1)); q[0], q[-1] = -np.inf, np.inf
-    e = np.histogram(r, q)[0] / len(r)
-    a = np.histogram(c, q)[0] / len(c)
-    e, a = np.clip(e, 1e-4, None), np.clip(a, 1e-4, None)
-    return float(np.sum((a - e) * np.log(a / e)))
+allowed = {"paid","shipped","refunded","cancelled"}
+validity = (sum(s in allowed for s in status) + sum("@" in e for e in email)) / (2 * N)   # 0.900
+uniqueness  = len(set(email)) / N                                       # 8 / 10 = 0.800
+consistency = sum(s >= o for s, o in zip(ship, order)) / N              # 9 / 10 = 0.900
+print("completeness=%.3f validity=%.3f uniqueness=%.3f consistency=%.3f" % (
+      completeness, validity, uniqueness, consistency))
 
-scores = {nm: round(psi(ref[:, i], cur[:, i]), 3) for i, nm in enumerate(names)}
-for nm, p in sorted(scores.items(), key=lambda t: -t[1]):
-    print(f"{nm:32s} {p}")
-# proline 4.283, alcalinity_of_ash 3.318, hue 2.379, flavanoids 2.361,
-# total_phenols 1.852, ... color_intensity 0.824, ... ash 0.190
-# alarm line at 0.25: every feature except 'ash' is flagged as large drift.`
+# ---- (3) Outlier rate: z-score vs IQR on the lesson's column ----
+x = np.array([10, 12, 11, 13, 12, 40.0])
+z40 = (40 - x.mean()) / x.std()                                        # ~2.3  -> under cut 3
+q1, q3 = np.percentile(x, [25, 75]); fence_hi = q3 + 1.5 * (q3 - q1)   # ~16   -> 40 > 16
+print("z of 40 = %.1f (cut 3 -> %s); IQR fence_hi = %.0f (-> 40 flagged: %s)" % (
+      z40, abs(z40) > 3, fence_hi, 40 > fence_hi))
+
+# ---- (4) PSI term by term: e uniform, a shifted right ----
+e = np.array([0.25, 0.25, 0.25, 0.25]); a = np.array([0.10, 0.20, 0.30, 0.40])
+terms = (a - e) * np.log(a / e)                                        # [.137, .011, .009, .071]
+print("PSI terms =", terms.round(3), " PSI =", round(terms.sum(), 3))  # 0.228 -> moderate band`
   };
 })();

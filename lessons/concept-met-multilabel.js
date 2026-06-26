@@ -240,37 +240,72 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
   };
 
   window.CODEVIZ["met-multilabel"] = {
-    question: "On real 10-class digit data, which class does the model handle worst — and how much does that hide inside a single overall score?",
+    question: "On ONE imbalanced multilabel example, why do macro-F1, micro-F1 and weighted-F1 give three different numbers — and how do Hamming loss and exact-match see the same predictions?",
     charts: [
       {
         type: "bars",
-        title: "Per-class F1 on load_digits (10 classes) — worst class highlighted",
-        xlabel: "digit class",
+        title: "Per-label precision = TP/(TP+FP) and recall = TP/(TP+FN) — read off each label's TP/FP/FN",
+        xlabel: "label (with true-support count)",
+        ylabel: "score",
+        labels: ["A (supp 7)", "B (supp 5)", "C rare (supp 2)"],
+        series: [
+          { name: "precision", color: "#4ea1ff", points: [[0, 0.875], [1, 1.0], [2, 0.0]] },
+          { name: "recall", color: "#7ee787", points: [[0, 1.0], [1, 0.8], [2, 0.0]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "Per-label F1 — rare label C scores 0; this is the gap each average treats differently",
+        xlabel: "label (with true-support count)",
         ylabel: "F1 score",
-        labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-        values: [0.991, 0.923, 0.990, 0.964, 0.972, 0.954, 0.981, 0.962, 0.920, 0.955],
-        valueLabels: ["0.991", "0.923", "0.990", "0.964", "0.972", "0.954", "0.981", "0.962", "0.920", "0.955"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff"]
+        labels: ["A (supp 7)", "B (supp 5)", "C rare (supp 2)"],
+        values: [0.933, 0.889, 0.0],
+        valueLabels: ["0.933", "0.889", "0.000"],
+        colors: ["#4ea1ff", "#4ea1ff", "#ff7b72"]
+      },
+      {
+        type: "bars",
+        title: "Macro vs micro vs weighted F1 on the SAME data — why they disagree under imbalance",
+        xlabel: "averaging scheme",
+        ylabel: "F1 score",
+        labels: ["macro", "weighted", "micro"],
+        values: [0.607, 0.784, 0.846],
+        valueLabels: ["0.607", "0.784", "0.846"],
+        colors: ["#ff7b72", "#ffb454", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Hamming loss (gentle) vs exact-match accuracy (strict) — same predictions, very different verdict",
+        xlabel: "multilabel metric",
+        ylabel: "value",
+        labels: ["Hamming loss = 4/24", "exact-match acc = 4/8"],
+        values: [0.167, 0.5],
+        valueLabels: ["0.167", "0.500"],
+        colors: ["#7ee787", "#c89bff"]
       }
     ],
-    caption: "Macro-F1 = 0.961 and micro-F1 = 0.961 look uniformly strong, but the per-class bars reveal digit '8' (red, F1 = 0.920) as the weakest — exactly the gap a single pooled score hides.",
+    caption: "Concrete example: N=8 rows, 3 labels A/B/C with supports 7/5/2. The model nails common label A (precision 0.875, recall 1.0 -> F1 0.933) and B (F1 0.889) but never predicts the rare label C (F1 0.000). That single failure splits the averages: macro-F1 = 0.607 gives C a full 1/3 vote and crashes; micro-F1 = 0.846 pools all TP/FP/FN (11/1/3) so the easy labels dominate and C nearly vanishes; weighted-F1 = 0.784 weights by support and lands between. Hamming loss = 4/24 = 0.167 (only 4 of 24 label-slots wrong) looks mild, while exact-match accuracy = 4/8 = 0.500 punishes any imperfect row — same predictions, opposite mood. All numbers computed with scikit-learn 1.6.1.",
     code: `import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
+from sklearn.metrics import (hamming_loss, accuracy_score, f1_score,
+    precision_score, recall_score)
 
-X, y = load_digits(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(
-    X, y, test_size=0.3, random_state=0, stratify=y)
-clf = LogisticRegression(max_iter=5000, random_state=0).fit(Xtr, ytr)
-pred = clf.predict(Xte)
+# N=8 rows, 3 labels A/B/C; imbalanced supports 7/5/2.
+Y_true = np.array([[1,1,0],[1,0,0],[1,1,1],[1,0,0],
+                   [1,1,0],[1,0,1],[1,1,0],[0,1,0]])
+Y_pred = np.array([[1,1,0],[1,0,0],[1,1,0],[1,0,0],
+                   [1,0,0],[1,0,0],[1,1,0],[1,1,0]])
 
-per_class = f1_score(yte, pred, average=None)   # one F1 per digit 0..9
-worst = int(np.argmin(per_class))               # -> 8
-print("per-class F1:", np.round(per_class, 3))
-print("worst class:", worst, "F1=", round(per_class[worst], 3))
-print("macro F1   :", round(f1_score(yte, pred, average="macro"), 3))
-print("micro F1   :", round(f1_score(yte, pred, average="micro"), 3))`
+z = dict(zero_division=0)
+print("support       :", Y_true.sum(axis=0))         # [7 5 2]
+print("precision/lab :", np.round(precision_score(Y_true, Y_pred, average=None, **z), 3))
+print("recall/lab    :", np.round(recall_score(Y_true, Y_pred, average=None, **z), 3))
+print("F1/label      :", np.round(f1_score(Y_true, Y_pred, average=None, **z), 3))
+
+print("F1 macro      :", round(f1_score(Y_true, Y_pred, average="macro", **z), 3))
+print("F1 weighted   :", round(f1_score(Y_true, Y_pred, average="weighted", **z), 3))
+print("F1 micro      :", round(f1_score(Y_true, Y_pred, average="micro", **z), 3))
+
+print("Hamming loss  :", round(hamming_loss(Y_true, Y_pred), 3))   # 4/24
+print("exact-match   :", round(accuracy_score(Y_true, Y_pred), 3)) # 4/8`
   };
 })();

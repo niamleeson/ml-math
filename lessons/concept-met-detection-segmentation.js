@@ -270,46 +270,70 @@ print("Dice:", ds(pred_t, gt_t).item())
   };
 
   window.CODEVIZ[ID] = {
-    question: "Take one real handwritten 0 from load_digits, box its ink, and score candidate boxes by IoU — how fast does overlap fall as a box shifts or loosens?",
+    question: "How are IoU, Dice, and mAP actually computed? Take one shifted box, one tiny mask, and one ranked list of detections, and watch each formula fall out term by term.",
     charts: [
       {
         type: "bars",
-        title: "IoU of candidate boxes against the true digit-0 box",
-        xlabel: "candidate box",
-        ylabel: "IoU (overlap / union)",
-        labels: ["perfect", "loose +1 margin", "shift +1px", "too small", "big shift +3px"],
-        values: [1.0, 0.6, 0.574, 0.5, 0.231],
-        colors: ["#7ee787", "#4ea1ff", "#4ea1ff", "#ffb454", "#ff7b72"]
+        title: "IoU = intersection / union — term by term on a shifted box",
+        xlabel: "term",
+        ylabel: "value (square pixels, or ratio)",
+        labels: ["intersection 35", "union 61", "IoU = 35/61"],
+        values: [35, 61, 0.574],
+        valueLabels: ["35 px", "61 px", "0.574"],
+        colors: ["#ffb454", "#9aa7b4", "#4ea1ff"]
+      },
+      {
+        type: "bars",
+        title: "Dice = 2|A∩B| / (|A|+|B|) vs IoU on the same tiny mask (A=3, B=3, share 2)",
+        xlabel: "term",
+        ylabel: "value (pixels, or ratio)",
+        labels: ["2 x share = 4", "|A|+|B| = 6", "Dice = 4/6", "IoU = 2/4"],
+        values: [4, 6, 0.667, 0.5],
+        valueLabels: ["4 px", "6 px", "0.667", "0.500"],
+        colors: ["#ffb454", "#9aa7b4", "#7ee787", "#c89bff"]
+      },
+      {
+        type: "line",
+        title: "AP = area under the precision-recall curve (one class, IoU>=0.5)",
+        xlabel: "recall",
+        ylabel: "precision",
+        series: [
+          {
+            name: "precision envelope (area = AP = 0.683)",
+            color: "#4ea1ff",
+            points: [[0.0, 1.0], [0.2, 1.0], [0.4, 1.0], [0.6, 0.75], [0.8, 0.667], [0.8, 0.0], [1.0, 0.0]]
+          }
+        ]
       }
     ],
-    caption: "Real IoU on one load_digits '0': the perfect box scores 1.0, a 1-pixel-loose box 0.6, a 1-pixel shift 0.574, a too-tight box 0.5, and a 3-pixel shift only 0.231 — overlap collapses quickly once a box stops hugging the ink.",
+    caption: "Each formula computed from concrete inputs. IoU: a box shifted by 1px overlaps the truth in 35 of 61 union pixels, so IoU = 35/61 = 0.574. Dice: on a tiny mask (A=3, B=3, shared 2) Dice = 4/6 = 0.667 reads higher than IoU = 2/4 = 0.500 on the very same pixels. mAP: rank 6 detections of 5 ground-truth objects, take the precision-recall envelope, and AP is its area = 0.683; one missed object caps recall at 0.8 so the curve drops to 0. mAP is this AP averaged over classes (and, for COCO, over IoU thresholds).",
     code: `import numpy as np
-from sklearn.datasets import load_digits
 
-# one real 8x8 handwritten "0"
-img = load_digits().images[0]
-ink = img > 4                       # ink pixels
-ys, xs = np.where(ink)
-# true box from the ink extent, as (x0, y0, x1, y1)
-true_box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)   # (1, 0, 7, 8)
+# ---- IoU term by term: a box shifted by 1px (each box 48 px) ----
+inter = 5 * 7                         # overlap rectangle = 35
+union = 48 + 48 - inter              # 61
+print("IoU:", inter, "/", union, "=", round(inter / union, 3))   # 0.574
 
-def iou(a, b):
-    ix0, iy0 = max(a[0], b[0]), max(a[1], b[1])
-    ix1, iy1 = min(a[2], b[2]), min(a[3], b[3])
-    inter = max(0, ix1 - ix0) * max(0, iy1 - iy0)
-    union = (a[2]-a[0])*(a[3]-a[1]) + (b[2]-b[0])*(b[3]-b[1]) - inter
-    return inter / union if union else 0.0
+# ---- Dice vs IoU on a tiny mask: A=3 px, B=3 px, share 2 ----
+A, B, share = 3, 3, 2
+dice = 2 * share / (A + B)           # 4/6 = 0.667
+iou_mask = share / (A + B - share)   # 2/4 = 0.500
+print("Dice:", round(dice, 3), " IoU:", round(iou_mask, 3))
 
-x0, y0, x1, y1 = true_box
-candidates = {
-    "perfect":         true_box,
-    "loose +1 margin": (x0-1, y0-1, x1+1, y1+1),
-    "shift +1px":      (x0+1, y0+1, x1+1, y1+1),
-    "too small":       (x0+1, y0+1, x1-1, y1-1),
-    "big shift +3px":  (x0+3, y0+2, x1+3, y1+2),
-}
-for name, box in candidates.items():
-    print(name, round(iou(true_box, box), 3))
-# perfect 1.0 | loose +1 margin 0.6 | shift +1px 0.574 | too small 0.5 | big shift +3px 0.231`
+# ---- AP = area under the precision-recall curve (one class) ----
+gt = 5                               # 5 ground-truth objects
+dets = ["TP", "TP", "FP", "TP", "FP", "TP"]   # ranked by confidence desc
+tp = fp = 0
+pr = []
+for d in dets:
+    tp += (d == "TP"); fp += (d == "FP")
+    pr.append((tp / gt, tp / (tp + fp)))      # (recall, precision)
+
+# precision envelope: max precision at recall >= r, then integrate
+recs = sorted(set([0.0] + [r for r, _ in pr]))
+env = [(r, max([p for rr, p in pr if rr >= r], default=0.0)) for r in recs]
+ap = sum((r1 - r0) * p1 for (r0, _), (r1, p1) in zip(env, env[1:]))
+print("AP:", round(ap, 3))           # 0.683  (recall caps at 0.8 -> one miss)
+# mAP averages AP over classes; COCO mAP also averages over IoU thresholds.`
   };
 })();

@@ -260,8 +260,44 @@ print("\\nVIF (>5-10 => multicollinear):\\n", vif.round(2))
   };
 
   window.CODEVIZ["met-association"] = {
-    question: "Among several wine-chemistry features, which pairs move together — and is the trend linear (Pearson) or just monotonic (the rank story)?",
+    question: "Each association measure sees a DIFFERENT kind of 'move together'. How does Pearson r read a scatter, why do Spearman/Kendall beat it on a curve, and how do chi-square / Cramer's V / mutual information handle categories and any-shape links?",
     charts: [
+      {
+        type: "scatter",
+        title: "Pearson r = cov / (sX sY): a NOISY LINE — r = 0.98 (line fits the cloud)",
+        xlabel: "X",
+        ylabel: "Y",
+        groups: [
+          { name: "data (8 points)", color: "#4ea1ff", points: [[1, 2], [2, 2.5], [3, 4], [4, 3.8], [5, 5.5], [6, 6], [7, 6.5], [8, 8]] }
+        ],
+        lines: [
+          { name: "least-squares fit", color: "#ffb454", points: [[1, 1.88], [8, 7.69]] }
+        ]
+      },
+      {
+        type: "scatter",
+        title: "Pearson vs Spearman on Y = X^2 (rising curve): r = 0.98 but rho = tau = 1.00",
+        xlabel: "X",
+        ylabel: "Y",
+        groups: [
+          { name: "Y = X^2", color: "#7ee787", points: [[1, 1], [2, 4], [3, 9], [4, 16], [5, 25]] }
+        ],
+        lines: [
+          { name: "best straight line", color: "#ffb454", dash: true, points: [[1, -1], [5, 23]] }
+        ]
+      },
+      {
+        type: "scatter",
+        title: "Pearson r BLIND to a U-shape: r = 0.00 AND rho = 0.00 (a real link r cannot see)",
+        xlabel: "X",
+        ylabel: "Y",
+        groups: [
+          { name: "Y = X^2 (U)", color: "#c89bff", points: [[-3, 9], [-2, 4], [-1, 1], [0, 0], [1, 1], [2, 4], [3, 9]] }
+        ],
+        lines: [
+          { name: "fitted line (flat)", color: "#ffb454", points: [[-3, 4], [3, 4]] }
+        ]
+      },
       {
         type: "heatmap",
         title: "Pearson correlation matrix of 6 load_wine features (real computed r values)",
@@ -279,35 +315,64 @@ print("\\nVIF (>5-10 => multicollinear):\\n", vif.round(2))
       },
       {
         type: "bars",
+        title: "chi-square = sum (O-E)^2/E on weather x umbrella: 4 cells each add 4.0 -> chi2 = 16, Cramer's V = 0.40",
+        xlabel: "contingency cell (observed O, expected E)",
+        ylabel: "(O - E)^2 / E",
+        labels: ["sunny,yes O35 E25", "sunny,no O15 E25", "rainy,yes O15 E25", "rainy,no O35 E25", "TOTAL chi2"],
+        values: [4.0, 4.0, 4.0, 4.0, 16.0],
+        valueLabels: ["4.0", "4.0", "4.0", "4.0", "16.0"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787"]
+      },
+      {
+        type: "bars",
         title: "Mutual information of each wine feature with the wine-class target (nonlinear-aware ranking)",
         xlabel: "feature",
         ylabel: "mutual information (bits)",
         labels: ["flavanoids", "proline", "color_int", "od280", "alcohol", "hue", "phenols", "proantho"],
         values: [0.666, 0.567, 0.552, 0.506, 0.473, 0.446, 0.404, 0.296],
         valueLabels: ["0.67", "0.57", "0.55", "0.51", "0.47", "0.45", "0.40", "0.30"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"]
       }
     ],
-    caption: "Heatmap: bright cells are strong Pearson correlations — e.g. flavanoids and od280 (r=0.79) are near-twins, while color_intensity and hue move oppositely (r=-0.52); a near-zero cell like alcohol-vs-hue (r=-0.07) only rules out a LINE. Bars: mutual information ranks features by any-shape dependence with the target, flagging flavanoids and proline as the most informative.",
+    caption: "Scatter 1 (Pearson r): a noisy straight line scores r=0.98 — the orange least-squares line tracks the cloud. Scatter 2 (Spearman/Kendall): Y=X^2 is a perfect rising curve, so the ranks line up exactly and rho=tau=1.00, but the straight-line fit (dashed) only manages r=0.98 — the rank measures are the honest ones for a curve. Scatter 3: a symmetric U gives r=0.00 AND rho=0.00 (a U is not monotonic), so the flat fitted line shows why r is structurally blind here — you need MI / distance correlation. Bars (chi-square / Cramer's V): on the 2x2 weather-vs-umbrella table (sunny 35/15, rainy 15/35, all expected 25 under independence) every cell contributes (O-E)^2/E = (35-25)^2/25 = 4.0, summing to chi2=16, and Cramer's V = sqrt(16/(100*1)) = 0.40. Bars (mutual information): ranks wine features by any-shape dependence with the class target, flagging flavanoids (0.67) and proline (0.57). Heatmap: bright cells are strong Pearson correlations — flavanoids and od280 (r=0.79) are near-twins; color_intensity vs hue move oppositely (r=-0.52); alcohol vs hue (r=-0.07) only rules out a LINE.",
     code: `import numpy as np
+from scipy import stats
 from sklearn.datasets import load_wine
 from sklearn.feature_selection import mutual_info_classif
 
-wine = load_wine()
-names = wine.feature_names
+# --- scatter 1: Pearson r on a noisy line ---
+x = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+y = np.array([2, 2.5, 4, 3.8, 5.5, 6, 6.5, 8])
+print("noisy line  r =", round(stats.pearsonr(x, y)[0], 2))   # 0.98
+m, b = np.polyfit(x, y, 1)                                     # least-squares line
+
+# --- scatter 2 & 3: Pearson vs Spearman on a curve ---
+xc = np.array([1, 2, 3, 4, 5]); yc = xc ** 2                   # rising curve
+print("Y=X^2  r =", round(stats.pearsonr(xc, yc)[0], 3),       # 0.981
+      " rho =", round(stats.spearmanr(xc, yc)[0], 2),          # 1.00
+      " tau =", round(stats.kendalltau(xc, yc)[0], 2))         # 1.00
+xu = np.array([-3, -2, -1, 0, 1, 2, 3]); yu = xu ** 2          # symmetric U
+print("U-shape  r =", round(stats.pearsonr(xu, yu)[0], 2),     # 0.00
+      " rho =", round(stats.spearmanr(xu, yu)[0], 2))          # 0.00
+
+# --- bars: chi-square + Cramer's V on a 2x2 contingency table ---
+table = np.array([[35, 15],     # sunny: umbrella yes / no
+                  [15, 35]])    # rainy: umbrella yes / no
+chi2, p, dof, exp = stats.chi2_contingency(table, correction=False)
+n = table.sum(); k, mm = table.shape
+terms = (table - exp) ** 2 / exp                              # each cell = 4.0
+print("expected =", exp.tolist(), " per-cell (O-E)^2/E =", terms.round(1).tolist())
+print("chi2 =", round(chi2, 1),                               # 16.0
+      " Cramer's V =", round(np.sqrt(chi2 / (n * (min(k, mm) - 1))), 2))  # 0.40
+
+# --- heatmap + MI bars on real wine data ---
+wine = load_wine(); names = wine.feature_names
 pick = ["alcohol", "flavanoids", "color_intensity", "hue",
         "od280/od315_of_diluted_wines", "proline"]
-idx = [names.index(p) for p in pick]
-
-# --- heatmap: Pearson correlation matrix among the chosen features ---
-X = wine.data[:, idx]
-corr = np.corrcoef(X.T)                       # 6x6, diagonal = 1.0
+corr = np.corrcoef(wine.data[:, [names.index(p) for p in pick]].T)   # 6x6, diag 1.0
 print(np.round(corr, 2))
-
-# --- bars: mutual information of EVERY feature with the 3-class target ---
 mi = mutual_info_classif(wine.data, wine.target, random_state=0)
-order = np.argsort(mi)[::-1][:8]
-for i in order:
+for i in np.argsort(mi)[::-1][:8]:
     print(f"{names[i]:>30s}  MI = {mi[i]:.3f}")`
   };
 })();

@@ -253,47 +253,101 @@ print("LPIPS:", lpips(out, target).item())
   };
 
   window.CODEVIZ["met-generative"] = {
-    question: "Does a real FID-style distance stay tiny for two halves of the SAME class, and blow up for a different class or a noised 'generated' set?",
-    charts: [{
-      type: "bars",
-      title: "Frechet (FID-style) distance in a 10-D feature space — real digits vs three comparison sets",
-      xlabel: "what we compare the real class against",
-      ylabel: "Frechet distance (lower = closer)",
-      labels: ["same class\\n(real vs real)", "other class\\n(real vs digit 1)", "noised 'generated'\\n(real + noise)"],
-      values: [0.06, 8.18, 6.18],
-      valueLabels: ["0.06", "8.18", "6.18"],
-      colors: ["#7ee787", "#ff7b72", "#ffb454"]
-    }],
-    caption: "Real numbers on load_digits (1797 real 8x8 handwritten digits). We take PCA features (10 dims) as a stand-in for an Inception network, then apply the exact Frechet formula (means + covariances). Two random halves of digit-0 give a tiny 0.06 — same distribution, so the clouds overlap. Comparing digit-0 against digit-1 jumps to 8.18, and against a noised copy of digit-0 to 6.18: a different or corrupted distribution lands far away. This isolates the distribution-distance idea; a real FID swaps the PCA features for a pretrained Inception network and uses tens of thousands of images.",
+    question: "What does each generative metric actually measure? See FID split into its mean and covariance terms, watch FID fall to 0 as the fakes approach the real statistics, and read fidelity-vs-diversity off precision/recall — plus what a good Inception Score looks like.",
+    charts: [
+      {
+        type: "bars",
+        title: "FID = ||mu_r-mu_g||^2 + Tr(S_r+S_g-2(S_r S_g)^1/2): the two terms add up",
+        xlabel: "the two pieces of the FID formula, then their sum",
+        ylabel: "contribution to FID (lower = closer)",
+        labels: ["mean term", "covariance term", "FID total"],
+        values: [13.0, 2.0, 15.0],
+        valueLabels: ["13.0", "2.0", "15.0"],
+        colors: ["#4ea1ff", "#c89bff", "#ffb454"]
+      },
+      {
+        type: "line",
+        title: "FID drops to 0 as the generated cloud approaches the real-feature stats",
+        xlabel: "fraction of the way from a bad generator to the real distribution",
+        ylabel: "FID (lower = better)",
+        series: [{
+          name: "FID",
+          color: "#7ee787",
+          points: [[0, 31.25], [0.25, 17.58], [0.5, 7.81], [0.75, 1.95], [1.0, 0.0]]
+        }]
+      },
+      {
+        type: "bars",
+        title: "Precision (fidelity) vs recall (diversity) for three generators",
+        xlabel: "blue = precision (do fakes look real?), green = recall (do fakes cover the range?)",
+        ylabel: "fraction (0 to 1)",
+        labels: ["lowdiv prec", "lowdiv rec", "lowfid prec", "lowfid rec", "good prec", "good rec"],
+        values: [1.0, 0.46, 0.14, 0.28, 0.88, 1.0],
+        valueLabels: ["1.00", "0.46", "0.14", "0.28", "0.88", "1.00"],
+        colors: ["#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Inception Score = exp(E_x KL(p(y|x) || p(y))): rewards confident AND varied",
+        xlabel: "generator type (3 classes, so the best possible IS is 3.0)",
+        ylabel: "Inception Score (higher = better)",
+        labels: ["confident + varied", "all one class", "blurry/unsure"],
+        values: [2.02, 1.0, 1.01],
+        valueLabels: ["2.02", "1.00", "1.01"],
+        colors: ["#7ee787", "#ff7b72", "#ffb454"]
+      }
+    ],
+    caption: "Real numbers from a concrete low-dimensional Gaussian feature example you can compute by hand. (1) FID term split: real cloud mu_r=[10,5], S_r=diag(4,1); a bad generator mu_g=[12,8], S_g=diag(9,4). Mean term = (10-12)^2+(5-8)^2 = 13.0; covariance term = Tr(diag(4,1)+diag(9,4)-2*diag(6,2)) = 1+1 = 2.0; FID = 15.0. (2) Sliding the generator from a far-off bad cloud (mu=[13,9], std=[4,2.5]) toward the real stats, FID falls 31.25 -> 17.58 -> 7.81 -> 1.95 -> 0.0 (exactly 0 when the fakes match the reals). (3) Precision/recall on 2-D feature clouds via k-NN manifolds (k=3, 50 points each): a low-diversity generator scores precision 1.00 but recall 0.46 (fakes look real but cover little); a low-fidelity one gets 0.14 / 0.28; a balanced one 0.88 / 1.00 — exactly the fidelity-vs-diversity split FID hides. (4) Inception Score over 3 classes: confident-and-varied label guesses give 2.02, but emitting all one class gives 1.00 and blurry/unsure guesses 1.01 (max possible = number of classes = 3.0).",
     code: `import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.decomposition import PCA
 from scipy.linalg import sqrtm
 
-d = load_digits()                          # 1797 real 8x8 handwritten digits
-X, y = d.data / 16.0, d.target
+# ---------- (1) FID term-by-term, concrete 2-D Gaussian features ----------
+mu_r = np.array([10.0, 5.0]); S_r = np.diag([4.0, 1.0])   # real cloud
+def fid(mu_g, S_g):
+    covmean = sqrtm(S_r @ S_g)
+    if np.iscomplexobj(covmean): covmean = covmean.real
+    mean_term = float((mu_r - mu_g) @ (mu_r - mu_g))
+    cov_term  = float(np.trace(S_r + S_g - 2 * covmean))
+    return mean_term, cov_term, mean_term + cov_term
+print("FID terms:", fid(np.array([12.0, 8.0]), np.diag([9.0, 4.0])))  # 13.0 2.0 15.0
 
-# PCA -> a shared 10-D 'feature space' standing in for an Inception network
-F = PCA(n_components=10, random_state=0).fit_transform(X)
-c0, c1 = F[y == 0], F[y == 1]              # real class 0, real class 1
+# ---------- (2) FID falls as the generator approaches the real stats ----------
+mu_far, sd_far = np.array([13.0, 9.0]), np.array([4.0, 2.5])
+sd_r = np.sqrt(np.diag(S_r))
+for t in [0.0, 0.25, 0.5, 0.75, 1.0]:
+    mu_g = (1 - t) * mu_far + t * mu_r
+    sd_g = (1 - t) * sd_far + t * sd_r
+    print("t=", t, "FID=", round(fid(mu_g, np.diag(sd_g ** 2))[2], 2))
+# 31.25 -> 17.58 -> 7.81 -> 1.95 -> 0.0
 
-rng = np.random.RandomState(0)
-idx = rng.permutation(len(c0))
-half_a = c0[idx[:len(c0)//2]]              # split class 0 in two halves
-half_b = c0[idx[len(c0)//2:]]
-noised = c0 + rng.normal(0, 1.0, c0.shape) # a 'generated' set = class 0 + noise
+# ---------- (3) precision (fidelity) & recall (diversity) via k-NN manifolds ----------
+def radii(pts, k=3):
+    return np.array([np.sort(np.linalg.norm(pts - p, axis=1))[k] for p in pts])
+def inside(query, pts, R):
+    return np.array([np.any(np.linalg.norm(pts - q, axis=1) <= R) for q in query])
+def prec_recall(real, fake):
+    Rr, Rf = radii(real), radii(fake)
+    return inside(fake, real, Rr).mean(), inside(real, fake, Rf).mean()
+np.random.seed(1)
+real     = np.random.normal(0, 1.0, (50, 2))
+lowdiv   = np.random.normal(0, 0.3, (50, 2))               # tight cluster
+lowfid   = np.random.normal(0, 1.0, (50, 2)) + [2.5, 2.5]  # off the manifold
+good     = np.random.normal(0, 1.0, (50, 2))
+for name, g in [("lowdiv", lowdiv), ("lowfid", lowfid), ("good", good)]:
+    p, r = prec_recall(real, g)
+    print(name, "precision=", round(p, 2), "recall=", round(r, 2))
+# lowdiv 1.00/0.46   lowfid 0.14/0.28   good 0.88/1.00
 
-def frechet(P, Q):                         # the exact FID formula
-    mu1, mu2 = P.mean(0), Q.mean(0)
-    s1, s2 = np.cov(P, rowvar=False), np.cov(Q, rowvar=False)
-    covmean = sqrtm(s1 @ s2)
-    if np.iscomplexobj(covmean):
-        covmean = covmean.real
-    diff = mu1 - mu2
-    return float(diff @ diff + np.trace(s1 + s2 - 2 * covmean))
-
-print("same class :", round(frechet(half_a, half_b), 2))   # 0.06
-print("other class:", round(frechet(c0, c1), 2))           # 8.18
-print("noised gen :", round(frechet(c0, noised), 2))       # 6.18`
+# ---------- (4) Inception Score = exp(E_x KL(p(y|x) || p(y))) ----------
+def inception_score(pyx):
+    pyx = np.array(pyx); py = pyx.mean(0)
+    kls = [np.sum(row * np.log(row / py)) for row in pyx]
+    return float(np.exp(np.mean(kls)))
+varied = [[.9, .05, .05], [.05, .9, .05], [.05, .05, .9]]   # confident + varied
+oneclass = [[.9, .05, .05]] * 3                              # confident, no variety
+blurry = [[.4, .35, .25], [.3, .4, .3], [.3, .3, .4]]        # unsure
+print("IS varied=", round(inception_score(varied), 2),
+      "oneclass=", round(inception_score(oneclass), 2),
+      "blurry=", round(inception_score(blurry), 2))           # 2.02 1.00 1.01`
   };
 })();

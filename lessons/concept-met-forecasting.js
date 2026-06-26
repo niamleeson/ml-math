@@ -284,11 +284,11 @@ print(f"sklearn pinball(q=0.9)={mean_pinball_loss(test, model_fc, alpha=0.9):.3f
   };
 
   window.CODEVIZ["met-forecasting"] = {
-    question: "On a real-shaped monthly series split by time, does a trend-aware seasonal model actually beat the naive last-season baseline?",
+    question: "On a real-shaped monthly series split by time: how do MAE, sMAPE, MASE and interval coverage each score this forecast, and does it beat the naive last-season baseline?",
     charts: [
       {
         type: "line",
-        title: "Actual vs forecast over the 12 held-out months",
+        title: "Forecast vs actual over time (model beats the naive baseline)",
         xlabel: "future month index",
         ylabel: "value",
         series: [
@@ -299,41 +299,80 @@ print(f"sklearn pinball(q=0.9)={mean_pinball_loss(test, model_fc, alpha=0.9):.3f
       },
       {
         type: "bars",
-        title: "Model vs naive baseline (lower is better)",
-        labels: ["MASE model", "MASE naive", "RMSE model", "RMSE naive"],
-        values: [0.185, 1.003, 5.17, 22.25],
-        colors: ["#4ea1ff", "#9aa7b4", "#4ea1ff", "#9aa7b4"]
+        title: "MAE = average of the per-month |error| (mean = 4.03)",
+        labels: ["m49", "m50", "m51", "m52", "m53", "m54", "m55", "m56", "m57", "m58", "m59", "m60", "MAE"],
+        values: [8.4, 5.4, 3.0, 4.7, 0.5, 4.2, 0.3, 4.3, 3.6, 11.7, 0.6, 1.7, 4.03],
+        valueLabels: ["8.4", "5.4", "3.0", "4.7", "0.5", "4.2", "0.3", "4.3", "3.6", "11.7", "0.6", "1.7", "4.03"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"]
+      },
+      {
+        type: "bars",
+        title: "MASE = MAE / MAE_naive: model error vs the naive baseline's error",
+        labels: ["MAE model", "MAE naive (=scale)", "MASE = ratio"],
+        values: [4.03, 21.82, 0.185],
+        valueLabels: ["4.03", "21.82", "0.185"],
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Error metrics: model vs naive (lower is better; sMAPE in %)",
+        labels: ["MAE", "RMSE", "sMAPE %", "MASE"],
+        series: [
+          { name: "model", color: "#4ea1ff", points: [[0, 4.03], [1, 5.17], [2, 2.13], [3, 0.185]] },
+          { name: "naive", color: "#9aa7b4", points: [[0, 21.82], [1, 22.25], [2, 11.88], [3, 1.003]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "90% interval coverage = fraction of actuals inside the band (10/12 = 83%)",
+        xlabel: "future month index",
+        ylabel: "value",
+        series: [
+          { name: "actual", color: "#7ee787", points: [[49, 195.5], [50, 199.1], [51, 209.2], [52, 202.7], [53, 205.6], [54, 209.4], [55, 204.7], [56, 192.8], [57, 175.5], [58, 178.6], [59, 184.4], [60, 206.0]] },
+          { name: "upper bound", color: "#ffb454", points: [[49, 194.7], [50, 212.1], [51, 213.8], [52, 205.6], [53, 213.7], [54, 212.8], [55, 212.6], [56, 196.1], [57, 179.5], [58, 174.5], [59, 191.4], [60, 215.3]] },
+          { name: "lower bound", color: "#ffb454", points: [[49, 179.5], [50, 196.9], [51, 198.6], [52, 190.4], [53, 198.5], [54, 197.6], [55, 197.4], [56, 180.9], [57, 164.3], [58, 159.3], [59, 176.2], [60, 200.1]] }
+        ]
       }
     ],
-    caption: "Split BY TIME (train months 1-48, test 49-60). The trend-aware seasonal model (blue) tracks the actuals (green) far better than the seasonal-naive baseline (grey), which lags a whole year of growth. MASE = 0.185 is well below 1, so the model beats naive (whose MASE is ~1 by definition); RMSE drops from 22.25 to 5.17. A model with MASE ≥ 1 would be no better than just repeating last season.",
+    caption: "Split BY TIME (train months 1-48, test 49-60). Chart 1: the model (blue) tracks actuals (green); the seasonal-naive baseline (grey) lags a year of growth. Chart 2: MAE = 4.03 is just the average of the 12 per-month |error| bars. Chart 3: MASE = MAE/MAE_naive = 4.03/21.82 = 0.185 — dividing by the naive baseline's error puts the score on a baseline ruler, and below 1 means the model beats naive. Chart 4: on every metric the model (blue) crushes naive (grey); MASE naive ~ 1.00 by definition. Chart 5: a nominal 90% interval (forecast +/- 1.645*sigma) catches 10 of 12 actuals (83% coverage) — the two misses (months 49 and 58) are where over- vs under-coverage shows. All numbers computed below.",
     code: `import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# real-shaped monthly series: trend + yearly season + noise
-rng = np.random.default_rng(7)
-t = np.arange(60)
-y = (100 + 1.8*t
-     + 18*np.sin(2*np.pi*(t % 12)/12) + 8*np.cos(2*np.pi*(t % 12)/6)
-     + rng.normal(0, 4, 60)).round(1)
+# the 12 held-out months: actual, model forecast, seasonal-naive baseline
+actual = np.array([195.5,199.1,209.2,202.7,205.6,209.4,
+                   204.7,192.8,175.5,178.6,184.4,206.0])
+model  = np.array([187.1,204.5,206.2,198.0,206.1,205.2,
+                   205.0,188.5,171.9,166.9,183.8,207.7])
+naive  = np.array([168.0,185.4,187.1,178.9,187.0,186.1,
+                   185.9,169.4,152.8,147.8,164.7,188.6])
 
-m = 12
-train, test = y[:48], y[48:]            # SPLIT BY TIME (never randomly)
+def mae(a,f):  return mean_absolute_error(a,f)
+def rmse(a,f): return np.sqrt(mean_squared_error(a,f))
+def smape(a,f):return 100*np.mean(np.abs(a-f)/((np.abs(a)+np.abs(f))/2))
 
-naive_fc = train[-m:]                    # seasonal-naive baseline
-slope = np.polyfit(np.arange(48), train, 1)[0]
-model_fc = (naive_fc + slope*m).round(1) # trend-aware seasonal model
+# MAE is literally the mean of the per-month absolute errors (chart 2)
+print("per-month |err|:", np.abs(actual-model).round(1).tolist())
+print("MAE model:", round(mae(actual,model),3))      # 4.03
 
-def mase(y_train, y_true, y_pred, season):
-    scale = np.mean(np.abs(y_train[season:] - y_train[:-season]))
-    return mean_absolute_error(y_true, y_pred) / scale
+# MASE = MAE / MAE_naive: the naive baseline's error is the scale (chart 3)
+scale = mae(actual,naive)                              # 21.82 = MASE denominator
+print("MAE naive (scale):", round(scale,3))
+print("MASE model:", round(mae(actual,model)/scale,3))# 0.185 -> beats naive
+print("MASE naive:", round(mae(actual,naive)/scale,3))# 1.0 by definition
 
-print("months 49..60:", list(range(49, 61)))
-print("actual:", test.tolist())
-print("model :", model_fc.tolist())
-print("naive :", naive_fc.tolist())
-print("MASE model:", round(mase(train, test, model_fc, m), 3))
-print("MASE naive:", round(mase(train, test, naive_fc, m), 3))
-print("RMSE model:", round(np.sqrt(mean_squared_error(test, model_fc)), 2))
-print("RMSE naive:", round(np.sqrt(mean_squared_error(test, naive_fc)), 2))`
+# all error metrics, model vs naive (chart 4)
+for name,f in [("model",model),("naive",naive)]:
+    print(name, "MAE",round(mae(actual,f),2),
+          "RMSE",round(rmse(actual,f),2),
+          "sMAPE",round(smape(actual,f),2),
+          "MASE",round(mae(actual,f)/scale,3))
+
+# 90% prediction interval coverage (chart 5)
+sigma = (actual-model).std(ddof=1)                    # residual std = 4.59
+hw = 1.645*sigma                                       # 90% half-width
+lower, upper = model-hw, model+hw
+inside = (actual>=lower) & (actual<=upper)
+print("coverage:", int(inside.sum()), "/", len(actual),
+      "=", round(100*inside.mean(),1), "%")            # 10/12 = 83.3%`
   };
 })();

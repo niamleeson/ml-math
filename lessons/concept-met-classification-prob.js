@@ -261,48 +261,70 @@ print(f"threshold maximizing TPR - FPR: {best:.3f}")`
   };
 
   window.CODEVIZ["met-classification-prob"] = {
-    question: "On a real classifier (logistic regression on load_breast_cancer), how do the ROC and Precision–Recall curves look, and what do their areas (AUCs) say?",
+    question: "Take 12 scored examples (6 positive, 6 negative) and sweep the threshold. What do ROC-AUC, the precision–recall curve, and the two probability-quality losses (log loss, Brier) actually look like — and why does one loss explode while the other stays calm?",
     charts: [
       {
+        type: "roc",
+        title: "ROC-AUC = P(a positive outscores a negative) — area under the TPR-vs-FPR sweep",
+        auc: 0.778,
+        points: [[0.0, 0.0], [0.0, 0.167], [0.0, 0.333], [0.167, 0.333], [0.167, 0.5], [0.167, 0.667], [0.333, 0.667], [0.333, 0.833], [0.5, 0.833], [0.667, 0.833], [0.667, 1.0], [0.833, 1.0], [1.0, 1.0]]
+      },
+      {
         type: "line",
-        title: "ROC curve vs Precision–Recall curve (breast-cancer test set)",
-        xlabel: "FPR (ROC) / Recall (PR)",
-        ylabel: "TPR (ROC) / Precision (PR)",
+        title: "Precision–Recall curve — Average Precision (PR-AUC) = 0.811, no-skill baseline = 0.5",
+        xlabel: "recall = TP/(TP+FN)",
+        ylabel: "precision = TP/(TP+FP)",
         series: [
-          { name: "ROC  (AUC = 0.996)", color: "#c89bff", points: [[0.0, 0.0], [0.0, 0.009], [0.0, 0.897], [0.016, 0.897], [0.016, 0.916], [0.031, 0.916], [0.047, 0.953], [0.047, 0.972], [0.062, 0.972], [0.062, 0.981], [0.078, 0.981], [1.0, 1.0]] },
-          { name: "PR  (AP = 0.997)", color: "#7ee787", points: [[0.0, 1.0], [0.15, 1.0], [0.299, 1.0], [0.439, 1.0], [0.589, 1.0], [0.729, 1.0], [0.879, 1.0], [0.981, 0.963], [1.0, 0.856], [1.0, 0.764], [1.0, 0.686], [1.0, 0.626]] },
-          { name: "random ROC", color: "#9aa7b4", points: [[0.0, 0.0], [1.0, 1.0]] }
+          { name: "PR curve (AP = 0.811)", color: "#7ee787", points: [[0.167, 1.0], [0.333, 1.0], [0.333, 0.667], [0.5, 0.75], [0.667, 0.8], [0.667, 0.667], [0.833, 0.714], [0.833, 0.625], [0.833, 0.556], [1.0, 0.6], [1.0, 0.545], [1.0, 0.5]] },
+          { name: "no-skill (positive rate 0.5)", color: "#9aa7b4", points: [[0.0, 0.5], [1.0, 0.5]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "Log loss vs Brier: per-example loss as the predicted probability moves, for a TRUE positive (y=1)",
+        xlabel: "predicted probability p (truth is positive)",
+        ylabel: "loss contributed by this example",
+        series: [
+          { name: "log loss term = -ln(p)", color: "#ff7b72", points: [[0.05, 2.996], [0.1, 2.303], [0.2, 1.609], [0.3, 1.204], [0.4, 0.916], [0.5, 0.693], [0.6, 0.511], [0.7, 0.357], [0.8, 0.223], [0.9, 0.105], [0.95, 0.051], [0.99, 0.01]] },
+          { name: "Brier term = (p-1)^2", color: "#4ea1ff", points: [[0.05, 0.902], [0.1, 0.81], [0.2, 0.64], [0.3, 0.49], [0.4, 0.36], [0.5, 0.25], [0.6, 0.16], [0.7, 0.09], [0.8, 0.04], [0.9, 0.01], [0.95, 0.003], [0.99, 0.0]] }
         ]
       }
     ],
-    caption: "Both curves bow toward the top: ROC-AUC = 0.996 (random would be the dashed-style diagonal at 0.5) and Average Precision = 0.997 (random would be flat at the 0.626 positive rate). The PR curve's right end falls to 0.626 — the test set's positive rate — which is the precision a no-skill model would have.",
+    caption: "All numbers come from one concrete set of 12 scored examples (scores 0.95…0.10, labels alternating so 6 are positive). Sweeping the threshold over the distinct scores traces the ROC sweep (ROC-AUC = 0.778, equal to the 28 of 36 positive–negative pairs ranked correctly) and the precision–recall sweep (Average Precision = 0.811; a no-skill model would sit flat at the 0.5 positive rate). The third chart fixes one true positive (y=1) and slides its predicted probability: the red log-loss term −ln(p) shoots toward infinity as p→0 (a confident wrong call dominates the average), while the blue Brier term (p−1)^2 can never exceed 1. That is the 'log loss explodes, Brier stays bounded' contrast from the pitfalls, drawn out.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import (roc_curve, roc_auc_score,
-                             precision_recall_curve, average_precision_score)
 
-X, y = load_breast_cancer(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(
-    X, y, test_size=0.3, random_state=0, stratify=y)
-sc = StandardScaler().fit(Xtr)
-clf = LogisticRegression(max_iter=5000).fit(sc.transform(Xtr), ytr)
-p = clf.predict_proba(sc.transform(Xte))[:, 1]
+# 12 concrete scored examples: (label, score). label 1 = positive.
+data = [(1,0.95),(1,0.90),(0,0.85),(1,0.80),(1,0.70),(0,0.65),
+        (1,0.60),(0,0.50),(0,0.40),(1,0.35),(0,0.30),(0,0.10)]
+y = np.array([d[0] for d in data]); s = np.array([d[1] for d in data])
+P, N = y.sum(), (1 - y).sum()                       # 6 positives, 6 negatives
 
-print("positive rate:", round(yte.mean(), 3))           # 0.626
-print("ROC-AUC:", round(roc_auc_score(yte, p), 4))      # 0.9956
-print("Avg Precision:", round(average_precision_score(yte, p), 4))  # 0.9974
+# --- ROC-AUC: pairwise = P(random positive outscores random negative) ---
+pos, neg = s[y == 1], s[y == 0]
+auc = np.mean([1.0 if a > b else 0.5 if a == b else 0.0
+               for a in pos for b in neg])
+print("ROC-AUC:", round(auc, 4))                    # 0.7778  (28/36 pairs)
 
-fpr, tpr, _ = roc_curve(yte, p)
-prec, rec, _ = precision_recall_curve(yte, p)
+# --- threshold sweep -> ROC and PR points ---
+roc, pr = [(0.0, 0.0)], []
+for t in sorted(set(s), reverse=True):
+    pred = s >= t
+    tp = np.sum(pred & (y == 1)); fp = np.sum(pred & (y == 0))
+    fn = np.sum(~pred & (y == 1))
+    roc.append((round(fp / N, 3), round(tp / P, 3)))
+    prec = tp / (tp + fp) if tp + fp else 1.0
+    pr.append((round(tp / P, 3), round(prec, 3)))    # (recall, precision)
+roc.append((1.0, 1.0))
+ap, prev = 0.0, 0.0
+for r, prc in pr:
+    ap += (r - prev) * prc; prev = r
+print("ROC points:", roc)
+print("PR points :", pr)
+print("Average Precision:", round(ap, 4))           # 0.8106
 
-def thin(a, b, n=12):                                   # subsample for plotting
-    idx = np.linspace(0, len(a) - 1, n).astype(int)
-    return [[round(float(a[i]), 3), round(float(b[i]), 3)] for i in idx]
-
-print("ROC points:", thin(fpr, tpr))
-print("PR  points:", thin(rec, prec))`
+# --- log loss vs Brier as a function of predicted prob, for a true positive ---
+grid = [0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]
+for p in grid:
+    print(f"p={p:<4} -ln(p)={-np.log(p):.3f}  (p-1)^2={(p-1)**2:.3f}")`
   };
 })();

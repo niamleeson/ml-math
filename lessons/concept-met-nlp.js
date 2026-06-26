@@ -254,76 +254,114 @@ print("BERTScore (tm):", BERTScore()(cand, [r[0] for r in refs])["f1"])`
   };
 
   window.CODEVIZ["met-nlp"] = {
-    question: "Given one human reference and three machine candidates, do the metrics agree on which candidate is best — high BLEU and ROUGE, low WER for the good one?",
-    charts: [{
-      type: "bars",
-      title: "Three candidates vs one reference: BLEU-1 & ROUGE-1 reward the close match, WER punishes errors",
-      xlabel: "candidate (A best, C worst)",
-      ylabel: "score (0..1)",
-      labels: ["A BLEU-1", "A ROUGE-1", "A WER", "B BLEU-1", "B ROUGE-1", "B WER", "C BLEU-1", "C ROUGE-1", "C WER"],
-      values: [1.0, 1.0, 0.0, 0.778, 0.778, 0.222, 0.571, 0.5, 0.889],
-      valueLabels: ["1.00", "1.00", "0.00", "0.78", "0.78", "0.22", "0.57", "0.50", "0.89"],
-      colors: ["#4ea1ff", "#7ee787", "#ffb454", "#4ea1ff", "#7ee787", "#ffb454", "#4ea1ff", "#7ee787", "#ffb454"]
-    }],
-    caption: "Reference: \"the quick brown fox jumps over the lazy dog\". Candidate A is an exact copy (BLEU-1 = ROUGE-1 = 1.00, WER = 0.00). Candidate B (\"a quick brown fox jumped over the lazy dog\") has two changed words, so overlap drops to 0.78 and WER rises to 0.22. Candidate C (\"the dog ran past a brown fox\") shares few words: BLEU-1 = 0.57, ROUGE-1 = 0.50, WER = 0.89. Every metric agrees on the ranking A > B > C — BLEU/ROUGE up, WER down for the better candidate. All numbers are computed below with numpy only (edit distance for WER, clipped n-gram overlap for BLEU-1 and ROUGE-1).",
+    question: "On one fixed reference vs one candidate, how is each metric actually built? Watch BLEU come together from its n-gram precisions and brevity penalty, see why BLEU and ROUGE disagree, see ROUGE's recall/precision/F split, and see perplexity as exp of average surprise.",
+    charts: [
+      {
+        type: "bars",
+        title: "BLEU = BP x geometric-mean(p1..p4) — term by term",
+        xlabel: "term",
+        ylabel: "value (0..1)",
+        labels: ["p1", "p2", "p3", "p4", "BP", "BLEU"],
+        values: [1.0, 0.8, 0.75, 0.6667, 0.8465, 0.6732],
+        valueLabels: ["1.00", "0.80", "0.75", "0.667", "0.847", "0.673"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Same candidate, different rulers: BLEU vs ROUGE-1 vs ROUGE-L",
+        xlabel: "metric",
+        ylabel: "score (0..1)",
+        labels: ["BLEU (n=4)", "ROUGE-1 F1", "ROUGE-L F1"],
+        values: [0.6732, 0.9231, 0.9231],
+        valueLabels: ["0.673", "0.923", "0.923"],
+        colors: ["#7ee787", "#c89bff", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "ROUGE-1 = F1 of unigram recall & precision",
+        xlabel: "component",
+        ylabel: "value (0..1)",
+        labels: ["recall = 6/7", "precision = 6/6", "F1"],
+        values: [0.8571, 1.0, 0.9231],
+        valueLabels: ["0.857", "1.00", "0.923"],
+        colors: ["#4ea1ff", "#c89bff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Perplexity = exp(cross-entropy): per-token surprise -ln P, then exp of their mean",
+        xlabel: "token surprise (nats), then summary",
+        ylabel: "value",
+        labels: ["t1 P=.5", "t2 P=.4", "t3 P=.1", "t4 P=.25", "t5 P=.2", "cross-ent", "perplexity"],
+        values: [0.6931, 0.9163, 2.3026, 1.3863, 1.6094, 1.3816, 3.9811],
+        valueLabels: ["0.69", "0.92", "2.30", "1.39", "1.61", "1.38", "3.98"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"]
+      }
+    ],
+    caption: "Reference: \"the cat sat on the warm mat\" (7 words). Candidate: \"the cat sat on the mat\" (6 words). Chart 1 (BLEU): clipped n-gram precisions are p1=6/6=1.00, p2=4/5=0.80, p3=3/4=0.75, p4=2/3=0.667; the candidate is shorter (c=6 < r=7) so BP=exp(1-7/6)=0.847; BLEU = BP x (p1 p2 p3 p4)^(1/4) = 0.847 x 0.795 = 0.673. Chart 2: on the SAME pair, BLEU=0.673 is lower than ROUGE-1 F1=0.923 and ROUGE-L F1=0.923 — BLEU's geometric mean over higher n-grams plus the brevity penalty is harsher than ROUGE's unigram F1. Chart 3 (ROUGE-1): 6 reference words are matched, so recall=6/7=0.857, precision=6/6=1.00, F1=2RP/(R+P)=0.923. Chart 4 (perplexity, separate toy example): a model assigns probabilities 0.5,0.4,0.1,0.25,0.2 to five tokens; surprise -ln P per token, mean = 1.382 nats cross-entropy, and perplexity = exp(1.382) = 3.98 (the model was as unsure as picking among ~4 equally-likely words). All numbers are computed below with numpy only.",
     code: `import numpy as np
 from collections import Counter
 
-reference = "the quick brown fox jumps over the lazy dog"
-candidates = {
-    "A": "the quick brown fox jumps over the lazy dog",   # exact copy
-    "B": "a quick brown fox jumped over the lazy dog",     # two word changes
-    "C": "the dog ran past a brown fox",                   # mostly different
-}
+reference = "the cat sat on the warm mat".split()   # 7 words
+candidate = "the cat sat on the mat".split()         # 6 words
 
-def tokenize(s):
-    return s.split()
+def ngrams(toks, n):
+    return [tuple(toks[i:i+n]) for i in range(len(toks) - n + 1)]
 
-def wer(ref, hyp):                       # Word Error Rate via Levenshtein edit distance
-    r, h = tokenize(ref), tokenize(hyp)
-    n, m = len(r), len(h)
-    D = np.zeros((n + 1, m + 1), dtype=int)
-    D[:, 0] = np.arange(n + 1)           # deleting all reference words
-    D[0, :] = np.arange(m + 1)           # inserting all hypothesis words
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            cost = 0 if r[i - 1] == h[j - 1] else 1
-            D[i, j] = min(D[i - 1, j] + 1,        # deletion
-                          D[i, j - 1] + 1,        # insertion
-                          D[i - 1, j - 1] + cost) # match or substitution
-    return D[n, m] / max(n, 1)
+def clipped_precision(ref, cand, n):     # fraction of candidate n-grams found in ref
+    rc, cc = Counter(ngrams(ref, n)), Counter(ngrams(cand, n))
+    total = sum(cc.values())
+    if total == 0:
+        return 0.0
+    overlap = sum(min(cnt, rc[g]) for g, cnt in cc.items())
+    return overlap / total
 
-def clipped_overlap(ref, hyp):           # shared unigrams, each clipped to ref count
-    rc, hc = Counter(tokenize(ref)), Counter(tokenize(hyp))
-    return sum(min(hc[w], rc[w]) for w in hc)
+# --- BLEU = BP * geometric mean of p1..p4 ---
+ps = [clipped_precision(reference, candidate, n) for n in range(1, 5)]
+c, r = len(candidate), len(reference)
+BP = 1.0 if c > r else np.exp(1 - r / c)            # brevity penalty, c <= r here
+geo = np.exp(np.mean([np.log(p) for p in ps]))      # equal weights 1/4
+bleu = BP * geo
+print("p1..p4 =", [round(p, 3) for p in ps])
+print("BP=%.3f  geo_mean=%.3f  BLEU=%.3f" % (BP, geo, bleu))
+# p1..p4 = [1.0, 0.8, 0.75, 0.667]
+# BP=0.847  geo_mean=0.795  BLEU=0.673
 
-def bleu1(ref, hyp):                     # BLEU = clipped unigram precision here
-    overlap = clipped_overlap(ref, hyp)
-    return overlap / max(len(tokenize(hyp)), 1)
+# --- ROUGE-1 (unigram recall / precision / F1) ---
+overlap1 = sum(min(c1, Counter(reference)[w]) for w, c1 in Counter(candidate).items())
+rec = overlap1 / len(reference)                     # 6/7
+prec = overlap1 / len(candidate)                    # 6/6
+f1 = 2 * rec * prec / (rec + prec)
+print("ROUGE-1 recall=%.3f prec=%.3f F1=%.3f" % (rec, prec, f1))
+# ROUGE-1 recall=0.857 prec=1.000 F1=0.923
 
-def rouge1_f1(ref, hyp):                 # ROUGE-1 = F1 of unigram precision & recall
-    overlap = clipped_overlap(ref, hyp)
-    rec = overlap / max(len(tokenize(ref)), 1)
-    prec = overlap / max(len(tokenize(hyp)), 1)
-    return 0.0 if rec + prec == 0 else 2 * rec * prec / (rec + prec)
+# --- ROUGE-L (Longest Common Subsequence) ---
+def lcs_len(a, b):
+    dp = np.zeros((len(a) + 1, len(b) + 1), dtype=int)
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            dp[i, j] = dp[i-1, j-1] + 1 if a[i-1] == b[j-1] else max(dp[i-1, j], dp[i, j-1])
+    return int(dp[-1, -1])
+L = lcs_len(reference, candidate)
+rl_rec, rl_prec = L / len(reference), L / len(candidate)
+rougeL = 2 * rl_rec * rl_prec / (rl_rec + rl_prec)
+print("ROUGE-L F1=%.3f (LCS=%d)" % (rougeL, L))
+# ROUGE-L F1=0.923 (LCS=6)
 
-for name, cand in candidates.items():
-    print(name,
-          "BLEU-1=%.3f" % bleu1(reference, cand),
-          "ROUGE-1=%.3f" % rouge1_f1(reference, cand),
-          "WER=%.3f" % wer(reference, cand))
-# A BLEU-1=1.000 ROUGE-1=1.000 WER=0.000
-# B BLEU-1=0.778 ROUGE-1=0.778 WER=0.222
-# C BLEU-1=0.571 ROUGE-1=0.500 WER=0.889
+# --- Perplexity = exp(cross-entropy) on a toy 5-token sequence ---
+probs = np.array([0.5, 0.4, 0.1, 0.25, 0.2])        # model's prob for each gold token
+cross_entropy = -np.mean(np.log(probs))             # average surprise in nats
+ppl = np.exp(cross_entropy)
+print("cross_entropy=%.3f  perplexity=%.3f" % (cross_entropy, ppl))
+# cross_entropy=1.382  perplexity=3.981
 
 import matplotlib.pyplot as plt
-names = list(candidates)
-x = np.arange(len(names))
-plt.bar(x - 0.25, [bleu1(reference, candidates[n]) for n in names], 0.25, label="BLEU-1", color="#4ea1ff")
-plt.bar(x + 0.00, [rouge1_f1(reference, candidates[n]) for n in names], 0.25, label="ROUGE-1", color="#7ee787")
-plt.bar(x + 0.25, [wer(reference, candidates[n]) for n in names], 0.25, label="WER", color="#ffb454")
-plt.xticks(x, names); plt.ylabel("score (0..1)"); plt.legend()
-plt.title("BLEU-1 & ROUGE-1 up, WER down for the better candidate")
-plt.show()`
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+ax[0].bar(["p1","p2","p3","p4","BP","BLEU"], ps + [BP, bleu],
+          color=["#4ea1ff"]*4 + ["#ffb454", "#7ee787"])
+ax[0].set_title("BLEU = BP x geo-mean(p1..p4)"); ax[0].set_ylabel("value")
+ax[1].bar(["BLEU","ROUGE-1","ROUGE-L"], [bleu, f1, rougeL],
+          color=["#7ee787", "#c89bff", "#ffb454"])
+ax[1].set_title("same pair, different rulers"); ax[1].set_ylim(0, 1)
+plt.tight_layout(); plt.show()`
   };
 })();

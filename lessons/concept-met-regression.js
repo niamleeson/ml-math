@@ -270,51 +270,116 @@ print("RMSLE:", rmsle)`
   };
 
   window.CODEVIZ["met-regression"] = {
-    question: "On the real diabetes dataset, how close do a Ridge model's predictions land to the actual disease-progression values?",
+    question: "Eight examples, truths y = 10,20,30,40,50,60,70,80 and predictions y-hat = 12,18,33,37,52,58,90,78 (the 7th is a big outlier, off by 20). How does each regression metric turn that one pile of residuals into a single score?",
     charts: [
       {
         type: "scatter",
-        title: "Predicted vs actual disease progression (diabetes test set, with the perfect y=x line)",
-        xlabel: "actual progression",
-        ylabel: "predicted progression",
+        title: "Predicted vs actual, with the perfect y=x line — points near the line are good guesses",
+        xlabel: "actual y",
+        ylabel: "predicted y-hat",
         groups: [
           {
-            name: "test patients",
+            name: "predictions",
             color: "#4ea1ff",
-            points: [[42.0, 129.6], [49.0, 127.2], [49.0, 89.6], [51.0, 83.4], [53.0, 82.0], [57.0, 45.3], [61.0, 118.2], [64.0, 117.2], [68.0, 202.7], [68.0, 113.9], [71.0, 115.8], [74.0, 90.2], [77.0, 77.4], [84.0, 123.1], [85.0, 150.6], [88.0, 107.2], [90.0, 143.7], [93.0, 83.5], [95.0, 146.6], [97.0, 110.4], [99.0, 235.5], [102.0, 110.4], [103.0, 146.3], [104.0, 78.0], [109.0, 171.4], [110.0, 165.9], [113.0, 151.8], [121.0, 169.6], [127.0, 164.4], [128.0, 65.6], [128.0, 98.9], [131.0, 162.2], [132.0, 261.7], [135.0, 121.4], [136.0, 158.3], [137.0, 96.9], [141.0, 148.0], [142.0, 149.6], [145.0, 128.4], [151.0, 162.8], [156.0, 162.3], [160.0, 114.5], [163.0, 217.3], [168.0, 142.4], [170.0, 134.3], [174.0, 167.7], [175.0, 182.5], [179.0, 111.5], [180.0, 220.7], [182.0, 138.6], [183.0, 109.1], [191.0, 188.3], [195.0, 236.7], [197.0, 207.6], [198.0, 183.5]]
+            points: [[10, 12], [20, 18], [30, 33], [40, 37], [50, 52], [60, 58], [80, 78]]
+          },
+          {
+            name: "outlier (7th point)",
+            color: "#ff7b72",
+            points: [[70, 90]]
           }
         ],
         lines: [
-          { name: "perfect prediction (y = x)", color: "#ffb454", points: [[42, 42], [321, 321]] }
+          { name: "perfect prediction (y = x)", color: "#ffb454", points: [[10, 10], [90, 90]] }
         ]
+      },
+      {
+        type: "scatter",
+        title: "Residual plot: each error e = y - y-hat vs actual y (the flat line at 0 is no error)",
+        xlabel: "actual y",
+        ylabel: "residual e = y - y-hat",
+        groups: [
+          {
+            name: "residuals",
+            color: "#4ea1ff",
+            points: [[10, -2], [20, 2], [30, -3], [40, 3], [50, -2], [60, 2], [80, 2]]
+          },
+          {
+            name: "outlier residual",
+            color: "#ff7b72",
+            points: [[70, -20]]
+          }
+        ],
+        lines: [
+          { name: "zero error", color: "#ffb454", points: [[10, 0], [80, 0]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "MAE = average of |y - y-hat| = 4.5 — each bar is one |error|, then take their mean",
+        labels: ["e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "MAE"],
+        values: [2, 2, 3, 3, 2, 2, 20, 2, 4.5],
+        valueLabels: ["2", "2", "3", "3", "2", "2", "20", "2", "4.5"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "MSE = average of (y - y-hat)^2 = 54.75 — squaring makes the outlier's 400 swamp everything",
+        labels: ["e1^2", "e2^2", "e3^2", "e4^2", "e5^2", "e6^2", "e7^2", "e8^2", "MSE"],
+        values: [4, 4, 9, 9, 4, 4, 400, 4, 54.75],
+        valueLabels: ["4", "4", "9", "9", "4", "4", "400", "4", "54.75"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "RMSE vs MAE on the SAME data: RMSE = 7.4 > MAE = 4.5 — RMSE punishes the one big miss more",
+        labels: ["MAE", "RMSE"],
+        values: [4.5, 7.4],
+        valueLabels: ["4.5", "7.4"],
+        colors: ["#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "R^2 = 0.896: fraction of the truths' variance the model explains (SS_explained / SS_total)",
+        labels: ["explained (SS_tot - SS_res)", "unexplained (SS_res)", "total spread (SS_tot)"],
+        values: [3762, 438, 4200],
+        valueLabels: ["3762  (89.6%)", "438  (10.4%)", "4200  (100%)"],
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
+      },
+      {
+        type: "bars",
+        title: "MAPE = average of |error| / |y| = 10.7% — error as a percent of each truth",
+        labels: ["10", "20", "30", "40", "50", "60", "70", "80", "MAPE"],
+        values: [20, 10, 10, 7.5, 4, 3.3, 28.6, 2.5, 10.7],
+        valueLabels: ["20%", "10%", "10%", "7.5%", "4%", "3.3%", "28.6%", "2.5%", "10.7%"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
       }
     ],
-    caption: "Ridge regression on the 442-patient diabetes data. Points hug the orange y=x line loosely: MAE = 44.96 (the typical miss), RMSE = 56.09 (bigger, so a few large errors weigh in), and R² = 0.403 (the model explains ~40% of the spread — far from perfect but well above the mean baseline).",
+    caption: "One concrete set of 8 (y, y-hat) pairs drives every chart. The scatter and residual plot show where the misses are — seven tiny errors and one outlier (the 7th point, off by 20, in red). MAE = 4.5 averages the raw |errors| fairly. MSE = 54.75 squares first, so the outlier's 400 is 91% of the total — that is why MSE/RMSE punish big misses. RMSE = 7.4 (square root of MSE) is back in real units yet still well above MAE = 4.5; the gap is the outlier's fingerprint. R² = 0.896 says the model explains 89.6% of the variance in y (only 10.4% of the spread is left in the residuals). MAPE = 10.7% rescales each error to a percent of its own truth, so the same 20-unit miss is a huge 28.6% on the y=70 point.",
     code: `import numpy as np
-from sklearn.datasets import load_diabetes
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import (mean_absolute_error,
-    root_mean_squared_error, r2_score)
 
-X, y = load_diabetes(return_X_y=True)
-X_tr, X_te, y_tr, y_te = train_test_split(
-    X, y, test_size=0.33, random_state=0)
+y    = np.array([10, 20, 30, 40, 50, 60, 70, 80], float)
+yhat = np.array([12, 18, 33, 37, 52, 58, 90, 78], float)  # 7th is the outlier
 
-model = make_pipeline(StandardScaler(), Ridge(alpha=1.0)).fit(X_tr, y_tr)
-pred = model.predict(X_te)
+res  = y - yhat                       # residuals: -2 2 -3 3 -2 2 -20 2
+m    = len(y)
 
-print("MAE :", round(mean_absolute_error(y_te, pred), 2))   # 44.96
-print("RMSE:", round(root_mean_squared_error(y_te, pred), 2)) # 56.09
-print("R2  :", round(r2_score(y_te, pred), 3))              # 0.403
+mae  = np.abs(res).mean()             # 4.5
+mse  = (res ** 2).mean()              # 54.75
+rmse = np.sqrt(mse)                   # 7.4
+mape = np.mean(np.abs(res) / np.abs(y)) * 100   # 10.7%
 
-# scatter of predicted vs actual; the y=x line is perfect prediction
-order = np.argsort(y_te)
-sel = order[::max(1, len(order)//55)][:55]
-pts = np.column_stack([y_te[sel], pred[sel]])
-print("plotted (actual, predicted) points:", np.round(pts, 1).tolist())
-print("y=x line spans:", [float(y_te.min()), float(max(y_te.max(), pred.max()))])`
+ybar   = y.mean()                     # 45.0
+ss_res = (res ** 2).sum()             # 438
+ss_tot = ((y - ybar) ** 2).sum()      # 4200
+r2     = 1 - ss_res / ss_tot          # 0.896 -> explains 89.6% of variance
+
+print("MAE :", round(mae, 2))         # 4.5
+print("MSE :", round(mse, 2))         # 54.75
+print("RMSE:", round(rmse, 2))        # 7.4
+print("R2  :", round(r2, 3))          # 0.896
+print("MAPE:", round(mape, 1), "%")   # 10.7 %
+print("per-point |error|^2:", (res ** 2).tolist())   # outlier 400 dominates
+print("variance: explained", ss_tot - ss_res, "of", ss_tot)`
   };
 })();

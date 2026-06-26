@@ -218,55 +218,80 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
   };
 
   window.CODEVIZ["met-distribution"] = {
-    question: "Take one real feature from load_wine, build a histogram for two wine classes, and ask: do KL, JS, Hellinger, and Wasserstein all flag the same shift — at different scales?",
+    question: "Two discrete distributions P and Q over the same 6 ordered bins (P leans left, Q leans right). For each key formula — KL, JS, Wasserstein/earth-mover, KS, PSI — what does it actually look at, and what number does it report on THIS pair?",
     charts: [
       {
         type: "bars",
-        title: "Class-conditional histograms of 'flavanoids' (8 bins): class 0 vs class 1",
-        labels: ["0.6", "1.1", "1.7", "2.3", "2.8", "3.4", "4.0", "4.5"],
-        values: [0.373, 0.424, 0.186, 0.056, 0.268, 0.366, 0.169, 0.113],
-        valueLabels: ["c0", "c0", "c0", "c1", "c1", "c1", "c1", "c1"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        title: "Step 1: the two distributions P (leans left) vs Q (leans right), over bins x=1..6",
+        labels: ["1", "2", "3", "4", "5", "6"],
+        series: [
+          { name: "P", color: "#4ea1ff", points: [[0, 0.30], [1, 0.25], [2, 0.20], [3, 0.13], [4, 0.08], [5, 0.04]] },
+          { name: "Q", color: "#ff7b72", points: [[0, 0.05], [1, 0.10], [2, 0.17], [3, 0.23], [4, 0.25], [5, 0.20]] }
+        ]
       },
       {
         type: "bars",
-        title: "Four distances on the SAME two histograms — same verdict, different scales",
-        labels: ["KL(c0||c1)", "KL(c1||c0)", "JS distance", "Hellinger", "Wasserstein"],
-        values: [1.250, 2.542, 0.687, 0.608, 0.934],
-        valueLabels: ["1.25", "2.54", "0.69", "0.61", "0.93"],
-        colors: ["#4ea1ff", "#79c0ff", "#7ee787", "#ffb454", "#c89bff"]
+        title: "KL = sum p log2(p/q): the per-bin contributions that add up to KL(P||Q)=0.82 bits",
+        labels: ["1", "2", "3", "4", "5", "6"],
+        values: [0.775, 0.330, 0.047, -0.107, -0.132, -0.093],
+        valueLabels: ["+.78", "+.33", "+.05", "-.11", "-.13", "-.09"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#ff7b72", "#ff7b72"]
+      },
+      {
+        type: "line",
+        title: "KS = max|CDF gap| (=0.43 at x=3); Wasserstein = total area between the CDFs (=1.57)",
+        xlabel: "bin value x",
+        ylabel: "cumulative probability",
+        series: [
+          { name: "CDF of P", color: "#4ea1ff", points: [[1, 0.30], [2, 0.55], [3, 0.75], [4, 0.88], [5, 0.96], [6, 1.00]] },
+          { name: "CDF of Q", color: "#ff7b72", points: [[1, 0.05], [2, 0.15], [3, 0.32], [4, 0.55], [5, 0.80], [6, 1.00]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "PSI = sum (p-q) ln(p/q): per-bin contributions add up to PSI=1.10 (big shift, >0.25)",
+        labels: ["1", "2", "3", "4", "5", "6"],
+        values: [0.448, 0.137, 0.005, 0.057, 0.194, 0.258],
+        valueLabels: [".45", ".14", ".00", ".06", ".19", ".26"],
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "Same shift, five different numbers: each metric on its own scale",
+        labels: ["KL(P||Q) bits", "KL(Q||P) bits", "JS div bits", "Wasserstein", "KS stat", "PSI"],
+        values: [0.821, 0.763, 0.182, 1.570, 0.430, 1.099],
+        valueLabels: ["0.82", "0.76", "0.18", "1.57", "0.43", "1.10"],
+        colors: ["#4ea1ff", "#79c0ff", "#7ee787", "#c89bff", "#ffb454", "#ff7b72"]
       }
     ],
-    caption: "Real numbers from load_wine (178 wines, feature 'flavanoids'). Class 0 (59 wines) clusters at HIGH flavanoids; class 1 (71 wines) at LOW — a clear shift. Every distance flags it: KL is unbounded and ASYMMETRIC (1.25 forward vs 2.54 reverse — note they differ, KL's signature), JS distance and Hellinger sit in [0,1] (0.69, 0.61), and Wasserstein (0.93) is in the feature's own units. Different scales, one verdict: these two histograms are clearly different.",
+    caption: "Real numbers from P=[.30,.25,.20,.13,.08,.04] and Q=[.05,.10,.17,.23,.25,.20] over bins 1..6. Chart 1 shows the shift: P's mass is low, Q's is high. Chart 2 breaks KL(P||Q)=0.82 bits into its per-bin terms p log2(p/q) — green bins (1-3, where p>q) PAY bits, red bins (4-6, where p<q) refund some; they net to 0.82, and KL(Q||P)=0.76 differs because the terms are reweighted (asymmetry). Chart 3 plots both CDFs: the KS statistic is their single biggest vertical gap (0.43 at x=3), while Wasserstein/earth-mover is the TOTAL area between them (1.57, in bin units). Chart 4 splits PSI=Sigma (p-q)ln(p/q)=1.10 per bin (>0.25 = major population shift). Chart 5 lines up all five: bounded [0,1]-ish JS (0.18) and KS (0.43) vs unbounded KL/PSI vs unit-scaled Wasserstein — never compare across metrics, only each to its own threshold.",
     code: `import numpy as np
-from sklearn.datasets import load_wine
-from scipy.stats import entropy, wasserstein_distance
-from scipy.spatial.distance import jensenshannon
 
-d = load_wine()                              # 178 real wines, 13 chemical features
-X, y = d.data, d.target
-fi = list(d.feature_names).index("flavanoids")
-a = X[y == 0, fi]                            # class 0 flavanoids (59 wines)
-b = X[y == 1, fi]                            # class 1 flavanoids (71 wines)
+# Two discrete distributions over the SAME 6 ordered bins (values 1..6).
+x = np.array([1, 2, 3, 4, 5, 6])
+P = np.array([0.30, 0.25, 0.20, 0.13, 0.08, 0.04])   # leans LEFT
+Q = np.array([0.05, 0.10, 0.17, 0.23, 0.25, 0.20])   # leans RIGHT
+P = P / P.sum(); Q = Q / Q.sum()
 
-# Two class-conditional histograms over the SAME 8 bins.
-lo, hi = min(a.min(), b.min()), max(a.max(), b.max())
-bins = np.linspace(lo, hi, 9)
-pa = np.histogram(a, bins=bins)[0]; pa = pa / pa.sum()
-pb = np.histogram(b, bins=bins)[0]; pb = pb / pb.sum()
+# KL(P||Q) in bits, term by term: p_i * log2(p_i / q_i)  -> sums to 0.821
+kl_terms = P * np.log2(P / Q)
+KL_fwd = kl_terms.sum()
+KL_rev = (Q * np.log2(Q / P)).sum()                  # 0.763 -> asymmetric
 
-eps = 1e-3                                    # smoothing so KL never divides by zero
-P = pa + eps; P /= P.sum()
-Q = pb + eps; Q /= Q.sum()
+# JS divergence (bits): average KL to the midpoint M = (P+Q)/2  -> 0.182
+M = 0.5 * (P + Q)
+JS = 0.5 * (P * np.log2(P / M)).sum() + 0.5 * (Q * np.log2(Q / M)).sum()
 
-kl_fwd = entropy(P, Q, base=2)                # KL(c0 || c1)
-kl_rev = entropy(Q, P, base=2)                # KL(c1 || c0)  -> different! (asymmetry)
-js     = jensenshannon(pa, pb, base=2)        # JS DISTANCE (sqrt of JS divergence)
-hell   = np.sqrt(0.5 * np.sum((np.sqrt(P) - np.sqrt(Q)) ** 2))   # Hellinger
-wass   = wasserstein_distance(a, b)           # earth-mover, on raw samples
+# CDFs -> KS and Wasserstein both read off them (bin spacing = 1):
+cP, cQ = np.cumsum(P), np.cumsum(Q)
+KS  = np.max(np.abs(cP - cQ))                         # 0.430 (biggest gap, at x=3)
+W1  = np.sum(np.abs(cP - cQ))                         # 1.570 (area between CDFs)
 
-print("KL fwd=%.3f  KL rev=%.3f  JS=%.3f  Hellinger=%.3f  Wasserstein=%.3f"
-      % (kl_fwd, kl_rev, js, hell, wass))
-# -> 1.250        2.542        0.687     0.608          0.934`
+# PSI = sum (p - q) * ln(p / q)  -> 1.099  (>0.25 = major shift)
+PSI = np.sum((P - Q) * np.log(P / Q))
+
+print("KL=%.3f KLrev=%.3f JS=%.3f Wass=%.3f KS=%.3f PSI=%.3f"
+      % (KL_fwd, KL_rev, JS, W1, KS, PSI))
+# -> KL=0.821 KLrev=0.763 JS=0.182 Wass=1.570 KS=0.430 PSI=1.099`
   };
 })();

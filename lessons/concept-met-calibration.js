@@ -273,64 +273,78 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
   };
 
   window.CODEVIZ["met-calibration"] = {
-    question: "A shallow random forest on breast-cancer data ranks tumors almost perfectly (AUC 0.992). But when it says \"80% malignant\", is it right 80% of the time?",
+    question: "Take 20 predictions binned by stated confidence (0.10, 0.30, 0.50, 0.70, 0.90). When the model says \"0.90\", do 90% actually turn out positive? Each diagram below reads off one calibration formula from this exact set.",
     charts: [
       {
         type: "line",
-        title: "Reliability diagram: predicted probability vs observed frequency (breast cancer)",
-        xlabel: "mean predicted probability in bin",
-        ylabel: "observed fraction positive",
+        title: "Reliability diagram: conf(Bm) vs acc(Bm), against the perfect y = x line",
+        xlabel: "mean predicted probability in bin = conf(Bm)",
+        ylabel: "observed fraction positive = acc(Bm)",
         series: [
           { name: "perfect (y = x)", color: "#9aa7b4", points: [[0.0, 0.0], [1.0, 1.0]] },
-          { name: "random forest", color: "#4ea1ff", points: [[0.013, 0.0], [0.149, 0.0], [0.246, 0.5], [0.342, 0.25], [0.469, 0.667], [0.52, 0.667], [0.661, 0.8], [0.769, 0.333], [0.853, 0.75], [0.977, 1.0]] }
+          { name: "model (20 cases, 5 bins)", color: "#4ea1ff", points: [[0.1, 0.0], [0.3, 0.5], [0.5, 0.5], [0.7, 0.75], [0.9, 0.8]] }
         ]
       },
       {
         type: "bars",
-        title: "ECE before vs after recalibration (held-out, AUC ~0.99 throughout)",
-        labels: ["raw RF", "isotonic", "Platt (sigmoid)"],
-        values: [0.047, 0.035, 0.052],
-        colors: ["#ff7b72", "#7ee787", "#ffb454"]
+        title: "ECE = sum (|Bm|/N) |acc-conf|: per-bin weighted gaps add to ECE 0.090; MCE = tallest raw gap 0.20",
+        labels: ["0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"],
+        values: [0.015, 0.040, 0.000, 0.010, 0.025],
+        valueLabels: ["0.015", "0.040", "0.000", "0.010", "0.025"],
+        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4", "#4ea1ff", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "Raw bin gaps |acc(Bm)-conf(Bm)|: MCE = max = 0.20 (bin 0.2-0.4, the worst lie)",
+        labels: ["0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"],
+        values: [0.10, 0.20, 0.00, 0.05, 0.10],
+        valueLabels: ["0.10", "0.20 (MCE)", "0.00", "0.05", "0.10"],
+        colors: ["#9aa7b4", "#ff7b72", "#9aa7b4", "#9aa7b4", "#9aa7b4"]
+      },
+      {
+        type: "bars",
+        title: "Brier 0.190 = reliability - resolution + uncertainty (Murphy decomposition)",
+        labels: ["reliability", "resolution", "uncertainty", "Brier total"],
+        values: [0.0125, -0.070, 0.2475, 0.190],
+        valueLabels: ["+0.0125", "-0.070", "+0.2475", "= 0.190"],
+        colors: ["#ff7b72", "#7ee787", "#9aa7b4", "#4ea1ff"]
       }
     ],
-    caption: "No — the blue curve wanders off the diagonal (ECE 0.047, MCE 0.44), so the 0.99-AUC forest ranks well but its probabilities are not trustworthy. Isotonic recalibration pulls ECE down to 0.035 while leaving AUC near 0.99; Platt scaling helps less on this dataset.",
+    caption: "No — at conf 0.90 only 80% are positive (gap 0.10), and the 0.30 bin is the worst at 0.20. The reliability curve sags below y = x (over-confident). Averaging the per-bin gaps weighted by bin size gives ECE = 0.090; the single worst bin gives MCE = 0.20. The Brier score 0.190 splits as reliability 0.0125 (small = well calibrated) minus resolution 0.070 (large = sharp, so subtracted) plus uncertainty 0.55x0.45 = 0.2475 (base-rate difficulty). All numbers are exact for the 20-case set in the code.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.calibration import calibration_curve, CalibratedClassifierCV
-from sklearn.metrics import brier_score_loss, roc_auc_score
 
-X, y = load_breast_cancer(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.4,
-                                       random_state=42, stratify=y)
+# A concrete 20-case set, constant predicted prob per bin so the binned
+# Murphy decomposition reproduces the direct Brier score exactly.
+# (predicted prob, count, number actually positive)
+bins = [(0.10, 3, 0),   # claims 0.10 -> 0/3 positive, obs 0.00
+        (0.30, 4, 2),   # claims 0.30 -> 2/4 positive, obs 0.50
+        (0.50, 4, 2),   # claims 0.50 -> 2/4 positive, obs 0.50
+        (0.70, 4, 3),   # claims 0.70 -> 3/4 positive, obs 0.75
+        (0.90, 5, 4)]   # claims 0.90 -> 4/5 positive, obs 0.80
 
-clf = RandomForestClassifier(n_estimators=50, max_depth=4,
-                             random_state=0).fit(Xtr, ytr)
-p = clf.predict_proba(Xte)[:, 1]
+p = np.concatenate([[b[0]] * b[1] for b in bins])
+y = np.concatenate([[1] * b[2] + [0] * (b[1] - b[2]) for b in bins]).astype(float)
+N = len(p)                                    # 20
 
-# reliability-diagram points (10 equal-width bins)
-frac_pos, mean_pred = calibration_curve(yte, p, n_bins=10, strategy="uniform")
-print("x (mean predicted):", np.round(mean_pred, 3))
-print("y (obs frequency) :", np.round(frac_pos, 3))
+conf = np.array([b[0] for b in bins])         # claimed prob per bin
+cnt  = np.array([b[1] for b in bins])
+acc  = np.array([b[2] / b[1] for b in bins])  # observed frequency per bin
+gap  = np.abs(acc - conf)                      # |acc - conf|
 
-def ece(y_true, prob, n_bins=10):
-    edges = np.linspace(0, 1, n_bins + 1); N = len(prob); e = 0.0
-    for i in range(n_bins):
-        lo, hi = edges[i], edges[i + 1]
-        m = (prob > lo) & (prob <= hi) if i > 0 else (prob >= lo) & (prob <= hi)
-        if m.sum():
-            e += (m.sum() / N) * abs(prob[m].mean() - y_true[m].mean())
-    return e
+ece = np.sum((cnt / N) * gap)                 # size-weighted average gap
+mce = gap.max()                               # worst single bin
+print("per-bin weighted gaps:", np.round((cnt / N) * gap, 4))
+print("ECE:", round(ece, 4), " MCE:", round(mce, 4))   # 0.09, 0.20
 
-print("raw  ECE:", round(ece(yte, p), 3), " AUC:", round(roc_auc_score(yte, p), 3))
-for method in ["isotonic", "sigmoid"]:
-    cal = CalibratedClassifierCV(
-        RandomForestClassifier(n_estimators=50, max_depth=4, random_state=0),
-        method=method, cv=5).fit(Xtr, ytr)
-    pc = cal.predict_proba(Xte)[:, 1]
-    print(method, "ECE:", round(ece(yte, pc), 3),
-          " Brier:", round(brier_score_loss(yte, pc), 3),
-          " AUC:", round(roc_auc_score(yte, pc), 3))`
+brier = np.mean((p - y) ** 2)                 # direct proper score
+obar  = y.mean()                              # base rate 0.55
+reliability = np.sum(cnt * (conf - acc) ** 2) / N
+resolution  = np.sum(cnt * (acc - obar) ** 2) / N
+uncertainty = obar * (1 - obar)
+print("Brier:", round(brier, 4))                       # 0.190
+print("= reliability", round(reliability, 4),          # 0.0125
+      "- resolution", round(resolution, 4),            # 0.070
+      "+ uncertainty", round(uncertainty, 4))          # 0.2475
+print("decomp:", round(reliability - resolution + uncertainty, 4))  # 0.190`
   };
 })();

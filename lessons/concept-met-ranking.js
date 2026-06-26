@@ -291,72 +291,98 @@ print("Spearman rho:", round(spearmanr(gold_order, model_order).statistic, 4))`
   };
 
   window.CODEVIZ["met-ranking"] = {
-    question: "On real data: rank the breast-cancer test tumors by a (deliberately weak) score and treat truly-malignant tumors as 'relevant'. How do Precision@k and NDCG@k change as we look further down the list (grow k)?",
+    question: "One concrete ranked list per metric: how do Precision@k and Recall@k trade off as the cutoff k grows, how do MRR and MAP average a per-query score, and how does NDCG come out of its DCG / IDCG term-by-term sum?",
     charts: [
       {
         type: "line",
-        title: "Precision@k and NDCG@k as the cutoff k grows (relevant = malignant tumor)",
+        title: "Precision@k = (#rel in top k)/k vs Recall@k = (#rel in top k)/(#rel total) — ranked list rel = [1,0,1,1,0,1,0,0,1,0], 5 relevant",
         xlabel: "k (how far down the ranked list we look)",
         ylabel: "metric value (0–1)",
         series: [
           {
-            name: "NDCG@k",
-            color: "#4ea1ff",
-            points: [[1, 1.0], [2, 1.0], [3, 1.0], [5, 0.854], [8, 0.727], [10, 0.696], [15, 0.717], [20, 0.666], [30, 0.696], [40, 0.749], [50, 0.728]]
-          },
-          {
             name: "Precision@k",
             color: "#7ee787",
-            points: [[1, 1.0], [2, 1.0], [3, 1.0], [5, 0.8], [8, 0.625], [10, 0.6], [15, 0.667], [20, 0.6], [30, 0.667], [40, 0.75], [50, 0.72]]
+            points: [[1, 1.0], [2, 0.5], [3, 0.667], [4, 0.75], [5, 0.6], [6, 0.667], [7, 0.571], [8, 0.5], [9, 0.556], [10, 0.5]]
           },
           {
             name: "Recall@k",
             color: "#ffb454",
-            points: [[1, 0.012], [2, 0.024], [3, 0.035], [5, 0.047], [8, 0.059], [10, 0.071], [15, 0.118], [20, 0.141], [30, 0.235], [40, 0.353], [50, 0.424]]
+            points: [[1, 0.2], [2, 0.2], [3, 0.4], [4, 0.6], [5, 0.6], [6, 0.8], [7, 0.8], [8, 0.8], [9, 1.0], [10, 1.0]]
           }
+        ]
+      },
+      {
+        type: "bars",
+        title: "MRR = mean of 1/rank-of-first-hit over 3 queries — first hit at rank 1, 2, 4 gives RR 1.0, 0.5, 0.25",
+        labels: ["q1 (1st hit @1)", "q2 (1st hit @2)", "q3 (1st hit @4)", "MRR (mean)"],
+        values: [1.0, 0.5, 0.25, 0.5833],
+        valueLabels: ["1.000", "0.500", "0.250", "0.583"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"]
+      },
+      {
+        type: "bars",
+        title: "MAP = mean of AP over 3 queries — AP(q) averages Precision@r at each relevant item's rank",
+        labels: ["AP q1", "AP q2", "AP q3", "MAP (mean)"],
+        values: [0.7278, 0.5556, 0.2679, 0.5171],
+        valueLabels: ["0.728", "0.556", "0.268", "0.517"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "NDCG@5 = DCG/IDCG = 4.704/5.693 = 0.826 — per-rank gain/log2(rank+1) for the ranking vs its ideal sort",
+        labels: ["r1", "r2", "r3", "r4", "r5"],
+        series: [
+          { name: "DCG term (grades 2,0,3,1,2)", color: "#4ea1ff", points: [[0, 2.0], [1, 0.0], [2, 1.5], [3, 0.431], [4, 0.774]] },
+          { name: "IDCG term (ideal 3,2,2,1,0)", color: "#7ee787", points: [[0, 3.0], [1, 1.262], [2, 1.0], [3, 0.431], [4, 0.0]] }
         ]
       }
     ],
-    caption: "228 test tumors, 85 truly malignant ('relevant'), ranked by a deliberately weak single-feature score (mean texture). At small k the top items are all malignant, so Precision@k and NDCG@k both sit at 1.0; as k grows and non-malignant tumors creep in, both fall (NDCG@5 = 0.854, P@5 = 0.80; NDCG@10 = 0.696). NDCG stays slightly above Precision because it credits hits near the top more (position-weighting). Recall@k, by contrast, only ever rises with k — it measures how many of the 85 relevant tumors we have captured so far. Three views of the SAME ranking, each answering a different question.",
+    caption: "Four views, each its own formula, all on concrete ranked lists. CHART 1 — for rel=[1,0,1,1,0,1,0,0,1,0] (5 relevant), Precision@k bounces as good/bad items alternate (1.0, 0.5, 0.667, 0.75, 0.6, …) while Recall@k only climbs as more of the 5 relevant items are caught (0.2 → 1.0 by k=9): the classic precision-recall trade-off down a single list. CHART 2 — MRR only cares about the FIRST hit: queries whose first relevant item lands at rank 1, 2, 4 score 1/1, 1/2, 1/4 = 1.0, 0.5, 0.25, and MRR is their mean 0.583. CHART 3 — MAP rewards getting ALL relevant items high: AP averages Precision@r at every relevant rank (q1's relevant items sit high so AP=0.728; q3's sink so AP=0.268), and MAP = mean = 0.517. CHART 4 — NDCG@5 broken into its terms: each bar is grade/log2(rank+1); the blue (this ranking, grades 2,0,3,1,2) sums to DCG=4.704, the green (ideal sort 3,2,2,1,0) sums to IDCG=5.693, and NDCG = 4.704/5.693 = 0.826. Putting the grade-3 item at rank 3 instead of rank 1 is exactly what costs the 0.174.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import ndcg_score
 
-# relevant = malignant tumor (sklearn target: 0=malignant, 1=benign)
-data = load_breast_cancer()
-X = data.data
-y = (data.target == 0).astype(int)          # 1 = malignant = "relevant"
-X_tr, X_te, y_tr, y_te = train_test_split(
-    X, y, test_size=0.4, random_state=0, stratify=y)
+# ---------- CHART 1: Precision@k & Recall@k down one ranked list ----------
+rel = np.array([1,0,1,1,0,1,0,0,1,0])   # 1=relevant, top-first; 5 relevant
+R   = int(rel.sum())                    # total relevant = 5
+def p_at_k(rel,k): return rel[:k].sum()/k
+def r_at_k(rel,k): return rel[:k].sum()/R
+print("k  P@k    R@k")
+for k in range(1,11):
+    print(k, round(p_at_k(rel,k),3), round(r_at_k(rel,k),3))
 
-# a DELIBERATELY WEAK ranker: rank tumors by ONE noisy feature (mean texture)
-# so the ranking is imperfect and the curves actually have structure.
-scores = X_te[:, 1].astype(float)           # feature 1 = "mean texture"
-order  = np.argsort(scores)[::-1]           # rank best-first
-rel    = y_te[order]                        # 1/0 relevance in ranked order
-R      = int(rel.sum())                     # total relevant (= 85)
+# ---------- CHART 2 & 3: MRR and MAP averaged over 3 queries ----------
+def reciprocal_rank(rel):
+    h = np.flatnonzero(rel==1)
+    return 1.0/(h[0]+1) if h.size else 0.0          # 1 / rank of FIRST hit
+def average_precision(rel):
+    tot = rel.sum()
+    if tot==0: return 0.0
+    hits=0; s=0.0
+    for r,rr in enumerate(rel, start=1):
+        if rr==1:
+            hits+=1; s+=hits/r                      # Precision@r at each hit
+    return s/tot
 
-def precision_at_k(rel, k): return rel[:k].sum() / k
-def recall_at_k(rel, k):    return rel[:k].sum() / R
-def dcg_at_k(rel, k):
-    g = rel[:k]; disc = 1.0 / np.log2(np.arange(2, k + 2)); return float(np.sum(g * disc))
-def ndcg_at_k(rel, k):
-    idcg = dcg_at_k(np.sort(rel)[::-1], k)
-    return dcg_at_k(rel, k) / idcg if idcg > 0 else 0.0
+q1 = rel
+q2 = np.array([0,1,1,0,0,1,0,0,0,0])               # first hit rank 2
+q3 = np.array([0,0,0,1,0,0,1,0,0,0])               # first hit rank 4
+qs = [q1,q2,q3]
+print("RR :", [round(reciprocal_rank(q),4) for q in qs])
+print("MRR:", round(np.mean([reciprocal_rank(q) for q in qs]),4))   # 0.5833
+print("AP :", [round(average_precision(q),4) for q in qs])
+print("MAP:", round(np.mean([average_precision(q) for q in qs]),4)) # 0.5171
 
-ks = [1, 2, 3, 5, 8, 10, 15, 20, 30, 40, 50]
-print("k  P@k    R@k    NDCG@k")
-for k in ks:
-    print(k, round(precision_at_k(rel, k), 3),
-             round(recall_at_k(rel, k), 3),
-             round(ndcg_at_k(rel, k), 3))
-
-# cross-check NDCG against scikit-learn's ndcg_score
-sorted_scores = np.sort(scores)[::-1].reshape(1, -1)
-y_true_row    = rel.reshape(1, -1).astype(float)
-for k in [5, 10, 20]:
-    print("sklearn NDCG@%d:" % k, round(ndcg_score(y_true_row, sorted_scores, k=k), 3))
-# -> 0.854, 0.696, 0.666  (matches the from-scratch values above)`
+# ---------- CHART 4: NDCG@5 = DCG / IDCG, term by term ----------
+g    = np.array([2,0,3,1,2])                       # graded relevance, ranked order
+k    = len(g)
+disc = 1.0/np.log2(np.arange(2, k+2))              # 1/log2(rank+1)
+dcg  = float(np.sum(g*disc))                       # 4.7044
+idcg = float(np.sum(np.sort(g)[::-1]*disc))        # ideal sort -> 5.6925
+print("DCG terms :", np.round(g*disc,4).tolist())
+print("IDCG terms:", np.round(np.sort(g)[::-1]*disc,4).tolist())
+print("NDCG@5    :", round(dcg/idcg,4))            # 0.8264
+# cross-check against scikit-learn (scores decreasing -> same ranked order)
+print("sklearn   :", round(ndcg_score(g.reshape(1,-1).astype(float),
+                                      np.array([[5,4,3,2,1]]), k=5),4))  # 0.8264`
   };
 })();

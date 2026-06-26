@@ -294,43 +294,86 @@ print("ADF (statn.) :", adfuller(np.cumsum(resid))[:2])          # H0: non-stati
   };
 
   window.CODEVIZ["met-hypothesis-tests"] = {
-    question: "Which breast-cancer measurements actually differ between malignant and benign tumors? A two-sample (Welch) t-test per feature, plotted as −log10(p) so taller bars = more significant.",
+    question: "Walk the whole recipe on the lesson's worked example: model A {0.90,0.91,0.89,0.92,0.88} vs model B {0.93,0.94,0.92,0.95,0.91}. We build the test statistic t, read the p-value off the null curve as a tail area, compare it to the threshold alpha, and weigh the two ways to be wrong (Type I/II error, power).",
     charts: [
       {
         type: "bars",
-        title: "How significant is each feature? −log10(p) from a malignant-vs-benign t-test",
-        xlabel: "feature",
-        ylabel: "−log10(p-value)  (taller = more significant)",
-        labels: ["worst concave pts", "mean radius", "mean texture", "worst smoothness", "mean smoothness", "mean symmetry", "mean fractal dim", "symmetry error"],
-        values: [95.97, 63.77, 24.52, 23.46, 18.25, 14.22, 0.12, 0.05],
-        valueLabels: ["96.0", "63.8", "24.5", "23.5", "18.3", "14.2", "0.12", "0.05"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#ff7b72"]
+        title: "Test statistic  t = gap / standard error  =  0.030 / 0.010  =  3.0",
+        xlabel: "term",
+        ylabel: "value",
+        labels: ["gap (xB - xA)", "standard error", "t = gap / SE"],
+        values: [0.030, 0.010, 3.0],
+        valueLabels: ["0.030", "0.010", "3.0"],
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+      },
+      {
+        type: "line",
+        title: "p-value = shaded tail area beyond |t|=3.0 under the null t-curve (df=8)  =  0.017",
+        xlabel: "t-statistic (standard errors from 0)",
+        ylabel: "probability density under H0",
+        series: [
+          { name: "null t-distribution (H0 true)", color: "#4ea1ff", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.2,0.046],[-2,0.06237],[-1.8,0.08372],[-1.6,0.11086],[-1.4,0.14425],[-1.2,0.18361],[-1,0.22761],[-0.8,0.27351],[-0.6,0.31721],[-0.4,0.35373],[-0.2,0.37812],[0,0.3867],[0.2,0.37812],[0.4,0.35373],[0.6,0.31721],[0.8,0.27351],[1,0.22761],[1.2,0.18361],[1.4,0.14425],[1.6,0.11086],[1.8,0.08372],[2,0.06237],[2.2,0.046],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] },
+          { name: "p-value tail (|t| >= 3.0)", color: "#ffb454", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0],[-2.6,0],[-2.4,0],[-2.2,0],[-2,0],[-1.8,0],[-1.6,0],[-1.4,0],[-1.2,0],[-1,0],[-0.8,0],[-0.6,0],[-0.4,0],[-0.2,0],[0,0],[0.2,0],[0.4,0],[0.6,0],[0.8,0],[1,0],[1.2,0],[1.4,0],[1.6,0],[1.8,0],[2,0],[2.2,0],[2.4,0],[2.6,0],[2.8,0],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "Significance threshold: reject H0 when |t| lands in the alpha=0.05 rejection region (|t| > 2.306)",
+        xlabel: "t-statistic (standard errors from 0)",
+        ylabel: "probability density under H0",
+        series: [
+          { name: "null t-distribution (H0 true)", color: "#4ea1ff", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.2,0.046],[-2,0.06237],[-1.8,0.08372],[-1.6,0.11086],[-1.4,0.14425],[-1.2,0.18361],[-1,0.22761],[-0.8,0.27351],[-0.6,0.31721],[-0.4,0.35373],[-0.2,0.37812],[0,0.3867],[0.2,0.37812],[0.4,0.35373],[0.6,0.31721],[0.8,0.27351],[1,0.22761],[1.2,0.18361],[1.4,0.14425],[1.6,0.11086],[1.8,0.08372],[2,0.06237],[2.2,0.046],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] },
+          { name: "rejection region (area = alpha = 0.05)", color: "#ff7b72", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.306,0.0413],[-2.2,0],[-2,0],[-1.8,0],[-1.6,0],[-1.4,0],[-1.2,0],[-1,0],[-0.8,0],[-0.6,0],[-0.4,0],[-0.2,0],[0,0],[0.2,0],[0.4,0],[0.6,0],[0.8,0],[1,0],[1.2,0],[1.4,0],[1.6,0],[1.8,0],[2,0],[2.2,0],[2.306,0.0413],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "The decision: p-value vs alpha threshold  ->  p=0.017 < 0.05  ->  reject H0",
+        xlabel: "quantity",
+        ylabel: "probability",
+        labels: ["p-value (observed)", "alpha (cutoff)"],
+        values: [0.017, 0.05],
+        valueLabels: ["0.017  REJECT H0", "0.05  threshold"],
+        colors: ["#7ee787", "#9aa7b4"]
+      },
+      {
+        type: "line",
+        title: "Two ways to be wrong: Type I error (alpha, false alarm) vs Type II (beta, miss); power = 1 - beta = 0.75",
+        xlabel: "t-statistic",
+        ylabel: "probability density",
+        series: [
+          { name: "H0 true: red right tail = alpha/2 (Type I)", color: "#4ea1ff", points: [[-5,0.00066],[-4.5,0.00132],[-4,0.00276],[-3.5,0.00592],[-3,0.01301],[-2.5,0.02878],[-2.306,0.0413],[-2,0.06237],[-1.5,0.12677],[-1,0.22761],[-0.5,0.33669],[0,0.3867],[0.5,0.33669],[1,0.22761],[1.5,0.12677],[2,0.06237],[2.306,0.0413],[2.5,0.02878],[3,0.01301],[3.5,0.00592],[4,0.00276],[4.5,0.00132],[5,0.00066]] },
+          { name: "H1 true (real effect, mean t=3): left part < 2.306 = beta (Type II miss)", color: "#c89bff", points: [[-5,0],[-4.5,0],[-4,0],[-3.5,0],[-3,0],[-2.5,0],[-2.306,0],[-2,0.00001],[-1.5,0.00003],[-1,0.00017],[-0.5,0.00063],[0,0.0043],[0.5,0.01399],[1,0.06049],[1.5,0.12374],[2,0.24201],[2.306,0.28],[2.5,0.29855],[3,0.31059],[3.5,0.27817],[4,0.20534],[4.5,0.15756],[5,0.1]] }
+        ]
       }
     ],
-    caption: "Each bar is −log10(p) for a Welch two-sample t-test comparing that feature's values in malignant vs benign tumors (taller = smaller p = more significant). The significance line sits at −log10(0.05) ≈ 1.30: everything above it (green) differs between the two classes far beyond chance — 'worst concave points' is astronomically significant (p ≈ 1e−96). The two red bars fall below the line: 'mean fractal dimension' (p ≈ 0.77) and 'symmetry error' (p ≈ 0.89) show no real malignant-vs-benign difference. This is exactly how you screen which features carry signal — but with 30 tests you must then apply a multiple-comparison correction (Bonferroni / FDR) before trusting the borderline ones.",
+    caption: "The same five-step recipe, end to end, on the lesson's worked example (B improves on A by 3 accuracy points). Chart 1 builds the test statistic: the 0.030 gap divided by the 0.010 standard error gives t = 3.0 — the gap is 3 noise-units above zero. Chart 2 reads the p-value straight off the null t-curve (df=8): it is the orange tail area beyond |t|=3.0 on BOTH sides (two-sided), which integrates to 0.017 — chance fakes a gap this big only 1.7% of the time. Chart 3 is the same curve with the alpha=0.05 rejection region shaded red: the two-sided cutoff is |t|>2.306, and any observed t past that line is 'too rare to be luck.' Chart 4 is the decision itself: p=0.017 < alpha=0.05, so we reject H0 and call B's improvement real. Chart 5 weighs the two errors: under H0 (blue) the red tail beyond 2.306 is the Type I false-alarm rate alpha; under a real effect H1 (purple, centered near t=3) the part of that curve still falling LEFT of 2.306 is the Type II miss rate beta=0.25, so the power to catch this effect is 1-beta=0.75 — bigger samples or bigger effects push the purple curve right and raise the power. All numbers are computed, not invented: t=3.0, df=8, p=0.01707, t_crit=2.306, power=0.748.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
 from scipy import stats
 
-data = load_breast_cancer()
-X, y, names = data.data, data.target, data.feature_names
-# sklearn target: 0 = malignant, 1 = benign
-malignant = X[y == 0]
-benign    = X[y == 1]
+A = np.array([0.90, 0.91, 0.89, 0.92, 0.88])   # model A accuracy on 5 splits
+B = np.array([0.93, 0.94, 0.92, 0.95, 0.91])   # model B accuracy on 5 splits
 
-# Welch two-sample t-test for every one of the 30 features
-neglogp = {}
-for i, name in enumerate(names):
-    t, p = stats.ttest_ind(malignant[:, i], benign[:, i], equal_var=False)
-    neglogp[name] = -np.log10(p)
+# ---- 1. test statistic  t = gap / standard error -----------------------
+gap = B.mean() - A.mean()                       # 0.030
+sA, sB, n = A.std(ddof=1), B.std(ddof=1), len(A)
+se  = np.sqrt(sA**2/n + sB**2/n)                # 0.010
+t   = gap / se                                  # 3.0
+df  = 8.0                                        # Welch df for this data
+print("gap =", round(gap,3), " SE =", round(se,3), " t =", round(t,1))
 
-# the eight features shown (a spread from most to least significant)
-show = ["worst concave points", "mean radius", "mean texture",
-        "worst smoothness", "mean smoothness", "mean symmetry",
-        "mean fractal dimension", "symmetry error"]
-for name in show:
-    print(f"{name:24s} -log10(p) = {neglogp[name]:.2f}")
+# ---- 2. p-value = two-sided tail area beyond |t| under the null --------
+p = 2 * stats.t.sf(abs(t), df)                  # 0.01707
+print("p-value =", round(p, 5))
 
-print("significance line -log10(0.05) =", round(-np.log10(0.05), 2))  # 1.30`
+# ---- 3. significance threshold: rejection region |t| > t_crit ----------
+alpha  = 0.05
+t_crit = stats.t.ppf(1 - alpha/2, df)           # 2.306
+print("t_crit =", round(t_crit, 3), " reject H0:", p < alpha)
+
+# ---- 5. power = 1 - beta, assuming the true effect equals what we saw --
+# under H1 the statistic is noncentral-t with noncentrality = t = 3.0
+beta  = stats.nct.cdf(t_crit, df, t) - stats.nct.cdf(-t_crit, df, t)
+print("Type II (beta) =", round(beta,3), " power =", round(1 - beta, 3))`
   };
 })();

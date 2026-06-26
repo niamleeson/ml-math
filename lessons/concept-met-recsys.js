@@ -208,82 +208,121 @@ print("diversity  ", round(diversity, 3))`
   };
 
   window.CODEVIZ["met-recsys"] = {
-    question: "Run a REAL item-item recommender on the digits images: as we show more items (larger k), how do Precision@k, Recall@k, and NDCG@k trade off — and does personalizing beat a popularity baseline on catalog coverage?",
+    question: "One user, R={B,D,E}, top list [B,X,D,Y,E,...]: how do Precision@k, Recall@k, HR@k and NDCG@k behave as k grows, how is NDCG@5 built from DCG/IDCG, how does MAP average the per-hit precisions, how does RMSE punish a big miss more than MAE — and why must we watch beyond-accuracy metrics (coverage, diversity) instead of accuracy alone?",
     charts: [
       {
         type: "line",
-        title: "Ranking metrics vs k (real item-item recommender on load_digits)",
-        xlabel: "k (number of recommended items shown)",
+        title: "Precision@k, Recall@k, HR@k, NDCG@k vs k (one user, R={B,D,E}, rel=[1,0,1,0,1,0,0,0])",
+        xlabel: "k (number of top items looked at)",
         ylabel: "metric value",
         series: [
-          { name: "Precision@k", color: "#ff7b72", points: [[1, 1.0], [3, 0.99], [5, 0.984], [10, 0.967], [20, 0.939], [50, 0.865]] },
-          { name: "Recall@k", color: "#4ea1ff", points: [[1, 0.006], [3, 0.017], [5, 0.028], [10, 0.054], [20, 0.105], [50, 0.242]] },
-          { name: "NDCG@k", color: "#7ee787", points: [[1, 1.0], [3, 0.992], [5, 0.987], [10, 0.975], [20, 0.953], [50, 0.892]] }
+          { name: "Precision@k = hits/k", color: "#ff7b72", points: [[1, 1.0], [2, 0.5], [3, 0.667], [4, 0.5], [5, 0.6], [8, 0.375]] },
+          { name: "Recall@k = hits/|R|", color: "#4ea1ff", points: [[1, 0.333], [2, 0.333], [3, 0.667], [4, 0.667], [5, 1.0], [8, 1.0]] },
+          { name: "HR@k (any hit?)", color: "#ffb454", points: [[1, 1.0], [2, 1.0], [3, 1.0], [4, 1.0], [5, 1.0], [8, 1.0]] },
+          { name: "NDCG@k", color: "#7ee787", points: [[1, 1.0], [2, 0.613], [3, 0.704], [4, 0.704], [5, 0.885], [8, 0.885]] }
         ]
       },
       {
         type: "bars",
-        title: "Catalog coverage: personalized recommender vs popularity baseline",
-        xlabel: "strategy",
-        ylabel: "fraction of catalog ever recommended",
-        labels: ["personalized (item-item)", "popularity (same top-10 for all)"],
-        values: [0.621, 0.006],
-        valueLabels: ["0.62", "0.006"],
-        colors: ["#7ee787", "#ff7b72"]
+        title: "NDCG@5 = DCG@5 / IDCG@5 = 1.887 / 2.131 = 0.885 (per-position gain rel/log2(i+1))",
+        xlabel: "list / position",
+        ylabel: "gain contributed",
+        labels: ["pos1 B", "pos2 X", "pos3 D", "pos4 Y", "pos5 E", "DCG@5 total", "IDCG@5 (ideal)"],
+        values: [1.0, 0.0, 0.5, 0.0, 0.387, 1.887, 2.131],
+        valueLabels: ["1.0", "0", "0.5", "0", "0.387", "1.887", "2.131"],
+        colors: ["#7ee787", "#9aa7b4", "#7ee787", "#9aa7b4", "#7ee787", "#4ea1ff", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "MAP = mean of AP; AP = average of precision at each hit (user1 AP=0.756, user2 AP=0.5 -> MAP=0.628)",
+        xlabel: "precision recorded at each relevant hit",
+        ylabel: "precision value",
+        labels: ["u1 hit@1=1/1", "u1 hit@3=2/3", "u1 hit@5=3/5", "u1 AP", "u2 AP", "MAP"],
+        values: [1.0, 0.667, 0.6, 0.756, 0.5, 0.628],
+        valueLabels: ["1.0", "0.667", "0.6", "0.756", "0.5", "0.628"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#ffb454", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "RMSE punishes the big miss: true [5,3], pred [4,1] -> errors [1,2] -> MAE 1.5 < RMSE 1.58",
+        xlabel: "quantity",
+        ylabel: "stars",
+        labels: ["|err| item1", "|err| item2", "MAE (avg |err|)", "RMSE (sqrt mean err^2)"],
+        values: [1.0, 2.0, 1.5, 1.581],
+        valueLabels: ["1.0", "2.0", "1.5", "1.581"],
+        colors: ["#9aa7b4", "#ff7b72", "#4ea1ff", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "Accuracy alone hides catalog collapse: watch Coverage & Diversity (personalized vs blockbuster lists)",
+        xlabel: "metric",
+        ylabel: "value (0..1)",
+        labels: ["Coverage personalized", "Coverage popularity", "Diversity varied list", "Diversity blockbuster list"],
+        values: [0.621, 0.01, 0.697, 0.01],
+        valueLabels: ["0.62", "0.01", "0.70", "0.01"],
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72"]
       }
     ],
-    caption: "Real numbers from load_digits (1797 images, 200 query users). As k grows, Precision@k falls (1.0 -> 0.865) and NDCG@k decays while Recall@k rises (0.006 -> 0.242) — the classic precision/recall trade-off. The popularity baseline shows the SAME 10 items to everyone, so it touches just 0.6% of the catalog; the personalized recommender reaches 62% — the long-tail / catalog-collapse story in one chart.",
+    caption: "All numbers computed from the lesson's worked example. Chart 1: as k grows, Recall@k rises to 1.0 (more slots catch all of R) while Precision@k wobbles down and NDCG@k climbs as relevant items get covered — HR@k is 1 the moment a hit appears. Chart 2: NDCG@5 sums position-discounted gains (slot 1 gives 1.0, slot 5 only 0.387), then divides DCG@5=1.887 by the ideal IDCG@5=2.131 -> 0.885. Chart 3: MAP averages each user's AP, where AP averages the precision recorded at every hit (1.0, 0.667, 0.6 -> 0.756 for user1). Chart 4: squaring makes the 2-star miss dominate, so RMSE 1.58 > MAE 1.5. Chart 5: a blockbuster list scores high on accuracy but craters Coverage (0.62 -> 0.01) and intra-list Diversity (0.70 -> 0.01) — the collapse accuracy cannot see.",
     code: `import numpy as np
-from sklearn.datasets import load_digits
 
-# Real user-item ranking proxy: each "user" is a query image; the recommender
-# returns the most cosine-similar OTHER images; an item is "relevant" if it is
-# the same digit class as the query. This is a real item-item recommender.
-rng = np.random.default_rng(0)
-digits = load_digits()
-X = digits.data.astype(float)
-y = digits.target
-X = X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-9)   # unit-norm -> dot = cosine
-
-idx = rng.choice(len(X), 200, replace=False)                # 200 query users
-S = X[idx] @ X.T                                             # 200 x 1797 similarities
-for i, qi in enumerate(idx):
-    S[i, qi] = -np.inf                                       # never recommend the query itself
-order = np.argsort(-S, axis=1)                               # ranked lists, best first
+# ---- one user's ranked list; R = {B,D,E}, |R| = 3 ----
+rel = np.array([1, 0, 1, 0, 1, 0, 0, 0])   # rel[i]=1 if top item i is relevant
+nR = 3
 
 def dcg(rels):
     rels = np.asarray(rels, float)
     return np.sum(rels / np.log2(np.arange(2, len(rels) + 2)))
 
-ks = [1, 3, 5, 10, 20, 50]
-prec, rec, ndcg = [], [], []
+ks = [1, 2, 3, 4, 5, 8]
 for k in ks:
-    ps, rs, ns = [], [], []
-    for i, qi in enumerate(idx):
-        topk = order[i, :k]
-        rel = (y[topk] == y[qi]).astype(float)
-        n_rel = (y == y[qi]).sum() - 1                       # exclude the query itself
-        ps.append(rel.sum() / k)
-        rs.append(rel.sum() / n_rel)
-        idcg = dcg(np.ones(min(k, n_rel)))
-        ns.append(dcg(rel) / idcg if idcg > 0 else 0.0)
-    prec.append(np.mean(ps)); rec.append(np.mean(rs)); ndcg.append(np.mean(ns))
+    r = rel[:k]
+    idcg = dcg(np.ones(min(k, nR)))
+    print("k", k,
+          "P", round(r.sum()/k, 3),
+          "R", round(r.sum()/nR, 3),
+          "HR", 1.0 if r.sum() > 0 else 0.0,
+          "NDCG", round(dcg(r)/idcg, 3))
+# k1 P1.0 R0.333 HR1 NDCG1.0 ... k5 P0.6 R1.0 NDCG0.885
 
-print("k         ", ks)
-print("precision ", [round(v, 3) for v in prec])   # [1.0, 0.99, 0.984, 0.967, 0.939, 0.865]
-print("recall    ", [round(v, 3) for v in rec])    # [0.006, 0.017, 0.028, 0.054, 0.105, 0.242]
-print("ndcg      ", [round(v, 3) for v in ndcg])   # [1.0, 0.992, 0.987, 0.975, 0.953, 0.892]
+# ---- NDCG@5 breakdown ----
+gains = rel[:5] / np.log2(np.arange(2, 7))   # [1.0, 0, 0.5, 0, 0.387]
+print("DCG@5", round(gains.sum(), 3),               # 1.887
+      "IDCG@5", round(dcg(np.ones(3)), 3),          # 2.131
+      "NDCG@5", round(gains.sum()/dcg(np.ones(3)), 3))  # 0.885
 
-# Catalog coverage: personalized recs (top-10 each) vs a popularity baseline
-N = len(X)
-recset = set()
-for i in range(len(idx)):
-    recset.update(order[i, :10].tolist())
-cov_model = len(recset) / N                          # ~0.62
+# ---- MAP = mean of per-user Average Precision ----
+def ap(r):
+    hits, precs = 0, []
+    for i, f in enumerate(r, start=1):
+        if f:
+            hits += 1
+            precs.append(hits / i)
+    return np.mean(precs) if precs else 0.0
+ap1 = ap(rel)                       # 0.756 from [1.0, 0.667, 0.6]
+ap2 = ap([0, 1, 0, 1, 0])           # 0.5 from [0.5, 0.5]
+print("AP1", round(ap1, 3), "AP2", round(ap2, 3),
+      "MAP", round(np.mean([ap1, ap2]), 3))   # 0.628
 
-avgsim = (X @ X.T).mean(0)                            # globally most-similar items
-popset = set(np.argsort(-avgsim)[:10].tolist())      # SAME top-10 shown to everyone
-cov_pop = len(popset) / N                            # ~0.006
-print("coverage personalized", round(cov_model, 3), " popularity", round(cov_pop, 3))`
+# ---- RMSE vs MAE on the lesson's rating pair ----
+yt, yp = np.array([5., 3.]), np.array([4., 1.])
+e = np.abs(yp - yt)                  # [1, 2]
+print("MAE", round(e.mean(), 3),                       # 1.5
+      "RMSE", round(np.sqrt((e**2).mean()), 3))        # 1.581
+
+# ---- beyond-accuracy: coverage + intra-list diversity ----
+catalog = 1000
+cov_personalized = 621 / catalog     # many distinct items recommended -> 0.621
+cov_popularity   = 10 / catalog      # SAME top-10 for everyone        -> 0.01
+print("coverage", cov_personalized, cov_popularity)
+
+def diversity(vecs):                 # avg pairwise (1 - cosine) within one list
+    v = vecs / np.linalg.norm(vecs, axis=1, keepdims=True)
+    s = v @ v.T
+    iu = np.triu_indices(len(v), 1)
+    return float((1 - s[iu]).mean())
+varied      = diversity(np.array([[1,0,0],[0,1,0],[0.2,0.1,0.97],[0.1,0.9,0.4]], float))
+blockbuster = diversity(np.array([[1,0,0],[0.97,0.1,0],[0.95,0.2,0.05],[0.99,0.05,0.1]], float))
+print("diversity", round(varied, 3), round(blockbuster, 3))   # 0.697  0.01`
   };
 })();

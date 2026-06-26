@@ -242,44 +242,103 @@ print("pinball@0.95    :", round(pinball(y_te, hi, 0.95), 2))
   };
 
   window.CODEVIZ["met-uncertainty"] = {
-    question: "On real diabetes data, do 80% / 90% / 95% split-conformal intervals actually cover at their promised rates?",
+    question: "What does each uncertainty metric actually measure — coverage vs width (PICP/MPIW), the asymmetric pinball loss, the CRPS distribution score, and the Winkler interval score that fuses narrow-and-covering into one number?",
     charts: [
       {
         type: "line",
-        title: "Achieved coverage (PICP) vs. target — split conformal on load_diabetes",
+        title: "PICP: achieved coverage vs target — must lie ON the y=x ideal line",
         xlabel: "target coverage 1 − α",
         ylabel: "achieved coverage (PICP) on held-out test",
         series: [
-          { name: "perfect (achieved = target)", color: "#9aa3ad", points: [[0.80, 0.80], [0.95, 0.95]] },
-          { name: "conformal achieved", color: "#4f8ef7", points: [[0.80, 0.888], [0.90, 0.921], [0.95, 0.933]] }
+          { name: "ideal: achieved = target (y=x)", color: "#9aa7b4", points: [[0.80, 0.80], [0.95, 0.95]] },
+          { name: "split-conformal (load_diabetes)", color: "#4ea1ff", points: [[0.80, 0.888], [0.90, 0.921], [0.95, 0.933]] }
         ]
+      },
+      {
+        type: "bars",
+        title: "MPIW: the price of coverage — interval width grows with the promise",
+        labels: ["80% interval", "90% interval", "95% interval"],
+        values: [154.2, 197.1, 226.3],
+        valueLabels: ["154.2", "197.1", "226.3"],
+        colors: ["#7ee787", "#ffb454", "#ff7b72"]
+      },
+      {
+        type: "line",
+        title: "Pinball loss (tau=0.9, truth y=10): asymmetric — under-shooting is fined 9x harder",
+        xlabel: "quantile guess q",
+        ylabel: "pinball loss",
+        series: [
+          { name: "loss(q): min at q=10, slope 0.9 left, 0.1 right", color: "#c89bff",
+            points: [[0,9],[2,7.2],[4,5.4],[6,3.6],[8,1.8],[10,0],[12,0.2],[14,0.4],[16,0.6],[18,0.8],[20,1.0]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "CRPS (truth y=10): sharp & centered scores low; vague or biased scores high",
+        labels: ["sharp N(10,2)", "vague N(10,8)", "biased N(4,2)"],
+        values: [0.467, 1.87, 4.873],
+        valueLabels: ["0.47", "1.87", "4.87"],
+        colors: ["#7ee787", "#ffb454", "#ff7b72"]
+      },
+      {
+        type: "bars",
+        title: "Winkler interval score (90%, truth y=10): width + 20x miss penalty, lower is better",
+        labels: ["calibrated [4,16] covers", "narrow [11,15] MISSES", "over-wide [0,50] covers"],
+        values: [12, 24, 50],
+        valueLabels: ["12 = 12 width", "24 = 4 width + 20 penalty", "50 = 50 width"],
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
       }
     ],
-    caption: "Split-conformal prediction intervals built from a LinearRegression on load_diabetes, with coverage measured on an untouched test split. Achieved coverage (blue) tracks the target (grey diagonal) closely at all three levels — the intervals are calibrated. Mean interval width (MPIW) grows with the promise: about 154 units at 80%, 197 at 90%, and 226 at 95% (target is disease-progression score) — the price of higher coverage is a wider band.",
+    caption: "One diagram per formula the lesson teaches. (1) PICP — split-conformal intervals from a LinearRegression on load_diabetes, coverage measured on an untouched test split; achieved coverage (blue) sits on the grey y=x ideal at all three levels, so the intervals are calibrated. (2) MPIW — the same intervals' mean width grows 154 → 197 → 226 progression-score units as the promise rises: higher coverage costs a wider band, which is why you must read PICP and MPIW together. (3) Pinball loss for tau=0.9 with truth y=10: a kinked V with its minimum at q=10, steep slope 0.9 on the under-shoot side and gentle 0.1 on the overshoot side — guessing 8 costs 1.8 but guessing 12 costs only 0.2, the asymmetry that pins q to the 90th percentile. (4) CRPS against the same truth y=10 for three Gaussian forecasts (closed-form crps_gaussian): the sharp, well-placed N(10,2) scores 0.47, a vague N(10,8) scores 1.87, and a confidently-wrong N(4,2) scores 4.87 — it punishes vagueness and bias. (5) Winkler/interval score for a 90% interval (alpha=0.1, so miss penalty = 2/alpha = 20x): the calibrated covering interval wins at 12, the over-narrow interval that misses by 1 is fined to 24 (4 width + 20 penalty), and the over-wide interval wastes its way to 50 — one number that rewards narrow AND covering.",
     code: `import numpy as np
+from math import erf, sqrt, pi, exp
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
+# ---- charts 1 & 2: PICP (coverage) and MPIW (width) on real data ----
 X, y = load_diabetes(return_X_y=True)        # 442 real patients; target = progression
 X_tr, X_tmp, y_tr, y_tmp = train_test_split(X, y, test_size=0.4, random_state=0)
 X_cal, X_te, y_cal, y_te = train_test_split(X_tmp, y_tmp, test_size=0.5, random_state=0)
-
 model = LinearRegression().fit(X_tr, y_tr)
-res = np.abs(y_cal - model.predict(X_cal))   # calibration residuals
+res = np.abs(y_cal - model.predict(X_cal))   # calibration residuals s_i = |y - yhat|
 pred = model.predict(X_te)
 n = len(res)
-
-for target in [0.80, 0.90, 0.95]:            # the three plotted points
+for target in [0.80, 0.90, 0.95]:
     alpha = 1 - target
     k = min(int(np.ceil((n + 1) * (1 - alpha))), n)
     qhat = np.sort(res)[k - 1]               # conformal half-width
     lo, hi = pred - qhat, pred + qhat
-    picp = np.mean((y_te >= lo) & (y_te <= hi))   # achieved coverage (y-axis)
-    mpiw = np.mean(hi - lo)                        # reported in the caption
+    picp = np.mean((y_te >= lo) & (y_te <= hi))
+    mpiw = np.mean(hi - lo)
     print(target, "PICP", round(float(picp), 3), "MPIW", round(float(mpiw), 1))
-# 0.80 PICP 0.888 MPIW 154.2
-# 0.90 PICP 0.921 MPIW 197.1
-# 0.95 PICP 0.933 MPIW 226.3`
+# 0.80 PICP 0.888 MPIW 154.2   |  0.90 PICP 0.921 MPIW 197.1  |  0.95 PICP 0.933 MPIW 226.3
+
+# ---- chart 3: pinball loss is asymmetric (tau=0.9, truth y=10) ----
+def pinball(y, q, tau):
+    d = y - q
+    return max(tau * d, (tau - 1) * d)
+print("q=8 :", round(pinball(10, 8, 0.9), 2),   # 1.8  (under-shoot, heavy)
+      " q=12:", round(pinball(10, 12, 0.9), 2)) # 0.2  (overshoot, light)
+
+# ---- chart 4: CRPS for a Gaussian forecast, closed form (truth y=10) ----
+def crps_gaussian(mu, sigma, y):
+    z = (y - mu) / sigma
+    Phi = 0.5 * (1 + erf(z / sqrt(2)))
+    phi = exp(-z * z / 2) / sqrt(2 * pi)
+    return sigma * (z * (2 * Phi - 1) + 2 * phi - 1 / sqrt(pi))
+for mu, sg in [(10, 2), (10, 8), (4, 2)]:
+    print("CRPS N(%g,%g):" % (mu, sg), round(crps_gaussian(mu, sg, 10), 3))
+# 0.467 (sharp), 1.87 (vague), 4.873 (biased)
+
+# ---- chart 5: Winkler / interval score (90%, alpha=0.1, truth y=10) ----
+def winkler(L, U, y, alpha):
+    w = U - L
+    if y < L: w += (2 / alpha) * (L - y)
+    elif y > U: w += (2 / alpha) * (y - U)
+    return w
+for L, U in [(4, 16), (11, 15), (0, 50)]:
+    print("Winkler [%d,%d]:" % (L, U), winkler(L, U, 10, 0.1))
+# 12 (calibrated, covers) | 24 (narrow, misses: 4 + 20) | 50 (over-wide)`
   };
 })();

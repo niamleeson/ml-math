@@ -244,43 +244,67 @@ print(f"accuracy={accuracy:.3f}  precision={precision:.3f}  recall={recall:.3f}"
   };
 
   window.CODEVIZ["met-foundations"] = {
-    question: "What does a real confusion matrix look like, and which of the four boxes (TP/FP/FN/TN) carry the counts?",
+    question: "Take one concrete spam test — 200 emails, TP=80, FP=20, FN=10, TN=90 — and watch how the four boxes turn into accuracy and error rate.",
     charts: [
       {
         type: "confusion",
-        title: "Confusion matrix — logistic regression on breast-cancer (positive = malignant)",
-        labels: ["benign (neg)", "malignant (pos)"],
-        matrix: [[141, 2], [7, 78]]
+        title: "Confusion matrix (positive = spam) — the four boxes every metric is built from",
+        labels: ["not-spam (neg)", "spam (pos)"],
+        matrix: [[90, 20], [10, 80]]
+      },
+      {
+        type: "bars",
+        title: "accuracy = (TP + TN) / total — correct boxes over all boxes",
+        labels: ["TP (correct catch)", "TN (correct all-clear)", "TP + TN (numerator)", "total (denominator)", "accuracy = ratio"],
+        values: [80, 90, 170, 200, 0.85],
+        valueLabels: ["80", "90", "170", "200", "0.85"],
+        colors: ["#7ee787", "#7ee787", "#4ea1ff", "#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "error rate = (FP + FN) / total — accuracy and error rate sum to 1",
+        labels: ["FP (false alarm)", "FN (miss)", "FP + FN (numerator)", "total (denominator)", "error rate = ratio"],
+        values: [20, 10, 30, 200, 0.15],
+        valueLabels: ["20", "10", "30", "200", "0.15"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "accuracy vs error rate on the same 200 emails — two slices of the whole",
+        labels: ["accuracy", "error rate"],
+        values: [0.85, 0.15],
+        valueLabels: ["0.85", "0.15"],
+        colors: ["#7ee787", "#ff7b72"]
       }
     ],
-    caption: "Rows = actual, columns = predicted. The diagonal is correct: TN = 141 (benign called benign) and TP = 78 (malignant caught). Off the diagonal are the mistakes: FP = 2 (benign wrongly flagged malignant — a false alarm) and FN = 7 (malignant called benign — a dangerous miss). From these four numbers: accuracy = (141+78)/228 = 0.961, recall on malignant = 78/(78+7) = 0.918, precision on malignant = 78/(78+2) = 0.975. Notice the 7 misses (FN) are the costly errors a single accuracy number would hide.",
+    caption: "One worked example: 200 emails, spam = positive. The confusion matrix holds the four counts — rows = actual, columns = predicted. The diagonal is correct: TN = 90 (not-spam called not-spam) and TP = 80 (spam caught). Off the diagonal are mistakes: FP = 20 (good mail wrongly flagged — a false alarm) and FN = 10 (spam that slipped through — a miss). The accuracy bars show the formula term by term: numerator TP + TN = 80 + 90 = 170, denominator total = 200, ratio accuracy = 170/200 = 0.85. The error-rate bars are the mirror image: FP + FN = 20 + 10 = 30 over 200 = 0.15. The last chart puts them side by side — accuracy 0.85 and error rate 0.15 sum to exactly 1, because every one of the 200 emails is either a correct box or a wrong box. (For reference, the same four counts give precision = TP/(TP+FP) = 80/100 = 0.80 and recall = TP/(TP+FN) = 80/90 = 0.889.)",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from sklearn.metrics import confusion_matrix
 
-# positive class = malignant (sklearn target: 0=malignant, 1=benign)
-data = load_breast_cancer()
-X = data.data
-y = (data.target == 0).astype(int)          # 1 = malignant
-
-X_tr, X_te, y_tr, y_te = train_test_split(
-    X, y, test_size=0.4, random_state=0, stratify=y)
-
-clf = make_pipeline(StandardScaler(),
-                    LogisticRegression(max_iter=5000)).fit(X_tr, y_tr)
-y_pred = clf.predict(X_te)
+# one concrete labeled spam test: 200 emails, positive = spam.
+# y_true / y_pred reconstructed to match TP=80, FP=20, FN=10, TN=90.
+# label 1 = spam (positive), label 0 = not-spam (negative)
+y_true = np.array([1]*90 + [0]*110)          # 90 real spam, 110 real ham
+y_pred = np.array(
+    [1]*80 + [0]*10 +                        # of the 90 spam: 80 caught, 10 missed
+    [1]*20 + [0]*90                          # of the 110 ham: 20 false alarms, 90 clear
+)
 
 # rows = actual [neg, pos], cols = predicted [neg, pos]
-cm = confusion_matrix(y_te, y_pred, labels=[0, 1])
-print(cm)                                    # [[141, 2], [7, 78]]
+cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
 tn, fp, fn, tp = cm.ravel()
+print(cm)                                    # [[90, 20], [10, 80]]
 print(f"TP={tp}  FP={fp}  FN={fn}  TN={tn}")
-print("accuracy :", round((tp + tn) / cm.sum(), 3))
-print("recall   :", round(tp / (tp + fn), 3))
-print("precision:", round(tp / (tp + fp), 3))`
+
+total = tp + fp + fn + tn                     # 200
+accuracy   = (tp + tn) / total                # (80+90)/200 = 0.85
+error_rate = (fp + fn) / total                # (20+10)/200 = 0.15
+print(f"accuracy  = (TP+TN)/total = {tp+tn}/{total} = {accuracy:.2f}")
+print(f"error rate= (FP+FN)/total = {fp+fn}/{total} = {error_rate:.2f}")
+print(f"they sum to {accuracy + error_rate:.2f}")          # 1.00
+
+# the same four boxes also give precision and recall:
+print(f"precision = TP/(TP+FP) = {tp}/{tp+fp} = {tp/(tp+fp):.2f}")
+print(f"recall    = TP/(TP+FN) = {tp}/{tp+fn} = {tp/(tp+fn):.3f}")`
   };
 })();

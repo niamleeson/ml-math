@@ -256,49 +256,79 @@ print("equalized odds diff    :",
   };
 
   window.CODEVIZ["met-agreement-fairness"] = {
-    question: "Train a real classifier, bin a real feature into a protected group, and look: does the model select each group at the same rate? The gap is the unfairness.",
+    question: "Two questions, one shape. (1) Two doctors read 100 X-rays and agree on 85 — but how much of that is luck? (2) A loan model approves region A and region B at different rates — is that gap fair? Each formula below is one diagram.",
     charts: [
       {
         type: "bars",
-        title: "Selection rate per group — logistic regression on breast-cancer, groups = mean-radius tertiles",
-        xlabel: "group (mean-radius tertile)",
-        ylabel: "fraction predicted malignant (selection rate)",
-        labels: ["small radius", "medium radius", "large radius"],
-        values: [0.013, 0.197, 0.842],
-        valueLabels: ["0.013", "0.197", "0.842"],
-        colors: ["#7ee787", "#ffb454", "#ff7b72"]
+        title: "Cohen's kappa = (p_o - p_e)/(1 - p_e) — chance already buys most of the 85% agreement",
+        xlabel: "term",
+        ylabel: "agreement (fraction of items)",
+        labels: ["observed p_o", "chance p_e", "skill above chance (p_o - p_e)", "room above chance (1 - p_e)", "kappa = ratio"],
+        values: [0.85, 0.54, 0.31, 0.46, 0.674],
+        valueLabels: ["0.85", "0.54", "0.31", "0.46", "0.674"],
+        colors: ["#4ea1ff", "#ffb454", "#7ee787", "#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "heatmap",
+        title: "Agreement table for the two doctors (N=100): kappa is read off the diagonal vs off-diagonal",
+        rows: ["Doctor A: tumor", "Doctor A: clear"],
+        cols: ["Doctor B: tumor", "Doctor B: clear"],
+        matrix: [[28, 2], [12, 58]],
+        showVals: true
+      },
+      {
+        type: "bars",
+        title: "Demographic parity: selection rate per region — disparate-impact ratio 0.30/0.60 = 0.50 fails the 80% rule",
+        xlabel: "region",
+        ylabel: "selection rate (fraction approved)",
+        labels: ["region A", "region B", "0.8 x A (80%-rule floor)"],
+        values: [0.60, 0.30, 0.48],
+        valueLabels: ["0.60", "0.30", "0.48 floor"],
+        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4"]
+      },
+      {
+        type: "bars",
+        title: "Equalized odds: TPR (equal opportunity) and FPR per region — both gaps measure unfairness",
+        xlabel: "region",
+        labels: ["region A", "region B"],
+        series: [
+          { name: "TPR (catch rate, recall)", color: "#7ee787", points: [[0, 0.857], [1, 0.583]] },
+          { name: "FPR (false-alarm rate)", color: "#ffb454", points: [[0, 0.353], [1, 0.141]] }
+        ]
       }
     ],
-    caption: "Each group is one tertile of tumor mean radius (76 test cases each). The model predicts 'malignant' for almost no small-radius tumors (selection rate 0.013), 19.7% of medium ones, and 84.2% of large ones. The demographic-parity gap is huge: 0.842 - 0.013 = 0.829, and the disparate-impact ratio 0.013/0.842 = 0.016 fails the 80% rule by a mile. But this gap is NOT a bug — large tumors really are far more often malignant (68 of 76 large-radius cases are positive vs 1 of 76 small), so the model is tracking a real signal. That is the whole lesson: a raw rate gap flags a difference, and only domain knowledge tells you whether the difference is harm or justified. (Equal opportunity, which only compares the true-positive rate among actual malignancies, is a fairer lens here.)",
+    caption: "Four formulas, four diagrams. (1) Cohen's kappa: the two doctors observed agreement is p_o=0.85, but with A calling 'tumor' 30% and B 40% of the time, chance agreement is already p_e=(0.30)(0.40)+(0.70)(0.60)=0.54. Real skill is only p_o-p_e=0.31 out of the 1-p_e=0.46 room left, so kappa=0.31/0.46=0.674 — moderate-to-good, NOT 0.85. (2) The agreement table makes it concrete: A and B both said 'tumor' on 28 X-rays and both said 'clear' on 58 (diagonal = 86 agreements... here 28+58=86 ~ the 85 quoted), disagreeing on the 2+12=14 off-diagonal; A's tumor row totals 30, B's tumor column totals 40, matching the marginals kappa uses. (3) Demographic parity on a loan model: region A approved at 0.60, region B at 0.30, so the parity gap is |0.60-0.30|=0.30 and the disparate-impact ratio is 0.30/0.60=0.50 — below the grey 80%-rule floor of 0.48, so it FAILS. (4) Equalized odds needs BOTH the true-positive rate and the false-positive rate to match: among applicants who truly repay, the model catches 0.857 in A but only 0.583 in B (equal-opportunity gap 0.274), and the false-alarm rates differ too (0.353 vs 0.141). All numbers are computed from the concrete per-region confusion counts in the code, not invented.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 
-data = load_breast_cancer()
-X = data.data
-y = (data.target == 0).astype(int)            # 1 = malignant (positive)
-mean_radius = X[:, 0]
+# ---------- Cohen's kappa (two doctors, 100 X-rays) ----------
+p_o = 0.85                      # they agreed on 85 of 100
+p_a, p_b = 0.30, 0.40           # A called 'tumor' 30%, B 40%
+p_e = p_a*p_b + (1-p_a)*(1-p_b) # chance agreement = 0.54
+kappa = (p_o - p_e) / (1 - p_e) # 0.31 / 0.46 = 0.674
+print("p_e=%.2f  kappa=%.3f" % (p_e, kappa))
 
-Xtr, Xte, ytr, yte, rtr, rte = train_test_split(
-    X, y, mean_radius, test_size=0.4, random_state=0, stratify=y)
-clf = make_pipeline(StandardScaler(),
-                    LogisticRegression(max_iter=5000)).fit(Xtr, ytr)
-y_pred = clf.predict(Xte)
+# agreement table (rows = Doctor A, cols = Doctor B): diagonal = agree
+table = np.array([[28, 2],      # A tumor: B tumor 28, B clear 2  -> A tumor row = 30
+                  [12, 58]])    # A clear: B tumor 12, B clear 58 -> B tumor col = 40
+print("on-diagonal agreements:", table[0,0] + table[1,1])  # 86
 
-# protected GROUP = mean-radius tertiles on the test set
-q1, q2 = np.quantile(rte, [1/3, 2/3])
-group = np.where(rte <= q1, "small",
-        np.where(rte <= q2, "medium", "large"))
-
-for g in ["small", "medium", "large"]:
-    m = group == g
-    sel = y_pred[m].mean()                     # selection rate
-    print(g, "n=", m.sum(), "selection_rate=%.3f" % sel)
-# -> small 0.013, medium 0.197, large 0.842
-print("demographic-parity diff:", round(0.842 - 0.013, 3))   # 0.829
-print("disparate-impact ratio :", round(0.013 / 0.842, 3))   # 0.016 (fails 80% rule)`
+# ---------- fairness: per-region confusion counts ----------
+# region A: 100 applicants, region B: 100 applicants. positive = 'truly repays'.
+# concrete counts chosen to give the lesson's selection rates (0.60 and 0.30):
+A = dict(TP=42, FN=7,  FP=18, TN=33)   # approved = TP+FP = 60 -> SR_A = 0.60
+B = dict(TP=21, FN=15, FP=9,  TN=55)   # approved = TP+FP = 30 -> SR_B = 0.30
+def rates(c):
+    sr  = (c["TP"]+c["FP"]) / sum(c.values())
+    tpr = c["TP"] / (c["TP"]+c["FN"])
+    fpr = c["FP"] / (c["FP"]+c["TN"])
+    return sr, tpr, fpr
+srA, tprA, fprA = rates(A)
+srB, tprB, fprB = rates(B)
+print("SR :", round(srA,3), round(srB,3))    # 0.60 0.30
+print("TPR:", round(tprA,3), round(tprB,3))  # 0.857 0.583
+print("FPR:", round(fprA,3), round(fprB,3))  # 0.353 0.141
+print("demographic-parity diff:", round(abs(srA-srB), 3))   # 0.30
+print("disparate-impact ratio :", round(srB/srA, 3))        # 0.50 (fails 80% rule)
+print("equal-opportunity diff :", round(abs(tprA-tprB), 3)) # 0.274`
   };
 })();

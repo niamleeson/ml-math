@@ -289,44 +289,99 @@ print(two_by_two(40, 10, 20, 30))
   };
 
   window.CODEVIZ["met-effect-size"] = {
-    question: "On the real breast-cancer data, which features most strongly separate malignant from benign tumors — measured by Cohen's d, NOT by a p-value?",
+    question: "What does each effect size actually measure? See Cohen's d as the separation between two groups, the term-by-term recipe for d, variance explained (eta-squared), odds ratio vs risk ratio, and correlation r — each on concrete numbers.",
     charts: [
       {
+        type: "line",
+        title: "Cohen's d = separation of two groups: d = 0.5 (overlap) vs d = 1.5 (clear gap)",
+        xlabel: "score",
+        ylabel: "relative frequency",
+        series: [
+          { name: "control (mean 72)", color: "#4ea1ff", points: [[42, 0.044], [48, 0.135], [54, 0.325], [60, 0.607], [66, 0.882], [72, 1.00], [78, 0.882], [84, 0.607], [90, 0.325], [96, 0.135], [102, 0.044]] },
+          { name: "treatment, d=0.5 (mean 78)", color: "#7ee787", points: [[48, 0.044], [54, 0.135], [60, 0.325], [66, 0.607], [72, 0.882], [78, 1.00], [84, 0.882], [90, 0.607], [96, 0.325], [102, 0.135], [108, 0.044]] },
+          { name: "treatment, d=1.5 (mean 90)", color: "#ffb454", points: [[60, 0.044], [66, 0.135], [72, 0.325], [78, 0.607], [84, 0.882], [90, 1.00], [96, 0.882], [102, 0.607], [108, 0.325], [114, 0.135], [120, 0.044]] }
+        ]
+      },
+      {
         type: "bars",
-        title: "Cohen's d per feature: malignant vs benign (taller = bigger separation)",
-        xlabel: "feature",
-        ylabel: "Cohen's d (standardized mean difference)",
-        labels: ["worst concave pts", "worst perimeter", "mean concave pts", "worst radius", "mean perimeter", "worst area", "mean radius", "mean area"],
-        values: [2.693, 2.598, 2.545, 2.544, 2.290, 2.230, 2.205, 2.076],
-        valueLabels: ["2.69", "2.60", "2.55", "2.54", "2.29", "2.23", "2.21", "2.08"],
-        colors: ["#ff7b72", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        title: "d = (mean1 - mean2) / pooled SD: term-by-term, 6 / 12 = 0.5",
+        xlabel: "term",
+        ylabel: "value (score units; d is unitless)",
+        labels: ["mean1 = 78", "mean2 = 72", "diff = 6", "pooled SD = 12", "d = 0.5"],
+        values: [78, 72, 6, 12, 0.5],
+        valueLabels: ["78", "72", "6", "12", "0.50"],
+        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#c89bff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "eta-squared = variance explained: SS_between / SS_total = 363.3 / 473.3 = 0.768",
+        xlabel: "quantity",
+        ylabel: "sum of squares",
+        labels: ["SS_between", "SS_within", "SS_total", "eta^2 x1000", "omega^2 x1000"],
+        values: [363.33, 110.0, 473.33, 768, 715],
+        valueLabels: ["363.3", "110.0", "473.3", "0.768", "0.715"],
+        colors: ["#7ee787", "#9aa7b4", "#4ea1ff", "#c89bff", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "Odds ratio vs risk ratio on the SAME 2x2 table: OR = 6.0 but RR = 2.0",
+        xlabel: "measure",
+        ylabel: "value (ratio, or rate)",
+        labels: ["risk exposed 0.80", "risk unexposed 0.40", "risk ratio = 2.0", "odds ratio = 6.0"],
+        values: [0.80, 0.40, 2.0, 6.0],
+        valueLabels: ["0.80", "0.40", "2.0", "6.0"],
+        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#ff7b72"]
+      },
+      {
+        type: "scatter",
+        title: "Correlation r as an effect size: r = 0.92, so r^2 = 0.85 (85% of variance explained)",
+        xlabel: "study hours",
+        ylabel: "exam score",
+        groups: [
+          { name: "students (n=14)", color: "#4ea1ff", points: [[1, 55], [2, 52], [2, 61], [3, 58], [4, 72], [4, 64], [5, 70], [6, 68], [7, 82], [8, 85], [3, 60], [5, 75], [6, 71], [2, 57]] }
+        ],
+        lines: [
+          { color: "#ffb454", dash: false, points: [[1, 52.6], [8, 83.3]] }
+        ]
       }
     ],
-    caption: "Each bar is Cohen's d between the malignant and benign tumors for one measurement: the gap between the two group means, divided by the pooled standard deviation. 'Worst concave points' is the largest at d = 2.69 (highlighted) — the two groups are nearly 2.7 standard deviations apart, an effect far beyond Cohen's 'large' benchmark of 0.8. By contrast the weakest features (symmetry error d = 0.01, texture error d = 0.02, mean fractal dimension d = 0.03) barely separate the classes at all. A p-value cannot rank features this way: on 569 tumors almost every feature is 'significant', so significance tells you nothing about which measurement actually carries the signal — the effect size does.",
+    caption: "Five views of the formulas. (1) Cohen's d IS the separation: control (mean 72, SD 12) vs a d=0.5 treatment (mean 78) overlap heavily, while a d=1.5 treatment (mean 90) pulls clear — d literally counts how many SDs apart the bell curves sit. (2) The term-by-term bars show the recipe d = (mean1-mean2)/pooled SD = 6/12 = 0.50: a medium effect. (3) eta-squared is variance explained: with three teaching-method groups (means 76, 81, 88), SS_between / SS_total = 363.3/473.3 = 0.768, i.e. the grouping explains 77% of the score variation; the less-biased omega-squared trims this to 0.715. (4) Odds ratio and risk ratio on ONE table (40/50 exposed, 20/50 unexposed had the event): risk ratio = 0.80/0.40 = 2.0 ('twice as likely'), yet the odds ratio = (40*30)/(10*20) = 6.0 — far from 2 because the event is common, the classic trap. (5) r as an effect size: study hours vs exam score give r = 0.92, so r-squared = 0.85 means the line explains 85% of the variance; the orange line is the fitted trend. All numbers are computed in the code below, not invented.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
 
-data = load_breast_cancer()
-X, y = data.data, data.target          # target: 0 = malignant, 1 = benign
-mal = X[y == 0]                        # malignant tumors
-ben = X[y == 1]                        # benign tumors
+# ---- 1) Cohen's d = (mean1 - mean2) / pooled SD ----
+mean1, mean2, sp = 78.0, 72.0, 12.0
+d = (mean1 - mean2) / sp
+print("Cohen's d =", d)                 # 0.5  (medium)
+# d=0.5 means the bell curves are half an SD apart; d=1.5 -> 1.5 SDs apart
 
-def cohens_d(a, b):
-    n1, n2 = len(a), len(b)
-    # pooled standard deviation: the two groups' spreads combined
-    sp = np.sqrt(((n1 - 1) * a.var(ddof=1) + (n2 - 1) * b.var(ddof=1))
-                 / (n1 + n2 - 2))
-    return (a.mean() - b.mean()) / sp
+# ---- 2) eta-squared (variance explained) for 3 groups ----
+g1 = np.array([72, 75, 78, 81, 74])     # teaching method A  (mean 76)
+g2 = np.array([80, 83, 79, 85, 78])     # method B           (mean 81)
+g3 = np.array([88, 91, 86, 90, 85])     # method C           (mean 88)
+allv = np.concatenate([g1, g2, g3]); grand = allv.mean()
+groups = [g1, g2, g3]
+ss_between = sum(len(g) * (g.mean() - grand) ** 2 for g in groups)
+ss_within  = sum(((g - g.mean()) ** 2).sum() for g in groups)
+ss_total   = ((allv - grand) ** 2).sum()
+eta2 = ss_between / ss_total
+k, N = 3, len(allv)
+ms_within = ss_within / (N - k)
+omega2 = (ss_between - (k - 1) * ms_within) / (ss_total + ms_within)
+print("SS_between, within, total:", round(ss_between,1), round(ss_within,1), round(ss_total,1))
+print("eta^2 =", round(eta2, 3), " omega^2 =", round(omega2, 3))  # 0.768, 0.715
 
-# Cohen's d for every feature, then rank by magnitude
-ds = np.array([cohens_d(mal[:, i], ben[:, i]) for i in range(X.shape[1])])
-order = np.argsort(-np.abs(ds))        # largest separation first
-for i in order[:8]:
-    print(f"{data.feature_names[i]:25s}  d = {ds[i]:.3f}")
-# worst concave points  d = 2.693   <- biggest separation (highlighted bar)
-# worst perimeter       d = 2.598
-# mean concave points   d = 2.545
-# ...
-# symmetry error        d ~ 0.013   <- tiny separation, yet still "significant"`
+# ---- 3) odds ratio vs risk ratio from a 2x2 table ----
+a, b, c, d2 = 40, 10, 20, 30            # exposed +/-,  unexposed +/-
+risk_exp, risk_unexp = a / (a + b), c / (c + d2)   # 0.80, 0.40
+rr = risk_exp / risk_unexp             # risk ratio  = 2.0
+od = (a * d2) / (b * c)                # odds ratio  = 6.0
+print("risk ratio =", rr, " odds ratio =", od)     # 2.0, 6.0
+
+# ---- 4) correlation r as an effect size ----
+hours = np.array([1,2,2,3,4,4,5,6,7,8,3,5,6,2])
+score = np.array([55,52,61,58,72,64,70,68,82,85,60,75,71,57])
+r = np.corrcoef(hours, score)[0, 1]
+print("r =", round(r, 3), " r^2 =", round(r**2, 3))  # 0.923, 0.852
+# r^2 = 0.85 -> the straight-line fit explains 85% of the score variance`
   };
 })();

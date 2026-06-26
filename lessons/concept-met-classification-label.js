@@ -239,47 +239,81 @@ print("weighted F1:", f1_score(y_te, pred, average="weighted"))`
   };
 
   window.CODEVIZ["met-classification-label"] = {
-    question: "How do the hard-label metrics compare for a real logistic-regression tumor classifier?",
+    question: "Each metric is a recipe over the four confusion-matrix counts. What does each formula actually measure, and why do they disagree on imbalanced data?",
     charts: [
       {
+        type: "confusion",
+        title: "The anchor: a confusion matrix (rare-disease screen, positive = sick)",
+        labels: ["positive", "negative"],
+        matrix: [[20, 30], [10, 940]]
+      },
+      {
         type: "bars",
-        title: "Hard-label metrics for logistic regression on breast cancer (malignant = positive)",
+        title: "precision = TP/(TP+FP) = 20/30 = 0.667 — of your positive flags, how many were right",
+        xlabel: "term",
+        ylabel: "count (last bar = ratio x100)",
+        labels: ["TP (numerator)", "TP+FP (denominator)", "precision x100"],
+        values: [20, 30, 66.7],
+        valueLabels: ["20", "30", "0.667"],
+        colors: ["#7ee787", "#9aa7b4", "#4ea1ff"]
+      },
+      {
+        type: "bars",
+        title: "recall = TP/(TP+FN) = 20/50 = 0.400 — of the real positives, how many you caught",
+        xlabel: "term",
+        ylabel: "count (last bar = ratio x100)",
+        labels: ["TP (numerator)", "TP+FN (denominator)", "recall x100"],
+        values: [20, 50, 40.0],
+        valueLabels: ["20", "50", "0.400"],
+        colors: ["#7ee787", "#9aa7b4", "#ffb454"]
+      },
+      {
+        type: "bars",
+        title: "F1 = 2TP/(2TP+FP+FN) = 40/80 = 0.500 — harmonic mean of precision and recall, ignores TN",
+        xlabel: "term",
+        ylabel: "count (last bar = ratio x100)",
+        labels: ["2TP (numerator)", "2TP+FP+FN (denominator)", "F1 x100"],
+        values: [40, 80, 50.0],
+        valueLabels: ["40", "80", "0.500"],
+        colors: ["#7ee787", "#9aa7b4", "#c89bff"]
+      },
+      {
+        type: "bars",
+        title: "Why they disagree: accuracy and specificity look great, but F1 and recall expose the misses (same matrix)",
         xlabel: "metric",
         ylabel: "score",
-        labels: ["accuracy", "precision", "recall", "F1", "balanced acc", "MCC"],
-        values: [0.878, 0.873, 0.786, 0.827, 0.859, 0.735],
-        valueLabels: ["0.878", "0.873", "0.786", "0.827", "0.859", "0.735"],
-        colors: ["#4ea1ff", "#7ee787", "#ffb454", "#c89bff", "#7ee787", "#ff7b72"]
+        labels: ["accuracy", "specificity", "precision", "F1", "recall"],
+        values: [0.96, 0.989, 0.667, 0.5, 0.4],
+        valueLabels: ["0.960", "0.989", "0.667", "0.500", "0.400"],
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787", "#c89bff", "#ff7b72"]
       }
     ],
-    caption: "All six come from one confusion matrix (TP=55, FP=8, FN=15, TN=110). Accuracy (0.878) is the rosiest; MCC (0.735) is the strictest because it uses all four counts and is not fooled by the easy negatives.",
+    caption: "One confusion matrix (TP=20, FP=10, FN=30, TN=940; only 50 of 1000 are positive) anchors every formula. accuracy = (20+940)/1000 = 0.960 and specificity = 940/950 = 0.989 are flattered by the 940 easy negatives. But accuracy never asks how many of the 50 sick people you caught: recall = 20/50 = 0.400 says you missed 30 of them, and F1 = 0.500 splits the difference with precision. The term-by-term bars show exactly which counts each ratio divides; the last chart puts all five on one scale so the imbalance trap is visible at a glance.",
     code: `import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    balanced_accuracy_score, matthews_corrcoef, confusion_matrix,
+    accuracy_score, precision_score, recall_score,
+    f1_score, confusion_matrix,
 )
 
-X, y = load_breast_cancer(return_X_y=True)
-# a few raw features -> a realistically imperfect model, so the metrics spread out
-X = X[:, [0, 3, 7]]   # mean radius, mean area, mean concave points
-X_tr, X_te, y_tr, y_te = train_test_split(
-    X, y, test_size=0.33, random_state=0, stratify=y)
+# A concrete, imbalanced labeled example: 1000 patients, 50 truly sick.
+# 1 = sick (positive), 0 = healthy (negative).
+y_true = np.array([1]*50  + [0]*950)
+# Model catches 20 of the 50 sick (TP=20), misses 30 (FN=30),
+# and falsely flags 10 of the healthy (FP=10), clears 940 (TN=940).
+y_pred = np.array([1]*20 + [0]*30 + [1]*10 + [0]*940)
 
-clf = LogisticRegression(max_iter=10000).fit(X_tr, y_tr)
-pred = clf.predict(X_te)
+tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+print("TP,FP,FN,TN:", tp, fp, fn, tn)        # -> 20 10 30 940
 
-pos = 0  # malignant is the positive class
-tn, fp, fn, tp = confusion_matrix(y_te, pred, labels=[1, 0]).ravel()
-print("TP,FP,FN,TN:", tp, fp, fn, tn)   # -> 55 8 15 110
+print("accuracy   :", round(accuracy_score(y_true, y_pred), 3))    # 0.960
+print("specificity:", round(tn / (tn + fp), 3))                    # 0.989
+print("precision  :", round(precision_score(y_true, y_pred), 3))   # 0.667
+print("recall     :", round(recall_score(y_true, y_pred), 3))      # 0.400
+print("F1         :", round(f1_score(y_true, y_pred), 3))          # 0.500
 
-print(round(accuracy_score(y_te, pred), 3))                        # 0.878
-print(round(precision_score(y_te, pred, pos_label=pos), 3))        # 0.873
-print(round(recall_score(y_te, pred, pos_label=pos), 3))           # 0.786
-print(round(f1_score(y_te, pred, pos_label=pos), 3))               # 0.827
-print(round(balanced_accuracy_score(y_te, pred), 3))               # 0.859
-print(round(matthews_corrcoef(y_te, pred), 3))                     # 0.735`
+# Read each ratio straight off the four counts:
+print("precision = TP/(TP+FP) =", tp, "/", tp + fp)                # 20 / 30
+print("recall    = TP/(TP+FN) =", tp, "/", tp + fn)                # 20 / 50
+print("F1        = 2TP/(2TP+FP+FN) =", 2*tp, "/", 2*tp + fp + fn)  # 40 / 80`
   };
 })();

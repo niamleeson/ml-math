@@ -263,28 +263,51 @@ for deg in (1, 2, 3, 4, 6):
   };
 
   window.CODEVIZ["met-model-selection"] = {
-    question: "As we fit polynomials of higher degree to one feature of the diabetes data, where do AIC and BIC bottom out — and where does pushing the degree higher start to OVERFIT?",
-    charts: [{
-      type: "line",
-      title: "AIC and BIC vs polynomial degree (one feature of load_diabetes)",
-      xlabel: "polynomial degree (model complexity)",
-      ylabel: "criterion value (lower = better)",
-      series: [
-        { name: "AIC", color: "#4ea1ff", points: [[1, 3675.4], [2, 3676.2], [3, 3663.4], [4, 3665.4], [5, 3667.1], [6, 3669.0], [7, 3670.8], [8, 3671.6]] },
-        { name: "BIC", color: "#ffb454", points: [[1, 3687.7], [2, 3692.6], [3, 3683.9], [4, 3689.9], [5, 3695.7], [6, 3701.8], [7, 3707.6], [8, 3712.5]] }
-      ]
-    }],
-    caption: "Real numbers computed from load_diabetes using one feature (s5) and Gaussian-likelihood AIC/BIC. Both curves dip to a minimum at degree 3 and then climb: up to degree 3 each added term lowers the residual sum of squares enough to beat its penalty (the model was too simple), but from degree 4 on the fit barely improves while the complexity tax keeps rising (overfitting). Degree 3 is the sweet spot. BIC (heavier penalty, $k\\ln n$ with $n=442$) sits above AIC and climbs faster, so it would never be tempted past the minimum — exactly its sparser, more conservative behavior.",
+    question: "One feature of load_diabetes, polynomials of growing degree. Three views of the SAME selection problem: AIC = 2k - 2lnL and BIC = k ln n - 2lnL as U-curves; the bias-variance train-vs-validation split; and AIC/BIC bars picking the winning candidate. Where is the sweet spot, and where does it start to OVERFIT?",
+    charts: [
+      {
+        type: "line",
+        title: "AIC = 2k - 2lnL and BIC = k ln n - 2lnL vs degree (fit reward + complexity tax)",
+        xlabel: "polynomial degree (model complexity)",
+        ylabel: "criterion value (lower = better)",
+        series: [
+          { name: "AIC (min deg 3)", color: "#4ea1ff", points: [[1, 3675.4], [2, 3676.2], [3, 3663.4], [4, 3665.4], [5, 3667.1], [6, 3669.0], [7, 3670.8], [8, 3671.6]] },
+          { name: "BIC (min deg 3)", color: "#ffb454", points: [[1, 3687.7], [2, 3692.6], [3, 3683.9], [4, 3689.9], [5, 3695.7], [6, 3701.8], [7, 3707.6], [8, 3712.5]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "Bias-variance: training MSE keeps falling, validation MSE is U-shaped (min deg 3)",
+        xlabel: "polynomial degree (model complexity)",
+        ylabel: "mean squared error (5-fold CV)",
+        series: [
+          { name: "training MSE (always drops)", color: "#7ee787", points: [[1, 4028], [2, 4016], [3, 3881], [4, 3880], [5, 3877], [6, 3875], [7, 3870], [8, 3857]] },
+          { name: "validation MSE (U: sweet spot deg 3)", color: "#ff7b72", points: [[1, 4061], [2, 4057], [3, 3951], [4, 3957], [5, 3963], [6, 3988], [7, 4393], [8, 5259]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "AIC vs BIC across 5 candidate models — pick the lowest bar (degree 3 wins both)",
+        labels: ["deg 1", "deg 2", "deg 3", "deg 4", "deg 6"],
+        series: [
+          { name: "AIC", color: "#4ea1ff", points: [[0, 3675.4], [1, 3676.2], [2, 3663.4], [3, 3665.4], [4, 3669.0]] },
+          { name: "BIC", color: "#ffb454", points: [[0, 3687.7], [1, 3692.6], [2, 3683.9], [3, 3689.9], [4, 3701.8]] }
+        ]
+      }
+    ],
+    caption: "Real numbers from load_diabetes, one feature (s5), n=442. CHART 1 (AIC/BIC U-curves): both criteria = a fit term -2lnL = n ln(RSS/n) plus a complexity tax (2k for AIC, k ln n for BIC). Each dips to a minimum at degree 3 then climbs — up to deg 3 the added term cuts RSS enough to beat its penalty (too simple before that); from deg 4 on the fit barely improves while the tax keeps rising (overfitting). BIC sits higher and climbs faster because ln(442) = 6.09 per parameter is a much heavier tax than AIC's flat 2. CHART 2 (bias-variance): the same story without a formula — 5-fold training MSE falls forever (low bias, the model memorizes), but validation MSE bottoms out at degree 3 (4061 -> 3951) then shoots up (5259 at deg 8) as variance explodes. The gap between the two curves IS the overfitting. Both the formula (AIC/BIC) and the held-out measurement (CV) point to degree 3. CHART 3 (candidate bars): line up five candidates and the rule is just 'pick the lowest bar' — degree 3 has the smallest AIC (3663.4) AND the smallest BIC (3683.9), so it wins under both.",
     code: `import numpy as np
 from sklearn.datasets import load_diabetes
+from sklearn.model_selection import KFold
 
 d = load_diabetes()
 y = d.target
 x = d.data[:, 8]                       # one feature: s5 (clearest dip)
 xs = (x - x.mean()) / x.std()          # standardize for a stable polynomial fit
 n = len(y)
+kf = KFold(n_splits=5, shuffle=True, random_state=0)
 
-aic, bic = [], []
+aic, bic, train_mse, val_mse = [], [], [], []
 for deg in range(1, 9):
     # design matrix of powers 0..deg (Vandermonde), fit by least squares
     Xd = np.vander(xs, deg + 1, increasing=True)
@@ -297,9 +320,22 @@ for deg in range(1, 9):
     aic.append(round(fit + 2 * k, 1))
     bic.append(round(fit + k * np.log(n), 1))
 
-print("AIC:", aic)   # [3675.4, 3676.2, 3663.4, 3665.4, 3667.1, 3669.0, 3670.8, 3671.6]
-print("BIC:", bic)   # [3687.7, 3692.6, 3683.9, 3689.9, 3695.7, 3701.8, 3707.6, 3712.5]
-print("AIC min at degree", int(np.argmin(aic)) + 1)   # 3
-print("BIC min at degree", int(np.argmin(bic)) + 1)   # 3`
+    # train vs validation MSE: bias-variance via 5-fold cross-validation
+    tr, va = [], []
+    for tri, vai in kf.split(xs):
+        Xt = np.vander(xs[tri], deg + 1, increasing=True)
+        Xv = np.vander(xs[vai], deg + 1, increasing=True)
+        b, *_ = np.linalg.lstsq(Xt, y[tri], rcond=None)
+        tr.append(np.mean((y[tri] - Xt @ b) ** 2))
+        va.append(np.mean((y[vai] - Xv @ b) ** 2))
+    train_mse.append(round(np.mean(tr)))
+    val_mse.append(round(np.mean(va)))
+
+print("AIC:", aic)               # [3675.4, 3676.2, 3663.4, ...]; min at degree 3
+print("BIC:", bic)               # [3687.7, 3692.6, 3683.9, ...]; min at degree 3
+print("train MSE:", train_mse)   # [4028, 4016, 3881, ...] keeps falling
+print("val   MSE:", val_mse)     # [4061, 4057, 3951, ...] U-shaped, min at degree 3
+print("AIC/BIC min degree:", int(np.argmin(aic)) + 1, int(np.argmin(bic)) + 1)
+print("validation min degree:", int(np.argmin(val_mse)) + 1)`
   };
 })();

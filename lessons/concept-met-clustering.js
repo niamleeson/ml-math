@@ -173,56 +173,89 @@ print("fowlkes_mallows   :", round(fowlkes_mallows_score(y_true, labels), 3))
   };
 
   window.CODEVIZ["met-clustering"] = {
-    question: "On the real iris flowers, as we vary the number of clusters k, where does the silhouette (no labels) peak versus the ARI (vs the true species)?",
+    question: "On concrete 2D point clusters, what do the silhouette, ARI, NMI, and purity formulas actually measure — and how far apart do a good clustering and a bad one score?",
     charts: [
       {
-        type: "line",
-        title: "Iris: silhouette (internal, no labels) vs ARI (external, vs truth) across k",
-        xlabel: "number of clusters k",
-        ylabel: "score (higher = better)",
-        series: [
-          { name: "silhouette (internal)", color: "#4ea1ff", points: [[2, 0.681], [3, 0.553], [4, 0.498], [5, 0.489], [6, 0.365], [7, 0.357], [8, 0.36]] },
-          { name: "ARI vs true species (external)", color: "#7ee787", points: [[2, 0.54], [3, 0.73], [4, 0.65], [5, 0.608], [6, 0.448], [7, 0.481], [8, 0.457]] }
+        type: "scatter",
+        title: "Silhouette s=(b-a)/max(a,b): well-separated (mean 0.903) vs overlapping (mean 0.291)",
+        xlabel: "x",
+        ylabel: "y",
+        groups: [
+          { name: "well-sep cluster 0", color: "#4ea1ff", points: [[0.0, 0.0], [0.5, 0.3], [0.3, -0.4], [-0.4, 0.2]] },
+          { name: "well-sep cluster 1", color: "#7ee787", points: [[6.0, 6.0], [6.5, 5.7], [5.7, 6.3], [6.2, 6.1]] },
+          { name: "well-sep cluster 2", color: "#ffb454", points: [[0.0, 6.0], [0.4, 6.3], [-0.3, 5.7], [0.2, 6.2]] },
+          { name: "overlapping cluster 0", color: "#c89bff", points: [[0.0, 0.0], [1.5, 0.6], [1.0, -0.5], [2.2, 0.3]] },
+          { name: "overlapping cluster 1", color: "#ff7b72", points: [[3.0, 2.5], [3.6, 2.0], [2.5, 2.4], [3.4, 3.0]] },
+          { name: "overlapping cluster 2", color: "#9aa7b4", points: [[1.8, 1.4], [2.6, 1.0], [1.2, 1.8], [2.9, 1.6]] }
         ]
       },
       {
         type: "bars",
-        title: "Inertia (within-cluster sum of squares) ALWAYS drops as k grows — cannot pick k",
-        labels: ["k=2", "k=3", "k=4", "k=5", "k=6", "k=7", "k=8"],
-        values: [152.3, 78.9, 57.2, 46.4, 39.0, 34.4, 30.1],
-        colors: ["#ffb454", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        title: "Silhouette of one point [0,0]: a=own-cluster dist, b=nearest-other dist, s=(b-a)/max(a,b)",
+        labels: ["a (tightness)", "b (separation)", "s = (b-a)/max(a,b)"],
+        values: [0.51, 6.056, 0.916],
+        valueLabels: ["0.510", "6.056", "0.916"],
+        colors: ["#ff7b72", "#7ee787", "#4ea1ff"]
+      },
+      {
+        type: "bars",
+        title: "Silhouette / ARI / NMI: a correct clustering vs a scrambled one (same 12 points, same truth)",
+        labels: ["silhouette", "ARI", "NMI"],
+        series: [
+          { name: "good (matches truth)", color: "#7ee787", points: [[0, 0.903], [1, 1.0], [2, 1.0]] },
+          { name: "bad (scrambled)", color: "#ff7b72", points: [[0, -0.198], [1, -0.146], [2, 0.054]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "Purity = correctly-labeled points / n: good vs bad, and the singleton trap (all-singletons = 1.0)",
+        labels: ["good clustering", "bad clustering", "every point alone (singletons)"],
+        values: [1.0, 0.5, 1.0],
+        valueLabels: ["1.000", "0.500", "1.000"],
+        colors: ["#7ee787", "#ff7b72", "#ffb454"]
       }
     ],
-    caption: "Real load_iris + KMeans. The green ARI (compared to the 3 true species) peaks cleanly at k=3 (0.73) — the right answer. The blue silhouette, which has NO labels, instead peaks at k=2 (0.681): two of the three species overlap, so merging them looks tighter and more separated. That gap is the 'silhouette favors convex blobs' pitfall in one picture. The orange/blue bars show inertia falling monotonically (152.3 to 30.1), which is exactly why you read its elbow (the bend at k=3) and never its lowest value.",
+    caption: "Real numbers from concrete points (no dataset download). Chart 1: silhouette in action — three tight far-apart blobs score a mean silhouette of 0.903, while three smeared-together blobs score only 0.291; same metric, the geometry alone drives the gap. Chart 2 opens the formula for one point at [0,0]: its mean distance to its own cluster is a=0.51 (tight), its mean distance to the nearest other cluster is b=6.056 (well separated), so s=(b-a)/max(a,b)=0.916, near the +1 ceiling. Chart 3 takes the SAME 12 points with a known 3-blob truth and scores a correct grouping vs a scrambled one: silhouette 0.903 vs -0.198, ARI 1.0 vs -0.146 (chance-corrected, so the random-looking scramble lands BELOW 0), NMI 1.0 vs 0.054. Chart 4 shows purity = 1.0 vs 0.5 for the same two clusterings, then the orange bar is purity's blind spot: split every point into its own singleton cluster and purity hits a perfect 1.0 while telling you nothing — never use it alone to pick k.",
     code: `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, adjusted_rand_score
+from sklearn.metrics import (silhouette_score, silhouette_samples,
+    adjusted_rand_score, normalized_mutual_info_score)
 
-iris = load_iris()
-X, y_true = iris.data, iris.target          # 150 real flowers, 3 true species
+# 12 concrete 2D points, 3 true blobs (the ground-truth grouping)
+X = np.array([
+    [0.0,0.0],[0.5,0.3],[0.3,-0.4],[-0.4,0.2],   # blob 0
+    [6.0,6.0],[6.5,5.7],[5.7,6.3],[6.2,6.1],      # blob 1
+    [0.0,6.0],[0.4,6.3],[-0.3,5.7],[0.2,6.2],     # blob 2
+])
+truth = np.array([0,0,0,0, 1,1,1,1, 2,2,2,2])
+good  = truth.copy()                              # correct grouping
+bad   = np.array([0,1,2,0, 1,2,0,1, 2,0,1,2])     # scrambled across blobs
 
-ks = list(range(2, 9))
-sil, ari, inertia = [], [], []
-for k in ks:
-    km = KMeans(n_clusters=k, n_init=10, random_state=0).fit(X)
-    labels = km.labels_
-    sil.append(silhouette_score(X, labels))          # INTERNAL: no labels used
-    ari.append(adjusted_rand_score(y_true, labels))  # EXTERNAL: vs the true species
-    inertia.append(km.inertia_)                       # within-cluster sum of squares
+def purity(truth, pred):
+    n = len(truth); total = 0
+    for c in np.unique(pred):                      # each cluster votes its majority true label
+        members = truth[pred == c]
+        _, counts = np.unique(members, return_counts=True)
+        total += counts.max()
+    return total / n
 
-for k, s, a, w in zip(ks, sil, ari, inertia):
-    print(k, round(s, 3), round(a, 3), round(w, 1))
+for name, pred in [("good", good), ("bad", bad)]:
+    print(name,
+          "sil",    round(silhouette_score(X, pred), 3),
+          "ARI",    round(adjusted_rand_score(truth, pred), 3),     # chance-corrected
+          "NMI",    round(normalized_mutual_info_score(truth, pred), 3),
+          "purity", round(purity(truth, pred), 3))
+# good sil 0.903 ARI 1.0   NMI 1.0   purity 1.0
+# bad  sil -0.198 ARI -0.146 NMI 0.054 purity 0.5
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-ax1.plot(ks, sil, "o-", color="#4ea1ff", label="silhouette (internal)")
-ax1.plot(ks, ari, "o-", color="#7ee787", label="ARI vs truth (external)")
-ax1.set_xlabel("number of clusters k"); ax1.set_ylabel("score"); ax1.legend()
-ax1.set_title("silhouette peaks at k=2, ARI peaks at the true k=3")
-ax2.bar([str(k) for k in ks], inertia, color="#ffb454")
-ax2.set_xlabel("k"); ax2.set_ylabel("inertia (WCSS)")
-ax2.set_title("inertia always drops — read the elbow, not the min")
-plt.show()`
+# Open the silhouette formula for one point: s = (b - a) / max(a, b)
+p0  = X[0]                                          # point [0,0] in blob 0
+a   = np.mean([np.linalg.norm(p0 - q) for q in X[1:4]])          # own-cluster mean dist
+b   = min(np.mean([np.linalg.norm(p0 - q) for q in X[4:8]]),     # nearest OTHER cluster
+          np.mean([np.linalg.norm(p0 - q) for q in X[8:12]]))
+print("a", round(a,3), "b", round(b,3), "s", round((b - a) / max(a, b), 3))
+# a 0.51 b 6.056 s 0.916
+
+# Singleton trap: give every point its own cluster -> purity = 1.0, meaningless
+print("all-singletons purity:", purity(truth, np.arange(len(truth))))   # 1.0`
   };
 })();
