@@ -261,6 +261,40 @@
        section). We quote this qualitatively and do not invent a BLEU figure. Our own numbers below are a separate
        toy demo, labelled as ours.</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> "Working" splits two ways. (a) <b>Cell correctness:</b> the metric is
+       <code>torch.allclose(my_gru(x,h), nn.GRUCell(...)(x,h), atol=1e-6)</code> being <code>True</code> &mdash; a
+       bit-for-bit match to PyTorch is the proof your four equations and weight packing are exact. (b) <b>System
+       behaviour:</b> on the long-gap recall task (a $\\pm1$ cue at step 0, then $T-1$ blanks, recall the sign at the
+       end), the metric is held-out accuracy vs gap length $T$; the no-skill baseline is <b>0.5</b> (coin flip), and the
+       reference to beat is a plain tanh RNN, which the GRU should match at short gaps and outlast at long ones.</p>
+       <ul>
+         <li><b>2. Sanity checks BEFORE the full run.</b> Check $r,z\\in(0,1)$ (sigmoid outputs) and
+         $\\tilde{h}\\in(-1,1)$ (tanh output), and that $h_{new}$ has the right shape. Recompute the scalar worked
+         example by hand: $r=0.5866,\\,z=0.7109,\\,\\tilde{h}=0.8066,\\,h_{new}=0.5886$. Degenerate-gate test: force
+         $z\\to1$ (PyTorch convention) and confirm $h_{new}\\approx h_{prev}$ &mdash; the copy-forward path; force
+         $r\\to0$ and confirm the candidate ignores $h_{prev}$ (depends only on $x$). Overfit a single tiny batch of
+         the recall task and watch the loss fall toward $\\sim0$.</li>
+         <li><b>3. Expected range.</b> The allclose must hold to <code>atol=1e-6</code> (max abs diff $\\sim1.2\\times10^{-7}$);
+         a larger gap means a packing or formula bug, not float noise. The paper (1409.1259) reports only a qualitative
+         result &mdash; quality "suffer[s] significantly as the length of the sentences increases" &mdash; so there is
+         no numeric target to hit. As a rule of thumb (our toy run, seed 0, not a paper figure): both cells reach
+         $\\approx1.0$ at short gaps and the RNN collapses to $\\approx0.5$ around $T\\!=\\!35$ while the GRU stays at
+         $1.0$; the reproducible signal is the <i>split</i>, not the exact crossover gap.</li>
+         <li><b>4. Ablation &mdash; prove the gates earn their keep.</b> The central idea is the gated carry. Replace
+         the GRU with a plain tanh RNN and sweep the gap: long-gap accuracy must DROP to chance for the RNN while the
+         GRU holds &mdash; if both survive, your gap isn't long enough to stress memory. Second ablation: clamp the
+         update gate to $z\\equiv0.5$ (no learned carry); long-gap recall should fall, confirming the learned
+         $z\\approx1$ behaviour is what bridges the gap, not the cell's capacity alone.</li>
+         <li><b>5. Failure signals.</b> <b>allclose returns False with plausible-looking numbers</b> &rarr; gates
+         sliced as $[z,r,n]$ instead of $[r,z,n]$, or $r$ multiplying the whole pre-activation instead of only the
+         hidden contribution $r\\odot(hW_{hn}^\\top+b_{hn})$, or folding <code>bias_ih</code> and <code>bias_hh</code>
+         together. <b>State barely changes ever / model won't learn</b> &rarr; $z$ saturated near 1 (copies forever).
+         <b>State ignores the past entirely</b> &rarr; $z$ or $r$ stuck near 0. <b>Recall stuck at 0.5</b> &rarr; labels
+         shuffled or the cue isn't reaching the readout (gap too long, or carry path broken). <b>Loss NaN</b> &rarr; LR
+         too high through the unrolled recurrence &mdash; the long-gap setting is gradient-sensitive.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> You build the GRU cell's four equations by hand from raw tensors, then verify it

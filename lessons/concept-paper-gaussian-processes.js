@@ -298,6 +298,44 @@
        from the datapoints," while a too-long one ($\\ell=3$) yields "a slowly varying function with a lot of
        noise." (Source: Rasmussen &amp; Williams, <i>Gaussian Processes for Machine Learning</i>, MIT Press 2006,
        Chapter 2.) The CODEVIZ numbers below are our own small run, not the book's reported numbers.</p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> There is no leaderboard here &mdash; "working" means your scratch GP
+       <b>reproduces the textbook math exactly</b>. The primary check is a <b>numerical-agreement</b> test on a
+       toy 1-D regression ($y=\\sin x+$ noise, 6 points): your predictive mean (eq. 2.25) and predictive std
+       (eq. 2.26) must match <code>sklearn.gaussian_process.GaussianProcessRegressor</code> (same fixed kernel,
+       <code>alpha</code>$=\\sigma_n^2$, no re-tuning) to machine precision. The "no-skill" baseline is a
+       constant predictor (predict the mean of $\\mathbf{y}$ everywhere with the prior std $\\sigma_f$): a correct
+       GP must beat it in held-out log-likelihood / RMSE near the data, and &mdash; crucially &mdash; report a
+       <b>calibrated</b> $\\pm2\\sigma$ band that actually covers the truth.</p>
+       <ul>
+        <li><b>Sanity checks before any plotting.</b> Recompute the $2\\times2$ worked example and confirm
+        $k(0,1)=0.6065$, $\\boldsymbol\\alpha=[2.0265,-2.0265]$, mean$@0=0.7973$, std$@0=0.2949$ &mdash; a
+        known-answer unit test for the kernel + solve. Check $K$ is <b>symmetric</b> and
+        <b>positive semi-definite</b> (Cholesky of $K+\\sigma_n^2 I$ succeeds). Verify the band <b>pinches at
+        training inputs</b> and that at a midpoint between two equal-and-opposite targets the mean is exactly
+        $0$ by symmetry. Confirm <code>predict</code> returns the std (not variance) before comparing.</li>
+        <li><b>Expected range.</b> The agreement test should pass to $\\sim10^{-6}$ (the lesson's run shows max
+        mean diff $\\approx4\\times10^{-16}$ &mdash; our small run, not a book claim). Qualitatively you should
+        reproduce Section 2.3 / Figure 2.5: with $(\\ell,\\sigma_f,\\sigma_n)=(1,1,0.1)$ the $95\\%$ band hugs the
+        data and fans to the prior width $\\sigma_f$ far away (these are the book's documented behaviors, quoted
+        in <code>results</code>; not a single benchmark number). A diff larger than $\\sim10^{-4}$ vs sklearn is
+        "probably a bug," not tuning.</li>
+        <li><b>Ablation &mdash; prove the kernel / length-scale earns its keep.</b> The central knob is the
+        <b>length-scale</b> $\\ell$ (the thing the kernel introduces). Hold the data fixed and refit at
+        $\\ell=0.3$ and $\\ell=3$ (the lesson's built-in ablation, reproducing Figure 2.5): the predictive std in
+        a between-data gap must <b>change</b> &mdash; in our run, std at $x=-2$ goes $1.00\\,(\\ell=0.3)\\to
+        0.50\\,(\\ell=1)\\to0.09\\,(\\ell=3)$. If shrinking $\\ell$ does <i>not</i> widen the gap uncertainty, the
+        length-scale is not wired into the exponent. A second ablation: set $\\sigma_n^2=0$ and watch the band
+        pinch to $0$ at data (exact interpolation) &mdash; confirms the noise term is doing its job.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Cholesky fails / <code>LinAlgError</code> &rarr; you
+        forgot $\\sigma_n^2 I$ on the diagonal (near-duplicate inputs make $K$ singular). <b>Negative variance</b>
+        before the square root &rarr; round-off in $k_{**}-\\mathbf{v}^\\top\\mathbf{v}$; clamp at a small floor.
+        Band <b>uniformly too wide or too narrow</b> vs sklearn &rarr; wrong exponent ($2\\ell^2$ vs $\\ell^2$ vs
+        $2\\ell$) or you compared variance to std. Mean <b>interpolates the data exactly</b> when it should not
+        &rarr; $\\sigma_n^2$ dropped. Band that does <i>not</i> widen away from data &rarr; $\\mathbf{k}_*$ not
+        decaying (kernel or distance computed wrong). Std off by a constant &rarr; you returned the $y_*$
+        variance (added $\\sigma_n^2$) while sklearn returns the latent $f_*$ std.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

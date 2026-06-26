@@ -273,6 +273,43 @@
        labeled nodes per class</b> for training (&sect;5.1).</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and Table 2. The numbers in the
        CODEVIZ panel below are from our own tiny run on a synthetic graph &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> GCN is judged on <b>semi-supervised node-classification accuracy</b>:
+       the fraction of <i>held-out</i> nodes labeled correctly, training on only $20$ labeled nodes per class
+       (&sect;5.1). The paper's benchmarks are the citation networks Cora, Citeseer, Pubmed. The "no-skill"
+       floor is majority-class / random = $1/F$ for $F$ classes (so $\\approx50\\%$ on a balanced 2-class toy
+       graph); the meaningful bar is beating a graph-blind per-node classifier (the $S\\to I$ ablation) and the
+       prior methods GCN reports it "outperforms ... by a significant margin."</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Recompute the worked 3-node path graph and confirm
+        $S=\\begin{bmatrix}0.5&0.408&0\\\\0.408&0.333&0.408\\\\0&0.408&0.5\\end{bmatrix}$ and $S H W$ as in the
+        lesson &mdash; a known-answer unit test for the renormalized adjacency. Check $S$ is <b>symmetric</b>,
+        has the self-loop weight $1/2$ on a degree-2 node, and that each row sums sensibly (degree-balanced).
+        <b>Overfit the 2 labeled nodes:</b> their training loss should fall toward $0$; the $F$-class
+        cross-entropy at init should sit near $-\\ln(1/F)$ (rule of thumb, $\\approx0.69$ for $F=2$). Verify the
+        output $Z$ is $N\\times F$ and each row softmaxes to $1$.</li>
+        <li><b>Expected range.</b> A correct implementation should reach roughly the paper's reported accuracy:
+        <b>Cora 81.5%, Citeseer 70.3%, Pubmed 79.0%</b> (Table 2, &sect;5.1 &mdash; quoted in <code>results</code>),
+        each with only $20$ labels per class. Landing within a couple of points of those is "tuning"; sitting
+        near majority-class, or far below them, is "probably a bug." On the toy two-community graph a correct
+        GCN should hit $\\approx100\\%$ on all nodes within a few epochs (our run, not a paper number).</li>
+        <li><b>Ablation &mdash; prove message passing earns its keep.</b> The central knob is the
+        <b>neighbour mixing</b> $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$. Replace $S$ with the identity
+        $I_N$ (the lesson's built-in ablation &mdash; each layer becomes a plain per-node MLP), keep weights,
+        optimizer, labels, and epochs identical, and confirm accuracy on the <i>unlabeled</i> nodes <b>collapses
+        to chance</b> ($\\approx40$-$50\\%$) and never climbs &mdash; with no mixing the unlabeled nodes get zero
+        label signal. If accuracy does <i>not</i> drop, $S$ is not actually wired in. The CODEVIZ panel shows
+        exactly this: GCN reaches $100\\%$ in $\\sim2$ epochs while the $S\\to I$ ablation hovers near chance.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Unlabeled accuracy stuck at chance &rarr; you used $A$
+        without the self-loop, normalized the wrong matrix, or effectively lost the mixing (silent $S\\to I$).
+        Loss NaN &rarr; LR too high, or a zero-degree node gave $\\tilde{D}^{-1/2}=\\infty$ (every node has a
+        self-loop, so degrees should be $\\ge1$). Accuracy <b>drops as you add layers</b> &rarr;
+        <b>over-smoothing</b>: too many hops average every node toward the same vector &mdash; use 2-3 layers.
+        Train-good (the 2 seeds memorized) but unlabeled-bad &rarr; the graph signal is not propagating (check
+        $S$, the self-loop, and that the loss is summed over $\\mathcal{Y}_L$ only, not all nodes). One-sided
+        $\\tilde{D}^{-1}\\tilde{A}$ instead of the symmetric form &rarr; subtly wrong scaling that lets hubs
+        dominate.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

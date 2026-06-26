@@ -277,6 +277,51 @@ $$ \\text{per-batch cost } = O\\!\\left(\\textstyle\\prod_{i=1}^{K} S_i\\right) 
        graphs using a multi-graph dataset of protein-protein interactions."</p>
        <p><i>That is the paper's reported claim, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The primary metric is <b>node-classification accuracy on held-out,
+       never-trained nodes</b> &mdash; the <i>inductive</i> setting, which is the whole claim. On the toy 3-cluster
+       graph the no-skill baseline is <b>chance = 1/3 (~0.33)</b> for 3 balanced classes; a working model must beat
+       that on nodes it never saw labels for. The paper's own benchmarks are inductive node classification on
+       citation and Reddit graphs and a multi-graph protein-protein-interaction set (abstract) &mdash; we do not
+       re-run those numbers.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Run the worked one-layer unit test (cell 0): neighbors $[0,2]$ and $[2,2]$ give mean $[1,2]$,
+        $\\mathrm{concat}([1,0],[1,2])=[1,0,1,2]$, $\\mathbf{W}\\cdot=[2,2]$, ReLU $\\to$ L2 $\\to[0.7071,0.7071]$.
+        A known-answer check on Alg. 1 lines 4&ndash;5, 7 before any training.</li>
+        <li><b>L2-norm check:</b> every layer's output rows must have length $1$ ($\\lVert\\mathbf{h}_v^k\\rVert_2=1$).
+        If not, the normalization is missing.</li>
+        <li><b>Permutation invariance:</b> shuffle a node's neighbor list and the aggregate must be unchanged
+        (mean is symmetric). If the embedding moves, a non-symmetric aggregator leaked the sampling order in.</li>
+        <li><b>Overfit a tiny batch:</b> with neighbors on, train accuracy should climb toward ~1.0 on the
+        training nodes; if it cannot even fit those, the layer or wiring is broken.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the toy graph (label carried by the neighborhood) a correct two-layer model
+       should reach (approximate, our small run &mdash; not the paper's number) <b>train acc ~0.97</b> and
+       <b>held-out inductive acc ~0.93</b>, well above chance $0.33$. A brand-new node wired to class-1 neighbors,
+       embedded with <b>no retraining</b>, should classify as class 1. Held-out accuracy stuck near $0.33$ is a
+       bug, not tuning.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The paper's central component is
+       <b>sample-and-aggregate</b> (the neighbor branch). Turn it OFF &mdash; <code>use_neighbors=False</code>, so
+       the layer becomes <code>relu(W @ h_self)</code> &mdash; and on neighbor-determined labels held-out accuracy
+       must <b>collapse toward chance</b>: in our run from ~0.93 down to ~0.23 (below $0.33$, since the per-node
+       features barely encode the label). If accuracy does <i>not</i> drop, the neighbors were never actually
+       contributing &mdash; the aggregate or concat is mis-wired.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Held-out acc near chance while train acc is high</b> &rarr; you accidentally learned a per-node
+        table (a transductive shortcut) or are leaking test labels &mdash; the model is not the shared-weight
+        function it must be.</li>
+        <li><b>High-degree nodes dominate / unstable loss</b> &rarr; missing L2 normalization (Alg. 1 line 7), so
+        embedding magnitudes scale with degree.</li>
+        <li><b>Cost blows up on hub nodes</b> &rarr; you aggregated <i>all</i> neighbors instead of a fixed-size
+        sample $N(v)$; per-node work must be bounded ($\\prod_i S_i$).</li>
+        <li><b>Embedding ignores the node itself</b> &rarr; you dropped the self vector from the concat (line 5);
+        the node loses its own features and only echoes its neighborhood.</li>
+        <li><b>New-node embedding requires retraining</b> &rarr; you stored an embedding row per node instead of
+        running the shared $\\mathbf{W}^k$ &mdash; you rebuilt a transductive method and lost the inductive
+        property (the very contrast with <code>paper-gcn</code>).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -302,6 +302,45 @@
        slowly &mdash; the two limitations the follow-up DETR variants targeted.</p>
        <p><i>These are the paper's reported, quoted claims. The numbers in the CODEVIZ panel below are from our own
        toy matching computation &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> DETR is an object detector, so the metric is <b>COCO Average Precision
+       (AP)</b> &mdash; mean precision averaged over IoU thresholds $0.5{:}0.95$, plus the size splits
+       AP$_S$/AP$_M$/AP$_L$ (small/medium/large) &mdash; on the COCO <code>val</code> set (&sect;4). The "better
+       than trivial" bar is the prior-SOTA DETR set out to match: the <b>Faster R-CNN</b> baseline (the paper
+       reports being "on par with the well-established and highly-optimized Faster R-CNN baseline"). For the toy
+       you build here, the contribution is the <b>matching</b>, so the checkable quantity is the
+       <b>Hungarian assignment</b> itself: the cost-matrix entries and whether the assignment stays one-to-one.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Known-answer matching test:</b> on the worked example
+        ($N{=}3$ preds, $M{=}2$ objects) <code>linear_sum_assignment(C)</code> must return $[(0,0),(1,1)]$ with
+        total cost $\\mathbf{-1.25}$, and entry $C[1,1]=-0.69$ &mdash; recompute by hand and assert. (2)
+        <b>Bijection check:</b> the number of distinct predictions used must equal the number of matched objects
+        (no row reused). (3) <b>Box/probability ranges:</b> predicted boxes are normalized $(c_x,c_y,w,h)\\in[0,1]$
+        and each prediction's class probabilities sum to 1. (4) <b>Overfit a few images:</b> on a handful of
+        images the Hungarian loss should fall toward 0 and the matched boxes should snap onto the objects.</li>
+        <li><b>Expected range.</b> Anchored to the paper (quoted in Results, &sect;4): DETR is reported "on par
+        with ... Faster R-CNN" on COCO AP, <i>better on large objects</i> (AP$_L$) thanks to global attention but
+        <i>weaker on small objects</i> (AP$_S$), and it <b>converges slowly</b> (a long schedule). As a <i>rule of
+        thumb</i>, not a paper claim: a correct DETR should be clearly above 0 AP within a few epochs and climb for
+        a long time &mdash; a quick toy run that looks weak is expected, not a bug. The full numbers need the full
+        backbone + transformer + schedule, which the toy does not rebuild.</li>
+        <li><b>Ablation &mdash; prove one-to-one matching earns its keep.</b> The central knob is the
+        <b>bijection constraint</b>. Swap <code>linear_sum_assignment</code> for a <b>greedy</b> per-object argmin
+        and run on a collision cost matrix where one prediction is cheapest for two objects (e.g.
+        $C{=}[[-0.9,-0.8],[0.2,0.1],[0.3,0.3]]$). Greedy reuses prediction 0 for <i>both</i> objects (a duplicate
+        that NMS would have to delete); Hungarian uses two distinct predictions &mdash; the CODEVIZ bar. If greedy
+        does <i>not</i> collide here, your collision matrix is not actually a collision case. A second ablation:
+        put $-\\log\\hat p$ (instead of the bare probability $\\hat p$) into the <i>matching</i> cost and watch the
+        chosen assignment change &mdash; the paper deliberately uses $\\hat p$ to keep the term "commensurable" with
+        the box loss (&sect;3.1).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Two boxes on one object</b> at inference = many-to-one
+        matching slipped in (you allowed greedy, or did not pad/permute correctly) &mdash; the exact thing NMS
+        exists for, which one-to-one matching is supposed to prevent. <b>Background term swamps the loss / all
+        slots predict $\\varnothing$</b> = you forgot to down-weight the $\\varnothing$ class term by $\\times 10$
+        (&sect;3.1). <b>Loss barely moves for many epochs</b> = DETR's known slow convergence, not necessarily a
+        bug. <b>L1 box loss explodes for large boxes</b> = you dropped the scale-invariant generalized-IoU term, or
+        are regressing raw pixels instead of normalized $(c_x,c_y,w,h)$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

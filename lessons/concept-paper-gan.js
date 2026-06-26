@@ -250,6 +250,55 @@
        (Eq. 1, Proposition 1, Theorem 1), not a single headline accuracy number.</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny run &mdash; not the paper's reported
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> A GAN has no single accuracy, so check it three ways on <b>MNIST</b>
+       (the paper's setting, with the Toronto Face DB and CIFAR-10). (a) <b>Equilibrium value:</b> the
+       discriminator's total BCE loss should settle near <b>$2\\log 2\\approx1.386=-\\log 4$</b> (each side near
+       $\\log 2\\approx0.693$), where $D$ is reduced to guessing. (b) <b>Sample quality:</b> generated digits
+       should look like real digits and cover all <b>ten</b> classes. (c) The paper's own number, a
+       <b>Parzen-window log-likelihood</b> of the samples (which it flags as "high variance &hellip; but the
+       best method available"). The "no-skill" reference is $D=0.5$ everywhere &mdash; a converged GAN
+       <i>wants</i> $D$ at chance, the opposite of a normal classifier.</p>
+       <p><b>2. Sanity checks BEFORE the full MNIST run.</b></p>
+       <ul>
+        <li><b>Known-answer unit test.</b> Reproduce the worked example: with $p_{\\text{data}}=0.6$, $p_g=0.2$,
+        the optimal $D^*_G(x)=0.6/0.8=0.75$, $\\log0.75=-0.2877$, $\\log0.7=-0.3567$, and the optimum
+        $-\\log 4=-1.3863$. With $p_g=p_{\\text{data}}=0.6$, $D^*$ must give exactly $0.5$.</li>
+        <li><b>Loss at init.</b> Before training, $D$ is near chance, so each BCE term should start near
+        $\\log 2\\approx0.693$ &mdash; if $D$'s loss starts near $0$, labels or the real/fake assignment are
+        flipped.</li>
+        <li><b>Output range &amp; shapes.</b> $G$ ends in <code>tanh</code> (pixels in $[-1,1]$), so normalize
+        the real data to $[-1,1]$ too; confirm $G(z)$ is $784$-dim and $D(x)$ is a single logit. A mismatched
+        range lets $D$ win on scale alone.</li>
+        <li><b>Overfit one batch.</b> Train $D$ alone to separate a fixed real batch from a fixed fake batch and
+        confirm its loss drops &mdash; verifies the discriminator and BCE wiring before adding the adversarial loop.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper's claim is <b>qualitative</b>: generated digits/faces "competitive
+       with the better generative models of the time," scored by Parzen-window log-likelihood (abstract,
+       &sect;5) &mdash; there is no headline accuracy to hit, so target the <b>theoretical equilibrium</b>
+       instead: $D$-loss converging to $2\\log 2\\approx1.386$ and samples that span all ten digit classes
+       (Theorem 1 / Fig. 1). As a rule of thumb, a $D$-loss pinned near $0$ (D winning) or runaway-high (D
+       losing) means the game is unbalanced, not converged.</p>
+       <p><b>4. Ablation &mdash; prove the adversarial wiring earns its keep.</b> The central mechanics are the
+       <b>detached $D$-step</b> and the <b>non-saturating $G$ loss</b>. (a) Remove <code>.detach()</code> from
+       the fakes in the $D$-step and confirm training <b>destabilizes</b> &mdash; the $D$-step's "call the fake
+       fake" gradient now also flows into $G$, fighting the $G$-step (the lesson's detach ablation). (b) Swap
+       the $G$ loss from non-saturating <code>bce(D(G(z)),1)</code> back to minimizing $\\log(1-D(G(z)))$ and
+       confirm $G$ learns far slower early (its gradient nearly vanishes while $D(G(z))\\approx0$). If neither
+       change hurts, those pieces aren't actually in the loop.</p>
+       <p><b>5. Failure signals.</b></p>
+       <ul>
+        <li><b>Every sample is the same digit</b> &rarr; <b>mode collapse</b>: $G$ parked $p_g$ on one mode that
+        fools $D$; loss can look stable while variety is gone.</li>
+        <li><b>$D$-loss crashes to $0$, $G$-loss climbs</b> &rarr; $D$ is winning (often forgot
+        <code>.detach()</code> or $D$ is too strong); $G$ gets no useful gradient.</li>
+        <li><b>Loss or samples become NaN</b> &rarr; learning rate too high / unstable init &mdash; lower the LR,
+        keep Adam $\\beta_1=0.5$.</li>
+        <li><b>Samples never sharpen, $G$-loss flat-high early</b> &rarr; using the saturating
+        $\\log(1-D(G(z)))$ loss instead of maximizing $\\log D(G(z))$.</li>
+        <li><b>Reading "lower $D$-loss is better"</b> &rarr; a converged GAN drives $D$-loss <i>up</i> to
+        $\\approx1.386$ (chance), not down to $0$; a flat plateau there is the goal.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

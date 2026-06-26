@@ -282,6 +282,47 @@
        GLUE language-understanding benchmark (Table 1).</p>
        <p><i>These are the paper's reported figures, quoted from the abstract/Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The student's job is to keep the teacher's accuracy at smaller size,
+       so score <b>task accuracy</b> (here, multi-class accuracy on the held-out test set; in the paper,
+       the <b>GLUE</b> language-understanding score). The two baselines that define "working": the
+       <b>teacher's accuracy</b> (the ceiling you hope to approach) and the matched <b>from-scratch student</b>
+       (the floor distillation must beat). In the paper the floor is BERT-base and the target is "retaining
+       97% of its language understanding capabilities" at "40% smaller ... 60% faster" (Abstract).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Recompute the worked example.</b> With $T=2$, logits $z^{(t)}=[2.0,1.0,0.1]$, $z^{(s)}=[1.5,0.5,0.2]$
+        you must get $t=[0.5017,0.3043,0.1940]$, $s=[0.4698,0.2849,0.2453]$, $L_{ce}\\approx 1.0337$. The
+        notebook's first cell prints exactly these &mdash; if yours differ, your softmax-temperature is wrong.</li>
+        <li><b>Soft targets are a distribution.</b> $t = \\mathrm{softmax}(z^{(t)}/T)$ must be all non-negative and
+        sum to $1$ (per row). At $T=1$ the loss at init for a $K$-way student with random logits should be near
+        $\\ln K$ (rule of thumb): $\\ln 4 \\approx 1.39$ here.</li>
+        <li><b>Self-distill identity.</b> Distill the teacher INTO an identical-capacity copy of itself; it should
+        reach essentially the teacher's accuracy. If it can't even copy itself, the loop is broken.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The distilled student should land <i>between</i> the from-scratch floor and the
+       teacher ceiling, usually closer to the teacher. In our tiny run that is teacher $0.8288$, distilled
+       $0.8425$, scratch $0.7937$ (our numbers, not the paper's). If distilled $\\approx$ scratch, distillation
+       isn't helping (a bug); if distilled noticeably <i>beats</i> the teacher, suspect a data/eval leak. The
+       paper's anchor is qualitative: a well-distilled student keeps $\\approx$97% of the teacher's GLUE score
+       (Abstract) &mdash; treat exact gaps on your toy task as tuning, not the paper's claim.</p>
+       <p><b>4. Ablation &mdash; prove distillation earns its keep.</b> The central knob is the <b>soft-target loss
+       $L_{ce}$</b>. Turn it off by setting $\\alpha = 0$ (or training the same student on hard labels only): the
+       student's accuracy should <b>drop</b> back toward the from-scratch floor. If accuracy is unchanged, $L_{ce}$
+       isn't wired in &mdash; check that the teacher's soft targets actually enter the loss and that you didn't
+       drop the $T^2$ factor (without it the soft gradient is $\\sim 1/T^2$ too weak and the ablation looks null).</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Distilled $\\approx$ from-scratch (no gain):</b> missing $T^2$ scaling, $T=1$ (dark knowledge hidden),
+        or gradients leaking into the teacher (forgot <code>torch.no_grad()</code>/<code>detach</code>).</li>
+        <li><b>Loss NaN / diverging:</b> $\\log s$ of a zero probability &mdash; use <code>log_softmax</code>, not
+        <code>log(softmax)</code>; or LR too high.</li>
+        <li><b>Student matches teacher's MISTAKES exactly:</b> expected &mdash; it's copying the full distribution
+        &mdash; but if it also <i>under</i>performs the teacher badly, $T$ is too high (over-smoothed) or $\\alpha$
+        too large (ignoring the true labels entirely).</li>
+        <li><b>Cross-entropy swapped ($-\\sum_i s_i \\log t_i$):</b> wrong, frozen objective &mdash; the loss barely
+        moves the student because $t$ is constant. Keep $-\\sum_i t_i \\log s_i$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

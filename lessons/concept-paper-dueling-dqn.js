@@ -302,6 +302,44 @@
        state-of-the-art on the Atari 2600 domain."</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny CartPole run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> For this Track-B build the metric is <b>episodes-to-solve on
+       CartPole-v1</b>: the first episode whose trailing-20 average return reaches the solved threshold (we use
+       $\\ge 195$). Plot the trailing-20 average-return learning curve for the dueling head and the plain-DQN
+       ablation under an identical body, replay buffer, target net, loss, LR, epsilon schedule, and seed. The
+       no-skill baseline is a <b>random policy</b>, which on CartPole lasts only $\\sim 20$ steps (return
+       $\\approx 20$, far below the $500$ cap); "better than trivial" means the curve climbs well past that.
+       The paper itself reports on the <b>Atari 2600 ALE (57 games)</b>: human-normalized mean
+       <b>373.1%</b> / median <b>151.5%</b> for Duel Clip (Table 1, 30 no-ops), so its own "baseline to beat"
+       is prior single-stream DQN.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> (i) Unit-test Eq. 9 on the worked example: feed
+       $V = 12.0$, $A = [2.0,-4.0]$ and assert <code>q = v + (a - a.mean(dim=1, keepdim=True))</code> equals
+       $[15.0, 9.0]$ with $\\text{mean}(Q) = 12.0 = V$. (ii) Check shapes: value head out-features $= 1$,
+       advantage head out-features $= |\\mathcal{A}|$, and $Q$ has shape <code>[batch, n_actions]</code>.
+       (iii) Confirm centering is policy-invariant: $\\arg\\max_a Q = \\arg\\max_a A$ on random inputs.
+       (iv) Overfit a single tiny replay batch with the target net frozen and watch the TD loss fall toward
+       $\\sim 0$ &mdash; if it can't, the gather/target wiring is wrong.</p>
+       <p><b>Expected range.</b> On CartPole both heads should eventually approach the $500$ return cap; the
+       <b>dueling head should reach the solved threshold in fewer episodes</b> than the plain head (the whole
+       point). These CartPole numbers are a rule of thumb for our tiny run, <i>not</i> a paper claim &mdash; exact
+       episode counts vary by hardware and seed. The paper's quotable anchor is the Atari result above
+       (mean 373.1% / median 151.5%, Table 1); if you scale up and land far below prior DQN, suspect a bug
+       rather than tuning.</p>
+       <p><b>Ablation &mdash; prove the split earns its keep.</b> The central knob is the <b>dueling head</b>.
+       Collapse it to a single <code>nn.Linear(hidden, n_actions)</code> outputting $Q$ directly (plain DQN),
+       holding the body, buffer, target net, loss, optimizer, and seed fixed. The dueling agent should cross
+       the solved line <b>sooner</b>; if the two curves coincide, the value/advantage factoring isn't wired in
+       or isn't helping. (Both should reach a similar <i>final</i> policy &mdash; centering doesn't change the
+       greedy action, so judge the win by <i>speed</i>, not endpoint.)</p>
+       <p><b>Failure signals &amp; what they mean.</b> Return <b>stuck near $\\sim 20$</b> (random level) =
+       not learning: epsilon never decays, target net never syncs, or the loss isn't back-propagating.
+       <b>Loss NaN / return collapses</b> = LR too high or unclipped gradients &mdash; apply the paper's
+       grad-norm $\\le 10$ clip. <b>Dueling no faster than plain</b> = you added the streams <i>without</i>
+       centering (naive Eq. 7) or subtracted the mean over the wrong axis (batch instead of <code>dim=1</code>)
+       or dropped <code>keepdim=True</code> so $V$ broadcast incorrectly. <b>Greedy action seems to flip when
+       you toggle centering</b> = a shape/broadcast bug; mathematically the $\\arg\\max$ is invariant to the
+       per-state constant. In the CODEVIZ panel a correct build looks like the green curve leading the red one;
+       a broken split looks like the two curves overlapping.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

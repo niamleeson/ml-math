@@ -264,6 +264,42 @@
        paper, on CIFAR-10 GELU reached <b>7.89%</b> error versus ReLU's <b>8.16%</b>. (Source: arXiv:1606.08415.)
        The CODEVIZ numbers below are our own small run, not the paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> GELU is a drop-in activation, so you evaluate it the way the paper
+       does (Section 3): swap GELU into an otherwise-fixed network and compare the <b>task metric</b> against the
+       same network with ReLU/ELU. The headline metric is <b>classification error</b> (lower is better) on the
+       paper's suites &mdash; MNIST, Twitter POS tagging, TIMIT speech frames, CIFAR-10/100. The "no-skill" floor
+       is chance accuracy (e.g. $90\\%$ error on 10-class CIFAR-10); the meaningful baseline is the <i>same-arch
+       ReLU model</i>, which on CIFAR-10 the paper reports at <b>8.16%</b> error (arXiv:1606.08415).</p>
+       <p><b>Sanity checks BEFORE the full run.</b> GELU has a built-in oracle the other parts of this build do
+       not: <code>torch.allclose(my_gelu_exact(x), F.gelu(x), atol=1e-6)</code> over a dense grid in
+       $[-4,4]$ must be <b>True</b> &mdash; your exact erf form IS PyTorch's default GELU. Also check fixed
+       points: $\\mathrm{GELU}(0)=0$, $\\mathrm{GELU}(1)\\approx0.8413$, $\\mathrm{GELU}(-1)\\approx-0.1587$
+       (the dip below zero), and that for large $|x|$ GELU $\\to$ ReLU. For the tanh variant, compare like-for-like
+       against <code>F.gelu(x, approximate='tanh')</code>, not the default. Then overfit a single tiny batch and
+       watch cross-entropy fall toward $0$ &mdash; if it cannot, the bug is in the surrounding net, not the
+       activation.</p>
+       <p><b>Expected range.</b> On CIFAR-10 a correct same-arch GELU model should land <i>near or slightly below</i>
+       the paper's <b>7.89%</b> error vs ReLU's <b>8.16%</b> (approximate, arXiv:1606.08415) &mdash; the gap is a
+       fraction of a percent, so being within a point of the ReLU baseline is "working." If GELU is many points
+       <i>worse</i> than ReLU on the same setup, that is a bug, not tuning. On the toy 2-class MLP in the CODE,
+       both activations saturate (our run: both $\\approx0.9950$ accuracy &mdash; our number, not the paper's), so
+       a tie there is expected and not evidence of a problem.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the <b>activation choice
+       itself</b>: hold seed, data, width, and optimizer fixed and swap only $\\mathrm{GELU}\\leftrightarrow
+       \\mathrm{ReLU}$ (and ideally ELU). On the paper's harder suites GELU should match or beat ReLU; if your GELU
+       is consistently <i>worse</i>, it is mis-wired (wrong $1/\\sqrt2$ scaling, density instead of CDF). A second
+       ablation: replace the exact erf form with the tanh approximation &mdash; the metric should barely move,
+       confirming the approximation is faithful, not load-bearing.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <code>allclose</code> fails / max-abs-diff $\\sim10^{-1}$:
+       you dropped the $1/\\sqrt2$ inside <code>erf</code> or used the bell-curve <i>density</i> instead of the CDF
+       $\\Phi$ (the two most common bugs &mdash; see Pitfalls). Curve is monotone with no dip near $x\\approx-0.75$:
+       you implemented ReLU/softplus, not GELU. Loss NaN: unrelated to GELU (LR too high or bad init), since GELU
+       is bounded and smooth. GELU far worse than ReLU at equal settings: activation mis-scaled or the comparison
+       isn't apples-to-apples (different seed/init). Tanh variant fails <code>allclose</code> against the
+       <i>default</i> <code>F.gelu</code>: expected &mdash; compare against <code>approximate='tanh'</code>
+       instead.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.nn.functional.gelu</code> in one call.

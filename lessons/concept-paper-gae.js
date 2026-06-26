@@ -333,6 +333,55 @@
        result required simulated experience the paper equates to "about 1-2 weeks of real time."</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;6. The numbers in the
        CODEVIZ panel below are from our own tiny CartPole run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> GAE is an advantage estimator, so you measure two things. (a) The
+       direct property it promises: the <b>variance of the advantage estimate</b> $\\hat{A}_t$ across rollouts
+       at a fixed policy &mdash; it must fall as $\\lambda$ drops from $1$ toward $0$. (b) Whether it helps
+       <i>learning</i>: <b>episode return</b> on a control task &mdash; CartPole-v1 (return tops out at $500$,
+       the env's max steps) for a quick check, and the paper's setting of MuJoCo <b>locomotion</b> (3D biped /
+       quadruped) reward. The "no-skill" reference is a <b>random policy</b> (CartPole random return is roughly
+       in the low tens, far below $500$); the variance baseline to beat is <b>raw Monte-Carlo</b> ($\\lambda=1$),
+       which GAE must undercut in variance.</p>
+       <p><b>2. Sanity checks BEFORE a full training run.</b></p>
+       <ul>
+        <li><b>Known-answer unit test.</b> Reproduce the lesson's 3-step rollout exactly: with $\\gamma=0.9$,
+        $\\lambda=0.8$, $r=[1.0,0.0,2.0]$, $V=[1.0,0.5,1.0]$, terminal at $t=2$, you must get
+        $\\delta=[0.45,0.40,1.00]$ and $\\hat{A}_0^{GAE}=1.2564$.</li>
+        <li><b>Endpoint checks.</b> At $\\lambda=0$, GAE must equal $\\delta_t$ exactly (Eq. 17); at $\\lambda=1$,
+        it must equal the discounted return minus the baseline, $G_t-V(s_t)$ (Eq. 18) &mdash; here $1.62$ at
+        $t=0$. If either endpoint is off, the recursion or the $\\gamma\\lambda$ decay is wrong.</li>
+        <li><b>Terminal-mask check.</b> Plant an episode boundary and confirm the bootstrap $\\gamma V(s_{t+1})$
+        and the recursion both <b>reset</b> there (mask $=0$); advantages must not bleed across episodes.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper reports best results at <b>$\\gamma\\in[0.96,0.99]$ and
+       $\\lambda\\in[0.92,0.98]$</b>, with GAE "substantially reduce[ing] the variance of policy gradient
+       estimates at the cost of some bias" over the $\\lambda=1$ baseline (abstract, &sect;6). So your variance
+       curve should sit well below the Monte-Carlo end at $\\lambda\\approx0.95$ (these $\\lambda$/$\\gamma$ bands
+       are the paper's; the exact variance numbers are run-specific). As a rule of thumb, a correct CartPole
+       actor-critic with GAE at $\\lambda=0.95$ should climb toward the $500$ return ceiling within a modest
+       number of iterations; staying near random return is a bug.</p>
+       <p><b>4. Ablation &mdash; prove the $\\lambda$ dial earns its keep.</b> The central knob is <b>$\\lambda$</b>.
+       Hold the policy and critic fixed and sweep $\\lambda\\in\\{0,0.95,1\\}$, measuring
+       $\\text{Var}(\\hat{A}_0)$ each time. You must see
+       $\\text{Var}(\\lambda{=}0)\\lt\\text{Var}(\\lambda{=}0.95)\\lt\\text{Var}(\\lambda{=}1)$ &mdash; the
+       lesson's CODEVIZ curve. If variance does <b>not</b> rise with $\\lambda$, the $(\\gamma\\lambda)^l$
+       weighting isn't actually changing the estimator (e.g. you used $\\gamma$ where $\\gamma\\lambda$ belongs).
+       For the learning claim, train at $\\lambda=0.95$ vs $\\lambda=1$ and confirm the lower-variance setting
+       trains faster / more stably.</p>
+       <p><b>5. Failure signals.</b></p>
+       <ul>
+        <li><b>Variance flat across $\\lambda$</b> &rarr; the decay uses $\\gamma$ instead of $\\gamma\\lambda$, so
+        $\\lambda$ has no effect.</li>
+        <li><b>Advantages explode at episode boundaries</b> &rarr; missing terminal mask: the bootstrap or the
+        recursion didn't reset across episodes.</li>
+        <li><b>Advantage looks like the return even at $\\lambda=0$</b> &rarr; the backward recursion is running
+        forward, so $\\hat{A}_t$ wrongly accumulates future steps.</li>
+        <li><b>Policy diverges / loss NaN</b> &rarr; advantages not standardized before the policy step (drifting
+        scale), or learning rate too high &mdash; normalize each batch to zero-mean/unit-variance, but measure
+        raw variance <i>before</i> normalizing when comparing $\\lambda$.</li>
+        <li><b>Return stuck near random</b> &rarr; critic not training (so $\\delta_t$ is pure noise) or
+        $\\gamma$/$\\lambda$ swapped &mdash; $\\gamma$ discounts reward, $\\lambda$ weights estimators.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

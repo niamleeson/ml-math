@@ -286,6 +286,39 @@
        <p><i>These are the paper's own reported numbers, quoted from the abstract, Table 1, and Figure 3. The
        numbers in the CODEVIZ panel below are from our own tiny run on a toy passage set &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> FiD is open-domain QA, so the metric is <b>exact-match (EM)</b>: the
+       fraction of questions whose generated answer string exactly matches a gold answer, on <b>Natural Questions</b>
+       and <b>TriviaQA</b> (the paper's Table 1 setup). The no-skill floor is a closed-book reader given NO passages
+       (or one irrelevant passage): it can only answer from memorized facts, so any EM gain over that is the
+       retrieval-fusion payoff. In the toy build the metric is answer accuracy and the trivial baseline is random
+       guessing, $1/C = 1/8 = 0.125$.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) Overfit a single batch &mdash; one question with the
+        clue planted in a known passage &mdash; and watch the loss fall to $\\approx 0$; if it cannot memorize one
+        example the routing is broken. (b) Check the fused memory shape: <code>torch.cat</code> of $k$ encodings must
+        give length $k \\cdot \\ell$ &mdash; if it is $\\ell$ you concatenated wrong. (c) Loss at init for a $K$-way
+        softmax should be $\\approx -\\ln(1/C) = \\ln 8 \\approx 2.08$ (rule of thumb); far from that means a bad init
+        or a wired-up bug. (d) Known-answer unit test: with $k=6$ and the clue always visible, accuracy must reach
+        $\\approx 1.0$.</li>
+        <li><b>3. Expected range.</b> The accuracy-vs-$k$ curve should track the worked-example prediction
+        $k/6 + (1-k/6)/8$ &mdash; roughly $0.27, 0.42, 0.56, 0.71, 0.85, 1.00$ for $k=1\\dots6$ (our toy run measured
+        $\\approx 0.22, 0.32, 0.56, 0.70, 0.86, 1.00$). For the real paper, a correct FiD reaches about <b>51.4 EM on
+        Natural Questions</b> and <b>67.6 EM on TriviaQA</b> (large model, Table 1, arXiv:2007.01282, approximate
+        target). Being within a few EM points of these is tuning; tens of points below means a bug.</li>
+        <li><b>4. Ablation &mdash; prove fusion earns its keep.</b> The central idea is decoder fusion over ALL
+        retrieved passages. Turn it off by setting the fuse count to $k=1$ (decoder sees only one passage though 6
+        were retrieved): accuracy must collapse toward $\\approx 0.27$ (clue visible only $1/6$ of the time, else a
+        guess). If accuracy stays high at $k=1$, fusion is not actually wired in &mdash; you are leaking the clue or
+        the decoder is not reading the concatenation. Rising accuracy as $k:1\\to6$ is the paper's &sect;4 / Figure 3
+        effect in miniature.</li>
+        <li><b>5. Failure signals.</b> <b>Accuracy stuck near $0.125$</b> (toy chance) &rarr; the decoder is not
+        attending to the memory, or the signal token never reaches it (check the <code>torch.cat</code> dim and the
+        cross-attention). <b>Flat accuracy across all $k$</b> &rarr; passages are being encoded together / the clue
+        leaks regardless of $k$, so fusion does nothing. <b>Loss NaN</b> &rarr; LR too high or bad init. <b>Cost
+        blows up quadratically with passage count</b> &rarr; you concatenated raw passages BEFORE the encoder instead
+        of concatenating only the encodings &mdash; the exact mistake FiD's independent encoding avoids.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

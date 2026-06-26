@@ -343,6 +343,43 @@
        <p><i>These are the paper's own statements, transcribed from the abstract, &sect;1, &sect;2, and Figure 1.2.
        The per-benchmark accuracy tables in &sect;3 are not reproduced here. Every number in the CODEVIZ panel below
        comes from our own tiny illustration &mdash; not the paper's measured results.</i></p>`,
+    evaluation:
+      `<p><b>The metric & benchmark.</b> This is a <b>read-only</b> paper, so "working" means your understanding
+       and the toy illustration behave correctly &mdash; there is no GPT-3 to train. The paper's own metric is
+       <b>task accuracy as a function of $K$</b> (the number of in-prompt demonstrations) across many NLP
+       benchmarks, plus the key trend: the accuracy-vs-$K$ <i>slope</i> steepens with model size (Figure 1.2). The
+       "no-skill" anchors are the <b>zero-shot</b> ($K=0$) accuracy &mdash; what the model gets from the
+       instruction alone &mdash; and chance for the task; few-shot must beat both. For the toy, the floor is the
+       $K=0$ echo-the-input accuracy (<b>0.000</b> in our run) and the ceiling is $1.0$.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Since there is nothing to train, the checks are on the
+        <i>protocol</i> and the toy: (1) <b>Frozen-weights invariant</b> &mdash; assert no parameter/array changes
+        between prompts; if anything updates, it's fine-tuning, not in-context learning. (2) <b>Known-answer toy
+        points</b> &mdash; the illustration must reproduce $K=0\\to 0.000$, $K=1\\to 0.325$, $K=16\\to 0.952$ (seed
+        0). (3) <b>Monotone-ish climb</b> &mdash; accuracy should rise (or plateau), never fall, as $K$ grows; a dip
+        means the similarity match or the "removed = set(di) - set(do)" rule inference is buggy. (4) <b>Eval/demos
+        disjoint</b> &mdash; confirm the held-out queries use a separate RNG from the demonstration pool, or you're
+        leaking.</li>
+        <li><b>Expected range.</b> Our toy curve: <b>0.000</b> ($K{=}0$), <b>0.325</b> ($K{=}1$), <b>0.603</b>
+        ($K{=}2,4$), <b>0.777</b> ($K{=}8$), <b>0.952</b> ($K{=}16$) &mdash; our small run, not GPT-3's numbers. The
+        $K{=}2$&ndash;$4$ plateau is honest: only three symbols exist, so accuracy jumps as demonstrations happen to
+        cover each one. For the real paper, the target is to match the abstract's qualitative claims (few-shot
+        approaches fine-tuning on some tasks; CoQA-style gains) &mdash; quote Figure 1.2 / the tables, never invent
+        per-benchmark scores.</li>
+        <li><b>Ablation &mdash; prove scale is what buys in-context learning.</b> The paper's central claim is that
+        the benefit of demonstrations <i>grows with model size</i>. The conceptual ablation: re-run the same
+        accuracy-vs-$K$ sweep on a <b>smaller / weaker</b> model and confirm the curve gets <b>flatter</b> (each
+        added demonstration helps less). If a tiny model climbs just as steeply, then in-context learning isn't
+        scale-dependent for your setup &mdash; contradicting Figure 1.2. (In the toy, you can mimic this by degrading
+        the matcher's features and watching the slope drop.)</li>
+        <li><b>Failure signals & what they mean.</b> <b>Accuracy flat at the $K=0$ value for all $K$:</b> the
+        demonstrations aren't being read &mdash; the prompt isn't actually conditioning the prediction (wrong
+        concatenation, or you scored zero-shot every time). <b>Accuracy = 1.0 even at $K=0$:</b> a leak &mdash; the
+        answer is reachable without examples (e.g. gold copied into the query). <b>Accuracy decreases with $K$:</b>
+        demonstrations are mislabeled or the similarity/rule-inference picks the wrong demo. <b>Weights changed
+        between prompts:</b> you've accidentally implemented fine-tuning, not in-context learning &mdash; the one
+        invariant the whole paper rests on ("no gradient updates or fine-tuning").</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

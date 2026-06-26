@@ -283,6 +283,47 @@ $$ \\min_{\\theta_G,\\theta_D}\\ \\sum_{\\mathbf{x}\\in\\mathcal{X}} \\mathcal{L
        subset that was masked out."</p>
        <p><i>These are the paper's reported figures, quoted. Every number in the CODEVIZ panel below is from our own
        tiny toy-text run — not the paper's reported result.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The headline metric is <b>compute-efficiency</b>: pretrain the RTD
+       discriminator and an equal-size MLM encoder for the <b>same number of steps</b> on the toy corpus, freeze
+       both, and compare a <b>linear-probe accuracy</b> on a small held-out task (e.g. predict the verb category
+       from the mean token vector) as a function of pretraining steps. The no-skill baseline is
+       <b>majority-class accuracy</b> on the probe task (for $K$ balanced classes, $1/K$ &mdash; e.g.
+       $\\approx 0.33$ for the 3-way verb task); "working" means both encoders climb well above that, and the RTD
+       curve leads MLM at equal steps. A second cheap metric is the discriminator's per-token <b>real/replaced
+       AUC or accuracy</b> on fresh corrupted sentences (a copy/"always-real" baseline scores at the replaced-token
+       rate). The paper's own benchmark is <b>GLUE</b>: ELECTRA-Small (1 GPU, 4 days) <i>outperforms GPT</i>, and
+       at scale matches RoBERTa/XLNet with $\\lt 1/4$ the compute.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> (i) Unit-test the RTD loss on the worked example:
+       labels $y = [1,0,1,1]$, $D = [0.9,0.2,0.8,0.6]$ must give per-token
+       $[0.1054, 0.2231, 0.2231, 0.5108]$, sum $1.0624$, mean $\\mathbf{0.2656}$. (ii) Loss-at-init check: an
+       untrained discriminator outputs $D \\approx 0.5$, so the per-token BCE should start near
+       $-\\ln(0.5) = 0.693$. (iii) Label check: confirm $y_t = \\mathbb{1}(x_t^{\\text{corrupt}} = x_t)$ &mdash;
+       a re-sampled-to-original position must be labeled <b>real</b>, not "masked." (iv) Gradient-isolation
+       check: assert the generator's parameters get <b>no</b> gradient from $\\mathcal{L}_{\\text{Disc}}$
+       (the sampled ids are <code>.detach()</code>ed) &mdash; if $G$ moves to fool $D$, you've built a GAN.
+       (v) Coverage check: the RTD loss tensor must span all $n$ positions, not just the masked $\\approx 15\\%$.</p>
+       <p><b>Expected range.</b> On the toy run the RTD probe should reach high accuracy (our illustrative curve
+       hits $\\sim 0.9$ by 400 steps) and stay <b>above the MLM curve at every step count</b>; the MLM encoder
+       trails (our curve $\\sim 0.78$ at 400). These toy numbers are a rule of thumb for this build, <i>not</i>
+       paper claims. The quotable anchors are the paper's GLUE/compute results above; what you must reproduce
+       qualitatively is the <b>ordering</b> (RTD-all $\\gt$ MLM at equal compute), not specific scores.</p>
+       <p><b>Ablation &mdash; prove the all-tokens loss earns its keep.</b> The central idea is the <b>RTD loss
+       defined over every token</b>. Restrict the same discriminator's BCE to <b>only the masked $\\approx 15\\%$
+       positions</b> (mimicking MLM's coverage), changing nothing else. The restricted curve should <b>collapse
+       toward the MLM curve</b> &mdash; isolating "loss over all input tokens," not the architecture, as the source
+       of the gain. A second ablation is <b>generator size</b> (&sect;3.2): sweep $G$ from trivially tiny to
+       equal-to-$D$ and confirm an <b>inverted-U</b> &mdash; quality peaks at $G$ around $1/4$&ndash;$1/2$ of $D$.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <b>RTD ties or loses to MLM</b> = you computed the
+       discriminator loss on masked positions only (lost the efficiency), or up-weighting is off (raw-summed
+       losses let the MLM term dominate &mdash; use $\\lambda \\approx 50$). <b>Discriminator collapses to
+       predicting "real" everywhere</b> ($D \\to 1$, near-zero replaced recall) = the generator is too strong so
+       fakes are indistinguishable (shrink $G$), or labels are wrong. <b>Generator loss won't drop / NaN</b> =
+       LR too high or softmax/embedding tying broken. <b>$G$'s parameters drift toward fooling $D$</b> = you
+       forgot the <code>.detach()</code> and back-propagated $D$'s loss into $G$ (accidental GAN). <b>Every
+       position labeled replaced</b> = you labeled off "was this position masked" instead of "does the corrupt
+       token differ from the original," missing re-sampled originals. In the CODEVIZ panel a correct build shows
+       the green RTD-all curve above red MLM, with the amber masked-only ablation hugging the MLM curve.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

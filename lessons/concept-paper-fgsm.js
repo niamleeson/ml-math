@@ -270,6 +270,47 @@
        numbers in the CODEVIZ panel below are from our own tiny run on an 8&times;8 digit dataset &mdash; not the
        paper's reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> The metric is <b>accuracy (or error rate) on FGSM adversarial
+       examples</b> as you sweep the budget $\\epsilon$ &mdash; the paper's setup is <b>MNIST</b> at
+       $\\epsilon=0.25$ (&sect;4 / &sect;6). The "no-skill" floor is <b>10% accuracy</b> (10-way uniform guessing),
+       which a successfully attacked clean model approaches. Two reference points from the paper: a clean-trained
+       shallow softmax hits <b>99.9% error</b> on FGSM examples at $\\epsilon=0.25$ (&sect;4), and adversarial
+       training cuts a maxout net's adversarial error to <b>17.9%</b> (&sect;6) &mdash; the gap between those is the
+       effect you are measuring.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Clean accuracy first:</b> at $\\epsilon=0$ both the
+        clean- and adversarially-trained nets must report the <i>same</i> accuracy (in our run <b>94.07%</b>); if
+        they differ at $\\epsilon=0$ your eval data or seeding drifted. (b) <b>Gradient target:</b> assert the
+        FGSM gradient is w.r.t. the <b>input</b> (<code>x.requires_grad_(True)</code> + <code>autograd.grad(loss,
+        x)</code>), not the weights. (c) <b>Perturbation shape:</b> every entry of $\\eta$ must be exactly
+        $\\pm\\epsilon$ (it is $\\epsilon\\,\\text{sign}(g)$); print $\\eta$ and check. (d) <b>Clamp:</b>
+        $x_{\\text{adv}}\\in[0,1]$ after the step. (e) <b>Worked-example unit test:</b> the 3-pixel linear case must
+        reproduce score $0.5\\to$ sign $[-1,+1,-1]\\to$ adversarial score $-0.05$ with $w\\!\\cdot\\!\\eta=-0.55$
+        (the first CODE cell checks this). (f) <b>Monotonicity:</b> clean accuracy should be non-increasing as
+        $\\epsilon$ grows.</li>
+        <li><b>3. Expected range.</b> A correct attack should drive the clean model toward the <b>10%</b> floor by
+        a moderate $\\epsilon$ (in our 8&times;8-digit run, <b>0%</b> by $\\epsilon=0.25$), and adversarial
+        training should hold meaningfully above that ($\\approx$<b>18.7%</b> at $\\epsilon=0.25$ in our run). On
+        MNIST the paper's targets are <b>99.9% error</b> (clean, softmax, &sect;4) and <b>17.9% error</b> after
+        adversarial training (&sect;6) &mdash; these are the paper's reported figures; our toy 8&times;8 numbers
+        only need to match the <i>shape</i> (clean collapses, defense degrades slowly). If the clean model does
+        <i>not</i> collapse as $\\epsilon$ rises, the attack is not really perturbing the input.</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The defense knob is the mix weight
+        <b>$\\alpha$</b>. Set <b>$\\alpha=1$</b> (drop the $(1-\\alpha)J_{\\text{adv}}$ term &mdash; clean-only
+        training) and retrain: adversarial accuracy at $\\epsilon=0.25$ must <b>fall back to the clean-trained
+        model's level</b> (near zero in our run). If it does not drop, the FGSM examples were never actually fed
+        into the loss (e.g. frozen / not regenerated each step), and the "robustness" is an artifact.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Accuracy unchanged as $\\epsilon$ grows</b> &rarr;
+        you took the gradient w.r.t. weights, not the input, so $x_{\\text{adv}}=x$. <b>Attack too weak / budget
+        ignored</b> &rarr; you used the raw gradient $\\epsilon g$ instead of $\\epsilon\\,\\text{sign}(g)$,
+        violating the max-norm budget. <b>Adversarial training doesn't help</b> &rarr; FGSM examples generated once
+        and frozen instead of regenerated from current weights each step. <b>Impossible-looking inputs / inflated
+        attack</b> &rarr; forgot to <code>.clamp(0,1)</code>. <b>Accuracy drops as a sharp cliff</b> &rarr; this is
+        <i>expected</i>: the loss climbs ~linearly in $\\epsilon$ but accuracy collapses once most inputs cross the
+        decision boundary &mdash; not a bug.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The classifier and the optimizer already ship in PyTorch,

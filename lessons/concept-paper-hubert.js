@@ -308,6 +308,48 @@
        labels usable.</p>
        <p><i>These are the paper's reported figures, quoted. The numbers in the CODE and CODEVIZ panels below are
        from our own tiny synthetic run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The end-task metric is <b>Word Error Rate (WER)</b> &mdash; the
+       fraction of words wrong, <i>lower is better</i> &mdash; after fine-tuning on LibriSpeech / Libri-Light
+       (test-clean / test-other), the paper's eval setup. The no-skill bar is a model that fails to use context:
+       the paper's $\\alpha = 0$ (unmasked-only) run collapses to "96.37%" WER, near total failure, versus
+       "17.86%" for masked-only with the same weak teacher (&sect;V-D, Table V). For the toy build here, the
+       trainable proxy is <b>masked-frame cluster accuracy</b> &mdash; how often the model names the correct
+       k-means cluster $z_t$ at <b>masked</b> frames &mdash; whose no-skill floor is chance $= 1/C$ ($= 0.25$ for
+       $C = 4$).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Unit-test the loss on the worked example: logits
+        $[1.0, 3.0, 0.5, -1.0]$ with true cluster $2$ must softmax to $p \\approx [0.1095, 0.8093, 0.0664,
+        0.0148]$ and give $-\\log(0.8093) = 0.2115$, matching <code>F.cross_entropy</code> to the digit. (2)
+        Check the loss at init: an untrained $C$-way head should give $\\approx \\ln C = \\ln 4 \\approx 1.386$
+        per masked frame. (3) Confirm <b>pseudo-label purity</b>: k-means cluster IDs should track the latent
+        units (the CODE prints this) &mdash; if clusters are random, the targets are noise and nothing will
+        learn. (4) Verify masking really deletes content: a masked frame's input must be the single learned
+        <code>[MASK]</code> vector, not its original features (else the model copies the answer). (5) Confirm the
+        encoder is <b>bidirectional</b> (no causal mask) so both sides are visible.</li>
+        <li><b>Expected range.</b> With $\\alpha = 1$ (masked-only) a correct toy build should drive masked-frame
+        accuracy up to $\\approx 0.97$ &mdash; our small run reaches that (CODEVIZ; <i>our number, not the
+        paper's</i>). The paper's anchor is the $\\alpha = 1$ vs $\\alpha = 0$ contrast ("17.86%" vs "96.37%" WER,
+        Table V) and the headline WERs ("1.8% / 2.9%" test-clean/test-other on 960h, Table III; "4.6% / 6.8%"
+        with 10 min, Table II). As a rule of thumb (not a paper claim), if masked accuracy stalls near chance
+        ($0.25$) with $\\alpha = 1$, that is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> Flip the one knob HuBERT fixes at $1$: the
+        <b>masked-loss weight $\\alpha$</b>. Train with $\\alpha = 0$ (score loss <b>only on unmasked</b> frames),
+        keeping the pseudo-labels, $8\\%$/length-10 span masking, depth, width, heads, optimizer, and seed
+        identical. Masked-frame accuracy must <b>collapse to $\\approx$ chance</b> ($1/C = 0.25$), because the
+        model is only ever graded on frames whose content it can already read (the toy mirror of Table V). If
+        $\\alpha = 0$ does <i>not</i> hurt masked accuracy, your masking is not actually hiding content or your
+        loss is leaking onto masked frames.</li>
+        <li><b>Failure signals &amp; what they mean.</b> (a) <b>Both $\\alpha = 1$ and $\\alpha = 0$ learn
+        masked frames well</b>: masking is not deleting content &mdash; the <code>[MASK]</code> overwrite is not
+        applied, or you mask single frames instead of spans ($l = 10$) so neighbours leak the answer. (b)
+        <b>Loss won't fall even at $\\alpha = 1$</b>: pseudo-labels are noise (k-means failed / re-initialized
+        each step instead of frozen), or you are accidentally backpropagating into the offline targets. (c)
+        <b>Accuracy high on unmasked but $\\approx$ chance on masked</b>: the model learned a copy, not context
+        &mdash; you are effectively at $\\alpha = 0$ (check <code>ignore_index</code> / which frames are scored).
+        (d) <b>Targets never improve across iterations</b>: you forgot to re-cluster on the trained model's own
+        features (&sect;II-A, &sect;IV-B), so you are stuck with the crude MFCC clusters.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

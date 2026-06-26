@@ -323,6 +323,42 @@
        strategy with $k = 4$ or $8$ performed best.</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny bit-flipping run at $n = 15$ &mdash;
        not the paper's reported numbers, which are for $n$ up to $50$ and for the robotic tasks.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The primary metric is the <b>success rate</b> &mdash; the fraction of
+       episodes in which the agent reaches the goal $g$ within $n$ steps &mdash; on the toy $n$-bit
+       <b>bit-flipping</b> task (&sect;3.1). The no-skill floor is concrete: a random/vanilla DQN agent at
+       $n = 15$ essentially never lands exactly on the $n$-bit target, so its success rate sits at $\\approx 0$.
+       That is the "better than trivial" bar to clear; on the robotic tasks the paper's baseline is plain DDPG,
+       which "is unable to solve any of the tasks" (&sect;4.2).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Unit-test the reward recompute on the lesson's worked
+        example: with $g = 11111$, $g' = s_T = 01101$, the step $01001 \\to 01101$ must give real reward
+        $-[01101 \\neq 11111] = -1$ and hindsight reward $-[01101 \\neq 01101] = 0$ &mdash; if your relabel does not
+        flip $-1 \\to 0$ here, HER is not wired in. (2) Check shapes: the net input is length $2n$ (the
+        concatenation $s\\|g$) and the output is length $n$ (one Q-value per flippable bit). (3) Confirm the
+        relabeled <b>final</b> transition of every episode has reward $0$ and done $=$ true. (4) Overfit a tiny
+        buffer (a handful of relabeled transitions) and watch the Bellman loss fall toward $0$.</li>
+        <li><b>Expected range.</b> With HER at $n = 15$, a correct build should climb to a high success rate
+        &mdash; our small run reaches $\\approx 0.9$ (CODEVIZ; <i>our number, not the paper's</i>). The paper's
+        own claim is qualitative and stronger: "DQN with HER easily solves the task for $n$ up to $50$" while
+        "DQN without HER can only solve the task for $n \\le 13$" (&sect;3.1). As a rule of thumb (not a paper
+        claim), if HER plateaus near $0$ at $n = 15$ it is a bug, not tuning; a slow climb that stalls around
+        $0.3$&ndash;$0.5$ is more likely a learning-rate / target-sync / buffer-ratio issue.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> Turn OFF the one knob HER introduced: the
+        <b>relabel step</b> (store only the real-goal transitions $(s\\|g, a, r, s'\\|g)$), keeping the same
+        goal-conditioned net, buffer, optimizer, learning rate, and seed. The success rate must <b>drop to
+        $\\approx 0$</b> at $n = 15$. If removing relabeling does <i>not</i> hurt, HER is not actually supplying
+        the non-$(-1)$ rewards &mdash; check that you recompute $r'$ under $g'$ (not just swap the goal tag) and
+        that the bootstrap $\\max_{a'}Q(s', a', g')$ uses the relabeled goal.</li>
+        <li><b>Failure signals &amp; what they mean.</b> (a) <b>Success stuck at $0$ even WITH HER</b>: relabel
+        not recomputing the reward (still all $-1$), or the net is goal-blind (you forgot to concatenate $g$, so
+        real and relabeled copies are contradictory labels for the same $(s,a)$). (b) <b>Q-values diverge / loss
+        NaN</b>: target net not synced or no terminal-bootstrap masking &mdash; with $\\gamma = 0.98$ the
+        backed-up $-1$s can blow up; clamp the target ($[-50, 0]$ in the code) and check the done flag. (c)
+        <b>HER and no-HER curves identical</b>: the relabeled copies never reached the buffer, or you
+        bootstrapped relabeled copies with the wrong goal. (d) <b>HER helps but underperforms</b>: try
+        <code>future</code> with $k = 4$ or $8$, the paper's best strategy (&sect;4.5).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

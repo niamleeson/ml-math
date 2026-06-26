@@ -290,6 +290,40 @@ $$ V^{(l)} \\in \\mathbb{R}^{n\\times k_l}, \\qquad k_l \\in \\mathbb{N}_0^{+} \
        form.</p>
        <p><i>These are the paper's reported results, described from its Fig. 2 and Lemma 3.1. The numbers in the
        CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> FM is a regression/ranking predictor, so the primary metric is held-out
+       <b>RMSE</b> (root-mean-square error) on a rating task &mdash; the paper's Fig. 2 uses the <b>Netflix</b>
+       rating-prediction benchmark and compares FM RMSE against an SVM as the number of factors $k$ grows. The
+       no-skill baseline is <b>predict-the-mean</b>: a model that always outputs $\\bar{y}$ has MSE equal to the
+       target variance $\\operatorname{Var}(y)$, so any model must beat that to be doing real work. In the toy build
+       the target variance is $\\approx 2.97$, which is the floor a useless model sits at.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) Known-answer unit test: recompute the worked example
+        ($x=[1,2,1]$, the three feature vectors) both the naive double-sum way and the $O(kn)$ way &mdash; both must
+        print <b>5.0</b>. (b) <code>torch.allclose(fast, naive, atol=1e-5)</code> on random $x,V$ must be <b>True</b>;
+        this proves Lemma 3.1 is implemented correctly before any training. (c) Overfit a tiny train set and watch
+        train MSE fall toward $\\approx 0$. (d) Shape check: $(xV)^2$ and $(x^2)(V^2)$ are both batch$\\times k$, and
+        the interaction is their half-difference summed over $k$.</li>
+        <li><b>3. Expected range.</b> On interaction-only toy data (target $1.5\\,x_0x_1 + 1.0\\,x_2x_3$) a correct FM
+        drives test MSE to $\\approx 0.047$, while plain linear regression is stuck at $\\approx 2.91$ &mdash; about the
+        target variance $\\approx 2.97$ (our small run; not the paper's numbers). FM well above $\\sim 0.1$ here means
+        a bug; near $2.9$ means the interaction term is doing nothing. For the real paper, the claim to reproduce is
+        qualitative: FM RMSE on Netflix drops <b>below the SVM</b> as $k$ grows (Fig. 2, approximate &mdash; the paper
+        gives the curve, not a single headline number).</li>
+        <li><b>4. Ablation &mdash; prove the factorized interaction earns its keep.</b> The central idea is the
+        $\\langle v_i,v_j\\rangle x_i x_j$ term. Turn it OFF (drop the interaction, keep only $w_0 + x\\cdot w$ &mdash;
+        a plain linear model on the same features): test MSE must JUMP back up to $\\approx 2.91$ (the variance floor).
+        If removing it barely changes the error, your signal was actually linear, or the interaction term is not
+        wired into the forward pass. The gap between the two (FM $\\approx 0.047$ vs linear $\\approx 2.91$) is the
+        whole contribution.</li>
+        <li><b>5. Failure signals.</b> <b>Fast and naive disagree by more than $\\sim 10^{-5}$</b> &rarr; you forgot to
+        subtract the sum-of-squares or to halve &mdash; the $(xV)^2$ term alone double-counts and includes the
+        $i=i$ diagonal. <b>FM no better than linear</b> &rarr; the interaction term is removed, zeroed, or the target
+        has no pairwise signal. <b>Test MSE far above train MSE</b> &rarr; overfitting; reduce $k$ or add $L2$
+        regularization (small $k$ generalizes better under sparsity). <b>Loss NaN / blow-up</b> &rarr; LR too high or
+        $V$ initialized too large. <b>Tiny $\\sim 10^{-6}$ mismatch in allclose</b> is just float rounding &mdash; use
+        a tolerance, not exact equality.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

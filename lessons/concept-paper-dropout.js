@@ -245,6 +245,41 @@
        and gives major improvements over other regularization methods." (Source: JMLR vol. 15, Table 2;
        jmlr.org/papers/v15/srivastava14a.) The numbers in the CODEVIZ below are our own small run, not these
        paper numbers.</p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Dropout is a regularizer, so the metric is <b>test-set error</b>
+       (and the <b>train&ndash;test gap</b> that measures overfitting). The paper's benchmark is <b>MNIST</b>
+       classification test error (&sect;6.1.1, Table 2). The no-skill / baseline anchors: 10-class random guessing
+       is <b>90% error</b>, and the meaningful baseline is the <b>same architecture without dropout</b>
+       (<b>1.60%</b> test error, Table 2) &mdash; dropout must beat that. On our small noisy 2-class task the proxy
+       metric is the <b>train&ndash;test loss gap</b>, with $50\\%$ accuracy as the chance floor.</p>
+       <p><b>2. Sanity checks before the full run.</b> These are unit tests on the <code>my_dropout</code>
+       primitive, before any training. (a) <b>Eval mode is the exact identity:</b>
+       <code>torch.allclose(my_dropout(x,p,training=False), x)</code> &mdash; dropout must be a no-op at test.
+       (b) <b>Expected value is preserved:</b> average <code>my_dropout</code> over many masks on a constant input
+       (e.g. all-$3$); the per-column mean should return $\\approx$ the input ($\\approx 3$), since
+       $\\mathbb{E}[\\tilde y]=p\\cdot(y/p)+(1-p)\\cdot 0=y$ &mdash; this is the proof the $1/p$ scaling is right.
+       (c) <b>Match PyTorch:</b> both checks above should also hold against <code>nn.Dropout</code>. (d) Reproduce
+       the worked example: $y=[2,4,6,8]$, mask $[1,0,1,1]$, $p_{\\text{drop}}=0.5$ gives train output
+       $[4,0,12,16]$ and empirical mean $\\approx[2,4,6,8]$.</p>
+       <p><b>3. Expected range.</b> On MNIST a correct dropout net should reach <b>$\\approx 1.35\\%$</b> test error
+       vs <b>1.60%</b> without, and <b>$\\approx 1.05\\%$</b> with dropout + max-norm (Table 2, quoted in
+       <b>Results</b> &mdash; the paper's numbers). On our small run the qualitative target is a <b>smaller
+       train&ndash;test gap</b> with dropout ($\\approx 0.28$) than without ($\\approx 0.33$), with training loss
+       slightly <i>higher</i> under dropout (rule-of-thumb, our run). If dropout makes test error <i>worse</i>,
+       something is off (wrong mode at test, or $p$ inverted).</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The key knob is the <b>drop rate</b>
+       $p_{\\text{drop}}$. Set it to <b>$0$</b> (dropout off) and retrain on the same data, everything else fixed:
+       the training loss should fall <i>lower</i> but the test loss end <i>higher</i> and the train&ndash;test gap
+       <b>grow</b> &mdash; the overfitting dropout was suppressing returns. If turning dropout off does <b>not</b>
+       widen the gap, the mask is not actually being applied (or the task is too easy to overfit).</p>
+       <p><b>5. Failure signals.</b> <b>Noisy, seed-dependent test predictions:</b> you forgot
+       <code>model.eval()</code> &mdash; dropout is still randomly zeroing units at inference. <b>Test accuracy
+       drops and activations look too small:</b> you omitted the <code>/keep</code> scale, so expected activations
+       shrank by a factor $p$ &mdash; the expected-value check (sanity #2b) will fail. <b>Train loss stays high /
+       net underfits:</b> drop rate too aggressive (the paper uses $\\approx 0.5$ for hidden units, $\\approx 0.2$
+       drop for inputs). <b>Drop rate inverted</b> (dropping $80\\%$ instead of $20\\%$): $p$ vs $p_{\\text{drop}}$
+       confusion &mdash; the paper's $p$ is the <i>keep</i> probability, PyTorch's and this code's is the
+       <i>drop</i> probability.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

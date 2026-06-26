@@ -323,6 +323,54 @@ $$ k \\;=\\; \\Big\\lfloor\\, k_0 + \\log_2\\!\\big(\\sqrt{w\\,h}\\,/\\,224\\big
        largest gains on <b>small</b> objects.</p>
        <p><i>These are the paper's reported figures, summarized from the abstract and &sect;5. The numbers in
        the CODEVIZ panel below are from our own tiny toy run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> FPN is a <i>neck</i>, so you score the <b>detector</b> it feeds, on
+       <b>COCO</b>: for the Region Proposal Network stage, <b>Average Recall (AR)</b> of the proposals
+       (AR@$k$ proposals, and the small/medium/large splits AR$_s$/AR$_m$/AR$_l$); for the full Faster R-CNN
+       stage, <b>COCO Average Precision (AP)</b> and its size splits (AP$_s$/AP$_m$/AP$_l$). The "no-skill"
+       reference is the <b>single-scale baseline</b> (detect off $C_4$ / $C_5$ only, no pyramid) the paper
+       beats &mdash; if FPN is wired in correctly its AR and AP, especially AR$_s$/AP$_s$ on small objects,
+       must exceed that single-scale number.</p>
+       <p><b>2. Sanity checks BEFORE the full COCO run.</b></p>
+       <ul>
+        <li><b>Shapes line up.</b> Print every level: $\\{P_2,P_3,P_4,P_5\\}$ must all have <b>$256$ channels</b>
+        and resolutions matching strides $\\{4,8,16,32\\}$. If the element-wise add throws a shape error, the
+        $2\\times$ upsample or the $1\\times1$ channel projection is missing (the lesson's first pitfall).</li>
+        <li><b>Worked-cell unit test.</b> Reproduce the notebook's single position: $\\text{lateral}(C_4)=0.30$
+        plus upsampled $\\text{up}(M_5)=0.50$ must give $M_4=0.80$. The level-assignment rule (Eq. 1) must give
+        $k=4$ for a $224\\times224$ RoI, $k=5$ for $448\\times448$, and clamp a $50\\times50$ RoI to $P_2$.</li>
+        <li><b>Overfit a tiny split.</b> Train the detector on ~10 images and watch the loss drive toward $0$;
+        if it cannot memorize a handful, the FPN&rarr;head plumbing is broken before any benchmark is worth running.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper reports FPN as a Region Proposal feature extractor lifting
+       <b>average recall substantially</b> over the single-scale baseline (Table 1), and as a Faster R-CNN
+       backbone improving <b>COCO AP</b> over the single-scale model (Tables 3&ndash;4) with the
+       <b>largest gains on small objects</b> &mdash; and "state-of-the-art single-model results on the COCO
+       detection benchmark" (abstract). Treat those as the direction and magnitude to reproduce (these are the
+       paper's claims, quoted; reproduce the <i>gap</i> over your own single-scale baseline rather than an exact
+       number). As a rule of thumb, if your FPN does <b>not</b> beat your single-scale baseline on AR$_s$/AP$_s$,
+       that is a bug, not tuning.</p>
+       <p><b>4. Ablation &mdash; prove the lateral connection earns its keep.</b> The central component is the
+       <b>lateral connection</b>. Turn it off (top-down-only: return just the upsampled coarse map, drop the
+       bottom-up $1\\times1$ add) and confirm recall <b>drops</b>, hardest on <b>small</b> objects &mdash; the
+       paper's Table 1 finding. The lesson's toy version measures this directly: a sharp feature planted in the
+       high-res $C_2$ map survives the full merge but is washed out top-down-only. Also ablate the <b>top-down
+       pathway</b> (bottom-up only) and the <b>finest-level-only</b> variant; each should lose either semantics
+       or location. If killing the lateral add does <b>not</b> hurt recall, it is not wired in or not helping.</p>
+       <p><b>5. Failure signals.</b></p>
+       <ul>
+        <li><b>Add throws a shape error</b> &rarr; forgot the $2\\times$ upsample (heights mismatch) or the
+        $1\\times1$ channel projection (channels mismatch).</li>
+        <li><b>Blocky / aliased $P$ levels</b> &rarr; the $3\\times3$ smoothing conv is missing or placed before
+        the add instead of after it.</li>
+        <li><b>Channels double at each level / the shared head breaks</b> &rarr; you <b>concatenated</b> instead
+        of adding.</li>
+        <li><b>Small-object AR/AP no better than single-scale</b> &rarr; the lateral connection isn't carrying
+        location (or RoIs are all read off one level &mdash; Eq. 1 not applied), so the high-resolution detail
+        $P_2$ should supply never reaches the head.</li>
+        <li><b>Big RoIs read off fine levels / tiny RoIs off coarse ones</b> &rarr; the level-assignment rule
+        $k=\\lfloor k_0+\\log_2(\\sqrt{wh}/224)\\rfloor$ is mis-signed or unclamped.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

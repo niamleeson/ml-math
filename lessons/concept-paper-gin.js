@@ -304,6 +304,49 @@
        <p><i>These are the paper's own claims, quoted from the abstract and &sect;7. The numbers in the CODEVIZ
        panel below are from our own tiny run on a synthetic task &mdash; not the paper's reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> GIN is a graph classifier, so the metric is <b>graph-classification
+       accuracy</b> (10-fold cross-validation, the paper's protocol) on the suites it reports: bioinformatics
+       (MUTAG, PTC, NCI1, PROTEINS) and social-network (COLLAB, IMDB-BINARY/MULTI, REDDIT-BINARY/MULTI5K)
+       datasets (&sect;7). The "no-skill" floor is the <b>majority-class</b> accuracy of each dataset (predict the
+       most common label); a useful model must clearly beat that. The relevant comparison baselines are the
+       <i>mean</i> and <i>max</i> aggregator GNNs (GCN/GraphSAGE-style), which the paper's theory predicts GIN
+       should match or exceed.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> The cheapest is the multiset oracle in the first CODE cell:
+       SUM, MEAN, MAX on $\\{r,r,b\\}$ vs $\\{r,b\\}$ and on $\\{r,r\\}$ vs $\\{r\\}$ &mdash; SUM must print
+       <b>DISTINGUISHED</b> for both pairs while MEAN/MAX collapse $\\{r,r\\}$ vs $\\{r\\}$ to <b>CONFUSED</b>. If
+       SUM ever confuses a pair, <code>A @ H</code> is being normalized (it's secretly MEAN). Check shapes:
+       $A H$ has the same shape as $H$, and row $v$ of $A H$ equals the literal sum of $v$'s neighbour rows
+       (verify by hand on a 3-node graph). Then <b>overfit a single batch</b> of a few graphs and watch
+       cross-entropy fall to $\\sim0$ &mdash; if a SUM-GIN cannot memorize a handful of graphs, the layer or the
+       readout is mis-wired. Loss at init for a balanced 2-class task should be $\\approx-\\ln(1/2)=0.693$ (rule of
+       thumb).</p>
+       <p><b>Expected range.</b> The paper's headline claim is qualitative &mdash; GIN "is provably the most
+       expressive among the class of GNNs and is as powerful as the Weisfeiler-Lehman graph isomorphism test"
+       (abstract) &mdash; and empirically it <b>matches or sets SOTA</b> and fits the <i>training</i> set better
+       than mean/max variants (&sect;7, arXiv:1810.00826). So the concrete target is: GIN's training accuracy
+       should be $\\ge$ that of the mean/max ablation on structure-sensitive data, and test accuracy should be
+       competitive with the best published GNN per dataset. On the synthetic count task in the CODE, a correct
+       SUM-GIN reaches $\\approx100\\%$ test accuracy while the MEAN ablation stalls near chance $\\approx55\\%$
+       (our small run, not the paper's numbers); SUM landing near chance there means a bug.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the <b>aggregator</b>:
+       hold MLP sizes, the $(1+\\epsilon)$ self-term, READOUT, optimizer, and epochs fixed and swap the neighbour
+       <b>SUM</b> (<code>A @ H</code>) for a degree-normalized <b>MEAN</b>. On a count-sensitive label the MEAN
+       accuracy must <b>drop</b> to chance &mdash; if it doesn't, either the task doesn't actually depend on
+       neighbour counts or the "SUM" path was already normalized. Two supporting ablations the paper's theory
+       predicts: replace the 2-layer MLP with a single <code>nn.Linear</code> (Lemma 7 &rarr; accuracy should
+       fall on some structures), and drop the $(1+\\epsilon)$ self-term (Corollary 6 &rarr; centre node no longer
+       jointly injective).</p>
+       <p><b>Failure signals &amp; what they mean.</b> SUM-GIN stuck at majority-class accuracy: labels shuffled,
+       or <code>A @ H</code> normalized so it's secretly MEAN (re-run the multiset oracle &mdash; it'll print
+       CONFUSED). MEAN ablation <i>matching</i> SUM on a count task: the task isn't structure/count-sensitive, so
+       the ablation proves nothing &mdash; pick a label that depends on multiplicity. Identical graph embeddings
+       for non-isomorphic graphs you expect to differ: collapsed aggregator, or you read out only $H^{(K)}$
+       instead of concatenating all layers (Eqn. 4.2). Train accuracy high but a single Linear caps it below
+       SUM-MLP: that's Lemma 7 biting, not a tuning issue. Loss NaN: LR too high / exploding sums on
+       high-degree nodes (the un-normalized sum can grow large) &mdash; lower LR or add BatchNorm as the paper
+       does, not normalize the aggregator.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives (matrix multiply, Linear layers, ReLU,

@@ -260,6 +260,40 @@
        ImageNet</b> (DenseNet-201, 10-crop testing).</p>
        <p><i>These are the paper's reported figures, quoted from the paper. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> DenseNet is an image classifier, so the metric is <b>top-1 classification
+       error</b> (lower is better) on the paper's benchmarks: CIFAR-10/100, SVHN, and ImageNet (&sect;4). The
+       "better than trivial" floor is majority-class / random guessing &mdash; for $C$ balanced classes that is
+       $1 - 1/C$ error (90% on CIFAR-10, 99% on CIFAR-100); your trained net must be far below that. For the toy
+       dense-vs-plain build here, the metric is just the <b>training cross-entropy</b>, whose chance value is
+       $\\ln C$ ($\\ln 3 \\approx 1.0986$ for the 3-class toy).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Channel bookkeeping:</b> assert each layer's conv
+        accepts $k_0 + k(\\ell-1)$ input channels and the block emits $k_0 + kL$ &mdash; the worked example
+        ($k_0{=}1, k{=}6, L{=}4 \\Rightarrow 1,7,13,19 \\to 25$) is a known-answer unit test. (2) <b>Loss at init:</b>
+        a $C$-way softmax should start near $-\\ln(1/C) = \\ln C$; if it starts wildly higher, your init or label
+        encoding is wrong. (3) <b>Overfit one tiny batch:</b> the dense net's loss should drive toward $\\sim 0$
+        in a few dozen steps &mdash; if it cannot memorize a handful of images, the wiring is broken.</li>
+        <li><b>Expected range.</b> Anchored to the paper's reported figures (&sect;4, quoted in Results): the best
+        DenseNet-BC ($L{=}190, k{=}40$) reaches <b>~3.46% error on CIFAR-10</b> and <b>~17.18% on CIFAR-100</b>
+        (with augmentation), <b>~1.59% on SVHN</b>, and DenseNet-201 reaches <b>~21.46% top-1 on ImageNet</b>
+        (10-crop). These are the paper's numbers and require its full models/schedule &mdash; do not expect them
+        from the toy build. As a <i>rule of thumb</i> (not a paper claim), a small DenseNet-121-style net on CIFAR-10
+        in the low-single-digit-to-teens error range is healthy; stuck near 90% means it is not learning.</li>
+        <li><b>Ablation &mdash; prove dense connectivity earns its keep.</b> The central knob is the
+        <b>concatenation</b> (Eqn. 2). Replace each layer's input <code>torch.cat(feats, 1)</code> with
+        <code>feats[-1]</code> (and shrink the conv's in-channels from $k_0+k(\\ell-1)$ to $k$), keeping depth,
+        $k$, optimizer, data, and seed identical. The deep <b>plain</b> stack should stall near chance ($\\ln C$)
+        while the dense one trains &mdash; the CODEVIZ contrast. If removing concatenation does <i>not</i> hurt,
+        your "dense" path was never actually concatenating, or the stack is too shallow for the gradient effect to
+        bite.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Loss flat at $\\ln C$</b> for the deep plain stack =
+        the vanishing-gradient stall the paper describes (expected in the ablation; a <i>bug</i> if it also happens
+        to the dense net). <b>Shape error in a conv</b> = wrong input-channel count ($k$ hard-coded instead of
+        $k_0+k(\\ell-1)$). <b>Concatenation size mismatch</b> = you downsampled <i>inside</i> a block; keep stride 1
+        in-block and downsample only in transition layers. <b>Channels ballooning / out-of-memory</b> = $k$ set too
+        large, erasing the parameter savings. <b>Loss NaN</b> = LR too high or BatchNorm misordered.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

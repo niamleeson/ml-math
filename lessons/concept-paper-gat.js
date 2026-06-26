@@ -276,6 +276,42 @@ $$ \\vec{h}_i' \\;=\\; \\sigma\\!\\Big(\\tfrac{1}{K}\\textstyle\\sum_{k=1}^{K}\\
        problems."</p>
        <p><i>These are the paper's reported claims, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> GAT is judged on <b>node classification</b>: transductive
+       <b>accuracy</b> on Cora / Citeseer / Pubmed, and <b>micro-averaged F1</b> on the inductive
+       PPI multi-label task &mdash; the paper's setup (&sect;3.3). The "better than trivial" floor is
+       majority-class accuracy (a few-class citation graph is well above chance only if the model
+       actually uses features+structure); the real bar is <b>matching or beating GCN</b>, the prior
+       method GAT was built to improve on. On your tiny toy graph the baseline is plain accuracy with
+       random-guess = $1/C$ for $C$ classes.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Recompute the lesson's worked example and confirm
+        $\\alpha=[0.2284,0.4982,0.2734]$ (sums to $1.0000$) and $\\vec{h}_i'=[0.5018,0.7716]$ &mdash; a
+        known-answer unit test for the masked softmax + aggregation. Check each row of $\\alpha$ sums to
+        $1$ and is $0$ on non-edges (the mask works). <b>Overfit one tiny graph:</b> with enough heads/epochs
+        a correct GAT should drive train loss toward $0$ and hit $100\\%$ train accuracy; for $C$-way softmax
+        the loss at init should sit near $-\\ln(1/C)$ (rule of thumb, $\\approx0.69$ for $C=2$). Verify output
+        shape is $N\\times C$ and hidden width is $KF'$ after concatenation.</li>
+        <li><b>Expected range.</b> A correct implementation should reach roughly the paper's reported level
+        &mdash; the abstract claims "state-of-the-art results across four established transductive and
+        inductive graph benchmarks" (Cora, Citeseer, Pubmed, PPI), competitive with or above GCN
+        (approximate; see the paper for exact tables, which this lesson does not quote). Landing within a
+        point or two of GCN on a citation split is "tuning"; sitting near majority-class or far below GCN is
+        "probably a bug."</li>
+        <li><b>Ablation &mdash; prove attention earns its keep.</b> The central knob is the <b>learned</b>
+        $\\alpha_{ij}$. Replace it with GCN's fixed $1/\\sqrt{d_i d_j}$ (the lesson's built-in ablation),
+        keep $W$, data, optimizer, and seed identical, and confirm the metric <b>drops</b> on a task where one
+        neighbor is misleading. If accuracy/F1 does not fall, the attention is not wired in or is not helping.
+        The CODEVIZ panel shows the learned weights skewing toward the informative neighbor (node 4 puts
+        $\\approx0.017$ on its cross-class bridge) while the fixed rule cannot.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Metric stuck at majority-class / chance &rarr; labels
+        shuffled, or the mask zeroed everything (all-$-\\infty$ rows give NaN after softmax). Loss NaN &rarr;
+        LR too high, or you used a real $-\\infty$ that produced $0/0$ &mdash; use a large finite negative
+        instead. Every $\\alpha$ row uniform ($\\approx1/|\\mathcal{N}_i|$) &rarr; attention collapsed to a
+        plain neighbor average (often a dead LeakyReLU score or too-small $\\vec{a}$ init), so GAT has silently
+        become GCN. $\\alpha$ that ignores the node itself / loses identity &rarr; you dropped the self-loop.
+        Train-good val-bad &rarr; overfit (raise dropout toward the paper's $p=0.6$ / add $L_2$).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

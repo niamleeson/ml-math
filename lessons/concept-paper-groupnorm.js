@@ -241,6 +241,38 @@
        <b>24.1%</b> across that range &mdash; so at batch size 2 GN's error is "10.6% lower than its BN
        counterpart" (Abstract). (Source: arXiv:1803.08494, Abstract and Table 2.)</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> GN is a layer, not a model &mdash; so "working" has two levels. (a)
+       <b>Layer correctness:</b> the metric is whether <code>torch.allclose(my_gn(x), nn.GroupNorm(G,C)(x), atol=1e-6)</code>
+       returns <code>True</code>. The trivial baseline is "off by a constant scale/shift" &mdash; close but not allclose.
+       (b) <b>System metric:</b> top-1/top-5 validation error on the paper's ImageNet ResNet-50 setup as the batch size
+       shrinks; the "no-skill" reference is BatchNorm's own error at the SAME batch size, which GN must match at large
+       batch and beat at tiny batch.</p>
+       <ul>
+         <li><b>2. Sanity checks BEFORE the full run.</b> Check output shape equals input $(N,C,H,W)$. Per example and
+         per group, the normalized $\\hat{x}$ (before $\\gamma,\\beta$) must have mean $\\approx 0$ and variance
+         $\\approx 1$ &mdash; assert <code>xhat.view(N,G,-1).mean(-1)</code> is near 0 and <code>.var(-1, unbiased=False)</code>
+         near 1. Recompute the worked $[1,3,5,7]$ group by hand and confirm $\\hat{x}=[-1.342,-0.447,0.447,1.342]$.
+         Feed a single example alone vs inside a batch and confirm <b>identical</b> output (the batch-independence
+         property). All of these are cheap and catch a broken build before any training.</li>
+         <li><b>3. Expected range.</b> The allclose must pass to <code>atol=1e-6</code> &mdash; anything larger means a
+         real formula bug (wrong axes, unbiased variance), not numerical noise. For the system, anchor to the paper's
+         Table 2 (arXiv:1803.08494): GN $\\approx$ <b>24.1%</b> error roughly flat from batch 32 down to 2, while BN
+         goes <b>23.6% &rarr; 34.7%</b> over the same range. As a rule of thumb (not a paper claim), if your GN error
+         <i>also</i> climbs steeply as the batch shrinks, the batch axis has leaked into the reduction.</li>
+         <li><b>4. Ablation &mdash; prove grouping earns its keep.</b> The central knob is the group count $G$ and the
+         fact that no axis touches $N$. Two ablations: (i) swap GN for BatchNorm and re-run the batch-size sweep &mdash;
+         the tiny-batch error must DROP for GN and RISE for BN (our toy run: BN $0.058\\!\\to\\!0.137$, GN flat $\\approx0.083$);
+         (ii) set $G=1$ (LayerNorm) and $G=C$ (InstanceNorm) and confirm accuracy degrades vs the default $G=32$ &mdash;
+         if all three tie, grouping isn't doing anything and $G$ is likely mis-wired.</li>
+         <li><b>5. Failure signals.</b> <b>allclose fails by a constant factor</b> &rarr; used unbiased variance
+         (divide by $m-1$ instead of $m$) or wrong $\\epsilon$. <b>Output changes when batch size changes</b> &rarr; the
+         reduction includes axis $N$ &mdash; it has become BatchNorm-like. <b>Shape/constructor error</b> &rarr; $C$ not
+         divisible by $G$. <b>$\\gamma,\\beta$ have no effect or wrong count</b> &rarr; applied per group instead of per
+         channel (must be $(1,C,1,1)$). <b>Tiny-batch accuracy still collapses</b> like the BN curve in the CODEVIZ chart
+         &rarr; you are normalizing over the batch, the exact failure GN exists to remove.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>nn.GroupNorm(G, C)</code> in one line. Here you

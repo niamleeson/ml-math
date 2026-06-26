@@ -288,6 +288,41 @@
        <p><i>These are the paper's reported, qualitative findings, summarized from &sect;3 (we quote no
        headline number from memory). The numbers in the CODEVIZ panel below are from our own tiny
        toy-chain run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> ICM is judged by <i>directed exploration</i>, not a loss. On our
+       toy chain the metric is <b>how far the agent gets</b> &mdash; furthest state reached per episode, and
+       how often it touches the goal at state $N$. The no-skill baseline is the <b>extrinsic-only ablation</b>
+       ($r^i_t=0$): on a sparse chain this long, a random/$\\epsilon$-greedy walker essentially never reaches
+       $N$, so "stuck near the start" is the floor to beat. (The paper's own benchmarks are VizDoom and Super
+       Mario, where the qualitative bar is: curiosity reaches the far goal / clears level fraction while a
+       plain A3C and a raw-pixel-prediction baseline do not, &sect;3.)</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Recompute Eq. 6 on the worked example: error
+        $(-0.8,-0.4)\\Rightarrow r^i_t=\\tfrac12(0.64+0.16)=0.40$, and the learned case $\\to 0.00025$ &mdash;
+        the lesson's first cell does exactly this. (2) Check shapes: the forward model's output
+        $\\hat{\\phi}(s_{t+1})$ must match $\\phi(s_{t+1})$'s feature dim, and the inverse model's logits must be
+        length $N_{act}$. (3) At init the inverse-model loss should sit near $-\\ln(1/N_{act})$ (for
+        $N_{act}=2$, $\\approx 0.69$); far from that means a wiring bug. (4) Confirm $\\phi(s_{t+1})$ is
+        <b>detached</b> when forming $r^i_t$ &mdash; a reward, not a $\\phi$-loss.</li>
+        <li><b>Expected range.</b> With curiosity the furthest-reached should climb episode by episode to $N$
+        and then the agent exploits it; in our small run it reaches state $12/12$ within a couple hundred
+        episodes while the ablation hovers around $2$&ndash;$3$ (rule of thumb, seed-dependent &mdash; our toy
+        numbers, not the paper's). A correct intrinsic reward should also <b>fall toward zero per region</b> as
+        the forward model learns it; curiosity that never decays signals a too-weak forward model.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the intrinsic reward
+        itself: set $r^i_t=0$ (use <code>reward = r_extrinsic</code>), keep agent/lr/episodes/seed identical,
+        retrain. The furthest-reached metric must <b>drop</b> &mdash; the agent should fail to reach $N$. A
+        second ablation: drop the <b>inverse model</b> ($L_I$) and watch $\\phi$ collapse (then $L_F\\to0$
+        trivially and the bonus vanishes), confirming the inverse model is what shapes a useful feature space.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Curious agent also stuck at the start</i> &rarr;
+        $r^i_t$ not added to the step reward, or $\\eta$ far too small. <i>Loss/NaN blow-up</i> &rarr; LR too
+        high or no detach (the reward back-props into $\\phi$). <i>Bonus stays high forever everywhere</i> &rarr;
+        forward model too weak, or you are predicting <b>raw state</b> instead of $\\phi$ (the noisy-TV problem
+        &mdash; add the noisy coordinate from Practice 3 and verify the bonus does <b>not</b> fixate on it).
+        <i>Agent wanders but never exploits the found goal</i> &rarr; $\\eta$ too large, drowning out the
+        extrinsic reward. The CODEVIZ green-vs-red curves are the picture of pass (green climbs to 12) vs fail
+        (red jitters near 2).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

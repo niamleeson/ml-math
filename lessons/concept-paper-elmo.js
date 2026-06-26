@@ -259,6 +259,41 @@
        (&sect;3.4). The "play" nearest-neighbour table (Table 4, &sect;5.3) shows GloVe's neighbours collapsing
        to the sports sense while the biLM separates the verb and theatre senses by context. The CODEVIZ numbers
        below are from OUR OWN tiny run, not the paper's results.</p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> "Working" for ELMo means two things. (1) On the toy biLM here: does the
+       <i>same</i> word get <i>different</i> vectors in different sentences? Measure cosine similarity of "bank"
+       across "river bank" vs "savings bank" &mdash; a contextual model gives clearly $\\lt 1$, a static embedding
+       is forced to give exactly $1.0$ (the no-skill baseline: word2vec/GloVe by construction). (2) At paper scale,
+       the real metric is the downstream task score after concatenating ELMo onto the task model, on the paper's six
+       benchmarks; the "trivial" baseline to beat is the same task model <i>without</i> ELMo (the paper's prior SOTA
+       it improved on, &sect;4 Table 1).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Check the biLM trains: the forward/backward cross-entropy must
+        fall well below $\\ln V$ ($V$ = vocab size), the loss of a uniform guesser &mdash; if it sticks near $\\ln V$
+        the LM is not learning. Overfit the tiny 6-sentence corpus and watch the loss go toward $0$. Verify the
+        combine math: softmax weights $s_j$ are positive and sum to $1$; reproduce the worked example exactly
+        ($s=(0.09003,0.24473,0.66524)$, $\\text{ELMo}=(1.51054,2.30940,1.15042)$). Check $R_k$ has $2L+1=5$
+        representations and layer 0 is identical regardless of sentence.</li>
+        <li><b>Expected range.</b> Toy run (rule of thumb, our numbers not the paper's): contextual cosine for the
+        two "bank" vectors clearly below $1$ (our run $\\approx 0.32$), static-ablation cosine $\\approx 1.00$. A
+        contextual cosine that is also $\\approx 1$ means the LSTM layers carry no context &mdash; a bug. At paper
+        scale, anchor to the reported figures (cite, do not claim as your own): SQuAD $\\approx 85.8$ F1, SNLI
+        $\\approx 88.7$ accuracy, biLM average perplexity $39.7$ (&sect;3.4, Table 1); within a point or two is
+        tuning, tens of points off is a bug.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The paper's contribution is the
+        <i>learned weighted sum over all layers</i>. Knock it out two ways: (a) put all softmax weight on layer 0
+        (the context-independent token vector) &mdash; ELMo collapses to a static embedding and the two "bank"
+        cosines jump to $1.0$ (this is the CODEVIZ ablation); (b) at paper scale, use only the top biLM layer
+        instead of the weighted sum and confirm the downstream metric drops (&sect;5.1). If neither hurts, the
+        layer-weighting is not wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Contextual cosine $\\approx 1.0$ &rarr; the LSTM hidden
+        states are not flowing into the combine (you summed only layer 0, or the backward pass was not re-aligned).
+        biLM loss stuck near $\\ln V$ &rarr; LM not training (LR, or labels shifted wrong by one). Loss NaN &rarr;
+        LR too high. Training loss near $0$ but the two senses still fuse &rarr; you let one LSTM see the whole
+        sentence (the leak pitfall) so it memorized rather than modeled context, or you folded $\\gamma$ into the
+        weights and skipped the softmax. Comparing with raw Euclidean instead of cosine &rarr; the $\\gamma$ scale
+        confounds the similarity; always use cosine.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -356,6 +356,46 @@ $$ \\text{Variational lower bound (§4.2, Eq. 6-7):}\\quad \\log p(\\tilde X) \\
        more, and capture more distinctive features" (blob, stroke, and even character detectors).</p>
        <p><i>All of the above are the paper's own reported figures. The numbers in the CODEVIZ panel below are
        from our own tiny single-layer MNIST run — not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The thing the paper actually measures is <b>downstream
+       classification</b>, not reconstruction loss. The paper's headline metric is <b>test classification error</b>
+       (lower is better) after stacking + fine-tuning on MNIST variants (basic, bg-img, rot, rect-img; &sect;5,
+       Table 1). In this lesson's faster proxy, measure <b>linear-probe accuracy</b> (higher is better) on a
+       frozen encoder's code. The no-skill floor is <b>$10\\%$</b> accuracy ($\\sim 90\\%$ error) for 10-way
+       random guessing; the decisive comparison is the <b>plain AE ($\\nu=0$)</b> vs the <b>denoising AE
+       ($\\nu\\gt0$)</b>, since the paper notes "SAA-3 is SdA-3 with $\\nu=0\\%$" &mdash; a clean ablation built in.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Recompute the worked example: clean
+        $x=[0.9,0.2,0.8,0.5]$, mask zeroing pixel 3, reconstruction $z=[0.85,0.25,0.6,0.5]$ must give squared-error
+        sum $0.045$ and <b>MSE $0.01125$</b>, with $0.04$ of it on the masked pixel (the lesson's first cell).
+        Verify the loss target is the <b>clean</b> $x$, never $\\tilde x$ &mdash; print one batch and confirm.
+        Check the corruption mask is <b>resampled each step</b> (two consecutive masks differ) and that at eval
+        the probe sees codes of <b>clean</b> inputs. Check ranges: $z\\in[0,1]^{784}$ (decoder ends in sigmoid).
+        Overfit a single batch: reconstruction MSE should fall toward $\\sim 0$; if it can't, the
+        encoder/decoder wiring is broken.</li>
+        <li><b>3. Expected range.</b> Anchor to Table 1 (&sect;5): on <b>basic MNIST</b> SAA-3 $3.46\\%$ error vs
+        <b>SdA-3 ($\\nu=10\\%$) $2.80\\%$</b>; on <b>bg-img</b> SAA-3 $23.00\\%$ vs <b>SdA-3 ($\\nu=25\\%$)
+        $16.68\\%$</b> &mdash; the paper's figures, approximate (reuse, do not re-target). Our toy single-layer run
+        gave linear-probe accuracy $\\sim 0.93$ (denoising) vs $\\sim 0.87$ (plain) &mdash; our numbers, not the
+        paper's; a single layer + linear probe will not match the 3-layer fine-tuned table, only its
+        <i>direction</i>. A probe near $10\\%$ is a bug; the denoising probe landing a point or two below the plain
+        one (instead of above) means $\\nu$ is too low or the target is wrong.</li>
+        <li><b>4. Ablation &mdash; prove corruption earns its keep.</b> The central knob is the corruption
+        fraction <b>$\\nu$</b>. Set $\\nu=0$ (plain AE, the paper's SAA-3) and confirm the <b>linear-probe
+        accuracy DROPS</b> versus $\\nu\\gt0$, even though the plain AE often has the <i>lower</i> reconstruction
+        MSE (it can nearly copy the identity with an over-complete code). If turning $\\nu$ on does <i>not</i>
+        improve the probe, corruption isn't reaching the encoder input, or the loss is being scored against
+        $\\tilde x$ instead of clean $x$ &mdash; the single most common bug, which silently reverts it to a plain
+        AE. A $\\nu$-sweep ($0, 0.1, 0.25, 0.4$) should trace probe accuracy up then eventually down.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Low reconstruction MSE but poor probe accuracy:</b>
+        the identity shortcut &mdash; expected for $\\nu=0$ with a wide code, and the whole reason the paper scores
+        classification, not reconstruction. <b>Denoising no better than plain:</b> loss scored against $\\tilde x$,
+        a fixed (not resampled) mask, or the probe fed corrupted inputs at eval. <b>Reconstruction $z$ blurry /
+        identical across digits:</b> too much corruption (large $\\nu$) or too small a code &mdash; the network
+        can't recover structure. <b>Loss NaN:</b> learning rate too high or a $\\log(0)$ in cross-entropy without
+        clamping $z$ away from $0/1$. <b>Probe great on train digits, poor on test:</b> probe overfitting the few
+        frozen codes, not an encoder fault.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

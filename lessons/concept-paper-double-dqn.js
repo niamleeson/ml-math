@@ -259,6 +259,49 @@
        numbers as the paper's; the numbers in this lesson's CODE / CODEVIZ are OUR small runs, labeled as
        such.)</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two things to measure, and the value metric is the cleaner one. (a)
+       <b>Value-estimate bias</b>: track the <b>mean predicted $Q$-value</b> during training and compare it to the
+       true discounted return the policy actually earns &mdash; this is the paper's Figure-1 curve (estimate
+       floating above truth = overestimation). (b) <b>Policy performance</b>: the Atari <b>49-game normalized
+       score</b> in the paper; here, CartPole-v1 return (max $500$). The "no-skill" baseline is a random policy
+       (CartPole return $\\approx 20$); the comparison baseline is <b>vanilla DQN</b> &mdash; Double DQN should
+       have a <i>lower, truer</i> value estimate at equal or better return.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Recompute the worked example.</b> $R=1$, $\\gamma=0.99$, online $[3.0,4.0]$, target $[3.2,2.5]$ must
+        give $Y^{DQN}=4.168$ and $Y^{DoubleDQN}=3.475$ (gap $0.693$). The notebook asserts exactly this &mdash;
+        if it fails, your select/evaluate wiring is wrong.</li>
+        <li><b>Toy bias test (Theorem 1).</b> A state where all $m$ true action-values are $0$ with unbiased
+        noise: the single $\\max$ must average <b>above</b> $0$ and grow with noise; the double estimator must
+        stay $\\approx 0$. Our run: single $0 \\to 2.86$, double $\\approx 0$ as $\\sigma$ goes $0 \\to 2$.</li>
+        <li><b>Gather, not max.</b> Print shapes: the evaluation step must <code>gather</code> the target net at
+        the online net's $\\arg\\max$ index (one value per row), NOT take the target net's max.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On CartPole both agents should reach near the $500$ cap, so judge by the
+       <b>value estimate</b>, not the score (CartPole is "solved either way"). Anchor: the paper reports Double DQN
+       "reduces the observed overestimations ... and ... leads to much better performance on several games"
+       (Abstract) &mdash; vanilla DQN's mean predicted $Q$ drifts well above the true return; Double DQN's tracks
+       it. If both curves overlap on CartPole, that's the easy-task caveat, not necessarily a bug &mdash; confirm
+       the effect on the toy bias test, which is unambiguous.</p>
+       <p><b>4. Ablation &mdash; prove the decoupling earns its keep.</b> The central knob is <b>which network
+       selects</b>. Flip <code>DOUBLE</code> to <code>False</code> (or, equivalently, select the $\\arg\\max$ with
+       the TARGET net $\\theta^-$ instead of the online net): the target collapses to vanilla DQN's single $\\max$
+       and the <b>mean predicted $Q$ should rise / overestimate again</b>. If the value estimate is identical with
+       <code>DOUBLE</code> on vs off, the $\\arg\\max$ is using the wrong net &mdash; selecting and evaluating with
+       $\\theta^-$ is just DQN rewritten.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Value estimate explodes upward even with <code>DOUBLE=True</code>:</b> the $\\arg\\max$ is on the
+        target net (so selection+evaluation share $\\theta^-$) &mdash; move selection to the online net $\\theta$.</li>
+        <li><b>Training unstable / loss NaN:</b> backprop is flowing through the target &mdash; wrap target
+        computation in <code>torch.no_grad()</code>; or LR too high / target sync $\\tau$ too short.</li>
+        <li><b>Return stuck near random ($\\approx 20$):</b> not learning &mdash; replay buffer too small,
+        $\\epsilon$ never decays, or bootstrap not zeroed at terminal states ($(1-\\text{done})$ missing).</li>
+        <li><b>Double = vanilla (no bias reduction):</b> the two nets are too correlated (target synced every
+        step), or the $\\arg\\max$ net is wrong &mdash; verify online selects, target evaluates.</li>
+       </ul>`,
+
     implementBoundary:
       `<p><b>Track B (architecture).</b> You do NOT build a Q-network primitive from scratch &mdash; you
        import <code>nn.Linear</code>, <code>nn.ReLU</code>, an Adam optimizer, and a Gymnasium environment.

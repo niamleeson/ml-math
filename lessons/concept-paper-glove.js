@@ -294,6 +294,47 @@
        and Table 2.) We do <b>not</b> reproduce these large-corpus numbers; our CODE run is a tiny toy used only to
        show the qualitative clustering and analogy effect.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The paper's primary metric is <b>word-analogy accuracy</b> (% of
+       "a is to b as c is to ?" questions answered correctly by nearest vector to
+       $w_b-w_a+w_c$), on the standard analogy task (Table 2), split into <b>semantic</b> and <b>syntactic</b>
+       subsets. Secondary metrics: word-similarity correlation and NER F1 (abstract). The "no-skill" floor is
+       near-$0\\%$ on analogies (random vectors almost never put the right word first out of a large vocabulary);
+       the baseline to beat is the authors' <b>skip-gram</b> model trained with word2vec, which on a 6B-token
+       corpus scores <b>69.1%</b> total vs GloVe's <b>71.7%</b> (arXiv-less; <code>nlp.stanford.edu/pubs/glove.pdf</code>,
+       Table 2).</p>
+       <p><b>Sanity checks BEFORE the full run.</b> The build has a numeric oracle: the worked-example term of $J$
+       must reproduce to the printed digits &mdash; $f(30)=0.40536$, dot $=0.06$, residual $=-3.041197$, term
+       $=3.749127$. Check that the objective <b>decreases monotonically</b> (our toy run ends $J\\approx0.0016$);
+       a flat or rising $J$ means the gradient sign or an update is wrong. Verify $f(0)=0$ and that the sum runs
+       <i>only</i> over nonzero $X_{ij}$ (never $\\log 0$). Gradient-check one parameter by finite differences:
+       perturb $w_i$ by $\\pm\\varepsilon$, confirm $(J_+-J_-)/2\\varepsilon$ matches your analytic
+       $2f(X_{ij})\\,r\\,\\tilde w_j$. Confirm $X$ is symmetric for a symmetric window so $W$ and $\\tilde W$ stay
+       comparable.</p>
+       <p><b>Expected range.</b> On a real corpus a correct GloVe should approach the paper's <b>75.0% total</b>
+       (81.9% semantic, 69.3% syntactic) for 300-d vectors on 42B tokens (approximate, Table 2) &mdash; landing
+       tens of points below at that scale signals a bug (bad weighting, $\\log$ on raw counts, or local-window
+       training). On the <b>tiny toy corpus</b> in the CODE there is no analogy-accuracy number to hit: the
+       reproducible targets are <i>qualitative</i> &mdash; animal words cluster, people words cluster, and
+       $w_{\\text{king}}-w_{\\text{man}}+w_{\\text{woman}}$ has <i>queen</i> as its nearest word (our run; exact
+       neighbour orderings wobble across seeds, so treat the topic split and analogy direction, not any single
+       similarity, as the pass criterion).</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the <b>weighting function
+       $f$</b> (Eq. 9): replace it with the constant $1$ (plain least squares on $\\log X$) and the fit should
+       degrade &mdash; on a real corpus analogy accuracy drops because frequent pairs dominate and noisy rare
+       pairs are over-weighted (the paper reports the weighted version helps). A second ablation isolates GloVe's
+       <i>thesis</i> &mdash; global vs local: training must use the <b>global</b> matrix $X$ built once over the
+       corpus; if you loop over sliding windows you have re-implemented skip-gram, not GloVe. Optionally ablate
+       summing $w+\\tilde w$ vs using $w$ alone (the paper reports the sum gives a small boost).</p>
+       <p><b>Failure signals &amp; what they mean.</b> $J$ explodes to $\\infty$/NaN: you took $\\log$ of a zero
+       cell, or $f(0)\\ne0$, or AdaGrad's accumulator started at $0$ (division by zero) &mdash; seed it at $1$.
+       $J$ flat / not falling: gradient sign flipped or you updated $W$ and $\\tilde W$ with each other's stale
+       values. No topic clustering and analogy fails on the toy corpus: the gradient math is wrong (per
+       <code>implementBoundary</code>, both effects vanish together when the update is broken). Vectors collapse
+       to identical rows: learning rate far too high, or you forgot the per-word biases so every pair fits the
+       same offset. Clustering appears but analogy points to a frequent word like "the": expected on a tiny
+       corpus with too few tokens &mdash; not a bug, just under-trained statistics.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> There is no single library call that "is" GloVe the way

@@ -265,6 +265,46 @@ $$ L_\\text{loc}(t^u,v) = \\!\\!\\sum_{i\\in\\{x,y,w,h\\}}\\!\\!\\text{smooth}_{
        <p><i>These are the paper&rsquo;s reported figures, quoted from the abstract and &sect;5.1. The numbers
        in the CODEVIZ panel below are from our own tiny run &mdash; not the paper&rsquo;s results.</i></p>`,
 
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> Fast R-CNN's headline metric is <b>mAP</b> (mean Average Precision) on
+       PASCAL VOC detection, plus train/test wall-clock speed. Two "trivial" baselines define progress: for accuracy,
+       the prior R-CNN/SPPnet mAP it had to match-or-beat; for speed, R-CNN's own timings (the paper reports
+       <b>9&times;</b> faster training and <b>213&times;</b> faster test-time on VGG16, Abstract). For the two
+       components you build here, the checks are sharper: RoI pooling is verified <i>exactly</i> (an oracle match, not
+       a benchmark), and the multi-task idea is measured by <b>classification accuracy</b> with vs without the box
+       loss (&sect;5.1).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> RoI pooling: reproduce the worked $4\\times4\\to2\\times2$ example
+        ($\\begin{smallmatrix}6&amp;4\\\\9&amp;8\\end{smallmatrix}$) and assert
+        <code>torch.allclose(mine, torchvision.ops.roi_pool(...))</code> &mdash; a known-answer unit test against the
+        oracle; check the output is always $H\\times W$ for RoIs of different $h,w$. smooth-L1: confirm the worked loss
+        $L_\\text{cls}=0.5108$, $L_\\text{loc}=1.65$, $L=2.1608$, and that the function is continuous at $|x|=1$ (both
+        branches give $0.5$). Check the $[u\\ge1]$ switch zeros the box loss for background ($u=0$). Loss at init for
+        the $K{+}1$-way softmax should be $\\approx \\ln(K{+}1)$ (here $\\ln 5\\approx1.609$) &mdash; the theoretical
+        value for uniform predictions.</li>
+        <li><b>Expected range.</b> RoI pooling must match torchvision <i>exactly</i> (allclose True) &mdash; anything
+        else is a binning/quantization bug, not tuning. For the &sect;5.1 ablation on toy data (our numbers, seed
+        fixed, not the paper's): multi-task ($\\lambda=1$) classification accuracy $\\approx 0.5525$ vs single-task
+        ($\\lambda=0$) $\\approx 0.5250$ &mdash; a small but consistent edge to multi-task. Anchor the paper's claim
+        separately (cite, do not adopt as your own): multi-task helped classification by roughly $+0.8$ to $+1.1$ mAP
+        across networks (&sect;5.1). A multi-task run that is clearly <i>worse</i> than single-task signals a bug;
+        the two being within noise is expected on this tiny toy.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> This paper's central training claim is that
+        the <i>joint multi-task loss</i> helps. The knob is $\\lambda$: train with $\\lambda=1$ (cls + smooth-L1 box)
+        and again with $\\lambda=0$ (classification only, box head present but its loss off), <b>everything else
+        identical</b> (data, depth, optimizer, seed), and confirm multi-task classification accuracy $\\ge$
+        single-task (&sect;5.1). If turning the box loss off does <i>not</i> drop accuracy, the box gradient is not
+        reaching the shared trunk (e.g. you detached it, or the $[u\\ge1]$ mask zeroed everything).</li>
+        <li><b>Failure signals &amp; what they mean.</b> RoI-pool allclose False &rarr; box-coordinate convention
+        mismatch (torchvision expects inclusive $x2,y2$ in feature coords) or floor/quantization off-by-one. Box loss
+        explodes / gradients NaN &rarr; you used $L_2$ instead of smooth-L1 (the unbounded tail the paper warns about,
+        &sect;2.3), or did not normalize the targets $v$ so $\\lambda=1$ no longer balances the terms. Regressor learns
+        garbage on background &rarr; you dropped the $[u\\ge1]$ switch and trained boxes on label-less background RoIs.
+        Multi-task no better than single-task with a correct build &rarr; toy too easy / box target uninformative,
+        not necessarily a bug. Re-running the conv per region instead of pooling from one shared map &rarr; you have
+        reimplemented R-CNN and lost the whole speed contribution.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

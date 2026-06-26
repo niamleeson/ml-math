@@ -286,6 +286,47 @@ $$ \\Pr\\big(u_k\\mid\\Phi(v_j)\\big)=\\prod_{l=1}^{\\lceil \\log |V|\\rceil}\\P
        far less training data (the paper states a $60\\%$-less-labeled-data parity on Flickr).</p>
        <p><i>Those are the paper's reported claims, quoted from the fetched text. The numbers in the CODEVIZ
        panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> DeepWalk is judged by <b>downstream node classification</b>, not by
+       any reconstruction loss: freeze the embeddings, fit a plain logistic-regression probe on a few labeled
+       nodes, and report <b>Micro-F1</b> (and Macro-F1) on the rest, as the paper does on <b>BlogCatalog</b>,
+       <b>Flickr</b>, and <b>YouTube</b> (&sect;5). The no-skill floor is the <b>majority-class</b> F1 (always
+       predict the most common label) and, more honestly for this paper, the <b>raw-adjacency-row baseline</b> &mdash;
+       the same probe fed the length-$N$ 0/1 adjacency vector. Beating that adjacency baseline is what proves the
+       walk-embedding earns its keep.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Verify the skip-gram pair extractor on the worked
+        example: the length-5 walk $(3,1,4,1,5)$ with window $w=2$ must yield exactly <b>15</b> (center,context)
+        pairs (the lesson recomputes this). Check the walk sampler steps to a <i>uniform</i> neighbor and never
+        leaves the graph (every visited node is in <code>adj</code>). Confirm shapes: $\\Phi$ is $|V|\\times d$.
+        At init (random vectors) the probe should score near the <b>majority-class</b> floor &mdash; if it scores
+        high <i>before</i> training, you have label leakage. Overfit check: on a clean 2-community graph the
+        embedding should separate into two clusters and the probe should reach $\\sim 1.0$; if it can't even
+        overfit the toy graph, the loss sign (pull positives, push negatives) is likely flipped.</li>
+        <li><b>3. Expected range.</b> Anchor to the paper (&sect;5): on <b>YouTube with $1\\%$ labeled data</b>
+        DeepWalk reports <b>$37.95\\%$ Micro-F1</b> vs EdgeCluster's $23.90\\%$, and it matches baselines with
+        $\\sim 60\\%$ less labeled data on Flickr &mdash; the paper's figures, approximate and graph/seed-dependent
+        (reuse, do not re-target). On the lesson's toy 2-community graph the embedding probe reached $\\sim 1.00$
+        vs $\\sim 0.62$ for the adjacency rows (our run, not the paper's). A probe stuck at the majority-class
+        floor is a bug; landing a few F1 points under a baseline is tuning ($\\gamma$, walk length $t$, window
+        $w$, dimension $d$).</li>
+        <li><b>4. Ablation &mdash; prove the random-walk embedding earns its keep.</b> The paper's whole claim is
+        that the dense <b>walk-embedding</b> beats the sparse representation. Run the <i>identical</i> logistic
+        probe on (a) the learned embedding and (b) the raw <b>adjacency rows</b>; the embedding must win. The
+        mechanism to test: two same-community nodes that share <i>no direct edge</i> have near-disjoint adjacency
+        rows yet co-occur in walks, so only the embedding places them together. A second knob: drop walks-per-node
+        $\\gamma$ toward $1$ or shorten walks &mdash; F1 should degrade, confirming the walk corpus (not just any
+        embedding) is what carries the signal.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Probe stuck at majority-class / chance:</b> walks
+        not connected (disconnected graph, or sampler bug so every walk stays at the start node), labels
+        misaligned, or embeddings never updated. <b>All embeddings collapse to one point:</b> negatives not being
+        pushed (missing the $\\log\\sigma(-\\cdot)$ negative-sampling term) so every vector is only pulled together.
+        <b>Loss NaN:</b> learning rate too high or the logsigmoid fed huge dot products from an oversized init.
+        <b>Embedding probe no better than adjacency:</b> walks may be biased/non-uniform (you drifted into
+        node2vec) or window clipping at walk edges is throwing away most pairs, so the co-occurrence signal never
+        forms. <b>Good on train nodes, poor on held-out:</b> too few labeled nodes for the probe, not an embedding
+        fault.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -325,6 +325,45 @@ $$ H(P_t,P_s) = h(P_t) + D_{KL}(P_t\\Vert P_s) $$
        centering the KL term collapses to $0$.</p>
        <p><i>These are the paper's reported figures, quoted from the abstract / §5.3. The numbers in the
        CODEVIZ panel below are from our own tiny MNIST run — not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> DINO trains features with <b>no labels</b>, so you do not score the
+       pretraining directly &mdash; you <b>freeze the encoder</b> and evaluate the features two standard ways
+       (&sect;4): a <b>linear probe</b> (one $\\texttt{nn.Linear}$ on frozen features) and a <b>k-NN</b> classifier,
+       both measured as <b>top-1 accuracy on ImageNet</b>. The "better than trivial" floor is random guessing
+       ($1/1000 = 0.1\\%$ on ImageNet; $10\\%$ on the toy 10-class MNIST), and the fairer baseline is a
+       <b>from-scratch</b> model trained on the same few labels &mdash; the probe must beat it in the low-label
+       regime. During pretraining the health monitor is the <b>teacher's mean per-image entropy</b> $h(P_t)$, which
+       must stay in a healthy middle (neither $0$ nor $\\ln K$).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Known-answer unit test:</b> the worked example
+        ($K{=}4$) must reproduce $P_t=[0.839,0.114,0.042,0.006]$, loss $H(P_t,P_s)=\\mathbf{0.9553}$, and the
+        decomposition $h(P_t)=0.5562$, $D_{KL}=0.3991$ summing back to $0.9553$ (Eqns. 1,2,5). (2) <b>Distribution
+        checks:</b> $P_s$ and $P_t$ are positive and each sums to $1$; teacher entropy at init is near the uniform
+        value $\\ln K$. (3) <b>Stop-gradient check:</b> teacher params have <code>requires_grad=False</code> and the
+        teacher branch runs under <code>torch.no_grad()</code> &mdash; only $\\theta_s$ should receive gradients.
+        (4) <b>Temperature order:</b> assert $\\tau_t \\lt \\tau_s$ (the teacher is sharper).</li>
+        <li><b>Expected range.</b> Anchored to the abstract (quoted in Results): full DINO reaches <b>~80.1% top-1
+        on ImageNet under a linear probe with ViT-Base</b>, and its frozen features are "excellent k-NN
+        classifiers." These need the full ViT + multi-crop + long schedule &mdash; the toy MNIST run will not reach
+        them. As a <i>rule of thumb</i> (not a paper claim), the toy success signal is simply: the frozen-DINO
+        linear probe beats from-scratch at the smallest label budgets, and the teacher's per-image entropy stays
+        well above $0$ (e.g. ~4.7 over $K{=}256$ in our run) rather than crashing.</li>
+        <li><b>Ablation &mdash; prove centering earns its keep.</b> The central knob is <b>centering</b> (Eqn. 4):
+        re-pretrain with <code>use_centering=False</code> (keep sharpening at the small $\\tau_t$), everything else
+        identical, and watch the teacher's mean per-image entropy. It should <b>crash toward $0$</b> &mdash; the
+        teacher emits the same near-one-hot distribution for every image (the one-dimension collapse of &sect;5.3,
+        Fig. 6). If entropy stays healthy without centering, centering was never actually subtracted before the
+        softmax. The mirror ablation: remove <i>sharpening</i> instead and the loss converges to $\\ln K$ (uniform
+        collapse).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Teacher entropy &rarr; $0$ / identical near-one-hot
+        outputs for every image</b> = one-dimension collapse (centering missing, or gradients leaking into the
+        teacher). <b>Loss converges to $\\ln K$</b> (uniform $P_t$) = sharpening missing or $\\tau_t \\ge \\tau_s$.
+        <b>Loss drops fast to ~0 but the probe is no better than from-scratch</b> = the student is trivially copying
+        a degenerate teacher (collapse), not learning features. <b>Loss NaN</b> = $\\tau$ too small or a
+        <code>log(0)</code> (add the $\\varepsilon$ inside the log). <b>Probe no better than chance</b> = you probed
+        the projection-head logits instead of the encoder features, or forgot to symmetrize the two view pairings
+        (halving the signal).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

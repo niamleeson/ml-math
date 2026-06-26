@@ -251,6 +251,46 @@
        <p><i>These are the paper's reported claims, paraphrased from the text — we did not transcribe the
        exact accuracy tables. The numbers in the CODEVIZ panel below are from our own tiny run, not the
        paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The thing this paper is about is <b>trainability at depth</b>, so
+       the primary metric is the <b>training loss</b> of a very deep stack (here a 40-layer MLP on a toy 3-class
+       blob problem; the paper uses MNIST / CIFAR with stacks of 100+ layers). The no-skill floor is the
+       <b>random-guess cross-entropy</b> $\\ln K$: for $K = 3$ classes that is $\\ln 3 \\approx 1.0986$. A net
+       pinned at $\\ln 3$ has learned nothing; "working" means descending well below it. The paper's qualitative
+       bar is that highway nets "with hundreds of layers can be trained directly" where matched plain stacks
+       fail (&sect;1, &sect;2.2).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Verify the loss at init: a fresh untrained net should
+        output near-uniform logits, so the first loss should be $\\approx \\ln 3 \\approx 1.0986$ &mdash; if it
+        starts far above, the head or init is broken. (2) Unit-test the highway blend on the lesson's worked
+        example: $H = [0.8, 0.5]$, $x = [1.0, -2.0]$, gate pre-activations $z = [2.0, -1.5]$ must give
+        $T = [0.8808, 0.1824]$ and $y = [0.8238, -1.5439]$. (3) Confirm <b>shape preservation</b>: every block's
+        input and output are width $n$ (the carry term adds the raw $x$ back, so they must match). (4) Check the
+        carry-init actually carries: right after init with $b_T = -2$, a forward pass should give $y \\approx x$
+        at each block (the gate $T \\approx \\sigma(-2) \\approx 0.12$), so the deep stack is a near-identity wire.
+        (5) Confirm $\\cdot$ is element-wise (<code>*</code>), not <code>@</code>/matmul.</li>
+        <li><b>Expected range.</b> A correct 40-layer highway net with $b_T &lt; 0$ should drive the training loss
+        to near $0$ &mdash; our small run collapses to $\\approx 0$ by $\\sim$step 120 (CODEVIZ; <i>our number,
+        not the paper's</i>). The matched plain net should stay pinned near $\\ln 3 \\approx 1.0887$ for the whole
+        run. As a rule of thumb (not a paper claim): if the highway loss flatlines at $\\ln 3$, the carry path or
+        its negative-bias init is not working; if it descends but slowly/noisily, that is more likely
+        learning-rate or depth tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> Two knobs, each isolating one half of the
+        contribution. (a) Replace highway blocks with <b>plain</b> blocks (<code>relu(H(x))</code>, no gate, no
+        carry) at the same depth &mdash; loss must stall near $\\ln 3$, showing the carry path is necessary. (b)
+        Keep the gate but set the gate bias to <b>$0$</b> (<code>nn.init.constant_(self.T.bias, 0.0)</code>)
+        &mdash; the net must <i>also</i> stall, showing the carry path is not enough without the
+        carry-by-default init (&sect;2.2). If the $b_T = 0$ run trains fine, the negative-bias trick is doing
+        nothing for you and you have likely mis-wired the init.</li>
+        <li><b>Failure signals &amp; what they mean.</b> (a) <b>Loss stuck at $\\ln 3$ even with highway blocks</b>:
+        gate bias not negative (half-open gates, no default carry), or you used a dot product instead of
+        element-wise multiply. (b) <b>Loss NaN / explodes</b>: learning rate too high for a 40-deep stack, or a
+        width mismatch making the carry term ill-formed. (c) <b>Highway and plain curves identical</b>: the gate
+        is degenerate (e.g. $T$ saturated at $1$, so $y = H(x)$ and the carry term vanished) &mdash; check
+        $b_T$ and that $T = \\sigma(\\cdot)$ truly feeds the blend. (d) <b>Trains but no better than a shallow
+        net</b>: depth isn't helping &mdash; expected, since the toy task is easy; the point is that highway
+        <i>can</i> optimize at depth, not that depth wins here.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

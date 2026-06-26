@@ -249,6 +249,46 @@
        <p><i>These are the paper's reported figures, quoted from the fetched text. The numbers in the CODEVIZ
        panel below are computed from the module's exact channel counts &mdash; our own arithmetic, not a headline
        metric from the paper.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The full network's metric is <b>top-5 classification error on
+       ImageNet (ILSVRC 2014)</b>; the paper reports <b>6.67%</b> (7-model ensemble, 144 crops) for 1st place,
+       at "12&times; fewer parameters than" AlexNet. The no-skill baseline is <b>chance = 99.9% top-5 error</b>
+       on 1000 classes (random gets 5/1000 right), and the bar to clear is the prior SOTA the paper beat. But
+       this is a <b>Track B</b> build of one <i>module</i>, so our two direct checks are: (1) the
+       <b>concatenated output shape</b> &mdash; module (3a) must emit $28\\times28\\times256$ &mdash; and (2) the
+       <b>exact cost arithmetic</b> of the $1\\times1$ bottleneck. There is no allclose oracle; the shape and the
+       reproducible FLOP/param counts are the oracle.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE any training.</b> (1) Shape: feed
+        $x=(N,192,28,28)$ and assert the module returns $(N,256,28,28)$ &mdash; $64+128+32+32=256$ channels,
+        $H,W$ unchanged. If <code>torch.cat</code> errors, a branch lost same-padding (a $5\\times5$ at
+        padding 0 shrinks $28\\to24$; fix padding $=(k-1)/2$). (2) Cost: recompute the lesson's worked example
+        &mdash; $5\\times5$ branch naive $=5^2\\cdot192\\cdot32=153{,}600$ weights vs bottleneck
+        $1{\\cdot}192{\\cdot}16 + 25{\\cdot}16{\\cdot}32 = 15{,}872 \\Rightarrow \\approx 9.68\\times$; the
+        $3\\times3$ branch gives $\\approx 1.71\\times$. (3) If you do train, the softmax loss at init should sit
+        near $-\\ln(1/1000)\\approx 6.9$ for the 1000-way head; far off means a head wiring bug.</li>
+        <li><b>Expected range.</b> The module-level numbers are <b>exact and reproducible</b>: $9.68\\times$
+        (5&times;5) and $1.71\\times$ (3&times;3) weight savings, identical for MACs since the $H\\cdot W=784$
+        factor cancels. If trained as a full GoogLeNet, a correct build should approach the paper's
+        single-model top-5 in the ~10% range and the ensemble's <b>6.67%</b> (these are the paper's figures);
+        landing tens of points worse is "probably a bug", a couple of points is "tuning". The whole net should
+        come out to ~5M parameters &mdash; a count far above that means the bottlenecks are missing.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>$1\\times1$ reduce</b> (the bottleneck). Rebuild the module with the reduces removed
+        (<code>NaiveInception</code>): the concat output stays $28\\times28\\times256$ &mdash; the interface is
+        unchanged &mdash; but the parameter/MAC count <b>jumps sharply</b> ($5\\times5$ branch $15{,}872\\to
+        153{,}600$ weights). That same-output, far-higher-cost contrast is the proof the bottleneck is a pure
+        efficiency win, which is what let GoogLeNet go 22 layers deep. (Second ablation, if training:
+        remove the two auxiliary heads and watch deep-net gradient flow / final accuracy degrade.)</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i><code>torch.cat</code> shape-mismatch</i> &rarr;
+        a branch missing same-padding (Practice 2's $24\\times24$ vs $28\\times28$). <i>Bottleneck saves
+        nothing</i> &rarr; the $1\\times1$ reduce was placed <b>after</b> the big conv, or on the wrong branch
+        (it must come first). <i>Output channel count wrong</i> &rarr; concatenated on <code>dim=0</code>
+        (batch) instead of <code>dim=1</code> (channels), or a branch width mis-set. <i>"12&times;" doesn't
+        match your "9.68&times;"</i> &rarr; not a bug: the $12\\times$ is a whole-net parameter ratio vs AlexNet,
+        the $9.68\\times$ is the per-branch $5\\times5$ saving &mdash; different scopes. <i>If training: loss
+        NaN</i> &rarr; LR too high; <i>loss flat at ~6.9</i> &rarr; head not learning / labels shuffled.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

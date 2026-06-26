@@ -263,6 +263,44 @@ $$ y_{DNN} = \\sigma\\big(W^{(|H|+1)} a^{(H)} + b^{(|H|+1)}\\big) $$
        low-order or only high-order feature interactions."</p>
        <p><i>Those are the paper's reported figures, quoted from the fetched source. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny synthetic run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> DeepFM is a CTR ranker, so score it with <b>AUC</b> (area under the
+       ROC curve; higher is better) and <b>LogLoss</b> (binary cross-entropy; lower is better) on a held-out
+       split &mdash; the paper uses the <b>Criteo</b> CTR benchmark and a Huawei <b>Company</b> set (&sect;3).
+       The no-skill floor is <b>AUC $= 0.5$</b> (random ranking) and LogLoss $= -[p\\ln p + (1{-}p)\\ln(1{-}p)]$
+       at the base click rate (predict the constant prior). A real model must clear both; the bar that proves
+       the architecture earns its keep is beating the <b>FM-only</b> and <b>DNN-only</b> ablations.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Verify the FM order-2 identity on two tiny embeddings &mdash;
+        $\\langle e_1,e_2\\rangle$ computed directly must equal $0.5[(\\sum e)^2 - \\sum e^2]$ (the lesson's worked
+        example: both $-0.01$); a mismatch means the identity is mis-wired. Check shapes: each branch returns
+        <code>(batch,)</code> and they <b>add</b> to one logit. At init with zero/near-zero weights the predicted
+        probability sits near the data's base click rate, so LogLoss starts near the prior entropy &mdash; not
+        NaN, not $0$. Overfit a single batch with dropout off: train LogLoss should fall toward $\\sim 0$ and
+        train AUC toward $\\sim 1.0$; if it can't, the forward pass or the gradient path is broken.</li>
+        <li><b>3. Expected range.</b> On Criteo the paper reports <b>DeepFM AUC $0.8007$, LogLoss $0.45083$</b>,
+        above FM ($0.7892$) and FNN ($0.7963$); on the Company set <b>AUC $0.8715$, LogLoss $0.02618$</b>
+        (&sect;3, ar5iv mirror &mdash; reuse, do not re-target). These are the paper's figures, approximate and
+        hardware/seed-dependent. Note CTR AUC gains are <i>small in absolute terms</i>: a $+0.001$ AUC lift is
+        considered significant here, so do not expect dramatic jumps. On the lesson's toy data DeepFM beat both
+        single components (FM $0.6545$, DNN $0.8418$, DeepFM $0.8585$ &mdash; our run, not the paper's). An AUC
+        stuck near $0.5$ is a bug; an AUC a few points under the ablation you expected to beat is tuning.</li>
+        <li><b>4. Ablation &mdash; prove the shared two-component design earns its keep.</b> The central idea is
+        the FM head and the deep head <b>sharing one embedding table</b>, summed before the sigmoid. Flip the
+        <code>mode</code> knob to <b>FM-only</b> and <b>DNN-only</b> and confirm full DeepFM beats <i>both</i> in
+        AUC/LogLoss. A second, sharper ablation: give each head its <b>own</b> embedding table &mdash; if metrics
+        don't drop versus the shared-table model, the sharing isn't wired in and you've built an ensemble, not
+        DeepFM. If DeepFM only ties the better single component, the weaker head is contributing nothing.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>AUC stuck at $\\sim 0.5$:</b> labels shuffled,
+        features not indexed into the embedding (wrong field offsets), or the logit not reaching the loss.
+        <b>LogLoss NaN / exploding:</b> learning rate too high, or sigmoid applied twice (inside a branch AND in
+        <code>BCEWithLogitsLoss</code>) so gradients blow up or vanish &mdash; branches must return raw logits.
+        <b>Sign-flipped or stalled FM term:</b> the order-2 identity computed as "sum of squares minus square of
+        sum" (reversed) &mdash; it must be $0.5[(\\sum e)^2 - \\sum e^2]$, summing over fields before squaring.
+        <b>DeepFM no better than FM-only:</b> the deep head's gradients aren't flowing (two tables, or the DNN
+        output isn't added), so the high-order signal is lost. <b>Train-good val-bad:</b> overfit &mdash; raise
+        dropout / weight decay.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

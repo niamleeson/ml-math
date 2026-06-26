@@ -271,6 +271,41 @@
        trains on 5-bit CelebA-HQ 256&times;256 at <b>1.03</b> bits/dimension (Table 3) and shows sharp face
        synthesis and smooth attribute interpolation. (All quoted from the paper; the numbers in our CODEVIZ
        below are our own tiny run, not the paper's.)</p>`,
+    evaluation:
+      `<p><b>The metric & benchmark.</b> Glow's score is <b>bits/dimension</b> (negative log-likelihood per
+       value, in base-2 bits; <i>lower is better</i>) on a held-out test set &mdash; the paper reports CIFAR-10
+       <b>3.35</b>, ImageNet 32&times;32 <b>4.09</b>, 64&times;64 <b>3.81</b> (Table 2). The "no-skill" anchor:
+       a model that ignores structure and scores each pixel as an independent uniform byte costs $\\log_2 256 =
+       <b>8</b>$ bits/dim, so anything well below 8 is doing real modeling; the target is to beat Real NVP's
+       numbers on the same benchmark. For your toy run, the floor is the data's own differential entropy &mdash;
+       a model that perfectly fits the correlated Gaussian can't go below it.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Because the flow is exact and invertible, you have unusually
+        strong unit tests: (1) <b>invertibility</b> &mdash; run each layer forward then reverse and confirm you
+        recover the input to floating-point ($\\|x - f^{-1}(f(x))\\| \\lt 10^{-5}$). (2) <b>Log-det against the
+        worked example</b> &mdash; $W=[[2,0],[1,3]]$, $h=w=4$ must give $16\\log 6 \\approx 28.668$, and actnorm
+        $s=(2,0.5)$ must give exactly $0$. (3) <b>Numeric Jacobian check</b> &mdash; for a tiny input, compare your
+        analytic log-det to $\\log|\\det|$ of the finite-difference Jacobian. (4) <b>Overfit one batch</b> &mdash;
+        bits/dim should drop steadily toward the data floor.</li>
+        <li><b>Expected range.</b> On the 4-channel toy in our CODEVIZ the full model settles at &asymp;<b>1.45</b>
+        bits/dim and the ablation at &asymp;<b>2.05</b> (our run, seed 0 &mdash; not a paper number). Treat those as
+        rules of thumb: landing within a few tenths is "fine, tune it"; sitting near 8 or rising is "probably a
+        bug." For real data, aim to approach the paper's Table 2 figures (CIFAR-10 3.35, etc.); being off by 0.5+
+        on CIFAR-10 suggests a wiring problem, not tuning.</li>
+        <li><b>Ablation &mdash; prove the 1&times;1 conv earns its keep.</b> The paper's headline component is the
+        learned invertible 1&times;1 convolution. Turn it OFF (set <code>use_1x1=False</code> so channels never
+        re-mix between coupling steps) and confirm bits/dim <b>goes UP</b>. If it doesn't change, the conv isn't
+        actually mixing channels (or your toy data has no cross-channel correlation to fit) &mdash; this is exactly
+        the gap the CODEVIZ plots (&asymp;1.45 vs &asymp;2.05).</li>
+        <li><b>Failure signals & what they mean.</b> <b>Loss = NaN/$-\\infty$:</b> $W$ drifted singular so
+        $\\log|\\det W|\\to-\\infty$ &mdash; initialize $W$ as a rotation (orthogonal, $\\det=\\pm1$) or use the LU
+        parameterization. <b>Bits/dim implausibly low (near 0 or negative and falling without bound):</b> a log-det
+        sign error or a missing $h\\cdot w$ factor &mdash; the model is "rewarding" itself for volume it isn't really
+        creating; check invertibility recovers the input. <b>Bits/dim stuck high and flat:</b> data-dependent
+        actnorm init was skipped, or the coupling net's last layer wasn't zero-initialized so the flow didn't start
+        near the identity. <b>Ablation matches the full model:</b> the 1&times;1 conv is a no-op &mdash; verify it's
+        in the forward path and its log-det is being summed.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

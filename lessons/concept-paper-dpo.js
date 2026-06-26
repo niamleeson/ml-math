@@ -293,6 +293,40 @@
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;6. The numbers in the
        CODEVIZ panel below are from our own tiny run on a toy categorical policy &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> DPO is evaluated by <b>preference win rate</b> &mdash; how often a
+       held-out judge prefers your model's output over a baseline's, on the paper's tasks: IMDb sentiment
+       control (&sect;6.1), Reddit TL;DR summarization, and Anthropic Helpful-Harmless single-turn dialogue,
+       with win rates judged by GPT-4 (&sect;6). The no-skill anchor is a <b>50% win rate</b> (a coin flip
+       against the comparison model); the meaningful bar is the <b>PPO-based RLHF</b> baseline DPO set out to
+       match or beat. As a cheap internal proxy during your own build, track the <b>mean implicit reward margin</b>
+       $\\hat r(y_w)-\\hat r(y_l)$ on held-out pairs and the <b>pairwise accuracy</b> ($\\hat r(y_w)\\gt\\hat r(y_l)$),
+       whose no-skill value is exactly $50\\%$.</p>
+       <p><b>2. Sanity checks before the full run.</b> (a) <b>Loss at init must be $-\\log\\sigma(0)=\\log 2\\approx 0.693$</b>
+       &mdash; because you initialize the policy <i>at</i> the reference, every margin is $0$; if your step-0 loss
+       is not $\\approx 0.693$ you did not init at the reference (or the reference is not frozen). (b) <b>Margin
+       starts at exactly $0$</b> for the same reason. (c) <b>Overfit a handful of pairs:</b> on a few preference
+       pairs the loss should fall toward $0$ and the margin grow without bound &mdash; if it plateaus at $\\log 2$
+       the gradient is not flowing (check that $\\hat r$ uses the live policy, not the detached reference). (d) Confirm
+       the per-pair worked example reproduces ($\\beta=0.1$, margin $0.10$, loss $0.644397$).</p>
+       <p><b>3. Expected range.</b> The paper's headline claim (abstract, quoted in <b>Results</b>) is that DPO
+       <i>"exceeds PPO-based RLHF in ability to control sentiment"</i> and <i>"matches or improves"</i> quality on
+       summarization and dialogue &mdash; so a correct build should reach a win rate <b>at or above the PPO
+       baseline</b> on these tasks (approximate; see &sect;6). On our toy run the correct-label margin climbs from
+       $0$ to $\\approx 0.98$ while shuffled labels stay near $\\approx 0.11$ (rule-of-thumb numbers from our run,
+       not the paper). A margin that never leaves $\\approx 0$ on correct labels is a bug, not a tuning issue.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> DPO's central claim is that the <b>preference
+       labels</b> carry the signal. <b>Shuffle the labels</b> (randomly swap $y_w$ and $y_l$): the implicit reward
+       margin measured on the <i>true</i> pairs should stop growing and stay near $0$ (contradictory supervision
+       cancels). If shuffling barely changes the margin, your loss is not actually keyed to the labels &mdash; the
+       method is not wired in. A second knob: sweep $\\beta\\in\\{0.05,0.1,1,5\\}$ (the paper's sentiment sweep,
+       &sect;6.1) &mdash; very large $\\beta$ should pin the policy to the reference (margin barely moves).</p>
+       <p><b>5. Failure signals.</b> <b>Loss stuck at $\\log 2$ / margin frozen at $0$:</b> reference not frozen, or
+       you are differentiating through $\\pi_{\\text{ref}}$ &mdash; the log-ratio collapses. <b>Margin grows for the
+       wrong responses</b> (model prefers worse answers): $y_w$ and $y_l$ swapped. <b>Loss goes NaN / margin
+       explodes:</b> raw <code>log(sigmoid(z))</code> underflow for very negative $z$ &mdash; use the stable
+       <code>F.logsigmoid</code>. <b>Train margin grows but win rate does not improve:</b> over-optimization /
+       reward hacking against the frozen reference &mdash; raise $\\beta$ or stop earlier.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

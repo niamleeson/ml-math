@@ -274,6 +274,41 @@
        initialization converges while Xavier's "completely stalls" / "does not converge" (Fig. 3). The CODEVIZ
        numbers below are our own small run, not the paper's reported numbers.</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two levels. (a) <b>Init correctness:</b> seed the same generator for both
+       and check <code>torch.allclose(my_he_normal_(w), nn.init.kaiming_normal_(w, mode='fan_in', nonlinearity='relu'))</code>
+       is <code>True</code> &mdash; bit-for-bit identical proves your scale IS Kaiming-normal. (b) <b>System metric:</b>
+       activation variance per layer through a deep ReLU stack (target: stays $\\approx$ constant), and whether a deep
+       ReLU classifier actually trains. The no-skill reference is Xavier-scale ($\\mathrm{Var}[w]=1/n$): it must visibly
+       FAIL where He succeeds, and the random-guess loss $\\ln 2\\approx0.693$ is the "learned nothing" floor for the
+       binary classifier.</p>
+       <ul>
+         <li><b>2. Sanity checks BEFORE the full run.</b> Cheap and decisive: the empirical std of a freshly
+         initialized weight tensor must match $\\sqrt{2/n_{\\text{in}}}$ &mdash; for fan-in 256, $\\approx0.0884$; for
+         512, exactly $0.0625$. Then push a unit-variance input through one ReLU layer and confirm the output variance
+         stays near the input variance (the multiplier $\\tfrac12 n\\cdot(2/n)=1$). Verify conv fan-in is computed as
+         $k^2c$, not $c$ (a $3\\times3$/128-channel layer has fan-in 1152, std $\\approx0.0417$). These catch the
+         factor-of-2 and fan-in bugs instantly.</li>
+         <li><b>3. Expected range.</b> The allclose must be exact (same RNG &rarr; identical tensors). For the
+         20-layer stack, anchor to our run (seed 0, a rule of thumb, not a paper number): He holds variance in the
+         $\\approx0.5$&ndash;$0.8$ band layer to layer, while Xavier-scale halves it each layer to $\\approx5\\times10^{-7}$
+         by layer 20. For training, He drives the 15-layer loss to $\\sim0$ while Xavier-scale stalls near
+         $\\ln 2\\approx0.69$. The paper's own anchor (arXiv:1502.01852) is the 30-layer Fig. 3 where He converges and
+         Xavier "does not converge," and the 4.94% ImageNet top-5 result &mdash; quote those, don't invent new scores.</li>
+         <li><b>4. Ablation &mdash; prove the factor of 2 earns its keep.</b> The entire contribution is the 2 in
+         $2/n$ vs Xavier's $1/n$. Swap $\\sqrt{2/n}\\to\\sqrt{1/n}$ on every layer and re-run: the deep-stack activation
+         variance must collapse and the 15-layer classifier must stall near $\\ln 2$. If dropping the 2 changes nothing,
+         the net is too shallow to show the effect (try more layers) or another mechanism (BatchNorm/residuals) is
+         masking it &mdash; remove those to isolate the init.</li>
+         <li><b>5. Failure signals.</b> <b>allclose False / empirical std too small by $\\sqrt2$</b> &rarr; used $1/n$
+         (Xavier) instead of $2/n$, or PyTorch's default <code>nonlinearity='leaky_relu'</code> slope was left in &mdash;
+         pass <code>'relu'</code>. <b>Activation variance vanishes toward 0 with depth</b> (the red CODEVIZ curve) &rarr;
+         the factor of 2 is missing; symmetrically the gradient to early layers dies and they never move. <b>Variance
+         explodes</b> &rarr; scale too large or fan-in under-counted (e.g. used $c$ not $k^2c$ for a conv). <b>Loss stuck
+         at $\\ln 2$</b> &rarr; no signal reaches the output: a deep ReLU net dying from Xavier-scale init, exactly the
+         Fig. 3 stall. <b>Loss NaN early</b> &rarr; variance blew up &mdash; wrong fan direction or over-large std.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>nn.init.kaiming_normal_(w, mode='fan_in',

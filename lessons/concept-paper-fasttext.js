@@ -275,6 +275,44 @@
        OOV ones, while word2vec cannot &mdash; is the effect we reproduce in CODEVIZ. (Source: arXiv:1607.04606,
        Section 5; exact table numbers are in the paper and we do not quote them from memory.)</p>`,
 
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> The paper's score is <b>Spearman rank correlation</b> between model
+       cosine similarities and human similarity ratings on word-similarity sets &mdash; English <b>Rare-Words
+       (RW)</b> and <b>German Gur350</b> are the ones to watch, since subword info helps most on rare and
+       morphologically rich words (Section 5). The "no-skill" floor is correlation <b>~0</b> (random vectors);
+       the bar to beat is the <b>word2vec/cbow baseline</b>, reported at <b>43</b> on RW vs. fastText's <b>47</b>.
+       The headline capability metric &mdash; the one our toy reproduces &mdash; is binary: <b>does an OOV word get
+       a vector at all</b>, and does it land nearest its morphological sibling.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>n-gram extractor:</b> for "where" at $n=3$ you must
+        get <code>&lt;wh, whe, her, ere, re&gt;</code> plus the whole-word token <code>&lt;where&gt;</code> &mdash;
+        the paper's own example. (b) <b>Boundary distinctness:</b> the n-gram <code>her</code> from "where" must
+        hash to a different id than the standalone word <code>&lt;her&gt;</code>. (c) <b>OOV returns a vector:</b>
+        <code>wordvec("cats")</code> must succeed (not raise) even though "cats" was never trained &mdash; that is
+        the whole point. (d) <b>Worked-example check:</b> with the lesson's $D=3$ vectors, $v(\\text{cat})$ should
+        be exactly $[0.8,0.6,0.6]$, $v(\\text{cats})=[0.75,0.35,0.25]$, cosine $\\approx 0.9521$. (e) <b>Loss at
+        init</b> for the negative-sampling logistic loss with 5 negatives $\\approx 6\\,\\ln 2\\approx 4.16$ summed,
+        or $\\ln 2\\approx 0.69$ per pair (rule of thumb &mdash; random scores give sigmoid $\\approx 0.5$).</li>
+        <li><b>3. Expected range.</b> On real data a correct build should roughly match the paper's <b>47</b> on
+        English RW and beat the cbow baseline's <b>43</b> (Section 5; approximate, the paper's reported figures).
+        Our tiny toy corpus reports no Spearman score &mdash; only cosines; in our run OOV "cats" sits at cosine
+        <b>~0.70</b> to "cat" vs. ~0.13&ndash;0.16 to "dog"/"fish". The reproducible target is the <b>ordering</b>
+        (cats nearest cat), not the exact cosine, which is noisy on so few tokens.</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central knob is the <b>subword sum</b>.
+        Replace <code>wordvec(word)=Z[ngrams(word)].sum(0)</code> with a plain <b>whole-word lookup</b>
+        <code>U[stoi[word]]</code> (this <i>is</i> word2vec). The OOV "cats" must now <b>fail outright</b> (a
+        <code>KeyError</code> &mdash; no row exists), and on real data the RW/Gur350 correlation must drop,
+        especially on rare words. If turning off subwords does <i>not</i> hurt rare-word scores, the n-gram table
+        is not actually contributing (e.g. you summed but never trained $\\mathbf{z}_g$).</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>OOV vector lands nearest an unrelated word</b> &rarr;
+        you dropped the boundary symbols, so shared n-grams aren't aligning (or the whole-word token swamps the
+        sum). <b>Every word's vector looks identical</b> &rarr; you averaged instead of summed, or the n-gram ids
+        all collide ($K$ too small / a broken hash). <b>OOV raises an error in the fastText path</b> &rarr; you
+        kept a whole-word lookup somewhere instead of summing n-grams. <b>Loss stuck near init (~0.69/pair)</b>
+        &rarr; gradients aren't flowing into $\\mathbf{Z}$ (the sum is detached, or only $\\mathbf{V}$ is in the
+        optimizer). <b>Cosines all near 1</b> &rarr; vectors collapsed; check learning rate / negative sampling.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> fastText builds <i>on top of</i> the skip-gram + negative-sampling

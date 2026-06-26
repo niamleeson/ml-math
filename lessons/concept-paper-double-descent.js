@@ -330,6 +330,49 @@
        for the exact curves.</i></p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny random-feature regression &mdash; not
        the paper's reported deep-network results. They reproduce the same qualitative double-descent shape.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The deliverable is a <i>shape</i>, not a single score: plot
+       <b>test error</b> (here mean-squared error on a clean held-out set; in the paper, test/classification
+       error on <b>CIFAR-10 / CIFAR-100</b>) against model size $D$, and confirm it <b>descends, peaks at the
+       interpolation threshold $D = n$, then descends again</b>. The "no-skill" reference is the
+       constant-predictor error (predict the mean &mdash; MSE $\\approx \\mathrm{Var}(y)$); a correct fit in the
+       under- and over-parameterized arms must beat it. The diagnostic baseline is the
+       <b>classical-regime best</b> (lowest test error for $D \\lt n$): the second descent should end
+       <i>below</i> it.</p>
+       <p><b>2. Sanity checks BEFORE the full sweep.</b></p>
+       <ul>
+        <li><b>Recompute the worked example.</b> OLS on $x=[0,1,2]$, $y=[1,1,3]$ with $D=2$ ($1$ and $x$) must give
+        $\\theta=(0.6667, 1)$ and training MSE $0.2222$ &mdash; the notebook's first cell prints these.</li>
+        <li><b>Train error hits exactly $0$ at $D = n$.</b> The cheapest signal the build works: as $D$ crosses
+        $n=60$, training MSE must fall to $\\approx 0$ and STAY there. If it never reaches $0$, your features are
+        ill-conditioned (collinear) or you have a ridge penalty preventing interpolation.</li>
+        <li><b>Min-norm check.</b> Past the threshold, <code>np.linalg.pinv</code> should return a solution with
+        small $\\lVert\\theta\\rVert$ that still gives train MSE $\\approx 0$ &mdash; verify both before trusting the
+        over-parameterized arm.</li>
+       </ul>
+       <p><b>3. Expected range.</b> Anchor to our tiny random-feature run (our numbers, not the paper's): test MSE
+       descends to $\\approx 0.75$ in the classical regime, <b>spikes to $\\approx 48.9$ exactly at $D=n=60$</b>,
+       then falls to $\\approx 0.22$ at $D=600$ &mdash; below the classical best. The paper's deep-net curves
+       (Figure 1, &sect;4) show the same qualitative shape; we deliberately quote no CIFAR numbers. A peak that is
+       barely above the surrounding error is "probably under-noised or under-sampled near $D=n$," not a tuning
+       issue; the spike magnitude varies by seed/hardware.</p>
+       <p><b>4. Ablation &mdash; prove the peak is caused by interpolating noise.</b> The central knob is the
+       <b>training-label noise</b> (<code>noise_std</code>). Set it to $0$ (clean labels) and rerun, everything
+       else identical: the peak at $D=n$ should <b>collapse</b> to a small bump or vanish, leaving a roughly
+       monotone "bigger is a bit better" curve. If the spike survives with clean labels, your peak is an artifact
+       (ill-conditioning at $D=n$), not double descent. A second ablation: add a <i>strong</i> ridge &mdash;
+       training error never reaches $0$ and you recover only the classical U, confirming interpolation is required.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>No visible peak:</b> clean labels (no noise to interpolate), too-strong regularizer (no
+        interpolation), or the sweep skipped over $D=n$ &mdash; cluster $D$ values densely around the threshold.</li>
+        <li><b>Train error never $0$ at $D=n$:</b> collinear features in low input dimension &mdash; use
+        higher-dimensional inputs ($d=20$ Gaussian) so $\\Phi$ is well-conditioned.</li>
+        <li><b>Test error explodes everywhere (not just at $D=n$):</b> test labels are noisy too, or train/test
+        teacher mismatch &mdash; keep test labels clean.</li>
+        <li><b>Second descent never beats the classical best:</b> sweep didn't reach large enough $D$, or the
+        min-norm solution wasn't used (you took a non-minimum-norm exact fit) &mdash; use the pseudo-inverse.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

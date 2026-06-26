@@ -253,6 +253,46 @@
        <p><i>The paper reports localization and human-trust studies on ImageNet-scale models; we do not quote those
        specific numbers here because we did not re-run them. Every number in the panels below is from our own tiny
        run on the toy blob task &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Grad-CAM has no loss to minimize &mdash; it is a read-out, so you score
+       it by <b>localization</b>: does the heatmap land on the object that drives the class? On our toy task the
+       concrete metric is the <i>mean heatmap value over the blob region</i> (top-left 3&times;3), and the test of
+       success is <b>class-discriminativeness</b>: the "why class 0?" map must be hotter on the blob than the
+       "why class 1?" map. The no-skill baseline is a <b>uniform / random heatmap</b>: if your map is flat or
+       independent of the target class, it carries zero explanation. (On real models the paper uses pointing-game
+       localization and human-trust studies on ImageNet-scale nets &mdash; we do not re-run those.)</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Run the worked $2\\times2$ unit test in cell 0: gradient $[[1,3],[-2,0]]$, map $[[2,0],[1,4]]$ must give
+        $\\alpha=0.5$ and heatmap $[[1.0,0],[0.5,2.0]]$. A known-answer check on Eqns. 1&ndash;2 before any CNN.</li>
+        <li><b>Shape &amp; range:</b> the heatmap must come out at feature-map resolution (here $8\\times8$, VGG would
+        be $14\\times14$) and be $\\ge 0$ everywhere after the ReLU. Any negative cell means the ReLU is missing.</li>
+        <li><b>Train the toy CNN to ~100% first</b> &mdash; Grad-CAM on an untrained net is meaningless noise. Cheap
+        gate: held-out accuracy near $1.0$ before you trust any map.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On a correctly-trained toy CNN the "why class 0?" map should be clearly hotter
+       on the blob than "why class 1?": in our run (approximate, our small run &mdash; not the paper's number)
+       blob-region mean $\\approx 0.55$ for class 0 vs $\\approx 0.215$ for class 1, and the blob's own pixels read
+       $0$ under class 1. Exact values shift with seed/hardware; what must hold is the <b>ordering</b> (class 0
+       $\\gt$ class 1 on the blob). If both maps are equal there, the map is not class-discriminative &mdash;
+       probably a bug, not tuning.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The paper's central knobs are (a) the
+       <b>ReLU</b> in Eqn. 2 and (b) differentiating <b>per target class</b>. Drop the ReLU: anti-class cells go
+       negative and leak in, diluting the object's highlight &mdash; confirming the ReLU is what makes the map a
+       clean positive explanation. Switch the target class on the <i>same</i> image: the hot region must <b>move</b>
+       off the blob. If it does not move, the gradient path is not wired to the target logit and the method is
+       degenerate.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Map is flat / identical for every class</b> &rarr; you back-propagated the softmax probability or a
+        constant, not the per-class logit $y^c$; or you pooled the activations $A$ instead of the gradients.</li>
+        <li><b>Map reads <code>None</code> / all zeros</b> &rarr; missing <code>A.retain_grad()</code>, so the
+        intermediate gradient was discarded; or every $\\alpha_k^c\\le 0$ and the ReLU clipped everything.</li>
+        <li><b>Edge-detector noise instead of a blob</b> &rarr; you tapped an early conv layer, not the <b>last</b>
+        one &mdash; early layers hold low-level edges, not class-discriminative position.</li>
+        <li><b>Highlight on the wrong region</b> &rarr; the CNN itself classifies by a spurious cue (the "background
+        watermark" failure the paper highlights); Grad-CAM is working &mdash; the model is the problem.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

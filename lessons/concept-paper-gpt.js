@@ -348,6 +348,43 @@ $$ p(\\text{output} \\mid \\text{input}) \\qquad\\longrightarrow\\qquad p(\\text
        <p><i>These are the paper's own reported figures, quoted from the abstract of the OpenAI PDF. The numbers
        in the CODE and CODEVIZ panels below are from our own tiny char-level run &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>The metric & benchmark.</b> A language model is scored by <b>next-token cross-entropy</b> (nats) or
+       its exponential, <b>perplexity</b> &mdash; <i>lower is better</i>. The "no-skill" baseline is a uniform
+       guess over the $V$-token vocabulary: loss $= \\ln V$ nats (perplexity $V$). In our tiny char build $V=20$,
+       so random init should start at $\\approx\\ln 20 \\approx <b>3.0</b>$ &mdash; check this first. The paper's
+       own benchmark is zero-shot LM perplexity (state-of-the-art on 7 of 8 datasets) and CoQA <b>55 F1</b>
+       (abstract); those are full-scale numbers, not something your tiny model reproduces.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Loss at init</b> should equal $\\ln V$ ($\\approx 3.0$
+        for $V=20$); much higher means a bad init or a bug, much lower at step 0 means a leak. (2) <b>Causal-mask
+        worked example</b> &mdash; with the 3-token identity input, token 0's attention weights must be exactly
+        $[1,0,0]$ (it sees only itself) and token 2's output $[0.752, 0.752]$. (3) <b>Cross-entropy known answer</b>
+        &mdash; logits $[1,0,3,0.5]$ with true token 2 must give $\\approx 0.237$. (4) <b>Overfit one batch</b>
+        &mdash; loss should fall toward $0$; if it can't memorize a single batch, the gradient path is broken.
+        (5) <b>Shape/shift check</b> &mdash; confirm the target at position $t$ is the input at $t{+}1$ (off-by-one
+        is the classic bug).</li>
+        <li><b>Expected range.</b> On the repetitive char corpus our masked run falls from $\\approx 3.0$ toward
+        $\\approx <b>0.2</b>$ nats and samples become readable (our run, seed 0 &mdash; not a paper figure). Rule of
+        thumb: if loss plateaus well above $\\ln V$, it isn't learning; if it crashes implausibly low (e.g.
+        $\\approx 0.02$) on the <i>masked</i> model, suspect a leak. Do <b>not</b> compare this char-level number to
+        WebText perplexity.</li>
+        <li><b>Ablation &mdash; prove the causal mask earns its keep.</b> The one piece that makes this a language
+        model is the causal mask. Turn it OFF (stop setting future scores to $-\\infty$) and retrain: training loss
+        drops <i>faster and lower</i> (&asymp;0.02 in our run) <b>but generation breaks</b> &mdash; the model cheated
+        by attending to the next token and never learned to predict from the past. The honest evaluation metric is
+        therefore <b>generated-text quality</b>, not training loss: the masked model's samples become readable while
+        the unmasked model's are gibberish. If removing the mask <i>doesn't</i> lower training loss, the mask was
+        never being applied.</li>
+        <li><b>Failure signals & what they mean.</b> <b>Loss = NaN:</b> learning rate too high or $-\\infty$ leaking
+        through softmax (mask a whole row) &mdash; lower LR, mask before softmax not after. <b>Loss stuck at
+        $\\ln V$:</b> not learning &mdash; check the optimizer is stepping and targets are shifted. <b>Train loss
+        great, generation gibberish:</b> the causal mask is missing or applied after softmax, or targets weren't
+        shifted (model learned to copy the input). <b>Repetitive/looping samples:</b> temperature too low or model
+        undertrained &mdash; expected early, should improve as loss falls. Tie back to the CODEVIZ: green (masked)
+        loss falling with rising sample quality is "working"; red (unmasked) plunging loss is the cheating
+        signature.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

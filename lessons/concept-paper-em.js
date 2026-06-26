@@ -255,6 +255,44 @@
        benchmark number; its contribution is the general method and its monotonicity/convergence proofs. (Source:
        JSTOR stable/2984875, Summary and Sections 1&ndash;3.)</p>`,
 
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> EM has no accuracy score &mdash; its correctness metric is the
+       <b>observed-data log-likelihood</b> $L(\\phi)=\\sum_i\\log\\!\\big(\\sum_k \\pi_k\\,\\mathcal{N}(x_i;\\mu_k,\\sigma_k^2)\\big)$,
+       plus the two guarantees the paper proves: (1) $L$ is <b>monotone non-decreasing</b> every iteration
+       (Theorem 1, Eq. 3.7) and (2) the converged fit matches an independent oracle. Here the oracle is
+       <code>sklearn.mixture.GaussianMixture</code> on the same data; "trivial baseline" is a single-component fit
+       ($K=1$, just the global mean/variance) &mdash; a working $K=2$ GMM must reach a strictly higher $L$ than that.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Check each E-step row of $\\gamma$ sums to $1$ (responsibilities
+        are a posterior). Reproduce the worked example to the digit: $\\gamma_{0,0}=0.997527$, $N_0=1.878331$,
+        $\\mu_0^{\\text{new}}=0.96894$. Assert $\\texttt{np.all(np.diff(lls) >= -1e-9)}$ &mdash; the log-likelihood
+        must never dip (a single dip is a bug, see below). On a trivial 1-cluster dataset, EM should converge in one
+        step to the sample mean/variance.</li>
+        <li><b>Expected range.</b> On the toy 1-D two-Gaussian data (our numbers, seed 0, not the paper's): $L$ climbs
+        $-1058.88 \\to -612.49 \\to \\dots \\to -606.73$ and the from-scratch $L$ should match sklearn's $-606.7329$ to
+        $\\lt 10^{-2}$, with means recovering the true centres ($\\approx -2$ and $\\approx +3$) and parameters agreeing
+        to $\\sim 4$ decimals. The paper's own genetics example converges in eight iterations to
+        $\\pi^*\\approx 0.6268214980$ (Eqs. 1.4&ndash;1.5, Table 1) &mdash; cite as the paper's, not yours. A log-likelihood
+        gap to sklearn larger than a few hundredths means a bug; landing in a different (worse) local optimum is a
+        restart/init issue, not necessarily wrong math.</li>
+        <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The paper's contribution is the
+        <i>monotone E&ndash;M cycle</i> via the soft responsibilities. Break it deliberately to confirm it matters:
+        (a) <b>hard-assign</b> each point to its argmax cluster instead of using soft $\\gamma$ &mdash; you get k-means,
+        and the GMM log-likelihood stops being maximized (variances/weights no longer fit). (b) <b>Log $L$ after the
+        M-step</b> instead of before &mdash; the curve will appear to dip even though EM is correct, showing the
+        guarantee is about <i>which</i> parameters you score. (c) Compare $K=1,2,3$: raw $L$ only ever rises with $K$
+        ($-708.32 \\lt -606.73 \\lt -604.78$), so it cannot pick $K$ &mdash; BIC (lowest at $K=2$, $1242.0$) does. If
+        the soft E-step is wired in correctly, the BIC minimum recovers the true two clusters.</li>
+        <li><b>Failure signals &amp; what they mean.</b> $L$ dips between iterations &rarr; you scored the wrong
+        parameters (log after M-step), forgot to normalize $\\gamma$ rows, or a sign/denominator bug in the E-step.
+        $L$ blows up to $+\\infty$ and a variance collapses to $\\sim 0$ &rarr; a component grabbed one point
+        (singular/degenerate fit) &mdash; add a variance floor (sklearn's <code>reg_covar</code>). Doesn't match
+        sklearn but is internally monotone &rarr; landed in a different local maximum from a poor init; try several
+        starts (sklearn's <code>n_init</code>). Means stuck on top of each other / identical components &rarr;
+        symmetric init with no symmetry-breaking. NaN responsibilities &rarr; a zero/negative variance fed into the
+        Gaussian density.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive), NumPy.</b> <code>sklearn.mixture.GaussianMixture</code> runs EM for you in two

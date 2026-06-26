@@ -284,6 +284,41 @@ $$ t_x^\\ast = \\frac{x^\\ast - x_a}{w_a},\\quad t_y^\\ast = \\frac{y^\\ast - y_
        image. (mAP = the detection accuracy measure; higher is better.)</p>
        <p><i>These are the paper's reported figures, quoted from the abstract/Table II. The numbers in the CODE
        and CODEVIZ panels below are from our own tiny toy-feature-map run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. The metric &amp; benchmark.</b> The end-to-end number is <b>mAP</b> (mean Average Precision) on
+       <b>PASCAL VOC 2007 test</b> &mdash; the paper's setup (Table II). But the RPN has its own proxy metric you
+       should track first: <b>proposal recall vs. number of proposals</b> (what fraction of ground-truth objects
+       has some proposal with IoU $\\ge 0.5$). The "no-skill" floor is a <b>fixed sliding-window / no-learning</b>
+       proposer at the same proposal count; the bar to beat is <b>Selective Search</b>, which the paper reports at
+       <b>58.7%</b> mAP with 2,000 proposals.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Shapes:</b> cls output is $(B,2k,H,W)$ and reg is
+        $(B,4k,H,W)$ &mdash; with $k=9$ that is 18 and 36 channels; getting 2 and 4 means you dropped the $k$.
+        (b) <b>Anchor count</b> $=WHk$ &mdash; for a $50\\times38$ map, $17{,}100$. (c) <b>Decode round-trip:</b>
+        encode a known box to deltas with Eq 2, decode it back, and confirm you recover the box to floating
+        point &mdash; this catches a missing $\\exp$ or a wrong anchor-unit divide. (d) <b>Overfit one cell:</b>
+        the toy fit (assign one anchor per target, smooth-L1) should drive box loss to <b>~0</b> in a few hundred
+        steps; if it plateaus, the head or the target encoding is wrong. (e) <b>cls loss at init</b> $\\approx
+        -\\ln(1/2)=0.69$ for the 2-way objectness softmax (rule of thumb).</li>
+        <li><b>3. Expected range.</b> A correct full system should land near the paper's <b>59.9%</b> mAP on VOC
+        2007 with 300 RPN proposals (Table II) &mdash; matching/beating Selective Search at 58.7%. These are the
+        paper's reported figures, approximate targets to aim at; our toy run reports no mAP (random feature map,
+        no backbone). Being a few points under is tuning (anchor scales, NMS threshold, sample ratio); being
+        $\\gt 20$ points under, or near random recall, means a wiring bug.</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central knob is the <b>anchor set</b>.
+        Drop $k=9$ to <b>$k=1$</b> (a single square anchor) and the per-cell box loss must <b>rise</b> &mdash; in
+        our toy run it plateaus around <b>0.06</b> while $k=9$ falls to ~0, because one box output cannot fit a
+        square, a wide, and a tall object at once (&sect;3.1.1). On the full detector, collapsing to 1 anchor (or
+        removing the multi-scale/aspect set) should drop proposal recall and mAP; if it does not, your anchors are
+        not actually feeding distinct predictions.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Recall flat near the no-learning floor</b> &rarr;
+        anchors centered at the origin instead of each cell's center $((j{+}0.5)\\,\\text{stride},(i{+}0.5)\\,
+        \\text{stride})$, breaking translation invariance. <b>Negative or exploding widths</b> &rarr; you added
+        $t_w$ instead of applying $e^{t_w}$ in decode. <b>Box loss won't fall</b> &rarr; you trained the regressor
+        on background anchors (forgot the $p_i^\\ast$ gate) or mismatched the target encoding. <b>cls perfect but
+        boxes garbage</b> &rarr; the reg branch is not connected to the loss, or you read RPN objectness as a class
+        score (it is object-vs-background only; the class comes from the Fast R-CNN head).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

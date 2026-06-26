@@ -388,6 +388,45 @@
        Section 2, Section 2.1, Section 3, and Figure 4. The schematic in the CODE and CODEVIZ panels below is a
        hand-drawn conceptual sketch of one WordNet branch &mdash; it is not the paper's Figure 1, not measured
        data, and contains no dataset statistics.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This is a <i>dataset</i>, so "working" means a clean, dense,
+       correctly-structured collection &mdash; the metric is <b>label precision</b>: the fraction of images in a
+       synset bucket that truly show the concept. The paper measures it on "a total of 80 synsets randomly
+       sampled at every tree depth of the mammal and vehicle subtrees" (Figure 4). The no-skill baseline is
+       <b>raw web search at "around 10%" precision</b> (Section 3.1) &mdash; so &sim;90% wrong is the floor your
+       cleaning pipeline must beat. Secondary metrics: <b>density</b> (images per synset, target 500&ndash;1000)
+       and <b>coverage</b> (synsets filled vs WordNet's &sim;80,000).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full crowd run.</b> (1) On a handful of synsets, hand-label a small
+        sample of the raw candidate pool and confirm precision is in the &sim;10% ballpark &mdash; if it is
+        already high, your queries are too narrow; if &sim;0%, the synonym/translation queries are broken. (2)
+        Check the is-a tree loads without cycles and every target synset resolves to a WordNet node (the CODE
+        panel's mammal&rarr;&hellip;&rarr;husky branch is the shape to verify). (3) On a synset with known
+        ground truth, confirm majority-voting with the per-category confidence threshold actually flips a
+        &sim;10%-precision pool up toward the target before spending on all synsets.</li>
+        <li><b>Expected range.</b> A correct cleaning pipeline should reach the paper's <b>&sim;99.7% precision</b>
+        on the sampled synsets (Figure 4), with "&sim;99% precision" overall (Section 2.1) &mdash; i.e. roughly
+        $600\\times0.003\\approx2$ wrong images in a 600-image bucket. Density should land near the paper's "on
+        average over 600 images ... per synset" (Section 2), consistent with $3{,}200{,}000/5247\\approx610$.
+        Precision stuck near 90%+ wrong means the crowd stage is not filtering; precision near 100% but only a
+        handful of images per synset means recall (search/expansion) is too weak. (Targets are the paper's;
+        any per-batch thresholds you pick are rules of thumb.)</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the <b>crowd
+        verification stage</b>: skip Amazon Mechanical Turk (keep raw search results as labels) and precision
+        should <b>collapse from &sim;99.7% back to &sim;10%</b> &mdash; proof the precision comes from the crowd,
+        not the search (Section 3.1&ndash;3.2). Second ablation: drop <b>majority voting</b> (trust one worker
+        per image) and watch precision fall, especially on fine concepts like "Burmese cat". Third (structural):
+        strip the WordNet <b>is-a hierarchy</b> to a flat list &mdash; the pile of images is identical but you
+        lose multi-level grouping (147 dog breeds rolling up to "dog"&rarr;"mammal") and the Section 4
+        tree-exploiting methods, confirming the hierarchy is half the contribution.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Precision near 10% after cleaning</i> &rarr; crowd
+        votes not applied or threshold too loose. <i>Many synsets with very few images</i> &rarr; query
+        expansion/translation missing, so recall is starved (the paper notes "About 20% of the synsets have very
+        few images", Figure 2 &mdash; expect some, not most). <i>Same word maps to mixed senses in one bucket</i>
+        (riverbank vs financial bank) &rarr; you bypassed WordNet's synset disambiguation. <i>A hard concept
+        ("Burmese cat") far below 99% while easy ones are fine</i> &rarr; the per-category confidence threshold
+        is flat instead of demanding more votes where workers disagree.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

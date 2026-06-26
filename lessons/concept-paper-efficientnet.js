@@ -282,6 +282,46 @@ $$ \\text{FLOPS multiplier} \\;=\\; d\\cdot w^{2}\\cdot r^{2} \\;=\\; \\alpha^{\
        FLOPS</b>.</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;4. The numbers in the
        CODEVIZ panel below are from our own tiny arithmetic/training run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This Track-B build does <b>not</b> retrain ImageNet; what you can
+       check exactly is the <b>scaling arithmetic and FLOPS accounting</b>. The primary metric is the
+       <b>measured FLOPS multiplier vs $\\phi$</b> on your toy net &mdash; count real conv/linear multiply-adds
+       at each $\\phi$ and divide by the $\\phi=0$ baseline. The target it must track is the predicted
+       $(\\alpha\\beta^2\\gamma^2)^\\phi \\approx 2^\\phi$. The "no-skill" reference is treating all three knobs
+       as linear (so you'd wrongly predict $\\alpha\\beta\\gamma$ per step): if your measured curve matches that
+       instead of $\\approx 2^\\phi$, the quadratic width/resolution terms are mis-counted. The paper's own
+       benchmark is <b>ImageNet top-1</b> (B0 <b>77.1%</b>, B7 <b>84.3%</b>), with the ablation measured at
+       <b>equal FLOPS</b>.</p>
+       <p><b>Sanity checks BEFORE any scaling sweep.</b> (i) Constraint check: assert
+       $\\alpha\\cdot\\beta^2\\cdot\\gamma^2 = 1.2\\times 1.21\\times 1.3225 \\approx 1.92$ (close to $2$).
+       (ii) Worked-example check: <code>scale(2)</code> must return $d=1.44,\\ w=1.21,\\ r=1.3225$, and
+       $d\\,w^2 r^2 \\approx 3.687$ (vs $2^2 = 4$). (iii) Identity check: <code>scale(0)</code> $= (1,1,1)$ and
+       the built net at $\\phi=0$ must equal the baseline exactly. (iv) Counter check: hand-compute FLOPS for a
+       single <code>Conv2d</code> ($C_{\\text{in}}C_{\\text{out}}k^2 \\cdot H_{\\text{out}}W_{\\text{out}}$) and
+       confirm the hook-based counter agrees on one layer before trusting the whole net.</p>
+       <p><b>Expected range.</b> A correct counter should give a measured multiplier of roughly
+       <b>$1.00,\\ 1.9,\\ 4.4,\\ 8.2\\times$</b> at $\\phi = 0,1,2,3$ &mdash; sitting a touch <i>under</i>
+       $1,2,4,8$ because the base is $1.92 \\lt 2$. (These toy-net numbers are a rule of thumb for this build,
+       not a paper claim.) If your ratios land far from $\\approx 2^\\phi$ (e.g. $1,2,3,4$ &mdash; linear, or
+       $1,4,16$ &mdash; over-squared), it's an arithmetic bug, not tuning. The accuracy claims you can only
+       quote, not reproduce: B0 $77.1\\%$, B7 $84.3\\%$, and up to $\\sim 2.5\\%$ accuracy gain for compound at
+       equal FLOPS (Fig. 8 / Table 7).</p>
+       <p><b>Ablation &mdash; prove compound scaling earns its keep.</b> The central idea is <b>balancing all
+       three dimensions</b>. Spend the <i>same</i> FLOPS budget (e.g. $\\phi=2$, $\\approx 4\\times$) on a single
+       knob &mdash; depth-only ($d = (\\alpha\\beta^2\\gamma^2)^\\phi$, $w=r=1$), width-only, or resolution-only
+       &mdash; and compare. At equal FLOPS the single-dim variants land lopsided cost/shape profiles (width-only
+       explodes parameters via $w^2$; resolution-only adds almost none), and on a real training run the paper
+       reports compound wins by up to $\\sim 2.5\\%$ accuracy. If single-dim scaling matched compound, balance
+       wouldn't matter &mdash; contradicting Observation 2.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <b>Measured multiplier grows linearly</b> ($1,2,3,4$) =
+       you scaled width/resolution but only multiplied FLOPS by $w$ and $r$ instead of $w^2$ and $r^2$.
+       <b>Multiplier explodes</b> ($1,4,16$) = you squared depth too, or squared the resolution side-length
+       twice. <b>Built net doesn't match the baseline at $\\phi=0$</b> = an off-by-one in layer rounding
+       (<code>round(L*d)</code> must give $L$ when $d=1$). <b>Channel counts come out non-multiples / tiny</b> =
+       forgot the <code>round_ch</code> snap-to-8 or applied $w$ to layers instead of channels. <b>Resolution
+       wrong by a square factor</b> = treated $r$ as a per-pixel (area) multiplier instead of per-side. In the
+       CODEVIZ panel a correct build is the green measured curve hugging the blue $2^\\phi$ line; a broken FLOPS
+       count diverges from it.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

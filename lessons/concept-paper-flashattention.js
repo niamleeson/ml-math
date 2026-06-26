@@ -322,6 +322,40 @@
        labeled as such — it demonstrates exactness (torch.allclose) and the $O(N^2)$-vs-$O(N)$ memory gap, not the paper's
        reported benchmark numbers.</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> FlashAttention is <b>exact</b>, so the primary metric is not accuracy but
+       <b>correctness + cost</b>: (a) the max absolute difference $\\lVert O_{\\text{flash}} - O_{\\text{standard}}\\rVert_\\infty$
+       against the reference $\\mathrm{softmax}(QK^\\top)V$, which must be at floating-point tolerance ($\\sim 10^{-6}$),
+       and (b) peak memory / HBM accesses vs sequence length $N$. The "no-skill" baseline is standard attention itself:
+       FlashAttention must match its output exactly (better-than-trivial = identical answer) while using far less
+       memory. The paper's end-to-end metrics are wall-clock speedup (BERT/GPT-2) on standard training setups.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) Run the worked two-block example (scores $[1,3,2,0]$,
+        values $[10,20,30,40]$) and confirm the online output prints $22.14$, matching full-row softmax. (b)
+        <code>torch.allclose(flash, standard, atol=1e-6)</code> on a small random $Q,K,V$ must be <b>True</b>. (c)
+        Check shapes: output is $N\\times d$ and the running state is only $m,\\ell$ (length $N$) plus $O$ &mdash; no
+        $N\\times N$ tensor should ever be allocated by the flash path. (d) Force a block to RAISE the max and verify
+        the rescale factor $e^{m-m^{\\text{new}}}\\lt1$ actually shrinks the old running sum (a known-answer check of
+        the correction).</li>
+        <li><b>3. Expected range.</b> A correct implementation matches standard attention to $\\sim 10^{-6}$ (our run:
+        max abs diff $\\approx 10^{-7}$); anything above $\\sim 10^{-4}$ is a bug, not float noise. The paper reports
+        (approximate, arXiv:2205.14135) a <b>15% speedup on BERT-large</b>, a <b>3x speedup on GPT-2</b>, and up to
+        <b>7.6x on the attention computation</b> itself, plus $O(N)$ extra memory (Theorem 1). Memory should grow
+        linearly: doubling $N$ roughly doubles flash state but quadruples the standard $N\\times N$ table.</li>
+        <li><b>4. Ablation &mdash; prove the online rescale earns its keep.</b> The central trick is rescaling the old
+        running $\\ell,O$ by $e^{m-m^{\\text{new}}}$ before adding each block. Turn it OFF (set the factor to $1$, i.e.
+        just $O\\leftarrow O+\\tilde P V_j$): <code>torch.allclose</code> must now <b>fail</b> with a large error,
+        because earlier blocks stay at the wrong exponential scale. If it still passes, your test scores happen to be
+        non-increasing across blocks (the max never rises) &mdash; pick inputs where a later block raises the max so
+        the ablation actually bites.</li>
+        <li><b>5. Failure signals.</b> <b>Large allclose error</b> &rarr; missing the rescale of old quantities, or
+        dividing by $\\ell$ inside the loop instead of once at the end. <b>NaN / inf in $O$</b> &rarr; you summed raw
+        $e^{x}$ without subtracting the running max &mdash; overflow on large scores; the max-subtraction is what
+        keeps exponentials in range. <b>Output off by a constant factor</b> &rarr; normalized by the wrong $\\ell$
+        (forgot to update it when the max changed). <b>Memory still $O(N^2)$</b> &rarr; you materialized the full
+        score table anyway; the toy Python loop is only $O(N)$ in spirit, the genuine win is the fused SRAM kernel.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> We do <i>not</i> rebuild the scaled-dot-product primitive — that is

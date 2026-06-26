@@ -273,6 +273,48 @@
        <code>TreeBoost</code> simulation studies.</p>
        <p><i>These are the paper's reported figures, quoted from &sect;5 and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny 1-D run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> For <code>LS_Boost</code> the primary metric is <b>train (and held-out)
+       MSE</b> as trees accumulate, but the <i>definitive</i> correctness check for this build is an <b>exact-match
+       oracle test</b>: <code>np.allclose(mine, GradientBoostingRegressor.predict)</code> with identical
+       <code>n_estimators</code>, <code>learning_rate</code>, and <code>max_depth</code>. The no-skill baseline is
+       the <b>constant model</b> $F_0=\\bar y$ (predicting the mean): its MSE is the variance of $y$, and any real
+       boosting run must beat it. The paper's own headline benchmark is the $\\nu$-$M$ trade-off (&sect;5, Table 1).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Run the worked one-round unit test (cell 0): $y=[10,20,30]$, $F_0=20$, residuals $[-10,0,10]$, stump
+        $h_1=[-10,5,5]$, $F_1=[10,25,25]$, SSE $200\\to 50$. A known-answer check on the residual + shrink update
+        before the full loop.</li>
+        <li><b>Init check:</b> with $M=0$ trees the model must predict exactly $\\bar y$ and its MSE must equal
+        $\\operatorname{Var}(y)$. If not, $F_0$ is wrong (e.g. started at $0$).</li>
+        <li><b>First-round residual:</b> after one tree the SSE must <i>drop</i>; if it rises, you added the tree
+        without (or with the wrong sign of) the residual.</li>
+        <li><b>The oracle:</b> the <code>np.allclose</code> against sklearn (matches to ~1e-15) is the real
+        gate &mdash; it should pass before you trust anything downstream.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the 60-point 1-D target, train MSE should fall fast then flatten:
+       (approximate, our small run &mdash; not the paper's number) $\\approx 1.11$ @1 tree $\\to 0.49$ @5 $\\to 0.024$
+       @20 $\\to \\sim\\!10^{-4}$ @100 at $\\nu=0.1$. A correct loop matches sklearn to floating-point. If
+       <code>allclose</code> is off by a roughly <i>constant</i> offset it is the init; if it diverges as trees grow
+       it is the shrink or the running-model update &mdash; that is a bug, not tuning.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The paper's central knob is <b>shrinkage</b>
+       $\\nu$ (Eq. 36). Hold $M=100$ fixed and sweep $\\nu\\in\\{1.0,0.3,0.1,0.03\\}$: final train MSE must
+       <b>rise</b> as $\\nu$ shrinks (small steps under-train at a fixed budget) &mdash; in our run $\\nu=0.03$ leaves
+       $\\approx 4\\times10^{-3}$ while $\\nu=1$ hits $\\approx 0$. This reproduces Friedman's Table 1 ($\\nu$ down
+       $\\Rightarrow$ best $M$ up: $\\nu=1\\to M\\!\\approx\\!15$, $\\nu=0.06\\to M\\!\\approx\\!326$). If the final
+       error is flat across $\\nu$, the learning rate is not actually scaling the trees.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>MSE flat / does not fall</b> &rarr; you are fitting each tree to $y$ (or to $F_0$'s residual every
+        round) instead of the residual at the <i>current</i> $F_{m-1}$ &mdash; the running model is not updating
+        in place.</li>
+        <li><b><code>allclose</code> fails by a constant</b> &rarr; init mismatch; use $F_0=\\bar y$, not $0$.</li>
+        <li><b><code>allclose</code> fails, growing with $M$</b> &rarr; forgot to multiply by $\\nu$ before adding,
+        or applied $\\nu$ to the prediction but not consistently in training and inference.</li>
+        <li><b>Train MSE $\\to 0$ but held-out blows up</b> &rarr; over-fitting from too-large $\\nu$ or too many
+        trees &mdash; the expected behavior the shrinkage regularizer (smaller $\\nu$, more trees) is meant to
+        temper.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

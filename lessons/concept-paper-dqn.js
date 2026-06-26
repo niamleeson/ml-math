@@ -292,6 +292,42 @@
        Atari game scores; it does not report a CartPole number.</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny CartPole run &mdash; not the paper's
        results, which are Atari game scores.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The agent's metric is <b>average episode return</b> &mdash; total
+       reward per episode, averaged over recent episodes. On the paper's setup it is the Atari game score across
+       the seven ALE games from raw pixels (&sect;5). On our build it is the <b>CartPole-v1</b> return, capped at
+       $500$; the standard "<b>solved</b>" bar is an average return $\\ge 475$. The no-skill anchors: a
+       <b>random policy</b> on CartPole returns only $\\approx 20$&ndash;$30$, and on Atari the paper's bar is
+       <b>prior methods</b> (it beat them on six of seven games) and a <b>human expert</b> (surpassed on three,
+       abstract). "Better than trivial" therefore means clearly above the $\\approx 20$ random-play floor and
+       climbing toward the $500$ cap.</p>
+       <p><b>2. Sanity checks before the full run.</b> (a) <b>Reproduce the worked TD target:</b> $\\gamma=0.99$,
+       $r=1$, $\\text{done}=0$, $Q(s')=[12,15]$ gives $y=1+0.99\\times15=15.85$, TD error $2.85$, squared loss
+       $8.1225$ &mdash; the notebook's first cell. (b) <b>Shapes/gather:</b> $Q(s)$ has shape (batch, n_act);
+       confirm <code>gather</code> picks the action taken and $\\max$ is over the <i>action</i> axis. (c)
+       <b>Terminal handling:</b> set $\\text{done}=1$ and check the target collapses to $y=r$. (d) <b>Overfit a
+       tiny fixed buffer:</b> train on a handful of stored transitions and watch the squared TD loss fall toward
+       $0$ &mdash; if it cannot fit a fixed target, the gather/max wiring is wrong. (e) Verify the target is built
+       under <code>no_grad</code> so backprop never flows through $y$.</p>
+       <p><b>3. Expected range.</b> A correct full DQN should <b>solve CartPole</b> (avg return $\\ge 475$,
+       approaching $500$) within a few hundred episodes; in our run it climbs smoothly past the solved line and
+       holds (rule-of-thumb, our run &mdash; the paper reports Atari scores, not CartPole). If the return never
+       leaves the $\\approx 20$&ndash;$50$ random-play range, that is a bug (wrong loss, target not detached, or
+       $\\epsilon$ stuck), not tuning. The paper's own claim (&sect;5, abstract): it "outperforms all previous
+       approaches on six of the games and surpasses a human expert on three."</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> DQN's two stabilizers are the <b>target
+       network</b> and <b>experience replay</b>. Turn each OFF, one at a time, holding net/optimizer/lr/seed fixed:
+       (a) compute $y$ from the <i>live</i> network &mdash; the return should rise then oscillate or crash (moving
+       target); (b) replace the minibatch with the single latest transition in order &mdash; learning becomes slow
+       and never settles (correlated, non-i.i.d. data). If removing either does <b>not</b> degrade stability, that
+       stabilizer is not actually wired in.</p>
+       <p><b>5. Failure signals.</b> <b>Return flat at $\\approx 20$ (random play):</b> agent not learning &mdash;
+       check the gather/max axes, that $\\epsilon$ decays, and the buffer warms up before learning. <b>Loss / values
+       diverge to huge numbers or NaN:</b> gradient flowing through the target, or never syncing $\\theta^-$
+       &mdash; the moving-target instability. <b>Values steadily inflate:</b> missing the $(1-\\text{done})$ factor,
+       so you bootstrap past terminal states and invent reward. <b>Return spikes then crashes repeatedly:</b>
+       target net synced too often (or every step) &mdash; back to a moving target; sync every few hundred steps
+       instead.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:
