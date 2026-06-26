@@ -290,6 +290,43 @@
        WikiSQL, and GPT-3 tasks despite the far smaller trainable footprint.</p>
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;4.2. The numbers in the
        CODEVIZ panel below are from our own tiny run on a toy task &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The headline metric is <b>held-out accuracy on the new task at a given
+        trainable-parameter budget</b> &mdash; LoRA is "working" when it matches its full-fine-tuning baseline while
+        training far fewer parameters. The right comparison is two-sided: the <b>no-adaptation</b> frozen model
+        (the floor &mdash; ~0.19 in our toy run, near chance for $4$ classes) and <b>full fine-tuning</b> (the
+        ceiling). On the paper's own scale the target is parity with full fine-tuning on GLUE / WikiSQL / GPT-3
+        tasks at a tiny fraction of the parameters (abstract: "reduce the number of trainable parameters by 10,000
+        times"). Always plot accuracy <i>against</i> trainable-parameter count, not accuracy alone.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>The zero-init invariant:</b> at step $0$, $B=0$ so
+        $\\Delta W = BA = 0$; feed a batch through the LoRA path and assert
+        <code>lora(x).abs().max() == 0</code> &mdash; the adapted model's outputs must be <i>identical</i> to the
+        frozen model's. If they differ, $B$ is not zeroed. (2) <b>Shapes:</b> $A$ is $r\\times k$, $B$ is
+        $d\\times r$, so $BA$ is $d\\times k$ &mdash; the same shape as $W_0$. (3) <b>Overfit one batch:</b> train
+        LoRA at a generous $r$ (say $8$) on a handful of new-task examples and watch the loss go to ~$0$ &mdash; if
+        it cannot even memorize a tiny set, the gradients are not reaching $B,A$ (e.g. you forgot to pass <i>only</i>
+        LoRA params to the optimizer, or the base layer is still in the graph wrong).</li>
+        <li><b>Expected range.</b> LoRA should <b>close the gap to full fine-tuning once $r$ is large enough to
+        express the task's update</b>. In our toy run rank $1$ reaches only ~0.64 but rank $2$ already hits ~0.99,
+        matching full fine-tuning's ~1.0 (our numbers, not the paper's). Treat these as rules of thumb: a small lag
+        at $r=1$ that vanishes by $r=2$&ndash;$4$ is normal "needs more rank"; LoRA stuck near the
+        <i>no-adaptation</i> floor at every $r$ is a bug. The paper's own claim is parity with full fine-tuning at
+        ~$0.01\\%$ of the parameters (abstract, &sect;5).</li>
+        <li><b>Ablations.</b> The central idea is the <b>low-rank update on a frozen base</b>, so ablate it three
+        ways. (a) <b>Sweep $r \\in \\{1,2,4,8\\}$</b> and confirm accuracy rises then plateaus &mdash; the plateau is
+        the evidence the needed update is low-rank (&sect;7.2). (b) <b>Set the LoRA scale to $0$</b> (or skip the
+        side-path): accuracy must drop back to the no-adaptation floor, proving the update is what's helping. (c)
+        <b>Unfreeze the base</b>: if accuracy and parameter count both jump, you were accidentally full-fine-tuning,
+        not doing LoRA.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Adapted output differs from frozen at step 0</b> &rarr;
+        $B$ initialized non-zero (the model starts as a random perturbation and may degrade before recovering).
+        <b>Update frozen at exactly $0$ throughout training</b> &rarr; <i>both</i> $A$ and $B$ were zeroed, so the
+        gradient through the bottleneck is zero and nothing learns. <b>Accuracy independent of $r$ and stuck low</b>
+        &rarr; LoRA params never reached the optimizer, or the base weights were never frozen so the side-path is
+        irrelevant. <b>Learning rate good at one $r$ but diverges at another</b> &rarr; you dropped the $\\alpha/r$
+        scale, so the update magnitude swings with the rank.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

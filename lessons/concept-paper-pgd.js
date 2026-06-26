@@ -287,6 +287,58 @@
        <p><i>These are the paper's own statements and settings, quoted/paraphrased from the abstract, &sect;3.2,
        and &sect;5. The numbers in the CODEVIZ panel below are from our own tiny run on a toy dataset &mdash; not
        the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The headline number is <b>robust accuracy</b>: classification accuracy
+       on test inputs that have first been attacked by a strong multi-step PGD adversary inside the
+       $\\ell_\\infty$-ball of radius $\\epsilon$. Always report it next to <b>clean accuracy</b> (no attack) and
+       <b>FGSM accuracy</b> (single-step). The trivial floors: a random two-class guesser sits at <b>50%</b>; a
+       model that is robust in name only collapses toward <b>0%</b> under PGD. The paper's own targets to beat:
+       MNIST $\\approx$ <b>89%</b> robust at $\\epsilon=0.3$, CIFAR-10 <b>mid-40s%</b> robust at $\\epsilon=8/255$
+       (&sect;5).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Replay the worked example</b> (notebook cell 0): one PGD step from $x^0=0.5$, $\\alpha=0.2$,
+        $\\epsilon=0.15$ must give $\\text{sign}=-1$, ascend $=0.30$, project $=0.35$. If the projection does not
+        fire here, your clip is wrong.</li>
+        <li><b>Attack should never help.</b> For <i>any</i> model, $\\text{acc}(\\text{PGD}) \\le
+        \\text{acc}(\\text{FGSM}) \\le \\text{acc}(\\text{clean})$ &mdash; a stronger/equal attack can only lower
+        accuracy. If an attack <i>raises</i> accuracy you stepped in the wrong sign (descending the loss instead of
+        ascending).</li>
+        <li><b>Perturbation budget.</b> Assert $\\lVert x_{\\text{adv}}-x\\rVert_\\infty \\le \\epsilon$ (up to
+        float slack) after every PGD call &mdash; a violation means a missing or end-only projection.</li>
+        <li><b>Loss at init.</b> A 2-class <code>BCEWithLogitsLoss</code> at random init should start near
+        $-\\ln(1/2)=\\ln 2\\approx 0.69$ (rule of thumb); a wildly different value flags a label or
+        logit-shape bug before you spend time adversarially training.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On this toy "moons" task our run (not the paper) lands the
+       <b>normally-trained</b> model at clean $\\approx0.96$ but PGD $\\approx0.15$ &mdash; well below the $0.50$
+       random floor, because the attack actively pushes points across the boundary &mdash; while the
+       <b>PGD-adv-trained</b> model holds PGD $\\approx0.48$ at the cost of clean $\\approx0.78$. Robust accuracy
+       that stays pinned at $0$ for the adversarially-trained model, or clean accuracy that does not drop at all,
+       means the min-max loop is not really running. On the paper's benchmarks, anchor to MNIST $\\approx89\\%$ /
+       CIFAR-10 mid-40s% (approximate, &sect;5); being tens of points under those is "probably a bug," a few
+       points is "tuning" ($\\epsilon$, $\\alpha$, steps, restarts).</p>
+       <p><b>4. Ablation &mdash; prove adversarial training earns its keep.</b> The central knob is the
+       <b>inner PGD call in the training loop</b>. Turn it OFF (train on clean batches, everything else identical):
+       robust accuracy under PGD must <b>drop sharply</b> (our run: $0.48\\to0.15$). If it barely moves, either the
+       PGD call was never wired into training or the attack at eval is too weak to separate the two models. A
+       second ablation: remove the <b>random start</b> in PGD &mdash; a too-easy attack will overstate robustness
+       and make a weak model look defended.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Robust acc stuck at chance/zero even after adv-training</b> &rarr; the PGD inner step is missing
+        from the loop, or you backprop weight-gradients (<code>loss.backward()</code>) instead of input-gradients
+        (<code>torch.autograd.grad(loss, x)</code>) inside the attack.</li>
+        <li><b>Attack <i>raises</i> accuracy</b> &rarr; wrong step sign; the adversary must ascend
+        $+\\alpha\\,\\text{sign}(\\nabla_x L)$.</li>
+        <li><b>PGD no stronger than FGSM</b> &rarr; you forgot to re-project every step, or used a single step, or
+        skipped the random start, so PGD never explores the ball.</li>
+        <li><b>Loss NaN</b> &rarr; $\\alpha$ or learning rate too high; the adversarial loop amplifies it.</li>
+        <li><b>"Robust" model also matches clean accuracy</b> &rarr; suspicious, not a win &mdash; usually a broken
+        (too-weak) attack at eval, since the paper expects a robustness/accuracy trade-off.</li>
+       </ul>
+       <p><i>The toy numbers are our small run; the $\\approx89\\%$ / mid-40s% targets are the paper's (&sect;5).
+       The init-loss and "tens of points off = bug" thresholds are rules of thumb, not paper claims.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

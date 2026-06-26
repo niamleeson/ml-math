@@ -309,6 +309,49 @@
        gap <i>grows</i> with the length of the task.</p>
        <p><i>These are the paper's reported figures, quoted from the fetched text. The numbers in the CODEVIZ
        panel below are from our own tiny Blind-Cliffwalk run &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Prioritized replay is a <i>sample-efficiency</i> change, so the metric is
+       <b>learning speed</b>, not a final score: <b>updates (or environment steps) to reach a target return</b>, and the
+       <b>area under the learning curve</b>. The paper's benchmark is the <b>49-game Atari suite</b> (median normalized
+       score) plus the diagnostic <b>Blind Cliffwalk</b> (&sect;2). The "no-skill" baseline is built in and is the right
+       one to compare against: <b>uniform replay</b> ($\\alpha=0$), i.e. the original DQN. The question is always
+       "prioritized vs uniform, everything else identical" &mdash; on Blind Cliffwalk an oracle needs exactly $n$ updates
+       while uniform needs many more (CODEVIZ). For your CartPole build, the metric is <b>episodes-to-high-return</b>
+       (return capped at $500$, solved $\\ge 475$), prioritized expected to get there in fewer episodes.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> (1) <b>Worked-example assert</b>: with $|\\delta|=[2,1,0.5]$,
+       $\\epsilon=0.01$, $\\alpha=0.6$, $\\beta=0.4$, confirm $P=[0.476,0.315,0.209]$ and normalized
+       $w=[0.7195,0.8487,1.0]$ (notebook cell 1). (2) <b>The uniform-consistency check</b> (the key one): set
+       $\\alpha=0$ and verify $P(i)=1/N$ for all $i$ <i>and</i> every IS-weight equals <b>exactly $1$</b> &mdash; uniform
+       sampling needs no correction, so any deviation means the $w_i$ formula is wrong. (3) <b>Probabilities sum to
+       $1$</b> and the most-surprising transition has the largest $P$. (4) <b>Max weight is $1$</b> after normalizing by
+       $\\max_j w_j$, and all others $\\le 1$ (updates only scale down). (5) <b>New transition gets max priority</b> so it
+       is sampled at least once.</p>
+       <p><b>Expected range.</b> On the <b>Blind Cliffwalk</b>, a correct oracle-prioritized run converges in <b>exactly
+       $n$ updates</b> (one per chain state) while uniform grows fast ($\\sim31$ at $n=4$ to $\\sim471$ at $n=16$ in our
+       run), a speed-up that <b>grows with task length</b> &mdash; the paper's qualitative "exponential" Blind-Cliffwalk
+       result (approximate, our numbers). At Atari scale the paper reports <b>41/49 games beaten</b> and <b>median
+       normalized score $48\\%\\to106\\%$</b> vs uniform (quoted in <b>results</b>). If prioritized is <i>not faster</i>
+       than uniform, something is unwired; if prioritized is faster but converges to a visibly <i>wrong</i> value
+       function, the IS-weights are missing.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is <b>$\\alpha$</b> (how sharply you
+       prioritize). Set <code>alpha = 0</code> (recovering uniform), keep network, optimizer, $\\beta$, and seed
+       identical, retrain: learning should <b>visibly slow</b>, and the gap should <b>widen on longer / sparser-reward
+       tasks</b>. If $\\alpha=0$ vs $\\alpha=0.6$ look the same, priorities are not actually steering the sampler (check
+       you draw from $P$, not uniformly). A second, separate ablation: drop the <b>IS-weights</b> ($\\beta=0$ / $w_i=1$)
+       and confirm the agent learns fast but converges to a <b>biased</b> (wrong) fixed point &mdash; this proves the
+       weights, not just the prioritization, earn their keep.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <ul>
+        <li><b>No speed-up over uniform</b> &rarr; sampler still uniform (drew indices with <code>randint</code> instead
+        of <code>choice(p=P)</code>), or $\\alpha$ effectively $0$.</li>
+        <li><b>Learns fast but converges to the wrong values / unstable return</b> &rarr; <b>missing or wrong
+        IS-weights</b> (training on a skewed distribution); verify the $\\alpha=0$ consistency check gives $w_i=1$.</li>
+        <li><b>Some transitions never replayed</b> &rarr; <b>no $\\epsilon$ floor</b> (a $\\delta=0$ transition gets
+        priority $0$ and is frozen out) or new transitions not inserted at max priority.</li>
+        <li><b>Keeps wastefully replaying already-learned transitions</b> &rarr; <b>stale priorities</b>: you are not
+        writing $p_i\\leftarrow|\\delta_i|+\\epsilon$ back after each sample.</li>
+        <li><b>Loss/return blows up as $\\beta\\to1$</b> &rarr; weights not normalized by $\\max_j w_j$, so some updates
+        scale <i>up</i> instead of only down.</li>
+       </ul></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

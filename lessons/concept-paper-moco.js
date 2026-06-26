@@ -256,6 +256,58 @@
        <p><i>Those are the paper's reported numbers, quoted from the abstract/Tables. The numbers in the CODEVIZ
        panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The headline metric is the <b>ImageNet linear-classification
+        protocol</b>: freeze the MoCo-trained encoder $f_q$ and fit a single linear classifier on its features
+        &mdash; top-1 accuracy measures how linearly separable, hence useful, the learned features are. The
+        "no-skill" floor is the <b>random (untrained) encoder of the same shape</b>: if a linear probe on MoCo
+        features doesn't beat the random-encoder probe, MoCo learned nothing. The paper's anchor is
+        <b>60.6% top-1</b> with a ResNet-50 backbone (Table&nbsp;1). The secondary metric is the <b>InfoNCE
+        training loss</b> itself (Eqn.&nbsp;1) &mdash; it should fall as $f_q$ learns to pick $k_+$ out of the
+        $K{+}1$ keys.</p>
+       <p><b>2. Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>Known-answer unit tests.</b> Recompute the lesson's two worked examples: the momentum step
+        $[0.40,-0.20]\\to[0.4002,-0.1997]$ at $m=0.999$ (Eqn.&nbsp;2), and the InfoNCE loss $\\approx 0.0144$
+        for sims $[0.8,0.5,0.3]$ at $\\tau=0.07$ (Eqn.&nbsp;1).</li>
+        <li><b>Loss at init.</b> Before learning, the query is no closer to $k_+$ than to a random negative, so
+        the InfoNCE loss should sit near $\\ln(K{+}1)$ &mdash; the $(K{+}1)$-way uniform-softmax value. A loss
+        far from this at step&nbsp;0 means the logits or label are wrong.</li>
+        <li><b>Shapes &amp; label.</b> Assert $l_{\\text{pos}}$ is $N\\times1$, $l_{\\text{neg}}$ is $N\\times K$,
+        the concatenation is $N\\times(1{+}K)$, and the cross-entropy target is <b>all zeros</b> (positive in
+        column&nbsp;0). Confirm $q$ and every key are L2-normalized (norms $=1$) so dot products are cosine
+        similarities in $[-1,1]$.</li>
+        <li><b>No-grad check.</b> Verify $f_k$'s parameters have <code>requires_grad=False</code> and the queue
+        entries are detached &mdash; nothing should backprop into the key encoder or the stored negatives.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper's anchor is <b>60.6% ImageNet top-1</b> under the linear protocol
+        (Table&nbsp;1, approximate, cited above) &mdash; not reproducible on a toy run, so judge by the
+        <i>ordering</i>: MoCo probe $\\gt$ random-encoder probe by a clear margin, and the InfoNCE loss visibly
+        decreasing. In our small 8-cluster run the MoCo probe hit ~0.99 vs ~0.81 random (our numbers, not the
+        paper's). Rule of thumb (not a paper claim): if MoCo barely beats random, the contrastive signal is too
+        weak &mdash; check $\\tau$, queue size, and that the two views are different augmentations.</p>
+       <p><b>4. Ablation &mdash; prove the momentum encoder earns its keep.</b> The central idea is the
+        <b>momentum (EMA) update of the key encoder</b> (Eqn.&nbsp;2). Turn it OFF by setting $m=1.0$ so $f_k$
+        stays frozen at its random init and never tracks $f_q$ &mdash; keep encoders, queue, $\\tau$, optimizer,
+        and data identical. The InfoNCE loss should stay high (the query chases a fixed, mismatched target) and
+        the linear probe should <b>drop</b>. In our run loss ~4.4 (vs ~3.6) and probe ~0.93 (vs ~0.99). The
+        paper's own ablation (&sect;4.1): $m=0.999\\to59.0\\%$, $m=0.9\\to55.2\\%$, and at $m=0$ the loss
+        "oscillates and fails to converge."</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Probe stuck at the random-encoder level.</b> No features learned &mdash; gradients leaking into
+        $f_k$, the two views identical (so the task is trivial), or the label not pointing at column&nbsp;0.</li>
+        <li><b>InfoNCE loss flat / non-decreasing.</b> Momentum too small or $m=1.0$ (stale/frozen key encoder),
+        or the queue isn't being updated &mdash; the dictionary is inconsistent.</li>
+        <li><b>Loss collapses to ~0 almost immediately.</b> The query can "cheat" the pretext task &mdash; e.g.
+        BatchNorm statistics leaking between $f_q$ and $f_k$ (the paper's shuffling-BN issue), or the positive
+        being trivially identifiable; features will probe poorly despite the tiny loss.</li>
+        <li><b>Loss NaN / unbounded logits.</b> Missing L2-normalization, so dot products blow up and $\\tau$
+        loses meaning &mdash; normalize $q$ and every $k$.</li>
+        <li><b>Loss NaN or oscillating wildly.</b> LR too high, or (per the paper) momentum at $m=0$ &mdash;
+        raise $m$ toward $0.99$&ndash;$0.999$.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so we <b>import</b>

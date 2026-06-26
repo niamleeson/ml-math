@@ -281,6 +281,48 @@
        while "using the Nesterov acceleration technique, the error decreases at $O(k^{-2})$." (Original:
        Nesterov, Doklady Akademii Nauk SSSR, 1983.) The CODEVIZ numbers below are our own small run, not
        the paper's reported results.</p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> NAG is an optimizer, so "working" is measured two ways. (1)
+       <b>Correctness</b>: <code>torch.allclose(my_weights, torch.optim.SGD(..., nesterov=True))</code> after
+       several steps from an identical start &mdash; a hard pass/fail; the trivial wrong baseline is plain
+       heavy-ball momentum (<code>nesterov=False</code>), which must <b>not</b> match. (2) <b>Convergence
+       rate</b>: minimize a smooth convex quadratic $f(x)=\\tfrac12 x^\\top A x$ and track the error
+       $f(x_k)-f^\\star$; the no-skill reference is gradient descent's $O(1/k)$ &mdash; NAG must pull
+       <i>away</i> from it as $k$ grows (the signature of $O(1/k^2)$).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Reproduce the worked example on $f(x)=x^2$
+        ($\\varepsilon=0.1,\\mu=0.9,\\theta_0=2$): step 1 $\\rightarrow\\theta_1=1.6$, step 2
+        $\\rightarrow\\theta_2=0.992$. (2) <b>Step-1 equivalence</b>: with $v_0=0$ the look-ahead point
+        equals the current point, so NAG's first step must equal heavy-ball's and plain GD's &mdash; if
+        step 1 already diverges, your buffer initialization is wrong (PyTorch seeds
+        <code>buf = g</code>, the single most common <code>allclose</code> mismatch). (3) With $\\mu=0$ NAG
+        must collapse to vanilla SGD: $\\theta\\leftarrow\\theta-\\varepsilon g$. (4) On the convex bowl the
+        error must <b>decrease monotonically-ish</b> toward $0$; a flat or rising curve means a sign error
+        in the velocity convention.</li>
+        <li><b>Expected range.</b> Anchored to the grounded claim (Sutskever et al. 2013, &sect;2,
+        attributing the rate to Nesterov 1983): NAG reaches $O(1/T^2)$ "versus the $O(1/T)$ of gradient
+        descent." Concretely the gap should <b>widen</b> with $k$ &mdash; in our run GD/NAG error ratio is
+        $\\approx 5\\times$ at $k=10$, $\\approx 240\\times$ at $k=100$, $\\approx 350\\times$ at $k=300$ (our
+        numbers, not the paper's). The <code>allclose</code> max-abs-diff vs PyTorch should be
+        $\\approx 3\\times 10^{-8}$ (float round-off). <i>Rule of thumb (not a paper claim):</i> a diff
+        above $\\sim 10^{-5}$ signals a real formula error, not numerical noise.</li>
+        <li><b>Ablation &mdash; prove the look-ahead earns its keep.</b> The paper's one idea is measuring
+        the gradient at the look-ahead point $\\theta_t+\\mu v_t$ instead of at $\\theta_t$. Toggle exactly
+        that &mdash; <code>grad(x + mu*v)</code> (NAG) vs <code>grad(x)</code> (heavy-ball) &mdash; with the
+        <b>same</b> $\\mu$ and learning rate. NAG should reach a markedly lower loss and oscillate less (our
+        run: $\\approx 1.7\\times 10^{-4}$ vs $\\approx 8.3\\times 10^{-2}$ at $k=50$). If the two curves are
+        identical, you are taking the gradient at the same point in both &mdash; the look-ahead is not wired
+        in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <code>allclose</code> <b>fails on step 1 only</b>
+        &rarr; buffer seeded as $\\mu\\cdot 0 + g$ in a way that differs from PyTorch's
+        <code>buf = g</code>. <b>Trajectory drifts</b> the wrong direction &rarr; sign/step-convention
+        mismatch ($\\theta_{t+1}=\\theta_t+v$ with $v$ already carrying $-\\varepsilon g$, vs subtracting).
+        <b>Error stalls or rises / oscillates and blows up</b> &rarr; $\\mu$ near $1$ with too-large
+        $\\varepsilon$ (NAG tolerates a larger $\\mu$ than heavy-ball, but not arbitrary). <b>NAG no faster
+        than GD</b> &rarr; the look-ahead is not applied, or you are testing on a non-convex / noisy
+        stochastic problem where the $O(1/k^2)$ asymptotic advantage is lost (Sutskever et al. 2013, &sect;2)
+        &mdash; verify on the deterministic smooth convex quadratic first.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

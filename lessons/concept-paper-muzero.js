@@ -291,6 +291,46 @@
        rules</i>. The paper's headline Atari numbers (e.g. its reported median human-normalized score) are in its Table 1;
        quote them from the paper if you cite them. The numbers in this lesson's CODEVIZ are <b>ours</b>, from a tiny toy
        corridor, and are <b>not</b> the paper's reported figures.</p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The headline metric is <b>episode return</b> (game score / win rate). The
+        paper measures <b>human-normalized score</b> on the 57-game <b>Arcade Learning Environment</b> &mdash; where
+        it "achieved a new state of the art for both mean and median normalized score" (&sect;4) &mdash; and
+        <b>match/win rate vs AlphaZero</b> on Go, chess, and shogi. The "no-skill" floor is a <b>random-action
+        agent</b> (human-normalized score $\\approx 0$); the strong reference is <b>AlphaZero</b>, which MuZero
+        matches <i>without being given the rules</i>. In our toy the metric is <b>goal-reaching success</b> over
+        trials, and the floor is the unbiased 50/50 prior &mdash; ~0% without planning.</p>
+       <p><b>2. Sanity checks before the full run.</b> (i) <b>Reward comes from $g$, not $f$:</b> assert your reward
+        prediction is read off the <i>dynamics</i> head &mdash; a classic bug is emitting it from the prediction
+        head. (ii) <b>Policy loss at init:</b> with random weights $f$'s policy is near-uniform, so the per-step
+        policy loss starts near $-\\ln(1/A)$ for $A$ actions (here $A=2$, so $\\approx\\ln 2\\approx0.69$) &mdash; a
+        rule-of-thumb check that the softmax/target are wired right. (iii) <b>Overfit one trajectory:</b> unroll on a
+        single episode until reward/value/policy losses &rarr; ~0; if they cannot, the $K$-step backprop chain is
+        broken. (iv) <b>Known-answer rollout:</b> reproduce the worked numbers &mdash; $f(s^0)$ gives a ~coin-flip
+        prior, then imagined value <i>rises</i> after RIGHT ($0.255\\to0.445$) and <i>falls</i> after LEFT
+        ($0.255\\to0.162$), and 80 MCTS sims give visits $\\approx[5,75]$. (v) <b>MCTS shape checks:</b> root visit
+        counts sum to the simulation budget; $\\bar Q$ stays in $[0,1]$ after min-max normalization.</p>
+       <p><b>3. Expected range.</b> A correct build should <b>plan its way to the goal at ~100% success</b> on the
+        toy once trained (our run reaches the goal in the optimal 3 steps). Anchor the <i>real</i> targets to the
+        paper, quoting them as approximate: state-of-the-art mean/median human-normalized score on Atari and parity
+        with AlphaZero on board games (&sect;4) &mdash; do not invent a specific median score; the paper's Table 1
+        holds the numbers. Rule of thumb (not a paper claim): if planning gives <i>no</i> lift over the bare policy
+        prior, that is "probably a bug," not tuning.</p>
+       <p><b>4. Ablation &mdash; prove the idea earns its keep.</b> The central component is <b>planning inside a
+        learned latent model</b> &mdash; the unrolled dynamics $g$. Set the training <b>unroll depth to 1</b> (encode
+        the root, train $f$ there, but never roll $g$ forward) and confirm success <b>collapses to ~0%</b>: in our
+        run full MuZero ($K=4$) reaches the goal on 100% of trials while the $K=1$ ablation succeeds 0%. Because
+        self-play is unbiased 50/50, the policy prior carries no directional signal, so if the ablation still
+        "works," your value backup is leaking the answer some other way. Secondary knob: zero out the value backup in
+        MCTS and watch the search lose its only directional signal.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b> <b>Success stuck at ~chance</b> with the prior ~50/50
+        &rarr; the dynamics is not learning to roll forward (the $K=1$ ablation symptom) &mdash; check that the loss
+        unrolls $g$ for $K\\gt1$ steps. <b>Loss NaN</b> &rarr; learning rate too high, or the latent drifting
+        unbounded (the paper min-max scales $s^k$ to $[0,1]$ for exactly this). <b>Value rises after <i>both</i>
+        actions</b> &rarr; $g$ is collapsing to an action-insensitive state (the action encoding is not actually
+        reaching the dynamics net). <b>Search degrades as you unroll deeper</b> &rarr; compounding model error
+        &mdash; the paper limits training unrolls to $K=5$ and re-plans each real step; toy code that unrolls too far
+        drifts. <b>You added a reconstruction loss and it got worse / weirder</b> &rarr; that is a misread of MuZero
+        (closer to Dreamer/World Models); Eq. 1 has <i>no</i> observation term &mdash; remove it.</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

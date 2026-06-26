@@ -352,6 +352,45 @@
        <p><i>These are the paper's own statements and table values, transcribed from the abstract, the
        Introduction, and &sect;2 / Table 2. The numbers in the CODEVIZ panel below come from our own small
        RMSNorm-vs-LayerNorm illustration &mdash; not from the paper.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> LLaMA is judged by <b>downstream task scores</b> at a given model
+       size and by the <b>training loss / perplexity</b> curve as tokens accumulate. The paper's stated bars
+       (quoted, abstract): "LLaMA-13B outperforms GPT-3 (175B) on most benchmarks, and LLaMA-65B is competitive
+       with the best models, Chinchilla-70B and PaLM-540B" &mdash; so the meaningful baselines are those named
+       models, plus the per-token-budget contrast (Introduction): a "7B model continues to improve even after
+       1T tokens" where Chinchilla would stop a 10B model at 200B tokens. The trivial floor for next-token loss
+       is $-\\ln(1/V)$ for a $V$-token vocabulary (uniform guess); a working model must sit well below it.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> This is read-only, so the checkable build is the
+        architecture, not a full train. (1) <b>RMSNorm correctness:</b> on $x=(1,2,3,4)$ with gain $1$ it must
+        return $(0.3651,0.7303,1.0954,1.4606)$ &mdash; all positive (rescale only), with output RMS equal to the
+        gain; LayerNorm on the same vector gives $(-1.3416,-0.4472,0.4472,1.3416)$, the gap being exactly the
+        mean $\\mu=2.5$. (2) <b>RoPE relative-position property:</b> $\\langle R(m)q, R(n)k\\rangle$ must depend
+        only on $m-n$ &mdash; rotate a fixed $q,k$ pair to several absolute $(m,n)$ with the same difference and
+        confirm the score is unchanged. (3) <b>Shapes/params:</b> SwiGLU has three matrices $W,V,W_2$ with
+        hidden width $d_{\\text{ff}}=\\tfrac{2}{3}\\cdot 4d$; verify the FFN param count stays comparable to a
+        ReLU $4d$ block. (4) <b>Loss at init:</b> before any training, next-token loss should be near
+        $\\ln V$ (theoretical uniform value), a known-answer check that the head and softmax are wired right.</li>
+        <li><b>Expected range.</b> A correct LLaMA-13B reproduction should roughly match GPT-3 (175B) "on most
+        benchmarks" and a 65B reproduction should be "competitive with Chinchilla-70B and PaLM-540B" (approximate,
+        per the abstract &mdash; not exact targets). Training loss should keep falling past Chinchilla's stopping
+        point (7B still improving past 1T tokens). Being a few points below GPT-3 across tasks is tuning/data
+        mixture; being near the $\\ln V$ chance floor, or far above GPT-3, signals a bug.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central <i>training</i> bet is
+        <b>train smaller, train longer</b>: stop the 7B model at Chinchilla's ~200B-token point and confirm the
+        downstream scores are <i>worse</i> than the full ~1T-token run &mdash; if extra tokens past the
+        compute-optimal point don't help, the train-longer thesis isn't earning its keep on your data. For the
+        architecture tweaks, swap each back to its baseline one at a time (RMSNorm&rarr;LayerNorm, SwiGLU&rarr;ReLU
+        at full $4d$, RoPE&rarr;absolute position embeddings) and confirm parity/regression; restoring the mean
+        subtraction must add the extra pass and learned shift the paper's RMSNorm drops.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Loss stuck near $\\ln V$ &rarr; not learning (bad LR,
+        labels shifted, or dead head). Loss NaN/spiking &rarr; LR too high, missing grad-clip (paper uses
+        $1.0$) or no 2000-step warmup. RMSNorm output that re-centers around zero &rarr; you accidentally
+        subtracted the mean and built LayerNorm, not RMSNorm. Attention scores that change when you shift all
+        positions by a constant offset &rarr; RoPE was <i>added</i> as a vector instead of <i>rotating</i> Q/K,
+        so relative-position invariance is broken. Inflated parameter count &rarr; you forgot SwiGLU's
+        $\\tfrac{2}{3}$ width factor.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

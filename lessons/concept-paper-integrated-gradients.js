@@ -280,6 +280,38 @@
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;5. The numbers in the CODE
        and CODEVIZ panels below are from our own tiny run &mdash; not the paper's reported results.</i></p>`,
 
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> Integrated Gradients is not a predictor, so you do not score accuracy &mdash;
+        you measure the <b>completeness gap</b>: $\\big|\\sum_i \\text{IG}_i(x) - (F(x) - F(x'))\\big|$, which a correct
+        implementation drives to $\\approx 0$ (&sect;3, Proposition 1). The "no-skill" comparison is <b>plain
+        grad$\\times$input</b>: on the product model $F=x_1 x_2$ it sums to $4$ against a gap of $2$, so a gap of
+        $\\approx 2$ (or any large, non-shrinking value) is the baseline you must beat. The paper's own quantitative
+        promise is that "20 to 300 steps are enough to approximate the integral (within 5%)" (&sect;5).</p>
+       <p><b>Sanity checks before the full run.</b> (1) Known-answer unit test: $F=x_1 x_2$, $x=(1,2)$, $x'=(0,0)$
+        must give $\\text{IG} \\to (1,1)$ summing to $2$ (a 50-step right-endpoint sum reads $\\approx (1.02,1.02)$,
+        sum $2.04$). (2) Baseline test: $\\text{IG}(x') $ at $x=x'$ must be all zeros (travel distance is zero). (3)
+        Linearity test: for a linear $F$, IG must equal plain grad$\\times$input exactly. (4) Check you are
+        differentiating w.r.t. the <i>input</i> (mark the interpolated point <code>requires_grad</code>), not the
+        weights, and that you scaled by $(x-x')$.</p>
+       <p><b>Expected range.</b> On our piecewise-linear multi-layer perceptron the completeness gap reaches
+        $\\approx 3\\mathrm{e}{-5}$ by $m=50$ steps, while plain grad$\\times$input is stuck at $\\approx 0.025$ (our
+        small run, not the paper's number). A gap that stays above a few percent of $|F(x)-F(x')|$ as you raise $m$
+        signals a bug, not just coarse discretization; a gap that shrinks smoothly with $m$ is just the Riemann
+        approximation tightening (the paper's $5\\%$ at $20$&ndash;$300$ steps, &sect;5). These thresholds are rules
+        of thumb.</p>
+       <p><b>Ablation &mdash; the path integral earns its keep.</b> The paper's central move is averaging the gradient
+        <i>along the whole path</i>, not reading it only at the input. Turn it off &mdash; use a single
+        $m=1$ point or plain grad$\\times$input &mdash; and watch completeness break (sum $=4 \\ne 2$ on $x_1 x_2$).
+        It should also fail the Sensitivity axiom: a feature that mattered but sits in a saturated (flat-gradient)
+        region gets near-zero credit from the single-point method but a faithful non-zero credit from the path
+        integral.</p>
+       <p><b>Failure signals.</b> Completeness gap large and <i>constant</i> in $m$ &rarr; you took no path (plain
+        grad$\\times$input) or forgot to scale by $(x-x')$. Gap large but <i>shrinking</i> with $m$ &rarr; just too
+        few steps; raise $m$ toward $20$&ndash;$300$. All attributions zero &rarr; you set $x'=x$ (zero travel) or
+        are differentiating the wrong variable. A feature equal to its baseline getting non-zero credit &rarr; the
+        $(x-x')$ scale is missing. Attributions that look right but never sum to the gap &rarr; gradients taken
+        w.r.t. parameters instead of the input.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The model and autograd already ship in PyTorch, so you

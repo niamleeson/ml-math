@@ -269,6 +269,44 @@
        <p><i>These are the paper's reported figures, quoted from the abstract and Section 4. The numbers in the
        CODEVIZ panel below are from our own tiny run on a synthetic toy task &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The score is <b>held-out classification accuracy</b> on
+       <b>N-way K-shot episodes built from classes the model never trained on</b> &mdash; the paper's
+       protocol on Omniglot and miniImageNet (Section 4). Report it at a fixed setting (e.g. 5-way 1-shot)
+       averaged over many sampled test episodes. The "better than trivial" line is <b>random guessing =
+       $1/N$</b>: $20\\%$ for 5-way, $5\\%$ for 20-way. Anything not clearly above $1/N$ means the metric is
+       not learned.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Recompute the worked example</b> &mdash;
+        cosine $[0.9965,\\,0,\\,-0.2631]\\to$ softmax $[0.605,\\,0.223,\\,0.172]\\to$ predict class 0; the first
+        code cell does exactly this. (2) <b>Check the attention axis:</b> for each query, the softmax weights
+        over the support set must <b>sum to 1</b> (softmax along the support axis, not over classes/queries).
+        (3) <b>Loss at init:</b> with an untrained encoder the negative-log-likelihood should sit near
+        $-\\ln(1/N)$ (about $1.61$ for 5-way) and accuracy near $1/N$ &mdash; the lesson's "untrained encoder"
+        bar reads $\\approx 0.25$, near the $0.20$ chance line. (4) <b>Overfit one episode:</b> train
+        repeatedly on a single fixed episode and watch its query loss fall toward $0$ &mdash; if it cannot
+        memorise one episode, the forward pass or the gradient path is broken.</li>
+        <li><b>Expected range.</b> A correct build should climb <b>well above $1/N$</b> on held-out classes.
+        The paper reports (Section 4, with Full Context Embeddings, approximate) <b>98.1%</b> on Omniglot
+        5-way 1-shot and <b>44.2%</b> on miniImageNet 5-way 1-shot. Our bias-free toy run (no FCE) reaches
+        about <b>0.53</b> at 5-way 1-shot &mdash; the absolute number depends on the dataset and the omitted
+        LSTMs; treat these as approximate, paper-cited anchors, not targets to hit exactly. Stuck near
+        $1/N$ is "probably a bug"; a few points off the paper on the real benchmark is "tuning / missing FCE."</li>
+        <li><b>Ablation &mdash; prove the learned metric earns its keep.</b> Replace the encoder with the
+        <b>identity</b> (<code>lambda x: x</code>), taking cosine in raw input space, and keep the attention
+        vote and episode sampler identical. Accuracy should <b>drop sharply toward $1/N$</b> (our run: about
+        $0.39$ raw vs $0.53$ trained at 5-way). If raw-input cosine scores as well as the trained encoder,
+        the embedding is not being learned (or the data is trivially separable) &mdash; the lift is supposed
+        to come from the metric, not the softmax formula.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy pinned at $1/N$ even after training:</b>
+        softmax on the wrong axis, train/test classes overlapping (memorisation, not generalisation), or
+        episode-local labels mismatched with the prediction. <b>Train accuracy high on fixed mini-batches but
+        held-out N-way collapses to chance:</b> the train protocol does not match the test protocol (Section
+        2.2) &mdash; switch to episodic sampling. <b>Aligned support point gets the smallest weight:</b> you
+        fed a cosine <i>distance</i> instead of <i>similarity</i> (negate it). <b>NaN loss:</b> usually a
+        missing $\\varepsilon$ inside $\\log\\hat{y}$ when a weight is $0$ &mdash; keep the
+        $\\log(\\hat{y}+10^{-8})$ guard.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

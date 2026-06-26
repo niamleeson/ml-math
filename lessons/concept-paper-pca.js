@@ -258,6 +258,50 @@
        benchmark "accuracy" number &mdash; PCA is an exact linear algebra construction, not a trained model. The
        CODEVIZ numbers below are our own small run, not a paper number.</p>`,
 
+    evaluation:
+      `<p><b>What you measure.</b> PCA is exact linear algebra, not a trained model, so there is no loss to minimize
+       and no held-out accuracy. The correctness metric is an <b>oracle match</b>: your from-scratch
+       <code>components</code> and <code>explained_variance_</code> must equal
+       <code>sklearn.decomposition.PCA</code>'s, up to a per-component sign flip (an eigenvector $u$ and $-u$ are the
+       same direction). The "no-skill" baseline is $k = 0$ &mdash; reconstruct every point as the mean &mdash; whose
+       error equals the <b>total</b> variance; any real PCA must beat that for $k \\ge 1$.</p>
+       <p><b>Sanity checks before trusting a run.</b> Every one of these is exact and cheap:</p>
+       <ul>
+        <li><b>Known-answer test (the toy set).</b> The 10-point cloud must give $\\bar x = [1.81, 1.91]$,
+        $\\lambda_1 = 1.2840$, $\\lambda_2 = 0.0491$, explained-variance ratio $96.3\\%$, and $k{=}1$ reconstruction
+        MSE $0.0442$. A single hard number off means a bug.</li>
+        <li><b>Orthonormality.</b> $U_k^{\\top} U_k = I$ to ~$10^{-10}$. If components are not orthonormal, you
+        skipped the symmetric eigensolver or scrambled the sort.</li>
+        <li><b>Variance = eigenvalue.</b> Project onto $u_1$ and compute the projected variance directly; it must
+        equal $\\lambda_1$. This verifies the whole "eigenvalue is the captured variance" identity.</li>
+        <li><b>Energy bookkeeping.</b> $k{=}1$ reconstruction MSE must equal the dropped eigenvalue times
+        $\\tfrac{n-1}{n}$: $0.0491 \\cdot \\tfrac{9}{10} = 0.0442$. Total variance $= \\lambda_1 + \\lambda_2 =
+        \\operatorname{tr}(\\Sigma)$ &mdash; a quick trace check.</li>
+        <li><b>Full-rank reconstructs perfectly.</b> $k = d$ must give MSE $= 0$ (you kept everything).</li>
+       </ul>
+       <p><b>Expected range.</b> The sklearn match is <i>exact</i> &mdash; demand <code>allclose</code> at
+       $\\text{atol} = 10^{-6}$ on $|\\text{components}|$ and on the explained variances, not "roughly." There is no
+       paper accuracy to quote (Pearson 1901 / Hotelling 1933 report the construction, not a benchmark). The only
+       tolerance you allow is the sign flip per component and floating-point noise; anything larger is a bug, never
+       "tuning."</p>
+       <p><b>Ablation &mdash; prove the components are ordered and earn their keep.</b> The central claim is that the
+       <b>top</b> eigenvectors capture the most variance, in order. Sweep $k = 0, 1, \\dots, d$ and confirm
+       reconstruction MSE <i>monotonically drops</i>, removing exactly the next eigenvalue each step (toy set:
+       $1.1998 \\to 0.0442 \\to 0$). Then the key ablation: <b>shuffle the eigenvalue ordering</b> (keep a low-variance
+       component instead of the top one) and watch the error rise &mdash; if it does not, your sort is broken and you
+       are not actually keeping the principal directions. Separately, <b>skip centering</b>: the first "component"
+       then points roughly at the mean and the explained-variance numbers are wrong &mdash; confirming the centering
+       step is load-bearing (Pearson proved the best line passes through the centroid).</p>
+       <p><b>Failure signals &amp; what they mean.</b> <i>Components match sklearn only up to sign</i> &rarr; <b>not</b> a
+       bug &mdash; compare <code>abs(components)</code>. <i>Component 1 has the smallest variance</i> &rarr;
+       <code>np.linalg.eigh</code> returns eigenvalues <b>ascending</b>; you forgot to reverse the sort (and the
+       eigenvector columns with it). <i>Worked numbers drift by a constant factor</i> &rarr; $n$ vs $n-1$ mismatch
+       &mdash; sklearn's <code>explained_variance_</code> uses $n-1$. <i>First component points at the mean / variances
+       wrong</i> &rarr; you forgot to center. <i>Reconstruction MSE rises as you keep more components</i> &rarr; the
+       eigenvectors and eigenvalues are mis-paired after sorting. <i>PCA "loses" the signal you care about</i> &rarr;
+       not a bug &mdash; PCA maximizes variance/reconstruction, not class separation; a low-variance but discriminative
+       direction is LDA's job, not PCA's.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> <code>sklearn.decomposition.PCA</code> ships this in two lines. Here you

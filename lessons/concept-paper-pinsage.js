@@ -297,6 +297,59 @@ $$ J_{\\mathcal{G}}(\\mathbf{z}_q,\\mathbf{z}_i) \\;=\\; \\mathbb{E}_{\\,n_k\\si
        "the largest application of deep graph embeddings to date."</p>
        <p><i>Those are the paper's reported claims (quoted from the fetched abstract). The numbers in the CODEVIZ
        panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The natural metrics for a recommender are <b>hit-rate</b> (for a query
+       item, is its nearest neighbor in embedding space a genuinely related item?) and the <b>related-vs-unrelated
+       similarity gap</b> (mean intra-cluster cosine $-$ mean inter-cluster cosine). The paper's production metric
+       is <b>recall@k / hit-rate@k</b> on held-out related pairs, plus the <b>MRR</b> it reports against deep-learning
+       and graph baselines on Pinterest's <b>3B-node, 18B-edge</b> graph (trained on <b>7.5B examples</b>), where
+       &mdash; per the abstract &mdash; "PinSage generates higher-quality recommendations than comparable&hellip;
+       alternatives." The trivial floor: <b>random embeddings</b> give hit-rate $\\approx 1/(\\text{number of
+       clusters})$ and a similarity gap near <b>0</b>; a recommender must clear both.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Replay the worked aggregation</b> (notebook cell 0): visit counts $6,3,1$ give
+        $\\boldsymbol{\\alpha}=(0.6,0.3,0.1)$ and importance-pooled $\\mathbf{n}_u=(1.3,1.3)$ vs uniform
+        $(1.0,1.6667)$. If these don't match, your weighting is wrong.</li>
+        <li><b>Weights sum to 1.</b> Assert each node's $\\boldsymbol{\\alpha}$ is $L_1$-normalized
+        ($\\sum_v \\alpha_v = 1$); un-normalized counts scale the aggregate by raw traffic.</li>
+        <li><b>Loss sign / known-answer.</b> Hand a triple where the negative is closer than the positive
+        ($\\mathbf{z}_q\\!\\cdot\\!\\mathbf{z}_n \\gt \\mathbf{z}_q\\!\\cdot\\!\\mathbf{z}_i$): the margin loss must
+        be <b>positive</b>. Hand one where the positive already wins by more than $\\Delta$: the loss must be
+        exactly <b>0</b> (the practice example: dots $0.8$ vs $0.5$, $\\Delta=0.1 \\Rightarrow \\max\\{0,-0.2\\}=0$).</li>
+        <li><b>Output shape / norm.</b> Every embedding is $L_2$-normalized to unit length, so all self-similarities
+        $\\mathbf{z}_u\\!\\cdot\\!\\mathbf{z}_u = 1$ and the dot product behaves like cosine.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On our toy 21-item, 3-cluster graph (not the paper), a correct build drives the
+       margin loss to <b>$\\approx 0$</b> while the similarity gap widens (<b>$0.235 \\to 0.933$</b>) and hit-rate
+       climbs (<b>$0.667 \\to 1.0$</b>) over 150 epochs. A hit-rate stuck near the $1/3$ random floor, or a gap that
+       stays near $0$, means the convolution or the loss is not learning. At Pinterest scale, anchor to the paper's
+       claim of beating deep-learning and graph baselines on offline metrics, user studies, and A/B tests (abstract,
+       &sect;4) &mdash; exact recall@k figures are best read off the paper's tables.</p>
+       <p><b>4. Ablation &mdash; prove importance pooling earns its keep.</b> The central knob is the
+       <b>weighted-mean aggregator</b> $\\gamma$. Swap it for a <b>uniform mean</b> over the same top-$T$ neighbors
+       (the lesson's <code>importance=False</code> path), changing nothing else; the metric should <b>drop</b> &mdash;
+       most visibly when the top-$T$ neighborhood is <b>noisy</b> (popular-but-irrelevant neighbors leak in), where
+       the visit-count weights suppress noise a flat average over-weights. On an <i>easy</i> graph (top-$T$ already
+       mostly correct) the two tie, so test the ablation on a noisy neighborhood or it will look like the idea does
+       not matter. A second knob: drop <b>hard negatives</b> &rarr; the loss saturates to $0$ early and learning
+       stalls.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Hit-rate pinned at the $1/\\text{clusters}$ floor</b> &rarr; embeddings not learning: check the
+        margin-loss sign, or that $\\gamma$ actually receives the neighbor messages.</li>
+        <li><b>Loss drops to 0 in a few epochs but hit-rate stays low</b> &rarr; only <b>easy negatives</b>; the
+        hinge is satisfied trivially. Add hard / increasingly-hard negatives (&sect;3.3).</li>
+        <li><b>Importance and uniform pooling give identical results</b> &rarr; either $\\boldsymbol{\\alpha}$ is
+        effectively uniform (forgot to weight before summing) or the graph is too easy &mdash; rerun the ablation on
+        a noisy neighborhood.</li>
+        <li><b>Loss negative or rewarding unrelated items</b> &rarr; margin-loss sign flipped; it must be
+        $\\mathbf{z}_q\\!\\cdot\\!\\mathbf{z}_n - \\mathbf{z}_q\\!\\cdot\\!\\mathbf{z}_i + \\Delta$.</li>
+        <li><b>Similarities outside $[-1,1]$ / unstable nearest-neighbor lookup</b> &rarr; skipped the $L_2$
+        normalization of the output embeddings.</li>
+       </ul>
+       <p><i>The toy numbers ($0.235\\to0.933$, $0.667\\to1.0$) are our small run; the scale and baseline-beating
+       claims are the paper's (abstract, &sect;4). The "few-epoch saturation" symptom is a rule of thumb.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

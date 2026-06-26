@@ -318,6 +318,48 @@
        won 28 to PPO's 19.</p>
        <p><i>These are the paper's reported figures, quoted from Tables 1-2 and the abstract. The numbers in
        the CODEVIZ panel below are from our own tiny CartPole run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The primary metric for an RL algorithm is <b>episode return</b> (total
+       reward per episode) as a function of environment steps &mdash; the learning curve. The paper's eval suites are
+       <b>MuJoCo continuous control</b> (7 tasks, normalized score) and <b>49 Atari games</b> (&sect;6). For your build,
+       <b>CartPole-v1</b> is the cheap stand-in: its return is capped at <b>$500$</b> and it counts as <b>solved at an
+       average return of $\\ge 475$</b>. The no-skill baselines are concrete: a <b>random policy</b> on CartPole scores
+       roughly <b>$\\sim20$&ndash;$25$</b>, and the paper's own "no clipping or penalty" variant scored <b>$-0.39$</b> normalized
+       &mdash; "worse than the initial random policy" (Table 1). So "better than trivial" means climbing well above
+       $\\sim25$ and holding.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> (1) <b>Worked-example assert</b>: with $\\epsilon=0.2$,
+       $r=0.8/0.5=1.6$, $A=+2$, confirm $\\min(1.6\\times2,\\,\\text{clip}(1.6)\\times2)=\\min(3.2,2.4)=2.4$ (the notebook's
+       first cell). (2) <b>Ratio at $\\theta=\\theta_{old}$</b>: immediately after a rollout, before any update step,
+       every $r_t=\\exp(\\log\\pi-\\log\\pi_{old})$ must equal <b>exactly $1$</b>; if not, you snapshotted
+       $\\log\\pi_{old}$ at the wrong time. (3) <b>Entropy at init</b>: for CartPole's 2 actions a fresh policy should
+       have entropy near $\\ln 2 \\approx 0.69$ nats. (4) <b>Advantage shape/normalization</b>: GAE advantages should be
+       finite and, after normalization, zero-mean / unit-variance. (5) <b>Overfit a tiny fixed batch</b>: the value loss
+       $(V-V^{targ})^2$ should fall toward $\\sim0$.</p>
+       <p><b>Expected range.</b> A correct PPO should drive CartPole return smoothly up to the <b>$\\sim475$&ndash;$500$
+       solved band</b> within a few dozen updates and <i>hold</i> there (matching the green CODEVIZ curve; approximate,
+       varies by seed/hardware). On the paper's own scale, the target is the <b>$0.82$</b> average normalized MuJoCo
+       score at $\\epsilon=0.2$ (Table 1, quoted in <b>results</b>; approximate). A run that climbs but then repeatedly
+       crashes back down, or never clears $\\sim50$, is <b>probably a bug</b>; landing at $\\sim430$ instead of $500$ is
+       <b>tuning</b> (LR, epochs, GAE $\\lambda$).</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the <b>clip</b> (Eq. 7).
+       Turn it off: replace the policy loss with the raw surrogate <code>-(ratio*adv).mean()</code>, keep network, GAE,
+       epochs, LR, and seed identical, retrain. The return should <b>rise then oscillate violently / collapse</b> (the
+       red CODEVIZ curve) because reusing each batch for several epochs lets one update push a good action's ratio huge.
+       If dropping the clip changes <i>nothing</i>, either your ratios never leave $[1-\\epsilon,1+\\epsilon]$ (too few
+       epochs, so the clip never bites) or the clip was never applied. A second knob: keep the clip but drop the
+       <b>$\\min$</b> (use only the clipped term) and confirm bad over-shot actions stop being corrected.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <ul>
+        <li><b>Return spikes up then crashes, repeatedly</b> &rarr; the clip is missing or ineffective (the ablation
+        signature), or too many epochs per batch let total KL drift far.</li>
+        <li><b>Return flat at $\\sim$random ($\\sim25$)</b> &rarr; not learning: advantages mis-signed, $\\theta_{old}$
+        not refreshed, or the value head not training (check $L^{VF}$ falls).</li>
+        <li><b>Loss / ratio NaN or exploding</b> &rarr; ratio computed in probability space (divide tiny numbers) instead
+        of $\\exp(\\log\\pi-\\log\\pi_{old})$, or LR too high &mdash; add <code>clip_grad_norm_</code>.</li>
+        <li><b>Policy collapses to one action, entropy &rarr; $0$ fast</b> &rarr; entropy bonus $c_2$ too small or
+        advantages unnormalized, so the ratio term dominates.</li>
+        <li><b>Ratios stuck exactly at $1$ across all epochs</b> &rarr; stale data / on-policy violation: you are
+        re-using $\\theta_{old}=\\theta$ or not actually updating between epochs.</li>
+       </ul></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

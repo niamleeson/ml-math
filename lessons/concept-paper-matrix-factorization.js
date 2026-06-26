@@ -294,6 +294,45 @@
        you add biases, implicit feedback, and temporal dynamics on top of plain factorization.</p>
        <p><i>These are the paper's reported numbers, quoted from the abstract and Figure 4. The numbers in
        the CODEVIZ panel below are from our own tiny simulation &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The score is <b>root-mean-square error (RMSE)</b> between predicted
+       and true ratings on a <b>held-out set of cells the model never trained on</b> &mdash; the paper's own
+       metric on the Netflix Prize data (Figure 4). Lower is better. Define "better than trivial" against two
+       baselines: the <b>global-average predictor</b> (predict $\\mu$ for every cell) and the
+       <b>bias-only baseline</b> $\\mu+b_u+b_i$ (no interaction). If your factor model does not beat
+       predict-the-mean, the dot product is contributing nothing.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>The gradient oracle:</b> the notebook's payoff
+        &mdash; assert your hand-coded $-2(e_{ui}p_u-\\lambda q_i)$ equals <code>torch.autograd</code>'s
+        gradient with <code>torch.allclose</code>; if this fails, the SGD rule is wrong and nothing downstream
+        is trustworthy. (2) <b>Recompute the worked step</b> &mdash; $p_u=[1,2]$, $q_i=[0.5,-1]$, $r=3$ gives
+        prediction $-1.5$, error $4.5$, updated $q_i=[0.7225,-0.545]$, $p_u=[1.1075,1.765]$. (3) <b>Train RMSE
+        must fall epoch over epoch</b> on the observed cells; if it rises, $\\gamma$ is too large. (4)
+        <b>Recover an exact low-rank matrix:</b> hide $30\\%$ of a true rank-$f$ matrix and fit with the same
+        $f$ &mdash; with $\\lambda=0$ the held-out RMSE should drop to $\\approx 0$ (our run: $0.0000$),
+        confirming the factors and the masking are wired correctly.</li>
+        <li><b>Expected range.</b> On real data, anchor to the paper (Figure 4 caption): the Netflix system
+        reached <b>RMSE $= 0.9514$</b> and the grand-prize bar was <b>RMSE $= 0.8563$</b> (lower is better);
+        the authors' entry was "8.43 percent better than Netflix." Treat these as the paper's reported figures,
+        not a target your toy build must hit. On the synthetic noise-free rank-2 task here, a correct build at
+        $\\lambda=0$ recovers held-out cells almost perfectly ($\\approx 0.0000$); held-out RMSE much larger
+        than train RMSE on clean low-rank data signals a bug (wrong mask, stale-vector update), not just tuning.</li>
+        <li><b>Ablation &mdash; prove regularization and the interaction earn their keep.</b> The paper's
+        central knobs are the <b>$\\lambda$ penalty</b> and the <b>dot-product interaction</b>. (a) <b>Sweep
+        $\\lambda$:</b> on <i>noisy</i> ratings the held-out RMSE should trace a <b>U</b> with its minimum at a
+        moderate $\\lambda$ (regularization helping); on the clean rank-2 toy it rises monotonically (our run:
+        $0.179$ at $\\lambda=0.05$, $0.939$ at $\\lambda=0.8$) because there is no noise to guard against &mdash;
+        that contrast is itself the check. (b) <b>Drop the interaction</b> (predict $\\mu+b_u+b_i$ only): on
+        data with real user&times;item structure the held-out RMSE should get <b>worse</b>; if it does not, the
+        learned factors carry no signal.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>All predictions collapse toward $0$ (or toward
+        $\\mu$):</b> you summed the squared error over <i>every</i> cell instead of the observed set $\\kappa$
+        &mdash; the empties swamp the loss. <b>Held-out RMSE far above train RMSE:</b> overfitting (raise
+        $\\lambda$) or train/test leakage. <b>RMSE grows across epochs / values blow up to NaN:</b> learning
+        rate $\\gamma$ too high. <b>The autograd assert fails or $p_u$ moves "too far":</b> you updated $p_u$
+        with the <i>already-updated</i> $q_i$ &mdash; clone <code>P[u]</code> first and use the old vectors for
+        both updates.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

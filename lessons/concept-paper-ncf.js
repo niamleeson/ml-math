@@ -278,6 +278,49 @@
        rather than a single stated number &mdash; consult Figures 4&ndash;6 in the paper for the precise
        curves. <i>The numbers in the CODEVIZ panel below are from our own tiny run &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Recommendation cares about <i>ranking</i>, not a probability,
+       so evaluate by <b>leave-one-out ranking</b>: hold out one true item per user, rank it against $99$
+       sampled negatives, and report <b>HR@10</b> (Hit Ratio &mdash; did the true item land in the top
+       $10$?) and <b>NDCG@10</b> (did it land <i>high</i> in the top $10$?), exactly the paper's setup on
+       MovieLens-1M and Pinterest (&sect;4.1). The no-skill baseline is <b>random ranking</b>: with $1$
+       positive among $100$ candidates, random HR@10 $\\approx 10/100 = 0.10$, and random NDCG@10 is even
+       lower. Anything near those means the model is not learning to rank.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Reproduce the worked GMF score:
+        $[0.5,-1.0,2.0]\\odot[1.0,0.5,-0.5]=[0.5,-0.5,-1.0]$, $z=1.2$,
+        $\\sigma(1.2)\\approx 0.7685$. (2) <b>Overfit a tiny batch</b>: train on a handful of positives with
+        no negatives and watch BCE drive toward $0$ (it will trivially predict $1$ &mdash; this confirms the
+        forward/backward path works, and is also <i>why</i> you need negatives). (3) Check the loss at init:
+        with random embeddings $\\hat{y}\\approx\\sigma(0)=0.5$, so BCE should start near
+        $-\\ln(0.5)\\approx 0.693$. (4) Check output shapes: the GMF branch keeps a length-$K$ vector before
+        $h$ (not a scalar) &mdash; if it is already a scalar you summed too early and lost the per-factor
+        weighting.</li>
+        <li><b>Expected range.</b> NeuMF should beat plain GMF on both metrics, with the larger gap on
+        NDCG@10 (it rewards ranking the true item higher). The paper states only a qualitative result &mdash;
+        "significant improvements of our proposed NCF framework over the state-of-the-art methods" and that
+        "deeper layers of neural networks offers better recommendation performance" (Abstract); the precise
+        HR/NDCG curves are read off Figures 4&ndash;6, so we do not quote a single decimal. On our toy
+        non-linear matrix the run shows NeuMF HR@10 $\\approx 1.00$, NDCG@10 $\\approx 0.98$ vs GMF
+        $\\approx 0.97$ / $\\approx 0.66$ (our numbers, not the paper's). <i>Rule of thumb (not a paper
+        claim):</i> HR@10 stuck near $0.10$ means it is ranking no better than random.</li>
+        <li><b>Ablation &mdash; prove the MLP earns its keep.</b> The paper's central idea is fusing a
+        non-linear MLP tower with GMF. <b>Delete the entire MLP branch</b> (and its separate embeddings),
+        leaving plain GMF (a learned inner product $\\approx$ matrix factorization), retrain with everything
+        else identical, and re-measure. HR@10 and especially NDCG@10 should <b>drop</b> (our run: NDCG@10
+        $\\approx 0.98 \\rightarrow 0.66$). If the metric does <b>not</b> fall, the MLP is not wired in, the
+        data hides no non-linear structure, or the branches share embeddings (the paper insists they be
+        separate, &sect;3.4).</li>
+        <li><b>Failure signals &amp; what they mean.</b> Model predicts <b>$1$ for everything</b>, loss
+        near $0$, recommendations useless &rarr; <b>no negative sampling</b> (implicit data is all $1$s).
+        HR@10 <b>frozen at $\\approx 0.10$</b> &rarr; not learning to rank (LR too small, embeddings not
+        updating, or negatives not resampled each epoch). <b>NaN loss</b> &rarr; LR too high, or you applied
+        a sigmoid <i>and</i> fed the result to <code>BCEWithLogitsLoss</code> (double sigmoid &mdash; pass
+        the raw logit). NeuMF <b>no better than GMF</b> &rarr; MLP branch dead, or you <i>added</i> instead
+        of <b>concatenated</b> the branch outputs / MLP inputs, mixing channels that should stay distinct.
+        Train loss great, ranking bad &rarr; you are trusting the loss instead of HR/NDCG &mdash; a lower
+        BCE does not guarantee better ranking.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

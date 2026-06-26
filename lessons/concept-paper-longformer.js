@@ -293,6 +293,45 @@
        <p>These are the paper's own large-scale numbers. Every number in the CODE/CODEVIZ below is instead
        <b>our own small run</b>, labeled as such — it demonstrates the cost saving and the local match, not the
        paper's benchmark.</p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Two things must hold for a working Longformer: (1) the sparse pattern
+       is <b>cheap</b> &mdash; scored-pair count grows like $O(n\\times w)$, not $O(n^2)$; and (2) it is
+       <b>accurate</b> on the paper's tasks. The paper's bars (quoted, with source): character-LM
+       <b>1.10 BPC on text8</b> and <b>1.00 BPC on enwik8</b> (small), <b>0.99 BPC on enwik8</b> (large)
+       (Section 4.2); and document tasks <b>81.9 F1 on WikiHop</b>, <b>77.3 F1 on TriviaQA</b> (Section 6). BPC
+       lower-is-better (trivial floor: $\\log_2 V$ bits for a uniform guess over a $V$-symbol vocabulary,
+       $=8$ for raw bytes); F1 higher-is-better on $0$&ndash;$100$, with a copy/most-frequent-answer baseline as
+       the no-skill mark. The cost baseline is full attention's $n^2$ pairs.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Pair count:</b> with $w=4$, $n=8$ the band mask must
+        have $34$ live pairs (interior rows $5$, edges fewer), $n=512$ &rarr; $\\approx 2048$ &mdash; check it
+        matches $\\sum_{ij}\\mathbb{1}[|i-j|\\le w/2]$. (2) <b>Rows sum to 1:</b> after masking to $-\\infty$ and
+        softmax, every attention row must sum to $1.0$ &mdash; the classic "masked <i>before</i> softmax" check;
+        if a row doesn't, you zeroed weights after softmax. (3) <b>Window = full when $w\\ge 2n$:</b> set the
+        window wide enough to allow all pairs and the windowed output must equal full attention exactly. (4)
+        <b>Global symmetry:</b> a global token's row AND column must both be fully live &mdash; assert
+        <code>allowed[g,:].all()</code> and <code>allowed[:,g].all()</code>. (5) <b>Local match:</b> on a
+        local-signal toy sequence, full attention's in-window weight mass should be near $1$, and the renormalized
+        windowed map should differ from full by only a small fraction.</li>
+        <li><b>Expected range.</b> A correct large-scale build should land near the paper's numbers (approximate,
+        Section 4.2/6): $\\approx 1.00$ BPC on enwik8, $\\approx 81.9$ F1 WikiHop, $\\approx 77.3$ F1 TriviaQA.
+        On the toy run, the windowed-vs-full weight gap on in-window neighbours should be a <i>small</i> fraction
+        (a rule of thumb, not a paper claim) and pair-counts should match the $n\\times w$ line. BPC near the
+        $8$-bit byte floor, or F1 near the copy baseline, means the model isn't learning &mdash; a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central knob is the <b>window size $w$</b>
+        (and the receptive field $\\ell\\times w$ it buys). Shrink it (e.g. $w{=}8\\to w{=}2$ in a 3-layer model:
+        reach $24\\to 6$ tokens) and confirm tasks needing long-range links <b>drop</b> &mdash; if nothing changes,
+        the long-range signal wasn't flowing through the window anyway. Second, <b>remove global attention</b> on a
+        QA task (drop the question/[CLS] global tokens): F1 should fall, since cross-document signal can no longer
+        cross in one layer. If neither hurts, the sparse pattern isn't carrying the task.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Attention rows not summing to $1$ &rarr; masked after
+        softmax instead of before. Receptive field too short / model can't link distant tokens &rarr; $w$ vs
+        $\\tfrac{1}{2}w$ off-by-one, or relying on one layer to see far (it only reaches $\\pm\\tfrac{1}{2}w$).
+        A global token everyone ignores &rarr; you set its row but forgot its column (a sink no one reads).
+        Memory still $O(n^2)$ at long $n$ &rarr; you materialized the full $n\\times n$ table (our teaching code
+        does this on purpose) instead of the banded kernel of Section 3.2. Cost growing quadratically in the plot
+        &rarr; the band mask isn't actually limiting keys per row.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

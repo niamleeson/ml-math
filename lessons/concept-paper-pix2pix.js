@@ -298,6 +298,60 @@ $$ G^{*} = \\arg\\min_{G}\\max_{D}\\; \\mathcal{L}_{cGAN}(G,D) + \\lambda\\,\\ma
        vs <b>0.8%</b> for an L1 baseline; on colorization <b>22.5%</b> on ImageNet (&sect;4).</p>
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny run on a toy task &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> pix2pix produces images, so "working" is measured two ways. The paper's
+       quantitative metric is the <b>FCN-score</b> on <b>Cityscapes labels&rarr;photo</b>: run an off-the-shelf
+       segmentation net on the generated street scene and report <b>per-pixel accuracy, per-class accuracy, and
+       class IOU</b> (higher = the fake scene is more recognizable). For a single-mode toy task a cheaper proxy is
+       <b>interior sharpness</b> &mdash; the spatial standard deviation inside the shape ($0=$ flat gray blur,
+       $\\approx$ target's std $=$ committed). The baselines to beat: the <b>L1-only</b> ablation
+       (per-pixel acc. <b>0.42</b>, per-class <b>0.15</b>, IOU <b>0.11</b>) and <b>cGAN-only</b> (<b>0.57 / 0.22 /
+       0.16</b>); the full <b>L1+cGAN</b> should top them (<b>0.66 / 0.23 / 0.17</b>, Table 1, &sect;4.1).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Replay the worked arithmetic</b> (notebook cell 0): $|0.7-(-0.3)|=1.0$, $100\\times1.0=100$,
+        $\\log 0.9=-0.1054$, $\\log 0.8=-0.2231$, patch equilibrium $-\\log 0.5=0.6931$.</li>
+        <li><b>Shapes.</b> $G$'s output matches the target ($1\\times H\\times W$, pixels in $[-1,1]$ from
+        $\\tanh$); $D$'s output is a <b>spatial grid</b> of logits (e.g. $4\\times4$), <b>not</b> a single scalar &mdash;
+        if it is $1\\times1$ you flattened the PatchGAN into a whole-image discriminator.</li>
+        <li><b>$D$ sees the pair.</b> Assert $D$'s input has the concatenated channels of
+        $\\text{cat}([x,\\text{output}])$ (e.g. 2 here, 6 for RGB); a single-image input loses the conditioning.</li>
+        <li><b>GAN loss at init.</b> Before training, each patch is a coin-flip, so the BCE per patch sits near
+        $-\\log 0.5 = \\log 2 \\approx 0.693$ &mdash; the same value a converged $D$ returns (rule of thumb).</li>
+        <li><b>Overfit one pair.</b> With L1 on a <i>single</i> fixed pair the reconstruction loss should fall toward
+        $0$; if it cannot, the U-Net (skips/upsampling) is mis-wired.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On our toy ambiguous-fill task (not the paper), <b>L1-only</b> hedges to a flat
+       gray &mdash; interior std collapses to $\\approx$<b>0.000</b> vs the target's <b>1.004</b> &mdash; and its L1
+       loss parks at an irreducible floor $\\approx$<b>0.317</b> it cannot beat by averaging. <b>L1+PatchGAN</b>
+       commits to one sharp stripe phase &mdash; interior std $\\approx$<b>1.004</b>, matching the target &mdash;
+       and its L1 can dip below the floor (to $\\approx$<b>0.198</b>) by picking a single mode. On Cityscapes, anchor
+       to Table 1: L1+cGAN $\\approx$<b>0.66</b> per-pixel acc. (&sect;4.1); being far under the L1-only <b>0.42</b>
+       baseline is "probably a bug," small gaps are "tuning."</p>
+       <p><b>4. Ablation &mdash; prove each term earns its keep.</b> The central knobs are the <b>two loss terms</b>.
+       (a) Drop the <b>GAN term</b> (L1 only): outputs must go <b>blurry/gray</b> on the multimodal target and
+       sharpness must <b>drop</b> (our run: std $1.004\\to0.000$) &mdash; this is the paper's headline ablation.
+       (b) Drop the <b>L1 term</b> (GAN only): outputs stay sharp but drift in content / show artifacts and FCN-score
+       falls. (c) Drop the <b>U-Net skips</b> or feed $D$ <b>only the output</b> (not the pair): faithfulness to the
+       input collapses. If turning off the GAN does <i>not</i> reintroduce blur, the adversarial term was never
+       wired into $G$'s step.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Output is blurry/gray on an ambiguous target</b> &rarr; the GAN term is missing from $G$'s loss (or
+        weighted to nothing); only L1 is acting, and L1's optimum on a multimodal target <i>is</i> the gray average.</li>
+        <li><b>Sharp but wrong content / ignores the input</b> &rarr; $D$ is fed only the output (lost conditioning),
+        or $\\lambda$ is too small so L1 cannot anchor faithfulness.</li>
+        <li><b>$G$ loss won't go down and you panic</b> &rarr; expected: a converged PatchGAN parks each patch's BCE
+        near $\\log 2\\approx0.693$, <i>not</i> $0$. Track the <b>L1</b> term and image quality, not the GAN term, for
+        progress.</li>
+        <li><b>Loss NaN / training diverges</b> &rarr; learning rate too high or missing <code>.detach()</code> on
+        the fake in the $D$ step (the $D$ update leaks into $G$).</li>
+        <li><b>$D$ separates real from fake instantly and $G$ never learns</b> &rarr; output range mismatch ($\\tanh$
+        is $[-1,1]$; normalize targets to $[-1,1]$ or $D$ wins on scale alone).</li>
+       </ul>
+       <p><i>The toy numbers (std $0.000$ vs $1.004$, L1 floor $\\approx0.317$) are our small run; the Table 1 FCN-scores
+       (0.42 / 0.57 / 0.66, &sect;4.1) and $\\lambda=100$ are the paper's. The init-loss and overfit-one-pair checks
+       are rules of thumb.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

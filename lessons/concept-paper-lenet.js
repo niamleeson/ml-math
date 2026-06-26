@@ -299,6 +299,46 @@
        recipe. The accuracy in the CODE / CODEVIZ below is from our own small run on an 8,000-image MNIST
        subset for a handful of epochs &mdash; not the paper's result.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The metric is <b>test-set classification accuracy</b> (equivalently
+       error rate) on held-out <b>MNIST</b> digits &mdash; the paper's own benchmark. The trivial baseline is
+       <b>10% accuracy</b> (random guess among 10 digit classes) / ~11% from always predicting the majority
+       class; anything near there means the net is not learning. The paper's bar to clear is its reported
+       <b>0.95% test error ($\\approx$ 99.05% accuracy)</b> on the full MNIST test set (&sect;III) &mdash; that is
+       the paper's number, on its full training recipe, not our small-subset run.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) <b>Shape trace:</b> push a <code>(2,1,32,32)</code>
+         tensor through and confirm the spatial side goes <b>32&rarr;28&rarr;14&rarr;10&rarr;5&rarr;1</b> and the
+         logits are <code>(2,10)</code> &mdash; if C5's map is not $1\\times1$, an earlier size is off (often
+         feeding 28&times;28 instead of resizing to 32&times;32). (2) <b>Loss at init:</b> with 10 balanced
+         classes the cross-entropy before any training should be $\\approx -\\ln(1/10)=\\ln 10\\approx 2.30$; a
+         wildly different value flags a bad init or a label/logit mismatch. (3) <b>Overfit a single batch:</b>
+         train on one mini-batch for many steps &mdash; the loss should fall to $\\approx 0$ and train accuracy
+         hit 100%. If it cannot memorize one batch, the architecture or the training loop is broken, not
+         under-tuned.</li>
+         <li><b>Expected range.</b> On our small 8,000-image subset for a few epochs, a correct LeNet-5 reaches
+         <b>~95% test accuracy</b> (our CODEVIZ run, not the paper's figure); the parameter-matched MLP trails at
+         ~91%. On full MNIST with the paper's recipe the target is ~99% (its 0.95% error). Stuck around 10&ndash;20%
+         is a <b>bug</b>; landing at 90&ndash;94% on the subset is <b>tuning</b> (learning rate, epochs), not a
+         broken build.</li>
+         <li><b>Ablation &mdash; prove the convolution earns its keep.</b> The paper's central claim is that
+         <i>weight-sharing across positions</i> is the right prior for images. Replace the entire conv/pool stack
+         with a parameter-matched fully-connected MLP (flatten 32&times;32 &rarr; one hidden layer &rarr; 10),
+         train on the <i>same</i> data, and confirm test accuracy <b>drops</b> (the conv net should win on the
+         small subset). If the MLP matches or beats LeNet-5, either the conv layers are not wired in, the
+         parameter counts are not actually matched, or the dataset is too easy to expose the gap. A second knob:
+         swap <code>AvgPool2d</code> for the trainable-coefficient sub-sampling and confirm it barely changes the
+         result (a faithful simplification).</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>Shape error at C5/flatten</b> &rarr; inputs not
+         resized to 32&times;32, or a conv counted as removing 5 (or 0) instead of 4 from each side. <b>Accuracy
+         frozen at ~10%</b> &rarr; labels shuffled, learning rate so high the loss diverged, or no gradient
+         reaching the conv filters. <b>Loss NaN</b> &rarr; learning rate too high / numerical blow-up; lower it.
+         <b>Train accuracy high but test accuracy low</b> &rarr; overfitting the small subset (expected to some
+         degree here) or a train/test leak. <b>Both nets near-identical</b> &rarr; the ablation is not isolating
+         structure (capacity mismatch or data too easy). The CODEVIZ line chart shows the healthy pattern: LeNet-5
+         climbing above the MLP as epochs pass.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives already ship in PyTorch, so you

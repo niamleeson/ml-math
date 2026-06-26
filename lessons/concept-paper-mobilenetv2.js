@@ -267,6 +267,57 @@
        <p><i>These are the paper's reported figures, quoted from its tables. The numbers in the CODEVIZ panel below
        are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The primary metric is <b>ImageNet top-1 classification accuracy</b>
+        (single-crop), reported against <b>parameter count</b> and <b>multiply-adds</b> &mdash; this is an
+        efficiency paper, so a number is only good <i>relative to its cost</i>. The "better than trivial"
+        floor is $1/1000 = 0.1\\%$ (random guess on 1000 ImageNet classes); the real baseline to beat is
+        <b>MobileNetV1 at 70.6% / 4.2M params / 575M mult-adds</b> (Table&nbsp;4) &mdash; V2 must reach higher
+        accuracy at <i>fewer</i> of both. For your toy build the metric is test accuracy on the held-out split,
+        floored at $1/K$ (here $1/12\\approx 8.3\\%$ for the 12-class toy task).</p>
+       <p><b>2. Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>Shape trace.</b> Push one batch through a block and assert the operator sequence
+        $h\\times w\\times d' \\to h\\times w\\times t d' \\to \\tfrac{h}{s}\\times\\tfrac{w}{s}\\times t d' \\to
+        \\tfrac{h}{s}\\times\\tfrac{w}{s}\\times d''$ (Table&nbsp;1) &mdash; the wide middle must be exactly
+        $t\\,d'$ channels.</li>
+        <li><b>FLOP unit test.</b> Recompute the worked example ($14\\times14$, $d'=d''=24$, $t=6$, $k=3$) and
+        assert the layer-sum $677376+254016+677376 = 1608768$ equals the closed form
+        $h\\,w\\,d'\\,t(d'+k^2+d'')$. A known-answer check that your block matches &sect;3.2.</li>
+        <li><b>Skip-gate check.</b> Assert the residual add fires <i>only</i> when <code>stride==1 and in_ch==out_ch</code>;
+        a stride-2 or width-changing block must run without the skip (a shape mismatch there would crash).</li>
+        <li><b>Overfit a single batch.</b> Train both nets on ~one batch and confirm the loss drops toward $0$;
+        cross-entropy at init should sit near $-\\ln(1/K)$ ($\\approx 2.48$ for $K=12$). If it can't memorize a
+        handful of examples, the block is mis-wired.</li>
+       </ul>
+       <p><b>3. Expected range.</b> The paper's anchor is <b>72.0% top-1 on ImageNet</b> (Table&nbsp;4,
+        approximate, cited above) at 3.4M params / 300M mult-adds &mdash; you will not reproduce that on a toy
+        run, so judge instead by the <i>gap</i>: the linear-bottleneck net should clearly beat its ReLU twin.
+        In our small run the linear net hit ~0.77 and the ReLU net ~0.43 on the 12-class toy task (our numbers,
+        not the paper's). As a rule of thumb (not a paper claim): a gap under a few points means the bottleneck
+        isn't actually thin enough to expose the effect (widen less / make the task harder); the two nets landing
+        identical means the ablation knob isn't wired.</p>
+       <p><b>4. Ablation &mdash; prove the linear bottleneck earns its keep.</b> The central idea is the
+        <b>linear (no-ReLU) projection on the thin bottleneck</b>. Turn it OFF by adding an <code>nn.ReLU6</code>
+        after the project $1\\times1$'s BatchNorm (the <code>linear=False</code> twin), keeping depth, widths,
+        $t$, optimizer, data, and seed identical &mdash; note both nets have the <i>same</i> parameter count (a
+        ReLU adds none). Test accuracy must <b>drop</b>. If it doesn't, either the projection wasn't actually
+        linear in the baseline (a stray activation) or your bottlenecks are too wide to feel the collapse. This
+        is the paper's own &sect;3.3 / Fig.&nbsp;6a check that "a non-linearity in the bottleneck hurts."</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Accuracy stuck near $1/K$ (chance).</b> Net not learning &mdash; LR too low, frozen weights, or
+        labels shuffled relative to inputs.</li>
+        <li><b>Loss NaN.</b> LR too high (momentum amplifies it) or a missing BatchNorm; lower $\\varepsilon$
+        and confirm every conv is followed by its BN.</li>
+        <li><b>Block far more expensive than expected.</b> You dropped <code>groups=hid</code> on the depthwise
+        conv, turning it into a full convolution on the wide tensor &mdash; the FLOP unit test catches this.</li>
+        <li><b>Linear and ReLU twins tie.</b> The bottleneck isn't really linear (stray ReLU on the baseline) or
+        not thin enough &mdash; the ablation can't show its effect.</li>
+        <li><b>Runtime crash on the skip add.</b> A residual was added across a stride-2 / width-changing block;
+        re-gate the add on <code>stride==1 and in_ch==out_ch</code>.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: convolutions, BatchNorm, and ReLU6 already ship in

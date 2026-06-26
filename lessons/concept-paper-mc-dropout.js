@@ -305,6 +305,45 @@ $$ \\log p(\\mathbf{y}^*\\mid\\mathbf{x}^*, \\mathbf{X}, \\mathbf{Y}) \\;\\appro
        <p><i>These are the paper's own statements, quoted from the abstract. The specific numbers in the CODE
        and CODEVIZ panels below are from our own tiny run on a 1-D regression problem &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> Two things to score. (1) <b>Predictive accuracy:</b> the MC-dropout
+       <i>mean</i> (Eq. 6) should match a normal trained network's predictions &mdash; report <b>RMSE</b> on a
+       held-out set, and <b>predictive log-likelihood</b> (Eq. 8, the metric the paper reports improving over
+       prior methods). (2) <b>Uncertainty quality:</b> the real claim is that the <i>spread</i> tracks where
+       data is missing &mdash; measure the mean predictive <b>standard deviation in-data vs in the
+       extrapolation tails</b> and check the ratio is well above 1. The "better than trivial" baseline for the
+       uncertainty is a <b>constant std</b> (same spread everywhere): a useful estimate must rise where the
+       network leaves the training range.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Recompute the worked example</b> &mdash; outputs
+        $[6,10,10,14]\\to$ mean $10.0$, variance $8.0$, std $\\approx 2.83$; the first code cell does this.
+        (2) <b>Dropout really is ON at test time:</b> run the same input twice in <code>net.train()</code> and
+        confirm the two outputs <b>differ</b> &mdash; if they are identical you are silently in eval mode.
+        (3) <b>The eval()-gives-zero check:</b> the same $T$ passes under <code>net.eval()</code> must give
+        std exactly $0$ (the notebook prints $0.000000$) &mdash; a positive value there means dropout did not
+        switch off, i.e. it was never on. (4) <b>$T$ is large enough:</b> the mean and std should stabilise as
+        you raise $T$; with $T=200$ they should barely move on a re-run.</li>
+        <li><b>Expected range.</b> The paper's own claims (abstract) are qualitative for our setting &mdash;
+        "a considerable improvement in predictive log-likelihood and RMSE compared to existing state-of-the-art
+        methods," and figures where uncertainty <b>grows as inputs move away from the training data</b>. That
+        rising-spread shape is the target; we have no single paper number to hit. In our 1-D run the mean std
+        is about <b>0.10 in-data</b> and about <b>0.40 in the extrapolation tails</b> (roughly $4\\times$) &mdash;
+        treat the $\\approx 4\\times$ as an approximate rule of thumb, not a paper claim. A ratio near $1$
+        (flat std) is "probably a bug or near-zero dropout"; a ratio of a few is the expected effect.</li>
+        <li><b>Ablation &mdash; prove the random masks are the source of the signal.</b> The central knob is
+        <b>keeping dropout ON at test time</b>. Switch the $T$ passes to <code>net.eval()</code> (everything
+        else identical): the std must <b>collapse to $0$ everywhere</b>, including far outside the data. If the
+        uncertainty does <i>not</i> drop to zero, dropout was not actually active in the train-mode passes
+        either &mdash; so the spread you saw was an artifact. A second knob: shrink the dropout rate $p$ toward
+        $0$ and confirm the in-data/extrapolation std gap shrinks too.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Std is $0$ (or constant) everywhere:</b> you called
+        <code>net.eval()</code> for the passes &mdash; the number-one mistake &mdash; or the dropout rate is
+        near zero / dropout is in the wrong place. <b>Std flat but nonzero, no rise in the tails:</b> too few
+        passes (raise $T$), or the network barely fit the data. <b>The mean prediction is noisy / unstable
+        across re-runs:</b> $T$ too small. <b>A wide interpolation GAP between two clusters shows little
+        uncertainty:</b> expected &mdash; MC dropout reliably flags <i>extrapolation</i> outside the range, not
+        every interior hole, so do not read a quiet gap as a broken estimate.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

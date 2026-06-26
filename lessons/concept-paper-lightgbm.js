@@ -311,6 +311,52 @@ $$ \\text{leaf-wise growth: each step split } \\ell^*=\\arg\\max_{\\ell\\in\\tex
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;5.1 / Tables 2-3. The
        numbers in the CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This paper sells <b>speed at matched accuracy</b>, so you evaluate on
+       <i>two</i> axes at once: (1) a <b>predictive metric</b> &mdash; AUC for classification, NDCG@10 for the
+       ranking sets &mdash; on a held-out test set, and (2) <b>training time</b> (per-iteration). The paper's
+       benchmarks are five public datasets (Allstate, Flight Delay, LETOR, KDD10, KDD12; Table 1). The baseline
+       that defines "working" is <code>lgb_baseline</code>: the same histogram GBDT <i>without</i> GOSS/EFB. GOSS
+       earns its keep only if it is <b>roughly as accurate</b> as that baseline while training on far fewer rows
+       &mdash; matching its accuracy at full row count is the trivial no-win, and accuracy far below it is a
+       broken sampler.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) <b>Recompute the worked example</b> by hand against the
+         lesson: $\\text{fact}=\\frac{1-a}{b}=4$, left weighted sum $0.22$ ($n_l{=}3$), right sum $2.8$
+         ($n_r{=}1$), $\\tilde V(d{=}5)=0.78561$ &mdash; a mismatch means a bug in the sampler or the weighting.
+         (2) <b>Weight bookkeeping:</b> after sampling, every top-set row has weight $1$ and every sampled row has
+         weight $\\frac{1-a}{b}$; the total weight $\\approx n$ (the re-weighting is supposed to preserve the data
+         "mass"). (3) <b>Rows-per-tree count:</b> each tree should be fit on $\\approx(a+b)\\,N$ rows &mdash; if it
+         is still using all $N$, GOSS is not actually on (check <code>boosting='goss'</code>,
+         <code>top_rate</code>/<code>other_rate</code>). (4) <b>EFB lossless-merge check:</b> for a bundle value,
+         the offset must be reversible &mdash; value $7$ &rarr; feature A active, value $25$ &rarr; feature B
+         active with value $25-10=15$.</li>
+         <li><b>Expected range.</b> On our tiny synthetic run (20k rows, 30 features, 100 trees) GOSS lands within
+         <b>~0.003 test accuracy</b> of the full-data model while each tree sees ~40% of the rows (our CODEVIZ,
+         not the paper's figure). At the paper's scale the target is the reported headline: "<b>up to over 20
+         times</b>" faster "while achieving almost the same accuracy" (abstract), with per-iteration speed-ups of
+         <b>21x, 6x, 1.6x, 14x, 13x</b> on Allstate/Flight Delay/LETOR/KDD10/KDD12 (&sect;5.1) at AUC/NDCG within
+         noise (Table 3). A GOSS accuracy gap of more than ~1 AUC point vs the baseline is a <b>bug</b> (usually
+         the missing weight); a tiny gap is the expected, controlled approximation error.</li>
+         <li><b>Ablation &mdash; prove GOSS earns its keep.</b> Flip <i>only</i> the boosting mode
+         (<code>'gbdt'</code> vs <code>'goss'</code>), holding trees, depth, learning rate, seed, and data fixed.
+         GOSS should hold accuracy while fitting each tree on $\\approx(a+b)\\,N$ rows. The sharper ablation is on
+         the <b>$\\frac{1-a}{b}$ weight itself</b>: drop it (just down-sample small-gradient rows with weight $1$)
+         and the split scores become biased toward the large-gradient rows &mdash; accuracy should <b>fall</b>
+         and trees should split in the wrong place. If removing the weight changes nothing, the small-gradient
+         rows are not contributing, so GOSS reduces to plain top-$a$ selection. (For EFB, ablate by disabling
+         bundling on sparse one-hot data and watch histogram-build time rise.)</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>GOSS accuracy well below the full-data baseline</b>
+         &rarr; the $\\frac{1-a}{b}$ weight is missing or wrong (biased split statistics) &mdash; the #1 GOSS bug.
+         <b>Only one gradient tail kept</b> &rarr; you ranked by signed $g_i$ instead of $|g_i|$, so large-negative
+         rows were discarded. <b>Trees deep, lopsided, and overfitting tiny data</b> &rarr; leaf-wise growth
+         uncapped; set <code>num_leaves</code>/<code>max_depth</code>/<code>min_child_samples</code>. <b>EFB gives
+         no speed-up</b> &rarr; the data is dense, so there is nothing mutually-exclusive to bundle (expected; the
+         win there comes from histograms + GOSS). <b>Rows-per-tree still equals $N$</b> &rarr; GOSS is not engaged.
+         The two CODEVIZ bars &mdash; accuracy nearly equal, rows-per-tree roughly halved &mdash; are the healthy
+         signature.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the gradient-boosting + decision-tree primitives are

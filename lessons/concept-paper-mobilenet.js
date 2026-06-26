@@ -258,6 +258,44 @@
        <p><i>These are the paper's reported figures, quoted from its tables. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> MobileNet is a <i>cost/accuracy trade</i>, so you report three
+       numbers together: <b>top-1 accuracy</b> (the paper uses ImageNet), <b>multiply-adds</b>, and
+       <b>parameter count</b> &mdash; for the depthwise-separable net <i>versus</i> a matched full-convolution
+       net (same depth/widths). The baselines from the paper's Table&nbsp;4 ablation: full-conv MobileNet
+       <b>71.7%</b> at <b>4866</b>M mult-adds / <b>29.3</b>M params, vs depthwise-separable <b>70.6%</b> at
+       <b>569</b>M / <b>4.2</b>M &mdash; about <b>1 point</b> of accuracy for ~8.6x compute and ~7x parameter
+       savings. "Better than trivial" for a $K$-class head is accuracy $\\gt 1/K$ (random guessing).</p>
+       <ul>
+        <li><b>Sanity checks before training.</b> (1) Recompute the worked example: $D_K{=}3,M{=}3,N{=}4,D_F{=}8$
+        gives standard $6912$, depthwise $1728$, pointwise $768$, separable $2496$, ratio $0.3611$ &mdash; and
+        confirm it equals $\\tfrac1N+\\tfrac1{D_K^2}=\\tfrac14+\\tfrac19$. If your counted ratio doesn't match the
+        closed form, your cost ledger is wrong. (2) Shape test: a <code>DepthwiseSeparable(in,out)</code> block
+        on a $C{\\times}H{\\times}W$ input must return $out{\\times}H{\\times}W$ (padding keeps $D_F$). (3) Confirm
+        the depthwise conv has <code>groups=in_ch</code> &mdash; check its weight tensor has $in\\_ch$ (not
+        $in\\_ch^2$) filters; that single fact is what buys the saving. (4) Overfit a tiny batch and watch the
+        loss reach ~0, so the block can actually learn.</li>
+        <li><b>Expected range.</b> The separable net should reach <i>near</i> the full-conv net's accuracy &mdash;
+        the paper's ~1-point gap on ImageNet; our toy run is $0.942$ separable vs $1.000$ full-conv. A few points
+        below full-conv is the expected trade; collapsing to chance ($\\approx 1/K$) is a bug. The cost reduction
+        should be <i>several-fold</i> but <i>not</i> a flat 9x on a small net: the first stage has only $M{=}3$
+        input channels where $\\tfrac1N$ dominates, so expect ~5-7x (our run: 5.1x params, 6.9x mult-adds). The
+        full 8-9x is the deep-layer limit where $N$ is in the hundreds.</li>
+        <li><b>Ablation &mdash; prove the factorization earns its keep.</b> The central idea is splitting the
+        convolution. Swap each depthwise-separable block for one ordinary $3\\times3$ <code>nn.Conv2d</code>
+        (everything else identical) and re-measure: parameters and mult-adds should jump several-fold while
+        accuracy barely moves &mdash; reproducing Table&nbsp;4. If the separable net's cost is <i>not</i> far
+        lower, you almost certainly dropped <code>groups=in_ch</code> and built two standard convs.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>No cost saving vs full-conv</i> &rarr; missing
+        <code>groups=in_ch</code> (the depthwise conv is secretly mixing channels). <i>Accuracy far below
+        full-conv (near $1/K$)</i> &rarr; BatchNorm/ReLU misplaced, or <code>bias=False</code> with no BatchNorm
+        so the layer has no offset (put BN+ReLU after <i>both</i> the depthwise and pointwise conv, Fig.&nbsp;3).
+        <i>Reported "9x" but measured ~3x</i> &rarr; you're on a shallow/narrow layer where small $N$ makes
+        $\\tfrac1N$ dominate &mdash; not a bug, the expected limit. <i>Params and FLOPs shrink by the same
+        ratio</i> &rarr; you conflated the two ledgers; FLOPs carry the extra $D_F^2$ factor and shrink
+        differently.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the convolution primitive already ships in PyTorch, so

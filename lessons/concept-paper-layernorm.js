@@ -262,6 +262,45 @@
        with previously published techniques." (Source: arXiv:1607.06450 abstract.) Headline speed/accuracy numbers
        from the experiments are omitted here to avoid misquoting; the numbers in our CODEVIZ are our own small run.</p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> LayerNorm is a primitive, not a model &mdash; so the metric is not
+       accuracy, it is <b>numerical agreement with the reference</b>. Your <code>my_layernorm</code> is correct
+       iff <code>torch.allclose(my_layernorm(x, g, b), nn.LayerNorm(H)(x), atol=1e-6)</code> is <code>True</code>.
+       The "no-skill baseline" is the identity map: a do-nothing LayerNorm that returns its input must FAIL this
+       check (if it passes, your input was already normalized by accident &mdash; use random $x$ with non-trivial
+       $g,b$).</p>
+       <ul>
+         <li><b>Sanity checks before the allclose.</b> (1) <b>Shapes:</b> output shape equals input shape exactly.
+         (2) <b>Statistics of the normalized value</b> (before $g,b$): each row's mean $\\approx 0$ and biased
+         standard deviation $\\approx 1$ &mdash; check <code>xhat.mean(-1)</code> is $\\approx 0$ and
+         <code>xhat.var(-1, unbiased=False)</code> is $\\approx 1$ for every row. (3) <b>Known-answer unit test:</b>
+         feed <code>[2,4,4,6]</code> with $g{=}2,b{=}1$ and confirm $\\approx[-1.828,1,1,3.828]$ (the worked
+         example). (4) <b>Constant-row test:</b> a row of all-equal values must NOT produce NaN &mdash; that
+         verifies the $\\epsilon$ inside the square root is wired in.</li>
+         <li><b>The batch-size-independence test (this paper's whole claim).</b> Run the same example alone (batch
+         1) and inside a batch of 8; the output for that example must be <b>bit-for-bit identical</b>
+         (<code>allclose</code>). This is the property the abstract promises: "exactly the same computation at
+         training and test times," any batch size.</li>
+         <li><b>Expected range.</b> A correct build matches <code>nn.LayerNorm</code> to floating-point tolerance
+         (<code>atol=1e-6</code>); there is no "close enough." If allclose is <code>False</code> by more than
+         $\\sim10^{-6}$ it is a <b>bug</b>, not tuning &mdash; this paper reports qualitative claims (Abstract,
+         arXiv:1607.06450), not a single accuracy number to hit.</li>
+         <li><b>Ablation &mdash; prove the central idea earns its keep.</b> The central idea is <i>which axis you
+         reduce over</i>. Switch the reduction from the feature axis (dim&nbsp;-1) to the batch axis (dim&nbsp;0)
+         and the batch-size-independence test must <b>break</b>: the example's output now shifts when you change
+         the batch (you have turned LN into BN). If flipping the axis changes nothing, you were never reducing
+         over features in the first place. A second ablation: drop $g,b$ (force $g{=}1,b{=}0$) &mdash; the
+         normalized statistics (mean 0, std 1) must still hold; only the learned rescale is gone.</li>
+         <li><b>Failure signals &amp; what they mean.</b> <b>allclose False at batch 8 but the per-row mean/std
+         look right</b> &rarr; biased-vs-unbiased variance mismatch (use <code>unbiased=False</code>, divide by
+         $H$) or wrong $\\epsilon$. <b>allclose passes at batch 8 but the batch-1 test differs</b> &rarr; you are
+         reducing over the wrong axis (the BN bug &mdash; the #1 mistake in <code>pitfalls</code>). <b>NaN
+         output</b> &rarr; missing $\\epsilon$ on a constant row, or $\\sqrt{\\text{negative}}$ from a sign error.
+         <b>gain/bias shape error</b> &rarr; <code>normalized_shape</code> does not match the last dim $H$. The
+         GREEN-bars-identical, RED-bars-divergent picture in the CODEVIZ is exactly what a correct LN vs the BN
+         failure mode looks like.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>nn.LayerNorm</code> in one line. Here you

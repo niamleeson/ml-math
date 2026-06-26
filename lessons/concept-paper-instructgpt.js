@@ -258,6 +258,38 @@ $$ \\text{objective}(\\phi) = \\mathbb{E}_{(x,\\,y)\\sim D_{\\pi_\\phi^{\\text{R
        numbers in the CODE and CODEVIZ panels below are from our own tiny toy run &mdash; not the paper's reported
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The system's real test is a <i>human win-rate</i>: on a held-out prompt
+        distribution, how often labelers prefer your model's output to a baseline's. The paper's headline is that
+        "outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3" (Abstract)
+        &mdash; so the no-skill bar is the <b>50% coin-flip</b> win-rate against the SFT (or base) model, and beating
+        the much larger un-aligned model is the bar that matters. In the toy build, the stand-in metric is the
+        <i>true preferred-output rate</i> (using the hidden ground-truth preference the reward model only estimates);
+        random $= 0.5$.</p>
+       <p><b>Sanity checks before the full run.</b> (1) The reward model is binary cross-entropy on the score gap, so
+        its loss at init should be near $-\\ln 2 \\approx 0.69$ and its held-out pair accuracy near $0.5$ &mdash; if
+        accuracy starts much above chance you have label leakage. (2) Re-run the worked example as a unit test:
+        $r(y_w)=2.0,\\, r(y_l)=0.5 \\Rightarrow \\sigma(1.5)=0.8176$, loss $=0.2014$. (3) Confirm the (winner, loser)
+        ordering by swapping a pair &mdash; the loss must jump (e.g. gap $-1.5$ gives loss $1.70$). (4) In Stage 3,
+        check the reward model and SFT model are <b>frozen</b> (their parameters are not in the policy optimizer).</p>
+       <p><b>Expected range.</b> The reward model should learn the preference pairs easily: in our toy run held-out
+        accuracy climbs $\\approx 0.65 \\to 0.99$, and with the KL penalty the policy's true preferred-rate rises from
+        $\\approx 0.5$ toward $1.0$ while staying close to SFT. Those are our small-run numbers, approximate &mdash;
+        not a paper claim; the paper's own evidence is the human win-rate above. Rule of thumb: a reward model stuck
+        near $0.5$ accuracy after training is a bug, not tuning.</p>
+       <p><b>Ablation &mdash; the KL penalty earns its keep.</b> The paper's central safeguard is the per-token KL
+        penalty to $\\pi^{\\text{SFT}}$. Set $\\beta = 0$ and re-run Stage 3, everything else identical: the
+        <i>measured</i> reward still rises but the policy drifts far from SFT (in our run KL $\\approx 12$ with the
+        penalty vs $\\approx 26$ without) and over-optimizes directions the reward model never judged, while true
+        quality stops improving. If dropping $\\beta$ changes nothing, the KL term is not wired in.</p>
+       <p><b>Failure signals.</b> Reward-model accuracy stuck at $\\approx 0.5$ &rarr; labels shuffled or
+        winner/loser order swapped in Equation 1. Loss NaN &rarr; learning rate too high. Policy KL to SFT exploding
+        while measured reward keeps climbing but human/true quality falls &rarr; reward over-optimization ($\\beta$
+        too small or zero) &mdash; the red curve in the CODEVIZ. Policy refuses to move at all &rarr; $\\beta$ too
+        large (the KL tax swamps the reward) or the policy was not initialized from SFT. High reward-model accuracy
+        but a bad policy &rarr; you are trusting the reward off-distribution; evaluate the policy with the held-out
+        <i>true</i> preference, not the reward score.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the building blocks already ship in PyTorch, so we

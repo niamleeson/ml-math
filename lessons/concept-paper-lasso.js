@@ -289,6 +289,46 @@ $$ \\text{(ridge, orthonormal design)}\\qquad \\hat\\beta_j^{\\,\\text{ridge}} \
        <p><i>The paper reports its accuracy results on its own data sets with its own setup. The numbers in the
        CODE / CODEVIZ below are from our own small synthetic run &mdash; they illustrate the qualitative effect
        (coefficients hitting exactly zero as $\\lambda$ grows), not the paper's reported numbers.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The lasso has two things to check: <b>correctness</b> (does your
+       solver compute the right coefficients?) and <b>behavior</b> (does it shrink <i>and</i> select?). For
+       correctness, the metric is exact agreement with a known closed form on <b>orthonormal predictors</b>
+       ($X^\\top X=I$), where the answer is $S(\\hat\\beta^{\\,\\text{OLS}},\\gamma)$ &mdash; verified with
+       <code>torch.allclose</code>. For behavior, count <b>exact zeros</b> in $\\beta$ as $\\lambda$ grows. The
+       no-skill baselines that bracket the path: at $\\lambda=0$ you must reproduce <b>plain OLS</b> (zero
+       sparsity), and at $\\lambda\\to\\infty$ you must reach the <b>all-zero vector</b> (full sparsity). The
+       paper's qualitative claim is selection happening <i>between</i> those ends.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the path sweep.</b> (1) <b>Known-answer unit test on the operator</b>:
+        $S([3,-2,0.5,-0.5,0],\\,1)=[2,-1,0,0,0]$ (the lesson's worked vector) &mdash;
+        <code>torch.allclose</code> to that reference. (2) <b>$\\lambda=0$ recovers OLS</b>: with the penalty
+        off, coordinate descent must return $X^\\top y/N$ (here the OLS solution) to numerical tolerance.
+        (3) <b>Orthonormal closed form</b>: plant $\\hat\\beta^{\\,\\text{OLS}}=[4,-3,0.7]$, run the solver at
+        $\\lambda=1$, and check it converges to $[3,-2,0]$ &mdash; the third coefficient (below threshold) zeroed.
+        (4) <b>Sign &amp; shrink direction</b>: every fitted $|\\beta_j|$ should be $\\le$ its OLS magnitude and
+        keep the OLS sign &mdash; a coefficient that grew or flipped sign signals a wrong update.</li>
+        <li><b>Expected range.</b> The check is <b>exact</b>, not approximate: on orthonormal data the
+        from-scratch coordinate descent must equal $S(\\hat\\beta^{\\,\\text{OLS}},\\lambda)$ to
+        <code>atol=1e-8</code> &mdash; anything looser than rounding noise means a real bug, not "tuning." On the
+        correlated path (CODEVIZ), expect the nonzero count to fall <b>5&rarr;3&rarr;2&rarr;1</b> with the two
+        genuinely-zero features dropped first (rule of thumb for that synthetic design, not a paper claim). The
+        paper's own result is qualitative &mdash; sparse, interpretable models with competitive error on data like
+        the prostate-cancer study (&sect;results) &mdash; so match the <i>pattern</i> of zeros, not a WER-style number.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central idea is the <b>L1 (absolute
+        value) penalty</b>. Swap the soft-threshold update for the <b>ridge / L2</b> update (multiply each OLS
+        coefficient by $1/(1+\\lambda)$) on the identical data and grid, and count exact zeros: the lasso's zero
+        count rises with $\\lambda$ while ridge's stays at <b>0</b>. If your "lasso" also never produces zeros,
+        you have accidentally implemented hard or no thresholding &mdash; the kink at the origin isn't wired in.
+        That contrast <i>is</i> the paper's whole claim (shrink AND select vs shrink only).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>No coefficient ever hits exactly zero</b> &rarr; you
+        used hard-thresholding or forgot the $\\max(\\cdot,0)$ clip, or you're running ridge. <b>Coefficients
+        blow up / oscillate and never settle</b> &rarr; features not standardized (the threshold is unfair across
+        unequal column lengths) or you divided by the wrong squared length. <b>Single pass gives wrong values on
+        correlated data</b> &rarr; you didn't sweep to convergence (the one-shot soft-threshold is exact only for
+        orthonormal columns). <b>Wrong sign or coefficient larger than OLS</b> &rarr; the partial residual added
+        back the wrong feature contribution. <b>$\\lambda=0$ doesn't match OLS</b> &rarr; a stray penalty term or
+        a scaling-by-$N$ mismatch in $\\rho_j$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

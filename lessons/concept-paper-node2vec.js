@@ -277,6 +277,47 @@ $$ \\pi_{vx}=\\alpha_{pq}(t,x)\\cdot w_{vx}\\,,\\qquad \\alpha_{pq}(t,x) \\;=\\;
        (Figure 1's Les Mis&eacute;rables visualization).</p>
        <p><i>Those are the paper's reported claims. The numbers in the CODEVIZ panel below are from our own
        tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> node2vec's embeddings are evaluated <b>downstream</b>, not in
+       isolation: <b>multi-label node classification</b> (BlogCatalog, Protein-Protein Interaction, Wikipedia)
+       scored by <b>Macro-F1 / Micro-F1</b>, and <b>link prediction</b> scored by <b>AUC</b> (&sect;4). The
+       "no-skill" anchors: for link-prediction AUC, <b>random $= 0.5$</b>; for classification, a
+       <b>majority-class / random-label</b> baseline, and the natural comparison baseline the paper beats is
+       <b>DeepWalk</b> ($p{=}q{=}1$). "Better than trivial" means clearly above $0.5$ AUC and above the
+       majority-class F1, and the paper's claim is that tuned $p,q$ beat DeepWalk and other baselines.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Reproduce the worked transition exactly:
+        $p{=}2,q{=}0.5$ must give $P\\approx[0.143,0.286,0.571]$ over (back, local, outward), and the outward
+        node most likely. (2) <b>DeepWalk reduction</b>: set $p{=}q{=}1$ and assert the next-step distribution is
+        <b>uniform</b> ($1/3,1/3,1/3$) &mdash; if not, your bias table is wrong. (3) Verify the walk is
+        <b>2nd-order</b>: the same current node $v$ reached from two different previous nodes $t$ must give
+        <i>different</i> distributions; if they match, you dropped the dependence on $t$ and rebuilt DeepWalk.
+        (4) Check $d_{tx}$ on a triangle (all neighbors at $d{=}1$) vs a path (the far node at $d{=}2$).
+        (5) Skip-gram init loss for a $K$-way softmax is $\\approx -\\ln(1/K)=\\ln K$; with negative sampling,
+        each logistic term starts near $-\\ln 0.5\\approx 0.69$ (rule of thumb, not a paper claim).</li>
+        <li><b>Expected range.</b> On the real benchmarks, tuned node2vec should <b>match or exceed DeepWalk</b>
+        and the other baselines on Macro/Micro-F1 and on link-prediction AUC (&sect;4) &mdash; the paper reports
+        gains but the exact per-dataset numbers depend on the split, so treat "beats DeepWalk by a clear margin"
+        as the bar (approximate, per the paper). On the toy two-community graph, a correct DFS-like run should
+        recover communities: <b>intra-community cosine $\\gg$ inter-community cosine</b> (our small run
+        $\\approx 0.9$ vs $\\approx 0.2$ &mdash; a rule of thumb, not a paper number). AUC near $0.5$ or F1 at the
+        majority-class floor is "probably a bug"; a few F1 points off SOTA is "tuning $p,q$, window, dim."</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>biased walk's $p,q$ knobs</b>. Set $p{=}q{=}1$ (DeepWalk) and confirm the metric that depends on the
+        right notion of similarity <b>drops</b> &mdash; e.g. on a homophily task the DFS-like ($q\\lt 1$) run
+        should beat the unbiased walk; on a structural-equivalence task the BFS-like ($q\\gt 1$) run should.
+        A cheaper proxy on the walk itself: <b>mean distinct nodes per fixed-length walk</b> must be
+        <b>higher</b> for DFS-like ($q\\lt 1$) than BFS-like ($q\\gt 1$). If swapping $q$ changes <i>nothing</i>,
+        the bias is not wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>$p,q$ have no effect on the walk</b> $\\Rightarrow$
+        you sampled from $v$ alone &mdash; carry the state $(t,v)$. <b>BFS/DFS behave backwards</b> (large $q$
+        roams instead of hugging) $\\Rightarrow$ you used $q$ where the weight is $1/q$ (same for $p$ vs $1/p$);
+        check against the worked example. <b>Embeddings collapse</b> (all cosines $\\approx 1$, communities not
+        separated) $\\Rightarrow$ no negative sampling, so only the attractive term acts &mdash; add negatives
+        approximating $-\\log Z_u$. <b>Loss NaN / explodes</b> $\\Rightarrow$ learning rate too high or
+        un-normalized dot products. <b>AUC stuck at $0.5$</b> $\\Rightarrow$ context pairs shuffled, labels
+        misaligned, or windows built across walk boundaries.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

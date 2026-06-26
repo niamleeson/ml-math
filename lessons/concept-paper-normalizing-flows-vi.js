@@ -316,6 +316,49 @@
        panels below are from our own tiny CPU run with fixed random flow parameters &mdash; not the paper's reported
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>What you measure.</b> A flow is a density, so the right metric is a <b>likelihood</b>, not an accuracy.
+       In the VAE setting (the paper's actual setup, &sect;6), the number to track is the <b>flow-based free energy</b>
+       $\\mathcal{F}(x)$ (Eq 15) &mdash; the negative evidence lower bound &mdash; on held-out data. The baseline to
+       beat is the <b>same VAE with no flow</b> ($K = 0$, a plain mean-field Gaussian posterior): adding flows should
+       <i>lower</i> $\\mathcal{F}$ (tighter bound). The paper's qualitative claim is that the bound improves as the
+       number of flows $K$ grows (&sect;6); reuse that as your direction-of-travel, not a fixed target.</p>
+       <p><b>Sanity checks before any training.</b> This lesson's core is the change-of-variables bookkeeping, and it
+       has an exact, cheap oracle &mdash; run it first:</p>
+       <ul>
+        <li><b>Jacobian cross-check.</b> For one sample, confirm your tracked
+        $\\ln q_K = \\ln q_0 - \\sum_k \\ln|\\det \\partial f_k|$ equals $\\ln q_0 - \\ln|\\det J_{\\text{full}}|$ from
+        <code>torch.autograd.functional.jacobian</code>. They must agree to ~5 decimals (the lesson hits
+        $-3.82672$ vs $-3.82672$). Disagreement means the log-determinant is wrong or has the wrong sign.</li>
+        <li><b>Known-answer unit test.</b> Reproduce the worked example: $z=(1,0.5)$, $w=(1,-1)$, $u=(2,0)$, $b=0.5$
+        must give log-determinant $0.609738$. A single hard number catches most bugs.</li>
+        <li><b>Degenerate flow = identity.</b> Set $u = 0$. Then $f(z) = z$, every log-determinant is
+        $\\ln|1| = 0$, and $\\ln q_K$ must equal $\\ln q_0$ exactly. If it drifts, your accumulation is leaking.</li>
+        <li><b>Density integrates to 1.</b> On a 2-D grid, $\\sum \\exp(\\ln q_K)\\,\\Delta A \\approx 1$. A flow whose
+        "density" does not normalize is not a valid flow &mdash; usually a dropped or double-counted Jacobian term.</li>
+       </ul>
+       <p><b>Expected range (rule of thumb, not a paper claim).</b> The Jacobian cross-check is exact, so demand a
+       match to $\\le 10^{-4}$, not "roughly." For the VAE bound, expect a modest but real improvement from the first
+       few flows that tapers as $K$ grows; the paper reports gains with increasing $K$ (&sect;6) but no single number
+       we can quote for your dataset. A bound that gets <i>worse</i> as you add flows means the flow is fighting the
+       objective &mdash; almost always a sign error in the log-determinant.</p>
+       <p><b>Ablation &mdash; prove the Jacobian term earns its keep.</b> The paper's central object is the
+       <b>sum-of-log-determinants</b> correction. Turn it off: set $\\ln q_K = \\ln q_0$ (pretend every map has
+       determinant 1). The change-of-variables cross-check must now <i>break</i> &mdash; the mismatch equals exactly the
+       dropped $\\sum_k \\ln|\\det \\partial f_k|$, and the "density" no longer integrates to 1. If your check still
+       passes with the term removed, your flows are accidentally near-identity (e.g. $u \\approx 0$ or tiny
+       parameters) and are not actually bending the density. Separately, ablate <b>depth</b>: $K = 0$ should collapse
+       to the mean-field VAE and lose the bound improvement.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <i>Tracked $\\ln q_K$ off by a constant ratio from autograd</i>
+       &rarr; you <b>added</b> the log-determinant instead of subtracting (off by $2\\times$ the term) &mdash; the rule
+       <i>divides</i> by $|\\det|$, so subtract in log-space. <i>$\\ln(\\text{non-positive})$ &rarr; NaN</i> &rarr;
+       $1 + u^{\\top}\\psi(z) \\le 0$ for some point; constrain $u$ via the $\\hat{u}$ reparameterization (Appendix A.1)
+       or take $\\ln|\\cdot|$ with small parameters in the toy demo. <i>Cross-check fails only after several flows</i>
+       &rarr; you evaluated $\\psi$ at the map's <b>output</b> $f(z)$ instead of its <b>input</b> $z$. <i>Flowed cloud
+       stays a round Gaussian</i> (variance unchanged from the base ~1) &rarr; flows are effectively identity; the
+       reshaping you should see is the deformation in this lesson's CODEVIZ scatter (per-dim variance moving from
+       ~$[1.02, 0.82]$ to ~$[1.27, 8.10]$).</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The plumbing already ships in PyTorch, so you

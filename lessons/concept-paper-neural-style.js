@@ -276,6 +276,46 @@ $$ \\mathcal{L}_{style}(\\vec{a},\\vec{x})=\\sum_{l} w_l E_l \\quad\\text{(Eq. 5
        result's character.</p>
        <p><i>The numbers in the CODE/CODEVIZ panels below are from our own tiny run &mdash; not the paper's reported
        results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This paper has <b>no accuracy number</b> &mdash; its result is
+       qualitative (Fig. 2: Tübingen in five painters' styles). So you evaluate against the <b>two losses
+       themselves</b>: the content loss (Eq. 1, deep-feature MSE at <code>conv4_2</code>) and the style loss
+       (Eqs. 4&ndash;5, normalized Gram-matrix MSE over <code>conv1_1..conv5_1</code>). The "no-skill" baselines
+       are the obvious endpoints: a <b>copy of the content photo</b> has content loss $\\approx 0$ but a high
+       style loss; the <b>style image itself</b> has style loss $\\approx 0$ but high content loss. A good
+       stylization lands <i>between</i> them &mdash; both losses low &mdash; and the headline check is the
+       <b>content-only vs content+style ablation</b> the paper's own ratio knob implies.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Reproduce the worked Gram example exactly:
+        <code>F @ F.t()</code> on $F=[[1,2,0],[0,1,1]]$ must give $G=[[5,2],[2,2]]$, and the toy
+        $E_l=2/144\\approx 0.0139$ (Eq. 4). (2) <b>Position-invariance test</b>: shuffle the columns of $F$ and
+        confirm $G$ is byte-identical &mdash; if it changes, your Gram sums over the wrong axis. (3) Check shapes:
+        $\\theta/\\phi$-free here, but $F^l$ is $N_l\\times M_l$ and $G^l$ is $N_l\\times N_l$. (4) Set
+        <code>requires_grad</code> only on the image and assert <code>vgg.parameters()</code> all have
+        <code>requires_grad=False</code> &mdash; the single most common bug. (5) One L-BFGS step on the
+        content-only loss ($\\beta=0$) must <b>drive content loss down</b>; if it rises, the optimizer is holding
+        the wrong tensor.</li>
+        <li><b>Expected range.</b> The paper gives no target number, so anchor on <b>behavior</b>, not a value:
+        with $\\alpha/\\beta = 10^{-3}$&ndash;$10^{-4}$ (the paper's ratios) the optimized image should visibly
+        keep the photo's layout while taking on the painting's palette/brushwork (Fig. 2). Quantitatively, the
+        style loss with the Gram term <b>on</b> should fall to a small fraction of its content-only value &mdash;
+        in our tiny run $\\approx 4\\%$ (rule of thumb, not a paper claim). If style loss barely moves when
+        $\\beta\\gt 0$, that is "probably a bug"; a result that looks too smeary or too unchanged is "tuning"
+        (adjust $\\alpha/\\beta$).</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>Gram-matrix style loss</b>. Turn it off ($\\beta=0$) and re-optimize: the image must become a plain
+        <b>content reconstruction</b> with none of the style's colour or texture, and the style loss must stay
+        <i>high</i>. Turn it back on and the style loss should drop sharply while content stays low. If killing
+        $\\beta$ does not change the picture, the style term is not wired into the optimized loss. A second knob:
+        sweep $\\alpha/\\beta$ &mdash; more content $\\to$ photo barely changes, more style $\\to$ texture soup.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Image never changes</b> $\\Rightarrow$ optimizer holds
+        <code>vgg.parameters()</code> instead of the pixels (the canonical pitfall), or the image is not a leaf
+        with <code>requires_grad_(True)</code>. <b>One style layer dominates / garish output</b> $\\Rightarrow$
+        missing or wrong $1/(4N_l^2M_l^2)$ normalization (wrong $M_l$). <b>Targets drift / loss won't bottom
+        out</b> $\\Rightarrow$ forgot to <code>.detach()</code> $P^l$ and $A^l$. <b>Washed-out, wrong-colour
+        features</b> $\\Rightarrow$ skipped ImageNet normalization before VGG. <b>NaN loss</b> $\\Rightarrow$
+        L-BFGS step too large or pixels unclamped; clamp to $[0,1]$ each step and lower the learning rate.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -300,6 +300,43 @@
        validation loss "2.51x faster than when reinitialized and is half a percentage point more accurate."</p>
        <p><i>These are the paper's reported figures, quoted. The numbers in the CODEVIZ panel below are from our
        own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The hypothesis is not "high accuracy" &mdash; it is a <b>contrast at
+        fixed sparsity</b>. The metric is the winning ticket's <b>test accuracy (and steps-to-best-accuracy
+        $j'$)</b> versus the <i>same mask</i> given a fresh random init, both measured at a high sparsity $P_m$. A
+        correct build shows the reset-to-init ticket meeting the <b>dense net</b> (the ceiling, $a$) while the
+        <b>random-reinit control</b> (the meaningful "no-skill" baseline here) trains worse. The paper's setup is
+        LeNet/MNIST and Conv-2/4/6 on CIFAR-10; its reported anchor (&sect;2): at $P_m = 21\\%$ a winning ticket
+        reaches minimum validation loss "2.51x faster than when reinitialized and is half a percentage point more
+        accurate."</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>Mask is binary and monotone:</b> $m \\in \\{0,1\\}$ and
+        the count of $1$s only ever decreases across rounds &mdash; assert <code>m.sum()</code> drops each round and
+        never rises. (2) <b>Pruned weights stay exactly $0$:</b> after every <code>opt.step()</code> re-apply the
+        mask, then assert <code>(weight[mask==0] == 0).all()</code> &mdash; with SGD momentum/decay a missing
+        re-mask silently revives dead weights. (3) <b>Reset is to $\\theta_0$, not $\\theta_j$:</b> after building
+        the ticket, check the surviving weights equal the cloned init, not the trained values. (4) <b>Known-answer
+        unit test:</b> run the lesson's 4-weight worked example and confirm $m=[0,0,1,1]$ and the ticket
+        $=[0,0,0.80,-0.60]$. (5) <b>Sparsity math:</b> $0.7^{13}\\approx 0.0097$, so $P_m$ should land near ~1%.</li>
+        <li><b>Expected range.</b> At high sparsity the <b>reset-to-init ticket should track the dense net</b> while
+        the <b>random-reinit lags</b>. In our toy run (~1% remaining) the ticket reaches ~0.78 test accuracy close
+        to the dense ~0.83, and random-reinit only ~0.71 (our numbers, not the paper's). Rule of thumb: if ticket
+        and random-reinit are <i>indistinguishable</i>, something is wrong (or the task is too easy &mdash; see
+        below); if the ticket also collapses, you over-pruned or pruned one-shot. The paper's claim is winning
+        tickets at "less than 10-20% of the size" that "learn faster ... and reach higher test accuracy" (abstract).</li>
+        <li><b>Ablations.</b> The central idea <i>is</i> the ablation: <b>keep the mask, swap reset-to-$\\theta_0$
+        for a fresh random init $\\theta_0'$</b>, changing exactly one thing. The ticket must out-train it
+        ($a'_{\\text{rand}} \\lt a'$); if it does not, the init is not doing real work in your setup (or the data is
+        too easy). Secondary ablation: <b>one-shot vs iterative</b> &mdash; a single big $p\\%$ cut should yield a
+        <i>weaker</i> ticket than $n$ small $p^{1/n}\\%$ rounds.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Ticket and random-reinit train identically</b> &rarr;
+        either the task is too easy (everything hits ~100% &mdash; use a harder random-teacher target so the dense
+        net sits well below 100%) or you accidentally reset both to the same weights. <b>Sparsity not increasing /
+        pruned weights drifting off zero</b> &rarr; you forgot to re-apply the mask after each step. <b>Ticket no
+        better than chance</b> &rarr; over-pruned (too few weights survive) or you reset to $\\theta_j$ and then
+        re-pruned, muddying the test. <b>Ticket only marginally beats random</b> &rarr; one-shot pruning or too-few
+        IMP rounds; prune more gently over more rounds.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

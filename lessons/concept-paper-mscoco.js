@@ -344,6 +344,45 @@
        <p><i>These are the paper's own statements and numbers, transcribed from the abstract, &sect;2, &sect;5, and
        &sect;7. The one comparison redrawn in the CODEVIZ below (7.7 vs. 2.3 objects per image) is quoted from
        &sect;5, not a computation of ours.</i></p>`,
+    evaluation:
+      `<p>There is no model to train here, so "is it working?" has two readings: (a) is your <b>IoU / detection
+        scoring</b> implemented right, and (b) did you <b>load and read the dataset</b> correctly. Both are
+        checkable.</p>
+       <p><b>1. The metric &amp; benchmark.</b> The scoring rule is <b>IoU</b> $=\\text{area}(A\\cap B)/\\text{area}(A\\cup B)$,
+        and a detector is summarized by <b>mAP</b> &mdash; AP averaged over the categories and, in COCO's standard
+        eval, over IoU thresholds $0.5,0.55,\\dots,0.95$ (&sect;7 + the eval server). The "no-skill" floor is a
+        <b>random / blank detector</b> (AP&nbsp;$\\to 0$); the meaningful reference the paper reports is the
+        <b>Deformable Parts Model baseline</b>, whose average detection performance <b>drops by nearly a factor of
+        two on COCO vs. PASCAL</b> (&sect;7) &mdash; that gap is the signal COCO is harder, not that your code is
+        broken.</p>
+       <p><b>2. Sanity checks before any full evaluation.</b> (i) <b>IoU known-answer test:</b> reproduce the worked
+        example &mdash; pred area $100$, true area $120$, overlap $80$ &rarr; IoU $=80/140\\approx0.571$; correct at
+        $0.5$, not at $0.75$. (ii) <b>IoU bounds:</b> identical regions give IoU $=1$, disjoint regions give $0$, and
+        $0\\le\\text{IoU}\\le1$ always &mdash; if you ever get $\\gt 1$, you forgot to subtract the overlap in the
+        union ($\\text{union}=\\text{area}(A)+\\text{area}(B)-\\text{overlap}$). (iii) <b>Loader sanity:</b> every
+        annotation has both a mask and a category in one of the 11 super-categories; instance masks for the same
+        image do not all collapse to one blob (that would be semantic, not <b>instance</b>, segmentation).</p>
+       <p><b>3. Expected range.</b> Anchor to the paper's <i>dataset</i> statistics, not invented scores: average
+        <b>7.7</b> instances per image, <b>3.5</b> categories per image (&sect;5), "<b>2.5 million</b> labeled
+        instances in <b>328k</b> images," 91 categories (abstract, &sect;4). If your loader reports ~2.3
+        instances/image you are accidentally reading PASCAL-style data; ~1 instance/image means you collapsed
+        instances. These are the paper's reported figures &mdash; use them as the target, do not fabricate an mAP for
+        this 2014 paper (it predates the headline mAP convention).</p>
+       <p><b>4. Ablation &mdash; prove the central idea earns its keep.</b> COCO's thesis is that <b>per-instance
+        masks + crowded non-iconic scenes</b> measure localization that boxes cannot. To show it: score the same
+        predictions with <b>box-IoU</b> vs <b>mask-IoU</b> &mdash; the mask metric is <i>stricter</i> and separates
+        a tight outline from a loose one; if your two scores are identical you are treating masks as boxes. Second
+        ablation: evaluate <b>only at IoU $0.5$</b> vs <b>averaged over $0.5$&ndash;$0.95$</b> &mdash; a loose
+        detector that looks fine at $0.5$ should drop sharply under the averaged metric, confirming the averaging is
+        what rewards accurate localization.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b> <b>IoU $\\gt 1$ or negative</b> &rarr; union computed wrong
+        (double-counted or omitted the overlap). <b>Box and mask scores identical</b> &rarr; masks are being read as
+        their bounding boxes, losing the dataset's whole point. <b>Two overlapping people merged into one detection</b>
+        &rarr; semantic-vs-instance confusion; each mask must belong to one object. <b>Category count $80$ where you
+        expected $91$</b> &rarr; not a bug: the 2014/2017 detection <i>release</i> annotates 80 of the paper's 91
+        design categories. <b>Suspiciously high mAP vs the DPM baseline</b> &rarr; likely an evaluation leak (testing
+        on train, or matching predictions to ground truth too loosely), since COCO is meant to be ~2&times; harder
+        than PASCAL (&sect;7).</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -273,6 +273,49 @@ $$ z_i = W_z\\, y_i + x_i \\quad\\text{(Eqn. 6, the non-local block: projection 
        keypoint detection it improves <b>$\\text{AP}^{\\text{kp}}$ by $+1.4$</b>.</p>
        <p><i>These are the paper's reported figures, quoted from &sect;4-5 and the abstract. The numbers in
        the CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Non-local blocks are evaluated by the <b>accuracy gain they add to a
+       backbone</b>, not as a standalone model. On <b>Kinetics</b> video classification the metric is
+       <b>top-1 accuracy</b>, and the no-skill anchor is the <b>I3D baseline 74.4%</b> that NL-I3D must beat
+       (paper: <b>77.7%</b> top-1, ResNet-101, 5 non-local blocks, &sect;4). On <b>COCO</b> the metric is
+       <b>AP</b> (box/mask/keypoint), and the anchor is the <b>same Mask R-CNN backbone without the block</b>
+       (paper: <b>$+1.3\\,\\text{AP}^{\\text{box}}$, $+1.1\\,\\text{AP}^{\\text{mask}}$, $+1.4\\,
+       \\text{AP}^{\\text{kp}}$</b>, &sect;4&ndash;5). "Works" = a measurable positive delta over the identical
+       block-free backbone. The toy proxy here is <b>MSE on a long-range copy task</b> (left end must reproduce
+       the right end), where the no-skill value is the target's <b>variance ($\\approx 1$)</b> &mdash; what a
+       model that never connects the two ends is stuck at.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Reproduce the worked example: $x=[1,2,3]$, identity
+        embeddings, softmax over $j$ must give row-1 weights $[0.090,0.245,0.665]$ and $y_1\\approx 2.575$.
+        (2) <b>Zero-init identity test</b>: with $W_z$ zero-initialized the fresh block must output <i>exactly</i>
+        its input, $z=x$ (Eqn. 6) &mdash; assert <code>(block(x) == x).all()</code> at step 0; this is the
+        safe-insertion property. (3) <b>Softmax axis</b>: attention rows must sum to $1$ over $j$
+        (<code>attn.sum(-1) == 1</code>); if they sum over $i$ instead you softmaxed the wrong dim. (4) Shapes:
+        scores are $N\\times N$, $y$ is $N\\times\\hat C$, output $z$ is back to $C$ channels. (5) Overfit a single
+        long-range batch and watch MSE head toward $0$.</li>
+        <li><b>Expected range.</b> On the real benchmarks, a correct block yields a <b>small but real gain</b>:
+        roughly the paper's <b>+3.3 top-1</b> on Kinetics (74.4 &rarr; 77.7) and <b>$\\approx +1$ AP</b> on COCO
+        (approximate, per &sect;4&ndash;5). On the toy task, the non-local model should drive long-range MSE
+        <b>near $0$</b> (our small run $\\approx 0.02$) while the conv-only ablation stays near the variance
+        $\\approx 1$ (our run $\\approx 0.97$ &mdash; a rule of thumb, not a paper number), and the left-query
+        attention should concentrate on the source position (our run $\\approx 0.72$ on $j{=}6$). A negative or
+        zero delta over the backbone is "probably a bug"; a fraction of an AP point is "tuning / placement."</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>all-pairs non-local mixing</b>. Disable it (let the block return just the residual $z=x$) and the
+        long-range MSE must <b>jump back to $\\approx$ variance</b> &mdash; the far signal becomes unreachable in
+        one layer. On the real net, <b>remove the non-local blocks</b> from NL-I3D and accuracy should fall back
+        toward the I3D baseline. A second, cheaper ablation per &sect;4.1: swap the affinity $f$ (embedded
+        Gaussian vs <b>dot product</b>, Eqn. 4) &mdash; both should help, confirming the gain comes from global
+        mixing, not the softmax specifically.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Long-range MSE stuck near variance</b> $\\Rightarrow$
+        the non-local path is off, or the residual is the only route to the output. <b>Inserting the block
+        breaks a pre-trained net at step 0</b> $\\Rightarrow$ $W_z$ not zero-initialized (weight <i>and</i>
+        bias). <b>Attention rows don't sum to 1 / nonsense weights</b> $\\Rightarrow$ softmax over the wrong axis
+        (use <code>dim=-1</code> over $j$). <b>Output replaces rather than augments features</b> $\\Rightarrow$
+        dropped the $+\\,x$ residual. <b>Block helps nothing / mixes garbage</b> $\\Rightarrow$ $g$ shared with
+        $\\theta$ or $\\phi$ instead of three separate $1\\times1$ convs. <b>OOM on large maps</b> $\\Rightarrow$
+        the $N\\times N$ affinity &mdash; apply the subsampling (max-pool $\\phi,g$) trick.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -291,6 +291,43 @@
        (Section 3.5). (Source: arXiv:1710.09412.) The CODEVIZ numbers below are our own small run, not the
        paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> mixup is judged by <i>test error</i> on a held-out set of
+       <b>real, un-mixed</b> examples &mdash; the paper uses CIFAR-10 and ImageNet-2012 top-1 (Section 3) &mdash;
+       compared head-to-head against the <i>same network trained with plain ERM</i>. ERM is the baseline to beat:
+       on CIFAR-10 a PreAct ResNet-18 goes from <b>5.6%</b> (ERM) to <b>4.2%</b> error, and WideResNet-28-10 from
+       <b>3.8%</b> to <b>2.7%</b> (arXiv:1710.09412). Track two secondary numbers too: the <b>train-vs-test gap</b>
+       (should shrink) and <b>mean predicted confidence</b> on test points (should drop &mdash; less
+       overconfidence).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Verify the construction on the worked example:
+        $\\lambda=0.7$ on $x_i=[0,2],x_j=[3,1]$ gives $\\tilde{x}=[0.9,1.7]$ and $\\tilde{y}=[0.7,0.3]$. (2)
+        Confirm the linearity identity numerically: mixed cross-entropy $=\\lambda\\ell_0+(1-\\lambda)\\ell_1$
+        (the worked example gives $0.6325$ both ways) &mdash; if these differ you are not feeding a soft target.
+        (3) Check $\\tilde{y}$ entries are non-negative and sum to $1$. (4) With $\\lambda=1$, mixup must reduce
+        <i>exactly</i> to ERM on that batch (a known-answer test). (5) Confirm $\\lambda$ is drawn from
+        <code>Beta</code>, one per batch, and the partner index is a real permutation.</li>
+        <li><b>Expected range.</b> A correct build should give mixup test error <i>below</i> ERM by a meaningful
+        margin on a small training set (the paper's ~1&ndash;1.4 point CIFAR-10 gains; our toy run lifts test
+        accuracy from $0.935$ to $0.970$). Roughly matching ERM is a sign mixup isn't actually changing the
+        target (label not mixed) or the train set is too large for it to help; mixup <i>worse</i> than ERM points
+        to a bug or $\\alpha$ far too large. (Approximate &mdash; the only hard numbers are the paper's; thresholds
+        are rules of thumb.)</li>
+        <li><b>Ablation &mdash; prove the mixed label earns its keep.</b> The central knob is <b>mixing the label
+        with the same $\\lambda$</b>. Turn it off (blend inputs but keep a hard one-hot target) and the test-error
+        improvement should <i>vanish</i> &mdash; that variant is just input noise. Also run the <b>$\\alpha$
+        sweep</b> $\\{0.1,0.2,0.4,1.0,4.0\\}$ vs ERM: expect an inverted-U peaking at small-to-moderate $\\alpha$
+        and degrading by $\\alpha=4.0$, matching the paper's recommended $\\alpha\\in[0.1,0.4]$. If accuracy is
+        flat across $\\alpha$, mixup isn't wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Test accuracy equal to ERM</i> &rarr; label not mixed,
+        or <code>cross_entropy</code> silently taking a hard index instead of the soft target $[0.7,0.3]$.
+        <i>Accuracy collapses / loss won't drop</i> &rarr; you mixed at test time too (mixing is training-only) or
+        $\\alpha$ so large every example is a hard 50/50 blend, underfitting. <i>Confidence as high as ERM
+        despite mixup</i> &rarr; the soft target isn't reaching the loss &mdash; the smoother, less-overconfident
+        boundary is the whole point. <i>$\\lambda$ identical every batch</i> &rarr; you sampled it once outside
+        the loop instead of per batch.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> mixup is a tiny data transform &mdash; a few lines. Here you <b>build it

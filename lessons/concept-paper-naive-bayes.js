@@ -297,6 +297,47 @@ $$ \\text{(multivariate Bernoulli word prob, for contrast, Eqn. 3)}\\quad \\hat\
        </ul>
        <p><i>Those are the paper's reported numbers. The accuracies in the CODE / CODEVIZ below are from our own
        small synthetic-corpus runs &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Multinomial Naive Bayes is a classifier, so the metric is
+       <b>classification accuracy</b> on a held-out test split of a text corpus, swept across vocabulary
+       sizes (the paper's Figs 1&ndash;6 on Yahoo, Industry Sector, Newsgroups, WebKB, Reuters). The
+       trivial baseline is the <b>majority-class accuracy</b> (always predict the most frequent class): on
+       a balanced 2-class toy corpus that is $50\\%$, on the paper's 20-way Newsgroups it is $\\approx 5\\%$.
+       A correct build must beat that comfortably. The two cross-checks in the lesson are themselves
+       pass/fail metrics: <code>torch.allclose</code> against the hand reference and against scikit-learn's
+       <code>MultinomialNB.predict_log_proba</code>.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Each class's smoothed word distribution must
+        <b>sum to 1</b>: <code>torch.exp(log_theta).sum(1)</code> $\\approx [1,1]$ &mdash; if not, $|V|$ is
+        in the wrong place in the denominator (Eqn 6). (2) Reproduce the worked example exactly:
+        <code>log_post</code> $=[-4.2767,-7.4547]$ for the test doc <code>"love love fun"</code>, prediction
+        class 0. (3) On a tiny separable corpus the model should hit $100\\%$ <b>train</b> accuracy &mdash;
+        Naive Bayes is fit by closed-form counting, so there is no optimization to get stuck. (4) Confirm
+        your normalized scores match sklearn before trusting any accuracy number.</li>
+        <li><b>Expected range.</b> Anchored to the paper's reported maxima (&sect;Results): on Yahoo Science
+        the multinomial reaches "a maximum of 54% accuracy at a vocabulary size of 1000 words"; on
+        Newsgroups "Multinomial achieves 85% accuracy and multi-variate Bernoulli achieves 74% accuracy"
+        (paper's numbers). On a clean synthetic 2-class corpus expect accuracy in the high 90s. <i>Rule of
+        thumb (not a paper claim):</i> if accuracy sits near majority-class, the build is broken; if it is
+        a few points below sklearn's <code>MultinomialNB</code> on the same split, suspect a smoothing or
+        log-space bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the count model earns its keep.</b> The paper's central claim is that
+        <b>counts beat presence/absence</b>. Swap the document representation from counts $N_{it}$ to
+        Bernoulli presence flags $B_{it}=\\mathbb{1}[N_{it}\\gt 0]$ (Eqns 2&ndash;3) and sweep the vocabulary
+        from small to large. The multinomial accuracy should <b>hold up</b> while the Bernoulli accuracy
+        <b>drops</b> as the vocabulary grows (the CODEVIZ crossover: $\\approx 0.96$ vs $\\approx 0.85$ on
+        our toy run). If both curves stay equal, the count information is not actually being used &mdash;
+        you have wired in presence flags, not counts.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Accuracy <b>stuck at majority-class</b> &rarr;
+        labels shuffled, or every test doc predicted to one class (often the log-prior dominating because
+        <code>log_theta</code> is all $-\\infty$). <code>-inf</code> or <code>NaN</code> in
+        <code>log_theta</code> &rarr; a zero made it through (smoothing dropped, $\\log 0$). Per-class
+        probabilities <b>not summing to 1</b> &rarr; $|V|$ missing from the denominator. <b>Mismatch vs
+        sklearn</b> after fixing the above &rarr; you forgot to normalize with
+        <code>logsumexp</code> before comparing to <code>predict_log_proba</code> (raw $\\arg\\max$ scores
+        are unnormalized). Multinomial <b>no better than Bernoulli</b> at large vocabulary &rarr; counts not
+        flowing through; you are scoring presence, not frequency.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

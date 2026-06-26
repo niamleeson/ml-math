@@ -308,6 +308,59 @@
        proceedings.mlr.press/v28/sutskever13, ICML 2013.) The CODEVIZ numbers below are
        <b>our own small run, not the paper's reported results.</b></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two things to measure on the ravine objective: the <b>loss after a
+        fixed number of steps</b> (lower = faster descent down the shallow floor) and the <b>wall-direction
+        swing</b> $\\max|x|$ after warm-up (smaller = less side-to-side bouncing across the steep walls). The
+        "no-skill" baseline is <b>plain SGD ($\\mu=0$)</b>: momentum must reach a clearly lower loss in the same
+        steps, or the velocity isn't accumulating. The paper's qualitative anchor (Introduction): momentum +
+        good init <i>matches Hessian-Free</i> on deep autoencoder / recurrent tasks &mdash; the bar is "rivals
+        second-order methods," not a single accuracy number.</p>
+       <p><b>2. Sanity checks before the full run.</b></p>
+       <ul>
+        <li><b>The allclose oracle (the key check).</b> Run your from-scratch classical momentum next to
+        <code>torch.optim.SGD(momentum=mu)</code> from the same start with the same gradients, and assert
+        <code>torch.allclose</code> on $\\theta$ after several steps. If it passes, your CM update <i>is</i>
+        PyTorch's &mdash; this is the unit test that proves eqs.&nbsp;(1)&ndash;(2) are correct.</li>
+        <li><b>Known-answer worked example.</b> On $f(x)=\\tfrac12 x^2$ ($\\nabla f=x$), $\\varepsilon=0.1$,
+        $\\mu=0.9$, $x_0=1$, $v_0=0$, assert the trajectory $x = 0.9000,\\,0.7200,\\,0.4860,\\,0.2268$ and watch
+        the velocity grow in magnitude ($-0.1\\to-0.18\\to-0.234\\to-0.2592$) even as the gradient shrinks.</li>
+        <li><b>$\\mu=0$ collapses to SGD.</b> Setting $\\mu=0$ in either CM or NAG must give exactly
+        $\\theta_{t+1}=\\theta_t-\\varepsilon\\nabla f(\\theta_t)$ &mdash; a quick check the velocity term is
+        wired in correctly.</li>
+        <li><b>NAG caveat (don't expect a match).</b> The paper's lookahead form and PyTorch's
+        <code>nesterov=True</code> buffer form are equivalent reparameterizations, <i>not</i> iterate-equal &mdash;
+        compare final loss / trajectory shape, not a step-for-step allclose. Compare $\\theta$, never the raw
+        velocity (the stored buffers differ by a factor $-\\varepsilon$).</li>
+       </ul>
+       <p><b>3. Expected range.</b> No single paper number to hit (the paper reports "rivals Hessian-Free"
+        qualitatively). Judge by the <i>ordering</i>: classical momentum and NAG should both reach a far lower
+        loss than plain SGD in the same steps, and NAG should bounce least. In our small ravine run, after 60
+        steps: plain SGD ~0.637, CM ~0.0019 (over $300\\times$ lower), NAG ~0.0004, with the wall swing dropping
+        from ~0.81 (CM) to ~0.26 (NAG), near plain SGD's ~0.22 (our numbers, not the paper's). Rule of thumb
+        (not a paper claim): if momentum isn't beating SGD, your velocity is being re-zeroed each step.</p>
+       <p><b>4. Ablation &mdash; prove momentum earns its keep.</b> The central idea is the <b>accumulated
+        velocity</b>. Turn it OFF by setting $\\mu=0$ (no velocity survives) on the same ravine, same
+        $\\varepsilon$, same start: the loss-after-$N$-steps must rise sharply &mdash; that gap <i>is</i> the
+        velocity at work. A second knob: the <b>NAG lookahead</b> &mdash; switch the gradient evaluation from
+        $\\theta_t$ to $\\theta_t+\\mu v_t$ and confirm the wall swing shrinks. If $\\mu=0$ and $\\mu=0.9$ give
+        the same trajectory, the velocity buffer isn't persisting across steps.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Momentum no faster than SGD.</b> The velocity $v$ is being re-zeroed every step / mini-batch
+        instead of carried as optimizer state &mdash; the accumulation is thrown away.</li>
+        <li><b>allclose against SGD fails.</b> Either you compared the raw velocity (buffers differ by
+        $-\\varepsilon$; compare $\\theta$) or the learning rate is in the wrong place &mdash; this paper puts it
+        <i>inside</i> the velocity ($v=\\mu v-\\varepsilon g$), PyTorch scales at the parameter step.</li>
+        <li><b>Loss diverges / oscillates and blows up.</b> Learning rate too high for the momentum &mdash;
+        $\\mu=0.9$ multiplies the effective step by ~$\\tfrac{1}{1-\\mu}=10\\times$, so a rate fine for plain SGD
+        now overshoots the steep walls. Lower $\\varepsilon$ or schedule $\\mu$ up slowly.</li>
+        <li><b>NAG iterates don't match PyTorch.</b> Expected &mdash; equivalent reparameterizations, not the
+        same recurrence. Only the <i>classical-momentum</i> allclose is the clean oracle.</li>
+        <li><b>Raising $\\mu$ always seems to help, then suddenly diverges.</b> "More momentum is better" is
+        false &mdash; too-large $\\mu$ overshoots; the paper schedules $\\mu$ and pairs it with good init.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships both updates as <code>torch.optim.SGD(momentum=mu)</code>

@@ -305,6 +305,40 @@
        <p><i>These are the paper's own statements, quoted from the abstract. We deliberately do not restate the
        paper's human-study percentages here. The numbers in the CODEVIZ panel below are from our own tiny numpy
        run on a toy nonlinear classifier &mdash; not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> LIME is an <i>explanation</i> method, so "working" is not a
+       benchmark accuracy &mdash; it is <b>local fidelity</b>: does the surrogate $g$ agree with the black
+       box $f$ near the explained point $x$? Compute the proximity-weighted RMSE
+       $\\sqrt{\\sum_z \\pi_x(z)(f(z)-g(z))^2 / \\sum_z \\pi_x(z)}$ over the perturbed cloud (this is just
+       Eqn. 2 turned into an error). The trivial baseline is a <b>constant surrogate</b> (predict the mean
+       $f(z)$, slopes $=0$): a real local linear $g$ must beat it near $x$. For our toy run the near-$x$ RMSE
+       is $\\approx 0.03$ vs $\\approx 0.28$ far away (our numbers, not the paper's).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Check the weighted normal equations on the worked
+        example: $f(z)=z^2$ at $x=2$, samples $z=[1,2,3]$ &rarr; weights $\\pi=[0.3679,1,0.3679]$ and coeffs
+        $c=(-3.576,4.000)$, with the fitted slope $4$ equal to the true derivative $2x=4$. Verify shapes
+        ($X$ is $N\\times(d'{+}1)$, $W$ is $N\\times N$ diagonal) and that every weight lies in $(0,1]$ with
+        $\\pi_x(x)=1$. Recover a known linear black box exactly: if $f$ <i>is</i> already linear, the
+        surrogate coefficients should equal $f$'s coefficients regardless of $\\sigma$.</li>
+        <li><b>Expected range.</b> Near $x$ the surrogate-vs-blackbox RMSE should be small (our run
+        $\\approx 0.03$, a rule of thumb &mdash; not a paper claim) and the dominant LIME coefficient should
+        track the black box's true local gradient: in our run $(c_1,c_2)\\approx(0.49,0.01)$ vs gradient
+        $(0.46,0.04)$. A surrogate slope with the <i>wrong sign</i> from the local gradient, or near-$x$ RMSE
+        as large as the far RMSE, is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>proximity weighting</b> $\\pi_x$. Turn it off (set every $\\pi_x(z)=1$, i.e. $W=I$) and refit:
+        near-$x$ fidelity must <b>get worse</b> (the line now averages over the whole cloud). If dropping the
+        weights changes nothing, $\\pi_x$ is not wired into the normal equations. A second knob is the
+        bandwidth $\\sigma$: sweep it and watch locality &mdash; too small starves the fit, too large makes it
+        global.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Surrogate <i>equally bad near and far</i> &rarr;
+        weights not applied (you fit global least squares). Singular / NaN coefficients from
+        $(X^\\top W X)^{-1}$ &rarr; $\\sigma$ too small so almost all weights $\\approx 0$ (too few effective
+        points), or duplicate/constant features. Coefficients that <b>swing wildly</b> across reruns &rarr;
+        too few samples $N$ or noise scale mismatched to $\\sigma$. A surrogate that fits far points well
+        &rarr; you have explained the average model, not the prediction at $x$ &mdash; LIME's whole promise is
+        faithful <i>near</i>, drifting <i>far</i>, exactly the rising-RMSE curve in the CODEVIZ panel.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

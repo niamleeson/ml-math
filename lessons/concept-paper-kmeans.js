@@ -292,6 +292,40 @@
        28(2):129–137, 1982; the result dates to 1957 Bell Labs work.) The CODEVIZ numbers below are our own
        small run, not the paper's reported results.</p>`,
 
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The quantity to compute is the <b>distortion</b> $J$ &mdash; total
+        within-cluster squared error, scikit-learn's <code>inertia_</code>. The decisive test here is an
+        <b>oracle</b>: started from the <i>same</i> initial centers, your from-scratch loop's final $J$ and its
+        point-to-cluster partition must match <code>sklearn.cluster.KMeans</code> (via <code>np.allclose</code> on
+        inertia and a label-match up to a permutation). Matching sklearn exactly is the "better than trivial" bar; a
+        $1$-cluster fit ($k=1$, $J$ = total variance about the global mean) is the no-skill floor every real
+        clustering must beat.</p>
+       <p><b>Sanity checks before the full run.</b> (1) Monotonicity: print $J$ each iteration and assert
+        $J^{(t+1)} \\le J^{(t)}$ (within numerical tolerance) &mdash; if it ever rises, you used un-squared distance,
+        updated centers before reassigning, or have an indexing bug. (2) Known-answer unit test: the worked example
+        (6 points, $k=2$, corner centers) gives distortion $48$ after assign and $\\approx 6.667$ after one update.
+        (3) Shape check: the distance matrix is $n\\times k$ and <code>argmin(axis=1)</code> yields $n$ labels in
+        $[0,k)$. (4) Empty-cluster guard: confirm a center with no assigned points does not become <code>NaN</code>.</p>
+       <p><b>Expected range.</b> On the toy three-blob set a correct loop converges to $J \\approx 66.23$ from a good
+        start, falling monotonically (in our run $2257 \\to 267 \\to 67.6 \\to 66.23$) and flattening once centers stop
+        moving &mdash; and sklearn from the same start reports the identical $66.2327$. These are our small-run
+        numbers (seed 0, 60 points), approximate, not the paper's; the paper's claim is structural &mdash; the
+        mean-squared error is non-increasing and converges to a quantizer satisfying both optimality conditions
+        (Lloyd 1982).</p>
+       <p><b>Ablation &mdash; the centroid/init choices earn their keep.</b> (a) Replace the mean update with any
+        other point (e.g. a fixed or median center) and the monotone-decrease guarantee breaks &mdash; the mean is
+        the unique minimizer of $\\sum\\lVert x-\\mu\\rVert^2$, so only it cannot raise $J$. (b) Swap k-means++ seeding
+        for random starts over many seeds: final $J$ scatters into much worse local optima (in our run mean
+        $\\approx 209$, worst $\\approx 547$) while k-means++ reliably hits $66.23$ &mdash; proof that initialization
+        matters and the loop only finds a <i>local</i> optimum.</p>
+       <p><b>Failure signals.</b> $J$ increases across an iteration &rarr; un-squared distance, wrong update order, or
+        argmin over the wrong axis. <code>NaN</code> centers &rarr; an empty cluster you did not re-seed. Distortion
+        keeps falling with no flat plateau &rarr; tolerance too tight or oscillating assignment (ties); add a
+        convergence gate on center movement. Your $J$ differs from sklearn's from the same start &rarr; a real
+        algorithm mismatch (often forgetting the final reassignment, or comparing raw label integers instead of the
+        partition up to a permutation). $J$ that only ever drops as you raise $k$ &rarr; expected, not a bug &mdash;
+        you cannot pick $k$ by minimizing $J$; use the elbow (here at $k=3$).</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> scikit-learn ships this as <code>sklearn.cluster.KMeans</code> in one line.

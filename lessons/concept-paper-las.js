@@ -305,6 +305,45 @@
        (&sect;1).</p>
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;4. The numbers in the
        CODEVIZ panel below are from our own tiny toy-sequence run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> LAS is scored by <b>word error rate (WER)</b> &mdash; the fraction
+       of words wrong (substitutions + insertions + deletions) against the reference transcript &mdash; on the
+       paper's <b>Google voice search</b> task; <b>lower is better</b>. The trivial baselines: an empty / garbage
+       transcriber gives $\\approx 100\\%$ WER, and the bar to clear is the tuned <b>CLDNN-HMM at 8.0% WER</b>
+       (&sect;4) that LAS was compared against. On your toy build, swap WER for <b>per-character accuracy</b> on
+       held-out toy sequences, with the no-skill floor being <b>chance</b> = $1/\\text{vocab}$ (for the lesson's
+       8-token vocab, $\\approx 12.5\\%$).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Overfit one tiny batch</b> &mdash; a few utterances
+        should reach near-zero loss and near-100% char accuracy; if it can't memorize a handful, the
+        Listener&rarr;Speller wiring or teacher forcing is broken. (2) <b>Loss at init</b> for a $K$-way softmax
+        over characters should be $\\approx -\\ln(1/K)=\\ln K$ (rule of thumb) &mdash; for the 8-token vocab,
+        $\\ln 8 \\approx 2.08$; a wildly different starting loss means logits or targets are mis-scaled.
+        (3) <b>Pyramid shapes</b>: feed $T=8$ frames and assert the encoder length is $8\\to4\\to2\\to1$ after
+        3 pBLSTMs (Eqn 5), and that each layer's <code>input_size</code> doubled. (4) <b>Attention rows sum to 1</b>:
+        each $\\alpha_{i,\\cdot}$ softmaxed over the $U$ encoder steps must sum to $1$; if not, you softmaxed the
+        wrong axis.</li>
+        <li><b>Expected range.</b> The paper reports <b>14.1% WER with no LM</b> and <b>10.3% with LM rescoring</b>
+        (abstract, &sect;4) &mdash; quoted, approximate, and on the full task, not your toy. For the toy build, a
+        correct pyramid+attention model should drive char accuracy well above the $\\approx 12.5\\%$ chance floor
+        and show a clean diagonal alignment (the CODEVIZ heatmap, e.g. out0&rarr;enc0 $\\approx 0.62$); accuracy
+        stuck near chance with a flat alignment is "probably a bug," whereas a slightly blurry diagonal is
+        "needs tuning."</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>pyramidal encoder</b>. Replace the 3 pBLSTMs with plain BiLSTMs that do <i>no</i> time downsampling
+        (the lesson's <code>pyramid=False</code> path) so the Speller attends over all $T$ steps: convergence
+        should slow and the alignment blur &mdash; reproducing "without the pyramid &hellip; our model converges
+        too slowly" (&sect;1). A second ablation: reuse one fixed context instead of recomputing $c_i$ each step
+        &mdash; every alignment row becomes identical and accuracy collapses, confirming attention is doing the
+        work (the paper notes that without attention the model just memorizes transcripts, &sect;3.2).</li>
+        <li><b>Failure signals &amp; what they mean.</b> Accuracy/WER stuck at chance &rarr; labels shuffled,
+        teacher forcing not feeding $y_{&lt;i}$, or attention not wired in. Loss <b>NaN</b> &rarr; learning rate
+        too high or LSTM states not reset between sequences. <b>All alignment rows identical</b> (a flat or
+        vertical-stripe heatmap instead of a diagonal) &rarr; context computed once and reused, or softmax over
+        the wrong axis. <b>Shape error entering a pBLSTM</b> &rarr; you forgot the feature width doubles after
+        concatenating adjacent pairs. Train-good / val-bad with a razor-sharp degenerate alignment &rarr; the
+        Speller is memorizing transcripts and ignoring the acoustics (the &sect;3.2 no-attention failure).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

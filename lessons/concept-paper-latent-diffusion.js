@@ -289,6 +289,48 @@
        and text-to-image results.</p>
        <p><i>These are the paper's reported figures, quoted from the paper. The numbers in the CODEVIZ panel
        below are from our own tiny toy run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Latent diffusion has two things to demonstrate: <b>efficiency</b>
+       (the whole point) and <b>generation quality</b>. Efficiency is measured as the <b>per-step compute /
+       wall-clock ratio</b> between pixel-space and latent-space denoising; the predicted target is exactly
+       $f^2$ (a $16\\times$ saving at $f=4$, $64\\times$ at $f=8$). Quality is measured by <b>FID</b>
+       (Fr&eacute;chet Inception Distance, an image-quality score where <b>lower is better</b>) on the paper's
+       benchmarks. The no-skill baselines: for efficiency, the <b>pixel-space model (LDM-1, $f=1$)</b> with ratio
+       $1.0$; for quality, untrained noise gives a huge FID, so "better than trivial" means FID well below that
+       and competitive with the pixel baseline. On your toy build, FID is overkill &mdash; use the cheaper proxies
+       below.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>Position-count assertion</b>: for $H=256,f=4$ assert
+        pixel positions $65{,}536$ vs latent $4{,}096$, ratio $=16=f^2$ &mdash; a known-answer test of the cost
+        claim. (2) <b>Autoencoder reconstructs first</b>: train Stage 1 alone and confirm $\\mathcal{D}(\\mathcal{E}(x))\\approx x$
+        (low recon MSE) <i>before</i> diffusing; a latent the decoder can't invert dooms everything downstream.
+        (3) <b>Overfit one batch</b> of latents &mdash; $L_{LDM}$ should fall toward $0$; if it can't, the
+        noising schedule ($\\bar\\alpha_t$) or the $z_t$ formula is wrong. (4) <b>Shapes &amp; ranges</b>: latent
+        $z$ has the expected $h\\times w\\times c$ ($f$-downsampled); $\\epsilon_\\theta(z_t,t)$ outputs the same
+        shape as $z$; the cross-attention output keeps the <b>query (image) side's</b> length, not the prompt's.</li>
+        <li><b>Expected range.</b> The paper quotes a <b>$\\ge 2.7\\times$ speed-up</b> pixel-vs-latent on
+        inpainting (&sect;4, Table 6) and a <b>FID gap of 38</b> between LDM-1 and LDM-8 (&sect;4.1) &mdash; quoted,
+        approximate. Your measured per-step ratio should <i>track</i> the ideal $1/f^2$ but flatten slightly at
+        large $f$ because fixed per-call overheads stop shrinking (CODEVIZ: measured $0.087$ vs ideal $0.0625$ at
+        $f=4$ &mdash; our run, a rule of thumb, not a paper number). A measured ratio near $1.0$ at $f=4$ &mdash;
+        i.e. <i>no</i> speed-up &mdash; means you are secretly still diffusing in pixels (a bug), not tuning.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is
+        <b>diffusing in the compressed latent</b>. Run the identical denoiser, budget, and loss <i>in pixel space</i>
+        ($f=1$, no encoder): the per-step cost should jump by $\\approx f^2$ and, at a fixed budget, quality lags
+        &mdash; reproducing the paper's LDM-1-vs-LDM-8 FID gap (&sect;4.1). Second ablation, the <b>conditioning</b>:
+        zero out or shuffle $\\tau_\\theta(y)$ and confirm cross-attention stops steering the output (samples no
+        longer track the prompt) &mdash; if output is unchanged, the keys/values aren't wired in. Push $f$ to
+        $16$&ndash;$32$ and watch reconstruction/quality degrade, confirming the $f\\in\\{4,8\\}$ sweet spot.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>No speed-up over pixels</b> &rarr; noise added to /
+        predicted in $x$ instead of $z$, or you decode every reverse step (multiplying $\\mathcal{D}$ by $T$).
+        <b>Blurry / mush samples</b> &rarr; $f$ too large (latent lost detail) or the autoencoder wasn't trained /
+        frozen, so the decoder can't invent what the latent never stored. <b>Loss NaN</b> &rarr; LR too high or
+        $\\bar\\alpha_t$ schedule out of $[0,1]$. <b>Collapsed / identical samples</b> (mode collapse) &rarr;
+        denoiser ignoring $z_t$ or backprop leaking into the frozen $\\mathcal{E}/\\mathcal{D}$. <b>Prompt has no
+        effect</b> &rarr; cross-attention $Q/K/V$ swapped (image must be $Q$; condition must be $K,V$) or
+        $\\tau_\\theta(y)$ disconnected. <b>Shape mismatch in attention</b> &rarr; you let the text supply queries,
+        so the output took the prompt's length instead of the image's.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

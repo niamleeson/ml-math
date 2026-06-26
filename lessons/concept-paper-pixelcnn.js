@@ -310,6 +310,48 @@ $$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x + V_{k,f} * s\\big) \\;\\odot\\; \\sigma
        training time."</p>
        <p><i>All numbers above are the paper's reported results. The losses and generated samples in the CODEVIZ
        panel below are from our own tiny run on small binary images &mdash; not the paper's reported numbers.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The headline metric is <b>bits/dim</b> (negative log-likelihood in base 2 per
+       pixel sub-value) on the test set &mdash; lower is better. The standard benchmarks are CIFAR-10 and ImageNet
+       $32\\times32$ / $64\\times64$, exactly the paper's eval setup. The "no-skill" floor is a <b>uniform-pixel
+       model</b>: predicting every intensity level with equal probability gives $\\log_2 256 = \\mathbf{8}$ bits/dim
+       (for 8-bit pixels), so any real model must sit well below $8$. The paper's target to beat is its predecessor
+       PixelRNN (see <b>results</b>). In our toy binary-pixel run the metric is just <b>per-pixel binary cross-entropy</b>;
+       its no-skill floor is $-\\ln(1/2) \\approx 0.693$ nats, the loss of a coin-flip predictor.</p>
+       <p><b>Sanity checks BEFORE the full run.</b> (1) <b>Loss at init</b>: an untrained net on binary pixels should
+       print close to $\\ln 2 \\approx 0.693$ (256-way: close to $\\ln 256$); far from that means a bad init or wrong loss.
+       (2) <b>Mask is correct</b>: run the worked-example assert &mdash; a mask-A $3\\times3$ conv on the lesson's patch
+       must output $10$, mask-B $19$, unmasked $45$, and mask-B$-$mask-A must equal the center value. (3) <b>The leakage
+       test</b> (the strongest check): a properly mask-A'd model can <i>never</i> drive per-pixel loss to $0$, because
+       the target pixel is genuinely hidden; if your "masked" model's loss collapses toward $0$, the mask is wrong and
+       the pixel is leaking. (4) <b>Overfit a single batch</b>: a masked model should still reach a low (but nonzero)
+       loss on one repeated batch.</p>
+       <p><b>Expected range.</b> A correct full build should land near the paper's reported <b>$3.03$ bits/dim on
+       CIFAR-10</b> and <b>$3.83$ / $3.57$ on ImageNet $32$/$64$</b> (Table 1-2, quoted in <b>results</b>; approximate,
+       reproductions vary with width/depth/epochs). Being a few hundredths off is <b>tuning</b>; sitting near the
+       $8$-bits/dim uniform floor, or below $\\sim2.5$ on CIFAR-10, is <b>probably a bug</b> (the latter usually means
+       leakage &mdash; an impossibly good likelihood). In the toy run, masked per-pixel BCE settling around
+       $\\sim0.14$ nats is sensible; a value pinned at $\\sim0.69$ means it is not learning.</p>
+       <p><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the <b>masked convolution</b>.
+       Turn it off: replace the first layer's <code>MaskedConv2d("A", ...)</code> with a plain <code>nn.Conv2d</code> of
+       the same shape, change nothing else, retrain. Training loss should drop <i>far below</i> the masked model (it
+       cheats by copying the target pixel through) &mdash; but <b>generation must collapse to incoherent noise</b>. If
+       removing the mask does NOT change anything, the mask was never wired in; if the unmasked model still generates
+       cleanly, your sampling loop is secretly leaking too. A second knob: ablate the <b>gated activation</b> (Eq. 2 &rarr;
+       plain ReLU) and confirm bits/dim worsens toward the older PixelRNN gap.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <ul>
+        <li><b>Training loss crashes toward $0$</b> but samples are garbage &rarr; <b>pixel leakage</b> (mask A missing on
+        layer 1, or mask applied to the conv <i>output</i> instead of the <i>weights</i>) &mdash; the exact red-curve
+        failure in the CODEVIZ.</li>
+        <li><b>Loss stuck near the floor</b> ($\\sim0.69$ binary / $\\sim\\ln 256$) &rarr; not learning (LR too low, dead
+        ReLUs, or the $1\\times1$ output head miswired).</li>
+        <li><b>Loss NaN</b> &rarr; LR too high or a numerically unstable head; use <code>BCEWithLogits</code> /
+        log-softmax, not raw sigmoid/softmax then log.</li>
+        <li><b>Good training likelihood, incoherent samples</b> &rarr; sampling in the <i>wrong order</i> (not strict
+        raster scan), or not feeding the partial image back in &mdash; a pixel conditions on values not yet drawn.</li>
+        <li><b>Visible above-right artifact / a model that ignores legal context</b> &rarr; the <b>blind spot</b> of a
+        single masked stack; expected in the toy, fixed by the vertical+horizontal two-stack design (&sect;2.2).</li>
+       </ul></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

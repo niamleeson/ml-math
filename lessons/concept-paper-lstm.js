@@ -344,6 +344,43 @@
        9(8):1735-1780, 1997, Tables 8&ndash;9 and §5.6.) The numbers in our CODEVIZ are our own small-scale run, not
        the paper's reported figures.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> This is a Track A (primitive) paper, so "working" has <b>two layers</b>.
+        (1) <b>Correctness oracle:</b> your hand-built cell must equal PyTorch's on the same weights &mdash;
+        <code>torch.allclose(my_h, ref_h)</code> and <code>torch.allclose(my_c, ref_c)</code> with
+        <code>atol=1e-6</code>. That binary pass/fail <i>is</i> the proof the cell is right. (2) <b>Capability
+        metric:</b> held-out accuracy on a long-gap recall task &mdash; cue at $t=0$, noise for $11$ steps, report
+        the cue at $t=11$. The no-skill baseline is <b>chance</b> ($0.50$ for a binary cue): a model with no working
+        memory carry cannot beat it. The paper's own benchmarks are the temporal-order and multiplication tasks
+        (Exp 5&ndash;6) where LSTM bridges lags of $\\ge 30$ to $1000+$ steps that plain RNNs fail past ~$10$.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) <b>The allclose oracle</b> on random weights &mdash; the
+        single most important check; if it fails, fix the cell before anything else. (2) <b>Known-answer unit
+        test:</b> run the worked $H=1$ example ($z_i,z_f,z_g,z_o = 0.5,1.0,0.8,0.3$, $c_{t-1}=2$) and confirm
+        $c_t \\approx 1.875453$, $h_t \\approx 0.548068$. (3) <b>Shapes/ranges:</b> gates $i,f,o \\in (0,1)$ (sigmoid),
+        candidate $g \\in (-1,1)$ (tanh); a gate outside $[0,1]$ means a swapped activation. (4) <b>Gate order
+        $i,f,g,o$</b> and <b>both biases</b> ($b_{ih}+b_{hh}$) &mdash; the usual two ways the allclose breaks.
+        (5) <b>Overfit one batch</b> of the gap task and watch BCE loss fall to ~$0$.</li>
+        <li><b>Expected range.</b> On the toy gap task a correct cell should go from <b>chance (~0.50) to ~100%</b>
+        once it learns to latch the cue (our run snaps to $1.0$ by ~step $150$; our numbers, not the paper's). The
+        loss at init for the binary readout should be near $-\\ln(1/2) \\approx 0.69$ (BCE on a balanced cue) &mdash;
+        a useful theoretical anchor. Treat the exact step-of-takeoff as seed-dependent; the reproducible facts are
+        the chance$\\rightarrow$100% transition and that it happens at all across a $12$-step gap.</li>
+        <li><b>Ablations.</b> The central idea is the <b>recurrent memory carry (the CEC)</b>. Ablate it by
+        <b>zeroing the recurrent weights</b> (<code>W_hh=0, b_hh=0</code>) on the <i>trained</i> cell and re-testing
+        without retraining: each gate then sees only $x_t$, the cue at $t=0$ cannot reach $t=11$, and accuracy must
+        <b>collapse to chance</b> (~0.50; our run gave $0.495$). If accuracy survives this, the model was not
+        actually using its memory to bridge the gap. A second ablation: shrink the gap $T$ &mdash; a broken carry
+        looks fine at $T=1$ and only fails as the lag grows.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>allclose fails</b> &rarr; wrong gate order, a dropped
+        bias, or sigmoid/tanh swapped on a block. <b>Accuracy stuck at chance and never takes off</b> &rarr; the
+        memory carry is not learning (LR too low, or you accidentally re-zero $c$/$h$ between steps instead of
+        carrying them). <b>Loss NaN</b> &rarr; LR too high. <b>Trains but ablation does NOT collapse to chance</b>
+        &rarr; the model is cheating via a non-recurrent leak (e.g. the cue bleeding into a later timestep's input),
+        so the gap task isn't testing memory. <b>First step diverges from PyTorch</b> &rarr; you didn't initialize
+        $(h_0,c_0)$ to zero to match its default.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships the whole cell as <code>nn.LSTMCell(input_size, hidden_size)</code>

@@ -294,6 +294,41 @@
        <b>11 of 13</b> targets (&sect;1 contributions / abstract).</p>
        <p><i>These are the paper's reported claims, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny run on synthetic molecule-style graphs &mdash; not the paper's QM9 results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> For graph-level <b>regression</b> the metric is <b>mean absolute error
+        (MAE)</b> per target on <b>QM9</b> (~134k molecules, 13 quantum-chemical properties); the paper's bar is
+        <b>chemical accuracy</b> &mdash; a per-target physical tolerance &mdash; which it clears on <b>11 of 13</b>
+        targets (abstract, &sect;1). The "no-skill" floor is a <b>constant predictor</b> (always output the training
+        mean): your MAE must beat that, and on a structure-dependent target it must beat the <b>$T=0$</b> model that
+        ignores the edges. In our toy the metric is validation <b>MSE</b> and the floor is the $T=0$ plateau (~5.9).</p>
+       <p><b>2. Sanity checks before the full run.</b> (i) <b>Overfit one tiny graph:</b> train on a single molecule
+        until MSE &rarr; ~0 &mdash; if it cannot, the message/update/readout wiring is broken. (ii) <b>Permutation
+        invariance (the load-bearing property):</b> randomly relabel a graph's nodes and confirm $\\hat{y}$ is
+        <i>unchanged</i> to floating-point &mdash; if it shifts, an order-dependent pool sneaked in (Eqn. 1 / Eqn. 3
+        must be a sum/mean/max). (iii) <b>Shapes:</b> message $A(e_{vw})h_w$ is $[d]$, the summed $m_v$ is $[d]$, the
+        readout output is one scalar per graph. (iv) <b>Known-answer unit test:</b> run the worked 3-node path
+        example by hand &mdash; messages $[2,4,2]$, states $[3,6,5]$, sum readout $14$ &mdash; and assert your code
+        reproduces them.</p>
+       <p><b>3. Expected range.</b> A correct MPNN should drive the structure-dependent target's error <i>far</i>
+        below the edge-blind floor and keep dropping with $T$; on QM9 the paper reaches <b>chemical accuracy on 11/13
+        targets</b> (abstract &mdash; approximate target, quote it as the paper's, do not invent per-target MAEs). Rule
+        of thumb (not a paper claim): on a clean run validation error should fall by roughly an order of magnitude
+        within the first tens of epochs; if it barely moves off the constant-predictor floor, that is "probably a
+        bug," whereas being within ~2&times; of a tuned run is "just tuning."</p>
+       <p><b>4. Ablation &mdash; prove the idea earns its keep.</b> The central component is the <b>message-passing
+        phase</b> (Eqns. 1&ndash;2). Set the number of rounds to <b>$T=0$</b> (readout straight off the raw node
+        features) and confirm the error <i>jumps</i> and plateaus high &mdash; our run goes from ~0.26 ($T=3$) to ~5.9
+        ($T=0$). If $T=0$ does <i>not</i> hurt, either your target does not actually depend on structure or messages
+        are not flowing into the readout. Secondary knob: replace the edge-network message $A(e_{vw})h_w$ with an
+        edge-agnostic mean and watch any bond-type-dependent target degrade.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b> <b>Error stuck at the $T=0$ floor</b> &rarr; messages not
+        wired into the update, or aggregating into the wrong node (check the $w\\!\\to\\!v$ direction). <b>$\\hat{y}$
+        changes when you renumber atoms</b> &rarr; an order-dependent pool &mdash; the model is not permutation
+        invariant. <b>Loss NaN</b> &rarr; learning rate too high or the edge matrices $A(e_{vw})$ blew up (the
+        $1/\\sqrt{d}$ init guards this). <b>Error gets <i>worse</i> as you raise $T$</b> &rarr; over-smoothing (all
+        node states collapsing to one vector) &mdash; the same pitfall GCN warns about; back off $T$. <b>Node states
+        explode over rounds</b> &rarr; the update is overwriting instead of gating &mdash; make sure $U_t$ keeps
+        $h_v^t$ (the GRU's gating exists for exactly this).</p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

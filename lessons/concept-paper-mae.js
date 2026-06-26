@@ -301,6 +301,42 @@
        fine-tuning," with linear probing far more sensitive to the ratio than fine-tuning.</p>
        <p><i>Those are the paper's reported ImageNet figures, quoted from the text. Every number in the CODEVIZ
        panel below is from our own tiny run on small images — not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> MAE's reconstruction loss is <i>not</i> the metric you judge features
+       by — the real metric is downstream <b>ImageNet-1K top-1 accuracy</b> of the encoder, measured two ways:
+       <b>linear probe</b> (freeze the encoder, train one linear classifier) and <b>fine-tuning</b> (update the
+       whole encoder). The no-skill floor is $1/1000 = 0.1\\%$ (random guess over 1000 classes); "better than
+       trivial" means well above that. The bar to beat is the paper's own numbers (approximate, cited below).</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) <b>Overfit one image</b> at $r=0.75$ for many
+        steps — masked-patch MSE should fall toward $\\sim 0$; if it plateaus high, your mask/gather wiring is
+        wrong. (b) <b>Reproduce the worked example</b>: $N=4,\\ r=0.75\\Rightarrow N_{\\text{vis}}=1$ and masked-patch
+        MSE $=0.4167$ — the notebook's first cell must print these. (c) <b>Shape/leakage check</b>: confirm the
+        encoder's input length is exactly $N_{\\text{vis}}=(1-r)N$ (no mask tokens inside), the decoder output is
+        $N\\times P^2C$, and that <b>visible patches contribute zero to the loss</b> (corrupt their predictions —
+        the loss must not change). (d) <b>Mask-count check</b>: $|\\mathcal{M}| = rN$ exactly.</li>
+        <li><b>3. Expected range.</b> Anchor to the paper (approximate, from <code>results</code> / §4):
+        ViT-Large <b>linear probe ≈ 73.5%</b>, ViT-Huge <b>fine-tune ≈ 86.9%</b> at 224 (≈ 87.8% at 448). Your
+        tiny MNIST run is not comparable to these — judge it relatively: the frozen-encoder linear probe should
+        clearly beat a probe on an <i>untrained</i> (random-init) encoder, and probe accuracy should peak near a
+        <b>high mask ratio (~0.75)</b>, not at low $r$. Being a few points off the peak is tuning; sitting at
+        random-encoder level is a bug.</li>
+        <li><b>4. Ablation — does the high mask ratio earn its keep?</b> The paper's central knob is the
+        <b>mask ratio $r$</b>. Sweep $r\\in\\{0.25, 0.50, 0.75, 0.90\\}$, linear-probe each frozen encoder, and
+        confirm the inverted-U of Figure 5: probe accuracy should <b>rise to a peak near 0.75 then fall</b> by
+        0.90. A second ablation: train at BERT's $r=0.15$ — features should be clearly <i>worse</i> (the task is
+        solvable by interpolation). If accuracy is flat across $r$, the masking isn't actually gating what the
+        encoder sees.</li>
+        <li><b>5. Failure signals.</b> <b>Probe accuracy stuck near random</b> (frozen features carry no signal):
+        encoder collapsed, or you accidentally probed a random encoder. <b>Reconstruction MSE won't drop / NaN</b>:
+        LR too high or position embeddings missing. <b>Low recon MSE but weak probe</b>: the classic trap — you
+        are reading pixel-painting as feature quality; always evaluate the encoder separately. <b>Blurry "average"
+        reconstructions identical across inputs</b>: mask tokens leaked into the encoder, or the loss is being
+        computed on visible patches (the network learned to copy). <b>Best probe at low $r$ instead of ~0.75</b>:
+        the mask isn't aggressive enough — check $N_{\\text{vis}}=(1-r)N$.</li>
+       </ul>
+       <p><i>Paper targets above are approximate, quoted from the lesson's <code>results</code> (abstract / §4,
+       Table 3); the loss-drop / "beats random encoder" thresholds are rules of thumb, not paper claims.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -279,6 +279,47 @@
        stride-32 features &mdash; "misalignments &hellip; have a large negative effect" without it.</p>
        <p><i>These are the paper's reported figures, quoted. The numbers in the CODEVIZ panel below are from
        our own toy computation &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The system metric is <b>mask AP</b> (average precision of predicted
+       instance masks vs. ground truth) on <b>COCO</b> &mdash; the paper's benchmark (&sect;4). For this Track-B
+       lesson, which builds only the cropping operators, the right metric is the <b>alignment fidelity</b> of the
+       crop: how faithfully one output bin tracks a sub-pixel RoI shift. The no-skill reference is <b>RoIPool</b>
+       itself &mdash; the staircase baseline RoIAlign must beat; the paper's headline is that swapping in RoIAlign
+       <b>improves mask AP by ~3 points</b> (Table 2c, quoted in <code>results</code>).</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) <b>Reproduce the worked example</b>: bilinearly
+        sampling the $4\\times4$ matrix at $(2.7,1.3)$ must give $\\mathbf{13.1}$, while RoIPool's floored read is
+        $10$ &mdash; the notebook's first cell prints both. (b) <b>Cross-check the bilinear sampler against
+        <code>torch.nn.functional.grid_sample</code></b> (<code>align_corners=True</code>); they must agree to
+        floating-point precision, else your pixel-center convention is off (a common bug &mdash; see pitfalls).
+        (c) <b>Weights-sum-to-1</b>: the four bilinear weights $(1\\!-\\!dx)(1\\!-\\!dy)$, $dx(1\\!-\\!dy)$,
+        $(1\\!-\\!dx)dy$, $dx\\,dy$ must sum to exactly $1$ at every sample point. (d) <b>On-grid identity</b>:
+        sampling at an integer location $(dx=dy=0)$ must return that exact grid value. (e) <b>$L_{mask}$ scope</b>:
+        confirm only the ground-truth class $k$'s mask channel receives gradient; the other $K\\!-\\!1$ channels get
+        none.</li>
+        <li><b>3. Expected range.</b> Anchor to the paper (approximate): RoIAlign over RoIPool is worth
+        <b>~3 mask-AP points</b> on ResNet-50-C4 (stride 16), and <i>more</i> on coarser stride-32 features
+        (&sect;4.2, Table 2c). In this toy run there is no AP &mdash; the check is qualitative and exact: RoIAlign's
+        top-left bin should ramp <b>smoothly $5.0\\to 6.0$</b> in even $0.1$ increments as the shift grows, while
+        RoIPool sits frozen (e.g. at $4.0$) then jumps a whole step. A RoIAlign curve that is <i>not</i> smooth
+        (has flats or jumps) is a bug; an AP gain near $0$ in a real detector means RoIAlign isn't actually wired in.</li>
+        <li><b>4. Ablation — does removing the rounding earn its keep?</b> The paper's central knob is
+        <b>RoIAlign vs. RoIPool</b> (the "x/16 instead of [x/16]" no-quantization change). Run both on the identical
+        feature map and RoI sweep and confirm RoIAlign's smooth ramp beats RoIPool's staircase; in a full detector
+        you would confirm mask AP <b>drops ~3 points</b> when you switch back to RoIPool. A second knob (per the
+        paper): replace the mask branch's <b>per-pixel sigmoid with a softmax across classes</b> &mdash; mask
+        quality should <i>fall</i>, since classes then compete for each pixel.</li>
+        <li><b>5. Failure signals.</b> <b>RoIAlign curve shows flats/jumps like RoIPool</b>: you floored a
+        coordinate or snapped a bin boundary &mdash; rounding leaked in ("x/16 instead of [x/16]" violated).
+        <b>Toy value disagrees with <code>grid_sample</code></b>: pixel-center / <code>align_corners</code>
+        convention mismatch, not a math error. <b>Masks look right but labels are wrong (or vice versa)</b>: the
+        mask branch is picking the class &mdash; class and mask must be <b>decoupled</b> (classification head picks
+        $k$, then read the $k$-th mask). <b>Two overlapping objects share one mask</b>: you built semantic, not
+        instance, segmentation &mdash; masks must be per-RoI. <b>Mask AP barely above RoIPool</b>: RoIAlign present
+        but bilinear sampling rounds internally, or the mask resolution $m$ is too small.</li>
+       </ul>
+       <p><i>The ~3-point mask-AP gain and the softmax-hurts result are the paper's, quoted from <code>results</code>
+       (&sect;4.2, Table 2c); the exact $5.0\\to 6.0$ ramp values are this lesson's toy run, not paper numbers.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

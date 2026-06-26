@@ -243,6 +243,42 @@
        <p><i>These are the paper's reported figures, quoted from the paper. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> Mixed precision is correct when the FP16 run <i>matches the FP32
+       baseline's accuracy</i> at lower memory/time &mdash; not when it beats it. So the primary metric is the
+       <b>gap to the FP32-only run</b> on whatever task you train (e.g. validation error on your dataset), plus
+       the memory footprint. Baseline to beat: the paper's target is "no accuracy loss" vs FP32; the failure it
+       fixes is updating FP16 weights directly, which &sect;3.1 reports causes "80% relative accuracy loss" on a
+       Mandarin speech model. The memory win to confirm is the abstract's "nearly 2x" reduction.</p>
+       <ul>
+        <li><b>Sanity checks before any real training.</b> (1) Reproduce the two unit cases in the notebook: a
+        gradient $1\\times10^{-8}$ casts to $0.0$ in FP16 but survives when scaled by $1024$; a weight at
+        $256.0$ frozen under pure-FP16 updates moves under an FP32 master copy. (2) Verify the underflow
+        threshold: $2^{-24}\\approx5.96\\times10^{-8}$ is the smallest positive FP16 value. (3) Check the
+        scale/unscale round-trip returns (almost exactly) the original gradient. (4) Overfit a single batch
+        with AMP on and confirm the loss drops to ~0 just like the FP32 run &mdash; if it can't, your
+        master-copy/unscale wiring is broken.</li>
+        <li><b>Expected range.</b> A correct build should land <i>within noise</i> of the FP32 run (the paper's
+        "no accuracy loss" claim, &sect;4). A gap of a fraction of a percent is tuning ($S$ too low, a stray
+        reduction in FP16); a gap of many percent &mdash; up to the order of the &sect;3.1 "80% relative" drop
+        &mdash; means the master copy or unscale is missing, not a tuning issue. (Approximate; the only hard paper
+        numbers are the &sect;3.1 ablation and the ~2x memory.)</li>
+        <li><b>Ablations &mdash; prove each piece earns its keep.</b> Turn OFF each technique in turn and watch
+        the metric degrade: (a) update FP16 weights directly (drop the master copy) &rarr; learning stalls /
+        large accuracy loss (&sect;3.1); (b) set $S=1$ (no loss scaling) &rarr; small gradients underflow and
+        accuracy falls or the model fails to converge (&sect;3.2); (c) accumulate reductions (softmax, batch-norm
+        stats) in FP16 &rarr; degraded accuracy on reduction-heavy nets (&sect;3.3). If turning one off changes
+        <i>nothing</i>, that piece isn't actually wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Loss flat / accuracy stuck</i> &rarr; updates
+        right-shifting to zero (no FP32 master copy) or $S$ too small so gradients are still $0$ &mdash; the
+        frozen-$256.0$ symptom. <i>Loss diverges to <code>inf</code>/<code>nan</code> within a few steps</i>
+        &rarr; forgot to unscale, so the step is $S\\times$ too large; or $S$ too large and gradients overflow
+        FP16's $65504$ max. <i>Trains fine but val-accuracy below the FP32 run</i> &rarr; a silent FP16 reduction
+        (use FP32 accumulation) or scaling the gradient <i>after</i> the FP16 cast (too late &mdash; $0\\times S=0$).
+        The fix for the <code>inf</code>/<code>nan</code> oscillation is dynamic loss scaling (raise $S$ when
+        stable, halve and skip on overflow), exactly what <code>GradScaler</code> does.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you

@@ -297,6 +297,47 @@
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;5.2. The numbers in the
        CODEVIZ panel below are from our own tiny run on the sinusoid task &mdash; not the paper's reported
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The metric is <b>post-adaptation loss</b>: adapt the meta-learned
+       init with one (or a few) inner gradient steps on a held-out task's $K$ support points, then measure the
+       <b>query MSE</b> on fresh points (paper's sinusoid task, &sect;5.1; for classification it would be few-shot
+       accuracy, &sect;5.2). The no-skill baselines are explicit and built into this lesson: (a) the
+       <b>jointly-pretrained init</b> adapted the same one step (the "average curve" that barely moves), and (b)
+       the <b>MAML init at 0 inner steps</b> (before adapting). "Working" means MAML's <i>one-step</i> query loss
+       is well below both.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full run.</b> (a) <b>Reproduce the worked example</b>: linear model,
+        $\\theta=(0,0)$, $\\alpha=0.05$, $x=[1,2]$, $y=[1,3]$ &rarr; gradient $(-7,-4)$, $\\theta'=(0.35,0.20)$,
+        loss $5.0\\to 2.31$ &mdash; the notebook's first cell must print these. (b) <b>Second-order graph check</b>:
+        after the inner <code>autograd.grad(..., create_graph=True)</code>, calling <code>.backward()</code> on the
+        query loss must produce a <b>non-zero</b> gradient on $\\theta$; if it errors or is <code>None</code>, the
+        inner step was detached. (c) <b>One inner step must lower the support loss</b> on a single task (else
+        $\\alpha$ overshoots &mdash; see the $\\alpha=0.40$ practice case where loss rose $5.0\\to 14.6$). (d)
+        <b>Overfit a single task</b>: meta-train on one fixed sine &mdash; post-adaptation query loss should go
+        near $0$.</li>
+        <li><b>3. Expected range.</b> The paper reports the relative claim, not an absolute sinusoid MSE: the
+        first-order variant performs "nearly the same" with "roughly a 33% speed-up" (&sect;5.2, quoted in
+        <code>results</code>). Judge your run <i>relatively</i>, anchored to this lesson's small run (approximate,
+        not paper numbers): after one inner step the <b>MAML init reaches far lower query MSE than the joint init</b>
+        (the CODEVIZ shows ~0.94 vs ~2.74). If MAML and joint are within noise of each other after one step, that
+        is "probably a bug," not tuning.</li>
+        <li><b>4. Ablation — does the second-order meta-gradient earn its keep?</b> The paper's central mechanism
+        is differentiating <i>through</i> the inner step. Flip the knob: set the inner gradient to
+        <code>create_graph=False</code> (this is <b>FOMAML</b>) and retrain. Per &sect;5.2 the drop should be
+        <b>small</b> &mdash; "nearly the same." The sharper ablation is against the bi-level objective itself: the
+        <b>joint-pretrained baseline</b> (no inner loop) must adapt clearly <i>worse</i> in one step. If turning off
+        the inner loop doesn't hurt, your meta-update isn't optimizing post-adaptation loss at all.</li>
+        <li><b>5. Failure signals.</b> <b>MAML init no better than joint init after one step</b>: most likely
+        <code>create_graph=True</code> is missing (silent FOMAML) or you called <code>opt.step()</code> inside the
+        inner loop (mutated $\\theta$ in place, destroyed the graph). <b>Meta-loss NaN / diverges</b>: $\\alpha$ too
+        large (inner step overshoots, poisoning the outer objective) or $\\beta$ too high. <b>Query loss equals
+        support loss / suspiciously low</b>: support and query sets aren't disjoint &mdash; you are rewarding
+        memorization. <b>Adaptation gets worse with more inner steps</b>: $\\alpha$ overshoots. <b>Meta-loss flat
+        from step 0</b>: $\\theta'_i$ detached, so the outer gradient never reaches $\\theta$.</li>
+       </ul>
+       <p><i>The "nearly the same / 33% speed-up" figures are the paper's, quoted from &sect;5.2; the ~0.94-vs-~2.74
+       one-step MSEs are this lesson's small run, not paper numbers; the overfit / divergence thresholds are rules
+       of thumb.</i></p>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

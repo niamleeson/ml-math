@@ -353,6 +353,55 @@
        &sect;6.3.1. Every number in the CODEVIZ below is OUR small illustration &mdash; not the paper's
        measured result.</i></p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> This is a read-only paper &mdash; you do not train PaLM, so there is no
+       loss curve to watch. "Working" means two checkable things: (1) your understanding of the architecture bundle
+       is correct, and (2) the small CODE/CODEVIZ illustrations reproduce the right numbers. The paper's own
+       headline metrics are the anchors: <b>GSM8K 58%</b> with 8-shot chain-of-thought + calculator, beating the
+       prior SOTA of <b>55%</b> (&sect;6.3.1); <b>BIG-bench</b> above the average human score (&sect;6.2); and on the
+       systems side, <b>model FLOPs utilization 46.2%</b> (hardware 57.8%) on 6144 TPU v4 chips (&sect;4). The
+       trivial baseline for grade-school word problems is near-zero exact-match for a small model, so 58% is far
+       above "no skill."</p>
+       <p><b>Sanity checks for the illustrations.</b> The only runnable thing in this lesson is the SwiGLU-vs-ReLU
+       gate, so verify it against known answers:</p>
+       <ul>
+        <li><b>Known-answer SwiGLU.</b> $\\text{Swish}(a)\\cdot b$ must give $5.28478$ for $(a,b)=(2,3)$ and
+        $-0.80682$ for $(a,b)=(-1,3)$. The signed-leak at $a=-1$ (ReLU would hard-clip to $0$) is the whole point of
+        the gate; if your negative case returns $0$, you implemented ReLU, not SwiGLU.</li>
+        <li><b>Swish at zero.</b> $\\text{Swish}(0) = 0\\cdot\\sigma(0) = 0$; $\\sigma(0) = 0.5$ exactly. A quick
+        check the sigmoid is centred right.</li>
+        <li><b>Parameter-matching arithmetic.</b> Confirm SwiGLU's two input matrices at hidden width
+        $\\tfrac{2}{3}\\cdot 4 d_{\\text{model}}$ give the same parameter count as a plain ReLU MLP at $4
+        d_{\\text{model}}$ (the &sect;2 / derivation $\\tfrac{4}{3} d f$ identity). If SwiGLU looks "better for free,"
+        you forgot to shrink the hidden width.</li>
+        <li><b>Block-shape check.</b> Both branches of the parallel block read the <i>same</i> $\\text{LayerNorm}(x)$,
+        so a correct count is <b>1</b> LayerNorm per block (vs 2 serial); the input projections then fuse into one
+        matmul. If you count 2, you wrote the serial block.</li>
+       </ul>
+       <p><b>Expected range (anchored to the paper).</b> If you were to evaluate PaLM 540B yourself, GSM8K with
+       8-shot chain-of-thought should land near the reported <b>58%</b> (&sect;6.3.1) &mdash; landing near
+       <i>direct-answer</i> performance (much lower) means chain-of-thought prompting is not actually being applied.
+       MFU should be in the mid-40s% (&sect;4); single-digit MFU at this scale means the sharding/pipeline is
+       starving the chips. These are the paper's measured numbers, quoted; treat any large gap as a setup bug, not a
+       model failure.</p>
+       <p><b>Ablations &mdash; prove each choice earns its keep.</b> The paper's contribution is a <i>bundle</i>, so the
+       ablations are per-knob. <b>Parallel layers:</b> revert to serial blocks &mdash; you should lose the "roughly
+       15% faster training" (&sect;2) with essentially no quality change at 540B (the gap closes with scale). <b>SwiGLU:</b>
+       swap in ReLU at matched parameters &mdash; quality should drop, since the gate (not extra weights) is what
+       helped. <b>Multi-query attention:</b> revert to multi-head &mdash; training quality barely moves but the
+       decode-time key/value cache balloons, so generation slows. <b>Scale itself:</b> the emergent-jump claim
+       (&sect;6.2) is the headline &mdash; evaluate the same task at 8B, 62B, 540B and confirm a flat-then-jump curve;
+       a smooth, gradual climb instead means the task is not one of the discontinuous ones.</p>
+       <p><b>Failure signals &amp; what they mean.</b> <i>SwiGLU negative case returns exactly $0$</i> &rarr; you wired
+       ReLU, not the smooth gate. <i>SwiGLU "beats" ReLU with a wider hidden layer</i> &rarr; unmatched parameters
+       &mdash; the comparison is rigged; shrink to $\\tfrac{2}{3}$. <i>Reasoning accuracy stuck near chance despite a
+       huge model</i> &rarr; chain-of-thought prompt not applied, or exact-match scoring rejecting correct answers in
+       a different format. <i>MFU far below 46.2%</i> &rarr; chips idling on communication &mdash; a sharding/pipeline
+       problem, not the architecture. <i>A "discontinuous" curve that looks smooth</i> &rarr; partial-credit metric
+       hiding the jump (&sect;6.2 notes the metric choice changes how sharp the jump looks). Distinguish MFU (46.2%,
+       useful math only) from HFU (57.8%, includes recomputation) &mdash; quoting them interchangeably is a reporting
+       bug, not a measurement.</p>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>read-only</b>, large-scale-result paper: there is no model to build from scratch and no
