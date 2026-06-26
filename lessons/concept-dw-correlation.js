@@ -249,21 +249,11 @@ print("\\nKept", df_model.shape[1] - 1, "features after dropping", to_drop)`
   };
 
   window.CODEVIZ["dw-correlation"] = {
-    question: "On the real load_wine table, which features correlate most strongly with the wine class (candidate predictors) — and which feature pairs are redundant near-twins you'd flag in the matrix?",
+    question: "How do you READ a correlation heatmap — and what do the misleading versions (a curve Pearson can't see, a spurious bright cell) look like so you don't get fooled?",
     charts: [
       {
-        type: "bars",
-        title: "Each feature's |Pearson correlation| with the wine-class target (predictor shortlist)",
-        xlabel: "feature",
-        ylabel: "|correlation with target|",
-        labels: ["flavanoids", "od280", "total_phenols", "proline", "hue", "alcalinity", "proantho", "nonflav_phenols"],
-        values: [0.847, 0.788, 0.719, 0.634, 0.617, 0.518, 0.499, 0.489],
-        valueLabels: ["0.85", "0.79", "0.72", "0.63", "0.62", "0.52", "0.50", "0.49"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-      },
-      {
         type: "heatmap",
-        title: "Pearson correlation matrix of 6 load_wine features (real computed r — bright off-diagonal cells = redundancy)",
+        title: "Ideal: Pearson matrix of 6 load_wine features (real r — bright off-diagonal = redundancy)",
         rows: ["alcohol", "flavanoids", "color_int", "hue", "od280", "proline"],
         cols: ["alcohol", "flavanoids", "color_int", "hue", "od280", "proline"],
         matrix: [
@@ -274,10 +264,46 @@ print("\\nKept", df_model.shape[1] - 1, "features after dropping", to_drop)`
           [0.07, 0.79, -0.43, 0.57, 1.00, 0.31],
           [0.64, 0.49, 0.32, 0.24, 0.31, 1.00]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "<b>How to read it:</b> rows and columns are the same 6 features, and each cell is the Pearson r between that pair — read off the colour and the number. The diagonal is always 1.00 (a column with itself), and the grid mirrors across it, so only read one triangle. <b>Hunt for bright off-diagonal cells:</b> flavanoids-vs-od280 = +0.79 is the brightest pair here — those two are <b>near-twins</b> carrying nearly the same signal (redundancy / multicollinearity), so drop one or PCA the group. A negative cell like color_int-vs-hue (-0.52) means they move oppositely; alcohol-vs-hue (-0.07) is flat — only rules out a straight line, says nothing about curves. Real numbers from the 178-row load_wine set."
+      },
+      {
+        type: "bars",
+        title: "Reading the target row: features ranked by |r| with the wine class (predictor shortlist)",
+        xlabel: "feature",
+        ylabel: "|correlation with target|",
+        labels: ["flavanoids", "od280", "total_phenols", "proline", "hue", "alcalinity", "proantho", "nonflav_phenols"],
+        values: [0.847, 0.788, 0.719, 0.634, 0.617, 0.518, 0.499, 0.489],
+        valueLabels: ["0.85", "0.79", "0.72", "0.63", "0.62", "0.52", "0.50", "0.49"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "<b>How to read it:</b> this is one slice of the matrix — the target's row — turned into a sorted bar chart. Each bar is one feature's <b>absolute</b> correlation with the wine class; tall = tracks the target closely. You rank on magnitude (not sign) because a strong negative is just as useful as a strong positive. <b>Conclusion:</b> the green bars — flavanoids (0.85), od280 (0.79), total_phenols (0.72) — are your candidate predictors to plot and model first; the short blue bars are weak on their own. Real numbers from load_wine."
+      },
+      {
+        type: "scatter",
+        title: "Trap: a U-shaped curve gives Pearson r ~ 0 even though the link is strong",
+        xlabel: "feature X",
+        ylabel: "target y",
+        groups: [
+          { name: "data", color: "#ffb454", points: [[-3, 9.2], [-2.4, 5.9], [-1.8, 3.0], [-1, 1.1], [-0.3, 0.2], [0.4, 0.3], [1.1, 1.4], [1.9, 3.5], [2.5, 6.4], [3, 9.0]] }
+        ],
+        interpret: "<b>Illustrative.</b> Each dot is one row: feature X across, target y up. The cloud is a clear smile (U) — strongly related — yet the <b>Pearson r is about 0.03</b> because a symmetric U has no net straight-line slope, and Pearson sees only straight lines. So a near-zero matrix cell does NOT mean 'no relationship' — it means 'no <i>line</i>'. <b>What to do:</b> never trust a cell without the scatter; add Spearman or Mutual Information to catch curves. This is the Anscombe lesson — same r, wildly different shapes."
+      },
+      {
+        type: "heatmap",
+        title: "Trap: spurious bright cell — wide table, few rows (40 rows x 200 features)",
+        rows: ["fA", "fB", "fC", "fD"],
+        cols: ["fA", "fB", "fC", "fD"],
+        matrix: [
+          [1.00, 0.61, 0.05, -0.08],
+          [0.61, 1.00, 0.11, 0.02],
+          [0.05, 0.11, 1.00, -0.04],
+          [-0.08, 0.02, -0.04, 1.00]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative.</b> Same heatmap layout, but this table has only 40 rows and 200 features (~20,000 pairs). The brightest off-diagonal cell, fA-vs-fB = 0.61, looks like a find — but with so few rows and so many pairs, some cell will hit |r| ~ 0.6 by <b>pure chance</b> (the spurious-correlation / multiple-comparisons trap). <b>How to recognise it:</b> a lone bright cell among unrelated columns on a wide, short table. <b>What to do:</b> don't cherry-pick the brightest cell — validate on fresh data or a held-out split and correct for multiple comparisons before believing it."
       }
     ],
-    caption: "Bars: features sorted by |Pearson r| with the 3-class wine target — flavanoids (0.85), od280 (0.79) and total_phenols (0.72) top the candidate-predictor shortlist (green = strongest). Heatmap: the feature-feature matrix; the bright cell flavanoids-vs-od280 (r=0.79) marks redundant near-twins to drop or PCA, while color_int-vs-hue move oppositely (r=-0.52) and alcohol-vs-hue (r=-0.07) only rules out a straight line. All numbers computed from the 178-row load_wine dataset.",
+    caption: "",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 
@@ -285,19 +311,18 @@ wine = load_wine()
 names = list(wine.feature_names)
 X, y = wine.data, wine.target
 
-# --- bars: each feature's |Pearson r| with the target, sorted ---
-Xt = np.column_stack([X, y])             # append target as last column
-ft = np.corrcoef(Xt.T)[:-1, -1]          # feature-vs-target correlations
-order = np.argsort(np.abs(ft))[::-1][:8]
-for i in order:
-    print(f"{names[i]:>30s}  |r| = {abs(ft[i]):.3f}")
-# flavanoids 0.847, od280/... 0.788, total_phenols 0.719, proline 0.634, ...
-
-# --- heatmap: Pearson correlation matrix among 6 chosen features ---
+# --- ideal heatmap: Pearson correlation matrix among 6 chosen features ---
 pick = ["alcohol", "flavanoids", "color_intensity", "hue",
         "od280/od315_of_diluted_wines", "proline"]
 idx = [names.index(p) for p in pick]
 corr = np.corrcoef(X[:, idx].T)          # 6x6, diagonal = 1.0
-print(np.round(corr, 2))`
+print(np.round(corr, 2))                 # bright off-diagonal = redundant near-twins
+
+# --- target row -> predictor shortlist (sort by |r| with the target) ---
+Xt = np.column_stack([X, y])             # append target as last column
+ft = np.corrcoef(Xt.T)[:-1, -1]          # feature-vs-target correlations
+for i in np.argsort(np.abs(ft))[::-1][:8]:
+    print(f"{names[i]:>30s}  |r| = {abs(ft[i]):.3f}")
+# flavanoids 0.847, od280/... 0.788, total_phenols 0.719, proline 0.634, ...`
   };
 })();

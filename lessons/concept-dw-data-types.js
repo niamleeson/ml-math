@@ -265,30 +265,54 @@ print(df['signup'].dt.month.tolist())   # date math unlocked`
   };
 
   window.CODEVIZ["dw-data-types"] = {
-    question: "Take a 5,000-row frame of repeated text labels and currency strings. How much memory does each column use as an object dtype, versus after converting the labels to 'category' and the amount to a downcast int?",
+    question: "What does fixing dtypes actually buy you — and what do the failure modes (memory blow-up, silent NaN from bad coercion, int upcast to float) look like on a chart?",
     charts: [
       {
         type: "bars",
-        title: "Memory per column (KB): object dtype vs category / downcast",
+        title: "Ideal: memory per column (KB) — object dtype (red) vs category / int32 (green)",
         xlabel: "column",
-        ylabel: "memory (KB)",
+        series: [
+          { name: "object dtype (before)", color: "#ff7b72", points: [["city", 316.7], ["plan", 305.3], ["status", 307.6], ["is_paid", 290.6], ["revenue", 294.9]] },
+          { name: "category / int32 (after)", color: "#7ee787", points: [["city", 5.4], ["plan", 5.3], ["status", 5.2], ["is_paid", 5.1], ["revenue", 19.5]] }
+        ],
         labels: ["city", "plan", "status", "is_paid", "revenue"],
-        values: [316.7, 305.3, 307.6, 290.6, 294.9],
-        valueLabels: ["317", "305", "308", "291", "295"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        interpret: "<b>How to read it:</b> one column per dataframe column; the <b>red</b> bar is its memory as an <code>object</code> dtype, the <b>green</b> bar after conversion. Taller = more memory. Each text column costs ~290-317 KB as object because pandas stores a full Python string per row; converting the four low-cardinality text columns to <code>category</code> drops them to ~5 KB (each label stored once + a 1-byte code per row, a ~58x shrink), and parsing revenue to int32 takes it from 295 to 19.5 KB. <b>Conclusion:</b> right dtypes shrink this frame ~37x (1515 -> 40.5 KB). Real numbers from a 5,000-row frame via <code>.memory_usage(deep=True)</code>."
       },
       {
         type: "bars",
-        title: "After: category for text, int32 for revenue (same y-axis, KB)",
-        xlabel: "column",
+        title: "Variant: category win shrinks as cardinality rises (k distinct labels, 5,000 rows)",
+        xlabel: "distinct labels in the column",
         ylabel: "memory (KB)",
-        labels: ["city", "plan", "status", "is_paid", "revenue"],
-        values: [5.4, 5.3, 5.2, 5.1, 19.5],
-        valueLabels: ["5.4", "5.3", "5.2", "5.1", "19.5"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        labels: ["k=3", "k=50", "k=500", "k=5000 (all unique)"],
+        values: [5.2, 9.0, 45.0, 320.0],
+        valueLabels: ["5.2", "9.0", "45", "320"],
+        colors: ["#7ee787", "#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Same 5,000-row text column, but how many <b>distinct</b> labels it holds grows left to right. <code>category</code> wins big when there are few labels over many rows (green, k=3): each label stored once + a tiny code per row. As k climbs the lookup table itself grows, so the saving shrinks (orange), and when every value is unique (red, k=5000) <code>category</code> is no cheaper than <code>object</code> — sometimes worse. <b>Lesson:</b> reach for <code>category</code> only for low-cardinality columns, not free-text IDs."
+      },
+      {
+        type: "bars",
+        title: "Trap: silent NaN — forgot to strip '%', so coercion nukes the whole column",
+        xlabel: "column after pd.to_numeric(errors='coerce')",
+        ylabel: "count of NaN (out of 5000)",
+        labels: ["revenue (stripped '$')", "growth (forgot '%')"],
+        values: [0, 5000],
+        valueLabels: ["0", "5000"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Each bar is how many values turned into <code>NaN</code> after <code>pd.to_numeric(s, errors='coerce')</code>. Revenue (green) was stripped of its '$' first, so 0 failed — clean parse. Growth (red) still had the '%' attached, so <b>every</b> value was unparseable and silently became NaN — no error, the whole column is gone. <b>How to catch it:</b> always compare <code>s.isna().sum()</code> before and after coercing; a sudden jump to the row count means you forgot to strip a junk character."
+      },
+      {
+        type: "bars",
+        title: "Trap: one missing value upcasts int64 -> float64 (IDs gain a '.0')",
+        xlabel: "customer_id dtype",
+        ylabel: "memory (KB) for 5,000 IDs",
+        labels: ["int64 (no missing)", "float64 (1 missing, upcast)", "Int64 nullable (fix)"],
+        values: [39.1, 39.1, 44.0],
+        valueLabels: ["39.1", "39.1", "44.0"],
+        colors: ["#7ee787", "#ff7b72", "#4ea1ff"],
+        interpret: "<b>Illustrative.</b> The danger here isn't size, it's correctness. A plain <code>int64</code> column (green) has no bit pattern for 'missing', so the instant one row is NaN pandas upcasts the whole column to <code>float64</code> (red) — and your IDs like <code>1001</code> become <code>1001.0</code>, which breaks joins and lookups. The fix is the nullable <code>Int64</code> (blue, capital I): it carries a separate mask of which entries are missing, so IDs stay whole numbers and gaps show as <code>&lt;NA&gt;</code> — costing only a few extra KB for that mask."
       }
     ],
-    caption: "Real numbers from a 5,000-row frame (pandas .memory_usage(deep=True)). As object dtype each text column costs ~290–317 KB because pandas stores a full Python string per row. Converting the four low-cardinality text columns (city, plan, status, is_paid) to 'category' drops them to ~5 KB each — each label is stored once plus a 1-byte code per row, a ~58x shrink. Stripping the '$' from revenue and parsing to int32 takes it from 295 KB to 19.5 KB. Total across these columns falls from 1515 KB to 40.5 KB — about a 37x reduction.",
+    caption: "",
     code: `import numpy as np
 import pandas as pd
 

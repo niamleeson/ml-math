@@ -211,26 +211,54 @@ plt.show()
   };
 
   window.CODEVIZ["dw-choosing-chart"] = {
-    question: "To show how the 'mean radius' of breast-cancer cells is spread out, do you draw the distribution (right) or a single mean bar (wrong)? The bar hides the spread the question asks about.",
+    question: "To show how the 'mean radius' of breast-cancer cells is spread out, do you draw the distribution (the right chart) or one of the wrong-chart traps? Learn to read each so you can spot the mismatch.",
     charts: [
       {
         type: "bars",
-        title: "RIGHT — histogram: the full spread of mean radius is visible",
+        title: "RIGHT — histogram answers a DISTRIBUTION question",
+        xlabel: "mean radius (binned)",
+        ylabel: "count of cells",
         labels: ["7.7–9.7", "9.7–11.7", "11.7–13.7", "13.7–15.7", "15.7–17.7", "17.7–19.7", "19.7–21.8"],
         values: [5, 9, 19, 12, 4, 5, 6],
         valueLabels: ["5", "9", "19", "12", "4", "5", "6"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "The x-axis is the value of mean radius cut into ranges; each bar's height is how many cells fall in that range. Read it left to right as a shape: most cells sit near 11.7–13.7, then the count tails off, with a small second bump of large cells out near 20. Because the bars span the whole range you can SEE the width, the skew, and the outlying tail. This is the matching chart for a distribution question (1 numeric column), and the numbers are real (60 cells from load_breast_cancer)."
       },
       {
         type: "bars",
-        title: "WRONG — one mean bar: spread, skew and outliers all hidden",
+        title: "WRONG — one mean bar: a comparison chart used for a distribution",
+        xlabel: "summary",
+        ylabel: "mean radius",
         labels: ["mean radius (mean = 14.1)"],
         values: [14.1],
         valueLabels: ["14.1"],
-        colors: ["#ff7b72"]
+        colors: ["#ff7b72"],
+        interpret: "Here a single bar shows just the mean (14.1) of the same 60 cells. A bar encodes one number as a height — that is a COMPARISON chart, fine for ranking categories, but here it collapses all 60 values into one number. You cannot see the width, the skew, or the large-radius tail that the histogram showed: the spread, which is the whole question, is gone. The giveaway that you picked the wrong chart: a lone bar for a numeric column you were asked to describe."
+      },
+      {
+        type: "bars",
+        title: "WRONG — pie-style: 9 near-equal market shares (illustrative)",
+        xlabel: "brand",
+        ylabel: "share (%)",
+        labels: ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
+        values: [13, 12, 12, 11, 11, 11, 10, 10, 10],
+        valueLabels: ["13", "12", "12", "11", "11", "11", "10", "10", "10"],
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "Illustrative numbers. This is a COMPARISON question — which brand leads? — and these nine shares are nearly equal (10–13%). Drawn as a pie, the slices would be almost identical angles and you could not tell which leads, because the eye reads angle and area badly. Even as bars the values are close, but the shared baseline lets you line their tops up and rank them. The lesson: with many or similar parts, a pie hides the very ranking it is supposed to show — use sorted bars."
+      },
+      {
+        type: "line",
+        title: "WRONG — dual-axis trap: two unrelated series made to 'line up' (illustrative)",
+        xlabel: "month",
+        ylabel: "rescaled value (two different axes)",
+        series: [
+          { name: "ice-cream sales", color: "#4ea1ff", points: [[1, 10], [2, 14], [3, 22], [4, 35], [5, 52], [6, 68]] },
+          { name: "shark attacks (other axis)", color: "#ff7b72", points: [[1, 11], [2, 13], [3, 24], [4, 33], [5, 54], [6, 66]] }
+        ],
+        interpret: "Illustrative. Two series rise together over the months and look tightly linked — but they sit on TWO different y-axes, each stretched so the lines overlap. By sliding the axes you can make almost any two rising series 'track' each other; the apparent correlation is an artifact of the scaling, not the data (ice-cream and shark attacks share a hidden cause, summer, not a real link). When you see a dual-axis chart, distrust the overlap: redraw as a direct scatter of one against the other, or as two stacked panels on a shared x."
       }
     ],
-    caption: "Real numbers from load_breast_cancer (60 cells subsampled, feature 'mean radius'). The question is a DISTRIBUTION question — how spread out is the radius? The histogram (right) answers it: a shape running from about 7.7 to 21.8, with most cells near 11.7–13.7 and a second little hump of large cells out near 20. The single mean bar (wrong) collapses all 60 values to one height of 14.1 and hides the width, the shape, and the large-radius tail entirely. Same data, but the bar throws away exactly what the question asked.",
+    caption: "One right chart and three wrong-chart traps for the same kind of task. RIGHT: a histogram answers a distribution question (real numbers, load_breast_cancer 'mean radius', 60 cells). WRONG #1: a single mean bar collapses those 60 values to one height (14.1) and hides spread/skew/tail. WRONG #2: nine near-equal shares as a pie are unrankable because the eye reads angle/area poorly — sorted bars fix it. WRONG #3: a dual-y-axis line makes two unrelated series appear correlated by sliding the axes. Match the chart to the (question, data type) pair, and learn to recognise the traps when someone else hands you one.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 

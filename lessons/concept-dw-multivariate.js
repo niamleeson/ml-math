@@ -272,7 +272,8 @@ print(kidney.groupby(["treatment", "stone_size"]).size().unstack())
         labels: ["small\nA", "small\nB", "large\nA", "large\nB"],
         values: [93.1, 86.7, 73.0, 68.8],
         valueLabels: ["93.1%", "86.7%", "73.0%", "68.8%"],
-        colors: ["#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff"]
+        colors: ["#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff"],
+        interpret: "<b>The within-group view (the trustworthy one).</b> Height is success rate; bars are grouped by stone size, and within each pair green=A, blue=B. Read each pair on its own: on small stones green is taller (93.1 vs 86.7), and on large stones green is taller again (73.0 vs 68.8). <b>A wins in every subgroup.</b> Comparing like with like — same stone size — this is the fair comparison."
       },
       {
         type: "bars",
@@ -280,10 +281,34 @@ print(kidney.groupby(["treatment", "stone_size"]).size().unstack())
         labels: ["overall\nA", "overall\nB"],
         values: [78.0, 82.6],
         valueLabels: ["78.0%", "82.6%"],
-        colors: ["#7ee787", "#4ea1ff"]
+        colors: ["#7ee787", "#4ea1ff"],
+        interpret: "<b>The pooled view (the misleading one).</b> Same data, now collapsed across stone size. Blue (B) is taller — B wins overall, 82.6 vs 78.0 — the <b>opposite</b> of the chart above. This flip is Simpson's paradox: A treated 263 of the hard large stones but only 87 easy small ones, so its size-weighted average gets dragged toward its lower large-stone rate. When the two charts disagree, trust the grouped one and distrust the total."
+      },
+      {
+        type: "bars",
+        title: "Variant — balanced case sizes: no reversal, pooled agrees with groups (illustrative)",
+        labels: ["small\nA", "small\nB", "large\nA", "large\nB", "all\nA", "all\nB"],
+        values: [93, 87, 73, 69, 83, 78],
+        valueLabels: ["93%", "87%", "73%", "69%", "83%", "78%"],
+        colors: ["#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff"],
+        interpret: "<b>Illustrative.</b> Same per-group rates, but now both treatments get an equal mix of small and large cases. With balanced weights the pooled bars (right pair) tell the SAME story as the groups — green stays on top everywhere. The lesson: Simpson's reversal needs unequal group sizes; remove the imbalance and the paradox disappears. Seeing the pool agree with the groups is the reassuring outcome."
+      },
+      {
+        type: "scatter",
+        title: "Variant — the same trap on continuous data: per-group slopes vs the pooled line (illustrative)",
+        xlabel: "hours studied",
+        ylabel: "exam score",
+        groups: [
+          { name: "group 1 (weak prep)", color: "#7ee787", points: [[1,40],[1.5,46],[2,44],[2.5,52],[3,50],[3.5,57]] },
+          { name: "group 2 (strong prep)", color: "#c89bff", points: [[5,70],[5.5,66],[6,73],[6.5,69],[7,76],[7.5,72]] }
+        ],
+        lines: [
+          { name: "pooled trend (misleading)", color: "#ff7b72", dash: true, points: [[1,75],[7.5,42]] }
+        ],
+        interpret: "<b>Illustrative — Simpson's paradox in scatter form.</b> Within each colored cluster the points slope UP (more hours, higher score). But the dashed red line fit to ALL points slopes DOWN, because group 2 happens to study more yet sits higher for an unrelated reason (better prep). A single regression on pooled data reports the wrong sign. The cure is the same as the bars: condition on the group — fit within each color — before believing the trend."
       }
     ],
-    caption: "Real numbers from the Charig et al. (1986) kidney-stone trial. Treatment A (green) wins WITHIN each stone-size group — 93.1% vs 86.7% on small stones, 73.0% vs 68.8% on large stones. Yet pooled across groups, treatment B (blue) wins, 82.6% vs 78.0%. The reversal is Simpson's paradox: A was given to 263 of the hard large-stone cases but only 87 easy small ones (B got 270 small, 80 large), so A's size-weighted pooled rate is dragged down. Moral: always check whether an aggregate relationship survives within the relevant groups.",
+    caption: "Ideal pair (charts 1–2): real Charig et al. (1986) kidney-stone numbers showing the reversal, then two variants — a balanced case where no reversal occurs, and the same trap as a scatter where pooled regression flips the slope's sign. Each chart's interpret explains how to read it.",
     code: `import pandas as pd
 
 # Charig et al. (1986) kidney-stone trial. Each cell = (successes, total)

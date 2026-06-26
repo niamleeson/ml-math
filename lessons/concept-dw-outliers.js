@@ -282,10 +282,38 @@ df[col + '_log'] = np.log1p(x)              # transform alternative to capping`
         ],
         lines: [
           { name: "upper IQR fence = 1237", color: "#ffb454", dash: true, points: [[1,1237],[60,1237]] }
-        ]
+        ],
+        interpret: "<b>The detector at work (real data).</b> Cells are sorted left-to-right by 'mean area', so the curve only rises; height is the value. The dashed orange line is the IQR upper fence (1237). Everything below it is green (inlier); the six points poking above it are red (flagged). Reading it: a flag just means 'far past the bulk' — the fence drew a clean line and the tail of six cells crossed it. It does NOT yet tell you whether those six are errors or genuine."
+      },
+      {
+        type: "hist",
+        title: "Variant — right-skewed column: long tail to the right, IQR catches it but z-score is fooled (illustrative)",
+        labels: ["0-200","200-400","400-600","600-800","800-1000","1000-1200","1200-1400","1400+"],
+        values: [4, 14, 18, 9, 5, 2, 4, 2],
+        colors: ["#7ee787","#7ee787","#7ee787","#7ee787","#7ee787","#9aa7b4","#ff7b72","#ff7b72"],
+        interpret: "<b>Illustrative — the skewed shape behind the scatter.</b> Bars are counts of cells in each value band. The pile is on the left and a long thin tail trails right (red bars). On a shape like this the plain z-score under-flags: those tail values inflate the mean and standard deviation, which shrinks their own z below 3 so they 'mask themselves'. The IQR fence, built from quartiles (ranks), is unmoved by the tail and still flags the right bars. When a histogram leans like this, prefer IQR or robust-z over the z-score."
+      },
+      {
+        type: "hist",
+        title: "Variant — a single impossible value: a far-off spike that is an ERROR, not a real extreme (illustrative)",
+        labels: ["normal range","","","","","","sentinel -999"],
+        values: [6, 22, 17, 8, 0, 0, 1],
+        colors: ["#7ee787","#7ee787","#7ee787","#7ee787","#9aa7b4","#9aa7b4","#ff7b72"],
+        interpret: "<b>Illustrative — detect flags it, but the decision differs.</b> One lone red bar sits in its own band, separated by empty space (grey) from the normal cluster — a classic sensor sentinel like -999 or an age of 200. The IQR fence flags it just like any extreme, but a domain range check says this value is <b>physically impossible</b>. So unlike the real-data chart above, the right action here is FIX or DROP, not keep. Same flag, opposite decision — the meaning, not the number, decides."
+      },
+      {
+        type: "scatter",
+        title: "Variant — multivariate outlier: normal in each axis alone, bizarre in COMBINATION (illustrative)",
+        xlabel: "height (cm)",
+        ylabel: "weight (kg)",
+        groups: [
+          { name: "normal rows", color: "#7ee787", points: [[160,58],[165,62],[168,66],[170,70],[172,68],[175,74],[178,80],[180,82],[183,88],[185,90],[188,95],[190,98],[163,60],[167,64],[176,77],[181,84]] },
+          { name: "multivariate outlier", color: "#ff7b72", points: [[200,42]] }
+        ],
+        interpret: "<b>Illustrative — why one column is not enough.</b> Height and weight rise together, so normal rows form a diagonal band (green). The red point (200 cm, 42 kg) is NOT extreme on either axis alone — 200 cm and 42 kg each fall inside their column's range — yet it sits far off the band: very tall and very light together. A per-column rule (z-score or IQR on each axis) would miss it; you need a method that uses the correlation, like Mahalanobis distance, Isolation Forest, or LOF. When points break the joint pattern but not the single-column ranges, reach for a multivariate detector."
       }
     ],
-    caption: "Real numbers from load_breast_cancer (60 cells subsampled, feature 'mean area', a right-skewed value). Quartiles: Q1=429, Q3=752, so IQR=323 and the upper fence Q3+1.5*IQR = 1237. Six points (red) sit above the dashed fence and are flagged; the 54 green points are inside. Note the plain z-score flags NONE of these (max |z| = 2.51 < 3) because the skewed tail inflates the standard deviation and masks them -- exactly why the IQR fence is preferred on skewed data. Whether to drop, cap, or keep the six is the next decision: a 'mean area' is physically possible, so these are real extremes, not errors.",
+    caption: "Ideal (chart 1): real load_breast_cancer 'mean area' with the IQR fence flagging six tail cells. Then three variants — the skewed histogram that fools the z-score, a lone impossible sentinel that detect-flags but decides differently (fix/drop), and a multivariate outlier that hides from any single-column rule. Each chart's interpret explains how to read it and what to conclude.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 

@@ -274,26 +274,54 @@ print('test accuracy:', round(pipe.score(X_te, y_te), 3))
   };
 
   window.CODEVIZ["dw-missing-data"] = {
-    question: "Inject missingness into two columns of the Wine dataset, then (1) show missing-% per column, and (2) show what median-imputing 'magnesium' does to its distribution — a spike appears at the median.",
+    question: "What does filling blanks actually do to your data? See the detection step, the spike a single-value impute carves, and the gentler shapes other strategies leave.",
     charts: [
       {
         type: "bars",
-        title: "Missing % per column (after injecting NaNs into magnesium & proline)",
+        title: "DETECT (step 1) — missing % per column",
+        xlabel: "column",
+        ylabel: "percent of cells missing",
         labels: ["alcohol", "magnesium", "proline", "color_intensity"],
         values: [0.0, 29.8, 11.8, 0.0],
         valueLabels: ["0.0%", "29.8%", "11.8%", "0.0%"],
-        colors: ["#7ee787", "#ff7b72", "#ffa657", "#7ee787"]
+        colors: ["#7ee787", "#ff7b72", "#ffa657", "#7ee787"],
+        interpret: "This is <code>df.isna().mean()*100</code> — the first thing to plot. Each bar is the share of cells blank in that column. <b>Read it:</b> alcohol/color_intensity are complete (green), magnesium is 29.8% missing (red — a meaningful fraction, impute don't drop), proline 11.8%. A tall bar tells you a column needs a decision; it does NOT tell you why it's missing — that's the mechanism (MCAR/MAR/MNAR), a judgement you add."
       },
       {
         type: "bars",
-        title: "'magnesium' counts by bin: OBSERVED (before) vs after MEDIAN impute",
+        title: "IDEAL/PROBLEM — median impute carves a fake SPIKE at the median",
+        xlabel: "magnesium value bin",
+        ylabel: "count of rows",
         labels: ["70–84", "84–97", "97–111", "111–124", "124–138", "138–151", "151–165"],
         values: [6, 53, 90, 20, 6, 2, 1],
-        valueLabels: ["6", "53", "90↑", "20", "6", "2", "1"],
-        colors: ["#58a6ff", "#58a6ff", "#ff7b72", "#58a6ff", "#58a6ff", "#58a6ff", "#58a6ff"]
+        valueLabels: ["6", "53", "90 spike", "20", "6", "2", "1"],
+        colors: ["#58a6ff", "#58a6ff", "#ff7b72", "#58a6ff", "#58a6ff", "#58a6ff", "#58a6ff"],
+        interpret: "Histogram of magnesium <b>after</b> filling its 53 blanks with the observed median (98.0). The 97–111 bin held 37 real values; all 53 fills land in it too, so it jumps to <b>90</b> (red) — a spike that is not in the real data. <b>Read it:</b> any single tall bar exactly at the mean/median after imputation is the variance-shrinking artifact. The other bins are unchanged. This is why you add a missingness indicator and consider multivariate fills."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — IterativeImputer fills with VARIED values, no single spike (illustrative)",
+        xlabel: "magnesium value bin",
+        ylabel: "count of rows",
+        labels: ["70–84", "84–97", "97–111", "111–124", "124–138", "138–151", "151–165"],
+        values: [8, 58, 49, 33, 14, 8, 3],
+        valueLabels: ["8", "58", "49", "33", "14", "8", "3"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>Illustrative.</b> Same column, but blanks filled by modelling magnesium from the <i>other</i> columns (IterativeImputer / KNN). The 53 fills spread across several bins matching the real shape, so <b>no single spike</b> appears and the variance is roughly preserved. <b>Read it:</b> compare to the red chart — a smooth refill (no one bin ballooning) means the imputer respected the distribution. This is the gentler choice when the column is MAR."
+      },
+      {
+        type: "scatter",
+        title: "VARIANT — MNAR: whether a value is blank depends on the value itself (illustrative)",
+        xlabel: "true income (thousands)",
+        ylabel: "P(this cell is blank)",
+        groups: [
+          { name: "observed (answered)", color: "#7ee787", points: [[40,0.05],[50,0.07],[60,0.1],[80,0.15],[120,0.25]] },
+          { name: "high earners (often blank)", color: "#ff7b72", points: [[200,0.55],[350,0.7],[600,0.85],[900,0.93]] }
+        ],
+        interpret: "<b>Illustrative.</b> x is the true value, y is how likely that cell is left blank. The rising curve means high earners skip 'income' <b>because</b> it is high — that is MNAR. <b>Read it:</b> if missingness probability climbs with the (hidden) value, no fill from other columns fully recovers it, and dropping those rows removes the high earners and biases the sample. The fix is a 0/1 missingness indicator so the model can learn 'declined → likely high'."
       }
     ],
-    caption: "Real numbers from sklearn.datasets.load_wine (n=178), with NaNs injected at a fixed seed (RandomState(42)) into 'magnesium' (53 cells, 29.8%) and 'proline' (21 cells, 11.8%). LEFT: isna().mean() per column. RIGHT: the median of observed magnesium is 98.0, which lands in the 97–111 bin; that bin held 37 observed values and jumps to 90 after the 53 blanks are all filled with 98.0 — a fake SPIKE exactly at the median (53 = 90 − 37). This is the distortion mean/median imputation causes, and why a missingness indicator is worth keeping.",
+    caption: "Real numbers from sklearn.datasets.load_wine (n=178), NaNs injected at a fixed seed into magnesium (29.8%) and proline (11.8%). Chart 1 is the detection step. Chart 2 (the core lesson) shows median-impute stacking 53 fills into one bin (37→90) — a fake spike exactly at the median that shrinks variance. The variants contrast a multivariate fill that avoids the spike, and the MNAR mechanism where the chance of being blank rises with the value itself, which is when the missingness indicator earns its keep.",
     code: `import numpy as np, pandas as pd
 from sklearn.datasets import load_wine
 from sklearn.impute import SimpleImputer

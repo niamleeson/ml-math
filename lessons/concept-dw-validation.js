@@ -224,18 +224,37 @@ assert (df["end_date"] >= df["start_date"]).all(), "end_date before start_date"
   };
 
   window.CODEVIZ["dw-validation"] = {
-    question: "Run a five-rule data contract on a small messy orders table. How many rows fail each rule? The bars are the contract catching problems.",
+    question: "A contract is a bar per rule, counting rows that fail it. Read three batches: a clean one (all bars zero, passes), a messy one (a few bars rise), and a drifted one (one bar spikes). Which is which?",
     charts: [
       {
         type: "bars",
-        title: "Rows FAILING each validation rule (20-row messy batch)",
+        title: "Messy batch: failures spread across rules (20 rows)",
         labels: ["range\n(age/price)", "category\n(allowed set)", "null\n(age/price)", "uniqueness\n(order_id)", "cross-field\n(dates)"],
         values: [6, 2, 4, 2, 2],
         valueLabels: ["6", "2", "4", "2", "2"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Each bar = one rule; its height = how many of the 20 rows break that rule.</b> Real counts from the code below: 6 rows out of range (ages -3, 140, 200 plus three negative prices), 2 disallowed categories ('TOYS', 'unknown'), 4 nulls, 2 duplicate keys, 2 dates that end before they start. Read it as a damage report: several rules fire a little. The contract did its job &mdash; this batch is <b>rejected at the boundary</b>, and you know the exact rules and row counts to fix. A real messy feed looks like this: scattered, small bars."
+      },
+      {
+        type: "bars",
+        title: "Clean batch: every bar is zero (contract PASSES)",
+        labels: ["range\n(age/price)", "category\n(allowed set)", "null\n(age/price)", "uniqueness\n(order_id)", "cross-field\n(dates)"],
+        values: [0, 0, 0, 0, 0],
+        valueLabels: ["0", "0", "0", "0", "0"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>The healthy case: zero rows fail any rule, so all five bars are flat on the floor.</b> Illustrative, but this is exactly what a good batch produces. When the contract passes it stays <b>silent</b> &mdash; no alert, the data flows on. The point to internalise: a contract is not paranoia, it spends most days doing nothing visible. Green-and-empty is success, not a broken check. (If a chart is suspiciously always-zero <i>and</i> nothing valid ever fails, suspect a bound so loose it can't fire &mdash; see the range-pitfall.)"
+      },
+      {
+        type: "bars",
+        title: "Schema drift: one rule collapses (upstream rename)",
+        labels: ["range\n(age/price)", "category\n(allowed set)", "null\n(age/price)", "uniqueness\n(order_id)", "cross-field\n(dates)"],
+        values: [0, 20, 0, 0, 0],
+        valueLabels: ["0", "20", "0", "0", "0"],
+        colors: ["#9aa7b4", "#ffb454", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>One bar spikes to the full 20 while the rest stay zero &mdash; a tell-tale drift signature.</b> Illustrative: upstream renamed <code>category</code> or added a value like 'podcasts', so after re-mapping <b>every</b> row fails the allowed-set rule at once. Contrast with the messy batch's scattered small bars: a single rule failing on (almost) all rows means the <b>structure</b> changed, not that a few rows are dirty. Then decide intent &mdash; if the rename was a mistake the contract just saved you; if it was agreed, update the contract deliberately."
       }
     ],
-    caption: "Real counts from a 20-row inline orders table with deliberate corruptions. The contract's five rules catch: 6 range violations (ages of -3, 140, 200 and three negative prices), 2 disallowed categories ('TOYS', 'unknown'), 4 nulls (2 missing ages, 2 missing prices), 2 duplicated-key rows (order_id 12 appears twice), and 2 cross-field violations (end_date before start_date). Without the contract, all 16 affected rows would flow downstream silently; with it, the batch fails loudly at the boundary.",
+    caption: "Same five-rule contract, three batches. Read the shape: all-zero = pass (silent), scattered small bars = ordinary dirty data, one bar at full height = schema drift. The messy-batch numbers are real counts from the runnable code; the clean and drift charts are illustrative shapes of cases you will actually meet.",
     code: `import pandas as pd
 import numpy as np
 

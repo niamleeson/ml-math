@@ -254,30 +254,54 @@ print('dirty  -> mean %.2f  median %.2f' % (dirty.mean(), dirty.median()))
   };
 
   window.CODEVIZ["dw-summary-stats"] = {
-    question: "For a strongly right-skewed real feature ('mean area' in load_breast_cancer), how far apart are the robust and non-robust summaries — does the mean really exceed the median, and is the std really inflated relative to the IQR?",
+    question: "Read the gap between robust (median/IQR/MAD) and non-robust (mean/std) summaries as a diagnostic: when do they agree, and when does the gap scream 'don't trust the mean'?",
     charts: [
       {
         type: "bars",
-        title: "Center: mean is pulled ABOVE the median by the right tail",
+        title: "Right-skewed feature: center — mean pulled ABOVE the median",
         xlabel: "statistic",
         ylabel: "value (mean area)",
         labels: ["median (robust)", "mean (non-robust)"],
         values: [551.1, 654.89],
         valueLabels: ["551.1", "654.9"],
-        colors: ["#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Two bars, same quantity (a 'typical' value) computed two ways. Real numbers from load_breast_cancer 'mean area' (569 values, skew 1.65). The green <b>median (551)</b> is the middle value; the red <b>mean (655)</b> is the balance point and the long right tail drags it up and to the right. <b>Mean &gt; median is the textbook fingerprint of right skew</b> — the bigger that gap, the more the mean overstates the typical case. Here, report the median."
       },
       {
         type: "bars",
-        title: "Spread: std is inflated; IQR and MAD stay grounded",
+        title: "Right-skewed feature: spread — std inflated, MAD/IQR grounded",
         xlabel: "statistic",
         ylabel: "value (mean area)",
         labels: ["MAD (robust)", "IQR (robust)", "std (non-robust)"],
         values: [153.3, 362.4, 351.91],
         valueLabels: ["153.3", "362.4", "351.9"],
-        colors: ["#7ee787", "#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "Same feature, now spread three ways. The red <b>std (352)</b> measures wobble around that pulled-up mean and the squared tail distances inflate it; it dwarfs the robust <b>MAD (153)</b>. (The IQR runs level here only because skew is moderate.) The lesson: pair spread with the matching center — quote <b>IQR/MAD with the median</b>, never std with a skewed mean. The std&gt;MAD gap is the same alarm as mean&gt;median."
+      },
+      {
+        type: "bars",
+        title: "Symmetric clean column: every summary AGREES (illustrative)",
+        xlabel: "statistic",
+        ylabel: "value",
+        labels: ["median", "mean", "MAD", "IQR/1.35", "std"],
+        values: [50.0, 50.1, 9.8, 10.1, 10.0],
+        valueLabels: ["50.0", "50.1", "9.8", "10.1", "10.0"],
+        colors: ["#7ee787", "#4ea1ff", "#7ee787", "#7ee787", "#4ea1ff"],
+        interpret: "Illustrative, for a roughly symmetric clean column (e.g. heights). Now the robust (green) and non-robust (blue) bars sit at the SAME height: median ≈ mean, and MAD ≈ IQR-scaled ≈ std. <b>When the two families agree, the mean/std picture is trustworthy</b> — there is no skew or outlier to hide. This 'no gap' is your green light to use the classical mean and std (for z-scores, effect sizes, etc.)."
+      },
+      {
+        type: "bars",
+        title: "One fat-fingered outlier: mean & std explode, robust trio shrug",
+        xlabel: "statistic",
+        ylabel: "value (log-ish scale, illustrative)",
+        labels: ["median", "mean", "MAD", "IQR", "std"],
+        values: [12.0, 101.6, 1.5, 2.0, 314.0],
+        valueLabels: ["12.0", "101.6", "1.5", "2.0", "314.0"],
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "Illustrative: ten values near 12 plus one glitch reading of 1000 (the lesson's own example). The red <b>mean (102)</b> and <b>std (314)</b> blow up because they sum/square every value, so one giant dominates. The green <b>median (12)</b>, <b>IQR (2)</b>, <b>MAD (1.5)</b> barely move — ranks ignore HOW large a tail point is. A huge red-vs-green gap like this means 'a single outlier or heavy skew is present': report the robust trio and go hunt the bad value."
       }
     ],
-    caption: "Real numbers from load_breast_cancer, feature 'mean area' (569 values, skewness 1.65 — a long right tail). LEFT: the mean (654.9) sits well above the median (551.1) because the upper tail drags the balance point up — the textbook signature of right skew. RIGHT: the std (351.9) is the spread around that pulled-up mean and is inflated by the same tail, dwarfing the MAD (153.3) and running level with the IQR (362.4). The mean>median gap and the std>MAD gap together say: report the median and IQR for this column, not the mean and std.",
+    caption: "Read these as paired robust (green) vs non-robust (red/blue) summaries. The first two charts use REAL numbers from load_breast_cancer 'mean area' (skew 1.65): mean&gt;median and std&gt;MAD both flag the right tail. The last two are illustrative but honest variants — a symmetric clean column where every summary agrees (use mean/std), and a single fat-fingered outlier where mean and std explode while median/IQR/MAD shrug (use the robust trio). The size of the red-vs-green gap IS the diagnostic for which summary to trust.",
     code: `import numpy as np
 from scipy.stats import median_abs_deviation
 from sklearn.datasets import load_breast_cancer

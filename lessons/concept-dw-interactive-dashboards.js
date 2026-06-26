@@ -201,21 +201,43 @@ st.dataframe(view)`
   };
 
   window.CODEVIZ["dw-interactive-dashboards"] = {
-    question: "On real wine-chemistry data, plot alcohol vs color intensity colored by cultivar — the kind of multi-class scatter you'd ship as an interactive Plotly chart (hover the row, filter by cultivar). Here it's a static stand-in.",
+    question: "An interactive scatter is only as good as the view it opens on. Here's the clean multi-class case you'd hover and filter — plus two views you'll actually meet: one drowned in points, one hiding its headline below the fold.",
     charts: [
       {
         type: "scatter",
-        title: "Wine: alcohol vs color intensity, colored by cultivar",
+        title: "Ideal: clean multi-class scatter — read & filter at a glance",
         xlabel: "alcohol (%)",
         ylabel: "color intensity",
         groups: [
           { name: "cultivar 0", color: "#4ea1ff", points: [[13.05,5.04],[13.05,4.25],[13.24,4.32],[13.39,4.8],[13.5,3.52],[13.56,6.25],[13.56,6.13],[13.64,5.1],[13.73,5.7],[13.74,5.85],[13.76,5.4],[13.83,5.6],[14.06,5.05],[14.19,8.7],[14.2,6.75],[14.21,5.24],[14.22,6.38],[14.3,6.2],[14.83,5.2]] },
           { name: "cultivar 1", color: "#7ee787", points: [[11.41,3.08],[11.56,6.0],[11.62,3.25],[11.76,3.8],[11.96,3.21],[12.0,2.5],[12.04,2.6],[12.08,2.4],[12.16,2.45],[12.25,3.4],[12.29,2.15],[12.33,3.27],[12.37,4.5],[12.37,4.45],[12.43,3.94],[12.51,2.94],[12.52,2.0],[12.6,2.45],[12.64,5.75],[12.69,3.05],[13.05,2.6],[13.11,5.3]] },
           { name: "cultivar 2", color: "#c89bff", points: [[12.25,8.21],[12.36,7.65],[12.6,7.1],[12.79,10.8],[12.88,5.4],[13.36,5.6],[13.4,7.3],[13.49,5.7],[13.58,8.66],[13.69,5.88],[13.78,9.58],[13.88,4.9],[14.34,13.0]] }
-        ]
+        ],
+        interpret: "<b>Real numbers from sklearn's load_wine</b> (54 wines): x is alcohol, y is color intensity, colour is cultivar. The three colours separate into legible clouds — blue (cultivar 0) sits high-alcohol/mid-intensity, green (cultivar 1) low/low, purple (cultivar 2) high-intensity. This is the case interactivity rewards: few enough points to read, so in Plotly you'd <b>hover any dot for its full chemistry row</b> and <b>click a legend entry to filter to one cultivar</b>. Conclude: when the cloud is this clean, ship it interactive."
+      },
+      {
+        type: "scatter",
+        title: "Overplotted: too many points to read (aggregate or subsample)",
+        xlabel: "alcohol (%)",
+        ylabel: "color intensity",
+        groups: [
+          { name: "all rows", color: "#9aa7b4", points: [[11.4,3.0],[11.5,2.9],[11.5,3.1],[11.6,3.0],[11.6,3.3],[11.7,3.6],[11.8,3.8],[11.9,3.2],[12.0,2.5],[12.0,2.7],[12.0,3.0],[12.1,2.4],[12.1,2.9],[12.1,3.4],[12.2,2.4],[12.2,2.5],[12.2,3.4],[12.2,3.6],[12.3,2.1],[12.3,3.3],[12.3,4.5],[12.4,3.9],[12.4,4.4],[12.5,2.0],[12.5,2.9],[12.5,3.5],[12.6,2.4],[12.6,5.7],[12.7,3.0],[12.7,7.1],[12.8,5.4],[12.9,4.6],[13.0,2.6],[13.0,4.2],[13.0,5.0],[13.1,5.3],[13.2,4.3],[13.3,5.6],[13.4,4.8],[13.4,7.3],[13.5,3.5],[13.5,5.7],[13.6,6.1],[13.6,6.2],[13.6,5.1],[13.7,5.7],[13.7,5.9],[13.8,5.6],[13.8,9.6],[13.9,4.9],[14.0,5.0],[14.1,5.2],[14.2,5.2],[14.2,6.4],[14.2,6.8],[14.3,6.2],[14.3,13.0],[14.4,5.2],[14.5,5.0],[14.6,6.0],[14.8,5.2],[12.8,5.0],[13.1,4.0],[13.3,4.5],[12.9,3.8],[12.7,4.1],[13.5,4.9],[13.0,3.6],[12.6,3.2],[12.4,3.0],[12.2,2.8]] }
+        ],
+        interpret: "<b>Illustrative:</b> same axes, but every row dumped in as one grey colour. The dots pile on top of each other, so you can't see where the data is dense and the cluster structure is gone. On real big data this also <b>freezes an interactive browser</b>. Recognise it by the solid smear with no readable colour groups. Fix: <b>aggregate to a 2-D heatmap or subsample a few thousand points</b> before plotting — interactivity can't rescue a chart with too much ink."
+      },
+      {
+        type: "scatter",
+        title: "Headline hidden below the fold: default view misses the outliers",
+        xlabel: "alcohol (%)",
+        ylabel: "color intensity",
+        groups: [
+          { name: "bulk (visible by default)", color: "#4ea1ff", points: [[12.0,3.0],[12.2,3.3],[12.4,3.6],[12.6,4.0],[12.8,4.2],[13.0,4.5],[13.2,4.8],[13.4,5.0],[13.6,5.3],[13.8,5.6],[14.0,5.9],[12.3,3.4],[12.7,4.1],[13.1,4.6],[13.5,5.1],[13.9,5.7]] },
+          { name: "outlier cluster (only seen after zoom)", color: "#ff7b72", points: [[13.7,12.6],[13.9,13.0],[14.1,12.4],[14.2,13.0],[13.8,12.8]] }
+        ],
+        interpret: "<b>Illustrative:</b> the real story is the red cluster of high-intensity outliers top-right, but a default auto-zoom centred on the blue bulk leaves them at the very edge — most readers never scroll or zoom to them. Recognise it when the interesting points sit cramped against a chart border. Fix: make the <b>default view already tell the story</b> — pre-zoom to or annotate the cluster. Interactivity is for going deeper, never for revealing the headline."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine (54 wines subsampled): alcohol on x, color intensity on y, colored by cultivar. Cultivar 0 clusters high-alcohol/mid-intensity, cultivar 1 low-alcohol/low-intensity, cultivar 2 high-intensity. In Plotly this exact chart would be interactive — hover any dot to read its full chemistry row, and filter to one cultivar from a legend click or a dashboard dropdown. The in-app engine is static, so here it's a still snapshot standing in for that interactive view.",
+    caption: "",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

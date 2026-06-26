@@ -265,20 +265,54 @@ print("missing dates:", pd.date_range(s.index.min(), s.index.max(), freq="D")
   };
 
   window.CODEVIZ["dw-timeseries-eda"] = {
-    question: "On a real-pattern daily series (trend + yearly season + weekend bump + noise), what does a 30-day rolling mean reveal, and is the raw series stationary?",
+    question: "How do you READ a raw-line-vs-rolling-mean plot — and tell trend, stationarity, seasonality, and a level shift apart by eye?",
     charts: [
       {
         type: "line",
-        title: "Raw daily series vs its 30-day rolling mean (one year)",
+        title: "Ideal/trending: rolling mean keeps drifting -> NON-stationary",
         xlabel: "day of year",
         ylabel: "value",
         series: [
           { name: "raw daily (noisy)", color: "#ff7b72", points: [[30,63.2],[36,55.9],[42,61.6],[48,65.6],[54,65.6],[60,67.8],[66,76.1],[72,77.6],[78,66.9],[84,67.0],[90,70.7],[96,65.2],[102,68.7],[108,76.6],[114,83.6],[120,72.4],[126,76.6],[132,70.0],[138,68.5],[144,69.6],[150,75.4],[156,71.7],[162,69.6],[168,72.2],[174,66.8],[180,73.2],[186,66.5],[192,72.1],[198,69.3],[204,65.3],[210,73.0],[216,63.1],[222,54.7],[228,56.6],[234,63.5],[240,67.8],[246,58.1],[252,61.8],[258,56.9],[264,56.2],[270,60.0],[276,67.4],[282,68.6],[288,63.0],[294,64.6],[300,64.9],[306,64.4],[312,68.5],[318,71.6],[324,80.1],[330,71.2],[336,70.4],[342,73.1],[348,69.8],[354,75.3],[360,81.0]] },
           { name: "30-day rolling mean", color: "#4ea1ff", points: [[30,55.3],[36,56.5],[42,57.8],[48,59.6],[54,61.2],[60,63.2],[66,64.7],[72,66.2],[78,67.2],[84,68.3],[90,69.0],[96,69.6],[102,70.1],[108,71.0],[114,71.3],[120,71.5],[126,72.1],[132,71.9],[138,71.6],[144,71.5],[150,71.2],[156,70.3],[162,70.2],[168,70.2],[174,69.3],[180,69.2],[186,68.7],[192,67.9],[198,66.4],[204,65.9],[210,64.9],[216,64.7],[222,64.0],[228,63.6],[234,63.0],[240,62.1],[246,61.0],[252,60.9],[258,61.0],[264,60.6],[270,60.5],[276,61.0],[282,61.0],[288,61.1],[294,62.0],[300,63.0],[306,63.7],[312,65.0],[318,66.4],[324,67.6],[330,68.5],[336,69.8],[342,70.8],[348,71.6],[354,73.3],[360,74.8]] }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> the x-axis is day of year, the y-axis the measured value. The red line is the raw daily series (jittery); the blue line is its 30-day rolling mean &mdash; a backward-only moving average that cancels noise so you can see the slow shape. Real numbers from the numpy-built series. <b>What the shape tells you:</b> the blue line is not flat &mdash; it rises into mid-year then eases off, tracing trend + yearly season. <b>Conclude: a rolling mean that keeps moving means the mean depends on time, so the series is NON-stationary.</b> The ADF test agrees: stat -6.14 on the level vs a far-more-negative -22.07 after one difference."
+      },
+      {
+        type: "line",
+        title: "Stationary: rolling mean is flat -> ready to model",
+        xlabel: "day",
+        ylabel: "value",
+        series: [
+          { name: "raw (noisy)", color: "#7ee787", points: [[0,2.1],[10,-1.4],[20,0.8],[30,-2.0],[40,1.6],[50,-0.7],[60,2.3],[70,-1.9],[80,0.4],[90,1.1],[100,-2.2],[110,0.9],[120,-0.5],[130,1.8],[140,-1.3],[150,0.6],[160,-1.7],[170,2.0],[180,-0.9],[190,1.2]] },
+          { name: "30-day rolling mean", color: "#4ea1ff", points: [[0,0.1],[10,-0.1],[20,0.2],[30,0.0],[40,-0.1],[50,0.1],[60,0.0],[70,0.1],[80,-0.1],[90,0.0],[100,0.1],[110,-0.1],[120,0.0],[130,0.1],[140,0.0],[150,-0.1],[160,0.1],[170,0.0],[180,-0.1],[190,0.0]] }
+        ],
+        interpret: "<b>Illustrative.</b> Same two lines, but here the green raw series scatters around a constant level and the blue rolling mean stays <b>flat near zero</b> with no drift. <b>How to recognise it:</b> a rolling mean that wanders within a thin band, not a rising or falling path. <b>Conclude:</b> constant mean (and roughly constant spread) is the visual signature of a <b>stationary</b> series &mdash; its ADF p-value would be small. This is what you want AFTER differencing or detrending: the leftover residual you can hand to a classical model."
+      },
+      {
+        type: "line",
+        title: "Seasonal: ACF spikes at the period (lag 7) instead of decaying",
+        xlabel: "lag k (days)",
+        ylabel: "autocorrelation",
+        series: [
+          { name: "trend series ACF (slow decay)", color: "#ff7b72", points: [[0,1.0],[1,0.70],[2,0.59],[3,0.60],[4,0.56],[5,0.57],[6,0.66],[7,0.75],[8,0.55],[9,0.50],[10,0.52],[11,0.48],[12,0.45],[13,0.47],[14,0.50]] },
+          { name: "weekly series ACF (spike at 7,14)", color: "#c89bff", points: [[0,1.0],[1,0.30],[2,-0.35],[3,-0.55],[4,-0.35],[5,0.30],[6,0.70],[7,0.87],[8,0.30],[9,-0.35],[10,-0.55],[11,-0.35],[12,0.30],[13,0.70],[14,0.82]] }
+        ],
+        interpret: "<b>How to read it:</b> the x-axis is the lag k (how many days back), the y-axis the autocorrelation &mdash; how strongly a value resembles the value k days earlier. Both curves start at 1.0 by definition. <b>What the two shapes mean:</b> the red curve (the trending series above) stays high and decays slowly &mdash; the fingerprint of <b>trend</b>, since a drifting mean keeps every value tied to many past ones (real lags 1..7: 0.70..0.75). The purple curve dips then <b>spikes at lag 7 and again at 14</b> (~0.87, ~0.82) &mdash; the fingerprint of <b>weekly seasonality</b>, where each day mirrors the same weekday last week. <b>Conclude:</b> slow decay => difference once; a spike at lag m => seasonal-difference at m."
+      },
+      {
+        type: "line",
+        title: "FAILURE/level shift: a step in the mean (release, outage, or tracking bug)",
+        xlabel: "day",
+        ylabel: "value",
+        series: [
+          { name: "raw (step at day 100)", color: "#ffb454", points: [[0,20],[10,21],[20,19],[30,22],[40,20],[50,21],[60,19],[70,20],[80,22],[90,21],[100,20],[100,40],[110,41],[120,39],[130,42],[140,40],[150,41],[160,39],[170,40],[180,42],[190,41]] },
+          { name: "30-day rolling mean", color: "#4ea1ff", points: [[0,20.4],[10,20.5],[20,20.3],[30,20.6],[40,20.5],[50,20.4],[60,20.3],[70,20.5],[80,20.6],[90,20.8],[100,24.0],[110,30.5],[120,36.0],[130,39.8],[140,40.5],[150,40.4],[160,40.3],[170,40.5],[180,40.6],[190,40.8]] }
+        ],
+        interpret: "<b>Illustrative.</b> The orange raw line sits flat near 20, then <b>jumps to ~40 at day 100</b> and stays there. <b>How to recognise it:</b> the blue rolling mean shows a <b>ramp</b> (not a spike) over one window-width as the old level slides out and the new one slides in &mdash; that smeared step is the tell of a <b>level shift</b>, not a single outlier (which would be one isolated point) and not a trend (a steady slope). <b>Conclude:</b> investigate the date &mdash; a release, outage, or tracking change. Don't difference it away blindly; the two regimes may need to be modelled separately or the break flagged as a known event."
       }
     ],
-    caption: "Real numbers from a numpy-built daily series (trend + yearly seasonality + weekend bump + noise) on a pandas DatetimeIndex. The red raw line jitters day to day; the blue 30-day rolling mean (s.rolling(30).mean()) cancels that noise and exposes the slow shape &mdash; rising into mid-year then easing off &mdash; which is exactly the trend plus yearly season. Because the rolling mean keeps moving, its mean is not constant, so the series is non-stationary; an Augmented Dickey-Fuller (ADF) test on the level gives stat -6.14 while the same test on the 1st difference gives a far more negative stat -22.07 (more clearly stationary once the trend is removed). The autocorrelation function (ACF) of the raw series stays high and decays slowly (lags 1..7: 0.70, 0.59, 0.60, 0.56, 0.57, 0.66, 0.75), the signature of trend; a separate clean weekly series shows the textbook seasonal ACF spike at lag 7 (~0.87). Monthly resample means (Jan..Dec): 55.6, 63.1, 68.9, 71.5, 71.1, 69.2, 65.0, 61.6, 60.5, 63.7, 69.2, 76.0.",
+    caption: "One ideal trending series plus the three other patterns you actually meet. Read every chart by its rolling mean (or its ACF): a drifting mean => non-stationary trend; a flat mean => stationary; an ACF that spikes at lag m => seasonality of period m; a smeared step in the rolling mean => a level shift to investigate. Chart 1 and the red ACF use real numbers from the code; the other variants are illustrative but qualitatively honest.",
     code: `import numpy as np
 import pandas as pd
 

@@ -250,20 +250,43 @@ print("live prediction:", served.predict(live_row)[0])`
   };
 
   window.CODEVIZ["dw-pipelines"] = {
-    question: "When you fit a feature selector + scaler on ALL the data (leaked) vs inside a Pipeline that refits on TRAIN only per fold, how do the reported accuracies compare? Shown on data where the TRUE accuracy is exactly chance (0.5), so any lift above 0.5 is pure leakage.",
+    question: "Fit a feature selector + scaler on ALL the data (leaked) vs inside a Pipeline that refits on TRAIN only per fold — how do the reported accuracies compare, and how do you SEE the difference on a chart?",
     charts: [
       {
         type: "bars",
-        title: "Reported cross-validated accuracy — true accuracy is 0.5 (chance)",
+        title: "Ideal read: leaked vs honest CV accuracy (true accuracy = 0.5, chance)",
         xlabel: "preprocessing strategy",
         ylabel: "CV accuracy",
         labels: ["Leaked (fit on ALL data)", "Pipeline (fit on TRAIN only)", "Truth (chance)"],
         values: [0.81, 0.425, 0.5],
         valueLabels: ["0.81", "0.42", "0.50"],
-        colors: ["#ff7b72", "#7ee787", "#8b949e"]
+        colors: ["#ff7b72", "#7ee787", "#9aa7b4"],
+        interpret: "Each bar is one reported accuracy; taller = better-looking. The grey bar is the truth: the labels are random, so the best anyone can do is 0.5 (a coin flip). Read the red bar against grey: it sits far ABOVE truth at 0.81 — that 0.31 gap is pure leakage, accuracy manufactured by letting the selector peek at every label. The green bar (Pipeline, refit on train only) sits right at 0.5. <b>Rule of thumb: when a preprocessing-on-all-data bar towers over a known ceiling, the lift is fake.</b>"
+      },
+      {
+        type: "line",
+        title: "Variant — leaked score looks great in test, collapses on live data",
+        xlabel: "deployment stage",
+        ylabel: "accuracy",
+        series: [
+          { name: "Leaked pipeline", color: "#ff7b72", points: [[0, 0.81], [1, 0.80], [2, 0.51]] },
+          { name: "Honest pipeline", color: "#7ee787", points: [[0, 0.50], [1, 0.50], [2, 0.50]] }
+        ],
+        interpret: "Illustrative. X goes left-to-right through the model's life: 0 = cross-validation, 1 = held-out test, 2 = live production. The red leaked line stays high through CV and even the test (both were contaminated by the same all-data fit), then <b>falls off a cliff to chance at production</b> — the first truly unseen data. The flat green line was honest all along. <b>The tell-tale shape of leakage is a high-then-crashing curve; honesty is flat and unexciting.</b>"
+      },
+      {
+        type: "bars",
+        title: "Variant — mild leakage (few features): gap is small and easy to miss",
+        xlabel: "preprocessing strategy",
+        ylabel: "CV accuracy",
+        labels: ["Leaked (fit on ALL data)", "Pipeline (fit on TRAIN only)", "Truth (chance)"],
+        values: [0.54, 0.50, 0.50],
+        valueLabels: ["0.54", "0.50", "0.50"],
+        colors: ["#ffb454", "#7ee787", "#9aa7b4"],
+        interpret: "Illustrative — same setup but only ~20 features instead of 5000, so the selector has little room to cherry-pick. The leaked bar (orange) now beats truth by just 0.04, not 0.31. <b>Leakage shrinks with fewer features, so a small gap does not mean it is safe</b> — the bias is still there, just quieter, and it grows fast as you add features. Don't dismiss a 'few points' of unexplained lift; always wrap preprocessing in the Pipeline regardless of how big the gap looks."
       }
     ],
-    caption: "Real numbers. Data: 200 rows of pure random noise (5000 features) with RANDOM 0/1 labels, so nothing is learnable and the honest accuracy is exactly 0.5. Fitting SelectKBest+StandardScaler on the FULL dataset (peeking at every label) lets the selector cherry-pick 20 features that happen to correlate with the labels by chance, manufacturing 0.81 cross-validated accuracy out of thin air — a total mirage. The identical steps wrapped in a Pipeline refit on each fold's TRAIN portion only and land at 0.42, right around chance — honest. The leaked bar looks far better and is entirely fake; on live data it would collapse to 0.5.",
+    caption: "Real numbers for the main chart. Data: 200 rows of pure random noise (5000 features) with RANDOM 0/1 labels, so nothing is learnable and honest accuracy is exactly 0.5. The variants are illustrative shapes showing how leakage reveals itself differently across deployment stages and feature counts.",
     code: `import numpy as np
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.preprocessing import StandardScaler

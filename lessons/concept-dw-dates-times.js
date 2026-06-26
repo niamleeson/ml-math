@@ -247,20 +247,43 @@ print(roll7.dropna().round(1).head())`
   };
 
   window.CODEVIZ["dw-dates-times"] = {
-    question: "On a real-ish noisy daily series, what does a 7-day rolling mean do that the raw daily values do not?",
+    question: "On a noisy daily series, what does a 7-day rolling mean reveal — and how do you read the time plots you'll actually meet?",
     charts: [
       {
         type: "line",
-        title: "Raw daily series vs its 7-day rolling mean (days 7–66)",
+        title: "Ideal: raw daily series vs its 7-day rolling mean (days 7–66)",
         xlabel: "day of year",
         ylabel: "value",
         series: [
           { name: "raw daily (noisy)", color: "#ff7b72", points: [[7,103.0],[8,96.4],[9,113.0],[10,111.8],[11,107.4],[12,109.7],[13,112.9],[14,105.3],[15,105.9],[16,106.5],[17,115.1],[18,113.8],[19,114.9],[20,108.2],[21,116.4],[22,110.8],[23,114.1],[24,124.3],[25,116.4],[26,111.3],[27,115.9],[28,103.9],[29,117.7],[30,117.3],[31,116.4],[32,124.1],[33,113.7],[34,122.9],[35,107.9],[36,113.9],[37,117.2],[38,128.3],[39,129.9],[40,122.0],[41,127.1],[42,118.4],[43,121.8],[44,121.9],[45,118.5],[46,118.5],[47,127.7],[48,135.5],[49,123.0],[50,120.2],[51,135.3],[52,129.0],[53,128.8],[54,129.8],[55,128.6],[56,123.2],[57,119.1],[58,132.2],[59,130.1],[60,135.6],[61,129.7],[62,123.9],[63,126.4],[64,133.9],[65,130.9],[66,129.2]] },
           { name: "7-day rolling mean", color: "#4ea1ff", points: [[7,105.6],[8,104.1],[9,105.4],[10,106.2],[11,106.1],[12,107.0],[13,107.8],[14,108.1],[15,109.5],[16,108.5],[17,109.0],[18,109.9],[19,110.6],[20,110.0],[21,111.5],[22,112.2],[23,113.3],[24,114.6],[25,115.0],[26,114.5],[27,115.6],[28,113.8],[29,114.8],[30,115.2],[31,114.1],[32,115.2],[33,115.6],[34,116.5],[35,117.1],[36,116.6],[37,116.6],[38,118.3],[39,119.1],[40,120.3],[41,120.9],[42,122.4],[43,123.5],[44,124.2],[45,122.8],[46,121.2],[47,122.0],[48,123.2],[49,123.8],[50,123.6],[51,125.5],[52,127.0],[53,128.5],[54,128.8],[55,127.8],[56,127.8],[57,127.7],[58,127.2],[59,127.4],[60,128.4],[61,128.4],[62,127.7],[63,128.1],[64,130.3],[65,130.1],[66,129.9]] }
-        ]
+        ],
+        interpret: "X is the day of year, Y is the measured value. The red line is the raw daily reading: it jitters up and down every single day, so the trend is hard to see by eye. The blue line is <b>s.rolling(7).mean()</b> — each blue point averages that day and the six days before it. The blue line is smooth and climbs steadily, exposing the real upward trend the noise was hiding. Because each average uses only past days, the blue line never peeks at the future."
+      },
+      {
+        type: "line",
+        title: "Window too long: a 60-day rolling mean erases the real wiggles (illustrative)",
+        xlabel: "day of year",
+        ylabel: "value",
+        series: [
+          { name: "raw daily (noisy)", color: "#ff7b72", points: [[7,103],[12,110],[17,115],[22,111],[27,116],[32,124],[37,117],[42,118],[47,128],[52,129],[57,119],[62,124],[67,140],[72,118],[77,135],[82,121],[87,138],[92,125],[97,142],[102,128]] },
+          { name: "60-day rolling mean", color: "#ffb454", points: [[7,118],[12,119],[17,120],[22,121],[27,122],[32,123],[37,124],[42,125],[47,126],[52,127],[57,128],[62,129],[67,130],[72,131],[77,132],[82,133],[87,134],[92,135],[97,136],[102,137]] }
+        ],
+        interpret: "Illustrative. Same noisy red series, but the orange line uses a <b>60-day</b> window instead of 7. A window that long averages over so many days that it flattens into an almost-straight line — every bump, dip, and weekly pattern is smoothed away. The lesson: the window length <b>w</b> is a knob. Too small and you keep the noise; too large and you erase the very structure you wanted to see. Pick w to match the cycle you care about (7 for weekly, ~30 for monthly)."
+      },
+      {
+        type: "line",
+        title: "Wrong parse: string-sorted dates jumble the timeline (illustrative)",
+        xlabel: "row order (as plotted)",
+        ylabel: "value",
+        series: [
+          { name: "plotted in string order", color: "#c89bff", points: [[1,102],[2,150],[3,118],[4,108],[5,168],[6,121],[7,134],[8,99],[9,160],[10,112]] },
+          { name: "correct time order", color: "#7ee787", points: [[1,99],[2,102],[3,108],[4,112],[5,118],[6,121],[7,134],[8,150],[9,160],[10,168]] }
+        ],
+        interpret: "Illustrative. This is what a forgotten parse looks like. The purple line plots rows sorted as <b>text</b> — \"2023-12-01\" lands before \"2023-2-01\" because the character '1' beats '2' — so the timeline is scrambled into a meaningless zig-zag. The green line is the same points after <b>pd.to_datetime</b> + sort, rising smoothly as a real trend. If your time plot looks like random spikes with no shape, suspect string dates, not bad data."
       }
     ],
-    caption: "Real numbers from a numpy-built daily series (trend + yearly season + weekday bump + noise) on a pandas DatetimeIndex. The red raw line jitters day to day; the blue 7-day rolling mean (s.rolling(7).mean()) cancels that noise and exposes the steady upward trend. Resampling the same series to monthly means gave 110.5, 123.9, 134.0, 139.0, 136.9, 134.4, 127.7, 124.4, 123.5, 127.1, 136.8, 149.9 for Jan–Dec. Because the rolling mean looks only backward, it is safe to use without leaking the future.",
+    caption: "Ideal plus two failure modes. The first chart uses real numbers from a numpy-built daily series (trend + yearly season + weekday bump + noise) on a pandas DatetimeIndex; resampling it to monthly means gave 110.5, 123.9, 134.0, 139.0, 136.9, 134.4, 127.7, 124.4, 123.5, 127.1, 136.8, 149.9 for Jan–Dec. The other two are illustrative shapes showing an over-long rolling window and string-sorted (unparsed) dates.",
     code: `import numpy as np
 import pandas as pd
 

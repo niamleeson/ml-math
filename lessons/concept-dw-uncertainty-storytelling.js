@@ -255,26 +255,56 @@ plt.show()`
   };
 
   window.CODEVIZ["dw-uncertainty-storytelling"] = {
-    question: "Real wine chemistry: the mean 'proline' level differs by grape variety — but by how much, and is the gap real? Bare means vs means with 95% confidence intervals.",
+    question: "Same two means every time — but the error bars decide the story. When is a gap real, when is it noise, and how do you draw the conclusion?",
     charts: [
       {
         type: "bars",
-        title: "Bare means hide how sure we are",
-        labels: ["class 0", "class 1", "class 2"],
-        values: [1115.7, 519.5, 629.9],
-        valueLabels: ["1116", "519", "630"],
-        colors: ["#cccccc", "#cccccc", "#cccccc"]
-      },
-      {
-        type: "bars",
-        title: "Class 0 is far higher — 95% CIs don't overlap (n labeled)",
+        title: "Real wine chemistry: 'proline' by class — 95% CIs don't overlap, gap is real",
+        xlabel: "grape-variety class (sample size n)",
+        ylabel: "mean proline",
         labels: ["class 0 (n=59)", "class 1 (n=71)", "class 2 (n=48)"],
         values: [1115.7, 519.5, 629.9],
         valueLabels: ["1116 ±58", "519 ±37", "630 ±33"],
-        colors: ["#1f77b4", "#cccccc", "#cccccc"]
+        colors: ["#7ee787", "#9aa7b4", "#9aa7b4"],
+        interpret: "Bar height = the sample mean; the <b>±</b> is the 95% confidence-interval half-width (about 1.96×SE), the honest fuzziness of each mean. Class 0's interval [1058, 1173] sits entirely above class 1's [482, 557] and class 2's [597, 663] — the bars <b>don't overlap</b>, so the gaps are real, not sampling noise. Class 0 (green) is the focus; the other two are greyed as context. Real numbers from sklearn's load_wine, 178 wines."
+      },
+      {
+        type: "bars",
+        title: "Within noise: two accuracies, overlapping CIs — you cannot call a winner",
+        xlabel: "model",
+        ylabel: "accuracy",
+        labels: ["model X", "model Y"],
+        values: [0.84, 0.82],
+        valueLabels: ["0.84 ±0.03", "0.82 ±0.03"],
+        colors: ["#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. Same picture, opposite verdict: X reads 0.84, Y reads 0.82, but each ±0.03 interval [0.81, 0.87] and [0.79, 0.85] <b>overlaps heavily</b>. When the bars overlap like this the 0.02 gap is inside the noise — the 'winner' may just be the luckier test split. Both are greyed because neither is a justified focus. The fix on a slide: a finding-stating title like 'X and Y are within noise'."
+      },
+      {
+        type: "bars",
+        title: "Tiny n trap: same 5-point gap, but B's huge bar swallows it",
+        xlabel: "onboarding flow (sample size n)",
+        ylabel: "sign-ups per 100 visitors",
+        labels: ["flow A (n=100)", "flow B (n=4)"],
+        values: [42, 37],
+        valueLabels: ["42 ±2", "37 ±16"],
+        colors: ["#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative. The point estimates (42 vs 37) match the first realistic case, but B now rests on only n=4. Because SE = s/√n, shrinking n from 100 to 4 makes the error bar about 5× wider: B's interval ≈ [21, 53] (red, huge) <b>swallows A's</b> [38, 46]. Identical means, opposite conclusion — with n=4 you cannot claim A is better. This is why the sample size n belongs on the chart."
+      },
+      {
+        type: "line",
+        title: "Tell the story: sign-ups doubled after the May launch (band = 95% CI)",
+        xlabel: "week",
+        ylabel: "weekly sign-ups",
+        series: [
+          { name: "pre-launch (context)", color: "#9aa7b4", points: [[1, 100], [2, 98], [3, 104], [4, 101], [5, 99]] },
+          { name: "post-launch (focus)", color: "#7ee787", points: [[5, 99], [6, 150], [7, 185], [8, 198], [9, 205]] },
+          { name: "95% CI upper", color: "#c89bff", points: [[5, 109], [6, 168], [7, 209], [8, 226], [9, 237]] },
+          { name: "95% CI lower", color: "#c89bff", points: [[5, 89], [6, 132], [7, 161], [8, 170], [9, 173]] }
+        ],
+        interpret: "Illustrative storytelling layout. The grey line is the flat pre-launch baseline (context); the green line is the post-launch rise (focus); week 5 is the launch marker where the arc turns. The purple band is the 95% CI — it <b>widens into the future</b> because later weeks are estimated less precisely. Read it as one sentence: greyed context, one bright series, a finding-stating title, and a hedge (the band) so the doubling claim stays honest."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine: mean 'proline' per grape-variety class with 95% confidence intervals (half-widths shown as ±). Left: three bare bars — you cannot tell if the gaps are real. Right: the same means with their 95% CIs and sample sizes n. Class 0's interval [1058, 1173] sits far above class 1's [482, 557] and class 2's [597, 663] — they don't overlap, so class 0 really is higher. The focus class is highlighted; the other two are greyed as context. Error bars = 95% CI.",
+    caption: "Four readings of the same lesson. Chart 1 (real load_wine numbers): non-overlapping 95% CIs → the gap is real. Chart 2: overlapping CIs → within noise, no winner. Chart 3: a tiny-n bar so wide it swallows the gap → n matters. Chart 4: the storytelling layout — greyed baseline, highlighted rise, launch marker, widening confidence band. Error bars / bands = 95% CI throughout.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 from scipy import stats

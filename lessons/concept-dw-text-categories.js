@@ -258,7 +258,7 @@ print(df['country_final'].value_counts())     # rare singletons folded into 'Oth
   };
 
   window.CODEVIZ["dw-text-categories"] = {
-    question: "One country (the United States) is typed 10 different ways across 12 rows. What do the category counts look like before cleaning versus after standardizing to canonical labels?",
+    question: "One country, ten spellings. Here is the count split BEFORE cleaning and merged AFTER — then two ways cleaning itself goes wrong: over-merging distinct things, and 'Other' swallowing a real category.",
     charts: [
       {
         type: "bars",
@@ -268,7 +268,8 @@ print(df['country_final'].value_counts())     # rare singletons folded into 'Oth
         labels: ["USA", "usa", "U.S.A.", "United States", "US", "U.S.", "U.S of A", "us", "U.S", "Unted States"],
         values: [2, 2, 1, 1, 1, 1, 1, 1, 1, 1],
         valueLabels: ["2", "2", "1", "1", "1", "1", "1", "1", "1", "1"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "Real counts. The x-axis lists ten raw strings that <b>all mean the United States</b>; the y-axis is how many rows carry each. <b>How to read it:</b> every bar is tiny (height 1 or 2) because the 12 US rows are shattered across spellings — case, spacing, dots, abbreviations, and the typo 'Unted States'. <b>Conclude:</b> a value_counts() here misranks the true top country as ten also-rans, and a join would drop the non-matching spellings. This is the disease cleaning cures."
       },
       {
         type: "bars",
@@ -278,10 +279,32 @@ print(df['country_final'].value_counts())     # rare singletons folded into 'Oth
         labels: ["United States", "United Kingdom", "Germany", "France", "Canada", "Brazil", "Japan", "India", "Australia"],
         values: [12, 7, 5, 4, 3, 3, 3, 1, 1],
         valueLabels: ["12", "7", "5", "4", "3", "3", "3", "1", "1"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#58a6ff", "#58a6ff"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#58a6ff", "#58a6ff"],
+        interpret: "The healthy result. Same data after .str.strip().str.upper(), punctuation removal, and a canonical replace() mapping. <b>How to read it:</b> one bar per real country, sorted high→low; the scattered US fragments are now a single honest bar of 12. <b>Conclude:</b> counts, ranks, joins and one-hot columns are all correct now. The two blue bars (India, Australia, count 1) are the rare tail — exactly what a frequency threshold would fold into 'Other'."
+      },
+      {
+        type: "bars",
+        title: "PITFALL — over-merging: cleaning fused two genuinely different categories (illustrative)",
+        xlabel: "over-normalized label",
+        ylabel: "row count",
+        labels: ["IT (Italy + 'it' dept)", "US (country + product code)", "Germany", "France"],
+        values: [9, 14, 5, 4],
+        valueLabels: ["9", "14", "5", "4"],
+        colors: ["#ffb454", "#ffb454", "#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. The orange bars are <b>too tall</b> because lower-casing and stripping punctuation collapsed things that should stay apart: country 'IT' (Italy) merged with department 'it' (IT/tech), and country 'US' merged with a product code 'U.S.'. <b>How to recognise it:</b> a category's count jumps after cleaning beyond what the synonyms can explain, or a label now spans two meanings. <b>Conclude:</b> normalization can flatten real meaning — always inspect what your cleaning collapses, and exclude codes/ambiguous tokens from blanket case-folding."
+      },
+      {
+        type: "bars",
+        title: "PITFALL — 'Other' swallowed a real category (illustrative)",
+        xlabel: "label after rare-collapse (threshold count < 5)",
+        ylabel: "row count",
+        labels: ["United States", "United Kingdom", "Germany", "Other"],
+        values: [12, 7, 5, 9],
+        valueLabels: ["12", "7", "5", "9 (hides a fraud segment)"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "Illustrative. Collapsing every label with count below the threshold into 'Other' is usually good, but here the red 'Other' bar (9 rows) hides a small-but-important class — e.g. a high-value market or a rare fraud type — that simply fell under the cutoff. <b>How to recognise it:</b> an 'Other' bucket that is large or that you cannot fully account for. <b>Conclude:</b> a frequency threshold is blind to importance; always list what landed in 'Other' before trusting it, and whitelist categories that matter regardless of count."
       }
     ],
-    caption: "Real counts from a 39-row messy country column. BEFORE: the United States alone appears under 10 different strings (case, spacing, punctuation, abbreviation, and a typo) totalling 12 rows — value_counts() reports 38 distinct labels overall, so the true top country looks like ten tiny also-rans. AFTER: .str.strip().str.upper(), punctuation removal, and a canonical replace() mapping collapse everything to the 9 real countries; the US becomes a single honest bar of 12. The two blue bars (India, Australia, count 1) are exactly the rare tail a frequency threshold would fold into 'Other'.",
     code: `import pandas as pd
 
 raw = [

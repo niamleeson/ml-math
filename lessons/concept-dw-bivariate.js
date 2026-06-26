@@ -183,11 +183,11 @@ plt.show()`
   };
 
   window.CODEVIZ["dw-bivariate"] = {
-    question: "Wine chemistry: do two features (flavanoids and total phenols) relate to each other AND to the grape cultivar (the class/target)?",
+    question: "How do you READ a bivariate scatter — and how do you tell a real trend from a no-relationship blob, a fanning spread, or a trend that reverses once you split by group?",
     charts: [
       {
         type: "scatter",
-        title: "flavanoids vs total_phenols, colored by cultivar (54 of 178 wines)",
+        title: "Healthy: tight trend + separated classes (real wine data, 54 of 178)",
         xlabel: "flavanoids",
         ylabel: "total_phenols",
         groups: [
@@ -206,10 +206,60 @@ plt.show()`
             color: "#c89bff",
             points: [[0.52,1.55],[0.69,1.59],[0.75,1.8],[0.48,1.62],[0.49,1.25],[0.96,1.98],[0.84,1.55],[0.63,1.74],[0.65,1.7],[0.56,1.83],[1.25,1.51],[0.83,1.8],[0.47,1.38],[1.28,2.2],[0.5,1.4],[0.58,1.9],[1.36,1.48],[0.51,1.39]]
           }
-        ]
+        ],
+        interpret: "<b>Read the cloud's tilt and its colours separately.</b> The whole point-cloud rises left-to-right along a tight diagonal: feature x feature, flavanoids and total_phenols move together (Pearson correlation 0.865) so they carry overlapping information. Now read the colours: feature x target, the three cultivars sit in clearly separated bands — purple low/low, blue high/high, green between. <b>Both columns relate strongly to the class, so both are promising features.</b> Real 178-wine dataset, 18 points per cultivar."
+      },
+      {
+        type: "scatter",
+        title: "No relationship: a horizontal blob (illustrative)",
+        xlabel: "feature x",
+        ylabel: "feature y",
+        groups: [
+          {
+            name: "rows",
+            color: "#9aa7b4",
+            points: [[1.0,2.6],[1.3,2.1],[1.6,2.9],[1.9,2.4],[2.2,2.7],[2.5,2.2],[2.8,2.9],[3.1,2.3],[3.4,2.6],[3.7,2.5],[4.0,2.8],[4.3,2.2],[4.6,2.7],[4.9,2.4],[1.2,2.4],[2.0,2.8],[2.9,2.5],[3.6,2.6],[4.2,2.4],[4.8,2.6]]
+        }
+        ],
+        interpret: "<b>Illustrative.</b> The cloud is a flat horizontal smear — y stays around 2.5 no matter what x does. There's no tilt, so there's no trend: correlation near 0. This is the null result you must be able to recognise so you don't talk yourself into a line that isn't there. Conclusion: feature x tells you almost nothing about feature y; drop one, or look elsewhere for signal."
+      },
+      {
+        type: "scatter",
+        title: "Heteroscedasticity: the spread fans out (illustrative)",
+        xlabel: "session_minutes",
+        ylabel: "order_value",
+        groups: [
+          {
+            name: "rows",
+            color: "#ffb454",
+            points: [[1,2.1],[1.5,2.4],[2,2.0],[2.5,2.6],[3,2.3],[3.5,3.0],[4,2.4],[4.5,3.6],[5,2.2],[5.5,4.1],[6,1.8],[6.5,4.8],[7,2.0],[7.5,5.3],[8,1.5],[8.5,5.9],[9,2.4],[9.5,6.4]]
+        }
+        ],
+        lines: [{ color: "#9aa7b4", dash: true, points: [[1,2.0],[9.5,4.0]] }],
+        interpret: "<b>Illustrative.</b> The dashed line still slopes up (longer sessions spend more on average), but read the VERTICAL scatter: it's a tight column on the left and a wide wedge on the right. The spread grows with x — that's <b>heteroscedasticity</b>. The trend is real but predictions get much shakier at high x, and a plain trend-line's confidence band is misleadingly narrow there. Flag it; don't just report the slope."
+      },
+      {
+        type: "scatter",
+        title: "Confounded: pooled trend up, reverses within each group (illustrative)",
+        xlabel: "ad_spend",
+        ylabel: "revenue",
+        groups: [
+          {
+            name: "Q1 (small budget)",
+            color: "#4ea1ff",
+            points: [[1.0,5.2],[1.3,5.0],[1.6,4.8],[1.9,4.7],[2.2,4.5],[2.5,4.4]]
+          },
+          {
+            name: "Q4 (big budget)",
+            color: "#c89bff",
+            points: [[5.0,7.2],[5.3,7.0],[5.6,6.9],[5.9,6.7],[6.2,6.6],[6.5,6.4]]
+          }
+        ],
+        lines: [{ color: "#ff7b72", dash: true, points: [[1.0,4.6],[6.5,7.2]] }],
+        interpret: "<b>Illustrative — the trap the lesson warns about.</b> The red dashed line through ALL points slopes up, so pooled you'd say 'ad spend raises revenue.' But colour by the confounder (quarter): WITHIN each cluster the slope is actually DOWNWARD. The pooled up-trend is just that the high-budget quarter happens to be the high-revenue one. This is <b>Simpson's paradox</b>: always split by candidate confounders before claiming a relationship — the within-group story can reverse the pooled one."
       }
     ],
-    caption: "Two bivariate stories in one scatter, from the real 178-wine dataset (54 plotted, 18 per cultivar). Feature x feature: flavanoids and total_phenols rise together in a tight upward trend (Pearson correlation 0.865) - they carry overlapping information. Feature x target: the three cultivars sit in clearly separated bands - cultivar 2 (purple) clusters at low flavanoids / low phenols (group means 0.78 / 1.68), cultivar 0 (blue) at high / high (2.98 / 2.84), cultivar 1 (green) in between (2.08 / 2.26). Both columns relate strongly to the class, so both are promising features.",
+    caption: "",
     code: `import numpy as np, pandas as pd
 from sklearn.datasets import load_wine
 

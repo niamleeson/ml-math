@@ -213,26 +213,48 @@ print(tidy)
   };
 
   window.CODEVIZ["dw-tidy-data"] = {
-    question: "Melting a wide table (years as columns) into tidy long form: how do the row and column counts change?",
+    question: "How do you READ a reshape diagram — and how do you tell a clean melt from the three classic 'untidy' messes?",
     charts: [
       {
         type: "bars",
-        title: "WIDE (untidy): few rows, many columns",
-        labels: ["rows", "columns"],
-        values: [4, 4],
-        valueLabels: ["4", "4 (1 id + 3 year cols)"],
-        colors: ["#ff7b72", "#ff7b72"]
+        title: "Ideal: melt turns a wide table tall-and-narrow (rows go up, columns go down)",
+        series: [
+          { name: "rows", color: "#9aa7b4", points: [["WIDE (untidy)", 4], ["LONG (tidy)", 12]] },
+          { name: "columns", color: "#7ee787", points: [["WIDE (untidy)", 4], ["LONG (tidy)", 3]] }
+        ],
+        labels: ["WIDE (untidy)", "LONG (tidy)"],
+        interpret: "<b>How to read it:</b> each pair of bars is one table shape; grey is its row count, green its column count. Real numbers from running the code on the 4-country x 3-year table. <b>What it tells you:</b> melt traded <b>width for height</b> &mdash; 4 rows x 4 columns became 12 rows x 3 columns, because the 3 year columns (1999/2009/2019) were really one hidden 'year' variable and got stacked into rows. <b>Conclude:</b> a healthy melt makes the table <b>taller and narrower</b>; the cell count (12 numbers) is preserved, just rearranged. This is the shape every groupby/plot/model wants."
       },
       {
         type: "bars",
-        title: "LONG (tidy): many rows, few columns",
-        labels: ["rows", "columns"],
-        values: [12, 3],
-        valueLabels: ["12 (4×3)", "3 (country, year, gdp_pc)"],
-        colors: ["#7ee787", "#7ee787"]
+        title: "Mess #1 — headers are values: tidy explodes the column count, not the rows",
+        series: [
+          { name: "rows", color: "#9aa7b4", points: [["1 id + 12 month cols", 50], ["after melt", 600]] },
+          { name: "columns", color: "#ff7b72", points: [["1 id + 12 month cols", 13], ["after melt", 3]] }
+        ],
+        labels: ["1 id + 12 month cols", "after melt"],
+        interpret: "<b>Illustrative.</b> A monthly export with one column per month is the same mess as the year table, just wider: 50 stores x 12 month-columns. <b>How to recognise it:</b> the red 'before' bar shows <b>many columns</b> (13) that are obviously values (Jan..Dec), and a groupby('month') raises KeyError because no 'month' column exists. <b>Conclude:</b> after melt the count flips to 600 rows x 3 columns &mdash; the wider the untidy table, the taller the tidy one. Headers-as-values always shows up as an abnormally wide table with no column to group by."
+      },
+      {
+        type: "bars",
+        title: "Mess #2 — many values in one cell: row count jumps but column count barely moves",
+        labels: ["start rows", "after str.split (+2 cols)", "after explode (1 row/tag)"],
+        values: [2, 2, 5],
+        valueLabels: ["2", "2 rows / 4 cols", "5 rows / 4 cols"],
+        colors: ["#9aa7b4", "#ffb454", "#7ee787"],
+        interpret: "<b>Illustrative.</b> Tracks the 'two facts in one cell' fix on a 2-row table where group='male_25-34' and tags='sports,news'. <b>How to read it:</b> grey is the messy start; orange is after str.split('_') breaks group into sex+age (rows unchanged, columns grow); green is after explode gives each tag its own row (2 to 5 rows). <b>Conclude:</b> split widens (more columns), explode lengthens (more rows). If a reshape adds rows but the same identifiers repeat, it's almost always an explode untangling a packed list &mdash; that's expected and correct, not duplication to worry about."
+      },
+      {
+        type: "bars",
+        title: "FAILURE — plain pivot on duplicate keys: crashes or silently collapses rows",
+        labels: ["long rows in", "unique (country,year) cells", "pivot_table mean out"],
+        values: [16, 12, 12],
+        valueLabels: ["16", "12 (4 dup)", "12 (4 averaged)"],
+        colors: ["#9aa7b4", "#ff7b72", "#7ee787"],
+        interpret: "<b>Illustrative.</b> Shows what happens when more than one row maps to the same (country, year) cell. <b>How to recognise it:</b> 16 long rows but only 12 unique row x column keys (red) means 4 duplicates &mdash; plain pivot raises 'Index contains duplicate entries'. <b>Conclude:</b> the gap between 'rows in' and 'unique cells' is your warning sign. pivot_table with aggfunc='mean' (green) deliberately averages each duplicate group down to one value, so 16 rows resolve to 12 cells on purpose. A silent row drop after a pivot usually means hidden duplicate keys you didn't aggregate."
       }
     ],
-    caption: "Real numbers from running the CODE on the inline 4-country × 3-year table. WIDE is 4 rows × 4 columns, where 3 of those columns (1999, 2009, 2019) are really values of one hidden 'year' variable. melt stacks them: 4 wide rows × 3 years → 12 long rows, each one observation, with just 3 columns. The table got taller and narrower — and now groupby, plotting, and modeling all work without further reshaping.",
+    caption: "One ideal reshape plus the three messes Wickham names. Read each chart as a before/after of table SHAPE: melt trades width for height; headers-as-values shows as an over-wide table; packed cells need split (widen) then explode (lengthen); and duplicate keys force pivot_table-with-aggfunc instead of plain pivot. The first chart uses real numbers from the code; the variants are illustrative but qualitatively honest.",
     code: `import pandas as pd
 
 wide = pd.DataFrame({
@@ -243,7 +265,8 @@ wide = pd.DataFrame({
 })
 long = wide.melt(id_vars="country", var_name="year", value_name="gdp_pc")
 
-print("wide rows, cols:", wide.shape)   # -> (4, 4)
-print("long rows, cols:", long.shape)   # -> (12, 3)`
+print("wide rows, cols:", wide.shape)   # -> (4, 4)  short and wide
+print("long rows, cols:", long.shape)   # -> (12, 3) tall and narrow
+# cells preserved: 4*3 year-values = 12 long observations`
   };
 })();

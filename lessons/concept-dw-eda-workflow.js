@@ -235,11 +235,11 @@ plt.title('Target distribution'); plt.tight_layout(); plt.show()
   };
 
   window.CODEVIZ["dw-eda-workflow"] = {
-    question: "On a brand-new dataset (load_wine), what does the very first univariate look reveal? Computing the skew of every numeric feature flags which ones are lopsided and will likely need a transform.",
+    question: "On a brand-new dataset (load_wine), the first univariate pass computes the skew of every feature to flag which are lopsided — but how do you READ the histograms those skew numbers stand for, including the shapes EDA exists to catch?",
     charts: [
       {
         type: "bars",
-        title: "First look at load_wine: skew of each feature (|skew| > 0.5 = noticeably lopsided)",
+        title: "Ideal univariate summary: skew of each feature (|skew| > 0.5 = lopsided)",
         labels: ["magnesium", "malic_acid", "color_intensity", "proline", "proanthoc.",
                  "nonflav.phen.", "alcal_ash", "tot_phenols", "flavanoids", "hue",
                  "alcohol", "ash", "od280/od315"],
@@ -248,10 +248,35 @@ plt.title('Target distribution'); plt.tight_layout(); plt.show()
                       "0.03", "0.02", "-0.05", "-0.18", "-0.31"],
         colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72",
                  "#d29922", "#d29922", "#7ee787", "#7ee787", "#7ee787",
-                 "#7ee787", "#7ee787", "#7ee787"]
+                 "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Each bar is one feature's <b>skew</b> — how lopsided its distribution is (0 symmetric, positive = long right tail). Bars are sorted, so reading top-down ranks where to look first: red bars (magnesium 1.10, malic_acid 1.04, color_intensity 0.87, proline 0.77) clear the 0.5 rule-of-thumb and are transform candidates; green bars near 0 (alcohol, ash, hue) are already symmetric. Conclude: one number per column turns 13 histograms into a to-do list — this is the 'notice something' step made concrete."
+      },
+      {
+        type: "hist",
+        title: "Healthy: proline is right-skewed (skew 0.77) but well-behaved",
+        labels: ["278", "500", "722", "944", "1166", "1388", "1610"],
+        values: [22, 41, 38, 30, 24, 15, 8],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "Illustrative shape behind the skew = 0.77 bar. X is the value of proline binned into ranges; Y is how many of the 178 wines fall in each bin. The bulk sits on the left with a thinning <b>right tail</b> (orange) — that long tail is exactly what a positive skew number reports. Conclude: this is normal right-skew, not an error; a log transform would pull the tail in and make the column more symmetric for modelling."
+      },
+      {
+        type: "hist",
+        title: "Problem to catch: a hidden -999 missing code spikes the left",
+        labels: ["-999", "278", "500", "722", "944", "1166", "1388"],
+        values: [14, 20, 39, 36, 28, 14, 7],
+        colors: ["#ff7b72", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ffb454", "#ffb454"],
+        interpret: "Illustrative shape. A lone tall bar (red) sitting far from the rest of the data is the classic EDA red flag: a placeholder like -999 or 0 stuffed in for <b>missing</b> values. The skew number alone would just say 'very skewed' and hide the cause — only the picture reveals the impossible spike. Conclude: don't transform yet; find out if that bar is a real value or a missing-code, fix it, then re-look. This is why EDA says look, don't just compute."
+      },
+      {
+        type: "hist",
+        title: "Problem to catch: bimodal — two groups mixed in one column",
+        labels: ["1.0", "1.6", "2.2", "2.8", "3.4", "4.0", "4.6"],
+        values: [9, 34, 18, 6, 19, 31, 7],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#9aa7b4", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "Illustrative shape. <b>Two humps</b> with a valley between them mean the column is really a mix of two sub-populations (e.g. two grape varieties). A single skew or mean number is misleading here — it lands in the empty valley where almost no data sits. Conclude: a transform won't help; instead find the variable that splits the two modes and analyse each group, or colour later plots by it. Bimodality is something you can only see by plotting."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine (178 wines, 13 numeric features). Skew measures how lopsided a distribution is: 0 is symmetric, positive means a long right tail, negative a long left tail. A quick univariate pass flags magnesium (1.10), malic_acid (1.04), color_intensity (0.87) and proline (0.77) as the most right-skewed (red) — the columns you'd zoom in on first and likely log-transform — while alcohol, ash, flavanoids and hue are nearly symmetric (green) and need no attention. This single bar chart is the 'notice something' step of the EDA loop made concrete: one summary, computed for every column, telling you where to look next.",
+    caption: "Ideal skew summary + the histogram shapes it stands for. The bars rank all 13 features (red = |skew|>0.5). A healthy right-skewed column (proline) just has a long tail; but the same skew machinery hides a -999 missing-code spike and a bimodal two-group mix — shapes only a plot reveals, which is exactly why EDA says look before you compute.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

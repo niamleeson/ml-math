@@ -261,18 +261,46 @@ print(result)
   };
 
   window.CODEVIZ["dw-big-data"] = {
-    question: "On a real mixed-dtype DataFrame, how much memory do you save by downcasting numerics (float64->float32, int64->int8) and converting a low-cardinality text column to 'category'?",
+    question: "How do you READ a before/after memory chart — and what do the different shapes tell you about WHERE the savings come from (or whether a downcast just corrupted your data)?",
     charts: [
       {
         type: "bars",
-        title: "DataFrame memory BEFORE vs AFTER downcasting + category (per dtype group, MB)",
+        title: "Mixed frame: real before/after by dtype group (MB) — the healthy case",
         labels: ["floats before", "floats after", "int before", "int after", "text before", "text after", "TOTAL before", "TOTAL after"],
         values: [1.49, 0.74, 0.17, 0.02, 1.27, 0.02, 2.92, 0.78],
         valueLabels: ["1.49", "0.74", "0.17", "0.02", "1.27", "0.02", "2.92", "0.78"],
-        colors: ["#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787"]
+        colors: ["#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787"],
+        interpret: "<b>Read it left to right in pairs:</b> each red bar is a dtype group BEFORE, the green bar right of it is the same group AFTER. The height drop within a pair is that group's saving. Floats only halve (1.49&rarr;0.74, the float64&rarr;float32 2x ceiling); the integer drops ~8x; the <b>text column collapses ~60x</b> (1.27&rarr;0.02) because category stores each label once. The final pair is the whole frame: 2.92&rarr;0.78 MB, a <b>3.7x cut</b> with zero information lost. Real numbers from fetch_california_housing (20,640 rows)."
+      },
+      {
+        type: "bars",
+        title: "Text-dominated frame: category is almost the WHOLE win (illustrative)",
+        labels: ["floats before", "floats after", "text before", "text after", "TOTAL before", "TOTAL after"],
+        values: [0.40, 0.20, 8.0, 0.10, 8.40, 0.30],
+        valueLabels: ["0.40", "0.20", "8.00", "0.10", "8.40", "0.30"],
+        colors: ["#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787"],
+        interpret: "<b>Illustrative, but the common real shape</b> for log/event data: one low-cardinality text column (country, status code, URL) towers over everything else. The float pair barely moves; the text pair collapses from 8.0 to 0.1 MB. When you see one giant red bar shrink to almost nothing, the lesson is: <b>profile first with memory_usage(deep=True)</b> and chase the dominant object column — downcasting the small numeric columns would have been a rounding error here."
+      },
+      {
+        type: "bars",
+        title: "All-numeric frame: modest 2x, no dramatic collapse (illustrative)",
+        labels: ["floats before", "floats after", "int before", "int after", "TOTAL before", "TOTAL after"],
+        values: [4.0, 2.0, 1.0, 0.5, 5.0, 2.5],
+        valueLabels: ["4.00", "2.00", "1.00", "0.50", "5.00", "2.50"],
+        colors: ["#ff7b72", "#ffb454", "#ff7b72", "#ffb454", "#ff7b72", "#ffb454"],
+        interpret: "<b>Illustrative.</b> No repetitive text column means no category trick — every bar only halves, because the sole lever left is byte WIDTH (float64&rarr;float32, a wider int&rarr;a narrower int). The total caps near 2x. The orange (not green) AFTER bars are a reminder this is a real-but-bounded win: if you were hoping for 10x here, you were hoping for the category collapse that this frame can't give you."
+      },
+      {
+        type: "bars",
+        title: "Overflow: int8 downcast that CORRUPTED the column (illustrative)",
+        labels: ["int memory before", "int memory after", "max value before", "max value after"],
+        values: [4.0, 0.5, 300, 44],
+        valueLabels: ["4.0 MB", "0.5 MB", "300 (true)", "44 (WRONG)"],
+        colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative warning case.</b> The two grey bars on the left show the memory DID shrink 8x — the win you wanted. But the two bars on the right show the catch: a true max of 300 doesn't fit in int8 (range -128..127), so it silently <b>wrapped around to 44</b>. The green&rarr;red flip is the tell: smaller memory, corrupted values. Always check the column's actual min/max first, or let pd.to_numeric(downcast=...) pick the smallest SAFE width."
       }
     ],
-    caption: "Real numbers from fetch_california_housing (20,640 rows): nine float64 columns, one int64 'county_code' (values 0–57), and one object 'price_band' text column (5 labels). Downcasting the floats to float32 halves them (1.49→0.74 MB); the integer to int8 cuts it ~8x (0.17→0.02 MB); and converting the repetitive text column to 'category' cuts it ~60x (1.27→0.02 MB). Whole frame: 2.92 MB → 0.78 MB, a 3.7x reduction with zero information lost. The category conversion is the dramatic one — a low-cardinality text column stores each distinct label once plus a one-byte code per row instead of a full Python string per row.",
+    caption: "",
     code: `import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_california_housing

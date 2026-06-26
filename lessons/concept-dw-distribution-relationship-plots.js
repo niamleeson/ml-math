@@ -292,17 +292,40 @@ plt.show()`
   };
 
   window.CODEVIZ["dw-distribution-relationship-plots"] = {
-    question: "The two main families on real wine data: a histogram of one feature (proline), and a scatter of two features (flavanoids vs color intensity) colored by grape class. What does each kind of plot reveal?",
+    question: "Same data, different plots: which charts show the structure honestly, and which ones hide it?",
     charts: [
       {
         type: "hist",
-        title: "Distribution: histogram of 'proline' (178 wines, 8 bins) — right-skewed, one peak",
+        title: "Ideal: histogram of 'proline' (178 wines, 8 bins) — right-skewed, one peak",
         xlabel: "proline",
         ylabel: "count of wines",
         labels: ["278", "453", "628", "804", "979", "1154", "1330", "1505"],
         values: [31, 47, 38, 16, 23, 16, 3, 4],
         valueLabels: ["31", "47", "38", "16", "23", "16", "3", "4"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "X is the proline value (split into 8 equal-width bins), Y is how many wines land in each bin. The tallest bar sits near 450 and the bars shrink toward the right, with a long thin tail — this shape is <b>right-skewed</b>: most wines have low-to-medium proline, a few have a lot. One clear peak means one main group. With a good bin count, the histogram reads the distribution honestly."
+      },
+      {
+        type: "bars",
+        title: "Trap — too few bins: 2 bins hide a real two-cluster gap (illustrative)",
+        xlabel: "value range",
+        ylabel: "count",
+        labels: ["50–75", "75–100"],
+        values: [4, 4],
+        valueLabels: ["4", "4"],
+        colors: ["#ffb454", "#ffb454"],
+        interpret: "Illustrative — the eight exam scores {52,55,58,60,88,90,92,95}, which are really two clusters with an empty middle. With only <b>2 bins</b> you see two equal bars and nothing else; the gap between the low group and the high group has vanished. Too few bins smear separate humps into a featureless block. The fix is to sweep several bin counts — with more bins the empty middle would reappear as a gap."
+      },
+      {
+        type: "line",
+        title: "Trap — box plot vs ECDF on the same bimodal data (illustrative)",
+        xlabel: "value",
+        ylabel: "fraction of points at or below x",
+        series: [
+          { name: "ECDF (staircase shows the gap)", color: "#7ee787", points: [[52,0.125],[55,0.25],[58,0.375],[60,0.5],[88,0.5],[88,0.625],[90,0.75],[92,0.875],[95,1.0]] },
+          { name: "box plot would draw one solid box here", color: "#ff7b72", points: [[57,0.5],[91,0.5]] }
+        ],
+        interpret: "Illustrative, same eight bimodal scores. The green <b>ECDF</b> plots the fraction of points at or below each x: it climbs over the low cluster, runs <b>flat</b> across the empty 60→88 middle (no points, so no rise), then climbs again — that flat shelf <i>is</i> the gap, shown exactly with no tuning. The red line marks the span a <b>box plot</b> would draw: a single box from about 57 to 91 with a median around 74, which looks identical to evenly-spread data. The box plot hides the two clusters; the ECDF cannot."
       },
       {
         type: "scatter",
@@ -313,10 +336,11 @@ plt.show()`
           { name: "class_0", color: "#7ee787", points: [[3.24, 5.68], [2.69, 4.32], [2.51, 5.05], [3.32, 5.75], [2.43, 5.0], [2.88, 3.8], [2.94, 4.8], [2.97, 4.5], [3.25, 5.7], [2.74, 5.4], [2.53, 4.2], [2.98, 5.1], [3.29, 6.13], [2.68, 4.28], [3.56, 5.43], [2.63, 4.36], [3.17, 4.9], [2.92, 6.2]] },
           { name: "class_1", color: "#4ea1ff", points: [[3.18, 5.3], [2.0, 4.68], [1.28, 2.85], [1.85, 3.4], [2.53, 3.9], [2.21, 3.05], [1.94, 2.62], [1.69, 2.8], [1.59, 1.74], [1.25, 3.6], [1.46, 3.05], [2.25, 2.15], [0.99, 2.5], [1.64, 2.06], [1.76, 3.3], [1.25, 3.4], [2.13, 2.08], [2.45, 2.12]] },
           { name: "class_2", color: "#ff7b72", points: [[0.58, 5.45], [0.66, 7.1], [0.6, 5.0], [0.6, 4.92], [0.52, 4.35], [0.55, 4.0], [1.36, 10.8], [0.83, 10.52], [0.58, 7.6], [0.83, 9.01], [1.31, 13.0], [0.7, 5.28], [0.66, 10.26], [0.96, 8.5], [0.49, 5.5], [0.51, 9.9], [0.61, 7.7], [0.69, 10.2]] }
-        ]
+        ],
+        interpret: "A relationship plot: X is flavanoids, Y is color intensity, one dot per wine, colored by grape class. Each color forms its own cloud — green (class_0) sits high on flavanoids, blue (class_1) low on color intensity, red (class_2) far left with very low flavanoids. The clean separation says these two features together tell the classes apart, something no single-variable distribution plot could reveal. Watch for <b>overplotting</b> though: with thousands of rows these dots would stack into a blob — then lower opacity or switch to a hexbin."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine (178 wines, 13 chemical features). LEFT — a distribution plot: the histogram of 'proline' uses 8 equal-width bins; counts 31, 47, 38, 16, 23, 16, 3, 4 show one peak near 450 and a long right tail (right-skewed). RIGHT — a relationship plot: 18 wines per grape class, flavanoids vs color intensity. The classes separate cleanly — class_0 high flavanoids, class_1 low color intensity, class_2 very low flavanoids — which a single-variable distribution plot could never show. One family answers 'what does one variable look like?', the other 'how do two move together?'.",
+    caption: "Ideal distribution plot plus traps, then a relationship plot. Histogram and scatter use real numbers from sklearn's load_wine (178 wines): proline counts 31, 47, 38, 16, 23, 16, 3, 4 (right-skewed); 18 wines per grape class for flavanoids vs color intensity. The two-bin bars and the ECDF/box comparison are illustrative, built from the eight bimodal exam scores {52,55,58,60,88,90,92,95} to show how bin count and a box plot can hide a real gap that an ECDF shows exactly.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

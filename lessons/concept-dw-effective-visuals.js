@@ -236,30 +236,53 @@ plt.show()`
   };
 
   window.CODEVIZ["dw-effective-visuals"] = {
-    question: "Take seven real numbers (the mean chemistry of class-0 wines) and draw them the cluttered default way vs the cleaned way. Does the cleaned chart let you read the ranking faster?",
+    question: "Same seven real numbers (mean chemistry of class-0 wines), drawn four ways. Which encodings let your eye recover the ranking, and which fight it?",
     charts: [
       {
         type: "bars",
-        title: "BEFORE — default: unsorted bars, rainbow colors (where is the biggest value?)",
-        xlabel: "feature (dataframe order)",
-        ylabel: "mean value",
-        labels: ["alcohol", "malic_acid", "ash", "total_phenols", "flavanoids", "color_intensity", "hue"],
-        values: [13.74, 2.01, 2.46, 2.84, 2.98, 5.53, 1.06],
-        valueLabels: ["13.74", "2.01", "2.46", "2.84", "2.98", "5.53", "1.06"],
-        colors: ["#9400d3", "#4b0082", "#0000ff", "#00ff00", "#ffff00", "#ff7f00", "#ff0000"]
-      },
-      {
-        type: "bars",
-        title: "AFTER — sorted, one accent color, direct value labels (the message lands instantly)",
+        title: "IDEAL — sorted bars, length on a common axis (rank is instant)",
         xlabel: "feature (sorted by value)",
         ylabel: "mean value",
         labels: ["alcohol", "color_intensity", "flavanoids", "total_phenols", "ash", "malic_acid", "hue"],
         values: [13.74, 5.53, 2.98, 2.84, 2.46, 2.01, 1.06],
         valueLabels: ["13.74", "5.53", "2.98", "2.84", "2.46", "2.01", "1.06"],
-        colors: ["#de8f05", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd"]
+        colors: ["#de8f05", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd", "#bdbdbd"],
+        interpret: "<b>The healthy case.</b> Each value is a bar <b>length</b> on one shared axis — the channel the eye reads most accurately. Bars are sorted largest-to-smallest, so rank reads top-down with no hunting, and the single accent colour (orange) marks the one bar that carries the message (alcohol, 13.74) while everything else stays muted grey. Direct value labels mean no grid or legend is needed. <b>Conclude:</b> this is what to aim for — length + sort + one accent."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — unsorted + rainbow: where is the biggest value?",
+        xlabel: "feature (dataframe order)",
+        ylabel: "mean value",
+        labels: ["alcohol", "malic_acid", "ash", "total_phenols", "flavanoids", "color_intensity", "hue"],
+        values: [13.74, 2.01, 2.46, 2.84, 2.98, 5.53, 1.06],
+        valueLabels: ["13.74", "2.01", "2.46", "2.84", "2.98", "5.53", "1.06"],
+        colors: ["#9400d3", "#4b0082", "#0000ff", "#00ff00", "#ffff00", "#ff7f00", "#ff0000"],
+        interpret: "<b>The cluttered default you'll actually be handed.</b> Same numbers, same length encoding — but bars sit in dataframe order, so the eye must scan all seven to find the largest, and the rainbow palette implies an order that isn't there (and isn't colour-blind-safe). <b>Recognise it by:</b> categories in load-order and one colour per bar carrying no meaning. <b>Fix:</b> sort by value, drop to one muted base colour plus a single accent."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — area encoding (bubble): proportional to value, but misread (illustrative)",
+        xlabel: "feature",
+        ylabel: "bubble RADIUS (~ sqrt of value)",
+        labels: ["alcohol", "color_intensity", "flavanoids", "total_phenols", "ash", "malic_acid", "hue"],
+        values: [3.71, 2.35, 1.73, 1.69, 1.57, 1.42, 1.03],
+        valueLabels: ["13.74", "5.53", "2.98", "2.84", "2.46", "2.01", "1.06"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> The bar heights here are the bubble <b>radii</b> (square root of each value), because that is what a bubble chart actually shows the eye — area grows with the square of radius. Notice alcohol is 13x hue, yet its radius is only ~3.6x: the value labels (real numbers) and the visible heights disagree. <b>Recognise it by:</b> sizes that feel far closer together than the numbers. <b>Conclude:</b> area badly undercounts big values — avoid bubbles/pies when rank matters."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — relies on colour alone (red/green, no labels): risky (illustrative)",
+        xlabel: "feature",
+        ylabel: "mean value",
+        labels: ["alcohol", "color_intensity", "flavanoids", "total_phenols", "ash", "malic_acid", "hue"],
+        values: [13.74, 5.53, 2.98, 2.84, 2.46, 2.01, 1.06],
+        colors: ["#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Length and sort are fine, but the only cue separating two groups is red vs green and the value labels are gone. <b>Recognise it by:</b> meaning carried purely by hue, no redundant marker or text. To a red-green colour-blind reader (~1 in 12 men) or a grayscale printout the groups merge. <b>Fix:</b> add a second channel — direct labels, dashes, or markers — and swap red/green for a colour-blind-safe pair like orange/blue."
       }
     ],
-    caption: "Real numbers from load_wine (mean of 7 chemical features for the 59 class-0 wines). LEFT is the cluttered default: bars sit in dataframe order and a rainbow palette implies an order that isn't there, so the eye must scan all seven to find the largest. RIGHT is the same data cleaned: bars sorted largest-to-smallest (alcohol 13.74 down to hue 1.06), every bar a muted gray except the accent on alcohol (the message), and values printed directly so no grid or legend is needed. Identical numbers — only the encoding and order changed.",
+    caption: "Real numbers from load_wine (mean of 7 chemical features for the 59 class-0 wines), the SAME seven values in every panel. The first chart is the ideal: length on a common axis, sorted, one accent. The three variants are the failure modes you actually meet — unsorted + rainbow, an area/bubble encoding that visually undercounts big values, and a chart that leans on red/green alone. Each panel's 'interpret' says how to spot it and what to do.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

@@ -263,26 +263,52 @@ print("after fuzzy collapse:", len(clean))   # 6 distinct entities
   };
 
   window.CODEVIZ["dw-duplicates"] = {
-    question: "Starting from 14 customer rows merged from two systems (with planted dupes), how many rows survive after dropping EXACT duplicates, and after also collapsing FUZZY near-duplicates?",
+    question: "Starting from 14 customer rows merged from two systems (with planted dupes), how many rows survive after dropping EXACT duplicates, then collapsing FUZZY near-duplicates — and how do you READ a threshold sweep to know your cutoff is right?",
     charts: [
       {
         type: "bars",
-        title: "Row count shrinks as we remove exact, then fuzzy, duplicates",
+        title: "Ideal: row count shrinks exact then fuzzy (14 to 10 to 6)",
         labels: ["raw rows", "after exact drop", "after fuzzy collapse"],
         values: [14, 10, 6],
         valueLabels: ["14", "10", "6"],
-        colors: ["#ff7b72", "#ffb454", "#7ee787"]
+        colors: ["#ff7b72", "#ffb454", "#7ee787"],
+        interpret: "Each bar is the number of rows left after a stage of de-duping; read it left to right as a funnel. The first drop (14 to 10) is the <b>exact</b> pass removing 4 byte-identical repeats — unambiguous. The second drop (10 to 6) is the <b>fuzzy</b> pass merging same-entity spellings (Jon/John Smith, Alice/alice Wong). Conclude: 6 truly distinct customers were hiding in 14 rows; the green end-bar is your clean table."
       },
       {
-        type: "bars",
-        title: "Distinct entities found vs fuzzy threshold τ (correct answer is 6)",
-        labels: ["τ=0.70", "τ=0.80", "τ=0.85", "τ=0.90", "τ=0.95"],
-        values: [5, 6, 6, 6, 7],
-        valueLabels: ["5", "6", "6", "6", "7"],
-        colors: ["#ff7b72", "#7ee787", "#7ee787", "#7ee787", "#4ea1ff"]
+        type: "line",
+        title: "Ideal threshold sweep: a flat correct plateau in the middle",
+        xlabel: "fuzzy threshold tau",
+        ylabel: "distinct entities found",
+        series: [
+          { name: "entities", color: "#7ee787", points: [[0.70, 5], [0.80, 6], [0.85, 6], [0.90, 6], [0.95, 7]] },
+          { name: "true answer (6)", color: "#9aa7b4", points: [[0.70, 6], [0.95, 6]] }
+        ],
+        interpret: "X is the similarity cutoff tau; Y is how many distinct entities you end up with. The healthy sign is a <b>flat plateau</b> sitting on the grey true-answer line (6) across tau = 0.80 to 0.90 — a range of cutoffs all agree, so the result is robust. The dips and rises at the ends are the failure modes (next two charts). Conclude: pick tau in the middle of the plateau, not on a slope."
+      },
+      {
+        type: "line",
+        title: "Threshold too loose: undercount that keeps falling left",
+        xlabel: "fuzzy threshold tau",
+        ylabel: "distinct entities found",
+        series: [
+          { name: "entities", color: "#ff7b72", points: [[0.55, 3], [0.65, 4], [0.70, 5], [0.80, 6]] },
+          { name: "true answer (6)", color: "#9aa7b4", points: [[0.55, 6], [0.80, 6]] }
+        ],
+        interpret: "Illustrative shape. When the curve sits <b>below</b> the grey true line and keeps dropping as you lower tau, your cutoff is too <b>loose</b>: a low bar glues distinct people together (Bob Lee + Robert Lee become one). You recognise it by an undercount that worsens toward the left. Conclude: raise tau and add a blocking key so only plausible pairs are compared."
+      },
+      {
+        type: "line",
+        title: "Threshold too tight: overcount that climbs right",
+        xlabel: "fuzzy threshold tau",
+        ylabel: "distinct entities found",
+        series: [
+          { name: "entities", color: "#ffb454", points: [[0.90, 6], [0.95, 7], [0.98, 9], [1.00, 10]] },
+          { name: "true answer (6)", color: "#9aa7b4", points: [[0.90, 6], [1.00, 6]] }
+        ],
+        interpret: "Illustrative shape. When the curve climbs <b>above</b> the grey true line toward the right, your cutoff is too <b>tight</b>: honest variants (Jon vs John Smith) score just under the bar and stay split, so you overcount. At tau = 1.00 nothing fuzzy merges and you fall back to the 10 exact-only rows. Conclude: lower tau toward the plateau and normalise keys first (lowercase, strip spaces) so real variants line up."
       }
     ],
-    caption: "Real counts from the 14-row planted table. The exact pass flags 4 byte-identical repeats (14 to 10); the fuzzy pass normalizes the name, blocks on city + signup date, and merges names with rapidfuzz similarity above the threshold, leaving 6 true entities (10 to 6). Second chart shows the threshold trade-off: at τ=0.70 'Bob Lee' and 'Robert Lee' wrongly merge (only 5 entities); at τ=0.95 'Jon Smith' and 'John Smith' wrongly stay split (7 entities); the band 0.80 to 0.90 recovers the correct 6.",
+    caption: "Ideal funnel + a threshold sweep read three ways. The exact pass removes 4 byte-identical repeats (14 to 10); the fuzzy pass merges same-entity spellings to 6. A good sweep shows a flat plateau on the true answer (6) across tau 0.80 to 0.90; too-loose cutoffs undercount (left), too-tight cutoffs overcount (right).",
     code: `import pandas as pd
 from rapidfuzz import fuzz
 from itertools import combinations

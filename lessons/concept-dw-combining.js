@@ -219,30 +219,54 @@ print(audit["_merge"].value_counts().to_dict())
   };
 
   window.CODEVIZ["dw-combining"] = {
-    question: "Joining two small tables (7 orders, 5 customers) on cust_id — how many rows does each join type return, and how do the matched / unmatched rows split?",
+    question: "After a join, the row count is your smoke alarm. Read these four bar charts to tell a healthy join from a silent explosion or a silent all-NaN.",
     charts: [
       {
         type: "bars",
-        title: "Result row count by join type (orders ⋈ customers on cust_id)",
+        title: "HEALTHY — row count by join type (7 orders ⋈ 5 customers on cust_id)",
         xlabel: "join type",
         ylabel: "rows in result",
         labels: ["inner", "left", "right", "outer"],
         values: [4, 7, 6, 9],
         valueLabels: ["4", "7", "6", "9"],
-        colors: ["#ff7b72", "#79c0ff", "#d2a8ff", "#7ee787"]
+        colors: ["#ff7b72", "#79c0ff", "#d2a8ff", "#7ee787"],
+        interpret: "Each bar is one join type; its height is the rows the join returns from the same two tables (orders=7, customers=5, key cust_id). Read the ORDER of the bars: inner (4, only matched keys) is the smallest, left (7) keeps all orders, right (6) keeps all customers, outer (9) keeps the union and is the tallest. The rule to memorise from the shape: inner is never bigger than left or right, and outer is never smaller than any of them. Real numbers from pd.merge."
       },
       {
         type: "bars",
-        title: "Outer join audited with indicator=True: where each row came from",
+        title: "HEALTHY audited — outer join split by indicator=True",
         xlabel: "match status",
         ylabel: "rows",
         labels: ["both", "left_only", "right_only"],
         values: [4, 3, 2],
         valueLabels: ["4", "3", "2"],
-        colors: ["#7ee787", "#79c0ff", "#d2a8ff"]
+        colors: ["#7ee787", "#79c0ff", "#d2a8ff"],
+        interpret: "indicator=True tags every outer-join row by where it came from. 'both' (4) are orders that found a customer — that is exactly the inner-join count. 'left_only' (3) are orders with no customer (keys 6,6,7); 'right_only' (2) are customers with no order (keys 4,5). The bars add up to the outer total: 4 + 3 + 2 = 9. Use this audit to see WHICH rows fell through, not just how many."
+      },
+      {
+        type: "bars",
+        title: "DANGER — many-to-many explosion: result bigger than either input (illustrative)",
+        xlabel: "table",
+        ylabel: "rows",
+        labels: ["orders (left)", "promos (right)", "merged"],
+        values: [1000, 1000, 7400],
+        valueLabels: ["1000", "1000", "7400"],
+        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative. The merged bar (7400) towers over BOTH inputs (1000 each). That can only happen when the key is duplicated on both sides: each shared key emits n×m rows, so the total balloons and silently double-counts. The tell is purely visual — a join result taller than the larger input table is impossible for a clean 1:1 or m:1 join. Catch it by passing validate=\"m:1\" (or \"1:1\") so pandas raises instead of exploding."
+      },
+      {
+        type: "bars",
+        title: "DANGER — key mismatch: rows look fine, but city is all NaN (illustrative)",
+        xlabel: "merged column",
+        ylabel: "rows",
+        labels: ["rows kept", "city populated", "city NaN"],
+        values: [50000, 0, 50000],
+        valueLabels: ["50000", "0", "50000"],
+        colors: ["#79c0ff", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative. A left join keeps all 50000 rows (blue bar looks healthy), so the row-count alarm stays quiet — but the 'city populated' bar is zero and every value is NaN (red). This is the silent trap: an int-vs-string or whitespace/case mismatch (3 vs \"3\", \"NYC \" vs \"NYC\") makes every key fail to match, yet a left join raises no error. Row count alone won't catch it; also check that the pulled-in columns aren't entirely NaN, and run indicator=True (all left_only confirms it). Fix by normalising both keys with .astype(str).str.strip().str.lower() before merging."
       }
     ],
-    caption: "Real numbers from pd.merge on two inline tables — orders cust_id = [1,1,2,3,6,6,7] (7 rows) joined to customers cust_id = [1,2,3,4,5] (5 unique rows). Inner keeps only matched keys (4); left keeps all orders (7); right keeps all customers (6); outer keeps the union (9). The indicator audit of the outer join splits those 9 into 4 matched (both), 3 order-only (left_only, no customer), and 2 customer-only (right_only, no order) — note 4 + 3 + 2 = 9, and inner (4) = the 'both' bar. Always check these counts before and after a join.",
+    caption: "Four bar charts that teach you to read a join by its row count. HEALTHY: real pd.merge numbers — inner 4, left 7, right 6, outer 9 from orders [1,1,2,3,6,6,7] joined to customers [1,2,3,4,5]; the indicator audit splits the outer 9 into both 4 / left_only 3 / right_only 2 (and 4+3+2=9, inner=both). DANGER #1 (illustrative): a result (7400) taller than either input (1000) is a many-to-many explosion — use validate=. DANGER #2 (illustrative): full row count but an all-NaN pulled-in column is a silent key mismatch — normalise keys and check with indicator=True. Always compare len() before and after.",
     code: `import pandas as pd
 
 customers = pd.DataFrame({"cust_id": [1, 2, 3, 4, 5],

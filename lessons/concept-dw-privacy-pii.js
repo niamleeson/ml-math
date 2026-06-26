@@ -223,26 +223,54 @@ print("re-identifiable rows (group <", K, "):", len(violations))
   };
 
   window.CODEVIZ["dw-privacy-pii"] = {
-    question: "How many people are uniquely identifiable (group size 1) before vs after we generalize the quasi-identifiers? Group the synthetic table on Q = (birthdate/age, ZIP, gender) and count the group sizes.",
+    question: "How do you READ k-anonymity off a chart? Group the table by its quasi-identifiers, plot each group's size, and the SHORTEST bar tells you your k. Here: before vs after generalizing, plus what too-little and too-much generalization look like.",
     charts: [
       {
         type: "bars",
-        title: "BEFORE generalizing: quasi-identifier group sizes (exact birthdate + ZIP-5 + gender)",
+        title: "BEFORE generalizing: group sizes (exact birthdate + ZIP-5 + gender) — k = 1",
+        xlabel: "quasi-identifier group",
+        ylabel: "people in group",
         labels: ["g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8"],
         values: [1, 1, 1, 1, 1, 1, 1, 1],
         valueLabels: ["1", "1", "1", "1", "1", "1", "1", "1"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "Each bar is one combination of (birthdate, ZIP-5, gender); its height is how many people share it. Every bar is height 1 — eight groups of one. <b>k is the height of the shortest bar, so here k = 1: every person is a unique fingerprint, fully re-identifiable.</b> All red because a size-1 group is a person waiting to be linked to an outside dataset that has their name."
       },
       {
         type: "bars",
-        title: "AFTER generalizing: group sizes (age-band + ZIP-3 + gender) — singletons collapse",
+        title: "AFTER generalizing: group sizes (age-band + ZIP-3 + gender) — k still = 1",
+        xlabel: "quasi-identifier group",
+        ylabel: "people in group",
         labels: ["30s/021/M", "40s/021/F", "30s/021/F", "70s/303/F"],
         values: [3, 3, 1, 1],
         valueLabels: ["3", "3", "1", "1"],
-        colors: ["#7ee787", "#7ee787", "#f0883e", "#f0883e"]
+        colors: ["#7ee787", "#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "Real counts. Generalizing birthdate to an age-band and ZIP-5 to ZIP-3 merged eight singletons into four taller groups. Two reach size 3 (green) — those people are now hidden among look-alikes. But <b>read the shortest bar: it is still 1 (red), so the dataset is STILL only 1-anonymous</b> — the lone 70s person is exposed. Generalization helped but did not finish the job; the minimum bar, not the average, decides k."
+      },
+      {
+        type: "bars",
+        title: "Variant — suppress/coarsen the stragglers: k = 2 reached",
+        xlabel: "quasi-identifier group",
+        ylabel: "people in group",
+        labels: ["30s/021/M", "40s/021/F", "30s+/021/F"],
+        values: [3, 3, 2],
+        valueLabels: ["3", "3", "2"],
+        colors: ["#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Illustrative. We folded the two leftover singletons together (e.g. coarsened their age-band further or merged a category) so the smallest group is now 2. <b>Every bar is green and the shortest is height 2, so the data is 2-anonymous: no record can be narrowed to fewer than 2 people.</b> This is the target shape — a flat floor at or above your chosen k, with no short red bars poking below."
+      },
+      {
+        type: "bars",
+        title: "Variant — over-generalized: k = 8 but utility destroyed",
+        xlabel: "quasi-identifier group",
+        ylabel: "people in group",
+        labels: ["adult/0xx/all"],
+        values: [8],
+        valueLabels: ["8"],
+        colors: ["#c89bff"],
+        interpret: "Illustrative — the opposite failure. We binned so hard (age to 'adult', ZIP to one prefix, gender dropped) that all 8 people fell into ONE group. <b>k = 8 looks maximally private, but a single giant bar means the quasi-identifiers now carry almost no information</b> — every row is 'adult / somewhere / human'. The data is safe and useless. The art is generalizing just enough to lift the shortest bar to k, and no further."
       }
     ],
-    caption: "Real counts from an 8-person synthetic table. BEFORE: grouping on exact birthdate + 5-digit ZIP + gender gives 8 groups of size 1 — every single person is uniquely re-identifiable (1-anonymous). AFTER generalizing birthdate to an age-band and ZIP-5 to ZIP-3, the 8 unique fingerprints collapse into just 4 groups; two reach size 3 (green) but two stragglers (orange) are still size 1, so the data is NOT yet 2-anonymous. To reach k = 2 you would suppress or further coarsen those two rows. Generalization shrinks re-identifiability; checking group sizes tells you when you've actually reached k.",
+    caption: "Real counts for the first two charts (an 8-person synthetic table); the last two are illustrative shapes. The single rule for reading every chart: find the SHORTEST bar — its height is your k. You want that floor at or above your target k, without flattening every group into one useless mega-bar.",
     code: `import pandas as pd
 
 # 8-person synthetic table (exact quasi-identifiers).

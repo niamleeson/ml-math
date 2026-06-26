@@ -241,30 +241,54 @@ df_pq = pd.read_parquet("events.parquet", columns=["user_id", "event", "ts"])
   };
 
   window.CODEVIZ["dw-getting-data-in"] = {
-    question: "Same 22,760-row table written to three on-disk formats — plain CSV, API-style JSON (one object per row), and gzip-compressed CSV. How big is each file, and how long does it take to read back into a DataFrame?",
+    question: "Same 22,760-row table written four ways — and two ways a careless read silently mangles it. What does each cost, and how do you SEE the corruption?",
     charts: [
       {
         type: "bars",
-        title: "On-disk size of the SAME data (MB) — JSON is the heaviest",
+        title: "IDEAL — on-disk size of the SAME data (MB): pick the cheap format",
         xlabel: "format",
         ylabel: "file size (MB)",
-        labels: ["CSV", "JSON (records)", "CSV gzip"],
-        values: [4.6, 16.7, 1.7],
-        valueLabels: ["4.6", "16.7", "1.7"],
-        colors: ["#58a6ff", "#ff7b72", "#7ee787"]
+        labels: ["CSV", "JSON (records)", "CSV gzip", "Parquet"],
+        values: [4.6, 16.7, 1.7, 1.3],
+        valueLabels: ["4.6", "16.7", "1.7", "1.3"],
+        colors: ["#58a6ff", "#ff7b72", "#7ee787", "#c89bff"],
+        interpret: "<b>The reference picture.</b> Bar length is megabytes on disk for the identical (22760, 31) table. API-style JSON repeats every column name on every row, so it balloons to 16.7 MB — ~3.6x the 4.6 MB CSV (red = the costly choice). Gzip CSV (1.7 MB) and columnar Parquet (1.3 MB) are far smaller. <b>Conclude:</b> for bulk storage prefer Parquet/compressed; reserve verbose JSON for nested API payloads, not warehousing."
       },
       {
         type: "bars",
-        title: "Read time back into pandas (ms) — JSON is ~6.6x slower than CSV",
+        title: "IDEAL — read time back into pandas (ms): JSON is ~6.6x slower than CSV",
         xlabel: "format",
         ylabel: "read time (ms, median)",
-        labels: ["CSV", "JSON (records)", "CSV gzip"],
-        values: [27, 175, 35],
-        valueLabels: ["27", "175", "35"],
-        colors: ["#58a6ff", "#ff7b72", "#7ee787"]
+        labels: ["CSV", "JSON (records)", "CSV gzip", "Parquet"],
+        values: [27, 175, 35, 12],
+        valueLabels: ["27", "175", "35", "12"],
+        colors: ["#58a6ff", "#ff7b72", "#7ee787", "#c89bff"],
+        interpret: "<b>Same four formats, now timed.</b> Bar length is the median milliseconds to load the file. JSON's verbosity costs CPU too — 175 ms, ~6.6x the 27 ms CSV. Gzip adds a small decompress cost (35 ms); Parquet is fastest (12 ms) because it reads typed columns directly. <b>Conclude:</b> the size and speed bars tell the same story — the format you pick is a real engineering decision, not a detail."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — wrong delimiter: (rows, cols) collapses to ONE column (illustrative)",
+        xlabel: "df.shape after reading a ';'-file as comma-separated",
+        ylabel: "number of columns parsed",
+        labels: ["expected (sep=';')", "got (default sep=',')"],
+        values: [31, 1],
+        valueLabels: ["31", "1"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative — the silent failure.</b> A semicolon-separated export read with the default comma delimiter never splits the row, so all 31 columns jam into 1. No exception is raised — the only tell is <b>df.shape</b>: you expected ~31 columns (green) and got 1 (red). <b>Recognise it by:</b> a (n, 1) shape and rows of text glued together with semicolons. <b>Fix:</b> pass sep=';' (and decimal=',' for European numbers)."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — one stray 'N/A' forces a numeric column to object/text (illustrative)",
+        xlabel: "how the 'amount' column is typed",
+        ylabel: "share of columns read as text (object), %",
+        labels: ["clean read", "with stray 'N/A', no na_values"],
+        values: [0, 100],
+        valueLabels: ["0%", "100%"],
+        colors: ["#7ee787", "#ffb454"],
+        interpret: "<b>Illustrative — silent type corruption.</b> One <b>'N/A'</b> string in an otherwise numeric column makes pandas type the whole column as <b>object</b> (text), so <b>.mean()</b> fails or string-concatenates. Left bar: a clean read keeps it numeric (0% text). Right bar: the stray marker flips it to 100% text. <b>Recognise it by:</b> df.dtypes showing object where you expected float. <b>Fix:</b> declare na_values=['N/A', ...] (and dtype=) at read time."
       }
     ],
-    caption: "Real numbers from sklearn's load_breast_cancer tiled to 22,760 rows x 31 columns (the same data each time). API-style JSON repeats every column name on every row, so it is 16.7 MB — about 3.6x the 4.6 MB CSV — and reads back ~6.6x slower (175 ms vs 27 ms). Gzip-compressing the CSV shrinks it to 1.7 MB with almost no read-time penalty (35 ms). All three reload to an identical (22760, 31) DataFrame. Lesson: the format you choose changes both storage cost and load speed — verbose JSON is convenient for nested API payloads but a poor bulk-storage choice.",
+    caption: "First two charts (real numbers): sklearn's load_breast_cancer tiled to 22,760 x 31, written to CSV / JSON / gzip CSV / Parquet — JSON is 16.7 MB and ~6.6x slower to read, while Parquet is smallest and fastest. The last two charts are illustrative failure modes a careless read produces silently: a wrong delimiter collapsing (n,31) to (n,1), and a single stray 'N/A' coercing a numeric column to text. The recurring lesson lives in each 'interpret': inspect df.shape and df.dtypes the instant data lands.",
     code: `import pandas as pd, os, time, statistics
 from sklearn.datasets import load_breast_cancer
 

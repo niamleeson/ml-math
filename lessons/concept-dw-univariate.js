@@ -266,30 +266,54 @@ plt.title("Target class balance — is any class rare?"); plt.xlabel("class"); p
   };
 
   window.CODEVIZ["dw-univariate"] = {
-    question: "On sklearn's wine dataset, what does univariate analysis surface — the SHAPE of one numeric feature, and the CLASS BALANCE of the target?",
+    question: "Same plot type, four different stories: how do you read SHAPE off a histogram (skewed? bimodal?) and BALANCE off a target bar (fair? a trap?)?",
     charts: [
       {
         type: "bars",
-        title: "Numeric feature 'color_intensity': histogram (8 bins) — right-skewed",
+        title: "Real load_wine 'color_intensity': histogram (8 bins) — right-skewed",
         xlabel: "color_intensity range",
         ylabel: "count of wines",
         labels: ["1.3-2.7", "2.7-4.2", "4.2-5.7", "5.7-7.1", "7.1-8.6", "8.6-10.1", "10.1-11.5", "11.5-13.0"],
         values: [28, 45, 47, 25, 16, 10, 5, 2],
         valueLabels: ["28", "45", "47", "25", "16", "10", "5", "2"],
-        colors: ["#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "x-axis = value bins of the feature, bar height = how many wines fall in each bin. The bars <b>pile up on the left and trail off to the right</b> — the textbook right skew. Real numbers: mean 5.06 sits above median 4.69 and skewness is +0.87 (positive = long right tail). The read: report the median, not the mean, and consider a log transform before modeling."
       },
       {
         type: "bars",
-        title: "Target class balance — count of wines per class",
+        title: "Variant — bimodal: two separate peaks (two hidden subgroups)",
+        xlabel: "value bin",
+        ylabel: "count",
+        labels: ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8"],
+        values: [8, 30, 42, 18, 16, 40, 33, 9],
+        valueLabels: ["8", "30", "42", "18", "16", "40", "33", "9"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "Illustrative. <b>Two humps</b> with a valley between them, not one hill. The mean lands in the empty valley where almost no data lives, so summary stats lie here. Two peaks usually mean two subgroups mixed together (e.g. two product tiers). Watch out: too few bins would smear these into one blob — vary the bin count and confirm the peaks are stable before trusting them."
+      },
+      {
+        type: "bars",
+        title: "Target class balance — fairly balanced, accuracy is fair",
         xlabel: "target class",
         ylabel: "count of wines",
         labels: ["class_0", "class_1", "class_2"],
         values: [59, 71, 48],
         valueLabels: ["59 (33%)", "71 (40%)", "48 (27%)"],
-        colors: ["#ffa657", "#ffa657", "#ffa657"]
+        colors: ["#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Real load_wine target: bar height = number of wines per class. The three classes are <b>roughly equal</b> (33% / 40% / 27%), so no class is rare — plain accuracy is a fair metric here. This is the plot you run on the label before modeling; a balanced target like this one means you can keep accuracy and move on."
+      },
+      {
+        type: "bars",
+        title: "Variant — imbalanced target: majority-class trap (accuracy lies)",
+        xlabel: "target class",
+        ylabel: "count of rows",
+        labels: ["legit", "fraud"],
+        values: [9900, 100],
+        valueLabels: ["9900 (99%)", "100 (1%)"],
+        colors: ["#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative (a fraud label). One class (grey, 99%) <b>dwarfs</b> the other (red, 1%). Here accuracy is a trap: a model that always predicts 'legit' already scores 99% while catching zero fraud. Spotting this sliver class first is the whole point of the plot — the fix is to judge the model with recall / precision / F1 / AUC and the confusion matrix, not accuracy."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine (178 rows). LEFT: an 8-bin histogram of the numeric feature 'color_intensity' — the bars pile up on the left and trail off to the right, the textbook right-skew (mean 5.06 sits above median 4.69, skewness +0.87). That shape is the signal to consider a log transform and to report the median, not the mean. RIGHT: the target's class balance — 59 / 71 / 48 wines across the three classes (33% / 40% / 27%). The classes are fairly balanced, so plain accuracy is a fair metric here; had one class been a sliver, accuracy would be a trap and you would switch to recall / F1 / AUC. Two univariate plots, two modeling decisions made before any model is fit.",
+    caption: "Two diagnostics, two variants each. Histograms read SHAPE: chart 1 is real load_wine 'color_intensity' (right-skewed, mean>median, skew +0.87 → log-transform, report median); chart 2 is a bimodal variant (two peaks = two subgroups, mean lands in the empty valley). Target bars read BALANCE: chart 3 is the real balanced wine target (accuracy is fair); chart 4 is an imbalanced 99/1 variant (the majority-class trap → switch to recall/F1/AUC). Every one of these reads is made before any model is fit.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

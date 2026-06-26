@@ -245,11 +245,11 @@ styled`
   };
 
   window.CODEVIZ["dw-tables"] = {
-    question: "Mean of five chemistry features for each of the three wine classes (load_wine). Read as a heatmap, this conditionally-formatted table shows which class is high on which feature — bright cells are the big numbers.",
+    question: "A styled summary table is a heatmap with the numbers printed on it. Here is the well-designed version, then two ways it goes wrong — over-coloured, and a raw dump where a chart would have won.",
     charts: [
       {
         type: "heatmap",
-        title: "Mean feature value per wine class — a color-scaled summary table (real load_wine means)",
+        title: "IDEAL: one calm color scale per column — shape AND exact value at once",
         rows: ["class_0 (n=59)", "class_1 (n=71)", "class_2 (n=48)"],
         cols: ["alcohol (%)", "flavanoids", "color_int", "hue", "proline (mg/L, /100)"],
         matrix: [
@@ -257,10 +257,32 @@ styled`
           [12.28, 2.08, 3.09, 1.06, 5.20],
           [13.15, 0.78, 7.40, 0.68, 6.30]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "Rows are the three wine classes, columns are five chemistry features, each cell is the real per-class mean from load_wine. Read it like a styled table: dark cells are big numbers, so your eye lands on the high values while the exact digits stay printed. <b>Conclude:</b> class_0 is the high-flavanoid, high-proline group; class_2 has the deepest color_intensity (7.40) but the palest flavanoids (0.78). This is the best-of-both a good styled table gives you. (proline is shown /100 so one shared scale spans all columns; a real Styler would shade each column on its own scale.)"
+      },
+      {
+        type: "heatmap",
+        title: "PITFALL — over-coloured: every cell loud, so nothing stands out (illustrative)",
+        rows: ["class_0", "class_1", "class_2"],
+        cols: ["alcohol", "flavanoids", "color_int", "hue", "proline"],
+        matrix: [
+          [0.95, 0.10, 0.80, 0.55, 0.98],
+          [0.20, 0.90, 0.30, 0.60, 0.05],
+          [0.70, 0.15, 0.95, 0.05, 0.50]
+        ],
+        showVals: true,
+        interpret: "Illustrative shading (0–1) standing in for a clashing rainbow gradient applied to <b>every</b> cell. <b>How to recognise it:</b> there is no calm baseline — the whole grid screams, so no single number pops and your eye has nowhere to rest. A rainbow scale also has no natural low→high order, so colour no longer encodes magnitude. <b>Conclude:</b> emphasis is relative; colouring everything is the same as colouring nothing. Fix: one sequential (light→dark) scale per column, bold just the key number per row."
+      },
+      {
+        type: "bars",
+        title: "PITFALL — raw dump: 24 ragged rows where the reader only wanted the shape (illustrative)",
+        xlabel: "row (one bar per raw record — unsorted, unaggregated)",
+        ylabel: "daily sales ($)",
+        labels: ["r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16","r17","r18","r19","r20","r21","r22","r23","r24"],
+        values: [412, 388, 455, 470, 503, 498, 540, 560, 575, 610, 595, 640, 662, 655, 700, 720, 715, 760, 780, 775, 810, 845, 838, 880],
+        interpret: "Illustrative: a 24-row table pasted in raw, one bar per record, nothing sorted or summarised. <b>How to recognise it:</b> many near-identical rows and no single quotable answer — you are forcing the reader to scan dozens of cells to feel a trend. <b>Conclude:</b> this is a chart job, not a table job. The numbers climb steadily, so a line over time would show that trend in one glance; a table this size only hides it. Match the form to the question — shape wants a chart, an exact value wants a small table."
       }
     ],
-    caption: "This heatmap IS a conditionally-formatted summary table: rows are the three wine classes, columns are five chemistry features, and each cell is the real per-class mean from load_wine, shaded by value. Reading it like a styled table: class_0 is the high-flavanoid, high-proline group (top of the shading on both), class_2 has by far the deepest color_intensity (7.40) but the palest flavanoids (0.78), and class_1 sits low on most. (proline is divided by 100 so its 0–1100 scale shares the color map with the small-valued columns; in a real Styler you would color each column on its own scale instead.) The shading guides the eye to the high cells while the printed numbers stay exact — the best-of-both that a styled table gives you.",
     code: `import numpy as np
 import pandas as pd
 from sklearn.datasets import load_wine

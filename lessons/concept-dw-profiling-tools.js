@@ -215,20 +215,43 @@ sv.compare([survived, 'Survived'], [not_survived, 'Did not survive']).show_html(
   };
 
   window.CODEVIZ["dw-profiling-tools"] = {
-    question: "Point a ydata-profiling-style profiler at a deliberately messy real frame — what KINDS of alerts does it raise, and how many of each?",
+    question: "Read the profiler's alerts section as a bar chart: how do you tell a messy raw export, a clean frame, and an overwhelming alert-storm apart at a glance?",
     charts: [
       {
         type: "bars",
-        title: "Profiler alerts by type on a messy load_breast_cancer frame",
+        title: "Messy raw export: a short, readable alert list (the useful case)",
         xlabel: "alert type",
         ylabel: "number of columns / pairs flagged",
         labels: ["High correlation", "Missing", "Unique (ID)", "Constant", "Imbalance"],
         values: [14, 3, 1, 1, 1],
         valueLabels: ["14", "3", "1", "1", "1"],
-        colors: ["#ff7b72", "#d29922", "#79c0ff", "#a371f7", "#7ee787"]
+        colors: ["#ff7b72", "#d29922", "#79c0ff", "#a371f7", "#7ee787"],
+        interpret: "Each bar is one ALERT TYPE; its height is how many columns (or column-pairs) tripped that rule. These are REAL counts from load_breast_cancer (569 rows) roughed up like a raw export. Read it as a ranked to-do list: <b>High correlation (14)</b> dominates because radius/perimeter/area variants are near-duplicates — look there first; <b>Missing (3)</b> is the three columns you have nulls in; the single <b>Unique</b> bar is a planted ID column, <b>Constant</b> a one-value column, <b>Imbalance</b> a lopsided flag. This one chart replaces eyeballing 33 columns: it tells you WHERE to look, not what it means."
+      },
+      {
+        type: "bars",
+        title: "Clean frame: almost nothing fires — the all-clear",
+        xlabel: "alert type",
+        ylabel: "number of columns / pairs flagged",
+        labels: ["High correlation", "Missing", "Unique (ID)", "Constant", "Imbalance"],
+        values: [1, 0, 0, 0, 0],
+        valueLabels: ["1", "0", "0", "0", "0"],
+        colors: ["#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. Same axes, but on a tidy already-cleaned frame nearly every bar is zero — only one mild High-correlation pair survives. <b>An empty alerts section is the GOOD outcome:</b> no constant junk, no missingness, no ID leak. Do not read 'few alerts' as 'profiler failed' — it means this table is in good shape, so move straight to your question-driven EDA instead of cleanup."
+      },
+      {
+        type: "bars",
+        title: "Alert storm: a wall of alerts you must triage, not read top-to-bottom",
+        xlabel: "alert type",
+        ylabel: "number of columns / pairs flagged",
+        labels: ["High correlation", "Missing", "Unique (ID)", "High cardinality", "Imbalance"],
+        values: [120, 18, 6, 9, 11],
+        valueLabels: ["120", "18", "6", "9", "11"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "Illustrative, for a wide ~60-column frame. Now the bars are huge — 120 high-correlation pairs alone. This is 'report overload': the alerts section is itself too big to read line by line. <b>Triage by height:</b> the tall High-correlation/Missing bars mean systemic problems (redundant column families, a broken join dropping values), so fix the structure first rather than chasing individual histograms. A storm like this is also the cue to sample rows or pass minimal=True before re-profiling."
       }
     ],
-    caption: "Real numbers from sklearn's load_breast_cancer (569 rows), deliberately roughed up to mimic a raw export: a constant column, a unique record-id column, and missingness injected into three measurement columns (30%, 12%, 5%). Applying ydata-profiling's own alert rules — distinct count == 1 → Constant, distinct == n_rows → Unique/ID, |correlation| > 0.9 → High correlation, any nulls → Missing, top category > 80% → Imbalance — yields the counts above. High correlation dominates (14 columns: radius, perimeter, and area variants are near-duplicates); 3 Missing alerts (one per injected column); 1 each for the planted ID, the constant column, and the imbalanced target. This single bar chart IS the profiler's alerts section: a ranked to-do list instead of 33 columns of raw data.",
+    caption: "Three shapes of the SAME alerts-by-type bar chart. Bar = one alert rule (distinct==1 → Constant, distinct==n_rows → Unique/ID, |corr|>0.9 → High correlation, any nulls → Missing, top category>80% → Imbalance); height = how many columns/pairs tripped it. The MAIN chart uses real counts from a roughed-up load_breast_cancer (569 rows). The clean and storm variants are illustrative but qualitatively honest: a tidy frame fires almost nothing (the all-clear), while a wide messy frame produces a wall you must triage by bar height instead of reading line by line.",
     code: `import numpy as np
 import pandas as pd
 from sklearn.datasets import load_breast_cancer

@@ -239,11 +239,11 @@ print(df.memory_usage(deep=True).sort_values(ascending=False))
   };
 
   window.CODEVIZ["dw-loading-inspecting"] = {
-    question: "On first contact with load_breast_cancer, what does the cardinality (number of distinct values) of each column tell us at a glance — and which column is obviously the label?",
+    question: "Plot .nunique() per column and column roles jump out: hundreds of values = continuous feature, exactly 2 = label. But two ugly bars show up on real exports too — a constant column (1) you must drop, and an ID (= n_rows) that leaks. Learn to spot all three shapes.",
     charts: [
       {
         type: "bars",
-        title: "Cardinality (n distinct values) per column — the at-a-glance column profile",
+        title: "Ideal profile: continuous features (tall) + a binary label (short red)",
         xlabel: "column",
         ylabel: "number of distinct values",
         labels: ["mean radius", "mean texture", "mean perimeter", "mean area",
@@ -251,10 +251,33 @@ print(df.memory_usage(deep=True).sort_values(ascending=False))
         values: [456, 479, 522, 539, 474, 537, 544, 2],
         valueLabels: ["456", "479", "522", "539", "474", "537", "544", "2"],
         colors: ["#79c0ff", "#79c0ff", "#79c0ff", "#79c0ff",
-                 "#79c0ff", "#79c0ff", "#79c0ff", "#ff7b72"]
+                 "#79c0ff", "#79c0ff", "#79c0ff", "#ff7b72"],
+        interpret: "<b>Real numbers from sklearn's load_breast_cancer</b> (569 rows). Each bar is one column's count of distinct values (its cardinality); taller means more distinct values. The seven blue bars each take hundreds of values (456–544) — that signature says <b>genuine continuous features</b>. The lone short red bar, 'target' = 2, is the <b>binary class label</b>, spotted instantly with no documentation. Conclude: one glance at .nunique() separates continuous features from the label."
+      },
+      {
+        type: "bars",
+        title: "Variant: a constant column (cardinality 1 — drop it)",
+        xlabel: "column",
+        ylabel: "number of distinct values",
+        labels: ["mean radius", "mean area", "worst area", "data_version", "target"],
+        values: [456, 539, 544, 1, 2],
+        valueLabels: ["456", "539", "544", "1", "2"],
+        colors: ["#79c0ff", "#79c0ff", "#79c0ff", "#ffb454", "#ff7b72"],
+        interpret: "<b>Illustrative:</b> a real export often carries a bookkeeping column like 'data_version' that holds the <b>same value in every row</b>, so its bar is height 1 (orange). A constant column gives a model zero information and just wastes memory. Recognise it as the bar pinned to the floor at 1. Action: <b>drop it</b> — and check why a 'feature' arrived constant (a broken join or a filtered load)."
+      },
+      {
+        type: "bars",
+        title: "Variant: an ID column (cardinality = n_rows — leaky, drop it)",
+        xlabel: "column",
+        ylabel: "number of distinct values",
+        labels: ["mean radius", "mean area", "worst area", "patient_id", "target"],
+        values: [456, 539, 544, 569, 2],
+        valueLabels: ["456", "539", "544", "569", "2"],
+        colors: ["#79c0ff", "#79c0ff", "#79c0ff", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Illustrative:</b> 'patient_id' takes <b>569 distinct values out of 569 rows</b> — one unique value per row. Its bar is the tallest of all, matching the row count exactly. That signature is an <b>identifier, not a feature</b>: feed it to a model and it memorises rows (leakage / overfitting). Recognise it as a bar at (or above) every other bar, equal to .shape[0]. Action: <b>drop it as a feature</b> (keep it only as a key for joins)."
       }
     ],
-    caption: "Real numbers from sklearn's load_breast_cancer (569 rows). A single bar chart of .nunique() per column profiles the data instantly: the seven measurement columns each take hundreds of distinct values (456–544) — they are genuine continuous features — while 'target' takes exactly 2 distinct values (red bar). That lone low bar is the binary label, spotted at a glance without reading any documentation. This is the whole point of the inspection battery: structure (continuous vs label/categorical) jumps out of a one-line summary.",
+    caption: "",
     code: `import pandas as pd
 from sklearn.datasets import load_breast_cancer
 

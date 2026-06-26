@@ -272,30 +272,65 @@ print('saved truncated_vs_zero.png and dual_axis_vs_panels.png')`
   };
 
   window.CODEVIZ["dw-misleading-charts"] = {
-    question: "The SAME four real group means from load_breast_cancer, drawn two ways: a truncated-axis bar chart (differences look huge) vs a zero-baseline bar chart (differences look small). Which one tells the truth?",
+    question: "Same four real group means, drawn four ways. Which chart geometry tells the truth, and how do you recognise each lie on sight?",
     charts: [
       {
         type: "bars",
-        title: "MISLEADING — y-axis truncated at 12 (drawn heights = mean − 12)",
-        xlabel: "mean-texture quartile",
-        ylabel: "drawn bar height (axis starts at 12)",
-        labels: ["Q1", "Q2", "Q3", "Q4"],
-        values: [0.59, 1.39, 2.72, 3.82],
-        valueLabels: ["0.59", "1.39", "2.72", "3.82"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
-      },
-      {
-        type: "bars",
-        title: "HONEST — y-axis starts at 0 (bar height = the real mean)",
+        title: "HONEST (ideal) — y-axis starts at 0, bar height = the real mean",
         xlabel: "mean-texture quartile",
         ylabel: "mean radius (axis starts at 0)",
         labels: ["Q1", "Q2", "Q3", "Q4"],
         values: [12.59, 13.39, 14.72, 15.82],
         valueLabels: ["12.59", "13.39", "14.72", "15.82"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Each bar's <b>length from zero</b> is the group mean (real load_breast_cancer numbers). Read the heights: 12.6, 13.4, 14.7, 15.8 — tallest over shortest is 15.8/12.6 ≈ <b>1.26x</b>, so the four bars look <b>nearly equal</b>. That near-equal picture is the truth. This is the only baseline (zero) that makes 'twice as tall = twice as much' honest for bars."
+      },
+      {
+        type: "bars",
+        title: "LIE 1 — same data, y-axis truncated at 12 (drawn height = mean − 12)",
+        xlabel: "mean-texture quartile",
+        ylabel: "drawn bar height (axis starts at 12)",
+        labels: ["Q1", "Q2", "Q3", "Q4"],
+        values: [0.59, 1.39, 2.72, 3.82],
+        valueLabels: ["0.59", "1.39", "2.72", "3.82"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "Identical numbers to the green chart, but the axis starts at 12 instead of 0, so each bar draws only mean−12: 0.59, 1.39, 2.72, 3.82. Tallest over shortest is now 3.82/0.59 ≈ <b>6.5x</b> — the eye reads a cliff where reality is 1.26x. <b>How to spot it:</b> check where the y-axis starts; if a bar chart's baseline is not 0, the lengths are lying. Fix: start at 0."
+      },
+      {
+        type: "line",
+        title: "LIE 2 — dual y-axes make two unrelated series 'track' (illustrative)",
+        xlabel: "month",
+        ylabel: "two arbitrary scales overlaid",
+        series: [
+          { name: "ad spend (left scale)", color: "#4ea1ff", points: [[0,1.0],[1,1.4],[2,1.1],[3,1.8],[4,2.2],[5,2.6],[6,3.0],[7,3.4]] },
+          { name: "sales (right scale, rescaled)", color: "#ff7b72", points: [[0,1.1],[1,1.3],[2,1.2],[3,1.9],[4,2.0],[5,2.7],[6,2.9],[7,3.5]] }
+        ],
+        interpret: "<b>Illustrative.</b> Two series are plotted on two different vertical scales, each stretched until the lines overlap — so they look locked together even when their real correlation is near zero. <b>How to spot it:</b> two y-axes with different units/ranges. The 'tracking' is an artifact of the scaling you chose, not the data. Fix: two stacked panels with a shared x-axis, or a scatter with the actual correlation reported."
+      },
+      {
+        type: "scatter",
+        title: "LIE 3 — bubble area: radius ∝ value over-states big values 4x (illustrative)",
+        xlabel: "encoded value (1x vs 2x)",
+        ylabel: "bubble radius (eye reads AREA)",
+        groups: [
+          { name: "value = 1 (radius 1, area π)", color: "#7ee787", points: [[1,1]] },
+          { name: "value = 2 drawn radius∝value (area 4π!)", color: "#ff7b72", points: [[2,2]] }
+        ],
+        interpret: "<b>Illustrative.</b> When a value sets a bubble's <b>radius</b>, doubling the value doubles the radius but <b>quadruples the area</b> (A = πr², so 2x → 4x), and the eye judges area. A '2x' number looks like a 4x blob. <b>How to spot it:</b> a bubble/area chart with no note that area (not radius) encodes the value. Fix: set radius ∝ √value so area is proportional, or just use a bar."
+      },
+      {
+        type: "bars",
+        title: "LIE 4 — one bar of the MEAN hides the spread (illustrative)",
+        xlabel: "region (mean response time, both ≈ 200 ms)",
+        ylabel: "mean only — spread invisible",
+        labels: ["Region A mean", "Region B mean"],
+        values: [200, 200],
+        valueLabels: ["200 ms", "200 ms"],
+        colors: ["#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Illustrative.</b> Both bars are the same height because both means are 200 ms — so the chart concludes 'identical'. But a mean bar throws away spread: A could be tight at 200 while B swings 50–600 ms. <b>How to spot it:</b> a single bar per group with no error bars, box, or points. Fix: show the distribution (box/violin/jittered points) or at least the median and 95th percentile — the tail is usually what the decision cares about."
       }
     ],
-    caption: "Real numbers from sklearn's load_breast_cancer: the mean 'mean radius' within each quartile of 'mean texture' is 12.59, 13.39, 14.72, 15.82 — a true spread of only 1.26x (about 26%). The MISLEADING chart truncates the y-axis at 12, so the drawn heights become 0.59, 1.39, 2.72, 3.82 and the tallest bar looks 6.5x the shortest. The HONEST chart starts the axis at 0, and the four bars look nearly equal — which is the truth. Same data, two stories; only the baseline moved.",
+    caption: "Real numbers from sklearn's load_breast_cancer: the mean 'mean radius' within each quartile of 'mean texture' is 12.59, 13.39, 14.72, 15.82 — a true spread of only 1.26x. Chart 1 (green, ideal) is the honest zero-baseline view. The rest are lies you will actually meet: a truncated axis turning 1.26x into 6.5x, dual y-axes manufacturing correlation, radius-encoded bubbles over-reading area 4x, and a mean bar hiding within-group spread. Same kinds of correct numbers, very different stories — the lie lives in the geometry.",
     code: `import numpy as np
 import pandas as pd
 from sklearn.datasets import load_breast_cancer
