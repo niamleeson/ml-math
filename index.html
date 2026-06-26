@@ -10,12 +10,11 @@
   (function () {
     try {
       var t = localStorage.getItem("mlmath_theme");
-      if (t !== "light" && t !== "dark") {
-        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
-      }
+      // Default to the light, textbook-style reading view; honour a saved choice if there is one.
+      if (t !== "light" && t !== "dark") t = "light";
       document.documentElement.setAttribute("data-theme", t);
     } catch (e) {
-      document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.setAttribute("data-theme", "light");
     }
   })();
 </script>
@@ -447,6 +446,77 @@
     body.nav-collapsed #sidebar { width: 320px; min-width: 320px; overflow-y: auto; border-right: 1px solid var(--border); transform: translateX(-100%); }
     #content { padding-top: 60px; }
   }
+
+  /* ===================================================================
+     TEXTBOOK READING MODE — the lesson pane (#content) reads like a book:
+     monochrome text, sections separated by spacing under a plain header,
+     no boxes / containers / coloured section icons. Diagrams & charts
+     (canvas) and code snippets (syntax highlighting) keep their colours.
+     =================================================================== */
+  #content {
+    max-width: 720px; padding: 60px 32px 160px; font-size: 17px;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, Cambria, "Times New Roman", serif;
+    line-height: 1.7;
+  }
+  #content .crumbs { color: var(--ink-dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #content h2.lesson-title { font-size: 34px; font-weight: 700; line-height: 1.18; letter-spacing: -.012em; margin: 0 0 10px; }
+  #content .lesson-sub { font-size: 18px; font-style: italic; color: var(--ink-dim); margin: 0 0 40px; }
+
+  /* Every content "card" becomes a plain section: a header, then prose, then space. */
+  #content .card { background: none; border: none; border-left: none; border-radius: 0;
+    box-shadow: none; padding: 0; margin: 0 0 38px; }
+  #content .card h3 { display: block; color: var(--ink); text-transform: none; letter-spacing: 0;
+    font-weight: 700; font-size: 22px; line-height: 1.3; margin: 0 0 14px; }
+  /* kill every coloured section-header / tinted-box / coloured-rule variant */
+  #content .card.idea h3, #content .card.example h3, #content .card.app h3, #content .card.deriv h3,
+  #content .card.whenuse h3, #content .card.pitfalls h3, #content .card.playbook h3, #content .card.checklist h3,
+  #content .card.practice h3, #content .card.walk h3, #content .card.viz h3, #content .card.code h3,
+  #content .card.objective h3, #content .card.quiz h3 { color: var(--ink); }
+  #content .card.pitfalls, #content .card.checklist, #content .card.quiz { background: none; }
+  #content .card p:first-of-type { margin-top: 0; }
+  #content p, #content li { color: var(--ink); }
+
+  /* Divider before the math/theory part: a quiet hairline, no icon. */
+  #content .uh-divider { color: var(--ink); border-top: 1px solid var(--border); text-transform: none;
+    letter-spacing: .01em; font-weight: 700; font-size: 15px; margin: 46px 0 26px; padding-top: 26px; }
+
+  /* Key equations: a centred math block with breathing room — not a dashed box. */
+  #content .formula-box { background: none; border: none; border-radius: 0; padding: 4px 0; margin: 12px 0; }
+
+  /* Ruled tables (symbols / API) keep their hairlines, lose the colour. */
+  #content .symbols td.sym, #content .api-table td.api-sig code { color: var(--ink); font-weight: 600; }
+
+  /* Practice & step lists: flat numbered text, hairline separators, monochrome counters. */
+  #content .problem { background: none; border: none; border-radius: 0; padding: 16px 0 0; margin: 0;
+    border-top: 1px solid var(--border); }
+  #content .problem .qnum, #content .steps > li::before, #content .solsteps > li::before {
+    background: none; border: 1px solid var(--ink-dim); color: var(--ink); }
+  #content .problem .reveal, #content .quiz .reveal, #content .solsteps .why { color: var(--ink-dim); }
+  #content .finalans { color: var(--ink); }
+
+  /* Callouts → quiet inline notes (prereqs, "part of", concept link, recall, paper meta). */
+  #content .partof, #content .conceptlink, #content .recall, #content .card.recall {
+    background: none; border: none; border-left: none; border-radius: 0; padding: 0; }
+  #content .prereqs, #content .partof, #content .conceptlink { color: var(--ink-dim); }
+  #content .papercard { background: none; border: none; border-radius: 0; box-shadow: none; padding: 0; margin: 0 0 18px; }
+  #content .pc-meta, #content .pc-links { color: var(--ink-dim); }
+  #content .trackbadge { background: none; border: 1px solid var(--border); color: var(--ink-dim); }
+  /* All in-content links: textbook style — ink with an underline. */
+  #content a.inlink, #content a.lessonlink, #content a.paperlink,
+  #content .prereqs a, #content .partof a, #content .conceptlink a { color: var(--ink); text-decoration: underline; }
+
+  /* Diagrams stay colourful — flatten only the container box around each chart. */
+  #content .viz .vizchart { background: none; border: none; border-radius: 0; padding: 0; margin: 22px 0 0; }
+  #content .viz .vizchart .vizct { color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #content .viz .vizchart .vizinterp { color: var(--ink-dim); border-top: 1px solid var(--border); }
+  #content .viz .vizcap, #content .viz .vizq { color: var(--ink-dim); }
+  #content .viz .vbtn.active { background: var(--ink); color: var(--bg); }
+
+  /* Buttons / nav: quiet monochrome controls (kept in the page sans, not the body serif). */
+  #content .colab-btn, #content .nav-row button, #content .markdone, #content .viz .vbtn, #content .reveal {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #content .nav-row button:hover, #content .colab-btn:hover { border-color: var(--ink); color: var(--ink); }
+  #content .markdone.done { border-color: var(--ink); color: var(--ink); }
 </style>
 </head>
 <body>
@@ -1154,7 +1224,7 @@ const App = (function () {
   function symbolsTable(symbols) {
     if (!symbols || !symbols.length) return "";
     const rows = symbols.map(s => `<tr><td class="sym">${s.sym}</td><td>${s.desc}</td></tr>`).join("");
-    return `<div class="card"><h3>🔤 Every symbol, in plain English</h3><table class="symbols">${rows}</table></div>`;
+    return `<div class="card"><h3>Every symbol, in plain English</h3><table class="symbols">${rows}</table></div>`;
   }
 
   function prereqLinks(prereqs) {
@@ -1167,7 +1237,7 @@ const App = (function () {
 
   // Link from a lesson into the concept map, centered on this node.
   function graphLink(id) {
-    return `<div class="lesson-links"><a class="inlink" href="graph.html#${id}">🗺️ See where this fits in the concept map →</a></div>`;
+    return `<div class="lesson-links"><a class="inlink" href="graph.html#${id}">See where this fits in the concept map →</a></div>`;
   }
 
   // Opens a starter notebook (committed under notebooks/) in Google Colab, with the
@@ -1175,7 +1245,7 @@ const App = (function () {
   // GitHub; the user does "Save a copy in Drive" to get their own runnable notebook.
   function colabBtn(id) {
     const url = "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/" + encodeURIComponent(id) + ".ipynb";
-    return `<a class="colab-btn" href="${url}" target="_blank" rel="noopener">⚡ Open practice notebook in Colab</a>`;
+    return `<a class="colab-btn" href="${url}" target="_blank" rel="noopener">Open practice notebook in Colab</a>`;
   }
 
   // Real-world applications that use this concept (links into applications.html).
@@ -1188,7 +1258,7 @@ const App = (function () {
 
   function quizBlock(quiz) {
     if (!quiz) return "";
-    return `<div class="card quiz"><h3>🧠 Check yourself</h3><p>${quiz.q}</p>` +
+    return `<div class="card quiz"><h3>Check yourself</h3><p>${quiz.q}</p>` +
       `<button class="reveal" onclick="this.parentElement.classList.toggle('open')">Show answer ▾</button>` +
       `<div class="answer">${quiz.a}</div></div>`;
   }
@@ -1204,14 +1274,14 @@ const App = (function () {
           <div class="solution"><ol class="solsteps">${steps}</ol>${p.answer ? `<div class="finalans">✅ Answer: ${p.answer}</div>` : ""}</div>
         </div>`;
     }).join("");
-    return `<div class="card practice"><h3>✏️ Practice — ${list.length} problems</h3>` +
+    return `<div class="card practice"><h3>Practice — ${list.length} problems</h3>` +
       `<p class="hint">Try each one yourself first, then reveal the worked solution. Every step says <i>what</i> to do and <i>why</i>.</p>` +
       probs + `</div>`;
   }
 
   function section(cls, icon, label, html) {
     if (!html) return "";
-    return `<div class="card ${cls}"><h3>${icon} ${label}</h3>${html}</div>`;
+    return `<div class="card ${cls}"><h3>${label}</h3>${html}</div>`;
   }
 
   // Real-world walkthroughs: a question the concept answers, solved end-to-end
@@ -1237,7 +1307,7 @@ const App = (function () {
           (w.conclusion ? `<div class="wt-conc">✅ <b>Answer:</b> ${w.conclusion}</div>` : "") +
         `</div></div>`;
     }).join("");
-    return `<div class="card walk"><h3>🌍 Real-world walkthroughs — ${ws.length}</h3>` +
+    return `<div class="card walk"><h3>Real-world walkthroughs — ${ws.length}</h3>` +
       `<p class="hint">See the concept solve an actual problem, end to end: the question, the data, the work (with code &amp; math), and the answer. Click one to open.</p>` +
       items + `</div>`;
   }
@@ -1256,7 +1326,7 @@ const App = (function () {
     const note = c.runnable
       ? ""
       : `<div class="codenote">▶ Not runnable here — ${escapeHtml(c.lib)} needs a Python/GPU runtime. Copy it into a notebook (Colab works) to run.</div>`;
-    return `<div class="card code"><h3>💻 Implement it in code — ${escapeHtml(c.lib)}</h3>` +
+    return `<div class="card code"><h3>Implement it in code — ${escapeHtml(c.lib)}</h3>` +
       (c.explain ? c.explain : "") +
       `<div class="codewrap">` +
         `<div class="codebar"><span class="libtag${torch ? " torch" : ""}">${escapeHtml(c.lib)}</span><span class="sp"></span>` +
@@ -1280,7 +1350,7 @@ const App = (function () {
       ? `<div class="viztoggle"><button class="vbtn active" onclick="App.vizView(this,'chart')">📊 Chart</button>` +
         `<button class="vbtn" onclick="App.vizView(this,'code')">💻 Code that made it</button></div>`
       : "";
-    return `<div class="card viz"><h3>📊 Visualize the data &amp; results</h3>` +
+    return `<div class="card viz"><h3>Visualize the data &amp; results</h3>` +
       (v.question ? `<p class="vizq">❓ <b>${v.question}</b></p>` : "") +
       toggle +
       `<div class="viz-charts">${canvases}</div>` +
@@ -1305,13 +1375,13 @@ const App = (function () {
   // is the page currently open. Returns "" when the target has no lesson or is the current page.
   function lessonRefLink(paperId, currentId) {
     if (!paperId || paperId === currentId || !byId[paperId]) return "";
-    return `<a class="lessonlink" onclick="App.open('${paperId}')">📘 lesson</a>`;
+    return `<a class="lessonlink" onclick="App.open('${paperId}')">lesson</a>`;
   }
   function paperCard(l) {
     const p = l.paper || {};
     const links = [];
     const paperUrl = p.arxiv || p.url || p.pdf;
-    if (paperUrl) links.push(`<a href="${paperUrl}" target="_blank" rel="noopener">📄 Read the paper</a>`);
+    if (paperUrl) links.push(`<a href="${paperUrl}" target="_blank" rel="noopener">Read the paper</a>`);
     if (p.code) links.push(`<a href="${p.code}" target="_blank" rel="noopener">💻 Official code</a>`);
     const meta = [p.authors, p.org, p.venue, p.year, p.citations].filter(Boolean).join(" · ");
     return `<div class="papercard"><div class="pc-top">${trackBadge(l.track)}</div>` +
@@ -1324,15 +1394,15 @@ const App = (function () {
       const cap = byId[po.capstone], name = cap ? cap.title : po.capstone;
       return `<a onclick="App.open('${po.capstone}')">${name}</a>` + (po.step ? ` — step ${po.step}` : "") + (po.builds ? ` (${po.builds})` : "");
     }).join("; ");
-    return `<div class="partof">🏗️ <b>Part of capstone:</b> ${items}</div>`;
+    return `<div class="partof"><b>Part of capstone:</b> ${items}</div>`;
   }
   function conceptCallout(l) {
     if (!l.conceptLink || !byId[l.conceptLink]) return "";
-    return `<div class="conceptlink">📐 <b>The underlying math is taught in:</b> <a onclick="App.open('${l.conceptLink}')">${byId[l.conceptLink].title}</a></div>`;
+    return `<div class="conceptlink"><b>The underlying math is taught in:</b> <a onclick="App.open('${l.conceptLink}')">${byId[l.conceptLink].title}</a></div>`;
   }
   function recallBlock(list) {
     if (!list || !list.length) return "";
-    return `<div class="card recall"><h3>🧠 Recall check — close the page, answer from memory</h3><ul>` +
+    return `<div class="card recall"><h3>Recall check — close the page, answer from memory</h3><ul>` +
       list.map(q => `<li>${q}</li>`).join("") + `</ul></div>`;
   }
   function navRow(id, prev, next) {
@@ -1348,7 +1418,7 @@ const App = (function () {
       section("", "🔬", "How it works", l.walkthrough) +
       section("", "🏛️", "The architecture — component by component", l.architecture) +
       symbolsTable(l.symbols) +
-      (l.formula ? `<div class="card"><h3>➗ Key equations</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes || ""}</div>` : "") +
+      (l.formula ? `<div class="card"><h3>Key equations</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes || ""}</div>` : "") +
       section("deriv", "📜", "Why it's true", l.derivation) +
       section("example", "🔢", "Worked example — real numbers", l.example) +
       section("", "🪜", "The recipe — what you'll build", l.recipe) +
@@ -1363,7 +1433,7 @@ const App = (function () {
       section("", "📖", "How to read the paper", l.readingGuide) +
       section("predict", "🤔", "Predict first — guess before you run", l.predict) +
       section("", "⌨️", "Your turn — try it before the reveal", l.attempt) +
-      `<div class="uh-divider"><span class="uh-ic">🔬</span> How it works — read &amp; understand</div>` +
+      `<div class="uh-divider">How it works — read &amp; understand</div>` +
       howItWorks + conceptCallout(l) +
       section("", "🧱", "Implement it — build vs import", l.implementBoundary) +
       codeBlock(id) + codeVizBlock(id) +
@@ -1378,16 +1448,16 @@ const App = (function () {
       // Whenever we link a paper, link its in-app lesson too — unless that lesson is
       // the page we're already on (here the page is the capstone, so it never is).
       const llink = lessonRefLink(s.paper, id) || (lp ? "" : `<i>lesson coming soon</i>`);
-      const plink = src ? `<a class="paperlink" href="${src}" target="_blank" rel="noopener">📄 paper</a>` : "";
+      const plink = src ? `<a class="paperlink" href="${src}" target="_blank" rel="noopener">paper</a>` : "";
       const refs = [llink, plink].filter(Boolean).join(" · ");
-      return `<li><b>${name}</b>${s.builds ? ` — ${s.builds}` : ""}${refs ? ` — ${refs}` : ""}${s.milestone ? ` <span class="milestone">🏁 milestone</span>` : ""}</li>`;
+      return `<li><b>${name}</b>${s.builds ? ` — ${s.builds}` : ""}${refs ? ` — ${refs}` : ""}${s.milestone ? ` <span class="milestone">milestone</span>` : ""}</li>`;
     }).join("");
     return `<div class="crumbs">${l.module}</div>` +
-      `<h2 class="lesson-title">🏗️ ${l.title}</h2>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       section("", "🎯", "The goal", l.goal) +
       section("", "🧭", "What you'll build", l.architecture) +
-      `<div class="card"><h3>🪜 Build order — implement each paper, then assemble</h3><ol class="capsteps">${steps}</ol></div>` +
+      `<div class="card"><h3>Build order — implement each paper, then assemble</h3><ol class="capsteps">${steps}</ol></div>` +
       colabBtn(id) + codeBlock(id) + codeVizBlock(id) +
       section("", "💭", "Reflection", l.reflection) +
       practiceBlock(l.practice) + navRow(id, prev, next);
@@ -1399,7 +1469,7 @@ const App = (function () {
     const rows = list.map(a =>
       `<tr><td class="api-sig"><code>${escapeHtml(a.sig)}</code></td>` +
       `<td>${a.does || ""}${a.snippet ? `<pre class="api-eg"><code class="language-python">${escapeHtml(a.snippet)}</code></pre>` : ""}</td></tr>`).join("");
-    return `<div class="card"><h3>🧩 The API, piece by piece</h3>` +
+    return `<div class="card"><h3>The API, piece by piece</h3>` +
       `<p class="hint">The functions and methods this lesson uses. Skim now; you'll meet each one in the walkthrough below.</p>` +
       `<table class="api-table">${rows}</table></div>`;
   }
@@ -1409,7 +1479,7 @@ const App = (function () {
       `<div class="tour-step"><div class="tour-explain">${s.explain || ""}</div>` +
       (s.code ? `<pre><code class="language-python">${escapeHtml(s.code)}</code></pre>` : "") +
       (s.output ? `<div class="tour-out">${escapeHtml(s.output)}</div>` : "") + `</div>`).join("");
-    return `<div class="card"><h3>📖 Code walkthrough — read it line by line</h3>` +
+    return `<div class="card"><h3>Code walkthrough — read it line by line</h3>` +
       `<p class="hint">The canonical example in small chunks: read the note, then the code it describes, then the output. Type each chunk into Colab as you go.</p>` +
       steps + `</div>`;
   }
@@ -1417,7 +1487,7 @@ const App = (function () {
     if (!list || !list.length) return "";
     const rows = list.map(c =>
       `<div class="cheat-row"><code>${escapeHtml(c.code)}</code><span class="cheat-note">${c.note || ""}</span></div>`).join("");
-    return `<div class="card"><h3>🗒️ Cheat-sheet — the lines worth memorizing</h3>${rows}</div>`;
+    return `<div class="card"><h3>Cheat-sheet — the lines worth memorizing</h3>${rows}</div>`;
   }
   function renderPyTorch(l, id, prev, next) {
     return `<div class="crumbs">${l.module}</div>` +
@@ -1433,7 +1503,7 @@ const App = (function () {
       section("pitfalls", "⚠️", "Gotchas &amp; fixes", l.pitfalls) +
       practiceBlock(l.practice) +
       cheatsheetBlock(l.cheatsheet) +
-      (l.deeper ? `<div class="uh-divider"><span class="uh-ic">🔬</span> Go deeper — the math behind it</div>` +
+      (l.deeper ? `<div class="uh-divider">Go deeper — the math behind it</div>` +
         section("deriv", "📐", "Go deeper", l.deeper) : "") +
       navRow(id, prev, next);
   }
@@ -1446,7 +1516,7 @@ const App = (function () {
 
     // The math/theory, folded under a collapsible so the page leads with implementation.
     const formulaBlock = l.formula
-      ? `<div class="card"><h3>➗ The formula</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes ? l.whatItDoes : ""}</div>`
+      ? `<div class="card"><h3>The formula</h3><div class="formula-box">${l.formula}</div>${l.whatItDoes ? l.whatItDoes : ""}</div>`
       : (l.whatItDoes ? section("", "➗", "What it does", l.whatItDoes) : "");
     const underHood =
       section("idea", "💡", "The big idea", l.bigIdea) +
@@ -1456,7 +1526,7 @@ const App = (function () {
       section("deriv", "📜", "Why it's true — derivation &amp; intuition", l.derivation) +
       section("example", "🔢", "Concrete example (real numbers)", l.example);
     const underHoodWrap = underHood.trim()
-      ? `<div class="uh-divider"><span class="uh-ic">🔬</span> Under the hood — the math &amp; intuition</div>${underHood}`
+      ? `<div class="uh-divider">Under the hood — the math &amp; intuition</div>${underHood}`
       : "";
 
     let html;
@@ -1481,7 +1551,7 @@ const App = (function () {
       section("checklist", "✅", "Your checklist", l.checklist) +
       // ---- Theory, folded ----
       underHoodWrap +
-      (l.demo ? `<div class="card"><h3>🎛️ Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
+      (l.demo ? `<div class="card"><h3>Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       practiceBlock(l.practice) +
       `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
         `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
@@ -1542,7 +1612,7 @@ const App = (function () {
         <p>You have <b class="hl">${total}</b> lessons. Completed: <b class="hl">${done}</b>.
         Pick a topic on the left, or start at the very beginning 👇</p>
         <div class="grid">
-          ${group().map(g => `<div class="card"><h3>📦 ${g.name}</h3>
+          ${group().map(g => `<div class="card"><h3>${g.name}</h3>
              <p class="hint">${g.lessons.length} lessons.</p>
              <a class="inlink" onclick="App.open('${g.lessons[0].id}')">Start →</a></div>`).join("")}
         </div>
