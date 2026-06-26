@@ -261,21 +261,21 @@ print(f"threshold maximizing TPR - FPR: {best:.3f}")`
   };
 
   window.CODEVIZ["met-classification-prob"] = {
-    question: "Take 12 scored examples (6 positive, 6 negative) and sweep the threshold. What do ROC-AUC, the precision–recall curve, and the two probability-quality losses (log loss, Brier) actually look like — and why does one loss explode while the other stays calm?",
+    question: "Take 50 scored examples (25 positive, 25 negative, with overlapping scores) and sweep the threshold. What do ROC-AUC, the precision–recall curve, and the two probability-quality losses (log loss, Brier) actually look like — and why does one loss explode while the other stays calm?",
     charts: [
       {
         type: "roc",
-        title: "ROC-AUC = P(a positive outscores a negative) — area under the TPR-vs-FPR sweep",
-        auc: 0.778,
-        points: [[0.0, 0.0], [0.0, 0.167], [0.0, 0.333], [0.167, 0.333], [0.167, 0.5], [0.167, 0.667], [0.333, 0.667], [0.333, 0.833], [0.5, 0.833], [0.667, 0.833], [0.667, 1.0], [0.833, 1.0], [1.0, 1.0]]
+        title: "ROC curve: true positive rate vs false positive rate as the threshold sweeps high to low (AUC = 0.859)",
+        auc: 0.859,
+        points: [[0,0],[0,0.04],[0,0.08],[0,0.12],[0,0.16],[0,0.2],[0,0.24],[0,0.28],[0.04,0.28],[0.04,0.32],[0.04,0.36],[0.04,0.4],[0.04,0.44],[0.04,0.48],[0.08,0.48],[0.08,0.52],[0.08,0.56],[0.08,0.6],[0.12,0.6],[0.12,0.64],[0.12,0.68],[0.16,0.68],[0.16,0.72],[0.2,0.72],[0.2,0.76],[0.24,0.76],[0.24,0.8],[0.28,0.8],[0.28,0.84],[0.32,0.84],[0.32,0.88],[0.36,0.88],[0.4,0.88],[0.4,0.92],[0.44,0.92],[0.48,0.92],[0.52,0.92],[0.52,0.96],[0.56,0.96],[0.6,0.96],[0.64,0.96],[0.68,0.96],[0.72,0.96],[0.72,1],[0.76,1],[0.8,1],[0.84,1],[0.88,1],[0.92,1],[0.96,1],[1,1]]
       },
       {
         type: "line",
-        title: "Precision–Recall curve — Average Precision (PR-AUC) = 0.811, no-skill baseline = 0.5",
+        title: "Precision-Recall curve — Average Precision (PR-AUC) = 0.866, no-skill baseline = 0.5",
         xlabel: "recall = TP/(TP+FN)",
         ylabel: "precision = TP/(TP+FP)",
         series: [
-          { name: "PR curve (AP = 0.811)", color: "#7ee787", points: [[0.167, 1.0], [0.333, 1.0], [0.333, 0.667], [0.5, 0.75], [0.667, 0.8], [0.667, 0.667], [0.833, 0.714], [0.833, 0.625], [0.833, 0.556], [1.0, 0.6], [1.0, 0.545], [1.0, 0.5]] },
+          { name: "PR curve (AP = 0.866)", color: "#7ee787", points: [[0.04,1],[0.08,1],[0.12,1],[0.16,1],[0.2,1],[0.24,1],[0.28,1],[0.28,0.875],[0.32,0.889],[0.36,0.9],[0.4,0.909],[0.44,0.917],[0.48,0.923],[0.48,0.857],[0.52,0.867],[0.56,0.875],[0.6,0.882],[0.6,0.833],[0.64,0.842],[0.68,0.85],[0.68,0.81],[0.72,0.818],[0.72,0.783],[0.76,0.792],[0.76,0.76],[0.8,0.769],[0.8,0.741],[0.84,0.75],[0.84,0.724],[0.88,0.733],[0.88,0.71],[0.88,0.688],[0.92,0.697],[0.92,0.676],[0.92,0.657],[0.92,0.639],[0.96,0.649],[0.96,0.632],[0.96,0.615],[0.96,0.6],[0.96,0.585],[0.96,0.571],[1,0.581],[1,0.568],[1,0.556],[1,0.543],[1,0.532],[1,0.521],[1,0.51],[1,0.5]] },
           { name: "no-skill (positive rate 0.5)", color: "#9aa7b4", points: [[0.0, 0.5], [1.0, 0.5]] }
         ]
       },
@@ -290,37 +290,41 @@ print(f"threshold maximizing TPR - FPR: {best:.3f}")`
         ]
       }
     ],
-    caption: "All numbers come from one concrete set of 12 scored examples (scores 0.95…0.10, labels alternating so 6 are positive). Sweeping the threshold over the distinct scores traces the ROC sweep (ROC-AUC = 0.778, equal to the 28 of 36 positive–negative pairs ranked correctly) and the precision–recall sweep (Average Precision = 0.811; a no-skill model would sit flat at the 0.5 positive rate). The third chart fixes one true positive (y=1) and slides its predicted probability: the red log-loss term −ln(p) shoots toward infinity as p→0 (a confident wrong call dominates the average), while the blue Brier term (p−1)^2 can never exceed 1. That is the 'log loss explodes, Brier stays bounded' contrast from the pitfalls, drawn out.",
+    caption: "All numbers come from one concrete set of 50 scored examples: 25 positives and 25 negatives whose scores overlap (positives score higher on average, but not perfectly). The ROC curve plots true positive rate (y) against false positive rate (x) as the threshold sweeps from high to low — it bows up toward the top-left corner; the dashed diagonal is a coin-flip model (AUC 0.5) and the green curve's area is ROC-AUC = 0.859 = P(a random positive outscores a random negative). The precision–recall curve traces Average Precision = 0.866 (a no-skill model would sit flat at the 0.5 positive rate). The third chart fixes one true positive (y=1) and slides its predicted probability: the red log-loss term −ln(p) shoots toward infinity as p→0 (a confident wrong call dominates the average), while the blue Brier term (p−1)^2 can never exceed 1. That is the 'log loss explodes, Brier stays bounded' contrast from the pitfalls, drawn out.",
     code: `import numpy as np
+from scipy.stats import norm
 
-# 12 concrete scored examples: (label, score). label 1 = positive.
-data = [(1,0.95),(1,0.90),(0,0.85),(1,0.80),(1,0.70),(0,0.65),
-        (1,0.60),(0,0.50),(0,0.40),(1,0.35),(0,0.30),(0,0.10)]
-y = np.array([d[0] for d in data]); s = np.array([d[1] for d in data])
-P, N = y.sum(), (1 - y).sum()                       # 6 positives, 6 negatives
+# 50 concrete scored examples, NO randomness (deterministic quantiles).
+# Negatives ~ N(-0.75, 1) and positives ~ N(+0.75, 1), each squashed through a
+# sigmoid into a score in (0, 1). The two clouds overlap -> a realistic ROC.
+def cloud(n, mean):
+    q = (np.arange(n) + 0.5) / n            # evenly spaced quantiles
+    return np.round(1 / (1 + np.exp(-(mean + norm.ppf(q)))), 3)
+
+neg = cloud(25, -0.75)                       # 25 negatives, lower scores
+pos = cloud(25, 0.75)                        # 25 positives, higher scores
+s = np.concatenate([pos, neg])
+y = np.concatenate([np.ones(25), np.zeros(25)]).astype(int)
+P, N = 25, 25
 
 # --- ROC-AUC: pairwise = P(random positive outscores random negative) ---
-pos, neg = s[y == 1], s[y == 0]
 auc = np.mean([1.0 if a > b else 0.5 if a == b else 0.0
                for a in pos for b in neg])
-print("ROC-AUC:", round(auc, 4))                    # 0.7778  (28/36 pairs)
+print("ROC-AUC:", round(auc, 4))            # 0.8592
 
-# --- threshold sweep -> ROC and PR points ---
+# --- threshold sweep -> ROC (FPR, TPR) and PR (recall, precision) points ---
 roc, pr = [(0.0, 0.0)], []
 for t in sorted(set(s), reverse=True):
     pred = s >= t
     tp = np.sum(pred & (y == 1)); fp = np.sum(pred & (y == 0))
-    fn = np.sum(~pred & (y == 1))
     roc.append((round(fp / N, 3), round(tp / P, 3)))
     prec = tp / (tp + fp) if tp + fp else 1.0
-    pr.append((round(tp / P, 3), round(prec, 3)))    # (recall, precision)
+    pr.append((round(tp / P, 3), round(prec, 3)))
 roc.append((1.0, 1.0))
 ap, prev = 0.0, 0.0
 for r, prc in pr:
     ap += (r - prev) * prc; prev = r
-print("ROC points:", roc)
-print("PR points :", pr)
-print("Average Precision:", round(ap, 4))           # 0.8106
+print("Average Precision:", round(ap, 4))   # 0.8657
 
 # --- log loss vs Brier as a function of predicted prob, for a true positive ---
 grid = [0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]

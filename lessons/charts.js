@@ -111,15 +111,33 @@
     legend(ctx, cv, groups.filter(g => g.name).map(g => ({ name: g.name, color: g.color || c.ac })));
   }
   function drawRoc(ctx, cv, s) {
-    const c = PAL(), padL = 44, padT = 14, padB = 30, sz = Math.min(cv.width - padL - 20, cv.height - padT - padB);
+    const c = PAL(), padL = 56, padT = 16, padB = 40, sz = Math.min(cv.width - padL - 18, cv.height - padT - padB);
     const x0 = padL, y0 = cv.height - padB, px = f => x0 + f * sz, py = t => y0 - t * sz;
-    frame(ctx, cv, padL, padT, padB);
+    // Square axes box.
+    ctx.strokeStyle = c.bd; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(x0, py(1)); ctx.lineTo(x0, y0); ctx.lineTo(px(1), y0); ctx.stroke();
+    // Tick marks + numeric labels on BOTH axes.
+    const ticks = [0, 0.25, 0.5, 0.75, 1];
+    ctx.strokeStyle = c.bd; ctx.fillStyle = c.dim; ctx.font = "10px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ticks.forEach(t => { ctx.beginPath(); ctx.moveTo(px(t), y0); ctx.lineTo(px(t), y0 + 3); ctx.stroke(); ctx.fillText(t, px(t), y0 + 5); });
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ticks.forEach(t => { ctx.beginPath(); ctx.moveTo(x0, py(t)); ctx.lineTo(x0 - 3, py(t)); ctx.stroke(); ctx.fillText(t, x0 - 6, py(t)); });
+    ctx.textBaseline = "alphabetic";
+    // "random" baseline diagonal.
     ctx.strokeStyle = c.dim; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(1), py(1)); ctx.stroke(); ctx.setLineDash([]);
+    // ROC curve.
     ctx.strokeStyle = c.ac2; ctx.lineWidth = 2; ctx.beginPath();
     (s.points || [[0, 0], [1, 1]]).forEach((p, i) => { i ? ctx.lineTo(px(p[0]), py(p[1])) : ctx.moveTo(px(p[0]), py(p[1])); }); ctx.stroke();
-    ctx.fillStyle = c.ink; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
-    if (s.auc != null) ctx.fillText("AUC = " + s.auc, px(0.42), py(0.18));
-    ctx.fillStyle = c.dim; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.fillText("false positive rate", (px(0) + px(1)) / 2, cv.height - 8);
+    // Axis titles.
+    ctx.fillStyle = c.dim; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(s.xlabel || "false positive rate  FPR = FP/(FP+TN)", (px(0) + px(1)) / 2, cv.height - 6);
+    ctx.save(); ctx.translate(13, (py(1) + py(0)) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText(s.ylabel || "true positive rate  TPR = TP/(TP+FN)", 0, 0); ctx.restore();
+    // Diagonal annotation + AUC callout placed in the open lower-right / under the curve.
+    ctx.fillStyle = c.dim; ctx.font = "10px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("random = 0.5", px(0.56), py(0.48));
+    if (s.auc != null) { ctx.fillStyle = c.ac2; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "left"; ctx.fillText("AUC = " + s.auc, px(0.33), py(0.22)); }
   }
   function drawConfusion(ctx, cv, s) {
     const c = PAL(), labs = s.labels || [], M = s.matrix || [], n = M.length || 1;
