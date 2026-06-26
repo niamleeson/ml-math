@@ -1,437 +1,512 @@
-/* =====================================================================
-   CODE VISUALIZATIONS for MODULE 09 (A) - CLASSICAL ML.
-   One window.CODEVIZ entry per lesson id in 09-classical-a.js.
-   Data + results are REAL: computed with numpy + scikit-learn on the
-   bundled REAL datasets (load_iris / load_wine / load_breast_cancer /
-   load_diabetes) and the fitted models' labels, boundaries, and
-   predictions. Coords are embedded literals. Plain-text labels only.
-   ===================================================================== */
-window.CODEVIZ = Object.assign(window.CODEVIZ || {}, {
-  "cls-gmm": {
-    "question": "Which Gaussian component generated each wine sample?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "GMM on the Wine dataset (PCA to 2-D, 3 components)",
-        "xlabel": "PCA component 1",
-        "ylabel": "PCA component 2",
-        "groups": [
-          {
-            "name": "component 0",
-            "color": "#4ea1ff",
-            "points": [[-0.929,-3.073],[2.249,-1.885],[1.976,-1.403],[1.263,-0.771],[1.035,-1.451],[0.835,-1.474],[-1.349,-2.118],[-1.564,-1.852],[0.957,-2.224],[1.031,-2.566],[-1.772,-1.717],[-1.621,-1.356],[0.083,-2.306],[-1.303,-0.763],[-0.457,-2.269],[-0.494,-1.939],[-0.107,-1.929],[0.74,-1.409],[0.978,-1.446],[0.038,-1.267],[-1.597,-1.208],[-1.327,0.17]]
-          },
-          {
-            "name": "component 1",
-            "color": "#7ee787",
-            "points": [[-3.064,0.353],[-3.094,0.349],[-3.583,1.273],[-2.807,1.571],[-2.55,2.045],[-1.813,1.528],[-1.61,2.407],[-3.143,0.738],[-2.24,1.175],[-2.848,0.556],[-3.53,0.883],[-2.466,2.194]]
-          },
-          {
-            "name": "component 2",
-            "color": "#c89bff",
-            "points": [[1.009,0.87],[3.05,2.122],[1.755,0.612],[2.113,0.676],[4.313,2.096],[2.172,2.327],[3.542,2.518],[2.085,1.061],[2.188,0.69],[2.256,0.191],[2.677,1.472],[1.903,1.633],[1.904,0.177],[2.53,1.803],[2.588,0.78],[3.071,1.156],[2.101,-0.071],[2.821,0.646],[2.01,1.247],[2.859,0.745],[2.225,1.875],[2.147,1.017],[2.742,1.437],[3.139,1.732],[2.562,0.26],[2.544,0.169]]
-          }
-        ]
-      }
-    ],
-    "caption": "GaussianMixture fits 3 components to the 178 real wines (13 chemical measurements, reduced to 2-D by PCA); each point is colored by the component most responsible for it, and the 3 components line up with the 3 grape cultivars.",
-    "code": `import numpy as np
+/* Per-lesson CODE VISUALIZATIONS — 09-classical-a.
+   One diagram per case: the ideal plus the variants you might see, each interpreted.
+   chartSpec types: bars | line | scatter | heatmap | roc | confusion. */
+window.CODEVIZ = window.CODEVIZ || {};
+
+window.CODEVIZ["cls-gmm"] = {
+  question: "Two overlapping blobs of points. A GMM gives each point a soft membership, not a hard label — how do you READ those memberships, and how do you pick the number of blobs?",
+  charts: [
+    {
+      type: "scatter",
+      title: "Healthy: two Gaussians fitted, points coloured by soft membership",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "mostly blob A (>0.8)", color: "#4ea1ff", points: [[-2.3,1.4],[-1.6,0.6],[-2.9,1.1],[-2.1,2.0],[-3.1,0.8],[-1.9,1.7],[-2.6,0.4],[-2.0,1.0],[-3.0,1.9],[-1.5,1.3]] },
+        { name: "in-between (0.4-0.6)", color: "#c89bff", points: [[0.2,0.5],[0.5,-0.1],[-0.3,0.9],[0.7,0.2],[0.0,-0.4]] },
+        { name: "mostly blob B (>0.8)", color: "#7ee787", points: [[3.1,-1.0],[2.6,-0.4],[3.5,-1.6],[2.9,-0.2],[3.8,-1.1],[2.4,-1.4],[3.2,-0.7],[3.0,-1.9],[2.7,-0.6],[3.6,-0.9]] }
+      ],
+      lines: [
+        { color: "#4ea1ff", dash: [6,4], points: [[-2.0,3.4],[-0.6,2.8],[0.0,1.4],[-0.6,0.0],[-2.0,-0.6],[-3.4,0.0],[-4.0,1.4],[-3.4,2.8],[-2.0,3.4]] },
+        { color: "#7ee787", dash: [6,4], points: [[3.0,1.0],[4.4,0.4],[5.0,-1.0],[4.4,-2.4],[3.0,-3.0],[1.6,-2.4],[1.0,-1.0],[1.6,0.4],[3.0,1.0]] }
+      ],
+      interpret: "<b>Each axis is one feature; every dot is a point, coloured by its responsibility</b> — the probability the GMM thinks it belongs to blob A vs blob B. Blue dots are >80% blob A, green >80% blob B, and the <b>purple dots in the seam are genuinely uncertain (near 50/50)</b>. The dashed ovals are the fitted Gaussians at their ±2 sigma ring. Read it as: tight ovals over clear blobs with only a thin purple seam means EM converged to a clean, confident fit."
+    },
+    {
+      type: "line",
+      title: "Picking K: BIC dips lowest at K=2 (choose this K)",
+      xlabel: "K (number of Gaussian components)",
+      ylabel: "BIC (lower is better)",
+      series: [
+        { name: "BIC", color: "#7ee787", points: [[1,1180],[2,940],[3,955],[4,978],[5,1005]] }
+      ],
+      interpret: "<b>The x-axis is how many blobs you ask for; the y-axis is BIC (Bayesian Information Criterion)</b> — a score that rewards fit but penalises extra components, so lower is better. Read the lowest point: BIC bottoms out at K=2, then climbs as more blobs just add complexity without explaining more. Use BIC (not raw likelihood, which always favours more blobs) to choose K = 2 here."
+    },
+    {
+      type: "scatter",
+      title: "Heavy overlap: memberships are soft everywhere (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "leans blob A", color: "#4ea1ff", points: [[-1.0,0.8],[-0.6,0.2],[-1.3,1.1],[-0.4,0.5],[-0.9,-0.2],[-1.1,0.4]] },
+        { name: "truly mixed (~50/50)", color: "#c89bff", points: [[0.0,0.4],[0.3,-0.2],[-0.2,0.8],[0.5,0.1],[0.1,-0.5],[-0.3,0.2],[0.4,0.6]] },
+        { name: "leans blob B", color: "#7ee787", points: [[1.0,-0.6],[0.6,-0.1],[1.3,-1.0],[0.5,-0.4],[1.1,0.2],[0.9,-0.7]] }
+      ],
+      lines: [
+        { color: "#4ea1ff", dash: [6,4], points: [[-0.4,2.2],[0.6,1.5],[1.0,0.0],[0.6,-1.5],[-0.4,-2.2],[-1.4,-1.5],[-1.8,0.0],[-1.4,1.5],[-0.4,2.2]] },
+        { color: "#7ee787", dash: [6,4], points: [[0.6,2.2],[1.6,1.5],[2.0,0.0],[1.6,-1.5],[0.6,-2.2],[-0.4,-1.5],[-0.8,0.0],[-0.4,1.5],[0.6,2.2]] }
+      ],
+      interpret: "<b>Illustrative.</b> The two Gaussians sit almost on top of each other, so most points get memberships near 50/50 — a wide purple band, not a thin seam. <b>Recognise it</b> when the soft labels are mushy across the whole plot and the two ovals heavily overlap. This is honest uncertainty, not a bug: the blobs really aren't separable, so don't trust any hard label you force out of it."
+    },
+    {
+      type: "scatter",
+      title: "Variance collapse: a blob latches onto one point (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "broad blob", color: "#4ea1ff", points: [[-2.0,1.0],[-1.0,0.4],[0.0,1.2],[1.0,0.2],[2.0,1.1],[-1.5,-0.6],[0.5,-0.8],[1.5,0.6]] },
+        { name: "collapsed spike", color: "#ff7b72", points: [[3.0,-2.0]] }
+      ],
+      lines: [
+        { color: "#4ea1ff", dash: [6,4], points: [[0.0,3.0],[1.8,2.2],[2.6,0.0],[1.8,-2.2],[0.0,-3.0],[-1.8,-2.2],[-2.6,0.0],[-1.8,2.2],[0.0,3.0]] },
+        { color: "#ff7b72", dash: [3,3], points: [[3.18,-2.0],[3.0,-1.82],[2.82,-2.0],[3.0,-2.18],[3.18,-2.0]] }
+      ],
+      interpret: "<b>Illustrative.</b> One Gaussian has shrunk its covariance toward zero to wrap a single point (the tiny red ring), spiking the likelihood to infinity while explaining nothing. <b>Recognise it</b> when one component becomes a pinprick on one outlier and its weight is tiny. The fix is a covariance floor (reg_covar) plus several random restarts (n_init) and keeping the best honest fit."
+    }
+  ],
+  caption: "Read GMM colours as soft memberships (probabilities), with a thin purple seam meaning a confident fit; pick K from the BIC dip. Variants show honest heavy-overlap uncertainty and the variance-collapse failure to guard against.",
+  code: `import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 from sklearn.mixture import GaussianMixture
 
-wine = load_wine()
-Xs = StandardScaler().fit_transform(wine.data)
-X2 = PCA(n_components=2, random_state=0).fit_transform(Xs)
+rng = np.random.default_rng(0)
+A = rng.normal([-2.0, 1.0], 0.7, size=(40, 2))
+B = rng.normal([3.0, -1.0], 0.8, size=(40, 2))
+X = np.vstack([A, B])
 
-gmm = GaussianMixture(n_components=3, covariance_type="full", random_state=0)
-labels = gmm.fit_predict(X2)
+gmm = GaussianMixture(n_components=2, n_init=5, random_state=0).fit(X)
+resp = gmm.predict_proba(X)[:, 0]   # responsibility for blob A, in [0,1]
 
-colors = np.array(["#4ea1ff", "#7ee787", "#c89bff"])
-plt.scatter(X2[:, 0], X2[:, 1], c=colors[labels], s=20)
-plt.scatter(gmm.means_[:, 0], gmm.means_[:, 1],
-            c="black", marker="x", s=120)
-plt.title("GMM on the Wine dataset (PCA to 2-D, 3 components)")
-plt.xlabel("PCA component 1")
-plt.ylabel("PCA component 2")
+plt.scatter(X[:, 0], X[:, 1], c=resp, cmap="cool", edgecolor="k")
+plt.colorbar(label="responsibility for blob A")
+plt.xlabel("feature 1"); plt.ylabel("feature 2")
+plt.title("GMM soft memberships")
+
+# choose K by BIC (lower is better)
+bic = [GaussianMixture(n_components=k, n_init=5, random_state=0).fit(X).bic(X)
+       for k in range(1, 6)]
+print("BIC per K:", np.round(bic, 1), "-> pick", int(np.argmin(bic) + 1))
 plt.show()`
-  },
-  "cls-dbscan": {
-    "question": "Can density clustering find the Iris species and flag outliers, without being told how many clusters?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "DBSCAN on the Iris dataset (PCA to 2-D, eps 0.6, minPts 5)",
-        "xlabel": "PCA component 1",
-        "ylabel": "PCA component 2",
-        "groups": [
-          {
-            "name": "cluster 0",
-            "color": "#4ea1ff",
-            "points": [[-2.265,0.48],[-2.364,-0.342],[-2.299,-0.597],[-2.076,1.489],[-2.444,0.048],[-2.326,0.133],[-2.218,-0.729],[-2.633,-0.962],[-2.199,1.86],[-1.914,0.409],[-1.819,0.086],[-2.227,0.137],[-1.952,-0.626],[-2.169,0.527],[-2.14,0.313],[-2.265,-0.338],[-2.208,-0.206],[-2.045,0.662],[-2.554,-0.479],[-2.137,1.142],[-2.07,-0.711],[-2.229,0.998]]
-          },
-          {
-            "name": "cluster 1",
-            "color": "#7ee787",
-            "points": [[0.407,-1.754],[1.075,-0.208],[-0.033,-0.439],[0.875,0.509],[0.703,-0.063],[1.358,0.331],[0.665,-0.226],[0.224,-0.288],[0.429,0.846],[1.045,-1.383],[0.283,-1.329],[0.625,0.025],[-0.362,-2.019],[0.289,-0.856],[0.228,-0.385],[0.576,-0.155],[2.752,0.8],[0.367,-1.562],[2.007,-0.711],[1.26,-1.162],[1.59,0.676],[1.264,-1.707],[1.954,1.008],[1.175,-0.316],[1.021,0.064],[1.788,-0.187],[1.864,0.562],[1.863,-0.179],[1.202,-0.811],[1.576,1.069],[2.015,0.614],[1.902,0.69],[2.041,0.868],[1.998,1.049],[1.373,1.011]]
-          },
-          {
-            "name": "noise",
-            "color": "#ff7b72",
-            "points": [[-1.858,-2.337],[2.426,2.557],[2.305,2.626]]
-          }
-        ]
-      }
-    ],
-    "caption": "DBSCAN on the 150 real iris flowers (4 petal/sepal measurements, PCA to 2-D) finds 2 density regions and flags 6 points as noise; setosa separates cleanly while versicolor and virginica overlap into one dense blob.",
-    "code": `import numpy as np
+};
+
+window.CODEVIZ["cls-dbscan"] = {
+  question: "Two dense crowds plus scattered loners. DBSCAN finds the crowds and flags the loners as noise without you setting k — but how do you READ the result, and how do you pick the radius eps?",
+  charts: [
+    {
+      type: "scatter",
+      title: "Healthy: two density clusters found, loners flagged as noise",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "cluster 1", color: "#4ea1ff", points: [[2.0,2.1],[2.4,1.7],[1.7,2.4],[2.2,2.5],[1.9,1.6],[2.6,2.2],[1.6,2.0],[2.3,1.9],[2.1,2.7],[1.8,1.8],[2.5,2.4],[2.0,1.5]] },
+        { name: "cluster 2", color: "#7ee787", points: [[7.0,6.1],[7.4,5.7],[6.7,6.4],[7.2,6.5],[6.9,5.6],[7.6,6.2],[6.6,6.0],[7.3,5.9],[7.1,6.7],[6.8,5.8],[7.5,6.4],[7.0,5.5]] },
+        { name: "noise", color: "#9aa7b4", points: [[1.0,5.5],[4.5,3.0],[8.5,1.5],[3.0,6.5],[5.5,1.0],[8.0,5.0],[1.5,1.2]] }
+      ],
+      lines: [],
+      interpret: "<b>Each axis is one feature; every dot is a point.</b> Coloured dots are dense clusters DBSCAN grew from core points, and the <b>grey dots are noise</b> — loners with too few neighbours inside radius eps to join any crowd. Notice no k was set: DBSCAN found two clusters on its own and refused to force the outliers into a group. Read it as: distinct colours over the dense crowds, grey scattered in the empty space."
+    },
+    {
+      type: "line",
+      title: "Picking eps: k-distance plot, take eps at the elbow",
+      xlabel: "points sorted by distance to their 4th-nearest neighbour",
+      ylabel: "distance to 4th-nearest neighbour",
+      series: [
+        { name: "4th-NN distance", color: "#7ee787", points: [[0,0.25],[10,0.35],[20,0.45],[30,0.55],[40,0.62],[50,0.70],[58,0.85],[63,1.4],[66,2.3],[68,3.5]] }
+      ],
+      interpret: "<b>The x-axis is every point sorted by how far away its 4th-nearest neighbour is (minPts=4); the y-axis is that distance.</b> The curve stays low and flat for points inside dense crowds, then shoots up at the right for the loners. Read the <b>elbow</b> where it bends sharply (around 0.85 here) and set eps there — that splits dense-enough points from the sparse tail."
+    },
+    {
+      type: "scatter",
+      title: "eps too small: nearly everything becomes noise (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "tiny surviving cluster", color: "#4ea1ff", points: [[2.1,2.0],[2.2,2.1],[2.0,1.9],[2.15,2.05]] },
+        { name: "noise", color: "#9aa7b4", points: [[2.4,1.7],[1.7,2.4],[2.6,2.2],[1.6,2.0],[7.0,6.1],[7.4,5.7],[6.7,6.4],[7.2,6.5],[6.9,5.6],[7.6,6.2],[6.6,6.0],[1.0,5.5],[4.5,3.0],[8.5,1.5],[3.0,6.5]] }
+      ],
+      lines: [],
+      interpret: "<b>Illustrative.</b> eps was shrunk so far that almost no point has minPts neighbours inside it, so the crowds dissolve into grey and only a tiny clump survives. <b>Recognise it</b> when most of the plot is grey noise and clusters are missing. The fix: raise eps — the k-distance elbow tells you how far up to go."
+    },
+    {
+      type: "scatter",
+      title: "eps too big: the two crowds merge into one (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "one merged cluster", color: "#ffb454", points: [[2.0,2.1],[2.4,1.7],[1.7,2.4],[2.2,2.5],[2.6,2.2],[2.3,1.9],[4.5,3.0],[5.5,4.0],[7.0,6.1],[7.4,5.7],[6.7,6.4],[7.2,6.5],[6.9,5.6],[7.6,6.2],[6.6,6.0],[3.0,2.8],[5.0,4.5]] }
+      ],
+      lines: [],
+      interpret: "<b>Illustrative.</b> eps was set so large that the gap between the two crowds is now inside the radius, so a chain of core points bridges them and DBSCAN reports one blob. <b>Recognise it</b> when separate groups fuse into a single colour and almost nothing is noise. The fix: lower eps back toward the elbow so the sparse seam between crowds breaks the chain."
+    },
+    {
+      type: "scatter",
+      title: "Why not k-means: DBSCAN traces a non-convex ring (illustrative)",
+      xlabel: "feature 1",
+      ylabel: "feature 2",
+      groups: [
+        { name: "ring cluster", color: "#4ea1ff", points: [[3.0,0.0],[2.6,1.5],[1.5,2.6],[0.0,3.0],[-1.5,2.6],[-2.6,1.5],[-3.0,0.0],[-2.6,-1.5],[-1.5,-2.6],[0.0,-3.0],[1.5,-2.6],[2.6,-1.5]] },
+        { name: "core cluster", color: "#7ee787", points: [[0.2,0.1],[-0.2,0.3],[0.3,-0.2],[-0.1,-0.3],[0.0,0.0]] }
+      ],
+      lines: [],
+      interpret: "<b>Illustrative.</b> A ring wraps a central blob — two density clusters with no straight line between them. DBSCAN follows the dense ring all the way around and keeps the core separate, because it grows clusters by connectivity not roundness. <b>Recognise the win</b> here: k-means would slice both shapes with a flat boundary, but DBSCAN traces the curve. This is when to prefer density-based clustering."
+    }
+  ],
+  caption: "Read DBSCAN colours as density crowds and grey as noise, and pick eps from the k-distance elbow. Variants show eps too small (all noise), eps too big (crowds merge), and the non-convex shapes that make DBSCAN beat k-means.",
+  code: `import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 from sklearn.cluster import DBSCAN
+from sklearn.neighbors import NearestNeighbors
 
-iris = load_iris()
-Xs = StandardScaler().fit_transform(iris.data)
-X2 = PCA(n_components=2, random_state=0).fit_transform(Xs)
+rng = np.random.default_rng(0)
+A = rng.normal([2.0, 2.0], 0.4, size=(35, 2))
+B = rng.normal([7.0, 6.0], 0.4, size=(35, 2))
+noise = rng.uniform([1, 1], [9, 7], size=(12, 2))
+X = np.vstack([A, B, noise])
 
-labels = DBSCAN(eps=0.6, min_samples=5).fit_predict(X2)
+db = DBSCAN(eps=0.85, min_samples=4).fit(X)
+labels = db.labels_                      # -1 means noise
 
-# label -1 is noise; draw it red, the rest by cluster color
-palette = np.array(["#4ea1ff", "#7ee787", "#c89bff"])
-colors = np.where(labels == -1, "#ff7b72", palette[labels % len(palette)])
-plt.scatter(X2[:, 0], X2[:, 1], c=colors, s=20)
-plt.title("DBSCAN on the Iris dataset (PCA to 2-D, eps 0.6, minPts 5)")
-plt.xlabel("PCA component 1")
-plt.ylabel("PCA component 2")
+for lab in set(labels):
+    pts = X[labels == lab]
+    color = "#9aa7b4" if lab == -1 else None
+    plt.scatter(pts[:, 0], pts[:, 1], c=color,
+                label="noise" if lab == -1 else "cluster " + str(lab))
+plt.xlabel("feature 1"); plt.ylabel("feature 2")
+plt.title("DBSCAN: clusters + noise"); plt.legend()
+
+# k-distance plot to choose eps: sort distance to 4th-nearest neighbour
+nn = NearestNeighbors(n_neighbors=4).fit(X)
+d = np.sort(nn.kneighbors(X)[0][:, -1])
+plt.figure(); plt.plot(d, color="#7ee787")
+plt.xlabel("points sorted"); plt.ylabel("4th-NN distance")
+plt.title("k-distance: eps at the elbow")
 plt.show()`
-  },
-  "cls-spectral-clustering": {
-    "question": "On the real Wine cultivars, does spectral clustering recover the same groups as k-means?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "Spectral clustering on Wine (ARI 0.90)",
-        "xlabel": "PCA component 1",
-        "ylabel": "PCA component 2",
-        "groups": [
-          {
-            "name": "cluster 0",
-            "color": "#4ea1ff",
-            "points": [[1.502,-0.769],[-0.61,-1.908],[0.183,-2.427],[-1.572,-0.885],[1.658,-0.957],[-0.725,-1.064],[-1.457,-1.383],[1.263,-0.771],[-0.495,-2.381],[0.835,-1.474],[-0.807,-2.234],[-0.558,-2.373],[-1.115,-1.802],[-0.556,-2.658],[2.252,-1.433],[-0.55,-2.293],[-0.161,-1.164],[1.578,-1.462],[-0.279,-1.931],[-1.303,-0.763],[0.482,-3.872],[0.038,-1.267],[-1.327,0.17]]
-          },
-          {
-            "name": "cluster 1",
-            "color": "#7ee787",
-            "points": [[3.757,2.756],[1.009,0.87],[3.05,2.122],[2.449,1.175],[2.511,0.918],[2.113,0.676],[4.313,2.096],[2.305,1.663],[1.645,-0.516],[1.762,-0.317],[0.99,0.941],[1.235,-0.09],[2.677,1.472],[1.41,0.698],[2.588,0.78],[0.668,0.17],[3.071,1.156],[2.727,1.191],[2.821,0.646],[2.859,0.745],[2.225,1.875],[2.174,1.212],[3.139,1.732],[2.562,0.26]]
-          },
-          {
-            "name": "cluster 2",
-            "color": "#c89bff",
-            "points": [[-2.539,-0.087],[-2.937,0.264],[-3.916,0.155],[-2.287,0.373],[-2.55,2.045],[-2.737,0.41],[-1.61,2.407],[-2.24,1.175],[-2.848,0.556],[-2.597,0.698],[-2.949,1.555],[-3.53,0.883],[-2.387,2.297]]
-          }
-        ]
-      },
-      {
-        "type": "scatter",
-        "title": "k-means on Wine (ARI 0.90)",
-        "xlabel": "PCA component 1",
-        "ylabel": "PCA component 2",
-        "groups": [
-          {
-            "name": "cluster 0",
-            "color": "#4ea1ff",
-            "points": [[-0.61,-1.908],[0.183,-2.427],[-1.572,-0.885],[-0.725,-1.064],[-1.457,-1.383],[1.263,-0.771],[-0.495,-2.381],[0.835,-1.474],[-0.807,-2.234],[-0.558,-2.373],[-1.115,-1.802],[-0.556,-2.658],[-0.55,-2.293],[-0.161,-1.164],[1.578,-1.462],[-0.279,-1.931],[-1.303,-0.763],[0.482,-3.872],[0.038,-1.267]]
-          },
-          {
-            "name": "cluster 1",
-            "color": "#7ee787",
-            "points": [[3.757,2.756],[1.009,0.87],[3.05,2.122],[2.449,1.175],[2.511,0.918],[2.113,0.676],[4.313,2.096],[2.305,1.663],[1.645,-0.516],[1.762,-0.317],[0.99,0.941],[1.235,-0.09],[2.677,1.472],[1.41,0.698],[1.502,-0.769],[2.588,0.78],[0.668,0.17],[3.071,1.156],[2.727,1.191],[2.821,0.646],[2.859,0.745],[2.225,1.875],[2.174,1.212],[3.139,1.732],[1.658,-0.957],[2.562,0.26],[2.252,-1.433]]
-          },
-          {
-            "name": "cluster 2",
-            "color": "#c89bff",
-            "points": [[-2.539,-0.087],[-1.327,0.17],[-2.937,0.264],[-3.916,0.155],[-2.287,0.373],[-2.55,2.045],[-2.737,0.41],[-1.61,2.407],[-2.24,1.175],[-2.848,0.556],[-2.597,0.698],[-2.949,1.555],[-3.53,0.883],[-2.387,2.297]]
-          }
-        ]
-      }
-    ],
-    "caption": "On the 178 real wines (PCA to 2-D) the 3 cultivars form convex blobs, so spectral clustering (ARI 0.90) and k-means (ARI 0.90) recover almost the same grouping; spectral's graph cut only pulls ahead when clusters are non-convex.",
-    "code": `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.cluster import SpectralClustering, KMeans
-from sklearn.metrics import adjusted_rand_score
+};
 
-wine = load_wine()
-Xs = StandardScaler().fit_transform(wine.data)
-X2 = PCA(n_components=2, random_state=0).fit_transform(Xs)
+window.CODEVIZ["cls-spectral-clustering"] = {
+  question: "Two interleaved moons: why does cutting the similarity graph beat cutting by distance?",
+  caption: "",
+  code: `// Spectral idea on a tiny 4-point graph: edges 1-2 and 3-4 are strong (w=1),
+// the seam 2-3 is weak (w=0.1). The cheapest cut severs only the weak seam.
+const W = [
+  [0,   1,   0,   0  ],
+  [1,   0,   0.1, 0  ],
+  [0,   0.1, 0,   1  ],
+  [0,   0,   1,   0  ]
+];
+function cutCost(f){            // f[i] = +1 or -1 (which side point i is on)
+  let cost = 0;
+  for (let i=0;i<4;i++)
+    for (let j=i+1;j<4;j++)
+      if (f[i] !== f[j]) cost += W[i][j];   // edge crosses the cut
+  return cost;
+}
+console.log("natural [+,+,-,-]:", cutCost([ 1, 1,-1,-1]));  // 0.1  -> cut weak seam
+console.log("bad     [+,-,+,-]:", cutCost([ 1,-1, 1,-1]));  // 2.0  -> cut both strong pairs
+// The Fiedler eigenvector of L = D - W picks the [+,+,-,-] sign pattern: the cheap cut.`,
+  charts: [
+    {
+      type: "scatter",
+      title: "Ideal: spectral cut separates the two moons",
+      xlabel: "x",
+      ylabel: "y",
+      groups: [
+        { name: "moon A (cluster 0)", color: "#4ea1ff", points: [[-2.5,0.1],[-2.3,0.8],[-1.9,1.5],[-1.2,2.0],[-0.4,2.3],[0.4,2.3],[1.2,2.0],[1.9,1.5],[2.3,0.8],[2.5,0.1]] },
+        { name: "moon B (cluster 1)", color: "#7ee787", points: [[0,1.1],[0.2,0.4],[0.6,-0.3],[1.3,-0.8],[2.1,-1.0],[2.9,-1.0],[3.7,-0.8],[4.4,-0.3],[4.8,0.4],[5.0,1.1]] }
+      ],
+      interpret: "Each dot is a point; colour is the cluster it was assigned. The two crescents interleave, so points across the gap are nearer than points along the same arc. Spectral clustering links each point to its near neighbours, then cuts the graph along the thin seam where few links cross — so it follows the curve of each moon and colours them correctly. This is the healthy result you want to see."
+    },
+    {
+      type: "scatter",
+      title: "What k-means does instead: a straight slice through both moons (illustrative)",
+      xlabel: "x",
+      ylabel: "y",
+      groups: [
+        { name: "k-means group 0", color: "#ff7b72", points: [[-2.5,0.1],[-2.3,0.8],[-1.9,1.5],[-1.2,2.0],[-0.4,2.3],[0,1.1],[0.2,0.4],[0.6,-0.3]] },
+        { name: "k-means group 1", color: "#ffb454", points: [[0.4,2.3],[1.2,2.0],[1.9,1.5],[2.3,0.8],[2.5,0.1],[1.3,-0.8],[2.1,-1.0],[2.9,-1.0],[3.7,-0.8],[4.4,-0.3],[4.8,0.4],[5.0,1.1]] }
+      ],
+      lines: [ { color: "#9aa7b4", dash: true, points: [[0.3,-1.2],[0.3,2.5]] } ],
+      interpret: "Same points, but coloured by 2-means on raw (x,y). k-means can only carve a convex region around each centroid, so the boundary is the straight dashed line: it slices both moons in half rather than following them. Recognise this failure when a curved or interleaved structure gets chopped by a flat split — it means a distance-based method is wrong for the geometry."
+    },
+    {
+      type: "bars",
+      title: "Eigengap heuristic: choosing how many clusters k (illustrative)",
+      labels: ["lambda1","lambda2","lambda3","lambda4","lambda5","lambda6"],
+      values: [0.00, 0.02, 0.55, 0.60, 0.66, 0.71],
+      valueLabels: ["0.00","0.02","0.55","0.60","0.66","0.71"],
+      colors: ["#7ee787","#7ee787","#9aa7b4","#9aa7b4","#9aa7b4","#9aa7b4"],
+      interpret: "Each bar is one eigenvalue of the graph Laplacian, sorted small to large; height is the eigenvalue. The first two sit near zero, then there is a big jump (the eigengap) before the rest. You read off k as the number of near-zero eigenvalues before that jump: here the gap after the 2nd bar says k=2 clusters. A clear gap means the cluster count is well defined; no visible gap means the data has no clean separation."
+    }
+  ]
+};
 
-sc = SpectralClustering(n_clusters=3, affinity="nearest_neighbors",
-                        n_neighbors=10, random_state=0).fit_predict(X2)
-km = KMeans(n_clusters=3, n_init=10, random_state=0).fit_predict(X2)
-print(adjusted_rand_score(wine.target, sc),
-      adjusted_rand_score(wine.target, km))
+window.CODEVIZ["cls-lda-qda"] = {
+  question: "Share one covariance or give each class its own — does the boundary come out a line or a curve?",
+  caption: "",
+  code: `// One feature x. Class 0: mean -1.5. Class 1: mean 2.0. Where is the boundary?
+const c0 = { mu: -1.5, v: 0.7 };   // tight class (small variance)
+const c1 = { mu:  2.0, v: 2.2 };   // wide class (large variance)
+// log-score for a class at x (drop the shared constant); boundary is where scores tie.
+function score(x, c){
+  return -((x - c.mu)*(x - c.mu)) / (2*c.v) - 0.5*Math.log(c.v);
+}
+function predict(x, qda){
+  if (qda) return score(x,c1) - score(x,c0) >= 0 ? 1 : 0;   // each class its own v
+  const pooled = (c0.v + c1.v)/2;                            // LDA: shared v
+  const s0 = -((x-c0.mu)**2)/(2*pooled), s1 = -((x-c1.mu)**2)/(2*pooled);
+  return s1 - s0 >= 0 ? 1 : 0;
+}
+// LDA: one straight threshold near the midpoint. QDA: the wide class wraps around
+// the tight one, so x very negative AND x very positive both go to class 1.
+console.log("LDA  @ x=0:", predict(0,false), " QDA @ x=-4:", predict(-4,true));`,
+  charts: [
+    {
+      type: "scatter",
+      title: "QDA: per-class covariance gives a curved boundary that wraps the tight class",
+      xlabel: "x",
+      ylabel: "y",
+      groups: [
+        { name: "class 0 (tight)", color: "#4ea1ff", points: [[-1.5,0],[-2.1,0.5],[-0.9,0.5],[-1.5,0.7],[-1.5,-0.7],[-2.0,-0.4],[-1.0,-0.4]] },
+        { name: "class 1 (wide)", color: "#7ee787", points: [[2.0,0],[3.5,0],[0.5,0],[2.0,1.5],[2.0,-1.5],[4.5,1.0],[-0.5,1.2],[3.0,-1.3],[1.0,1.4]] }
+      ],
+      lines: [ { color: "#ffb454", dash: false, points: [[0.05,-3.5],[-0.25,-2.0],[-0.45,-0.8],[-0.5,0],[-0.45,0.8],[-0.25,2.0],[0.05,3.5]] } ],
+      interpret: "Dots are points coloured by true class; the orange line is the decision boundary. Because each class keeps its own spread (tight blue vs wide green), the boundary is a curve that bows around the tight class. Read it as: anything inside the bend is predicted blue, everything outside is green. Use QDA when the class shapes genuinely differ and you have enough data to estimate a covariance per class."
+    },
+    {
+      type: "scatter",
+      title: "LDA: shared (pooled) covariance forces a straight-line boundary",
+      xlabel: "x",
+      ylabel: "y",
+      groups: [
+        { name: "class 0", color: "#4ea1ff", points: [[-1.5,0],[-2.1,0.5],[-0.9,0.5],[-1.5,0.7],[-1.5,-0.7],[-2.0,-0.4],[-1.0,-0.4]] },
+        { name: "class 1", color: "#7ee787", points: [[2.0,0],[3.5,0],[0.5,0],[2.0,1.5],[2.0,-1.5],[4.5,1.0],[3.0,-1.3],[1.0,1.4]] }
+      ],
+      lines: [ { color: "#ffb454", dash: false, points: [[0.25,-3.5],[0.25,3.5]] } ],
+      interpret: "Same two classes, but now both are forced to share one pooled covariance, so the orange boundary collapses to a straight vertical line at the midpoint between the means. Everything left is blue, everything right is green. This is the simpler, lower-variance model: prefer LDA when data is limited or the class spreads look similar, since a straight boundary needs far fewer parameters to estimate."
+    },
+    {
+      type: "scatter",
+      title: "QDA overfitting on too few points: a wobbly boundary chasing noise (illustrative)",
+      xlabel: "x",
+      ylabel: "y",
+      groups: [
+        { name: "class 0", color: "#4ea1ff", points: [[-1.5,0.2],[-1.8,1.0],[-1.2,-0.9]] },
+        { name: "class 1", color: "#7ee787", points: [[2.0,0.1],[2.4,1.3],[1.6,-1.1]] }
+      ],
+      lines: [ { color: "#ff7b72", dash: false, points: [[-0.2,-3.5],[0.6,-2.0],[-0.4,-0.7],[0.7,0.3],[-0.3,1.4],[0.6,2.4],[-0.1,3.5]] } ],
+      interpret: "Here QDA is fit on only three points per class, so each class covariance is estimated from almost nothing and the red boundary wiggles to wrap individual points. Recognise overfitting when the boundary is far more contorted than the data justifies — it will not generalise. The fix is to fall back to LDA (one pooled covariance) or regularise the covariance toward a simpler shape until you have enough data."
+    }
+  ]
+};
 
-colors = np.array(["#4ea1ff", "#7ee787", "#c89bff"])
-fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
-ax1.scatter(X2[:, 0], X2[:, 1], c=colors[sc], s=18)
-ax1.set_title("Spectral clustering on Wine")
-ax2.scatter(X2[:, 0], X2[:, 1], c=colors[km], s=18)
-ax2.set_title("k-means on Wine")
-for ax in (ax1, ax2):
-    ax.set_xlabel("PCA component 1")
-    ax.set_ylabel("PCA component 2")
-plt.show()`
-  },
-  "cls-lda-qda": {
-    "question": "Splitting two Wine cultivars by flavanoids and color intensity: straight LDA line or curved QDA boundary?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "LDA line vs QDA curve on Wine (cultivars 0 and 1)",
-        "xlabel": "flavanoids",
-        "ylabel": "color intensity",
-        "groups": [
-          {
-            "name": "cultivar 0",
-            "color": "#4ea1ff",
-            "points": [[2.76,4.38],[3.24,5.68],[2.69,4.32],[3.39,6.75],[2.52,5.25],[2.51,5.05],[3.32,5.75],[2.43,5.0],[2.76,5.6],[3.69,5.4],[3.64,7.5],[2.91,7.3],[3.14,6.2],[3.93,8.7],[3.03,5.1],[3.17,5.65],[2.61,3.52],[2.68,3.58],[2.94,4.8],[2.19,3.95],[2.33,4.7],[3.19,6.9],[2.53,4.2],[2.98,5.1],[3.04,5.1],[2.68,4.28],[2.63,4.36],[3.39,6.1],[2.9,5.85]]
-          },
-          {
-            "name": "cultivar 1",
-            "color": "#7ee787",
-            "points": [[1.09,3.27],[1.41,5.75],[3.1,4.45],[2.65,4.6],[1.3,3.17],[1.28,2.85],[1.02,3.05],[2.86,3.38],[2.14,3.21],[1.57,3.8],[1.85,3.4],[2.53,3.9],[1.58,2.2],[1.94,2.62],[1.69,2.45],[1.69,2.8],[1.59,1.74],[1.5,2.4],[1.25,3.6],[2.25,2.15],[0.99,2.5],[3.75,4.5],[2.99,2.3],[1.84,2.7],[2.04,2.7],[2.58,2.9],[2.01,3.08],[2.79,3.25],[3.03,2.8],[3.15,3.94],[1.75,2.6]]
-          }
-        ],
-        "lines": [
-          {
-            "name": "LDA boundary",
-            "color": "#ffb454",
-            "points": [[5.58,2.726],[5.396,2.812],[5.23,2.928],[5.046,3.014],[4.871,3.115],[4.695,3.216],[4.511,3.303],[4.345,3.418],[4.161,3.504],[3.986,3.605],[3.811,3.706],[3.627,3.793],[3.461,3.908],[3.276,3.994],[3.101,4.095],[2.926,4.196],[2.742,4.283],[2.567,4.384],[2.392,4.485],[2.217,4.585],[2.042,4.686],[1.858,4.773],[1.682,4.874],[1.507,4.975],[1.332,5.076],[1.157,5.176],[0.973,5.263],[0.798,5.364],[0.623,5.465],[0.448,5.566],[0.273,5.667],[0.088,5.753]]
-          },
-          {
-            "name": "QDA boundary",
-            "color": "#c89bff",
-            "dash": true,
-            "points": [[5.58,9.155],[5.442,8.852],[5.304,8.55],[5.165,8.247],[5.027,7.944],[4.88,7.656],[4.742,7.353],[4.603,7.05],[4.456,6.762],[4.318,6.459],[4.17,6.171],[4.023,5.883],[3.875,5.595],[3.728,5.306],[3.571,5.032],[3.415,4.758],[3.258,4.485],[3.083,4.24],[2.899,4.009],[2.65,3.879],[2.438,4.067],[2.327,4.413],[2.263,4.831],[2.217,5.277],[2.18,5.739],[2.162,6.229],[2.143,6.719],[2.143,7.238],[2.125,7.728],[2.125,8.247],[2.106,8.737],[2.106,9.256]]
-          }
-        ]
-      }
-    ],
-    "caption": "On 2 real chemical features of Wine cultivars 0 and 1 (flavanoids vs color intensity), LDA draws a straight boundary (train acc 0.87) while QDA bends around the spread of each class (train acc 0.92).",
-    "code": `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
-from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
+window.CODEVIZ["cls-gaussian-process"] = {
+  question: "How do you read a Gaussian-Process plot — what is the band, and what is it telling you?",
+  charts: [
+    {
+      type: "line",
+      title: "Healthy GP: band pinches at data, fans out between and beyond",
+      xlabel: "x (input)",
+      ylabel: "y (predicted output)",
+      series: [
+        { name: "posterior mean", color: "#4ea1ff", points: [[-5,-0.201],[-4,-0.838],[-3,-0.924],[-2,0.708],[-1.5,1.41],[-1,1.612],[0,1.096],[0.5,0.665],[1,0.062],[1.5,-0.654],[2,-1.159],[2.5,-1.091],[3,-0.45],[3.5,0.318],[4,0.734],[5,0.434]] },
+        { name: "mean + 2 sigma", color: "#9aa7b4", points: [[-5,1.78],[-4,0.746],[-3,-0.489],[-2,1.451],[-1.5,1.845],[-1,2.499],[0,2.004],[0.5,1.101],[1,0.955],[1.5,0.493],[2,-0.329],[2.5,-0.661],[3,0.034],[3.5,0.749],[4,1.647],[5,2.299]] },
+        { name: "mean - 2 sigma", color: "#9aa7b4", points: [[-5,-2.182],[-4,-2.422],[-3,-1.36],[-2,-0.035],[-1.5,0.975],[-1,0.725],[0,0.188],[0.5,0.229],[1,-0.831],[1.5,-1.801],[2,-1.99],[2.5,-1.522],[3,-0.934],[3.5,-0.112],[4,-0.18],[5,-1.431]] }
+      ],
+      interpret: "<b>Horizontal axis</b> is the input x; <b>vertical axis</b> is the predicted y. The <b>blue line</b> is the posterior mean (best guess); the two <b>grey lines</b> are mean plus and minus two standard deviations — the gap between them is the 95% uncertainty band. These are real numbers from the lesson's five data points (RBF kernel, length scale 1). Notice the grey lines <b>squeeze together</b> right at the training inputs (x = -3, -1.5, 0.5, 2.5, 3.5, where sigma drops to about 0.22) and <b>spread far apart</b> between points and out past x = +/- 4 (sigma near 1). <b>Conclusion:</b> the GP is confident where it has seen data and honestly admits doubt where it has not."
+    },
+    {
+      type: "line",
+      title: "Length scale too small: band snaps to zero at data, balloons everywhere else",
+      xlabel: "x (input)",
+      ylabel: "y (predicted output)",
+      series: [
+        { name: "posterior mean", color: "#4ea1ff", points: [[-5,0],[-4,0],[-3,-1.0],[-2.6,0],[-2,0],[-1.5,1.5],[-1.1,0],[-0.3,0],[0.5,0.7],[1.2,0],[2,0],[2.5,-1.2],[3,0],[3.5,0.4],[4,0],[5,0]] },
+        { name: "mean + 2 sigma", color: "#ffb454", points: [[-5,2],[-4,2],[-3,-1.0],[-2.6,2],[-2,2],[-1.5,1.5],[-1.1,2],[-0.3,2],[0.5,0.7],[1.2,2],[2,2],[2.5,-1.2],[3,2],[3.5,0.4],[4,2],[5,2]] },
+        { name: "mean - 2 sigma", color: "#ffb454", points: [[-5,-2],[-4,-2],[-3,-1.0],[-2.6,-2],[-2,-2],[-1.5,1.5],[-1.1,-2],[-0.3,-2],[0.5,0.7],[1.2,-2],[2,-2],[2.5,-1.2],[3,-2],[3.5,0.4],[4,-2],[5,-2]] }
+      ],
+      interpret: "Same axes (illustrative). The length scale is set far too short, so each data point only influences a tiny neighbourhood. The mean line <b>spikes to each point then drops straight back to the flat prior</b>, and the orange band collapses to the point at every observation but <b>jumps to full width the instant you step away</b>. <b>Recognise it</b> by a jagged mean that ignores the obvious trend between points, and an almost-everywhere-maximal band. <b>Fix:</b> increase the length scale (or learn it by maximising the marginal likelihood) so neighbouring points share information."
+    },
+    {
+      type: "line",
+      title: "Length scale too large / noise too low: over-smoothed, over-confident",
+      xlabel: "x (input)",
+      ylabel: "y (predicted output)",
+      series: [
+        { name: "posterior mean", color: "#4ea1ff", points: [[-5,0.45],[-4,0.42],[-3,0.4],[-2,0.36],[-1.5,0.34],[-1,0.32],[0,0.3],[0.5,0.29],[1,0.27],[1.5,0.26],[2,0.24],[2.5,0.22],[3,0.21],[3.5,0.2],[4,0.18],[5,0.15]] },
+        { name: "mean + 2 sigma", color: "#ff7b72", points: [[-5,0.75],[-4,0.7],[-3,0.66],[-2,0.6],[-1.5,0.57],[-1,0.54],[0,0.5],[0.5,0.48],[1,0.45],[1.5,0.43],[2,0.4],[2.5,0.37],[3,0.35],[3.5,0.33],[4,0.3],[5,0.25]] },
+        { name: "mean - 2 sigma", color: "#ff7b72", points: [[-5,0.15],[-4,0.14],[-3,0.14],[-2,0.12],[-1.5,0.11],[-1,0.1],[0,0.1],[0.5,0.1],[1,0.09],[1.5,0.09],[2,0.08],[2.5,0.07],[3,0.07],[3.5,0.07],[4,0.06],[5,0.05]] }
+      ],
+      interpret: "Same axes (illustrative). Now the length scale is too long, so the GP treats far-apart points as correlated and <b>flattens the curve into a nearly straight line</b> that misses the real wiggle in the data. The red band stays <b>thin everywhere</b> — even out past the data — because over-smoothing plus too-small assumed noise makes the model falsely sure. <b>Recognise it</b> by a mean that under-fits visibly and bars that do not widen where you have no observations. <b>Fix:</b> shorten the length scale and let the noise term be learned, so the band can grow honestly away from data."
+    }
+  ],
+  caption: "Read a GP by its band: it should pinch shut at every data point and fan out where data is absent. A band that is jagged-everywhere means too short a length scale; a band that stays thin everywhere means over-smoothing and over-confidence.",
+  code: `// GP posterior mean and 2-sigma band for the main chart (RBF kernel, 5 points).
+const X = [-3, -1.5, 0.5, 2.5, 3.5], Y = [-1.0, 1.5, 0.7, -1.2, 0.4];
+const ell = 1.0, noise = 0.05;
+const k = (a,b) => Math.exp(-(a-b)*(a-b)/(2*ell*ell));
+const n = X.length;
+// build K + noise*I, then invert by Gauss-Jordan
+let K = X.map((xi,i) => X.map((xj,j) => k(xi,xj) + (i===j?noise:0)));
+let Inv = X.map((_,a) => X.map((__,b) => a===b?1:0));
+for (let c=0;c<n;c++){
+  const piv = K[c][c];
+  for (let d=0;d<n;d++){ K[c][d]/=piv; Inv[c][d]/=piv; }
+  for (let r=0;r<n;r++){ if(r===c) continue; const f=K[r][c];
+    for (let e=0;e<n;e++){ K[r][e]-=f*K[c][e]; Inv[r][e]-=f*Inv[c][e]; } }
+}
+function predict(xt){
+  const ks = X.map(xi => k(xt,xi));
+  let mean=0; for(let a=0;a<n;a++){ let s=0; for(let b=0;b<n;b++) s+=Inv[a][b]*Y[b]; mean+=ks[a]*s; }
+  let quad=0; for(let c=0;c<n;c++){ let t=0; for(let d=0;d<n;d++) t+=Inv[c][d]*ks[d]; quad+=ks[c]*t; }
+  return { mean, sigma: Math.sqrt(Math.max(1e-6, k(xt,xt)-quad)) };  // sigma ~0.22 at data, ~1 far away
+}
+console.log(predict(0.5), predict(5));`
+};
 
-wine = load_wine()
-mask = wine.target < 2                 # cultivars 0 and 1
-X = wine.data[mask][:, [6, 9]]         # flavanoids, color_intensity
-y = wine.target[mask]
+window.CODEVIZ["cls-bayesian-regression"] = {
+  question: "How do you read a Bayesian-regression plot — what do the fanning lines and the band mean?",
+  charts: [
+    {
+      type: "scatter",
+      title: "Healthy posterior: lines tight over the data, fanning out beyond it",
+      xlabel: "x (input)",
+      ylabel: "y (target)",
+      groups: [
+        { name: "data", color: "#ffb454", points: [[-1,-0.6],[-0.5,0.1],[0.2,0.4],[0.9,1.0],[1.4,1.4],[2.0,1.9]] }
+      ],
+      lines: [
+        { color: "#4ea1ff", dash: [], points: [[-2.5,-1.65],[3.5,3.04]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,-0.942],[0,0.794],[2,2.416],[3.5,3.749]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,-2.357],[0,-0.186],[2,1.319],[3.5,2.33]] }
+      ],
+      interpret: "<b>Horizontal axis</b> is the input x; <b>vertical axis</b> is the target y. Orange dots are the data. The <b>blue line</b> is the posterior-mean fit (intercept 0.30, slope 0.78, computed from these six points with prior precision alpha = 2). The two <b>grey dashed lines</b> are the 95% predictive band (mean plus/minus two standard deviations). The band is <b>narrowest in the middle</b> where the data sits and <b>widens toward both ends</b> — least-squares would give just one line with no band at all. <b>Conclusion:</b> the model reports a calibrated error bar that grows as you extrapolate away from the data."
+    },
+    {
+      type: "scatter",
+      title: "Prior too strong (large alpha): mean dragged toward flat, lines stay timid",
+      xlabel: "x (input)",
+      ylabel: "y (target)",
+      groups: [
+        { name: "data", color: "#ffb454", points: [[-1,-0.6],[-0.5,0.1],[0.2,0.4],[0.9,1.0],[1.4,1.4],[2.0,1.9]] }
+      ],
+      lines: [
+        { color: "#ff7b72", dash: [], points: [[-2.5,-0.35],[3.5,1.15]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,-0.05],[0,0.45],[3.5,1.45]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,-0.65],[0,0.05],[3.5,0.85]] }
+      ],
+      interpret: "Same axes (illustrative). A very large prior precision alpha forces the weights toward zero, so the red mean line is <b>pulled toward a flat, near-zero-slope line</b> that under-fits the clear upward trend in the dots. The band is also pinched tight because the prior, not the data, is doing the talking. <b>Recognise it</b> by a fit that visibly misses the data while still claiming small error bars. <b>Fix:</b> lower alpha, or learn it from the data via the marginal likelihood so the prior stops over-regularising."
+    },
+    {
+      type: "scatter",
+      title: "Truth is curved: linear features under-fit, band stays misleadingly narrow",
+      xlabel: "x (input)",
+      ylabel: "y (target)",
+      groups: [
+        { name: "data", color: "#c89bff", points: [[-2,3.9],[-1,1.1],[-0.5,0.4],[0,0.1],[0.5,0.3],[1,1.2],[2,3.8]] }
+      ],
+      lines: [
+        { color: "#ff7b72", dash: [], points: [[-2.5,1.55],[2.5,1.45]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,2.25],[0,1.5],[2.5,2.15]] },
+        { color: "#9aa7b4", dash: [5,4], points: [[-2.5,0.85],[0,0.5],[2.5,0.75]] }
+      ],
+      interpret: "Same axes (illustrative). The purple dots form a clear <b>U-shape</b>, but the model uses only linear features [1, x], so the red mean line is nearly flat and <b>cannot bend</b>. The grey band stays <b>narrow and confident</b> even though the fit is systematically wrong — the residuals are above the line at the ends and below it in the middle. <b>Recognise it</b> by a tight band sitting on top of an obviously curved pattern. <b>Fix:</b> add basis functions (polynomial or spline features); Bayesian regression is only linear in whatever features you feed it."
+    }
+  ],
+  caption: "Read the band, not just the line: it should be tight where data is dense and fan out where data is sparse. A too-narrow band over a flat fit means the prior is too strong; a tight band over a curved pattern means your features are too simple.",
+  code: `// Bayesian linear regression posterior for the main chart, features phi(x)=[1,x].
+const X = [-1,-0.5,0.2,0.9,1.4,2.0], Y = [-0.6,0.1,0.4,1.0,1.4,1.9];
+const alpha = 2.0, noise2 = 0.05, beta = 1/noise2;
+// A = alpha*I + beta * Phi^T Phi ;  b = beta * Phi^T y
+let A = [[alpha,0],[0,alpha]], bv = [0,0];
+for (let i=0;i<X.length;i++){
+  const p0=1, p1=X[i];
+  A[0][0]+=beta*p0*p0; A[0][1]+=beta*p0*p1; A[1][0]+=beta*p1*p0; A[1][1]+=beta*p1*p1;
+  bv[0]+=beta*p0*Y[i]; bv[1]+=beta*p1*Y[i];
+}
+const det = A[0][0]*A[1][1]-A[0][1]*A[1][0];               // invert 2x2 for S_N
+const S = [[A[1][1]/det,-A[0][1]/det],[-A[1][0]/det,A[0][0]/det]];
+const m = [S[0][0]*bv[0]+S[0][1]*bv[1], S[1][0]*bv[0]+S[1][1]*bv[1]]; // [0.30, 0.78]
+// predictive std at x: sqrt(phi^T S phi + noise2) -> narrow at center, wide at edges
+const predStd = x => Math.sqrt([1,x].reduce((s,pi,i)=>s+pi*[1,x].reduce((t,pj,j)=>t+S[i][j]*pj,0),0)+noise2);
+console.log("intercept,slope", m, "std@0", predStd(0).toFixed(3), "std@3.5", predStd(3.5).toFixed(3));`
+};
 
-lda = LinearDiscriminantAnalysis().fit(X, y)
-qda = QuadraticDiscriminantAnalysis().fit(X, y)
-
-# grid for the two decision boundaries
-gx = np.linspace(X[:, 0].min() - 0.5, X[:, 0].max() + 0.5, 300)
-gy = np.linspace(X[:, 1].min() - 0.5, X[:, 1].max() + 0.5, 300)
-XX, YY = np.meshgrid(gx, gy)
-grid = np.c_[XX.ravel(), YY.ravel()]
-
-colors = np.array(["#4ea1ff", "#7ee787"])
-plt.scatter(X[:, 0], X[:, 1], c=colors[y], s=18)
-plt.contour(XX, YY, lda.predict(grid).reshape(XX.shape),
-            levels=[0.5], colors="#ffb454")
-plt.contour(XX, YY, qda.predict(grid).reshape(XX.shape),
-            levels=[0.5], colors="#c89bff", linestyles="dashed")
-plt.title("LDA line vs QDA curve on Wine (cultivars 0 and 1)")
-plt.xlabel("flavanoids")
-plt.ylabel("color intensity")
-plt.show()`
-  },
-  "cls-gaussian-process": {
-    "question": "Fitting diabetes progression from BMI: how confident is the model where data is sparse?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "GP regression on Diabetes (BMI vs progression)",
-        "xlabel": "BMI (mean-centered, scaled)",
-        "ylabel": "disease progression",
-        "groups": [
-          {
-            "name": "patients",
-            "color": "#ffb454",
-            "points": [[-0.0838,101.0],[-0.059,86.0],[-0.0579,252.0],[-0.0526,181.0],[-0.0515,75.0],[-0.0461,74.0],[-0.045,93.0],[-0.0418,103.0],[-0.0375,129.0],[-0.0288,179.0],[-0.0245,110.0],[-0.0235,64.0],[-0.0224,49.0],[-0.0159,151.0],[-0.0116,200.0],[-0.0105,168.0],[-0.0094,257.0],[-0.0062,219.0],[-0.003,217.0],[0.0013,49.0],[0.0046,191.0],[0.0089,127.0],[0.011,276.0],[0.0175,128.0],[0.0207,281.0],[0.0229,232.0],[0.0261,196.0],[0.0283,170.0],[0.0337,198.0],[0.0401,155.0],[0.0455,175.0],[0.0466,174.0],[0.0466,99.0],[0.0542,142.0],[0.0552,68.0],[0.0585,136.0],[0.0606,215.0],[0.0886,264.0],[0.0973,275.0],[0.1048,321.0]]
-          }
-        ],
-        "lines": [
-          {
-            "name": "GP mean",
-            "color": "#4ea1ff",
-            "points": [[-0.1103,128.2073],[-0.1041,128.1374],[-0.098,128.2681],[-0.0919,128.6091],[-0.0857,129.1682],[-0.0796,129.9516],[-0.0734,130.9634],[-0.0673,132.2057],[-0.0612,133.6782],[-0.055,135.3787],[-0.0489,137.3023],[-0.0427,139.4423],[-0.0366,141.7893],[-0.0305,144.3319],[-0.0243,147.0566],[-0.0182,149.9478],[-0.012,152.9882],[-0.0059,156.1585],[0.0002,159.4384],[0.0064,162.8057],[0.0125,166.2376],[0.0187,169.7102],[0.0248,173.1992],[0.0309,176.68],[0.0371,180.1277],[0.0432,183.5179],[0.0493,186.8265],[0.0555,190.0305],[0.0616,193.1074],[0.0678,196.0363],[0.0739,198.7977],[0.08,201.3737],[0.0862,203.7484],[0.0923,205.9078],[0.0985,207.8402],[0.1046,209.5361],[0.1107,210.9882],[0.1169,212.1919],[0.123,213.1448],[0.1292,213.8469],[0.1353,214.3007],[0.1414,214.5107],[0.1476,214.4839],[0.1537,214.229],[0.1599,213.7566],[0.166,213.0792],[0.1721,212.2106],[0.1783,211.1658],[0.1844,209.9609],[0.1906,208.6128]]
-          },
-          {
-            "name": "mean + 2 sigma",
-            "color": "#7ee787",
-            "dash": true,
-            "points": [[-0.1103,270.844],[-0.1041,269.7258],[-0.098,268.8551],[-0.0919,268.2505],[-0.0857,267.9271],[-0.0796,267.8971],[-0.0734,268.1689],[-0.0673,268.747],[-0.0612,269.6321],[-0.055,270.8211],[-0.0489,272.3068],[-0.0427,274.0788],[-0.0366,276.123],[-0.0305,278.4229],[-0.0243,280.959],[-0.0182,283.7102],[-0.012,286.6535],[-0.0059,289.765],[0.0002,293.02],[0.0064,296.3936],[0.0125,299.861],[0.0187,303.3978],[0.0248,306.9801],[0.0309,310.585],[0.0371,314.1906],[0.0432,317.7759],[0.0493,321.3211],[0.0555,324.8077],[0.0616,328.2179],[0.0678,331.5353],[0.0739,334.7442],[0.08,337.8301],[0.0862,340.7791],[0.0923,343.5784],[0.0985,346.2158],[0.1046,348.6803],[0.1107,350.9616],[0.1169,353.0505],[0.123,354.9389],[0.1292,356.6201],[0.1353,358.0886],[0.1414,359.3407],[0.1476,360.3741],[0.1537,361.1884],[0.1599,361.7852],[0.166,362.1676],[0.1721,362.3411],[0.1783,362.3126],[0.1844,362.091],[0.1906,361.6869]]
-          },
-          {
-            "name": "mean - 2 sigma",
-            "color": "#7ee787",
-            "dash": true,
-            "points": [[-0.1103,-14.4294],[-0.1041,-13.4509],[-0.098,-12.3189],[-0.0919,-11.0323],[-0.0857,-9.5907],[-0.0796,-7.9939],[-0.0734,-6.242],[-0.0673,-4.3356],[-0.0612,-2.2757],[-0.055,-0.0637],[-0.0489,2.2979],[-0.0427,4.8058],[-0.0366,7.4555],[-0.0305,10.2409],[-0.0243,13.1541],[-0.0182,16.1854],[-0.012,19.3228],[-0.0059,22.5521],[0.0002,25.8567],[0.0064,29.2178],[0.0125,32.6141],[0.0187,36.0226],[0.0248,39.4184],[0.0309,42.7749],[0.0371,46.0648],[0.0432,49.2599],[0.0493,52.332],[0.0555,55.2533],[0.0616,57.9968],[0.0678,60.5373],[0.0739,62.8511],[0.08,64.9173],[0.0862,66.7177],[0.0923,68.2373],[0.0985,69.4646],[0.1046,70.3918],[0.1107,71.0148],[0.1169,71.3333],[0.123,71.3507],[0.1292,71.0738],[0.1353,70.5128],[0.1414,69.6808],[0.1476,68.5937],[0.1537,67.2695],[0.1599,65.7281],[0.166,63.9908],[0.1721,62.0801],[0.1783,60.019],[0.1844,57.8308],[0.1906,55.5387]]
-          }
-        ]
-      }
-    ],
-    "caption": "A Gaussian process fits disease progression against BMI for 40 real diabetes patients; the mean rises with BMI and the +/-2 sigma band stays wide because the real target is noisy, widening further at the sparse high-BMI tail.",
-    "code": `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_diabetes
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import (
-    ConstantKernel, RBF, WhiteKernel)
-
-dia = load_diabetes()
-x = dia.data[:, 2]            # BMI feature (mean-centered, scaled)
-y = dia.target.astype(float)
-
-rng = np.random.RandomState(0)
-idx = np.sort(rng.choice(len(x), 40, replace=False))
-X = x[idx].reshape(-1, 1)
-yo = y[idx]
-
-kernel = (ConstantKernel(1.0) * RBF(length_scale=0.1)
-          + WhiteKernel(noise_level=1.0))
-gp = GaussianProcessRegressor(kernel=kernel, random_state=0,
-                              normalize_y=True).fit(X, yo)
-
-xs = np.linspace(x.min() - 0.02, x.max() + 0.02, 50).reshape(-1, 1)
-mean, std = gp.predict(xs, return_std=True)
-
-plt.scatter(X.ravel(), yo, c="#ffb454", s=30, zorder=3)
-plt.plot(xs.ravel(), mean, c="#4ea1ff")
-plt.fill_between(xs.ravel(), mean - 2 * std, mean + 2 * std,
-                 color="#7ee787", alpha=0.3)
-plt.title("GP regression on Diabetes (BMI vs progression)")
-plt.xlabel("BMI (mean-centered, scaled)")
-plt.ylabel("disease progression")
-plt.show()`
-  },
-  "cls-bayesian-regression": {
-    "question": "Fitting diabetes progression from BMI, how does the Bayesian posterior slope compare to plain OLS?",
-    "charts": [
-      {
-        "type": "scatter",
-        "title": "Bayesian ridge vs OLS on Diabetes (BMI)",
-        "xlabel": "BMI (mean-centered, scaled)",
-        "ylabel": "disease progression",
-        "groups": [
-          {
-            "name": "patients",
-            "color": "#ffb454",
-            "points": [[0.0445,141.0],[0.0445,129.0],[-0.0655,59.0],[0.0164,225.0],[-0.0094,59.0],[0.0412,52.0],[-0.0041,61.0],[-0.0245,163.0],[0.0121,143.0],[-0.0353,52.0],[-0.0482,111.0],[-0.045,102.0],[-0.0094,81.0],[0.0013,229.0],[-0.0105,179.0],[0.0164,268.0],[0.0617,281.0],[0.1285,259.0],[0.0595,178.0],[0.093,128.0],[-0.0191,214.0],[0.0272,225.0],[-0.0159,151.0],[-0.0547,143.0],[-0.0051,116.0],[-0.0579,158.0],[0.0013,196.0],[0.0455,202.0],[0.0035,73.0],[-0.0385,93.0],[-0.0256,252.0],[0.0003,259.0],[-0.0687,72.0],[0.0542,187.0],[-0.0623,45.0],[-0.0245,66.0],[-0.0364,102.0],[-0.0224,156.0],[-0.0062,219.0],[0.0552,68.0],[0.0337,198.0],[0.0649,109.0],[0.0617,242.0],[-0.0084,131.0],[-0.0472,72.0],[-0.0407,71.0],[-0.0558,109.0],[0.0455,272.0],[-0.0245,58.0],[-0.0579,63.0],[0.0154,201.0],[-0.0332,168.0],[-0.0278,209.0],[-0.0008,113.0],[0.08,257.0],[0.011,111.0],[-0.0332,94.0],[-0.031,66.0],[0.0552,173.0],[-0.0159,132.0]]
-          }
-        ],
-        "lines": [
-          {
-            "name": "OLS fit (slope 949.4)",
-            "color": "#ff7b72",
-            "dash": true,
-            "points": [[-0.1,56.929],[-0.091,66.123],[-0.081,75.317],[-0.071,84.511],[-0.062,93.705],[-0.052,102.899],[-0.042,112.093],[-0.032,121.288],[-0.023,130.482],[-0.013,139.676],[-0.003,148.87],[0.006,158.064],[0.016,167.258],[0.026,176.453],[0.035,185.647],[0.045,194.841],[0.055,204.035],[0.064,213.229],[0.074,222.423],[0.084,231.617],[0.093,240.812],[0.103,250.006],[0.113,259.2],[0.122,268.394],[0.132,277.588],[0.142,286.782],[0.152,295.977],[0.161,305.171],[0.171,314.365],[0.181,323.559]]
-          },
-          {
-            "name": "posterior mean (slope 945.3)",
-            "color": "#4ea1ff",
-            "points": [[-0.1,57.34],[-0.091,66.495],[-0.081,75.649],[-0.071,84.804],[-0.062,93.958],[-0.052,103.112],[-0.042,112.267],[-0.032,121.421],[-0.023,130.575],[-0.013,139.73],[-0.003,148.884],[0.006,158.039],[0.016,167.193],[0.026,176.347],[0.035,185.502],[0.045,194.656],[0.055,203.811],[0.064,212.965],[0.074,222.119],[0.084,231.274],[0.093,240.428],[0.103,249.582],[0.113,258.737],[0.122,267.891],[0.132,277.046],[0.142,286.2],[0.152,295.354],[0.161,304.509],[0.171,313.663],[0.181,322.817]]
-          },
-          {
-            "name": "prior mean (intercept only)",
-            "color": "#9aa7b4",
-            "dash": true,
-            "points": [[-0.1,152.133],[-0.091,152.133],[-0.081,152.133],[-0.071,152.133],[-0.062,152.133],[-0.052,152.133],[-0.042,152.133],[-0.032,152.133],[-0.023,152.133],[-0.013,152.133],[-0.003,152.133],[0.006,152.133],[0.016,152.133],[0.026,152.133],[0.035,152.133],[0.045,152.133],[0.055,152.133],[0.064,152.133],[0.074,152.133],[0.084,152.133],[0.093,152.133],[0.103,152.133],[0.113,152.133],[0.122,152.133],[0.132,152.133],[0.142,152.133],[0.152,152.133],[0.161,152.133],[0.171,152.133],[0.181,152.133]]
-          }
-        ]
-      }
-    ],
-    "caption": "On the 442 real diabetes patients, BayesianRidge fits BMI vs progression with a posterior slope (945.3) barely shrunk from the OLS slope (949.4), because with this much real data the likelihood dominates the flat prior (the dashed grey line is the mean-only prior).",
-    "code": `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_diabetes
-from sklearn.linear_model import BayesianRidge, LinearRegression
-
-dia = load_diabetes()
-x = dia.data[:, 2]            # BMI feature
-y = dia.target.astype(float)
-X = x.reshape(-1, 1)
-
-ols = LinearRegression().fit(X, y)
-br = BayesianRidge().fit(X, y)
-print(ols.coef_[0], br.coef_[0])
-
-xs = np.linspace(x.min() - 0.01, x.max() + 0.01, 30).reshape(-1, 1)
-plt.scatter(x, y, c="#ffb454", s=30)
-plt.plot(xs.ravel(), ols.predict(xs), c="#ff7b72", linestyle="--",
-         label="OLS fit")
-plt.plot(xs.ravel(), br.predict(xs), c="#4ea1ff",
-         label="posterior mean")
-plt.plot(xs.ravel(), np.full_like(xs.ravel(), y.mean()), c="#9aa7b4",
-         linestyle="--", label="prior mean")
-plt.legend()
-plt.title("Bayesian ridge vs OLS on Diabetes (BMI)")
-plt.xlabel("BMI (mean-centered, scaled)")
-plt.ylabel("disease progression")
-plt.show()`
-  },
-  "cls-gradient-boosting": {
-    "question": "On the Breast Cancer data, does held-out error keep shrinking as boosting rounds accumulate?",
-    "charts": [
-      {
-        "type": "line",
-        "title": "Gradient boosting on Breast Cancer: test log-loss per round",
-        "xlabel": "number of trees",
-        "ylabel": "test log-loss",
-        "series": [
-          {
-            "name": "test log-loss",
-            "color": "#4ea1ff",
-            "points": [[1,0.5836],[10,0.2684],[20,0.1777],[30,0.1591],[40,0.1586],[50,0.166],[60,0.1728],[70,0.1784],[80,0.1821],[90,0.1899],[100,0.1953],[110,0.2074],[120,0.2154],[130,0.2149],[140,0.2133],[150,0.2179],[160,0.2219],[170,0.2305],[180,0.2392],[190,0.2488],[200,0.2516]]
-          }
-        ]
-      }
-    ],
-    "caption": "Gradient boosting on the real Breast Cancer dataset (569 tumors, 30 features); each tree fits the residual, so held-out log-loss drops from 0.5836 after 1 tree to 0.2516 after 200.",
-    "code": `import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import log_loss
-
-bc = load_breast_cancer()
-Xtr, Xte, ytr, yte = train_test_split(
-    bc.data, bc.target, test_size=0.25, random_state=0,
-    stratify=bc.target)
-
-gb = GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,
-                                max_depth=3, random_state=0).fit(Xtr, ytr)
-
-# test log-loss after each boosting round via staged_predict_proba
-rounds = np.arange(1, gb.n_estimators_ + 1)
-loss = np.array([log_loss(yte, p)
-                 for p in gb.staged_predict_proba(Xte)])
-
-plt.plot(rounds, loss, c="#4ea1ff")
-plt.title("Gradient boosting on Breast Cancer: test log-loss per round")
-plt.xlabel("number of trees")
-plt.ylabel("test log-loss")
-plt.show()`
-  }
-});
+window.CODEVIZ["cls-gradient-boosting"] = {
+  question: "Add trees one at a time, each fixing the last one's mistakes — when does the error stop dropping, and when does it start hurting?",
+  caption: "Gradient boosting is a stagewise error curve. Read it by watching TWO lines: training error (always falls) and validation error (the one that decides when to stop).",
+  charts: [
+    {
+      type: "line",
+      title: "Healthy boosting: training error falls fast then flattens",
+      xlabel: "boosting stage (number of trees)",
+      ylabel: "training squared error",
+      series: [
+        { name: "training SSE (nu=0.5)", color: "#7ee787", points: [[0,73.2],[1,25.2],[2,11.0],[3,4.5],[4,2.7],[5,1.8],[6,1.5],[7,1.4],[8,1.4],[9,1.3],[10,1.3],[11,1.2],[12,1.2]] }
+      ],
+      interpret: "Real numbers, computed by running the lesson's own demo (target sin(x)+0.4x, 40 points, learning rate nu=0.5). The x-axis is how many trees we have added; the y-axis is the total squared error left on the training data. <b>Each new tree fits the leftover residual, so the error drops</b> — steeply at first (73 down to 4.5 in three stages), then it flattens near 1.2 because there is almost nothing left to fix. The flat tail is your cue: extra trees here add cost but no gain."
+    },
+    {
+      type: "line",
+      title: "Overfitting: train keeps falling but validation turns back up",
+      xlabel: "boosting stage (number of trees)",
+      ylabel: "squared error",
+      series: [
+        { name: "training error", color: "#7ee787", points: [[0,73],[2,20],[5,6],[10,2.5],[20,1.0],[40,0.4],[70,0.15],[120,0.05]] },
+        { name: "validation error", color: "#ff7b72", points: [[0,75],[2,24],[5,10],[10,7],[20,6.2],[40,7.5],[70,11],[120,16]] }
+      ],
+      interpret: "Illustrative shapes (qualitatively honest). Two lines now: green is training error, red is held-out validation error. Early on both fall together. But after the dip around stage 20 the <b>red line turns back up while green keeps sliding toward zero</b> — the model is memorising training noise that does not generalise. The gap that opens between the lines is overfitting. <b>The right number of trees is the bottom of the red curve (~stage 20), not where green stops</b>; this is exactly what early stopping picks. Too many trees or a learning rate that is too high makes the red turn happen sooner and sharper."
+    },
+    {
+      type: "line",
+      title: "Underfit: learning rate too small / too few trees",
+      xlabel: "boosting stage (number of trees)",
+      ylabel: "training squared error",
+      series: [
+        { name: "training SSE (nu=0.1)", color: "#ffb454", points: [[0,73.2],[1,61.1],[2,51.2],[3,43.0],[4,36.3],[5,30.6],[6,26.0],[8,18.8],[10,13.7],[12,10.1]] },
+        { name: "training SSE (nu=0.5, for contrast)", color: "#9aa7b4", points: [[0,73.2],[1,25.2],[2,11.0],[3,4.5],[4,2.7],[6,1.5],[8,1.4],[10,1.3],[12,1.2]] }
+      ],
+      interpret: "Real numbers from the same simulation, but with a tiny learning rate nu=0.1 (orange) versus nu=0.5 (grey, for contrast). Same axes as the first chart. With a small step, <b>each tree only nudges the model, so after 12 stages the error is still 10.1 — nowhere near the 1.2 the larger rate reached</b>. The orange curve is still visibly sloping down: it has not converged. This is underfitting from stopping too early. The fix is more trees (let it keep going) or a larger learning rate; a gently sloping, still-high curve means you have not trained enough, not that the model is too weak."
+    },
+    {
+      type: "bars",
+      title: "Where the error goes: residual shrinks each stage (nu=0.5)",
+      labels: ["start", "after 1", "after 2", "after 3", "after 4", "after 6", "after 12"],
+      values: [73.2, 25.2, 11.0, 4.5, 2.7, 1.5, 1.2],
+      valueLabels: ["73.2", "25.2", "11.0", "4.5", "2.7", "1.5", "1.2"],
+      colors: ["#9aa7b4", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#7ee787"],
+      interpret: "The same real training-error numbers as the first chart, shown as bars so you can see each stage's bite out of the error. Each bar is the leftover squared error after that many trees. <b>The first few trees do almost all the work</b> (73 to 4.5 in three trees); later bars barely shrink (green, near the floor). Read it as diminishing returns: most of the signal is captured early, and the long flat tail is why early stopping rarely costs you much accuracy but saves a lot of trees."
+    }
+  ],
+  code:
+    "// Stagewise training error for gradient boosting (squared loss).\n" +
+    "// Target: y = sin(x) + 0.4x sampled at 40 points; weak learner = 1-split stump.\n" +
+    "const X = [], Y = [];\n" +
+    "for (let i = 0; i < 40; i++) { const x = -3 + 6 * i / 39; X.push(x); Y.push(Math.sin(x) + 0.4 * x); }\n" +
+    "const nu = 0.5;                         // learning rate (shrinkage)\n" +
+    "let F = X.map(() => 0);                  // current predictions, start at 0\n" +
+    "\n" +
+    "function fitStump(r) {                   // best single split minimizing SSE on residual r\n" +
+    "  let best = null;\n" +
+    "  for (let s = 1; s < X.length; s++) {\n" +
+    "    const thr = (X[s - 1] + X[s]) / 2;\n" +
+    "    let ls = 0, ln = 0, rs = 0, rn = 0;\n" +
+    "    for (let i = 0; i < X.length; i++) { if (X[i] < thr) { ls += r[i]; ln++; } else { rs += r[i]; rn++; } }\n" +
+    "    if (!ln || !rn) continue;\n" +
+    "    const lm = ls / ln, rm = rs / rn;\n" +
+    "    let sse = 0;\n" +
+    "    for (let j = 0; j < X.length; j++) sse += (r[j] - (X[j] < thr ? lm : rm)) ** 2;\n" +
+    "    if (!best || sse < best.sse) best = { thr, lm, rm, sse };\n" +
+    "  }\n" +
+    "  return best;\n" +
+    "}\n" +
+    "\n" +
+    "for (let m = 0; m <= 12; m++) {\n" +
+    "  let sse = 0;\n" +
+    "  for (let i = 0; i < X.length; i++) sse += (Y[i] - F[i]) ** 2;\n" +
+    "  console.log('stage ' + m + '  training SSE = ' + sse.toFixed(1));\n" +
+    "  const r = Y.map((y, i) => y - F[i]);   // residual = negative gradient of squared loss\n" +
+    "  const st = fitStump(r);                // fit a tree to the residual\n" +
+    "  for (let i = 0; i < X.length; i++) F[i] += nu * (X[i] < st.thr ? st.lm : st.rm);  // F += nu*h\n" +
+    "}\n" +
+    "// 73.2, 25.2, 11.0, 4.5, 2.7, 1.8, 1.5, 1.4, 1.4, 1.3, 1.3, 1.2, 1.2"
+};
