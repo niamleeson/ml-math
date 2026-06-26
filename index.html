@@ -1482,6 +1482,14 @@ const App = (function () {
     const c = document.getElementById("content");
     c.innerHTML = html;
     document.querySelectorAll(".lessons li").forEach(li => li.classList.toggle("active", li.dataset.id === id));
+    // Expand the section that holds the active lesson and scroll it into view in the sidebar,
+    // so opening a lesson (via search, prev/next, a cross-link, or a #hash) always reveals where it lives.
+    const activeLi = document.querySelector(`.lessons li[data-id="${id}"]`);
+    if (activeLi) {
+      const mod = activeLi.closest(".module");
+      if (mod) mod.classList.remove("collapsed");
+      activeLi.scrollIntoView({ block: "nearest" });
+    }
     if (l.demo) { try { l.demo(document.getElementById("demo-host")); } catch (e) { console.warn(e); } }
     if (window.hljs) c.querySelectorAll("pre code").forEach(b => { try { hljs.highlightElement(b); } catch (e) {} });
     drawLessonViz(c);
