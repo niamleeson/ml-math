@@ -146,36 +146,68 @@ jensen_gap(np.log, Xpos, "  uniform(1, 5)")
   };
 
   window.CODEVIZ["prob-jensen"] = {
-    question: "For a convex function the average overshoots f(E[X]); for a concave one it undershoots. How big is the gap, and which way does it point?",
+    question: "The chord between two points on a convex curve lies ABOVE the curve. That gap IS Jensen's inequality. Which way does it point for convex vs concave f?",
     charts: [
+      {
+        type: "line",
+        title: "Jensen for convex e^x: chord (E[f(X)]) sits ABOVE the curve (f(E[X])) at x=E[X]=0.5",
+        xlabel: "x",
+        ylabel: "f(x) = e^x",
+        series: [
+          {
+            name: "f(x) = e^x (convex curve)",
+            color: "#4ea1ff",
+            points: [[-1.0,0.3679],[-0.9,0.4066],[-0.8,0.4493],[-0.7,0.4966],[-0.6,0.5488],[-0.5,0.6065],[-0.4,0.6703],[-0.3,0.7408],[-0.2,0.8187],[-0.1,0.9048],[0.0,1.0],[0.1,1.1052],[0.2,1.2214],[0.3,1.3499],[0.4,1.4918],[0.5,1.6487],[0.6,1.8221],[0.7,2.0138],[0.8,2.2255],[0.9,2.4596],[1.0,2.7183],[1.1,3.0042],[1.2,3.3201],[1.3,3.6693],[1.4,4.0552],[1.5,4.4817],[1.6,4.953],[1.7,5.4739],[1.8,6.0496],[1.9,6.6859],[2.0,7.3891]]
+          },
+          {
+            name: "chord from (x1, f(x1)) to (x2, f(x2))",
+            color: "#ffb454",
+            points: [[-1.0,0.3679],[2.0,7.3891]]
+          },
+          {
+            name: "E[f(X)] = 3.879 (point on chord at x=0.5)",
+            color: "#ff7b72",
+            points: [[0.5,3.8785]]
+          },
+          {
+            name: "f(E[X]) = 1.649 (point on curve at x=0.5)",
+            color: "#7ee787",
+            points: [[0.5,1.6487]]
+          }
+        ]
+      },
       {
         type: "bars",
         title: "E[f(X)] vs f(E[X]):  convex e^x overshoots (gap up), concave log undershoots (gap down)",
         xlabel: "quantity",
         ylabel: "value",
         labels: ["e^x: E[f(X)]", "e^x: f(E[X])", "log: E[f(X)]", "log: f(E[X])"],
-        values: [1.6482, 0.9991, 1.0141, 1.1010],
-        valueLabels: ["1.648", "0.999", "1.014", "1.101"],
+        values: [3.8785, 1.6487, 1.0141, 1.1010],
+        valueLabels: ["3.879", "1.649", "1.014", "1.101"],
         colors: ["#7ee787", "#4ea1ff", "#ff7b72", "#4ea1ff"]
       }
     ],
-    caption: "Real numpy run (100,000 samples, seed 0). CONVEX f(x)=e^x with X~Normal(0,1): E[f(X)]=1.648 sits ABOVE f(E[X])=0.999, a +0.649 gap (green over blue) — exactly Jensen's E[f(X)] >= f(E[X]). CONCAVE f(x)=log x with X~Uniform(1,5): E[f(X)]=1.014 sits BELOW f(E[X])=1.101, a -0.087 gap (red under blue) — the inequality flips to E[f(X)] <= f(E[X]). Curving up lifts the average; curving down drops it.",
+    caption: "Top: the canonical Jensen picture for convex f(x)=e^x. Take a two-point X equal to x1=-1 or x2=2 each with probability 1/2, so E[X]=0.5. The straight orange chord joins the two curve points and lies ABOVE the blue curve everywhere between them. At x=E[X]=0.5 the chord value E[f(X)]=(e^-1+e^2)/2=3.879 (red dot) sits ABOVE f(E[X])=e^0.5=1.649 (green dot) — exactly Jensen's E[f(X)] >= f(E[X]) for convex f, gap +2.230. Bottom: the same overshoot as bars (green over blue), plus the concave case f(x)=log x with X~Uniform(1,5) where E[f(X)]=1.014 sits BELOW f(E[X])=1.101 (red under blue), the flipped E[f(X)] <= f(E[X]). Curving up lifts the average above the curve; curving down drops it below.",
     code: `import numpy as np
 
+# --- CONVEX f(x) = e^x : the canonical Jensen chord-above-curve picture ---
+# Two-point X: x1 = -1 or x2 = 2, each with prob 1/2, so E[X] = 0.5
+x1, x2 = -1.0, 2.0
+f = np.exp
+EX = 0.5 * (x1 + x2)              # 0.5  = E[X]
+Ef = 0.5 * (f(x1) + f(x2))        # 3.8785 = E[f(X)] = chord height at x = E[X]
+fE = f(EX)                        # 1.6487 = f(E[X]) = curve height at x = E[X]
+print(round(Ef, 4), round(fE, 4), round(Ef - fE, 4))   # 3.8785 1.6487 2.2297  (gap > 0)
+
+# curve samples e^x on [-1, 2] (the blue line)
+xs = np.linspace(-1.0, 2.0, 31)
+curve = [[round(float(x), 4), round(float(np.exp(x)), 4)] for x in xs]
+
+# --- CONCAVE f(x) = log x : inequality flips, E[f(X)] <= f(E[X]) ---
 rng = np.random.default_rng(0)
-N = 100_000
-
-# CONVEX f(x) = e^x, X ~ Normal(0, 1):  E[f(X)] >= f(E[X])
-X = rng.normal(0.0, 1.0, N)
-conv_Ef = np.mean(np.exp(X))     # 1.6482
-conv_fE = np.exp(np.mean(X))     # 0.9991  (mean(X) ~ 0, so e^0 ~ 1)
-
-# CONCAVE f(x) = log x, X ~ Uniform(1, 5):  E[f(X)] <= f(E[X])
-Xp = rng.uniform(1.0, 5.0, N)
+Xp = rng.uniform(1.0, 5.0, 100_000)
 conc_Ef = np.mean(np.log(Xp))    # 1.0141
 conc_fE = np.log(np.mean(Xp))    # 1.1010
-
-print(round(conv_Ef, 4), round(conv_fE, 4))   # 1.6482 0.9991  -> gap +0.6491
-print(round(conc_Ef, 4), round(conc_fE, 4))   # 1.0141 1.101   -> gap -0.0869`
+print(round(conc_Ef, 4), round(conc_fE, 4))   # 1.0141 1.101  -> gap -0.0869`
   };
 })();

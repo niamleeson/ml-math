@@ -230,18 +230,34 @@ print(f"Var(Y) simulated = {VarY_sim:8.4f}   theory E[N]Var(X)+E[X]^2Var(N) = {V
   };
 
   window.CODEVIZ["probx-random-sum"] = {
-    question: "Do the random-sum formulas actually predict the simulated mean and variance? Compare simulated vs theoretical E[Y] and Var(Y) side by side.",
+    question: "What does each random-sum formula actually compute? One diagram per formula: Wald's mean, the two-part variance, and the shape of Y itself.",
     charts: [
       {
         type: "bars",
-        title: "Random sum Y = sum of N pieces: simulated vs theory (N~Poisson(5), X mean 3 var 4)",
-        labels: ["E[Y] sim", "E[Y] theory", "Var(Y) sim", "Var(Y) theory"],
-        values: [14.997, 15.0, 64.932, 65.0],
-        valueLabels: ["14.997", "15.000", "64.932", "65.000"],
-        colors: ["#4ea1ff", "#7ee787", "#ffb454", "#c89bff"]
+        title: "Wald's identity: E[Y] = E[N] * E[X], factor by factor (N~Poisson(5), E[X]=3)",
+        labels: ["E[N] = 5", "E[X] = 3", "E[Y] = E[N]*E[X]"],
+        values: [5, 3, 15],
+        valueLabels: ["5", "3", "15"],
+        colors: ["#4ea1ff", "#ffb454", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Var(Y) = E[N]*Var(X) + (E[X])^2*Var(N): two contributions add to the total",
+        labels: ["within-count E[N]*Var(X)", "between-count (E[X])^2*Var(N)", "total Var(Y)"],
+        values: [20, 45, 65],
+        valueLabels: ["20", "45", "65"],
+        colors: ["#4ea1ff", "#c89bff", "#7ee787"]
+      },
+      {
+        type: "bars",
+        title: "Distribution of Y (500k simulated random sums); predicted mean E[Y]=15 marked",
+        labels: ["0-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35", "35-40"],
+        values: [0.0879, 0.2062, 0.2532, 0.2069, 0.1310, 0.0678, 0.0293, 0.0117],
+        valueLabels: ["0.088", "0.206", "0.253", "0.207", "0.131", "0.068", "0.029", "0.012"],
+        colors: ["#9aa7b4", "#9aa7b4", "#7ee787", "#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"]
       }
     ],
-    caption: "Over 500k simulated random sums, the Monte-Carlo E[Y] (14.997) and Var(Y) (64.932) sit right on the closed forms E[N]E[X]=15 and E[N]Var(X)+(E[X])^2Var(N)=65, confirming both identities.",
+    caption: "First bar set: Wald's identity multiplies the average count (5) by the average piece (3) to get E[Y]=15. Second: the variance is two stacked contributions, the within-count spread E[N]Var(X)=20 plus the between-count spread (E[X])^2Var(N)=45, summing to Var(Y)=65. Third: the simulated distribution of Y piles up around the predicted mean E[Y]=15 (green bars), with spread matching Var(Y)=65 (the simulated histogram is illustrative; the means and variances are the exact formulas).",
     code: `import numpy as np
 rng = np.random.default_rng(7)
 
@@ -249,28 +265,32 @@ lam = 5.0                 # N ~ Poisson(5):  E[N] = Var(N) = 5
 k, th = 2.25, 4.0 / 3.0   # X ~ Gamma -> E[X] = 3, Var(X) = 4
 EX, VarX, EN, VarN = k * th, k * th * th, lam, lam
 
+# --- Formula 1: Wald's identity, factor by factor ---
+EY = EN * EX                              # 5 * 3 = 15
+wald_labels = ['E[N] = 5', 'E[X] = 3', 'E[Y] = E[N]*E[X]']
+wald_values = [EN, EX, EY]               # [5, 3, 15]
+
+# --- Formula 2: variance as two contributions ---
+within  = EN * VarX                       # 5 * 4 = 20
+between = EX**2 * VarN                     # 9 * 5 = 45
+VarY    = within + between                 # 65
+var_labels = ['within E[N]*Var(X)', 'between (E[X])^2*Var(N)', 'total Var(Y)']
+var_values = [within, between, VarY]      # [20, 45, 65]
+
+# --- Formula 3: simulated distribution of Y ---
 trials = 500_000
 N = rng.poisson(lam, size=trials)
 X = rng.gamma(k, th, size=int(N.sum()))
 ends = np.cumsum(N); starts = ends - N
 csum = np.concatenate(([0.0], np.cumsum(X)))
 Y = csum[ends] - csum[starts]
-
-EY_sim, VarY_sim = Y.mean(), Y.var()
-EY_th = EN * EX                          # Wald: -> 15.0
-VarY_th = EN * VarX + EX**2 * VarN       # random-sum variance: -> 65.0
-# EY_sim -> 14.997, VarY_sim -> 64.932
-
-labels = ['E[Y] sim', 'E[Y] theory', 'Var(Y) sim', 'Var(Y) theory']
-values = [EY_sim, EY_th, VarY_sim, VarY_th]
-
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.bar(labels, values, color=['#4ea1ff', '#7ee787', '#ffb454', '#c89bff'])
-ax.set_ylabel('value')
-ax.set_title('Random sum: simulated mean/variance match the formulas')
-for i, v in enumerate(values):
-    ax.text(i, v + 0.5, f'{v:.3f}', ha='center')
-plt.tight_layout(); plt.show()`
+edges = np.arange(0, 45, 5.0)
+counts, _ = np.histogram(Y, bins=edges)
+frac = counts / trials
+# frac -> [0.088, 0.206, 0.253, 0.207, 0.131, 0.068, 0.029, 0.012]
+print('E[Y]=', EY, ' Var(Y)=', VarY)
+print('sim E[Y]=', round(Y.mean(),3), ' sim Var(Y)=', round(Y.var(),3))
+# E[Y]= 15.0  Var(Y)= 65.0
+# sim E[Y]= 14.997  sim Var(Y)= 64.932`
   };
 })();
