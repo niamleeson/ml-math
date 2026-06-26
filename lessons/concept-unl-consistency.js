@@ -238,16 +238,51 @@ def train_step(x_lab, y_lab, x_unlab, weak_aug, strong_aug, epoch):
   };
 
   window.CODEVIZ["unl-consistency"] = {
-    question: "On real digit images with only a handful of labels, does using the UNLABELED data lift test accuracy over training on labels alone?",
-    charts: [{
-      type: "line", title: "Test accuracy vs label budget: labels-only vs label-spreading (uses unlabeled data)",
-      xlabel: "number of labeled training digits", ylabel: "test accuracy",
-      series: [
-        { name: "labels only (supervised)", color: "#ff7b72", points: [[10, 0.431], [20, 0.702], [40, 0.826], [80, 0.863], [160, 0.907]] },
-        { name: "with unlabeled (LabelSpreading)", color: "#7ee787", points: [[10, 0.570], [20, 0.917], [40, 0.928], [80, 0.894], [160, 0.956]] }
-      ]
-    }],
-    caption: "Real load_digits experiment. Train on N labeled digits; the supervised model (red) uses only those N, while LabelSpreading (green) also propagates labels across the ~1250 UNLABELED training digits through a k-NN (k-Nearest Neighbors) graph. Label propagation IS consistency under the manifold assumption: it forces nearby points to agree. With just 20 labels the unlabeled data lifts accuracy from 0.70 to 0.92. This is a faithful small-scale proxy for the augmentation-consistency effect — real Mean Teacher / UDA need a GPU, augmentations, and a deep network, but the payoff (few labels + unlabeled beats labels-only) is the same.",
+    question: "Does the unlabeled data actually HELP — and how do you read the curve to spot when consistency is working, collapsing, or enforcing agreement on the wrong manifold?",
+    charts: [
+      {
+        type: "line", title: "Healthy: unlabeled data lifts accuracy at every label budget",
+        xlabel: "number of labeled training digits", ylabel: "test accuracy",
+        series: [
+          { name: "labels only (supervised)", color: "#ff7b72", points: [[10, 0.431], [20, 0.702], [40, 0.826], [80, 0.863], [160, 0.907]] },
+          { name: "with unlabeled (LabelSpreading)", color: "#7ee787", points: [[10, 0.570], [20, 0.917], [40, 0.928], [80, 0.894], [160, 0.956]] }
+        ],
+        interpret: "Real load_digits experiment. The x-axis is how many digits you labeled; the y-axis is test accuracy. <b>Read the vertical gap between the two lines: that is what the free unlabeled data bought you.</b> The green line (LabelSpreading, which propagates labels across ~1250 unlabeled digits through a k-NN graph — consistency under the manifold assumption) sits ABOVE the red labels-only line everywhere, and the gap is biggest when labels are scarce: at 20 labels it lifts accuracy from 0.70 to 0.92. The gap narrows on the right because once you have plenty of labels the unlabeled signal adds little. This is the healthy, working case."
+      },
+      {
+        type: "line", title: "Collapse: unlabeled term ramped too fast, model predicts one class",
+        xlabel: "training epoch", ylabel: "value",
+        series: [
+          { name: "test accuracy", color: "#ff7b72", points: [[0, 0.30], [5, 0.42], [10, 0.40], [15, 0.28], [20, 0.12], [25, 0.11], [30, 0.10] ] },
+          { name: "consistency loss", color: "#9aa7b4", points: [[0, 0.50], [5, 0.30], [10, 0.18], [15, 0.08], [20, 0.02], [25, 0.005], [30, 0.001]] }
+        ],
+        interpret: "Illustrative. Two lines over training time. <b>The trap is reading the falling grey loss as success.</b> The consistency loss (grey) marches toward 0 — but accuracy (red) is COLLAPSING toward 0.10 (chance for 10 classes). That is the degenerate solution: predicting the same class for everything makes the two augmented views agree perfectly (loss 0) while learning nothing. Recognize it by loss-good-but-accuracy-dying, usually caused by ramping the unlabeled weight up too fast so it drowns the few labels. Fix: keep the supervised loss active, ramp slowly, add confidence thresholding or entropy minimization."
+      },
+      {
+        type: "line", title: "Wrong manifold: unlabeled data from a different distribution HURTS",
+        xlabel: "number of labeled training digits", ylabel: "test accuracy",
+        series: [
+          { name: "labels only (supervised)", color: "#ff7b72", points: [[10, 0.431], [20, 0.702], [40, 0.826], [80, 0.863], [160, 0.907]] },
+          { name: "unlabeled from WRONG distribution", color: "#ffb454", points: [[10, 0.38], [20, 0.61], [40, 0.74], [80, 0.80], [160, 0.86]] }
+        ],
+        interpret: "Illustrative. Same axes as the healthy chart, but here the orange 'with unlabeled' line sits BELOW the red labels-only line. <b>When the semi-supervised line is worse than labels-only, your unlabeled pool is off-distribution.</b> Consistency happily enforces agreement on the wrong manifold, so it pulls the boundary toward clusters you do not care about and actively hurts. The tell is a method that should help making things worse. Fix: check that unlabeled and labeled data are from the same distribution before trusting any consistency method."
+      },
+      {
+        type: "scatter",
+        title: "Why it works: consistency pushes the boundary into the low-density gap",
+        xlabel: "feature 1", ylabel: "feature 2",
+        groups: [
+          { name: "class A cluster", color: "#4ea1ff", points: [[1.0, 1.2], [1.3, 0.9], [0.8, 1.0], [1.1, 1.4], [0.9, 0.7], [1.4, 1.1]] },
+          { name: "class B cluster", color: "#7ee787", points: [[3.0, 3.2], [3.3, 2.9], [2.8, 3.1], [3.1, 3.4], [2.9, 2.7], [3.4, 3.1]] }
+        ],
+        lines: [
+          { color: "#7ee787", dash: false, points: [[2.0, 0.5], [2.0, 3.8]] },
+          { color: "#ff7b72", dash: true, points: [[1.2, 0.5], [1.2, 3.8]] }
+        ],
+        interpret: "Illustrative of the manifold/cluster assumption. Each dot is an unlabeled point; the two blobs are dense regions of one class each. <b>Read where each boundary line falls relative to the blobs.</b> The dashed red line slices THROUGH the left cluster — nearby points there would get different predictions, which the consistency loss punishes. The solid green line sits in the empty low-density gap between the clusters, so points within each blob agree. Demanding f(x+delta) approx f(x) on many unlabeled points pushes the boundary out of dense regions and into the gap, exactly where a good boundary belongs; the few labels then just name which side is which."
+      }
+    ],
+    caption: "How to read a semi-supervised result. The first chart is a real load_digits experiment (a faithful small-scale proxy for augmentation-consistency — real Mean Teacher / UDA need a GPU and a deep network, but the payoff is the same). The other three are illustrative: a collapse, an off-distribution failure, and the geometric reason consistency helps. The habit: compare the semi-supervised line to labels-only, and never read a falling consistency loss as success on its own.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split

@@ -229,19 +229,54 @@ print(f"kNN (k=20) accuracy:   {knn_acc:.3f}")
   };
 
   window.CODEVIZ["unl-eval"] = {
-    question: "On real digit images, does a frozen representation (linear probe and kNN) need far fewer labels than training a classifier from scratch on raw pixels?",
-    charts: [{
-      type: "line",
-      title: "Label efficiency on load_digits: frozen probe / kNN vs from-scratch",
-      xlabel: "label fraction (%)",
-      ylabel: "test accuracy",
-      series: [
-        { name: "linear probe (frozen)", color: "#7ee787", points: [[1, 0.807], [5, 0.927], [10, 0.934], [25, 0.956], [100, 0.969]] },
-        { name: "kNN (frozen)", color: "#4ea1ff", points: [[1, 0.235], [5, 0.882], [10, 0.927], [25, 0.954], [100, 0.972]] },
-        { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.640], [5, 0.840], [10, 0.883], [25, 0.922], [100, 0.954]] }
-      ]
-    }],
-    caption: "Reproducible sklearn proxy on load_digits (1797 real 8x8 handwritten digits). A small MLP (Multi-Layer Perceptron) is pretrained on an abundant source pool and its hidden layer is FROZEN as the encoder — a stand-in for a self-supervised encoder. We then measure three protocols as we reveal 1%/5%/10%/25%/100% of a disjoint label pool: a LINEAR PROBE (logistic regression on the frozen MLP features), kNN on those same features, and a from-scratch logistic model on raw pixels (the baseline that must learn everything from the few labels). At 1% labels the frozen probe (81%) crushes from-scratch (64%) — the frozen representation is far more label-efficient — and the gap shrinks toward 100% labels. Note kNN collapses to 24% at 1% labels: with so few labeled neighbors to vote with, the geometry probe is unreliable, a real kNN pitfall, but it recovers fast and leads by 100%. Real SimCLR / MoCo / DINO evaluation needs a GPU-trained encoder; this is a faithful small-scale stand-in. Each point is averaged over 15 random label draws.",
+    question: "On real digit images, how do you read a label-efficiency curve to tell a good frozen representation from a useless one — and what does it look like when the probe and fine-tune disagree, or when the 1% point is just noise?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy label-efficiency: frozen probe / kNN vs from-scratch (computed)",
+        xlabel: "label fraction (%)",
+        ylabel: "test accuracy",
+        series: [
+          { name: "linear probe (frozen)", color: "#7ee787", points: [[1, 0.807], [5, 0.927], [10, 0.934], [25, 0.956], [100, 0.969]] },
+          { name: "kNN (frozen)", color: "#4ea1ff", points: [[1, 0.235], [5, 0.882], [10, 0.927], [25, 0.954], [100, 0.972]] },
+          { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.640], [5, 0.840], [10, 0.883], [25, 0.922], [100, 0.954]] }
+        ],
+        interpret: "<b>The ideal, computed on load_digits.</b> X is the fraction of labels revealed (1% to 100%); Y is test accuracy. A good representation is <i>steep on the left</i>: the green frozen linear probe already hits 81% at 1% labels while the orange from-scratch baseline reaches only 64%. The vertical gap between green and orange at small X is the label-efficiency win — it is biggest where labels are scarce and shrinks toward 100%, where everyone has enough data. <b>Conclusion:</b> green sitting above orange on the left = the frozen features did real work. The blue kNN curve crashing to 24% at 1% is a separate kNN pitfall (too few labeled neighbors to vote with), not an encoder failure — it recovers by 5%."
+      },
+      {
+        type: "line",
+        title: "Useless encoder: frozen features no better than raw pixels (illustrative)",
+        xlabel: "label fraction (%)",
+        ylabel: "test accuracy",
+        series: [
+          { name: "linear probe (frozen)", color: "#ff7b72", points: [[1, 0.61], [5, 0.83], [10, 0.87], [25, 0.91], [100, 0.95]] },
+          { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.640], [5, 0.840], [10, 0.883], [25, 0.922], [100, 0.954]] }
+        ],
+        interpret: "<b>Illustrative failure mode.</b> Same axes, but the red frozen-probe curve lies on top of (or just below) the orange from-scratch baseline at every label fraction. The pretraining bought you <i>nothing</i>: a linear probe on these frozen features is no more label-efficient than training on raw pixels. <b>How to recognise it:</b> no left-side gap — the frozen curve never pulls clear of from-scratch, especially at 1-10% labels where a good encoder should shine. <b>Conclusion:</b> the representation failed; the encoder did not place classes into a linearly separable arrangement, so reconsider the pretraining recipe."
+      },
+      {
+        type: "bars",
+        title: "Probe vs fine-tune disagree: rank flips between protocols (illustrative)",
+        labels: ["Encoder A", "Encoder B"],
+        series: [
+          { name: "linear probe (frozen)", color: "#7ee787", points: [[0, 0.78], [1, 0.71]] },
+          { name: "fine-tune", color: "#c89bff", points: [[0, 0.80], [1, 0.82]] }
+        ],
+        interpret: "<b>Illustrative — why one number can mislead.</b> Two encoders, two protocols. On the frozen <i>linear probe</i> (green) A wins (0.78 vs 0.71): A's frozen features are more linearly separable. But after <i>fine-tuning</i> (purple) the rank flips and B wins (0.82 vs 0.80): B's mediocre frozen features hid an encoder that reshapes well once unlocked. <b>How to recognise it:</b> the taller bar switches encoders when you switch protocol. <b>Conclusion:</b> there is no single 'better' encoder — pick A if you will deploy frozen features, B if you will fine-tune, and always report both protocols."
+      },
+      {
+        type: "line",
+        title: "Noisy 1% point: too few label draws make it swing (illustrative)",
+        xlabel: "label fraction (%)",
+        ylabel: "probe accuracy (1 unlucky draw vs averaged)",
+        series: [
+          { name: "single random draw (noisy)", color: "#ff7b72", points: [[1, 0.66], [5, 0.90], [10, 0.93], [25, 0.955], [100, 0.969]] },
+          { name: "averaged over many draws", color: "#7ee787", points: [[1, 0.807], [5, 0.927], [10, 0.934], [25, 0.956], [100, 0.969]] }
+        ],
+        interpret: "<b>Illustrative — a measurement artefact, not an encoder problem.</b> Both curves are the same frozen probe; the red one uses a single random choice of which 1% of points get labels, the green averages over many draws. At 1% there are only a handful of examples per class, so one unlucky draw drops the red point several points below the stable green estimate; by 25-100% labels the two agree. <b>How to recognise it:</b> the left end jumps around when you rerun, while the right end is steady. <b>Conclusion:</b> it is sampling noise — average over many random label draws and seeds and report the spread before trusting any low-label point."
+      }
+    ],
+    caption: "Reproducible sklearn proxy on load_digits (1797 real 8x8 handwritten digits). A small MLP is pretrained on an abundant source pool and its hidden layer is FROZEN as the encoder — a stand-in for a self-supervised encoder. The first chart is the computed ideal (probe / kNN / from-scratch, each averaged over 15 random label draws); the rest are illustrative cases — a useless encoder, a probe-vs-fine-tune rank flip, and a noisy low-label point — that teach you how to read these curves. Each chart's interpret box explains how to read it.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.neural_network import MLPClassifier

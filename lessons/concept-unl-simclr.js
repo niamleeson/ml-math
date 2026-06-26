@@ -258,15 +258,35 @@ def train_step(images, augment, tau=0.5):
   };
 
   window.CODEVIZ["unl-simclr"] = {
-    question: "Do augmentation-invariant features (a SimCLR-style proxy) beat raw pixels when you have only a handful of labels?",
-    charts: [{
-      type: "line", title: "kNN accuracy vs number of labels: learned representation vs raw pixels (load_digits)", xlabel: "number of labeled examples", ylabel: "kNN accuracy on held-out digits",
-      series: [
-        { name: "learned representation", color: "#7ee787", points: [[5, 0.161], [10, 0.299], [20, 0.519], [40, 0.719], [80, 0.855], [160, 0.914]] },
-        { name: "raw pixels", color: "#ff7b72", points: [[5, 0.157], [10, 0.291], [20, 0.506], [40, 0.712], [80, 0.859], [160, 0.922]] }
-      ]
-    }],
-    caption: "Real load_digits result (encoder = PCA fit on 4 augmented views of 800 unlabeled images; kNN probe averaged over 40 random label draws on 900 held-out digits). In the LOW-label regime (5-40 labels) the augmentation-invariant representation wins: 0.161 vs 0.157 at 5 labels, up to 0.719 vs 0.712 at 40. Once labels are plentiful (80-160) raw pixels catch up and edge ahead, because on clean 8x8 digits raw pixels are already a strong kNN feature. That low-label crossover is exactly the SimCLR payoff: contrastive features buy you the most when labels are scarce. Real SimCLR needs a GPU, a deep ResNet encoder, and the NT-Xent loss over large batches; this is a faithful small CPU proxy of 'augmentation-invariant features are label-efficient'.",
+    question: "How do you READ whether contrastive pretraining is working? A label-efficiency curve tells you it helps; the NT-Xent loss curve and the embedding scatter tell you whether training is healthy or has collapsed.",
+    charts: [
+      {
+        type: "line", title: "Ideal: learned features beat raw pixels in the low-label regime (load_digits)", xlabel: "number of labeled examples", ylabel: "kNN accuracy on held-out digits",
+        series: [
+          { name: "learned representation", color: "#7ee787", points: [[5, 0.161], [10, 0.299], [20, 0.519], [40, 0.719], [80, 0.855], [160, 0.914]] },
+          { name: "raw pixels", color: "#ff7b72", points: [[5, 0.157], [10, 0.291], [20, 0.506], [40, 0.712], [80, 0.859], [160, 0.922]] }
+        ],
+        interpret: "<b>Read it as a label-efficiency curve.</b> X is how many labels you give the downstream kNN probe; Y is its accuracy. Green is the contrastive (augmentation-invariant) representation, red is raw pixels. The win shows in the <b>low-label regime (5-40)</b>, where green sits above red, then the two cross once labels are plentiful (80-160) because clean 8x8 digits are already easy for raw pixels. <b>Conclusion:</b> contrastive pretraining pays off most exactly when labels are scarce — judge it by the gap on the left of the curve, not the right."
+      },
+      {
+        type: "line", title: "NT-Xent loss curve: healthy descent vs representation collapse (illustrative)", xlabel: "training step (x100)", ylabel: "NT-Xent / InfoNCE loss",
+        series: [
+          { name: "healthy", color: "#7ee787", points: [[0, 4.85], [1, 3.9], [2, 3.1], [3, 2.5], [4, 2.1], [5, 1.85], [6, 1.7], [7, 1.62], [8, 1.58], [9, 1.56]] },
+          { name: "collapse", color: "#ff7b72", points: [[0, 4.85], [1, 2.0], [2, 0.6], [3, 0.15], [4, 0.04], [5, 0.01], [6, 0.005], [7, 0.003], [8, 0.002], [9, 0.001]] }
+        ],
+        interpret: "<b>Illustrative loss curves.</b> X is training step, Y is the NT-Xent loss. Green descends smoothly and <b>flattens at a positive floor</b> (around log of the batch size minus the mutual information captured) — that is healthy learning. Red plummets almost to <b>zero</b>: a loss that crashes toward 0 is the signature of <b>representation collapse</b>, where the encoder maps every image to nearly the same vector so all positives are trivially close and all negatives look identical. <b>Conclusion:</b> a too-good-to-be-true near-zero loss is a red flag, not success — check the embeddings before trusting it."
+      },
+      {
+        type: "scatter", title: "Embedding scatter: well-separated clusters vs collapsed blob (illustrative 2D projection)", xlabel: "embedding dim 1", ylabel: "embedding dim 2",
+        groups: [
+          { name: "healthy class A", color: "#7ee787", points: [[-2.1, 1.9], [-1.8, 2.3], [-2.4, 1.6], [-1.9, 2.0], [-2.2, 2.2]] },
+          { name: "healthy class B", color: "#4ea1ff", points: [[2.0, -1.7], [2.4, -2.1], [1.7, -1.9], [2.2, -1.5], [1.9, -2.0]] },
+          { name: "collapsed (all classes)", color: "#ff7b72", points: [[0.05, 0.02], [-0.03, 0.06], [0.04, -0.04], [-0.02, -0.03], [0.01, 0.05], [-0.05, 0.01], [0.03, 0.0], [0.0, -0.05]] }
+        ],
+        interpret: "<b>Illustrative 2D view</b> of the projected embeddings. Each point is one image's vector. <b>Healthy</b> training (green and blue) spreads different content into <b>distinct, separated clusters</b> — that is what makes the features useful downstream. The red points are all piled into one tiny blob at the origin: that is <b>collapse</b>, every image mapped to essentially the same vector. <b>Conclusion:</b> pair this with the loss curve — a near-zero loss plus a single blob confirms collapse; well-spread clusters confirm the encoder learned to tell images apart. Fix weak augmentation or too-few negatives."
+      }
+    ],
+    caption: "How to read SimCLR diagnostics: the label-efficiency curve (does it help?) plus the loss curve and embedding scatter (is training healthy or collapsed?). The main curve is a faithful small CPU proxy; real SimCLR needs a GPU, a deep ResNet encoder, and NT-Xent over large batches.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

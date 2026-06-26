@@ -173,18 +173,43 @@ print(f"lift of logistic regression over NIR : "
   };
 
   window.CODEVIZ["skill-baselines"] = {
-    question: "On a real dataset, what is the accuracy each future model must beat — the floor set by the trivial and simple baselines?",
-    charts: [{
-      type: "bars",
-      title: "Baselines on load_breast_cancer (test split): the bar every fancy model must clear",
-      xlabel: "predictor",
-      ylabel: "test accuracy",
-      labels: ["majority dummy", "stratified dummy", "logistic regression", "no-info rate (NIR)"],
-      values: [0.6257, 0.5380, 0.9591, 0.6257],
-      valueLabels: ["0.626", "0.538", "0.959", "0.626"],
-      colors: ["#ff7b72", "#ff7b72", "#7ee787", "#ffb454"]
-    }],
-    caption: "Real numbers from scikit-learn on the 569-record breast-cancer dataset (30% test split). The majority dummy scores 0.626 — exactly the no-information rate (orange line). The stratified dummy is worse (0.538). Logistic regression reaches 0.959, a lift of +0.333 over the NIR. Any future model must beat 0.626 to add anything, and must beat 0.959 to beat the cheap simple-model baseline.",
+    question: "How do you read a baseline chart — when is the lift real, when is the baseline already winning, and when is it suspiciously too good?",
+    charts: [
+      {
+        type: "bars",
+        title: "Healthy: real lift over the floor (load_breast_cancer, test split)",
+        xlabel: "predictor",
+        ylabel: "test accuracy",
+        labels: ["majority dummy", "stratified dummy", "logistic regression", "no-info rate (NIR)"],
+        values: [0.6257, 0.5380, 0.9591, 0.6257],
+        valueLabels: ["0.626", "0.538", "0.959", "0.626"],
+        colors: ["#ff7b72", "#ff7b72", "#7ee787", "#ffb454"],
+        interpret: "Real scikit-learn numbers. Each bar is one predictor's <b>test accuracy</b>; the orange bar is the <b>no-information rate</b> (NIR) — the accuracy of always guessing the majority class (0.626). Read it left to right: the two red dummy bars sit at or below the orange floor, so they add nothing. The green logistic-regression bar towers over the floor at 0.959 — the gap of <b>+0.333</b> above orange is the <b>lift</b>, the only number worth reporting. This is the shape you want: a clear green bar well above the orange floor."
+      },
+      {
+        type: "bars",
+        title: "Imbalanced-data trap: the model is BELOW the majority floor",
+        xlabel: "predictor",
+        ylabel: "accuracy (illustrative)",
+        labels: ["majority dummy", "fancy model", "no-info rate (NIR)"],
+        values: [0.988, 0.987, 0.988],
+        valueLabels: ["0.988", "0.987", "0.988"],
+        colors: ["#ffb454", "#ff7b72", "#ffb454"],
+        interpret: "Illustrative, from a 1.2%-fraud problem. Same axes, but notice the fancy model (red) is <b>below</b> the orange no-info floor: always guessing 'not fraud' scores 0.988, the model 0.987. A 98.7% accuracy looks great in isolation, yet it is <i>worse than doing nothing</i>. The lesson for reading: never judge a bar by its height alone — compare it to the orange floor. When all bars are sky-high and nearly equal on an imbalanced dataset, accuracy is the wrong metric; switch to balanced accuracy, precision/recall, or AUC."
+      },
+      {
+        type: "bars",
+        title: "Red flag: a trivial/simple baseline that is suspiciously too good (leakage)",
+        xlabel: "predictor",
+        ylabel: "accuracy (illustrative)",
+        labels: ["majority dummy", "logistic baseline", "no-info rate (NIR)"],
+        values: [0.71, 0.995, 0.71],
+        valueLabels: ["0.71", "0.995", "0.71"],
+        colors: ["#ff7b72", "#ffb454", "#ffb454"],
+        interpret: "Illustrative churn example. Here a <i>simple</i> logistic baseline (orange) leaps to 0.995, far above the 0.71 majority floor. That should not delight you — read a too-good baseline as an <b>alarm, not a victory</b>. A linear model on raw features almost never nails a real churn task; a jump this large usually means a feature is <b>leaking</b> the label (a column computed after the outcome, like account_closed_date). When the cheap baseline is near-perfect, stop and audit for leakage before trusting any model on this data."
+      }
+    ],
+    caption: "Three shapes of the same baseline chart. Always read each bar against the orange no-information-rate floor, not on its own height: a green bar far above the floor (chart 1) is real lift; a model below the floor (chart 2) means accuracy is being gamed by class imbalance; a too-good cheap baseline (chart 3) is a leakage alarm.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split

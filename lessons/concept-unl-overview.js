@@ -256,18 +256,43 @@ def train_step(model, opt, labeled_batch, unlabeled_batch, lam=1.0):
   };
 
   window.CODEVIZ["unl-overview"] = {
-    question: "On real handwritten digits, does adding unlabeled data beat labels-only — and does the gain shrink as labels grow plentiful?",
-    charts: [{
-      type: "line",
-      title: "Test accuracy vs number of labeled digits: labels-only vs labels + unlabeled (LabelSpreading)",
-      xlabel: "number of labeled examples",
-      ylabel: "test accuracy (500 held-out digits)",
-      series: [
-        { name: "labels + unlabeled (semi-supervised)", color: "#7ee787", points: [[10, 0.466], [20, 0.794], [30, 0.902], [50, 0.946], [100, 0.95], [200, 0.966], [400, 0.972]] },
-        { name: "labels only (kNN)", color: "#4ea1ff", points: [[10, 0.22], [20, 0.406], [30, 0.532], [50, 0.76], [100, 0.862], [200, 0.924], [400, 0.964]] }
-      ]
-    }],
-    caption: "A reproducible sklearn proxy on load_digits (1797 real 8x8 handwritten digits). With only 10 labels, spreading them over the unlabeled pool with LabelSpreading scores 0.466 vs 0.220 for a labels-only kNN — more than double. By 400 labels the gap nearly closes (0.972 vs 0.964): once labels are plentiful, unlabeled data adds little, exactly as the pitfalls warn. Real SimCLR / FixMatch need a GPU; this is a faithful small-scale stand-in for the same labels-only-vs-labels-plus-unlabeled effect.",
+    question: "On real handwritten digits, how do you read a 'labels-only vs labels + unlabeled' curve — and what does it look like when unlabeled data helps, helps nothing, or actively hurts?",
+    charts: [
+      {
+        type: "line",
+        title: "Assumptions hold: unlabeled wins big when labels are scarce, gap closes as labels grow",
+        xlabel: "number of labeled examples",
+        ylabel: "test accuracy (fraction correct, 500 held-out digits)",
+        series: [
+          { name: "labels + unlabeled (semi-supervised)", color: "#7ee787", points: [[10, 0.466], [20, 0.794], [30, 0.902], [50, 0.946], [100, 0.95], [200, 0.966], [400, 0.972]] },
+          { name: "labels only (kNN)", color: "#4ea1ff", points: [[10, 0.22], [20, 0.406], [30, 0.532], [50, 0.76], [100, 0.862], [200, 0.924], [400, 0.964]] }
+        ],
+        interpret: "<b>The main chart, real numbers from load_digits.</b> The x-axis is how many labels you reveal; the y-axis is test accuracy on a fixed held-out set. Read the vertical gap between the two lines as 'what the unlabeled pile bought you'. On the left (10 labels) the green semi-supervised line more than doubles the blue labels-only line (0.466 vs 0.220) — the unlabeled points reveal the digit clusters and pin the boundary in the empty gaps. Walking right, both lines climb and converge: by 400 labels the gap nearly vanishes (0.972 vs 0.964). The takeaway: unlabeled data pays off most when labels are scarce, and the payoff shrinks as labels grow plentiful."
+      },
+      {
+        type: "line",
+        title: "Mismatched / off-distribution unlabeled data: the green line drops BELOW labels-only (illustrative)",
+        xlabel: "number of labeled examples",
+        ylabel: "test accuracy (fraction correct, 500 held-out digits)",
+        series: [
+          { name: "labels + unlabeled (wrong distribution)", color: "#ff7b72", points: [[10, 0.19], [20, 0.34], [30, 0.45], [50, 0.66], [100, 0.79], [200, 0.86], [400, 0.92]] },
+          { name: "labels only (kNN)", color: "#4ea1ff", points: [[10, 0.22], [20, 0.406], [30, 0.532], [50, 0.76], [100, 0.862], [200, 0.924], [400, 0.964]] }
+        ],
+        interpret: "<b>Illustrative failure case.</b> Same axes, but now the red 'with unlabeled' line sits <b>below</b> the blue labels-only line everywhere. That inversion is the tell-tale sign that your unlabeled pile came from a different distribution than the labeled task — different classes or a different domain. Its clusters do not line up with the real classes, so the unlabeled loss drags the boundary toward the wrong structure and you would have been better off ignoring it. The fix: filter the unlabeled set to match the target domain, or turn the unlabeled weight lambda down."
+      },
+      {
+        type: "line",
+        title: "No cluster / manifold structure: the two lines lie on top of each other (illustrative)",
+        xlabel: "number of labeled examples",
+        ylabel: "test accuracy (fraction correct, 500 held-out digits)",
+        series: [
+          { name: "labels + unlabeled (no usable structure)", color: "#ffb454", points: [[10, 0.23], [20, 0.41], [30, 0.54], [50, 0.75], [100, 0.86], [200, 0.92], [400, 0.96]] },
+          { name: "labels only (kNN)", color: "#4ea1ff", points: [[10, 0.22], [20, 0.406], [30, 0.532], [50, 0.76], [100, 0.862], [200, 0.924], [400, 0.964]] }
+        ],
+        interpret: "<b>Illustrative null case.</b> Here the orange and blue lines are nearly indistinguishable at every label count — adding unlabeled data changed nothing. You see this when the data has no cluster or manifold structure to exploit: the points do not clump into class-pure groups and there is no low-density valley for the boundary to settle into, so the unlabeled term has nothing to push on. The honest read is that semi-supervised learning is not buying you anything here; do not bolt it on out of habit."
+      }
+    ],
+    caption: "A reproducible sklearn proxy on load_digits (1797 real 8x8 handwritten digits). The first chart uses real numbers (LabelSpreading vs labels-only kNN); the mismatched and no-structure charts are illustrative shapes showing how the same comparison looks when the field's assumptions break. Real SimCLR / FixMatch need a GPU; this is a faithful small-scale stand-in.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.semi_supervised import LabelSpreading

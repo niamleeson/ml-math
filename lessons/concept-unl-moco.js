@@ -191,26 +191,72 @@ class MoCo(nn.Module):
   };
 
   window.CODEVIZ["unl-moco"] = {
-    question: "On real digit embeddings, how does the chance of correctly matching an augmented view to its original change as the number of negatives grows?",
-    charts: [{
-      type: "line",
-      title: "Contrastive retrieval: top-1 match accuracy vs number of negatives (load_digits)",
-      xlabel: "number of negatives N (log scale of 2^x)",
-      ylabel: "top-1 match accuracy",
-      series: [
-        {
-          name: "MoCo-style retrieval (cosine match)",
-          color: "#4ea1ff",
-          points: [[1, 0.827], [2, 0.647], [3, 0.455], [4, 0.277], [5, 0.227], [6, 0.13], [7, 0.09], [8, 0.048], [9, 0.023], [10, 0.017]]
-        },
-        {
-          name: "random-guess baseline (1/N)",
-          color: "#9aa7b4",
-          points: [[1, 0.5], [2, 0.25], [3, 0.125], [4, 0.0625], [5, 0.0312], [6, 0.0156], [7, 0.0078], [8, 0.0039], [9, 0.002], [10, 0.001]]
-        }
-      ]
-    }],
-    caption: "Reproducible scikit-learn proxy for MoCo's 'negatives from a queue' idea (NOT MoCo itself — real MoCo needs a GPU). On 16-D PCA embeddings of load_digits, each trial matches a noisy 'augmented' view of one image to its original among N-1 distractor negatives by cosine similarity; the x-axis is the exponent, so N = 2^x runs from 2 to 1024. Top-1 accuracy falls as N grows (matching gets harder with more negatives), but it stays far above the random-guess line 1/N — and that widening gap is the discriminative signal MoCo's large queue buys cheaply, without huge batches.",
+    question: "On real digit embeddings, how do you read a contrastive-retrieval curve — and how do you spot a collapsed encoder or an inconsistent queue from its shape?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy encoder: accuracy falls with more negatives but stays far above chance",
+        xlabel: "number of negatives N (as 2^x; x=1 means N=2, x=10 means N=1024)",
+        ylabel: "top-1 match accuracy (fraction correct, 0 to 1)",
+        series: [
+          {
+            name: "MoCo-style retrieval (cosine match)",
+            color: "#7ee787",
+            points: [[1, 0.827], [2, 0.647], [3, 0.455], [4, 0.277], [5, 0.227], [6, 0.13], [7, 0.09], [8, 0.048], [9, 0.023], [10, 0.017]]
+          },
+          {
+            name: "random-guess baseline (1/N)",
+            color: "#9aa7b4",
+            points: [[1, 0.5], [2, 0.25], [3, 0.125], [4, 0.0625], [5, 0.0312], [6, 0.0156], [7, 0.0078], [8, 0.0039], [9, 0.002], [10, 0.001]]
+          }
+        ],
+        interpret: "<b>The main chart, real numbers from load_digits.</b> The x-axis is the exponent: N = 2^x negatives, so x runs 1 to 10 meaning N runs 2 to 1024. The y-axis is the fraction of trials where the augmented query's nearest key (by cosine) is its true original. Both lines slide down to the right because picking the right key out of a bigger crowd is harder. What matters is the <b>gap</b>: the green line sits far above the grey 1/N chance line at every N. That gap is real discriminative signal — the encoder genuinely tells images apart — and it is exactly what MoCo's big queue buys you without needing huge batches."
+      },
+      {
+        type: "line",
+        title: "Collapsed encoder: retrieval sits on the chance line (illustrative)",
+        xlabel: "number of negatives N (as 2^x)",
+        ylabel: "top-1 match accuracy (fraction correct, 0 to 1)",
+        series: [
+          {
+            name: "collapsed encoder (all vectors nearly identical)",
+            color: "#ff7b72",
+            points: [[1, 0.51], [2, 0.26], [3, 0.13], [4, 0.07], [5, 0.033], [6, 0.017], [7, 0.008], [8, 0.004], [9, 0.002], [10, 0.001]]
+          },
+          {
+            name: "random-guess baseline (1/N)",
+            color: "#9aa7b4",
+            points: [[1, 0.5], [2, 0.25], [3, 0.125], [4, 0.0625], [5, 0.0312], [6, 0.0156], [7, 0.0078], [8, 0.0039], [9, 0.002], [10, 0.001]]
+          }
+        ],
+        interpret: "<b>Illustrative failure case.</b> Same axes as above, but here the red retrieval line lies right on top of the grey 1/N chance line. When you see this — accuracy no better than random guessing at every N — the encoder has <b>collapsed</b>: it maps every image to nearly the same vector, so cosine similarity carries no information and matching is pure luck. In MoCo this happens when the queue of negatives is too small or broken, so nothing forces the network to keep different images apart. The fix is a large, consistent queue of negatives."
+      },
+      {
+        type: "line",
+        title: "Inconsistent queue (momentum too low): a healthy curve sags toward chance (illustrative)",
+        xlabel: "number of negatives N (as 2^x)",
+        ylabel: "top-1 match accuracy (fraction correct, 0 to 1)",
+        series: [
+          {
+            name: "healthy reference (high momentum)",
+            color: "#7ee787",
+            points: [[1, 0.827], [2, 0.647], [3, 0.455], [4, 0.277], [5, 0.227], [6, 0.13], [7, 0.09], [8, 0.048], [9, 0.023], [10, 0.017]]
+          },
+          {
+            name: "inconsistent queue (stale keys from a lurching encoder)",
+            color: "#ffb454",
+            points: [[1, 0.69], [2, 0.45], [3, 0.27], [4, 0.14], [5, 0.085], [6, 0.045], [7, 0.022], [8, 0.011], [9, 0.005], [10, 0.0025]]
+          },
+          {
+            name: "random-guess baseline (1/N)",
+            color: "#9aa7b4",
+            points: [[1, 0.5], [2, 0.25], [3, 0.125], [4, 0.0625], [5, 0.0312], [6, 0.0156], [7, 0.0078], [8, 0.0039], [9, 0.002], [10, 0.001]]
+          }
+        ],
+        interpret: "<b>Illustrative in-between case.</b> The orange line still beats chance, but it sags well below the green healthy reference everywhere — and the gap over chance is much thinner. This is what a low momentum (say m=0.9) looks like: the key encoder lurches every step, so keys queued many batches ago were made by a very different network and no longer line up with today's query. The negatives become a noisy, stale jumble. You recognise it as 'better than random but disappointing'; the fix is to push the momentum up near 0.999 so the whole queue stays comparable."
+      }
+    ],
+    caption: "Reproducible scikit-learn proxy for MoCo's 'negatives from a queue' idea (NOT MoCo itself — real MoCo needs a GPU). The first chart uses real numbers; the collapsed and inconsistent-queue charts are illustrative shapes that show how the same retrieval curve looks when the encoder collapses or the queue goes stale.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits

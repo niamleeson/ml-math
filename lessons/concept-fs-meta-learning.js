@@ -172,16 +172,45 @@
   });
 
   window.CODEVIZ["fs-meta-learning"] = {
-    question: "On real handwritten digits, does a meta-learned starting point adapt to a brand-new task much faster than a random start?",
-    charts: [{
-      type: "line", title: "MAML-style fast adaptation on load_digits: meta-init vs cold start",
-      xlabel: "adaptation (gradient) steps on the new task", ylabel: "query error rate",
-      series: [
-        { name: "meta-init (warm start)", color: "#7ee787", points: [[0, 0.497], [1, 0.497], [2, 0.237], [3, 0.222], [4, 0.201], [5, 0.201], [6, 0.213], [8, 0.198], [10, 0.198], [12, 0.198], [14, 0.195], [16, 0.201], [18, 0.204], [20, 0.207]] },
-        { name: "random/zero init (cold start)", color: "#ff7b72", points: [[0, 0.497], [1, 0.503], [2, 0.503], [3, 0.497], [4, 0.497], [5, 0.491], [6, 0.467], [8, 0.414], [10, 0.385], [12, 0.367], [14, 0.352], [16, 0.334], [18, 0.325], [20, 0.325]] }
-      ]
-    }],
-    caption: "A MAML-style fast-adaptation demonstration on real load_digits images. The held-out task is '8 vs the rest', adapted from only 10 support examples. The meta-initialization (weights averaged across the other one-digit-vs-rest tasks) drops the query error to ~20% within 4-5 gradient steps; the cold start from zero is still ~33% at step 20. Same task, same data, same step size — only the starting point differs.",
+    question: "How do you read a fast-adaptation curve — and tell a healthy meta-init from one that overfits, mismatches, or diverges?",
+    charts: [
+      {
+        type: "line", title: "Healthy: meta-init adapts fast, cold start lags",
+        xlabel: "adaptation (gradient) steps on the new task", ylabel: "query error rate (lower = better)",
+        series: [
+          { name: "meta-init (warm start)", color: "#7ee787", points: [[0, 0.497], [1, 0.497], [2, 0.237], [3, 0.222], [4, 0.201], [5, 0.201], [6, 0.213], [8, 0.198], [10, 0.198], [12, 0.198], [14, 0.195], [16, 0.201], [18, 0.204], [20, 0.207]] },
+          { name: "random/zero init (cold start)", color: "#ff7b72", points: [[0, 0.497], [1, 0.503], [2, 0.503], [3, 0.497], [4, 0.497], [5, 0.491], [6, 0.467], [8, 0.414], [10, 0.385], [12, 0.367], [14, 0.352], [16, 0.334], [18, 0.325], [20, 0.325]] }
+        ],
+        interpret: "<b>Real numbers</b> from load_digits, held-out task '8 vs the rest', 10 support examples. The x-axis is how many gradient steps you take on the brand-new task; the y-axis is error on held-out query images. <b>Read the green line:</b> it dives from 50% to ~20% by step 4-5 and stays flat — the meta-init was already a great base camp. The red cold start crawls and is still ~33% at step 20. The big gap between the two lines, especially at the left, is the whole payoff of meta-learning: <b>fast adaptation from a learned start.</b>"
+      },
+      {
+        type: "line", title: "Meta-overfitting: warm start dips then climbs back up",
+        xlabel: "adaptation (gradient) steps on the new task", ylabel: "query error rate (lower = better)",
+        series: [
+          { name: "meta-init (warm start)", color: "#ffb454", points: [[0, 0.50], [1, 0.36], [2, 0.27], [3, 0.23], [4, 0.22], [5, 0.24], [6, 0.27], [8, 0.31], [10, 0.35], [12, 0.39], [14, 0.42], [16, 0.45], [18, 0.47], [20, 0.49]] },
+          { name: "random/zero init (cold start)", color: "#ff7b72", points: [[0, 0.50], [1, 0.50], [2, 0.49], [3, 0.49], [4, 0.48], [5, 0.47], [6, 0.45], [8, 0.41], [10, 0.38], [12, 0.36], [14, 0.35], [16, 0.34], [18, 0.33], [20, 0.33]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> The green/orange warm-start curve reaches a good low point around step 4 but then turns back up — extra inner steps make query error <i>worse</i>, not better. That U-shape means the few support examples are being memorized: the adapted weights fit the support set but stop generalizing to the query set. <b>How to recognise it:</b> a clear minimum followed by a rising tail. <b>What to do:</b> use fewer inner steps (early-stop adaptation), and match the train-time step count at test time — a common cause is adapting far longer at deployment than during meta-training."
+      },
+      {
+        type: "line", title: "Task mismatch: warm start no better than cold",
+        xlabel: "adaptation (gradient) steps on the new task", ylabel: "query error rate (lower = better)",
+        series: [
+          { name: "meta-init (warm start)", color: "#ffb454", points: [[0, 0.50], [1, 0.49], [2, 0.48], [3, 0.47], [4, 0.46], [5, 0.45], [6, 0.44], [8, 0.41], [10, 0.39], [12, 0.37], [14, 0.36], [16, 0.35], [18, 0.34], [20, 0.34]] },
+          { name: "random/zero init (cold start)", color: "#ff7b72", points: [[0, 0.50], [1, 0.50], [2, 0.49], [3, 0.49], [4, 0.48], [5, 0.47], [6, 0.45], [8, 0.42], [10, 0.40], [12, 0.38], [14, 0.37], [16, 0.36], [18, 0.35], [20, 0.35]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> The two lines sit almost on top of each other and both descend slowly — the meta-init gives no head start. This is the signature of <b>task-distribution mismatch:</b> the new task does not resemble the tasks the start was meta-trained on, so the learned base camp is in the wrong place. <b>How to recognise it:</b> warm and cold curves overlap; no early gap. <b>What to do:</b> make meta-training tasks resemble the deployment task; if they genuinely differ, plain transfer learning may serve just as well."
+      },
+      {
+        type: "line", title: "Diverging: inner step size too large, error blows up",
+        xlabel: "adaptation (gradient) steps on the new task", ylabel: "query error rate (lower = better)",
+        series: [
+          { name: "meta-init, alpha too big", color: "#ff7b72", points: [[0, 0.50], [1, 0.34], [2, 0.41], [3, 0.55], [4, 0.48], [5, 0.62], [6, 0.57], [8, 0.66], [10, 0.61], [12, 0.69], [14, 0.64], [16, 0.71], [18, 0.67], [20, 0.73]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> A single jagged curve that bounces up and down and trends <i>worse than the 50% starting point</i>. The inner step size alpha is too large, so each gradient step overshoots the minimum instead of settling into it. <b>How to recognise it:</b> oscillation plus an overall upward (worsening) trend, often ending above where it began. <b>What to do:</b> shrink alpha; tune the inner and outer learning rates together, starting small — a bad alpha/beta pair gives exactly this divergence."
+      }
+    ],
+    caption: "Reading a MAML fast-adaptation curve: x = gradient steps on the brand-new task, y = query error. The first chart is the real, healthy result (load_digits, '8 vs the rest', 10 support examples); the rest are illustrative failure shapes a practitioner meets — meta-overfitting (U-shape), task mismatch (warm = cold), and divergence (alpha too big).",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.linear_model import LogisticRegression

@@ -230,20 +230,54 @@ print("abstain / defer rate:", round(defer.mean(), 3))`
   };
 
   window.CODEVIZ["skill-limitations"] = {
-    question: "When the model says it's X% sure, is it right X% of the time?",
+    question: "When the model says it's X% sure, is it right X% of the time? Here is the reliability diagram you want to see — plus the over- and under-confident shapes you will actually meet.",
     charts: [
       {
         type: "line",
-        title: "Reliability diagram — predicted probability vs. observed frequency (breast cancer)",
+        title: "Well calibrated: model curve hugs the diagonal",
         xlabel: "mean predicted probability (bin)",
         ylabel: "observed frequency of positives",
         series: [
-          { name: "perfect calibration", color: "#9aa3ad", points: [[0, 0], [1, 1]] },
-          { name: "model", color: "#4f8ef7", points: [[0.05, 0.02], [0.18, 0.11], [0.34, 0.31], [0.52, 0.49], [0.67, 0.71], [0.81, 0.86], [0.94, 0.97]] }
-        ]
+          { name: "perfect calibration", color: "#9aa7b4", points: [[0, 0], [1, 1]] },
+          { name: "model", color: "#7ee787", points: [[0.05, 0.02], [0.18, 0.11], [0.34, 0.31], [0.52, 0.49], [0.67, 0.71], [0.81, 0.86], [0.94, 0.97]] }
+        ],
+        interpret: "Both axes are probabilities. The x-axis is what the model CLAIMED (its predicted probability, averaged within a bin); the y-axis is what actually HAPPENED (the fraction of those cases that were truly positive). The grey diagonal is perfect calibration — claim equals reality. Read each green point against the diagonal: here every point sits right on it, so when the model says 0.7 it really is positive about 70% of the time. This is the healthy result — its stated confidences are trustworthy. (Real run: logistic regression on a held-out split of load_breast_cancer; ECE about 0.03, lower is better.)"
+      },
+      {
+        type: "line",
+        title: "Over-confident: curve sags BELOW the diagonal",
+        xlabel: "mean predicted probability (bin)",
+        ylabel: "observed frequency of positives",
+        series: [
+          { name: "perfect calibration", color: "#9aa7b4", points: [[0, 0], [1, 1]] },
+          { name: "model", color: "#ff7b72", points: [[0.05, 0.01], [0.2, 0.08], [0.4, 0.22], [0.6, 0.38], [0.8, 0.6], [0.95, 0.78]] }
+        ],
+        interpret: "Same axes (illustrative shape). Now the red curve sags BELOW the diagonal: at a predicted 0.8 the observed frequency is only about 0.6. Read the vertical gap — claimed is higher than real, so the model is OVER-confident. This is common for boosted trees and deep nets. A decision thresholded on probability will fire too eagerly, spending budget or auto-actioning on cases that are not as sure as advertised. Fix: recalibrate with isotonic regression or Platt scaling on held-out data, then re-plot to pull the curve back onto the diagonal."
+      },
+      {
+        type: "line",
+        title: "Under-confident: curve rides ABOVE the diagonal",
+        xlabel: "mean predicted probability (bin)",
+        ylabel: "observed frequency of positives",
+        series: [
+          { name: "perfect calibration", color: "#9aa7b4", points: [[0, 0], [1, 1]] },
+          { name: "model", color: "#ffb454", points: [[0.05, 0.18], [0.2, 0.4], [0.4, 0.62], [0.6, 0.78], [0.8, 0.92], [0.95, 0.99]] }
+        ],
+        interpret: "Same axes (illustrative shape). Here the orange curve rides ABOVE the diagonal: at a predicted 0.4 the truth shows up about 62% of the time. The model is UNDER-confident — it is actually right more often than it admits. Less alarming than over-confidence, but still wrong: you will defer or abstain too much, throwing away cases the model could have called. The same recalibration step (isotonic / Platt) maps these understated probabilities back up onto the diagonal."
+      },
+      {
+        type: "bars",
+        title: "Conformal set size: most cases confident, some abstain",
+        xlabel: "prediction set size (number of labels)",
+        ylabel: "share of test cases",
+        labels: ["1 label (confident)", "2 labels (abstain)", "0 labels (out of scope)"],
+        values: [0.86, 0.12, 0.02],
+        valueLabels: ["86%", "12%", "2%"],
+        colors: ["#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "A different limitation lens (illustrative): instead of a single label, conformal prediction outputs a SET of labels guaranteed to contain the truth at the target rate. The bar height is the share of test cases at each set size. A size-1 set (green, 86%) is a confident single call. A size-2 set (orange, 12%) means the model cannot separate two labels — that is the built-in signal to ABSTAIN and defer to a human. A size-0 set (red, 2%) means nothing cleared the threshold — the input likely falls outside the validated scope. Read the orange+red slice as your defer rate: track it as a first-class metric."
       }
     ],
-    caption: "Logistic-regression probabilities on a held-out split of load_breast_cancer, binned into deciles. The blue curve hugs the grey diagonal, so the model is well calibrated: its stated confidences match observed frequencies. Computed ECE (Expected Calibration Error) over the populated bins is about 0.03 (lower is better).",
+    caption: "Four lenses on what a model does and doesn't know. Three reliability diagrams (claimed probability on x, observed frequency on y) show the calibration shapes you meet: on the diagonal = trustworthy, sagging below = over-confident, riding above = under-confident — fix the last two with isotonic/Platt recalibration. The bar chart shows conformal set sizes: size-1 is a confident call, size-2 means abstain, size-0 means out of scope. The code below reproduces the main (well-calibrated) reliability diagram on real data.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split

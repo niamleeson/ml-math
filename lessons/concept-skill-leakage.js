@@ -237,18 +237,46 @@ for j in range(X.shape[1]):
   };
 
   window.CODEVIZ["skill-leakage"] = {
-    question: "Can a single feature's standalone AUC expose a leak? We inject one deliberately leaky feature (label + small noise) into the real breast-cancer data and compare its standalone AUC to genuine features.",
-    charts: [{
-      type: "bars",
-      title: "Single-feature AUC on load_breast_cancer (one feature is a planted leak)",
-      xlabel: "feature",
-      ylabel: "standalone AUC",
-      labels: ["leaky_feature", "worst perimeter", "worst concave pts", "mean texture", "mean smoothness", "symmetry error"],
-      values: [1.000, 0.975, 0.967, 0.776, 0.722, 0.555],
-      valueLabels: ["1.000", "0.975", "0.967", "0.776", "0.722", "0.555"],
-      colors: ["#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-    }],
-    caption: "Real run on load_breast_cancer (569 samples, 30 real features). We DELIBERATELY injected one leaky feature equal to the label plus small Gaussian noise to demonstrate the signature — it is the orange bar. Its standalone AUC (Area Under the Curve) is a perfect 1.000, standing clearly above even the strongest genuine feature (worst perimeter, 0.975). A lone feature that separates the classes almost perfectly is the classic fingerprint of target-derived leakage: in a real audit you would trace that column back to its source and remove it.",
+    question: "How do leak-detection diagrams actually look — the smoking gun versus an all-clear? Here is the canonical single-feature AUC scan plus the other shapes you will meet on a real audit.",
+    charts: [
+      {
+        type: "bars",
+        title: "Leak present: one feature's standalone AUC pins at 1.000",
+        xlabel: "feature",
+        ylabel: "standalone AUC (0.5 = useless, 1.0 = perfect)",
+        labels: ["leaky_feature", "worst perimeter", "worst concave pts", "mean texture", "mean smoothness", "symmetry error"],
+        values: [1.000, 0.975, 0.967, 0.776, 0.722, 0.555],
+        valueLabels: ["1.000", "0.975", "0.967", "0.776", "0.722", "0.555"],
+        colors: ["#ff7b72", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "Each bar is ONE feature used alone to predict the label; the height is its AUC — the chance it ranks a random positive above a random negative (0.5 is a coin flip, 1.0 is a perfect wall). Read it left to right looking for a bar that towers near 1.0 and detaches from the pack: the red <b>leaky_feature</b> at 1.000 sits clearly above the best genuine feature (worst perimeter, 0.975). That lone near-perfect bar is the classic fingerprint of target-derived leakage — trace that column back to its source query and remove it before you trust any score. (Real run on load_breast_cancer; we deliberately planted the leak = label + small noise.)"
+      },
+      {
+        type: "bars",
+        title: "Healthy: a smooth ladder, no single feature dominates",
+        xlabel: "feature",
+        ylabel: "standalone AUC (0.5 = useless, 1.0 = perfect)",
+        labels: ["worst perimeter", "worst concave pts", "worst radius", "mean texture", "mean smoothness", "symmetry error"],
+        values: [0.975, 0.967, 0.958, 0.776, 0.722, 0.555],
+        valueLabels: ["0.975", "0.967", "0.958", "0.776", "0.722", "0.555"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Same chart type, all-clear case (illustrative — the real features of breast-cancer with the planted leak removed). The bars form a gentle ladder that tops out below 1.0 and tapers off; no bar detaches and pins at the ceiling. This is what you WANT to see: strong features are allowed (0.975 is fine for a genuinely predictive measurement), but nothing is suspiciously perfect. Read the GAP between the top bar and 1.0 — a healthy scan leaves daylight there. If every bar were instead jammed against 1.0, suspect leakage smeared across many columns."
+      },
+      {
+        type: "roc",
+        auc: 0.52,
+        title: "Adversarial validation, healthy: detector can't tell train from test",
+        points: [[0, 0], [0.25, 0.27], [0.5, 0.52], [0.75, 0.77], [1, 1]],
+        interpret: "Different detector: stack train (label 0) and test (label 1) rows and train a classifier to tell which is which; this ROC curve is how well it does. The diagonal is pure guessing (AUC 0.5). Here the curve hugs that diagonal (AUC about 0.52, illustrative) — the detector CANNOT separate train from test, so the two splits come from the same distribution. That is the healthy result: no distribution leak or shift, your holdout is a fair test."
+      },
+      {
+        type: "roc",
+        auc: 0.97,
+        title: "Adversarial validation, leak: detector separates train from test",
+        points: [[0, 0], [0.03, 0.55], [0.08, 0.82], [0.2, 0.94], [0.5, 0.99], [1, 1]],
+        interpret: "Same train-vs-test detector, the alarm case (illustrative). Now the curve bows hard to the top-left corner (AUC about 0.97): the classifier easily tells train rows from test rows, which means the two splits do NOT look alike — a distribution leak or shift. Read the detector's own feature importances to find WHICH columns drifted; those are your suspects. An offline score built on splits this separable will not survive production."
+      }
+    ],
+    caption: "Three lenses on one audit. The bar charts scan each feature alone (a lone bar pinned at 1.0 = a planted/target-derived leak; a smooth ladder under 1.0 = healthy). The two ROC curves are adversarial validation — a detector trying to separate train from test: hugging the diagonal is healthy, bowing to the top-left is a distribution leak. The code below reproduces the main (leak-present) bar chart on real data.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.metrics import roc_auc_score

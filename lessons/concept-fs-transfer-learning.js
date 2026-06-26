@@ -159,18 +159,54 @@
   });
 
   window.CODEVIZ["fs-transfer-learning"] = {
-    question: "On real digit images, does reusing a frozen pretrained representation beat training from scratch when you only have a few labels per class?",
-    charts: [{
-      type: "line",
-      title: "Few-shot accuracy on load_digits: transfer (frozen features) vs from scratch",
-      xlabel: "labeled examples per class",
-      ylabel: "test accuracy",
-      series: [
-        { name: "transfer (frozen features)", color: "#7ee787", points: [[1, 0.907], [2, 0.945], [5, 0.962], [10, 0.972], [20, 0.977]] },
-        { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.703], [2, 0.807], [5, 0.895], [10, 0.936], [20, 0.951]] }
-      ]
-    }],
-    caption: "Real run on load_digits (1797 handwritten 8x8 images). A small MLP is pretrained on an abundant source pool and its hidden layer is FROZEN as a feature extractor. A new few-shot classifier reuses those frozen features (green) versus a logistic model trained directly on raw pixels (orange). At just 1 label per class transfer already hits 91% while from-scratch is at 70%; from-scratch only catches up near 10-20 labels.",
+    question: "How do you READ a transfer-vs-scratch accuracy curve — and how do you spot the cases where the pretrained backbone helps a lot, helps not at all, or actively hurts?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy transfer: frozen features win most when labels are scarce (real load_digits)",
+        xlabel: "labeled examples per class",
+        ylabel: "test accuracy",
+        series: [
+          { name: "transfer (frozen features)", color: "#7ee787", points: [[1, 0.907], [2, 0.945], [5, 0.962], [10, 0.972], [20, 0.977]] },
+          { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.703], [2, 0.807], [5, 0.895], [10, 0.936], [20, 0.951]] }
+        ],
+        interpret: "<b>Read the x-axis left-to-right as 'how much data you have':</b> 1 label per class on the far left, 20 on the right. The y-axis is test accuracy. The <b>green</b> line (transfer, frozen backbone) starts high (91%) even at 1 label; the <b>orange</b> line (from scratch) starts low (70%). The vertical <b>gap between the lines is the value of the pretrained backbone</b> — it is biggest at the left (tiny data) and shrinks as both lines climb toward the right. <b>Conclusion:</b> reuse the backbone when labels are scarce; the payoff fades once you have enough data to learn features from scratch."
+      },
+      {
+        type: "line",
+        title: "No-gain transfer: the backbone is irrelevant, lines overlap (illustrative)",
+        xlabel: "labeled examples per class",
+        ylabel: "test accuracy",
+        series: [
+          { name: "transfer (frozen features)", color: "#7ee787", points: [[1, 0.74], [2, 0.82], [5, 0.90], [10, 0.94], [20, 0.96]] },
+          { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.72], [2, 0.81], [5, 0.89], [10, 0.94], [20, 0.96]] }
+        ],
+        interpret: "<b>Illustrative.</b> Here the two lines sit almost on top of each other at every x. The gap is ~0, so the frozen features buy you nothing over raw pixels. <b>How to recognise it:</b> green and orange are tangled together with no consistent vertical separation. <b>What it means:</b> the source task taught features that don't transfer to this target — the representation isn't wrong, just useless here. Don't pay the complexity cost of transfer; a from-scratch baseline is just as good."
+      },
+      {
+        type: "line",
+        title: "Negative transfer: the pretrained features HURT (illustrative)",
+        xlabel: "labeled examples per class",
+        ylabel: "test accuracy",
+        series: [
+          { name: "transfer (frozen features)", color: "#ff7b72", points: [[1, 0.55], [2, 0.60], [5, 0.66], [10, 0.71], [20, 0.74]] },
+          { name: "from scratch (raw pixels)", color: "#ffb454", points: [[1, 0.70], [2, 0.80], [5, 0.89], [10, 0.93], [20, 0.95]] }
+        ],
+        interpret: "<b>Illustrative.</b> Now the <b>red</b> transfer line sits BELOW the orange from-scratch line everywhere — a <b>negative gap</b>. <b>How to recognise it:</b> the line you expected to be on top (transfer) is instead the lower one, and it stays lower as data grows. <b>What it means:</b> the source domain is too unlike the target (think natural photos pretraining a medical-scan task), so the frozen features actively mislead the head. This is <b>negative transfer</b> — the reason you always run a from-scratch baseline before trusting a backbone."
+      },
+      {
+        type: "line",
+        title: "Catastrophic forgetting: too-big a fine-tuning step wrecks the backbone (illustrative)",
+        xlabel: "fine-tuning step",
+        ylabel: "accuracy on the ORIGINAL general task",
+        series: [
+          { name: "small learning rate (safe)", color: "#7ee787", points: [[0, 0.95], [1, 0.95], [2, 0.94], [3, 0.94], [4, 0.94], [5, 0.93]] },
+          { name: "large learning rate (forgetting)", color: "#ff7b72", points: [[0, 0.95], [1, 0.78], [2, 0.55], [3, 0.40], [4, 0.33], [5, 0.30]] }
+        ],
+        interpret: "<b>Illustrative.</b> This is a different x-axis: training steps during fine-tuning, not data amount. The y-axis tracks accuracy on the model's ORIGINAL general skill. The <b>green</b> line (tiny learning rate) stays flat near 95% — old knowledge survives. The <b>red</b> line (big learning rate) collapses fast as big steps shove the backbone weights far from their good spot. <b>How to recognise it:</b> a steep drop in old-task accuracy right after fine-tuning begins. <b>What it means:</b> <b>catastrophic forgetting</b> — the fix is a tiny learning rate, freezing lower layers, or PEFT."
+      }
+    ],
+    caption: "Read each curve as transfer vs from-scratch: a positive gap = the backbone helps (healthy), ~0 gap = irrelevant, negative gap = it hurts (negative transfer). The last chart switches axes to show what too-large a fine-tuning step does to old skills.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.neural_network import MLPClassifier

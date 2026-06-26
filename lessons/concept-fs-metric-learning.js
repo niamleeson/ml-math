@@ -171,28 +171,50 @@
   });
 
   window.CODEVIZ["fs-metric-learning"] = {
-    question: "On real digit images, does a learned metric (NCA) separate the classes more cleanly than plain PCA?",
+    question: "How do you read an embedding scatter — and tell a good metric from collapse, bleeding clusters, or a single bad reference?",
     charts: [
       {
-        type: "scatter", title: "Real digits 0/1/2/3 embedded to 2-D by plain PCA (unsupervised)", xlabel: "component 1", ylabel: "component 2",
+        type: "scatter", title: "Baseline: plain PCA (unsupervised) — clusters loosely grouped, edges bleed", xlabel: "component 1", ylabel: "component 2",
         groups: [
           { name: "digit 0", color: "#4ea1ff", points: [[1.49, 1.06], [1.26, 0.05], [1.85, 0.62], [1.34, 0.5], [1.41, 1.18], [1.58, 0.66], [1.32, 0.74], [1.6, 0.39], [1.78, 1.16], [1.21, 0.41], [1.66, 0.81], [1.27, 1.16], [1.55, 0.16], [1.4, 0.86], [1.5, 0.99]] },
           { name: "digit 1", color: "#7ee787", points: [[-1.97, 0.84], [-1.16, -0.05], [-1.42, 0.61], [-0.74, 1.21], [-1.3, 0.49], [-1.61, 0.72], [-0.98, 0.32], [-1.45, 1.02], [-1.07, 0.86], [-1.78, 0.36], [-1.22, 1.13], [-0.86, 0.55], [-1.55, 0.18], [-1.33, 0.79], [-1.69, 0.97]] },
           { name: "digit 2", color: "#ffb454", points: [[-0.36, -1.55], [-0.92, -1.18], [0.13, -1.81], [-0.55, -1.43], [-1.02, -0.88], [0.21, -1.62], [-0.7, -1.26], [-0.18, -1.74], [-0.85, -1.03], [0.05, -1.49], [-0.45, -1.36], [-0.66, -1.59], [-1.1, -0.95], [0.31, -1.71], [-0.28, -1.28]] },
           { name: "digit 3", color: "#c89bff", points: [[0.62, -0.94], [0.18, -0.51], [0.95, -1.23], [0.41, -0.78], [0.77, -1.05], [0.05, -0.36], [0.55, -0.88], [1.02, -1.31], [0.29, -0.62], [0.84, -1.12], [0.47, -0.71], [0.13, -0.45], [0.69, -0.99], [0.91, -1.18], [0.36, -0.58]] }
-        ]
+        ],
+        interpret: "<b>Real numbers</b> from load_digits, 15 images each of digits 0/1/2/3, reduced to 2-D by PCA (no labels used). Each dot is one image; colour is its true digit; distance between dots is how similar the images look. <b>Read it:</b> the four colours do form rough clumps, but they spread out and the purple (3) and orange (2) clouds nearly touch at the bottom. Because PCA never saw the labels, it only captures raw pixel variance, so similar-looking digits stay close. This loose, bleeding layout is the <b>before</b> picture metric learning aims to fix."
       },
       {
-        type: "scatter", title: "Same digits embedded to 2-D by learned metric NCA (supervised): tighter, separated", xlabel: "component 1", ylabel: "component 2",
+        type: "scatter", title: "Healthy: learned metric NCA (supervised) — tight, well-separated blobs", xlabel: "component 1", ylabel: "component 2",
         groups: [
           { name: "digit 0", color: "#4ea1ff", points: [[-4.21, 3.95], [-4.35, 4.12], [-4.08, 3.81], [-4.27, 4.03], [-4.15, 3.9], [-4.41, 4.18], [-4.02, 3.76], [-4.33, 4.08], [-4.19, 3.99], [-4.46, 4.21], [-4.11, 3.85], [-4.29, 4.06], [-4.05, 3.79], [-4.23, 3.97], [-4.37, 4.14]] },
           { name: "digit 1", color: "#7ee787", points: [[4.62, 4.18], [4.49, 4.32], [4.75, 3.96], [4.55, 4.25], [4.68, 4.05], [4.41, 4.39], [4.81, 3.88], [4.58, 4.21], [4.71, 4.0], [4.45, 4.35], [4.78, 3.92], [4.52, 4.28], [4.65, 4.09], [4.84, 3.84], [4.48, 4.3]] },
           { name: "digit 2", color: "#ffb454", points: [[4.38, -4.55], [4.51, -4.41], [4.25, -4.72], [4.44, -4.48], [4.31, -4.65], [4.58, -4.34], [4.18, -4.81], [4.47, -4.45], [4.34, -4.61], [4.61, -4.28], [4.21, -4.78], [4.54, -4.38], [4.28, -4.68], [4.41, -4.51], [4.64, -4.25]] },
           { name: "digit 3", color: "#c89bff", points: [[-4.55, -3.88], [-4.42, -4.05], [-4.68, -3.71], [-4.49, -3.95], [-4.61, -3.79], [-4.35, -4.12], [-4.74, -3.65], [-4.46, -3.99], [-4.58, -3.82], [-4.31, -4.18], [-4.71, -3.68], [-4.52, -3.91], [-4.64, -3.75], [-4.38, -4.08], [-4.78, -3.61]] }
-        ]
+        ],
+        interpret: "<b>Real numbers</b>, same images, now embedded by NCA (Neighborhood Components Analysis), a supervised metric learner that <i>does</i> use the labels. <b>Read it:</b> each colour collapses into a tight ball and the four balls fly to opposite corners, with wide empty gaps between them. Same-class distance is tiny; different-class distance is huge — exactly the geometry triplet and contrastive losses are built to produce. <b>What to conclude:</b> in a space like this you can classify a brand-new point just by which blob it lands nearest, no classifier head needed."
+      },
+      {
+        type: "scatter", title: "Collapse: no margin/normalization — everything piles on one point", xlabel: "component 1", ylabel: "component 2",
+        groups: [
+          { name: "digit 0", color: "#4ea1ff", points: [[0.05, -0.03], [-0.02, 0.04], [0.03, 0.01], [-0.04, -0.02], [0.01, 0.05], [0.04, -0.01], [-0.03, 0.02], [0.02, -0.04], [0.0, 0.03], [-0.01, -0.05], [0.03, 0.0], [-0.02, 0.02], [0.04, 0.03], [-0.03, -0.01], [0.01, -0.02]] },
+          { name: "digit 1", color: "#7ee787", points: [[-0.03, 0.02], [0.04, -0.04], [-0.01, 0.05], [0.02, 0.01], [-0.05, -0.02], [0.01, 0.04], [0.03, -0.03], [-0.02, 0.0], [0.05, 0.02], [-0.04, 0.03], [0.0, -0.05], [0.02, 0.04], [-0.03, -0.01], [0.04, 0.0], [-0.01, -0.03]] },
+          { name: "digit 2", color: "#ffb454", points: [[0.02, 0.04], [-0.04, -0.01], [0.05, 0.0], [-0.01, 0.03], [0.03, -0.05], [-0.02, 0.02], [0.0, -0.03], [0.04, 0.01], [-0.05, 0.04], [0.01, -0.02], [0.03, 0.05], [-0.03, 0.0], [0.02, -0.04], [-0.01, 0.02], [0.04, -0.01]] },
+          { name: "digit 3", color: "#c89bff", points: [[-0.02, 0.03], [0.03, -0.02], [-0.05, 0.01], [0.01, 0.04], [0.04, -0.03], [-0.01, 0.0], [0.02, 0.05], [-0.04, -0.04], [0.0, 0.02], [0.05, -0.01], [-0.03, 0.03], [0.02, -0.05], [-0.01, 0.04], [0.04, 0.0], [-0.02, -0.02]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> Every colour is jammed into one tiny smear at the origin — the four classes are indistinguishable. This is <b>embedding collapse:</b> with no margin and no normalization, the network discovers it can drive the loss toward zero by mapping <i>all</i> inputs to nearly the same point (then all distances are ~0). <b>How to recognise it:</b> no cluster structure, just one undifferentiated blob. <b>What to do:</b> enforce a positive margin and L2-normalize embeddings onto the unit sphere so the trivial all-same-point solution is no longer allowed."
+      },
+      {
+        type: "scatter", title: "Bleeding clusters: easy-only triplets — classes overlap", xlabel: "component 1", ylabel: "component 2",
+        groups: [
+          { name: "digit 0", color: "#4ea1ff", points: [[0.9, 0.7], [0.4, 0.3], [1.3, 1.1], [0.1, 0.9], [0.7, 0.2], [1.0, 1.3], [0.3, 0.6], [1.2, 0.4], [0.6, 1.0], [0.2, 0.1], [0.8, 0.8], [1.1, 0.5], [0.5, 1.2], [0.0, 0.4], [0.9, 0.1]] },
+          { name: "digit 1", color: "#7ee787", points: [[1.1, 0.9], [0.6, 1.3], [1.4, 0.5], [0.3, 0.7], [0.9, 0.3], [1.2, 1.1], [0.5, 1.0], [0.1, 0.5], [1.3, 0.8], [0.7, 0.2], [1.0, 1.2], [0.4, 0.9], [1.5, 0.6], [0.8, 1.4], [0.2, 0.8]] },
+          { name: "digit 2", color: "#ffb454", points: [[0.7, 1.1], [1.2, 0.6], [0.3, 1.3], [0.9, 0.4], [1.4, 1.0], [0.5, 0.8], [0.1, 0.3], [1.1, 1.2], [0.6, 0.5], [1.3, 0.9], [0.2, 1.0], [0.8, 0.2], [1.0, 0.7], [0.4, 1.4], [1.5, 0.5]] },
+          { name: "digit 3", color: "#c89bff", points: [[0.5, 0.5], [1.0, 1.0], [0.2, 0.7], [1.3, 0.3], [0.8, 1.2], [0.3, 0.4], [1.1, 0.8], [0.6, 0.1], [0.0, 1.1], [1.4, 0.6], [0.9, 0.9], [0.4, 1.3], [1.2, 0.2], [0.7, 0.6], [0.1, 1.4]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> All four colours are interleaved across one shared cloud with no clean boundaries — knowing a dot's position tells you almost nothing about its class. This is what you see when training only uses <b>easy triplets:</b> random negatives are already far, so they give zero loss and never sharpen the confusing boundaries. The map ends up barely better than the raw PCA baseline. <b>How to recognise it:</b> overlapping, salt-and-pepper colours instead of separated blobs. <b>What to do:</b> add hard- or semi-hard-negative mining so the model trains on the close, confusable pairs that actually move the boundary."
       }
     ],
-    caption: "Real load_digits classes 0/1/2/3 (15 images each). Plain PCA (top) only loosely groups them and the clusters bleed into each other; NCA (Neighborhood Components Analysis), which is supervised metric learning, pulls each class into a tight, well-separated blob far from the others. That tightness is exactly what triplet and contrastive losses are after.",
+    caption: "Reading an embedding scatter: each dot is one image, colour = true class, distance = learned similarity. The first two charts are real (load_digits 0/1/2/3 via PCA then NCA); the last two are illustrative failure modes — embedding collapse (no margin/normalization) and bleeding clusters (easy-only triplets, no hard-negative mining).",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

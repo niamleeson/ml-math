@@ -201,19 +201,46 @@
   });
 
   window.CODEVIZ["fs-zero-shot"] = {
-    question: "Can a model classify handwritten 8s and 9s it NEVER saw as labels, just by matching them to a written description of each digit?",
-    charts: [{
-      type: "scatter",
-      title: "Held-out digits 8 and 9 land nearest their own attribute description (zero-shot)",
-      xlabel: "cosine similarity to the 8-description",
-      ylabel: "cosine similarity to the 9-description",
-      groups: [
-        { name: "true 8 (never trained)", color: "#4ea1ff", points: [[0.472, 0.004], [0.311, 0.065], [0.575, -0.018], [0.235, -0.382], [0.339, 0.218], [0.529, 0.541], [0.917, 0.643], [0.572, 0.364], [-0.061, -0.07], [-0.264, 0.253], [0.666, 0.345], [0.268, -0.606], [0.16, -0.468], [0.964, 0.223], [0.479, -0.041], [0.66, 0.363], [-0.457, -0.624], [-0.087, 0.188], [0.054, -0.417], [0.56, 0.051], [0.764, 0.754], [0.418, 0.901]] },
-        { name: "true 9 (never trained)", color: "#7ee787", points: [[0.071, 0.736], [0.233, 0.961], [-0.287, 0.345], [0.604, 0.776], [0.177, 0.653], [0.457, 0.57], [0.656, 0.677], [-0.063, 0.689], [0.329, 0.937], [-0.032, 0.863], [0.038, 0.802], [0.495, 0.85], [0.439, 0.909], [-0.206, 0.748], [0.338, 0.853], [0.16, 0.81], [-0.053, 0.654], [0.117, 0.76], [0.515, 0.902], [0.181, 0.893], [0.096, 0.814], [0.44, 0.991]] }
-      ],
-      lines: [{ color: "#9aa7b4", dash: true, points: [[-0.5, -0.5], [1.0, 1.0]] }]
-    }],
-    caption: "Approach B (fully reproducible, sklearn): a Ridge regressor trained ONLY on digit classes 0-7 maps each image into a 6-D attribute space (number of enclosed holes, top/bottom ink balance, left/right balance, central stroke, total ink, vertical center-of-mass). The held-out classes 8 and 9 are then classified by nearest class-description via cosine similarity — never having seen 8 or 9 as labels. Most true-8 images (blue) sit below the dashed diagonal (more similar to the 8-description) and most true-9 images (green) sit above it, giving 81.4% zero-shot accuracy on these two unseen classes.",
+    question: "How do you READ a zero-shot similarity plot — and how do you tell a clean split from descriptions that overlap or quietly collapse onto each other?",
+    charts: [
+      {
+        type: "scatter",
+        title: "Healthy zero-shot: unseen 8s and 9s split across the diagonal (real load_digits)",
+        xlabel: "cosine similarity to the 8-description",
+        ylabel: "cosine similarity to the 9-description",
+        groups: [
+          { name: "true 8 (never trained)", color: "#4ea1ff", points: [[0.472, 0.004], [0.311, 0.065], [0.575, -0.018], [0.235, -0.382], [0.339, 0.218], [0.529, 0.541], [0.917, 0.643], [0.572, 0.364], [-0.061, -0.07], [-0.264, 0.253], [0.666, 0.345], [0.268, -0.606], [0.16, -0.468], [0.964, 0.223], [0.479, -0.041], [0.66, 0.363], [-0.457, -0.624], [-0.087, 0.188], [0.054, -0.417], [0.56, 0.051], [0.764, 0.754], [0.418, 0.901]] },
+          { name: "true 9 (never trained)", color: "#7ee787", points: [[0.071, 0.736], [0.233, 0.961], [-0.287, 0.345], [0.604, 0.776], [0.177, 0.653], [0.457, 0.57], [0.656, 0.677], [-0.063, 0.689], [0.329, 0.937], [-0.032, 0.863], [0.038, 0.802], [0.495, 0.85], [0.439, 0.909], [-0.206, 0.748], [0.338, 0.853], [0.16, 0.81], [-0.053, 0.654], [0.117, 0.76], [0.515, 0.902], [0.181, 0.893], [0.096, 0.814], [0.44, 0.991]] }
+        ],
+        lines: [{ color: "#9aa7b4", dash: true, points: [[-0.5, -0.5], [1.0, 1.0]] }],
+        interpret: "<b>Each dot is one held-out image</b> the model never saw as a label. Its x is how similar that image looks to the written 8-description; its y is its similarity to the 9-description. The <b>dashed diagonal is the decision boundary</b>: below it means 'more like an 8', above it means 'more like a 9'. <b>Healthy sign:</b> most <b>blue</b> (true 8) dots fall below the line and most <b>green</b> (true 9) dots above it — the two colours separate. A few dots on the wrong side are the 18.6% errors (81.4% accuracy). <b>Conclusion:</b> matching to descriptions alone sorts the unseen classes."
+      },
+      {
+        type: "scatter",
+        title: "Overlapping descriptions: both classes pile on the diagonal (illustrative)",
+        xlabel: "cosine similarity to the 8-description",
+        ylabel: "cosine similarity to the 9-description",
+        groups: [
+          { name: "true 8 (never trained)", color: "#4ea1ff", points: [[0.62, 0.60], [0.55, 0.58], [0.70, 0.66], [0.48, 0.52], [0.66, 0.63], [0.58, 0.61], [0.72, 0.70], [0.50, 0.49], [0.64, 0.67], [0.60, 0.56], [0.53, 0.55], [0.68, 0.64]] },
+          { name: "true 9 (never trained)", color: "#7ee787", points: [[0.59, 0.62], [0.52, 0.55], [0.67, 0.69], [0.46, 0.50], [0.63, 0.65], [0.57, 0.60], [0.71, 0.72], [0.49, 0.51], [0.61, 0.63], [0.54, 0.57], [0.66, 0.68], [0.50, 0.53]] }
+        ],
+        lines: [{ color: "#9aa7b4", dash: true, points: [[-0.5, -0.5], [1.0, 1.0]] }],
+        interpret: "<b>Illustrative.</b> Every dot, blue or green, hugs the diagonal — each image is about equally similar to BOTH descriptions. <b>How to recognise it:</b> the colours are completely mixed and sit right on the boundary line, so tiny noise flips the prediction either way. <b>What it means:</b> the two class descriptions are too alike for the encoder to separate (the lesson's dog-vs-wolf trap, or '8' and '9' described with nearly identical attributes). Accuracy hovers near 50% (chance). Fix: write more distinct descriptions, or fall back to few-shot."
+      },
+      {
+        type: "scatter",
+        title: "Systematic bias: one class collapses onto the other (illustrative)",
+        xlabel: "cosine similarity to the 8-description",
+        ylabel: "cosine similarity to the 9-description",
+        groups: [
+          { name: "true 8 (never trained)", color: "#4ea1ff", points: [[0.30, 0.78], [0.22, 0.85], [0.41, 0.74], [0.18, 0.88], [0.35, 0.80], [0.27, 0.83], [0.45, 0.71], [0.20, 0.90], [0.38, 0.76], [0.25, 0.84], [0.33, 0.79], [0.29, 0.82]] },
+          { name: "true 9 (never trained)", color: "#7ee787", points: [[0.10, 0.92], [0.20, 0.95], [0.05, 0.88], [0.30, 0.90], [0.15, 0.86], [0.25, 0.94], [0.08, 0.91], [0.18, 0.97], [0.12, 0.89], [0.22, 0.93], [0.16, 0.90], [0.28, 0.96]] }
+        ],
+        lines: [{ color: "#9aa7b4", dash: true, points: [[-0.5, -0.5], [1.0, 1.0]] }],
+        interpret: "<b>Illustrative.</b> ALMOST every dot — both colours — sits high above the diagonal, near the 9-description. The true 9s (green) are correct, but most true 8s (blue) are dragged up there too and get mislabelled as 9. <b>How to recognise it:</b> one class's points land squarely inside the other's region; the predictions pile into a single winning label. <b>What it means:</b> a calibration / prior problem — the 9-description is systematically 'louder', so raw cosine scores aren't comparable across labels. Fix: temperature-scale or per-class normalise the similarities before taking the argmax."
+      }
+    ],
+    caption: "Read every dot as one unseen image placed by its similarity to each class description; the dashed diagonal is the 8-vs-9 boundary. Healthy zero-shot separates the colours across it; overlapping descriptions tangle them on the line; uncalibrated scores drag one class onto the other.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.linear_model import Ridge

@@ -148,20 +148,40 @@ def entropy_min_loss(logits_unlabeled):
   };
 
   window.CODEVIZ["unl-pseudo-label"] = {
-    question: "On real digit images with only 40 labels, how does self-training accuracy depend on the confidence threshold — where is the sweet spot, and where does the wrong threshold either admit bad pseudo-labels (confirmation bias) or admit nothing (no learning)?",
+    question: "How do you READ a pseudo-labeling diagnostic? The accuracy-vs-threshold curve and the class-balance bars tell you whether the confidence gate is helping or quietly feeding the model its own mistakes.",
     charts: [
       {
         type: "line",
-        title: "Self-training accuracy vs confidence threshold (load_digits, 40 labels, mean of 8 splits)",
+        title: "Ideal: accuracy vs threshold has a sweet spot then collapses (load_digits, 40 labels, mean of 8 splits)",
         xlabel: "confidence threshold tau",
         ylabel: "test accuracy",
         series: [
           { name: "self-training", color: "#4ea1ff", points: [[0.40, 0.877], [0.50, 0.869], [0.60, 0.843], [0.70, 0.792], [0.80, 0.652], [0.90, 0.839], [0.95, 0.839], [0.99, 0.839]] },
           { name: "labels-only baseline", color: "#9aa7b4", points: [[0.40, 0.839], [0.99, 0.839]] }
-        ]
+        ],
+        interpret: "<b>Read it left to right.</b> X is the confidence gate tau; Y is held-out test accuracy; grey is the labels-only baseline (no pseudo-labels). The blue curve rises <i>above</i> grey at low tau (0.40-0.50, the sweet spot: many mostly-correct pseudo-labels), then <b>dips below</b> grey in the 0.70-0.80 band (the accepted set has become a biased, noisier subset — confirmation bias), then snaps back onto grey at 0.90+ (almost nothing clears the gate, so you are back to labels-only). <b>Conclusion:</b> the best tau is where blue sits highest above grey; a curve that dips under grey is the warning sign that the gate is admitting confident mistakes."
+      },
+      {
+        type: "line",
+        title: "Variant - threshold too low: pseudo-labels are noise, accuracy falls below baseline everywhere (illustrative)",
+        xlabel: "confidence threshold tau",
+        ylabel: "test accuracy",
+        series: [
+          { name: "self-training", color: "#ff7b72", points: [[0.40, 0.61], [0.50, 0.66], [0.60, 0.72], [0.70, 0.78], [0.80, 0.82], [0.90, 0.838], [0.95, 0.839], [0.99, 0.839]] },
+          { name: "labels-only baseline", color: "#9aa7b4", points: [[0.40, 0.839], [0.99, 0.839]] }
+        ],
+        interpret: "<b>Illustrative shape</b> for a weak or poorly-calibrated base model. Here the red curve stays <i>under</i> the grey baseline at every low-to-mid tau and only recovers as tau approaches 1 (where the gate stops admitting anything). The lesson: when the whole curve lives below baseline, pseudo-labeling is actively hurting — every accepted label is more likely noise than signal. <b>Conclusion:</b> raise tau or fix the supervised baseline first; here self-training never beats just using the 40 real labels."
+      },
+      {
+        type: "bars",
+        title: "Variant - class imbalance in accepted pseudo-labels (illustrative, 10 digit classes)",
+        labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        values: [210, 230, 60, 45, 195, 30, 205, 25, 40, 35],
+        colors: ["#7ee787", "#7ee787", "#ffb454", "#ffb454", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#ffb454", "#ff7b72"],
+        interpret: "<b>Illustrative bar chart</b> of how many pseudo-labels were accepted for each digit class. Each bar is one class; tall green bars are easy classes the model is confident on, short red bars are hard classes that rarely clear the gate. A <b>healthy</b> accepted set would have bars of roughly equal height; this lopsided shape means the model feeds itself mostly easy classes and starves the hard ones, so it skews even further toward what it already knows. <b>Conclusion:</b> if your accepted-label counts look like this, the headline accuracy hides a per-class collapse — fix with per-class thresholds or class balancing."
       }
     ],
-    caption: "Reproducible sklearn proxy for confidence-thresholded pseudo-labeling: SelfTrainingClassifier (logistic-regression base) on real load_digits with only 40 labels (4 per class) and ~1217 unlabeled, averaged over 8 stratified splits. Baseline (grey, labels only) is 0.839. A generous threshold (0.40-0.50) accepts ~1240 pseudo-labels that are mostly right and lifts accuracy to 0.877 — the sweet spot. As the threshold rises into the 0.70-0.80 band the accepted set becomes a biased, noisier subset and accuracy collapses to 0.65: confirmation bias, the model reinforcing its own confident mistakes. Push the threshold to 0.90+ and almost nothing clears the gate (only the 40 real labels remain), so you fall back to the baseline — all risk avoided, but no learning either. Real FixMatch/MixMatch need a GPU; this is the same effect at small scale.",
+    caption: "How to read pseudo-labeling diagnostics: the threshold curve (ideal sweet-spot vs all-noise) plus the per-class acceptance bars. Real FixMatch/MixMatch need a GPU; the main curve is a faithful small-scale sklearn proxy.",
     code: `import warnings; warnings.filterwarnings("ignore")
 import numpy as np
 from sklearn.datasets import load_digits

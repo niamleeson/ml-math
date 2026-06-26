@@ -219,18 +219,54 @@ print("VERDICT:", "signal beats chance -> frame is feasible"
   };
 
   window.CODEVIZ["skill-framing"] = {
-    question: "Before building a churn-style model, is there any signal to frame a task around? Which candidate features actually carry information about the label?",
-    charts: [{
-      type: "bars",
-      title: "Mutual information of top candidate features vs the label (load_breast_cancer)",
-      xlabel: "candidate feature",
-      ylabel: "mutual information I(X;y), nats",
-      labels: ["worst perimeter", "worst area", "worst radius", "worst concave pts", "mean concave pts", "mean perimeter", "mean concavity"],
-      values: [0.473, 0.463, 0.454, 0.439, 0.437, 0.403, 0.375],
-      valueLabels: ["0.47", "0.46", "0.45", "0.44", "0.44", "0.40", "0.38"],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-    }],
-    caption: "Real feasibility probe on load_breast_cancer (569 tumor records; base rate P(benign)=0.627, so the majority baseline is 62.7% accurate). mutual_info_classif scores every feature against the label; the top seven all carry strong signal (0.38-0.47 nats), and a 5-line cross-validated LogisticRegression reaches 0.981 accuracy — far above the 0.627 baseline. Clear, measurable signal: the frame is feasible.",
+    question: "The feasibility probe: how do you read a mutual-information bar chart to decide a frame is GO, NO-GO, or too-good-to-be-true (leakage)?",
+    charts: [
+      {
+        type: "bars",
+        title: "GO: strong signal, every top feature well above zero",
+        xlabel: "candidate feature",
+        ylabel: "mutual information I(X;y), nats",
+        labels: ["worst perimeter", "worst area", "worst radius", "worst concave pts", "mean concave pts", "mean perimeter", "mean concavity"],
+        values: [0.473, 0.463, 0.454, 0.439, 0.437, 0.403, 0.375],
+        valueLabels: ["0.47", "0.46", "0.45", "0.44", "0.44", "0.40", "0.38"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>How to read it:</b> each bar is one feature's mutual information with the label — how many nats knowing that feature removes from your uncertainty about the answer. Zero height = useless feature. <b>What to conclude:</b> here the top seven all stand tall (0.38-0.47 nats), so several inputs genuinely carry information. Real run on load_breast_cancer: a 5-line cross-validated LogisticRegression then hits 0.981 accuracy vs a 0.627 majority baseline. Strong signal AND lift over baseline = the frame is feasible, GO."
+      },
+      {
+        type: "bars",
+        title: "NO-GO: no signal — kill the frame cheaply",
+        xlabel: "candidate feature",
+        ylabel: "mutual information I(X;y), nats",
+        labels: ["days since signup", "tenure bucket", "region code", "device type", "plan tier"],
+        values: [0.012, 0.009, 0.006, 0.004, 0.002],
+        valueLabels: ["0.01", "0.01", "0.01", "0.00", "0.00"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Every bar is flat against the floor — all I(X;y) near zero (under ~0.02 nats). <b>What to conclude:</b> none of the candidate inputs carries information about the label, so no model can beat the base rate. The cross-validated baseline would match the majority baseline, not beat it. This is the cheap kill signal: rethink the frame (better features, different label/horizon) or stop the project now — before any expensive modeling."
+      },
+      {
+        type: "bars",
+        title: "Leakage trap: one bar towers — too good to be true",
+        xlabel: "candidate feature",
+        ylabel: "mutual information I(X;y), nats",
+        labels: ["account_closed_flag", "logins last 7d", "support tickets", "tenure", "plan tier"],
+        values: [0.93, 0.14, 0.09, 0.04, 0.02],
+        valueLabels: ["0.93 (LEAK?)", "0.14", "0.09", "0.04", "0.02"],
+        colors: ["#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "<b>Illustrative.</b> One feature (orange) dwarfs the rest at ~0.93 nats while the honest features sit at 0.02-0.14. <b>What to conclude:</b> a single suspiciously-predictive feature is the classic fingerprint of <b>label leakage</b> — 'account_closed_flag' is recorded AFTER the churn it is supposedly predicting, so it is the answer in disguise. Offline scores look magical and production collapses. The fix: drop any feature not knowable strictly before the prediction horizon, then re-probe."
+      },
+      {
+        type: "bars",
+        title: "Imbalance: high baseline means accuracy lies",
+        xlabel: "outcome class",
+        ylabel: "share of rows",
+        labels: ["stays (negative)", "churns (positive)"],
+        values: [0.92, 0.08],
+        valueLabels: ["0.92", "0.08 (base rate)"],
+        colors: ["#9aa7b4", "#c89bff"],
+        interpret: "<b>Illustrative.</b> This is not an MI chart — it is the class balance you must read FIRST. The positive class (churn) is only 8% of rows, so always predicting 'stays' is already 92% accurate. <b>What to conclude:</b> a 92% accuracy headline would be worthless here — it just matches the base rate. With a fixed offer budget you rank by risk and measure precision@budget, not accuracy. Reading the base rate is what tells you which metric and baseline the spec must name."
+      }
+    ],
+    caption: "Reading the feasibility probe: tall MI bars across several features (chart 1) plus lift over baseline = GO; all bars near zero (chart 2) = no signal, kill it; one bar towering over the rest (chart 3) is the fingerprint of label leakage, not a great feature; and always read the base rate (chart 4) first, because a high majority share makes raw accuracy a misleading metric.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.feature_selection import mutual_info_classif

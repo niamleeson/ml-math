@@ -167,19 +167,45 @@
   });
 
   window.CODEVIZ["fs-in-context"] = {
-    question: "As we add more in-context demonstrations per class, how does accuracy on a held-out query set rise and then plateau?",
-    charts: [{
-      type: "line",
-      title: "Accuracy vs number of in-context demonstrations (k-NN proxy on load_digits)",
-      xlabel: "K = demonstrations per class in the context",
-      ylabel: "accuracy on held-out queries",
-      series: [{
-        name: "k-NN proxy accuracy",
-        color: "#4ea1ff",
-        points: [[0, 0.102], [1, 0.213], [2, 0.566], [5, 0.794], [10, 0.879], [20, 0.93]]
-      }]
-    }],
-    caption: "Real LLMs (Large Language Models) cannot run in the browser, so this is a k-NN (k-Nearest Neighbors) proxy that reproduces the same shape. Using real load_digits pixel features (1797 handwritten 8x8 digit images), 'K demonstrations per class in the prompt' is modeled as a k-NN trained on K real examples per class. Accuracy climbs fast — 0.10 (a zero-shot most-frequent baseline) to 0.21, 0.57, 0.79 — then plateaus near 0.88 and 0.93, exactly the rising-then-flattening curve seen as you add in-context examples to a real LLM.",
+    question: "How do you read an accuracy-vs-demonstrations curve, and what do the healthy, saturated, and prompt-sensitive shapes look like?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: rises fast then plateaus (k-NN proxy on load_digits)",
+        xlabel: "K = demonstrations per class in the context",
+        ylabel: "accuracy on held-out queries",
+        series: [{
+          name: "k-NN proxy accuracy",
+          color: "#4ea1ff",
+          points: [[0, 0.102], [1, 0.213], [2, 0.566], [5, 0.794], [10, 0.879], [20, 0.93]]
+        }],
+        interpret: "The x-axis is K, the number of worked examples placed in the prompt per class; the y-axis is accuracy on fresh queries the model never saw. At K=0 (<b>zero-shot</b>) accuracy is ~10% — only a most-frequent guess. The <b>blue</b> line then jumps steeply (0.21, 0.57, 0.79) and bends over near ~0.93. Read this as the classic in-context shape: a few demonstrations help a lot, then each extra one helps less. This is what a task the model can learn from context looks like."
+      },
+      {
+        type: "line",
+        title: "Saturated early: nothing to gain past a few shots (illustrative)",
+        xlabel: "K = demonstrations per class in the context",
+        ylabel: "accuracy on held-out queries",
+        series: [{
+          name: "easy-task accuracy",
+          color: "#7ee787",
+          points: [[0, 0.55], [1, 0.93], [2, 0.95], [5, 0.96], [10, 0.96], [20, 0.96]]
+        }],
+        interpret: "Illustrative. The <b>green</b> line is already high at zero- and one-shot and is flat from then on. Read this as a task the model nearly knows from pretraining: one demonstration just shows the output format and it is done. The lesson is practical — when the curve saturates this early, stop adding examples; extra demonstrations only burn context window and tokens for no accuracy gain."
+      },
+      {
+        type: "line",
+        title: "Prompt sensitivity: same K, different example choice/order (illustrative)",
+        xlabel: "K = demonstrations per class in the context",
+        ylabel: "accuracy on held-out queries",
+        series: [
+          { name: "good examples, balanced order", color: "#7ee787", points: [[0, 0.10], [1, 0.40], [2, 0.66], [5, 0.83], [10, 0.90], [20, 0.93]] },
+          { name: "poor examples / bad ordering", color: "#ff7b72", points: [[0, 0.10], [1, 0.18], [2, 0.30], [5, 0.52], [10, 0.66], [20, 0.74]] }
+        ],
+        interpret: "Illustrative. Both curves use the same number of demonstrations K, but differ in <i>which</i> examples and <i>what order</i>. The <b>red</b> line trails the <b>green</b> one everywhere — bad or redundant examples, label imbalance, or recency bias (the model over-weighting the last example) all drag accuracy down. Read a persistent gap like this as prompt sensitivity: the count K alone does not fix it; you must curate and shuffle the demonstrations."
+      }
+    ],
+    caption: "Real LLMs (Large Language Models) cannot run in the browser, so this is a k-NN (k-Nearest Neighbors) proxy on real load_digits pixel features (1797 handwritten 8x8 digit images): 'K demonstrations per class' becomes a k-NN given K real examples per class. The main curve climbs from 0.10 (zero-shot most-frequent) to ~0.93, the rising-then-flattening shape seen with a real LLM. The variant charts show early saturation and prompt sensitivity.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split

@@ -215,15 +215,34 @@
   });
 
   window.CODEVIZ["fs-few-shot"] = {
-    question: "On real handwritten digits, how much does few-shot accuracy improve as you go from one-shot to many shots per class?",
-    charts: [{
-      type: "line", title: "5-way prototypical accuracy vs shots per class (real load_digits)", xlabel: "shots per class K", ylabel: "query accuracy",
-      series: [{
-        name: "prototypical accuracy", color: "#7ee787",
-        points: [[1, 0.768], [2, 0.847], [5, 0.902], [10, 0.925], [20, 0.934]]
-      }]
-    }],
-    caption: "Real result on load_digits (classes 0-4, embedded once with NeighborhoodComponentsAnalysis, averaged over 200 random episodes): one-shot is already ~77% accurate, and adding shots lifts and then plateaus the accuracy toward ~93% — each extra example steadies the class prototype, with sharply diminishing returns after ~5 shots.",
+    question: "How do you read a shots-vs-accuracy curve, and what does it look like when the embedding is good, weak, or biased?",
+    charts: [
+      {
+        type: "line", title: "Healthy: accuracy rises then plateaus (real load_digits)", xlabel: "shots per class K", ylabel: "query accuracy",
+        series: [{
+          name: "prototypical accuracy", color: "#7ee787",
+          points: [[1, 0.768], [2, 0.847], [5, 0.902], [10, 0.925], [20, 0.934]]
+        }],
+        interpret: "The x-axis is K, the number of labeled support examples per class; the y-axis is the fraction of query examples classified correctly. The <b>green</b> line climbs steeply from one-shot (~77%) and then flattens near ~93%. Read this as: each extra shot steadies the class prototype (its mean embedding), but returns shrink fast after about 5 shots. A curve that starts high and bends over like this means your embedding is strong and few-shot is working as intended."
+      },
+      {
+        type: "line", title: "Weak embedding: low and nearly flat (illustrative)", xlabel: "shots per class K", ylabel: "query accuracy",
+        series: [{
+          name: "weak-embedding accuracy", color: "#ff7b72",
+          points: [[1, 0.27], [2, 0.30], [5, 0.33], [10, 0.34], [20, 0.35]]
+        }],
+        interpret: "Illustrative shape. The <b>red</b> line sits near chance (a 5-way task guesses ~20% at random) and barely rises as you add shots. Read this as a broken embedding: if same-class points are not already grouped together, averaging them makes a meaningless prototype, so more support data does not help. When you see a low, flat curve, fix the representation (transfer learning) first — no amount of extra shots will rescue it."
+      },
+      {
+        type: "line", title: "Support-set bias: high variance between draws (illustrative)", xlabel: "shots per class K", ylabel: "query accuracy",
+        series: [
+          { name: "lucky support draw", color: "#7ee787", points: [[1, 0.82], [2, 0.86], [5, 0.90], [10, 0.92], [20, 0.93]] },
+          { name: "unlucky support draw", color: "#ffb454", points: [[1, 0.55], [2, 0.70], [5, 0.85], [10, 0.91], [20, 0.93]] }
+        ],
+        interpret: "Illustrative. Two curves from the same model differ only in <i>which</i> examples landed in the support set. At low K the <b>orange</b> (unlucky) draw is far below the <b>green</b> (lucky) one — one noisy or off-center example drags the one-shot prototype astray. The gap shrinks as K grows and the mean steadies. Read a wide spread at small K as support-set bias: report accuracy averaged over many random episodes, not a single lucky run."
+      }
+    ],
+    caption: "Real result on load_digits (classes 0-4, embedded once with NeighborhoodComponentsAnalysis, averaged over 200 random episodes): one-shot is already ~77% accurate, and adding shots lifts and then plateaus the accuracy toward ~93%. The variant charts show what a weak embedding or a biased support set looks like instead.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.preprocessing import StandardScaler

@@ -241,18 +241,43 @@ print("income KS statistic:", ks.statistic, "p-value:", ks.pvalue)`
   };
 
   window.CODEVIZ["skill-data-audit"] = {
-    question: "Split a real dataset into a reference half and a current half — which features drift, and by how much (PSI)?",
-    charts: [{
-      type: "bars",
-      title: "PSI per feature on load_wine: first half (reference) vs second half (current)",
-      xlabel: "feature",
-      ylabel: "PSI (Population Stability Index)",
-      labels: ["proline", "alcalin.", "flavan.", "hue", "od280", "phenols", "nonflav.", "malic"],
-      values: [6.667, 4.976, 2.827, 2.742, 2.45, 2.267, 1.505, 1.419],
-      valueLabels: ["6.67", "4.98", "2.83", "2.74", "2.45", "2.27", "1.51", "1.42"],
-      colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
-    }],
-    caption: "Real run on load_wine (178 samples, 13 features). The rows are ordered by grape cultivar, so the first 89 rows and the last 89 rows are genuinely different distributions. Computing PSI (Population Stability Index) per feature between the two halves, every feature shown sails past the 0.25 'big drift' threshold (so all bars are orange) — proline drifts most at PSI 6.67. This is the exact alarm you want when training and serving data are drawn from different slices of the world.",
+    question: "How do you read a PSI drift chart — when is the data stable, when is it worth watching, and when has it blown up?",
+    charts: [
+      {
+        type: "bars",
+        title: "Severe drift: ordered split (load_wine), every feature past the alarm",
+        xlabel: "feature",
+        ylabel: "PSI (Population Stability Index)",
+        labels: ["proline", "alcalin.", "flavan.", "hue", "od280", "phenols", "nonflav.", "malic"],
+        values: [6.667, 4.976, 2.827, 2.742, 2.45, 2.267, 1.505, 1.419],
+        valueLabels: ["6.67", "4.98", "2.83", "2.74", "2.45", "2.27", "1.51", "1.42"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "Real load_wine run. Each bar is one feature's <b>PSI</b> — how far its <i>current</i> distribution moved from a fixed <i>reference</i>. Higher = more drift; the rule of thumb is &lt;0.1 stable, 0.1&ndash;0.25 watch, &gt;0.25 big shift. Here the rows are sorted by grape cultivar, so the reference (first half) and current (second half) are different worlds: <b>every</b> bar is far past 0.25 (all red), proline worst at 6.67. Read this shape as a five-alarm fire — train and serving data are drawn from different slices and the model is unsafe to trust."
+      },
+      {
+        type: "bars",
+        title: "Stable (healthy): nothing to worry about",
+        xlabel: "feature",
+        ylabel: "PSI (illustrative)",
+        labels: ["age", "income", "tenure", "clicks", "region", "device"],
+        values: [0.03, 0.05, 0.02, 0.07, 0.04, 0.06],
+        valueLabels: ["0.03", "0.05", "0.02", "0.07", "0.04", "0.06"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Illustrative. Same axes, but every PSI bar sits well under <b>0.1</b> (all green). Read this as the world holding still: the current batch looks just like the reference, so the model's inputs are the same shape it trained on. This is the boring chart you <i>want</i> to see in nightly monitoring — no bar reaches the watch band, so no action is needed."
+      },
+      {
+        type: "bars",
+        title: "Moderate: one feature in the WATCH band, refresh soon",
+        xlabel: "feature",
+        ylabel: "PSI (illustrative)",
+        labels: ["age", "income", "tenure", "clicks", "region", "device"],
+        values: [0.04, 0.18, 0.06, 0.09, 0.05, 0.07],
+        valueLabels: ["0.04", "0.18", "0.06", "0.09", "0.05", "0.07"],
+        colors: ["#7ee787", "#ffb454", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Illustrative. Most bars are green and stable, but <code>income</code> sits at 0.18 (orange) — inside the <b>0.1&ndash;0.25 watch band</b>. Read this as one feature starting to move while the rest hold: the model still runs, but income drifted enough to keep an eye on. The single tall bar is also a pointer for investigation — check that feature first for a unit change (dollars vs cents), an encoding mismatch, or a new null pattern before it climbs past 0.25."
+      }
+    ],
+    caption: "Three shapes of the same PSI drift chart. Read each bar against the bands: under 0.1 (green) is stable, 0.1&ndash;0.25 (orange) is worth watching, above 0.25 (red) is a big shift likely to break the model. Chart 1 is a real all-features-blown alarm; charts 2 and 3 show the healthy and one-feature-watch cases you compare it against.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 

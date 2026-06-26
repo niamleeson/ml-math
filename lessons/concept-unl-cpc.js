@@ -221,26 +221,46 @@ print(float(loss))`
   };
 
   window.CODEVIZ["unl-cpc"] = {
-    question: "On real digit images read as a sequence of 8 pixel-rows, can a context vector predict the TRUE next row's latent out of N negatives by cosine InfoNCE — and how does that get harder as we predict further ahead or face more negatives?",
+    question: "On real digit images read as a sequence of 8 pixel-rows, can a context vector predict the TRUE next row's latent out of N negatives by cosine InfoNCE — and how do you tell a healthy CPC signal apart from a collapsed one, a too-easy quiz, or predicting too far ahead?",
     charts: [
       {
-        type: "line", title: "Top-1 contrastive accuracy vs prediction gap k (16 negatives) — further ahead is harder",
+        type: "line", title: "Healthy CPC proxy: top-1 accuracy beats chance, fades with gap k (16 negatives)",
         xlabel: "prediction gap k (rows ahead)", ylabel: "top-1 accuracy (pick the true future)",
         series: [
-          { name: "CPC proxy (cosine InfoNCE)", color: "#4ea1ff", points: [[1, 0.280], [2, 0.149], [3, 0.118], [4, 0.132], [5, 0.148]] },
+          { name: "CPC proxy (cosine InfoNCE)", color: "#7ee787", points: [[1, 0.280], [2, 0.149], [3, 0.118], [4, 0.132], [5, 0.148]] },
           { name: "chance (1 / (1+N))", color: "#9aa7b4", points: [[1, 0.059], [2, 0.059], [3, 0.059], [4, 0.059], [5, 0.059]] }
-        ]
+        ],
+        interpret: "<b>The ideal, computed from real load_digits.</b> X is how far ahead we predict (gap k, in rows); Y is how often cosine similarity to the predicted future ranks the TRUE next-row latent above all 16 negatives. The green curve sits clearly above the grey chance line (1/(1+16) = 0.059) at every gap, so the context really does carry information about the future — that gap is what InfoNCE is teaching. It is highest at k=1 (the near future is most predictable) and sags for larger k. <b>Conclusion:</b> green well above grey = a real, useful contrastive signal."
       },
       {
-        type: "line", title: "Top-1 contrastive accuracy vs number of negatives (gap k=1) — more negatives, harder quiz",
+        type: "line", title: "Healthy: accuracy drops as the negative pool grows, but always beats chance (gap k=1)",
         xlabel: "number of negatives N", ylabel: "top-1 accuracy",
         series: [
           { name: "CPC proxy (cosine InfoNCE)", color: "#7ee787", points: [[1, 0.813], [4, 0.574], [8, 0.404], [16, 0.284], [32, 0.173], [64, 0.105]] },
           { name: "chance (1 / (1+N))", color: "#9aa7b4", points: [[1, 0.500], [4, 0.200], [8, 0.111], [16, 0.059], [32, 0.030], [64, 0.015]] }
-        ]
+        ],
+        interpret: "<b>Same healthy model, computed, now varying the quiz difficulty.</b> X is the number of negatives N in each multiple-choice quiz; Y is top-1 accuracy at gap k=1. Both curves fall as N grows because guessing one-of-many is harder, but the gap between green and grey (chance = 1/(1+N)) <i>stays open</i> — at N=64 the model still scores 0.105 versus 0.015 chance, about 7x better. <b>Conclusion:</b> a true signal beats chance by a wide margin at every N; absolute accuracy dropping with N is expected, not a failure."
+      },
+      {
+        type: "line", title: "Collapsed / shortcut representation: hugs the chance line (illustrative)",
+        xlabel: "prediction gap k (rows ahead)", ylabel: "top-1 accuracy",
+        series: [
+          { name: "collapsed encoder", color: "#ff7b72", points: [[1, 0.068], [2, 0.061], [3, 0.058], [4, 0.062], [5, 0.060]] },
+          { name: "chance (1 / (1+N))", color: "#9aa7b4", points: [[1, 0.059], [2, 0.059], [3, 0.059], [4, 0.059], [5, 0.059]] }
+        ],
+        interpret: "<b>Illustrative failure mode.</b> Same axes as the ideal, but the red curve lies right on top of the grey chance line at every gap. This is what you see when the encoder has <i>collapsed</i> (every latent maps to nearly the same vector) or learned nothing predictive — the context tells you no more about the future than a coin flip. <b>How to recognise it:</b> accuracy near 1/(1+N) everywhere, flat, never pulling away from chance. <b>Conclusion:</b> no mutual information was captured — check for representation collapse, a broken target, or negatives sampled from the positive."
+      },
+      {
+        type: "line", title: "Too-easy negatives: near-perfect accuracy that means nothing (illustrative)",
+        xlabel: "prediction gap k (rows ahead)", ylabel: "top-1 accuracy",
+        series: [
+          { name: "easy-negative quiz", color: "#ffb454", points: [[1, 0.992], [2, 0.985], [3, 0.984], [4, 0.983], [5, 0.981]] },
+          { name: "chance (1 / (1+N))", color: "#9aa7b4", points: [[1, 0.059], [2, 0.059], [3, 0.059], [4, 0.059], [5, 0.059]] }
+        ],
+        interpret: "<b>Illustrative trap — high accuracy is not always good.</b> Here the negatives are drawn from obviously different images, so telling the true future apart is trivial and accuracy sits near 1.0 even far into the future (orange almost flat at the top). The quiz is too easy: the model can win by matching cheap low-level statistics (brightness, texture) instead of learning structure, so the loss is tiny but the representation is weak. <b>How to recognise it:</b> accuracy suspiciously high and barely dropping with gap k. <b>Conclusion:</b> draw harder negatives (same image / nearby times) so the score reflects real learning, not an easy quiz."
       }
     ],
-    caption: "A faithful small-scale proxy of CPC's core move: predict the future contrastively. Each real load_digits image (8x8) is read as a sequence of 8 pixel-rows; PCA encodes each row to a latent, a per-gap linear head W_k predicts the latent k rows ahead from a context row, and we measure how often cosine similarity picks the TRUE future latent over N negatives drawn from other images. Left: accuracy falls as we predict further ahead (gap k=1 is easiest); it stays above the dashed chance line throughout. Right: with a fixed gap, accuracy drops as the negative pool grows, but always beats chance — the contrastive signal is real. This isolates the predict-the-future-contrastively idea; real CPC v2 needs a GPU, a deep ResNet encoder, and image patches.",
+    caption: "A faithful small-scale proxy of CPC's core move: predict the future contrastively. Each real load_digits image (8x8) is read as a sequence of 8 pixel-rows; PCA encodes each row to a latent, a per-gap linear head W_k predicts the latent k rows ahead from a context row, and we score how often cosine similarity picks the TRUE future latent over N negatives. The first two charts are the computed ideal; the last two are illustrative failure modes you should learn to spot. Each chart's interpret box explains how to read it.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

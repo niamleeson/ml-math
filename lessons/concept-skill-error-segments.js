@@ -227,18 +227,55 @@ print(f"worst slice={worst}  z={z:.2f}  p={p:.4f}")`
   };
 
   window.CODEVIZ["skill-error-segments"] = {
-    question: "On the breast-cancer scans, a model with 0.965 overall accuracy — but is its benign recall uniform across tumor sizes, or does one segment quietly fail?",
-    charts: [{
-      type: "bars",
-      title: "Benign recall per tumor mean-radius tertile (worst slice highlighted)",
-      xlabel: "tumor mean-radius tertile",
-      ylabel: "benign recall",
-      labels: ["small", "medium", "large"],
-      values: [1.000, 0.974, 0.750],
-      valueLabels: ["1.000 (n=55)", "0.974 (n=76)", "0.750 (n=12)"],
-      colors: ["#4ea1ff", "#4ea1ff", "#ffb454"]
-    }],
-    caption: "Real run on load_breast_cancer (569 scans). A logistic-regression classifier scores 0.965 accuracy OVERALL, yet when the test set is sliced into tertiles by tumor mean radius, benign recall collapses from 1.00 (small) to 0.75 on the LARGE-radius slice (orange) — the model misses a quarter of benign large tumors. A two-proportion z-test of that slice against the rest gives z ~ 4.2 (p < 0.001), so the gap is statistically real, not the noise of a 12-row slice. The headline number alone would have shipped a broken segment.",
+    question: "A model with 0.965 overall accuracy — how do you read a per-segment bar chart to tell a REAL broken slice from one that is just noise or a mirage?",
+    charts: [
+      {
+        type: "bars",
+        title: "Real gap: benign recall collapses on the large-radius slice",
+        xlabel: "tumor mean-radius tertile",
+        ylabel: "benign recall",
+        labels: ["small", "medium", "large"],
+        values: [1.000, 0.974, 0.750],
+        valueLabels: ["1.000 (n=55)", "0.974 (n=76)", "0.750 (n=12)"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "<b>How to read it:</b> each bar is the SAME metric (benign recall) recomputed inside one segment; the dotted mental line is the 0.965 overall average. The bars are NOT uniform — the <b>large</b> slice (red) sits far below the others. <b>What to conclude:</b> the headline average hid a broken group. Because the gap (0.75 vs ~0.98) is large AND a two-proportion z-test of this slice vs the rest gives z ~ 4.2 (well past 1.96), the gap is real — this is the slice to fix, even though it barely dented the average."
+      },
+      {
+        type: "bars",
+        title: "Healthy: all slices track the average (no slice to chase)",
+        xlabel: "tumor mean-radius tertile",
+        ylabel: "benign recall",
+        labels: ["small", "medium", "large"],
+        values: [0.97, 0.96, 0.95],
+        valueLabels: ["0.97 (n=55)", "0.96 (n=76)", "0.95 (n=78)"],
+        colors: ["#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>Illustrative.</b> Every bar hugs the same height and sits near the overall average — the spread is a couple of points on healthy sample sizes. <b>What to conclude:</b> the model behaves the same across segments, so there is no broken slice to fix here. This is what you HOPE to see; it is also the case that lets you trust the headline number. Don't invent a problem from a 1-2 point wobble on big slices."
+      },
+      {
+        type: "bars",
+        title: "Noise trap: a huge gap on a tiny slice (not significant)",
+        xlabel: "customer segment",
+        ylabel: "accuracy",
+        labels: ["mobile", "web", "kiosk"],
+        values: [0.93, 0.91, 0.64],
+        valueLabels: ["0.93 (n=1200)", "0.91 (n=980)", "0.64 (n=11)"],
+        colors: ["#7ee787", "#7ee787", "#ffb454"],
+        interpret: "<b>Illustrative.</b> The <b>kiosk</b> bar craters to 0.64 — visually alarming. But read the count first: <b>n=11</b>. A single-digit-ish slice swinging 30 points is mostly sampling noise; one or two flipped rows move it wildly. <b>What to conclude:</b> do NOT act yet. A z-test (or a confidence interval) of this tiny slice vs the rest would NOT clear 1.96. The lesson: always read the bar's height NEXT TO its n — a big gap on few rows is a mirage, a modest gap on many rows is real."
+      },
+      {
+        type: "bars",
+        title: "Simpson's paradox: model B wins overall but loses every cohort",
+        xlabel: "cohort",
+        ylabel: "AUC",
+        series: [
+          { name: "model A", color: "#4ea1ff", points: [[0, 0.88], [1, 0.72], [2, 0.83]] },
+          { name: "model B (overall AUC higher)", color: "#ff7b72", points: [[0, 0.86], [1, 0.70], [2, 0.81]] }
+        ],
+        labels: ["new users", "returning", "overall"],
+        interpret: "<b>Illustrative.</b> Look at the per-cohort pairs: in <b>new users</b> and <b>returning</b>, blue (model A) is taller than red (model B) — A is better in BOTH real groups. Yet the <b>overall</b> pair shows red taller. <b>What to conclude:</b> B's higher blended AUC is an artifact of how the cohorts were reweighted, not a genuine improvement — this is Simpson's paradox. The rule: a real win must hold (or at least not regress) inside each cohort, so here you would NOT ship B despite the better headline."
+      }
+    ],
+    caption: "Reading the per-segment chart: compare each bar to the overall average, but always read its row COUNT too. A large gap on a big slice (chart 1) is a real broken segment; a flat spread (chart 2) means trust the headline; a huge gap on a tiny slice (chart 3) is noise; and a per-cohort view (chart 4) can expose a 'win' that reverses inside every group (Simpson's paradox).",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression

@@ -270,18 +270,55 @@ print("PSI:", psi(reference["amount"].values, current["amount"].values))
   };
 
   window.CODEVIZ["skill-monitoring"] = {
-    question: "On real data with a shift injected into later time windows, does the PSI drift signal cross the alert threshold exactly when the shift starts?",
-    charts: [{
-      type: "line",
-      title: "Input drift (PSI) over time windows vs the 0.2 alert threshold",
-      xlabel: "time window",
-      ylabel: "PSI (Population Stability Index)",
-      series: [
-        { name: "PSI of 'mean radius'", color: "#4ea1ff", points: [[1, 0.134], [2, 0.051], [3, 0.115], [4, 0.329], [5, 1.399], [6, 2.484]] },
-        { name: "alert threshold = 0.2", color: "#ffb454", points: [[1, 0.2], [2, 0.2], [3, 0.2], [4, 0.2], [5, 0.2], [6, 0.2]] }
-      ]
-    }],
-    caption: "Real numbers from load_breast_cancer (569 tumor records). A logistic-regression model is trained on a 300-row reference window; the feature 'mean radius' from that window is the reference distribution. The live stream is split into 6 windows of 120 samples, and a deliberate covariate shift (+0.45 standard deviations per window) is injected into windows 4, 5, 6. PSI stays low and flat for windows 1-3 (0.13, 0.05, 0.12, all below 0.2), then crosses the threshold the moment the shift starts: 0.33, 1.40, 2.48. The alert fires at window 4 — exactly when the data began to drift.",
+    question: "Read a PSI-over-time chart: how do you tell stable from drifting, and a sudden break from a slow creep?",
+    charts: [
+      {
+        type: "line",
+        title: "Step drift: PSI flat, then crosses 0.2 the moment the shift starts (real data)",
+        xlabel: "time window",
+        ylabel: "PSI (Population Stability Index)",
+        series: [
+          { name: "PSI of 'mean radius'", color: "#4ea1ff", points: [[1, 0.134], [2, 0.051], [3, 0.115], [4, 0.329], [5, 1.399], [6, 2.484]] },
+          { name: "alert threshold = 0.2", color: "#ffb454", points: [[1, 0.2], [2, 0.2], [3, 0.2], [4, 0.2], [5, 0.2], [6, 0.2]] }
+        ],
+        interpret: "<b>This is the textbook drift signal.</b> X is the time window (each a recent batch of live traffic); Y is the PSI distance between that window and the fixed training reference. The <b>orange</b> line is the 0.2 alert cutoff. PSI sits low and flat (0.13, 0.05, 0.12) while live data still looks like training, then jumps clean over the line at window 4 (0.33 -> 1.40 -> 2.48) — exactly when the injected shift starts. Read a sharp knee crossing 0.2 as: <b>something broke at that window</b> (a pipeline change, a new segment) — go look at what changed there."
+      },
+      {
+        type: "line",
+        title: "Stable: PSI wiggles below 0.1 forever (no drift)",
+        xlabel: "time window",
+        ylabel: "PSI (illustrative)",
+        series: [
+          { name: "PSI of feature", color: "#7ee787", points: [[1, 0.04], [2, 0.07], [3, 0.03], [4, 0.06], [5, 0.05], [6, 0.04], [7, 0.07], [8, 0.05]] },
+          { name: "alert threshold = 0.2", color: "#ffb454", points: [[1, 0.2], [2, 0.2], [3, 0.2], [4, 0.2], [5, 0.2], [6, 0.2], [7, 0.2], [8, 0.2]] }
+        ],
+        interpret: "<b>Illustrative.</b> A healthy feature: PSI bounces around in the 0.03-0.07 band, well under the 0.1 'no real shift' mark, and never approaches the orange line. The small wiggle is just sampling noise from finite windows, not drift. Read this as <b>do nothing</b> — and resist the urge to lower the threshold to 'catch' these bumps, or you will alert on noise. Flat-and-low across many windows is exactly what you want to see."
+      },
+      {
+        type: "line",
+        title: "Gradual drift: slow creep that finally crosses (catch it early)",
+        xlabel: "time window",
+        ylabel: "PSI (illustrative)",
+        series: [
+          { name: "PSI of feature", color: "#c89bff", points: [[1, 0.04], [2, 0.06], [3, 0.09], [4, 0.12], [5, 0.15], [6, 0.18], [7, 0.22], [8, 0.27]] },
+          { name: "moderate zone = 0.1", color: "#9aa7b4", points: [[1, 0.1], [2, 0.1], [3, 0.1], [4, 0.1], [5, 0.1], [6, 0.1], [7, 0.1], [8, 0.1]] },
+          { name: "alert threshold = 0.2", color: "#ffb454", points: [[1, 0.2], [2, 0.2], [3, 0.2], [4, 0.2], [5, 0.2], [6, 0.2], [7, 0.2], [8, 0.2]] }
+        ],
+        interpret: "<b>Illustrative.</b> No clean knee here — PSI climbs steadily from 0.04 to 0.27 as the world shifts a little each window (seasonality, slow user-mix change). It enters the 0.1-0.2 'moderate, keep watching' band (grey) around window 4 and only trips the 0.2 alarm at window 7. Read a steady upward ramp as a <b>slow rot</b>: don't wait for the crossing — the trend itself is the warning, so investigate and plan a retrain while it is still in the grey zone."
+      },
+      {
+        type: "line",
+        title: "Transient spike: one window jumps, then returns (probably not real drift)",
+        xlabel: "time window",
+        ylabel: "PSI (illustrative)",
+        series: [
+          { name: "PSI of feature", color: "#ffb454", points: [[1, 0.05], [2, 0.06], [3, 0.04], [4, 0.41], [5, 0.07], [6, 0.05], [7, 0.06], [8, 0.05]] },
+          { name: "alert threshold = 0.2", color: "#9aa7b4", points: [[1, 0.2], [2, 0.2], [3, 0.2], [4, 0.2], [5, 0.2], [6, 0.2], [7, 0.2], [8, 0.2]] }
+        ],
+        interpret: "<b>Illustrative.</b> PSI spikes to 0.41 at a single window then drops straight back to baseline. A real distribution shift <i>persists</i>; a one-window blip that self-heals usually means a transient — a bad data load, an outage backfill, a holiday — not lasting drift. Read it as: <b>don't trigger a retrain on a lone spike.</b> Require the alert to hold for N consecutive windows (or a minimum sample size) before acting, so you are not chasing one-off noise."
+      }
+    ],
+    caption: "Real numbers from load_breast_cancer drive the top chart: a model trains on a 300-row reference window, the live stream is split into 6 windows of 120, and a +0.45-std-per-window shift is injected into windows 4-6 — PSI stays flat (0.13, 0.05, 0.12) then crosses 0.2 the moment the shift begins (0.33, 1.40, 2.48). The three variants below are illustrative shapes you will read in practice: stable (flat, low), gradual creep (catch the trend early), and a transient spike (don't retrain on one blip).",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression

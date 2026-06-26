@@ -229,28 +229,50 @@ def mixmatch_step(model, augment, x_l, y_l, x_u,
   };
 
   window.CODEVIZ["unl-mixmatch"] = {
-    question: "What does sharpening do to a real, ambiguous predicted distribution — and does leaning on unlabeled data beat labels-only?",
+    question: "What does sharpening do to a predicted distribution as you cool the temperature — and what does the unlabeled-data payoff look like when it works versus when it backfires?",
     charts: [
       {
         type: "bars",
-        title: "Sharpening a REAL ambiguous digit prediction (true label 6) at T = 1, 0.5, 0.25",
+        title: "Healthy sharpening: a REAL ambiguous digit (true label 6) gets peakier as T drops (1, 0.5, 0.25)",
         xlabel: "class (T=1 blue, T=0.5 orange, T=0.25 purple)", ylabel: "probability",
         labels: ["1 @T1", "6 @T1", "1 @T.5", "6 @T.5", "1 @T.25", "6 @T.25"],
         values: [0.352, 0.377, 0.418, 0.480, 0.426, 0.561],
         valueLabels: ["0.352", "0.377", "0.418", "0.480", "0.426", "0.561"],
-        colors: ["#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454", "#c89bff", "#c89bff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454", "#c89bff", "#c89bff"],
+        interpret: "<b>Real numbers.</b> Each bar is a probability; bars are grouped by temperature (blue T=1, orange T=0.5, purple T=0.25), showing only the two contenders, class 1 and the true class 6. At T=1 (no sharpening) it is a near-tie: 0.352 vs 0.377. As T cools, Sharpen raises each probability to the power 1/T and renormalizes, so the <b>winner (class 6) climbs</b> 0.377 → 0.480 → 0.561 while the runner-up class 1 stalls. <b>Read it as:</b> sharpening makes the guessed target more confident <i>in the direction it already leaned</i>, and here that direction is correct (6), so it helps."
+      },
+      {
+        type: "bars",
+        title: "Sharpening backfires: a WRONG winner gets locked in as T drops (illustrative)",
+        xlabel: "class (T=1 blue, T=0.5 orange, T=0.25 purple)", ylabel: "probability",
+        labels: ["wrong @T1", "true @T1", "wrong @T.5", "true @T.5", "wrong @T.25", "true @T.25"],
+        values: [0.40, 0.36, 0.55, 0.30, 0.74, 0.18],
+        valueLabels: ["0.40", "0.36", "0.55", "0.30", "0.74", "0.18"],
+        colors: ["#ff7b72", "#9aa7b4", "#ff7b72", "#9aa7b4", "#ff7b72", "#9aa7b4"],
+        interpret: "<b>Illustrative</b> (the danger case). Same axes, but now the model's top guess (red) is the <i>wrong</i> class and the true class (grey) is just behind. Sharpening cannot know that: it just amplifies the leader, so as T cools the wrong class is driven 0.40 → 0.55 → 0.74 toward a near one-hot while the truth is crushed. <b>Recognise it</b> when low-T training makes accuracy <i>fall</i>: you are committing hard to confident mistakes — confirmation bias. <b>Cure:</b> keep T moderate (the paper uses 0.5, never 0) and average K augmentations first so the leader is more often the true class."
       },
       {
         type: "line",
-        title: "Semi-supervised (LabelSpreading) vs labels-only accuracy on load_digits",
+        title: "Healthy payoff: labels + unlabeled (LabelSpreading) beats labels-only at every budget (real load_digits)",
         xlabel: "number of labeled examples", ylabel: "test accuracy",
         series: [
-          { name: "labels only (logistic)", color: "#ff7b72", points: [[10, 0.469], [20, 0.766], [40, 0.864], [80, 0.907], [160, 0.927]] },
+          { name: "labels only (logistic)", color: "#9aa7b4", points: [[10, 0.469], [20, 0.766], [40, 0.864], [80, 0.907], [160, 0.927]] },
           { name: "labels + unlabeled (LabelSpreading)", color: "#7ee787", points: [[10, 0.594], [20, 0.914], [40, 0.947], [80, 0.952], [160, 0.980]] }
-        ]
+        ],
+        interpret: "<b>Real numbers.</b> X is the number of real labels; Y is test accuracy. The grey line uses only the labels; the green line also exploits the unlabeled pool. Green sits <b>above</b> grey everywhere and the gap is widest where labels are scarcest (0.914 vs 0.766 at 20 labels), then both converge as labels become plentiful. <b>Read it as:</b> when unlabeled data is on-distribution, leaning on it buys you accuracy you would otherwise have to pay for with more labels — exactly the regime MixMatch targets."
+      },
+      {
+        type: "line",
+        title: "Off-distribution backfire: unlabeled pool hurts when its labels are wrong (illustrative)",
+        xlabel: "number of labeled examples", ylabel: "test accuracy",
+        series: [
+          { name: "labels only (logistic)", color: "#9aa7b4", points: [[10, 0.469], [20, 0.766], [40, 0.864], [80, 0.907], [160, 0.927]] },
+          { name: "labels + unlabeled (mismatched pool)", color: "#ff7b72", points: [[10, 0.40], [20, 0.62], [40, 0.74], [80, 0.84], [160, 0.90]] }
+        ],
+        interpret: "<b>Illustrative</b> (not the real run). When the unlabeled pool is off-distribution — extra classes, a domain shift — the guessed labels are systematically wrong, so the red curve sits <b>below</b> the grey labels-only line: the unlabeled data is actively dragging the model down. <b>Recognise it</b> by semi-supervised <i>underperforming</i> the labels-only baseline. <b>Conclude:</b> filter the unlabeled pool to the same label space (or use ReMixMatch-style distribution alignment) before trusting it; more labels eventually close the gap as the model relies less on the bad guesses."
       }
     ],
-    caption: "Left: a logistic model on real load_digits gives an ambiguous prediction for a digit whose true label is 6 — it is split between class 1 (0.352) and class 6 (0.377). Sharpening with T=0.5 then T=0.25 raises every probability to the power 1/T and renormalizes, piling mass onto the winning class 6 (0.377 -> 0.480 -> 0.561) while class 1 stalls; as T -> 0 it would become a one-hot on class 6. Right: with the same data, LabelSpreading (which exploits the unlabeled points) beats labels-only logistic regression at every tiny label budget — e.g. 0.914 vs 0.766 at 20 labels. Both panels are real numbers computed by the code below with numpy + scikit-learn. They isolate two ideas inside MixMatch (sharpening, and the payoff of using unlabeled data); the full MixMatch with K augmentations, MixUp, and a deep network needs a GPU.",
+    caption: "Panels 1 and 3 are real numpy + scikit-learn numbers; panels 2 and 4 are illustrative shapes of the same mechanisms gone wrong. Together they isolate two ideas inside MixMatch — sharpening and the unlabeled-data payoff — plus their failure modes. The full MixMatch with K augmentations, MixUp, and a deep network needs a GPU.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.linear_model import LogisticRegression

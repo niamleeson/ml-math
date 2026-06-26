@@ -293,11 +293,11 @@ print("reliability (pred vs actual):",
   };
 
   window.CODEVIZ["skill-metrics-cost"] = {
-    question: "On the breast-cancer data, where does expected cost bottom out, and how far is that from the naive 0.5 threshold?",
+    question: "Read the expected-cost curve: where does the bill bottom out, and what does its shape tell you about the right threshold?",
     charts: [
       {
         type: "line",
-        title: "Expected cost vs decision threshold (miss a malignant tumor = 10× a false alarm)",
+        title: "Asymmetric cost (miss = 10x a false alarm): minimum sits LEFT of 0.5",
         xlabel: "decision threshold t",
         ylabel: "expected cost on the test set",
         series: [
@@ -308,7 +308,7 @@ print("reliability (pred vs actual):",
           },
           {
             name: "cost-minimizing t = 0.13",
-            color: "#ffb454",
+            color: "#7ee787",
             points: [[0.13, 34]]
           },
           {
@@ -316,10 +316,63 @@ print("reliability (pred vs actual):",
             color: "#9aa7b4",
             points: [[0.50, 61]]
           }
-        ]
+        ],
+        interpret: "<b>This is the ideal case.</b> X is the threshold you might ship; Y is the dollar cost at that threshold on the test set. The curve is a valley: too-low t fires alarms on everyone (left climb), too-high t misses real positives (right climb, which is steep because each miss costs 10x). The <b>green</b> point is the bottom of the valley — the threshold to ship (t = 0.13, cost 34). The <b>grey</b> point is the naive 0.5, sitting on the right wall at cost 61, nearly 2x worse. Read it as: because misses cost more, the cheapest cutoff is pulled <b>left</b> of 0.5."
+      },
+      {
+        type: "line",
+        title: "Symmetric cost (miss = false alarm): minimum sits AT 0.5",
+        xlabel: "decision threshold t",
+        ylabel: "expected cost (illustrative)",
+        series: [
+          {
+            name: "expected cost",
+            color: "#4ea1ff",
+            points: [[0.05, 95], [0.15, 62], [0.25, 44], [0.35, 34], [0.42, 30], [0.50, 28], [0.58, 30], [0.66, 35], [0.75, 46], [0.85, 66], [0.95, 98]]
+          },
+          {
+            name: "minimum t = 0.50",
+            color: "#7ee787",
+            points: [[0.50, 28]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> When a false alarm and a miss cost the same, the cost curve is roughly symmetric and its bottom lands near t = 0.5 — so the default cutoff is actually fine here. The lesson: 0.5 is not wrong because it is 0.5, it is wrong when costs are <b>unequal</b>. If you ever see a valley centered on 0.5, double-check that your two errors really do cost the same before celebrating the default."
+      },
+      {
+        type: "line",
+        title: "Extreme ratio (miss = 100x): minimum slides to the edge, near-monotone",
+        xlabel: "decision threshold t",
+        ylabel: "expected cost (illustrative)",
+        series: [
+          {
+            name: "expected cost",
+            color: "#ffb454",
+            points: [[0.03, 22], [0.08, 18], [0.15, 30], [0.25, 70], [0.35, 150], [0.45, 280], [0.55, 430], [0.65, 600], [0.75, 800], [0.85, 1050], [0.95, 1400]]
+          },
+          {
+            name: "minimum t = 0.08",
+            color: "#7ee787",
+            points: [[0.08, 18]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> When a miss is overwhelmingly costlier (100x), the right wall dominates and the curve climbs almost monotonically from left to right — the bottom is squeezed hard against the low end (here t ~ 0.08, near t* = 1/101). Read this shape as: <b>almost always act</b>. A near-monotone cost curve is a signal that your cost ratio is extreme and the threshold belongs at the edge, not in the middle. Watch that you are not just alerting on literally everything (t -> 0)."
+      },
+      {
+        type: "line",
+        title: "Uncalibrated scores: jagged curve, untrustworthy minimum",
+        xlabel: "decision threshold t",
+        ylabel: "expected cost (illustrative)",
+        series: [
+          {
+            name: "expected cost",
+            color: "#ff7b72",
+            points: [[0.05, 70], [0.12, 41], [0.18, 58], [0.24, 39], [0.30, 60], [0.36, 44], [0.42, 72], [0.50, 50], [0.58, 81], [0.66, 63], [0.74, 95], [0.82, 78], [0.90, 120]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> When the model's scores are NOT real probabilities (raw trees, SVM margins), the cost curve is jagged with several local dips instead of one clean valley, and a score of 0.3 may not mean a 30% chance — so the t* = C_FP/(C_FP+C_FN) shortcut points to the wrong place. Recognise it by the bumpy shape and a minimum that jumps around between data splits. Fix it: calibrate first (CalibratedClassifierCV), or pick the threshold by sweeping the empirical curve on a validation split rather than trusting the formula."
       }
     ],
-    caption: "Positive class = malignant tumor. With a miss costing 10× a false alarm, expected cost bottoms out at t = 0.13 (cost 34: 34 false alarms but ZERO missed tumors), near the Bayes-optimal t* = 0.09. The naive 0.5 threshold costs 61 (1 false alarm but 6 missed malignancies) — almost 2× worse. The threshold, not the model, is where the cost is won.",
+    caption: "Positive class = malignant tumor. The ideal (top) chart is real: with a miss costing 10x a false alarm, expected cost bottoms out at t = 0.13, near the Bayes-optimal t* = 0.09, and the naive 0.5 costs nearly 2x more. The three variants below are illustrative shapes you will actually meet: symmetric costs (valley at 0.5), an extreme ratio (near-monotone, push to the edge), and uncalibrated scores (jagged, untrustworthy minimum).",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split

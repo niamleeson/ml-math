@@ -250,18 +250,54 @@ print("McNemar:", mcnemar([[0, b], [c, 0]], exact=False, correction=True))`
   };
 
   window.CODEVIZ["skill-validation"] = {
-    question: "On real data with a grouped (entity) structure, how much does naive random K-fold INFLATE the score versus a group-aware split? The gap is leakage.",
-    charts: [{
-      type: "bars",
-      title: "Naive random K-fold vs honest GroupKFold on grouped breast-cancer data",
-      xlabel: "validation protocol",
-      ylabel: "5-fold mean accuracy",
-      labels: ["random K-fold (OPTIMISTIC)", "GroupKFold (HONEST)"],
-      values: [1.0, 0.929],
-      valueLabels: ["1.000", "0.929"],
-      colors: ["#ff7b72", "#7ee787"]
-    }],
-    caption: "Real numbers from load_breast_cancer. We BUILD a group index: pick 80 real tumors as 'patients' and give each 5-8 near-identical scans (the original row + tiny noise), so rows are NOT independent. A 1-nearest-neighbour pipeline scores a perfect 1.000 under random KFold(shuffle=True) — because for almost every test row its near-duplicate twin sits in the training fold, so the model just recognizes the twin. Under GroupKFold (each patient entirely in train OR test) the honest accuracy is 0.929. That 7-point gap is pure leakage: the random-fold number is a lie about how the model handles a NEW patient.",
+    question: "How do you READ a validation report and tell an honest score from a lie? Compare the leakage gap, the confidence interval, and the paired test that decide whether to trust a number.",
+    charts: [
+      {
+        type: "bars",
+        title: "Leakage gap: naive random K-fold vs honest GroupKFold (grouped data)",
+        xlabel: "validation protocol",
+        ylabel: "5-fold mean accuracy",
+        labels: ["random K-fold (OPTIMISTIC)", "GroupKFold (HONEST)"],
+        values: [1.0, 0.929],
+        valueLabels: ["1.000", "0.929"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "Real numbers from load_breast_cancer with a built-in group structure (80 'patients', each with 5-8 near-identical scans). The bar height is the cross-validated accuracy. <b>Read the GAP between the two bars, not either bar alone.</b> Random K-fold (red) hits a perfect 1.000 because each test row's near-duplicate twin sits in the training fold — the model recognizes the twin, not the disease. GroupKFold (green) keeps every patient entirely on one side, so the test fold is genuinely unseen: 0.929. The 7-point gap IS the leakage. The honest number is the lower green one; the red one is a lie about how the model handles a NEW patient."
+      },
+      {
+        type: "bars",
+        title: "Report the spread: point estimate vs bootstrap 95% confidence interval",
+        xlabel: "what you report",
+        ylabel: "AUC",
+        labels: ["bare point estimate", "bootstrap 95% interval"],
+        values: [0.896, 0.896],
+        valueLabels: ["0.896", "0.876 - 0.916"],
+        colors: ["#ffb454", "#7ee787"],
+        interpret: "Illustrative, built from the lesson's per-fold AUCs [0.88, 0.91, 0.90, 0.86, 0.93]. Both bars sit at the same mean (0.896) — the point is what the LABEL tells you, not the height. The orange 'bare point estimate' hides all uncertainty: you cannot tell a real 2-point gain from noise. The green bar's label shows the bootstrap 95% interval [0.876, 0.916] — a band of about plus-or-minus 2 points. <b>When you see a score with no interval, distrust it</b>; a healthy report always carries a range so you know how much it could wobble on a fresh sample."
+      },
+      {
+        type: "scatter",
+        title: "Temporal leakage: shuffled K-fold trains on the FUTURE (illustrative)",
+        xlabel: "time (day index)",
+        ylabel: "row",
+        groups: [
+          { name: "train", color: "#4ea1ff", points: [[1, 1], [2, 1], [5, 1], [7, 1], [9, 1], [3, 1], [8, 1]] },
+          { name: "test", color: "#ff7b72", points: [[4, 1], [6, 1], [10, 1]] }
+        ],
+        interpret: "Illustrative. The x-axis is time; each dot is one row colored by which fold it landed in. <b>Read whether red (test) dots are interleaved among or strictly to the right of the blue (train) dots.</b> Here shuffled K-fold scatters test rows (red) BEFORE training rows (blue) in time — the model is allowed to train on day 7 and 9 to predict day 4 and 6, i.e. peek at the future. That inflates the score on temporal data. An honest split (TimeSeriesSplit / walk-forward) would put ALL red dots to the right of ALL blue dots: train on the past, test on the future."
+      },
+      {
+        type: "bars",
+        title: "Optimistic selection: tune-on-test vs nested CV (illustrative)",
+        xlabel: "reporting protocol",
+        ylabel: "reported AUC",
+        labels: ["best of GridSearchCV (tuned on same folds)", "nested CV (honest)"],
+        values: [0.94, 0.91],
+        valueLabels: ["0.940", "0.910"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "Illustrative but qualitatively honest. Both bars score the SAME model; only the protocol differs. The red bar reports GridSearchCV's own best score — the MAX over many hyperparameter trials on the same folds, which is biased upward even if every setting were equally good (taking the max of noisy numbers always overshoots). The green bar re-scores the chosen setting on outer folds the inner search never saw. <b>Expect the nested-CV bar to sit lower</b>; that drop is the optimism you removed. The gap between these two is exactly why leaderboard 'winners' so often regress in production."
+      }
+    ],
+    caption: "Four ways to read a validation report. The first chart uses real load_breast_cancer numbers; the other three are illustrative shapes that are qualitatively honest. Together they teach the three habits: read the leakage gap (not either bar), demand an interval (not a point), and prefer the lower nested/grouped number (the honest one).",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import cross_val_score, KFold, GroupKFold

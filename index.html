@@ -381,6 +381,8 @@
   .viz .vizchart { margin: 12px 0 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg); }
   .viz .vizchart .vizct { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
   .viz canvas[data-viz] { width: 100%; max-width: 600px; height: auto; display: block; }
+  .viz .vizchart .vizinterp { font-size: 13px; color: var(--ink-dim); margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--border); line-height: 1.5; }
+  .viz .vizchart .vizinterp b { color: var(--ink); }
   .viz .vizcap { font-size: 13.5px; color: var(--ink-dim); margin: 10px 0 0; }
   .viz .viztoggle { display: inline-flex; gap: 0; margin: 2px 0 4px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .viz .vbtn { background: var(--bg); color: var(--ink-dim); border: none; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
@@ -1264,7 +1266,8 @@ const App = (function () {
     if (!v || !v.charts || !v.charts.length) return "";
     const canvases = v.charts.map((ch, i) =>
       `<div class="vizchart">${ch.title ? `<div class="vizct">${ch.title}</div>` : ""}` +
-      `<canvas data-viz="${id}::${i}" width="600" height="${ch.h || 260}"></canvas></div>`).join("");
+      `<canvas data-viz="${id}::${i}" width="600" height="${ch.h || 260}"></canvas>` +
+      `${ch.interpret ? `<div class="vizinterp">${ch.interpret}</div>` : ""}</div>`).join("");
     const hasCode = !!v.code;
     const toggle = hasCode
       ? `<div class="viztoggle"><button class="vbtn active" onclick="App.vizView(this,'chart')">📊 Chart</button>` +

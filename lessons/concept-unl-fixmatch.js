@@ -219,17 +219,34 @@ def fixmatch_step(model, x_lab, y_lab, x_weak, x_strong,
   };
 
   window.CODEVIZ["unl-fixmatch"] = {
-    question: "FixMatch's central knob is the confidence threshold tau. As a faithful sklearn proxy, how does a self-trained classifier's accuracy change as we sweep that threshold, versus a labels-only baseline?",
+    question: "FixMatch's central knob is the confidence threshold tau. How should a self-trained classifier's accuracy move as you sweep that threshold — and what do the unhealthy sweeps look like?",
     charts: [
       {
-        type: "line", title: "Real load_digits: self-training accuracy vs confidence threshold (40 labels)", xlabel: "confidence threshold τ", ylabel: "test accuracy",
+        type: "line", title: "Healthy sweep: self-training beats labels-only in a mid-tau window (real load_digits, 40 labels)", xlabel: "confidence threshold τ", ylabel: "test accuracy",
         series: [
-          { name: "self-training (FixMatch idea)", color: "#4ea1ff", points: [[0.50, 0.894], [0.60, 0.881], [0.70, 0.856], [0.80, 0.661], [0.90, 0.867], [0.95, 0.867], [0.99, 0.867]] },
+          { name: "self-training (FixMatch idea)", color: "#7ee787", points: [[0.50, 0.894], [0.60, 0.881], [0.70, 0.856], [0.80, 0.661], [0.90, 0.867], [0.95, 0.867], [0.99, 0.867]] },
           { name: "labels-only baseline", color: "#9aa7b4", points: [[0.50, 0.867], [0.60, 0.867], [0.70, 0.867], [0.80, 0.867], [0.90, 0.867], [0.95, 0.867], [0.99, 0.867]] }
-        ]
+        ],
+        interpret: "<b>Real numbers</b> from scikit-learn's SelfTrainingClassifier on load_digits (1797 real 8x8 digit images, 40 labels). X is the confidence threshold τ; Y is held-out accuracy. The grey flat line is the labels-only baseline (0.867) — it ignores τ. The green line is self-training: at a moderate τ (0.50-0.60) confident pseudo-labels lift it <b>above</b> baseline (0.89 vs 0.87); the 0.80 dip is a single noisy run admitting some wrong guesses; at high τ (0.90+) almost nothing clears the bar so it collapses back onto the baseline. <b>Read it as:</b> there is a useful mid-τ window, and very high τ wastes the unlabeled data."
+      },
+      {
+        type: "line", title: "Confirmation-bias collapse: τ too low admits wrong pseudo-labels (illustrative)", xlabel: "confidence threshold τ", ylabel: "test accuracy",
+        series: [
+          { name: "self-training", color: "#ff7b72", points: [[0.50, 0.62], [0.60, 0.70], [0.70, 0.80], [0.80, 0.86], [0.90, 0.87], [0.95, 0.867], [0.99, 0.867]] },
+          { name: "labels-only baseline", color: "#9aa7b4", points: [[0.50, 0.867], [0.60, 0.867], [0.70, 0.867], [0.80, 0.867], [0.90, 0.867], [0.95, 0.867], [0.99, 0.867]] }
+        ],
+        interpret: "<b>Illustrative</b> failure shape (not the real run). When the model is shaky and τ is set low, the gate lets in many <i>wrong</i> guesses; the model trains on its own mistakes and the red curve sits <b>below</b> the grey baseline at low τ, climbing back to baseline only as τ rises and filters the junk out. <b>Recognise it</b> by a curve that is worst on the left and improves as τ increases — the opposite of a free lunch. The cure is to raise τ (FixMatch uses 0.95) so only confident, mostly-correct pseudo-labels are kept."
+      },
+      {
+        type: "line", title: "Threshold-starved: τ so high the unlabeled data never switches on (illustrative)", xlabel: "confidence threshold τ", ylabel: "test accuracy",
+        series: [
+          { name: "self-training", color: "#ffb454", points: [[0.50, 0.90], [0.60, 0.895], [0.70, 0.89], [0.80, 0.88], [0.90, 0.871], [0.95, 0.868], [0.99, 0.867]] },
+          { name: "labels-only baseline", color: "#9aa7b4", points: [[0.50, 0.867], [0.60, 0.867], [0.70, 0.867], [0.80, 0.867], [0.90, 0.867], [0.95, 0.867], [0.99, 0.867]] }
+        ],
+        interpret: "<b>Illustrative.</b> Here the gain is real at low τ but the curve slides monotonically back to baseline as τ tightens: by τ=0.99 essentially no unlabeled image clears the bar, so the unlabeled loss is ~0 and you are training on the 40 labels alone. <b>Recognise it</b> by a curve that touches the grey baseline at the right edge and only separates from it on the left. <b>Conclude:</b> if your accepted-pseudo-label count is near zero, τ is too high — lower it or train the supervised head longer so more images become confident."
       }
     ],
-    caption: "Real numbers from scikit-learn's SelfTrainingClassifier on load_digits (1797 real 8x8 digit images) with only 40 labels (4 per class) and the rest unlabeled. This is a faithful small-scale proxy that isolates FixMatch's central mechanism — confidence-thresholded pseudo-labeling — on a CPU. A moderate threshold (0.50-0.60) lets confident pseudo-labels lift accuracy above the labels-only baseline (0.89 vs 0.87); too low a threshold can admit wrong guesses (the 0.80 dip reflects this confirmation-bias risk on a noisy probability estimate); too high (0.90+) accepts almost nothing, so it collapses back to the baseline. Real FixMatch on CIFAR-10 with a CNN, RandAugment, and a GPU is the full method this proxy stands in for.",
+    caption: "The main panel is real scikit-learn output; the two variants are illustrative shapes of the same sweep gone wrong. All isolate FixMatch's central mechanism — confidence-thresholded pseudo-labeling — on a CPU. Real FixMatch on CIFAR-10 with a CNN, RandAugment, and a GPU is the full method this proxy stands in for.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
