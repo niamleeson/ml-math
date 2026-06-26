@@ -180,6 +180,7 @@ class Block(nn.Module):
 class NanoGPT(nn.Module):
     def __init__(self, vocab, d_model=64, h=4, n_layers=3, max_len=64, d_ff=128):
         super().__init__()
+        self.max_len = max_len                              # longest context the position table can index
         self.tok = nn.Embedding(vocab, d_model)             # token embedding table (paper-word2vec)
         self.pos = nn.Embedding(max_len, d_model)           # LEARNED positional embedding (paper-transformer)
         self.blocks = nn.ModuleList([Block(d_model, h, max_len, d_ff) for _ in range(n_layers)])
@@ -195,9 +196,9 @@ class NanoGPT(nn.Module):
         return self.head(self.ln_f(x))                      # (B,S,vocab) next-char logits
 
     @torch.no_grad()
-    def generate(self, idx, n_new, temp=0.8, max_len=64):
+    def generate(self, idx, n_new, temp=0.8):
         for _ in range(n_new):
-            logits = self(idx[:, -max_len:])[:, -1, :] / temp   # logits for the next char at the last slot
+            logits = self(idx[:, -self.max_len:])[:, -1, :] / temp  # crop to the model's context window, then take the last slot
             probs = F.softmax(logits, dim=-1)
             nxt = torch.multinomial(probs, 1)               # SAMPLE the next char (paper-gpt)
             idx = torch.cat([idx, nxt], dim=1)
