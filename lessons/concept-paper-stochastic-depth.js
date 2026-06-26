@@ -432,7 +432,7 @@ class StochasticBlock(nn.Module):
         self.bn1   = nn.BatchNorm2d(out_ch)
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, stride=1, padding=1, bias=False)
         self.bn2   = nn.BatchNorm2d(out_ch)
-        self.relu  = nn.ReLU(inplace=True)
+        self.relu  = nn.ReLU()
         self.proj = None                         # projection skip when shape changes
         if stride != 1 or in_ch != out_ch:
             self.proj = nn.Sequential(nn.Conv2d(in_ch, out_ch, 1, stride=stride, bias=False),
@@ -460,7 +460,7 @@ class SmallResNet(nn.Module):
     def __init__(self, blocks_per_stage=3, pL=0.5, n_classes=10):
         super().__init__()
         self.stem = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1, bias=False),
-                                  nn.BatchNorm2d(16), nn.ReLU(inplace=True))
+                                  nn.BatchNorm2d(16), nn.ReLU())
         widths = [(16, 16, 1), (16, 32, 2), (32, 64, 2)]
         Ltot = len(widths) * blocks_per_stage           # total residual blocks
         blocks, idx = [], 0
