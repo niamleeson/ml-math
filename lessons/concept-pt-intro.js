@@ -430,11 +430,11 @@ print("model(x) =", y.item())                       # a single predicted number
   };
 
   window.CODEVIZ["pt-intro"] = {
-    question: "What does 'training' actually look like? A tiny model's loss falling over epochs — the curve you watch in every PyTorch run. Here: full-batch gradient descent fitting a line y = 2x + 1, the same loop PyTorch automates with autograd + an optimizer.",
+    question: "What does 'training' actually look like — and how do you read the loss curve to tell a healthy run from a broken one? Full-batch gradient descent fitting y = 2x + 1, the same loop PyTorch automates with autograd + an optimizer.",
     charts: [
       {
         type: "line",
-        title: "Training loss falling over epochs — tiny linear fit (real run)",
+        title: "Healthy: loss falls then flattens at the noise floor (real run, lr 0.3)",
         xlabel: "epoch",
         ylabel: "mean squared error (loss)",
         series: [
@@ -443,10 +443,39 @@ print("model(x) =", y.item())                       # a single predicted number
             color: "#7ee787",
             points: [[0, 2.2537], [1, 0.9552], [2, 0.5339], [3, 0.332], [4, 0.215], [5, 0.1429], [6, 0.0978], [7, 0.0694], [8, 0.0515], [9, 0.0403], [10, 0.0332], [11, 0.0287], [12, 0.0259], [13, 0.0241], [14, 0.023], [15, 0.0223], [16, 0.0218], [17, 0.0216], [18, 0.0214], [19, 0.0213], [20, 0.0212], [21, 0.0212], [22, 0.0211], [23, 0.0211], [24, 0.0211], [25, 0.0211], [26, 0.0211], [27, 0.0211], [28, 0.0211], [29, 0.0211], [30, 0.0211], [31, 0.0211], [32, 0.0211], [33, 0.0211], [34, 0.0211], [35, 0.0211], [36, 0.0211], [37, 0.0211], [38, 0.0211], [39, 0.0211]]
           }
-        ]
+        ],
+        interpret: "X is the epoch (one full pass of the optimizer); Y is the loss, how wrong the model is — lower is better. Read the shape: a steep drop early (the optimizer is taking big useful steps) that bends into a flat floor near 0.021. That floor is the leftover noise in the data, not a bug — the model has learned everything learnable. A curve that falls smoothly and levels off like this is the healthy result you want; here the recovered w=1.89, b=1.00 match the true 2.0 and 1.0. These are real computed numbers."
+      },
+      {
+        type: "line",
+        title: "Variant — learning rate too high: loss oscillates / explodes (illustrative)",
+        xlabel: "epoch",
+        ylabel: "mean squared error (loss)",
+        series: [
+          {
+            name: "MSE loss (lr too high)",
+            color: "#ff7b72",
+            points: [[0, 2.25], [1, 3.8], [2, 1.6], [3, 6.5], [4, 2.4], [5, 12.0], [6, 4.0], [7, 28.0], [8, 9.0], [9, 70.0], [10, 22.0], [11, 180.0]]
+          }
+        ],
+        interpret: "Same axes, but the curve zig-zags up and down and the peaks keep growing instead of settling. This is the classic too-large learning-rate signature: each step overshoots the bottom of the valley and lands further up the other side, so the loss bounces and can run away toward infinity (often printing NaN). If you see this, lower the learning rate (e.g. 0.3 to 0.03). Illustrative shape."
+      },
+      {
+        type: "line",
+        title: "Variant — learning rate too low: barely moves, never converges (illustrative)",
+        xlabel: "epoch",
+        ylabel: "mean squared error (loss)",
+        series: [
+          {
+            name: "MSE loss (lr too low)",
+            color: "#ffb454",
+            points: [[0, 2.25], [1, 2.21], [2, 2.17], [3, 2.14], [4, 2.10], [5, 2.07], [6, 2.04], [7, 2.01], [8, 1.98], [9, 1.95], [10, 1.92], [11, 1.90], [12, 1.87], [13, 1.85], [14, 1.83], [15, 1.81]]
+          }
+        ],
+        interpret: "Here the loss does drop, but in a long slow crawl that is nowhere near the 0.021 floor after the same number of epochs. The near-flat, gently-sloping line means the steps are tiny — the learning rate is too small, so training would take enormously long to finish. The fix is the opposite of the case above: raise the learning rate (or train far longer). Don't confuse this with the healthy flat tail — this line is still high and never bent down sharply. Illustrative shape."
       }
     ],
-    caption: "Real numbers from the numpy code below. A linear model y = w*x + b is fit to data generated from y = 2x + 1 + noise using full-batch gradient descent (learning rate 0.3). The loss starts at 2.25 and falls to 0.0211 — the leftover noise floor — by epoch ~20, then flattens. This falling-then-flattening curve is exactly what you watch when training any PyTorch model; the recovered parameters end at w=1.89, b=1.00, close to the true 2.0 and 1.0. In PyTorch you write this loop in five lines and let autograd compute the gradients (gw, gb) for you instead of deriving them by hand as we do here.",
+    caption: "Three runs of the same y = 2x + 1 fit, read off the loss curve. Green is the real healthy run (lr 0.3): a sharp drop that flattens at the noise floor. The two coloured variants show what a bad learning rate looks like — too high makes the loss oscillate and explode (red), too low makes it crawl and never converge (orange) — both illustrative but qualitatively honest. In PyTorch you watch exactly this curve every run; autograd computes the gradients (gw, gb) for you instead of deriving them by hand as below.",
     code: `import numpy as np
 
 # ---- A tiny training loop done by hand (this is what PyTorch automates) ----

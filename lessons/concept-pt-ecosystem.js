@@ -406,18 +406,44 @@ print("sequence embedding shape:", out.last_hidden_state.shape)  # [1, seq, 768]
   };
 
   window.CODEVIZ["pt-ecosystem"] = {
-    question: "For the same fine-tune task, how much code do you write in raw PyTorch vs. Lightning vs. Hugging Face?",
-    charts: [{
-      type: "bars",
-      title: "Setup effort (lines of code) for the same task — less code, less control",
-      xlabel: "stack",
-      ylabel: "lines of code (illustrative)",
-      labels: ["Raw PyTorch", "PyTorch Lightning", "Hugging Face"],
-      values: [120, 50, 12],
-      valueLabels: ["120", "50", "12"],
-      colors: ["#ffb454", "#4ea1ff", "#7ee787"]
-    }],
-    caption: "Illustrative line counts for fine-tuning the same classifier (with multi-GPU + AMP + logging) three ways. Raw PyTorch writes every line — the most control and the most code (~120). Lightning keeps your data and model but absorbs the loop, device handling, multi-GPU, and logging (~50). Hugging Face often starts from a pretrained model, so you write the least (~12) and trade away the most control. The trend is the lesson, not the exact numbers: more code buys more control; less code buys speed on standard tasks.",
+    question: "Read the trade-off chart: each bar is a stack, taller = more code you write. The right tool is the shortest bar whose control you still need — and the standard ladder (raw > Lightning > Hugging Face) only holds for a STANDARD task.",
+    charts: [
+      {
+        type: "bars",
+        title: "Standard task: more code buys more control (raw > Lightning > HF)",
+        xlabel: "stack",
+        ylabel: "lines of code (illustrative)",
+        labels: ["Raw PyTorch", "PyTorch Lightning", "Hugging Face"],
+        values: [120, 50, 12],
+        valueLabels: ["120", "50", "12"],
+        colors: ["#ffb454", "#4ea1ff", "#7ee787"],
+        interpret: "<b>Each bar = one way to do the SAME fine-tune job (with multi-GPU + mixed precision + logging); height = lines of code you write.</b> Read it left to right as a ladder: raw PyTorch writes every line (~120, orange = most work), Lightning absorbs the loop, device handling, and logging (~50, blue), Hugging Face starts from a pretrained model so you write almost nothing (~12, green). <b>Conclude:</b> the bars shrink as you climb the rings, but the control you give up grows the same way. Pick the shortest bar that still lets you change what you need to change. Illustrative counts; the monotonic trend is the point."
+      },
+      {
+        type: "bars",
+        title: "The hidden axis: code DOWN means control DOWN",
+        xlabel: "stack",
+        ylabel: "control retained (%) vs code written (lines)",
+        series: [
+          { name: "lines of code", color: "#9aa7b4", points: [[0, 120], [1, 50], [2, 12]] },
+          { name: "control retained (%)", color: "#c89bff", points: [[0, 100], [1, 60], [2, 25]] }
+        ],
+        labels: ["Raw PyTorch", "PyTorch Lightning", "Hugging Face"],
+        interpret: "<b>Illustrative. Same three stacks, but now two bars per stack: grey = lines you write, purple = how much of the loop you still control.</b> They fall together left to right — that is the whole trade-off in one picture. The grey bars dropping is the appeal (less work); the purple bars dropping is the cost (when something breaks deep in a hidden loop, you have fewer knobs and less visibility). <b>Read it as:</b> there is no free lunch; every line a framework removes is a line you can no longer easily reach in."
+      },
+      {
+        type: "bars",
+        title: "Wrong tool for a tiny task: the ladder inverts",
+        xlabel: "stack",
+        ylabel: "lines of code for a 1-file, 1-GPU script (illustrative)",
+        labels: ["Raw PyTorch", "PyTorch Lightning", "Hugging Face"],
+        values: [25, 45, 10],
+        valueLabels: ["25", "45", "10"],
+        colors: ["#7ee787", "#ff7b72", "#7ee787"],
+        interpret: "<b>Illustrative.</b> Same axes, but now the job is tiny: one file, one GPU, no logging, no multi-GPU. The ladder breaks — <b>Lightning is now the TALLEST bar (red)</b>, because its boilerplate (a LightningModule, configure_optimizers, a Trainer) costs more than just writing the 25-line raw loop. <b>Diagnose:</b> this is over-engineering. A framework only pays off when the work it removes (scaling, AMP, logging) actually exists. <b>Fix:</b> match the tool to the size of the job; reach for raw PyTorch (or a pretrained pipeline) for small scripts."
+      }
+    ],
+    caption: "",
     code: `import numpy as np
 
 # Illustrative line-count breakdown for the SAME task (fine-tune + multi-GPU

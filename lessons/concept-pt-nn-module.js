@@ -435,18 +435,43 @@ print("after re-init, fc1.bias is all zeros:",
   };
 
   window.CODEVIZ["pt-nn-module"] = {
-    question: "Where do an MLP's parameters actually live? Per-layer trainable-parameter count for the MLP Linear(784->256) -> ReLU -> Linear(256->128) -> ReLU -> Linear(128->10), computed with the formula in*out + out.",
-    charts: [{
-      type: "bars",
-      title: "Trainable parameters per layer of a 784-256-128-10 MLP",
-      xlabel: "layer",
-      ylabel: "parameter count",
-      labels: ["Linear 784->256", "ReLU", "Linear 256->128", "ReLU", "Linear 128->10"],
-      values: [200960, 0, 32896, 0, 1290],
-      valueLabels: ["200,960", "0", "32,896", "0", "1,290"],
-      colors: ["#4ea1ff", "#8b949e", "#4ea1ff", "#8b949e", "#7ee787"]
-    }],
-    caption: "Real counts from in*out + out: Linear(784->256) = 784*256+256 = 200,960; Linear(256->128) = 256*128+128 = 32,896; Linear(128->10) = 128*10+10 = 1,290. ReLU has zero parameters. Total = 235,146 — the same number model.parameters() reports. The first layer dominates because it is widest at the input.",
+    question: "Where do a model's parameters actually live? Read a per-layer parameter bar chart — and spot which layer dominates.",
+    charts: [
+      {
+        type: "bars",
+        title: "Trainable parameters per layer of a 784-256-128-10 MLP",
+        xlabel: "layer",
+        ylabel: "parameter count",
+        labels: ["Linear 784->256", "ReLU", "Linear 256->128", "ReLU", "Linear 128->10"],
+        values: [200960, 0, 32896, 0, 1290],
+        valueLabels: ["200,960", "0", "32,896", "0", "1,290"],
+        colors: ["#4ea1ff", "#8b949e", "#4ea1ff", "#8b949e", "#7ee787"],
+        interpret: "<b>Each bar is one layer; bar height = how many trainable numbers (weights + biases) that layer holds</b>, from in*out + out. Real counts: Linear(784->256) = 784*256+256 = 200,960; Linear(256->128) = 32,896; Linear(128->10) = 1,290; the two grey ReLU bars are <b>zero</b> because an activation has no weights. The first bar towers over the rest: the layer touching the 784-wide input owns ~86% of the model. Total = 235,146, exactly what sum(p.numel() for p in model.parameters()) reports."
+      },
+      {
+        type: "bars",
+        title: "Variant: wide-tail MLP, last layer dominates (illustrative)",
+        xlabel: "layer",
+        ylabel: "parameter count",
+        labels: ["Linear 64->128", "ReLU", "Linear 128->256", "ReLU", "Linear 256->1000"],
+        values: [8320, 0, 33024, 0, 257000],
+        valueLabels: ["8,320", "0", "33,024", "0", "257,000"],
+        colors: ["#4ea1ff", "#8b949e", "#4ea1ff", "#8b949e", "#ffb454"],
+        interpret: "<b>Illustrative</b> but the formula is real. Same chart type, opposite shape: a network that <b>fans out to a 1000-class output</b> piles most of its weights into the <b>last</b> layer (256*1000+1000 = 257,000). Read it the same way — tallest bar = where the parameters live — but here the cost is at the output, not the input. The lesson: a single very wide layer (input OR output) dominates the budget."
+      },
+      {
+        type: "bars",
+        title: "Variant: all the params hide in a bias-only / scale layer (illustrative)",
+        xlabel: "layer",
+        ylabel: "parameter count",
+        labels: ["Linear 512->512", "ReLU", "BatchNorm (512)", "Linear 512->512"],
+        values: [262656, 0, 1024, 262656],
+        valueLabels: ["262,656", "0", "1,024", "262,656"],
+        colors: ["#4ea1ff", "#8b949e", "#7ee787", "#4ea1ff"],
+        interpret: "<b>Illustrative.</b> Two equal-width Linear layers carry the bulk, but notice the small green <b>BatchNorm</b> bar is <b>not zero</b> (512 scales + 512 shifts = 1,024). The takeaway when reading these charts: a near-flat bar can still be non-zero — normalization and embedding layers hold learnable parameters too, so don't assume only Linear/Conv layers count. Always cross-check the bars against sum(p.numel() ...)."
+      }
+    ],
+    caption: "How to read a per-layer parameter chart: each bar = one layer, height = its trainable-parameter count (in*out + out for Linear), grey = parameter-free activations. The tallest bar tells you where the model's weight budget lives — usually the widest Linear layer.",
     code: `import numpy as np
 
 # An MLP described as a list of (in_features, out_features) for each Linear,

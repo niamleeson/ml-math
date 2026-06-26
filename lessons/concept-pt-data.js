@@ -509,28 +509,66 @@ print("padded sequences:", padded.shape, "| true lengths:", lengths.tolist())
   };
 
   window.CODEVIZ["pt-data"] = {
-    question: "Why does DataLoader parallelism matter? As we add worker processes, how does training throughput (samples/sec) change? Modelled on a small 2-conv-layer CNN (Convolutional Neural Network) whose GPU step takes ~20 ms per batch of 64, while one CPU loader needs ~115 ms of decode+augment per batch.",
+    question: "How do you read a throughput-vs-num_workers curve to pick the right number of workers? The shape tells you whether your data loader is the bottleneck — rising-then-plateau means it was, flat-from-the-start means it never was, and a curve that peaks then DROPS means you over-subscribed and should back off.",
     charts: [
       {
         type: "line",
-        title: "Training throughput vs num_workers (small 2-conv-layer CNN, batch_size=64)",
+        title: "Healthy: throughput climbs then plateaus at the GPU ceiling",
+        xlabel: "num_workers",
+        ylabel: "throughput (samples / sec)",
+        series: [
+          {
+            name: "throughput",
+            color: "#7ee787",
+            points: [[0, 557], [1, 557], [2, 1096], [3, 1595], [4, 2035], [6, 2704], [8, 3096], [12, 3200]]
+          },
+          {
+            name: "GPU-bound ceiling (3200)",
+            color: "#9aa7b4",
+            points: [[0, 3200], [12, 3200]]
+          }
+        ],
+        interpret: "<b>x-axis</b> is the number of loader worker processes, <b>y-axis</b> is training throughput in samples/sec. With 0 or 1 worker the CPU decodes batches serially (~115 ms each), so throughput is stuck at ~557/sec and the GPU idles. Each extra worker prefetches in parallel and the green line climbs steeply, then bends over and flattens at the grey GPU ceiling (~3200/sec = a 20 ms GPU step on 64 samples). <b>Read it as: pick the worker count where the curve first flattens (~6-8 here)</b> — more workers buy nothing. Real computed numbers from the model below."
+      },
+      {
+        type: "line",
+        title: "Already GPU-bound: flat from the start, workers don't help",
         xlabel: "num_workers",
         ylabel: "throughput (samples / sec)",
         series: [
           {
             name: "throughput",
             color: "#4ea1ff",
-            points: [[0, 557], [1, 557], [2, 1096], [3, 1595], [4, 2035], [6, 2704], [8, 3096], [12, 3200]]
+            points: [[0, 3050], [1, 3120], [2, 3180], [3, 3200], [4, 3200], [6, 3200], [8, 3200], [12, 3200]]
           },
           {
             name: "GPU-bound ceiling (3200)",
-            color: "#ffb454",
+            color: "#9aa7b4",
             points: [[0, 3200], [12, 3200]]
           }
-        ]
+        ],
+        interpret: "Illustrative. Here the curve is <b>flat at the ceiling almost immediately</b> — even one worker keeps up because the per-batch CPU work is cheap (light transforms, fast disk). The data loader was never the bottleneck; the GPU step is. <b>Read it as: adding workers is wasted effort</b> — keep num_workers small (1-2) and look elsewhere (model size, batch size, mixed precision) if you want more speed. A flat line from the left edge means you are already GPU-bound."
+      },
+      {
+        type: "line",
+        title: "Over-subscribed: throughput peaks then DROPS",
+        xlabel: "num_workers",
+        ylabel: "throughput (samples / sec)",
+        series: [
+          {
+            name: "throughput",
+            color: "#ff7b72",
+            points: [[0, 557], [1, 557], [2, 1096], [3, 1595], [4, 2035], [6, 2704], [8, 2950], [12, 2300], [16, 1700]]
+          },
+          {
+            name: "GPU-bound ceiling (3200)",
+            color: "#9aa7b4",
+            points: [[0, 3200], [16, 3200]]
+          }
+        ],
+        interpret: "Illustrative. The red line rises like the healthy case, peaks near 8 workers, then <b>turns back down</b> — it never reaches the grey ceiling. Too many worker processes oversubscribe the CPU cores and RAM, so inter-process copying and context-switching cost more than the parallelism saves. <b>Read it as: the optimum is the peak, not the maximum</b> — back off to ~8 workers. A throughput curve that falls after a peak is the signature of too-high num_workers, not of a slow GPU."
       }
     ],
-    caption: "With 0 or 1 worker the CPU loads batches serially (~115 ms each), so throughput is stuck near 557 samples/sec and the GPU mostly idles. Each extra worker prefetches batches in parallel, and throughput climbs steeply (1096 at 2 workers, 2035 at 4). It then bends over and plateaus near 3200 samples/sec — the GPU-bound ceiling (a 20 ms GPU step on 64 samples = 3200/sec). Past that point the loader is no longer the bottleneck, so more workers add inter-process overhead, not speed. This is exactly why you set num_workers > 0 (and pin_memory) — to keep a fast GPU fed — and why you stop at the plateau rather than maxing it out.",
     code: `import numpy as np
 
 # Small illustrative model: a 2-conv-layer CNN. Per BATCH of 64 samples,

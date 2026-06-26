@@ -310,18 +310,41 @@ print("z.grad_fn       =", z.grad_fn)         # None
   };
 
   window.CODEVIZ["pt-autograd"] = {
-    question: "Does PyTorch's autograd actually compute the true derivative? Plot the autograd gradient of f(x)=x^3+2x against the analytic derivative 3x^2+2.",
-    charts: [{
-      type: "line",
-      title: "Autograd gradient vs analytic derivative of f(x) = x^3 + 2x",
-      xlabel: "x",
-      ylabel: "df/dx",
-      series: [
-        { name: "analytic 3x^2+2", color: "#4ea1ff", points: [[-3, 29], [-2.8, 25.52], [-2.6, 22.28], [-2.4, 19.28], [-2.2, 16.52], [-2, 14], [-1.8, 11.72], [-1.6, 9.68], [-1.4, 7.88], [-1.2, 6.32], [-1, 5], [-0.8, 3.92], [-0.6, 3.08], [-0.4, 2.48], [-0.2, 2.12], [0, 2], [0.2, 2.12], [0.4, 2.48], [0.6, 3.08], [0.8, 3.92], [1, 5], [1.2, 6.32], [1.4, 7.88], [1.6, 9.68], [1.8, 11.72], [2, 14], [2.2, 16.52], [2.4, 19.28], [2.6, 22.28], [2.8, 25.52], [3, 29]] },
-        { name: "torch autograd", color: "#ff7b72", points: [[-3, 29], [-2.8, 25.52], [-2.6, 22.28], [-2.4, 19.28], [-2.2, 16.52], [-2, 14], [-1.8, 11.72], [-1.6, 9.68], [-1.4, 7.88], [-1.2, 6.32], [-1, 5], [-0.8, 3.92], [-0.6, 3.08], [-0.4, 2.48], [-0.2, 2.12], [0, 2], [0.2, 2.12], [0.4, 2.48], [0.6, 3.08], [0.8, 3.92], [1, 5], [1.2, 6.32], [1.4, 7.88], [1.6, 9.68], [1.8, 11.72], [2, 14], [2.2, 16.52], [2.4, 19.28], [2.6, 22.28], [2.8, 25.52], [3, 29]] }
-      ]
-    }],
-    caption: "The two curves lie exactly on top of each other: autograd's reverse-mode gradient equals the analytic derivative 3x^2+2 at every x. This validates that .backward() really is computing the calculus derivative (the V at x=0 bottoms out at the minimum slope of 2).",
+    question: "Does autograd really compute the true derivative — and what do its famous gotchas look like as a picture?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: autograd gradient lands exactly on the analytic derivative",
+        xlabel: "x",
+        ylabel: "df/dx",
+        series: [
+          { name: "analytic 3x^2+2", color: "#4ea1ff", points: [[-3, 29], [-2.8, 25.52], [-2.6, 22.28], [-2.4, 19.28], [-2.2, 16.52], [-2, 14], [-1.8, 11.72], [-1.6, 9.68], [-1.4, 7.88], [-1.2, 6.32], [-1, 5], [-0.8, 3.92], [-0.6, 3.08], [-0.4, 2.48], [-0.2, 2.12], [0, 2], [0.2, 2.12], [0.4, 2.48], [0.6, 3.08], [0.8, 3.92], [1, 5], [1.2, 6.32], [1.4, 7.88], [1.6, 9.68], [1.8, 11.72], [2, 14], [2.2, 16.52], [2.4, 19.28], [2.6, 22.28], [2.8, 25.52], [3, 29]] },
+          { name: "torch autograd", color: "#7ee787", points: [[-3, 29], [-2.8, 25.52], [-2.6, 22.28], [-2.4, 19.28], [-2.2, 16.52], [-2, 14], [-1.8, 11.72], [-1.6, 9.68], [-1.4, 7.88], [-1.2, 6.32], [-1, 5], [-0.8, 3.92], [-0.6, 3.08], [-0.4, 2.48], [-0.2, 2.12], [0, 2], [0.2, 2.12], [0.4, 2.48], [0.6, 3.08], [0.8, 3.92], [1, 5], [1.2, 6.32], [1.4, 7.88], [1.6, 9.68], [1.8, 11.72], [2, 14], [2.2, 16.52], [2.4, 19.28], [2.6, 22.28], [2.8, 25.52], [3, 29]] }
+        ],
+        interpret: "<b>x-axis</b> is the input x; <b>y-axis</b> is the slope df/dx. The blue line is hand-derived calculus (3x^2+2); the green line is what <code>.backward()</code> read off <code>x.grad</code> at each x. They sit perfectly on top of each other — that overlap is the whole point: autograd is computing the <i>exact</i> derivative, not an approximation. Both curves dip to a minimum of 2 at x=0 (the +2 term) and rise as the x^2 term grows. Real computed numbers."
+      },
+      {
+        type: "line",
+        title: "The #1 bug: gradients ACCUMULATE if you don't zero_grad",
+        xlabel: "number of backward() calls (no zero_grad)",
+        ylabel: "value sitting in x.grad",
+        series: [
+          { name: "with zero_grad (correct)", color: "#7ee787", points: [[1, 14], [2, 14], [3, 14], [4, 14], [5, 14]] },
+          { name: "no zero_grad (buggy)", color: "#ff7b72", points: [[1, 14], [2, 28], [3, 42], [4, 56], [5, 70]] }
+        ],
+        interpret: "<b>x-axis</b> counts how many times you call <code>.backward()</code> on the same x; <b>y-axis</b> is the value left in <code>x.grad</code>. The correct gradient is always 14 (green, flat). But <code>.backward()</code> <i>adds into</i> <code>.grad</code> instead of replacing it, so without <code>zero_grad</code> the red line climbs 14, 28, 42, 56, 70 — a straight line through the origin. If you ever see your gradient growing in lock-step with the iteration count, you forgot <code>optimizer.zero_grad()</code>. Real computed numbers."
+      },
+      {
+        type: "bars",
+        title: "no_grad / detach: gradient flow is cut — x.grad stays empty",
+        labels: ["normal backward", "inside no_grad()", "after .detach()"],
+        values: [14, 0, 0],
+        valueLabels: ["14.0", "None", "None"],
+        colors: ["#7ee787", "#9aa7b4", "#9aa7b4"],
+        interpret: "Each bar is the gradient that reaches the leaf x after a forward pass done three different ways. <b>Left (green):</b> a normal tracked forward, so <code>.backward()</code> deposits 14. <b>Middle / right (grey):</b> the forward ran inside <code>torch.no_grad()</code> or on a <code>.detach()</code>-ed tensor, so no graph was built and there is nothing to differentiate — <code>x.grad</code> is never filled (None, drawn as 0). Grey = no gradient on purpose. This is the inference / frozen-path case: a zero bar here is correct, not a bug. Illustrative of the two ways tracking gets switched off."
+      }
+    ],
+    caption: "Ideal plus the two gotchas every PyTorch user hits: the gradient matches calculus exactly, it piles up if you skip zero_grad, and it vanishes under no_grad/detach.",
     code: `import numpy as np
 import torch
 

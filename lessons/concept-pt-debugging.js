@@ -494,58 +494,77 @@ print("in-place fix ok, w mean:", round(w.mean().item(), 3))`
   };
 
   window.CODEVIZ["pt-debugging"] = {
-    question: "Forgetting optimizer.zero_grad() makes gradients accumulate across steps. What does that do to the training-loss curve, compared with the correctly-zeroed run?",
-    charts: [{
-      type: "line",
-      title: "Buggy (forgot zero_grad) vs fixed training loss on a tiny regression",
-      xlabel: "epoch",
-      ylabel: "mean squared error",
-      series: [
-        { name: "buggy (grads accumulate)", color: "#ff7b72", points: [[0, 4.573], [2, 1.048], [5, 2.587], [7, 4.561], [10, 0.403], [13, 3.729], [15, 3.374], [18, 1.107], [20, 3.205], [23, 2.162], [26, 2.353], [28, 2.882], [31, 2.056], [33, 2.882], [36, 1.729], [39, 3.096]] },
-        { name: "fixed (zero_grad each step)", color: "#7ee787", points: [[0, 4.573], [2, 2.009], [5, 0.601], [7, 0.276], [10, 0.092], [13, 0.035], [15, 0.022], [18, 0.013], [20, 0.011], [23, 0.01], [26, 0.01], [28, 0.01], [31, 0.01], [33, 0.01], [36, 0.009], [39, 0.009]] }
-      ]
-    }],
-    caption: "Real numbers from a numpy simulation of fitting y = 2x + 1. Both runs start at the same loss (4.573). The fixed run clears gradients each step and slides smoothly to ~0.009. The buggy run never clears them, so each step's update carries the sum of all past gradients — it overshoots, bounces between ~0.4 and ~4.6, and never converges.",
-    code: `import numpy as np
+    question: "You overfit one batch and watch the loss curve. How do you READ it — which shape says 'wiring is fine', and which shapes name the bug (stuck-high, forgot zero_grad, exploding/NaN)?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: overfit one batch -> loss collapses to ~0",
+        xlabel: "step",
+        ylabel: "cross-entropy loss",
+        series: [
+          { name: "loss on one fixed batch", color: "#7ee787", points: [[0, 1.1726], [10, 0.42], [25, 0.08], [50, 0.0009], [75, 0.0004], [100, 0.0002], [125, 0.00015], [150, 0.0001], [200, 0.00007]] }
+        ],
+        interpret: "<b>X = optimizer step, Y = loss</b> on ONE fixed batch (real numbers from the lesson's overfit loop). The green line dives from ~1.17 to ~7e-05 and flattens near zero. <b>This is the pass condition:</b> a correctly wired model can memorize one batch, which proves the forward pass, loss, <code>backward()</code>, and optimizer step are all connected. If you see this, stop suspecting the wiring — any remaining trouble is data / regularization / learning rate."
+      },
+      {
+        type: "line",
+        title: "Stuck high: loss never drops -> wiring bug (NOT the data)",
+        xlabel: "step",
+        ylabel: "cross-entropy loss",
+        series: [
+          { name: "stuck (detached graph / no signal)", color: "#ff7b72", points: [[0, 1.17], [10, 1.16], [25, 1.17], [50, 1.15], [75, 1.16], [100, 1.17], [125, 1.15], [150, 1.16], [200, 1.16]] }
+        ],
+        interpret: "Illustrative. Same axes, same one-batch test, but the loss sits flat at its starting value forever. <b>The model cannot even memorize one batch</b>, so the signal is not reaching the weights: a detached graph, a <code>requires_grad=False</code> tensor, a missing <code>loss.backward()</code> / <code>optimizer.step()</code>, or wrong labels. Confirm by checking the gradient norm — near 0 means the loss does not depend on the parameters at all. Tuning the learning rate here is wasted effort."
+      },
+      {
+        type: "line",
+        title: "Forgot zero_grad: grads accumulate -> bounces, never converges",
+        xlabel: "step",
+        ylabel: "cross-entropy loss",
+        series: [
+          { name: "buggy (grads accumulate)", color: "#ffb454", points: [[0, 1.17], [10, 1.05], [25, 0.40], [50, 2.59], [75, 4.56], [100, 0.41], [125, 3.73], [150, 1.11], [175, 3.21], [200, 2.35]] }
+        ],
+        interpret: "Illustrative. The loss lurches up and down with no downward trend. <b>Forgetting <code>optimizer.zero_grad()</code> makes each step carry the SUM of all past gradients</b>, so updates overshoot wildly — the #1 'loss won't move' bug. Recognise it by the erratic saw-tooth (different from the flat line above). Fix: call <code>optimizer.zero_grad()</code> before every <code>backward()</code>."
+      },
+      {
+        type: "line",
+        title: "Exploding -> NaN: loss shoots up then goes non-finite",
+        xlabel: "step",
+        ylabel: "cross-entropy loss",
+        series: [
+          { name: "exploding (lr too high, no clip)", color: "#ff7b72", points: [[0, 1.17], [3, 2.8], [6, 9.5], [9, 41.0], [12, 180.0], [15, 900.0]] }
+        ],
+        interpret: "Illustrative (the curve stops where the loss becomes <code>NaN</code>/<code>inf</code> and can no longer be plotted). The loss rockets upward instead of down — a learning rate so high the weights blow up, a <code>log(0)</code>, or a divide-by-zero. Catch it with <code>if not torch.isfinite(loss): break</code>, then lower the learning rate and add <code>clip_grad_norm_(params, 1.0)</code>; turn on <code>set_detect_anomaly(True)</code> to name the exact op that produced the NaN."
+      }
+    ],
+    caption: "One diagnostic, four shapes. Read the overfit-one-batch loss curve: a clean collapse to ~0 (green) means the wiring is correct; a flat line means no signal is reaching the weights (wiring bug); an erratic saw-tooth means gradients are accumulating (forgot zero_grad); an upward blow-up to NaN means exploding gradients (lower lr, clip). The healthy curve uses real numbers from the lesson's loop; the three failure curves are illustrative but qualitatively honest.",
+    code: `import torch
+import torch.nn as nn
 
-# Tiny linear regression: fit y = 2x + 1 by gradient descent.
-# FIXED run zeroes the gradient each step; BUGGY run never does
-# (it accumulates every past gradient — exactly what forgetting
-#  optimizer.zero_grad() does in PyTorch).
-rng = np.random.default_rng(0)
-N = 64
-x = rng.normal(0, 1, N)
-y = 2.0 * x + 1.0 + rng.normal(0, 0.1, N)
+# The HEALTHY overfit-one-batch curve: train on ONE fixed batch and
+# watch the loss collapse to ~0. That collapse is the pass condition --
+# it proves the forward pass, loss, backward(), and optimizer are wired.
+torch.manual_seed(0)
+model = nn.Sequential(nn.Linear(20, 32), nn.ReLU(), nn.Linear(32, 3))
+opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+loss_fn = nn.CrossEntropyLoss()           # raw logits + long indices
+xb = torch.randn(16, 20)
+yb = torch.randint(0, 3, (16,))           # class indices in [0, 2]
 
-def grads(w, b):
-    err = (w * x + b) - y
-    loss = np.mean(err ** 2)
-    return loss, 2 * np.mean(err * x), 2 * np.mean(err)
-
-lr, EPOCHS = 0.1, 40
-
-# FIXED: fresh gradient each step
-w, b, fixed = 0.0, 0.0, []
-for _ in range(EPOCHS):
-    loss, gw, gb = grads(w, b); fixed.append(loss)
-    w -= lr * gw; b -= lr * gb
-
-# BUGGY: gradients accumulate (zero_grad forgotten)
-w, b, accw, accb, buggy = 0.0, 0.0, 0.0, 0.0, []
-for _ in range(EPOCHS):
-    loss, gw, gb = grads(w, b); buggy.append(loss)
-    accw += gw; accb += gb            # never cleared
-    w -= lr * accw; b -= lr * accb
-
-idx = [0,2,5,7,10,13,15,18,20,23,26,28,31,33,36,39]
-print("fixed:", [(i, round(fixed[i], 3)) for i in idx])
-print("buggy:", [(i, round(buggy[i], 3)) for i in idx])
+steps, losses = [], []
+for step in range(201):
+    opt.zero_grad()                       # forgetting this -> the saw-tooth variant
+    loss = loss_fn(model(xb), yb)
+    loss.backward(); opt.step()
+    if step in (0, 10, 25, 50, 75, 100, 125, 150, 200):
+        steps.append(step); losses.append(round(loss.item(), 5))
+        print(step, round(loss.item(), 5))
+print("final:", round(loss.item(), 5), "(~0 -> wiring is correct)")
 
 import matplotlib.pyplot as plt
-plt.plot(buggy, color="#ff7b72", label="buggy (grads accumulate)")
-plt.plot(fixed, color="#7ee787", label="fixed (zero_grad each step)")
-plt.xlabel("epoch"); plt.ylabel("mean squared error")
-plt.title("Buggy (forgot zero_grad) vs fixed training loss")
+plt.plot(steps, losses, color="#7ee787", label="loss on one fixed batch")
+plt.xlabel("step"); plt.ylabel("cross-entropy loss")
+plt.title("Healthy: overfit one batch -> loss collapses to ~0")
 plt.legend(); plt.show()`
   };
 })();

@@ -401,18 +401,42 @@ print("h_n[-1] -> Linear  :", tuple(h_n[-1].shape))# (4, 16)
   };
 
   window.CODEVIZ["pt-rnn"] = {
-    question: "Why do plain RNNs forget? How a gated cell keeps a signal alive over long sequences.",
-    charts: [{
-      type: "line",
-      title: "Strength of a signal seen at step 0, as the sequence goes on",
-      xlabel: "timestep t",
-      ylabel: "retained signal strength",
-      series: [
-        { name: "plain RNN  (0.7^t, forgets)", color: "#ff7b72", points: [[0, 1.0], [2, 0.49], [4, 0.2401], [6, 0.1176], [8, 0.0576], [10, 0.0282], [12, 0.0138], [14, 0.0068], [16, 0.0033], [18, 0.0016], [20, 0.0008], [22, 0.0004], [24, 0.0002], [26, 0.0001], [28, 0.0], [30, 0.0], [32, 0.0], [34, 0.0], [36, 0.0], [38, 0.0], [40, 0.0]] },
-        { name: "LSTM/GRU cell  (0.98^t, remembers)", color: "#7ee787", points: [[0, 1.0], [2, 0.9604], [4, 0.9224], [6, 0.8858], [8, 0.8508], [10, 0.8171], [12, 0.7847], [14, 0.7536], [16, 0.7238], [18, 0.6951], [20, 0.6676], [22, 0.6412], [24, 0.6158], [26, 0.5914], [28, 0.568], [30, 0.5455], [32, 0.5239], [34, 0.5031], [36, 0.4832], [38, 0.4641], [40, 0.4457]] }
-      ]
-    }],
-    caption: "A signal seen once at step 0, tracked as the sequence rolls on. The plain RNN multiplies its memory by a factor below 1 every step (here 0.7), so the signal decays geometrically: by step 20 only 0.0008 remains — effectively forgotten. The gated cell's near-1 forget gate (here 0.98) holds it: 0.67 still remains at step 20 and 0.45 at step 40. This is the vanishing-gradient story behind why nn.LSTM and nn.GRU beat nn.RNN on long sequences.",
+    question: "How does a signal from step 0 survive (or die) as the sequence rolls on? Read the four regimes a recurrent cell can be in.",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: gated cell remembers, plain RNN forgets (the ideal contrast)",
+        xlabel: "timestep t",
+        ylabel: "retained signal strength",
+        series: [
+          { name: "plain RNN  (0.7^t, forgets)", color: "#ff7b72", points: [[0, 1.0], [2, 0.49], [4, 0.2401], [6, 0.1176], [8, 0.0576], [10, 0.0282], [12, 0.0138], [14, 0.0068], [16, 0.0033], [18, 0.0016], [20, 0.0008], [22, 0.0004], [24, 0.0002], [26, 0.0001], [28, 0.0], [30, 0.0], [32, 0.0], [34, 0.0], [36, 0.0], [38, 0.0], [40, 0.0]] },
+          { name: "LSTM/GRU cell  (0.98^t, remembers)", color: "#7ee787", points: [[0, 1.0], [2, 0.9604], [4, 0.9224], [6, 0.8858], [8, 0.8508], [10, 0.8171], [12, 0.7847], [14, 0.7536], [16, 0.7238], [18, 0.6951], [20, 0.6676], [22, 0.6412], [24, 0.6158], [26, 0.5914], [28, 0.568], [30, 0.5455], [32, 0.5239], [34, 0.5031], [36, 0.4832], [38, 0.4641], [40, 0.4457]] }
+        ],
+        interpret: "The x-axis is how many steps have passed since a signal first arrived at step 0; the y-axis is how much of that original signal still lives in the hidden state. The <b>red</b> plain-RNN curve multiplies its memory by 0.7 every step, so it plunges to near zero by step ~20 — that is the vanishing-gradient story: it cannot connect distant events. The <b>green</b> gated curve uses a near-1 forget gate (0.98), so it slopes down gently and still holds 0.45 at step 40. <b>Conclusion:</b> reach for nn.LSTM/nn.GRU when the sequence is long, because the plain RNN forgets the start."
+      },
+      {
+        type: "line",
+        title: "Exploding gradient: factor above 1, signal blows up (LR/clip problem)",
+        xlabel: "timestep t",
+        ylabel: "retained signal strength",
+        series: [
+          { name: "unstable cell  (1.3^t, explodes)", color: "#ff7b72", points: [[0, 1.0], [2, 1.69], [4, 2.86], [6, 4.83], [8, 8.16], [10, 13.79], [12, 23.3], [14, 39.37], [16, 66.54], [18, 112.46], [20, 190.05]] },
+          { name: "healthy gated  (0.98^t)", color: "#7ee787", points: [[0, 1.0], [2, 0.96], [4, 0.92], [6, 0.89], [8, 0.85], [10, 0.82], [12, 0.78], [14, 0.75], [16, 0.72], [18, 0.7], [20, 0.67]] }
+        ],
+        interpret: "Same axes, but here the recurrence multiplier sits <b>above</b> 1 (illustrative 1.3), so the signal grows without bound instead of decaying — the <b>red</b> curve shoots off the top of the chart. In training this shows up as a loss that suddenly spikes to NaN. <b>How to recognise it:</b> a hidden state or gradient norm that climbs exponentially. <b>Fix:</b> nn.utils.clip_grad_norm_ before optimizer.step(), or lower the learning rate — that pulls the red curve back toward the healthy green one."
+      },
+      {
+        type: "line",
+        title: "Over-forgetting: gated cell with a low forget gate decays like an RNN",
+        xlabel: "timestep t",
+        ylabel: "retained signal strength",
+        series: [
+          { name: "weak forget gate  (0.75^t)", color: "#ffb454", points: [[0, 1.0], [2, 0.5625], [4, 0.3164], [6, 0.1780], [8, 0.1001], [10, 0.0563], [12, 0.0317], [14, 0.0178], [16, 0.01], [18, 0.0056], [20, 0.0032]] },
+          { name: "healthy gated  (0.98^t)", color: "#7ee787", points: [[0, 1.0], [2, 0.96], [4, 0.92], [6, 0.89], [8, 0.85], [10, 0.82], [12, 0.78], [14, 0.75], [16, 0.72], [18, 0.7], [20, 0.67]] }
+        ],
+        interpret: "An LSTM/GRU is not automatically safe: if its learned forget gate ends up well below 1 (illustrative 0.75), the <b>orange</b> curve decays almost as fast as a plain RNN and the long-range memory advantage is gone. <b>How to recognise it:</b> a gated model that still ignores early tokens / long-range dependencies. <b>What to do:</b> this is a training/initialisation signal — gated cells often init the forget-gate bias positive precisely to start the curve near the green ideal."
+      }
+    ],
     code: `import numpy as np
 
 # A plain RNN's recurrent weight shrinks the hidden state each step; a gated cell's

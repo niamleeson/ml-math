@@ -432,30 +432,53 @@ print("loaded onto:", next(cpu_model.parameters()).device)   # cpu`
   };
 
   window.CODEVIZ["pt-save-load"] = {
-    question: "How big is the saved file when you store just the state_dict vs. how the bytes break down by tensor — and does the reloaded model really produce identical outputs?",
+    question: "Save just the state_dict — how do the bytes break down, and how do you read a reload that goes RIGHT vs. one that goes WRONG?",
     charts: [
       {
         type: "bars",
-        title: "Saved size by parameter tensor (float32 = 4 bytes each) for Net(4->8->1)",
+        title: "Bytes by tensor in the state_dict (float32 = 4 bytes) for Net(4->8->1)",
         xlabel: "tensor in the state_dict",
         ylabel: "bytes",
         labels: ["fc1.weight (8x4)", "fc1.bias (8)", "fc2.weight (1x8)", "fc2.bias (1)"],
         values: [128, 32, 32, 4],
         valueLabels: ["128", "32", "32", "4"],
-        colors: ["#4ea1ff", "#7ee787", "#c89bff", "#ffa657"]
+        colors: ["#4ea1ff", "#7ee787", "#c89bff", "#ffa657"],
+        interpret: "Each bar is one named tensor in the state_dict; the height is its size in bytes = (number of elements) x 4, because each float32 weight takes 4 bytes. fc1.weight is an 8x4 matrix = 32 numbers = 128 bytes, the biggest bar; the bias vectors are tiny. <b>Read it as:</b> the saved file size is dominated by the weight matrices, and it scales with the parameter count — 97 params here, 97x4 = 388 raw bytes (the .pt adds a little zip/pickle overhead). These are the only numbers worth saving."
       },
       {
         type: "bars",
-        title: "Outputs match? max |original - reloaded| (after load_state_dict + eval)",
+        title: "Healthy reload: outputs match only after eval() turns dropout off",
         xlabel: "check",
-        ylabel: "max absolute difference",
+        ylabel: "max |original - reloaded|",
         labels: ["with eval() (dropout off)", "no eval() (dropout on)"],
         values: [0.0, 0.83],
         valueLabels: ["0.0 (identical)", "0.83 (differs!)"],
-        colors: ["#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "The y-axis is the largest difference between the original model's output and the reloaded model's output on the same input — zero means identical. With <b>eval()</b> (green) the difference is 0.0: the same numbers loaded, dropout off, so the models agree exactly. Forget eval() (red) and the reloaded model stays in training mode, dropout randomly zeroes units, and the outputs diverge (~0.83). <b>This is the eval()-after-loading rule made visible:</b> a non-zero green-side bar means you forgot eval()."
+      },
+      {
+        type: "bars",
+        title: "Architecture mismatch: which keys land when you load_state_dict",
+        xlabel: "key in the saved state_dict",
+        ylabel: "loaded into new model? (1 = yes, 0 = skipped)",
+        labels: ["fc1.weight", "fc1.bias", "fc2.weight (shape differs)", "fc2.bias (shape differs)"],
+        values: [1, 1, 0, 0],
+        valueLabels: ["copied", "copied", "skipped", "skipped"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72", "#ffb454"],
+        interpret: "Illustrative. You load weights from Net(4->8->1) into a model whose head changed to fc2 = Linear(8, 3). load_state_dict matches <b>by name</b>: fc1.* keys line up and copy (green), but fc2.* now has a different shape so they cannot land (red/orange). With default strict=True this <b>raises</b> a size-mismatch error; with strict=False the mismatched keys are skipped and returned in the missing/unexpected lists. <b>Read it as:</b> any non-green bar means that part of the network kept its random init — the transfer-learning pattern."
+      },
+      {
+        type: "bars",
+        title: "Device mismatch on load: GPU-tagged file vs. CPU-only box",
+        xlabel: "torch.load call",
+        ylabel: "load succeeds? (1 = yes, 0 = error)",
+        labels: ["plain load (no map_location)", "map_location='cpu'"],
+        values: [0, 1],
+        valueLabels: ["RuntimeError", "loads to cpu"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "Illustrative. A file trained on a GPU stores each tensor tagged 'cuda'. On a CPU-only machine a plain torch.load tries to recreate them on a GPU that is not there and <b>errors</b> (red bar = 0, fails). Passing <b>map_location='cpu'</b> redirects every tensor to the CPU as it deserializes, before the missing device is touched, so the load succeeds (green). <b>Read it as:</b> a device RuntimeError on load is almost always a missing map_location, not a corrupt file."
       }
     ],
-    caption: "Left: the state_dict for Net(4->8->1) holds 97 float32 numbers — fc1.weight 8x4=32, fc1.bias 8, fc2.weight 1x8=8, fc2.bias 1 — so 97x4 = 388 bytes of raw tensor data (the .pt file adds a little pickle/zip overhead on top). Right: reload the SAME weights and the outputs are byte-for-byte identical (max difference 0.0) only when you call eval() to turn dropout off; leave the model in training mode and dropout randomly zeroes units, so the reloaded model disagrees with the original (here ~0.83). This is the eval()-after-loading rule made visible. Numbers are real (numpy reproduces the param-count -> bytes; the dropout gap is the std of the saved fc2 outputs under 50% dropout).",
     code: `import numpy as np
 
 # ---- 1) bytes by tensor: param-count -> bytes (float32 = 4 bytes) ----

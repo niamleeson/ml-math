@@ -501,18 +501,42 @@ print("forward calls counted by buffer:", int(model.call_count.item()))`
   };
 
   window.CODEVIZ["pt-custom"] = {
-    question: "Is the hand-written backward of a custom autograd Function correct? For Square (f(x)=x^2), plot the analytic gradient our backward returns (2x) against a numerical finite-difference gradient across x — gradcheck's idea, by hand.",
-    charts: [{
-      type: "line",
-      title: "Custom Function backward (2x) vs numerical gradient of f(x) = x^2",
-      xlabel: "x",
-      ylabel: "df/dx",
-      series: [
-        { name: "analytic backward 2x", color: "#4ea1ff", points: [[-3, -6], [-2.8, -5.6], [-2.6, -5.2], [-2.4, -4.8], [-2.2, -4.4], [-2, -4], [-1.8, -3.6], [-1.6, -3.2], [-1.4, -2.8], [-1.2, -2.4], [-1, -2], [-0.8, -1.6], [-0.6, -1.2], [-0.4, -0.8], [-0.2, -0.4], [0, 0], [0.2, 0.4], [0.4, 0.8], [0.6, 1.2], [0.8, 1.6], [1, 2], [1.2, 2.4], [1.4, 2.8], [1.6, 3.2], [1.8, 3.6], [2, 4], [2.2, 4.4], [2.4, 4.8], [2.6, 5.2], [2.8, 5.6], [3, 6]] },
-        { name: "numerical (finite diff)", color: "#ff7b72", points: [[-3, -6], [-2.8, -5.6], [-2.6, -5.2], [-2.4, -4.8], [-2.2, -4.4], [-2, -4], [-1.8, -3.6], [-1.6, -3.2], [-1.4, -2.8], [-1.2, -2.4], [-1, -2], [-0.8, -1.6], [-0.6, -1.2], [-0.4, -0.8], [-0.2, -0.4], [0, 0], [0.2, 0.4], [0.4, 0.8], [0.6, 1.2], [0.8, 1.6], [1, 2], [1.2, 2.4], [1.4, 2.8], [1.6, 3.2], [1.8, 3.6], [2, 4], [2.2, 4.4], [2.4, 4.8], [2.6, 5.2], [2.8, 5.6], [3, 6]] }
-      ]
-    }],
-    caption: "The two curves lie exactly on top of each other: the analytic gradient our Square.backward returns (2x) matches the numerical finite-difference gradient at every x (max difference ~1e-11). This is precisely what torch.autograd.gradcheck automates — if the hand-written backward were wrong, the red curve would peel away from the blue line.",
+    question: "How do you READ a gradcheck plot? Plot the analytic gradient your backward returns against the numerical finite-difference gradient across x. When the two lines sit on top of each other your backward is right; when the red analytic line peels off the blue numerical reference, gradcheck fails — and the GAP tells you what kind of bug.",
+    charts: [
+      {
+        type: "line",
+        title: "Correct backward (2x): analytic lands on the numerical reference",
+        xlabel: "x",
+        ylabel: "df/dx",
+        series: [
+          { name: "numerical reference 2x", color: "#4ea1ff", points: [[-3, -6], [-2.5, -5], [-2, -4], [-1.5, -3], [-1, -2], [-0.5, -1], [0, 0], [0.5, 1], [1, 2], [1.5, 3], [2, 4], [2.5, 5], [3, 6]] },
+          { name: "analytic backward 2x", color: "#7ee787", points: [[-3, -6], [-2.5, -5], [-2, -4], [-1.5, -3], [-1, -2], [-0.5, -1], [0, 0], [0.5, 1], [1, 2], [1.5, 3], [2, 4], [2.5, 5], [3, 6]] }
+        ],
+        interpret: "<b>x-axis</b> is the input value, <b>y-axis</b> is the gradient of f(x)=x^2 at that input. Blue is the numerical finite-difference reference (what gradcheck trusts); green is what your hand-written <b>backward</b> returns, here 2x. The two lines lie exactly on top of each other at every x (max gap ~1e-11), so <b>gradcheck passes</b> — this is the only outcome you want before training. These are real computed numbers."
+      },
+      {
+        type: "line",
+        title: "Wrong formula (returned x, not 2x): half the slope",
+        xlabel: "x",
+        ylabel: "df/dx",
+        series: [
+          { name: "numerical reference 2x", color: "#4ea1ff", points: [[-3, -6], [-2.5, -5], [-2, -4], [-1.5, -3], [-1, -2], [-0.5, -1], [0, 0], [0.5, 1], [1, 2], [1.5, 3], [2, 4], [2.5, 5], [3, 6]] },
+          { name: "analytic backward x (BUG)", color: "#ff7b72", points: [[-3, -3], [-2.5, -2.5], [-2, -2], [-1.5, -1.5], [-1, -1], [-0.5, -0.5], [0, 0], [0.5, 0.5], [1, 1], [1.5, 1.5], [2, 2], [2.5, 2.5], [3, 3]] }
+        ],
+        interpret: "Illustrative. The red analytic line has the right sign but only <b>half</b> the slope of the blue reference — you returned <code>grad_output * x</code> instead of <code>grad_output * 2 * x</code>, a missing factor. A multiplicative error like this fans out: the gap grows as you move away from x=0. gradcheck fails everywhere except x=0. Training would still run but learn at the wrong rate — the quietest, nastiest class of bug."
+      },
+      {
+        type: "line",
+        title: "Sign flipped (returned -2x): gradient points uphill",
+        xlabel: "x",
+        ylabel: "df/dx",
+        series: [
+          { name: "numerical reference 2x", color: "#4ea1ff", points: [[-3, -6], [-2.5, -5], [-2, -4], [-1.5, -3], [-1, -2], [-0.5, -1], [0, 0], [0.5, 1], [1, 2], [1.5, 3], [2, 4], [2.5, 5], [3, 6]] },
+          { name: "analytic backward -2x (BUG)", color: "#ffb454", points: [[-3, 6], [-2.5, 5], [-2, 4], [-1.5, 3], [-1, 2], [-0.5, 1], [0, 0], [0.5, -1], [1, -2], [1.5, -3], [2, -4], [2.5, -5], [3, -6]] }
+        ],
+        interpret: "Illustrative. The orange analytic line is a mirror image of the blue reference across the x-axis — you returned the right magnitude with the wrong sign (a stray minus in <code>backward</code>). gradcheck fails hard. In training this is catastrophic: the optimizer steps in the direction that <i>increases</i> the loss, so the loss climbs instead of falling. The mirror shape is the tell-tale sign of a flipped gradient."
+      }
+    ],
     code: `import numpy as np
 
 xs = np.linspace(-3, 3, 31)

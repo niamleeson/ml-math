@@ -316,18 +316,43 @@ print("single element :", a[0, 2].item())  # .item() -> plain Python float 3.0
   };
 
   window.CODEVIZ["pt-tensors"] = {
-    question: "How much memory does the same 1000-element tensor take in each dtype?",
-    charts: [{
-      type: "bars",
-      title: "Memory for a 1000-element tensor by dtype",
-      xlabel: "dtype",
-      ylabel: "bytes",
-      labels: ["float64", "float32 (default)", "float16", "int8"],
-      values: [8000, 4000, 2000, 1000],
-      valueLabels: ["8000", "4000", "2000", "1000"],
-      colors: ["#ff7b72", "#4ea1ff", "#7ee787", "#c89bff"]
-    }],
-    caption: "Each element of a 1000-element tensor costs 8 bytes in float64, 4 in float32, 2 in float16, 1 in int8. PyTorch defaults to float32 (4000 bytes here) — half the memory of numpy's float64 default, with precision to spare for deep learning. Halving the dtype halves the memory.",
+    question: "How do you READ a dtype-memory chart — and how do you recognise the two ways dtype bites you (silent upcast, integer overflow)?",
+    charts: [
+      {
+        type: "bars",
+        title: "Healthy: memory of a 1000-element tensor by dtype",
+        xlabel: "dtype",
+        ylabel: "bytes",
+        labels: ["float64", "float32 (default)", "float16", "int8"],
+        values: [8000, 4000, 2000, 1000],
+        valueLabels: ["8000", "4000", "2000", "1000"],
+        colors: ["#ff7b72", "#4ea1ff", "#7ee787", "#c89bff"],
+        interpret: "<b>Bars = total bytes, height = bytes-per-element times 1000.</b> float64 costs 8 bytes/element (8000), float32 4 (4000), float16 2 (2000), int8 1 (1000). <b>Read it as: each step down the list halves memory.</b> PyTorch defaults to float32 (blue) — half of numpy's float64 default (red), with precision to spare for deep learning. This is the picture you want: you chose the dtype, so you control the cost. Real computed numbers (element_size x numel)."
+      },
+      {
+        type: "bars",
+        title: "Pitfall A: numpy round-trip silently UPCASTS to float64 (2x memory)",
+        xlabel: "what you expected vs what you got",
+        ylabel: "bytes",
+        labels: ["expected float32", "got float64 (from_numpy)"],
+        values: [4000, 8000],
+        valueLabels: ["4000", "8000 (2x!)"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "<b>Recognise it by the bar that's TWICE as tall as you expected.</b> numpy defaults to float64, so torch.from_numpy(np_array) inherits float64, not float32. You think you have a 4000-byte tensor (green) but you actually have 8000 (red) — and later ops may silently upcast or raise a dtype error. <b>Tell-tale:</b> print .dtype and see float64 where you wanted float32. Fix: .to(torch.float32). Illustrative bars, real byte counts."
+      },
+      {
+        type: "bars",
+        title: "Pitfall B: int8 OVERFLOW — value 200 wraps to -56, no error",
+        xlabel: "value you stored vs value int8 holds",
+        ylabel: "stored value",
+        labels: ["wanted 100", "wanted 200", "wanted 300"],
+        values: [100, -56, 44],
+        valueLabels: ["100 ok", "-56 (wrapped!)", "44 (wrapped!)"],
+        colors: ["#7ee787", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Recognise it by values that go NEGATIVE or jump downward as inputs grow.</b> int8 only holds -128..127. Storing 100 is fine (green); 200 wraps to 200-256 = -56 and 300 wraps to 300-256 = 44 (red) — silently, no error. <b>Tell-tale:</b> sums or counts that should be large come out small or negative. The tiny memory win of int8 costs you range. Use int8 only for data you know stays in [-128,127]. Real wrap-around arithmetic."
+      }
+    ],
+    caption: "",
     code: `import numpy as np
 
 n = 1000  # number of elements in the tensor

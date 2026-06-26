@@ -408,30 +408,54 @@ print(SERVE)`
   };
 
   window.CODEVIZ["pt-deployment"] = {
-    question: "How much smaller and faster does the model get as you move from FP32 eager PyTorch to TorchScript, to ONNX Runtime, to int8 quantization?",
+    question: "Across the deployment pipeline (FP32 -> TorchScript -> ONNX -> int8), how do you READ the size/latency bars — and the two charts that catch the things that go WRONG (int8 accuracy drop, ONNX output drift)?",
     charts: [
       {
         type: "bars",
-        title: "Model size on disk (MB) — int8 is ~4x smaller",
+        title: "Healthy: model size on disk (MB) — int8 is ~4x smaller",
         xlabel: "artifact",
         ylabel: "size (MB)",
         labels: ["FP32 (.pt)", "TorchScript", "ONNX Runtime", "int8 quantized"],
         values: [1.075, 1.085, 1.075, 0.269],
         valueLabels: ["1.07", "1.08", "1.07", "0.27"],
-        colors: ["#ff7b72", "#4ea1ff", "#c89bff", "#7ee787"]
+        colors: ["#ff7b72", "#4ea1ff", "#c89bff", "#7ee787"],
+        interpret: "<b>Each bar is one artifact; height = bytes on disk.</b> Real numbers: the classifier has 268,650 params, so at float32 (4 bytes each) it is ~1.07 MB. TorchScript and ONNX carry the SAME float32 weights, so their bars are essentially identical (tiny graph/metadata overhead) — <b>export alone does not shrink the model</b>. Only the green int8 bar drops, to ~0.27 MB, because each weight is now 1 byte instead of 4. Read it as: if you need a smaller file, quantization is the lever, not export."
       },
       {
         type: "bars",
-        title: "Inference latency per request (ms) — each runtime faster",
+        title: "Healthy: inference latency per request (ms) — each runtime faster",
         xlabel: "runtime",
         ylabel: "latency (ms, lower is better)",
         labels: ["FP32 eager", "TorchScript", "ONNX Runtime", "int8 quantized"],
         values: [12.0, 9.0, 6.5, 4.0],
         valueLabels: ["12.0", "9.0", "6.5", "4.0"],
-        colors: ["#ff7b72", "#4ea1ff", "#c89bff", "#7ee787"]
+        colors: ["#ff7b72", "#4ea1ff", "#c89bff", "#7ee787"],
+        interpret: "<b>Lower is better</b> here — each bar is per-request latency. The staircase down means each step removes overhead: TorchScript drops the Python interpreter, ONNX Runtime adds graph-level op optimization, int8 swaps float math for cheaper integer math (~3x faster than eager overall). Numbers are <b>illustrative but plausible</b>; latency is hardware-dependent, so always benchmark on your own serving box — read the SHAPE (monotonic improvement), not the exact values."
+      },
+      {
+        type: "bars",
+        title: "Pitfall: int8 accuracy drop you never measured",
+        xlabel: "model",
+        ylabel: "validation accuracy (%)",
+        labels: ["FP32 (baseline)", "int8 (mild loss, ship)", "int8 (big loss, DON'T ship)"],
+        values: [91.2, 90.7, 78.3],
+        valueLabels: ["91.2", "90.7", "78.3"],
+        colors: ["#9aa7b4", "#7ee787", "#ff7b72"],
+        interpret: "Illustrative. <b>The size win is free; the accuracy cost is not.</b> int8 is lossy: on a forgiving model the green bar barely moves from the grey FP32 baseline (91.2 -> 90.7, ship it), but on a sensitive model the red bar craters (91.2 -> 78.3). The whole point of this chart is that you cannot tell which case you are in WITHOUT measuring — <b>re-validate the quantized model on a held-out set</b> and only ship if the drop is within budget."
+      },
+      {
+        type: "bars",
+        title: "Pitfall: ONNX output drifts from PyTorch (export bug)",
+        xlabel: "case",
+        ylabel: "max abs difference vs PyTorch",
+        labels: ["healthy (allclose True)", "drift: bad opset / unsupported op"],
+        values: [0.00002, 0.41],
+        valueLabels: ["2e-5", "0.41"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Illustrative. After export you compare ONNX Runtime output to PyTorch with <code>np.allclose(..., atol=1e-4)</code>; this bar is the max absolute difference. <b>The green bar (~2e-5) is below tolerance — the graphs agree, ship it.</b> The red bar (0.41) is far above: an unsupported op was approximated, or the opset version mismatched the runtime. Read a tall bar as 'do NOT ship' — pin the opset, run <code>onnx.checker</code>, and find the op that diverged before serving."
       }
     ],
-    caption: "Left (size, real): the classifier has 268,650 parameters; at float32 (4 bytes each) that is 268650 x 4 ≈ 1.07 MB. TorchScript and ONNX carry the same float32 weights, so their size barely changes (a small graph/metadata overhead); int8 quantization stores each weight in 1 byte, ≈ 0.27 MB — a 4x shrink, computed from the real param count. Right (latency, illustrative but plausible): exporting to a Python-free graph removes interpreter overhead (TorchScript), a dedicated engine optimizes the op graph (ONNX Runtime), and int8 integer math is cheaper than float (quantized) — here a 3x speedup over eager FP32. Latency is hardware-dependent: always benchmark on your own serving box. The size numbers are reproduced exactly by the numpy below.",
+    caption: "Four charts: read the two healthy pipeline bars (size shrinks only at int8; latency steps down at each runtime), then the two that catch deployment bugs. The accuracy chart shows int8 can be free OR costly — you must measure. The drift chart shows the cross-boundary check: a small max-diff means ONNX matches PyTorch; a large one means an export bug. Size bars use the real param count; latency, accuracy, and drift bars are illustrative but qualitatively honest.",
     code: `import numpy as np
 
 # ---- model param count, layer by layer (real architecture from the CODE cell) ----

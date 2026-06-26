@@ -434,17 +434,49 @@ for epoch in range(1, EPOCHS + 1):
   };
 
   window.CODEVIZ["pt-training-loop"] = {
-    question: "Across epochs, does training loss keep falling while validation loss eventually turns back up?",
-    charts: [{
-      type: "line",
-      title: "Train vs validation loss over epochs (the overfitting signal)",
-      xlabel: "epoch", ylabel: "loss (cross-entropy)",
-      series: [
-        { name: "train loss", color: "#7ee787", points: [[1, 0.5385], [3, 0.3741], [5, 0.2892], [7, 0.2365], [9, 0.2002], [11, 0.1735], [13, 0.153], [15, 0.1367], [17, 0.1235], [19, 0.1126], [21, 0.1034], [23, 0.0956], [25, 0.0888], [27, 0.0829], [29, 0.0778], [31, 0.0732], [33, 0.0691], [35, 0.0655], [37, 0.0622], [39, 0.0592], [41, 0.0565], [43, 0.054], [45, 0.0517], [47, 0.0496], [49, 0.0477], [51, 0.0459], [53, 0.0443], [55, 0.0427], [57, 0.0413], [59, 0.0399], [61, 0.0387], [63, 0.0375], [65, 0.0363], [67, 0.0353], [69, 0.0343], [71, 0.0334], [73, 0.0325], [75, 0.0316], [77, 0.0308], [79, 0.0301], [81, 0.0293], [83, 0.0286], [85, 0.028], [87, 0.0273], [89, 0.0267], [91, 0.0262], [93, 0.0256], [95, 0.0251], [97, 0.0246], [99, 0.0241], [101, 0.0236], [103, 0.0232], [105, 0.0227], [107, 0.0223], [109, 0.0219], [111, 0.0215], [113, 0.0211], [115, 0.0208], [117, 0.0204], [119, 0.0201]] },
-        { name: "validation loss", color: "#ff7b72", points: [[1, 0.6488], [3, 0.6041], [5, 0.5848], [7, 0.5761], [9, 0.5726], [11, 0.5721], [13, 0.5734], [15, 0.5757], [17, 0.5787], [19, 0.5822], [21, 0.5859], [23, 0.5897], [25, 0.5936], [27, 0.5976], [29, 0.6015], [31, 0.6054], [33, 0.6093], [35, 0.6131], [37, 0.6168], [39, 0.6205], [41, 0.6241], [43, 0.6276], [45, 0.631], [47, 0.6344], [49, 0.6377], [51, 0.6409], [53, 0.6441], [55, 0.6472], [57, 0.6502], [59, 0.6532], [61, 0.6561], [63, 0.6589], [65, 0.6617], [67, 0.6645], [69, 0.6671], [71, 0.6698], [73, 0.6724], [75, 0.6749], [77, 0.6774], [79, 0.6798], [81, 0.6822], [83, 0.6846], [85, 0.6869], [87, 0.6892], [89, 0.6914], [91, 0.6936], [93, 0.6958], [95, 0.6979], [97, 0.7], [99, 0.7021], [101, 0.7041], [103, 0.7061], [105, 0.7081], [107, 0.71], [109, 0.7119], [111, 0.7138], [113, 0.7157], [115, 0.7175], [117, 0.7193], [119, 0.7211]] }
-      ]
-    }],
-    caption: "Real numbers from a tiny numpy logistic-regression run (30 training rows, 40 features of which only 3 carry signal, 300 validation rows). Train loss falls steadily toward 0.02 as the model memorizes the training set. Validation loss bottoms out around epoch 11 (about 0.572) then climbs back to 0.72 — the classic overfitting signal, and why you watch validation loss and stop early (see dl-early-stopping).",
+    question: "How do you read the train/validation loss curves the loop prints each epoch — and which of the four shapes did you just train?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy convergence: both losses fall together and flatten",
+        xlabel: "epoch", ylabel: "loss (cross-entropy)",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [[1, 0.382], [2, 0.18], [3, 0.142], [4, 0.119], [5, 0.104], [6, 0.094], [7, 0.087], [8, 0.082], [9, 0.078], [10, 0.075], [11, 0.073], [12, 0.072], [13, 0.071], [14, 0.07], [15, 0.071] ] },
+          { name: "validation loss", color: "#4ea1ff", points: [[1, 0.171], [2, 0.112], [3, 0.098], [4, 0.089], [5, 0.083], [6, 0.079], [7, 0.076], [8, 0.073], [9, 0.071], [10, 0.07], [11, 0.069], [12, 0.069], [13, 0.069], [14, 0.069], [15, 0.069] ] }
+        ],
+        interpret: "<b>The ideal — this is the run in the walkthrough.</b> The x-axis is the epoch (one full pass over the data); the y-axis is cross-entropy loss (lower = better guesses). Both curves fall fast then flatten, and the green train line and blue validation line stay close together (train ~0.07, val ~0.07). A small, stable gap means the model learned the real pattern and it generalizes. <b>Conclusion:</b> the loop is wired correctly and you can stop when the curves flatten."
+      },
+      {
+        type: "line",
+        title: "Overfitting: train keeps falling but validation turns back up",
+        xlabel: "epoch", ylabel: "loss (cross-entropy)",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [[1, 0.5385], [3, 0.3741], [5, 0.2892], [7, 0.2365], [9, 0.2002], [11, 0.1735], [13, 0.153], [15, 0.1367], [17, 0.1235], [19, 0.1126], [21, 0.1034], [23, 0.0956], [25, 0.0888], [27, 0.0829], [29, 0.0778], [31, 0.0732], [33, 0.0691], [35, 0.0655], [37, 0.0622], [39, 0.0592], [41, 0.0565], [43, 0.054], [45, 0.0517], [47, 0.0496], [49, 0.0477], [51, 0.0459], [53, 0.0443], [55, 0.0427], [57, 0.0413], [59, 0.0399], [61, 0.0387], [63, 0.0375], [65, 0.0363], [67, 0.0353], [69, 0.0343], [71, 0.0334], [73, 0.0325], [75, 0.0316], [77, 0.0308], [79, 0.0301], [81, 0.0293], [83, 0.0286], [85, 0.028], [87, 0.0273], [89, 0.0267], [91, 0.0262], [93, 0.0256], [95, 0.0251], [97, 0.0246], [99, 0.0241], [101, 0.0236], [103, 0.0232], [105, 0.0227], [107, 0.0223], [109, 0.0219], [111, 0.0215], [113, 0.0211], [115, 0.0208], [117, 0.0204], [119, 0.0201]] },
+          { name: "validation loss", color: "#ff7b72", points: [[1, 0.6488], [3, 0.6041], [5, 0.5848], [7, 0.5761], [9, 0.5726], [11, 0.5721], [13, 0.5734], [15, 0.5757], [17, 0.5787], [19, 0.5822], [21, 0.5859], [23, 0.5897], [25, 0.5936], [27, 0.5976], [29, 0.6015], [31, 0.6054], [33, 0.6093], [35, 0.6131], [37, 0.6168], [39, 0.6205], [41, 0.6241], [43, 0.6276], [45, 0.631], [47, 0.6344], [49, 0.6377], [51, 0.6409], [53, 0.6441], [55, 0.6472], [57, 0.6502], [59, 0.6532], [61, 0.6561], [63, 0.6589], [65, 0.6617], [67, 0.6645], [69, 0.6671], [71, 0.6698], [73, 0.6724], [75, 0.6749], [77, 0.6774], [79, 0.6798], [81, 0.6822], [83, 0.6846], [85, 0.6869], [87, 0.6892], [89, 0.6914], [91, 0.6936], [93, 0.6958], [95, 0.6979], [97, 0.7], [99, 0.7021], [101, 0.7041], [103, 0.7061], [105, 0.7081], [107, 0.71], [109, 0.7119], [111, 0.7138], [113, 0.7157], [115, 0.7175], [117, 0.7193], [119, 0.7211]] }
+        ],
+        interpret: "<b>Real numbers, from a tiny dataset (30 train rows, 40 features, only 3 with signal).</b> Watch the two lines split: green train loss keeps sliding toward 0.02 (the model is memorizing), but red validation loss bottoms out around epoch 11 (~0.572) and then <b>climbs back up</b>. The widening gap is the textbook overfitting signature — the model is fitting noise the held-out data doesn't share. <b>Conclusion:</b> stop at the validation minimum (early stopping, see dl-early-stopping), not where train loss is lowest."
+      },
+      {
+        type: "line",
+        title: "Underfitting: both losses stay high and flat",
+        xlabel: "epoch", ylabel: "loss (cross-entropy)",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [[1, 0.69], [2, 0.66], [3, 0.645], [4, 0.638], [5, 0.634], [6, 0.632], [7, 0.631], [8, 0.6305], [9, 0.63], [10, 0.6298], [11, 0.6297], [12, 0.6296], [13, 0.6296], [14, 0.6295], [15, 0.6295] ] },
+          { name: "validation loss", color: "#ffb454", points: [[1, 0.692], [2, 0.665], [3, 0.651], [4, 0.644], [5, 0.641], [6, 0.639], [7, 0.638], [8, 0.6375], [9, 0.637], [10, 0.6368], [11, 0.6367], [12, 0.6366], [13, 0.6366], [14, 0.6365], [15, 0.6365] ] }
+        ],
+        interpret: "<b>Illustrative shape.</b> Both curves drop a little and then stall at a high loss (~0.63), close together. They are close — so this is not overfitting — but neither reaches low loss: the model is too weak, the learning rate too small, or it trained too briefly to capture the pattern. <b>Conclusion:</b> add capacity (more / wider layers), raise the learning rate, or train longer — early stopping won't help here, there's nothing being memorized."
+      },
+      {
+        type: "line",
+        title: "Diverging: loss explodes instead of falling",
+        xlabel: "epoch", ylabel: "loss (cross-entropy)",
+        series: [
+          { name: "train loss", color: "#ff7b72", points: [[1, 0.7], [2, 0.9], [3, 1.4], [4, 2.3], [5, 4.1], [6, 7.8], [7, 15.0], [8, 30.0], [9, 62.0], [10, 130.0] ] }
+        ],
+        interpret: "<b>Illustrative shape.</b> Loss goes the wrong way — up, and faster each epoch (you may even see <code>nan</code>). This is not a data problem; it's the optimizer stepping too far: learning rate too high, exploding gradients, or a missing <code>optimizer.zero_grad()</code> letting gradients pile up across batches. <b>Conclusion:</b> lower the learning rate (e.g. 10x), add gradient clipping, and confirm you call <code>zero_grad()</code> first in every batch."
+      }
+    ],
+    caption: "The epoch loop prints train and validation loss every epoch — these four shapes are what those numbers can look like. Only the overfitting chart uses real numbers (a tiny numpy logistic-regression run); the other three are illustrative but honest about each failure mode.",
     code: `import numpy as np
 
 rng = np.random.RandomState(1)

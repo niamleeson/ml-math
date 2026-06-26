@@ -488,18 +488,43 @@ if __name__ == "__main__":
   };
 
   window.CODEVIZ["pt-distributed"] = {
-    question: "How much faster does DDP train as you add GPUs? Throughput (images/sec) and speedup vs the number of GPUs under a simple Amdahl-style model with communication overhead — near-linear at first, then sub-linear as all-reduce cost grows.",
-    charts: [{
-      type: "line",
-      title: "DDP throughput vs number of GPUs (Amdahl model with comm overhead)",
-      xlabel: "number of GPUs (N)",
-      ylabel: "throughput (images/sec)",
-      series: [
-        { name: "ideal (linear)", color: "#8b949e", points: [[1, 1000], [2, 2000], [4, 4000], [8, 8000], [16, 16000], [32, 32000]] },
-        { name: "DDP (modeled)", color: "#4ea1ff", points: [[1, 1000], [2, 1958], [4, 3740], [8, 6752], [16, 10724], [32, 13258]] }
-      ]
-    }],
-    caption: "Real numbers from a per-epoch time model t(N) = t1*(s + (1-s)/N) + c*(N-1) with serial fraction s=0.02 and per-step comm cost c=0.0008*t1; throughput = 1000 * t1/t(N). Speedup is near-linear early (2 GPUs -> 1.96x, 4 -> 3.74x) then falls off as the c*(N-1) all-reduce term dominates (16 -> 10.7x, 32 -> 13.3x of the ideal 32x). Real speedups depend on model size, interconnect, and batch — this is illustrative.",
+    question: "How much faster does DDP train as you add GPUs? Read a scaling curve: the dashed line is perfect (N GPUs = N times faster); the real curve always falls below it, and HOW it falls tells you what's wrong.",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy scaling: near-linear early, gently sub-linear at scale",
+        xlabel: "number of GPUs (N)",
+        ylabel: "throughput (images/sec)",
+        series: [
+          { name: "ideal (linear)", color: "#9aa7b4", points: [[1, 1000], [2, 2000], [4, 4000], [8, 8000], [16, 16000], [32, 32000]] },
+          { name: "DDP (modeled)", color: "#7ee787", points: [[1, 1000], [2, 1958], [4, 3740], [8, 6752], [16, 10724], [32, 13258]] }
+        ],
+        interpret: "<b>X = number of GPUs, Y = images processed per second.</b> The grey dashed line is the dream: double the GPUs, double the speed. The green curve is real DDP from the Amdahl model t(N)=t1*(s+(1-s)/N)+c*(N-1) with serial fraction s=0.02 and small comm cost c. It tracks the ideal line closely at first (2 GPUs gives 1.96x, 4 gives 3.74x) then bends below it as the all-reduce term c*(N-1) grows (32 GPUs gives only 13.3x of the ideal 32x). <b>Read it as:</b> still climbing, just with diminishing returns. This is what good scaling looks like."
+      },
+      {
+        type: "line",
+        title: "Poor interconnect: early plateau (comm-bound)",
+        xlabel: "number of GPUs (N)",
+        ylabel: "throughput (images/sec)",
+        series: [
+          { name: "ideal (linear)", color: "#9aa7b4", points: [[1, 1000], [2, 2000], [4, 4000], [8, 8000], [16, 16000], [32, 32000]] },
+          { name: "DDP (slow network)", color: "#ffb454", points: [[1, 1000], [2, 1750], [4, 2600], [8, 3200], [16, 3450], [32, 3500]] }
+        ],
+        interpret: "<b>Illustrative.</b> Same axes. The curve climbs at first but flattens into a near-horizontal plateau around 8 GPUs: adding more barely helps. The gap to the dashed ideal widens fast. <b>Diagnose:</b> a slow interconnect (no NVLink, training over Ethernet) makes the all-reduce cost dominate, so GPUs spend their time waiting on the network instead of computing. <b>Fix:</b> faster interconnect, larger per-GPU batch to give more compute per sync, or gradient bucketing/compression."
+      },
+      {
+        type: "line",
+        title: "Communication-bound collapse: throughput turns DOWN",
+        xlabel: "number of GPUs (N)",
+        ylabel: "throughput (images/sec)",
+        series: [
+          { name: "ideal (linear)", color: "#9aa7b4", points: [[1, 1000], [2, 2000], [4, 4000], [8, 8000], [16, 16000], [32, 32000]] },
+          { name: "DDP (over-scaled)", color: "#ff7b72", points: [[1, 1000], [2, 1850], [4, 2900], [8, 3300], [16, 2700], [32, 1800]] }
+        ],
+        interpret: "<b>Illustrative.</b> Same axes. The worst case: the curve rises, peaks (here around 8 GPUs), then actually <b>falls</b> as you add more. Past the peak, each extra GPU adds more all-reduce traffic than compute, so the whole job gets slower. <b>Diagnose:</b> you've scaled past the useful point for this model and network, or the per-GPU work is too tiny (model too small, batch too small) to hide the communication. <b>Fix:</b> use fewer GPUs, grow the model/batch per GPU, or switch to sharding (FSDP) if the limit is memory, not compute."
+      }
+    ],
+    caption: "",
     code: `import numpy as np
 
 # Amdahl-style per-epoch time model with all-reduce communication overhead.

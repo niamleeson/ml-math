@@ -377,18 +377,43 @@ print(f"restored best val loss = {best_val:.4f} | val accuracy = {val_acc:.3f}")
   };
 
   window.CODEVIZ["pt-regularization"] = {
-    question: "Does regularization actually stop overfitting? Train the same tiny logistic model on few samples with many noise features, WITHOUT vs WITH L2 (weight decay), and plot validation loss over epochs.",
-    charts: [{
-      type: "line",
-      title: "Validation loss over training: no regularization vs L2 (weight decay)",
-      xlabel: "epoch",
-      ylabel: "validation loss",
-      series: [
-        { name: "no regularization", color: "#ff7b72", points: [ [0,0.812],[5,0.854],[10,0.881],[15,0.901],[20,0.916],[25,0.930],[30,0.941],[35,0.951],[40,0.960],[45,0.968],[50,0.975],[55,0.982],[60,0.988],[65,0.994],[70,1.000],[75,1.005],[80,1.010],[85,1.014],[90,1.019],[95,1.023],[100,1.027],[105,1.031],[110,1.035],[115,1.038],[120,1.041],[125,1.045],[130,1.048],[135,1.051],[140,1.054],[145,1.057],[150,1.059],[155,1.062],[160,1.065],[165,1.067],[170,1.070],[175,1.072],[180,1.074],[185,1.077],[190,1.079],[195,1.081],[200,1.083],[205,1.085],[210,1.087],[215,1.089],[220,1.091],[225,1.093],[230,1.095],[235,1.097],[240,1.098],[245,1.100],[250,1.102],[255,1.104],[260,1.105],[265,1.107],[270,1.108],[275,1.110],[280,1.112],[285,1.113],[290,1.115],[295,1.116] ] },
-        { name: "L2 (weight_decay=0.1)", color: "#4ea1ff", points: [ [0,0.812],[5,0.811],[10,0.811],[15,0.811],[20,0.811],[25,0.812],[30,0.812],[35,0.813],[40,0.813],[45,0.814],[50,0.814],[55,0.815],[60,0.815],[65,0.815],[70,0.816],[75,0.816],[80,0.817],[85,0.817],[90,0.818],[95,0.818],[100,0.819],[105,0.819],[110,0.820],[115,0.820],[120,0.820],[125,0.821],[130,0.821],[135,0.822],[140,0.822],[145,0.823],[150,0.823],[155,0.824],[160,0.824],[165,0.825],[170,0.825],[175,0.825],[180,0.826],[185,0.826],[190,0.827],[195,0.827],[200,0.828],[205,0.828],[210,0.829],[215,0.829],[220,0.829],[225,0.830],[230,0.830],[235,0.831],[240,0.831],[245,0.832],[250,0.832],[255,0.832],[260,0.833],[265,0.833],[270,0.834],[275,0.834],[280,0.834],[285,0.835],[290,0.835],[295,0.836] ] }
-      ]
-    }],
-    caption: "Same model, same data. Without regularization (red) validation loss climbs from 0.81 to 1.12 as the model memorizes the noise features — classic overfitting (train loss keeps falling while val loss rises). With L2 weight decay (blue) the weights stay small and validation loss holds flat near 0.81. The growing gap between the curves is exactly what early stopping would catch.",
+    question: "How do you READ a validation-loss curve to tell overfitting from a healthy fit from over-regularizing — and where does early stopping cut?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: L2 (blue) holds flat while no-reg (red) overfits",
+        xlabel: "epoch",
+        ylabel: "validation loss",
+        series: [
+          { name: "no regularization", color: "#ff7b72", points: [ [0,0.812],[20,0.916],[40,0.960],[60,0.988],[80,1.010],[100,1.027],[120,1.041],[140,1.054],[160,1.065],[180,1.074],[200,1.083],[220,1.091],[240,1.098],[260,1.105],[280,1.112],[295,1.116] ] },
+          { name: "L2 (weight_decay=0.1)", color: "#4ea1ff", points: [ [0,0.812],[20,0.811],[40,0.813],[60,0.815],[80,0.817],[100,0.819],[120,0.820],[140,0.822],[160,0.824],[180,0.826],[200,0.828],[240,0.831],[280,0.834],[295,0.836] ] }
+        ],
+        interpret: "X axis is training epoch (time), Y axis is loss on held-out validation data — lower is better, and the shape over time is what matters. The red curve RISES: as training continues the model memorizes the noise features and gets worse on unseen data — that upward turn is the signature of overfitting. The blue curve (L2 weight decay) stays flat and low because shrinking the weights stops the memorization. The widening gap between red and blue IS the overfitting you removed; real computed numbers from the tiny model below."
+      },
+      {
+        type: "line",
+        title: "Overfitting up close: train keeps falling, val turns back up",
+        xlabel: "epoch",
+        ylabel: "loss",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [ [0,0.69],[20,0.52],[40,0.38],[60,0.27],[80,0.18],[100,0.12],[120,0.08],[140,0.05],[160,0.035],[180,0.025],[200,0.018],[240,0.010],[280,0.006],[295,0.005] ] },
+          { name: "validation loss", color: "#ff7b72", points: [ [0,0.70],[20,0.64],[40,0.61],[60,0.605],[80,0.62],[100,0.66],[120,0.71],[140,0.77],[160,0.83],[180,0.89],[200,0.95],[240,1.05],[280,1.13],[295,1.16] ] }
+        ],
+        interpret: "Same axes, now showing BOTH curves so you can diagnose the cause. Train loss (green) keeps falling toward zero while validation loss (red) bottoms out around epoch 60 and then climbs — the textbook overfitting fork. Read the gap: when train keeps dropping but val turns back up, the model is fitting noise it cannot generalize. The lowest point of the red curve (~epoch 60) is exactly where <b>early stopping</b> would halt and snapshot the best weights; everything after is wasted, worse training. Illustrative shape."
+      },
+      {
+        type: "line",
+        title: "Over-regularized: both curves stuck high (underfitting)",
+        xlabel: "epoch",
+        ylabel: "loss",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [ [0,0.70],[20,0.69],[40,0.685],[60,0.682],[80,0.681],[100,0.680],[120,0.680],[140,0.679],[160,0.679],[180,0.679],[200,0.679],[240,0.678],[280,0.678],[295,0.678] ] },
+          { name: "validation loss", color: "#ffb454", points: [ [0,0.71],[20,0.70],[40,0.695],[60,0.692],[80,0.691],[100,0.690],[120,0.690],[140,0.689],[160,0.689],[180,0.689],[200,0.689],[240,0.688],[280,0.688],[295,0.688] ] }
+        ],
+        interpret: "The opposite failure. Here train (green) and validation (orange) sit close together but BOTH stay high and flat near the trivial loss (~0.69 = guessing) — the gap is gone, but so is the learning. This is what too much dropout, too large a weight_decay, or stopping too early looks like: you over-regularized into <b>underfitting</b>. Read it as: small train/val gap is good ONLY if the loss is also low; a small gap at high loss means dial the regularization back down. Illustrative shape."
+      }
+    ],
+    caption: "Three readings of a validation-loss curve: the healthy fix (L2 flat vs no-reg rising), overfitting up close (train falls while val turns up — early stopping cuts at the val minimum), and over-regularizing (both curves stuck high = underfitting). Each note explains the shape; the goal is to close the train/val gap WITHOUT pushing the loss up.",
     code: `import numpy as np
 rng = np.random.RandomState(0)
 

@@ -522,16 +522,51 @@ print(f"test accuracy: {correct/total:.4f}  on {total} images")`
   };
 
   window.CODEVIZ["pt-cnn"] = {
-    question: "On the same image task, does a CNN really beat a plain MLP on flattened pixels?",
-    charts: [{
-      type: "bars",
-      title: "Test accuracy on load_digits: small CNN vs flat-pixel MLP (same 540 test images)",
-      labels: ["CNN (conv+pool)", "MLP (flat pixels)"],
-      values: [0.963, 0.9315],
-      valueLabels: ["96.3%", "93.2%"],
-      colors: ["#7ee787", "#ff7b72"]
-    }],
-    caption: "Real PyTorch run on scikit-learn's load_digits (1797 real 8×8 handwritten digits, 30% held out). Two tiny models trained 12 epochs with Adam and the same DataLoader: the CNN (two Conv2d→BatchNorm→ReLU→MaxPool blocks + Linear head) reaches 96.3% test accuracy; an MLP on the 64 flattened pixels reaches 93.2%. Exploiting spatial locality wins.",
+    question: "Does a CNN beat a flat-pixel MLP — and how do you read the curves that tell you training is healthy or broken?",
+    charts: [
+      {
+        type: "bars",
+        title: "Ideal result: small CNN vs flat-pixel MLP on load_digits (540 held-out images)",
+        labels: ["CNN (conv+pool)", "MLP (flat pixels)"],
+        values: [0.963, 0.9315],
+        valueLabels: ["96.3%", "93.2%"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Each bar is final test accuracy on the same 540 held-out digits; taller is better. The green CNN (two Conv2d→BatchNorm→ReLU→MaxPool blocks + Linear head) reaches 96.3%, beating the red MLP on the 64 flattened pixels at 93.2%. The gap is the payoff of spatial locality: the CNN shares one small filter across the image, the MLP throws the 8×8 layout away. Real PyTorch run, 12 epochs of Adam each."
+      },
+      {
+        type: "line",
+        title: "Healthy training: loss falls smoothly and flattens",
+        xlabel: "epoch",
+        ylabel: "avg train loss",
+        series: [
+          { name: "train loss", color: "#7ee787", points: [[1, 0.162], [2, 0.051], [3, 0.038], [4, 0.031], [5, 0.027], [6, 0.024], [7, 0.022], [8, 0.021]] }
+        ],
+        interpret: "<b>x-axis</b> is the epoch (one pass over the data); <b>y-axis</b> is the average training loss that epoch. A healthy run drops fast at first, then bends and flattens toward a small value — the weights are moving downhill and settling. This is the shape you want to see when your <code>zero_grad → forward → loss → backward → step</code> loop is wired correctly. Numbers are the real MNIST run from the walkthrough (~0.16 → 0.04)."
+      },
+      {
+        type: "line",
+        title: "Broken: loss explodes (un-normalized input or learning rate too high)",
+        xlabel: "epoch",
+        ylabel: "avg train loss",
+        series: [
+          { name: "diverging loss", color: "#ff7b72", points: [[1, 2.3], [2, 4.1], [3, 9.5], [4, 31], [5, 120], [6, 600], [7, 3200], [8, 18000]] }
+        ],
+        interpret: "Same axes as the healthy chart, but the loss climbs instead of falling — note it shoots off the top. This is the classic failure when you feed raw 0–255 pixels without normalizing, or set the learning rate far too high: each step overshoots and activations blow up. If your loss rises (or prints <code>nan</code>) after a few steps, normalize the input and lower the LR. Illustrative shape, qualitatively what divergence looks like."
+      },
+      {
+        type: "confusion",
+        labels: ["0", "1", "2", "3"],
+        title: "Reading the result: a near-diagonal confusion matrix means it works",
+        matrix: [
+          [53, 0, 1, 0],
+          [0, 51, 0, 1],
+          [1, 0, 52, 0],
+          [0, 1, 1, 50]
+        ],
+        interpret: "Rows are the <b>true</b> digit, columns are the digit the CNN <b>predicted</b> (4 of the 10 classes shown). A strong classifier puts almost everything on the diagonal — predicted equals actual. The few off-diagonal counts are the mistakes; here 2↔3 and 1↔3 are the most confused pairs, which is exactly where hand-written digits look alike. If instead one whole column lit up, the model would be collapsing to a single class. Illustrative counts in the spirit of the 96% run."
+      }
+    ],
+    caption: "Ideal accuracy bar plus the curves you actually diagnose by: healthy converging loss, a diverging loss when input is un-normalized or the LR is too high, and a near-diagonal confusion matrix that confirms the classes are separated.",
     code: `import numpy as np, torch, torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.datasets import load_digits

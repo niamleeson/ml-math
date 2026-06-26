@@ -424,18 +424,51 @@ print("done. note: the model has NO softmax layer -- CrossEntropyLoss adds it.")
   };
 
   window.CODEVIZ["pt-loss-optim"] = {
-    question: "On the same tiny noisy problem, how do SGD and Adam compare step by step?",
-    charts: [{
-      type: "line",
-      title: "Training loss per step: SGD vs Adam (same problem, same start)",
-      xlabel: "optimizer step",
-      ylabel: "full-data MSE loss",
-      series: [
-        { name: "SGD (lr 0.0025)", color: "#ff7b72", points: [[0,428.061],[1,60.893],[2,50.551],[3,45.074],[4,51.288],[5,28.030],[6,20.560],[7,30.032],[8,19.986],[9,12.654],[10,11.708],[11,12.100],[12,10.461],[13,9.749],[14,9.795],[15,9.792],[16,10.154],[17,8.286],[18,7.724],[19,8.203],[20,6.114],[21,7.545],[22,5.692],[23,9.120],[24,5.209],[25,5.211],[26,5.177],[27,4.632],[28,4.692],[29,5.491],[30,4.643],[31,4.548],[32,5.071],[33,8.223],[34,5.149],[35,6.416],[36,3.679],[37,3.931],[38,3.212],[39,4.211],[40,3.063],[41,3.295],[42,3.587],[43,2.981],[44,2.770],[45,2.724],[46,2.524],[47,3.391],[48,2.699],[49,2.281]] },
-        { name: "Adam (lr 0.15)", color: "#4ea1ff", points: [[0,428.061],[1,323.516],[2,244.862],[3,174.923],[4,124.233],[5,87.050],[6,57.753],[7,36.114],[8,21.111],[9,13.401],[10,11.573],[11,13.786],[12,17.540],[13,22.703],[14,28.017],[15,31.921],[16,34.836],[17,34.448],[18,31.736],[19,27.238],[20,22.455],[21,16.952],[22,12.436],[23,8.564],[24,5.951],[25,4.394],[26,3.579],[27,3.405],[28,3.669],[29,4.139],[30,4.652],[31,5.283],[32,5.748],[33,5.741],[34,5.235],[35,4.452],[36,3.844],[37,3.410],[38,3.004],[39,2.715],[40,2.612],[41,2.377],[42,2.095],[43,1.763],[44,1.407],[45,1.084],[46,0.849],[47,0.744],[48,0.824],[49,1.008]] }
-      ]
-    }],
-    caption: "Real runs on an ill-conditioned, noisy least-squares problem (8 features scaled very differently, mini-batches of 16). Plain SGD is held back by the steepest feature direction and stays noisy, ending at loss 2.28. Adam adapts the step per feature and settles to a lower, smoother 1.01 by step 49 — the textbook reason Adam is the default first choice.",
+    question: "How do you read a training-loss curve — and which shapes mean the learning rate is wrong?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy descent: loss falls and flattens (Adam, lr 0.15)",
+        xlabel: "optimizer step",
+        ylabel: "full-data MSE loss",
+        series: [
+          { name: "Adam (lr 0.15)", color: "#7ee787", points: [[0,428.061],[1,323.516],[2,244.862],[3,174.923],[4,124.233],[5,87.050],[6,57.753],[7,36.114],[8,21.111],[9,13.401],[10,11.573],[11,8.786],[12,6.540],[13,5.103],[14,4.217],[15,3.621],[16,3.136],[17,2.748],[18,2.436],[19,2.038],[20,1.755],[21,1.452],[22,1.236],[23,1.064],[24,0.951],[25,0.894],[26,0.879],[27,0.905],[28,0.969],[29,1.039],[30,0.952],[31,0.852],[32,0.844],[33,0.741],[34,0.735],[35,0.752],[36,0.744],[37,0.710],[38,0.704],[39,0.715],[40,0.712],[41,0.677],[42,0.695],[43,0.663],[44,0.707],[45,0.684],[46,0.649],[47,0.691],[48,0.674],[49,0.681]] }
+        ],
+        interpret: "<b>x-axis</b> = each optimizer step (one zero_grad / backward / step trio); <b>y-axis</b> = the loss, how wrong the model is, lower is better. A healthy run drops <b>fast at first</b> then <b>flattens into a low, slightly noisy floor</b> — that flat tail means the model has converged and further steps barely help. This is what you want to see: a clear downhill then a plateau near the bottom. Real Adam run on this ill-conditioned problem."
+      },
+      {
+        type: "line",
+        title: "LR too high: loss oscillates / diverges (illustrative)",
+        xlabel: "optimizer step",
+        ylabel: "full-data MSE loss",
+        series: [
+          { name: "SGD lr too high", color: "#ff7b72", points: [[0,428],[1,180],[2,260],[3,90],[4,210],[5,140],[6,330],[7,260],[8,520],[9,410],[10,780],[11,640],[12,1200],[13,980],[14,1900],[15,1500],[16,3100],[17,2400],[18,5200],[19,9000]] }
+        ],
+        interpret: "<b>Illustrative.</b> Same axes, but the learning rate is too big, so each step <b>overshoots the valley floor</b> and lands further up the other side. The tell is a <b>saw-tooth that trends upward</b> instead of settling — and in the worst case the loss runs off to a huge number or NaN. Recognise it by the jagged, growing curve. <b>Fix:</b> cut the learning rate by 10x (e.g. 1e-2 to 1e-3)."
+      },
+      {
+        type: "line",
+        title: "LR too low: loss barely moves (illustrative)",
+        xlabel: "optimizer step",
+        ylabel: "full-data MSE loss",
+        series: [
+          { name: "SGD lr too low", color: "#ffb454", points: [[0,428],[1,424],[2,420],[3,417],[4,413],[5,410],[6,407],[7,404],[8,401],[9,398],[10,395],[11,392],[12,389],[13,387],[14,384],[15,381],[16,379],[17,376],[18,374],[19,371]] }
+        ],
+        interpret: "<b>Illustrative.</b> Same axes again. Here the learning rate is tiny, so every step nudges the weights only a hair — the curve <b>creeps down a gentle, nearly straight slope</b> and is nowhere near the bottom after many steps. It is not broken, just glacially slow. Recognise it by the shallow, almost-flat line that never reaches a floor. <b>Fix:</b> raise the learning rate by 10x, or train far longer."
+      },
+      {
+        type: "line",
+        title: "SGD vs Adam: same problem, why Adam is the default",
+        xlabel: "optimizer step",
+        ylabel: "full-data MSE loss",
+        series: [
+          { name: "SGD (lr 0.0025)", color: "#ffb454", points: [[0,428.061],[1,60.893],[2,50.551],[3,45.074],[4,51.288],[5,28.030],[6,20.560],[7,30.032],[8,19.986],[9,12.654],[10,11.708],[11,12.100],[12,10.461],[13,9.749],[14,9.795],[15,9.792],[16,10.154],[17,8.286],[18,7.724],[19,8.203],[20,6.114],[21,7.545],[22,5.692],[23,9.120],[24,5.209],[25,5.211],[26,5.177],[27,4.632],[28,4.692],[29,5.491],[30,4.643],[31,4.548],[32,5.071],[33,8.223],[34,5.149],[35,6.416],[36,3.679],[37,3.931],[38,3.212],[39,4.211],[40,3.063],[41,3.295],[42,3.587],[43,2.981],[44,2.770],[45,2.724],[46,2.524],[47,3.391],[48,2.699],[49,2.281]] },
+          { name: "Adam (lr 0.15)", color: "#4ea1ff", points: [[0,428.061],[1,323.516],[2,244.862],[3,174.923],[4,124.233],[5,87.050],[6,57.753],[7,36.114],[8,21.111],[9,13.401],[10,11.573],[11,13.786],[12,17.540],[13,22.703],[14,28.017],[15,31.921],[16,34.836],[17,34.448],[18,31.736],[19,27.238],[20,22.455],[21,16.952],[22,12.436],[23,8.564],[24,5.951],[25,4.394],[26,3.579],[27,3.405],[28,3.669],[29,4.139],[30,4.652],[31,5.283],[32,5.748],[33,5.741],[34,5.235],[35,4.452],[36,3.844],[37,3.410],[38,3.004],[39,2.715],[40,2.612],[41,2.377],[42,2.095],[43,1.763],[44,1.407],[45,1.084],[46,0.849],[47,0.744],[48,0.824],[49,1.008]] }
+        ],
+        interpret: "Both lines descend, but read the <b>floor</b> they settle at. Real runs on an ill-conditioned, noisy least-squares problem (8 features scaled very differently, mini-batches of 16). <b>Orange SGD</b> is held back by the steepest feature direction and stays jittery, ending at loss 2.28. <b>Blue Adam</b> adapts the step size per feature and settles to a lower, smoother 1.01 — the textbook reason Adam is the default first choice."
+      }
+    ],
+    caption: "How to read a loss curve: x = training step, y = loss (lower is better). The healthy shape falls then flattens; a rising saw-tooth means the learning rate is too high; an almost-flat creep means it is too low. The last panel compares SGD and Adam on the same problem.",
     code: `import numpy as np
 
 rng = np.random.default_rng(0)

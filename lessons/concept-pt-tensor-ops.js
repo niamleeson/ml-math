@@ -324,11 +324,11 @@ print("stack dim=0        ->", tuple(torch.stack([x, x], dim=0).shape)) # (2,2,3
   };
 
   window.CODEVIZ["pt-tensor-ops"] = {
-    question: "When a (3,1) column broadcasts against a (1,4) row, what (3,4) grid comes out — and what do the per-row sums look like?",
+    question: "How do you READ a shape diagram — and how do you spot a broadcast that silently produced the WRONG grid?",
     charts: [
       {
         type: "heatmap",
-        title: "Broadcasting (3,1) + (1,4) -> (3,4): every cell is col[i] + row[j]",
+        title: "Intended broadcast: (3,1) + (1,4) -> (3,4), cell = col[i] + row[j]",
         rows: ["col=10", "col=20", "col=30"],
         cols: ["row=1", "row=2", "row=3", "row=4"],
         matrix: [
@@ -336,18 +336,33 @@ print("stack dim=0        ->", tuple(torch.stack([x, x], dim=0).shape)) # (2,2,3
           [21, 22, 23, 24],
           [31, 32, 33, 34]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "<b>Read it as a grid of results.</b> Rows are the column tensor [10,20,30] (size-1 axis stretched across 4 columns); columns are the row tensor [1,2,3,4] (stretched down 3 rows). Each cell is col[i]+row[j], so the value climbs left-to-right and top-to-bottom: top-left 11, bottom-right 34. <b>This is the healthy case</b> — a 3x4 block where you genuinely wanted a 3x4 block. Real numbers (numpy broadcasting matches torch exactly)."
+      },
+      {
+        type: "heatmap",
+        title: "Silent mis-broadcast: (3,) + (3,1) -> (3,3), NOT the (3,) you meant",
+        rows: ["col=10", "col=20", "col=30"],
+        cols: ["v=1", "v=2", "v=3"],
+        matrix: [
+          [11, 12, 13],
+          [21, 22, 23],
+          [31, 32, 33]
+        ],
+        showVals: true,
+        interpret: "<b>This is the failure mode to recognise.</b> You meant to add two length-3 vectors elementwise and expected a flat (3,). But a (3,) row aligns by trailing dims against a (3,1) column, so each stretches and you get a 3x3 grid with NO error. <b>Tell-tale sign:</b> the output is square and bigger than either input. If a result is a grid when you expected a line, you mis-broadcast. Fix: flatten the column so both are (3,). Real numbers."
       },
       {
         type: "bars",
-        title: "Reduction: grid.sum(dim=1) — add across each row of the grid",
-        labels: ["row 0 (10+...)", "row 1 (20+...)", "row 2 (30+...)"],
-        values: [50, 90, 130],
-        valueLabels: ["50", "90", "130"],
-        colors: ["#4ea1ff", "#7ee787", "#c89bff"]
+        title: "Shape after each op: * keeps shape, @ cancels the inner dim",
+        labels: ["(2,3)*(2,3)", "(2,3)@(3,2)", "(8,2,3) bmm (8,3,5)"],
+        values: [6, 4, 80],
+        valueLabels: ["(2,3) = 6", "(2,2) = 4", "(8,2,5) = 80"],
+        colors: ["#7ee787", "#4ea1ff", "#c89bff"],
+        interpret: "<b>Each bar is one operation; height is the element count of its output shape (printed on the bar).</b> Elementwise * (green) keeps the input shape (2,3), 6 elements. Matmul @ (blue) follows (m,k)@(k,n)->(m,n): the inner 3 cancels, leaving (2,2), 4 elements. Batched bmm (purple) does one matmul per batch element: (8,2,3) bmm (8,3,5) -> (8,2,5), 80 elements. <b>Read it as a shape check:</b> if you confuse * and @, the output shape and element count change — that mismatch is your bug. Real computed shapes."
       }
     ],
-    caption: "Real numbers (numpy broadcasting matches torch exactly). The column [10,20,30] repeats across 4 columns and the row [1,2,3,4] repeats down 3 rows, so cell (i,j)=col[i]+row[j]: top-left 11, bottom-right 34. Summing each row over dim=1 gives [50, 90, 130] — the bars. With keepdim=True that stays shape (3,1) and can broadcast back; without it, it collapses to a flat (3,).",
+    caption: "",
     code: `import numpy as np
 
 col = np.array([[10], [20], [30]])   # shape (3,1) -- a column

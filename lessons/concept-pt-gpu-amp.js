@@ -370,30 +370,65 @@ if device.type == 'cuda':
   };
 
   window.CODEVIZ["pt-gpu-amp"] = {
-    question: "How do training-step time and memory compare for CPU, GPU (FP32), and GPU + AMP?",
+    question: "How do you read a GPU+AMP result — and how do you spot the cases where AMP does NOT help, or quietly breaks training?",
     charts: [
       {
         type: "bars",
-        title: "Training-step time (lower is better) — illustrative",
+        title: "Healthy: GPU collapses time, AMP cuts it again (illustrative)",
         xlabel: "configuration",
         ylabel: "ms per step",
         labels: ["CPU (FP32)", "GPU (FP32)", "GPU + AMP"],
         values: [169.3, 9.4, 4.9],
         valueLabels: ["169.3", "9.4", "4.9"],
-        colors: ["#ff7b72", "#4ea1ff", "#7ee787"]
+        colors: ["#ff7b72", "#4ea1ff", "#7ee787"],
+        interpret: "Each bar is one training-step time in milliseconds; shorter is faster. Read it left to right as a ladder: moving the same step from CPU to GPU drops it from ~169 ms to ~9 ms (the matmuls now run on thousands of parallel cores), then turning on AMP halves it again to ~5 ms (the heavy math runs in 16-bit on tensor cores). This big-drop-then-drop-again shape is the win you are looking for. The CPU bar is a real numpy measurement; the GPU bars apply typical speedup factors and are illustrative."
       },
       {
         type: "bars",
-        title: "Training-step memory (lower is better) — illustrative",
+        title: "Healthy memory: AMP roughly halves activation memory (illustrative)",
         xlabel: "configuration",
         ylabel: "relative memory (FP32 = 100)",
-        labels: ["CPU (FP32)", "GPU (FP32)", "GPU + AMP"],
-        values: [100, 100, 55],
-        valueLabels: ["100", "100", "55"],
-        colors: ["#ff7b72", "#4ea1ff", "#7ee787"]
+        labels: ["GPU (FP32)", "GPU + AMP"],
+        values: [100, 55],
+        valueLabels: ["100", "55"],
+        colors: ["#4ea1ff", "#7ee787"],
+        interpret: "Height is peak GPU memory with FP32 set to 100 as the baseline. The AMP bar sits near 55, meaning AMP holds activations in 16-bit so they take about half the space. This is why AMP is the fix for a CUDA out-of-memory error: a model that did not fit in FP32 often fits with AMP, or lets you double the batch size. Illustrative ratio (real savings vary by model)."
+      },
+      {
+        type: "bars",
+        title: "Variant — AMP barely helps: tiny / memory-bound model (illustrative)",
+        xlabel: "configuration",
+        ylabel: "ms per step",
+        labels: ["GPU (FP32)", "GPU + AMP"],
+        values: [3.1, 2.9],
+        valueLabels: ["3.1", "2.9"],
+        colors: ["#4ea1ff", "#ffb454"],
+        interpret: "Here the two GPU bars are almost the same height — AMP shaved almost nothing. Recognise it by a flat, near-equal pair instead of a clear drop. It happens when the model is too small to saturate the GPU, or the step is bound by data transfers / tiny ops rather than big matmuls, so there is little 16-bit math to accelerate. AMP is not broken; this workload just has little to gain. Illustrative."
+      },
+      {
+        type: "line",
+        title: "Variant — AMP WITHOUT a GradScaler: loss diverges to NaN (illustrative)",
+        xlabel: "step",
+        ylabel: "training loss",
+        series: [
+          { name: "with GradScaler (healthy)", color: "#7ee787", points: [[0, 6.4], [1, 4.1], [2, 2.8], [3, 1.9], [4, 1.4], [5, 1.1], [6, 0.9], [7, 0.8], [8, 0.75], [9, 0.72]] },
+          { name: "no GradScaler (underflow)", color: "#ff7b72", points: [[0, 6.4], [1, 5.9], [2, 5.8], [3, 5.85], [4, 6.0], [5, 6.4], [6, 7.5], [7, 11.0], [8, 30.0], [9, 60.0]] }
+        ],
+        interpret: "X is the training step, Y is the loss. The green curve falls smoothly — AMP used with a GradScaler trains just like FP32. The red curve first stalls (tiny float16 gradients underflow to 0, so the weights barely move) and then blows up toward NaN. If your loss goes flat-then-explodes only after you switch on autocast, you forgot the GradScaler: it multiplies the loss up before backward so gradients stay in float16's range. Illustrative shapes."
+      },
+      {
+        type: "bars",
+        title: "Variant — the #1 GPU bug: device mismatch (no result at all)",
+        xlabel: "where the tensor lives",
+        ylabel: "step completes? (1 = yes, 0 = error)",
+        labels: ["model GPU, batch GPU", "model GPU, batch CPU"],
+        values: [1, 0],
+        valueLabels: ["runs", "RuntimeError"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "This is not a timing chart — it is a pass/fail. The green bar is the correct setup: model and batch on the same device, so the step runs. The red zero bar is what happens when the model is on cuda but the batch is still on cpu: PyTorch raises 'Expected all tensors to be on the same device' and you get no number at all. The lesson: there is no slow result here, just an error — move every batch with .to(device)."
       }
     ],
-    caption: "Illustrative numbers. The CPU FP32 time is a real numpy measurement of the same matmul-heavy step; the GPU times apply typical matmul speedups (GPU ~18x over this CPU; AMP ~1.9x over GPU FP32), and memory uses the rough rule that AMP roughly halves activation memory. The shape is what matters: the GPU collapses step time, and AMP cuts it again while using about half the memory. FP32 means 32-bit floats; AMP (Automatic Mixed Precision) runs the heavy math in 16-bit.",
+    caption: "Five cases: the healthy time and memory wins (green), then the three things you actually run into — AMP barely helping on a small/memory-bound model (orange), training diverging when you use autocast without a GradScaler (red), and the device-mismatch error that produces no result at all. The first bar set uses a real numpy CPU measurement; the rest are illustrative but qualitatively honest.",
     code: `import numpy as np, time
 
 # We MEASURE the CPU FP32 step for real (numpy stands in for the CPU), then derive
@@ -421,6 +456,6 @@ print("time ms/step:", [round(cpu_ms, 1), round(gpu_fp32_ms, 1), round(gpu_amp_m
 # -> e.g. [169.3, 9.4, 4.9]
 
 # memory: FP32 baseline = 100; AMP keeps float16 activations -> ~0.55x
-print("relative memory:", [100, 100, 55])`
+print("relative memory:", [100, 55])`
   };
 })();

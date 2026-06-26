@@ -371,20 +371,43 @@ print("after one fine-tune step:", loss.item())
   };
 
   window.CODEVIZ["pt-transfer-learning"] = {
-    question: "Transfer learning should win most when labels are scarce. Using frozen learned features (a stand-in for a pretrained backbone) vs raw pixels, how does test accuracy on a real face dataset grow as we give the classifier more labeled images?",
+    question: "Transfer learning should win most when labels are scarce — how do you read a label-budget curve, and what do the win, the catch-up, and the failure case each look like?",
     charts: [
       {
         type: "line",
-        title: "Test accuracy vs number of labeled images: transfer (frozen features) vs from scratch (raw pixels)",
+        title: "The win: transfer beats from-scratch most when labels are scarce",
         xlabel: "labeled images (total, 40 people)",
         ylabel: "test accuracy",
         series: [
           { name: "transfer (frozen learned features)", color: "#4ea1ff", points: [[40, 0.548], [80, 0.707], [120, 0.815], [160, 0.858], [200, 0.893], [280, 0.925]] },
           { name: "from scratch (raw 4096 pixels)", color: "#ff7b72", points: [[40, 0.506], [80, 0.655], [120, 0.727], [160, 0.761], [200, 0.778], [280, 0.850]] }
-        ]
+        ],
+        interpret: "<b>Real scikit-learn run on Olivetti faces (400 photos, 40 people).</b> The x-axis is how many labeled images you train on; the y-axis is test accuracy. Both curves rise as you add labels, but the blue transfer line (linear head on frozen learned features) sits above the red from-scratch line (same head on raw pixels) at every budget — and the vertical gap is widest on the left, where labels are scarcest (at 80 images, 0.707 vs 0.655). <b>Conclusion:</b> reuse pretrained features and you get far with little data; that left-side gap is the whole point of transfer learning."
+      },
+      {
+        type: "line",
+        title: "Catch-up: with lots of labels, from-scratch closes the gap",
+        xlabel: "labeled images (total)",
+        ylabel: "test accuracy",
+        series: [
+          { name: "transfer (frozen features)", color: "#4ea1ff", points: [[40, 0.55], [120, 0.82], [280, 0.93], [800, 0.955], [2000, 0.965], [5000, 0.97]] },
+          { name: "from scratch", color: "#ffb454", points: [[40, 0.5], [120, 0.73], [280, 0.85], [800, 0.93], [2000, 0.96], [5000, 0.972]] }
+        ],
+        interpret: "<b>Illustrative shape.</b> Same two curves, but extended far to the right (thousands of labels). The big early gap shrinks and the lines meet — with enough data, training from scratch can learn its own features and match (or just pass) the frozen backbone. <b>Conclusion:</b> the transfer advantage is a small-data advantage; once labels are abundant, fine-tuning the backbone (not freezing it) is what keeps transfer ahead."
+      },
+      {
+        type: "line",
+        title: "Negative transfer: wrong backbone hurts on out-of-domain data",
+        xlabel: "labeled images (total)",
+        ylabel: "test accuracy",
+        series: [
+          { name: "transfer (mismatched backbone)", color: "#ff7b72", points: [[40, 0.42], [80, 0.52], [120, 0.6], [200, 0.68], [280, 0.74]] },
+          { name: "from scratch", color: "#ffb454", points: [[40, 0.48], [80, 0.6], [120, 0.69], [200, 0.78], [280, 0.84]] }
+        ],
+        interpret: "<b>Illustrative shape — the case people forget.</b> Here the transfer line sits <b>below</b> from-scratch at every budget. When the pretrained backbone's domain is nothing like your data (e.g. ImageNet photos vs medical scans or radar), its frozen features encode the wrong things and actively mislead the head. <b>Conclusion:</b> transfer is not free — if the curves cross or transfer trails, unfreeze and fine-tune, or pick a backbone trained on closer data."
       }
     ],
-    caption: "Real scikit-learn run on the Olivetti faces dataset (400 photos of 40 people, 64x64 = 4096 pixels each). The TRANSFER curve fits a linear classifier on FROZEN learned features — an eigenface PCA basis learned once on the face manifold, standing in for a pretrained backbone's frozen features. The FROM-SCRATCH curve fits the same linear classifier on raw 4096-dim pixels. Transfer is higher at every label budget and the gap is largest when labels are scarce (at 80 labeled images, 0.707 vs 0.655; the lead widens through the small-data range). That is the label-efficiency win: good pretrained features get you far with little data. A real backbone is a CNN pretrained on ImageNet, which cannot run in-browser; PCA eigenfaces are only a faithful, fast stand-in for that frozen feature extractor.",
+    caption: "How to read a label-budget curve: x = number of labeled images, y = test accuracy, one line per approach. Only the first chart uses real numbers (Olivetti faces; an eigenface PCA basis stands in for a pretrained backbone's frozen features, since a real ImageNet CNN can't run in-browser). The catch-up and negative-transfer charts are illustrative but honest about when transfer stops helping.",
     code: `import numpy as np
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.decomposition import PCA

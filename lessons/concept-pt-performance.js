@@ -487,18 +487,43 @@ print("avg micro-batch loss:", (running / (i + 1)).item())`
   };
 
   window.CODEVIZ["pt-performance"] = {
-    question: "How much faster does each optimization make training? Training throughput (samples/sec) for baseline vs +AMP vs +torch.compile vs +more DataLoader workers, with each speedup stacking on the previous. ILLUSTRATIVE numbers from a small reproducible model.",
-    charts: [{
-      type: "bars",
-      title: "Training throughput stacks up with each optimization (illustrative)",
-      xlabel: "configuration (each adds to the previous)",
-      ylabel: "throughput (samples / sec)",
-      labels: ["baseline", "+ AMP", "+ torch.compile", "+ more workers"],
-      values: [2500, 4500, 6300, 7245],
-      valueLabels: ["2,500", "4,500", "6,300", "7,245"],
-      colors: ["#8b949e", "#4ea1ff", "#7ee787", "#f2cc60"]
-    }],
-    caption: "Illustrative throughput from a small reproducible model: a baseline of 2,500 samples/sec, then stacked speedups of 1.8x (AMP), 1.4x (torch.compile), and 1.15x (more DataLoader workers) — plausible per-step factors, not a measured benchmark. They MULTIPLY because each attacks a different stage of the pipeline (per-op precision, op count, idle data-loading gaps), giving ~2.9x end to end. Real numbers depend heavily on your GPU, model, and data; the point is the stacking, so always profile your own run.",
+    question: "How do you READ a speedup chart and a profiler table — and how do you tell a real win from a knob that did nothing because the bottleneck was elsewhere?",
+    charts: [
+      {
+        type: "bars",
+        title: "Healthy: each optimization stacks (illustrative)",
+        xlabel: "configuration (each adds to the previous)",
+        ylabel: "throughput (samples / sec)",
+        labels: ["baseline", "+ AMP", "+ torch.compile", "+ more workers"],
+        values: [2500, 4500, 6300, 7245],
+        valueLabels: ["2,500", "4,500", "6,300", "7,245"],
+        colors: ["#9aa7b4", "#4ea1ff", "#7ee787", "#ffb454"],
+        interpret: "Bar height is throughput (samples processed per second); taller is faster, and each bar adds one optimization on top of the previous. Read it left to right: every bar is meaningfully taller than the one before, so each knob (AMP, then compile, then more DataLoader workers) actually paid off. The gains <b>multiply</b> (1.8x then 1.4x then 1.15x ~= 2.9x end to end) because each attacks a different pipeline stage — per-op cost, op count, idle data-loading gaps. This is the shape you WANT; illustrative numbers from a small model, so profile your own run for real figures."
+      },
+      {
+        type: "bars",
+        title: "GPU-starved: compute knobs do nothing until you feed the GPU",
+        xlabel: "configuration (each adds to the previous)",
+        ylabel: "throughput (samples / sec)",
+        labels: ["baseline", "+ AMP", "+ torch.compile", "+ more workers"],
+        values: [2000, 2050, 2100, 5400],
+        valueLabels: ["2,000", "2,050", "2,100", "5,400"],
+        colors: ["#9aa7b4", "#ff7b72", "#ff7b72", "#7ee787"],
+        interpret: "Same axes, but the first two optimizations (red) barely move the bar — AMP and torch.compile make the GPU compute faster, yet the GPU was already idle waiting for data, so making it faster changes nothing. The jump only comes at <b>+ more workers</b> (green), when the DataLoader finally keeps it fed. The lesson: a flat run of bars means you tuned the wrong stage; <b>profile first</b> to find the real bottleneck (here, data loading) before reaching for compute knobs. Illustrative shape."
+      },
+      {
+        type: "bars",
+        title: "Read the profiler: where the time actually goes (one step)",
+        xlabel: "operation",
+        ylabel: "self time (ms)",
+        labels: ["data load", "forward", "backward", "optimizer.step", ".item() sync"],
+        values: [11.0, 5.8, 7.4, 1.5, 4.2],
+        valueLabels: ["11.0", "5.8", "7.4", "1.5", "4.2"],
+        colors: ["#ff7b72", "#4ea1ff", "#4ea1ff", "#9aa7b4", "#ffb454"],
+        interpret: "This is the profiler table as a bar chart: each bar is one operation's self time in milliseconds for a single step — the bigger the bar, the more of your step it costs. Read it by finding the TALLEST bar: here <b>data load</b> (red) dominates, so raising num_workers/pin_memory is the highest-value fix, not touching the matmul. The orange <b>.item() sync</b> bar is a silent killer — a per-step host/device sync that often costs more than optimizer.step; remove it by accumulating with .detach(). Always sort by self time and fix the top bar first. Illustrative."
+      }
+    ],
+    caption: "Three ways to read a speedup chart: the healthy stack (every bar grows), the GPU-starved trap (compute knobs are flat until you feed the GPU), and the profiler breakdown that tells you WHICH stage to attack. Each chart's note explains how to read it; the rule throughout is profile first, fix the tallest bar.",
     code: `import numpy as np
 
 # Reproducible, ILLUSTRATIVE model of how throughput stacks.
