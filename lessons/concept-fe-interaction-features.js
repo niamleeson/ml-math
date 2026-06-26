@@ -220,20 +220,43 @@ print("R^2 base + interactions:  %.4f  (+/- %.4f)" % (r2_inter.mean(), r2_inter.
   };
 
   window.CODEVIZ["fe-interaction-features"] = {
-    question: "On a real dataset, does adding pairwise interaction features lift a linear model's accuracy — and what does it cost in feature count?",
+    question: "On a real dataset, does adding pairwise interaction features lift a linear model's accuracy — and how do you read the cases where it helps, overfits, or does nothing?",
     charts: [
       {
         type: "bars",
-        title: "5-fold CV accuracy of logistic regression on load_breast_cancer (5 mean-features): base vs base + interactions",
+        title: "Ideal: small real lift (load_breast_cancer, first 5 mean-features, 5-fold CV)",
         xlabel: "feature set",
         ylabel: "mean 5-fold accuracy (higher is better)",
-        labels: ["base (5 features)", "base + interactions (15 features)"],
+        labels: ["base (5 cols)", "base + interactions (15 cols)"],
         values: [0.9244, 0.9279],
         valueLabels: ["0.9244", "0.9279"],
-        colors: ["#9aa7b4", "#4ea1ff"]
+        colors: ["#9aa7b4", "#7ee787"],
+        interpret: "Each bar is the model's cross-validated accuracy; taller is better. The grey bar is plain logistic regression on 5 features; the green bar adds the 10 pairwise products (15 columns total). The green bar edges <b>above</b> grey (0.9244 to 0.9279) — a small but real gain, validated on held-out folds so it is not just memorising. This is the healthy outcome: interactions gave the linear model something it could not express before, and the lift survived cross-validation."
+      },
+      {
+        type: "bars",
+        title: "Overfitting: all 30 features crossed -> 465 columns, CV accuracy drops",
+        xlabel: "feature set",
+        ylabel: "accuracy (train high, 5-fold CV lower)",
+        labels: ["base 30 cols (CV)", "all interactions 465 cols (train)", "all interactions 465 cols (CV)"],
+        values: [0.95, 0.99, 0.90],
+        valueLabels: ["~0.95", "~0.99 train", "~0.90 CV"],
+        colors: ["#9aa7b4", "#ffb454", "#ff7b72"],
+        interpret: "Illustrative shapes. Crossing all 30 features makes 465 columns. The orange bar shows training accuracy soaring (the model memorises noise with so many columns), but the red bar — the honest cross-validated score — falls <b>below</b> the grey base. The tell-tale sign of overfitting from interaction blow-up: a big gap between train (high) and CV (lower), with CV worse than no interactions. Read it as 'too many products, regularise or select.'"
+      },
+      {
+        type: "bars",
+        title: "No lift: features already separable / redundant crosses",
+        xlabel: "feature set",
+        ylabel: "mean 5-fold accuracy",
+        labels: ["base", "base + interactions"],
+        values: [0.96, 0.96],
+        valueLabels: ["0.96", "0.96"],
+        colors: ["#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. The two bars are level — interactions changed nothing. This happens when the data is already linearly separable (no joint effect to capture) or the crossed features were highly correlated, so each product is nearly a copy of the originals (multicollinearity). Read flat-or-equal bars as 'no joint structure here, or redundant crosses' — drop the interactions and save the columns."
       }
     ],
-    caption: "The book uses Online News Popularity; this is the same idea on the bundled load_breast_cancer dataset. Using the first 5 'mean' features, PolynomialFeatures(degree=2, interaction_only=True) adds the 10 pairwise products (5 + C(5,2)=5+10=15 columns), and the linear model's cross-validated accuracy edges up from ~0.9244 to ~0.9279 -- a small but real lift. Standardizing first (and capping at 5 features) keeps the quadratic blow-up in check; adding all 30 features instead would jump to 465 columns and overfit, which is the book's cautionary half of the story.",
+    caption: "The book uses Online News Popularity; the IDEAL bar uses the bundled load_breast_cancer (first 5 mean-features). PolynomialFeatures(degree=2, interaction_only=True) adds the 10 pairwise products (5+C(5,2)=15 columns) and CV accuracy edges up ~0.9244 to ~0.9279. The two variant charts are illustrative shapes showing the failure modes you actually meet: quadratic blow-up overfitting (train up, CV down) and the no-lift case (already-separable or redundant features).",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler

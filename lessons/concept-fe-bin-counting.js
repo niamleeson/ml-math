@@ -259,26 +259,55 @@ def encode_at_serving(device_id):
   };
 
   window.CODEVIZ["fe-bin-counting"] = {
-    question: "On a real dataset, does encoding a category by its OUT-OF-FOLD target rate beat a label-encoded baseline — and how dense and predictive is that single bin-counted column?",
+    question: "How do you READ a bin-counting diagram -- the smoothing curve that tames rare categories, the dense per-category signal, the leakage gap between CV and production, and the noise of low-count values?",
     charts: [
       {
-        type: "bars",
-        title: "Per-category target rate: the dense signal bin counting extracts (load_breast_cancer)",
-        labels: ["bin 0", "bin 1", "bin 2", "bin 3", "bin 4"],
-        values: [0.95, 0.86, 0.71, 0.33, 0.08],
-        valueLabels: ["0.95", "0.86", "0.71", "0.33", "0.08"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        type: "line",
+        title: "Ideal: smoothing pulls low-count rates toward the prior, trusts high-count ones",
+        xlabel: "rows seen for this category value (Nv)",
+        ylabel: "encoded rate (smoothed toward prior p0 = 0.05)",
+        series: [
+          { name: "raw rate = 1.0 (all clicked)", color: "#9aa7b4", points: [[1,0.05],[200,0.05],[400,0.05],[600,0.05],[800,0.05],[1000,0.05]] },
+          { name: "smoothed estimate", color: "#7ee787", points: [[1,0.136],[2,0.208],[5,0.367],[10,0.525],[20,0.683],[50,0.842],[100,0.914],[300,0.969],[1000,0.990]] }
+        ],
+        interpret: "X axis is <b>how much history</b> a category value has; Y axis is the <b>encoded rate</b> you hand the model. The grey line is the global prior p0 = 0.05 (the fallback). The green curve is the smoothed estimate for a value whose raw rate is a perfect 1.0: with <b>few rows it sits low, near the prior</b> (a 1/1 fluke can't pose as 100%), and as rows pile up it <b>climbs toward the true 1.0</b>. Read it as: little data, trust the prior; lots of data, trust the value. The knob alpha sets how fast it climbs."
       },
       {
         type: "bars",
-        title: "Logistic-regression accuracy: label-encoded category vs its bin-counted (target-rate) column",
-        labels: ["label-encoded id", "bin-counted (out-of-fold)"],
-        values: [0.63, 0.90],
-        valueLabels: ["0.63", "0.90"],
-        colors: ["#ff7b72", "#58a6ff"]
+        title: "What you want to see: a dense, monotone per-category target rate",
+        labels: ["bin 0", "bin 1", "bin 2", "bin 3", "bin 4"],
+        values: [0.95, 0.86, 0.71, 0.33, 0.08],
+        valueLabels: ["0.95", "0.86", "0.71", "0.33", "0.08"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Real numbers from load_breast_cancer (a binned feature standing in for a high-cardinality category). Each bar is one category value; height is its <b>out-of-fold target rate</b> P(y=1 | value). One dense column replaces a 5-wide one-hot. The bars step cleanly from 0.95 down to 0.08 -- a <b>clear, monotone separation</b> between values, which is exactly the predictive signal you hope for. Flat bars all near the prior would mean the category carries no signal."
+      },
+      {
+        type: "line",
+        title: "Failure mode: target leakage -- great in CV, collapses in production",
+        xlabel: "training epoch / evaluation point",
+        ylabel: "AUC",
+        series: [
+          { name: "cross-validation AUC (leaky)", color: "#7ee787", points: [[1,0.80],[2,0.88],[3,0.92],[4,0.94],[5,0.95]] },
+          { name: "production AUC (truth)", color: "#ff7b72", points: [[1,0.61],[2,0.62],[3,0.62],[4,0.63],[5,0.62]] }
+        ],
+        interpret: "Illustrative. Both lines are AUC (higher = better ranking). The green CV line soars to ~0.95 while the red production line is stuck around ~0.62 -- a <b>wide, persistent gap</b>. That gap is the fingerprint of <b>target leakage</b>: the encoding was built using each row's own label, so the feature secretly carries the answer in CV but is useless on unseen rows. If you see CV far above production, suspect leakage and recompute the encoding <b>out-of-fold</b> or from an earlier time window."
+      },
+      {
+        type: "scatter",
+        title: "What raw (unsmoothed) rates look like: rare categories are pure noise",
+        xlabel: "rows seen for this category value (Nv, log-ish)",
+        ylabel: "raw target rate N1 / Nv",
+        groups: [
+          { name: "rare: noisy, untrustworthy", color: "#ff7b72", points: [[1,0.0],[1,1.0],[2,0.0],[2,0.5],[2,1.0],[3,0.33],[3,1.0],[4,0.25],[5,0.6]] },
+          { name: "well-populated: settles near truth", color: "#7ee787", points: [[200,0.07],[400,0.09],[700,0.08],[1000,0.08],[1500,0.085]] }
+        ],
+        lines: [
+          { color: "#9aa7b4", dash: true, points: [[1,0.05],[1500,0.05]] }
+        ],
+        interpret: "Illustrative. Each point is a category value: X = how many rows it has, Y = its <b>raw, unsmoothed rate</b>. The red low-count values on the left are <b>scattered all over 0 to 1</b> -- a 1/1 gives 1.0, a 0/2 gives 0.0, none trustworthy. The green high-count values on the right <b>cluster tightly</b> near their true rate (~0.08). The grey dashed line is the prior p0. This funnel shape is why you smooth: it drags the wild left-hand points toward the prior while leaving the settled right-hand points alone."
       }
     ],
-    caption: "Real numbers from load_breast_cancer. We bin one feature ('mean radius') into 5 buckets to play the role of a high-cardinality category, then encode it. Left: each bucket's out-of-fold malignant-vs-benign target rate — one dense, monotone signal (0.95 down to 0.08) instead of a 5-wide one-hot. Right: a logistic model on the raw bucket index (treated as a meaningless label) reaches ~0.63 accuracy, while the SAME model on the single bin-counted target-rate column reaches ~0.90. The book uses the heavy-cardinality Avazu click IDs; this is the same idea on a bundled dataset, computed out-of-fold to stay honest.",
+    caption: "How to read bin-counting diagrams: the smoothing curve (history decides how much to trust a value), the dense per-category target rate, the CV-vs-production gap that signals leakage, and the noise funnel that motivates smoothing. The book uses heavy-cardinality Avazu click IDs; these show the same ideas, computed out-of-fold to stay honest.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression

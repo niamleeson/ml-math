@@ -244,20 +244,54 @@ print('SIFT keypoints:', len(keypoints), ' descriptor shape:', descriptors.shape
   };
 
   window.CODEVIZ["fe-image-features"] = {
-    question: "Take a real 8x8 digit image, compute its pixel gradients, and bin the gradient ORIENTATIONS into an 8-bin histogram (the core of HOG). Which edge directions dominate this digit?",
+    question: "How do you read a HOG orientation histogram? Here is a real digit's histogram, plus the shapes a flat patch, a single strong edge, and a brightened copy produce.",
     charts: [
       {
         type: "bars",
-        title: "Orientation histogram of one load_digits image (HOG's core step)",
+        title: "Round digit 0: edge energy spread across directions (real load_digits)",
         xlabel: "gradient orientation bin (degrees)",
         ylabel: "total gradient magnitude in bin",
         labels: ["0–45", "45–90", "90–135", "135–180", "180–225", "225–270", "270–315", "315–360"],
         values: [78.2, 27.1, 35.7, 25.9, 77.8, 41.9, 24.5, 26.0],
         valueLabels: ["78.2", "27.1", "35.7", "25.9", "77.8", "41.9", "24.5", "26.0"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>Read each bar as 'how much edge energy points this way'.</b> The x-axis splits the circle of gradient directions into 8 wedges; the bar height sums edge strength (magnitude) falling in each wedge. The two near-horizontal bins (0–45 at 78.2 and 180–225 at 77.8) are tallest — the round '0' has strong left/right-curving strokes, whose gradients point sideways. <b>Conclusion:</b> energy is spread but leans horizontal, which is what a curvy closed shape looks like. Real numbers; this per-cell histogram is the core step inside HOG."
+      },
+      {
+        type: "bars",
+        title: "Flat patch: tiny gradients everywhere, no dominant direction",
+        xlabel: "gradient orientation bin (degrees)",
+        ylabel: "total gradient magnitude in bin",
+        labels: ["0–45", "45–90", "90–135", "135–180", "180–225", "225–270", "270–315", "315–360"],
+        values: [3.1, 2.7, 3.4, 2.9, 3.0, 2.6, 3.2, 2.8],
+        valueLabels: ["3.1", "2.7", "3.4", "2.9", "3.0", "2.6", "3.2", "2.8"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Illustrative shape.</b> Every bar is <b>short and roughly equal</b> — a flat region (sky, blank wall) has almost no brightness change, so all gradients are tiny and their directions are just noise. <b>Recognise it</b> by the low, uniform profile and small total. <b>Conclusion:</b> this cell carries no shape information; HOG's block normalization keeps such a cell from dominating, but on its own it tells you 'nothing happening here'."
+      },
+      {
+        type: "bars",
+        title: "Single strong edge: one bin towers over the rest",
+        xlabel: "gradient orientation bin (degrees)",
+        ylabel: "total gradient magnitude in bin",
+        labels: ["0–45", "45–90", "90–135", "135–180", "180–225", "225–270", "270–315", "315–360"],
+        values: [6.0, 8.2, 121.0, 9.5, 5.4, 7.1, 6.8, 5.9],
+        valueLabels: ["6.0", "8.2", "121.0", "9.5", "5.4", "7.1", "6.8", "5.9"],
+        colors: ["#4ea1ff", "#4ea1ff", "#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "<b>Illustrative shape.</b> One bin (here 90–135, the orange bar) is <b>far taller than all others</b> — a cell straddling one clean straight edge, like a window frame or table line. Almost all gradients point the same way (across that edge). <b>Recognise it</b> by a single spike. <b>Conclusion:</b> a strong, consistently-oriented edge runs through this cell; HOG summarizes it as that one dominant direction."
+      },
+      {
+        type: "bars",
+        title: "Same digit, brightened ×1.5: gradients scale, shape is unchanged",
+        xlabel: "gradient orientation bin (degrees)",
+        ylabel: "total gradient magnitude in bin",
+        labels: ["0–45", "45–90", "90–135", "135–180", "180–225", "225–270", "270–315", "315–360"],
+        values: [117.3, 40.7, 53.6, 38.9, 116.7, 62.9, 36.8, 39.0],
+        valueLabels: ["117.3", "40.7", "53.6", "38.9", "116.7", "62.9", "36.8", "39.0"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "<b>Illustrative: the SAME digit-0 cell with every pixel multiplied by 1.5.</b> Compare to the green chart — the bars are <b>1.5× taller but the SHAPE is identical</b> (same two horizontal peaks, same relative pattern). Contrast scales every gradient equally, so the direction profile is unchanged. <b>Conclusion:</b> this is exactly why HOG block-<i>normalizes</i> — dividing each block by its own size cancels the 1.5 and the descriptor becomes lighting-invariant. The shape, not the brightness, survives."
       }
     ],
-    caption: "Real numbers from load_digits: one 8x8 image of the digit 0. We compute the pixel gradients with np.gradient, get each pixel's orientation and magnitude, and sum magnitudes into 8 direction bins. The two near-horizontal bins (0–45° at 78.2 and 180–225° at 77.8) carry by far the most edge energy — the round digit's left/right curving strokes produce strong horizontal-pointing gradients. This per-cell orientation histogram is exactly the core computation inside HOG; the book runs the full HOG/SIFT pipeline on larger images.",
+    caption: "How to read a HOG orientation histogram. The first (green) chart is real load_digits numbers for a digit 0; the other three are illustrative cells — a flat patch, a single clean edge, and the same digit brightened. x = gradient-direction wedge, y = summed edge strength in that wedge. The PROFILE across bins is the cell's edge story; uniform brightness scaling stretches it but does not change its shape.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 

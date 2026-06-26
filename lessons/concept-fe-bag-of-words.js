@@ -180,19 +180,11 @@ print("sparsity:", 1 - X.nnz / (X.shape[0] * X.shape[1]))   # almost all zeros
   };
 
   window.CODEVIZ["fe-bag-of-words"] = {
-    question: "On four tiny real review-style sentences, what does the bag-of-words document-term matrix look like, which words are most common, and can it tell 'not good' from 'good'?",
+    question: "How do you READ a bag-of-words diagram -- the document-term matrix, the word-frequency curve, the negation it can't see, and the geometry of similar documents?",
     charts: [
       {
-        type: "bars",
-        title: "Total word counts across the 4-document corpus (the bag, summed)",
-        labels: ["the", "was", "food", "great", "service", "good", "and", "slow", "but", "not", "value"],
-        values: [6, 6, 4, 4, 4, 3, 2, 2, 1, 1, 1],
-        valueLabels: ["6", "6", "4", "4", "4", "3", "2", "2", "1", "1", "1"],
-        colors: ["#ff7b72", "#ff7b72", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
-      },
-      {
         type: "heatmap",
-        title: "Document-term matrix: 4 reviews (rows) x 11 vocabulary words (cols)",
+        title: "Ideal: document-term matrix, 4 reviews (rows) x 11 vocabulary words (cols)",
         rows: ["d1: ...good...great", "d2: ...slow...good", "d3: great great great", "d4: ...not good...slow"],
         cols: ["and", "but", "food", "good", "great", "not", "service", "slow", "the", "value", "was"],
         matrix: [
@@ -201,10 +193,41 @@ print("sparsity:", 1 - X.nnz / (X.shape[0] * X.shape[1]))   # almost all zeros
           [0, 0, 1, 0, 3, 0, 1, 0, 0, 1, 0],
           [1, 0, 1, 1, 0, 1, 1, 1, 2, 0, 2]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "Read it as a grid: one <b>row per document</b>, one <b>column per vocabulary word</b>, each cell is the <b>count</b> of that word in that document. A whole row is one document's bag-of-words vector. Darker / bigger numbers mean the word appears more; most cells are <b>0</b> (the word is absent) -- that emptiness is the sparsity the lesson stresses. The repeated 'great' in row d3 shows up as a 3, the only count above 2."
+      },
+      {
+        type: "bars",
+        title: "What you'll usually see: word frequencies are Zipfian (stop words on top)",
+        labels: ["the", "was", "food", "great", "service", "good", "and", "slow", "but", "not", "value"],
+        values: [6, 6, 4, 4, 4, 3, 2, 2, 1, 1, 1],
+        valueLabels: ["6", "6", "4", "4", "4", "3", "2", "2", "1", "1", "1"],
+        colors: ["#ff7b72", "#ff7b72", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Each bar is one vocabulary word; height is its <b>total count summed over every document</b>. The bars fall off sharply from left to right -- a few words dominate and a long tail barely appears (Zipf's law). The tallest bars (red: 'the', 'was') are <b>function words with no sentiment</b>, yet they out-count the meaningful ones. That is the warning to <b>remove stop words or switch to tf-idf</b>, which down-weights words that appear everywhere."
+      },
+      {
+        type: "bars",
+        title: "Failure mode: 'not good' looks almost identical to 'good' (counts overlap)",
+        series: [
+          { name: "d1: ...good... (positive)", color: "#7ee787", points: [[0,1],[1,1],[2,0],[3,1],[4,1],[5,2],[6,2]] },
+          { name: "d4: ...not good... (negative)", color: "#ff7b72", points: [[0,1],[1,1],[2,1],[3,1],[4,1],[5,2],[6,2]] }
+        ],
+        labels: ["and", "food", "not", "good", "service", "the", "was"],
+        interpret: "Illustrative: two reviews with <b>opposite sentiment</b> plotted as side-by-side count bars over the words they use. The green (positive) and red (negative) bars are <b>nearly the same height on every word</b> -- they share 'good', 'food', 'service'. The only real difference is the lone 'not' bar the negative review has. Because BoW keeps no order, that single stray 'not' is all that separates them, so a classifier easily confuses the two. <b>This is the motivation for n-grams</b>, which make 'not good' its own feature."
+      },
+      {
+        type: "scatter",
+        title: "Geometry: word overlap = nearby points; no shared words = orthogonal",
+        xlabel: "count on the 'food' axis",
+        ylabel: "count on the 'great' axis",
+        groups: [
+          { name: "share words (close)", color: "#7ee787", points: [[1,1],[1,2],[2,1]] },
+          { name: "no overlap (far)", color: "#ff7b72", points: [[0,3]] }
+        ],
+        interpret: "Illustrative 2-axis slice of bag-of-words space: each point is a document, its position set by how many times it uses each word. Documents that <b>share words sit close together</b> (green cluster, all with non-zero 'food'); a document with a <b>different vocabulary sits far away</b> (red point, zero 'food', high 'great'). Two documents with no words in common end up at a <b>right angle</b> (cosine similarity 0). This nearness-equals-similarity is exactly what lets a linear classifier draw a boundary between good and bad reviews."
       }
     ],
-    caption: "Real scikit-learn CountVectorizer output on 4 inline sentences. Left: the summed bag -- common words 'the'/'was' (red) top the counts despite carrying no sentiment, which motivates stop-word removal and tf-idf. Right: the document-term matrix; each row is a review's count vector. Compare row d1 (\"...good...\") and row d4 (\"...not good...\"): they differ only in the 'not' and 'and' columns -- the negation is one stray count, so BoW barely tells them apart. The book uses the Yelp reviews; this is the same idea on inline text.",
+    caption: "How to read bag-of-words diagrams: the document-term matrix (counts grid), the Zipfian frequency curve (stop words dominate), the negation BoW can't see, and the geometry where overlap becomes nearness. The book uses the Yelp reviews; the same ideas appear on these inline sentences.",
     code: `import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 

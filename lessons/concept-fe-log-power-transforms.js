@@ -188,7 +188,7 @@ print("Box-Cox lambda = %0.4f" % bc_params)   # ~0 means ~ a log transform`
   };
 
   window.CODEVIZ["fe-log-power-transforms"] = {
-    question: "Take a heavy-tailed positive feature (the 'mean area' of breast-cancer tumors). Does a log transform turn its lopsided distribution into something more symmetric and bell-shaped?",
+    question: "How do you READ a before/after histogram to tell if a log or power transform actually helped? Here is the ideal reshape plus three things you might really see.",
     charts: [
       {
         type: "bars",
@@ -197,19 +197,41 @@ print("Box-Cox lambda = %0.4f" % bc_params)   # ~0 means ~ a log transform`
         ylabel: "count of tumors",
         labels: ["179-366", "366-554", "554-741", "741-929", "929-1116", "1116-1304", "1304-1491"],
         values: [8, 23, 14, 4, 2, 3, 6],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Read this as the problem.</b> The x-axis is the raw feature split into equal-width bins; the y-axis is how many tumors land in each bin. The tall bar sits on the LEFT and a thin tail trails off to the RIGHT — that lopsided pile-plus-tail shape (skew about +1.05, positive = right tail) is exactly the heavy-tailed positive feature a log/power transform is built to fix."
       },
       {
         type: "bars",
-        title: "AFTER: log10(area) is far more symmetric (skew +0.04, bell-shaped)",
+        title: "IDEAL AFTER: log10(area) is far more symmetric (skew +0.04, bell-shaped)",
         xlabel: "log10(mean area) bin",
         ylabel: "count of tumors",
         labels: ["2.25-2.38", "2.38-2.52", "2.52-2.65", "2.65-2.78", "2.78-2.91", "2.91-3.04", "3.04-3.17"],
         values: [3, 5, 10, 15, 15, 3, 9],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>This is the win.</b> Same axes, but x is now log10 of the feature. The bars rise to a peak in the MIDDLE and fall off on both sides, and the skew has collapsed from +1.05 to about +0.04 (near zero = symmetric). When you see the peak move inward and the tail disappear like this, the transform did its job — the feature is now roughly bell-shaped (Gaussian)."
+      },
+      {
+        type: "bars",
+        title: "OVER-TRANSFORMED: log applied to already-symmetric data (skew -0.7, illustrative)",
+        xlabel: "log10(value) bin",
+        ylabel: "count",
+        labels: ["lo", "", "", "mid", "", "", "hi"],
+        values: [10, 8, 7, 6, 4, 2, 1],
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "<b>Recognise over-transforming.</b> (Illustrative shape.) The starting feature was already roughly symmetric, so logging it did not fix a right tail — it MANUFACTURED a left one: now the tall bars sit on the LEFT and trail down to the right (skew about -0.7, negative = left tail). The tell is that the skew flipped sign instead of shrinking toward zero. Lesson: don't transform on autopilot; check that the feature was actually right-skewed first."
+      },
+      {
+        type: "bars",
+        title: "TOO WEAK: sqrt on a very heavy tail — still right-skewed (skew +0.6, illustrative)",
+        xlabel: "sqrt(value) bin",
+        ylabel: "count",
+        labels: ["lo", "", "", "mid", "", "", "hi"],
+        values: [20, 14, 8, 4, 2, 1, 1],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Recognise an under-squash.</b> (Illustrative shape.) A square root is a gentler transform than a log. On a very heavy tail it pulls the giants in only partway, so the histogram is LESS skewed than the raw feature but still leans right (skew about +0.6, still clearly positive). The tell: the shape improved but the peak is still glued to the left edge. Reach for a stronger squash — the log, or let Box-Cox pick a smaller lambda."
       }
     ],
-    caption: "Same idea as the book's Yelp / News word-count example, on a bundled dataset. The raw 'mean area' feature (60 sampled tumors) is right-skewed (skewness +1.05) — an early peak with a long right tail. After log10 the skewness drops to +0.04 and the bars climb to a peak in the middle and fall off on both sides — much more Gaussian. The book uses Yelp review counts and the Online News Popularity word count; this is the same reshape on a bundled scikit-learn dataset.",
+    caption: "Read the FOUR cases. Top two are the real before/after on a bundled scikit-learn dataset (60 sampled tumors): raw 'mean area' skew +1.05 collapses to +0.04 after log10 — the ideal. The bottom two are illustrative failure modes you must be able to spot: logging an already-symmetric feature creates a left skew (over-transform), and a square root on a very heavy tail leaves it still right-skewed (too weak). Always compare the before and after skew/shape before trusting a transform.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 

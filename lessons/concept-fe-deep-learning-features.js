@@ -213,20 +213,44 @@ clf.fit(X, my_labels)                       # only THIS small head is trained
   };
 
   window.CODEVIZ["fe-deep-learning-features"] = {
-    question: "Learned features should be more label-efficient than raw pixels. On the digits dataset, how does downstream accuracy compare when the classifier sees RAW pixels vs a learned-feature stand-in, as we vary how many labels per class it gets to train on?",
+    question: "Learned features should be more label-efficient than raw pixels. How does downstream accuracy compare for learned features vs raw pixels as labels get scarce -- and what does the curve look like when transfer goes WRONG (domain shift) or you read off the WRONG layer?",
     charts: [
       {
         type: "line",
-        title: "Downstream accuracy vs labels per class: raw pixels vs learned features",
+        title: "Healthy transfer: learned features beat raw pixels, most when labels are scarce",
         xlabel: "labeled examples per class",
         ylabel: "test accuracy",
         series: [
           { name: "raw pixels (64-dim)", color: "#ff7b72", points: [[2.0, 0.680], [5.0, 0.856], [10.0, 0.853], [20.0, 0.907], [40.0, 0.935], [80.0, 0.963]] },
           { name: "learned features (pretrained proxy)", color: "#4ea1ff", points: [[2.0, 0.813], [5.0, 0.909], [10.0, 0.907], [20.0, 0.966], [40.0, 0.966], [80.0, 0.972]] }
-        ]
+        ],
+        interpret: "The x-axis is how many labeled examples per class the downstream classifier gets to train on; the y-axis is its accuracy on held-out test images. Both curves rise as you move right (more labels = better), but the blue learned-features curve sits ABOVE the red raw-pixels curve everywhere, and the vertical gap between them is widest at the far LEFT. Read that as: learned features help most exactly when labels are scarce, which is the whole point of using a pretrained featurizer. This is the healthy, expected pattern."
+      },
+      {
+        type: "line",
+        title: "Domain shift: features learned elsewhere give no lift (illustrative)",
+        xlabel: "labeled examples per class",
+        ylabel: "test accuracy",
+        series: [
+          { name: "raw pixels", color: "#ff7b72", points: [[2.0, 0.62], [5.0, 0.72], [10.0, 0.79], [20.0, 0.84], [40.0, 0.88], [80.0, 0.91]] },
+          { name: "learned features (wrong domain)", color: "#ffb454", points: [[2.0, 0.60], [5.0, 0.70], [10.0, 0.77], [20.0, 0.83], [40.0, 0.87], [80.0, 0.90]] }
+        ],
+        interpret: "Same axes, but now the two curves sit almost on top of each other and the learned-features curve (orange) is even slightly BELOW raw pixels. There is no scarce-label gap to exploit. Recognise this when the pretraining images look nothing like your images -- ImageNet photos vs X-rays or microscope slides -- so the learned edges/textures do not match your domain. The fix is to fine-tune on in-domain data or pick a closer backbone; do not assume deep features always win. (Illustrative shapes.)"
+      },
+      {
+        type: "line",
+        title: "Wrong layer: too-early features stay low-level, the final layer over-specializes (illustrative)",
+        xlabel: "labeled examples per class",
+        ylabel: "test accuracy",
+        series: [
+          { name: "penultimate layer (right)", color: "#7ee787", points: [[2.0, 0.81], [5.0, 0.90], [10.0, 0.93], [20.0, 0.96], [40.0, 0.97], [80.0, 0.97]] },
+          { name: "early conv layer (too low-level)", color: "#9aa7b4", points: [[2.0, 0.66], [5.0, 0.78], [10.0, 0.83], [20.0, 0.88], [40.0, 0.91], [80.0, 0.93]] },
+          { name: "final softmax layer (over-specialized)", color: "#c89bff", points: [[2.0, 0.58], [5.0, 0.66], [10.0, 0.70], [20.0, 0.73], [40.0, 0.75], [80.0, 0.76]] }
+        ],
+        interpret: "Same accuracy-vs-labels axes, but each curve is a DIFFERENT layer of the same network used as the feature vector. The green penultimate-layer curve is highest -- high-level yet still generic. The grey early-layer curve trails it because edges and color blobs are too low-level to separate objects. The purple final-softmax curve is lowest and barely improves: it outputs probabilities over the ORIGINAL classes, so it is over-fit to the pretraining labels, not yours. Takeaway: read off the penultimate layer, not too early and not the very end. (Illustrative shapes.)"
       }
     ],
-    caption: "Real numpy+scikit-learn run on load_digits (1797 8x8 images). The learned-feature stand-in is a small network trained on a SEPARATE pretrain pool of digits; its hidden-layer activations become the feature vector -- the in-browser proxy for a pretrained CNN's penultimate layer. A logistic regression on those learned features beats one on raw pixels at every label budget, and the gap is largest when labels are SCARCE (at 2 per class, 0.813 vs 0.680) -- the lesson's point that LEARNED features are more label-efficient. A real deep featurizer comes from a CNN pretrained on ImageNet; this small network is only a tiny in-browser proxy, since a CNN cannot run here.",
+    caption: "Chart 1 is a real numpy+scikit-learn run on load_digits (1797 8x8 images); the learned-feature stand-in is a small network trained on a SEPARATE pretrain pool, an in-browser proxy for a pretrained CNN's penultimate layer (a real CNN cannot run here). Charts 2-3 are illustrative failure modes -- domain shift, and picking the wrong layer.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.neural_network import MLPClassifier

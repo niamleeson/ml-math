@@ -232,30 +232,54 @@ plt.show()`
   };
 
   window.CODEVIZ["fe-scaling-normalization"] = {
-    question: "Two real features on wildly different scales: wine 'proline' (~hundreds) vs 'hue' (~1). What do their min / mean / max look like BEFORE standardization, and how does standardization put them on a common footing?",
+    question: "Two real features on wildly different scales: wine 'proline' (~hundreds) vs 'hue' (~1). How do you READ a scaling diagram — and what do the healthy case and the common failure modes look like?",
     charts: [
       {
         type: "bars",
-        title: "BEFORE standardization: proline dwarfs hue (note the scale)",
-        xlabel: "feature & statistic",
-        ylabel: "raw value",
-        labels: ["proline min", "proline mean", "proline max", "hue min", "hue mean", "hue max"],
-        values: [278.0, 746.9, 1680.0, 0.48, 0.957, 1.71],
-        valueLabels: ["278", "746.9", "1680", "0.48", "0.96", "1.71"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454", "#ffb454"]
-      },
-      {
-        type: "bars",
-        title: "AFTER standardization: both centered at 0 with comparable spread",
+        title: "Ideal: AFTER standardization both features share one z-score axis",
         xlabel: "feature & statistic",
         ylabel: "standardized value (z-score)",
         labels: ["proline min", "proline mean", "proline max", "hue min", "hue mean", "hue max"],
         values: [-1.493, 0.0, 2.971, -2.095, 0.0, 3.302],
         valueLabels: ["-1.49", "0.00", "2.97", "-2.10", "0.00", "3.30"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454", "#ffb454"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Real numbers from sklearn's load_wine (178 wines). Each bar is a min / mean / max statistic; the y-axis is the standardized value (z-score = how many standard deviations from that feature's own mean). Read it like this: <b>both colours now reach a comparable height</b> — every mean sits exactly at 0 and both maxima land near +3. That is the goal: proline (blue) and hue (green) speak the same units, so a k-NN / SGD / neural-net model weighs them fairly. The book scales Online News Popularity's n_tokens_content; same idea here."
+      },
+      {
+        type: "bars",
+        title: "Problem you might see: raw, un-scaled — proline dwarfs hue",
+        xlabel: "feature & statistic",
+        ylabel: "raw value",
+        labels: ["proline min", "proline mean", "proline max", "hue min", "hue mean", "hue max"],
+        values: [278.0, 746.9, 1680.0, 0.48, 0.957, 1.71],
+        valueLabels: ["278", "746.9", "1680", "0.48", "0.96", "1.71"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Same six statistics, but the y-axis is now the RAW value (no scaling). Recognise this failure by the grey bars being <b>invisibly flat against the floor</b>: proline (red) runs to 1680 while hue (grey) never leaves the 0-2 band, ~700x smaller. On one shared axis hue carries no visible height, so any Euclidean distance or gradient step is essentially all proline and hue is ignored. If your before/after pair looks like this, you forgot to scale."
+      },
+      {
+        type: "bars",
+        title: "Trap: one outlier crushes min-max-scaled values toward 0",
+        xlabel: "data point (sorted)",
+        ylabel: "min-max scaled value in [0,1]",
+        labels: ["p1", "p2", "p3", "p4", "p5", "p6", "outlier"],
+        values: [0.012, 0.018, 0.021, 0.027, 0.033, 0.041, 1.0],
+        valueLabels: ["0.01", "0.02", "0.02", "0.03", "0.03", "0.04", "1.00"],
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ff7b72"],
+        interpret: "Illustrative. Each bar is one example's min-max scaled value, which by definition lives in [0,1]. The single red bar is a far-out outlier — it alone sets the max, so it sits at 1.00. The tell-tale shape: <b>one tall bar on the right, every other bar squashed into a tiny sliver near 0</b>. All the ordinary points got crushed together and lost their spread. When you see this, switch from min-max to standardization or RobustScaler (median + interquartile range), which the outlier cannot dominate."
+      },
+      {
+        type: "bars",
+        title: "Trap: standardizing does NOT remove skew (shape unchanged)",
+        xlabel: "histogram bin (low value to high tail)",
+        ylabel: "count of examples in bin",
+        labels: ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8"],
+        values: [62, 40, 22, 12, 7, 4, 2, 1],
+        valueLabels: ["62", "40", "22", "12", "7", "4", "2", "1"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "Illustrative histogram. The x-axis is value bins from low to high; bar height is how many examples fall in each bin. This is a right-skewed feature — a tall stack on the left and a long thin tail to the right. The lesson: this <b>exact same picture appears before AND after standardizing</b>, because standardization is an affine (shift-and-stretch) map and only relabels the x-axis — it cannot bend the shape or shorten the tail. So if a feature still looks skewed after scaling, that is expected; reach for a log / power transform (applied before scaling) to actually reshape it."
       }
     ],
-    caption: "Real numbers from sklearn's load_wine (178 wines). BEFORE: proline's values (hundreds, blue) are ~700x larger than hue's (around 1, orange) — on a shared axis hue is invisible, so any distance or gradient would be dominated by proline. AFTER StandardScaler each feature has mean exactly 0 and a comparable spread (both maxima land around +3 z-scores), so a k-NN / SGD / neural-net model weighs them fairly. The book scales Online News Popularity's n_tokens_content; this is the same idea on a bundled dataset. Note the SHAPE of each distribution is unchanged — scaling only moved the axis.",
+    caption: "How to read scaling diagrams: the ideal (all features share one z-score axis) plus three things you actually meet — raw un-scaled features, an outlier wrecking min-max, and skew surviving standardization. Each chart explains itself below it.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler

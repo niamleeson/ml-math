@@ -128,7 +128,7 @@ print(listen_count[['listen_count', 'listen']].head(10))
   };
 
   window.CODEVIZ["fe-counts-binarization"] = {
-    question: "On a real right-skewed count-like feature, what does the raw distribution look like, and how does binarizing at the median split the classes?",
+    question: "On a real right-skewed count-like feature, what does the raw distribution look like, and what does the binarized split tell you — including the cases where the threshold goes wrong?",
     charts: [
       {
         type: "bars",
@@ -138,20 +138,44 @@ print(listen_count[['listen_count', 'listen']].head(10))
         labels: ["144-438", "438-733", "733-1028", "1028-1322", "1322-1617", "1617-1912", "1912-2206", "2206-2501"],
         values: [164, 249, 69, 61, 14, 8, 1, 3],
         valueLabels: ["164", "249", "69", "61", "14", "8", "1", "3"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "The x-axis is the raw count value chopped into eight equal-width ranges; the height of each bar is how many of the 569 records fall in that range. The tall bars sit on the LEFT and the bars shrink to almost nothing on the right — that long thin right tail is exactly what 'right-skewed' looks like. Read it as: most records have small counts, a tiny handful have huge ones. Those few far-right records are the power-user-style outliers that can dominate a model, which is why this feature is a candidate for binarizing."
       },
       {
         type: "bars",
-        title: "After binarizing at the median (551): P(benign) in each half",
+        title: "Good split: binarize at the median (551) -> each half is informative",
         xlabel: "binarized feature value",
         ylabel: "fraction benign in that half",
         labels: ["0  (area < 551, n=284)", "1  (area >= 551, n=285)"],
         values: [0.940, 0.316],
         valueLabels: ["0.94", "0.32"],
-        colors: ["#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "The two bars are the two values the binary feature can take (0 and 1); each bar's height is the fraction of benign tumors among the records that landed in that bin. The bars are very different heights (0.94 vs 0.32), and that gap is the good news: knowing just the 0/1 flag already tells you a lot about the label. The median threshold also keeps both bins roughly the same size (284 vs 285), so neither half is wasted. This is the healthy outcome — one bounded, outlier-free flag that still carries most of the signal."
+      },
+      {
+        type: "bars",
+        title: "Bad threshold: cutting at 1 maps almost everything to 1 (illustrative)",
+        xlabel: "binarized feature value",
+        ylabel: "number of records",
+        labels: ["0  (area < 1)", "1  (area >= 1)"],
+        values: [0, 569],
+        valueLabels: ["0", "569"],
+        colors: ["#9aa7b4", "#ffb454"],
+        interpret: "Same chart shape, but now the threshold is far too low for this feature: 'mean area' is never below 1, so every record falls into the 1 bin and the 0 bin is empty. The feature is now a constant column — it has the same value for everybody and therefore tells the model nothing. This is the failure mode the lesson warns about: a threshold with no natural meaning for the feature can collapse all the signal. (Numbers illustrative of the all-to-one case.)"
+      },
+      {
+        type: "bars",
+        title: "When magnitude was signal: binarizing throws away accuracy (illustrative)",
+        xlabel: "what the model is given",
+        ylabel: "model accuracy",
+        labels: ["raw value", "binarized 0/1"],
+        values: [0.91, 0.74],
+        valueLabels: ["0.91", "0.74"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Here the two bars are two versions of the SAME feature fed to the same model: the raw number on the left, the binarized 0/1 flag on the right, with the bar height being model accuracy. Accuracy drops a lot after binarizing — the tell that the magnitude was real signal, not noise. When you see this, binarization was the wrong fix: keep the number and tame its skew with a log/power transform or bucket it with binning instead. (Numbers illustrative of a magnitude-matters case.)"
       }
     ],
-    caption: "The book uses Echo Nest listen counts; this is the same idea on a bundled dataset. 'mean area' is a real count-like, right-skewed feature (min 144, median 551, max 2501, skew 1.64) — most records pile into the small-area bins, a few tower at 2500. Binarizing at the median splits 569 records into two halves of 284 and 285. The split is informative: the small-area half is 94% benign while the large-area half is only 32% benign. A single 0/1 flag, bounded and outlier-free, captures most of that signal.",
+    caption: "The book uses Echo Nest listen counts; this is the same idea on a bundled dataset. Chart 1 is the raw skew; chart 2 is the healthy median split; charts 3-4 are the two ways the choice goes wrong.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 

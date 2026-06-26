@@ -233,18 +233,54 @@ print("pruned features  :", len(pruned.get_feature_names_out()))`
   };
 
   window.CODEVIZ["fe-ngrams"] = {
-    question: "On a tiny real corpus of reviews (one with the negation \"not good\"), how fast does the number of distinct features grow as we widen ngram_range from (1,1) to (1,2) to (1,3)?",
-    charts: [{
-      type: "bars",
-      title: "Distinct features explode as the n-gram range widens (6 short reviews, CountVectorizer)",
-      xlabel: "ngram_range",
-      ylabel: "number of distinct features",
-      labels: ["(1,1) unigrams", "(1,2) +bigrams", "(1,3) +trigrams"],
-      values: [12, 31, 45],
-      valueLabels: ["12", "31", "45"],
-      colors: ["#4ea1ff", "#7ee787", "#ffb454"]
-    }],
-    caption: "Six short real reviews, including \"the food is not good\". Adding bigrams takes the feature count from 12 to 31; adding trigrams pushes it to 45 — the count climbs faster than the vocabulary, even on this tiny corpus. The (1,2) setting is what creates the \"not good\" feature (printed below) that plain bag-of-words cannot represent. The book measures the same effect on Yelp: ~29k unigrams, ~357k bigrams, ~1.63M trigrams. Numbers below are real CountVectorizer outputs.",
+    question: "How do you READ a feature-count-vs-ngram-range bar chart? Here is the real tiny-corpus growth, the real Yelp blow-up, plus two shapes you might see on other corpora.",
+    charts: [
+      {
+        type: "bars",
+        title: "IDEAL: distinct features grow as the n-gram range widens (6 short reviews, real CountVectorizer)",
+        xlabel: "ngram_range",
+        ylabel: "number of distinct features",
+        labels: ["(1,1) unigrams", "(1,2) +bigrams", "(1,3) +trigrams"],
+        values: [12, 31, 45],
+        valueLabels: ["12", "31", "45"],
+        colors: ["#4ea1ff", "#7ee787", "#ffb454"],
+        interpret: "<b>Read each bar as a vocabulary size.</b> The x-axis is how wide you let n-grams run; the y-axis is the number of distinct feature columns. Bars climb left-to-right (12 to 31 to 45) because adding bigrams then trigrams keeps inventing new contiguous runs. The step from unigrams to bigrams is the one that creates the 'not good' feature you actually want — the higher bars are the price you pay for it. These are real CountVectorizer counts."
+      },
+      {
+        type: "bars",
+        title: "REAL SCALE: the same chart on Yelp — the blow-up is enormous (book's measured counts)",
+        xlabel: "ngram_range",
+        ylabel: "thousands of distinct features",
+        labels: ["(1,1)", "(2,2)", "(3,3)"],
+        values: [29, 357, 1627],
+        valueLabels: ["29k", "357k", "1.63M"],
+        colors: ["#4ea1ff", "#7ee787", "#ff7b72"],
+        interpret: "<b>Same shape, real magnitude.</b> y is in thousands of features. On the full Yelp corpus the book measures 29k unigrams, 357k bigrams, 1.63M trigrams — bigrams ~12x and trigrams ~56x the unigram count. The bars rocket up because distinct word-pairs and triples vastly outnumber distinct words. This is what 'feature explosion' looks like at production scale: the (3,3) bar in red is a warning, not a goal."
+      },
+      {
+        type: "bars",
+        title: "NEAR-FLAT: a tiny / very repetitive corpus barely grows (illustrative)",
+        xlabel: "ngram_range",
+        ylabel: "number of distinct features",
+        labels: ["(1,1)", "(1,2)", "(1,3)"],
+        values: [6, 8, 9],
+        valueLabels: ["6", "8", "9"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Recognise a corpus where n-grams barely help.</b> (Illustrative.) When the corpus is tiny or every document repeats the same few phrases, there are almost no NEW pairs or triples to find, so the bars stay nearly level (6 to 8 to 9). The flat shape tells you bigrams add little signal AND little cost here — widening the range is mostly harmless but mostly pointless. Decide based on whether real negation/phrases exist, not reflex."
+      },
+      {
+        type: "bars",
+        title: "PRUNED: min_df / max_features collapses the explosion back down (illustrative)",
+        xlabel: "stage",
+        ylabel: "thousands of distinct features",
+        labels: ["(1,2) raw", "+ min_df=10", "+ max_features=50k"],
+        values: [386, 90, 50],
+        valueLabels: ["386k", "90k", "50k"],
+        colors: ["#ff7b72", "#ffb454", "#7ee787"],
+        interpret: "<b>Read this as the fix in action.</b> (Illustrative magnitudes.) Start from the raw unigram+bigram space (red, ~386k). Dropping n-grams seen in fewer than 10 documents (min_df) removes the rare-noise tail and slashes it (orange). Capping at the 50k most frequent (max_features) bounds it hard (green). Falling bars left-to-right = you kept the useful phrasing while throwing away the long sparse tail. This is the lever the pitfalls section is about."
+      }
+    ],
+    caption: "Read FOUR cases. Chart 1 is the real tiny-corpus growth (12 to 31 to 45, actual CountVectorizer output, with 'not good' recovered at (1,2)). Chart 2 is the book's real Yelp blow-up (29k / 357k / 1.63M). Charts 3-4 are illustrative shapes you must recognise: a tiny/repetitive corpus where the bars stay flat (n-grams barely help), and a pruned pipeline where min_df / max_features collapse the explosion back to something usable. The shape of the bars tells you whether you are buying signal or just buying columns.",
     code: `import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 

@@ -209,26 +209,45 @@ print(deciles)
   };
 
   window.CODEVIZ["fe-binning"] = {
-    question: "Take a skewed real count (the 'mean area' of cells in load_breast_cancer) and split it into 5 fixed-width bins vs 5 quantile bins. Which scheme keeps the bins evenly populated?",
+    question: "How do you READ a bin-occupancy chart? Each bar is one bin; its height is how many points landed in it. On a heavy-tailed count, which scheme keeps the bars even — and how do you spot the failure modes?",
     charts: [
       {
         type: "bars",
-        title: "Fixed-width (equal-width) bins: occupancy is LOPSIDED on skewed data",
-        labels: ["179–441", "441–704", "704–966", "966–1229", "1229–1491"],
-        values: [17, 25, 7, 5, 6],
-        valueLabels: ["17", "25", "7", "5", "6"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"]
-      },
-      {
-        type: "bars",
-        title: "Quantile (equal-count) bins: every bin holds the SAME 12 points",
+        title: "IDEAL — Quantile (equal-count) bins: every bar the SAME height",
         labels: ["179–411", "411–518", "518–641", "641–824", "824–1491"],
         values: [12, 12, 12, 12, 12],
         valueLabels: ["12", "12", "12", "12", "12"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>How to read it:</b> the x-axis lists the bin ranges, each bar's height is the point count in that bin. <b>Real numbers</b> from load_breast_cancer 'mean area' (60 cells). Notice the ranges are <b>uneven</b> (179–411 is wide, 824–1491 is huge) but the bars are <b>flat at 12</b>. That flatness is the signature of <b>quantile binning</b>: edges sit at the data's own quintiles, so each bin holds the same count. <b>Conclude:</b> no empty bins, no bin swallowing the data — this is the healthy target for a skewed feature."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — Fixed-width bins: bars LOPSIDED, the empty-bin problem",
+        labels: ["179–441", "441–704", "704–966", "966–1229", "1229–1491"],
+        values: [17, 25, 7, 5, 6],
+        valueLabels: ["17", "25", "7", "5", "6"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>How to read it:</b> same data, but now the bin ranges are <b>equal width</b> (~262 each). The bars are tall on the left (17, 25) and collapse on the right (7, 5, 6). <b>Recognise it</b> by the staircase-down shape — the head crowds bin 1–2 and the tail bins starve. With 20 bins instead of 5, the right bins would hit <b>zero</b>: the empty-bin problem. <b>Conclude:</b> equal-width binning wastes resolution on a heavy tail; switch to log or quantile bins."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — Exponential (log10) bins: tidy power-of-10 bands",
+        labels: ["1–9", "10–99", "100–999", "1000–9999", "10000+"],
+        values: [3, 6, 4, 3, 1],
+        valueLabels: ["3", "6", "4", "3", "1"],
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "<b>Illustrative</b> (counts spanning 1 to 90,000). <b>How to read it:</b> each bar is one power-of-10 band — bin index is floor(log10(x)). The ranges <b>multiply</b> by 10 each step, so the wide tail collapses into just a few bands and every band gets some points. <b>Recognise it</b> by the geometric x-labels (1–9, 10–99, 100–999...) and a roughly mound-shaped occupancy. <b>Conclude:</b> log bins fix the spacing with fixed, data-independent edges — good when you span orders of magnitude but want reproducible edges."
+      },
+      {
+        type: "bars",
+        title: "TRAP — Quantile edges fit on TEST data: looks even but leaks",
+        labels: ["bin1", "bin2", "bin3", "bin4", "bin5"],
+        values: [12, 12, 12, 12, 12],
+        valueLabels: ["12", "12", "12", "12", "12"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "<b>Illustrative.</b> <b>How to read it:</b> the bars look perfectly even — identical to the ideal — but here the quantile edges were computed on the <b>full dataset including test rows</b>. The chart can't show leakage; it looks healthy by construction because each bin was forced to hold one-fifth of ALL the data. <b>Recognise the danger</b> not in the bars but in the workflow: edges fit after the train/test split, or recomputed on test. <b>Conclude:</b> a too-perfect occupancy on held-out data is a red flag — fit decile edges on the TRAINING set only and reuse them everywhere."
       }
     ],
-    caption: "Real numbers from load_breast_cancer (60 cells subsampled, feature 'mean area' — a right-skewed count-like value). Fixed-width bins of equal width are lopsided: 17 and 25 points crowd the low end while the three high bins hold only 7, 5, 6. Quantile bins put their edges at the data's own quintiles, so all five bins hold exactly 12 points each. The book uses the heavy-tailed Yelp review_count; this is the same idea on a bundled dataset.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 

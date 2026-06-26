@@ -272,18 +272,43 @@ print('cluster-feature accuracy :', lr_clu.score(Zte, yte))     # ~0.95+
   };
 
   window.CODEVIZ["fe-kmeans-featurization"] = {
-    question: "On real data with nonlinear structure (load_digits projected to 2-D, where a linear model struggles), does feeding k-means CLUSTER features to logistic regression beat feeding the RAW features?",
+    question: "Stacking k-means cluster features under logistic regression on curved data — how do you read the healthy 'more clusters help' climb, the underfit when k is too small, and the leakage trap?",
     charts: [
       {
         type: "bars",
-        title: "Downstream logistic-regression accuracy: RAW vs k-means CLUSTER features",
-        labels: ["Raw 2-D coords", "k=8 clusters", "k=40 clusters", "k=100 clusters"],
+        title: "Ideal: accuracy climbs as k grows (load_digits 4-vs-9, 2-D PCA)",
+        xlabel: "feature set fed to logistic regression",
+        ylabel: "test accuracy (higher is better)",
+        labels: ["Raw 2-D coords", "k=8", "k=40", "k=100"],
         values: [0.46, 0.61, 0.83, 0.91],
         valueLabels: ["0.46", "0.61", "0.83", "0.91"],
-        colors: ["#ff7b72", "#ffb454", "#58a6ff", "#7ee787"]
+        colors: ["#ff7b72", "#ffb454", "#58a6ff", "#7ee787"],
+        interpret: "Each bar is the SAME logistic regression's test accuracy on a different feature set; taller is better. Red is the raw 2-D coordinates (~0.46, barely above chance on this curved blob). Moving right, each bar uses one-hot k-means cluster features with more clusters. The bars rise <b>monotonically</b> (0.61 -> 0.83 -> 0.91) — exactly the chapter's rule: more clusters tile the curved manifold more finely, so the linear model gets one weight per small cell and bends its boundary along the data. Read a rising staircase as 'k is the knob; keep raising it until accuracy plateaus.'"
+      },
+      {
+        type: "bars",
+        title: "Underfitting: k too small — cluster features no better than raw",
+        xlabel: "feature set",
+        ylabel: "test accuracy",
+        labels: ["Raw coords", "k=2", "k=3"],
+        values: [0.46, 0.49, 0.52],
+        valueLabels: ["0.46", "0.49", "0.52"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454"],
+        interpret: "Illustrative. With only 2-3 clusters the bars stay <b>flat and low</b>, hugging the raw-feature baseline. Each huge Voronoi cell straddles BOTH classes, so the one prediction-per-cell still mixes them — the model underfits. The diagnostic shape: cluster features that fail to beat raw features. The fix is not a different model, it is simply more clusters (push k into the tens-plus), which turns this flat picture into the rising staircase above."
+      },
+      {
+        type: "bars",
+        title: "Leakage: target used in clustering, applied to test -> suspiciously perfect",
+        xlabel: "evaluation",
+        ylabel: "accuracy",
+        labels: ["Honest out-of-fold", "Leaky (y in clustering, on test)"],
+        values: [0.91, 1.00],
+        valueLabels: ["0.91", "1.00"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Illustrative. The semi-supervised trick appends a scaled copy of the label y before clustering to make cells class-pure. Done honestly (green, fit on the training fold, freeze centroids, assign test points by inputs only) you get the realistic ~0.91. Done naively — clustering with y and applying that same model to the test points — the red bar shoots to a <b>too-good ~1.00</b>: the test labels defined the features. Read a near-perfect bar as a red flag for target leakage, not success; re-run the featurization out-of-fold."
       }
     ],
-    caption: "Real numbers from load_digits (1797 handwritten-digit images, here the 4-vs-9 pair). The two digits are projected to 2-D with PCA so they form a curved, NOT linearly separable blob; logistic regression on those raw 2 coordinates manages only ~0.46. Stacking k-means cluster features under the SAME logistic regression lifts accuracy as k grows: 0.61 at k=8, 0.83 at k=40, 0.91 at k=100 — concrete proof of the chapter's rule that you need MANY clusters to tile the manifold. The book uses the Swiss roll; this is the same idea on a bundled dataset.",
+    caption: "Real numbers from load_digits (the hard 4-vs-9 pair), projected to 2-D with PCA so the classes form a curved, NOT linearly separable blob: raw logistic regression manages only ~0.46. The IDEAL chart shows one-hot k-means cluster features lifting the same model as k grows (0.61/0.83/0.91 at k=8/40/100). The two variants are illustrative: k-too-small underfitting (cluster features no better than raw) and the leakage trap (target used in clustering then scored on test gives a suspicious ~1.00). The book uses the Swiss roll; this is the same idea on a bundled dataset.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

@@ -169,18 +169,54 @@ recommend(nn2, Xn2, query_idx=0, titles=papers['title'])
   };
 
   window.CODEVIZ["fe-end-to-end"] = {
-    question: "On a bundled item catalog, does scaling + L2-normalizing the features before cosine nearest-neighbor retrieval return more same-class items (higher precision@k) than using RAW features?",
-    charts: [{
-      type: "bars",
-      title: "Retrieval precision@k: RAW features vs SCALED + L2-normalized features",
-      xlabel: "feature representation (k = 5 neighbors)",
-      ylabel: "mean precision@5 (fraction of neighbors in same class)",
-      labels: ["RAW features", "SCALED + normalized"],
-      values: [0.76, 0.93],
-      valueLabels: ["0.76", "0.93"],
-      colors: ["#ff7b72", "#7ee787"]
-    }],
-    caption: "Real scikit-learn output on the bundled load_wine catalog (178 items, 13 features, 3 classes) used as a stand-in item catalog. We treat each wine as an 'item', build a feature matrix, and retrieve its 5 nearest neighbors by cosine similarity; precision@5 is the fraction of neighbors sharing the query's class. RAW features let the largest-magnitude column (proline, in the hundreds) dominate the distance, so retrieval is mediocre (~0.76). After standardizing every column and L2-normalizing each row, all features contribute comparably and same-class retrieval climbs to ~0.93. The book builds this on the Microsoft Academic Graph (papers + fields of study); this is the same compose-then-scale idea on a bundled catalog.",
+    question: "On a bundled item catalog, does scaling + L2-normalizing the features before cosine nearest-neighbor retrieval return more same-class items (higher precision@k) than RAW features — and how do you read the bar chart when scaling barely helps or even hurts?",
+    charts: [
+      {
+        type: "bars",
+        title: "Ideal: SCALED + normalized beats RAW (load_wine, real numbers)",
+        xlabel: "feature representation (k = 5 neighbors)",
+        ylabel: "mean precision@5 (fraction of neighbors in same class)",
+        labels: ["RAW features", "SCALED + normalized"],
+        values: [0.76, 0.93],
+        valueLabels: ["0.76", "0.93"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "Each bar is one feature recipe. Height = precision@5: out of the 5 nearest neighbors of each item, the fraction in the SAME class, averaged over all items. Higher is better. The red RAW bar (0.76) is low because one big-magnitude column (proline, in the hundreds) dominates the cosine distance. The green SCALED bar (0.93) is taller: after standardizing every column and L2-normalizing each row, all 13 features contribute comparably. <b>Read it as: a tall gap from red to green means scaling fixed a scale-domination problem.</b>"
+      },
+      {
+        type: "bars",
+        title: "Variant — scaling barely moves the needle (illustrative)",
+        xlabel: "feature representation (k = 5)",
+        ylabel: "mean precision@5",
+        labels: ["RAW features", "SCALED + normalized"],
+        values: [0.88, 0.90],
+        valueLabels: ["0.88", "0.90"],
+        colors: ["#ffb454", "#7ee787"],
+        interpret: "Illustrative. Here the two bars are nearly the same height (0.88 vs 0.90). <b>Read a near-flat pair as: the columns were already on comparable scales, so no single feature was hijacking the distance and scaling had little to fix.</b> This is the common, undramatic case — scaling is cheap insurance, not always a big win. Do not conclude scaling is useless; conclude this particular dataset did not have a scale-domination problem."
+      },
+      {
+        type: "bars",
+        title: "Variant — scaling HURTS: red sits below green-baseline (illustrative)",
+        xlabel: "feature representation (k = 5)",
+        ylabel: "mean precision@5",
+        labels: ["RAW features", "SCALED + normalized"],
+        values: [0.91, 0.79],
+        valueLabels: ["0.91", "0.79"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Illustrative, and a trap to recognise. Here the SCALED bar (red, 0.79) is SHORTER than RAW (green, 0.91) — scaling made retrieval worse. <b>Read a shorter scaled bar as: standardizing amplified a low-information, noisy column up to the same magnitude as the genuinely useful ones, drowning the signal.</b> When you see this, do not blindly standardize everything — drop or down-weight noise features, or scale only the columns that need it."
+      },
+      {
+        type: "line",
+        title: "How precision@k decays as you ask for more neighbors (k)",
+        xlabel: "k (number of neighbors retrieved)",
+        ylabel: "mean precision@k",
+        series: [
+          { name: "SCALED + normalized", color: "#7ee787", points: [[1, 0.97], [3, 0.95], [5, 0.93], [10, 0.88], [20, 0.80]] },
+          { name: "RAW features", color: "#ff7b72", points: [[1, 0.83], [3, 0.79], [5, 0.76], [10, 0.70], [20, 0.62]] }
+        ],
+        interpret: "x = how many neighbors k you retrieve; y = precision@k. Both lines slope DOWN: asking for more neighbors reaches further from the query, so later neighbors are less likely to share its class. <b>Read the vertical gap between the lines as the benefit of scaling at that k</b> — green stays above red everywhere. The k=5 point (green 0.93, red 0.76) is exactly the first bar chart. Use this to pick k: small k is precise but returns few items; large k returns more but dilutes quality."
+      }
+    ],
+    caption: "Chart 1 is real scikit-learn output on the bundled load_wine catalog (178 items, 13 features, 3 classes) as a stand-in item catalog; charts 2-3 are illustrative shapes of how the same bar chart looks when scaling barely helps or hurts; chart 4 traces precision as k grows. The book builds this on the Microsoft Academic Graph (papers + fields of study); this is the same compose-then-scale idea on a bundled catalog.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler, normalize

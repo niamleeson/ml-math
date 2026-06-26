@@ -218,27 +218,53 @@ print('hashed feature matrix size:', f.data.nbytes, 'bytes')
   };
 
   window.CODEVIZ["fe-feature-hashing"] = {
-    question: "Hash a list of many category strings into m buckets for m = 16, 64, 256. As the number of buckets m grows, how does the collision rate fall — the size-vs-accuracy trade-off?",
+    question: "Hash 200 category strings into m buckets. How do you READ a collision-rate-vs-m chart — the healthy decay, a bad hash that stays jammed, and how the signed trick cancels a collision?",
     charts: [
       {
         type: "bars",
-        title: "Collision rate vs number of buckets m (more buckets → fewer collisions)",
+        title: "Ideal: good hash — collision rate falls as m grows (real numbers)",
+        xlabel: "number of buckets m",
+        ylabel: "collision rate (fraction of categories sharing a bucket)",
         labels: ["m=16", "m=32", "m=64", "m=128", "m=256"],
         values: [0.92, 0.78, 0.55, 0.32, 0.18],
         valueLabels: ["92%", "78%", "55%", "32%", "18%"],
-        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#7ee787", "#7ee787"]
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#7ee787", "#7ee787"],
+        interpret: "Each bar is one choice of m (bucket count); height = collision rate, the fraction of the 200 categories that land in a bucket shared with another. <b>Read left-to-right: bars shrink as m grows</b> — more buckets, fewer collisions. Red bars (m=16, 32) mean almost everything collides and features are heavily blurred; green bars (m=128, 256) mean collisions are rare. This IS the book's size-vs-accuracy trade-off: pick m far enough right that the bar is short, accepting a wider vector."
       },
       {
         type: "line",
-        title: "Same trade-off as a curve: collision rate decays as m increases",
+        title: "Same trade-off as a curve: a smooth decay you can extrapolate",
         xlabel: "number of buckets m",
         ylabel: "collision rate",
         series: [
-          { name: "collision rate", color: "#4ea1ff", points: [[16, 0.92], [32, 0.78], [64, 0.55], [128, 0.32], [256, 0.18]] }
-        ]
+          { name: "good hash (even spread)", color: "#4ea1ff", points: [[16, 0.92], [32, 0.78], [64, 0.55], [128, 0.32], [256, 0.18]] }
+        ],
+        interpret: "x = bucket count m; y = collision rate. The curve falls steadily toward zero as m increases. <b>Read the slope: every doubling of m roughly halves the collisions</b>, so to push collisions below a target you keep doubling m. A real system uses m=2^18; this toy curve shows the shape you would see far to the right — collisions vanishingly small. A smooth, monotonically-decreasing curve is the signature of a well-behaved hash."
+      },
+      {
+        type: "line",
+        title: "Variant — BAD hash: collision rate plateaus high (illustrative)",
+        xlabel: "number of buckets m",
+        ylabel: "collision rate",
+        series: [
+          { name: "good hash", color: "#4ea1ff", points: [[16, 0.92], [32, 0.78], [64, 0.55], [128, 0.32], [256, 0.18]] },
+          { name: "bad hash (clusters into few buckets)", color: "#ff7b72", points: [[16, 0.94], [32, 0.90], [64, 0.86], [128, 0.83], [256, 0.81]] }
+        ],
+        interpret: "Illustrative. The red curve barely drops as m grows — adding buckets does not help. <b>Read a flat, stuck-high curve as: the hash is poorly distributed, piling categories into a few buckets and leaving most empty,</b> so you pay for a wide vector but still collide constantly. If your collision rate refuses to fall when you increase m, suspect the hash function itself (use a well-mixed one like MurmurHash3), not the bucket count."
+      },
+      {
+        type: "bars",
+        title: "Signed-hash trick: a collided bucket cancels instead of piling up",
+        xlabel: "bucket 1 contents (two colliding categories 'ad' and 'hi')",
+        ylabel: "value added to the bucket",
+        labels: ["unsigned: ad(+1)+hi(+1)", "signed: ad(+1)+hi(-1)"],
+        values: [2, 0],
+        valueLabels: ["2", "0"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "Two categories 'ad' and 'hi' collide in the same bucket (from the lesson's toy example). <b>Read the left red bar as the unsigned case: both add +1, so the bucket inflates to 2 — the collision systematically biases it upward.</b> The right green bar is the signed trick: a random sign gives 'hi' a -1, so +1 and -1 cancel to 0. Over many collisions these signed errors average out (mean zero), which is why the signed hash keeps the dot product unbiased despite collisions."
       }
     ],
-    caption: "200 distinct category strings hashed into m buckets with Python's hash modulo m. A bucket holding 2+ distinct categories is a collision; the collision rate is the fraction of categories landing in such buckets. With few buckets almost everything collides (92% at m=16); as m grows past the 200 categories, collisions thin out (18% at m=256). This is the book's size-vs-accuracy trade-off: smaller m → smaller vector but more blurring; larger m → fewer collisions at the cost of size. The book hashes the heavy-tailed Yelp review vocabulary; this is the same idea on a bundled list of strings.",
+    caption: "Charts 1-2 are real: 200 distinct category strings hashed into m buckets with Python's hash modulo m; a bucket with 2+ distinct categories is a collision. Chart 3 is an illustrative bad-hash curve that plateaus; chart 4 illustrates the signed-hash cancellation from the lesson's 4-word example. The book hashes the heavy-tailed Yelp review vocabulary; this is the same idea on a bundled list of strings.",
     code: `import numpy as np
 
 # 200 distinct category strings (e.g. user IDs / words). Real, deterministic.

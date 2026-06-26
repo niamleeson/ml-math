@@ -164,18 +164,54 @@ for name, Xtr, Xte in [("bag-of-words",       X_tr_bow,   X_te_bow),
   };
 
   window.CODEVIZ["fe-tfidf"] = {
-    question: "On a tiny real corpus, what happens to a COMMON word's weight versus a RARE word's weight when we switch from raw counts to tf-idf?",
-    charts: [{
-      type: "bars",
-      title: "Raw count vs tf-idf weight: common word down-weighted, rare word up-weighted",
-      xlabel: "word (and what we measure)",
-      ylabel: "weight in the matrix",
-      labels: ["'the' raw count", "'the' tf-idf", "'volcano' raw count", "'volcano' tf-idf"],
-      values: [4.00, 0.00, 1.00, 1.61],
-      valueLabels: ["4.00", "0.00", "1.00", "1.61"],
-      colors: ["#ff7b72", "#ff7b72", "#7ee787", "#7ee787"]
-    }],
-    caption: "Real output on a 5-document inline corpus using the book's plain idf = log(N/n_w) (natural log, no smoothing, no row normalization). 'the' appears in every document, so its idf is log(5/5)=0 and its tf-idf weight collapses to 0.00 even though its raw count is the highest (4). 'volcano' appears in just one document, so its idf is log(5/1)≈1.609 and its tf-idf weight rises to ≈1.61, above its raw count of 1. The book runs this on Yelp reviews; this is the same column-scaling idea on a bundled inline corpus.",
+    question: "When you switch from raw counts to tf-idf, how does a COMMON word's weight change versus a RARE word's — and what do the common variants (smoothing, sublinear tf) do to that picture?",
+    charts: [
+      {
+        type: "bars",
+        title: "Plain idf log(N/n): common word crushed to 0, rare word amplified",
+        xlabel: "word (and what we measure)",
+        ylabel: "weight in the matrix",
+        labels: ["'the' raw count", "'the' tf-idf", "'volcano' raw count", "'volcano' tf-idf"],
+        values: [4.00, 0.00, 1.00, 1.61],
+        valueLabels: ["4.00", "0.00", "1.00", "1.61"],
+        colors: ["#ff7b72", "#ff7b72", "#7ee787", "#7ee787"],
+        interpret: "Each bar is one word's weight in the matrix; height is the weight. Read it in pairs: <b>red</b> is the ubiquitous word 'the', <b>green</b> is the rare word 'volcano'. Going from raw count to tf-idf, 'the' drops from 4 to <b>exactly 0</b> (idf = log(5/5) = 0 with no smoothing) while 'volcano' rises from 1 to <b>1.61</b> (idf = log(5/1)). The takeaway: tf-idf silences words seen everywhere and amplifies the rare, document-specific ones — the most-counted word can end up worth nothing."
+      },
+      {
+        type: "bars",
+        title: "sklearn smoothed idf log((1+N)/(1+n))+1: common word kept small, not zero",
+        xlabel: "word (and what we measure)",
+        ylabel: "weight in the matrix",
+        labels: ["'the' raw count", "'the' tf-idf", "'volcano' raw count", "'volcano' tf-idf"],
+        values: [4.00, 4.00, 1.00, 2.79],
+        valueLabels: ["4.00", "4.00", "1.00", "2.79"],
+        colors: ["#9aa7b4", "#ffb454", "#9aa7b4", "#7ee787"],
+        interpret: "Illustrative, same corpus, but with scikit-learn's <b>default</b> idf = log((1+N)/(1+n))+1. The '+1' floor means no word is ever fully silenced: 'the' (orange) keeps its weight near its raw count instead of collapsing to 0, while 'volcano' (green) is still clearly amplified above its raw count. Recognise this when ubiquitous words still carry a small nonzero weight — that is the smoothing, not a bug. Rare words still dominate, just less drastically than plain idf."
+      },
+      {
+        type: "bars",
+        title: "Sublinear tf (1+log count): a word seen many times stops scaling linearly",
+        xlabel: "how often 'great' appears in one document",
+        ylabel: "tf used before idf",
+        labels: ["1x", "2x", "5x", "10x", "50x"],
+        values: [1.00, 1.69, 2.61, 3.30, 4.91],
+        valueLabels: ["1.00", "1.69", "2.61", "3.30", "4.91"],
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "Illustrative. With <b>sublinear tf</b> the raw count is replaced by 1+log(count) before multiplying by idf. The x-axis is how many times a word appears in one document; the y-axis is the tf value actually used. Notice the bars <b>flatten</b>: going 1→50 occurrences raises tf only from 1.0 to ~4.9, not 1→50. Recognise this when a word repeated 50 times is not worth 50× a word seen once — it dampens runaway repetition inside long documents."
+      },
+      {
+        type: "bars",
+        title: "Pitfall: a one-off typo gets the maximum idf and spuriously dominates",
+        xlabel: "word",
+        ylabel: "tf-idf weight (rare-word region)",
+        labels: ["'delicious' (real, n=2)", "'dlicious' (typo, n=1)", "'asdfgh' (junk, n=1)"],
+        values: [1.20, 1.61, 1.61],
+        valueLabels: ["1.20", "1.61", "1.61"],
+        colors: ["#7ee787", "#ff7b72", "#ff7b72"],
+        interpret: "Illustrative failure mode. idf rewards rarity, so the rarest tokens win — but a <b>typo</b> ('dlicious') or random <b>junk</b> string seen in one document gets the same maximum idf (red) as, or more than, a genuinely informative word (green). Recognise this when your top tf-idf features are misspellings, IDs, or noise. The fix lives upstream of the weighting: a min-document-frequency cutoff and token cleaning so rarity alone can't crown garbage."
+      }
+    ],
+    caption: "Real output on a 5-document inline corpus using the book's plain idf = log(N/n_w) (natural log, no smoothing). The first chart is the canonical case; the rest are variants you actually meet — sklearn's smoothed idf, sublinear-tf saturation, and the typo/junk failure mode.",
     code: `import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 

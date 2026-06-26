@@ -288,17 +288,54 @@ y = df['shares']                    # the target we want to predict`
   };
 
   window.CODEVIZ["fe-what-is-a-feature"] = {
-    question: "On real tumor data, does a simple feature transform (scaling) actually change how well the model does?",
-    charts: [{
-      type: "bars",
-      title: "Logistic-regression accuracy: raw features vs scaled features (real load_breast_cancer)",
-      xlabel: "feature set fed to the same model",
-      ylabel: "test accuracy",
-      labels: ["raw features", "scaled features"],
-      values: [0.936, 0.959],
-      colors: ["#ffb454", "#7ee787"]
-    }],
-    caption: "Same data, same model, same train/test split — only the features change. The raw breast-cancer columns span very different scales (mean area ranges 143 to 2501, while mean smoothness is near 0.1), so the model scores 0.936 and the optimizer even warns it failed to converge. One simple feature-engineering step, StandardScaler, lifts it to 0.959. The book uses Yelp / Online News data; this is the same idea — features feed the model — on a bundled dataset.",
+    question: "On real tumor data, does a simple feature transform actually change how well the model does — and what are the cases where it helps, does nothing, hurts, or looks too good to be true?",
+    charts: [
+      {
+        type: "bars",
+        title: "Helps: scaling lifts a linear model (real load_breast_cancer)",
+        xlabel: "feature set fed to the same linear model",
+        ylabel: "test accuracy",
+        labels: ["raw features", "scaled features"],
+        values: [0.936, 0.959],
+        valueLabels: ["0.936", "0.959"],
+        colors: ["#ffb454", "#7ee787"],
+        interpret: "Each bar is the same logistic regression on the same train/test split — <b>only the features change</b>. The y-axis is test accuracy, so taller is better. The raw columns span wildly different scales (mean area 143–2501 vs mean smoothness ≈0.1), so the raw model lags at 0.936 (orange); one StandardScaler step lifts it to 0.959 (green). Read this as: the feature transform, not the model, moved the score."
+      },
+      {
+        type: "bars",
+        title: "Does nothing: same scaling on a tree model",
+        xlabel: "feature set fed to the same tree model",
+        ylabel: "test accuracy",
+        labels: ["raw features", "scaled features"],
+        values: [0.953, 0.953],
+        valueLabels: ["0.953", "0.953"],
+        colors: ["#9aa7b4", "#9aa7b4"],
+        interpret: "Illustrative. Same two feature sets, but fed to a decision-tree / gradient-boosted model. The bars are the <b>same height</b>: a tree splits on whether a feature is above or below a threshold, so it cares only about order, and a monotone rescale leaves every split unchanged. Recognise this flat pair when a transform that helped your linear model does nothing for trees — the right feature depends on the model."
+      },
+      {
+        type: "bars",
+        title: "Hurts: wrong transform for the data",
+        xlabel: "feature set fed to the same linear model",
+        ylabel: "test accuracy",
+        labels: ["raw features", "log-transformed"],
+        values: [0.936, 0.872],
+        valueLabels: ["0.936", "0.872"],
+        colors: ["#ffb454", "#ff7b72"],
+        interpret: "Illustrative failure. Here a log transform is applied blindly to columns that include zeros and near-symmetric values, so accuracy <b>drops</b> from 0.936 to 0.872 (red shorter than orange). A transform is not automatically good: log helps skewed positive counts but mangles data it does not suit. Recognise this when 'feature engineering' makes things worse — the right feature depends on the data, so look before you transform."
+      },
+      {
+        type: "bars",
+        title: "Too good to be true: target leakage",
+        xlabel: "feature set fed to the same linear model",
+        ylabel: "test accuracy",
+        labels: ["honest features", "with a leaked feature"],
+        values: [0.959, 1.000],
+        valueLabels: ["0.959", "1.000"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Illustrative. The right bar hits a suspiciously <b>perfect 1.000</b> because a feature was built from information you would not have at prediction time (a stand-in for the label leaked in). Treat a near-perfect jump as a <b>red flag</b>, not a win: it vanishes in production where that information is missing. Recognise leakage by the implausibly high score, then trace each feature back to what is truly known at predict time."
+      }
+    ],
+    caption: "Same data, same train/test split — only the features change. The first chart is real (load_breast_cancer, StandardScaler lifts 0.936 to 0.959); the rest are illustrative cases you actually meet — a transform that does nothing (trees), one that hurts (wrong tool for the data), and the perfect-score smell of target leakage.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split

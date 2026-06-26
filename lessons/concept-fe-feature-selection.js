@@ -211,18 +211,58 @@ print("  selected feature indices:", kept.tolist())`
   };
 
   window.CODEVIZ["fe-feature-selection"] = {
-    question: "On real data, how many features do you actually need? A FILTER (mutual information with the target) ranks the features; we keep the top-k and watch accuracy. The curve plateaus fast: a handful of features gets almost all the accuracy.",
-    charts: [{
-      type: "bars",
-      title: "Accuracy vs number of filter-selected features (load_breast_cancer)",
-      xlabel: "k = number of top features kept (by mutual information)",
-      ylabel: "5-fold CV accuracy",
-      labels: ["k=1", "k=2", "k=3", "k=5", "k=8", "k=12", "k=20", "k=30 (all)"],
-      values: [0.917, 0.923, 0.917, 0.947, 0.954, 0.951, 0.977, 0.979],
-      valueLabels: ["0.917", "0.923", "0.917", "0.947", "0.954", "0.951", "0.977", "0.979"],
-      colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-    }],
-    caption: "Real numbers from load_breast_cancer (30 features). A filter ranks features by mutual information with the target; we keep the top k and score a scaled logistic-regression pipeline with 5-fold cross-validation. Just the top 8 features (green) reach 0.954 accuracy, versus 0.979 with all 30 (blue) — a 2.5-point gap for keeping less than a third of the columns. That is the whole pitch of selection: most of the signal lives in a few features, and the curve plateaus quickly. The book makes the same point on high-dimensional text; this is the same idea on a bundled dataset. Selection runs INSIDE the cross-validation pipeline, so no held-out rows leak into the feature ranking.",
+    question: "On real data, how do you read an accuracy-vs-k curve to pick how many features to keep? Here is the healthy plateau on load_breast_cancer, plus three shapes you will actually run into.",
+    charts: [
+      {
+        type: "line",
+        title: "Plateau: a few features get almost all the accuracy (load_breast_cancer)",
+        xlabel: "k = number of top features kept (by mutual information)",
+        ylabel: "5-fold CV accuracy",
+        series: [{
+          name: "CV accuracy",
+          color: "#7ee787",
+          points: [[1, 0.917], [2, 0.923], [3, 0.917], [5, 0.947], [8, 0.954], [12, 0.951], [20, 0.977], [30, 0.979]]
+        }],
+        interpret: "<b>The healthy, common case — read it left to right.</b> The x-axis is how many top-ranked features you keep; the y-axis is cross-validated accuracy. Accuracy shoots up over the first few features then <b>flattens</b>: top-8 already hits 0.954 versus 0.979 for all 30, a 2.5-point gap for keeping under a third of the columns. <b>Conclusion:</b> read off the elbow (around k=8) and stop there — the extra features add cost, not signal. Real numbers; selection runs inside the CV pipeline so no held-out rows leak into the ranking."
+      },
+      {
+        type: "line",
+        title: "Peak then decline: extra features add noise and overfit",
+        xlabel: "k = number of top features kept",
+        ylabel: "5-fold CV accuracy",
+        series: [{
+          name: "CV accuracy",
+          color: "#ff7b72",
+          points: [[1, 0.86], [2, 0.90], [3, 0.93], [5, 0.955], [8, 0.96], [12, 0.95], [20, 0.93], [30, 0.91]]
+        }],
+        interpret: "<b>Illustrative shape (not from this dataset).</b> Accuracy climbs, hits a <b>peak around k=8</b>, then <b>turns back down</b> as you add more features. The late features are mostly noise; with limited rows the model starts fitting their quirks, so held-out accuracy falls. <b>Recognise it</b> by the downhill right tail. <b>Conclusion:</b> the best k is the peak, not 'all' — keeping every column actively hurts here. This is the strongest argument for selection."
+      },
+      {
+        type: "line",
+        title: "No plateau: every feature still helps (keep them all)",
+        xlabel: "k = number of top features kept",
+        ylabel: "5-fold CV accuracy",
+        series: [{
+          name: "CV accuracy",
+          color: "#9aa7b4",
+          points: [[1, 0.62], [2, 0.66], [3, 0.70], [5, 0.76], [8, 0.81], [12, 0.86], [20, 0.91], [30, 0.95]]
+        }],
+        interpret: "<b>Illustrative shape.</b> The curve keeps <b>rising to the right with no flat spot</b> — accuracy at k=30 is far above k=8. Every feature is carrying independent signal, so there is little redundancy to prune. <b>Recognise it</b> by the steady upward slope all the way to 'all'. <b>Conclusion:</b> aggressive selection would throw away real signal here; keep most features, or only trim the very weakest tail."
+      },
+      {
+        type: "line",
+        title: "Flat from k=1: one dominant feature carries it",
+        xlabel: "k = number of top features kept",
+        ylabel: "5-fold CV accuracy",
+        series: [{
+          name: "CV accuracy",
+          color: "#ffb454",
+          points: [[1, 0.94], [2, 0.945], [3, 0.945], [5, 0.95], [8, 0.95], [12, 0.95], [20, 0.952], [30, 0.952]]
+        }],
+        interpret: "<b>Illustrative shape.</b> The curve is <b>already high at k=1</b> and barely moves after — the single top-ranked feature does almost all the work. <b>Recognise it</b> by a tall first point and an almost-horizontal line. <b>Conclusion:</b> you can keep just 1–2 features. But check for leakage: a single feature this predictive is sometimes a target proxy that sneaked into the inputs."
+      }
+    ],
+    caption: "How to read an accuracy-vs-k curve. The first (green) chart is real load_breast_cancer numbers; the other three are illustrative shapes you will meet on other data. x = number of top features kept (ranked by mutual information), y = 5-fold CV accuracy. The shape of the curve tells you where to stop.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.feature_selection import SelectKBest, mutual_info_classif

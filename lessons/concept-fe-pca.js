@@ -274,17 +274,17 @@ X_2d = PCA(n_components=2).fit_transform(X_train_std)
   };
 
   window.CODEVIZ["fe-pca"] = {
-    question: "On load_digits (64-dim images), how many principal components do we need before the cumulative explained variance reaches 95% -- i.e. how far can we squash the pancake while keeping the signal?",
+    question: "How do you read a cumulative explained-variance curve to decide how far to squash the pancake -- and what does the curve look like when the data does NOT compress?",
     charts: [
       {
         type: "line",
-        title: "Cumulative explained variance vs number of PCA components (load_digits, 64-dim)",
+        title: "Compressible data: curve bends early, 95% by k=28 (load_digits, 64-dim)",
         xlabel: "number of components k",
         ylabel: "cumulative explained-variance ratio",
         series: [
           {
             name: "cumulative variance kept",
-            color: "#4ea1ff",
+            color: "#7ee787",
             points: [
               [0, 0.0], [1, 0.149], [2, 0.285], [3, 0.403], [5, 0.545],
               [8, 0.674], [10, 0.738], [13, 0.803], [15, 0.835], [20, 0.894],
@@ -296,10 +296,55 @@ X_2d = PCA(n_components=2).fit_transform(X_train_std)
             color: "#ff7b72",
             points: [[0, 0.95], [64, 0.95]]
           }
-        ]
+        ],
+        interpret: "<b>This is the healthy, ideal case.</b> The x-axis is how many components you keep; the y-axis is the running fraction of total spread (variance) those components capture. Read it left to right: the curve shoots up steeply then flattens into a knee, meaning the first few directions carry most of the spread and the rest are nearly flat. To pick k, slide right until the green curve crosses your red threshold -- here 95% is reached at <b>k=28</b>. Conclusion: 64 correlated pixels squash to ~28 orthogonal features with almost no loss. Real numbers from scikit-learn's standardized load_digits."
+      },
+      {
+        type: "line",
+        title: "Incompressible data: near-diagonal line, no good cut (illustrative)",
+        xlabel: "number of components k",
+        ylabel: "cumulative explained-variance ratio",
+        series: [
+          {
+            name: "cumulative variance kept",
+            color: "#ff7b72",
+            points: [
+              [0, 0.0], [8, 0.13], [16, 0.26], [24, 0.39], [32, 0.51],
+              [40, 0.64], [48, 0.77], [56, 0.89], [64, 1.0]
+            ]
+          },
+          {
+            name: "95% threshold",
+            color: "#9aa7b4",
+            points: [[0, 0.95], [64, 0.95]]
+          }
+        ],
+        interpret: "<b>Illustrative failure mode: there is no knee.</b> The curve climbs in a near-straight diagonal, so every component adds about the same slice of variance. That means the directions are all roughly equally spread -- the data is NOT a thin pancake, it is a round ball (think near-isotropic noise, or already-decorrelated features). To hit 95% you would need almost all the components, so PCA buys you almost no compression. Recognise it by the missing elbow: if the line is straight, do not bother reducing -- you would throw away real signal for little dimension savings."
+      },
+      {
+        type: "line",
+        title: "One dominant direction: curve jumps to ~1.0 at k=1 (illustrative)",
+        xlabel: "number of components k",
+        ylabel: "cumulative explained-variance ratio",
+        series: [
+          {
+            name: "cumulative variance kept",
+            color: "#ffb454",
+            points: [
+              [0, 0.0], [1, 0.97], [2, 0.985], [3, 0.991], [5, 0.996],
+              [10, 0.999], [20, 1.0], [64, 1.0]
+            ]
+          },
+          {
+            name: "95% threshold",
+            color: "#9aa7b4",
+            points: [[0, 0.95], [64, 0.95]]
+          }
+        ],
+        interpret: "<b>Illustrative degenerate case: one component eats everything.</b> The curve leaps almost to 1.0 at k=1 and is flat after. PC1 alone captures ~97% of the spread, so a single direction explains nearly all the data. This usually means your features are highly redundant (e.g. duplicated or near-collinear columns -- steps and calories that move together). Reading it: you can squash to k=1, but also treat it as a warning to check why one direction dominates, since it can signal a leaking ID column or a near-constant feature set rather than genuine rich structure."
       }
     ],
-    caption: "Real numbers from scikit-learn's load_digits (1797 8x8 digit images, 64 pixel features), standardized then run through PCA. The curve rises fast then flattens: the first component alone keeps 14.9% of the variance, the top 10 keep 73.8%, and it crosses the red 95% line at about 28 components. So 64 correlated pixels squash to ~28 orthogonal features with almost no loss. The book uses MNIST-like images; this is the same idea on a bundled dataset.",
+    caption: "How to read a cumulative explained-variance (scree) curve: x = components kept, y = fraction of total spread retained. The healthy curve (green) has a sharp knee and crosses 95% early (k=28 on real load_digits). The two illustrative variants show what failure looks like: a straight diagonal means the data will not compress, and an instant jump to 1.0 means a single redundant direction dominates.",
     code: `import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.preprocessing import StandardScaler

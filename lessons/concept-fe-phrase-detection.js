@@ -204,18 +204,43 @@ print(finder.nbest(bigram_measures.raw_freq, 20))`
   };
 
   window.CODEVIZ["fe-phrase-detection"] = {
-    question: "On a small real corpus where \"machine learning\" repeats, does pointwise mutual information (PMI) score the true phrase far above incidental word pairs?",
-    charts: [{
-      type: "bars",
-      title: "PMI per candidate bigram (small inline corpus, numpy)",
-      xlabel: "candidate bigram",
-      ylabel: "PMI = log( p(a,b) / (p(a) p(b)) )",
-      labels: ["machine learning", "deep learning", "of the", "in the", "the model"],
-      values: [2.67, 2.67, 1.16, 1.02, 0.65],
-      valueLabels: ["2.67", "2.67", "1.16", "1.02", "0.65"],
-      colors: ["#7ee787", "#7ee787", "#ff7b72", "#ff7b72", "#ffb454"]
-    }],
-    caption: "Real numpy output on a small inline corpus. The true phrases \"machine learning\" and \"deep learning\" both score PMI 2.67 — more than double the filler pairs \"of the\" (1.16) and \"in the\" (1.02), which co-occur a lot only because their words are everywhere. The book uses the Yelp reviews dataset with nltk's likelihood-ratio test; this is the same idea computed by hand with PMI.",
+    question: "How do you read a bigram-score bar chart to tell real phrases from filler -- and what does it look like when PMI misfires on rare words or when you score by raw frequency instead?",
+    charts: [
+      {
+        type: "bars",
+        title: "Healthy PMI ranking: real phrases tower over filler (inline corpus, numpy)",
+        xlabel: "candidate bigram",
+        ylabel: "PMI = log( p(a,b) / (p(a) p(b)) )",
+        labels: ["machine learning", "deep learning", "of the", "in the", "the model"],
+        values: [2.67, 2.67, 1.16, 1.02, 0.65],
+        valueLabels: ["2.67", "2.67", "1.16", "1.02", "0.65"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72", "#ff7b72", "#ffb454"],
+        interpret: "<b>This is what success looks like.</b> Each bar is one candidate word-pair; bar height is its PMI -- how much more often the two words co-occur than chance, given how common each word is on its own. Read it top-down by height: the genuine phrases <b>machine learning</b> and <b>deep learning</b> (green) sit at 2.67, more than double the filler pairs <b>of the</b> (1.16) and <b>in the</b> (1.02, red). Conclusion: PMI has pushed the meaningful phrases to the top and demoted the common-word filler, so a threshold around 2 cleanly separates phrases from junk. Real numpy output on the small inline corpus."
+      },
+      {
+        type: "bars",
+        title: "PMI misfire: a rare pair seen ONCE gets a giant score (illustrative)",
+        xlabel: "candidate bigram",
+        ylabel: "PMI = log( p(a,b) / (p(a) p(b)) )",
+        labels: ["quokka spotted (seen 1x)", "machine learning", "deep learning", "of the"],
+        values: [5.2, 2.67, 2.67, 1.16],
+        valueLabels: ["5.20", "2.67", "2.67", "1.16"],
+        colors: ["#ff7b72", "#7ee787", "#7ee787", "#9aa7b4"],
+        interpret: "<b>Illustrative trap: do not trust the tallest bar blindly.</b> The red bar towers over even the true phrases -- but it is a pair seen exactly once, where both words are rare. Because PMI divides by p(a)p(b), two rare words make that denominator tiny, so a single accidental co-occurrence explodes the score. The shape to recognise: an outlier bar far above everything else, backed by a count of 1 or 2. The fix is a <b>frequency floor</b> (drop bigrams seen fewer than ~5-10 times) BEFORE scoring, which removes this bar entirely. Lesson: always read PMI alongside the raw count."
+      },
+      {
+        type: "bars",
+        title: "Wrong metric: raw frequency puts filler on top (illustrative)",
+        xlabel: "candidate bigram",
+        ylabel: "raw bigram count",
+        labels: ["of the", "in the", "the model", "machine learning", "deep learning"],
+        values: [41, 33, 19, 8, 6],
+        valueLabels: ["41", "33", "19", "8", "6"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#7ee787", "#7ee787"],
+        interpret: "<b>Illustrative: same data, wrong y-axis.</b> Here the bars are raw co-occurrence counts, not PMI. The order flips: filler <b>of the</b> and <b>in the</b> (red) sit on top simply because their words are everywhere, while the real phrases <b>machine learning</b> and <b>deep learning</b> (green) sink to the bottom. Recognise this failure when your top-ranked bigrams are all stopword pairs -- it means you ranked by frequency and forgot to correct for commonness. Switch the score to PMI or a likelihood-ratio test (which divide out p(a)p(b)) and the ranking inverts back to the healthy chart above."
+      }
+    ],
+    caption: "How to read a bigram-score bar chart: bar = candidate word-pair, height = its score. With PMI (chart 1) real phrases tower over filler -- the healthy case. The variants are illustrative warnings: PMI on a once-seen rare pair (chart 2) produces a giant but meaningless spike fixed by a frequency floor, and ranking by raw frequency (chart 3) puts stopword filler on top. The book scores Yelp bigrams with nltk's likelihood-ratio test; this is the same idea by hand.",
     code: `import numpy as np
 
 # A small REAL corpus: the phrase "machine learning" repeats on purpose.

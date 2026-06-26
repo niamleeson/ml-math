@@ -261,19 +261,11 @@ print('effect coefs    :', lin2.coef_)         # each = (city mean) - (grand mea
   };
 
   window.CODEVIZ["fe-categorical-encoding"] = {
-    question: "Bin a real wine feature ('color_intensity' from load_wine) into 3 named categories (pale / medium / deep). What does the one-hot matrix look like, and how many columns does one-hot use versus dummy coding?",
+    question: "How do you READ an encoding matrix? Each row is a data point, each column an encoded feature, each cell the number fed to the model. What does a healthy one-hot matrix look like — and how do you spot dummy coding, the dummy-variable trap, and the wrong way (label encoding)?",
     charts: [
       {
-        type: "bars",
-        title: "Category frequencies (load_wine 'color_intensity' split at its terciles)",
-        labels: ["pale", "medium", "deep"],
-        values: [60, 58, 60],
-        valueLabels: ["60", "58", "60"],
-        colors: ["#7ee787", "#58a6ff", "#ff7b72"]
-      },
-      {
         type: "heatmap",
-        title: "One-hot matrix: 9 sample rows (3 per category) x 3 columns — exactly one 1 per row",
+        title: "IDEAL — One-hot: exactly one 1 per row, no false order",
         rows: ["pale #1", "pale #2", "pale #3", "med #1", "med #2", "med #3", "deep #1", "deep #2", "deep #3"],
         cols: ["pale", "medium", "deep"],
         matrix: [
@@ -287,10 +279,60 @@ print('effect coefs    :', lin2.coef_)         # each = (city mean) - (grand mea
           [0, 0, 1],
           [0, 0, 1]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "<b>How to read it:</b> rows are sample wines (load_wine 'color_intensity' split at its terciles), columns are the three categories, each cell is the 0/1 the model sees. <b>Real</b> sample rows. Read along any row: there is <b>exactly one 1</b> and the rest are 0 — that single hot cell names the category. The block-diagonal staircase means the categories are grouped. <b>Conclude:</b> every category gets its own column and sits the same distance from every other — no fake ordering sneaks in. This is the healthy one-hot pattern; it uses k=3 columns."
+      },
+      {
+        type: "bars",
+        title: "IDEAL — Category frequencies: balanced terciles",
+        labels: ["pale", "medium", "deep"],
+        values: [60, 58, 60],
+        valueLabels: ["60", "58", "60"],
+        colors: ["#7ee787", "#58a6ff", "#ff7b72"],
+        interpret: "<b>How to read it:</b> one bar per category, height = how many wines fall in it. <b>Real numbers</b> from load_wine (178 wines, split at the 33rd/67th percentile of color_intensity): 60 / 58 / 60 — flat bars, low cardinality. <b>Conclude:</b> a handful of well-populated categories is exactly the case where one-hot is the right default. Watch for the opposite (see the blow-up variant)."
+      },
+      {
+        type: "heatmap",
+        title: "VARIANT — Dummy coding: drop one column, reference is all-zeros",
+        rows: ["pale #1", "pale #2", "med #1", "med #2", "deep #1", "deep #2"],
+        cols: ["medium", "deep"],
+        matrix: [
+          [0, 0],
+          [0, 0],
+          [1, 0],
+          [1, 0],
+          [0, 1],
+          [0, 1]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative.</b> <b>How to read it:</b> same rows, but now only k-1=2 columns — the 'pale' column is gone. <b>Recognise it</b> by the reference rows that are <b>all-zeros</b> (the pale rows): they have no hot cell at all. A row is 'pale' precisely when every column is 0. <b>Conclude:</b> dummy coding carries the same information in one fewer column; it breaks the redundancy with a model's intercept, and each coefficient reads as 'difference from the pale baseline'."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — High-cardinality blow-up: one-hot explodes",
+        labels: ["3 cats", "12 cats", "200 cats", "30000 zips"],
+        values: [3, 12, 200, 30000],
+        valueLabels: ["3", "12", "200", "30000"],
+        colors: ["#7ee787", "#58a6ff", "#ffb454", "#ff7b72"],
+        interpret: "<b>Illustrative</b> (note the huge last bar — axis is dominated by it). <b>How to read it:</b> x-axis is a categorical column, bar height is the number of one-hot columns it produces (one per distinct value). At 3 or 12 categories it's fine; a 30,000-value zip_code column becomes <b>30,000 mostly-zero columns</b>. <b>Recognise it</b> by one bar dwarfing the rest. <b>Conclude:</b> one-hot does not scale to high cardinality — reach for feature hashing or bin-counting to keep the column count bounded."
+      },
+      {
+        type: "heatmap",
+        title: "WRONG WAY — Label encoding: one column, a FAKE order",
+        rows: ["pale #1", "pale #2", "med #1", "med #2", "deep #1", "deep #2"],
+        cols: ["label"],
+        matrix: [
+          [0],
+          [0],
+          [1],
+          [1],
+          [2],
+          [2]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative.</b> <b>How to read it:</b> a single column holding 0/1/2. It looks compact, but a linear model reads those numbers as <b>quantities</b>: it will believe deep (2) is 'twice' medium (1) and that pale→medium equals medium→deep. <b>Recognise the danger</b> by integer codes in one column feeding a linear/distance model. <b>Conclude:</b> this injects a false order and spacing — never label-encode for linear models (it's fine only for trees, which split on thresholds and ignore the spacing)."
       }
     ],
-    caption: "Real numbers from load_wine (178 wines). 'color_intensity' is split at its terciles into three named categories — frequencies 60 / 58 / 60, nicely balanced. The one-hot matrix (9 sample rows, 3 per category) has exactly one 1 per row: each category gets its own column and no false ordering is implied. One-hot uses k=3 columns; dummy coding drops one (the reference) for k-1=2. The book uses a city -> rent table; this is the same idea on a bundled dataset.",
     code: `import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import OneHotEncoder

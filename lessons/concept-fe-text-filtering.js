@@ -246,18 +246,55 @@ print("stemmed       : vocab size =", len(bow_stem.get_feature_names_out()))
   };
 
   window.CODEVIZ["fe-text-filtering"] = {
-    question: "Building a bag-of-words on five short reviews, how much does the vocabulary (the number of feature columns) shrink as we add (1) stopword removal and (2) frequency filtering with min_df=2?",
-    charts: [{
-      type: "bars",
-      title: "Vocabulary size shrinks: no filtering vs stopwords vs stopwords + min_df=2",
-      xlabel: "filtering applied",
-      ylabel: "vocabulary size V (number of feature columns)",
-      labels: ["no filtering", "stopwords removed", "stopwords + min_df=2"],
-      values: [18, 10, 4],
-      valueLabels: ["18", "10", "4"],
-      colors: ["#ffb454", "#4ea1ff", "#7ee787"]
-    }],
-    caption: "Five short restaurant reviews. With no filtering the vocabulary is 18 words, dominated by function words (\"the\" appears 8 times, \"was\" 4). Removing English stopwords drops it to 10 words — now the top tokens are \"great\", \"food\", \"service\", \"best\", all meaningful. Adding min_df=2 (drop words in fewer than 2 documents) removes the rare tail (\"city\", \"drinks\", \"good\", \"pizza\", \"place\", \"slow\") and leaves 4 dense, high-signal features: best, food, great, service. The book uses the Yelp reviews dataset; this is the same idea on an inline corpus. All numbers are computed below with scikit-learn's CountVectorizer.",
+    question: "How do you READ a text-filtering diagram? The ideal vocabulary-shrink, the Zipf word-frequency curve the cutoffs act on, and two ways filtering goes wrong.",
+    charts: [
+      {
+        type: "bars",
+        title: "Ideal: vocabulary V shrinks as each filter is added",
+        xlabel: "filtering applied",
+        ylabel: "vocabulary size V (number of feature columns)",
+        labels: ["no filtering", "stopwords removed", "stopwords + min_df=2"],
+        values: [18, 10, 4],
+        valueLabels: ["18", "10", "4"],
+        colors: ["#9aa7b4", "#4ea1ff", "#7ee787"],
+        interpret: "Five short restaurant reviews, real counts from CountVectorizer. The x-axis lists filters added left to right; bar height is V, the number of surviving word columns. Read the <b>downward staircase</b>: 18 raw words (dominated by \"the\" x8, \"was\" x4), down to 10 after dropping English stopwords (now \"great\", \"food\", \"service\", \"best\" lead), down to 4 dense high-signal features after min_df=2. Falling bars with the surviving words still meaningful = healthy filtering."
+      },
+      {
+        type: "line",
+        title: "The curve cutoffs act on: Zipf word-frequency, both tails dead",
+        xlabel: "word rank (most frequent = 1, on the left)",
+        ylabel: "document frequency df(w)  (how many docs contain it)",
+        series: [{
+          name: "df(w) by rank",
+          color: "#4ea1ff",
+          points: [[1, 98], [2, 92], [3, 80], [4, 55], [6, 30], [10, 14], [20, 6], [40, 3], [80, 2], [160, 1], [300, 1]]
+        }],
+        interpret: "Illustrative, corpus of 100 docs. X-axis is word rank (commonest word at left); y-axis is df(w), the number of documents a word appears in. The curve is <b>steep at the left then a long flat tail at the bottom</b> — the Zipf shape. The left shoulder (df near 100) is function words that appear everywhere and separate nothing: max_df cuts them. The endless flat tail (df = 1 or 2) is typos and one-off names a model cannot learn from: min_df cuts them. You keep the informative middle."
+      },
+      {
+        type: "bars",
+        title: "Trap: over-stemming merges unrelated words into one column",
+        xlabel: "stem produced (and what got merged into it)",
+        ylabel: "document frequency df of the merged stem",
+        labels: ["univers (good)", "new=news (BAD)", "organ=organize (BAD)"],
+        values: [9, 12, 8],
+        valueLabels: ["9", "12", "8"],
+        colors: ["#7ee787", "#ff7b72", "#ff7b72"],
+        interpret: "Illustrative. Each bar is one stem the Porter stemmer produced; height is the df it ended up with after merging. The green bar is a GOOD merge: \"university\"/\"universities\" -> \"univers\", same meaning, one denser feature. The red bars are the trap — \"news\" crushed into \"new\", and \"organ\" merged with \"organize\". The tell: <b>a single column secretly mixes two unrelated meanings</b>, which you only catch by inspecting the merge list. When precision matters, prefer dictionary-aware lemmatization, which keeps \"news\" distinct from \"new\"."
+      },
+      {
+        type: "bars",
+        title: "Trap: min_df too high deletes a rare but informative word",
+        xlabel: "word (its document frequency)",
+        ylabel: "document frequency df(w)",
+        labels: ["food (40)", "great (33)", "antibiotic (3)", "min_df=5 line"],
+        values: [40, 33, 3, 5],
+        valueLabels: ["40", "33", "3 -> CUT", "cutoff=5"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72", "#9aa7b4"],
+        interpret: "Illustrative. Bar height is each word's df(w); the grey bar marks the min_df=5 cutoff. \"food\" and \"great\" (green) sit well above the line and survive. But \"antibiotic\" (red, df=3) falls below the cutoff and is deleted — even though in a medical-review task it may be exactly the word you care about. The lesson: a cutoff is blind to meaning, so <b>a rare bar below the line is not automatically noise</b>. After setting min_df/max_df, inspect what got dropped and loosen the cutoff if a signal word is in the casualty list."
+      }
+    ],
+    caption: "How to read text-filtering diagrams: the ideal vocabulary-shrink staircase, the Zipf curve the min_df/max_df cutoffs actually slice, and two failure modes — over-stemming collapsing distinct words, and a min_df set so high it deletes a rare-but-useful word. Each chart self-explains below it. Book uses Yelp; this is the same idea on an inline corpus.",
     code: `import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
