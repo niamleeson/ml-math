@@ -338,20 +338,41 @@ for ep in range(600):
   };
 
   window.CODEVIZ["rl-policy-gradients"] = {
-    question: "Does a REINFORCE-style policy gradient actually raise the return over training, and does subtracting a baseline reduce the variance of the learning curve? We implement a tabular softmax policy gradient (numpy only) on a tiny 3-action bandit and plot the average reward per episode, WITH versus WITHOUT a baseline.",
+    question: "How do you READ a policy-gradient learning curve? We plot average reward per episode for a tiny 3-action softmax policy gradient (numpy), then show the variant shapes a practitioner actually sees: the healthy baseline-vs-none gap, a high-variance jittery run, and a learning-rate collapse.",
     charts: [
       {
         type: "line",
-        title: "Policy-gradient learning curve: average reward rising (baseline vs none)",
+        title: "Healthy: reward rises, baseline (green) climbs faster than no-baseline (red)",
         xlabel: "episode (block of 50, averaged over 60 runs)",
         ylabel: "average reward",
         series: [
-          { name: "with baseline", color: "#2e7d32", points: [[0, 9.121], [1, 9.289], [2, 9.442], [3, 9.648], [4, 9.72], [5, 9.757], [6, 9.826], [7, 9.838], [8, 9.841], [9, 9.896], [10, 9.867], [11, 9.919], [12, 9.949], [13, 9.927], [14, 9.915], [15, 9.957], [16, 9.954], [17, 9.956], [18, 9.954], [19, 9.979]] },
-          { name: "no baseline", color: "#c62828", points: [[0, 9.129], [1, 9.221], [2, 9.293], [3, 9.498], [4, 9.523], [5, 9.55], [6, 9.61], [7, 9.621], [8, 9.605], [9, 9.647], [10, 9.628], [11, 9.684], [12, 9.715], [13, 9.677], [14, 9.677], [15, 9.725], [16, 9.731], [17, 9.748], [18, 9.741], [19, 9.781]] }
-        ]
+          { name: "with baseline", color: "#7ee787", points: [[0, 9.121], [1, 9.289], [2, 9.442], [3, 9.648], [4, 9.72], [5, 9.757], [6, 9.826], [7, 9.838], [8, 9.841], [9, 9.896], [10, 9.867], [11, 9.919], [12, 9.949], [13, 9.927], [14, 9.915], [15, 9.957], [16, 9.954], [17, 9.956], [18, 9.954], [19, 9.979]] },
+          { name: "no baseline", color: "#ff7b72", points: [[0, 9.129], [1, 9.221], [2, 9.293], [3, 9.498], [4, 9.523], [5, 9.55], [6, 9.61], [7, 9.621], [8, 9.605], [9, 9.647], [10, 9.628], [11, 9.684], [12, 9.715], [13, 9.677], [14, 9.677], [15, 9.725], [16, 9.731], [17, 9.748], [18, 9.741], [19, 9.781]] }
+        ],
+        interpret: "<b>Read it:</b> x is training time (later = more episodes), y is average reward earned (higher = better policy). Both curves climb, so the policy-gradient update genuinely optimizes the policy. The two lines isolate ONE change: the <b>green</b> line subtracts a baseline (uses the advantage, 'is this arm better than average'); the <b>red</b> does not. <b>Conclude:</b> the gap between them is the variance fix &mdash; green climbs faster and ends higher (~9.98 vs ~9.78) because the baseline removes the large common reward offset, leaving only the advantage to drive the update. Same destination (best arm pays 10), green just gets there sooner and more reliably."
+      },
+      {
+        type: "line",
+        title: "High variance: no-baseline run jitters episode to episode (illustrative)",
+        xlabel: "episode (single run, not averaged)",
+        ylabel: "reward this episode",
+        series: [
+          { name: "no baseline (single seed)", color: "#ff7b72", points: [[0, 8.2], [1, 9.6], [2, 8.4], [3, 9.9], [4, 8.1], [5, 9.7], [6, 8.6], [7, 9.8], [8, 8.3], [9, 9.5], [10, 9.1], [11, 8.5], [12, 9.9], [13, 8.7], [14, 9.6], [15, 9.0], [16, 9.8], [17, 8.4], [18, 9.7], [19, 9.2]] },
+          { name: "with baseline (single seed)", color: "#7ee787", points: [[0, 8.9], [1, 9.2], [2, 9.4], [3, 9.5], [4, 9.4], [5, 9.6], [6, 9.6], [7, 9.7], [8, 9.7], [9, 9.8], [10, 9.7], [11, 9.8], [12, 9.9], [13, 9.8], [14, 9.9], [15, 9.9], [16, 9.9], [17, 9.9], [18, 9.95], [19, 9.95]] }
+        ],
+        interpret: "<b>Illustrative.</b> This is ONE seed, not an average &mdash; so the noise is visible instead of smoothed away. <b>Read it:</b> the red line bounces violently up and down between adjacent episodes with no clean trend; the green line is a smooth ramp. <b>Recognise it:</b> a saw-tooth, jagged learning curve is the signature of high gradient variance &mdash; REINFORCE's headline problem, because whole-episode returns are noisy. <b>Conclude:</b> jitter this large means your gradient estimate is dominated by noise; subtract a baseline / standardize returns to turn the red shape into the green one."
+      },
+      {
+        type: "line",
+        title: "Policy collapse: learning rate too large, reward craters and stays low (illustrative)",
+        xlabel: "episode (block of 50)",
+        ylabel: "average reward",
+        series: [
+          { name: "lr too large (collapse)", color: "#ffb454", points: [[0, 9.1], [1, 9.4], [2, 9.6], [3, 9.5], [4, 8.2], [5, 8.25], [6, 8.18], [7, 8.22], [8, 8.2], [9, 8.19], [10, 8.21], [11, 8.2], [12, 8.2], [13, 8.21], [14, 8.19], [15, 8.2], [16, 8.2], [17, 8.2], [18, 8.21], [19, 8.2]] }
+        ],
+        interpret: "<b>Illustrative.</b> <b>Read it:</b> reward climbs at first, then a single oversized step drops it to a floor it never escapes (here it pins to ~8, the value of the WORST arm). <b>Recognise it:</b> early progress followed by a cliff and a flat plateau is policy collapse &mdash; one step too large pushed the softmax to a near-deterministic distribution stuck on a bad action, so the agent stops exploring and can't recover. <b>Conclude:</b> this is not slow learning, it's broken learning &mdash; lower the learning rate, clip the update (PPO/TRPO), and add an entropy bonus to keep the policy exploring."
       }
     ],
-    caption: "Real numbers, computed by the numpy code below (averaged over 60 seeds). Both curves climb &mdash; the softmax policy-gradient update genuinely raises expected reward, optimizing the policy directly. The green 'with baseline' curve (subtract the running average reward, leaving the ADVANTAGE) climbs faster and ends higher (~9.98 vs ~9.78) than the red 'no baseline' curve. With large positive rewards (arms pay ~8, 9, 10), the no-baseline gradient indiscriminately pushes UP every sampled action, slowing convergence; the baseline subtracts that common offset so only the ADVANTAGE (which arm is better than average) drives the update &mdash; cutting variance WITHOUT adding bias, exactly as the derivation proves. The best arm pays 10, so both curves approach 10; the baseline just gets there sooner and more reliably.",
     code: `import numpy as np
 
 # Tiny 3-action bandit (a one-state MDP). Rewards are stochastic AND have a

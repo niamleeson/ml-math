@@ -209,20 +209,62 @@ print("pi*(s) =", pi)                               # [1 1 0] -> advance, advanc
   };
 
   window.CODEVIZ["rl-bellman-optimality"] = {
-    question: "On a real 3x4 gridworld with a +1 goal and a -1 hazard, what is the optimal value V*(s) of every cell, and which way does the greedy optimal policy point?",
-    charts: [{
-      type: "heatmap",
-      title: "Optimal value V*(s) per cell (goal +1 top-right, hazard -1, wall blocked) via value iteration",
-      rows: ["row 0", "row 1", "row 2"],
-      cols: ["col 0", "col 1", "col 2", "col 3"],
-      matrix: [
-        [0.509, 0.65, 0.795, 1.0],
-        [0.399, null, 0.486, -1.0],
-        [0.296, 0.254, 0.345, 0.13]
-      ],
-      showVals: true
-    }],
-    caption: "Real value iteration on a 3x4 stochastic gridworld (intended move 0.8, each perpendicular slip 0.1; step cost -0.04; gamma 0.9), run to convergence in 30 sweeps. V* forms a smooth gradient RISING toward the +1 goal at the top-right corner (0,3) and DIPPING near the -1 hazard at (1,3); the wall cell (1,1) is blocked (blank). The greedy optimal policy pi*(s) = argmax_a Q*(s,a) reads off as arrows that all flow up-and-right toward the goal while steering around the hazard: (0,0)->right, (0,1)->right, (0,2)->right; (1,0)->up, (1,2)->up; (2,0)->up, (2,1)->right, (2,2)->up, (2,3)->left (it backs away from the hazard column). Every number is a real output of the code below.",
+    question: "How do you READ a V*(s) value-map? The converged one shows a smooth gradient rising to the +1 goal — but the same heatmap also tells you when iteration has NOT finished, when the discount gamma is set wrong, and when an off-by-one bug has corrupted the backup. Learn the four pictures.",
+    charts: [
+      {
+        type: "heatmap",
+        title: "CONVERGED: V*(s) is a smooth gradient rising to the +1 goal (real, 30 sweeps)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2", "col 3"],
+        matrix: [
+          [0.509, 0.65, 0.795, 1.0],
+          [0.399, null, 0.486, -1.0],
+          [0.296, 0.254, 0.345, 0.13]
+        ],
+        showVals: true,
+        interpret: "<b>Each cell is its optimal value V*(s); blank = wall.</b> Real value iteration to convergence (intended move 0.8, perpendicular slip 0.1, step cost -0.04, gamma 0.9). <b>Read it:</b> values rise smoothly toward the +1 goal at top-right (0,3) and dip toward the -1 hazard at (1,3) — a clean monotone gradient with no flat patches is the signature of a solved MDP. The greedy policy pi*(s)=argmax_a Q* points uphill: every arrow flows up-and-right toward the goal, and (2,3) points LEFT, backing away from the hazard column. Every number is a real output of the code below."
+      },
+      {
+        type: "heatmap",
+        title: "NOT CONVERGED: stop iteration early and only cells near the goal have value (illustrative)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2", "col 3"],
+        matrix: [
+          [0.0, 0.49, 0.76, 1.0],
+          [0.0, null, 0.42, -1.0],
+          [0.0, 0.0, 0.0, 0.07]
+        ],
+        showVals: true,
+        interpret: "Illustrative (same gridworld, only ~3 sweeps done). <b>Same value map, iteration halted too soon.</b> Reward information has only propagated a few steps back from the goal: cells far from the goal (the whole left column) are still stuck at their initial 0, while near-goal cells already look right. <b>Recognise it:</b> a sharp frontier between sensible values and a block of identical 0s. <b>Fix:</b> keep sweeping until the largest change per sweep (delta) drops below your tolerance — the contraction guarantees it will."
+      },
+      {
+        type: "heatmap",
+        title: "WRONG GAMMA: a too-small discount makes the agent short-sighted, values shrink far from goal (illustrative)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2", "col 3"],
+        matrix: [
+          [0.02, 0.08, 0.34, 1.0],
+          [-0.03, null, 0.05, -1.0],
+          [-0.05, -0.06, -0.05, -0.2]
+        ],
+        showVals: true,
+        interpret: "Illustrative (same grid, gamma dropped to ~0.3 instead of 0.9). <b>Converged, but to a DIFFERENT V* — optimality is per-MDP.</b> A small discount means distant reward barely counts, so value decays steeply away from the goal and far cells are dominated by the -0.04 step cost (slightly negative). <b>Recognise it:</b> values collapse to near-zero just a couple of cells from the goal instead of forming a long smooth ramp. The policy can even change. <b>Lesson:</b> change gamma (or reward, or transitions) and you must re-solve — never reuse a value table across different gamma."
+      },
+      {
+        type: "heatmap",
+        title: "BROKEN BACKUP: off-by-one (R(s) not R(s')) corrupts the fixed point (illustrative)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2", "col 3"],
+        matrix: [
+          [0.51, 0.66, 0.81, 1.0],
+          [0.41, null, 1.42, -1.0],
+          [0.30, 0.26, 0.36, 1.07]
+        ],
+        showVals: true,
+        interpret: "Illustrative — a buggy backup that pairs the reward with the WRONG state (mixing R(s) with V*(s) instead of R+gamma*V*(s') over the SAME transition). <b>Recognise it:</b> values that violate the geometry — here cells next to the -1 hazard (2,3) and (1,2) come out HIGHER than their neighbours and even exceed 1.0, which is impossible when the only +1 is the goal. A value map that is not monotone toward the goal, or exceeds the max attainable reward, means the backup is wrong. <b>Fix:</b> write it as R + gamma*V*(s') over successors s' and hand-check on a 2-state MDP."
+      }
+    ],
+    caption: "The first heatmap is real (numpy value iteration below); the other three are illustrative of what the SAME value map shows when something is off. Healthy: a smooth monotone gradient to the goal. Warnings: a block of untouched 0s far from the goal (not converged), value that collapses within a cell or two of the goal (gamma too small), or values that break the geometry / exceed the max reward (an off-by-one backup bug).",
     code: `import numpy as np
 
 # 3x4 gridworld. Goal (0,3)=+1 (absorbing), hazard (1,3)=-1 (absorbing), wall (1,1) blocked.

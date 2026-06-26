@@ -293,16 +293,46 @@ print("check V = sum_a pi(a|s) Q(s,a):", np.einsum('sa,sa->s', pi, Q))
 
   /* ------------------------------------------------------------------ */
   window.CODEVIZ["rl-returns-values"] = {
-    question: "On a 3x3 gridworld, what is each cell worth to a random-walking agent — and do values rise toward the goal?",
-    charts: [{
-      type: "heatmap",
-      title: "V_pi(s) over a 3x3 gridworld (goal at bottom-right, +1), solved from (I - gamma P_pi) V = R_pi",
-      rows: ["row 0", "row 1", "row 2"],
-      cols: ["col 0", "col 1", "col 2 (goal col)"],
-      matrix: [[-0.11, -0.05, 0.04], [-0.05, 0.08, 0.32], [0.04, 0.32, 0.00]],
-      showVals: true
-    }],
-    caption: "Solving the linear Bellman system for the uniform-random policy gives values that climb toward the +1 goal: the goal's neighbors are worth 0.32, while the far corner is only -0.11. The goal cell shows 0 (absorbing, no further reward). gamma = 0.9, step cost -0.04.",
+    question: "How do you READ a value-function heatmap? Start with the ideal V_pi over a 3x3 gridworld (values rise toward the +1 goal), then see how the SAME map changes when you turn the discount gamma down (myopic) or up (far-sighted) — and what a healthy gradient toward the goal should look like.",
+    charts: [
+      {
+        type: "heatmap",
+        title: "Ideal: V_pi rises toward the +1 goal (gamma = 0.9)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2 (goal col)"],
+        matrix: [[-0.11, -0.05, 0.04], [-0.05, 0.08, 0.32], [0.04, 0.32, 0.00]],
+        showVals: true,
+        interpret: "<b>How to read it:</b> each cell is one gridworld square; the number is V_pi(s), the expected discounted reward from that square under the uniform-random policy. Brighter/larger means a better place to be. <b>What the shape tells you:</b> values climb smoothly toward the goal at bottom-right — its two neighbours are worth 0.32 while the far top-left corner is only -0.11 (it pays the step cost for longer before reaching the goal). The goal cell itself reads 0 because it is absorbing: no future reward once you arrive. <b>Conclusion:</b> a clean gradient pointing at the goal is exactly what a correctly-solved Bellman system looks like. These are the real numbers from the numpy below (gamma = 0.9, step cost -0.04)."
+      },
+      {
+        type: "heatmap",
+        title: "Myopic: small gamma (0.5) flattens values, gradient barely reaches",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2 (goal col)"],
+        matrix: [[-0.07, -0.06, -0.02], [-0.06, -0.02, 0.18], [-0.02, 0.18, 0.00]],
+        showVals: true,
+        interpret: "<b>Illustrative (smaller gamma).</b> Same gridworld, same policy, but the discount is turned down so the agent cares mostly about near-term reward. <b>How to recognise it:</b> the goal's pull barely propagates — only the cells immediately next to the goal light up (0.18), and far cells sit near the step-cost floor with almost no gradient between them. <b>What it means:</b> a near-flat map away from the goal does not mean the solver is broken; it means gamma is short, so distant states look almost worthless. Pick gamma to match the real horizon, and never compare values computed at different gamma."
+      },
+      {
+        type: "heatmap",
+        title: "Far-sighted: large gamma (0.98) inflates values, long reach",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2 (goal col)"],
+        matrix: [[0.46, 0.58, 0.74], [0.58, 0.78, 1.02], [0.74, 1.02, 0.00]],
+        showVals: true,
+        interpret: "<b>Illustrative (larger gamma).</b> Same map again, but gamma is near 1 so the agent weights far-future reward almost fully. <b>How to recognise it:</b> every non-goal cell is now strongly positive and the numbers are much bigger — the goal's value reaches all the way to the far corner (0.46) and the gradient is gentle. <b>What it means:</b> the larger overall magnitude is expected, roughly scaling with 1/(1-gamma); it is NOT a bug or a different, better policy. The ordering is the same as the ideal map — only the scale and reach changed."
+      },
+      {
+        type: "heatmap",
+        title: "Red flag: values DECREASE toward the goal (something is wrong)",
+        rows: ["row 0", "row 1", "row 2"],
+        cols: ["col 0", "col 1", "col 2 (goal col)"],
+        matrix: [[0.30, 0.18, 0.05], [0.18, 0.06, -0.08], [0.05, -0.08, 0.00]],
+        showVals: true,
+        interpret: "<b>Illustrative failure.</b> Same layout, but the gradient points the WRONG way — cells get worse as you approach the goal corner. <b>How to recognise it:</b> the high values cluster far from the +1 goal. <b>What it means:</b> for a positive goal reward this is a symptom of a setup error — a flipped goal index (rewarding the wrong cell), a sign error on the reward, or rows/cols transposed when reshaping V back to a grid. A correctly-solved positive-goal MDP must have values rising toward the goal, so an inverted gradient is your cue to re-check the reward and indexing, not the math."
+      }
+    ],
+    caption: "Read the ideal map first (a clean gradient toward the goal), then see how only gamma changes the SAME map — myopic flattens it, far-sighted inflates it — and what an inverted gradient (a setup bug) looks like. The ideal map's numbers are computed by the numpy below; the gamma variants and the red-flag case are illustrative but qualitatively honest.",
     code: `import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(precision=2, suppress=True)

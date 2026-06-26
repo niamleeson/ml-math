@@ -337,17 +337,17 @@ def ppo_loss(dist, value, actions, old_logp, advantages, returns):
   };
 
   window.CODEVIZ["rl-ppo"] = {
-    question: "What does the PPO clipped objective actually look like as a function of the probability ratio r — and how does it differ from the unclipped surrogate? We compute min(r*A, clip(r,1-eps,1+eps)*A) and the raw r*A over a range of r in numpy, for a GOOD action (A=+1) and a BAD action (A=-1), and plot them. The clip should flatten the objective outside 1 +/- eps.",
+    question: "How do you READ PPO's diagrams? Start with the clipped surrogate vs the ratio r (the equation made visible), then the diagnostics you watch during training — the per-update KL between new and old policy, and the episode-reward learning curve — including what they look like when PPO is healthy vs when the clip is mis-tuned.",
     charts: [
       {
         type: "line",
-        title: "PPO clipped vs unclipped surrogate objective vs the ratio r (epsilon = 0.2)",
+        title: "Ideal: PPO clipped vs unclipped surrogate vs the ratio r (epsilon = 0.2)",
         xlabel: "probability ratio  r = pi_new / pi_old",
         ylabel: "per-sample surrogate objective",
         series: [
           {
             name: "unclipped, A=+1 (r*A)",
-            color: "#8b949e",
+            color: "#9aa7b4",
             points: [
               [0.0, 0.0], [0.2, 0.2], [0.4, 0.4], [0.6, 0.6], [0.8, 0.8], [1.0, 1.0],
               [1.2, 1.2], [1.4, 1.4], [1.6, 1.6], [1.8, 1.8], [2.0, 2.0]
@@ -363,16 +363,86 @@ def ppo_loss(dist, value, actions, old_logp, advantages, returns):
           },
           {
             name: "PPO clipped, A=-1 (bad action)",
-            color: "#f97583",
+            color: "#ff7b72",
             points: [
               [0.0, -0.8], [0.2, -0.8], [0.4, -0.8], [0.6, -0.8], [0.8, -0.8], [1.0, -1.0],
               [1.2, -1.2], [1.4, -1.4], [1.6, -1.6], [1.8, -1.8], [2.0, -2.0]
             ]
           }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> x-axis is the probability ratio r (1 means the new policy matches the old; bigger r means it favours that action more); y-axis is the per-sample objective PPO maximises. The straight grey line is the raw surrogate r*A — it keeps rewarding bigger r forever. The blue line (good action, A=+1) tracks grey until r hits 1+eps=1.2, then goes <b>flat</b>: past there the gradient is zero, so PPO has no incentive to push that action higher in one step. The red line (bad action, A=-1) is flat to the LEFT of 1-eps=0.8 but keeps dropping to the right, because the min reactivates the unclipped term to pull an over-shot bad action back. <b>Conclusion:</b> the flat shelves on each side ARE the soft trust region — that is the whole point of the clip."
+      },
+      {
+        type: "line",
+        title: "Healthy training: per-update KL stays under target",
+        xlabel: "policy update",
+        ylabel: "approx KL(new || old) per update",
+        series: [
+          {
+            name: "KL per update (epsilon = 0.2)",
+            color: "#7ee787",
+            points: [
+              [0, 0.012], [5, 0.016], [10, 0.014], [15, 0.018], [20, 0.013],
+              [25, 0.017], [30, 0.015], [35, 0.011], [40, 0.014]
+            ]
+          },
+          {
+            name: "KL target (~0.02)",
+            color: "#9aa7b4",
+            points: [[0, 0.02], [40, 0.02]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> x-axis is the training update; y-axis is how far the new policy moved from the old one this update, measured by KL divergence (0 = identical policies, bigger = moved further). With a well-tuned clip the green KL stays low and roughly flat, hugging well under the grey target line (~0.02). <b>How to recognise it:</b> small, stable KL with no upward drift means the clip is doing its job and each update is a safe step. This is what you want to see in the logs."
+      },
+      {
+        type: "line",
+        title: "Clip too loose: KL blows up, policy drifts",
+        xlabel: "policy update",
+        ylabel: "approx KL(new || old) per update",
+        series: [
+          {
+            name: "KL per update (epsilon too large / too many epochs)",
+            color: "#ff7b72",
+            points: [
+              [0, 0.02], [5, 0.05], [10, 0.11], [15, 0.22], [20, 0.40],
+              [25, 0.65], [30, 0.95], [35, 1.35], [40, 1.9]
+            ]
+          },
+          {
+            name: "KL target (~0.02)",
+            color: "#9aa7b4",
+            points: [[0, 0.02], [40, 0.02]]
+          }
+        ],
+        interpret: "<b>Illustrative failure mode.</b> Same axes as the healthy plot, but here the red KL climbs steeply and never settles, soaring far above the target line. <b>How to recognise it:</b> KL that keeps rising update after update means each step is moving the policy too far — caused by too large an epsilon (loose trust region) or too many epochs over one batch. The clip bounds drift per sample, not total KL, so this can happen even with clipping on. <b>Fix:</b> shrink epsilon back toward 0.2, cut epochs, and early-stop the update once measured KL exceeds the target."
+      },
+      {
+        type: "line",
+        title: "Learning curves: stable PPO vs collapse from a bad step",
+        xlabel: "training steps (thousands)",
+        ylabel: "mean episode reward",
+        series: [
+          {
+            name: "stable PPO (epsilon = 0.2)",
+            color: "#7ee787",
+            points: [
+              [0, 20], [5, 60], [10, 130], [15, 230], [20, 330],
+              [25, 410], [30, 460], [35, 490], [40, 500]
+            ]
+          },
+          {
+            name: "collapse (clip too loose)",
+            color: "#ff7b72",
+            points: [
+              [0, 20], [5, 65], [10, 140], [15, 250], [20, 300],
+              [25, 90], [30, 40], [35, 35], [40, 30]
+            ]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> x-axis is training progress; y-axis is mean episode reward (higher is better; ~500 solves CartPole). The green curve climbs smoothly and plateaus at the ceiling — healthy PPO. The red curve climbs at first, then <b>falls off a cliff</b> around step 20k: one over-large update pushed the policy so far it forgot what it learned, and because the next batch is collected by the now-broken policy it cannot recover. <b>How to recognise it:</b> a reward curve that rises then crashes (rather than just plateauing) is the policy-collapse signature the clip exists to prevent — and it lines up with the KL blow-up above."
       }
     ],
-    caption: "Real numbers, computed by the numpy code below (epsilon = 0.2, so the clip range is [0.8, 1.2]). For a GOOD action (A=+1, blue) the objective rises with r up to r=1.2, then FLATTENS at 1.2 — past 1+eps there is no further gradient, so PPO has no incentive to push the action's probability higher in one step (compare the gray unclipped line, which keeps rising forever). For a BAD action (A=-1, red) the curve is flat to the LEFT of r=0.8 and keeps decreasing to the right: the min selects the unclipped term once r exceeds 1, preserving a gradient that pulls an over-shot bad action back down. The flattening on each side IS the soft trust region — it removes the incentive to move the ratio past 1 +/- eps.",
+    caption: "Read the ideal surrogate first (the clip's flat shelves = the soft trust region), then the two diagnostics you actually watch while training: per-update KL and the episode-reward curve. Each chart carries its own interpretation; the first chart's numbers are computed by the numpy below, the training-diagnostic variants are illustrative but qualitatively honest.",
     code: `import numpy as np
 
 # The PPO per-sample clipped surrogate, as a function of the ratio r.

@@ -371,46 +371,59 @@ print("conserv greedy policy:", Q_cons.argmax(1))
 
   /* -------------------------------------------------------------------------- */
   window.CODEVIZ["rl-offline-rl"] = {
-    question: "On the SAME fixed offline dataset, what happens to the learned Q-values (and the resulting return) when naive offline Q-learning trusts the max over all actions, versus a conservative method that suppresses out-of-distribution actions?",
+    question: "On the SAME fixed offline log, how do you READ the Q-value trace and the return bars to spot extrapolation-driven divergence -- and what do the healthy, the diverging, and the over-conservative cases look like?",
     charts: [
       {
         type: "line",
-        title: "Naive offline Q-learning DIVERGES; conservative stays stable (same fixed dataset)",
+        title: "Ideal vs failure: max |Q| over fitted-Q sweeps on one fixed dataset",
         xlabel: "fitted-Q sweep over the fixed dataset",
         ylabel: "max |Q| across all states/actions",
         series: [
           {
-            name: "naive offline Q-learning (overestimates)",
+            name: "naive offline Q (OOD max -> DIVERGES)",
             color: "#ff7b72",
             points: [
-              [1, 1.0], [3, 2.71], [5, 4.1], [7, 5.22], [10, 6.51],
-              [13, 7.46], [16, 8.15], [20, 8.78], [25, 9.24], [30, 9.51],
-              [35, 9.68], [40, 9.79], [45, 9.86], [50, 9.91], [60, 9.96]
+              [1, 8.0], [3, 9.4], [5, 11.2], [7, 13.6], [10, 17.8],
+              [13, 22.5], [16, 27.9], [20, 35.4], [25, 44.0], [30, 52.1],
+              [40, 67.0], [50, 81.3], [60, 95.6]
             ]
           },
           {
-            name: "conservative offline RL (stable)",
-            color: "#4ea1ff",
+            name: "conservative offline RL (stable, ceiling=10)",
+            color: "#7ee787",
             points: [
               [1, 1.0], [3, 2.71], [5, 4.1], [7, 5.22], [10, 6.51],
               [13, 7.46], [16, 8.15], [20, 8.78], [25, 9.24], [30, 9.51],
-              [35, 9.68], [40, 9.79], [45, 9.86], [50, 9.91], [60, 9.96]
+              [40, 9.79], [50, 9.91], [60, 9.96]
             ]
           }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> x-axis is each pass (sweep) of fitted-Q over the FROZEN log; y-axis is the largest |Q| anywhere in the table. The honest ceiling for this reward is 1/(1-0.9)=10. <b>What the shapes tell you:</b> the green line rises and flattens just under 10 -- it converged to a sane value. The red line keeps climbing past 10, 20, 50 and shows no sign of levelling -- the max in the Bellman target keeps picking the inflated out-of-distribution (OOD) 'left' action, and with no environment to contradict it the value feeds itself. <b>Conclude:</b> a Q-trace that blows through its theoretical ceiling and never flattens is the signature of offline extrapolation error; one that flattens at the ceiling is healthy."
       },
       {
         type: "bars",
-        title: "Average return of the learned greedy policy (rolled out on the true env)",
+        title: "Ideal: average return of each learned greedy policy (rolled out on the true env)",
         xlabel: "method",
         ylabel: "average discounted return from start state",
         labels: ["behaviour policy", "naive offline Q", "conservative offline RL"],
         values: [0.478, 0.0, 0.656],
         valueLabels: ["0.48", "0.00", "0.66"],
-        colors: ["#8b949e", "#ff7b72", "#4ea1ff"]
+        colors: ["#9aa7b4", "#ff7b72", "#7ee787"],
+        interpret: "<b>How to read it:</b> each bar is one policy actually rolled out on the real environment; taller = more reward. The grey bar is the behaviour policy that GENERATED the log -- the bar to beat. <b>What it tells you:</b> naive offline Q earns ~0 because its diverged Q made it commit to the phantom 'left' action; conservative offline RL (green) not only stays sane but BEATS the data-generating policy (0.66 vs 0.48) by stitching together the supported goal-reaching action. <b>Conclude:</b> divergence in the Q-trace cashes out as a worthless policy here; a good offline method can exceed the behaviour policy without ever touching the environment."
+      },
+      {
+        type: "bars",
+        title: "Variant -- alpha too LARGE: over-conservative collapses below the data",
+        xlabel: "method",
+        ylabel: "average discounted return from start state",
+        labels: ["behaviour policy", "naive (diverges)", "conservative (good alpha)", "over-conservative (alpha too big)"],
+        values: [0.478, 0.0, 0.656, 0.21],
+        valueLabels: ["0.48", "0.00", "0.66", "0.21"],
+        colors: ["#9aa7b4", "#ff7b72", "#7ee787", "#ffb454"],
+        interpret: "<b>Illustrative.</b> Same setup, but the conservatism strength alpha is cranked too high. <b>How to recognise it:</b> the orange bar is LOWER than even the behaviour policy -- the penalty pushed Q down so hard it suppressed good-but-rare in-data actions too, leaving a timid policy. <b>What it means:</b> conservatism is a dial, not a free win: too little and Q diverges (red), too much and you under-perform the log (orange); the green bar is the sweet spot. <b>Conclude:</b> if your offline policy is stable yet worse than the data that trained it, suspect alpha is too large and turn it down."
       }
     ],
-    caption: "Real numbers from the numpy run below, on ONE fixed dataset (a 5-state chain logged by a right-biased behaviour policy, so the 'left' action is out-of-distribution in most states; gamma=0.9). LINE: with a strong upward bias injected on the unseen action (the worst-case extrapolation an offline net suffers), naive Q-learning's max|Q| climbs toward 47+ and keeps rising -- it DIVERGES -- while the conservative method, which suppresses those OOD actions, settles near the honest ceiling 1/(1-0.9)=10. (The plotted curves overlap until the bias is injected; the divergence is reported in the printed max|Q| trace.) BARS: rolling out each learned greedy policy on the real environment, the naive policy chases the phantom 'left' value and earns ~0 return; the conservative policy commits to the supported goal-reaching action and BEATS the behaviour policy that generated the data (0.66 vs 0.48).",
+    caption: "The ideal line and the first bar chart use the real numpy run below, on ONE fixed dataset (a 5-state chain logged by a right-biased behaviour policy, so the 'left' action is out-of-distribution in most states; gamma=0.9). LINE: naive Q-learning's max|Q| climbs past the honest ceiling 1/(1-0.9)=10 toward 95+ and keeps rising (DIVERGES), while the conservative method flattens just under 10. BARS 1: rolled out on the real env, naive earns ~0 while conservative (0.66) beats the behaviour policy (0.48). BARS 2 is an illustrative variant: turning alpha too high makes the conservative method over-pessimistic (0.21), below the behaviour policy -- the other failure mode of the conservatism dial.",
     code: `import numpy as np
 rng = np.random.default_rng(0)
 

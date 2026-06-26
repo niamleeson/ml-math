@@ -318,31 +318,57 @@ for x in [0.0, 0.3, 0.6, 0.9]:
   };
 
   window.CODEVIZ["rl-function-approximation"] = {
-    question: "As semi-gradient TD(0) trains a LINEAR approximator on a 1-D corridor, does the value error fall — and does the fitted line match the true value?",
+    question: "Reading a value-approximation training curve: how do you tell healthy convergence apart from a deadly-triad divergence or a features-too-weak plateau?",
     charts: [
       {
         type: "line",
-        title: "Semi-gradient TD(0): RMS value error falls as training proceeds",
+        title: "Healthy: on-policy semi-gradient TD(0) converges (RMS error falls and settles)",
         xlabel: "episode",
         ylabel: "RMS value error (over a grid of states)",
         series: [{
           name: "RMS error",
-          color: "#4ea1ff",
+          color: "#7ee787",
           points: [[0, 0.599], [20, 0.0705], [41, 0.0332], [61, 0.0308], [82, 0.0328], [103, 0.0292], [123, 0.0295], [144, 0.0292], [165, 0.0328], [185, 0.0285], [206, 0.0277], [227, 0.0305], [247, 0.0272], [268, 0.0254], [289, 0.0303], [309, 0.0247], [330, 0.0261], [351, 0.0239], [371, 0.0235], [392, 0.0254], [413, 0.0266], [433, 0.0242], [454, 0.0213], [475, 0.0317], [495, 0.0225], [516, 0.0277], [537, 0.0295], [557, 0.0245], [578, 0.0223], [599, 0.0221]]
-        }]
+        }],
+        interpret: "Real numpy output. <b>X</b> = training episodes, <b>Y</b> = root-mean-square gap between the learned value and the true value over a grid of states; lower is better. Read it left-to-right: error plunges from 0.60 to about 0.03 within ~40 episodes, then sits flat with small noise. A curve that <b>drops fast and then stays low and steady is the healthy signature</b> — five weights now predict the value at infinitely many states. This is what to expect with linear features and on-policy sampling."
       },
       {
         type: "line",
-        title: "After training: linear-RBF approximation vs the true 1-D value function",
+        title: "After training: linear-RBF approximation tracks the true 1-D value function",
         xlabel: "state x",
         ylabel: "value",
         series: [
           { name: "true V(x)", color: "#7ee787", points: [[0.0, 0.387], [0.1, 0.43], [0.2, 0.478], [0.3, 0.531], [0.4, 0.59], [0.5, 0.656], [0.6, 0.729], [0.7, 0.81], [0.8, 0.9], [0.9, 1.0]] },
           { name: "learned V̂(x;w)", color: "#4ea1ff", points: [[0.0, 0.391], [0.1, 0.419], [0.2, 0.461], [0.3, 0.511], [0.4, 0.562], [0.5, 0.619], [0.6, 0.691], [0.7, 0.783], [0.8, 0.881], [0.9, 0.956]] }
-        ]
+        ],
+        interpret: "Real numpy output, same trained run. <b>X</b> = the state (a real number along the corridor), <b>Y</b> = its value. The green line is the true value, the blue line is the approximation. <b>When the two lines sit almost on top of each other</b>, the approximator has generalized correctly across the whole continuous range. Watch the gap: a small, even gap everywhere is healthy; a curve that matches in some regions but peels away in others points to features too weak to bend the way the true value bends."
+      },
+      {
+        type: "line",
+        title: "Divergence: the deadly triad (FA + bootstrap + off-policy) blows the error UP",
+        xlabel: "episode",
+        ylabel: "RMS value error (log-ish scale)",
+        series: [{
+          name: "RMS error (diverging)",
+          color: "#ff7b72",
+          points: [[0, 0.6], [20, 0.55], [41, 0.62], [61, 0.81], [82, 1.15], [103, 1.7], [123, 2.6], [144, 4.1], [165, 6.5], [185, 10.4], [206, 17.0], [227, 28.0], [247, 46.0], [268, 76.0], [289, 125.0], [309, 205.0]]
+        }],
+        interpret: "Illustrative shape (qualitatively honest). Same axes as the healthy curve, but the error <b>climbs instead of falling and accelerates upward</b> — the weights are blowing up toward infinity. This is the <b>deadly triad</b>: function approximation + bootstrapping + off-policy data combined. The tell-tale sign is an error that never settles and grows faster and faster. Fix by removing one leg (stay on-policy, use Monte-Carlo returns instead of bootstrapping) or by adding a target network and replay as DQN does."
+      },
+      {
+        type: "line",
+        title: "Plateau: features too weak — error falls then sticks well above zero",
+        xlabel: "episode",
+        ylabel: "RMS value error",
+        series: [{
+          name: "RMS error (underfit)",
+          color: "#ffb454",
+          points: [[0, 0.6], [20, 0.42], [41, 0.33], [61, 0.29], [82, 0.265], [103, 0.255], [123, 0.25], [144, 0.248], [165, 0.247], [185, 0.246], [206, 0.246], [227, 0.245], [247, 0.245], [268, 0.245], [289, 0.245], [309, 0.245], [330, 0.245], [351, 0.245], [371, 0.245], [392, 0.245], [413, 0.245], [454, 0.245], [495, 0.245], [537, 0.245], [578, 0.245], [599, 0.245]]
+        }],
+        interpret: "Illustrative shape. Same axes again. The error <b>drops a little, then flattens at a high floor</b> (here ~0.25, not ~0.03) and more training does not help. This is <b>underfitting</b>: a linear approximator can only express functions linear in its features, so if the features are too coarse (e.g. one RBF instead of four) it physically cannot match the true value's shape, no matter how long you train. The fix is richer features (more/finer RBFs, tile coding) or a neural net that learns its own — not a smaller step size or more episodes."
       }
     ],
-    caption: "Real numpy output. Starting from zero weights (RMS error 0.599), semi-gradient TD(0) with 4 radial-basis features + a bias drives the RMS value error down to ~0.022 within ~40 episodes and holds there. The right panel shows the learned linear approximation V̂(x;w)=wᵀx(s) tracking the true value curve closely across the whole continuous corridor — five weights generalize across infinitely many states, with no table.",
+    caption: "Four ways a value-approximation training curve can look. The first two panels are real numpy output from the healthy run; the last two are illustrative shapes for the divergence and underfitting failure modes. Each chart's own note explains how to read it and what to conclude.",
     code: `import numpy as np
 
 # 1-D corridor: state x in [0,1]; step +0.1; reward +1 on reaching x>=1; gamma=0.9.

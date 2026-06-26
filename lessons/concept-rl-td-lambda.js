@@ -238,17 +238,53 @@ print("true V =", np.round(TRUE_V, 3).tolist())
   };
 
   window.CODEVIZ["rl-td-lambda"] = {
-    question: "On the 5-state random walk, how does value-estimate error after 10 episodes depend on λ — does an intermediate λ really beat both TD(λ=0) and MC(λ=1)?",
-    charts: [{
-      type: "line",
-      title: "RMS value error after 10 episodes vs λ (averaged over 200 runs)",
-      xlabel: "λ (0 = one-step TD, 1 = Monte Carlo)",
-      ylabel: "RMS error vs true values",
-      series: [
-        { name: "TD(λ), α = 0.05", color: "#7ee787", points: [[0.0, 0.1745], [0.2, 0.1686], [0.4, 0.1623], [0.6, 0.156], [0.7, 0.1534], [0.8, 0.1523], [0.9, 0.156], [0.95, 0.1635], [1.0, 0.1831]] }
-      ]
-    }],
-    caption: "A reproducible numpy run of tabular TD(λ) on the 5-state random walk. Error is a clear U-shape: λ = 0 (pure one-step TD) gives RMS 0.1745 and λ = 1 (Monte Carlo) gives 0.1831, but the intermediate λ ≈ 0.8 reaches 0.1523 — best of both, faster credit assignment with controlled variance. The exact bottom is problem- and α-dependent (a pitfall), but an interior λ winning is the classic result.",
+    question: "On the 5-state random walk, how does value-estimate error depend on λ -- the classic U-shape, and the other error-vs-λ shapes you can actually get?",
+    charts: [
+      {
+        type: "line",
+        title: "Ideal: U-shape -- an interior λ beats both TD(0) and MC(1) (real numbers, 200 runs)",
+        xlabel: "λ (0 = one-step TD, 1 = Monte Carlo)",
+        ylabel: "RMS error vs true values (after 10 episodes)",
+        series: [
+          { name: "TD(λ), α = 0.05", color: "#7ee787", points: [[0.0, 0.1745], [0.2, 0.1686], [0.4, 0.1623], [0.6, 0.156], [0.7, 0.1534], [0.8, 0.1523], [0.9, 0.156], [0.95, 0.1635], [1.0, 0.1831]] }
+        ],
+        interpret: "<b>x = the λ dial (left edge is one-step TD, right edge is Monte Carlo); y = how far the learned values are from the truth (lower is better).</b> Read the shape, not single points: it sags in the <b>middle</b>. Both ends are worse -- λ=0 (RMS 0.1745) is biased from over-bootstrapping, λ=1 (0.1831) is noisy from full-episode variance -- and the bottom of the bowl at λ≈0.8 (0.1523) is the best of both. The takeaway: blend, don't pick an extreme. Real numbers from the numpy run below; the exact bottom moves with the problem and with α."
+      },
+      {
+        type: "line",
+        title: "Variant: faster credit assignment -- error vs EPISODE for TD(0) vs TD(0.9) (illustrative)",
+        xlabel: "training episode",
+        ylabel: "RMS error vs true values",
+        series: [
+          { name: "TD(λ = 0.9) -- credits whole path each episode", color: "#7ee787", points: [[0, 0.35], [2, 0.26], [5, 0.19], [10, 0.15], [20, 0.11], [40, 0.085], [80, 0.07]] },
+          { name: "TD(λ = 0) -- one state per step", color: "#4ea1ff", points: [[0, 0.35], [2, 0.31], [5, 0.27], [10, 0.22], [20, 0.16], [40, 0.11], [80, 0.08]] }
+        ],
+        interpret: "<b>Here x is episodes of training and y is error, so a line that drops FASTER is better.</b> Read the early gap: green (λ=0.9) falls faster in the first ~20 episodes because one goal-reward floods credit <b>backward</b> along the whole recent path via eligibility traces, while blue (λ=0) only nudges the single state where the surprise happened and waits for later episodes to propagate it. They meet eventually -- the win from traces is SPEED of credit assignment, not a different fixed point. Illustrative curves; the ordering is the real effect."
+      },
+      {
+        type: "line",
+        title: "Variant: α too large -- big λ DIVERGES (the α-λ interaction pitfall, illustrative)",
+        xlabel: "λ (0 = one-step TD, 1 = Monte Carlo)",
+        ylabel: "RMS error vs true values",
+        series: [
+          { name: "α small (0.05) -- gentle U", color: "#7ee787", points: [[0.0, 0.175], [0.4, 0.162], [0.8, 0.152], [0.9, 0.156], [1.0, 0.183]] },
+          { name: "α large (0.4) -- error explodes as λ rises", color: "#ff7b72", points: [[0.0, 0.19], [0.4, 0.21], [0.6, 0.27], [0.8, 0.41], [0.9, 0.6], [1.0, 0.95]] }
+        ],
+        interpret: "<b>Same λ axis as the ideal, two step sizes overlaid.</b> Read the red line: instead of a bowl it shoots <b>upward</b> on the right. A bigger λ spreads each update over more states, which effectively amplifies the learning rate -- so an α that is fine at λ=0 can blow up at high λ. The signature to recognise is error RISING with λ (no interior minimum). The fix is to tune α and λ <b>together</b> and shrink α as you raise λ. Illustrative magnitudes; the divergence-at-high-λ shape is the honest warning."
+      },
+      {
+        type: "line",
+        title: "Variant: noisy / high-variance task -- minimum shifts toward MC (illustrative)",
+        xlabel: "λ (0 = one-step TD, 1 = Monte Carlo)",
+        ylabel: "RMS error vs true values",
+        series: [
+          { name: "low-noise task -- minimum near λ ≈ 0.8", color: "#7ee787", points: [[0.0, 0.17], [0.4, 0.155], [0.8, 0.145], [0.9, 0.15], [1.0, 0.18]] },
+          { name: "deterministic-ish task -- bias dominates, lower λ wins", color: "#c89bff", points: [[0.0, 0.13], [0.4, 0.14], [0.7, 0.155], [0.9, 0.18], [1.0, 0.22]] }
+        ],
+        interpret: "<b>Still error vs λ, but now the bowl's bottom MOVES depending on the environment.</b> Read where each curve dips: green (more stochastic task) bottoms out around λ≈0.8 as before, but purple (a near-deterministic task) has its minimum pushed <b>left toward λ=0</b> -- when there is little randomness, bootstrapping's bias hurts less than MC's variance, so a lower λ wins. The lesson, restated as a pitfall: there is no universal best λ; always plot this curve on a small version of YOUR task. Illustrative shapes."
+      }
+    ],
+    caption: "Four error-vs-λ shapes to recognise: the classic U-shape (interior λ wins, real numbers), error-vs-episode showing traces assign credit FASTER, the α-too-large case where big λ diverges, and a problem-dependent shift of the minimum. Only the first chart uses real numpy output; the variants are illustrative but qualitatively honest.",
     code: `import numpy as np
 
 # 5-state random walk; true values 1/6..5/6 (Sutton & Barto Example 6.2).

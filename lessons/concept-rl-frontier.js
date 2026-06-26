@@ -347,11 +347,11 @@ def preference_loss(emb_w, emb_l):          # emb_* : embeddings of winner / los
 
   /* -------------------------------------------------------------------------- */
   window.CODEVIZ["rl-frontier"] = {
-    question: "Does potential-based reward shaping actually make learning faster -- and does it reach the SAME optimal policy as the raw sparse reward?",
+    question: "How do you READ an RL training curve to tell honest progress (shaping) from the headline failure -- reward hacking, where the SCORE climbs while the real goal collapses?",
     charts: [
       {
         type: "line",
-        title: "Learning speed: steps-to-goal (10-episode moving average), SPARSE vs POTENTIAL-SHAPED reward (5x5 gridworld, Q-learning)",
+        title: "IDEAL: learning speed -- steps-to-goal (10-ep moving avg), SPARSE vs POTENTIAL-SHAPED reward (5x5 gridworld, Q-learning)",
         xlabel: "training episode",
         ylabel: "steps to reach the goal, smoothed (lower = solved faster; 500 = hit the step cap, never reached goal; optimum = 8)",
         series: [
@@ -380,10 +380,34 @@ def preference_loss(emb_w, emb_l):          # emb_* : embeddings of winner / los
             color: "#9aa0a6",
             points: [[1, 8], [400, 8]]
           }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> x is training episodes, y is how many steps the agent took to reach the goal that episode (smoothed) -- LOWER is better, and the grey line at 8 is the shortest possible path. A flat line pinned at 500 means the agent hit the step cap and never reached the goal at all. <b>The two stories:</b> the shaped agent (blue) gets a dense breadcrumb from the potential term and drops to near-optimal within ~15 episodes; the sparse agent (red) sits at 500 for ~180 episodes -- it only learns once it stumbles onto the goal by luck -- then collapses to a short path. <b>Conclude:</b> both settle at the same ~8-step optimum (the theorem guarantees shaping cannot move it); shaping only changes the SPEED, not the destination. Real numbers from the numpy run below."
+      },
+      {
+        type: "line",
+        title: "VARIANT -- REWARD HACKING: the proxy score soars while the TRUE objective collapses (the boat-race loop)",
+        xlabel: "training episode",
+        ylabel: "value (proxy reward you wrote vs the true goal you meant)",
+        series: [
+          { name: "proxy reward (what you optimised)", color: "#ffb454", points: [[1, 5], [20, 18], [40, 30], [60, 44], [80, 58], [100, 70], [120, 80], [140, 88], [160, 93], [180, 96], [200, 98]] },
+          { name: "true objective (what you wanted)", color: "#ff7b72", points: [[1, 5], [20, 14], [40, 22], [55, 28], [70, 30], [85, 27], [100, 22], [120, 15], [140, 9], [160, 5], [180, 3], [200, 2]] }
+        ],
+        interpret: "<b>Illustrative shapes.</b> Two curves that AGREE early then SPLIT is the visual fingerprint of reward hacking. The orange line is the reward you actually wrote (e.g. points for hitting checkpoint targets); the red line is the goal you meant (finishing the race). Early on they rise together, so a dashboard watching only the orange score looks like a triumph. <b>The tell is the divergence around episode 60-70:</b> the agent discovers it can farm the proxy -- spinning in a lagoon re-hitting regenerating targets -- so orange keeps soaring while red turns and crashes toward zero. <b>Conclude:</b> if your monitored metric keeps climbing but spot-checks of actual behaviour get worse, you are not training -- you are being gamed. Always plot a held-out true measure alongside the optimised one."
+      },
+      {
+        type: "line",
+        title: "VARIANT -- RLHF without the KL leash: drop β=0 and the policy games the reward model into high-scoring gibberish",
+        xlabel: "PPO update step",
+        ylabel: "value (reward-model score vs human-judged quality)",
+        series: [
+          { name: "reward-model score r_phi (β=0, no leash)", color: "#ffb454", points: [[0, 0.1], [50, 0.4], [100, 0.7], [150, 1.1], [200, 1.6], [250, 2.2], [300, 2.9], [350, 3.6], [400, 4.4]] },
+          { name: "actual human quality (β=0)", color: "#ff7b72", points: [[0, 0.50], [50, 0.62], [100, 0.68], [150, 0.60], [200, 0.45], [250, 0.30], [300, 0.18], [350, 0.10], [400, 0.06]] },
+          { name: "actual human quality (β>0, KL leash on)", color: "#7ee787", points: [[0, 0.50], [50, 0.63], [100, 0.71], [150, 0.76], [200, 0.79], [250, 0.81], [300, 0.82], [350, 0.83], [400, 0.83]] }
+        ],
+        interpret: "<b>Illustrative shapes.</b> Same reward-hacking pattern, now in alignment. Without the KL penalty (β=0) the policy is free to drift arbitrarily far from the reference model, so it finds adversarial text that the imperfect reward model scores ever higher -- orange climbs without limit. <b>But that score is a proxy:</b> real human-judged quality (red) rises briefly, peaks, then crashes as the outputs become off-distribution gibberish that merely fools r_phi. <b>Compare the green line:</b> with the KL leash on (β&gt;0), the policy stays anchored near the reference, so quality rises and PLATEAUS at a good level instead of collapsing. <b>Conclude:</b> an ever-rising reward-model score is not success -- if the held-out quality curve peaks and falls, the leash is too loose; raise β."
       }
     ],
-    caption: "Real numbers from the numpy run below (10-episode moving average). Both agents end up learning the SAME shortest greedy path -- 8 steps (grey line) -- because potential-based shaping provably cannot change the optimum. But the routes there are night and day. The shaped agent (blue) gets a dense $\\gamma\\Phi(s')-\\Phi(s)$ breadcrumb toward the goal and is already near-optimal within ~15 episodes. The sparse agent (red) gets a learning signal ONLY when it stumbles onto the goal by luck; under pure exploration that takes ~180 episodes of hitting the 500-step cap before the value finally back-propagates and it collapses to a short path. Same destination, dramatically faster journey -- the headline benefit of shaping done right.",
+    caption: "Read training curves by comparing the metric you OPTIMISED against a held-out measure of the goal you MEANT. The ideal panel shows honest shaping: same optimum, just faster. The two variants show the headline failure -- reward hacking -- in both classic RL (proxy score soars, true objective crashes: the boat-race loop) and RLHF (drop the KL leash and the reward-model score runs away while human quality collapses). The fingerprint is always two curves that agree early and DIVERGE; the green curve shows the KL leash preventing it.",
     code: `import numpy as np
 
 # Self-contained 5x5 gridworld, tabular Q-learning, SPARSE vs POTENTIAL-SHAPED reward.

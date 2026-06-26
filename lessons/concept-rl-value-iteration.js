@@ -226,22 +226,52 @@ for r in range(ROWS):
 
   /* ---------------------------------------------------------------- */
   window.CODEVIZ["rl-value-iteration"] = {
-    question: "How fast does value iteration converge? Plot the max value-change per sweep — the contraction predicts geometric decay toward 0.",
-    charts: [{
-      type: "line",
-      title: "Bellman residual per sweep on a 3x4 gridworld — geometric γ-contraction decay toward 0",
-      xlabel: "sweep k", ylabel: "max value-change  ||V(k+1) - V(k)||_inf",
-      series: [{
-        name: "||V(k+1) - V(k)||_inf", color: "#4ea1ff",
-        points: [
-          [1, 0.04], [2, 0.7128], [3, 0.506736], [4, 0.359018], [5, 0.253244],
-          [6, 0.198886], [7, 0.123413], [8, 0.072437], [9, 0.035482], [10, 0.016783],
-          [11, 0.007518], [12, 0.003303], [13, 0.001417], [14, 0.000601], [15, 0.000252],
-          [16, 0.000105], [17, 0.000043], [18, 0.000018], [19, 0.000007], [20, 0.000003], [21, 0.000001]
-        ]
-      }]
-    }],
-    caption: "Real per-sweep Bellman residuals from the code below (γ=0.9, 3x4 stochastic gridworld). After the early build-up while reward news spreads, the residual decays geometrically — each sweep multiplies the error by roughly γ, exactly the γ-contraction the Banach fixed-point theorem predicts (a straight line on a log axis). It hits machine-zero by sweep 22 (those trailing zero deltas are dropped from the plot).",
+    question: "How do you read a value-iteration convergence plot? The Bellman residual per sweep should decay geometrically — learn the healthy gamma=0.9 shape, the painfully slow gamma near 1, and what a non-contracting blow-up looks like.",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy (gamma=0.9): residual decays geometrically toward 0",
+        xlabel: "sweep k", ylabel: "max value-change  ||V(k+1) - V(k)||_inf",
+        series: [{
+          name: "gamma = 0.9", color: "#4ea1ff",
+          points: [
+            [1, 0.04], [2, 0.7128], [3, 0.506736], [4, 0.359018], [5, 0.253244],
+            [6, 0.198886], [7, 0.123413], [8, 0.072437], [9, 0.035482], [10, 0.016783],
+            [11, 0.007518], [12, 0.003303], [13, 0.001417], [14, 0.000601], [15, 0.000252],
+            [16, 0.000105], [17, 0.000043], [18, 0.000018], [19, 0.000007], [20, 0.000003], [21, 0.000001]
+          ]
+        }],
+        interpret: "Real per-sweep residuals from the code below (gamma=0.9, 3x4 stochastic gridworld). The x-axis is the sweep number; the y-axis is the largest value change any state saw this sweep — how much the table still wobbled. After an early bump while the goal's reward news spreads outward, each sweep multiplies the residual by roughly gamma=0.9, so it slides smoothly toward 0 and hits machine-zero by sweep 22. <b>Read it as:</b> a steadily shrinking residual means the iterates are funneling to the fixed point V*; on a log y-axis this would be a straight downward line — that straightness IS the gamma-contraction."
+      },
+      {
+        type: "line",
+        title: "Slow (gamma=0.99): same shape, far more sweeps (illustrative)",
+        xlabel: "sweep k", ylabel: "max value-change  ||V(k+1) - V(k)||_inf",
+        series: [{
+          name: "gamma = 0.99", color: "#ffb454",
+          points: [
+            [1, 0.04], [3, 0.62], [6, 0.55], [10, 0.49], [15, 0.42], [20, 0.36],
+            [25, 0.31], [30, 0.27], [40, 0.20], [50, 0.15], [60, 0.11], [70, 0.083],
+            [80, 0.062], [90, 0.046], [100, 0.034], [120, 0.019], [140, 0.010], [160, 0.0056], [180, 0.0031]
+          ]
+        }],
+        interpret: "Illustrative shape for a discount very close to 1. Same axes, but each sweep now multiplies the residual by ~0.99 instead of 0.9, so the curve flattens out and crawls — reaching the same tolerance takes roughly log(eps)/log(gamma) sweeps, which balloons as gamma -> 1 (here hundreds, not twenty). <b>Recognise it by:</b> the same downward trend but a very gentle, long-tailed slope. It is still converging and still correct — just expensive. The fix is a smaller gamma if the problem allows, or prioritized/async sweeps."
+      },
+      {
+        type: "line",
+        title: "Bug, not a contraction: residual grows / oscillates (illustrative)",
+        xlabel: "sweep k", ylabel: "max value-change  ||V(k+1) - V(k)||_inf",
+        series: [{
+          name: "diverging (e.g. gamma>=1 or a buggy backup)", color: "#ff7b72",
+          points: [
+            [1, 0.04], [2, 0.8], [3, 0.6], [4, 1.1], [5, 0.9], [6, 1.6], [7, 1.3],
+            [8, 2.4], [9, 2.0], [10, 3.6], [11, 3.1], [12, 5.4], [13, 4.8], [14, 8.0]
+          ]
+        }],
+        interpret: "Illustrative failure mode. The residual should shrink; here it grows (with oscillation) instead of decaying. Plain tabular value iteration with gamma<1 cannot do this — the contraction forbids it — so an upward residual means an assumption broke: gamma set to 1 or more (no contraction), a sign/indexing bug in the backup, or function approximation replacing the exact table (the 'deadly triad'). <b>Recognise it by:</b> a residual that climbs or refuses to settle. Conclusion: this is a bug or a setting outside the theorem's guarantees — do not wait for it to converge."
+      }
+    ],
+    caption: "Three value-iteration residual curves on the same axes — sweep (x) vs largest value-change (y). The first is real (gamma=0.9); the others are illustrative shapes for a slow gamma near 1 and a non-converging blow-up.",
     code: `import numpy as np
 
 # Tiny 3x4 stochastic gridworld (no gym): goal +1, hazard -1, one wall.

@@ -304,10 +304,10 @@ for n in (0, 5, 50):
 
   /* -------------------------------------------------------------------------- */
   window.CODEVIZ["rl-model-based"] = {
-    question: "Does planning on a learned model let Dyna-Q reach the goal in fewer REAL environment steps than plain Q-learning? Plot steps-to-goal per episode for n=0 (plain Q-learning) vs n=5 vs n=50 planning steps.",
+    question: "How do you READ a sample-efficiency learning curve for model-based RL? The x-axis is the episode (each episode burns real environment steps), the y-axis is steps-to-goal (lower is better; optimal = 14). A curve that drops fast and low means the agent learned a good policy from few real interactions. Below is the healthy speed-up plus the variants you'll actually meet: more-planning-but-no-extra-gain, and the wrong-model case where planning HURTS.",
     charts: [{
       type: "line",
-      title: "Dyna-Q on the 6x9 maze: steps-to-goal per episode (lower = better; optimal = 14). More planning ⇒ good policy in far fewer real episodes.",
+      title: "Healthy: more planning ⇒ good policy in far fewer real episodes (6x9 maze)",
       xlabel: "episode (each costs real environment steps)",
       ylabel: "steps to reach goal (log scale; mean of 20 seeds)",
       logy: true,
@@ -322,9 +322,38 @@ for n in (0, 5, 50):
         { name: "Dyna-Q (n=50 planning)", color: "#3fb950", points: [
           [1,863],[2,89],[3,23],[4,17],[5,17],[6,16],[7,17],[8,16],[9,16],[10,17],
           [12,17],[14,16],[16,17],[18,17],[20,17],[24,17],[28,16],[34,17],[42,17],[50,16] ] }
-      ]
+      ],
+      interpret: "<b>Compare how fast each line falls.</b> All three start near 900 steps (random flailing) and end near the optimal 14, but the gap is WHEN. The red n=0 line (plain Q-learning, no planning) drifts down slowly and only reaches good policy around episode 28; the blue n=5 and green n=50 lines plunge within ~4–6 episodes. A curve that drops fast and flattens low = the agent extracted a good policy from few real episodes (good <b>sample efficiency</b>). Green sitting just under blue shows diminishing returns: going from 5 to 50 planning steps barely helps here. (Real numbers, mean of 20 seeds, from the numpy code below.)"
+    },
+    {
+      type: "line",
+      title: "Diminishing returns: extra planning stops helping (n=5 vs n=50 overlap)",
+      xlabel: "episode",
+      ylabel: "steps to reach goal (log scale)",
+      logy: true,
+      series: [
+        { name: "Dyna-Q (n=5)", color: "#4ea1ff", points: [
+          [1,831],[2,175],[3,66],[4,44],[5,24],[6,18],[8,17],[12,16],[20,17],[30,16],[40,17],[50,16] ] },
+        { name: "Dyna-Q (n=50)", color: "#3fb950", points: [
+          [1,863],[2,89],[3,23],[4,17],[5,17],[6,16],[8,16],[12,17],[20,17],[30,16],[40,17],[50,16] ] }
+      ],
+      interpret: "<b>Illustrative — two planning budgets that converge to the same floor.</b> n=50 wins the first three episodes, but from episode ~5 the two lines lie on top of each other near the optimal 14. <b>The lesson:</b> once planning has propagated reward across the whole tiny maze, more imagined updates per step buy nothing — you are paying 10x the planning compute for the same policy. When two curves with very different effort converge, you've hit the point where the bottleneck is no longer planning but real exploration."
+    },
+    {
+      type: "line",
+      title: "WRONG MODEL: planning on a bad model HURTS (the central risk)",
+      xlabel: "episode",
+      ylabel: "steps to reach goal (log scale)",
+      logy: true,
+      series: [
+        { name: "Q-learning (n=0, model-free)", color: "#ff7b72", points: [
+          [1,924],[3,454],[6,195],[10,163],[14,106],[20,45],[28,19],[36,18],[44,18],[50,18] ] },
+        { name: "Dyna-Q on a WRONG model (n=50)", color: "#c89bff", points: [
+          [1,860],[3,120],[5,40],[8,55],[12,90],[16,130],[20,110],[26,140],[32,120],[40,135],[50,128] ] }
+      ],
+      interpret: "<b>Illustrative — what compounding model error looks like.</b> The purple curve drops fast at first (the model is roughly right near the start states) but then <b>turns back UP and stays high</b> instead of settling at 14: the agent keeps planning confidently against transitions the model gets wrong (e.g. a changed or stochastic maze it hasn't re-grounded on). Here the model-free red line eventually <b>beats</b> the model-based purple one. <b>How to recognise it:</b> a learning curve that improves then degrades, or a model-based method that ends up worse than plain model-free — the signature of a confidently wrong model. The fixes are short rollouts, frequent re-grounding on real data, and modelling uncertainty."
     }],
-    caption: "Real outputs of the NumPy code below (mean of 20 seeds; log y-axis; optimal path = 14 steps). Plain Q-learning (n=0) only settles near optimal around episode 28 (≈4409 real environment steps); Dyna-Q with n=5 planning steps is near optimal by episode 6 (≈1156 real steps), and n=50 by episode 4 (≈991). Same real experience, but each real step is reused in many imagined planning backups — roughly a 4x cut in real interactions. The catch (not shown): on a stochastic or changing maze the learned model would be wrong, and planning on a wrong model degrades the policy — model error is the price of this sample efficiency.",
+    caption: "Read every sample-efficiency curve the same way: x = episodes (real-step cost), y = steps-to-goal (lower=better, optimal=14), and judge HOW FAST it drops and HOW LOW it flattens. Chart 1 is the real Dyna-Q result from the numpy code (planning ⇒ fewer real episodes). Charts 2–3 are illustrative variants — diminishing returns from extra planning, and the dangerous wrong-model case where planning makes things worse — so you can spot each pattern in your own runs.",
     code: `import numpy as np
 
 # Classic 6x9 Dyna maze; start (2,0), goal (0,8); deterministic; +1 only at goal.

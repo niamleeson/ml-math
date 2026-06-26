@@ -290,11 +290,11 @@ for s in [(21, 10, False), (20, 7, False), (18, 6, False), (13, 10, False), (12,
 
   /* -------------------------------------------------------------------------- */
   window.CODEVIZ["rl-monte-carlo"] = {
-    question: "As Monte Carlo accumulates episodes, does its estimate of a state's value home in on the true value -- and what does 'unbiased but high-variance' look like on the way there?",
+    question: "As Monte Carlo averages more episodes, how do you READ a convergence curve to tell 'healthy unbiased-but-jumpy' apart from 'biased' or 'too-noisy-to-trust'?",
     charts: [
       {
         type: "line",
-        title: "First-visit MC estimate of V(s0) converging to the true value (3-state chain, gamma=0.9)",
+        title: "Ideal: first-visit MC homing in on the true value (3-state chain, gamma=0.9)",
         xlabel: "number of episodes averaged in",
         ylabel: "value estimate V(s0)",
         series: [
@@ -311,13 +311,59 @@ for s in [(21, 10, False), (20, 7, False), (18, 6, False), (13, 10, False), (12,
           },
           {
             name: "true V(s0) = 5.39",
-            color: "#ff7b72",
+            color: "#7ee787",
             points: [[1, 5.39], [2000, 5.39]]
           }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> the x-axis is how many episode-returns you have averaged so far; the y-axis is the current estimate V(s0). The green line is the true value (5.39). The blue line is the MC running mean computed with real numbers from the sim below. <b>What the shape tells you:</b> wild early swings (up to 6.26, down to 4.63) are the HIGH VARIANCE of full-episode returns; the swings shrink like 1/N and the blue line tightens onto the green one. <b>Conclude:</b> this is healthy MC -- centred on the truth from the very first sample (UNBIASED), just noisy until enough episodes average the noise away."
+      },
+      {
+        type: "line",
+        title: "Variant -- too few episodes: read OFF the noisy plateau and you are fooled",
+        xlabel: "number of episodes averaged in",
+        ylabel: "value estimate V(s0)",
+        series: [
+          {
+            name: "MC estimate (stopped early)",
+            color: "#ffb454",
+            points: [
+              [1, 5.8], [2, 5.38], [3, 6.08], [4, 5.99], [5, 5.52],
+              [7, 6.26], [10, 5.66], [15, 4.63], [20, 4.8], [25, 4.7], [30, 5.0]
+            ]
+          },
+          {
+            name: "true V(s0) = 5.39",
+            color: "#7ee787",
+            points: [[1, 5.39], [30, 5.39]]
+          }
+        ],
+        interpret: "<b>Illustrative</b> (same sim, just cut off at 30 episodes). <b>How to recognise it:</b> the curve is still swinging by a whole unit and has NOT visibly flattened -- if you read off the last point (~5.0) you'd report a value that is off by ~0.4 purely from noise. <b>What it means:</b> the estimate is unbiased but its variance (Var(G)/N) is still large; you stopped before 1/N did its work. <b>Conclude:</b> never trust an MC value from a curve that hasn't flattened -- run more episodes, or add a baseline to cut the variance."
+      },
+      {
+        type: "line",
+        title: "Variant -- BIASED: non-terminating episodes cut at a fixed horizon",
+        xlabel: "number of episodes averaged in",
+        ylabel: "value estimate V(s0)",
+        series: [
+          {
+            name: "MC estimate (truncated returns)",
+            color: "#ff7b72",
+            points: [
+              [1, 3.9], [3, 4.3], [5, 4.1], [10, 4.25], [20, 4.2], [40, 4.18],
+              [70, 4.22], [100, 4.2], [200, 4.21], [400, 4.2], [700, 4.2],
+              [1000, 4.2], [2000, 4.2]
+            ]
+          },
+          {
+            name: "true V(s0) = 5.39",
+            color: "#7ee787",
+            points: [[1, 5.39], [2000, 5.39]]
+          }
+        ],
+        interpret: "<b>Illustrative.</b> Here the task never really terminates, so each return was chopped at a fixed horizon -- dropping the rewards beyond the cut. <b>How to recognise it:</b> the curve converges tightly and smoothly (low variance, looks 'done') but settles onto the WRONG level (~4.2), a fixed gap below the green truth. <b>What it means:</b> a settled curve that misses the true line is BIAS, not noise -- and averaging more episodes will not close the gap, it just pins down the wrong number. <b>Conclude:</b> if MC looks too clean but lands off-target, suspect truncated/non-terminating episodes; lengthen the horizon or switch to a bootstrapping method (TD)."
       }
     ],
-    caption: "Real numbers from the numpy simulation below: a deterministic 3-state chain (s0->s1->s2->terminal) with reward -1 per step and a NOISY terminal bonus ~Normal(10, 4), gamma=0.9, so the true value is V(s0) = -1 + 0.9*(-1) + 0.81*9 = 5.39 (red line). The blue MC running mean swings hard early (5.80, then 6.08, then dipping to 4.63 around episode 15) -- that is the HIGH VARIANCE of full-episode returns. But the swings are centered on the truth from the start (UNBIASED), and as 1/N shrinks the variance, the estimate slowly settles toward 5.39. Honest but jumpy: exactly MC's signature.",
+    caption: "Ideal chart uses real numbers from the numpy sim below (deterministic 3-state chain s0->s1->s2->terminal, reward -1 per step plus a NOISY terminal bonus ~Normal(10,4), gamma=0.9, so true V(s0) = -1 + 0.9*(-1) + 0.81*9 = 5.39). The two variants are illustrative shapes showing the two ways an MC convergence plot misleads you: stopped-too-early (still swinging) and biased (settled onto the wrong value because episodes were truncated).",
     code: `import numpy as np
 
 # Tiny self-contained episodic MDP: a 3-state chain s0 -> s1 -> s2 -> TERMINAL.

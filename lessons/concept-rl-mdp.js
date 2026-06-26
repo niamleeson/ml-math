@@ -291,11 +291,11 @@ print(f"\\nReached goal at t={t}.  Discounted return G_0 = {G:.4f}")
   };
 
   window.CODEVIZ["rl-mdp"] = {
-    question: "What does the transition dynamics P(s' | s, a) of the 4-state slippery chain actually look like? We draw the RIGHT-action transition matrix as a heatmap — each row is a current state, each column a next state, the color is the probability — making the 'slip with probability 0.2' structure visible at a glance.",
+    question: "How do you READ the transition dynamics P(s' | s, a) of an MDP? A transition matrix is a heatmap: each ROW is a current state s, each COLUMN a possible next state s', and the colour is the probability of that move. Below is the healthy slippery chain plus the variants you actually run into — a broken (unnormalised) matrix, a deterministic chain, and a near-random one.",
     charts: [
       {
         type: "heatmap",
-        title: "P(s' | s, RIGHT) — transition probabilities of the slippery chain (rows = s, cols = s')",
+        title: "Healthy slippery chain: P(s' | s, RIGHT), rows = s, cols = s'",
         rows: ["s0", "s1", "s2", "s3 (goal)"],
         cols: ["s0", "s1", "s2", "s3 (goal)"],
         matrix: [
@@ -304,10 +304,53 @@ print(f"\\nReached goal at t={t}.  Discounted return G_0 = {G:.4f}")
           [0.0, 0.0, 0.2, 0.8],
           [0.0, 0.0, 0.0, 1.0]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "<b>Read one row at a time:</b> row s2 says that taking RIGHT in s2 lands you in s3 with probability 0.8 (the bright off-diagonal cell) and slips back to s2 with probability 0.2 (the dim diagonal cell). The bright band just above the diagonal is the intended 'move one step right'; the dim diagonal is the 'slip and stay'. The bottom row is all-zero except a 1.0 on s3 itself: the goal is <b>absorbing</b> — once there you never leave. <b>Every row sums to 1.0</b> — that is what makes this a valid probability distribution and the real 'P' of the MDP. (Real numbers, from the numpy code below.)"
+      },
+      {
+        type: "heatmap",
+        title: "BUG — unnormalised rows: P(s' | s, RIGHT) that does NOT sum to 1",
+        rows: ["s0", "s1", "s2", "s3 (goal)"],
+        cols: ["s0", "s1", "s2", "s3 (goal)"],
+        matrix: [
+          [0.2, 0.8, 0.0, 0.0],
+          [0.0, 0.2, 0.5, 0.0],
+          [0.0, 0.0, 0.2, 0.7],
+          [0.0, 0.0, 0.0, 1.0]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative bug.</b> It looks almost identical, but add up row s1: 0.0 + 0.2 + 0.5 + 0.0 = 0.7, not 1.0. A typo dropped 0.3 of the probability mass into nowhere. Every value computed downstream (returns, V, Q) is then silently wrong, because the agent thinks 30% of the time the world simply vanishes. <b>How to spot it:</b> a row whose cells don't add to 1, or a row that looks unexpectedly dim overall. The fix is the assert in the code: check that each row sums to 1 for every (s, a)."
+      },
+      {
+        type: "heatmap",
+        title: "Deterministic chain (no slip): P(s' | s, RIGHT) with slip probability 0",
+        rows: ["s0", "s1", "s2", "s3 (goal)"],
+        cols: ["s0", "s1", "s2", "s3 (goal)"],
+        matrix: [
+          [0.0, 1.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0],
+          [0.0, 0.0, 0.0, 1.0]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative — what a non-slippery floor looks like.</b> All the mass is a single bright 1.0 on the off-diagonal; the dim 'slip-stay' diagonal is gone. RIGHT in s2 now reaches s3 with certainty. When you see a transition matrix made entirely of crisp 1.0s and 0.0s, the environment is <b>deterministic</b>: the same action in the same state always gives the same next state. This is the easy case — planning is just following the bright cells."
+      },
+      {
+        type: "heatmap",
+        title: "Near-random dynamics: P(s' | s, RIGHT) with heavy slip",
+        rows: ["s0", "s1", "s2", "s3 (goal)"],
+        cols: ["s0", "s1", "s2", "s3 (goal)"],
+        matrix: [
+          [0.55, 0.45, 0.0, 0.0],
+          [0.45, 0.10, 0.45, 0.0],
+          [0.0, 0.45, 0.10, 0.45],
+          [0.0, 0.0, 0.0, 1.0]
+        ],
+        showVals: true,
+        interpret: "<b>Illustrative — a very slippery, near-random floor.</b> The probability mass is smeared across several cells per row instead of concentrating on one, and some of it leaks backward (left of the diagonal). The 'intended' RIGHT move now barely outweighs slipping the wrong way, so the agent's action only weakly controls where it ends up. <b>When you see diffuse, spread-out rows</b>, the dynamics are highly stochastic: actions matter little, the discount must work harder, and the optimal policy is much less obvious than in the crisp deterministic case."
       }
     ],
-    caption: "Real numbers, computed by the numpy code below. Under RIGHT, each non-terminal state moves one step right with probability 0.8 (the bright off-diagonal band) and slips, staying put, with probability 0.2 (the dim diagonal). The goal state s3 is ABSORBING — its row is all-zero except a 1.0 on itself, so once reached the agent never leaves. Every row sums to 1.0, the defining property of a valid transition distribution. This single matrix IS the 'P' of the MDP tuple for the RIGHT action; the LEFT action has the mirror-image band.",
+    caption: "Read every transition matrix the same way: one row per current state, one column per next state, colour = probability, and each row must sum to 1. The first heatmap is the real, valid slippery chain from the numpy code; the other three are illustrative variants — a normalisation bug, a deterministic chain, and near-random dynamics — so you can recognise each at a glance.",
     code: `import numpy as np
 
 # Build the same 4-state slippery chain and read off P(. | s, RIGHT).

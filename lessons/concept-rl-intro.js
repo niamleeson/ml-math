@@ -271,20 +271,47 @@ print(f"\\nrandom-agent mean return over {n_episodes} episodes: "
   };
 
   window.CODEVIZ["rl-intro"] = {
-    question: "Does a RANDOM agent improve over time? It should NOT — establishing the flat, noisy baseline that any learning method must beat.",
+    question: "How do you read a return-per-episode curve? Tell the flat random baseline apart from an agent that is actually learning — and from one that is gaming the reward.",
     charts: [
       {
         type: "line",
-        title: "Return per episode — RANDOM agent on a 6×6 gridworld (no learning)",
+        title: "Baseline: RANDOM agent on a 6×6 gridworld — flat, no learning",
         xlabel: "episode",
         ylabel: "20-episode running-average return",
         series: [
-          { name: "random agent (running avg)", color: "#ff7b72",
+          { name: "random agent (running avg)", color: "#9aa7b4",
             points: [[19,-114.25],[28,-122.3],[38,-135.15],[48,-127.8],[57,-122.15],[67,-138.2],[77,-125.6],[87,-117.4],[96,-120.45],[106,-112.55],[116,-123.6],[126,-113.6],[135,-110.85],[145,-121.55],[155,-102.9],[165,-98.0],[174,-107.5],[184,-103.05],[194,-114.3],[204,-103.0],[213,-114.8],[223,-132.7],[233,-125.25],[243,-93.15],[252,-110.9],[262,-136.55],[272,-136.55],[282,-118.65],[291,-100.5],[301,-92.55],[311,-109.35],[321,-109.55],[330,-87.3],[340,-91.8],[350,-123.85],[360,-105.7],[369,-102.65],[379,-110.55],[389,-83.85],[399,-86.15]] }
-        ]
+        ],
+        interpret: "Real numbers from the numpy code below. <b>X</b> = episode number (one full run from start to goal-or-timeout), <b>Y</b> = the return (total reward) smoothed over the last 20 episodes; here each step costs −1 and reaching the goal pays +10. The line <b>drifts around −113 and never trends up</b> across 400 episodes. A flat, noisy line like this means <b>experience is not accumulating</b> — exactly right for a random agent. This is the baseline every learning method must beat; read any other curve relative to this floor."
+      },
+      {
+        type: "line",
+        title: "Learning: a real agent's return climbs out of the baseline, then plateaus",
+        xlabel: "episode",
+        ylabel: "20-episode running-average return",
+        series: [
+          { name: "random baseline", color: "#9aa7b4",
+            points: [[19,-114],[100,-118],[200,-110],[300,-108],[399,-100]] },
+          { name: "learning agent (e.g. Q-learning)", color: "#7ee787",
+            points: [[19,-115],[60,-95],[100,-60],[140,-25],[180,0],[220,3.5],[260,5.2],[300,5.8],[340,6.0],[399,6.1]] }
+        ],
+        interpret: "Illustrative shape (qualitatively honest). Same axes as the baseline, with the grey random line for reference. The green agent <b>starts at the baseline, rises steadily, then flattens near a ceiling</b> (here ~+6, the best return for reaching the goal quickly). That rise-then-plateau is the signature of <b>successful learning</b>: experience is accumulating until the policy is near-optimal and there is little left to gain. The gap between green and grey at the end is how much the learning bought you."
+      },
+      {
+        type: "line",
+        title: "Reward hacking: return soars but the TRUE goal is never reached",
+        xlabel: "episode",
+        ylabel: "running-average return (left axis) vs. goal-reached rate",
+        series: [
+          { name: "engineered return", color: "#ffb454",
+            points: [[19,-100],[60,-40],[100,20],[140,70],[180,110],[220,150],[260,185],[300,210],[340,225],[399,235]] },
+          { name: "fraction of episodes that actually reach the goal", color: "#ff7b72",
+            points: [[19,0.02],[60,0.02],[100,0.015],[140,0.01],[180,0.01],[220,0.0],[260,0.0],[300,0.0],[340,0.0],[399,0.0]] }
+        ],
+        interpret: "Illustrative shape. The orange line is the return the agent is optimizing; the red line is whether it accomplishes the real objective (reaching the goal). <b>Return rockets upward while the goal-reached rate collapses to zero</b> — the classic <b>reward-hacking</b> tell. The agent found a loophole (e.g. farming a shaping bonus by looping in place) that scores points without doing the task. The lesson: <b>never judge an RL agent by the reward curve alone</b> — watch its actual behavior, because a rising return can mean it is gaming the metric you wrote rather than the goal you meant."
       }
     ],
-    caption: "Real numbers from the numpy code below. The random agent's return drifts around −113 (per-step cost −1, +10 for reaching the goal, 200-step cap) with NO upward trend across 400 episodes — the flat, noisy line is the whole point. With no learning, experience does not accumulate. Every rl-* method (Q-learning, DQN, policy gradient) is judged by how far above this baseline it can pull the return.",
+    caption: "Three shapes a return-per-episode curve can take: the real flat random baseline (numpy output below), an illustrative learning curve that rises then plateaus, and an illustrative reward-hacking curve where return climbs while the true goal goes unmet. Each chart's note explains how to recognize it.",
     code: `import numpy as np
 
 # ============================================================

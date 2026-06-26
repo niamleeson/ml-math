@@ -197,18 +197,44 @@ print(grid)`
   };
 
   window.CODEVIZ["rl-policy-iteration"] = {
-    question: "On the classic 4x4 gridworld, how fast does policy iteration lock in the optimal policy?",
-    charts: [{
-      type: "line",
-      title: "States that change action per improvement step (0 = policy stable = converged)",
-      xlabel: "improvement step",
-      ylabel: "number of states whose greedy action changed",
-      series: [
-        { name: "policy iteration (4x4 gridworld)", color: "#7ee787",
-          points: [[0, 6], [1, 7], [2, 2], [3, 0]] }
-      ]
-    }],
-    caption: "A reproducible NumPy run on the Sutton & Barto 4x4 gridworld (corners terminal, step cost -1, gamma=1), started from the bad 'always up' policy. The first greedy improvement flips 6 states, the next 7, then 2, then 0 — four improvement steps and the policy is stable, i.e. optimal. The drop to 0 is the convergence signal: greedy-with-respect-to-V now equals the current policy, so it satisfies the Bellman optimality equation. The recovered V* is the negated shortest-path distance to the nearest corner, exactly as policy iteration guarantees.",
+    question: "How do you READ a policy-iteration convergence plot? We plot how many states change their greedy action each improvement step on the classic 4x4 gridworld (real run), then show the variant shapes you might see: clean convergence, a flip-flop that never reaches 0, and a slow truncated-evaluation run.",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: action-changes fall to 0 in four steps (policy stable = optimal)",
+        xlabel: "improvement step",
+        ylabel: "number of states whose greedy action changed",
+        series: [
+          { name: "policy iteration (4x4 gridworld)", color: "#7ee787",
+            points: [[0, 6], [1, 7], [2, 2], [3, 0]] }
+        ],
+        interpret: "<b>Read it:</b> x is each improvement step; y counts how many states picked a DIFFERENT greedy action than last round. Real run on the Sutton &amp; Barto 4x4 grid (corners terminal, step cost -1, gamma=1), started from the bad 'always up' policy: 6 states flip, then 7, then 2, then 0. <b>Conclude:</b> the drop to <b>0</b> is the convergence signal &mdash; greedy-with-respect-to-V now equals the current policy, so it satisfies the Bellman optimality equation and the policy is optimal. Policy iteration locks in fast: very few improvement steps, exactly as the finite-policy argument promises. (The count need not fall monotonically &mdash; 6 then 7 is fine; only reaching 0 matters.)"
+      },
+      {
+        type: "line",
+        title: "Flip-flop: ties broken inconsistently, count never reaches 0 (illustrative)",
+        xlabel: "improvement step",
+        ylabel: "number of states whose greedy action changed",
+        series: [
+          { name: "non-deterministic tie-break", color: "#ff7b72",
+            points: [[0, 6], [1, 3], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2]] }
+        ],
+        interpret: "<b>Illustrative.</b> <b>Read it:</b> the count drops at first but then sticks at a small non-zero floor forever instead of hitting 0. <b>Recognise it:</b> a plateau at a low positive value is the tie-break bug &mdash; two actions have equal value and the argmax keeps swapping between them, so those states report 'changed' every round and the stop condition never fires. <b>Conclude:</b> the algorithm is actually optimal but cannot tell &mdash; the fix is to break ties deterministically (e.g. lowest action index) so equal-value states stop oscillating and the count falls cleanly to 0."
+      },
+      {
+        type: "line",
+        title: "Truncated evaluation: fewer sweeps per round, more improvement steps (illustrative)",
+        xlabel: "improvement step",
+        ylabel: "number of states whose greedy action changed",
+        series: [
+          { name: "full evaluation (policy iteration)", color: "#7ee787",
+            points: [[0, 6], [1, 7], [2, 2], [3, 0]] },
+          { name: "1-sweep eval (toward value iteration)", color: "#ffb454",
+            points: [[0, 6], [1, 5], [2, 4], [3, 3], [4, 3], [5, 2], [6, 1], [7, 0]] }
+        ],
+        interpret: "<b>Illustrative.</b> <b>Read it:</b> both runs eventually reach 0 (both find the optimal policy), but the orange line &mdash; which evaluates each policy with only ONE Bellman sweep instead of running to convergence &mdash; takes many more improvement steps to get there. <b>Recognise it:</b> a longer, gentler slide to 0 means each round used a rougher value estimate. <b>Conclude:</b> this is the policy-iteration / value-iteration trade-off &mdash; full evaluation (green) needs few improvement steps but each is expensive; one-sweep evaluation (orange) IS value iteration, with cheap rounds but more of them. Both are correct; pick based on which sweep cost dominates."
+      }
+    ],
     code: `import numpy as np
 
 # 4x4 gridworld: corners 0 and 15 terminal, every move costs -1, gamma = 1.

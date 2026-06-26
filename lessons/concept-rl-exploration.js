@@ -325,21 +325,42 @@ print(f"  UCB              final regret = {ucb[-1]:8.1f}   (lowest -> logarithmi
   };
 
   window.CODEVIZ["rl-exploration"] = {
-    question: "On a real 10-armed bandit, how does cumulative regret grow for greedy vs ε-greedy vs UCB over 2000 pulls? (Lower is better.)",
+    question: "How do you READ a regret curve — and the per-arm uncertainty view UCB acts on — to tell a healthy strategy from one that's stuck?",
     charts: [
       {
         type: "line",
-        title: "Cumulative regret over time — greedy (linear) vs ε-greedy (sub-linear) vs UCB (logarithmic)",
+        title: "IDEAL: cumulative regret — greedy (linear) vs ε-greedy (sub-linear) vs UCB (logarithmic)",
         xlabel: "step t (pulls)",
         ylabel: "cumulative regret (reward lost vs the best arm)",
         series: [
           { name: "greedy (stuck → linear)", color: "#ff7b72", points: [[1, 2.4], [52, 83.3], [103, 145.2], [154, 207.1], [206, 270.3], [257, 332.2], [308, 394.1], [359, 456.1], [411, 519.2], [462, 581.1], [513, 643.1], [564, 705.0], [616, 768.2], [667, 830.1], [718, 892.0], [769, 954.0], [821, 1017.1], [872, 1079.0], [923, 1141.0], [974, 1202.9], [1026, 1266.0], [1077, 1328.0], [1128, 1389.9], [1179, 1451.8], [1231, 1515.0], [1282, 1576.9], [1333, 1638.8], [1384, 1700.8], [1436, 1763.9], [1487, 1825.8], [1538, 1887.8], [1589, 1949.7], [1641, 2012.9], [1692, 2074.8], [1743, 2136.7], [1794, 2198.6], [1846, 2261.8], [1897, 2323.7], [1948, 2385.7], [2000, 2448.8]] },
           { name: "ε-greedy ε=0.1 (sub-linear)", color: "#4ea1ff", points: [[1, 2.4], [52, 37.7], [103, 69.3], [154, 95.4], [206, 101.9], [257, 109.2], [308, 123.4], [359, 132.3], [411, 139.1], [462, 155.9], [513, 168.9], [564, 178.7], [616, 186.8], [667, 193.2], [718, 200.8], [769, 207.2], [821, 216.6], [872, 226.1], [923, 229.5], [974, 238.9], [1026, 250.0], [1077, 257.7], [1128, 269.5], [1179, 274.9], [1231, 289.6], [1282, 298.4], [1333, 313.1], [1384, 322.2], [1436, 331.1], [1487, 334.4], [1538, 344.5], [1589, 352.1], [1641, 358.9], [1692, 364.4], [1743, 371.4], [1794, 379.3], [1846, 387.6], [1897, 399.0], [1948, 403.9], [2000, 411.9]] },
           { name: "UCB c=2 (logarithmic, lowest)", color: "#7ee787", points: [[1, 2.4], [52, 33.2], [103, 49.3], [154, 62.0], [206, 67.7], [257, 75.4], [308, 82.8], [359, 90.9], [411, 92.3], [462, 92.3], [513, 94.7], [564, 96.3], [616, 103.9], [667, 105.4], [718, 105.4], [769, 108.8], [821, 108.8], [872, 114.4], [923, 117.5], [974, 122.0], [1026, 131.8], [1077, 132.3], [1128, 134.1], [1179, 134.6], [1231, 134.6], [1282, 135.1], [1333, 138.5], [1384, 149.1], [1436, 158.9], [1487, 158.9], [1538, 163.1], [1589, 163.1], [1641, 163.1], [1692, 163.1], [1743, 163.1], [1794, 163.1], [1846, 163.1], [1897, 163.1], [1948, 163.1], [2000, 163.6]] }
-        ]
+        ],
+        interpret: "<b>How to read it:</b> x is pulls made, y is total reward LOST versus an oracle that always pulls the best arm — so lower and flatter is better, and the curve can only ever go up. <b>Shape is everything:</b> a straight LINE that never bends (red) means the strategy is stuck paying a fixed penalty every step forever — greedy locked onto a wrong arm. A curve that BENDS over (blue, ε-greedy) is sub-linear: still climbing, but slower. A curve that FLATTENS to nearly horizontal (green, UCB) is the signature of an algorithm that found the best arm and stopped wasting pulls — logarithmic regret. <b>Conclude:</b> read the late slope, not the height — flat late means solved."
+      },
+      {
+        type: "bars",
+        title: "VARIANT — what UCB sees at one step: estimate Q̂ (bar) plus confidence bonus (the gap to the marker)",
+        labels: ["Arm A  (N=6)", "Arm B  (N=3)", "Arm C  (N=1)"],
+        values: [0.60, 0.50, 0.40],
+        valueLabels: ["Q̂=0.60 → U=1.22", "Q̂=0.50 → U=1.38", "Q̂=0.40 → U=1.92 ✓pull"],
+        colors: ["#9aa7b4", "#9aa7b4", "#7ee787"],
+        interpret: "<b>How to read it:</b> each bar is an arm's current value estimate Q̂ — the running average reward seen from it. Greedy reads only the bars and pulls the tallest (Arm A, 0.60). But UCB adds a confidence bonus that is BIGGER for less-pulled arms: with c=1 and t=10, the upper bound U = Q̂ + √(ln t / N) gives A=1.22, B=1.38, C=1.92. <b>What it tells you:</b> Arm C has the LOWEST estimate but the HIGHEST upper bound because it has been pulled only once (N=1) — huge uncertainty. <b>Conclude:</b> UCB pulls C (green), the arm greedy would never revisit. This is directed exploration: probe the uncertain arm that could still be best. Numbers are the worked example from the lesson."
+      },
+      {
+        type: "line",
+        title: "VARIANT — non-stationary: decay-to-zero ε MISSES a drift (arm values change at step 1000)",
+        xlabel: "step t (pulls)",
+        ylabel: "cumulative regret (reward lost vs the CURRENT best arm)",
+        series: [
+          { name: "decayed ε→0 (blind after drift)", color: "#ff7b72", points: [[1, 3], [200, 40], [400, 55], [600, 62], [800, 66], [1000, 68], [1100, 120], [1200, 175], [1300, 232], [1400, 290], [1500, 349], [1600, 408], [1700, 468], [1800, 528], [1900, 589], [2000, 650]] },
+          { name: "ε floored at 0.05 (keeps probing)", color: "#7ee787", points: [[1, 3], [200, 42], [400, 60], [600, 70], [800, 76], [1000, 80], [1100, 110], [1200, 128], [1300, 140], [1400, 150], [1500, 158], [1600, 165], [1700, 171], [1800, 177], [1900, 182], [2000, 187]] }
+        ],
+        interpret: "<b>Illustrative shapes.</b> Here the best arm secretly changes at step 1000 (a non-stationary world). Both curves are flat and healthy on the left — exploration has done its job. <b>The tell is the kink at 1000:</b> the decay-to-zero strategy (red) has already shrunk ε to nearly nothing, so it never re-checks the other arms and stays loyal to the now-WRONG arm — its regret turns back into a straight rising line, exactly the stuck-greedy failure but arriving late. The floored strategy (green) keeps a small permanent ε, notices the new winner within a few hundred pulls, and re-flattens. <b>Conclude:</b> when a curve that was flat suddenly resumes a straight climb, suspect drift — and never decay exploration fully to zero on non-stationary problems."
       }
     ],
-    caption: "Real numpy run on a 10-armed Gaussian bandit (seed 5, 2000 pulls). Greedy locks onto a sub-optimal arm and its regret climbs in a straight LINE to 2448.8 — it pays a fixed gap every step forever. ε-greedy (ε=0.1) keeps probing, so its regret bends sub-linear and ends at 411.9. UCB directs exploration only at uncertain arms; its curve FLATTENS (logarithmic) and ends lowest at 163.6 — about 15× less regret than greedy. The flattening is the visual signature of an algorithm that has found the best arm and mostly stopped exploring.",
+    caption: "Read the regret curve by its LATE SHAPE: straight line = stuck (linear), bending = sub-linear, flattening = solved (logarithmic). The bar chart shows the per-arm uncertainty view UCB acts on — lowest estimate can still have the highest upper bound. The third panel is the failure to watch for: a flat curve that resumes a straight climb means the world drifted and your exploration decayed too far.",
     code: `import numpy as np
 
 # ---- a REAL 10-armed Gaussian bandit, simulated in numpy ----

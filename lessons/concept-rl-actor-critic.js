@@ -324,11 +324,11 @@ print("final 50-ep average:", round(float(np.mean(returns_hist[-50:])), 1))`
   };
 
   window.CODEVIZ["rl-actor-critic"] = {
-    question: "Does the critic actually help? We pit two tabular policy-gradient agents on the SAME tiny slippery-corridor MDP — REINFORCE (Monte-Carlo full return, no critic) vs Actor-Critic (one-step TD-error advantage) — and plot return per episode. Actor-Critic should climb faster and sit higher with less wobble, because the critic's bootstrap cuts variance.",
+    question: "How do you READ an actor-critic learning curve? The ideal one climbs and flattens with the critic's bootstrap beating REINFORCE — but the same plot can also wobble wildly (no critic / variance), shoot to the floor (the deadly triad / diverging values), or rise then crash (entropy collapse). Learn to tell them apart.",
     charts: [
       {
         type: "line",
-        title: "Return per episode: REINFORCE vs Actor-Critic on a 10-state slippery corridor (12-seed mean, smoothed)",
+        title: "HEALTHY: Actor-Critic climbs above REINFORCE and flattens (real, 12-seed mean)",
         xlabel: "episode",
         ylabel: "smoothed episode return",
         series: [
@@ -350,10 +350,83 @@ print("final 50-ep average:", round(float(np.mean(returns_hist[-50:])), 1))`
               [271, 0.735], [294, 0.747], [317, 0.756], [339, 0.755], [362, 0.768], [385, 0.766]
             ]
           }
-        ]
+        ],
+        interpret: "<b>X = episode, Y = smoothed return (higher = better).</b> This is the win you want. Both agents share the same policy and corridor; the only difference is the gradient weight — REINFORCE uses the full Monte-Carlo return, Actor-Critic uses the one-step TD error from its critic. <b>Read it:</b> the green (AC) curve pulls ahead early (0.56 vs 0.42 by episode 22) and stays above, then both flatten — that plateau means converged. The critic's bootstrap is doing its job: same direction as REINFORCE, less noise (real per-episode std 0.014 vs 0.020). Numbers are real outputs of the code below."
+      },
+      {
+        type: "line",
+        title: "VARIANCE: no critic — return wobbles violently episode to episode (illustrative)",
+        xlabel: "episode",
+        ylabel: "episode return (raw, unsmoothed)",
+        series: [
+          {
+            name: "REINFORCE raw (high variance)",
+            color: "#4ea1ff",
+            points: [
+              [0, -0.3], [20, 0.5], [40, 0.05], [60, 0.7], [80, 0.2], [100, 0.75],
+              [120, 0.1], [140, 0.68], [160, 0.25], [180, 0.72], [200, 0.0], [220, 0.7],
+              [240, 0.3], [260, 0.74], [280, 0.15], [300, 0.7], [320, 0.35], [340, 0.72]
+            ]
+          },
+          {
+            name: "Actor-Critic raw (steady)",
+            color: "#7ee787",
+            points: [
+              [0, -0.28], [20, 0.55], [40, 0.6], [60, 0.66], [80, 0.7], [100, 0.72],
+              [120, 0.71], [140, 0.74], [160, 0.73], [180, 0.75], [200, 0.74], [220, 0.76],
+              [240, 0.75], [260, 0.77], [280, 0.76], [300, 0.77], [320, 0.78], [340, 0.77]
+            ]
+          }
+        ],
+        interpret: "Illustrative. <b>Same axes, but raw (unsmoothed) return.</b> The blue spikes show what the critic buys you: with no critic, each update is weighted by the full random return, so good and bad episodes alternate wildly even after the mean has converged. <b>Recognise it:</b> a jagged, fat band of return that never settles, while the green (with critic) sits in a thin band. If your actor-critic plot looks this spiky, the critic is not cutting variance — check that it is actually learning (watch the critic loss)."
+      },
+      {
+        type: "line",
+        title: "DIVERGING: the deadly triad — values blow up and return collapses (illustrative)",
+        xlabel: "episode",
+        ylabel: "smoothed episode return",
+        series: [
+          {
+            name: "Diverging (LR too high / no clipping)",
+            color: "#ff7b72",
+            points: [
+              [0, -0.28], [20, 0.3], [40, 0.55], [60, 0.62], [80, 0.5], [100, 0.2],
+              [120, -0.2], [140, -0.6], [160, -1.0], [180, -1.4], [200, -1.6], [220, -1.6],
+              [240, -1.6], [260, -1.6], [280, -1.6], [300, -1.6], [320, -1.6], [340, -1.6]
+            ]
+          }
+        ],
+        interpret: "Illustrative. <b>Same axes.</b> Bootstrapping + function approximation + a moving policy is the \"deadly triad\" — the critic chases its own moving estimate and the values explode. <b>Recognise it:</b> the curve starts to learn, then turns over and crashes to the floor and stays pinned (the policy has gone near-deterministic on a bad action). Red = broken. <b>Fix:</b> smaller learning rates, gradient clipping, advantage normalization, GAE — exactly the stabilizers in the code's loss."
+      },
+      {
+        type: "line",
+        title: "ENTROPY COLLAPSE: rises then crashes as the actor stops exploring (illustrative)",
+        xlabel: "episode",
+        ylabel: "value",
+        series: [
+          {
+            name: "return",
+            color: "#ffb454",
+            points: [
+              [0, -0.28], [20, 0.4], [40, 0.6], [60, 0.7], [80, 0.72], [100, 0.6],
+              [120, 0.4], [140, 0.3], [160, 0.28], [180, 0.27], [200, 0.27], [220, 0.27],
+              [240, 0.27], [260, 0.27], [280, 0.27], [300, 0.27], [320, 0.27], [340, 0.27]
+            ]
+          },
+          {
+            name: "policy entropy H",
+            color: "#c89bff",
+            points: [
+              [0, 0.69], [20, 0.6], [40, 0.45], [60, 0.3], [80, 0.18], [100, 0.1],
+              [120, 0.05], [140, 0.02], [160, 0.01], [180, 0.0], [200, 0.0], [220, 0.0],
+              [240, 0.0], [260, 0.0], [280, 0.0], [300, 0.0], [320, 0.0], [340, 0.0]
+            ]
+          }
+        ],
+        interpret: "Illustrative. <b>Two series on shared axes: orange = return, purple = policy entropy (spread of the action distribution).</b> The actor commits to one action too early — entropy crashes to ~0 — so exploration dies and the return locks in at a mediocre plateau instead of the ~0.77 optimum. <b>Recognise it:</b> entropy falling to zero <i>before</i> the return has maxed out, then return stalling below the healthy curve. <b>Fix:</b> raise the entropy bonus so the actor is paid to keep its action distribution spread out."
       }
     ],
-    caption: "Real numbers, averaged over 12 seeds, from the numpy code below. Both agents share the exact same softmax policy and corridor; the ONLY difference is the weight on the policy-gradient update — REINFORCE uses the full Monte-Carlo return $G_t$, Actor-Critic uses the one-step TD error $\\delta_t = r + \\gamma\\hat V(s') - \\hat V(s)$ from a tabular critic. The Actor-Critic curve (green) pulls ahead early (0.56 vs 0.42 by episode 22) and stays consistently above. Across the last 150 episodes the raw per-episode return has std 0.014 for Actor-Critic vs 0.020 for REINFORCE — the critic's bootstrap visibly lowers variance, exactly the bias/variance win the math predicts.",
+    caption: "The first chart is real (12-seed numpy below); the other three are illustrative shapes of the failure modes the same plot can show. The healthy signature: AC above REINFORCE, both flattening to a plateau. The warnings: a fat wobbly band (variance, no working critic), a curve that crashes and pins to the floor (diverging / deadly triad), or return stalling low while entropy hits zero (entropy collapse).",
     code: `import numpy as np
 
 # A tiny SLIPPERY CORRIDOR MDP, built inline in numpy (no gym).

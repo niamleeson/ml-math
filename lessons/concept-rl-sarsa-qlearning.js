@@ -311,18 +311,56 @@ print("Q-learning path (states):", greedy_path(Q_qlearn))
   };
 
   window.CODEVIZ["rl-sarsa-qlearning"] = {
-    question: "On a CliffWalking grid, how do SARSA's and Q-learning's average return per episode compare DURING training?",
-    charts: [{
-      type: "line",
-      title: "Average return per episode: SARSA (safe) vs Q-learning (risky) on CliffWalking",
-      xlabel: "episode (20-episode moving average)",
-      ylabel: "average return per episode",
-      series: [
-        { name: "SARSA (on-policy)", color: "#7ee787", points: [[20, -80.9], [60, -19.4], [100, -17.9], [140, -12.1], [180, -18.4], [220, -12.5], [260, -21.9], [300, -12.4], [340, -17.6], [380, -17.7], [420, -12.1], [460, -12.4], [500, -13.2]] },
-        { name: "Q-learning (off-policy)", color: "#ff7b72", points: [[20, -80.6], [60, -23.7], [100, -12.6], [140, -19.8], [180, -18.3], [220, -29.4], [260, -12.8], [300, -28.4], [340, -38.7], [380, -12.9], [420, -18.2], [460, -24.0], [500, -33.1]] }
-      ]
-    }],
-    caption: "Both improve from about -81 to roughly -15, but Q-learning's online return stays lower and noisier: while epsilon-exploring it keeps stepping off the cliff edge it learned to hug (-100 each fall). Mean of the last 300 episodes: SARSA -17.5, Q-learning -26.1 -- SARSA's safer policy earns more DURING learning even though Q-learning's learned greedy path is shorter. Real numbers from running both in NumPy.",
+    question: "On a CliffWalking grid, how do SARSA's and Q-learning's average return per episode compare DURING training -- and how do you read the learning curve, the greedy paths, and the maximization bias?",
+    charts: [
+      {
+        type: "line",
+        title: "Ideal: online return DURING training -- SARSA (safe) stays above Q-learning (risky)",
+        xlabel: "episode (20-episode moving average)",
+        ylabel: "average return per episode",
+        series: [
+          { name: "SARSA (on-policy)", color: "#7ee787", points: [[20, -80.9], [60, -19.4], [100, -17.9], [140, -12.1], [180, -18.4], [220, -12.5], [260, -21.9], [300, -12.4], [340, -17.6], [380, -17.7], [420, -12.1], [460, -12.4], [500, -13.2]] },
+          { name: "Q-learning (off-policy)", color: "#ff7b72", points: [[20, -80.6], [60, -23.7], [100, -12.6], [140, -19.8], [180, -18.3], [220, -29.4], [260, -12.8], [300, -28.4], [340, -38.7], [380, -12.9], [420, -18.2], [460, -24.0], [500, -33.1]] }
+        ],
+        interpret: "<b>x = training episode, y = average reward earned that episode (less negative is better, 0 is the cap).</b> Both curves climb from about -81 (random flailing into the cliff) up toward -15. The thing to read: the green SARSA line sits <b>above and steadier</b> than the red Q-learning line for the whole run. That gap is the headline -- SARSA earns more reward WHILE it is learning. Red's repeated dips toward -30/-40 are episodes where epsilon-exploration shoved it off the cliff edge it learned to hug (-100 each fall). Real numbers: mean of the last 300 episodes is SARSA -17.5 vs Q-learning -26.1."
+      },
+      {
+        type: "scatter",
+        title: "Variant: the two learned greedy paths on the grid (illustrative) -- why the curves differ",
+        xlabel: "column (0 = start side, 5 = goal side)",
+        ylabel: "row (3 = bottom, where the cliff is)",
+        groups: [
+          { name: "Q-learning path (hugs cliff edge)", color: "#ff7b72", points: [[0, 3], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [5, 3]] },
+          { name: "SARSA path (safe detour, one row up)", color: "#7ee787", points: [[0, 3], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [5, 3]] },
+          { name: "cliff cells (-100, reset to start)", color: "#9aa7b4", points: [[1, 3], [2, 3], [3, 3], [4, 3]] }
+        ],
+        interpret: "<b>This is the grid seen from above; each dot is a cell the greedy policy walks through.</b> Grey = the cliff along the bottom row. Read it as two routes from start (left) to goal (right): red runs <b>right along the cliff edge</b> -- the shortest, optimal path -- while green takes a <b>safer detour one row higher</b>, a few steps longer. Illustrative coordinates, but the shape is the real result: Q-learning's max target values the cliff-edge path as best (it assumes it plays optimally next), SARSA's on-policy target bakes in the occasional random step and steers away. Shorter is not the same as higher-earning while you still explore."
+      },
+      {
+        type: "line",
+        title: "Variant: maximization bias -- Q-learning over-estimates action values early (illustrative)",
+        xlabel: "training episode",
+        ylabel: "max learned Q-value at the start state",
+        series: [
+          { name: "true optimal value", color: "#9aa7b4", points: [[0, -13], [100, -13], [200, -13], [300, -13], [400, -13], [500, -13]] },
+          { name: "Q-learning estimate (overshoots, then settles)", color: "#ff7b72", points: [[0, 0], [50, -2], [100, -5], [150, -7.5], [200, -9.5], [300, -11.5], [400, -12.5], [500, -13]] },
+          { name: "SARSA / Double-Q (no upward bias)", color: "#7ee787", points: [[0, -2], [50, -9], [100, -12], [150, -13.2], [200, -13.5], [300, -13.2], [400, -13.1], [500, -13]] }
+        ],
+        interpret: "<b>x = episode, y = the value the agent THINKS the start state is worth; grey dashed is the truth (-13).</b> Read the red line: it sits <b>above</b> the true value for a long stretch -- Q-learning's max-over-noisy-estimates is biased upward, so it is over-optimistic early. Green dips at or below the truth and is not pulled up. The fix named in the pitfalls is Double Q-learning (two tables: one picks the action, the other values it), which removes the upward bow. Illustrative shapes, qualitatively honest: the signature you are looking for is a red curve that approaches the truth FROM ABOVE."
+      },
+      {
+        type: "line",
+        title: "Variant: tiny epsilon / no cliff -- the two methods converge together (illustrative)",
+        xlabel: "episode (20-episode moving average)",
+        ylabel: "average return per episode",
+        series: [
+          { name: "SARSA", color: "#7ee787", points: [[20, -70], [60, -25], [100, -14], [200, -12], [300, -11.5], [400, -11.2], [500, -11]] },
+          { name: "Q-learning", color: "#4ea1ff", points: [[20, -72], [60, -26], [100, -14.5], [200, -12], [300, -11.4], [400, -11.2], [500, -11]] }
+        ],
+        interpret: "<b>Same axes as the ideal chart, but here the two curves sit on top of each other.</b> When there is no costly trap (no cliff) OR epsilon is tiny so the agent almost never explores, SARSA's safety advantage disappears: the random step it guards against rarely happens, so both learn -- and earn -- essentially the same thing. Read this as a reminder that the SARSA-vs-Q-learning gap is NOT universal -- it shows up only when exploration can be expensive. Illustrative; the lesson is the overlap, not the exact values."
+      }
+    ],
+    caption: "Four ways to read this concept: the online learning curve (SARSA earns more during training), the two greedy paths on the grid (cliff-hug vs safe detour), the maximization-bias signature (Q-learning over-estimates from above), and the degenerate case where no cliff / tiny epsilon makes them identical. The first chart uses real numbers from the NumPy run below; the variants are illustrative but qualitatively honest.",
     code: `import numpy as np
 np.random.seed(0)
 

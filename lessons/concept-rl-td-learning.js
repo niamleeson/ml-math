@@ -268,18 +268,41 @@ print(V.reshape(4, 4))
   };
 
   window.CODEVIZ["rl-td-learning"] = {
-    question: "Does TD(0) really estimate a state's value with lower variance and faster than Monte Carlo? Compare their error vs. number of episodes on the same state of a tiny random-walk Markov Decision Process (MDP).",
-    charts: [{
-      type: "line",
-      title: "Value-estimate error at the center state: TD(0) vs Monte Carlo (mean abs error over 200 runs)",
-      xlabel: "episodes",
-      ylabel: "| V(center) - true value |",
-      series: [
-        { name: "TD(0)", color: "#7ee787", points: [[0,0.0],[2,0.0009],[4,0.0039],[6,0.0083],[8,0.0133],[10,0.018],[12,0.0221],[14,0.0254],[16,0.0297],[18,0.0332],[20,0.0346],[22,0.0361],[24,0.0382],[26,0.042],[28,0.041],[30,0.0434],[32,0.0439],[34,0.0441],[36,0.0456],[38,0.0433],[40,0.04],[42,0.0418],[44,0.0487],[46,0.0518],[48,0.0487],[50,0.0491],[52,0.0501],[54,0.0526],[56,0.0505],[58,0.0526],[60,0.051],[62,0.0515],[64,0.0501],[66,0.0493],[68,0.0506],[70,0.05],[72,0.0517],[74,0.0527],[76,0.0513],[78,0.0556],[80,0.0557],[82,0.0559],[84,0.0585],[86,0.0569],[88,0.0554],[90,0.0563],[92,0.0542],[94,0.0556],[96,0.0577],[98,0.0584]] },
-        { name: "Monte Carlo", color: "#ff7b72", points: [[0,0.1315],[2,0.1726],[4,0.1869],[6,0.1923],[8,0.1913],[10,0.1794],[12,0.1913],[14,0.1788],[16,0.1831],[18,0.1859],[20,0.1889],[22,0.1965],[24,0.1973],[26,0.1979],[28,0.1989],[30,0.201],[32,0.2005],[34,0.2004],[36,0.1862],[38,0.1899],[40,0.1865],[42,0.1785],[44,0.1955],[46,0.2072],[48,0.1866],[50,0.1816],[52,0.1953],[54,0.1806],[56,0.1813],[58,0.1911],[60,0.1878],[62,0.1883],[64,0.1839],[66,0.1901],[68,0.2048],[70,0.1954],[72,0.1924],[74,0.1883],[76,0.1795],[78,0.1946],[80,0.1889],[82,0.1956],[84,0.2008],[86,0.2038],[88,0.1952],[90,0.1963],[92,0.1725],[94,0.1978],[96,0.1893],[98,0.1912]] }
-      ]
-    }],
-    caption: "Real numbers from the code below (5-state random walk, true center value = 0.5, same step size alpha = 0.1 for both, averaged over 200 runs). TD(0) (green) settles to a small, stable error around 0.05 within a few episodes; Monte Carlo (red) is stuck far higher (~0.19) because its full-return target carries the variance of every future step. Same data, same alpha — TD's lower-variance one-step target makes it both lower-error and faster early. (MC would eventually shrink with a decaying alpha, but at a fixed alpha its variance keeps it noisy.)",
+    question: "How do you read a TD learning curve? Track the estimate's error per episode and learn to recognise the healthy case, a step size set too large, and the well-tuned decaying-step-size case.",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy: TD(0) beats Monte Carlo on error (mean abs error over 200 runs)",
+        xlabel: "episodes",
+        ylabel: "| V(center) - true value |",
+        series: [
+          { name: "TD(0)", color: "#7ee787", points: [[0,0.0],[2,0.0009],[4,0.0039],[6,0.0083],[8,0.0133],[10,0.018],[12,0.0221],[14,0.0254],[16,0.0297],[18,0.0332],[20,0.0346],[22,0.0361],[24,0.0382],[26,0.042],[28,0.041],[30,0.0434],[32,0.0439],[34,0.0441],[36,0.0456],[38,0.0433],[40,0.04],[42,0.0418],[44,0.0487],[46,0.0518],[48,0.0487],[50,0.0491],[52,0.0501],[54,0.0526],[56,0.0505],[58,0.0526],[60,0.051],[62,0.0515],[64,0.0501],[66,0.0493],[68,0.0506],[70,0.05],[72,0.0517],[74,0.0527],[76,0.0513],[78,0.0556],[80,0.0557],[82,0.0559],[84,0.0585],[86,0.0569],[88,0.0554],[90,0.0563],[92,0.0542],[94,0.0556],[96,0.0577],[98,0.0584]] },
+          { name: "Monte Carlo", color: "#ff7b72", points: [[0,0.1315],[2,0.1726],[4,0.1869],[6,0.1923],[8,0.1913],[10,0.1794],[12,0.1913],[14,0.1788],[16,0.1831],[18,0.1859],[20,0.1889],[22,0.1965],[24,0.1973],[26,0.1979],[28,0.1989],[30,0.201],[32,0.2005],[34,0.2004],[36,0.1862],[38,0.1899],[40,0.1865],[42,0.1785],[44,0.1955],[46,0.2072],[48,0.1866],[50,0.1816],[52,0.1953],[54,0.1806],[56,0.1813],[58,0.1911],[60,0.1878],[62,0.1883],[64,0.1839],[66,0.1901],[68,0.2048],[70,0.1954],[72,0.1924],[74,0.1883],[76,0.1795],[78,0.1946],[80,0.1889],[82,0.1956],[84,0.2008],[86,0.2038],[88,0.1952],[90,0.1963],[92,0.1725],[94,0.1978],[96,0.1893],[98,0.1912]] }
+        ],
+        interpret: "Real numbers from the code below (5-state random walk, true center value = 0.5, same step size alpha = 0.1 for both, 200 runs). The x-axis is how many episodes the agent has seen; the y-axis is how far the center-state estimate sits from the known true value (0 = perfect). Green TD(0) drops to a small, stable error near 0.05 within a few episodes; red Monte Carlo plateaus far higher (~0.19) because its full-return target soaks up the randomness of every future step. <b>Read it as:</b> lower and flatter is better, and the green line being both lower and quicker is the whole point — TD's one-step target has far less variance."
+      },
+      {
+        type: "line",
+        title: "Step size too large: error never settles, it oscillates (illustrative)",
+        xlabel: "episodes",
+        ylabel: "| V(center) - true value |",
+        series: [
+          { name: "TD(0), alpha too big", color: "#ff7b72", points: [[0,0.0],[5,0.12],[10,0.05],[15,0.19],[20,0.07],[25,0.22],[30,0.06],[35,0.20],[40,0.09],[45,0.24],[50,0.05],[55,0.21],[60,0.08],[65,0.23],[70,0.06],[75,0.20],[80,0.10],[85,0.25],[90,0.07],[95,0.22]] }
+        ],
+        interpret: "Illustrative shape. Same axes — episodes vs distance from the true value — but here alpha is set too high (say 0.8). Each update slams the estimate a big fraction of the way toward a single noisy target, so the error swings wildly up and down and never settles into a low band. <b>Recognise it by:</b> a jagged line with no shrinking trend, often as wide late as it was early. The fix is a smaller alpha or a step-size schedule that decays it."
+      },
+      {
+        type: "line",
+        title: "Decaying step size: error keeps shrinking toward zero (illustrative)",
+        xlabel: "episodes",
+        ylabel: "| V(center) - true value |",
+        series: [
+          { name: "TD(0), alpha_n = 1/n", color: "#7ee787", points: [[0,0.0],[5,0.07],[10,0.045],[15,0.032],[20,0.025],[25,0.02],[30,0.017],[35,0.014],[40,0.012],[45,0.011],[50,0.0095],[55,0.0085],[60,0.0075],[65,0.0068],[70,0.0062],[75,0.0057],[80,0.0052],[85,0.0048],[90,0.0045],[95,0.0042]] }
+        ],
+        interpret: "Illustrative shape of the convergence guarantee. Same axes again. With a decaying step size (e.g. alpha_n = 1/n, which satisfies the stochastic-approximation conditions), the early steps move fast, then the shrinking alpha damps the noise so the error keeps drifting toward 0 instead of plateauing at a noise floor. <b>Recognise it by:</b> a smooth, monotone-ish decline that flattens near zero rather than levelling off at a constant band like the fixed-alpha green curve in the first chart."
+      }
+    ],
+    caption: "Three TD learning curves on the same axes — episodes (x) vs distance from the true value (y). The first is real; the other two are illustrative shapes for a too-large step size and a well-tuned decaying one.",
     code: `import numpy as np
 
 # A tiny 5-state random walk (Sutton & Barto). States 0..4 (left..right).

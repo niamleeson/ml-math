@@ -245,18 +245,56 @@ class TwinCritic(nn.Module):                 # Q_phi1, Q_phi2 — TD3/SAC use mi
 
   /* ---------------------------------------------------------------- */
   window.CODEVIZ["rl-continuous-control"] = {
-    question: "Off-policy methods reuse experience, so they should learn faster per environment step. How much return does each algorithm reach at a fixed sample budget on a continuous-control task — DDPG vs TD3 vs SAC vs PPO?",
-    charts: [{
-      type: "bars",
-      title: "Illustrative return at a fixed 50k-step budget (higher = more sample-efficient)",
-      xlabel: "algorithm",
-      ylabel: "mean episode return at 50k steps",
-      labels: ["DDPG", "TD3", "SAC", "PPO"],
-      values: [142, 268, 312, 165],
-      valueLabels: ["142", "268", "312", "165"],
-      colors: ["#f4a259", "#4ea1ff", "#3ddc97", "#bd93f9"]
-    }],
-    caption: "Illustrative, not from a real benchmark run: numbers come from the tiny saturating learning-curve model in the code below, which encodes the well-documented qualitative ordering on continuous control — off-policy SAC and TD3 reach high return fastest (sample-efficient replay), plain DDPG lags and is brittle (over-estimation), and on-policy PPO is robust but slower per sample at this small budget. Labeled illustrative; absolute scale is arbitrary.",
+    question: "How do you read a continuous-control learning curve — and how do you spot the failure modes (DDPG's overestimation blow-up, an unstable critic) versus a healthy SAC/TD3 run?",
+    charts: [
+      {
+        type: "line",
+        title: "Healthy continuous control: SAC and TD3 climb fast, DDPG lags, PPO slow-but-steady",
+        xlabel: "environment steps (thousands)",
+        ylabel: "mean episode return (higher = better)",
+        series: [
+          { name: "SAC", color: "#7ee787", points: [[0,-160],[10,40],[20,170],[30,255],[40,300],[50,320]] },
+          { name: "TD3", color: "#4ea1ff", points: [[0,-160],[10,10],[20,120],[30,210],[40,265],[50,295]] },
+          { name: "PPO", color: "#c89bff", points: [[0,-160],[10,-90],[20,-20],[30,60],[40,120],[50,165]] },
+          { name: "DDPG", color: "#ffb454", points: [[0,-160],[10,-60],[20,30],[30,90],[40,125],[50,145]] }
+        ],
+        interpret: "<b>X = how much experience the agent has seen (steps); Y = average return per episode, so up-and-to-the-left is more sample-efficient.</b> Read which curve reaches a given return with the fewest steps. <b>Green SAC</b> and <b>blue TD3</b> shoot up earliest — off-policy replay plus (for SAC) entropy exploration. <b>Purple PPO</b> rises steadily but later: on-policy, it throws each batch away. <b>Orange DDPG</b> trails and flattens low — its single critic over-values actions and it explores poorly. Conclusion: at a fixed budget, prefer SAC/TD3. (Illustrative shapes; absolute scale arbitrary.)"
+      },
+      {
+        type: "bars",
+        title: "Same story as a snapshot: return at a fixed 50k-step budget",
+        xlabel: "algorithm",
+        ylabel: "mean episode return at 50k steps",
+        labels: ["DDPG", "TD3", "SAC", "PPO"],
+        values: [142, 268, 312, 165],
+        valueLabels: ["142", "268", "312", "165"],
+        colors: ["#ffb454", "#4ea1ff", "#7ee787", "#c89bff"],
+        interpret: "<b>Each bar is one algorithm's return after the same 50k steps — a single vertical slice through the curves above.</b> Taller is more sample-efficient. SAC (green) is highest, TD3 (blue) close behind, then PPO (purple), with DDPG (orange) lowest. Use a bar snapshot like this to rank algorithms at your compute budget; it hides the trajectory, so pair it with the curve when timing matters. (Illustrative numbers from the saturating model in the code.)"
+      },
+      {
+        type: "line",
+        title: "Failure mode — DDPG overestimation: critic Q-value diverges while true return stays flat",
+        xlabel: "environment steps (thousands)",
+        ylabel: "value",
+        series: [
+          { name: "critic's predicted Q", color: "#ff7b72", points: [[0,5],[10,40],[20,120],[30,320],[40,820],[50,2100]] },
+          { name: "actual episode return", color: "#9aa7b4", points: [[0,-160],[10,-150],[20,-155],[30,-140],[40,-150],[50,-145]] }
+        ],
+        interpret: "<b>Two lines on the same axes: red is what the critic THINKS a state-action is worth; grey is what the agent actually earns.</b> When red runs away from grey — here exploding into the thousands while grey stays pinned at the floor — the critic is over-estimating: the max-like target amplifies its own errors. The tell is a Q-estimate that climbs without the real return following. This is exactly the bug TD3 fixes by taking the MIN of twin critics. If you see this, suspect a single optimistic critic. (Illustrative.)"
+      },
+      {
+        type: "line",
+        title: "Failure mode — unstable / oscillating: return swings instead of converging",
+        xlabel: "environment steps (thousands)",
+        ylabel: "mean episode return",
+        series: [
+          { name: "unstable run", color: "#ff7b72", points: [[0,-160],[10,80],[20,-40],[30,180],[40,-20],[50,150],[60,-60],[70,120]] },
+          { name: "healthy SAC (reference)", color: "#7ee787", points: [[0,-160],[10,40],[20,170],[30,255],[40,300],[50,320],[60,325],[70,330]] }
+        ],
+        interpret: "<b>Both lines are return vs steps; green is a healthy run for reference, red is the run under diagnosis.</b> A healthy curve trends upward and settles; the red one keeps swinging up and down with no settling — a sign of too-large a learning rate or step size, a too-small replay buffer, or unscaled actions/rewards. The diagnostic is the saw-tooth that never narrows. Fix by lowering the learning rate, enlarging the buffer, or squashing actions to [-1,1]. (Illustrative.)"
+      }
+    ],
+    caption: "The first two charts are the healthy comparison (ideal curve plus its fixed-budget snapshot); the last two are failure modes you actually meet — DDPG's critic blowing up, and an unstable oscillating run. Each chart's box says how to read it.",
     code: `import numpy as np
 
 # Illustrative sample-efficiency proxy (NO gym): model each algorithm's learning curve as

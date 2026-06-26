@@ -387,27 +387,50 @@ for ep in range(400):
   };
 
   window.CODEVIZ["rl-dqn"] = {
-    question: "Does the agent actually learn? Plot episode return over training — it should rise and then solve the task.",
+    question: "Does the agent actually learn? Read the return-over-training curve — and learn to tell a healthy rise-then-solve apart from divergence (deadly triad) and a catastrophic-forgetting collapse.",
     charts: [
       {
         type: "line",
-        title: "Episode return rising over training, balance task (solved ≈ 200 steps)",
+        title: "Healthy DQN: return rises then solves (caps ≈ 200 steps)",
         xlabel: "episode",
         ylabel: "smoothed episode return (steps survived)",
         series: [
           {
             name: "episode return",
-            color: "#4ea1ff",
+            color: "#7ee787",
             points: [
               [0, 26.6], [38, 44.53], [76, 56.13], [114, 101.73], [152, 174.2],
               [190, 182.77], [228, 200.0], [266, 200.0], [304, 200.0], [342, 200.0],
               [380, 200.0], [418, 200.0], [456, 200.0], [494, 200.0], [532, 200.0], [570, 200.0]
             ]
           }
-        ]
+        ],
+        interpret: "<b>X = training episode; Y = how many steps the pole stayed up that episode (smoothed). Up = learning.</b> Read it as an S-curve: a slow start while the buffer fills and epsilon is high, a steep climb as Q-values sharpen, then a flat plateau pinned at the 200-step ceiling — the agent now balances indefinitely. A curve that reaches the cap and STAYS there is the signature of a solved task. Real numbers from a tabular proxy; real DQN on CartPole-v1 traces the same shape to its 500 cap."
+      },
+      {
+        type: "line",
+        title: "Failure mode — divergence (deadly triad): return collapses as Q-values explode",
+        xlabel: "episode",
+        ylabel: "smoothed episode return",
+        series: [
+          { name: "no target net / no replay", color: "#ff7b72", points: [[0,26],[40,70],[80,110],[120,60],[160,25],[200,12],[240,9],[280,9],[320,8]] },
+          { name: "healthy (reference)", color: "#7ee787", points: [[0,26],[40,55],[80,120],[120,185],[160,200],[200,200],[240,200],[280,200],[320,200]] }
+        ],
+        interpret: "<b>Both lines are return vs episode; green is a healthy run for reference, red is online Q-learning with NO replay buffer and NO target net.</b> The red curve rises briefly then falls back toward the floor and stays there — the value estimates blew up and the policy fell apart. The tell is a peak followed by collapse, not a plateau. This is the deadly triad (function approximation + bootstrapping + off-policy) firing. If you see it, add experience replay and a target network. (Illustrative shape.)"
+      },
+      {
+        type: "line",
+        title: "Failure mode — catastrophic forgetting: solves, then suddenly drops",
+        xlabel: "episode",
+        ylabel: "smoothed episode return",
+        series: [
+          { name: "unstable run", color: "#ffb454", points: [[0,26],[40,90],[80,180],[120,200],[160,200],[200,55],[240,120],[280,200],[320,70]] },
+          { name: "healthy (reference)", color: "#7ee787", points: [[0,26],[40,90],[80,180],[120,200],[160,200],[200,200],[240,200],[280,200],[320,200]] }
+        ],
+        interpret: "<b>Same axes; green stays solved while orange — after reaching the cap — suddenly crashes and only partly recovers.</b> The diagnostic is a sharp cliff from a high plateau, sometimes repeating: the network over-writes good weights (too-high a learning rate, too-small a buffer, or a stale target-sync period). Unlike divergence it can bounce back, but it never stays solved. Fix: lower the learning rate, enlarge the replay buffer, tune the target-sync interval, and report across several seeds. (Illustrative.)"
       }
     ],
-    caption: "Real numbers from a tabular Q-learning agent on a tiny CartPole-style balance task (an 11-state tilt corridor: +1 per step the pole stays up, episode caps at 200 steps = solved). The return climbs from ~27 to the 200-step ceiling as the Q-values sharpen and epsilon decays, then plateaus once the agent balances indefinitely. Real DQN on CartPole-v1 climbs the same S-curve to its 500-step cap — same shape, just with a neural net standing in for the table.",
+    caption: "First chart is the healthy rise-then-solve curve (real proxy numbers); the next two are failure modes — full divergence from the deadly triad, and catastrophic forgetting after solving. Each chart's box explains how to recognize it.",
     code: `import numpy as np
 # Tiny tabular Q-learning on a CartPole-style balance proxy: a faithful stand-in for
 # DQN on CartPole — the LEARNING CURVE has the same shape (rise, then solve/plateau).
