@@ -337,6 +337,47 @@ $$ f(x_t) \\;=\\; \\operatorname{sign}(x_t)\\,\\frac{\\ln\\!\\big(1+\\mu\\,|x_t|
        <p><i>All numbers above are the paper's reported results. The receptive-field counts, losses, and generated
        waveform in the CODEVIZ panel below are from our own tiny run on toy data &mdash; not the paper's reported
        numbers.</i></p>`,
+    evaluation:
+      `<p><b>What "working" means here:</b> two separable claims — (i) the architecture has the long memory it
+       promises (receptive field), and (ii) it is a good autoregressive density model (likelihood / sample
+       quality). Check both.</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> <b>Architecture:</b> the <b>measured receptive field</b> $R$ — past
+        samples that can influence one output — versus the formula $R=1+\\sum_\\ell (k-1)d_\\ell=2^{L}$ for
+        doubling dilation. <b>Density model:</b> per-sample <b>cross-entropy / negative log-likelihood</b> over
+        the 256 $\\mu$-law classes; the no-skill baseline is the <b>uniform 256-way prediction</b>,
+        $-\\ln(1/256)\\approx 5.545$ nats ($\\log_2 256 = 8$ bits/sample), and a stronger trivial baseline is the
+        <b>marginal class histogram</b> — your model must beat both. <b>Downstream (paper):</b> the headline is
+        <b>Mean Opinion Score</b> — WaveNet ~<b>4.21</b> MOS on US-English TTS vs best parametric ~3.67 /
+        concatenative ~3.86, with natural speech ~<b>4.55</b> (paper §3; quote as approximate).</li>
+        <li><b>Sanity checks BEFORE the full run.</b> (a) <b>Causality test</b> — the single most important
+        check: perturb input $x_{t+1}$ and confirm output $y_t$ does <b>not</b> change (no future leakage); the
+        gradient probe is the clean version (only inputs $\\le t$ have nonzero gradient). (b) <b>Worked-example
+        unit test</b>: the causal conv with weights $[0.5,2.0]$ on $[3,1,4,2]$ must give
+        <code>[6.0, 3.5, 8.5, 6.0]</code> (notebook asserts it). (c) <b>Receptive-field assert</b>: dilated
+        $1,2,4,8\\Rightarrow R=16$, plain $1,1,1,1\\Rightarrow R=5$. (d) <b>Loss at init</b> $\\approx -\\ln(1/Q)$
+        for the $Q$-way softmax ($\\approx 5.545$ nats at $Q=256$); far below it before any training means a
+        leak. (e) <b>Overfit one short waveform</b> — loss should drop toward 0.</li>
+        <li><b>Expected range.</b> A correct toy run drives the per-sample cross-entropy well below the
+        uniform $-\\ln(1/Q)$ floor and generates a waveform that follows the seed's periodicity (our small CPU
+        run on a toy sine — not the paper's MOS/audio). Reproducing the paper means MOS in the low-4s on real
+        TTS (approximate, §3); a couple of tenths off is "tuning," speech indistinguishable from the parametric
+        baseline is "probably a bug."</li>
+        <li><b>Ablation — prove the idea earns its keep.</b> The central mechanism is the <b>dilated causal
+        convolution</b>. <b>Set every dilation to 1</b> (plain causal): the measured receptive field collapses
+        from $2^{L}$ to $1+L$ ($16\\to5$ at 4 layers; $1024\\to11$ at 10), the model can no longer reach
+        speech-scale context, and likelihood/sample quality drop. The CODEVIZ panel measures exactly this gap
+        with the gradient probe. (Secondary knobs: replace the gated unit with ReLU — the paper found gating
+        "significantly better"; drop $\\mu$-law — 256 uniform levels sound noisy.)</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Suspiciously low loss that won't generalize</b> /
+        a model that "sees the answer" &rarr; <b>future leakage</b>: right-padding or symmetric
+        <code>padding=(k-1)d//2</code> instead of left-pad only (the top pitfall). <b>Long-range structure never
+        captured, periodic audio sounds memoryless</b> &rarr; dilation not actually applied (receptive field
+        measures $1+L$). <b>Generated audio is white noise / buzzy</b> &rarr; sampling out of order or in
+        parallel, or $\\mu$-law skipped. <b>Loss stuck at $-\\ln(1/Q)$</b> &rarr; model not learning (LR/init).
+        <b>Off-by-one receptive field</b> ($k\\,d$ instead of $(k-1)d$) &rarr; padding and RF math disagree —
+        re-derive the reach.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

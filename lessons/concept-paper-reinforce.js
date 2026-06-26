@@ -377,6 +377,50 @@
        <p><i>Neither paper reports a CartPole number — CartPole post-dates them. The numbers in the CODEVIZ
        panel below are from our own tiny CartPole run, demonstrating the qualitative effect (return rises;
        baseline reduces variance), not the papers' reported results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The primary metric is the <b>average episode return</b> on
+       <code>CartPole-v1</code> (return = number of steps the pole stays up, capped at $500$), tracked as a
+       running mean over recent episodes. The no-skill floor is the <b>untrained random policy</b>: a fresh
+       network scores roughly $20$&ndash;$30$ steps, so anything stuck near there is not learning. The
+       environment's "solved" bar is an average return around $475$ &mdash; that is your "clearly working"
+       target. (CartPole post-dates both papers, so there is no paper return to match; the theory claim you
+       are really testing is Williams' Theorem 1 &mdash; that the sampled update follows $\\nabla_W E\\{r\\mid W\\}$
+       in the mean, i.e. the return should rise at all.)</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Reproduce the worked example exactly &mdash; the
+        notebook's first cell must print $G_1 = 2.9701$, $-\\log(0.6)\\cdot G_1 = 1.5172$, and with $b=2.0$,
+        $-\\log(0.6)\\cdot 0.9701 = 0.4956$; a mismatch means the discounted-return or sign bookkeeping is
+        wrong. (2) Check shapes/ranges: the policy's <code>Categorical</code> probabilities must be
+        non-negative and sum to $1$, and <code>log_prob</code> values must be $\\le 0$. (3) The episodic
+        loss is a single scalar; the gradient of <code>-(logp * adv).sum()</code> must be non-zero on the
+        first episode. (4) <b>Sign check</b> (rule of thumb): feed one fake episode with a large positive
+        advantage and confirm one optimizer step <i>raises</i> $\\log\\pi$ for the taken action &mdash; if it
+        drops, you forgot the minus sign.</li>
+        <li><b>Expected range.</b> With the baseline on, a correct build should climb from the ~$20$ random
+        floor toward the ~$475$ solved line within the $600$-episode budget (our run reaches the high-$400$s;
+        approximate, our own CartPole run, NOT a Williams 1992 / Sutton et al. 2000 number &mdash; both are
+        theory papers reporting no CartPole score). A run that <b>never leaves the $20$&ndash;$40$ band</b> is
+        almost certainly a bug; a run that rises but plateaus around $100$&ndash;$200$ and jitters is more
+        likely tuning (learning rate, normalization, episodes-per-update) or the variance the baseline is
+        meant to cut.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The component to toggle is the
+        <b>baseline</b> $b$ (Williams' $(r-b)$). Set <code>use_baseline=False</code> (raw return $G_t$),
+        keeping network, returns, learning rate, normalization, and seed identical. Because REINFORCE is
+        unbiased either way (Theorem 1), the no-baseline run should <i>still trend up</i> &mdash; but it should
+        be visibly <b>noisier and slower</b>, and less reliably reach the solved line in the same budget. If
+        removing the baseline changes <i>nothing</i>, it is not wired into the advantage; if it makes learning
+        <i>impossible</i> (not just noisier), suspect the baseline is accidentally depending on the action
+        (which would bias the gradient). This is exactly the green-vs-red contrast in the CODEVIZ panel.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Return falls or stays at chance</i> &rarr; the loss
+        sign is flipped (gradient descent on $+\\log\\pi\\cdot G$ makes the policy worse), or the advantage was
+        not <code>detach()</code>ed and gradient leaked through it. <i>Loss/return goes NaN</i> &rarr; learning
+        rate too high or a $\\log(0)$ from an unclamped probability. <i>Policy collapses to one action</i>
+        (entropy &rarr; 0, return stuck) &rarr; over-confident logits / too-large updates with no exploration.
+        <i>Every step credited with the whole-episode return instead of reward-to-go</i> &rarr; learning is
+        slow and biased toward late actions; verify $G$ is accumulated <b>backward</b> ($G\\leftarrow r+\\gamma G$).
+        <i>With-baseline and no-baseline curves look identical</i> &rarr; the baseline subtraction is a no-op
+        (check it is actually applied before the loss).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

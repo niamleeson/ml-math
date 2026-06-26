@@ -268,6 +268,42 @@
        far fewer than the training-set size. Degree 1 (a plain linear boundary) was markedly worse at 12.0%, showing the
        kernel's value. <i>These are the paper's reported numbers, on their data.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The SVM's metric is <b>test classification error</b> (lower is better)
+       on a held-out set; the paper's benchmark is <b>US Postal Service handwritten digits</b> (7,300 train / 2,000
+       test, 16&times;16 inputs), a 10-way one-vs-rest problem (&sect;6). The no-skill anchor is <b>majority-class
+       accuracy</b> (~10% on balanced digits, so ~90% error is "no skill"); the more honest baseline here is the
+       paper's own <b>degree-1 (linear) kernel at 12.0%</b> error &mdash; anything not beating that means the kernel
+       isn't buying you a curved boundary. For your 2-D toy verification the metric is instead <b>agreement with
+       <code>sklearn.svm.SVC</code></b>: identical support-vector set and ~100% boundary match on a grid.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> The CODE cell does these: on the worked 2-point example,
+        assert one SMO step gives $\\alpha_2=0.25$, $\\eta=-8$, $w=(0.5,0.5)$, margin $2\\sqrt2\\approx2.828$, and that
+        these match <code>SVC</code>. Check the balance constraint $\\sum_i\\alpha_i y_i=0$ holds after every update,
+        and that every $\\alpha_i$ stays clipped to $[0,C]$. Confirm labels are $\\pm1$ (not $\\{0,1\\}$). Verify the
+        kernel matrix is symmetric and, for RBF, that $K_{ii}=1$. Cosine between your $w$ and sklearn's
+        <code>coef_</code> should be $\\approx 1$ on a separable 2-D blob.</li>
+        <li><b>Expected range.</b> A correct polynomial-kernel SVM (degree 2&ndash;7) on USPS should reach the
+        paper's reported raw test error of about <b>4.2&ndash;4.7%</b> with ~127&ndash;190 support vectors per
+        classifier (Table 2; reuse these &mdash; do not invent new ones). As a rule of thumb (not a paper claim): if
+        your from-scratch SMO and sklearn disagree on more than a handful of grid points on the same 2-D data, it's a
+        bug, not tuning; a few stray points near the boundary is fine.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the <b>kernel</b>. On a
+        blob-inside-a-ring (not linearly separable), swap <code>kernel='linear'</code> for <code>kernel='rbf'</code>
+        and confirm train accuracy jumps (our run: ~71.7% &rarr; 100%, with support vectors dropping ~53 &rarr; ~14).
+        If RBF does <i>not</i> beat linear there, the kernel isn't reaching the dual's $D$ matrix. Second knob:
+        sweep <b>$C$</b> &mdash; large $C$ &rarr; hard margin (narrow, fits separable data); small $C$ &rarr; wider,
+        more slack. If varying $C$ never changes the support-vector count, the box cap $\\alpha_i\\le C$ isn't wired
+        in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy stuck at chance</b> (~50% two-class) = labels
+        used as $\\{0,1\\}$ instead of $\\pm1$, breaking $\\sum\\alpha_i y_i=0$. <b>$\\alpha$'s blow up or never
+        converge</b> = missing the clip to $[0,C]$ or a non-negative curvature $\\eta\\ge0$ step applied anyway.
+        <b>Boundary matches sklearn's <code>predict</code> but the raw $b$ differs</b> = sign convention on the
+        intercept; compare the decision <i>function</i> on a grid, not $b$. <b>Every point becomes a support
+        vector</b> = $C$ far too small (everything inside the corridor). <b>$w$ undefined for RBF</b> = expected;
+        there is no explicit $w$ in input space, predict through $\\sum_i\\alpha_i y_i K(x_i,x)+b$.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Build by hand:</b> the kernel, the SMO dual solver, the decision rule, and the worked 2-point update — the

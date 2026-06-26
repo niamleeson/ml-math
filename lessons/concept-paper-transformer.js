@@ -298,6 +298,42 @@ $$ x_0 = \\sqrt{d_{\\text{model}}}\\;\\mathrm{Embed}(\\text{tokens}) + PE, \\qqu
        score; higher is better.)</p>
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny reverse-task run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The paper's task is machine translation, scored by <b>BLEU</b>
+       (Bilingual Evaluation Understudy, a translation-quality score; higher is better) on <b>WMT 2014
+       English&rarr;German</b> and <b>English&rarr;French</b> (&sect;6). The "better than trivial" bar is the
+       prior published state-of-the-art it beat &mdash; a BLEU near $0$ means unaligned gibberish. For the toy
+       encoder you build here the metric is <b>per-token accuracy</b> on the reverse task, with chance
+       $=1/(V{-}1)\\approx 0.11$ over the $\\sim$9-symbol vocabulary.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Reproduce the worked example first: the 2-head split
+        must give <code>[1.888, 0.112, 1.0, 0.609]</code> and $PE_{(1)}\\approx[0.8415,0.5403,0.0100,1.0]$ &mdash;
+        if not, your head reshape/transpose or the $\\sin$/$\\cos$ column interleaving is wrong. Check the loss at
+        init: a $V$-way softmax should start near $-\\ln(1/V)=\\ln V$ ($\\approx 2.30$ for $V{=}10$, rule of thumb).
+        Assert shapes through the heads: split to <code>(B,h,S,d_k)</code> and concat back to
+        <code>(B,S,d_{model})</code>; verify softmax rows sum to $1$. <b>Overfit a single batch</b> with $PE$ on
+        &mdash; token accuracy should hit $\\approx 1.0$ within a few hundred steps.</li>
+        <li><b>3. Expected range.</b> On the toy reverse task, with positional encoding the model should reach
+        $\\approx 1.0$ token accuracy by $\\sim$step 100 and the ablation should sit near chance $\\approx 0.32$ in
+        our run &mdash; matching CODEVIZ (not a paper claim; varies by seed/hardware). If you reproduce the paper,
+        the targets are the abstract's quoted numbers: <b>28.4 BLEU</b> on WMT 2014 English&rarr;German and a
+        single-model <b>41.8 BLEU</b> on English&rarr;French (&sect;6). Reverse accuracy stuck well below $1.0$
+        with $PE$ on is a bug (likely the head transpose), not a tuning issue.</li>
+        <li><b>4. Ablation &mdash; prove the idea earns its keep.</b> The component to isolate is the
+        <b>positional encoding</b>. Remove exactly the one line <code>x = x + PE</code> (keep depth, width, heads,
+        optimizer, data, seed identical) and retrain. Token accuracy must <b>collapse to near chance</b>, proving
+        self-attention is permutation-invariant and order comes only from $PE$. (Use <b>reverse</b>, not copy:
+        copying needs no position, so it would not expose the ablation.) A second knob: drop from $h{=}$multi-head
+        to $h{=}1$ and watch expressivity fall on harder tasks.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> Accuracy <b>stuck near chance ($\\approx 0.32$) even
+        with $PE$ on</b> &rarr; the $+PE$ add isn't reaching the tokens, or the head reshape is mixing the wrong
+        axis (forgot the <code>transpose</code> to <code>(B,h,S,d_k)</code>). <b>Scores saturating / NaN
+        loss</b> &rarr; you scaled by $\\sqrt{d_{model}}$ instead of the per-head $\\sqrt{d_k}$, or LR too high.
+        <b>Identical output for "a b c" and "c b a"</b> &rarr; positional encoding missing &mdash; the
+        permutation-invariance symptom. <b>Residual shape mismatch</b> &rarr; a sub-layer didn't return width
+        $d_{model}$ (check $W^O$ and the FFN output). The green ($PE$-on) vs red (ablation) CODEVIZ curves are the
+        pass/fail picture.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

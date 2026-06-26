@@ -336,6 +336,42 @@
        <p>The numbers in our CODE / CODEVIZ below are <i>our own small-scale run, not the paper's reported
        numbers.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> A forest is a classifier, so score <b>test-set error rate</b>
+       (or accuracy = 1 &minus; error) on held-out data &mdash; the paper's own metric in Tables 1&ndash;2.
+       The free in-sample gauge is the <b>out-of-bag (OOB) error</b> (&sect;3.1): vote each training point
+       using only the trees that did not bootstrap it. The "better than trivial" floor is the
+       <b>majority-class baseline</b> (predict the most common label always); a forest must beat that, and
+       on the paper's sets it should clear a <b>single CART tree</b> by a wide margin (Table 2's "One Tree"
+       column).</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) A forest of <b>$B=1$ tree with $F=M$</b> (all
+         features, no bootstrap) must reproduce a plain decision tree &mdash; a known-answer unit test on the
+         tree code. (2) Each bootstrap should leave roughly <b>$1/e\\approx 37\\%$</b> of rows out-of-bag; print
+         the OOB fraction per tree and check it sits near $0.37$ (rule of thumb, not a paper claim). (3) Votes
+         per point should sum to $B$; predicted labels must lie in the class set. (4) On a tiny separable toy
+         set the forest should hit near-zero training error.</li>
+         <li><b>Expected range.</b> Anchor to the paper: e.g. breast cancer <b>$\\sim 2.9\\%$</b> error and
+         sonar <b>$\\sim 15.9\\%$</b> (Forest-RI "selection", Table 2), each roughly halving the single-tree
+         error ($6.3\\%$ and $31.7\\%$ respectively). On your own data, OOB and a held-out test error should
+         land within a couple of points of each other once <b>$B\\gtrsim 50$</b> trees accumulate; a gap much
+         larger than that is probably a bug (rule of thumb), not tuning. Test error far <i>above</i> the
+         single-tree error means the ensemble is broken.</li>
+         <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central knob is the
+         <b>per-node random feature subset $F$</b>. Set $F=M$ (consider all features at every split): the trees
+         become highly correlated, $\\bar\\rho$ rises, and test error should <b>climb back toward the single
+         tree</b> &mdash; the gap between $F=1$ and $F=M$ is the decorrelation effect Theorem 2.3 predicts. A
+         second ablation: re-draw $F$ <b>once per tree</b> instead of per node (the older random-subspace
+         method); accuracy should drop, confirming the per-node redraw matters (&sect;4). If neither hurts the
+         metric, the random subset is not actually wired into the split search.</li>
+         <li><b>Failure signals &amp; what they mean.</b> Forest no better than one tree &rArr; $F$ too large
+         or the feature subset is fixed/ignored (trees not decorrelated). OOB error stuck at the majority-class
+         rate &rArr; labels shuffled or trees not learning. OOB <i>much</i> worse than test error on a small
+         forest &rArr; too few trees so many points have few or zero OOB votes (&sect;3.1) &mdash; add trees,
+         not a bug. Test error rises as you add trees &rArr; impossible for a correct forest (Theorem 1.2 says
+         it converges, never overfits), so suspect a leak, a label bug, or bootstrapping without replacement.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive, NumPy).</b> A random forest is a build-it-from-scratch ensemble, so the

@@ -232,6 +232,41 @@
        We quote these with their source rather than restating them as our own; the numbers in our CODEVIZ below are
        our own small run, not the paper's reported numbers.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Swish is judged by <b>validation accuracy</b> (higher is better) of a
+       network using it as the activation, holding everything else fixed against a <b>ReLU</b> baseline &mdash;
+       ReLU is the "no-skill" reference here. The paper's benchmarks are <b>CIFAR-10 / CIFAR-100</b> (where Swish
+       "consistently matches or outperforms ReLU on every model") and <b>ImageNet</b> (Section 4). Because Swish is
+       a primitive, the first metric you actually compute is <b>exactness</b>: at $\\beta=1$ your <code>my_swish</code>
+       must equal PyTorch's <code>F.silu</code>.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> The CODE cell does these, and they should pass to ~1e-6
+        before you trust anything: <code>torch.allclose(my_swish(x, 1.0), F.silu(x))</code> on random $x$ (the
+        oracle); the paper's derivative $f'(x)=\\beta f(x)+\\sigma(\\beta x)(1-\\beta f(x))$ matches
+        <b>autograd</b>; the slope at $x=-1$ is <b>nonzero</b> (ReLU's is exactly 0 there). Check the limiting
+        cases: $\\beta=0$ gives the line $x/2$ (so $f(2)=1$), $\\beta\\to\\infty$ approaches ReLU. Confirm $f(-1)\\approx
+        -0.2689$ (a small <i>negative</i>, not 0) &mdash; if your output is clamped at 0 you accidentally built ReLU.</li>
+        <li><b>Expected range.</b> Quoting the paper (reuse these &mdash; do not invent new ones): on ImageNet
+        Swish gives "a 1.4% boost on Mobile NASNet-A and a 2.2% boost on MobileNet over ReLU," and on
+        CIFAR it "tends to work better than ReLU on deeper models" (Section 4, arXiv:1710.05941). As a rule of thumb
+        (not a paper claim): the gain over ReLU is usually a fraction of a percent to a couple percent &mdash; a
+        Swish run that is <i>much</i> worse than ReLU signals a bug (wrong gate), not that the paper is wrong.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central idea is the <b>self-gate</b>
+        $\\sigma(\\beta x)$ that produces the smooth, non-monotonic <b>bump</b>. Ablate by (1) replacing Swish with
+        ReLU under an otherwise identical net and seed (the CODE cell's Swish-vs-ReLU run) and confirming Swish
+        reaches equal-or-lower final loss; (2) clamping Swish's negative side to 0 &mdash; this removes the bump and
+        should erase the advantage, proving the small-negative region is what helps. Sweep <b>$\\beta$</b>: at
+        $\\beta=0$ it degenerates to the line $x/2$; if accuracy is flat across $\\beta$, the gate's $\\beta$ scaling
+        isn't wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b><code>allclose</code> vs <code>F.silu</code> fails</b> =
+        you forgot the $\\beta$ inside the sigmoid, or returned $\\sigma(\\beta x)$ alone / $\\sigma(x)\\sigma(\\beta
+        x)$ instead of $x\\cdot\\sigma(\\beta x)$. <b>Derivative disagrees with autograd</b> = chain-rule slip (missing
+        the $\\beta$ factor on $\\sigma'$). <b>Dead units / loss plateaus like ReLU</b> = output clamped at 0, killing
+        the negative gradient. <b>Loss NaN</b> = LR too high (not a Swish-specific issue, but smoothness should make
+        it <i>less</i> likely than with ReLU). <b>Swish never beats ReLU on a shallow net</b> = expected; the paper's
+        gain is on <i>deeper</i> models, so don't read a tie on a 2-layer toy as a failure.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships the $\\beta=1$ case as <code>F.silu</code> / <code>nn.SiLU</code>

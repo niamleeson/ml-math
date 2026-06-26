@@ -317,6 +317,44 @@
        $5.8$ to $4.7$ and raised test BLEU from $25.9$ to $30.6$. (Source: arXiv:1409.3215, abstract + Sections 3.3,
        3.6, Table 1.) The paper also reports the LSTM "did not have difficulty on long sentences."</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> seq2seq is a sequence transducer, so the paper's metric is <b>BLEU</b>
+       (BiLingual Evaluation Understudy, a $0\\unicode{x2013}100$ match-to-reference score) on the WMT'14
+       En$\\to$Fr test set, with <b>test perplexity</b> as the training-side proxy. The baseline to beat is the
+       phrase-based SMT system at <b>33.30 BLEU</b>; the paper's ensemble reached <b>34.81</b> (Table 1). For our
+       Track-B copy task the metric is <b>per-token accuracy</b> on held-out sequences; the no-skill floor is
+       random guessing over the $|\\mathcal{V}|$-symbol vocabulary ($\\approx 1/10$ here).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> First prove the imported cell is the real gate math: one
+        <code>nn.LSTMCell</code> step must equal the hand-written $i/f/g/o$ gates under <code>torch.allclose</code>,
+        and the worked scalar example must reproduce ($i=0.62246$, $f=0.73106$, $g=0.76159$, $o=0.62246$,
+        $c=0.47406$, $h=0.27480$) &mdash; the CODE's first cells do exactly this. Check shapes: logits are
+        $(B,L,|\\mathcal{V}|)$. Verify the loss at init is near $-\\ln(1/|\\mathcal{V}|)\\approx\\ln 12\\approx 2.48$
+        for a uniform $12$-symbol softmax (a rule of thumb; the CODEVIZ curves do start at $\\approx 2.49$). Then
+        <b>overfit a single batch</b> with teacher forcing &mdash; the copy task should reach near-perfect token
+        accuracy and the loss should fall toward $0$; if it can't memorize one batch, the encoder$\\to$decoder
+        state hand-off is broken.</li>
+        <li><b>Expected range.</b> On the paper's setup a correct build approaches the reported BLEU (ensemble
+        $34.81$ vs SMT $33.30$, Table 1 &mdash; approximate, the paper's figures). On our toy copy task expect
+        <b>reverse=True</b> $\\approx 0.80$ token accuracy and <b>reverse=False</b> $\\approx 0.54$ (our $5$-seed
+        run, not the paper's). The reproducible signal is the <i>direction</i> (reverse helps), not any single
+        number on so few steps; a reversed model stuck near the random floor is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The paper's central trick is
+        <b>source reversal</b> (&sect;3.3). Flip <code>reverse_input</code> from <code>True</code> to
+        <code>False</code> with the same seed and steps and confirm the loss falls <b>slower</b> and final token
+        accuracy <b>drops</b> &mdash; the paper's $\\approx 0.80\\to\\approx 0.54$ gap in our run, mirroring its
+        test-BLEU $25.9\\to 30.6$ rise (&sect;3.3). If reversing makes no difference, the flip isn't being applied
+        to the encoder input. (A secondary check: confirm you reversed the <i>source</i> only, not the target &mdash;
+        reversing both changes the task.)</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy stuck at the $\\approx 1/|\\mathcal{V}|$
+        floor:</b> the context $v$ isn't reaching the decoder &mdash; check you pass the encoder's final
+        $(h,c)$ as the decoder's initial state, and carry the <i>cell</i> state, not just $h$. <b>Perfect with
+        teacher forcing but garbage when decoding free-running:</b> exposure drift &mdash; expected on a $1$-layer
+        toy net, worse at later positions (the CODE shows both modes). <b>Loss NaN:</b> LR too high. <b>Reverse
+        and normal-order curves identical:</b> <code>torch.flip</code> isn't wired in or the encoder and decoder
+        accidentally share one module (they must be two separate LSTMs with different weights).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> The LSTM <i>cell</i> is a primitive PyTorch already ships

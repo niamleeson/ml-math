@@ -256,6 +256,54 @@ $$ N = \\frac{HW}{P^2} \\quad\\text{(\\S 3.1: number of patches = sequence lengt
        CNNs, such as translation equivariance and locality."</p>
        <p><i>These are the paper's reported figures, quoted from the abstract/tables. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny MNIST-subset run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The paper's metric is <b>top-1 classification accuracy</b> on
+       standard image benchmarks after large-scale pre-training; it reports (quoted, abstract/Table 2)
+       <b>88.55%</b> on ImageNet, <b>90.72%</b> on ImageNet-ReaL, <b>94.55%</b> on CIFAR-100, and <b>77.63%</b>
+       on the 19-task VTAB suite. The no-skill floor is chance: $1/1000 = 0.1\\%$ on ImageNet's $1000$ classes.
+       Our toy build instead reports <b>test accuracy on a small MNIST subset</b>, where the floor is $10\\%$
+       ($10$ digit classes) &mdash; the bar is "well above $10\\%$," not the paper's pre-trained ImageNet
+       figure.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Patch-count unit test.</b> The first cell is this known-answer check: $H{=}W{=}28$, $P{=}7$ must
+        give a $4\\times4$ grid, $N=16$ patches, sequence length $N{+}1=17$, flattened-patch length $49$. Wrong
+        numbers mean the patchify or shapes are off.</li>
+        <li><b>Shape trace.</b> After the <code>Conv2d(kernel=stride=P)</code> and flatten, tokens are
+        $(B, N, D)$; after prepending the class token, $(B, N{+}1, D)$; <code>pos</code> must be
+        $(1, N{+}1, D)$ to broadcast-add. A size-$N$ (not $N{+}1$) position table is the classic shape bug.</li>
+        <li><b>Loss at init.</b> For $K=10$-way soft-max, cross-entropy at init should be
+        $\\approx -\\ln(1/10) = \\ln 10 \\approx 2.30$.</li>
+        <li><b>Overfit one batch &amp; permutation check.</b> Train on one minibatch &mdash; loss should
+        approach $0$. And with $E_\\text{pos}$ <i>off</i>, shuffling the patch order must leave the output
+        unchanged (self-attention is permutation-invariant) &mdash; a direct test that positions are the only
+        spatial signal.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the $3000$-image MNIST subset, the position-on run climbs to
+       <b>~0.93</b> test accuracy over $6$ epochs (CODEVIZ) &mdash; <i>our</i> number, not the paper's. The
+       paper's $88.55\\%$ ImageNet etc. (quoted) require $14$M&ndash;$300$M-image pre-training and are <b>not</b>
+       reproducible here; the toy goal is only to show ViT <i>learns</i> and that positions help. As a <i>rule
+       of thumb</i> (not a paper claim), pos-on well above $90\\%$ on this MNIST subset is "working"; near
+       chance is "broken."</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central added component (beyond the
+       imported Transformer) is the <b>learnable position embedding</b>. <b>Remove the single
+       <code>z = z + self.pos</code> line</b> (<code>use_pos=False</code>), retrain everything else identical,
+       and accuracy should <b>drop</b> (our run ~$0.93 \\to \\sim 0.79$, CODEVIZ). It does <i>not</i> fall to
+       chance &mdash; each patch token still carries its own pixels, informative on MNIST &mdash; but the gap is
+       exactly what the position signal is worth. If accuracy doesn't move, the add isn't wired in.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Shape error at the position add:</b> $E_\\text{pos}$ sized $N$ instead of $N{+}1$ (forgot the
+        class token), or wrong $(1,N{+}1,D)$ broadcast shape.</li>
+        <li><b>Accuracy stuck at chance ($\\approx 10\\%$):</b> reading out the wrong token (a patch row, not
+        row $0$ the class token), or labels mis-aligned.</li>
+        <li><b>Too many tokens / blurry attention:</b> <code>stride &lt; P</code> made overlapping windows
+        instead of the $N=HW/P^2$ non-overlapping patches.</li>
+        <li><b>Unstable loss / NaN at depth:</b> post-norm instead of pre-norm &mdash; set
+        <code>norm_first=True</code> in <code>nn.TransformerEncoderLayer</code> to match Eqns 2&ndash;3.</li>
+        <li><b>ViT loses to a small CNN on this data:</b> expected, not a bug &mdash; with little data ViT
+        lacks the CNN's locality/translation inductive biases (&sect;4.3); the toy run only checks it learns.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

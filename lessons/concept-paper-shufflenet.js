@@ -314,6 +314,51 @@ Complexity (1x): ~143 / 140 / 137 / 142 / 137 MFLOPs</pre>
        <p><i>These are the paper's reported figures, quoted from its abstract and tables. The numbers in the CODEVIZ
        panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> Two separable claims: (1) the cheap block actually costs
+       $\\tfrac1g$-ish less, and (2) channel shuffle is what lets the grouped network learn cross-group tasks.
+       Check the arithmetic first (it's exact), then the learning behavior.</p>
+       <ul>
+         <li><b>The metric &amp; baseline.</b> For the unit: the channel-shuffle <b>index permutation</b> must
+         exactly equal the hand-traced answer ($g{=}3,n{=}4 \\rightarrow [0,4,8,1,5,9,2,6,10,3,7,11]$) &mdash; a
+         known-answer test, no tolerance. For the cost claim: the block-FLOP ratio ShuffleNet/ResNet, compared
+         against the closed form $\\tfrac{hw(2cm/g+9m)}{hw(2cm+9m^2)}$ (worked block: $514304/3411968=0.1507$). For
+         the headline ImageNet claim, the metric is <b>top-1 error</b> and the baseline is the same-budget network
+         <i>without</i> shuffle (Table&nbsp;3) and MobileNet (Table&nbsp;5); chance on 1000-way ImageNet is 99.9%
+         error, so "better than trivial" is far from the bar &mdash; the real bar is beating the no-shuffle twin.</li>
+         <li><b>Sanity checks BEFORE training.</b> (a) Run <code>channel_shuffle</code> on channel ids
+         <code>torch.arange(C)</code> and assert it reproduces the index permutation. (b) Assert shuffle is a true
+         permutation: applying it $g$ times (or sorting the output) returns the original set of channel ids; no
+         channel is dropped or duplicated. (c) Shape check: output is still $(B,C,H,W)$ and $C$ divides evenly by
+         $g$ (else the reshape is silently wrong). (d) Overfit a single batch on the cross-group toy task &mdash;
+         the <b>shuffled</b> unit's train loss should reach $\\approx 0$; if even the shuffled net can't memorize one
+         batch, the unit is mis-wired. (e) At init, a $K$-way head gives loss $\\approx -\\ln(1/K)$
+         ($=\\ln 2\\approx0.69$ for the binary toy task).</li>
+         <li><b>Expected range.</b> The FLOP ratio should match the formula to the digit (exact integer
+         arithmetic). On the lesson's toy cross-group task expect the shuffled unit near <b>0.98</b> test accuracy
+         and the un-shuffled one stalling near <b>0.65</b> (our small run, CODEVIZ &mdash; a rule-of-thumb gap, not
+         a paper number). The paper's reported figures: removing shuffle costs <b>5.2 points</b> of top-1 error
+         (ShuffleNet 1&times;, $g{=}8$: 37.6% without vs 32.4% with), and ShuffleNet beats MobileNet by
+         <b>absolute 7.8%</b> top-1 at 40 MFLOPs (arXiv:1707.01083, Abstract, Tables&nbsp;3 &amp; 5). A few points
+         off the toy target is seed/tuning; the shuffled net failing to clear the un-shuffled one is a bug.</li>
+         <li><b>Ablation &mdash; prove channel shuffle earns its keep.</b> This IS the paper's central test
+         (Table&nbsp;3). Remove only the <code>channel_shuffle(x, g)</code> call &mdash; same $g$, widths, depthwise
+         conv, optimizer, data, seed &mdash; so two grouped $1\\times1$ convs stack with isolated groups. On a task
+         whose label compares channels in <i>different</i> groups (the toy task pits channel 0 in group 0 vs channel
+         4 in group 2), accuracy must <b>drop</b>. If removing shuffle changes nothing, either the task doesn't
+         actually need cross-group information, or your "shuffle" was an identity-like permutation that never
+         interleaved the groups.</li>
+         <li><b>Failure signals &amp; what they mean.</b> (i) The permutation comes out as $[0,1,2,\\dots]$
+         (identity) &rarr; you reshaped to $(C/g, g)$ instead of $(g, C/g)$, or skipped the transpose. (ii)
+         <code>.view()</code> throws after the transpose &rarr; non-contiguous tensor; add <code>.contiguous()</code>
+         (or use <code>.reshape</code>). (iii) Shuffled and un-shuffled nets reach the <i>same</i> accuracy &rarr;
+         the shuffle line isn't between the grouped convs, or the task is within-group solvable &mdash; the ablation
+         is testing nothing. (iv) A reshape error or wrong group count whenever $C \\% g \\ne 0$ &rarr; pick channel
+         widths that are multiples of $g$. (v) "$g\\times$ speedup" doesn't materialize &rarr; only the grouped
+         $1\\times1$ layers shrink by $g$; the depthwise $3\\times3$ and BatchNorms don't, so use the full
+         $hw(\\tfrac{2cm}{g}+9m)$ formula, not a flat $1/g$.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: convolutions, grouping, and tensor reshaping all ship in

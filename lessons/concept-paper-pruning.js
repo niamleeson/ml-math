@@ -268,6 +268,48 @@
        <p><i>These are the paper's reported figures, quoted from the abstract / &sect;3.4 / Table 1. The
        numbers in the CODEVIZ panel below are from our own tiny run on synthetic data &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Pruning is judged by <b>compression vs accuracy</b>: the
+        <b>parameter-reduction factor</b> (or equivalently the <b>sparsity</b>, fraction of weights zeroed) reached
+        <b>without losing the dense baseline's test accuracy</b>, on the paper's nets/datasets (LeNet on MNIST,
+        AlexNet and VGG-16 on ImageNet). The "no-skill" anchor is the <b>dense baseline accuracy</b> at $0\\%$
+        sparsity &mdash; pruning is only "working" if a heavily pruned net retrains back to (essentially) that same
+        number. The paper's bar: "reduced by an order of magnitude without affecting accuracy" &mdash; AlexNet
+        <b>$9\\times$</b> ($61\\text{M}\\to6.7\\text{M}$), VGG-16 <b>$13\\times$</b> ($138\\text{M}\\to10.3\\text{M}$)
+        (abstract / Table 1).</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the sparsity sweep.</b> (a) <b>Known-answer unit test</b> &mdash; recompute
+        the worked example: $w=[0.80,-0.05,0.30,0.02,-0.60,0.10]$, $q=0.5$ &rarr; $\\sigma\\approx0.458$,
+        $\\tau\\approx0.229$, mask $[1,0,1,0,1,0]$, i.e. $50\\%$ sparsity (CODE panel's first cell asserts this).
+        (b) <b>Sign test</b> &mdash; confirm $-0.60$ <i>survives</i> and $-0.05$ is pruned: you must score by
+        $|w_i|$, not raw value. (c) <b>Real-sparsity check</b> &mdash; after applying the mask, <i>count the zeros</i>
+        and confirm it matches the target fraction; after <i>each</i> retrain step, re-count to confirm the mask
+        held (pruned weights still exactly $0$). (d) A correct dense baseline should first reach high accuracy at
+        $0\\%$ sparsity &mdash; if it does not, fix that before pruning.</li>
+        <li><b>3. Expected range.</b> A correct implementation should match the paper's headline: roughly
+        <b>$9$&ndash;$13\\times$ parameter reduction with no accuracy loss</b> on the paper's nets (about
+        <b>$12\\times$</b> on the LeNets), reached via <b>iterative</b> prune+retrain (&sect;3.4). These are the
+        paper's reported figures &mdash; targets, not guarantees. Rule of thumb: up to moderate sparsity, accuracy
+        should barely move; if accuracy craters at, say, $50\\%$ sparsity even <i>with</i> retraining, that is
+        "probably a bug" (mask not re-applied, or scoring by raw value), not "needs tuning." Our CODEVIZ run
+        (synthetic 10-class MLP) is our own, not the paper's numbers.</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The paper's load-bearing claim is the
+        <b>retrain step</b>. The ablation (CODE/CODEVIZ, practice Q1): at each sparsity measure accuracy
+        <b>prune-only</b> vs <b>prune-then-retrain</b>, holding the trained net and masks identical. With retraining
+        OFF, accuracy should drop much sooner as sparsity climbs; turning it ON should recover it &mdash; the paper
+        calls the step "critical." A second ablation isolates <b>keeping the survivors</b>: re-initialize the pruned
+        layers from scratch instead of fine-tuning the trained weights, and recovery should be worse (the co-adapted
+        features, &sect;3.3, are destroyed). If prune-only and prune-then-retrain look the same at high sparsity,
+        the retrain (or the mask re-apply) is not actually running.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Sparsity silently shrinks back toward $0$ during
+        retraining</b> &rarr; you forgot to re-apply the mask after every <code>opt.step()</code>; gradients refill
+        the zeroed weights. <b>Even low sparsity tanks accuracy</b> &rarr; pruning by raw value instead of $|w_i|$
+        (a large negative weight got deleted), or pruning the wrong tensor. <b>Retraining does not recover at high
+        sparsity (e.g. $95\\%$)</b> &rarr; you cut too aggressively in one shot past the point of no return; iterate
+        (prune a little, retrain, repeat, &sect;3.4) instead. <b>Retrain accuracy worse than prune-only</b> &rarr;
+        you re-initialized the survivors instead of keeping the trained weights (&sect;3.3), or the retrain LR is too
+        high. <b>Loss NaN during retrain</b> &rarr; LR too high on the now-sparse net.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

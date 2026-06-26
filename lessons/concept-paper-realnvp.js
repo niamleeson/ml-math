@@ -286,6 +286,44 @@
        <p><i>These are the paper's reported claims, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny 2-D run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Real NVP is a density model, so the primary metric is
+       <b>exact negative log-likelihood</b> &mdash; reported as <b>bits-per-dimension</b> on natural-image
+       benchmarks (<b>CIFAR-10, ImageNet $32\\times32$/$64\\times64$, LSUN, CelebA</b>, &sect;4): bits/dim
+       $= -\\log_2 p_X(x) / D$, lower is better. For our 2-D toy the same metric is the <b>mean exact
+       log-likelihood</b> on held-out points (higher is better). The no-skill floor is the log-likelihood of
+       the <b>untransformed base Gaussian</b> on the data: the flow must beat just scoring the raw points under
+       $\\mathcal{N}(0,\\mathbf{I})$, or it has learned nothing.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) <b>Round-trip invertibility</b>: push $x$ forward to
+         $z$ then inverse back; max reconstruction error must be $\\approx 0$ (the CODE prints this). (2) The
+         <b>worked-example unit test</b>: with $s=0.5,t=-1.0$, $x=(2.0,3.0)$ must give $y=(2.0,3.946164)$,
+         layer log-det $=0.5$, and the inverse must return $x_2=3.0$. (3) <b>Log-det check</b>: the total log-det
+         must equal $\\sum_j s_j$ summed over layers &mdash; compare against a brute-force numerical Jacobian
+         determinant on the tiny model (they must match). (4) At init the model is near-identity, so the mean
+         log-likelihood should start close to the base-Gaussian value and <b>rise</b> during training.</li>
+         <li><b>Expected range.</b> The paper's claim is "<b>competitive</b>" bits/dim via exact likelihood
+         (abstract) &mdash; it quotes per-dataset bits/dim in &sect;4; reuse those if you scale up, do not invent
+         new ones. For the 2-D two-moons toy, a correctly trained 6-layer flow should reach a held-out mean
+         log-likelihood <b>well above</b> the base-Gaussian baseline, and the <b>samples should seat on the two
+         moons</b> rather than a round blob (CODEVIZ). A model whose log-likelihood never separates from the
+         baseline is "probably a bug," not a tuning gap.</li>
+         <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+         <b>alternating mask</b> across stacked coupling layers (&sect;3.5). Freeze the mask so coordinate&nbsp;1
+         is copied in <i>every</i> layer (the CODE's built-in ablation): held-out log-likelihood should get
+         <b>markedly worse</b> and that coordinate's marginal stays a plain Gaussian &mdash; if the metric does
+         not drop, the masks were not actually alternating. A second ablation: drop the <b>$\\log|\\det J|$
+         term</b> from the loss and the model cheats by collapsing volume to zero (log-likelihood "improves"
+         nonsensically while samples degenerate) &mdash; proof both terms of Eq. 1 are load-bearing.</li>
+         <li><b>Failure signals &amp; what they mean.</b> Log-likelihood shooting to $+\\infty$ with collapsing
+         samples &rArr; the log-det term was dropped (volume squashed to zero). NaN loss &rArr; $\\exp(s)$
+         overflowing because $s$ is unbounded (clamp or $\\tanh$-bound the log-scale; LR too high). Samples form
+         a round Gaussian blob instead of moons &rArr; mask not alternating, so one coordinate is never
+         transformed. Round-trip reconstruction error large &rArr; sign/order error in the inverse (subtract
+         $t$ <i>then</i> multiply by $\\exp(-s)$). Loss decreasing but you maximized $+\\log p_X$ &rArr; sign of
+         the objective flipped (you must minimize the negative log-likelihood).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the building blocks already ship in PyTorch, so you

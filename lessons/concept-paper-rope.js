@@ -286,6 +286,43 @@
        reproduce those headline numbers here to avoid misquoting. Every number in our CODE and CODEVIZ is our
        own small-scale run, not the paper's reported number.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; baseline.</b> RoPE's defining claim is a <b>theorem</b>, not a benchmark, so
+       the primary test is the <b>relative-position invariant</b>: for many $(m,n)$ pairs sharing the same
+       difference $m-n$, the score $(R_m q)^\\top(R_n k)$ must be the <i>same number</i>
+       ($\\texttt{torch.allclose}$, atol $\\approx 10^{-6}$). The no-skill comparison is the old
+       <b>additive</b> position scheme $(q+p_m)^\\top(k+p_n)$: holding $m-n$ fixed, its score should
+       <i>drift</i> as the absolute positions slide &mdash; that contrast is exactly what RoPE fixes. A
+       secondary check: the rotation must preserve length, $\\lVert R_m q\\rVert=\\lVert q\\rVert$.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> Reproduce the worked numbers exactly: $q=[1,0]$,
+         $k=[0,1]$, $\\theta=1$ &rarr; at $(m,n)=(2,5),(0,3),(7,10)$ every dot product is $-0.141120$;
+         $q_2\\approx[-0.4161,0.9093]$, $k_5\\approx[0.9589,0.2837]$ (known-answer test). Check
+         length-preservation: rotate $q=[1,2]$ and confirm the norm stays $\\sqrt5\\approx 2.236$. Verify
+         the property holds in full $d$ dimensions too (rotate random 8-vectors at two pairs with the same
+         $m-n$). Confirm $d$ is even and the swap-and-negate hits the <i>first</i> of each pair
+         ($[-x_2,x_1,-x_4,x_3,\\dots]$).</li>
+         <li><b>Expected range.</b> There is no loss to tune &mdash; correctness is binary: the
+         same-difference scores must agree to atol $10^{-6}$ ($\\texttt{allclose}$ $\\texttt{True}$) and a
+         <i>different</i> $m-n$ must give a different score (so the test is not trivially passing on a
+         constant). In our run every same-difference RoPE score sits flat at $-0.1411$ while the additive
+         scores spread across many values (our numbers, not the paper's).</li>
+         <li><b>Ablation &mdash; prove the rotation earns its keep.</b> The central idea is
+         <i>multiplicative</i> rotation. Swap it for the additive scheme $q+p_m$, $k+p_n$ and re-run the
+         slide-both-positions test: the score must now <b>drift</b> (the cross terms $q^\\top p_n$ and
+         $p_m^\\top k$ depend on absolute $m,n$). If your "additive" run also stays flat, the position
+         vectors are not actually being added. A cheaper ablation: rotate the key by the <i>query's</i>
+         position (or skip the key's rotation) &mdash; the $n-m$ cancellation breaks and same-difference
+         scores stop matching.</li>
+         <li><b>Failure signals &amp; what they mean.</b> Same-difference scores <i>almost</i> equal but
+         off &rarr; sign error in the rotation (top row must be $[\\cos,-\\sin]$) or a pairing-convention
+         mismatch (adjacent $(1,2)$ vs halves $(1,1{+}d/2)$ &mdash; pick one consistently). Scores match
+         but the vector's norm changed &rarr; you scaled, not rotated. The property fails entirely &rarr;
+         you rotated $q$ and $k$ with the <i>same</i> position, or rotated only one of them. Applying RoPE
+         to the value $v$ or to the input embeddings &rarr; wrong: it lives inside attention, on $q$ and
+         $k$ only.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> The rotation itself is a few lines of raw tensor math &mdash; that is what

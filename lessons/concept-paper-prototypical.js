@@ -264,6 +264,48 @@
        <p><i>These are the paper's reported figures, quoted from the abstract and tables. The numbers in the
        CODE and CODEVIZ panels below are from our own tiny CPU run on synthetic data &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The metric is <b>few-shot classification accuracy</b> on episodes built
+        from <b>held-out classes the embedding never saw in training</b> &mdash; the paper's <b>Omniglot</b> and
+        <b>miniImageNet</b> benchmarks. The no-skill baseline is fixed by the task: $N$-way chance is $1/N$, so
+        <b>5-way chance is 20%</b> and <b>20-way chance is 5%</b>. "Working" means scoring far above that, and the
+        right bar is the paper's prior-SOTA (Matching Networks) which it set out to match or beat.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full episodic run.</b> (a) <b>Known-answer unit test</b> &mdash;
+        recompute the worked $2$-way $2$-shot example: prototypes $c_A=[2,1]$, $c_B=[5,3]$, distances $d_A=2$,
+        $d_B=5$, and $p(A)=0.9526$ (the CODE panel's first cell asserts these). (b) <b>Shapes</b> &mdash; the
+        per-class prototype tensor must be $[N, M]$ (one vector per class), the distance matrix $[N_q, N]$, and the
+        softmax rows must sum to $1$. (c) <b>Loss at init</b> &mdash; with a random embedding the logits are roughly
+        symmetric, so the $N$-way cross-entropy should start near $\\ln N$ ($\\ln 5\\approx1.61$ for 5-way); a value
+        far from that signals a sign or shape bug. (d) <b>Overfit one episode</b> &mdash; train on a single fixed
+        episode and watch the query loss fall to $\\approx0$; if it cannot, the gradient path into $\\phi$ is
+        broken.</li>
+        <li><b>3. Expected range.</b> A correct implementation should approach the paper's reported numbers
+        (Tables 1&ndash;2): <b>Omniglot 5-way 1-shot $98.8\\%$, 5-way 5-shot $99.7\\%$, 20-way 1-shot $96.0\\%$,
+        20-way 5-shot $98.9\\%$</b>; <b>miniImageNet 5-way 1-shot $49.42\\pm0.78\\%$, 5-way 5-shot
+        $68.20\\pm0.66\\%$</b>. These are the paper's figures &mdash; targets, not guarantees. As a rule of thumb,
+        on miniImageNet anything stuck near $20\\%$ (5-way chance) is "probably a bug"; landing a few points under
+        the paper's number is "tuning" (embedding capacity, episodes, $N_C$ at train time). The synthetic CODE/CODEVIZ
+        run ($\\approx0.84$ held-out 5-way) is our own, not the paper's result.</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central design choice is <b>softmax
+        over the NEGATIVE squared-Euclidean distance</b>. The cleanest ablation (CODE panel, practice Q1): flip the
+        sign &mdash; use $+d$ instead of $-d$ &mdash; with no retraining; accuracy should <b>collapse toward chance
+        ($\\approx20\\%$ for 5-way)</b> because the softmax now rewards the <i>farthest</i> prototype. Second
+        ablation: swap squared Euclidean for <b>cosine</b> distance &mdash; the paper found Euclidean clearly
+        better, and cosine breaks the Bregman "mean-is-optimal" guarantee, so accuracy should drop. Third: leak
+        test classes into training &mdash; held-out accuracy looks inflated, exposing that you measured ordinary
+        classification, not few-shot generalization. If flipping the sign does <i>not</i> hurt, the distance is not
+        wired into the loss.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Accuracy stuck at $1/N$ chance</b> &rarr; missing
+        negation (logits = $+d$), query labels shuffled, or no gradient into $\\phi$. <b>Prototype tensor wrong
+        shape / averaged over the wrong axis</b> &rarr; you averaged across classes instead of across the $K$ shots
+        (mean must be over <code>dim=1</code> of a $[N,K,M]$ support tensor, yielding $[N,M]$). <b>Train accuracy
+        high but held-out accuracy near chance</b> &rarr; class splits are not disjoint (leakage) or the embedding
+        overfit the training classes. <b>Loss NaN</b> &rarr; LR too high or exploding embeddings; clip or lower the
+        LR. <b>All prototypes collapse to one point</b> (queries equidistant, $p\\approx1/N$ everywhere) &rarr; the
+        embedding learned a constant map &mdash; check the loss is actually decreasing and the data has class
+        signal.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

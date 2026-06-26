@@ -244,6 +244,42 @@
        VE continuous model, plus a likelihood of 2.99 bits/dim with the sub-VP probability-flow ODE. Those are
        the paper's numbers, quoted with their source. Everything in our CODE/CODEVIZ below is a tiny 2-D run
        &mdash; our own, not the paper's reported number.</p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> For a generative model the metric is <b>sample quality</b>. On the
+       paper's benchmark &mdash; unconditional <b>CIFAR-10</b> &mdash; that is <b>FID</b> (Fr&eacute;chet
+       Inception Distance, lower is better) and <b>Inception score</b> (higher is better); the paper reports its
+       best VE continuous model at <b>IS $=9.89$, FID $=2.20$</b> (abstract, &sect;4, Table 3), beating the prior
+       SOTA it set out to pass. The "no-skill" floor is samples that ignore the data &mdash; pure $\\mathcal{N}(0,
+       \\sigma_{\\max}^2 I)$ noise, which scores a huge FID. For our 2-D toy build the cheap proxy is the
+       <b>fraction of samples landing within $0.4$ of one of the 8 cluster centers</b> (random noise &asymp; near
+       $0$; a working sampler &asymp; $0.99$ in our run).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Recompute the worked example: the score of
+        $\\mathcal{N}(\\mu,\\sigma^2 I)$ is $-(x-\\mu)/\\sigma^2$; at $\\mu=(1,-0.5)$, $\\sigma=0.5$,
+        $x=(1.4,0.3)$ it is $(-1.6,-3.2)$, and the denoising-score-matching target $-z/\\sigma_t$ gives the same
+        vector (the notebook's first cell checks both match). Then: confirm $s_\\theta(x,t)$ outputs a vector the
+        <b>same shape</b> as $x$; <b>overfit a single batch</b> and watch the Eq. 7 loss fall toward $0$; check
+        the sampler's <b>sign and noise scale</b> &mdash; samples that fly to infinity mean the reverse-step sign
+        is wrong, and the start must be $\\mathcal{N}(0,\\sigma_{\\max}^2 I)$, not unit variance.</li>
+        <li><b>Expected range.</b> On the toy task a correct build should land $\\approx 0.99$ of samples within
+        $0.4$ of a cluster and reach a <b>mean radius near the ring radius $2.0$</b> (our numbers, not the
+        paper's). On CIFAR-10 the target to anchor to is the paper's <b>FID $2.20$ / IS $9.89$</b> (abstract);
+        far worse FID with a correctly-trained score net usually means a sampler bug, not a modeling limit.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central trick is a
+        <b>time-conditioned</b> score network &mdash; one $s_\\theta(x,t)$ that gives very different scores at
+        small vs large noise. Turn it off by <b>hiding the time input $t$</b> (feed a constant), retrain, and
+        confirm the cluster-hit fraction <b>drops sharply</b> &mdash; from $\\approx 0.99$ to $\\approx 0.15$ in
+        our run. If quality does NOT fall, the network was effectively ignoring $t$ anyway (e.g. $t$ never
+        reached the layers), so the conditioning is not actually wired in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Samples explode to large radius:</b> reverse-step
+        sign wrong (recall $dt\\lt 0$ when integrating $t$ from $1$ to $0$), or you started sampling from unit
+        variance instead of $\\sigma_{\\max}^2$. <b>Loss won't drop:</b> the target is $-z/\\sigma_t$, not $z$ or
+        $-z$ &mdash; confusing the score with the noise (off by the $-1/\\sigma_t$ factor) trains the wrong field.
+        <b>Samples form a blurry blob, not 8 distinct clusters:</b> missing or mis-weighted $\\lambda(t)$ so high-
+        and low-noise levels are not balanced. <b>Right shape, wrong magnitude everywhere:</b> the classic
+        time-blind failure &mdash; the ablation symptom &mdash; one network applying a single-scale correction
+        across all noise levels.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

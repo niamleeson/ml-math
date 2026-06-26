@@ -286,6 +286,47 @@
        <p><i>These are the paper's reported figures, quoted. The numbers in the CODEVIZ panel below are from
        our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> ULMFiT is a text-<b>classifier</b>, so the metric is <b>test-set
+       classification accuracy</b> (the paper reports its complement, <b>error rate</b>) on a held-out split. The
+       paper's benchmarks are six text-classification datasets &mdash; e.g. <b>IMDb</b> sentiment and <b>AG News</b>
+       topic. Define "better than trivial" with the <b>majority-class</b> baseline: on a balanced 2-class set that
+       is 50% accuracy (so init cross-entropy loss should sit near $-\\ln(1/2)\\approx0.693$); a model stuck there is
+       not learning. The real bar is the <b>from-scratch baseline</b> (random encoder, plain fine-tuning) &mdash;
+       the whole claim is that pretrain-then-fine-tune beats it, especially with few labels.</p>
+       <ul>
+         <li><b>2. Sanity checks before the full run.</b> <b>Overfit a tiny batch:</b> train on ~20 labeled
+         examples with no regularization and confirm <b>train accuracy reaches ~100%</b> and loss &rarr; ~0 &mdash;
+         if it cannot even memorize, the wiring is broken. Check the loss <b>at init</b> matches $-\\ln(1/K)$ for
+         $K$ classes ($\\approx0.693$ for 2). <b>Unit-test the STLR schedule</b> against the lesson's worked values:
+         for $T=1000$, $\\eta(t{=}0)\\approx0.000313$ (the floor $\\eta_{max}/\\mathit{ratio}$), $\\eta$ at the peak
+         $t{=}\\mathit{cut}{=}100$ equals $\\eta_{max}=0.01$, and $\\eta(t{=}50)\\approx0.005156$. Check the
+         <b>discriminative rates</b>: $0.01, 0.003846, 0.001479, 0.000569$ &mdash; each $1/2.6$ of the one above.
+         Confirm <b>concat pooling</b> produces a vector of width $3\\times$ hidden, and that frozen-layer
+         parameters have <b>zero gradient</b> while gradual unfreezing keeps them frozen.</li>
+         <li><b>3. Expected range.</b> ULMFiT should clearly beat from-scratch with few labels. The paper reports
+         (quoted): <b>4.6% error on IMDb</b> vs the CoVe baseline's 8.2%, <b>5.01% on AG News</b> vs 6.87%, and an
+         18-24% error reduction on most datasets; and "with only 100 labeled examples, it matches &hellip; training
+         from scratch on 100x more data" (Howard &amp; Ruder 2018, abstract / Tables 2-3, Fig. 3). On the lesson's
+         toy task with 20 labels, full ULMFiT lands ~0.94, the ablation ~0.86, from-scratch ~0.80 (approximate, our
+         small run, not paper numbers). If ULMFiT does not clear from-scratch by a margin, suspect a bug; a few
+         points of wobble is tuning.</li>
+         <li><b>4. Ablation &mdash; prove the recipe earns its keep.</b> The paper's contribution is the
+         <b>fine-tuning recipe</b> (discriminative rates + STLR + gradual unfreezing) on top of pretraining. Turn
+         the tricks <b>OFF</b> &mdash; one global learning rate, all layers trainable from step 0 &mdash; while
+         keeping the <i>same pretrained encoder</i>. The accuracy should <b>drop</b> and land <b>between</b>
+         from-scratch and full ULMFiT (in the lesson, ~0.86): the gap below ULMFiT is what the tricks buy, the gap
+         above from-scratch is what pretraining buys. If turning the tricks off changes <i>nothing</i>, they are not
+         actually engaged (check that gradual unfreezing really freezes, and that the per-group rates differ).</li>
+         <li><b>5. Failure signals.</b> <b>Accuracy stuck at majority class (~50%)</b> &rarr; labels shuffled, head
+         not connected, or learning rate ~0. <b>Loss NaN</b> &rarr; $\\eta_{max}$ too high or the STLR ramp jolting a
+         random head into the pretrained weights &mdash; that warm-up "slant" exists to prevent it. <b>Train-good,
+         val-bad</b> &rarr; overfitting the few labels (expected for from-scratch; ULMFiT's tricks are what hold it
+         off). <b>Ablation matches full ULMFiT</b> &rarr; tricks not wired in (param groups identical, or unfreezing
+         a no-op). <b>Pretrained no better than scratch</b> &rarr; encoder weights not actually transferred, or the
+         LM never learned (Stage-1 next-token loss never fell).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the neural primitives ship in PyTorch, so you

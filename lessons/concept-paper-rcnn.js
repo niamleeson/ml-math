@@ -282,6 +282,41 @@
        <p><i>These are the paper's reported figures, quoted. The timing and IoU numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> R-CNN is a detector, so the primary score is <b>mean Average
+       Precision (mAP)</b> on <b>PASCAL VOC</b> (the paper's benchmark): a detection counts as correct when
+       its IoU with a ground-truth box is $\\ge 0.5$, AP is computed per class, then averaged. The "better
+       than trivial" bar is the <b>prior best on VOC 2012</b> that R-CNN beat by "more than 30% relative",
+       reaching <b>$53.3\\%$ mAP</b> (abstract). A second axis worth measuring is <b>cost</b>: CNN forward
+       passes per image (~2000), the slowness this lesson counts.</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> (1) Run the worked example as a <b>known-answer unit
+         test</b>: IoU of $P=[3,3,8,7]$ with $G=[1,1,6,6]$ must be exactly <b>$0.25$</b>; the targets must be
+         $(t_x,t_y,t_w,t_h)=(-0.4,-0.375,0,0.223)$; applying them must drive IoU to <b>$1.0$</b>. (2) IoU must
+         lie in $[0,1]$, equal $1$ for a box with itself, and $0$ for disjoint boxes. (3) The transform must be
+         invertible: encode targets from $(P,G)$ then apply them and recover $G$ (round-trip error $\\approx 0$).
+         (4) Check the warp output shape is the fixed $227\\times227$ (here the toy size) for any input box.</li>
+         <li><b>Expected range.</b> Anchor to the paper: full R-CNN reaches <b>$\\sim 53.3\\%$&ndash;$53.7\\%$
+         mAP</b> on VOC 2010&ndash;2012 (abstract / &sect;3). Box regression alone should add <b>3 to 4 mAP
+         points</b> (paper) &mdash; if turning it on moves mAP by far less, it is mis-wired. A from-scratch
+         pipeline on a real VOC subset that lands tens of points below this is "probably a bug" (bad IoU
+         labelling, wrong warp, untrained SVM), not tuning.</li>
+         <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The paper's central pieces are
+         <b>region proposals + per-region CNN features</b> and the <b>box regressor</b>. (a) Turn OFF box
+         regression and confirm mAP <b>drops by ~3&ndash;4 points</b> (the paper's own ablation). (b) Replace
+         the fine-tuned CNN features with a trivial feature (e.g. raw pixel mean) and watch mAP collapse toward
+         the no-skill level &mdash; this confirms the CNN, not selective search, is doing the recognition. (c)
+         Skip <b>supervised pre-train + fine-tune</b> (train the CNN from scratch on the tiny detection set) and
+         mAP should fall sharply (abstract's "significant performance boost").</li>
+         <li><b>Failure signals &amp; what they mean.</b> mAP near zero with confident boxes everywhere &rArr;
+         NMS not applied (duplicate detections) or IoU computed in the wrong box form (corner vs center mixed).
+         Every proposal labelled background during fine-tuning &rArr; IoU threshold or denominator swapped
+         ($t_x$ must divide by $P_w$, $t_y$ by $P_h$). Refined boxes flying off-image &rArr; missing the $\\log$
+         on the size target so $\\exp(d_w)$ explodes. Per-image latency or pass-count not scaling with ~2000
+         &rArr; you accidentally shared the CNN pass (that is Fast R-CNN, not R-CNN) &mdash; the very redundancy
+         the CODEVIZ chart plots.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the heavy primitives (the CNN, selective search in

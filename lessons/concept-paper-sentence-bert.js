@@ -277,6 +277,46 @@ $$ \\text{Inference:}\\quad \\hat{y} = \\cos(u,v) = \\frac{u\\cdot v}{\\lVert u\
        <p><i>Those are the paper's reported figures, quoted from the abstract and Table 6. Every number in the
        CODE and CODEVIZ panels below is from our own tiny run on toy data &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> SBERT produces sentence embeddings, so the headline metric is the
+       <b>Spearman rank correlation</b> between the <b>cosine similarity</b> of the two pooled embeddings and
+       human similarity ratings on the <b>STS benchmark</b> (the paper's eval; &sect;4&ndash;5). The no-skill
+       floor is correlation $\\approx 0$ (random embeddings give cosine uncorrelated with the labels), and the
+       baseline to beat is what the paper warns about &mdash; off-the-shelf BERT MEAN/CLS, "often worse than
+       averaging GloVe" (&sect;1). For our toy Track-B build the practical proxy is the
+       <b>paraphrase-minus-unrelated cosine gap</b>: mean cosine on paraphrase pairs minus mean on unrelated
+       pairs (higher = better separation).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Verify cosine itself first: the worked example
+        $\\cos([2,1,0,1],[1,2,1,0])=0.667$ and $\\cos(\\cdot,[-1,0,2,-1])=-0.5$ (the CODE's first cell recomputes
+        these), and the scale-invariance check $\\cos(u,2v)=\\cos(u,v)$. Confirm $\\cos\\in[-1,1]$ and that a
+        vector with itself gives exactly $1$. <b>Check weight sharing</b>: print <code>id(enc_A)==id(enc_B)</code>
+        &mdash; both sentences must pass through the <i>same</i> module, or the two embedding spaces are unrelated
+        and cosine is noise. <b>Overfit a handful of pairs</b>: the MSE regression loss should drive toward $0$
+        and the gap should widen &mdash; a rule of thumb, not a paper number.</li>
+        <li><b>Expected range.</b> On the paper's setup, a correct build reaches the reported STS Spearman where
+        SBERT "outperforms other state-of-the-art sentence embeddings methods" (abstract, approximate). On our
+        toy run, MEAN pooling should open a clear positive gap (CODEVIZ shows $\\approx 0.89$ vs CLS
+        $\\approx 0.73$ &mdash; our numbers, not the paper's). A gap stuck near $0$, or paraphrase cosine no
+        higher than unrelated, signals a bug rather than tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> Two components to test. First, the paper's
+        central <b>pooling</b> choice: swap MEAN for CLS (token 0) with everything else identical and confirm the
+        gap <b>shrinks</b> &mdash; the paper's Table 6 ranks MEAN $80.78\\gt$ CLS $79.80\\gt$ MAX $79.07$
+        (&sect;6). Second, the broader claim that <i>fine-tuning</i> (not pooling alone) makes cosine meaningful:
+        evaluate the encoder <b>before training</b> &mdash; the gap should be near zero and only open up after the
+        cosine objective is applied. For the classification objective, dropping the $|u-v|$ concatenation term
+        should also hurt (Table 6's most-important component).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Gap stays $\\approx 0$:</b> weights not shared (each
+        sentence got its own encoder), or you're feeding raw untrained vectors and expecting good cosine.
+        <b>All embeddings collapse to one point</b> (every cosine $\\approx 1$, paraphrase and unrelated alike):
+        posterior collapse &mdash; in the triplet objective this means the margin $\\epsilon$ was dropped (the
+        loss is minimized by collapsing all distances to $0$; keep $\\epsilon\\gt 0$, paper uses $1$). <b>Short
+        sentences score oddly low:</b> MEAN-pooling averaged over pad tokens &mdash; mask padding before
+        averaging. <b>Loss won't move / wrong head:</b> the objectives don't mix &mdash; regression fits
+        $\\cos(u,v)$ with MSE, classification softmaxes $W_t(u,v,|u-v|)$; pairing a loss with the wrong head
+        stalls training.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

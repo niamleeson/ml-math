@@ -256,6 +256,40 @@
        <p><i>These are the paper's reported ImageNet figures, quoted from the abstract. The numbers in the
        CODEVIZ panel below are from our own tiny MNIST run — not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Representation quality is measured by <b>linear-probe top-1 accuracy</b>
+       (&sect;2.3): freeze the encoder $f$, train one <code>nn.Linear</code> on its features $h$, report test
+       accuracy. The paper's benchmark is ImageNet, where SimCLR's probe reaches <b>76.5% top-1</b> &mdash;
+       "matching the performance of a supervised ResNet-50" (abstract). Define "better than trivial" as beating a
+       <b>from-scratch</b> model trained on the same few labels (the low-label comparison), and beating
+       majority-class accuracy; on $K$-way balanced data random is $1/K$.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Unit-test <code>nt_xent</code> against the lesson's worked
+        example: $N=2$, $\\tau=0.5$, the four unit vectors give $p_{1,2} = 0.7919$ and $\\ell_{1,2} = 0.2333$. (2)
+        At init with $2N$ random unit projections, NT-Xent should be near $\\ln(2N-1)$ (rule of thumb &mdash; a
+        $(2N\\!-\\!1)$-way softmax with no signal), e.g. $\\approx \\ln(255) \\approx 5.5$ at $N=128$. (3) Confirm
+        $z$ is L2-normalized and the diagonal is masked to $-\\infty$; the loss should NOT instantly hit $0$. (4)
+        Check the partner targets: row $i$ pairs with row $i+N$. (5) Overfit one batch &mdash; loss should fall
+        steadily.</li>
+        <li><b>Expected range.</b> Anchor to the paper: a full SimCLR probe should approach <b>76.5% ImageNet
+        top-1</b> (abstract, approximate target), and "85.8% top-5 when fine-tuned on only 1% of labels." Our tiny
+        MNIST run is far lower (probe ~0.25 at 20 labels, our small run, not the paper) &mdash; what matters is the
+        probe beating from-scratch at every label budget. A probe no better than from-scratch signals a bug, not
+        tuning.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central idea is <b>NT-Xent contrastive
+        pretraining</b>. Turn it off: replace the pretrained encoder with a <b>random untrained encoder</b> and
+        probe that &mdash; accuracy should collapse toward from-scratch/chance, isolating pretraining (not the
+        architecture or probe) as the source of the gain. Secondary knobs the paper credits: remove the
+        <b>projection head</b> (probe $z$ instead of $h$) and accuracy drops; shrink the <b>batch size</b> (fewer
+        negatives) and the probe weakens; drop <b>colour distortion</b> from the augmentations and the task becomes
+        too easy.</li>
+        <li><b>Failure signals &amp; what they mean.</b> NT-Xent instantly near $0$ with useless features &rarr;
+        diagonal not masked (the trivial self-match wins). Loss stuck at $\\ln(2N-1)$ and never falling &rarr; not
+        learning (forgot L2-normalize, so the temperature is meaningless; or $\\tau$ left at $1$). Loss falls but
+        probe is at chance &rarr; targets point at the wrong row (off-by-$N$), or you probed $z$ not $h$. Loss NaN
+        &rarr; LR too high or $\\tau$ too small (over-sharpened softmax).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

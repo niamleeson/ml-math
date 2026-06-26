@@ -336,6 +336,47 @@
        change. (All specific Atari numbers are the paper's; every number in this lesson's CODE / CODEVIZ is
        OUR own small CartPole run, labeled as such &mdash; not the paper's reported figures.)</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Rainbow is a value-based RL agent, so the metric is <b>episode
+        return</b> (and, for the paper, <b>human-normalized median score across the 57 Atari 2600 games</b>, in
+        both data efficiency and final score). The "no-skill" anchors are a <b>random-action policy</b> (low
+        return) and the <b>plain DQN baseline</b> Rainbow must beat. In the toy build the benchmark is
+        <code>CartPole-v1</code>, where return is capped at <b>500</b> and a random policy scores roughly
+        <b>~20</b> &mdash; so "working" means the agent climbs well above ~20 toward 500.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Run the worked-example cell: $n=3$, $\\gamma=0.9$,
+        rewards $[1,0,2]$ must give $R_t^{(3)}=2.62$ and the double target $y=4.807$ &mdash; the notebook
+        <code>assert</code>s this (a known-answer test for multi-step + double). (2) Check the C51/dueling head
+        outputs a <b>probability vector that sums to 1</b> per action (softmax over atoms), and that the dueling
+        recombination subtracts the mean advantage. (3) Check the $n$-step return <b>masks at episode
+        boundaries</b> ($\\gamma_t^{(k)}\\to 0$ after termination) so reward never leaks across episodes. (4)
+        Confirm the noisy layers <b>resample noise each forward pass</b> and that turning noise off makes the
+        layer reduce to an ordinary linear map. (5) Verify prioritized sampling reproduces uniform sampling when
+        all priorities are equal.</li>
+        <li><b>Expected range.</b> The paper: the integrated agent "outperforms&hellip; each of the six
+        individual extensions" and sets a new state of the art on Atari-57 in data efficiency and final score
+        &mdash; <i>the Atari numbers are the paper's; consult Figure 1 / the appendix for exact per-game
+        figures</i>. In the toy run the full agent should reach a high CartPole return quickly (our mean training
+        return ~182 over 250 episodes). <b>Rule of thumb:</b> if the full agent never rises above the ~20
+        random-policy level, something is broken (target not bootstrapping, noise never resampled, replay empty),
+        not merely under-tuned.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The paper's whole method <i>is</i> the
+        ablation: remove <b>one component at a time</b> from the full agent (the <code>CFG</code> booleans:
+        DUELING, DOUBLE, NOISY, PRIORITIZED, N_STEP) and confirm learning speed <b>drops</b>. The signature
+        result to reproduce in shape: removing <b>multi-step</b> and <b>prioritized replay</b> hurts most (the
+        paper's "two most crucial components"), while removing <b>dueling</b> or <b>double</b> changes little in
+        aggregate. If removing multi-step does <i>not</i> slow learning, the $n$-step return is not actually
+        feeding the target.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Return stuck near random (~20)</b> &rarr; target is
+        not learning &mdash; check the $\\gamma^n$ bootstrap, terminal masking, or that replay is being sampled.
+        <b>Q-values explode / diverge</b> &rarr; the $\\max$ over-estimation (missing the double decoupling) or
+        too-large multi-step variance. <b>No exploration / premature plateau</b> &rarr; noisy nets not resampled,
+        or $\\epsilon$-greedy left on <i>alongside</i> noisy layers (double-counted exploration). <b>Agent
+        over-fits rare large-error transitions</b> &rarr; prioritized replay without the importance-sampling
+        weight correction. <b>"Double" gives no benefit</b> &rarr; the same net is selecting and evaluating
+        $a^*_{t+n}$ inside the target.</li>
+       </ul>`,
+
     implementBoundary:
       `<p><b>Track B (architecture).</b> You import the primitives &mdash; <code>nn.Linear</code>,
        <code>nn.ReLU</code>, Adam, and a Gymnasium environment &mdash; and the base DQN plumbing (replay

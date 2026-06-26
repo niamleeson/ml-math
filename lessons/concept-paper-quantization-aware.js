@@ -287,6 +287,44 @@
        bit depth.</p>
        <p><i>These are the paper's reported figures, quoted from its tables. The numbers in the CODE and CODEVIZ
        panels below are from our own tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The thing to measure is <b>classification accuracy of the int8
+        (quantized) net vs. the float baseline</b> &mdash; the paper reports <b>top-1 accuracy</b> on ImageNet
+        (ResNet-50, Inception v3) and <b>mAP</b> for COCO detection. The right "no-skill" anchor is your own
+        <b>float32 accuracy</b>: a correct int8 build should land just below it, never far below. In the toy
+        build, the matched float baseline is ~$0.92$ on the 6-class blob task, and random guessing is $1/6
+        \\approx 0.167$ &mdash; so "working" means int8 stays near $0.92$, not down at chance.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Run the worked-example cell: range $[-2,6]$ must give
+        $S = 8/255$, $Z = 64$, and $1.5 \\to q=112 \\to \\hat r = 1.50588$ &mdash; a known-answer unit test for the
+        affine map. (2) Check $\\hat r$ from <code>fake_quant</code> is always <b>within one step $S$</b> of $r$
+        for in-range inputs, and exactly clamps outside $[a,b]$. (3) Confirm real $0$ maps back to $0$ exactly
+        ($q=Z \\Rightarrow r=0$). (4) Confirm a fake-quant tensor takes at most $2^{\\text{bits}}$ distinct values.
+        (5) At 8 bits, $\\hat r \\approx r$, so quantized and float outputs should be nearly identical &mdash; if
+        they diverge wildly at 8 bits, the scale/zero-point math is wrong.</li>
+        <li><b>Expected range.</b> Anchored to the paper: full int8 inference costs only <b>~1.5%</b> top-1 on
+        ResNet-50 ($76.4\\% \\to 74.9\\%$, Table 4.1) and <b>~3%</b> on Inception v3 ($78.4\\% \\to 75.4\\%$, Table 4.3)
+        &mdash; <i>approximate, the paper's figures</i>. <b>Rule of thumb:</b> if your 8-bit accuracy drops more
+        than a few points below your float baseline, that is "probably a bug" (bad range, missing zero-point),
+        not tuning. The bit-width cliff is expected &mdash; the paper sees loss grow from $-0.9\\%$ at 8/8 bits to
+        $-14.0\\%$ at 4/4 (Table 4.7).</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central component is
+        <b>quantization-aware training</b> (training <i>with</i> simulated rounding). Turn it OFF: train Net A in
+        plain float and quantize it only afterward (post-training). At a generous 8 bits QAT and PTQ should be
+        close; as you sweep down to 3 or 2 bits, the <b>QAT curve must stay above the PTQ curve</b> (in the toy
+        run, 3-bit $0.890$ vs $0.860$). If the two curves coincide at low bits, the fake-quant is not actually
+        wired into the training forward pass. A second ablation: kill the <b>straight-through estimator</b> (make
+        backward return $0$) &mdash; training should stall near its starting loss, proving the STE is what makes
+        QAT trainable.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Loss frozen / net never learns</b> &rarr; you let
+        autograd differentiate <code>round</code> honestly (gradient $0$); restore the STE. <b>8-bit accuracy
+        already far below float</b> &rarr; wrong scale $S$, missing/incorrect zero-point $Z$, or you quantized
+        the bias to int8 (keep it higher precision). <b>Accuracy clips or wastes range as training proceeds</b>
+        &rarr; a hard-coded activation range; track it with the EMA. <b>QAT no better than PTQ at low bits</b>
+        &rarr; fake-quant is off during training, or the range $[a,b]$ is recomputed wrong. <b>Values not landing
+        on a grid / spiky errors at $r=0$</b> &rarr; you dropped the zero-point and lost the exact-zero
+        guarantee.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -258,6 +258,49 @@
        <p>The paper summarizes: focal loss with $\\gamma=2$ "yields a 2.9 AP improvement" over balanced cross
        entropy. (All numbers above are <b>the paper's</b>, quoted; the notebook below reproduces the
        <i>shape</i> of this curve on a toy problem &mdash; our own small run, not these numbers.)</p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The paper's primary metric is <b>Average Precision (AP)</b> on
+       <b>COCO</b> object detection (higher is better). The bar to beat is the <b>prior-SOTA two-stage
+       detector</b>: the paper reports RetinaNet-101-800 at <b>AP 39.1</b>, a $2.3$-point gap above the
+       top Faster R-CNN variant it compares to. For the loss itself, the cleaner metric is the
+       $\\gamma$-ablation AP from <b>Table 1b</b>. In the Track B reproduction here there is no detector, so the
+       proxy metrics are (a) <b>recall on the rare class</b> of an imbalanced toy classifier and (b) the
+       <b>share of total loss</b> contributed by easy vs hard examples &mdash; the no-skill floor being plain
+       cross entropy's behavior, where easy negatives dominate.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) <b>The built-in oracle</b>: focal loss with
+        $\\gamma=0$, $\\alpha=0.5$ must reduce to PyTorch's binary cross entropy &mdash; the code asserts
+        <code>torch.allclose(focal(gamma=0)*2, BCE)</code>; if it fails, the $p_t$ flip (using $1-p$ for
+        $y=0$) is wrong, which is the most common bug. (2) Reproduce the worked numbers: $p_t=0.9$ &rarr;
+        CE$=0.1054$, FL$=0.001054$, ratio $\\mathbf{100\\times}$ (the paper's own quoted figure); $p_t=0.5$
+        &rarr; ratio only $\\mathbf{4\\times}$. (3) Range check: $p_t\\in(0,1)$, and clamp before $\\log$ to
+        avoid $\\log(0)$. (4) <b>Loss-mass check</b> (matches the CODEVIZ panel): on 1000 easy ($p_t=0.95$) + 10
+        hard ($p_t=0.5$) examples, CE gives the easy group ~$88\\%$ of the loss, focal ($\\gamma=2$) drops it
+        to ~$7\\%$ &mdash; the flip is the whole idea.</li>
+        <li><b>Expected range.</b> Anchor to the paper's reported AP (Lin et al. 2017, Table 1b): $\\gamma=0$
+        (balanced CE) AP <b>31.1</b>, rising to $\\gamma=2$ AP <b>34.0</b> (best, a $2.9$-AP gain), then
+        <i>falling</i> to AP <b>32.2</b> at $\\gamma=5$. The toy run reproduces only the <b>shape</b> (peak at
+        $\\gamma=2$, fall at $\\gamma=5$), not these numbers &mdash; rare-class recall should rise from CE's
+        baseline to a peak near $\\gamma=2$. A focal run that does <b>no better than CE</b> on an imbalanced set
+        suggests the modulating factor is not applied; a run that's worse everywhere suggests the $p_t$ flip or
+        the $\\alpha/\\gamma$ pairing is wrong (recall $\\alpha$ should drop as $\\gamma$ rises).</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The knob is the <b>focusing parameter</b>
+        $\\gamma$. Sweep $\\gamma\\in\\{0, 0.5, 1, 2, 5\\}$ with everything else fixed. At $\\gamma=0$ focal loss
+        <i>is</i> cross entropy (modulating factor $\\equiv 1$), so the metric should match the CE baseline; as
+        $\\gamma$ rises toward $2$ the rare-class metric should <b>improve</b>, then <b>fall</b> by $\\gamma=5$
+        as even moderately-hard examples ($p_t\\approx 0.7$ &rarr; $(0.3)^5\\approx 0.0024$) get starved of
+        gradient. If the $\\gamma=0$ point does NOT equal cross entropy, the loss is miswired; if the curve is
+        flat across all $\\gamma$, the modulating factor isn't multiplying in.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>$\\gamma=0$ does not match cross entropy</i> &rarr;
+        the $p_t$ bookkeeping is wrong (forgot $1-p$ for negatives), or the $\\alpha$ constant wasn't undone in
+        the check. <i>Loss NaN</i> &rarr; $\\log(0)$ from an unclamped $p_t$ at a confident-wrong prediction.
+        <i>Rare-class recall stuck near 0</i> (model predicts "background" for everything) &rarr; either the
+        modulating factor isn't applied (easy negatives still flood the loss) or, in a real detector, the
+        prior-bias init $b=-\\log((1-\\pi)/\\pi)$, $\\pi=0.01$ is missing and iteration one blew up. <i>Metric
+        falls as $\\gamma$ grows past 2</i> &rarr; expected (too-aggressive down-weighting), not a bug &mdash;
+        back off $\\gamma$. <i>Focal $\\approx$ CE on a balanced, well-separated set</i> &rarr; also expected:
+        focal loss only helps when easy negatives dominate, so verify your test set is actually imbalanced.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

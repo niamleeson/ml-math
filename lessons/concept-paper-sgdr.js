@@ -265,6 +265,48 @@
        Every number in this lesson's CODEVIZ is instead OUR OWN small run, labeled as such &mdash; not the paper's
        reported number.</p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> SGDR is a learning-rate <i>schedule</i>, not a model, so it gets
+       checked at two levels: (1) the schedule is the curve it should be, and (2) using it actually trains
+       faster / lower than a flat baseline.</p>
+       <ul>
+         <li><b>The metric &amp; baseline.</b> Two things to measure. For the schedule itself: max absolute LR
+         error vs <code>torch.optim.lr_scheduler.CosineAnnealingWarmRestarts</code> across at least two restarts
+         &mdash; this should be $\\approx 0$ (the no-skill bar is "matches PyTorch to floating point"). For the
+         payoff: final training loss (or validation error) versus a <b>constant-LR run</b> of the same step
+         budget and seed &mdash; that constant-LR curve is your trivial baseline; SGDR should end at or below it.
+         At scale the paper's own yardstick is test error vs the baseline schedule it beats (see Expected range).</li>
+         <li><b>Sanity checks BEFORE any training.</b> (a) At every restart, $T_{cur}=0$, so plug it in:
+         $\\eta=\\eta_{max}$ exactly &mdash; assert the first LR of each cycle equals the base LR. (b) At the
+         bottom $T_{cur}=T_i$: $\\cos\\pi=-1$, so $\\eta=\\eta_{min}$ (default $0$) &mdash; assert the curve
+         reaches its floor. (c) Replay the lesson's worked sequence $0.1,\\,0.08536,\\,0.05,\\,0.01464,\\,
+         [\\text{jump}]\\,0.1$ as a known-answer unit test. (d) Run the
+         <code>torch.allclose(my_lrs, pytorch_lrs)</code> check from the CODE cell across a restart with
+         $T_{mult}\\ne 1$ &mdash; if it passes, your schedule provably IS PyTorch's.</li>
+         <li><b>Expected range.</b> The schedule-vs-PyTorch error should be machine-epsilon small (rule of thumb:
+         $\\lt 10^{-6}$); anything larger is an off-by-one at the restart, not tuning. For the training payoff,
+         the paper reports (Abstract) state-of-the-art <b>3.14% test error on CIFAR-10 and 16.21% on CIFAR-100</b>,
+         reaching comparable-or-better accuracy in roughly <b>2&times;&ndash;4&times; fewer epochs</b>
+         (arXiv:1608.03983, Abstract &amp; &sect;5) &mdash; that "anytime" speedup, not a single accuracy point, is
+         the claim to reproduce in spirit. On the lesson's toy run, expect SGDR to end below the constant-LR
+         baseline; if it's no better, the restarts aren't doing anything (rule of thumb, not a paper number).</li>
+         <li><b>Ablation &mdash; prove the restart earns its keep.</b> The central knob is the warm restart itself.
+         Turn it OFF by never resetting $T_{cur}$ (one long cosine decay, no jumps) or by switching to a constant
+         LR, holding seed/init/step-budget fixed. The restart's signature should vanish: no LR jumps back to
+         $\\eta_{max}$, and on a non-convex problem the "escape a shallow minimum" behavior disappears (the
+         lesson's CODEVIZ: 8/12 runs escape WITH restarts, the constant-LR run stays trapped). If turning restarts
+         off changes nothing, your $T_{cur}$ reset is dead code &mdash; you built a plain cosine decay.</li>
+         <li><b>Failure signals &amp; what they mean.</b> (i) The allclose drifts only AFTER the first cycle &rarr;
+         off-by-one at the restart or you forgot to grow $T_i$ when $T_{mult}\\ne 1$ (the classic pitfall). (ii)
+         One smooth monotone decay with no jumps &rarr; you fed the global step into the cosine instead of resetting
+         $T_{cur}$ &mdash; that's not warm restarts. (iii) Loss goes NaN right after a restart &rarr; $\\eta_{max}$
+         is too high for this model (the jump is real, the value is wrong). (iv) Loss collapses to the constant-LR
+         curve with no bump at restarts &rarr; the LR jump isn't reaching the optimizer (schedule not wired to the
+         param group). (v) Training is worse than constant LR &rarr; restarts too frequent / $\\eta_{max}$ too
+         large, kicking the weights out faster than they settle. The visible <b>bump-up in loss at each restart</b>
+         (CODEVIZ, step 9&rarr;10) is the healthy signal that the kick is landing.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this schedule as

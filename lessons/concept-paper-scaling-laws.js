@@ -313,6 +313,41 @@
        <p><i>These are the paper's own statements and fitted numbers, transcribed from the abstract, &sect;1.1,
        and Tables 5&ndash;6. The numbers in the CODEVIZ panel below come from a small synthetic illustration of
        the law's form &mdash; not the paper's measured results.</i></p>`,
+    evaluation:
+      `<p><b>What "working" means &amp; the metric.</b> This is a <b>read-only</b> paper, so you do not train a
+       model &mdash; you verify that you have <b>transcribed and can apply the laws correctly</b>. The metric is
+       <b>predictive accuracy of the fitted power law</b>: hold out the largest-scale points, fit
+       $L=(N_c/N)^{\\alpha_N}$ on the rest, and check the held-out loss is predicted to within the fit's error.
+       The "no-skill" baseline is a <b>flat line</b> (predict the mean loss, ignoring $N$); a real power law must
+       beat that, and the evidence is a straight line on log-log axes (high $R^2$) spanning, per the abstract,
+       "more than seven orders of magnitude."</p>
+       <ul>
+        <li><b>Sanity checks BEFORE any fit.</b> Recompute the lesson's worked numbers: with the paper's
+        $N_c=8.8\\times10^{13}$, $\\alpha_N=0.076$ (Table 5), $L(10^6)\\approx 4.02$ nats, $L(10^7)\\approx 3.37$
+        nats, ratio $\\approx 0.839$ &mdash; and it must equal the shortcut $10^{-\\alpha_N}=10^{-0.076}\\approx
+        0.839$ (the NumPy cell asserts this). Unit-test the fitter on <b>synthetic</b> data: generate points from
+        a known $\\alpha$, add tiny jitter, and confirm <code>polyfit</code> in log-log space recovers
+        $-\\alpha$ as the slope (our demo recovers $-0.1005$ for a true $-0.10$). Also confirm you used
+        <b>non-embedding</b> parameter counts (Eq 2.1), not total params.</li>
+        <li><b>Expected range.</b> Recovered exponents should land near the paper's <b>$\\alpha_N\\approx 0.076$,
+        $\\alpha_D\\approx 0.095$, $\\alpha_C^{\\min}\\approx 0.050$</b> (Table 5) when you reproduce the setup;
+        the scale constants $N_c,D_c,C_c^{\\min}$ are tokenization-dependent, so expect those to shift between
+        setups while the exponents stay portable. A per-decade loss factor of $10^{-\\alpha}$ (about $0.84$ for
+        size) is the rule of thumb to expect; a slope far from these is "probably a bug or wrong regime," a small
+        offset is "setup difference."</li>
+        <li><b>Ablation &mdash; prove the power-law form earns its keep.</b> The paper's central claim is that
+        loss is a <b>power law</b> (straight on log-log), not, say, an exponential or a flat plateau. Turn the
+        idea off by <b>fitting a constant (or a linear-in-$N$) model instead</b> and confirm its held-out error
+        is clearly worse than the log-log line's; equivalently, fit on a <b>narrow $N$ range</b> and watch the
+        extrapolation to far-larger $N$ fail. If the straight log-log line does <i>not</i> beat the flat
+        baseline, either the points span too few decades or you are outside the law's regime (Eq 1.5).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Log-log points curve, not straight:</b> you mixed
+        regimes &mdash; a data-starved run obeys the combined $L(N,D)$ (Eq 1.5), not $L(N)$ alone (overfitting
+        boundary). <b>Fitted $\\alpha$ way off / sign flipped:</b> counting total instead of non-embedding
+        params, or fitting in linear rather than log space. <b>Extrapolation to a giant model is wildly wrong:</b>
+        you fit too narrow a range, or applied the $C_{\\min}$ law to a badly-allocated (non-optimal) training
+        run, which never sits on the Eq 1.3 line.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

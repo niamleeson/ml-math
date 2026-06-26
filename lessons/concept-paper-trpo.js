@@ -301,6 +301,46 @@
        <p><i>These are the paper's reported, qualitative claims, quoted from &sect;8 and the conclusion (the paper
        reports them mostly via plots, not single headline numbers). The numbers in the CODEVIZ panel below are from
        our own tiny toy-policy run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The real metric is <b>average episodic return</b> (higher = better,
+       measured across training iterations) on the paper's two suites: <b>MuJoCo locomotion</b> (swimming,
+       hopping, walking) and <b>Atari from raw pixels</b> (seven games, &sect;8). The "no-skill" floor is a
+       <b>random policy</b>; the meaningful bar is the baselines TRPO compared against (cross-entropy method, CMA,
+       natural-gradient variants; for Atari, Deep Q-Learning). For the toy build here the metric is the
+       <b>realized true return per update</b> of a 3-action softmax policy, and the property you are really
+       checking is <b>monotonic improvement</b> &mdash; the curve should never dip.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Reproduce the worked example: from uniform
+        $\\pi_{old}$ with advantages $(+1,-0.5,-0.5)$ and $\\delta=0.02$, the step must land at $\\beta\\approx0.83$,
+        $\\pi_{new}=(0.431,0.284,0.284)$, realized KL $=0.020$ (exactly on the boundary), surrogate $=0.147$ &mdash;
+        if the KL isn't pinned at $\\delta$, the line search or the KL formula is wrong. Check that
+        $D_{KL}(\\pi_{old}\\,\\|\\,\\pi_{old})=0$ and is non-negative. At $\\theta=\\theta_{old}$ every importance
+        ratio is $1$, so the surrogate gradient should equal the ordinary policy gradient (known-answer check).
+        For the full version, gradient-check the Fisher-vector product against a finite-difference Hessian-of-KL.</li>
+        <li><b>3. Expected range.</b> On the toy policy the constrained run should climb smoothly to the optimum
+        ($\\approx 1.0$ realized true return) with no dip, while the unconstrained ablation crashes to $\\approx
+        -1.4$ on the first step &mdash; matching CODEVIZ (not a paper claim; our run). If you reproduce the paper,
+        the targets are qualitative (the paper reports plots, not headline numbers): TRPO should learn working
+        gaits and "<b>outperform</b>" the locomotion baselines, and "<b>perform competitively</b>" with DQN on
+        Atari (&sect;8), using $\\delta=0.01$. A return curve that <i>decreases</i> between iterations means the
+        trust region isn't binding &mdash; a bug, not tuning.</li>
+        <li><b>4. Ablation &mdash; prove the idea earns its keep.</b> The central component is the <b>KL trust
+        region</b>. Drop it: replace the line search with a fixed <b>big greedy step</b> $\\theta\\leftarrow
+        \\theta_{old}+(\\text{big})\\,g$ up the same surrogate gradient, keeping advantages, policy form, and start
+        identical. The realized true return must <b>overshoot and fall below the start</b> on the first iteration
+        &mdash; if it doesn't, the step wasn't actually large enough to leave the region where the surrogate is a
+        valid local model, so the constraint isn't being tested. This is the &sect;3 monotonic-improvement claim
+        made concrete: only the constrained run improves $\\eta$ every step.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Realized return dips between iterations</b> &rarr;
+        the KL constraint isn't enforced (line search skipped, or you constrained the surrogate not the KL).
+        <b>Step always tiny / policy barely moves</b> &rarr; you implemented the <i>penalty</i> form (Eq. 9, with
+        the huge constant $C$) instead of the <i>constraint</i> form (Eq. 12). <b>Trust region the wrong size /
+        asymmetric</b> &rarr; KL arguments swapped &mdash; it must be $D_{KL}(\\pi_{old}\\,\\|\\,\\pi_{new})$, old
+        as reference. <b>Improvement stalls or oscillates with reused data</b> &rarr; you reused stale rollouts;
+        TRPO is on-policy, recollect each iteration. <b>Raw natural-gradient step violates $\\delta$</b> &rarr;
+        you skipped the backtracking line search that corrects the quadratic approximation (&sect;6). The green
+        (constrained) vs red (ablation) CODEVIZ curves are the pass/fail picture.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

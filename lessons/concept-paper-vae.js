@@ -284,6 +284,52 @@ $$ \\mathcal{L}(\\theta,\\phi;X) \\;\\approx\\; \\widetilde{\\mathcal{L}}^{M} \\
        <p><i>The paper's own headline numbers (lower-bound / marginal-likelihood curves) are in &sect;5 &mdash;
        we do not restate them from memory. The numbers in the CODEVIZ panel below are from our own tiny MNIST
        run, not the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> A VAE has two jobs, so report two numbers on MNIST (the paper's
+       &sect;5 dataset): the <b>negative ELBO per image</b> (the bound you trained on, in nats &mdash; lower
+       is better, split into its reconstruction-BCE and KL parts), and a qualitative <b>prior-sample</b> check
+       (draw $z\\sim N(0,I)$, decode &mdash; do digits appear?). The "no-skill" floor: a model that ignores
+       $z$ and outputs the per-pixel mean digit. Beating it means the latent actually carries information; the
+       paper reports its lower bound / estimated marginal likelihood on MNIST &amp; Frey-Face beating a
+       wake-sleep baseline (&sect;5).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Worked-example unit test.</b> The first code cell already does this: $\\mu=0.8$,
+        $\\log\\sigma^2=-1.386$, $\\epsilon=-1.2$ must give $z=0.2$ and $D_{KL}\\approx 0.638$. If not, your
+        reparameterization or KL formula is wrong before any training.</li>
+        <li><b>Shapes &amp; ranges.</b> Decoder output in $[0,1]$ (sigmoid); $\\mu,\\log\\sigma^2$ shape
+        $(B,J)$; KL is a single non-negative scalar after summing.</li>
+        <li><b>KL at init / collapse point.</b> If the encoder outputs $\\mu=0,\\log\\sigma^2=0$ the
+        Appendix-B KL is exactly $0$ &mdash; a good closed-form check.</li>
+        <li><b>Overfit one batch.</b> Train on a single minibatch; the reconstruction term should fall toward
+        $0$ (it can memorize), confirming gradients flow through the reparameterized $z$.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On a small MNIST run the negative ELBO per image should fall steadily over
+       a few epochs and prior samples should look digit-like. The paper's headline is its lower-bound /
+       marginal-likelihood <i>curves</i> on MNIST &amp; Frey-Face beating wake-sleep (&sect;5) &mdash; we do
+       not restate exact figures from memory. As a <i>rule of thumb</i> (not a paper claim), a healthy 20-dim
+       MNIST VAE lands roughly around the low-$100$s of nats negative-ELBO per image; an order of magnitude
+       off, or a flat loss, signals a bug rather than tuning.</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central component is the <b>KL
+       term</b> (the regularizer that aligns codes with the prior). <b>Turn it off</b> (<code>use_kl=False</code>),
+       retrain with everything else identical, and re-draw prior samples: they should <b>degrade to mush/blanks</b>
+       while reconstructions stay fine. The CODEVIZ panel quantifies it &mdash; without KL, mean $|\\mu|$ blows
+       up ($\\approx 0.74 \\to \\approx 6.8$) and mean $\\sigma$ collapses toward $0$. If prior samples do
+       <i>not</i> get worse, the KL term isn't wired in. (Second knob: the reparameterization itself &mdash;
+       replace $z=\\mu+\\sigma\\epsilon$ with a direct <code>torch.normal</code> sample and the encoder stops
+       learning entirely.)</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Posterior collapse</b> (encoder outputs $\\mu\\approx0,\\sigma\\approx1$ for every input; KL
+        $\\to 0$ but reconstructions are blurry/identical): KL too strong or BCE <i>meaned</i> over pixels
+        instead of <i>summed</i> (shrinks recon ~784&times;). Fix the reduction or anneal the KL weight.</li>
+        <li><b>Codes explode / loss NaN:</b> sign of the KL flipped (model maximizes divergence), or a missing
+        $\\tfrac{1}{2}$ in $\\sigma=e^{\\frac{1}{2}\\log\\sigma^2}$.</li>
+        <li><b>Reconstructions good but prior samples are noise:</b> the honest generative test failed &mdash;
+        the latent isn't aligned to $N(0,I)$ (typically the no-KL case).</li>
+        <li><b>Encoder never improves:</b> sampled $z$ directly instead of reparameterizing &mdash; no gradient
+        reaches $\\mu,\\sigma$.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

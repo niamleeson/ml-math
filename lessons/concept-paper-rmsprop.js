@@ -267,6 +267,43 @@
        cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf.) The CODEVIZ numbers below are our own small
        run, not any reported result.</p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; baseline.</b> RMSProp has no benchmark to chase &mdash; the slide makes no
+       numeric claim. So "working" is defined two ways: (1) <b>exactness</b> &mdash; your hand-built
+       update must equal $\\texttt{torch.optim.RMSprop}$ to floating-point tolerance
+       ($\\texttt{torch.allclose}$, atol $\\approx 10^{-7}$); and (2) <b>optimization progress</b> &mdash;
+       on the convex least-squares problem the loss must fall monotonically and end <i>below</i> the
+       AdaGrad baseline that stalls. In our run AdaGrad freezes near loss $\\approx 17.5$ while RMSProp
+       reaches $\\approx 7.2$ in the same 120 steps (our numbers, not the slide's).</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> Reproduce the worked one-step example exactly:
+         from $\\theta_0=0$, $s_0=0$, $g_1=0.1$, $\\rho=0.9$, $\\alpha=0.01$ you must get
+         $s_1=0.001$ and $\\theta_1\\approx -0.0316228$ &mdash; a known-answer unit test. Check the
+         scale-cancellation invariant: on the <i>first</i> step the update size is about
+         $\\alpha/\\sqrt{1-\\rho}\\approx 0.0316$ <i>regardless</i> of the gradient's magnitude (try
+         $g_1=0.1$ and $g_1=10$ &mdash; same step). Confirm $s$ has the same shape as each parameter and
+         starts at all zeros.</li>
+         <li><b>Expected range.</b> The only "paper" target is the $\\texttt{allclose}$ pass (max abs
+         diff $\\sim 0$, expect $\\texttt{True}$); that is binary, not approximate. For the optimization
+         demo, a correct build keeps a roughly flat step length ($\\approx 0.02$ in our run) and a
+         steadily falling loss; if your step length decays like $1/\\sqrt{t}$ toward zero you have built
+         AdaGrad, not RMSProp (rule of thumb, our run &mdash; not a slide claim).</li>
+         <li><b>Ablation &mdash; prove the moving average earns its keep.</b> The central idea is the
+         <i>decaying</i> average. Replace $s_t=\\rho s_{t-1}+(1-\\rho)g_t^2$ with AdaGrad's running
+         <i>sum</i> $G_t=G_{t-1}+g_t^2$ and keep everything else fixed: $\\texttt{allclose}$ vs
+         $\\texttt{torch.optim.RMSprop}$ must flip to $\\texttt{False}$, the step size must start
+         shrinking, and the demo loss must stall higher. If turning the average off does <i>not</i> hurt,
+         the $\\rho$ blend is not actually wired in.</li>
+         <li><b>Failure signals &amp; what they mean.</b> $\\texttt{allclose}$ False with a tiny diff &rarr;
+         usually $\\epsilon$ placed <i>inside</i> the sqrt ($\\sqrt{s+\\epsilon}$) instead of outside, or
+         PyTorch's $\\texttt{alpha}$ (decay) left at its 0.99 default when you used $\\rho=0.9$. Loss
+         increasing or NaN &rarr; learning rate too high, or you forgot to step under
+         $\\texttt{torch.no_grad()}$ and corrupted the graph. Step length collapsing to zero over time
+         &rarr; you accumulated a sum, not an average (the AdaGrad bug). $s$ stuck at zero / wrong values
+         &rarr; missing $\\texttt{zero\\_grad()}$, so gradients accumulate across steps and $g_t$ is
+         wrong.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> PyTorch ships this as <code>torch.optim.RMSprop</code> in one line. Here

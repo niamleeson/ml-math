@@ -291,6 +291,53 @@
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;2.2. The numbers in the
        CODEVIZ panel below are from our own tiny run on toy tokens &mdash; not the paper's reported
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> A Switch layer is a drop-in FFN replacement, so you score it
+        two ways at once. (a) <b>Quality:</b> the model's task loss / perplexity on held-out data &mdash;
+        a correctly wired Switch FFN must do at least as well as the single dense FFN it replaced (the
+        "trivial" baseline here is the dense model at the same per-token FLOPs; the paper's headline is up
+        to "7x increases in pre-training speed" over T5-Base/Large at equal compute, quoted in
+        <code>results</code>). (b) <b>Routing health:</b> per-expert token share and the fraction of
+        <b>dropped</b> tokens. Define "no skill" as the degenerate router that dumps everything on one
+        expert (share $=1$ on one expert, $0$ elsewhere); a working layer spreads load near $1/N$.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Reproduce the worked example exactly &mdash; $N=2$, $T=4$, logits $[2,0],[1,0],[0,1],[3,0]$
+        must give $f=[0.75,0.25]$, $P=[0.7083,0.2917]$, aux $=0.012083$. Any drift means a wrong softmax
+        axis or a wrong $f$/$P$ definition.</li>
+        <li>Check shapes/ranges: the router output sums to 1 per token ($\\sum_i p_i(x)=1$); the layer output
+        has the same shape as its input; $f$ and $P$ each sum to 1 over experts.</li>
+        <li>At init the router is roughly uniform, so expect $f_i \\approx P_i \\approx 1/N$ and the aux loss
+        $\\approx \\alpha$ (its balanced floor) &mdash; a useful known-answer check ($\\alpha=10^{-2}$).</li>
+        <li>Overfit a single tiny batch with the task loss only: it should fall toward $0$, which proves the
+        experts and the differentiable gate $p_i(x)$ are actually receiving gradient.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the toy 4-type task the balanced run should land all four experts
+        near $0.25$ with $0$ dropped (our small run: CV $\\approx 0.17$, in <code>results</code>/CODEVIZ &mdash;
+        not a paper number); treat per-expert shares inside roughly $[0.15,0.35]$ as healthy and a dead
+        expert at $\\approx 0$ as a bug, not tuning. At scale, anchor quality to the paper's claim of matching
+        or beating the dense T5 baseline at equal FLOPs (approximate, see <code>results</code>); being
+        <i>worse</i> than the dense FFN it replaced means the routing or gate is broken, not merely untuned.</p>
+       <p><b>4. Ablation &mdash; prove the idea earns its keep.</b> The paper's central additions are the
+        <b>top-1 router</b> and the <b>load-balancing aux loss</b>. Turn the aux loss OFF
+        (<code>use_aux=False</code>), retrain identically, and the routing must <b>collapse</b>: a couple of
+        experts grab most tokens, others go dead, drops spike (our run: one expert $\\approx 75\\%$, two at $0\\%$,
+        112 tokens dropped, CV $\\approx 1.23$). If usage stays balanced with the aux loss off, the loss term
+        isn't wired into the optimizer. As a second knob, compare top-1 against a dense (all-experts) baseline:
+        top-1 should hold quality at a fraction of the compute.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>One expert at $\\approx 100\\%$, others dead, many drops</b> &rarr; routing collapse: aux loss
+        missing, too weak, or the leading $N$ factor dropped (rule of thumb).</li>
+        <li><b>Router never improves / experts get no gradient</b> &rarr; you returned $E_i(x)$ without the
+        gate $p_i(x)$, so the $\\arg\\max$ pick has no learnable signal.</li>
+        <li><b>Huge drop fraction even when balanced</b> &rarr; capacity factor set to $1.0$ or below; raise it
+        (the demo uses $1.25$).</li>
+        <li><b>Aux loss not near $\\alpha$ at init</b> &rarr; wrong $f$/$P$ definition or a missing $N$ scale;
+        the balanced floor should be $\\alpha=10^{-2}$.</li>
+        <li><b>Loss NaN</b> &rarr; LR too high, or a divide-by-zero in a per-expert normalization when an expert
+        receives zero tokens.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

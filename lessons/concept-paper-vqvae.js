@@ -279,6 +279,45 @@
        numeric metrics. Treat the exact figures as needing a fact-check against the PDF.)</i> The headline
        claim is the one in the abstract: high-quality images, video, and speech from a <b>discrete</b>,
        collapse-free latent.</p>`,
+    evaluation:
+      `<p><b>What "working" means here:</b> the VQ-VAE both <i>reconstructs</i> well and learns a <i>useful,
+       collapse-free discrete code</i>. Evaluate both halves.</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> Primary: <b>reconstruction error</b> (per-image MSE for our MNIST
+        demo; the paper quotes <b>bits/dim</b> in the negative-log-likelihood sense). Anchor to a baseline so
+        "better than trivial" is defined: the constant <b>predict-the-mean image</b> (or just the dataset
+        pixel-mean) — your VQ-VAE must beat that MSE handily, or it is not using the latent. The paper's own
+        reference point is a <b>continuous-latent VAE</b>: on CIFAR-10 VQ-VAE reaches about <b>4.67 bits/dim</b>
+        vs the VAE's <b>~4.51</b> (ar5iv mirror of arXiv:1711.00937 — treat as approximate, the abstract lists
+        no numeric metric), i.e. discreteness should cost only a little. Also track <b>codebook usage</b> (how
+        many of $K$ symbols ever get chosen) and the <b>encoder-to-codebook gap</b> $\\lVert z_e-z_q\\rVert^2$.</li>
+        <li><b>Sanity checks BEFORE the full run.</b> (a) <b>Overfit one batch</b> — recon MSE should fall toward
+        ~0; if it plateaus high, the straight-through wiring or a stop-gradient is wrong. (b) <b>Shape/identity
+        check</b>: with $K$ very large and a tiny dataset, $z_q\\approx z_e$ and the model should behave like a
+        plain autoencoder. (c) <b>Worked-example unit test</b>: the notebook's first cell asserts
+        dists $=[0.17,5.57,0.65]$, nearest $k=0$, codebook term $=0.17$, commitment $=0.0425$ — a known-answer
+        check on the quantizer. (d) <b>Gradient check</b>: confirm a gradient actually reaches the encoder
+        (it must, via straight-through) and that the codebook updates (via the codebook term) — a zero-grad
+        encoder means you fed the raw <code>argmin</code> result to the decoder.</li>
+        <li><b>Expected range.</b> A correct tiny MNIST run shows clearly legible reconstructions, a small
+        enc-to-codebook gap (our run: $\\approx 0.02$ <i>with</i> commitment — a rule-of-thumb, not a paper
+        claim), and many of $K$ symbols in use. Being a little off the VAE bits/dim is "tuning"; reconstructions
+        that are blurry blobs no better than the mean image, or a gap an order of magnitude larger, is "probably
+        a bug."</li>
+        <li><b>Ablation — prove the idea earns its keep.</b> The paper's central pieces are the
+        <b>straight-through estimator</b> and the <b>commitment loss</b> (the lesson ablates the latter). Set
+        $\\beta=0$ (drop commitment) and retrain: the enc-to-codebook gap should <b>blow up</b> (our run:
+        $\\approx 0.02\\to\\approx 0.2$) and symbol usage should drop — if nothing changes, the commitment term
+        is not wired in. As a second ablation, remove the straight-through line
+        (<code>z_q = z_e + (z_q - z_e).detach()</code>) and confirm the encoder stops learning entirely.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Recon stuck near the mean-image MSE</b> &rarr; no
+        gradient to the encoder (missing straight-through) or decoder ignoring the code. <b>Codebook collapse</b>
+        — only 1-2 of $K$ symbols ever used, identical reconstructions across inputs &rarr; dead-codebook problem
+        (the lesson's pitfall; fix with EMA updates / re-init). <b>Encoder magnitude growing without bound</b>,
+        symbols flip-flopping &rarr; commitment loss missing or $\\beta$ too small. <b>Loss NaN</b> &rarr; LR too
+        high or bad codebook init. <b>Swapped stop-gradients</b> (codebook term moving the encoder, or vice
+        versa) &rarr; training is unstable and the gap never shrinks — re-check which side has <code>.detach()</code>.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

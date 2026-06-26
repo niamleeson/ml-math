@@ -282,6 +282,45 @@
        <p><i>These are the paper's reported figures, quoted from the fetched text. The numbers in the
        CODEVIZ panel below are from our own tiny toy-shape run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> U-Net does per-pixel segmentation, so score it with an <b>overlap</b>
+       metric &mdash; <b>Dice</b> or <b>Intersection-over-Union (IoU)</b> &mdash; on held-out images, <i>not</i>
+       pixel accuracy. On a thin ring almost every pixel is background, so an all-background prediction already
+       scores ~95% pixel accuracy while having Dice/IoU near <b>0</b>; that 0-overlap "predict all background" is
+       the no-skill baseline. The paper's benchmarks are the <b>ISBI</b> neuronal-structure and cell-tracking
+       challenges; it reports IoU on PhC-U373 and DIC-HeLa.</p>
+       <ul>
+         <li><b>2. Sanity checks before the full run.</b> <b>Overfit a single image:</b> train on one ring until
+         Dice &rarr; ~1.0 / loss &rarr; ~0 &mdash; if the net cannot memorize one example, the wiring is wrong.
+         Check <b>output shape</b> matches the target mask ($1\\times H\\times W$ logits) and that sigmoid
+         probabilities lie in $[0,1]$. Verify the loss at init is near $-\\ln(1/2)\\approx0.693$ for 2-class
+         per-pixel softmax (random logits). Re-run the lesson's <b>size trace</b> as a known-answer test for valid
+         convs: $572\\to568\\to284\\to\\dots$ to a $28\\times28$ bottleneck, climbing back to a $388\\times388$
+         output (paper Fig. 1). Confirm the <b>concat shapes line up</b>: up-conv 32 ch + skip 32 ch = 64 ch into
+         the next double-conv (a 1-pixel mismatch throws at <code>torch.cat</code>).</li>
+         <li><b>3. Expected range.</b> On the easy toy ring task a correct U-Net should reach <b>Dice ~0.99</b> and a
+         visibly clean ring (lesson run ~0.991; approximate, our small run, not a paper claim). The paper's own
+         reported figures (quoted): <b>IoU 92.03%</b> on PhC-U373 and <b>77.56%</b> on DIC-HeLa, plus winning the
+         ISBI 2015 cell-tracking challenge "by a large margin" (Ronneberger et al. 2015, Sec. 4). Treat the toy
+         ~0.99 as a rule of thumb for "build works"; a Dice stuck near 0 (blank masks) is a bug, while 0.85-0.95 is
+         tuning / a hard case.</li>
+         <li><b>4. Ablation &mdash; prove the skips earn their keep.</b> The paper's central idea is the
+         <b>concatenating skip connections</b>. Rebuild the identical U with the two <code>torch.cat</code> skips
+         <b>removed</b> (<code>use_skip=False</code>) and retrain everything else identically &mdash; same channels,
+         depth, optimizer, data, steps. Dice should <b>drop</b> (in the lesson ~0.991 &rarr; ~0.921) and the
+         predicted ring thicken, break, and fray, because the only path to the output now runs through the lossy
+         pooled bottleneck. If removing the skips does <i>not</i> hurt, they were not actually concatenated (or the
+         decoder conv was not widened to accept the extra channels). A second lever: compare <b>concatenate vs add</b>
+         &mdash; addition forces equal channels and blends the two streams, losing the learnable merge.</li>
+         <li><b>5. Failure signals.</b> <b>Shape error at <code>torch.cat</code></b> &rarr; encoder/decoder spatial
+         sizes mismatch (valid convs need center-cropping; padded convs must keep padding+pooling consistent), or
+         the decoder conv expects too few input channels. <b>High pixel accuracy but Dice ~0</b> &rarr; predicting
+         all background &mdash; the metric trap; switch to Dice/IoU. <b>Blurry, rounded, broken masks</b> &rarr;
+         skips missing or not concatenated, so fine detail never crosses the bottleneck. <b>Loss NaN</b> &rarr;
+         learning rate too high or unstable up-conv init. <b>Train-good val-bad</b> &rarr; overfitting too few images
+         &mdash; the paper's answer is heavy (elastic) augmentation.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the building blocks already ship in PyTorch, so you

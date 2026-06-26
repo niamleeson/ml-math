@@ -271,6 +271,45 @@
        maps; we do not quote a single headline accuracy number, and the numbers in our CODEVIZ are our own small
        run.</p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> t-SNE is a <i>visualization</i> with no unique numerical answer (the map
+       is only defined up to rotation, reflection and scale), so the right "score" is <b>neighborhood
+       preservation</b>, not a coordinate match. Put a number on it the way the lesson's oracle does: a
+       <b>leave-one-out k-NN label accuracy</b> in the 2-D map (do same-class points land next to each other?), or
+       a <b>trustworthiness</b> score. Run it on a labeled set the paper used &mdash; e.g. a <b>handwritten-digits</b>
+       subset (here digits {0,1,2}, 64-D pixels). The no-skill baseline: for 3 balanced classes, label-shuffled or
+       random 2-D points give k-NN accuracy near the majority rate $\\approx 1/3 \\approx 0.33$; anything near chance
+       means the map carries no class structure.</p>
+       <ul>
+         <li><b>2. Sanity checks before the full run.</b> Verify $P$ <b>sums to 1</b> ($\\sum_{ij}p_{ij}=1$) and is
+         symmetric, with a <b>zero diagonal</b>; same for $Q$. Confirm every row of $p_{j|i}$ has the <b>target
+         perplexity</b> &mdash; recompute $2^{H(P_i)}$ after the binary search and check it is within tolerance of
+         (say) 30. Confirm the <b>KL cost decreases monotonically</b> over iterations (it should fall fast during
+         early exaggeration). Reproduce the lesson's worked numbers as a known-answer test: $q_{12}\\approx0.28846$,
+         $q_{13}\\approx0.11538$, and the gradient summand $(-0.22308, 0)$ for $y_1$ from its pair with $y_2$.</li>
+         <li><b>3. Expected range.</b> On an easy 3-class digits subset a correct from-scratch t-SNE should reach
+         <b>k-NN map accuracy ~0.95+</b> and visibly separate three blobs &mdash; in the lesson's run ~0.97 for our
+         code vs ~0.99 for <code>sklearn.manifold.TSNE</code> (approximate, our small run, not a paper claim). The
+         paper itself reports only <b>qualitative</b> maps &mdash; "significantly better visualizations &hellip;
+         reducing the tendency to crowd points together" and beating Sammon mapping, Isomap and LLE on MNIST,
+         Olivetti faces and COIL-20 (van der Maaten &amp; Hinton, JMLR 9, 2008, abstract / Sec. 4) &mdash; so treat
+         these accuracy targets as rules of thumb, not paper numbers. Within ~0.05 of sklearn is "fine"; near chance
+         (~0.33) is a bug.</li>
+         <li><b>4. Ablation &mdash; prove the heavy tail earns its keep.</b> The paper's central move is the
+         <b>Student-t (heavy-tailed) map distribution</b> $q_{ij}\\propto(1+d^2)^{-1}$. Swap it back to the
+         <b>Gaussian</b> $q_{ij}\\propto e^{-d^2}$ of symmetric SNE (Eq. 3) and re-run: you should see the
+         <b>crowding problem</b> return &mdash; moderately distant points pile toward the center, gaps between
+         clusters close, and the k-NN map accuracy <b>drops</b>. If it does not drop, the heavy tail is not actually
+         wired into $q_{ij}$ or the gradient. A second knob to ablate is <b>perplexity</b> (the lesson's practice):
+         too low (~2) fragments the map, too high (~50) merges classes; ~30 is best.</li>
+         <li><b>5. Failure signals.</b> <b>Map collapses to one blob / accuracy near chance</b> &rarr; $P$ and $Q$
+         swapped in the cost, or the $(p_{ij}-q_{ij})$ sign flipped (springs push the wrong way). <b>NaNs</b> &rarr;
+         learning rate too high, or a zero in a normalizer (clip $P,Q$ to a floor like $10^{-12}$, exclude the
+         diagonal). <b>Map sums wrong / gradient mis-scaled</b> &rarr; forgot the $/2n$, so $P$ sums to $n$ instead
+         of 1. <b>Many tiny scattered clumps</b> &rarr; perplexity too small or early exaggeration left on. <b>Slow,
+         drifting, never-separating map</b> &rarr; momentum not applied or $Y$ not re-centered each step.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track A (primitive).</b> scikit-learn ships t-SNE as <code>sklearn.manifold.TSNE(...).fit_transform(X)</code>

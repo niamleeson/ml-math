@@ -283,6 +283,42 @@
        <p><i>The numbers in the CODEVIZ panel below are from our own tiny run &mdash; not the paper's reported
        results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> StyleGAN's headline metric is <b>FID</b> (Fr&eacute;chet Inception
+       Distance, <i>lower is better</i>) between 50K generated images and the real set, on <b>FFHQ</b> (1024&sup2;
+       faces) and <b>CelebA-HQ</b>. The "no-skill" anchor is the traditional generator baseline (config
+       <b>a</b>): the paper's Table 1 reports it at <b>8.04</b> FID on FFHQ &mdash; your full style-based generator
+       must beat that to justify the rewrite. Alongside FID, the paper measures <b>perceptual path length</b> and
+       <b>linear separability</b> (&sect;4) to claim $\\mathcal{W}$ is more disentangled than $\\mathcal{Z}$.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> These are cheap and catch a broken style pathway in seconds
+        (the CODE cell does exactly these): feed any content through <b>AdaIN</b> and assert each output channel's
+        <b>mean $=\\mathbf{y}_b$</b> and <b>std $=|\\mathbf{y}_s|$</b> to ~1e-5, independent of the input &mdash; if
+        not, your normalize axis is wrong. Check the constant input is shape $4{\\times}4{\\times}512$ and that
+        $\\mathbf{w}$ enters <i>only</i> through $A$, never as a spatial input. Verify the noise is single-channel
+        broadcast (not per-channel content). Overfit the discriminator on a handful of reals vs a frozen batch of
+        fakes and confirm it drives its loss toward 0 &mdash; if it can't, the data pipeline is broken.</li>
+        <li><b>Expected range.</b> A correct full implementation should approach the paper's reported
+        <b>4.40</b> FID on FFHQ and <b>5.17</b> on CelebA-HQ (Table 1, config <b>f</b>; reuse these &mdash; do not
+        invent new ones). As a rule of thumb (not a paper claim): an FID stuck near or above the 8.04 baseline means
+        the style pieces aren't helping; an FID in the hundreds means the generator is producing noise (broken
+        AdaIN or a collapsed discriminator), not a tuning issue.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>AdaIN style pathway</b> (mapping net + AdaIN). Turn it off two ways: (1) remove the <b>normalize step</b>
+        inside AdaIN (the practice ablation) &mdash; styles stop owning each channel's statistics, leak between
+        layers, and scale-separated control collapses; (2) drop the <b>mapping network</b> and feed $\\mathbf{z}$
+        straight in &mdash; FID should rise back toward the 8.04 baseline. If FID does <i>not</i> worsen, the style
+        path isn't wired in. Also ablate <b>mixing regularization</b>: without it, test-time style mixing produces
+        smeared, non-localized swaps (Table 2 motivation).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Identical / near-identical samples</b> across different
+        $\\mathbf{z}$ = <b>mode collapse</b> (generator beat the discriminator; lower G's LR or rebalance).
+        <b>NaN losses</b> = LR too high or a divide-by-zero in AdaIN's $\\sigma$ (add the $\\varepsilon$ in the
+        denominator). <b>Style mixing changes everything at once</b> (no coarse/fine separation) = missing
+        normalize or missing mixing regularization. <b>Noise patterns shift global structure</b> (pose changes with
+        the noise seed) = noise wired as a per-channel style instead of broadcast stochastic detail. FID flat across
+        training = generator not learning (check the discriminator isn't saturated).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b> them

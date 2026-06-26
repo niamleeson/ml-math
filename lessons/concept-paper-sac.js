@@ -321,6 +321,41 @@
        hardest tasks (Ant, Humanoid) the advantage over DDPG is largest.</p>
        <p><i>These are the paper's reported qualitative claims, quoted from the abstract and &sect;5. The numbers
        in the CODEVIZ panel below are from our own tiny toy-task run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The primary metric is <b>average episode return</b> (total reward per
+       episode) on the paper's <b>MuJoCo continuous-control</b> tasks in OpenAI Gym &mdash; Hopper, Walker2d,
+       HalfCheetah, Ant, Humanoid (&sect;5). The "no-skill" floor is a <b>random policy</b> (near-zero or
+       negative return on these tasks); the bar to clear is the paper's named baselines, <b>DDPG, PPO, TD3,
+       SQL</b>, which SAC reports beating &mdash; with the largest margin on the hardest tasks (Ant, Humanoid).
+       Track stability too: <b>spread of return across random seeds</b>, since the paper's headline is "very
+       similar performance across different random seeds."</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> Run the lesson's worked example first: with $Q=[2,1,0]$,
+        $\\alpha=1$ the soft policy must come out $\\pi=[0.665,0.245,0.090]$, $\\mathbb{E}[Q]=1.575$,
+        $\\mathcal{H}=0.834$ nats, objective $2.409 \\gt 2.0$ (the notebook's first cell asserts this). Then:
+        check the policy returns an action in $[-1,1]$ (the $\\tanh$ squash) and a finite scalar $\\log\\pi$;
+        confirm $-\\log\\pi$ averaged equals the entropy you expect; verify gradients flow to the actor (a
+        plain <code>.sample()</code> instead of <code>rsample()</code> gives <b>zero</b> actor grad &mdash; a
+        fast bug to catch). On the toy task, the critic loss should fall toward $0$ within a few hundred steps.</li>
+        <li><b>Expected range.</b> On the toy reward $r=-(a-s)^2$ a correct build drives greedy-eval reward
+        toward its ceiling $0$ (our run reaches $\\approx -0.008$) while the action std stays healthy
+        ($\\approx 0.5$). On real MuJoCo, anchor to the paper's qualitative claim: SAC should <b>match or beat
+        DDPG/PPO/TD3</b> and be far less seed-sensitive (&sect;5, abstract). These toy numbers are ours, not the
+        paper's; treat "reward stuck well below the DDPG baseline" as a bug and "a bit under SOTA" as tuning.</li>
+        <li><b>Ablation &mdash; prove entropy earns its keep.</b> Set the temperature <b>$\\alpha=0$</b> (the
+        paper's central idea turned off), holding the twin critics, networks, replay buffer, and seed identical,
+        and re-run. The action std should <b>collapse toward $0$</b> and return should plateau lower / get more
+        seed-sensitive. If it does NOT drop, the $-\\alpha\\log\\pi$ entropy term is not actually wired into the
+        value target and policy loss. Our run shows std falling from $\\approx 0.545$ (entropy on) to
+        $\\approx 0.003$ (off).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Action std collapses to $\\sim 0$ even with
+        $\\alpha\\gt 0$:</b> the entropy term is dropped or the tanh log-likelihood correction is missing, so
+        $\\log\\pi$ is wrong. <b>Q-values explode / value loss NaN:</b> using a single critic or the <b>max</b>
+        instead of $\\min(Q_1,Q_2)$ &mdash; overestimation feeds back (DDPG's instability), or LR too high.
+        <b>Actor never improves:</b> non-reparameterized sampling blocked the gradient (use
+        <code>rsample()</code>). <b>Reward fine but wildly seed-dependent:</b> the entropy/exploration
+        machinery isn't doing its job &mdash; exactly the brittleness SAC was built to remove.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -283,6 +283,39 @@ $$ \\eta_x^{t} \\leftarrow \\mathbb{E}_{\\mathcal{T}}\\big[\\,\\mathcal{F}_{\\th
        <p><i>Those are the paper's reported ImageNet/ablation figures, quoted from the text. The numbers in the
        CODEVIZ panel below are from our own tiny MNIST run — not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> Two things are measured. First, the <b>training health signals</b>: the
+       negative-cosine loss $\\mathcal{L}$ (floor $-1$) and the <b>per-channel output std</b> of the L2-normalized
+       representation &mdash; a healthy run holds std near $1/\\sqrt{d}$, a collapsed run drives it to $\\approx 0$.
+       Second, representation quality via <b>linear-probe top-1 accuracy</b> on ImageNet, where the paper reports
+       <b>67.7%</b> with stop-gradient (&sect;4.1). "Better than trivial" means: loss settles <i>above</i> the $-1$
+       floor with non-zero std, and the probe beats a random-encoder / majority-class baseline ($1/K$ on $K$-way
+       balanced data).</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Unit-test the loss against the lesson's worked example:
+        $p_1=[2,0],\\ z_2=[1,1],\\ p_2=[0,3],\\ z_1=[1,1]$ give $\\mathcal{L} = -0.7071$, and a constant output
+        ($p=z=[0.7,0.7]$) gives exactly $\\mathcal{L} = -1$. (2) Verify the stop-gradient is on the <b>target</b>
+        ($z$.detach()), not the prediction ($p$) &mdash; assert $z$.requires_grad is false inside the loss term. (3)
+        Confirm the predictor $h$ is present and non-identity. (4) Log output std from epoch 0 so you catch collapse
+        the moment it starts.</li>
+        <li><b>Expected range.</b> With stop-gradient, loss should settle comfortably above $-1$ (the paper's runs
+        plateau in a healthy regime; our toy MNIST run lands around $-0.69$ with std $\\approx 0.11$ &mdash; our
+        small run, not the paper) and the linear probe should approach the paper's <b>67.7%</b> on ImageNet
+        (approximate target, &sect;4.1). A loss pinned at $-1$ with std $\\to 0$ is collapse, not tuning.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the
+        <b>stop-gradient</b>. The defining experiment (&sect;4.1, Figure 2): rerun the <i>identical</i> training
+        loop with the target's <code>.detach()</code> removed (target = raw $z$) and confirm the loss <b>dives to
+        $-1$</b> while std collapses to $\\approx 0$ &mdash; if it doesn't collapse, the stop-gradient was never
+        actually wired in. Second knob: drop the <b>predictor $h$</b> (set it to identity) and the method fails
+        (&sect;4.2). Both removals should kill the representation.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Loss $\\to -1$ with std $\\to 0$ &rarr; collapse: stop-grad
+        missing / on the wrong side, or predictor dropped. Reading loss $= -1$ as "great low loss" is the classic
+        trap &mdash; <b>always watch the std too</b>. Loss won't drop below $\\approx -0.5$ and probe is weak &rarr;
+        check L2-normalization (the cosine needs unit vectors) and that BatchNorm is on. Loss NaN &rarr; LR too high.
+        Adding negatives or a momentum encoder "to be safe" muddies the experiment &mdash; SimSiam's whole claim is
+        you need neither.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

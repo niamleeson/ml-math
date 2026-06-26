@@ -268,6 +268,44 @@ $$ \\text{extra params} = \\frac{2}{r}\\sum_{s=1}^{S} N_s\\,C_s^{2} \\quad\\text
        <p><i>These are the paper's reported figures, quoted from the abstract and &sect;5-6. The numbers in the
        CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> SENet is an image classifier, so the metric is <b>top-1 / top-5
+       classification accuracy</b> (or its error) on a held-out validation set &mdash; ImageNet in the paper,
+       a CIFAR-10 subset in our Track-B build. The honest comparison is always <b>SE vs the identical backbone
+       with the SE block removed</b>; the no-skill floor for $K$ classes is random guessing ($10\\%$ on
+       CIFAR-10, $0.1\\%$ top-1 on ImageNet's $1000$ classes). "Working" means the SE net <b>matches or beats</b>
+       its matched plain backbone &mdash; the paper's gain was ResNet-50 $24.80\\%\\to$ SE-ResNet-50 $23.29\\%$
+       top-1 error (&sect;5, Table 2).</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> Verify the block is shape- and range-correct in isolation:
+        run the worked example ($C=2$, $z=[1,1]$, gates $s=[0.5,0.5]$ &mdash; the CODE's first cell does exactly
+        this) and confirm the gates land in $(0,1)$. Check tensor shapes: squeeze takes $(B,C,H,W)\\to(B,C)$,
+        gates are $(B,C)$, the rescaled output is back to $(B,C,H,W)$. <b>Identity-fallback test:</b> force
+        every gate to $1$ (or init the block so $\\sigma$ outputs $\\approx 0.5$ and scale up) and confirm the
+        SE net reproduces the plain net &mdash; the block must be able to do nothing. Then <b>overfit one tiny
+        batch</b>: loss should fall toward $0$; at init a $K$-way softmax loss should sit near $-\\ln(1/K)$
+        ($\\approx 2.30$ for CIFAR-10's $10$ classes) &mdash; a rule of thumb, not a paper claim.</li>
+        <li><b>Expected range.</b> On the full ImageNet setup the target is the paper's $\\approx 1.5$-point
+        top-1 error <i>drop</i> over the matched backbone (approximate, &sect;5/Table 2) for $\\approx 10\\%$ more
+        parameters. On our tiny CIFAR-10 run expect a smaller, noisier lift (a few points of accuracy) &mdash;
+        the <i>direction</i> (SE $\\ge$ plain) is the reproducible signal, not the magnitude. An SE net that
+        lands <i>below</i> the plain net by more than run-to-run noise is probably a bug, not just tuning.</li>
+        <li><b>Ablation &mdash; prove the SE block earns its keep.</b> The central component is the
+        squeeze-excite-scale recalibration. Turn it OFF (the <code>use_se=False</code> switch: skip the
+        <code>x = se(x)</code> call, keep convs/BatchNorm/depth/optimizer/seed identical) and confirm accuracy
+        <b>drops or ties</b>. If removing SE changes nothing, the block isn't wired in or its gates have
+        collapsed to a constant. A second knob: sweep the <b>reduction ratio $r$</b> &mdash; the paper found
+        $r=16$ a good balance and only mild degradation at $r=32$ (&sect;6.1).</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Gates all $\\approx 0.5$ and never spread</b> (the
+        CODEVIZ bottom chart should fan across $(0,1)$): the excitation FCs aren't learning &mdash; check the
+        ReLU/sigmoid order and that $z$ feeds <code>fc1</code>. <b>Accuracy collapses / channels go dark:</b>
+        you averaged over the wrong dims (channel instead of $H,W$ &mdash; use <code>x.mean(dim=(2,3))</code>),
+        wiping out the per-channel signal. <b>SE silently equals plain:</b> you forgot to broadcast
+        $s$ to $(B,C,1,1)$, or applied the gate after the residual add. <b>Loss NaN:</b> LR too high or a
+        softmax slipped in where the sigmoid belongs. <b>SE worse than plain:</b> bottleneck over-shrunk
+        ($C/r\\lt 1$) for a narrow stage &mdash; clamp <code>hidden = max(1, C//r)</code>.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives already ship in PyTorch, so you

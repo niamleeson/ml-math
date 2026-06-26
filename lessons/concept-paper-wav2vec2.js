@@ -276,6 +276,46 @@
        </ul>
        <p>(All quoted from the fetched paper. The CODEVIZ numbers below are OURS, from a tiny toy run &mdash; not
        the paper's reported figures.)</p>`,
+    evaluation:
+      `<p><b>What "working" means here</b> splits across two stages: the self-supervised <i>pretraining</i> must
+       learn structure (measured intrinsically by the contrastive game), and the <i>fine-tuned</i> recognizer
+       must transcribe (measured by word error rate).</p>
+       <ul>
+        <li><b>Metric &amp; benchmark.</b> <b>Downstream:</b> <b>WER</b> (word error rate, percent of words
+        wrong — lower better) on <b>LibriSpeech test-clean / test-other</b> after CTC fine-tuning. Baseline for
+        "better than trivial" is the prior low-resource SOTA the paper beats; the paper's anchor numbers
+        (§5, Tables 1-2, pretrained on LV-60k): <b>4.8 / 8.2</b> with 10&nbsp;min labeled, <b>2.0 / 4.0</b> with
+        100&nbsp;h, <b>1.8 / 3.3</b> with the full 960&nbsp;h (Large). <b>Intrinsic / our toy:</b> the
+        <b>pick-the-true-target accuracy</b> in the contrastive game; the no-skill floor is
+        <b>chance $=\\frac{1}{K+1}$</b> ($\\approx 0.091$ for $K=10$; the paper uses $K=100$). Also watch
+        <b>codebook perplexity / usage</b> (the diversity loss's job).</li>
+        <li><b>Sanity checks BEFORE the full run.</b> (a) <b>Worked-example unit test</b>: the notebook recomputes
+        $\\mathcal{L}_m=0.2676$, $\\mathcal{L}_d=-0.3167$, total $=0.2359$ — assert these. (b) <b>Loss at init</b>:
+        before training, $\\mathbf{c}_t$ is random, so the contrastive softmax over $K+1$ candidates is near
+        uniform and $\\mathcal{L}_m\\approx\\ln(K+1)$ (rule of thumb) and accuracy $\\approx\\frac{1}{K+1}$ — if it
+        starts far from chance, your distractors or targets are mis-sampled. (c) <b>Cosine range</b>: every
+        $\\text{sim}(\\mathbf{a},\\mathbf{b})\\in[-1,1]$; out-of-range means a normalization bug. (d) <b>Overfit a
+        few utterances</b>: accuracy should climb well above chance fast.</li>
+        <li><b>Expected range.</b> Our tiny toy run climbs from chance ($\\approx 0.091$) to <b>~0.37</b>
+        (~4&times; chance) — a qualitative target, OURS not the paper's. Downstream, a correct reproduction at a
+        given label budget should land near the paper's WER row above (approximate; quote §5). WER a few points
+        off is "tuning"; WER near 100% (or accuracy stuck at chance) is "probably a bug."</li>
+        <li><b>Ablation — prove the idea earns its keep.</b> The central idea is <b>masking + contrast over
+        quantized targets</b>. Knob 1: <b>remove masking</b> (nothing hidden) — the context net can just copy
+        each latent, so pick-the-true accuracy <b>stays at chance</b> (our CODEVIZ red curve); if it still
+        learns, the mask is not actually hiding frames. Knob 2: <b>easy distractors</b> — draw decoys as random
+        noise instead of from <i>other masked steps of the same utterance</i> (§4.2); the loss goes trivially to
+        zero and downstream features degrade. Knob 3: <b>drop the diversity loss</b> ($\\alpha=0$) and watch
+        codebook usage collapse onto a few entries.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Accuracy pinned at $\\frac{1}{K+1}$</b> &rarr; no
+        learning signal: masking off, or the loss aligns $\\mathbf{c}$ with $\\mathbf{z}$ instead of $\\mathbf{q}$
+        (the lesson's pitfall). <b>Codebook collapse</b> (few entries used, low perplexity) &rarr; diversity-loss
+        sign flipped or $\\alpha$ too small — minimizing $\\mathcal{L}_d$ must <i>maximize</i> entropy.
+        <b>$\\mathcal{L}_m$ trivially ~0 from step 1</b> &rarr; distractors too easy / leaked. <b>Pretraining
+        looks great but downstream WER is awful</b> &rarr; CTC fine-tuning bug or train/test leakage, not a
+        pretraining problem. <b>Loss NaN</b> &rarr; temperature $\\kappa$ too small or Gumbel temperature not
+        annealed.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -281,6 +281,38 @@
        <p><i>These are the paper's reported figures, quoted from its tables. The numbers in the CODEVIZ panel
        below are from our own tiny run &mdash; not the paper's reported numbers.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> The headline number is <b>N-way one-shot accuracy</b>: per trial, one
+       support image per class, predict $C^{*} = \\arg\\max_c p(c)$, average over many trials. The paper's setup is
+       the <b>20-way within-alphabet</b> task on Omniglot, 400 trials (&sect;4.3). Define "better than trivial"
+       against the right floor: $N$-way one-shot chance is $1/N$ (5% for 20-way, 20% for 5-way), and the paper's
+       own <b>1-Nearest-Neighbor baseline (21.7%)</b> is the weak-learned-feature bar your verifier must clear.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Overfit a tiny set of same/different pairs and watch BCE
+        fall toward $0$ &mdash; if it can't, the head or label wiring is broken. (2) At init, an untrained verifier
+        outputs $p \\approx 0.5$ on random pairs, so BCE should start near $-\\ln(1/2) \\approx 0.693$ (rule of thumb).
+        (3) Check the head is symmetric: $p(x_1, x_2) = p(x_2, x_1)$, since $|h_1 - h_2|$ is symmetric. (4) Confirm
+        $p \\in (0, 1)$ (sigmoid applied) and that a same-class pair scores higher than a hand-built far pair &mdash;
+        reuse the worked example ($p \\approx 0.474$ close vs $0.079$ far).</li>
+        <li><b>Expected range.</b> A correct convolutional Siamese net should reach roughly the paper's
+        <b>92.0% 20-way one-shot on Omniglot</b> (Table 2, approximate target &mdash; the paper's figure), with the
+        non-convolutional variant far lower at 58.3%. On our toy digit run expect 5-way around <b>0.88</b> (our
+        small run, not the paper). Sitting near the $1/N$ floor means it isn't learning; landing between chance and
+        the target is usually tuning (LR, pair balance, epochs), not a structural bug.</li>
+        <li><b>Ablations &mdash; prove the key idea earns its keep.</b> The central component is the <b>trained
+        verification metric</b> over a <b>tied (shared-weight) encoder</b>. Turn it off two ways: (1) evaluate the
+        <i>untrained</i> encoder (random weights, same architecture, same one-shot protocol) &mdash; accuracy
+        should drop near chance, as in the lesson's ablation (~0.40 for 5-way vs 0.88 trained). (2) Untie the
+        weights (two separate encoders) and watch one-shot accuracy degrade &mdash; weight tying is what keeps
+        similar images mapped close.</li>
+        <li><b>Failure signals &amp; what they mean.</b> Accuracy stuck at $1/N$ &rarr; verifier never learned
+        (LR off, labels shuffled, or support images leaked into training so it memorized instead of generalizing).
+        Verifier always predicts "different" (low $p$ everywhere) &rarr; unbalanced pairs flooded it with negatives;
+        rebalance to ~50/50. BCE NaN &rarr; logits fed to <code>nn.BCELoss</code> instead of probabilities (missing
+        sigmoid), or LR too high. Train BCE good but one-shot poor &rarr; leakage or comparing against the wrong
+        chance baseline (remember chance is $1/N$, not 50%).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives ship in PyTorch, so you <b>import</b>

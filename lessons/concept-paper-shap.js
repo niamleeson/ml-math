@@ -286,6 +286,47 @@
        <p><i>These are the paper's own statements, quoted from the abstract and &sect;3. The numbers in the CODEVIZ
        panel below are from our own tiny exact-enumeration run &mdash; not a number reported by the paper.</i></p>`,
 
+    evaluation:
+      `<p><b>What "working" means here.</b> SHAP is an attribution method, not a predictor, so "correct" is not an
+       accuracy &mdash; it is that the attributions obey the three axioms (Theorem 1) and, on a model whose answer
+       you know, equal the ground truth. Everything below is exact and deterministic; there is no tuning.</p>
+       <ul>
+         <li><b>The metric &amp; baseline.</b> The primary check is the <b>local-accuracy residual</b>
+         $\\left|\\,\\phi_0 + \\sum_i \\phi_i - f(x)\\,\\right|$, which must be $\\approx 0$ (machine epsilon). The
+         "no-skill" reference is an explainer that ignores the model and returns all-equal or all-zero
+         attributions: it does NOT satisfy local accuracy, so a nonzero residual on the trivial method is exactly
+         what your correct method must avoid. On the lesson's additive model you have a stronger oracle: the closed
+         form $\\phi_i = c_i(x_i-\\bar x_i)$, so the metric is also max $|\\phi_i^{\\text{computed}} -
+         c_i(x_i-\\bar x_i)|$.</li>
+         <li><b>Sanity checks BEFORE trusting any explanation.</b> (a) Replay the worked 2-feature example as a
+         known-answer test: $f(x)=10+3x_0+4x_1$, $x=(2,5)$ &rarr; $\\phi_0^{\\text{feat}}=6$, $\\phi_1=20$, sum
+         $=26=f(x)-E[f]=36-10$. (b) Check the coalition weights sum to 1 over all $2^{M-1}$ subsets per feature
+         ($\\sum_{S}\\tfrac{|S|!(M-|S|-1)!}{M!}=1$) &mdash; if not, your factorial term is wrong. (c) Missingness:
+         set a feature to its background value and confirm its $\\phi_i\\to 0$. (d) Symmetry: two features with
+         identical coefficients and identical $(x_i-\\bar x_i)$ must get identical $\\phi_i$. (e) Verify
+         $\\phi_0 = f_x(\\varnothing) = E[f]$, not $0$.</li>
+         <li><b>Expected range.</b> Exact enumeration is not approximate, so the local-accuracy residual and the
+         ground-truth gap should both be $\\lt 10^{-9}$ (a float rule of thumb, not a paper claim) &mdash; anything
+         larger is a bug, never "close enough." The paper's own claim is qualitative: SHAP is the <b>unique</b>
+         attribution satisfying local accuracy, missingness, and consistency (Theorem 1, &sect;3), with "improved
+         computational performance and/or better consistency with human intuition than previous approaches"
+         (Abstract, arXiv:1705.07874) &mdash; there is no benchmark number to hit, the axioms ARE the target.</li>
+         <li><b>Ablation &mdash; prove the Shapley weighting earns its keep.</b> The central idea is the
+         order-counting coalition weight $\\tfrac{|S|!(M-|S|-1)!}{M!}$. Turn it OFF by replacing it with a flat
+         $\\tfrac{1}{2^{M-1}}$ (every coalition equal) and recompute &mdash; the lesson's CODE does exactly this.
+         Local accuracy must <b>break</b>: $\\phi_0+\\sum_i\\phi_i \\ne f(x)$. If the sum still matches after
+         flattening the weights, you are either on a degenerate symmetric input that hides the error, or the
+         factorial weights were never actually applied.</li>
+         <li><b>Failure signals &amp; what they mean.</b> (i) $\\sum_i\\phi_i = f(x)$ instead of $f(x)-E[f]$ &rarr;
+         you set $\\phi_0=0$ rather than $E[f]$; off by exactly the base value. (ii) Residual nonzero by a clean
+         offset &rarr; flat/wrong coalition weights (the ablation, accidentally). (iii) $\\phi_i$ disagree with
+         $c_i(x_i-\\bar x_i)$ on a purely additive model &rarr; the value function is wrong &mdash; absent features
+         not pinned to $\\bar x_i$, or present/absent swapped. (iv) Attributions explode or runtime blows up &rarr;
+         $M$ too large; exact enumeration is $O(M\\,2^M)$, switch to Kernel/Deep SHAP or shrink $M$. (v)
+         Permuting feature order changes the $\\phi_i$ &rarr; a bug, since Shapley values are order-independent by
+         construction.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The model and the array math already ship, so you

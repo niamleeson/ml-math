@@ -318,6 +318,45 @@
        <p><i>These are the paper's reported figures, quoted from its abstract and Table&nbsp;2. The numbers in the
        CODEVIZ panel below are from our own tiny CPU run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The headline metric is <b>top-1 / top-5 classification accuracy on
+        ImageNet</b> (ILSVRC-2012, 1000 classes) at a fixed <b>parameter / model-size budget</b> &mdash; SqueezeNet's
+        whole claim is "same accuracy, far fewer params," so you report <i>both</i> accuracy and parameter count
+        together, never one alone. The no-skill floor is random guessing at $1/1000 = 0.1\\%$ top-1; the real baseline
+        to beat is <b>AlexNet: 57.2% top-1, 80.3% top-5 at ~240MB</b> (lesson <code>results</code>), which SqueezeNet
+        matches at ~50&times; fewer parameters. On the toy task here the floor is $1/8 = 12.5\\%$ (8 classes), and the
+        baseline is the plain $3\\times3$-conv net at equal accuracy.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Parameter-count oracle:</b> the by-hand Fire count must
+        equal PyTorch's <code>sum(p.numel())</code> for the same module &mdash; the lesson checks the worked example
+        gives <b>2888</b> and <code>match: True</code>; if these disagree, your channel wiring is wrong. (b) <b>Shape
+        check:</b> a Fire module's output must have exactly $e_{1\\times1}+e_{3\\times3}$ channels at the same $H\\times W$
+        as its input &mdash; if the concat throws or $H,W$ shrink, you forgot <code>padding=1</code> on the $3\\times3$
+        expand. (c) <b>Overfit one batch:</b> train on a handful of images with weight decay off; cross-entropy should
+        fall toward $0$. The init loss for $K$-way softmax should be near $-\\ln(1/K)$ &mdash; $\\ln 1000 \\approx 6.9$ on
+        ImageNet, $\\ln 8 \\approx 2.08$ on the toy task; a wildly different start means a label or logit bug.</li>
+        <li><b>3. Expected range.</b> A correct full SqueezeNet should land near the paper's <b>57.5% top-1 / 80.3%
+        top-5 on ImageNet</b> (approximate, from Table&nbsp;2 / the abstract) at ~4.8MB. Several points below that is
+        "tuning" (LR schedule, augmentation, the conv1 width); $10\\%$+ below, or top-1 stuck near the $0.1\\%$ floor, is
+        "probably a bug." On the toy task a correct Fire net reaches <b>near-equal accuracy to the plain net at ~2&times;
+        fewer params</b> (our run: 0.996 vs 1.000; not a paper number).</li>
+        <li><b>4. Ablation &mdash; prove the squeeze earns its keep.</b> The central knob is the <b>squeeze ratio</b>
+        SR $= s_{1\\times1}/(e_{1\\times1}+e_{3\\times3})$. Sweep it (e.g. SR $0.125 \\to 0.75$): parameter count must rise
+        with SR, and accuracy must rise then flatten with diminishing returns (lesson &sect;5.2 / CODEVIZ: our run
+        0.840 @ 4728 params $\\to$ 1.000 @ 20328). If a very thin squeeze costs <i>no</i> accuracy at all on a real task,
+        the squeeze isn't the bottleneck you think &mdash; or the task is too easy to show the trade-off. Conversely,
+        replacing every Fire with one plain $3\\times3$ conv of equal output width should cost <i>far</i> more params for
+        no accuracy gain &mdash; that gap is Strategy&nbsp;2 doing its job.</li>
+        <li><b>5. Failure signals.</b> <b>Concat shape mismatch / crash</b> &rarr; missing <code>padding=1</code> on the
+        $3\\times3$ expand, or concatenating on the wrong axis (must be <code>dim=1</code>, the channel axis).
+        <b>Accuracy stuck at chance</b> ($0.1\\%$ ImageNet / $12.5\\%$ toy) &rarr; labels shuffled, squeeze widths
+        collapsed to near-zero, or LR so low nothing moves. <b>Loss NaN</b> &rarr; LR too high or a thin squeeze layer
+        unstable &mdash; the lesson's BatchNorm inside Fire is what keeps very thin squeezes trainable. <b>Params far
+        below ~4.8MB but accuracy also collapses</b> &rarr; you over-squeezed (SR too small, capacity starved). <b>Model
+        already &lt;0.5MB from architecture alone</b> &rarr; you conflated the design with Deep Compression; the
+        architecture gives ~4.8MB / 50&times;, the &lt;0.5MB figure needs the separate pruning + quantization step.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: convolutions, ReLU, and concatenation already ship in

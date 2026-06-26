@@ -311,6 +311,43 @@
        numbers here &mdash; consult &sect;4 of the paper for the exact figures with their settings.
        The numbers in the CODE and CODEVIZ panels below are from our own tiny toy run &mdash; not
        the paper's reported results.</i></p>`,
+    evaluation:
+      `<p><b>The metric &amp; benchmark.</b> RAG is an open-domain QA system, so the metric is
+        <b>answer accuracy / exact match</b> on knowledge-intensive QA (the paper's setting: Natural Questions,
+        TriviaQA, WebQuestions). The "no-skill" anchor is the <b>matched parametric-only baseline</b> &mdash; the
+        same answer head that reads only the question, never a passage. In the toy run the answer lives only in
+        the retrieved passage and is re-randomized per episode, so the floor is <b>random guessing</b>
+        $1/A = 1/12 \\approx 0.083$ over $A$ capitals; "working" means RAG sits far above that floor and far above
+        the parametric-only baseline.</p>
+       <ul>
+        <li><b>Sanity checks before the full run.</b> (1) Run the worked-example cell: scores $[2.0,1.0,0.5]$
+        must softmax to $[0.6285,0.2312,0.1402]$, the top-2 weights to $[0.7311,0.2689]$, and the marginal to
+        <b>$0.6117$</b> &mdash; a known-answer test for the retrieve-then-marginalize math. (2) Check the
+        retriever weights $p_\\eta(z|x)$ over the top-$K$ <b>sum to 1</b> (softmax). (3) Check the marginal
+        $p(y|x)=\\sum_z p_\\eta(z|x)\\,p_\\theta(y|x,z)$ always lies <b>between</b> the smallest and largest
+        per-document answer probabilities. (4) Overfit a <i>single fixed</i> document store for a few steps and
+        watch $-\\log p(y|x)$ drop toward $0$ &mdash; if it cannot even fit one store, the gradient path through
+        the marginalization is broken.</li>
+        <li><b>Expected range.</b> The paper reports RAG "set the state-of-the-art on three open domain QA tasks,
+        outperforming parametric seq2seq models and task-specific retrieve-and-extract architectures" (abstract)
+        &mdash; <i>qualitative; consult &sect;4 for exact Natural Questions figures with their settings</i>. In
+        the toy build, a correct RAG reaches <b>~1.0</b> (it reads the answer out of the passage) while the
+        parametric-only baseline stays near the <b>$0.083$</b> random floor. <b>Rule of thumb:</b> if RAG sits
+        only a little above the parametric-only baseline, retrieval is not actually feeding the generator.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The central component is
+        <b>retrieval (the non-parametric memory)</b>. Turn it OFF: feed the generator a <b>zero / empty document
+        vector</b> for every query, everything else identical. Accuracy must <b>collapse toward the random floor</b>
+        $1/A$ &mdash; if it does not, the generator was answering from its weights and the passage was never being
+        read. A second ablation: replace the top-$K$ sum with $\\arg\\max_z$ (single best document) &mdash; that
+        discards the marginalization and stops gradient flowing to lower-ranked-but-useful documents.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <b>Both RAG and baseline near $1.0$</b> &rarr; the
+        country&rarr;capital mapping is fixed, so the generator memorized it; re-randomize per episode. <b>RAG
+        stuck near the random floor</b> &rarr; the inner-product MIPS is not surfacing the answer passage, or the
+        generator ignores the retrieved tokens. <b>Marginal $p(y|x)$ outside $[0,1]$ or NaN</b> &rarr; you summed
+        un-normalized scores instead of a softmax, or took a log of $0$ (add the $+10^{-9}$). <b>Accuracy caps
+        well below $1.0$ despite a confident generator</b> &rarr; the retriever ranks the answer document low
+        (mis-ranking muffles a strong $p_\\theta$, as in the $0.46$ worked variant); train the query encoder.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

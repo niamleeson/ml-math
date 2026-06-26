@@ -302,6 +302,51 @@
        <p><i>These are the paper's reported figures, quoted from the Abstract and Table 1. The numbers in the
        CODEVIZ panel below are from our own tiny toy run &mdash; not the paper's results, and our "audio" is
        synthetic, not real speech.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two complementary checks. (a) <b>Reconstruction:</b> the
+        $\\ell_1$ (mean-absolute-error) loss between predicted and target spectrogram frames &mdash; the
+        same objective the paper trains on (&sect;4); the trivial baseline is predicting a constant
+        (e.g. the mean frame), whose $\\ell_1$ your model must beat. (b) <b>Alignment health:</b> read the
+        attention matrix $\\alpha$ &mdash; for real TTS the gold metric is the human <b>mean opinion score</b>,
+        and the paper reports <b>3.82 MOS</b> on US English, beating a production parametric system (quoted in
+        <code>results</code>); our toy stops at frames + alignment, not audio/MOS. "No skill" for alignment is a
+        flat/uniform $\\alpha$ (every character weighted $1/T_x$, no diagonal).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Reproduce the worked attention step: $h_1=[1,0]$, $h_2=[0,1]$, $h_3=[1,1]$, $s=[0.5,-0.5]$ with the
+        given $W,U,v$ must give $e=[0.603,0.880,1.483]$, $\\alpha=[0.211,0.279,0.510]$, $c=[0.721,0.789]$.
+        A mismatch points to a wrong softmax axis or scorer wiring.</li>
+        <li>Check shapes/ranges: each alignment row is a softmax over the $T_x$ <b>characters</b> and must sum
+        to 1; the predicted frame block has shape $r\\times$ frame-dim; the decoder runs exactly
+        $\\text{num\\_frames}/r$ steps.</li>
+        <li>Confirm the first step is fed the all-zero $\\langle\\text{GO}\\rangle$ frame, and that the context
+        $c_i$ is <b>recomputed every step</b> (not reused).</li>
+        <li>Overfit a single tiny utterance: the frame $\\ell_1$ should fall toward $0$ and a clean diagonal
+        should appear &mdash; proof the attention is actually learning to align.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the toy character&rarr;frame task the attention model should reach a low
+        frame $\\ell_1$ and a clearly near-diagonal, monotonic $\\alpha$ (our small run: brightest cell on the
+        matching character each row, e.g. step 0&rarr;char0 $\\approx 0.84$, in <code>results</code>/CODEVIZ &mdash;
+        not a paper number). A scattered or vertical-stripe heatmap is a bug, not tuning. For real Tacotron, anchor
+        naturalness to the paper's $\\approx 3.82$ MOS (approximate, see <code>results</code>).</p>
+       <p><b>4. Ablation &mdash; prove the idea earns its keep.</b> The central mechanism is the <b>content-based
+        attention</b> itself. Replace the per-step context with a <b>single fixed vector</b> (the last encoder
+        annotation, <code>attend=False</code>) and retrain: the frame $\\ell_1$ must <b>rise</b> (later frames
+        worst) and the diagonal must <b>vanish</b> &mdash; one vector cannot tell the decoder which character the
+        current frame belongs to. If error and alignment barely change, attention wasn't actually driving the
+        decoder.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Identical alignment rows / no diagonal</b> &rarr; the context was computed once and reused instead
+        of recomputed each step (collapses to plain seq2seq).</li>
+        <li><b>Rows don't sum to 1 / heatmap looks transposed</b> &rarr; softmax taken over the wrong axis (batch
+        or hidden) instead of over characters.</li>
+        <li><b>Non-monotonic, scattered alignment</b> &rarr; the model is "skipping" or "repeating" &mdash; the
+        TTS analogue of a broken attention; real speech alignment should march strictly rightward.</li>
+        <li><b>Shape error in the decoder loop</b> &rarr; mismatched step count vs frame count from the reduction
+        factor $r$, or the wrong $\\langle\\text{GO}\\rangle$ frame shape at step 0.</li>
+        <li><b>Loss NaN / stuck high</b> &rarr; LR too high, or feeding garbage instead of the zero start frame.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

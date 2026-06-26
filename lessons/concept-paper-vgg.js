@@ -258,6 +258,53 @@
        <p><i>These are the paper's reported ImageNet figures, quoted. The accuracy printed by the CODE cell and
        the numbers in the CODEVIZ panel below are from our own tiny CIFAR-10 run &mdash; not the paper's
        results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The paper's metric is <b>top-1 / top-5 classification error</b> on
+       <b>ImageNet</b> (&sect;4). The no-skill floor is chance: $1/1000 = 0.1\\%$ top-1 on ImageNet's $1000$
+       classes (so $\\approx 99.9\\%$ error is "random"). Their reported headline (quoted from the results
+       discussion) is <b>7.1% top-5 error for the single best model (config E)</b>, and an ensemble down to
+       <b>6.8%</b> top-5. Our toy build instead trains on a <b>CIFAR-10 subset</b>, where the floor is $10\\%$
+       accuracy ($10$ classes) &mdash; the bar is "well above $10\\%$," not the paper's ImageNet figure.</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li><b>Parameter-count unit test.</b> The first cell is exactly this known-answer check: two stacked
+        $3\\times3$ convs at $C=64$ must print <b>73,728</b> weights ($=18C^2$) and one $5\\times5$ must print
+        <b>102,400</b> ($=25C^2$), with <code>bias=False</code>. If these don't match, your counting (or the
+        bias flag) is wrong.</li>
+        <li><b>Shape trace.</b> With <code>padding=1</code> each conv preserves $H\\times W$ and each
+        $2\\times2$ pool halves it; verify the feature map runs $32\\to16\\to8\\to4$ on CIFAR before the
+        classifier, else a missing pad/pool will mismatch the flatten size.</li>
+        <li><b>Loss at init.</b> For $K=10$-way soft-max, the cross-entropy at initialization should be
+        $\\approx -\\ln(1/10) = \\ln 10 \\approx 2.30$. A wildly different starting loss signals bad
+        init/normalization.</li>
+        <li><b>Overfit one batch.</b> Train on a single minibatch &mdash; loss should drive toward $0$,
+        confirming the conv stack and head are wired and learning.</li>
+       </ul>
+       <p><b>3. Expected range.</b> On the $5000$-image CIFAR-10 subset our run's train loss falls roughly
+       $1.79 \\to 0.85$ over $5$ epochs (CODEVIZ), reaching test accuracy comfortably above the $10\\%$ chance
+       baseline &mdash; these are <i>our</i> numbers, not the paper's. The paper's ImageNet figure (7.1% top-5,
+       config E, quoted &sect;4) is <b>not</b> reproducible from this toy run. As a <i>rule of thumb</i> (not a
+       paper claim), a few-percent-above-chance CIFAR result on this tiny subset is "working"; stuck near
+       $10\\%$ is "broken."</p>
+       <p><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The central idea is <b>depth via stacked
+       small $3\\times3$ filters</b>. <b>Replace each pair of stacked $3\\times3$ convs with one $5\\times5$</b>
+       (padding 2, same in/out channels): the net <i>gains</i> parameters ($25C^2$ vs $18C^2$) and <i>loses</i>
+       one ReLU per block, and accuracy should be equal-or-worse at higher cost &mdash; demonstrating the stack
+       earns its keep on both parameter count and expressiveness. (Companion knob: drop <code>padding=1</code>
+       and watch the spatial size shrink until the deep stack runs out of pixels.)</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>Accuracy stuck at chance ($\\approx 10\\%$):</b> labels mis-aligned/shuffled, or learning rate so
+        small the net never moves &mdash; not learning.</li>
+        <li><b>Shape error at the flatten / first Linear:</b> a missing <code>padding=1</code> or an extra/missing
+        pool changed the final feature-map size (e.g. it's $3\\times3$, not $4\\times4$).</li>
+        <li><b>Loss NaN:</b> learning rate too high for a deep plain stack &mdash; lower it (this fragility at
+        depth is the very thing ResNet later fixed).</li>
+        <li><b>Param counts don't match $18C^2$/$25C^2$:</b> <code>bias=True</code> is adding $C$ per conv
+        layer &mdash; the paper's $27C^2$/$49C^2$ comparison is weights-only.</li>
+        <li><b>Train-good val-bad:</b> overfitting the tiny subset &mdash; expected at this scale; the paper uses
+        dropout $0.5$ on the FC layers and weight decay to fight it.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

@@ -315,6 +315,47 @@ $$ \\text{effective / largest dependency length} = O(N \\times L) \\quad\\text{(
        state-of-the-art results "on enwik8, text8, WikiText-103, One Billion Word, and Penn Treebank."</p>
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODE and
        CODEVIZ panels below are from our own tiny echo-task run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Transformer-XL is a language model, so the real metric is
+       <b>perplexity</b> (lower = better; the language-model surprise on the held-out tokens) on the paper's
+       benchmarks &mdash; <b>enwik8 / text8</b> (reported in bits-per-character), <b>WikiText-103</b>, <b>One
+       Billion Word</b>, <b>Penn Treebank</b> (&sect;4). The "no-skill" floor is a uniform next-token guess:
+       perplexity $=V$ (vocabulary size), or $\\log_2 V$ bits/char &mdash; any working model must beat that, and
+       the meaningful bar is the <b>vanilla segmented Transformer</b> it improves on. For the toy build here the
+       metric is <b>cross-segment cue accuracy</b>, with chance $=1/(V{-}1)\\approx 0.1$ for our $\\sim$10-symbol
+       echo task.</p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> Run the worked example first &mdash; extended context
+        $[4,-1,2]$, attention weights $\\approx[0.982,0.000,0.018]$, output $\\approx 3.964$ vs the no-memory
+        $2.0$ &mdash; those exact numbers must reproduce or your memory concat / query-from-current wiring is
+        wrong. Check the loss at init: for a $V$-way softmax it should sit near $-\\ln(1/V)=\\ln V$ ($\\approx
+        2.48$ for $V{=}12$) before training (rule of thumb). <b>Overfit a single batch</b> with memory on: cue
+        accuracy should reach $1.0$ in a few hundred steps. Assert shapes: queries length $L$, keys/values
+        length $M{+}L$; softmax rows sum to $1$.</li>
+        <li><b>3. Expected range.</b> On the toy echo task the memory model should climb to $\\approx 1.0$ cue
+        accuracy and the vanilla ablation should plateau near chance $\\approx 0.1$ &mdash; matching our CODEVIZ
+        run (not a paper claim; numbers vary by seed/hardware). If you reproduce the paper, the headline targets
+        are the abstract's relative claims, quoted: dependencies "<b>80% longer than RNNs and 450% longer than
+        vanilla Transformers</b>" and "<b>up to 1,800+ times faster</b>" at evaluation, plus state-of-the-art
+        perplexity "on enwik8, text8, WikiText-103, One Billion Word, and Penn Treebank" (&sect;4). A model whose
+        cross-segment accuracy is stuck at chance is a wiring bug, not tuning.</li>
+        <li><b>4. Ablation &mdash; prove the idea earns its keep.</b> The central component is <b>segment-level
+        recurrence</b>. Turn it off: pass an <b>empty memory</b> to segment 2 (set <code>use_mem=False</code>),
+        which is exactly the &sect;3.1 vanilla segmented baseline, keeping depth/width/heads/optimizer/seed
+        identical. Cross-segment cue accuracy must <b>collapse toward chance</b> while in-segment predictions stay
+        intact &mdash; if it doesn't drop, the cache isn't actually being attended to (queries leaking from
+        memory, or the detach/concat is a no-op). A second knob: remove the <b>distance-based relative bias</b>
+        and the splice becomes positionally incoherent.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> Cue accuracy <b>stuck at $\\approx 0.1$ even with
+        memory on</b> &rarr; keys/values are not coming from the extended context, or the answer token isn't
+        actually reachable. <b>Cost/memory growing every segment</b> &rarr; you forgot <code>mem.detach()</code>
+        (the stop-gradient $\\mathrm{SG}$) so autograd keeps the previous segment's graph alive. <b>Output length
+        wrong / re-predicting cached tokens</b> &rarr; queries were taken from $\\tilde h$ instead of the current
+        segment only. <b>Two segments behave identically regardless of content</b> &rarr; absolute positions
+        reused across the splice (memory token 0 and current token 0 collide) &mdash; the reason relative
+        positions exist (&sect;3.3). NaN loss &rarr; LR too high. The green (memory-on) vs red (ablation) CODEVIZ
+        curves are the picture of pass vs fail.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

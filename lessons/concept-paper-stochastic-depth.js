@@ -266,6 +266,44 @@
        <p><i>These are the paper's reported figures, quoted from &sect;4 / Tables 1-2. The numbers in the
        CODEVIZ panel below are from our own tiny run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Two metrics, reported together, because the claim is "faster <i>and</i>
+        more accurate": <b>test error (%)</b> on <b>CIFAR-10 / CIFAR-100 / SVHN</b> (and ImageNet) at full deployed
+        depth, and <b>wall-clock training time per epoch</b>. The baseline to beat is the <b>identical constant-depth
+        ResNet</b> (every $p_\\ell = 1$): the lesson <code>results</code> quote stochastic vs constant
+        <b>CIFAR-10 5.25% vs 6.41%</b>, <b>CIFAR-100 24.98% vs 27.76%</b>, with a <b>~25% training-time reduction</b>
+        (Table&nbsp;2). The no-skill floor is majority-class guessing $= 10\\%$ accuracy / $90\\%$ error on 10-class
+        CIFAR. Stochastic depth must beat its own constant-depth twin on <i>both</i> axes, not just one.</li>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Schedule:</b> for $L{=}5$, $p_L{=}0.5$, Eqn&nbsp;4 must
+        give $[0.9,0.8,0.7,0.6,0.5]$ and $E(\\tilde L)=\\sum p_\\ell = 3.5 = (3L{-}1)/4$ (lesson worked example /
+        notebook cell 0). (b) <b>Expectation match:</b> block 2's train-average $H_1 + p_2 f_2$ must equal its test
+        output $\\mathrm{ReLU}(p_2 f_2 + H_1)$ &mdash; both $2.48$ in the example; if they differ you mis-scaled
+        Eqn&nbsp;5. (c) <b>Drop really skips compute:</b> with the schedule on, the per-epoch time must actually drop
+        (~$0.72\\times$ here) &mdash; if it doesn't, you compute $f$ then multiply by $0$ instead of <code>return</code>-ing
+        the skip early. (d) <b>Identity always present:</b> a fully-dropped block must return <code>relu(identity)</code>,
+        never $0$. (e) <b>Overfit one batch:</b> loss should fall toward $0$; init $K$-way softmax loss near
+        $-\\ln(1/K)$ ($\\ln 10 \\approx 2.30$ on CIFAR-10).</li>
+        <li><b>3. Expected range.</b> A correct small ResNet-110-style net with stochastic depth should reach roughly
+        the paper's <b>~5.25% CIFAR-10 error</b> (approximate, &sect;4 / Table&nbsp;1) and clearly beat its constant-depth
+        twin; a point or two off is "tuning" (LR schedule, $p_L$ choice, augmentation), while error near the $90\\%$ floor
+        or <i>worse</i> than constant depth is "probably a bug." On the toy run here, stochastic depth descends faster to
+        a lower held-out loss (~0.03 vs ~0.35 by epoch 7; not a paper number).</li>
+        <li><b>4. Ablation &mdash; prove the dropping earns its keep.</b> The central knob is the <b>survival schedule</b>.
+        Turn it off ($p_\\ell \\equiv 1$ &mdash; ordinary constant-depth ResNet), changing nothing else, and confirm both
+        (a) per-epoch wall-clock <i>rises</i> (all $L$ blocks now run, vs $E(\\tilde L) \\approx 3L/4$) and (b) test error
+        <i>rises</i> (lose the regularizer). If turning dropping off doesn't hurt error at all, the schedule isn't wired
+        in or the net is too small/short to overfit. A secondary sweep: more aggressive $p_L$ (e.g. $0.2$) should buy
+        more speedup (~40% in the paper) at some accuracy risk.</li>
+        <li><b>5. Failure signals.</b> <b>Test error far above training, collapses at eval</b> &rarr; you skipped the
+        $\\times p_\\ell$ rescale (Eqn&nbsp;5), so every residual is $1/p_\\ell$ too large at test and activations drift
+        off-distribution. <b>Gradients vanish / net won't train</b> &rarr; you dropped the <i>skip</i> instead of the
+        residual $f_\\ell$, severing the gradient highway (a dropped block must keep the identity). <b>No speedup</b>
+        &rarr; $f$ is computed then zeroed rather than branched-around. <b>Worse than constant depth, deep blocks dead</b>
+        &rarr; schedule decays the wrong way (early blocks dropped hard) &mdash; $p_\\ell$ must slide from $1$ down to
+        $p_L$. <b>Loss NaN</b> &rarr; LR too high / bad init, unrelated to the drop logic.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper: the primitives already ship in PyTorch, so you

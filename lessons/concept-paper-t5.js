@@ -334,6 +334,55 @@ $$ x \\;\\xrightarrow{\\text{drop }15\\%,\\ \\text{mean span }3}\\; x_{\\text{co
        <p><i>These are the paper's reported claims, quoted from the abstract. Every number in the CODE
        and CODEVIZ panels below is from our own tiny three-task run — our small-scale run, not the
        paper's reported numbers.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> Because everything is text-to-text, the one metric is
+        <b>exact-match accuracy</b> of the generated target string, reported <i>per task</i> on held-out
+        examples. In the toy build that is sequence accuracy on <code>&lt;rev&gt;</code>,
+        <code>&lt;inc&gt;</code>, and <code>&lt;last&gt;</code>; the "no-skill" floors are tiny &mdash; copying
+        the input or emitting random digits scores near $0$ on <code>&lt;rev&gt;</code>/<code>&lt;inc&gt;</code>
+        and about $1/10$ on the single-digit <code>&lt;last&gt;</code>. At paper scale the metrics are the
+        benchmark scores T5 reports (GLUE, SuperGLUE, SQuAD, CNN/DailyMail, WMT), where the abstract claims
+        "state-of-the-art results on many benchmarks" (quoted in <code>results</code>; we do not restate the
+        per-benchmark numbers).</p>
+       <p><b>2. Sanity checks BEFORE the full run.</b></p>
+       <ul>
+        <li>Reproduce the bucketing worked example: 16 buckets bidirectional, query at position 2, keys
+        $[0,1,2,3,4,5]$ must map to buckets $[2,1,0,9,10,11]$. A wrong sign split or an <code>abs</code>-only
+        bucket shows up here immediately.</li>
+        <li>Check shapes/masks: the position-bias tensor broadcasts to the attention logits as
+        $(1,h,q,k)$; decoder self-attention is causal (upper-triangular $-\\infty$); cross-attention is
+        <i>un</i>masked. Verify attention rows sum to 1 after softmax.</li>
+        <li>Loss at init: with vocabulary size $V$ the first-step cross-entropy should sit near $\\ln V$
+        ($-\\ln(1/V)$ for a uniform $V$-way softmax) &mdash; the theoretical no-information value (rule of thumb).</li>
+        <li>Overfit a single batch of a handful of examples: the train loss should drop to $\\approx 0$ and
+        exact-match to $1.0$, proving teacher-forcing, the shift, and <code>ignore_index=PAD</code> are wired
+        correctly.</li>
+       </ul>
+       <p><b>3. Expected range.</b> With the relative position bias ON, one tiny model should reach
+        $\\approx 1.0$ sequence accuracy on all three tasks by a few hundred steps (our small run: seq-acc $1.0$,
+        rev/inc/last all near-perfect &mdash; in <code>results</code>/CODEVIZ, not a paper number). Anything that
+        plateaus well below $1.0$ on the toy task is a bug, not tuning. At scale, anchor only to the paper's
+        qualitative claim of SOTA on its benchmark suite (approximate, see <code>results</code>).</p>
+       <p><b>4. Ablation &mdash; prove the idea earns its keep.</b> The architectural piece you built is the
+        <b>simplified relative position bias</b> &mdash; T5's only source of order. Set
+        <code>use_relpos=False</code> (no scalar added to any logit), retrain identically, and the
+        order-dependent tasks must <b>collapse</b>: self-attention is permutation-invariant, so
+        <code>&lt;rev&gt;</code> and <code>&lt;inc&gt;</code> fall toward chance while the order-free
+        <code>&lt;last&gt;</code> partly survives (our run: seq-acc $\\approx 1.0 \\to \\approx 0.15$, in
+        <code>results</code>/CODEVIZ). If accuracy barely moves, the bias was never actually feeding the logits.</p>
+       <p><b>5. Failure signals &amp; what they mean.</b></p>
+       <ul>
+        <li><b>All order tasks flatline near chance with the bias ON</b> &rarr; the scalar is added in the wrong
+        place (to embeddings, or after the softmax) instead of to the pre-softmax logit.</li>
+        <li><b>Reverse never works but increment does</b> &rarr; you bucketed on <code>abs(offset)</code>, so the
+        head cannot tell a left neighbour ($-1$) from a right one ($+1$).</li>
+        <li><b>Decoder trivially "perfect" in training but garbage at greedy decode</b> &rarr; the causal mask is
+        missing, so the decoder peeked at future target tokens (leakage).</li>
+        <li><b>Loss starts far above $\\ln V$ or goes NaN</b> &rarr; bad init / LR too high, or a LayerNorm
+        misplacement (remember T5's LayerNorm is rescale-only, on each sub-component's input).</li>
+        <li><b>One task always wins, others stuck</b> &rarr; the task-prefix token isn't distinguishing the tasks
+        (check the shared vocabulary and that the prefix actually reaches the encoder).</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

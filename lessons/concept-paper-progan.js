@@ -351,6 +351,48 @@
        <p><i>These are the paper's reported numbers, quoted from the abstract. The fade-in schedule and the
        equalized-LR ablation in the CODEVIZ panel below are from our own tiny toy run &mdash; not the paper's
        reported results.</i></p>`,
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> ProGAN is a generative model, so "working" is measured by image
+        <b>quality</b> and <b>variation</b>, not accuracy. The paper's own metrics: the <b>sliced Wasserstein
+        distance (SWD)</b> between real and generated image patches at each resolution (lower = closer to real),
+        and on CIFAR-10 the <b>Inception score</b> (higher = better). The paper reports "a record inception score of
+        $8.80$ in unsupervised CIFAR10" (abstract). The "no-skill" anchors: an untrained generator emits noise, so
+        its SWD is large and its Inception score is near $1.0$ (a copy-the-mean baseline is trivially worse than any
+        real generator). Beat the prior GAN SOTA Inception score on CIFAR-10 to claim the method works.</p>
+       <ul>
+        <li><b>2. Sanity checks BEFORE the full multi-resolution run.</b> The four novel pieces each have a cheap
+        unit test (all in the CODE panel): (a) <b>EqualizedConv2d</b> &mdash; assert the He scale for a $3\\times3$,
+        $512$-in conv equals $\\sqrt{2/4608}\\approx0.0208$; (b) <b>MinibatchStddev</b> &mdash; feed a <i>varied</i>
+        batch and a <i>collapsed</i> (all-identical) batch and check the appended channel is $\\approx1$ for varied
+        and $\\approx0$ for collapsed; (c) <b>PixelNorm</b> &mdash; check every pixel's feature vector has RMS
+        $\\approx1$ after; (d) <b>fade-in</b> &mdash; sweep $\\alpha$ and confirm the worked blend $0.20\\to0.50\\to
+        0.80$. Then check output <b>shapes</b> grow $4\\to8\\to16$ as blocks are added, and that $D$'s score is a
+        finite scalar. As a rule of thumb (not a paper claim), overfit $G$ to a single fixed image at $4\\times4$
+        and watch the WGAN-GP loss fall &mdash; if it cannot memorize one image, the wiring is broken.</li>
+        <li><b>3. Expected range.</b> A correct full implementation should approach the paper's reported
+        <b>Inception score $\\approx8.80$ on unsupervised CIFAR-10</b> (abstract) and produce visually clean
+        $1024\\times1024$ CelebA-HQ faces; SWD should <i>drop</i> as you grow to higher resolutions. These are the
+        paper's numbers &mdash; treat them as the target, not a guarantee. A toy run (like the CODEVIZ panel) will
+        not reach them; that panel is our own small run, not the paper's results. If your Inception score sits near
+        $1$&ndash;$2$ or images are pure noise after full training, that is "probably a bug," not "needs tuning."</li>
+        <li><b>4. Ablation &mdash; prove the key idea earns its keep.</b> The headline idea is <b>progressive
+        growing with smooth fade-in</b>: turn the fade-in OFF (switch each new resolution block on abruptly at
+        $\\alpha=1$) and training should become unstable / lower quality &mdash; the "sudden shock" the paper warns
+        about (&sect;2). Likewise ablate each stabilizer in isolation: bake He init in once instead of the runtime
+        <b>equalized LR</b> (&sect;4.1) and watch training get noisier across layers (the CODEVIZ right panel shows
+        exactly this contrast on a toy fit); remove the <b>minibatch-stddev</b> layer and watch variation collapse;
+        drop <b>pixel norm</b> and watch activation magnitudes spiral. If turning a piece off does <i>not</i> hurt,
+        it is not wired in.</li>
+        <li><b>5. Failure signals &amp; what they mean.</b> <b>Mode collapse</b> (the generator emits a few
+        near-identical images, ignoring $z$) &rarr; the minibatch-stddev channel reads $\\approx0$ (its CODE test
+        is exactly this) and SWD/variation stalls. <b>Activations spiraling to huge values or loss NaN</b> &rarr;
+        the equalized-LR / pixel-norm arms-race stabilizers are missing or the LR is too high. <b>Sudden quality
+        crash right when a new resolution is added</b> &rarr; fade-in skipped or $\\alpha$ not ramping
+        ($0\\to1$); the trained low-res layers got shocked by the new block's random output. <b>Old path looks
+        blocky/misaligned during a transition</b> &rarr; the "old" branch must be a plain
+        <code>nearest</code>-neighbor upsample, not a learned layer. <b>Pixel norm denominator hits 0 / NaN on a
+        dead pixel</b> &rarr; the $+\\epsilon$ ($10^{-8}$) inside the square root is missing.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

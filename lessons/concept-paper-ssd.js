@@ -271,6 +271,47 @@ $$ \\frac{\\#\\,\\text{negatives}}{\\#\\,\\text{positives}} \\le 3 \\qquad\\text
        <p><i>These are the paper's reported figures, quoted from the abstract. The numbers in the CODEVIZ panel
        below are from our own tiny toy run &mdash; not the paper's results.</i></p>`,
 
+    evaluation:
+      `<p><b>1. Metric &amp; benchmark.</b> The headline metric is <b>mean Average Precision (mAP)</b> on
+        <b>PASCAL VOC2007 test</b> (and VOC2012 / COCO), reported alongside <b>FPS</b> (frames per second) &mdash; SSD
+        is a speed/accuracy claim, so you report both. A detection is a true positive only if its IoU with a ground
+        truth exceeds 0.5; mAP averages Average Precision over the 20 VOC classes. The baseline to beat is the
+        contemporary <b>Faster R-CNN</b>: the lesson <code>results</code> quote <b>SSD300 = 72.1% mAP @ 58 FPS</b> and
+        <b>SSD500 = 75.1% mAP</b>, "outperforming a comparable Faster R-CNN model" while running far faster. A trivial
+        no-skill detector (random or single fixed box) scores ~0 mAP, so any double-digit mAP already beats chance.</li>
+       <p><b>Before the full detector, test the two pieces this lesson actually builds &mdash; the box generator and
+        the matcher &mdash; geometrically, no training needed:</b></p>
+       <ul>
+        <li><b>2. Sanity checks before the full run.</b> (a) <b>Scale formula:</b> Eqn&nbsp;4 with $m{=}4$,
+        $s_{\\min}{=}0.2$, $s_{\\max}{=}0.9$ must give $s_1{=}0.2,\\,s_2{=}0.4333,\\,s_3{=}0.6667,\\,s_4{=}0.9$ (lesson
+        worked example / notebook cell 0). (b) <b>Area preservation:</b> for every aspect-ratio box, $w\\,h = s_k^2$
+        &mdash; if a "wide" box has the wrong area you swapped $w = s_k\\sqrt{a_r}$ and $h = s_k/\\sqrt{a_r}$. (c)
+        <b>Known-answer IoU:</b> the lesson's worked match (square side $0.4333$ vs a $0.5\\times0.5$ GT, both at
+        $(0.75,0.75)$) must return <b>IoU $\\approx 0.751$</b>; a symmetric self-IoU must be exactly $1.0$ and a disjoint
+        pair $0$. (d) <b>Box count:</b> for SSD300 the six maps must sum to <b>8732 default boxes</b>; a different total
+        means wrong per-cell box counts (4 vs 6) or grid sizes. (e) Once training: init confidence loss for a
+        $(C{+}1)$-way softmax should be near $-\\ln(1/(C{+}1))$.</li>
+        <li><b>3. Expected range.</b> A correct SSD300 should approach the paper's <b>~72% mAP on VOC2007</b>
+        (approximate, from the abstract); landing in the high 60s is "tuning" (augmentation, hard-negative ratio,
+        learning-rate schedule, the conv4_3 L2-norm scale), while &lt;50% mAP or recall floored on a whole object-size
+        band is "probably a bug." On the toy geometric task here, multi-scale boxes should match <b>both</b> small and
+        large objects (our run: small 0.413, large 0.487 recall; not a paper number).</li>
+        <li><b>4. Ablation &mdash; prove multi-scale earns its keep.</b> The central idea is <b>predicting from several
+        feature-map scales</b>. Replace the multi-scale default-box set with a <b>single scale</b> (coarse-only or
+        fine-only) and recompute matching recall split by object size: coarse-only must catch large objects but drop
+        small-object recall toward 0, and fine-only the mirror image (lesson CODEVIZ: coarse small=0.000/large=0.487,
+        multi small=0.413/large=0.487). If single-scale recall <i>doesn't</i> collapse for off-size objects, your boxes
+        aren't actually at different scales, or your test objects span too narrow a size range to expose it.</li>
+        <li><b>5. Failure signals.</b> <b>Small-object recall stuck at ~0</b> &rarr; no fine/high-resolution map, or the
+        $+0.5$ cell-center offset dropped so every box shifts toward the top-left and IoUs sag. <b>Everything predicted
+        "background," mAP near 0</b> &rarr; hard negative mining off, so easy negatives swamp the confidence loss (keep
+        negatives:positives $\\le 3{:}1$). <b>Decoded boxes land in the wrong place</b> &rarr; you treated the network
+        output as the box itself instead of an <b>offset</b> from the default box (Eqn&nbsp;2 encode/decode). <b>Loss
+        NaN</b> &rarr; LR too high, or dividing by $N{=}0$ when an image has no matched box (the loss must be set to $0$
+        there). <b>"Wide" boxes behave tall</b> &rarr; $\\sqrt{a_r}$ swapped between $w$ and $h$ (area still equals
+        $s_k^2$, so it passes a quick check while silently mis-shaping every box).</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p>This is a <b>Track B (architecture)</b> paper. The primitives ship in PyTorch, so we <b>import</b>

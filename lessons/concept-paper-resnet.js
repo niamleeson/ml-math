@@ -245,6 +245,48 @@
        but test error rises to 7.93% &mdash; here the limit is overfitting, not degradation.</p>
        <p><i>These are the paper's reported figures. The numbers in the CODEVIZ panel below are from our own
        tiny run &mdash; not the paper's results.</i></p>`,
+    evaluation:
+      `<p><b>Metric &amp; benchmark.</b> The headline metric is <b>top-1 / top-5 classification error</b> on
+       <b>ImageNet</b> (and error rate on CIFAR-10 for the deep-net studies). The no-skill floor for 1000-way
+       ImageNet is $99.9\\%$ top-1 error (random guessing $= 1/1000$); the bar this paper had to clear was the
+       <b>plain-net baseline</b> of the same depth, which it beats by <i>not degrading</i>. But for a Track B
+       reproduction the real metric is <b>training loss vs depth</b>: the thing you are testing is the
+       <b>degradation problem</b> &mdash; that a deep residual net optimizes where a matched plain net stalls.</p>
+       <ul>
+        <li><b>Sanity checks BEFORE the full run.</b> (1) Reproduce the worked block exactly: the first cell
+        must print sum $= [0.3, -0.2]$ and ReLU $= [0.3, 0.0]$ for $x=[0.5,-0.3]$, $F(x)=[-0.2,0.1]$ &mdash; a
+        mismatch means the "+ x" add is wrong. (2) Shape check: the residual add is element-wise, so before
+        every <code>out + identity</code> assert the two tensors share shape; a stage that doubles channels or
+        strides must route the shortcut through the $1\\times1$ projection. (3) Identity-init check: set the
+        block's second-conv/BN weights so $F(x)=0$ and confirm the block returns $\\sigma(x)$ (the "safe
+        fallback") &mdash; this verifies the skip path is live. (4) <b>Overfit a single batch</b> (rule of
+        thumb): a correct deep ResNet should drive cross-entropy on one mini-batch to near $0$ within a few
+        dozen steps; if it cannot, the gradient highway is broken.</li>
+        <li><b>Expected range.</b> Anchor to the paper's reported figures (these are He et al. 2015's numbers):
+        single-model ImageNet validation error is ResNet-50 <b>22.85% / 6.71%</b> (top-1/top-5), ResNet-152
+        <b>21.43% / 5.71%</b>, and the winning <b>ensemble reaches 3.57%</b> top-5 on the ImageNet test set;
+        CIFAR-10 ResNet-110 reaches <b>6.43%</b> error. For the toy run here there is no target number &mdash;
+        the correct-build signal is qualitative: the residual training-loss curve should fall <b>fast and stay
+        low</b>, while the matched plain net lags. If your deep <i>residual</i> net cannot even overfit the
+        small training set, that is a bug, not tuning.</li>
+        <li><b>Ablation &mdash; prove the key idea earns its keep.</b> The component to toggle is the
+        <b>skip connection</b> itself: flip <code>skip=False</code> (delete "<code>+ identity</code>"),
+        keeping depth, width, optimizer, data, and seed identical, building a <b>matched plain net</b>. The
+        deep plain net's training loss should fall slower, plateau higher, and spike/oscillate &mdash; the
+        degradation problem reproduced. If removing the skip changes <i>nothing</i>, the net is too shallow for
+        degradation to bite (go deeper, e.g. 50 blocks) or the skip was never actually summed in. This is the
+        green-vs-red contrast in the CODEVIZ panel.</li>
+        <li><b>Failure signals &amp; what they mean.</b> <i>Shape/runtime error at the add</i> &rarr; missing
+        projection shortcut where channels or stride change (Eqn 2's $W_s$). <i>Deep net trains WORSE than a
+        shallow one on the TRAINING set</i> &rarr; degradation &mdash; expected for the plain ablation, but a
+        bug if it happens to your residual net (skip not wired in, or BN misplaced onto the shortcut). <i>Loss
+        NaN / diverges</i> &rarr; learning rate too high or BatchNorm applied after instead of before the add,
+        putting the two summed paths on different scales. <i>Train error low but val error high</i> &rarr; this
+        is <b>overfitting, not degradation</b> (the paper's 1202-layer CIFAR net does exactly this) &mdash; the
+        fix is regularization/less depth, NOT more skips. <i>Adding the ReLU before the add instead of after</i>
+        &rarr; the clean identity path is destroyed and deep nets stop training; the order must be
+        <code>relu(out + identity)</code>.</li>
+       </ul>`,
 
     // IMPLEMENT + REFLECT
     implementBoundary:

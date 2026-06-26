@@ -309,6 +309,42 @@
        <p>The numbers in our CODE / CODEVIZ below are <i>our own small-scale run, not the paper's
        reported numbers.</i></p>`,
 
+    evaluation:
+      `<p><b>The metric &amp; baseline.</b> The training signal is the <b>MLM cross-entropy</b>
+       $\\mathcal{L}_{\\text{MLM}}=\\frac{1}{|M|}\\sum_{i\\in M}-\\log P_\\theta(x_i\\mid\\hat x)$, reported
+       as held-out loss or perplexity $\\text{ppl}=\\exp(\\mathcal{L}_{\\text{MLM}})$. The no-skill baseline
+       is a uniform guess over the vocabulary: loss $-\\ln(1/|\\mathcal{V}|)=\\ln|\\mathcal{V}|$, i.e.
+       perplexity $\\approx |\\mathcal{V}|$ (for the toy $|\\mathcal{V}|=20$, loss $\\approx 3.0$). At scale
+       the paper's own anchors are downstream task scores: dynamic-masking SQuAD 2.0 F1 78.7 vs static 78.3
+       (Table 1) and large-batch held-out MLM perplexity 3.68 at batch 2K vs 3.99 at batch 256 (Table 3).</p>
+       <ul>
+         <li><b>Sanity checks before the full run.</b> Verify the loss is computed <i>only</i> on masked
+         positions (ignore index $-100$ everywhere else); if the model can see the answer the loss
+         collapses unrealistically fast &mdash; a leakage tell. Reproduce the worked cross-entropy: logits
+         $[2,1,0,1]$, true index 0 &rarr; softmax $\\approx[0.5345,0.1966,0.0723,0.1966]$, loss
+         $\\approx 0.6264$, perplexity $\\approx 1.871$ (known-answer test). Check loss at init is near
+         $\\ln|\\mathcal{V}|$ (random guessing). Overfit a single tiny batch and watch the masked-token
+         loss drive toward $\\sim 0$. Confirm the masker actually applies 80/10/10 and that the head has
+         no NSP output.</li>
+         <li><b>Expected range.</b> On the toy run a correct build lands well under the $\\approx 3.0$
+         random baseline (our run: static $\\approx 2.71$, dynamic $\\approx 2.55$ &mdash; our numbers,
+         not the paper's). A loss stuck at $\\approx \\ln|\\mathcal{V}|$ means it is not learning; a loss
+         near 0 on held-out data means leakage. The dynamic-minus-static gap is small and noisy at toy
+         scale &mdash; treat its <i>sign</i>, not its size, as the signal (rule of thumb).</li>
+         <li><b>Ablation &mdash; prove dynamic masking earns its keep.</b> The central knob this lesson
+         introduces is <b>dynamic vs static masking</b>. Run both with everything else identical (same
+         init, data, budget) and score on one fixed held-out mask: dynamic should reach the lower loss,
+         matching Table 1's "comparable or slightly better" direction. If "dynamic" ties static exactly,
+         you froze the RNG or cached the masked batch &mdash; it is secretly static. The second ablation:
+         add back an NSP head/loss and confirm it does not help (Section 4.2, Table 2).</li>
+         <li><b>Failure signals &amp; what they mean.</b> Held-out loss $\\approx \\ln|\\mathcal{V}|$ and
+         flat &rarr; labels not aligned to masked positions, or loss averaged over all tokens. Loss
+         near 0 on held-out but garbage predictions &rarr; the model is copying visible tokens (you masked
+         100% with $[\\text{MASK}]$ and skipped the 10% random / 10% unchanged, or computed loss on
+         unmasked spots). NaN loss &rarr; learning rate too high. Dynamic identical to static &rarr; the
+         mask is not being re-drawn inside the loop.</li>
+       </ul>`,
+
     // IMPLEMENT + REFLECT
     implementBoundary:
       `<p><b>Track B (architecture).</b> RoBERTa adds no new primitive, so there is no
