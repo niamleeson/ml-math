@@ -257,26 +257,55 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-transformations-actions"] = {
-    question: "When an action fires a filter+groupBy query, how does Spark break the JOB into STAGES (split at the shuffle) and TASKS (one per partition), and how much data actually moves?",
+    question: "How do you READ a Spark stage/task picture? Where is the shuffle, why is one job two stages and another four, and how do you spot a skewed reducer or a job that needs no shuffle at all?",
     charts: [
       {
         type: "bars",
-        title: "1 JOB -> 2 STAGES -> TASKS for df.filter(amount>0).groupBy('region').sum()",
+        title: "Healthy 2-stage job: filter (narrow) then groupBy (one shuffle)",
         labels: ["Stage 1 map tasks", "Stage 2 reduce tasks", "(of those, non-empty)"],
         values: [8, 200, 5],
         valueLabels: ["8", "200", "5"],
-        colors: ["#7ee787", "#ff7b72", "#ffb454"]
+        colors: ["#7ee787", "#9aa7b4", "#ffb454"],
+        interpret: "Each bar is a count of <b>tasks</b> (the unit of work, one task per partition). Read it left to right as the job runs. Stage 1 is the <b>narrow</b> filter: <b>8 map tasks</b>, exactly one per input partition, all in parallel, no data crossing the network. Then the <b>one shuffle</b> (the groupBy's Exchange) ends Stage 1 and opens Stage 2, which has Spark's default <b>200</b> shuffle partitions = up to 200 reduce tasks. Only <b>5</b> are orange because there are 5 regions; the other 195 are empty and finish instantly. <b>Take-away:</b> one Exchange means exactly two stages, and a wall of mostly-empty reduce tasks is normal, not a bug."
       },
       {
         type: "bars",
-        title: "Data MOVED across the cluster (MB): narrow filter vs wide groupBy",
+        title: "Data MOVED across the cluster (MB): narrow shuffles nothing, wide shuffles the survivors",
         labels: ["filter (NARROW)", "groupBy (WIDE, shuffle)"],
         values: [0.0, 201.6],
         valueLabels: ["0.0", "201.6"],
-        colors: ["#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Height = megabytes sent over the network. Green <b>filter</b> moves <b>0 MB</b>: a narrow step works on the rows each machine already holds. Red <b>groupBy</b> moves <b>~201.6 MB</b> — the ~8.4M rows that survive the filter (~70% of 12M) are re-sent so every region lands on one machine. <b>How to read it:</b> the tall red bar is where your time goes. When a Spark job is slow, find the wide step (every <code>Exchange</code> in the plan) — that, not the narrow steps, is the cost. Real computed numbers."
+      },
+      {
+        type: "bars",
+        title: "SKEW: same shuffle, but one key is huge — read the per-reducer load",
+        labels: ["reducer A", "reducer B", "reducer C", "reducer D (hot key)", "reducer E"],
+        values: [60, 55, 48, 1300, 52],
+        valueLabels: ["60", "55", "48", "1300", "52"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#7ee787"],
+        interpret: "Illustrative. Each bar is the row count handled by one non-empty reduce task in Stage 2. Healthy shuffles look <b>even</b> — all bars about the same height. Here reducer D towers over the rest: one group key (say a default <code>region='unknown'</code> holding most rows) all hashed to a single task. <b>How to recognise it:</b> in the Spark UI the stage shows one task with a far larger 'Shuffle Read' and a far longer duration while 199 others finished. The whole stage waits on that one straggler. <b>Fix:</b> salt the hot key, filter the junk value, or use adaptive skew-join handling."
+      },
+      {
+        type: "bars",
+        title: "SHUFFLE-HEAVY: groupBy then join then orderBy = 3 Exchanges = 4 stages",
+        labels: ["Stage 1 (read+filter)", "Stage 2 (after groupBy)", "Stage 3 (after join)", "Stage 4 (after orderBy)"],
+        values: [8, 200, 200, 200],
+        valueLabels: ["8", "200", "200", "200"],
+        colors: ["#7ee787", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "Illustrative. Bars are tasks per stage; the count of bars is the count of <b>stages</b>. Three wide steps (groupBy, join, orderBy) each add an <code>Exchange</code>, so the job has <b>3 shuffles and 4 stages</b> — three red shuffle boundaries instead of one. <b>How to read a plan like this:</b> count the <code>Exchange</code> lines in <code>.explain()</code> — that many shuffles, plus one, equals the stage count. Each red boundary is a full re-shuffle of the data. <b>Fix direction:</b> broadcast the small side of the join, or reorder so you shuffle once, to collapse red bars."
+      },
+      {
+        type: "bars",
+        title: "NARROW-ONLY: filter+select+withColumn = 1 stage, ZERO shuffle",
+        labels: ["Stage 1 only (8 tasks)"],
+        values: [8],
+        valueLabels: ["8"],
+        colors: ["#7ee787"],
+        interpret: "Illustrative. The ideal case: a chain of only <b>narrow</b> steps (filter, select, withColumn) has <b>no Exchange at all</b>, so it is a single stage of 8 tasks — one per input partition — and <b>0 MB</b> cross the network. <b>How to recognise it:</b> <code>.explain()</code> shows no <code>Exchange</code> line; the Spark UI shows one stage. This is what you are steering toward — push filters early and avoid needless groupBy/join/distinct/orderBy so the job stays a flat, all-green, shuffle-free pass."
       }
     ],
-    caption: "A 12,000,000-row table in 8 input partitions, running filter(amount>0).groupBy('region').sum(). The single action splits into TWO stages at the one shuffle (the Exchange). Stage 1 is NARROW (filter): 8 map tasks, one per input partition, and 0 MB cross the network. The groupBy is WIDE: it shuffles the ~8.4M surviving rows (~70% pass the filter) by region — about 201.6 MB moved. Stage 2 has Spark's default 200 shuffle partitions, so up to 200 reduce tasks, but with only 5 distinct regions just 5 do real work and the other 195 are empty. The contrast in the second chart is the whole reason wide transformations dominate Spark's cost: narrow moves nothing, wide moves everything that survives.",
+    caption: "How to read these: bar height is a task or row count, bar colour flags healthy (green) vs costly/problem (red/orange). The first two charts are the real worked job (12M rows, 8 partitions, filter+groupBy); the last three are illustrative variants you will meet — a skewed reducer, a 3-shuffle chain, and a clean shuffle-free job — each labelled in its own interpret.",
     code: `import numpy as np
 
 # --- Job shape: a 12M-row table in 8 input partitions -------------------

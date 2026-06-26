@@ -254,17 +254,18 @@ print("BERTScore (tm):", BERTScore()(cand, [r[0] for r in refs])["f1"])`
   };
 
   window.CODEVIZ["met-nlp"] = {
-    question: "On one fixed reference vs one candidate, how is each metric actually built? Watch BLEU come together from its n-gram precisions and brevity penalty, see why BLEU and ROUGE disagree, see ROUGE's recall/precision/F split, and see perplexity as exp of average surprise.",
+    question: "On one fixed reference vs one candidate, how is each metric built — and what do the FAILURE shapes look like? Watch BLEU come together from its n-gram precisions and brevity penalty, see why BLEU and ROUGE disagree, then meet the cases that bite in practice: a perfect paraphrase that overlap metrics wrongly punish, the brevity penalty crushing a too-short output, and the same model looking great or terrible just by swapping tokenizers.",
     charts: [
       {
         type: "bars",
-        title: "BLEU = BP x geometric-mean(p1..p4) — term by term",
+        title: "Healthy: BLEU = BP x geometric-mean(p1..p4), term by term",
         xlabel: "term",
         ylabel: "value (0..1)",
         labels: ["p1", "p2", "p3", "p4", "BP", "BLEU"],
         values: [1.0, 0.8, 0.75, 0.6667, 0.8465, 0.6732],
         valueLabels: ["1.00", "0.80", "0.75", "0.667", "0.847", "0.673"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"],
+        interpret: "Each blue bar is one n-gram precision: of the candidate's n-word runs, what fraction appear in the reference. They fall left to right (single words match easily, 4-word runs rarely) — that downward staircase is normal. The orange bar is the brevity penalty (0.847, below 1 because the candidate is one word short). The green bar is the final BLEU: the geometric mean of the four blue bars, then multiplied by orange. <b>Read it as:</b> BLEU can only be as strong as its weakest n-gram precision, and being too short drags it down further."
       },
       {
         type: "bars",
@@ -274,7 +275,8 @@ print("BERTScore (tm):", BERTScore()(cand, [r[0] for r in refs])["f1"])`
         labels: ["BLEU (n=4)", "ROUGE-1 F1", "ROUGE-L F1"],
         values: [0.6732, 0.9231, 0.9231],
         valueLabels: ["0.673", "0.923", "0.923"],
-        colors: ["#7ee787", "#c89bff", "#ffb454"]
+        colors: ["#7ee787", "#c89bff", "#ffb454"],
+        interpret: "Three metrics, ONE identical candidate. BLEU (green) is much lower than the two ROUGE scores (0.673 vs 0.923) — not because the text changed, but because BLEU multiplies four n-gram precisions and adds a brevity penalty, while ROUGE-1 only checks single-word overlap. <b>Lesson:</b> never compare a BLEU number against a ROUGE number; a metric's scale is its own. Always state which ruler produced the score."
       },
       {
         type: "bars",
@@ -284,20 +286,55 @@ print("BERTScore (tm):", BERTScore()(cand, [r[0] for r in refs])["f1"])`
         labels: ["recall = 6/7", "precision = 6/6", "F1"],
         values: [0.8571, 1.0, 0.9231],
         valueLabels: ["0.857", "1.00", "0.923"],
-        colors: ["#4ea1ff", "#c89bff", "#7ee787"]
+        colors: ["#4ea1ff", "#c89bff", "#7ee787"],
+        interpret: "Blue = recall (of the 7 reference words, how many the candidate produced: 6/7). Purple = precision (of the 6 candidate words, how many are in the reference: 6/6 = perfect, it added no junk). Green = their F1, the harmonic mean, which sits below precision because recall is the weaker of the two. <b>Read it as:</b> precision punishes adding wrong words; recall punishes leaving good words out; F1 won't be high unless both are."
       },
       {
         type: "bars",
-        title: "Perplexity = exp(cross-entropy): per-token surprise -ln P, then exp of their mean",
+        title: "Perplexity = exp(cross-entropy): per-token surprise, then exp of the mean",
         xlabel: "token surprise (nats), then summary",
         ylabel: "value",
         labels: ["t1 P=.5", "t2 P=.4", "t3 P=.1", "t4 P=.25", "t5 P=.2", "cross-ent", "perplexity"],
         values: [0.6931, 0.9163, 2.3026, 1.3863, 1.6094, 1.3816, 3.9811],
         valueLabels: ["0.69", "0.92", "2.30", "1.39", "1.61", "1.38", "3.98"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#7ee787"],
+        interpret: "Each blue bar is one token's surprise, minus the log of the probability the model gave it: a token the model expected (P=0.5) costs little; one it doubted (P=0.1) spikes to 2.30. Orange is their average (cross-entropy, 1.38 nats). Green exponentiates that into perplexity, 3.98 — read as 'the model was as unsure as if guessing uniformly among ~4 words'. <b>One spike token (the P=0.1 bar) drags the whole average up</b>, which is why perplexity is sensitive to rare hard tokens. Lower is better."
+      },
+      {
+        type: "bars",
+        title: "Variant — paraphrase trap: same meaning, overlap metrics collapse (illustrative)",
+        xlabel: "metric",
+        ylabel: "score (0..1)",
+        labels: ["BLEU", "ROUGE-1", "BERTScore (meaning)"],
+        values: [0.18, 0.25, 0.91],
+        valueLabels: ["0.18", "0.25", "0.91"],
+        colors: ["#ff7b72", "#ffb454", "#7ee787"],
+        interpret: "Illustrative. The candidate is a perfect paraphrase — e.g. reference 'the film began at noon', candidate 'the movie started at midday'. Every content word is a correct synonym, so word-overlap finds almost nothing: BLEU and ROUGE crater (red/orange) even though the translation is excellent. The green bar is BERTScore, which compares word MEANINGS via embeddings and stays near 0.9. <b>How to recognise it:</b> overlap metrics low, a human rates the output fine. <b>What it means:</b> trust a meaning-aware metric (BERTScore/COMET) here, not BLEU."
+      },
+      {
+        type: "bars",
+        title: "Variant — brevity penalty crushes a too-short candidate (illustrative)",
+        xlabel: "candidate length c (reference r = 20 words)",
+        ylabel: "brevity penalty BP",
+        labels: ["c=4", "c=8", "c=12", "c=16", "c=20"],
+        values: [0.2096, 0.4724, 0.6592, 0.8290, 1.0],
+        valueLabels: ["0.21", "0.47", "0.66", "0.83", "1.00"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#ffb454", "#7ee787"],
+        interpret: "Illustrative: the brevity penalty BP = exp(1 - r/c) against a 20-word reference. A model can cheat precision by emitting just a few words it is sure about — but BP slams that shut. At c=4 words BP=0.21, so even perfect precision yields BLEU below 0.21 (red). Only when the candidate is as long as the reference (c=20) does BP reach 1.0 (green). <b>How to recognise it:</b> precisions look high yet BLEU is tiny. <b>What it means:</b> the output is too short — BP is doing the job recall would, forcing completeness."
+      },
+      {
+        type: "bars",
+        title: "Variant — perplexity is NOT comparable across tokenizers (illustrative)",
+        xlabel: "same model & text, different tokenizer",
+        ylabel: "perplexity (lower=better)",
+        labels: ["char-level", "BPE 32k", "word-level"],
+        values: [3.1, 14.0, 280.0],
+        valueLabels: ["3.1", "14", "280"],
+        colors: ["#9aa7b4", "#7ee787", "#ff7b72"],
+        interpret: "Illustrative, log-ish scale: the SAME model on the SAME text reports wildly different perplexity just by changing how text is split into tokens. Character tokenizers have few choices per step (low perplexity, 3.1) while word-level vocabularies have tens of thousands (perplexity 280) — none of this reflects model quality. <b>How to recognise it:</b> two papers quote very different perplexities for similar models. <b>What it means:</b> only compare perplexities computed with the IDENTICAL tokenizer, or convert to bits-per-byte first."
       }
     ],
-    caption: "Reference: \"the cat sat on the warm mat\" (7 words). Candidate: \"the cat sat on the mat\" (6 words). Chart 1 (BLEU): clipped n-gram precisions are p1=6/6=1.00, p2=4/5=0.80, p3=3/4=0.75, p4=2/3=0.667; the candidate is shorter (c=6 < r=7) so BP=exp(1-7/6)=0.847; BLEU = BP x (p1 p2 p3 p4)^(1/4) = 0.847 x 0.795 = 0.673. Chart 2: on the SAME pair, BLEU=0.673 is lower than ROUGE-1 F1=0.923 and ROUGE-L F1=0.923 — BLEU's geometric mean over higher n-grams plus the brevity penalty is harsher than ROUGE's unigram F1. Chart 3 (ROUGE-1): 6 reference words are matched, so recall=6/7=0.857, precision=6/6=1.00, F1=2RP/(R+P)=0.923. Chart 4 (perplexity, separate toy example): a model assigns probabilities 0.5,0.4,0.1,0.25,0.2 to five tokens; surprise -ln P per token, mean = 1.382 nats cross-entropy, and perplexity = exp(1.382) = 3.98 (the model was as unsure as picking among ~4 equally-likely words). All numbers are computed below with numpy only.",
+    caption: "Charts 1-4 build the metrics on a real pair — reference \"the cat sat on the warm mat\" (7 words), candidate \"the cat sat on the mat\" (6 words) — all numbers computed below with numpy. Charts 5-7 are the failure shapes you actually meet: a paraphrase that overlap metrics wrongly punish, the brevity penalty crushing a too-short output, and perplexity swinging by tokenizer. Each chart's own interpret box explains how to read it.",
     code: `import numpy as np
 from collections import Counter
 

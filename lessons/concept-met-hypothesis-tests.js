@@ -294,60 +294,87 @@ print("ADF (statn.) :", adfuller(np.cumsum(resid))[:2])          # H0: non-stati
   };
 
   window.CODEVIZ["met-hypothesis-tests"] = {
-    question: "Walk the whole recipe on the lesson's worked example: model A {0.90,0.91,0.89,0.92,0.88} vs model B {0.93,0.94,0.92,0.95,0.91}. We build the test statistic t, read the p-value off the null curve as a tail area, compare it to the threshold alpha, and weigh the two ways to be wrong (Type I/II error, power).",
+    question: "Walk the whole recipe on the lesson's worked example: model A {0.90,0.91,0.89,0.92,0.88} vs model B {0.93,0.94,0.92,0.95,0.91}. We build the test statistic t, read the p-value off the null curve as a tail area, compare it to alpha, and weigh the two ways to be wrong (Type I/II, power). Then: two outcomes you must also recognise — a fat p that is NOT proof of no effect, and a tiny p on a huge sample that is statistically significant but practically meaningless.",
     charts: [
       {
         type: "bars",
-        title: "Test statistic  t = gap / standard error  =  0.030 / 0.010  =  3.0",
+        title: "Step 1 — test statistic  t = gap / standard error  =  0.030 / 0.010  =  3.0",
         xlabel: "term",
         ylabel: "value",
         labels: ["gap (xB - xA)", "standard error", "t = gap / SE"],
         values: [0.030, 0.010, 3.0],
         valueLabels: ["0.030", "0.010", "3.0"],
-        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"],
+        interpret: "<b>Build the one number that summarises the data.</b> Each bar is a term in t = gap / standard error. The blue <b>gap</b> (0.030) is how much B's average beats A's; the grey <b>standard error</b> (0.010) is how much that gap would wobble from sampling luck alone. The green bar is their ratio, <b>t = 3.0</b>: the observed gap stands 3 noise-units above zero. Read it as 'how many standard errors of separation' — bigger |t| means the gap is harder to dismiss as chance."
       },
       {
         type: "line",
-        title: "p-value = shaded tail area beyond |t|=3.0 under the null t-curve (df=8)  =  0.017",
+        title: "Step 2 — p-value = shaded tail area beyond |t|=3.0 under the null t-curve (df=8) = 0.017",
         xlabel: "t-statistic (standard errors from 0)",
         ylabel: "probability density under H0",
         series: [
           { name: "null t-distribution (H0 true)", color: "#4ea1ff", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.2,0.046],[-2,0.06237],[-1.8,0.08372],[-1.6,0.11086],[-1.4,0.14425],[-1.2,0.18361],[-1,0.22761],[-0.8,0.27351],[-0.6,0.31721],[-0.4,0.35373],[-0.2,0.37812],[0,0.3867],[0.2,0.37812],[0.4,0.35373],[0.6,0.31721],[0.8,0.27351],[1,0.22761],[1.2,0.18361],[1.4,0.14425],[1.6,0.11086],[1.8,0.08372],[2,0.06237],[2.2,0.046],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] },
           { name: "p-value tail (|t| >= 3.0)", color: "#ffb454", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0],[-2.6,0],[-2.4,0],[-2.2,0],[-2,0],[-1.8,0],[-1.6,0],[-1.4,0],[-1.2,0],[-1,0],[-0.8,0],[-0.6,0],[-0.4,0],[-0.2,0],[0,0],[0.2,0],[0.4,0],[0.6,0],[0.8,0],[1,0],[1.2,0],[1.4,0],[1.6,0],[1.8,0],[2,0],[2.2,0],[2.4,0],[2.6,0],[2.8,0],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] }
-        ]
+        ],
+        interpret: "<b>Turn the statistic into a probability.</b> The blue bell is where t would land if H0 (no real difference) were true — most weight near 0, thin tails far out. The orange area is the p-value: the chance of a |t| at least as extreme as our 3.0, counted on BOTH tails (two-sided). It integrates to <b>p = 0.017</b>, so under 'nothing is going on' a gap this big shows up only about 1.7% of the time. Smaller tail area = more surprising = stronger evidence against H0."
       },
       {
         type: "line",
-        title: "Significance threshold: reject H0 when |t| lands in the alpha=0.05 rejection region (|t| > 2.306)",
+        title: "Step 3 — significance threshold: reject H0 when |t| lands in the alpha=0.05 region (|t| > 2.306)",
         xlabel: "t-statistic (standard errors from 0)",
         ylabel: "probability density under H0",
         series: [
           { name: "null t-distribution (H0 true)", color: "#4ea1ff", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.2,0.046],[-2,0.06237],[-1.8,0.08372],[-1.6,0.11086],[-1.4,0.14425],[-1.2,0.18361],[-1,0.22761],[-0.8,0.27351],[-0.6,0.31721],[-0.4,0.35373],[-0.2,0.37812],[0,0.3867],[0.2,0.37812],[0.4,0.35373],[0.6,0.31721],[0.8,0.27351],[1,0.22761],[1.2,0.18361],[1.4,0.14425],[1.6,0.11086],[1.8,0.08372],[2,0.06237],[2.2,0.046],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] },
           { name: "rejection region (area = alpha = 0.05)", color: "#ff7b72", points: [[-5,0.00066],[-4.8,0.00087],[-4.6,0.00115],[-4.4,0.00153],[-4.2,0.00205],[-4,0.00276],[-3.8,0.00373],[-3.6,0.00507],[-3.4,0.00692],[-3.2,0.00948],[-3,0.01301],[-2.8,0.01788],[-2.6,0.02457],[-2.4,0.03369],[-2.306,0.0413],[-2.2,0],[-2,0],[-1.8,0],[-1.6,0],[-1.4,0],[-1.2,0],[-1,0],[-0.8,0],[-0.6,0],[-0.4,0],[-0.2,0],[0,0],[0.2,0],[0.4,0],[0.6,0],[0.8,0],[1,0],[1.2,0],[1.4,0],[1.6,0],[1.8,0],[2,0],[2.2,0],[2.306,0.0413],[2.4,0.03369],[2.6,0.02457],[2.8,0.01788],[3,0.01301],[3.2,0.00948],[3.4,0.00692],[3.6,0.00507],[3.8,0.00373],[4,0.00276],[4.2,0.00205],[4.4,0.00153],[4.6,0.00115],[4.8,0.00087],[5,0.00066]] }
-        ]
+        ],
+        interpret: "<b>Where the line in the sand sits.</b> Same null bell, now with the red rejection region — the most extreme 5% of the curve, split across both tails. The cutoff is <b>|t| > 2.306</b> (for df=8); any observed t past that vertical edge is 'too rare to blame on luck' at alpha=0.05. Our t=3.0 lands inside the red zone. The red area is exactly alpha, the false-alarm rate you accept BEFORE seeing data."
       },
       {
         type: "bars",
-        title: "The decision: p-value vs alpha threshold  ->  p=0.017 < 0.05  ->  reject H0",
+        title: "Step 4 — the decision: p-value vs alpha threshold  ->  p=0.017 < 0.05  ->  reject H0",
         xlabel: "quantity",
         ylabel: "probability",
         labels: ["p-value (observed)", "alpha (cutoff)"],
         values: [0.017, 0.05],
         valueLabels: ["0.017  REJECT H0", "0.05  threshold"],
-        colors: ["#7ee787", "#9aa7b4"]
+        colors: ["#7ee787", "#9aa7b4"],
+        interpret: "<b>The call, in one comparison.</b> Green is the observed p-value (0.017), grey is the alpha cutoff (0.05). The rule is simply: p below alpha means reject H0. Here the green bar is shorter than the grey, so <b>p < alpha</b> and we declare B's improvement real (statistically significant). If green had risen above grey, we would keep H0 — the next chart shows exactly that case."
+      },
+      {
+        type: "bars",
+        title: "What you might also see #1 — fat p: gap = 0.008, t = 0.8, p = 0.45 -> DO NOT reject H0",
+        xlabel: "quantity",
+        ylabel: "probability",
+        labels: ["p-value (observed)", "alpha (cutoff)"],
+        values: [0.45, 0.05],
+        valueLabels: ["0.45  keep H0", "0.05  threshold"],
+        colors: ["#ff7b72", "#9aa7b4"],
+        interpret: "<b>The 'no evidence' outcome — and what it does NOT mean.</b> Suppose B beat A by only 0.008 with the same noise, giving t about 0.8 and <b>p = 0.45</b> (illustrative). The red p-bar towers over the grey alpha cutoff, so p > alpha: chance fakes a gap this size almost half the time, and we <b>fail to reject H0</b>. Crucial reading: this is 'no evidence of a difference', NOT 'proof the models are equal' — a small or underpowered study lands here even when a real effect exists. Don't claim the models are identical; say you couldn't detect a difference."
+      },
+      {
+        type: "bars",
+        title: "What you might also see #2 — huge n: tiny 0.05% lift, p=0.0001 SIGNIFICANT but trivial",
+        xlabel: "quantity (two scales)",
+        ylabel: "value",
+        labels: ["effect size (% lift)", "p-value", "alpha cutoff"],
+        values: [0.05, 0.0001, 0.05],
+        valueLabels: ["0.05% lift (tiny)", "0.0001 sig.", "0.05"],
+        colors: ["#ffb454", "#7ee787", "#9aa7b4"],
+        interpret: "<b>Significant is not the same as important.</b> With millions of rows the standard error shrinks to almost nothing, so even a microscopic <b>0.05% lift</b> (orange) produces a tiny <b>p = 0.0001</b> (green, far below the grey 0.05 cutoff) and 'passes'. Reading: a small p only says the effect is probably nonzero, never that it is big enough to act on. Recognise this trap by a giant sample plus a trivial effect size. Fix: always report the effect size and a confidence interval, and ask 'is this gap worth shipping?' — here, no."
       },
       {
         type: "line",
-        title: "Two ways to be wrong: Type I error (alpha, false alarm) vs Type II (beta, miss); power = 1 - beta = 0.75",
+        title: "Step 5 — two ways to be wrong: Type I (alpha, false alarm) vs Type II (beta, miss); power = 1 - beta = 0.75",
         xlabel: "t-statistic",
         ylabel: "probability density",
         series: [
           { name: "H0 true: red right tail = alpha/2 (Type I)", color: "#4ea1ff", points: [[-5,0.00066],[-4.5,0.00132],[-4,0.00276],[-3.5,0.00592],[-3,0.01301],[-2.5,0.02878],[-2.306,0.0413],[-2,0.06237],[-1.5,0.12677],[-1,0.22761],[-0.5,0.33669],[0,0.3867],[0.5,0.33669],[1,0.22761],[1.5,0.12677],[2,0.06237],[2.306,0.0413],[2.5,0.02878],[3,0.01301],[3.5,0.00592],[4,0.00276],[4.5,0.00132],[5,0.00066]] },
           { name: "H1 true (real effect, mean t=3): left part < 2.306 = beta (Type II miss)", color: "#c89bff", points: [[-5,0],[-4.5,0],[-4,0],[-3.5,0],[-3,0],[-2.5,0],[-2.306,0],[-2,0.00001],[-1.5,0.00003],[-1,0.00017],[-0.5,0.00063],[0,0.0043],[0.5,0.01399],[1,0.06049],[1.5,0.12374],[2,0.24201],[2.306,0.28],[2.5,0.29855],[3,0.31059],[3.5,0.27817],[4,0.20534],[4.5,0.15756],[5,0.1]] }
-        ]
+        ],
+        interpret: "<b>The cost of each mistake.</b> Two worlds overlap. Blue is H0 (no effect): its tail past the 2.306 cutoff is the <b>Type I</b> false-alarm rate alpha — crying 'effect!' when there is none. Purple is H1 (a real effect, centred near t=3): the slice of it still falling LEFT of 2.306 is the <b>Type II</b> miss rate beta = 0.25 — failing to catch a true effect. The rest of purple, to the right, is the <b>power = 1 - beta = 0.75</b>. More data or a bigger effect slides the purple curve rightward, shrinking beta and raising power. All numbers computed: t=3.0, df=8, p=0.01707, t_crit=2.306, power=0.748."
       }
     ],
-    caption: "The same five-step recipe, end to end, on the lesson's worked example (B improves on A by 3 accuracy points). Chart 1 builds the test statistic: the 0.030 gap divided by the 0.010 standard error gives t = 3.0 — the gap is 3 noise-units above zero. Chart 2 reads the p-value straight off the null t-curve (df=8): it is the orange tail area beyond |t|=3.0 on BOTH sides (two-sided), which integrates to 0.017 — chance fakes a gap this big only 1.7% of the time. Chart 3 is the same curve with the alpha=0.05 rejection region shaded red: the two-sided cutoff is |t|>2.306, and any observed t past that line is 'too rare to be luck.' Chart 4 is the decision itself: p=0.017 < alpha=0.05, so we reject H0 and call B's improvement real. Chart 5 weighs the two errors: under H0 (blue) the red tail beyond 2.306 is the Type I false-alarm rate alpha; under a real effect H1 (purple, centered near t=3) the part of that curve still falling LEFT of 2.306 is the Type II miss rate beta=0.25, so the power to catch this effect is 1-beta=0.75 — bigger samples or bigger effects push the purple curve right and raise the power. All numbers are computed, not invented: t=3.0, df=8, p=0.01707, t_crit=2.306, power=0.748.",
+    caption: "The five-step recipe end to end on the worked example (B beats A by 3 accuracy points), plus two outcomes you must also recognise. Steps 1-4: build t=3.0, read the p-value as the 0.017 tail area, mark the alpha=0.05 rejection region (|t|>2.306), and make the call p<alpha -> reject H0. The two 'what you might also see' bars are the everyday traps: a fat p=0.45 where you FAIL to reject and must say 'no evidence' rather than 'no effect', and a huge-sample p=0.0001 on a trivial 0.05% lift that is statistically significant yet not worth shipping. Step 5 weighs the two errors: Type I (alpha) under H0 vs Type II (beta=0.25) under a real effect, leaving power=0.75. Numbers are computed, not invented.",
     code: `import numpy as np
 from scipy import stats
 

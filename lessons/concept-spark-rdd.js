@@ -264,18 +264,42 @@ spark.stop()
   };
 
   window.CODEVIZ["spark-rdd"] = {
-    question: "What does the classic RDD word count (flatMap -> map -> reduceByKey) actually return? Here are the top word counts a Spark reduceByKey would produce on a small real text, computed reproducibly with a numpy/pandas word count.",
+    question: "How do you READ an RDD job? Three views: the word-count result reduceByKey returns, the long-tail shape real text gives it, and WHY reduceByKey beats groupByKey on bytes shuffled.",
     charts: [
       {
         type: "bars",
-        title: "Word count: top words by frequency (what reduceByKey returns)",
+        title: "Ideal: word count — top words by frequency (what reduceByKey returns)",
+        xlabel: "word",
+        ylabel: "count",
         labels: ["it", "was", "the", "of", "times", "age", "epoch", "season"],
         values: [10, 10, 10, 10, 2, 2, 2, 2],
         valueLabels: ["10", "10", "10", "10", "2", "2", "2", "2"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#58a6ff", "#58a6ff", "#58a6ff", "#58a6ff"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Each bar is one <code>(word, count)</code> pair the RDD pipeline <code>flatMap(split)&rarr;map(w&rarr;(w,1))&rarr;reduceByKey(add)</code> returns; height is how many times that word appeared. <b>x</b> is the word, <b>y</b> is its count. Real computed numbers on the 60-word opening of 'A Tale of Two Cities'. The four green bars ('it','was','the','of') each hit 10 — the anaphora of the passage — then grey bars drop to 2: a few common words dominate, most are rare. Read it as: <b>this is the materialized output an action like <code>take</code> pulled back</b>, not the lazy recipe."
+      },
+      {
+        type: "line",
+        title: "Variant — Zipf's law: rank vs frequency on real text (log-log, illustrative)",
+        xlabel: "word rank (1 = most common)",
+        ylabel: "count",
+        series: [
+          { name: "frequency", color: "#4ea1ff", points: [[1, 1000], [2, 500], [3, 333], [4, 250], [5, 200], [10, 100], [20, 50], [50, 20], [100, 10], [200, 5]] }
+        ],
+        interpret: "Illustrative shape, not the tiny sample above. <b>x</b> is a word's rank (1 = most frequent), <b>y</b> is its count; on real corpora this is a near-straight downward line on log-log axes — <b>Zipf's law</b>: the n-th word appears about 1/n as often as the most common. So expect a handful of monster keys ('the','of') and a giant tail of words seen once or twice. Practical read: word-count output is <b>always lopsided</b>, which is exactly why one hot key can later overload one partition — the seed of the skew problem."
+      },
+      {
+        type: "bars",
+        title: "Variant — bytes shuffled: reduceByKey (local combine) vs groupByKey",
+        xlabel: "operation",
+        ylabel: "bytes sent over network (illustrative)",
+        labels: ["reduceByKey", "groupByKey"],
+        values: [12, 100],
+        valueLabels: ["~12", "~100"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "Illustrative relative volumes for the SAME word count. <b>x</b> names the operation, <b>y</b> is how much data crosses the network. <code>reduceByKey</code> (green) combines the 1's <b>locally on each partition first</b>, so only one small partial count per word per partition is shuffled — short bar. <code>groupByKey</code> (red) ships <b>every raw value</b> across the network before combining — tall bar, and on a skewed key it floods one machine. Read this as the rule of thumb: <b>same answer, but pick the operation that combines early</b> so less data moves."
       }
     ],
-    caption: "The classic word-count result on the 60-word opening of 'A Tale of Two Cities' (public domain). An RDD pipeline flatMap(split) -> map(w -> (w,1)) -> reduceByKey(add) produces exactly these (word, count) pairs; here the same numbers are computed reproducibly with a pandas value_counts (no Spark needed) to show what the distributed job returns. The four most frequent words ('it', 'was', 'the', 'of') each appear 10 times — the anaphora of the famous passage — then a long tail of words appearing twice ('times', 'age', 'epoch', 'season') and once. reduceByKey is preferred over groupByKey for exactly this: it combines the per-word 1's locally on each partition first, so only small partial counts cross the network.",
+    caption: "",
     code: `import re
 import pandas as pd
 

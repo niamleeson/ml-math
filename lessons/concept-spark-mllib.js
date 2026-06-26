@@ -276,20 +276,42 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-mllib"] = {
-    question: "What accuracy and area-under-ROC does a standardized logistic-regression classifier reach — the same model MLlib would fit, here on a single machine for real numbers?",
+    question: "MLlib scores a classifier with BinaryClassificationEvaluator(areaUnderROC) — so how do you READ an ROC curve, and what do the healthy and broken ones look like?",
     charts: [
       {
         type: "bars",
-        title: "Logistic regression on load_breast_cancer (held-out test set, 171 rows)",
+        title: "Healthy: logistic regression on load_breast_cancer (171 held-out rows)",
         xlabel: "metric",
-        ylabel: "score (0–1)",
+        ylabel: "score (0 to 1)",
         labels: ["accuracy", "area under ROC", "majority baseline acc"],
         values: [0.9883, 0.9981, 0.6257],
         valueLabels: ["0.988", "0.998", "0.626"],
-        colors: ["#7ee787", "#7ee787", "#8b949e"]
+        colors: ["#7ee787", "#7ee787", "#9aa7b4"],
+        interpret: "<b>Each bar is one score, taller is better, all on a 0-to-1 scale.</b> The two green bars are the trained model: 0.988 accuracy (share of rows it got right) and 0.998 area under the ROC curve (how well it RANKS positives above negatives). The grey bar is the dumb baseline that always predicts the majority class, which still gets 0.626 by luck of the class split. <b>Read it as:</b> the model beats the baseline by a wide margin, so it learned real signal. These are the exact numbers MLlib's BinaryClassificationEvaluator would return — the only difference is MLlib computes them across a cluster."
+      },
+      {
+        type: "roc",
+        auc: 0.998,
+        title: "Healthy ROC: curve bows hard to the top-left (areaUnderROC = 0.998)",
+        points: [[0, 0], [0.0, 0.62], [0.0, 0.90], [0.01, 0.98], [0.05, 0.995], [0.2, 1.0], [1, 1]],
+        interpret: "<b>The ROC curve plots, as you lower the decision threshold, the true-positive rate (y, real positives caught) against the false-positive rate (x, negatives wrongly flagged).</b> The dashed diagonal is random guessing. A good model <b>bows toward the top-left corner</b>: it catches almost all positives (y near 1) while raising almost no false alarms (x near 0). areaUnderROC is the area under this curve — here 0.998, nearly the whole 1.0 box. <b>This is what 'cleanly separable' looks like</b>, and what the demo data in the CODE produces."
+      },
+      {
+        type: "roc",
+        auc: 0.52,
+        title: "Near-random: curve hugs the diagonal (areaUnderROC ~ 0.5, illustrative)",
+        points: [[0, 0], [0.2, 0.23], [0.4, 0.42], [0.6, 0.63], [0.8, 0.81], [1, 1]],
+        interpret: "<b>Illustrative.</b> When the curve clings to the dashed diagonal, the model ranks positives no better than a coin flip — areaUnderROC near 0.5. <b>Recognise it</b> by the near-straight line from corner to corner. <b>What it means:</b> the features carry no signal for this target, or a bug is scrambling labels/predictions. A high accuracy here would be a trap from class imbalance, which is exactly why MLlib scoring leans on areaUnderROC instead of accuracy."
+      },
+      {
+        type: "confusion",
+        title: "Imbalance trap: majority-class collapse (rare-positive data, illustrative)",
+        labels: ["actual neg", "actual pos"],
+        matrix: [[950, 0], [48, 2]],
+        interpret: "<b>Illustrative, rows = actual class, columns = predicted class.</b> On rare-positive data (fraud, churn) the model predicts 'negative' for almost everything: 950 true negatives, but it catches only 2 of 50 real positives and misses 48 (bottom-left). <b>Accuracy still looks great</b> — (950+2)/1000 = 95.2% — yet the model is useless. <b>This is the pitfall</b> the lesson warns about: judge with areaUnderROC / areaUnderPR and use class weights (LogisticRegression's weightCol) or resampling, not raw accuracy."
       }
     ],
-    caption: "Real numbers from scikit-learn on the bundled load_breast_cancer dataset (569 rows, 30 features, 2 classes), a 70/30 stratified split. A StandardScaler → LogisticRegression model reaches 0.988 accuracy and 0.998 area under the ROC (Receiver Operating Characteristic) curve on the 171 held-out rows, versus 0.626 for always predicting the majority class. This is exactly the pipeline the PySpark CODE builds — VectorAssembler → StandardScaler → LogisticRegression scored with BinaryClassificationEvaluator(areaUnderROC) — and on this dataset MLlib would produce the same result. The difference is only WHERE it runs: single-node here, distributed across a cluster in MLlib, which is what lets it train on data far too big for one machine.",
+    caption: "The MLlib CODE scores with BinaryClassificationEvaluator(areaUnderROC), so these charts teach how to READ that score. Bars: the real held-out metrics on load_breast_cancer (StandardScaler → LogisticRegression, the same pipeline shape as the PySpark code). ROC #1: the healthy curve that areaUnderROC = 0.998 comes from. ROC #2 and the confusion matrix are illustrative failure modes — a near-random ranker, and the majority-class collapse on imbalanced data where accuracy lies. MLlib produces the same numbers as this single-node run; the only difference is it computes them distributed across a cluster.",
     code: `import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split

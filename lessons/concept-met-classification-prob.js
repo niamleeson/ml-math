@@ -261,23 +261,25 @@ print(f"threshold maximizing TPR - FPR: {best:.3f}")`
   };
 
   window.CODEVIZ["met-classification-prob"] = {
-    question: "Take 50 scored examples (25 positive, 25 negative, with overlapping scores) and sweep the threshold. What do ROC-AUC, the precision–recall curve, and the two probability-quality losses (log loss, Brier) actually look like — and why does one loss explode while the other stays calm?",
+    question: "Take 50 scored examples (25 positive, 25 negative, with overlapping scores) and sweep the threshold. What do ROC-AUC, the precision–recall curve, and the two probability-quality losses (log loss, Brier) actually look like — and what do the failure shapes (a near-random curve, an inverted ranker, the imbalance mirage) look like so you can spot them?",
     charts: [
       {
         type: "roc",
-        title: "ROC curve: true positive rate vs false positive rate as the threshold sweeps high to low (AUC = 0.859)",
+        title: "Healthy ROC curve: true positive rate vs false positive rate, AUC = 0.859",
         auc: 0.859,
-        points: [[0,0],[0,0.04],[0,0.08],[0,0.12],[0,0.16],[0,0.2],[0,0.24],[0,0.28],[0.04,0.28],[0.04,0.32],[0.04,0.36],[0.04,0.4],[0.04,0.44],[0.04,0.48],[0.08,0.48],[0.08,0.52],[0.08,0.56],[0.08,0.6],[0.12,0.6],[0.12,0.64],[0.12,0.68],[0.16,0.68],[0.16,0.72],[0.2,0.72],[0.2,0.76],[0.24,0.76],[0.24,0.8],[0.28,0.8],[0.28,0.84],[0.32,0.84],[0.32,0.88],[0.36,0.88],[0.4,0.88],[0.4,0.92],[0.44,0.92],[0.48,0.92],[0.52,0.92],[0.52,0.96],[0.56,0.96],[0.6,0.96],[0.64,0.96],[0.68,0.96],[0.72,0.96],[0.72,1],[0.76,1],[0.8,1],[0.84,1],[0.88,1],[0.92,1],[0.96,1],[1,1]]
+        points: [[0,0],[0,0.04],[0,0.08],[0,0.12],[0,0.16],[0,0.2],[0,0.24],[0,0.28],[0.04,0.28],[0.04,0.32],[0.04,0.36],[0.04,0.4],[0.04,0.44],[0.04,0.48],[0.08,0.48],[0.08,0.52],[0.08,0.56],[0.08,0.6],[0.12,0.6],[0.12,0.64],[0.12,0.68],[0.16,0.68],[0.16,0.72],[0.2,0.72],[0.2,0.76],[0.24,0.76],[0.24,0.8],[0.28,0.8],[0.28,0.84],[0.32,0.84],[0.32,0.88],[0.36,0.88],[0.4,0.88],[0.4,0.92],[0.44,0.92],[0.48,0.92],[0.52,0.92],[0.52,0.96],[0.56,0.96],[0.6,0.96],[0.64,0.96],[0.68,0.96],[0.72,0.96],[0.72,1],[0.76,1],[0.8,1],[0.84,1],[0.88,1],[0.92,1],[0.96,1],[1,1]],
+        interpret: "Up the y-axis is the true positive rate (fraction of real positives caught); along the x-axis is the false positive rate (fraction of real negatives wrongly flagged). Each point is one threshold; the curve traces them from strict (bottom-left, flag nothing) to loose (top-right, flag everything). This curve <b>bows up toward the top-left corner</b> — it catches most positives while raising few false alarms. The dashed diagonal is a coin-flip model; the area under the green curve is ROC-AUC = 0.859, exactly the chance a random positive outscores a random negative. Verdict: a good ranker."
       },
       {
         type: "line",
-        title: "Precision-Recall curve — Average Precision (PR-AUC) = 0.866, no-skill baseline = 0.5",
+        title: "Healthy Precision-Recall curve — Average Precision (PR-AUC) = 0.866, no-skill baseline = 0.5",
         xlabel: "recall = TP/(TP+FN)",
         ylabel: "precision = TP/(TP+FP)",
         series: [
           { name: "PR curve (AP = 0.866)", color: "#7ee787", points: [[0.04,1],[0.08,1],[0.12,1],[0.16,1],[0.2,1],[0.24,1],[0.28,1],[0.28,0.875],[0.32,0.889],[0.36,0.9],[0.4,0.909],[0.44,0.917],[0.48,0.923],[0.48,0.857],[0.52,0.867],[0.56,0.875],[0.6,0.882],[0.6,0.833],[0.64,0.842],[0.68,0.85],[0.68,0.81],[0.72,0.818],[0.72,0.783],[0.76,0.792],[0.76,0.76],[0.8,0.769],[0.8,0.741],[0.84,0.75],[0.84,0.724],[0.88,0.733],[0.88,0.71],[0.88,0.688],[0.92,0.697],[0.92,0.676],[0.92,0.657],[0.92,0.639],[0.96,0.649],[0.96,0.632],[0.96,0.615],[0.96,0.6],[0.96,0.585],[0.96,0.571],[1,0.581],[1,0.568],[1,0.556],[1,0.543],[1,0.532],[1,0.521],[1,0.51],[1,0.5]] },
           { name: "no-skill (positive rate 0.5)", color: "#9aa7b4", points: [[0.0, 0.5], [1.0, 0.5]] }
-        ]
+        ],
+        interpret: "Along the x-axis is recall (what fraction of real positives you caught); up the y-axis is precision (of everything you flagged, what fraction was right). As you loosen the threshold you move right (more recall) but usually drop down (precision falls as junk leaks in). The green curve starts high and stays well above the grey no-skill line at 0.5 (the positive rate), so its area — Average Precision = 0.866 — is real signal. <b>Read the gap to the no-skill line, not the absolute height.</b>"
       },
       {
         type: "line",
@@ -287,10 +289,36 @@ print(f"threshold maximizing TPR - FPR: {best:.3f}")`
         series: [
           { name: "log loss term = -ln(p)", color: "#ff7b72", points: [[0.05, 2.996], [0.1, 2.303], [0.2, 1.609], [0.3, 1.204], [0.4, 0.916], [0.5, 0.693], [0.6, 0.511], [0.7, 0.357], [0.8, 0.223], [0.9, 0.105], [0.95, 0.051], [0.99, 0.01]] },
           { name: "Brier term = (p-1)^2", color: "#4ea1ff", points: [[0.05, 0.902], [0.1, 0.81], [0.2, 0.64], [0.3, 0.49], [0.4, 0.36], [0.5, 0.25], [0.6, 0.16], [0.7, 0.09], [0.8, 0.04], [0.9, 0.01], [0.95, 0.003], [0.99, 0.0]] }
-        ]
+        ],
+        interpret: "This fixes ONE true positive (the right answer is p = 1) and slides its predicted probability along the x-axis; the y-axis is the loss that single example adds. Both losses fall to 0 as the model approaches p = 1 (correct and confident). But on the left, where the model is confidently wrong, the red log-loss curve <b>shoots toward infinity</b> as p → 0, while the blue Brier curve can never exceed 1. That is why one confident mistake can dominate average log loss but barely move Brier."
+      },
+      {
+        type: "roc",
+        title: "Variant — near-random model: ROC hugs the diagonal, AUC ≈ 0.52 (illustrative)",
+        auc: 0.52,
+        points: [[0,0],[0.1,0.12],[0.2,0.22],[0.3,0.33],[0.4,0.42],[0.5,0.53],[0.6,0.62],[0.7,0.71],[0.8,0.82],[0.9,0.91],[1,1]],
+        interpret: "Illustrative. When the scores barely separate the classes, the curve <b>clings to the dashed diagonal</b> and the area is near 0.5 — about the same as guessing. Recognise it by the lack of any real bow toward the top-left. ROC-AUC ≈ 0.52 means almost no ranking power; do not ship, and check whether your features carry signal at all."
+      },
+      {
+        type: "roc",
+        title: "Variant — inverted ranker: ROC sags BELOW the diagonal, AUC ≈ 0.20 (illustrative)",
+        auc: 0.20,
+        points: [[0,0],[0.1,0.03],[0.2,0.06],[0.3,0.1],[0.4,0.15],[0.5,0.22],[0.6,0.32],[0.7,0.45],[0.8,0.6],[0.9,0.8],[1,1]],
+        interpret: "Illustrative. The curve dips <b>below</b> the diagonal, so AUC ≈ 0.20 — worse than a coin flip. This is not a useless model; it is a useful one with its sign flipped (it systematically scores positives LOWER than negatives). The fix is trivial: negate the score and you get a 0.80 model. An AUC well under 0.5 is a label or sign bug to chase down, not a reason to abandon the features."
+      },
+      {
+        type: "line",
+        title: "Variant — same ranker, but on 5%-positive data: PR-AUC collapses to 0.34 while ROC-AUC stays high (illustrative)",
+        xlabel: "recall = TP/(TP+FN)",
+        ylabel: "precision = TP/(TP+FP)",
+        series: [
+          { name: "PR curve under 5% imbalance (AP ≈ 0.34)", color: "#ffb454", points: [[0.05,0.9],[0.1,0.7],[0.15,0.6],[0.2,0.52],[0.3,0.42],[0.4,0.34],[0.5,0.28],[0.6,0.22],[0.7,0.17],[0.8,0.12],[0.9,0.08],[1,0.05]] },
+          { name: "no-skill (positive rate 0.05)", color: "#9aa7b4", points: [[0.0, 0.05], [1.0, 0.05]] }
+        ],
+        interpret: "Illustrative — the SAME ranker, now run on data that is only 5% positive. ROC-AUC would still look great here, but precision (y-axis) <b>sags toward the floor</b> because each true positive is buried among many false alarms. The no-skill line has dropped to 0.05 (the new positive rate), and the curve's area is only ≈ 0.34. Recognise the imbalance mirage by this shape: a respectable ROC paired with a PR curve that nose-dives. Under rare positives, trust PR-AUC and compare it to the positive rate, never to 0.5."
       }
     ],
-    caption: "All numbers come from one concrete set of 50 scored examples: 25 positives and 25 negatives whose scores overlap (positives score higher on average, but not perfectly). The ROC curve plots true positive rate (y) against false positive rate (x) as the threshold sweeps from high to low — it bows up toward the top-left corner; the dashed diagonal is a coin-flip model (AUC 0.5) and the green curve's area is ROC-AUC = 0.859 = P(a random positive outscores a random negative). The precision–recall curve traces Average Precision = 0.866 (a no-skill model would sit flat at the 0.5 positive rate). The third chart fixes one true positive (y=1) and slides its predicted probability: the red log-loss term −ln(p) shoots toward infinity as p→0 (a confident wrong call dominates the average), while the blue Brier term (p−1)^2 can never exceed 1. That is the 'log loss explodes, Brier stays bounded' contrast from the pitfalls, drawn out.",
+    caption: "All main-chart numbers come from one concrete set of 50 scored examples (25 positives, 25 negatives, overlapping scores). The three healthy charts show a good ranker; the three variants show the shapes you must learn to recognise — a near-random ROC that hugs the diagonal (AUC ≈ 0.5), an inverted ROC that sags below it (AUC < 0.5, a sign bug), and the imbalance mirage where the very same ranker keeps a high ROC-AUC but its PR curve collapses once positives are rare. Each chart's interpret box says how to read it and what to conclude.",
     code: `import numpy as np
 from scipy.stats import norm
 

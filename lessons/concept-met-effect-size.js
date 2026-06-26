@@ -289,38 +289,52 @@ print(two_by_two(40, 10, 20, 30))
   };
 
   window.CODEVIZ["met-effect-size"] = {
-    question: "What does each effect size actually measure? See Cohen's d as the separation between two groups, the term-by-term recipe for d, variance explained (eta-squared), odds ratio vs risk ratio, and correlation r — each on concrete numbers.",
+    question: "What does each effect size actually measure — and what do the misleading cases look like? See Cohen's d as the separation between two groups, plus the failure modes you will actually meet: a giant d from a tiny spread, a near-zero effect that is still 'significant', and an odds ratio that overstates the risk.",
     charts: [
       {
         type: "line",
-        title: "Cohen's d = separation of two groups: d = 0.5 (overlap) vs d = 1.5 (clear gap)",
+        title: "Healthy read: Cohen's d = separation of two groups (d = 0.5 overlap vs d = 1.5 clear gap)",
         xlabel: "score",
         ylabel: "relative frequency",
         series: [
           { name: "control (mean 72)", color: "#4ea1ff", points: [[42, 0.044], [48, 0.135], [54, 0.325], [60, 0.607], [66, 0.882], [72, 1.00], [78, 0.882], [84, 0.607], [90, 0.325], [96, 0.135], [102, 0.044]] },
           { name: "treatment, d=0.5 (mean 78)", color: "#7ee787", points: [[48, 0.044], [54, 0.135], [60, 0.325], [66, 0.607], [72, 0.882], [78, 1.00], [84, 0.882], [90, 0.607], [96, 0.325], [102, 0.135], [108, 0.044]] },
           { name: "treatment, d=1.5 (mean 90)", color: "#ffb454", points: [[60, 0.044], [66, 0.135], [72, 0.325], [78, 0.607], [84, 0.882], [90, 1.00], [96, 0.882], [102, 0.607], [108, 0.325], [114, 0.135], [120, 0.044]] }
-        ]
+        ],
+        interpret: "The x-axis is the score; each curve is one group's spread of values, scaled to the same peak height so you compare shapes. <b>Cohen's d is literally how far apart the peaks sit, measured in standard deviations.</b> Blue (control) and green (d = 0.5) overlap heavily — a medium effect you could miss by eye. Orange (d = 1.5) pulls clearly clear of blue — a large, obvious separation. <b>Read it as: more horizontal gap between peaks = bigger d = a difference that matters more.</b>"
       },
       {
         type: "bars",
-        title: "d = (mean1 - mean2) / pooled SD: term-by-term, 6 / 12 = 0.5",
+        title: "Recipe: d = (mean1 - mean2) / pooled SD = 6 / 12 = 0.5",
         xlabel: "term",
         ylabel: "value (score units; d is unitless)",
         labels: ["mean1 = 78", "mean2 = 72", "diff = 6", "pooled SD = 12", "d = 0.5"],
         values: [78, 72, 6, 12, 0.5],
         valueLabels: ["78", "72", "6", "12", "0.50"],
-        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#c89bff", "#7ee787"]
+        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#c89bff", "#7ee787"],
+        interpret: "Each bar is one term of the formula. The two grey bars are the group means; the blue bar is their <b>raw gap</b> (6 points); the purple bar is the <b>pooled standard deviation</b> (the typical spread, 12); the green bar is d = gap ÷ spread = 6/12 = <b>0.50</b>. Read it left to right: d takes a raw difference and rescales it by the spread, turning '6 points' into 'half a standard deviation' so you can compare it across any problem."
       },
       {
         type: "bars",
-        title: "eta-squared = variance explained: SS_between / SS_total = 363.3 / 473.3 = 0.768",
-        xlabel: "quantity",
-        ylabel: "sum of squares",
-        labels: ["SS_between", "SS_within", "SS_total", "eta^2 x1000", "omega^2 x1000"],
-        values: [363.33, 110.0, 473.33, 768, 715],
-        valueLabels: ["363.3", "110.0", "473.3", "0.768", "0.715"],
-        colors: ["#7ee787", "#9aa7b4", "#4ea1ff", "#c89bff", "#ffb454"]
+        title: "Tiny-spread TRAP: same 6-point gap, but SD = 2 inflates d from 0.5 to 3.0",
+        xlabel: "term",
+        ylabel: "value (score units; d is unitless)",
+        labels: ["diff = 6", "SD = 12 -> d=0.5", "SD = 2 -> d=3.0"],
+        values: [6, 0.5, 3.0],
+        valueLabels: ["6", "0.50", "3.00"],
+        colors: ["#9aa7b4", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> The raw gap is the same 6 points in both studies (grey). But d divides by the spread: with a normal spread of 12 you get d = 0.5 (green, medium); with an unusually tiny spread of 2 the <i>same</i> gap balloons to d = 3.0 (red, 'huge'). <b>Recognise it when d is enormous but the raw means barely differ.</b> The fix: always look at the raw difference in real units, and be suspicious of a giant d paired with a tiny standard deviation."
+      },
+      {
+        type: "bars",
+        title: "Significant but TINY: huge n makes a trivial 0.05-point gap p < 0.001",
+        xlabel: "what you see",
+        ylabel: "value",
+        labels: ["effect size d", "p-value (x1000)", "n per group (x10000)"],
+        values: [0.02, 0.4, 200],
+        valueLabels: ["d = 0.02", "p < 0.001", "n = 2,000,000"],
+        colors: ["#ff7b72", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Illustrative.</b> A result can be 'highly significant' and still trivially small. Here a negligible effect (d = 0.02, red) clears p < 0.001 only because the sample is enormous (2 million per group). <b>The tell: a tiny effect-size bar next to a tiny p-value.</b> A p-value mixes effect size with sample size, so with huge n almost everything is 'significant'. Read the effect size, not the p-value, to decide if the difference is worth acting on — here it is not."
       },
       {
         type: "bars",
@@ -330,7 +344,8 @@ print(two_by_two(40, 10, 20, 30))
         labels: ["risk exposed 0.80", "risk unexposed 0.40", "risk ratio = 2.0", "odds ratio = 6.0"],
         values: [0.80, 0.40, 2.0, 6.0],
         valueLabels: ["0.80", "0.40", "2.0", "6.0"],
-        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#ff7b72"]
+        colors: ["#9aa7b4", "#9aa7b4", "#4ea1ff", "#ff7b72"],
+        interpret: "Two grey bars are the event rates in each group (0.80 vs 0.40). The blue bar is the <b>risk ratio</b> = 0.80/0.40 = 2.0 — the honest 'twice as likely'. The red bar is the <b>odds ratio</b> = 6.0 on the very same table. <b>Read the gap between blue and red as the trap:</b> because this event is common (40–80%), the odds ratio sits far above the risk ratio. Reporting OR = 6 as 'six times as likely' would be wrong — say RR = 2 when you mean likelihood."
       },
       {
         type: "scatter",
@@ -342,10 +357,24 @@ print(two_by_two(40, 10, 20, 30))
         ],
         lines: [
           { color: "#ffb454", dash: false, points: [[1, 52.6], [8, 83.3]] }
-        ]
+        ],
+        interpret: "Each blue dot is one student: x = hours studied, y = exam score. The orange line is the fitted trend. <b>r measures how tightly the dots hug a straight line</b> — here r = 0.92, so r² = 0.85, meaning the line explains 85% of the score variation. <b>Read tight clustering around the line as a strong effect (r near 1); a diffuse cloud means r near 0.</b> The points rise together left-to-right, so r is positive."
+      },
+      {
+        type: "scatter",
+        title: "What r MISSES: a perfect U-shape gives r ~ 0 even though the link is total",
+        xlabel: "x",
+        ylabel: "y",
+        groups: [
+          { name: "data (strong but curved)", color: "#ff7b72", points: [[-3, 9], [-2.4, 5.8], [-1.8, 3.2], [-1.2, 1.5], [-0.6, 0.4], [0, 0], [0.6, 0.4], [1.2, 1.5], [1.8, 3.2], [2.4, 5.8], [3, 9]] }
+        ],
+        lines: [
+          { color: "#9aa7b4", dash: true, points: [[-3, 3.5], [3, 3.5]] }
+        ],
+        interpret: "<b>Illustrative.</b> y is perfectly determined by x (a U-shape, y = x²), yet Pearson r is near <b>0</b> and the best-fit line (grey dashes) is flat. <b>Recognise it when a scatter has an obvious curved pattern but r reports 'no relationship'.</b> r and r² only capture <i>straight-line</i> association, so they completely miss curves. The fix: always plot the data before trusting an r near zero — a low r means 'no linear trend', not 'no relationship'."
       }
     ],
-    caption: "Five views of the formulas. (1) Cohen's d IS the separation: control (mean 72, SD 12) vs a d=0.5 treatment (mean 78) overlap heavily, while a d=1.5 treatment (mean 90) pulls clear — d literally counts how many SDs apart the bell curves sit. (2) The term-by-term bars show the recipe d = (mean1-mean2)/pooled SD = 6/12 = 0.50: a medium effect. (3) eta-squared is variance explained: with three teaching-method groups (means 76, 81, 88), SS_between / SS_total = 363.3/473.3 = 0.768, i.e. the grouping explains 77% of the score variation; the less-biased omega-squared trims this to 0.715. (4) Odds ratio and risk ratio on ONE table (40/50 exposed, 20/50 unexposed had the event): risk ratio = 0.80/0.40 = 2.0 ('twice as likely'), yet the odds ratio = (40*30)/(10*20) = 6.0 — far from 2 because the event is common, the classic trap. (5) r as an effect size: study hours vs exam score give r = 0.92, so r-squared = 0.85 means the line explains 85% of the variance; the orange line is the fitted trend. All numbers are computed in the code below, not invented.",
+    caption: "Read each chart by its own caption below it. The healthy reads (Cohen's d as peak separation; the term-by-term recipe; the odds-vs-risk bars; r as line-hugging) show what the metrics mean on real numbers. The three variant charts are the traps you will actually meet: a tiny within-group spread inflating d, a trivially small effect still hitting p < 0.001 on a huge sample, and Pearson r reading ~0 on a perfect but curved relationship. All main-chart numbers are computed in the code below, not invented; the trap charts are labelled illustrative.",
     code: `import numpy as np
 
 # ---- 1) Cohen's d = (mean1 - mean2) / pooled SD ----

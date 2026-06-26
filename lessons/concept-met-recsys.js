@@ -208,11 +208,11 @@ print("diversity  ", round(diversity, 3))`
   };
 
   window.CODEVIZ["met-recsys"] = {
-    question: "One user, R={B,D,E}, top list [B,X,D,Y,E,...]: how do Precision@k, Recall@k, HR@k and NDCG@k behave as k grows, how is NDCG@5 built from DCG/IDCG, how does MAP average the per-hit precisions, how does RMSE punish a big miss more than MAE — and why must we watch beyond-accuracy metrics (coverage, diversity) instead of accuracy alone?",
+    question: "One user, R={B,D,E}, top list [B,X,D,Y,E,...]: how do Precision@k, Recall@k, HR@k and NDCG@k behave as k grows, how is NDCG@5 built, how does MAP average per-hit precisions, how does RMSE punish a big miss more than MAE? Then the shapes that bite: a good-ranking model whose Coverage collapses onto blockbusters while accuracy keeps climbing, and an NDCG curve that flatlines because every hit sits at the bottom of the list.",
     charts: [
       {
         type: "line",
-        title: "Precision@k, Recall@k, HR@k, NDCG@k vs k (one user, R={B,D,E}, rel=[1,0,1,0,1,0,0,0])",
+        title: "Healthy: Precision@k, Recall@k, HR@k, NDCG@k vs k (R={B,D,E}, rel=[1,0,1,0,1,0,0,0])",
         xlabel: "k (number of top items looked at)",
         ylabel: "metric value",
         series: [
@@ -220,27 +220,30 @@ print("diversity  ", round(diversity, 3))`
           { name: "Recall@k = hits/|R|", color: "#4ea1ff", points: [[1, 0.333], [2, 0.333], [3, 0.667], [4, 0.667], [5, 1.0], [8, 1.0]] },
           { name: "HR@k (any hit?)", color: "#ffb454", points: [[1, 1.0], [2, 1.0], [3, 1.0], [4, 1.0], [5, 1.0], [8, 1.0]] },
           { name: "NDCG@k", color: "#7ee787", points: [[1, 1.0], [2, 0.613], [3, 0.704], [4, 0.704], [5, 0.885], [8, 0.885]] }
-        ]
+        ],
+        interpret: "x-axis = how many top items you inspect (k); y-axis = the metric. Blue Recall climbs monotonically to 1.0 — more slots can only catch more of the 3 relevant items. Red Precision wobbles DOWN as k grows because you dilute the good slots with junk. Orange HR is flat at 1.0 (a hit appeared at k=1, and you can't 'un-hit'). Green NDCG ratchets up at each hit then plateaus once all relevant items are covered. <b>Read it as:</b> precision and recall trade off against k — pick k from how many slots your screen shows, then read the metrics at that k."
       },
       {
         type: "bars",
-        title: "NDCG@5 = DCG@5 / IDCG@5 = 1.887 / 2.131 = 0.885 (per-position gain rel/log2(i+1))",
+        title: "NDCG@5 = DCG@5 / IDCG@5 = 1.887 / 2.131 = 0.885 (gain = rel / log2(i+1))",
         xlabel: "list / position",
         ylabel: "gain contributed",
         labels: ["pos1 B", "pos2 X", "pos3 D", "pos4 Y", "pos5 E", "DCG@5 total", "IDCG@5 (ideal)"],
         values: [1.0, 0.0, 0.5, 0.0, 0.387, 1.887, 2.131],
         valueLabels: ["1.0", "0", "0.5", "0", "0.387", "1.887", "2.131"],
-        colors: ["#7ee787", "#9aa7b4", "#7ee787", "#9aa7b4", "#7ee787", "#4ea1ff", "#c89bff"]
+        colors: ["#7ee787", "#9aa7b4", "#7ee787", "#9aa7b4", "#7ee787", "#4ea1ff", "#c89bff"],
+        interpret: "Green bars are the relevant items, grey bars the irrelevant ones (zero gain). Notice the green bars SHRINK down the list: the same relevant item is worth 1.0 at slot 1 but only 0.387 at slot 5 — that is the position discount, log2(i+1). Blue sums the greens into DCG=1.887. Purple is IDCG, the score of the perfect order (all three relevant items first) = 2.131. NDCG divides them -> 0.885. <b>Read it as:</b> NDCG rewards putting relevant items HIGH, not just present; 1.0 only if every hit is at the very top."
       },
       {
         type: "bars",
-        title: "MAP = mean of AP; AP = average of precision at each hit (user1 AP=0.756, user2 AP=0.5 -> MAP=0.628)",
+        title: "MAP = mean of AP; AP averages precision at each hit (u1 AP=0.756, u2 AP=0.5 -> MAP=0.628)",
         xlabel: "precision recorded at each relevant hit",
         ylabel: "precision value",
         labels: ["u1 hit@1=1/1", "u1 hit@3=2/3", "u1 hit@5=3/5", "u1 AP", "u2 AP", "MAP"],
         values: [1.0, 0.667, 0.6, 0.756, 0.5, 0.628],
         valueLabels: ["1.0", "0.667", "0.6", "0.756", "0.5", "0.628"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#ffb454", "#c89bff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787", "#ffb454", "#c89bff"],
+        interpret: "Blue bars are the precision measured at each moment user1 hits a relevant item as you walk down the list (1/1, then 2/3, then 3/5). Green averages those into user1's Average Precision = 0.756. Orange is a second user's AP (0.5). Purple is MAP, the mean across users = 0.628. <b>Read it as:</b> AP rewards clustering MANY relevant items near the top (each later hit is recorded at a lower precision, so deep hits hurt). MAP is the per-user average — a single number for the whole population."
       },
       {
         type: "bars",
@@ -250,20 +253,45 @@ print("diversity  ", round(diversity, 3))`
         labels: ["|err| item1", "|err| item2", "MAE (avg |err|)", "RMSE (sqrt mean err^2)"],
         values: [1.0, 2.0, 1.5, 1.581],
         valueLabels: ["1.0", "2.0", "1.5", "1.581"],
-        colors: ["#9aa7b4", "#ff7b72", "#4ea1ff", "#c89bff"]
+        colors: ["#9aa7b4", "#ff7b72", "#4ea1ff", "#c89bff"],
+        interpret: "Grey and red are the two per-item rating errors (1 star and 2 stars off). Blue MAE just averages them (1.5). Purple RMSE squares first, averages, then square-roots — which inflates the bigger error, so RMSE (1.58) sits ABOVE MAE. <b>Read it as:</b> the gap between the blue and purple bars is a tell for outliers — when RMSE >> MAE, a few big misses dominate. Use these only when the product shows a predicted number (stars); for a ranked list, use the ranking metrics above."
       },
       {
         type: "bars",
-        title: "Accuracy alone hides catalog collapse: watch Coverage & Diversity (personalized vs blockbuster lists)",
+        title: "Accuracy alone hides catalog collapse: Coverage & Diversity (personalized vs blockbuster list)",
         xlabel: "metric",
         ylabel: "value (0..1)",
         labels: ["Coverage personalized", "Coverage popularity", "Diversity varied list", "Diversity blockbuster list"],
         values: [0.621, 0.01, 0.697, 0.01],
         valueLabels: ["0.62", "0.01", "0.70", "0.01"],
-        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72"],
+        interpret: "Pairs of bars: green is a healthy personalized system, red is one that recommends the same blockbusters to everyone. Coverage (fraction of the catalog ever shown) collapses 0.62 -> 0.01, and intra-list Diversity collapses 0.70 -> 0.01. Crucially, an accuracy metric like NDCG would look FINE in both cases. <b>Read it as:</b> when these two bars go red, your model has collapsed onto a handful of popular items even though accuracy stayed high — this is the failure accuracy cannot see."
+      },
+      {
+        type: "line",
+        title: "Variant — the collapse over training: NDCG keeps rising while Coverage dies (illustrative)",
+        xlabel: "training epoch (optimising accuracy only)",
+        ylabel: "value (0..1)",
+        series: [
+          { name: "NDCG@10 (accuracy)", color: "#7ee787", points: [[1, 0.62], [2, 0.71], [3, 0.77], [4, 0.80], [5, 0.82], [6, 0.83]] },
+          { name: "Coverage", color: "#ff7b72", points: [[1, 0.45], [2, 0.34], [3, 0.22], [4, 0.12], [5, 0.06], [6, 0.04]] },
+          { name: "Personalization", color: "#ffb454", points: [[1, 0.58], [2, 0.46], [3, 0.31], [4, 0.18], [5, 0.09], [6, 0.05]] }
+        ],
+        interpret: "Illustrative. x-axis = training epochs while optimising accuracy ALONE. The green accuracy curve rises and looks like steady progress. But the red Coverage and orange Personalization curves slide toward zero: the model is learning that recommending the same few blockbusters to everyone is the safest way to score hits. <b>How to recognise it:</b> the green and red curves DIVERGE — accuracy up, catalog metrics down. <b>What it means:</b> popularity collapse / long-tail starvation; set floors on Coverage and Diversity, and reward Novelty/Serendipity, before shipping."
+      },
+      {
+        type: "bars",
+        title: "Variant — NDCG@5 near zero: every hit dumped at the BOTTOM (illustrative)",
+        xlabel: "list / position",
+        ylabel: "gain contributed",
+        labels: ["pos1 X", "pos2 Y", "pos3 Z", "pos4 D", "pos5 E", "DCG@5", "IDCG@5", "NDCG@5"],
+        values: [0.0, 0.0, 0.0, 0.4307, 0.3869, 0.8176, 2.1309, 0.3837],
+        valueLabels: ["0", "0", "0", "0.431", "0.387", "0.818", "2.131", "0.384"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#ffb454", "#ffb454", "#4ea1ff", "#c89bff", "#ff7b72"],
+        interpret: "Illustrative: same 3 relevant items as the healthy chart, but ranked LAST instead of interleaved at the top — list [X,Y,Z,D,E]. The orange relevant bars now sit at slots 4-5 where the position discount is steep, so DCG is only 0.818 against the same ideal IDCG 2.131, giving NDCG 0.384 (red). <b>How to recognise it:</b> Recall@5 and HR@5 are still high (the items ARE in the top-5) yet NDCG is poor. <b>What it means:</b> the right items are present but badly ORDERED — exactly the gap NDCG exists to catch and that a hit-rate metric would miss."
       }
     ],
-    caption: "All numbers computed from the lesson's worked example. Chart 1: as k grows, Recall@k rises to 1.0 (more slots catch all of R) while Precision@k wobbles down and NDCG@k climbs as relevant items get covered — HR@k is 1 the moment a hit appears. Chart 2: NDCG@5 sums position-discounted gains (slot 1 gives 1.0, slot 5 only 0.387), then divides DCG@5=1.887 by the ideal IDCG@5=2.131 -> 0.885. Chart 3: MAP averages each user's AP, where AP averages the precision recorded at every hit (1.0, 0.667, 0.6 -> 0.756 for user1). Chart 4: squaring makes the 2-star miss dominate, so RMSE 1.58 > MAE 1.5. Chart 5: a blockbuster list scores high on accuracy but craters Coverage (0.62 -> 0.01) and intra-list Diversity (0.70 -> 0.01) — the collapse accuracy cannot see.",
+    caption: "Charts 1-5 build the metrics on the lesson's worked example (all numbers computed below). Charts 6-7 are the failure shapes: a model whose accuracy keeps climbing while Coverage/Personalization die (the blockbuster collapse over training), and a list where the right items are present but ranked at the bottom so NDCG craters while Recall and HR stay high. Each chart's own interpret box explains how to read it.",
     code: `import numpy as np
 
 # ---- one user's ranked list; R = {B,D,E}, |R| = 3 ----

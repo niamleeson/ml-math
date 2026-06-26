@@ -235,18 +235,39 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-intro"] = {
-    question: "Where does each tool win as the data grows? Illustrative runtimes for pandas vs Spark across small / medium / huge data, showing Spark's fixed overhead loses on small data and only pays off at large scale.",
+    question: "Spark spreads a job across many machines but pays a fixed overhead to do it — so where does that trade actually pay off as data grows?",
     charts: [
       {
         type: "bars",
-        title: "ILLUSTRATIVE runtime (seconds) — pandas vs Spark by data size",
-        labels: ["pandas\n0.1 GB", "Spark\n0.1 GB", "pandas\n5 GB", "Spark\n5 GB", "pandas\n200 GB", "Spark\n200 GB"],
+        title: "pandas vs Spark by data size (seconds, illustrative)",
+        labels: ["pandas 0.1GB", "Spark 0.1GB", "pandas 5GB", "Spark 5GB", "pandas 200GB", "Spark 200GB"],
         values: [0.5, 20.5, 25.0, 33.0, 1000.0, 90.0],
         valueLabels: ["0.5", "20.5", "25", "33", "OOM/1000", "90"],
-        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#ff7b72", "#7ee787"]
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#ff7b72", "#7ee787"],
+        interpret: "<b>The ideal chart.</b> Bars come in pandas/Spark pairs, one pair per data size; shorter is better and green marks the winner. At <b>0.1 GB</b> pandas (0.5 s) crushes Spark (20.5 s, red) — Spark's startup overhead dwarfs the tiny job. At <b>5 GB</b> they are close. At <b>200 GB</b> pandas can no longer hold the data and crashes (the red 1000 s bar is an OOM stand-in), while Spark finishes in ~90 s and turns green. Read it as: the winner FLIPS exactly where the data stops fitting one machine."
+      },
+      {
+        type: "line",
+        title: "Crossover: runtime vs data size (log-log, illustrative)",
+        xlabel: "data size (GB, log scale)",
+        ylabel: "runtime (seconds, log scale)",
+        series: [
+          { name: "pandas (single machine)", color: "#7ee787", points: [[0.1, 0.5], [1, 1.0], [5, 25], [16, 80]] },
+          { name: "Spark (cluster)", color: "#4ea1ff", points: [[0.1, 20.5], [1, 20.9], [5, 33], [50, 56], [200, 90]] }
+        ],
+        interpret: "<b>Variant: the same story as two curves.</b> X is data size, Y is runtime, both rising. The <b>green pandas line starts near zero</b> (no coordination cost) but climbs fast and then ENDS at ~16 GB — one machine's RAM, past which it cannot run. The <b>blue Spark line starts high</b> (its ~20 s fixed overhead) but barely rises. The lines cross around a few GB: left of the crossing pandas wins, right of it Spark wins, and beyond pandas's cliff Spark is the only option left. 'When to use Spark' is just: whichever line is lower at your size."
+      },
+      {
+        type: "bars",
+        title: "Where Spark's time goes on a SMALL job (illustrative)",
+        labels: ["start cluster", "ship code", "first shuffle", "actual work"],
+        values: [9, 5, 6, 0.5],
+        valueLabels: ["9", "5", "6", "0.5"],
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#7ee787"],
+        interpret: "<b>Variant: why small data loses, broken down.</b> This splits Spark's ~20 s on a 0.1 GB job into its parts. The three red/orange bars — starting the cluster, shipping code to executors, the first network shuffle — are <b>fixed overhead</b> that Spark pays no matter how small the job. The lone green bar is the real computation: half a second. When overhead is 40x the work, a single-machine tool with zero coordination cost obviously wins. This is the anatomy of the 'don't use Spark for small data' pitfall."
       }
     ],
-    caption: "ILLUSTRATIVE, not benchmarked — plausible numbers to show the shape. Model: pandas runtime ≈ a fixed 0.001 s/MB of in-memory work but it cannot exceed one machine's RAM (≈16 GB), so the 200 GB case fails / thrashes (shown as a 1000 s wall). Spark pays a fixed ≈20 s overhead (start cluster, ship code, first shuffle) PLUS ≈0.45 ms/MB spread across ~64 parallel cores. On 0.1 GB, pandas (0.5 s) crushes Spark (20.5 s) — the overhead dominates. At 5 GB they are close. At 200 GB pandas can't even hold the data while Spark finishes in ~90 s. The lesson: Spark's overhead is a fixed tax that only pays off once the data is too big for one machine.",
+    caption: "Same trade, three views. The paired bars show the WINNER flipping with data size; the line shows WHY (pandas has near-zero overhead but a hard RAM ceiling, Spark has high fixed overhead but no ceiling); the breakdown shows WHAT that overhead is on a small job. Rule of thumb: below a few GB stay single-machine; graduate to Spark only when one machine truly can't hold the data. Numbers are a transparent cost model, not a benchmark.",
     code: `import numpy as np
 
 # ---- A simple, transparent cost MODEL (illustrative, not a benchmark) ----

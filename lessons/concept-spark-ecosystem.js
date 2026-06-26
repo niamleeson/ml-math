@@ -284,18 +284,48 @@ old.orderBy("id").show()
   };
 
   window.CODEVIZ["spark-ecosystem"] = {
-    question: "For one group-by aggregation over a mid-size (~50 GB) Parquet dataset, how long does each tool take — and at which data size does each tool actually win?",
+    question: "For one group-by aggregation, which tool wins — and does the answer flip as the data grows from 1 GB to 2 TB?",
     charts: [
       {
         type: "bars",
-        title: "Runtime (seconds) of a 50 GB group-by aggregation, by tool (illustrative)",
-        labels: ["pandas", "DuckDB", "Polars", "Spark (10-node)", "warehouse (BigQuery)"],
+        title: "MID data (~50 GB): runtime in seconds by tool",
+        labels: ["pandas", "DuckDB", "Polars", "Spark (10-node)", "warehouse"],
         values: [999, 35, 28, 22, 9],
         valueLabels: ["OOM/crash", "35", "28", "22", "9"],
-        colors: ["#ff7b72", "#7ee787", "#7ee787", "#4ea1ff", "#c89bff"]
+        colors: ["#ff7b72", "#7ee787", "#7ee787", "#4ea1ff", "#c89bff"],
+        interpret: "<b>The ideal/decision chart.</b> Each bar is one tool's wall-clock time for the SAME 50 GB group-by; shorter is better. <b>pandas</b> is red because 50 GB will not fit one machine's RAM — it crashes (the tall 'OOM' bar is a stand-in, not a real time). The single-node engines <b>DuckDB (35 s)</b> and <b>Polars (28 s)</b> rival or beat a 10-node <b>Spark</b> cluster (22 s), and a <b>warehouse</b> you already pay for (9 s) wins outright. Read it as: at this size you do NOT need a cluster — a single fat box, or a warehouse, is faster and far simpler."
+      },
+      {
+        type: "bars",
+        title: "SMALL data (~1 GB): Spark's overhead makes it the SLOWEST",
+        labels: ["Polars", "DuckDB", "warehouse", "pandas", "Spark (10-node)"],
+        values: [0.9, 1.0, 2.1, 3.2, 12.2],
+        valueLabels: ["0.9", "1.0", "2.1", "3.2", "12.2"],
+        colors: ["#7ee787", "#7ee787", "#c89bff", "#7ee787", "#ff7b72"],
+        interpret: "<b>Variant: small data flips the answer (illustrative).</b> Same chart, 1 GB instead of 50 GB. Now everything single-node finishes in about a second, and <b>Spark is the slowest bar</b> (red) — its ~12 s is almost all fixed cost (start a JVM, plan the job, do a network shuffle) that it pays before any useful work. Recognise this shape — a cluster losing to a laptop — as the signature of using Spark on data that was never big enough to need it."
+      },
+      {
+        type: "bars",
+        title: "LARGE data (~2 TB): single-node tools fall over, Spark pays off",
+        labels: ["warehouse", "Spark (10-node)", "DuckDB", "Polars", "pandas"],
+        values: [282, 412, 999, 999, 999],
+        valueLabels: ["282", "412", "OOM", "OOM", "OOM"],
+        colors: ["#c89bff", "#7ee787", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Variant: large data flips it back (illustrative).</b> At 2 TB the three single-node tools (<b>pandas, DuckDB, Polars</b>) all run out of memory — red 'OOM' bars, no time at all. Only the scale-out options finish: the <b>warehouse</b> (282 s) and <b>Spark</b> (412 s) are now the green/healthy choices. This is the regime Spark was built for: its fixed overhead is a flat tax that finally disappears next to the size of the job."
+      },
+      {
+        type: "line",
+        title: "Crossover: runtime vs data size (log-log, illustrative)",
+        xlabel: "data size (GB, log scale)",
+        ylabel: "runtime (seconds, log scale)",
+        series: [
+          { name: "DuckDB/Polars (single-node)", color: "#7ee787", points: [[1, 1], [10, 7], [50, 31], [120, 84]] },
+          { name: "Spark (10-node)", color: "#4ea1ff", points: [[1, 12], [10, 14], [50, 22], [500, 112], [2000, 412]] }
+        ],
+        interpret: "<b>Variant: why there's a crossover at all.</b> The x-axis is data size, the y-axis is runtime — both growing left-to-right. The <b>green single-node line starts low</b> (near-zero overhead) but climbs steeply and then STOPS at ~120 GB, where the tool runs out of RAM. The <b>blue Spark line starts high</b> (its fixed overhead) but stays nearly flat, so the two lines cross: below the crossing, single-node wins; above it (and past where green ends), only Spark keeps going. The whole 'when to use Spark' rule is just: pick the lower line for your data size."
       }
     ],
-    caption: "Illustrative, labeled runtimes for the SAME group-by aggregation at a mid (~50 GB) size — the numbers are a reproducible cost model, not a benchmark. The point is WHERE each tool wins by data size: at SMALL (~1 GB) pandas/DuckDB/Polars all finish in well under a second and Spark's ~12 s of JVM-startup + planning + shuffle overhead makes it the SLOWEST; at MID (~50 GB) pandas runs out of memory and crashes (shown as a tall red 'OOM' bar) while single-node DuckDB (35 s) and Polars (28 s) beat or rival a 10-node Spark cluster (22 s), and a warehouse you already pay for (9 s) wins outright; only at LARGE (TB+) does Spark's near-flat overhead pay off and single-node tools fall over. Decision rule: under ~100 GB, prefer DuckDB/Polars on one big machine (simpler, cheaper, often faster); reach for Spark or a warehouse only when the data truly exceeds one node.",
+    caption: "Same group-by, four views. The first three bars show how the WINNER flips with data size (single-node at 1 GB, single-node/warehouse at 50 GB, scale-out at 2 TB); the line shows WHY — single-node has low overhead but a RAM ceiling, Spark has high fixed overhead but no ceiling. Rule of thumb: under ~100 GB prefer DuckDB/Polars on one big machine; reach for Spark or a warehouse only when the data truly exceeds one node. Numbers are a reproducible cost model, not a benchmark.",
     code: `import numpy as np
 import pandas as pd
 

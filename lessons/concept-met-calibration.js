@@ -273,7 +273,7 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
   };
 
   window.CODEVIZ["met-calibration"] = {
-    question: "Take 20 predictions binned by stated confidence (0.10, 0.30, 0.50, 0.70, 0.90). When the model says \"0.90\", do 90% actually turn out positive? Each diagram below reads off one calibration formula from this exact set.",
+    question: "Take 20 predictions binned by stated confidence (0.10, 0.30, 0.50, 0.70, 0.90). When the model says \"0.90\", do 90% actually turn out positive? The first four diagrams read off the formulas from this exact set; the last two show the OTHER reliability shapes you will meet — an under-confident model and a flat one that is calibrated yet useless.",
     charts: [
       {
         type: "line",
@@ -283,7 +283,8 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
         series: [
           { name: "perfect (y = x)", color: "#9aa7b4", points: [[0.0, 0.0], [1.0, 1.0]] },
           { name: "model (20 cases, 5 bins)", color: "#4ea1ff", points: [[0.1, 0.0], [0.3, 0.5], [0.5, 0.5], [0.7, 0.75], [0.9, 0.8]] }
-        ]
+        ],
+        interpret: "The x-axis is what the model claimed (its average predicted probability in each bin); the y-axis is what actually happened (the fraction of those cases that were positive). The grey diagonal is perfect honesty. The blue model curve <b>sits below the diagonal</b> at the high end — at claim 0.90 reality is only 0.80, at claim 0.70 reality is 0.75. Below the line means <b>over-confident</b>: it states bigger numbers than the outcomes justify. Read the vertical gap to the diagonal as the lie at each confidence level."
       },
       {
         type: "bars",
@@ -291,7 +292,8 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
         labels: ["0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"],
         values: [0.015, 0.040, 0.000, 0.010, 0.025],
         valueLabels: ["0.015", "0.040", "0.000", "0.010", "0.025"],
-        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4", "#4ea1ff", "#ffb454"]
+        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4", "#4ea1ff", "#ffb454"],
+        interpret: "Each bar is one confidence bin's contribution to ECE: its raw gap times its share of the cases. Crowded bins with big gaps dominate; the empty-gap 0.4-0.6 bin contributes nothing (grey). Add all five bars and you get <b>ECE = 0.090</b> — the average dishonesty across the whole set. This is the single number to quote, but it hides which bin is worst (next chart)."
       },
       {
         type: "bars",
@@ -299,7 +301,8 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
         labels: ["0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"],
         values: [0.10, 0.20, 0.00, 0.05, 0.10],
         valueLabels: ["0.10", "0.20 (MCE)", "0.00", "0.05", "0.10"],
-        colors: ["#9aa7b4", "#ff7b72", "#9aa7b4", "#9aa7b4", "#9aa7b4"]
+        colors: ["#9aa7b4", "#ff7b72", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "Same five bins, but now the <b>unweighted</b> gap in each — how far that bin's claim was from reality, ignoring how many cases it held. <b>MCE is just the tallest bar</b> (red, the 0.2-0.4 bin at 0.20): the single worst confidence band. Use MCE when even one badly-wrong band is unacceptable (high-stakes medicine); use ECE when you care about the average."
       },
       {
         type: "bars",
@@ -307,10 +310,33 @@ for method in ["isotonic", "sigmoid"]:   # isotonic = monotone fit; sigmoid = Pl
         labels: ["reliability", "resolution", "uncertainty", "Brier total"],
         values: [0.0125, -0.070, 0.2475, 0.190],
         valueLabels: ["+0.0125", "-0.070", "+0.2475", "= 0.190"],
-        colors: ["#ff7b72", "#7ee787", "#9aa7b4", "#4ea1ff"]
+        colors: ["#ff7b72", "#7ee787", "#9aa7b4", "#4ea1ff"],
+        interpret: "The Brier score (mean squared error of the probabilities) splits into three parts. <b>Reliability</b> (red, +0.0125) is the calibration error — small is good, and this is the part recalibration fixes. <b>Resolution</b> (green, plotted negative because it is SUBTRACTED) rewards a model for spreading cases apart from the base rate — bigger is better. <b>Uncertainty</b> (grey, +0.2475) is fixed by the base rate alone, nothing the model can change. They sum to the blue total 0.190: a good score needs small reliability AND large resolution."
+      },
+      {
+        type: "line",
+        title: "Variant — under-confident model: reliability curve bows ABOVE the diagonal (illustrative)",
+        xlabel: "mean predicted probability in bin = conf(Bm)",
+        ylabel: "observed fraction positive = acc(Bm)",
+        series: [
+          { name: "perfect (y = x)", color: "#9aa7b4", points: [[0.0, 0.0], [1.0, 1.0]] },
+          { name: "under-confident model", color: "#7ee787", points: [[0.1, 0.28], [0.3, 0.45], [0.5, 0.6], [0.7, 0.78], [0.9, 0.95]] }
+        ],
+        interpret: "Illustrative — the mirror image of the over-confident case. The curve <b>bows above the diagonal</b>: when the model says 0.10, the event actually happens 28% of the time; when it says 0.50, reality is 0.60. It is too timid — its probabilities are squeezed toward the middle. Recognise it by a curve above y = x. Fixing it (e.g. with temperature below 1, or isotonic regression) <b>stretches</b> the scores back out toward 0 and 1."
+      },
+      {
+        type: "line",
+        title: "Variant — calibrated but useless: every prediction is the base rate 0.60 (illustrative)",
+        xlabel: "mean predicted probability in bin = conf(Bm)",
+        ylabel: "observed fraction positive = acc(Bm)",
+        series: [
+          { name: "perfect (y = x)", color: "#9aa7b4", points: [[0.0, 0.0], [1.0, 1.0]] },
+          { name: "constant model (single point)", color: "#ffb454", points: [[0.6, 0.6]] }
+        ],
+        interpret: "Illustrative. A model that predicts the base rate 0.60 for EVERY case lands as <b>one lonely dot</b> sitting exactly on the diagonal — so ECE and the reliability gap are zero, perfectly calibrated. But there is only one point because the model never varies: it has <b>zero sharpness and zero resolution</b>, so it can drive no decision. Calibration alone cannot expose this; the Brier resolution term (and sharpness) catches it. Good probabilities must be calibrated AND spread out."
       }
     ],
-    caption: "No — at conf 0.90 only 80% are positive (gap 0.10), and the 0.30 bin is the worst at 0.20. The reliability curve sags below y = x (over-confident). Averaging the per-bin gaps weighted by bin size gives ECE = 0.090; the single worst bin gives MCE = 0.20. The Brier score 0.190 splits as reliability 0.0125 (small = well calibrated) minus resolution 0.070 (large = sharp, so subtracted) plus uncertainty 0.55x0.45 = 0.2475 (base-rate difficulty). All numbers are exact for the 20-case set in the code.",
+    caption: "No — at conf 0.90 only 80% are positive (gap 0.10), and the 0.30 bin is the worst at 0.20. The first four charts use the exact 20-case set: the reliability curve sags below y = x (over-confident), the weighted per-bin gaps sum to ECE = 0.090, the worst raw gap gives MCE = 0.20, and the Brier 0.190 splits as reliability 0.0125 minus resolution 0.070 plus uncertainty 0.2475. The last two are the OTHER shapes to recognise: an under-confident curve that bows above the diagonal, and a flat constant model that is perfectly calibrated yet useless (no sharpness). Each chart's interpret box says how to read it and what to conclude.",
     code: `import numpy as np
 
 # A concrete 20-case set, constant predicted prob per bin so the binned

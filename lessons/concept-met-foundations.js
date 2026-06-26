@@ -244,13 +244,14 @@ print(f"accuracy={accuracy:.3f}  precision={precision:.3f}  recall={recall:.3f}"
   };
 
   window.CODEVIZ["met-foundations"] = {
-    question: "Take one concrete spam test — 200 emails, TP=80, FP=20, FN=10, TN=90 — and watch how the four boxes turn into accuracy and error rate.",
+    question: "Take one concrete spam test — 200 emails, TP=80, FP=20, FN=10, TN=90 — watch the four boxes turn into accuracy; then see three other confusion matrices and why accuracy alone can fool you.",
     charts: [
       {
         type: "confusion",
-        title: "Confusion matrix (positive = spam) — the four boxes every metric is built from",
+        title: "Healthy & balanced: confusion matrix (positive = spam)",
         labels: ["not-spam (neg)", "spam (pos)"],
-        matrix: [[90, 20], [10, 80]]
+        matrix: [[90, 20], [10, 80]],
+        interpret: "Rows are the truth, columns are the model's call. The two diagonal boxes are correct: TN = 90 (real ham called ham) and TP = 80 (real spam caught). The off-diagonal boxes are the two mistakes: FP = 20 (good mail wrongly flagged) and FN = 10 (spam that slipped through). <b>The diagonal is heavy and both classes are well covered</b> — that is what a healthy, balanced result looks like. Every metric below is just some fraction of these four numbers."
       },
       {
         type: "bars",
@@ -258,7 +259,8 @@ print(f"accuracy={accuracy:.3f}  precision={precision:.3f}  recall={recall:.3f}"
         labels: ["TP (correct catch)", "TN (correct all-clear)", "TP + TN (numerator)", "total (denominator)", "accuracy = ratio"],
         values: [80, 90, 170, 200, 0.85],
         valueLabels: ["80", "90", "170", "200", "0.85"],
-        colors: ["#7ee787", "#7ee787", "#4ea1ff", "#9aa7b4", "#c89bff"]
+        colors: ["#7ee787", "#7ee787", "#4ea1ff", "#9aa7b4", "#c89bff"],
+        interpret: "This reads the accuracy formula left to right. The two green bars are the correct boxes (TP = 80, TN = 90); the blue bar is their sum, the numerator (170); the grey bar is the total of all four boxes, the denominator (200). The purple bar is the ratio, 170/200 = <b>0.85</b>. Accuracy is simply <b>how much of the whole is on the diagonal</b>."
       },
       {
         type: "bars",
@@ -266,18 +268,36 @@ print(f"accuracy={accuracy:.3f}  precision={precision:.3f}  recall={recall:.3f}"
         labels: ["FP (false alarm)", "FN (miss)", "FP + FN (numerator)", "total (denominator)", "error rate = ratio"],
         values: [20, 10, 30, 200, 0.15],
         valueLabels: ["20", "10", "30", "200", "0.15"],
-        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#9aa7b4", "#c89bff"]
+        colors: ["#ff7b72", "#ff7b72", "#ffb454", "#9aa7b4", "#c89bff"],
+        interpret: "The mirror image of the accuracy chart. The two red bars are the wrong boxes (FP = 20, FN = 10); the orange bar sums them (30); over the same total of 200 the ratio is <b>0.15</b>. Because every email is either a correct box or a wrong box, <b>accuracy 0.85 + error rate 0.15 = 1</b> exactly — they are two views of the same split."
+      },
+      {
+        type: "confusion",
+        title: "Variant — majority-class collapse on imbalanced data (illustrative)",
+        labels: ["not-spam (neg)", "spam (pos)"],
+        matrix: [[195, 0], [5, 0]],
+        interpret: "Illustrative: now only 5 of 200 emails are spam, and a lazy model labels <b>everything</b> not-spam. The whole positive column is empty — TP = 0, FP = 0 — so it catches zero spam. Yet accuracy = (TN + TP)/total = 195/200 = <b>0.975</b>, higher than the healthy model above. <b>This is the trap:</b> on imbalanced data accuracy rewards predicting the majority and hides total failure on the class you care about. Recall = 0/5 = 0 exposes it instantly."
+      },
+      {
+        type: "confusion",
+        title: "Variant — high recall, low precision (threshold too low, illustrative)",
+        labels: ["not-spam (neg)", "spam (pos)"],
+        matrix: [[40, 70], [2, 88]],
+        interpret: "Illustrative: the threshold is dialed way down, so the model shouts \"spam\" at almost everything. It now catches nearly all real spam (TP = 88, FN = 2, recall = 0.978) but at the cost of flooding FP = 70 good emails into the junk folder (precision = 88/158 = 0.557). <b>A tall FP box with a thin FN box is the fingerprint of an over-eager classifier</b> — great recall, poor precision. Lowering the threshold always trades misses (FN down) for false alarms (FP up)."
       },
       {
         type: "bars",
-        title: "accuracy vs error rate on the same 200 emails — two slices of the whole",
-        labels: ["accuracy", "error rate"],
-        values: [0.85, 0.15],
-        valueLabels: ["0.85", "0.15"],
-        colors: ["#7ee787", "#ff7b72"]
+        title: "Same four counts, three different stories: accuracy can agree or disagree with the metric you care about",
+        xlabel: "scenario",
+        ylabel: "score",
+        labels: ["balanced: accuracy", "balanced: recall", "collapse: accuracy", "collapse: recall", "low-thresh: accuracy", "low-thresh: recall"],
+        values: [0.85, 0.889, 0.975, 0.0, 0.64, 0.978],
+        valueLabels: ["0.85", "0.889", "0.975", "0.000", "0.64", "0.978"],
+        colors: ["#7ee787", "#4ea1ff", "#ff7b72", "#9aa7b4", "#ffb454", "#4ea1ff"],
+        interpret: "Each pair puts accuracy (green/red/orange) next to recall (blue/grey) for one of the three matrices above. In the <b>balanced</b> case they roughly agree (0.85 vs 0.889). In the <b>collapse</b> case accuracy is the highest of all (0.975) while recall is zero — accuracy is lying. In the <b>low-threshold</b> case accuracy looks mediocre (0.64) yet recall is excellent (0.978). The lesson: <b>never read accuracy alone</b> — always check the metric tied to the cost of your specific mistake."
       }
     ],
-    caption: "One worked example: 200 emails, spam = positive. The confusion matrix holds the four counts — rows = actual, columns = predicted. The diagonal is correct: TN = 90 (not-spam called not-spam) and TP = 80 (spam caught). Off the diagonal are mistakes: FP = 20 (good mail wrongly flagged — a false alarm) and FN = 10 (spam that slipped through — a miss). The accuracy bars show the formula term by term: numerator TP + TN = 80 + 90 = 170, denominator total = 200, ratio accuracy = 170/200 = 0.85. The error-rate bars are the mirror image: FP + FN = 20 + 10 = 30 over 200 = 0.15. The last chart puts them side by side — accuracy 0.85 and error rate 0.15 sum to exactly 1, because every one of the 200 emails is either a correct box or a wrong box. (For reference, the same four counts give precision = TP/(TP+FP) = 80/100 = 0.80 and recall = TP/(TP+FN) = 80/90 = 0.889.)",
+    caption: "Start with the healthy balanced matrix (200 emails, spam = positive): rows = actual, columns = predicted; the diagonal TN = 90 and TP = 80 are correct, the off-diagonal FP = 20 and FN = 10 are the two mistakes. The accuracy bars walk the formula term by term (170/200 = 0.85); the error-rate bars are its mirror (30/200 = 0.15) and the two sum to 1. Then come the variants you will really meet: majority-class collapse (accuracy 0.975 while catching zero spam) and an over-eager low-threshold model (recall 0.978 but 70 false alarms). The final bar chart lines accuracy up against recall across all three — the whole point of the foundations lesson: one number can flatter or hide, so pick the metric from the cost of being wrong.",
     code: `import numpy as np
 from sklearn.metrics import confusion_matrix
 

@@ -270,7 +270,7 @@ print("RMSLE:", rmsle)`
   };
 
   window.CODEVIZ["met-regression"] = {
-    question: "Eight examples, truths y = 10,20,30,40,50,60,70,80 and predictions y-hat = 12,18,33,37,52,58,90,78 (the 7th is a big outlier, off by 20). How does each regression metric turn that one pile of residuals into a single score?",
+    question: "Eight examples, truths y = 10,20,30,40,50,60,70,80 and predictions y-hat = 12,18,33,37,52,58,90,78 (the 7th is a big outlier, off by 20). How does each regression metric turn that one pile of residuals into a single score — and what do the WARNING residual shapes look like?",
     charts: [
       {
         type: "scatter",
@@ -291,7 +291,8 @@ print("RMSLE:", rmsle)`
         ],
         lines: [
           { name: "perfect prediction (y = x)", color: "#ffb454", points: [[10, 10], [90, 90]] }
-        ]
+        ],
+        interpret: "X is the true value, Y is the model's guess. The orange y=x line is where a perfect prediction would land. Blue dots hug the line, so those seven guesses are close. The red dot at (70, 90) floats far ABOVE the line — the model predicted 90 when the truth was 70, a 20-unit over-prediction. Read this chart first: vertical distance from a point to the orange line IS that point's error, and one stray point far off the line warns you an outlier will dominate the squared metrics."
       },
       {
         type: "scatter",
@@ -312,7 +313,8 @@ print("RMSLE:", rmsle)`
         ],
         lines: [
           { name: "zero error", color: "#ffb454", points: [[10, 0], [80, 0]] }
-        ]
+        ],
+        interpret: "Same errors, re-drawn flat: each point's height is its residual (truth minus guess), and the orange line at 0 means no error. Blue points scatter tightly just above and below 0 — small, balanced misses. The red point plunges to -20, the lone big error. A healthy residual plot looks like this: a structureless cloud hugging 0. If instead you saw a curve, a funnel, or a one-sided drift, the model would have a problem (see the variant charts below)."
       },
       {
         type: "bars",
@@ -320,7 +322,8 @@ print("RMSLE:", rmsle)`
         labels: ["e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "MAE"],
         values: [2, 2, 3, 3, 2, 2, 20, 2, 4.5],
         valueLabels: ["2", "2", "3", "3", "2", "2", "20", "2", "4.5"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"],
+        interpret: "Each blue bar is one example's |error| (its size, sign dropped); the green bar is their average, the MAE. The outlier bar (red, 20) is tall but, because MAE just averages raw sizes, it lifts the mean only to 4.5 — the big miss counts in proportion to its size, no more. Read MAE as 'the typical miss in real units', and note how gently the one large error pulls it compared with the squared metric next door."
       },
       {
         type: "bars",
@@ -328,7 +331,8 @@ print("RMSLE:", rmsle)`
         labels: ["e1^2", "e2^2", "e3^2", "e4^2", "e5^2", "e6^2", "e7^2", "e8^2", "MSE"],
         values: [4, 4, 9, 9, 4, 4, 400, 4, 54.75],
         valueLabels: ["4", "4", "9", "9", "4", "4", "400", "4", "54.75"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"],
+        interpret: "Same errors, but each is SQUARED before averaging. The small errors barely register (2 becomes 4) while the outlier explodes (20 becomes 400) — the red bar alone is about 91% of the whole sum. That is why the green MSE bar (54.75) is so much larger than MAE: squaring lets one big miss dominate the score. Use MSE/RMSE when a big error really is much worse than several small ones; avoid it when you don't want a single weird point steering the verdict."
       },
       {
         type: "bars",
@@ -336,7 +340,8 @@ print("RMSLE:", rmsle)`
         labels: ["MAE", "RMSE"],
         values: [4.5, 7.4],
         valueLabels: ["4.5", "7.4"],
-        colors: ["#9aa7b4", "#c89bff"]
+        colors: ["#9aa7b4", "#c89bff"],
+        interpret: "RMSE is the square root of MSE, so it is back in the target's real units and directly comparable to MAE. RMSE (7.4) is always >= MAE (4.5); here the gap is large because of the single outlier. The size of that GAP is the headline: when RMSE sits far above MAE, a few big errors are inflating it; when they are nearly equal, your errors are uniform. Always report both and read the gap, not just the numbers."
       },
       {
         type: "bars",
@@ -344,7 +349,8 @@ print("RMSLE:", rmsle)`
         labels: ["explained (SS_tot - SS_res)", "unexplained (SS_res)", "total spread (SS_tot)"],
         values: [3762, 438, 4200],
         valueLabels: ["3762  (89.6%)", "438  (10.4%)", "4200  (100%)"],
-        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"],
+        interpret: "R-squared splits the total spread of the truths (grey, 4200) into the part the model explained (green, 3762) and the part left in the residuals (red, 438). R-squared is the green share of the grey total = 0.896, so the model captures 89.6% of the variation; only 10.4% is unexplained. Read it as 'how much better than always guessing the mean': 1 is perfect, 0 ties the mean, and — as the variant below shows — it can even go NEGATIVE when the model is worse than the mean."
       },
       {
         type: "bars",
@@ -352,10 +358,56 @@ print("RMSLE:", rmsle)`
         labels: ["10", "20", "30", "40", "50", "60", "70", "80", "MAPE"],
         values: [20, 10, 10, 7.5, 4, 3.3, 28.6, 2.5, 10.7],
         valueLabels: ["20%", "10%", "10%", "7.5%", "4%", "3.3%", "28.6%", "2.5%", "10.7%"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"],
+        interpret: "Each bar rescales an error to a PERCENT of its own truth (|error| / |y|); the green bar is their average, MAPE = 10.7%. Notice the same absolute miss looks different here: a 2-unit error is 20% on the small y=10 point but only 2.5% on y=80, and the outlier's 20-unit miss is 28.6% on y=70. Read MAPE as 'typically off by X percent', but remember the bars blow up as the truth shrinks toward zero — which is exactly the failure the variant chart below shows."
+      },
+      {
+        type: "scatter",
+        title: "WHAT YOU MIGHT ALSO SEE — heteroscedastic fan: errors grow with the truth (illustrative)",
+        xlabel: "actual y",
+        ylabel: "residual e = y - y-hat",
+        groups: [
+          {
+            name: "residuals fan out",
+            color: "#ffb454",
+            points: [[10, 1], [20, -2], [30, 3], [40, -6], [50, 8], [60, -11], [70, 14], [80, -17], [90, 20]]
+          }
+        ],
+        lines: [
+          { name: "zero error", color: "#9aa7b4", points: [[10, 0], [90, 0]] }
+        ],
+        interpret: "Illustrative warning shape. Instead of a flat band, the residuals FAN OUT — tiny near small y, large near big y. This is heteroscedasticity: the model's error size depends on the target's scale. A single RMSE or MAE averages over the whole range and hides it, so the model looks fine on small values but is unreliable on large ones. Recognise it by the triangular spread around 0; fixes include modelling in log-space or switching to a relative metric like WAPE."
+      },
+      {
+        type: "scatter",
+        title: "WHAT YOU MIGHT ALSO SEE — systematic bias: every point shifted one way (illustrative)",
+        xlabel: "actual y",
+        ylabel: "residual e = y - y-hat",
+        groups: [
+          {
+            name: "residuals all negative",
+            color: "#ff7b72",
+            points: [[10, -8], [20, -9], [30, -7], [40, -8], [50, -10], [60, -8], [70, -9], [80, -7]]
+          }
+        ],
+        lines: [
+          { name: "zero error", color: "#9aa7b4", points: [[10, 0], [80, 0]] }
+        ],
+        interpret: "Illustrative warning shape. Every residual sits BELOW the zero line by roughly the same amount — the whole cloud is shifted, not scattered around 0. That is systematic bias: the model consistently over-predicts (here truth minus guess is always about -8, so y-hat is always ~8 too high). MAE and RMSE flag that errors exist but not the direction; the give-away is mean bias being far from 0 (and R-squared differing from explained variance). Fix by recalibrating the offset, e.g. subtracting the mean residual."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — negative R^2: model worse than guessing the mean (illustrative)",
+        xlabel: "R-squared regime",
+        ylabel: "R-squared value",
+        labels: ["good fit (0.90)", "ties the mean (0.0)", "WORSE than mean (-0.4)"],
+        values: [0.90, 0.0, -0.4],
+        valueLabels: ["0.90", "0.00", "-0.40"],
+        colors: ["#7ee787", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative reminder that R-squared is NOT a probability and can drop below 0. A healthy model sits near 1 (green). R-squared = 0 (grey) means the model is no better than always predicting the average. A negative value (red, -0.4) means the model's squared error is LARGER than the mean baseline's — it is actively worse than guessing the average, which happens on held-out data under overfitting, leakage, or distribution shift. Read any negative R-squared as a loud alarm, not a bug."
       }
     ],
-    caption: "One concrete set of 8 (y, y-hat) pairs drives every chart. The scatter and residual plot show where the misses are — seven tiny errors and one outlier (the 7th point, off by 20, in red). MAE = 4.5 averages the raw |errors| fairly. MSE = 54.75 squares first, so the outlier's 400 is 91% of the total — that is why MSE/RMSE punish big misses. RMSE = 7.4 (square root of MSE) is back in real units yet still well above MAE = 4.5; the gap is the outlier's fingerprint. R² = 0.896 says the model explains 89.6% of the variance in y (only 10.4% of the spread is left in the residuals). MAPE = 10.7% rescales each error to a percent of its own truth, so the same 20-unit miss is a huge 28.6% on the y=70 point.",
+    caption: "One concrete set of 8 (y, y-hat) pairs drives the first seven charts. The scatter and residual plot show where the misses are — seven tiny errors and one outlier (the 7th point, off by 20, in red). MAE = 4.5 averages the raw |errors| fairly. MSE = 54.75 squares first, so the outlier's 400 is 91% of the total — that is why MSE/RMSE punish big misses. RMSE = 7.4 is back in real units yet well above MAE = 4.5; the gap is the outlier's fingerprint. R² = 0.896 means the model explains 89.6% of the variance. MAPE = 10.7% rescales each error to a percent of its own truth. The last three charts are warning shapes you might ALSO meet: a heteroscedastic fan (errors grow with y), systematic bias (residuals all shifted one way), and a negative R² (model worse than the mean). Main numbers are exact; the variant charts are illustrative.",
     code: `import numpy as np
 
 y    = np.array([10, 20, 30, 40, 50, 60, 70, 80], float)

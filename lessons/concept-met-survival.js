@@ -296,11 +296,11 @@ print("PR-AUC:", round(pr_auc, 3))`
   };
 
   window.CODEVIZ["met-survival"] = {
-    question: "From one concrete censored dataset of 8 machines, what does the Kaplan-Meier survival curve S(t) = product of (1 - d_i/n_i) look like, what is the per-step hazard d_i/n_i, and what C-index does an imperfect risk score earn over the comparable pairs?",
+    question: "From one censored dataset of 8 machines: what does the Kaplan-Meier curve S(t) look like, what is the per-step hazard, and what C-index does a risk score earn? Below: the IDEAL diagrams PLUS the failure-mode variants (a flat/near-random ranking, ROC that flatters a rare-event detector) you will actually meet.",
     charts: [
       {
         type: "line",
-        title: "Kaplan-Meier survival curve S(t) = product of (1 - d_i/n_i) over time",
+        title: "IDEAL — Kaplan-Meier survival curve S(t) = product of (1 - d_i/n_i) over time",
         xlabel: "time t (months)",
         ylabel: "S(t) = P(survive past t)",
         series: [
@@ -309,40 +309,87 @@ print("PR-AUC:", round(pr_auc, 3))`
             color: "#4ea1ff",
             points: [[0, 1.0], [2, 1.0], [2, 0.875], [3, 0.875], [3, 0.75], [6, 0.75], [6, 0.6], [7, 0.6], [7, 0.45], [9, 0.45], [9, 0.225], [12, 0.225], [12, 0.0]]
           }
-        ]
+        ],
+        interpret: "<b>Read the height as the fraction still surviving past each time t.</b> The curve only steps DOWN at a time when a real event (death/failure) happens; it stays flat through censored periods. Each drop is the survival fraction times (1 - deaths/at-risk) at that moment, so later steps are bigger when fewer subjects remain at risk. A curve that stays high and flat means most subjects survive the window; a steep early drop means high near-term risk."
       },
       {
         type: "bars",
-        title: "Per-step survival factor (1 - d_i/n_i): the terms multiplied to build S(t)",
+        title: "IDEAL — Per-step survival factor (1 - d_i/n_i): the terms multiplied to build S(t)",
         xlabel: "event time t (n_i at risk, d_i events)",
         ylabel: "factor 1 - d_i/n_i (closer to 1 = gentler drop)",
         labels: ["t=2 (8,1)", "t=3 (7,1)", "t=6 (5,1)", "t=7 (4,1)", "t=9 (2,1)", "t=12 (1,1)"],
         values: [0.875, 0.857, 0.800, 0.750, 0.500, 0.000],
         valueLabels: ["0.875", "0.857", "0.800", "0.750", "0.500", "0.000"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#ffb454", "#ffb454", "#ff7b72"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ffb454", "#ffb454", "#ff7b72"],
+        interpret: "Each bar is one multiplied term of S(t): the fraction of the still-at-risk machines that survive that step. Early on many machines are at risk so one failure barely dents the factor (0.875); late, with few left, a single failure is a big fraction (0.500), and the final t=12 bar is exactly 0 because the last machine fails (1 - 1/1). <b>Read it as:</b> bars near 1 = gentle drops, bars near 0 = steep drops; multiply them left to right and you get the survival curve above."
       },
       {
         type: "bars",
-        title: "Discrete hazard h_i = d_i/n_i: the conditional event rate at each step",
+        title: "IDEAL — Discrete hazard h_i = d_i/n_i: the conditional event rate at each step",
         xlabel: "event time t (n_i at risk, d_i events)",
         ylabel: "hazard d_i/n_i (chance of failing at t given alive)",
         labels: ["t=2 (8,1)", "t=3 (7,1)", "t=6 (5,1)", "t=7 (4,1)", "t=9 (2,1)", "t=12 (1,1)"],
         values: [0.125, 0.143, 0.200, 0.250, 0.500, 1.000],
         valueLabels: ["0.125", "0.143", "0.200", "0.250", "0.500", "1.000"],
-        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#ffb454", "#ff7b72"]
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#ffb454", "#ff7b72"],
+        interpret: "The hazard is the mirror image of the factor above: h_i = d_i/n_i = 1 - factor. It is the chance of failing AT this step given you survived until it. It climbs from 0.125 to 1.0 purely because the at-risk pool n_i shrinks — one failure is a bigger share of a smaller group. <b>Read it as:</b> rising hazard here is a small-sample artefact of the thinning risk set, not necessarily worsening machines; with real data a hump or late spike flags a genuine wear-out period."
       },
       {
         type: "bars",
-        title: "C-index = (concordant + 0.5*tied) / comparable = 19/21 = 0.905",
+        title: "IDEAL — C-index = (concordant + 0.5*tied) / comparable = 19/21 = 0.905",
         xlabel: "comparable-pair outcome",
         ylabel: "number of comparable pairs",
         labels: ["concordant (ranked right)", "discordant (ranked wrong)", "tied"],
         values: [19, 2, 0],
         valueLabels: ["19", "2", "0"],
-        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"],
+        interpret: "Only pairs where one machine had its event before the other's observed time are 'comparable' and counted. Of 21 such pairs, 19 are concordant (the earlier-failing machine got the higher risk) and 2 discordant, so C = 19/21 = 0.905. <b>Read it as:</b> a tall green bar versus a tiny red one means strong risk ranking, well above the 0.5 coin-flip line. The C-index is just this green-vs-red ratio (ties count half)."
+      },
+      {
+        type: "line",
+        title: "WHAT YOU MIGHT ALSO SEE — Heavy censoring: KM curve barely drops and never reaches 0",
+        xlabel: "time t (months)",
+        ylabel: "S(t) = P(survive past t)",
+        series: [
+          {
+            name: "S(t) with few events, lots of censoring",
+            color: "#ffb454",
+            points: [[0, 1.0], [3, 1.0], [3, 0.917], [8, 0.917], [8, 0.833], [14, 0.833], [14, 0.75], [20, 0.75]]
+          }
+        ],
+        interpret: "Illustrative. Most machines were still running when the study ended, so only a few events ever drop the curve and it flattens out high (here at 0.75) instead of reaching 0. <b>Recognise it by:</b> a curve that ends well above 0 with long flat plateaus — the right tail is dominated by censored rows, so the median survival is undefined and any metric that ignores censoring would massively overstate failures. This is exactly why you keep censored rows and use IPCW-corrected metrics."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — Near-random ranking: C-index 11/21 = 0.52, a coin flip",
+        xlabel: "comparable-pair outcome",
+        ylabel: "number of comparable pairs",
+        labels: ["concordant (ranked right)", "discordant (ranked wrong)", "tied"],
+        values: [11, 10, 0],
+        valueLabels: ["11", "10", "0"],
+        colors: ["#9aa7b4", "#ff7b72", "#9aa7b4"],
+        interpret: "Illustrative. Now the green concordant bar (11) barely beats the red discordant bar (10), so C = 11/21 = 0.52 — essentially 0.50, a coin flip. <b>Recognise it by:</b> the two bars being almost equal height. The risk score has no useful ordering signal; do NOT ship on this. If green were SHORTER than red (C below 0.5) the ranking is reversed — often a sign you fed the risk score with the wrong sign."
+      },
+      {
+        type: "roc",
+        auc: 0.93,
+        title: "WHAT YOU MIGHT ALSO SEE — ROC flatters a rare-event detector (AUC 0.93 looks great)",
+        points: [[0, 0], [0.02, 0.55], [0.05, 0.78], [0.1, 0.88], [0.3, 0.96], [0.6, 0.99], [1, 1]],
+        interpret: "Illustrative, on data that is 99.9% normal. ROC plots recall (TPR) against false-alarm rate (FPR). Because the huge negative class sits in the FPR denominator, even thousands of false alarms barely move FPR, so the curve bows hard to the top-left and AUC looks excellent (0.93). <b>Recognise the trap:</b> a beautiful ROC on a very rare positive can hide terrible precision — at the alarm budget you may still be drowning in false positives. On rare events trust the PR view below, not this one."
+      },
+      {
+        type: "line",
+        title: "WHAT YOU MIGHT ALSO SEE — Precision-Recall curve tells the truth on the SAME rare-event detector",
+        xlabel: "recall (fraction of true anomalies caught)",
+        ylabel: "precision (fraction of alarms that are real)",
+        series: [
+          { name: "PR curve (rare positives, base rate ~0.001)", color: "#ff7b72", points: [[0, 0.5], [0.2, 0.35], [0.4, 0.22], [0.6, 0.12], [0.8, 0.05], [1.0, 0.001]] },
+          { name: "no-skill baseline (= base rate)", color: "#9aa7b4", points: [[0, 0.001], [1.0, 0.001]] }
+        ],
+        interpret: "Illustrative, same detector as the ROC above. PR plots precision (of the alarms you raise, how many are real) against recall. Here precision collapses as you chase more recall, and the grey no-skill line sits at the ~0.001 base rate. <b>Read it as:</b> the area under this red curve (PR-AUC / average precision) is far below the rosy ROC-AUC, honestly showing most alarms are false. <b>The lesson:</b> when positives are rare, judge by PR-AUC and precision/recall at your alarm budget, never by ROC-AUC or accuracy alone."
       }
     ],
-    caption: "One concrete dataset: 8 machines with observed times 2,3,4,6,7,9,12 months, where t=4 and t=8 are CENSORED (still running, no event). Chart 1 is the Kaplan-Meier survival curve: at each event time t we multiply S by the factor (1 - d_i/n_i), where n_i is the number still at risk just before t and d_i is the events at t. The curve only steps DOWN at event times (2,3,6,7,9,12) and stays flat through censoring; it falls 1.0 -> 0.875 -> 0.75 -> 0.6 -> 0.45 -> 0.225 -> 0.0. Chart 2 breaks out those product factors term by term: each bar is one (1 - d_i/n_i); the bars shrink toward 0 as the at-risk set n_i thins out, and the final t=12 factor is exactly 0 (the last machine fails: 1 - 1/1). Chart 3 is the matching discrete hazard h_i = d_i/n_i = 1 - factor: the conditional chance of failing at t given you reached it, rising from 0.125 to 1.0 as fewer machines remain. Chart 4 scores an imperfect risk ranking with the C-index: of the 21 comparable pairs (one machine had its event before the other's observed time), 19 are concordant (earlier-failing machine got the higher risk) and 2 are discordant, so C = 19/21 = 0.905 - well above the 0.5 coin-flip line. All numbers computed with numpy from the dataset below.",
+    caption: "Read each chart by its IDEAL vs WHAT-YOU-MIGHT-ALSO-SEE tag. Survival ideal: 8 machines (times 2,3,4,6,7,9,12 months; t=4 and t=8 censored) give a KM curve that steps down only at events, per-step factors and hazards that move because the at-risk set thins, and a C-index of 19/21 = 0.905. The variants are the failures you must spot: a heavy-censoring KM curve that flattens high and never hits 0; a near-random C-index (11 vs 10 -> 0.52) you must NOT ship; and the rare-event pair where ROC-AUC looks great (0.93) but the PR curve on the SAME detector reveals precision collapsing toward the 0.001 base rate. Main-chart numbers are computed with numpy from the dataset in the code; variants marked 'illustrative' are qualitatively honest shapes.",
     code: `import numpy as np
 
 # 8 machines: observed time t, event indicator delta (1=failed, 0=censored)

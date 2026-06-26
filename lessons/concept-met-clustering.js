@@ -173,11 +173,11 @@ print("fowlkes_mallows   :", round(fowlkes_mallows_score(y_true, labels), 3))
   };
 
   window.CODEVIZ["met-clustering"] = {
-    question: "On concrete 2D point clusters, what do the silhouette, ARI, NMI, and purity formulas actually measure — and how far apart do a good clustering and a bad one score?",
+    question: "On concrete 2D point clusters, what do silhouette, ARI, NMI, and purity actually measure — and what do the failure shapes look like: a silhouette that LIES on non-convex data, a Rand Index that scores random clusterings high, and inertia that always drops as k grows?",
     charts: [
       {
         type: "scatter",
-        title: "Silhouette s=(b-a)/max(a,b): well-separated (mean 0.903) vs overlapping (mean 0.291)",
+        title: "Silhouette in action: well-separated blobs (mean 0.903) vs overlapping blobs (mean 0.291)",
         xlabel: "x",
         ylabel: "y",
         groups: [
@@ -187,35 +187,71 @@ print("fowlkes_mallows   :", round(fowlkes_mallows_score(y_true, labels), 3))
           { name: "overlapping cluster 0", color: "#c89bff", points: [[0.0, 0.0], [1.5, 0.6], [1.0, -0.5], [2.2, 0.3]] },
           { name: "overlapping cluster 1", color: "#ff7b72", points: [[3.0, 2.5], [3.6, 2.0], [2.5, 2.4], [3.4, 3.0]] },
           { name: "overlapping cluster 2", color: "#9aa7b4", points: [[1.8, 1.4], [2.6, 1.0], [1.2, 1.8], [2.9, 1.6]] }
-        ]
+        ],
+        interpret: "<b>x and y are just the 2D coordinates of each point; colour = which cluster it was assigned to.</b> Top-left three groups sit in tight, far-apart blobs — every point is deep inside its own colour, so the mean silhouette is high (0.903). The lower-right three groups smear into each other, so points sit near a rival colour and the mean silhouette drops to 0.291. <b>Read the geometry directly:</b> tight + far-apart = high silhouette; overlapping = low. No labels needed — this is what 'internal' scoring means."
       },
       {
         type: "bars",
-        title: "Silhouette of one point [0,0]: a=own-cluster dist, b=nearest-other dist, s=(b-a)/max(a,b)",
+        title: "Open the formula for one point [0,0]: a=own-cluster dist, b=nearest-other dist, s=(b-a)/max(a,b)",
         labels: ["a (tightness)", "b (separation)", "s = (b-a)/max(a,b)"],
         values: [0.51, 6.056, 0.916],
         valueLabels: ["0.510", "6.056", "0.916"],
-        colors: ["#ff7b72", "#7ee787", "#4ea1ff"]
+        colors: ["#ff7b72", "#7ee787", "#4ea1ff"],
+        interpret: "<b>This decomposes one point's silhouette.</b> Red bar a = the point's mean distance to its OWN cluster (tightness; smaller is better). Green bar b = its mean distance to the NEAREST OTHER cluster (separation; larger is better). Blue bar s = (b−a)/max(a,b). Here a is tiny (0.51) and b is large (6.056), so s = 0.916, almost the +1 ceiling. <b>Rule of thumb:</b> s near +1 = well-placed; s near 0 = on a border; s negative = closer to a rival cluster than its own, i.e. probably mis-assigned."
       },
       {
         type: "bars",
-        title: "Silhouette / ARI / NMI: a correct clustering vs a scrambled one (same 12 points, same truth)",
+        title: "Same 12 points, same truth: a correct clustering vs a scrambled one, scored 3 ways",
         labels: ["silhouette", "ARI", "NMI"],
         series: [
           { name: "good (matches truth)", color: "#7ee787", points: [[0, 0.903], [1, 1.0], [2, 1.0]] },
           { name: "bad (scrambled)", color: "#ff7b72", points: [[0, -0.198], [1, -0.146], [2, 0.054]] }
-        ]
+        ],
+        interpret: "<b>Each pair of bars is one metric; green = a correct grouping, red = a scrambled one, on the SAME points with a known 3-blob truth.</b> The good grouping scores at the top of every scale (silhouette 0.903, ARI and NMI both 1.0). The scramble collapses — and note ARI goes BELOW zero (−0.146): because ARI is chance-corrected, a grouping no better than random lands near 0, and a perverse one can dip negative. <b>The big green-vs-red gap is the point:</b> all three metrics agree the correct clustering is far better."
       },
       {
         type: "bars",
-        title: "Purity = correctly-labeled points / n: good vs bad, and the singleton trap (all-singletons = 1.0)",
+        title: "Purity = correctly-labeled points / n: good vs bad, plus the singleton trap (all-singletons = 1.0)",
         labels: ["good clustering", "bad clustering", "every point alone (singletons)"],
         values: [1.0, 0.5, 1.0],
         valueLabels: ["1.000", "0.500", "1.000"],
-        colors: ["#7ee787", "#ff7b72", "#ffb454"]
+        colors: ["#7ee787", "#ff7b72", "#ffb454"],
+        interpret: "<b>Purity = give each cluster its majority true label, count how many points that gets right, divide by n.</b> Good clustering = 1.0, bad = 0.5 — so far it tracks quality. But the orange bar is the trap: split EVERY point into its own one-point cluster and purity hits a perfect 1.0 while telling you nothing useful. <b>Lesson:</b> a metric that rewards making more, smaller clusters cannot pick k on its own — pair purity with V-measure or AMI, which penalise over-splitting."
+      },
+      {
+        type: "scatter",
+        title: "Failure mode — silhouette LIES on non-convex data: two correct rings score low (illustrative)",
+        xlabel: "x",
+        ylabel: "y",
+        groups: [
+          { name: "inner ring (truth)", color: "#4ea1ff", points: [[0.0, 1.0], [0.71, 0.71], [1.0, 0.0], [0.71, -0.71], [0.0, -1.0], [-0.71, -0.71], [-1.0, 0.0], [-0.71, 0.71]] },
+          { name: "outer ring (truth)", color: "#ffb454", points: [[0.0, 3.0], [2.12, 2.12], [3.0, 0.0], [2.12, -2.12], [0.0, -3.0], [-2.12, -2.12], [-3.0, 0.0], [-2.12, 2.12]] }
+        ],
+        interpret: "<b>Two concentric rings — the clustering here is CORRECT (each colour is a true ring).</b> But the silhouette is built on average distances and assumes round, convex blobs, so it mis-scores this: a point on the inner ring is on average about as close to the far side of the OUTER ring as to the far side of its own ring, dragging its silhouette toward 0 or negative. <b>Recognise the shape</b> — long, curved, or nested clusters — as a case where a low silhouette does NOT mean a bad clustering. Fix: judge with a density-aware method or, if you have labels, with ARI/AMI. Illustrative points."
+      },
+      {
+        type: "bars",
+        title: "Failure mode — raw Rand Index is NOT chance-corrected: random clusterings score high (illustrative)",
+        labels: ["random clustering", "random clustering"],
+        series: [
+          { name: "Rand Index (raw — looks good)", color: "#ff7b72", points: [[0, 0.66], [1, 0.68]] },
+          { name: "Adjusted Rand Index (honest)", color: "#7ee787", points: [[0, 0.01], [1, -0.02]] }
+        ],
+        interpret: "<b>Both clusterings here are RANDOM — they match the truth no better than coin flips.</b> Yet the raw Rand Index (red) reads a deceptively healthy 0.66–0.68, because most pairs of points are 'apart in both' just by chance and that inflates the score. The Adjusted Rand Index (green) subtracts the expected-by-chance value, so the same random clusterings correctly land near 0 (one even dips slightly negative). <b>Tell:</b> a Rand Index of ~0.6–0.7 means almost nothing — always read the ADJUSTED version. Illustrative numbers."
+      },
+      {
+        type: "line",
+        title: "Failure mode — inertia ALWAYS drops as k grows: use the elbow, not the minimum (illustrative)",
+        xlabel: "k (number of clusters)",
+        ylabel: "inertia (within-cluster sum of squares)",
+        series: [
+          { name: "inertia", color: "#ffb454", points: [[1, 240], [2, 152], [3, 79], [4, 57], [5, 46], [6, 38], [7, 31], [8, 25]] },
+          { name: "elbow at k=3", color: "#7ee787", points: [[3, 79], [3, 79]] }
+        ],
+        interpret: "<b>x = number of clusters k; y = inertia (total squared distance of points to their own centroid).</b> The orange curve only ever falls — adding a centroid can only move points closer, and at k=n inertia hits 0 — so 'smallest inertia' would always pick the largest k, which is useless. <b>Read the ELBOW instead:</b> the drop is huge from k=2→3 (152→79) then flattens, so the bend at k=3 (green marker) is the natural number of clusters. A monotone curve cannot point to the right k; the kink can. Illustrative numbers."
       }
     ],
-    caption: "Real numbers from concrete points (no dataset download). Chart 1: silhouette in action — three tight far-apart blobs score a mean silhouette of 0.903, while three smeared-together blobs score only 0.291; same metric, the geometry alone drives the gap. Chart 2 opens the formula for one point at [0,0]: its mean distance to its own cluster is a=0.51 (tight), its mean distance to the nearest other cluster is b=6.056 (well separated), so s=(b-a)/max(a,b)=0.916, near the +1 ceiling. Chart 3 takes the SAME 12 points with a known 3-blob truth and scores a correct grouping vs a scrambled one: silhouette 0.903 vs -0.198, ARI 1.0 vs -0.146 (chance-corrected, so the random-looking scramble lands BELOW 0), NMI 1.0 vs 0.054. Chart 4 shows purity = 1.0 vs 0.5 for the same two clusterings, then the orange bar is purity's blind spot: split every point into its own singleton cluster and purity hits a perfect 1.0 while telling you nothing — never use it alone to pick k.",
+    caption: "Ideal first, then the failure shapes. Chart 1: silhouette reads geometry — tight far-apart blobs (0.903) vs overlapping (0.291). Chart 2: the per-point formula s=(b−a)/max(a,b) for point [0,0]. Chart 3: good vs scrambled clustering across silhouette/ARI/NMI (note ARI goes negative on the scramble). Chart 4: purity good vs bad, plus the singleton trap (all-singletons = 1.0). Chart 5: the silhouette LIES on two concentric rings even though the clustering is correct — the convex-blob pitfall. Chart 6: a raw Rand Index of ~0.67 on RANDOM clusterings while ARI sits at 0 — why you must read the adjusted version. Chart 7: inertia always drops as k grows, so you pick k by the elbow (k=3), never the minimum. The last three are the shapes that warn you a number is misleading.",
     code: `import numpy as np
 from sklearn.metrics import (silhouette_score, silhouette_samples,
     adjusted_rand_score, normalized_mutual_info_score)

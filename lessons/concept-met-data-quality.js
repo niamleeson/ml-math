@@ -277,7 +277,7 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
   };
 
   window.CODEVIZ["met-data-quality"] = {
-    question: "Score one concrete 10-row 'orders' table: what is each quality dimension worth, how does completeness = non-null/total break down, why does the z-score miss an outlier the IQR catches, and how do PSI's per-bin terms add up to a moderate drift?",
+    question: "Score one concrete 10-row 'orders' table — each quality dimension, how completeness = non-null/total breaks down, why the z-score misses an outlier the IQR catches, and how PSI's per-bin terms add to a moderate drift — then see the cases you actually hit: NO drift, a majority-class collapse, and a KS test fooled by a huge sample.",
     charts: [
       {
         type: "bars",
@@ -287,7 +287,8 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
         labels: ["completeness", "validity", "uniqueness", "consistency"],
         values: [0.975, 0.900, 0.800, 0.900],
         valueLabels: ["0.975", "0.900", "0.800", "0.900"],
-        colors: ["#7ee787", "#ffb454", "#ff7b72", "#ffb454"]
+        colors: ["#7ee787", "#ffb454", "#ff7b72", "#ffb454"],
+        interpret: "<b>Each bar is one quality dimension scored as good-rows / total — taller is cleaner.</b> Completeness 0.975 (39 of 40 cells filled), validity 0.900, uniqueness 0.800, consistency 0.900. The colours encode severity (green good, orange watch, red worst). Read it as a triage list: the shortest/reddest bar, uniqueness at 0.800 (2 duplicate customers in 10 rows), is where you act first."
       },
       {
         type: "bars",
@@ -297,7 +298,8 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
         labels: ["non-null cells", "total cells", "= rate 0.975"],
         values: [39, 40, 0.975],
         valueLabels: ["39", "40", "0.975"],
-        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"],
+        interpret: "<b>This unpacks ONE scorecard bar into its fraction.</b> The blue bar is the numerator (39 non-null cells), the grey bar the denominator (40 total cells across 10 rows x 4 columns), and the green bar is their ratio, 0.975. The point: every 'rate' on the scorecard is just one count divided by another — completeness is non-null over total, nothing more."
       },
       {
         type: "bars",
@@ -307,7 +309,8 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
         labels: ["|z| of 40", "z cutoff (3)", "value 40", "IQR upper fence (16)"],
         values: [2.3, 3.0, 40, 16],
         valueLabels: ["2.3 (not flagged)", "3.0", "40 (flagged)", "16"],
-        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72", "#7ee787"]
+        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72", "#7ee787"],
+        interpret: "<b>Two outlier tests, side by side, on the same value 40.</b> LEFT pair (z-score): |z|=2.3 sits UNDER the cutoff of 3, so the z-rule MISSES 40 — the lone big value inflated the standard deviation and hid itself. RIGHT pair (IQR): 40 towers over the upper fence of 16, so the IQR rule CATCHES it. Same value, opposite verdict — because quartiles can't be dragged by a single extreme, IQR is the default on skewed data."
       },
       {
         type: "bars",
@@ -317,10 +320,44 @@ print("multivariate outlier rate (d > 3):", float(np.mean(d > 3)))
         labels: ["bin 1", "bin 2", "bin 3", "bin 4", "PSI total", "alarm = 0.25"],
         values: [0.137, 0.011, 0.009, 0.071, 0.228, 0.25],
         valueLabels: ["0.137", "0.011", "0.009", "0.071", "0.228", "0.25"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ff7b72"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ff7b72"],
+        interpret: "<b>The four blue bars are per-bin PSI terms; they SUM to the orange 'PSI total' bar (0.228).</b> Bins 1 and 4 (the ends, where mass moved most) contribute most; the middle bins barely move. The orange total sits just below the red 0.25 alarm line, so this is the '0.1-0.25 moderate, keep watching' band. Every term is positive — PSI never lets a bin cancel another out."
+      },
+      {
+        type: "bars",
+        title: "Variant — NO drift: a matches e, every PSI term ~0, total 0.004 (well under 0.1 = stable)",
+        xlabel: "bin (and the total)",
+        ylabel: "contribution to PSI",
+        labels: ["bin 1", "bin 2", "bin 3", "bin 4", "PSI total", "stable < 0.1"],
+        values: [0.001, 0.0, 0.001, 0.002, 0.004, 0.1],
+        valueLabels: ["0.001", "0.000", "0.001", "0.002", "0.004", "0.1"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#9aa7b4"],
+        interpret: "<b>Illustrative healthy baseline: current shares nearly equal the reference (e.g. a=[.24,.25,.26,.25] vs e=[.25,.25,.25,.25]).</b> Every per-bin term is a rounding-error sliver, so the PSI total is 0.004 — far under the grey 0.1 'stable' line. This is what a non-drifting feature looks like day to day: tiny non-zero noise, never zero, but nowhere near the threshold. Don't alert on this."
+      },
+      {
+        type: "bars",
+        title: "Variant — CLASS IMBALANCE: labels 990:10 give shares 0.99 / 0.01, so 'always predict 0' scores 99%",
+        xlabel: "class",
+        ylabel: "share of rows",
+        labels: ["class 0 (majority)", "class 1 (minority)"],
+        values: [0.99, 0.01],
+        valueLabels: ["0.99", "0.01"],
+        colors: ["#ff7b72", "#9aa7b4"],
+        interpret: "<b>Illustrative quality failure: class balance, not drift.</b> 990 rows of class 0 vs 10 of class 1 means a model that ALWAYS says '0' is 99% accurate while catching zero positives — so accuracy is meaningless here. When you see one bar near 1.0 and the other a sliver, switch to precision/recall (or resample / reweight) and never trust raw accuracy. This is a single-dataset property, caught before any drift check."
+      },
+      {
+        type: "line",
+        title: "Variant — KS over-powered on 5M rows: CDFs almost touch (D=0.004) yet p<1e-7 'screams drift'",
+        xlabel: "feature value x",
+        ylabel: "cumulative probability",
+        series: [
+          { name: "reference CDF", color: "#4ea1ff", points: [[-2, 0.02], [-1, 0.16], [0, 0.50], [1, 0.84], [2, 0.98]] },
+          { name: "current CDF", color: "#ffb454", points: [[-2, 0.024], [-1, 0.166], [0, 0.504], [1, 0.842], [2, 0.981]] }
+        ],
+        interpret: "<b>Illustrative trap: the two CDFs are nearly on top of each other — the largest gap D is only 0.004.</b> That is a practically meaningless shift, yet across 5 million rows the KS p-value reads &lt;1e-7 and the dashboard shouts 'significant drift'. The fix the lesson teaches: threshold the EFFECT SIZE (the KS statistic D, or PSI / Wasserstein), not the p-value, or subsample first. Significance is not size — at huge N every tiny wiggle becomes 'significant'."
       }
     ],
-    caption: "Four diagrams, one per key formula, all from concrete numbers. (1) SCORECARD: each quality dimension is a rate of good rows over total on a 10-row, 4-column orders table. Completeness 0.975 (39 of 40 cells filled), validity 0.900 (9 of 10 statuses in the allowed set, 9 of 10 emails contain '@'), uniqueness 0.800 (8 distinct emails of 10 rows -> 2 duplicate customers), consistency 0.900 (9 of 10 rows have ship_date >= order_date). Uniqueness is the worst dimension, so that is where you act. (2) COMPLETENESS broken into its terms: numerator non-null = 39, denominator total = 40, ratio = 0.975 -- the rate is just one bar divided by the next. (3) OUTLIER rules on the lesson's column [10,12,11,13,12,40]: the z-score of 40 is only 2.3, under the cutoff of 3, so z MISSES it (the single big value inflated sigma); the IQR upper fence is 16, and 40 > 16, so the IQR rule CATCHES it. Same value, opposite verdict -- that robustness is why IQR is the default on skewed data. (4) PSI summed term by term: each per-bin (a-e)*ln(a/e) is positive; 0.137 + 0.011 + 0.009 + 0.071 = 0.228, which lands in the 0.1-0.25 moderate band, just under the 0.25 alarm line. Every number here is computed, not invented.",
+    caption: "Charts 1-4 score one concrete 10-row orders table, one diagram per key formula (each chart's interpret says how to read it): the quality scorecard, completeness as non-null/total, the z-vs-IQR outlier disagreement on x=40, and PSI's per-bin terms summing to 0.228 (moderate). Charts 5-7 are the everyday variants: NO drift (PSI 0.004, well under 0.1 — the stable baseline you must NOT alert on), CLASS IMBALANCE (0.99/0.01 shares making accuracy a lie — a quality flaw, not drift), and the KS OVER-POWER trap (CDFs nearly identical, D=0.004, yet p<1e-7 on 5M rows — threshold the effect size, never the p-value). Every number in charts 1-5 is computed; the imbalance and KS-trap variants are illustrative but qualitatively honest.",
     code: `import numpy as np
 
 # ---- (1)+(2) Quality scorecard on a concrete 10-row 'orders' table ----

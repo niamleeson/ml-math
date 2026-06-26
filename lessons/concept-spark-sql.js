@@ -278,20 +278,43 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-sql"] = {
-    question: "What does a Spark SQL 'SELECT region, SUM(amount) ... WHERE MedInc>3 GROUP BY region ORDER BY total DESC' query return — total sales by region — on a real dataset?",
+    question: "What does a Spark SQL 'SELECT region, SUM(amount) ... WHERE MedInc>3 GROUP BY region ORDER BY total DESC' query return — and how do you read the bar chart when the result is skewed or empty?",
     charts: [
       {
         type: "bars",
-        title: "Total sales amount by region (GROUP BY result, $ millions)",
+        title: "Healthy GROUP BY result: total amount by region, sorted (real data)",
         xlabel: "region",
         ylabel: "total amount ($ millions)",
         labels: ["far_south", "central", "south", "north", "far_north"],
         values: [1064.09, 1055.20, 898.78, 250.35, 10.32],
         valueLabels: ["1064.09", "1055.20", "898.78", "250.35", "10.32"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "<b>Read this as the answer to the query.</b> Each bar is one group the GROUP BY produced; height is SUM(amount) for that region; bars run left-to-right tallest-first because of ORDER BY total DESC. The smooth taper (1064, 1055, 899, 250, 10) is the <b>expected</b> shape: a few big regions, a couple of small ones, nothing absurd. Conclusion: the query did what you asked — every region appears, totals are sane, sort order is right. This is your baseline to compare the other two against."
+      },
+      {
+        type: "bars",
+        title: "Data skew: one group dwarfs the rest (slow shuffle, but query is correct)",
+        xlabel: "region",
+        ylabel: "total amount ($ millions)",
+        labels: ["central", "far_south", "south", "north", "far_north"],
+        values: [3120.0, 95.0, 70.0, 22.0, 8.0],
+        valueLabels: ["3120.00", "95.00", "70.00", "22.00", "8.00"],
+        colors: ["#ffb454", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Illustrative.</b> One bar towers over the others — 'central' holds almost all the rows. The numbers are still correct, but this shape is a warning: a GROUP BY shuffles all rows of a key to one machine, so a giant group means one task does most of the work while the rest sit idle (data <b>skew</b>). Recognise it by the single dominant bar. Conclusion: if this query is slow, the fix is not switching SQL↔API (same plan, same speed) — it's the skew; salt the key or broadcast the small side."
+      },
+      {
+        type: "bars",
+        title: "Empty result: filter removed every row ('the query did nothing')",
+        xlabel: "region",
+        ylabel: "total amount ($ millions)",
+        labels: ["(no rows returned)"],
+        values: [0],
+        valueLabels: ["0"],
+        colors: ["#ff7b72"],
+        interpret: "<b>Illustrative.</b> No real bars — the GROUP BY returned zero rows. This is what you see when WHERE is too strict (e.g. MedInc &gt; 300 keeps nothing) OR, the classic Spark trap, when the query is <b>lazy and never ran</b>: spark.sql(...) builds a DataFrame but nothing executes until an action like .show(). Recognise it by an empty/flat chart after a query you expected to fill. Conclusion: check the filter first, then confirm you actually triggered an action — a 'silent' query usually just never hit .show()/.write."
       }
     ],
-    caption: "Real numbers from fetch_california_housing (20,640 rows). We turn it into a 'sales' table (region from Latitude bands, amount = median house value in dollars), then compute exactly what the Spark SQL query SELECT region, SUM(amount) AS total FROM sales WHERE MedInc > 3 GROUP BY region ORDER BY total DESC returns — using pandas so the bars are reproducible. The filter keeps higher-income blocks (MedInc > 3); the GROUP BY collapses ~13k surviving rows into one total per region; ORDER BY sorts them. far_south and central lead at ~1.06 and ~1.06 billion dollars, far_north trails at ~10M. In Spark this same query runs distributed over a terabyte the identical way — and the DataFrame-API form df.filter(...).groupBy('region').agg(sum('amount')) compiles to the same plan and returns the same numbers.",
+    caption: "Three shapes of the SAME GROUP BY result. Real numbers from fetch_california_housing (20,640 rows): we turn it into a 'sales' table (region from Latitude bands, amount = median house value in dollars) and compute exactly what SELECT region, SUM(amount) AS total FROM sales WHERE MedInc > 3 GROUP BY region ORDER BY total DESC returns. The first chart is that real result; the other two are illustrative variants — skew and an empty result — that the same query produces under different data or mistakes. In Spark this runs distributed over a terabyte the identical way, and the DataFrame-API form df.filter(...).groupBy('region').agg(sum('amount')) compiles to the same plan and returns the same numbers.",
     code: `import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_california_housing

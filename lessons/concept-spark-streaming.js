@@ -258,30 +258,54 @@ query = (windowed.writeStream
   };
 
   window.CODEVIZ["spark-streaming"] = {
-    question: "What does a windowed streaming aggregation actually output — event counts per tumbling time window — and how many events does a 5-second watermark accept as on-time vs drop as late?",
+    question: "What does a windowed streaming aggregation output per tumbling window — and how do you read the chart for a healthy watermark vs a too-tight one vs no watermark at all?",
     charts: [
       {
         type: "bars",
-        title: "Streaming windowed COUNT: events per 10-second tumbling window",
+        title: "Healthy: windowed COUNT per 10-second tumbling window (real shape)",
         xlabel: "tumbling window (event-time start)",
         ylabel: "event count",
         labels: ["10:00:00", "10:00:10", "10:00:20", "10:00:30", "10:00:40", "10:00:50"],
         values: [23, 50, 87, 81, 59, 20],
         valueLabels: ["23", "50", "87", "81", "59", "20"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "<b>This is the actual output of groupBy(window(...)).count().</b> Each bar is one tumbling 10-second window, labelled by its event-time start; height is how many events fell in it. Events are bucketed by their <b>own timestamp</b>, not arrival time, so the smooth rise-then-fall (23→87→20) reflects real traffic, not processing hiccups. Conclusion: this is what a correct windowed count looks like — one bar per closed window, counts that track the data's actual rhythm."
       },
       {
         type: "bars",
-        title: "Same windows split by a 5-second watermark: on-time (kept) vs late (dropped)",
+        title: "Healthy watermark (5s): most events on-time, a thin tail dropped late",
         xlabel: "tumbling window (event-time start)",
         ylabel: "event count",
         labels: ["00 on-time", "00 late", "10 on-time", "10 late", "20 on-time", "20 late", "30 on-time", "30 late", "40 on-time", "40 late", "50 on-time", "50 late"],
         values: [20, 3, 42, 8, 76, 11, 70, 11, 50, 9, 19, 1],
         valueLabels: ["20", "3", "42", "8", "76", "11", "70", "11", "50", "9", "19", "1"],
-        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72"]
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72"],
+        interpret: "<b>Each window is split into kept (green) vs dropped-late (red).</b> A 5-second watermark accepts events delayed up to 5s and discards stragglers beyond that once the window finalizes. Read it as a ratio: green towers over red in every window (277 kept vs 43 dropped overall, ~13%). Conclusion: this watermark is <b>well-sized</b> — you lose only a thin late tail while keeping state bounded. The 43 red events are exactly the memory Spark would otherwise hold forever."
+      },
+      {
+        type: "bars",
+        title: "Too-tight watermark (0.5s): most events arrive 'late' and are dropped",
+        xlabel: "tumbling window (event-time start)",
+        ylabel: "event count",
+        labels: ["00 on-time", "00 late", "10 on-time", "10 late", "20 on-time", "20 late", "30 on-time", "30 late", "40 on-time", "40 late", "50 on-time", "50 late"],
+        values: [5, 18, 12, 38, 22, 65, 19, 62, 14, 45, 5, 15],
+        valueLabels: ["5", "18", "12", "38", "22", "65", "19", "62", "14", "45", "5", "15"],
+        colors: ["#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Same data, but the watermark is shrunk to half a second, so almost any normal network delay counts as 'late'. Now <b>red dominates green</b> — the bulk of every window is discarded and your counts are badly undercounted. Recognise it by red bars taller than green across the board. Conclusion: the watermark is too tight; the fix is to <b>size lateness to how late events realistically arrive</b> (seconds-to-minutes), not to chase the smallest number."
+      },
+      {
+        type: "line",
+        title: "No watermark: state never retires → unbounded memory growth → OOM crash",
+        xlabel: "minutes the job has been running",
+        ylabel: "state held (open windows kept in memory)",
+        series: [
+          { name: "no watermark (grows forever)", color: "#ff7b72", points: [[0, 0], [10, 60], [20, 120], [30, 180], [40, 240], [50, 300], [55, 330]] },
+          { name: "with 5s watermark (bounded)", color: "#7ee787", points: [[0, 0], [10, 6], [20, 6], [30, 6], [40, 6], [50, 6], [55, 6]] }
+        ],
+        interpret: "<b>Illustrative — this is a resource chart, not a result chart.</b> X is wall-clock minutes; Y is how many windows' state Spark is holding. Without a watermark (red) Spark can never declare a window 'done' — a late event might belong to any past window — so state climbs linearly until the driver hits out-of-memory and dies. With a watermark (green) old windows retire once it passes their end, so state stays flat. Conclusion: a forever-rising memory line on a windowed stream means a <b>missing watermark</b>, not a data spike."
       }
     ],
-    caption: "A synthetic 60-second event stream of 320 events, bucketed into 10-second tumbling windows by EVENT TIME with pandas resample/floor — exactly the shape a Spark groupBy(window(...)).count() emits. Top: the per-window counts rise then fall (23, 50, 87, 81, 59, 20). Bottom: each event also has an arrival delay; with a 5-second watermark, events delayed more than 5s count as 'late'. Across all windows 277 events are on-time (green, kept) and 43 are late (red, dropped once the watermark passes the window). That 43 is exactly the state Spark would otherwise have to hold forever without a watermark.",
+    caption: "Reading a windowed streaming aggregation. Charts 1–2 use real numbers: a synthetic 60-second stream of 320 events bucketed into 10s tumbling windows by EVENT TIME with pandas floor — exactly the shape Spark's groupBy(window(...)).count() emits, then split by a 5s watermark (277 on-time, 43 late). Charts 3–4 are illustrative failure modes: a too-tight watermark that drops most events, and the unbounded state growth you get with NO watermark (the OOM in the lesson's pitfalls). Green = healthy/kept, red/orange = problem.",
     code: `import numpy as np
 import pandas as pd
 

@@ -284,57 +284,92 @@ print(f"sklearn pinball(q=0.9)={mean_pinball_loss(test, model_fc, alpha=0.9):.3f
   };
 
   window.CODEVIZ["met-forecasting"] = {
-    question: "On a real-shaped monthly series split by time: how do MAE, sMAPE, MASE and interval coverage each score this forecast, and does it beat the naive last-season baseline?",
+    question: "On a real-shaped monthly series split by time: how do MAE, sMAPE, MASE and interval coverage each score this forecast, and what do the WARNING shapes (MAPE blow-up, autocorrelated residuals, a model that loses to naive) look like?",
     charts: [
       {
         type: "line",
-        title: "Forecast vs actual over time (model beats the naive baseline)",
+        title: "Healthy: forecast tracks actual, beats the naive baseline",
         xlabel: "future month index",
         ylabel: "value",
         series: [
           { name: "actual", color: "#7ee787", points: [[49, 195.5], [50, 199.1], [51, 209.2], [52, 202.7], [53, 205.6], [54, 209.4], [55, 204.7], [56, 192.8], [57, 175.5], [58, 178.6], [59, 184.4], [60, 206.0]] },
           { name: "model forecast", color: "#4ea1ff", points: [[49, 187.1], [50, 204.5], [51, 206.2], [52, 198.0], [53, 206.1], [54, 205.2], [55, 205.0], [56, 188.5], [57, 171.9], [58, 166.9], [59, 183.8], [60, 207.7]] },
           { name: "naive baseline", color: "#9aa7b4", points: [[49, 168.0], [50, 185.4], [51, 187.1], [52, 178.9], [53, 187.0], [54, 186.1], [55, 185.9], [56, 169.4], [57, 152.8], [58, 147.8], [59, 164.7], [60, 188.6]] }
-        ]
+        ],
+        interpret: "X is the held-out month, Y is the value. The blue forecast hugs the green actual line, while the grey naive baseline ('repeat last year') sits well below it because it cannot see the year of growth. <b>Read it like this:</b> the vertical gap between blue and green is the error you pay; the gap between grey and green is the error the baseline pays. Blue's gap is much smaller, so the model is adding real skill — that is what MASE below 1 will confirm numerically."
       },
       {
         type: "bars",
-        title: "MAE = average of the per-month |error| (mean = 4.03)",
+        title: "MAE = average of the 12 per-month |error| bars (mean = 4.03)",
         labels: ["m49", "m50", "m51", "m52", "m53", "m54", "m55", "m56", "m57", "m58", "m59", "m60", "MAE"],
         values: [8.4, 5.4, 3.0, 4.7, 0.5, 4.2, 0.3, 4.3, 3.6, 11.7, 0.6, 1.7, 4.03],
         valueLabels: ["8.4", "5.4", "3.0", "4.7", "0.5", "4.2", "0.3", "4.3", "3.6", "11.7", "0.6", "1.7", "4.03"],
-        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"]
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"],
+        interpret: "Each grey bar is one month's absolute miss |actual − forecast|; the blue bar on the right is their average, the MAE. <b>Read it like this:</b> MAE literally is the height you'd get by levelling all the grey bars flat. Month 58 (11.7) towers over the rest — that single big miss is what would pull RMSE above MAE, because RMSE squares each bar before averaging. Watch for one giant bar dominating: it tells you the average is being driven by a few bad months, not a steady small error."
       },
       {
         type: "bars",
-        title: "MASE = MAE / MAE_naive: model error vs the naive baseline's error",
+        title: "MASE = MAE / MAE_naive: your error measured in baseline-error units",
         labels: ["MAE model", "MAE naive (=scale)", "MASE = ratio"],
         values: [4.03, 21.82, 0.185],
         valueLabels: ["4.03", "21.82", "0.185"],
-        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"]
+        colors: ["#4ea1ff", "#9aa7b4", "#7ee787"],
+        interpret: "Left blue bar = the model's MAE (4.03). Middle grey bar = the naive baseline's MAE (21.82), which becomes the ruler. Right green bar = their ratio, MASE = 0.185. <b>Read it like this:</b> MASE asks 'how many baseline-errors big is my typical miss?' 0.185 means the model's error is about one-fifth of the baseline's — below 1 beats naive, above 1 loses. Because it is a ratio of two same-unit quantities it is unitless, so you can average it across a 5-unit product and a 5,000-unit product on one leaderboard."
       },
       {
         type: "bars",
-        title: "Error metrics: model vs naive (lower is better; sMAPE in %)",
+        title: "All metrics agree: model (blue) beats naive (grey); lower is better",
         labels: ["MAE", "RMSE", "sMAPE %", "MASE"],
         series: [
           { name: "model", color: "#4ea1ff", points: [[0, 4.03], [1, 5.17], [2, 2.13], [3, 0.185]] },
           { name: "naive", color: "#9aa7b4", points: [[0, 21.82], [1, 22.25], [2, 11.88], [3, 1.003]] }
-        ]
+        ],
+        interpret: "Four metrics side by side, blue model vs grey naive; in each pair lower is better. <b>Read it like this:</b> the blue bar is shorter in every group, so the verdict does not depend on which metric you happen to report. Note MASE-naive is ~1.00 by definition (the baseline scores 1 against itself), which is the anchor that makes the model's 0.185 meaningful. When metrics disagree it usually means a few large misses (RMSE up but MAE calm) or a near-zero actual (percentage metrics misbehave); here they line up, a sign of a clean result."
       },
       {
         type: "line",
-        title: "90% interval coverage = fraction of actuals inside the band (10/12 = 83%)",
+        title: "90% interval coverage: 10 of 12 actuals inside the band (83%)",
         xlabel: "future month index",
         ylabel: "value",
         series: [
           { name: "actual", color: "#7ee787", points: [[49, 195.5], [50, 199.1], [51, 209.2], [52, 202.7], [53, 205.6], [54, 209.4], [55, 204.7], [56, 192.8], [57, 175.5], [58, 178.6], [59, 184.4], [60, 206.0]] },
           { name: "upper bound", color: "#ffb454", points: [[49, 194.7], [50, 212.1], [51, 213.8], [52, 205.6], [53, 213.7], [54, 212.8], [55, 212.6], [56, 196.1], [57, 179.5], [58, 174.5], [59, 191.4], [60, 215.3]] },
           { name: "lower bound", color: "#ffb454", points: [[49, 179.5], [50, 196.9], [51, 198.6], [52, 190.4], [53, 198.5], [54, 197.6], [55, 197.4], [56, 180.9], [57, 164.3], [58, 159.3], [59, 176.2], [60, 200.1]] }
-        ]
+        ],
+        interpret: "The two orange lines are the lower and upper bounds of a nominal 90% prediction interval; green is the actual. <b>Read it like this:</b> count how many green points fall between the orange lines — here 10 of 12 (83%). A 90% interval should catch about 90%, so 83% is slightly over-confident (the band is a touch too narrow). The escapees are months 49 and 58, exactly the big-miss months from chart 2. Coverage near but below target means widen the band a little; far below means the model badly understates its own uncertainty."
+      },
+      {
+        type: "bars",
+        title: "What you might also see — MAPE blows up when an actual is near zero",
+        labels: ["m1 y=80", "m2 y=60", "m3 y=2 (stockout)", "m4 y=95", "MAPE avg"],
+        values: [6.3, 8.3, 400.0, 5.3, 105.0],
+        valueLabels: ["6.3%", "8.3%", "400%!", "5.3%", "105%!"],
+        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative. Per-point MAPE is |error| / |actual|; three normal months sit near 5–8%, but month 3 had an actual of only 2 (a stockout), so an 8-unit miss reads as 400%. <b>Read it like this:</b> a single near-zero actual hijacks the average — the headline MAPE jumps to 105% even though the forecast is fine elsewhere. The tell is one monstrous percentage bar next to small ones. Fix by switching to WAPE (total error ÷ total actual) or MASE, neither of which divides by a single tiny point."
+      },
+      {
+        type: "scatter",
+        title: "What you might also see — autocorrelated residuals (a slow wave, not noise)",
+        xlabel: "month index",
+        ylabel: "residual (actual − forecast)",
+        groups: [
+          { name: "residuals (drift in a wave)", color: "#ffb454",
+            points: [[1, 1.2], [2, 3.0], [3, 4.1], [4, 4.6], [5, 3.9], [6, 2.2], [7, -0.2], [8, -2.6], [9, -4.0], [10, -4.5], [11, -3.7], [12, -1.8], [13, 0.6], [14, 2.8], [15, 4.0], [16, 4.5], [17, 3.6], [18, 1.6]] }
+        ],
+        lines: [ { color: "#9aa7b4", dash: true, points: [[1, 0], [18, 0]] } ],
+        interpret: "Illustrative. Y is the residual (actual − forecast) at each month; the grey dashed line is zero, where healthy residuals should scatter randomly. <b>Read it like this:</b> instead of random dots these swing in a slow up-and-down wave, staying positive for a run then negative for a run. That is leftover structure the model failed to capture (an un-modelled trend or season). Durbin-Watson would come back near 0 (far from the healthy 2) and Ljung-Box would give a tiny p-value — both flag 'pattern remains'. The fix is a better model (add seasonality / trend), not a different metric."
+      },
+      {
+        type: "bars",
+        title: "What you might also see — a model that LOSES to naive (MASE > 1)",
+        labels: ["MAE model", "MAE naive (=scale)", "MASE = ratio"],
+        values: [27.0, 21.82, 1.24],
+        valueLabels: ["27.0", "21.82", "1.24"],
+        colors: ["#ff7b72", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative — the same MASE chart but for a worse model. The blue-position bar (now red, 27.0) is TALLER than the grey baseline (21.82), so the ratio is 1.24, above 1. <b>Read it like this:</b> MASE above 1 means your model's typical miss is bigger than just repeating last season — it has learned nothing useful and you should ship the naive forecast instead. This is the single most important sanity check: a glossy report quoting 'RMSE = 27' looks fine in isolation but is worthless once you see naive scores better. Always anchor to the baseline."
       }
     ],
-    caption: "Split BY TIME (train months 1-48, test 49-60). Chart 1: the model (blue) tracks actuals (green); the seasonal-naive baseline (grey) lags a year of growth. Chart 2: MAE = 4.03 is just the average of the 12 per-month |error| bars. Chart 3: MASE = MAE/MAE_naive = 4.03/21.82 = 0.185 — dividing by the naive baseline's error puts the score on a baseline ruler, and below 1 means the model beats naive. Chart 4: on every metric the model (blue) crushes naive (grey); MASE naive ~ 1.00 by definition. Chart 5: a nominal 90% interval (forecast +/- 1.645*sigma) catches 10 of 12 actuals (83% coverage) — the two misses (months 49 and 58) are where over- vs under-coverage shows. All numbers computed below.",
+    caption: "Split BY TIME (train months 1-48, test 49-60). Charts 1-5 are the healthy result; each chart's own interpretation explains how to read it. Charts 6-8 are 'what you might also see': the MAPE blow-up near a zero actual, residuals that wave instead of scatter (autocorrelation the diagnostics catch), and a model whose MASE climbs above 1 — i.e. it loses to naive. The healthy numbers are computed below; the warning charts are illustrative but qualitatively honest.",
     code: `import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 

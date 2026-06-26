@@ -239,13 +239,14 @@ print("weighted F1:", f1_score(y_te, pred, average="weighted"))`
   };
 
   window.CODEVIZ["met-classification-label"] = {
-    question: "Each metric is a recipe over the four confusion-matrix counts. What does each formula actually measure, and why do they disagree on imbalanced data?",
+    question: "Each metric is a recipe over the four confusion-matrix counts. What does each formula measure, and how do the SAME counts look under a balanced model, a high-precision/low-recall model, and majority-class collapse?",
     charts: [
       {
         type: "confusion",
-        title: "The anchor: a confusion matrix (rare-disease screen, positive = sick)",
+        title: "The anchor: rare-disease screen (positive = sick), only 50 of 1000 are sick",
         labels: ["positive", "negative"],
-        matrix: [[20, 30], [10, 940]]
+        matrix: [[20, 30], [10, 940]],
+        interpret: "Rows = truth, columns = prediction. Of the 50 real positives, the model catches TP = 20 and misses FN = 30; of the 950 negatives it correctly clears TN = 940 and falsely flags FP = 10. <b>The TN box dwarfs everything</b> because the disease is rare — that lopsidedness is exactly what makes accuracy untrustworthy here and why we compute the per-class metrics below. All four counts (20, 10, 30, 940) feed every formula that follows."
       },
       {
         type: "bars",
@@ -255,7 +256,8 @@ print("weighted F1:", f1_score(y_te, pred, average="weighted"))`
         labels: ["TP (numerator)", "TP+FP (denominator)", "precision x100"],
         values: [20, 30, 66.7],
         valueLabels: ["20", "30", "0.667"],
-        colors: ["#7ee787", "#9aa7b4", "#4ea1ff"]
+        colors: ["#7ee787", "#9aa7b4", "#4ea1ff"],
+        interpret: "Reads the precision formula term by term. The green bar is TP = 20 (correct positive flags); the grey bar is TP + FP = 30, every example the model called positive; the blue bar is the ratio scaled x100 so it shares the axis. Precision = 20/30 = <b>0.667</b> answers <b>\"when the model says sick, how often is it right?\"</b> — it only looks at the positive column, never at TN."
       },
       {
         type: "bars",
@@ -265,7 +267,8 @@ print("weighted F1:", f1_score(y_te, pred, average="weighted"))`
         labels: ["TP (numerator)", "TP+FN (denominator)", "recall x100"],
         values: [20, 50, 40.0],
         valueLabels: ["20", "50", "0.400"],
-        colors: ["#7ee787", "#9aa7b4", "#ffb454"]
+        colors: ["#7ee787", "#9aa7b4", "#ffb454"],
+        interpret: "Same TP = 20 numerator, but now the denominator is TP + FN = 50, the real positives (the top row of the matrix). Recall = 20/50 = <b>0.400</b> answers <b>\"of everyone who was actually sick, how many did we catch?\"</b> — here, fewer than half. Precision and recall divide TP by different groups, which is why they disagree and why you must name which mistake you fear."
       },
       {
         type: "bars",
@@ -275,20 +278,36 @@ print("weighted F1:", f1_score(y_te, pred, average="weighted"))`
         labels: ["2TP (numerator)", "2TP+FP+FN (denominator)", "F1 x100"],
         values: [40, 80, 50.0],
         valueLabels: ["40", "80", "0.500"],
-        colors: ["#7ee787", "#9aa7b4", "#c89bff"]
+        colors: ["#7ee787", "#9aa7b4", "#c89bff"],
+        interpret: "F1 blends precision and recall into one number. The denominator 2TP + FP + FN = 80 contains <b>no TN at all</b> — the 940 easy negatives never enter, so F1 cannot be flattered by them. F1 = 40/80 = <b>0.500</b>, dragged toward the weaker of the two (recall 0.400), because the harmonic mean punishes imbalance between precision and recall."
+      },
+      {
+        type: "confusion",
+        title: "Variant — high precision, low recall (conservative model, illustrative)",
+        labels: ["positive", "negative"],
+        matrix: [[8, 42], [0, 950]],
+        interpret: "Illustrative: a cautious model only flags a case when it is very sure. It makes zero false alarms (FP = 0, precision = 8/8 = 1.000) but pays for that caution by missing most of the disease (FN = 42, recall = 8/50 = 0.160). <b>An empty FP box with a fat FN box is the signature of a high-precision, low-recall model</b> — perfect when you flag, but it stays silent far too often. Deadly for screening, where a miss can cost a life."
+      },
+      {
+        type: "confusion",
+        title: "Variant — majority-class collapse: predict negative for everyone (illustrative)",
+        labels: ["positive", "negative"],
+        matrix: [[0, 50], [0, 950]],
+        interpret: "Illustrative: the model gives up and labels everything negative. The entire positive column is empty: TP = 0, FP = 0. Accuracy = 950/1000 = <b>0.950</b> looks excellent, but recall = 0/50 = 0, F1 = 0, and MCC = 0 — the model has zero skill. <b>A whole empty prediction column with sky-high accuracy is the classic imbalance trap;</b> MCC and balanced accuracy are the metrics that refuse to be fooled by it."
       },
       {
         type: "bars",
-        title: "Why they disagree: accuracy and specificity look great, but F1 and recall expose the misses (same matrix)",
-        xlabel: "metric",
+        title: "The same metrics across all three matrices — watch which ones stay honest under imbalance",
+        xlabel: "scenario / metric",
         ylabel: "score",
-        labels: ["accuracy", "specificity", "precision", "F1", "recall"],
-        values: [0.96, 0.989, 0.667, 0.5, 0.4],
-        valueLabels: ["0.960", "0.989", "0.667", "0.500", "0.400"],
-        colors: ["#4ea1ff", "#9aa7b4", "#7ee787", "#c89bff", "#ff7b72"]
+        labels: ["anchor: accuracy", "anchor: recall", "anchor: F1", "high-prec: accuracy", "high-prec: recall", "collapse: accuracy", "collapse: MCC"],
+        values: [0.96, 0.4, 0.5, 0.958, 0.16, 0.95, 0.0],
+        valueLabels: ["0.960", "0.400", "0.500", "0.958", "0.160", "0.950", "0.000"],
+        colors: ["#4ea1ff", "#ff7b72", "#c89bff", "#4ea1ff", "#ff7b72", "#4ea1ff", "#7ee787"],
+        interpret: "Blue bars are accuracy, which stays around 0.95-0.96 in all three cases — it barely moves even when the model collapses to useless. The red recall bars and the green MCC bar tell the real story: recall falls from 0.400 to 0.160 as the model turns conservative, and MCC is exactly 0 for the collapse model that accuracy still rates 0.950. <b>When classes are imbalanced, trust recall, F1, balanced accuracy, or MCC over accuracy</b> — they react to the failures accuracy papers over."
       }
     ],
-    caption: "One confusion matrix (TP=20, FP=10, FN=30, TN=940; only 50 of 1000 are positive) anchors every formula. accuracy = (20+940)/1000 = 0.960 and specificity = 940/950 = 0.989 are flattered by the 940 easy negatives. But accuracy never asks how many of the 50 sick people you caught: recall = 20/50 = 0.400 says you missed 30 of them, and F1 = 0.500 splits the difference with precision. The term-by-term bars show exactly which counts each ratio divides; the last chart puts all five on one scale so the imbalance trap is visible at a glance.",
+    caption: "The anchor matrix (TP=20, FP=10, FN=30, TN=940; only 50 of 1000 positive) feeds every term-by-term bar: precision = 20/30 = 0.667 (positive column only), recall = 20/50 = 0.400 (positive row only), F1 = 40/80 = 0.500 (no TN in sight). Then two variants you will actually meet on imbalanced data: a conservative high-precision/low-recall model (FP = 0 but recall 0.160) and full majority-class collapse (predict-all-negative, accuracy 0.950 yet recall, F1 and MCC all 0). The final chart lines the metrics up across all three so you can see accuracy hold steady near 0.95 while recall and MCC expose what is really happening — the reason this lesson exists.",
     code: `import numpy as np
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,

@@ -253,7 +253,7 @@ print("LPIPS:", lpips(out, target).item())
   };
 
   window.CODEVIZ["met-generative"] = {
-    question: "What does each generative metric actually measure? See FID split into its mean and covariance terms, watch FID fall to 0 as the fakes approach the real statistics, and read fidelity-vs-diversity off precision/recall — plus what a good Inception Score looks like.",
+    question: "What does each generative metric actually measure — and what do the healthy and broken versions of each chart look like? See FID split into its mean and covariance terms, watch FID fall to 0 as the fakes approach the real stats, read fidelity-vs-diversity off precision/recall, and learn the failure shapes you will actually meet.",
     charts: [
       {
         type: "bars",
@@ -263,18 +263,44 @@ print("LPIPS:", lpips(out, target).item())
         labels: ["mean term", "covariance term", "FID total"],
         values: [13.0, 2.0, 15.0],
         valueLabels: ["13.0", "2.0", "15.0"],
-        colors: ["#4ea1ff", "#c89bff", "#ffb454"]
+        colors: ["#4ea1ff", "#c89bff", "#ffb454"],
+        interpret: "FID is just two non-negative pieces added together, and this chart shows their sizes. The blue <b>mean term</b> (13.0) is how far the fake cloud's center sits from the real center; the purple <b>covariance term</b> (2.0) is how differently the two clouds are spread/shaped. Orange is their sum, the <b>FID = 15.0</b>. The reading: here the damage is mostly <b>wrong center</b>, not wrong spread — so the fakes are systematically off-target rather than too narrow or too wide. Lower bars are better; both are 0 only when the clouds match exactly."
       },
       {
         type: "line",
-        title: "FID drops to 0 as the generated cloud approaches the real-feature stats",
+        title: "Healthy: FID drops to 0 as the generated cloud approaches the real stats",
         xlabel: "fraction of the way from a bad generator to the real distribution",
         ylabel: "FID (lower = better)",
         series: [{
           name: "FID",
           color: "#7ee787",
           points: [[0, 31.25], [0.25, 17.58], [0.5, 7.81], [0.75, 1.95], [1.0, 0.0]]
-        }]
+        }],
+        interpret: "This is a training curve as it should look. The x-axis is how close the generator's statistics are to the real data (0 = far off, 1 = matched); the y-axis is FID. The curve <b>slides smoothly down to 0</b> and flattens — exactly 0 when the fakes match the reals. Read a real FID-vs-step plot the same way: <b>monotone decrease toward a floor = healthy training</b>. The curve gets steeper near the left (a bad generator improves fast) and flattens near the right (the last bit of FID is the hardest to remove)."
+      },
+      {
+        type: "line",
+        title: "Variant — FID plateaus high: generator stops improving (illustrative)",
+        xlabel: "training step",
+        ylabel: "FID (lower = better)",
+        series: [{
+          name: "FID stuck",
+          color: "#ffb454",
+          points: [[0, 120], [1, 70], [2, 48], [3, 42], [4, 40], [5, 39.5], [6, 39.5]]
+        }],
+        interpret: "A failure you will actually meet (numbers illustrative). FID falls at first, then <b>flattens out far above 0</b> and never reaches a good value. Read it as: the generator learned the easy structure but is <b>stuck</b> — mode collapse, too-small a model, or a learning rate that needs dropping. The tell is the <b>high flat tail</b>: if your FID stops at 40 instead of trending toward single digits, more steps will not help. Compare to the healthy curve above, which keeps descending toward 0."
+      },
+      {
+        type: "line",
+        title: "Variant — FID diverges: training destabilises (illustrative)",
+        xlabel: "training step",
+        ylabel: "FID (lower = better)",
+        series: [{
+          name: "FID blowing up",
+          color: "#ff7b72",
+          points: [[0, 90], [1, 55], [2, 38], [3, 45], [4, 80], [5, 140], [6, 210]]
+        }],
+        interpret: "The GAN-instability signature (numbers illustrative). FID improves for a while, then <b>turns around and climbs</b> — often sharply. Read it as: the generator and discriminator fell out of balance (or the LR is too high), so image quality is now <b>getting worse</b> every step. The lesson: <b>watch the trend, not the best point</b> — checkpoint at the minimum (here ~step 2) and stop, because the curve after it is pure regression. An ever-rising tail means restart with a lower learning rate or a fix to the training dynamics."
       },
       {
         type: "bars",
@@ -284,7 +310,8 @@ print("LPIPS:", lpips(out, target).item())
         labels: ["lowdiv prec", "lowdiv rec", "lowfid prec", "lowfid rec", "good prec", "good rec"],
         values: [1.0, 0.46, 0.14, 0.28, 0.88, 1.0],
         valueLabels: ["1.00", "0.46", "0.14", "0.28", "0.88", "1.00"],
-        colors: ["#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787"]
+        colors: ["#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787", "#4ea1ff", "#7ee787"],
+        interpret: "Read this in <b>blue/green pairs</b>, one pair per generator. Blue = precision (fidelity: do the fakes look real?); green = recall (diversity: do the fakes cover the full real range?). The <b>low-diversity</b> generator is blue-high/green-low (1.00 / 0.46) — its few faces look real but it ignores most of the range. The <b>low-fidelity</b> one is low/low (0.14 / 0.28) — fakes land off the real manifold. The <b>good</b> one has both bars tall (0.88 / 1.00). This split is exactly what a single FID number hides: a tall-blue/short-green pair is the classic mode-collapse fingerprint."
       },
       {
         type: "bars",
@@ -294,10 +321,11 @@ print("LPIPS:", lpips(out, target).item())
         labels: ["confident + varied", "all one class", "blurry/unsure"],
         values: [2.02, 1.0, 1.01],
         valueLabels: ["2.02", "1.00", "1.01"],
-        colors: ["#7ee787", "#ff7b72", "#ffb454"]
+        colors: ["#7ee787", "#ff7b72", "#ffb454"],
+        interpret: "Inception Score wants <b>both</b> sharp single images <b>and</b> variety across the batch; this chart shows what each failure does to it. The green generator is confident <i>and</i> spans all 3 classes, so IS is high (2.02, near the max of 3). The red one emits <b>all one class</b> — no variety — so IS collapses to 1.00. The orange one is <b>blurry/unsure</b> (flat label guesses) and also scores ~1.01. The trap to remember: IS only looks at the fakes, <b>never at your real data</b>, so a high IS does not prove the fakes resemble reality — always pair it with FID."
       }
     ],
-    caption: "Real numbers from a concrete low-dimensional Gaussian feature example you can compute by hand. (1) FID term split: real cloud mu_r=[10,5], S_r=diag(4,1); a bad generator mu_g=[12,8], S_g=diag(9,4). Mean term = (10-12)^2+(5-8)^2 = 13.0; covariance term = Tr(diag(4,1)+diag(9,4)-2*diag(6,2)) = 1+1 = 2.0; FID = 15.0. (2) Sliding the generator from a far-off bad cloud (mu=[13,9], std=[4,2.5]) toward the real stats, FID falls 31.25 -> 17.58 -> 7.81 -> 1.95 -> 0.0 (exactly 0 when the fakes match the reals). (3) Precision/recall on 2-D feature clouds via k-NN manifolds (k=3, 50 points each): a low-diversity generator scores precision 1.00 but recall 0.46 (fakes look real but cover little); a low-fidelity one gets 0.14 / 0.28; a balanced one 0.88 / 1.00 — exactly the fidelity-vs-diversity split FID hides. (4) Inception Score over 3 classes: confident-and-varied label guesses give 2.02, but emitting all one class gives 1.00 and blurry/unsure guesses 1.01 (max possible = number of classes = 3.0).",
+    caption: "Charts 1, 5 and 6 use concrete hand-computable numbers; the three FID-vs-step curves (2 healthy, 3-4 variants) are illustrative shapes you learn to recognise on a training plot. (1) FID term split: real cloud mu_r=[10,5], S_r=diag(4,1); a bad generator mu_g=[12,8], S_g=diag(9,4) gives mean term 13.0 + covariance term 2.0 = FID 15.0. (5) Precision/recall via k-NN manifolds: low-diversity 1.00/0.46, low-fidelity 0.14/0.28, good 0.88/1.00. (6) Inception Score over 3 classes: confident+varied 2.02, all-one-class 1.00, blurry 1.01 (max = 3.0).",
     code: `import numpy as np
 from scipy.linalg import sqrtm
 

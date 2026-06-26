@@ -274,18 +274,46 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-performance"] = {
-    question: "When a DataFrame is reused across several actions, how much does cache() save versus recomputing the whole pipeline each time?",
+    question: "How do you READ a Spark performance chart — the win cache() buys, the case where it buys nothing, the broadcast-vs-shuffle gap, and a skewed stage in the UI?",
     charts: [
       {
         type: "bars",
-        title: "Runtime of 3 repeated reads of the same result: WITHOUT cache vs WITH cache (ms)",
-        labels: ["no-cache read 1", "no-cache read 2", "no-cache read 3", "cached read 1 (fills cache)", "cached read 2", "cached read 3"],
+        title: "Cache pays off: 3 reused reads, WITHOUT cache vs WITH cache (ms)",
+        labels: ["no-cache 1", "no-cache 2", "no-cache 3", "cached 1 (fills cache)", "cached 2", "cached 3"],
         values: [110.0, 100.0, 98.0, 97.0, 0.07, 0.02],
-        valueLabels: ["110", "100", "98", "97 (compute+cache)", "0.07", "0.02"],
-        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ffb454", "#7ee787", "#7ee787"]
+        valueLabels: ["110", "100", "98", "97 compute+cache", "0.07", "0.02"],
+        colors: ["#ff7b72", "#ff7b72", "#ff7b72", "#ffb454", "#7ee787", "#7ee787"],
+        interpret: "<b>Each bar is one read of the same result; height is milliseconds, shorter is better.</b> Red bars (no cache) all cost ~100 ms because Spark is lazy — every action re-runs the whole pipeline from the source. The orange bar is the FIRST cached read: it still pays ~97 ms, but now it also stores the result. The two green bars are reads 2 and 3 from cache: ~0.07 and 0.02 ms, effectively free. <b>Read it as:</b> with 3 reuses, cache turns ~3x the work into ~1x — and the more reuses, the bigger the win."
+      },
+      {
+        type: "bars",
+        title: "Cache HURTS on single use: read once, never reused (illustrative)",
+        labels: ["no cache (1 read)", "cached (1 read)"],
+        values: [100.0, 112.0],
+        valueLabels: ["100", "112 (compute + store overhead)"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative.</b> Same axes (ms, shorter is better), but now the DataFrame is read only ONCE. Without cache it costs ~100 ms. WITH cache it costs MORE (~112 ms): you pay the pipeline plus the overhead of writing blocks into executor memory, and nothing ever reads them back. <b>Recognise it</b> by a cached bar that is taller, not shorter. <b>What it means:</b> caching a DataFrame used once (k=1) wastes memory and time — only cache when it is reused across multiple actions, and unpersist() when done."
+      },
+      {
+        type: "bars",
+        title: "Broadcast vs shuffle join: huge table joined to a tiny lookup (illustrative)",
+        labels: ["shuffle join (SortMergeJoin)", "broadcast join (BroadcastHashJoin)"],
+        values: [240.0, 35.0],
+        valueLabels: ["240", "35"],
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "<b>Illustrative; height is seconds of stage time, shorter is better.</b> A default join shuffles BOTH tables across the network by the key — the red bar — even though one side is tiny. F.broadcast(small) ships a full copy of the small table to every executor so each joins locally with no shuffle: the green bar. <b>Recognise the win</b> in explain() when the plan flips from SortMergeJoin (with an Exchange/shuffle) to BroadcastHashJoin (none). <b>What it means:</b> the shuffle was the whole cost, so removing it can collapse a long stage."
+      },
+      {
+        type: "bars",
+        title: "Skew in the Spark UI: per-task time within one stage (illustrative)",
+        labels: ["task 1", "task 2", "task 3", "task 4", "task 5 (straggler)"],
+        values: [4.0, 3.8, 4.2, 3.9, 47.0],
+        valueLabels: ["4.0", "3.8", "4.2", "3.9", "47.0 straggler"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative; each bar is one task in the same stage, height is seconds.</b> Four tasks finish in ~4 s, but task 5 takes 47 s — a <b>straggler</b>. The stage cannot finish until its slowest task does, so this one task holds up everything. <b>Recognise it</b> in the Spark UI as a single bar towering over its peers (or a max task time far above the median). <b>What it means:</b> data skew — one partition holds far more rows than the rest. Fix: enable AQE skew handling (spark.sql.adaptive.skewJoin.enabled) to split the oversized partition, or salt the join key."
       }
     ],
-    caption: "Real timings from a pandas stand-in for a lazy Spark pipeline (4,000,000 rows: filter amount > 5, log1p, group-by-region sum). WITHOUT cache, every action re-runs the whole pipeline — each of three reads costs ~100 ms (3x the work). WITH cache, the first read pays ~97 ms to compute AND store the result; reads 2 and 3 then read the materialized result in ~0.07 and ~0.02 ms — effectively free. This is exactly why df.cache() pays off when a DataFrame is reused across multiple actions, and why caching a DataFrame used only once buys nothing. (pandas illustrates the ratio; Spark caches across executors, but the recompute-vs-reuse story is the same.)",
+    caption: "Four ways a Spark performance chart shows up. Bars #1: REAL timings (pandas stand-in for a lazy 4M-row pipeline) showing cache turning 3 reused reads from ~3x work into ~1x. Bars #2: the flip side — caching a once-used DataFrame costs MORE, illustrative. Bars #3: broadcast vs shuffle join, the shuffle being the whole cost, illustrative. Bars #4: a straggler task in the Spark UI signalling data skew, illustrative. The healthy/green cases are the levers from the lesson; the red cases are how the same charts reveal a problem.",
     code: `import numpy as np, pandas as pd, time
 
 rng = np.random.RandomState(0)

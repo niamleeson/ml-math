@@ -263,39 +263,74 @@ for deg in (1, 2, 3, 4, 6):
   };
 
   window.CODEVIZ["met-model-selection"] = {
-    question: "One feature of load_diabetes, polynomials of growing degree. Three views of the SAME selection problem: AIC = 2k - 2lnL and BIC = k ln n - 2lnL as U-curves; the bias-variance train-vs-validation split; and AIC/BIC bars picking the winning candidate. Where is the sweet spot, and where does it start to OVERFIT?",
+    question: "One feature of load_diabetes, polynomials of growing degree. See the healthy read — AIC/BIC U-curves and the bias-variance split both bottoming at degree 3 — then the cases you actually meet: AIC and BIC disagreeing on which model wins, a validation curve that never turns down (underfit), and one that explodes (severe overfit). Where is the sweet spot, and how do you spot trouble?",
     charts: [
       {
         type: "line",
-        title: "AIC = 2k - 2lnL and BIC = k ln n - 2lnL vs degree (fit reward + complexity tax)",
+        title: "Healthy: AIC = 2k - 2lnL and BIC = k ln n - 2lnL both dip to a min at degree 3",
         xlabel: "polynomial degree (model complexity)",
         ylabel: "criterion value (lower = better)",
         series: [
           { name: "AIC (min deg 3)", color: "#4ea1ff", points: [[1, 3675.4], [2, 3676.2], [3, 3663.4], [4, 3665.4], [5, 3667.1], [6, 3669.0], [7, 3670.8], [8, 3671.6]] },
           { name: "BIC (min deg 3)", color: "#ffb454", points: [[1, 3687.7], [2, 3692.6], [3, 3683.9], [4, 3689.9], [5, 3695.7], [6, 3701.8], [7, 3707.6], [8, 3712.5]] }
-        ]
+        ],
+        interpret: "X-axis is model complexity (polynomial degree); y-axis is the criterion (lower = better). Each curve = a fit term that drops as the model improves, plus a complexity tax that rises with each parameter. <b>Read the bottom of the U as the model to pick.</b> Both dip to a minimum at degree 3, then climb — before 3 the model is too simple, after 3 the fit barely improves while the tax keeps rising (overfitting). BIC (orange) sits higher and climbs faster because its tax, ln(442) ≈ 6.09 per parameter, is heavier than AIC's flat 2."
       },
       {
         type: "line",
-        title: "Bias-variance: training MSE keeps falling, validation MSE is U-shaped (min deg 3)",
+        title: "Healthy: training MSE keeps falling, validation MSE is U-shaped (min deg 3)",
         xlabel: "polynomial degree (model complexity)",
         ylabel: "mean squared error (5-fold CV)",
         series: [
           { name: "training MSE (always drops)", color: "#7ee787", points: [[1, 4028], [2, 4016], [3, 3881], [4, 3880], [5, 3877], [6, 3875], [7, 3870], [8, 3857]] },
           { name: "validation MSE (U: sweet spot deg 3)", color: "#ff7b72", points: [[1, 4061], [2, 4057], [3, 3951], [4, 3957], [5, 3963], [6, 3988], [7, 4393], [8, 5259]] }
-        ]
+        ],
+        interpret: "The same story with no formula, using held-out error. Green (training MSE) falls forever — a more complex model always fits the data it has seen. Red (validation MSE, on unseen folds) bottoms out at degree 3 then shoots up. <b>Read the widening gap between green and red as the amount of overfitting.</b> Pick the degree where the red curve is lowest (3): past it the model is memorizing noise. Both the formula (AIC/BIC) and this measurement agree on degree 3."
       },
       {
         type: "bars",
-        title: "AIC vs BIC across 5 candidate models — pick the lowest bar (degree 3 wins both)",
+        title: "Healthy: AIC vs BIC across 5 candidates — pick the lowest bar (degree 3 wins both)",
         labels: ["deg 1", "deg 2", "deg 3", "deg 4", "deg 6"],
         series: [
           { name: "AIC", color: "#4ea1ff", points: [[0, 3675.4], [1, 3676.2], [2, 3663.4], [3, 3665.4], [4, 3669.0]] },
           { name: "BIC", color: "#ffb454", points: [[0, 3687.7], [1, 3692.6], [2, 3683.9], [3, 3689.9], [4, 3701.8]] }
-        ]
+        ],
+        interpret: "Each pair of bars is one candidate model; blue = AIC, orange = BIC. <b>The rule is simply 'pick the lowest bar'.</b> Degree 3 has the smallest AIC (3663.4) AND the smallest BIC (3683.9), so it wins under both criteria — an easy, unambiguous decision. When the lowest AIC and lowest BIC land on the same model like this, you can ship it with confidence."
+      },
+      {
+        type: "bars",
+        title: "What you might see: AIC and BIC DISAGREE — AIC picks deg 4, BIC picks deg 2",
+        labels: ["deg 1", "deg 2", "deg 3", "deg 4", "deg 5"],
+        series: [
+          { name: "AIC (min deg 4)", color: "#4ea1ff", points: [[0, 312.0], [1, 308.0], [2, 306.5], [3, 305.8], [4, 306.2]] },
+          { name: "BIC (min deg 2)", color: "#ffb454", points: [[0, 318.5], [1, 314.0], [2, 315.5], [3, 318.0], [4, 322.0]] }
+        ],
+        interpret: "<b>Illustrative.</b> Here the lowest blue bar (AIC) is at degree 4 but the lowest orange bar (BIC) is at degree 2 — the two criteria <b>point at different models</b>. This happens by design: AIC's light penalty tolerates extra parameters (good for prediction, tends to over-select), while BIC's heavier ln(n) penalty prefers simpler models (good for finding the 'true' model). <b>Recognise it when the two lowest bars don't line up.</b> Resolve it by your goal — AIC for forecasting, BIC for a parsimonious explanation — or break the tie with cross-validation."
+      },
+      {
+        type: "line",
+        title: "What you might see: UNDERFIT — validation MSE never turns down, just flattens",
+        xlabel: "polynomial degree (model complexity)",
+        ylabel: "mean squared error (held-out)",
+        series: [
+          { name: "training MSE", color: "#7ee787", points: [[1, 5200], [2, 5150], [3, 5120], [4, 5100], [5, 5090], [6, 5085], [7, 5082], [8, 5080]] },
+          { name: "validation MSE (no clear dip)", color: "#ff7b72", points: [[1, 5300], [2, 5260], [3, 5240], [4, 5235], [5, 5235], [6, 5238], [7, 5242], [8, 5248]] }
+        ],
+        interpret: "<b>Illustrative.</b> Both curves stay high and nearly flat, and validation MSE has <b>no clear bottom</b> — it just plateaus and the train/validation gap stays small. <b>Read this as underfitting: none of these models capture the signal, so adding degree barely helps.</b> Unlike the healthy chart, there is no obvious 'sweet spot' degree to pick. The fix is more expressive models or better features, not fiddling with the polynomial degree among options that are all too weak."
+      },
+      {
+        type: "line",
+        title: "What you might see: SEVERE OVERFIT — validation MSE explodes past the sweet spot",
+        xlabel: "polynomial degree (model complexity)",
+        ylabel: "mean squared error (held-out)",
+        series: [
+          { name: "training MSE (drops to ~0)", color: "#7ee787", points: [[1, 4000], [2, 3700], [3, 3500], [4, 2800], [5, 1600], [6, 700], [7, 150], [8, 20]] },
+          { name: "validation MSE (blows up)", color: "#ff7b72", points: [[1, 4100], [2, 3950], [3, 3900], [4, 4600], [5, 7200], [6, 14000], [7, 31000], [8, 78000]] }
+        ],
+        interpret: "<b>Illustrative.</b> Training MSE (green) drives toward zero — the model memorizes every point — while validation MSE (red) bottoms early (degree 3) then <b>explodes by orders of magnitude</b>. <b>Recognise severe overfitting by the huge, ever-widening gap between the two curves.</b> The high-degree wiggles fit the training noise but predict wildly on new data. Pick the degree at the red minimum and ignore the lower training error; regularization or fewer features would tame the blow-up."
       }
     ],
-    caption: "Real numbers from load_diabetes, one feature (s5), n=442. CHART 1 (AIC/BIC U-curves): both criteria = a fit term -2lnL = n ln(RSS/n) plus a complexity tax (2k for AIC, k ln n for BIC). Each dips to a minimum at degree 3 then climbs — up to deg 3 the added term cuts RSS enough to beat its penalty (too simple before that); from deg 4 on the fit barely improves while the tax keeps rising (overfitting). BIC sits higher and climbs faster because ln(442) = 6.09 per parameter is a much heavier tax than AIC's flat 2. CHART 2 (bias-variance): the same story without a formula — 5-fold training MSE falls forever (low bias, the model memorizes), but validation MSE bottoms out at degree 3 (4061 -> 3951) then shoots up (5259 at deg 8) as variance explodes. The gap between the two curves IS the overfitting. Both the formula (AIC/BIC) and the held-out measurement (CV) point to degree 3. CHART 3 (candidate bars): line up five candidates and the rule is just 'pick the lowest bar' — degree 3 has the smallest AIC (3663.4) AND the smallest BIC (3683.9), so it wins under both.",
+    caption: "Read each chart by its own caption below it. Real numbers (charts 1–3) from load_diabetes, one feature (s5), n=442: the AIC/BIC U-curves, the bias-variance train-vs-validation split, and the candidate bars all agree that degree 3 is the sweet spot — both criteria = a fit term -2lnL = n ln(RSS/n) plus a complexity tax (2k for AIC, k ln n for BIC). Charts 4–6 are the situations you actually meet, all illustrative: AIC and BIC disagreeing on the winner (light vs heavy penalty), an underfit validation curve that never turns down, and a severe-overfit curve that explodes past the minimum. In every case the rule is the same — pick the model at the bottom of the U, and treat falling training error alone as a warning, not a win.",
     code: `import numpy as np
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import KFold

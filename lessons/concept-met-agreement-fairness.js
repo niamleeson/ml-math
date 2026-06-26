@@ -256,48 +256,96 @@ print("equalized odds diff    :",
   };
 
   window.CODEVIZ["met-agreement-fairness"] = {
-    question: "Two questions, one shape. (1) Two doctors read 100 X-rays and agree on 85 — but how much of that is luck? (2) A loan model approves region A and region B at different rates — is that gap fair? Each formula below is one diagram.",
+    question: "Two questions, one shape. (1) Two raters agree on most items — but how much is luck? (2) A model treats two groups differently — is the gap fair? Below: the healthy/ideal diagrams PLUS the failure-mode variants you will actually meet.",
     charts: [
       {
         type: "bars",
-        title: "Cohen's kappa = (p_o - p_e)/(1 - p_e) — chance already buys most of the 85% agreement",
+        title: "IDEAL — Cohen's kappa = (p_o - p_e)/(1 - p_e): chance already buys most of the 85% agreement",
         xlabel: "term",
         ylabel: "agreement (fraction of items)",
         labels: ["observed p_o", "chance p_e", "skill above chance (p_o - p_e)", "room above chance (1 - p_e)", "kappa = ratio"],
         values: [0.85, 0.54, 0.31, 0.46, 0.674],
         valueLabels: ["0.85", "0.54", "0.31", "0.46", "0.674"],
-        colors: ["#4ea1ff", "#ffb454", "#7ee787", "#9aa7b4", "#c89bff"]
-      },
-      {
-        type: "heatmap",
-        title: "Agreement table for the two doctors (N=100): kappa is read off the diagonal vs off-diagonal",
-        rows: ["Doctor A: tumor", "Doctor A: clear"],
-        cols: ["Doctor B: tumor", "Doctor B: clear"],
-        matrix: [[28, 2], [12, 58]],
-        showVals: true
+        colors: ["#4ea1ff", "#ffb454", "#7ee787", "#9aa7b4", "#c89bff"],
+        interpret: "Each bar is one term of the kappa formula. Blue is what the raters actually agreed on (0.85); orange is what pure luck already buys when A calls 'tumor' 30% and B 40% (0.54). Kappa keeps only the green slice of skill ABOVE chance (0.31) as a fraction of the grey room that was left to win (0.46), giving the purple 0.674. <b>Read it as:</b> a healthy moderate-to-good result — the raw 85% overstated the real agreement, but plenty of genuine skill remains."
       },
       {
         type: "bars",
-        title: "Demographic parity: selection rate per region — disparate-impact ratio 0.30/0.60 = 0.50 fails the 80% rule",
+        title: "WHAT YOU MIGHT ALSO SEE — Prevalence paradox: 92% raw agreement but kappa only 0.51",
+        xlabel: "term",
+        ylabel: "agreement (fraction of items)",
+        labels: ["observed p_o", "chance p_e", "skill above chance", "room above chance", "kappa = ratio"],
+        values: [0.92, 0.836, 0.084, 0.164, 0.512],
+        valueLabels: ["0.92", "0.836", "0.084", "0.164", "0.512"],
+        colors: ["#4ea1ff", "#ff7b72", "#7ee787", "#9aa7b4", "#c89bff"],
+        interpret: "Same chart, rare class ('toxic' at ~9%). The orange chance bar swells to 0.836 because when one label dominates, two random raters agree almost all the time. That leaves only a sliver of room (0.164) and a tiny skill slice (0.084), so kappa drops to 0.51 even though raw agreement LOOKS better (0.92) than the ideal case. <b>Recognise it by:</b> a huge orange bar nearly touching the blue one — high raw %, low kappa. Always report kappa next to the raw % and class balance."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — Worse than chance: raters disagree systematically, kappa goes NEGATIVE",
+        xlabel: "term",
+        ylabel: "agreement (fraction of items)",
+        labels: ["observed p_o", "chance p_e", "skill above chance (p_o - p_e)", "room above chance (1 - p_e)", "kappa = ratio"],
+        values: [0.40, 0.54, -0.14, 0.46, -0.304],
+        valueLabels: ["0.40", "0.54", "-0.14", "0.46", "-0.304"],
+        colors: ["#4ea1ff", "#ffb454", "#ff7b72", "#9aa7b4", "#ff7b72"],
+        interpret: "Illustrative. Here observed agreement (0.40) sits BELOW chance (0.54), so the skill slice is negative (-0.14) and kappa falls below zero to -0.30. <b>Read it as:</b> the raters agree LESS than coin-flips would — usually a sign of flipped category definitions, a coding error, or one rater systematically inverting the scale. A negative kappa is never 'just low' — go fix the labeling guideline or the data pipeline."
+      },
+      {
+        type: "heatmap",
+        title: "IDEAL — Agreement table for the two doctors (N=100): kappa reads off diagonal vs off-diagonal",
+        rows: ["Doctor A: tumor", "Doctor A: clear"],
+        cols: ["Doctor B: tumor", "Doctor B: clear"],
+        matrix: [[28, 2], [12, 58]],
+        showVals: true,
+        interpret: "Rows are Doctor A's calls, columns Doctor B's. The diagonal (28 both-tumor, 58 both-clear) is where they AGREE; the off-diagonal (2 + 12) is where they disagree. The row/column totals are the marginals kappa uses: A's tumor row sums to 30, B's tumor column to 40. <b>Read it as:</b> mass concentrated on the diagonal means good agreement; the off-diagonal cells are the cases your labeling guide needs to disambiguate."
+      },
+      {
+        type: "bars",
+        title: "IDEAL — Demographic parity: selection rate per region; disparate-impact 0.30/0.60 = 0.50 FAILS the 80% rule",
         xlabel: "region",
         ylabel: "selection rate (fraction approved)",
         labels: ["region A", "region B", "0.8 x A (80%-rule floor)"],
         values: [0.60, 0.30, 0.48],
         valueLabels: ["0.60", "0.30", "0.48 floor"],
-        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4"]
+        colors: ["#4ea1ff", "#ff7b72", "#9aa7b4"],
+        interpret: "Each bar is the fraction of a region approved. Region B (red, 0.30) is far below region A (blue, 0.60). The grey bar is the 80%-rule floor — 0.8 times A's rate = 0.48 — and B sits below it. <b>Read it as:</b> when the lower group's bar falls under the grey floor, the disparate-impact ratio (here 0.30/0.60 = 0.50) is under 0.8 and the model FAILS the legal screen. The size of the drop below grey is how far it fails by."
       },
       {
         type: "bars",
-        title: "Equalized odds: TPR (equal opportunity) and FPR per region — both gaps measure unfairness",
+        title: "WHAT YOU MIGHT ALSO SEE — Parity PASSES: 0.55 vs 0.48 gives ratio 0.87, above the 0.8 floor",
+        xlabel: "region",
+        ylabel: "selection rate (fraction approved)",
+        labels: ["region A", "region B", "0.8 x A (80%-rule floor)"],
+        values: [0.55, 0.48, 0.44],
+        valueLabels: ["0.55", "0.48", "0.44 floor"],
+        colors: ["#4ea1ff", "#7ee787", "#9aa7b4"],
+        interpret: "Illustrative healthy case. Both regions are approved at close rates (0.55 vs 0.48), and the lower group (green) sits ABOVE the grey 0.44 floor (0.8 x 0.55). The ratio 0.48/0.55 = 0.87 clears 0.8. <b>Recognise it by:</b> the lower bar landing above the grey line — the 80% rule passes. Note this only checks selection rate; pair it with the TPR/FPR view below before declaring the model fair on every harm."
+      },
+      {
+        type: "bars",
+        title: "IDEAL — Equalized odds: TPR (equal opportunity) and FPR per region; both gaps measure unfairness",
         xlabel: "region",
         labels: ["region A", "region B"],
         series: [
           { name: "TPR (catch rate, recall)", color: "#7ee787", points: [[0, 0.857], [1, 0.583]] },
           { name: "FPR (false-alarm rate)", color: "#ffb454", points: [[0, 0.353], [1, 0.141]] }
-        ]
+        ],
+        interpret: "Two grouped bars per region: green is TPR (of those who truly repay, the fraction approved) and orange is FPR (of those who truly default, the fraction wrongly approved). Equalized odds wants BOTH colours level across regions. Here the green gap (0.857 vs 0.583 = a 0.274 equal-opportunity gap) and the orange gap (0.353 vs 0.141) are both large. <b>Read it as:</b> region B's qualified applicants are missed far more often — a real harm even though earlier parity charts only showed selection-rate skew."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — Impossibility: forcing equal TPR opens a precision gap (different base rates)",
+        xlabel: "fairness criterion (gap between the two groups)",
+        ylabel: "gap (0 = perfectly equal across groups)",
+        labels: ["TPR gap (after equalizing)", "FPR gap (after equalizing)", "precision gap (forced open)"],
+        values: [0.00, 0.00, 0.31],
+        valueLabels: ["0.00", "0.00", "0.31"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "Illustrative. The two groups have different true base rates (e.g. 12% vs 30% positive). Suppose you tune the model to equalize odds — the green TPR and FPR gaps go to zero. The impossibility theorem then forces the red precision (predictive-parity) gap to open up (0.31). <b>Read it as:</b> you cannot flatten every fairness bar at once when base rates differ — pushing two gaps to zero pops a third. Fairness is choosing WHICH bar to flatten, not flattening them all."
       }
     ],
-    caption: "Four formulas, four diagrams. (1) Cohen's kappa: the two doctors observed agreement is p_o=0.85, but with A calling 'tumor' 30% and B 40% of the time, chance agreement is already p_e=(0.30)(0.40)+(0.70)(0.60)=0.54. Real skill is only p_o-p_e=0.31 out of the 1-p_e=0.46 room left, so kappa=0.31/0.46=0.674 — moderate-to-good, NOT 0.85. (2) The agreement table makes it concrete: A and B both said 'tumor' on 28 X-rays and both said 'clear' on 58 (diagonal = 86 agreements... here 28+58=86 ~ the 85 quoted), disagreeing on the 2+12=14 off-diagonal; A's tumor row totals 30, B's tumor column totals 40, matching the marginals kappa uses. (3) Demographic parity on a loan model: region A approved at 0.60, region B at 0.30, so the parity gap is |0.60-0.30|=0.30 and the disparate-impact ratio is 0.30/0.60=0.50 — below the grey 80%-rule floor of 0.48, so it FAILS. (4) Equalized odds needs BOTH the true-positive rate and the false-positive rate to match: among applicants who truly repay, the model catches 0.857 in A but only 0.583 in B (equal-opportunity gap 0.274), and the false-alarm rates differ too (0.353 vs 0.141). All numbers are computed from the concrete per-region confusion counts in the code, not invented.",
+    caption: "Read each chart by its IDEAL vs WHAT-YOU-MIGHT-ALSO-SEE tag. Kappa: the ideal (0.674) shows real skill above chance; the prevalence-paradox variant (high raw %, kappa 0.51) and the negative-kappa variant (worse than chance) are the two failure modes to spot. Fairness: the ideal demographic-parity chart FAILS the 80% rule (ratio 0.50), the passing variant clears it (0.87), and the impossibility variant shows why equalizing one gap (TPR/FPR) forces another (precision) open when base rates differ. Main-chart numbers are computed from the concrete per-region confusion counts in the code; variants marked 'illustrative' are qualitatively honest shapes.",
     code: `import numpy as np
 
 # ---------- Cohen's kappa (two doctors, 100 X-rays) ----------

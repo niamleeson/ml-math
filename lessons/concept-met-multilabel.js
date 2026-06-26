@@ -240,7 +240,7 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
   };
 
   window.CODEVIZ["met-multilabel"] = {
-    question: "On ONE imbalanced multilabel example, why do macro-F1, micro-F1 and weighted-F1 give three different numbers — and how do Hamming loss and exact-match see the same predictions?",
+    question: "On ONE imbalanced multilabel example, why do macro-F1, micro-F1 and weighted-F1 give three different numbers — and how do Hamming loss and exact-match see the same predictions? Then: what do the WARNING shapes look like?",
     charts: [
       {
         type: "bars",
@@ -251,7 +251,8 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
         series: [
           { name: "precision", color: "#4ea1ff", points: [[0, 0.875], [1, 1.0], [2, 0.0]] },
           { name: "recall", color: "#7ee787", points: [[0, 1.0], [1, 0.8], [2, 0.0]] }
-        ]
+        ],
+        interpret: "Each label gets its OWN precision (blue, of what we called this label, how much was right) and recall (green, of all true cases, how much we caught). Read the pair per label: A and B are near the top on both bars, so the model handles the two common labels well. The rare label C has both bars flat at 0 — the model never predicts it, so it has no true positives at all. The takeaway: per-label bars expose exactly WHICH label is failing, which a single averaged number would hide."
       },
       {
         type: "bars",
@@ -261,7 +262,8 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
         labels: ["A (supp 7)", "B (supp 5)", "C rare (supp 2)"],
         values: [0.933, 0.889, 0.0],
         valueLabels: ["0.933", "0.889", "0.000"],
-        colors: ["#4ea1ff", "#4ea1ff", "#ff7b72"]
+        colors: ["#4ea1ff", "#4ea1ff", "#ff7b72"],
+        interpret: "Each bar is one label's F1 (the single number that blends its precision and recall). Tall blue bars (A 0.933, B 0.889) mean those labels are well predicted; the red bar at 0 is the rare label C, totally missed. The height GAP between the blue bars and the red one is the disagreement that the next chart's averages each handle differently — so always look at this per-label row before trusting any one summary score."
       },
       {
         type: "bars",
@@ -271,7 +273,8 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
         labels: ["macro", "weighted", "micro"],
         values: [0.607, 0.784, 0.846],
         valueLabels: ["0.607", "0.784", "0.846"],
-        colors: ["#ff7b72", "#ffb454", "#7ee787"]
+        colors: ["#ff7b72", "#ffb454", "#7ee787"],
+        interpret: "Three ways to boil the per-label F1s into ONE number, from the same predictions. Macro (red, 0.607) gives every label an equal vote, so the failed rare label C drags it down — the honest, harshest read. Micro (green, 0.846) pools all the per-example right/wrong counts, so the two big labels dominate and C nearly vanishes — the rosiest read. Weighted (orange, 0.784) sits between. The lesson: when you see micro far above macro, suspect a rare class is being hidden — go back and read the per-label row."
       },
       {
         type: "bars",
@@ -281,10 +284,45 @@ print("label ranking loss :", round(label_ranking_loss(Y_true, Y_score), 4))`
         labels: ["Hamming loss = 4/24", "exact-match acc = 4/8"],
         values: [0.167, 0.5],
         valueLabels: ["0.167", "0.500"],
-        colors: ["#7ee787", "#c89bff"]
+        colors: ["#7ee787", "#c89bff"],
+        interpret: "Two multilabel metrics on the very same predictions. Hamming loss (green, 0.167, lower is better) counts wrong label-slots out of all 24 slots, so a few flipped labels look mild. Exact-match accuracy (purple, 0.5, higher is better) demands a row be PERFECT to count, so the same flips knock half the rows out. The two bars measure error on completely different scales — never compare their heights directly; read each against its own 'good' direction, and always report both so a gentle Hamming number can't hide rows that are actually wrong."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — majority-label collapse: model predicts only the common labels (illustrative)",
+        xlabel: "label (with true-support count)",
+        ylabel: "F1 score",
+        labels: ["A (supp 60)", "B (supp 30)", "C (supp 6)", "D rare (supp 3)"],
+        values: [0.95, 0.88, 0.0, 0.0],
+        valueLabels: ["0.95", "0.88", "0.000", "0.000"],
+        colors: ["#4ea1ff", "#4ea1ff", "#ff7b72", "#ff7b72"],
+        interpret: "Illustrative failure mode you will meet on heavily imbalanced label sets: the model only ever fires the two common labels and gives up on every rare one, so the red bars collapse to 0 while the blue bars stay tall. Micro-F1 here would still look great (the big labels carry it) but macro-F1 would be cut roughly in half. Recognise it by a per-label chart that splits into 'tall common, zero rare' — the cure is class weighting, resampling, or per-label thresholds, not a different average."
+      },
+      {
+        type: "bars",
+        title: "WHAT YOU MIGHT ALSO SEE — over-tagging: high recall, low precision (illustrative)",
+        xlabel: "label",
+        ylabel: "score",
+        labels: ["A", "B", "C", "D"],
+        series: [
+          { name: "precision", color: "#4ea1ff", points: [[0, 0.45], [1, 0.40], [2, 0.50], [3, 0.42]] },
+          { name: "recall", color: "#7ee787", points: [[0, 0.95], [1, 0.92], [2, 0.97], [3, 0.90]] }
+        ],
+        interpret: "Illustrative: a model with its threshold set too low predicts almost every label on every example. Recall (green) is sky-high — it catches nearly all true labels — but precision (blue) is poor everywhere because most of what it tags is wrong. The signature is green bars far ABOVE blue bars on every label. Hamming loss looks bad (many extra wrong slots) even though recall flatters the model. Fix by RAISING the per-label decision thresholds; the mirror image (blue far above green) means the threshold is too high and the model is under-tagging."
+      },
+      {
+        type: "line",
+        title: "WHAT YOU MIGHT ALSO SEE — ranking failure: a true label buried low in the score order (illustrative)",
+        xlabel: "rank position (1 = top score)",
+        ylabel: "is this label actually true? (1 = yes)",
+        series: [
+          { name: "healthy: true labels ranked at top", color: "#7ee787", points: [[1, 1], [2, 1], [3, 0], [4, 0], [5, 0]] },
+          { name: "failure: a true label buried at rank 4", color: "#ff7b72", points: [[1, 1], [2, 0], [3, 0], [4, 1], [5, 0]] }
+        ],
+        interpret: "Illustrative view of the ranking metrics (LRAP, coverage error, label ranking loss), which judge the ORDER of label scores, not hard yes/no calls. X is rank by model score (1 = highest); a point at y=1 marks a label that is actually true. In the green healthy case both true labels sit at ranks 1-2, so you collect them all by scanning 2 deep: high LRAP, low coverage error. In the red failure case a true label is buried at rank 4 below two wrong ones, so coverage error and ranking loss both rise. Read it as: the further right a y=1 point sits, the worse the ranking — a true label is hiding under false ones."
       }
     ],
-    caption: "Concrete example: N=8 rows, 3 labels A/B/C with supports 7/5/2. The model nails common label A (precision 0.875, recall 1.0 -> F1 0.933) and B (F1 0.889) but never predicts the rare label C (F1 0.000). That single failure splits the averages: macro-F1 = 0.607 gives C a full 1/3 vote and crashes; micro-F1 = 0.846 pools all TP/FP/FN (11/1/3) so the easy labels dominate and C nearly vanishes; weighted-F1 = 0.784 weights by support and lands between. Hamming loss = 4/24 = 0.167 (only 4 of 24 label-slots wrong) looks mild, while exact-match accuracy = 4/8 = 0.500 punishes any imperfect row — same predictions, opposite mood. All numbers computed with scikit-learn 1.6.1.",
+    caption: "Concrete example (first four charts): N=8 rows, 3 labels A/B/C with supports 7/5/2. The model nails common label A (precision 0.875, recall 1.0 -> F1 0.933) and B (F1 0.889) but never predicts the rare label C (F1 0.000). That single failure splits the averages: macro-F1 = 0.607 gives C a full 1/3 vote and crashes; micro-F1 = 0.846 pools all TP/FP/FN (11/1/3) so the easy labels dominate and C nearly vanishes; weighted-F1 = 0.784 weights by support and lands between. Hamming loss = 4/24 = 0.167 looks mild while exact-match = 4/8 = 0.500 punishes any imperfect row. The last three charts are shapes you might ALSO meet: majority-label collapse, over-tagging (recall >> precision), and a ranking failure where a true label is buried low. Main numbers computed with scikit-learn 1.6.1; variant charts are illustrative.",
     code: `import numpy as np
 from sklearn.metrics import (hamming_loss, accuracy_score, f1_score,
     precision_score, recall_score)

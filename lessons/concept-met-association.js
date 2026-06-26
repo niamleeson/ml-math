@@ -260,43 +260,73 @@ print("\\nVIF (>5-10 => multicollinear):\\n", vif.round(2))
   };
 
   window.CODEVIZ["met-association"] = {
-    question: "Each association measure sees a DIFFERENT kind of 'move together'. How does Pearson r read a scatter, why do Spearman/Kendall beat it on a curve, and how do chi-square / Cramer's V / mutual information handle categories and any-shape links?",
+    question: "Each association measure sees a DIFFERENT kind of 'move together' — and the SAME number can hide very different scatters. How does Pearson r read a clean cloud, when does it agree with Spearman, and what failure shapes (a U it misses, one outlier faking r, a fan of changing spread) must you eyeball before trusting any single number?",
     charts: [
       {
         type: "scatter",
-        title: "Pearson r = cov / (sX sY): a NOISY LINE — r = 0.98 (line fits the cloud)",
+        title: "Healthy case — Pearson r = cov/(sX sY): a NOISY LINE, r = 0.98 (line fits the cloud)",
         xlabel: "X",
         ylabel: "Y",
         groups: [
-          { name: "data (8 points)", color: "#4ea1ff", points: [[1, 2], [2, 2.5], [3, 4], [4, 3.8], [5, 5.5], [6, 6], [7, 6.5], [8, 8]] }
+          { name: "data (8 points)", color: "#7ee787", points: [[1, 2], [2, 2.5], [3, 4], [4, 3.8], [5, 5.5], [6, 6], [7, 6.5], [8, 8]] }
         ],
         lines: [
           { name: "least-squares fit", color: "#ffb454", points: [[1, 1.88], [8, 7.69]] }
-        ]
+        ],
+        interpret: "<b>The ideal Pearson scatter.</b> The horizontal axis is X, the vertical is Y, each dot is one row. The dots rise together along the orange least-squares line, so Pearson <b>r = 0.98</b> — close to the +1 ceiling. Here r is trustworthy because the shape really IS a straight line: the number and the picture agree. This is the case every other chart below is a warning against assuming."
       },
       {
         type: "scatter",
-        title: "Pearson vs Spearman on Y = X^2 (rising curve): r = 0.98 but rho = tau = 1.00",
+        title: "Monotonic curve — Pearson vs Spearman on Y = X^2 (rising): r = 0.98 but rho = tau = 1.00",
         xlabel: "X",
         ylabel: "Y",
         groups: [
-          { name: "Y = X^2", color: "#7ee787", points: [[1, 1], [2, 4], [3, 9], [4, 16], [5, 25]] }
+          { name: "Y = X^2", color: "#4ea1ff", points: [[1, 1], [2, 4], [3, 9], [4, 16], [5, 25]] }
         ],
         lines: [
           { name: "best straight line", color: "#ffb454", dash: true, points: [[1, -1], [5, 23]] }
-        ]
+        ],
+        interpret: "<b>When the rank measure is the honest one.</b> The dots bend upward — a perfect always-rising curve, not a line. Pearson still reads <b>r = 0.98</b> (it forces the dashed straight line through a curve and so loses a little), but because the order of X matches the order of Y exactly, <b>Spearman rho = Kendall tau = 1.00</b>. Read it as: r below rho is the fingerprint of a curve. Trust the rank number here."
       },
       {
         type: "scatter",
-        title: "Pearson r BLIND to a U-shape: r = 0.00 AND rho = 0.00 (a real link r cannot see)",
+        title: "What you might also see #1 — U-shape: r = 0.00 AND rho = 0.00, yet a perfect link",
         xlabel: "X",
         ylabel: "Y",
         groups: [
-          { name: "Y = X^2 (U)", color: "#c89bff", points: [[-3, 9], [-2, 4], [-1, 1], [0, 0], [1, 1], [2, 4], [3, 9]] }
+          { name: "Y = X^2 (U)", color: "#ff7b72", points: [[-3, 9], [-2, 4], [-1, 1], [0, 0], [1, 1], [2, 4], [3, 9]] }
         ],
         lines: [
           { name: "fitted line (flat)", color: "#ffb454", points: [[-3, 4], [3, 4]] }
-        ]
+        ],
+        interpret: "<b>Failure mode: the relationship r is structurally blind to.</b> The dots form a clear smile (U), so Y is fully determined by X — yet the falling-then-rising shape has no net slope, so the fitted line is flat and <b>r = 0.00</b>. Spearman is also 0.00 because a U is not monotonic. Recognise it by: a strong visible shape but near-zero r AND rho together. Conclusion: r near 0 rules out a LINE, never a relationship — reach for Mutual Information or distance correlation, which both light up here."
+      },
+      {
+        type: "scatter",
+        title: "What you might also see #2 — ONE outlier fakes r: cloud has r=0.0, add 1 point -> r=0.82",
+        xlabel: "X",
+        ylabel: "Y",
+        groups: [
+          { name: "random cloud (r approx 0)", color: "#9aa7b4", points: [[1, 5], [1.5, 4.5], [2, 5.3], [2.2, 4.7], [1.8, 5.1], [2.5, 4.6], [1.3, 5.2], [2.1, 4.9]] },
+          { name: "single outlier", color: "#ff7b72", points: [[9, 12]] }
+        ],
+        lines: [
+          { name: "fit dragged by the outlier", color: "#ffb454", dash: true, points: [[1, 4.2], [9, 11.4]] }
+        ],
+        interpret: "<b>Failure mode: a single point inventing a correlation.</b> The grey blob on the left has no trend on its own (Pearson r about 0). Add the one red point far to the upper-right and Pearson jumps to <b>r = 0.82</b> — the dashed line is chasing that lone leverage point, not the blob. Illustrative numbers, but the effect is real and exactly the Anscombe trap. Spot it by: most of the data is a structureless cluster with one extreme point doing all the work. Fix: use rank-based Spearman/Kendall (robust to outliers) and re-check r with the suspect point dropped."
+      },
+      {
+        type: "scatter",
+        title: "What you might also see #3 — heteroscedastic FAN: r=0.9 but the link is unreliable, not constant",
+        xlabel: "X",
+        ylabel: "Y",
+        groups: [
+          { name: "spread grows with X", color: "#ffb454", points: [[1, 1.1], [1, 0.9], [2, 2.3], [2, 1.7], [3, 3.6], [3, 2.4], [4, 5.2], [4, 2.8], [5, 7.1], [5, 2.9], [6, 9.0], [6, 3.0]] }
+        ],
+        lines: [
+          { name: "least-squares fit", color: "#4ea1ff", points: [[1, 0.5], [6, 6.5]] }
+        ],
+        interpret: "<b>Failure mode: a single r hiding changing spread.</b> The dots fan out — tight on the left, widely scattered on the right. Pearson still reports a high <b>r approx 0.9</b> because the cloud trends up overall, but the relationship is far noisier at large X than the one number admits (illustrative shape). Recognise it by: a triangular/funnel cloud. Conclusion: r summarises average straight-line strength only; it cannot tell you the link is dependable for small X and loose for large X — always look, and consider modelling the variance too."
       },
       {
         type: "heatmap",
@@ -311,30 +341,33 @@ print("\\nVIF (>5-10 => multicollinear):\\n", vif.round(2))
           [0.07, 0.79, -0.43, 0.57, 1.00, 0.31],
           [0.64, 0.49, 0.32, 0.24, 0.31, 1.00]
         ],
-        showVals: true
+        showVals: true,
+        interpret: "<b>Reading a correlation matrix for de-duplication.</b> Each cell is the Pearson r between the row feature and the column feature; the diagonal is always 1.00 (a feature with itself). Bright warm cells = strong positive r, dark/cool = strong negative. flavanoids vs od280 (<b>r = 0.79</b>) are near-twins — candidates to drop one before modelling. color_int vs hue (<b>r = -0.52</b>) move oppositely. alcohol vs hue (<b>r = -0.07</b>) only rules out a straight line, not a curved link. Scan the off-diagonal for high-magnitude cells to find redundant features."
       },
       {
         type: "bars",
-        title: "chi-square = sum (O-E)^2/E on weather x umbrella: 4 cells each add 4.0 -> chi2 = 16, Cramer's V = 0.40",
+        title: "Categorical association — chi-square on weather x umbrella: 4 cells each add 4.0 -> chi2 = 16, Cramer's V = 0.40",
         xlabel: "contingency cell (observed O, expected E)",
         ylabel: "(O - E)^2 / E",
         labels: ["sunny,yes O35 E25", "sunny,no O15 E25", "rainy,yes O15 E25", "rainy,no O35 E25", "TOTAL chi2"],
         values: [4.0, 4.0, 4.0, 4.0, 16.0],
         valueLabels: ["4.0", "4.0", "4.0", "4.0", "16.0"],
-        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787"]
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#7ee787"],
+        interpret: "<b>How association works with no means or lines.</b> For two categorical columns there is no 'above average', so we count people in each cell of the 2x2 table and compare observed O to the count E expected if weather and umbrella were independent (here E = 25 everywhere). Each blue bar is one cell's mismatch (O-E)^2/E = (35-25)^2/25 = 4.0; the green TOTAL bar sums them to <b>chi2 = 16</b>. Rescaling, Cramer's V = sqrt(16/(100*1)) = <b>0.40</b> — a moderate weather-umbrella link on a 0-to-1 scale. Bigger bars mean cells further from independence."
       },
       {
         type: "bars",
-        title: "Mutual information of each wine feature with the wine-class target (nonlinear-aware ranking)",
+        title: "Any-shape dependence — mutual information of each wine feature with the wine-class target",
         xlabel: "feature",
         ylabel: "mutual information (bits)",
         labels: ["flavanoids", "proline", "color_int", "od280", "alcohol", "hue", "phenols", "proantho"],
         values: [0.666, 0.567, 0.552, 0.506, 0.473, 0.446, 0.404, 0.296],
         valueLabels: ["0.67", "0.57", "0.55", "0.51", "0.47", "0.45", "0.40", "0.30"],
-        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"]
+        colors: ["#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff", "#c89bff"],
+        interpret: "<b>Ranking features when the shape is unknown.</b> Each bar is the mutual information (in bits) between one wine feature and the class target — how much knowing the feature shrinks your uncertainty about the class, for a relationship of ANY shape (linear or curved). Taller = more informative. flavanoids (<b>0.67</b>) and proline (<b>0.57</b>) lead, so they are the strongest candidates to keep. Unlike Pearson r this never goes negative (no direction) and would still flag a U-shaped feature that r scores 0."
       }
     ],
-    caption: "Scatter 1 (Pearson r): a noisy straight line scores r=0.98 — the orange least-squares line tracks the cloud. Scatter 2 (Spearman/Kendall): Y=X^2 is a perfect rising curve, so the ranks line up exactly and rho=tau=1.00, but the straight-line fit (dashed) only manages r=0.98 — the rank measures are the honest ones for a curve. Scatter 3: a symmetric U gives r=0.00 AND rho=0.00 (a U is not monotonic), so the flat fitted line shows why r is structurally blind here — you need MI / distance correlation. Bars (chi-square / Cramer's V): on the 2x2 weather-vs-umbrella table (sunny 35/15, rainy 15/35, all expected 25 under independence) every cell contributes (O-E)^2/E = (35-25)^2/25 = 4.0, summing to chi2=16, and Cramer's V = sqrt(16/(100*1)) = 0.40. Bars (mutual information): ranks wine features by any-shape dependence with the class target, flagging flavanoids (0.67) and proline (0.57). Heatmap: bright cells are strong Pearson correlations — flavanoids and od280 (r=0.79) are near-twins; color_intensity vs hue move oppositely (r=-0.52); alcohol vs hue (r=-0.07) only rules out a LINE.",
+    caption: "Chart set: one healthy case plus three 'what you might also see' failure shapes, then the categorical and any-shape tools. The first scatter (green) is the trustworthy case — a real line, r=0.98. The second shows r below rho is the fingerprint of a curve. The three red/orange variants are the traps: a U-shape r=rho=0 cannot see, a single outlier dragging r from 0 to 0.82, and a heteroscedastic fan where one high r hides changing spread — all reasons to PLOT before trusting a number (the Anscombe lesson). The heatmap reads off near-twin features for de-duplication; the chi-square bars build Cramer's V=0.40 for categories; the MI bars rank features by any-shape dependence.",
     code: `import numpy as np
 from scipy import stats
 from sklearn.datasets import load_wine

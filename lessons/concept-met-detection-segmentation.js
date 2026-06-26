@@ -270,7 +270,7 @@ print("Dice:", ds(pred_t, gt_t).item())
   };
 
   window.CODEVIZ[ID] = {
-    question: "How are IoU, Dice, and mAP actually computed? Take one shifted box, one tiny mask, and one ranked list of detections, and watch each formula fall out term by term.",
+    question: "How are IoU, Dice, and mAP actually computed — and what do healthy vs broken versions of each chart look like? Take one shifted box, one tiny mask, and one ranked list of detections, watch each formula fall out term by term, then learn to recognise the failure shapes.",
     charts: [
       {
         type: "bars",
@@ -280,7 +280,8 @@ print("Dice:", ds(pred_t, gt_t).item())
         labels: ["intersection 35", "union 61", "IoU = 35/61"],
         values: [35, 61, 0.574],
         valueLabels: ["35 px", "61 px", "0.574"],
-        colors: ["#ffb454", "#9aa7b4", "#4ea1ff"]
+        colors: ["#ffb454", "#9aa7b4", "#4ea1ff"],
+        interpret: "Read this left to right as the IoU fraction being built. The orange bar is the <b>overlap</b> (35 shared pixels), the grey bar is the <b>union</b> (61 pixels the two boxes cover together), and the blue bar is their ratio, 35/61 = <b>0.574</b>. The key reading: the answer (rightmost, a ratio near 0.5) is on a different scale from the pixel counts — look at its value label, not its height. A 1-pixel shift already drops IoU below 0.6, so at threshold 0.75 this box would be a miss."
       },
       {
         type: "bars",
@@ -290,23 +291,67 @@ print("Dice:", ds(pred_t, gt_t).item())
         labels: ["2 x share = 4", "|A|+|B| = 6", "Dice = 4/6", "IoU = 2/4"],
         values: [4, 6, 0.667, 0.5],
         valueLabels: ["4 px", "6 px", "0.667", "0.500"],
-        colors: ["#ffb454", "#9aa7b4", "#7ee787", "#c89bff"]
+        colors: ["#ffb454", "#9aa7b4", "#7ee787", "#c89bff"],
+        interpret: "The first two bars build Dice (orange = twice the shared pixels = 4; grey = the two mask sizes added = 6). The last two bars are the two final scores on the <i>same</i> pixels: green Dice = 4/6 = <b>0.667</b>, purple IoU = 2/4 = <b>0.500</b>. The takeaway is the gap: <b>green sits above purple every time</b>. Dice always reads higher than IoU for identical masks, so a 0.667 Dice and a 0.500 IoU describe the same prediction — never compare the two numbers across metrics."
       },
       {
         type: "line",
-        title: "AP = area under the precision-recall curve (one class, IoU>=0.5)",
+        title: "Healthy AP: precision-recall envelope (one class, IoU>=0.5, AP=0.683)",
         xlabel: "recall",
         ylabel: "precision",
         series: [
           {
             name: "precision envelope (area = AP = 0.683)",
-            color: "#4ea1ff",
+            color: "#7ee787",
             points: [[0.0, 1.0], [0.2, 1.0], [0.4, 1.0], [0.6, 0.75], [0.8, 0.667], [0.8, 0.0], [1.0, 0.0]]
           }
-        ]
+        ],
+        interpret: "Real numbers from 6 ranked detections of 5 true objects. The y-axis is precision (of the boxes drawn, how many are correct); the x-axis is recall (of the real objects, how many were found). The curve <b>starts at the top (precision 1.0)</b> for the confident, correct boxes, then <b>steps down</b> as later boxes include mistakes. <b>AP is the area underneath = 0.683.</b> The vertical drop to 0 at recall 0.8 is the one object the model never finds — recall cannot pass 0.8, so the curve falls off there. mAP averages this AP over classes (and, for COCO, over IoU thresholds)."
+      },
+      {
+        type: "line",
+        title: "Variant — strong detector: curve hugs the top-right, AP near 1 (illustrative)",
+        xlabel: "recall",
+        ylabel: "precision",
+        series: [
+          {
+            name: "precision envelope (area = AP ~ 0.93)",
+            color: "#7ee787",
+            points: [[0.0, 1.0], [0.4, 1.0], [0.8, 0.98], [0.95, 0.95], [0.95, 0.0], [1.0, 0.0]]
+          }
+        ],
+        interpret: "This is what you hope to see (numbers illustrative). Precision (y, of the boxes you drew how many are correct) stays near <b>1.0</b> as recall (x, of the real objects how many you found) climbs almost to 1.0 — the curve hugs the <b>top-right corner</b>, so the area underneath (AP) is near 1. A near-vertical drop only at the far right means the detector finds nearly every object before it starts making mistakes. Wide area = good class. Compare its shape to the healthy 0.683 curve above: same idea, just more area."
+      },
+      {
+        type: "line",
+        title: "Variant — low-recall detector: curve dies early, AP small (illustrative)",
+        xlabel: "recall",
+        ylabel: "precision",
+        series: [
+          {
+            name: "precision envelope (area = AP ~ 0.30)",
+            color: "#ffb454",
+            points: [[0.0, 1.0], [0.15, 1.0], [0.3, 0.95], [0.3, 0.0], [1.0, 0.0]]
+          }
+        ],
+        interpret: "A common failure (numbers illustrative): precision is high but the curve <b>falls off a cliff at low recall</b> (here ~0.3) and never recovers. Read it as: the few boxes the model draws are right, but it <b>misses most real objects</b> — recall caps early, so the area (AP) is tiny. This is the precise/conservative detector. The cure is not a better threshold; the model simply is not finding the objects. Contrast with the high-precision-low-recall confusion-matrix story: same disease, told through recall."
+      },
+      {
+        type: "line",
+        title: "Variant — noisy detector: precision sawtooths down, low AP (illustrative)",
+        xlabel: "recall",
+        ylabel: "precision",
+        series: [
+          {
+            name: "precision envelope (area = AP ~ 0.42)",
+            color: "#ff7b72",
+            points: [[0.0, 0.6], [0.2, 0.55], [0.4, 0.5], [0.6, 0.45], [0.8, 0.4], [1.0, 0.35]]
+          }
+        ],
+        interpret: "Here precision <b>starts low and sags the whole way</b> (numbers illustrative) instead of starting at 1.0. Read it as: even the most confident boxes are often wrong, so the detector is drowning in <b>false positives</b> at every recall level (the curve never gets near the top). The area is small even though recall reaches 1.0. A curve that hugs the <b>bottom</b> rather than the top is the signature of a noisy, over-eager detector — too many boxes, most of them background."
       }
     ],
-    caption: "Each formula computed from concrete inputs. IoU: a box shifted by 1px overlaps the truth in 35 of 61 union pixels, so IoU = 35/61 = 0.574. Dice: on a tiny mask (A=3, B=3, shared 2) Dice = 4/6 = 0.667 reads higher than IoU = 2/4 = 0.500 on the very same pixels. mAP: rank 6 detections of 5 ground-truth objects, take the precision-recall envelope, and AP is its area = 0.683; one missed object caps recall at 0.8 so the curve drops to 0. mAP is this AP averaged over classes (and, for COCO, over IoU thresholds).",
+    caption: "First three charts use concrete numbers; the last three precision-recall variants are illustrative shapes you learn to recognise. The healthy AP curve (green) starts at precision 1.0 and steps down as recall grows, AP = its area = 0.683; one missed object caps recall at 0.8 so it drops to 0.",
     code: `import numpy as np
 
 # ---- IoU term by term: a box shifted by 1px (each box 48 px) ----

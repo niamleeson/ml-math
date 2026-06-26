@@ -242,35 +242,38 @@ print("pinball@0.95    :", round(pinball(y_te, hi, 0.95), 2))
   };
 
   window.CODEVIZ["met-uncertainty"] = {
-    question: "What does each uncertainty metric actually measure — coverage vs width (PICP/MPIW), the asymmetric pinball loss, the CRPS distribution score, and the Winkler interval score that fuses narrow-and-covering into one number?",
+    question: "What does each uncertainty metric measure — coverage vs width (PICP/MPIW), asymmetric pinball, CRPS, Winkler — and what do the BAD calibration shapes (over-confident, too-wide, drifting coverage) look like?",
     charts: [
       {
         type: "line",
-        title: "PICP: achieved coverage vs target — must lie ON the y=x ideal line",
+        title: "Calibrated: achieved coverage sits ON the y=x ideal line",
         xlabel: "target coverage 1 − α",
         ylabel: "achieved coverage (PICP) on held-out test",
         series: [
           { name: "ideal: achieved = target (y=x)", color: "#9aa7b4", points: [[0.80, 0.80], [0.95, 0.95]] },
           { name: "split-conformal (load_diabetes)", color: "#4ea1ff", points: [[0.80, 0.888], [0.90, 0.921], [0.95, 0.933]] }
-        ]
+        ],
+        interpret: "X is what you PROMISED (target coverage); Y is what you actually GOT (PICP on a fresh test split). The grey line is perfection: achieved equals promised. <b>Read it like this:</b> a calibrated method's points sit on or just above the grey line. The blue conformal points hug it (a hair above, slightly conservative — fine), so an '80% interval' really covers ~80% and a '95%' really covers ~95%. Points BELOW the grey line would mean over-confidence; well above would mean wastefully wide. This is the first thing to check before trusting any width number."
       },
       {
         type: "bars",
-        title: "MPIW: the price of coverage — interval width grows with the promise",
+        title: "MPIW: the price of coverage — width grows with the promise",
         labels: ["80% interval", "90% interval", "95% interval"],
         values: [154.2, 197.1, 226.3],
         valueLabels: ["154.2", "197.1", "226.3"],
-        colors: ["#7ee787", "#ffb454", "#ff7b72"]
+        colors: ["#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "Each bar is the average interval width (MPIW) at a coverage level, in the target's own units (diabetes progression score). <b>Read it like this:</b> width climbs 154 → 197 → 226 as you demand more coverage — promising to be right more often forces a wider net. This is why MPIW only means something next to PICP from chart 1: a narrow band is good ONLY if it still covers. On its own, a small MPIW could just mean the intervals are too tight and quietly missing the truth."
       },
       {
         type: "line",
-        title: "Pinball loss (tau=0.9, truth y=10): asymmetric — under-shooting is fined 9x harder",
+        title: "Pinball loss (tau=0.9, truth y=10): under-shooting fined 9x harder",
         xlabel: "quantile guess q",
         ylabel: "pinball loss",
         series: [
           { name: "loss(q): min at q=10, slope 0.9 left, 0.1 right", color: "#c89bff",
             points: [[0,9],[2,7.2],[4,5.4],[6,3.6],[8,1.8],[10,0],[12,0.2],[14,0.4],[16,0.6],[18,0.8],[20,1.0]] }
-        ]
+        ],
+        interpret: "X is your quantile guess q; Y is the pinball loss when the truth turns out to be 10, scoring a 90th-percentile prediction (tau=0.9). <b>Read it like this:</b> the V bottoms out at q=10 (zero loss when you nail it) but the two sides are lopsided — the left arm (guessing too low) falls at slope 0.9, the right arm (too high) at slope 0.1. So guessing 8 costs 1.8 while guessing 12 costs only 0.2. That 9x asymmetry deliberately pushes a high-quantile forecast UPWARD until only ~10% of outcomes exceed it, which is exactly what 'the 90th percentile' means."
       },
       {
         type: "bars",
@@ -278,18 +281,51 @@ print("pinball@0.95    :", round(pinball(y_te, hi, 0.95), 2))
         labels: ["sharp N(10,2)", "vague N(10,8)", "biased N(4,2)"],
         values: [0.467, 1.87, 4.873],
         valueLabels: ["0.47", "1.87", "4.87"],
-        colors: ["#7ee787", "#ffb454", "#ff7b72"]
+        colors: ["#7ee787", "#ffb454", "#ff7b72"],
+        interpret: "Three whole-distribution forecasts scored against one truth (y=10); lower CRPS is better. <b>Read it like this:</b> the green N(10,2) is sharp AND centered on the truth, so it scores best (0.47). The orange N(10,8) is centered but vague (too wide), costing 1.87 — CRPS penalizes uncertainty you didn't need. The red N(4,2) is confidently wrong (sharp but centered at 4, far from 10) and scores worst (4.87). The lesson: CRPS rewards being both correct and confident, and punishes vagueness and bias separately."
       },
       {
         type: "bars",
-        title: "Winkler interval score (90%, truth y=10): width + 20x miss penalty, lower is better",
+        title: "Winkler interval score (90%, truth y=10): width + 20x miss penalty",
         labels: ["calibrated [4,16] covers", "narrow [11,15] MISSES", "over-wide [0,50] covers"],
         values: [12, 24, 50],
         valueLabels: ["12 = 12 width", "24 = 4 width + 20 penalty", "50 = 50 width"],
-        colors: ["#7ee787", "#ff7b72", "#9aa7b4"]
+        colors: ["#7ee787", "#ff7b72", "#9aa7b4"],
+        interpret: "One number per interval that fuses narrowness and coverage; lower is better. With alpha=0.1 a miss is multiplied by 2/alpha = 20. <b>Read it like this:</b> the green calibrated interval covers the truth and is reasonably tight, scoring 12 (pure width). The red narrow interval [11,15] looks tight but MISSES the truth by 1, so it pays 4 width + 20×1 = 24 — being narrow does not save you if you miss. The grey over-wide [0,50] covers but wastes width, scoring 50. The winner is narrow AND covering, which is the whole point of the score."
+      },
+      {
+        type: "line",
+        title: "What you might also see — OVER-CONFIDENT: PICP below the ideal line",
+        xlabel: "target coverage 1 − α",
+        ylabel: "achieved coverage (PICP) on held-out test",
+        series: [
+          { name: "ideal: achieved = target (y=x)", color: "#9aa7b4", points: [[0.80, 0.80], [0.95, 0.95]] },
+          { name: "over-confident model", color: "#ff7b72", points: [[0.80, 0.66], [0.90, 0.74], [0.95, 0.80]] }
+        ],
+        interpret: "Illustrative. Same axes as chart 1 (promised vs achieved coverage), but now the red points sit BELOW the grey ideal line at every level. <b>Read it like this:</b> when you promise 90% you only get 74% — the intervals are too narrow and the truth escapes more often than admitted. This is the dangerous failure: the band looks reassuringly tight (great-looking MPIW) but lies about its reliability. The tell is points dropping under the diagonal. Fix by widening / re-calibrating until the points climb back onto the line; never judge width until they do."
+      },
+      {
+        type: "line",
+        title: "What you might also see — TOO WIDE: PICP above the line (wasted width)",
+        xlabel: "target coverage 1 − α",
+        ylabel: "achieved coverage (PICP) on held-out test",
+        series: [
+          { name: "ideal: achieved = target (y=x)", color: "#9aa7b4", points: [[0.80, 0.80], [0.95, 0.95]] },
+          { name: "over-wide model", color: "#ffb454", points: [[0.80, 0.95], [0.90, 0.985], [0.95, 0.998]] }
+        ],
+        interpret: "Illustrative. The orange points float ABOVE the grey ideal: an '80% interval' actually covers 95%. <b>Read it like this:</b> this looks safe — you almost never miss — but it is uselessly cautious. The intervals are far wider than they need to be (a big MPIW), so 'sales will be 0 to 10,000' is technically right and tells the planner nothing. This is why coverage alone is not enough: you want PICP ON the line, not above it. Tighten the intervals until coverage settles back to the promised rate, trading away the wasted width."
+      },
+      {
+        type: "bars",
+        title: "What you might also see — coverage OK on average but FAILS per segment",
+        labels: ["easy segment", "medium segment", "hard segment", "OVERALL avg"],
+        values: [0.99, 0.92, 0.71, 0.90],
+        valueLabels: ["0.99", "0.92", "0.71", "0.90"],
+        colors: ["#7ee787", "#7ee787", "#ff7b72", "#9aa7b4"],
+        interpret: "Illustrative. PICP computed within each data segment, plus the pooled overall on the right; the target is 0.90. <b>Read it like this:</b> the overall grey bar hits 0.90 exactly and looks calibrated — but that average hides a split. Easy cases are over-covered (0.99) while the HARD segment covers only 0.71, far below promise. Users in that segment routinely get blindsided even though the headline number is perfect. The tell is one short red bar beside tall green ones. Always break PICP down by segment (region, time, class): marginal coverage is not conditional coverage."
       }
     ],
-    caption: "One diagram per formula the lesson teaches. (1) PICP — split-conformal intervals from a LinearRegression on load_diabetes, coverage measured on an untouched test split; achieved coverage (blue) sits on the grey y=x ideal at all three levels, so the intervals are calibrated. (2) MPIW — the same intervals' mean width grows 154 → 197 → 226 progression-score units as the promise rises: higher coverage costs a wider band, which is why you must read PICP and MPIW together. (3) Pinball loss for tau=0.9 with truth y=10: a kinked V with its minimum at q=10, steep slope 0.9 on the under-shoot side and gentle 0.1 on the overshoot side — guessing 8 costs 1.8 but guessing 12 costs only 0.2, the asymmetry that pins q to the 90th percentile. (4) CRPS against the same truth y=10 for three Gaussian forecasts (closed-form crps_gaussian): the sharp, well-placed N(10,2) scores 0.47, a vague N(10,8) scores 1.87, and a confidently-wrong N(4,2) scores 4.87 — it punishes vagueness and bias. (5) Winkler/interval score for a 90% interval (alpha=0.1, so miss penalty = 2/alpha = 20x): the calibrated covering interval wins at 12, the over-narrow interval that misses by 1 is fined to 24 (4 width + 20 penalty), and the over-wide interval wastes its way to 50 — one number that rewards narrow AND covering.",
+    caption: "Charts 1-5 are the healthy view, one per formula the lesson teaches, each with its own how-to-read note. Charts 6-8 are 'what you might also see': an over-confident model whose PICP falls below the ideal line, an over-wide model whose PICP floats above it (wasted width), and a model that covers 90% on average but only 71% on its hard segment — the conditional-coverage trap. Charts 1-5 use real computed numbers (split-conformal on load_diabetes); the warning charts are illustrative but qualitatively honest.",
     code: `import numpy as np
 from math import erf, sqrt, pi, exp
 from sklearn.datasets import load_diabetes

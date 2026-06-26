@@ -291,11 +291,11 @@ print("Spearman rho:", round(spearmanr(gold_order, model_order).statistic, 4))`
   };
 
   window.CODEVIZ["met-ranking"] = {
-    question: "One concrete ranked list per metric: how do Precision@k and Recall@k trade off as the cutoff k grows, how do MRR and MAP average a per-query score, and how does NDCG come out of its DCG / IDCG term-by-term sum?",
+    question: "One concrete ranked list per metric — Precision@k vs Recall@k, MRR, MAP, NDCG — and then the SHAPES you actually see in practice: a perfect ranking, a buried-gem ranking, and the gap between NDCG and a position-blind metric.",
     charts: [
       {
         type: "line",
-        title: "Precision@k = (#rel in top k)/k vs Recall@k = (#rel in top k)/(#rel total) — ranked list rel = [1,0,1,1,0,1,0,0,1,0], 5 relevant",
+        title: "Precision@k vs Recall@k down one list — rel=[1,0,1,1,0,1,0,0,1,0], 5 relevant",
         xlabel: "k (how far down the ranked list we look)",
         ylabel: "metric value (0–1)",
         series: [
@@ -309,35 +309,69 @@ print("Spearman rho:", round(spearmanr(gold_order, model_order).statistic, 4))`
             color: "#ffb454",
             points: [[1, 0.2], [2, 0.2], [3, 0.4], [4, 0.6], [5, 0.6], [6, 0.8], [7, 0.8], [8, 0.8], [9, 1.0], [10, 1.0]]
           }
-        ]
+        ],
+        interpret: "<b>x-axis = k</b> (how far down the list you look); <b>y = metric value, 0 to 1.</b> Green Precision@k = fraction of the top k that is relevant — it jiggles up and down as relevant/irrelevant items alternate. Orange Recall@k = fraction of ALL 5 relevant items caught so far — it can only climb (or stay flat), reaching 1.0 once all 5 are in. <b>Read the trade-off:</b> small k gives high precision but low recall (clean but incomplete); large k gives full recall but diluted precision. Where the two lines sit tells you the cost of your chosen cutoff."
       },
       {
         type: "bars",
-        title: "MRR = mean of 1/rank-of-first-hit over 3 queries — first hit at rank 1, 2, 4 gives RR 1.0, 0.5, 0.25",
+        title: "MRR = mean of 1/rank-of-first-hit over 3 queries (first hit @1, @2, @4)",
         labels: ["q1 (1st hit @1)", "q2 (1st hit @2)", "q3 (1st hit @4)", "MRR (mean)"],
         values: [1.0, 0.5, 0.25, 0.5833],
         valueLabels: ["1.000", "0.500", "0.250", "0.583"],
-        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"]
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#4ea1ff"],
+        interpret: "<b>Each grey bar is one query's reciprocal rank = 1 / (rank of its FIRST relevant hit).</b> First hit at rank 1 scores a full 1.0; rank 2 scores 0.5; rank 4 scores 0.25 — the fall-off is steep early and shallow late, mirroring how user attention fades. The blue bar is MRR, the simple mean of the three. <b>Takeaway:</b> MRR ignores everything after the first hit, so it is the right scoreboard only when one correct answer is the whole job (a Q&A box, a navigational search)."
       },
       {
         type: "bars",
-        title: "MAP = mean of AP over 3 queries — AP(q) averages Precision@r at each relevant item's rank",
+        title: "MAP = mean of AP over 3 queries — AP averages Precision@r at each relevant rank",
         labels: ["AP q1", "AP q2", "AP q3", "MAP (mean)"],
         values: [0.7278, 0.5556, 0.2679, 0.5171],
         valueLabels: ["0.728", "0.556", "0.268", "0.517"],
-        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#c89bff"]
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#c89bff"],
+        interpret: "<b>Each grey bar is one query's Average Precision</b> — it re-measures Precision@r every time a relevant item appears and averages those values. Higher AP means the relevant items are clustered NEAR THE TOP: q1's sit high (AP 0.728), q3's sink low (AP 0.268). The purple bar is MAP, the mean across queries. <b>Unlike MRR, MAP cares about ALL the relevant items, not just the first</b> — reach for it when the user wants to gather many relevant results, not just one."
       },
       {
         type: "bars",
-        title: "NDCG@5 = DCG/IDCG = 4.704/5.693 = 0.826 — per-rank gain/log2(rank+1) for the ranking vs its ideal sort",
+        title: "NDCG@5 = DCG/IDCG = 4.704/5.693 = 0.826 — per-rank gain / log2(rank+1)",
         labels: ["r1", "r2", "r3", "r4", "r5"],
         series: [
           { name: "DCG term (grades 2,0,3,1,2)", color: "#4ea1ff", points: [[0, 2.0], [1, 0.0], [2, 1.5], [3, 0.431], [4, 0.774]] },
           { name: "IDCG term (ideal 3,2,2,1,0)", color: "#7ee787", points: [[0, 3.0], [1, 1.262], [2, 1.0], [3, 0.431], [4, 0.0]] }
-        ]
+        ],
+        interpret: "<b>Each bar is one rank's contribution = grade / log2(rank+1).</b> Blue = your actual ranking (grades 2,0,3,1,2 top-down); green = the IDEAL ranking, the same grades sorted best-first (3,2,2,1,0). The blue bars sum to DCG=4.704, the green to IDCG=5.693, and NDCG = blue-sum / green-sum = 0.826. <b>Read the gap at r1:</b> blue is only 2.0 there because the grade-3 item got stranded at rank 3 instead of rank 1 — that wasted discount is exactly what drops NDCG below a perfect 1.0."
+      },
+      {
+        type: "bars",
+        title: "What a PERFECT ranking looks like: NDCG=1.0 — every grade is already in ideal order (illustrative)",
+        labels: ["r1", "r2", "r3", "r4", "r5"],
+        series: [
+          { name: "DCG term (grades 3,2,2,1,0)", color: "#7ee787", points: [[0, 3.0], [1, 1.262], [2, 1.0], [3, 0.431], [4, 0.0]] },
+          { name: "IDCG term (same ideal)", color: "#9aa7b4", points: [[0, 3.0], [1, 1.262], [2, 1.0], [3, 0.431], [4, 0.0]] }
+        ],
+        interpret: "<b>The healthy case to recognise: the two bar sets sit exactly on top of each other.</b> When your ranking already places the highest grades first (3,2,2,1,0), its DCG equals the IDCG, so NDCG = DCG/IDCG = 1.0. <b>Visual tell:</b> green and grey overlap at every rank — no wasted discount anywhere. Illustrative shape, but qualitatively this is what 'NDCG ≈ 1.0' means: nothing relevant is buried below something less relevant."
+      },
+      {
+        type: "bars",
+        title: "Failure mode — the buried gem: NDCG collapses when the best item lands last (illustrative)",
+        labels: ["r1", "r2", "r3", "r4", "r5"],
+        series: [
+          { name: "DCG term (grades 0,1,2,2,3 — best LAST)", color: "#ff7b72", points: [[0, 0.0], [1, 0.631], [2, 1.0], [3, 0.861], [4, 1.161]] },
+          { name: "IDCG term (ideal 3,2,2,1,0)", color: "#9aa7b4", points: [[0, 3.0], [1, 1.262], [2, 1.0], [3, 0.431], [4, 0.0]] }
+        ],
+        interpret: "<b>The opposite failure: the grade-3 'gem' is stranded at rank 5</b> (red bars rise toward the right instead of falling). It still earns SOME credit, but heavily discounted by 1/log2(6) ≈ 0.39, so its bar is tiny compared with where it should be (the grey ideal towers at r1). Red sum ≈ 3.65 vs grey IDCG ≈ 5.69, so NDCG ≈ 0.64. <b>Recognise this shape</b> — bars climbing left-to-right — as 'the right answers exist but are buried', the exact disease ranking metrics are built to catch. Illustrative numbers."
+      },
+      {
+        type: "bars",
+        title: "Why position-blind metrics lie: same 2 relevant docs, two orderings — Recall@5 ties, NDCG splits (illustrative)",
+        labels: ["Recall@5", "NDCG@5"],
+        series: [
+          { name: "docs at ranks 1,2 (top)", color: "#7ee787", points: [[0, 1.0], [1, 1.0]] },
+          { name: "docs at ranks 4,5 (bottom)", color: "#ff7b72", points: [[0, 1.0], [1, 0.52]] }
+        ],
+        interpret: "<b>Two rankers find the SAME two relevant docs, so both have Recall@5 = 1.0 (left pair — green and red are equal).</b> But one puts them at ranks 1–2 and the other at ranks 4–5. <b>Recall is position-blind and calls them tied</b>; NDCG@5 is not — it stays 1.0 for the top placement (green) but drops to ~0.52 for the buried placement (red). The right pair of bars pulling apart is the whole reason to prefer a position-aware metric: a position-blind 'tie' can hide a big quality gap. Illustrative numbers."
       }
     ],
-    caption: "Four views, each its own formula, all on concrete ranked lists. CHART 1 — for rel=[1,0,1,1,0,1,0,0,1,0] (5 relevant), Precision@k bounces as good/bad items alternate (1.0, 0.5, 0.667, 0.75, 0.6, …) while Recall@k only climbs as more of the 5 relevant items are caught (0.2 → 1.0 by k=9): the classic precision-recall trade-off down a single list. CHART 2 — MRR only cares about the FIRST hit: queries whose first relevant item lands at rank 1, 2, 4 score 1/1, 1/2, 1/4 = 1.0, 0.5, 0.25, and MRR is their mean 0.583. CHART 3 — MAP rewards getting ALL relevant items high: AP averages Precision@r at every relevant rank (q1's relevant items sit high so AP=0.728; q3's sink so AP=0.268), and MAP = mean = 0.517. CHART 4 — NDCG@5 broken into its terms: each bar is grade/log2(rank+1); the blue (this ranking, grades 2,0,3,1,2) sums to DCG=4.704, the green (ideal sort 3,2,2,1,0) sums to IDCG=5.693, and NDCG = 4.704/5.693 = 0.826. Putting the grade-3 item at rank 3 instead of rank 1 is exactly what costs the 0.174.",
+    caption: "Read the ideal first, then the variants. CHART 1 — Precision@k vs Recall@k trade off down one list. CHART 2 — MRR averages 1/first-hit-rank. CHART 3 — MAP averages Average Precision (cares about ALL relevant items). CHART 4 — NDCG@5 = DCG/IDCG, term by term. CHART 5 — what a PERFECT NDCG=1.0 looks like (your bars overlap the ideal). CHART 6 — the buried-gem failure (bars climb left-to-right, NDCG collapses). CHART 7 — why a position-blind metric (Recall) ties two rankings that NDCG correctly splits. The last three are the shapes you actually scan for in practice.",
     code: `import numpy as np
 from sklearn.metrics import ndcg_score
 

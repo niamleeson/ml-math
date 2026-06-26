@@ -287,30 +287,65 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-aggregations-joins"] = {
-    question: "Joining a 4 GB fact table to a 200-row lookup: how much do runtime and data-shuffled drop when Spark uses a BROADCAST join instead of a SHUFFLE (sort-merge) join?",
+    question: "How do you READ a join's runtime/shuffle bars and its per-task timeline — to tell a healthy broadcast win from big-vs-big, key skew, and an exploding many-to-many join?",
     charts: [
       {
         type: "bars",
-        title: "Runtime: shuffle (sort-merge) join vs broadcast join (seconds)",
+        title: "Ideal: broadcast beats shuffle on a giant-to-tiny join (runtime, seconds)",
         xlabel: "join strategy",
         ylabel: "runtime (s)",
-        labels: ["shuffle (sort-merge) join", "broadcast join"],
+        labels: ["shuffle (sort-merge)", "broadcast"],
         values: [50.0, 3.0],
         valueLabels: ["50.0 s", "3.0 s"],
-        colors: ["#ff7b72", "#7ee787"]
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "<b>The canonical win.</b> Each bar is one physical join strategy; height is wall-clock runtime, so <b>shorter is better</b>. The shuffle (sort-merge) join (red, 50 s) drags both tables across the network; the broadcast join (green, 3 s) copies only the tiny lookup and leaves the 4 GB fact table in place. <b>Read it:</b> when one side is small, a much shorter green bar next to the red one is the signature of <code>F.broadcast(small)</code> doing its job — about a 17x speedup here for the identical answer."
       },
       {
         type: "bars",
-        title: "Data shuffled across the network (MB, log-ish scale in the numbers)",
+        title: "Same join, data shuffled across the network (MB)",
         xlabel: "join strategy",
         ylabel: "data shuffled (MB)",
-        labels: ["shuffle (sort-merge) join", "broadcast join"],
+        labels: ["shuffle (sort-merge)", "broadcast"],
         values: [4000.0, 0.19],
         valueLabels: ["4000 MB", "0.19 MB"],
-        colors: ["#ff7b72", "#7ee787"]
+        colors: ["#ff7b72", "#7ee787"],
+        interpret: "<b>Why the runtime dropped — the cause behind the previous chart.</b> Height is megabytes moved over the network. The shuffle bar is ~4000 MB (essentially the whole fact table); the broadcast bar is 0.19 MB (the 24 KB lookup copied to 8 executors). <b>Read it:</b> the green bar is so short it nearly vanishes — about 21,000x less data moved. When you see this gap, network shuffle was the bottleneck and broadcasting removed it. This is the number to check first when a join is slow."
+      },
+      {
+        type: "bars",
+        title: "Variant — big-vs-big: broadcast does NOT help (illustrative)",
+        xlabel: "join strategy",
+        ylabel: "runtime (s)",
+        labels: ["shuffle (sort-merge)", "forced broadcast"],
+        values: [55.0, 90.0],
+        valueLabels: ["55 s", "90 s / OOM risk"],
+        colors: ["#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative: the broadcast trick backfiring.</b> Here both tables are large (say 4 GB and 1.5 GB), so the colours flip: shuffle (green) is now the <i>correct</i> strategy and forcing a broadcast (red) is the mistake. The forced-broadcast bar is taller — and may not finish at all, because copying 1.5 GB into every executor and through the driver OOMs (runs out of memory). <b>Read it:</b> if the 'broadcast' bar is taller than shuffle, or the job crashes with an OOM, the broadcast side was not actually small. Drop the hint and let big-vs-big shuffle."
+      },
+      {
+        type: "bars",
+        title: "Variant — join-key skew: one straggler task (per-task runtime, illustrative)",
+        xlabel: "task (one bar per partition)",
+        ylabel: "task runtime (s)",
+        labels: ["t1", "t2", "t3", "t4", "t5", "t6 (null key)"],
+        values: [4, 5, 4, 5, 4, 1200],
+        valueLabels: ["4 s", "5 s", "4 s", "5 s", "4 s", "1200 s"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative: skew, read off the task timeline not the strategy.</b> Each bar is one task (partition); height is how long that task ran. Five tasks finish in seconds (green) but one runs for 20 minutes (red) — every row with the hot key (here a <code>null</code> user_id) hashed to that single partition. <b>Read it:</b> a flat row of short bars with one huge spike means <b>join-key skew</b> — the stage waits on that straggler. Fix by salting the hot key or enabling AQE skew-join handling; the giveaway is the one tall bar, not the average."
+      },
+      {
+        type: "bars",
+        title: "Variant — exploding many-to-many join: output rows blow up (illustrative)",
+        xlabel: "stage",
+        ylabel: "row count",
+        labels: ["left rows", "right rows", "joined rows"],
+        values: [1000, 1000, 1000000],
+        valueLabels: ["1,000", "1,000", "1,000,000"],
+        colors: ["#9aa7b4", "#9aa7b4", "#ff7b72"],
+        interpret: "<b>Illustrative: a duplicate-key explosion.</b> The two grey bars are the input sizes (1,000 rows each); the red bar is the join output. <b>Read it:</b> if the output bar dwarfs both inputs — here 1,000 x 1,000 = 1,000,000 — both sides had duplicate join keys, so every left match paired with every right match. This is not skew or a strategy problem; it is a correctness/size trap. Check the output row count, then de-duplicate or pre-aggregate the keys before joining."
       }
     ],
-    caption: "Joining a 4 GB fact table (50,000,000 rows x 80 bytes) to a 200-row, 24 KB lookup. The sort-merge join shuffles BOTH sides by key, so ~4000 MB (essentially the whole fact table) crosses the network and is sorted — modeled at ~50 s. The broadcast join copies only the 24 KB lookup to each of 8 executors (~0.19 MB total) and joins the fact table locally with no shuffle of the big side — modeled at ~3 s. That is ~21,000x less data moved and a ~17x speedup for the exact same result. The catch: broadcast only works while the small side genuinely fits in each executor's memory; broadcasting a table that is actually large OOMs the driver/executors.",
+    caption: "Read each chart by its axis. Charts 1-2: the real numbers for a 4 GB fact table joined to a 24 KB lookup — broadcast moves ~21,000x less data and runs ~17x faster. Charts 3-5 are illustrative variants you will actually meet: big-vs-big (broadcast backfires/OOMs), key skew (one straggler task), and a many-to-many explosion (output dwarfs inputs). Each chart's interpret says how to recognise it.",
     code: `import numpy as np
 
 # Reproducible model of the two physical join strategies.

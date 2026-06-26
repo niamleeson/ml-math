@@ -267,18 +267,46 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-dataframes"] = {
-    question: "When a Spark DataFrame query filters then counts per group, what comes back? Illustrated with the equivalent pandas query on the real Iris dataset: filter petal length > 1.5 cm, then count rows per species.",
+    question: "How do you READ the result of df.filter(...).groupBy('species').count() — the grey-vs-green before/after bars — and spot the cases (heavy filter, no-op filter, schema-inference corruption) where the bars look wrong?",
     charts: [
       {
         type: "bars",
-        title: "Rows per species: full dataset vs after filter(petal_length > 1.5).groupBy('species').count()",
-        labels: ["setosa (all)", "setosa (filtered)", "versicolor (all)", "versicolor (filtered)", "virginica (all)", "virginica (filtered)"],
+        title: "Ideal: filter(petal_length > 1.5).groupBy('species').count() on real Iris (150 rows)",
+        labels: ["setosa all", "setosa kept", "versicolor all", "versicolor kept", "virginica all", "virginica kept"],
         values: [50, 13, 50, 50, 50, 50],
         valueLabels: ["50", "13", "50", "50", "50", "50"],
-        colors: ["#6e7681", "#7ee787", "#6e7681", "#7ee787", "#6e7681", "#7ee787"]
+        colors: ["#6e7681", "#7ee787", "#6e7681", "#7ee787", "#6e7681", "#7ee787"],
+        interpret: "<b>The canonical filter-then-count result, real numbers.</b> Bars are grouped in pairs per species: grey is rows before the filter, green is rows that survive <code>petal_length &gt; 1.5</code>. <b>Read it:</b> compare each green bar to the grey beside it. Versicolor and virginica are untouched (50 to 50) because their petals are long; setosa drops 50 to 13 because setosa petals are famously short. This little table is exactly what <code>.show()</code> would print — except Spark builds it lazily (nothing runs until the action) and across partitions."
+      },
+      {
+        type: "bars",
+        title: "Variant — heavy filter: one group nearly collapses (illustrative)",
+        labels: ["setosa all", "setosa kept", "versicolor all", "versicolor kept", "virginica all", "virginica kept"],
+        values: [50, 1, 50, 47, 50, 49],
+        valueLabels: ["50", "1", "50", "47", "50", "49"],
+        colors: ["#6e7681", "#ffb454", "#6e7681", "#7ee787", "#6e7681", "#7ee787"],
+        interpret: "<b>Illustrative: a much stricter predicate, e.g. <code>petal_length &gt; 2.5</code>.</b> Same grey-vs-coloured pairing. <b>Read it:</b> when one green/orange bar shrinks to near zero (setosa 50 to 1) while others barely move, the filter is selective <i>against that group</i> — not a bug, just biology. Watch for groups that vanish entirely: a group at 0 disappears from the count output, so a species you expected can silently go missing. Always sanity-check that the groups you need survive the filter."
+      },
+      {
+        type: "bars",
+        title: "Variant — no-op filter: predicate keeps everything (illustrative)",
+        labels: ["setosa all", "setosa kept", "versicolor all", "versicolor kept", "virginica all", "virginica kept"],
+        values: [50, 50, 50, 50, 50, 50],
+        valueLabels: ["50", "50", "50", "50", "50", "50"],
+        colors: ["#6e7681", "#9aa7b4", "#6e7681", "#9aa7b4", "#6e7681", "#9aa7b4"],
+        interpret: "<b>Illustrative: a predicate that matches every row, e.g. <code>petal_length &gt; 0</code>.</b> <b>Read it:</b> every grey bar and its grey-blue partner are the same height — the filter removed nothing. If you expected the filter to cut rows and the before/after bars are identical, the predicate is wrong (too loose, wrong column, wrong units) or the data does not contain what you assumed. An unchanged count is a signal to re-read the condition, not proof the data is clean."
+      },
+      {
+        type: "bars",
+        title: "Variant — schema inference corrupts the key: distinct groups collapse (illustrative)",
+        labels: ["007 (string)", "012 (string)", "042 (string)", "7,12,42 -> merged (int)"],
+        values: [40, 35, 25, 100],
+        valueLabels: ["40", "35", "25", "100"],
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72"],
+        interpret: "<b>Illustrative: <code>inferSchema=True</code> guessing the group key wrong.</b> The three green bars are the correct per-id counts when <code>order_id</code> is read as a string (<code>\"007\"</code>, <code>\"012\"</code>, <code>\"042\"</code> stay distinct). <b>Read it:</b> if inference reads that all-digit column as an integer, leading zeros drop and the values stop being distinct ids — the red bar shows the groups silently merging into one bloated count. When a groupBy returns fewer, fatter groups than you expected, suspect a mistyped key. Fix with an explicit <code>StructType</code> typing the id as <code>StringType()</code>."
       }
     ],
-    caption: "The result of the Spark query df.filter(F.col('petal_length') > 1.5).groupBy('species').count(), shown for real by running the identical logic in pandas on the 150-row Iris dataset. Each species starts with 50 rows (grey). The petal-length filter barely touches versicolor and virginica (both stay at 50) but slices setosa down to 13 — because setosa flowers have famously short petals, most fall at or below 1.5 cm. This small filtered-count table is exactly what an action like .show() would return from the Spark query; the only differences are that Spark builds it lazily (nothing runs until .show()) and distributed across partitions, and uses .show() rather than print.",
+    caption: "Chart 1 is the real Iris result (filter petal_length > 1.5, then count per species), computed in pandas to show exactly what the Spark .show() returns. Charts 2-4 are illustrative variants: a heavy filter that nearly empties a group, a no-op filter that changes nothing (a signal the predicate is wrong), and schema-inference reading the group key as the wrong type so distinct groups silently merge. Each interpret says how to read its bars and what to conclude.",
     code: `import pandas as pd
 from sklearn.datasets import load_iris
 

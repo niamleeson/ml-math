@@ -218,7 +218,7 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
   };
 
   window.CODEVIZ["met-distribution"] = {
-    question: "Two discrete distributions P and Q over the same 6 ordered bins (P leans left, Q leans right). For each key formula — KL, JS, Wasserstein/earth-mover, KS, PSI — what does it actually look at, and what number does it report on THIS pair?",
+    question: "Two discrete distributions P and Q over the same 6 ordered bins (P leans left, Q leans right). For each key formula — KL, JS, Wasserstein/earth-mover, KS, PSI — what does it look at, what number does it report on THIS pair, and what do these charts look like in the edge cases you actually hit (identical / disjoint / heavy-tail)?",
     charts: [
       {
         type: "bars",
@@ -227,7 +227,8 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
         series: [
           { name: "P", color: "#4ea1ff", points: [[0, 0.30], [1, 0.25], [2, 0.20], [3, 0.13], [4, 0.08], [5, 0.04]] },
           { name: "Q", color: "#ff7b72", points: [[0, 0.05], [1, 0.10], [2, 0.17], [3, 0.23], [4, 0.25], [5, 0.20]] }
-        ]
+        ],
+        interpret: "<b>x-axis = bin value (1..6); bar height = the probability that distribution puts in that bin.</b> Blue (P) piles up on the left bins, red (Q) on the right — the same total mass (each sums to 1) shifted rightward. The further apart the two colours sit, the bigger every distance below will be. This overlapping-but-shifted shape is the everyday drift case: the supports still overlap, so all the metrics behave."
       },
       {
         type: "bars",
@@ -235,7 +236,8 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
         labels: ["1", "2", "3", "4", "5", "6"],
         values: [0.775, 0.330, 0.047, -0.107, -0.132, -0.093],
         valueLabels: ["+.78", "+.33", "+.05", "-.11", "-.13", "-.09"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#ff7b72", "#ff7b72"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#ff7b72", "#ff7b72", "#ff7b72"],
+        interpret: "<b>Each bar is one bin's term p log2(p/q); they SUM to KL(P||Q)=0.82 bits.</b> Green bins (1-3) have p&gt;q, so P pays extra surprise there (positive); red bins (4-6) have p&lt;q and give a little back (negative). KL is the net, dominated by the bins where P has mass but Q does not. Read it as: most of the 0.82-bit cost comes from bin 1, where P expects a lot but Q expected little."
       },
       {
         type: "line",
@@ -245,7 +247,8 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
         series: [
           { name: "CDF of P", color: "#4ea1ff", points: [[1, 0.30], [2, 0.55], [3, 0.75], [4, 0.88], [5, 0.96], [6, 1.00]] },
           { name: "CDF of Q", color: "#ff7b72", points: [[1, 0.05], [2, 0.15], [3, 0.32], [4, 0.55], [5, 0.80], [6, 1.00]] }
-        ]
+        ],
+        interpret: "<b>Each curve is a CDF: the fraction of that distribution's mass at or below x.</b> P (blue) rises fast because its mass is on low bins; Q (red) lags. The KS statistic is the single biggest vertical gap between the curves (0.43, at x=3); Wasserstein is the whole area sandwiched between them (1.57, in bin units). Both curves start low and meet at 1.0 on the right — they always do, which is why only the gap between them carries information."
       },
       {
         type: "bars",
@@ -253,7 +256,8 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
         labels: ["1", "2", "3", "4", "5", "6"],
         values: [0.448, 0.137, 0.005, 0.057, 0.194, 0.258],
         valueLabels: [".45", ".14", ".00", ".06", ".19", ".26"],
-        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"]
+        colors: ["#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454", "#ffb454"],
+        interpret: "<b>Each bar is one bin's PSI term (p-q)*ln(p/q); they SUM to PSI=1.10.</b> Unlike KL, every term is POSITIVE — the share-gap and the log-ratio always share a sign — so PSI never lets a bin 'refund'. Bins 1 and 6 (the two ends, where the shift is largest) dominate. PSI&gt;0.25 is the standard 'major population shift, alarm' band, so this is a loud drift signal."
       },
       {
         type: "bars",
@@ -261,10 +265,42 @@ print("MMD^2 =", round(mmd2(a, b, sigma), 4))`
         labels: ["KL(P||Q) bits", "KL(Q||P) bits", "JS div bits", "Wasserstein", "KS stat", "PSI"],
         values: [0.821, 0.763, 0.182, 1.570, 0.430, 1.099],
         valueLabels: ["0.82", "0.76", "0.18", "1.57", "0.43", "1.10"],
-        colors: ["#4ea1ff", "#79c0ff", "#7ee787", "#c89bff", "#ffb454", "#ff7b72"]
+        colors: ["#4ea1ff", "#79c0ff", "#7ee787", "#c89bff", "#ffb454", "#ff7b72"],
+        interpret: "<b>One shift, six bars, six scales — do NOT compare bar heights across metrics.</b> JS (0.18) and KS (0.43) are bounded in [0,1]; KL and PSI are unbounded bits; Wasserstein (1.57) carries the data's own units. Note KL(P||Q)=0.82 vs KL(Q||P)=0.76: the two directions differ — that asymmetry is KL's signature. Each metric is only meaningful against its OWN history or threshold."
+      },
+      {
+        type: "line",
+        title: "Variant — IDENTICAL distributions (P=Q): both CDFs lie on top of each other, every distance = 0",
+        xlabel: "bin value x",
+        ylabel: "cumulative probability",
+        series: [
+          { name: "CDF of P", color: "#4ea1ff", points: [[1, 0.30], [2, 0.55], [3, 0.75], [4, 0.88], [5, 0.96], [6, 1.00]] },
+          { name: "CDF of Q", color: "#7ee787", points: [[1, 0.295], [2, 0.545], [3, 0.745], [4, 0.875], [5, 0.955], [6, 1.00]] }
+        ],
+        interpret: "<b>Illustrative: the healthy 'no drift' baseline you want to recognise.</b> When P=Q the two CDFs sit on top of each other (drawn a hair apart so you can see both), so the KS gap is 0 and the Wasserstein area is 0 — KL, JS and PSI are all 0 too. In real monitoring the curves won't be pixel-identical from sampling noise, but a KS&nbsp;D near 0 and PSI well under 0.1 is exactly this picture: stable, no real shift."
+      },
+      {
+        type: "line",
+        title: "Variant — DISJOINT support (spikes at 0 and 5): KL=inf, JS saturates, but Wasserstein stays finite",
+        xlabel: "value x",
+        ylabel: "cumulative probability",
+        series: [
+          { name: "CDF of P (spike at 0)", color: "#4ea1ff", points: [[0, 1.0], [1, 1.0], [2, 1.0], [3, 1.0], [4, 1.0], [5, 1.0]] },
+          { name: "CDF of Q (spike at 5)", color: "#ff7b72", points: [[0, 0.0], [1, 0.0], [2, 0.0], [3, 0.0], [4, 0.0], [5, 1.0]] }
+        ],
+        interpret: "<b>Illustrative failure mode: the distributions share NO bins.</b> P is all at 0, Q all at 5. KL hits +infinity (q=0 where p&gt;0), and JS is pinned at its max (1 bit) and FLAT — slide Q from 5 toward 1 and JS does not budge, so it gives a generator no gradient. Wasserstein still reads the gap between the CDFs as the distance the mass must move (here 5), and shrinks smoothly as the spikes approach. This is exactly why WGAN uses Wasserstein, not JS."
+      },
+      {
+        type: "bars",
+        title: "Variant — HEAVY-TAIL outlier: one far-off bin makes KL spike but barely moves bounded TV",
+        labels: ["1", "2", "3", "4", "5", "rare tail"],
+        values: [0.02, 0.01, 0.005, 0.0, 0.0, 0.61],
+        valueLabels: [".02", ".01", ".00", "0", "0", "+.61"],
+        colors: ["#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#9aa7b4", "#ff7b72"],
+        interpret: "<b>Illustrative: per-bin KL terms when Q nearly forgot one rare bin.</b> P and Q agree almost everywhere, but in the far-right 'rare tail' bin Q put tiny mass while P put real mass — that single bin (red) dominates KL because log(p/q) explodes as q shrinks. A bounded metric like TV or Hellinger would barely move (the share gap is small). Lesson: KL is hypersensitive to near-zero reference bins — smooth the bins, or use a bounded/earth-mover metric, before trusting a big KL."
       }
     ],
-    caption: "Real numbers from P=[.30,.25,.20,.13,.08,.04] and Q=[.05,.10,.17,.23,.25,.20] over bins 1..6. Chart 1 shows the shift: P's mass is low, Q's is high. Chart 2 breaks KL(P||Q)=0.82 bits into its per-bin terms p log2(p/q) — green bins (1-3, where p>q) PAY bits, red bins (4-6, where p<q) refund some; they net to 0.82, and KL(Q||P)=0.76 differs because the terms are reweighted (asymmetry). Chart 3 plots both CDFs: the KS statistic is their single biggest vertical gap (0.43 at x=3), while Wasserstein/earth-mover is the TOTAL area between them (1.57, in bin units). Chart 4 splits PSI=Sigma (p-q)ln(p/q)=1.10 per bin (>0.25 = major population shift). Chart 5 lines up all five: bounded [0,1]-ish JS (0.18) and KS (0.43) vs unbounded KL/PSI vs unit-scaled Wasserstein — never compare across metrics, only each to its own threshold.",
+    caption: "Charts 1-5 use real numbers from P=[.30,.25,.20,.13,.08,.04] and Q=[.05,.10,.17,.23,.25,.20] over bins 1..6 (each chart's interpret explains how to read it). Charts 6-8 are the edge cases you actually meet: IDENTICAL (CDFs coincide, every distance 0 — the no-drift baseline), DISJOINT support (KL=inf and JS flat-saturated, but Wasserstein stays finite and gradient-friendly — the WGAN motivation), and a HEAVY-TAIL outlier (one near-zero reference bin makes KL spike while bounded TV/Hellinger shrug). Across all of them the rule holds: read each metric against its own scale and threshold, never against another metric's.",
     code: `import numpy as np
 
 # Two discrete distributions over the SAME 6 ordered bins (values 1..6).

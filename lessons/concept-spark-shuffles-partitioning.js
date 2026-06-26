@@ -282,30 +282,43 @@ spark.stop()`
   };
 
   window.CODEVIZ["spark-shuffles-partitioning"] = {
-    question: "When 3,000 rows are shuffled into 8 partitions, what does an EVEN key distribution look like versus a SKEWED one where a single hot key owns 70% of the rows?",
+    question: "How do you READ records-per-partition after a shuffle? Three cases: balanced keys (healthy), one hot key (skew straggler), and what SALTING the hot key fixes.",
     charts: [
       {
         type: "bars",
-        title: "Records per partition — EVEN keys (one task each finishes fast)",
+        title: "Ideal — EVEN keys: every partition ~equal, all tasks finish together",
         xlabel: "partition",
         ylabel: "records",
         labels: ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"],
         values: [9934, 9924, 9997, 10220, 10070, 9951, 9949, 9955],
         valueLabels: ["9934", "9924", "9997", "10220", "10070", "9951", "9949", "9955"],
-        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Real counts from hashing 80,000 well-spread keys into 8 partitions. <b>x</b> is the partition, <b>y</b> is how many rows landed in it. All bars are the same height (~10,000), so <b>max/mean &approx; 1.02</b> — perfectly balanced. Since one task handles one partition and a stage ends when its slowest task does, equal bars mean all 8 tasks finish together. This is the shape you WANT after a <code>groupBy</code>/<code>join</code> shuffle: flat bars = the cluster is fully used."
       },
       {
         type: "bars",
-        title: "Records per partition — SKEWED (one hot key → one monster task)",
+        title: "Variant — SKEWED: one hot key → one monster partition (straggler)",
         xlabel: "partition",
         ylabel: "records",
         labels: ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"],
         values: [58780, 3028, 2988, 3019, 3109, 3004, 3046, 3026],
         valueLabels: ["58780", "3028", "2988", "3019", "3109", "3004", "3046", "3026"],
-        colors: ["#ff7b72", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
+        colors: ["#ff7b72", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787", "#7ee787"],
+        interpret: "Same 8 partitions, but one hot key (a <code>null</code> or logged-out-user sentinel) owns 70% of rows. The red bar p0 holds 58,780 rows (73.5% of everything) while the rest sit near 3,000, so <b>max/mean &approx; 5.88</b>. Read one towering bar as the textbook <b>skew straggler</b>: p0's task runs ~6x longer while the other 7 finish early and idle. Adding executors does nothing — the bottleneck is one un-splittable partition. The cure is salting (next chart) or AQE."
+      },
+      {
+        type: "bars",
+        title: "Variant — AFTER SALTING: hot key spread 16 ways, balance restored",
+        xlabel: "partition",
+        ylabel: "records",
+        labels: ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"],
+        values: [10380, 9980, 9890, 9950, 10110, 9940, 9900, 9850],
+        valueLabels: ["10380", "9980", "9890", "9950", "10110", "9940", "9900", "9850"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"],
+        interpret: "Illustrative: the SAME skewed data after appending a small random salt to the hot key (group by <code>(key, salt)</code>, then combine the partials). <b>x</b> is the partition, <b>y</b> is records. The monster p0 from the previous chart is now broken across all 8 partitions, so the bars are flat again (<b>max/mean &approx; 1.05</b>) and the straggler is gone. Read flat bars after a known-skewed shuffle as <b>the fix worked</b>: every task does roughly equal work and the stage runs at the balanced speed."
       }
     ],
-    caption: "Real counts from hashing 80,000 keys into 8 partitions. EVEN case (keys spread across ~50,000 values): every partition gets ~10,000 rows, so max/mean ≈ 1.02 — perfectly balanced, all 8 tasks finish together. SKEWED case (one hot key owns 70% of rows — think a null or logged-out-user sentinel): partition p0 gets 58,780 rows (73.5% of everything) while the rest get ~3,000 each, so max/mean ≈ 5.88. The stage's runtime is set by its slowest task, so p0's task runs ~6x longer than it should and the other 7 sit idle — the straggler. Adding executors does nothing; you must salt the key or let AQE split it. This is the skew problem made visible.",
+    caption: "",
     code: `import numpy as np
 
 N_PART = 8                 # shuffle into 8 partitions
