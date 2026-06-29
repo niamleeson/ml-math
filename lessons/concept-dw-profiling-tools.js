@@ -111,23 +111,31 @@
        missing on the same rows) is visible at a glance.</p>`,
 
     example:
-      `<p>Suppose you point <code>ProfileReport</code> at a 569-row table that happens to contain a sneaked-in
-       constant column, an ID column, and three columns with injected missingness.</p>
+      `<p>Point <code>ProfileReport</code> at the real 569-row <code>load_breast_cancer</code> frame, roughed
+       up like a raw export: add one constant column (<code>const_col = 1.0</code>), one ID column
+       (<code>record_id = 0..568</code>), and inject nulls into three measurement columns at 30%, 12%, and 5%.
+       The profiler applies one rule per alert type and counts the hits:</p>
+       <table class="extable">
+         <caption>Alert rule &rarr; trigger &rarr; how many columns/pairs fire (real counts)</caption>
+         <thead><tr><th>alert</th><th>rule (per column / pair)</th><th class="num">count</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Constant</td><td>distinct count $=1$</td><td class="num">1</td></tr>
+           <tr><td class="row-h">Unique (ID)</td><td>distinct count $=$ row count (569)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">Missing</td><td>column has any nulls</td><td class="num">3</td></tr>
+           <tr><td class="row-h">High correlation</td><td>$|\\text{corr}| \\gt 0.9$ for a column pair</td><td class="num">14</td></tr>
+           <tr><td class="row-h">Imbalance</td><td>top category $\\gt 80\\%$ of rows</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>The profiler scans every column and writes one alert per problem it finds.</li>
-         <li>The <b>Constant</b> alert fires once &mdash; the column with a single distinct value (drop it; it
-         carries no information).</li>
-         <li>The <b>Unique</b> / high-cardinality alert fires once &mdash; the column whose distinct count
-         equals the row count, i.e. an identifier (drop it as a feature; it would leak or overfit).</li>
-         <li>The <b>Missing</b> alert fires three times &mdash; once for each column you injected nulls into
-         (here at roughly 30%, 12%, and 5% missing).</li>
-         <li>The <b>High correlation</b> alert fires for the measurement columns that move together (radius,
-         perimeter, and area are near-duplicates of each other), and an <b>Imbalance</b> alert fires for the
-         one flag whose top value dominates.</li>
+         <li><b>Constant</b> fires once &mdash; <code>const_col</code> has a single distinct value (drop it; no information).</li>
+         <li><b>Unique</b> fires once &mdash; <code>record_id</code> has 569 distinct values for 569 rows, i.e. an identifier (drop it as a feature; it would leak or overfit).</li>
+         <li><b>Missing</b> fires three times &mdash; once per injected column ($0.30, 0.12, 0.05 \\times 569 \\approx 171, 68, 28$ nulls).</li>
+         <li><b>High correlation</b> fires for the <b>14</b> measurement columns tangled in $|\\text{corr}|\\gt0.9$ pairs &mdash; radius, perimeter, and area variants are near-duplicates of one another.</li>
+         <li><b>Imbalance</b> fires once for the one flag whose top value clears 80% of rows.</li>
        </ul>
-       <p>You read five short alert lines and immediately know what to fix &mdash; <i>before</i> opening a
-       single histogram. That is the whole value of automated profiling: it converts 30 columns of raw data
-       into a ranked to-do list.</p>`,
+       <p>You read five short alert lines &mdash; total $1+1+3+14+1 = 20$ flags &mdash; and know what to fix
+       <i>before</i> opening a single histogram. That is the whole value of automated profiling: it converts
+       30 columns of raw data into a ranked to-do list.</p>`,
 
     practice: [
       {

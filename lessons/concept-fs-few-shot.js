@@ -142,15 +142,21 @@
     },
 
     example:
-      `<p>A tiny <b>2-way 1-shot</b> task in embedding space (so each example is just a 2-number vector $f(x)$).</p>
-       <p>Support set: one example of class A at $f = [0, 0]$, and one example of class B at $f = [4, 0]$.</p>
+      `<p>A tiny <b>2-way 1-shot</b> task in embedding space (so each example is just a 2-number vector $f(x)$). Support set: one example of class A at $f = [0, 0]$, and one of class B at $f = [4, 0]$. A query arrives at $f(x) = [1, 0]$.</p>
        <ul class="steps">
-         <li><b>Build prototypes.</b> With one example each, the prototype is that example. So $c_A = [0, 0]$ and $c_B = [4, 0]$.</li>
-         <li><b>A query arrives</b> at $f(x) = [1, 0]$. Measure squared distances.</li>
-         <li>To A: $\\|[1,0] - [0,0]\\|^2 = 1^2 + 0^2 = 1$.</li>
-         <li>To B: $\\|[1,0] - [4,0]\\|^2 = (-3)^2 + 0^2 = 9$.</li>
-         <li>$1 &lt; 9$, so the nearest prototype is A. Predict $\\hat{y} = A$.</li>
+         <li><b>Build prototypes.</b> With one example each, the prototype is that example: $c_A = [0, 0]$ and $c_B = [4, 0]$.</li>
+         <li><b>Distance to A:</b> $\\|[1,0] - [0,0]\\|^2 = 1^2 + 0^2 = 1$.</li>
+         <li><b>Distance to B:</b> $\\|[1,0] - [4,0]\\|^2 = (-3)^2 + 0^2 = 9$.</li>
+         <li><b>Pick the smallest:</b> $1 &lt; 9$, so the nearest prototype is A. Predict $\\hat{y} = A$.</li>
        </ul>
+       <table class="extable">
+         <caption>Query $[1,0]$ vs each prototype — nearest wins</caption>
+         <thead><tr><th>class $k$</th><th>prototype $c_k$</th><th class="num">$\\|f(x)-c_k\\|^2$</th><th>verdict</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td>$[0, 0]$</td><td class="num">1</td><td>nearest &rarr; predict A</td></tr>
+           <tr><td class="row-h">B</td><td>$[4, 0]$</td><td class="num">9</td><td>farther</td></tr>
+         </tbody>
+       </table>
        <p>Now add a second shot to class A at $[2, 0]$. The prototype moves to the mean: $c_A = \\frac{[0,0] + [2,0]}{2} = [1, 0]$. The query at $[1,0]$ now sits right on $c_A$ (distance 0) — extra shots steadied the prototype and made the call even more confident.</p>`,
 
     application:

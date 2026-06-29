@@ -106,22 +106,50 @@
        </ul>`,
 
     example:
-      `<p>Take eight exam scores: $\\{52,\\ 55,\\ 58,\\ 60,\\ 88,\\ 90,\\ 92,\\ 95\\}$ &mdash; clearly
-       <b>two clusters</b>, a low group and a high group, nothing in the middle.</p>
+      `<p>Take eight exam scores, $n=8$: $\\{52,\\ 55,\\ 58,\\ 60,\\ 88,\\ 90,\\ 92,\\ 95\\}$ &mdash; clearly
+       <b>two clusters</b>, a low group and a high group, nothing in the middle. Let us plug them into the
+       <b>ECDF</b> formula $F_n(x)=\\frac{1}{n}\\sum_{i=1}^{n}\\mathbf{1}[x_i\\le x]$ &mdash; just "count the
+       points at or below $x$, divide by 8".</p>
+       <table class="extable">
+         <caption>ECDF: at each score, count how many of the 8 points are $\\le x$, then divide by 8.</caption>
+         <thead><tr><th>$x$</th><th class="num">count $\\le x$</th><th class="num">$F_8(x)=\\text{count}/8$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">52</td><td class="num">1</td><td class="num">0.125</td></tr>
+           <tr><td class="row-h">55</td><td class="num">2</td><td class="num">0.250</td></tr>
+           <tr><td class="row-h">58</td><td class="num">3</td><td class="num">0.375</td></tr>
+           <tr><td class="row-h">60</td><td class="num">4</td><td class="num">0.500</td></tr>
+           <tr><td class="row-h">88</td><td class="num">5</td><td class="num">0.625</td></tr>
+           <tr><td class="row-h">90</td><td class="num">6</td><td class="num">0.750</td></tr>
+           <tr><td class="row-h">92</td><td class="num">7</td><td class="num">0.875</td></tr>
+           <tr><td class="row-h">95</td><td class="num">8</td><td class="num">1.000</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Histogram, 2 bins</b> &mdash; one bar for 50&ndash;75, one for 75&ndash;100, each holding 4
-         points. The gap is visible: two bars, nothing between. Good.</li>
+         <li><b>ECDF, the calculation.</b> At $x=60$: four scores ($52,55,58,60$) are $\\le 60$, so
+         $F_8(60)=\\tfrac{4}{8}=0.5$. At $x=87$ (in the empty middle): still only those four are $\\le 87$, so
+         $F_8(87)=\\tfrac{4}{8}=0.5$ &mdash; <b>unchanged</b>. The curve runs <b>flat from 60 to 88</b>: that
+         flat shelf <i>is</i> the gap, shown exactly with no tuning.</li>
+         <li><b>Box plot, the five numbers.</b> Median $Q_2=\\tfrac{60+88}{2}=74$; lower quartile
+         $Q_1=\\tfrac{55+58}{2}=56.5$; upper quartile $Q_3=\\tfrac{90+92}{2}=91$; whiskers at $52$ and $95$.
+         A box from $56.5$ to $91$ with a line at $74$ &mdash; <b>identical</b> to a box plot of eight scores
+         spread <i>evenly</i> from 52 to 95. The middle gap is <b>invisible</b>.</li>
+         <li><b>Histogram, 2 bins</b> &mdash; bin 50&ndash;75 holds the 4 low scores, bin 75&ndash;100 holds
+         the 4 high scores. Two bars, nothing between: the gap shows. Good.</li>
          <li><b>Histogram, 1 bin</b> &mdash; a single bar "50&ndash;100: 8 points". The two clusters have
          <b>vanished</b>. Too few bins smeared the structure away &mdash; the classic bin-count trap.</li>
-         <li><b>Box plot</b> &mdash; median between 60 and 88 (so $\\approx 74$), box spanning roughly
-         57&ndash;91. It looks exactly like a box plot of eight scores spread <i>evenly</i> from 52 to 95.
-         The middle gap &mdash; the whole story &mdash; is <b>invisible</b>.</li>
-         <li><b>ECDF</b> &mdash; the staircase climbs to 0.5 over the low cluster, then runs <b>flat</b>
-         across the empty middle (no points there, so no rise), then climbs to 1.0 over the high cluster.
-         The flat stretch <i>is</i> the gap. Exact, no tuning.</li>
        </ul>
-       <p>Same eight numbers: the histogram shows the gap if you pick enough bins, the ECDF always shows
-       it, and the box plot never does.</p>`,
+       <table class="extable">
+         <caption>Same 8 numbers, four plots: does each one show the middle gap?</caption>
+         <thead><tr><th>plot</th><th>tuning knob</th><th>shows the gap?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">histogram, 2 bins</td><td>bin count</td><td>yes</td></tr>
+           <tr><td class="row-h">histogram, 1 bin</td><td>bin count</td><td>no (too few bins)</td></tr>
+           <tr><td class="row-h">box plot</td><td>none</td><td>no (only 5 numbers)</td></tr>
+           <tr><td class="row-h">ECDF</td><td>none</td><td>yes (flat 60&rarr;88)</td></tr>
+         </tbody>
+       </table>
+       <p>Same eight numbers: the histogram shows the gap only if you pick enough bins, the ECDF always
+       shows it (the flat $0.5$ shelf), and the box plot never does.</p>`,
 
     whenToUse:
       `<p><b>Pick the family by how many variables you are asking about.</b></p>

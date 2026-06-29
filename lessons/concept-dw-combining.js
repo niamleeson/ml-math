@@ -117,18 +117,36 @@
        some key is duplicated on both sides. $\\blacksquare$</p>`,
 
     example:
-      `<p>Two tiny tables. <b>Orders</b> (left): <code>cust_id</code> = 1, 1, 2, 3, 6, 6, 7 (7 rows).
-       <b>Customers</b> (right): <code>cust_id</code> = 1, 2, 3, 4, 5 (5 rows, each unique).</p>
+      `<p>Two tiny tables, joined on <code>cust_id</code>. <b>Orders</b> (left) has keys
+       $\\{1,1,2,3,6,6,7\\}$ &mdash; 7 rows. <b>Customers</b> (right) has keys $\\{1,2,3,4,5\\}$ &mdash;
+       5 rows, each unique. So $K_L=\\{1,2,3,6,7\\}$ and $K_R=\\{1,2,3,4,5\\}$.</p>
+       <table class="extable">
+         <caption>The same two tables, joined four ways &mdash; count the rows each keeps.</caption>
+         <thead>
+           <tr><th>join (<code>how=</code>)</th><th>keeps keys</th><th class="num">left-side rows kept</th><th class="num">right-only rows</th><th class="num">result rows</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">inner</td><td>$K_L\\cap K_R=\\{1,2,3\\}$</td><td class="num">4</td><td class="num">0</td><td class="num">4</td></tr>
+           <tr><td class="row-h">left</td><td>$K_L$ (all orders)</td><td class="num">7</td><td class="num">0</td><td class="num">7</td></tr>
+           <tr><td class="row-h">right</td><td>$K_R$ (all customers)</td><td class="num">4</td><td class="num">2</td><td class="num">6</td></tr>
+           <tr><td class="row-h">outer</td><td>$K_L\\cup K_R$</td><td class="num">7</td><td class="num">2</td><td class="num">9</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Inner</b> &rarr; <b>4</b> rows (keys 1, 1, 2, 3 match a customer).</li>
-         <li><b>Left</b> &rarr; <b>7</b> rows (all orders; keys 6, 6, 7 get <code>NaN</code> city).</li>
-         <li><b>Right</b> &rarr; <b>6</b> rows (4 matched + customers 4, 5 with <code>NaN</code> amount).</li>
-         <li><b>Outer</b> &rarr; <b>9</b> rows (4 matched + 3 order-only + 2 customer-only).</li>
+         <li><b>Inner.</b> Only keys in both, $\\{1,2,3\\}$. On the left those cover order rows
+         $1,1,2,3$, so $4$ rows. Keys $6,6,7$ (no customer) and $4,5$ (no order) drop.</li>
+         <li><b>Left.</b> Every order row: $7$. The $4$ matched get a city; rows $6,6,7$ get
+         <code>NaN</code> city.</li>
+         <li><b>Right.</b> Every customer: matched orders ($4$ rows) plus customers $4,5$ with
+         <code>NaN</code> amount ($2$ rows): $4+2=6$.</li>
+         <li><b>Outer.</b> The union: $4$ matched $+\\ 3$ order-only ($6,6,7$) $+\\ 2$ customer-only
+         ($4,5$) $=4+3+2=\\mathbf{9}$.</li>
        </ul>
-       <p>Now break the key on purpose: store <code>cust_id</code> as a <i>string with a space</i>
-       (<code>"1 "</code>) on one side and an <i>integer</i> (<code>1</code>) on the other. Every key
-       mismatches, so a left join returns 7 rows with <b>every</b> city column <code>NaN</code> &mdash;
-       no error, just silent emptiness.</p>`,
+       <p>Sanity check: inner $4\\le$ left $7$, inner $4\\le$ right $6$, and outer $9\\ge$ all of them &mdash;
+       exactly as the theory says. Now break the key on purpose: store <code>cust_id</code> as a
+       <i>string with a space</i> (<code>"1 "</code>) on one side and an <i>integer</i> (<code>1</code>)
+       on the other. Every key mismatches, so a left join still returns $7$ rows but with <b>every</b>
+       city column <code>NaN</code> &mdash; no error, just silent emptiness.</p>`,
 
     practice: [
       {

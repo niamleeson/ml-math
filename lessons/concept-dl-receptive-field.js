@@ -50,11 +50,20 @@
        <p>$$ R_k = 1 + \\sum_{j=1}^{k} (F_j - 1)\\prod_{i=0}^{j-1} S_i. $$</p>
        <p><b>Two 3×3 versus one 5×5.</b> Set $F_1 = F_2 = 3$, $S_1 = S_2 = 1$. Then $R_2 = 1 + (3-1)\\cdot 1 + (3-1)\\cdot 1 = 5$ — the same receptive field as a single $5\\times5$ filter. But two $3\\times3$ filters cost $2\\times(3{\\cdot}3) = 18$ weights per channel pair, versus $5{\\cdot}5 = 25$ for the $5\\times5$ — fewer parameters, plus an extra nonlinearity in between. That is exactly why deep nets stack small filters.</p>`,
     example:
-      `<p>The cheat-sheet's own example. Two stacked $3\\times3$ filters, both stride $1$: $F_1 = F_2 = 3$, $S_1 = S_2 = 1$.</p>
+      `<p>The cheat-sheet's own example. Two stacked $3\\times3$ filters, both stride $1$: $F_1 = F_2 = 3$, $S_1 = S_2 = 1$. Plug into $R_k = 1 + \\sum_{j=1}^{k} (F_j - 1)\\prod_{i=0}^{j-1} S_i$, building the per-layer ledger:</p>
+       <table class="extable">
+         <caption>Per-layer contribution to the receptive field (two $3\\times3$ stride-1 layers)</caption>
+         <thead><tr><th>layer $j$</th><th class="num">$F_j$</th><th class="num">$S_j$</th><th class="num">jump $\\prod_{i=0}^{j-1} S_i$</th><th class="num">term $(F_j-1)\\cdot$jump</th><th class="num">running $R_j$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">start</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$1$</td></tr>
+           <tr><td class="row-h">1</td><td class="num">$3$</td><td class="num">$1$</td><td class="num">$1$</td><td class="num">$2$</td><td class="num">$3$</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$3$</td><td class="num">$1$</td><td class="num">$1$</td><td class="num">$2$</td><td class="num">$5$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Layer 1: $(F_1 - 1)\\prod_{i=0}^{0} S_i = 2 \\cdot 1 = 2$.</li>
-         <li>Layer 2: $(F_2 - 1)\\prod_{i=0}^{1} S_i = 2 \\cdot (S_0 S_1) = 2 \\cdot (1\\cdot 1) = 2$.</li>
-         <li>Add to the starting pixel: $R_2 = 1 + 2\\cdot 1 + 2\\cdot 1 = 5$.</li>
+         <li>Layer 1 term: $(F_1 - 1)\\prod_{i=0}^{0} S_i = 2 \\cdot 1 = 2$.</li>
+         <li>Layer 2 term: $(F_2 - 1)\\prod_{i=0}^{1} S_i = 2 \\cdot (S_0 S_1) = 2 \\cdot (1\\cdot 1) = 2$.</li>
+         <li>Add both to the starting pixel: $R_2 = 1 + 2 + 2 = 5$.</li>
        </ul>
        <p>So two $3\\times3$ stride-1 layers see a $5\\times5$ input patch — matching one $5\\times5$ filter, with fewer weights.</p>`,
     practice: [

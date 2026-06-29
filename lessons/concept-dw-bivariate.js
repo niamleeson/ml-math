@@ -89,21 +89,50 @@
        differences, association. Spotting any of them flags a column worth keeping for the model.</p>`,
 
     example:
-      `<p>Say you have an online-shop table with <code>session_minutes</code> (number),
-       <code>order_value</code> (number), <code>device</code> (mobile/desktop), and <code>bought</code>
-       (yes/no). Three quick bivariate looks:</p>
-       <ul>
-         <li><b>Numeric &times; Numeric:</b> scatter <code>order_value</code> vs <code>session_minutes</code>.
-         The cloud tilts up &mdash; longer sessions tend to spend more &mdash; but the spread fans out at high
-         minutes (heteroscedasticity), so long sessions are <i>less</i> predictable.</li>
-         <li><b>Numeric &times; Categorical:</b> box plot of <code>order_value</code> by <code>device</code>.
-         Desktop's box sits higher: a group difference worth keeping.</li>
-         <li><b>Categorical &times; Categorical:</b> a crosstab of <code>device</code> against
-         <code>bought</code>, normalized by row. If desktop buys 22&percnt; of the time and mobile 11&percnt;,
-         the two are <b>associated</b> &mdash; device relates to the target.</li>
+      `<p>Take eight rows of an online-shop table: <code>session_minutes</code> (number),
+       <code>order_value</code> (number, in $), <code>device</code> (mobile/desktop), and <code>bought</code>
+       (yes/no). Small enough to do the arithmetic by hand.</p>
+       <table class="extable">
+         <caption>Sample of 8 sessions (illustrative)</caption>
+         <thead>
+           <tr><th>row</th><th>device</th><th class="num">session_minutes</th><th class="num">order_value</th><th>bought</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td>desktop</td><td class="num">12</td><td class="num">80</td><td>yes</td></tr>
+           <tr><td class="row-h">2</td><td>desktop</td><td class="num">5</td><td class="num">40</td><td>no</td></tr>
+           <tr><td class="row-h">3</td><td>desktop</td><td class="num">18</td><td class="num">120</td><td>yes</td></tr>
+           <tr><td class="row-h">4</td><td>desktop</td><td class="num">9</td><td class="num">60</td><td>no</td></tr>
+           <tr><td class="row-h">5</td><td>mobile</td><td class="num">7</td><td class="num">30</td><td>no</td></tr>
+           <tr><td class="row-h">6</td><td>mobile</td><td class="num">14</td><td class="num">50</td><td>yes</td></tr>
+           <tr><td class="row-h">7</td><td>mobile</td><td class="num">4</td><td class="num">20</td><td>no</td></tr>
+           <tr><td class="row-h">8</td><td>mobile</td><td class="num">11</td><td class="num">35</td><td>no</td></tr>
+         </tbody>
+       </table>
+       <p><b>Numeric &times; Categorical &mdash; group means of <code>order_value</code> by <code>device</code>:</b></p>
+       <ul class="steps">
+         <li>Desktop mean: $(80 + 40 + 120 + 60) / 4 = 300 / 4 = 75$.</li>
+         <li>Mobile mean: $(30 + 50 + 20 + 35) / 4 = 135 / 4 = 33.75$.</li>
+         <li>Desktop sits much higher ($75$ vs $33.75$) &mdash; a group difference worth keeping.</li>
        </ul>
-       <p>In three plots you've learned that session length, device, and the device&ndash;purchase link are all
-       candidate features &mdash; without fitting a single model.</p>`,
+       <p><b>Categorical &times; Categorical &mdash; crosstab of <code>device</code> against <code>bought</code>, row-normalized to a buy <i>rate</i>:</b></p>
+       <table class="extable">
+         <caption>Counts, then each row's buy rate = bought-yes / row total</caption>
+         <thead>
+           <tr><th>device</th><th class="num">bought = no</th><th class="num">bought = yes</th><th class="num">row total</th><th class="num">buy rate</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">desktop</td><td class="num">2</td><td class="num">2</td><td class="num">4</td><td class="num">2/4 = 0.50</td></tr>
+           <tr><td class="row-h">mobile</td><td class="num">3</td><td class="num">1</td><td class="num">4</td><td class="num">1/4 = 0.25</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Desktop buys at $2/4 = 0.50$, mobile at $1/4 = 0.25$ &mdash; double the rate.</li>
+         <li>The buy rate differs by device, so the two categories are <b>associated</b>: device relates to the target.</li>
+       </ul>
+       <p>From one tiny table you've found a group difference (desktop spends more) and an association
+       (desktop buys more often) &mdash; both flag <code>device</code> as a candidate feature, without fitting a
+       single model. (For the Numeric &times; Numeric view you would scatter <code>order_value</code> vs
+       <code>session_minutes</code> and look for the upward tilt.)</p>`,
 
     practice: [
       {

@@ -62,14 +62,31 @@
          <li><b>Why trees ignore scaling.</b> A tree split asks "is $x \\lt t$?". Under any increasing rescaling $\\tilde{x}=ax+b$, the equivalent threshold is $\\tilde{t}=at+b$, and the <i>same rows</i> fall on each side. The partition is identical, so the tree is unchanged. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p>Take two real <code>load_wine</code> features that live on very different scales. Across the 178 wines:</p>
+      `<p>Take two real <code>load_wine</code> features that live on very different scales (across the 178 wines), and standardize each with $\\tilde{x}=\\frac{x-\\mu}{\\sigma}$.</p>
+       <table class="extable">
+         <caption>Raw statistics, and the spread ratio that lets the big column bully the small one.</caption>
+         <thead><tr><th>feature</th><th class="num">min</th><th class="num">mean $\\mu$</th><th class="num">max</th><th class="num">std $\\sigma$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">proline (mg/L)</td><td class="num">278</td><td class="num">746.9</td><td class="num">1680</td><td class="num">314.0</td></tr>
+           <tr><td class="row-h">hue (ratio)</td><td class="num">0.48</td><td class="num">0.957</td><td class="num">1.71</td><td class="num">0.228</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b><code>proline</code></b> (an amino acid, in milligrams per liter) runs min <b>278</b>, mean <b>746.9</b>, max <b>1680</b> &mdash; hundreds.</li>
-         <li><b><code>hue</code></b> (a color ratio) runs min <b>0.48</b>, mean <b>0.957</b>, max <b>1.71</b> &mdash; around one.</li>
-         <li><b>Standardize <code>proline</code>.</b> Its standard deviation is about <b>314</b>. So the smallest wine maps to $\\tilde{x}=\\frac{278-746.9}{314}\\approx -1.49$, the mean maps to $0$, and the largest to $\\frac{1680-746.9}{314}\\approx +2.97$. The hundreds-sized column now lives in roughly $[-1.5,\\ 3.0]$.</li>
-         <li><b>Standardize <code>hue</code>.</b> Its standard deviation is about <b>0.228</b>. The smallest maps to $\\frac{0.48-0.957}{0.228}\\approx -2.10$, the mean to $0$, the largest to $\\frac{1.71-0.957}{0.228}\\approx +3.30$. The around-one column now lives in roughly $[-2.1,\\ 3.3]$.</li>
-         <li><b>The payoff:</b> before scaling, <code>proline</code>'s numbers were ~700&times; larger than <code>hue</code>'s, so any distance was all proline. After scaling, both features have mean 0 and a comparable spread, so a k-NN or SGD model weighs them fairly. Note the shapes did not change &mdash; only the axes did.</li>
-       </ul>`,
+         <li><b>Standardize <code>proline</code>'s min.</b> $\\tilde{x}=\\frac{278-746.9}{314.0}=\\frac{-468.9}{314.0}\\approx -1.49$.</li>
+         <li><b>Its mean.</b> $\\frac{746.9-746.9}{314.0}=0$.</li>
+         <li><b>Its max.</b> $\\frac{1680-746.9}{314.0}=\\frac{933.1}{314.0}\\approx +2.97$.</li>
+         <li><b>Standardize <code>hue</code>'s min.</b> $\\frac{0.48-0.957}{0.228}=\\frac{-0.477}{0.228}\\approx -2.09$.</li>
+         <li><b>Its mean.</b> $\\frac{0.957-0.957}{0.228}=0$. <b>Its max.</b> $\\frac{1.71-0.957}{0.228}=\\frac{0.753}{0.228}\\approx +3.30$.</li>
+       </ul>
+       <table class="extable">
+         <caption>Before: spreads differ by ~700&times;. After: both centered at 0, comparable range.</caption>
+         <thead><tr><th>feature</th><th class="num">raw min</th><th class="num">raw max</th><th class="num">z min</th><th class="num">z max</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">proline</td><td class="num">278</td><td class="num">1680</td><td class="num">-1.49</td><td class="num">+2.97</td></tr>
+           <tr><td class="row-h">hue</td><td class="num">0.48</td><td class="num">1.71</td><td class="num">-2.09</td><td class="num">+3.30</td></tr>
+         </tbody>
+       </table>
+       <p><b>The payoff:</b> before scaling, <code>proline</code>'s spread ($\\sigma\\approx314$) was ~$314/0.228\\approx1380\\times$ <code>hue</code>'s, so any Euclidean distance was essentially all proline. After scaling, both have mean 0 and unit variance, so a k-NN or SGD model weighs them fairly. The shapes did not change &mdash; only the axes did.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       var s = getComputedStyle(document.documentElement);

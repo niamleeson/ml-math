@@ -127,20 +127,49 @@
        noise": raise the share of ink that is signal, and the message arrives faster.</p>`,
 
     example:
-      `<p>Take the seven average chemical readings for class-0 wines (from the bundled wine dataset):
-       alcohol $13.74$, malic acid $2.01$, ash $2.46$, total phenols $2.84$, flavanoids $2.98$, color
-       intensity $5.53$, hue $1.06$.</p>
+      `<p>Take the seven average chemical readings for class-0 wines (from the bundled wine dataset). The
+       data never changes; we change only the <b>order</b> and the <b>ink</b>. First, the same seven numbers
+       in dataframe order vs sorted by value:</p>
+       <table class="extable">
+         <caption>Same 7 values, two orderings. Sorting makes rank readable at a glance.</caption>
+         <thead><tr><th>feature</th><th class="num">mean</th><th class="num">rank (sorted)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">alcohol</td><td class="num">13.74</td><td class="num">1</td></tr>
+           <tr><td class="row-h">color intensity</td><td class="num">5.53</td><td class="num">2</td></tr>
+           <tr><td class="row-h">flavanoids</td><td class="num">2.98</td><td class="num">3</td></tr>
+           <tr><td class="row-h">total phenols</td><td class="num">2.84</td><td class="num">4</td></tr>
+           <tr><td class="row-h">ash</td><td class="num">2.46</td><td class="num">5</td></tr>
+           <tr><td class="row-h">malic acid</td><td class="num">2.01</td><td class="num">6</td></tr>
+           <tr><td class="row-h">hue</td><td class="num">1.06</td><td class="num">7</td></tr>
+         </tbody>
+       </table>
+       <p>Now work the <b>data-ink ratio</b>
+       $=\\dfrac{\\text{ink used to show data}}{\\text{total ink}}$ on each version. Count "ink marks" as a
+       rough proxy.</p>
        <ul class="steps">
-         <li><b>The cluttered default.</b> Plot them as bars in the order they came out of the dataframe
-         (alcohol, malic acid, ash, &hellip;), each bar a different rainbow color, a heavy grid behind
-         them, a title that just says "Wine features". The reader has to scan all seven bars to find the
-         biggest, the rainbow implies an order that isn't there, and the grid adds ink for nothing.</li>
-         <li><b>The cleaned version.</b> Sort the bars largest-to-smallest, so alcohol ($13.74$) sits on
-         top and hue ($1.06$) at the bottom &mdash; rank is now instant. Color every bar one muted gray
-         except alcohol, the point of the chart, in a single accent color. Delete the grid and the top/
-         right spines. Print each value at the end of its bar (direct labels, no legend). Re-title it with
-         the takeaway: "Alcohol dominates the average chemistry of class-0 wines".</li>
+         <li><b>The cluttered default.</b> 7 data bars, plus non-data ink: 1 heavy frame + 10 gridlines +
+         2 extra spines = <b>13</b> non-data marks. Total ink $=7+13=20$, so data-ink ratio
+         $=\\tfrac{7}{20}=\\mathbf{0.35}$ &mdash; almost two-thirds of the ink is junk.</li>
+         <li><b>The cleaned version.</b> 7 data bars, plus only 7 direct value labels (these <i>are</i>
+         data ink) and <b>0</b> gridlines/spines. Non-data ink $=0$, total $=7+7=14$, data-ink ratio
+         $=\\tfrac{14}{14}=\\mathbf{1.00}$ &mdash; every mark carries information.</li>
+         <li><b>The change.</b> $0.35\\rightarrow1.00$. Sort the bars (alcohol $13.74$ on top, hue $1.06$ at
+         bottom &mdash; rank instant), one muted gray except alcohol in a single accent color, delete grid
+         and top/right spines, direct-label each value, and re-title with the takeaway: "Alcohol dominates
+         the average chemistry of class-0 wines".</li>
        </ul>
+       <table class="extable">
+         <caption>Before vs after, on the same 7 numbers.</caption>
+         <thead><tr><th>property</th><th>cluttered default</th><th>cleaned</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">data bars</td><td class="num">7</td><td class="num">7</td></tr>
+           <tr><td class="row-h">non-data ink marks</td><td class="num">13</td><td class="num">0</td></tr>
+           <tr><td class="row-h">data-ink ratio</td><td class="num">0.35</td><td class="num">1.00</td></tr>
+           <tr><td class="row-h">bars sorted?</td><td>no</td><td>yes</td></tr>
+           <tr><td class="row-h">colors</td><td>rainbow (7)</td><td>gray + 1 accent</td></tr>
+           <tr><td class="row-h">read time</td><td>~10 s</td><td>~1 s</td></tr>
+         </tbody>
+       </table>
        <p>Same seven numbers, but the second chart is read in one second and the first takes ten. Nothing
        about the <i>data</i> changed &mdash; only the ink and the order.</p>`,
 

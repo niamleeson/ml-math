@@ -80,14 +80,37 @@
        <p>This is also why the chapter is called "back to the feature": none of these transforms are new — BoW, one-hot, scaling, normalization, tf-idf, PCA all appeared in earlier chapters. Chapter 9 just <b>composes</b> them and shows the payoff is in how you stack and scale, not in any single trick.</p>`,
 
     example:
-      `<p>Three papers, one-hot encoded over three fields of study [ML, vision, NLP], with one extra numeric column for "citations".</p>
+      `<p>Three papers, one-hot encoded over three fields of study [ML, vision, NLP], with one extra numeric column for "citations". We want recommendations for the query $q$.</p>
+       <table class="extable">
+         <caption>Feature rows $x=(\\text{ML},\\text{vision},\\text{NLP},\\,\\text{citations})$.</caption>
+         <thead><tr><th>paper</th><th class="num">ML</th><th class="num">vision</th><th class="num">NLP</th><th class="num">citations</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$q$ (ML+vision)</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">10</td></tr>
+           <tr><td class="row-h">A (ML+vision)</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">12</td></tr>
+           <tr><td class="row-h">B (NLP only)</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">4000</td></tr>
+         </tbody>
+       </table>
+       <p><b>Round 1 — raw cosine (no scaling).</b> Plug into $\\cos(x_q,x_j)=\\dfrac{x_q\\cdot x_j}{\\lVert x_q\\rVert\\,\\lVert x_j\\rVert}$:</p>
        <ul class="steps">
-         <li>Query $q$ = "ML + vision paper, 10 citations": raw $x_q=(1,1,0,\\,10)$. Paper A = "ML + vision, 12 citations": $x_A=(1,1,0,\\,12)$. Paper B = "NLP only, 4000 citations": $x_B=(0,0,1,\\,4000)$.</li>
-         <li><b>Raw cosine (no scaling).</b> $x_q\\cdot x_B = 0+0+0+10\\times4000=40000$, and $\\lVert x_q\\rVert\\approx10.1$, $\\lVert x_B\\rVert\\approx4000$. So $\\cos(q,B)\\approx 40000/(10.1\\times4000)\\approx 0.99$ — paper B looks almost identical to the query, even though they share <b>no field of study</b>. The citation column (in the thousands) hijacked the distance.</li>
-         <li><b>After scaling.</b> Standardize the citation column across the three papers; the values $10,12,4000$ become roughly $-0.58,-0.58,+1.15$. Now $x_q=(1,1,0,-0.58)$, $x_A=(1,1,0,-0.58)$, $x_B=(0,0,1,+1.15)$.</li>
-         <li>$\\cos(q,A)=\\dfrac{1+1+0+0.34}{\\dots}\\approx 0.99$ (they share both fields and similar citations), while $\\cos(q,B)$ drops to roughly $-0.4$ (no shared field, opposite citation sign). Now A is correctly the top recommendation and B is pushed away.</li>
-         <li>The lesson in one line: <b>raw, the recommender picked the wrong paper purely on citation magnitude; after scaling, it picks the paper that actually shares the query's topic.</b></li>
-       </ul>`,
+         <li>$x_q\\cdot x_B = 1{\\cdot}0+1{\\cdot}0+0{\\cdot}1+10{\\cdot}4000 = 40000$.</li>
+         <li>$\\lVert x_q\\rVert = \\sqrt{1+1+0+100} = \\sqrt{102} \\approx 10.10$.</li>
+         <li>$\\lVert x_B\\rVert = \\sqrt{0+0+1+16{,}000{,}000} \\approx 4000.0$.</li>
+         <li>$\\cos(q,B) = \\dfrac{40000}{10.10\\times4000.0} \\approx 0.990$ — B looks almost identical to $q$ even though they share <b>no field of study</b>. The citation column hijacked the distance.</li>
+       </ul>
+       <p><b>Round 2 — standardize the citation column first.</b> The three citation values $10,12,4000$ have mean $\\bar{c}=\\frac{10+12+4000}{3}=1340.67$ and standard deviation $\\approx 1880.4$, so they rescale to $z=(c-\\bar{c})/1880.4$: $\\;10\\to-0.708$, $\\;12\\to-0.707$, $\\;4000\\to+1.414$. Now $x_q=(1,1,0,-0.708)$, $x_A=(1,1,0,-0.707)$, $x_B=(0,0,1,+1.414)$.</p>
+       <ul class="steps">
+         <li>$\\cos(q,A)$: dot $= 1+1+0+(-0.708)(-0.707)=2.501$; lengths $\\sqrt{1+1+0.501}=1.581$ each, so $\\cos(q,A)=\\dfrac{2.501}{1.581\\times1.581}\\approx 1.000$.</li>
+         <li>$\\cos(q,B)$: dot $= 0+0+0+(-0.708)(1.414)=-1.001$; $\\lVert x_q\\rVert=1.581$, $\\lVert x_B\\rVert=\\sqrt{0+0+1+2.000}=1.732$, so $\\cos(q,B)=\\dfrac{-1.001}{1.581\\times1.732}\\approx -0.366$.</li>
+       </ul>
+       <table class="extable">
+         <caption>Cosine similarity to the query $q$, before vs after scaling.</caption>
+         <thead><tr><th>candidate</th><th class="num">raw cosine</th><th class="num">scaled cosine</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A (shares both fields)</td><td class="num">≈0.99</td><td class="num">≈1.00</td></tr>
+           <tr><td class="row-h">B (no shared field)</td><td class="num">≈0.99</td><td class="num">≈−0.37</td></tr>
+         </tbody>
+       </table>
+       <p>In one line: <b>raw, the recommender tied B with A purely on citation magnitude; after scaling, A is the clear top recommendation and B is pushed away</b> because it shares none of the query's topic.</p>`,
 
     practice: [
       {

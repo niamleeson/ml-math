@@ -159,20 +159,29 @@
        </ul>`,
 
     example:
-      `<p>Ten clean readings of a sensor, all clustered near 12:</p>
-       <p>$x = \\{10,\\,12,\\,11,\\,13,\\,12,\\,10,\\,14,\\,11,\\,12,\\,13\\}$.</p>
+      `<p>Ten clean readings of a sensor, all clustered near 12:
+       $x = \\{10,\\,12,\\,11,\\,13,\\,12,\\,10,\\,14,\\,11,\\,12,\\,13\\}$. Plug them into the formulas, then
+       corrupt one value and recompute.</p>
        <ul class="steps">
-         <li><b>Center.</b> The mean is $11.8$ and the median is $12$ — they agree, because the data is
-         symmetric and clean.</li>
-         <li><b>Spread.</b> The std is about $1.3$ and the IQR is $2$ — both small, both telling the same
-         story of a tight cluster.</li>
-         <li><b>Now corrupt it.</b> One sensor glitches and records $1000$. The mean leaps to about $101.6$,
-         and the std balloons past $300$. But the median is still $12$ and the IQR is still about $2$ — the
-         <b>robust</b> summaries shrugged off the glitch.</li>
-         <li><b>The gap is the alarm.</b> Mean $101.6$ versus median $12$ is a screaming signal that an
-         outlier (or heavy skew) is present. Report the median and IQR here; quoting the mean would invent a
-         "typical reading" of 102 that no real sensor ever produced.</li>
-       </ul>`,
+         <li><b>Mean.</b> $\\bar{x}=\\frac{1}{n}\\sum_i x_i = \\frac{10+12+11+13+12+10+14+11+12+13}{10} = \\frac{118}{10} = 11.8$.</li>
+         <li><b>Median.</b> Sorted: $10,10,11,11,\\mathbf{12},\\mathbf{12},12,13,13,14$; the two middles are both $12$, so $\\text{median}=12$. Mean $\\approx$ median &mdash; symmetric, clean data.</li>
+         <li><b>Std.</b> $\\sum_i(x_i-\\bar{x})^2 = (-1.8)^2+\\dots+(1.2)^2 = 15.6$, so $s=\\sqrt{15.6/(10-1)}=\\sqrt{1.733}\\approx 1.32$. The IQR is $Q_3-Q_1 = 13-11 = 2$. Both small &mdash; a tight cluster.</li>
+         <li><b>Now corrupt it:</b> one reading glitches to $1000$, giving $n=11$. New mean $=\\frac{118+1000}{11}=\\frac{1118}{11}\\approx 101.64$; std balloons to $\\approx 298$.</li>
+         <li><b>Robust stats shrug.</b> The new sorted middle (6th of 11 values) is still $12$, so $\\text{median}=12$ and $\\text{IQR}\\approx 2$ &mdash; one far-out point shifts the middle by at most one position.</li>
+       </ul>
+       <table class="extable">
+         <caption>Clean vs. one-outlier: robust summaries barely move</caption>
+         <thead><tr><th>statistic</th><th class="num">clean</th><th class="num">+ outlier 1000</th><th>type</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">mean $\\bar{x}$</td><td class="num">11.80</td><td class="num">101.64</td><td>non-robust</td></tr>
+           <tr><td class="row-h">std $s$</td><td class="num">1.32</td><td class="num">~298</td><td>non-robust</td></tr>
+           <tr><td class="row-h">median</td><td class="num">12.0</td><td class="num">12.0</td><td>robust</td></tr>
+           <tr><td class="row-h">IQR</td><td class="num">2.0</td><td class="num">~2.0</td><td>robust</td></tr>
+         </tbody>
+       </table>
+       <p><b>The gap is the alarm.</b> Mean $101.64$ versus median $12$ screams that an outlier (or heavy skew)
+       is present. Report the median and IQR here; quoting the mean would invent a "typical reading" of $\\approx 102$
+       that no real sensor ever produced.</p>`,
 
     practice: [
       {

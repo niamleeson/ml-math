@@ -103,14 +103,29 @@
     },
 
     example:
-      `<p>One task: tell digit 3 from digit 8. The support set has just a few labeled images. Inner step size $\\alpha = 0.3$.</p>
+      `<p>One task: tell digit 3 from digit 8. Use a single weight to keep the arithmetic plain. The meta-init is $\\theta = 2.0$, inner step size $\\alpha = 0.3$, and on the support set the gradient is $\\nabla_\\theta\\,\\mathcal{L}_{\\text{task}}(\\theta) = 4.0$.</p>
+       <p><b>Inner loop</b> — one gradient step, $\\theta' = \\theta - \\alpha\\,\\nabla_\\theta\\,\\mathcal{L}_{\\text{task}}(\\theta)$:</p>
        <ul class="steps">
-         <li>Start at the meta-init $\\theta$. On the support set the gradient is $\\nabla_\\theta\\,\\mathcal{L}_{\\text{task}}(\\theta) = g$.</li>
-         <li>One inner step: $\\theta' = \\theta - 0.3\\,g$. Suppose this already gets most query images right.</li>
-         <li>The outer loop checks the query loss at $\\theta'$, not at $\\theta$. If a tiny tweak to $\\theta$ would make $\\theta'$ even better, it makes that tweak.</li>
-         <li>Repeat over many digit-pair tasks. The shared start $\\theta$ slowly becomes a place where <i>any</i> digit pair is one short hop away.</li>
+         <li>Scale the gradient: $\\alpha\\,\\nabla_\\theta\\,\\mathcal{L}_{\\text{task}}(\\theta) = 0.3 \\times 4.0 = 1.2$.</li>
+         <li>Step downhill: $\\theta' = 2.0 - 1.2 = 0.8$. That is the adapted weight for this task.</li>
        </ul>
-       <p>The payoff: a brand-new pair the model never trained on is learned in a handful of steps, not from scratch.</p>`,
+       <p><b>Outer loop</b> — the loss is measured at the <i>adapted</i> $\\theta'$, summed over tasks. Suppose three digit-pair tasks each get adapted from the same start $\\theta = 2.0$:</p>
+       <table class="extable">
+         <caption>One inner step per task; outer objective is the sum of the post-adaptation losses.</caption>
+         <thead>
+           <tr><th>task</th><th class="num">gradient $g$</th><th class="num">$\\theta' = 2.0 - 0.3g$</th><th class="num">loss at $\\theta'$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">3 vs 8</td><td class="num">4.0</td><td class="num">0.80</td><td class="num">0.20</td></tr>
+           <tr><td class="row-h">1 vs 7</td><td class="num">2.0</td><td class="num">1.40</td><td class="num">0.15</td></tr>
+           <tr><td class="row-h">0 vs 6</td><td class="num">5.0</td><td class="num">0.50</td><td class="num">0.25</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Outer objective: $\\sum_{\\text{tasks}} \\mathcal{L}_{\\text{task}}(\\theta') = 0.20 + 0.15 + 0.25 = 0.60$.</li>
+         <li>The outer loop nudges the shared start $\\theta$ to make that $0.60$ smaller — scoring at $\\theta'$, never at $\\theta$.</li>
+       </ul>
+       <p>The payoff: a brand-new pair the model never trained on is learned in a handful of steps from this start, not from scratch.</p>`,
 
     application:
       `<p>Meta-learning shines when each new task has very little data. A robot arm meeting a new object, a drug-response model for a rare disease, or a phone keyboard adapting to your typing in a few taps.</p>

@@ -140,20 +140,34 @@
        </ul>`,
 
     example:
-      `<p>Five raw strings arrive in mixed, day-first format with a stray bad value:</p>
-       <p><code>["01/03/2023", "15/03/2023", "31/03/2023", "10/04/2023", "not a date"]</code>.</p>
+      `<p>Five raw strings arrive in mixed, day-first format with a stray bad value, each carrying a value
+       $x$. Parse with <code>pd.to_datetime(s, dayfirst=True, errors="coerce")</code>:</p>
+       <table class="extable">
+         <caption>Parse, then extract calendar pieces with <code>.dt</code> (Mon$=0$ ... Sun$=6$).</caption>
+         <thead>
+           <tr><th>raw string</th><th>parsed $t$</th><th class="num">.dt.month</th><th class="num">.dt.dayofweek</th><th class="num">value $x$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">"01/03/2023"</td><td>2023-03-01</td><td class="num">3</td><td class="num">2 (Wed)</td><td class="num">10</td></tr>
+           <tr><td class="row-h">"15/03/2023"</td><td>2023-03-15</td><td class="num">3</td><td class="num">2 (Wed)</td><td class="num">20</td></tr>
+           <tr><td class="row-h">"31/03/2023"</td><td>2023-03-31</td><td class="num">3</td><td class="num">4 (Fri)</td><td class="num">30</td></tr>
+           <tr><td class="row-h">"10/04/2023"</td><td>2023-04-10</td><td class="num">4</td><td class="num">0 (Mon)</td><td class="num">60</td></tr>
+           <tr><td class="row-h">"not a date"</td><td><code>NaT</code></td><td class="num">NaN</td><td class="num">NaN</td><td class="num">&mdash;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Parse</b> with <code>pd.to_datetime(s, dayfirst=True, errors="coerce")</code>. The first four
-         become 2023-03-01, 2023-03-15, 2023-03-31, 2023-04-10; the junk becomes <code>NaT</code>. Without
-         <code>dayfirst=True</code>, <code>"31/03/2023"</code> would fail (there is no month 31) &mdash; a
-         useful signal that the format is day-first.</li>
-         <li><b>Extract.</b> <code>.dt.month</code> gives <code>[3, 3, 3, 4, NaN]</code> and
-         <code>.dt.dayofweek</code> gives <code>[2, 2, 4, 0, NaN]</code> (the first two are Wednesdays).</li>
-         <li><b>Duration.</b> The span from the first to the fourth valid date is
-         <code>Timestamp("2023-04-10") - Timestamp("2023-03-01")</code> $= \\Delta t = $ <b>40 days</b>.</li>
-         <li><b>Resample.</b> If each row carried a value, setting the parsed column as the index and calling
-         <code>.resample("M").mean()</code> would produce one number for March and one for April &mdash; the
-         bucket means $\\bar{x}_{\\text{Mar}}$ and $\\bar{x}_{\\text{Apr}}$.</li>
+         <li><b>Parse.</b> The first four become real timestamps; the junk becomes <code>NaT</code>. Without
+         <code>dayfirst=True</code>, <code>"31/03/2023"</code> fails (no month 31) &mdash; a signal the format
+         is day-first.</li>
+         <li><b>Duration ($\\Delta t$).</b> First to fourth valid date:
+         $\\Delta t=\\text{2023-04-10}-\\text{2023-03-01}=\\mathbf{40}$ <b>days</b>.</li>
+         <li><b>Resample to monthly mean ($\\bar{x}_m=\\frac{1}{|B_m|}\\sum_{t\\in B_m}x_t$).</b> March bucket
+         $B_{\\text{Mar}}=\\{10,20,30\\}$: $\\bar{x}_{\\text{Mar}}=(10+20+30)/3=60/3=\\mathbf{20}$. April bucket
+         $B_{\\text{Apr}}=\\{60\\}$: $\\bar{x}_{\\text{Apr}}=60/1=\\mathbf{60}$.</li>
+         <li><b>Rolling mean ($r_t=\\frac{1}{w}\\sum_{k=0}^{w-1}x_{t-k}$, $w=3$).</b> The first full window
+         (first three values) is $r=(10+20+30)/3=\\mathbf{20}$; slide it forward one step and
+         $r=(20+30+60)/3=110/3\\approx\\mathbf{36.7}$ &mdash; each window looks only backward, never at the
+         future.</li>
        </ul>`,
 
     practice: [

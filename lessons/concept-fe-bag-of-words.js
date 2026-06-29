@@ -68,22 +68,28 @@
        </ul>`,
 
     example:
-      `<p>Take three tiny reviews and build the bag by hand.</p>
+      `<p>Take three tiny reviews and build the matrix $X$ by hand. Documents:
+       $d_1=$ "great food great service", $d_2=$ "good food", $d_3=$ "bad service". The vocabulary, sorted as
+       scikit-learn does it, is <code>bad, food, good, great, service</code>, so $V=5$. Filling in each
+       $x_{d,w}$ = count of word $w$ in document $d$ gives the $3\\times 5$ document-term matrix:</p>
+       <table class="extable">
+         <caption>Document-term matrix $X$ ($N=3$ rows, $V=5$ cols)</caption>
+         <thead><tr><th>doc</th><th class="num">bad</th><th class="num">food</th><th class="num">good</th><th class="num">great</th><th class="num">service</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$\\mathbf{x}_1$</td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">2</td><td class="num">1</td></tr>
+           <tr><td class="row-h">$\\mathbf{x}_2$</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+           <tr><td class="row-h">$\\mathbf{x}_3$</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Documents.</b> $d_1=$ "great food great service", $d_2=$ "good food", $d_3=$ "bad service".</li>
-         <li><b>Vocabulary</b> (sorted, as scikit-learn does it): <code>bad, food, good, great, service</code>. So $V=5$ — a 5-dimensional space.</li>
-         <li><b>Count each document into those 5 columns:</b>
-           <ul>
-             <li>$\\mathbf{x}_1 = [\\,0,\\ 1,\\ 0,\\ 2,\\ 1\\,]$ — "great" appears twice, "food" and "service" once, "bad" and "good" zero.</li>
-             <li>$\\mathbf{x}_2 = [\\,0,\\ 1,\\ 1,\\ 0,\\ 0\\,]$.</li>
-             <li>$\\mathbf{x}_3 = [\\,1,\\ 0,\\ 0,\\ 0,\\ 1\\,]$.</li>
-           </ul>
-         </li>
-         <li><b>Read off the geometry.</b> $\\mathbf{x}_1$ and $\\mathbf{x}_2$ both have a 1 in the "food" column, so they overlap — somewhat close. $\\mathbf{x}_2$ and $\\mathbf{x}_3$ share <i>no</i> word, so their dot product is 0 — they are orthogonal, maximally dissimilar in BoW space.</li>
-         <li><b>See order vanish.</b> $d_1$ rearranged as "service great food great" gives the <i>identical</i> vector $[\\,0,1,0,2,1\\,]$. The bag cannot tell the two apart.</li>
+         <li><b>Row $\\mathbf{x}_1$:</b> "great" appears twice &rarr; a 2; "food" and "service" once each &rarr; 1, 1; "bad" and "good" absent &rarr; 0, 0.</li>
+         <li><b>Overlap = nearness.</b> $\\mathbf{x}_1$ and $\\mathbf{x}_2$ both have a 1 in "food", so $\\mathbf{x}_1\\cdot\\mathbf{x}_2 = 0\\cdot0+1\\cdot1+0\\cdot1+2\\cdot0+1\\cdot0 = 1\\gt 0$ &mdash; they overlap, so they are somewhat close.</li>
+         <li><b>Disjoint = orthogonal.</b> $\\mathbf{x}_2$ and $\\mathbf{x}_3$ share no word, so $\\mathbf{x}_2\\cdot\\mathbf{x}_3 = 0\\cdot1+1\\cdot0+1\\cdot0+0\\cdot0+0\\cdot1 = 0$.</li>
+         <li><b>Cosine similarity</b> of $d_2,d_3$: $\\lVert\\mathbf{x}_2\\rVert=\\sqrt{0+1+1+0+0}=\\sqrt2$, $\\lVert\\mathbf{x}_3\\rVert=\\sqrt{1+0+0+0+1}=\\sqrt2$, so $\\cos=\\frac{0}{\\sqrt2\\cdot\\sqrt2}=\\frac{0}{2}=0$ &mdash; a right angle, maximally dissimilar.</li>
+         <li><b>Order vanishes.</b> Rearranging $d_1$ to "service great food great" gives the <i>identical</i> row $[\\,0,1,0,2,1\\,]$ &mdash; the bag cannot tell them apart.</li>
        </ul>
-       <p>Three short reviews, a $3\\times5$ document-term matrix, and already 9 of its 15 entries are zero —
-       a hint of how sparse a real Yelp matrix gets.</p>`,
+       <p>Of the $3\\times 5=15$ entries, <b>9 are zero</b> &mdash; already 60% sparse, a hint of how empty a
+       real Yelp matrix gets.</p>`,
 
     whenToUse:
       `<p><b>Reach for bag-of-words when word presence or frequency carries the signal</b> — which is

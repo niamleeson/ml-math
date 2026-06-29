@@ -85,14 +85,36 @@
        </ul>`,
 
     example:
-      `<p>Work through the two-part split on a single image, ResNet-18 sizes.</p>
+      `<p>Work through the two-part split $\\hat{y}=g(f_\\theta(\\mathbf{I}))$ on a single image, ResNet-18
+       sizes, with the dimensions plugged in.</p>
        <ul class="steps">
-         <li><b>Input.</b> $\\mathbf{I}$ is a $224\\times224\\times3$ photo — about 150,000 raw pixel numbers. Too high-dimensional and too low-level to classify directly.</li>
-         <li><b>Featurize.</b> Push $\\mathbf{I}$ through the frozen CNN $f_\\theta$. Convolution and pooling layers shrink the spatial grid while growing abstraction, until the penultimate layer outputs $\\mathbf{z} = f_\\theta(\\mathbf{I}) \\in \\mathbb{R}^{512}$ — just 512 learned features instead of 150,000 raw pixels.</li>
-         <li><b>Classify your task.</b> Suppose your new task is "is this a muffin or a chihuahua?" — 2 classes the network was never trained on. Fit a logistic regression $g$ on the 512-dim vectors from your few hundred labeled photos. $g$ has only $512\\times2$ weights to learn, so a tiny dataset suffices.</li>
-         <li><b>Predict.</b> For a new photo, $\\hat{y} = g(f_\\theta(\\mathbf{I}))$. You trained none of the 11 million CNN weights — all the visual know-how came from ImageNet pretraining, reused for free.</li>
-         <li><b>Contrast with HOG.</b> The hand-crafted route computes a fixed gradient-orientation histogram (no learning, no ImageNet) and feeds <i>that</i> to the same logistic regression. It works, but the learned $\\mathbf{z}$ usually wins because it encodes object-level structure a fixed gradient recipe cannot.</li>
-       </ul>`,
+         <li><b>Input.</b> $\\mathbf{I}$ is a $224\\times224\\times3$ photo, so its raw size is
+         $224\\times224\\times3 = 150{,}528$ pixel numbers &mdash; too high-dimensional and low-level to
+         classify directly.</li>
+         <li><b>Featurize.</b> Push $\\mathbf{I}$ through the frozen CNN $f_\\theta$. The penultimate layer
+         outputs $\\mathbf{z}=f_\\theta(\\mathbf{I})\\in\\mathbb{R}^{d}$ with $d=512$ &mdash; a
+         $150{,}528 / 512 = 294\\times$ reduction, from raw pixels to learned features.</li>
+         <li><b>Classify your task.</b> For "muffin vs. chihuahua" (2 classes), fit a logistic regression
+         $g$ on the 512-dim vectors. It has $d\\times2 + 2 = 512\\times2 + 2 = 1{,}026$ weights to learn
+         (the $+2$ are the per-class biases).</li>
+         <li><b>Count what you DIDN'T train.</b> ResNet-18 has $\\approx 11{,}000{,}000$ frozen weights in
+         $f_\\theta$. You trained $1{,}026$, i.e. only $1026 / 11{,}000{,}000 \\approx 0.0093\\%$ &mdash;
+         the other $99.99\\%$ came free from ImageNet pretraining.</li>
+         <li><b>Predict.</b> For a new photo, $\\hat{y}=g(f_\\theta(\\mathbf{I}))$, reusing all the frozen
+         visual know-how.</li>
+       </ul>
+       <table class="extable">
+         <caption>Three ways to feed the same logistic-regression head $g$ (illustrative sizes; ResNet-18 backbone).</caption>
+         <thead><tr><th>feature source</th><th class="num">feature dim</th><th class="num">weights you train ($\\times2$ classes)</th><th>learned from data?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">raw pixels</td><td class="num">150,528</td><td class="num">301,058</td><td>no (just pixels)</td></tr>
+           <tr><td class="row-h">HOG (hand-crafted)</td><td class="num">~3,780</td><td class="num">~7,562</td><td>no (fixed recipe)</td></tr>
+           <tr><td class="row-h">deep features $\\mathbf{z}$</td><td class="num">512</td><td class="num">1,026</td><td>yes (frozen CNN)</td></tr>
+         </tbody>
+       </table>
+       <p>The learned $\\mathbf{z}$ gives the smallest head to train <i>and</i> the richest features:
+       512 object-level numbers usually beat 150,528 raw pixels or a fixed gradient histogram, because
+       $f_\\theta$ already encodes parts and shapes a hand-crafted recipe cannot.</p>`,
 
     whenToUse:
       `<p><b>Reach for deep learned features whenever you have an image task</b> — they are the book's

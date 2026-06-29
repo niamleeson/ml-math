@@ -77,13 +77,22 @@
        <p><b>Why this helps a linear classifier.</b> A logistic regression learns one weight per column. If a useless common word has huge counts, it can swamp the gradient and the regularizer spends its budget taming that column. Shrinking common columns toward zero (small idf) and stretching rare informative columns (large idf) puts the features on a more comparable footing, so the optimizer and the regularizer focus on the columns that discriminate. The book stresses, though, that this effect is <b>modest</b>: on Yelp, properly tuning the regularization strength $C$ does more than the choice between BoW, L2-normalized BoW, and tf-idf.</p>`,
 
     example:
-      `<p>Tiny corpus of $N=4$ short documents. The word "the" appears in all four; the word "delicious" appears in only one.</p>
+      `<p>Tiny corpus of $N=4$ short documents. Take one review, "the food the the delicious", and weight each word with $\\text{tfidf}=\\text{tf}\\cdot\\log\\frac{N}{n_w}$ (natural log).</p>
+       <table class="extable">
+         <caption>Per-word tf-idf for the review "the food the the delicious" ($N=4$)</caption>
+         <thead><tr><th>word $w$</th><th class="num">$n_w$</th><th class="num">$\\text{idf}=\\log\\frac{4}{n_w}$</th><th class="num">$\\text{tf}$</th><th class="num">$\\text{tfidf}=\\text{tf}\\cdot\\text{idf}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">the</td><td class="num">4</td><td class="num">0.000</td><td class="num">3</td><td class="num">0.000</td></tr>
+           <tr><td class="row-h">food</td><td class="num">2</td><td class="num">0.693</td><td class="num">1</td><td class="num">0.693</td></tr>
+           <tr><td class="row-h">delicious</td><td class="num">1</td><td class="num">1.386</td><td class="num">1</td><td class="num">1.386</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>For "the": $n_{\\text{the}}=4$, so $\\text{idf}(\\text{the})=\\log\\frac{4}{4}=\\log 1 = 0$. Whatever its count, its tf-idf weight is $0$ — fully silenced.</li>
-         <li>For "delicious": $n_{\\text{delicious}}=1$, so $\\text{idf}(\\text{delicious})=\\log\\frac{4}{1}=\\log 4 \\approx 1.386$ (natural log).</li>
-         <li>Suppose a review reads "the food the the delicious": tf of "the" $=3$, tf of "delicious" $=1$.</li>
-         <li>tf-idf of "the" $=3\\times 0 = 0$. tf-idf of "delicious" $=1\\times 1.386 = 1.386$.</li>
-         <li>So even though "the" is counted three times and "delicious" once, the raw count says "the" is $3\\times$ more important, while tf-idf says "the" is worth <b>nothing</b> and "delicious" carries all the signal. That is the down-weight-common, up-weight-rare effect in one line.</li>
+         <li>"the" sits in all 4 docs: $\\text{idf}=\\log\\frac{4}{4}=\\log 1 = 0$.</li>
+         <li>"food" sits in 2 docs: $\\text{idf}=\\log\\frac{4}{2}=\\log 2 \\approx 0.693$.</li>
+         <li>"delicious" sits in 1 doc: $\\text{idf}=\\log\\frac{4}{1}=\\log 4 \\approx 1.386$.</li>
+         <li>Multiply tf by idf: "the" $=3\\times 0 = 0$, "food" $=1\\times 0.693 = 0.693$, "delicious" $=1\\times 1.386 = 1.386$.</li>
+         <li>Raw counts said "the" (3) outweighs "delicious" (1) by $3\\times$. tf-idf flips it: "the" is worth <b>nothing</b> and "delicious" carries the most signal.</li>
        </ul>
        <p>(scikit-learn's default would smooth this — $\\text{idf}(\\text{the})=\\log\\frac{1+4}{1+4}+1=1$ rather than $0$ — so even ubiquitous words keep a small nonzero weight, but rare words still dominate.)</p>`,
 

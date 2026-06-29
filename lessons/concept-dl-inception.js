@@ -60,12 +60,30 @@
        <p>$$ \\frac{F^2 C_{in} C_{out}}{F^2 C_{red} C_{out} + C_{in} C_{red}} \\;\\approx\\; \\frac{C_{in}}{C_{red}} \\quad\\text{(when the 1×1 term is small).} $$</p>
        <p>So reducing $192$ channels to $16$ before the big conv buys close to a $192/16 = 12\\times$ saving on that branch — the exact factor depends on the leftover 1×1 cost.</p>`,
     example:
-      `<p>Take a real GoogLeNet-style branch: input with $C_{in}=192$ channels over an $H\\times W = 28\\times28$ map, producing a $5\\times5$ conv output with $C_{out}=32$ channels. Use a bottleneck of $C_{red}=16$.</p>
+      `<p>Take a real GoogLeNet-style branch: input with $C_{in}=192$ channels over an $H\\times W = 28\\times28$ map, producing a $5\\times5$ conv output with $C_{out}=32$ channels. Use a bottleneck of $C_{red}=16$. Plug into $\\text{params} = (F\\times F\\times C_{in} + 1)\\times C_{out}$.</p>
        <ul class="steps">
          <li><b>Direct 5×5 params:</b> $(5\\times5\\times192 + 1)\\times32 = (4800+1)\\times32 = 153{,}632$.</li>
-         <li><b>Bottleneck params:</b> the 1×1 is $(1\\times1\\times192+1)\\times16 = 193\\times16 = 3{,}088$; the 5×5 is $(5\\times5\\times16+1)\\times32 = 401\\times32 = 12{,}832$; total $= 3{,}088 + 12{,}832 = 15{,}920$.</li>
+         <li><b>Bottleneck 1×1 params:</b> $(1\\times1\\times192+1)\\times16 = 193\\times16 = 3{,}088$.</li>
+         <li><b>Bottleneck 5×5 params:</b> $(5\\times5\\times16+1)\\times32 = 401\\times32 = 12{,}832$.</li>
+         <li><b>Bottleneck total:</b> $3{,}088 + 12{,}832 = 15{,}920$ weights.</li>
          <li><b>Parameter saving:</b> $153{,}632 \\div 15{,}920 \\approx 9.65\\times$ fewer weights.</li>
-         <li><b>FLOPs (multiply-adds over the $28\\times28$ map):</b> direct $= 5\\times5\\times192\\times32\\times784 = 120{,}422{,}400$; bottleneck $= 2{,}408{,}448 + 10{,}035{,}200 = 12{,}443{,}648$ — about $9.68\\times$ cheaper.</li>
+       </ul>
+       <p>The same split applied to FLOPs (multiply-adds over all $28\\times28 = 784$ positions, $\\text{FLOPs}\\approx F^2 C_{in} C_{out} H W$):</p>
+       <table class="extable">
+         <caption>Direct $5\\times5$ vs $1\\times1$ bottleneck ($C_{in}=192$, $C_{red}=16$, $C_{out}=32$, $28\\times28$)</caption>
+         <thead><tr><th>approach</th><th class="num">params</th><th class="num">FLOPs</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">direct $5\\times5$</td><td class="num">$153{,}632$</td><td class="num">$120{,}422{,}400$</td></tr>
+           <tr><td class="row-h">$1\\times1$ reduce ($192\\to16$)</td><td class="num">$3{,}088$</td><td class="num">$2{,}408{,}448$</td></tr>
+           <tr><td class="row-h">$5\\times5$ on $16$ ch</td><td class="num">$12{,}832$</td><td class="num">$10{,}035{,}200$</td></tr>
+           <tr><td class="row-h">bottleneck total</td><td class="num">$15{,}920$</td><td class="num">$12{,}443{,}648$</td></tr>
+           <tr><td class="row-h">saving</td><td class="num">$\\approx 9.65\\times$</td><td class="num">$\\approx 9.68\\times$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Direct FLOPs:</b> $5\\times5\\times192\\times32\\times784 = 120{,}422{,}400$.</li>
+         <li><b>Bottleneck FLOPs:</b> $2{,}408{,}448 + 10{,}035{,}200 = 12{,}443{,}648$.</li>
+         <li><b>FLOP saving:</b> $120{,}422{,}400 \\div 12{,}443{,}648 \\approx 9.68\\times$ cheaper.</li>
        </ul>
        <p>Same output shape, nearly one-tenth the cost. Do this on every branch and the whole module becomes affordable.</p>`,
     practice: [

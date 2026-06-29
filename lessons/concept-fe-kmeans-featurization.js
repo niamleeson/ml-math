@@ -93,20 +93,38 @@
 
     example:
       `<p>Two interleaving half-moons &mdash; class A on the top arc, class B on the bottom arc &mdash;
-       a textbook case where a straight line cannot separate the classes.</p>
+       a textbook case where a straight line cannot separate the classes. Take a tiny corpus of
+       $n=20$ points (10 per class) and tile it with $k=5$ k-means cells. The table below is the
+       per-cell breakdown: how many class-A and class-B points landed in each cell, the majority label
+       the downstream linear model assigns to that cell, and how many points it then gets right.</p>
+       <table class="extable">
+         <caption>Illustrative cell-by-cell counts for $n=20$ points, $k=5$ clusters.</caption>
+         <thead>
+           <tr><th>cell</th><th class="num">class A</th><th class="num">class B</th><th class="num">majority</th><th class="num">correct in cell</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">4</td><td class="num">0</td><td class="num">A</td><td class="num">4</td></tr>
+           <tr><td class="row-h">2</td><td class="num">3</td><td class="num">1</td><td class="num">A</td><td class="num">3</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0</td><td class="num">5</td><td class="num">B</td><td class="num">5</td></tr>
+           <tr><td class="row-h">4</td><td class="num">3</td><td class="num">0</td><td class="num">A</td><td class="num">3</td></tr>
+           <tr><td class="row-h">5</td><td class="num">0</td><td class="num">4</td><td class="num">B</td><td class="num">4</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Plain logistic regression on $(x,y)$.</b> The best single line slices through both arcs and
-         misclassifies a big chunk of each &mdash; accuracy around the mid-70s%. The classes simply aren't
-         linearly separable.</li>
-         <li><b>Cluster with $k=20$ k-means cells.</b> Each little cell sits on one arc or the other, so
-         inside a cell one class dominates. Encode each point by its cluster (one-hot, 20 features).</li>
-         <li><b>Logistic regression on the 20 cluster features.</b> Now the model assigns one weight per
-         cell; it labels the top-arc cells class A and the bottom-arc cells class B. Accuracy jumps into the
-         high-90s%. <b>Same linear model, new features</b> &mdash; the lift came entirely from the k-means
-         featurization stage.</li>
+         <li><b>Plain logistic regression on $(x,y)$.</b> One straight line must cut through both arcs; on
+         this set it gets roughly $15$ of $20$ right, so accuracy $= 15/20 = 0.75$ — the mid-70s%. The
+         classes simply aren't linearly separable by a single line.</li>
+         <li><b>Cluster with $k=5$ and one-hot encode.</b> Each point becomes a length-5 indicator
+         $\\mathbf{e}_{c(x)}$, e.g. a cell-3 point is $[0,0,1,0,0]$. The linear model now learns one weight
+         per cell — effectively predicting each cell's majority class.</li>
+         <li><b>Add up the correct predictions.</b> From the table the per-cell hits are
+         $4+3+5+3+4 = 19$, so cluster-feature accuracy $= 19/20 = 0.95$. The only miss is the lone class-B
+         point sitting in mostly-A cell 2. <b>Same linear model, new features</b> — the lift from $0.75$ to
+         $0.95$ came entirely from the k-means featurization stage.</li>
        </ul>
-       <p>If you had used only $k=2$ clusters, each cluster would straddle both arcs and the trick would
-       fail &mdash; concrete proof that you need <b>many</b> clusters to tile the manifold.</p>`,
+       <p>If you had used only $k=2$ clusters, each cluster would straddle both arcs — say $5$ A and $5$ B
+       each — so the majority vote inside a cell is right only about half the time and accuracy collapses
+       back toward $0.5$. Concrete proof that you need <b>many</b> clusters to tile the manifold.</p>`,
 
     whenToUse:
       `<p><b>Reach for k-means featurization when a simple downstream model meets nonlinear structure.</b></p>

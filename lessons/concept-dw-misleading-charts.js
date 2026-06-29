@@ -161,19 +161,34 @@
        doubling of the value doubles the area the eye reads.</p>`,
 
     example:
-      `<p>Suppose two product variants have conversion rates of <b>3.1%</b> and <b>3.4%</b> &mdash;
-       a real but small $0.3$ percentage-point gap.</p>
+      `<p>Two product variants have conversion rates $x_A = 3.1\\%$ and $x_B = 3.4\\%$ &mdash; a real but small
+       $0.3$ percentage-point gap. We plug these into the ratio formula
+       $\\frac{\\max_i h_i}{\\min_i h_i}$ where $h_i = x_i - b$, for two baselines $b$:</p>
+       <table class="extable">
+         <caption>Same two numbers ($3.1$, $3.4$), two baselines $b$ &mdash; what the eye reads</caption>
+         <thead>
+           <tr><th>baseline $b$</th><th class="num">$h_A=x_A-b$</th><th class="num">$h_B=x_B-b$</th><th class="num">ratio $h_B/h_A$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">honest, $b=0$</td><td class="num">3.1</td><td class="num">3.4</td><td class="num">1.10&times;</td></tr>
+           <tr><td class="row-h">truncated, $b=3.0$</td><td class="num">0.1</td><td class="num">0.4</td><td class="num">4.00&times;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Honest bars (axis $0\\%$ to $4\\%$).</b> Two bars of length $3.1$ and $3.4$; the
-         second is about $10\\%$ longer. They look <i>almost identical</i> &mdash; correct, because
-         they nearly are.</li>
-         <li><b>Truncated bars (axis $3.0\\%$ to $3.5\\%$).</b> Drawn heights become $0.1$ and $0.4$.
-         The "winner" now towers at <b>four times</b> the height of the "loser". A
-         $0.3$-point difference has been rendered as a landslide.</li>
-         <li><b>The honest add-on.</b> Put $95\\%$ error bars on the honest version. If each rate has
-         a margin of $\\pm 0.4$ points, the bars <b>overlap</b> &mdash; revealing that the
+         <li><b>Honest bars ($b=0$).</b> Drawn heights are $h_A = 3.1 - 0 = 3.1$ and
+         $h_B = 3.4 - 0 = 3.4$. The ratio the eye sees is $3.4 / 3.1 \\approx 1.10$, so $B$ is about
+         $10\\%$ taller &mdash; the bars look <i>almost identical</i>, which is correct.</li>
+         <li><b>Truncated bars ($b=3.0$).</b> Drawn heights become $h_A = 3.1 - 3.0 = 0.1$ and
+         $h_B = 3.4 - 3.0 = 0.4$. Now the ratio is $0.4 / 0.1 = 4.00$ &mdash; the "winner" towers at
+         <b>four times</b> the "loser". The same $0.3$-point gap is rendered as a landslide; the only thing that
+         changed is $b$.</li>
+         <li><b>The honest add-on.</b> Put $95\\%$ error bars on the $b=0$ version. With a margin of
+         $\\pm 0.4$ points, $A$ spans $3.1 \\pm 0.4 = [2.7,\\ 3.5]$ and $B$ spans
+         $3.4 \\pm 0.4 = [3.0,\\ 3.8]$. Those intervals <b>overlap</b> on $[3.0,\\ 3.5]$ &mdash; the
          "difference" may be noise, a fact the truncated chart actively hides.</li>
-       </ul>`,
+       </ul>
+       <p>Two correct numbers, two baselines: the eye's ratio jumps from $1.10\\times$ to $4.00\\times$ with
+       nothing falsified &mdash; the lie lives entirely in the choice of $b$.</p>`,
 
     practice: [
       {

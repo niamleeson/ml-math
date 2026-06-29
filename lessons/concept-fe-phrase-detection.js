@@ -107,16 +107,40 @@
        <p>The test reports how much better $H_2$ explains the counts. It is more stable than PMI for low counts, which is why the book recommends it over plain PMI for ranking.</p>`,
 
     example:
-      `<p>A tiny corpus of 100 words. The bigram "machine learning" appears 8 times.</p>
-       <ul>
-         <li>"machine" appears 10 times total: $p(a) = 10/100 = 0.10$.</li>
-         <li>"learning" appears 12 times total: $p(b) = 12/100 = 0.12$.</li>
-         <li>The pair co-occurs 8 times out of 99 bigrams: $p(a,b) = 8/99 \\approx 0.081$.</li>
+      `<p>A tiny corpus of 100 words (so 99 bigrams). We score two candidate pairs: the real phrase "machine learning" and the filler "of the".</p>
+       <table class="extable">
+         <caption>Counts from the 100-word corpus. $N=100$ words, $B=99$ bigrams.</caption>
+         <thead><tr><th>pair $(a,b)$</th><th class="num">count $a$</th><th class="num">count $b$</th><th class="num">count $(a,b)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">machine learning</td><td class="num">10</td><td class="num">12</td><td class="num">8</td></tr>
+           <tr><td class="row-h">of the</td><td class="num">25</td><td class="num">30</td><td class="num">7</td></tr>
+         </tbody>
+       </table>
+       <p><b>Score "machine learning":</b></p>
+       <ul class="steps">
+         <li>$p(a) = 10/100 = 0.10$, $p(b) = 12/100 = 0.12$.</li>
+         <li>$p(a,b) = 8/99 \\approx 0.0808$.</li>
+         <li>Chance baseline: $p(a)\\,p(b) = 0.10 \\times 0.12 = 0.012$.</li>
+         <li>Ratio: $0.0808 / 0.012 \\approx 6.73$ &mdash; about 6.7 times more than chance.</li>
+         <li>$\\mathrm{PMI} = \\log(6.73) \\approx 1.91$ (natural log). Strongly positive &mdash; a real phrase.</li>
        </ul>
-       <p>Chance baseline: $p(a)\\,p(b) = 0.10 \\times 0.12 = 0.012$.</p>
-       <p>Ratio: $0.081 / 0.012 \\approx 6.75$. So they co-occur about 6.75 times more than chance.</p>
-       <p>$\\mathrm{PMI} = \\log(6.75) \\approx 1.91$ (natural log). A strongly positive score — a real phrase.</p>
-       <p>Now compare "of the". Say "of" appears 6 times, "the" 8 times, and the pair 3 times. Baseline $= 0.06 \\times 0.08 = 0.0048$; observed $= 3/99 \\approx 0.030$; ratio $\\approx 6.3$ here too — but with a frequency floor and a real corpus, "of the" is dominated by chance co-occurrence across the whole text and its likelihood-ratio score collapses, while "machine learning" stays high. That gap is the whole point.</p>`,
+       <p><b>Score "of the":</b></p>
+       <ul class="steps">
+         <li>$p(a) = 25/100 = 0.25$, $p(b) = 30/100 = 0.30$ &mdash; both words are very common.</li>
+         <li>$p(a,b) = 7/99 \\approx 0.0707$ &mdash; the pair is frequent too.</li>
+         <li>Chance baseline: $p(a)\\,p(b) = 0.25 \\times 0.30 = 0.075$.</li>
+         <li>Ratio: $0.0707 / 0.075 \\approx 0.943$.</li>
+         <li>$\\mathrm{PMI} = \\log(0.943) \\approx -0.06$ &mdash; essentially zero (slightly negative).</li>
+       </ul>
+       <table class="extable">
+         <caption>Same raw frequency, opposite verdict once you divide out commonness.</caption>
+         <thead><tr><th>pair</th><th class="num">$p(a,b)$</th><th class="num">$p(a)p(b)$</th><th class="num">ratio</th><th class="num">PMI</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">machine learning</td><td class="num">0.0808</td><td class="num">0.012</td><td class="num">6.73</td><td class="num">+1.91</td></tr>
+           <tr><td class="row-h">of the</td><td class="num">0.0707</td><td class="num">0.075</td><td class="num">0.94</td><td class="num">-0.06</td></tr>
+         </tbody>
+       </table>
+       <p>"of the" co-occurs <i>just as often</i> as "machine learning" by raw count, but because "of" and "the" are everywhere its chance baseline is huge, so its PMI collapses to ~0. That gap is the whole point.</p>`,
 
     practice: [
       {

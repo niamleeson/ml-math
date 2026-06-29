@@ -133,22 +133,39 @@
        </ul>`,
 
     example:
-      `<p>Take ten daily order counts, one of them a sensor glitch:</p>
-       <p>$x = \\{12,\\ 14,\\ 15,\\ 15,\\ 16,\\ 18,\\ 19,\\ 21,\\ 23,\\ 900\\}$.</p>
+      `<p>Take ten daily order counts, one of them a sensor glitch:
+       $x=\\{12,\\ 14,\\ 15,\\ 15,\\ 16,\\ 18,\\ 19,\\ 21,\\ 23,\\ 900\\}$. Run <b>both</b> detectors on
+       the $900$ and compare.</p>
+       <p><b>z-score rule.</b></p>
        <ul class="steps">
-         <li><b>z-score.</b> Mean $\\bar{x}=105.3$, standard deviation $s\\approx 263$. The glitch's z-score is
-         $(900-105.3)/263\\approx 3.0$ &mdash; right on the edge, and the inflated $s$ nearly <b>let it slip
-         through</b>. Worse, the mean of $105$ is now larger than every normal day.</li>
-         <li><b>IQR fence.</b> $Q_1=15$, $Q_3=21$, so $\\text{IQR}=6$. Upper fence $=21+1.5\\cdot 6=30$. The
-         $900$ sits far past $30$ and is flagged cleanly; the quartiles never noticed it. The lower fence
-         $15-9=6$ flags nothing.</li>
-         <li><b>Decide.</b> Daily orders of $900$ when the rest are in the teens, with a known sensor glitch?
-         This is an <b>impossible / error</b> value &mdash; a domain range check (orders should be, say,
-         $\\le 100$) confirms it. <b>Fix or remove</b> it. Had this instead been a Black-Friday spike, it would
-         be a <b>real extreme</b> to <b>keep</b>.</li>
+         <li>Mean: $\\bar{x}=(12+14+15+15+16+18+19+21+23+900)/10 = 1053/10 = 105.3$.</li>
+         <li>Standard deviation $s\\approx 265$ &mdash; huge, because the $900$ inflates it.</li>
+         <li>z-score of the glitch: $z=(900-105.3)/265 \\approx \\mathbf{3.0}$ &mdash; right on the
+         $|z|\\gt 3$ edge. The inflated $s$ nearly <b>let it slip through</b>, and $\\bar{x}=105.3$ is now
+         larger than every normal day.</li>
        </ul>
-       <p>Same flag, opposite action &mdash; the number detected the point, but the <i>meaning</i> decided its
-       fate.</p>`,
+       <p><b>IQR fence.</b></p>
+       <ul class="steps">
+         <li>Quartiles: $Q_1=15$, $Q_3=21$, so $\\text{IQR}=Q_3-Q_1=21-15=6$.</li>
+         <li>Upper fence: $Q_3+1.5\\cdot\\text{IQR}=21+1.5\\cdot 6 = 21+9 = \\mathbf{30}$.</li>
+         <li>Lower fence: $Q_1-1.5\\cdot\\text{IQR}=15-9 = 6$ &mdash; flags nothing below.</li>
+         <li>The $900 \\gt 30$, so it is flagged <b>cleanly</b>; the rank-based quartiles never moved.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same outlier, two detectors &mdash; the IQR fence flags it decisively, the z-score barely.</caption>
+         <thead>
+           <tr><th>Detector</th><th class="num">Center</th><th class="num">Spread</th><th class="num">Cutoff</th><th class="num">Score of 900</th><th>Flagged?</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">z-score</td><td class="num">$\\bar{x}=105.3$</td><td class="num">$s\\approx 265$</td><td class="num">$|z|\\gt 3$</td><td class="num">$z\\approx 3.0$</td><td>barely (on the edge)</td></tr>
+           <tr><td class="row-h">IQR fence</td><td class="num">$Q_1,Q_3=15,21$</td><td class="num">$\\text{IQR}=6$</td><td class="num">$\\gt 30$</td><td class="num">$900$</td><td>yes (far past)</td></tr>
+         </tbody>
+       </table>
+       <p><b>Decide.</b> Daily orders of $900$ when the rest are in the teens, with a known sensor glitch, is
+       an <b>impossible / error</b> value &mdash; a domain range check (orders should be, say, $\\le 100$)
+       confirms it: <b>fix or remove</b> it. Had it been a Black-Friday spike, it would be a <b>real
+       extreme</b> to <b>keep</b>. Same flag, opposite action &mdash; the number detected the point, but the
+       <i>meaning</i> decided its fate.</p>`,
 
     pitfalls:
       `<ul>

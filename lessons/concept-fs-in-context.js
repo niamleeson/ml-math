@@ -113,13 +113,22 @@
       draw();
     },
     example:
-      `<p>Suppose you want an LLM to label a movie review as positive or negative. You never train it; you just write a prompt.</p>
+      `<p>Suppose you want an LLM to label a movie review as positive or negative. You never train it; you just write a prompt. The query is $x$ = "The best film this year." and the target is $y$ = "positive".</p>
        <ul class="steps">
-         <li><b>K = 2 demonstrations</b> go first: &nbsp; "Review: I loved it. Sentiment: positive" &nbsp; and &nbsp; "Review: A total bore. Sentiment: negative".</li>
+         <li><b>K = 2 demonstrations</b> go first: $(x_1,y_1)$ = "I loved it." &rarr; positive, and $(x_2,y_2)$ = "A total bore." &rarr; negative.</li>
          <li>Then the <b>query</b>: "Review: The best film this year. Sentiment:" — and you stop, letting the model continue.</li>
          <li>The model reads all of it as one context and predicts the next word: "positive".</li>
-         <li>This is exactly $p\\big(y \\mid x, (x_1,y_1), (x_2,y_2)\\big)$ with $K = 2$: the chance of the answer $y$ given the query $x$ and the two demonstration pairs.</li>
+         <li>This is exactly $p\\big(y \\mid x, (x_1,y_1), (x_2,y_2)\\big)$ with $K = 2$: the chance of answer $y$ given the query $x$ and the two demonstration pairs.</li>
        </ul>
+       <table class="extable">
+         <caption>The same query $x$ at three values of $K$ — the formula $p(y \\mid x, (x_1,y_1),\\dots,(x_K,y_K))$ with more or fewer pairs</caption>
+         <thead><tr><th>setting</th><th class="num">$K$</th><th>what sits in the context (right of $\\mid$)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">zero-shot</td><td class="num">0</td><td>just the instruction and the query $x$</td></tr>
+           <tr><td class="row-h">one-shot</td><td class="num">1</td><td>$(x_1,y_1)$, then $x$</td></tr>
+           <tr><td class="row-h">few-shot</td><td class="num">2</td><td>$(x_1,y_1), (x_2,y_2)$, then $x$</td></tr>
+         </tbody>
+       </table>
        <p>One warning: the answer is sensitive to the examples. Swap in worse examples, or reorder them, and the prediction can flip. The format and the choice of demonstrations matter.</p>`,
     application:
       `<p>In-context learning is why modern chatbots feel so flexible. You can paste a couple of examples of the formatting or style you want, and the model copies it — with no fine-tuning, no GPUs, no waiting. It powers prompt-engineering tricks like giving a model two or three labelled examples before asking it to classify, translate, or extract data in the same shape.</p>`,

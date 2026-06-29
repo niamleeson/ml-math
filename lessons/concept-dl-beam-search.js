@@ -69,14 +69,32 @@
        <p><b>Why $T_y^{\\alpha}$ fixes it.</b> Dividing by the length $T_y$ converts the total log-probability into an <i>average per-token</i> log-probability, which no longer grows with length. Using $T_y^{\\alpha}$ with $0.5 \\le \\alpha \\le 1$ is a softer version: $\\alpha = 1$ is the full per-token average, $\\alpha = 0$ is no correction, and values in between trade off how strongly we reward longer sequences. $\\alpha$ is a tunable knob.</p>`,
 
     example:
-      `<p>Two candidate translations, scored by summed log-probability (natural log):</p>
+      `<p>Two candidate translations, each scored by the summed per-token log-probability (natural log). First the per-token log-probs and their sums:</p>
+       <table class="extable">
+         <caption>Per-token log-probabilities of two candidate outputs</caption>
+         <thead><tr><th>candidate</th><th class="num">$T_y$ (tokens)</th><th>per-token log-probs</th><th class="num">sum</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">"Go."</td><td class="num">2</td><td>$-0.5,\\ -0.7$</td><td class="num">$-1.2$</td></tr>
+           <tr><td class="row-h">"Please go now."</td><td class="num">4</td><td>$-0.5,\\ -0.6,\\ -0.5,\\ -0.4$</td><td class="num">$-2.0$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Short:</b> "Go." — 2 tokens, log-probs $-0.5, -0.7$. Sum $= -1.2$.</li>
-         <li><b>Full:</b> "Please go now." — 4 tokens, log-probs $-0.5, -0.6, -0.5, -0.4$. Sum $= -2.0$.</li>
-         <li><b>Raw scores</b> prefer the short one ($-1.2 \\gt -2.0$), even though the full sentence is the better translation. That is the short-sequence bias.</li>
-         <li><b>Normalize</b> with $\\alpha = 0.7$. Short: $-1.2 / 2^{0.7} = -1.2 / 1.62 \\approx -0.74$. Full: $-2.0 / 4^{0.7} = -2.0 / 2.64 \\approx -0.76$.</li>
-         <li>Now they are nearly tied, and a slightly higher $\\alpha$ tips it to the full sentence. Length normalization stops the short answer from cheating.</li>
-       </ul>`,
+         <li><b>Short sum:</b> $-0.5 + (-0.7) = -1.2$.</li>
+         <li><b>Full sum:</b> $-0.5 + (-0.6) + (-0.5) + (-0.4) = -2.0$.</li>
+         <li><b>Raw scores prefer the short one</b> ($-1.2 \\gt -2.0$), even though the full sentence is the better translation. That is the short-sequence bias.</li>
+         <li><b>Normalize</b> by $T_y^{\\alpha}$ with $\\alpha = 0.7$. Short denominator: $2^{0.7} \\approx 1.62$. Full denominator: $4^{0.7} \\approx 2.64$.</li>
+         <li><b>Short normalized:</b> $-1.2 / 1.62 \\approx -0.74$.</li>
+         <li><b>Full normalized:</b> $-2.0 / 2.64 \\approx -0.76$.</li>
+       </ul>
+       <table class="extable">
+         <caption>Raw score vs length-normalized score ($\\alpha = 0.7$)</caption>
+         <thead><tr><th>candidate</th><th class="num">raw sum</th><th class="num">$T_y^{0.7}$</th><th class="num">normalized</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">"Go." (short)</td><td class="num">$-1.20$ (wins)</td><td class="num">$1.62$</td><td class="num">$-0.74$</td></tr>
+           <tr><td class="row-h">"Please go now." (full)</td><td class="num">$-2.00$</td><td class="num">$2.64$</td><td class="num">$-0.76$</td></tr>
+         </tbody>
+       </table>
+       <p>Now the two are nearly tied, and a slightly higher $\\alpha$ tips it to the full sentence. Length normalization stops the short answer from cheating.</p>`,
 
     demo: function (host) {
       host.innerHTML = "";

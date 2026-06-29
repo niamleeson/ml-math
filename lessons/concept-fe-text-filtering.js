@@ -98,10 +98,29 @@
          <li><code>A great place with great food and great drinks</code></li>
          <li><code>The best food and the best service ever</code></li>
        </ol>
-       <p><b>No filtering.</b> Count every distinct word. The vocabulary has $V = 18$ words: <code>and, best, but, city, drinks, ever, food, good, great, in, is, pizza, place, service, slow, the, was, with</code>. The top words by total count are "the" (8), "great" (5), "was" (4), "food" (4) — three of those four are function words carrying no topic signal.</p>
-       <p><b>Remove English stopwords.</b> Out go "the", "and", "was", "is", "in", "but", "a", "with", "ever". Vocabulary shrinks to $V = 10$: <code>best, city, drinks, food, good, great, pizza, place, service, slow</code>. Now the top words are "great" (5), "food" (4), "service" (3), "best" (3) — all meaningful.</p>
-       <p><b>Add frequency filtering (<code>min_df=2</code>).</b> Drop any word in fewer than 2 documents. That deletes the rare tail: "city", "drinks", "good", "pizza", "place", "slow" each appear in only one review. Vocabulary shrinks to $V = 4$: <code>best, food, great, service</code> — a tiny, dense, high-signal feature set.</p>
-       <p>So $V$ fell $18 \\rightarrow 10 \\rightarrow 4$, and what remains are exactly the words you would use to describe a restaurant review. (Separately, a Porter stemmer would map "flowers" &rarr; "flower" and "swimming" &rarr; "swim", merging variants — but watch the over-collapse "news" &rarr; "new".)</p>`,
+       <p>Apply the keep-rule $\\mathrm{df}(w) \\ge \\mathrm{min\\_df}$ and $w \\notin \\text{stopwords}$, with $\\mathrm{min\\_df}=2$. First tabulate each content word's document frequency $\\mathrm{df}(w)$ (how many of the 5 reviews contain it):</p>
+       <table class="extable">
+         <caption>$\\mathrm{df}(w)$ = number of reviews (out of $D=5$) containing $w$; verdict at $\\mathrm{min\\_df}=2$.</caption>
+         <thead><tr><th>word $w$</th><th class="num">$\\mathrm{df}(w)$</th><th>kept?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">great</td><td class="num">2</td><td>keep</td></tr>
+           <tr><td class="row-h">food</td><td class="num">3</td><td>keep</td></tr>
+           <tr><td class="row-h">service</td><td class="num">3</td><td>keep</td></tr>
+           <tr><td class="row-h">best</td><td class="num">2</td><td>keep</td></tr>
+           <tr><td class="row-h">pizza</td><td class="num">1</td><td>drop (rare)</td></tr>
+           <tr><td class="row-h">city</td><td class="num">1</td><td>drop (rare)</td></tr>
+           <tr><td class="row-h">slow</td><td class="num">1</td><td>drop (rare)</td></tr>
+           <tr><td class="row-h">good</td><td class="num">1</td><td>drop (rare)</td></tr>
+           <tr><td class="row-h">place</td><td class="num">1</td><td>drop (rare)</td></tr>
+           <tr><td class="row-h">drinks</td><td class="num">1</td><td>drop (rare)</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>No filtering.</b> Count every distinct word &rarr; $V = 18$: <code>and, best, but, city, drinks, ever, food, good, great, in, is, pizza, place, service, slow, the, was, with</code>. Top by total count: "the" (8), "great" (5), "was" (4), "food" (4) &mdash; three of four are function words.</li>
+         <li><b>Remove English stopwords.</b> Drop "the, and, was, is, in, but, a, with, ever" (9 words) &rarr; $V = 18 - 8 = 10$ (note "a" was not a separate token here): <code>best, city, drinks, food, good, great, pizza, place, service, slow</code>. Top now: "great" (5), "food" (4), "service" (3), "best" (3) &mdash; all meaningful.</li>
+         <li><b>Add <code>min_df=2</code>.</b> From the table, the six words with $\\mathrm{df}=1$ are cut &rarr; $V = 10 - 6 = 4$: <code>best, food, great, service</code>.</li>
+       </ul>
+       <p>So $V$ fell $18 \\rightarrow 10 \\rightarrow 4$, and what remains are exactly the words you would use to describe a restaurant review. (Separately, a Porter stemmer would map "flowers" &rarr; "flower" and "swimming" &rarr; "swim", merging variants &mdash; but watch the over-collapse "news" &rarr; "new".)</p>`,
 
     demo: function (host) {
       host.innerHTML = "";

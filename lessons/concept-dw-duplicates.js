@@ -149,22 +149,48 @@
        </ul>`,
 
     example:
-      `<p>Fourteen customer rows merged from two systems, with planted repeats:</p>
+      `<p>Fourteen customer rows merged from two systems, with planted repeats. First the <b>exact</b> pass,
+       then plug each candidate name pair into the lesson's similarity formula
+       $\\text{sim}(a,b)=1-\\dfrac{d(a,b)}{\\max(|a|,|b|)}$ and compare to the threshold $\\tau$.</p>
        <ul class="steps">
          <li><b>Exact pass.</b> Rows like <i>(John Smith, Boston, 2024-01-05)</i> and <i>(Mary Johnson,
          New York, 2024-02-11)</i> each appear twice byte-for-byte. <code>df.duplicated(subset=['name','city','signup'])</code>
          flags <b>4</b> repeats; dropping them takes <b>14&nbsp;&rarr;&nbsp;10</b> rows.</li>
-         <li><b>Normalize.</b> Among the 10 survivors, "John&nbsp;&nbsp;Smith&nbsp;" (double space, trailing
-         space), "Jon&nbsp;Smith", and "John&nbsp;Smith" all normalize toward the same key; "alice wong"
-         and "Alice Wong" collapse on lowercasing.</li>
-         <li><b>Fuzzy match (block on city + date, $\\tau=0.85$).</b> "John/Jon/John&nbsp;&nbsp;Smith"
-         merge into one entity; "Mary Johnson"/"Mary Jonson" merge; "Alice Wong"/"alice wong" merge.
-         "Bob Lee" and "Robert Lee" score <i>below</i> 0.85, so they correctly stay separate. The 10 rows
+         <li><b>Normalize.</b> Lowercase, strip, collapse spaces: "John&nbsp;&nbsp;Smith&nbsp;"&rarr;"john smith",
+         "Alice Wong"&rarr;"alice wong". Now honest variants line up before scoring.</li>
+       </ul>
+       <table class="extable">
+         <caption>Fuzzy scoring: edit distance $d$ &rarr; similarity, on the normalized keys. Merge if $\\text{sim}\\ge\\tau=0.85$.</caption>
+         <thead><tr><th>pair (normalized)</th><th class="num">$d$</th><th class="num">$\\max(|a|,|b|)$</th><th class="num">$\\text{sim}=1-d/\\max$</th><th>$\\ge 0.85$?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">"jon smith" vs "john smith"</td><td class="num">1</td><td class="num">10</td><td class="num">0.900</td><td>merge</td></tr>
+           <tr><td class="row-h">"mary jonson" vs "mary johnson"</td><td class="num">1</td><td class="num">12</td><td class="num">0.917</td><td>merge</td></tr>
+           <tr><td class="row-h">"alice wong" vs "alice wong"</td><td class="num">0</td><td class="num">10</td><td class="num">1.000</td><td>merge</td></tr>
+           <tr><td class="row-h">"bob lee" vs "robert lee"</td><td class="num">4</td><td class="num">10</td><td class="num">0.600</td><td>keep apart</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Worked numbers.</b> "jon smith"&rarr;"john smith" needs one insert ('h'), so $d=1$, longer
+         string is 10 chars: $\\text{sim}=1-\\tfrac{1}{10}=0.900\\ge0.85$ &rarr; merge. "bob lee"&rarr;"robert
+         lee" needs 4 edits, $d=4$ over 10: $\\text{sim}=1-\\tfrac{4}{10}=0.600\\lt0.85$ &rarr; correctly
+         stays separate.</li>
+         <li><b>Collapse.</b> Block on city + date, merge every above-threshold pair: the three Smith rows
+         become one, the two Mary rows one, the two Alice rows one; Bob and Robert stay two. The 10 rows
          collapse to <b>6</b> distinct entities.</li>
        </ul>
-       <p>So <b>14 &rarr; 10 &rarr; 6</b>. Note the threshold sensitivity: at $\\tau=0.70$ "Bob"/"Robert"
-       wrongly merge (5 entities); at $\\tau=0.95$ "Jon"/"John" wrongly split (7 entities). The middle band
-       0.80&ndash;0.90 gives the correct 6.</p>`,
+       <table class="extable">
+         <caption>The funnel, stage by stage.</caption>
+         <thead><tr><th>stage</th><th class="num">rows</th><th class="num">removed</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">raw (merged)</td><td class="num">14</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">after exact drop</td><td class="num">10</td><td class="num">4</td></tr>
+           <tr><td class="row-h">after fuzzy collapse</td><td class="num">6</td><td class="num">4</td></tr>
+         </tbody>
+       </table>
+       <p>So <b>14 &rarr; 10 &rarr; 6</b>. Threshold sensitivity (using the same scorer across cutoffs): a
+       too-loose $\\tau$ glues "Bob"/"Robert" together (undercount), a too-tight $\\tau=0.95$ leaves
+       "Jon"/"John" split (overcount, 7 entities); the middle band $\\tau\\approx0.80\\text{&ndash;}0.90$
+       gives the correct <b>6</b>.</p>`,
 
     practice: [
       {

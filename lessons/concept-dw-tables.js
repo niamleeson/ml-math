@@ -121,33 +121,30 @@
        </ul>`,
 
     example:
-      `<p>Three wine classes, mean of two chemistry features each (real <code>load_wine</code> numbers,
-       rounded). First the raw dump, then the designed version.</p>
+      `<p>Three wine classes, mean of two chemistry features each (real <code>load_wine</code> numbers). Watch
+       the same data go from raw dump to designed table by applying the checklist rules one at a time.</p>
        <p><b>Bad</b> &mdash; arbitrary order, ragged decimals, left-aligned, no units, no emphasis:</p>
        <ul>
          <li>class_1, 2.0824, 519.507</li>
          <li>class_2, 0.7814, 629.896</li>
          <li>class_0, 2.9824, 1115.71</li>
        </ul>
-       <p><b>Good</b> &mdash; sorted by <code>proline</code> (high&rarr;low), two decimals for
-       <code>flavanoids</code> and zero for <code>proline</code>, units in the header, the per-column max
-       bolded, a mean row:</p>
-       <table style="border-collapse:collapse">
-         <tr><th style="text-align:left;padding:2px 10px">wine class</th>
-             <th style="text-align:right;padding:2px 10px">flavanoids</th>
-             <th style="text-align:right;padding:2px 10px">proline (mg/L)</th></tr>
-         <tr><td style="text-align:left;padding:2px 10px">class_0</td>
-             <td style="text-align:right;padding:2px 10px"><b>2.98</b></td>
-             <td style="text-align:right;padding:2px 10px"><b>1116</b></td></tr>
-         <tr><td style="text-align:left;padding:2px 10px">class_2</td>
-             <td style="text-align:right;padding:2px 10px">0.78</td>
-             <td style="text-align:right;padding:2px 10px">630</td></tr>
-         <tr><td style="text-align:left;padding:2px 10px">class_1</td>
-             <td style="text-align:right;padding:2px 10px">2.08</td>
-             <td style="text-align:right;padding:2px 10px">520</td></tr>
-         <tr><td style="text-align:left;padding:2px 10px;border-top:1px solid #888"><i>mean</i></td>
-             <td style="text-align:right;padding:2px 10px;border-top:1px solid #888"><i>2.03</i></td>
-             <td style="text-align:right;padding:2px 10px;border-top:1px solid #888"><i>747</i></td></tr>
+       <ul class="steps">
+         <li><b>Round consistently.</b> Two decimals for flavanoids ($2.9824\\to2.98$), zero for proline ($1115.71\\to1116$, $629.896\\to630$, $519.507\\to520$).</li>
+         <li><b>Sort meaningfully</b> by proline, high&rarr;low: $1116 \\gt 630 \\gt 520$, i.e. class_0, class_2, class_1.</li>
+         <li><b>Units in the header</b> (proline in mg/L), <b>right-align</b> the numbers, and <b>bold the per-column max</b>: flavanoids max is $2.98$ (class_0), proline max is $1116$ (class_0).</li>
+         <li><b>Add a summary row</b> &mdash; the overall mean across all 178 rows: flavanoids $2.03$, proline $747$.</li>
+       </ul>
+       <p><b>Good</b> &mdash; the same numbers after those four steps:</p>
+       <table class="extable">
+         <caption>Mean wine chemistry by class &mdash; sorted by proline (high&rarr;low)</caption>
+         <thead><tr><th>wine class</th><th class="num">flavanoids</th><th class="num">proline (mg/L)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">class_0</td><td class="num"><b>2.98</b></td><td class="num"><b>1116</b></td></tr>
+           <tr><td class="row-h">class_2</td><td class="num">0.78</td><td class="num">630</td></tr>
+           <tr><td class="row-h">class_1</td><td class="num">2.08</td><td class="num">520</td></tr>
+           <tr><td class="row-h"><i>mean (all)</i></td><td class="num"><i>2.03</i></td><td class="num"><i>747</i></td></tr>
+         </tbody>
        </table>
        <p>Same numbers, but the good table is sorted, aligned, consistently rounded, unit-labelled, and the
        eye lands on <code>class_0</code> as the high-flavanoid, high-proline group without any chart.</p>`,

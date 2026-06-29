@@ -163,20 +163,36 @@
        </ul>`,
 
     example:
-      `<p>A tiny "income" column with one blank, treated three ways.</p>
-       <p>Observed values (in thousands): $40,\\ 45,\\ 50,\\ 55,\\ 900$, and one <b>blank</b>. This is
-       skewed &mdash; the $900$ is a big earner.</p>
+      `<p>A tiny "income" column (in thousands) with one blank, treated three ways. Observed values are
+       $40,\\ 45,\\ 50,\\ 55,\\ 900$ &mdash; skewed, because the $900$ is one big earner.</p>
+       <p><b>Step 1 &mdash; mean fill.</b> Plug all five observed values into $\\bar{x}$:</p>
        <ul class="steps">
-         <li><b>Mean fill.</b> $\\bar{x}=(40+45+50+55+900)/5 = 218$. You would fill the blank with
-         <b>218</b> &mdash; a value <i>no one</i> in the column is near, dragged up by the outlier.</li>
-         <li><b>Median fill.</b> Sorted, the middle value is $50$. Fill with <b>50</b> &mdash; a typical
-         person, unbothered by the $900$. Much more representative.</li>
-         <li><b>Indicator.</b> Whatever you fill with, also add $M=1$ for that row and $M=0$ for the
-         rest. If the blank was MNAR (a high earner declining to answer), $M$ lets a model learn
-         "declined &rarr; probably high income" &mdash; recovering signal the fill alone threw away.</li>
+         <li>$\\bar{x}=\\dfrac{40+45+50+55+900}{5}=\\dfrac{1090}{5}=\\mathbf{218}$.</li>
+         <li>So $\\hat{x}_{\\text{mean}}=218$ &mdash; a value <i>no one</i> in the column is near,
+         dragged up by the $900$ outlier.</li>
        </ul>
-       <p>Same blank: mean fill puts it in an empty no-man's-land, median fill puts it with the crowd,
-       and the indicator keeps the fact that it was ever missing.</p>`,
+       <p><b>Step 2 &mdash; median fill.</b> Sort the five values and take the middle one:</p>
+       <ul class="steps">
+         <li>Sorted: $40,\\ 45,\\ \\underline{50},\\ 55,\\ 900$ &mdash; the 3rd of 5 is the median.</li>
+         <li>So $\\hat{x}_{\\text{median}}=\\tilde{x}=\\mathbf{50}$ &mdash; a typical person, unbothered by
+         the $900$.</li>
+       </ul>
+       <p><b>Step 3 &mdash; indicator.</b> Whatever you fill with, also set $M=1$ for the blank row and
+       $M=0$ for the rest, so the model can still tell imputed rows apart.</p>
+       <table class="extable">
+         <caption>The same blank row, filled three ways (income in thousands).</caption>
+         <thead>
+           <tr><th>Strategy</th><th class="num">Fill value</th><th>Effect on the row</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">Mean $\\hat{x}_{\\text{mean}}$</td><td class="num">218</td><td>lands in an empty no-man's-land between the crowd ($40$&ndash;$55$) and the outlier ($900$)</td></tr>
+           <tr><td class="row-h">Median $\\hat{x}_{\\text{median}}$</td><td class="num">50</td><td>sits right with the crowd; the $900$ does not move it</td></tr>
+           <tr><td class="row-h">Indicator $M$</td><td class="num">1</td><td>keeps the fact that the cell was ever missing &mdash; signal for MNAR data</td></tr>
+         </tbody>
+       </table>
+       <p>Same blank, three outcomes: mean fill misplaces it, median fill puts it with the crowd, and the
+       indicator preserves "this was missing" &mdash; so a model can learn "declined &rarr; probably high
+       income".</p>`,
 
     practice: [
       {

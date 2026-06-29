@@ -98,21 +98,52 @@
        message, and remember that the simplest layer that does the job is usually the right one.</p>`,
 
     example:
-      `<p>You have a table of products with <code>price</code>, <code>rating</code>, <code>category</code>,
-       and <code>name</code>, and you want to find the over-priced low-rated items.</p>
+      `<p>Here is a tiny products table. We want the <b>over-priced, low-rated</b> item &mdash; the dot in the
+       high-<code>price</code>, low-<code>rating</code> corner:</p>
+       <table class="extable">
+         <caption>8 products (price in $, rating out of 5)</caption>
+         <thead>
+           <tr><th>name</th><th>category</th><th class="num">price</th><th class="num">rating</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">Echo</td><td>Audio</td><td class="num">49</td><td class="num">4.6</td></tr>
+           <tr><td class="row-h">Bolt</td><td>Tools</td><td class="num">120</td><td class="num">3.1</td></tr>
+           <tr><td class="row-h">Nimbus</td><td>Audio</td><td class="num">89</td><td class="num">4.2</td></tr>
+           <tr><td class="row-h">Pixel</td><td>Phones</td><td class="num">699</td><td class="num">4.8</td></tr>
+           <tr><td class="row-h">Quartz</td><td>Tools</td><td class="num">35</td><td class="num">2.7</td></tr>
+           <tr><td class="row-h">Drift</td><td>Audio</td><td class="num">59</td><td class="num">3.9</td></tr>
+           <tr><td class="row-h">Sol</td><td>Phones</td><td class="num">999</td><td class="num">2.9</td></tr>
+           <tr><td class="row-h">Vega</td><td>Phones</td><td class="num">450</td><td class="num">4.4</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Static.</b> A scatter of <code>price</code> versus <code>rating</code> shows the cloud, but to
-         learn <i>which</i> product sits at the bad corner you'd have to label every dot &mdash; unreadable.</li>
-         <li><b>Interactive (Plotly).</b> The same scatter with <code>hover_data=["name", "category"]</code>
-         and <code>color="category"</code>. Now you hover the lonely dot in the high-price, low-rating corner
-         and instantly read its name &mdash; no re-plotting, and category is a third dimension via color.</li>
-         <li><b>Dashboard (Streamlit).</b> Add a <code>st.selectbox</code> to pick a category and an
-         <code>st.slider</code> for a minimum rating, feeding a <code>st.plotly_chart</code> and a
-         <code>st.dataframe</code>. A teammate filters to "Electronics, rating below 3" themselves &mdash;
-         self-serve, no new code from you.</li>
+         <li><b>Find the bad corner by hand.</b> The worst value-for-money is the highest price with the lowest
+         rating. <b>Sol</b> is <code>price = 999</code> (the max) and <code>rating = 2.9</code> &mdash; the one
+         dot in the top-left "expensive and disliked" corner. On a plain scatter it is just an unlabeled dot.</li>
+         <li><b>Static.</b> A scatter of <code>price</code> (y) vs <code>rating</code> (x) shows the cloud, but
+         to learn that the bad dot is <i>Sol</i> you'd have to print all 8 names on the chart &mdash; unreadable.</li>
+         <li><b>Interactive (Plotly).</b> Same scatter, plus <code>hover_data=["name","category"]</code> and
+         <code>color="category"</code>. Hover the lonely dot at <code>(2.9, 999)</code> and it reads
+         <b>"Sol, Phones"</b> instantly &mdash; no re-plot, and color adds <code>category</code> as a 3rd
+         dimension.</li>
+         <li><b>Dashboard (Streamlit).</b> Add <code>st.selectbox("category")</code> and
+         <code>st.slider("min rating")</code>. Filtering to <code>category = "Phones"</code> and
+         <code>rating &lt; 3</code> keeps only the rows that pass <i>both</i>: of the 3 Phones (Pixel 4.8,
+         Sol 2.9, Vega 4.4) just <b>1</b> survives &mdash; Sol. A teammate runs that filter themselves.</li>
        </ul>
-       <p>Same data, three layers: the static view states the shape, the interactive view lets you drill to the
-       exact row, and the dashboard lets anyone ask their own version of the question.</p>`,
+       <table class="extable">
+         <caption>Same data, three layers &mdash; what each one lets the reader do</caption>
+         <thead>
+           <tr><th>layer</th><th>reader can</th><th>finds "Sol" how</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">static image</td><td>see the overall shape</td><td>not without labeling all 8 dots</td></tr>
+           <tr><td class="row-h">interactive scatter</td><td>hover / zoom / color</td><td>hover the corner dot &rarr; "Sol, Phones"</td></tr>
+           <tr><td class="row-h">dashboard</td><td>filter price/rating/category</td><td>filter Phones &amp; rating &lt; 3 &rarr; 1 row</td></tr>
+         </tbody>
+       </table>
+       <p>Same 8 rows, three layers: the static view states the shape, the interactive view drills to the exact
+       row, and the dashboard lets anyone ask their own version of the question.</p>`,
 
     practice: [
       {

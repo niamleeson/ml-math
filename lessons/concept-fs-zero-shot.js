@@ -146,11 +146,23 @@
        <ul class="steps">
          <li>Class descriptions: $s_{\\text{horse}} = [0, 1]$, &nbsp; $s_{\\text{tiger}} = [1, 0]$, &nbsp; $s_{\\text{zebra}} = [1, 1]$ (striped <i>and</i> horse-shaped).</li>
          <li>A new image is embedded into the same attribute space: $g(x) = [0.9, 0.8]$ (looks striped and horse-shaped).</li>
-         <li>Cosine to horse: $\\frac{0.9\\cdot0 + 0.8\\cdot1}{\\sqrt{0.9^2+0.8^2}\\,\\cdot 1} = \\frac{0.8}{1.20} \\approx 0.66$.</li>
-         <li>Cosine to tiger: $\\frac{0.9\\cdot1 + 0.8\\cdot0}{1.20 \\cdot 1} = \\frac{0.9}{1.20} \\approx 0.75$.</li>
-         <li>Cosine to zebra: $\\frac{0.9\\cdot1 + 0.8\\cdot1}{1.20 \\cdot \\sqrt{2}} = \\frac{1.7}{1.70} \\approx 1.00$.</li>
+         <li>Its length: $\\lVert g(x) \\rVert = \\sqrt{0.9^2 + 0.8^2} = \\sqrt{1.45} \\approx 1.20$.</li>
+         <li>Cosine to horse: $\\frac{0.9\\cdot0 + 0.8\\cdot1}{1.20 \\,\\cdot\\, 1} = \\frac{0.8}{1.20} \\approx 0.66$.</li>
+         <li>Cosine to tiger: $\\frac{0.9\\cdot1 + 0.8\\cdot0}{1.20 \\,\\cdot\\, 1} = \\frac{0.9}{1.20} \\approx 0.75$.</li>
+         <li>Cosine to zebra: $\\frac{0.9\\cdot1 + 0.8\\cdot1}{1.20 \\,\\cdot\\, \\sqrt{2}} = \\frac{1.7}{1.70} \\approx 1.00$.</li>
        </ul>
-       <p>Zebra wins with cosine $\\approx 1.00$. We classified a zebra correctly with <b>zero</b> zebra training images — only its attribute description.</p>`,
+       <table class="extable">
+         <caption>$\\hat{y} = \\arg\\max_k \\text{sim}\\big(g(x), s_k\\big)$ for $g(x) = [0.9, 0.8]$.</caption>
+         <thead>
+           <tr><th>class $k$</th><th class="num">$s_k$</th><th class="num">dot $g(x)\\cdot s_k$</th><th class="num">$\\lVert s_k \\rVert$</th><th class="num">cosine</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">horse</td><td class="num">[0, 1]</td><td class="num">0.8</td><td class="num">1.00</td><td class="num">0.66</td></tr>
+           <tr><td class="row-h">tiger</td><td class="num">[1, 0]</td><td class="num">0.9</td><td class="num">1.00</td><td class="num">0.75</td></tr>
+           <tr><td class="row-h">zebra</td><td class="num">[1, 1]</td><td class="num">1.7</td><td class="num">1.41</td><td class="num">1.00</td></tr>
+         </tbody>
+       </table>
+       <p>Zebra wins the $\\arg\\max$ with cosine $\\approx 1.00$. We classified a zebra correctly with <b>zero</b> zebra training images — only its attribute description.</p>`,
 
     application:
       `<p>Zero-shot learning is everywhere in modern AI. <b>CLIP</b> (Contrastive Language-Image Pretraining) classifies an image into any list of labels you type, with no fine-tuning: it embeds the image and each label-sentence, then picks the nearest sentence. Large language models do zero-shot text classification the same way. And attribute-based zero-shot lets vision systems flag rare or never-photographed categories (new animal species, rare defects) from a written description alone.</p>`,

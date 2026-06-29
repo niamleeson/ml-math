@@ -86,12 +86,24 @@
        <p><b>Why Box-Cox unifies them.</b> As $\\lambda\\to 0$, $\\dfrac{x^{\\lambda}-1}{\\lambda}\\to\\ln(x)$ (that's the limit definition of the log), and $\\lambda=0.5$ is a shifted-and-scaled $\\sqrt{x}$. One formula, a continuum of squashes, with $\\lambda$ chosen by maximum likelihood.</p>`,
 
     example:
-      `<p>Take four Yelp-style review counts: $x=0, 9, 99, 9999$. They span four orders of magnitude — a textbook heavy tail.</p>
+      `<p>Take four Yelp-style review counts: $x=0, 9, 99, 9999$. They span four orders of magnitude — a textbook heavy tail. The table runs each value through the two transforms the lesson teaches: the log transform $\\log_{10}(x+1)$ and a Box-Cox squash. For Box-Cox use $\\lambda=0.5$ (a square root), whose formula is $\\tilde{x}=\\dfrac{x^{0.5}-1}{0.5}=2\\big(\\sqrt{x}-1\\big)$; Box-Cox needs positive input, so feed it $x+1$.</p>
+       <table class="extable">
+         <caption>Raw counts vs the log transform vs Box-Cox ($\\lambda=0.5$, on $x+1$).</caption>
+         <thead>
+           <tr><th>raw $x$</th><th class="num">$x+1$</th><th class="num">$\\log_{10}(x+1)$</th><th class="num">$\\sqrt{x+1}$</th><th class="num">Box-Cox $\\tilde{x}=2(\\sqrt{x+1}-1)$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="num">9</td><td class="num">10</td><td class="num">1</td><td class="num">3.162</td><td class="num">4.325</td></tr>
+           <tr><td class="num">99</td><td class="num">100</td><td class="num">2</td><td class="num">10</td><td class="num">18</td></tr>
+           <tr><td class="num">9999</td><td class="num">10000</td><td class="num">4</td><td class="num">100</td><td class="num">198</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Add 1, then $\\log_{10}$: $\\log_{10}(0+1)=0$, $\\log_{10}(10)=1$, $\\log_{10}(100)=2$, $\\log_{10}(10000)=4$.</li>
-         <li>The raw values jump $0\\to 9\\to 99\\to 9999$ — wildly uneven. The logged values step $0\\to 1\\to 2\\to 4$ — almost evenly spaced.</li>
-         <li>The giant $9999$, which alone dwarfed the others on a linear axis, is now just a "4" sitting a polite distance from the rest. The crushed small values $0,9,99$ are now spread to $0,1,2$.</li>
-         <li>That re-spacing is exactly what makes the histogram look more Gaussian — and note $0$ mapped to $0$, not $-\\infty$, because we added 1 first.</li>
+         <li><b>Log transform.</b> Add 1, then $\\log_{10}$: $\\log_{10}(0+1)=0$, $\\log_{10}(10)=1$, $\\log_{10}(100)=2$, $\\log_{10}(10000)=4$. The raw jumps $0\\to 9\\to 99\\to 9999$ become the near-even steps $0\\to 1\\to 2\\to 4$. Note $0$ mapped to $0$, not $-\\infty$, because we added 1 first.</li>
+         <li><b>Box-Cox at $\\lambda=0.5$.</b> Plug $x+1$ into $\\tilde{x}=2(\\sqrt{x+1}-1)$. For $x=9$: $\\sqrt{10}=3.162$, so $\\tilde{x}=2(3.162-1)=4.325$. For $x=99$: $\\sqrt{100}=10$, so $\\tilde{x}=2(10-1)=18$. For $x=9999$: $\\sqrt{10000}=100$, so $\\tilde{x}=2(100-1)=198$.</li>
+         <li><b>Compare the squash strength.</b> The giant $9999$ versus the small $9$: the raw ratio is $9999/9\\approx 1111\\times$. After the square-root Box-Cox it is $198/4.325\\approx 46\\times$; after the log it is $4/1=4\\times$. The log is the <i>stronger</i> squash — it pulls the lonely giant in the hardest, which is why it tames the heaviest tails.</li>
+         <li>That re-spacing is exactly what makes the histogram look more Gaussian — and the choice of $\\lambda$ (log vs square root vs in between) is the dial Box-Cox sets for you by maximum likelihood.</li>
        </ul>`,
 
     practice: [

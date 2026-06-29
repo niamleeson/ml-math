@@ -153,20 +153,38 @@
        </ul>`,
 
     example:
-      `<p>Take a tiny daily series with a clear weekly beat (period $m=7$), e.g. low on weekends:</p>
-       <p><code>Mon..Sun</code> for two weeks &asymp; <code>[20, 21, 22, 21, 20, 12, 11,  22, 23, 24, 23, 22, 14, 13]</code>.</p>
+      `<p>Take a tiny daily series with a clear weekly beat (period $m=7$), low on weekends &mdash; two weeks
+       (days $t=0$ to $13$), Mon&hellip;Sun then Mon&hellip;Sun:</p>
+       <table class="extable">
+         <caption>$y_t$ &mdash; daily values, two weeks; weekend days (Sat/Sun) in the dip</caption>
+         <thead><tr><th>week</th><th class="num">Mon</th><th class="num">Tue</th><th class="num">Wed</th><th class="num">Thu</th><th class="num">Fri</th><th class="num">Sat</th><th class="num">Sun</th><th class="num">avg</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">week 1 ($t$=0&ndash;6)</td><td class="num">20</td><td class="num">21</td><td class="num">22</td><td class="num">21</td><td class="num">20</td><td class="num">12</td><td class="num">11</td><td class="num">18.14</td></tr>
+           <tr><td class="row-h">week 2 ($t$=7&ndash;13)</td><td class="num">22</td><td class="num">23</td><td class="num">24</td><td class="num">23</td><td class="num">22</td><td class="num">14</td><td class="num">13</td><td class="num">20.14</td></tr>
+         </tbody>
+       </table>
+       <p>The overall mean is $\\bar{y} = 268/14 = 19.143$. Now work the two formulas on real numbers.</p>
+       <p><b>1. Trend &amp; seasonality (the additive split $y_t = T_t + S_t + R_t$).</b> The weekly averages
+       above are the trend estimate: $T \\approx 18.14$ in week 1, $20.14$ in week 2 &mdash; a gentle upward
+       drift. The seasonal part is each day minus its week average, e.g. Wednesday:</p>
        <ul class="steps">
-         <li><b>Plot.</b> The eye sees two things at once: a gentle upward <b>trend</b> (week 2 sits above week
-         1) and a repeating <b>dip every 6th-7th point</b> (the weekend).</li>
-         <li><b>Decompose</b> with period 7. $T_t$ comes out as a smooth slope from ~18 to ~20; $S_t$ is the
-         fixed weekly shape (positive on weekdays, sharply negative on weekends); $R_t$ is tiny.</li>
-         <li><b>Autocorrelation.</b> $\\rho_7$ is large and positive &mdash; each day looks like the same day
-         last week. That lag-7 spike is the numeric fingerprint of the weekly season you saw by eye.</li>
-         <li><b>Stationarity.</b> Because the mean drifts up, the raw series fails the ADF test. Subtract last
-         week (<code>y.diff(7)</code>) to remove the season, or <code>y.diff(1)</code> to remove the trend; the
-         differenced series has a roughly flat mean and now passes &mdash; ready for a model that assumes
-         stationarity.</li>
-       </ul>`,
+         <li>Wed week 1: $S = 22 - 18.14 = +3.86$ &nbsp;&nbsp; Wed week 2: $S = 24 - 20.14 = +3.86$ (same shape).</li>
+         <li>Sun week 1: $S = 11 - 18.14 = -7.14$ &nbsp;&nbsp; Sun week 2: $S = 13 - 20.14 = -7.14$ (the weekend dip).</li>
+       </ul>
+       <p><b>2. Autocorrelation at the seasonal lag, $\\rho_7$.</b> Plug into
+       $\\rho_k=\\frac{\\sum_t (y_t-\\bar{y})(y_{t-k}-\\bar{y})}{\\sum_t (y_t-\\bar{y})^2}$ with $k=7$:</p>
+       <ul class="steps">
+         <li><b>Numerator</b> (7 paired terms, day vs same day last week):
+         $2.45 + 7.16 + 13.88 + 7.16 + 2.45 + 36.74 + 50.02 = 119.86$.</li>
+         <li><b>Denominator</b> $\\sum_t (y_t-\\bar{y})^2 = 267.71$ (total squared spread).</li>
+         <li><b>$\\rho_7 = 119.86 / 267.71 = 0.448$</b> &mdash; large and positive: each day strongly
+         resembles the same day last week. That lag-7 value is the numeric fingerprint of the weekly season
+         you saw by eye.</li>
+       </ul>
+       <p><b>3. Stationarity.</b> Because the mean drifts up ($18.14 \\to 20.14$), the raw series fails the
+       ADF test. Seasonal-difference it: <code>y.diff(7)</code> gives $22-20=2$, $23-21=2$, &hellip;,
+       $14-12=2$, $13-11=2$ &mdash; a flat constant 2. That removes both trend and season, and the
+       differenced series now passes, ready for a model that assumes stationarity.</p>`,
 
     practice: [
       {

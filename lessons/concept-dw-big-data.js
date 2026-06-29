@@ -84,18 +84,27 @@
 
     example:
       `<p>A frame of 20,640 California-housing rows: nine measured float columns, one small integer
-       <code>county_code</code> (values 0&ndash;57), and one text <code>price_band</code> with five labels.</p>
+       <code>county_code</code> (values 0&ndash;57), and one text <code>price_band</code> with five labels.
+       <code>df.memory_usage(deep=True).sum()</code> reports <b>2.92 MB</b> as loaded. Apply the three dtype moves,
+       column group by column group:</p>
+       <table class="extable">
+         <caption>Memory per dtype group, before and after honest dtypes (real numbers, 20,640 rows)</caption>
+         <thead>
+           <tr><th>dtype group</th><th>move</th><th class="num">before (MB)</th><th class="num">after (MB)</th><th class="num">cut</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">9 floats</td><td><code>float64</code> &rarr; <code>float32</code></td><td class="num">1.49</td><td class="num">0.74</td><td class="num">2.0x</td></tr>
+           <tr><td class="row-h"><code>county_code</code></td><td><code>int64</code> &rarr; <code>int8</code></td><td class="num">0.17</td><td class="num">0.02</td><td class="num">8.5x</td></tr>
+           <tr><td class="row-h"><code>price_band</code></td><td><code>object</code> &rarr; <code>category</code></td><td class="num">1.27</td><td class="num">0.02</td><td class="num">63.5x</td></tr>
+           <tr><td class="row-h">TOTAL</td><td>&mdash;</td><td class="num">2.92</td><td class="num">0.78</td><td class="num">3.7x</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>As loaded</b> (all <code>float64</code> / <code>int64</code> / <code>object</code>):
-         <code>df.memory_usage(deep=True).sum()</code> reports <b>2.92 MB</b>. The nine floats are 1.49 MB, the
-         one integer column is 0.17 MB, and the single <code>object</code> text column alone is <b>1.27 MB</b>
-         &mdash; nearly half the frame for one column.</li>
-         <li><b>Downcast the floats</b> to <code>float32</code>: 1.49 MB &rarr; 0.74 MB. Clean 2x.</li>
-         <li><b>Downcast the integer</b> to <code>int8</code> (0&ndash;57 fits easily): 0.17 MB &rarr; 0.02 MB.</li>
-         <li><b>Convert <code>price_band</code> to <code>category</code></b>: 1.27 MB &rarr; 0.02 MB. The big one.</li>
-         <li><b>Total: 2.92 MB &rarr; 0.78 MB</b>, a <b>3.7x</b> reduction &mdash; same numbers, same rows, zero
-         information lost, just honest dtypes. On a 30 GB frame that is the difference between fitting in RAM and
-         not.</li>
+         <li><b>Floats</b> halve: $1.49 \\rightarrow 0.74$ MB &mdash; the clean 2x ceiling of <code>float64</code> to <code>float32</code>.</li>
+         <li><b>The integer</b> drops far: $0.17 \\rightarrow 0.02$ MB, because 0&ndash;57 fits a single byte (<code>int8</code> holds -128 to 127).</li>
+         <li><b>The text column</b> collapses: $1.27 \\rightarrow 0.02$ MB &mdash; the big one &mdash; since only 5 labels are stored once plus a one-byte code per row.</li>
+         <li><b>Add them up:</b> $0.74 + 0.02 + 0.02 = 0.78$ MB, versus $2.92$ MB before. The reduction is $2.92 / 0.78 = 3.7$x.</li>
+         <li>Same numbers, same rows, zero information lost &mdash; just honest dtypes. On a 30 GB frame that 3.7x is the difference between fitting in RAM and not.</li>
        </ul>`,
 
     whenToUse:

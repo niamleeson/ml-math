@@ -131,23 +131,30 @@
        </ul>`,
 
     example:
-      `<p>Suppose a column <code>session_length</code> (minutes) has values whose middle (median) is about
-       8 minutes, but a handful of marathon sessions run to 200+ minutes.</p>
+      `<p>Take a tiny <code>session_length</code> column (minutes) with $n=9$ rows, sorted:
+       $\\{2,\\ 4,\\ 5,\\ 7,\\ 8,\\ 9,\\ 11,\\ 14,\\ 200\\}$ &mdash; eight ordinary sessions and one marathon
+       outlier. Compute each summary statistic from the lesson on these real numbers.</p>
        <ul class="steps">
-         <li><b>Histogram</b> with 8 bins shows one tall bar near 0&ndash;10 and a long thin tail stretching
-         right &mdash; a classic <b>right skew</b>.</li>
-         <li><b>Mean vs median:</b> the mean comes out around 18 (dragged up by the marathons) while the
-         median is 8. Reporting "average session = 18 min" would badly overstate the typical user; the honest
-         number is the median, 8.</li>
-         <li><b>Box plot:</b> the box (middle 50%) is small and low; the upper whisker is short; a cloud of
-         points sits above it &mdash; the marathon sessions, flagged as outliers to investigate (real power
-         users? a logging bug?).</li>
-         <li><b>Decision:</b> right skew + outliers &rarr; model <code>log(session_length)</code> rather than
-         the raw value, and report the median, not the mean.</li>
+         <li><b>Mean</b> $\\bar{x}=\\frac{1}{n}\\sum_i x_i=\\frac{2+4+5+7+8+9+11+14+200}{9}=\\frac{260}{9}=28.9$.</li>
+         <li><b>Median</b> $\\tilde{x}=$ the middle (5th of 9) value $=8$. The one 200 cannot move it &mdash; rank, not distance.</li>
+         <li><b>Mean vs median:</b> $\\bar{x}=28.9\\gt\\tilde{x}=8$, so $\\bar{x}\\gt\\tilde{x}$ &mdash; the signature of a <b>right skew</b>. Reporting "average session = 28.9 min" overstates the typical user; the honest figure is the median, 8.</li>
+         <li><b>Quartiles &amp; IQR:</b> with 9 points, $Q_1$ = median of the lower four $\\{2,4,5,7\\}=\\frac{4+5}{2}=4.5$; $Q_3$ = median of the upper four $\\{9,11,14,200\\}=\\frac{11+14}{2}=12.5$. So $\\mathrm{IQR}=Q_3-Q_1=12.5-4.5=8.0$.</li>
+         <li><b>Outlier rule:</b> the box-plot upper fence is $Q_3+1.5\\cdot\\mathrm{IQR}=12.5+1.5\\cdot 8.0=12.5+12=24.5$. The value $200\\gt 24.5$, so 200 is flagged as an outlier &mdash; investigate (power user? logging bug?).</li>
+         <li><b>Skewness sign:</b> the long tail is on the right, so $g_1\\gt 0$ &mdash; positive skew confirmed.</li>
+         <li><b>Decision:</b> right skew + outlier &rarr; model <code>log(session_length)</code>, and report the median (8), not the mean (28.9).</li>
        </ul>
-       <p>Now the target. Say you are predicting <code>churned</code> and a class-balance bar shows 97% "no",
-       3% "yes". That single plot tells you accuracy is meaningless (always-"no" scores 97%), so you switch to
-       recall / F1 and consider resampling &mdash; all decided <i>before</i> any modeling.</p>`,
+       <p>Now the <b>target</b>. Predicting <code>churned</code> on 1000 rows, the class-balance counts are:</p>
+       <table class="extable">
+         <caption>Target class balance (1000 rows) &mdash; share decides the metric</caption>
+         <thead><tr><th>class</th><th class="num">count</th><th class="num">share</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">no</td><td class="num">970</td><td class="num">97.0%</td></tr>
+           <tr><td class="row-h">yes</td><td class="num">30</td><td class="num">3.0%</td></tr>
+           <tr><td class="row-h">total</td><td class="num">1000</td><td class="num">100%</td></tr>
+         </tbody>
+       </table>
+       <p>An always-"no" model already scores $970/1000=97\\%$ accuracy while catching zero churners, so accuracy
+       is a trap here. Switch to recall / F1 and consider resampling &mdash; all decided <i>before</i> any modeling.</p>`,
 
     practice: [
       {

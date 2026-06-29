@@ -96,22 +96,42 @@
        "two facts in one cell" mess. Together these few verbs reshape almost any table into tidy form.</p>`,
 
     example:
-      `<p>Take this tiny <b>wide</b> table (a made-up GDP-per-person figure, in thousands):</p>
-       <ul>
-         <li><code>Brazil</code>: 1999 &rarr; 3.1, 2009 &rarr; 8.6, 2019 &rarr; 8.8</li>
-         <li><code>India</code>: 1999 &rarr; 0.45, 2009 &rarr; 1.1, 2019 &rarr; 2.1</li>
+      `<p>Take this tiny <b>wide</b> table (a made-up GDP-per-person figure, in thousands) &mdash;
+       <b>2 rows &times; 4 columns</b> (<code>country</code> plus three year columns):</p>
+       <table class="extable">
+         <caption>WIDE / untidy: headers 1999/2009/2019 are values of <code>year</code></caption>
+         <thead><tr><th>country</th><th class="num">1999</th><th class="num">2009</th><th class="num">2019</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Brazil</td><td class="num">3.1</td><td class="num">8.6</td><td class="num">8.8</td></tr>
+           <tr><td class="row-h">India</td><td class="num">0.45</td><td class="num">1.1</td><td class="num">2.1</td></tr>
+         </tbody>
+       </table>
+       <p><b>Melt it.</b> Keep <code>country</code>, stack the three year columns. The shape count is exactly
+       <b>2 rows &times; 3 years = 6 long rows</b>, each one observation with three columns
+       (<code>country</code>, <code>year</code>, <code>gdp_pc</code>) &mdash; the 6 cell values are preserved,
+       just rearranged:</p>
+       <table class="extable">
+         <caption>LONG / tidy: one observation per row (6 rows &times; 3 cols)</caption>
+         <thead><tr><th>country</th><th class="num">year</th><th class="num">gdp_pc</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Brazil</td><td class="num">1999</td><td class="num">3.1</td></tr>
+           <tr><td class="row-h">Brazil</td><td class="num">2009</td><td class="num">8.6</td></tr>
+           <tr><td class="row-h">Brazil</td><td class="num">2019</td><td class="num">8.8</td></tr>
+           <tr><td class="row-h">India</td><td class="num">1999</td><td class="num">0.45</td></tr>
+           <tr><td class="row-h">India</td><td class="num">2009</td><td class="num">1.1</td></tr>
+           <tr><td class="row-h">India</td><td class="num">2019</td><td class="num">2.1</td></tr>
+         </tbody>
+       </table>
+       <p>Now downstream calls just work. For example <code>groupby("year").mean()</code> averages each
+       year's two countries:</p>
+       <ul class="steps">
+         <li><b>1999:</b> (3.1 + 0.45) / 2 = 3.55 / 2 = <b>1.775</b></li>
+         <li><b>2009:</b> (8.6 + 1.1) / 2 = 9.7 / 2 = <b>4.85</b></li>
+         <li><b>2019:</b> (8.8 + 2.1) / 2 = 10.9 / 2 = <b>5.45</b></li>
        </ul>
-       <p>It has 2 rows and 4 columns (<code>country</code> plus three year columns). The headers
-       <code>1999/2009/2019</code> are clearly values of <code>year</code>, so this is untidy.</p>
-       <p><b>Melt it.</b> Keep <code>country</code>, stack the three years. Brazil's one wide row becomes three
-       tidy rows: <code>(Brazil, 1999, 3.1)</code>, <code>(Brazil, 2009, 8.6)</code>,
-       <code>(Brazil, 2019, 8.8)</code> &mdash; and likewise for India. Two wide rows &times; three years
-       &rarr; <b>6 long rows</b>, each one observation with exactly three columns
-       (<code>country</code>, <code>year</code>, <code>gdp_pc</code>).</p>
-       <p>Now <code>groupby("year").mean()</code> just works, and a line plot of <code>gdp_pc</code> vs
-       <code>year</code> colored by <code>country</code> is one call. <b>Pivot it back</b> with
-       <code>index="country", columns="year"</code> and you recover the original readable matrix for a
-       report.</p>`,
+       <p>That one-liner is <i>impossible</i> while <code>year</code> is smeared across headers. <b>Pivot it
+       back</b> with <code>index="country", columns="year"</code> and you recover the original readable
+       2&times;3 matrix for a report.</p>`,
 
     practice: [
       {

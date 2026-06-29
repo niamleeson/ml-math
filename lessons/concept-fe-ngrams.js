@@ -83,14 +83,30 @@
        <p><b>Why the gain is bounded and shrinking.</b> Each new order adds rarer features. A trigram seen in one review out of a million teaches a classifier nothing it can reuse. So accuracy typically climbs a little from unigrams to bigrams, then flattens — while the feature count keeps multiplying. That is the cost–benefit curve the book wants you to feel: pick the smallest $n$ that captures the phrasing you need, and prune the rest.</p>`,
 
     example:
-      `<p>Two tiny reviews:</p>
+      `<p>Two tiny reviews, one positive and one negated:</p>
        <ul>
-         <li>Review 1: <code>the food is good</code></li>
-         <li>Review 2: <code>the food is not good</code></li>
+         <li>Review 1: <code>the food is good</code> &mdash; $L=4$ words.</li>
+         <li>Review 2: <code>the food is not good</code> &mdash; $L=5$ words.</li>
        </ul>
-       <p><b>Bag-of-words (unigrams).</b> Vocabulary = {the, food, is, good, not}. The two reviews differ only in the single "not" slot. The word "good" fires in <i>both</i> — so a model leaning on "good" would wrongly call Review 2 positive too.</p>
-       <p><b>Add bigrams.</b> Review 2 now contains the bigrams "is not" and <b>"not good"</b>, which Review 1 does not have. The "not good" column lights up only for the negative review. The model can put a negative weight on "not good" and get it right.</p>
-       <p><b>Feel the blow-up on these toy reviews.</b> Distinct unigrams: {the, food, is, good, not} = <b>5</b>. Distinct bigrams across both: {the food, food is, is good, is not, not good} = <b>5</b>. Distinct trigrams: {the food is, food is good, food is not, is not good} = <b>4</b>. On two short sentences the orders look similar — but scaled to a real corpus like Yelp the same counting gives ~29k vs ~357k vs ~1.63M. The explosion is a property of <i>many</i> documents, not of one.</p>`,
+       <p>Use the count formula $L-n+1$ on each review, then list the <i>distinct</i> n-grams pooled across both. The table puts the per-review counts next to the corpus-wide distinct totals.</p>
+       <table class="extable">
+         <caption>n-gram counts per review (via $L-n+1$) and distinct n-grams across both reviews.</caption>
+         <thead>
+           <tr><th>order $n$</th><th class="num">R1 ($L=4$)</th><th class="num">R2 ($L=5$)</th><th class="num">distinct across both</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">unigram ($n=1$)</td><td class="num">4</td><td class="num">5</td><td class="num">5</td></tr>
+           <tr><td class="row-h">bigram ($n=2$)</td><td class="num">3</td><td class="num">4</td><td class="num">5</td></tr>
+           <tr><td class="row-h">trigram ($n=3$)</td><td class="num">2</td><td class="num">3</td><td class="num">4</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Per-review counts.</b> Review 2 has $L=5$: bigrams $=5-2+1=4$, trigrams $=5-3+1=3$. Review 1 has $L=4$: bigrams $=4-2+1=3$, trigrams $=4-3+1=2$. Within one sentence, higher $n$ gives <i>fewer</i> n-grams.</li>
+         <li><b>Bag-of-words (unigrams).</b> Distinct = {the, food, is, good, not} $=5$. The two reviews differ only in the "not" slot, and "good" fires in <i>both</i> — so a model leaning on "good" would wrongly call Review 2 positive too.</li>
+         <li><b>Add bigrams.</b> Distinct = {the food, food is, is good, is not, not good} $=5$. Review 2 alone has "is not" and <b>"not good"</b>; the "not good" column lights up only for the negative review, so the model can put a negative weight on it and get Review 2 right.</li>
+         <li><b>Distinct trigrams</b> = {the food is, food is good, food is not, is not good} $=4$.</li>
+       </ul>
+       <p>On two short sentences the distinct totals ($5, 5, 4$) look similar — but scaled to a real corpus like Yelp the same counting gives ~29k vs ~357k vs ~1.63M, a $\\sim\\!12\\times$ and $\\sim\\!56\\times$ blow-up. The explosion is a property of <i>many</i> documents, not of one.</p>`,
 
     demo: function (host) {
       host.innerHTML = "";

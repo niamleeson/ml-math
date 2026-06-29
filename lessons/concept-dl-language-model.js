@@ -96,12 +96,21 @@
          <li><code>the cat sat</code></li>
          <li><code>the cat ran</code></li>
        </ul>
-       <p><b>Count the pairs.</b> "the" is followed by "cat" both times. "cat" is followed by "sat" once and "ran" once. So, without smoothing:</p>
+       <p><b>Count the pairs.</b> Tally every adjacent word pair and the count of each first word (the context):</p>
+       <table class="extable">
+         <caption>Bigram counts and the count-ratio $P(y_t \\mid y_{t-1}) = \\dfrac{\\operatorname{count}(y_{t-1}, y_t)}{\\operatorname{count}(y_{t-1})}$</caption>
+         <thead><tr><th>pair $(y_{t-1}, y_t)$</th><th class="num">$\\operatorname{count}(\\text{pair})$</th><th class="num">$\\operatorname{count}(y_{t-1})$</th><th class="num">$P(y_t \\mid y_{t-1})$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">the &rarr; cat</td><td class="num">$2$</td><td class="num">$2$</td><td class="num">$1.0$</td></tr>
+           <tr><td class="row-h">cat &rarr; sat</td><td class="num">$1$</td><td class="num">$2$</td><td class="num">$0.5$</td></tr>
+           <tr><td class="row-h">cat &rarr; ran</td><td class="num">$1$</td><td class="num">$2$</td><td class="num">$0.5$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li>$P(\\text{cat} \\mid \\text{the}) = \\dfrac{\\operatorname{count}(\\text{the cat})}{\\operatorname{count}(\\text{the})} = \\dfrac{2}{2} = 1.0$.</li>
          <li>$P(\\text{sat} \\mid \\text{cat}) = \\dfrac{\\operatorname{count}(\\text{cat sat})}{\\operatorname{count}(\\text{cat})} = \\dfrac{1}{2} = 0.5$.</li>
+         <li><b>Score a sentence</b> with the chain rule: $P(\\text{the cat sat}) = P(\\text{cat}\\mid\\text{the})\\cdot P(\\text{sat}\\mid\\text{cat}) = 1.0 \\times 0.5 = 0.5$.</li>
        </ul>
-       <p><b>Score a sentence.</b> $P(\\text{the cat sat}) = P(\\text{cat}\\mid\\text{the})\\cdot P(\\text{sat}\\mid\\text{cat}) = 1.0 \\times 0.5 = 0.5$.</p>
        <p><b>The zero trap.</b> Now try "the cat jumped." The pair "cat jumped" was never seen, so $P(\\text{jumped}\\mid\\text{cat}) = 0/2 = 0$, and the whole sentence gets probability $0$ — perplexity infinite. Add-one smoothing rescues it: with vocabulary size $|V|=5$, $P_{\\text{add-1}}(\\text{jumped}\\mid\\text{cat}) = (0+1)/(2+5) = 1/7 \\approx 0.143$. Small, but no longer impossible.</p>`,
 
     demo: function (host) {

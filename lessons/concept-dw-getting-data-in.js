@@ -103,26 +103,43 @@
        hold a dict in a cell sensibly, so you <b>flatten</b> the nesting into flat columns first.</p>`,
 
     example:
-      `<p>Suppose a sales export <code>sales.csv</code> arrives from a European system and the first line is
-       written as:</p>
+      `<p>A European sales export <code>sales.csv</code> arrives. The raw bytes of its two lines are:</p>
        <p><code>id;name;amount;sold_on</code><br>
           <code>1;café;1.234,50;21/06/2026</code></p>
+       <p>Watch the SAME row land four different ways as we set each option. The header line splits into
+       <code>id</code>, <code>name</code>, <code>amount</code>, <code>sold_on</code> &mdash; that is the
+       4-column shape we should end up with:</p>
+       <table class="extable">
+         <caption>One data row, read four ways &mdash; each fixed option changes what lands</caption>
+         <thead>
+           <tr><th>read options</th><th class="num">df.shape</th><th>amount cell</th><th>name cell</th><th>sold_on cell</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">naive (default comma)</td><td class="num">(1, 1)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+           <tr><td class="row-h">+ sep=';'</td><td class="num">(1, 4)</td><td>"1.234,50" (text)</td><td>café</td><td>"21/06/2026" (text)</td></tr>
+           <tr><td class="row-h">+ thousands='.', decimal=','</td><td class="num">(1, 4)</td><td class="num">1234.50</td><td>café</td><td>"21/06/2026" (text)</td></tr>
+           <tr><td class="row-h">+ encoding='latin-1', parse_dates</td><td class="num">(1, 4)</td><td class="num">1234.50</td><td>café</td><td>2026-06-21</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Naive read.</b> <code>pd.read_csv('sales.csv')</code> uses a comma delimiter, so the entire
-         line lands in <b>one</b> column named <code>id;name;amount;sold_on</code>. No error. If you'd
-         eyeballed <code>df.shape</code> you'd see <code>(1, 1)</code> and know something is off.</li>
-         <li><b>Right delimiter.</b> <code>sep=';'</code> now gives four columns. But <code>amount</code> is
-         the string <code>"1.234,50"</code> (European: dot is the thousands separator, comma is the decimal)
-         &mdash; add <code>decimal=','</code> and <code>thousands='.'</code> to get the number
-         <code>1234.50</code>.</li>
-         <li><b>Encoding.</b> If the file was saved as latin-1, reading it as UTF-8 turns <code>café</code>
-         into <code>cafÃ©</code> (mojibake) or raises an error. Pass <code>encoding='latin-1'</code>.</li>
-         <li><b>Dates.</b> <code>sold_on</code> is text <code>"21/06/2026"</code>; add
-         <code>parse_dates=['sold_on']</code> (with the right day-first interpretation) so it becomes a real
-         timestamp you can sort and subtract.</li>
+         <li><b>Naive read.</b> <code>pd.read_csv('sales.csv')</code> splits on commas, but there are none, so
+         all four fields stay glued together in <b>one</b> column. The count is
+         <code>columns = 1</code> when you expected <code>4</code> &mdash; the row 1 of the table. No error is
+         raised; <code>df.shape == (1, 1)</code> is the only tell.</li>
+         <li><b>Right delimiter.</b> Add <code>sep=';'</code>. Now pandas splits the row into
+         <code>4</code> fields, so <code>df.shape == (1, 4)</code> (row 2). But <code>amount</code> is still the
+         <i>string</i> <code>"1.234,50"</code>.</li>
+         <li><b>European number.</b> In <code>"1.234,50"</code> the dot is the thousands separator and the comma
+         is the decimal point. With <code>thousands='.'</code> and <code>decimal=','</code> pandas reads it as
+         the arithmetic <code>1234 + 0.50 = 1234.50</code> &mdash; a real float (row 3).</li>
+         <li><b>Encoding + dates.</b> The file was saved as latin-1; read as UTF-8 the bytes for
+         <code>café</code> would decode to <code>cafÃ©</code> (mojibake), so pass <code>encoding='latin-1'</code>.
+         Then <code>parse_dates=['sold_on']</code> with day-first turns the text <code>"21/06/2026"</code> into
+         the timestamp <code>2026-06-21</code> you can sort and subtract (row 4).</li>
        </ul>
-       <p>One file, four decisions. Get them right at read time and the rest of the project starts from clean
-       ground.</p>`,
+       <p>One file, four options &mdash; and the shape went from a useless <code>(1, 1)</code> to a clean
+       <code>(1, 4)</code> with a numeric <code>1234.50</code> and a real date. Get them right at read time and
+       the rest of the project starts from clean ground.</p>`,
 
     practice: [
       {

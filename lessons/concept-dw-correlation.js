@@ -147,23 +147,48 @@
        </ul>`,
 
     example:
-      `<p><b>A tiny matrix you can read by hand.</b> Three columns: <code>size_cm</code>,
-       <code>size_in</code> (the same lengths in inches), and <code>price</code> the target. Suppose the
-       correlations come out:</p>
+      `<p><b>Compute one cell by hand.</b> Four rows, two columns: <code>size_cm</code> ($X$) and the
+       target <code>price</code> ($y$). We plug them into
+       $r=\\dfrac{\\sum_k (X_k-\\bar X)(y_k-\\bar y)}{\\sqrt{\\sum_k (X_k-\\bar X)^2}\\,\\sqrt{\\sum_k (y_k-\\bar y)^2}}$.</p>
+       <table class="extable">
+         <caption>Deviations from each mean, then their products and squares (the pieces of $r$).</caption>
+         <thead>
+           <tr><th class="num">$X$ (size_cm)</th><th class="num">$y$ (price)</th><th class="num">$X-\\bar X$</th><th class="num">$y-\\bar y$</th><th class="num">$(X-\\bar X)(y-\\bar y)$</th><th class="num">$(X-\\bar X)^2$</th><th class="num">$(y-\\bar y)^2$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="num">10</td><td class="num">20</td><td class="num">-5</td><td class="num">-15</td><td class="num">75</td><td class="num">25</td><td class="num">225</td></tr>
+           <tr><td class="num">12</td><td class="num">30</td><td class="num">-3</td><td class="num">-5</td><td class="num">15</td><td class="num">9</td><td class="num">25</td></tr>
+           <tr><td class="num">16</td><td class="num">40</td><td class="num">1</td><td class="num">5</td><td class="num">5</td><td class="num">1</td><td class="num">25</td></tr>
+           <tr><td class="num">22</td><td class="num">50</td><td class="num">7</td><td class="num">15</td><td class="num">105</td><td class="num">49</td><td class="num">225</td></tr>
+           <tr><td class="row-h">sum</td><td class="num">140</td><td class="num">0</td><td class="num">0</td><td class="num">200</td><td class="num">84</td><td class="num">500</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Target line.</b> $r(\\text{size\\_cm},\\,\\text{price})=0.78$ and
-         $r(\\text{size\\_in},\\,\\text{price})=0.78$. Both are strong &mdash; size is a candidate predictor.
-         Sorted by $|r|$, size sits at the top of the shortlist.</li>
-         <li><b>Feature line.</b> $r(\\text{size\\_cm},\\,\\text{size\\_in})=1.00$. That cell is a blazing
-         off-diagonal twin: the two columns are the <i>same measurement</i> in different units. Keeping both
-         would give a linear model an impossible choice &mdash; textbook multicollinearity.</li>
-         <li><b>The read.</b> Drop one of the duplicate size columns, keep the other as a predictor. One
-         glance at the matrix &mdash; one bright target cell, one $r=1.00$ off-diagonal &mdash; tells the
-         whole EDA story.</li>
+         <li><b>Means.</b> $\\bar X=(10+12+16+22)/4=60/4=15$; $\\bar y=(20+30+40+50)/4=140/4=35$.</li>
+         <li><b>Numerator (covariance sum).</b> $75+15+5+105=200$.</li>
+         <li><b>Denominator.</b> $\\sqrt{84}\\,\\sqrt{500}=\\sqrt{42000}\\approx 204.94$.</li>
+         <li><b>Divide.</b> $r=\\dfrac{200}{204.94}\\approx \\mathbf{0.976}$ &mdash; a strong positive,
+         straight-line trend, safely inside $[-1,1]$.</li>
        </ul>
-       <p>Real tables hide softer versions of this: a pair at $r=0.86$ is redundant-ish, a target cell at
-       $|r|=0.85$ is a strong predictor. The matrix turns "which columns matter and which repeat?" into a
-       picture you scan in seconds.</p>`,
+       <p><b>Now the redundancy read.</b> Add a third column <code>size_in</code> = the same lengths in
+       inches ($X/2.54$): $3.94, 4.72, 6.30, 8.66$. Because it is a linear rescaling of <code>size_cm</code>,
+       $r(\\text{size\\_cm},\\,\\text{size\\_in})=1.00$ exactly &mdash; a blazing off-diagonal twin. The full
+       $3\\times3$ matrix:</p>
+       <table class="extable">
+         <caption>Correlation matrix: bright target cells, one $r=1.00$ redundant pair.</caption>
+         <thead>
+           <tr><th></th><th class="num">size_cm</th><th class="num">size_in</th><th class="num">price</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">size_cm</td><td class="num">1.00</td><td class="num">1.00</td><td class="num">0.98</td></tr>
+           <tr><td class="row-h">size_in</td><td class="num">1.00</td><td class="num">1.00</td><td class="num">0.98</td></tr>
+           <tr><td class="row-h">price</td><td class="num">0.98</td><td class="num">0.98</td><td class="num">1.00</td></tr>
+         </tbody>
+       </table>
+       <p><b>The read.</b> The diagonal is all $1.00$ (skip it). The target line says both size columns are
+       strong predictors ($|r|=0.98$). The off-diagonal $r(\\text{size\\_cm},\\,\\text{size\\_in})=1.00$ flags
+       them as the <i>same measurement</i> &mdash; textbook multicollinearity. Drop one, keep the other. One
+       glance &mdash; bright target cells, one $r=1.00$ off-diagonal &mdash; tells the whole EDA story.</p>`,
 
     practice: [
       {

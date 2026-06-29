@@ -128,24 +128,36 @@
 
     example:
       `<p>A tiny table. One numeric column <code>age</code> with a missing value, one categorical column
-       <code>city</code>.</p>
-       <p>Train rows: <code>age = [30, 50, ?]</code>, <code>city = [NYC, LA, NYC]</code>.
-       Test row: <code>age = [40]</code>, <code>city = [SF]</code>.</p>
+       <code>city</code>. Train rows: <code>age = [30, 50, ?]</code>, <code>city = [NYC, LA, NYC]</code>.
+       Test row: <code>age = [40]</code>, <code>city = [SF]</code>. Watch every learned number come from
+       <b>train only</b>.</p>
+       <p><b>Step 1 &mdash; fit on train.</b></p>
        <ul class="steps">
-         <li><b>Fit on train.</b> The median age of the two known training values is
-         $\\text{median}(30,50)=40$, so the imputer's fill value is <b>40</b>. After filling, the training
-         ages are $30,50,40$, with mean $\\mu=40$ and standard deviation $\\sigma\\approx 8.16$. The encoder
-         learns the category list <code>{NYC, LA}</code> from train.</li>
-         <li><b>Transform train.</b> Ages standardize to $z=\\frac{x-40}{8.16}$: roughly
-         $-1.22,\\ 1.22,\\ 0$. Cities one-hot encode against <code>{NYC, LA}</code>.</li>
-         <li><b>Transform test.</b> The test age <b>40</b> is filled if missing using the <i>training</i>
-         median 40, and standardized with the <i>training</i> $\\mu=40,\\sigma=8.16$ &mdash; giving $z=0$.
-         The test city <b>SF</b> was never seen in training, so with
-         <code>handle_unknown="ignore"</code> it encodes as all-zeros instead of crashing.</li>
+         <li>Imputer fill = median of the known training ages: $\\text{median}(30,50)=\\mathbf{40}$.</li>
+         <li>After filling, the training ages are $30,\\ 50,\\ 40$.</li>
+         <li>Scaler mean: $\\mu=(30+50+40)/3 = 120/3 = \\mathbf{40}$.</li>
+         <li>Scaler std: $\\sigma=\\sqrt{\\tfrac{(30-40)^2+(50-40)^2+(40-40)^2}{3}}
+         =\\sqrt{\\tfrac{100+100+0}{3}}=\\sqrt{66.7}\\approx \\mathbf{8.16}$.</li>
+         <li>Encoder learns the category list <code>{NYC, LA}</code> from train.</li>
        </ul>
-       <p>Notice the test row was cleaned entirely with numbers <i>learned from train</i>. Nothing about the
-       test set leaked back into the fill value, the mean, the std, or the category list. That is the whole
-       point.</p>`,
+       <p><b>Step 2 &mdash; transform, using only those train-learned numbers</b> via
+       $z=\\dfrac{x-\\mu}{\\sigma}=\\dfrac{x-40}{8.16}$:</p>
+       <table class="extable">
+         <caption>Each value cleaned with the train-learned fill 40, $\\mu=40$, $\\sigma=8.16$, and list {NYC, LA}.</caption>
+         <thead>
+           <tr><th>Row</th><th class="num">raw age</th><th class="num">filled</th><th class="num">$z$</th><th>city &rarr; one-hot</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">train 1</td><td class="num">30</td><td class="num">30</td><td class="num">$-1.22$</td><td>NYC &rarr; [1, 0]</td></tr>
+           <tr><td class="row-h">train 2</td><td class="num">50</td><td class="num">50</td><td class="num">$+1.22$</td><td>LA &rarr; [0, 1]</td></tr>
+           <tr><td class="row-h">train 3</td><td class="num">?</td><td class="num">40</td><td class="num">$0.00$</td><td>NYC &rarr; [1, 0]</td></tr>
+           <tr><td class="row-h">test</td><td class="num">40</td><td class="num">40</td><td class="num">$0.00$</td><td>SF &rarr; [0, 0]</td></tr>
+         </tbody>
+       </table>
+       <p>The test age $40$ standardizes to $z=(40-40)/8.16=0$ using the <i>training</i> $\\mu$ and
+       $\\sigma$; the unseen test city <b>SF</b> encodes to all-zeros under
+       <code>handle_unknown="ignore"</code> instead of crashing. Nothing about the test set leaked into the
+       fill, the mean, the std, or the category list &mdash; that is the whole point.</p>`,
 
     practice: [
       {

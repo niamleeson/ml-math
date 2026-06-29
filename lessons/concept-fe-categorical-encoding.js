@@ -97,22 +97,30 @@
        </ul>`,
 
     example:
-      `<p>The book's tiny table: three cities, their rents (averaged per city), encoded three ways.</p>
-       <p>Group means &mdash; $\\text{SF}=4000$, $\\text{NYC}=3500$, $\\text{Seattle}=2500$; grand mean
-       $\\bar{y}=\\tfrac{4000+3500+2500}{3}=3333.3$.</p>
+      `<p>The book's tiny table: three cities, their rents (averaged per city), encoded three ways.
+       Group means $\\text{SF}=4000$, $\\text{NYC}=3500$, $\\text{Seattle}=2500$; grand mean
+       $\\bar{y}=\\tfrac{4000+3500+2500}{3}=\\tfrac{10000}{3}=3333.3$.</p>
+       <table class="extable">
+         <caption>The same three cities under each encoding (Seattle = reference for dummy / effect).</caption>
+         <thead><tr><th>city</th><th class="num">mean rent</th><th>one-hot</th><th>dummy</th><th>effect</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">SF</td><td class="num">4000</td><td>$(1,0,0)$</td><td>$(1,0)$</td><td>$(1,0)$</td></tr>
+           <tr><td class="row-h">NYC</td><td class="num">3500</td><td>$(0,1,0)$</td><td>$(0,1)$</td><td>$(0,1)$</td></tr>
+           <tr><td class="row-h">Seattle</td><td class="num">2500</td><td>$(0,0,1)$</td><td>$(0,0)$</td><td>$(-1,-1)$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>One-hot (3 columns).</b> $\\text{SF}=(1,0,0)$, $\\text{NYC}=(0,1,0)$,
-         $\\text{Seattle}=(0,0,1)$. With <i>no</i> intercept the three weights come out as the three group
-         means $4000, 3500, 2500$.</li>
-         <li><b>Dummy coding (2 columns, Seattle = reference = all-zeros).</b> $\\text{SF}=(1,0)$,
-         $\\text{NYC}=(0,1)$, $\\text{Seattle}=(0,0)$. Fit with an intercept: $\\beta_0=2500$ (Seattle's
-         mean), $\\beta_{\\text{SF}}=4000-2500=1500$, $\\beta_{\\text{NYC}}=3500-2500=1000$. Each weight is
-         a gap <i>from Seattle</i>.</li>
-         <li><b>Effect coding (2 columns, Seattle = reference = all &minus;1).</b> $\\text{SF}=(1,0)$,
-         $\\text{NYC}=(0,1)$, $\\text{Seattle}=(-1,-1)$. Now $\\beta_0=\\bar{y}=3333.3$ (the grand mean),
-         $\\beta_{\\text{SF}}=4000-3333.3=666.7$, $\\beta_{\\text{NYC}}=3500-3333.3=166.7$. Each weight is a
-         deviation <i>from the overall average</i>; Seattle's deviation is recovered as
-         $-(\\beta_{\\text{SF}}+\\beta_{\\text{NYC}})=-833.3$.</li>
+         <li><b>One-hot (3 columns), no intercept.</b> The three weights come out as the three group means
+         directly: $\\beta_{\\text{SF}}=4000$, $\\beta_{\\text{NYC}}=3500$, $\\beta_{\\text{Seattle}}=2500$.</li>
+         <li><b>Dummy coding (2 columns), with intercept.</b> A Seattle row has all $x_j=0$, so
+         $\\beta_0=2500$ (Seattle's mean). Then $\\beta_{\\text{SF}}=4000-2500=1500$ and
+         $\\beta_{\\text{NYC}}=3500-2500=1000$ &mdash; each a gap <i>from Seattle</i>.</li>
+         <li><b>Effect coding (2 columns), with intercept.</b> The intercept becomes the grand mean,
+         $\\beta_0=\\bar{y}=3333.3$. Then $\\beta_{\\text{SF}}=4000-3333.3=666.7$ and
+         $\\beta_{\\text{NYC}}=3500-3333.3=166.7$.</li>
+         <li><b>Recover Seattle's deviation</b> under effect coding:
+         $-(\\beta_{\\text{SF}}+\\beta_{\\text{NYC}})=-(666.7+166.7)=-833.3$, and indeed
+         $3333.3-833.3=2500$ &mdash; Seattle's mean.</li>
        </ul>
        <p>Same data, three lenses: one-hot keeps every city symmetric, dummy reads "vs. Seattle", effect
        reads "vs. the average city".</p>`,

@@ -99,20 +99,30 @@
 
     example:
       `<p>Three devices in a tiny click log. Counts are clicks $N_1$ / non-clicks $N_0$, global rate
-       $p_0=0.05$ (5% click overall), smoothing $\\alpha=10$.</p>
+       $p_0=0.05$ (5% overall), smoothing $\\alpha=10$. Plug each device into the three formulas
+       $p_v=\\frac{N_1}{N_1+N_0}$, $\\hat p_v=\\frac{N_1+\\alpha p_0}{N_v+\\alpha}$, and
+       $\\log\\frac{p_v}{1-p_v}$:</p>
        <ul class="steps">
-         <li><b>Device A</b> &mdash; $N_1=80,\\ N_0=920$ ($N_v=1000$). Raw rate $p_A=80/1000=0.08$.
-         Smoothed $\\hat p_A=\\frac{80+10\\cdot 0.05}{1000+10}=\\frac{80.5}{1010}\\approx 0.0797$. Tons of
-         data, so smoothing barely moves it &mdash; this 8% rate is trustworthy. Log-odds
-         $\\log\\frac{0.08}{0.92}\\approx -2.44$.</li>
-         <li><b>Device B</b> &mdash; $N_1=1,\\ N_0=0$ ($N_v=1$). Raw rate $p_B=1/1=1.0$ &mdash; a "100% click"
-         device, obviously a fluke. Smoothed $\\hat p_B=\\frac{1+0.5}{1+10}=\\frac{1.5}{11}\\approx 0.136$.
-         Smoothing <b>back off</b> the absurd 100% toward the prior; still above average, but sane.</li>
-         <li><b>Device C (unseen)</b> &mdash; never in training, $N_v=0$. Fall back to the global rate:
-         $\\hat p_C=p_0=0.05$. No NaN, no crash &mdash; just "assume average until we learn otherwise".</li>
+         <li><b>Device A</b> &mdash; $N_1=80,\\ N_0=920,\\ N_v=1000$. Raw rate $p_A=\\frac{80}{1000}=0.08$.
+         Smoothed $\\hat p_A=\\frac{80+10\\cdot 0.05}{1000+10}=\\frac{80.5}{1010}\\approx 0.0797$ &mdash; tons of
+         data, so smoothing barely moves it. Log-odds $\\log\\frac{0.08}{0.92}=\\log(0.0870)\\approx -2.44$.</li>
+         <li><b>Device B</b> &mdash; $N_1=1,\\ N_0=0,\\ N_v=1$. Raw rate $p_B=\\frac{1}{1}=1.0$ &mdash; a "100% click"
+         fluke. Smoothed $\\hat p_B=\\frac{1+10\\cdot 0.05}{1+10}=\\frac{1.5}{11}\\approx 0.136$ &mdash; smoothing
+         backs the absurd 100% off toward the prior; above average, but sane.</li>
+         <li><b>Device C (unseen)</b> &mdash; never in training, $N_1=0,\\ N_0=0,\\ N_v=0$. The smoothing formula's
+         $N_v=0$ limit is $\\hat p_C=\\frac{0+10\\cdot 0.05}{0+10}=\\frac{0.5}{10}=0.05=p_0$. No NaN, no crash.</li>
        </ul>
-       <p>Same transform, three regimes: a well-populated value keeps its real rate, a rare value is pulled
-       toward the prior, and an unseen value <i>becomes</i> the prior.</p>`,
+       <table class="extable">
+         <caption>Same transform, three regimes ($p_0=0.05$, $\\alpha=10$)</caption>
+         <thead><tr><th>device</th><th class="num">$N_1$</th><th class="num">$N_0$</th><th class="num">raw $p_v$</th><th class="num">smoothed $\\hat p_v$</th><th>regime</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td class="num">80</td><td class="num">920</td><td class="num">0.080</td><td class="num">0.080</td><td>kept (high count)</td></tr>
+           <tr><td class="row-h">B</td><td class="num">1</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.136</td><td>pulled to prior</td></tr>
+           <tr><td class="row-h">C</td><td class="num">0</td><td class="num">0</td><td class="num">&mdash;</td><td class="num">0.050</td><td>becomes prior</td></tr>
+         </tbody>
+       </table>
+       <p>A well-populated value keeps its real rate, a rare value is pulled toward the prior, and an unseen
+       value <i>becomes</i> the prior.</p>`,
 
     whenToUse:
       `<p><b>Reach for bin counting when the category is huge and the target statistics are stable.</b></p>

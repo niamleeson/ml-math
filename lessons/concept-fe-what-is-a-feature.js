@@ -116,14 +116,20 @@
        <p><b>Why practitioners live here.</b> Because there is no formula that hands you the right features — only judgment, iteration, and domain knowledge. You build features, train, study the mistakes, and revise. That loop, not the model fit, is where most of the work and most of the gains live.</p>`,
 
     example:
-      `<p>A tiny worked example in the spirit of Chapter 1: turning raw text into a feature.</p>
-       <p>Raw observation $x$ = the review <i>"Great great food and great service"</i>. A model cannot read that. We need a feature.</p>
+      `<p>A tiny worked example in the spirit of Chapter 1: turning the raw review $x$ = <i>"Great great food and great service"</i> into a feature vector. A model cannot read text, so we apply two feature functions and read off $\\mathbf{z}$.</p>
+       <table class="extable">
+         <caption>Two feature functions applied to one raw review (6 words)</caption>
+         <thead><tr><th>feature function</th><th>what it counts</th><th class="num">value $\\phi_j(x)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$\\phi_1(x)$</td><td>times "great" appears</td><td class="num">3</td></tr>
+           <tr><td class="row-h">$\\phi_2(x)$</td><td>total words</td><td class="num">6</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Pick a feature function.</b> Let $\\phi(x)$ = the number of times the word "great" appears. This is one numeric aspect of the raw review.</li>
-         <li><b>Apply it.</b> "great" appears 3 times, so $\\phi(x) = 3$.</li>
-         <li><b>Now the review is a number.</b> The single value $3$ is something a model can multiply by a weight and learn from.</li>
+         <li><b>Apply $\\phi_1$:</b> the words are Great, great, food, and, great, service — "great" appears 3 times, so $\\phi_1(x) = 3$.</li>
+         <li><b>Apply $\\phi_2$:</b> count all the words: $6$, so $\\phi_2(x) = 6$.</li>
+         <li><b>Stack into a vector:</b> $\\mathbf{z} = [\\phi_1(x), \\phi_2(x)] = [3, 6]$. The raw sentence is now a 2-number vector the model can use.</li>
        </ul>
-       <p>Add a second feature: $\\phi_2(x)$ = total word count = $6$. Now $\\mathbf{z} = [3, 6]$. The raw sentence has become a 2-number vector the model can use.</p>
        <p>Notice the choice we made. We could have counted any word, used presence-vs-absence instead of counts, or weighted rare words higher with tf-idf. Each is a different feature for the same raw data — and which is best depends on the model and the rest of the corpus. That space of choices is exactly what the rest of this module explores.</p>`,
 
     demo: function (host) {

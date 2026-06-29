@@ -119,15 +119,30 @@
 
     example:
       `<p>Suppose a block's input is the vector $a^{[l]} = [2,\\,-1]$, and the two layers compute a
-       pre-activation $z^{[l+2]} = [0.1,\\,0.3]$. Take $g$ to be ReLU (keep positives, zero out negatives).</p>
+       pre-activation $z^{[l+2]} = [0.1,\\,0.3]$. Take $g$ to be ReLU (keep positives, zero out negatives).
+       Plug straight into $a^{[l+2]} = g(a^{[l]} + z^{[l+2]})$:</p>
        <ul class="steps">
-         <li>Add the skip: $a^{[l]} + z^{[l+2]} = [2+0.1,\\;-1+0.3] = [2.1,\\,-0.7]$.</li>
-         <li>Apply $g$: $\\mathrm{ReLU}([2.1,\\,-0.7]) = [2.1,\\,0]$. So $a^{[l+2]} = [2.1,\\,0]$.</li>
-         <li>Notice what the layers had to do: the output's first component, $2.1$, is mostly the input's
-         $2$ plus a small residual $0.1$. The two layers only learned the little correction &mdash; the bulk
-         of the answer came for free through the shortcut.</li>
+         <li>Component 1, add the skip: $a^{[l]}_1 + z^{[l+2]}_1 = 2 + 0.1 = 2.1$.</li>
+         <li>Component 2, add the skip: $a^{[l]}_2 + z^{[l+2]}_2 = -1 + 0.3 = -0.7$.</li>
+         <li>So the pre-activation sum is $a^{[l]} + z^{[l+2]} = [2.1,\\,-0.7]$.</li>
+         <li>Apply $g$: $\\mathrm{ReLU}(2.1) = 2.1$ (positive, kept) and $\\mathrm{ReLU}(-0.7) = 0$ (negative, zeroed).</li>
+         <li>Final block output: $a^{[l+2]} = [2.1,\\,0]$.</li>
        </ul>
-       <p>If the layers had learned $z^{[l+2]} = [0,0]$ (the residual $F(x)=0$), the block would output
+       <p>Lay the two paths side by side &mdash; the skip carries almost the whole answer, the layers add only a
+       small residual:</p>
+       <table class="extable">
+         <caption>Each output component = input (skip) + learned residual, then ReLU</caption>
+         <thead>
+           <tr><th>component</th><th class="num">input $a^{[l]}$</th><th class="num">residual $z^{[l+2]}$</th><th class="num">sum</th><th class="num">after $g$ = $a^{[l+2]}$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">2</td><td class="num">0.1</td><td class="num">2.1</td><td class="num">2.1</td></tr>
+           <tr><td class="row-h">2</td><td class="num">-1</td><td class="num">0.3</td><td class="num">-0.7</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
+       <p>The output's first component, $2.1$, is mostly the input's $2$ plus a small residual $0.1$ &mdash; the
+       two layers only learned the little correction; the bulk came for free through the shortcut.</p>
+       <p>If the layers had instead learned $z^{[l+2]} = [0,0]$ (the residual $F(x)=0$), the block would output
        $g(a^{[l]}) = \\mathrm{ReLU}([2,-1]) = [2,0]$ &mdash; just passing the input along. That is the
        "do nothing safely" fallback a plain stack struggles to learn.</p>`,
 

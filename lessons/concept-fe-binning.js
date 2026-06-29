@@ -78,15 +78,38 @@
        </ul>`,
 
     example:
-      `<p>Take a handful of Yelp-style review counts and bin them three ways.</p>
-       <p>Counts: $x = \\{5,\\ 8,\\ 12,\\ 37,\\ 95,\\ 410,\\ 2503\\}$.</p>
+      `<p>Take seven Yelp-style review counts and run each through all three binning formulas:
+       $x = \\{5,\\ 8,\\ 12,\\ 37,\\ 95,\\ 410,\\ 2503\\}$.</p>
        <ul class="steps">
-         <li><b>Linear, width $w=10$</b> &mdash; $b=\\lfloor x/10\\rfloor$: the small counts give $0,0,1,3$ and the big ones give $9, 41, 250$. The first bin already holds two points, and bins $2,4,5,\\dots,40$ are <b>empty</b>. Lopsided, as expected for a heavy tail.</li>
-         <li><b>Exponential</b> &mdash; $b=\\lfloor\\log_{10}x\\rfloor$: $5,8\\to 0$ (one digit); $12,37,95\\to 1$ (tens); $410\\to 2$ (hundreds); $2503\\to 3$ (thousands). Four tidy bins, each a power-of-10 band &mdash; the spread now matches the data.</li>
-         <li><b>Quantile (quartiles, 4 bins)</b> &mdash; with 7 points the cut points sit near $12$, $37$, and $95$. Each bin gets about two points: $\\{5,8\\}$, $\\{12,37\\}$, $\\{95,410\\}$, $\\{2503\\}$. Roughly <b>equal counts</b> per bin, no empties.</li>
+         <li><b>Linear, width $w=10$</b> &mdash; $b_{\\text{linear}}=\\lfloor x/10\\rfloor$:
+         $\\lfloor 5/10\\rfloor=0$, $\\lfloor 8/10\\rfloor=0$, $\\lfloor 12/10\\rfloor=1$,
+         $\\lfloor 37/10\\rfloor=3$, $\\lfloor 95/10\\rfloor=9$, $\\lfloor 410/10\\rfloor=41$,
+         $\\lfloor 2503/10\\rfloor=250$.</li>
+         <li><b>Exponential</b> &mdash; $b_{\\text{exp}}=\\lfloor\\log_{10}x\\rfloor$:
+         $\\log_{10}5\\approx0.70\\to 0$, $\\log_{10}8\\approx0.90\\to 0$, $\\log_{10}12\\approx1.08\\to 1$,
+         $\\log_{10}37\\approx1.57\\to 1$, $\\log_{10}95\\approx1.98\\to 1$, $\\log_{10}410\\approx2.61\\to 2$,
+         $\\log_{10}2503\\approx3.40\\to 3$.</li>
+         <li><b>Quantile (quartiles, 4 bins)</b> &mdash; with 7 sorted points the cut points fall near
+         $12$, $37$, and $95$, so $b_{\\text{quantile}}=\\#\\{\\alpha:q_\\alpha\\le x\\}$ gives
+         $\\{5,8\\}\\to 0$, $\\{12,37\\}\\to 1$, $\\{95,410\\}\\to 2$, $\\{2503\\}\\to 3$ &mdash; about two
+         points each.</li>
        </ul>
-       <p>Same data, three layouts: linear leaves gaping holes, exponential matches the orders of
-       magnitude, and quantile evens out the counts.</p>`,
+       <table class="extable">
+         <caption>Same seven counts, three binning schemes side by side.</caption>
+         <thead><tr><th>count $x$</th><th class="num">linear $\\lfloor x/10\\rfloor$</th><th class="num">exp $\\lfloor\\log_{10}x\\rfloor$</th><th class="num">quantile (4 bins)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">5</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+           <tr><td class="row-h">8</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+           <tr><td class="row-h">12</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+           <tr><td class="row-h">37</td><td class="num">3</td><td class="num">1</td><td class="num">1</td></tr>
+           <tr><td class="row-h">95</td><td class="num">9</td><td class="num">1</td><td class="num">2</td></tr>
+           <tr><td class="row-h">410</td><td class="num">41</td><td class="num">2</td><td class="num">2</td></tr>
+           <tr><td class="row-h">2503</td><td class="num">250</td><td class="num">3</td><td class="num">3</td></tr>
+         </tbody>
+       </table>
+       <p>Same data, three layouts: linear scatters points across indices $0$ to $250$ with huge gaps
+       (bins $2,4\\text{--}8,10\\text{--}40,\\dots$ empty), exponential collapses to four power-of-10 bands,
+       and quantile evens the counts to roughly two per bin.</p>`,
 
     whenToUse:
       `<p><b>The choice tracks the shape of your data.</b></p>

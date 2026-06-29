@@ -75,18 +75,23 @@ $$ \\#\\text{interaction-only terms} \\;=\\; \\binom{d}{2} \\;=\\; \\frac{d(d-1)
        <p><b>Why the count is $\\binom{d}{2}$.</b> An interaction term uses an unordered pair of distinct features $\\{i,j\\}$; the number of such pairs from $d$ features is $\\binom{d}{2}=\\frac{d(d-1)}{2}$. Squared terms $x_i^2$ (the full polynomial) add $d$ more. $\\blacksquare$</p>`,
 
     example:
-      `<p><b>A two-feature worked example.</b> Take $x_1, x_2 \\in \\{0,1\\}$ (two on/off flags) and suppose the target is the AND function: $y=1$ only when <i>both</i> are on.</p>
-       <table>
-         <tr><th>$x_1$</th><th>$x_2$</th><th>$x_1 x_2$</th><th>$y$ (AND)</th></tr>
-         <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
-         <tr><td>1</td><td>0</td><td>0</td><td>0</td></tr>
-         <tr><td>0</td><td>1</td><td>0</td><td>0</td></tr>
-         <tr><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+      `<p><b>A two-feature worked example.</b> Take $x_1, x_2 \\in \\{0,1\\}$ (two on/off flags) and suppose the target is the AND function: $y=1$ only when <i>both</i> flags are on. The table builds the interaction column $x_1 x_2$ and then plugs each row into two competing models.</p>
+       <table class="extable">
+         <caption>The four possible rows, with the product column and both models' predictions.</caption>
+         <thead>
+           <tr><th>$x_1$</th><th class="num">$x_2$</th><th class="num">$x_1 x_2$</th><th class="num">$y$ (AND)</th><th class="num">plain $\\hat y$</th><th class="num">with $x_1x_2$, $\\hat y$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">-0.25</td><td class="num">0</td></tr>
+           <tr><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0.25</td><td class="num">0</td></tr>
+           <tr><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0.25</td><td class="num">0</td></tr>
+           <tr><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">0.75</td><td class="num">1</td></tr>
+         </tbody>
        </table>
        <ul class="steps">
-         <li><b>Plain linear model</b> $\\hat y = w_0 + w_1 x_1 + w_2 x_2$ <i>cannot</i> fit this. To get the first three rows near 0 and the last near 1 you would need $w_1 + w_2 \\gg w_1$ and $\\gg w_2$ individually — impossible with a single sum; the least-squares fit lands at $\\hat y = -0.25 + 0.5 x_1 + 0.5 x_2$, which predicts $0.25$ for the "only one on" rows. Wrong.</li>
-         <li><b>Add the interaction</b> $x_1 x_2$. Now set $w_0=0,\\,w_1=0,\\,w_2=0,\\,w_{12}=1$: then $\\hat y = x_1 x_2$, which is $0,0,0,1$ — <b>exactly</b> the AND target. The single product column made the unlearnable learnable.</li>
-         <li><b>Read off the meaning.</b> The marginal effect of $x_1$ is $\\partial\\hat y/\\partial x_1 = w_1 + w_{12} x_2 = 0 + 1\\cdot x_2$ — zero when $x_2=0$, one when $x_2=1$. The effect of $x_1$ <i>depends on</i> $x_2$, precisely as intended.</li>
+         <li><b>Plain linear model</b> $\\hat y = w_0 + w_1 x_1 + w_2 x_2$ <i>cannot</i> fit this. Its best least-squares fit is $w_0=-0.25,\\,w_1=0.5,\\,w_2=0.5$, so plug in row $(1,0)$: $\\hat y = -0.25 + 0.5\\cdot 1 + 0.5\\cdot 0 = 0.25$ — but the target is $0$. Every "only one on" row is off by $0.25$ (the "plain $\\hat y$" column above).</li>
+         <li><b>Add the interaction</b> $x_1 x_2$ and set $w_0=0,\\,w_1=0,\\,w_2=0,\\,w_{12}=1$, giving $\\hat y = x_1 x_2$. Plug in each row: $0\\cdot 0=0$, $1\\cdot 0=0$, $0\\cdot 1=0$, $1\\cdot 1=1$ — the predictions $0,0,0,1$ match the AND target <b>exactly</b>. One product column made the unlearnable learnable.</li>
+         <li><b>Read off the meaning.</b> The marginal effect of $x_1$ is $\\partial\\hat y/\\partial x_1 = w_1 + w_{12}\\,x_2 = 0 + 1\\cdot x_2$. So at $x_2=0$ the effect is $0$, and at $x_2=1$ the effect is $1$. The effect of $x_1$ <i>depends on</i> $x_2$ — precisely as intended.</li>
        </ul>
        <p><b>Scaling up.</b> The book does the same move on Online News Popularity: <code>PolynomialFeatures(interaction_only=True)</code> turns the original numeric columns into themselves plus all $\\binom{d}{2}$ pairwise products, and the cross-validated $R^2$ of the linear model edges up — at the cost of many more columns and longer training.</p>`,
 

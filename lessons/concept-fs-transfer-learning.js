@@ -95,14 +95,30 @@
         (scratch[0] * 100).toFixed(0) + "%</b>. The frozen backbone already knows how to 'see' digits, so a few labels are enough. From-scratch must learn everything from raw pixels and only catches up by ~10-20 labels.";
     },
     example:
-      `<p>You have a model pretrained to recognize handwritten digits. Now you get a <b>new task</b>: tell apart five digits you barely have labels for. You are handed only <b>2 labeled images per class</b>.</p>
+      `<p>You have a model pretrained to recognize handwritten digits. Now you get a <b>new task</b>: tell apart five digits you barely have labels for, handed only <b>2 labeled images per class</b>.</p>
        <ul class="steps">
-         <li><b>Feature extraction.</b> Freeze the backbone. Push each of your 10 images (2 per class &times; 5 classes) through it to get features $\\phi(x)$. Train a small head on those 10 feature vectors.</li>
-         <li><b>Result (real numbers).</b> On a held-out test set, this frozen-feature classifier reaches about <b>94%</b> accuracy from just 2 labels per class.</li>
-         <li><b>Compare to from scratch.</b> Train a fresh model on the same 10 raw images, with no pretrained backbone. It reaches only about <b>81%</b>, because 10 images is far too few to learn good features from raw pixels.</li>
-         <li><b>If you had more labels.</b> By 10-20 labels per class the from-scratch model finally catches up. Transfer's edge is largest exactly when data is tiny.</li>
+         <li><b>Feature extraction</b> follows the freeze rule $\\hat y = \\text{head}_w\\big(\\phi(x)\\big)$ with $\\theta$ fixed. Push each of your 10 images (2 per class &times; 5 classes) through the frozen backbone to get features $\\phi(x)$, then train a small head $w$ on those 10 feature vectors.</li>
+         <li><b>From scratch</b> trains a fresh head on the same 10 raw-pixel images, with no pretrained backbone — so it must learn features from only 10 examples.</li>
        </ul>
-       <p>Same data, same test set. The only difference is whether you reused a pretrained representation. That reuse is worth roughly 13 accuracy points at 2 labels.</p>`,
+       <p>These are the real load_digits numbers (same data, same held-out test set). Read the gap left to right:</p>
+       <table class="extable">
+         <caption>Test accuracy, transfer (frozen features) vs from scratch (raw pixels).</caption>
+         <thead>
+           <tr><th>labels / class</th><th class="num">transfer</th><th class="num">from scratch</th><th class="num">gap</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">90.7%</td><td class="num">70.3%</td><td class="num">+20.4</td></tr>
+           <tr><td class="row-h">2</td><td class="num">94.5%</td><td class="num">80.7%</td><td class="num">+13.8</td></tr>
+           <tr><td class="row-h">5</td><td class="num">96.2%</td><td class="num">89.5%</td><td class="num">+6.7</td></tr>
+           <tr><td class="row-h">10</td><td class="num">97.2%</td><td class="num">93.6%</td><td class="num">+3.6</td></tr>
+           <tr><td class="row-h">20</td><td class="num">97.7%</td><td class="num">95.1%</td><td class="num">+2.6</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>At 2 labels/class the gap is $94.5\\% - 80.7\\% = 13.8$ accuracy points — reusing the representation is worth roughly 14 points when data is tiny.</li>
+         <li>The gap shrinks as labels grow: by 20 labels/class it is only $97.7\\% - 95.1\\% = 2.6$ points, since from-scratch finally has enough data to learn its own features.</li>
+       </ul>
+       <p>Same data, same test set. The only difference is whether you reused a pretrained representation.</p>`,
     application:
       `<p>Almost no one trains a big vision or language model from scratch. They start from a pretrained one and adapt it.</p>
        <ul>

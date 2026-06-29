@@ -67,15 +67,23 @@
        </ul>
        <p><i>Why a filter is so cheap:</i> it never solves an optimization over $w$ at all &mdash; it computes $d$ independent statistics $s(x_j,y)$ and sorts. That is also exactly why it cannot see interactions: each statistic ignores every other feature.</p>`,
     example:
-      `<p>Tiny worked filter: 4 features, label $y\\in\\{0,1\\}$, judged by mutual information $I(x_j; y)$ (in bits).</p>
+      `<p>Tiny worked filter: $d=4$ features, label $y\\in\\{0,1\\}$, scored by mutual information $s(x_j,y)=I(x_j;y)$ (in bits). The filter computes one score per feature, sorts, and keeps the top $k$.</p>
+       <table class="extable">
+         <caption>Filter scores; sort descending and keep the top $k=2$.</caption>
+         <thead><tr><th>feature</th><th>relationship to $y$</th><th class="num">$I(x_j;y)$ (bits)</th><th class="num">rank</th><th>keep ($k{=}2$)?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td>equals $y$ on almost every row</td><td class="num">0.85</td><td class="num">1</td><td>KEEP</td></tr>
+           <tr><td class="row-h">D</td><td>a copy of A (redundant)</td><td class="num">0.85</td><td class="num">2</td><td>KEEP</td></tr>
+           <tr><td class="row-h">B</td><td>leans toward $y$ but noisy</td><td class="num">0.30</td><td class="num">3</td><td>drop</td></tr>
+           <tr><td class="row-h">C</td><td>coin flip, independent of $y$</td><td class="num">0.00</td><td class="num">4</td><td>drop</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Feature A</b> equals $y$ on almost every row &mdash; knowing A nearly pins down $y$. $I=0.85$ bits.</li>
-         <li><b>Feature B</b> leans toward $y$ but is noisy. $I=0.30$ bits.</li>
-         <li><b>Feature C</b> is a coin flip independent of $y$. $I\\approx 0.00$ bits.</li>
-         <li><b>Feature D</b> is a copy of Feature A (redundant). $I=0.85$ bits.</li>
-         <li><b>Filter, keep top $k=2$:</b> sort by score &rarr; $\\{A, D\\}$. Notice the trap &mdash; the filter keeps A and its <i>duplicate</i> D, and drops the weaker-but-complementary B. It scored each feature alone, so it cannot see that D adds nothing new. A wrapper or an embedded method would have caught the redundancy and kept $\\{A, B\\}$ instead.</li>
+         <li><b>Sort by score:</b> $0.85\\,(A) \\ge 0.85\\,(D) \\ge 0.30\\,(B) \\ge 0.00\\,(C)$.</li>
+         <li><b>Keep the top $k=2$:</b> the selected subset is $\\{A, D\\}$.</li>
+         <li><b>The trap:</b> the filter kept A and its <i>duplicate</i> D, and dropped the weaker-but-complementary B. Scoring each feature alone, it cannot see that D adds nothing A doesn't. A wrapper or embedded method would catch the redundancy and keep $\\{A, B\\}$ instead.</li>
        </ul>
-       <p>The lesson the book stresses: a filter is a fast first cut, not the final word &mdash; high score does not imply usefulness once features are combined.</p>`,
+       <p>The lesson the book stresses: a filter is a fast first cut, not the final word &mdash; a high score does not imply usefulness once features are combined.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       var s = getComputedStyle(document.documentElement);

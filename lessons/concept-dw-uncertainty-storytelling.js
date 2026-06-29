@@ -138,18 +138,34 @@
        series, one annotation, a title that has already told the reader the answer.</p>`,
 
     example:
-      `<p>Two onboarding flows, measuring sign-ups per 100 visitors.</p>
+      `<p>Two onboarding flows, measuring sign-ups per 100 visitors. Each has mean and spread; plug them
+       through $\\mathrm{SE}=s/\\sqrt{n}$ then $\\bar{x}\\pm1.96\\,\\mathrm{SE}$.</p>
        <ul class="steps">
-         <li><b>Flow A:</b> mean 42, $s=10$, $n=100$. So $\\mathrm{SE}=10/\\sqrt{100}=1.0$, and the 95% CI
-         is $42\\pm1.96(1.0)$, about <b>40 to 44</b>.</li>
-         <li><b>Flow B:</b> mean 37, $s=10$, $n=100$. Same math gives $\\mathrm{SE}=1.0$, CI about
-         <b>35 to 39</b>.</li>
+         <li><b>Flow A</b> ($\\bar{x}=42,\\ s=10,\\ n=100$): $\\mathrm{SE}=10/\\sqrt{100}=10/10=1.0$;
+         half-width $=1.96\\times1.0=1.96$; CI $=42\\pm1.96 \\approx$ <b>40 to 44</b>.</li>
+         <li><b>Flow B</b> ($\\bar{x}=37,\\ s=10,\\ n=100$): $\\mathrm{SE}=10/\\sqrt{100}=1.0$;
+         half-width $=1.96$; CI $=37\\pm1.96 \\approx$ <b>35 to 39</b>.</li>
          <li>The intervals (40&ndash;44 vs 35&ndash;39) <b>do not overlap</b>, so the 5-point gap is real,
          not sampling noise. <b>Title it the finding:</b> "Flow A converts 5 points higher (95% CIs
          disjoint, n = 100 each)" &mdash; not "Conversion by flow".</li>
-         <li>Now suppose B had only $n=4$. Then $\\mathrm{SE}=10/\\sqrt{4}=5.0$ and B's CI is roughly
-         <b>27 to 47</b> &mdash; a huge bar that swallows A's. Same point estimate, totally different
-         conclusion: with $n=4$ you <b>cannot</b> claim A is better. That is why $n$ goes on the chart.</li>
+       </ul>
+       <p>Now watch what the sample size $n$ does. Keep the same means and $s=10$, but shrink B to $n=4$.
+       Compare:</p>
+       <table class="extable">
+         <caption>Same $\\bar{x}$, same $s$ &mdash; only $n$ changes the bar</caption>
+         <thead><tr><th>case</th><th class="num">$\\bar{x}$</th><th class="num">$s$</th><th class="num">$n$</th><th class="num">$\\mathrm{SE}=s/\\sqrt{n}$</th><th class="num">95% CI</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Flow A</td><td class="num">42</td><td class="num">10</td><td class="num">100</td><td class="num">1.0</td><td class="num">40 &ndash; 44</td></tr>
+           <tr><td class="row-h">Flow B (n=100)</td><td class="num">37</td><td class="num">10</td><td class="num">100</td><td class="num">1.0</td><td class="num">35 &ndash; 39</td></tr>
+           <tr><td class="row-h">Flow B (n=4)</td><td class="num">37</td><td class="num">10</td><td class="num">4</td><td class="num">5.0</td><td class="num">27 &ndash; 47</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>At $n=4$: $\\mathrm{SE}=10/\\sqrt{4}=10/2=5.0$; half-width $=1.96\\times5.0=9.8\\approx10$;
+         CI $=37\\pm10 \\approx$ <b>27 to 47</b>.</li>
+         <li>That bar (27&ndash;47) <b>swallows</b> A's (40&ndash;44). Same point estimates as the top case,
+         opposite conclusion: with $n=4$ you <b>cannot</b> claim A is better. That is why $n$ goes on the
+         chart.</li>
        </ul>`,
 
     practice: [

@@ -110,25 +110,41 @@
        </ul>`,
 
     example:
-      `<p>A tiny two-feature example to see the pancake squash. Say a fitness app logs, for each user,
-       <b>steps</b> and <b>calories</b>. These two are highly correlated &mdash; more steps means more
-       calories &mdash; so the cloud is a thin diagonal pancake, wide along one diagonal direction and thin
-       across it.</p>
+      `<p>A tiny two-feature example to see the pancake squash. A fitness app logs, for 5 users,
+       <b>steps</b> (in thousands) and <b>calories</b> (in hundreds). The two are highly correlated &mdash;
+       more steps means more calories &mdash; so the cloud is a thin diagonal pancake.</p>
+       <table class="extable">
+         <caption>5 users; we center each column by subtracting its mean.</caption>
+         <thead><tr><th>user</th><th class="num">steps $x_1$</th><th class="num">cal $x_2$</th><th class="num">$x_1-\\bar{x}_1$</th><th class="num">$x_2-\\bar{x}_2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td class="num">2</td><td class="num">3</td><td class="num">-4</td><td class="num">-4</td></tr>
+           <tr><td class="row-h">B</td><td class="num">4</td><td class="num">5</td><td class="num">-2</td><td class="num">-2</td></tr>
+           <tr><td class="row-h">C</td><td class="num">6</td><td class="num">7</td><td class="num">0</td><td class="num">0</td></tr>
+           <tr><td class="row-h">D</td><td class="num">8</td><td class="num">9</td><td class="num">+2</td><td class="num">+2</td></tr>
+           <tr><td class="row-h">E</td><td class="num">10</td><td class="num">11</td><td class="num">+4</td><td class="num">+4</td></tr>
+           <tr><td class="row-h">mean</td><td class="num">6</td><td class="num">7</td><td class="num">0</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Center.</b> Subtract the mean steps and mean calories so the cloud sits at the origin.</li>
-         <li><b>Covariance.</b> Suppose the centered covariance comes out
-          $\\Sigma=\\begin{bmatrix}4 & 3.6\\\\ 3.6 & 4\\end{bmatrix}$ &mdash; big diagonal variances and a
-          big positive off-diagonal, the signature of two strongly correlated features.</li>
-         <li><b>Eigen.</b> Its eigenvalues are $\\lambda_1=7.6$ (along the diagonal direction
-          $\\mathbf{w}_1\\propto[1,1]$) and $\\lambda_2=0.4$ (across it, $\\mathbf{w}_2\\propto[1,-1]$).</li>
-         <li><b>Explained variance.</b> PC1 captures $r_1=7.6/(7.6+0.4)=\\mathbf{0.95}$ &mdash; 95% of the
-          spread. PC2 captures just 5%.</li>
-         <li><b>Squash.</b> Keep only PC1. You have turned two correlated columns into <b>one</b> new feature
-          (roughly "total activity"), throwing away just 5% of the variance and, helpfully, the redundancy
-          between steps and calories.</li>
+         <li><b>Center.</b> Means are $\\bar{x}_1=(2+4+6+8+10)/5=6$ and $\\bar{x}_2=(3+5+7+9+11)/5=7$.
+          Subtract them (last two columns above).</li>
+         <li><b>Covariance, diagonal.</b> $\\Sigma_{11}=\\tfrac{1}{5}\\sum(x_1-\\bar{x}_1)^2
+          =\\tfrac{1}{5}(16+4+0+4+16)=\\tfrac{40}{5}=8$. By symmetry $\\Sigma_{22}=8$.</li>
+         <li><b>Covariance, off-diagonal.</b> $\\Sigma_{12}=\\tfrac{1}{5}\\sum(x_1-\\bar{x}_1)(x_2-\\bar{x}_2)
+          =\\tfrac{1}{5}(16+4+0+4+16)=8$ &mdash; here the two columns move together exactly, so
+          $\\Sigma=\\begin{bmatrix}8 & 8\\\\ 8 & 8\\end{bmatrix}$.</li>
+         <li><b>Eigen.</b> For $\\begin{bmatrix}8 & 8\\\\ 8 & 8\\end{bmatrix}$ the eigenvalues are
+          $\\lambda_1=8+8=16$ (direction $\\mathbf{w}_1\\propto[1,1]$) and $\\lambda_2=8-8=0$
+          (across it, $\\mathbf{w}_2\\propto[1,-1]$).</li>
+         <li><b>Explained variance.</b> $r_1=\\lambda_1/(\\lambda_1+\\lambda_2)=16/(16+0)=\\mathbf{1.00}$.
+          PC1 captures 100% of the spread; PC2 captures $0/16=0$.</li>
+         <li><b>Squash.</b> Keep only PC1. The five 2-D points collapse onto one line with <b>zero</b> loss:
+          two perfectly correlated columns became <b>one</b> feature (roughly "total activity").</li>
        </ul>
-       <p>That is PCA as a featurizer in miniature: two correlated inputs become one decorrelated output that
-       keeps nearly all the signal.</p>`,
+       <p>That is PCA as a featurizer in miniature. With real, noisier data the off-diagonal is a little
+       below the diagonal, so $\\lambda_2$ is small but nonzero &mdash; e.g.
+       $\\Sigma=\\begin{bmatrix}8 & 7.2\\\\ 7.2 & 8\\end{bmatrix}$ gives
+       $\\lambda_1=15.2,\\ \\lambda_2=0.8$ and $r_1=15.2/16=0.95$: still squash to one feature, losing 5%.</p>`,
 
     whenToUse:
       `<p>Reach for PCA when you have <b>many continuous features</b> and want fewer, cleaner ones.</p>

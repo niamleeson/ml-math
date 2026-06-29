@@ -104,20 +104,40 @@
        </ul>`,
 
     example:
-      `<p>Here is a tiny contract in words for an orders table.</p>
+      `<p>Run a six-rule contract over this tiny 6-row orders batch (dates abbreviated to day-of-month, all in
+       Jan&nbsp;2024). The rules: <code>age</code> in $[0,120]$, <code>price</code> $\\ge 0$,
+       <code>category</code> in $\\{$<code>books, music, games</code>$\\}$, <code>age</code>/<code>price</code>
+       not-null, <code>order_id</code> unique, and <code>end &ge; start</code>.</p>
+       <table class="extable">
+         <caption>The batch &mdash; offending cells marked &#10007;</caption>
+         <thead><tr><th>order_id</th><th class="num">age</th><th class="num">price</th><th>category</th><th class="num">start</th><th class="num">end</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td class="num">34</td><td class="num">19.99</td><td>books</td><td class="num">01</td><td class="num">05</td></tr>
+           <tr><td class="num">2</td><td class="num">200 &#10007;</td><td class="num">5.00</td><td>music</td><td class="num">01</td><td class="num">03</td></tr>
+           <tr><td class="num">3</td><td class="num">29</td><td class="num">-2.50 &#10007;</td><td>podcasts &#10007;</td><td class="num">01</td><td class="num">30 (Dec) &#10007;</td></tr>
+           <tr><td class="num">4</td><td class="num">52</td><td class="num">12.00</td><td>games</td><td class="num">01</td><td class="num">10</td></tr>
+           <tr><td class="num">12</td><td class="num">41</td><td class="num">9.90</td><td>books</td><td class="num">01</td><td class="num">07</td></tr>
+           <tr><td class="num">12 &#10007;</td><td class="num">55</td><td class="num">9.90</td><td>books</td><td class="num">01</td><td class="num">07</td></tr>
+         </tbody>
+       </table>
+       <p>Now tally how many rows break each rule &mdash; the failure ledger the contract reports:</p>
+       <table class="extable">
+         <caption>Per-rule failure count</caption>
+         <thead><tr><th>rule</th><th>offending rows</th><th class="num">fails</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">range (age 0&ndash;120)</td><td>row 2 (age 200)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">range (price &ge; 0)</td><td>row 3 (price -2.50)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">allowed-set (category)</td><td>row 3 (podcasts)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">uniqueness (order_id)</td><td>the two id=12 rows</td><td class="num">2</td></tr>
+           <tr><td class="row-h">cross-field (end &ge; start)</td><td>row 3 (ends Dec 30)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">TOTAL violations</td><td>&mdash;</td><td class="num">6</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Schema:</b> columns <code>order_id, age, price, category, start_date, end_date</code> must
-         all be present; <code>price</code> must be a float, the dates must be datetimes.</li>
-         <li><b>Range:</b> <code>age</code> in $[0, 120]$; <code>price</code> $\\ge 0$.</li>
-         <li><b>Allowed set:</b> <code>category</code> in $\\{$<code>books, music, games</code>$\\}$.</li>
-         <li><b>Not-null:</b> <code>age</code> and <code>price</code> have no missing values.</li>
-         <li><b>Unique:</b> <code>order_id</code> has no duplicates.</li>
-         <li><b>Cross-field:</b> <code>end_date &ge; start_date</code> on every row.</li>
-       </ul>
-       <p>Feed a clean batch and it passes silently. Feed a batch where one row has <code>age = 200</code>,
-       another has <code>price = -5</code>, two share an <code>order_id</code>, and one ends before it
-       starts &mdash; and the contract raises, naming the exact rule and rows that failed. That is the whole
-       payoff: the bad batch never reaches the model.</p>`,
+         <li>A <b>clean</b> batch would score 0 on every rule and pass silently.</li>
+         <li>This batch scores <b>6 violations across 5 rules</b>, so the contract <b>raises</b>, naming each rule and row.</li>
+         <li>The payoff: the bad batch is rejected at the boundary and never reaches the model.</li>
+       </ul>`,
 
     practice: [
       {

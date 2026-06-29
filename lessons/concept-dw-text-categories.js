@@ -122,30 +122,45 @@
        </ul>`,
 
     example:
-      `<p>Take a country column with these raw values (39 rows in all):</p>
-       <p><code> USA </code>, <code>usa</code>, <code>U.S.A.</code>, <code>United States</code>,
-       <code>US</code>, <code>U.S.</code>, <code>United States of America</code>, <code>Unted States</code>,
-       <code>UK</code>, <code>U.K.</code>, <code>United Kingdom</code>, <code>Great Britain</code>,
-       <code>Germany</code>, <code>Deutschland</code>, <code>DE</code>, <code>France</code>,
-       <code>Fance</code>, &hellip; and so on.</p>
+      `<p>Concretely: just the 12 rows that all mean <b>United States</b>. Watch the distinct-label
+       count fall as each cleaning step runs. The raw spellings and their counts are:</p>
+       <table class="extable">
+         <caption>12 US rows scattered across 10 raw labels (a value_counts())</caption>
+         <thead><tr><th>raw label</th><th class="num">count</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h"><code>USA</code></td><td class="num">2</td></tr>
+           <tr><td class="row-h"><code>usa</code></td><td class="num">2</td></tr>
+           <tr><td class="row-h"><code>U.S.A.</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>United States</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>US</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>U.S.</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>United States of America</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code> us </code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>U.S</code></td><td class="num">1</td></tr>
+           <tr><td class="row-h"><code>Unted States</code> (typo)</td><td class="num">1</td></tr>
+           <tr><td class="row-h"><b>total rows</b></td><td class="num"><b>12</b></td></tr>
+         </tbody>
+       </table>
+       <p>Now run the recipe step by step, tracking the <b>distinct-label count</b> over all 39 rows in the
+       full column (9 real countries):</p>
        <ul class="steps">
-         <li><b>Audit first.</b> <code>value_counts()</code> shows <b>38 distinct labels</b> for what is
-         really nine countries &mdash; cardinality is wildly inflated.</li>
-         <li><b>Normalize.</b> <code>.str.strip().str.upper()</code> then drop the dots
-         (<code>.str.replace('.', '', regex=False)</code>) turns <code>" USA "</code>, <code>"usa"</code>,
-         <code>"U.S.A."</code> all into <code>"USA"</code>. That alone drops the distinct count from 38 to
-         <b>23</b>.</li>
-         <li><b>Standardize with a mapping.</b> A dictionary like
-         <code>{"USA":"United States","US":"United States","UK":"United Kingdom",
-         "DEUTSCHLAND":"Germany", &hellip;}</code> merges the surviving synonyms and the typos
-         (<code>"UNTED STATES"</code>, <code>"FANCE"</code>) into canonical names. Distinct count falls to
-         <b>9</b> &mdash; the true number of countries.</li>
-         <li><b>Collapse the rare tail.</b> Two countries appear once each. A frequency threshold maps
-         everything with count <code>&lt; 2</code> to <code>"Other"</code>, so the model sees the common
-         categories plus one small catch-all instead of a long thin tail.</li>
+         <li><b>Audit.</b> <code>value_counts()</code> on the raw column &rarr; <b>38</b> distinct labels.
+         For the US alone, that is <b>10</b> labels with counts 2+2+1+1+1+1+1+1+1+1 = <b>12</b>.</li>
+         <li><b>Normalize.</b> <code>.str.strip().str.upper()</code> then drop dots. Now
+         <code>" USA "</code>, <code>"usa"</code>, <code>"USA"</code>, <code>" us "</code>,
+         <code>"US"</code>, <code>"U.S.A."</code>, <code>"U.S."</code>, <code>"U.S"</code> all collapse:
+         the 10 US labels fall to just <b>3</b> (<code>USA</code> with 2+2+1+1 = 6, <code>US</code> with
+         1+1 = 2, <code>U.S.A.</code>+<code>U.S.</code>+<code>U.S</code> = 3, and <code>UNTED STATES</code> = 1).
+         Across the whole column the distinct count drops 38 &rarr; <b>23</b>.</li>
+         <li><b>Standardize.</b> The mapping <code>{"USA":"United States","US":"United States",
+         "UNTED STATES":"United States", &hellip;}</code> merges synonyms and the typo. All US variants
+         become one label; the column-wide distinct count falls 23 &rarr; <b>9</b> &mdash; the true number
+         of countries.</li>
+         <li><b>Collapse rare tail.</b> Two countries appear once each (count <code>&lt; 2</code>). Map them
+         to <code>"Other"</code>: 9 categories &rarr; 8 real + 1 catch-all.</li>
        </ul>
-       <p>Same data, gone from <b>38 noisy labels to 9 clean ones</b> &mdash; the United States count went
-       from being scattered across ten strings to a single honest <b>12</b>.</p>`,
+       <p>The US count, summed back: <b>2+2+1+1+1+1+1+1+1+1 = 12</b> &mdash; one honest row instead of ten
+       fragments. The whole column went from <b>38 noisy labels to 9 clean ones</b>.</p>`,
 
     practice: [
       {

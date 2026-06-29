@@ -82,18 +82,25 @@
        </ul>`,
 
     example:
-      `<p>Hash four words into $m=4$ buckets to see a collision happen. Use a toy hash:
-       sum the letters' positions in the alphabet (a=1, &hellip;), then take it modulo 4.</p>
+      `<p>Hash four words into $m=4$ buckets to see a collision happen. Use a toy hash $h(c)$:
+       sum the letters' positions in the alphabet (a=1, b=2, &hellip;), then take it $\\bmod\\,4$, i.e.
+       $j=h(c)\\bmod 4$.</p>
+       <table class="extable">
+         <caption>Each word's bucket $j=h(c)\\bmod 4$ under the toy hash.</caption>
+         <thead><tr><th>word $c$</th><th>letter sum $h(c)$</th><th class="num">$h(c)\\bmod 4$</th><th class="num">bucket $j$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">"go"</td><td>$7+15=22$</td><td class="num">2</td><td class="num">2</td></tr>
+           <tr><td class="row-h">"ad"</td><td>$1+4=5$</td><td class="num">1</td><td class="num">1</td></tr>
+           <tr><td class="row-h">"by"</td><td>$2+25=27$</td><td class="num">3</td><td class="num">3</td></tr>
+           <tr><td class="row-h">"hi"</td><td>$8+9=17$</td><td class="num">1</td><td class="num">1 &larr; collision</td></tr>
+         </tbody>
+       </table>
+       <p>"ad" and "hi" both land in bucket 1 &mdash; a <b>collision</b>. Now build the vector
+       $\\phi(x)_j=\\sum_{c:\\,h(c)=j}\\xi(c)$ over buckets $[0,1,2,3]$:</p>
        <ul class="steps">
-         <li><b>"go"</b>: $g{=}7,\\ o{=}15 \\Rightarrow 22$, and $22 \\bmod 4 = 2$ &rarr; bucket <b>2</b>.</li>
-         <li><b>"ad"</b>: $a{=}1,\\ d{=}4 \\Rightarrow 5$, and $5 \\bmod 4 = 1$ &rarr; bucket <b>1</b>.</li>
-         <li><b>"by"</b>: $b{=}2,\\ y{=}25 \\Rightarrow 27$, and $27 \\bmod 4 = 3$ &rarr; bucket <b>3</b>.</li>
-         <li><b>"hi"</b>: $h{=}8,\\ i{=}9 \\Rightarrow 17$, and $17 \\bmod 4 = 1$ &rarr; bucket <b>1</b> &mdash; <b>collision</b> with "ad".</li>
+         <li><b>Unsigned</b> (every $\\xi(c){=}+1$): bucket 0 $=0$; bucket 1 $=\\xi(\\text{ad})+\\xi(\\text{hi})=1+1=2$; bucket 2 $=1$ ("go"); bucket 3 $=1$ ("by"). So $\\phi=[0,\\,2,\\,1,\\,1]$ &mdash; the collision inflates bucket 1 to 2.</li>
+         <li><b>Signed</b> (say $\\xi(\\text{ad}){=}+1,\\ \\xi(\\text{hi}){=}-1$): bucket 1 $=+1-1=0$. So $\\phi=[0,\\,0,\\,1,\\,1]$ &mdash; the colliding pair cancels instead of piling up.</li>
        </ul>
-       <p>The unsigned hashed vector over buckets $[0,1,2,3]$ is $[0,\\,2,\\,1,\\,1]$: bucket 1 holds the sum of
-       "ad" and "hi" because they collided. Now add signs &mdash; say $\\xi(\\text{ad}){=}+1$ and
-       $\\xi(\\text{hi}){=}-1$. Bucket 1 becomes $+1-1 = 0$: the colliding pair partly cancels instead of
-       piling up, which is exactly how the signed trick keeps the encoding unbiased.</p>
        <p>Four words, only four buckets, and one collision already &mdash; with a real $m=2^{18}$ and a good
        hash, collisions are far rarer, but the mechanism is identical.</p>`,
 

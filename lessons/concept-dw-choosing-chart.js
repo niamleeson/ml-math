@@ -123,20 +123,35 @@
        </ul>`,
 
     example:
-      `<p>You have one small table: monthly sales of three products. The <i>same table</i> answers four
-       different questions, each wanting a different chart.</p>
+      `<p>One small table: quarterly sales of three products (units), plus that quarter's ad spend ($k). The
+       <i>same table</i> answers four different questions, each wanting a different chart &mdash; with real numbers
+       you can check by hand.</p>
+       <table class="extable">
+         <caption>Sales (units) and ad spend ($k) by quarter (illustrative)</caption>
+         <thead>
+           <tr><th>quarter</th><th class="num">product A</th><th class="num">product B</th><th class="num">product C</th><th class="num">total sales</th><th class="num">ad spend</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">Q1</td><td class="num">10</td><td class="num">20</td><td class="num">5</td><td class="num">35</td><td class="num">4</td></tr>
+           <tr><td class="row-h">Q2</td><td class="num">15</td><td class="num">22</td><td class="num">8</td><td class="num">45</td><td class="num">6</td></tr>
+           <tr><td class="row-h">Q3</td><td class="num">25</td><td class="num">18</td><td class="num">12</td><td class="num">55</td><td class="num">9</td></tr>
+           <tr><td class="row-h">Q4</td><td class="num">30</td><td class="num">25</td><td class="num">15</td><td class="num">70</td><td class="num">11</td></tr>
+           <tr><td class="row-h">column total</td><td class="num">80</td><td class="num">85</td><td class="num">40</td><td class="num">205</td><td class="num">&mdash;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>"Which product sold the most overall?"</b> — that is a <b>comparison</b> of one number across a
-         categorical label. Sum each product and draw <b>three bars</b>, sorted. The tallest bar is the answer.</li>
-         <li><b>"How spread out are the monthly sales values?"</b> — that is a <b>distribution</b> of one numeric
-         column. Draw a <b>histogram</b> of all the monthly numbers. A single mean bar would hide whether the
-         months are tightly clustered or all over the place.</li>
-         <li><b>"Do high-ad-spend months have high sales?"</b> — that is a <b>relationship</b> between two numeric
-         columns. Draw a <b>scatter</b> of ad-spend (x) versus sales (y). An upward cloud answers "yes".</li>
-         <li><b>"How did total sales change through the year?"</b> — that is a <b>trend</b> over time. Draw a
-         <b>line</b> of total sales by month. The line's slope is the answer.</li>
+         <li><b>Comparison &mdash; "which product sold the most overall?"</b> Sum each product column:
+         A $= 10+15+25+30 = 80$, B $= 20+22+18+25 = 85$, C $= 5+8+12+15 = 40$. Draw <b>three bars</b>; the tallest
+         (B at 85) is the answer.</li>
+         <li><b>Distribution &mdash; "how spread out are the quarterly total-sales values?"</b> The four totals are
+         $35, 45, 55, 70$, range $35$ to $70$, mean $(35+45+55+70)/4 = 205/4 = 51.25$. Draw a <b>histogram</b> of
+         those values; a single mean bar of $51.25$ would hide the spread.</li>
+         <li><b>Relationship &mdash; "do high-ad-spend quarters have high sales?"</b> Pair (ad spend, total):
+         $(4,35), (6,45), (9,55), (11,70)$. Both rise together &mdash; draw a <b>scatter</b>; the upward cloud answers "yes".</li>
+         <li><b>Trend &mdash; "how did total sales change through the year?"</b> Plot $35 \\rightarrow 45 \\rightarrow 55 \\rightarrow 70$
+         across Q1&ndash;Q4. Draw a <b>line</b>; the upward slope (steepest into Q4) is the answer.</li>
        </ul>
-       <p>One dataset, four questions, four charts. You never asked "what chart fits this table" — you asked
+       <p>One dataset, four questions, four charts. You never asked "what chart fits this table" &mdash; you asked
        "what question, what data type", four times.</p>`,
 
     practice: [

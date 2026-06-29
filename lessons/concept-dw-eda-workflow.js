@@ -81,21 +81,43 @@
        </ul>`,
 
     example:
-      `<p>Imagine you just loaded a housing dataset. One lap of the loop:</p>
+      `<p>You just loaded a housing dataset of <b>1,000</b> rows. Walk one lap of the
+       <b>ask&rarr;look&rarr;notice&rarr;hypothesize&rarr;check&rarr;next</b> loop, with real counts.</p>
+       <table class="extable">
+         <caption>One lap of the EDA loop, as a ledger.</caption>
+         <thead><tr><th>move</th><th>what happens</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">ask</td><td>"What does the sale <code>price</code> look like?"</td></tr>
+           <tr><td class="row-h">look</td><td>histogram of <code>price</code> &mdash; heavily right-skewed, long tail of expensive homes</td></tr>
+           <tr><td class="row-h">notice</td><td>a tall spike at exactly <code>0</code></td></tr>
+           <tr><td class="row-h">hypothesize</td><td>"price 0 is a placeholder, not a real sale"</td></tr>
+           <tr><td class="row-h">check</td><td>filter <code>price == 0</code> &rarr; 40 rows, all family transfers</td></tr>
+           <tr><td class="row-h">next</td><td>"drop those 40 rows, and model <code>log(price)</code>?"</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Ask:</b> "What does the sale price look like?"</li>
-         <li><b>Look:</b> a histogram of <code>price</code>. It is heavily right-skewed &mdash; a long tail of
-         expensive homes.</li>
-         <li><b>Notice:</b> there is also a tall spike at exactly <code>0</code>.</li>
-         <li><b>Hypothesize:</b> "A price of 0 is not a real sale &mdash; it is probably a placeholder for
-         missing or non-arms-length transfers."</li>
-         <li><b>Check:</b> filter to <code>price == 0</code> and inspect those rows; they turn out to be
-         family transfers with no money changing hands.</li>
-         <li><b>Next question:</b> "Should I drop those rows, and is the skew big enough that I will want to
-         model <code>log(price)</code>?"</li>
+         <li><b>Look:</b> the histogram is right-skewed &mdash; most homes cluster low, a thin tail runs high.</li>
+         <li><b>Check, with a real count.</b> Filter to <code>price == 0</code> and count: <b>40</b> of the
+         <b>1,000</b> rows, i.e. $\\tfrac{40}{1000}=4\\%$. Inspecting them shows family transfers with no money
+         changing hands &mdash; not real sales.</li>
+         <li><b>Decide.</b> Drop those 40 rows: $1000-40=\\mathbf{960}$ valid sales remain. The skew is large
+         enough that you will model <code>log(price)</code> next.</li>
        </ul>
-       <p>One question became a finding (the 0-spike), a decision (drop the transfers), and the next question
-       (log-transform). That is the whole job, repeated.</p>`,
+       <p>And a real assumption-check on the bundled wine target, which the lesson cites &mdash; is it balanced?
+       Counting the three classes gives:</p>
+       <table class="extable">
+         <caption>Wine target distribution (178 rows): mildly imbalanced, not pathological.</caption>
+         <thead><tr><th>class</th><th class="num">count</th><th class="num">share</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">class 0</td><td class="num">59</td><td class="num">33.1%</td></tr>
+           <tr><td class="row-h">class 1</td><td class="num">71</td><td class="num">39.9%</td></tr>
+           <tr><td class="row-h">class 2</td><td class="num">48</td><td class="num">27.0%</td></tr>
+           <tr><td class="row-h">total</td><td class="num">178</td><td class="num">100%</td></tr>
+         </tbody>
+       </table>
+       <p>Check the arithmetic: $59+71+48=178$, and $59/178\\approx0.331$. One question became a finding (the
+       0-spike, 40 rows), a decision (drop the transfers, keep 960), and the next question (log-transform).
+       That is the whole job, repeated.</p>`,
 
     whenToUse:
       `<p><b>Always, and early.</b></p>

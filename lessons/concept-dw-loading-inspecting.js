@@ -128,18 +128,32 @@
        </ul>`,
 
     example:
-      `<p>Imagine a 5-row peek at a customer table after loading:</p>
-       <p><code>shape -&gt; (1000, 4)</code> with columns <code>id, age, plan, signup_date</code>.</p>
+      `<p>A customer table loads with <code>.shape -&gt; (1000, 4)</code>: 1000 rows, columns
+       <code>id, age, plan, signup_date</code>. Run three battery commands and read each column's role straight
+       off the numbers:</p>
+       <table class="extable">
+         <caption>The inspection battery on a (1000, 4) table &mdash; three commands, one verdict per column</caption>
+         <thead>
+           <tr><th>column</th><th>.dtypes</th><th class="num">.isna().sum()</th><th class="num">.nunique()</th><th>verdict</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">id</td><td>int64</td><td class="num">0</td><td class="num">1000</td><td>ID &mdash; drop (leaks)</td></tr>
+           <tr><td class="row-h">age</td><td>object</td><td class="num">0</td><td class="num">71</td><td>mis-typed number &mdash; fix dtype</td></tr>
+           <tr><td class="row-h">plan</td><td>object</td><td class="num">0</td><td class="num">3</td><td>clean 3-level category</td></tr>
+           <tr><td class="row-h">signup_date</td><td>object</td><td class="num">180</td><td class="num">812</td><td>18% missing &mdash; handle first</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b><code>.dtypes</code></b> reports <code>id:int64, age:object, plan:object,
-         signup_date:object</code>. Red flag: <code>age</code> is <code>object</code>, not a number. A peek
-         shows values like <code>"34"</code> and <code>"unknown"</code> &mdash; the text <code>"unknown"</code>
+         <li><b><code>.dtypes</code> &mdash; type.</b> <code>age</code> is <code>object</code>, not a number.
+         A peek shows values like <code>"34"</code> and <code>"unknown"</code>; the text <code>"unknown"</code>
          poisoned the whole column to strings.</li>
-         <li><b><code>.isna().sum()</code></b> reports <code>signup_date</code> has 180 missing out of 1000
-         &mdash; 18% absent. You now know to handle those before any date math.</li>
-         <li><b><code>.nunique()</code></b> reports <code>id:1000</code> (= n_rows, so it is an identifier,
-         drop it as a feature), <code>plan:3</code> (a genuine 3-level category), <code>age:71</code> (real
-         continuous, once you fix the dtype).</li>
+         <li><b><code>.isna().sum()</code> &mdash; missingness.</b> <code>signup_date</code> has
+         <code>180</code> nulls out of <code>1000</code> rows. As a fraction that is
+         <code>180 / 1000 = 0.18 = 18%</code> absent &mdash; handle those before any date math.</li>
+         <li><b><code>.nunique()</code> &mdash; cardinality.</b> Compare each count to <code>n_rows = 1000</code>:
+         <code>id = 1000</code> equals the row count exactly &rarr; one value per row, an identifier (drop it);
+         <code>plan = 3</code> is a genuine 3-level category; <code>age = 71</code> distinct values is real
+         continuous data, once the dtype is fixed.</li>
        </ul>
        <p>In three commands you have learned: one column is a mis-typed number, one is 18% missing, one is a
        leaky ID, and one is a clean category &mdash; all <i>before</i> writing a single line of cleaning code.</p>`,

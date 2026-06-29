@@ -148,25 +148,34 @@
        </ul>`,
 
     example:
-      `<p>Five tiny columns, each with the classic problem.</p>
+      `<p>Five tiny columns, each with the classic problem &mdash; what's wrong, the fix, and the dtype
+       you land on:</p>
+       <table class="extable">
+         <caption>Five messy columns &rarr; the conversion &rarr; the correct dtype.</caption>
+         <thead>
+           <tr><th>column (raw)</th><th>raw dtype</th><th>fix</th><th>after</th><th>dtype</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h"><code>revenue</code> = ["$1,234","$5","$78"]</td><td><code>object</code></td><td>strip <code>$</code>,<code>,</code> &rarr; <code>to_numeric</code></td><td>[1234, 5, 78]</td><td><code>int64</code></td></tr>
+           <tr><td class="row-h"><code>growth</code> = ["12%","5%","120%"]</td><td><code>object</code></td><td>strip <code>%</code> &rarr; <code>to_numeric</code> &divide; 100</td><td>[0.12, 0.05, 1.20]</td><td><code>float64</code></td></tr>
+           <tr><td class="row-h"><code>is_paid</code> = ["Yes","No","Yes"]</td><td><code>object</code></td><td><code>.map({'Yes':True,'No':False})</code></td><td>[True, False, True]</td><td><code>bool</code></td></tr>
+           <tr><td class="row-h"><code>signup</code> = ["2026-01-05",...]</td><td><code>object</code></td><td><code>pd.to_datetime</code></td><td>2026-01-05 ...</td><td><code>datetime64</code></td></tr>
+           <tr><td class="row-h"><code>plan</code> = ["free","pro","free",...]</td><td><code>object</code></td><td><code>.astype('category')</code></td><td>same values, coded</td><td><code>category</code></td></tr>
+         </tbody>
+       </table>
+       <p>Now watch the math actually work, step by step, once the dtypes are right:</p>
        <ul class="steps">
-         <li><b><code>revenue</code></b> = <code>["$1,234", "$5", "$78"]</code> &rarr; dtype
-         <code>object</code>. <code>.sum()</code> glues text. Strip <code>"$"</code> and <code>","</code>,
-         then <code>pd.to_numeric</code> &rarr; <code>[1234, 5, 78]</code>, dtype <code>int64</code>;
-         <code>.sum()</code> now gives <code>1317</code>.</li>
-         <li><b><code>growth</code></b> = <code>["12%", "5%", "120%"]</code> &rarr; strip <code>"%"</code>,
-         <code>to_numeric</code>, divide by 100 &rarr; <code>[0.12, 0.05, 1.20]</code>, dtype
-         <code>float64</code>.</li>
-         <li><b><code>is_paid</code></b> = <code>["Yes", "No", "Yes"]</code> &rarr;
-         <code>.map({'Yes':True,'No':False})</code> &rarr; <code>[True, False, True]</code>, dtype
-         <code>bool</code>. Now <code>.sum()</code> counts the trues (<code>2</code>) and
-         <code>.mean()</code> gives the rate (<code>0.67</code>).</li>
-         <li><b><code>signup</code></b> = <code>["2026-01-05", "2026-03-20", "2026-06-01"]</code> &rarr;
-         <code>pd.to_datetime</code> &rarr; dtype <code>datetime64</code>. Now
-         <code>signup.dt.month</code> and date subtraction work.</li>
-         <li><b><code>plan</code></b> = <code>["free","pro","free","free","pro", ...]</code> (many repeats)
-         &rarr; <code>.astype('category')</code>. Same values, a fraction of the memory, and faster
-         <code>groupby('plan')</code>.</li>
+         <li><b><code>revenue.sum()</code>.</b> As strings, <code>+</code> glues: <code>"$1,234"+"$5"+"$78"</code>.
+         After parsing to <code>int64</code>: $1234+5+78=\\mathbf{1317}$ &mdash; real addition.</li>
+         <li><b><code>growth</code>.</b> Strip <code>"%"</code> &rarr; $[12,5,120]$, divide by $100$ &rarr;
+         $[0.12,\\,0.05,\\,1.20]$. Mean growth $=(0.12+0.05+1.20)/3=1.37/3\\approx\\mathbf{0.457}$.</li>
+         <li><b><code>is_paid</code>.</b> Map to $[True, False, True]=[1,0,1]$. Sum $=2$ (count paid);
+         mean $=2/3\\approx\\mathbf{0.667}$ (the paid rate).</li>
+         <li><b><code>signup</code>.</b> As <code>datetime64</code>, <code>signup.dt.month</code> gives
+         $[1,3,6]$ and subtraction works: $\\text{2026-06-01}-\\text{2026-01-05}=\\mathbf{147}$ days.</li>
+         <li><b><code>plan</code>.</b> $n$ rows, $k=2$ labels. As <code>object</code>: one Python string per
+         row. As <code>category</code>: store $2$ labels once $+$ one tiny code per row &mdash; when $k\\ll n$
+         that is a large memory drop (the CODEVIZ shows a real $\\approx$50&times;).</li>
        </ul>`,
 
     practice: [

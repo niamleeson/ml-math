@@ -90,23 +90,28 @@
        </ul>`,
 
     example:
-      `<p>Take one tiny cell and build its orientation histogram by hand. Suppose a $2\\times2$ patch has
-       these four gradient arrows (magnitude $m$, orientation $\\theta$):</p>
+      `<p>Take one tiny cell and build its orientation histogram $h_c[k]$ by hand. Suppose a $2\\times2$ patch
+       has four gradient arrows. First confirm one magnitude with the formula
+       $m=\\sqrt{g_x^2+g_y^2}$: if a pixel has $g_x=8,\\ g_y=6$ then $m=\\sqrt{64+36}=\\sqrt{100}=10$ and
+       $\\theta=\\operatorname{atan2}(6,8)\\approx 37\\degree$. The four arrows (magnitude $m$, orientation $\\theta$):</p>
+       <table class="extable">
+         <caption>4 orientation bins of 45&deg;: bin 0 $=[0,45)$, bin 1 $=[45,90)$, bin 2 $=[90,135)$, bin 3 $=[135,180)$.</caption>
+         <thead><tr><th>arrow</th><th class="num">$m$</th><th class="num">$\\theta$</th><th class="num">bin $k$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A (vertical edge)</td><td class="num">10</td><td class="num">0&deg;</td><td class="num">0</td></tr>
+           <tr><td class="row-h">B (almost right)</td><td class="num">8</td><td class="num">5&deg;</td><td class="num">0</td></tr>
+           <tr><td class="row-h">C (horizontal edge)</td><td class="num">9</td><td class="num">90&deg;</td><td class="num">2</td></tr>
+           <tr><td class="row-h">D (weak diagonal)</td><td class="num">1</td><td class="num">44&deg;</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
+       <p>Now add each arrow's <b>magnitude</b> into its orientation bin, $h_c[k]=\\sum m\\,[\\text{bin}(\\theta)=k]$:</p>
        <ul class="steps">
-         <li>Arrow A: $m=10,\\ \\theta=0\\degree$ (points right &mdash; a vertical edge).</li>
-         <li>Arrow B: $m=8,\\ \\theta=5\\degree$ (almost right).</li>
-         <li>Arrow C: $m=9,\\ \\theta=90\\degree$ (points up &mdash; a horizontal edge).</li>
-         <li>Arrow D: $m=1,\\ \\theta=44\\degree$ (a weak diagonal).</li>
+         <li>Bin 0 gets A, B, D (all $\\lt 45\\degree$): $h_c[0]=10+8+1 = 19$.</li>
+         <li>Bin 1 $[45,90)$: nothing &rarr; $h_c[1]=0$.</li>
+         <li>Bin 2 $[90,135)$ gets C: $h_c[2]=9$.</li>
+         <li>Bin 3 $[135,180)$: nothing &rarr; $h_c[3]=0$.</li>
        </ul>
-       <p>Use 4 orientation bins of 45&deg; each: bin 0 = $[0,45)\\degree$, bin 1 = $[45,90)\\degree$,
-       bin 2 = $[90,135)\\degree$, bin 3 = $[135,180)\\degree$. Add each arrow's <b>magnitude</b> into its
-       bin:</p>
-       <ul class="steps">
-         <li>A ($0\\degree$) and B ($5\\degree$) and D ($44\\degree$) fall in bin 0: $10+8+1 = 19$.</li>
-         <li>C ($90\\degree$) falls in bin 2: $9$.</li>
-         <li>Bins 1 and 3 stay $0$.</li>
-       </ul>
-       <p>Histogram $h = [\\,19,\\ 0,\\ 9,\\ 0\\,]$. The big value in bin 0 says this cell is dominated by
+       <p>Histogram $h_c = [\\,19,\\ 0,\\ 9,\\ 0\\,]$. The big value in bin 0 says this cell is dominated by
        <b>vertical edges</b> (gradients pointing right), with a weaker horizontal edge (bin 2). That four-
        number summary &mdash; not the raw pixels &mdash; is what HOG hands to the model for this cell.</p>`,
 

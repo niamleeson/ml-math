@@ -76,13 +76,35 @@
        </ul>`,
 
     example:
-      `<p>Five people, names already dropped. Quasi-identifiers $Q$ = (exact birthdate, 5-digit ZIP, gender):</p>
+      `<p>Five people, names already dropped. Quasi-identifiers $Q$ = (exact birthdate, 5-digit ZIP, gender).
+       Generalize each: birthdate $\\to$ age-band (taking ages as of 2026, so $1983\\to43\\to$ "40s",
+       $1991\\to35\\to$ "30s", $1955\\to71\\to$ "70s"), and ZIP-5 $\\to$ its first 3 digits.</p>
+       <table class="extable">
+         <caption>Raw quasi-identifiers, then generalized</caption>
+         <thead><tr><th>birthdate</th><th>ZIP</th><th>gender</th><th>age-band</th><th>ZIP-3</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1983-07-14</td><td class="num">02139</td><td>F</td><td>40s</td><td class="num">021</td></tr>
+           <tr><td class="num">1991-02-03</td><td class="num">02141</td><td>M</td><td>30s</td><td class="num">021</td></tr>
+           <tr><td class="num">1983-11-30</td><td class="num">02139</td><td>F</td><td>40s</td><td class="num">021</td></tr>
+           <tr><td class="num">1991-08-22</td><td class="num">02141</td><td>M</td><td>30s</td><td class="num">021</td></tr>
+           <tr><td class="num">1955-01-09</td><td class="num">30301</td><td>F</td><td>70s</td><td class="num">303</td></tr>
+         </tbody>
+       </table>
+       <p>Now <b>group, count, find the min</b> &mdash; before and after generalizing:</p>
+       <table class="extable">
+         <caption>Equivalence-class sizes $|g|$</caption>
+         <thead><tr><th>group (combination of $Q$)</th><th class="num">$|g|$ exact</th><th class="num">$|g|$ generalized</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">(40s, 021, F)</td><td class="num">1, 1</td><td class="num">2</td></tr>
+           <tr><td class="row-h">(30s, 021, M)</td><td class="num">1, 1</td><td class="num">2</td></tr>
+           <tr><td class="row-h">(70s, 303, F)</td><td class="num">1</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Raw rows: (1983-07-14, 02139, F), (1991-02-03, 02141, M), (1983-11-30, 02139, F), (1991-08-22, 02141, M), (1955-01-09, 30301, F).</li>
-         <li>Group by exact $Q$: every combination is <b>unique</b> &mdash; five groups of size 1. So $\\min_g|g| = 1$: this is only <b>1-anonymous</b>, i.e. fully re-identifiable.</li>
-         <li>Now <b>generalize</b>: birthdate $\\to$ age-band, ZIP-5 $\\to$ ZIP-3. Rows become (40s, 021, F), (30s, 021, M), (40s, 021, F), (30s, 021, M), (70s, 303, F).</li>
-         <li>Re-group: <b>(40s, 021, F)</b> now has 2 members, <b>(30s, 021, M)</b> has 2, and <b>(70s, 303, F)</b> still has 1.</li>
-         <li>The smallest group is still 1, so we're 1-anonymous &mdash; the lone 70s person is exposed. To reach $k=2$ you'd suppress that row, or generalize gender / coarsen further until even she shares a group. The check is mechanical: <b>group, count, find the min</b>.</li>
+         <li><b>Exact $Q$:</b> all five combinations are distinct &mdash; five groups of size 1, so $\\min_g|g| = 1$. This is only <b>1-anonymous</b>: every row is a unique fingerprint, fully re-identifiable.</li>
+         <li><b>After generalizing:</b> the two 40s-F rows collapse into one group of $|g|=2$, the two 30s-M rows into another $|g|=2$, leaving the lone 70s-F row at $|g|=1$.</li>
+         <li>The smallest group is still $\\min_g|g| = 1$, so we are <b>still 1-anonymous</b> &mdash; the lone 70s person remains exposed. The formula's test $\\min_g|g| \\ge k$ fails for any $k\\ge 2$.</li>
+         <li>To reach $k=2$, <b>suppress</b> that one row (drop it) or coarsen further until even she shares a group. Then $\\min_g|g| = 2 \\ge 2$ and the data is <b>2-anonymous</b>.</li>
        </ul>`,
 
     whenToUse:

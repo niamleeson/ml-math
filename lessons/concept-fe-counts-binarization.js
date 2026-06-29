@@ -56,15 +56,32 @@
        <p><b>(2) It is robust to outliers.</b> Counts follow heavy-tailed distributions. A single value of 312 in a column of ones has enormous leverage on a linear model — it can swing coefficients and dominate squared-error loss. After binarizing, that 312 is just another 1; no row can shout louder than any other. The feature is bounded in $\\{0,1\\}$, so no rescaling is even needed.</p>
        <p>The cost — and it is real — is information loss. You have decided, deliberately, that the magnitude is noise. When the magnitude is signal, you log-transform instead of binarizing.</p>`,
     example:
-      `<p>Take a tiny slice of the Echo Nest listen counts for one user across eight songs:</p>
-       <p><code>count = [0, 1, 2, 0, 312, 1, 0, 4]</code></p>
-       <p>Binarize with threshold $t=1$ (apply $b=\\mathbf{1}[x \\ge 1]$ to each entry):</p>
-       <ul>
-         <li>$0 \\to 0$, &nbsp; $1 \\to 1$, &nbsp; $2 \\to 1$, &nbsp; $0 \\to 0$</li>
-         <li>$312 \\to 1$, &nbsp; $1 \\to 1$, &nbsp; $0 \\to 0$, &nbsp; $4 \\to 1$</li>
+      `<p>Take a tiny slice of the Echo Nest listen counts for one user across eight songs:
+       <code>count = [0, 1, 2, 0, 312, 1, 0, 4]</code>. Binarize with threshold $t=1$ by applying
+       $b=\\mathbf{1}[x \\ge 1]$ to every entry.</p>
+       <ul class="steps">
+         <li>Song 1: $x=0$, is $0 \\ge 1$? No $\\Rightarrow b=0$.</li>
+         <li>Song 2: $x=1$, is $1 \\ge 1$? Yes $\\Rightarrow b=1$.</li>
+         <li>Song 3: $x=2$, is $2 \\ge 1$? Yes $\\Rightarrow b=1$.</li>
+         <li>Song 4: $x=0$, is $0 \\ge 1$? No $\\Rightarrow b=0$.</li>
+         <li>Song 5: $x=312$ (the super-fan), is $312 \\ge 1$? Yes $\\Rightarrow b=1$.</li>
+         <li>Song 6: $x=1 \\Rightarrow b=1$; &nbsp; Song 7: $x=0 \\Rightarrow b=0$; &nbsp; Song 8: $x=4 \\Rightarrow b=1$.</li>
        </ul>
-       <p><code>listen = [0, 1, 1, 0, 1, 1, 0, 1]</code></p>
-       <p>The super-fan's $312$ is now indistinguishable from a single play. The feature says only: this user listened to songs 2, 3, 5, 6, and 8, and not to 1, 4, and 7. That is the robust "listened at all" signal the book recommends for the recommender.</p>`,
+       <table class="extable">
+         <caption>Raw listen count vs the binarized "listened at all" flag, $t=1$.</caption>
+         <thead><tr><th>song</th><th class="num">count $x$</th><th class="num">$x \\ge 1$?</th><th class="num">$b$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">0</td><td class="num">no</td><td class="num">0</td></tr>
+           <tr><td class="row-h">2</td><td class="num">1</td><td class="num">yes</td><td class="num">1</td></tr>
+           <tr><td class="row-h">3</td><td class="num">2</td><td class="num">yes</td><td class="num">1</td></tr>
+           <tr><td class="row-h">4</td><td class="num">0</td><td class="num">no</td><td class="num">0</td></tr>
+           <tr><td class="row-h">5</td><td class="num">312</td><td class="num">yes</td><td class="num">1</td></tr>
+           <tr><td class="row-h">6</td><td class="num">1</td><td class="num">yes</td><td class="num">1</td></tr>
+           <tr><td class="row-h">7</td><td class="num">0</td><td class="num">no</td><td class="num">0</td></tr>
+           <tr><td class="row-h">8</td><td class="num">4</td><td class="num">yes</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
+       <p>Result: <code>listen = [0, 1, 1, 0, 1, 1, 0, 1]</code>. The super-fan's $312$ is now indistinguishable from a single play. The feature says only: this user listened to songs 2, 3, 5, 6, and 8, and not to 1, 4, and 7 &mdash; the robust "listened at all" signal the book recommends.</p>`,
     practice: [
       {
         q: `You have a "listen_count" column from the Echo Nest data: most values are 1 or 2, but one user played a song 980 times. You are building a song recommender. Should you feed the raw count, and what does binarizing change?`,

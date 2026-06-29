@@ -145,17 +145,36 @@
        and you change which treatment "wins" the aggregate, without touching a single per-group rate.</p>`,
 
     example:
-      `<p>The real kidney-stone trial (Charig et al., 1986), as a tiny table of <b>(successes / total)</b>.</p>
+      `<p>The real kidney-stone trial (Charig et al., 1986). Each cell below is
+       <b>successes / total</b>; the rate is just that division.</p>
+       <table class="extable">
+         <caption>Success rate $r^T_g$ by treatment $T$ and stone-size group $g$, then pooled.</caption>
+         <thead>
+           <tr><th>Group $g$</th><th class="num">A: succ/total</th><th class="num">$r^A_g$</th><th class="num">B: succ/total</th><th class="num">$r^B_g$</th><th>Winner</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">Small stones</td><td class="num">81/87</td><td class="num">93.1%</td><td class="num">234/270</td><td class="num">86.7%</td><td>A</td></tr>
+           <tr><td class="row-h">Large stones</td><td class="num">192/263</td><td class="num">73.0%</td><td class="num">55/80</td><td class="num">68.8%</td><td>A</td></tr>
+           <tr><td class="row-h">Pooled</td><td class="num">273/350</td><td class="num">78.0%</td><td class="num">289/350</td><td class="num">82.6%</td><td>B</td></tr>
+         </tbody>
+       </table>
+       <p>Plug the numbers into the formula $\\text{rate}_T=\\sum_g w^T_g\\,r^T_g$:</p>
        <ul class="steps">
-         <li><b>Small stones</b> &mdash; A: $81/87 = 93.1\\%$; B: $234/270 = 86.7\\%$. <b>A wins.</b></li>
-         <li><b>Large stones</b> &mdash; A: $192/263 = 73.0\\%$; B: $55/80 = 68.8\\%$. <b>A wins again.</b></li>
-         <li><b>Pooled</b> &mdash; A: $273/350 = 78.0\\%$; B: $289/350 = 82.6\\%$. <b>B wins the overall!</b></li>
+         <li><b>Small:</b> $r^A=81/87=93.1\\%$ vs $r^B=234/270=86.7\\%$ &mdash; <b>A wins</b>.</li>
+         <li><b>Large:</b> $r^A=192/263=73.0\\%$ vs $r^B=55/80=68.8\\%$ &mdash; <b>A wins again</b>.</li>
+         <li><b>A's weights:</b> A's $350$ cases are $87$ small, $263$ large, so
+         $w^A_{\\text{small}}=87/350=0.249$, $w^A_{\\text{large}}=263/350=0.751$.</li>
+         <li><b>A pooled:</b> $0.249\\cdot 93.1 + 0.751\\cdot 73.0 = 23.1 + 54.9 = \\mathbf{78.0\\%}$
+         (same as $273/350$).</li>
+         <li><b>B's weights:</b> B's $350$ cases are $270$ small, $80$ large, so
+         $w^B_{\\text{small}}=270/350=0.771$, $w^B_{\\text{large}}=80/350=0.229$.</li>
+         <li><b>B pooled:</b> $0.771\\cdot 86.7 + 0.229\\cdot 68.8 = 66.9 + 15.7 = \\mathbf{82.6\\%}$
+         (same as $289/350$). <b>B wins the pool!</b></li>
        </ul>
-       <p>A is better for small stones and better for large stones, yet worse overall. The trick is the
-       imbalance: A was used on $263$ of the hard large-stone cases but only $87$ easy small ones, while B got
-       $270$ easy and only $80$ hard &mdash; so A's pooled rate is dragged down toward its large-stone rate.
-       The right move is to compare <b>within stone size</b>, where A clearly wins; the pooled number is the
-       one to distrust.</p>`,
+       <p>A is better for small stones and better for large stones, yet worse overall. The flip comes
+       entirely from the weights: A's load is $75\\%$ hard large stones, so its average is dragged toward
+       its lower $73.0\\%$; B's load is $77\\%$ easy small stones, lifting its average toward $86.7\\%$.
+       Compare <b>within stone size</b> (A wins); distrust the pooled number.</p>`,
 
     practice: [
       {

@@ -113,15 +113,30 @@
       render();
     },
     example:
-      `<p>One triplet, with embeddings that are just 1-D numbers so the arithmetic is easy. Use margin $\\alpha = 0.2$.</p>
+      `<p>One triplet, with embeddings that are just 1-D numbers so the arithmetic is easy. Anchor $f(a) = 1.0$, positive $f(p) = 1.3$ (same class), margin $\\alpha = 0.2$. We try two different negatives.</p>
+       <p><b>Easy negative</b> $f(n) = 2.0$ (far away):</p>
        <ul class="steps">
-         <li>Anchor $f(a) = 1.0$, positive $f(p) = 1.3$ (same class), negative $f(n) = 2.0$ (different class).</li>
          <li>Same-class squared distance: $\\|f(a)-f(p)\\|^2 = (1.0 - 1.3)^2 = (-0.3)^2 = 0.09$.</li>
          <li>Different-class squared distance: $\\|f(a)-f(n)\\|^2 = (1.0 - 2.0)^2 = (-1.0)^2 = 1.0$.</li>
          <li>Inside the max: $0.09 - 1.0 + 0.2 = -0.71$.</li>
          <li>Loss: $\\max(0, -0.71) = 0$. The negative is already far enough, so this triplet is "solved" and contributes nothing.</li>
-         <li>Now a hard triplet: keep the same $a$ and $p$ but a confusing negative $f(n) = 1.2$. Then $\\|f(a)-f(n)\\|^2 = (1.0 - 1.2)^2 = 0.04$. Inside: $0.09 - 0.04 + 0.2 = 0.25$. Loss $= \\max(0, 0.25) = 0.25 > 0$, so backprop pushes that negative away.</li>
        </ul>
+       <p><b>Hard negative</b> $f(n) = 1.2$ (confusingly close):</p>
+       <ul class="steps">
+         <li>Different-class squared distance: $\\|f(a)-f(n)\\|^2 = (1.0 - 1.2)^2 = (-0.2)^2 = 0.04$.</li>
+         <li>Inside the max: $0.09 - 0.04 + 0.2 = 0.25$.</li>
+         <li>Loss: $\\max(0, 0.25) = 0.25 \\gt 0$, so backprop pushes that negative away.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same anchor and positive ($\\|f(a)-f(p)\\|^2 = 0.09$, $\\alpha = 0.2$); only the negative changes.</caption>
+         <thead>
+           <tr><th>negative</th><th class="num">$f(n)$</th><th class="num">$\\|f(a)-f(n)\\|^2$</th><th class="num">inside max</th><th class="num">loss</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">easy (far)</td><td class="num">2.0</td><td class="num">1.00</td><td class="num">&minus;0.71</td><td class="num">0.00</td></tr>
+           <tr><td class="row-h">hard (close)</td><td class="num">1.2</td><td class="num">0.04</td><td class="num">0.25</td><td class="num">0.25</td></tr>
+         </tbody>
+       </table>
        <p>The easy negative taught nothing; the hard negative drove the learning. That is hard-negative mining in one example.</p>`,
     application:
       `<p>Metric learning is the math behind the face-verification system in [dl-face-recognition]: a phone unlocks by checking whether your face's embedding is within a small distance of the stored one.</p>
