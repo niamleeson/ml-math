@@ -645,8 +645,24 @@
 <script src="lessons/10-modern-a.js"></script>
 <script src="lessons/10-modern-b.js"></script>
 
-<!-- Book companions: lessons follow each book's own chapter structure (template: "book"). -->
-<script src="lessons/book-naked.js"></script>
+<!-- Book companions: lessons follow each book's own chapter structure (template: "book").
+     Per-chapter fragment <script> tags are added per book as each book is generated. -->
+<script src="lessons/book-naked-intro.js"></script>
+<script src="lessons/book-naked-ch01.js"></script>
+<script src="lessons/book-naked-ch02.js"></script>
+<script src="lessons/book-naked-ch03.js"></script>
+<script src="lessons/book-naked-ch04.js"></script>
+<script src="lessons/book-naked-ch05.js"></script>
+<script src="lessons/book-naked-ch05h.js"></script>
+<script src="lessons/book-naked-ch06.js"></script>
+<script src="lessons/book-naked-ch07.js"></script>
+<script src="lessons/book-naked-ch08.js"></script>
+<script src="lessons/book-naked-ch09.js"></script>
+<script src="lessons/book-naked-ch10.js"></script>
+<script src="lessons/book-naked-ch11.js"></script>
+<script src="lessons/book-naked-ch12.js"></script>
+<script src="lessons/book-naked-ch13.js"></script>
+<script src="lessons/book-naked-conclusion.js"></script>
 <script src="lessons/book-practical.js"></script>
 <script src="lessons/book-allofstats.js"></script>
 
@@ -1547,6 +1563,7 @@ const App = (function () {
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
       `<div class="card book-chapter">${body}${takeaways}</div>` +
+      codeVizBlock(id) +
       navRow(id, prev, next);
   }
 
