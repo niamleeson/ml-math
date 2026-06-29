@@ -280,10 +280,14 @@
        distribution, since that is the number to verify). Take $n=3$ multi-step, discount $\\gamma=0.9$.</p>
        <p>The next three real rewards after time $t$ are $R_{t+1}=1$, $R_{t+2}=0$, $R_{t+3}=2$. Three steps
        later the agent is in state $S_{t+3}$ with two actions; the two networks disagree about them:</p>
-       <ul>
-         <li>Online net $\\theta$: $\\;q(S_{t+3},a_0)=5.0,\\quad q(S_{t+3},a_1)=4.0$.</li>
-         <li>Target net $\\bar\\theta$: $\\;q(S_{t+3},a_0)=3.0,\\quad q(S_{t+3},a_1)=6.0$.</li>
-       </ul>
+       <table class="extable">
+        <caption>The two nets' action-values at $S_{t+3}$. ONLINE selects (its $\\arg\\max$); TARGET evaluates that pick.</caption>
+        <thead><tr><th>action</th><th class="num">online $q_\\theta$</th><th class="num">target $q_{\\bar\\theta}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$a_0$</td><td class="num">5.0 &larr; online max</td><td class="num">3.0 &larr; used</td></tr>
+         <tr><td class="row-h">$a_1$</td><td class="num">4.0</td><td class="num">6.0 (target max, ignored)</td></tr>
+        </tbody>
+       </table>
        <p><b>Step 1 &mdash; multi-step return (Eq. 2).</b> Sum the three discounted rewards:</p>
        <ul class="steps">
          <li>$R_t^{(3)} = \\gamma^0 R_{t+1} + \\gamma^1 R_{t+2} + \\gamma^2 R_{t+3} = 1 + 0.9(0) + 0.81(2) = 1 + 0 + 1.62 = 2.62$.</li>
@@ -298,10 +302,19 @@
        <ul class="steps">
          <li>$y_{\\text{Rainbow}} = R_t^{(3)} + \\gamma^{3}\\,q_{\\bar\\theta}(S_{t+3},a^*) = 2.62 + 0.729\\times3.0 = 2.62 + 2.187 = \\mathbf{4.807}$.</li>
        </ul>
-       <p><b>Contrast.</b> A NON-double version would have taken the target net's $\\max(3.0,6.0)=6.0$, giving
-       $2.62 + 0.729\\times6.0 = 6.994$ &mdash; inflated by $2.187$, because the target net over-rates $a_1$ but
-       the online net never picks it. And a ONE-step ($n=1$) version would have used only $R_{t+1}=1$ plus
-       $\\gamma\\,q$, propagating the real reward far more slowly. These exact numbers are recomputed in the
+       <p><b>Contrast the variants on the same numbers</b> &mdash; what each Rainbow piece changes about the target:</p>
+       <table class="extable">
+        <caption>Same rewards $[1,0,2]$ and nets: how the target $y$ moves as you add multi-step and double.</caption>
+        <thead><tr><th>variant</th><th class="num">return part</th><th class="num">bootstrap</th><th class="num">target $y$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">one-step ($n=1$)</td><td class="num">$R_{t+1}=1$</td><td class="num">$0.9\\,q(S_{t+1})$</td><td class="num">slow propagation</td></tr>
+         <tr><td class="row-h">non-double ($n=3$)</td><td class="num">2.62</td><td class="num">$0.729\\times6.0=4.374$</td><td class="num">6.994</td></tr>
+         <tr><td class="row-h">Rainbow ($n=3$, double)</td><td class="num">2.62</td><td class="num">$0.729\\times3.0=2.187$</td><td class="num">4.807</td></tr>
+        </tbody>
+       </table>
+       <p>The non-double version grabs the target net's $\\max(3.0,6.0)=6.0$, inflating $y$ by $2.187$ because
+       the target net over-rates $a_1$ but the online net never picks it. The one-step version uses only
+       $R_{t+1}=1$, propagating real reward far more slowly. These exact numbers are recomputed in the
        notebook.</p>`,
 
     recipe:

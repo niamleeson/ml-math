@@ -274,24 +274,32 @@
        sign-by-sign derivation and the GAE bias&ndash;variance argument live in the <b>rl-ppo</b> concept
        lesson &mdash; we only recap here.</p>`,
     example:
-      `<p>Work one clipped term by hand &mdash; the exact case the prompt and notebook recompute. Take the
-       paper's $\\epsilon = 0.2$, so the clip range is $[0.8,\\,1.2]$.</p>
+      `<p>Plug real numbers into the clipped surrogate
+       $L^{CLIP}=\\min\\!\\big(r_t\\hat{A}_t,\\ \\text{clip}(r_t,1-\\epsilon,1+\\epsilon)\\,\\hat{A}_t\\big)$ (Eq. 7).
+       Take the paper's $\\epsilon = 0.2$, so the clip range is $[0.8,\\,1.2]$.</p>
        <ul class="steps">
-        <li><b>Form the ratio.</b> Say the old policy gave the action probability $0.5$ and the new policy
-        raised it to $0.8$. Then $r_t = \\dfrac{0.8}{0.5} = 1.6$ &mdash; the new policy made this action $1.6\\times$
-        as likely.</li>
-        <li><b>The action was good:</b> $\\hat{A}_t = +2$. The <b>unclipped</b> term is
-        $r_t\\,\\hat{A}_t = 1.6 \\times 2 = 3.2$.</li>
-        <li><b>Clip the ratio.</b> $r_t = 1.6$ is above $1+\\epsilon = 1.2$, so
-        $\\text{clip}(1.6,\\,0.8,\\,1.2) = 1.2$. The <b>clipped</b> term is $1.2 \\times 2 = 2.4$.</li>
-        <li><b>Take the minimum:</b> $\\min(3.2,\\,2.4) = 2.4$ &mdash; the clipped, flat value. Beyond
-        $r_t = 1.2$ the objective stops growing, so its <b>gradient is zero</b> there: PPO gives no reward for
-        having lurched this good action all the way to $1.6\\times$. <i>That is the trust region biting.</i>
-        Without the clip the optimizer would have happily kept the full $3.2$ and pushed the ratio even
-        higher.</li>
+        <li><b>Form the ratio.</b> The old policy gave the action probability $0.5$, the new policy raised it to
+        $0.8$, so $r_t = \\dfrac{0.8}{0.5} = 1.6$ &mdash; the new policy made this action $1.6\\times$ as likely.</li>
+        <li><b>Clip the ratio.</b> $r_t = 1.6$ is above $1+\\epsilon = 1.2$, so $\\text{clip}(1.6,\\,0.8,\\,1.2) = 1.2$.</li>
        </ul>
-       <p>These exact numbers ($r = 0.8/0.5 = 1.6$, $A = +2$, clip to $1.2$, $\\min(3.2, 2.4) = 2.4$) are
-       recomputed in the notebook's first cell so you can check the loss by running it.</p>`,
+       <p>Now apply the <b>same</b> ratio to a <b>good</b> action ($\\hat{A}_t=+2$) and an over-shot <b>bad</b>
+       action ($\\hat{A}_t=-2$), and watch which term the $\\min$ selects:</p>
+       <table class="extable">
+        <caption>$L^{CLIP}$ for $r_t=1.6$, $\\epsilon=0.2$: same ratio, opposite advantage sign.</caption>
+        <thead><tr><th>advantage $\\hat{A}_t$</th><th class="num">unclipped $r_t\\hat{A}_t$</th><th class="num">clipped $1.2\\,\\hat{A}_t$</th><th class="num">$\\min$ = $L^{CLIP}$</th><th>which term &middot; gradient</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$+2$ (good)</td><td class="num">3.2</td><td class="num">2.4</td><td class="num">2.4</td><td>clipped &middot; <b>zero</b> (flat)</td></tr>
+         <tr><td class="row-h">$-2$ (bad)</td><td class="num">&minus;3.2</td><td class="num">&minus;2.4</td><td class="num">&minus;3.2</td><td>unclipped &middot; <b>live</b> (pulls back)</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Good action.</b> $\\min(3.2,\\,2.4)=2.4$ &mdash; the clipped, flat value. Past $r_t=1.2$ the objective
+        stops growing, so its <b>gradient is zero</b>: PPO gives no reward for lurching this good action all the way
+        to $1.6\\times$. <i>That is the trust region biting.</i></li>
+        <li><b>Bad action.</b> $\\min(-3.2,\\,-2.4)=-3.2$ &mdash; the <b>unclipped</b> term is more negative, so the
+        $\\min$ selects it, keeping a live gradient that pulls this over-shot bad action's probability back down.</li>
+       </ul>
+       <p>The notebook's first cell recomputes the good-action case $\\min(1.6\\times2,\\,1.2\\times2)=\\min(3.2,2.4)=2.4$.</p>`,
     recipe:
       `<ol>
         <li><b>Build two small networks</b> from <code>nn.Linear</code>: a <b>policy</b> head that outputs

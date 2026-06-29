@@ -242,21 +242,32 @@
        $x^0 = 0.50$, step size $\\alpha = 0.20$, budget $\\epsilon = 0.15$, so the allowed $\\ell_\\infty$-ball is
        $[0.50-0.15,\\; 0.50+0.15] = [0.35,\\; 0.65]$.</p>
        <ul class="steps">
-        <li><b>Loss + input gradient.</b> The logit is $2.0 \\cdot 0.5 = 1.0$. For binary cross-entropy with
-        target $y=1$, the loss <i>decreases</i> as the logit grows, so raising the loss means <i>lowering</i> $x$.
-        Concretely $\\partial L/\\partial(\\text{logit}) = \\sigma(\\text{logit}) - y = \\sigma(1.0) - 1 \\approx
-        0.731 - 1 = -0.269$, and $\\partial L/\\partial x = (-0.269)\\cdot w = -0.538$. So
-        $\\nabla_x L \\lt 0$ and $\\text{sign}(\\nabla_x L) = -1$.</li>
-        <li><b>Ascent step</b> ($x + \\alpha\\,\\text{sign}(\\nabla_x L)$):
-        $0.50 + 0.20\\cdot(-1) = 0.30$. The step moved <i>down</i> to raise the loss, as expected.</li>
-        <li><b>Project back into the ball</b> ("Proj" = clip to $[0.35, 0.65]$): $0.30 \\lt 0.35$, so the step
+        <li><b>Logit.</b> $\\text{logit} = w\\,x^0 = 2.0 \\cdot 0.50 = 1.00$.</li>
+        <li><b>Loss gradient at the logit.</b> For binary cross-entropy with target $y=1$,
+        $\\partial L/\\partial(\\text{logit}) = \\sigma(\\text{logit}) - y = \\sigma(1.0) - 1 = 0.731 - 1 = -0.269$.</li>
+        <li><b>Input gradient.</b> Chain rule through the logit: $\\nabla_x L = \\partial L/\\partial(\\text{logit})
+        \\cdot w = (-0.269)\\cdot 2.0 = -0.538$. So $\\nabla_x L \\lt 0$ and $\\text{sign}(\\nabla_x L) = -1$ &mdash;
+        raising the loss means <i>lowering</i> $x$.</li>
+        <li><b>Ascent step</b> ($x + \\alpha\\,\\text{sign}(\\nabla_x L)$): $0.50 + 0.20\\cdot(-1) = 0.30$.</li>
+        <li><b>Project back into the ball</b> ("Proj" = clip to $[0.35, 0.65]$): $0.30 \\lt 0.35$, so the raw step
         landed <i>outside</i> the budget. Clip up to the lower edge: $x^1 = 0.35$.</li>
         <li><b>Read the result.</b> After one PGD step, $x^1 = 0.35$ &mdash; the most the adversary may push the
-        input within budget, in the loss-raising direction. A second step would try to leave the ball again and be
-        clipped right back to $0.35$.</li>
+        input within budget. A second step would try to leave the ball again and be clipped right back to $0.35$.</li>
        </ul>
-       <p>The projection genuinely fired here: the raw ascent ($0.30$) was outside $[0.35, 0.65]$, so the clip
-       pulled it to the edge. The notebook's first cell recomputes exactly this: sign $=-1$, ascend $=0.30$,
+       <table class="extable">
+        <caption>One PGD step from $x^0=0.50$, $\\alpha=0.20$, $\\epsilon=0.15$, ball $[0.35,0.65]$, vs the
+        single-step FGSM attack (step size $\\epsilon$).</caption>
+        <thead><tr><th>quantity</th><th class="num">PGD step ($\\alpha=0.20$)</th><th class="num">FGSM step ($\\epsilon=0.15$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\text{sign}(\\nabla_x L)$</td><td class="num">$-1$</td><td class="num">$-1$</td></tr>
+         <tr><td class="row-h">step size</td><td class="num">0.20</td><td class="num">0.15</td></tr>
+         <tr><td class="row-h">raw ascent $x + \\text{step}\\cdot\\text{sign}$</td><td class="num">0.30</td><td class="num">0.35</td></tr>
+         <tr><td class="row-h">after projection (clip to ball)</td><td class="num">0.35</td><td class="num">0.35</td></tr>
+        </tbody>
+       </table>
+       <p>The projection genuinely fired for the PGD step: the raw ascent ($0.30$) was outside $[0.35, 0.65]$, so
+       the clip pulled it to the edge $0.35$. FGSM's single $\\epsilon$-sized step lands exactly on the edge
+       without needing the clip. The notebook's first cell recomputes the PGD case: sign $=-1$, ascend $=0.30$,
        project $=0.35$.</p>`,
     recipe:
       `<ol>

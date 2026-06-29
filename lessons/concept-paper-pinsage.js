@@ -252,19 +252,28 @@ $$ J_{\\mathcal{G}}(\\mathbf{z}_q,\\mathbf{z}_i) \\;=\\; \\mathbb{E}_{\\,n_k\\si
        to learn from; making them harder over epochs is a <b>curriculum</b>.</p>`,
     example:
       `<p>Work <b>one importance-pooling aggregation</b> by hand. Node $u$ has three top-$T$ neighbors. Their
-       transformed messages (after $\\mathrm{ReLU}(\\mathbf{Q}\\mathbf{h}_v+\\mathbf{q})$), as $2$-dimensional
-       vectors, are $\\mathbf{m}_1=(2,0)$, $\\mathbf{m}_2=(0,4)$, $\\mathbf{m}_3=(1,1)$. The random walk visited
-       them <b>$6$, $3$, and $1$</b> times.</p>
+       transformed messages (after $\\mathrm{ReLU}(\\mathbf{Q}\\mathbf{h}_v+\\mathbf{q})$) are $2$-dimensional
+       vectors, and the random walk visited each a different number of times:</p>
+       <table class="extable">
+        <caption>The three neighbors: transformed message, raw visit count, and the resulting
+        $L_1$-normalized importance weight $\\alpha_v$ (uniform weight $1/3$ shown for the ablation).</caption>
+        <thead><tr><th>neighbor</th><th class="num">message $\\mathbf{m}_v$</th><th class="num">visit count</th><th class="num">importance $\\alpha_v$</th><th class="num">uniform weight</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\mathbf{m}_1$</td><td class="num">$(2,0)$</td><td class="num">6</td><td class="num">0.6</td><td class="num">0.3333</td></tr>
+         <tr><td class="row-h">$\\mathbf{m}_2$</td><td class="num">$(0,4)$</td><td class="num">3</td><td class="num">0.3</td><td class="num">0.3333</td></tr>
+         <tr><td class="row-h">$\\mathbf{m}_3$</td><td class="num">$(1,1)$</td><td class="num">1</td><td class="num">0.1</td><td class="num">0.3333</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">&mdash;</td><td class="num">10</td><td class="num">1.0</td><td class="num">1.0</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Normalize the visit counts ($L_1$) into importance weights $\\boldsymbol{\\alpha}$.</b> Sum
         $=6+3+1=10$, so $\\boldsymbol{\\alpha}=(6/10,\\,3/10,\\,1/10)=(0.6,\\,0.3,\\,0.1)$. They add to $1$.</li>
-        <li><b>Importance pooling = weighted mean.</b>
-        $\\mathbf{n}_u=0.6\\,(2,0)+0.3\\,(0,4)+0.1\\,(1,1)$. First coordinate:
-        $0.6\\!\\cdot\\!2+0.3\\!\\cdot\\!0+0.1\\!\\cdot\\!1=1.2+0+0.1=1.3$. Second coordinate:
-        $0.6\\!\\cdot\\!0+0.3\\!\\cdot\\!4+0.1\\!\\cdot\\!1=0+1.2+0.1=1.3$. So
-        $\\mathbf{n}_u=(1.3,\\,1.3)$.</li>
-        <li><b>Compare with a plain (uniform) mean</b> &mdash; the ablation. $\\tfrac{1}{3}\\big((2,0)+(0,4)+(1,1)\\big)
-        =\\tfrac{1}{3}(3,5)=(1.0,\\,1.6667)$.</li>
+        <li><b>Importance pooling = weighted mean, coordinate 1.</b>
+        $0.6\\!\\cdot\\!2+0.3\\!\\cdot\\!0+0.1\\!\\cdot\\!1 = 1.2+0+0.1 = 1.3$.</li>
+        <li><b>Importance pooling, coordinate 2.</b>
+        $0.6\\!\\cdot\\!0+0.3\\!\\cdot\\!4+0.1\\!\\cdot\\!1 = 0+1.2+0.1 = 1.3$. So $\\mathbf{n}_u=(\\mathbf{1.3},\\,\\mathbf{1.3})$.</li>
+        <li><b>Uniform-mean ablation.</b> $\\tfrac{1}{3}\\big((2,0)+(0,4)+(1,1)\\big) = \\tfrac{1}{3}(3,5) =
+        (\\mathbf{1.0},\\,\\mathbf{1.6667})$.</li>
        </ul>
        <p>Read it off: importance pooling gives $(1.3,1.3)$, leaning toward the <b>frequently-visited</b> neighbor
        $\\mathbf{m}_1=(2,0)$ (weight $0.6$), whereas the uniform mean $(1.0,1.6667)$ over-weights the

@@ -240,19 +240,41 @@
       `<p>Read one feature map at one fractional location by hand, then see what RoIPool would have done. Take
        a $4\\times4$ single-channel feature map (rows are $y$, columns are $x$, both 0-indexed):</p>
        <p>$$ F = \\begin{bmatrix} 1 & 2 & 3 & 4 \\\\ 5 & 6 & 7 & 8 \\\\ 9 & 10 & 11 & 12 \\\\ 13 & 14 & 15 & 16 \\end{bmatrix} $$</p>
-       <p>Sample at the continuous location $(y,x) = (2.7,\\,1.3)$ &mdash; a point RoIAlign would not round.</p>
+       <p>Sample at the continuous location $(y,x) = (2.7,\\,1.3)$ &mdash; a point RoIAlign would not round. The
+       four surrounding grid neighbours and their weights:</p>
+       <table class="extable">
+        <caption>The four neighbours of $(2.7,1.3)$ with $dx=0.3$, $dy=0.7$. Bilinear weights multiply to give each neighbour's share.</caption>
+        <thead><tr><th>neighbour</th><th>cell $(y,x)$</th><th class="num">value</th><th>weight</th><th class="num">weight value</th><th class="num">contribution</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$v_{00}$ top-left</td><td>$(2,1)$</td><td class="num">10</td><td>$(1-dx)(1-dy)=0.7\\cdot0.3$</td><td class="num">0.21</td><td class="num">2.10</td></tr>
+         <tr><td class="row-h">$v_{01}$ top-right</td><td>$(2,2)$</td><td class="num">11</td><td>$dx(1-dy)=0.3\\cdot0.3$</td><td class="num">0.09</td><td class="num">0.99</td></tr>
+         <tr><td class="row-h">$v_{10}$ bot-left</td><td>$(3,1)$</td><td class="num">14</td><td>$(1-dx)dy=0.7\\cdot0.7$</td><td class="num">0.49</td><td class="num">6.86</td></tr>
+         <tr><td class="row-h">$v_{11}$ bot-right</td><td>$(3,2)$</td><td class="num">15</td><td>$dx\\,dy=0.3\\cdot0.7$</td><td class="num">0.21</td><td class="num">3.15</td></tr>
+         <tr><td class="row-h"><b>sum</b></td><td></td><td class="num"></td><td></td><td class="num">1.00</td><td class="num"><b>13.10</b></td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Find the four neighbours.</b> $x_0=\\lfloor 1.3\\rfloor=1$, $y_0=\\lfloor 2.7\\rfloor=2$, so the
-        corners are $(2,1),(2,2),(3,1),(3,2)$: $v_{00}=F[2,1]=10$, $v_{01}=F[2,2]=11$, $v_{10}=F[3,1]=14$,
-        $v_{11}=F[3,2]=15$.</li>
+        corners are $(2,1),(2,2),(3,1),(3,2)$ with values $10,11,14,15$ (table).</li>
         <li><b>Fractional offsets.</b> $dx = 1.3-1 = 0.3$, $\\;dy = 2.7-2 = 0.7$.</li>
         <li><b>Blend along $x$ (top and bottom rows).</b>
-        top $= (1-0.3)\\cdot 10 + 0.3\\cdot 11 = 10.3$; bottom $= (1-0.3)\\cdot 14 + 0.3\\cdot 15 = 14.3$.</li>
-        <li><b>Blend along $y$.</b> $F(2.7,1.3) = (1-0.7)\\cdot 10.3 + 0.7\\cdot 14.3 = 3.09 + 10.01 = \\mathbf{13.1}$.</li>
+        top $= (1-0.3)\\cdot 10 + 0.3\\cdot 11 = 7.0 + 3.3 = 10.3$; bottom $= (1-0.3)\\cdot 14 + 0.3\\cdot 15 = 9.8 + 4.5 = 14.3$.</li>
+        <li><b>Blend along $y$.</b> $F(2.7,1.3) = (1-0.7)\\cdot 10.3 + 0.7\\cdot 14.3 = 3.09 + 10.01 = \\mathbf{13.1}$
+        &mdash; the same $13.1$ the weight table sums to (the four weights, summing to $1$, confirm the blend).</li>
         <li><b>What RoIPool would do.</b> It rounds first: $(2.7,1.3)\\to(\\lfloor 2.7\\rfloor,\\lfloor 1.3\\rfloor)=(2,1)$,
         reading $F[2,1]=\\mathbf{10}$ &mdash; the value at the rounded corner, ignoring that the true point sits
-        $70\\%$ of the way toward the next row. The $13.1$-vs-$10$ gap <i>is</i> the misalignment.</li>
+        $70\\%$ of the way toward the next row.</li>
        </ul>
+       <p>Side by side, the rounding is the whole story:</p>
+       <table class="extable">
+        <caption>RoIAlign vs RoIPool at the same point $(2.7,1.3)$.</caption>
+        <thead><tr><th>operator</th><th>coordinate used</th><th class="num">value read</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">RoIAlign (bilinear, no rounding)</td><td>$(2.7,\\,1.3)$ exact</td><td class="num">13.1</td></tr>
+         <tr><td class="row-h">RoIPool (floors first)</td><td>$(2,\\,1)$ rounded</td><td class="num">10.0</td></tr>
+         <tr><td class="row-h"><b>gap = the misalignment</b></td><td></td><td class="num"><b>3.1</b></td></tr>
+        </tbody>
+       </table>
        <p>The notebook recomputes $13.1$ both by hand and via <code>torch.nn.functional.grid_sample</code>
        (PyTorch's bilinear sampler) so you can check it.</p>`,
     recipe:

@@ -284,6 +284,29 @@
         $1.84\\times$ near $z$, so the density there is divided by $1.84$, i.e. its log-density drops by
         $0.609738$.</li>
        </ul>
+       <table class="extable">
+        <caption>Step &rarr; value ledger for one planar flow at $z=(1.0,\\,0.5)$, $w=(1,-1)$, $u=(2,0)$, $b=0.5$.</caption>
+        <thead><tr><th>step</th><th>expression</th><th class="num">value</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">pre-activation</td><td>$a=w^{\\top}z+b$</td><td class="num">1.000000</td></tr>
+         <tr><td class="row-h">nonlinearity</td><td>$h(a)=\\tanh a$</td><td class="num">0.761594</td></tr>
+         <tr><td class="row-h">derivative</td><td>$h'(a)=1-\\tanh^2 a$</td><td class="num">0.419974</td></tr>
+         <tr><td class="row-h">dot product</td><td>$u^{\\top}\\psi(z)$</td><td class="num">0.839949</td></tr>
+         <tr><td class="row-h">det factor</td><td>$1+u^{\\top}\\psi(z)$</td><td class="num">1.839949</td></tr>
+         <tr><td class="row-h">log-det</td><td>$\\ln|1+u^{\\top}\\psi(z)|$</td><td class="num">0.609738</td></tr>
+        </tbody>
+       </table>
+       <p>Now swap the push direction to $u=(0,\\,2)$ (along the second axis). Note $a$, $h'(a)$, and
+       $\\psi(z)=(0.419974,\\,-0.419974)$ are <b>unchanged</b> (they do not depend on $u$); only the dot product
+       flips sign: $u^{\\top}\\psi=(0)(0.419974)+(2)(-0.419974)=-0.839949$. The table contrasts the two:</p>
+       <table class="extable">
+        <caption>Same flow, two push directions $u$: one spreads volume, the other compresses it.</caption>
+        <thead><tr><th>$u$</th><th class="num">$u^{\\top}\\psi(z)$</th><th class="num">$1+u^{\\top}\\psi$</th><th class="num">$\\ln|1+u^{\\top}\\psi|$</th><th>effect</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$(2,\\,0)$</td><td class="num">0.839949</td><td class="num">1.839949</td><td class="num">$+0.609738$</td><td>spreads ($\\gt 1$)</td></tr>
+         <tr><td class="row-h">$(0,\\,2)$</td><td class="num">$-0.839949$</td><td class="num">0.160051</td><td class="num">$-1.832$</td><td>compresses ($\\lt 1$)</td></tr>
+        </tbody>
+       </table>
        <p>The notebook recomputes these exact numbers and cross-checks the log-determinant against the full
        Jacobian determinant from autograd &mdash; both give $0.609738$.</p>`,
     recipe:

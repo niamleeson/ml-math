@@ -275,16 +275,31 @@
        you can see the velocity build: $f(x)=\\tfrac12 x^2$, so $\\nabla f(x)=x$. Use $\\varepsilon=0.1$,
        $\\mu=0.9$, start at $x_0=1$, $v_0=0$. Each step is $v\\leftarrow\\mu v-\\varepsilon\\,g$ then
        $x\\leftarrow x+v$:</p>
-       <ul>
+       <ul class="steps">
          <li><b>Step 1:</b> $g=x_0=1$. $v_1=0.9\\cdot 0-0.1\\cdot 1=-0.1$. $x_1=1+(-0.1)=0.9$.</li>
          <li><b>Step 2:</b> $g=0.9$. $v_2=0.9\\cdot(-0.1)-0.1\\cdot 0.9=-0.09-0.09=-0.18$. $x_2=0.9-0.18=0.72$.</li>
          <li><b>Step 3:</b> $g=0.72$. $v_3=0.9\\cdot(-0.18)-0.1\\cdot 0.72=-0.162-0.072=-0.234$. $x_3=0.72-0.234=0.486$.</li>
          <li><b>Step 4:</b> $g=0.486$. $v_4=0.9\\cdot(-0.234)-0.1\\cdot 0.486=-0.2106-0.0486=-0.2592$. $x_4=0.486-0.2592=0.2268$.</li>
        </ul>
+       <p>The ledger below tracks the gradient, velocity, and position each step, with plain SGD ($\\mu=0$, which
+       just moves $-\\varepsilon g$ with no stored velocity) in the last column for comparison:</p>
+       <table class="extable">
+        <caption>Classical momentum vs plain SGD on $f(x)=\\tfrac12 x^2$ &mdash; $\\varepsilon=0.1$, $\\mu=0.9$, $x_0=1$.</caption>
+        <thead>
+         <tr><th>step $t$</th><th class="num">$g=\\nabla f(x_{t-1})$</th><th class="num">$v_t$</th><th class="num">$x_t$ (momentum)</th><th class="num">$x_t$ (plain SGD)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">0 (start)</td><td class="num">&mdash;</td><td class="num">0.0000</td><td class="num">1.0000</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h">1</td><td class="num">1.0000</td><td class="num">&minus;0.1000</td><td class="num">0.9000</td><td class="num">0.9000</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.9000</td><td class="num">&minus;0.1800</td><td class="num">0.7200</td><td class="num">0.8100</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.7200</td><td class="num">&minus;0.2340</td><td class="num">0.4860</td><td class="num">0.7290</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.4860</td><td class="num">&minus;0.2592</td><td class="num">0.2268</td><td class="num">0.6561</td></tr>
+        </tbody>
+       </table>
        <p>Watch the velocity grow in magnitude ($-0.1\\to-0.18\\to-0.234\\to-0.2592$) even as the gradient
-       shrinks: that is the accumulation. Plain SGD ($\\mu=0$) would have moved only $-0.1\\cdot g$ each step,
-       reaching $x_4\\approx 0.656$ &mdash; momentum is already at $0.2268$, much closer to the minimum at $0$.
-       The CODE cell recomputes these exact numbers and prints them.</p>`,
+       shrinks: that is the accumulation. Plain SGD multiplies the position by $0.9$ each step, reaching only
+       $x_4=0.6561$ &mdash; momentum is already at $0.2268$, much closer to the minimum at $0$. The CODE cell
+       recomputes these exact numbers and prints them.</p>`,
 
     recipe:
       `<p><b>The two updates, as numbered steps</b> &mdash; initialize $v_0=0$, then each iteration:</p>

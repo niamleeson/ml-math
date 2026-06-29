@@ -295,28 +295,36 @@
        sub-skill is missing and accuracy stays near chance, then past the threshold they align and accuracy
        leaps. The paper's contribution here is the <i>measurement</i>, not a derivation.</p>`,
     example:
-      `<p>Let us run a single number through the <b>SwiGLU gate</b> $\\text{Swish}(a)\\cdot b$ and compare it
-       to a plain <b>ReLU</b> on the same input, so you can feel what the gate does. (We use scalar branch
-       values $a$ and $b$ to keep arithmetic by hand; in the real MLP these are whole vectors.)</p>
+      `<p>Let us plug real numbers into the <b>SwiGLU gate</b> $\\text{SwiGLU}(x)=\\text{Swish}(xW)\\cdot xV$ for one
+       hidden unit, and compare it to a plain <b>ReLU</b> on the same input. Write $a = xW$ (one entry of the gate
+       branch) and $b = xV$ (one entry of the value branch); in the real MLP these are whole vectors, here scalars
+       so we can do the arithmetic by hand. Take $a = 2.0$, $b = 3.0$.</p>
        <ul class="steps">
-        <li><b>Pick branch values.</b> Suppose for one hidden unit the gate branch is $a = 2.0$ (this is one
-        entry of $xW$) and the value branch is $b = 3.0$ (one entry of $xV$).</li>
-        <li><b>Swish on the gate branch.</b> $\\text{Swish}(a) = a\\,\\sigma(a)$. First
-        $\\sigma(2.0) = 1/(1 + e^{-2.0}) = 1/(1 + 0.13534) = 0.88080$. Then
-        $\\text{Swish}(2.0) = 2.0 \\times 0.88080 = 1.76159$.</li>
-        <li><b>Gate the value branch.</b> SwiGLU output $= \\text{Swish}(a)\\cdot b = 1.76159 \\times 3.0 =
-        5.28478$. The gate ($\\approx 1.76$) <i>amplified</i> the value because $a$ was solidly positive.</li>
-        <li><b>Compare to ReLU.</b> A plain MLP unit would just compute $\\text{ReLU}(a) = \\max(0, 2.0) =
-        2.0$ &mdash; it ignores the second branch entirely and passes the gate input straight through.</li>
-        <li><b>Now a negative gate.</b> Take $a = -1.0$, $b = 3.0$. $\\sigma(-1.0) = 1/(1 + e^{1.0}) =
-        1/(1 + 2.71828) = 0.26894$, so $\\text{Swish}(-1.0) = -1.0 \\times 0.26894 = -0.26894$, and SwiGLU
-        output $= -0.26894 \\times 3.0 = -0.80682$ &mdash; a small <i>signed</i> leak. ReLU would output
-        $\\max(0, -1.0) = 0$ &mdash; a hard zero. SwiGLU's gate is smooth and can pass a little signed
-        information where ReLU clips to nothing.</li>
+        <li><b>Sigmoid of the gate branch.</b> $\\sigma(a) = 1/(1+e^{-a}) = 1/(1+e^{-2.0}) = 1/(1+0.13534) =
+        1/1.13534 = 0.88080$.</li>
+        <li><b>Swish of the gate branch.</b> $\\text{Swish}(a) = a\\,\\sigma(a) = 2.0 \\times 0.88080 = 1.76159$.</li>
+        <li><b>Gate the value branch.</b> $\\text{SwiGLU} = \\text{Swish}(a)\\cdot b = 1.76159 \\times 3.0 =
+        \\mathbf{5.28478}$. The gate ($\\approx 1.76$) <i>amplified</i> the value because $a$ was solidly positive.</li>
+        <li><b>Plain-ReLU comparison.</b> A ReLU unit computes $\\text{ReLU}(a) = \\max(0, 2.0) = \\mathbf{2.0}$
+        &mdash; it ignores the value branch $b$ entirely.</li>
+        <li><b>Now a negative gate.</b> Take $a = -1.0$, $b = 3.0$: $\\sigma(-1.0) = 1/(1+e^{1.0}) = 1/(1+2.71828) =
+        1/3.71828 = 0.26894$, so $\\text{Swish}(-1.0) = -1.0 \\times 0.26894 = -0.26894$, and
+        $\\text{SwiGLU} = -0.26894 \\times 3.0 = \\mathbf{-0.80682}$ &mdash; a small <i>signed</i> leak, where
+        $\\text{ReLU}(-1.0) = \\max(0,-1.0) = \\mathbf{0}$ clips hard to nothing.</li>
        </ul>
-       <p>The CODEVIZ recomputes these exact numbers in NumPy and plots the SwiGLU and ReLU outputs across a
-       range of gate inputs, so you can verify $5.285$ and $-0.807$ and see the smooth-vs-hard difference.
-       Those are OUR small illustration of the activation shape &mdash; not any number from the paper.</p>`,
+       <table class="extable">
+        <caption>SwiGLU $\\text{Swish}(a)\\cdot b$ vs plain $\\text{ReLU}(a)$, value branch fixed at $b = 3.0$.</caption>
+        <thead><tr><th>gate input $a$</th><th class="num">$\\sigma(a)$</th><th class="num">$\\text{Swish}(a)$</th><th class="num">SwiGLU $=\\text{Swish}(a)\\cdot 3$</th><th class="num">$\\text{ReLU}(a)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$-1.0$</td><td class="num">0.26894</td><td class="num">$-0.26894$</td><td class="num">$-0.80682$</td><td class="num">0.00000</td></tr>
+         <tr><td class="row-h">$0.0$</td><td class="num">0.50000</td><td class="num">0.00000</td><td class="num">0.00000</td><td class="num">0.00000</td></tr>
+         <tr><td class="row-h">$2.0$</td><td class="num">0.88080</td><td class="num">1.76159</td><td class="num">5.28478</td><td class="num">2.00000</td></tr>
+        </tbody>
+       </table>
+       <p>The table makes the contrast plain: SwiGLU depends on <i>both</i> branches and leaks a small signed value
+       at $a=-1$, where ReLU hard-clips to $0$ and never sees $b$. The CODEVIZ recomputes these exact numbers in
+       NumPy ($5.285$ and $-0.807$) and plots both curves &mdash; OUR small illustration of the activation shape,
+       not any number from the paper.</p>`,
     recipe:
       `<p>This is a read-only paper, so there is no architecture to assemble from scratch. Here instead is the
        <b>recipe of PaLM's design</b> &mdash; the choices you would copy to build a model in its style:</p>

@@ -255,34 +255,40 @@ $$ \\text{leaf-wise growth: each step split } \\ell^*=\\arg\\max_{\\ell\\in\\tex
        Theorem 3.2 (proof in the supplement) bounds the resulting approximation error and shows it shrinks like
        $O(1/\\sqrt{n})$, so GOSS "will not lose much training accuracy and will outperform random sampling."</p>`,
     example:
-      `<p>Work one GOSS step on a tiny node by hand. Take $n=10$ rows on a node, a single feature $x$, and these
-       per-row gradients $g$ (already paired with their $x$ value):</p>
-       <p>$$\\begin{array}{c|cccccccccc}
-       x & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\\\\\hline
-       g & +0.9 & -0.8 & +0.05 & -0.04 & +0.03 & -0.02 & +0.01 & -0.01 & +0.7 & -0.6
-       \\end{array}$$</p>
-       <p>Use $a=0.2$ (keep the top $20\\%$ by $|g|$) and $b=0.2$ (sample $20\\%$ of the rest).</p>
+      `<p>Work one GOSS step on a tiny node by hand: $n=10$ rows, a single feature $x$, per-row gradients $g$, with
+       $a=0.2$ (keep the top $20\\%$ by $|g|$) and $b=0.2$ (sample $20\\%$ of the rest). The data, ranked by $|g|$ &mdash;
+       this is the table GOSS sorts on:</p>
+       <table class="extable">
+         <caption>Rows sorted by $|g|$. GOSS keeps set $A$ (weight 1), samples set $B$ from the rest (weight $\\text{fact}$).</caption>
+         <thead><tr><th>$x$</th><th class="num">$g$</th><th class="num">$|g|$</th><th>GOSS role</th><th class="num">weight $w$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">$+0.9$</td><td class="num">0.90</td><td>$A$ (top-2, kept)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$-0.8$</td><td class="num">0.80</td><td>$A$ (top-2, kept)</td><td class="num">1</td></tr>
+           <tr><td class="row-h">9</td><td class="num">$+0.7$</td><td class="num">0.70</td><td>$B$ (sampled)</td><td class="num">4</td></tr>
+           <tr><td class="row-h">10</td><td class="num">$-0.6$</td><td class="num">0.60</td><td>dropped</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">5</td><td class="num">$+0.03$</td><td class="num">0.03</td><td>$B$ (sampled)</td><td class="num">4</td></tr>
+           <tr><td class="row-h">3</td><td class="num">$+0.05$</td><td class="num">0.05</td><td>dropped</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">4</td><td class="num">$-0.04$</td><td class="num">0.04</td><td>dropped</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">6</td><td class="num">$-0.02$</td><td class="num">0.02</td><td>dropped</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">7</td><td class="num">$+0.01$</td><td class="num">0.01</td><td>dropped</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">8</td><td class="num">$-0.01$</td><td class="num">0.01</td><td>dropped</td><td class="num">&mdash;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Amplification weight (Alg. 2):</b> $\\text{fact}=\\frac{1-a}{b}=\\frac{1-0.2}{0.2}=\\frac{0.8}{0.2}=4$.
-        Also $\\text{topN}=a\\,n=0.2\\cdot10=2$ rows kept, $\\text{randN}=b\\,n=0.2\\cdot10=2$ rows sampled.</li>
-        <li><b>Rank by $|g|$ and keep the top 2 (set $A$).</b> Sorted by $|g|$: row $x{=}1$ ($0.9$), $x{=}2$
-        ($0.8$), $x{=}9$ ($0.7$), $x{=}10$ ($0.6$), then the tiny ones. Top-2 = $\\{x{=}1,\\,x{=}2\\}$, with
-        $g=+0.9,-0.8$. These keep weight $1$.</li>
-        <li><b>Sample 2 from the remaining 8 (set $B$).</b> Say the random pick is $\\{x{=}9,\\,x{=}5\\}$, with
-        $g=+0.7,+0.03$. These get weight $\\text{fact}=4$.</li>
-        <li><b>Score a split, threshold $d=5$</b> (left: $x\\le5$, right: $x\\gt5$), using only $A\\cup B$ and
-        Eqn. (1). Left rows in the subset: $x{=}1\\,(g{=}0.9,\\,w{=}1)$, $x{=}2\\,(g{=}-0.8,\\,w{=}1)$,
-        $x{=}5\\,(g{=}0.03,\\,w{=}4)$. Right rows: $x{=}9\\,(g{=}0.7,\\,w{=}4)$.
-        Left weighted gradient sum $= 0.9 - 0.8 + 4(0.03) = 0.22$, with $n_l=3$.
-        Right weighted sum $= 4(0.7) = 2.8$, with $n_r=1$.</li>
+        <li><b>Amplification weight (Alg. 2).</b> $\\text{fact}=\\frac{1-a}{b}=\\frac{1-0.2}{0.2}=\\frac{0.8}{0.2}=4$;
+        $\\text{topN}=a\\,n=0.2\\cdot10=2$ kept, $\\text{randN}=b\\,n=0.2\\cdot10=2$ sampled.</li>
+        <li><b>Keep the top 2 by $|g|$ (set $A$).</b> $\\{x{=}1,\\,x{=}2\\}$ with $g=+0.9,-0.8$, weight $1$.</li>
+        <li><b>Sample 2 from the remaining 8 (set $B$).</b> Random pick $\\{x{=}9,\\,x{=}5\\}$ with $g=+0.7,+0.03$, weight $4$.</li>
+        <li><b>Score the split at threshold $d=5$</b> (left $x\\le5$, right $x\\gt5$) over only $A\\cup B$.
+        Left $= x{=}1,2,5$: weighted sum $= 0.9 - 0.8 + 4(0.03) = 0.22$, $n_l=3$.
+        Right $= x{=}9$: weighted sum $= 4(0.7) = 2.8$, $n_r=1$.</li>
         <li><b>Variance gain (Eqn. 1)</b> with $n=10$:
         $\\tilde V(d{=}5)=\\frac{1}{10}\\!\\left(\\frac{0.22^2}{3}+\\frac{2.8^2}{1}\\right)
         =\\frac{1}{10}\\!\\left(\\frac{0.0484}{3}+7.84\\right)=\\frac{1}{10}(0.01613+7.84)=0.78561.$</li>
        </ul>
-       <p>The kept large-gradient rows ($x{=}1,2$) plus a handful of <b>amplified</b> small-gradient rows
-       reproduce the split signal from only $4$ of the $10$ rows. These exact numbers ($\\text{fact}=4$, left
-       sum $0.22$, right sum $2.8$, $\\tilde V=0.78561$) are recomputed in the notebook's first cell so you can
-       check the sampler by running it.</p>`,
+       <p>The two kept large-gradient rows plus two <b>amplified</b> small-gradient rows reproduce the split signal
+       from only $4$ of the $10$ rows. These exact numbers ($\\text{fact}=4$, left sum $0.22$, right sum $2.8$,
+       $\\tilde V=0.78561$) are recomputed in the notebook's first cell so you can check the sampler by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Histogram split finder (Algorithm 1).</b> Bin each feature into ~255 discrete bins; to score a

@@ -301,18 +301,27 @@
        channels</b> (a typical ProGAN low-resolution block). The fan_in is</p>
        <p>$$ \\text{fan\\_in} = (\\text{in\\_channels})\\times k_h \\times k_w = 512 \\times 3 \\times 3 = 512\\times 9 = 4608. $$</p>
        <ul class="steps">
-        <li><b>$2/\\text{fan\\_in}$</b> $= 2 / 4608 = 0.000434027\\ldots$</li>
-        <li><b>$c=\\sqrt{2/\\text{fan\\_in}}$</b> $= \\sqrt{0.000434027} \\approx 0.020833$.</li>
-        <li><b>What $c$ is:</b> it is the He <b>standard deviation</b> for this layer &mdash; the scale at which
-        the weights actually act. ProGAN stores each weight as a plain $\\mathcal{N}(0,1)$ draw and, at runtime,
+        <li><b>$2/\\text{fan\\_in}$</b> $= 2 / 4608 = 0.000434028$.</li>
+        <li><b>$c=\\sqrt{2/\\text{fan\\_in}}$</b> $= \\sqrt{0.000434028} \\approx 0.020833$.</li>
+        <li><b>What $c$ is:</b> the He <b>standard deviation</b> for this layer &mdash; the scale at which the
+        weights actually act. ProGAN stores each weight as a plain $\\mathcal{N}(0,1)$ draw and, at runtime,
         rescales it by this $c$ so the effective weight std is $\\approx 0.0208$ for every $3\\times3$/512-in
-        layer. (The paper writes the rule as $\\hat w_i = w_i/c$; in code, as below, this is implemented by
-        multiplying the stored weight by the He scale $c$ &mdash; the unambiguous quantity to track is $c$
-        itself.)</li>
+        layer. (The paper writes the rule as $\\hat w_i = w_i/c$; in code this is implemented by multiplying the
+        stored weight by the He scale $c$ &mdash; the unambiguous quantity to track is $c$ itself.)</li>
        </ul>
-       <p>The number to remember: for a $3\\times3$, $512$-in conv, the He scale is
-       $c=\\sqrt{2/4608}\\approx 0.0208$. The notebook computes this and asserts it equals
-       <code>(2 / 4608) ** 0.5</code>.</p>
+       <p>The He scale depends only on fan_in, so different layer shapes get different $c$ &mdash; that is the
+       whole point of per-layer equalized LR:</p>
+       <table class="extable">
+        <caption>He scale $c=\\sqrt{2/\\text{fan\\_in}}$ for three ProGAN layer shapes.</caption>
+        <thead><tr><th>layer</th><th class="num">in&times;$k_h$&times;$k_w$</th><th class="num">fan_in</th><th class="num">$2/\\text{fan\\_in}$</th><th class="num">$c$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$3\\times3$, 512-in conv</td><td class="num">512&times;3&times;3</td><td class="num">4608</td><td class="num">0.000434</td><td class="num">0.0208</td></tr>
+         <tr><td class="row-h">$3\\times3$, 256-in conv</td><td class="num">256&times;3&times;3</td><td class="num">2304</td><td class="num">0.000868</td><td class="num">0.0295</td></tr>
+         <tr><td class="row-h">$1\\times1$, 256-in toRGB</td><td class="num">256&times;1&times;1</td><td class="num">256</td><td class="num">0.007813</td><td class="num">0.0884</td></tr>
+        </tbody>
+       </table>
+       <p>The number to remember: for a $3\\times3$, $512$-in conv, $c=\\sqrt{2/4608}\\approx 0.0208$. The notebook
+       computes this and asserts it equals <code>(2 / 4608) ** 0.5</code>.</p>
        <p><b>Part B &mdash; the fade-in blend.</b> Suppose at a transition the old (upsampled) path outputs an
        RGB pixel value $0.20$ and the new high-res block outputs $0.80$ for the same pixel. The faded output is
        $(1-\\alpha)\\cdot 0.20 + \\alpha\\cdot 0.80$:</p>
@@ -321,8 +330,19 @@
         <li><b>$\\alpha=0.5$:</b> $0.5\\cdot 0.20 + 0.5\\cdot 0.80 = 0.10 + 0.40 = 0.50$ &mdash; halfway.</li>
         <li><b>$\\alpha=1.0$:</b> $0.0\\cdot 0.20 + 1.0\\cdot 0.80 = 0.80$ &mdash; pure new block.</li>
        </ul>
-       <p>As $\\alpha$ ramps $0\\to1$ the output slides smoothly from the trusted low-res image to the new
-       high-res one &mdash; no shock. The notebook recomputes this $0.20\\to0.50\\to0.80$ sweep.</p>`,
+       <table class="extable">
+        <caption>Fade-in ledger: $(1-\\alpha)\\cdot 0.20 + \\alpha\\cdot 0.80$ as $\\alpha$ ramps $0\\to1$.</caption>
+        <thead><tr><th class="num">$\\alpha$</th><th class="num">$(1-\\alpha)\\cdot 0.20$</th><th class="num">$\\alpha\\cdot 0.80$</th><th class="num">faded output</th></tr></thead>
+        <tbody>
+         <tr><td class="num">0.00</td><td class="num">0.200</td><td class="num">0.000</td><td class="num">0.200</td></tr>
+         <tr><td class="num">0.25</td><td class="num">0.150</td><td class="num">0.200</td><td class="num">0.350</td></tr>
+         <tr><td class="num">0.50</td><td class="num">0.100</td><td class="num">0.400</td><td class="num">0.500</td></tr>
+         <tr><td class="num">0.75</td><td class="num">0.050</td><td class="num">0.600</td><td class="num">0.650</td></tr>
+         <tr><td class="num">1.00</td><td class="num">0.000</td><td class="num">0.800</td><td class="num">0.800</td></tr>
+        </tbody>
+       </table>
+       <p>As $\\alpha$ ramps $0\\to1$ the output slides smoothly from the trusted low-res image ($0.20$) to the new
+       high-res one ($0.80$) &mdash; no shock. The notebook recomputes this $0.20\\to0.50\\to0.80$ sweep.</p>`,
     recipe:
       `<ol>
         <li><b>Equalized-LR wrapper.</b> Store a layer's weights as $\\mathcal{N}(0,1)$; in <code>forward</code>,

@@ -239,25 +239,32 @@
        bottom-left block $\\partial y_{d+1:D}/\\partial x_{1:d}$ &mdash; which contains the messy derivatives of
        $s$ and $t$ &mdash; sits <i>below</i> the diagonal and so never enters the determinant.</p>`,
     example:
-      `<p>Work <b>one affine coupling layer forward, its inverse, and its log-det</b> by hand on a 2-D point, so
-       Eqs. 7&ndash;9 are concrete. Take $D=2$, split $d=1$ (so $x_a = x_1$ is copied, $x_b = x_2$ is
-       transformed). Suppose the scale and shift networks, evaluated at $x_a$, return
-       $s(x_a) = 0.5$ and $t(x_a) = -1.0$. Take the input point $x = (x_1, x_2) = (2.0,\\ 3.0)$.</p>
+      `<p>Plug real numbers into the affine coupling layer's forward (Eq. 7), log-det (Eq. 8), and inverse
+       (Eq. 9) on a 2-D point. Take $D=2$, split $d=1$ (so $x_a = x_1$ is copied, $x_b = x_2$ is transformed).
+       Suppose the scale and shift networks, evaluated at $x_a$, return $s(x_a) = 0.5$ and $t(x_a) = -1.0$, and
+       take the input point $x = (x_1, x_2) = (2.0,\\ 3.0)$.</p>
        <ul class="steps">
         <li><b>Forward, copy the first part</b> (Eq. 7): $y_1 = x_1 = 2.0$.</li>
         <li><b>Forward, scale-and-shift the second part</b> (Eq. 7):
-        $y_2 = x_2 \\cdot \\exp(s) + t = 3.0 \\cdot \\exp(0.5) + (-1.0)$. With $\\exp(0.5) \\approx 1.648721$,
+        $y_2 = x_2 \\cdot \\exp(s) + t = 3.0 \\cdot \\exp(0.5) + (-1.0)$. With $\\exp(0.5) = 1.648721$,
         $y_2 = 3.0 \\times 1.648721 - 1.0 = 4.946164 - 1.0 = \\mathbf{3.946164}$. So $y = (2.0,\\ 3.946164)$.</li>
         <li><b>Log-determinant of this layer</b> (Eq. 8): $\\log|\\det J| = \\sum_j s_j = 0.5$ (one transformed
-        coordinate, $s = 0.5$).</li>
-        <li><b>Inverse, recover the second part</b> (Eq. 9): $x_1 = y_1 = 2.0$ (so we can recompute the same
-        $s = 0.5,\\ t = -1.0$), then
-        $x_2 = (y_2 - t)\\cdot\\exp(-s) = (3.946164 - (-1.0)) \\cdot \\exp(-0.5)
+        coordinate, $s = 0.5$) &mdash; a single sum, not a $2\\times2$ determinant.</li>
+        <li><b>Inverse, recover the second part</b> (Eq. 9): $x_1 = y_1 = 2.0$, so recompute the same
+        $s = 0.5,\\ t = -1.0$, then $x_2 = (y_2 - t)\\cdot\\exp(-s) = (3.946164 - (-1.0)) \\cdot \\exp(-0.5)
         = 4.946164 \\times 0.606531 = \\mathbf{3.000000}$.</li>
        </ul>
-       <p>The inverse returns the original $x_2 = 3.0$ exactly &mdash; the layer is <b>exactly invertible</b>,
-       and its log-det was a single sum, not a $2\\times2$ determinant computation. These exact numbers are
-       recomputed in the notebook's first cell so you can check them by running it.</p>`,
+       <table class="extable">
+        <caption>Coupling layer with $s=0.5$, $t=-1.0$, split $d=1$: forward then inverse round-trip.</caption>
+        <thead><tr><th>step</th><th class="num">coord 1 (copied)</th><th class="num">coord 2 (transformed)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">input $x$</td><td class="num">2.0</td><td class="num">3.000000</td></tr>
+         <tr><td class="row-h">forward $y$</td><td class="num">2.0</td><td class="num">3.946164</td></tr>
+         <tr><td class="row-h">inverse $x$</td><td class="num">2.0</td><td class="num">3.000000</td></tr>
+        </tbody>
+       </table>
+       <p>The inverse returns the original $x_2 = 3.0$ exactly &mdash; the layer is <b>exactly invertible</b>.
+       These exact numbers are recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Choose a base distribution.</b> A standard 2-D Gaussian $\\mathcal{N}(0,\\mathbf{I})$, with the

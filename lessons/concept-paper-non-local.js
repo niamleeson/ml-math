@@ -243,6 +243,16 @@ $$ z_i = W_z\\, y_i + x_i \\quad\\text{(Eqn. 6, the non-local block: projection 
         Once $W_z$ trains away from $0$, say $W_z = 1$, then $z_1 = 2.575 + 1 = 3.575$: the long-range signal
         (mostly from position $3$) is added on top of the original feature.</li>
        </ul>
+       <table class="extable">
+        <caption>Computing $y_1$ at position $1$: per-source affinity, softmax weight, and its contribution to the weighted sum.</caption>
+        <thead><tr><th>source $j$</th><th class="num">$x_j$</th><th class="num">$f_{1j}=e^{x_1 x_j}$</th><th class="num">$w_{1j}=f_{1j}/C$</th><th class="num">$w_{1j}\\,g(x_j)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$j=1$</td><td class="num">1</td><td class="num">2.718</td><td class="num">0.090</td><td class="num">0.090</td></tr>
+         <tr><td class="row-h">$j=2$</td><td class="num">2</td><td class="num">7.389</td><td class="num">0.245</td><td class="num">0.490</td></tr>
+         <tr><td class="row-h">$j=3$</td><td class="num">3</td><td class="num">20.086</td><td class="num">0.665</td><td class="num">1.995</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">$C=30.193$</td><td class="num">1.000</td><td class="num">$y_1=2.575$</td></tr>
+        </tbody>
+       </table>
        <p>The point: $y_1$ at the left position is pulled toward position $3$ &mdash; six cells away in the
        demo &mdash; in a single operation, something no $3\\times3$ convolution can do in one layer. These
        exact numbers are recomputed in the notebook's first cell so you can check the block by running it.</p>`,

@@ -254,12 +254,21 @@
       `<p>Work the loss by hand on a tiny case so you can check the notebook. Take an image with $N=4$ patches,
        mask ratio $r=0.75$, so $N_{\\text{vis}}=(1-0.75)\\cdot 4 = 1$ visible patch and $|\\mathcal{M}| = 3$
        masked patches. Use $P^2 = 2$ pixels per patch (a length-2 vector) just for arithmetic you can verify by
-       hand. The three masked patches have true and predicted pixels:</p>
-       <ul>
-        <li>masked patch A: true $x_A=[1.0,\\ 0.0]$, predicted $\\hat{x}_A=[0.5,\\ 0.0]$</li>
-        <li>masked patch B: true $x_B=[0.0,\\ 2.0]$, predicted $\\hat{x}_B=[0.0,\\ 1.0]$</li>
-        <li>masked patch C: true $x_C=[1.0,\\ 1.0]$, predicted $\\hat{x}_C=[1.0,\\ 1.0]$ (perfect)</li>
-       </ul>
+       hand. The encoder sees only the $1$ visible patch; the loss is over the $3$ masked patches only:</p>
+       <table class="extable">
+        <caption>Squared pixel error on each masked patch (visible patch excluded from the loss by design).</caption>
+        <thead><tr>
+          <th>masked patch</th>
+          <th class="num">true $x_i$</th>
+          <th class="num">pred $\\hat{x}_i$</th>
+          <th class="num">$\\lVert\\hat{x}_i-x_i\\rVert_2^2$</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-h">A</td><td class="num">[1.0, 0.0]</td><td class="num">[0.5, 0.0]</td><td class="num">0.25</td></tr>
+          <tr><td class="row-h">B</td><td class="num">[0.0, 2.0]</td><td class="num">[0.0, 1.0]</td><td class="num">1.00</td></tr>
+          <tr><td class="row-h">C</td><td class="num">[1.0, 1.0]</td><td class="num">[1.0, 1.0]</td><td class="num">0.00</td></tr>
+        </tbody>
+       </table>
        <p>First, the <b>visible-patch count</b>: $N_{\\text{vis}} = (1-r)\\,N = 0.25\\times 4 = 1$. The encoder
        processes 1 patch; the other 3 are masked. Now the <b>reconstruction MSE on masked patches</b>
        (the formula, averaged over $\\mathcal{M}=\\{A,B,C\\}$):</p>

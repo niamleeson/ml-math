@@ -256,13 +256,25 @@
         <li><b>Apply the $\\alpha/r$ scale.</b> With $\\alpha = 2$ and $r = 1$ the factor is $\\alpha/r = 2$, so
         the actual weight update is $2\\,B A$. Its first row is $2\\cdot[1, 0, -1] = [2, 0, -2]$.</li>
         <li><b>Count trainable parameters.</b> LoRA trains only $B$ and $A$: $B$ has $4\\times 1 = 4$ numbers,
-        $A$ has $1\\times 3 = 3$ numbers, total $4 + 3 = 7$. Full fine-tuning of this layer would train all of
-        $W_0$: $4\\times 3 = 12$ numbers. So even on this toy $4\\times 3$ layer, rank-$1$ LoRA trains
-        $7$ instead of $12$. On real layers where $d, k$ are in the thousands, $r(d+k)$ is a tiny sliver of
-        $d\\,k$.</li>
+        $A$ has $1\\times 3 = 3$ numbers, total $r(d+k) = 1\\cdot(4+3) = 7$. Full fine-tuning of this layer would
+        train all of $W_0$: $d\\times k = 4\\times 3 = 12$ numbers. So even on this toy layer, rank-$1$ LoRA trains
+        $7$ instead of $12$.</li>
+        <li><b>Why the saving explodes at scale.</b> The toy only saved $7$ vs $12$ because $d,k$ are tiny.
+        On a realistic $d=k=1000$ layer, full trains $d\\,k = 1{,}000{,}000$ while LoRA trains $r(d+k)=2000\\,r$
+        &mdash; a tiny sliver, as the table shows.</li>
        </ul>
+       <table class="extable">
+        <caption>Trainable parameters: full fine-tuning ($d\\,k$) vs LoRA ($r(d+k)$), at two layer sizes.</caption>
+        <thead><tr><th>layer</th><th class="num">full $=d\\,k$</th><th class="num">LoRA $r{=}1$</th><th class="num">LoRA $r{=}8$</th><th class="num">$r{=}8$ as % of full</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">toy $d{=}4,\\,k{=}3$</td><td class="num">12</td><td class="num">7</td><td class="num">56</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">real $d{=}k{=}1000$</td><td class="num">1,000,000</td><td class="num">2,000</td><td class="num">16,000</td><td class="num">1.6%</td></tr>
+        </tbody>
+       </table>
        <p>These exact numbers &mdash; the $B A$ matrix, the scaled first row $[2, 0, -2]$, and the counts $7$ vs
-       $12$ &mdash; are recomputed in the notebook's first cell so you can check them.</p>`,
+       $12$ &mdash; are recomputed in the notebook's first cell so you can check them. (For the toy layer, $r=8$
+       would exceed $\\min(d,k)=3$, so $r(d+k)=56$ is shown only to illustrate the formula; in practice
+       $r \\ll \\min(d,k)$.)</p>`,
     recipe:
       `<ol>
         <li><b>Build and pretrain a small net</b> with <code>torch.nn</code> on a base task. This stands in for

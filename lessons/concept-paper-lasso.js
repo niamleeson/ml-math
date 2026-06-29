@@ -247,20 +247,47 @@ $$ \\text{(ridge, orthonormal design)}\\qquad \\hat\\beta_j^{\\,\\text{ridge}} \
       `<p><b>Soft-thresholding by hand</b>, with threshold $\\gamma = 1$. Apply
        $S(z,\\gamma) = \\operatorname{sign}(z)\\,(|z|-\\gamma)_+$ to each value:</p>
        <ul class="steps">
-        <li>$z = 3$: $|z|-\\gamma = 2 \\gt 0$, sign $+$, so $S = +2$. (Pulled toward zero by $1$.)</li>
-        <li>$z = -2$: $|z|-\\gamma = 1 \\gt 0$, sign $-$, so $S = -1$. (Pulled toward zero by $1$.)</li>
-        <li>$z = 0.5$: $|z|-\\gamma = -0.5 \\lt 0$, positive part is $0$, so $S = \\mathbf{0}$. (Killed.)</li>
-        <li>$z = -0.5$: $|z|-\\gamma = -0.5 \\lt 0 \\Rightarrow S = \\mathbf{0}$. (Killed.)</li>
-        <li>$z = 0$: $S = 0$.</li>
+        <li>$z = 3$: $|z|-\\gamma = 3-1 = 2 \\gt 0$, sign $+$, so $S = +2$. (Pulled toward zero by $1$.)</li>
+        <li>$z = -2$: $|z|-\\gamma = 2-1 = 1 \\gt 0$, sign $-$, so $S = -1$. (Pulled toward zero by $1$.)</li>
+        <li>$z = 0.5$: $|z|-\\gamma = 0.5-1 = -0.5 \\lt 0$, positive part is $0$, so $S = \\mathbf{0}$. (Killed.)</li>
+        <li>$z = -0.5$: $|z|-\\gamma = 0.5-1 = -0.5 \\lt 0 \\Rightarrow S = \\mathbf{0}$. (Killed.)</li>
+        <li>$z = 0$: $|z|-\\gamma = -1 \\lt 0 \\Rightarrow S = 0$.</li>
        </ul>
+       <table class="extable">
+        <caption>Soft-threshold $S(z,1)$ applied entrywise: small values ($|z|\\le 1$) are killed, large ones shrunk by $1$.</caption>
+        <thead><tr><th>$z$</th><th class="num">$|z|-\\gamma$</th><th class="num">$(|z|-\\gamma)_+$</th><th class="num">$\\operatorname{sign}(z)$</th><th class="num">$S(z,1)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">3</td><td class="num">2</td><td class="num">2</td><td class="num">+1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">&minus;2</td><td class="num">1</td><td class="num">1</td><td class="num">&minus;1</td><td class="num">&minus;1</td></tr>
+         <tr><td class="row-h">0.5</td><td class="num">&minus;0.5</td><td class="num">0</td><td class="num">+1</td><td class="num">0</td></tr>
+         <tr><td class="row-h">&minus;0.5</td><td class="num">&minus;0.5</td><td class="num">0</td><td class="num">&minus;1</td><td class="num">0</td></tr>
+         <tr><td class="row-h">0</td><td class="num">&minus;1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        </tbody>
+       </table>
        <p>So $S([3,-2,0.5,-0.5,0],\\,1) = [2,-1,0,0,0]$. The two small values are zeroed; the two large ones are
        shrunk by exactly $1$. This is the verified reference vector in the notebook.</p>
        <p><b>A converged lasso fit by hand (orthonormal case).</b> Plant a noiseless signal with OLS
        coefficients $\\hat\\beta^{\\,\\text{OLS}} = [4,\\,-3,\\,0.7]$ on uncorrelated standardized predictors,
-       and use $\\lambda = 1$. The closed-form answer is just soft-thresholding:
-       $S([4,-3,0.7],\\,1) = [4-1,\\ -(3-1),\\ 0]= [\\mathbf{3},\\,\\mathbf{-2},\\,\\mathbf{0}]$. The small
-       coefficient $0.7$ (below the threshold $1$) is dropped; the other two shrink by $1$. The notebook runs
-       coordinate descent from scratch and confirms it converges to this exact vector with
+       and use $\\lambda = 1$ (so the threshold $\\gamma=1$). The closed-form answer is just soft-thresholding
+       each OLS coefficient, $\\hat\\beta_j = S(\\hat\\beta_j^{\\,\\text{OLS}},\\,1)$:</p>
+       <ul class="steps">
+        <li>$\\hat\\beta_1 = S(4,1) = 4-1 = \\mathbf{3}$ (shrunk by $1$, kept).</li>
+        <li>$\\hat\\beta_2 = S(-3,1) = -(3-1) = \\mathbf{-2}$ (shrunk by $1$, kept).</li>
+        <li>$\\hat\\beta_3 = S(0.7,1) = (0.7-1)_+ = \\mathbf{0}$ (below threshold &mdash; selected out).</li>
+       </ul>
+       <table class="extable">
+        <caption>Orthonormal lasso ($\\lambda=1$) vs ridge on the same OLS coefficients: L1 zeros the small one, L2 only shrinks. Ridge uses $\\hat\\beta_j/(1+\\lambda)$ with $\\lambda=1$.</caption>
+        <thead><tr><th>feature $j$</th><th class="num">$\\hat\\beta_j^{\\,\\text{OLS}}$</th><th class="num">lasso $S(\\hat\\beta_j,1)$</th><th class="num">ridge $\\hat\\beta_j/2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">4</td><td class="num">3</td><td class="num">2.0</td></tr>
+         <tr><td class="row-h">2</td><td class="num">&minus;3</td><td class="num">&minus;2</td><td class="num">&minus;1.5</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.7</td><td class="num">0</td><td class="num">0.35</td></tr>
+        </tbody>
+       </table>
+       <p>The lasso fit is $[\\mathbf{3},\\,\\mathbf{-2},\\,\\mathbf{0}]$: the small coefficient $0.7$ (below the
+       threshold $1$) is dropped, while the other two shrink by $1$. Ridge in the same case shrinks all three
+       toward zero ($0.35$ for the third) but never reaches it &mdash; shrink only, no selection. The notebook
+       runs coordinate descent from scratch and confirms it converges to $[3,-2,0]$ with
        <code>torch.allclose</code>.</p>`,
     recipe:
       `<ol>

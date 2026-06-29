@@ -254,20 +254,17 @@
        inner-product scores (&sect;2.2). Substituting it back gives the formulas above. Nothing is
        added beyond marginalization plus a top-$K$ approximation &mdash; that is the elegance.</p>`,
     example:
-      `<p>Work the marginalization by hand on three documents. Suppose the retriever's
-       inner-product scores for three documents are $[\\,2.0,\\; 1.0,\\; 0.5\\,]$, and we keep the
-       top $K=2$ (documents 0 and 1). We need (a) the retriever weights $p(z|x)$ over those two,
-       and (b) the marginal answer probability, given a generator that assigns the correct answer
-       probabilities $p_\\theta(y|x,z_0)=0.8$ (the answer is plainly in document 0) and
-       $p_\\theta(y|x,z_1)=0.1$ (document 1 barely supports it).</p>
+      `<p>Work the marginalization by hand on three documents. The retriever's inner-product scores
+       are $s=[\\,2.0,\\; 1.0,\\; 0.5\\,]$; we keep the top $K=2$ (documents 0 and 1). The generator
+       assigns the correct answer probabilities $p_\\theta(y|x,z_0)=0.8$ (the answer is plainly in
+       document 0) and $p_\\theta(y|x,z_1)=0.1$ (document 1 barely supports it). We compute (a) the
+       retriever weights $p(z|x)$ and (b) the marginal answer probability.</p>
        <ul class="steps">
-        <li><b>Softmax over all three scores</b> (for intuition). With
-        $\\mathrm{softmax}_j = e^{s_j} / \\sum_k e^{s_k}$ and $s=[2.0,1.0,0.5]$:
-        $e^{2}=7.389$, $e^{1}=2.718$, $e^{0.5}=1.649$, sum $=11.756$. So the full distribution is
-        $[7.389,\\,2.718,\\,1.649]/11.756 = [0.6285,\\; 0.2312,\\; 0.1402]$.</li>
-        <li><b>Renormalize over the top-2.</b> RAG sums only over the retrieved documents, so we
-        take the softmax over just the two kept scores $[2.0,1.0]$: denominator
-        $e^{2}+e^{1}=7.389+2.718=10.107$, giving
+        <li><b>Exponentiate each score.</b> $e^{2.0}=7.389$, $e^{1.0}=2.718$, $e^{0.5}=1.649$.</li>
+        <li><b>Softmax over all three</b> (for intuition). Sum $=7.389+2.718+1.649=11.756$, so the
+        full distribution is $[7.389,\\,2.718,\\,1.649]/11.756 = [0.6285,\\; 0.2312,\\; 0.1402]$.</li>
+        <li><b>Renormalize over the top-2.</b> RAG sums only over the retrieved documents, so softmax
+        over just $[2.0,1.0]$: denominator $7.389+2.718=10.107$, giving
         $p(z_0|x)=7.389/10.107=0.7311$ and $p(z_1|x)=2.718/10.107=0.2689$.</li>
         <li><b>Marginalize the generator over the two documents.</b>
         $p(y|x)=p(z_0|x)\\,p_\\theta(y|x,z_0) + p(z_1|x)\\,p_\\theta(y|x,z_1)
@@ -276,7 +273,17 @@
         probabilities ($0.8$ and $0.1$), pulled toward $0.8$ because document 0 is far more
         relevant ($p(z_0|x)=0.73$). The retriever's confidence steers the average.</li>
        </ul>
-       <p>These exact numbers &mdash; $[0.6285,0.2312,0.1402]$, the top-2 weights
+       <table class="extable">
+        <caption>Marginalizing the generator over the top-2 retrieved documents: $p(y|x)=\\sum_z p(z|x)\\,p_\\theta(y|x,z)$.</caption>
+        <thead><tr><th>document $z$</th><th class="num">score $s$</th><th class="num">$e^{s}$</th><th class="num">$p(z|x)$ (top-2)</th><th class="num">$p_\\theta(y|x,z)$</th><th class="num">$p(z|x)\\,p_\\theta$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$z_0$ (kept)</td><td class="num">2.0</td><td class="num">7.389</td><td class="num">0.7311</td><td class="num">0.8</td><td class="num">0.5849</td></tr>
+         <tr><td class="row-h">$z_1$ (kept)</td><td class="num">1.0</td><td class="num">2.718</td><td class="num">0.2689</td><td class="num">0.1</td><td class="num">0.0269</td></tr>
+         <tr><td class="row-h">$z_2$ (dropped)</td><td class="num">0.5</td><td class="num">1.649</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">marginal $p(y|x)$</td><td class="num"></td><td class="num"></td><td class="num">1.0000</td><td class="num"></td><td class="num">0.6117</td></tr>
+        </tbody>
+       </table>
+       <p>These exact numbers &mdash; the full softmax $[0.6285,0.2312,0.1402]$, the top-2 weights
        $[0.7311,0.2689]$, and the marginal $0.6117$ &mdash; are recomputed in the notebook's first
        cell so you can check them.</p>`,
     recipe:

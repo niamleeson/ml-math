@@ -238,33 +238,36 @@ $$ \\text{(multivariate Bernoulli word prob, for contrast, Eqn. 3)}\\quad \\hat\
     example:
       `<p>A tiny worked example you can verify by hand and in the notebook. Vocabulary of $|V|=5$ words, indexed
        <code>0=fun, 1=couple, 2=love, 3=fast, 4=furious</code>. Two classes: <b>class 0 = romance</b>,
-       <b>class 1 = action</b>. Four training documents, written as count vectors over the 5 words:</p>
+       <b>class 1 = action</b>. Four training documents, written as count vectors $N_{it}$ over the 5 words:</p>
+       <table class="extable">
+        <caption>Training corpus &mdash; one row per document, columns are the word counts $N_{it}$.</caption>
+        <thead><tr><th>doc</th><th class="num">fun</th><th class="num">couple</th><th class="num">love</th><th class="num">fast</th><th class="num">furious</th><th>class</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">d0 "fun fun love couple"</td><td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td>0 romance</td></tr>
+         <tr><td class="row-h">d1 "couple love love"</td><td class="num">0</td><td class="num">1</td><td class="num">2</td><td class="num">0</td><td class="num">0</td><td>0 romance</td></tr>
+         <tr><td class="row-h">d2 "fast furious furious"</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">2</td><td>1 action</td></tr>
+         <tr><td class="row-h">d3 "fast fast fun furious"</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">1</td><td>1 action</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><code>d0 "fun fun love couple"</code> &rarr; $[2,1,1,0,0]$ &nbsp;(class 0)</li>
-        <li><code>d1 "couple love love"</code> &rarr; $[0,1,2,0,0]$ &nbsp;(class 0)</li>
-        <li><code>d2 "fast furious furious"</code> &rarr; $[0,0,0,1,2]$ &nbsp;(class 1)</li>
-        <li><code>d3 "fast fast fun furious"</code> &rarr; $[1,0,0,2,1]$ &nbsp;(class 1)</li>
+        <li><b>Step 1 &mdash; log prior (Eqn 4).</b> 2 of 4 docs in each class, so $P(c_0)=P(c_1)=2/4=0.5$ and $\\log 0.5 = -0.6931$ for both.</li>
+        <li><b>Step 2 &mdash; per-class word totals.</b> Class 0: $d0+d1=[2,2,3,0,0]$, total $=2{+}2{+}3=7$. Class 1: $d2+d3=[1,0,0,3,3]$, total $=1{+}3{+}3=7$. With $\\alpha=1,\\ |V|=5$, each denominator is $5+7=12$.</li>
+        <li><b>Step 3 &mdash; smoothed word probs (Eqn 6),</b> $\\hat\\theta=(1+\\text{count})/12$ &mdash; see the table below.</li>
+        <li><b>Step 4 &mdash; classify</b> <code>"love love fun"</code> $=[1,0,2,0,0]$ (one "fun" at index 0, two "love" at index 2). Class 0: $-0.6931 + 1{\\cdot}\\log 0.25 + 2{\\cdot}\\log 0.3333 = -0.6931 -1.3863 -2.1972 = \\mathbf{-4.2767}$.</li>
+        <li>Class 1: $-0.6931 + 1{\\cdot}\\log 0.1667 + 2{\\cdot}\\log 0.0833 = -0.6931 -1.7918 -4.9698 = \\mathbf{-7.4547}$.</li>
+        <li><b>Compare.</b> $-4.2767 \\gt -7.4547$, so predict <b>class 0 (romance)</b> &mdash; correct, since "love" and "fun" are romance words.</li>
        </ul>
-       <p><b>Step 1 &mdash; log prior (Eqn 4).</b> 2 of 4 documents in each class, so $P(c_0)=P(c_1)=0.5$ and
-       $\\log 0.5 = -0.6931$ for both.</p>
-       <p><b>Step 2 &mdash; per-class word totals.</b> Class 0: $d0+d1=[2,2,3,0,0]$, total $=7$. Class 1:
-       $d2+d3=[1,0,0,3,3]$, total $=7$. With $\\alpha=1$ and $|V|=5$, each denominator is $5+7=12$.</p>
-       <p><b>Step 3 &mdash; smoothed word probs (Eqn 6),</b> $\\hat\\theta=(1+\\text{count})/12$:</p>
-       <ul class="steps">
-        <li>class 0: $[\\tfrac{3}{12},\\tfrac{3}{12},\\tfrac{4}{12},\\tfrac{1}{12},\\tfrac{1}{12}]
-        =[0.25,0.25,0.3333,0.0833,0.0833]$.</li>
-        <li>class 1: $[\\tfrac{2}{12},\\tfrac{1}{12},\\tfrac{1}{12},\\tfrac{4}{12},\\tfrac{4}{12}]
-        =[0.1667,0.0833,0.0833,0.3333,0.3333]$.</li>
-       </ul>
-       <p><b>Step 4 &mdash; classify the test document</b> <code>"love love fun"</code> $=[1,0,2,0,0]$
-       (one "fun" at index 0, two "love" at index 2). Score $=\\log P(c)+\\sum_t N_t\\log\\hat\\theta_{t\\mid c}$:</p>
-       <ul class="steps">
-        <li>class 0: $-0.6931 + 1\\cdot\\log 0.25 + 2\\cdot\\log 0.3333 = -0.6931 -1.3863 -2.1972 = \\mathbf{-4.2767}$.</li>
-        <li>class 1: $-0.6931 + 1\\cdot\\log 0.1667 + 2\\cdot\\log 0.0833 = -0.6931 -1.7918 -4.9698 = \\mathbf{-7.4547}$.</li>
-       </ul>
-       <p>$-4.2767 \\gt -7.4547$, so the prediction is <b>class 0 (romance)</b> &mdash; correct, since "love"
-       and "fun" are romance words. The notebook recomputes these exact numbers with raw torch tensors and
-       asserts they match this hand reference (and match scikit-learn's <code>MultinomialNB</code>).</p>`,
+       <p>The smoothed word probabilities $\\hat\\theta_{w_t\\mid c}=(1+\\text{count})/12$ from Step 3:</p>
+       <table class="extable">
+        <caption>Per-class word probabilities (each row sums to 1 over the 5 words).</caption>
+        <thead><tr><th>class</th><th class="num">fun</th><th class="num">couple</th><th class="num">love</th><th class="num">fast</th><th class="num">furious</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0 romance</td><td class="num">0.2500</td><td class="num">0.2500</td><td class="num">0.3333</td><td class="num">0.0833</td><td class="num">0.0833</td></tr>
+         <tr><td class="row-h">1 action</td><td class="num">0.1667</td><td class="num">0.0833</td><td class="num">0.0833</td><td class="num">0.3333</td><td class="num">0.3333</td></tr>
+        </tbody>
+       </table>
+       <p>The notebook recomputes these exact numbers with raw torch tensors and asserts they match this hand
+       reference (and match scikit-learn's <code>MultinomialNB</code>).</p>`,
     recipe:
       `<ol>
         <li><b>Build the count matrix.</b> Represent each document as a length-$|V|$ vector of word counts

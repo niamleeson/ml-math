@@ -205,28 +205,33 @@
        (Table 1b), which is exactly the ablation you reproduce. The $\\alpha_t$ factor is the standard
        inverse-frequency class weighting, kept because it gave a small additional gain (&sect;3).</p>`,
     example:
-      `<p>Take $\\gamma=2$ and compare an <b>easy</b> example with a <b>hard</b> one, using the core focal loss
-       $-(1-p_t)^2\\log(p_t)$ (no $\\alpha$, so we isolate the modulating factor). These numbers match the
-       notebook and the paper's own quoted ratios (&sect;3).</p>
-       <p><b>Easy example</b>, $p_t = 0.9$ (model is right and confident):</p>
-       <ul>
-        <li>Cross entropy: $-\\log(0.9) = 0.1054$.</li>
-        <li>Modulating factor: $(1-0.9)^2 = (0.1)^2 = 0.01$.</li>
-        <li>Focal loss: $0.01 \\times 0.1054 = 0.001054$.</li>
-        <li>Ratio: cross entropy is $0.1054 / 0.001054 = \\mathbf{100\\times}$ larger. The paper states exactly
-        this: "with $\\gamma=2$, an example classified with $p_t=0.9$ would have 100&times; lower loss compared
-        with CE."</li>
+      `<p>Plug real numbers into the core focal loss $\\text{FL}(p_t) = -(1-p_t)^{\\gamma}\\log(p_t)$ with
+       $\\gamma=2$ (no $\\alpha$, to isolate the modulating factor), and compare it against cross entropy
+       $\\text{CE}(p_t)=-\\log(p_t)$ for an <b>easy</b>, an <b>even-easier</b>, and a <b>hard</b> example.
+       These numbers match the notebook and the paper's own quoted ratios (&sect;3).</p>
+       <ul class="steps">
+        <li><b>Easy example, $p_t = 0.9$.</b> Cross entropy $= -\\log(0.9) = 0.1054$.</li>
+        <li>Modulating factor $= (1-0.9)^2 = (0.1)^2 = 0.01$.</li>
+        <li>Focal loss $= 0.01 \\times 0.1054 = 0.001054$, so $\\text{CE}/\\text{FL} = 1/0.01 = \\mathbf{100\\times}$.
+        The paper states exactly this: "with $\\gamma=2$, an example classified with $p_t=0.9$ would have
+        100&times; lower loss compared with CE."</li>
+        <li><b>Even easier, $p_t = 0.968$.</b> $\\text{CE} = -\\log(0.968) = 0.0325$; factor
+        $= (0.032)^2 = 0.001024$; $\\text{FL} = 0.001024 \\times 0.0325 = 0.0000333$, so
+        $\\text{CE}/\\text{FL} \\approx \\mathbf{977\\times}$ &mdash; matching the paper's quoted "1000&times;."</li>
+        <li><b>Hard example, $p_t = 0.5$.</b> $\\text{CE} = -\\log(0.5) = 0.6931$; factor
+        $= (1-0.5)^2 = 0.25$; $\\text{FL} = 0.25 \\times 0.6931 = 0.1733$, so $\\text{CE}/\\text{FL} = 1/0.25 = \\mathbf{4\\times}$.</li>
        </ul>
-       <p><b>Even easier</b>, $p_t = 0.968$: the factor is $(0.032)^2 \\approx 0.001$, so focal loss is about
-       $\\mathbf{1000\\times}$ smaller than cross entropy &mdash; again matching the paper's quoted "1000&times;."</p>
-       <p><b>Hard example</b>, $p_t = 0.5$ (model is unsure):</p>
-       <ul>
-        <li>Cross entropy: $-\\log(0.5) = 0.6931$.</li>
-        <li>Modulating factor: $(1-0.5)^2 = 0.25$.</li>
-        <li>Focal loss: $0.25 \\times 0.6931 = 0.1733$.</li>
-        <li>Ratio: only $\\mathbf{4\\times}$ smaller. The hard example keeps most of its loss while the easy one
-        was crushed 100&times; &mdash; that 96&times; gap in <i>relative</i> treatment is what refocuses training.</li>
-       </ul>`,
+       <table class="extable">
+        <caption>$\\text{FL} = -(1-p_t)^2\\log(p_t)$ vs $\\text{CE} = -\\log(p_t)$ at $\\gamma=2$.</caption>
+        <thead><tr><th>example</th><th class="num">$p_t$</th><th class="num">$(1-p_t)^2$</th><th class="num">CE</th><th class="num">FL</th><th class="num">CE/FL</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">easy</td><td class="num">0.900</td><td class="num">0.0100</td><td class="num">0.1054</td><td class="num">0.001054</td><td class="num">100&times;</td></tr>
+         <tr><td class="row-h">even easier</td><td class="num">0.968</td><td class="num">0.001024</td><td class="num">0.0325</td><td class="num">0.0000333</td><td class="num">977&times;</td></tr>
+         <tr><td class="row-h">hard</td><td class="num">0.500</td><td class="num">0.2500</td><td class="num">0.6931</td><td class="num">0.1733</td><td class="num">4&times;</td></tr>
+        </tbody>
+       </table>
+       <p>The hard example keeps most of its loss ($4\\times$ smaller) while the easy one is crushed $100\\times$
+       &mdash; that gap in <i>relative</i> treatment is what refocuses training onto the hard minority.</p>`,
     recipe:
       `<p>The focal loss, as numbered steps you will implement:</p>
        <ol>

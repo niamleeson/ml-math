@@ -253,8 +253,18 @@
       `<p>Two tiny worked calculations: the pyramid's time math, then one attention step. Both are
        recomputed in the notebook's first cell so you can check them.</p>
        <p><b>(a) Pyramid time-downsampling (Eqn 5).</b> Start with $T = 8$ frames. Each pBLSTM layer
-       concatenates consecutive pairs, so the length halves:</p>
+       concatenates consecutive pairs, so the length halves and the feature width doubles:</p>
        <p>$$ 8 \\;\\xrightarrow{\\text{pBLSTM}_1}\\; 4 \\;\\xrightarrow{\\text{pBLSTM}_2}\\; 2 \\;\\xrightarrow{\\text{pBLSTM}_3}\\; 1. $$</p>
+       <table class="extable">
+        <caption>Pyramid time math from $T=8$, feature width $d=4$: each layer halves the length, doubles the width.</caption>
+        <thead><tr><th>layer</th><th class="num">time length</th><th class="num">feature width</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">input</td><td class="num">8</td><td class="num">4</td></tr>
+         <tr><td class="row-h">after pBLSTM&#8321;</td><td class="num">4</td><td class="num">8</td></tr>
+         <tr><td class="row-h">after pBLSTM&#8322;</td><td class="num">2</td><td class="num">16</td></tr>
+         <tr><td class="row-h">after pBLSTM&#8323;</td><td class="num">1</td><td class="num">32</td></tr>
+        </tbody>
+       </table>
        <p>After 3 layers, $U = 8/2^3 = \\mathbf{1}$ encoder step &mdash; the $2^3 = 8\\times$ reduction the
        paper reports. (With 16 input frames you would land at $U = 16/8 = 2$.)</p>
        <p><b>(b) One attention step (Eqns 9-11).</b> Take a downsampled Listener output of length $U = 3$
@@ -266,13 +276,23 @@
         $e_1 = 1{\\cdot}2 + 0.5{\\cdot}0 = \\mathbf{2.0}$, &nbsp;
         $e_2 = 1{\\cdot}0 + 0.5{\\cdot}2 = \\mathbf{1.0}$, &nbsp;
         $e_3 = 1{\\cdot}1 + 0.5{\\cdot}1 = \\mathbf{1.5}$.</li>
-        <li><b>Softmax to weights (Eqn 10).</b> $\\exp(e) = [7.389,\\,2.718,\\,4.482]$, summing to
-        $14.589$, so $\\alpha = [0.5065,\\,0.1863,\\,0.3072]$ (they sum to 1). Encoder step 1 wins the most
-        weight.</li>
+        <li><b>Exponentiate (Eqn 10).</b> $e^{2.0}=7.389$, $e^{1.0}=2.718$, $e^{1.5}=4.482$; sum $=14.589$.</li>
+        <li><b>Softmax to weights (Eqn 10).</b> $\\alpha = [7.389,\\,2.718,\\,4.482]/14.589 =
+        [0.5065,\\,0.1863,\\,0.3072]$ (they sum to 1). Encoder step 1 wins the most weight.</li>
         <li><b>Weighted-sum context (Eqn 11).</b>
         $c = 0.5065[2,0] + 0.1863[0,2] + 0.3072[1,1]
         = [1.013{+}0.307,\\;\\,0.373{+}0.307] = [\\mathbf{1.320},\\,\\mathbf{0.680}]$.</li>
        </ul>
+       <table class="extable">
+        <caption>Content attention over $U=3$ encoder steps (Eqns 9&ndash;11): energy &rarr; softmax weight &rarr; contribution to the context.</caption>
+        <thead><tr><th>step $u$</th><th class="num">$h_u$</th><th class="num">energy $e_u$</th><th class="num">$\\exp(e_u)$</th><th class="num">weight $\\alpha_u$</th><th class="num">$\\alpha_u h_u$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">[2, 0]</td><td class="num">2.0</td><td class="num">7.389</td><td class="num">0.5065</td><td class="num">[1.013, 0]</td></tr>
+         <tr><td class="row-h">2</td><td class="num">[0, 2]</td><td class="num">1.0</td><td class="num">2.718</td><td class="num">0.1863</td><td class="num">[0, 0.373]</td></tr>
+         <tr><td class="row-h">3</td><td class="num">[1, 1]</td><td class="num">1.5</td><td class="num">4.482</td><td class="num">0.3072</td><td class="num">[0.307, 0.307]</td></tr>
+         <tr><td class="row-h">context $c$</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">sum 14.589</td><td class="num">1.000</td><td class="num">[1.320, 0.680]</td></tr>
+        </tbody>
+       </table>
        <p>So at this step the Speller reads mostly encoder chunk 1 (weight 0.51) and gets context
        $[1.320,\\,0.680]$. These exact numbers appear in the notebook so you can verify the block.</p>`,
     recipe:

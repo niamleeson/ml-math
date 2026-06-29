@@ -247,27 +247,40 @@
        solves its own sub-problem exactly, neither can raise $J$, which proves the monotone decrease.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> — one full assign+update iteration. Six 2-D points, $k=2$, starting from the two
-       corner centers $\\mu_1=(0,0)$ and $\\mu_2=(10,10)$:</p>
-       <p>Points: $(1,1),(1,3),(2,2)$ (a low-left blob) and $(8,8),(9,7),(7,9)$ (an upper-right blob).</p>
-       <ul>
-         <li><b>Assign (squared distances to $\\mu_1,\\mu_2$).</b>
-           $(1,1)$: $2$ vs $162$ → cluster 1. &nbsp;
-           $(1,3)$: $10$ vs $130$ → 1. &nbsp;
-           $(2,2)$: $8$ vs $128$ → 1.<br>
-           $(8,8)$: $128$ vs $8$ → cluster 2. &nbsp;
-           $(9,7)$: $130$ vs $10$ → 2. &nbsp;
-           $(7,9)$: $130$ vs $10$ → 2.</li>
-         <li><b>Distortion after assigning</b> (sum of the chosen distances):
-           $2+10+8+8+10+10=48$.</li>
-         <li><b>Update (mean of each cluster).</b>
-           $\\mu_1=\\big(\\tfrac{1+1+2}{3},\\tfrac{1+3+2}{3}\\big)=(1.333,\\,2.0)$;
-           $\\mu_2=\\big(\\tfrac{8+9+7}{3},\\tfrac{8+7+9}{3}\\big)=(8.0,\\,8.0)$.</li>
-         <li><b>Distortion after the update</b> (recompute with the new centers): $\\approx 6.667$ — down from
-           $48$. The single update slashed the error because the centers moved into the middle of their points.</li>
+      `<p><b>Worked numbers</b> &mdash; one full assign+update iteration. Six 2-D points, $k=2$, starting from the
+       two corner centers $\\mu_1=(0,0)$ and $\\mu_2=(10,10)$. The points form a low-left blob and an
+       upper-right blob.</p>
+       <table class="extable">
+        <caption>Assign step: squared distance $\\lVert x-\\mu_i\\rVert^2$ from each point to each center; the
+        point joins the nearer one.</caption>
+        <thead>
+         <tr><th>point $x$</th><th class="num">$\\lVert x-\\mu_1\\rVert^2$</th><th class="num">$\\lVert x-\\mu_2\\rVert^2$</th><th class="num">cluster</th><th class="num">chosen dist.</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$(1,1)$</td><td class="num">2</td><td class="num">162</td><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$(1,3)$</td><td class="num">10</td><td class="num">130</td><td class="num">1</td><td class="num">10</td></tr>
+         <tr><td class="row-h">$(2,2)$</td><td class="num">8</td><td class="num">128</td><td class="num">1</td><td class="num">8</td></tr>
+         <tr><td class="row-h">$(8,8)$</td><td class="num">128</td><td class="num">8</td><td class="num">2</td><td class="num">8</td></tr>
+         <tr><td class="row-h">$(9,7)$</td><td class="num">130</td><td class="num">10</td><td class="num">2</td><td class="num">10</td></tr>
+         <tr><td class="row-h">$(7,9)$</td><td class="num">130</td><td class="num">10</td><td class="num">2</td><td class="num">10</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Distortion after assigning</b> &mdash; sum the chosen-distance column:
+           $2+10+8+8+10+10 = 48$.</li>
+         <li><b>Update cluster 1's center</b> to the mean of $(1,1),(1,3),(2,2)$:
+           $\\mu_1=\\big(\\tfrac{1+1+2}{3},\\,\\tfrac{1+3+2}{3}\\big)=\\big(\\tfrac{4}{3},\\,\\tfrac{6}{3}\\big)=(1.333,\\,2.0)$.</li>
+         <li><b>Update cluster 2's center</b> to the mean of $(8,8),(9,7),(7,9)$:
+           $\\mu_2=\\big(\\tfrac{8+9+7}{3},\\,\\tfrac{8+7+9}{3}\\big)=\\big(\\tfrac{24}{3},\\,\\tfrac{24}{3}\\big)=(8.0,\\,8.0)$.</li>
+         <li><b>Distortion after the update</b> &mdash; recompute squared distances to the new centers.
+           Cluster 1: $\\lVert(1,1)-(1.333,2)\\rVert^2+\\lVert(1,3)-(1.333,2)\\rVert^2+\\lVert(2,2)-(1.333,2)\\rVert^2
+           = 1.111+1.111+0.444 = 2.667$. Cluster 2:
+           $\\lVert(8,8)-(8,8)\\rVert^2+\\lVert(9,7)-(8,8)\\rVert^2+\\lVert(7,9)-(8,8)\\rVert^2 = 0+2+2 = 4$.
+           Total $= 2.667+4 = 6.667$ &mdash; down from $48$.</li>
        </ul>
-       <p>The next iteration would not change the assignment, so the centers stop moving and the loop has
-       converged. The CODE cell recomputes these exact numbers and prints them.</p>`,
+       <p>The single update slashed the error from $48$ to $\\approx 6.667$ because each center moved into the
+       middle of its points. The next iteration would not change the assignment, so the centers stop moving and
+       the loop has converged. The CODE cell recomputes these exact numbers and prints them.</p>`,
 
     recipe:
       `<p><b>Lloyd's algorithm (k-means), as numbered steps</b> — given data $X$, a count $k$, and initial

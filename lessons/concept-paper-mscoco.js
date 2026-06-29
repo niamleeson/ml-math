@@ -288,29 +288,42 @@
        the minimum expensive work. That is the same logic as a coarse-to-fine search.</p>`,
     example:
       `<p>There is no formula to plug numbers into, so the worked example walks the <b>annotation pipeline</b>
-       through one image, using the paper's design (&sect;4), and then computes one IoU by hand.</p>
+       through one image, using the paper's design (&sect;4), and then computes one IoU by hand. Take a park scene
+       with two people, one dog, and one frisbee. The three stages narrow the work from "what types?" to "which
+       pixels?":</p>
+       <table class="extable">
+        <caption>The three-stage annotation pipeline (&sect;4) run on one park image. Each stage hands a smaller, more precise job to the next.</caption>
+        <thead>
+         <tr><th>stage</th><th>question it answers</th><th>output on this image</th><th class="num">items produced</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">1 &mdash; category labeling (&sect;4.1)</td><td>what is here?</td><td>{person, dog, frisbee} present</td><td class="num">3 categories</td></tr>
+         <tr><td class="row-h">2 &mdash; instance spotting (&sect;4.2)</td><td>how many, roughly where?</td><td>a cross on each: 2 people, 1 dog, 1 frisbee</td><td class="num">4 markers</td></tr>
+         <tr><td class="row-h">3 &mdash; instance segmentation (&sect;4.3)</td><td>exactly which pixels?</td><td>a traced pixel mask per spotted instance</td><td class="num">4 masks</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Stage 1 &mdash; category labeling (&sect;4.1).</b> Image: a park scene. A worker scans the 11
-        super-categories. Under "animal" they tick <i>dog</i>; under "person" they tick <i>person</i>; under
-        "sports" they tick <i>frisbee</i>. They mark only that each type is <i>present</i> &mdash; "only a single
-        instance of each category needs to be annotated in this stage." Output: {person, dog, frisbee}.</li>
-        <li><b>Stage 2 &mdash; instance spotting (&sect;4.2).</b> A different worker, told the present categories,
-        now places a cross on <b>every</b> separate instance: two people get two crosses, one dog one cross, one
-        frisbee one cross. Output: 4 instance markers. Cheap, and it guarantees nothing is missed.</li>
-        <li><b>Stage 3 &mdash; instance segmentation (&sect;4.3).</b> A trained worker traces the precise pixel
-        outline of each of the 4 spotted instances, producing 4 masks. Several workers verify each outline. This
-        crowded little image now contributes 4 of COCO's 2.5 million labeled instances &mdash; close to the dataset
-        average of <b>7.7 instances per image</b> (&sect;5).</li>
-        <li><b>Scoring one detection with IoU.</b> Suppose a detector predicts a mask of area $A = 100$ pixels for
-        the dog, the true mask has area $B = 120$ pixels, and they overlap on $80$ pixels. Intersection $= 80$.
-        Union $=$ (area of $A$) $+$ (area of $B$) $-$ (overlap) $= 100 + 120 - 80 = 140$. So
-        $\\text{IoU} = 80 / 140 \\approx 0.571$. Against a $0.5$ threshold this detection counts as correct; against
-        a stricter $0.75$ threshold it does not. COCO's standard score averages across such thresholds, so this
-        "okay but not tight" prediction is rewarded at the lenient end and penalized at the strict end &mdash;
-        exactly the localization pressure the masks make possible.</li>
+        <li><b>Stage 1</b> marks only that each type is <i>present</i> &mdash; "only a single instance of each
+        category needs to be annotated in this stage" &mdash; scanning via the 11 super-categories.</li>
+        <li><b>Stage 2</b> places a cross on <b>every</b> separate instance, so counts and rough locations are
+        complete and nothing is missed before the expensive step.</li>
+        <li><b>Stage 3</b> traces the precise outline of each of the 4 spotted instances; several workers verify
+        each mask. This crowded little image contributes 4 of COCO's 2.5 million labeled instances &mdash; close
+        to the dataset average of <b>7.7 instances per image</b> (&sect;5).</li>
        </ul>
-       <p>The CODEVIZ recomputes that IoU and shows the paper's quoted "objects per image" comparison &mdash; COCO
-       7.7 vs. PASCAL 2.3 (&sect;5).</p>`,
+       <p><b>Scoring one detection with IoU.</b> A detector predicts a mask of area $A = 100$ pixels for the dog,
+       the true mask has area $B = 120$ pixels, and they overlap on $80$ pixels:</p>
+       <ul class="steps">
+        <li><b>Intersection</b> $= \\text{overlap} = 80$ pixels.</li>
+        <li><b>Union</b> $= \\text{area}(A) + \\text{area}(B) - \\text{overlap} = 100 + 120 - 80 = 140$ pixels.</li>
+        <li><b>IoU</b> $= 80 / 140 = \\mathbf{0.571}$.</li>
+        <li><b>Threshold test:</b> $0.571 \\ge 0.5$, so this counts as correct at the $0.5$ threshold; but
+        $0.571 \\lt 0.75$, so it fails the stricter $0.75$ threshold.</li>
+       </ul>
+       <p>COCO's standard score averages across such thresholds, so this "okay but not tight" prediction is
+       rewarded at the lenient end and penalized at the strict end &mdash; exactly the localization pressure the
+       masks make possible. The CODEVIZ recomputes that IoU and shows the paper's quoted "objects per image"
+       comparison &mdash; COCO 7.7 vs. PASCAL 2.3 (&sect;5).</p>`,
     recipe:
       `<p>This is a read-only paper, so there is no architecture to assemble. Instead, here is the procedure the
        paper uses to <b>build</b> the dataset &mdash; the recipe you would follow to construct a detection benchmark

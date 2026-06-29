@@ -257,32 +257,33 @@
        weights, so the largest update is unchanged and the rest only shrink &mdash; a learning-rate-stability
        safeguard, not part of the bias math.</p>`,
     example:
-      `<p>Work the pipeline by hand on a tiny buffer of $N = 3$ transitions, using the proportional variant with
-       $\\epsilon = 0.01$, $\\alpha = 0.6$, $\\beta = 0.4$ (the paper's proportional settings). Suppose the
-       three transitions have absolute TD-errors $|\\delta| = [2.0,\\; 1.0,\\; 0.5]$.</p>
+      `<p>Work the full pipeline by hand on a tiny buffer of $N = 3$ transitions, proportional variant with
+       $\\epsilon = 0.01$, $\\alpha = 0.6$, $\\beta = 0.4$ (the paper's proportional settings). The three
+       transitions have absolute TD-errors $|\\delta| = [2.0,\\; 1.0,\\; 0.5]$. Each column applies one formula to
+       every transition:</p>
+       <table class="extable">
+        <caption>priority $\\to$ sampling probability $P(i)$ (Eqn. 1) $\\to$ IS-weight $w_i$ (&sect;3.4) for $N=3$.</caption>
+        <thead><tr><th>transition</th><th class="num">$|\\delta_i|$</th><th class="num">$p_i=|\\delta_i|+\\epsilon$</th><th class="num">$p_i^{0.6}$</th><th class="num">$P(i)$</th><th class="num">$w_i=(\\tfrac1{NP(i)})^{0.4}$</th><th class="num">$w_i/\\max$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1 (most surprising)</td><td class="num">2.0</td><td class="num">2.01</td><td class="num">1.5203</td><td class="num">0.476</td><td class="num">0.8672</td><td class="num">0.7195</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1.0</td><td class="num">1.01</td><td class="num">1.0060</td><td class="num">0.315</td><td class="num">1.0229</td><td class="num">0.8487</td></tr>
+         <tr><td class="row-h">3 (least surprising)</td><td class="num">0.5</td><td class="num">0.51</td><td class="num">0.6676</td><td class="num">0.209</td><td class="num">1.2052</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h"><b>sum</b></td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">3.1939</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Priorities</b> $p_i = |\\delta_i| + \\epsilon$:
-        &nbsp;$p = [2.0 + 0.01,\\; 1.0 + 0.01,\\; 0.5 + 0.01] = [2.01,\\; 1.01,\\; 0.51]$.</li>
-        <li><b>Raise to $\\alpha = 0.6$:</b>
-        &nbsp;$p^{0.6} = [2.01^{0.6},\\; 1.01^{0.6},\\; 0.51^{0.6}] = [1.5203,\\; 1.0060,\\; 0.6676]$.
-        &nbsp;Sum $= 3.1939$.</li>
-        <li><b>Probabilities</b> (Eqn. 1) $P(i) = p_i^{\\alpha} / \\sum_k p_k^{\\alpha}$:
-        &nbsp;$P = [1.5203/3.1939,\\; 1.0060/3.1939,\\; 0.6676/3.1939] = [0.476,\\; 0.315,\\; 0.209]$.
-        &nbsp;The most-surprising transition is now sampled $\\approx 0.476/0.209 \\approx 2.3\\times$ as often as
-        the least.</li>
-        <li><b>Raw IS-weights</b> $w_i = (1/(N\\,P(i)))^{\\beta} = (1/(3\\,P(i)))^{0.4}$:
-        &nbsp;$w = [(1/(3\\cdot0.476))^{0.4},\\; (1/(3\\cdot0.315))^{0.4},\\; (1/(3\\cdot0.209))^{0.4}]
-        = [0.8672,\\; 1.0229,\\; 1.2052]$.
-        &nbsp;Notice the order is <i>flipped</i>: the over-sampled transition (1) gets the <b>smallest</b>
-        weight, the under-sampled one (3) the <b>largest</b> &mdash; exactly the down-weighting we wanted.</li>
-        <li><b>Normalize by $\\max_i w_i = 1.2052$:</b>
-        &nbsp;$w/\\max = [0.7195,\\; 0.8487,\\; 1.0]$. The largest is now $1$; everything else only scales the
-        update <i>down</i>.</li>
+        <li><b>Priorities</b> $p_i=|\\delta_i|+\\epsilon$: $[2.01,\\;1.01,\\;0.51]$ &mdash; the $\\epsilon$ floor keeps even small errors nonzero.</li>
+        <li><b>Raise to $\\alpha=0.6$:</b> $[1.5203,\\;1.0060,\\;0.6676]$, which sum to $3.1939$.</li>
+        <li><b>Probabilities</b> $P(i)=p_i^{0.6}/3.1939$: $[0.476,\\;0.315,\\;0.209]$ &mdash; the most-surprising
+        transition is sampled $\\approx 0.476/0.209 \\approx 2.3\\times$ as often as the least.</li>
+        <li><b>Raw IS-weights</b> $w_i=(1/(3\\,P(i)))^{0.4}$: $[0.8672,\\;1.0229,\\;1.2052]$ &mdash; the order is
+        <i>flipped</i>: the over-sampled transition 1 gets the <b>smallest</b> weight, undoing the over-count.</li>
+        <li><b>Normalize by $\\max_i w_i=1.2052$:</b> $[0.7195,\\;0.8487,\\;1.0]$ &mdash; the largest is now $1$; everything else only scales the update <i>down</i>.</li>
        </ul>
-       <p><b>Sanity check &mdash; what uniform replay would give.</b> Set $\\alpha = 0$: then every $p_i^0 = 1$,
-       so $P(i) = 1/3$ for all, and $w_i = (1/(3\\cdot\\tfrac13))^{\\beta} = 1^{\\beta} = 1$. Uniform sampling
-       needs <i>no</i> correction &mdash; all weights are exactly $1$ &mdash; which is the consistency check that
-       the IS-weight is doing the right thing. These exact numbers are recomputed in the notebook's first cell.</p>`,
+       <p><b>Sanity check &mdash; uniform replay.</b> Set $\\alpha=0$: every $p_i^0=1$, so $P(i)=1/3$ and
+       $w_i=(1/(3\\cdot\\tfrac13))^{0.4}=1^{0.4}=1$ for all. Uniform sampling needs <i>no</i> correction &mdash; all
+       weights exactly $1$ &mdash; the consistency check that the IS-weight is right. These exact numbers are
+       recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Build a DQN as usual</b> (import: <code>nn.Linear</code> Q-network, a target network, an

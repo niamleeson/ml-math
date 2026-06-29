@@ -252,20 +252,35 @@
        reasoning as decoder masking in <code>paper-attention</code>.</p>`,
 
     example:
-      `<p><b>Worked numbers — cost.</b> Take a window $w=4$ ($\\tfrac{1}{2}w=2$ on each side) and compare the
-       number of scored pairs for full vs sliding-window attention as $n$ grows:</p>
-       <ul>
-         <li>$n=8$: full $=8^2=64$ pairs; window $\\approx 8\\times4=32$ pairs (interior rows have 5 live entries,
-         edges fewer; exact count $=34$). Already about half.</li>
-         <li>$n=64$: full $=4096$; window $\\approx 64\\times4=256$. A 16$\\times$ saving.</li>
-         <li>$n=512$: full $=262{,}144$; window $\\approx 512\\times4=2048$. A 128$\\times$ saving.</li>
-       </ul>
-       <p>Doubling $n$ from 256 to 512 <b>quadruples</b> the full cost ($65{,}536\\to262{,}144$) but only
-       <b>doubles</b> the windowed cost ($1024\\to2048$) — that is $O(n^2)$ vs $O(n\\times w)$ in numbers.</p>
-       <p><b>Worked numbers — local match.</b> For a middle token $i$ whose true signal is local, the full-attention
-       weights over its in-window neighbours are already nearly all the weight; renormalizing just those (dropping
-       the tiny far weights and softmax-ing again over the window) barely changes them. The CODE cell measures this
-       gap on a toy sequence and prints it — typically a small fraction.</p>`,
+      `<p>Count the scored token-pairs for full vs sliding-window attention as the sequence grows, with a fixed
+       window $w=4$ (so $\\tfrac{1}{2}w=2$ tokens on each side). Full attention fills the whole $n\\times n$ table,
+       so its count is $n^2$; the window keeps only the band $|i-j|\\le 2$, so its count is
+       $\\sum_{i}\\sum_{j}\\mathbb{1}[|i-j|\\le 2]$ &mdash; about $n\\times w$, smaller at the two edges.</p>
+       <table class="extable">
+        <caption>Scored token-pairs: full $O(n^2)$ vs sliding-window $O(n\\times w)$, window $w=4$.</caption>
+        <thead><tr><th>$n$</th><th class="num">full $=n^2$</th><th class="num">window (band, exact)</th><th class="num">saving $=$ full$/$window</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">8</td><td class="num">64</td><td class="num">34</td><td class="num">1.9&times;</td></tr>
+         <tr><td class="row-h">64</td><td class="num">4,096</td><td class="num">314</td><td class="num">13&times;</td></tr>
+         <tr><td class="row-h">256</td><td class="num">65,536</td><td class="num">1,274</td><td class="num">51&times;</td></tr>
+         <tr><td class="row-h">512</td><td class="num">262,144</td><td class="num">2,554</td><td class="num">103&times;</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Full count at $n=8$.</b> Every token attends to all $8$ tokens: $8\\times 8 = 64$ pairs.</li>
+        <li><b>Window count at $n=8$.</b> Interior rows keep $5$ live entries ($j=i-2,\\dots,i+2$); the two
+        rows nearest each edge keep $4$, the two corner rows keep $3$. Sum
+        $=3+4+5+5+5+5+4+3 = 34$ pairs &mdash; already about half of $64$.</li>
+        <li><b>The two growth laws.</b> Doubling $n$ from $256$ to $512$ <b>quadruples</b> the full cost
+        ($65{,}536 \\to 262{,}144$, a $4\\times$ jump) but only <b>doubles</b> the windowed cost
+        ($1{,}274 \\to 2{,}554$, a $2\\times$ jump). That is exactly $O(n^2)$ vs $O(n\\times w)$ in numbers.</li>
+        <li><b>Saving grows as $n/w$.</b> Full$/$window $\\approx n/w$, so the ratio climbs with length:
+        $\\approx 8/4 = 2\\times$ at $n=8$, up to $\\approx 512/4 = 128\\times$ at $n=512$. Longer documents win more.</li>
+        <li><b>Local match.</b> For a middle token whose signal is local, full attention already places nearly all
+        its weight on the in-window neighbours; re-normalizing just those (a softmax over the band) barely moves
+        the weights. So dropping the far pairs costs almost nothing &mdash; the CODE cell measures this gap and
+        prints a small fraction.</li>
+       </ul>`,
 
     recipe:
       `<p><b>Longformer attention (Section 3.1), as numbered steps:</b></p>

@@ -217,7 +217,8 @@
        defer to.</p>`,
     example:
       `<p>Work one layer by hand with small numbers. Take a $3\\times3$ convolution on an $8\\times8$ feature map
-       that turns $M=3$ input channels into $N=4$ output channels: so $D_K=3$, $M=3$, $N=4$, $D_F=8$.</p>
+       that turns $M=3$ input channels into $N=4$ output channels: so $D_K=3$, $M=3$, $N=4$, $D_F=8$ (note
+       $D_F\\cdot D_F = 64$).</p>
        <ul class="steps">
         <li><b>Standard convolution</b> (eqn&nbsp;2): $D_K\\cdot D_K\\cdot M\\cdot N\\cdot D_F\\cdot D_F =
         3\\cdot3\\cdot3\\cdot4\\cdot8\\cdot8 = 9\\cdot12\\cdot64 = \\mathbf{6912}$ multiply-adds.</li>
@@ -226,10 +227,21 @@
         <li><b>Pointwise step</b> ($1\\times1$): $M\\cdot N\\cdot D_F\\cdot D_F = 3\\cdot4\\cdot8\\cdot8 =
         12\\cdot64 = \\mathbf{768}$.</li>
         <li><b>Separable total</b> (eqn&nbsp;5): $1728 + 768 = \\mathbf{2496}$ multiply-adds.</li>
-        <li><b>Ratio</b>: $2496 / 6912 = \\mathbf{0.3611}$ &mdash; the separable version costs about 36% as much,
-        i.e. roughly <b>2.8x cheaper</b>. Check it against the formula:
-        $\\tfrac{1}{N} + \\tfrac{1}{D_K^2} = \\tfrac14 + \\tfrac19 = 0.25 + 0.1111 = \\mathbf{0.3611}$. Exact match.</li>
+        <li><b>Ratio</b>: $2496 / 6912 = \\mathbf{0.3611}$ &mdash; about 36% as much, i.e. roughly <b>2.8x cheaper</b>.</li>
+        <li><b>Check against the formula</b>: $\\tfrac{1}{N} + \\tfrac{1}{D_K^2} = \\tfrac14 + \\tfrac19 =
+        0.25 + 0.1111 = \\mathbf{0.3611}$. Exact match.</li>
        </ul>
+       <table class="extable">
+        <caption>One $3\\times3$ layer, $M=3 \\to N=4$ on an $8\\times8$ map: standard conv vs the two-step split.</caption>
+        <thead><tr><th>operation</th><th>cost expression</th><th class="num">multiply-adds</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">standard conv</td><td>$D_K^2\\,M\\,N\\,D_F^2$</td><td class="num">$6912$</td></tr>
+         <tr><td class="row-h">depthwise step</td><td>$D_K^2\\,M\\,D_F^2$</td><td class="num">$1728$</td></tr>
+         <tr><td class="row-h">pointwise step</td><td>$M\\,N\\,D_F^2$</td><td class="num">$768$</td></tr>
+         <tr><td class="row-h">separable total</td><td>depthwise $+$ pointwise</td><td class="num">$2496$</td></tr>
+         <tr><td class="row-h">ratio (sep / std)</td><td>$\\tfrac1N + \\tfrac1{D_K^2}$</td><td class="num">$0.3611$</td></tr>
+        </tbody>
+       </table>
        <p>Here the saving is "only" 2.8x because $N=4$ is small, so $\\tfrac1N=0.25$ dominates. Deep in a real
        MobileNet $N$ is in the hundreds, $\\tfrac1N\\to0$, and the ratio approaches $\\tfrac19\\approx0.11$ &mdash;
        the 8-9x the paper quotes. The notebook recomputes all five of these numbers so you can check them.</p>`,

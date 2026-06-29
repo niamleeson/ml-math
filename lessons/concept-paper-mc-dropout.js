@@ -261,17 +261,25 @@ $$ \\log p(\\mathbf{y}^*\\mid\\mathbf{x}^*, \\mathbf{X}, \\mathbf{Y}) \\;\\appro
        $p = 0.5$, which keeps each unit with probability $0.5$. PyTorch uses <b>inverted dropout</b>: it scales
        kept activations by $\\tfrac{1}{1-p} = 2$ so the average activation is unchanged. Run $T = 4$ passes; each
        pass keeps a different random pair of the 4 units.</p>
+       <table class="extable">
+        <caption>$T=4$ stochastic forward passes over $h=[1,2,3,4]$. Output $=$ (sum of kept units) $\\times 2$.</caption>
+        <thead><tr><th>pass $t$</th><th>units kept</th><th class="num">kept sum</th><th class="num">$\\times\\,2$ = output $\\hat{y}_t$</th><th class="num">$(\\hat{y}_t-\\bar{y})^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td>$[1,2]$</td><td class="num">3</td><td class="num">6</td><td class="num">16</td></tr>
+         <tr><td class="row-h">2</td><td>$[2,3]$</td><td class="num">5</td><td class="num">10</td><td class="num">0</td></tr>
+         <tr><td class="row-h">3</td><td>$[1,4]$</td><td class="num">5</td><td class="num">10</td><td class="num">0</td></tr>
+         <tr><td class="row-h">4</td><td>$[3,4]$</td><td class="num">7</td><td class="num">14</td><td class="num">16</td></tr>
+         <tr><td class="row-h"><b>mean / sum</b></td><td></td><td class="num"></td><td class="num"><b>10.0</b></td><td class="num"><b>32</b></td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Pass 1</b> keeps units $[1, 2]$: kept sum $= 1 + 2 = 3$, times the scale $2$ $\\Rightarrow$ output
-        $= 6$.</li>
-        <li><b>Pass 2</b> keeps units $[2, 3]$: kept sum $= 5$, $\\times 2 \\Rightarrow$ output $= 10$.</li>
-        <li><b>Pass 3</b> keeps units $[1, 4]$: kept sum $= 5$, $\\times 2 \\Rightarrow$ output $= 10$.</li>
-        <li><b>Pass 4</b> keeps units $[3, 4]$: kept sum $= 7$, $\\times 2 \\Rightarrow$ output $= 14$.</li>
-        <li><b>Predictive mean</b> (Eq. 6) $= \\tfrac{1}{4}(6 + 10 + 10 + 14) = \\tfrac{40}{4} = 10.0$.</li>
-        <li><b>Predictive variance</b> (sample variance of the 4 outputs, ignoring the constant $\\tau^{-1}$):
-        deviations from the mean are $[6-10,\\,10-10,\\,10-10,\\,14-10] = [-4, 0, 0, 4]$; squared $[16, 0, 0, 16]$;
-        average $= \\tfrac{32}{4} = 8.0$. <b>Standard deviation</b> (the spread we report) $= \\sqrt{8.0} \\approx
-        2.83$.</li>
+        <li><b>Predictive mean</b> (Eq. 6) $= \\tfrac{1}{4}(6 + 10 + 10 + 14) = \\tfrac{40}{4} = 10.0$ (the output
+        column's mean).</li>
+        <li><b>Deviations from the mean.</b> $[6-10,\\,10-10,\\,10-10,\\,14-10] = [-4, 0, 0, 4]$; squared
+        $[16, 0, 0, 16]$ (the last column), summing to $32$.</li>
+        <li><b>Predictive variance</b> (sample variance, ignoring the constant $\\tau^{-1}$)
+        $= \\tfrac{32}{4} = 8.0$.</li>
+        <li><b>Standard deviation</b> (the spread we report) $= \\sqrt{8.0} \\approx 2.83$.</li>
        </ul>
        <p>So this input's prediction is $10.0$ with an uncertainty of about $\\pm 2.83$. Two inputs can share the
        same mean yet differ wildly in spread &mdash; that spread is the whole point. These exact numbers

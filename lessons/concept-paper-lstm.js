@@ -294,22 +294,27 @@
 
     example:
       `<p><b>Worked numbers</b> for one LSTM cell step with hidden size $H=1$ (scalars), input $x_t=1$, previous
-       output $h_{t-1}=0$, previous memory $c_{t-1}=2$. Pre-activation weights (recurrent parts vanish since
+       output $h_{t-1}=0$, previous memory $c_{t-1}=2$. Pre-activation nets (recurrent parts vanish since
        $h_{t-1}=0$): input-gate net $z_i=0.5$, forget-gate net $z_f=1.0$, candidate net $z_g=0.8$, output-gate net
-       $z_o=0.3$.</p>
-       <ul>
-         <li><b>Gates &amp; candidate</b> (apply $\\sigma$ to $i,f,o$ and $\\tanh$ to $g$):
-         <ul>
-           <li>$i = \\sigma(0.5) = 0.622459$</li>
-           <li>$f = \\sigma(1.0) = 0.731059$</li>
-           <li>$g = \\tanh(0.8) = 0.664037$</li>
-           <li>$o = \\sigma(0.3) = 0.574443$</li>
-         </ul></li>
-         <li><b>New memory</b> $c_t = f\\cdot c_{t-1} + i\\cdot g
-         = 0.731059\\cdot 2 + 0.622459\\cdot 0.664037
-         = 1.462118 + 0.413335 = 1.875453$.</li>
-         <li><b>Read out</b> $h_t = o\\cdot\\tanh(c_t) = 0.574443\\cdot\\tanh(1.875453)
-         = 0.574443\\cdot 0.954086 = 0.548068$.</li>
+       $z_o=0.3$. Apply $\\sigma$ to the three gates $i,f,o$ and $\\tanh$ to the candidate $g$:</p>
+       <table class="extable">
+        <caption>The four pre-activations through their activations.</caption>
+        <thead><tr>
+          <th>quantity</th><th>activation</th><th class="num">net $z$</th><th class="num">value</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-h">$i$ (input gate)</td><td>$\\sigma$</td><td class="num">0.5</td><td class="num">0.622459</td></tr>
+          <tr><td class="row-h">$f$ (forget gate)</td><td>$\\sigma$</td><td class="num">1.0</td><td class="num">0.731059</td></tr>
+          <tr><td class="row-h">$g$ (candidate)</td><td>$\\tanh$</td><td class="num">0.8</td><td class="num">0.664037</td></tr>
+          <tr><td class="row-h">$o$ (output gate)</td><td>$\\sigma$</td><td class="num">0.3</td><td class="num">0.574443</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Keep old memory:</b> $f\\cdot c_{t-1} = 0.731059\\cdot 2 = 1.462118$.</li>
+         <li><b>Write new content:</b> $i\\cdot g = 0.622459\\cdot 0.664037 = 0.413335$.</li>
+         <li><b>New memory:</b> $c_t = f\\cdot c_{t-1} + i\\cdot g = 1.462118 + 0.413335 = 1.875453$.</li>
+         <li><b>Squash the memory:</b> $\\tanh(c_t) = \\tanh(1.875453) = 0.954086$.</li>
+         <li><b>Read out:</b> $h_t = o\\cdot\\tanh(c_t) = 0.574443\\cdot 0.954086 = 0.548068$.</li>
        </ul>
        <p>So this cell <b>kept</b> most of its old memory ($f=0.73$ of $2$) and added a bit of the new candidate,
        landing at $c_t=1.875453$, and revealed about $55\\%$ of its squashed memory as the output $h_t=0.548068$.

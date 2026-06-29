@@ -206,18 +206,31 @@
        gradient reaches the early layers instead of vanishing to $0$. The vanishing-gradient setup and the
        per-layer Jacobian product are derived in full in the <b>dl-resnet</b> concept lesson.</p>`,
     example:
-      `<p>Work one block by hand with tiny vectors so the "$+ x$" is concrete. Let the block's input be
-       $x = [0.5,\\,-0.3]$, and suppose its two weight layers compute the residual
-       $F(x) = z = [-0.2,\\,0.1]$. Take $\\sigma$ to be ReLU.</p>
+      `<p>Plug real numbers into the residual block $\\mathbf{y} = \\mathcal{F}(\\mathbf{x}) + \\mathbf{x}$, then
+       apply the final ReLU, so the "$+ x$" is concrete. Let the block's input be $x = [0.5,\\,-0.3]$ and suppose
+       its two weight layers compute the residual $F(x) = [-0.2,\\,0.1]$. Take $\\sigma$ to be ReLU.</p>
        <ul class="steps">
-        <li><b>Add the shortcut</b> (Eqn. 1): $y = F(x) + x = [-0.2 + 0.5,\\;\\; 0.1 + (-0.3)] = [0.3,\\,-0.2]$.</li>
-        <li><b>Apply the final ReLU</b>: $\\sigma(y) = \\mathrm{ReLU}([0.3,\\,-0.2]) = [0.3,\\,0.0]$.</li>
-        <li><b>See what the skip bought you.</b> The first component is $0.3$: the input's $0.5$ plus the
-        small residual $-0.2$. The shortcut <b>kept the $0.5$ alive</b> &mdash; the layers only had to supply
-        the little correction. Without the skip the block would have output $\\mathrm{ReLU}([-0.2,\\,0.1]) =
-        [0.0,\\,0.1]$, throwing the input's signal away.</li>
+        <li><b>Add the shortcut</b> (Eqn. 1), component by component:
+        $y = F(x) + x = [\\,-0.2 + 0.5,\\;\\; 0.1 + (-0.3)\\,] = [0.3,\\,-0.2]$.</li>
+        <li><b>Apply the final ReLU</b>: $\\sigma(y) = \\mathrm{ReLU}([0.3,\\,-0.2]) = [0.3,\\,0.0]$ (keep
+        $0.3$, clip $-0.2$ to $0$).</li>
+        <li><b>Compare against no skip.</b> Drop the "$+ x$" and the block computes
+        $\\mathrm{ReLU}(F(x)) = \\mathrm{ReLU}([-0.2,\\,0.1]) = [0.0,\\,0.1]$ &mdash; the input's $0.5$ is thrown
+        away.</li>
        </ul>
-       <p>These exact numbers are recomputed in the notebook's first cell so you can check the block by
+       <table class="extable">
+        <caption>One block on $x=[0.5,-0.3]$, residual $F(x)=[-0.2,0.1]$: with vs without the skip.</caption>
+        <thead><tr><th>quantity</th><th class="num">comp. 1</th><th class="num">comp. 2</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">input $x$</td><td class="num">0.5</td><td class="num">&minus;0.3</td></tr>
+         <tr><td class="row-h">residual $F(x)$</td><td class="num">&minus;0.2</td><td class="num">0.1</td></tr>
+         <tr><td class="row-h">$y = F(x)+x$</td><td class="num">0.3</td><td class="num">&minus;0.2</td></tr>
+         <tr><td class="row-h">with skip: $\\sigma(y)$</td><td class="num">0.3</td><td class="num">0.0</td></tr>
+         <tr><td class="row-h">no skip: $\\sigma(F(x))$</td><td class="num">0.0</td><td class="num">0.1</td></tr>
+        </tbody>
+       </table>
+       <p>The shortcut <b>kept the $0.5$ alive</b> &mdash; the layers only had to supply the small correction.
+       These exact numbers are recomputed in the notebook's first cell so you can check the block by
        running it.</p>`,
     recipe:
       `<ol>

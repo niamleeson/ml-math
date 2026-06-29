@@ -311,11 +311,19 @@
         Variance: $(2.25 + 0.25 + 0.25 + 2.25)/4 = 1.25$, so $\\sigma = \\sqrt{1.25} \\approx 1.1180$. Divide:
         $\\approx (-1.3416,\\, -0.4472,\\, 0.4472,\\, 1.3416)$. Now the values are <i>centered around zero</i> &mdash;
         two negative, two positive.</li>
-        <li><b>The difference.</b> The two outputs are not just scaled copies of each other; LayerNorm's
-        mean-subtraction flipped the lower half negative, while RMSNorm kept everything positive. The gap comes
-        entirely from the $\\mu = 2.5$ that LayerNorm removed and RMSNorm did not. Had $x$ already had mean zero,
-        the two would have produced proportional results.</li>
        </ul>
+       <table class="extable">
+        <caption>Same input $x=(1,2,3,4)$, two norms: RMSNorm rescales only, LayerNorm re-centers first.</caption>
+        <thead><tr><th>entry $x_i$</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">RMSNorm (&divide; RMS $2.7386$)</td><td class="num">0.3651</td><td class="num">0.7303</td><td class="num">1.0954</td><td class="num">1.4606</td></tr>
+         <tr><td class="row-h">LayerNorm (&minus;$\\mu$, &divide; $\\sigma$)</td><td class="num">&minus;1.3416</td><td class="num">&minus;0.4472</td><td class="num">0.4472</td><td class="num">1.3416</td></tr>
+        </tbody>
+       </table>
+       <p><b>The difference.</b> The two outputs are not just scaled copies of each other; LayerNorm's
+       mean-subtraction flipped the lower half negative, while RMSNorm kept everything positive. The gap comes
+       entirely from the $\\mu = 2.5$ that LayerNorm removed and RMSNorm did not. Had $x$ already had mean zero,
+       the two would have produced proportional results.</p>
        <p>The CODEVIZ recomputes these exact numbers in PyTorch and prints both vectors so you can verify them.</p>`,
     recipe:
       `<p>This is a read-only paper, so there is no model to build from scratch. Here is LLaMA's recipe stated as

@@ -243,19 +243,38 @@ $$ \\pi_{vx}=\\alpha_{pq}(t,x)\\cdot w_{vx}\\,,\\qquad \\alpha_{pq}(t,x) \\;=\\;
        <ul class="steps">
         <li><b>Classify each candidate by $d_{tx}$.</b> $x{=}t$: $d{=}0$. $x{=}a$: $a$ touches $t$, so $d{=}1$.
         $x{=}b$: $b$ does not touch $t$, only reachable as $t\\to v\\to b$, so $d{=}2$.</li>
-        <li><b>Look up the bias $\\alpha$.</b> $\\alpha(t)=1/p=1/2=0.5$ (back). $\\alpha(a)=1=1$ (local).
+        <li><b>Look up the bias $\\alpha$.</b> $\\alpha(t)=1/p=1/2=0.5$ (back). $\\alpha(a)=1$ (local).
         $\\alpha(b)=1/q=1/0.5=2$ (outward).</li>
         <li><b>Unnormalized weights</b> $\\pi=\\alpha\\cdot w$ (all $w{=}1$): $\\pi_t=0.5$, $\\pi_a=1$,
-        $\\pi_b=2$. Sum $=0.5+1+2=3.5$.</li>
-        <li><b>Normalize</b> to probabilities: $P(t)=0.5/3.5\\approx 0.1429$, $P(a)=1/3.5\\approx 0.2857$,
-        $P(b)=2/3.5\\approx 0.5714$.</li>
+        $\\pi_b=2$. Sum $Z=0.5+1+2=3.5$.</li>
+        <li><b>Normalize</b> to probabilities $\\pi/Z$: $P(t)=0.5/3.5\\approx 0.1429$, $P(a)=1/3.5\\approx 0.2857$,
+        $P(b)=2/3.5\\approx 0.5714$ (these sum to $1$).</li>
        </ul>
+       <table class="extable">
+        <caption>One biased step from $v$ (arrived from $t$), with $p=2$, $q=0.5$, all edge weights $1$.</caption>
+        <thead><tr><th>candidate $x$</th><th>move</th><th class="num">$d_{tx}$</th><th class="num">$\\alpha_{pq}$</th><th class="num">$\\pi_{vx}$</th><th class="num">$P(x)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$t$</td><td>back</td><td class="num">0</td><td class="num">$1/p=0.5$</td><td class="num">0.5</td><td class="num">0.1429</td></tr>
+         <tr><td class="row-h">$a$</td><td>local</td><td class="num">1</td><td class="num">$1$</td><td class="num">1.0</td><td class="num">0.2857</td></tr>
+         <tr><td class="row-h">$b$</td><td>outward</td><td class="num">2</td><td class="num">$1/q=2$</td><td class="num">2.0</td><td class="num">0.5714</td></tr>
+         <tr><td class="row-h">sum</td><td></td><td class="num"></td><td class="num"></td><td class="num">3.5</td><td class="num">1.0000</td></tr>
+        </tbody>
+       </table>
        <p>Read it off: with $q=0.5\\lt 1$ the <b>outward</b> node $b$ is <i>most</i> likely ($\\approx 57\\%$)
        &mdash; this is a <b>DFS-like</b> setting that wanders away from the start, biasing toward
        <b>homophily</b>. Flip to $q=2$ and the outward weight becomes $1/q=0.5$, so the sum is
-       $0.5+1+0.5=2$ and $P(b)=0.5/2=0.25$ drops below the local step $P(a)=0.5$ &mdash; now the walk hugs the
-       neighborhood (<b>BFS-like</b>, biasing toward <b>structural equivalence</b>). These exact numbers are
-       recomputed in the notebook's first cell.</p>`,
+       $0.5+1+0.5=2$ and $P(b)=0.5/2=0.25$ drops below the local step $P(a)=1/2=0.5$ &mdash; now the walk hugs the
+       neighborhood (<b>BFS-like</b>, biasing toward <b>structural equivalence</b>). The table below contrasts the
+       two regimes on the same step:</p>
+       <table class="extable">
+        <caption>Same step, two settings of $q$: outward node $b$'s probability flips.</caption>
+        <thead><tr><th>setting</th><th class="num">$P(t)$ back</th><th class="num">$P(a)$ local</th><th class="num">$P(b)$ outward</th><th>regime</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$p{=}2,\\ q{=}0.5$</td><td class="num">0.143</td><td class="num">0.286</td><td class="num">0.571</td><td>DFS-like (homophily)</td></tr>
+         <tr><td class="row-h">$p{=}2,\\ q{=}2$</td><td class="num">0.250</td><td class="num">0.500</td><td class="num">0.250</td><td>BFS-like (struct. equiv.)</td></tr>
+        </tbody>
+       </table>
+       <p>These exact numbers are recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Precompute the bias.</b> For each directed edge $(t,v)$ and each neighbor $x$ of $v$, compute

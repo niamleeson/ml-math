@@ -265,6 +265,18 @@
         <li><b>Readout (Eqn. 3), sum readout $R=\\sum_v h_v^{T}$ with $T=1$.</b>
          $\\hat{y}=h_0^1+h_1^1+h_2^1=3+6+5=14$.</li>
        </ul>
+       <table class="extable">
+        <caption>One message-passing round on the 3-node path $0\\!-\\!1\\!-\\!2$ ($M=h_w$, $U=h_v+m_v$).</caption>
+        <thead>
+         <tr><th>node $v$</th><th>neighbours $N(v)$</th><th class="num">$h_v^0$</th><th class="num">$m_v^1=\\sum_{w}h_w^0$</th><th class="num">$h_v^1=h_v^0+m_v^1$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td>{1}</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+         <tr><td class="row-h">1 (hub)</td><td>{0, 2}</td><td class="num">2</td><td class="num">4</td><td class="num">6</td></tr>
+         <tr><td class="row-h">2</td><td>{1}</td><td class="num">3</td><td class="num">2</td><td class="num">5</td></tr>
+         <tr><td class="row-h"><b>readout $\\sum_v$</b></td><td>&mdash;</td><td class="num">6</td><td class="num">&mdash;</td><td class="num"><b>14</b></td></tr>
+        </tbody>
+       </table>
        <p>Notice the hub (node 1) grew fastest ($2\\to6$) because it has the most neighbours &mdash; structure is
        already showing up after a single round. These exact numbers ($m=[2,4,2]$, $h^1=[3,6,5]$, $\\hat{y}=14$)
        are recomputed in the notebook's first cell so you can check the step.</p>`,

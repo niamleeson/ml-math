@@ -259,10 +259,19 @@
        $f(2)=4$). We perturb with three samples $z = [1, 2, 3]$, so the black-box outputs are
        $f = [1, 4, 9]$. Use the proximity kernel with bandwidth $\\sigma = 1$ and $L_2$ distance, and fit a
        line $g(z) = c_0 + c_1 z$ by weighted least squares.</p>
+       <table class="extable">
+        <caption>The three weighted samples: each $z$, the black box $f(z)=z^2$, and its proximity weight $\\pi_x(z)$.</caption>
+        <thead><tr><th>sample $z$</th><th class="num">$f(z)=z^2$</th><th class="num">$(x-z)^2$</th><th class="num">$\\pi_x(z)=e^{-(x-z)^2}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">1</td><td class="num">1</td><td class="num">0.3679</td></tr>
+         <tr><td class="row-h">2 (the point $x$)</td><td class="num">4</td><td class="num">0</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h">3</td><td class="num">9</td><td class="num">1</td><td class="num">0.3679</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Proximity weights.</b> $\\pi_x(z) = \\exp(-(x-z)^2/\\sigma^2)$ with $x=2$, $\\sigma=1$:
-        $\\pi(1) = e^{-1} \\approx 0.3679$, $\\pi(2) = e^{0} = 1$, $\\pi(3) = e^{-1} \\approx 0.3679$. The middle
-        sample (right on $x$) counts most.</li>
+        <li><b>Proximity weights (table above).</b> $\\pi_x(z) = \\exp(-(x-z)^2/\\sigma^2)$ with $x=2$,
+        $\\sigma=1$: $\\pi(1) = e^{-1} \\approx 0.3679$, $\\pi(2) = e^{0} = 1$, $\\pi(3) = e^{-1} \\approx 0.3679$.
+        The middle sample (right on $x$) counts most.</li>
         <li><b>Set up weighted least squares.</b> Design matrix $X = \\big[\\,[1,1],[1,2],[1,3]\\,\\big]$ (a $1$
         for the intercept, then $z$). Weight matrix $W = \\mathrm{diag}(0.3679,\\,1,\\,0.3679)$. Outputs
         $y = [1,4,9]$. The weighted normal equations are $(X^\\top W X)\\,c = X^\\top W y$ with

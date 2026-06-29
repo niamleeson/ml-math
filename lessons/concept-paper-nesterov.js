@@ -243,18 +243,24 @@
     example:
       `<p><b>Worked numbers</b> — two NAG steps in 1-D on the smooth convex bowl $f(x)=x^2$
        (so $\\nabla f(x)=2x$), with learning rate $\\varepsilon=0.1$, momentum $\\mu=0.9$, starting at
-       $\\theta_0=2.0$ and velocity $v_0=0$:</p>
-       <ul>
-         <li><b>Step 1.</b> Look-ahead point $\\theta_0+\\mu v_0 = 2.0+0.9\\cdot 0 = 2.0$ (with $v_0=0$ it
-         equals the current point). Gradient there: $2\\cdot 2.0 = 4.0$.
-         Velocity: $v_1 = 0.9\\cdot 0 - 0.1\\cdot 4.0 = -0.4$.
-         Update: $\\theta_1 = 2.0 + (-0.4) = 1.6$.</li>
-         <li><b>Step 2.</b> Now $v_1\\ne 0$, so the look-ahead point <i>differs</i> from the current point:
-         $\\theta_1+\\mu v_1 = 1.6 + 0.9\\cdot(-0.4) = 1.24$. Gradient there:
-         $2\\cdot 1.24 = 2.48$ — measured ahead, not at $1.6$.
-         Velocity: $v_2 = 0.9\\cdot(-0.4) - 0.1\\cdot 2.48 = -0.36 - 0.248 = -0.608$.
-         Update: $\\theta_2 = 1.6 + (-0.608) = 0.992$.</li>
+       $\\theta_0=2.0$ and velocity $v_0=0$. We plug into $v_{t+1}=\\mu v_t-\\varepsilon\\nabla f(\\theta_t+\\mu v_t)$.</p>
+       <ul class="steps">
+         <li><b>Step 1 — look-ahead.</b> $\\theta_0+\\mu v_0 = 2.0+0.9{\\cdot}0 = 2.0$ (with $v_0=0$ it equals the current point).</li>
+         <li><b>Step 1 — gradient there.</b> $\\nabla f(2.0)=2{\\cdot}2.0 = 4.0$.</li>
+         <li><b>Step 1 — velocity & update.</b> $v_1 = 0.9{\\cdot}0 - 0.1{\\cdot}4.0 = -0.4$; $\\theta_1 = 2.0 + (-0.4) = 1.6$.</li>
+         <li><b>Step 2 — look-ahead.</b> Now $v_1\\ne 0$, so it <i>differs</i> from the current point: $\\theta_1+\\mu v_1 = 1.6 + 0.9{\\cdot}(-0.4) = 1.24$.</li>
+         <li><b>Step 2 — gradient there.</b> $\\nabla f(1.24)=2{\\cdot}1.24 = 2.48$ — measured ahead, not at $1.6$.</li>
+         <li><b>Step 2 — velocity & update.</b> $v_2 = 0.9{\\cdot}(-0.4) - 0.1{\\cdot}2.48 = -0.36 - 0.248 = -0.608$; $\\theta_2 = 1.6 + (-0.608) = 0.992$.</li>
        </ul>
+       <p>The step ledger, and the column that shows the look-ahead's effect (NAG measures the gradient at the look-ahead point, heavy-ball would measure it at $\\theta_t$):</p>
+       <table class="extable">
+        <caption>Two NAG steps on $f(x)=x^2$; the last column is the gradient classical momentum would have used instead.</caption>
+        <thead><tr><th>step $t$</th><th class="num">$\\theta_t$</th><th class="num">look-ahead $\\theta_t{+}\\mu v_t$</th><th class="num">$\\nabla f$ there</th><th class="num">$v_{t+1}$</th><th class="num">$\\theta_{t+1}$</th><th class="num">heavy-ball $\\nabla f(\\theta_t)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">2.00</td><td class="num">2.00</td><td class="num">4.00</td><td class="num">&minus;0.400</td><td class="num">1.600</td><td class="num">4.00</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1.60</td><td class="num">1.24</td><td class="num">2.48</td><td class="num">&minus;0.608</td><td class="num">0.992</td><td class="num">3.20</td></tr>
+        </tbody>
+       </table>
        <p>The look-ahead is the whole story of step 2: classical momentum would have used the gradient at
        $1.6$ ($=3.2$) instead of at the look-ahead point $1.24$ ($=2.48$), taking a slightly more
        aggressive, less-corrected step. The CODE cell recomputes $\\theta_1=1.6$ and $\\theta_2=0.992$ and

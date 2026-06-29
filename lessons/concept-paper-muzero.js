@@ -250,22 +250,25 @@
     example:
       `<p><b>One latent rollout step, from our trained toy MuZero</b> (corridor, start = cell 3; numbers from our small
        torch run, see CODEVIZ — not the paper's). Recall self-play moved 50/50, so the policy prior should be nearly
-       uninformative; planning must do the work.</p>
-       <ol>
+       uninformative; planning must do the work. We plug real latent values into $f(s^k)$ and $g(s^{k-1},a^k)$.</p>
+       <ul class="steps">
         <li><b>Encode.</b> $s^0 = h(\\text{onehot(cell 3)}) =
-         [\\,0.132,\\,0.101,\\,{-}0.197,\\,0.085,\\,0.016,\\,{-}0.246,\\,0.594,\\,0.031\\,]$ — an 8-D latent vector, not the
-         board.</li>
-        <li><b>Read the root.</b> $f(s^0)$ gives policy $p^0=[0.487,\\,0.513]$ (LEFT, RIGHT) — essentially 50/50, as
-         predicted: the <b>prior alone cannot decide</b>. Value $v^0=0.255$.</li>
-        <li><b>Imagine RIGHT.</b> $g(s^0,\\text{RIGHT})$ gives reward $r^1=0.008\\approx 0$ (the start is not the goal) and
-         a new latent $s^1$. Then $f(s^1)$ gives value $v^1=0.445$.</li>
-        <li><b>Imagine LEFT.</b> $g(s^0,\\text{LEFT})$ gives $r^1=-0.005\\approx 0$ and, via $f$, value $v^1=0.162$.</li>
-        <li><b>Compare.</b> The imagined value rises after RIGHT ($0.255\\to 0.445$) and falls after LEFT
-         ($0.255\\to 0.162$). So even though the prior is a coin-flip, <b>rolling the learned dynamics forward reveals
-         RIGHT is better.</b></li>
-        <li><b>Search confirms it.</b> 80 MCTS simulations give root visit counts $[5,\\,75]$, i.e. policy
-         $\\pi\\approx[0.06,\\,0.94]$ — the agent picks RIGHT. The whole signal came from planning, not the prior.</li>
-       </ol>
+         [\\,0.132,\\,0.101,\\,{-}0.197,\\,0.085,\\,0.016,\\,{-}0.246,\\,0.594,\\,0.031\\,]$ — an 8-D latent vector, not the board.</li>
+        <li><b>Read the root.</b> $f(s^0)\\to$ policy $p^0=[0.487,\\,0.513]$ (LEFT, RIGHT) — essentially 50/50, so the <b>prior alone cannot decide</b>; value $v^0=0.255$.</li>
+        <li><b>Imagine RIGHT.</b> $g(s^0,\\text{RIGHT})\\to$ reward $r^1=0.008\\approx 0$ (start is not the goal) and latent $s^1$; then $f(s^1)\\to$ value $v^1=0.445$.</li>
+        <li><b>Imagine LEFT.</b> $g(s^0,\\text{LEFT})\\to$ reward $r^1={-}0.005\\approx 0$ and, via $f$, value $v^1=0.162$.</li>
+        <li><b>Compute the value change.</b> RIGHT: $0.445-0.255=+0.190$. LEFT: $0.162-0.255=-0.093$. RIGHT raises the imagined value; LEFT lowers it.</li>
+        <li><b>Search confirms it.</b> 80 MCTS simulations give root visit counts $[5,\\,75]$, so $\\pi=[5/80,\\,75/80]=[0.0625,\\,0.9375]\\approx[0.06,\\,0.94]$ — the agent picks RIGHT, all from planning, not the prior.</li>
+       </ul>
+       <p>The two imagined branches side by side — same coin-flip prior, opposite value verdicts:</p>
+       <table class="extable">
+        <caption>Root $s^0$ ($v^0=0.255$): imagine each action one latent step out, read the value with $f$.</caption>
+        <thead><tr><th>imagined action $a^1$</th><th class="num">reward $r^1$ from $g$</th><th class="num">value $v^1$ from $f$</th><th class="num">$v^1-v^0$</th><th class="num">MCTS visits $N$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">RIGHT</td><td class="num">0.008</td><td class="num">0.445</td><td class="num">+0.190</td><td class="num">75</td></tr>
+         <tr><td class="row-h">LEFT</td><td class="num">&minus;0.005</td><td class="num">0.162</td><td class="num">&minus;0.093</td><td class="num">5</td></tr>
+        </tbody>
+       </table>
        <p>These exact numbers are recomputed in the CODE cell and must match.</p>`,
     recipe:
       `<p>The MuZero recipe as numbered steps (what you implement):</p>

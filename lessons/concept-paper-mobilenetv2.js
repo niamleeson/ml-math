@@ -223,25 +223,35 @@
        the block downsamples; for stride&nbsp;1, $h\\,w$ is shared by all three. The lesson uses a stride-1 block so
        the algebra is exact.) This is self-contained &mdash; no separate concept lesson to defer to.</p>`,
     example:
-      `<p>Work one stride-1 block by hand with paper-style numbers. Take a $14\\times14$ feature map, a thin
-       bottleneck of $d'=24$ channels in and $d''=24$ out, expansion $t=6$, kernel $k=3$. So the wide middle has
-       $t\\,d' = 6\\cdot24 = \\mathbf{144}$ channels.</p>
+      `<p>Work one stride-1 block by hand with paper-style numbers. Take a $14\\times14$ feature map ($h\\,w =
+       196$), a thin bottleneck of $d'=24$ channels in and $d''=24$ out, expansion $t=6$, kernel $k=3$. So the
+       wide middle has $t\\,d' = 6\\cdot24 = \\mathbf{144}$ channels.</p>
        <ul class="steps">
-        <li><b>Expand</b> ($1\\times1$, $24\\to144$): $h\\,w\\,d'(t\\,d') = 14\\cdot14\\cdot24\\cdot144 =
-        196\\cdot24\\cdot144 = \\mathbf{677376}$ multiply-adds.</li>
-        <li><b>Depthwise</b> ($3\\times3$ on 144 channels): $h\\,w\\,(t\\,d')\\,k^2 = 196\\cdot144\\cdot9 =
-        \\mathbf{254016}$.</li>
-        <li><b>Project</b> ($1\\times1$, $144\\to24$): $h\\,w\\,(t\\,d')\\,d'' = 196\\cdot144\\cdot24 =
-        \\mathbf{677376}$.</li>
-        <li><b>Block total</b>: $677376 + 254016 + 677376 = \\mathbf{1608768}$. Check with the closed form:
-        $h\\,w\\,d'\\,t(d'+k^2+d'') = 196\\cdot24\\cdot6\\cdot(24+9+24) = 28224\\cdot57 = \\mathbf{1608768}$. Exact match.</li>
+        <li><b>Expand</b> ($1\\times1$, $24\\to144$): $h\\,w\\,d'(t\\,d') = 196\\cdot24\\cdot144 = \\mathbf{677376}$ multiply-adds.</li>
+        <li><b>Depthwise</b> ($3\\times3$ on 144 channels): $h\\,w\\,(t\\,d')\\,k^2 = 196\\cdot144\\cdot9 = \\mathbf{254016}$.</li>
+        <li><b>Project</b> ($1\\times1$, $144\\to24$): $h\\,w\\,(t\\,d')\\,d'' = 196\\cdot144\\cdot24 = \\mathbf{677376}$.</li>
+        <li><b>Block total</b>: $677376 + 254016 + 677376 = \\mathbf{1608768}$.</li>
+        <li><b>Check with the closed form</b>: $h\\,w\\,d'\\,t(d'+k^2+d'') = 196\\cdot24\\cdot6\\cdot(24+9+24) =
+        28224\\cdot57 = \\mathbf{1608768}$. Exact match.</li>
        </ul>
-       <p>For comparison, a single ordinary $3\\times3$ convolution doing $24\\to24$ on the same map costs
-       $h\\,w\\,d'\\,d''\\,k^2 = 196\\cdot24\\cdot24\\cdot9 = \\mathbf{1016064}$, and V1's depthwise-separable block
-       (Eqn&nbsp;1, $h\\,w\\,d'(k^2+d'') = 196\\cdot24\\cdot33$) costs $\\mathbf{155232}$. The inverted-residual block
-       costs more <i>per block</i> than V1's because of the $t=6$ expansion &mdash; but it carries a residual and a
-       linear bottleneck, lets the whole network stay thinner between blocks, and so the <i>full</i> MobileNetV2
-       still ends up smaller and more accurate than V1 (Table&nbsp;4). The notebook recomputes all of these.</p>`,
+       <table class="extable">
+        <caption>One stride-1 block ($14\\times14$, $d'=d''=24$, $t=6$, $k=3$), and the two baselines it is measured against.</caption>
+        <thead><tr><th>operation</th><th>cost expression</th><th class="num">multiply-adds</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">expand $1\\times1$</td><td>$h\\,w\\,d'(t\\,d')$</td><td class="num">$677376$</td></tr>
+         <tr><td class="row-h">depthwise $3\\times3$</td><td>$h\\,w\\,(t\\,d')\\,k^2$</td><td class="num">$254016$</td></tr>
+         <tr><td class="row-h">project $1\\times1$</td><td>$h\\,w\\,(t\\,d')\\,d''$</td><td class="num">$677376$</td></tr>
+         <tr><td class="row-h">inverted-residual block</td><td>$h\\,w\\,d'\\,t(d'+k^2+d'')$</td><td class="num">$1608768$</td></tr>
+         <tr><td class="row-h">standard $3\\times3$ conv</td><td>$h\\,w\\,d'\\,d''\\,k^2$</td><td class="num">$1016064$</td></tr>
+         <tr><td class="row-h">V1 separable block (Eqn 1)</td><td>$h\\,w\\,d'(k^2+d'')$</td><td class="num">$155232$</td></tr>
+        </tbody>
+       </table>
+       <p>The baselines: a single ordinary $3\\times3$ conv doing $24\\to24$ costs $196\\cdot24\\cdot24\\cdot9 =
+       \\mathbf{1016064}$, and V1's depthwise-separable block costs $196\\cdot24\\cdot(9+24) = 196\\cdot24\\cdot33 =
+       \\mathbf{155232}$. The inverted-residual block costs more <i>per block</i> than either, because of the $t=6$
+       expansion &mdash; but it carries a residual and a linear bottleneck, lets the whole network stay thinner
+       between blocks, and so the <i>full</i> MobileNetV2 still ends up smaller and more accurate than V1
+       (Table&nbsp;4). The notebook recomputes all of these.</p>`,
     recipe:
       `<ol>
         <li><b>Build the inverted-residual block</b> (<code>InvertedResidual</code>): expand $1\\times1$ &rarr;

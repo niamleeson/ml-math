@@ -222,22 +222,51 @@
        and so on.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; the classic 2-D toy set (10 points, one row per point):</p>
-       <p><code>X = [[2.5,2.4],[0.5,0.7],[2.2,2.9],[1.9,2.2],[3.1,3.0],[2.3,2.7],[2.0,1.6],[1.0,1.1],[1.5,1.6],[1.1,0.9]]</code></p>
-       <ul>
-         <li><b>Mean:</b> $\\bar x=[1.81,\\,1.91]$. Subtract it from every row to centre.</li>
-         <li><b>Covariance</b> (divide by $n-1=9$): $\\Sigma=\\begin{bmatrix}0.6166 & 0.6154\\\\ 0.6154 & 0.7166\\end{bmatrix}$.
-         The big off-diagonal $0.6154$ says the two features rise together &mdash; a tilted cloud.</li>
-         <li><b>Eigen-decomposition:</b> $\\lambda_1=1.2840,\\ \\lambda_2=0.0491$, with eigenvectors
-         $u_1=[0.6779,\\,0.7352]$ and $u_2=[-0.7352,\\,0.6779]$. $u_1$ points up-and-to-the-right, along the cloud's
-         long diagonal &mdash; the first principal component.</li>
-         <li><b>Explained variance:</b> $\\lambda_1/(\\lambda_1+\\lambda_2)=1.284/1.333=96.3\\%$. One direction
-         captures almost all the spread.</li>
-         <li><b>Keep $k=1$, reconstruct:</b> the average squared reconstruction error is $0.0442$. Notice
-         $\\lambda_2\\cdot\\frac{n-1}{n}=0.0491\\cdot\\frac{9}{10}=0.0442$ &mdash; the error you pay equals the variance
-         you discarded (the dropped eigenvalue). Keep $k=2$ and the error is $0$ (you kept everything).</li>
+      `<p><b>Worked numbers</b> &mdash; the classic 2-D toy set, $n=10$ points (one row per point), $d=2$ features:</p>
+       <table class="extable">
+        <caption>The 10 data points $x_i=(x_{i1},x_{i2})$, and the centred points $\\tilde x_i = x_i - \\bar x$ with $\\bar x=[1.81,1.91]$.</caption>
+        <thead><tr><th>$i$</th><th class="num">$x_{i1}$</th><th class="num">$x_{i2}$</th><th class="num">$\\tilde x_{i1}$</th><th class="num">$\\tilde x_{i2}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">2.5</td><td class="num">2.4</td><td class="num">0.69</td><td class="num">0.49</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.5</td><td class="num">0.7</td><td class="num">$-1.31$</td><td class="num">$-1.21$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2.2</td><td class="num">2.9</td><td class="num">0.39</td><td class="num">0.99</td></tr>
+         <tr><td class="row-h">4</td><td class="num">1.9</td><td class="num">2.2</td><td class="num">0.09</td><td class="num">0.29</td></tr>
+         <tr><td class="row-h">5</td><td class="num">3.1</td><td class="num">3.0</td><td class="num">1.29</td><td class="num">1.09</td></tr>
+         <tr><td class="row-h">6</td><td class="num">2.3</td><td class="num">2.7</td><td class="num">0.49</td><td class="num">0.79</td></tr>
+         <tr><td class="row-h">7</td><td class="num">2.0</td><td class="num">1.6</td><td class="num">0.19</td><td class="num">$-0.31$</td></tr>
+         <tr><td class="row-h">8</td><td class="num">1.0</td><td class="num">1.1</td><td class="num">$-0.81$</td><td class="num">$-0.81$</td></tr>
+         <tr><td class="row-h">9</td><td class="num">1.5</td><td class="num">1.6</td><td class="num">$-0.31$</td><td class="num">$-0.31$</td></tr>
+         <tr><td class="row-h">10</td><td class="num">1.1</td><td class="num">0.9</td><td class="num">$-0.71$</td><td class="num">$-1.01$</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Mean.</b> $\\bar x_1 = (2.5+0.5+2.2+1.9+3.1+2.3+2.0+1.0+1.5+1.1)/10 = 18.1/10 = 1.81$;
+        $\\bar x_2 = (2.4+0.7+2.9+2.2+3.0+2.7+1.6+1.1+1.6+0.9)/10 = 19.1/10 = 1.91$. So $\\bar x=[1.81,1.91]$.</li>
+        <li><b>Covariance</b> (divide by $n-1=9$). $\\Sigma_{11}=\\frac{1}{9}\\sum_i \\tilde x_{i1}^2 = 5.549/9 = 0.6166$;
+        $\\Sigma_{22}=\\frac{1}{9}\\sum_i \\tilde x_{i2}^2 = 6.449/9 = 0.7166$;
+        $\\Sigma_{12}=\\frac{1}{9}\\sum_i \\tilde x_{i1}\\tilde x_{i2} = 5.539/9 = 0.6154$.</li>
+        <li><b>Eigenvalues.</b> For $\\Sigma=\\begin{bmatrix}0.6166 & 0.6154\\\\ 0.6154 & 0.7166\\end{bmatrix}$, solve
+        $\\det(\\Sigma-\\lambda I)=0$: $\\lambda^2 - 1.3332\\,\\lambda + (0.6166\\cdot0.7166 - 0.6154^2) = 0$, i.e.
+        $\\lambda^2 - 1.3332\\,\\lambda + 0.06318 = 0$, giving $\\lambda_1 = 1.2840$, $\\lambda_2 = 0.0491$.</li>
+        <li><b>Eigenvectors.</b> $u_1=[0.6779,0.7352]$ (along the cloud's long diagonal &mdash; the first principal
+        component) and $u_2=[-0.7352,0.6779]$, perpendicular to it.</li>
+        <li><b>Explained variance.</b> Total $=\\lambda_1+\\lambda_2 = 1.2840+0.0491 = 1.3331$, so component 1 captures
+        $\\lambda_1/1.3331 = 0.963 = \\mathbf{96.3\\%}$ of the spread.</li>
+        <li><b>Keep $k=1$, reconstruct.</b> Average squared reconstruction error $=\\lambda_2\\cdot\\frac{n-1}{n}
+        = 0.0491\\cdot\\frac{9}{10} = \\mathbf{0.0442}$ &mdash; exactly the variance you discarded. Keep $k=2$ and the
+        error is $0$ (you kept everything).</li>
        </ul>
-       <p>The CODE cell recomputes all of these and checks them against <code>sklearn.decomposition.PCA</code>.</p>`,
+       <table class="extable">
+        <caption>Keeping $k$ of $d=2$ components: variance captured and reconstruction error.</caption>
+        <thead><tr><th>$k$</th><th class="num">variance captured</th><th class="num">explained ratio</th><th class="num">reconstruction MSE</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">0.0000</td><td class="num">0.0%</td><td class="num">1.1998</td></tr>
+         <tr><td class="row-h">1</td><td class="num">1.2840</td><td class="num">96.3%</td><td class="num">0.0442</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1.3331</td><td class="num">100.0%</td><td class="num">0.0000</td></tr>
+        </tbody>
+       </table>
+       <p>The $k=0$ error is the total variance times $\\frac{n-1}{n}$: $1.3331\\cdot0.9 = 1.1998$. The CODE cell
+       recomputes all of these and checks them against <code>sklearn.decomposition.PCA</code>.</p>`,
 
     recipe:
       `<p><b>PCA, as numbered steps</b> (Pearson 1901 / Hotelling 1933, modern form):</p>

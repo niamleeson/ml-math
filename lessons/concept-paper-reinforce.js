@@ -323,29 +323,33 @@
        <b>eligibility accumulator</b> $\\sum_t e_{ij}(t)$ per weight, updated online as the episode runs and
        multiplied by $(r-b)$ once the reward arrives.</p>`,
     example:
-      `<p>Work one REINFORCE policy-gradient term by hand &mdash; the exact case the notebook's first cell
-       recomputes. Take $\\gamma = 0.99$ and a short $3$-step CartPole episode (every step gives reward
-       $+1$), and focus on the very first action $a_1$.</p>
+      `<p>Plug real numbers into the REINFORCE loss term $-\\log\\pi(a_t\\mid s_t)\\cdot(G_t - b)$ by hand &mdash;
+       the exact case the notebook's first cell recomputes. Take $\\gamma = 0.99$ and a short $3$-step CartPole
+       episode (every step gives reward $+1$), and focus on the very first action $a_1$, which the policy gave
+       probability $\\pi = 0.6$.</p>
        <ul class="steps">
-        <li><b>The return that follows $a_1$.</b> From state $s_1$ the agent takes action $a_1$, then the
-        episode lasts $3$ steps with rewards $r_1 = r_2 = r_3 = 1$. The return is
+        <li><b>The return that follows $a_1$</b> (computed backward, $G \\leftarrow r + \\gamma G$):
         $G_1 = r_1 + \\gamma r_2 + \\gamma^2 r_3 = 1 + 0.99(1) + 0.99^2(1) = 1 + 0.99 + 0.9801 = 2.9701$.</li>
-        <li><b>The log-probability.</b> Suppose the policy gave action $a_1$ probability $\\pi = 0.6$, so
-        $\\log\\pi = \\log 0.6 = -0.5108$ (to 4 dp). The score $\\nabla_\\theta\\log\\pi$ points toward making
-        $a_1$ more likely.</li>
-        <li><b>The policy-gradient term (no baseline).</b> The per-step <b>objective</b> contribution is
-        $\\log\\pi \\cdot G_1 = (-0.5108)(2.9701) = -1.5172$, so the per-step <b>loss</b> we minimize is its
-        negative, $-\\log\\pi\\cdot G_1 = +1.5172$. Gradient descent on $+1.5172$ raises $\\log\\pi$ (since
-        $G_1 \\gt 0$), pushing $a_1$'s probability <i>up</i> &mdash; a good action gets reinforced.</li>
-        <li><b>With a baseline.</b> Let the baseline be the running mean return $b = 2.0$. Then the
-        advantage is $G_1 - b = 2.9701 - 2.0 = 0.9701$, and the loss term becomes
-        $-\\log\\pi\\cdot(G_1 - b) = -(-0.5108)(0.9701) = +0.4956$. Same <i>sign</i> (still pushes $a_1$ up),
-        but a smaller, recentered magnitude &mdash; the variance-reducing effect of subtracting the
-        baseline.</li>
+        <li><b>The log-probability</b> of the action taken: $\\log\\pi = \\log 0.6 = -0.5108$ (to 4 dp). The
+        score $\\nabla_\\theta\\log\\pi$ points toward making $a_1$ more likely.</li>
+        <li><b>No-baseline loss term</b> ($b=0$): $-\\log\\pi\\cdot G_1 = -(-0.5108)(2.9701) = +1.5172$.
+        Gradient descent on $+1.5172$ raises $\\log\\pi$ (since $G_1 \\gt 0$), pushing $a_1$'s probability
+        <i>up</i> &mdash; a good action gets reinforced.</li>
+        <li><b>With baseline</b> $b = 2.0$ (running mean return): advantage $G_1 - b = 2.9701 - 2.0 = 0.9701$,
+        so $-\\log\\pi\\cdot(G_1 - b) = -(-0.5108)(0.9701) = +0.4956$. Same <i>sign</i> (still pushes $a_1$ up),
+        smaller recentered magnitude &mdash; the variance-reducing effect of the baseline.</li>
        </ul>
-       <p>These exact numbers ($G_1 = 2.9701$, $\\log 0.6 = -0.5108$, no-baseline loss term $= 1.5172$,
-       with-baseline loss term $= 0.4956$) are recomputed in the notebook's first cell so you can check them
-       by running it.</p>`,
+       <table class="extable">
+        <caption>Same action ($\\log\\pi = -0.5108$, $G_1 = 2.9701$), with vs without the baseline $b=2.0$.</caption>
+        <thead><tr><th>variant</th><th class="num">$G_1 - b$</th><th class="num">$-\\log\\pi\\cdot(G_1-b)$</th><th>moves $a_1$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">no baseline ($b=0$)</td><td class="num">2.9701</td><td class="num">+1.5172</td><td>up</td></tr>
+         <tr><td class="row-h">with baseline ($b=2.0$)</td><td class="num">0.9701</td><td class="num">+0.4956</td><td>up</td></tr>
+        </tbody>
+       </table>
+       <p>These exact numbers ($G_1 = 2.9701$, $\\log 0.6 = -0.5108$, no-baseline term $= 1.5172$,
+       with-baseline term $= 0.4956$) are recomputed in the notebook's first cell so you can check them by
+       running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build a policy network</b> from <code>nn.Linear</code>: state in, action <b>logits</b> out

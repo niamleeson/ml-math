@@ -246,25 +246,29 @@
 
     example:
       `<p><b>Worked numbers</b> &mdash; one mixed example and its mixed loss, on a 2-class problem. Take two
-       training examples (using tiny 2D inputs for clarity):</p>
-       <ul>
-         <li>Example $i$ is class 0: input $x_i=[0,\\,2]$, one-hot label $y_i=[1,\\,0]$.</li>
-         <li>Example $j$ is class 1: input $x_j=[3,\\,1]$, one-hot label $y_j=[0,\\,1]$.</li>
-         <li>Drawn mixing weight: $\\lambda=0.7$.</li>
+       training examples (tiny 2D inputs for clarity) and a drawn mixing weight $\\lambda=0.7$:</p>
+       <table class="extable">
+        <caption>Two real examples and the mixed virtual one, $\\lambda=0.7$ (so $1-\\lambda=0.3$).</caption>
+        <thead><tr><th>example</th><th class="num">input $x$</th><th class="num">one-hot label $y$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$i$ (class 0)</td><td class="num">$[0,\\,2]$</td><td class="num">$[1,\\,0]$</td></tr>
+         <tr><td class="row-h">$j$ (class 1)</td><td class="num">$[3,\\,1]$</td><td class="num">$[0,\\,1]$</td></tr>
+         <tr><td class="row-h">mixed $\\tilde{x},\\tilde{y}$</td><td class="num">$[0.9,\\,1.7]$</td><td class="num">$[0.7,\\,0.3]$</td></tr>
+        </tbody>
+       </table>
+       <p>Plug into $\\tilde{x}=\\lambda x_i+(1-\\lambda)x_j$ and $\\tilde{y}=\\lambda y_i+(1-\\lambda)y_j$:</p>
+       <ul class="steps">
+        <li><b>Blend the input, first coord.</b> $0.7\\cdot0 + 0.3\\cdot3 = 0.9$.</li>
+        <li><b>Blend the input, second coord.</b> $0.7\\cdot2 + 0.3\\cdot1 = 1.4 + 0.3 = 1.7$. So $\\tilde{x}=\\mathbf{[0.9,\\,1.7]}$.</li>
+        <li><b>Blend the label the SAME way.</b> $0.7[1,0] + 0.3[0,1] = \\mathbf{[0.7,\\,0.3]}$ &mdash; a soft target, "70% class 0, 30% class 1."</li>
+        <li><b>Mixed loss.</b> Say the model outputs $p=[0.6,\\,0.4]$ on $\\tilde{x}$. Cross-entropy vs the soft target is $\\ell = -\\sum_k \\tilde{y}_k\\ln p_k = -(0.7\\ln 0.6 + 0.3\\ln 0.4)$.</li>
+        <li><b>Per-class losses.</b> $-\\ln 0.6 = 0.5108$ and $-\\ln 0.4 = 0.9163$.</li>
+        <li><b>Combine.</b> $0.7(0.5108) + 0.3(0.9163) = 0.35756 + 0.27489 = \\mathbf{0.6325}$.</li>
        </ul>
-       <p><b>Blend the input:</b> $\\tilde{x}=0.7\\,[0,2]+0.3\\,[3,1]=[0.7\\cdot0+0.3\\cdot3,\\;0.7\\cdot2+0.3\\cdot1]
-       =\\mathbf{[0.9,\\,1.7]}$.</p>
-       <p><b>Blend the label:</b> $\\tilde{y}=0.7\\,[1,0]+0.3\\,[0,1]=\\mathbf{[0.7,\\,0.3]}$ &mdash; a soft target,
-       "70% class 0, 30% class 1."</p>
-       <p><b>Mixed loss.</b> Suppose the model outputs class probabilities $p=[0.6,\\,0.4]$ on $\\tilde{x}$. The
-       cross-entropy against the soft target is $\\ell=-\\sum_k \\tilde{y}_k\\log p_k
-       =-(0.7\\ln 0.6+0.3\\ln 0.4)$. Since $-\\ln 0.6=0.5108$ and $-\\ln 0.4=0.9163$:
-       $\\ell=0.7(0.5108)+0.3(0.9163)=\\mathbf{0.6325}$.</p>
-       <p>Notice the mixed cross-entropy equals
-       $\\lambda\\,\\ell(p,\\text{class }0)+(1-\\lambda)\\,\\ell(p,\\text{class }1)$ &mdash; the same $\\lambda$-weighted
-       average of the two single-class losses ($0.7\\cdot0.5108+0.3\\cdot0.9163=0.6325$). That identity (linearity
-       of cross-entropy in the soft label) is exactly how mixup is implemented in practice. The CODE cell
-       recomputes all of these and prints them.</p>`,
+       <p>Notice the mixed cross-entropy equals $\\lambda\\,\\ell(p,\\text{class }0)+(1-\\lambda)\\,\\ell(p,\\text{class }1)$
+       &mdash; the same $\\lambda$-weighted average of the two single-class losses. That identity (linearity of
+       cross-entropy in the soft label) is exactly how mixup is implemented in practice. The CODE cell recomputes
+       all of these and prints them.</p>`,
 
     recipe:
       `<p><b>mixup, as numbered steps</b> &mdash; one training batch:</p>

@@ -213,15 +213,26 @@
        in the paper; we recap the two-class core here. The Bayes-rule background lives in the
        <b>prob-bayes</b> and <b>ml-knn</b> concept lessons.</p>`,
     example:
-      `<p>Work the rule by hand on three training points in the plane. Distances are squared Euclidean
-       (taking the square root does not change which point is nearest, so we skip it). Train set:</p>
+      `<p>Work the rule by hand on three training points in the plane, classifying the query $x = (2,0)$.
+       Distances are squared Euclidean &mdash; $\\lVert x - x_i\\rVert^2 = (x^{(1)}-x_i^{(1)})^2 +
+       (x^{(2)}-x_i^{(2)})^2$ &mdash; and we skip the square root because it does not change which point is
+       nearest.</p>
+       <table class="extable">
+        <caption>Each training point, its label, and its squared distance to the query $x=(2,0)$.</caption>
+        <thead>
+         <tr><th>training point</th><th class="num">label</th><th>$\\lVert x - x_i\\rVert^2$</th><th class="num">value</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$x_1=(0,0)$</td><td class="num">0</td><td>$(2-0)^2+(0-0)^2$</td><td class="num">4</td></tr>
+         <tr><td class="row-h">$x_2=(3,4)$</td><td class="num">1</td><td>$(2-3)^2+(0-4)^2=1+16$</td><td class="num">17</td></tr>
+         <tr><td class="row-h">$x_3=(1,0)$</td><td class="num">0</td><td>$(2-1)^2+(0-0)^2$</td><td class="num">1</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li>$x_1 = (0,0)$, label $0$. &nbsp; $x_2 = (3,4)$, label $1$. &nbsp; $x_3 = (1,0)$, label $0$.</li>
-        <li><b>Query</b> $x = (2,0)$. Compute squared distances to each training point:</li>
-        <li>to $x_1$: $(2-0)^2 + (0-0)^2 = 4$. &nbsp; to $x_2$: $(2-3)^2 + (0-4)^2 = 1 + 16 = 17$. &nbsp;
-        to $x_3$: $(2-1)^2 + (0-0)^2 = 1$.</li>
-        <li><b>Take the smallest</b>: the distances are $[4,\\,17,\\,1]$, so $\\arg\\min = x_3$ (distance $1$).</li>
-        <li><b>Copy its label</b>: $x_3$ has label $0$, so the NN rule predicts <b>class 0</b> for the query.</li>
+        <li><b>Collect the squared distances.</b> Reading the last column: $[\\,4,\\;17,\\;1\\,]$.</li>
+        <li><b>Take the smallest.</b> $\\arg\\min[\\,4,17,1\\,]$ is the third entry, so the nearest neighbor is
+        $x_3=(1,0)$ at distance $1$.</li>
+        <li><b>Copy its label.</b> $x_3$ has label $0$, so the NN rule predicts <b>class 0</b> for the query.</li>
        </ul>
        <p>Notice $x_2$ is class $1$ but far away ($17$), so it is ignored entirely &mdash; only the single
        nearest point votes. These exact numbers $[4, 17, 1]$ and the predicted label $0$ are recomputed in

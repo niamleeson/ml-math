@@ -238,26 +238,34 @@
        reduction and detail preservation" (abstract). The cost saving comes from a simple counting argument,
        worked next: an $f\\times f$ spatial shrink leaves $1/f^2$ as many positions for the U-Net to process.</p>`,
     example:
-      `<p>Work the <b>compute saving from the downsampling factor $f$</b> by hand &mdash; this is the number the
-       whole paper turns on. The denoiser's cost per reverse step is dominated by the number of spatial
-       positions it must process. A convolutional U-Net does $O(1)$ work per position, so:</p>
+      `<p>Work the <b>compute saving from the downsampling factor $f$</b> by hand on a $256\\times256$ image &mdash;
+       this is the number the whole paper turns on. The denoiser's cost per reverse step is dominated by the number
+       of spatial positions it must process (a convolutional U-Net does $O(1)$ work per position), so the saving is
+       just a ratio of position counts. Plug $f=4$ into $z=\\mathcal{E}(x)$ with $f=H/h=W/w$:</p>
        <ul class="steps">
-        <li><b>Pixel image.</b> Take $H=W=256$. Pixel-space positions: $256\\times 256 = 65{,}536$.</li>
-        <li><b>Encode with $f=4$.</b> Latent spatial size is $H/f \\times W/f = 64\\times 64$. Latent positions:
-        $64\\times 64 = 4{,}096$.</li>
-        <li><b>Ratio.</b> $65{,}536 / 4{,}096 = \\mathbf{16}$. So each latent denoising step touches $16\\times$
-        fewer positions &mdash; and $16 = f^2 = 4^2$. <b>The per-step saving is $f^2$.</b></li>
-        <li><b>Over a full sample.</b> Diffusion runs the same step many times (say $T$ reverse steps), so the
-        whole sampling cost scales by the same $\\approx 1/f^2$. The decoder $\\mathcal{D}$ runs <i>once</i> at
-        the end, so it is a tiny add-on, not multiplied by $T$.</li>
-        <li><b>Try $f=8$.</b> Latent is $32\\times 32 = 1{,}024$ positions; ratio $65{,}536/1{,}024 = \\mathbf{64}=8^2$.
-        Bigger $f$ saves more compute &mdash; but the paper warns (&sect;4.1) that "too strong first stage
-        compression result[s] in information loss and thus limit[s] the achievable quality." That tension is the
-        whole point of the ablation: $f\\in\\{4,8\\}$ is the sweet spot.</li>
+        <li><b>Pixel positions.</b> $H\\times W = 256\\times 256 = 65{,}536$.</li>
+        <li><b>Latent spatial size at $f=4$.</b> $H/f = 256/4 = 64$, so the latent is $64\\times 64$.</li>
+        <li><b>Latent positions.</b> $64\\times 64 = 4{,}096$.</li>
+        <li><b>Ratio.</b> $65{,}536 / 4{,}096 = \\mathbf{16}$ &mdash; and $16 = f^2 = 4^2$. <b>The per-step saving is $f^2$</b>, because the latent shrinks along <i>both</i> height and width.</li>
        </ul>
-       <p>So with $f=4$ on a $256^2$ image, one latent step is about <b>16&times; cheaper</b> than one pixel
-       step, for the <i>same</i> denoiser per position. The notebook recomputes these exact counts (and times an
-       actual U-Net step at both resolutions to confirm the $\\approx f^2$ ratio).</p>`,
+       <p>Sweep $f$ to see the trade-off the paper ablates (positions $=(256/f)^2$, saving $=f^2$):</p>
+       <table class="extable">
+         <caption>Per-step cost on a $256\\times256$ image vs downsampling factor $f$.</caption>
+         <thead><tr><th>$f$</th><th class="num">latent side $256/f$</th><th class="num">positions $(256/f)^2$</th><th class="num">saving $f^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1 (pixel)</td><td class="num">256</td><td class="num">65,536</td><td class="num">1&times;</td></tr>
+           <tr><td class="row-h">2</td><td class="num">128</td><td class="num">16,384</td><td class="num">4&times;</td></tr>
+           <tr><td class="row-h">4</td><td class="num">64</td><td class="num">4,096</td><td class="num">16&times;</td></tr>
+           <tr><td class="row-h">8</td><td class="num">32</td><td class="num">1,024</td><td class="num">64&times;</td></tr>
+           <tr><td class="row-h">16</td><td class="num">16</td><td class="num">256</td><td class="num">256&times;</td></tr>
+         </tbody>
+       </table>
+       <p>So with $f=4$ one latent step is about <b>16&times; cheaper</b> than a pixel step, and at $f=8$ it is
+       $\\mathbf{64}\\times=8^2$. This saving multiplies over every one of the $T$ reverse steps, while the decoder
+       $\\mathcal{D}$ runs <i>once</i> at the end (not multiplied by $T$). Bigger $f$ saves more, but the paper warns
+       (&sect;4.1) that "too strong first stage compression result[s] in information loss and thus limit[s] the
+       achievable quality" &mdash; which is why $f\\in\\{4,8\\}$ is the sweet spot. The notebook recomputes these exact
+       counts and times an actual U-Net step at both resolutions to confirm the $\\approx f^2$ ratio.</p>`,
     recipe:
       `<ol>
         <li><b>Stage 1 &mdash; train the autoencoder once.</b> Train an encoder $\\mathcal{E}$ and decoder

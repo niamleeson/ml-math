@@ -240,24 +240,34 @@
     example:
       `<p>Quantize one real value to int8 and back, by hand. Use the unsigned 8-bit convention from the paper
        ($q$ ranges over $0\\ldots255$, so $n = 256$ levels). Suppose a tensor's real range is
-       $[a, b] = [-2.0,\\ 6.0]$.</p>
+       $[a, b] = [-2.0,\\ 6.0]$. First find the two map constants:</p>
        <ul class="steps">
         <li><b>Scale.</b> The step size spans the range across $255$ gaps:
-        $S = (b - a)/(255) = 8 / 255 = 0.031373$ (real units per integer step).</li>
+        $S = (b - a)/255 = 8 / 255 = 0.031373$ (real units per integer step).</li>
         <li><b>Zero-point.</b> Pick $Z$ so the bottom of the range, $a = -2.0$, maps to integer $0$:
-        $Z = 0 - a/S = 0 - (-2.0)/0.031373 = 63.75 \\to \\mathbf{64}$ (rounded to an integer). Check: real $0$ maps
-        to $q = \\text{round}(0/S) + Z = 64$, and dequantizing $q=64$ gives $S(64 - 64) = 0$ exactly &mdash; zero
-        is represented with no error, as promised.</li>
-        <li><b>Quantize</b> $r = 1.5$. Invert Eq. 1: $q = \\text{round}(r/S) + Z = \\text{round}(1.5 / 0.031373) + 64
-        = \\text{round}(47.81) + 64 = 48 + 64 = \\mathbf{112}$. It is inside $[0,255]$, so no clamp needed. The
-        single int8 byte that stores $1.5$ is $112$.</li>
-        <li><b>Dequantize</b> back with Eq. 1: $\\hat{r} = S(q - Z) = 0.031373 \\times (112 - 64) = 0.031373 \\times 48
-        = \\mathbf{1.50588}$. The recovered value is $1.50588$ versus the true $1.5$ &mdash; a rounding error of
-        about $\\mathbf{+0.0059}$, less than one step $S$. That small, bounded error is exactly what
-        quantization-aware training teaches the net to tolerate.</li>
+        $Z = 0 - a/S = 2.0/0.031373 = 63.75 \\to \\mathbf{64}$ (rounded to an integer).</li>
+        <li><b>Quantize</b> $r = 1.5$ by inverting Eq. 1: $q = \\text{round}(r/S) + Z = \\text{round}(47.81) + 64
+        = 48 + 64 = \\mathbf{112}$ (inside $[0,255]$, so no clamp).</li>
+        <li><b>Dequantize</b> with Eq. 1: $\\hat{r} = S(q - Z) = 0.031373 \\times (112 - 64) = 0.031373 \\times 48
+        = \\mathbf{1.505882}$ &mdash; an error of $r-\\hat{r} = -0.005882$, less than one step $S$.</li>
        </ul>
-       <p>These exact numbers ($S = 8/255$, $Z = 64$, $r=1.5 \\to q=112 \\to \\hat{r}=1.50588$) are recomputed in
-       the notebook's first cell so you can check them by running it.</p>`,
+       <p>Run the same quantize&rarr;dequantize on a few values and watch every recovered $\\hat{r}$ land on the
+       grid within one step $S\\approx0.0314$ of the original &mdash; and real $0$ recovered exactly:</p>
+       <table class="extable">
+        <caption>Affine int8 round-trip on range $[-2,6]$: $q=\\text{round}(r/S)+Z$, $\\hat r=S(q-Z)$, $S=8/255$, $Z=64$.</caption>
+        <thead><tr><th class="num">$r$</th><th class="num">$r/S$</th><th class="num">$q$</th><th class="num">$\\hat r = S(q-Z)$</th><th class="num">error $r-\\hat r$</th></tr></thead>
+        <tbody>
+         <tr><td class="num">&minus;2.0</td><td class="num">&minus;63.75</td><td class="num">0</td><td class="num">&minus;2.007843</td><td class="num">+0.007843</td></tr>
+         <tr><td class="num">0.0</td><td class="num">0.00</td><td class="num">64</td><td class="num">0.000000</td><td class="num">0.000000</td></tr>
+         <tr><td class="num">1.5</td><td class="num">47.81</td><td class="num">112</td><td class="num">1.505882</td><td class="num">&minus;0.005882</td></tr>
+         <tr><td class="num">3.0</td><td class="num">95.63</td><td class="num">160</td><td class="num">3.011765</td><td class="num">&minus;0.011765</td></tr>
+         <tr><td class="num">6.0</td><td class="num">191.25</td><td class="num">255</td><td class="num">5.992157</td><td class="num">+0.007843</td></tr>
+        </tbody>
+       </table>
+       <p>Real $0$ recovers exactly ($q=Z=64 \\Rightarrow \\hat r = 0$), as the zero-point guarantees; every other
+       value sits on the int grid within one step. That small, bounded error is exactly what quantization-aware
+       training teaches the net to tolerate. These exact numbers ($S = 8/255$, $Z = 64$, $r=1.5 \\to q=112 \\to
+       \\hat{r}=1.505882$) are recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build fake-quant</b> as a custom autograd op. <b>Forward:</b> step $S = (b-a)/(2^{\\text{bits}}-1)$,

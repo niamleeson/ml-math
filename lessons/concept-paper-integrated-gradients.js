@@ -250,6 +250,19 @@
         Plain gradients <b>double-count</b> the interaction; Integrated Gradients splits it evenly and sums to the
         gap.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-feature attribution: Integrated Gradients vs plain grad$\\times$input. Only IG sums to the
+        prediction gap $F(x)-F(x')=2$.</caption>
+        <thead>
+         <tr><th>feature</th><th class="num">$\\text{IG}_i$</th><th class="num">plain $\\frac{\\partial F}{\\partial x_i}\\cdot(x_i-x'_i)$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$x_1$</td><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$x_2$</td><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">2</td><td class="num">4</td></tr>
+         <tr><td class="row-h">target gap</td><td class="num">2</td><td class="num">2</td></tr>
+        </tbody>
+       </table>
        <p>The notebook's first cell recomputes this with a $50$-step Riemann sum. A right-endpoint sum on an
        increasing integrand slightly overshoots, giving $\\text{IG} \\approx (1.02, 1.02)$, sum $\\approx 2.04$;
        it tightens toward the exact $(1, 1)$ as the step count grows (sum $\\to 2$). You will see that

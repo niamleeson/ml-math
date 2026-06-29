@@ -230,20 +230,32 @@
        instead of the $m$ batch examples.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> (one example, a feature vector of $H=4$ values, $\\epsilon$ tiny enough to
-       ignore):</p>
-       <ul>
-         <li>Feature vector for one example: <code>[2, 4, 4, 6]</code>.</li>
-         <li>Mean over the features: $\\mu=(2+4+4+6)/4=4$.</li>
-         <li>Variance over the features: $\\sigma^2=\\big((2-4)^2+(4-4)^2+(4-4)^2+(6-4)^2\\big)/4=(4+0+0+4)/4=2$.</li>
-         <li>Standard deviation: $\\sigma=\\sqrt{2}\\approx 1.4142$.</li>
-         <li>Normalize: $\\hat{x}=[(2-4)/1.4142,\\,0,\\,0,\\,(6-4)/1.4142]=[-1.4142,\\,0,\\,0,\\,1.4142]$.</li>
-         <li>Scale &amp; shift with gain $g=2$, bias $b=1$ (same for every feature here):
-         $y=2\\cdot[-1.4142,0,0,1.4142]+1=[-1.8284,\\;1,\\;1,\\;3.8284]$.</li>
+      `<p>LayerNorm one example with $H=4$ features, $a=[2,4,4,6]$, learned gain $g=2$ and bias $b=1$ (the same
+       for every feature here), $\\epsilon$ tiny enough to ignore. First the statistics over the four features:</p>
+       <ul class="steps">
+         <li><b>Mean over the features.</b> $\\mu=\\frac{1}{4}(2+4+4+6)=\\frac{16}{4}=4$.</li>
+         <li><b>Variance over the features</b> (biased, divide by $H=4$).
+         $\\sigma^2=\\frac{1}{4}\\big((2-4)^2+(4-4)^2+(4-4)^2+(6-4)^2\\big)=\\frac{4+0+0+4}{4}=\\frac{8}{4}=2$.</li>
+         <li><b>Standard deviation.</b> $\\sigma=\\sqrt{2}\\approx 1.4142$.</li>
        </ul>
-       <p>Note we averaged over the <b>four features of this one example</b> &mdash; no other example was
-       involved. The CODE cell recomputes these exact numbers and checks them against
-       <code>nn.LayerNorm</code>.</p>`,
+       <p>Now apply $y_i=g\\cdot\\frac{a_i-\\mu}{\\sigma}+b$ feature by feature &mdash; the per-feature ledger:</p>
+       <table class="extable">
+         <caption>Each feature: center by $\\mu=4$, divide by $\\sigma\\approx1.4142$, then $\\times g{=}2$ and $+b{=}1$.</caption>
+         <thead><tr><th>feature $a_i$</th><th class="num">$a_i-\\mu$</th><th class="num">$\\hat{x}_i=(a_i-\\mu)/\\sigma$</th><th class="num">$y_i=2\\hat{x}_i+1$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">2</td><td class="num">$-2$</td><td class="num">$-1.4142$</td><td class="num">$-1.8284$</td></tr>
+           <tr><td class="row-h">4</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$1$</td></tr>
+           <tr><td class="row-h">4</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$1$</td></tr>
+           <tr><td class="row-h">6</td><td class="num">$+2$</td><td class="num">$1.4142$</td><td class="num">$3.8284$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Normalized vector</b> (mean $0$, std $\\approx1$): $\\hat{x}=[-1.4142,\\,0,\\,0,\\,1.4142]$.</li>
+         <li><b>Output</b> after gain/bias: $y=2\\cdot[-1.4142,0,0,1.4142]+1=[-1.8284,\\;1,\\;1,\\;3.8284]$.</li>
+       </ul>
+       <p>Every number came from the <b>four features of this one example</b> &mdash; no other example entered the
+       calculation, which is exactly why the answer is identical at any batch size. The CODE cell recomputes these
+       exact numbers and checks them against <code>nn.LayerNorm</code>.</p>`,
 
     recipe:
       `<p><b>Layer Normalization as numbered steps</b> (input is one example's feature vector of length $H$):</p>

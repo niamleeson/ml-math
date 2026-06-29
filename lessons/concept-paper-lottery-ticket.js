@@ -256,22 +256,36 @@
        is just the bookkeeping of $m$, $\\theta_0$, and $m \\odot \\theta_0$.</p>`,
     example:
       `<p>Work the prune-and-reset on one tiny 4-weight layer so the "reset to $\\theta_0$" step is concrete.
-       Suppose this layer started at init</p>
-       <p>$$ \\theta_0 = [\\,0.30,\\; -0.05,\\; 0.80,\\; -0.60\\,] $$</p>
-       <p>and after $j$ training steps became</p>
-       <p>$$ \\theta_j = [\\,0.20,\\; 0.04,\\; 0.90,\\; -0.50\\,]. $$</p>
+       This layer started at init $\\theta_0 = [\\,0.30,\\, -0.05,\\, 0.80,\\, -0.60\\,]$ and after $j$ training
+       steps became $\\theta_j = [\\,0.20,\\, 0.04,\\, 0.90,\\, -0.50\\,]$. We magnitude-prune $50\\%$ (delete the
+       two smallest $|\\theta_j|$), then reset the survivors to $\\theta_0$.</p>
+       <table class="extable">
+        <caption>Per-weight prune-and-reset ledger ($P^2$-style bookkeeping for the 4-weight layer).</caption>
+        <thead><tr>
+          <th>weight $i$</th>
+          <th class="num">$\\theta_{0,i}$ (init)</th>
+          <th class="num">$\\theta_{j,i}$ (trained)</th>
+          <th class="num">$|\\theta_{j,i}|$</th>
+          <th>keep?</th>
+          <th class="num">$m_i$</th>
+          <th class="num">ticket $m_i\\theta_{0,i}$</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-h">1</td><td class="num">0.30</td><td class="num">0.20</td><td class="num">0.20</td><td>prune (2nd smallest)</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td class="row-h">2</td><td class="num">&minus;0.05</td><td class="num">0.04</td><td class="num">0.04</td><td>prune (smallest)</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td class="row-h">3</td><td class="num">0.80</td><td class="num">0.90</td><td class="num">0.90</td><td>keep (largest)</td><td class="num">1</td><td class="num">0.80</td></tr>
+          <tr><td class="row-h">4</td><td class="num">&minus;0.60</td><td class="num">&minus;0.50</td><td class="num">0.50</td><td>keep (2nd largest)</td><td class="num">1</td><td class="num">&minus;0.60</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Take magnitudes of the trained weights:</b>
-        $|\\theta_j| = [\\,0.20,\\; 0.04,\\; 0.90,\\; 0.50\\,]$.</li>
-        <li><b>Magnitude-prune 50&percnt;</b> (delete the two smallest). The two smallest magnitudes are
-        $0.04$ and $0.20$ (weights 2 and 1). So the mask keeps weights 3 and 4:
-        $m = [\\,0,\\; 0,\\; 1,\\; 1\\,]$.</li>
-        <li><b>Reset survivors to $\\theta_0$ (the key step):</b> the winning ticket is
-        $m \\odot \\theta_0 = [\\,0,\\; 0,\\; 0.80,\\; -0.60\\,]$. Notice the survivors take their
-        <i>original</i> values $0.80$ and $-0.60$ &mdash; <b>not</b> their trained values $0.90$ and $-0.50$.</li>
-        <li><b>Contrast &mdash; the random-reinit ablation:</b> keep the same mask $[\\,0,0,1,1\\,]$ but draw a
-        <i>fresh</i> random pair for the two survivors (say $[\\,0,\\,0,\\,0.11,\\,-0.42\\,]$). Same wiring,
-        different starting values. The paper shows this trains worse.</li>
+        <li><b>Rank the trained magnitudes:</b> $|\\theta_j| = [\\,0.20,\\, 0.04,\\, 0.90,\\, 0.50\\,]$; smallest two are
+        $0.04$ (weight 2) and $0.20$ (weight 1).</li>
+        <li><b>Prune those two</b> &rarr; mask $m = [\\,0,\\, 0,\\, 1,\\, 1\\,]$ (sparsity $P_m = \\lVert m\\rVert_0/|\\theta| = 2/4 = 0.50$).</li>
+        <li><b>Reset survivors to $\\theta_0$ (the key step):</b> winning ticket
+        $m \\odot \\theta_0 = [\\,0,\\, 0,\\, 0.80,\\, -0.60\\,]$ &mdash; survivors take their <i>original</i> values
+        $0.80,\\,-0.60$, <b>not</b> the trained $0.90,\\,-0.50$.</li>
+        <li><b>Random-reinit ablation:</b> same mask $[\\,0,0,1,1\\,]$ but a <i>fresh</i> random pair, e.g.
+        $[\\,0,\\,0,\\,0.11,\\,-0.42\\,]$. Same wiring, different start &mdash; the paper shows this trains worse.</li>
        </ul>
        <p>These exact numbers are recomputed in the notebook's first cell so you can check the prune-and-reset
        by running it.</p>`,

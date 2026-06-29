@@ -252,29 +252,40 @@ $$ y \\;=\\; \\tanh\\!\\big(W_{k,f} * x + V_{k,f} * s\\big) \\;\\odot\\; \\sigma
        $x_i$ itself never enters its own prediction. That is the whole correctness argument.</p>`,
     example:
       `<p><b>Worked numeric example: one masked $3\\times3$ convolution at one pixel.</b> This is the exact
-       computation recomputed in the notebook's first cell. Take a $3\\times3$ patch of a (single-channel) image
-       centered on the pixel we are predicting, and a $3\\times3$ filter. Index kernel rows/cols $0,1,2$; the
-       center is $(1,1)$.</p>
-       <p>Image patch (center is the pixel being predicted, value $9$):</p>
+       computation recomputed in the notebook's first cell. Take a $3\\times3$ patch $X$ of a (single-channel) image
+       centered on the pixel we are predicting (value $9$), and an all-ones filter $W$. Index kernel rows/cols
+       $0,1,2$; the center is $(1,1)$.</p>
        <p>$$ X = \\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 9 & 6 \\\\ 7 & 8 & 5 \\end{bmatrix}, \\qquad
             W = \\begin{bmatrix} 1 & 1 & 1 \\\\ 1 & 1 & 1 \\\\ 1 & 1 & 1 \\end{bmatrix}\\ (\\text{all ones, for clarity}). $$</p>
-       <p><b>Step 1 &mdash; build mask A.</b> Keep positions strictly <i>before</i> the center in raster order
-       (the whole top row, and the center-row entries left of center); zero the center and everything after:</p>
-       <p>$$ M_A = \\begin{bmatrix} 1 & 1 & 1 \\\\ 1 & 0 & 0 \\\\ 0 & 0 & 0 \\end{bmatrix}. $$</p>
-       <p><b>Step 2 &mdash; apply the mask to the weights:</b> $W\\odot M_A = M_A$ here (since $W$ is all ones).</p>
-       <p><b>Step 3 &mdash; masked convolution = sum of (patch $\\times$ masked weight), position by position:</b></p>
+       <p>The masked convolution is $\\sum (X \\odot W \\odot M)$ &mdash; sum the patch times the masked weight,
+       position by position. The table shows, for each of the $9$ kernel positions, the patch value and which masks
+       keep it ($1$) or zero it ($0$):</p>
+       <table class="extable">
+        <caption>Per-position contribution $X\\odot M$ under mask A, mask B, and no mask. Center $(1,1)$ is the pixel being predicted.</caption>
+        <thead><tr><th>position</th><th class="num">$X$</th><th class="num">mask A</th><th class="num">mask B</th><th class="num">unmasked</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$(0,0)$ past</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$(0,1)$ past</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$(0,2)$ past</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td></tr>
+         <tr><td class="row-h">$(1,0)$ past</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td></tr>
+         <tr><td class="row-h">$(1,1)$ <b>center</b></td><td class="num">9</td><td class="num">0</td><td class="num">9</td><td class="num">9</td></tr>
+         <tr><td class="row-h">$(1,2)$ future</td><td class="num">6</td><td class="num">0</td><td class="num">0</td><td class="num">6</td></tr>
+         <tr><td class="row-h">$(2,0)$ future</td><td class="num">7</td><td class="num">0</td><td class="num">0</td><td class="num">7</td></tr>
+         <tr><td class="row-h">$(2,1)$ future</td><td class="num">8</td><td class="num">0</td><td class="num">0</td><td class="num">8</td></tr>
+         <tr><td class="row-h">$(2,2)$ future</td><td class="num">5</td><td class="num">0</td><td class="num">0</td><td class="num">5</td></tr>
+         <tr><td class="row-h"><b>sum (output)</b></td><td class="num">45</td><td class="num">10</td><td class="num">19</td><td class="num">45</td></tr>
+        </tbody>
+       </table>
+       <p>Read the three column sums step by step:</p>
        <ul class="steps">
-        <li>Top row: $1\\cdot1 + 2\\cdot1 + 3\\cdot1 = 1+2+3 = 6$.</li>
-        <li>Center row: $4\\cdot1 + \\underbrace{9\\cdot0}_{\\text{center masked}} + 6\\cdot0 = 4 + 0 + 0 = 4$.</li>
-        <li>Bottom row (all future): $7\\cdot0 + 8\\cdot0 + 5\\cdot0 = 0$.</li>
-        <li><b>Mask-A output</b> $= 6 + 4 + 0 = \\mathbf{10}$. Crucially the center value $9$ contributed
+        <li><b>Mask A</b> keeps only the past: $1+2+3+4=\\mathbf{10}$. The center value $9$ contributed
         <b>nothing</b> &mdash; the prediction cannot see the pixel it is predicting.</li>
+        <li><b>Mask B</b> adds the center back: $10 + 9\\cdot1 = \\mathbf{19}$. The difference $19-10=9$ is
+        <i>exactly</i> the center pixel &mdash; the only thing mask B changes.</li>
+        <li><b>Unmasked</b> (the ablation) also adds the future: $19 + 6 + (7+8+5) = 19 + 6 + 20 = \\mathbf{45}$
+        &mdash; it has illegally seen $x_i$ and every future pixel.</li>
        </ul>
-       <p><b>Step 4 &mdash; contrast with mask B</b> (center allowed): $M_B$ is $M_A$ with the center set to $1$,
-       so the output gains $9\\cdot1 = 9$, giving $10 + 9 = \\mathbf{19}$. And the <b>unmasked</b> conv (the
-       ablation) adds the future too: $19 + (6) + (7+8+5) = 19 + 6 + 20 = \\mathbf{45}$ &mdash; it has illegally
-       seen $x_i$ and all the future pixels. The notebook computes all three ($10$, $19$, $45$) and asserts the
-       mask-A output equals the no-center sum.</p>`,
+       <p>The notebook computes all three ($10$, $19$, $45$) and asserts mask-B $-$ mask-A $=9$, the center value.</p>`,
     recipe:
       `<ol>
         <li><b>MaskedConv2d.</b> Subclass <code>nn.Conv2d</code>. Register a 0/1 buffer the shape of the weight:

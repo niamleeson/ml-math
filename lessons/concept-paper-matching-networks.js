@@ -222,26 +222,32 @@
        where same-class points align. The general few-shot setup (support sets, episodes, the metric view) is
        laid out in the <b>fs-few-shot</b> concept lesson; here we only recap.</p>`,
     example:
-      `<p>Work a tiny 3-way 1-shot task by hand. Embeddings are 2-D so you can see the angles. Suppose the
-       query embeds to $f(\\hat{x})=[1.0,\\,0.5]$, and the three support examples (one per class) embed to:</p>
-       <ul class="steps">
-        <li>class 0: $g(x_0)=[1.0,\\,0.4]$ &nbsp; (points almost the same way as the query)</li>
-        <li>class 1: $g(x_1)=[-0.5,\\,1.0]$ &nbsp; (roughly perpendicular)</li>
-        <li>class 2: $g(x_2)=[0.2,\\,-1.0]$ &nbsp; (points away)</li>
-       </ul>
+      `<p>Work a tiny 3-way 1-shot task by hand. Embeddings are 2-D so you can see the angles. The query embeds
+       to $f(\\hat{x})=[1.0,\\,0.5]$, and the three support examples (one per class) embed as in the table below.
+       Each row carries one support point all the way to its vote weight $a_i$.</p>
+       <table class="extable">
+        <caption>3-way 1-shot vote. $c_i=c(f(\\hat{x}),g(x_i))$ is cosine similarity; $a_i=\\text{softmax}(c)_i$.</caption>
+        <thead><tr><th>class $i$</th><th>support $g(x_i)$</th><th class="num">cosine $c_i$</th><th class="num">$e^{c_i}$</th><th class="num">weight $a_i$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0 (near query)</td><td>$[1.0,\\,0.4]$</td><td class="num">0.9965</td><td class="num">2.709</td><td class="num">0.6050</td></tr>
+         <tr><td class="row-h">1 (perpendicular)</td><td>$[-0.5,\\,1.0]$</td><td class="num">0.0000</td><td class="num">1.000</td><td class="num">0.2233</td></tr>
+         <tr><td class="row-h">2 (points away)</td><td>$[0.2,\\,-1.0]$</td><td class="num">-0.2631</td><td class="num">0.769</td><td class="num">0.1717</td></tr>
+         <tr><td class="row-h"><b>sum</b></td><td></td><td class="num"></td><td class="num">4.478</td><td class="num"><b>1.0000</b></td></tr>
+        </tbody>
+       </table>
        <p>The one-hot support labels are $y_0=[1,0,0]$, $y_1=[0,1,0]$, $y_2=[0,0,1]$.</p>
        <ul class="steps">
-        <li><b>Step 1 &mdash; cosine similarities</b> $c\\big(f(\\hat{x}),g(x_i)\\big)$ (the cosine of the angle
-        between the query vector and each support vector):
-        $c_0 = 0.9965$, &nbsp; $c_1 = 0.0$, &nbsp; $c_2 = -0.2631$.</li>
-        <li><b>Step 2 &mdash; softmax to attention weights.</b> Exponentiate:
-        $e^{0.9965}=2.709$, $e^{0}=1.000$, $e^{-0.2631}=0.769$; sum $=4.478$. Divide:
-        $a = [\\,2.709/4.478,\\;1.000/4.478,\\;0.769/4.478\\,] = [0.6050,\\;0.2233,\\;0.1717]$ (sums to 1).</li>
-        <li><b>Step 3 &mdash; weighted label sum</b> (Eqn. 1): since each $y_i$ is one-hot, $\\hat{y}$ just
-        equals the weight vector:
-        $\\hat{y}=0.6050\\,[1,0,0]+0.2233\\,[0,1,0]+0.1717\\,[0,0,1]=[0.6050,\\,0.2233,\\,0.1717]$.</li>
-        <li><b>Step 4 &mdash; predict.</b> The largest entry is index 0, so the predicted class is
-        <b>0</b> &mdash; the class of the support example the query was most aligned with.</li>
+        <li><b>Step 1 &mdash; cosine similarities</b> $c\\big(f(\\hat{x}),g(x_i)\\big)$. For class 0:
+        $\\tfrac{(1.0)(1.0)+(0.5)(0.4)}{\\sqrt{1.0^2+0.5^2}\\,\\sqrt{1.0^2+0.4^2}}=\\tfrac{1.20}{(1.118)(1.077)}=0.9965$;
+        likewise $c_1=0.0$, $c_2=-0.2631$ (the cosine column).</li>
+        <li><b>Step 2 &mdash; exponentiate.</b> $e^{0.9965}=2.709$, $e^{0}=1.000$, $e^{-0.2631}=0.769$;
+        sum $=2.709+1.000+0.769=4.478$ (the $e^{c_i}$ column).</li>
+        <li><b>Step 3 &mdash; normalize to attention weights.</b> Divide each by $4.478$:
+        $a=[2.709/4.478,\\;1.000/4.478,\\;0.769/4.478]=[0.6050,\\;0.2233,\\;0.1717]$, which sums to $1$.</li>
+        <li><b>Step 4 &mdash; weighted label sum</b> (Eqn. 1): since each $y_i$ is one-hot, $\\hat{y}$ just equals
+        the weight vector: $\\hat{y}=[0.6050,\\,0.2233,\\,0.1717]$.</li>
+        <li><b>Step 5 &mdash; predict.</b> The largest entry is index 0, so the predicted class is <b>0</b>
+        &mdash; the class of the support example the query was most aligned with.</li>
        </ul>
        <p>These exact numbers are recomputed in the notebook's first cell so you can check the vote by
        running it.</p>`,

@@ -217,18 +217,31 @@
        the student.)</p>`,
     example:
       `<p>Soften a real logit vector and watch the small probabilities grow. Take logits
-       $z = [2.0,\\,1.0,\\,0.1,\\,-1.0]$ for four classes.</p>
+       $z = [2.0,\\,1.0,\\,0.1,\\,-1.0]$ for four classes, and apply Eqn. 1 at $T=1$ then $T=4$.</p>
        <ul class="steps">
-        <li><b>At $T = 1$</b> (ordinary softmax). Exponentiate: $e^{2.0}=7.389$, $e^{1.0}=2.718$,
-        $e^{0.1}=1.105$, $e^{-1.0}=0.368$. Sum $= 11.580$. Divide:
-        $q = [7.389,\\,2.718,\\,1.105,\\,0.368] / 11.580 = [0.638,\\,0.235,\\,0.095,\\,0.032]$.</li>
-        <li><b>At $T = 4$</b> (softened). First divide the logits by $4$: $[0.5,\\,0.25,\\,0.025,\\,-0.25]$.
-        Exponentiate: $[1.649,\\,1.284,\\,1.025,\\,0.779]$, sum $= 4.737$. Divide:
+        <li><b>$T=1$, exponentiate the raw logits.</b> $e^{2.0}=7.389$, $e^{1.0}=2.718$,
+        $e^{0.1}=1.105$, $e^{-1.0}=0.368$.</li>
+        <li><b>$T=1$, normalize.</b> Sum $= 7.389+2.718+1.105+0.368 = 11.580$. Divide each:
+        $q = [0.638,\\,0.235,\\,0.095,\\,0.032]$.</li>
+        <li><b>$T=4$, first divide the logits by $4$.</b> $z/4 = [0.5,\\,0.25,\\,0.025,\\,-0.25]$.</li>
+        <li><b>$T=4$, exponentiate.</b> $e^{0.5}=1.649$, $e^{0.25}=1.284$, $e^{0.025}=1.025$, $e^{-0.25}=0.779$.</li>
+        <li><b>$T=4$, normalize.</b> Sum $= 1.649+1.284+1.025+0.779 = 4.737$. Divide each:
         $q = [0.348,\\,0.271,\\,0.217,\\,0.164]$.</li>
         <li><b>Read the difference.</b> The top class fell from $0.638$ to $0.348$; the bottom class rose from
         $0.032$ to $0.164$ &mdash; a $5\\times$ jump. Softening did not change the <i>ranking</i>, but it made
         the wrong-class odds <b>visible</b>. That visible structure is exactly what the student learns from.</li>
        </ul>
+       <table class="extable">
+        <caption>Softened softmax $q_i$ of $z=[2.0,1.0,0.1,-1.0]$ &mdash; raising $T$ flattens the distribution.</caption>
+        <thead><tr><th>class $i$</th><th class="num">logit $z_i$</th><th class="num">$q_i$ at $T=1$</th><th class="num">$q_i$ at $T=4$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1 (top)</td><td class="num">2.0</td><td class="num">0.638</td><td class="num">0.348</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1.0</td><td class="num">0.235</td><td class="num">0.271</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.1</td><td class="num">0.095</td><td class="num">0.217</td></tr>
+         <tr><td class="row-h">4 (bottom)</td><td class="num">&minus;1.0</td><td class="num">0.032</td><td class="num">0.164</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">&mdash;</td><td class="num">1.000</td><td class="num">1.000</td></tr>
+        </tbody>
+       </table>
        <p>These exact numbers are recomputed in the notebook's first cell:
        $T{=}1 \\to [0.6381, 0.2347, 0.0954, 0.0318]$ and $T{=}4 \\to [0.3481, 0.2711, 0.2165, 0.1644]$.</p>`,
     recipe:

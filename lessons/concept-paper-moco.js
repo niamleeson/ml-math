@@ -222,11 +222,23 @@
         barely budges. That is exactly why every key already in the queue is still "almost current."</li>
        </ul>
        <p><b>(b) The InfoNCE loss (Eqn. 1)</b> for $1$ positive and $K=2$ negatives, with $\\tau=0.07$. Suppose
-       the (cosine) similarities are: positive $q\\!\\cdot\\!k_+ = 0.8$, negatives $0.5$ and $0.3$.</p>
+       the (cosine) similarities are: positive $q\\!\\cdot\\!k_+ = 0.8$, negatives $0.5$ and $0.3$. The table builds
+       the softmax denominator one key at a time:</p>
+       <table class="extable">
+        <caption>Per-key terms of the InfoNCE softmax ($\\tau=0.07$). The positive sits in column&nbsp;0.</caption>
+        <thead>
+         <tr><th>key</th><th class="num">sim $q\\!\\cdot\\!k$</th><th class="num">logit $=$ sim$/\\tau$</th><th class="num">$\\exp(\\text{logit})$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$k_+$ (positive)</td><td class="num">0.8</td><td class="num">11.4286</td><td class="num">91910.6</td></tr>
+         <tr><td class="row-h">$k_1$ (negative)</td><td class="num">0.5</td><td class="num">7.1429</td><td class="num">1265.0</td></tr>
+         <tr><td class="row-h">$k_2$ (negative)</td><td class="num">0.3</td><td class="num">4.2857</td><td class="num">72.7</td></tr>
+         <tr><td class="row-h"><b>denominator (sum)</b></td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><b>93248.3</b></td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Divide by $\\tau$:</b> logits $= [0.8,\\,0.5,\\,0.3]/0.07 = [11.4286,\\,7.1429,\\,4.2857]$.</li>
-        <li><b>Exponentiate:</b> $[\\,e^{11.4286},\\,e^{7.1429},\\,e^{4.2857}\\,] = [91910.6,\\,1265.0,\\,72.7]$,
-        summing to $93248.3$.</li>
+        <li><b>Divide by $\\tau$:</b> logits $= [0.8,\\,0.5,\\,0.3]/0.07 = [11.4286,\\,7.1429,\\,4.2857]$ (column 3).</li>
+        <li><b>Exponentiate &amp; sum:</b> the last column sums to $91910.6 + 1265.0 + 72.7 = 93248.3$.</li>
         <li><b>Loss</b> $= -\\log\\!\\big(91910.6 / 93248.3\\big) = -\\log(0.98565) = \\mathbf{0.0144}$.</li>
         <li><b>Read it:</b> the positive already dominates the denominator, so the loss is tiny &mdash; the query
         is correctly "classified" as its positive key. Had a negative scored $0.8$ too, its $\\exp$ term would

@@ -252,22 +252,34 @@
        it equals $-2(e_{ui}\\,p_u - \\lambda\\,q_i)$ to floating-point precision.</p>`,
     example:
       `<p>Work <b>one</b> stochastic gradient descent step by hand, then check it in the notebook. Take a
-       single user and item with $f = 2$ factors:</p>
+       single user and item with $f = 2$ factors: $p_u = [\\,1,\\ 2\\,]$, $q_i = [\\,0.5,\\ -1\\,]$, true rating
+       $r_{ui} = 3$, learning rate $\\gamma = 0.05$, regularization $\\lambda = 0.1$.</p>
        <ul class="steps">
-        <li>$p_u = [\\,1,\\ 2\\,]$, &nbsp; $q_i = [\\,0.5,\\ -1\\,]$, &nbsp; true rating $r_{ui} = 3$, &nbsp;
-        learning rate $\\gamma = 0.05$, &nbsp; regularization $\\lambda = 0.1$.</li>
         <li><b>Predict</b> (dot product, Equation 1): $\\hat{r}_{ui} = q_i^\\top p_u = (0.5)(1) + (-1)(2) =
         0.5 - 2 = -1.5$.</li>
         <li><b>Error</b>: $e_{ui} = r_{ui} - \\hat{r}_{ui} = 3 - (-1.5) = 4.5$.</li>
-        <li><b>Update</b> $q_i$: $q_i + \\gamma(e_{ui}\\,p_u - \\lambda\\,q_i) = [0.5,-1] + 0.05\\big(4.5\\,[1,2]
-        - 0.1\\,[0.5,-1]\\big) = [0.5,-1] + 0.05\\,[4.45,\\ 9.1] = [\\,0.7225,\\ -0.545\\,]$.</li>
-        <li><b>Update</b> $p_u$ (using the <i>old</i> $q_i$): $p_u + \\gamma(e_{ui}\\,q_i - \\lambda\\,p_u) =
-        [1,2] + 0.05\\big(4.5\\,[0.5,-1] - 0.1\\,[1,2]\\big) = [1,2] + 0.05\\,[2.15,\\ -4.7] =
-        [\\,1.1075,\\ 1.765\\,]$.</li>
+        <li><b>Update step for $q_i$</b>: $e_{ui}\\,p_u - \\lambda\\,q_i = 4.5\\,[1,2] - 0.1\\,[0.5,-1] =
+        [4.5,9.0]-[0.05,-0.1] = [4.45,\\,9.1]$; then $q_i + \\gamma[4.45,9.1] = [0.5,-1]+0.05[4.45,9.1] =
+        [\\,0.7225,\\ -0.545\\,]$.</li>
+        <li><b>Update step for $p_u$</b> (using the <i>old</i> $q_i$): $e_{ui}\\,q_i - \\lambda\\,p_u =
+        4.5\\,[0.5,-1] - 0.1\\,[1,2] = [2.25,-4.5]-[0.1,0.2] = [2.15,\\,-4.7]$; then
+        $p_u + \\gamma[2.15,-4.7] = [1,2]+0.05[2.15,-4.7] = [\\,1.1075,\\ 1.765\\,]$.</li>
        </ul>
+       <p>Per-component ledger of the one step (each new value $=$ old $+\\,\\gamma\\cdot$step):</p>
+       <table class="extable">
+        <caption>One SGD step, $\\gamma=0.05$, $\\lambda=0.1$, $e_{ui}=4.5$. Both vectors move so the dot product climbs from $-1.5$ toward $3$.</caption>
+        <thead><tr><th>vector</th><th>component</th><th class="num">old</th><th class="num">gradient step</th><th class="num">new</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$q_i$</td><td>$q_{i1}$</td><td class="num">0.50</td><td class="num">4.45</td><td class="num">0.7225</td></tr>
+         <tr><td class="row-h">$q_i$</td><td>$q_{i2}$</td><td class="num">-1.00</td><td class="num">9.10</td><td class="num">-0.5450</td></tr>
+         <tr><td class="row-h">$p_u$</td><td>$p_{u1}$</td><td class="num">1.00</td><td class="num">2.15</td><td class="num">1.1075</td></tr>
+         <tr><td class="row-h">$p_u$</td><td>$p_{u2}$</td><td class="num">2.00</td><td class="num">-4.70</td><td class="num">1.7650</td></tr>
+        </tbody>
+       </table>
        <p>The error was a big positive $4.5$ (we under-predicted), so both vectors moved to make their dot
-       product larger. These exact numbers &mdash; prediction $-1.5$, error $4.5$, $q_i = [0.7225, -0.545]$,
-       $p_u = [1.1075, 1.765]$ &mdash; are recomputed in the notebook's first cell.</p>`,
+       product larger. As a check, the new prediction $q_i^\\top p_u = (0.7225)(1.1075)+(-0.545)(1.765) =
+       0.800 - 0.962 = -0.162$ &mdash; risen from $-1.5$ toward the target $3$. These exact numbers
+       are recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Set up the data</b>: a ratings matrix <code>R</code> and a boolean <code>mask</code> marking

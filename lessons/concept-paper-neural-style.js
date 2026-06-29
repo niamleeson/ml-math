@@ -246,7 +246,20 @@ $$ \\mathcal{L}_{style}(\\vec{a},\\vec{x})=\\sum_{l} w_l E_l \\quad\\text{(Eq. 5
         $A=\\begin{bmatrix}5 &amp; 3\\\\ 3 &amp; 2\\end{bmatrix}$. Then $\\sum_{i,j}(G_{ij}-A_{ij})^2=(5-5)^2+(2-3)^2
         +(2-3)^2+(2-2)^2=0+1+1+0=2$, and $E_l=\\dfrac{2}{4N^2M^2}=\\dfrac{2}{4\\cdot4\\cdot9}=\\dfrac{2}{144}
         \\approx0.0139$.</li>
-       </ul>`,
+       </ul>
+       <table class="extable">
+        <caption>Per-entry style error (Eq. 4): generated Gram $G$ vs style target $A$, each pair's squared gap.</caption>
+        <thead><tr><th>entry $(i,j)$</th><th class="num">$G_{ij}$</th><th class="num">$A_{ij}$</th><th class="num">$(G_{ij}-A_{ij})^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$(1,1)$</td><td class="num">5</td><td class="num">5</td><td class="num">0</td></tr>
+         <tr><td class="row-h">$(1,2)$</td><td class="num">2</td><td class="num">3</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$(2,1)$</td><td class="num">2</td><td class="num">3</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$(2,2)$</td><td class="num">2</td><td class="num">2</td><td class="num">0</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">2</td></tr>
+        </tbody>
+       </table>
+       <p>Divide the summed squared gap by the normalizer $4N^2M^2=4\\cdot2^2\\cdot3^2=144$:
+       $E_l=2/144\\approx0.0139$.</p>`,
     recipe:
       `<ol>
         <li><b>Load a frozen pretrained CNN.</b> torchvision VGG <code>features</code>; set every weight to

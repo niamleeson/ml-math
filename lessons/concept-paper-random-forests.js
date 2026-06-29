@@ -283,24 +283,30 @@
 
     example:
       `<p><b>Worked numbers, part 1 &mdash; the bagging vote (Definition 1.1).</b> Take one test point and a
-       small forest of 5 trees. Their class votes are $[1,1,0,1,0]$. Tally: class&nbsp;0 gets 2 votes,
-       class&nbsp;1 gets 3. The majority vote is <b>class&nbsp;1</b>. Note three of five trees can be
-       individually wrong on <i>other</i> points yet the ensemble is right here &mdash; that is the whole
-       point of voting.</p>
-       <p><b>Worked numbers, part 2 &mdash; why decorrelation shrinks variance.</b> Plug into the variance
-       identity above with $\\sigma^2=1$ and a large forest ($B=100$):</p>
-       <ul>
-         <li>Highly correlated trees, $\\rho=0.9$:
-         $\\operatorname{Var}/\\sigma^2 = 0.9+\\tfrac{0.1}{100}=\\mathbf{0.9010}$ &mdash; averaging barely
-         helped; the $\\rho$ floor dominates.</li>
-         <li>Moderately decorrelated, $\\rho=0.6$:
-         $0.6+\\tfrac{0.4}{100}=\\mathbf{0.6040}$.</li>
-         <li>Strongly decorrelated, $\\rho=0.3$:
-         $0.3+\\tfrac{0.7}{100}=\\mathbf{0.3070}$ &mdash; variance cut to less than a third.</li>
+       small forest of 5 trees. Their class votes are $[1,1,0,1,0]$.</p>
+       <ul class="steps">
+         <li><b>Tally class 0:</b> trees 3 and 5 vote $0$ &rarr; $2$ votes.</li>
+         <li><b>Tally class 1:</b> trees 1, 2 and 4 vote $1$ &rarr; $3$ votes.</li>
+         <li><b>Majority vote:</b> $3\\gt2$, so the forest predicts <b>class&nbsp;1</b>.</li>
        </ul>
+       <p>Three of five trees can be individually wrong on <i>other</i> points yet the ensemble is right
+       here &mdash; that is the whole point of voting.</p>
+       <p><b>Worked numbers, part 2 &mdash; why decorrelation shrinks variance.</b> Plug into the variance
+       identity $\\operatorname{Var}=\\rho\\sigma^2+\\tfrac{1-\\rho}{B}\\sigma^2$ with $\\sigma^2=1$ and a
+       large forest ($B=100$). Only the pairwise correlation $\\rho$ changes:</p>
+       <table class="extable">
+        <caption>Variance of the averaged forest at $\\sigma^2=1$, $B=100$: $\\operatorname{Var}=\\rho+\\tfrac{1-\\rho}{100}$. The $\\rho$ floor dominates.</caption>
+        <thead><tr><th>trees</th><th class="num">$\\rho$</th><th class="num">floor $\\rho\\sigma^2$</th><th class="num">$\\tfrac{1-\\rho}{B}\\sigma^2$</th><th class="num">$\\operatorname{Var}/\\sigma^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">highly correlated</td><td class="num">0.9</td><td class="num">0.9</td><td class="num">0.0010</td><td class="num">0.9010</td></tr>
+         <tr><td class="row-h">moderately decorrelated</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.0040</td><td class="num">0.6040</td></tr>
+         <tr><td class="row-h">strongly decorrelated</td><td class="num">0.3</td><td class="num">0.3</td><td class="num">0.0070</td><td class="num">0.3070</td></tr>
+        </tbody>
+       </table>
        <p>Same number of trees, same per-tree variance &mdash; <i>only the correlation changed</i>, and it
-       set how much averaging could buy. Forest-RI's random feature subset is the mechanism that pushes
-       $\\rho$ down. The CODE cell recomputes all of these and the 5-tree vote, and they match.</p>`,
+       set how much averaging could buy: dropping $\\rho$ from $0.9$ to $0.3$ cut the averaged variance to
+       less than a third. Forest-RI's random feature subset is the mechanism that pushes $\\rho$ down. The
+       CODE cell recomputes all of these and the 5-tree vote, and they match.</p>`,
 
     recipe:
       `<p><b>Forest-RI as numbered steps (what you implement; §3.1 + §4):</b></p>

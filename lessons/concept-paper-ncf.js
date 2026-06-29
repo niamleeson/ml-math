@@ -237,15 +237,23 @@
       `<p>Work one GMF score by hand so the element-wise product and the weight $h$ are concrete. Take a
        length-$3$ user embedding, item embedding, and output weight (no bias):</p>
        <p>$p_u = [0.5,\\,-1.0,\\,2.0]$, &nbsp; $q_i = [1.0,\\,0.5,\\,-0.5]$, &nbsp; $h = [0.8,\\,0.4,\\,-1.0]$.</p>
+       <p>Per-factor work &mdash; the element-wise product $p_u\\odot q_i$, then how GMF (learned $h$) and plain MF (all-ones $h$) weight each factor:</p>
+       <table class="extable">
+        <caption>One latent factor per row; the last two columns are the per-factor contributions that get summed.</caption>
+        <thead><tr><th>factor $k$</th><th class="num">$p_{u,k}$</th><th class="num">$q_{i,k}$</th><th class="num">$p_{u,k}q_{i,k}$</th><th class="num">$h_k$ (GMF)</th><th class="num">$h_k\\!\\cdot\\!(p\\odot q)_k$</th><th class="num">MF term ($h_k{=}1$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.5</td><td class="num">1.0</td><td class="num">0.5</td><td class="num">0.8</td><td class="num">0.40</td><td class="num">0.5</td></tr>
+         <tr><td class="row-h">2</td><td class="num">&minus;1.0</td><td class="num">0.5</td><td class="num">&minus;0.5</td><td class="num">0.4</td><td class="num">&minus;0.20</td><td class="num">&minus;0.5</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2.0</td><td class="num">&minus;0.5</td><td class="num">&minus;1.0</td><td class="num">&minus;1.0</td><td class="num">1.00</td><td class="num">&minus;1.0</td></tr>
+         <tr><td class="row-h">sum $z$</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">1.20</td><td class="num">&minus;1.0</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Element-wise product</b> $p_u \\odot q_i$ (multiply matching entries):
-        $[0.5\\cdot1.0,\\;\\; -1.0\\cdot0.5,\\;\\; 2.0\\cdot(-0.5)] = [0.5,\\,-0.5,\\,-1.0]$.</li>
-        <li><b>Weighted sum</b> $z = h^\\top(p_u \\odot q_i)$:
-        $0.8\\cdot0.5 + 0.4\\cdot(-0.5) + (-1.0)\\cdot(-1.0) = 0.4 - 0.2 + 1.0 = 1.2$.</li>
+        <li><b>Element-wise product</b> $p_u \\odot q_i = [0.5{\\cdot}1.0,\\; -1.0{\\cdot}0.5,\\; 2.0{\\cdot}(-0.5)] = [0.5,\\,-0.5,\\,-1.0]$.</li>
+        <li><b>GMF weighted sum</b> $z = h^\\top(p_u \\odot q_i) = 0.8{\\cdot}0.5 + 0.4{\\cdot}(-0.5) + (-1.0){\\cdot}(-1.0) = 0.4 - 0.2 + 1.0 = 1.2$.</li>
         <li><b>Sigmoid</b> $\\hat{y}_{ui} = \\sigma(1.2) = 1/(1+e^{-1.2}) \\approx 0.769$.</li>
-        <li><b>Compare to plain MF</b> (the all-ones $h$): the inner product would be
-        $0.5 + (-0.5) + (-1.0) = -1.0$, giving $\\sigma(-1.0)\\approx 0.269$. Same embeddings, very different
-        score &mdash; the learned $h$ re-weighted the factors, here flipping a "no" into a "yes."</li>
+        <li><b>Plain MF</b> (all-ones $h$): inner product $= 0.5 + (-0.5) + (-1.0) = -1.0$, so $\\sigma(-1.0)\\approx 0.269$.</li>
+        <li><b>Compare.</b> Same embeddings, very different score ($0.769$ vs $0.269$) &mdash; the learned $h$ re-weighted the factors, flipping a "no" into a "yes."</li>
        </ul>
        <p>These exact numbers ($[0.5,-0.5,-1.0]$, $z=1.2$, $\\hat{y}\\approx0.769$) are recomputed in the
        notebook's first cell so you can check the GMF score by running it.</p>`,

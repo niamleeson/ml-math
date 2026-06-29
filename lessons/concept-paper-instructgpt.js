@@ -232,6 +232,18 @@ $$ \\text{objective}(\\phi) = \\mathbb{E}_{(x,\\,y)\\sim D_{\\pi_\\phi^{\\text{R
         model to fix the ordering. If it were unsure (gap $0$), $\\sigma(0) = 0.5$ and the loss is
         $-\\log(0.5) = 0.6931$.</li>
        </ul>
+       <table class="extable">
+        <caption>The same loss $-\\log\\sigma(\\text{gap})$ at three score gaps, showing it is small when the
+        winner leads and large when the model has the pair backwards.</caption>
+        <thead>
+         <tr><th>case</th><th class="num">gap $r_\\theta(x,y_w)-r_\\theta(x,y_l)$</th><th class="num">$\\sigma(\\text{gap})$</th><th class="num">loss $-\\log\\sigma$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">winner leads (our case)</td><td class="num">$+1.5$</td><td class="num">0.8176</td><td class="num">0.2014</td></tr>
+         <tr><td class="row-h">unsure</td><td class="num">$0$</td><td class="num">0.5000</td><td class="num">0.6931</td></tr>
+         <tr><td class="row-h">backwards</td><td class="num">$-1.5$</td><td class="num">0.1824</td><td class="num">1.7014</td></tr>
+        </tbody>
+       </table>
        <p>So this one comparison contributes $0.2014$ to the loss. The full Equation 1 averages this over all
        $\\binom{K}{2}$ pairs from the ranking and over the dataset $D$. These exact numbers are recomputed in the
        notebook's first cell so you can check them.</p>`,

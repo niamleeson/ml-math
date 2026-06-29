@@ -230,23 +230,34 @@
        regularizer: "do your job, but stay a little humble (closer to uniform)."</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; $K=5$ classes, true label $y=2$ (0-indexed), smoothing $\\epsilon=0.1$.</p>
-       <p><b>1) Build the smoothed target</b> $q'(k)=(1-\\epsilon)\\delta_{k,y}+\\epsilon/K$, with
-       $\\epsilon/K=0.1/5=0.02$:</p>
-       <ul>
-         <li>True class ($k=2$): $(1-0.1)\\cdot1+0.02 = 0.9+0.02 = \\mathbf{0.92}$.</li>
-         <li>Each other class ($k\\neq2$): $(1-0.1)\\cdot0+0.02 = \\mathbf{0.02}$.</li>
-         <li>Target vector: $[0.02,\\,0.02,\\,0.92,\\,0.02,\\,0.02]$ &mdash; sums to $1.0$. (Note the true class
-         is $0.92$, not $0.90$: it keeps its own share $\\epsilon/K$ of the sprinkled mass.)</li>
+      `<p><b>Worked numbers</b> &mdash; $K=5$ classes, true label $y=2$ (0-indexed), smoothing $\\epsilon=0.1$,
+       so the sprinkled mass per class is $\\epsilon/K=0.1/5=0.02$.</p>
+       <p><b>1) Build the smoothed target</b> $q'(k)=(1-\\epsilon)\\delta_{k,y}+\\epsilon/K$:</p>
+       <ul class="steps">
+         <li><b>True class ($k=2$):</b> $(1-0.1)\\cdot1+0.02 = 0.9+0.02 = \\mathbf{0.92}$.</li>
+         <li><b>Each other class ($k\\neq2$):</b> $(1-0.1)\\cdot0+0.02 = \\mathbf{0.02}$.</li>
+         <li><b>Check it sums to 1:</b> $0.92 + 4(0.02) = 0.92 + 0.08 = 1.000$. (Note the true class is
+         $0.92$, not $0.90$: it keeps its own share $\\epsilon/K$ of the sprinkled mass.)</li>
        </ul>
-       <p><b>2) Compute the loss</b> for some logits. Take logits
-       $z=[1,\\,0,\\,3,\\,0,\\,0]$. Softmax gives $p=[0.1053,\\,0.0388,\\,0.7784,\\,0.0388,\\,0.0388]$, so the
-       log-probabilities are $\\log p=[-2.251,\\,-3.251,\\,-0.251,\\,-3.251,\\,-3.251]$.</p>
-       <ul>
-         <li><b>Plain cross-entropy</b> ($\\epsilon=0$, one-hot): $-\\log p(2)=-(-0.251)=\\mathbf{0.2505}$.</li>
-         <li><b>Smoothed loss</b> ($\\epsilon=0.1$): $-\\sum_k q'(k)\\log p(k)
-         = -(0.02\\cdot(-2.251)+0.02\\cdot(-3.251)+0.92\\cdot(-0.251)+0.02\\cdot(-3.251)+0.02\\cdot(-3.251))$
-         $= \\mathbf{0.4705}$.</li>
+       <p><b>2) Compute the loss</b> for logits $z=[1,\\,0,\\,3,\\,0,\\,0]$. Softmax (denominator
+       $e^1+e^0+e^3+e^0+e^0 = 2.718+1+20.086+1+1 = 25.804$) gives the per-class numbers in the table; the
+       two losses are then weighted sums of $\\log p(k)$:</p>
+       <table class="extable">
+        <caption>Per-class breakdown for $z=[1,0,3,0,0]$, $y=2$, $\\epsilon=0.1$. The smoothed loss is $-\\sum_k q'(k)\\log p(k)$; plain CE only charges the $k{=}2$ row.</caption>
+        <thead><tr><th>class $k$</th><th class="num">$z_k$</th><th class="num">$p(k)$</th><th class="num">$\\log p(k)$</th><th class="num">one-hot $q$</th><th class="num">smoothed $q'$</th><th class="num">$q'(k)\\log p(k)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">1</td><td class="num">0.1053</td><td class="num">&minus;2.251</td><td class="num">0</td><td class="num">0.02</td><td class="num">&minus;0.0450</td></tr>
+         <tr><td class="row-h">1</td><td class="num">0</td><td class="num">0.0387</td><td class="num">&minus;3.251</td><td class="num">0</td><td class="num">0.02</td><td class="num">&minus;0.0650</td></tr>
+         <tr><td class="row-h">2 (true)</td><td class="num">3</td><td class="num">0.7784</td><td class="num">&minus;0.251</td><td class="num">1</td><td class="num">0.92</td><td class="num">&minus;0.2309</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0</td><td class="num">0.0387</td><td class="num">&minus;3.251</td><td class="num">0</td><td class="num">0.02</td><td class="num">&minus;0.0650</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0</td><td class="num">0.0387</td><td class="num">&minus;3.251</td><td class="num">0</td><td class="num">0.02</td><td class="num">&minus;0.0650</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Plain cross-entropy</b> ($\\epsilon=0$, one-hot): only the true-class row counts,
+         $-\\log p(2)=-(-0.251)=\\mathbf{0.2505}$.</li>
+         <li><b>Smoothed loss</b> ($\\epsilon=0.1$): negate the sum of the last column,
+         $-(-0.0450-0.0650-0.2309-0.0650-0.0650) = -(-0.4709) = \\mathbf{0.4705}$.</li>
        </ul>
        <p>The smoothed loss ($0.4705$) is larger than the plain loss ($0.2505$) here because the soft target also
        charges the model for not putting mass on the other classes &mdash; that extra charge is the

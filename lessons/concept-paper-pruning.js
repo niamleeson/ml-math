@@ -232,14 +232,28 @@
         <li><b>Weight spread.</b> The standard deviation of these six numbers is $\\sigma \\approx 0.458$
         (the typical distance of a weight from zero).</li>
         <li><b>Threshold.</b> $\\tau = q\\,\\sigma = 0.5 \\times 0.458 \\approx 0.229$.</li>
-        <li><b>Sizes.</b> $|w| = [0.80,\\,0.05,\\,0.30,\\,0.02,\\,0.60,\\,0.10]$.</li>
-        <li><b>Mask</b> ($|w_i| \\ge 0.229$ keeps): $[0.80,\\,0.30,\\,0.60]$ pass; $[0.05,\\,0.02,\\,0.10]$ fail.
+        <li><b>Sizes.</b> Score by absolute value: $|w| = [0.80,\\,0.05,\\,0.30,\\,0.02,\\,0.60,\\,0.10]$.</li>
+        <li><b>Mask</b> ($|w_i| \\ge 0.229$ keeps): $0.80,\\,0.30,\\,0.60$ pass; $0.05,\\,0.02,\\,0.10$ fail.
         So $m = [1,\\,0,\\,1,\\,0,\\,1,\\,0]$.</li>
         <li><b>Apply.</b> $m \\odot w = [0.80,\\,0,\\,0.30,\\,0,\\,-0.60,\\,0]$. We kept 3 of 6 weights &mdash;
-        <b>50% sparsity</b>. The three big-signal connections survive; the three near-zero ones are gone.</li>
+        <b>50% sparsity</b>.</li>
        </ul>
-       <p>These exact numbers are recomputed in the notebook's first cell so you can check the threshold and
-       mask by running it.</p>`,
+       <table class="extable">
+        <caption>Per-weight pruning decision against threshold $\\tau \\approx 0.229$ ($q=0.5$, $\\sigma\\approx0.458$).</caption>
+        <thead><tr><th class="num">$w_i$</th><th class="num">$|w_i|$</th><th class="num">$|w_i| \\ge \\tau$?</th><th class="num">mask $m_i$</th><th class="num">$m_i\\,w_i$</th></tr></thead>
+        <tbody>
+         <tr><td class="num">0.80</td><td class="num">0.80</td><td class="num">yes</td><td class="num">1</td><td class="num">0.80</td></tr>
+         <tr><td class="num">&minus;0.05</td><td class="num">0.05</td><td class="num">no</td><td class="num">0</td><td class="num">0.00</td></tr>
+         <tr><td class="num">0.30</td><td class="num">0.30</td><td class="num">yes</td><td class="num">1</td><td class="num">0.30</td></tr>
+         <tr><td class="num">0.02</td><td class="num">0.02</td><td class="num">no</td><td class="num">0</td><td class="num">0.00</td></tr>
+         <tr><td class="num">&minus;0.60</td><td class="num">0.60</td><td class="num">yes</td><td class="num">1</td><td class="num">&minus;0.60</td></tr>
+         <tr><td class="num">0.10</td><td class="num">0.10</td><td class="num">no</td><td class="num">0</td><td class="num">0.00</td></tr>
+        </tbody>
+       </table>
+       <p>The three big-signal connections survive; the three near-zero ones are gone &mdash; 3 of 6 kept,
+       <b>50% sparsity</b>. Note $-0.60$ survives despite its negative sign: we score by $|w_i|$, not raw value.
+       These exact numbers are recomputed in the notebook's first cell so you can check the threshold and mask by
+       running it.</p>`,
     recipe:
       `<ol>
         <li><b>Train a dense net.</b> A stack of <code>nn.Linear</code> layers (a multi-layer perceptron),

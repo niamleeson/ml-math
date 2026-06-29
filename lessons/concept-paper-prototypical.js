@@ -221,24 +221,40 @@
        softmax classifier.</p>`,
     example:
       `<p>Work a tiny <b>2-way 2-shot</b> case by hand with 2-dimensional embeddings, so every number is
-       checkable. Suppose the embedding network has already mapped the support examples to these points:</p>
+       checkable. The embedding network has already mapped the support examples to these points; the prototype
+       (Eqn. 1) is the mean of each class's two support embeddings:</p>
+       <table class="extable">
+        <caption>Support embeddings and prototype (mean) per class.</caption>
+        <thead><tr><th>class</th><th class="num">support 1</th><th class="num">support 2</th><th class="num">prototype $c_k$ (mean)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">A</td><td class="num">[1, 1]</td><td class="num">[3, 1]</td><td class="num">[2, 1]</td></tr>
+         <tr><td class="row-h">B</td><td class="num">[4, 3]</td><td class="num">[6, 3]</td><td class="num">[5, 3]</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Class A support</b> embeds to $[1,1]$ and $[3,1]$. <b>Prototype</b> (Eqn. 1, the mean):
-        $c_A = \\tfrac{1}{2}([1,1]+[3,1]) = [2,1]$.</li>
-        <li><b>Class B support</b> embeds to $[4,3]$ and $[6,3]$. Prototype: $c_B = \\tfrac{1}{2}([4,3]+[6,3]) = [5,3]$.</li>
-        <li><b>A query</b> embeds to $q = [3,2]$. <b>Squared Euclidean distances</b> (subtract, square each
-        coordinate, sum):
+        <li><b>$c_A$</b> (Eqn. 1, the mean): $\\tfrac{1}{2}([1,1]+[3,1]) = [2,1]$.</li>
+        <li><b>$c_B$:</b> $\\tfrac{1}{2}([4,3]+[6,3]) = [5,3]$.</li>
+        <li><b>A query</b> embeds to $q = [3,2]$. <b>Squared Euclidean distance</b> (subtract, square each
+        coordinate, sum) to each prototype:
         <br>$d_A = (3-2)^2 + (2-1)^2 = 1 + 1 = 2$.
         <br>$d_B = (3-5)^2 + (2-3)^2 = 4 + 1 = 5$.</li>
-        <li><b>Negate and softmax</b> (Eqn. 2). Logits are $-d_A = -2$ and $-d_B = -5$.
-        <br>$\\exp(-2) = 0.135335$, $\\quad \\exp(-5) = 0.006738$.
-        <br>$p(A) = \\dfrac{0.135335}{0.135335 + 0.006738} = 0.9526$, $\\quad p(B) = 0.0474$.</li>
-        <li><b>Verdict:</b> the query is closer to $c_A$ ($d_A = 2 \\lt d_B = 5$), so the model assigns it to
-        class A with probability $\\approx 95\\%$. The negation is what made "nearer" become "higher
-        probability."</li>
+        <li><b>Negate and exponentiate</b> (Eqn. 2). Logits $-d_A = -2$, $-d_B = -5$:
+        <br>$\\exp(-2) = 0.135335$, $\\quad \\exp(-5) = 0.006738$.</li>
+        <li><b>Softmax:</b> $p(A) = \\dfrac{0.135335}{0.135335 + 0.006738} = 0.9526$, $\\quad p(B) = 0.0474$.</li>
        </ul>
-       <p>These exact numbers ($c_A=[2,1]$, $c_B=[5,3]$, $d_A=2$, $d_B=5$, $p(A)=0.9526$) are recomputed in the
-       notebook's first cell so you can check them by running it.</p>`,
+       <table class="extable">
+        <caption>Query $q=[3,2]$: distance &rarr; logit &rarr; probability per class.</caption>
+        <thead><tr><th>class</th><th class="num">$d_k=\\lVert q-c_k\\rVert^2$</th><th class="num">logit $-d_k$</th><th class="num">$\\exp(-d_k)$</th><th class="num">$p(k)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">A</td><td class="num">2</td><td class="num">&minus;2</td><td class="num">0.135335</td><td class="num">0.9526</td></tr>
+         <tr><td class="row-h">B</td><td class="num">5</td><td class="num">&minus;5</td><td class="num">0.006738</td><td class="num">0.0474</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">0.142073</td><td class="num">1.0000</td></tr>
+        </tbody>
+       </table>
+       <p><b>Verdict:</b> the query is closer to $c_A$ ($d_A = 2 \\lt d_B = 5$), so the model assigns it to class A
+       with probability $\\approx 95\\%$. The negation is what made "nearer" become "higher probability." These
+       exact numbers ($c_A=[2,1]$, $c_B=[5,3]$, $d_A=2$, $d_B=5$, $p(A)=0.9526$) are recomputed in the notebook's
+       first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build the embedding network</b> $f_\\phi$ from <code>nn.Linear</code> / <code>nn.ReLU</code>

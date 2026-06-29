@@ -253,6 +253,20 @@
        $f(x) = w x + b$ with weights $\\theta = (w, b)$, mean-squared-error loss, and inner step size
        $\\alpha = 0.05$. Start at $\\theta = (w, b) = (0, 0)$. The task gives two points:
        $x = [1, 2]$ with targets $y = [1, 3]$.</p>
+       <table class="extable">
+        <caption>Per-parameter inner step: gradient, then $\\theta'_i = \\theta - \\alpha\\nabla_\\theta\\mathcal{L}$ with $\\alpha=0.05$.</caption>
+        <thead><tr>
+          <th>param</th>
+          <th class="num">$\\theta$ (start)</th>
+          <th class="num">$\\nabla_\\theta\\mathcal{L}$</th>
+          <th class="num">$-\\alpha\\nabla$</th>
+          <th class="num">$\\theta'_i$</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-h">$w$</td><td class="num">0</td><td class="num">&minus;7</td><td class="num">+0.35</td><td class="num">0.35</td></tr>
+          <tr><td class="row-h">$b$</td><td class="num">0</td><td class="num">&minus;4</td><td class="num">+0.20</td><td class="num">0.20</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Forward + loss.</b> Predictions at $\\theta=(0,0)$ are $[0, 0]$, so residuals are
         $\\hat y - y = [0-1,\\; 0-3] = [-1, -3]$. Mean-squared error

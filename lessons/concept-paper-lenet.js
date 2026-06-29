@@ -257,19 +257,26 @@
        $\\lfloor (n - k + 2p)/s \\rfloor + 1$, and the reason convolution detects shift-invariant features, are
        derived in full in the <b>dl-conv</b> concept lesson &mdash; we only apply the no-padding case here.</p>`,
     example:
-      `<p>Track the spatial size through the whole conv/pool stack, by hand, starting from the 32&times;32
-       input. Use $\\text{out}=n-4$ for each 5&times;5 valid convolution and $\\text{out}=n/2$ for each
-       2&times;2 stride-2 pool. (Channel counts come from the paper; we only compute the side length.)</p>
+      `<p>Track the spatial size through the whole conv/pool stack, by hand, starting from the 32&times;32 input.
+       Apply $\\text{out}=n-4$ for each 5&times;5 valid convolution (a 5&times;5 filter removes 4 from each side)
+       and $\\text{out}=n/2$ for each 2&times;2 stride-2 pool. The per-layer ledger:</p>
+       <table class="extable">
+         <caption>Side length through LeNet-5 (channel counts from the paper; we compute only the side).</caption>
+         <thead><tr><th>layer</th><th>op</th><th class="num">rule</th><th class="num">side</th><th>shape</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">INPUT</td><td>image</td><td class="num">&mdash;</td><td class="num">32</td><td>1&times;32&times;32</td></tr>
+           <tr><td class="row-h">C1</td><td>conv 5&times;5</td><td class="num">$32-4$</td><td class="num">28</td><td>6&times;28&times;28</td></tr>
+           <tr><td class="row-h">S2</td><td>pool 2&times;2</td><td class="num">$28/2$</td><td class="num">14</td><td>6&times;14&times;14</td></tr>
+           <tr><td class="row-h">C3</td><td>conv 5&times;5</td><td class="num">$14-4$</td><td class="num">10</td><td>16&times;10&times;10</td></tr>
+           <tr><td class="row-h">S4</td><td>pool 2&times;2</td><td class="num">$10/2$</td><td class="num">5</td><td>16&times;5&times;5</td></tr>
+           <tr><td class="row-h">C5</td><td>conv 5&times;5</td><td class="num">$5-4$</td><td class="num">1</td><td>120&times;1&times;1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-        <li><b>INPUT</b>: side $= 32$. (1 channel.)</li>
-        <li><b>C1</b> (conv 5&times;5): $32 - 4 = \\mathbf{28}$. &rarr; 6&times;28&times;28. <i>(Paper: "size &hellip; is 28x28".)</i></li>
-        <li><b>S2</b> (pool 2&times;2): $28 / 2 = \\mathbf{14}$. &rarr; 6&times;14&times;14. <i>(Paper: "size 14x14".)</i></li>
-        <li><b>C3</b> (conv 5&times;5): $14 - 4 = \\mathbf{10}$. &rarr; 16&times;10&times;10.</li>
-        <li><b>S4</b> (pool 2&times;2): $10 / 2 = \\mathbf{5}$. &rarr; 16&times;5&times;5. <i>(Paper: "size 5x5".)</i></li>
-        <li><b>C5</b> (conv 5&times;5): $5 - 4 = \\mathbf{1}$. &rarr; 120&times;1&times;1. The 5&times;5 filter exactly
-        covers the 5&times;5 map, so it collapses to a single point &mdash; a full connection in disguise.</li>
-        <li><b>Flatten</b>: 120&times;1&times;1 &rarr; a vector of <b>120</b> numbers.</li>
-        <li><b>F6</b> (linear 120&rarr;84): a vector of <b>84</b>. <b>OUTPUT</b> (10 classes): a vector of <b>10</b>.</li>
+        <li><b>C5 collapses to a point.</b> S4 is 5&times;5 and C5's filter is 5&times;5, so $5-4=1$: the filter has
+        exactly one valid placement and the map becomes 120&times;1&times;1 &mdash; a full connection in disguise.</li>
+        <li><b>Flatten</b> 120&times;1&times;1 &rarr; a vector of <b>120</b> numbers.</li>
+        <li><b>F6</b> (linear 120&rarr;84) &rarr; <b>84</b>; <b>OUTPUT</b> (10 classes) &rarr; <b>10</b>.</li>
        </ul>
        <p>So the side length goes <b>32 &rarr; 28 &rarr; 14 &rarr; 10 &rarr; 5 &rarr; 1</b>, matching Fig. 2 exactly.
        These numbers are recomputed in the notebook's first cell (printed by a tiny size-tracker) and again as

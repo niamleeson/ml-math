@@ -202,24 +202,38 @@
        worked through in the <b>pt-gpu-amp</b> concept lesson; we only recap them here.</p>`,
     example:
       `<p>Two tiny worked cases, both recomputed in the notebook.</p>
-       <p><b>(a) Loss scaling rescues a gradient.</b> Take a gradient $g = 1\\times10^{-8}$ (in FP32).</p>
+       <p><b>(a) Loss scaling rescues a gradient.</b> Take a gradient $g = 1\\times10^{-8}$ (in FP32) and
+       a scale factor $S = 1024$. Plug into the loss-scaling rule $g \\leftarrow \\tfrac{1}{S}\\,\\mathrm{round}_{16}(S\\cdot g)$:</p>
        <ul class="steps">
-        <li>Cast straight to FP16: $1\\times10^{-8}$ is below the $2^{-24} \\approx 5.96\\times10^{-8}$ floor,
-        so it becomes exactly $0.0$. The signal is gone.</li>
-        <li>Scale first, then cast: $g \\times 1024 = 1.024\\times10^{-5}$, which FP16 stores as about
-        $1.025\\times10^{-5}$ &mdash; nonzero, it survived.</li>
-        <li>Unscale in FP32: $1.025\\times10^{-5} / 1024 \\approx 1.001\\times10^{-8}$ &mdash; back to (almost
-        exactly) the original gradient. We recovered $g$ instead of losing it to $0$.</li>
+        <li><b>Cast straight to FP16 (no scaling).</b> Compare $g$ to the floor: $1\\times10^{-8} \\lt 2^{-24} \\approx 5.96\\times10^{-8}$, so $\\mathrm{round}_{16}(g) = \\mathbf{0.0}$. The signal is gone.</li>
+        <li><b>Scale first.</b> $S\\cdot g = 1024 \\times 1\\times10^{-8} = 1.024\\times10^{-5}$, now well above the floor.</li>
+        <li><b>Then cast to FP16.</b> $\\mathrm{round}_{16}(1.024\\times10^{-5}) \\approx 1.025\\times10^{-5}$ &mdash; nonzero, it survived.</li>
+        <li><b>Unscale in FP32.</b> $1.025\\times10^{-5} / 1024 \\approx \\mathbf{1.001\\times10^{-8}}$ &mdash; back to (almost exactly) the original $g$.</li>
        </ul>
+       <table class="extable">
+        <caption>Same gradient $g=1\\times10^{-8}$, with vs without loss scaling ($S=1024$).</caption>
+        <thead><tr><th>step</th><th class="num">no scaling</th><th class="num">with $S=1024$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">value to store</td><td class="num">$1\\times10^{-8}$</td><td class="num">$1.024\\times10^{-5}$</td></tr>
+         <tr><td class="row-h">stored in FP16</td><td class="num">$0.0$</td><td class="num">$1.025\\times10^{-5}$</td></tr>
+         <tr><td class="row-h">recovered gradient</td><td class="num">$0.0$ (lost)</td><td class="num">$1.001\\times10^{-8}$</td></tr>
+        </tbody>
+       </table>
        <p><b>(b) FP32 master copy rescues a weight update.</b> Start a weight at $256.0$. Near $256$ the gap
-       between consecutive FP16 numbers is $0.25$. Apply an update of about $-0.009$ per step for $200$
-       steps.</p>
+       between consecutive FP16 numbers is $0.25$. Apply an update of $u = -0.009$ per step for $200$ steps.</p>
        <ul class="steps">
-        <li>Pure FP16: each $-0.009$ update is far below the $0.25$ FP16 spacing, so the add right-shifts it
-        to nothing. After $200$ steps the FP16 weight is still <b>$256.0$</b> &mdash; frozen.</li>
-        <li>FP32 master: the $-0.009$ updates accumulate in FP32. After $200$ steps the master weight has
-        moved to about <b>$254.65$</b> &mdash; it learned. (Numbers from the notebook below.)</li>
-       </ul>`,
+        <li><b>Check the vanishing-update ratio.</b> $\\tfrac{|w|}{|u|} = \\tfrac{256}{0.009} \\approx 28444 \\ge 2048$, so in FP16 each add right-shifts $u$ past the last kept bit &mdash; a no-op.</li>
+        <li><b>Pure FP16.</b> Every one of the $200$ adds does nothing; the weight stays $\\mathbf{256.0}$ &mdash; frozen.</li>
+        <li><b>FP32 master.</b> The total drift is $200 \\times (-0.009) = -1.8$ in exact arithmetic; accumulated in FP32 the weight moves to about $\\mathbf{254.65}$ &mdash; it learned. (Notebook value below.)</li>
+       </ul>
+       <table class="extable">
+        <caption>Weight at $256.0$ after $200$ updates of $-0.009$ (FP16 spacing near $256$ is $0.25$).</caption>
+        <thead><tr><th>accumulator</th><th class="num">per-step effect</th><th class="num">weight after 200 steps</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">pure FP16</td><td class="num">$0$ (right-shifted away)</td><td class="num">$256.0$ (frozen)</td></tr>
+         <tr><td class="row-h">FP32 master</td><td class="num">$-0.009$ survives</td><td class="num">$254.65$ (moved)</td></tr>
+        </tbody>
+       </table>`,
     recipe:
       `<ol>
         <li><b>Keep an FP32 master copy</b> of every weight. Make an FP16 copy of it for the passes.</li>

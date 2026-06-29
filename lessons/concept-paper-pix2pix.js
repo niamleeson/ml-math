@@ -242,24 +242,35 @@ $$ G^{*} = \\arg\\min_{G}\\max_{D}\\; \\mathcal{L}_{cGAN}(G,D) + \\lambda\\,\\ma
        $p_g(\\cdot\\mid x)$, so the paper-gan result applies per input $x$ (this is the same "hold the condition
        fixed" argument as in <b>paper-cgan</b>).</p>`,
     example:
-      `<p>Work the loss arithmetic by hand for one pixel and one patch (these are recomputed in the notebook's
-       first cell). Pixels are scaled to $[-1,1]$ (the $\\tanh$ output range).</p>
+      `<p>Plug real numbers into the full objective $G^{*}=\\arg\\min_G\\max_D\\,\\mathcal{L}_{cGAN}(G,D)+\\lambda\\,\\mathcal{L}_{L1}(G)$ (Eq. 4, $\\lambda=100$),
+       one pixel and one patch at a time. Pixels are scaled to $[-1,1]$ (the $\\tanh$ output range); these are recomputed in the notebook's first cell.</p>
        <ul class="steps">
-        <li><b>L1 of one pixel.</b> Say the true pixel is $y=0.7$ and the generator outputs $G(x)=-0.3$. The L1
-        contribution is $|\\,0.7-(-0.3)\\,| = |1.0| = 1.0$. With $\\lambda=100$, this single pixel contributes
-        $100\\times 1.0 = 100$ to the weighted L1 term &mdash; L1 dominates the magnitude of the objective.</li>
-        <li><b>Why ambiguity forces a hedge.</b> Suppose for one input $x$ the correct pixel is equally often
-        $+1$ or $-1$ (two modes). The constant that minimizes expected L1 is the <b>median</b>, which here is
-        anything in $[-1,+1]$ &mdash; and the symmetric choice is $0$ (mid-gray). Outputting $0$ costs L1
-        $|0-(+1)|=1$ or $|0-(-1)|=1$ &mdash; the <b>same</b> as the true value would cost the other half the time, so
-        L1 has no incentive to commit. That tie is the blur.</li>
-        <li><b>The cGAN term on a pair.</b> If $D$ scores a <b>real</b> pair at $D(x,y)=0.9$, the first term is
-        $\\log 0.9 = -0.1054$. If $D$ scores a <b>generated</b> pair at $D(x,G(x))=0.2$, the second term is
-        $\\log(1-0.2)=\\log 0.8 = -0.2231$. $D$ wants both pushed up (toward $\\log 1 = 0$).</li>
-        <li><b>PatchGAN equilibrium.</b> When $G$ matches the data, each patch is a coin-flip for $D$
-        ($D\\to 0.5$), so each patch's binary-cross-entropy term settles at $-\\log 0.5 = \\log 2 = 0.6931$ &mdash; the
-        same GAN plateau as before, now reached <i>per patch</i>. Watch for these numbers in the loss panel.</li>
-       </ul>`,
+        <li><b>L1 of one pixel.</b> True pixel $y=0.7$, generator outputs $G(x)=-0.3$, so the L1 term
+        $\\lVert y-G(x)\\rVert_1=|\\,0.7-(-0.3)\\,|=|1.0|=1.0$.</li>
+        <li><b>Weight it by $\\lambda$.</b> $\\lambda\\cdot\\mathcal{L}_{L1}=100\\times 1.0=100$ for this one pixel
+        &mdash; the L1 term dominates the magnitude of the objective.</li>
+        <li><b>cGAN real term.</b> $D$ scores a <b>real</b> pair at $D(x,y)=0.9$, so $\\log D(x,y)=\\log 0.9=-0.1054$.</li>
+        <li><b>cGAN fake term.</b> $D$ scores a <b>generated</b> pair at $D(x,G(x))=0.2$, so
+        $\\log(1-D(x,G(x)))=\\log 0.8=-0.2231$. $D$ wants both terms pushed up toward $\\log 1=0$.</li>
+        <li><b>PatchGAN equilibrium.</b> When $G$ matches the data each patch is a coin-flip ($D\\to 0.5$), so its
+        binary-cross-entropy settles at $-\\log 0.5=\\log 2=0.6931$ &mdash; the GAN plateau, now reached <i>per patch</i>.</li>
+       </ul>
+       <p><b>Why L1 alone hedges to gray.</b> Suppose for one input $x$ the correct pixel is equally often $+1$ or
+       $-1$ (two modes). Compare three candidate outputs by their expected L1 cost
+       $\\tfrac12|c-(+1)|+\\tfrac12|c-(-1)|$:</p>
+       <table class="extable">
+        <caption>Expected L1 cost when the true pixel is $+1$ or $-1$ with equal probability (the multimodal case).</caption>
+        <thead><tr><th>output $c$</th><th class="num">$\\tfrac12|c-1|$</th><th class="num">$\\tfrac12|c+1|$</th><th class="num">expected L1</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">commit to $+1$</td><td class="num">0.0</td><td class="num">1.0</td><td class="num">1.0</td></tr>
+         <tr><td class="row-h">commit to $-1$</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">1.0</td></tr>
+         <tr><td class="row-h">gray $c=0$</td><td class="num">0.5</td><td class="num">0.5</td><td class="num">1.0</td></tr>
+        </tbody>
+       </table>
+       <p>All three cost the same $1.0$, so L1 has <b>no incentive to commit</b> &mdash; it is free to output the gray
+       middle, and that tie is the blur. The cGAN term breaks it: a gray patch is easily flagged fake (its BCE rises
+       above the $0.6931$ plateau), so the min&ndash;max forces $G$ to pick one sharp mode while the $\\lambda=100$ L1
+       term keeps the overall content right.</p>`,
     recipe:
       `<ol>
         <li><b>Make paired data</b> $(x, y)$: input image and its correct output. (We use edges &rarr; filled shape;

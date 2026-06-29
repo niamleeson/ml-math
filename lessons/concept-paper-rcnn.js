@@ -239,9 +239,9 @@
        lesson; we only recap it here and use it to label proposals and judge the refined box.</p>`,
     example:
       `<p>Work the two pieces of math R-CNN needs, by hand, on integer boxes (corner form
-       $[x_1,y_1,x_2,y_2]$, units of grid cells).</p>
-       <p><b>(a) IoU of a proposal and the ground truth.</b> Ground truth $G=[1,1,6,6]$ (a $5\\times5$ box,
-       area $25$). Proposal $P=[3,3,8,7]$ (a $5\\times4$ box, area $20$).</p>
+       $[x_1,y_1,x_2,y_2]$, units of grid cells). Ground truth $G=[1,1,6,6]$ (a $5\\times5$ box,
+       area $25$); proposal $P=[3,3,8,7]$ (a $5\\times4$ box, area $20$).</p>
+       <p><b>(a) IoU of the proposal and the ground truth.</b></p>
        <ul class="steps">
         <li><b>Intersection box:</b> $x$ from $\\max(1,3)=3$ to $\\min(6,8)=6$ &rarr; width $3$; $y$ from
         $\\max(1,3)=3$ to $\\min(6,7)=6$ &rarr; height $3$. Intersection area $= 3\\times3 = 9$.</li>
@@ -249,16 +249,27 @@
         <li><b>IoU:</b> $9 / 36 = 0.25$. That is below $0.5$, so this proposal would be labelled
         <b>background</b> for fine-tuning &mdash; it does not yet fit the object well.</li>
        </ul>
-       <p><b>(b) Box-regression targets to fix it.</b> Convert to center/size. $G$: center $(3.5,3.5)$, size
-       $(5,5)$. $P$: center $(5.5,5.0)$, size $(5,4)$.</p>
+       <p><b>(b) Box-regression targets to fix it.</b> Convert to center/size form
+       $(x,y,w,h)$ &mdash; $G$: center $(3.5,3.5)$, size $(5,5)$; $P$: center $(5.5,5.0)$, size $(5,4)$ &mdash;
+       then compute each target $t_\\star$:</p>
+       <table class="extable">
+        <caption>The four Appendix-C targets that move $P$ onto $G$. Center shifts are box-size fractions; size targets are log-ratios.</caption>
+        <thead><tr><th>target</th><th class="num">formula</th><th class="num">numbers</th><th class="num">value</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$t_x$</td><td class="num">$(G_x-P_x)/P_w$</td><td class="num">$(3.5-5.5)/5$</td><td class="num">$-0.4$</td></tr>
+         <tr><td class="row-h">$t_y$</td><td class="num">$(G_y-P_y)/P_h$</td><td class="num">$(3.5-5.0)/4$</td><td class="num">$-0.375$</td></tr>
+         <tr><td class="row-h">$t_w$</td><td class="num">$\\log(G_w/P_w)$</td><td class="num">$\\log(5/5)$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$t_h$</td><td class="num">$\\log(G_h/P_h)$</td><td class="num">$\\log(5/4)$</td><td class="num">$0.223$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>$t_x = (G_x-P_x)/P_w = (3.5-5.5)/5 = -0.4$</b> &mdash; shift the center left by $0.4$ of the box width.</li>
-        <li><b>$t_y = (G_y-P_y)/P_h = (3.5-5.0)/4 = -0.375$</b> &mdash; shift up by $0.375$ of the height.</li>
-        <li><b>$t_w = \\log(G_w/P_w) = \\log(5/5) = 0$</b> &mdash; width already correct, no change.</li>
-        <li><b>$t_h = \\log(G_h/P_h) = \\log(5/4) \\approx 0.223$</b> &mdash; grow the height by a factor $e^{0.223}=1.25$.</li>
+        <li><b>$t_x=-0.4$</b> &mdash; shift the center left by $0.4$ of the box width.</li>
+        <li><b>$t_y=-0.375$</b> &mdash; shift up by $0.375$ of the height.</li>
+        <li><b>$t_w=0$</b> &mdash; width already correct, no change.</li>
+        <li><b>$t_h=0.223$</b> &mdash; grow the height by a factor $e^{0.223}=1.25$.</li>
        </ul>
-       <p>Apply these and the proposal lands on $G$: IoU jumps to $1.0$. These exact numbers are recomputed in
-       the notebook's first cell so you can check them by running it.</p>`,
+       <p>Apply these and the proposal lands on $G$: IoU jumps from $0.25$ to $1.0$. These exact numbers are
+       recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Propose regions.</b> Run selective search &rarr; ~2000 category-independent boxes $P$. (In our
