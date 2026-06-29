@@ -79,10 +79,24 @@
       `<p>A tiny two-point case. Let $X$ equal $1$ or $9$, each with probability $\\tfrac{1}{2}$, and take the convex $f(x) = x^2$.</p>
        <ul class="steps">
          <li><b>Average first, then square</b> &nbsp;($f(E[X])$): $E[X] = \\tfrac{1+9}{2} = 5$, so $f(E[X]) = 5^2 = 25$.</li>
-         <li><b>Square first, then average</b> &nbsp;($E[f(X)]$): $E[X^2] = \\tfrac{1^2 + 9^2}{2} = \\tfrac{1 + 81}{2} = 41$.</li>
+         <li><b>Square first, then average</b> &nbsp;($E[f(X)]$): $E[X^2] = \\tfrac{1^2 + 9^2}{2} = \\tfrac{1 + 81}{2} = \\tfrac{82}{2} = 41$.</li>
          <li><b>Compare:</b> $E[f(X)] = 41 \\ge 25 = f(E[X])$. Jensen holds, as it must for a convex $f$.</li>
          <li><b>The gap is the variance.</b> $41 - 25 = 16$, and indeed $\\operatorname{Var}(X) = E[X^2] - (E[X])^2 = 41 - 25 = 16$ (the values sit $\\pm 4$ from the mean, so $4^2 = 16$). The Jensen gap and the variance are the same number here.</li>
-       </ul>`,
+       </ul>
+       <table class="extable">
+        <caption>Two outcomes of $X$, each with probability $\\tfrac{1}{2}$: the two sides of Jensen.</caption>
+        <thead>
+         <tr><th>outcome</th><th class="num">prob</th><th class="num">$x$</th><th class="num">$f(x)=x^2$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">low</td><td class="num">$0.5$</td><td class="num">$1$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">high</td><td class="num">$0.5$</td><td class="num">$9$</td><td class="num">$81$</td></tr>
+         <tr><td class="row-h"><b>average</b></td><td class="num"></td><td class="num"><b>$E[X]=5$</b></td><td class="num"><b>$E[f(X)]=41$</b></td></tr>
+        </tbody>
+       </table>
+       <p>Reading the bottom row: square the average input ($5^2=25=f(E[X])$) versus the average of the squared
+       column ($41=E[f(X)]$). $41 \\ge 25$ &mdash; the convex bound, with the gap $16$ equal to
+       $\\operatorname{Var}(X)$.</p>`,
 
     practice: [
       {

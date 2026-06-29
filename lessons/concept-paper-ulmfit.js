@@ -237,28 +237,49 @@
     example:
       `<p><b>(a) STLR (Eqn 3).</b> Take $T = 1000$ iterations and the paper's defaults
        $\\mathit{cut\\_frac}=0.1$, $\\mathit{ratio}=32$, $\\eta_{max}=0.01$. First the cut point:
-       $\\mathit{cut} = \\lfloor 1000 \\cdot 0.1 \\rfloor = 100$.</p>
+       $\\mathit{cut} = \\lfloor 1000 \\cdot 0.1 \\rfloor = \\lfloor 100 \\rfloor = 100$.</p>
        <ul class="steps">
-        <li><b>At the peak, $t=100$:</b> $p = t/\\mathit{cut} = 100/100 = 1$, so
-        $\\eta_t = 0.01\\cdot\\dfrac{1 + 1\\cdot(32-1)}{32} = 0.01\\cdot\\dfrac{32}{32} = \\mathbf{0.01}$ &mdash;
-        exactly $\\eta_{max}$, as designed.</li>
+        <li><b>At the very start, $t=0$:</b> $p = t/\\mathit{cut} = 0/100 = 0$, so
+        $\\eta_0 = 0.01\\cdot\\dfrac{1 + 0\\cdot(32-1)}{32} = 0.01\\cdot\\dfrac{1}{32} \\approx \\mathbf{0.000313}$
+        &mdash; the floor $\\eta_{max}/\\mathit{ratio}$.</li>
         <li><b>Halfway up, $t=50$:</b> $p = 50/100 = 0.5$, so
-        $\\eta_t = 0.01\\cdot\\dfrac{1 + 0.5\\cdot 31}{32} = 0.01\\cdot\\dfrac{16.5}{32} \\approx \\mathbf{0.005156}$.</li>
-        <li><b>At the very start, $t=0$:</b> $p = 0$, so
-        $\\eta_t = 0.01\\cdot\\dfrac{1}{32} \\approx \\mathbf{0.000313}$ &mdash; the floor $\\eta_{max}/\\mathit{ratio}$.</li>
+        $\\eta_{50} = 0.01\\cdot\\dfrac{1 + 0.5\\cdot 31}{32} = 0.01\\cdot\\dfrac{16.5}{32} \\approx \\mathbf{0.005156}$.</li>
+        <li><b>At the peak, $t=100$:</b> $p = 100/100 = 1$, so
+        $\\eta_{100} = 0.01\\cdot\\dfrac{1 + 1\\cdot 31}{32} = 0.01\\cdot\\dfrac{32}{32} = \\mathbf{0.01}$ &mdash;
+        exactly $\\eta_{max}$, as designed.</li>
         <li><b>In the decay, $t=200$:</b> $p = 1 - \\dfrac{200-100}{100\\,(1/0.1 - 1)} = 1 - \\dfrac{100}{900}
-        \\approx 0.8889$, so $\\eta_t = 0.01\\cdot\\dfrac{1 + 0.8889\\cdot 31}{32} \\approx \\mathbf{0.008924}$
+        \\approx 0.8889$, so $\\eta_{200} = 0.01\\cdot\\dfrac{1 + 0.8889\\cdot 31}{32} \\approx \\mathbf{0.008924}$
         &mdash; already gently coming down from the peak.</li>
        </ul>
+       <table class="extable">
+        <caption>STLR schedule, $T=1000$ ($\\mathit{cut}=100$), $\\mathit{cut\\_frac}=0.1$, $\\mathit{ratio}=32$, $\\eta_{max}=0.01$.</caption>
+        <thead><tr><th>step $t$</th><th class="num">$p$</th><th class="num">$\\eta_t$</th><th>phase</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$0$</td><td class="num">$0$</td><td class="num">$0.000313$</td><td>floor (ramp start)</td></tr>
+         <tr><td class="row-h">$50$</td><td class="num">$0.5$</td><td class="num">$0.005156$</td><td>ramping up</td></tr>
+         <tr><td class="row-h">$100$</td><td class="num">$1$</td><td class="num">$0.010000$</td><td>peak $=\\eta_{max}$</td></tr>
+         <tr><td class="row-h">$200$</td><td class="num">$0.8889$</td><td class="num">$0.008924$</td><td>decaying</td></tr>
+        </tbody>
+       </table>
        <p><b>(b) Discriminative learning rates (Eqn 2).</b> Suppose the top layer's rate is $\\eta^L = 0.01$
-       and there are 4 layers, using $\\eta^{l-1} = \\eta^l/2.6$:</p>
+       and there are 4 layers, using $\\eta^{l-1} = \\eta^l/2.6$ &mdash; divide by $2.6$ each step down:</p>
        <ul class="steps">
-        <li>Layer $L$ (top): $\\eta = 0.01$.</li>
+        <li>Layer $L$ (top): $\\eta^L = 0.01$.</li>
         <li>Layer $L\\!-\\!1$: $0.01/2.6 \\approx \\mathbf{0.003846}$.</li>
         <li>Layer $L\\!-\\!2$: $0.003846/2.6 \\approx \\mathbf{0.001479}$.</li>
-        <li>Layer $L\\!-\\!3$ (bottom): $0.001479/2.6 \\approx \\mathbf{0.000569}$ &mdash; about
-        $17\\times$ smaller than the top.</li>
+        <li>Layer $L\\!-\\!3$ (bottom): $0.001479/2.6 \\approx \\mathbf{0.000569}$ &mdash; that is
+        $0.01/2.6^3 \\approx 0.01/17.58$, about $17\\times$ smaller than the top.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-layer discriminative rates from $\\eta^L=0.01$, $\\eta^{l-1}=\\eta^l/2.6$.</caption>
+        <thead><tr><th>layer</th><th class="num">divide by</th><th class="num">rate $\\eta^l$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$L$ (top)</td><td class="num">$1$</td><td class="num">$0.010000$</td></tr>
+         <tr><td class="row-h">$L\\!-\\!1$</td><td class="num">$2.6$</td><td class="num">$0.003846$</td></tr>
+         <tr><td class="row-h">$L\\!-\\!2$</td><td class="num">$2.6^2$</td><td class="num">$0.001479$</td></tr>
+         <tr><td class="row-h">$L\\!-\\!3$ (bottom)</td><td class="num">$2.6^3$</td><td class="num">$0.000569$</td></tr>
+        </tbody>
+       </table>
        <p>Every one of these numbers is recomputed in the notebook so you can check the schedule and the
        per-layer rates by running it.</p>`,
     recipe:

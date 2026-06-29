@@ -282,9 +282,20 @@ $$ f(x_t) \\;=\\; \\operatorname{sign}(x_t)\\,\\frac{\\ln\\!\\big(1+\\mu\\,|x_t|
         <li>Receptive field $R = 1 + (1+2+4+8) = 1 + 15 = \\mathbf{16}$ samples.</li>
        </ul>
        <p>So the last output can see <b>16</b> input samples into the past with only 4 layers. Notice
-       $16 = 2^{4}$ &mdash; the receptive field is $2^{L}$ for $L$ layers, exactly the geometric-series result. Add
-       a 5th layer ($d=16$) and it would jump to $32$; the dilations $1,2,4,\\dots,512$ (10 layers) give
-       $2^{10}=1024$, the paper's number.</p>
+       $16 = 2^{4}$ &mdash; the receptive field is $2^{L}$ for $L$ layers, exactly the geometric-series result. The
+       <b>ablation</b> (plain causal, all $d=1$) reaches only $R=1+(1+1+1+1)=5$ at the same depth. Compare the two
+       schedules as depth grows:</p>
+       <table class="extable">
+        <caption>Receptive field $R=1+\\sum_\\ell (k-1)d_\\ell$ vs depth, $k=2$ (dilated doubling vs plain all-$1$).</caption>
+        <thead><tr><th>layers $L$</th><th class="num">dilated $R=2^{L}$</th><th class="num">plain $R=1+L$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$4$</td><td class="num">$16$</td><td class="num">$5$</td></tr>
+         <tr><td class="row-h">$5$</td><td class="num">$32$</td><td class="num">$6$</td></tr>
+         <tr><td class="row-h">$10$</td><td class="num">$1024$</td><td class="num">$11$</td></tr>
+        </tbody>
+       </table>
+       <p>The dilations $1,2,4,\\dots,512$ (10 layers) give $2^{10}=1024$, the paper's block size &mdash; while the
+       plain stack crawls to only $11$. That exponential-vs-linear gap is the whole point of dilation.</p>
        <p><b>Worked numeric example, part 2 &mdash; one masked-causal step.</b> Take a single causal conv layer,
        $k=2$, $d=1$, with filter weights $w=[w_0,w_1]=[0.5,\\,2.0]$ (tap $w_1$ is the <i>current</i> sample, tap
        $w_0$ is the one before). For input $x=[\\,3,\\,1,\\,4,\\,2\\,]$, left-pad with one zero (because the layer
@@ -296,6 +307,17 @@ $$ f(x_t) \\;=\\; \\operatorname{sign}(x_t)\\,\\frac{\\ln\\!\\big(1+\\mu\\,|x_t|
         <li>$y_3 = 0.5\\cdot 1 + 2.0\\cdot 4 = 0.5 + 8.0 = 8.5$ &mdash; sees $x_2,x_3$.</li>
         <li>$y_4 = 0.5\\cdot 4 + 2.0\\cdot 2 = 2.0 + 4.0 = 6.0$ &mdash; sees $x_3,x_4$.</li>
        </ul>
+       <p>Laid out as a ledger (tap $w_0$ on the past sample, $w_1$ on the current):</p>
+       <table class="extable">
+        <caption>Causal conv $y_t=0.5\\,x_{t-1}+2.0\\,x_t$ on $x=[3,1,4,2]$ (left-padded $x_0=0$).</caption>
+        <thead><tr><th>$t$</th><th class="num">$x_{t-1}$</th><th class="num">$x_t$</th><th class="num">$0.5\\,x_{t-1}$</th><th class="num">$2.0\\,x_t$</th><th class="num">$y_t$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">$0$</td><td class="num">$3$</td><td class="num">$0.0$</td><td class="num">$6.0$</td><td class="num">$6.0$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$3$</td><td class="num">$1$</td><td class="num">$1.5$</td><td class="num">$2.0$</td><td class="num">$3.5$</td></tr>
+         <tr><td class="row-h">$3$</td><td class="num">$1$</td><td class="num">$4$</td><td class="num">$0.5$</td><td class="num">$8.0$</td><td class="num">$8.5$</td></tr>
+         <tr><td class="row-h">$4$</td><td class="num">$4$</td><td class="num">$2$</td><td class="num">$2.0$</td><td class="num">$4.0$</td><td class="num">$6.0$</td></tr>
+        </tbody>
+       </table>
        <p>Crucially, <b>no</b> $y_t$ uses any $x_{t+1}$ &mdash; the left-pad makes the convolution causal. The
        notebook recomputes $y=[6.0,\\,3.5,\\,8.5,\\,6.0]$ and asserts it, and separately measures the 4-layer
        receptive field $=16$ by a gradient probe.</p>`,

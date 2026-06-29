@@ -240,22 +240,34 @@
        holding numerically.</p>`,
     example:
       `<p>Work one AdaIN call by hand, with real numbers (these are recomputed in the notebook's first cell).
-       Take one feature map with four activations and one style.</p>
+       Take one feature map with four activations $\\mathbf{x}_i = [\\,2,\\,4,\\,4,\\,6\\,]$ and one style:
+       scale $\\mathbf{y}_{s,i}=1.5$, bias $\\mathbf{y}_{b,i}=0.5$.</p>
        <ul class="steps">
-        <li><b>The inputs.</b> Feature map $\\mathbf{x}_i = [\\,2,\\,4,\\,4,\\,6\\,]$; style scale
-        $\\mathbf{y}_{s,i}=1.5$, style bias $\\mathbf{y}_{b,i}=0.5$.</li>
         <li><b>Normalize &mdash; mean.</b> $\\mu = \\tfrac{2+4+4+6}{4} = \\tfrac{16}{4} = 4.0$.</li>
         <li><b>Normalize &mdash; std.</b> Deviations are $[-2,0,0,2]$; variance
         $=\\tfrac{(-2)^2+0+0+2^2}{4}=\\tfrac{8}{4}=2.0$, so $\\sigma=\\sqrt{2}\\approx 1.4142$.</li>
-        <li><b>Normalized map:</b> $\\dfrac{\\mathbf{x}_i-\\mu}{\\sigma}
-        = \\Big[\\tfrac{-2}{1.4142},\\,0,\\,0,\\,\\tfrac{2}{1.4142}\\Big]
-        = [-1.4142,\\,0,\\,0,\\,1.4142]$ &mdash; mean 0, std 1.</li>
-        <li><b>Re-style:</b> multiply by $\\mathbf{y}_{s,i}=1.5$ and add $\\mathbf{y}_{b,i}=0.5$:
-        $[\\,1.5(-1.4142)+0.5,\\;0.5,\\;0.5,\\;1.5(1.4142)+0.5\\,]
-        = [-1.6213,\\,0.5,\\,0.5,\\,2.6213]$.</li>
-        <li><b>Check the styled statistics.</b> The output's mean is exactly
-        $\\mathbf{y}_{b,i}=0.5$ and its std is exactly $\\mathbf{y}_{s,i}=1.5$ &mdash; the content's original
-        $\\mu=4$, $\\sigma=1.4142$ are gone, replaced by the style. That is AdaIN's whole job.</li>
+        <li><b>Normalized map:</b> $\\dfrac{\\mathbf{x}_i-\\mu}{\\sigma}$ &mdash; subtract $4$, divide by
+        $1.4142$ &mdash; gives mean 0, std 1.</li>
+        <li><b>Re-style:</b> apply $\\mathbf{y}_{s,i}\\,(\\cdot) + \\mathbf{y}_{b,i} = 1.5(\\cdot) + 0.5$ to each
+        normalized value.</li>
+       </ul>
+       <p>Tracing all four positions through the pipeline:</p>
+       <table class="extable">
+        <caption>One AdaIN call, position by position ($\\mathbf{y}_s=1.5$, $\\mathbf{y}_b=0.5$)</caption>
+        <thead><tr><th>position</th><th class="num">input $\\mathbf{x}_i$</th><th class="num">$(\\mathbf{x}_i-\\mu)/\\sigma$</th><th class="num">$1.5(\\cdot)+0.5$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">2</td><td class="num">-1.4142</td><td class="num">-1.6213</td></tr>
+         <tr><td class="row-h">2</td><td class="num">4</td><td class="num">0.0000</td><td class="num">0.5000</td></tr>
+         <tr><td class="row-h">3</td><td class="num">4</td><td class="num">0.0000</td><td class="num">0.5000</td></tr>
+         <tr><td class="row-h">4</td><td class="num">6</td><td class="num">1.4142</td><td class="num">2.6213</td></tr>
+         <tr><td class="row-h">mean</td><td class="num">4.0000</td><td class="num">0.0000</td><td class="num">0.5000</td></tr>
+         <tr><td class="row-h">std</td><td class="num">1.4142</td><td class="num">1.0000</td><td class="num">1.5000</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Check the styled statistics.</b> The output's mean is exactly $\\mathbf{y}_{b,i}=0.5$ and its std
+        is exactly $\\mathbf{y}_{s,i}=1.5$ &mdash; the content's original $\\mu=4$, $\\sigma=1.4142$ are gone,
+        replaced by the style. That is AdaIN's whole job.</li>
        </ul>`,
     recipe:
       `<ol>

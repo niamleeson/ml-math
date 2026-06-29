@@ -291,9 +291,23 @@
         $\\pi_2^{1/1.3} = 0.3^{0.769} = 0.396$; renormalized, $\\pi = (0.657,\\,0.343)$ &mdash; flatter than the
         original $(0.7,0.3)$, so higher-temperature dreams are more uncertain.</li>
        </ul>
-       <p>These exact numbers ($\\mathcal{N}(1.0;1.0,0.25) = 0.7979$, mixture density $= 0.5585$,
-       $\\tau{=}1$ sample $= 1.20$, $\\tau{=}1.3$ sample $= 1.26$, reweighted $\\pi = (0.657,0.343)$) are
-       recomputed in the notebook's first cell so you can check them by running it.</p>`,
+       <p><b>Temperature side by side</b> &mdash; the same component-1 draw ($\\varepsilon=0.4$) and the same
+        reweighting rule, at the learned temperature versus a hotter one:</p>
+       <table class="extable">
+         <caption>Effect of temperature $\\tau$ on M's mixture $\\pi=(0.7,0.3),\\,\\mu=(1.0,-2.0),\\,\\sigma=(0.5,0.5)$.</caption>
+         <thead><tr><th>quantity</th><th class="num">$\\tau = 1$</th><th class="num">$\\tau = 1.3$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">comp-1 sample $\\mu_1+\\tau\\sigma_1\\varepsilon$</td><td class="num">$1.0+1.0\\cdot0.5\\cdot0.4=1.20$</td><td class="num">$1.0+1.3\\cdot0.5\\cdot0.4=1.26$</td></tr>
+           <tr><td class="row-h">$\\pi_1^{1/\\tau}$ (pre-norm)</td><td class="num">$0.700$</td><td class="num">$0.7^{0.769}=0.760$</td></tr>
+           <tr><td class="row-h">$\\pi_2^{1/\\tau}$ (pre-norm)</td><td class="num">$0.300$</td><td class="num">$0.3^{0.769}=0.396$</td></tr>
+           <tr><td class="row-h">reweighted $\\pi$ (normalized)</td><td class="num">$(0.700,\\,0.300)$</td><td class="num">$(0.657,\\,0.343)$</td></tr>
+         </tbody>
+       </table>
+       <p>Reading down the last column: the $\\tau=1.3$ draw lands farther from the mean ($1.26\\gt1.20$) and the
+        weights flatten ($0.7\\to0.657$, $0.3\\to0.343$) &mdash; a more uncertain dream. These exact numbers
+        ($\\mathcal{N}(1.0;1.0,0.25) = 0.7979$, mixture density $= 0.5585$, $\\tau{=}1$ sample $= 1.20$,
+        $\\tau{=}1.3$ sample $= 1.26$, reweighted $\\pi = (0.657,0.343)$) are recomputed in the notebook's first
+        cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Collect rollouts.</b> Run a random (or simple) policy in the environment and record

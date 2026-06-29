@@ -243,6 +243,16 @@ $$ \\eta_x^{t} \\leftarrow \\mathbb{E}_{\\mathcal{T}}\\big[\\,\\mathcal{F}_{\\th
        <p>Compute $\\mathcal{L} = \\tfrac{1}{2}\\mathcal{D}(p_1, \\mathrm{sg}(z_2)) + \\tfrac{1}{2}\\mathcal{D}(p_2, \\mathrm{sg}(z_1))$.
        (Stop-gradient does not change the <i>forward</i> value — it only zeros gradients — so the numbers below
        are the plain negative cosines.)</p>
+       <table class="extable">
+        <caption>The two negative-cosine terms of $\\mathcal{L}$, and the collapsed case for contrast.</caption>
+        <thead><tr><th>term</th><th class="num">dot product</th><th class="num">$\\lVert\\cdot\\rVert\\,\\lVert\\cdot\\rVert$</th><th class="num">cosine</th><th class="num">$\\mathcal{D}=-\\cos$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\mathcal{D}(p_1,z_2)$</td><td class="num">$2$</td><td class="num">$2\\cdot\\sqrt 2$</td><td class="num">$0.7071$</td><td class="num">$-0.7071$</td></tr>
+         <tr><td class="row-h">$\\mathcal{D}(p_2,z_1)$</td><td class="num">$3$</td><td class="num">$3\\cdot\\sqrt 2$</td><td class="num">$0.7071$</td><td class="num">$-0.7071$</td></tr>
+         <tr><td class="row-h">$\\mathcal{L}$ (average)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$-0.7071$</td></tr>
+         <tr><td class="row-h">collapsed ($p=z=[0.7,0.7]$)</td><td class="num">$0.98$</td><td class="num">$0.98$</td><td class="num">$1.0000$</td><td class="num">$-1.0000$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>First term</b> $\\mathcal{D}(p_1, z_2)$: lengths $\\lVert p_1\\rVert = \\sqrt{2^2+0^2} = 2$,
         $\\lVert z_2\\rVert = \\sqrt{1^2+1^2} = \\sqrt 2$. Dot product $p_1\\cdot z_2 = 2(1)+0(1) = 2$. Cosine

@@ -238,23 +238,28 @@
        nearest-codebook snap + straight-through + codebook/commitment losses on the other.</p>`,
     example:
       `<p><b>Worked numbers</b> (one encoder vector, a $K=3$, $D=2$ codebook; matches the notebook's first
-       cell). Encoder output $z_e(x)=(0.9,\\,-0.4)$. Codebook:
-       $e_0=(1.0,\\,0.0)$, $e_1=(-1.0,\\,1.0)$, $e_2=(0.2,\\,-0.8)$.</p>
-       <ol>
-        <li><b>Distances</b> (squared Euclidean, Eqn. 2's $\\arg\\min$):
-        <br>$\\lVert z_e-e_0\\rVert^2=(0.9-1.0)^2+(-0.4-0.0)^2=0.01+0.16=0.17$
-        <br>$\\lVert z_e-e_1\\rVert^2=(0.9+1.0)^2+(-0.4-1.0)^2=3.61+1.96=5.57$
-        <br>$\\lVert z_e-e_2\\rVert^2=(0.9-0.2)^2+(-0.4+0.8)^2=0.49+0.16=0.65$</li>
-        <li><b>Nearest codebook lookup.</b> Smallest is $0.17$ at $k=0$, so the symbol is $0$ and
+       cell). Encoder output $z_e(x)=(0.9,\\,-0.4)$, codebook
+       $e_0=(1.0,\\,0.0)$, $e_1=(-1.0,\\,1.0)$, $e_2=(0.2,\\,-0.8)$. First compute the squared Euclidean
+       distance (Eqn. 2's $\\arg\\min$) from $z_e$ to each codebook row:</p>
+       <table class="extable">
+        <caption>Squared distance $\\lVert z_e-e_k\\rVert^2$ from $z_e=(0.9,-0.4)$ to each codebook vector.</caption>
+        <thead><tr><th>$k$</th><th>$e_k$</th><th class="num">$(\\Delta x)^2$</th><th class="num">$(\\Delta y)^2$</th><th class="num">distance</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$0$</td><td>$(1.0,\\,0.0)$</td><td class="num">$0.01$</td><td class="num">$0.16$</td><td class="num">$0.17$ &larr; min</td></tr>
+         <tr><td class="row-h">$1$</td><td>$(-1.0,\\,1.0)$</td><td class="num">$3.61$</td><td class="num">$1.96$</td><td class="num">$5.57$</td></tr>
+         <tr><td class="row-h">$2$</td><td>$(0.2,\\,-0.8)$</td><td class="num">$0.49$</td><td class="num">$0.16$</td><td class="num">$0.65$</td></tr>
+        </tbody>
+       </table>
+       <p>Now read off the symbol and the loss terms (Eqn. 3), step by step:</p>
+       <ul class="steps">
+        <li><b>Nearest codebook lookup.</b> Smallest distance is $0.17$ at $k=0$, so the symbol is $0$ and
         $z_q(x)=e_0=(1.0,\\,0.0)$.</li>
-        <li><b>Codebook (VQ) loss</b> $\\lVert\\operatorname{sg}[z_e]-e_0\\rVert^2$: numerically the same
-        distance, $0.17$ (the $\\operatorname{sg}$ only changes <i>which</i> variable gets the gradient, not
-        the value).</li>
-        <li><b>Commitment loss</b> $\\beta\\lVert z_e-\\operatorname{sg}[e_0]\\rVert^2=0.25\\times 0.17
-        =0.0425$.</li>
-        <li><b>VQ part of the loss</b> (codebook $+$ commitment) $=0.17+0.0425=0.2125$, on top of the
-        reconstruction term.</li>
-       </ol>`,
+        <li><b>Codebook (VQ) loss</b> $\\lVert\\operatorname{sg}[z_e]-e_0\\rVert^2 = 0.17$ &mdash; the same
+        distance value (the $\\operatorname{sg}$ only changes <i>which</i> variable gets the gradient).</li>
+        <li><b>Commitment loss</b> $\\beta\\lVert z_e-\\operatorname{sg}[e_0]\\rVert^2 = 0.25\\times 0.17 = 0.0425$.</li>
+        <li><b>VQ part of the loss</b> (codebook $+$ commitment) $= 0.17 + 0.0425 = 0.2125$, added on top of
+        the reconstruction term.</li>
+       </ul>`,
     recipe:
       `<p>The architecture/algorithm as steps (what the notebook builds):</p>
        <ol>

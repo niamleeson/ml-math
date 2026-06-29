@@ -220,6 +220,16 @@
        </ul>
        <p>All are unit-length, so cosine similarity is just the dot product. Use temperature $\\tau = 0.5$.
        Compute $\\ell_{1,2}$ — the loss for the anchor $i=1$ with positive $j=2$.</p>
+       <table class="extable">
+        <caption>Anchor $i=1$: each other view's cosine similarity, scaled by $\\tau=0.5$, exponentiated (the softmax denominator, term by term; the self term $k=1$ is dropped by $\\mathbb{1}_{[k\\neq i]}$).</caption>
+        <thead><tr><th>view $k$</th><th>role</th><th class="num">$\\mathrm{sim}(z_1,z_k)$</th><th class="num">$\\mathrm{sim}/\\tau$</th><th class="num">$e^{\\mathrm{sim}/\\tau}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$z_2$</td><td>positive</td><td class="num">$0.8$</td><td class="num">$1.6$</td><td class="num">$4.9530$</td></tr>
+         <tr><td class="row-h">$z_3$</td><td>negative</td><td class="num">$-0.6$</td><td class="num">$-1.2$</td><td class="num">$0.3012$</td></tr>
+         <tr><td class="row-h">$z_4$</td><td>negative</td><td class="num">$0.0$</td><td class="num">$0.0$</td><td class="num">$1.0000$</td></tr>
+         <tr><td class="row-h">denom (sum)</td><td>&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$6.2542$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Similarities of anchor 1 to every other view</b> ($k\\neq 1$):
         $\\mathrm{sim}(z_1,z_2) = 1(0.8)+0(0.6) = 0.8$;

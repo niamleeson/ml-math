@@ -272,28 +272,37 @@ $$ \\text{effective / largest dependency length} = O(N \\times L) \\quad\\text{(
        base-attention derivation (the $\\sqrt{d_k}$ scaling, multi-head split) is the
        <b>paper-transformer</b> / <b>dl-attention</b> material &mdash; we consume it here.</p>`,
     example:
-      `<p>Work the <b>memory mechanism</b> by hand on numbers tiny enough to check. Use single-head attention
-       with the query/key/value projections set to the identity (so $q=k=v=$ the hidden state). One feature
-       per token to keep it readable.</p>
-       <p>Suppose the <b>cached previous segment</b> produced hidden states (one scalar each)
-       $h_{\\text{mem}} = [\\,4,\\ -1\\,]$ (two tokens), and the <b>current segment</b> has one token with
-       hidden state $h_{\\text{cur}} = [\\,2\\,]$. The current token is the only <b>query</b>; its
-       <b>keys/values</b> come from the <i>extended</i> context.</p>
+      `<p>Work the <b>memory mechanism</b> (&sect;3.2) by hand on numbers tiny enough to check. Use single-head
+       attention with the query/key/value projections set to the identity (so $q=k=v=$ the hidden state), one
+       feature per token. The <b>cached previous segment</b> produced hidden states $h_{\\text{mem}}=[\\,4,\\ -1\\,]$
+       (two tokens); the <b>current segment</b> has one token $h_{\\text{cur}}=[\\,2\\,]$, the only <b>query</b>.</p>
        <ul class="steps">
-        <li><b>Build the extended context</b> (&sect;3.2): glue memory in front of current,
-        $\\tilde h = [\\,4,\\ -1,\\ 2\\,]$ &mdash; three keys/values. The query is just $q=2$.</li>
-        <li><b>Scores</b> $=q\\cdot k$ for each key: $[\\,2{\\cdot}4,\\ 2{\\cdot}(-1),\\ 2{\\cdot}2\\,]
-        = [\\,8,\\ -2,\\ 4\\,]$. (We skip the $\\sqrt{d_k}$ divisor since $d_k=1$.)</li>
-        <li><b>Softmax</b> of $[8,-2,4]$: exponentials $\\approx [2981,\\ 0.135,\\ 54.6]$, sum $\\approx 3035.7$,
-        so weights $\\approx [0.9820,\\ 0.0000,\\ 0.0180]$.</li>
-        <li><b>Output</b> $=$ weighted sum of values $[4,-1,2]$:
-        $0.9820{\\cdot}4 + 0.0000{\\cdot}(-1) + 0.0180{\\cdot}2 \\approx 3.928 + 0.036 = 3.964$.</li>
-        <li><b>Contrast: vanilla (no memory).</b> Drop the cache; the only key/value is the current token
-        itself, $[2]$. Softmax of a single score is $1.0$, so the output is just $2.0$ &mdash; the token can
-        only see itself. The memory model's output $3.964$ is pulled strongly toward the value $4$ it fetched
-        from the <i>previous</i> segment. That difference is the whole point.</li>
+        <li><b>Build the extended context</b> $\\tilde h = [\\,\\mathrm{SG}(h_{\\text{mem}})\\circ h_{\\text{cur}}\\,]
+        = [\\,4,\\ -1,\\ 2\\,]$ &mdash; three keys/values. Query $q=2$.</li>
+        <li><b>Scores</b> $=q\\cdot k_j$ (skip $\\sqrt{d_k}$ since $d_k=1$): $2{\\cdot}4=8$, $2{\\cdot}(-1)=-2$,
+        $2{\\cdot}2=4$, so scores $=[\\,8,\\ -2,\\ 4\\,]$.</li>
+        <li><b>Exponentiate:</b> $e^{8}\\approx 2981.0$, $e^{-2}\\approx 0.135$, $e^{4}\\approx 54.60$; sum
+        $\\approx 3035.7$.</li>
+        <li><b>Softmax weights:</b> $2981.0/3035.7\\approx 0.9820$, $0.135/3035.7\\approx 0.0000$,
+        $54.60/3035.7\\approx 0.0180$.</li>
+        <li><b>Output</b> $=$ weighted sum of values: $0.9820{\\cdot}4 + 0.0000{\\cdot}(-1) + 0.0180{\\cdot}2
+        = 3.928 + 0 + 0.036 = \\mathbf{3.964}$.</li>
+        <li><b>Vanilla (no memory):</b> the only key/value is the current token $[2]$. Softmax of one score $=1.0$,
+        so the output is $1.0{\\cdot}2 = \\mathbf{2.0}$ &mdash; the token sees only itself.</li>
        </ul>
-       <p>These exact numbers are recomputed in the notebook's first cells so you can check them by running.</p>`,
+       <table class="extable">
+        <caption>Memory ON vs OFF for the single current query $q=2$</caption>
+        <thead><tr><th>key $j$ (source)</th><th class="num">value $k_j=v_j$</th><th class="num">score $q{\\cdot}k_j$</th><th class="num">weight (mem on)</th><th class="num">weight (mem off)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">mem token 0 (prev segment)</td><td class="num">4</td><td class="num">8</td><td class="num">0.9820</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">mem token 1 (prev segment)</td><td class="num">&minus;1</td><td class="num">&minus;2</td><td class="num">0.0000</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">current token</td><td class="num">2</td><td class="num">4</td><td class="num">0.0180</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h"><b>output</b></td><td class="num"></td><td class="num"></td><td class="num"><b>3.964</b></td><td class="num"><b>2.0</b></td></tr>
+        </tbody>
+       </table>
+       <p>The memory model's output $3.964$ is pulled strongly toward the value $4$ it fetched from the
+       <i>previous</i> segment; the vanilla model is stuck at $2.0$. That gap is the whole point. These exact
+       numbers are recomputed in the notebook's first cells.</p>`,
     recipe:
       `<ol>
         <li><b>Chop</b> the long sequence into segments of length $L$.</li>

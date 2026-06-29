@@ -291,9 +291,20 @@
         greedy $2.0 \\gt$ soft $1.575$, so the greedy, zero-entropy policy wins. With no entropy bonus the agent
         prefers to collapse to one action &mdash; exactly the loss of exploration the ablation demonstrates.</li>
        </ul>
-       <p>These exact numbers ($\\pi_{\\text{soft}} = [0.665, 0.245, 0.090]$, $\\mathbb{E}[Q] = 1.575$,
-       $\\mathcal{H} = 0.834$, objective $2.409 \\gt 2.0$, and the flip at $\\alpha = 0$) are recomputed in the
-       notebook's first cell so you can check them by running it.</p>`,
+       <table class="extable">
+         <caption>Greedy vs soft policy on the SAC objective $\\mathbb{E}[Q]+\\alpha\\mathcal{H}$, with $Q=[2,1,0]$. At $\\alpha=1$ soft wins; at $\\alpha=0$ (ablation) greedy wins.</caption>
+         <thead><tr><th>policy</th><th class="num">$\\pi$</th><th class="num">$\\mathbb{E}[Q]$</th><th class="num">$\\mathcal{H}$ (nats)</th><th class="num">obj at $\\alpha{=}1$</th><th class="num">obj at $\\alpha{=}0$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">greedy</td><td class="num">$[1,\\,0,\\,0]$</td><td class="num">$2.000$</td><td class="num">$0.000$</td><td class="num">$2.000$</td><td class="num">$2.000$</td></tr>
+           <tr><td class="row-h">soft $\\propto e^{Q/\\alpha}$</td><td class="num">$[0.665,\\,0.245,\\,0.090]$</td><td class="num">$1.575$</td><td class="num">$0.834$</td><td class="num">$2.409$</td><td class="num">$1.575$</td></tr>
+         </tbody>
+       </table>
+       <p>The objective columns show the whole story: at $\\alpha=1$ the soft policy's entropy bonus
+       ($+0.834$) more than covers the $0.425$ of raw reward it gives up, so $2.409 \\gt 2.000$; at $\\alpha=0$
+       the bonus is worth nothing and greedy's $2.000 \\gt 1.575$ wins. These exact numbers
+       ($\\pi_{\\text{soft}} = [0.665, 0.245, 0.090]$, $\\mathbb{E}[Q] = 1.575$, $\\mathcal{H} = 0.834$,
+       objective $2.409 \\gt 2.0$, and the flip at $\\alpha = 0$) are recomputed in the notebook's first cell so
+       you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build a stochastic squashed-Gaussian policy</b> from <code>nn.Linear</code>: a body that outputs

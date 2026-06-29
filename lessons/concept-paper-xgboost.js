@@ -307,8 +307,21 @@ $$ r_k(z) = \\frac{1}{\\sum_{(x,h)\\in D_k} h}\\sum_{\\substack{(x,h)\\in D_k\\\
         $w_R^\\ast = -3/12 = -0.25$: the leaf values <b>shrink toward 0</b>, and the gain drops too
         ($\\tfrac12[\\,25/12 + 9/12 - 4/14\\,] \\approx 1.27$). That is the regularization ablation.</li>
        </ul>
-       <p>Every number here ($G,H$, the per-split gains, $w^\\ast$, and the $\\lambda$ sweep) is recomputed in
-       the notebook's first cells and must match.</p>`,
+       <p><b>The $\\lambda$ sweep as a table</b> &mdash; the same split (leaf sums $G_L=-5,H_L=2$; $G_R=3,H_R=2$;
+       parent $G=-2,H=4$ are fixed; only the denominator $H+\\lambda$ changes):</p>
+       <table class="extable">
+         <caption>Regularization ablation on the split-after-2: $w^\\ast=-G/(H+\\lambda)$ (Eq. 5), gain (Eq. 7, $\\gamma=0$).</caption>
+         <thead><tr><th>$\\lambda$</th><th class="num">$w_L^\\ast$</th><th class="num">$w_R^\\ast$</th><th class="num">split gain</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$0$</td><td class="num">$2.500$</td><td class="num">$-1.500$</td><td class="num">$8.000$</td></tr>
+           <tr><td class="row-h">$1$</td><td class="num">$1.667$</td><td class="num">$-1.000$</td><td class="num">$5.267$</td></tr>
+           <tr><td class="row-h">$10$</td><td class="num">$0.417$</td><td class="num">$-0.250$</td><td class="num">$1.274$</td></tr>
+           <tr><td class="row-h">$100$</td><td class="num">$0.049$</td><td class="num">$-0.029$</td><td class="num">$0.147$</td></tr>
+         </tbody>
+       </table>
+       <p>Reading down the columns: as $\\lambda$ grows, both leaf values shrink toward $0$ and the gain falls
+       &mdash; bigger $\\lambda$ means simpler, more conservative trees. Every number here ($G,H$, the per-split
+       gains, $w^\\ast$, and the $\\lambda$ sweep) is recomputed in the notebook's first cells and must match.</p>`,
     recipe:
       `<ol>
         <li><b>Compute $g_i,h_i$.</b> For the chosen loss, evaluate the gradient and hessian at the current

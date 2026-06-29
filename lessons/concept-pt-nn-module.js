@@ -198,15 +198,24 @@
        </ul>`,
 
     example:
-      `<p>A two-layer MLP that maps a length-4 input to 3 outputs, with a hidden layer of 8 units:</p>
-       <p><code>Linear(4&rarr;8) &rarr; ReLU &rarr; Linear(8&rarr;3)</code>.</p>
+      `<p>Count every trainable parameter of a two-layer MLP that maps a length-4 input to 3 outputs, with a hidden
+        layer of 8 units: <code>Linear(4&rarr;8) &rarr; ReLU &rarr; Linear(8&rarr;3)</code>. Plug each layer into the
+        formula $\\text{params} = \\text{in} \\times \\text{out} + \\text{out}$ (the $+\\,\\text{out}$ is the bias).</p>
+       <table class="extable">
+         <caption>Per-layer parameter count: in&times;out weights + out biases</caption>
+         <thead><tr><th>layer</th><th class="num">weights (in&times;out)</th><th class="num">biases (out)</th><th class="num">params</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Linear(4&rarr;8)</td><td class="num">4&times;8 = 32</td><td class="num">8</td><td class="num">40</td></tr>
+           <tr><td class="row-h">ReLU</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+           <tr><td class="row-h">Linear(8&rarr;3)</td><td class="num">8&times;3 = 24</td><td class="num">3</td><td class="num">27</td></tr>
+           <tr><td class="row-h">total</td><td class="num"></td><td class="num"></td><td class="num">67</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>First layer parameters: weight matrix of shape (8, 4) = 32 numbers, plus a bias of length 8 =
-         8 numbers &rarr; <b>40</b>.</li>
-         <li>The Rectified Linear Unit (ReLU) has <b>no</b> parameters &mdash; it is just <code>max(0, z)</code>.</li>
-         <li>Second layer: weight (3, 8) = 24, plus bias of length 3 = 3 &rarr; <b>27</b>.</li>
-         <li>Total trainable parameters: $40 + 27 = 67$. The formula per linear layer is
-         $\\text{in} \\times \\text{out} + \\text{out}$ (the <code>+out</code> is the bias).</li>
+         <li><b>First layer.</b> $4 \\times 8 = 32$ weights, plus a bias of length $8$ &rarr; $32 + 8 = \\mathbf{40}$.</li>
+         <li><b>ReLU.</b> The Rectified Linear Unit has <b>no</b> parameters &mdash; it is just $\\max(0, z)$, so $0$.</li>
+         <li><b>Second layer.</b> $8 \\times 3 = 24$ weights, plus a bias of length $3$ &rarr; $24 + 3 = \\mathbf{27}$.</li>
+         <li><b>Total.</b> $40 + 0 + 27 = \\mathbf{67}$ — exactly what <code>sum(p.numel() for p in model.parameters())</code> would print for this model.</li>
        </ul>`,
 
     practice: [

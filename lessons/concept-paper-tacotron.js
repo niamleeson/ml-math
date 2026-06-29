@@ -258,17 +258,22 @@
        $W = \\begin{bmatrix}0.5 & 0\\\\0 & 0.5\\end{bmatrix}$, $U = \\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}$
        (identity), and $v = [1,1]$. Note $W s = [0.25,\\,-0.25]$ for every $j$.</p>
        <ul class="steps">
-        <li><b>Score each character.</b>
-        <ul>
-          <li>$j=1$: $\\tanh([0.25,-0.25]+[1,0]) = \\tanh([1.25,-0.25]) = [0.848,\\,-0.245]$; $e_1 = 0.848-0.245 = \\mathbf{0.603}$.</li>
-          <li>$j=2$: $\\tanh([0.25,-0.25]+[0,1]) = \\tanh([0.25,0.75]) = [0.245,\\,0.635]$; $e_2 = 0.245+0.635 = \\mathbf{0.880}$.</li>
-          <li>$j=3$: $\\tanh([0.25,-0.25]+[1,1]) = \\tanh([1.25,0.75]) = [0.848,\\,0.635]$; $e_3 = 0.848+0.635 = \\mathbf{1.483}$.</li>
-        </ul></li>
-        <li><b>Softmax to weights.</b> $\\exp(e) = [1.828,\\,2.411,\\,4.408]$, summing to $8.647$, so
-        $\\alpha = [0.211,\\,0.279,\\,0.510]$ (they sum to 1). Character 3 wins the most weight here.</li>
-        <li><b>Weighted-sum context.</b>
-        $c = 0.211\\,[1,0] + 0.279\\,[0,1] + 0.510\\,[1,1] = [0.211+0.510,\\;\\,0.279+0.510] = [\\mathbf{0.721},\\,\\mathbf{0.789}]$.</li>
+        <li><b>Score character 1.</b> $\\tanh([0.25,-0.25]+[1,0]) = \\tanh([1.25,-0.25]) = [0.848,\\,-0.245]$; $e_1 = 0.848-0.245 = 0.603$.</li>
+        <li><b>Score character 2.</b> $\\tanh([0.25,-0.25]+[0,1]) = \\tanh([0.25,0.75]) = [0.245,\\,0.635]$; $e_2 = 0.245+0.635 = 0.880$.</li>
+        <li><b>Score character 3.</b> $\\tanh([0.25,-0.25]+[1,1]) = \\tanh([1.25,0.75]) = [0.848,\\,0.635]$; $e_3 = 0.848+0.635 = 1.483$.</li>
+        <li><b>Exponentiate and sum.</b> $\\exp(e) = [1.828,\\,2.411,\\,4.408]$, total $= 8.647$.</li>
+        <li><b>Softmax to weights.</b> divide each by $8.647$: $\\alpha = [0.211,\\,0.279,\\,0.510]$ (they sum to 1).</li>
+        <li><b>Weighted-sum context.</b> $c = 0.211\\,[1,0] + 0.279\\,[0,1] + 0.510\\,[1,1] = [0.211+0.510,\\;0.279+0.510] = [0.721,\\,0.789]$.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-character attention: score $e_j$, $\\exp(e_j)$, weight $\\alpha_j$, and the annotation $h_j$ each weight multiplies.</caption>
+        <thead><tr><th>char $j$</th><th class="num">$h_j$</th><th class="num">score $e_j$</th><th class="num">$\\exp(e_j)$</th><th class="num">weight $\\alpha_j$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">$[1,0]$</td><td class="num">$0.603$</td><td class="num">$1.828$</td><td class="num">$0.211$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$[0,1]$</td><td class="num">$0.880$</td><td class="num">$2.411$</td><td class="num">$0.279$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$[1,1]$</td><td class="num">$1.483$</td><td class="num">$4.408$</td><td class="num">$0.510$</td></tr>
+        </tbody>
+       </table>
        <p>So at this step the decoder reads mostly character 3 (weight 0.51) with some of 1 and 2, and gets
        context $[0.721,\\,0.789]$. In a trained Tacotron the weight would peak on whichever character the current
        frame belongs to, and that peak marches rightward as $i$ grows &mdash; the diagonal. These exact numbers

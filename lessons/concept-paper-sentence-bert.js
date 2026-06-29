@@ -232,23 +232,33 @@ $$ \\text{Inference:}\\quad \\hat{y} = \\cos(u,v) = \\frac{u\\cdot v}{\\lVert u\
        separation. The paper uses $\\epsilon=1$ with Euclidean distance.</p>`,
     example:
       `<p>Work the comparison that the whole method rests on: the <b>cosine similarity of two sentence
-       embeddings</b>. Suppose, after pooling, two sentences gave the $4$-dimensional vectors</p>
-       <p>$$ u = [\\,2,\\ 1,\\ 0,\\ 1\\,], \\qquad v = [\\,1,\\ 2,\\ 1,\\ 0\\,]. $$</p>
+       embeddings</b>. Suppose, after pooling, three sentences gave the $4$-dimensional vectors</p>
+       <p>$$ u = [\\,2,\\ 1,\\ 0,\\ 1\\,], \\quad v = [\\,1,\\ 2,\\ 1,\\ 0\\,], \\quad w = [\\,-1,\\ 0,\\ 2,\\ -1\\,]. $$</p>
        <ul class="steps">
-        <li><b>Dot product</b> (numerator): $u\\cdot v = 2\\!\\cdot\\!1 + 1\\!\\cdot\\!2 + 0\\!\\cdot\\!1 +
+        <li><b>Dot product, paraphrase pair:</b> $u\\cdot v = 2\\!\\cdot\\!1 + 1\\!\\cdot\\!2 + 0\\!\\cdot\\!1 +
         1\\!\\cdot\\!0 = 2 + 2 + 0 + 0 = 4$.</li>
-        <li><b>Lengths</b> (denominator): $\\lVert u\\rVert = \\sqrt{2^2+1^2+0^2+1^2} = \\sqrt{6} \\approx
-        2.449$; $\\lVert v\\rVert = \\sqrt{1^2+2^2+1^2+0^2} = \\sqrt{6} \\approx 2.449$.</li>
-        <li><b>Cosine:</b> $\\cos(u,v) = \\dfrac{4}{\\sqrt6\\,\\sqrt6} = \\dfrac{4}{6} \\approx 0.667$. The two
-        sentences are moderately similar &mdash; the angle between them is $\\arccos(0.667)\\approx 48^\\circ$.</li>
-        <li><b>Contrast with an unrelated sentence</b> $w=[-1,\\ 0,\\ 2,\\ -1]$:
-        $u\\cdot w = -2 + 0 + 0 -1 = -3$, $\\lVert w\\rVert = \\sqrt{6}$, so
-        $\\cos(u,w) = \\dfrac{-3}{6} = -0.5$. Negative cosine &mdash; they point partly <i>opposite</i>, i.e.
-        dissimilar. Training's whole job is to make paraphrase pairs land near $+1$ and unrelated pairs near
-        $0$ or below.</li>
+        <li><b>Lengths:</b> $\\lVert u\\rVert = \\sqrt{2^2+1^2+0^2+1^2} = \\sqrt{6} \\approx 2.449$;
+        $\\lVert v\\rVert = \\sqrt{1^2+2^2+1^2+0^2} = \\sqrt{6} \\approx 2.449$.</li>
+        <li><b>Cosine:</b> $\\cos(u,v) = \\dfrac{4}{\\sqrt6\\,\\sqrt6} = \\dfrac{4}{6} \\approx 0.667$ &mdash;
+        moderately similar; the angle is $\\arccos(0.667)\\approx 48^\\circ$.</li>
+        <li><b>Unrelated pair:</b> $u\\cdot w = (2)(-1) + (1)(0) + (0)(2) + (1)(-1) = -2 + 0 + 0 - 1 = -3$, and
+        $\\lVert w\\rVert = \\sqrt{(-1)^2+0^2+2^2+(-1)^2} = \\sqrt{6}$, so $\\cos(u,w) = \\dfrac{-3}{6} = -0.5$
+        &mdash; negative, pointing partly <i>opposite</i>.</li>
        </ul>
-       <p>All of these exact numbers ($0.667$ and $-0.5$) are recomputed in the notebook's first cell so you
-       can check them by running.</p>`,
+       <p>Side by side, the comparison the training objective is built to widen:</p>
+       <table class="extable">
+        <caption>Cosine of $u$ with a paraphrase ($v$) vs. an unrelated sentence ($w$)</caption>
+        <thead>
+         <tr><th>pair</th><th class="num">dot $u\\cdot\\,\\cdot$</th><th class="num">$\\lVert u\\rVert$</th><th class="num">$\\lVert\\,\\cdot\\rVert$</th><th class="num">cosine</th><th class="num">gold label</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$(u,v)$ paraphrase</td><td class="num">4</td><td class="num">2.449</td><td class="num">2.449</td><td class="num">0.667</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$(u,w)$ unrelated</td><td class="num">-3</td><td class="num">2.449</td><td class="num">2.449</td><td class="num">-0.500</td><td class="num">0</td></tr>
+        </tbody>
+       </table>
+       <p>Training's whole job is to make paraphrase pairs land near $+1$ and unrelated pairs near $0$ or below
+       &mdash; widening the gap between these two rows. Both exact numbers ($0.667$ and $-0.5$) are recomputed in
+       the notebook's first cell so you can check them by running.</p>`,
     recipe:
       `<ol>
         <li><b>Shared encoder.</b> One network (BERT in the paper; a tiny Transformer-ish encoder here) maps a

@@ -150,9 +150,34 @@
        <p><b>Why <code>inference_mode</code> matters for the server.</b> Normally every forward pass also records the operations needed for a future <code>backward()</code>. At serving time you never call backward, so that bookkeeping is pure waste. <code>torch.inference_mode()</code> (a stricter, faster cousin of <code>no_grad()</code>) turns it off entirely, cutting memory and latency per request.</p>`,
 
     example:
-      `<p>Suppose a small image classifier with about 268,650 parameters. At float32 (4 bytes each) the weights are roughly <code>268650 x 4 ≈ 1.07 MB (megabytes)</code>. Quantize the linear layers to int8 (1 byte each) and the same numbers take roughly a quarter of the space — about <code>0.27 MB</code>.</p>
-       <p>Export it two ways. <code>ts = torch.jit.trace(model, x)</code> freezes it into a TorchScript graph you can <code>ts.save('m.ts')</code> and load in a C++ service. <code>torch.onnx.export(model, x, 'm.onnx', opset_version=17)</code> writes a portable file that <code>onnxruntime</code> runs on a CPU box with no PyTorch installed.</p>
-       <p>Before trusting either, you compare: run the same input through PyTorch (in <code>eval()</code> + <code>inference_mode()</code>) and through ONNX Runtime, and check <code>np.allclose(torch_out, onnx_out)</code>. If that passes and the quantized model's validation accuracy is within budget, you ship the smallest, fastest artifact behind a FastAPI <code>/predict</code> endpoint.</p>`,
+      `<p>Work the float32 &rarr; int8 size win with the lesson's real param count: an image classifier with
+       <b>268,650</b> parameters (conv1 448 + conv2 4,640 + fc1 262,272 + fc2 1,290 = 268,650).</p>
+       <ul class="steps">
+         <li><b>float32 size:</b> 4 bytes per weight, so $268650 \\times 4 = 1{,}074{,}600$ bytes
+         $= 1{,}074{,}600 / 10^6 \\approx 1.07$ MB (megabytes).</li>
+         <li><b>int8 size:</b> 1 byte per weight, so $268650 \\times 1 = 268{,}650$ bytes $\\approx 0.27$ MB.</li>
+         <li><b>shrink factor:</b> $1.07 / 0.27 = 4\\times$ &mdash; the 4-bytes-to-1-byte ratio, exactly. Equivalently
+         the int8 file is $0.27 / 1.07 \\approx 25\\%$ of the float32 file.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same 268,650 weights, four artifacts &mdash; export does not shrink; quantization does</caption>
+         <thead><tr><th>artifact</th><th class="num">bytes/weight</th><th class="num">size (MB)</th><th class="num">vs float32</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">float32 (.pt)</td><td class="num">4</td><td class="num">1.07</td><td class="num">1.00&times;</td></tr>
+           <tr><td class="row-h">TorchScript</td><td class="num">4</td><td class="num">1.07</td><td class="num">1.00&times;</td></tr>
+           <tr><td class="row-h">ONNX</td><td class="num">4</td><td class="num">1.07</td><td class="num">1.00&times;</td></tr>
+           <tr><td class="row-h">int8 quantized</td><td class="num">1</td><td class="num">0.27</td><td class="num">0.25&times;</td></tr>
+         </tbody>
+       </table>
+       <p>Export it two ways. <code>ts = torch.jit.trace(model, x)</code> freezes it into a TorchScript graph you can
+       <code>ts.save('m.ts')</code> and load in a C++ service. <code>torch.onnx.export(model, x, 'm.onnx', opset_version=17)</code>
+       writes a portable file that <code>onnxruntime</code> runs on a CPU box with no PyTorch installed &mdash; both carry
+       the <i>same</i> float32 weights, so the table shows their size unchanged at 1.07 MB.</p>
+       <p>Before trusting either, you compare: run the same input through PyTorch (in <code>eval()</code> +
+       <code>inference_mode()</code>) and through ONNX Runtime, and check <code>np.allclose(torch_out, onnx_out, atol=1e-4)</code>
+       &mdash; a max absolute difference like $2 \\times 10^{-5}$ passes (below $10^{-4}$), while $0.41$ flags an export bug.
+       If that passes and the quantized model's validation accuracy is within budget, you ship the smallest, fastest
+       artifact behind a FastAPI <code>/predict</code> endpoint.</p>`,
 
     practice: [
       {

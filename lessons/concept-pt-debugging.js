@@ -239,18 +239,34 @@
        </ul>`,
 
     example:
-      `<p>A silent broadcasting bug, made concrete. Suppose predictions are shape <code>(4, 1)</code> and targets are
-       shape <code>(4,)</code>, and you write <code>err = pred - target</code> for a mean-squared-error loss.</p>
+      `<p>The silent broadcasting bug with real numbers. Take predictions <code>pred = [[1], [2], [3]]</code> of shape
+       <code>(3, 1)</code> and targets <code>target = [10, 20, 30]</code> of shape <code>(3,)</code>, and write
+       <code>err = pred - target</code> for a mean-squared-error loss. You <i>meant</i>
+       <code>[1-10, 2-20, 3-30] = [-9, -18, -27]</code> &mdash; three differences.</p>
        <ul class="steps">
-         <li>PyTorch broadcasts <code>(4, 1)</code> against <code>(4,)</code> &rarr; it lines up the last axes,
-         stretching <code>(4, 1)</code> and <code>(1, 4)</code> into an <code>(4, 4)</code> result &mdash; an
-         <b>outer-product grid</b> of every prediction minus every target.</li>
-         <li>No error is raised. <code>err.mean()</code> averages 16 wrong differences instead of 4 right ones, so the
-         loss is meaningless and the model will not train.</li>
-         <li>The fix is to make shapes match: <code>pred = pred.squeeze(1)</code> (now <code>(4,)</code>) or
-         <code>target = target.unsqueeze(1)</code> (now <code>(4, 1)</code>). Printing
-         <code>(pred - target).shape</code> exposes the bug instantly &mdash; you expected <code>(4,)</code> or
-         <code>(4, 1)</code>, not <code>(4, 4)</code>.</li>
+         <li><b>What you wanted (elementwise, shape <code>(3,)</code>):</b> $1-10=-9$, $2-20=-18$, $3-30=-27$. Mean
+         squared error $= ((-9)^2 + (-18)^2 + (-27)^2)/3 = (81 + 324 + 729)/3 = 1134/3 = 378$.</li>
+         <li><b>What PyTorch actually does:</b> it lines up the last axes and broadcasts <code>(3, 1)</code> against
+         <code>(3,)</code> into a <code>(3, 3)</code> <b>outer-product grid</b> &mdash; every prediction minus every
+         target. Row $i$ uses <code>pred[i]</code>; column $j$ uses <code>target[j]</code>.</li>
+       </ul>
+       <table class="extable">
+         <caption>The accidental <code>(3, 3)</code> grid: cell = <code>pred[i] - target[j]</code></caption>
+         <thead><tr><th>pred &darr; / target &rarr;</th><th class="num">10</th><th class="num">20</th><th class="num">30</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">-9</td><td class="num">-19</td><td class="num">-29</td></tr>
+           <tr><td class="row-h">2</td><td class="num">-8</td><td class="num">-18</td><td class="num">-28</td></tr>
+           <tr><td class="row-h">3</td><td class="num">-7</td><td class="num">-17</td><td class="num">-27</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>No error is raised. <code>err.mean()</code> now averages <b>9</b> wrong differences, not 3. Summing the grid:
+         row 1 $= -9-19-29 = -57$, row 2 $= -8-18-28 = -54$, row 3 $= -7-17-27 = -51$; total $= -162$, so the mean of
+         the differences is $-162/9 = -18$ &mdash; only the diagonal (-9, -18, -27) was ever meant.</li>
+         <li><b>The fix &mdash; match the shapes:</b> <code>pred.squeeze(1)</code> gives <code>[1, 2, 3]</code> of shape
+         <code>(3,)</code>, so <code>pred.squeeze(1) - target = [-9, -18, -27]</code> &mdash; exactly the diagonal, the
+         3 differences you wanted, MSE back to $378$. Printing <code>(pred - target).shape</code> exposes the bug
+         instantly: you expected <code>(3,)</code>, not <code>(3, 3)</code>.</li>
        </ul>`,
 
     practice: [

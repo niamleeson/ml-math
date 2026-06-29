@@ -235,18 +235,46 @@
 
     example:
       `<p><b>Two points, by hand.</b> Take $x_1=(1,1)$ with $y_1=+1$ and $x_2=(-1,-1)$ with $y_2=-1$; linear kernel,
-       so $K=x\\cdot x$. The kernel matrix is $K_{11}=2,\\ K_{22}=2,\\ K_{12}=K_{21}=-2$. By symmetry the optimum has
+       so $K(u,v)=u\\cdot v$. First the kernel matrix $K_{ij}=x_i\\cdot x_j$:</p>
+       <table class="extable">
+        <caption>Linear kernel matrix for the two points</caption>
+        <thead><tr><th></th><th class="num">$x_1$</th><th class="num">$x_2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$x_1$</td><td class="num">2</td><td class="num">-2</td></tr>
+         <tr><td class="row-h">$x_2$</td><td class="num">-2</td><td class="num">2</td></tr>
+        </tbody>
+       </table>
+       <p>e.g. $K_{11}=1\\cdot1+1\\cdot1=2$ and $K_{12}=1\\cdot(-1)+1\\cdot(-1)=-2$. By symmetry the optimum has
        $\\alpha_1=\\alpha_2=\\alpha$.</p>
-       <p><b>One SMO step from $\\alpha=(0,0)$.</b> The error on a point is
-       $E_i=f(x_i)-y_i$. With all $\\alpha=0$ and $b=0$, $f=0$, so $E_1=0-(+1)=-1$ and $E_2=0-(-1)=+1$. The step's
-       curvature is $\\eta=2K_{12}-K_{11}-K_{22}=2(-2)-2-2=-8$. The update for the second multiplier is
-       $\\alpha_2 \\leftarrow \\alpha_2-\\dfrac{y_2(E_1-E_2)}{\\eta}=0-\\dfrac{(-1)(-1-1)}{-8}=0-\\dfrac{2}{8}=0.25.$</p>
-       <p><b>The optimum.</b> Maximizing $W(\\alpha)=2\\alpha-\\tfrac12(4\\alpha^2)=2\\alpha-2\\alpha^2$ gives
-       $\\alpha^\\*=\\tfrac12$? — careful: with $D_{11}=D_{22}=2,\\ D_{12}=y_1y_2K_{12}=(-1)(-2)=2$, the quadratic form is
-       $A^{\\mathsf T}DA=2\\alpha^2+2\\alpha^2+2(2)\\alpha^2=8\\alpha^2$, so $W=2\\alpha-4\\alpha^2$, maximized at
-       $\\alpha^\\*=0.25$ with $W^\\*=0.25$. Then $w=\\alpha(y_1x_1+y_2x_2)=0.25\\big((1,1)-(-1,-1)\\big)=(0.5,0.5)$,
-       and the margin is $2/\\lVert w\\rVert=2/\\sqrt{0.5}=2\\sqrt2\\approx 2.828$. The notebook recomputes all of these and
-       confirms $\\mathtt{sklearn}$ gives $w=(0.5,0.5)$ and margin $\\approx 2.828$ on the same two points.</p>`,
+       <p><b>One SMO step from $\\alpha=(0,0)$, $b=0$.</b></p>
+       <ul class="steps">
+        <li><b>Decision is flat:</b> $f=0$, so the errors are $E_1=f(x_1)-y_1=0-(+1)=-1$ and
+        $E_2=f(x_2)-y_2=0-(-1)=+1$.</li>
+        <li><b>Curvature:</b> $\\eta=2K_{12}-K_{11}-K_{22}=2(-2)-2-2=-8$.</li>
+        <li><b>Update:</b> $\\alpha_2 \\leftarrow \\alpha_2-\\dfrac{y_2(E_1-E_2)}{\\eta}
+        =0-\\dfrac{(-1)(-1-1)}{-8}=0-\\dfrac{2}{-8}=0-(-0.25)=0.25.$</li>
+       </ul>
+       <p><b>The optimum.</b> With $D_{11}=D_{22}=2$ and $D_{12}=y_1y_2K_{12}=(1)(-1)(-2)=2$, the quadratic
+       form is $A^{\\mathsf T}DA=2\\alpha^2+2\\alpha^2+2(2)\\alpha^2=8\\alpha^2$, so:</p>
+       <ul class="steps">
+        <li><b>Dual objective:</b> $W(\\alpha)=\\sum_i\\alpha_i-\\tfrac12 A^{\\mathsf T}DA
+        =2\\alpha-\\tfrac12(8\\alpha^2)=2\\alpha-4\\alpha^2$.</li>
+        <li><b>Maximize:</b> $\\dfrac{dW}{d\\alpha}=2-8\\alpha=0 \\Rightarrow \\alpha^\\*=0.25$, with
+        $W^\\*=2(0.25)-4(0.25)^2=0.5-0.25=0.25$.</li>
+        <li><b>Weights:</b> $w=\\alpha^\\*(y_1x_1+y_2x_2)=0.25\\big((1,1)-(-1,-1)\\big)=0.25(2,2)=(0.5,0.5)$.</li>
+        <li><b>Margin:</b> $2/\\lVert w\\rVert=2/\\sqrt{0.5^2+0.5^2}=2/\\sqrt{0.5}=2\\sqrt2\\approx 2.828$.</li>
+       </ul>
+       <p>The notebook recomputes all of these and confirms <code>sklearn.svm.SVC</code> agrees on the same two
+       points:</p>
+       <table class="extable">
+        <caption>From-scratch dual vs. the library oracle (2-point example)</caption>
+        <thead><tr><th>quantity</th><th class="num">ours</th><th class="num">sklearn SVC</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\alpha^\\*$ (one SMO step)</td><td class="num">0.25</td><td class="num">0.25</td></tr>
+         <tr><td class="row-h">$w$</td><td class="num">(0.5, 0.5)</td><td class="num">(0.5, 0.5)</td></tr>
+         <tr><td class="row-h">margin $2/\\lVert w\\rVert$</td><td class="num">2.828</td><td class="num">2.828</td></tr>
+        </tbody>
+       </table>`,
 
     recipe:
       `<ol>

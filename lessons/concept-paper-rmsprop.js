@@ -235,19 +235,31 @@
     example:
       `<p><b>Worked numbers</b> &mdash; one RMSProp step on a single weight, with $\\rho=0.9$, learning rate
        $\\alpha=0.01$, $\\epsilon=10^{-8}$, starting from $\\theta_0=0$, $s_0=0$, and gradient $g_1=0.1$ at
-       $t=1$:</p>
-       <ul>
-         <li>MeanSquare: $s_1 = 0.9\\cdot 0 + 0.1\\cdot(0.1)^2 = 0.1\\cdot 0.01 = 0.001$.</li>
-         <li>Root mean square: $\\sqrt{s_1} = \\sqrt{0.001} \\approx 0.0316228$; add $\\epsilon$:
-         $\\sqrt{s_1}+\\epsilon \\approx 0.0316228$.</li>
-         <li>Step: $\\dfrac{\\alpha}{\\sqrt{s_1}+\\epsilon}\\,g_1
+       $t=1$. Plug into $s_1=\\rho s_0+(1-\\rho)g_1^2$ then
+       $\\theta_1=\\theta_0-\\alpha g_1/(\\sqrt{s_1}+\\epsilon)$:</p>
+       <ul class="steps">
+         <li><b>MeanSquare.</b> $s_1 = 0.9\\cdot 0 + 0.1\\cdot(0.1)^2 = 0.1\\cdot 0.01 = 0.001$.</li>
+         <li><b>Root mean square.</b> $\\sqrt{s_1} = \\sqrt{0.001} \\approx 0.0316228$; add $\\epsilon$:
+         $\\sqrt{s_1}+\\epsilon \\approx 0.0316228$ (the $10^{-8}$ is negligible here).</li>
+         <li><b>Scaled gradient.</b> $\\dfrac{\\alpha}{\\sqrt{s_1}+\\epsilon}\\,g_1
          = \\dfrac{0.01}{0.0316228}\\cdot 0.1 \\approx 0.316228\\cdot 0.1 \\approx 0.0316228$.</li>
-         <li>Update: $\\theta_1 = 0 - 0.0316228 = -0.0316228$.</li>
+         <li><b>Update.</b> $\\theta_1 = 0 - 0.0316228 = -0.0316228$.</li>
        </ul>
-       <p>Notice the step is about $\\alpha/\\sqrt{1-\\rho}=0.01/\\sqrt{0.1}\\approx 0.0316$, which is far larger
-       than the raw $\\alpha\\,g_1=0.001$ a plain SGD step would take. With a single fresh gradient the only
-       information $s_1$ has is that one gradient, so $\\sqrt{s_1}=\\sqrt{1-\\rho}\\,|g_1|$ and the gradient's
-       size cancels out of $g_1/\\sqrt{s_1}$. The CODE cell recomputes these exact numbers and prints them.</p>`,
+       <p><b>RMSProp vs plain SGD</b> on this same first step (same $\\alpha=0.01$, same $g_1$). Notice RMSProp's
+       step does <i>not</i> shrink with the gradient &mdash; it is about $\\alpha/\\sqrt{1-\\rho}=0.01/\\sqrt{0.1}\\approx 0.0316$
+       no matter how big $g_1$ is, because $\\sqrt{s_1}=\\sqrt{1-\\rho}\\,|g_1|$ and the gradient size cancels in
+       $g_1/\\sqrt{s_1}$:</p>
+       <table class="extable">
+         <caption>First step taken for two gradient sizes; SGD step is $\\alpha\\,g_1$, RMSProp step is $\\alpha\\,g_1/(\\sqrt{s_1}+\\epsilon)$.</caption>
+         <thead><tr><th>gradient $g_1$</th><th class="num">$s_1=0.1\\,g_1^2$</th><th class="num">$\\sqrt{s_1}$</th><th class="num">SGD step $\\alpha g_1$</th><th class="num">RMSProp step</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$0.1$</td><td class="num">$0.001$</td><td class="num">$0.0316$</td><td class="num">$0.001$</td><td class="num">$0.0316$</td></tr>
+           <tr><td class="row-h">$10$</td><td class="num">$10$</td><td class="num">$3.1623$</td><td class="num">$0.1$</td><td class="num">$0.0316$</td></tr>
+         </tbody>
+       </table>
+       <p>SGD's step scales straight with the gradient ($0.001$ vs $0.1$); RMSProp's lands at $\\approx 0.0316$
+       both times &mdash; that scale-normalization is the whole point. The CODE cell recomputes these exact
+       numbers and prints them.</p>`,
 
     recipe:
       `<p><b>RMSProp, as numbered steps</b> &mdash; initialize $s_0=0$ for every parameter, then each update:</p>

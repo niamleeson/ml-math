@@ -226,14 +226,32 @@
        $5\\times5$ receptive field, both map $64$ channels to $64$. Ignore biases (the paper's comparison does).</p>
        <ul class="steps">
         <li><b>One $3\\times3$ conv layer:</b> $3^2 \\cdot C^2 = 9 \\cdot 64^2 = 9 \\cdot 4096 = 36{,}864$ weights.</li>
-        <li><b>Two stacked $3\\times3$:</b> $2 \\cdot 36{,}864 = 73{,}728$ weights. In the formula's shorthand,
+        <li><b>Two stacked $3\\times3$:</b> $2 \\cdot 36{,}864 = \\mathbf{73{,}728}$ weights. In the formula's shorthand,
         $2\\,(3^2 C^2) = 18 C^2 = 18 \\cdot 4096 = 73{,}728$.</li>
-        <li><b>One $5\\times5$ conv layer:</b> $5^2 \\cdot C^2 = 25 \\cdot 4096 = 102{,}400$ weights, i.e.
+        <li><b>One $5\\times5$ conv layer:</b> $5^2 \\cdot C^2 = 25 \\cdot 4096 = \\mathbf{102{,}400}$ weights, i.e.
         $25 C^2$.</li>
-        <li><b>Compare:</b> the two-$3\\times3$ stack uses $73{,}728$ vs $102{,}400$ &mdash; about
-        $73{,}728 / 102{,}400 \\approx 72\\%$, so the single $5\\times5$ has $\\approx 39\\%$ more weights
-        ($102{,}400 / 73{,}728 \\approx 1.389$) &mdash; <i>and</i> the stack has an extra ReLU in between.</li>
+        <li><b>Compare:</b> the single $5\\times5$ has $102{,}400 / 73{,}728 \\approx 1.389$, i.e.
+        $\\approx 39\\%$ more weights than the two-$3\\times3$ stack &mdash; <i>and</i> the stack has an extra
+        ReLU in between.</li>
        </ul>
+       <p>The same comparison one layer deeper &mdash; <b>three stacked $3\\times3$</b> vs <b>one $7\\times7$</b>,
+       both reaching a $7\\times7$ receptive field at $C=64$:</p>
+       <ul class="steps">
+        <li><b>Three stacked $3\\times3$:</b> $3\\,(3^2 C^2) = 27 C^2 = 27 \\cdot 4096 = \\mathbf{110{,}592}$ weights.</li>
+        <li><b>One $7\\times7$:</b> $7^2 C^2 = 49 C^2 = 49 \\cdot 4096 = \\mathbf{200{,}704}$ weights.</li>
+        <li><b>Compare:</b> $200{,}704 / 110{,}592 \\approx 1.815$ &mdash; the $7\\times7$ has the paper's
+        quoted "$81\\%$ more" parameters.</li>
+       </ul>
+       <table class="extable">
+        <caption>Weights for the same receptive field, $C=64$, weights only (no bias). Stacked $3\\times3$ wins on both count and an extra ReLU per layer.</caption>
+        <thead><tr><th>receptive field</th><th>design</th><th class="num">formula</th><th class="num">weights</th><th class="num">ReLUs</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$5\\times5$</td><td>two $3\\times3$</td><td class="num">$18 C^2$</td><td class="num">$73{,}728$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">$5\\times5$</td><td>one $5\\times5$</td><td class="num">$25 C^2$</td><td class="num">$102{,}400$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$7\\times7$</td><td>three $3\\times3$</td><td class="num">$27 C^2$</td><td class="num">$110{,}592$</td><td class="num">$3$</td></tr>
+         <tr><td class="row-h">$7\\times7$</td><td>one $7\\times7$</td><td class="num">$49 C^2$</td><td class="num">$200{,}704$</td><td class="num">$1$</td></tr>
+        </tbody>
+       </table>
        <p>The notebook's parameter-count cell builds exactly these layers with <code>nn.Conv2d</code> and prints
        the same numbers ($73{,}728$ vs $102{,}400$), so you can verify the arithmetic by running it.</p>`,
     recipe:

@@ -257,32 +257,26 @@
     example:
       `<p>Work through the <b>special-token decoding sequence</b> for one clip by hand, the way the demo parses it.
        Suppose the audio is a German speaker, and we want a <b>same-language transcript without timestamps</b>. The
-       decoder produces (token ids shown illustratively):</p>
-       <ul>
-        <li>Sequence: <code>&lt;|startoftranscript|&gt;</code>, <code>&lt;|de|&gt;</code>,
-        <code>&lt;|transcribe|&gt;</code>, <code>&lt;|notimestamps|&gt;</code>, <code>"Guten"</code>,
-        <code>"Tag"</code>, <code>&lt;|endoftext|&gt;</code>.</li>
-       </ul>
-       <ul class="steps">
-        <li><b>Position 1 — $\\langle\\text{sot}\\rangle$:</b> <code>&lt;|startoftranscript|&gt;</code>. Always
-        first; tells the decoder a transcript is beginning.</li>
-        <li><b>Position 2 — $\\langle\\text{lang}\\rangle$:</b> <code>&lt;|de|&gt;</code>. The language slot says
-        <b>German</b>. Had we left it for the model to predict, the highest-probability language token here would be
-        Whisper's <b>language identification</b> output.</li>
-        <li><b>Position 3 — $\\langle\\text{task}\\rangle$:</b> <code>&lt;|transcribe|&gt;</code>. Same-language
-        output, so the text will be in German. Switching this to <code>&lt;|translate|&gt;</code> would instead
-        request the <b>English</b> translation of the same audio.</li>
-        <li><b>Position 4 — $\\langle\\text{ts}\\rangle$:</b> <code>&lt;|notimestamps|&gt;</code>. Plain text, no
-        timing tokens. Omitting it would make the model interleave 20 ms-quantized timestamp tokens around the
-        words.</li>
-        <li><b>Positions 5–6 — text:</b> <code>"Guten"</code>, <code>"Tag"</code>. The actual transcript tokens,
-        each predicted from the audio and all earlier tokens.</li>
-        <li><b>Position 7 — $\\langle\\text{eot}\\rangle$:</b> <code>&lt;|endoftext|&gt;</code>. Stop.</li>
-       </ul>
-       <p>So the first <b>four</b> tokens are pure control (start, language, task, timestamps) and everything after
-       is content. Flip the language token and you change LID; flip the task token and you switch transcribe vs.
-       translate; drop the no-timestamps token and you get timing — all from the same model. The demo below parses
-       this exact sequence and recomputes the same breakdown.</p>`,
+       decoder emits this 7-token sequence; the table walks each position:</p>
+       <table class="extable">
+         <caption>One Whisper target sequence (German, transcribe, no timestamps &rarr; "Guten Tag"). Positions 1&ndash;4 are the control prefix; 5&ndash;6 are text; 7 stops.</caption>
+         <thead><tr><th class="num">pos</th><th>token</th><th>slot</th><th>role</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td><code>&lt;|startoftranscript|&gt;</code></td><td>$\\langle\\text{sot}\\rangle$</td><td>marks the start; always first</td></tr>
+           <tr><td class="num">2</td><td><code>&lt;|de|&gt;</code></td><td>$\\langle\\text{lang}\\rangle$</td><td>language = German (predict this slot &rarr; language ID)</td></tr>
+           <tr><td class="num">3</td><td><code>&lt;|transcribe|&gt;</code></td><td>$\\langle\\text{task}\\rangle$</td><td>same-language output (flip to <code>&lt;|translate|&gt;</code> for English)</td></tr>
+           <tr><td class="num">4</td><td><code>&lt;|notimestamps|&gt;</code></td><td>$\\langle\\text{ts}\\rangle$</td><td>plain text (omit &rarr; 20 ms timestamp tokens)</td></tr>
+           <tr><td class="num">5</td><td><code>"Guten"</code></td><td>text</td><td>transcript token</td></tr>
+           <tr><td class="num">6</td><td><code>"Tag"</code></td><td>text</td><td>transcript token</td></tr>
+           <tr><td class="num">7</td><td><code>&lt;|endoftext|&gt;</code></td><td>$\\langle\\text{eot}\\rangle$</td><td>stop</td></tr>
+         </tbody>
+       </table>
+       <p>Count it out: the first <b>4</b> tokens are pure control (start, language, task, timestamps) and the
+       remaining <b>2</b> are content, ending in the stop token &mdash; $4+2+1=7$ positions total. Flip the
+       language token (position 2) and you change LID; flip the task token (position 3) and you switch transcribe
+       vs. translate; drop the no-timestamps token (position 4) and you get timing &mdash; all from the same
+       model, same weights. The demo below parses this exact sequence and recomputes the same breakdown
+       ($4$ control tokens, $2$ text tokens).</p>`,
     recipe:
       `<ol>
         <li><b>Front end.</b> Resample audio to 16 kHz; compute an <b>80-channel log-Mel spectrogram</b> (25 ms

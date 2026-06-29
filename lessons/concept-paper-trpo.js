@@ -252,27 +252,37 @@
        the <b>rl-ppo</b> concept lesson, not re-derived here.</p>`,
     example:
       `<p>Take one <b>constrained trust-region step</b> by hand &mdash; the exact case the notebook recomputes.
-       Use a single-state policy over three actions, starting <b>uniform</b>: $\\pi_{old}=(\\tfrac13,\\tfrac13,\\tfrac13)$.
-       Suppose the old-policy rollouts estimated advantages $A=(+1,\\,-0.5,\\,-0.5)$ &mdash; action 0 is good, the
-       other two below average. Use trust-region size $\\delta = 0.02$.</p>
+       Single-state policy over three actions, starting <b>uniform</b> $\\pi_{old}=(\\tfrac13,\\tfrac13,\\tfrac13)$,
+       with old-policy advantages $A=(+1,\\,-0.5,\\,-0.5)$ (action 0 is good). Trust-region size $\\delta = 0.02$.</p>
        <ul class="steps">
-        <li><b>Surrogate to maximize.</b> Sampling actions from $\\pi_{old}$, the importance-sampled surrogate
-        $\\mathbb{E}[\\tfrac{\\pi}{\\pi_{old}}A]$ reduces to $\\sum_a \\pi(a)\\,A(a)$. At the start it is
-        $\\tfrac13(1)+\\tfrac13(-0.5)+\\tfrac13(-0.5)=0$. We want to raise it.</li>
-        <li><b>Ascent direction.</b> The gradient of the surrogate with respect to the action logits at the uniform
-        policy is $g = \\pi(A-\\bar A) = (0.333,\\,-0.167,\\,-0.167)$ &mdash; push probability toward action 0.</li>
-        <li><b>Line-search the step inside the trust region.</b> Walk along $g$: $\\theta_{new}=\\theta_{old}+\\beta g$,
-        and find the largest $\\beta$ with mean $D_{KL}(\\pi_{old}\\,\\|\\,\\pi_{new})\\le 0.02$. That boundary is at
-        $\\beta \\approx 0.83$, giving logits $(0.277,\\,-0.139,\\,-0.139)$.</li>
-        <li><b>Read off the new policy.</b> $\\pi_{new} = (0.431,\\,0.284,\\,0.284)$: action 0's probability rose
-        from $0.333$ to $0.431$. The realized KL is $0.020$ &mdash; exactly on the trust-region boundary &mdash;
-        and the surrogate climbed from $0$ to $0.147$. We improved as much as the KL budget allows, and <i>no
-        further</i>. <b>That is the trust region binding.</b></li>
+        <li><b>Surrogate at the old policy.</b> $\\sum_a\\pi(a)A(a) = \\tfrac13(1)+\\tfrac13(-0.5)+\\tfrac13(-0.5)
+        = \\tfrac13(1-0.5-0.5) = 0$.</li>
+        <li><b>Mean advantage</b> $\\bar A = \\tfrac{1-0.5-0.5}{3} = 0$.</li>
+        <li><b>Ascent direction</b> (gradient w.r.t. logits) $g=\\pi(A-\\bar A) = \\tfrac13(1,\\,-0.5,\\,-0.5)
+        = (0.333,\\,-0.167,\\,-0.167)$ &mdash; push probability toward action 0.</li>
+        <li><b>Line-search</b> the largest $\\beta$ with $D_{KL}(\\pi_{old}\\,\\|\\,\\pi_{new})\\le 0.02$ along
+        $\\theta_{new}=\\theta_{old}+\\beta g$: boundary at $\\beta\\approx 0.83$.</li>
+        <li><b>New logits</b> $=0.83\\cdot g = (0.277,\\,-0.139,\\,-0.139)$.</li>
+        <li><b>Softmax to $\\pi_{new}$:</b> $e^{0.277}\\approx 1.319$, $e^{-0.139}\\approx 0.870$ (twice),
+        sum $\\approx 3.059$; $\\pi_{new}=(1.319/3.059,\\ 0.870/3.059,\\ 0.870/3.059)=(0.431,\\,0.284,\\,0.284)$.</li>
+        <li><b>New surrogate</b> $=0.431(1)+0.284(-0.5)+0.284(-0.5) = 0.431-0.284 = 0.147$; realized
+        $D_{KL}=0.020$ &mdash; exactly on the boundary.</li>
        </ul>
-       <p>These exact numbers ($g=(0.333,-0.167,-0.167)$, $\\beta\\approx0.83$, $\\pi_{new}=(0.431,0.284,0.284)$,
-       KL $=0.020$, surrogate $=0.147$) are recomputed in the notebook's first cell so you can check the step by
-       running it. An unconstrained greedy step would shoot far past $\\beta=0.83$, leave the trust region, and
-       &mdash; because the surrogate is only a local model &mdash; can <i>lower</i> the true return (the ablation).</p>`,
+       <table class="extable">
+        <caption>Before vs after one constrained step ($\\delta=0.02$)</caption>
+        <thead><tr><th>quantity</th><th class="num">old ($\\pi_{old}$)</th><th class="num">new ($\\pi_{new}$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\pi$(action 0)</td><td class="num">0.333</td><td class="num">0.431</td></tr>
+         <tr><td class="row-h">$\\pi$(action 1)</td><td class="num">0.333</td><td class="num">0.284</td></tr>
+         <tr><td class="row-h">$\\pi$(action 2)</td><td class="num">0.333</td><td class="num">0.284</td></tr>
+         <tr><td class="row-h">surrogate $\\sum\\pi A$</td><td class="num">0.000</td><td class="num">0.147</td></tr>
+         <tr><td class="row-h">$D_{KL}(\\pi_{old}\\|\\pi_{new})$</td><td class="num">0.000</td><td class="num">0.020</td></tr>
+        </tbody>
+       </table>
+       <p>We improved as much as the KL budget allows and <i>no further</i> &mdash; the realized KL is pinned at
+       $\\delta=0.02$. <b>That is the trust region binding.</b> An unconstrained greedy step would shoot far past
+       $\\beta=0.83$, leave the trust region, and &mdash; because the surrogate is only a local model &mdash; can
+       <i>lower</i> the true return (the ablation).</p>`,
     recipe:
       `<ol>
         <li><b>Collect a rollout</b> with the current (old) policy and estimate the <b>advantages</b>

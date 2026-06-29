@@ -232,6 +232,17 @@ $$ \\phi(x) = \\begin{cases} x & \\text{if } x \\gt 0 \\\\ 0.1\\,x & \\text{othe
        </ul>
        <p><b>Step 3 &mdash; NMS on three boxes.</b> Scores: P $= 0.90$, Q $= 0.75$, and a far-off box
        R $= 0.80$ that overlaps neither (IoU with both $= 0$). Use NMS threshold $0.5$.</p>
+       <table class="extable">
+        <caption>The three candidate boxes and their IoU with the current top box.</caption>
+        <thead>
+         <tr><th>box</th><th class="num">score</th><th class="num">IoU vs top box</th><th>action (thr $0.5$)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">P</td><td class="num">$0.90$</td><td class="num">&mdash;</td><td>keep (highest)</td></tr>
+         <tr><td class="row-h">R</td><td class="num">$0.80$</td><td class="num">$0.000$</td><td>keep ($0 \\le 0.5$)</td></tr>
+         <tr><td class="row-h">Q</td><td class="num">$0.75$</td><td class="num">$0.714$</td><td>drop ($0.714 \\gt 0.5$)</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li>Sort by score: P (0.90), R (0.80), Q (0.75). <b>Keep P</b> (highest).</li>
         <li>Compare the rest to P: IoU(P, Q) $= 0.714 \\gt 0.5$ &rarr; <b>drop Q</b>. IoU(P, R) $= 0 \\le 0.5$

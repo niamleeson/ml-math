@@ -227,17 +227,27 @@
     example:
       `<p><b>Worked numbers: the learning rate across one restart.</b> Take $\\eta_{max}=0.1$, $\\eta_{min}=0$,
        first run length $T_0=4$ epochs, $T_{mult}=1$ (so every run is 4 epochs). We read $\\eta_t$ at integer
-       epochs. Using Eq. (5) with $\\eta_{min}=0$ it simplifies to
-       $\\eta_t=0.05\\,(1+\\cos(\\pi\\,T_{cur}/4))$:</p>
-       <ul>
-         <li>$T_{cur}=0$: $\\cos(0)=1$ &rarr; $\\eta=0.05(1+1)=\\mathbf{0.1}$ &nbsp;(top of run 1).</li>
-         <li>$T_{cur}=1$: $\\cos(\\pi/4)=0.7071$ &rarr; $\\eta=0.05(1.7071)=\\mathbf{0.08536}$.</li>
-         <li>$T_{cur}=2$: $\\cos(\\pi/2)=0$ &rarr; $\\eta=0.05(1)=\\mathbf{0.05}$ &nbsp;(halfway).</li>
-         <li>$T_{cur}=3$: $\\cos(3\\pi/4)=-0.7071$ &rarr; $\\eta=0.05(0.2929)=\\mathbf{0.01464}$.</li>
-         <li>$T_{cur}=4$: this is a <b>restart</b>. $T_{cur}$ snaps to $0$ and $T_i$ stays $4$, so
-         $\\eta=0.05(1+\\cos 0)=\\mathbf{0.1}$ again &mdash; the learning rate <b>jumps</b> from $0.01464$ at the
-         end of epoch 3 straight back up to $0.1$.</li>
+       epochs. With $\\eta_{min}=0$ Eq. (5) simplifies to
+       $\\eta_t=0.05\\,(1+\\cos(\\pi\\,T_{cur}/4))$. Step through one full run, then the restart:</p>
+       <ul class="steps">
+         <li>$T_{cur}=0$: $\\cos(0)=1\\Rightarrow\\eta=0.05(1+1)=0.1$ &nbsp;(top of run 1).</li>
+         <li>$T_{cur}=1$: $\\cos(\\pi/4)=0.70711\\Rightarrow\\eta=0.05(1.70711)=0.08536$.</li>
+         <li>$T_{cur}=2$: $\\cos(\\pi/2)=0\\Rightarrow\\eta=0.05(1)=0.05$ &nbsp;(halfway).</li>
+         <li>$T_{cur}=3$: $\\cos(3\\pi/4)=-0.70711\\Rightarrow\\eta=0.05(0.29289)=0.01464$.</li>
+         <li>$T_{cur}=4$: <b>restart</b> &mdash; $T_{cur}$ snaps to $0$, $T_i$ stays $4$, so
+         $\\eta=0.05(1+\\cos 0)=0.1$ again. The rate <b>jumps</b> from $0.01464$ straight back up to $0.1$.</li>
        </ul>
+       <table class="extable">
+         <caption>$\\eta_t$ at each epoch of a 4-epoch run ($\\eta_{max}=0.1,\\ \\eta_{min}=0,\\ T_0=4,\\ T_{mult}=1$), then the jump.</caption>
+         <thead><tr><th>$T_{cur}$</th><th class="num">$\\cos(\\pi T_{cur}/4)$</th><th class="num">$1+\\cos$</th><th class="num">$\\eta_t$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0</td><td class="num">1.00000</td><td class="num">2.00000</td><td class="num">0.10000</td></tr>
+           <tr><td class="row-h">1</td><td class="num">0.70711</td><td class="num">1.70711</td><td class="num">0.08536</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.00000</td><td class="num">1.00000</td><td class="num">0.05000</td></tr>
+           <tr><td class="row-h">3</td><td class="num">&minus;0.70711</td><td class="num">0.29289</td><td class="num">0.01464</td></tr>
+           <tr><td class="row-h">4 &rarr; restart</td><td class="num">1.00000</td><td class="num">2.00000</td><td class="num">0.10000</td></tr>
+         </tbody>
+       </table>
        <p>So the sequence is $0.1,\\,0.08536,\\,0.05,\\,0.01464,\\,[\\text{jump}]\\,0.1,\\dots$ The CODE cell
        recomputes these exact numbers and checks them against
        <code>CosineAnnealingWarmRestarts</code>.</p>`,

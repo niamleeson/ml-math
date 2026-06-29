@@ -231,23 +231,34 @@
        general "learn an embedding so that distance encodes class identity" argument is derived in full in the
        <b>fs-metric-learning</b> concept lesson &mdash; we only recap it here.</p>`,
     example:
-      `<p>Work the head by hand on tiny 3-dimensional embeddings, with <b>learned</b> weights
-       $\\alpha = [-2.0,\\,-1.0,\\,-0.5]$. (Training made them negative here so that <i>more</i> distance gives a
-       <i>lower</i> "same" probability &mdash; the sign is whatever training finds.) Recall
-       $\\sigma(z) = 1/(1 + e^{-z})$.</p>
+      `<p>Work the similarity head $p = \\sigma(\\sum_j \\alpha_j |h_{1,j} - h_{2,j}|)$ by hand on tiny
+       3-dimensional embeddings, with <b>learned</b> weights $\\alpha = [-2.0,\\,-1.0,\\,-0.5]$. (Training made
+       them negative here so that <i>more</i> distance gives a <i>lower</i> "same" probability &mdash; the sign is
+       whatever training finds.) Recall $\\sigma(z) = 1/(1 + e^{-z})$. We score two pairs &mdash; one close
+       (same class), one far (different class) &mdash; coordinate by coordinate:</p>
+       <table class="extable">
+        <caption>Per-coordinate L1 head, $z = \\sum_j \\alpha_j\\,|h_{1,j}-h_{2,j}|$, for a close pair and a far pair.</caption>
+        <thead><tr><th>coord $j$</th><th class="num">$\\alpha_j$</th><th class="num">close $|h_{1,j}-h_{2,j}|$</th><th class="num">close $\\alpha_j\\cdot$gap</th><th class="num">far $|h_{1,j}-h_{2,j}|$</th><th class="num">far $\\alpha_j\\cdot$gap</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">$-2.0$</td><td class="num">$0.02$</td><td class="num">$-0.040$</td><td class="num">$0.8$</td><td class="num">$-1.60$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$-1.0$</td><td class="num">$0.04$</td><td class="num">$-0.040$</td><td class="num">$0.5$</td><td class="num">$-0.50$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$-0.5$</td><td class="num">$0.05$</td><td class="num">$-0.025$</td><td class="num">$0.7$</td><td class="num">$-0.35$</td></tr>
+         <tr><td class="row-h">$z$ (sum)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$-0.105$</td><td class="num">&mdash;</td><td class="num">$-2.45$</td></tr>
+        </tbody>
+       </table>
        <p><b>A same-class pair</b> (embeddings close): $h_1 = [0.80,\\,0.30,\\,0.55]$, $h_2 = [0.78,\\,0.34,\\,0.50]$.</p>
        <ul class="steps">
         <li><b>Coordinate gaps</b> $|h_1 - h_2| = [\\,|0.80-0.78|,\\;|0.30-0.34|,\\;|0.55-0.50|\\,] = [0.02,\\,0.04,\\,0.05]$.</li>
-        <li><b>Weighted sum</b> $z = (-2.0)(0.02) + (-1.0)(0.04) + (-0.5)(0.05) = -0.04 - 0.04 - 0.025 = -0.105$.</li>
-        <li><b>Sigmoid</b> $p = \\sigma(-0.105) = 1/(1 + e^{0.105}) \\approx 0.474$. Close embeddings &rarr; a
-        relatively <b>high</b> score.</li>
+        <li><b>Weighted sum</b> $z = (-2.0)(0.02) + (-1.0)(0.04) + (-0.5)(0.05) = -0.040 - 0.040 - 0.025 = -0.105$.</li>
+        <li><b>Sigmoid</b> $p = \\sigma(-0.105) = 1/(1 + e^{0.105}) \\approx 1/2.111 \\approx 0.474$. Close embeddings
+        &rarr; a relatively <b>high</b> score.</li>
        </ul>
        <p><b>A different-class pair</b> (embeddings far apart): $h_1 = [0.9,\\,0.2,\\,0.8]$, $h_2 = [0.1,\\,0.7,\\,0.1]$.</p>
        <ul class="steps">
         <li><b>Coordinate gaps</b> $|h_1 - h_2| = [0.8,\\,0.5,\\,0.7]$.</li>
-        <li><b>Weighted sum</b> $z = (-2.0)(0.8) + (-1.0)(0.5) + (-0.5)(0.7) = -1.6 - 0.5 - 0.35 = -2.45$.</li>
-        <li><b>Sigmoid</b> $p = \\sigma(-2.45) = 1/(1 + e^{2.45}) \\approx 0.079$. Far embeddings &rarr; a
-        <b>low</b> score.</li>
+        <li><b>Weighted sum</b> $z = (-2.0)(0.8) + (-1.0)(0.5) + (-0.5)(0.7) = -1.60 - 0.50 - 0.35 = -2.45$.</li>
+        <li><b>Sigmoid</b> $p = \\sigma(-2.45) = 1/(1 + e^{2.45}) \\approx 1/12.588 \\approx 0.079$. Far embeddings
+        &rarr; a <b>low</b> score.</li>
        </ul>
        <p>The same pair ($0.474$) outscores the different pair ($0.079$), so an $\\arg\\max$ over support items
        would pick the same-class one. These exact numbers are recomputed in the notebook's first cell.</p>`,

@@ -241,25 +241,34 @@
        <p>The full gradient is derived in the <code>dl-word2vec</code> concept lesson.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> for one (center, target) pair with a tiny $D=2$, $V=3$ vocabulary
+      `<p><b>Full softmax for one (center, target) pair</b> (Eq. 2), with a tiny $D=2$, $V=3$ vocabulary
        (words $0,1,2$). Center vector $e_c = [1,\\,2]$; output vectors
-       $\\theta_0=[1,0]$, $\\theta_1=[0.5,1]$, $\\theta_2=[-1,1]$. The true target is word $1$.</p>
-       <ul>
-         <li><b>Scores</b> $\\theta_j^\\top e_c$:
-         $\\theta_0^\\top e_c = 1\\cdot1 + 0\\cdot2 = 1$;
-         $\\theta_1^\\top e_c = 0.5\\cdot1 + 1\\cdot2 = 2.5$;
-         $\\theta_2^\\top e_c = -1\\cdot1 + 1\\cdot2 = 1$. Scores $=[1,\\,2.5,\\,1]$.</li>
-         <li><b>Exponentiate:</b> $[e^{1},\\,e^{2.5},\\,e^{1}]=[2.71828,\\,12.18249,\\,2.71828]$.</li>
-         <li><b>Denominator</b> $\\sum_j$: $2.71828+12.18249+2.71828 = 17.61906$.</li>
-         <li><b>Softmax probabilities:</b> $[2.71828,\\,12.18249,\\,2.71828]/17.61906 =
-         [0.15428,\\,0.69144,\\,0.15428]$ (they sum to $1$).</li>
-         <li><b>Loss</b> for true target $1$: $-\\ln(0.69144) = 0.36898$.</li>
+       $\\theta_0=[1,0]$, $\\theta_1=[0.5,1]$, $\\theta_2=[-1,1]$; the true target is word $1$.
+       Each word's score is the dot product $\\theta_j^\\top e_c$:</p>
+       <table class="extable">
+         <caption>Skip-gram softmax over the $V=3$ vocabulary, center $e_c=[1,2]$, true target $=$ word 1.</caption>
+         <thead><tr><th>word $j$</th><th class="num">$\\theta_j$</th><th class="num">score $\\theta_j^\\top e_c$</th><th class="num">$\\exp(\\text{score})$</th><th class="num">softmax $p(j\\mid c)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0</td><td class="num">$[1,0]$</td><td class="num">$1\\cdot1+0\\cdot2=1$</td><td class="num">$2.71828$</td><td class="num">$0.15428$</td></tr>
+           <tr><td class="row-h">1 (true)</td><td class="num">$[0.5,1]$</td><td class="num">$0.5\\cdot1+1\\cdot2=2.5$</td><td class="num">$12.18249$</td><td class="num">$0.69144$</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$[-1,1]$</td><td class="num">$-1\\cdot1+1\\cdot2=1$</td><td class="num">$2.71828$</td><td class="num">$0.15428$</td></tr>
+           <tr><td class="row-h">$\\sum$</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$17.61906$</td><td class="num">$1.00000$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Denominator</b> (sum of the $\\exp$ column): $2.71828+12.18249+2.71828 = 17.61906$.</li>
+         <li><b>Softmax</b> each row: divide its $\\exp$ by $17.61906$, e.g. $12.18249/17.61906 = 0.69144$;
+         the column sums to $1$.</li>
+         <li><b>Loss</b> for true target $1$ (negative log-likelihood): $-\\ln(0.69144) = 0.36898$.</li>
        </ul>
        <p>The CODE cell recomputes these exact numbers and prints them.</p>
-       <p><b>Same pair under negative sampling (Eq. 4)</b> with one noise word, say word $0$ (score $1$).
-       True term $\\log\\sigma(2.5)=\\ln(0.92414)=-0.07889$; noise term $\\log\\sigma(-1)=\\ln(0.26894)=-1.31326$.
-       Objective $=-0.07889-1.31326=-1.39215$ (we maximize it). Notice it never summed over the whole vocabulary
-       &mdash; just the true word plus one sampled noise word.</p>
+       <p><b>Same pair under negative sampling (Eq. 4)</b> with one noise word, say word $0$ (its score is $1$).
+       It never sums over the whole vocabulary &mdash; just the true word plus the sampled noise word:</p>
+       <ul class="steps">
+         <li><b>True term:</b> $\\log\\sigma(2.5)=\\ln(0.92414)=-0.07889$ (push the true pair's score up).</li>
+         <li><b>Noise term:</b> $\\log\\sigma(-1)=\\ln(0.26894)=-1.31326$ (push the noise word's score down).</li>
+         <li><b>Objective</b> (we maximize): $-0.07889 + (-1.31326) = -1.39215$.</li>
+       </ul>
        <p><b>Subsampling (Eq. 5)</b> for a frequent word with $f=0.01$ and $t=10^{-5}$:
        $P(\\text{drop})=1-\\sqrt{10^{-5}/0.01}=1-\\sqrt{0.001}=1-0.03162=0.96838$ &mdash; that occurrence is dropped
        about 97% of the time. A rare word with $f=10^{-5}$ gives $P=1-\\sqrt{1}=0$, never dropped.</p>`,

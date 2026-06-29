@@ -209,21 +209,27 @@
        </ul>`,
 
     example:
-      `<p>Five samples, <code>batch_size=2</code>, <code>shuffle=False</code>, <code>drop_last=False</code>.</p>
+      `<p>Five samples, <code>batch_size=2</code>, <code>shuffle=False</code>, <code>drop_last=False</code>. The Dataset
+       holds <code>X</code> of shape <code>(5, 3)</code> and labels <code>y = [0,1,0,1,0]</code>, so <code>len(ds)=5</code>
+       and <code>ds[2]</code> returns the pair <code>(X[2], 0)</code> as tensors.</p>
        <ul class="steps">
-         <li><b>The Dataset</b> holds <code>X</code> of shape <code>(5, 3)</code> and labels
-         <code>y = [0,1,0,1,0]</code>. <code>len(ds)</code> is 5; <code>ds[2]</code> returns the pair
-         <code>(X[2], 0)</code> as tensors.</li>
-         <li><b>The Sampler</b> (no shuffle) yields indices <code>0,1,2,3,4</code>; the BatchSampler groups them
-         into <code>[0,1]</code>, <code>[2,3]</code>, <code>[4]</code>.</li>
-         <li><b>Collate</b> stacks each group: batch 1 is an <code>x</code> of shape <code>(2, 3)</code> and a
-         <code>y</code> of shape <code>(2,)</code>; same for batch 2; batch 3 is the leftover single sample,
-         shape <code>(1, 3)</code>. With <code>drop_last=True</code> that last short batch would be dropped,
-         leaving two full batches.</li>
-         <li><b>The loop</b> <code>for xb, yb in loader:</code> runs three times, handing you those batched
-         tensors one at a time. Flip to <code>shuffle=True</code> and the index order &mdash; hence the batch
-         contents &mdash; changes every epoch.</li>
-       </ul>`,
+         <li><b>Sampler</b> (no shuffle) yields indices $0,1,2,3,4$.</li>
+         <li><b>BatchSampler</b> chops that into chunks of 2: $[0,1],\\ [2,3],\\ [4]$. Number of batches $= \\lceil 5/2 \\rceil = 3$.</li>
+         <li><b>Collate</b> stacks each chunk: 2 samples of shape $(3,)$ stack into $(2, 3)$; the leftover single sample becomes $(1, 3)$.</li>
+         <li>With <code>drop_last=True</code> the final short batch is dropped, leaving $\\lfloor 5/2 \\rfloor = 2$ full batches.</li>
+       </ul>
+       <table class="extable">
+         <caption>How 5 indices map to batches, and the resulting tensor shapes</caption>
+         <thead><tr><th>batch</th><th>indices</th><th class="num"># samples</th><th>x shape</th><th>y shape</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td>[0, 1]</td><td class="num">2</td><td>(2, 3)</td><td>(2,)</td></tr>
+           <tr><td class="row-h">2</td><td>[2, 3]</td><td class="num">2</td><td>(2, 3)</td><td>(2,)</td></tr>
+           <tr><td class="row-h">3</td><td>[4]</td><td class="num">1</td><td>(1, 3)</td><td>(1,)</td></tr>
+         </tbody>
+       </table>
+       <p>The loop <code>for xb, yb in loader:</code> runs 3 times (or 2 with <code>drop_last=True</code>), handing you
+       those batched tensors one at a time. Flip to <code>shuffle=True</code> and the index order &mdash; hence the
+       batch contents &mdash; changes every epoch.</p>`,
 
     practice: [
       {

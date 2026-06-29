@@ -165,13 +165,30 @@ else:
 <li><b><code>cudnn.benchmark</code>.</b> Setting <code>torch.backends.cudnn.benchmark = True</code> lets cuDNN (NVIDIA's deep-learning library) auto-tune the fastest convolution algorithm for your fixed input shapes. It costs a brief warmup, then speeds up every later step. Leave it off if your input sizes change every batch.</li>
 <li><b>Beyond one GPU.</b> When a single GPU is not enough, you split work across several with DDP (Distributed Data Parallel) &mdash; a forward-link covered in a later lesson.</li>
 </ul>`,
-    example: `<p>Turn a CPU step into a fast GPU+AMP step:</p>
-<ul>
-<li><b>Setup.</b> <code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')</code>, then <code>model.to(device)</code> and <code>scaler = torch.cuda.amp.GradScaler()</code>.</li>
-<li><b>Per batch.</b> <code>xb, yb = xb.to(device), yb.to(device)</code> &rarr; data joins the model on the GPU.</li>
-<li><b>The step.</b> <code>opt.zero_grad()</code>; then <code>with torch.autocast(device_type='cuda', dtype=torch.float16): out = model(xb); loss = loss_fn(out, yb)</code>; then <code>scaler.scale(loss).backward()</code>, <code>scaler.step(opt)</code>, <code>scaler.update()</code>.</li>
-<li><b>Result.</b> Same math, same final accuracy, roughly half the time and half the memory &mdash; because the heavy matmuls now run in float16 on the GPU and the scaler keeps the gradients alive.</li>
-</ul>`,
+    example: `<p>Put real numbers on the two wins. Speedup is just $\\text{speedup} = \\dfrac{t_{\\text{baseline}}}{t_{\\text{new}}}$,
+and AMP's memory saving comes from float16 using half the bytes of float32. Using the illustrative per-step times
+measured in this lesson's CODEVIZ ($169.3$ ms on CPU, $9.4$ ms on GPU, $4.9$ ms on GPU+AMP):</p>
+<table class="extable">
+<caption>Per-step time and the speedup over the CPU baseline (illustrative)</caption>
+<thead><tr><th>configuration</th><th class="num">ms / step</th><th class="num">speedup vs CPU</th></tr></thead>
+<tbody>
+<tr><td class="row-h">CPU (FP32)</td><td class="num">169.3</td><td class="num">1.0&times;</td></tr>
+<tr><td class="row-h">GPU (FP32)</td><td class="num">9.4</td><td class="num">18.0&times;</td></tr>
+<tr><td class="row-h">GPU + AMP</td><td class="num">4.9</td><td class="num">34.6&times;</td></tr>
+</tbody>
+</table>
+<ul class="steps">
+<li><b>GPU vs CPU.</b> $169.3 / 9.4 = 18.0$ &mdash; moving the same step to the GPU is about $18\\times$ faster.</li>
+<li><b>AMP on top of the GPU.</b> $9.4 / 4.9 = 1.9$ &mdash; turning on AMP roughly halves the GPU time again.</li>
+<li><b>Combined.</b> $169.3 / 4.9 = 34.6$ &mdash; GPU and AMP stacked give about a $35\\times$ speedup over the CPU.</li>
+</ul>
+<p><b>The memory win.</b> A float32 number is $4$ bytes; a float16 number is $2$. For a $256 \\times 1024$ batch of activations:</p>
+<ul class="steps">
+<li><b>FP32 size.</b> $256 \\times 1024 \\times 4 = 1{,}048{,}576$ bytes $\\approx 1.05$ MB.</li>
+<li><b>FP16 size.</b> $256 \\times 1024 \\times 2 = 524{,}288$ bytes $\\approx 0.52$ MB &mdash; exactly half.</li>
+<li><b>Why ~55, not 50.</b> AMP keeps the sensitive parts (loss, reductions) in float32, so real peak memory lands near $55\\%$ of FP32 rather than a clean $50\\%$.</li>
+</ul>
+<p>Same math, same final accuracy &mdash; the heavy matmuls just run in float16 on the GPU while the <code>GradScaler</code> keeps the gradients alive.</p>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> The device pattern. Pick <code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')</code>, build <code>model = nn.Linear(4, 2)</code>, move it with <code>.to(device)</code>, and print the device of its first parameter. Predict the output on a CPU-only runtime before running.`,

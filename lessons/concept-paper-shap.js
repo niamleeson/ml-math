@@ -237,9 +237,19 @@
       `<p>Compute exact SHAP values by hand on a tiny 2-feature additive model, then check they sum correctly. Let
        $f(x) = 10 + 3x_0 + 4x_1$. Explain the instance $x = (x_0, x_1) = (2, 5)$ with background means
        $\\bar x = (0, 0)$, so an absent feature is replaced by $0$. The feature set is $F = \\{0, 1\\}$, $M = 2$.</p>
+       <table class="extable">
+        <caption>Value function $f_x(S)$ on all $2^M=4$ coalitions: present features at $x$, absent at the mean $0$.</caption>
+        <thead><tr><th>coalition $S$</th><th>feature 0</th><th>feature 1</th><th class="num">$f_x(S)$</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">$\\varnothing$</td><td>absent (0)</td><td>absent (0)</td><td class="num">10</td></tr>
+          <tr><td class="row-h">$\\{0\\}$</td><td>$x_0=2$</td><td>absent (0)</td><td class="num">16</td></tr>
+          <tr><td class="row-h">$\\{1\\}$</td><td>absent (0)</td><td>$x_1=5$</td><td class="num">30</td></tr>
+          <tr><td class="row-h">$\\{0,1\\}$</td><td>$x_0=2$</td><td>$x_1=5$</td><td class="num">36</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Value function on all coalitions.</b> Plug present features at $x$, absent ones at the mean $0$:
-        $f_x(\\varnothing) = 10$ (both absent); $f_x(\\{0\\}) = 10 + 3\\cdot2 = 16$; $f_x(\\{1\\}) = 10 + 4\\cdot5 = 30$;
+        $f_x(\\varnothing) = 10$; $f_x(\\{0\\}) = 10 + 3\\cdot2 = 16$; $f_x(\\{1\\}) = 10 + 4\\cdot5 = 30$;
         $f_x(\\{0,1\\}) = 10 + 6 + 20 = 36$. The full prediction is $f(x) = 36$ and the base value is
         $\\phi_0 = f_x(\\varnothing) = 10$.</li>
         <li><b>SHAP value of feature 0.</b> The other-feature coalitions are $S = \\varnothing$ and $S = \\{1\\}$.

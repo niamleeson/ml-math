@@ -236,20 +236,38 @@
         <li><b>Rule for a 2&times;2 pool (stride 2):</b> $n \\to \\lfloor n/2\\rfloor$.</li>
         <li><b>Rule for a 2&times;2 up-conv:</b> $n \\to 2n$.</li>
        </ul>
-       <p><b>Down the contracting path:</b></p>
+       <p><b>Down the contracting path</b> (input $=572$; each block: two convs subtract 4, then a pool halves):</p>
        <ul class="steps">
-        <li>Input $= 572$. Enc&nbsp;block&nbsp;1 (two convs): $572-4 = \\mathbf{568}$. Pool: $568/2 = 284$.</li>
-        <li>Enc&nbsp;2: $284-4 = \\mathbf{280}$. Pool: $140$. &nbsp; Enc&nbsp;3: $140-4 = \\mathbf{136}$. Pool: $68$.</li>
-        <li>Enc&nbsp;4: $68-4 = \\mathbf{64}$. Pool: $32$. &nbsp; Bottleneck (two convs): $32-4 = \\mathbf{28}$.</li>
+        <li>Enc&nbsp;1: $572-4 = \\mathbf{568}$, pool $\\lfloor 568/2\\rfloor = 284$.</li>
+        <li>Enc&nbsp;2: $284-4 = \\mathbf{280}$, pool $140$.</li>
+        <li>Enc&nbsp;3: $140-4 = \\mathbf{136}$, pool $68$.</li>
+        <li>Enc&nbsp;4: $68-4 = \\mathbf{64}$, pool $32$.</li>
+        <li>Bottleneck (two convs): $32-4 = \\mathbf{28}$ &mdash; the smallest, deepest map.</li>
        </ul>
-       <p>So the bottleneck feature map is $28\\times28$. <b>Up the expanding path</b> (each step: up-conv
-       doubles, concat the cropped skip, two convs subtract 4):</p>
+       <p><b>Up the expanding path</b> (each step: up-conv doubles, concat the cropped skip, two convs subtract 4):</p>
        <ul class="steps">
-        <li>Up-conv: $28\\times2 = 56$. Two convs: $56-4 = \\mathbf{52}$.</li>
-        <li>Up-conv: $52\\times2 = 104$. Two convs: $104-4 = \\mathbf{100}$.</li>
-        <li>Up-conv: $100\\times2 = 200$. Two convs: $200-4 = \\mathbf{196}$.</li>
-        <li>Up-conv: $196\\times2 = 392$. Two convs: $392-4 = \\mathbf{388}$.</li>
+        <li>Up-conv $28\\times2 = 56$, two convs $56-4 = \\mathbf{52}$.</li>
+        <li>Up-conv $52\\times2 = 104$, two convs $104-4 = \\mathbf{100}$.</li>
+        <li>Up-conv $100\\times2 = 200$, two convs $200-4 = \\mathbf{196}$.</li>
+        <li>Up-conv $196\\times2 = 392$, two convs $392-4 = \\mathbf{388}$.</li>
        </ul>
+       <table class="extable">
+        <caption>One side length through the U (input $572$, valid 3&times;3 convs). "skip from" = the encoder map that crosses to this decoder level, center-cropped to match.</caption>
+        <thead><tr><th>stage</th><th>operation</th><th class="num">size</th><th class="num">skip from</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">input</td><td>&mdash;</td><td class="num">$572$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">enc 1</td><td>2 convs &rarr; pool</td><td class="num">$568 \\to 284$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">enc 2</td><td>2 convs &rarr; pool</td><td class="num">$280 \\to 140$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">enc 3</td><td>2 convs &rarr; pool</td><td class="num">$136 \\to 68$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">enc 4</td><td>2 convs &rarr; pool</td><td class="num">$64 \\to 32$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">bottleneck</td><td>2 convs</td><td class="num">$28$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">dec 4</td><td>up-conv &rarr; concat &rarr; 2 convs</td><td class="num">$56 \\to 52$</td><td class="num">$64\\to56$</td></tr>
+         <tr><td class="row-h">dec 3</td><td>up-conv &rarr; concat &rarr; 2 convs</td><td class="num">$104 \\to 100$</td><td class="num">$136\\to104$</td></tr>
+         <tr><td class="row-h">dec 2</td><td>up-conv &rarr; concat &rarr; 2 convs</td><td class="num">$200 \\to 196$</td><td class="num">$280\\to200$</td></tr>
+         <tr><td class="row-h">dec 1</td><td>up-conv &rarr; concat &rarr; 2 convs</td><td class="num">$392 \\to 388$</td><td class="num">$568\\to392$</td></tr>
+         <tr><td class="row-h">output</td><td>1&times;1 conv</td><td class="num">$388$</td><td class="num">&mdash;</td></tr>
+        </tbody>
+       </table>
        <p>Final output map $= \\mathbf{388\\times388}$ &mdash; smaller than the $572\\times572$ input,
        because valid convolutions keep shaving the border (this is why the paper crops the input region and
        uses an "overlap-tile" strategy). Notice the skip at the top level concatenates the encoder's

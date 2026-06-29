@@ -216,31 +216,43 @@
        with last-block survival $p_L = 0.5$.</p>
        <p><b>Step 1 &mdash; the linear schedule (Eqn. 4).</b> Plug $\\ell = 1,\\dots,5$ into
        $p_\\ell = 1 - (\\ell/5)(1 - 0.5) = 1 - 0.1\\,\\ell$:</p>
-       <ul class="steps">
-        <li>$p_1 = 1 - 0.1(1) = 0.9$, &nbsp; $p_2 = 0.8$, &nbsp; $p_3 = 0.7$, &nbsp; $p_4 = 0.6$, &nbsp;
-        $p_5 = 0.5$.</li>
-        <li>Early blocks survive 90% of the time; the last survives 50%. The line slides from $0.9$ down to
-        $0.5$.</li>
-       </ul>
+       <table class="extable">
+        <caption>Per-block survival probability and drop chance ($L=5$, $p_L=0.5$)</caption>
+        <thead><tr><th>block $\\ell$</th><th class="num">$p_\\ell$ (survive)</th><th class="num">$1-p_\\ell$ (drop)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.9</td><td class="num">0.1</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.8</td><td class="num">0.2</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.7</td><td class="num">0.3</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.6</td><td class="num">0.4</td></tr>
+         <tr><td class="row-h">5</td><td class="num">0.5</td><td class="num">0.5</td></tr>
+        </tbody>
+       </table>
+       <p>Early blocks survive 90% of the time; the last survives 50%. The line slides from $0.9$ down to $0.5$.</p>
        <p><b>Step 2 &mdash; expected training depth.</b>
        $E(\\tilde{L}) = 0.9 + 0.8 + 0.7 + 0.6 + 0.5 = 3.5$ blocks. Check against the closed form
        $\\tfrac{3L - 1}{4} = \\tfrac{3(5) - 1}{4} = \\tfrac{14}{4} = 3.5$. &#10003; The net trains as if it
        had $3.5$ of its $5$ blocks &mdash; 30% fewer active blocks on average.</p>
        <p><b>Step 3 &mdash; forward pass through block $\\ell = 2$</b> ($p_2 = 0.8$). To keep arithmetic
        clear use scalar "feature maps": let the input be $H_1 = 2.0$ and suppose the residual function outputs
-       $f_2(H_1) = 0.6$. All quantities are non-negative so the outer ReLU is the identity here.</p>
+       $f_2(H_1) = 0.6$. All quantities are non-negative so the outer ReLU is the identity here. The three
+       cases (Eqns. 2, 3, 5):</p>
+       <table class="extable">
+        <caption>Block 2 output: training coin flips vs. the test-time rescale</caption>
+        <thead><tr><th>case</th><th class="num">prob</th><th>computation</th><th class="num">$H_2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">train, coin heads ($b_2=1$)</td><td class="num">0.8</td><td>$\\mathrm{ReLU}(1\\cdot 0.6 + 2.0)$</td><td class="num">2.60</td></tr>
+         <tr><td class="row-h">train, coin tails ($b_2=0$)</td><td class="num">0.2</td><td>$\\mathrm{ReLU}(0\\cdot 0.6 + 2.0)$</td><td class="num">2.00</td></tr>
+         <tr><td class="row-h">train average</td><td class="num">&mdash;</td><td>$2.0 + p_2(0.6) = 2.0 + 0.8(0.6)$</td><td class="num">2.48</td></tr>
+         <tr><td class="row-h">test (Eqn. 5)</td><td class="num">&mdash;</td><td>$\\mathrm{ReLU}(0.8\\cdot 0.6 + 2.0)$</td><td class="num">2.48</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Training, coin = heads</b> ($b_2 = 1$, prob $0.8$): &nbsp; Eqn. 2 gives
-        $H_2 = \\mathrm{ReLU}(1\\cdot 0.6 + 2.0) = 2.6$.</li>
-        <li><b>Training, coin = tails</b> ($b_2 = 0$, prob $0.2$): &nbsp; Eqn. 3 gives
-        $H_2 = \\mathrm{ReLU}(0\\cdot 0.6 + 2.0) = 2.0$ &mdash; the block vanished, only the skip remains.</li>
-        <li><b>Average training output:</b> $E[H_2] = 2.0 + p_2\\cdot 0.6 = 2.0 + 0.8(0.6) = 2.48$.</li>
-        <li><b>Test (Eqn. 5), scale by $p_2$:</b> $H_2^{\\text{Test}} = \\mathrm{ReLU}(0.8\\cdot 0.6 + 2.0)
-        = \\mathrm{ReLU}(0.48 + 2.0) = 2.48$.</li>
+        <li><b>Train average:</b> $0.8(2.60) + 0.2(2.00) = 2.08 + 0.40 = 2.48$ &mdash; matches $2.0 + p_2(0.6)$.</li>
+        <li><b>Test rescale (Eqn. 5):</b> $\\mathrm{ReLU}(0.8\\cdot 0.6 + 2.0) = \\mathrm{ReLU}(0.48 + 2.0) = 2.48$.</li>
+        <li>The test output ($2.48$) lands <b>exactly on the training average</b> ($2.48$) &mdash; that is the
+        whole point of the $p_\\ell$ rescale.</li>
        </ul>
-       <p>The test output ($2.48$) lands <b>exactly on the training average</b> ($2.48$) &mdash; that is the
-       whole point of the $p_\\ell$ rescale. These numbers are recomputed in the notebook's first cell so you
-       can check them by running.</p>`,
+       <p>These numbers are recomputed in the notebook's first cell so you can check them by running.</p>`,
     recipe:
       `<ol>
         <li><b>Build a stochastic residual block.</b> Wrap the usual two-conv residual function $f$ (each conv

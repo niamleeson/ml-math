@@ -241,22 +241,32 @@ $$ \\mathcal{L}(\\theta,\\phi;X) \\;\\approx\\; \\widetilde{\\mathcal{L}}^{M} \\
        concrete. Let the encoder output $\\mu = 0.8$ and $\\log\\sigma^2 = -1.386$ (so $\\sigma^2 = e^{-1.386}
        = 0.25$, i.e. $\\sigma = 0.5$). Draw noise $\\epsilon = -1.2$.</p>
        <ul class="steps">
-        <li><b>Reparameterize</b> (Eqn. 4): first $\\sigma = e^{\\frac{1}{2}\\log\\sigma^2} = e^{-0.693} =
-        0.5$. Then $z = \\mu + \\sigma\\epsilon = 0.8 + 0.5\\times(-1.2) = 0.8 - 0.6 = 0.2$. That single code
-        $z=0.2$ is what the decoder would see.</li>
+        <li><b>Reparameterize</b> (Eqn. 4): first $\\sigma = e^{\\frac{1}{2}\\log\\sigma^2} = e^{0.5\\times(-1.386)}
+        = e^{-0.693} = 0.5$.</li>
+        <li>Then $z = \\mu + \\sigma\\epsilon = 0.8 + 0.5\\times(-1.2) = 0.8 - 0.6 = \\mathbf{0.2}$. That single
+        code $z=0.2$ is what the decoder would see.</li>
         <li><b>Compute the KL</b> (Appendix B, written as the positive divergence $D_{KL} = -\\tfrac{1}{2}(1 +
-        \\log\\sigma^2 - \\mu^2 - \\sigma^2)$). Plug in $\\mu^2 = 0.64$, $\\sigma^2 = 0.25$,
-        $\\log\\sigma^2 = -1.386$:</li>
+        \\log\\sigma^2 - \\mu^2 - \\sigma^2)$). Plug in $\\mu^2 = 0.8^2 = 0.64$, $\\sigma^2 = 0.25$,
+        $\\log\\sigma^2 = -1.386$.</li>
         <li>Inside the parentheses: $1 + (-1.386) - 0.64 - 0.25 = -1.276$.</li>
-        <li>Half of that: $\\tfrac{1}{2}(-1.276) = -0.638$. That is $-D_{KL}$, so
-        $D_{KL} = 0.638$.</li>
-        <li><b>Read it.</b> The KL is positive ($\\approx 0.638$) because this code distribution &mdash; mean
-        $0.8$, spread $0.5$ &mdash; sits off-center and too narrow compared with the prior $N(0,1)$. Minimizing
-        it would push $\\mu\\to 0$ and $\\sigma\\to 1$, where $D_{KL}=0$. The reconstruction term, meanwhile,
-        resists that pull by wanting $z$ informative enough to rebuild $x$.</li>
+        <li>Half of that: $\\tfrac{1}{2}\\times(-1.276) = -0.638$. That is $-D_{KL}$, so
+        $D_{KL} = \\mathbf{0.638}$.</li>
        </ul>
-       <p>These exact numbers ($z = 0.2$, $D_{KL} \\approx 0.638$) are recomputed in the notebook's first cell
-       so you can check them by running it.</p>`,
+       <table class="extable">
+        <caption>This encoder Gaussian vs the prior $N(0,1)$ &mdash; the KL measures the gap.</caption>
+        <thead><tr><th>quantity</th><th class="num">encoder $q$</th><th class="num">prior $p$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">mean $\\mu$</td><td class="num">$0.8$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">variance $\\sigma^2$</td><td class="num">$0.25$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">std $\\sigma$</td><td class="num">$0.5$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$D_{KL}(q\\,\\Vert\\,p)$</td><td class="num">$0.638$</td><td class="num">$0$</td></tr>
+        </tbody>
+       </table>
+       <p><b>Read it.</b> The KL is positive ($\\approx 0.638$) because this code distribution &mdash; mean
+       $0.8$, spread $0.5$ &mdash; sits off-center and too narrow compared with the prior $N(0,1)$. Minimizing
+       it would push $\\mu\\to 0$ and $\\sigma\\to 1$, where $D_{KL}=0$. The reconstruction term, meanwhile,
+       resists that pull by wanting $z$ informative enough to rebuild $x$. These exact numbers ($z = 0.2$,
+       $D_{KL} \\approx 0.638$) are recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build the encoder.</b> A couple of <code>nn.Linear</code> layers from 784 pixels down to a

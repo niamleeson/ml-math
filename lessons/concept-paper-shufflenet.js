@@ -263,16 +263,26 @@ Complexity (1x): ~143 / 140 / 137 / 142 / 137 MFLOPs</pre>
        to.</p>`,
     example:
       `<p>Two worked pieces: the FLOP saving, then the channel-shuffle <b>index permutation</b> itself.</p>
-       <p><b>(A) FLOP saving.</b> Take a block with $h=w=28$, $c=64$, $m=16$, and $g=4$ groups.</p>
+       <p><b>(A) FLOP saving.</b> Take a block with $h=w=28$ (so $hw=784$), $c=64$, $m=16$, and $g=4$ groups.
+       The two $1\\times1$ terms give $2cm=2048$ and the $3\\times3$ term $9m^2=2304$.</p>
        <ul class="steps">
-        <li><b>ResNet</b> $hw(2cm+9m^2) = 784\\,(2\\cdot64\\cdot16 + 9\\cdot16^2) = 784\\,(2048+2304) = 784\\cdot4352
-        = \\mathbf{3{,}411{,}968}$ multiply-adds.</li>
+        <li><b>ResNet</b> $hw(2cm+9m^2) = 784\\,(2048+2304) = 784\\cdot4352 = 3{,}411{,}968$ multiply-adds.</li>
+        <li><b>ResNeXt</b> $hw(2cm+\\tfrac{9m^2}{g}) = 784\\,(2048 + \\tfrac{2304}{4}) = 784\\,(2048+576) =
+        784\\cdot2624 = 2{,}057{,}216$ &mdash; only the $3\\times3$ is grouped.</li>
         <li><b>ShuffleNet</b> $hw(\\tfrac{2cm}{g}+9m) = 784\\,(\\tfrac{2048}{4} + 9\\cdot16) = 784\\,(512+144) =
-        784\\cdot656 = \\mathbf{514{,}304}$.</li>
-        <li><b>Ratio</b> $514304/3411968 = \\mathbf{0.1507}$ &mdash; ShuffleNet costs about 15% as much, roughly
-        <b>6.6x cheaper</b>. The grouping turned the dominant $2cm$ into $\\tfrac{2cm}{4}$ and the depthwise step
-        turned $9m^2=2304$ into $9m=144$.</li>
+        784\\cdot656 = 514{,}304$ &mdash; the $1\\times1$s are grouped and the $3\\times3$ is depthwise.</li>
+        <li><b>Ratio</b> $514304/3411968 = 0.1507$ &mdash; ShuffleNet costs about 15% as much, roughly
+        <b>6.6x cheaper</b> than ResNet.</li>
        </ul>
+       <table class="extable">
+        <caption>One bottleneck block, $h=w=28$, $c=64$, $m=16$, $g=4$. Which layers each design groups, and the cost.</caption>
+        <thead><tr><th>block</th><th>$1\\times1$ layers</th><th>$3\\times3$ layer</th><th class="num">multiply-adds</th><th class="num">vs ResNet</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">ResNet</td><td>dense ($2cm$)</td><td>dense ($9m^2$)</td><td class="num">3,411,968</td><td class="num">1.00&times;</td></tr>
+          <tr><td class="row-h">ResNeXt</td><td>dense ($2cm$)</td><td>grouped ($9m^2/g$)</td><td class="num">2,057,216</td><td class="num">0.60&times;</td></tr>
+          <tr><td class="row-h">ShuffleNet</td><td>grouped ($2cm/g$)</td><td>depthwise ($9m$)</td><td class="num">514,304</td><td class="num">0.15&times;</td></tr>
+        </tbody>
+       </table>
        <p><b>(B) The channel-shuffle permutation.</b> Take $g=3$ groups of $n=4$ channels, so $12$ channels indexed
        $0..11$. Group&nbsp;0 is $[0,1,2,3]$, group&nbsp;1 is $[4,5,6,7]$, group&nbsp;2 is $[8,9,10,11]$.</p>
        <ul class="steps">

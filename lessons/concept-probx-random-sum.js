@@ -151,7 +151,19 @@
          <li><b>Total variance:</b> $\\operatorname{Var}(Y) = 20 + 45 = 65$.</li>
          <li><b>Sanity check.</b> If you wrongly dropped the count-variance term you would report 20 — less than
           a third of the true 65. The random count contributes most of the spread here.</li>
-       </ul>`,
+       </ul>
+       <table class="extable">
+        <caption>Plugging the inputs ($E[N]{=}\\operatorname{Var}(N){=}5$, $E[X]{=}3$, $\\operatorname{Var}(X){=}4$) into each formula term.</caption>
+        <thead>
+         <tr><th>term</th><th>plug in</th><th class="num">value</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$E[Y]=E[N]\\,E[X]$</td><td>$5 \\times 3$</td><td class="num">$15$</td></tr>
+         <tr><td class="row-h">within-count $E[N]\\,\\operatorname{Var}(X)$</td><td>$5 \\times 4$</td><td class="num">$20$</td></tr>
+         <tr><td class="row-h">between-count $(E[X])^2\\,\\operatorname{Var}(N)$</td><td>$3^2 \\times 5$</td><td class="num">$45$</td></tr>
+         <tr><td class="row-h"><b>$\\operatorname{Var}(Y)$ total</b></td><td>$20 + 45$</td><td class="num"><b>$65$</b></td></tr>
+        </tbody>
+       </table>`,
 
     practice: [
       {

@@ -222,12 +222,26 @@ print(f"test accuracy: {correct/total:.4f}  on {total} images")`,
        <p><code>BatchNorm2d</code> keeps running estimates of the mean and variance of each channel. In <code>model.train()</code> it normalizes using the current batch; in <code>model.eval()</code> it switches to those stored running stats — which is exactly why forgetting <code>model.eval()</code> at test time corrupts the numbers.</p>`,
 
     example:
-      `<p>Trace one 8×8 grayscale digit (as in <code>load_digits</code>) through a two-block net with <code>padding=1</code> 3×3 convs:</p>
+      `<p>Trace one 8×8 grayscale digit (as in <code>load_digits</code>) through a two-block net, plugging into the rule $H_{out} = \\lfloor (H_{in} + 2p - k)/s \\rfloor + 1$ at each layer.</p>
        <ul class="steps">
-         <li>Input <code>(N, 1, 8, 8)</code>. Conv → 8 channels, still 8×8. Pool(2) → <code>(N, 8, 4, 4)</code>.</li>
-         <li>Conv → 16 channels, still 4×4. Pool(2) → <code>(N, 16, 2, 2)</code>.</li>
-         <li>Flatten: 16 × 2 × 2 = <b>64</b> features. So the head is <code>Linear(64, 10)</code>.</li>
+         <li><b>Conv</b> 3×3, $p=1,\\ s=1$: $H_{out} = \\lfloor (8 + 2\\cdot1 - 3)/1 \\rfloor + 1 = \\lfloor 7 \\rfloor + 1 = 8$. Same size; channels $1\\to 8$.</li>
+         <li><b>Pool</b> 2×2, $p=0,\\ s=2$: $H_{out} = \\lfloor (8 + 0 - 2)/2 \\rfloor + 1 = \\lfloor 3 \\rfloor + 1 = 4$. Halved.</li>
+         <li><b>Conv</b> 3×3, $p=1,\\ s=1$: $H_{out} = \\lfloor (4 + 2 - 3)/1 \\rfloor + 1 = 4$. Same size; channels $8\\to 16$.</li>
+         <li><b>Pool</b> 2×2, $p=0,\\ s=2$: $H_{out} = \\lfloor (4 - 2)/2 \\rfloor + 1 = 2$. Halved again.</li>
+         <li><b>Flatten:</b> $16 \\times 2 \\times 2 = 64$ features. So the head is <code>Linear(64, 10)</code>.</li>
        </ul>
+       <table class="extable">
+         <caption>Tensor shape after each stage, starting from <code>(N, 1, 8, 8)</code></caption>
+         <thead><tr><th>stage</th><th class="num">channels</th><th class="num">H</th><th class="num">W</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">input</td><td class="num">1</td><td class="num">8</td><td class="num">8</td></tr>
+           <tr><td class="row-h">conv 3×3 p1</td><td class="num">8</td><td class="num">8</td><td class="num">8</td></tr>
+           <tr><td class="row-h">pool 2</td><td class="num">8</td><td class="num">4</td><td class="num">4</td></tr>
+           <tr><td class="row-h">conv 3×3 p1</td><td class="num">16</td><td class="num">4</td><td class="num">4</td></tr>
+           <tr><td class="row-h">pool 2</td><td class="num">16</td><td class="num">2</td><td class="num">2</td></tr>
+           <tr><td class="row-h">flatten</td><td class="num" colspan="3">16 × 2 × 2 = 64</td></tr>
+         </tbody>
+       </table>
        <p>Get that 64 wrong and PyTorch throws a shape error the moment the first batch hits the head.</p>`,
 
     demo: function (host) {

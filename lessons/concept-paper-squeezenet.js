@@ -274,9 +274,20 @@
        width, not the module's full input width $C$. That is Strategy&nbsp;2 baked into the parameter count. This is
        self-contained &mdash; no separate concept lesson to defer to.</p>`,
     example:
-      `<p>Work one Fire module by hand. Take a module with $C=32$ input channels, squeeze
-       $s_{1\\times1}=8$, and expand $e_{1\\times1}=32$, $e_{3\\times3}=32$. The output has
-       $e_{1\\times1}+e_{3\\times3}=64$ channels.</p>
+      `<p>Work one Fire module by hand with the parameter rule $\\text{params}(\\text{conv}) = a\\cdot b\\cdot k^2 + b$
+       ($a$ input channels, $b$ output channels, $k\\times k$ filter). Take a module with $C=32$ input channels,
+       squeeze $s_{1\\times1}=8$, and expand $e_{1\\times1}=32$, $e_{3\\times3}=32$. The output has
+       $e_{1\\times1}+e_{3\\times3}=64$ channels. Each of the three convolutions is one row:</p>
+       <table class="extable">
+        <caption>Per-convolution parameter count of a Fire module ($C=32,\\ s_{1\\times1}=8,\\ e_{1\\times1}=e_{3\\times3}=32$).</caption>
+        <thead><tr><th>conv</th><th class="num">in $a$</th><th class="num">out $b$</th><th class="num">area $k^2$</th><th class="num">weights $a b k^2$</th><th class="num">biases $b$</th><th class="num">subtotal</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">squeeze $1\\times1$</td><td class="num">$32$</td><td class="num">$8$</td><td class="num">$1$</td><td class="num">$256$</td><td class="num">$8$</td><td class="num">$264$</td></tr>
+         <tr><td class="row-h">expand $1\\times1$</td><td class="num">$8$</td><td class="num">$32$</td><td class="num">$1$</td><td class="num">$256$</td><td class="num">$32$</td><td class="num">$288$</td></tr>
+         <tr><td class="row-h">expand $3\\times3$</td><td class="num">$8$</td><td class="num">$32$</td><td class="num">$9$</td><td class="num">$2304$</td><td class="num">$32$</td><td class="num">$2336$</td></tr>
+         <tr><td class="row-h">Fire total</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$2816$</td><td class="num">$72$</td><td class="num">$\\mathbf{2888}$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Squeeze $1\\times1$</b> ($32\\to8$): weights $=C\\,s_{1\\times1}=32\\cdot8=256$, plus $8$ biases
         $=\\mathbf{264}$.</li>
@@ -288,9 +299,18 @@
        </ul>
        <p>For comparison, a single ordinary $3\\times3$ convolution doing $32\\to64$ on the same input would cost
        $32\\cdot64\\cdot9 + 64 = 18432 + 64 = \\mathbf{18496}$ parameters &mdash; about $6.4\\times$ more than the whole
-       Fire module, even though both turn 32 channels into 64. The savings come from squeezing to 8 channels
-       before the $3\\times3$ work. <b>The notebook recomputes 2888 and checks it equals PyTorch's own parameter
-       count for the exact same module &mdash; and it matches.</b></p>`,
+       Fire module, even though both turn 32 channels into 64:</p>
+       <table class="extable">
+        <caption>Fire module vs one plain $3\\times3$ conv, both mapping $32\\to64$ channels.</caption>
+        <thead><tr><th>block</th><th class="num">params</th><th class="num">out channels</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">Fire ($s_{1\\times1}=8$)</td><td class="num">$2888$</td><td class="num">$64$</td></tr>
+         <tr><td class="row-h">plain $3\\times3$ conv $32\\to64$</td><td class="num">$18496$</td><td class="num">$64$</td></tr>
+         <tr><td class="row-h">ratio (plain / Fire)</td><td class="num">$6.4\\times$</td><td class="num">&mdash;</td></tr>
+        </tbody>
+       </table>
+       <p>The savings come from squeezing to 8 channels before the $3\\times3$ work. <b>The notebook recomputes 2888
+       and checks it equals PyTorch's own parameter count for the exact same module &mdash; and it matches.</b></p>`,
     recipe:
       `<ol>
         <li><b>Build the Fire module</b> (<code>Fire</code>): squeeze $1\\times1$ ($C\\to s_{1\\times1}$) &rarr;

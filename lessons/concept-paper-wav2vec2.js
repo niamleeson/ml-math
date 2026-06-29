@@ -227,27 +227,38 @@
        derivation lives here. The contrastive piece reuses <code>paper-simclr</code>'s InfoNCE and the masking
        reuses <code>paper-bert</code>'s masked-prediction idea.)</p>`,
     example:
-      `<p><b>Part A — the contrastive term $\\mathcal{L}_m$ (Eqn. 3).</b> Use a context vector and 4 candidates
-       (the true target + 3 distractors), in 2-D so the cosine is hand-checkable, with $\\kappa=0.1$:</p>
-       <ul>
-        <li>$\\mathbf{c}=(1,\\,1)$; true $\\mathbf{q}_t=(1,\\,0.9)$; distractors $\\mathbf{d}_1=(-1,\\,0.5)$,
-            $\\mathbf{d}_2=(0.2,\\,-1)$, $\\mathbf{d}_3=(0.3,\\,1)$.</li>
-        <li>Cosine sims: $\\text{sim}(\\mathbf{c},\\mathbf{q}_t)=0.9986$,
-            $\\text{sim}(\\mathbf{c},\\mathbf{d}_1)=-0.3162$, $\\text{sim}(\\mathbf{c},\\mathbf{d}_2)=-0.5547$,
-            $\\text{sim}(\\mathbf{c},\\mathbf{d}_3)=0.8805$. (Note $\\mathbf{d}_3$ is a <i>confusable</i> decoy.)</li>
-        <li>Divide by $\\kappa=0.1$ &rarr; logits $9.986,\\,-3.162,\\,-5.547,\\,8.805$.</li>
-        <li>Softmax over the 4 candidates &rarr; $0.7652,\\,0.0000,\\,0.0000,\\,0.2348$.</li>
-        <li>$\\mathcal{L}_m=-\\log(0.7652)=\\mathbf{0.2676}$. The true target wins (76.5% of the mass), but the
-            close decoy $\\mathbf{d}_3$ keeps the loss above zero &mdash; exactly the pressure that sharpens the
-            representation.</li>
+      `<p><b>Part A &mdash; the contrastive term $\\mathcal{L}_m$ (Eqn. 3).</b> Context vector $\\mathbf{c}=(1,\\,1)$,
+       true target $\\mathbf{q}_t=(1,\\,0.9)$, and three distractors, all in 2-D so the cosine is hand-checkable,
+       with $\\kappa=0.1$. Score each candidate: cosine similarity, then divide by $\\kappa$ to get a logit, then
+       softmax over the four.</p>
+       <table class="extable">
+        <caption>Candidate scoring for $\\mathbf{c}=(1,1)$, $\\kappa=0.1$ (true target is row 0).</caption>
+        <thead><tr><th>candidate</th><th>vector</th><th class="num">cos sim</th><th class="num">$/\\kappa$ (logit)</th><th class="num">softmax</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">true $\\mathbf{q}_t$</td><td>$(1,\\,0.9)$</td><td class="num">$0.9986$</td><td class="num">$9.986$</td><td class="num">$0.7652$</td></tr>
+         <tr><td class="row-h">$\\mathbf{d}_1$</td><td>$(-1,\\,0.5)$</td><td class="num">$-0.3162$</td><td class="num">$-3.162$</td><td class="num">$0.0000$</td></tr>
+         <tr><td class="row-h">$\\mathbf{d}_2$</td><td>$(0.2,\\,-1)$</td><td class="num">$-0.5547$</td><td class="num">$-5.547$</td><td class="num">$0.0000$</td></tr>
+         <tr><td class="row-h">$\\mathbf{d}_3$</td><td>$(0.3,\\,1)$</td><td class="num">$0.8805$</td><td class="num">$8.805$</td><td class="num">$0.2348$</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li>The true target gets softmax probability $0.7652$ (the confusable decoy $\\mathbf{d}_3$ steals the rest).</li>
+        <li>$\\mathcal{L}_m=-\\log(0.7652)=\\mathbf{0.2676}$ &mdash; the close decoy keeps the loss above zero, exactly
+            the pressure that sharpens the representation.</li>
        </ul>
-       <p><b>Part B — the diversity term $\\mathcal{L}_d$ (Eqn. 4).</b> Toy product quantization with $G=2$
-       groups, $V=3$ entries each. Batch-averaged usage $\\bar{p}$:</p>
-       <ul>
-        <li>Group 1 (skewed): $\\bar{p}_1=(0.7,\\,0.2,\\,0.1)$, entropy $H(\\bar{p}_1)=0.8018$.</li>
-        <li>Group 2 (near-uniform): $\\bar{p}_2=(0.34,\\,0.33,\\,0.33)$, entropy $H(\\bar{p}_2)=1.0985$.</li>
-        <li>$\\mathcal{L}_d=\\frac{1}{GV}\\big(-H(\\bar{p}_1)-H(\\bar{p}_2)\\big)
-            =\\frac{1}{6}(-0.8018-1.0985)=\\mathbf{-0.3167}$. The more uniform group 2 lowers (improves) it more.</li>
+       <p><b>Part B &mdash; the diversity term $\\mathcal{L}_d$ (Eqn. 4).</b> Toy product quantization with $G=2$
+       groups, $V=3$ entries each. Batch-averaged usage $\\bar{p}$ and its entropy $H(\\bar p)=-\\sum_v \\bar p_v\\log\\bar p_v$:</p>
+       <table class="extable">
+        <caption>Per-group codebook usage and entropy ($V=3$; natural log).</caption>
+        <thead><tr><th>group</th><th class="num">$\\bar p_{g,1}$</th><th class="num">$\\bar p_{g,2}$</th><th class="num">$\\bar p_{g,3}$</th><th class="num">$H(\\bar p_g)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$g=1$ (skewed)</td><td class="num">$0.70$</td><td class="num">$0.20$</td><td class="num">$0.10$</td><td class="num">$0.8018$</td></tr>
+         <tr><td class="row-h">$g=2$ (near-uniform)</td><td class="num">$0.34$</td><td class="num">$0.33$</td><td class="num">$0.33$</td><td class="num">$1.0985$</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li>$\\mathcal{L}_d=\\dfrac{1}{GV}\\big(-H(\\bar{p}_1)-H(\\bar{p}_2)\\big)
+            =\\dfrac{1}{6}(-0.8018-1.0985)=\\mathbf{-0.3167}$ &mdash; the more uniform group 2 lowers (improves) it more.</li>
         <li>Total (Eqn. 2) with $\\alpha=0.1$: $\\mathcal{L}=0.2676+0.1\\cdot(-0.3167)=\\mathbf{0.2359}$.</li>
        </ul>
        <p>These exact numbers are recomputed in the notebook and must match.</p>`,

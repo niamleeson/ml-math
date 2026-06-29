@@ -287,23 +287,31 @@ $$ x \\;\\xrightarrow{\\text{drop }15\\%,\\ \\text{mean span }3}\\; x_{\\text{co
     example:
       `<p>Work the relative-position bucketing by hand for the settings used in the notebook:
        <b>16 buckets, bidirectional</b>, so the buckets split into 8 for the "past" (offset
-       $\\le 0$) and 8 for the "future" (offset $\\gt 0$). Take a query at position $i=2$ and bucket
-       each key position $j$ by its signed offset $j-i$:</p>
+       $\\le 0$, buckets 0&ndash;7) and 8 for the "future" (offset $\\gt 0$, buckets 8&ndash;15). Take a query
+       at position $i=2$ and bucket each key position $j$ by its signed offset $j-i$. The table is the full
+       lookup; the steps show how three rows are computed.</p>
+       <table class="extable">
+        <caption>Query at $i=2$: each key's signed offset $j-i$ maps to a bucket, which selects the learned per-head scalar added to the attention logit.</caption>
+        <thead><tr><th>key $j$</th><th class="num">offset $j-i$</th><th>half</th><th class="num">bucket</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$0$</td><td class="num">$-2$</td><td>past</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">$1$</td><td class="num">$-1$</td><td>past</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$0$</td><td>past/zero</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$3$</td><td class="num">$+1$</td><td>future</td><td class="num">$9$</td></tr>
+         <tr><td class="row-h">$4$</td><td class="num">$+2$</td><td>future</td><td class="num">$10$</td></tr>
+         <tr><td class="row-h">$5$</td><td class="num">$+3$</td><td>future</td><td class="num">$11$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Offset $0$ (the query attends to itself, $j=2$).</b> $j-i=0$ &rarr; bucket $0$ (the
-        first "past/zero" bucket).</li>
-        <li><b>Key to the left ($j=1$, offset $-1$; $j=0$, offset $-2$).</b> Small negative offsets get
-        their own buckets: $-1\\to$ bucket $1$, $-2\\to$ bucket $2$. These live in the first 8 (the past
-        half).</li>
-        <li><b>Key to the right ($j=3$, offset $+1$; $j=4$, offset $+2$; $j=5$, offset $+3$).</b>
-        Positive offsets land in the <i>second</i> half (buckets 8–15): $+1\\to$ bucket $9$,
-        $+2\\to$ bucket $10$, $+3\\to$ bucket $11$.</li>
+        <li><b>Self, $j=2$.</b> Offset $j-i=2-2=0$ &rarr; past/zero half &rarr; bucket $0$.</li>
+        <li><b>Left neighbour, $j=1$.</b> Offset $1-2=-1$; small negative gets its own bucket in the past half &rarr; bucket $1$.</li>
+        <li><b>Right neighbour, $j=3$.</b> Offset $3-2=+1$; positive offsets are shifted by the half-size $8$, so bucket $=8+1=9$.</li>
        </ul>
        <p>So the query at position 2 looks up scalars from buckets $[2,1,0,9,10,11]$ across keys
        $[0,1,2,3,4,5]$. The bias is therefore <b>direction-aware</b>: a left neighbour (bucket 1) and a
        right neighbour (bucket 9) get <i>different</i> learned scalars, which is how a single number per
-       offset still lets a head prefer, say, the token just before it. (With the paper's full settings —
-       32 buckets, max offset 128 — the only change is more fine-grained buckets and a logarithmic merge
+       offset still lets a head prefer, say, the token just before it. (With the paper's full settings &mdash;
+       32 buckets, max offset 128 &mdash; the only change is more fine-grained buckets and a logarithmic merge
        of far offsets; the mechanism is identical.) The notebook recomputes exactly these six bucket
        indices so you can check them.</p>`,
     recipe:

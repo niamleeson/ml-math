@@ -146,7 +146,30 @@
     derivation: `<p>How does a framework "remove the loop" without changing the math? It does not. Lightning's <code>Trainer.fit()</code> calls the <i>exact</i> five steps you wrote — <code>zero_grad</code>, forward, loss, <code>backward</code>, <code>step</code> — but it owns the <code>for epoch / for batch</code> scaffolding and the device/precision plumbing. You supply only the part that changes per project: what one training step computes (<code>training_step</code>) and which optimizer to use (<code>configure_optimizers</code>). Flags like <code>devices=4</code> or <code>precision="16-mixed"</code> swap the plumbing (DDP — Distributed Data Parallel — across GPUs, or AMP) without touching your step.</p>
 <p>The Hugging Face <code>Trainer</code> is the same idea one ring out: it also owns the loop, but it is specialized for Transformers and pairs with a <code>from_pretrained</code> model + tokenizer, so you usually skip training a model from scratch entirely. The cost of both is the same: when something breaks inside the hidden loop, you need the fundamentals from this course to find it.</p>`,
 
-    example: `<p>Same task — fine-tune an image classifier — three ways. <b>Raw PyTorch</b>: write the <code>DataLoader</code>, the model, and the full epoch/batch loop (the <code>pt-training-loop</code> lesson — roughly 100+ lines for multi-GPU + logging). <b>Lightning</b>: move the per-batch logic into a <code>training_step</code>, add <code>configure_optimizers</code>, then <code>Trainer(max_epochs=5, devices=2).fit(model, dl)</code> — the loop, multi-GPU, and logging are gone from your code. <b>Hugging Face</b>: <code>pipeline("image-classification")</code> may already solve it with <i>zero</i> training. The math is identical; only how much boilerplate you write changes.</p>`,
+    example: `<p>Same task &mdash; fine-tune an image classifier with multi-GPU + AMP + logging &mdash; three ways. Count the
+       (illustrative) lines you write per stack, summed over the components of the job:</p>
+       <table class="extable">
+         <caption>Lines of code you write, by component, for the SAME fine-tune job</caption>
+         <thead><tr><th>stack</th><th class="num">data</th><th class="num">model</th><th class="num">loop</th><th class="num">scale</th><th class="num">logging</th><th class="num">misc</th><th class="num">total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Raw PyTorch</td><td class="num">18</td><td class="num">14</td><td class="num">40</td><td class="num">22</td><td class="num">12</td><td class="num">14</td><td class="num">120</td></tr>
+           <tr><td class="row-h">PyTorch Lightning</td><td class="num">18</td><td class="num">14</td><td class="num">12</td><td class="num">0</td><td class="num">0</td><td class="num">6</td><td class="num">50</td></tr>
+           <tr><td class="row-h">Hugging Face</td><td class="num">6</td><td class="num">2</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">4</td><td class="num">12</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Raw PyTorch:</b> you write everything &mdash; $18 + 14 + 40 + 22 + 12 + 14 = 120$ lines (the
+         <code>pt-training-loop</code> lesson's full epoch/batch loop, plus DDP and logging by hand).</li>
+         <li><b>Lightning:</b> the <code>Trainer</code> owns the loop, scaling, and logging, so those columns drop to
+         12/0/0: $18 + 14 + 12 + 0 + 0 + 6 = 50$ lines. <code>Trainer(max_epochs=5, devices=2).fit(model, dl)</code>
+         turns on multi-GPU with one flag.</li>
+         <li><b>Hugging Face:</b> a pretrained model means almost no data/model/loop code:
+         $6 + 2 + 0 + 0 + 0 + 4 = 12$ lines &mdash; <code>pipeline("image-classification")</code> may solve it with
+         <i>zero</i> training.</li>
+       </ul>
+       <p>Ratio of effort: $120 : 50 : 12 \\approx 10 : 4.2 : 1$. The math is identical across all three; only how much
+       boilerplate you write changes &mdash; and every line a framework removes is a line you can no longer reach in
+       when an abstraction leaks.</p>`,
 
     demo: function (host) {
       var s = getComputedStyle(document.documentElement);

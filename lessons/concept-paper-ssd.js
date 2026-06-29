@@ -225,24 +225,43 @@ $$ \\frac{\\#\\,\\text{negatives}}{\\#\\,\\text{positives}} \\le 3 \\qquad\\text
       `<p>Work the default-box geometry and one match by hand, with $m = 4$ feature-map levels,
        $s_{\\min} = 0.2$, $s_{\\max} = 0.9$. (These exact numbers are recomputed in the notebook so you can
        check them.)</p>
+       <p><b>Scales (Eqn 4).</b> The even spacing step is $\\frac{0.9 - 0.2}{4 - 1} = \\frac{0.7}{3} =
+       0.2333$, then $s_k = s_{\\min} + 0.2333\\,(k-1)$:</p>
+       <table class="extable">
+        <caption>Default-box scale per feature-map level (Eqn 4)</caption>
+        <thead><tr><th>level $k$</th><th class="num">$s_k$</th><th>used for</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.2000</td><td>smallest objects</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.4333</td><td>small&ndash;medium</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.6667</td><td>medium&ndash;large</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.9000</td><td>largest objects</td></tr>
+        </tbody>
+       </table>
+       <p><b>Aspect-ratio boxes at level 2</b> ($s_2 = 0.4333$), using $w = s_k\\sqrt{a_r}$, $h = s_k/\\sqrt{a_r}$.
+       Each box keeps area $s_2^2 = 0.4333^2 = 0.1877$:</p>
+       <table class="extable">
+        <caption>Width/height for each aspect ratio at level 2 (area preserved)</caption>
+        <thead><tr><th>$a_r$</th><th class="num">$w$</th><th class="num">$h$</th><th class="num">area $w\\,h$</th><th>shape</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.4333</td><td class="num">0.4333</td><td class="num">0.1877</td><td>square</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.6128</td><td class="num">0.3064</td><td class="num">0.1877</td><td>wide</td></tr>
+         <tr><td class="row-h">$\\tfrac12$</td><td class="num">0.3064</td><td class="num">0.6128</td><td class="num">0.1877</td><td>tall</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Scales (Eqn 4).</b> The even spacing step is $\\frac{0.9 - 0.2}{4 - 1} = \\frac{0.7}{3} =
-        0.2333$. So $s_1 = 0.2$, $s_2 = 0.2 + 0.2333 = 0.4333$, $s_3 = 0.6667$, $s_4 = 0.9$. Boxes grow from
-        $0.2$ of the image (level 1, for small objects) to $0.9$ (level 4, for large ones).</li>
-        <li><b>Aspect-ratio boxes at level 2</b> ($s_2 = 0.4333$). For $a_r = 1$: $w = h = 0.4333$. For
-        $a_r = 2$: $w = 0.4333\\sqrt{2} = 0.6128$, $h = 0.4333/\\sqrt{2} = 0.3064$ (wide). For
-        $a_r = \\tfrac12$: $w = 0.3064$, $h = 0.6128$ (tall). Check the area is preserved:
-        $0.6128 \\times 0.3064 = 0.1877 = 0.4333^2$. The extra $a_r{=}1$ box uses
-        $s'_2 = \\sqrt{s_2\\, s_3} = \\sqrt{0.4333 \\times 0.6667} = 0.5375$.</li>
+        <li><b>Extra $a_r{=}1$ box.</b> $s'_2 = \\sqrt{s_2\\, s_3} = \\sqrt{0.4333 \\times 0.6667} =
+        \\sqrt{0.2889} = 0.5375$.</li>
         <li><b>Centers on a $2\\times2$ grid.</b> Cell $(i,j)$ has center $\\big((j{+}0.5)/2,\\,(i{+}0.5)/2\\big)$,
         giving the four points $(0.25,0.25),\\,(0.75,0.25),\\,(0.25,0.75),\\,(0.75,0.75)$.</li>
-        <li><b>One match (IoU).</b> Take the square $a_r{=}1$ box of side $0.4333$ at center
-        $(0.75,0.75)$ &mdash; corners $(0.533,0.533,0.967,0.967)$ &mdash; against a ground-truth box of size
-        $0.5{\\times}0.5$ centered at $(0.75,0.75)$ &mdash; corners $(0.5,0.5,1.0,1.0)$. The overlap rectangle
-        is $(0.533,0.533,0.967,0.967)$ with area $0.434^2 = 0.1877$; the union is
-        $0.4333^2 + 0.5^2 - 0.1877 = 0.1877 + 0.25 - 0.1877 = 0.25$. So $\\text{IoU} = 0.1877/0.25 \\approx
-        \\mathbf{0.751}$, which is $\\gt 0.5$ &mdash; a <b>positive match</b>. The other three centers overlap
-        the ground truth not at all (IoU $= 0$), so this is the best-jaccard box for that object.</li>
+        <li><b>One match &mdash; the boxes.</b> Square $a_r{=}1$ box of side $0.4333$ at center $(0.75,0.75)$ has
+        corners $(0.533,0.533,0.967,0.967)$; the ground truth is $0.5{\\times}0.5$ at $(0.75,0.75)$, corners
+        $(0.5,0.5,1.0,1.0)$.</li>
+        <li><b>Intersection.</b> The overlap rectangle is $(0.533,0.533,0.967,0.967)$, area
+        $0.4333^2 = 0.1877$ (the small box lies inside the GT here).</li>
+        <li><b>Union.</b> $0.4333^2 + 0.5^2 - 0.1877 = 0.1877 + 0.25 - 0.1877 = 0.25$.</li>
+        <li><b>IoU.</b> $0.1877 / 0.25 \\approx \\mathbf{0.751} \\gt 0.5$ &mdash; a <b>positive match</b>. The
+        other three centers overlap the ground truth not at all (IoU $= 0$), so this is the best-jaccard box
+        for that object.</li>
        </ul>`,
     recipe:
       `<ol>

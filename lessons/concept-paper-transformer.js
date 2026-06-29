@@ -252,29 +252,46 @@ $$ x_0 = \\sqrt{d_{\\text{model}}}\\;\\mathrm{Embed}(\\text{tokens}) + PE, \\qqu
     example:
       `<p>Work multi-head attention by hand with a <b>2-head split</b>, tiny enough to check every number.
        Let $d_{\\text{model}}=4$, $h=2$ heads, so each head has width $d_k=d_v=4/2=2$. Take a 2-token sequence
-       and assume (for clarity) that the query/key/value projections are the identity, so $Q=K=V=X$ with</p>
+       with identity query/key/value projections, so $Q=K=V=X$ with</p>
        <p>$$ X = \\begin{bmatrix} 2 & 0 & 1 & 1 \\\\ 0 & 2 & 1 & -1 \\end{bmatrix}\\!. $$</p>
-       <p><b>Split into heads.</b> Head 1 takes columns $0,1$; head 2 takes columns $2,3$:</p>
+       <p>Head 1 takes columns $0,1$; head 2 takes columns $2,3$. We compute the output for <b>token 0</b>.</p>
        <ul class="steps">
-        <li><b>Head 1.</b> $Q=K=V=\\begin{bmatrix}2&0\\\\0&2\\end{bmatrix}$. Scores
-        $= QK^\\top/\\sqrt{2} = \\begin{bmatrix}4&0\\\\0&4\\end{bmatrix}/\\sqrt 2 =
-        \\begin{bmatrix}2.83&0\\\\0&2.83\\end{bmatrix}$.
-        Softmax of token 0's row $[2.83, 0]$: weights $\\approx [0.944,\\,0.056]$. Head-1 output for token 0
-        $= 0.944\\,[2,0] + 0.056\\,[0,2] = [1.888,\\,0.112]$.</li>
-        <li><b>Head 2.</b> $Q=K=V=\\begin{bmatrix}1&1\\\\1&-1\\end{bmatrix}$. Scores for token 0
-        $= [\\,(1\\cdot1+1\\cdot1),\\,(1\\cdot1+1\\cdot(-1))\\,]/\\sqrt 2 = [2,0]/\\sqrt 2 = [1.414,\\,0]$.
-        Softmax: weights $\\approx [0.804,\\,0.196]$. Head-2 output for token 0
-        $= 0.804\\,[1,1] + 0.196\\,[1,-1] = [1.0,\\,0.609]$.</li>
-        <li><b>Concatenate the heads</b> back to width $4$:
-        $\\mathrm{Concat}([1.888,0.112],\\,[1.0,0.609]) = [1.888,\\,0.112,\\,1.0,\\,0.609]$ &mdash; then $W^O$
-        (here identity) would mix it. <b>Notice the heads attended differently</b>: head 1 put $94\\%$ on
-        token 0, head 2 only $80\\%$. That is the whole point &mdash; two lenses, one pass.</li>
+        <li><b>Head 1, scores.</b> $Q_0=[2,0]$; keys $k_0=[2,0]$, $k_1=[0,2]$.
+        $q{\\cdot}k_0 = 2{\\cdot}2+0{\\cdot}0 = 4$; $q{\\cdot}k_1 = 2{\\cdot}0+0{\\cdot}2 = 0$.
+        Divide by $\\sqrt2\\approx 1.414$: $[\\,4/1.414,\\ 0\\,]=[\\,2.83,\\ 0\\,]$.</li>
+        <li><b>Head 1, softmax.</b> $e^{2.83}\\approx 16.95$, $e^{0}=1$, sum $\\approx 17.95$;
+        weights $[\\,16.95/17.95,\\ 1/17.95\\,]\\approx[\\,0.944,\\ 0.056\\,]$.</li>
+        <li><b>Head 1, output.</b> $0.944\\,[2,0] + 0.056\\,[0,2] = [\\,1.888,\\ 0.112\\,]$.</li>
+        <li><b>Head 2, scores.</b> $Q_0=[1,1]$; keys $k_0=[1,1]$, $k_1=[1,-1]$.
+        $q{\\cdot}k_0 = 1+1 = 2$; $q{\\cdot}k_1 = 1-1 = 0$. Divide by $\\sqrt2$: $[\\,1.414,\\ 0\\,]$.</li>
+        <li><b>Head 2, softmax.</b> $e^{1.414}\\approx 4.113$, $e^{0}=1$, sum $\\approx 5.113$;
+        weights $\\approx[\\,0.804,\\ 0.196\\,]$.</li>
+        <li><b>Head 2, output.</b> $0.804\\,[1,1] + 0.196\\,[1,-1] = [\\,1.0,\\ 0.609\\,]$.</li>
+        <li><b>Concatenate</b> back to width $4$: $[\\,1.888,\\ 0.112,\\ 1.0,\\ 0.609\\,]$ &mdash; then $W^O$
+        (here identity) would mix it.</li>
        </ul>
-       <p>And a <b>positional-encoding</b> check ($d_{\\text{model}}=4$, &sect;3.5). Position $pos=1$:
-       column $0$ is $\\sin(1/10000^{0}) = \\sin(1) \\approx 0.8415$; column $1$ is $\\cos(1)\\approx 0.5403$;
-       column $2$ is $\\sin(1/10000^{1/2}) = \\sin(0.01) \\approx 0.0100$; column $3$ is
-       $\\cos(0.01)\\approx 1.0$. So $PE_{(1)} \\approx [0.8415,\\,0.5403,\\,0.0100,\\,1.0]$, while
-       $PE_{(0)} = [0,1,0,1]$ &mdash; different positions, different vectors.</p>
+       <table class="extable">
+        <caption>The two heads attend to token 0 vs token 1 <i>differently</i> &mdash; two lenses, one pass</caption>
+        <thead><tr><th>head</th><th class="num">score $[t_0,t_1]$</th><th class="num">weight on $t_0$</th><th class="num">weight on $t_1$</th><th class="num">token-0 output</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">head 1 (cols 0,1)</td><td class="num">[2.83, 0]</td><td class="num">0.944</td><td class="num">0.056</td><td class="num">[1.888, 0.112]</td></tr>
+         <tr><td class="row-h">head 2 (cols 2,3)</td><td class="num">[1.414, 0]</td><td class="num">0.804</td><td class="num">0.196</td><td class="num">[1.0, 0.609]</td></tr>
+        </tbody>
+       </table>
+       <p>And a <b>positional-encoding</b> check ($d_{\\text{model}}=4$, &sect;3.5), comparing two positions:</p>
+       <ul class="steps">
+        <li><b>$pos=0$:</b> $\\sin(0)=0$, $\\cos(0)=1$, $\\sin(0)=0$, $\\cos(0)=1$, so $PE_{(0)}=[0,1,0,1]$.</li>
+        <li><b>$pos=1$, col 0:</b> $\\sin(1/10000^{0})=\\sin(1)\\approx 0.8415$; <b>col 1:</b> $\\cos(1)\\approx 0.5403$.</li>
+        <li><b>$pos=1$, col 2:</b> $\\sin(1/10000^{1/2})=\\sin(0.01)\\approx 0.0100$; <b>col 3:</b> $\\cos(0.01)\\approx 1.0$.</li>
+       </ul>
+       <table class="extable">
+        <caption>Positional encoding: same content, different position &rarr; different vector</caption>
+        <thead><tr><th>position</th><th class="num">col 0 (sin)</th><th class="num">col 1 (cos)</th><th class="num">col 2 (sin)</th><th class="num">col 3 (cos)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$PE_{(0)}$</td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$PE_{(1)}$</td><td class="num">0.8415</td><td class="num">0.5403</td><td class="num">0.0100</td><td class="num">1.0</td></tr>
+        </tbody>
+       </table>
        <p>All of these exact numbers are recomputed in the notebook's first cells so you can check them by
        running.</p>`,
     recipe:

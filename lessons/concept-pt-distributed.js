@@ -229,12 +229,38 @@
          rule suggests $\\text{lr} = 0.1 \\times 8 = 0.8$ at batch 256 (with a short warmup so the big early steps
          do not blow up).</li>
          <li><b>Sampler:</b> the <code>DistributedSampler</code> hands each rank $1/8$ of the dataset; with 80,000
-         training images that is 10,000 per GPU per epoch &mdash; the GPUs run the same number of steps and stay in
-         lockstep.</li>
+         training images that is $80000 / 8 = 10{,}000$ per GPU per epoch &mdash; the GPUs run the same number of steps
+         and stay in lockstep.</li>
          <li><b>If you only have 1 GPU</b> but want the effect of batch 256, use <b>gradient accumulation</b> with
          $K = 8$: do 8 forward/backward passes of batch 32, summing gradients, then one <code>optimizer.step()</code>.
          Same effective batch, $1/8$ the peak memory, but 8&times; slower (no real parallelism).</li>
-       </ul>`,
+       </ul>
+       <p>Now plug real numbers into the speedup formula
+       $t(N) = t_1\\left(s + \\frac{1-s}{N}\\right) + c\\,(N-1)$, the per-epoch time on $N$ GPUs. Take single-GPU time
+       $t_1 = 1.0$, serial fraction $s = 0.02$ (2% can't parallelize), and per-step comm cost $c = 0.0008$. Speedup is
+       $t_1 / t(N)$:</p>
+       <ul class="steps">
+         <li><b>N = 8:</b> parallel part $= (1 - 0.02)/8 = 0.98/8 = 0.1225$; with serial: $0.02 + 0.1225 = 0.1425$.
+         Comm: $0.0008 \\times (8-1) = 0.0056$. So $t(8) = 0.1425 + 0.0056 = 0.1481$, and speedup $= 1.0/0.1481 = 6.75\\times$
+         (ideal would be $8\\times$).</li>
+         <li><b>N = 32:</b> parallel $= 0.98/32 = 0.030625$; with serial $= 0.050625$. Comm $= 0.0008 \\times 31 = 0.0248$.
+         So $t(32) = 0.050625 + 0.0248 = 0.075425$, speedup $= 1.0/0.075425 = 13.26\\times$ &mdash; far below the ideal
+         $32\\times$, because the comm term $c(N-1)$ has grown to dominate.</li>
+       </ul>
+       <table class="extable">
+         <caption>Speedup $t_1/t(N)$ vs the ideal linear $N\\times$ &mdash; the gap is the all-reduce cost</caption>
+         <thead><tr><th>N (GPUs)</th><th class="num">t(N)</th><th class="num">speedup</th><th class="num">ideal</th><th class="num">efficiency</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">1.000</td><td class="num">1.00&times;</td><td class="num">1&times;</td><td class="num">100%</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.5108</td><td class="num">1.96&times;</td><td class="num">2&times;</td><td class="num">98%</td></tr>
+           <tr><td class="row-h">4</td><td class="num">0.2674</td><td class="num">3.74&times;</td><td class="num">4&times;</td><td class="num">94%</td></tr>
+           <tr><td class="row-h">8</td><td class="num">0.1481</td><td class="num">6.75&times;</td><td class="num">8&times;</td><td class="num">84%</td></tr>
+           <tr><td class="row-h">16</td><td class="num">0.0933</td><td class="num">10.72&times;</td><td class="num">16&times;</td><td class="num">67%</td></tr>
+           <tr><td class="row-h">32</td><td class="num">0.0754</td><td class="num">13.26&times;</td><td class="num">32&times;</td><td class="num">41%</td></tr>
+         </tbody>
+       </table>
+       <p>Read the efficiency column (speedup &divide; N): near-perfect at 2 GPUs, sliding to 41% at 32 &mdash; the
+       diminishing returns the formula predicts.</p>`,
 
     practice: [
       {

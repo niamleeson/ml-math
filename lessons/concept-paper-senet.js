@@ -226,23 +226,28 @@ $$ \\text{extra params} = \\frac{2}{r}\\sum_{s=1}^{S} N_s\\,C_s^{2} \\quad\\text
        $$u_1 = \\begin{bmatrix}4 & 0\\\\ 0 & 0\\end{bmatrix}, \\qquad u_2 = \\begin{bmatrix}1 & 1\\\\ 1 & 1\\end{bmatrix}.$$</p>
        <ul class="steps">
         <li><b>Squeeze (Eqn. 2)</b> &mdash; average each map: $z_1 = (4+0+0+0)/4 = 1.0$,
-        $z_2 = (1+1+1+1)/4 = 1.0$. So $z = [1.0,\\,1.0]$. (Both channels have the same average energy, even
-        though channel 1 is a single bright spot and channel 2 is uniform.)</li>
-        <li><b>Excitation, FC1 + ReLU (Eqn. 3).</b> With one hidden unit, take $W_1 = [0.5,\\,-0.5]$ (a
-        $1\\times2$ matrix). Then $W_1 z = 0.5(1.0) + (-0.5)(1.0) = 0.0$, and $\\delta(0.0) = \\mathrm{ReLU}(0)
-        = 0.0$. Call this hidden value $h = 0.0$.</li>
-        <li><b>Excitation, FC2 + sigmoid.</b> Take $W_2 = [2.0,\\,-2.0]^\\top$ (a $2\\times1$ matrix). Then
-        $W_2 h = [2.0\\cdot 0,\\; -2.0\\cdot 0] = [0,\\,0]$, and the sigmoid $\\sigma(0) = \\tfrac{1}{1+e^{0}} =
-        0.5$ for both. So the gates are $s = [0.5,\\,0.5]$. <i>(With these toy weights the gates land at the
-        sigmoid's midpoint; a trained block would push them apart.)</i></li>
-        <li><b>Scale (Eqn. 4)</b> &mdash; multiply each channel by its gate:
-        $\\tilde{x}_1 = 0.5\\,u_1 = \\begin{bmatrix}2 & 0\\\\ 0 & 0\\end{bmatrix}$,
-        $\\tilde{x}_2 = 0.5\\,u_2 = \\begin{bmatrix}0.5 & 0.5\\\\ 0.5 & 0.5\\end{bmatrix}$. Every pixel of a
-        channel is scaled by that channel's single weight.</li>
+        $z_2 = (1+1+1+1)/4 = 1.0$. So $z = [1.0,\\,1.0]$. (Same average energy, though channel 1 is a single
+        bright spot and channel 2 is uniform.)</li>
+        <li><b>Excitation, FC1 + ReLU (Eqn. 3).</b> One hidden unit, $W_1 = [0.5,\\,-0.5]$:
+        $W_1 z = 0.5(1.0) + (-0.5)(1.0) = 0.0$, and $\\delta(0.0) = \\mathrm{ReLU}(0) = 0.0$. Hidden value $h = 0.0$.</li>
+        <li><b>Excitation, FC2 + sigmoid.</b> $W_2 = [2.0,\\,-2.0]^\\top$: $W_2 h = [2.0\\cdot 0,\\; -2.0\\cdot 0]
+        = [0,\\,0]$, and $\\sigma(0) = \\tfrac{1}{1+e^{0}} = 0.5$ for both. Gates $s = [0.5,\\,0.5]$. <i>(Toy
+        weights land the gates at the sigmoid midpoint; a trained block pushes them apart.)</i></li>
+        <li><b>Scale (Eqn. 4)</b> &mdash; multiply each channel's whole map by its single gate: $\\tilde{x}_c = s_c\\,u_c$.</li>
        </ul>
-       <p>The point: one scalar per channel, computed from a <b>global</b> summary of all channels, rides the
-       whole feature map. These exact numbers are recomputed in the notebook's first cell so you can check the
-       block by running it.</p>`,
+       <p>The per-channel ledger &mdash; one scalar gate, from a <b>global</b> summary, rides the whole feature map:</p>
+       <table class="extable">
+        <caption>SE block per-channel ledger ($C=2$, $r=2$): squeeze &rarr; excite &rarr; scale</caption>
+        <thead>
+         <tr><th>channel</th><th class="num">squeeze $z_c$</th><th class="num">gate $s_c$</th><th>scaled map $\\tilde{x}_c = s_c\\,u_c$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$u_1$ (bright spot)</td><td class="num">1.0</td><td class="num">0.5</td><td>$\\begin{bmatrix}2 & 0\\\\ 0 & 0\\end{bmatrix}$</td></tr>
+         <tr><td class="row-h">$u_2$ (uniform)</td><td class="num">1.0</td><td class="num">0.5</td><td>$\\begin{bmatrix}0.5 & 0.5\\\\ 0.5 & 0.5\\end{bmatrix}$</td></tr>
+        </tbody>
+       </table>
+       <p>Every pixel of a channel is scaled by that channel's single weight. These exact numbers are recomputed
+       in the notebook's first cell so you can check the block by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build the SE block</b> (<code>SEBlock</code>): squeeze with global average pooling

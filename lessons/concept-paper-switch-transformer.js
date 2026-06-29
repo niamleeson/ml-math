@@ -240,28 +240,41 @@
        reduces softmax mass on whichever experts have large $f_i$ &mdash; exactly the overloaded ones. That is
        how a hard load count steers a soft router.</p>`,
     example:
-      `<p>Work the aux loss by hand on a tiny batch so it is concrete. Take $N=2$ experts and $T=4$ tokens.
-       Suppose the router logits $h(x)$ for the four tokens are:</p>
+      `<p>Work the aux loss by hand on a tiny batch so it is concrete. Take $N=2$ experts and $T=4$ tokens,
+       with router logits $h(x)$ of $[2,0],[1,0],[0,1],[3,0]$. The table holds the per-token softmax (Eqn 1)
+       and the top-1 pick (the $\\arg\\max$); the steps below run the aux-loss arithmetic on it.</p>
+       <table class="extable">
+        <caption>Per-token router probabilities (Eqn 1) and top-1 pick. E.g. token 1: $e^{2}/(e^{2}+e^{0})=7.389/8.389=0.8808$.</caption>
+        <thead><tr><th>token</th><th>logits</th><th class="num">$p_0$</th><th class="num">$p_1$</th><th>pick ($\\arg\\max$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td>$[2,0]$</td><td class="num">$0.8808$</td><td class="num">$0.1192$</td><td>expert 0</td></tr>
+         <tr><td class="row-h">2</td><td>$[1,0]$</td><td class="num">$0.7311$</td><td class="num">$0.2689$</td><td>expert 0</td></tr>
+         <tr><td class="row-h">3</td><td>$[0,1]$</td><td class="num">$0.2689$</td><td class="num">$0.7311$</td><td>expert 1</td></tr>
+         <tr><td class="row-h">4</td><td>$[3,0]$</td><td class="num">$0.9526$</td><td class="num">$0.0474$</td><td>expert 0</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Softmax each token (Eqn 1).</b> With logits $[2,0],[1,0],[0,1],[3,0]$:
-        token&nbsp;1 $\\to[0.8808,0.1192]$, token&nbsp;2 $\\to[0.7311,0.2689]$,
-        token&nbsp;3 $\\to[0.2689,0.7311]$, token&nbsp;4 $\\to[0.9526,0.0474]$.
-        (For token 1: $e^{2}/(e^{2}+e^{0}) = 7.389/8.389 = 0.8808$.)</li>
-        <li><b>Top-1 pick ($\\arg\\max$).</b> Tokens 1, 2, 4 pick expert&nbsp;0; token 3 picks expert&nbsp;1.
-        So picks $=[0,0,1,0]$.</li>
         <li><b>$f_i$ &mdash; fraction dispatched (Eqn 5).</b> Expert&nbsp;0 got 3 of 4 tokens, expert&nbsp;1 got
         1 of 4: $f = [0.75,\\; 0.25]$.</li>
-        <li><b>$P_i$ &mdash; mean router prob (Eqn 6).</b> Average each column:
-        $P_0 = (0.8808+0.7311+0.2689+0.9526)/4 = 2.8334/4 = 0.7083$, and
-        $P_1 = 1 - 0.7083 = 0.2917$. So $P = [0.7083,\\; 0.2917]$.</li>
-        <li><b>Aux loss (Eqn 4).</b> $\\sum_i f_i P_i = 0.75\\cdot0.7083 + 0.25\\cdot0.2917 = 0.5312+0.0729
-        = 0.6042$. Times $N=2$: $1.2083$. Times $\\alpha=0.01$: $\\text{loss}=0.012083$.</li>
-        <li><b>Sanity vs balanced.</b> Perfectly balanced ($f=P=[0.5,0.5]$) would give
-        $N\\sum f_i P_i = 2(0.25+0.25)=1.0$, loss $=\\alpha=0.01$. Our skewed batch sits ABOVE that at
-        $0.012083$ &mdash; the loss is higher precisely because expert&nbsp;0 is overloaded.</li>
+        <li><b>$P_0$ &mdash; mean router prob for expert 0 (Eqn 6).</b> Average column $p_0$:
+        $(0.8808+0.7311+0.2689+0.9526)/4 = 2.8334/4 = 0.7083$.</li>
+        <li><b>$P_1$.</b> $P_1 = 1 - 0.7083 = 0.2917$. So $P = [0.7083,\\; 0.2917]$.</li>
+        <li><b>Dot product $\\sum_i f_i P_i$ (Eqn 4).</b> $0.75\\cdot0.7083 + 0.25\\cdot0.2917 = 0.5312+0.0729 = 0.6042$.</li>
+        <li><b>Scale by $N=2$.</b> $2\\times 0.6042 = 1.2083$.</li>
+        <li><b>Scale by $\\alpha=0.01$.</b> $\\text{loss}=0.01\\times 1.2083 = 0.012083$.</li>
        </ul>
-       <p>These exact numbers ($f=[0.75,0.25]$, $P=[0.7083,0.2917]$, loss $=0.012083$) are recomputed in the
-       notebook's first cell so you can check them.</p>`,
+       <p>Compare this skewed batch against a perfectly balanced one to see the loss do its job:</p>
+       <table class="extable">
+        <caption>The aux loss rises with imbalance ($\\alpha=0.01$, $N=2$).</caption>
+        <thead><tr><th>batch</th><th class="num">$f$</th><th class="num">$P$</th><th class="num">$N\\sum f_i P_i$</th><th class="num">loss</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">balanced</td><td class="num">$[0.5,0.5]$</td><td class="num">$[0.5,0.5]$</td><td class="num">$1.0000$</td><td class="num">$0.010000$</td></tr>
+         <tr><td class="row-h">our skewed batch</td><td class="num">$[0.75,0.25]$</td><td class="num">$[0.7083,0.2917]$</td><td class="num">$1.2083$</td><td class="num">$0.012083$</td></tr>
+        </tbody>
+       </table>
+       <p>The skewed batch sits ABOVE the balanced floor of $\\alpha=0.01$ precisely because expert&nbsp;0 is
+       overloaded. These exact numbers ($f=[0.75,0.25]$, $P=[0.7083,0.2917]$, loss $=0.012083$) are recomputed in
+       the notebook's first cell so you can check them.</p>`,
     recipe:
       `<ol>
         <li><b>Build experts</b> with <code>torch.nn</code>: $N$ parallel feed-forward networks, each

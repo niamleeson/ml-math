@@ -278,17 +278,45 @@
        the gates with <code>torch.allclose</code>.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> for <i>one</i> LSTM step (scalar gates, so $h$ and $c$ are single numbers), starting
-       from $h_{t-1}=0$, $c_{t-1}=0$, input $x_t=1$. We pick simple weights to make the arithmetic clean: input gate
-       pre-activation $0.5$, forget gate pre-activation $1.0$, candidate pre-activation $1.0$, output gate
-       pre-activation $0.5$ (these are $W_\\cdot x_t + b_\\cdot$ with $h_{t-1}=0$).</p>
-       <ul>
-         <li><b>Input gate:</b> $i_t=\\sigma(0.5)=1/(1+e^{-0.5})=0.62246$.</li>
-         <li><b>Forget gate:</b> $f_t=\\sigma(1.0)=1/(1+e^{-1.0})=0.73106$.</li>
-         <li><b>Candidate:</b> $g_t=\\tanh(1.0)=0.76159$.</li>
-         <li><b>Output gate:</b> $o_t=\\sigma(0.5)=0.62246$.</li>
-         <li><b>New cell:</b> $c_t=f_t\\odot c_{t-1} + i_t\\odot g_t = 0.73106\\cdot 0 + 0.62246\\cdot 0.76159 = 0.47406$.</li>
-         <li><b>New hidden:</b> $h_t=o_t\\odot\\tanh(c_t)=0.62246\\cdot\\tanh(0.47406)=0.62246\\cdot 0.44150 = 0.27480$.</li>
+      `<p><b>Two worked numbers.</b> First the decoder's Eq. 1 on a 3-token output, then <i>one</i> LSTM step inside
+       it (scalar gates, so $h$ and $c$ are single numbers).</p>
+       <p><b>(A) Eq. 1 &mdash; the probability of a whole output sequence</b>
+       $p(y_1,y_2,y_3\\mid x)=\\prod_{t=1}^{3} p(y_t\\mid v,y_{\\lt t})$. Suppose the decoder assigns the three
+       correct tokens these per-step probabilities; the product is the sequence probability and the summed
+       negative-log is the training loss:</p>
+       <table class="extable">
+         <caption>Per-step decoder probabilities for the target "le chat" + &lt;EOS&gt; (illustrative).</caption>
+         <thead><tr><th>step $t$</th><th>token $y_t$</th><th class="num">$p(y_t\\mid v,y_{\\lt t})$</th><th class="num">$-\\ln p$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td>le</td><td class="num">0.50</td><td class="num">0.69315</td></tr>
+           <tr><td class="row-h">2</td><td>chat</td><td class="num">0.80</td><td class="num">0.22314</td></tr>
+           <tr><td class="row-h">3</td><td>&lt;EOS&gt;</td><td class="num">0.25</td><td class="num">1.38629</td></tr>
+           <tr><td class="row-h">product / sum</td><td>&mdash;</td><td class="num">0.10000</td><td class="num">2.30259</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Sequence probability:</b> $0.50\\times 0.80\\times 0.25 = 0.10000$ (Eq. 1 multiplies the per-step terms).</li>
+         <li><b>Total loss (NLL):</b> $-\\ln 0.50 - \\ln 0.80 - \\ln 0.25 = 0.69315+0.22314+1.38629 = 2.30259$.</li>
+         <li><b>Cross-check:</b> $-\\ln(0.10000) = 2.30259$ &mdash; sum of logs equals log of the product.</li>
+       </ul>
+       <p><b>(B) One LSTM step</b> from $h_{t-1}=0$, $c_{t-1}=0$, input $x_t=1$, with simple gate pre-activations
+       (these are $W_\\cdot x_t + b_\\cdot$ with $h_{t-1}=0$): input $0.5$, forget $1.0$, candidate $1.0$,
+       output $0.5$.</p>
+       <table class="extable">
+         <caption>Each gate value, then the cell and hidden update.</caption>
+         <thead><tr><th>quantity</th><th>formula</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">input gate $i_t$</td><td>$\\sigma(0.5)=1/(1+e^{-0.5})$</td><td class="num">0.62246</td></tr>
+           <tr><td class="row-h">forget gate $f_t$</td><td>$\\sigma(1.0)=1/(1+e^{-1.0})$</td><td class="num">0.73106</td></tr>
+           <tr><td class="row-h">candidate $g_t$</td><td>$\\tanh(1.0)$</td><td class="num">0.76159</td></tr>
+           <tr><td class="row-h">output gate $o_t$</td><td>$\\sigma(0.5)$</td><td class="num">0.62246</td></tr>
+           <tr><td class="row-h">cell $c_t$</td><td>$f_t\\odot c_{t-1}+i_t\\odot g_t$</td><td class="num">0.47406</td></tr>
+           <tr><td class="row-h">hidden $h_t$</td><td>$o_t\\odot\\tanh(c_t)$</td><td class="num">0.27480</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>New cell:</b> $c_t = 0.73106\\cdot 0 + 0.62246\\cdot 0.76159 = 0.47406$.</li>
+         <li><b>New hidden:</b> $h_t = 0.62246\\cdot\\tanh(0.47406) = 0.62246\\cdot 0.44150 = 0.27480$.</li>
        </ul>
        <p>The CODE recomputes these exact numbers, and separately checks a full vector <code>nn.LSTMCell</code> step
        against the hand-written gates with <code>torch.allclose</code> (returns <code>True</code>).</p>`,

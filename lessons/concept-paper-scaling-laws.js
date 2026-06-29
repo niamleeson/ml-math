@@ -257,27 +257,40 @@
     example:
       `<p>Plug real model sizes into the transcribed law $L(N) = (N_c/N)^{\\alpha_N}$ with the paper's fitted
        constants $N_c = 8.8\\times10^{13}$ and $\\alpha_N = 0.076$ (Table 5), and check the "10&times; bigger"
-       prediction step by step. (Note: $L$ here is the model-size-limited loss in nats; in the regime where
-       Law 1 applies.)</p>
+       prediction step by step. ($L$ is the model-size-limited loss in nats, in the regime where Law 1 applies.)</p>
        <ul class="steps">
         <li><b>A small model, $N = 10^6$ parameters (one million).</b> The ratio is
-        $N_c / N = 8.8\\times10^{13} / 10^6 = 8.8\\times10^{7}$. Raise to $\\alpha_N = 0.076$:
-        $L = (8.8\\times10^{7})^{0.076}$. Take logs: $\\ln(8.8\\times10^{7}) \\approx 18.293$, times $0.076$ gives
+        $N_c / N = 8.8\\times10^{13} / 10^6 = 8.8\\times10^{7}$.</li>
+        <li>Raise to $\\alpha_N = 0.076$ via logs: $\\ln(8.8\\times10^{7}) \\approx 18.293$, times $0.076$ gives
         $\\approx 1.390$, so $L = e^{1.390} \\approx 4.02$ nats.</li>
-        <li><b>A 10&times; bigger model, $N = 10^7$ (ten million).</b> Now
-        $N_c / N = 8.8\\times10^{6}$, and $\\ln(8.8\\times10^{6}) \\approx 15.990$, times $0.076 \\approx 1.215$,
-        so $L = e^{1.215} \\approx 3.37$ nats.</li>
-        <li><b>The reduction factor.</b> $L_{\\text{big}} / L_{\\text{small}} = 3.37 / 4.02 \\approx 0.84$. Exactly
-        as predicted by the shortcut: a 10&times; increase in $N$ multiplies the loss by $10^{-\\alpha_N} =
-        10^{-0.076} \\approx 0.839$. About a <b>16% drop</b> for an order of magnitude more parameters.</li>
-        <li><b>And 100&times; bigger?</b> Two factors of $0.839$: $0.839^2 \\approx 0.704$. So $100\\times$ the
-        size gives roughly a $30\\%$ loss reduction. This is why the paper must scan many orders of magnitude to
-        watch the loss fall meaningfully &mdash; and why the curve is so smooth.</li>
+        <li><b>A 10&times; bigger model, $N = 10^7$ (ten million).</b> Now $N_c / N = 8.8\\times10^{6}$.</li>
+        <li>$\\ln(8.8\\times10^{6}) \\approx 15.990$, times $0.076 \\approx 1.215$, so $L = e^{1.215} \\approx 3.37$ nats.</li>
+        <li><b>Reduction factor:</b> $L_{\\text{big}} / L_{\\text{small}} = 3.37 / 4.02 \\approx 0.84$ &mdash; exactly the
+        shortcut $10^{-\\alpha_N} = 10^{-0.076} \\approx 0.839$. About a <b>16% drop</b> per order of magnitude.</li>
+       </ul>
+       <p>Apply that fixed per-decade factor $0.839$ repeatedly to see how the loss falls as the model grows, and
+       compare it against the other two laws' exponents:</p>
+       <table class="extable">
+        <caption>Per-decade loss factor $10^{-\\alpha}$ for each scaling law (paper's Table 5 exponents)</caption>
+        <thead>
+         <tr><th>resource scaled</th><th class="num">exponent $\\alpha$</th><th class="num">factor per 10&times; ($10^{-\\alpha}$)</th><th class="num">loss after 100&times;</th><th class="num">loss after 1000&times;</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">model size $N$ ($\\alpha_N$)</td><td class="num">0.076</td><td class="num">0.839</td><td class="num">0.704</td><td class="num">0.590</td></tr>
+         <tr><td class="row-h">dataset size $D$ ($\\alpha_D$)</td><td class="num">0.095</td><td class="num">0.804</td><td class="num">0.647</td><td class="num">0.520</td></tr>
+         <tr><td class="row-h">compute $C_{\\min}$ ($\\alpha_C^{\\min}$)</td><td class="num">0.050</td><td class="num">0.891</td><td class="num">0.794</td><td class="num">0.708</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>100&times; the size:</b> two decades, $0.839^2 \\approx 0.704$ &mdash; about a $30\\%$ loss reduction.</li>
+        <li><b>1000&times; the size:</b> three decades, $0.839^3 \\approx 0.590$ &mdash; about a $41\\%$ reduction.</li>
+        <li><b>Why data drops loss faster:</b> $\\alpha_D = 0.095 \\gt \\alpha_N = 0.076$, so its factor $0.804$ is smaller
+        than $0.839$ &mdash; a bigger exponent is a steeper log-log slope. This is why the paper must scan many orders
+        of magnitude to watch the loss fall meaningfully, and why the curve stays so smooth.</li>
        </ul>
        <p>The CODEVIZ recomputes the $10^{-\\alpha}$ shortcut and the log-log slope so you can verify these
-       numbers. The synthetic-fit panel there uses the <i>same form</i> $L = (N_c/N)^{\\alpha}$ but with
-       made-up round constants to keep the picture clean &mdash; it is an illustration of the shape, not these
-       exact paper values.</p>`,
+       numbers. Its synthetic-fit panel uses the <i>same form</i> $L = (N_c/N)^{\\alpha}$ but with made-up round
+       constants &mdash; an illustration of the shape, not these exact paper values.</p>`,
     recipe:
       `<p>This is a read-only paper, so there is no architecture to assemble. Instead, here is the procedure the
        paper uses to <b>establish</b> a scaling law &mdash; the recipe you would follow to measure one yourself:</p>

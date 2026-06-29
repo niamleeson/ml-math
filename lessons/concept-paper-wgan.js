@@ -258,25 +258,34 @@
         <li><b>Fake</b> $\\mathbb{P}_\\theta$: the same segment shifted to $x=\\theta$ &mdash; points
         $(\\theta, z)$, again $z\\sim U[0,1]$.</li>
        </ul>
-       <p>So $\\theta$ is just the horizontal gap between two identical vertical lines. The paper computes each
-       distance as a function of $\\theta$:</p>
+       <p>So $\\theta$ is just the horizontal gap between two identical vertical lines. Plug $\\theta=0.5$,
+       $\\theta=0.1$, and $\\theta=0$ into each distance's closed form:</p>
        <ul class="steps">
         <li><b>Wasserstein.</b> Every point must move horizontally by exactly $\\theta$ (matching equal heights),
-        so the optimal transport cost is $W(\\mathbb{P}_0,\\mathbb{P}_\\theta) = |\\theta|$. At
-        $\\theta = 0.5$: $W = 0.5$. At $\\theta = 0.1$: $W = 0.1$. <b>Smoothly tracks the gap.</b></li>
-        <li><b>Jensen&ndash;Shannon.</b> If $\\theta \\ne 0$ the two lines do not overlap at all, so
-        $\\mathrm{JS}(\\mathbb{P}_0,\\mathbb{P}_\\theta) = \\log 2 \\approx 0.693$ &mdash; the <i>same value</i>
-        for $\\theta=0.5$ and for $\\theta=0.1$. Only at $\\theta=0$ does it drop to $0$. <b>Flat, then a cliff.</b></li>
-        <li><b>KL divergence.</b> $\\mathrm{KL}(\\mathbb{P}_0\\Vert\\mathbb{P}_\\theta) = +\\infty$ for every
-        $\\theta\\ne0$ (the supports are disjoint), and $0$ at $\\theta=0$. <b>Useless as a gradient.</b></li>
-        <li><b>Total Variation.</b> $\\delta(\\mathbb{P}_0,\\mathbb{P}_\\theta) = 1$ for $\\theta\\ne0$, $0$ at
-        $\\theta=0$. <b>Also flat.</b></li>
+        so $W(\\mathbb{P}_0,\\mathbb{P}_\\theta)=|\\theta|$. Then $W(0.5)=0.5$, $W(0.1)=0.1$, $W(0)=0$.</li>
+        <li><b>Jensen&ndash;Shannon.</b> For $\\theta\\ne0$ the lines do not overlap, so
+        $\\mathrm{JS}=\\log 2\\approx0.693$ &mdash; the same value at $\\theta=0.5$ and $\\theta=0.1$; only
+        $\\mathrm{JS}(0)=0$.</li>
+        <li><b>KL.</b> $\\mathrm{KL}(\\mathbb{P}_0\\Vert\\mathbb{P}_\\theta)=+\\infty$ for $\\theta\\ne0$
+        (disjoint supports), $0$ at $\\theta=0$.</li>
+        <li><b>Total Variation.</b> $\\delta=1$ for $\\theta\\ne0$, $0$ at $\\theta=0$.</li>
        </ul>
+       <table class="extable">
+         <caption>The four distances as $\\theta$ shrinks. Only $W$ changes smoothly &mdash; the others are flat then cliff.</caption>
+         <thead><tr><th>$\\theta$</th><th class="num">$W=|\\theta|$</th><th class="num">$\\mathrm{JS}$</th><th class="num">$\\mathrm{KL}$</th><th class="num">$\\mathrm{TV}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$0.5$</td><td class="num">$0.5$</td><td class="num">$0.693$</td><td class="num">$+\\infty$</td><td class="num">$1$</td></tr>
+           <tr><td class="row-h">$0.1$</td><td class="num">$0.1$</td><td class="num">$0.693$</td><td class="num">$+\\infty$</td><td class="num">$1$</td></tr>
+           <tr><td class="row-h">$0$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td></tr>
+           <tr><td class="row-h">slope at $0.1$</td><td class="num">$+1$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td></tr>
+         </tbody>
+       </table>
        <p><b>The punchline.</b> Send $\\theta_t\\to0$. Only $W=|\\theta_t|\\to0$ <i>continuously</i>, with a
-       constant non-zero slope $\\tfrac{dW}{d\\theta}=\\mathrm{sign}(\\theta)=\\pm1$ that always points home. JS,
-       KL and TV are <b>constant</b> for all $\\theta\\ne0$, so their derivative is $0$ &mdash; a GAN gets no
-       signal to close the gap. The notebook's first cell recomputes $W=|\\theta|$ and $\\mathrm{JS}=\\log 2$ at
-       $\\theta\\in\\{0.5, 0.1, 0\\}$ and prints the gradients, matching these numbers exactly.</p>`,
+       constant non-zero slope $\\tfrac{dW}{d\\theta}=\\mathrm{sign}(\\theta)=\\pm1$ that always points home
+       &mdash; read off the last table row. JS, KL and TV are <b>constant</b> for all $\\theta\\ne0$, so their
+       derivative is $0$ &mdash; a GAN gets no signal to close the gap. The notebook's first cell recomputes
+       $W=|\\theta|$ and $\\mathrm{JS}=\\log 2$ at $\\theta\\in\\{0.5, 0.1, 0\\}$ and prints the gradients,
+       matching these numbers exactly.</p>`,
     recipe:
       `<ol>
         <li><b>Critic $f_w$.</b> Same backbone as a GAN discriminator, but the <b>output layer has no sigmoid</b>

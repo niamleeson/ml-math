@@ -213,17 +213,28 @@
        with respect to $x$ gives the score</p>
        $$\\nabla_x \\log p(x) = -\\,\\frac{x - \\mu}{\\sigma^2}.$$
        <p>Plug in $\\mu = (1.0,\\,-0.5)$, $\\sigma = 0.5$ (so $\\sigma^2 = 0.25$), and $x = (1.4,\\,0.3)$:</p>
-       <ul>
-        <li>$x - \\mu = (1.4 - 1.0,\\; 0.3 - (-0.5)) = (0.4,\\; 0.8)$.</li>
-        <li>Divide by $\\sigma^2 = 0.25$ and negate: $-(0.4,\\,0.8)/0.25 = (-1.6,\\; -3.2)$.</li>
-        <li>So the score is $(-1.6,\\,-3.2)$ &mdash; it points back toward the mean $\\mu$, and is steeper the
-        farther $x$ is from $\\mu$.</li>
+       <ul class="steps">
+        <li><b>Deviation:</b> $x - \\mu = (1.4 - 1.0,\\; 0.3 - (-0.5)) = (0.4,\\; 0.8)$.</li>
+        <li><b>Divide by $\\sigma^2 = 0.25$:</b> $(0.4,\\,0.8)/0.25 = (1.6,\\; 3.2)$.</li>
+        <li><b>Negate:</b> score $= -(1.6,\\,3.2) = (-1.6,\\; -3.2)$ &mdash; it points back toward the mean $\\mu$,
+        and is steeper the farther $x$ is from $\\mu$.</li>
        </ul>
-       <p><b>Why this is the training target.</b> The VE perturbation kernel is
-       $x_t = x_0 + \\sigma_t z$, a Gaussian centered at $x_0$, so its score is
-       $-(x_t - x_0)/\\sigma_t^2 = -\\,z/\\sigma_t$. With $\\sigma_t = 0.5$, $x_0 = (1.0,-0.5)$,
-       $z = (0.8,\\,1.6)$: target $= -z/\\sigma_t = (-1.6,\\,-3.2)$ &mdash; the same vector. The notebook's
-       first cell recomputes both and they match exactly.</p>`,
+       <p><b>Why this is the training target.</b> The VE perturbation kernel is $x_t = x_0 + \\sigma_t z$, a
+       Gaussian centered at $x_0$, so its score equals $-(x_t - x_0)/\\sigma_t^2 = -\\,z/\\sigma_t$. With
+       $\\sigma_t = 0.5$, $x_0 = (1.0,-0.5)$, $z = (0.8,\\,1.6)$ &mdash; note $x_0 + \\sigma_t z = (1.0,-0.5) +
+       0.5\\,(0.8,1.6) = (1.4,\\,0.3) = x$, the same point. The two routes give the same vector:</p>
+       <table class="extable">
+        <caption>Two ways to the score &mdash; direct formula vs. denoising-score-matching (DSM) target</caption>
+        <thead>
+         <tr><th>route</th><th>computation</th><th class="num">component 1</th><th class="num">component 2</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">direct: $-(x-\\mu)/\\sigma^2$</td><td>$-(0.4,\\,0.8)/0.25$</td><td class="num">-1.6</td><td class="num">-3.2</td></tr>
+         <tr><td class="row-h">DSM target: $-z/\\sigma_t$</td><td>$-(0.8,\\,1.6)/0.5$</td><td class="num">-1.6</td><td class="num">-3.2</td></tr>
+        </tbody>
+       </table>
+       <p>They match exactly &mdash; the network is trained to output $-z/\\sigma_t$, which equals the true
+       Gaussian score. The notebook's first cell recomputes both.</p>`,
     recipe:
       `<ol>
         <li><b>Pick the SDE (here VE).</b> Set $f=0$ and a geometric noise scale

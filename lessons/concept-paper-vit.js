@@ -215,16 +215,29 @@ $$ N = \\frac{HW}{P^2} \\quad\\text{(\\S 3.1: number of patches = sequence lengt
        <b>paper-transformer</b>; here the table is just learned weights.</p>`,
     example:
       `<p><b>Patch count by hand</b> (Eq 1's $N$), for the exact setup the notebook uses. Take an MNIST image,
-       $H=W=28$, one channel $C=1$, and patch size $P=7$.</p>
+       $H=W=28$, one channel $C=1$, patch size $P=7$, and token width $D=32$.</p>
        <ul class="steps">
         <li>Patches along each side: $28 \\div 7 = 4$. So the grid is $4\\times 4$.</li>
         <li>Number of patches (tokens): $N = \\dfrac{H\\,W}{P^2} = \\dfrac{28\\times 28}{7^2} = \\dfrac{784}{49} = 16$.</li>
-        <li>Each flattened patch has length $P^2 C = 7^2 \\times 1 = 49$. The patch-embedding matrix $E$ is
-        therefore $49 \\times D$; with $D=32$ it maps each $49$-vector to a $32$-dim token.</li>
-        <li><b>Prepend the class token:</b> the sequence fed to the encoder has $N{+}1 = 16 + 1 = 17$ tokens.</li>
+        <li>Flattened-patch length: $P^2 C = 7^2 \\times 1 = 49$. So the patch-embedding matrix $E$ is $49\\times D = 49\\times 32$.</li>
+        <li><b>Prepend the class token:</b> sequence length $\\to N{+}1 = 16 + 1 = 17$.</li>
         <li><b>Position table:</b> $E_\\text{pos}$ is $(N{+}1)\\times D = 17 \\times 32$ &mdash; one learnable row per
         position (including the class token), added to $z_0$.</li>
        </ul>
+       <p>The shape flows down the pipeline like this:</p>
+       <table class="extable">
+        <caption>One $28\\times28$ MNIST image through the ViT front end ($P=7$, $D=32$).</caption>
+        <thead><tr><th>Stage</th><th>What it is</th><th class="num">Shape</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">image $x$</td><td>raw pixels, $1$ channel</td><td class="num">$28\\times28\\times1$</td></tr>
+         <tr><td class="row-h">patch grid</td><td>$4\\times4$ non-overlapping $7\\times7$ patches</td><td class="num">$16$ patches</td></tr>
+         <tr><td class="row-h">flattened patch</td><td>one patch's pixels in a row, $P^2C$</td><td class="num">$49$</td></tr>
+         <tr><td class="row-h">patch tokens $x_p E$</td><td>each $49$-vector projected by $E$</td><td class="num">$16\\times32$</td></tr>
+         <tr><td class="row-h">+ class token</td><td>prepend $x_\\text{class}$ &rArr; length $N{+}1$</td><td class="num">$17\\times32$</td></tr>
+         <tr><td class="row-h">+ position $E_\\text{pos}$</td><td>add one learnable row per position</td><td class="num">$17\\times32$</td></tr>
+         <tr><td class="row-h">encoder input $z_0$</td><td>what the Transformer sees</td><td class="num">$17\\times32$</td></tr>
+        </tbody>
+       </table>
        <p>So a $28\\times28$ grayscale image becomes a length-$17$ sequence of $32$-dim tokens. (This differs from
        the <b>mod-vit</b> lesson's $48\\times48$, $P=16 \\Rightarrow 9$-patch example on purpose, so you see the
        count on the dimensions your notebook actually runs.) Every one of these numbers is recomputed in the

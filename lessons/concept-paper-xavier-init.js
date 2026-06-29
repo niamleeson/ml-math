@@ -279,16 +279,30 @@
        $r = \\sqrt{6/(n_\\text{in}+n_\\text{out})} = \\sqrt6/\\sqrt{n_\\text{in}+n_\\text{out}}$, which is eq. (16).</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; a layer with fan-in $n_\\text{in}=4$ and fan-out $n_\\text{out}=6$:</p>
-       <ul>
-         <li>Target variance (eq. 12): $\\mathrm{Var}(W)=\\dfrac{2}{n_\\text{in}+n_\\text{out}}=\\dfrac{2}{4+6}=\\dfrac{2}{10}=0.2$.</li>
-         <li>Uniform half-width (eq. 16): $r=\\dfrac{\\sqrt6}{\\sqrt{n_\\text{in}+n_\\text{out}}}=\\dfrac{\\sqrt6}{\\sqrt{10}}=\\sqrt{0.6}\\approx 0.7746$.</li>
+      `<p><b>Worked numbers</b> &mdash; a layer with fan-in $n_\\text{in}=4$ and fan-out $n_\\text{out}=6$,
+       computed step by step:</p>
+       <ul class="steps">
+         <li><b>Target variance</b> (eq. 12): $\\mathrm{Var}(W)=\\dfrac{2}{n_\\text{in}+n_\\text{out}}=\\dfrac{2}{4+6}=\\dfrac{2}{10}=0.2$.</li>
+         <li><b>Uniform half-width</b> (eq. 16): $r=\\dfrac{\\sqrt6}{\\sqrt{n_\\text{in}+n_\\text{out}}}=\\dfrac{\\sqrt6}{\\sqrt{10}}=\\sqrt{0.6}\\approx 0.7746$.</li>
          <li><b>Check the variance:</b> $U[-r,r]$ has variance $r^2/3=(0.7746)^2/3=0.6/3=0.2$. &check; It matches the target exactly.</li>
        </ul>
        <p>So we sample every weight in this layer uniformly from about $[-0.775,\\,+0.775]$ and the resulting
-       weight variance is $0.2$, the value eq. (12) demands. Compare the old standard init's
-       $U[-1/\\sqrt n,1/\\sqrt n]$, which gives $n\\,\\mathrm{Var}(W)=1/3$ (eq. 15) &mdash; a per-layer factor of
-       $1/3\\lt 1$, so signal and gradient shrink with depth. The CODE cell recomputes these exact numbers and
+       weight variance is $0.2$, the value eq. (12) demands. Here Xavier is set against the old "standard" init
+       $U[-1/\\sqrt n,1/\\sqrt n]$ (using $n=10$ so the comparison is on the same total fan), and against
+       He init ($2/n_\\text{in}$, for ReLU) on the same layer:</p>
+       <table class="extable">
+         <caption>Same layer ($n_\\text{in}=4,\\,n_\\text{out}=6$): three initializers and their per-layer variance factor.</caption>
+         <thead><tr><th>init rule</th><th class="num">$\\mathrm{Var}(W)$</th><th class="num">half-width $r$</th><th class="num">fwd factor $n_\\text{in}\\mathrm{Var}(W)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Xavier $\\;2/(n_\\text{in}+n_\\text{out})$</td><td class="num">$0.2000$</td><td class="num">$0.7746$</td><td class="num">$0.800$</td></tr>
+           <tr><td class="row-h">standard $\\;1/\\sqrt n,\\ n{=}10$</td><td class="num">$0.0333$</td><td class="num">$0.3162$</td><td class="num">$0.133$</td></tr>
+           <tr><td class="row-h">He $\\;2/n_\\text{in}$</td><td class="num">$0.5000$</td><td class="num">$1.2247$</td><td class="num">$2.000$</td></tr>
+         </tbody>
+       </table>
+       <p>For a square layer ($n_\\text{in}=n_\\text{out}$) Xavier's forward factor is exactly $1$; here, with
+       $n_\\text{in}=4\\lt n_\\text{out}=6$, it is $0.8$ (the compromise leans toward the backward condition). The
+       old standard init's factor of $\\approx0.13$ ($n\\,\\mathrm{Var}(W)=1/3$ in the equal-width case, eq. 15) is
+       far below $1$, so signal and gradient shrink with depth. The CODE cell recomputes these exact numbers and
        prints them.</p>`,
 
     recipe:

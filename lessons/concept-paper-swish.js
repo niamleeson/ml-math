@@ -200,19 +200,33 @@
        autograd, and the slope is verified to be nonzero at a negative input.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> (Swish with $\\beta=1$, so the gate is $\\sigma(x)$):</p>
-       <ul>
-         <li><b>$x=1$:</b> gate $\\sigma(1)=1/(1+e^{-1})=0.7311$; output $f(1)=1\\times 0.7311=0.7311$. (ReLU would
-         give $1$ &mdash; Swish passes a bit less.)</li>
-         <li><b>$x=-1$:</b> gate $\\sigma(-1)=0.2689$; output $f(-1)=-1\\times 0.2689=-0.2689$. <b>Not zero</b> &mdash;
-         a small negative number, where ReLU gives exactly $0$.</li>
-         <li><b>$x=2$:</b> gate $\\sigma(2)=0.8808$; output $f(2)=2\\times 0.8808=1.7616$. (ReLU gives $2$.)</li>
-         <li><b>$x=-3$:</b> gate $\\sigma(-3)=0.0474$; output $f(-3)=-3\\times 0.0474=-0.1423$. The gate is nearly
-         shut, so the output is a tiny negative, close to ReLU's $0$.</li>
+      `<p>Plug real numbers into $f(x)=x\\cdot\\sigma(\\beta x)$ with $\\beta=1$, so the gate is $\\sigma(x)=1/(1+e^{-x})$.
+       Each row computes the gate, multiplies by $x$, and compares to ReLU at the same input.</p>
+       <table class="extable">
+        <caption>Swish ($\\beta=1$) vs ReLU at four inputs &mdash; output $=x\\cdot\\sigma(x)$.</caption>
+        <thead><tr><th>$x$</th><th class="num">gate $\\sigma(x)$</th><th class="num">$f(x)=x\\cdot\\sigma(x)$</th><th class="num">ReLU $=\\max(0,x)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">$0.7311$</td><td class="num">$0.7311$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$-1$</td><td class="num">$0.2689$</td><td class="num">$-0.2689$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$0.8808$</td><td class="num">$1.7616$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">$-3$</td><td class="num">$0.0474$</td><td class="num">$-0.1423$</td><td class="num">$0$</td></tr>
+        </tbody>
+       </table>
+       <p>Step by step for each input:</p>
+       <ul class="steps">
+        <li><b>$x=1$:</b> gate $\\sigma(1)=1/(1+e^{-1})=1/1.3679=0.7311$; output $f(1)=1\\times 0.7311=0.7311$ (a bit less than ReLU's $1$).</li>
+        <li><b>$x=-1$:</b> gate $\\sigma(-1)=1/(1+e^{1})=1/3.7183=0.2689$; output $f(-1)=-1\\times 0.2689=-0.2689$ &mdash; <b>not</b> zero, where ReLU gives $0$.</li>
+        <li><b>$x=2$:</b> gate $\\sigma(2)=1/(1+e^{-2})=1/1.1353=0.8808$; output $f(2)=2\\times 0.8808=1.7616$.</li>
+        <li><b>$x=-3$:</b> gate $\\sigma(-3)=1/(1+e^{3})=1/21.086=0.0474$; output $f(-3)=-3\\times 0.0474=-0.1423$ &mdash; gate nearly shut, tiny negative, close to ReLU's $0$.</li>
        </ul>
-       <p><b>Derivative at $x=1$, $\\beta=1$:</b> $f(1)=0.7311$, $\\sigma(1)=0.7311$, so
-       $f'(1)=1\\cdot 0.7311+0.7311\\cdot(1-1\\cdot 0.7311)=0.7311+0.7311\\cdot 0.2689=0.9277$. The CODE cell recomputes
-       all of these and matches them against $\\texttt{F.silu}$ and autograd.</p>`,
+       <p><b>Derivative at $x=1$, $\\beta=1$</b>, using $f'(x)=\\beta f(x)+\\sigma(\\beta x)(1-\\beta f(x))$:</p>
+       <ul class="steps">
+        <li>Recall $f(1)=0.7311$ and $\\sigma(1)=0.7311$.</li>
+        <li>First term: $\\beta f(1)=1\\times 0.7311=0.7311$.</li>
+        <li>Second term: $\\sigma(1)\\,(1-\\beta f(1))=0.7311\\times(1-0.7311)=0.7311\\times 0.2689=0.1966$.</li>
+        <li>Sum: $f'(1)=0.7311+0.1966=0.9277$.</li>
+       </ul>
+       <p>The CODE cell recomputes all of these and matches them against $\\texttt{F.silu}$ and autograd.</p>`,
 
     recipe:
       `<p><b>Swish as numbered steps</b> (input is one pre-activation number $x$, with a chosen $\\beta$):</p>

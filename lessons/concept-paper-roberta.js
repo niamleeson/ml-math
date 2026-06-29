@@ -259,20 +259,39 @@
     example:
       `<p><b>Worked numbers</b> for one tiny masked spot. Vocabulary of 4 tokens. At a masked position the
        model outputs logits (raw scores) $z=[2.0,\\,1.0,\\,0.0,\\,1.0]$ over the 4 tokens, and the true
-       token is index 0.</p>
-       <ul>
-         <li><b>Softmax</b> the logits. $e^{2}=7.389$, $e^{1}=2.718$, $e^{0}=1.000$, $e^{1}=2.718$;
-         sum $=13.825$. So $P=[0.5345,\\,0.1966,\\,0.0723,\\,0.1966]$.</li>
+       token is index 0. Plug into the kept MLM loss $\\mathcal{L}_{\\text{MLM}}=-\\log P_\\theta(x_i\\mid\\hat x)$
+       (here $|M|=1$).</p>
+       <table class="extable">
+         <caption>Softmax of the logits: $P_k=e^{z_k}/\\sum_j e^{z_j}$, sum of $e^{z}=7.389+2.718+1.000+2.718=13.825$.</caption>
+         <thead><tr><th>token $k$</th><th class="num">logit $z_k$</th><th class="num">$e^{z_k}$</th><th class="num">$P_k$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0 (true)</td><td class="num">$2.0$</td><td class="num">$7.389$</td><td class="num">$0.5345$</td></tr>
+           <tr><td class="row-h">1</td><td class="num">$1.0$</td><td class="num">$2.718$</td><td class="num">$0.1966$</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$0.0$</td><td class="num">$1.000$</td><td class="num">$0.0723$</td></tr>
+           <tr><td class="row-h">3</td><td class="num">$1.0$</td><td class="num">$2.718$</td><td class="num">$0.1966$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Softmax</b> the logits (table above): $P=[0.5345,\\,0.1966,\\,0.0723,\\,0.1966]$, summing to $1$.</li>
          <li><b>Cross-entropy</b> at this spot $=-\\log P(\\text{token }0)=-\\log(0.5345)=0.6264$.</li>
-         <li><b>If this is the only masked token</b>, $|M|=1$ and $\\mathcal{L}_{\\text{MLM}}=0.6264$.
-         The <b>perplexity</b> is $e^{0.6264}=1.871$.</li>
+         <li><b>MLM loss.</b> Only this token is masked, so $|M|=1$ and $\\mathcal{L}_{\\text{MLM}}=0.6264$.</li>
+         <li><b>Perplexity</b> $=e^{\\mathcal{L}_{\\text{MLM}}}=e^{0.6264}=1.871$.</li>
        </ul>
-       <p><b>Static vs dynamic, in one picture.</b> Suppose a 6-token sentence and $p=0.15$ selects
-       1 position. Static always masks, say, position 3 &mdash; the model gets very good at position 3's
-       context but never practises predicting positions 1, 2, 4, 5, 6. Dynamic masks a <i>different</i>
-       random position each epoch, so over training it practises all of them. The CODE cell recomputes
-       the cross-entropy above and runs the static-vs-dynamic training to show dynamic generalizes a
-       touch better &mdash; our small run, not the paper's number.</p>`,
+       <p><b>Static vs dynamic, in one picture.</b> Take a 6-token sentence; $p=0.15$ selects $\\approx 1$
+       position. Static freezes one masked position; dynamic re-draws a fresh one each epoch. Over 4 epochs
+       the masked position $M^{(e)}$ is:</p>
+       <table class="extable">
+         <caption>Which position the loss trains on each epoch (static $M^{(e)}=M$; dynamic re-samples).</caption>
+         <thead><tr><th>scheme</th><th class="num">epoch 1</th><th class="num">epoch 2</th><th class="num">epoch 3</th><th class="num">epoch 4</th><th>positions practised</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">static</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td>only 3</td></tr>
+           <tr><td class="row-h">dynamic</td><td class="num">3</td><td class="num">1</td><td class="num">5</td><td class="num">2</td><td>3, 1, 5, 2</td></tr>
+         </tbody>
+       </table>
+       <p>Static gets very good at position 3's context but never practises predicting positions 1, 2, 4, 5, 6;
+       dynamic practises many of them, so it generalizes a touch better. The CODE cell recomputes the
+       cross-entropy above and runs the static-vs-dynamic training to show this small gap &mdash; our run, not
+       the paper's number.</p>`,
 
     recipe:
       `<p><b>RoBERTa pretraining, as numbered steps (the deltas vs BERT in bold):</b></p>

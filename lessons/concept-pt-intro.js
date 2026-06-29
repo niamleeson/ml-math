@@ -240,22 +240,34 @@
        GPU, data loading, and saving). Keep this skeleton in your head and the whole course hangs on it.</p>`,
 
     example:
-      `<p>A complete "hello world" in five small moves &mdash; the shape of every PyTorch program in miniature.</p>
+      `<p>The same "hello world", but with the arithmetic worked out. We add two tensors, then run one
+        <code>nn.Linear(3, 1)</code> forward pass — which computes $y = Wx + b$ — with concrete numbers.</p>
+       <p><b>Step 1 — the eager add.</b> <code>a = torch.tensor([1., 2., 3.])</code> and <code>b = torch.ones(3)</code>,
+        then <code>a + b</code> runs the instant Python reaches it (eager / define-by-run):</p>
        <ul class="steps">
-         <li><b>Import and check the hardware.</b> <code>import torch</code>, then
-         <code>torch.cuda.is_available()</code> tells you whether a GPU is present. Set
-         <code>device = "cuda" if torch.cuda.is_available() else "cpu"</code> once, and use that variable everywhere.</li>
-         <li><b>Make two tensors and do an op.</b> <code>a = torch.tensor([1., 2., 3.])</code> and
-         <code>b = torch.ones(3)</code>; then <code>a + b</code> runs <i>immediately</i> (eager) and gives
-         <code>[2., 3., 4.]</code> &mdash; no graph to compile, no session to open. You can <code>print</code> it on
-         the spot.</li>
-         <li><b>Move to the GPU if there is one.</b> <code>a = a.to(device)</code> places the tensor on the chosen
-         device. On a GPU-enabled machine the same arithmetic now runs on the GPU.</li>
-         <li><b>A five-line model.</b> <code>model = torch.nn.Linear(3, 1)</code> is a tiny linear layer
-         (three inputs, one output) &mdash; it computes $y = Wx + b$. Calling <code>model(a)</code> runs a forward
-         pass and returns one number. That is the entire "model" step in one line.</li>
-         <li><b>That is the skeleton.</b> Add a loss, an optimizer, and a loop around <code>model(a)</code> and you
-         have training &mdash; exactly the five steps above, which the rest of the course unpacks.</li>
+         <li><b>Element 0.</b> $1 + 1 = 2$.</li>
+         <li><b>Element 1.</b> $2 + 1 = 3$.</li>
+         <li><b>Element 2.</b> $3 + 1 = 4$.</li>
+         <li><b>Result.</b> <code>a + b = [2., 3., 4.]</code> — exists immediately, nothing to compile.</li>
+       </ul>
+       <p><b>Step 2 — the forward pass.</b> Say the seeded layer has weights $W = [0.2, -0.5, 0.4]$ and bias
+        $b = 0.1$ (illustrative — the real values come from <code>torch.manual_seed(0)</code>). For input
+        $x = [1, 2, 3]$, the layer computes $y = Wx + b = \\sum_i W_i x_i + b$:</p>
+       <table class="extable">
+         <caption>$y = Wx + b$ — one weight&times;input product per row</caption>
+         <thead><tr><th>$i$</th><th class="num">$W_i$</th><th class="num">$x_i$</th><th class="num">$W_i x_i$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0</td><td class="num">0.2</td><td class="num">1</td><td class="num">0.2</td></tr>
+           <tr><td class="row-h">1</td><td class="num">-0.5</td><td class="num">2</td><td class="num">-1.0</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.4</td><td class="num">3</td><td class="num">1.2</td></tr>
+           <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">0.4</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Weighted sum.</b> $0.2 + (-1.0) + 1.2 = 0.4$.</li>
+         <li><b>Add the bias.</b> $y = 0.4 + 0.1 = 0.5$ — a single number, the layer's one output.</li>
+         <li><b>The skeleton.</b> Add a loss, an optimizer, and a loop around <code>model(x)</code> and you have
+         training — the five steps the rest of the course unpacks.</li>
        </ul>`,
 
     practice: [

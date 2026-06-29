@@ -230,20 +230,32 @@
        </ul>`,
 
     example:
-      `<p>A from-scratch linear layer, the "hello world" of custom modules:</p>
+      `<p>Take a tiny custom linear layer with $\\text{in}=2,\\ \\text{out}=2$, one input row $x = [1,\\ 2]$, weight
+       $W = \\begin{bmatrix} 2 & 0 \\\\ 1 & 3 \\end{bmatrix}$ (shape out×in), and $b = [0,\\ 0]$. Suppose the upstream
+       gradient flowing in from the next layer is $\\frac{\\partial \\mathcal{L}}{\\partial y} = [1,\\ 1]$. We work all
+       three formulas with real numbers.</p>
        <ul class="steps">
-         <li><code>class MyLinear(nn.Module)</code> with
-         <code>self.W = nn.Parameter(torch.randn(out, in))</code> and
-         <code>self.b = nn.Parameter(torch.zeros(out))</code>.</li>
-         <li><code>forward(self, x)</code> returns <code>x @ self.W.t() + self.b</code> &mdash; pure differentiable
-         torch ops, so no backward to write.</li>
-         <li>Because <code>W</code> and <code>b</code> are <code>nn.Parameter</code>s, they appear in
-         <code>model.parameters()</code> and the optimizer updates them. Swap <code>nn.Parameter</code> for a plain
-         <code>torch.randn</code> and the layer would simply never learn.</li>
-         <li>A matching custom loss is just
-         <code>def my_mse(pred, target): return ((pred - target) ** 2).mean()</code> &mdash; one scalar, fully
-         differentiable, no backward needed.</li>
-       </ul>`,
+         <li><b>Forward</b> $y = xW^{\\top} + b$. With $W^{\\top} = \\begin{bmatrix} 2 & 1 \\\\ 0 & 3 \\end{bmatrix}$:
+         $y_1 = 1\\cdot 2 + 2\\cdot 0 = 2$, $y_2 = 1\\cdot 1 + 2\\cdot 3 = 7$. So $y = [2,\\ 7]$.</li>
+         <li><b>Grad w.r.t. weight</b> $\\frac{\\partial \\mathcal{L}}{\\partial W} = \\left(\\frac{\\partial \\mathcal{L}}{\\partial y}\\right)^{\\top} x$:
+         the column $[1,\\ 1]^{\\top}$ times the row $[1,\\ 2]$ gives
+         $\\begin{bmatrix} 1\\cdot 1 & 1\\cdot 2 \\\\ 1\\cdot 1 & 1\\cdot 2 \\end{bmatrix} = \\begin{bmatrix} 1 & 2 \\\\ 1 & 2 \\end{bmatrix}$ (shape out×in, matches $W$).</li>
+         <li><b>Grad w.r.t. input</b> $\\frac{\\partial \\mathcal{L}}{\\partial x} = \\frac{\\partial \\mathcal{L}}{\\partial y}\\, W$:
+         $[1,\\ 1]\\begin{bmatrix} 2 & 0 \\\\ 1 & 3 \\end{bmatrix} = [\\,1\\cdot 2 + 1\\cdot 1,\\ \\ 1\\cdot 0 + 1\\cdot 3\\,] = [3,\\ 3]$ &mdash; this flows back to the previous layer.</li>
+       </ul>
+       <table class="extable">
+         <caption>The three quantities, their formula, shape, and computed value</caption>
+         <thead><tr><th>quantity</th><th>formula</th><th>shape</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">output $y$</td><td>$xW^{\\top}+b$</td><td>1×2</td><td class="num">[2, 7]</td></tr>
+           <tr><td class="row-h">$\\partial\\mathcal{L}/\\partial W$</td><td>$(\\partial\\mathcal{L}/\\partial y)^{\\top} x$</td><td>2×2</td><td class="num">[[1,2],[1,2]]</td></tr>
+           <tr><td class="row-h">$\\partial\\mathcal{L}/\\partial x$</td><td>$(\\partial\\mathcal{L}/\\partial y)\\,W$</td><td>1×2</td><td class="num">[3, 3]</td></tr>
+         </tbody>
+       </table>
+       <p>In practice you write only the <code>forward</code> (<code>x @ self.W.t() + self.b</code>); autograd derives
+       both gradients exactly as above. Because <code>W</code> and <code>b</code> are <code>nn.Parameter</code>s they
+       appear in <code>model.parameters()</code> and the optimizer updates them &mdash; swap in a plain
+       <code>torch.randn</code> and the layer would never learn.</p>`,
 
     practice: [
       {

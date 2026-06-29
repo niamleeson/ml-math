@@ -254,24 +254,38 @@
        improves conditioning. This is the optimization advantage in one line of algebra.</p>`,
 
     example:
-      `<p><b>Worked numbers.</b> Take a 2-input neuron with direction $\\mathbf{v}=[3,\\,4]$ and length $g=10$.</p>
-       <ul>
+      `<p><b>Worked numbers.</b> Take a 2-input neuron with direction $\\mathbf{v}=[3,\\,4]$ and length $g=10$.
+       Plug these into the reparameterization $\\mathbf{w}=g\\,\\mathbf{v}/\\lVert\\mathbf{v}\\rVert$:</p>
+       <ul class="steps">
          <li>Length of the direction: $\\lVert\\mathbf{v}\\rVert=\\sqrt{3^{2}+4^{2}}=\\sqrt{9+16}=\\sqrt{25}=5$.</li>
-         <li>Reparameterized weight: $\\mathbf{w}=g\\,\\mathbf{v}/\\lVert\\mathbf{v}\\rVert
-         =10\\cdot[3,4]/5=[6,\\,8]$.</li>
+         <li>Unit direction: $\\mathbf{v}/\\lVert\\mathbf{v}\\rVert=[3,4]/5=[0.6,\\,0.8]$.</li>
+         <li>Reparameterized weight: $\\mathbf{w}=g\\cdot[0.6,0.8]=10\\cdot[0.6,0.8]=[6,\\,8]$.</li>
          <li>Check the magnitude: $\\lVert\\mathbf{w}\\rVert=\\sqrt{6^{2}+8^{2}}=\\sqrt{36+64}=\\sqrt{100}=10=g$. ✓</li>
        </ul>
-       <p><b>One gradient step.</b> Suppose backprop gives $\\nabla_{\\mathbf{w}}L=[1,\\,1]$.</p>
-       <ul>
+       <p><b>One gradient step.</b> Suppose backprop gives $\\nabla_{\\mathbf{w}}L=[1,\\,1]$. Apply the Eq. 3
+       gradients term by term:</p>
+       <ul class="steps">
          <li>$\\nabla_g L=(\\nabla_{\\mathbf{w}}L\\cdot\\mathbf{v})/\\lVert\\mathbf{v}\\rVert
          =(1\\cdot3+1\\cdot4)/5=7/5=1.4$.</li>
-         <li>$\\nabla_{\\mathbf{v}}L=(g/\\lVert\\mathbf{v}\\rVert)\\nabla_{\\mathbf{w}}L
-         -(g\\,\\nabla_g L/\\lVert\\mathbf{v}\\rVert^{2})\\mathbf{v}
-         =(10/5)[1,1]-(10\\cdot1.4/25)[3,4]$
-         $=[2,2]-0.56\\cdot[3,4]=[2,2]-[1.68,2.24]=[0.32,\\,-0.24]$.</li>
+         <li>First term of $\\nabla_{\\mathbf{v}}L$: $(g/\\lVert\\mathbf{v}\\rVert)\\,\\nabla_{\\mathbf{w}}L
+         =(10/5)[1,1]=[2,\\,2]$.</li>
+         <li>Second term: $(g\\,\\nabla_g L/\\lVert\\mathbf{v}\\rVert^{2})\\,\\mathbf{v}
+         =(10\\cdot1.4/25)[3,4]=0.56\\cdot[3,4]=[1.68,\\,2.24]$.</li>
+         <li>$\\nabla_{\\mathbf{v}}L=[2,2]-[1.68,2.24]=[0.32,\\,-0.24]$.</li>
          <li>Check it is perpendicular to $\\mathbf{v}$: $\\mathbf{v}\\cdot\\nabla_{\\mathbf{v}}L
          =3\\cdot0.32+4\\cdot(-0.24)=0.96-0.96=0$. ✓ The direction update does not touch the length.</li>
        </ul>
+       <p>The table collects each computed quantity, with the two parameters' separate roles side by side:</p>
+       <table class="extable">
+         <caption>$\\mathbf{v}=[3,4]$, $g=10$, $\\nabla_{\\mathbf{w}}L=[1,1]$ &mdash; the length and direction pieces.</caption>
+         <thead><tr><th>quantity</th><th class="num">length piece ($g$)</th><th class="num">direction piece ($\\mathbf{v}$)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">stored parameter</td><td class="num">$10$</td><td class="num">$[3,\\,4]$</td></tr>
+           <tr><td class="row-h">rebuilt weight $\\mathbf{w}$</td><td class="num">$\\lVert\\mathbf{w}\\rVert=10$</td><td class="num">$[6,\\,8]$</td></tr>
+           <tr><td class="row-h">gradient</td><td class="num">$\\nabla_g L=1.4$</td><td class="num">$\\nabla_{\\mathbf{v}}L=[0.32,\\,-0.24]$</td></tr>
+           <tr><td class="row-h">dotted with $\\mathbf{v}$</td><td class="num">&mdash;</td><td class="num">$0$ (perpendicular)</td></tr>
+         </tbody>
+       </table>
        <p>The CODE cell recomputes these exact numbers and prints them, and checks the weight against PyTorch's
        built-in <code>weight_norm</code>.</p>`,
 

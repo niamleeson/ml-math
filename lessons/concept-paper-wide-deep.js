@@ -208,20 +208,22 @@ $$ P(Y=1\\mid \\mathbf{x}) = \\sigma\\!\\Big( \\mathbf{w}_{\\text{wide}}^{\\top}
     example:
       `<p>Work the <b>cross-product feature</b> (Eqn. 1) by hand on a tiny categorical pair, so the AND is
        concrete. Two one-hot fields: <b>user</b> $\\in\\{u_0,u_1,u_2\\}$ and <b>app</b>
-       $\\in\\{a_0,a_1,a_2\\}$. Define one cross feature, AND(user=$u_1$, app=$a_2$). In Eqn. 1 that means
-       $c_{ki}=1$ for the two indicators "user is $u_1$" and "app is $a_2$", and $c_{ki}=0$ for the other
-       four. So $\\phi(\\mathbf{x}) = (\\text{user}{=}u_1)\\cdot(\\text{app}{=}a_2)$.</p>
-       <ul class="steps">
-        <li><b>Match.</b> user=$u_1$, app=$a_2$ &rarr; both indicators are 1 &rarr;
-        $\\phi = 1\\cdot 1 = 1$. The two ignored fields contribute $x^{0}=1$ each and drop out.</li>
-        <li><b>App differs.</b> user=$u_1$, app=$a_1$ &rarr; the "app is $a_2$" indicator is 0 &rarr;
-        $\\phi = 1\\cdot 0 = 0$.</li>
-        <li><b>User differs.</b> user=$u_0$, app=$a_2$ &rarr; the "user is $u_1$" indicator is 0 &rarr;
-        $\\phi = 0\\cdot 1 = 0$.</li>
-       </ul>
-       <p>So $\\phi$ fires (equals 1) only for the exact pair $(u_1,a_2)$ &mdash; a logical AND. Give the
-       wide part a weight on this feature and it has memorized a rule about that one pair, touching no other.
-       The notebook's first cell recomputes these three values and prints $[1,0,0]$.</p>`,
+       $\\in\\{a_0,a_1,a_2\\}$. Define one cross feature, AND(user=$u_1$, app=$a_2$). In Eqn. 1
+       $\\phi_k(\\mathbf{x})=\\prod_i x_i^{c_{ki}}$ that means $c_{ki}=1$ for the two indicators "user is $u_1$"
+       and "app is $a_2$", and $c_{ki}=0$ for the other four (which contribute $x^{0}=1$ and drop out). So
+       $\\phi(\\mathbf{x}) = (\\text{user}{=}u_1)\\cdot(\\text{app}{=}a_2)$. Evaluate it on three input rows:</p>
+       <table class="extable">
+         <caption>$\\phi=\\big(\\text{user}{=}u_1\\big)\\cdot\\big(\\text{app}{=}a_2\\big)$ &mdash; fires only on the exact pair $(u_1,a_2)$.</caption>
+         <thead><tr><th>row</th><th class="num">user=$u_1$?</th><th class="num">app=$a_2$?</th><th class="num">$\\phi$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$(u_1,a_2)$</td><td class="num">$1$</td><td class="num">$1$</td><td class="num">$1\\cdot1=1$</td></tr>
+           <tr><td class="row-h">$(u_1,a_1)$</td><td class="num">$1$</td><td class="num">$0$</td><td class="num">$1\\cdot0=0$</td></tr>
+           <tr><td class="row-h">$(u_0,a_2)$</td><td class="num">$0$</td><td class="num">$1$</td><td class="num">$0\\cdot1=0$</td></tr>
+         </tbody>
+       </table>
+       <p>So $\\phi$ fires (equals 1) only for the exact pair $(u_1,a_2)$ &mdash; a logical AND, giving the
+       column $[1,0,0]$. Give the wide part a weight on this feature and it has memorized a rule about that one
+       pair, touching no other. The notebook's first cell recomputes these three values and prints $[1,0,0]$.</p>`,
     recipe:
       `<ol>
         <li><b>Build the wide part.</b> One learnable weight per cross-product feature. For the toy task the

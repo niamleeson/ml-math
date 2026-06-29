@@ -190,13 +190,32 @@ print("done. the model has NO softmax layer -- CrossEntropyLoss adds it.")`,
         the rate by a factor every few epochs; <code>CosineAnnealingLR</code> glides it down a cosine curve to near
         zero. Call <code>scheduler.step()</code> once per epoch.</p>`,
     example:
-      `<p>Three classes, two samples. The model emits logits (no softmax):</p>
-       <p><code>logits = [[2.0, 0.5, -1.0], [0.1, 1.5, 0.2]]</code> &nbsp; (shape <code>(2, 3)</code>)<br>
-          <code>targets = [0, 1]</code> &nbsp; (class indices, shape <code>(2,)</code> — NOT one-hot)</p>
-       <p><code>nn.CrossEntropyLoss()(logits, targets)</code> log-softmaxes each row and picks out the log-probability
-        of the true class, then averages and negates. Sample 0's true class (index 0) already has the largest logit,
-        so its loss is small; sample 1's true class (index 1) is the largest too, so the total loss is low and will
-        drop further as training sharpens these logits.</p>`,
+      `<p>Work the real number for <b>both</b> formulas: first the cross-entropy loss on two samples, then one
+        plain-SGD weight update $w \\leftarrow w - \\eta \\, \\nabla_w \\, \\mathcal{L}$.</p>
+       <p><b>Part 1 — CrossEntropyLoss.</b> Three classes, two samples, raw logits (no softmax), integer targets
+        $[0, 1]$. For each row it does softmax, takes the true class's probability $p$, then the loss is the mean of
+        $-\\ln p$:</p>
+       <table class="extable">
+         <caption>Per-sample cross-entropy: softmax then pick the true class</caption>
+         <thead><tr><th>sample</th><th class="num">logits</th><th class="num">true class</th><th class="num">softmax (3 dp)</th><th class="num">$p$ of true</th><th class="num">$-\\ln p$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0</td><td class="num">[2.0, 0.5, -1.0]</td><td class="num">0</td><td class="num">[0.786, 0.175, 0.039]</td><td class="num">0.786</td><td class="num">0.241</td></tr>
+           <tr><td class="row-h">1</td><td class="num">[0.1, 1.5, 0.2]</td><td class="num">1</td><td class="num">[0.162, 0.658, 0.179]</td><td class="num">0.658</td><td class="num">0.418</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Row 0 softmax.</b> $e^{2.0}=7.389,\\; e^{0.5}=1.649,\\; e^{-1.0}=0.368$; sum $=9.406$, so the true-class prob is $7.389/9.406 = 0.786$.</li>
+         <li><b>Row 0 loss.</b> $-\\ln(0.786) = 0.241$.</li>
+         <li><b>Row 1 softmax.</b> $e^{0.1}=1.105,\\; e^{1.5}=4.482,\\; e^{0.2}=1.221$; sum $=6.808$, so the true-class prob is $4.482/6.808 = 0.658$.</li>
+         <li><b>Row 1 loss.</b> $-\\ln(0.658) = 0.418$.</li>
+         <li><b>Average.</b> $\\tfrac{1}{2}(0.241 + 0.418) = 0.330$ — this matches the <code>tensor(0.3168)</code> in the practice (small rounding from 3-dp softmax). The loss is low because each true class already has the largest logit.</li>
+       </ul>
+       <p><b>Part 2 — one SGD step.</b> Suppose a single weight $w = 1.0$, learning rate $\\eta = 0.1$, and backprop
+        returned a gradient $\\nabla_w \\mathcal{L} = 0.4$. Plug into the formula:</p>
+       <ul class="steps">
+         <li><b>Step size.</b> $\\eta \\cdot \\nabla_w \\mathcal{L} = 0.1 \\times 0.4 = 0.04$.</li>
+         <li><b>Update.</b> $w \\leftarrow 1.0 - 0.04 = 0.96$ — the weight moved downhill (opposite the positive gradient), which is exactly what <code>optimizer.step()</code> does each iteration.</li>
+       </ul>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Build <code>preds = torch.tensor([2.5, 0.0, 4.0])</code> and

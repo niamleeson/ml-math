@@ -247,23 +247,28 @@
 
     example:
       `<p><b>Worked numbers</b> &mdash; the simplest case, a single 2-D pair with speed $\\theta=1$. Take a
-       query $q=[1,0]$ and a key $k=[0,1]$ (fixed contents). We will show the dot product depends only on
-       $m-n$.</p>
-       <ul>
-         <li><b>At $m=2$, $n=5$ (so $m-n=-3$).</b> Rotate $q$ by $2$ rad:
-         $q_2=[\\cos2,\\,\\sin2]=[-0.4161,\\,0.9093]$. Rotate $k$ by $5$ rad:
-         $k_5=[-\\sin5,\\,\\cos5]=[0.9589,\\,0.2837]$. Dot product:
-         $(-0.4161)(0.9589)+(0.9093)(0.2837)=-0.1411$.</li>
-         <li><b>At $m=0$, $n=3$ (same $m-n=-3$).</b> $q_0=[1,0]$, $k_3=[-\\sin3,\\,\\cos3]=[-0.1411,-0.99]$.
-         Dot product: $(1)(-0.1411)+(0)(-0.99)=-0.1411$. <b>Identical.</b></li>
-         <li><b>At $m=7$, $n=10$ (same $m-n=-3$).</b> $q_7=[0.7539,\\,0.657]$,
-         $k_{10}=[0.544,\\,-0.8391]$. Dot product:
-         $(0.7539)(0.544)+(0.657)(-0.8391)=-0.1411$. <b>Identical again.</b></li>
+       query $q=[1,0]$ and a key $k=[0,1]$ (fixed contents). Rotate $q$ by $m$ rad and $k$ by $n$ rad with
+       $R(\\phi)$, then dot. For these vectors $q_m=[\\cos m,\\,\\sin m]$ and $k_n=[-\\sin n,\\,\\cos n]$, so the
+       score works out to $\\sin(m-n)$ &mdash; a function of the difference alone.</p>
+       <ul class="steps">
+         <li><b>Rotate the query.</b> $q_m=R(m)\\,[1,0]=[\\cos m,\\,\\sin m]$.</li>
+         <li><b>Rotate the key.</b> $k_n=R(n)\\,[0,1]=[-\\sin n,\\,\\cos n]$ (top row $[\\cos,-\\sin]$ acts on the second coord).</li>
+         <li><b>Dot product.</b> $q_m\\!\\cdot\\! k_n=\\cos m(-\\sin n)+\\sin m\\cos n=\\sin(m-n)$.</li>
+         <li><b>For $m-n=-3$.</b> $\\sin(-3)=-0.141120$ &mdash; the same for every pair below.</li>
        </ul>
+       <table class="extable">
+         <caption>Three different absolute positions, all with $m-n=-3$: the rotated vectors differ but the score is identical.</caption>
+         <thead><tr><th>$m$</th><th>$n$</th><th class="num">$q_m=[\\cos m,\\sin m]$</th><th class="num">$k_n=[-\\sin n,\\cos n]$</th><th class="num">$q_m\\!\\cdot\\! k_n$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$2$</td><td class="num">$5$</td><td class="num">$[-0.4161,\\,0.9093]$</td><td class="num">$[0.9589,\\,0.2837]$</td><td class="num">$-0.1411$</td></tr>
+           <tr><td class="row-h">$0$</td><td class="num">$3$</td><td class="num">$[1.0000,\\,0.0000]$</td><td class="num">$[-0.1411,\\,-0.9900]$</td><td class="num">$-0.1411$</td></tr>
+           <tr><td class="row-h">$7$</td><td class="num">$10$</td><td class="num">$[0.7539,\\,0.6570]$</td><td class="num">$[0.5440,\\,-0.8391]$</td><td class="num">$-0.1411$</td></tr>
+         </tbody>
+       </table>
        <p>Three completely different absolute positions, one shared difference $m-n=-3$, and the same score
-       $-0.141120$ every time. Change the difference and the score changes; keep it fixed and the score is
-       locked. The CODE cell recomputes these exact numbers and runs <code>torch.allclose</code> across many
-       same-difference pairs.</p>`,
+       $-0.141120$ every time. Change the difference (e.g. $m-n=-1$ gives $\\sin(-1)=-0.8415$) and the score
+       changes; keep it fixed and the score is locked. The CODE cell recomputes these exact numbers and runs
+       <code>torch.allclose</code> across many same-difference pairs.</p>`,
 
     recipe:
       `<p><b>RoPE as numbered steps</b> (query/key vector of even length $d$, at position $m$):</p>

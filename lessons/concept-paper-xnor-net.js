@@ -236,19 +236,35 @@
        $\\alpha = \\frac{1}{n}\\sum_i |W_i| = \\mathrm{mean}(|W|)$. The mean magnitude is the best scale.</p>`,
     example:
       `<p>Work the formula on a tiny filter so the numbers are checkable. Let
-       $W = [\\,0.8,\\,-0.5,\\,0.3,\\,-0.9,\\,0.2,\\,-0.4\\,]$, so $n = 6$.</p>
+       $W = [\\,0.8,\\,-0.5,\\,0.3,\\,-0.9,\\,0.2,\\,-0.4\\,]$, so $n = 6$. Take the sign of each weight,
+       find the optimal scale $\\alpha=\\mathrm{mean}(|W|)$, then compare reconstruction error WITH that scale
+       against the naive $\\alpha=1$.</p>
        <ul class="steps">
         <li><b>Binary filter</b> (Eqn. 4): $B = \\mathrm{sign}(W) = [\\,+1,\\,-1,\\,+1,\\,-1,\\,+1,\\,-1\\,]$.</li>
-        <li><b>Optimal scale</b> (Eqn. 6): sum of magnitudes is
-        $0.8+0.5+0.3+0.9+0.2+0.4 = 3.1$. Divide by $n=6$:
-        $\\alpha = 3.1 / 6 = 0.51\\overline{6}$.</li>
-        <li><b>Error WITH the scale.</b> $\\alpha B = [\\,0.5167,\\,-0.5167,\\,0.5167,\\,-0.5167,\\,0.5167,\\,-0.5167\\,]$.
-        Squared error $\\lVert W-\\alpha B\\rVert^2 \\approx (0.283)^2+(0.017)^2+(0.217)^2+(0.383)^2+(0.317)^2+(0.117)^2 \\approx 0.388$.</li>
-        <li><b>Error WITHOUT the scale</b> (naive sign, $\\alpha=1$): $\\lVert W-\\mathrm{sign}(W)\\rVert^2
-        = (0.2)^2+(0.5)^2+(0.7)^2+(0.1)^2+(0.8)^2+(0.6)^2 = 1.79$.</li>
-        <li><b>Verdict.</b> The scaled version's error $0.388$ is about <b>4.6&times; smaller</b> than the naive
-        $1.79$. The one number $\\alpha=\\mathrm{mean}(|W|)$ did that.</li>
+        <li><b>Sum of magnitudes</b> for Eqn. 6: $0.8+0.5+0.3+0.9+0.2+0.4 = 3.1$.</li>
+        <li><b>Optimal scale</b> (Eqn. 6): $\\alpha = \\dfrac{3.1}{6} = 0.51\\overline{6} \\approx 0.5167$.</li>
+        <li><b>Per-weight errors</b> (table below). WITH the scale each entry of $\\alpha B$ is
+        $\\pm0.5167$; the squared error is the last column summed: $\\lVert W-\\alpha B\\rVert^2 \\approx 0.388$.</li>
+        <li><b>Without the scale</b> ($\\alpha=1$, plain $\\mathrm{sign}(W)$): squared error
+        $(0.2)^2+(0.5)^2+(0.7)^2+(0.1)^2+(0.8)^2+(0.6)^2 = 0.04+0.25+0.49+0.01+0.64+0.36 = 1.79$.</li>
+        <li><b>Verdict.</b> The scaled error $0.388$ is about <b>4.6&times; smaller</b> than the naive $1.79$.
+        The single number $\\alpha=\\mathrm{mean}(|W|)$ did that.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-weight reconstruction: scaled ($\\alpha=0.5167$) vs naive ($\\alpha=1$).</caption>
+        <thead>
+         <tr><th>$W_i$</th><th class="num">$B_i$</th><th class="num">$\\alpha B_i$</th><th class="num">$(W_i-\\alpha B_i)^2$</th><th class="num">$(W_i-B_i)^2$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$0.8$</td><td class="num">$+1$</td><td class="num">$0.5167$</td><td class="num">$0.0803$</td><td class="num">$0.04$</td></tr>
+         <tr><td class="row-h">$-0.5$</td><td class="num">$-1$</td><td class="num">$-0.5167$</td><td class="num">$0.0003$</td><td class="num">$0.25$</td></tr>
+         <tr><td class="row-h">$0.3$</td><td class="num">$+1$</td><td class="num">$0.5167$</td><td class="num">$0.0470$</td><td class="num">$0.49$</td></tr>
+         <tr><td class="row-h">$-0.9$</td><td class="num">$-1$</td><td class="num">$-0.5167$</td><td class="num">$0.1470$</td><td class="num">$0.01$</td></tr>
+         <tr><td class="row-h">$0.2$</td><td class="num">$+1$</td><td class="num">$0.5167$</td><td class="num">$0.1003$</td><td class="num">$0.64$</td></tr>
+         <tr><td class="row-h">$-0.4$</td><td class="num">$-1$</td><td class="num">$-0.5167$</td><td class="num">$0.0136$</td><td class="num">$0.36$</td></tr>
+         <tr><td class="row-h"><b>sum</b></td><td class="num"></td><td class="num"></td><td class="num"><b>$0.388$</b></td><td class="num"><b>$1.79$</b></td></tr>
+        </tbody>
+       </table>
        <p>These exact values ($\\alpha=0.5167$, errors $0.388$ vs $1.79$) are recomputed in the notebook's first
        cell so you can check them by running it.</p>`,
     recipe:

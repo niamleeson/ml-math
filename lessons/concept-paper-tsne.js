@@ -229,20 +229,31 @@
     example:
       `<p><b>Worked numbers</b> through the Student-t map probability $q_{ij}$ (Eq. 4) and one KL gradient term
        (Eq. 5), for a tiny 3-point map. Map points $y_1=(0,0)$, $y_2=(1,0)$, $y_3=(0,2)$.</p>
-       <ul>
-         <li><b>Squared map distances:</b> $d_{12}^2=1^2+0^2=1$, $d_{13}^2=0^2+2^2=4$, $d_{23}^2=1^2+2^2=5$.</li>
-         <li><b>Unnormalized Student-t weights</b> $(1+d^2)^{-1}$: pair (1,2): $1/(1+1)=0.5$; pair (1,3):
-         $1/(1+4)=0.2$; pair (2,3): $1/(1+5)\\approx0.16667$. Each unordered pair appears twice in the sum
-         $\\sum_{k\\neq l}$, so the normalizer is $2(0.5+0.2+0.16667)=1.73333$.</li>
-         <li><b>$q_{12}$:</b> $0.5/1.73333 \\approx 0.28846$. (Likewise $q_{13}\\approx0.11538$,
-         $q_{23}\\approx0.09615$.)</li>
-         <li><b>One gradient term</b> for $y_1$ from its pair with $y_2$ (Eq. 5 summand). Suppose the high-D
-         affinity is $p_{12}=0.4$. The summand is
-         $4\\,(p_{12}-q_{12})\\,(y_1-y_2)\\,(1+d_{12}^2)^{-1}
-         = 4\\,(0.4-0.28846)\\,(-1,0)\\,(0.5)$.</li>
-         <li>Scalar factor: $4\\cdot0.11154\\cdot0.5 = 0.22308$. Times $(y_1-y_2)=(-1,0)$ gives the contribution
-         $(-0.22308,\\,0)$ &mdash; a pull of $y_1$ toward $y_2$, because $p_{12}\\gt q_{12}$ means the map
-         under-represents this pair, so the spring attracts.</li>
+       <ul class="steps">
+         <li><b>Squared map distances:</b> $d_{12}^2=1^2+0^2=1$; $d_{13}^2=0^2+2^2=4$; $d_{23}^2=1^2+2^2=5$.</li>
+         <li><b>Unnormalized weights</b> $(1+d^2)^{-1}$: $1/(1+1)=0.5$; $1/(1+4)=0.2$; $1/(1+5)\\approx 0.16667$.</li>
+         <li><b>Normalizer.</b> Each unordered pair appears twice in $\\sum_{k\\neq l}$:
+         $2(0.5+0.2+0.16667) = 2(0.86667) = 1.73333$.</li>
+         <li><b>$q_{12}=0.5/1.73333 \\approx 0.28846$;</b> $q_{13}=0.2/1.73333\\approx 0.11538$;
+         $q_{23}=0.16667/1.73333\\approx 0.09615$.</li>
+       </ul>
+       <table class="extable">
+        <caption>Student-t map affinities (Eq. 4) for the 3-point map</caption>
+        <thead><tr><th>pair</th><th class="num">$d^2$</th><th class="num">weight $(1+d^2)^{-1}$</th><th class="num">$q_{ij}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">(1,2)</td><td class="num">1</td><td class="num">0.50000</td><td class="num">0.28846</td></tr>
+         <tr><td class="row-h">(1,3)</td><td class="num">4</td><td class="num">0.20000</td><td class="num">0.11538</td></tr>
+         <tr><td class="row-h">(2,3)</td><td class="num">5</td><td class="num">0.16667</td><td class="num">0.09615</td></tr>
+        </tbody>
+       </table>
+       <p>Now <b>one gradient summand</b> for $y_1$ from its pair with $y_2$ (Eq. 5), with high-D affinity
+       $p_{12}=0.4$:</p>
+       <ul class="steps">
+         <li><b>Scalar factor</b> $4\\,(p_{12}-q_{12})\\,(1+d_{12}^2)^{-1} = 4\\,(0.4-0.28846)\\,(0.5)
+         = 4\\,(0.11154)\\,(0.5) = 0.22308$.</li>
+         <li><b>Times the direction</b> $(y_1-y_2)=(-1,0)$: contribution $0.22308\\cdot(-1,0) = (-0.22308,\\ 0)$.</li>
+         <li>Because $p_{12}\\gt q_{12}$ the map <b>under-represents</b> this pair, so the spring <b>attracts</b>:
+         the summand pulls $y_1$ toward $y_2$.</li>
        </ul>
        <p>The CODE cell recomputes these exact numbers and prints them.</p>`,
 

@@ -143,12 +143,23 @@
        </ul>
        <p><b>Why "accumulate"?</b> The final step <i>adds</i> into <code>x.grad</code> rather than overwriting it. That is deliberate &mdash; it lets you sum gradients over several backward passes (e.g. gradient accumulation across micro-batches). The cost is that you must <code>zero_grad()</code> between independent steps, or stale gradients pile up.</p>`,
     example:
-      `<p>Let $x=2$ with <code>requires_grad=True</code>, and $y = x^3 + 2x$.</p>
+      `<p>Let $x=2$ with <code>requires_grad=True</code>, and $y = x^3 + 2x$ (so $\\tfrac{dy}{dx} = 3x^2 + 2$).</p>
        <ul class="steps">
          <li>Forward: $y = 2^3 + 2\\cdot 2 = 8 + 4 = 12$.</li>
-         <li>Backward: $\\tfrac{dy}{dx} = 3x^2 + 2 = 3(4)+2 = 14$. So <code>x.grad</code> $= 14.0$.</li>
-         <li>Now call <code>y2 = x**3 + 2*x; y2.backward()</code> <i>again</i> without zeroing. <code>x.grad</code> becomes $14 + 14 = 28$ &mdash; accumulation in action. Calling <code>x.grad.zero_()</code> first keeps it at $14$.</li>
-       </ul>`,
+         <li>Backward seeds $\\tfrac{dy}{dy} = 1$, splits at the sum: the $x^3$ branch gives $3x^2 = 3\\cdot 2^2 = 12$, the $2x$ branch gives $2$.</li>
+         <li>The two branches hit the same leaf $x$, so they <b>add</b>: $\\tfrac{dy}{dx} = 12 + 2 = 14$. So <code>x.grad</code> $= 14.0$ &mdash; exactly the analytic derivative.</li>
+       </ul>
+       <p>Now call <code>backward()</code> three times in a row, recomputing $y$ each time, to see what gradients <i>accumulate</i> means &mdash; with and without <code>x.grad.zero_()</code>:</p>
+       <table class="extable">
+         <caption>Value sitting in <code>x.grad</code> after each <code>backward()</code> (each pass deposits 14)</caption>
+         <thead><tr><th>backward call</th><th class="num">no zero_grad</th><th class="num">with zero_grad</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1st</td><td class="num">14</td><td class="num">14</td></tr>
+           <tr><td class="row-h">2nd</td><td class="num">28</td><td class="num">14</td></tr>
+           <tr><td class="row-h">3rd</td><td class="num">42</td><td class="num">14</td></tr>
+         </tbody>
+       </table>
+       <p>Without zeroing the same $14$ piles up: $14,\\ 14{+}14{=}28,\\ 28{+}14{=}42$ &mdash; the #1 PyTorch bug. Calling <code>x.grad.zero_()</code> before each pass clears the slate, so it stays $14$ every time.</p>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Hand-check autograd. Create <code>x = torch.tensor(2.0, requires_grad=True)</code>, compute <code>y = x**3 + 2*x</code>, call <code>y.backward()</code>, and print <code>x.grad</code>. Predict the value first using the derivative $3x^2+2$ at $x=2$.`,
