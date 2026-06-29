@@ -152,6 +152,12 @@
          <li>Concretely, fill 30% of a column with its mean and you have erased about 30% of its spread.
          Downstream, correlations with the target get <b>diluted</b> and confidence intervals come out
          too narrow.</li>
+         <li><b>Worked variance check.</b> Take seven observed values $2,4,6,8,10,12,14$ with mean
+         $\\bar{x}=56/7=8$. Their squared deviations are $36,16,4,0,4,16,36$, summing to $112$, so the
+         observed variance is $112/7=16$. Now add three blanks ($p=3/10=0.3$) and mean-fill them all with
+         $8$ &mdash; each adds a deviation of $(8-8)^2=0$. The new sum of squared deviations is still
+         $112$, but it is now spread over $10$ rows: $112/10=\\mathbf{11.2}$. That is $11.2/16=0.7$ of the
+         original &mdash; exactly the $(1-p)=0.7$ shrink the formula predicted.</li>
          <li>The <b>median</b> $\\tilde{x}$ has the same spike problem but is far more <b>robust</b>: a
          single huge outlier moves the mean a lot but the median barely at all, so on skewed columns the
          filled value is more representative. That is why <code>strategy='median'</code> is the usual

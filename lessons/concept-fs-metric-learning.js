@@ -42,7 +42,25 @@
     derivation:
       `<p>Why squared distance and not plain distance? Squared distance is smoother to differentiate, so the gradient in backprop [dl-backprop] is simple. Both shrink to 0 at the same place, so the goal is unchanged.</p>
        <p>Why the margin? Suppose $\\alpha = 0$. Then a loss of 0 only needs the negative to be a hair farther than the positive. The classes would touch, and one noisy point flips the answer. Setting $\\alpha > 0$ demands a real gap, so the clusters separate with room to spare.</p>
-       <p>When the inside term is negative (goal already met), $\\max(0,\\,\\cdot\\,)$ returns 0, its slope is 0, and that triplet contributes no gradient. That is exactly why easy triplets are wasted compute and hard-negative mining helps.</p>`,
+       <p>When the inside term is negative (goal already met), $\\max(0,\\,\\cdot\\,)$ returns 0, its slope is 0, and that triplet contributes no gradient. That is exactly why easy triplets are wasted compute and hard-negative mining helps.</p>
+       <p><b>The contrastive loss in numbers.</b> The triplet loss looks at three points at once; the contrastive loss is simpler and looks at one <i>pair</i> at a time, with a label $y$ that is $1$ for a same-class pair and $0$ for a different-class pair. Its rule is: pull same-class pairs together (cost = the squared distance $d^2$), and push different-class pairs apart until they clear the margin $\\alpha$ (cost = $\\max(0,\\,\\alpha - d)^2$, which is $0$ once $d \\ge \\alpha$). Here $d$ is the plain distance between the two points and $\\alpha$ is the same margin idea as before. Take $\\alpha = 1.0$ and walk three pairs:</p>
+       <ul class="steps">
+         <li><b>Same-class pair, $d = 0.3$</b> (label $y=1$): the cost is just $d^2 = 0.3^2 = 0.09$. Still positive, so backprop pulls these two points closer together.</li>
+         <li><b>Different-class pair, close, $d = 0.4$</b> (label $y=0$): $\\alpha - d = 1.0 - 0.4 = 0.6$, which is positive, so the cost is $\\max(0,\\,0.6)^2 = 0.6^2 = 0.36$. Backprop pushes these apart because they are inside the margin.</li>
+         <li><b>Different-class pair, far, $d = 1.5$</b> (label $y=0$): $\\alpha - d = 1.0 - 1.5 = -0.5$, which is negative, so $\\max(0,\\,-0.5) = 0$ and the cost is $0^2 = 0$. Already past the margin, so nothing to fix.</li>
+       </ul>
+       <table class="extable">
+         <caption>Contrastive loss per pair, margin $\\alpha = 1.0$. Same-class pays $d^2$; different-class pays $\\max(0,\\,\\alpha-d)^2$.</caption>
+         <thead>
+           <tr><th>pair</th><th class="num">label $y$</th><th class="num">distance $d$</th><th class="num">cost</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">same-class</td><td class="num">1</td><td class="num">0.30</td><td class="num">0.09</td></tr>
+           <tr><td class="row-h">different, close</td><td class="num">0</td><td class="num">0.40</td><td class="num">0.36</td></tr>
+           <tr><td class="row-h">different, far</td><td class="num">0</td><td class="num">1.50</td><td class="num">0.00</td></tr>
+         </tbody>
+       </table>
+       <p>Notice the same pattern as triplet loss: the far different-class pair has already met the goal and pays nothing, so it teaches nothing. The close (confusing) pair pays the most. That is again why mining the hard, nearby pairs is where the real learning happens.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       function C() {

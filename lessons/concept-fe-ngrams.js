@@ -55,8 +55,20 @@
          <li><b>Bigrams ($n=2$):</b> the 4 adjacent pairs — "the food", "food is", "is not", "not good".</li>
          <li><b>Trigrams ($n=3$):</b> the 3 adjacent triples — "the food is", "food is not", "is not good".</li>
        </ul>
-       <p>A sentence of $L$ words has $L$ unigrams, $L-1$ bigrams, and $L-2$ trigrams — fewer n-grams as $n$ rises <i>within one sentence</i>. But across the whole corpus the opposite happens: the number of <i>distinct</i> n-grams explodes, because there are so many more possible pairs and triples than single words.</p>
-       <p>The bag-of-n-grams vector for a document has one slot per distinct n-gram in the vocabulary, holding how many times that n-gram appears. "not good" is now a slot of its own — that is the negation signal bag-of-words could not represent.</p>`,
+       <p>Think of it as a <b>sliding window</b>. Lay the 5 words in a row and drag a frame of width $n$ from left to right, one step at a time. Each position you stop at is one n-gram. A wider frame ($n=3$) reaches the right edge sooner, so it stops at fewer positions — that is why higher $n$ gives fewer n-grams in one sentence. The table walks the window across <code>the food is not good</code> at each order:</p>
+       <table class="extable">
+         <caption>Sliding a window of width $n$ across <code>the food is not good</code> (positions 1–5). Each window position is one n-gram.</caption>
+         <thead>
+           <tr><th>order $n$</th><th>the n-grams produced (left to right)</th><th class="num">how many</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">unigram ($n=1$)</td><td>the · food · is · not · good</td><td class="num">5</td></tr>
+           <tr><td class="row-h">bigram ($n=2$)</td><td>the food · food is · is not · <b>not good</b></td><td class="num">4</td></tr>
+           <tr><td class="row-h">trigram ($n=3$)</td><td>the food is · food is not · is not good</td><td class="num">3</td></tr>
+         </tbody>
+       </table>
+       <p>A sentence of $L$ words has $L$ unigrams, $L-1$ bigrams, and $L-2$ trigrams — fewer n-grams as $n$ rises <i>within one sentence</i>, exactly the column of counts ($5, 4, 3$) above. But across the whole corpus the opposite happens: the number of <i>distinct</i> n-grams explodes, because there are so many more possible pairs and triples than single words.</p>
+       <p>The bag-of-n-grams vector for a document has one slot per distinct n-gram in the vocabulary, holding how many times that n-gram appears. "not good" (bolded above) is now a slot of its own — that is the negation signal bag-of-words could not represent.</p>`,
 
     symbols: [
       { sym: "$n$", desc: "the n-gram order: how many words in a row form one feature. $n=1$ unigram, $n=2$ bigram, $n=3$ trigram." },
@@ -80,7 +92,28 @@
     derivation:
       `<p><b>Why distinct n-grams explode.</b> Suppose the vocabulary has $V_1$ words. The number of <i>possible</i> ordered word-pairs is $V_1^2$, and triples $V_1^3$. Real text uses only a tiny slice of those (grammar forbids most), but even that slice grows much faster than $V_1$. On Yelp the book measures it: $V_1 \\approx 29\\text{k}$ unigrams, $V_2 \\approx 357\\text{k}$ bigrams, $V_3 \\approx 1.63\\text{M}$ trigrams. The jump from words to pairs is far bigger than the jump from one document to the next.</p>
        <p><b>Why it still helps.</b> Bag-of-words is the special case $n=1$: it assumes word order does not matter at all. That assumption is wrong whenever a phrase means more than its words — and most damagingly for <b>negation</b>. Adding bigrams lets the model assign a separate weight to "not good", so it can learn the negation flips the sentiment. The signal you gain is exactly the local order bag-of-words discarded.</p>
-       <p><b>Why the gain is bounded and shrinking.</b> Each new order adds rarer features. A trigram seen in one review out of a million teaches a classifier nothing it can reuse. So accuracy typically climbs a little from unigrams to bigrams, then flattens — while the feature count keeps multiplying. That is the cost–benefit curve the book wants you to feel: pick the smallest $n$ that captures the phrasing you need, and prune the rest.</p>`,
+       <p><b>Why the gain is bounded and shrinking.</b> Each new order adds rarer features. A trigram seen in one review out of a million teaches a classifier nothing it can reuse. So accuracy typically climbs a little from unigrams to bigrams, then flattens — while the feature count keeps multiplying. That is the cost–benefit curve the book wants you to feel: pick the smallest $n$ that captures the phrasing you need, and prune the rest.</p>
+       <p><b>Worked frequency count.</b> Counting <i>distinct</i> n-grams tells you how wide the matrix is. Counting <i>how often each one fires</i> tells you which features carry weight. Take this 5-review corpus (the same one the demo below uses):</p>
+       <ul class="steps">
+         <li><b>The corpus.</b> R1 <code>the food is good</code>, R2 <code>the food is not good</code>, R3 <code>great service and great food</code>, R4 <code>service was not great</code>, R5 <code>i would not come back</code>.</li>
+         <li><b>Tally each unigram across all 5 reviews.</b> Walk every word and add 1 to its tally. "food" appears in R1, R2, R3 $\\rightarrow 3$. "great" appears twice in R3 plus once in R4 $\\rightarrow 3$. "not" appears in R2, R4, R5 $\\rightarrow 3$. These three tie for the top.</li>
+         <li><b>Notice the problem.</b> "not" is one of the <i>most common</i> words, yet alone it says nothing about sentiment — "not" sits in a one-star review (R5) and could just as easily sit in "not bad". As a lone unigram it is a strong feature pointing nowhere useful.</li>
+         <li><b>Tally the bigrams.</b> Now "not" splits into "not good" (R2), "not great" (R4), and "not come" (R5) — each firing once. The single noisy "not" column becomes three sharp, sentiment-bearing columns.</li>
+         <li><b>The payoff.</b> A model can put a negative weight on "not good" and "not great" specifically, instead of guessing from a "not" that appears everywhere. That is the local-order signal, made concrete in the counts.</li>
+       </ul>
+       <table class="extable">
+         <caption>Top unigram frequencies vs the negation bigrams they split into, across the 5-review corpus.</caption>
+         <thead>
+           <tr><th>unigram</th><th class="num">count</th><th>splits into bigrams</th><th class="num">each count</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">food</td><td class="num">3</td><td>the food, food is, great food</td><td class="num">1</td></tr>
+           <tr><td class="row-h">great</td><td class="num">3</td><td>great service, great food, not great</td><td class="num">1</td></tr>
+           <tr><td class="row-h">not</td><td class="num">3</td><td><b>not good, not great, not come</b></td><td class="num">1</td></tr>
+           <tr><td class="row-h">good</td><td class="num">2</td><td>is good, not good</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
+       <p>The common unigram "not" (count 3) is informative only once it joins its neighbor: the bigrams "not good" and "not great" are what a sentiment model actually wants to penalize.</p>`,
 
     example:
       `<p>Two tiny reviews, one positive and one negated:</p>
@@ -294,6 +327,17 @@ print("pruned features  :", len(pruned.get_feature_names_out()))`
         valueLabels: ["386k", "90k", "50k"],
         colors: ["#ff7b72", "#ffb454", "#7ee787"],
         interpret: "<b>Read this as the fix in action.</b> (Illustrative magnitudes.) Start from the raw unigram+bigram space (red, ~386k). Dropping n-grams seen in fewer than 10 documents (min_df) removes the rare-noise tail and slashes it (orange). Capping at the 50k most frequent (max_features) bounds it hard (green). Falling bars left-to-right = you kept the useful phrasing while throwing away the long sparse tail. This is the lever the pitfalls section is about."
+      },
+      {
+        type: "bars",
+        title: "WHY 'not' ALONE IS NOISE: top unigram frequencies in the 6-review corpus (real counts)",
+        xlabel: "unigram",
+        ylabel: "count across the corpus",
+        labels: ["good", "food", "not", "great", "service", "and", "the", "is"],
+        values: [4, 4, 3, 3, 3, 2, 2, 2],
+        valueLabels: ["4", "4", "3", "3", "3", "2", "2", "2"],
+        colors: ["#7ee787", "#4ea1ff", "#ff7b72", "#4ea1ff", "#4ea1ff", "#9aa7b4", "#9aa7b4", "#9aa7b4"],
+        interpret: "<b>Read the height as how often each single word fires.</b> 'not' (red) is among the most frequent words in the corpus, yet on its own it is sentiment-blind — it shows up in negative reviews but says nothing about WHAT is being negated. That is the bag-of-words failure: a strong, common feature pointing nowhere. Only when 'not' joins its neighbor into the bigrams 'not good' / 'not great' does it become a sharp signal. (Counts are for the 6-review demo corpus, which adds 'good food and good service'.)"
       }
     ],
     caption: "Read FOUR cases. Chart 1 is the real tiny-corpus growth (12 to 31 to 45, actual CountVectorizer output, with 'not good' recovered at (1,2)). Chart 2 is the book's real Yelp blow-up (29k / 357k / 1.63M). Charts 3-4 are illustrative shapes you must recognise: a tiny/repetitive corpus where the bars stay flat (n-grams barely help), and a pruned pipeline where min_df / max_features collapse the explosion back to something usable. The shape of the bars tells you whether you are buying signal or just buying columns.",

@@ -151,6 +151,17 @@
          <li>Lower fence: $Q_1-1.5\\cdot\\text{IQR}=15-9 = 6$ &mdash; flags nothing below.</li>
          <li>The $900 \\gt 30$, so it is flagged <b>cleanly</b>; the rank-based quartiles never moved.</li>
        </ul>
+       <p><b>Robust z-score (median / MAD).</b> Same data, but built from ranks so the $900$ cannot hide
+       itself:</p>
+       <ul class="steps">
+         <li>Median of $\\{12,14,15,15,16,18,19,21,23,900\\}$: the two middle values (5th and 6th of 10)
+         are $16$ and $18$, so $\\text{median}=(16+18)/2=\\mathbf{17}$.</li>
+         <li>Absolute deviations $|x-17|$: $5,3,2,2,1,1,2,4,6,883$. Sorted: $1,1,2,2,2,3,4,5,6,883$ &mdash;
+         the two middle ones are $2$ and $3$, so $\\text{MAD}=(2+3)/2=\\mathbf{2.5}$.</li>
+         <li>Robust score of the glitch: $z_{\\text{rob}}=0.6745\\,(900-17)/2.5
+         =0.6745\\cdot 353.2\\approx \\mathbf{238}$ &mdash; astronomically past the usual $3.5$ cutoff. The
+         median and MAD never moved, so the outlier stands out vastly more than its plain $z\\approx 3.0$.</li>
+       </ul>
        <table class="extable">
          <caption>Same outlier, two detectors &mdash; the IQR fence flags it decisively, the z-score barely.</caption>
          <thead>
@@ -159,6 +170,7 @@
          <tbody>
            <tr><td class="row-h">z-score</td><td class="num">$\\bar{x}=105.3$</td><td class="num">$s\\approx 265$</td><td class="num">$|z|\\gt 3$</td><td class="num">$z\\approx 3.0$</td><td>barely (on the edge)</td></tr>
            <tr><td class="row-h">IQR fence</td><td class="num">$Q_1,Q_3=15,21$</td><td class="num">$\\text{IQR}=6$</td><td class="num">$\\gt 30$</td><td class="num">$900$</td><td>yes (far past)</td></tr>
+           <tr><td class="row-h">Robust z (med/MAD)</td><td class="num">$\\text{median}=17$</td><td class="num">$\\text{MAD}=2.5$</td><td class="num">$|z_{\\text{rob}}|\\gt 3.5$</td><td class="num">$z_{\\text{rob}}\\approx 238$</td><td>yes (overwhelmingly)</td></tr>
          </tbody>
        </table>
        <p><b>Decide.</b> Daily orders of $900$ when the rest are in the teens, with a known sensor glitch, is

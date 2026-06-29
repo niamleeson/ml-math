@@ -107,6 +107,28 @@
        label, a <b>histogram</b> for a regression target. This is not optional &mdash; it is the plot that
        picks your metric and your transforms.</p>`,
 
+    whatItDoes:
+      `<p>Each tool answers one of the four questions, and the trick is knowing which number to read off which
+       plot. Walk a numeric column through them:</p>
+       <ul>
+         <li><b>Shape</b> &mdash; read it from the <b>histogram</b> or <b>KDE</b>: a long tail on one side is
+         skew, two humps is bimodal. The one-number summary is the gap $\\bar{x}-\\tilde{x}$ (mean minus
+         median): positive means a right tail, negative a left tail, near zero means symmetric.</li>
+         <li><b>Spread</b> &mdash; read it from the <b>box</b> width, which is the $\\mathrm{IQR}=Q_3-Q_1$ (the
+         range covering the middle 50% of points). A wide box means the values are scattered; a narrow box
+         means they cluster tightly around the median $\\tilde{x}$.</li>
+         <li><b>Outliers</b> &mdash; read them off the box plot's whiskers: any point beyond
+         $Q_3+1.5\\cdot\\mathrm{IQR}$ (or below $Q_1-1.5\\cdot\\mathrm{IQR}$) is flagged. That $1.5\\times$ fence
+         is just a convention for "suspiciously far from the middle 50%".</li>
+         <li><b>Any percentile</b> &mdash; read it straight off the <b>ECDF</b>: find $0.5$ on the y-axis and
+         the x-value beneath it is the median; $0.9$ gives the 90th percentile, and so on, with no bins to
+         tune.</li>
+       </ul>
+       <p>For a <b>categorical</b> column there is no shape to read &mdash; the four numbers collapse to one
+       table of counts (<code>value_counts()</code>), and the only question is balance: does one level dominate?
+       For the <b>target</b>, that balance number is what picks your metric, which is why it is the single most
+       important plot in the whole pass.</p>`,
+
     symbols: [
       { sym: "$\\bar{x}$", desc: "the mean (arithmetic average) of a numeric variable — pulled toward the long tail when the data is skewed." },
       { sym: "$\\tilde{x}$", desc: "the median — the middle value; robust to skew and outliers, so it is the honest 'typical value' for long-tailed data." },

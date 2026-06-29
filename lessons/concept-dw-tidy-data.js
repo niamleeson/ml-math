@@ -95,6 +95,37 @@
        <b>split / combine</b> (<code>str.split</code>, <code>explode</code>, string concatenation) handle the
        "two facts in one cell" mess. Together these few verbs reshape almost any table into tidy form.</p>`,
 
+    derivation:
+      `<p><b>Why a wide table cannot be grouped &mdash; and why melt preserves every number.</b> A
+       "variable" is a thing you can <i>group by</i> or <i>filter on</i>. <code>groupby("year")</code> needs
+       a literal column named <code>year</code> to read each row's year from. Walk the shapes on the 2-country
+       &times; 3-year table to see why the wide form makes that impossible and the long form makes it trivial.</p>
+       <ul class="steps">
+         <li><b>Count the real numbers.</b> The wide table is 2 rows &times; 3 year-columns, so it holds
+         exactly $2 \\times 3 = 6$ measured values. That count is fixed &mdash; any honest reshape must keep
+         all 6, just rearranged.</li>
+         <li><b>Why wide can't group.</b> In the wide table the year a value belongs to is encoded in its
+         <i>column position</i> (the header <code>1999</code>/<code>2009</code>/<code>2019</code>), not in any
+         cell. <code>groupby("year")</code> reads a <i>column</i>, and there is no <code>year</code> column &mdash;
+         so it raises <code>KeyError: 'year'</code>. The variable exists in the data but not in a form a tool
+         can address.</li>
+         <li><b>What melt does, row by row.</b> Melt visits each of the 6 cells and emits one long row carrying
+         three facts: the id (<code>country</code>), the old header turned into a value (<code>year</code>),
+         and the cell number (<code>gdp_pc</code>). Brazil's row <code>(3.1, 8.6, 8.8)</code> becomes three
+         rows <code>(Brazil,1999,3.1)</code>, <code>(Brazil,2009,8.6)</code>, <code>(Brazil,2019,8.8)</code>;
+         India's becomes three more. $2 \\times 3 = 6$ long rows &mdash; the same 6 numbers, now each tagged
+         with its year in an actual column.</li>
+         <li><b>Now the group works.</b> With <code>year</code> a real column, <code>groupby("year")</code> can
+         sort the 6 rows into 3 bins by their year value and average each bin: 1999 &rarr; $(3.1+0.45)/2=1.775$,
+         2009 &rarr; $(8.6+1.1)/2=4.85$, 2019 &rarr; $(8.8+2.1)/2=5.45$. The same arithmetic was un-expressible
+         while year lived in the headers.</li>
+         <li><b>Pivot is the exact inverse.</b> <code>pivot(index="country", columns="year")</code> reads each
+         long row's <code>year</code> and routes its value back to a (country, year) cell &mdash; recovering the
+         original 2&times;3 matrix. It only fails when two long rows claim the <i>same</i> (country, year) cell:
+         then there are two numbers for one slot and plain pivot refuses, so you use
+         <code>pivot_table(..., aggfunc="mean")</code> to combine them on purpose. $\\blacksquare$</li>
+       </ul>`,
+
     example:
       `<p>Take this tiny <b>wide</b> table (a made-up GDP-per-person figure, in thousands) &mdash;
        <b>2 rows &times; 4 columns</b> (<code>country</code> plus three year columns):</p>

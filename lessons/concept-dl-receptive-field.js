@@ -25,9 +25,10 @@
          <li><b>Padding ignored in the count.</b> Padding changes output size but not the receptive-field <i>growth</i> per layer; do not let "same" padding fool you into thinking the receptive field is bigger than it is.</li>
        </ul>`,
     bigIdea:
-      `<p>Pick one number in a deep feature map. Ask: which input pixels, if you changed them, would change this number? That set of input pixels is its <b>receptive field</b>.</p>
+      `<p>Pick one number in a deep feature map (a <b>feature map</b> is the grid of numbers a layer outputs; one "number" is a single neuron's value). Ask: which input pixels, if you changed them, would change this number? That set of input pixels is its <b>receptive field</b>.</p>
+       <p><b>Analogy — nested committees.</b> A top boss hears from a few managers; each manager hears from a few team leads; each lead hears from a few workers. The boss never talks to a worker directly, yet the boss's decision can be swayed by any worker through the chain. The receptive field is the full set of "workers" (input pixels) that can ultimately reach one "boss" (deep neuron) through the stack of layers.</p>
        <p>Each convolutional layer's filter looks at a small window, but that window sits on the previous layer's neurons — which themselves looked at windows of the layer before. So as you stack layers, the patch of the ORIGINAL input that one neuron depends on keeps growing.</p>
-       <p>The receptive field grows <b>additively</b> with depth, and each <b>stride</b> earlier in the net <b>multiplies</b> how fast later layers add to it.</p>`,
+       <p>The receptive field grows <b>additively</b> with depth (each plain layer tacks on a fixed amount), and each <b>stride</b> earlier in the net (a stride is how many pixels the filter jumps between positions) <b>multiplies</b> how fast later layers add to it.</p>`,
     buildup:
       `<p>Layer 1, a 3×3 filter: each output sees a 3×3 patch of the input. Receptive field = 3.</p>
        <p>Layer 2, another 3×3 filter on top: each output combines a 3×3 patch of <i>layer-1</i> neurons. But each of those already sees 3×3 input pixels, and neighbours overlap by one step, so the combined input patch is 5×5. Receptive field = 5.</p>

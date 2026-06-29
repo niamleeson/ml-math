@@ -110,6 +110,21 @@
        draws one vertical strip per column with gaps where values are absent, so a pattern (e.g. two columns
        missing on the same rows) is visible at a glance.</p>`,
 
+    derivation:
+      `<p><b>Why a full profile gets slow, in numbers.</b> The cheap part of a profile is the per-column
+       summary: with $c$ columns it does $c$ passes, one per column &mdash; cost grows <i>linearly</i>, so
+       doubling the columns roughly doubles the work. The expensive part is the <b>correlation matrix</b>,
+       which must look at every <i>pair</i> of columns. The number of unordered pairs of $c$ columns is
+       $\\binom{c}{2} = \\frac{c(c-1)}{2}$ &mdash; that grows like $c^2$ (quadratic), so doubling the columns
+       roughly <i>quadruples</i> the pair work. (Here $\\binom{c}{2}$, read "c choose 2", is just the count of
+       ways to pick 2 distinct columns out of $c$.)</p>
+       <ul class="steps">
+         <li><b>10 columns:</b> per-column work $=10$ passes; pairs $=\\frac{10\\cdot 9}{2}=45$. The pair work is already ~4.5&times; the column work.</li>
+         <li><b>30 columns:</b> per-column work $=30$; pairs $=\\frac{30\\cdot 29}{2}=435$. Tripling columns (10&rarr;30) made the pair count jump ~9.7&times; ($45\\to435$) &mdash; that is the quadratic blow-up.</li>
+         <li><b>60 columns:</b> per-column work $=60$; pairs $=\\frac{60\\cdot 59}{2}=1770$. Each of those 1770 pairs also <i>scans every row</i>, so on a 20-million-row frame that is $1770\\times 20{,}000{,}000 \\approx 3.5\\times 10^{10}$ cell reads just for correlations.</li>
+         <li><b>The two fixes attack the two factors.</b> <code>minimal=True</code> deletes the pair term entirely (drop the $\\binom{c}{2}$ correlation/interaction work, keep the $c$ cheap summaries). Sampling to 50,000 rows cuts the per-pair row scan by $20{,}000{,}000 / 50{,}000 = 400\\times$. Either one turns a crawl back into seconds. $\\blacksquare$</li>
+       </ul>`,
+
     example:
       `<p>Point <code>ProfileReport</code> at the real 569-row <code>load_breast_cancer</code> frame, roughed
        up like a raw export: add one constant column (<code>const_col = 1.0</code>), one ID column

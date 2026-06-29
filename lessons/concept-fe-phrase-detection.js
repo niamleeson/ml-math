@@ -69,7 +69,17 @@
          <li><b>Part-of-speech (POS) based chunking.</b> Tag each word with its grammatical role, then keep patterns that look like noun phrases (for example, adjective followed by noun, or noun followed by noun). spaCy's noun-chunk parser does this. It captures "fast service" and "happy hour" while ignoring "of the".</li>
          <li><b>Statistical.</b> Score each bigram by how much more often the two words co-occur than chance predicts. The book uses a <b>likelihood-ratio test</b> and <b>pointwise mutual information (PMI)</b>. "San Francisco" co-occurs far more than any random pair of words, so it scores high; "of the" co-occurs a lot but only because both words are everywhere, so it scores low.</li>
        </ol>
-       <p>The statistical view is the deepest, so the formula below makes it precise.</p>`,
+       <p>Side by side, on the same test pair "happy hour" versus the filler "of the":</p>
+       <table class="extable">
+         <caption>The three methods, and how each verdicts the real phrase "happy hour" vs the filler "of the".</caption>
+         <thead><tr><th>method</th><th>what it looks at</th><th>"happy hour"</th><th>"of the"</th><th>cost</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">frequency</td><td>raw count of the pair</td><td>keeps it (if frequent)</td><td>keeps it (filler ranks high)</td><td>cheapest</td></tr>
+           <tr><td class="row-h">POS chunking</td><td>grammar (adjective + noun, noun + noun)</td><td>keeps it (adj + noun)</td><td>drops it (prep + article)</td><td>needs a tagger</td></tr>
+           <tr><td class="row-h">statistical (PMI)</td><td>co-occurrence vs chance</td><td>keeps it (PMI high)</td><td>drops it (PMI &asymp; 0)</td><td>needs counts</td></tr>
+         </tbody>
+       </table>
+       <p>Only the bottom two methods reject the filler. The statistical view is the deepest, so the formula below makes it precise.</p>`,
 
     symbols: [
       { sym: "$a$", desc: "the first word of a candidate bigram (for example, \"machine\")." },

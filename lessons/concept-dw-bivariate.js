@@ -88,6 +88,46 @@
        <p>Across all three, you read the same handful of patterns: trend, clusters, heteroscedasticity, group
        differences, association. Spotting any of them flags a column worth keeping for the model.</p>`,
 
+    derivation:
+      `<p><b>Putting a number on "do these two move together?"</b> For the numeric &times; numeric case,
+       the scatter shows the trend with your eyes; the <b>Pearson correlation</b> $r$ puts a single number on
+       it, between $-1$ (perfect downward line) and $+1$ (perfect upward line), with $0$ meaning no straight-line
+       trend. Here is exactly how it is built, with the eight rows from the example.</p>
+       <p>Every symbol first. $x_i$ is row $i$'s value of the first column (here <code>session_minutes</code>);
+       $y_i$ is row $i$'s value of the second column (here <code>order_value</code>); $\\bar{x}$ ("x-bar") is the
+       mean of all the $x$ values; $\\bar{y}$ is the mean of all the $y$ values. The idea: for each row, ask "is
+       $x$ above or below its average, and is $y$?" If the two usually agree in sign, the columns move together.</p>
+       <p>$$ r = \\frac{\\sum_i (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum_i (x_i-\\bar{x})^2}\\;\\sqrt{\\sum_i (y_i-\\bar{y})^2}} $$</p>
+       <p>The top (numerator) adds up the products of the two deviations: it is large and positive when a row that
+       is high in $x$ is also high in $y$. The bottom (denominator) just rescales by each column's own spread so
+       the answer always lands in $[-1,1]$ regardless of the units (minutes vs dollars). Work it for the eight rows:</p>
+       <ul class="steps">
+         <li>Means: $\\bar{x} = (12+5+18+9+7+14+4+11)/8 = 80/8 = 10$; $\\bar{y} = (80+40+120+60+30+50+20+35)/8 = 435/8 = 54.375$.</li>
+         <li>Deviations $x_i-\\bar{x}$: $2,-5,8,-1,-3,4,-6,1$. Deviations $y_i-\\bar{y}$: $25.625,-14.375,65.625,5.625,-24.375,-4.375,-34.375,-19.375$.</li>
+         <li>Products $(x_i-\\bar{x})(y_i-\\bar{y})$, row by row: $51.25,\\,71.875,\\,525,\\,-5.625,\\,73.125,\\,-17.5,\\,206.25,\\,-19.375$. Sum $= 885$.</li>
+         <li>$\\sum (x_i-\\bar{x})^2 = 4+25+64+1+9+16+36+1 = 156$.</li>
+         <li>$\\sum (y_i-\\bar{y})^2 = 656.64+206.64+4306.64+31.64+594.14+19.14+1181.64+375.39 = 7371.88$.</li>
+         <li>$r = 885 / (\\sqrt{156}\\,\\sqrt{7371.88}) = 885 / (12.49 \\times 85.86) = 885 / 1072.6 = 0.825$.</li>
+         <li>$r \\approx 0.83$ is strongly positive: longer sessions go with bigger orders. The scatter would show a clear upward tilt &mdash; exactly the "trend" pattern that flags a feature worth keeping. $\\blacksquare$</li>
+       </ul>
+       <table class="extable">
+         <caption>The numerator, built one row at a time (deviations from the means $\\bar{x}=10$, $\\bar{y}=54.375$)</caption>
+         <thead>
+           <tr><th>row</th><th class="num">$x_i$</th><th class="num">$y_i$</th><th class="num">$x_i-\\bar{x}$</th><th class="num">$y_i-\\bar{y}$</th><th class="num">product</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">12</td><td class="num">80</td><td class="num">2</td><td class="num">25.625</td><td class="num">51.25</td></tr>
+           <tr><td class="row-h">2</td><td class="num">5</td><td class="num">40</td><td class="num">-5</td><td class="num">-14.375</td><td class="num">71.875</td></tr>
+           <tr><td class="row-h">3</td><td class="num">18</td><td class="num">120</td><td class="num">8</td><td class="num">65.625</td><td class="num">525</td></tr>
+           <tr><td class="row-h">4</td><td class="num">9</td><td class="num">60</td><td class="num">-1</td><td class="num">5.625</td><td class="num">-5.625</td></tr>
+           <tr><td class="row-h">5</td><td class="num">7</td><td class="num">30</td><td class="num">-3</td><td class="num">-24.375</td><td class="num">73.125</td></tr>
+           <tr><td class="row-h">6</td><td class="num">14</td><td class="num">50</td><td class="num">4</td><td class="num">-4.375</td><td class="num">-17.5</td></tr>
+           <tr><td class="row-h">7</td><td class="num">4</td><td class="num">20</td><td class="num">-6</td><td class="num">-34.375</td><td class="num">206.25</td></tr>
+           <tr><td class="row-h">8</td><td class="num">11</td><td class="num">35</td><td class="num">1</td><td class="num">-19.375</td><td class="num">-19.375</td></tr>
+           <tr><td class="row-h">sum</td><td class="num">80</td><td class="num">435</td><td class="num">0</td><td class="num">0</td><td class="num">885</td></tr>
+         </tbody>
+       </table>`,
+
     example:
       `<p>Take eight rows of an online-shop table: <code>session_minutes</code> (number),
        <code>order_value</code> (number, in $), <code>device</code> (mobile/desktop), and <code>bought</code>

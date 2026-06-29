@@ -48,6 +48,22 @@
     buildup:
       `<p>Think of a corpus of $N$ documents. For a word $w$, let $n_w$ be the number of documents that contain $w$ at least once — its <b>document frequency</b>.</p>
        <p>A word in almost every document has $n_w \\approx N$, so $N/n_w \\approx 1$ and $\\log(N/n_w) \\approx 0$: the word is nearly silenced. A word in just one document has $n_w = 1$, so $N/n_w = N$ and $\\log N$ is as large as the weight gets: the word is amplified.</p>
+       <p>Make that concrete with a corpus of $N = 100$ documents. Watch the idf shrink as a word spreads across more documents (natural log):</p>
+       <table class="extable">
+         <caption>idf $=\\log\\frac{100}{n_w}$ as a word's document frequency $n_w$ grows ($N=100$)</caption>
+         <thead><tr><th class="num">$n_w$</th><th>how common</th><th class="num">$N/n_w$</th><th class="num">$\\text{idf}=\\log\\frac{100}{n_w}$</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td class="row-h">in 1 doc (very rare)</td><td class="num">100.0</td><td class="num">4.605</td></tr>
+           <tr><td class="num">10</td><td class="row-h">in 10 docs</td><td class="num">10.0</td><td class="num">2.303</td></tr>
+           <tr><td class="num">50</td><td class="row-h">in half the docs</td><td class="num">2.0</td><td class="num">0.693</td></tr>
+           <tr><td class="num">100</td><td class="row-h">in every doc</td><td class="num">1.0</td><td class="num">0.000</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>A word in 1 of 100 docs: $\\log\\frac{100}{1}=\\log 100 \\approx 4.605$ — the maximum, fully amplified.</li>
+         <li>A word in 50 of 100 docs: $\\log\\frac{100}{50}=\\log 2 \\approx 0.693$ — already shrunk to a seventh of the rare-word weight.</li>
+         <li>A word in all 100 docs: $\\log\\frac{100}{100}=\\log 1 = 0$ — completely silenced.</li>
+       </ul>
        <p>The <b>term frequency</b> $\\text{tf}(w,d)$ is just how often $w$ appears in document $d$ — the original bag-of-words count. Multiply tf by idf and you get the tf-idf weight: frequent <i>within this document</i>, but rare <i>across the corpus</i>, scores highest.</p>`,
 
     symbols: [

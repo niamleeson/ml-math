@@ -145,6 +145,48 @@
        <p>Same 8 rows, three layers: the static view states the shape, the interactive view drills to the exact
        row, and the dashboard lets anyone ask their own version of the question.</p>`,
 
+    derivation:
+      `<p><b>Why each layer beats the one below it &mdash; worked on the 8-product table.</b> There is no formula
+       to prove here; the "derivation" is the reasoning that turns the vague advice "match the layer to the job"
+       into something you can compute. Two ideas make it concrete: how much a layer can <i>show</i>, and how a
+       <b>filter</b> actually narrows the data.</p>
+       <ul class="steps">
+         <li><b>How many facts a static chart carries.</b> A flat scatter encodes exactly <b>2</b> numbers per
+         row: an x-position and a y-position. With 8 products that is <code>8 &times; 2 = 16</code> values on the
+         page, and the names are <i>not</i> among them &mdash; the dot at <code>(rating 2.9, price 999)</code> is
+         anonymous. To name all 8 dots you would print 8 text labels, which on a real chart of hundreds of points
+         is unreadable. So the static layer's ceiling is "shape, not identity".</li>
+         <li><b>What hover and colour add.</b> A hover tooltip attaches the <i>whole row</i> to each dot, so the
+         encoded facts jump from 2 to "every column you list" &mdash; <code>name</code> and <code>category</code>
+         appear on demand without a single new label cluttering the page. Colour by <code>category</code> adds a
+         3rd visible dimension for free. Same 8 dots, far more information, because the extra facts are revealed
+         <i>on interaction</i> instead of drawn all at once.</li>
+         <li><b>What a filter does, counted exactly.</b> A dashboard filter is just a logical condition applied to
+         the rows. Start with all <b>8</b> products. Apply <code>category = "Phones"</code> &mdash; that keeps
+         <b>3</b> rows (Pixel, Sol, Vega). Now also apply <code>rating &lt; 3</code> &mdash; of those 3, the
+         ratings are <code>4.8, 2.9, 4.4</code>, and only <code>2.9 &lt; 3</code>, so <b>1</b> row survives (Sol).
+         Two filters in series multiply down the row count: <code>8 &rarr; 3 &rarr; 1</code>. The reader did the
+         narrowing themselves, with no new chart from you.</li>
+         <li><b>Why that ordering of layers.</b> Each step strictly adds power: static shows the cloud; interactive
+         adds identity + a colour dimension on the <i>same</i> picture; the dashboard adds a live filter that any
+         reader can re-run to ask their own question. You climb to the lowest layer that answers the actual
+         question &mdash; "what's the shape?" stops at static, "which dot is that?" needs interactive, "let me
+         slice it my way" needs the dashboard. $\\blacksquare$</li>
+       </ul>
+       <table class="extable">
+         <caption>The Phones-and-rating&lt;3 filter, counted step by step (8-row table)</caption>
+         <thead>
+           <tr><th>after applying</th><th class="num">rows kept</th><th>which products</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">nothing (all data)</td><td class="num">8</td><td>all 8</td></tr>
+           <tr><td class="row-h">category = "Phones"</td><td class="num">3</td><td>Pixel (4.8), Sol (2.9), Vega (4.4)</td></tr>
+           <tr><td class="row-h">&hellip; and rating &lt; 3</td><td class="num">1</td><td>Sol (2.9)</td></tr>
+         </tbody>
+       </table>
+       <p>The chain <code>8 &rarr; 3 &rarr; 1</code> is the whole value of the dashboard layer in one line: each
+       widget is a condition, conditions compose, and the reader &mdash; not you &mdash; chooses them.</p>`,
+
     practice: [
       {
         q: `You found a striking single fact: in your A/B test, the new layout lifted conversion from 4.0% to 4.8%. You need to put it in the launch slide deck and the exec summary. Static chart or interactive dashboard?`,

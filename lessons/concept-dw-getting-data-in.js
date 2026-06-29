@@ -141,6 +141,54 @@
        <code>(1, 4)</code> with a numeric <code>1234.50</code> and a real date. Get them right at read time and
        the rest of the project starts from clean ground.</p>`,
 
+    derivation:
+      `<p><b>Why the four read options each change the result &mdash; one pipeline, traced with real bytes.</b>
+       A reader is a chain of four decisions; the value you end up with is whatever survives all four. Take the
+       single raw row <code>1;café;1.234,50;21/06/2026</code> and walk it through, naming every option:</p>
+       <ul class="steps">
+         <li><b>Step 1 &mdash; bytes &rarr; characters (the <code>encoding</code>).</b> The file is a string of
+         bytes. The accented <code>é</code> was written in <b>latin-1</b> as the single byte <code>0xE9</code>
+         (decimal <code>233</code>). Decode that one byte as <b>UTF-8</b> and it is illegal as a stand-alone byte,
+         so pandas either errors or substitutes &mdash; you get <code>cafÃ©</code> (the byte <code>0xE9</code>
+         mis-read as two characters). With <code>encoding='latin-1'</code> the byte maps straight to
+         <code>é</code>. <i>Outcome of step 1: the text is either right (<code>café</code>) or already
+         corrupted, before any splitting happens.</i></li>
+         <li><b>Step 2 &mdash; characters &rarr; fields (the <code>sep</code>).</b> Count the separators. The row
+         contains <b>3</b> semicolons, so a correct split yields <code>3 + 1 = 4</code> fields. The default
+         <code>sep=','</code> finds <b>0</b> commas, so it produces <code>0 + 1 = 1</code> field &mdash; the whole
+         line in one cell. That is exactly why <code>df.shape</code> reads <code>(1, 1)</code> instead of
+         <code>(1, 4)</code>: <i>columns = (number of delimiters found) + 1</i>.</li>
+         <li><b>Step 3 &mdash; field text &rarr; number (<code>thousands</code>, <code>decimal</code>).</b> The
+         amount field is the <i>string</i> <code>"1.234,50"</code>. Pandas needs to know which symbol is which.
+         With <code>thousands='.'</code> it deletes the dot used for grouping, leaving <code>"1234,50"</code>;
+         with <code>decimal=','</code> it reads the comma as the decimal point, giving the float
+         <code>1234 + 50/100 = 1234.50</code>. Get either option wrong and the field stays text (or parses as the
+         wrong number, e.g. <code>1.234</code>).</li>
+         <li><b>Step 4 &mdash; field text &rarr; date (<code>parse_dates</code>).</b> <code>"21/06/2026"</code> is
+         day-first. Parsed as a date it becomes the timestamp <code>2026-06-21</code>, on which
+         <code>max - min</code> and sorting work. Left as text, <code>"21/06/2026" &lt; "21/07/2026"</code> only
+         happens to sort right by luck of the digits; <code>"02/01/2026"</code> vs <code>"21/06/2025"</code>
+         would sort wrong. <i>So the date option is about correctness, not convenience.</i></li>
+       </ul>
+       <p><b>Putting the steps together as a count.</b> Each option fixes exactly one decision, and a wrong
+       decision is silent &mdash; no exception, just a degraded value. Starting from a useless
+       <code>(1, 1)</code> with mojibake and two text fields, applying all four options in turn lands the clean
+       <code>(1, 4)</code> row <code>(1, "café", 1234.50, 2026-06-21)</code>. The general rule falls out of
+       step 2: for any delimiter-separated line, <b>columns parsed = delimiters found + 1</b> &mdash; so a
+       table you expect to be wide showing up as one column is a guaranteed delimiter mismatch. $\\blacksquare$</p>
+       <table class="extable">
+         <caption>Each option repairs one stage of the pipeline (same raw row throughout)</caption>
+         <thead>
+           <tr><th>stage</th><th>option</th><th>value before</th><th>value after</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">bytes &rarr; chars</td><td><code>encoding='latin-1'</code></td><td>cafÃ© (mojibake)</td><td>café</td></tr>
+           <tr><td class="row-h">chars &rarr; fields</td><td><code>sep=';'</code></td><td>1 column</td><td class="num">4 columns</td></tr>
+           <tr><td class="row-h">field &rarr; number</td><td><code>thousands='.', decimal=','</code></td><td>"1.234,50" (text)</td><td class="num">1234.50</td></tr>
+           <tr><td class="row-h">field &rarr; date</td><td><code>parse_dates=['sold_on']</code></td><td>"21/06/2026" (text)</td><td>2026-06-21</td></tr>
+         </tbody>
+       </table>`,
+
     practice: [
       {
         q: `You read a colleague's CSV with <code>pd.read_csv('data.csv')</code>. It loads with no error, but <code>df.shape</code> shows only one column and every row's text is jammed together with semicolons. What happened and how do you fix it?`,

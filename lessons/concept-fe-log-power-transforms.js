@@ -69,7 +69,20 @@
          <li>$\\lambda=0.5$: a square-root-like squash, good for Poisson counts.</li>
          <li>$\\lambda\\to 0$: the formula smoothly becomes $\\ln(x)$ — the strongest squash, for the heaviest tails.</li>
        </ul>
-       <p>You don't pick $\\lambda$ by hand. <b>Maximum likelihood</b> picks the $\\lambda$ that makes the transformed feature look as Gaussian as possible.</p>`,
+       <p>To feel the dial, take one fixed input — a review count of $x=99$ — and turn $\\lambda$ from 1 (no squash) down to 0 (the log). Watch how hard each setting pulls that value inward. The Box-Cox column uses $\\tilde{x}=\\dfrac{x^{\\lambda}-1}{\\lambda}$ (and $\\ln x$ at $\\lambda=0$):</p>
+       <table class="extable">
+         <caption>The same value $x=99$ under different $\\lambda$ settings — bigger squash as $\\lambda$ shrinks toward 0.</caption>
+         <thead>
+           <tr><th>$\\lambda$</th><th>what it is</th><th class="num">formula on $x=99$</th><th class="num">$\\tilde{x}$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="num">1</td><td>raw (just shifted)</td><td class="num">$99^{1}-1$ over $1$</td><td class="num">98</td></tr>
+           <tr><td class="num">0.5</td><td>square-root squash</td><td class="num">$(99^{0.5}-1)$ over $0.5$</td><td class="num">17.90</td></tr>
+           <tr><td class="num">0.25</td><td>stronger squash</td><td class="num">$(99^{0.25}-1)$ over $0.25$</td><td class="num">8.62</td></tr>
+           <tr><td class="num">0</td><td>log (strongest)</td><td class="num">$\\ln 99$</td><td class="num">4.60</td></tr>
+         </tbody>
+       </table>
+       <p>As $\\lambda$ slides from 1 to 0 the same input shrinks from 98 down to 4.60 — the smaller the $\\lambda$, the harder the giant gets pulled in. You don't pick $\\lambda$ by hand. <b>Maximum likelihood</b> picks the $\\lambda$ that makes the transformed feature look as Gaussian as possible.</p>`,
 
     derivation:
       `<p><b>Why the log reshapes a tail.</b></p>

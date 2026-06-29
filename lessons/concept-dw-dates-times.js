@@ -295,6 +295,17 @@ print(roll7.dropna().round(1).head())`
           { name: "correct time order", color: "#7ee787", points: [[1,99],[2,102],[3,108],[4,112],[5,118],[6,121],[7,134],[8,150],[9,160],[10,168]] }
         ],
         interpret: "Illustrative. This is what a forgotten parse looks like. The purple line plots rows sorted as <b>text</b> — \"2023-12-01\" lands before \"2023-2-01\" because the character '1' beats '2' — so the timeline is scrambled into a meaningless zig-zag. The green line is the same points after <b>pd.to_datetime</b> + sort, rising smoothly as a real trend. If your time plot looks like random spikes with no shape, suspect string dates, not bad data."
+      },
+      {
+        type: "bars",
+        title: "Extract pays off: mean value by day of week (.dt.dayofweek, real numbers)",
+        xlabel: "day of week (Mon=0 ... Sun=6)",
+        ylabel: "mean value",
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        values: [132.2, 131.5, 132.2, 132.5, 132.6, 127.2, 126.9],
+        valueLabels: ["132.2", "131.5", "132.2", "132.5", "132.6", "127.2", "126.9"],
+        colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454"],
+        interpret: "This is what the <code>.dt</code> accessor buys you. Once the column is a real datetime, <code>s.groupby(s.index.dayofweek).mean()</code> pulls out the <b>weekly shape</b> in one line. Each bar is the average value for one weekday; blue are Monday–Friday (dayofweek 0–4), orange are the weekend (5–6). The five weekdays sit near 132 while Saturday and Sunday dip to ~127 — the weekday bump the data was built with, now visible. You could never group like this on a string column. Real numbers from the same 365-day series."
       }
     ],
     caption: "Ideal plus two failure modes. The first chart uses real numbers from a numpy-built daily series (trend + yearly season + weekday bump + noise) on a pandas DatetimeIndex; resampling it to monthly means gave 110.5, 123.9, 134.0, 139.0, 136.9, 134.4, 127.7, 124.4, 123.5, 127.1, 136.8, 149.9 for Jan–Dec. The other two are illustrative shapes showing an over-long rolling window and string-sorted (unparsed) dates.",

@@ -293,6 +293,18 @@ print('cluster-feature accuracy :', lr_clu.score(Zte, yte))     # ~0.95+
     question: "Stacking k-means cluster features under logistic regression on curved data — how do you read the healthy 'more clusters help' climb, the underfit when k is too small, and the leakage trap?",
     charts: [
       {
+        type: "scatter",
+        title: "Why it works: k-means tiles two curved arcs with centroids",
+        xlabel: "feature 1",
+        ylabel: "feature 2",
+        groups: [
+          { name: "class A (top arc)", color: "#58a6ff", points: [[0.0, 1.0], [0.5, 0.87], [1.0, 0.5], [1.5, 0.0], [2.0, -0.4], [-0.5, 0.87], [-1.0, 0.5], [2.5, -0.5], [0.25, 0.97], [1.75, -0.25]] },
+          { name: "class B (bottom arc)", color: "#ffb454", points: [[1.0, -0.5], [1.5, -0.37], [2.0, 0.0], [2.5, 0.5], [3.0, 0.9], [0.5, -0.37], [3.5, 0.87], [3.0, 1.0], [1.25, -0.47], [2.75, 0.72]] },
+          { name: "centroids ($\\mu_j$)", color: "#ff7b72", points: [[0.0, 0.9], [1.4, 0.1], [2.7, -0.45], [1.6, -0.4], [3.1, 0.9]] }
+        ],
+        interpret: "Blue and orange are the two interleaving half-moon classes — no single straight line splits them. The red dots are the $k=5$ k-means centroids; each one owns the points nearest to it (a Voronoi cell). Notice each cell sits on essentially ONE color: that is exactly what lets a linear model assign one weight per cell and bend its boundary along the arcs. Read clusters that each cover a single color as 'k is large enough to tile the manifold.'"
+      },
+      {
         type: "bars",
         title: "Ideal: accuracy climbs as k grows (load_digits 4-vs-9, 2-D PCA)",
         xlabel: "feature set fed to logistic regression",

@@ -62,7 +62,21 @@ $$ \\#\\text{interaction-only terms} \\;=\\; \\binom{d}{2} \\;=\\; \\frac{d(d-1)
     whatItDoes:
       `<p>The <b>first line</b> is the model. The left part $w_0 + \\sum_i w_i x_i$ is the ordinary linear model: each feature contributes its value times one weight. The boxed part adds, for every pair $i \\lt j$, the product $x_i x_j$ scaled by a learned weight $w_{ij}$. Because $w_{ij}$ is learned, the model can decide for each pair whether their combination raises or lowers the prediction — and by how much.</p>
        <p>The <b>second line</b> is the payoff written as a derivative. In the plain model, $\\partial \\hat y/\\partial x_1 = w_1$, a fixed number. With interactions it becomes $w_1 + \\sum_{j \\gt 1} w_{1j} x_j$ — the marginal effect of $x_1$ now <i>shifts</i> with the values of the other features. That is the precise mathematical meaning of "the effect of one feature depends on another". The product term acts AND-like: $x_i x_j$ is large only when <i>both</i> are large, so $w_{ij}$ rewards or penalizes the co-occurrence.</p>
-       <p>The <b>third line</b> is the cost. With interaction-only degree-2 expansion you add one column per pair, $\\binom{d}{2}$ of them, which grows as $d^2$. Turn off <code>interaction_only</code> and you also add the $d$ squared terms $x_i^2$ (a full degree-2 polynomial, total $d + \\binom{d}{2}$ new columns). Either way the feature space — and the training time — balloons quadratically, which is why the book frames interactions as accuracy bought with dimensionality.</p>`,
+       <p>The <b>third line</b> is the cost. With interaction-only degree-2 expansion you add one column per pair, $\\binom{d}{2}$ of them, which grows as $d^2$. Turn off <code>interaction_only</code> and you also add the $d$ squared terms $x_i^2$ (a full degree-2 polynomial, total $d + \\binom{d}{2}$ new columns). Either way the feature space — and the training time — balloons quadratically, which is why the book frames interactions as accuracy bought with dimensionality.</p>
+       <p>To <i>feel</i> that blow-up, read the totals across a few feature counts $d$. Notice the rightmost column: as $d$ doubles, the number of new columns roughly <b>quadruples</b> — the signature of $O(d^2)$ growth.</p>
+       <table class="extable">
+         <caption>Columns after a degree-2 expansion. "Inter-only total" $= d + \\binom{d}{2}$; "full total" also adds the $d$ squares.</caption>
+         <thead>
+           <tr><th>$d$ (original)</th><th class="num">pairs $\\binom{d}{2}$</th><th class="num">inter-only total</th><th class="num">full total ($+\\,d$ squares)</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">5</td><td class="num">10</td><td class="num">15</td><td class="num">20</td></tr>
+           <tr><td class="row-h">10</td><td class="num">45</td><td class="num">55</td><td class="num">65</td></tr>
+           <tr><td class="row-h">20</td><td class="num">190</td><td class="num">210</td><td class="num">230</td></tr>
+           <tr><td class="row-h">50</td><td class="num">1,225</td><td class="num">1,275</td><td class="num">1,325</td></tr>
+           <tr><td class="row-h">100</td><td class="num">4,950</td><td class="num">5,050</td><td class="num">5,150</td></tr>
+         </tbody>
+       </table>`,
 
     derivation:
       `<p><b>Why a product encodes "depends on".</b> Suppose the truth is that feature $x_1$'s effect on $y$ is itself a function of $x_2$. The simplest such dependence is <i>linear</i>: the slope on $x_1$ equals $a + b\\,x_2$. Write the contribution of $x_1$ as that slope times $x_1$:</p>
