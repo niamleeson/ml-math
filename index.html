@@ -1191,12 +1191,10 @@ const App = (function () {
     wrap.innerHTML = "";
     order.length = 0;
     groups.forEach((g, gi) => {
-      const done = g.lessons.filter(l => progress[l.id]).length;
       const mod = document.createElement("div");
-      mod.className = "module" + (gi === 0 ? "" : " collapsed");
+      mod.className = "module collapsed";
       mod.innerHTML =
-        `<div class="mod-head"><span class="chev">▼</span><span>${g.name}</span>` +
-        `<span class="modbar" data-mod="${g.name}">${done}/${g.lessons.length}</span></div>` +
+        `<div class="mod-head"><span class="chev">▼</span><span>${g.name}</span></div>` +
         `<ul class="lessons"></ul>`;
       const ul = mod.querySelector(".lessons");
       g.lessons.forEach(l => {
@@ -1609,7 +1607,6 @@ const App = (function () {
 
   function welcome() {
     const total = LESSONS.length;
-    const done = Object.keys(progress).length;
     document.getElementById("content").innerHTML = `
       <div id="welcome">
         <div class="crumbs">Start here</div>
@@ -1617,7 +1614,7 @@ const App = (function () {
         <p class="lesson-sub">Every formula from the Stanford / MIT cheat sheets — rebuilt as
         plain-English lessons. Short sentences. Every symbol explained. A worked example with real
         numbers, and where each idea is used in the real world.</p>
-        <p>You have <b class="hl">${total}</b> lessons. Completed: <b class="hl">${done}</b>.
+        <p>You have <b class="hl">${total}</b> lessons.
         Pick a topic on the left, or start at the very beginning 👇</p>
         <div class="grid">
           ${group().map(g => `<div class="card"><h3>${g.name}</h3>
@@ -1646,7 +1643,13 @@ const App = (function () {
     // Phones start with the sidebar collapsed (it overlays content); desktop starts expanded.
     if (window.innerWidth <= 820) document.body.classList.add("nav-collapsed");
     const hash = location.hash.replace("#", "");
-    if (hash && byId[hash]) open(hash); else welcome();
+    if (hash && byId[hash]) {
+      open(hash);   // open() expands only the section that holds this lesson
+    } else {
+      welcome();
+      const first = document.querySelector("#modules .module");
+      if (first) first.classList.remove("collapsed");   // default landing: first section open
+    }
     // In-tab nav-anchor clicks (and browser back/forward) change the hash; route them here.
     window.addEventListener("hashchange", () => {
       const h = location.hash.replace("#", "");
