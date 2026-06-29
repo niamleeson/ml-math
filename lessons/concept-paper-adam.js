@@ -215,19 +215,34 @@
     example:
       `<p><b>Worked numbers</b> &mdash; one Adam step on a single weight, paper defaults
        ($\\alpha=0.001,\\ \\beta_1=0.9,\\ \\beta_2=0.999,\\ \\epsilon=10^{-8}$), starting from $\\theta_0=0$ with
-       gradient $g_1=0.1$ at $t=1$:</p>
-       <ul>
-         <li>First moment: $m_1=0.9\\cdot 0 + 0.1\\cdot 0.1 = 0.01$.</li>
-         <li>Second moment: $v_1=0.999\\cdot 0 + 0.001\\cdot(0.1)^2 = 0.001\\cdot 0.01 = 1\\times10^{-5}$.</li>
-         <li>Bias-correct (at $t=1$): $\\hat m_1 = 0.01/(1-0.9) = 0.01/0.1 = 0.1$;
-         $\\hat v_1 = 10^{-5}/(1-0.999) = 10^{-5}/0.001 = 0.01$.</li>
-         <li>Step: $\\alpha\\cdot \\hat m_1/(\\sqrt{\\hat v_1}+\\epsilon)
-         = 0.001\\cdot 0.1/(\\sqrt{0.01}+10^{-8}) = 0.001\\cdot 0.1/0.1 = 0.001$.</li>
-         <li>Update: $\\theta_1 = 0 - 0.001 = -0.001$.</li>
+       gradient $g_1=0.1$ at $t=1$. Plug into Algorithm 1 line by line:</p>
+       <ul class="steps">
+         <li><b>First moment:</b> $m_1=\\beta_1 m_0+(1-\\beta_1)g_1=0.9\\cdot0 + 0.1\\cdot0.1 = 0.01$.</li>
+         <li><b>Second moment:</b> $v_1=\\beta_2 v_0+(1-\\beta_2)g_1^2=0.999\\cdot0 + 0.001\\cdot(0.1)^2 = 0.001\\cdot0.01 = 1\\times10^{-5}$.</li>
+         <li><b>Bias-correct first moment:</b> $\\hat m_1 = m_1/(1-\\beta_1^1) = 0.01/(1-0.9) = 0.01/0.1 = 0.1$.</li>
+         <li><b>Bias-correct second moment:</b> $\\hat v_1 = v_1/(1-\\beta_2^1) = 10^{-5}/(1-0.999) = 10^{-5}/0.001 = 0.01$.</li>
+         <li><b>Step:</b> $\\alpha\\cdot \\hat m_1/(\\sqrt{\\hat v_1}+\\epsilon) = 0.001\\cdot 0.1/(\\sqrt{0.01}+10^{-8}) = 0.001\\cdot 0.1/0.1 = 0.001$.</li>
+         <li><b>Update:</b> $\\theta_1 = \\theta_0 - 0.001 = 0 - 0.001 = -0.001$.</li>
        </ul>
-       <p>Notice $\\hat m_1/\\sqrt{\\hat v_1}=0.1/0.1=1$, so the first step is exactly $-\\alpha=-0.001$. That is
-       Adam's signature: after bias correction the very first step is about $\\pm\\alpha$ no matter the gradient's
-       magnitude. The CODE cell recomputes these exact numbers and prints them.</p>`,
+       <p>The signature is $\\hat m_1/\\sqrt{\\hat v_1}=0.1/0.1=1$, so the first step is exactly $-\\alpha=-0.001$.
+       <b>It does not depend on the gradient's size</b> &mdash; rerun the same step with a $100\\times$ larger
+       gradient $g_1=10$ and you land on the same $-0.001$:</p>
+       <table class="extable">
+         <caption>One Adam step from $\\theta_0=0$, $t=1$: a tiny gradient vs a huge one give the same step</caption>
+         <thead>
+           <tr><th>quantity</th><th class="num">$g_1=0.1$</th><th class="num">$g_1=10$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">$m_1=0.1\\,g_1$</td><td class="num">0.01</td><td class="num">1.0</td></tr>
+           <tr><td class="row-h">$v_1=0.001\\,g_1^2$</td><td class="num">0.00001</td><td class="num">0.1</td></tr>
+           <tr><td class="row-h">$\\hat m_1=m_1/0.1$</td><td class="num">0.1</td><td class="num">10.0</td></tr>
+           <tr><td class="row-h">$\\hat v_1=v_1/0.001$</td><td class="num">0.01</td><td class="num">100.0</td></tr>
+           <tr><td class="row-h">$\\hat m_1/\\sqrt{\\hat v_1}$</td><td class="num">1.0</td><td class="num">1.0</td></tr>
+           <tr><td class="row-h">step $=-\\alpha\\cdot$ratio</td><td class="num">&minus;0.001</td><td class="num">&minus;0.001</td></tr>
+         </tbody>
+       </table>
+       <p>That is Adam's signature: after bias correction the very first step is about $\\pm\\alpha$ no matter the
+       gradient's magnitude. The CODE cell recomputes the $g_1=0.1$ numbers and prints them.</p>`,
 
     recipe:
       `<p><b>Algorithm 1 (Adam), as numbered steps</b> &mdash; initialize $m_0=0$, $v_0=0$, $t=0$, then each

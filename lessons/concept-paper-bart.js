@@ -274,13 +274,21 @@
       `<p><b>Worked numbers</b> for the loss on a tiny reconstruction. Suppose the clean original is the 3-token
        sequence $x=[\\,\\text{the},\\ \\text{cat},\\ \\text{sat}\\,]$, and text-infilling corrupted it to
        $\\tilde{x}=[\\,\\text{the},\\ [\\text{MASK}]\\,]$ &mdash; one mask hiding the 2-token span "cat sat". The
-       decoder reconstructs left to right and assigns the <i>correct</i> token these probabilities:</p>
-       <ul>
-         <li>position 1 ("the"): $p_1 = 0.9$ &mdash; easy, it was visible.</li>
-         <li>position 2 ("cat"): $p_2 = 0.5$ &mdash; harder, it was inside the masked span.</li>
-         <li>position 3 ("sat"): $p_3 = 0.4$ &mdash; hardest; the model also had to infer the span was length 2.</li>
-       </ul>
-       <ul>
+       decoder reconstructs left to right and assigns the <i>correct</i> token a probability $p_t$ at each
+       position; the per-token loss is $-\\ln p_t$ (Section 2.2's reconstruction cross-entropy):</p>
+       <table class="extable">
+        <caption>Per-position reconstruction: the decoder's probability on the correct token, and its cross-entropy contribution.</caption>
+        <thead>
+          <tr><th>position $t$</th><th>token $x_t$</th><th>in masked span?</th><th class="num">$p_t$</th><th class="num">loss $-\\ln p_t$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-h">1</td><td>the</td><td>no (visible)</td><td class="num">0.9</td><td class="num">0.10536</td></tr>
+          <tr><td class="row-h">2</td><td>cat</td><td>yes</td><td class="num">0.5</td><td class="num">0.69315</td></tr>
+          <tr><td class="row-h">3</td><td>sat</td><td>yes</td><td class="num">0.4</td><td class="num">0.91629</td></tr>
+          <tr><td class="row-h">total</td><td>&mdash;</td><td>&mdash;</td><td class="num">0.18000</td><td class="num">1.71480</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
          <li><b>Reconstruction probability:</b> $p_1 p_2 p_3 = 0.9\\times 0.5\\times 0.4 = 0.18$.</li>
          <li><b>Per-token losses:</b> $-\\ln 0.9 = 0.10536$, $-\\ln 0.5 = 0.69315$, $-\\ln 0.4 = 0.91629$.</li>
          <li><b>Total loss:</b> $\\mathcal{L} = 0.10536 + 0.69315 + 0.91629 = 1.71480$.</li>

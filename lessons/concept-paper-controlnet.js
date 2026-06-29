@@ -254,24 +254,36 @@
       `<p>Work the zero-convolution identity by hand so Eq. 3 is concrete. Take a single pixel with three channels,
        input vector $\\mathbf{p} = [2,\\,-1,\\,3]$. A $1\\times1$ convolution that maps three channels to three
        channels is a $3\\times3$ weight matrix $W$ plus a length-3 bias $\\mathbf{b}$. For a <b>zero convolution</b>,
-       both are all zeros:</p>
+       both are all zeros, so each output channel $o = w_{o,1}\\,p_1 + w_{o,2}\\,p_2 + w_{o,3}\\,p_3 + b_o$:</p>
        <ul class="steps">
-        <li><b>Zero convolution output.</b> $\\mathbf{o} = W\\mathbf{p} + \\mathbf{b}$. Each output channel is a row
-        of $W$ dotted with $\\mathbf{p}$, plus a bias entry. Row $= [0,0,0]$, so the dot product is
-        $0\\cdot2 + 0\\cdot(-1) + 0\\cdot3 = 0$; bias $=0$. Every output channel is $0$. So
-        $\\mathbf{o} = [0,\\,0,\\,0]$ &mdash; regardless of $\\mathbf{p}$.</li>
+        <li><b>Output channel 1.</b> $0\\cdot 2 + 0\\cdot(-1) + 0\\cdot 3 + 0 = 0$.</li>
+        <li><b>Output channel 2.</b> $0\\cdot 2 + 0\\cdot(-1) + 0\\cdot 3 + 0 = 0$.</li>
+        <li><b>Output channel 3.</b> $0\\cdot 2 + 0\\cdot(-1) + 0\\cdot 3 + 0 = 0$. So $\\mathbf{o} = [0,\\,0,\\,0]$
+        &mdash; regardless of $\\mathbf{p}$.</li>
         <li><b>Plug into Eq. 2.</b> The condition path gives $\\mathcal{Z}(\\mathbf{c};\\Theta_{z1}) = \\mathbf{0}$,
-        so the trainable copy sees $\\mathbf{x} + \\mathbf{0} = \\mathbf{x}$. Whatever it outputs then passes through
-        the second zero convolution: $\\mathcal{Z}(\\cdot;\\Theta_{z2}) = \\mathbf{0}$. So the whole second summand
-        is $\\mathbf{0}$.</li>
+        so the trainable copy sees $\\mathbf{x} + \\mathbf{0} = \\mathbf{x}$; its output then passes through the
+        second zero convolution: $\\mathcal{Z}(\\cdot;\\Theta_{z2}) = \\mathbf{0}$. The whole second summand is
+        $\\mathbf{0}$.</li>
         <li><b>Result (Eq. 3).</b> $\\mathbf{y}_c = \\mathcal{F}(\\mathbf{x};\\Theta) + \\mathbf{0} = \\mathbf{y}$.
         The conditioned output equals the frozen output exactly. No harm.</li>
-        <li><b>But it will learn.</b> The gradient of output channel $1$ with respect to its first weight is the
-        input $p_1 = 2 \\ne 0$. So after one gradient step that weight is no longer zero, and the zero convolution
-        starts to pass a signal. The effect grows from zero.</li>
+        <li><b>But it will learn.</b> The gradient of output channel $1$ w.r.t. its first weight is the input
+        $\\partial o/\\partial w_{1,1} = p_1 = 2 \\ne 0$. So after one gradient step that weight is no longer zero.</li>
        </ul>
-       <p>The notebook's first cell builds a real zero convolution, confirms its output is exactly $0$, and prints
-       the (nonzero) weight gradient &mdash; matching this by-hand reasoning.</p>`,
+       <p>The table contrasts the two quantities that make ControlNet work &mdash; the <b>output</b> (zero at init,
+       the safe start) versus the <b>weight gradient</b> (nonzero, so it still learns):</p>
+       <table class="extable">
+        <caption>Zero convolution on input $\\mathbf{p}=[2,-1,3]$: output vs gradient, per channel.</caption>
+        <thead><tr><th>output channel $o$</th><th class="num">$w$ row (at init)</th><th class="num">output $= W\\mathbf{p}+\\mathbf{b}$</th><th class="num">$\\partial o/\\partial w_{o,1}=p_1$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">$[0,0,0]$</td><td class="num">$0$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$[0,0,0]$</td><td class="num">$0$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$[0,0,0]$</td><td class="num">$0$</td><td class="num">$2$</td></tr>
+        </tbody>
+       </table>
+       <p>Every output is $0$ (so $\\mathbf{y}_c=\\mathbf{y}$ at init), yet every weight gradient is $p_1=2\\ne 0$
+       (so the connector escapes zero on the first step). The notebook's first cell builds a real zero convolution,
+       confirms output $\\approx 0$, and prints a nonzero weight gradient (magnitude $\\approx 6.5$) &mdash; matching
+       this by-hand reasoning.</p>`,
     recipe:
       `<ol>
         <li><b>Build a tiny frozen block</b> with <code>torch.nn</code> (a couple of <code>nn.Conv2d</code> + ReLU

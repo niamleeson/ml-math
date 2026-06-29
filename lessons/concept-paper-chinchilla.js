@@ -241,15 +241,31 @@
         $N \\cdot D = (7.0 \\times 10^{10}) \\times (1.4 \\times 10^{12}) = 9.8 \\times 10^{22}$.</li>
         <li><b>Apply the factor 6.</b>
         $C \\approx 6 \\times 9.8 \\times 10^{22} = 58.8 \\times 10^{22} = 5.88 \\times 10^{23}$ FLOPs.</li>
-        <li><b>Read off the trade-off.</b> Now hold that same $C = 5.88 \\times 10^{23}$ but use Gopher's size,
-        $N = 280$ billion $= 2.8 \\times 10^{11}$. Solving $D = C / (6N)$ gives
+        <li><b>Now hold that same budget</b> $C = 5.88 \\times 10^{23}$ and ask what each model size can afford,
+        solving $D = C / (6N)$.</li>
+        <li><b>Gopher's size</b> $N = 280$ billion $= 2.8 \\times 10^{11}$:
         $D = 5.88 \\times 10^{23} / (6 \\times 2.8 \\times 10^{11}) = 5.88 \\times 10^{23} / (1.68 \\times 10^{12})
         = 3.5 \\times 10^{11} = 350$ billion tokens.</li>
+        <li><b>Tokens-per-parameter check.</b> Chinchilla: $D/N = 1.4 \\times 10^{12} / 7.0 \\times 10^{10} = 20$
+        tokens per parameter. Gopher-size: $D/N = 3.5 \\times 10^{11} / 2.8 \\times 10^{11} = 1.25$ &mdash; far below
+        the &asymp;20 the paper recommends.</li>
        </ul>
+       <p>Laying the two allocations side by side at the <i>same</i> compute $C = 5.88 \\times 10^{23}$ FLOPs:</p>
+       <table class="extable">
+        <caption>Two ways to spend the same budget $C \\approx 6ND = 5.88 \\times 10^{23}$ FLOPs.</caption>
+        <thead>
+         <tr><th>allocation</th><th class="num">$N$ (params)</th><th class="num">$D = C/(6N)$ (tokens)</th><th class="num">$D/N$ (tokens/param)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">Chinchilla (70B)</td><td class="num">$7.0 \\times 10^{10}$</td><td class="num">$1.40 \\times 10^{12}$</td><td class="num">$20.0$</td></tr>
+         <tr><td class="row-h">Gopher-size (280B)</td><td class="num">$2.8 \\times 10^{11}$</td><td class="num">$3.50 \\times 10^{11}$</td><td class="num">$1.25$</td></tr>
+        </tbody>
+       </table>
        <p>So at Chinchilla's compute, a 280B-parameter model could only afford about <b>350 billion</b> tokens
        &mdash; one quarter of Chinchilla's 1.4 trillion. The 4&times;-bigger model gets 4&times; less data at the
-       same cost. That is exactly the bind Chinchilla escapes by going smaller and reading more. (These plug-in
-       numbers are recomputed and printed in the code cell below.)</p>`,
+       same cost, and at just $1.25$ tokens per parameter it is badly undertrained. That is exactly the bind
+       Chinchilla escapes by going smaller and reading more. (These plug-in numbers are recomputed and printed in
+       the code cell below.)</p>`,
     recipe:
       `<p>Read-only paper &mdash; there is no architecture to build. The "recipe" is the budgeting procedure the
        paper hands you:</p>

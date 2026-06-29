@@ -118,16 +118,35 @@ $$ \\text{RR}=\\frac{a/(a+b)}{c/(c+d)},\\quad \\text{OR}=\\frac{a\\,d}{b\\,c},\\
     example:
       `<p><b>Means (Cohen's d).</b> A reading program is tested. The treatment group scores a mean of $\\bar{x}_1=78$, the control $\\bar{x}_2=72$, and suppose the pooled standard deviation is $s_p=12$.</p>
        <ul class="steps">
-         <li>$d=\\dfrac{78-72}{12}=\\dfrac{6}{12}=0.5$. The groups are half a standard deviation apart — a <b>medium</b> effect by Cohen's benchmark.</li>
-         <li>If instead the spread were tiny, $s_p=2$, the same 6-point gap gives $d=3$ — a giant-looking effect from a small denominator. That is the "tiny within-group variance inflates d" pitfall: always glance at the raw 6 points too.</li>
+         <li>$d=\\dfrac{\\bar{x}_1-\\bar{x}_2}{s_p}=\\dfrac{78-72}{12}=\\dfrac{6}{12}=0.5$. The groups are half a standard deviation apart — a <b>medium</b> effect by Cohen's benchmark.</li>
+         <li>If instead the spread were tiny, $s_p=2$, the same 6-point gap gives $d=\\dfrac{6}{2}=3$ — a giant-looking effect from a small denominator. That is the "tiny within-group variance inflates d" pitfall: always glance at the raw 6 points too.</li>
        </ul>
-       <p><b>Binary outcome (risk vs odds).</b> A 2&times;2 table: of 50 exposed people, 40 got the event and 10 did not; of 50 unexposed, 20 got the event and 30 did not. So $a=40,\\,b=10,\\,c=20,\\,d=30$.</p>
+       <p><b>Binary outcome (risk vs odds).</b> Of 50 exposed people, 40 got the event and 10 did not; of 50 unexposed, 20 got the event and 30 did not. Lay the four counts out as the 2&times;2 table the formulas read from, $a=40,\\,b=10,\\,c=20,\\,d=30$:</p>
+       <table class="extable">
+         <caption>The 2&times;2 contingency table of counts.</caption>
+         <thead><tr><th></th><th class="num">event</th><th class="num">no event</th><th class="num">row total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">exposed</td><td class="num">$a=40$</td><td class="num">$b=10$</td><td class="num">50</td></tr>
+           <tr><td class="row-h">unexposed</td><td class="num">$c=20$</td><td class="num">$d=30$</td><td class="num">50</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Risk (exposed) $=\\dfrac{40}{50}=0.80$; risk (unexposed) $=\\dfrac{20}{50}=0.40$.</li>
+         <li>Risk (exposed) $=\\dfrac{a}{a+b}=\\dfrac{40}{50}=0.80$; risk (unexposed) $=\\dfrac{c}{c+d}=\\dfrac{20}{50}=0.40$.</li>
          <li><b>Risk ratio</b> RR $=0.80/0.40=2.0$ — the exposed are twice as likely to have the event.</li>
          <li><b>Risk difference</b> RD $=0.80-0.40=0.40$ — a 40-percentage-point jump. <b>NNT</b> $=1/0.40=2.5$.</li>
-         <li><b>Odds ratio</b> OR $=\\dfrac{a\\,d}{b\\,c}=\\dfrac{40\\times 30}{10\\times 20}=\\dfrac{1200}{200}=6.0$. Notice OR $=6$ is far from RR $=2$: because the event is <i>common</i> here (40%–80%), the odds ratio badly overstates "how many times more likely". Reporting OR as if it were RR would be the classic mistake.</li>
-       </ul>`,
+         <li><b>Odds ratio</b> OR $=\\dfrac{a\\,d}{b\\,c}=\\dfrac{40\\times 30}{10\\times 20}=\\dfrac{1200}{200}=6.0$.</li>
+       </ul>
+       <p>Lined up side by side, OR $=6$ sits far from RR $=2$ — because the event is <i>common</i> here (40%–80%), the odds ratio badly overstates "how many times more likely". Reporting OR as if it were RR is the classic mistake:</p>
+       <table class="extable">
+         <caption>Four effect sizes from the same 2&times;2 table.</caption>
+         <thead><tr><th>measure</th><th class="num">formula</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Risk ratio (RR)</td><td class="num">$0.80/0.40$</td><td class="num">2.0</td></tr>
+           <tr><td class="row-h">Risk difference (RD)</td><td class="num">$0.80-0.40$</td><td class="num">0.40</td></tr>
+           <tr><td class="row-h">NNT</td><td class="num">$1/0.40$</td><td class="num">2.5</td></tr>
+           <tr><td class="row-h">Odds ratio (OR)</td><td class="num">$(40\\cdot30)/(10\\cdot20)$</td><td class="num">6.0</td></tr>
+         </tbody>
+       </table>`,
 
     demo: function (host) {
       function C() {

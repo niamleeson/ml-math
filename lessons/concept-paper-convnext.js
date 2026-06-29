@@ -271,26 +271,30 @@ $$ \\text{Downsample (between stages)}:\\ \\ \\text{LN} \\;\\to\\; \\text{Conv}_
        cargo-cult, not load-bearing.</p>`,
     example:
       `<p><b>Trace the channel widths and a parameter count</b> through one ConvNeXt block, for the exact dimensions
-       the notebook uses: channel width $C=32$, kernel $7\\times7$, expansion ratio $r=4$.</p>
+       the notebook uses: channel width $C=32$, kernel $7\\times7$, expansion ratio $r=4$. Read the table top to
+       bottom &mdash; one row per layer, with the channels in/out, the weight count, and the running feature width:</p>
+       <table class="extable">
+        <caption>One ConvNeXt block at $C=32,\\ r=4$: shape and weight ledger (biases shown separately).</caption>
+        <thead><tr><th>layer</th><th class="num">channels in&rarr;out</th><th class="num">weight count</th><th class="num">biases</th><th class="num">feature width</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">depthwise $7\\times7$ conv</td><td class="num">$32\\to32$</td><td class="num">$32\\times49=1{,}568$</td><td class="num">$32$</td><td class="num">$32$</td></tr>
+         <tr><td class="row-h">LayerNorm</td><td class="num">$32\\to32$</td><td class="num">$32$ (scale)</td><td class="num">$32$ (shift)</td><td class="num">$32$</td></tr>
+         <tr><td class="row-h">$1\\times1$ expand $W_1$</td><td class="num">$32\\to128$</td><td class="num">$32\\times128=4{,}096$</td><td class="num">$128$</td><td class="num">$128$</td></tr>
+         <tr><td class="row-h">GELU</td><td class="num">$128\\to128$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$128$</td></tr>
+         <tr><td class="row-h">$1\\times1$ project $W_2$</td><td class="num">$128\\to32$</td><td class="num">$128\\times32=4{,}096$</td><td class="num">$32$</td><td class="num">$32$</td></tr>
+         <tr><td class="row-h">residual $+\\,x$</td><td class="num">$32\\to32$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$32$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Depthwise $7\\times7$ conv:</b> $C\\to C = 32\\to 32$, one filter per channel. Weights:
-        $C \\times 7 \\times 7 = 32 \\times 49 = 1{,}568$ (plus $32$ biases). It changes <i>where</i> info sits, not
-        the channel count.</li>
-        <li><b>LayerNorm:</b> over $C=32$ channels &mdash; a scale and a shift, $2\\times 32 = 64$ params. Output
-        still $32$ channels.</li>
-        <li><b>$1\\times1$ expand ($W_1$):</b> $C \\to rC = 32 \\to 128$. As a per-pixel linear map its weight is
-        $32 \\times 128 = 4{,}096$ (plus $128$ biases). The feature map now has $128$ channels.</li>
-        <li><b>GELU:</b> applied elementwise on the $128$ channels &mdash; no parameters, shape unchanged.</li>
-        <li><b>$1\\times1$ project ($W_2$):</b> $rC \\to C = 128 \\to 32$. Weight $128 \\times 32 = 4{,}096$ (plus
-        $32$ biases). Back to $32$ channels &mdash; the same shape as the input.</li>
-        <li><b>Residual:</b> add the original input ($32$ channels) to this $32$-channel output. Shapes match, so
-        the add is valid; no parameters.</li>
+        <li><b>Spatial weights (depthwise):</b> $32\\times 7\\times 7 = 32\\times 49 = 1{,}568$.</li>
+        <li><b>Channel-mixing weights (the two $1\\times1$ convs):</b> $4{,}096 + 4{,}096 = 8{,}192$.</li>
+        <li><b>Ratio:</b> $8{,}192 / 1{,}568 \\approx 5.2$ &mdash; channel mixing holds about $84\\%$ of the block's
+        weights ($8{,}192 / 9{,}760$), spatial mixing only $\\approx 16\\%$.</li>
        </ul>
-       <p>So a $32$-channel feature map goes in and a $32$-channel feature map comes out, having been mixed across
-       space (depthwise) and across an expanded $128$-wide channel space (the inverted-bottleneck MLP). The
-       channel-mixing weights total $4{,}096 + 4{,}096 = 8{,}192$, dwarfing the $1{,}568$ spatial weights &mdash;
-       most of a ConvNeXt block's parameters live in the $1\\times1$ MLP, exactly as in a transformer. The notebook's
-       first cell recomputes these counts.</p>`,
+       <p>So a $32$-channel feature map goes in and a $32$-channel feature map comes out, mixed across space
+       (depthwise) and across an expanded $128$-wide channel space (the inverted-bottleneck MLP). Most of a ConvNeXt
+       block's parameters live in the $1\\times1$ MLP, exactly as in a transformer. The notebook's first cell
+       recomputes these counts ($1{,}568$ vs $8{,}192$).</p>`,
     recipe:
       `<ol>
         <li><b>Patchify stem (&sect;2.2).</b> <code>nn.Conv2d(C_in, dim, kernel_size=4, stride=4)</code> &mdash;

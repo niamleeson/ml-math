@@ -247,21 +247,35 @@ $$ p(n) = \\frac{1/n}{\\sum_{k=1}^{N} 1/k}, \\qquad N = 3 $$
        effect directly.</p>`,
     example:
       `<p>Work the parameter savings with the paper's actual ALBERT-base configuration (Table 1):
-       vocabulary $V = 30{,}000$, hidden size $H = 768$, embedding size $E = 128$.</p>
+       vocabulary $V = 30{,}000$, hidden size $H = 768$, embedding size $E = 128$. Plug these into both
+       embedding formulas and subtract.</p>
        <ul class="steps">
-        <li><b>BERT embedding.</b> $V \\times H = 30{,}000 \\times 768 = 23{,}040{,}000$ parameters &mdash;
-        about $23.0$M just for the token table.</li>
-        <li><b>ALBERT factorized embedding.</b> $V \\times E + E \\times H
-        = 30{,}000 \\times 128 + 128 \\times 768 = 3{,}840{,}000 + 98{,}304 = 3{,}938{,}304$ &mdash; about
-        $3.9$M. The big $V\\times E$ term is $6\\times$ smaller than $V\\times H$ (because $E$ is $6\\times$
-        smaller than $H$), and the extra $E\\times H = 98{,}304$ term is negligible next to it.</li>
+        <li><b>BERT embedding.</b> $V \\times H = 30{,}000 \\times 768 = 23{,}040{,}000$ &mdash; about
+        $23.0$M just for the token table.</li>
+        <li><b>ALBERT small table.</b> $V \\times E = 30{,}000 \\times 128 = 3{,}840{,}000$ &mdash; the
+        per-token vector shrinks from width $768$ to width $128$.</li>
+        <li><b>ALBERT up-projection.</b> $E \\times H = 128 \\times 768 = 98{,}304$ &mdash; one matrix shared
+        by every token, not one per token.</li>
+        <li><b>ALBERT factorized total.</b> $V \\times E + E \\times H = 3{,}840{,}000 + 98{,}304
+        = 3{,}938{,}304$ &mdash; about $3.9$M.</li>
         <li><b>Saving.</b> $23{,}040{,}000 - 3{,}938{,}304 = 19{,}101{,}696$ parameters removed from the
-        embedding alone &mdash; a $5.85\\times$ smaller embedding ($23.0\\text{M}/3.9\\text{M}$).</li>
-        <li><b>Cross-layer sharing.</b> ALBERT-base has $L=12$ layers; sharing replaces $12$ copies of an
-        encoder block with $1$. With one shared block instead of $12$ distinct ones, the encoder's distinct
-        layer parameters drop by a factor of $12$. The two tricks together are why Table 1 lists
-        <b>12M</b> ALBERT-base parameters versus <b>108M</b> for BERT-base.</li>
+        embedding alone &mdash; a $5.85\\times$ smaller embedding ($23{,}040{,}000 / 3{,}938{,}304 = 5.85$).</li>
+        <li><b>Cross-layer sharing.</b> ALBERT-base has $L=12$ layers; sharing stores $1$ block's weights
+        instead of $12$, so the encoder's distinct layer parameters drop by a factor of $12$. The two tricks
+        together are why Table 1 lists <b>12M</b> ALBERT-base params versus <b>108M</b> for BERT-base.</li>
        </ul>
+       <table class="extable">
+        <caption>Embedding parameter count, BERT vs ALBERT-base ($V=30{,}000$, $H=768$, $E=128$).</caption>
+        <thead>
+         <tr><th>Quantity</th><th class="num">BERT ($V\\times H$)</th><th class="num">ALBERT ($V\\times E + E\\times H$)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">Token table</td><td class="num">23,040,000</td><td class="num">3,840,000</td></tr>
+         <tr><td class="row-h">Up-projection $E\\times H$</td><td class="num">&mdash;</td><td class="num">98,304</td></tr>
+         <tr><td class="row-h">Total embedding params</td><td class="num">23,040,000</td><td class="num">3,938,304</td></tr>
+         <tr><td class="row-h">Saving</td><td class="num">&mdash;</td><td class="num">19,101,696 ($5.85\\times$)</td></tr>
+        </tbody>
+       </table>
        <p>The notebook recomputes these exact numbers, and also reports the <i>same</i> arithmetic on the
        tiny model it trains, so you can check every figure by running.</p>`,
     recipe:

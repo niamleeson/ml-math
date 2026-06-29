@@ -248,6 +248,21 @@
         <li><b>Text→image cross-entropy</b>: $\\text{CE}_{\\text{col}} = (0.2204 + 0.2204)/2 = 0.2204$.</li>
         <li><b>Symmetric loss</b>: $L = (0.2236 + 0.2204)/2 = 0.2220$.</li>
        </ul>
+       <p>The four softmax slices and their correct-pair probabilities, side by side:</p>
+       <table class="extable">
+        <caption>Per-slice softmax over the scaled grid $L = S/\\tau$ ($\\tau = 0.5$). The correct match is always the diagonal.</caption>
+        <thead>
+         <tr><th>slice</th><th class="num">logit (diag)</th><th class="num">logit (off)</th><th class="num">$p$(correct)</th><th class="num">$-\\log p$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">row 1 (img 1 → text)</td><td class="num">$1.8$</td><td class="num">$0.2$</td><td class="num">$0.8320$</td><td class="num">$0.1839$</td></tr>
+         <tr><td class="row-h">row 2 (img 2 → text)</td><td class="num">$1.6$</td><td class="num">$0.4$</td><td class="num">$0.7686$</td><td class="num">$0.2633$</td></tr>
+         <tr><td class="row-h">col 1 (text 1 → img)</td><td class="num">$1.8$</td><td class="num">$0.4$</td><td class="num">$0.8022$</td><td class="num">$0.2204$</td></tr>
+         <tr><td class="row-h">col 2 (text 2 → img)</td><td class="num">$1.6$</td><td class="num">$0.2$</td><td class="num">$0.8022$</td><td class="num">$0.2204$</td></tr>
+        </tbody>
+       </table>
+       <p>Averaging the two row losses gives $\\text{CE}_{\\text{row}} = 0.2236$; the two column losses give
+       $\\text{CE}_{\\text{col}} = 0.2204$; the symmetric loss is their mean, $0.2220$.</p>
        <p>The loss is small ($0.222$) because the diagonal already dominates each row and column. If an
        off-diagonal entry grew larger than the diagonal — a mismatched pair looking more similar than the true
        one — the corresponding probability would fall and the loss would climb. These exact numbers are recomputed

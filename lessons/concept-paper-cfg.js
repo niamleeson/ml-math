@@ -260,6 +260,16 @@
         = (1.20,-2.00) - (0.30,-0.60) = \\mathbf{(0.90,\\,-1.40)}$. Signal form:
         $(0.30,-0.50) + 3\\cdot(0.20,-0.30) = (0.90,-1.40)$. &#10003;</li>
        </ul>
+       <p>Lining up the three guidance strengths side by side, with the signal fixed at $(0.20,-0.30)$:</p>
+       <table class="extable">
+        <caption>Guided estimate $\\tilde\\epsilon = (1+w)\\,\\epsilon_c - w\\,\\epsilon_u$ as the guidance scale $w$ grows ($\\epsilon_c=(0.30,-0.50)$, $\\epsilon_u=(0.10,-0.20)$).</caption>
+        <thead><tr><th>$w$</th><th class="num">$(1+w)\\,\\epsilon_c$</th><th class="num">$w\\,\\epsilon_u$</th><th class="num">$\\tilde\\epsilon$</th><th class="num">$\\lVert\\tilde\\epsilon\\rVert$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">$(0.30,-0.50)$</td><td class="num">$(0.00,\\ 0.00)$</td><td class="num">$(0.30,-0.50)$</td><td class="num">0.583</td></tr>
+         <tr><td class="row-h">1</td><td class="num">$(0.60,-1.00)$</td><td class="num">$(0.10,-0.20)$</td><td class="num">$(0.50,-0.80)$</td><td class="num">0.943</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$(1.20,-2.00)$</td><td class="num">$(0.30,-0.60)$</td><td class="num">$(0.90,-1.40)$</td><td class="num">1.664</td></tr>
+        </tbody>
+       </table>
        <p>Notice the guided estimate marches steadily along the signal direction $(0.20,-0.30)$: each unit of
        $w$ adds one more copy. The length of $\\tilde\\epsilon$ grows from $\\lVert(0.30,-0.50)\\rVert\\approx0.583$
        at $w=0$ to $\\lVert(0.90,-1.40)\\rVert\\approx1.664$ at $w=3$ &mdash; a stronger, more class-committed

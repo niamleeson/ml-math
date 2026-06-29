@@ -118,18 +118,30 @@
        </ul>`,
 
     example:
-      `<p>One stochastic-ascent step on a single data point, by hand, in 2-D. Start from
+      `<p>One stochastic-ascent step on a single data point, by hand, in 2-D. We plug real numbers into
+       the update $W \\leftarrow W + \\alpha\\big((1-2g(Wx))\\,x^{\\top} + (W^{\\top})^{-1}\\big)$. Start from
        $W = \\begin{bmatrix}1 & 0\\\\ 0 & 1\\end{bmatrix}$ (the identity), learning rate $\\alpha = 0.1$,
        on the recording $x^{(i)} = \\begin{bmatrix}1\\\\ 2\\end{bmatrix}$.</p>
        <ul class="steps">
-         <li><b>Recovered values.</b> $Wx = \\begin{bmatrix}1\\\\ 2\\end{bmatrix}$.</li>
-         <li><b>Sigmoid.</b> $g(1) = 0.731$, $g(2) = 0.881$, so
-          $1 - 2g = \\begin{bmatrix}-0.462\\\\ -0.762\\end{bmatrix}$.</li>
-         <li><b>Outer product</b> $(1-2g)\\,x^{\\top} = \\begin{bmatrix}-0.462 & -0.924\\\\ -0.762 & -1.523\\end{bmatrix}$.</li>
-         <li><b>Jacobian term.</b> $(W^{\\top})^{-1} = \\begin{bmatrix}1 & 0\\\\ 0 & 1\\end{bmatrix}$ (identity is its own inverse).</li>
-         <li><b>Gradient</b> = sum of the two $= \\begin{bmatrix}0.538 & -0.924\\\\ -0.762 & 0.477\\end{bmatrix}$.</li>
-         <li><b>Update.</b> $W \\leftarrow W + 0.1\\cdot\\text{grad} = \\begin{bmatrix}1.054 & -0.092\\\\ -0.076 & 0.948\\end{bmatrix}$.</li>
+         <li><b>Recovered values.</b> $Wx = \\begin{bmatrix}1 & 0\\\\ 0 & 1\\end{bmatrix}\\begin{bmatrix}1\\\\ 2\\end{bmatrix} = \\begin{bmatrix}1\\\\ 2\\end{bmatrix}$.</li>
+         <li><b>Sigmoid.</b> $g(1) = \\tfrac{1}{1+e^{-1}} = 0.731$, $g(2) = \\tfrac{1}{1+e^{-2}} = 0.881$.</li>
+         <li><b>Data-fit vector.</b> $1 - 2g = \\begin{bmatrix}1 - 2(0.731)\\\\ 1 - 2(0.881)\\end{bmatrix} = \\begin{bmatrix}-0.462\\\\ -0.762\\end{bmatrix}$.</li>
+         <li><b>Outer product</b> $(1-2g)\\,x^{\\top} = \\begin{bmatrix}-0.462\\\\ -0.762\\end{bmatrix}\\begin{bmatrix}1 & 2\\end{bmatrix} = \\begin{bmatrix}-0.462 & -0.924\\\\ -0.762 & -1.523\\end{bmatrix}$.</li>
+         <li><b>Jacobian term.</b> $(W^{\\top})^{-1} = \\begin{bmatrix}1 & 0\\\\ 0 & 1\\end{bmatrix}$ (the identity is its own inverse).</li>
+         <li><b>Gradient</b> = outer product $+$ Jacobian term $= \\begin{bmatrix}-0.462{+}1 & -0.924{+}0\\\\ -0.762{+}0 & -1.523{+}1\\end{bmatrix} = \\begin{bmatrix}0.538 & -0.924\\\\ -0.762 & -0.523\\end{bmatrix}$.</li>
+         <li><b>Update.</b> $W \\leftarrow W + 0.1\\cdot\\text{grad} = \\begin{bmatrix}1{+}0.054 & 0{-}0.092\\\\ 0{-}0.076 & 1{-}0.052\\end{bmatrix} = \\begin{bmatrix}1.054 & -0.092\\\\ -0.076 & 0.948\\end{bmatrix}$.</li>
        </ul>
+       <p>The table tracks every entry through the step:</p>
+       <table class="extable">
+         <caption>Each matrix entry, outer product &rarr; gradient &rarr; updated $W$</caption>
+         <thead><tr><th>entry</th><th class="num">outer $(1-2g)x^{\\top}$</th><th class="num">$(W^{\\top})^{-1}$</th><th class="num">gradient (sum)</th><th class="num">$W + 0.1\\,\\text{grad}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">(1,1)</td><td class="num">-0.462</td><td class="num">1</td><td class="num">0.538</td><td class="num">1.054</td></tr>
+           <tr><td class="row-h">(1,2)</td><td class="num">-0.924</td><td class="num">0</td><td class="num">-0.924</td><td class="num">-0.092</td></tr>
+           <tr><td class="row-h">(2,1)</td><td class="num">-0.762</td><td class="num">0</td><td class="num">-0.762</td><td class="num">-0.076</td></tr>
+           <tr><td class="row-h">(2,2)</td><td class="num">-1.523</td><td class="num">1</td><td class="num">-0.523</td><td class="num">0.948</td></tr>
+         </tbody>
+       </table>
        <p>$W$ moved off the identity. Repeating this over the whole data set drives it toward
        $A^{-1}$ (up to scale and permutation).</p>`,
 

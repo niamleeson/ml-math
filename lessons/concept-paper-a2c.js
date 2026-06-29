@@ -258,26 +258,33 @@
     example:
       `<p>Work one advantage and one policy-gradient term by hand &mdash; the exact case the notebook's first
        cell recomputes. Take $\\gamma = 0.99$ and a short $k = 2$ step rollout on CartPole (every step gives
-       reward $+1$).</p>
+       reward $+1$). From state $s_t$ the agent acts, sees rewards $r_t = 1$ and $r_{t+1} = 1$, and ends at
+       $s_{t+2}$; the critic's values are $V(s_t) = 18.0$ and $V(s_{t+2}) = 19.5$; the taken action had
+       probability $\\pi = 0.6$.</p>
        <ul class="steps">
-        <li><b>The rollout window.</b> From state $s_t$ the agent takes the action, then sees rewards
-        $r_t = 1$ and $r_{t+1} = 1$ over two steps, ending at state $s_{t+2}$. The critic's values are
-        $V(s_t) = 18.0$ and $V(s_{t+2}) = 19.5$.</li>
-        <li><b>Bootstrapped return $R_t$.</b> Real rewards for $k = 2$ steps, then bootstrap the tail:
+        <li><b>Bootstrapped return $R_t$.</b> Real rewards for $k = 2$ steps, then bootstrap the tail with the critic:
         $R_t = r_t + \\gamma\\,r_{t+1} + \\gamma^2 V(s_{t+2}) = 1 + 0.99(1) + 0.99^2(19.5)
         = 1 + 0.99 + 19.11195 = 21.1019$ (to 4 dp).</li>
         <li><b>Advantage.</b> $A = R_t - V(s_t) = 21.1019 - 18.0 = 3.1019$. The action did better than the
         critic's baseline by about $3.1$ &mdash; a <i>positive</i> advantage, so the actor should make this
         action more likely.</li>
-        <li><b>Policy-gradient term.</b> Suppose the policy gave the action probability $\\pi = 0.6$, so
-        $\\log\\pi = \\log 0.6 = -0.5108$. The actor's per-sample <b>objective</b> term is
-        $\\log\\pi \\cdot A = (-0.5108)(3.1019) = -1.5846$, so the per-sample <b>loss</b> we minimize is its
-        negative, $-\\log\\pi \\cdot A = +1.5846$. Gradient descent on $+1.5846$ raises $\\log\\pi$ (since
-        $A \\gt 0$), i.e. pushes the action's probability <i>up</i> &mdash; exactly what a good action should
-        get.</li>
+        <li><b>Log-prob.</b> $\\log\\pi = \\log 0.6 = -0.5108$ (the policy gradient uses the log-probability of the action taken).</li>
+        <li><b>Policy loss term.</b> The objective is $\\log\\pi \\cdot A = (-0.5108)(3.1019) = -1.5846$; the
+        <b>loss</b> we minimize is its negative, $-\\log\\pi \\cdot A = +1.5846$. Descending it raises
+        $\\log\\pi$ (since $A \\gt 0$), pushing the action's probability <i>up</i>.</li>
        </ul>
-       <p>These exact numbers ($R_t = 21.1019$, $A = 3.1019$, $\\log 0.6 = -0.5108$, loss term
-       $= 1.5846$) are recomputed in the notebook's first cell so you can check them by running it.</p>`,
+       <p>The advantage's <i>sign</i> sets the direction of the push. Compare the positive case above with a
+       negative-advantage step (here $A = -1.5$, taken action $\\pi = 0.7$ so $\\log\\pi = -0.3567$):</p>
+       <table class="extable">
+         <caption>How the advantage sign steers the update</caption>
+         <thead><tr><th>case</th><th class="num">$A$</th><th class="num">$\\log\\pi$</th><th class="num">loss $-\\log\\pi\\cdot A$</th><th>action probability moves</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">beat the baseline</td><td class="num">3.1019</td><td class="num">-0.5108</td><td class="num">+1.5846</td><td>UP (make it more likely)</td></tr>
+           <tr><td class="row-h">missed the baseline</td><td class="num">-1.5000</td><td class="num">-0.3567</td><td class="num">-0.5350</td><td>DOWN (make it less likely)</td></tr>
+         </tbody>
+       </table>
+       <p>The positive-advantage row's exact numbers ($R_t = 21.1019$, $A = 3.1019$, $\\log 0.6 = -0.5108$,
+       loss term $= 1.5846$) are recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build one shared-body network</b> from <code>nn.Linear</code> with two heads: a <b>policy</b>

@@ -107,10 +107,40 @@
        <p><b>Why you cannot have all fairness at once.</b> Suppose two groups truly contain positives at different base rates (say 8% vs 30% genuinely sick). A short algebra argument (the <i>impossibility theorem</i> of Kleinberg, Chouldechova, and others) shows that, except when the model is perfect, you cannot simultaneously have equal precision (predictive parity), equal TPR and FPR (equalized odds), and calibration in every group. Equalizing one gap necessarily opens another. So fairness work begins by choosing the gap that matches the harm. $\\blacksquare$</p>`,
 
     example:
-      `<p><b>Agreement.</b> Two doctors each read 100 X-rays as "tumor" or "clear". They agree on 85 of them, so $p_o = 0.85$. Doctor A called "tumor" 30% of the time, Doctor B 40%. Chance agreement: $p_e = (0.30)(0.40) + (0.70)(0.60) = 0.12 + 0.42 = 0.54$. Then</p>
-       <p>$\\kappa = \\dfrac{p_o - p_e}{1 - p_e} = \\dfrac{0.85 - 0.54}{1 - 0.54} = \\dfrac{0.31}{0.46} \\approx 0.67.$</p>
-       <p>Raw agreement looked like 85%, but chance already bought 54%, so the <i>real</i> agreement is a moderate-to-good 0.67 — not 0.85.</p>
-       <p><b>Fairness.</b> A loan model is checked on two regions. In region A it approves 60 of 100 applicants (selection rate 0.60); in region B it approves 30 of 100 (0.30). The demographic-parity difference is $|0.60 - 0.30| = 0.30$. The disparate-impact ratio is $0.30 / 0.60 = 0.50$, which is below 0.8 — it <b>fails the 80% rule</b>, flagging that region B is approved far less often.</p>`,
+      `<p><b>Part 1 — agreement (Cohen's kappa).</b> Two doctors each read 100 X-rays as "tumor" or "clear".
+        Their calls land in this contingency grid (diagonal = they agree):</p>
+       <table class="extable">
+         <caption>Doctor A (rows) vs Doctor B (columns), $N=100$ X-rays. Diagonal cells are agreements.</caption>
+         <thead><tr><th></th><th class="num">B: tumor</th><th class="num">B: clear</th><th class="num">A total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A: tumor</td><td class="num">28</td><td class="num">2</td><td class="num">30</td></tr>
+           <tr><td class="row-h">A: clear</td><td class="num">12</td><td class="num">58</td><td class="num">70</td></tr>
+           <tr><td class="row-h">B total</td><td class="num">40</td><td class="num">60</td><td class="num">100</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Observed agreement.</b> Diagonal $= 28 + 58 = 86$ of 100, so $p_o = 0.86$.</li>
+         <li><b>Each rater's "tumor" rate from the margins.</b> A: $30/100 = 0.30$; B: $40/100 = 0.40$.</li>
+         <li><b>Chance agreement.</b> $p_e = (0.30)(0.40) + (0.70)(0.60) = 0.12 + 0.42 = 0.54$.</li>
+         <li><b>Plug into kappa.</b> $\\kappa = \\dfrac{p_o - p_e}{1 - p_e} = \\dfrac{0.86 - 0.54}{1 - 0.54} =
+          \\dfrac{0.32}{0.46} \\approx 0.70$.</li>
+       </ul>
+       <p>Raw agreement looked like 86%, but chance already bought 54%, so the <i>real</i> agreement is a
+        moderate-to-good $\\kappa \\approx 0.70$ — not 0.86.</p>
+       <p><b>Part 2 — fairness (demographic parity).</b> A loan model is checked on two regions:</p>
+       <table class="extable">
+         <caption>Per-region selection rate and the 80%-rule check.</caption>
+         <thead><tr><th>region</th><th class="num">approved</th><th class="num">applicants</th><th class="num">selection rate</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">region A</td><td class="num">60</td><td class="num">100</td><td class="num">0.60</td></tr>
+           <tr><td class="row-h">region B</td><td class="num">30</td><td class="num">100</td><td class="num">0.30</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Demographic-parity difference.</b> $\\Delta_{\\text{DP}} = |\\,0.60 - 0.30\\,| = 0.30$.</li>
+         <li><b>Disparate-impact ratio.</b> $\\text{SR}_{\\text{low}}/\\text{SR}_{\\text{high}} = 0.30/0.60 = 0.50$.</li>
+         <li><b>80% rule.</b> $0.50 \\lt 0.8$, so it <b>fails</b> — region B is approved far less often.</li>
+       </ul>`,
 
     demo: function (host) {
       function C() {

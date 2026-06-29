@@ -97,20 +97,38 @@
        <p><b>Why log loss punishes confident mistakes so hard.</b> The cost of an example is $-\\log(\\text{prob it gave the true class})$. As that probability heads toward $0$, $-\\log$ heads toward $+\\infty$. So a model that says "99.9% negative" about an actual positive pays about $-\\log(0.001)\\approx 6.9$, while a humble "60% negative" wrong guess pays only $-\\log(0.4)\\approx 0.92$. Log loss therefore rewards models that hedge appropriately and express genuine uncertainty.</p>`,
 
     example:
-      `<p><b>A tiny ranking example for ROC-AUC.</b> Four cases. Two real positives score $0.90$ and $0.60$; two real negatives score $0.70$ and $0.30$. There are $2\\times 2 = 4$ positive–negative pairs:</p>
+      `<p><b>A tiny ranking example for ROC-AUC.</b> Four cases. Two real positives score $0.90$ and $0.60$; two real negatives score $0.70$ and $0.30$. ROC-AUC is the fraction of positive–negative pairs the model ranks correctly. There are $2\\times 2 = 4$ such pairs — check each:</p>
+       <table class="extable">
+         <caption>Each positive's score vs each negative's score; ✓ = positive outscores (correctly ranked).</caption>
+         <thead><tr><th>positive $s_+$</th><th>negative $s_-$</th><th class="num">$s_+ \\gt s_-$?</th><th>verdict</th></tr></thead>
+         <tbody>
+           <tr><td class="num">$0.90$</td><td class="num">$0.70$</td><td class="num">yes</td><td>✓ positive wins</td></tr>
+           <tr><td class="num">$0.90$</td><td class="num">$0.30$</td><td class="num">yes</td><td>✓ positive wins</td></tr>
+           <tr><td class="num">$0.60$</td><td class="num">$0.70$</td><td class="num">no</td><td>✗ negative outscored it</td></tr>
+           <tr><td class="num">$0.60$</td><td class="num">$0.30$</td><td class="num">yes</td><td>✓ positive wins</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>$0.90$ vs $0.70$ → positive wins ✓</li>
-         <li>$0.90$ vs $0.30$ → positive wins ✓</li>
-         <li>$0.60$ vs $0.70$ → positive loses ✗ (the negative outscored it)</li>
-         <li>$0.60$ vs $0.30$ → positive wins ✓</li>
+         <li>Count correct pairs: $3$ of $4$.</li>
+         <li>ROC-AUC $= \\Pr(s_+ \\gt s_-) = 3/4 = 0.75$.</li>
+         <li>Gini $= 2\\,\\text{AUC} - 1 = 2(0.75) - 1 = 0.50$.</li>
        </ul>
-       <p>Three of four pairs are ranked correctly, so <b>ROC-AUC $= 3/4 = 0.75$</b>. The matching <b>Gini $= 2(0.75) - 1 = 0.5$</b>. Notice we never used the exact score values — only who outscored whom.</p>
+       <p>Notice we never used the exact score values — only who outscored whom.</p>
        <p><b>A tiny probability example for log loss &amp; Brier.</b> Suppose a true positive ($y=1$) gets probability $\\hat p = 0.8$, and a true negative ($y=0$) gets $\\hat p = 0.3$.</p>
        <ul class="steps">
-         <li>Log loss $= -\\tfrac{1}{2}\\big[\\log(0.8) + \\log(1-0.3)\\big] = -\\tfrac{1}{2}\\big[\\log 0.8 + \\log 0.7\\big] \\approx -\\tfrac{1}{2}(-0.223 - 0.357) = 0.290$.</li>
+         <li>Log loss $= -\\tfrac{1}{2}\\big[y_1\\log \\hat p_1 + (1-y_2)\\log(1-\\hat p_2)\\big] = -\\tfrac{1}{2}\\big[\\log 0.8 + \\log 0.7\\big] \\approx -\\tfrac{1}{2}(-0.223 - 0.357) = 0.290$.</li>
          <li>Brier $= \\tfrac{1}{2}\\big[(0.8-1)^2 + (0.3-0)^2\\big] = \\tfrac{1}{2}(0.04 + 0.09) = 0.065$.</li>
        </ul>
-       <p>Now make the negative <i>overconfidently wrong</i>: $\\hat p = 0.99$ while $y=0$. Its log-loss term jumps to $-\\log(0.01) \\approx 4.6$, dragging the average from $0.29$ to about $2.4$ — one bad call dominating. Its Brier term only moves to $(0.99)^2 \\approx 0.98$. That contrast is exactly the "log loss explodes, Brier stays bounded" behavior from the pitfalls.</p>`,
+       <p>Now make the negative <i>overconfidently wrong</i>: $\\hat p = 0.99$ while $y=0$. The table below contrasts the two losses on the honest pair vs the overconfident pair — log loss explodes while Brier stays bounded:</p>
+       <table class="extable">
+         <caption>One overconfident wrong call ($\\hat p=0.99$, $y=0$) dominates the log-loss average but barely moves Brier.</caption>
+         <thead><tr><th>scenario</th><th class="num">log loss</th><th class="num">Brier</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">honest ($0.8$ / $0.3$)</td><td class="num">$0.290$</td><td class="num">$0.065$</td></tr>
+           <tr><td class="row-h">overconfident neg ($0.8$ / $0.99$)</td><td class="num">$\\approx 2.41$</td><td class="num">$\\approx 0.49$</td></tr>
+         </tbody>
+       </table>
+       <p>The overconfident negative's log-loss term jumps to $-\\log(0.01) \\approx 4.6$, dragging the average to $\\tfrac{1}{2}(0.223 + 4.6) \\approx 2.41$ — one bad call dominating. Its Brier term only moves to $(0.99)^2 \\approx 0.98$, so the Brier average rises to just $\\tfrac{1}{2}(0.04 + 0.98) \\approx 0.49$. That contrast is exactly the "log loss explodes, Brier stays bounded" behavior from the pitfalls.</p>`,
 
     demo: function (host) {
       function C() {

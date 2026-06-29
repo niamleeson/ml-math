@@ -90,14 +90,43 @@ $$ \\phi=\\sqrt{\\tfrac{\\chi^2}{n}}, \\qquad V=\\sqrt{\\frac{\\chi^2}{n\\,\\min
        <p><b>Why Cramér's V lands in $[0,1]$.</b> For a contingency table, $\\chi^2$ can grow with $n$ and the table size, so it has no natural ceiling. The largest possible $\\chi^2$ is $n\\cdot\\min(k-1, m-1)$ (perfect association in a $k\\times m$ table). Dividing by that maximum and taking the square root forces $V$ into $[0,1]$, where $1$ means each row category determines the column category.</p>`,
 
     example:
-      `<p><b>The whole point in five numbers.</b> Take $X=[1,2,3,4,5]$ and $Y=[1,4,9,16,25]$ — that is $Y=X^2$, a perfect (but curved) relationship that is also always rising.</p>
+      `<p><b>The whole point in five numbers.</b> Take $X=[1,2,3,4,5]$ and $Y=[1,4,9,16,25]$ — that is
+        $Y=X^2$, a perfect (but curved) relationship that is also always rising. Here is the per-row data,
+        centered for the Pearson formula:</p>
+       <table class="extable">
+         <caption>The five rows. $\\bar X = 3$, $\\bar Y = 11$. Last two columns feed the Pearson formula.</caption>
+         <thead><tr><th class="num">$X$</th><th class="num">$Y$</th><th class="num">$X-\\bar X$</th><th class="num">$Y-\\bar Y$</th><th class="num">$(X-\\bar X)(Y-\\bar Y)$</th><th class="num">$(X-\\bar X)^2$</th><th class="num">$(Y-\\bar Y)^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td class="num">1</td><td class="num">-2</td><td class="num">-10</td><td class="num">20</td><td class="num">4</td><td class="num">100</td></tr>
+           <tr><td class="num">2</td><td class="num">4</td><td class="num">-1</td><td class="num">-7</td><td class="num">7</td><td class="num">1</td><td class="num">49</td></tr>
+           <tr><td class="num">3</td><td class="num">9</td><td class="num">0</td><td class="num">-2</td><td class="num">0</td><td class="num">0</td><td class="num">4</td></tr>
+           <tr><td class="num">4</td><td class="num">16</td><td class="num">1</td><td class="num">5</td><td class="num">5</td><td class="num">1</td><td class="num">25</td></tr>
+           <tr><td class="num">5</td><td class="num">25</td><td class="num">2</td><td class="num">14</td><td class="num">28</td><td class="num">4</td><td class="num">196</td></tr>
+           <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">60</td><td class="num">10</td><td class="num">374</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Pearson $r$.</b> Center and apply the formula. Because the curve bends, the straight-line fit is good but not perfect: $r\\approx 0.981$. Close to 1, yet it has already <i>lost</i> information — it can't tell this from a slightly noisy line.</li>
-         <li><b>Spearman $\\rho$.</b> Rank both: $X$ ranks are $[1,2,3,4,5]$ and $Y$ ranks are also $[1,2,3,4,5]$ (since $Y$ rises with $X$). The rank gaps are all $d_i=0$, so $\\rho = 1-\\frac{6\\cdot 0}{5(25-1)} = 1$. <b>Perfect.</b></li>
-         <li><b>Kendall $\\tau$.</b> Every one of the $\\binom{5}{2}=10$ pairs is concordant (both rise together), none discordant, so $\\tau = \\frac{10-0}{10} = 1$. Also perfect.</li>
-         <li><b>The lesson:</b> the relationship is exact and monotonic, yet Pearson reports $0.981$ while Spearman and Kendall report $1.0$. For a curved-but-rising relationship, the rank measures are the honest ones — Pearson only ever sees the straight-line shadow.</li>
+         <li><b>Pearson $r$.</b> $r=\\dfrac{\\sum (X-\\bar X)(Y-\\bar Y)}{\\sqrt{\\sum (X-\\bar X)^2}\\,\\sqrt{\\sum (Y-\\bar Y)^2}}
+          = \\dfrac{60}{\\sqrt{10}\\,\\sqrt{374}} = \\dfrac{60}{\\sqrt{3740}} \\approx \\dfrac{60}{61.16} \\approx 0.981$.
+          Close to 1, yet not perfect — the curve bends, so it can't tell this from a slightly noisy line.</li>
+         <li><b>Spearman $\\rho$.</b> Rank both: $X$ ranks $[1,2,3,4,5]$ and $Y$ ranks $[1,2,3,4,5]$ (since $Y$
+          rises with $X$). All rank gaps $d_i=0$, so $\\rho = 1-\\dfrac{6\\cdot 0}{5(5^2-1)} = 1$. <b>Perfect.</b></li>
+         <li><b>Kendall $\\tau$.</b> All $\\binom{5}{2}=10$ pairs are concordant, none discordant, so
+          $\\tau = \\dfrac{10-0}{10} = 1$. Also perfect.</li>
        </ul>
-       <p><b>A categorical mini-example (Cramér's V).</b> Suppose a 2×2 table of {weather: sunny/rainy} vs {umbrella: yes/no} gives $\\chi^2 = 20$ on $n=100$ people. Then $\\phi = V = \\sqrt{20/100} = \\sqrt{0.2} \\approx 0.45$ — a moderate association between weather and carrying an umbrella, with no means or straight lines involved at all.</p>`,
+       <table class="extable">
+         <caption>Same exact, always-rising relationship — three verdicts. Only Pearson is fooled by the curve.</caption>
+         <thead><tr><th>measure</th><th class="num">value</th><th>what it saw</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Pearson $r$</td><td class="num">0.981</td><td>straight-line strength (loses the curve)</td></tr>
+           <tr><td class="row-h">Spearman $\\rho$</td><td class="num">1.000</td><td>monotonic strength (on ranks)</td></tr>
+           <tr><td class="row-h">Kendall $\\tau$</td><td class="num">1.000</td><td>concordant-pair strength</td></tr>
+         </tbody>
+       </table>
+       <p><b>A categorical mini-example (Cramér's V).</b> Suppose a 2×2 table of {weather: sunny/rainy} vs
+        {umbrella: yes/no} gives $\\chi^2 = 20$ on $n=100$ people. Then
+        $\\phi = V = \\sqrt{20/100} = \\sqrt{0.2} \\approx 0.45$ — a moderate association between weather and
+        carrying an umbrella, with no means or straight lines involved at all.</p>`,
 
     demo: function (host) {
       var c = (function () {

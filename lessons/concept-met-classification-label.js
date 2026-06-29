@@ -104,18 +104,27 @@
        <p>MCC is the correlation coefficient between the predicted labels and the true labels treated as $0/1$ numbers. A correlation runs from $-1$ to $+1$ and only hits $+1$ when all four boxes line up, which is why it stays honest even when one class is rare.</p>`,
 
     example:
-      `<p>Take the real confusion matrix from the model in the chart below (malignant = positive): $TP = 55$, $FP = 8$, $FN = 15$, $TN = 110$. Real positives $P = 55+15 = 70$, real negatives $N = 110+8 = 118$, total $= 188$.</p>
+      `<p>Take the real confusion matrix from the model in the chart below (malignant = positive). Lay the four counts in the $2\\times 2$ grid (rows = truth, columns = prediction):</p>
+       <table class="extable">
+         <caption>Confusion matrix: $TP=55$, $FP=8$, $FN=15$, $TN=110$ (total $188$).</caption>
+         <thead><tr><th></th><th class="num">predicted +</th><th class="num">predicted &minus;</th><th class="num">row total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">actual + (malignant)</td><td class="num">$TP=55$</td><td class="num">$FN=15$</td><td class="num">$P=70$</td></tr>
+           <tr><td class="row-h">actual &minus; (benign)</td><td class="num">$FP=8$</td><td class="num">$TN=110$</td><td class="num">$N=118$</td></tr>
+         </tbody>
+       </table>
+       <p>So real positives $P = 55+15 = 70$, real negatives $N = 110+8 = 118$, total $= 188$. Now plug those four counts into each formula:</p>
        <ul class="steps">
-         <li>Accuracy $= \\dfrac{55+110}{188} = \\dfrac{165}{188} \\approx 0.878$ &nbsp; (error rate $\\approx 0.122$).</li>
-         <li>Precision (PPV) $= \\dfrac{55}{55+8} = \\dfrac{55}{63} \\approx 0.873$.</li>
-         <li>Recall / sensitivity / TPR $= \\dfrac{55}{55+15} = \\dfrac{55}{70} \\approx 0.786$.</li>
-         <li>Specificity / TNR $= \\dfrac{110}{110+8} = \\dfrac{110}{118} \\approx 0.932$ &nbsp; (FPR $\\approx 0.068$, FNR $\\approx 0.214$).</li>
-         <li>F1 $= \\dfrac{2\\times 55}{2\\times 55 + 8 + 15} = \\dfrac{110}{133} \\approx 0.827$.</li>
-         <li>Balanced accuracy $= \\dfrac{0.786 + 0.932}{2} \\approx 0.859$.</li>
-         <li>NPV $= \\dfrac{110}{110+15} = \\dfrac{110}{125} = 0.880$.</li>
-         <li>Jaccard $= \\dfrac{55}{55+8+15} = \\dfrac{55}{78} \\approx 0.705$.</li>
-         <li>Youden's J (informedness) $= 0.786 + 0.932 - 1 = 0.718$.</li>
-         <li>MCC $= \\dfrac{55\\cdot110 - 8\\cdot15}{\\sqrt{63\\cdot70\\cdot118\\cdot125}} = \\dfrac{5930}{\\sqrt{65{,}047{,}500}} \\approx 0.735$.</li>
+         <li>Accuracy $= \\dfrac{TP+TN}{\\text{all}} = \\dfrac{55+110}{188} = \\dfrac{165}{188} \\approx 0.878$ &nbsp; (error rate $\\approx 0.122$).</li>
+         <li>Precision (PPV) $= \\dfrac{TP}{TP+FP} = \\dfrac{55}{63} \\approx 0.873$.</li>
+         <li>Recall / sensitivity / TPR $= \\dfrac{TP}{TP+FN} = \\dfrac{55}{70} \\approx 0.786$.</li>
+         <li>Specificity / TNR $= \\dfrac{TN}{TN+FP} = \\dfrac{110}{118} \\approx 0.932$ &nbsp; (FPR $\\approx 0.068$, FNR $\\approx 0.214$).</li>
+         <li>F1 $= \\dfrac{2\\,TP}{2\\,TP+FP+FN} = \\dfrac{110}{133} \\approx 0.827$.</li>
+         <li>Balanced accuracy $= \\dfrac{\\text{recall}+\\text{specificity}}{2} = \\dfrac{0.786 + 0.932}{2} \\approx 0.859$.</li>
+         <li>NPV $= \\dfrac{TN}{TN+FN} = \\dfrac{110}{125} = 0.880$.</li>
+         <li>Jaccard $= \\dfrac{TP}{TP+FP+FN} = \\dfrac{55}{78} \\approx 0.705$.</li>
+         <li>Youden's J (informedness) $= \\text{recall}+\\text{specificity}-1 = 0.786 + 0.932 - 1 = 0.718$.</li>
+         <li>MCC $= \\dfrac{TP\\cdot TN - FP\\cdot FN}{\\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}} = \\dfrac{55\\cdot110 - 8\\cdot15}{\\sqrt{63\\cdot70\\cdot118\\cdot125}} = \\dfrac{5930}{\\sqrt{65{,}047{,}500}} \\approx 0.735$.</li>
        </ul>
        <p>Notice accuracy ($0.878$) flatters the model: balanced accuracy ($0.859$) and MCC ($0.735$) are lower because the model misses more malignant cases (recall $0.786$) than its overall accuracy suggests.</p>`,
 

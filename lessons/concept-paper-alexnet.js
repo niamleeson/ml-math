@@ -254,10 +254,21 @@
         <li><b>Add the channels.</b> There are $96$ kernels, so the layer outputs a
         $54 \\times 54 \\times 96$ feature map: a stack of 96 feature maps, each $54$ pixels on a side.</li>
        </ul>
-       <p>(The paper's Fig. 2 labels this layer $55\\times55$, not $54\\times54$ &mdash; that figure implicitly
-       uses a small padding / a $227\\times227$ input, a well-known ambiguity. With the clean "$224$ input, no
-       padding" reading the formula gives $54$. The point is the <b>arithmetic</b>, which the notebook recomputes
-       for both readings so you can see exactly where the off-by-one comes from.)</p>`,
+       <p>The paper's Fig. 2 labels this layer $55\\times55$, not $54\\times54$ &mdash; that figure implicitly
+       uses a small padding / a $227\\times227$ input, a well-known ambiguity. Run the same formula for both
+       readings to see exactly where the off-by-one comes from:</p>
+       <table class="extable">
+        <caption>Conv1 output size $O=\\lfloor (W-K+2P)/S\\rfloor +1$ under the two common readings ($K=11$, $S=4$, $P=0$).</caption>
+        <thead>
+         <tr><th>Reading</th><th class="num">$W$</th><th class="num">$W-K+2P$</th><th class="num">$/S$</th><th class="num">$\\lfloor\\cdot\\rfloor+1=O$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">Clean "224, no pad"</td><td class="num">224</td><td class="num">213</td><td class="num">53.25</td><td class="num">54</td></tr>
+         <tr><td class="row-h">Fig. 2 "227" reading</td><td class="num">227</td><td class="num">216</td><td class="num">54.0</td><td class="num">55</td></tr>
+        </tbody>
+       </table>
+       <p>The point is the <b>arithmetic</b>; the notebook recomputes both rows so you can check every figure
+       by running.</p>`,
     recipe:
       `<ol>
         <li><b>Build the feature extractor:</b> five <code>nn.Conv2d</code> layers, each followed by a

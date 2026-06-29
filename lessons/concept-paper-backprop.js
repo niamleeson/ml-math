@@ -216,28 +216,32 @@
        giving the sum in eq (7). See that lesson for the line-by-line derivation.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; one backward pass through a 2-layer net. One input unit $i$, one hidden
-       unit $h$, one output unit $o$; sigmoid units; target $d=0$. Weights $w_{hi}=0.2$ (input&rarr;hidden),
-       $w_{oh}=0.3$ (hidden&rarr;output); input activity $y_i=0.5$.</p>
-       <p><b>Forward (eqs 1-2):</b></p>
-       <ul>
-         <li>$x_h = y_i w_{hi} = 0.5\\cdot 0.2 = 0.1$, so $y_h = 1/(1+e^{-0.1}) = 0.524979$.</li>
-         <li>$x_o = y_h w_{oh} = 0.524979\\cdot 0.3 = 0.157494$, so $y_o = 1/(1+e^{-0.157494}) = 0.539292$.</li>
-         <li>Error $E = \\tfrac12 (y_o-d)^2 = \\tfrac12(0.539292)^2 = 0.145418$.</li>
+      `<p><b>Worked numbers</b> &mdash; one forward + one backward pass through a 2-layer net. One input unit
+       $i$, one hidden unit $h$, one output unit $o$; sigmoid units; target $d=0$. Weights $w_{hi}=0.2$
+       (input&rarr;hidden), $w_{oh}=0.3$ (hidden&rarr;output); input activity $y_i=0.5$.</p>
+       <p><b>Forward (eqs 1-2), bottom to top:</b></p>
+       <ul class="steps">
+         <li>$x_h = y_i w_{hi} = 0.5\\cdot 0.2 = 0.1$, so $y_h = 1/(1+e^{-0.1}) = 0.524979$ (eq 1&rarr;2).</li>
+         <li>$x_o = y_h w_{oh} = 0.524979\\cdot 0.3 = 0.157494$, so $y_o = 1/(1+e^{-0.157494}) = 0.539292$ (eq 1&rarr;2).</li>
+         <li>Error $E = \\tfrac12 (y_o-d)^2 = \\tfrac12(0.539292-0)^2 = 0.145418$ (eq 3).</li>
        </ul>
-       <p><b>Backward (eqs 4-6 at the output, then 7&rarr;5&rarr;6 for the hidden weight):</b></p>
-       <ul>
-         <li>$\\partial E/\\partial y_o = y_o - d = 0.539292$ (eq 4).</li>
-         <li>$\\partial E/\\partial x_o = 0.539292\\cdot y_o(1-y_o) = 0.539292\\cdot 0.248456 = 0.133990$ (eq 5).
-         This is the output delta $\\delta_o$.</li>
-         <li>$\\partial E/\\partial w_{oh} = \\delta_o\\, y_h = 0.133990\\cdot 0.524979 = 0.070342$ (eq 6).</li>
-         <li>Propagate down: $\\partial E/\\partial y_h = \\delta_o\\, w_{oh} = 0.133990\\cdot 0.3 = 0.040197$ (eq 7).</li>
-         <li>$\\partial E/\\partial x_h = 0.040197\\cdot y_h(1-y_h) = 0.040197\\cdot 0.249376 = 0.010024$ (eq 5).
-         This is the hidden delta $\\delta_h$.</li>
-         <li>$\\partial E/\\partial w_{hi} = \\delta_h\\, y_i = 0.010024\\cdot 0.5 = 0.005012$ (eq 6).</li>
-       </ul>
-       <p>The CODE cell recomputes these exact numbers with the from-scratch tape and confirms them against
-       <code>torch.autograd</code>.</p>`,
+       <p><b>Backward (eqs 4-6 at the output, then 7&rarr;5&rarr;6 for the buried hidden weight)</b> &mdash;
+       each row is one equation plugged in:</p>
+       <table class="extable">
+         <caption>The backward sweep as a step &rarr; value ledger; the last row is the gradient on the hidden weight.</caption>
+         <thead><tr><th>eq</th><th>quantity</th><th class="num">arithmetic</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">4</td><td>$\\partial E/\\partial y_o$</td><td class="num">$y_o - d = 0.539292 - 0$</td><td class="num">0.539292</td></tr>
+           <tr><td class="row-h">5</td><td>$\\partial E/\\partial x_o=\\delta_o$</td><td class="num">$0.539292\\cdot 0.248456$</td><td class="num">0.133990</td></tr>
+           <tr><td class="row-h">6</td><td>$\\partial E/\\partial w_{oh}$</td><td class="num">$\\delta_o\\, y_h = 0.133990\\cdot 0.524979$</td><td class="num">0.070342</td></tr>
+           <tr><td class="row-h">7</td><td>$\\partial E/\\partial y_h$</td><td class="num">$\\delta_o\\, w_{oh} = 0.133990\\cdot 0.3$</td><td class="num">0.040197</td></tr>
+           <tr><td class="row-h">5</td><td>$\\partial E/\\partial x_h=\\delta_h$</td><td class="num">$0.040197\\cdot 0.249376$</td><td class="num">0.010024</td></tr>
+           <tr><td class="row-h">6</td><td>$\\partial E/\\partial w_{hi}$</td><td class="num">$\\delta_h\\, y_i = 0.010024\\cdot 0.5$</td><td class="num">0.005012</td></tr>
+         </tbody>
+       </table>
+       <p>Here $y_o(1-y_o)=0.539292\\cdot0.460708=0.248456$ and $y_h(1-y_h)=0.524979\\cdot0.475021=0.249376$
+       are the two sigmoid derivatives used in eq (5). The CODE cell recomputes these exact numbers with the
+       from-scratch tape and confirms them against <code>torch.autograd</code>.</p>`,
 
     recipe:
       `<p><b>The procedure, as numbered steps (one training step):</b></p>

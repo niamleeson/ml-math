@@ -317,23 +317,42 @@
        <p><b>(A) One PUCT selection.</b> A root has been searched a little. Two candidate moves, with
        $c_{puct}=1.5$, and the parent's total visits $\\sum_b N(s,b) = 9$ (so $\\sqrt{9}=3$):</p>
        <ul class="steps">
-        <li><b>Move A:</b> network prior $P=0.6$, tried $N=3$ times, mean value $Q=0.10$.
-        $U_A = 1.5 \\times 0.6 \\times \\dfrac{3}{1+3} = 1.5 \\times 0.6 \\times 0.75 = 0.675$.
-        Score $=Q+U = 0.10 + 0.675 = 0.775$.</li>
-        <li><b>Move B:</b> network prior $P=0.4$, tried $N=1$ time, mean value $Q=0.50$.
-        $U_B = 1.5 \\times 0.4 \\times \\dfrac{3}{1+1} = 1.5 \\times 0.4 \\times 1.5 = 0.90$.
-        Score $=Q+U = 0.50 + 0.90 = 1.40$.</li>
-        <li><b>Select $\\arg\\max$:</b> $1.40 \\gt 0.775$, so the simulation descends into <b>Move B</b>. Even
+        <li><b>Move A bonus.</b> $U_A = 1.5 \\times 0.6 \\times \\dfrac{3}{1+3} = 1.5 \\times 0.6 \\times 0.75
+        = 0.675$. Score $=Q+U = 0.10 + 0.675 = 0.775$.</li>
+        <li><b>Move B bonus.</b> $U_B = 1.5 \\times 0.4 \\times \\dfrac{3}{1+1} = 1.5 \\times 0.4 \\times 1.5
+        = 0.90$. Score $=Q+U = 0.50 + 0.90 = 1.40$.</li>
+        <li><b>Select $\\arg\\max$.</b> $1.40 \\gt 0.775$, so the simulation descends into <b>Move B</b>. Even
         though A had the higher prior, B's strong early value <i>and</i> its low visit count (big exploration
         bonus) win this step. That is PUCT balancing exploit ($Q$) against explore ($U$).</li>
        </ul>
+       <table class="extable">
+        <caption>(A) PUCT selection, $U = 1.5\\cdot P\\cdot\\sqrt{9}/(1+N)$, $\\sqrt{9}=3$. $\\arg\\max(Q+U)$ is move B.</caption>
+        <thead>
+         <tr><th>Move</th><th class="num">$P$</th><th class="num">$N$</th><th class="num">$Q$</th><th class="num">$U$</th><th class="num">$Q+U$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">A</td><td class="num">0.6</td><td class="num">3</td><td class="num">0.10</td><td class="num">0.675</td><td class="num">0.775</td></tr>
+         <tr><td class="row-h">B</td><td class="num">0.4</td><td class="num">1</td><td class="num">0.50</td><td class="num">0.900</td><td class="num">1.400</td></tr>
+        </tbody>
+       </table>
        <p><b>(B) One backup.</b> The simulation reached a leaf the network valued at $v = +0.8$ (good for the
-       player to move <i>there</i>). Walk back up the two-ply path, flipping sign each ply. At the parent edge of
-       the leaf (the opponent's move into it) the value is $-0.8$; suppose that edge had
-       $N=1,\\,W=0.2$ before. After backup: $N = 2,\\; W = 0.2 + (-0.8) = -0.6,\\; Q = W/N = -0.6/2 = -0.30$.
-       One ply further up (our move), the value flips again to $+0.8$; if that edge had
-       $N=3,\\,W=0.5$: after backup $N=4,\\; W = 0.5 + 0.8 = 1.3,\\; Q = 1.3/4 = 0.325$.</li>
+       player to move <i>there</i>). Walk back up the two-ply path, flipping the sign each ply.</p>
+       <ul class="steps">
+        <li><b>Leaf-edge (opponent's move into the leaf).</b> Flip sign: value $= -0.8$. With $N=1,\\,W=0.2$
+        before: $N = 1+1 = 2$, $W = 0.2 + (-0.8) = -0.6$, $Q = W/N = -0.6/2 = -0.30$.</li>
+        <li><b>One ply up (our move).</b> Flip again: value $= +0.8$. With $N=3,\\,W=0.5$ before:
+        $N = 3+1 = 4$, $W = 0.5 + 0.8 = 1.3$, $Q = W/N = 1.3/4 = 0.325$.</li>
        </ul>
+       <table class="extable">
+        <caption>(B) Backup of leaf value $v=+0.8$, sign flipped per ply. Each edge: $N\\!+\\!=\\!1$, $W\\!+\\!=\\!v$, $Q=W/N$.</caption>
+        <thead>
+         <tr><th>Edge</th><th class="num">$v$ (flipped)</th><th class="num">$N$</th><th class="num">$W$</th><th class="num">$Q$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">Leaf-edge (opponent)</td><td class="num">&minus;0.8</td><td class="num">2</td><td class="num">&minus;0.6</td><td class="num">&minus;0.30</td></tr>
+         <tr><td class="row-h">One ply up (us)</td><td class="num">+0.8</td><td class="num">4</td><td class="num">1.3</td><td class="num">0.325</td></tr>
+        </tbody>
+       </table>
        <p>Both blocks &mdash; $U_A=0.675$, $U_B=0.90$, pick B; and the two updated $Q$'s $-0.30$ and $0.325$
        &mdash; are recomputed in the notebook's first cell so you can verify them.</p>`,
     recipe:

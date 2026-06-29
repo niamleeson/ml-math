@@ -170,17 +170,40 @@
        is pure redundancy), and $\\beta\\to1$ gives $E_n\\to n$ (no redundancy &mdash; raw count). Both match the
        weight limits above.</p>`,
     example:
-      `<p>Take a tiny class with $\\beta=0.9$ (so ceiling $1/(1-0.9)=10$). Effective numbers:
-       $E_1=1$, $E_2=1+0.9=1.9$, $E_3=1+0.9+0.81=2.71$. So the 3rd sample added only $2.71-1.9=0.81$ effective
-       samples &mdash; already less than the 2nd added ($0.9$), which added less than the 1st ($1.0$). Diminishing
-       returns, exactly.</p>
-       <p>Now a 5-class long tail with counts $[5000,1000,200,50,10]$ and $\\beta=0.99$. The class weights
-       $1/E_{n_y}$, normalized to sum to $C=5$, come out roughly $[0.31, 0.31, 0.36, 0.78, 3.24]$. Notice the two
-       <b>head</b> classes (5000 and 1000) get the <i>same</i> weight 0.31 &mdash; both saturated the
-       $\\beta=0.99$ ceiling &mdash; while the rarest class gets $3.24$. Compare inverse-frequency on the same
-       counts: $[0.008, 0.040, 0.198, 0.792, 3.96]$, which gives the rarest class an even bigger share and barely
-       any to the head. CB sits between "treat all classes equally" and "inverse frequency," capping the head
-       rather than starving it.</p>`,
+      `<p>First, watch the <b>effective number saturate</b>. Take a tiny class with $\\beta=0.9$ (ceiling
+       $1/(1-0.9)=10$) and compute $E_n=(1-\\beta^n)/(1-\\beta)=1+0.9+0.9^2+\\dots$ term by term:</p>
+       <ul class="steps">
+        <li>$E_1 = 1$.</li>
+        <li>$E_2 = 1 + 0.9 = 1.90$ &mdash; the 2nd sample added $0.90$.</li>
+        <li>$E_3 = 1 + 0.9 + 0.81 = 2.71$ &mdash; the 3rd added only $2.71-1.90 = 0.81$.</li>
+       </ul>
+       <table class="extable">
+        <caption>Each new sample adds less effective coverage ($\\beta=0.9$): diminishing returns.</caption>
+        <thead><tr><th>sample $n$</th><th class="num">$E_n$</th><th class="num">added ($E_n-E_{n-1}$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">1.00</td><td class="num">1.00</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1.90</td><td class="num">0.90</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2.71</td><td class="num">0.81</td></tr>
+        </tbody>
+       </table>
+       <p>Now a 5-class long tail with counts $[5000,1000,200,50,10]$ and $\\beta=0.99$ (ceiling $100$). Compute
+       $w_y=1/E_{n_y}$ and normalize so $\\sum_y w_y = C = 5$, and compare against inverse-frequency
+       ($w_y \\propto 1/n_y$, also normalized to sum $5$):</p>
+       <table class="extable">
+        <caption>CB ($\\beta=0.99$) caps the head to a shared floor; inverse-frequency starves it.</caption>
+        <thead><tr><th>count $n_y$</th><th class="num">no re-weight</th><th class="num">CB $\\beta=0.99$</th><th class="num">inverse-freq</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">5000 (head)</td><td class="num">1.00</td><td class="num">0.31</td><td class="num">0.008</td></tr>
+         <tr><td class="row-h">1000</td><td class="num">1.00</td><td class="num">0.31</td><td class="num">0.040</td></tr>
+         <tr><td class="row-h">200</td><td class="num">1.00</td><td class="num">0.36</td><td class="num">0.198</td></tr>
+         <tr><td class="row-h">50</td><td class="num">1.00</td><td class="num">0.78</td><td class="num">0.792</td></tr>
+         <tr><td class="row-h">10 (tail)</td><td class="num">1.00</td><td class="num">3.24</td><td class="num">3.96</td></tr>
+        </tbody>
+       </table>
+       <p>The two <b>head</b> classes (5000 and 1000) get the <i>same</i> CB weight $0.31$ — both saturated the
+       $\\beta=0.99$ ceiling — while the rarest gets $3.24$. Inverse-frequency instead hands the rarest an even
+       bigger share and gives the head almost nothing ($0.008$). CB sits between "treat all classes equally" and
+       "inverse frequency," capping the head rather than starving it.</p>`,
     recipe:
       `<ol>
         <li>Count samples per class on the <b>training</b> split: $n_1,\\dots,n_C$.</li>

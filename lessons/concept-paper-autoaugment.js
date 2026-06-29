@@ -263,27 +263,44 @@ $$ \\nabla_\\theta J(\\theta) \\;\\approx\\; \\big(R - b\\big)\\,\\sum_{k=1}^{30
     example:
       `<p>Two worked computations: (a) the <b>search-space size</b>, and (b) <b>applying one sub-policy</b>
        to an image.</p>
-       <p><b>(a) Search-space size (&sect;3).</b> Count the independent choices.</p>
+       <p><b>(a) Search-space size (&sect;3).</b> Count the independent choices, building up from one
+       operation to a full policy.</p>
        <ul class="steps">
-        <li>One operation: $\\underbrace{16}_{\\text{transforms}}\\times\\underbrace{10}_{\\text{magnitudes}}
+        <li>One operation = pick a transform, a magnitude, and a probability:
+        $\\underbrace{16}_{\\text{transforms}}\\times\\underbrace{10}_{\\text{magnitudes}}
         \\times\\underbrace{11}_{\\text{probabilities}} = 1760$ choices.</li>
         <li>One sub-policy $=2$ operations in sequence: $1760^2 = 3{,}097{,}600\\approx3.1\\times10^{6}$.</li>
-        <li>One policy $=5$ sub-policies: $\\left(1760^2\\right)^5 = 1760^{10} = (16\\times10\\times11)^{10}$.
-        Taking logs, $\\log_{10}1760\\approx3.2455$, so $10\\times3.2455 = 32.455$, giving
+        <li>One policy $=5$ sub-policies $=10$ operations total: $\\left(1760^2\\right)^5 = 1760^{10}
+        = (16\\times10\\times11)^{10}$.</li>
+        <li>Evaluate via logs: $\\log_{10}1760\\approx3.2455$, so $10\\times3.2455 = 32.455$, giving
         $10^{32.455}\\approx2.9\\times10^{32}$ &mdash; the paper's number.</li>
        </ul>
+       <table class="extable">
+         <caption>Counting the &sect;3 search space, level by level (each level multiplies in more choices).</caption>
+         <thead><tr><th>level</th><th class="num">how many</th><th class="num">count</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">one operation</td><td class="num">16 × 10 × 11</td><td class="num">1,760</td></tr>
+           <tr><td class="row-h">one sub-policy (2 ops)</td><td class="num">1760²</td><td class="num">3.10 × 10⁶</td></tr>
+           <tr><td class="row-h">one policy (5 sub-policies)</td><td class="num">1760¹⁰</td><td class="num">2.9 × 10³²</td></tr>
+         </tbody>
+       </table>
        <p><b>(b) Applying one sub-policy.</b> Suppose a sampled sub-policy is
        <code>[(Rotate, p=0.8, m=9), (Solarize, p=0.3, m=5)]</code>, where magnitude $9$ on a $0\\!-\\!9$
        scale is near the strongest rotation (the paper's degree range is $\\pm30^\\circ$, so $m=9$
-       $\\approx$ $30^\\circ$), and Solarize at $m=5$ inverts pixels above a mid threshold.</p>
+       $\\approx$ $30^\\circ$), and Solarize at $m=5$ inverts pixels above a mid threshold. For each
+       operation draw a uniform $r\\in[0,1)$ and <b>apply</b> only if $r\\lt p$.</p>
+       <table class="extable">
+         <caption>One image, one epoch: per-operation apply/skip gate (apply when the draw $r\\lt p$).</caption>
+         <thead><tr><th>operation</th><th class="num">$p$</th><th class="num">draw $r$</th><th>$r\\lt p$?</th><th>decision</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Rotate ($m=9$)</td><td class="num">0.8</td><td class="num">0.42</td><td>0.42 &lt; 0.8 &rarr; yes</td><td><b>apply</b> (~30°)</td></tr>
+           <tr><td class="row-h">Solarize ($m=5$)</td><td class="num">0.3</td><td class="num">0.55</td><td>0.55 &lt; 0.3 &rarr; no</td><td><b>skip</b></td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Operation 1 (Rotate, $p=0.8$).</b> Draw a uniform random number $r_1\\in[0,1)$. Say
-        $r_1=0.42$. Since $0.42\\lt0.8$, <b>apply</b> Rotate at $\\approx30^\\circ$.</li>
-        <li><b>Operation 2 (Solarize, $p=0.3$).</b> Draw $r_2$; say $r_2=0.55$. Since $0.55\\ge0.3$,
-        <b>skip</b> Solarize. The image is left as the rotated version.</li>
-        <li><b>Result:</b> this image, this epoch, is rotated by $\\sim30^\\circ$ and not solarized. Next
-        epoch the same image might draw $r_1=0.9$ (skip rotate) and $r_2=0.1$ (apply solarize) &mdash; a
-        <i>different</i> augmented view. That per-epoch variety is the point.</li>
+        <li><b>Result this epoch:</b> the image is rotated by $\\sim30^\\circ$ and not solarized.</li>
+        <li><b>Next epoch</b> the same image might draw $r_1=0.9$ (skip rotate) and $r_2=0.1$ (apply
+        solarize) &mdash; a <i>different</i> augmented view. That per-epoch variety is the point.</li>
        </ul>
        <p>The notebook recomputes both: it prints $(16\\times10\\times11)^{10}$ and walks a sub-policy with
        a fixed random seed so the apply/skip decisions match these numbers.</p>`,

@@ -94,13 +94,30 @@
        <p><b>Why not just optimize the metric directly?</b> Accuracy and F1 are flat-then-jumpy in the model's parameters — they have no useful slope, so gradient descent cannot follow them. The loss (log loss, squared error) is a smooth stand-in the optimizer <i>can</i> follow, chosen so that pushing it down tends to push the metric up. Loss to train, metric to report. $\\blacksquare$</p>`,
 
     example:
-      `<p>A spam filter is tested on 200 emails. The confusion matrix comes back: TP $= 80$, FP $= 20$, FN $= 10$, TN $= 90$ (positive = spam).</p>
+      `<p>A spam filter is tested on 200 emails (positive = spam). The confusion matrix comes back as the four boxes below — rows are the truth, columns are the model's call:</p>
+       <table class="extable">
+         <caption>Confusion matrix: 200 emails, positive = spam.</caption>
+         <thead><tr><th></th><th class="num">predicted spam</th><th class="num">predicted ham</th><th class="num">row total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">actually spam</td><td class="num">TP $=80$</td><td class="num">FN $=10$</td><td class="num">90</td></tr>
+           <tr><td class="row-h">actually ham</td><td class="num">FP $=20$</td><td class="num">TN $=90$</td><td class="num">110</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li><b>Accuracy</b> $= \\dfrac{TP+TN}{\\text{all}} = \\dfrac{80+90}{200} = \\dfrac{170}{200} = 0.85$. It got 85% of emails right.</li>
-         <li><b>Precision</b> $= \\dfrac{TP}{TP+FP} = \\dfrac{80}{100} = 0.80$. Of mail it flagged as spam, 80% really was.</li>
-         <li><b>Recall</b> $= \\dfrac{TP}{TP+FN} = \\dfrac{80}{90} \\approx 0.89$. It caught 89% of the real spam.</li>
-         <li>Now imagine the data were imbalanced — say only 5 of the 200 emails were spam. A lazy model that marks <i>everything</i> "not spam" would score $\\frac{195}{200} = 0.975$ accuracy while catching zero spam. Accuracy looks great; the model is useless. That is exactly when you reach past accuracy to precision and recall.</li>
-       </ul>`,
+         <li><b>Precision</b> $= \\dfrac{TP}{TP+FP} = \\dfrac{80}{80+20} = \\dfrac{80}{100} = 0.80$. Of mail it flagged as spam, 80% really was.</li>
+         <li><b>Recall</b> $= \\dfrac{TP}{TP+FN} = \\dfrac{80}{80+10} = \\dfrac{80}{90} \\approx 0.89$. It caught 89% of the real spam.</li>
+       </ul>
+       <p>Now imagine the data were imbalanced — only 5 of the 200 emails are spam — and a lazy model marks <i>everything</i> "not spam". Accuracy looks great while the model catches zero spam, which is exactly when you reach past accuracy to precision and recall:</p>
+       <table class="extable">
+         <caption>Why accuracy alone misleads on imbalanced data.</caption>
+         <thead><tr><th>model</th><th class="num">accuracy</th><th class="num">recall (spam)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">real filter (90 spam)</td><td class="num">0.850</td><td class="num">0.889</td></tr>
+           <tr><td class="row-h">"always ham" (5 spam)</td><td class="num">0.975</td><td class="num">0.000</td></tr>
+         </tbody>
+       </table>
+       <p>The do-nothing model scores $\\frac{195}{200}=0.975$ accuracy yet catches nothing — its recall of $0$ gives it away.</p>`,
 
     demo: function (host) {
       function C() {

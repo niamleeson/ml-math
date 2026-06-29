@@ -206,20 +206,28 @@
        scores and healthy gradients. See <code>dl-attention</code> for the alignment/weighted-sum derivation.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> (2 tokens, $d_k=d_v=2$). Take</p>
-       <ul>
-         <li>$Q=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$, $K=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$,
-         $V=\\begin{bmatrix}10&0\\\\0&10\\end{bmatrix}$, so $d_k=2$.</li>
-         <li><b>Scores</b> $QK^\\top=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$ (each query dotted with each key).</li>
-         <li><b>Scale</b> by $\\sqrt{d_k}=\\sqrt2\\approx1.414$: scores become
-         $\\begin{bmatrix}0.707&0\\\\0&0.707\\end{bmatrix}$.</li>
-         <li><b>Softmax</b> each row. Row 1: $e^{0.707}\\approx2.028$, $e^{0}=1$, sum $3.028$, so weights
-         $[0.6698,\\,0.3302]$. Row 2 is the mirror $[0.3302,\\,0.6698]$. This is the <b>attention map</b>.</li>
-         <li><b>Weighted sum</b> with $V$. Output row 1 $=0.6698\\cdot[10,0]+0.3302\\cdot[0,10]=[6.698,\\,3.302]$.
-         Row 2 $=[3.302,\\,6.698]$.</li>
+      `<p><b>Worked numbers for Equation (1)</b> with 2 tokens and $d_k=d_v=2$. Take
+       $Q=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$, $K=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$,
+       $V=\\begin{bmatrix}10&0\\\\0&10\\end{bmatrix}$, and trace query 1 (the top row) through the four steps.</p>
+       <ul class="steps">
+         <li><b>Score</b> $QK^\\top$. Query 1 $=[1,0]$ dotted with key 1 $=[1,0]$ gives $1\\cdot1+0\\cdot0=1$;
+         with key 2 $=[0,1]$ gives $1\\cdot0+0\\cdot1=0$. So query 1's score row is $[1,\\,0]$.</li>
+         <li><b>Scale</b> by $\\sqrt{d_k}=\\sqrt2\\approx1.4142$: $[1/1.4142,\\;0/1.4142]=[0.7071,\\,0]$.</li>
+         <li><b>Softmax</b> the row. $e^{0.7071}\\approx2.0281$, $e^{0}=1$, sum $=3.0281$, so weights
+         $[2.0281/3.0281,\\;1/3.0281]=[0.6698,\\,0.3302]$ (they sum to $1$). This is row 1 of the attention map.</li>
+         <li><b>Blend</b> with $V$: $0.6698\\cdot[10,0]+0.3302\\cdot[0,10]=[6.698,\\,3.302]$ — query 1's output.</li>
        </ul>
-       <p>Each query leans toward the value whose key it matched, but blends in the other. The CODE cell
-       recomputes these exact numbers and prints them, and checks them against PyTorch.</p>`,
+       <p>Query 2 is the mirror image. Collecting both rows (the attention map is symmetric here):</p>
+       <table class="extable">
+         <caption>Both queries through Equation (1): score &rarr; scaled &rarr; softmax weights &rarr; output.</caption>
+         <thead><tr><th>query</th><th class="num">score [k1, k2]</th><th class="num">scaled</th><th class="num">weights (map)</th><th class="num">output (·V)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">query 1</td><td class="num">[1, 0]</td><td class="num">[0.7071, 0]</td><td class="num">[0.6698, 0.3302]</td><td class="num">[6.698, 3.302]</td></tr>
+           <tr><td class="row-h">query 2</td><td class="num">[0, 1]</td><td class="num">[0, 0.7071]</td><td class="num">[0.3302, 0.6698]</td><td class="num">[3.302, 6.698]</td></tr>
+         </tbody>
+       </table>
+       <p>Each query leans toward the value whose key it matched ($\\approx67\\%$), but blends in the other
+       ($\\approx33\\%$). The CODE cell recomputes these exact numbers and checks them against PyTorch.</p>`,
 
     recipe:
       `<p><b>Scaled dot-product attention (Equation 1 / Figure 2 left), as numbered steps:</b></p>

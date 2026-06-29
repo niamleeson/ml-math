@@ -136,13 +136,22 @@
 
     example:
       `<p>Two model variants are each evaluated; their accuracy on five random test splits is:</p>
+       <table class="extable">
+         <caption>Accuracy of each model on the same five test splits</caption>
+         <thead><tr><th>split</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">mean $\\bar{x}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Model A</td><td class="num">0.90</td><td class="num">0.91</td><td class="num">0.89</td><td class="num">0.92</td><td class="num">0.88</td><td class="num">0.900</td></tr>
+           <tr><td class="row-h">Model B</td><td class="num">0.93</td><td class="num">0.94</td><td class="num">0.92</td><td class="num">0.95</td><td class="num">0.91</td><td class="num">0.930</td></tr>
+         </tbody>
+       </table>
+       <p>Now run the Welch t-statistic step by step:</p>
        <ul class="steps">
-         <li>Model A: $0.90, 0.91, 0.89, 0.92, 0.88$ → average $\\bar{x}_A = 0.900$.</li>
-         <li>Model B: $0.93, 0.94, 0.92, 0.95, 0.91$ → average $\\bar{x}_B = 0.930$.</li>
-         <li>Observed gap: $\\bar{x}_B - \\bar{x}_A = 0.030$ (B looks 3 points better).</li>
-         <li>Each group's spread is $s \\approx 0.0158$, and $n = 5$ each. Standard error $= \\sqrt{\\dfrac{0.0158^2}{5} + \\dfrac{0.0158^2}{5}} \\approx \\sqrt{0.0000998} \\approx 0.00999$.</li>
-         <li>So $t = \\dfrac{0.030}{0.00999} \\approx 3.0$. The gap is about 3 standard errors above zero.</li>
-         <li>For these small samples a $|t| \\approx 3.0$ gives a p-value around $0.017$ — below $\\alpha = 0.05$. <b>Verdict:</b> the gap is bigger than sampling noise comfortably explains, so we call B's improvement real.</li>
+         <li>Means: $\\bar{x}_A=(0.90+0.91+0.89+0.92+0.88)/5=4.50/5=0.900$ and $\\bar{x}_B=4.65/5=0.930$.</li>
+         <li>Observed gap: $\\bar{x}_B-\\bar{x}_A=0.930-0.900=0.030$ (B looks 3 points better).</li>
+         <li>Each group's variance is $s^2=0.001/4=0.00025$ (A's deviations $0,0.01,-0.01,0.02,-0.02$ square to $0.001$; B is identical), so $s\\approx0.0158$ and $n=5$ each.</li>
+         <li>Standard error $=\\sqrt{\\dfrac{0.00025}{5}+\\dfrac{0.00025}{5}}=\\sqrt{0.00005+0.00005}=\\sqrt{0.0001}=0.0100$.</li>
+         <li>So $t=\\dfrac{0.030}{0.0100}=\\mathbf{3.0}$. The gap is about 3 standard errors above zero.</li>
+         <li>For these small samples a $|t|\\approx3.0$ (with $\\approx 8$ degrees of freedom) gives a p-value around $0.017$ — below $\\alpha=0.05$. <b>Verdict:</b> the gap is bigger than sampling noise comfortably explains, so we call B's improvement real.</li>
          <li><b>But notice the catch:</b> these five splits reuse the same test data, so the runs are really <i>paired</i>. A paired t-test (or, for per-example correct/wrong labels, <b>McNemar's test</b>) would use the pairing and is the more honest choice here.</li>
        </ul>`,
 

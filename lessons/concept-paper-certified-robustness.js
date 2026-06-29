@@ -239,10 +239,22 @@
         $R = \\sigma\\,\\Phi^{-1}(\\bar p_A) = 0.5 \\cdot 2.3263 = 1.1632$. </li>
        </ul>
        <p>So at this point, <i>no</i> adversarial perturbation with $\\ell_2$ length below $1.1632$ can change the
-       smoothed prediction. Now contrast a barely-confident point: if $\\bar p_A = 0.6$, then
-       $R = 0.5 \\cdot \\Phi^{-1}(0.6) = 0.5 \\cdot 0.2533 = 0.1267$ &mdash; a much smaller certified radius. And
-       if $\\bar p_A = 0.5$ exactly, $\\Phi^{-1}(0.5)=0$, so $R=0$: a coin-flip vote certifies nothing. These
-       numbers are recomputed in the notebook's first cell.</p>`,
+       smoothed prediction. Now hold $\\sigma = 0.5$ fixed and sweep the vote confidence $\\bar p_A$, using
+       $R = \\sigma\\,\\Phi^{-1}(\\bar p_A)$ each time:</p>
+       <table class="extable">
+        <caption>Certified radius $R$ vs vote confidence $\\bar p_A$ (two-class form, $\\sigma = 0.5$).</caption>
+        <thead><tr><th>$\\bar p_A$</th><th class="num">$\\Phi^{-1}(\\bar p_A)$</th><th class="num">$R = \\sigma\\,\\Phi^{-1}(\\bar p_A)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0.50</td><td class="num">0.0000</td><td class="num">0.0000</td></tr>
+         <tr><td class="row-h">0.60</td><td class="num">0.2533</td><td class="num">0.1267</td></tr>
+         <tr><td class="row-h">0.90</td><td class="num">1.2816</td><td class="num">0.6408</td></tr>
+         <tr><td class="row-h">0.99</td><td class="num">2.3263</td><td class="num">1.1632</td></tr>
+        </tbody>
+       </table>
+       <p>The pattern is clear: a barely-confident vote ($\\bar p_A = 0.6$) certifies only $R = 0.1267$, and a
+       coin-flip vote ($\\bar p_A = 0.5$, where $\\Phi^{-1}(0.5)=0$) certifies $R=0$ &mdash; nothing at all.
+       Confidence near $1$ is what buys a large radius, because $\\Phi^{-1}$ shoots up only as $\\bar p_A \\to 1$.
+       These numbers are recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Build a base classifier</b> with <code>torch.nn</code>: a tiny multi-layer perceptron

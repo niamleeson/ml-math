@@ -345,11 +345,25 @@
        of the current harm is removed each round). Then after $k$ rounds the harm is $r^{k}$:</p>
        <ul class="steps">
         <li><b>Round 0 (original answer):</b> harm $= 1.000$.</li>
-        <li><b>Round 1:</b> harm $= 1.000 \\times 0.6 = 0.600$. Removed $0.400$ this round.</li>
-        <li><b>Round 2:</b> harm $= 0.600 \\times 0.6 = 0.360$. Removed $0.240$.</li>
-        <li><b>Round 3:</b> harm $= 0.360 \\times 0.6 = 0.216$. Removed $0.144$.</li>
-        <li><b>Round 4:</b> harm $= 0.216 \\times 0.6 = 0.1296 \\approx 0.130$. Removed $0.086$.</li>
+        <li><b>Round 1:</b> harm $= 1.000 \\times 0.6 = 0.600$. Removed $1.000 - 0.600 = 0.400$ this round.</li>
+        <li><b>Round 2:</b> harm $= 0.600 \\times 0.6 = 0.360$. Removed $0.600 - 0.360 = 0.240$.</li>
+        <li><b>Round 3:</b> harm $= 0.360 \\times 0.6 = 0.216$. Removed $0.360 - 0.216 = 0.144$.</li>
+        <li><b>Round 4:</b> harm $= 0.216 \\times 0.6 = 0.1296 \\approx 0.130$. Removed $0.216 - 0.130 = 0.086$.</li>
        </ul>
+       <p>The full ledger, with each round's surviving harm $r^{k}$ and the amount it removed:</p>
+       <table class="extable">
+        <caption>Toy geometric decay of harm, survival fraction $r = 0.6$ per round. Numbers are ours, illustrating the shape &mdash; not the paper's measured curve.</caption>
+        <thead>
+         <tr><th>round $k$</th><th class="num">harm $= 0.6^{k}$</th><th class="num">removed this round</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">0 (original)</td><td class="num">$1.000$</td><td class="num">&mdash;</td></tr>
+         <tr><td class="row-h">1</td><td class="num">$0.600$</td><td class="num">$0.400$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$0.360$</td><td class="num">$0.240$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$0.216$</td><td class="num">$0.144$</td></tr>
+         <tr><td class="row-h">4</td><td class="num">$0.130$</td><td class="num">$0.086$</td></tr>
+        </tbody>
+       </table>
        <p>Two things to notice. First, the harm goes <b>down every round</b> &mdash; monotone, matching the paper's
        qualitative claim that revisions $1$&ndash;$4$ keep improving harmlessness (&sect;3.4). Second, each round
        removes <i>less</i> than the one before ($0.40$, then $0.24$, then $0.14$, then $0.09$): diminishing returns,

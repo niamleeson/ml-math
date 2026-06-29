@@ -90,16 +90,36 @@
        </ul>`,
 
     example:
-      `<p>Take two tiny 3-bin distributions: $P=[0.5,\\,0.3,\\,0.2]$ and $Q=[0.2,\\,0.3,\\,0.5]$ (mass
-       moved from bin 1 to bin 3). Use base-2 logs, so answers are in bits.</p>
+      `<p>Take two tiny 3-bin distributions, $P=[0.5,\\,0.3,\\,0.2]$ and $Q=[0.2,\\,0.3,\\,0.5]$ (mass
+       moved from bin 1 to bin 3). Here are the per-bin numbers every formula below reads from. Use
+       base-2 logs, so answers are in bits.</p>
+       <table class="extable">
+         <caption>Per-bin ingredients for $P=[0.5,0.3,0.2]$, $Q=[0.2,0.3,0.5]$.</caption>
+         <thead><tr><th>bin $i$</th><th class="num">$p_i$</th><th class="num">$q_i$</th><th class="num">$\\log_2 p_i$</th><th class="num">$\\log_2\\frac{p_i}{q_i}$</th><th class="num">$\\sqrt{p_i}$</th><th class="num">$\\sqrt{q_i}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">0.5</td><td class="num">0.2</td><td class="num">-1.000</td><td class="num">+1.322</td><td class="num">0.707</td><td class="num">0.447</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.3</td><td class="num">0.3</td><td class="num">-1.737</td><td class="num">0.000</td><td class="num">0.548</td><td class="num">0.548</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.2</td><td class="num">0.5</td><td class="num">-2.322</td><td class="num">-1.322</td><td class="num">0.447</td><td class="num">0.707</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Entropy of $P$:</b> $H(P)=-(0.5\\log_2 0.5+0.3\\log_2 0.3+0.2\\log_2 0.2)=-(0.5(-1)+0.3(-1.737)+0.2(-2.322))=1.485$ bits.</li>
+         <li><b>Entropy of $P$:</b> $H(P)=-(0.5(-1.000)+0.3(-1.737)+0.2(-2.322))=-(-0.500-0.521-0.464)=1.485$ bits.</li>
          <li><b>Total variation:</b> $\\mathrm{TV}=\\tfrac12(|0.5-0.2|+|0.3-0.3|+|0.2-0.5|)=\\tfrac12(0.3+0+0.3)=0.30$. The two disagree by at most 30 percentage points on any event.</li>
-         <li><b>KL, both directions:</b> $D_{\\mathrm{KL}}(P\\,\\|\\,Q)=0.5\\log_2\\frac{0.5}{0.2}+0.3\\log_2\\frac{0.3}{0.3}+0.2\\log_2\\frac{0.2}{0.5}=0.5(1.322)+0+0.2(-1.322)=0.397$ bits. Swap them and you get the same $0.397$ here (because $P$ and $Q$ are mirror images) — but in general the two directions differ. That asymmetry is KL's signature.</li>
-         <li><b>Hellinger:</b> $\\sqrt{p_i}=[0.707,0.548,0.447]$, $\\sqrt{q_i}=[0.447,0.548,0.707]$. Differences squared: $0.0676+0+0.0676=0.135$. So $H_e=\\tfrac{1}{\\sqrt2}\\sqrt{0.135}=0.260$ — bounded and symmetric, smaller and tamer than KL.</li>
+         <li><b>KL, both directions:</b> $D_{\\mathrm{KL}}(P\\,\\|\\,Q)=0.5(1.322)+0.3(0)+0.2(-1.322)=0.661+0-0.264=0.397$ bits. Swap them and you get the same $0.397$ here (because $P$ and $Q$ are mirror images) — but in general the two directions differ. That asymmetry is KL's signature.</li>
+         <li><b>Hellinger:</b> the $(\\sqrt{p_i}-\\sqrt{q_i})^2$ terms are $(0.707-0.447)^2+0+(0.447-0.707)^2=0.0676+0+0.0676=0.135$. So $H_e=\\tfrac{1}{\\sqrt2}\\sqrt{0.135}=0.260$ — bounded and symmetric, smaller and tamer than KL.</li>
        </ul>
-       <p>Four different numbers (TV $0.30$, KL $0.40$, Hellinger $0.26$) for one shift — <b>different
-       scales, same verdict</b>: these histograms are clearly different.</p>`,
+       <p>Four numbers for one shift, each on its own scale but with the <b>same verdict</b> — these
+       histograms are clearly different:</p>
+       <table class="extable">
+         <caption>One shift, four metrics, four scales — never compare the values across rows.</caption>
+         <thead><tr><th>metric</th><th class="num">value</th><th>range</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Total variation</td><td class="num">0.30</td><td>$[0,1]$</td></tr>
+           <tr><td class="row-h">KL $(P\\,\\|\\,Q)$</td><td class="num">0.40 bits</td><td>$[0,\\infty)$</td></tr>
+           <tr><td class="row-h">Hellinger</td><td class="num">0.26</td><td>$[0,1]$</td></tr>
+           <tr><td class="row-h">Entropy $H(P)$</td><td class="num">1.49 bits</td><td>$[0,\\log_2 3]$</td></tr>
+         </tbody>
+       </table>`,
 
     whenToUse:
       `<p><b>The choice is mostly about three things: is it symmetric, is it bounded, and do the two

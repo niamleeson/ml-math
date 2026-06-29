@@ -237,26 +237,29 @@ $$ \\text{(cost-complexity pruning)}\\quad R_\\alpha(T) = R(T) + \\alpha\\,|\\wi
        greedy rule is used. Full coverage in <code>ml-trees</code>.</p>`,
     example:
       `<p>Work the Gini and the split score by hand on a one-feature dataset, then confirm the search finds the
-       perfect split. Six rows, one feature $x$, two classes:</p>
-       <p><code>x = [1, 2, 3, 6, 7, 8]</code>, &nbsp; <code>y = [0, 0, 0, 1, 1, 1]</code>.</p>
+       perfect split. Six rows, one feature $x$, two classes:
+       <code>x = [1, 2, 3, 6, 7, 8]</code>, &nbsp; <code>y = [0, 0, 0, 1, 1, 1]</code>.</p>
        <ul class="steps">
         <li><b>Parent Gini.</b> Three $0$s and three $1$s, so $p_0 = p_1 = 0.5$.
-        $H = 0.5(1-0.5) + 0.5(1-0.5) = 0.25 + 0.25 = \\mathbf{0.5}$. (A 50/50 mix &mdash; the maximum for two
-        classes.)</li>
-        <li><b>A good threshold, $t = 4.5$</b> (the midpoint of $3$ and $6$). Left $= \\{0,0,0\\}$, right
-        $= \\{1,1,1\\}$ &mdash; both pure, so each child Gini is $0$.
-        $G = \\frac{3}{6}(0) + \\frac{3}{6}(0) = \\mathbf{0}$. Impurity reduction $= 0.5 - 0 = 0.5$
-        &mdash; the largest possible.</li>
-        <li><b>A worse threshold, $t = 2.5$.</b> Left $= \\{0,0\\}$ (pure, Gini $0$), right $= \\{0,1,1,1\\}$.
-        Right has $p_0 = \\tfrac14, p_1 = \\tfrac34$, so its Gini $= \\tfrac14\\cdot\\tfrac34 + \\tfrac34\\cdot\\tfrac14
-        = \\tfrac{3}{16} + \\tfrac{3}{16} = \\mathbf{0.375}$.
-        $G = \\frac{2}{6}(0) + \\frac{4}{6}(0.375) = \\mathbf{0.25}$. Worse than $t=4.5$, as expected.</li>
-        <li><b>Best split.</b> The search compares all thresholds; any cut between $3$ and $6$ ties at $G = 0$,
-        and the midpoint reported is $t = 4.5$ on <b>feature 0</b>. Greedy CART takes it.</li>
+        $H = 0.5(1-0.5) + 0.5(1-0.5) = 0.25 + 0.25 = \\mathbf{0.5}$ — a 50/50 mix, the maximum for two classes.</li>
+        <li><b>Good threshold $t = 4.5$</b> (midpoint of $3$ and $6$). Left $= \\{0,0,0\\}$, right $= \\{1,1,1\\}$ — both pure, child Gini $0$ each.
+        $G = \\frac{3}{6}(0) + \\frac{3}{6}(0) = \\mathbf{0}$. Reduction $= 0.5 - 0 = 0.5$, the largest possible.</li>
+        <li><b>Worse threshold $t = 2.5$.</b> Left $= \\{0,0\\}$ (pure, Gini $0$); right $= \\{0,1,1,1\\}$ with
+        $p_0 = \\tfrac14,\\ p_1 = \\tfrac34$, so right Gini $= \\tfrac14\\cdot\\tfrac34 + \\tfrac34\\cdot\\tfrac14 = \\tfrac{3}{16} + \\tfrac{3}{16} = \\mathbf{0.375}$.</li>
+        <li><b>Score it.</b> $G = \\frac{2}{6}(0) + \\frac{4}{6}(0.375) = \\frac{4}{6}(0.375) = \\mathbf{0.25}$ — worse than $t=4.5$, as expected.</li>
        </ul>
-       <p>Every one of these numbers ($0.5$, $0$, $0.375$, $0.25$, and the chosen $t = 4.5$) is recomputed and
-       <b>asserted</b> in the notebook's first cell against the from-scratch functions &mdash; if your math is
-       off, the assertion fails.</p>`,
+       <table class="extable">
+        <caption>Candidate thresholds on feature 0, ranked by weighted split score $G$ (lower is better).</caption>
+        <thead><tr><th>threshold $t$</th><th>left rows</th><th>right rows</th><th class="num">left Gini</th><th class="num">right Gini</th><th class="num">$G$</th><th class="num">reduction $H-G$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">2.5</td><td>{0,0}</td><td>{0,1,1,1}</td><td class="num">0.000</td><td class="num">0.375</td><td class="num">0.250</td><td class="num">0.250</td></tr>
+         <tr><td class="row-h">4.5</td><td>{0,0,0}</td><td>{1,1,1}</td><td class="num">0.000</td><td class="num">0.000</td><td class="num">0.000</td><td class="num">0.500</td></tr>
+        </tbody>
+       </table>
+       <p>The search compares all thresholds; any cut between $3$ and $6$ ties at $G = 0$, and the reported
+       midpoint is $t = 4.5$ on <b>feature 0</b> — greedy CART takes it. Every number ($0.5$, $0$, $0.375$,
+       $0.25$, chosen $t = 4.5$) is recomputed and <b>asserted</b> in the notebook's first cell — if your math
+       is off, the assertion fails.</p>`,
     recipe:
       `<ol>
         <li><b>Gini.</b> Write <code>gini(y)</code>: count each class, form fractions $p_k$, return

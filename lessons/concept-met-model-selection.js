@@ -85,13 +85,23 @@ $$ \\underbrace{-2\\ln\\hat{L}}_{\\text{fit: lower is better}} \\;+\\; \\underbr
          <li><b>Why cross-validation needs no parameter count.</b> Instead of estimating the optimism with a formula, CV measures it: every held-out point is genuinely fresh data, so its loss is an honest sample of out-of-sample error. Leave-one-out CV is, for many models, asymptotically equivalent to AIC — the "$2k$" and "hold each point out" are two routes to the same correction. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p>You fit two models to $n=100$ points. Model A is a line (2 coefficients $+1$ variance, so $k_A=3$); model B adds a quadratic term ($k_B=4$). Maximum log-likelihoods come out $\\ln\\hat{L}_A=-150.0$ and $\\ln\\hat{L}_B=-148.5$ — model B fits a bit better, as a bigger model always will.</p>
+      `<p>You fit two models to $n=100$ points. Model A is a line (2 coefficients $+1$ variance, so $k_A=3$); model B adds a quadratic term ($k_B=4$). Maximum log-likelihoods come out $\\ln\\hat{L}_A=-150.0$ and $\\ln\\hat{L}_B=-148.5$ — model B fits a bit better, as a bigger model always will. Both share the fit term $-2\\ln\\hat{L}$; only the penalty differs.</p>
        <ul class="steps">
-         <li><b>AIC.</b> $\\text{AIC}_A = -2(-150.0) + 2\\cdot3 = 300 + 6 = 306.0$. $\\text{AIC}_B = -2(-148.5) + 2\\cdot4 = 297 + 8 = 305.0$. B wins by $1.0$ — but that is under the "2" rule of thumb, so it is barely worth it.</li>
-         <li><b>BIC</b> (penalty $\\ln 100 = 4.605$). $\\text{BIC}_A = 300 + 3\\cdot4.605 = 313.8$. $\\text{BIC}_B = 297 + 4\\cdot4.605 = 315.4$. Now <b>A wins</b> — BIC's heavier tax decides the extra term is not worth it. The two criteria disagree exactly because B's improved fit ($3$ units of $-2\\ln\\hat{L}$) beats AIC's penalty step ($2$) but loses to BIC's penalty step ($4.605$).</li>
-         <li><b>AICc</b> for model B: $305.0 + \\dfrac{2\\cdot4\\cdot5}{100-4-1} = 305.0 + \\dfrac{40}{95} = 305.4$. The small-sample correction is tiny here because $n=100$ is comfortably larger than $k=4$; it would matter if $n$ were, say, $20$.</li>
-         <li><b>The lesson:</b> the fit term favored the complex model, but the penalty term flipped the decision under BIC. When AIC and BIC disagree on such a thin margin, the honest move is the simpler model A (or a cross-validation check).</li>
-       </ul>`,
+         <li>Fit terms: $-2\\ln\\hat{L}_A=-2(-150.0)=300.0$ and $-2\\ln\\hat{L}_B=-2(-148.5)=297.0$.</li>
+         <li><b>AIC</b> ($+2k$): $\\text{AIC}_A=300.0+2\\cdot3=306.0$; $\\text{AIC}_B=297.0+2\\cdot4=305.0$.</li>
+         <li><b>BIC</b> ($+k\\ln n$, with $\\ln 100=4.605$): $\\text{BIC}_A=300.0+3\\cdot4.605=313.8$; $\\text{BIC}_B=297.0+4\\cdot4.605=315.4$.</li>
+         <li><b>AICc</b> for B ($\\text{AIC}+\\tfrac{2k(k+1)}{n-k-1}$): $305.0+\\dfrac{2\\cdot4\\cdot5}{100-4-1}=305.0+\\dfrac{40}{95}=305.0+0.4=305.4$.</li>
+       </ul>
+       <table class="extable">
+         <caption>The two candidates under each criterion — lowest score wins (winners in bold)</caption>
+         <thead><tr><th>criterion</th><th class="num">Model A ($k=3$)</th><th class="num">Model B ($k=4$)</th><th>winner</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">fit term $-2\\ln\\hat{L}$</td><td class="num">300.0</td><td class="num">297.0</td><td>B (fits better)</td></tr>
+           <tr><td class="row-h">AIC</td><td class="num">306.0</td><td class="num"><b>305.0</b></td><td>B by 1.0</td></tr>
+           <tr><td class="row-h">BIC</td><td class="num"><b>313.8</b></td><td class="num">315.4</td><td>A by 1.6</td></tr>
+         </tbody>
+       </table>
+       <p>The two criteria <b>disagree</b>: B's improved fit ($3$ units of $-2\\ln\\hat{L}$) beats AIC's penalty step ($2$) but loses to BIC's heavier penalty step ($4.605$). AICc barely moves B's AIC ($305.0\\to305.4$) because $n=100$ is comfortably larger than $k=4$. <b>The lesson:</b> the fit term favored the complex model, but the penalty flipped the call under BIC; on such a thin margin (both gaps under the "2" rule of thumb) the honest move is the simpler model A, or a cross-validation check.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       var s = getComputedStyle(document.documentElement);

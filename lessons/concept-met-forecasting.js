@@ -106,16 +106,38 @@ $$ \\text{Pinball}_q(y,\\hat y^{(q)})=\\begin{cases} q\\,(y-\\hat y^{(q)}) & y\\
        </ul>`,
 
     example:
-      `<p>Three months of demand. Actuals $y=[100,\\;120,\\;90]$; your model forecasts $\\hat y=[110,\\;115,\\;95]$. Errors $e=y-\\hat y=[-10,\\;5,\\;-5]$.</p>
+      `<p>Three months of demand. Here are the actuals, your forecast, and the resulting per-step errors $e_t=y_t-\\hat y_t$ that every metric below summarizes:</p>
+       <table class="extable">
+         <caption>The held-out horizon ($h=3$ months).</caption>
+         <thead><tr><th>month $t$</th><th class="num">$y_t$</th><th class="num">$\\hat y_t$</th><th class="num">$e_t$</th><th class="num">$|e_t|$</th><th class="num">$e_t^2$</th><th class="num">$|e_t|/|y_t|$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">100</td><td class="num">110</td><td class="num">-10</td><td class="num">10</td><td class="num">100</td><td class="num">0.100</td></tr>
+           <tr><td class="row-h">2</td><td class="num">120</td><td class="num">115</td><td class="num">+5</td><td class="num">5</td><td class="num">25</td><td class="num">0.042</td></tr>
+           <tr><td class="row-h">3</td><td class="num">90</td><td class="num">95</td><td class="num">-5</td><td class="num">5</td><td class="num">25</td><td class="num">0.056</td></tr>
+           <tr><td class="row-h">sum</td><td class="num">310</td><td class="num"></td><td class="num"></td><td class="num">20</td><td class="num">150</td><td class="num">0.198</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>MAE</b> $=\\frac{|{-}10|+|5|+|{-}5|}{3}=\\frac{20}{3}\\approx 6.67$ units.</li>
-         <li><b>RMSE</b> $=\\sqrt{\\frac{100+25+25}{3}}=\\sqrt{50}\\approx 7.07$ — slightly above MAE because the $-10$ miss is squared.</li>
-         <li><b>MAPE</b> $=\\frac{100}{3}\\big(\\frac{10}{100}+\\frac{5}{120}+\\frac{5}{90}\\big)\\approx \\frac{100}{3}(0.10+0.042+0.056)\\approx 6.6\\%$.</li>
-         <li><b>WAPE</b> $=\\frac{10+5+5}{100+120+90}\\times100=\\frac{20}{310}\\times100\\approx 6.5\\%$ — one pooled percentage.</li>
+         <li><b>MAE</b> $=\\frac{1}{3}\\sum|e_t|=\\frac{20}{3}\\approx 6.67$ units.</li>
+         <li><b>RMSE</b> $=\\sqrt{\\frac{1}{3}\\sum e_t^2}=\\sqrt{\\frac{150}{3}}=\\sqrt{50}\\approx 7.07$ — slightly above MAE because the $-10$ miss is squared.</li>
+         <li><b>MAPE</b> $=\\frac{100}{3}\\sum\\frac{|e_t|}{|y_t|}=\\frac{100}{3}(0.198)\\approx 6.6\\%$.</li>
+         <li><b>WAPE</b> $=\\frac{\\sum|e_t|}{\\sum|y_t|}\\times100=\\frac{20}{310}\\times100\\approx 6.5\\%$ — one pooled percentage.</li>
          <li><b>MASE:</b> suppose the seasonal-naive baseline's in-sample MAE is $s=10$. Then $\\text{MASE}=\\frac{6.67}{10}=0.67$ — below 1, so the model beats naive by a third. <b>That is the headline number.</b></li>
-         <li><b>Pinball at $q=0.9$</b> for the first point: the model's 90% quantile is, say, $\\hat y^{(0.9)}=118$ while the truth is $100 \\lt 118$, so loss $=(1-0.9)(118-100)=0.1\\times18=1.8$. Over-shooting a high quantile is cheap; under-shooting it would cost $0.9\\times$ the gap.</li>
+         <li><b>Pinball at $q=0.9$</b> for month 1: the model's 90% quantile is, say, $\\hat y^{(0.9)}=118$ while the truth is $100 \\lt 118$, so loss $=(1-0.9)(118-100)=0.1\\times18=1.8$. Over-shooting a high quantile is cheap; under-shooting it would cost $0.9\\times$ the gap.</li>
        </ul>
-       <p>Notice MAE, RMSE, MAPE, WAPE all land near 6.5-7 here, but only <b>MASE = 0.67</b> tells you whether that is any good — and it is, because it beats the baseline.</p>`,
+       <p>Lined up, the point metrics all land near 6.5–7, but only <b>MASE</b> answers "is that any good?" — and it is, because it beats the baseline:</p>
+       <table class="extable">
+         <caption>Same forecast, six metrics. Only MASE is baseline-relative.</caption>
+         <thead><tr><th>metric</th><th class="num">value</th><th>reads "good" as</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">MAE</td><td class="num">6.67 units</td><td>smaller</td></tr>
+           <tr><td class="row-h">RMSE</td><td class="num">7.07 units</td><td>smaller</td></tr>
+           <tr><td class="row-h">MAPE</td><td class="num">6.6%</td><td>smaller</td></tr>
+           <tr><td class="row-h">WAPE</td><td class="num">6.5%</td><td>smaller</td></tr>
+           <tr><td class="row-h">MASE</td><td class="num">0.67</td><td>$\\lt 1$ beats naive</td></tr>
+           <tr><td class="row-h">Pinball $(q{=}0.9)$</td><td class="num">1.8</td><td>smaller</td></tr>
+         </tbody>
+       </table>`,
 
     demo: function (host) {
       var c = (function () {

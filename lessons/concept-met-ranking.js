@@ -100,19 +100,40 @@ $$\\text{DCG@}k=\\sum_{r=1}^{k}\\frac{rel_r}{\\log_2(r+1)},\\qquad \\text{NDCG@}
        <p><b>Why AP rewards clustering.</b> AP averages Precision@r over the positions where relevant items land. Precision@r is high when relevant items appear early (the numerator fills up while $r$ is still small), so packing the relevant items at the top maximizes AP. A relevant item buried deep is multiplied by a small precision, dragging AP down — that is how MAP encodes "all the good stuff near the top".</p>`,
 
     example:
-      `<p>One query. The engine returns 5 results; the ✓ are relevant (binary), the ✗ are not, top first:</p>
-       <p><code>rank 1: ✗ &nbsp; rank 2: ✓ &nbsp; rank 3: ✗ &nbsp; rank 4: ✓ &nbsp; rank 5: ✗</code> &nbsp; (2 relevant items total)</p>
+      `<p>One query. The engine returns 5 results (top first); ✓ = relevant (binary), ✗ = not. There are 2 relevant items total. The table also shows each rank's gain and position discount $1/\\log_2(r+1)$.</p>
+       <table class="extable">
+         <caption>The returned list, with binary gain and position discount per rank.</caption>
+         <thead><tr><th class="num">rank $r$</th><th>relevant?</th><th class="num">gain $rel_r$</th><th class="num">$1/\\log_2(r+1)$</th><th class="num">DCG term</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td>✗</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+           <tr><td class="num">2</td><td>✓</td><td class="num">1</td><td class="num">0.631</td><td class="num">0.631</td></tr>
+           <tr><td class="num">3</td><td>✗</td><td class="num">0</td><td class="num">0.500</td><td class="num">0.000</td></tr>
+           <tr><td class="num">4</td><td>✓</td><td class="num">1</td><td class="num">0.431</td><td class="num">0.431</td></tr>
+           <tr><td class="num">5</td><td>✗</td><td class="num">0</td><td class="num">0.387</td><td class="num">0.000</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Precision@3</b> = (relevant in top 3)/3 = 1/3 ≈ <b>0.33</b>. <b>Precision@5</b> = 2/5 = <b>0.40</b>.</li>
-         <li><b>Recall@3</b> = (relevant in top 3)/(total relevant) = 1/2 = <b>0.50</b>. <b>Recall@5</b> = 2/2 = <b>1.0</b>.</li>
-         <li><b>F1@3</b> = $\\dfrac{2(0.33)(0.50)}{0.33+0.50} = \\dfrac{0.33}{0.83} ≈$ <b>0.40</b>.</li>
-         <li><b>Hit rate / success@3</b> = 1 (there <i>is</i> a relevant item in the top 3). success@1 = 0 (rank 1 was ✗).</li>
-         <li><b>MRR (this single query)</b>: first relevant item is at rank 2, so RR = 1/2 = <b>0.50</b>.</li>
-         <li><b>AP</b>: relevant items sit at ranks 2 and 4. Precision@2 = 1/2 = 0.50; Precision@4 = 2/4 = 0.50. AP = (0.50 + 0.50)/2 = <b>0.50</b>. (Over many queries this becomes MAP.)</li>
-         <li><b>DCG@5</b> (binary gains): $\\frac{0}{\\log_2 2}+\\frac{1}{\\log_2 3}+\\frac{0}{\\log_2 4}+\\frac{1}{\\log_2 5}+\\frac{0}{\\log_2 6} = 0.631 + 0.431 = $ <b>1.062</b>.</li>
-         <li><b>IDCG@5</b>: the ideal puts both ✓ at ranks 1–2: $\\frac{1}{\\log_2 2}+\\frac{1}{\\log_2 3} = 1.0 + 0.631 = $ <b>1.631</b>. So <b>NDCG@5</b> = 1.062 / 1.631 ≈ <b>0.65</b>.</li>
+         <li><b>Precision@3</b> = (relevant in top 3)/3 = $1/3 \\approx$ <b>0.33</b>. <b>Precision@5</b> = $2/5 =$ <b>0.40</b>.</li>
+         <li><b>Recall@3</b> = (relevant in top 3)/(total relevant) = $1/2 =$ <b>0.50</b>. <b>Recall@5</b> = $2/2 =$ <b>1.0</b>.</li>
+         <li><b>F1@3</b> = $\\dfrac{2(0.33)(0.50)}{0.33+0.50} = \\dfrac{0.33}{0.83} \\approx$ <b>0.40</b>.</li>
+         <li><b>Success@3</b> = 1 (there is a ✓ in the top 3). <b>success@1</b> = 0 (rank 1 was ✗).</li>
+         <li><b>MRR</b> (this single query): first ✓ is at rank 2, so RR = $1/2 =$ <b>0.50</b>.</li>
+         <li><b>AP</b>: ✓ sit at ranks 2 and 4. Precision@2 = $1/2 = 0.50$; Precision@4 = $2/4 = 0.50$. AP = $(0.50 + 0.50)/2 =$ <b>0.50</b>. (Averaged over queries this becomes MAP.)</li>
+         <li><b>DCG@5</b> = sum of the DCG-term column = $0 + 0.631 + 0 + 0.431 + 0 =$ <b>1.062</b>.</li>
+         <li><b>IDCG@5</b>: the ideal puts both ✓ at ranks 1–2: $\\frac{1}{\\log_2 2}+\\frac{1}{\\log_2 3} = 1.000 + 0.631 =$ <b>1.631</b>.</li>
+         <li><b>NDCG@5</b> = DCG/IDCG = $1.062 / 1.631 \\approx$ <b>0.65</b>.</li>
        </ul>
-       <p>Notice the story the numbers tell: Recall@5 is a perfect 1.0 (we found both relevant items), but NDCG@5 is only 0.65 — because we put them at ranks 2 and 4 instead of 1 and 2. <b>The set was right; the order was not, and the position-aware metric caught it.</b> That gap is the entire reason ranking metrics exist.</p>`,
+       <table class="extable">
+         <caption>Same list, several rulers — the position-blind ones miss the problem.</caption>
+         <thead><tr><th>metric</th><th class="num">value</th><th>sees position?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Recall@5</td><td class="num">1.00</td><td>no</td></tr>
+           <tr><td class="row-h">Precision@5</td><td class="num">0.40</td><td>no</td></tr>
+           <tr><td class="row-h">MRR</td><td class="num">0.50</td><td>first hit only</td></tr>
+           <tr><td class="row-h">NDCG@5</td><td class="num">0.65</td><td>yes</td></tr>
+         </tbody>
+       </table>
+       <p>Notice the story: Recall@5 is a perfect 1.0 (we found both relevant items), but NDCG@5 is only 0.65 — because they sit at ranks 2 and 4 instead of 1 and 2. <b>The set was right; the order was not, and the position-aware metric caught it.</b> That gap is the entire reason ranking metrics exist.</p>`,
 
     demo: function (host) {
       var c = (function () {

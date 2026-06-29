@@ -222,21 +222,33 @@
 
     example:
       `<p><b>Worked numbers &mdash; one round on 5 examples.</b> One feature $x\\in\\{1,2,3,4,5\\}$, labels
-       $y=[+1,+1,-1,+1,-1]$, equal start weights $w_i=0.2$.</p>
-       <ul>
-         <li><b>Best stump.</b> Scanning thresholds, the best one-question rule is "predict $+1$ if $x\\lt2.5$,
-         else $-1$", giving predictions $[+1,+1,-1,-1,-1]$. It is wrong only on example 4 ($x=4$, true $+1$,
-         predicted $-1$).</li>
-         <li><b>Weighted error.</b> $\\epsilon = \\sum_{\\text{wrong}} w_i = 0.2$ (only example 4).</li>
-         <li><b>Vote weight.</b> $\\alpha = \\tfrac12\\ln\\frac{1-0.2}{0.2} = \\tfrac12\\ln 4 = \\tfrac12(1.3863)
-         = 0.6931$.</li>
-         <li><b>Reweight.</b> Right examples ($y_i h_t=+1$): $w\\cdot e^{-0.6931}=0.2\\times0.5=0.1$. The wrong
-         example ($y_i h_t=-1$): $w\\cdot e^{+0.6931}=0.2\\times2=0.4$. Unnormalized weights:
-         $[0.1,0.1,0.1,0.4,0.1]$.</li>
-         <li><b>Renormalize.</b> Sum $Z = 0.8$; divide: $[0.125,0.125,0.125,\\mathbf{0.5},0.125]$. The hard
-         example (4) now carries half the total weight &mdash; the next stump will be forced to fix it.</li>
+       $y=[+1,+1,-1,+1,-1]$, equal start weights $w_i=0.2$. The best one-question stump is "predict $+1$ if
+       $x\\lt2.5$, else $-1$", giving predictions $h=[+1,+1,-1,-1,-1]$ &mdash; wrong only on example 4
+       ($x=4$, true $+1$, predicted $-1$).</p>
+       <table class="extable">
+         <caption>One AdaBoost round: the per-example weight ledger</caption>
+         <thead>
+           <tr><th>example</th><th class="num">$x$</th><th class="num">$y$</th><th class="num">$h(x)$</th><th>right?</th><th class="num">$w$ (start)</th><th class="num">factor</th><th class="num">$w\\cdot$factor</th><th class="num">$w'$ (renorm)</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">1</td><td class="num">+1</td><td class="num">+1</td><td>right</td><td class="num">0.2</td><td class="num">$e^{-\\alpha}=0.5$</td><td class="num">0.1</td><td class="num">0.125</td></tr>
+           <tr><td class="row-h">2</td><td class="num">2</td><td class="num">+1</td><td class="num">+1</td><td>right</td><td class="num">0.2</td><td class="num">0.5</td><td class="num">0.1</td><td class="num">0.125</td></tr>
+           <tr><td class="row-h">3</td><td class="num">3</td><td class="num">&minus;1</td><td class="num">&minus;1</td><td>right</td><td class="num">0.2</td><td class="num">0.5</td><td class="num">0.1</td><td class="num">0.125</td></tr>
+           <tr><td class="row-h">4</td><td class="num">4</td><td class="num">+1</td><td class="num">&minus;1</td><td>WRONG</td><td class="num">0.2</td><td class="num">$e^{+\\alpha}=2$</td><td class="num">0.4</td><td class="num">0.500</td></tr>
+           <tr><td class="row-h">5</td><td class="num">5</td><td class="num">&minus;1</td><td class="num">&minus;1</td><td>right</td><td class="num">0.2</td><td class="num">0.5</td><td class="num">0.1</td><td class="num">0.125</td></tr>
+         </tbody>
+       </table>
+       <p>Now plug the numbers into the formulas step by step:</p>
+       <ul class="steps">
+         <li><b>Weighted error</b> (sum the start-weights of the wrong rows): $\\epsilon = \\sum_{\\text{wrong}} w_i = 0.2$ (only example 4).</li>
+         <li><b>Vote weight:</b> $\\alpha = \\tfrac12\\ln\\frac{1-\\epsilon}{\\epsilon} = \\tfrac12\\ln\\frac{1-0.2}{0.2} = \\tfrac12\\ln 4 = \\tfrac12(1.3863) = 0.6931$.</li>
+         <li><b>Decay factor for right rows:</b> $e^{-\\alpha} = e^{-0.6931} = 0.5$ &mdash; halve the weight ($0.2\\times0.5=0.1$).</li>
+         <li><b>Growth factor for the wrong row:</b> $e^{+\\alpha} = e^{+0.6931} = 2$ &mdash; double the weight ($0.2\\times2=0.4$).</li>
+         <li><b>Unnormalized weights:</b> $[0.1,0.1,0.1,0.4,0.1]$, summing to $Z = 0.8$.</li>
+         <li><b>Renormalize</b> (divide by $Z=0.8$): $[0.125,0.125,0.125,\\mathbf{0.5},0.125]$ &mdash; these sum to $1$.</li>
        </ul>
-       <p>The CODE cell recomputes these exact numbers and prints them.</p>`,
+       <p>The hard example (4) now carries half the total weight &mdash; the next stump is forced to fix it. The
+       CODE cell recomputes these exact numbers and prints them.</p>`,
 
     recipe:
       `<p><b>Algorithm AdaBoost (Figure 2), as numbered steps:</b></p>

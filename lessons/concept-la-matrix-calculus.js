@@ -161,22 +161,34 @@
 
     example:
       `<p><b>Worked vector example.</b> Let $b=\\begin{bmatrix}2\\\\-1\\end{bmatrix}$ and
-        $A=\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}$, and take the point $x=\\begin{bmatrix}1\\\\1\\end{bmatrix}$.</p>
+        $A=\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}$, and take the point $x=\\begin{bmatrix}1\\\\1\\end{bmatrix}$.
+        Plug real numbers into the two vector rules step by step.</p>
        <ul class="steps">
          <li><b>Linear rule.</b> $\\nabla_x\\, b^\\top x = b = \\begin{bmatrix}2\\\\-1\\end{bmatrix}$. It does
           not depend on $x$ at all — a linear function has a constant slope.</li>
-         <li><b>Quadratic rule.</b> First the symmetric part: $A+A^\\top =
+         <li><b>Quadratic rule, step 1 — symmetric part.</b> $A+A^\\top =
           \\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}+\\begin{bmatrix}1&0\\\\2&3\\end{bmatrix} =
           \\begin{bmatrix}2&2\\\\2&6\\end{bmatrix}$.</li>
-         <li>Then $\\nabla_x\\, x^\\top A x = (A+A^\\top)x =
-          \\begin{bmatrix}2&2\\\\2&6\\end{bmatrix}\\begin{bmatrix}1\\\\1\\end{bmatrix} =
-          \\begin{bmatrix}4\\\\8\\end{bmatrix}$.</li>
-         <li><b>Sanity check.</b> $A$ is not symmetric, so we must <i>not</i> use $2Ax$. Indeed $2Ax =
-          2\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}\\begin{bmatrix}1\\\\1\\end{bmatrix} =
-          \\begin{bmatrix}6\\\\6\\end{bmatrix}$, which is the wrong answer. The $(A+A^\\top)x$ form is the
-          correct one.<div class="why">$x^\\top A x$ only ever sees the symmetric part of $A$, because the
-          off-diagonal pieces $A_{ij}$ and $A_{ji}$ both multiply the same product $x_i x_j$.</div></li>
-       </ul>`,
+         <li><b>Step 2 — multiply by $x$, top entry.</b> $(A+A^\\top)x$ row 1 $= 2\\cdot1 + 2\\cdot1 = 4$.</li>
+         <li><b>Step 3 — bottom entry.</b> row 2 $= 2\\cdot1 + 6\\cdot1 = 8$, so
+          $\\nabla_x\\, x^\\top A x = \\begin{bmatrix}4\\\\8\\end{bmatrix}$.</li>
+         <li><b>Step 4 — sanity check the shortcut.</b> $A$ is not symmetric, so the $2Ax$ shortcut is
+          <i>wrong</i> here: $2Ax = 2\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}\\begin{bmatrix}1\\\\1\\end{bmatrix}
+          = \\begin{bmatrix}6\\\\6\\end{bmatrix}$ — not equal to $\\begin{bmatrix}4\\\\8\\end{bmatrix}$.
+          <div class="why">$x^\\top A x$ only ever sees the symmetric part of $A$, because the off-diagonal
+          pieces $A_{ij}$ and $A_{ji}$ both multiply the same product $x_i x_j$.</div></li>
+       </ul>
+       <table class="extable">
+         <caption>The quadratic gradient at $x=[1,1]^\\top$: the correct $(A+A^\\top)x$ rule vs the
+          symmetric-only $2Ax$ shortcut, entry by entry.</caption>
+         <thead><tr><th>entry</th><th class="num">$(A+A^\\top)x$ (correct)</th><th class="num">$2Ax$ (shortcut)</th><th class="num">match?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">row 1</td><td class="num">$2(1)+2(1)=4$</td><td class="num">$2(1\\cdot1+2\\cdot1)=6$</td><td class="num">no</td></tr>
+           <tr><td class="row-h">row 2</td><td class="num">$2(1)+6(1)=8$</td><td class="num">$2(0\\cdot1+3\\cdot1)=6$</td><td class="num">no</td></tr>
+         </tbody>
+       </table>
+       <p>The columns disagree because $A\\neq A^\\top$ — only when $A$ is symmetric do $(A+A^\\top)x$ and
+        $2Ax$ coincide.</p>`,
 
     practice: [
       {

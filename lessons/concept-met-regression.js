@@ -101,17 +101,38 @@
        <p><b>Why R² can go negative.</b> $R^2 = 1 - \\frac{\\text{your squared error}}{\\text{mean's squared error}}$. On the training set your fitted model is at least as good as the mean, so the ratio is $\\le 1$ and $R^2 \\ge 0$. But on held-out data a bad model can have <i>more</i> squared error than the mean — then the ratio exceeds $1$ and $R^2 \\lt  0$. That is not a bug; it is a loud warning that the model is worse than guessing the average.</p>`,
 
     example:
-      `<p>Five truths $y = 10, 20, 30, 40, 50$ (mean $\\bar{y} = 30$). Predictions $\\hat{y} = 12, 18, 33, 35, 90$ — good on the first four, badly off on the last.</p>
+      `<p>Five truths $y$ with mean $\\bar{y} = 30$, and predictions $\\hat{y}$ — good on the first four, badly off on the last. Here is the data and the per-row pieces every metric is built from:</p>
+       <table class="extable">
+         <caption>Five examples; the last row ($y=50$) is the outlier.</caption>
+         <thead><tr><th class="num">$y$</th><th class="num">$\\hat{y}$</th><th class="num">$e=y-\\hat{y}$</th><th class="num">$|e|$</th><th class="num">$e^2$</th><th class="num">$(y-\\bar{y})^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="num">10</td><td class="num">12</td><td class="num">-2</td><td class="num">2</td><td class="num">4</td><td class="num">400</td></tr>
+           <tr><td class="num">20</td><td class="num">18</td><td class="num">+2</td><td class="num">2</td><td class="num">4</td><td class="num">100</td></tr>
+           <tr><td class="num">30</td><td class="num">33</td><td class="num">-3</td><td class="num">3</td><td class="num">9</td><td class="num">0</td></tr>
+           <tr><td class="num">40</td><td class="num">35</td><td class="num">+5</td><td class="num">5</td><td class="num">25</td><td class="num">100</td></tr>
+           <tr><td class="num">50</td><td class="num">90</td><td class="num">-40</td><td class="num">40</td><td class="num">1600</td><td class="num">400</td></tr>
+           <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">52</td><td class="num">1642</td><td class="num">1000</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Residuals $y-\\hat{y} = -2, +2, -3, +5, -40$. The last one is a clear outlier.</li>
-         <li><b>MAE</b> $= \\frac{2+2+3+5+40}{5} = \\frac{52}{5} = 10.4$. The typical miss, with the outlier counted in proportion.</li>
-         <li><b>MSE</b> $= \\frac{4+4+9+25+1600}{5} = \\frac{1642}{5} = 328.4$. The $-40$ residual ($1600$ after squaring) is $97\\%$ of the total — squaring let one point dominate.</li>
+         <li><b>MAE</b> $= \\frac{52}{5} = 10.4$ (sum of $|e|$ over 5). The typical miss, outlier counted in proportion.</li>
+         <li><b>MSE</b> $= \\frac{1642}{5} = 328.4$. The $-40$ residual ($1600$ squared) is $97\\%$ of the total — squaring let one point dominate.</li>
          <li><b>RMSE</b> $= \\sqrt{328.4} \\approx 18.1$. Far above MAE ($10.4$): the gap screams "one big error is driving this".</li>
          <li><b>Median absolute error</b> $= \\text{median}(2,2,3,5,40) = 3$. The robust version barely notices the outlier.</li>
          <li><b>Max error</b> $= 40$. The worst single miss.</li>
-         <li><b>Mean bias</b> $= \\frac1m\\sum(\\hat{y}-y) = \\frac{(2-2+3-5+40)}{5} = \\frac{38}{5} = 7.6$. Positive, so the model <i>over-predicts</i> on average — driven by that last point.</li>
-         <li><b>R²:</b> $SS_{res} = 1642$, $SS_{tot} = (10\\!-\\!30)^2+\\dots+(50\\!-\\!30)^2 = 1000$. $R^2 = 1 - 1642/1000 = -0.642$ — <b>negative</b>, meaning this model does worse than just guessing the mean, thanks to the one wild miss.</li>
+         <li><b>Mean bias</b> $= \\frac1m\\sum(\\hat{y}-y) = \\frac{2-2+3-5+40}{5} = \\frac{38}{5} = 7.6$. Positive, so the model <i>over-predicts</i> on average — driven by that last point.</li>
+         <li><b>R²</b>: $SS_{res} = 1642$, $SS_{tot} = 1000$ (sum of $(y-\\bar{y})^2$). $R^2 = 1 - 1642/1000 = -0.642$ — <b>negative</b>: worse than just guessing the mean, thanks to the one wild miss.</li>
        </ul>
+       <table class="extable">
+         <caption>One pile of residuals, several verdicts.</caption>
+         <thead><tr><th>metric</th><th class="num">value</th><th>outlier-sensitive?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">MAE</td><td class="num">10.4</td><td>mildly</td></tr>
+           <tr><td class="row-h">RMSE</td><td class="num">18.1</td><td>strongly</td></tr>
+           <tr><td class="row-h">median |e|</td><td class="num">3.0</td><td>no</td></tr>
+           <tr><td class="row-h">R²</td><td class="num">-0.642</td><td>strongly</td></tr>
+         </tbody>
+       </table>
        <p>One outlier pulled RMSE, MSE, and R² to alarm; MAE and especially the median stayed calm. That contrast is the whole point of reporting more than one metric.</p>`,
 
     demo: function (host) {

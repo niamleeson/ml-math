@@ -93,18 +93,40 @@
        <p><b>Why accuracy alone causes catalog collapse.</b> Head items are liked by nearly everyone, so recommending them is the safest way to score hits. A pure accuracy objective therefore <i>pushes</i> the model toward a tiny set of blockbusters — high Precision/NDCG, near-zero Coverage. The only defense is to measure Coverage / Diversity / Novelty directly; they are the metrics that "see" the collapse the accuracy number hides.</p>`,
 
     example:
-      `<p>One user. Their truly relevant items are $R=\\{B, D, E\\}$, so $|R|=3$. Your top-5 list is:</p>
+      `<p>One user. Their truly relevant items are $R=\\{B, D, E\\}$, so $|R|=3$. Your top-5 list, with each slot's relevant flag and position discount $1/\\log_2(i+1)$:</p>
+       <table class="extable">
+         <caption>The top-5 list. DCG gain = flag × discount.</caption>
+         <thead><tr><th class="num">position $i$</th><th>item</th><th class="num">$\\text{rel}_i$</th><th class="num">$1/\\log_2(i+1)$</th><th class="num">DCG gain</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td>B</td><td class="num">1</td><td class="num">1.000</td><td class="num">1.000</td></tr>
+           <tr><td class="num">2</td><td>X</td><td class="num">0</td><td class="num">0.631</td><td class="num">0.000</td></tr>
+           <tr><td class="num">3</td><td>D</td><td class="num">1</td><td class="num">0.500</td><td class="num">0.500</td></tr>
+           <tr><td class="num">4</td><td>Y</td><td class="num">0</td><td class="num">0.431</td><td class="num">0.000</td></tr>
+           <tr><td class="num">5</td><td>E</td><td class="num">1</td><td class="num">0.387</td><td class="num">0.387</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Positions 1..5 = $[B,\\ X,\\ D,\\ Y,\\ E]$. Relevant flags $\\text{rel} = [1,0,1,0,1]$.</li>
          <li><b>Precision@5</b> $= \\frac{1+0+1+0+1}{5} = \\frac{3}{5} = 0.60$. Three of the five shown were good.</li>
-         <li><b>Recall@5</b> $= \\frac{3}{|R|} = \\frac{3}{3} = 1.0$. You caught all three of their relevant items.</li>
+         <li><b>Recall@5</b> $= \\frac{3}{|R|} = \\frac{3}{3} = 1.0$. You caught all three relevant items.</li>
          <li><b>HR@5</b> $= 1$ (at least one relevant item appeared).</li>
          <li><b>MRR:</b> first relevant item ($B$) is at position $r=1$, so $1/r = 1.0$.</li>
-         <li><b>DCG@5</b> $= \\frac{1}{\\log_2 2}+\\frac{0}{\\log_2 3}+\\frac{1}{\\log_2 4}+\\frac{0}{\\log_2 5}+\\frac{1}{\\log_2 6} = 1 + 0 + 0.5 + 0 + 0.387 = 1.887$.</li>
-         <li><b>IDCG@5</b> (perfect order $[B,D,E,\\dots]$) $= \\frac{1}{\\log_2 2}+\\frac{1}{\\log_2 3}+\\frac{1}{\\log_2 4} = 1 + 0.631 + 0.5 = 2.131$.</li>
+         <li><b>DCG@5</b> = sum of the DCG-gain column = $1.000 + 0 + 0.500 + 0 + 0.387 = 1.887$.</li>
+         <li><b>IDCG@5</b> (perfect order $[B,D,E,\\dots]$) $= 1.000 + 0.631 + 0.500 = 2.131$.</li>
          <li><b>NDCG@5</b> $= 1.887 / 2.131 \\approx 0.886$. Good, but not perfect — the relevant items were not all at the very top.</li>
        </ul>
-       <p>Now a rating example: true ratings $[5, 3]$, predicted $[4, 1]$. Errors $[1, 2]$. <b>MAE</b> $=\\frac{1+2}{2}=1.5$. <b>RMSE</b> $=\\sqrt{\\frac{1^2+2^2}{2}}=\\sqrt{2.5}\\approx 1.58$ — slightly higher, because the size-2 miss is squared.</p>`,
+       <p>Now a rating example with two items: true ratings $[5, 3]$, predicted $[4, 1]$.</p>
+       <table class="extable">
+         <caption>Rating errors feed MAE and RMSE.</caption>
+         <thead><tr><th>item</th><th class="num">true $y_i$</th><th class="num">pred $\\hat{y}_i$</th><th class="num">$|y_i-\\hat{y}_i|$</th><th class="num">$(y_i-\\hat{y}_i)^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">5</td><td class="num">4</td><td class="num">1</td><td class="num">1</td></tr>
+           <tr><td class="row-h">2</td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">4</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>MAE</b> $= \\frac{1+2}{2} = 1.5$ — the average absolute miss.</li>
+         <li><b>RMSE</b> $= \\sqrt{\\frac{1+4}{2}} = \\sqrt{2.5} \\approx 1.58$ — slightly higher, because the size-2 miss is squared before averaging.</li>
+       </ul>`,
 
     practice: [
       {

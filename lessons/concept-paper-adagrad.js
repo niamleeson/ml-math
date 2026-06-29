@@ -266,18 +266,29 @@
        the small $\\delta$ so the matrix is invertible from step one.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; one coordinate, two Adagrad steps, with $\\eta=0.1$, $\\delta\\approx0$,
-       starting at $x_0=0$, and a constant gradient $g=2$ each step (so we can watch the step shrink):</p>
-       <ul>
-         <li><b>Step 1 ($t=1$).</b> Accumulate: $G_1=g^2=2^2=4$. Denominator: $\\sqrt{4}=2$.
-         Step: $\\eta\\,g/\\sqrt{G_1}=0.1\\cdot 2/2=0.1$. Update: $x_1=0-0.1=-0.1$.</li>
-         <li><b>Step 2 ($t=2$).</b> Accumulate: $G_2=4+2^2=8$. Denominator: $\\sqrt{8}\\approx2.8284$.
-         Step: $0.1\\cdot 2/2.8284\\approx0.0707$. Update: $x_2=-0.1-0.0707=-0.1707$.</li>
+      `<p><b>Worked numbers</b> &mdash; one coordinate, three Adagrad steps, with $\\eta=0.1$, $\\delta\\approx0$,
+       starting at $x_0=0$, and a constant gradient $g=2$ every step (so we can watch the step shrink even though
+       the gradient never changes).</p>
+       <ul class="steps">
+         <li><b>Step 1 ($t=1$).</b> Accumulate $G_1=G_0+g^2=0+2^2=4$; denominator $\\sqrt{G_1}=\\sqrt4=2$; step $\\eta\\,g/\\sqrt{G_1}=0.1\\cdot2/2=0.1$; update $x_1=0-0.1=-0.1$.</li>
+         <li><b>Step 2 ($t=2$).</b> Accumulate $G_2=4+2^2=8$; denominator $\\sqrt8\\approx2.8284$; step $0.1\\cdot2/2.8284\\approx0.0707$; update $x_2=-0.1-0.0707=-0.1707$.</li>
+         <li><b>Step 3 ($t=3$).</b> Accumulate $G_3=8+2^2=12$; denominator $\\sqrt{12}\\approx3.4641$; step $0.1\\cdot2/3.4641\\approx0.0577$; update $x_3=-0.1707-0.0577=-0.2284$.</li>
        </ul>
-       <p>The gradient never changed, but the step fell from $0.1$ to $0.0707$ &mdash; the accumulated sum grew
-       from $4$ to $8$, so $\\sqrt{G}$ grew by $\\sqrt2$ and the step shrank by the same factor. That automatic,
-       per-coordinate decay is Adagrad's signature. The CODE cell recomputes these exact numbers and prints
-       them.</p>`,
+       <table class="extable">
+         <caption>Same gradient $g=2$ each step &mdash; the accumulator grows, so the step shrinks</caption>
+         <thead>
+           <tr><th>step $t$</th><th class="num">$G_t=G_{t-1}+g^2$</th><th class="num">$\\sqrt{G_t}$</th><th class="num">step $=\\eta g/\\sqrt{G_t}$</th><th class="num">$x_t$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">4</td><td class="num">2.0000</td><td class="num">0.1000</td><td class="num">&minus;0.1000</td></tr>
+           <tr><td class="row-h">2</td><td class="num">8</td><td class="num">2.8284</td><td class="num">0.0707</td><td class="num">&minus;0.1707</td></tr>
+           <tr><td class="row-h">3</td><td class="num">12</td><td class="num">3.4641</td><td class="num">0.0577</td><td class="num">&minus;0.2284</td></tr>
+         </tbody>
+       </table>
+       <p>The gradient never changed, but the step fell from $0.1$ to $0.0707$ to $0.0577$ &mdash; each time the
+       accumulated sum grows, $\\sqrt{G}$ grows and the step shrinks by the same factor (from step 1 to step 2,
+       $\\sqrt{G}$ grew by $\\sqrt2$, so the step shrank by $\\sqrt2$). That automatic, per-coordinate decay is
+       Adagrad's signature. The CODE cell recomputes the first two steps exactly and prints them.</p>`,
 
     recipe:
       `<p><b>Diagonal Adagrad, as numbered steps</b> &mdash; initialize the accumulator $G_0=0$ (one entry per

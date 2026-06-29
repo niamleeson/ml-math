@@ -240,17 +240,28 @@
        $U_a = \\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}$ (identity), and $v_a = [1,1]$. Note
        $W_a s = [0.25,\\,-0.25]$ for every $j$.</p>
        <ul class="steps">
-        <li><b>Score each source word (Eqn. 7).</b>
-        <ul>
-          <li>$j=1$: $\\tanh([0.25,-0.25]+[1,0]) = \\tanh([1.25,-0.25]) = [0.848,\\,-0.245]$; $e_1 = 0.848-0.245 = \\mathbf{0.603}$.</li>
-          <li>$j=2$: $\\tanh([0.25,-0.25]+[0,1]) = \\tanh([0.25,0.75]) = [0.245,\\,0.635]$; $e_2 = 0.245+0.635 = \\mathbf{0.880}$.</li>
-          <li>$j=3$: $\\tanh([0.25,-0.25]+[1,1]) = \\tanh([1.25,0.75]) = [0.848,\\,0.635]$; $e_3 = 0.848+0.635 = \\mathbf{1.483}$.</li>
-        </ul></li>
-        <li><b>Softmax to weights (Eqn. 6).</b> $\\exp(e) = [1.828,\\,2.411,\\,4.408]$, summing to $8.647$, so
-        $\\alpha = [0.211,\\,0.279,\\,0.510]$ (they sum to 1). Source word 3 wins the most weight.</li>
-        <li><b>Weighted-sum context (Eqn. 5).</b>
-        $c = 0.211\\,[1,0] + 0.279\\,[0,1] + 0.510\\,[1,1] = [0.211+0.510,\\;\\,0.279+0.510] = [\\mathbf{0.721},\\,\\mathbf{0.789}]$.</li>
+        <li><b>Score each source word (Eqn. 7):</b> push $W_a s + U_a h_j$ through $\\tanh$, then dot with $v_a=[1,1]$ (i.e. add the two components):
+          <ul>
+            <li>$j=1$: $\\tanh([1.25,-0.25]) = [0.848,\\,-0.245]$; $e_1 = 0.848-0.245 = \\mathbf{0.603}$.</li>
+            <li>$j=2$: $\\tanh([0.25,0.75]) = [0.245,\\,0.635]$; $e_2 = 0.245+0.635 = \\mathbf{0.880}$.</li>
+            <li>$j=3$: $\\tanh([1.25,0.75]) = [0.848,\\,0.635]$; $e_3 = 0.848+0.635 = \\mathbf{1.483}$.</li>
+          </ul>
+        </li>
+        <li><b>Softmax to weights (Eqn. 6):</b> $\\exp(e) = [1.828,\\,2.411,\\,4.408]$, which sum to $8.647$; divide each by $8.647$ to get $\\alpha = [0.211,\\,0.279,\\,0.510]$ (these sum to 1).</li>
+        <li><b>Weighted-sum context (Eqn. 5):</b> $c = 0.211\\,[1,0] + 0.279\\,[0,1] + 0.510\\,[1,1]$, so $c_1 = 0.211+0.510 = \\mathbf{0.721}$ and $c_2 = 0.279+0.510 = \\mathbf{0.789}$.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-source-word ledger: score &rarr; softmax weight &rarr; contribution to the context.</caption>
+        <thead>
+          <tr><th>source $j$</th><th class="num">$h_j$</th><th class="num">$e_j$ (Eqn. 7)</th><th class="num">$\\exp(e_j)$</th><th class="num">$\\alpha_j$ (Eqn. 6)</th><th class="num">$\\alpha_j h_j$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-h">1</td><td class="num">$[1,0]$</td><td class="num">0.603</td><td class="num">1.828</td><td class="num">0.211</td><td class="num">$[0.211,\\,0]$</td></tr>
+          <tr><td class="row-h">2</td><td class="num">$[0,1]$</td><td class="num">0.880</td><td class="num">2.411</td><td class="num">0.279</td><td class="num">$[0,\\,0.279]$</td></tr>
+          <tr><td class="row-h">3</td><td class="num">$[1,1]$</td><td class="num">1.483</td><td class="num">4.408</td><td class="num">0.510</td><td class="num">$[0.510,\\,0.510]$</td></tr>
+          <tr><td class="row-h">sum</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">8.647</td><td class="num">1.000</td><td class="num">$c=[0.721,\\,0.789]$</td></tr>
+        </tbody>
+       </table>
        <p>So the decoder, at this step, reads mostly source word 3 (weight 0.51) with some of words 1 and 2,
        and gets context $[0.721,\\,0.789]$. These exact numbers are recomputed in the notebook's first cell so
        you can check the block by running it.</p>`,

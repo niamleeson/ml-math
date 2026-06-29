@@ -241,16 +241,36 @@
     example:
       `<p><b>Worked numbers: one AdamW step on a single (1-D) weight.</b> Start with $\\theta=0.5$, loss gradient
        $g=0.2$, and defaults $\\alpha=0.1$, $\\beta_1=0.9$, $\\beta_2=0.999$, $\\epsilon=10^{-8}$, $\\lambda=0.01$,
-       $\\eta_t=1$. This is the very first step ($t=1$), so $m_0=v_0=0$.</p>
-       <ul>
-         <li>First moment: $m_1=(1-\\beta_1)\\,g=(0.1)(0.2)=0.02$.</li>
-         <li>Second moment: $v_1=(1-\\beta_2)\\,g^2=(0.001)(0.04)=0.00004$.</li>
-         <li>Bias-correct: $\\hat m_1=m_1/(1-\\beta_1^1)=0.02/0.1=0.2$; &nbsp; $\\hat v_1=v_1/(1-\\beta_2^1)=0.00004/0.001=0.04$.</li>
-         <li>Adaptive step: $\\hat m_1/(\\sqrt{\\hat v_1}+\\epsilon)=0.2/(\\sqrt{0.04}+10^{-8})=0.2/0.2=1.0$.</li>
-         <li>Decoupled decay term: $\\lambda\\theta=0.01\\times0.5=0.005$.</li>
-         <li>Update: $\\theta_{\\text{new}}=0.5-0.1\\,(1.0+0.005)=0.5-0.1005=\\mathbf{0.3995}$.</li>
+       $\\eta_t=1$. This is the very first step ($t=1$), so $m_0=v_0=0$. Plug into Algorithm 2 line by line:</p>
+       <ul class="steps">
+         <li><b>First moment:</b> $m_1=(1-\\beta_1)\\,g=(0.1)(0.2)=0.02$.</li>
+         <li><b>Second moment:</b> $v_1=(1-\\beta_2)\\,g^2=(0.001)(0.04)=0.00004$.</li>
+         <li><b>Bias-correct first moment:</b> $\\hat m_1=m_1/(1-\\beta_1^1)=0.02/0.1=0.2$.</li>
+         <li><b>Bias-correct second moment:</b> $\\hat v_1=v_1/(1-\\beta_2^1)=0.00004/0.001=0.04$.</li>
+         <li><b>Adaptive step:</b> $\\hat m_1/(\\sqrt{\\hat v_1}+\\epsilon)=0.2/(\\sqrt{0.04}+10^{-8})=0.2/0.2=1.0$.</li>
+         <li><b>Decoupled decay term:</b> $\\lambda\\theta=0.01\\times0.5=0.005$ &mdash; applied to the weight directly.</li>
+         <li><b>Update:</b> $\\theta_{\\text{new}}=\\theta-\\alpha(\\,\\text{adaptive}+\\lambda\\theta\\,)=0.5-0.1\\,(1.0+0.005)=0.5-0.1005=\\mathbf{0.3995}$.</li>
        </ul>
-       <p>The CODE cell recomputes these exact numbers and checks $\\theta_{\\text{new}}=0.3995$ against
+       <p><b>The one and only difference from "Adam with L2".</b> Adam+L2 folds the decay <i>into</i> the gradient
+       first ($g\\leftarrow g+\\lambda\\theta = 0.2+0.005=0.205$) so it gets divided by $\\sqrt{\\hat v_1}$ along
+       with everything else; AdamW keeps the decay <b>outside</b> that division:</p>
+       <table class="extable">
+         <caption>Same one step ($\\theta=0.5$, $g=0.2$, $t=1$): where the $\\lambda\\theta$ decay enters</caption>
+         <thead>
+           <tr><th>quantity</th><th class="num">AdamW (decoupled)</th><th class="num">Adam + L2 (coupled)</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">gradient used for $m,v$</td><td class="num">$g=0.2$</td><td class="num">$g+\\lambda\\theta=0.205$</td></tr>
+           <tr><td class="row-h">$\\hat m_1$</td><td class="num">0.2</td><td class="num">0.205</td></tr>
+           <tr><td class="row-h">$\\hat v_1$</td><td class="num">0.04</td><td class="num">0.042025</td></tr>
+           <tr><td class="row-h">adaptive $=\\hat m_1/\\sqrt{\\hat v_1}$</td><td class="num">1.0</td><td class="num">1.0</td></tr>
+           <tr><td class="row-h">separate decay term</td><td class="num">$+\\lambda\\theta=0.005$</td><td class="num">none (already in $g$)</td></tr>
+           <tr><td class="row-h">$\\theta_{\\text{new}}=\\theta-\\alpha(\\cdots)$</td><td class="num">0.3995</td><td class="num">0.4000</td></tr>
+         </tbody>
+       </table>
+       <p>Even on this first step the two land on different weights ($0.3995$ vs $0.4000$); over many steps the gap
+       grows, because under Adam+L2 the decay is scaled by each weight's own $1/\\sqrt{\\hat v_t}$ instead of being a
+       uniform shrink. The CODE cell recomputes $\\theta_{\\text{new}}=0.3995$ and checks it against
        <code>torch.optim.AdamW</code> on the same one step.</p>`,
 
     recipe:

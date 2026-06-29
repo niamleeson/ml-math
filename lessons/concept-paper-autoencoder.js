@@ -268,15 +268,21 @@ $$ \\text{Gaussian visible unit (real-valued data): } v_i \\sim \\mathcal{N}\\!\
        the deep nonlinear version optimize well; full derivation of that energy-based pretraining is beyond
        this lesson and lives in the RBM literature it cites.</p>`,
     example:
-      `<p>Work the <b>reconstruction loss</b> by hand on a tiny 4-pixel "image" so you can check the
-       notebook. We have an input $x$ and a decoder output $\\hat x$ (both with pixel values in $[0,1]$):</p>
-       <ul>
-        <li>input $x = [1.0,\\ 0.0,\\ 0.8,\\ 0.2]$</li>
-        <li>reconstruction $\\hat x = [0.9,\\ 0.1,\\ 0.6,\\ 0.2]$</li>
-       </ul>
+      `<p>Work the <b>reconstruction loss</b> $\\sum_i (x_i-\\hat x_i)^2$ by hand on a tiny 4-pixel "image"
+       so you can check the notebook. We have an input $x = [1.0,\\ 0.0,\\ 0.8,\\ 0.2]$ and a decoder output
+       $\\hat x = [0.9,\\ 0.1,\\ 0.6,\\ 0.2]$ (both with pixel values in $[0,1]$). Take it pixel by pixel:</p>
+       <table class="extable">
+         <caption>Per-pixel reconstruction error: subtract, then square. Last column is what we sum.</caption>
+         <thead><tr><th>pixel $i$</th><th class="num">$x_i$</th><th class="num">$\\hat x_i$</th><th class="num">$x_i-\\hat x_i$</th><th class="num">$(x_i-\\hat x_i)^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">1.0</td><td class="num">0.9</td><td class="num">0.1</td><td class="num">0.01</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.0</td><td class="num">0.1</td><td class="num">-0.1</td><td class="num">0.01</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.8</td><td class="num">0.6</td><td class="num">0.2</td><td class="num">0.04</td></tr>
+           <tr><td class="row-h">4</td><td class="num">0.2</td><td class="num">0.2</td><td class="num">0.0</td><td class="num">0.00</td></tr>
+           <tr><td class="row-h"><b>sum</b></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"><b>0.06</b></td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Per-pixel errors.</b> $x - \\hat x = [\\,1.0-0.9,\\ 0.0-0.1,\\ 0.8-0.6,\\ 0.2-0.2\\,] = [0.1,\\ -0.1,\\ 0.2,\\ 0.0].$</li>
-        <li><b>Square each.</b> $[0.1^2,\\ (-0.1)^2,\\ 0.2^2,\\ 0.0^2] = [0.01,\\ 0.01,\\ 0.04,\\ 0.00].$</li>
         <li><b>Sum of squared errors.</b> $0.01 + 0.01 + 0.04 + 0.00 = 0.06.$</li>
         <li><b>Mean-squared error (divide by 4 pixels).</b> $\\text{MSE} = 0.06 / 4 = 0.015.$</li>
        </ul>

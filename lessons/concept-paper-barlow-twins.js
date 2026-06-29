@@ -251,6 +251,19 @@ $$ \\text{where}\\quad \\mathcal{C}_{ij} \\;\\triangleq\\; \\frac{\\sum_{b} z^{A
         <li><b>Redundancy (off-diagonal) term:</b> $\\mathcal{C}_{12}^2 + \\mathcal{C}_{21}^2 = 0 + 0 = 0$.</li>
         <li><b>Total loss:</b> $\\mathcal{L}_{\\mathcal{BT}} = 4.0 + 0.5\\cdot 0 = 4.0$.</li>
        </ul>
+       <table class="extable">
+        <caption>The $2\\times2$ cross-correlation matrix $\\mathcal{C}$ (each entry = numerator $/\\,4$), and which loss term it feeds.</caption>
+        <thead>
+          <tr><th>entry</th><th class="num">numerator $\\sum_b z^A z^B$</th><th class="num">$\\mathcal{C}$ (num $/\\,4$)</th><th>target</th><th class="num">contribution</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-h">$\\mathcal{C}_{11}$ (diag)</td><td class="num">4</td><td class="num">1.0</td><td>$\\to 1$</td><td class="num">$(1-1)^2=0$</td></tr>
+          <tr><td class="row-h">$\\mathcal{C}_{22}$ (diag)</td><td class="num">$-4$</td><td class="num">$-1.0$</td><td>$\\to 1$</td><td class="num">$(1-(-1))^2=4.0$</td></tr>
+          <tr><td class="row-h">$\\mathcal{C}_{12}$ (off)</td><td class="num">0</td><td class="num">0</td><td>$\\to 0$</td><td class="num">$\\lambda\\cdot 0^2=0$</td></tr>
+          <tr><td class="row-h">$\\mathcal{C}_{21}$ (off)</td><td class="num">0</td><td class="num">0</td><td>$\\to 0$</td><td class="num">$\\lambda\\cdot 0^2=0$</td></tr>
+          <tr><td class="row-h">total</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td>&mdash;</td><td class="num">$\\mathcal{L}_{\\mathcal{BT}}=4.0$</td></tr>
+        </tbody>
+       </table>
        <p>The whole loss here comes from dimension 2's diagonal being $-1$ instead of $+1$: the two views
        <i>disagree</i> on that feature, and the invariance term punishes it ($4.0$). The off-diagonal is already
        $0$ (the dimensions are decorrelated), so the redundancy term is $0$. Gradient descent would flip

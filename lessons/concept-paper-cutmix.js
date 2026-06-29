@@ -244,20 +244,33 @@
     example:
       `<p><b>Worked numbers.</b> Take a CIFAR-style image $W=H=32$ (so area $=1024$ pixels). Sample the target
        weight $\\lambda=0.6$, meaning image A should keep $60\\%$ and image B's patch should cover the other
-       $40\\%$.</p>
-       <ul>
-         <li><b>Patch size (Eq. 2):</b> $r_w=W\\sqrt{1-\\lambda}=32\\sqrt{0.4}=32(0.6325)=20.24\\to 20$ px (rounded),
-         and likewise $r_h=20$ px.</li>
-         <li><b>Patch placed fully inside</b> (no clipping for this example): its area is
-         $20\\times20=400$ pixels, out of $1024$.</li>
+       $40\\%$. Plug into Eq. 2 and the re-fit line, step by step:</p>
+       <ul class="steps">
+         <li><b>Patch width (Eq. 2):</b> $r_w=W\\sqrt{1-\\lambda}=32\\sqrt{0.4}=32\\times 0.6325=20.24\\to 20$ px
+         (rounded down).</li>
+         <li><b>Patch height (Eq. 2):</b> $r_h=H\\sqrt{1-\\lambda}=32\\times 0.6325=20.24\\to 20$ px, likewise.</li>
+         <li><b>Patch area:</b> placed fully inside (no clipping), $r_w\\times r_h=20\\times 20=400$ pixels, out of
+         $1024$.</li>
          <li><b>Re-fit $\\lambda$ to the actual area:</b>
-         $\\lambda=1-\\dfrac{400}{1024}=1-0.3906=\\mathbf{0.6094}$. (Slightly above $0.6$ because rounding $20.24$
-         down to $20$ made the patch a hair smaller than planned.)</li>
-         <li><b>Mixed label:</b> $\\tilde{y}=0.6094\\,y_A+0.3906\\,y_B$. If A is class "cat" and B is class "dog",
-         the target is $\\mathbf{0.6094}$ cat $+\\;\\mathbf{0.3906}$ dog.</li>
+         $\\lambda=1-\\dfrac{400}{1024}=1-0.3906=\\mathbf{0.6094}$ (a hair above $0.6$ because rounding $20.24$ down
+         shrank the patch slightly).</li>
+         <li><b>Mixed label:</b> $\\tilde{y}=0.6094\\,y_A+0.3906\\,y_B$. If A is "cat" and B is "dog", the target is
+         $\\mathbf{0.6094}$ cat $+\\;\\mathbf{0.3906}$ dog.</li>
        </ul>
-       <p>The CODE cell recomputes these exact values ($r_w=r_h=20$, area $400/1024$, $\\lambda=0.6094$) and prints
-       them.</p>`,
+       <p>Now contrast the three "regional/blend" augmentations on this same pair &mdash; what fills the deleted
+       rectangle, whether pixels stay real, and how the label is set:</p>
+       <table class="extable">
+        <caption>Cutout vs Mixup vs CutMix on the $\\lambda=0.6$ example ($40\\%$ region affected).</caption>
+        <thead><tr><th>method</th><th>fills the region with</th><th class="num">faded pixels</th><th>label target</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">Cutout</td><td>zeros (deleted)</td><td class="num">$0\\%$</td><td>$y_A$ (unchanged)</td></tr>
+         <tr><td class="row-h">Mixup</td><td>$\\lambda x_A+(1-\\lambda)x_B$ everywhere</td><td class="num">$100\\%$</td><td>$0.6\\,y_A+0.4\\,y_B$</td></tr>
+         <tr><td class="row-h">CutMix</td><td>real pixels of $x_B$ (spliced)</td><td class="num">$0\\%$</td><td>$0.6094\\,y_A+0.3906\\,y_B$</td></tr>
+        </tbody>
+       </table>
+       <p>CutMix is the only one that both keeps every pixel real (like Cutout, unlike Mixup) <i>and</i> mixes the
+       label by area (like Mixup, unlike Cutout). The CODE cell recomputes these exact values ($r_w=r_h=20$, area
+       $400/1024$, $\\lambda=0.6094$) and prints them.</p>`,
 
     recipe:
       `<p><b>CutMix on one training batch, as numbered steps</b> (images <code>x</code> of shape

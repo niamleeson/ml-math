@@ -88,13 +88,42 @@
        <p><b>Why PR-AUC over accuracy on rare events.</b> Accuracy and ROC's false-alarm rate both have the giant negative count in their denominator, so the rare positives barely move them. Precision puts the alarms in the denominator instead — so a flood of false alarms drops it immediately — which is exactly the failure mode you care about when positives are rare.</p>`,
 
     example:
-      `<p><b>C-index by hand.</b> Three machines. Machine A failed at 2 months, B failed at 5 months, C was still running (censored) at 4 months. Observed times and indicators: A $(t{=}2,\\delta{=}1)$, B $(t{=}5,\\delta{=}1)$, C $(t{=}4,\\delta{=}0)$. The model's risk scores: $\\hat r_A = 0.9$, $\\hat r_B = 0.3$, $\\hat r_C = 0.6$.</p>
+      `<p><b>C-index by hand.</b> Three machines, each with an observed time $t$, an event indicator $\\delta$ ($1$ = failed, $0$ = still running / censored), and the model's risk score $\\hat r$ (higher = expected to fail sooner).</p>
+       <table class="extable">
+         <caption>The three machines</caption>
+         <thead><tr><th>machine</th><th class="num">$t$ (months)</th><th class="num">$\\delta$</th><th>status</th><th class="num">$\\hat r$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td class="num">2</td><td class="num">1</td><td>failed</td><td class="num">0.9</td></tr>
+           <tr><td class="row-h">B</td><td class="num">5</td><td class="num">1</td><td>failed</td><td class="num">0.3</td></tr>
+           <tr><td class="row-h">C</td><td class="num">4</td><td class="num">0</td><td>censored</td><td class="num">0.6</td></tr>
+         </tbody>
+       </table>
+       <p>Check each of the three possible pairs: is it <i>comparable</i> (do we know who failed first?), and if so is it <i>concordant</i> (did the earlier-failing machine get the higher risk?).</p>
+       <table class="extable">
+         <caption>Every pair, classified</caption>
+         <thead><tr><th>pair</th><th>comparable?</th><th>why</th><th>concordant?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A &amp; B</td><td>yes</td><td>A failed at $2 \\lt 5$, so A failed first</td><td>yes — A's risk $0.9 \\gt 0.3$</td></tr>
+           <tr><td class="row-h">A &amp; C</td><td>yes</td><td>A failed at $2 \\lt 4$ (before C's censoring time)</td><td>yes — A's risk $0.9 \\gt 0.6$</td></tr>
+           <tr><td class="row-h">B &amp; C</td><td>no</td><td>C censored at $4$, B's event at $5 \\gt 4$: cannot tell who fails first</td><td>—</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>List comparable pairs.</b> A&amp;B: A failed at 2 &lt; 5, comparable. A&amp;C: A failed at 2 &lt; 4, comparable (A failed before C's censoring time). B&amp;C: C is censored at 4, and B's event is at 5 &gt; 4 — we cannot tell whether C would have failed before or after B, so <i>not</i> comparable. Comparable pairs: {A,B} and {A,C}.</li>
-         <li><b>Score each pair.</b> {A,B}: A failed first and has the higher risk ($0.9 \\gt  0.3$) — concordant. {A,C}: A failed first and has the higher risk ($0.9 \\gt  0.6$) — concordant.</li>
-         <li><b>Compute C.</b> Both comparable pairs are concordant: $C = 2/2 = 1.0$. The model ranked risk perfectly on every pair it could be judged on.</li>
+         <li><b>Count comparable pairs.</b> {A,B} and {A,C} are comparable; {B,C} is not. So $\\#\\{\\text{comparable}\\} = 2$.</li>
+         <li><b>Count those ranked correctly.</b> Both comparable pairs are concordant, so $\\#\\{\\text{ranked correctly}\\} = 2$.</li>
+         <li><b>Plug into the formula.</b> $C = \\dfrac{\\#\\{\\text{ranked correctly}\\}}{\\#\\{\\text{comparable}\\}} = \\dfrac{2}{2} = 1.0$ — the model ranked risk perfectly on every pair it could be judged on.</li>
        </ul>
-       <p><b>Why accuracy fails on anomalies.</b> A fraud detector sees 10,000 transactions, of which 10 are fraud. A model that flags <i>nothing</i> is correct on the 9,990 normal ones, so its accuracy is $9990/10000 = 0.999$ — yet it catches zero fraud. Its recall is $0/10 = 0$ and PR-AUC is near the base rate $0.001$. Accuracy looks excellent; the precision–recall numbers correctly call it worthless.</p>`,
+       <p><b>Why accuracy fails on anomalies.</b> A fraud detector sees $10{,}000$ transactions, of which $10$ are fraud. Compare a do-nothing model (flags nothing) against the metrics that matter:</p>
+       <table class="extable">
+         <caption>Do-nothing detector on 10,000 transactions (10 fraud)</caption>
+         <thead><tr><th>metric</th><th>arithmetic</th><th class="num">value</th><th>verdict</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">accuracy</td><td>$9990 / 10000$</td><td class="num">0.999</td><td>looks excellent</td></tr>
+           <tr><td class="row-h">recall</td><td>$0 / 10$</td><td class="num">0.000</td><td>catches zero fraud</td></tr>
+           <tr><td class="row-h">PR-AUC</td><td>$\\approx$ base rate $10/10000$</td><td class="num">0.001</td><td>worthless</td></tr>
+         </tbody>
+       </table>
+       <p>Accuracy is flattered by the $9{,}990$ easy negatives; the precision–recall numbers correctly call the detector worthless.</p>`,
 
     demo: function (host) {
       function C() {

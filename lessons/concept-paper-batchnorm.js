@@ -222,16 +222,26 @@
        that is the mechanism behind "much higher learning rates" (Section 3.3).</p>`,
 
     example:
-      `<p><b>Worked numbers</b> (one feature, batch of 3, $\\epsilon$ tiny enough to ignore):</p>
-       <ul>
-         <li>Batch <code>[2, 4, 6]</code>.</li>
-         <li>Mean: $\\mu_B=(2+4+6)/3=4$.</li>
-         <li>Variance: $\\sigma^2_B=\\big((2-4)^2+(4-4)^2+(6-4)^2\\big)/3=(4+0+4)/3=2.667$.</li>
-         <li>Std: $\\sqrt{2.667}\\approx 1.633$.</li>
-         <li>Normalize: $\\hat{x}=[(2-4)/1.633,\\;(4-4)/1.633,\\;(6-4)/1.633]=[-1.225,\\;0,\\;1.225]$.</li>
-         <li>Scale &amp; shift with $\\gamma=2,\\;\\beta=1$:
-         $y=2\\cdot[-1.225,0,1.225]+1=[-1.449,\\;1,\\;3.449]$.</li>
+      `<p><b>Worked numbers</b> (one feature, batch of 3, $\\epsilon$ tiny enough to ignore). Batch
+       $x=[2,4,6]$, with learned $\\gamma=2,\\ \\beta=1$:</p>
+       <ul class="steps">
+         <li><b>Mean (Alg. 1 line 1):</b> $\\mu_B=(2+4+6)/3=4$.</li>
+         <li><b>Variance (line 2, biased $/m$):</b> $\\sigma^2_B=\\big((2-4)^2+(4-4)^2+(6-4)^2\\big)/3=(4+0+4)/3=2.667$.</li>
+         <li><b>Std:</b> $\\sqrt{2.667}\\approx 1.633$.</li>
+         <li><b>Normalize (line 3):</b> $\\hat{x}=[(2-4)/1.633,\\;(4-4)/1.633,\\;(6-4)/1.633]=[-1.225,\\;0,\\;1.225]$.</li>
+         <li><b>Scale &amp; shift (line 4):</b> $y=\\gamma\\hat{x}+\\beta=2\\cdot[-1.225,0,1.225]+1=[-1.449,\\;1,\\;3.449]$.</li>
        </ul>
+       <table class="extable">
+        <caption>Per-element walk through the four BN steps for batch $[2,4,6]$ ($\\mu_B=4$, $\\sigma_B\\approx1.633$, $\\gamma=2$, $\\beta=1$).</caption>
+        <thead>
+          <tr><th>$x_i$</th><th class="num">$x_i-\\mu_B$</th><th class="num">$\\hat{x}_i=(x_i-\\mu_B)/\\sigma_B$</th><th class="num">$y_i=\\gamma\\hat{x}_i+\\beta$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-h">2</td><td class="num">$-2$</td><td class="num">$-1.225$</td><td class="num">$-1.449$</td></tr>
+          <tr><td class="row-h">4</td><td class="num">0</td><td class="num">0</td><td class="num">1.000</td></tr>
+          <tr><td class="row-h">6</td><td class="num">2</td><td class="num">1.225</td><td class="num">3.449</td></tr>
+        </tbody>
+       </table>
        <p>The CODE cell recomputes these exact numbers and prints them, and checks them against
        <code>nn.BatchNorm1d</code>.</p>`,
 

@@ -257,25 +257,40 @@
        $\\rho$.</p>`,
     example:
       `<p>Work the two core pieces by hand on a single weight: <b>(a)</b> sample it with the reparameterization
-       trick, and <b>(b)</b> compute its KL complexity cost. Take $\\mu = 0.1$, raw spread $\\rho = -2.0$, and a
-       fixed noise draw $\\epsilon = 0.5$. Use a standard-normal prior $P(w) = \\mathcal{N}(0, 1)$, so prior
-       standard deviation $\\sigma_0 = 1$.</p>
+       trick $w = \\mu + \\sigma\\epsilon$, and <b>(b)</b> compute its KL complexity cost against a standard-normal
+       prior $P(w) = \\mathcal{N}(0, 1)$ (so prior standard deviation $\\sigma_0 = 1$). Take $\\mu = 0.1$, raw
+       spread $\\rho = -2.0$, and a fixed noise draw $\\epsilon = 0.5$.</p>
        <ul class="steps">
-        <li><b>Recover the spread.</b> $\\sigma = \\log(1+\\exp(\\rho)) = \\log(1 + e^{-2}) = \\log(1.13534)
-        = 0.12693$. (Softplus keeps it positive.)</li>
+        <li><b>Recover the spread (softplus).</b> $\\sigma = \\log(1+\\exp(\\rho)) = \\log(1 + e^{-2})$. Now
+        $e^{-2} = 0.13534$, so $1 + e^{-2} = 1.13534$, and $\\sigma = \\log(1.13534) = 0.12693$. (Softplus keeps
+        it positive.)</li>
         <li><b>Sample the weight.</b> $w = \\mu + \\sigma\\,\\epsilon = 0.1 + 0.12693 \\times 0.5 = 0.1 + 0.06346
         = 0.16346$. That is one differentiable draw of this weight.</li>
-        <li><b>KL complexity cost</b> for one Gaussian weight against a $\\mathcal{N}(0,\\sigma_0^2)$ prior has the
-        closed form $\\;\\log\\dfrac{\\sigma_0}{\\sigma} + \\dfrac{\\sigma^2 + \\mu^2}{2\\sigma_0^2} - \\dfrac12$.
-        Plug in $\\sigma_0 = 1$, $\\sigma = 0.12693$, $\\mu = 0.1$:</li>
-        <li>$\\log\\dfrac{1}{0.12693} = 2.0644$; &nbsp; $\\dfrac{0.12693^2 + 0.1^2}{2} = \\dfrac{0.016111 + 0.01}{2}
-        = 0.013056$; &nbsp; so $\\text{KL} = 2.0644 + 0.013056 - 0.5 = 1.5774$.</li>
-        <li><b>Read it.</b> The KL is positive: this weight's distribution is far from the prior, mostly because its
-        spread $\\sigma = 0.127$ is much tighter than the prior's $\\sigma_0 = 1$ (the $\\log(\\sigma_0/\\sigma)$
-        term dominates). The complexity cost would push $\\sigma$ back up unless data justifies the tightness.</li>
+        <li><b>KL closed form</b> for one Gaussian weight vs a $\\mathcal{N}(0,\\sigma_0^2)$ prior is
+        $\\;\\log\\dfrac{\\sigma_0}{\\sigma} + \\dfrac{\\sigma^2 + \\mu^2}{2\\sigma_0^2} - \\dfrac12$. With
+        $\\sigma_0 = 1$, $\\sigma = 0.12693$, $\\mu = 0.1$.</li>
+        <li><b>Log term:</b> $\\log\\dfrac{1}{0.12693} = 2.0644$.</li>
+        <li><b>Quadratic term:</b> $\\dfrac{0.12693^2 + 0.1^2}{2} = \\dfrac{0.016111 + 0.01}{2} = 0.013056$.</li>
+        <li><b>Sum:</b> $\\text{KL} = 2.0644 + 0.013056 - 0.5 = 1.5774$.</li>
        </ul>
-       <p>These exact numbers ($\\sigma = 0.12693$, $w = 0.16346$, $\\text{KL} = 1.577$) are recomputed in the
-       notebook's first cell so you can check them.</p>`,
+       <p><b>How the complexity cost reacts to the spread.</b> Hold $\\mu = 0.1$ fixed and recompute the KL for
+       three values of the raw spread $\\rho$ &mdash; a tight weight, a near-prior weight, and a loose weight:</p>
+       <table class="extable">
+        <caption>KL complexity cost vs the weight's spread $\\sigma$ (prior $\\sigma_0 = 1$, $\\mu = 0.1$)</caption>
+        <thead><tr><th>$\\rho$</th><th class="num">$\\sigma=\\log(1+e^{\\rho})$</th><th class="num">$\\log\\frac{\\sigma_0}{\\sigma}$</th><th class="num">$\\frac{\\sigma^2+\\mu^2}{2}$</th><th class="num">KL</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$-2.0$ (tight)</td><td class="num">0.12693</td><td class="num">2.0644</td><td class="num">0.01306</td><td class="num">1.5774</td></tr>
+         <tr><td class="row-h">$+0.5$ (near prior)</td><td class="num">0.97407</td><td class="num">0.02627</td><td class="num">0.47940</td><td class="num">0.00567</td></tr>
+         <tr><td class="row-h">$+2.0$ (loose)</td><td class="num">2.12693</td><td class="num">$-0.75466$</td><td class="num">2.26692</td><td class="num">1.01226</td></tr>
+        </tbody>
+       </table>
+       <p><b>Read it.</b> The KL bottoms out near $\\sigma \\approx \\sigma_0 = 1$ (the $\\rho=+0.5$ row, KL
+       $\\approx 0.006$) and grows in both directions &mdash; a spread that is far <i>tighter</i> than the prior
+       ($1.577$) is penalized even harder than one far <i>looser</i> ($1.012$). Our weight ($\\sigma = 0.127$)
+       sits on the tight side, so the complexity cost would push $\\sigma$ back up unless data justifies the
+       tightness. These exact numbers
+       ($\\sigma = 0.12693$, $w = 0.16346$, $\\text{KL} = 1.577$) are recomputed in the notebook's first cell so
+       you can check them.</p>`,
     recipe:
       `<ol>
         <li><b>Build a Bayesian linear layer.</b> Compose with <code>torch.nn</code>: store two parameters per

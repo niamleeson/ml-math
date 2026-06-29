@@ -96,21 +96,41 @@
        </ul>`,
 
     example:
-      `<p>Five points, true labels $U=[\\,A,A,A,B,B\\,]$. Your clustering $V=[\\,1,1,2,2,2\\,]$ — close but it splits the A's and lumps one A with the B's.</p>
+      `<p>Five points, true labels $U=[\\,A,A,A,B,B\\,]$ (points $1,2,3$ are $A$; points $4,5$ are $B$). Your clustering $V=[\\,1,1,2,2,2\\,]$ (points $1,2$ in cluster $1$; points $3,4,5$ in cluster $2$) — close, but it splits the $A$'s and lumps one $A$ in with the $B$'s.</p>
+       <p>Score over all $\\binom{5}{2}=10$ pairs. A pair is "together" in a grouping if both points share a label/cluster. Classify each pair:</p>
+       <table class="extable">
+         <caption>Each pair is together-in-$U$ and/or together-in-$V$. $a$=both, $b$=$U$ only, $c$=$V$ only, $d$=neither.</caption>
+         <thead><tr><th>pair</th><th>same in $U$?</th><th>same in $V$?</th><th>bucket</th></tr></thead>
+         <tbody>
+           <tr><td class="num">(1,2)</td><td>yes ($A,A$)</td><td>yes ($1,1$)</td><td>$a$</td></tr>
+           <tr><td class="num">(4,5)</td><td>yes ($B,B$)</td><td>yes ($2,2$)</td><td>$a$</td></tr>
+           <tr><td class="num">(1,3)</td><td>yes ($A,A$)</td><td>no ($1,2$)</td><td>$b$</td></tr>
+           <tr><td class="num">(2,3)</td><td>yes ($A,A$)</td><td>no ($1,2$)</td><td>$b$</td></tr>
+           <tr><td class="num">(3,4)</td><td>no ($A,B$)</td><td>yes ($2,2$)</td><td>$c$</td></tr>
+           <tr><td class="num">(3,5)</td><td>no ($A,B$)</td><td>yes ($2,2$)</td><td>$c$</td></tr>
+           <tr><td class="num">(1,4)</td><td>no</td><td>no</td><td>$d$</td></tr>
+           <tr><td class="num">(1,5)</td><td>no</td><td>no</td><td>$d$</td></tr>
+           <tr><td class="num">(2,4)</td><td>no</td><td>no</td><td>$d$</td></tr>
+           <tr><td class="num">(2,5)</td><td>no</td><td>no</td><td>$d$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Count over all $\\binom{5}{2}=10$ pairs.</b> A pair is "together" in a grouping if both points share a label/cluster.
-           <ul>
-             <li>$a$ = together in BOTH: pair $(1,2)$ only $\\Rightarrow a=1$.</li>
-             <li>$b$ = together in $U$ only: A-pairs $(1,3),(2,3)$ are split in $V$ $\\Rightarrow b=2$.</li>
-             <li>$c$ = together in $V$ only: $V$'s cluster 2 puts $(3,4),(3,5)$ together though their labels differ $\\Rightarrow c=2$. (Pair $(4,5)$ is together in both $U$ and $V$, so it is already counted in $a$ — recount: $a$ = $(1,2)$ and $(4,5)$ $\\Rightarrow a=2$.)</li>
-             <li>$d$ = apart in both = the remaining $10-a-b-c$ pairs $\\Rightarrow d=10-2-2-2=4$.</li>
-           </ul>
-         </li>
-         <li><b>Rand Index</b> $=\\dfrac{a+d}{10}=\\dfrac{2+4}{10}=0.60$. Looks decent — but a random clustering would score near this, which is exactly why we adjust.</li>
-         <li><b>Fowlkes–Mallows</b> $=\\sqrt{\\dfrac{a}{a+c}\\cdot\\dfrac{a}{a+b}}=\\sqrt{\\dfrac{2}{4}\\cdot\\dfrac{2}{4}}=\\sqrt{0.25}=0.50$.</li>
-         <li><b>Purity</b>: cluster 1 = $\\{A,A\\}$ (majority A, 2 right); cluster 2 = $\\{A,B,B\\}$ (majority B, 2 right). Purity $=(2+2)/5=0.80$. Note how it ignores that the A class got torn apart — that is the over-split blind spot.</li>
-         <li><b>Takeaway.</b> Three metrics, three different verdicts on the SAME clustering. The chance-corrected ARI (computed in code) lands much lower than the raw RI of $0.60$, which is the honest number.</li>
-       </ul>`,
+         <li>Tally the buckets: $a=2$, $b=2$, $c=2$, $d=4$ (and $a+b+c+d=10$ ✓).</li>
+         <li>Rand Index $=\\dfrac{a+d}{a+b+c+d}=\\dfrac{2+4}{10}=0.60$. Looks decent — but a random clustering scores near this, which is exactly why we adjust.</li>
+         <li>Fowlkes–Mallows $=\\sqrt{\\dfrac{a}{a+c}\\cdot\\dfrac{a}{a+b}}=\\sqrt{\\dfrac{2}{4}\\cdot\\dfrac{2}{4}}=\\sqrt{0.25}=0.50$.</li>
+         <li>Purity: cluster $1=\\{A,A\\}$ (majority $A$, $2$ right); cluster $2=\\{A,B,B\\}$ (majority $B$, $2$ right). Purity $=(2+2)/5=0.80$ — it ignores that the $A$ class got torn apart (the over-split blind spot).</li>
+       </ul>
+       <p><b>Three metrics, three verdicts on the SAME clustering:</b></p>
+       <table class="extable">
+         <caption>Same clustering, scored three ways. The chance-corrected ARI is the honest number.</caption>
+         <thead><tr><th>metric</th><th class="num">value</th><th>reads as</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Rand Index (raw)</td><td class="num">$0.60$</td><td>flattering; not chance-corrected</td></tr>
+           <tr><td class="row-h">Fowlkes–Mallows</td><td class="num">$0.50$</td><td>pairwise precision &amp; recall combined</td></tr>
+           <tr><td class="row-h">Purity</td><td class="num">$0.80$</td><td>blind to the split $A$ class</td></tr>
+         </tbody>
+       </table>
+       <p>The chance-corrected ARI (computed in code) lands well below the raw RI of $0.60$ — that is the honest verdict on a clustering this scrambled.</p>`,
 
     practice: [
       {

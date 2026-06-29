@@ -293,19 +293,30 @@
        $u = c \\cdot P / (1 + N)$ with exploration constant $c = 1.5$. Each move stores its current value $Q$, its
        policy prior $P$, and its visit count $N$.</p>
        <ul class="steps">
-        <li><b>Move A &mdash; $Q = 0.60$, $P = 0.20$, $N = 8$.</b> Bonus
-        $u_A = 1.5 \\times 0.20 / (1 + 8) = 0.30 / 9 = 0.0333$. Score $Q + u = 0.60 + 0.0333 = 0.6333$. A has been
-        visited a lot, so its bonus is small &mdash; but its proven value is high.</li>
-        <li><b>Move B &mdash; $Q = 0.10$, $P = 0.50$, $N = 1$.</b> Bonus
-        $u_B = 1.5 \\times 0.50 / (1 + 1) = 0.75 / 2 = 0.3750$. Score $Q + u = 0.10 + 0.3750 = 0.4750$. B has the
-        biggest prior and a big bonus (few visits), but its measured value is low so far.</li>
-        <li><b>Move C &mdash; $Q = 0.20$, $P = 0.30$, $N = 3$.</b> Bonus
-        $u_C = 1.5 \\times 0.30 / (1 + 3) = 0.45 / 4 = 0.1125$. Score $Q + u = 0.20 + 0.1125 = 0.3125$.</li>
+        <li><b>Move A bonus.</b> $u_A = 1.5 \\times 0.20 / (1 + 8) = 0.30 / 9 = 0.0333$. Score
+        $Q + u = 0.60 + 0.0333 = 0.6333$. A is visited a lot, so its bonus is small &mdash; but its proven
+        value is high.</li>
+        <li><b>Move B bonus.</b> $u_B = 1.5 \\times 0.50 / (1 + 1) = 0.75 / 2 = 0.3750$. Score
+        $Q + u = 0.10 + 0.3750 = 0.4750$. B has the biggest prior and a big bonus (few visits), but its
+        measured value is low so far.</li>
+        <li><b>Move C bonus.</b> $u_C = 1.5 \\times 0.30 / (1 + 3) = 0.45 / 4 = 0.1125$. Score
+        $Q + u = 0.20 + 0.1125 = 0.3125$.</li>
         <li><b>Select the $\\arg\\max$.</b> Scores are $A = 0.6333$, $B = 0.4750$, $C = 0.3125$. The search picks
         <b>move A</b>. Even though B has the highest policy prior, A's strong proven value $Q$ wins. Had B been
         visited 8 times like A, its bonus would shrink to $1.5 \\times 0.50 / 9 = 0.0833$ and its score to
-        $0.183$ &mdash; the bonus only buys the high-prior move early attention, not permanent priority.</li>
+        $0.1833$ &mdash; the bonus only buys the high-prior move early attention, not permanent priority.</li>
        </ul>
+       <table class="extable">
+        <caption>PUCT selection (Eq 5), $u = 1.5\\cdot P/(1+N)$. Score $= Q+u$; $\\arg\\max$ is move A.</caption>
+        <thead>
+         <tr><th>Move</th><th class="num">$Q$</th><th class="num">$P$</th><th class="num">$N$</th><th class="num">$u$</th><th class="num">$Q+u$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">A</td><td class="num">0.60</td><td class="num">0.20</td><td class="num">8</td><td class="num">0.0333</td><td class="num">0.6333</td></tr>
+         <tr><td class="row-h">B</td><td class="num">0.10</td><td class="num">0.50</td><td class="num">1</td><td class="num">0.3750</td><td class="num">0.4750</td></tr>
+         <tr><td class="row-h">C</td><td class="num">0.20</td><td class="num">0.30</td><td class="num">3</td><td class="num">0.1125</td><td class="num">0.3125</td></tr>
+        </tbody>
+       </table>
        <p>The CODEVIZ recomputes these exact numbers in code, then runs a tiny MCTS that repeats this selection
        many times so you can watch the visit counts pile onto the best move &mdash; our own small illustration,
        not the paper's results.</p>`,

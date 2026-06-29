@@ -299,8 +299,22 @@
         end-to-end gain. This is the mechanism our CODEVIZ visualizes &mdash; <b>not</b> the paper's measured GSM8K
         accuracy.</li>
        </ul>
-       <p>The CODEVIZ recomputes exactly these numbers ($0.8^4$ and $0.92^4$) and sweeps the per-step success $p$ to
-       show how the one-shot and step-by-step curves separate. All numbers there are from this toy model.</p>`,
+       <p>The compounding bites harder the longer the problem. Holding the lift fixed ($p = 0.80$ one-shot,
+       $p' = 0.92$ written), here is the whole-problem success $p^k$ as the number of steps $k$ grows:</p>
+       <table class="extable">
+        <caption>Whole-problem success $p^k$ vs number of steps $k$ (toy model: $p=0.80$ hidden, $p'=0.92$ written). Our illustration, not a paper number.</caption>
+        <thead><tr><th>steps $k$</th><th class="num">one-shot $0.80^k$</th><th class="num">step-by-step $0.92^k$</th><th class="num">gain</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.800</td><td class="num">0.920</td><td class="num">+0.120</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.640</td><td class="num">0.846</td><td class="num">+0.206</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.410</td><td class="num">0.716</td><td class="num">+0.306</td></tr>
+         <tr><td class="row-h">8</td><td class="num">0.168</td><td class="num">0.513</td><td class="num">+0.345</td></tr>
+        </tbody>
+       </table>
+       <p>The per-step lift is the same $0.12$ everywhere, yet the whole-problem gain <i>widens</i> with length:
+       $+0.12$ at one step grows to $+0.345$ at eight steps. That is the toy model's whole point &mdash; raising
+       per-step reliability pays off most on long, multi-step problems. The CODEVIZ recomputes $0.8^4$ and $0.92^4$
+       and instead sweeps the per-step success $p$; all numbers are from this toy model.</p>`,
     recipe:
       `<p>This is a read-only paper, so there is no architecture to assemble. Instead, here is the <b>procedure to use
        chain-of-thought prompting</b>, as described in &sect;2&ndash;3.1 &mdash; the recipe you would follow yourself:</p>

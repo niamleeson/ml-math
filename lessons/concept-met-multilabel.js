@@ -89,12 +89,24 @@
        <p><b>Why Hamming loss is so forgiving and subset accuracy so harsh.</b> Hamming divides errors by $N\\times C$ — the total number of yes/no decisions — so one flipped label out of, say, $5\\times10=50$ slots costs only $0.02$. Subset accuracy divides by $N$ and demands a perfect row, so that <i>same</i> single flip makes the whole example count as wrong. Same mistake, wildly different penalty: that is why they should always be read together.</p>`,
 
     example:
-      `<p><b>Tiny multilabel example, $N=5$ examples and $C=3$ labels.</b> Truth and prediction as 0/1 vectors:</p>
+      `<p><b>Tiny multilabel example, $N=5$ examples and $C=3$ labels.</b> Truth $Y$ and prediction $\\hat{Y}$ as 0/1 vectors, with the per-row overlap worked out:</p>
+       <table class="extable">
+         <caption>Per-row truth vs prediction, slot mismatches, and example F1</caption>
+         <thead><tr><th>row</th><th>true $y_i$</th><th>pred $\\hat{y}_i$</th><th class="num">slot misses</th><th>exact?</th><th class="num">$2|\\hat{y}_i\\cap y_i|/(|\\hat{y}_i|+|y_i|)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td>[1,0,1]</td><td>[1,0,1]</td><td class="num">0</td><td>yes</td><td class="num">$2\\cdot2/(2+2)=1.000$</td></tr>
+           <tr><td class="row-h">2</td><td>[0,1,1]</td><td>[0,1,0]</td><td class="num">1</td><td>no</td><td class="num">$2\\cdot1/(1+2)=0.667$</td></tr>
+           <tr><td class="row-h">3</td><td>[1,1,0]</td><td>[1,1,1]</td><td class="num">1</td><td>no</td><td class="num">$2\\cdot2/(3+2)=0.800$</td></tr>
+           <tr><td class="row-h">4</td><td>[0,0,1]</td><td>[0,0,1]</td><td class="num">1*</td><td>yes</td><td class="num">$2\\cdot1/(1+1)=1.000$</td></tr>
+           <tr><td class="row-h">5</td><td>[1,0,0]</td><td>[0,0,0]</td><td class="num">1</td><td>no</td><td class="num">$2\\cdot0/(0+1)=0.000$</td></tr>
+           <tr><td class="row-h">total</td><td>—</td><td>—</td><td class="num">3</td><td>2 / 5</td><td class="num">3.467</td></tr>
+         </tbody>
+       </table>
+       <p>(*) Row 4 matches exactly — its mismatch count is 0; the $3$ slot misses are rows 2, 3 and 5. Now read off each metric:</p>
        <ul class="steps">
-         <li>True $Y$ rows: $[1,0,1],[0,1,1],[1,1,0],[0,0,1],[1,0,0]$. Predicted $\\hat{Y}$: $[1,0,1],[0,1,0],[1,1,1],[0,0,1],[0,0,0]$.</li>
-         <li><b>Hamming loss:</b> count slot mismatches. Row 2 misses label 3 (1 miss); row 3 wrongly adds label 3 (1 miss); row 5 misses label 1 (1 miss). That is $3$ wrong out of $5\\times3=15$ slots, so Hamming $=3/15=\\mathbf{0.20}$.</li>
-         <li><b>Subset (exact-match) accuracy:</b> rows 1 and 4 match exactly; rows 2, 3, 5 do not. So $2/5=\\mathbf{0.40}$ — far below "80% of slots right".</li>
-         <li><b>Example-based F1:</b> row 1 overlap $2/(2+2)\\!\\to\\!F_1=1$; row 4 $F_1=1$; row 2 predicts $\\{2\\}$ vs true $\\{2,3\\}\\to 2\\cdot1/(1+2)=0.667$; row 3 predicts $\\{1,2,3\\}$ vs true $\\{1,2\\}\\to 2\\cdot2/(3+2)=0.8$; row 5 predicts $\\{\\}$ vs true $\\{1\\}\\to0$. Mean $=(1+0.667+0.8+1+0)/5=\\mathbf{0.693}$.</li>
+         <li><b>Hamming loss</b> (slot mismatches over all slots): $3/(5\\times3)=3/15=\\mathbf{0.20}$.</li>
+         <li><b>Subset (exact-match) accuracy</b> (whole rows that match): rows 1 and 4, so $2/5=\\mathbf{0.40}$ — far below "80% of slots right".</li>
+         <li><b>Example-based F1</b> (mean of the last column): $(1.000+0.667+0.800+1.000+0.000)/5=3.467/5=\\mathbf{0.693}$.</li>
          <li><b>Ranking (using scores):</b> with imperfect scores that sometimes float a wrong label above a right one, sklearn gives LRAP $=\\mathbf{0.733}$, coverage error $=\\mathbf{2.2}$ (you must scan ~2.2 labels down to gather all true ones), and label ranking loss $=\\mathbf{0.5}$ (half the right/wrong label pairs are mis-ordered).</li>
        </ul>
        <p>Notice how the <i>same</i> predictions look "good" (Hamming 0.20) or "bad" (subset 0.40) depending on which metric you read — exactly why you report several.</p>`,

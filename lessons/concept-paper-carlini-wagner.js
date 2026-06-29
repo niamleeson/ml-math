@@ -241,24 +241,31 @@
        and binary search over $c$ behaves. The $\\max(\\cdot,-\\kappa)$ clamp simply stops the loss once the
        target wins by $\\kappa$, so the optimizer turns its attention back to shrinking the distortion.</p>`,
     example:
-      `<p>Compute the margin loss $f$ on a tiny logit vector, by hand. Say the network outputs three logits for
-       the adversarial input, $Z(x') = [\\,2.0,\\; 0.5,\\; -1.0\\,]$ for classes $0,1,2$. Our target is class
-       $t=2$ (the last one). Use confidence $\\kappa = 0$.</p>
+      `<p>Compute the margin loss $f$ on a tiny logit vector, by hand. The network outputs three logits for the
+       adversarial input, for classes $0,1,2$. Our target is class $t=2$. We work two snapshots — early
+       (target losing) and late (target winning) — laid out per class:</p>
+       <table class="extable">
+        <caption>Logits $Z(x')$ for each class, at two points during the attack (target $t=2$).</caption>
+        <thead><tr><th>snapshot</th><th class="num">$Z_0$</th><th class="num">$Z_1$</th><th class="num">$Z_2$ (target)</th><th class="num">$\\max_{i\\neq t}Z_i$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">early</td><td class="num">2.0</td><td class="num">0.5</td><td class="num">-1.0</td><td class="num">2.0</td></tr>
+         <tr><td class="row-h">late</td><td class="num">2.0</td><td class="num">0.5</td><td class="num">3.0</td><td class="num">2.0</td></tr>
+        </tbody>
+       </table>
+       <p><b>Early snapshot, confidence $\\kappa = 0$.</b></p>
        <ul class="steps">
         <li><b>Target logit.</b> $Z_t = Z_2 = -1.0$.</li>
-        <li><b>Best competing logit.</b> Among $i\\neq t$, the logits are $\\{2.0, 0.5\\}$, so
-        $\\max_{i\\neq t} Z_i = 2.0$ (class $0$).</li>
-        <li><b>Raw margin.</b> $\\max_{i\\neq t} Z_i - Z_t = 2.0 - (-1.0) = 3.0$. Positive: another class
-        (class $0$) is winning, so the input is <i>not</i> yet classified as the target.</li>
-        <li><b>Apply the clamp.</b> $f = \\max(3.0,\\; -\\kappa) = \\max(3.0, 0) = 3.0$. The attack still has work
-        to do; its gradient will push $Z_2$ up and the others down.</li>
+        <li><b>Best competing logit.</b> Among $i\\neq t$ the logits are $\\{2.0,\\ 0.5\\}$, so $\\max_{i\\neq t} Z_i = 2.0$ (class $0$).</li>
+        <li><b>Raw margin.</b> $\\max_{i\\neq t} Z_i - Z_t = 2.0 - (-1.0) = 3.0$. Positive — class $0$ is winning, the input is <i>not</i> yet the target.</li>
+        <li><b>Apply the clamp.</b> $f = \\max(3.0,\\; -\\kappa) = \\max(3.0,\\ 0) = 3.0$. Still work to do; the gradient pushes $Z_2$ up and the others down.</li>
        </ul>
-       <p><b>Now a case where the target wins, with $\\kappa = 1.0$.</b> Suppose after some optimization the
-       logits become $Z(x') = [\\,2.0,\\; 0.5,\\; 3.0\\,]$, still target $t=2$. Then $Z_t = 3.0$,
-       $\\max_{i\\neq t} Z_i = 2.0$, raw margin $= 2.0 - 3.0 = -1.0$, and
-       $f = \\max(-1.0,\\, -1.0) = -1.0$. The target leads by exactly $\\kappa=1.0$, so $f$ has bottomed out at
-       $-\\kappa$ &mdash; the attack is satisfied and will stop trading distortion for more confidence. Both
-       numbers are recomputed in the notebook's first cell.</p>`,
+       <p><b>Late snapshot, confidence $\\kappa = 1.0$ (target now winning).</b></p>
+       <ul class="steps">
+        <li><b>Target logit.</b> $Z_t = Z_2 = 3.0$; best competitor $\\max_{i\\neq t} Z_i = 2.0$.</li>
+        <li><b>Raw margin.</b> $2.0 - 3.0 = -1.0$ — negative, so the target leads.</li>
+        <li><b>Apply the clamp.</b> $f = \\max(-1.0,\\; -1.0) = -1.0$. The target leads by exactly $\\kappa=1.0$, so $f$ has bottomed out at $-\\kappa$ — the attack is satisfied and stops trading distortion for more confidence.</li>
+       </ul>
+       <p>Both numbers ($f = 3.0$ and $f = -1.0$) are recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Train a tiny classifier</b> with <code>torch.nn</code> on toy data whose inputs live in $[0,1]$,

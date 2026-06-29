@@ -93,13 +93,23 @@
        <p><b>Why a proper scoring rule.</b> A scoring rule is <i>proper</i> if your expected score is best exactly when you report your true belief. Brier and log loss are proper; plain accuracy is not (it ignores how confident you were). That is why calibration work is graded with proper scores — they cannot be gamed by lying about confidence, and they reward sharpness and calibration at once.</p>`,
 
     example:
-      `<p>Tiny worked ECE. Ten cases, sorted into two confidence bins. <b>Bin "low" (claimed ~0.20):</b> 5 cases, the model averaged 0.20, and 1 of the 5 was actually positive — so observed frequency = 1/5 = 0.20. <b>Bin "high" (claimed ~0.80):</b> 5 cases, the model averaged 0.80, and 3 of the 5 were positive — observed = 3/5 = 0.60.</p>
+      `<p>Tiny worked ECE. Ten cases ($N=10$), sorted into two confidence bins. Here is the per-bin ledger —
+        what the model <i>claimed</i> ($\\mathrm{conf}$) versus what actually <i>happened</i> ($\\mathrm{acc}$):</p>
+       <table class="extable">
+         <caption>Two bins, $N=10$ cases. The gap column drives both ECE and MCE.</caption>
+         <thead><tr><th>bin</th><th class="num">$|B_m|$</th><th class="num">$\\mathrm{conf}(B_m)$ (claimed)</th><th class="num">positives</th><th class="num">$\\mathrm{acc}(B_m)$ (observed)</th><th class="num">gap $|\\mathrm{acc}-\\mathrm{conf}|$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">low</td><td class="num">5</td><td class="num">0.20</td><td class="num">1</td><td class="num">1/5 = 0.20</td><td class="num">0.00</td></tr>
+           <tr><td class="row-h">high</td><td class="num">5</td><td class="num">0.80</td><td class="num">3</td><td class="num">3/5 = 0.60</td><td class="num">0.20</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Low bin gap: $|\\,0.20-0.20\\,|=0.00$. The model is honest here.</li>
-         <li>High bin gap: $|\\,0.60-0.80\\,|=0.20$. When it says 80%, only 60% happen — it is over-confident.</li>
-         <li>Weight each gap by bin size: both bins hold 5/10 = 0.5 of the cases.</li>
-         <li>$\\mathrm{ECE}=0.5\\times0.00+0.5\\times0.20=0.10$. On average the stated confidence is off by 0.10.</li>
-         <li>$\\mathrm{MCE}=\\max(0.00,\\,0.20)=0.20$ — the worst bin. To fix it, recalibration would <i>shrink</i> the 0.80 claims toward 0.60.</li>
+         <li><b>Low bin gap.</b> $|\\,0.20-0.20\\,| = 0.00$. The model is honest here.</li>
+         <li><b>High bin gap.</b> $|\\,0.60-0.80\\,| = 0.20$. When it says 80%, only 60% happen — over-confident.</li>
+         <li><b>Bin weights.</b> Both bins hold $5/10 = 0.5$ of the cases.</li>
+         <li><b>ECE</b> $= \\dfrac{|B_m|}{N}$-weighted average gap $= 0.5\\times0.00 + 0.5\\times0.20 = 0.10$.</li>
+         <li><b>MCE</b> $= \\max(0.00,\\,0.20) = 0.20$ — the worst bin. To fix it, recalibration would <i>shrink</i>
+          the 0.80 claims toward 0.60.</li>
        </ul>`,
 
     demo: function (host) {

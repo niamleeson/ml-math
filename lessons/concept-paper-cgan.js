@@ -231,11 +231,24 @@
         <li><b>A fake-side term.</b> For a class-$y$ fake where the current $D$ outputs $D(G(z|y))=0.3$, the
         contribution is $\\log(1-0.3) = \\log 0.7 = -0.3567$.</li>
         <li><b>The converged value.</b> When $G$ matches the data for this class ($p_g(\\cdot|y)=p_{\\text{data}}
-        (\\cdot|y)$), $D^* = \\tfrac12$ there and the game value hits $-\\log 4 = -1.3863$. Each <b>BCE</b> (binary
-        cross-entropy) term settles at $-\\log\\tfrac12 = \\log 2 = 0.6931$, so $D$'s total loss settles near
-        $2\\log 2 = 1.3863$ &mdash; the same plateau as a plain GAN, now reached <i>per class</i>. Watch for these
-        numbers in the loss panel.</li>
-       </ul>`,
+        (\\cdot|y)$), so $p_g(x|y)=0.6$ too, $D^* = \\dfrac{0.6}{0.6+0.6} = \\tfrac12$ there and the game value hits
+        $-\\log 4 = -1.3863$. Each <b>BCE</b> (binary cross-entropy) term settles at $-\\log\\tfrac12 = \\log 2 =
+        0.6931$, so $D$'s total loss settles near $2\\log 2 = 1.3863$ &mdash; the same plateau as a plain GAN, now
+        reached <i>per class</i>. Watch for these numbers in the loss panel.</li>
+       </ul>
+       <p>As the generator improves for this class, $p_g(x|y)$ climbs toward the real density $0.6$ and the
+       optimal detector $D^*(x|y)=\\dfrac{0.6}{0.6+p_g(x|y)}$ slides from confident toward a coin flip:</p>
+       <table class="extable">
+        <caption>Optimal conditional $D^*(x|y)$ as the generator catches up ($p_{\\text{data}}(x|y)=0.6$ fixed).</caption>
+        <thead><tr><th>$p_g(x|y)$</th><th class="num">$D^*(x|y)$</th><th class="num">$\\log D^*(x|y)$</th><th>verdict</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0.20</td><td class="num">0.7500</td><td class="num">-0.2877</td><td>easily caught as real</td></tr>
+         <tr><td class="row-h">0.40</td><td class="num">0.6000</td><td class="num">-0.5108</td><td>harder to tell</td></tr>
+         <tr><td class="row-h">0.60</td><td class="num">0.5000</td><td class="num">-0.6931</td><td>coin flip (equilibrium)</td></tr>
+        </tbody>
+       </table>
+       <p>At equilibrium $D^*=0.5$ for <i>every</i> class, both BCE terms equal $\\log 2 = 0.6931$, and $D$'s total
+       loss parks at $2\\log 2 = 1.3863 = -\\log 4$ &mdash; the per-class signature you watch for in the loss panel.</p>`,
     recipe:
       `<ol>
         <li><b>One-hot the label.</b> Turn integer label $y$ into a length-$K$ one-hot vector ($K$ = number of

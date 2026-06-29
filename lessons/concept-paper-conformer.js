@@ -232,9 +232,24 @@ $$ y_i = \\mathrm{LayerNorm}\\!\\left(x''_i + \\tfrac{1}{2}\\,\\mathrm{FFN}(x''_
         <li><b>Line 3 (convolution, local):</b> $x'' = x' + \\mathrm{Conv}(x') = 1.4 + (-0.6) = 0.8$. Full residual. <b>The ablation deletes this line</b>, which would leave $x'' = x' = 1.4$.</li>
         <li><b>Line 4 (back half-FFN, then LayerNorm):</b> first the half-step add $0.8 + \\tfrac{1}{2}(0.5) = 0.8 + 0.25 = 1.05$, then $y = \\mathrm{LayerNorm}(1.05)$. (LayerNorm over a single dimension just re-centers to $0$; in the notebook the state is wider, where LayerNorm does real work.)</li>
        </ul>
+       <p>The same four lines, run <b>with</b> the conv module and <b>with it ablated</b> (line 3 skipped), as a
+       value ledger:</p>
+       <table class="extable">
+        <caption>Equation 1 traced at one position, $x = 1.0$; residual outputs $\\mathrm{FFN}_1=0.4$, $\\mathrm{MHSA}=0.2$, $\\mathrm{Conv}=-0.6$, $\\mathrm{FFN}_2=0.5$.</caption>
+        <thead>
+         <tr><th>line</th><th class="num">residual added</th><th class="num">state (full block)</th><th class="num">state (conv ablated)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">start $x$</td><td class="num">&mdash;</td><td class="num">$1.00$</td><td class="num">$1.00$</td></tr>
+         <tr><td class="row-h">1: $+\\tfrac{1}{2}\\mathrm{FFN}_1$</td><td class="num">$+0.20$</td><td class="num">$1.20$</td><td class="num">$1.20$</td></tr>
+         <tr><td class="row-h">2: $+\\mathrm{MHSA}$</td><td class="num">$+0.20$</td><td class="num">$1.40$</td><td class="num">$1.40$</td></tr>
+         <tr><td class="row-h">3: $+\\mathrm{Conv}$</td><td class="num">$-0.60$</td><td class="num">$0.80$</td><td class="num">$1.40$</td></tr>
+         <tr><td class="row-h">4: $+\\tfrac{1}{2}\\mathrm{FFN}_2$ (pre-LN)</td><td class="num">$+0.25$</td><td class="num">$1.05$</td><td class="num">$1.65$</td></tr>
+        </tbody>
+       </table>
        <p>The two half-steps together added $0.2 + 0.25 = 0.45$, which is what one full FFN of those two would have
        added &mdash; that is the point of the Macaron split. With the conv line ablated, the pre-LayerNorm value is
-       $1.4 + 0.25 = 1.65$ instead of $1.05$: the local correction $-0.6$ is simply gone. The notebook recomputes
+       $1.65$ instead of $1.05$: the local correction $-0.6$ is simply gone. The notebook recomputes
        these exact numbers in its first cell.</p>`,
     recipe:
       `<ol>

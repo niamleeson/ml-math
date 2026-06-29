@@ -83,20 +83,43 @@
        </ul>
        <p><b>Why split-conformal intervals cover.</b> The calibration residuals $s_1,\\dots,s_n$ and the next test residual $s_{\\text{test}}$ are <b>exchangeable</b> (same distribution, order irrelevant). So $s_{\\text{test}}$ is equally likely to land in any rank among the $n+1$ residuals; taking $\\hat q$ at rank $\\lceil (n+1)(1-\\alpha)\\rceil$ makes $P(s_{\\text{test}} \\le \\hat q) \\ge 1-\\alpha$. The interval $\\hat y \\pm \\hat q$ therefore covers $y$ at least $1-\\alpha$ of the time — distribution-free, finite-sample. $\\blacksquare$</p>`,
     example:
-      `<p><b>PICP and MPIW by hand.</b> Five test points, each with a predicted 90% interval and the truth:</p>
+      `<p><b>PICP and MPIW by hand.</b> Five test points, each with a predicted 90% interval $[L_i,U_i]$ and the true value $y_i$. Check whether the truth lands inside, and record the width $U_i - L_i$:</p>
+       <table class="extable">
+         <caption>Five 90% intervals vs the truth</caption>
+         <thead><tr><th>$i$</th><th class="num">$L_i$</th><th class="num">$U_i$</th><th class="num">$y_i$</th><th>$L_i \\le y_i \\le U_i$?</th><th class="num">width $U_i-L_i$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">8</td><td class="num">12</td><td class="num">10</td><td>inside ✓</td><td class="num">4</td></tr>
+           <tr><td class="row-h">2</td><td class="num">5</td><td class="num">9</td><td class="num">7</td><td>inside ✓</td><td class="num">4</td></tr>
+           <tr><td class="row-h">3</td><td class="num">20</td><td class="num">30</td><td class="num">33</td><td>outside ✗</td><td class="num">10</td></tr>
+           <tr><td class="row-h">4</td><td class="num">0</td><td class="num">4</td><td class="num">2</td><td>inside ✓</td><td class="num">4</td></tr>
+           <tr><td class="row-h">5</td><td class="num">15</td><td class="num">19</td><td class="num">16</td><td>inside ✓</td><td class="num">4</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>$[8,12]$ truth $10$ ✓ inside &nbsp; $[5,9]$ truth $7$ ✓ &nbsp; $[20,30]$ truth $33$ ✗ outside &nbsp; $[0,4]$ truth $2$ ✓ &nbsp; $[15,19]$ truth $16$ ✓.</li>
-         <li>PICP $= 4/5 = 0.80$. We promised $0.90$ but only covered $0.80$ — these intervals are slightly OVER-confident.</li>
-         <li>Widths: $4,4,10,4,4$. MPIW $= (4+4+10+4+4)/5 = 26/5 = 5.2$.</li>
-         <li>Reported together: "PICP 0.80 at MPIW 5.2." Coverage is below target, so the fix is to <i>widen</i> the intervals (which will raise MPIW) until PICP reaches 0.90.</li>
+         <li><b>PICP — count the hits.</b> Indicator $\\mathbb{1}[\\cdot]$ is $1{,}1{,}0{,}1{,}1$, so $\\text{PICP} = \\dfrac{1}{N}\\sum \\mathbb{1}[L_i \\le y_i \\le U_i] = \\dfrac{1+1+0+1+1}{5} = \\dfrac{4}{5} = 0.80$.</li>
+         <li><b>Read it.</b> We promised $0.90$ but only covered $0.80$ — these intervals are slightly OVER-confident.</li>
+         <li><b>MPIW — average the widths.</b> $\\text{MPIW} = \\dfrac{1}{N}\\sum (U_i - L_i) = \\dfrac{4+4+10+4+4}{5} = \\dfrac{26}{5} = 5.2$.</li>
+         <li><b>Report together.</b> "PICP $0.80$ at MPIW $5.2$." Coverage is below target, so the fix is to <i>widen</i> the intervals (raising MPIW) until PICP reaches $0.90$.</li>
        </ul>
-       <p><b>Pinball loss, by hand.</b> Predicting the 90th percentile, so $\\tau=0.9$, and the truth turns out to be $y=10$.</p>
+       <p><b>Pinball loss, by hand.</b> Predicting the 90th percentile, so $\\tau=0.9$, and the truth turns out to be $y=10$. The two arms of the formula give a lopsided penalty:</p>
+       <table class="extable">
+         <caption>Pinball loss for $\\tau=0.9$, $y=10$</caption>
+         <thead><tr><th>guess $q$</th><th>branch</th><th>arithmetic</th><th class="num">loss</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$q=8$ (too low)</td><td>$y \\ge q$, use $\\tau(y-q)$</td><td>$0.9 \\times (10-8)$</td><td class="num">1.8</td></tr>
+           <tr><td class="row-h">$q=12$ (too high)</td><td>$y \\lt q$, use $(1-\\tau)(q-y)$</td><td>$0.1 \\times (12-10)$</td><td class="num">0.2</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>If you guessed too low, $q=8$: since $y \\ge q$, loss $= \\tau\\,(y-q) = 0.9\\times 2 = 1.8$ — a big penalty for under-shooting a high quantile.</li>
-         <li>If you overshot, $q=12$: since $y < q$, loss $= (1-\\tau)(q-y) = 0.1\\times 2 = 0.2$ — a small penalty.</li>
-         <li>The asymmetry ($1.8$ vs $0.2$) is the whole point: for a 90th-percentile forecast, being too low is far worse, which pushes the prediction up until only ~10% of outcomes exceed it.</li>
+         <li><b>The asymmetry is the point.</b> Both guesses miss by $2$, yet under-shooting costs $1.8$ and overshooting costs $0.2$ — a $9{\\times}$ heavier penalty for being too low.</li>
+         <li><b>Why.</b> For a 90th-percentile forecast, under-shooting is far worse, which pushes the prediction up until only $\\approx 10\\%$ of outcomes exceed it.</li>
        </ul>
-       <p><b>Conformal interval, by hand.</b> Calibration residuals sorted: $[2,3,5,6,9]$, so $n=5$, target $1-\\alpha=0.9$. Rank $=\\lceil (5+1)\\times 0.9\\rceil = \\lceil 5.4\\rceil = 6$, which exceeds $n$, so we take the largest residual: $\\hat q = 9$. A new point predicted at $\\hat y = 40$ gets the interval $[40-9,\\,40+9] = [31,49]$ — guaranteed to cover at least 90% of the time.</p>`,
+       <p><b>Conformal interval, by hand.</b> Calibration residuals sorted: $[2,3,5,6,9]$, so $n=5$, target $1-\\alpha=0.9$.</p>
+       <ul class="steps">
+         <li><b>Pick the rank.</b> $\\lceil (n+1)(1-\\alpha)\\rceil = \\lceil (5+1)\\times 0.9\\rceil = \\lceil 5.4\\rceil = 6$.</li>
+         <li><b>Read off $\\hat q$.</b> Rank $6$ exceeds $n=5$, so take the largest residual: $\\hat q = 9$.</li>
+         <li><b>Build the interval.</b> A new point predicted at $\\hat y = 40$ gets $[\\hat y - \\hat q,\\,\\hat y + \\hat q] = [40-9,\\,40+9] = [31,\\,49]$ — guaranteed to cover at least $90\\%$ of the time, with no Gaussian assumption.</li>
+       </ul>`,
     demo: function (host) {
       // Interactive: widen/narrow a band of intervals and watch PICP vs MPIW trade off.
       var cv = document.createElement("canvas"); cv.width = 640; cv.height = 300; cv.style.maxWidth = "100%"; host.appendChild(cv);

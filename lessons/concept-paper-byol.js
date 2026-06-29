@@ -233,28 +233,34 @@ $$ \\mathcal{L}^{\\text{BYOL}}_{\\theta,\\xi} = \\mathcal{L}_{\\theta,\\xi} + \\
        an empirical-plus-intuitive argument, and §5's ablations are the proof: drop the predictor or freeze
        the target and quality collapses.</p>`,
     example:
-      `<p>Work the prediction loss (Eqn. 2) by hand for one view, and one EMA update (Eqn. 1) for one
-       weight. Take 2-D vectors (the predictor output and the target projection, before normalizing):</p>
-       <ul>
-        <li>prediction $a = q_\\theta(z_\\theta) = [3.0,\\ 4.0]$</li>
-        <li>target $b = z'_\\xi = [4.0,\\ 3.0]$</li>
-       </ul>
+      `<p>Work the prediction loss (Eqn. 2) by hand for one view, then one EMA update (Eqn. 1) for one
+       weight. Take 2-D vectors — the predictor output $a = q_\\theta(z_\\theta) = [3.0,\\ 4.0]$ and the
+       target projection $b = z'_\\xi = [4.0,\\ 3.0]$, both before normalizing.</p>
        <ul class="steps">
-        <li><b>Lengths.</b> $\\lVert a\\rVert_2 = \\sqrt{3^2+4^2} = 5$; &nbsp; $\\lVert b\\rVert_2 = \\sqrt{4^2+3^2} = 5$.</li>
+        <li><b>Lengths.</b> $\\lVert a\\rVert_2 = \\sqrt{3^2+4^2} = \\sqrt{25} = 5$; &nbsp; $\\lVert b\\rVert_2 = \\sqrt{4^2+3^2} = \\sqrt{25} = 5$.</li>
         <li><b>Dot product.</b> $\\langle a,b\\rangle = 3\\cdot4 + 4\\cdot3 = 12 + 12 = 24$.</li>
         <li><b>Cosine similarity.</b> $\\dfrac{\\langle a,b\\rangle}{\\lVert a\\rVert_2\\,\\lVert b\\rVert_2} = \\dfrac{24}{5\\cdot5} = \\dfrac{24}{25} = 0.96$.</li>
         <li><b>Loss (right-hand form of Eqn. 2).</b> $\\mathcal{L} = 2 - 2(0.96) = 2 - 1.92 = 0.08$.</li>
-        <li><b>Check via the squared-distance form.</b> Unit vectors: $\\hat a = [0.6, 0.8]$, $\\hat b = [0.8, 0.6]$.
-        $\\hat a - \\hat b = [-0.2,\\ 0.2]$, so $\\lVert\\hat a - \\hat b\\rVert_2^2 = 0.04 + 0.04 = 0.08$. ✓ Both forms agree.</li>
+        <li><b>Unit vectors (for the check).</b> $\\hat a = a/5 = [0.6,\\ 0.8]$, &nbsp; $\\hat b = b/5 = [0.8,\\ 0.6]$.</li>
+        <li><b>Check via the squared-distance form.</b> $\\hat a - \\hat b = [-0.2,\\ 0.2]$, so
+        $\\lVert\\hat a - \\hat b\\rVert_2^2 = (-0.2)^2 + (0.2)^2 = 0.04 + 0.04 = 0.08$. ✓ Both forms of Eqn. 2 agree.</li>
        </ul>
-       <p>Now one <b>EMA update</b> (Eqn. 1) for a single weight, with decay $\\tau = 0.99$. Say the target
-       weight is $\\xi = 1.00$ and the freshly-updated online weight is $\\theta = 2.00$:</p>
+       <table class="extable">
+        <caption>The two equivalent forms of Eqn. 2 give the same loss $0.08$.</caption>
+        <thead><tr><th>form</th><th>computation</th><th class="num">value</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">squared distance $\\lVert\\hat a-\\hat b\\rVert_2^2$</td><td>$0.04+0.04$</td><td class="num">0.08</td></tr>
+         <tr><td class="row-h">cosine form $2-2\\cos\\angle$</td><td>$2-2(0.96)$</td><td class="num">0.08</td></tr>
+        </tbody>
+       </table>
+       <p>Now one <b>EMA update</b> (Eqn. 1) for a single weight, decay $\\tau = 0.99$, target weight
+       $\\xi = 1.00$, freshly-updated online weight $\\theta = 2.00$:</p>
        <ul class="steps">
         <li>$\\xi \\leftarrow \\tau\\,\\xi + (1-\\tau)\\,\\theta = 0.99(1.00) + 0.01(2.00) = 0.99 + 0.02 = 1.01.$</li>
+        <li>The target moved only $0.01$ of the way to the online weight — a <b>slow</b> chase.</li>
        </ul>
-       <p>The target moved only $0.01$ of the way to the online weight — a <b>slow</b> chase. These exact
-       numbers ($\\mathcal{L} = 0.08$ and $\\xi = 1.01$) are recomputed in the notebook's first cell so you
-       can check your loss and EMA implementation.</p>`,
+       <p>These exact numbers ($\\mathcal{L} = 0.08$ and $\\xi = 1.01$) are recomputed in the notebook's first
+       cell so you can check your loss and EMA implementation.</p>`,
     recipe:
       `<ol>
         <li><b>Two views.</b> For each image sample the augmentation pipeline <b>twice</b> → views $v, v'$.</li>

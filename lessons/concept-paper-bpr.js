@@ -248,14 +248,22 @@
     example:
       `<p>One BPR-MF step by hand, latent dimension $k = 2$. User factor $w_u = [0.5,\\,-0.2]$; positive item
        $h_i = [0.4,\\,0.1]$; sampled negative item $h_j = [0.2,\\,0.3]$.</p>
+       <table class="extable">
+        <caption>Per-factor products for the two scores $\\hat{x}_{ui}=\\langle w_u,h_i\\rangle$ and $\\hat{x}_{uj}=\\langle w_u,h_j\\rangle$ (&sect;4.3.1)</caption>
+        <thead><tr><th>factor $f$</th><th class="num">$w_{uf}$</th><th class="num">$h_{if}$</th><th class="num">$w_{uf}h_{if}$</th><th class="num">$h_{jf}$</th><th class="num">$w_{uf}h_{jf}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.5</td><td class="num">0.4</td><td class="num">0.20</td><td class="num">0.2</td><td class="num">0.10</td></tr>
+         <tr><td class="row-h">2</td><td class="num">-0.2</td><td class="num">0.1</td><td class="num">-0.02</td><td class="num">0.3</td><td class="num">-0.06</td></tr>
+         <tr><td class="row-h">sum (score)</td><td class="num"></td><td class="num"></td><td class="num">0.18</td><td class="num"></td><td class="num">0.04</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Scores</b> (&sect;4.3.1, dot product):
-        $\\hat{x}_{ui} = 0.5\\cdot0.4 + (-0.2)\\cdot0.1 = 0.20 - 0.02 = 0.18$;
-        $\\hat{x}_{uj} = 0.5\\cdot0.2 + (-0.2)\\cdot0.3 = 0.10 - 0.06 = 0.04$.</li>
-        <li><b>Pairwise score:</b> $\\hat{x}_{uij} = 0.18 - 0.04 = 0.14$.</li>
-        <li><b>Sigmoid:</b> $\\sigma(0.14) = 1/(1 + e^{-0.14}) = 0.5349$. So the model currently thinks the user
-        prefers $i$ over $j$ with probability $\\approx 0.535$ &mdash; only just above a coin flip; this pair
-        still needs work. The objective term is $\\ln \\sigma(0.14) = -0.6256$.</li>
+        <li><b>Scores</b> (column sums above): $\\hat{x}_{ui} = 0.20 + (-0.02) = 0.18$;
+        $\\hat{x}_{uj} = 0.10 + (-0.06) = 0.04$.</li>
+        <li><b>Pairwise score:</b> $\\hat{x}_{uij} = \\hat{x}_{ui} - \\hat{x}_{uj} = 0.18 - 0.04 = 0.14$.</li>
+        <li><b>Sigmoid (preference probability):</b> $\\sigma(0.14) = 1/(1 + e^{-0.14}) = 0.5349$. So the model
+        currently thinks the user prefers $i$ over $j$ with probability $\\approx 0.535$ &mdash; only just above
+        a coin flip; this pair still needs work. The objective term is $\\ln \\sigma(0.14) = -0.6256$.</li>
         <li><b>Gradient weight:</b> $\\sigma(-\\hat{x}_{uij}) = 1/(1 + e^{0.14}) = 0.4651$ &mdash; sizable,
         because the pair is barely ordered correctly.</li>
         <li><b>Gradient for $w_u$:</b> $\\sigma(-\\hat{x}_{uij})\\,(h_i - h_j) = 0.4651 \\cdot

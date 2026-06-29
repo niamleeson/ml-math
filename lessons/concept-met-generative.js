@@ -78,15 +78,23 @@ $$ \\mathrm{IS}=\\exp\\!\\Big(\\mathbb{E}_x\\,D_{\\mathrm{KL}}\\big(p(y\\mid x)\
          <li><b>Why features, not pixels.</b> A 1-pixel shift changes every raw pixel yet leaves "what the image shows" untouched. Inception features $\\phi(x)$ are nearly unchanged by such nuisance shifts, so distances in feature space track <i>content</i>, which is what we want to compare.</li>
        </ul>`,
     example:
-      `<p>A tiny 1-D version so the FID formula is concrete (real features are high-dimensional, but the arithmetic is the same idea).</p>
+      `<p>A tiny 1-D version so the FID formula is concrete (real features are high-dimensional, but the arithmetic is the same idea). One feature, the <b>real</b> cloud vs the <b>generated</b> cloud:</p>
+       <table class="extable">
+         <caption>The two feature clouds, summarized by mean and variance</caption>
+         <thead><tr><th>cloud</th><th class="num">mean $\\mu$</th><th class="num">variance $\\Sigma$</th><th class="num">std dev</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">real ($r$)</td><td class="num">10</td><td class="num">4</td><td class="num">2</td></tr>
+           <tr><td class="row-h">generated ($g$)</td><td class="num">12</td><td class="num">9</td><td class="num">3</td></tr>
+         </tbody>
+       </table>
+       <p>The generated cloud is slightly off-center and more spread out. Plug both pieces of the FID formula in turn (in 1-D the matrix square root is just an ordinary square root):</p>
        <ul class="steps">
-         <li>Say a single feature of the <b>real</b> images has mean $\\mu_r=10$ and variance $\\Sigma_r=4$ (so standard deviation 2).</li>
-         <li>The <b>generated</b> images have mean $\\mu_g=12$ and variance $\\Sigma_g=9$ (standard deviation 3): slightly off-center and more spread out.</li>
-         <li>Center term: $\\lVert \\mu_r-\\mu_g\\rVert^2=(10-12)^2=4$.</li>
-         <li>Spread term (1-D, so the matrix square root is just an ordinary square root): $\\Sigma_r+\\Sigma_g-2\\sqrt{\\Sigma_r\\Sigma_g}=4+9-2\\sqrt{36}=13-12=1$.</li>
-         <li>$\\mathrm{FID}=4+1=5$. If the fakes matched the reals exactly ($\\mu_g=10,\\ \\Sigma_g=4$) both terms would be 0, giving the best possible $\\mathrm{FID}=0$.</li>
+         <li>Center term: $\\lVert \\mu_r-\\mu_g\\rVert^2=(10-12)^2=(-2)^2=4$.</li>
+         <li>Spread term: $\\Sigma_r+\\Sigma_g-2\\sqrt{\\Sigma_r\\Sigma_g}=4+9-2\\sqrt{4\\cdot9}=13-2\\sqrt{36}=13-2\\cdot6=13-12=1$.</li>
+         <li>Add them: $\\mathrm{FID}=4+1=\\mathbf{5}$.</li>
+         <li>If the fakes matched the reals exactly ($\\mu_g=10,\\ \\Sigma_g=4$): center term $=(10-10)^2=0$, spread term $=4+4-2\\sqrt{16}=8-8=0$, so the best possible $\\mathrm{FID}=0$.</li>
        </ul>
-       <p>The CODEVIZ below runs this exact computation in 10 dimensions on real handwritten digits.</p>`,
+       <p>The CODEVIZ below runs this exact computation in higher dimensions on real handwritten digits.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       function C() {

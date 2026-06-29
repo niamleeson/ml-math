@@ -109,14 +109,35 @@
        <p><b>Why perplexity is $\\exp$ of average surprise.</b> A model's surprise at a token is $-\\log P(\\text{token})$ — small when the model expected it, large when it didn't. Average that over all $T$ tokens, then $\\exp$ it. The $\\exp$ converts "average log-probability" back into an effective <i>branching factor</i>: a perplexity of $20$ means the model was, on average, as uncertain as if picking uniformly from $20$ choices. Lower surprise, lower perplexity, better model.</p>`,
 
     example:
-      `<p>Reference (human): <code>the quick brown fox</code> (4 words). Candidate (machine): <code>the brown fox</code> (3 words).</p>
-       <p><b>Unigram precision</b> $p_1$ = (candidate words found in the reference) / (candidate words). All three of "the", "brown", "fox" appear in the reference, so $p_1 = 3/3 = 1.0$.</p>
-       <p><b>Bigram precision</b> $p_2$: candidate bigrams are "the brown" and "brown fox". The reference bigrams are "the quick", "quick brown", "brown fox". Only "brown fox" matches, so $p_2 = 1/2 = 0.5$.</p>
-       <p><b>Brevity penalty</b>: candidate length $c = 3$, reference length $r = 4$, and $c \\le r$, so $\\text{BP} = e^{1 - 4/3} = e^{-1/3} \\approx 0.717$.</p>
-       <p><b>BLEU (up to bigrams, equal weights $1/2$)</b>: $\\text{BP}\\cdot\\exp\\!\\big(\\tfrac12\\log 1.0 + \\tfrac12\\log 0.5\\big) = 0.717 \\times \\sqrt{1.0 \\times 0.5} \\approx 0.717 \\times 0.707 \\approx 0.507$.</p>
-       <p><b>WER</b>: turning the candidate into the reference needs one insertion ("quick"), so $S=0, D=0, I=1$ over $4$ reference words: $\\text{WER} = 1/4 = 0.25$.</p>
-       <p><b>ROUGE-1 F1</b>: recall $R = 3/4 = 0.75$ (3 of 4 reference words produced), precision $P = 3/3 = 1.0$, so $F_1 = \\frac{2(1.0)(0.75)}{1.0+0.75} = \\frac{1.5}{1.75} \\approx 0.857$.</p>
-       <p>One short candidate, several rulers: BLEU $\\approx 0.51$, WER $= 0.25$, ROUGE-1 $\\approx 0.86$. They disagree because each weighs precision, recall, and length differently.</p>`,
+      `<p>Reference (human): <code>the quick brown fox</code> ($r = 4$ words). Candidate (machine): <code>the brown fox</code> ($c = 3$ words). We grade this one pair with four rulers.</p>
+       <table class="extable">
+         <caption>Unigram (1-word) match: each candidate word vs the reference.</caption>
+         <thead><tr><th>candidate word</th><th>in reference?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">the</td><td>yes</td></tr>
+           <tr><td class="row-h">brown</td><td>yes</td></tr>
+           <tr><td class="row-h">fox</td><td>yes</td></tr>
+         </tbody>
+       </table>
+       <p>Now the calculation, step by step:</p>
+       <ul class="steps">
+         <li><b>Unigram precision</b> $p_1$ = (candidate words found in reference) / (candidate words) = $3/3 = 1.0$.</li>
+         <li><b>Bigram precision</b> $p_2$: candidate bigrams are "the brown", "brown fox"; reference bigrams are "the quick", "quick brown", "brown fox". Only "brown fox" matches, so $p_2 = 1/2 = 0.5$.</li>
+         <li><b>Brevity penalty</b>: $c = 3 \\le r = 4$, so $\\text{BP} = e^{1 - 4/3} = e^{-1/3} \\approx 0.717$.</li>
+         <li><b>BLEU</b> (up to bigrams, equal weights $1/2$) = $\\text{BP}\\cdot\\exp\\!\\big(\\tfrac12\\log 1.0 + \\tfrac12\\log 0.5\\big) = 0.717 \\times \\sqrt{1.0 \\times 0.5} = 0.717 \\times 0.707 \\approx 0.507$.</li>
+         <li><b>WER</b>: turning candidate into reference needs one insertion ("quick"), so $S=0,\\ D=0,\\ I=1$ over $4$ reference words: $\\text{WER} = (0+0+1)/4 = 0.25$.</li>
+         <li><b>ROUGE-1 F1</b>: recall $R = 3/4 = 0.75$, precision $P = 3/3 = 1.0$, so $F_1 = \\frac{2(1.0)(0.75)}{1.0+0.75} = \\frac{1.5}{1.75} \\approx 0.857$.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same candidate, four rulers — they disagree on purpose.</caption>
+         <thead><tr><th>metric</th><th class="num">score</th><th>better when</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">BLEU (n=2)</td><td class="num">0.507</td><td>higher</td></tr>
+           <tr><td class="row-h">WER</td><td class="num">0.250</td><td>lower</td></tr>
+           <tr><td class="row-h">ROUGE-1 F1</td><td class="num">0.857</td><td>higher</td></tr>
+         </tbody>
+       </table>
+       <p>One short candidate, three different verdicts — each weighs precision, recall, and length differently.</p>`,
 
     demo: function (host) {
       host.innerHTML = "";

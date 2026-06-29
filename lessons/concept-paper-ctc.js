@@ -304,9 +304,22 @@
         $p(l|x)=\\alpha_3(4)+\\alpha_3(3)=0.1256+0.2048=\\mathbf{0.3304}$. Loss
         $=-\\ln 0.3304=\\mathbf{1.10745}$.</li>
        </ul>
-       <p>The notebook builds this exact $y$ and runs the recursion, then calls
-       <code>torch.nn.CTCLoss</code> on the same inputs &mdash; it returns $\\mathbf{1.10745}$ too, with
-       <code>np.allclose</code> $=$ True.</p>`,
+       <p>The full forward table &mdash; rows are frames $t$, columns are extended positions $s$ (symbols
+       $b,a,b,b,b$); each cell is $\\alpha_t(s)$:</p>
+       <table class="extable">
+        <caption>Forward variable $\\alpha_t(s)$ for target "ab", $l'=[b,a,b,b,b]$. Read off $p(l|x)=\\alpha_3(4)+\\alpha_3(3)$.</caption>
+        <thead><tr><th>$t \\backslash\\ s$</th><th class="num">$0$ ($b$)</th><th class="num">$1$ ($a$)</th><th class="num">$2$ ($b$)</th><th class="num">$3$ ($b$)</th><th class="num">$4$ ($b$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$0$</td><td class="num">$0.10$</td><td class="num">$0.60$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$1$</td><td class="num">$0.02$</td><td class="num">$0.35$</td><td class="num">$0.12$</td><td class="num">$0.18$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$0.006$</td><td class="num">$0.111$</td><td class="num">$0.141$</td><td class="num">$0.26$</td><td class="num">$0.054$</td></tr>
+         <tr><td class="row-h">$3$</td><td class="num">$0.0024$</td><td class="num">$0.0234$</td><td class="num">$0.1008$</td><td class="num">$0.2048$</td><td class="num">$0.1256$</td></tr>
+        </tbody>
+       </table>
+       <p>The two boxed cells $\\alpha_1(1)=0.35$ and the skip step $\\alpha_2(3)=0.26$ are the worked steps above.
+       Summing the last row's two endpoints, $0.2048+0.1256=\\mathbf{0.3304}=p(l|x)$, gives loss $\\mathbf{1.10745}$.
+       The notebook builds this exact $y$, runs the recursion, then calls <code>torch.nn.CTCLoss</code> on the same
+       inputs &mdash; it returns $\\mathbf{1.10745}$ too, with <code>np.allclose</code> $=$ True.</p>`,
     recipe:
       `<ol>
         <li><b>Output layer:</b> a softmax over $K=|L|+1$ symbols &mdash; the labels plus one <b>blank</b> &mdash;

@@ -80,14 +80,35 @@ $$ \\text{PSI}=\\sum_i (a_i-e_i)\\,\\ln\\frac{a_i}{e_i} \\qquad D=\\sup_x\\bigl|
        </ul>`,
 
     example:
-      `<p><b>(a) Outlier rate, one column.</b> Values $[10,12,11,13,12,40]$. Mean $\\mu=16.3$, standard deviation $\\sigma\\approx 10.4$, so the z-score of 40 is $(40-16.3)/10.4=2.3$ — under a cutoff of 3 it is <i>not</i> flagged (the one big value inflated $\\sigma$). The IQR rule is sturdier: $Q_1=11,\\,Q_3=13,\\,\\text{IQR}=2$, upper fence $=13+1.5(2)=16$. Now 40 &gt; 16 is flagged. Outlier rate $=1/6\\approx 0.17$.</p>
-       <p><b>(b) PSI, one feature.</b> Reference bin shares $e=[0.25,0.25,0.25,0.25]$; current $a=[0.10,0.20,0.30,0.40]$.</p>
+      `<p><b>(a) Outlier rate, one column.</b> Values $[10,12,11,13,12,40]$ with $\\mu=16.3$ and $\\sigma\\approx 10.4$. The two outlier rules disagree on the value $40$:</p>
+       <table class="extable">
+         <caption>z-score vs IQR on the same value $40$. The lone big value inflated $\\sigma$, hiding itself from the z-rule.</caption>
+         <thead><tr><th>rule</th><th>test statistic</th><th class="num">value</th><th class="num">cutoff / fence</th><th>flag $40$?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">z-score</td><td>$z=(40-16.3)/10.4$</td><td class="num">$2.3$</td><td class="num">$\\gt 3$</td><td>no</td></tr>
+           <tr><td class="row-h">IQR</td><td>$Q_3+1.5\\,\\text{IQR}=13+1.5(2)$</td><td class="num">$40$</td><td class="num">$\\gt 16$</td><td>yes</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Bin 1: $(0.10-0.25)\\ln(0.10/0.25)=(-0.15)(-0.916)=0.137$.</li>
-         <li>Bin 2: $(0.20-0.25)\\ln(0.20/0.25)=(-0.05)(-0.223)=0.011$.</li>
-         <li>Bin 3: $(0.30-0.25)\\ln(0.30/0.25)=(0.05)(0.182)=0.009$.</li>
-         <li>Bin 4: $(0.40-0.25)\\ln(0.40/0.25)=(0.15)(0.470)=0.071$.</li>
-         <li>PSI $=0.137+0.011+0.009+0.071=0.228$. That is in the $0.1$&ndash;$0.25$ band &mdash; a <b>moderate shift</b>, keep watching; nudge it a touch higher and it crosses $0.25$ into <b>large shift / alarm</b>.</li>
+         <li>z-score: $\\dfrac{40-16.3}{10.4}=2.3$, which is under the cutoff of $3$ &mdash; <i>not</i> flagged.</li>
+         <li>IQR: $Q_1=11,\\,Q_3=13,\\,\\text{IQR}=2$, upper fence $=13+1.5(2)=16$; since $40\\gt 16$ it <i>is</i> flagged.</li>
+         <li>Outlier rate (IQR) $=1/6\\approx 0.17$.</li>
+       </ul>
+       <p><b>(b) PSI, one feature.</b> Reference bin shares $e=[0.25,0.25,0.25,0.25]$; current $a=[0.10,0.20,0.30,0.40]$. Build the per-bin ledger $(a_i-e_i)\\ln(a_i/e_i)$:</p>
+       <table class="extable">
+         <caption>PSI per-bin terms. Both factors share a sign, so every term is positive.</caption>
+         <thead><tr><th>bin</th><th class="num">$e_i$</th><th class="num">$a_i$</th><th class="num">$a_i-e_i$</th><th class="num">$\\ln(a_i/e_i)$</th><th class="num">term</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td class="num">$0.25$</td><td class="num">$0.10$</td><td class="num">$-0.15$</td><td class="num">$-0.916$</td><td class="num">$0.137$</td></tr>
+           <tr><td class="num">2</td><td class="num">$0.25$</td><td class="num">$0.20$</td><td class="num">$-0.05$</td><td class="num">$-0.223$</td><td class="num">$0.011$</td></tr>
+           <tr><td class="num">3</td><td class="num">$0.25$</td><td class="num">$0.30$</td><td class="num">$0.05$</td><td class="num">$0.182$</td><td class="num">$0.009$</td></tr>
+           <tr><td class="num">4</td><td class="num">$0.25$</td><td class="num">$0.40$</td><td class="num">$0.15$</td><td class="num">$0.470$</td><td class="num">$0.071$</td></tr>
+           <tr><td class="row-h">PSI total</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">$0.228$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Sum the four terms: $0.137+0.011+0.009+0.071=0.228$.</li>
+         <li>That lands in the $0.1$&ndash;$0.25$ band &mdash; a <b>moderate shift</b>, keep watching; nudge it a touch higher and it crosses $0.25$ into <b>large shift / alarm</b>.</li>
        </ul>
        <p><b>(c) Class balance.</b> Labels $[\\,0{:}990,\\;1{:}10\\,]$ give shares $0.99 / 0.01$. That is severe imbalance — accuracy is now meaningless (predict "0" always for 99%), and you must reach for precision/recall or resampling.</p>`,
 

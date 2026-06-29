@@ -252,22 +252,33 @@ $$ z^{l}_{\\text{diff}} = \\lvert z_{1,l} - z_{2,l}\\rvert,\\qquad z^{b}_{\\text
        reconstruction cost on this input is $R = 10.0$ nats (i.e. $\\mathbb{E}_{q_\\phi}[\\log
        p_\\theta(x\\mid z)] = -10.0$; lower $R$ = better rebuild).</p>
        <ul class="steps">
-        <li><b>Compute the KL</b> for this dimension, $D_{KL} = -\\tfrac{1}{2}(1 + \\log\\sigma^2 - \\mu^2 -
-        \\sigma^2)$. Plug in $\\mu^2 = 1.0$, $\\sigma^2 = 0.6$, $\\log\\sigma^2 = -0.5108$:</li>
-        <li>Inside: $1 + (-0.5108) - 1.0 - 0.6 = -1.1108$. Half of that: $-0.5554$. So
-        $D_{KL} = 0.5554$.</li>
-        <li><b>Negative-$\\beta$-ELBO loss</b> we minimize is $\\;R + \\beta\\,D_{KL}$.
-        At $\\beta = 1$: $10.0 + 1\\times 0.5554 = \\mathbf{10.5554}$.</li>
-        <li>At $\\beta = 4$: the <i>same</i> reconstruction cost, but the KL penalty quadruples:
-        $10.0 + 4\\times 0.5554 = 10.0 + 2.2217 = \\mathbf{12.2217}$.</li>
-        <li><b>Read it.</b> Raising $\\beta$ from $1$ to $4$ added $3\\times D_{KL} = 1.666$ nats of penalty
-        for using this code's information &mdash; <i>without changing the reconstruction term at all</i>.
-        Gradient descent now has a stronger incentive to shrink the KL: push $\\mu\\to 0$, $\\sigma\\to 1$,
-        or stop using this dimension. Only a dimension that <i>pays for itself</i> in reconstruction
-        survives. That selective pressure is what factor-aligns the surviving dimensions.</li>
+        <li><b>The KL closed form</b> for this dimension is $D_{KL} = -\\tfrac{1}{2}(1 + \\log\\sigma^2 - \\mu^2 -
+        \\sigma^2)$. Plug in $\\mu^2 = 1.0$, $\\sigma^2 = 0.6$, $\\log\\sigma^2 = -0.5108$.</li>
+        <li><b>Inside the bracket:</b> $1 + (-0.5108) - 1.0 - 0.6 = -1.1108$.</li>
+        <li><b>Half it (with the minus):</b> $D_{KL} = -\\tfrac{1}{2}\\times(-1.1108) = 0.5554$.</li>
+        <li><b>Negative-$\\beta$-ELBO loss</b> we minimize is $\\;R + \\beta\\,D_{KL}$. At $\\beta = 1$:
+        $10.0 + 1\\times 0.5554 = 10.5554$.</li>
+        <li>At $\\beta = 4$: the <i>same</i> reconstruction cost $R$, but the KL penalty quadruples:
+        $10.0 + 4\\times 0.5554 = 10.0 + 2.2217 = 12.2217$.</li>
        </ul>
-       <p>These exact numbers ($D_{KL} \\approx 0.5554$; loss $10.5554$ at $\\beta{=}1$ and $12.2217$ at
-       $\\beta{=}4$) are recomputed in the notebook's first cell so you can check them.</p>`,
+       <p><b>Sweeping $\\beta$ on the same code.</b> The reconstruction cost $R$ and the KL ($0.5554$) are fixed;
+       only the weight on the bottleneck changes:</p>
+       <table class="extable">
+        <caption>$\\beta$-ELBO loss $= R + \\beta\\,D_{KL}$ for one code ($R=10.0$, $D_{KL}=0.5554$)</caption>
+        <thead><tr><th>$\\beta$</th><th class="num">$R$</th><th class="num">$\\beta\\,D_{KL}$</th><th class="num">loss</th><th>note</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1 (plain VAE)</td><td class="num">10.0</td><td class="num">0.5554</td><td class="num">10.5554</td><td>baseline</td></tr>
+         <tr><td class="row-h">4 (tuned)</td><td class="num">10.0</td><td class="num">2.2217</td><td class="num">12.2217</td><td>bottleneck taxed 4&times;</td></tr>
+         <tr><td class="row-h">8 (over-pressed)</td><td class="num">10.0</td><td class="num">4.4434</td><td class="num">14.4434</td><td>pushes toward collapse</td></tr>
+        </tbody>
+       </table>
+       <p><b>Read it.</b> Raising $\\beta$ from $1$ to $4$ added $3\\times D_{KL} = 1.666$ nats of penalty for
+       using this code's information &mdash; <i>without changing the reconstruction term at all</i>. Gradient
+       descent now has a stronger incentive to shrink the KL: push $\\mu\\to 0$, $\\sigma\\to 1$, or stop using
+       this dimension. Only a dimension that <i>pays for itself</i> in reconstruction survives &mdash; that
+       selective pressure is what factor-aligns the surviving dimensions. These exact numbers
+       ($D_{KL} \\approx 0.5554$; loss $10.5554$ at $\\beta{=}1$ and $12.2217$ at $\\beta{=}4$) are recomputed
+       in the notebook's first cell so you can check them.</p>`,
     recipe:
       `<ol>
         <li><b>Build a VAE</b> (encoder with <code>mu</code>/<code>logvar</code> heads, reparameterize,

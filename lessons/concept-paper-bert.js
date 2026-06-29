@@ -247,23 +247,41 @@
       `<p>Work the MLM loss at <b>one</b> masked position by hand. Take a tiny vocabulary of $V=6$ words,
        indexed $0\\ldots 5$ as
        <code>[the, cat, sat, dog, ran, mat]</code>. We mask the third word of "the cat <code>[MASK]</code> on
-       the mat", so the <b>true word</b> $x_i$ is index $2$ ("sat"). Suppose the MLM head produced these
-       logits (raw scores) at that slot:</p>
-       <p>$$ W\\mathbf{h}_i + b = [\\,0.5,\\;1.0,\\;3.0,\\;0.2,\\;-1.0,\\;0.8\\,]. $$</p>
+       the mat", so the <b>true word</b> $x_i$ is index $2$ ("sat"). Suppose the MLM head produced the logits
+       (raw scores) $W\\mathbf{h}_i + b = [\\,0.5,\\;1.0,\\;3.0,\\;0.2,\\;-1.0,\\;0.8\\,]$ at that slot.</p>
+       <table class="extable">
+        <caption>Softmax over the $V=6$ vocabulary: exponentiate each logit, then divide by the sum $28.27$</caption>
+        <thead><tr><th>word</th><th class="num">index</th><th class="num">logit $z_j$</th><th class="num">$e^{z_j}$</th><th class="num">$\\hat{p}_i[j]$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">the</td><td class="num">0</td><td class="num">0.5</td><td class="num">1.649</td><td class="num">0.0583</td></tr>
+         <tr><td class="row-h">cat</td><td class="num">1</td><td class="num">1.0</td><td class="num">2.718</td><td class="num">0.0962</td></tr>
+         <tr><td class="row-h">sat (true)</td><td class="num">2</td><td class="num">3.0</td><td class="num">20.09</td><td class="num">0.7106</td></tr>
+         <tr><td class="row-h">dog</td><td class="num">3</td><td class="num">0.2</td><td class="num">1.221</td><td class="num">0.0432</td></tr>
+         <tr><td class="row-h">ran</td><td class="num">4</td><td class="num">-1.0</td><td class="num">0.368</td><td class="num">0.0130</td></tr>
+         <tr><td class="row-h">mat</td><td class="num">5</td><td class="num">0.8</td><td class="num">2.226</td><td class="num">0.0787</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">28.27</td><td class="num">1.0000</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Softmax (turn scores into probabilities).</b> Exponentiate and normalize:
-        $e^{0.5},e^{1.0},e^{3.0},e^{0.2},e^{-1.0},e^{0.8} = [1.649,\\,2.718,\\,20.09,\\,1.221,\\,0.368,\\,2.226]$,
-        which sum to $28.27$. Dividing gives
-        $\\hat{p}_i \\approx [0.0583,\\,0.0962,\\,0.7106,\\,0.0432,\\,0.0130,\\,0.0787]$. The big logit ($3.0$ for
-        "sat") becomes the dominant probability.</li>
+        <li><b>Softmax.</b> Exponentiate each logit (the $e^{z_j}$ column), sum to $28.27$, and divide &mdash;
+        giving the probabilities $\\hat{p}_i$ in the last column. The big logit ($3.0$ for "sat") becomes the
+        dominant probability.</li>
         <li><b>Read off the true word's probability.</b> The true word is index $2$ ("sat"), so
         $\\hat{p}_i[x_i] = 0.7106$ &mdash; the model is fairly confident.</li>
-        <li><b>Cross-entropy loss at this slot.</b>
-        $-\\log(0.7106) = 0.3417$. (If the model had been certain &mdash; probability $1.0$ on "sat" &mdash;
-        the loss would be $-\\log 1 = 0$; if it had put only $0.05$ there, the loss would be
-        $-\\log 0.05 = 3.0$.)</li>
+        <li><b>Cross-entropy loss at this slot.</b> $\\mathcal{L} = -\\log \\hat{p}_i[x_i] = -\\log(0.7106) = 0.3417$.</li>
        </ul>
-       <p>The full MLM loss averages this over all masked slots in the batch. These exact numbers
+       <p><b>How the loss depends on the confidence in the true word.</b> The loss reads <i>only</i> the
+       probability on "sat"; here is what it would have been at three confidence levels:</p>
+       <table class="extable">
+        <caption>MLM cross-entropy $= -\\log \\hat{p}_i[\\text{sat}]$ at one masked slot</caption>
+        <thead><tr><th>case</th><th class="num">$\\hat{p}_i[\\text{sat}]$</th><th class="num">$-\\log \\hat{p}_i[\\text{sat}]$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">certain &amp; right</td><td class="num">1.00</td><td class="num">0.000</td></tr>
+         <tr><td class="row-h">our model</td><td class="num">0.7106</td><td class="num">0.3417</td></tr>
+         <tr><td class="row-h">barely backing it</td><td class="num">0.05</td><td class="num">2.996</td></tr>
+        </tbody>
+       </table>
+       <p>The full MLM loss averages the per-slot value over all masked slots in the batch. These exact numbers
        ($\\hat{p}_i = [0.0583,\\ldots]$, $0.3417$) are recomputed in the notebook's first cell and match
        <code>F.cross_entropy</code> to the digit, so you can check them by running.</p>`,
     recipe:
