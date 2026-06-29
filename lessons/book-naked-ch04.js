@@ -177,7 +177,7 @@
     takeaways: [
       "Correlation does not imply causation.",
       "TVs and SAT scores correlate because of a third variable: parental education.",
-      "College Board: SAT math 586 (family income over $200k) vs 460 (under $20k)."
+      "College Board: SAT math 586 (family income over \\$200k) vs 460 (under \\$20k)."
     ]
   });
 
@@ -200,7 +200,7 @@
           "watched <em>Bhutto</em> and gave it five stars — just as Netflix predicted.</p>"
       },
       {
-        h: "The $1,000,000 Netflix Prize",
+        h: "The \\$1,000,000 Netflix Prize",
         body:
           "<p>The real method is far more complex than the &quot;big picture.&quot; In 2006 Netflix launched a " +
           "contest offering &dollar;1,000,000 to anyone who could improve its recommendations by at least 10 " +
@@ -220,7 +220,7 @@
     takeaways: [
       "Netflix finds customers whose ratings correlate with yours, then recommends what they liked.",
       "Bhutto was suggested from five-star ratings for Enron and Fog of War.",
-      "The 2006 Netflix Prize: $1M for a 10% improvement; won in 2009.",
+      "The 2006 Netflix Prize: \\$1M for a 10% improvement; won in 2009.",
       "Training data: 100M+ ratings, 18,000 films, 480,000 customers; 2.8M ratings withheld."
     ]
   });

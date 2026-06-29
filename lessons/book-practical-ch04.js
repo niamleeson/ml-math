@@ -235,7 +235,7 @@
     ],
     takeaways: [
       "Multiple regression adds terms: Y = b0 + b1 X1 + ... + bp Xp + e; least squares still applies.",
-      "King County housing: each finished square foot adds ~$229; 1,000 sq ft implies ~$228,800.",
+      "King County housing: each finished square foot adds ~\\$229; 1,000 sq ft implies ~\\$228,800.",
       "Assess with RMSE and R-squared; King County R-squared = 0.5407, RSE = 261,200.",
       "Cross-validation tests out-of-sample by rotating k holdout folds.",
       "AIC = 2P + n log(RSS/n) penalizes extra terms; stepwise regression minimizes it.",
@@ -248,7 +248,7 @@
         type: "bars",
         title: "Unweighted vs Weighted King County Coefficients (book values)",
         interpret: "Weighting by sale recency nudges every coefficient; SqFtTotLiving rises from 228.8 to 245.0 per square foot.",
-        labels: ["SqFtTotLiving", "Bathrooms (k$)", "Bedrooms (k$)"],
+        labels: ["SqFtTotLiving", "Bathrooms (k\\$)", "Bedrooms (k\\$)"],
         values: [228.8, -19.4, -47.8],
         valueLabels: ["228.8", "-19.4", "-47.8"],
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff"]
@@ -303,7 +303,7 @@
       }
     ],
     takeaways: [
-      "Do not extrapolate beyond the data: the empty-lot prediction came out to about -$522,202.",
+      "Do not extrapolate beyond the data: the empty-lot prediction came out to about -\\$522,202.",
       "Confidence intervals quantify uncertainty around coefficients (or a mean).",
       "Prediction intervals quantify uncertainty around a single individual prediction.",
       "A prediction interval is much wider; it also includes individual data-point error.",
@@ -372,7 +372,7 @@
     takeaways: [
       "Factor variables must be recoded numerically; the common route is binary dummy variables.",
       "In regression, a P-level factor uses P-1 dummies (one-hot's P columns cause multicollinearity).",
-      "Reference coding: PropertyType vs Multiplex — Single Family ~-$85k, Townhouse over -$150k.",
+      "Reference coding: PropertyType vs Multiplex — Single Family ~-\\$85k, Townhouse over -\\$150k.",
       "High-cardinality factors (82 zip codes) can be consolidated into groups from model residuals.",
       "Ordered factors (BldgGrade 1..13) are best kept numeric to preserve the ordering."
     ]
@@ -382,7 +382,7 @@
       {
         type: "bars",
         title: "PropertyType Coefficients Relative to Multiplex (book values)",
-        interpret: "With Multiplex as the reference (0), a Single Family home is worth ~$85k less and a Townhouse ~$115k less.",
+        interpret: "With Multiplex as the reference (0), a Single Family home is worth ~\\$85k less and a Townhouse ~\\$115k less.",
         labels: ["Multiplex (ref)", "Single Family", "Townhouse"],
         values: [0, -84690, -115100],
         valueLabels: ["0", "-84,690", "-115,100"],
@@ -460,8 +460,8 @@
       "Correlated predictors make coefficients hard to read: Bedrooms came out negative (~-49,807) due to size.",
       "Multicollinearity (redundant predictors) leaves no well-defined solution; remove the offenders.",
       "A confounding variable is an omitted important predictor; adding ZipGroup fixed sign anomalies.",
-      "Most expensive zip group adds almost $340,000; with location, a bathroom adds about $7,500.",
-      "Interactions: per-sqft value is ~$177 in the cheapest zip group vs $177+$230=$447 in the priciest."
+      "Most expensive zip group adds almost \\$340,000; with location, a bathroom adds about \\$7,500.",
+      "Interactions: per-sqft value is ~\\$177 in the cheapest zip group vs \\$177+\\$230=\\$447 in the priciest."
     ]
   });
   window.CODEVIZ["ps-ch4-interpreting-the-equation"] = {
@@ -469,12 +469,12 @@
       {
         type: "line",
         title: "SqFtTotLiving x ZipGroup Interaction (book values)",
-        interpret: "Price rises ~$177 per square foot in the cheapest zip group but ~$447 per square foot in the priciest — almost a 2.7x steeper slope.",
+        interpret: "Price rises ~\\$177 per square foot in the cheapest zip group but ~\\$447 per square foot in the priciest — almost a 2.7x steeper slope.",
         xlabel: "SqFtTotLiving",
-        ylabel: "Predicted price contribution ($)",
+        ylabel: "Predicted price contribution (\\$)",
         series: [
-          { name: "Lowest ZipGroup (~$177/sqft)", color: "#4ea1ff", points: [[1000, 177000], [4000, 708000]] },
-          { name: "Highest ZipGroup (~$447/sqft)", color: "#ffb454", points: [[1000, 447000], [4000, 1788000]] }
+          { name: "Lowest ZipGroup (~\\$177/sqft)", color: "#4ea1ff", points: [[1000, 177000], [4000, 708000]] },
+          { name: "Highest ZipGroup (~\\$447/sqft)", color: "#ffb454", points: [[1000, 447000], [4000, 1788000]] }
         ]
       }
     ]
@@ -552,7 +552,7 @@
     takeaways: [
       "Outliers have large standardized residuals; zip 98105's worst was -4.33 (a partial-interest sale).",
       "Influential points (high leverage / Cook's distance) can swing the fit without a big residual.",
-      "Removing influential King County points moved Bathrooms from ~$2,282 to ~-$16,132.",
+      "Removing influential King County points moved Bathrooms from ~\\$2,282 to ~-\\$16,132.",
       "Heteroskedasticity = non-constant residual variance; non-normal residuals mainly hurt inference.",
       "Partial residual = residual + bhat_i X_i; the SqFtTotLiving plot reveals a nonlinear relationship."
     ]

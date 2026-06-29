@@ -154,10 +154,10 @@
       {
         h: "The Bush tax cuts",
         body:
-          "<p>The Bush administration said 92 million Americans would get an average tax cut of over $1,000 ($1,083 to be precise). Was that accurate.</p>" +
+          "<p>The Bush administration said 92 million Americans would get an average tax cut of over \\$1,000 (\\$1,083 to be precise). Was that accurate.</p>" +
           "<ul class=\"steps\">" +
           "<li>Would 92 million people get a cut? Yes.</li>" +
-          "<li>Would most get about $1,000? No — the median cut was less than $100.</li>" +
+          "<li>Would most get about \\$1,000? No — the median cut was less than \\$100.</li>" +
           "</ul>" +
           "<p>A few very wealthy people got huge cuts. Those outliers pulled the mean up. The median, immune to outliers, better described the typical household.</p>"
       },
@@ -170,7 +170,7 @@
     ],
     takeaways: [
       "Mean is pulled by outliers; median is not.",
-      "Bush tax cut: mean over $1,000, median under $100.",
+      "Bush tax cut: mean over \\$1,000, median under \\$100.",
       "Sometimes the outliers ARE the message (Gould) — judgment, not math, decides."
     ]
   });
@@ -195,17 +195,17 @@
         h: "Convert to comparable units",
         body:
           "<p>Many tricks are \"apples and oranges\" comparisons. A hotel in Paris at 180 a night sounds dearer than London at 150 — until you realize one is euros and the other pounds. Numbers in different currencies mean nothing until converted at the exchange rate.</p>" +
-          "<p>The subtle version politicians and Hollywood exploit is inflation. A dollar today buys less than a dollar long ago. Something that cost $1 in 1950 would cost $9.37 in 2011. So comparing 1950 and 2011 dollars without adjusting is worse than comparing pounds and euros — those two are closer in value than a 1950 dollar is to a 2011 dollar.</p>"
+          "<p>The subtle version politicians and Hollywood exploit is inflation. A dollar today buys less than a dollar long ago. Something that cost \\$1 in 1950 would cost \\$9.37 in 2011. So comparing 1950 and 2011 dollars without adjusting is worse than comparing pounds and euros — those two are closer in value than a 1950 dollar is to a 2011 dollar.</p>"
       },
       {
         h: "Nominal versus real",
         body:
-          "<p>Nominal figures are not adjusted for inflation; real figures are. A veterans' housing program at $10 million in 1970 and $40 million in 2011 looks like more spending. But one 1970 dollar equals $5.83 in 2011, so matching the old $10 million would take $58.3 million in 2011. At $40 million, the real commitment actually fell.</p>" +
+          "<p>Nominal figures are not adjusted for inflation; real figures are. A veterans' housing program at \\$10 million in 1970 and \\$40 million in 2011 looks like more spending. But one 1970 dollar equals \\$5.83 in 2011, so matching the old \\$10 million would take \\$58.3 million in 2011. At \\$40 million, the real commitment actually fell.</p>" +
           "<table class=\"extable\"><thead><tr><th>Year</th><th class=\"num\">Nominal spend</th><th class=\"num\">Needed to match 1970</th></tr></thead><tbody>" +
-          "<tr><td class=\"row-h\">1970</td><td class=\"num\">$10M</td><td class=\"num\">$10M</td></tr>" +
-          "<tr><td class=\"row-h\">2011</td><td class=\"num\">$40M</td><td class=\"num\">$58.3M</td></tr>" +
+          "<tr><td class=\"row-h\">1970</td><td class=\"num\">\\$10M</td><td class=\"num\">\\$10M</td></tr>" +
+          "<tr><td class=\"row-h\">2011</td><td class=\"num\">\\$40M</td><td class=\"num\">\\$58.3M</td></tr>" +
           "</tbody></table>" +
-          "<p>The federal minimum wage (then $7.25) is nominal — the boss only owes the number on the check, not its buying power. Inflation erodes that, which is why unions bargain for cost-of-living adjustments.</p>"
+          "<p>The federal minimum wage (then \\$7.25) is nominal — the boss only owes the number on the check, not its buying power. Inflation erodes that, which is why unions bargain for cost-of-living adjustments.</p>"
       },
       {
         h: "Top-grossing films",
@@ -216,7 +216,7 @@
     takeaways: [
       "Convert to common units before comparing — currency or inflation.",
       "Nominal = unadjusted; real = inflation-adjusted.",
-      "$40M in 2011 < $10M in 1970 in real terms (would need $58.3M)."
+      "\\$40M in 2011 < \\$10M in 1970 in real terms (would need \\$58.3M)."
     ]
   });
 
@@ -229,26 +229,26 @@
       {
         h: "Big percent, small money",
         body:
-          "<p>Percentages give scale and context, but they can exaggerate. Growth off a tiny starting point looks explosive. Wheelan saw his taxes for the Suburban Cook County Tuberculosis Sanitarium District set to rise 527 percent. Alarming — until the Chicago Sun-Times noted the typical homeowner's bill would go from $1.15 to $6. The base was tiny, so any rise looks huge.</p>" +
+          "<p>Percentages give scale and context, but they can exaggerate. Growth off a tiny starting point looks explosive. Wheelan saw his taxes for the Suburban Cook County Tuberculosis Sanitarium District set to rise 527 percent. Alarming — until the Chicago Sun-Times noted the typical homeowner's bill would go from \\$1.15 to \\$6. The base was tiny, so any rise looks huge.</p>" +
           "<table class=\"extable\"><thead><tr><th>Item</th><th class=\"num\">From</th><th class=\"num\">To</th><th class=\"num\">% change</th></tr></thead><tbody>" +
-          "<tr><td class=\"row-h\">TB district tax bill</td><td class=\"num\">$1.15</td><td class=\"num\">$6.00</td><td class=\"num\">~527%</td></tr>" +
+          "<tr><td class=\"row-h\">TB district tax bill</td><td class=\"num\">\\$1.15</td><td class=\"num\">\\$6.00</td><td class=\"num\">~527%</td></tr>" +
           "</tbody></table>"
       },
       {
         h: "Small percent, huge money",
         body:
-          "<p>The flip side: a small percent of an enormous sum is big. A 4 percent rise in a roughly $700 billion defense budget is 4% × $700B = $28 billion — more than the entire NASA budget and about the Labor and Treasury budgets combined.</p>" +
-          "<p>And a fair-sounding equal percent can hide huge gaps. \"Everyone gets the same 10 percent raise\" sounds generous. But a boss making $1,000,000 gets $100,000; an employee making $50,000 gets $5,000. \"Same 10 percent raise\" sounds better than \"my raise is twenty times bigger than yours\" — both true.</p>" +
+          "<p>The flip side: a small percent of an enormous sum is big. A 4 percent rise in a roughly \\$700 billion defense budget is 4% × \\$700B = \\$28 billion — more than the entire NASA budget and about the Labor and Treasury budgets combined.</p>" +
+          "<p>And a fair-sounding equal percent can hide huge gaps. \"Everyone gets the same 10 percent raise\" sounds generous. But a boss making \\$1,000,000 gets \\$100,000; an employee making \\$50,000 gets \\$5,000. \"Same 10 percent raise\" sounds better than \"my raise is twenty times bigger than yours\" — both true.</p>" +
           "<ul class=\"steps\">" +
-          "<li>Boss: 10% × $1,000,000 = $100,000.</li>" +
-          "<li>Employee: 10% × $50,000 = $5,000.</li>" +
-          "<li>Ratio: $100,000 / $5,000 = 20 times.</li>" +
+          "<li>Boss: 10% × \\$1,000,000 = \\$100,000.</li>" +
+          "<li>Employee: 10% × \\$50,000 = \\$5,000.</li>" +
+          "<li>Ratio: \\$100,000 / \\$5,000 = 20 times.</li>" +
           "</ul>"
       }
     ],
     takeaways: [
-      "527% sounds huge but was $1.15 to $6.",
-      "4% of $700B = $28B — small percent, enormous money.",
+      "527% sounds huge but was \\$1.15 to \\$6.",
+      "4% of \\$700B = \\$28B — small percent, enormous money.",
       "Always ask: percent of what base?"
     ]
   });

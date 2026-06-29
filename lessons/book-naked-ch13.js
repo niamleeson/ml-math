@@ -131,13 +131,13 @@
       },
       {
         h: "Results, and the price tag",
-        body: "<p>Project STAR remains the only randomized test of the effect of smaller classes, and its results were statistically and socially significant.</p><ul class=\"steps\"><li>Students in small classes scored about .15 standard deviations higher on standardized tests than students in regular-size classes.</li><li>Black students in small classes had gains twice as large.</li></ul><p>Now the bad news: the finest studies cost big bucks. Project STAR cost roughly $12 million, and the prayer study on postsurgical complications cost $2.4 million. Real life also chipped away at the randomization &mdash; students entered and left mid-experiment, some were moved for disciplinary reasons, and some parents lobbied to get their kids into smaller classes.</p>"
+        body: "<p>Project STAR remains the only randomized test of the effect of smaller classes, and its results were statistically and socially significant.</p><ul class=\"steps\"><li>Students in small classes scored about .15 standard deviations higher on standardized tests than students in regular-size classes.</li><li>Black students in small classes had gains twice as large.</li></ul><p>Now the bad news: the finest studies cost big bucks. Project STAR cost roughly \\$12 million, and the prayer study on postsurgical complications cost \\$2.4 million. Real life also chipped away at the randomization &mdash; students entered and left mid-experiment, some were moved for disciplinary reasons, and some parents lobbied to get their kids into smaller classes.</p>"
       }
     ],
     takeaways: [
       "Ethics restrict experiments on humans; the finest studies are also very expensive.",
       "Project STAR randomized 79 schools' kindergartners into small, regular, and aide classes.",
-      "Small classes gave a .15 standard-deviation gain (double for black students); the study cost ~$12M."
+      "Small classes gave a .15 standard-deviation gain (double for black students); the study cost ~\\$12M."
     ]
   });
 
@@ -179,7 +179,7 @@
       },
       {
         h: "Dale and Krueger on elite colleges",
-        body: "<p>This addresses the chapter's title question: is there a real life advantage to attending a highly selective college? Harvard, Princeton, and Dartmouth graduates do very well &mdash; a 2008 PayScale.com study found median pay (ten to twenty years' experience) of $134,000 for Dartmouth grads, the highest of any undergraduate institution, with Princeton second at $131,000. But those numbers say nothing about the <em>value</em> of the education: these students were talented when they applied; <em>that's why they got accepted</em>. The hard question is the treatment effect of attending an elite school versus the selection effect of elite schools admitting the most talented students.</p>"
+        body: "<p>This addresses the chapter's title question: is there a real life advantage to attending a highly selective college? Harvard, Princeton, and Dartmouth graduates do very well &mdash; a 2008 PayScale.com study found median pay (ten to twenty years' experience) of \\$134,000 for Dartmouth grads, the highest of any undergraduate institution, with Princeton second at \\$131,000. But those numbers say nothing about the <em>value</em> of the education: these students were talented when they applied; <em>that's why they got accepted</em>. The hard question is the treatment effect of attending an elite school versus the selection effect of elite schools admitting the most talented students.</p>"
       },
       {
         h: "Exploiting multiple applications",

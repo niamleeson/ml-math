@@ -40,21 +40,21 @@
       { h: "The book's worked figures", body:
         "<p>Wheelan walks the number up from one position to the whole firm:</p>" +
         "<ul class=\"steps\">" +
-        "<li>A single trading position: at most $13 million lost over the period, with 99 percent probability (so a 1-in-100 chance of losing more).</li>" +
+        "<li>A single trading position: at most \\$13 million lost over the period, with 99 percent probability (so a 1-in-100 chance of losing more).</li>" +
         "<li>The model even folded in correlations between positions — if two investments were negatively correlated, a loss in one tends to be offset by a gain in the other, making the pair less risky than either alone.</li>" +
-        "<li>Bond trader Bob Smith: a 24-hour VaR of $19 million, again at 99 percent — the most he should lose over the next day, 99 times out of 100.</li>" +
+        "<li>Bond trader Bob Smith: a 24-hour VaR of \\$19 million, again at 99 percent — the most he should lose over the next day, 99 times out of 100.</li>" +
         "<li>Aggregate up across currencies, leverage, and liquidity, and managers got one firm-wide risk number at any moment.</li>" +
         "</ul>" +
         "<table class=\"extable\"><thead><tr><th>Level</th><th class=\"num\">VaR (99% conf.)</th><th>Horizon</th></tr></thead><tbody>" +
-        "<tr><td class=\"row-h\">One position</td><td class=\"num\">$13M</td><td>~1 week</td></tr>" +
-        "<tr><td class=\"row-h\">Trader Bob Smith</td><td class=\"num\">$19M</td><td>24 hours</td></tr>" +
+        "<tr><td class=\"row-h\">One position</td><td class=\"num\">\\$13M</td><td>~1 week</td></tr>" +
+        "<tr><td class=\"row-h\">Trader Bob Smith</td><td class=\"num\">\\$19M</td><td>24 hours</td></tr>" +
         "</tbody></table>" },
       { h: "Why people loved it", body:
         "<p>As writer Joe Nocera put it, VaR's great selling point was that it expressed risk as a single number, a dollar figure — something non-quants could grasp. At J. P. Morgan, where VaR was refined, the daily figure landed on top executives' desks every afternoon and was nicknamed the \"4:15 report,\" arriving just after U.S. markets closed.</p>" }
     ],
     takeaways: [
       "VaR reports a worst-case loss at a stated probability, e.g. 99%.",
-      "Book figures: $13M per position; $19M 24-hour VaR for trader Bob Smith.",
+      "Book figures: \\$13M per position; \\$19M 24-hour VaR for trader Bob Smith.",
       "Its appeal was reducing complex risk to one dollar number.",
       "Remember the 1-in-100 tail — it becomes the whole problem."
     ]
@@ -65,7 +65,7 @@
     interpret: "VaR shrinks a position or trader's risk to a single dollar loss it should not exceed 99 times out of 100.",
     labels: ["One position (1 wk)", "Bob Smith (24 hr)"],
     values: [13, 19],
-    valueLabels: ["$13M", "$19M"],
+    valueLabels: ["\\$13M", "\\$19M"],
     colors: ["#4ea1ff", "#7ee787"]
   } ] };
 
@@ -103,7 +103,7 @@
     tagline: "The 99% assurance is useless because it is the 1% that destroys you.",
     sections: [
       { h: "The 1 percent is the whole point", body:
-        "<p>Even if the underlying probabilities were right, the 99 percent comfort was dangerous. Hedge-fund manager David Einhorn compared VaR to an air bag that works every time except when you have a crash. If a firm has a Value at Risk of $500 million, that 99 percent chance of losing no more than $500 million also means a 1 percent chance of losing more — possibly far more. The models said nothing about how bad that 1 percent could get. That neglected sliver is the <strong>tail risk</strong>: the small chance of a catastrophic outcome, named for the tail of the distribution.</p>" },
+        "<p>Even if the underlying probabilities were right, the 99 percent comfort was dangerous. Hedge-fund manager David Einhorn compared VaR to an air bag that works every time except when you have a crash. If a firm has a Value at Risk of \\$500 million, that 99 percent chance of losing no more than \\$500 million also means a 1 percent chance of losing more — possibly far more. The models said nothing about how bad that 1 percent could get. That neglected sliver is the <strong>tail risk</strong>: the small chance of a catastrophic outcome, named for the tail of the distribution.</p>" },
       { h: "Compounding the error", body:
         "<p>Firms made things worse with unrealistic assumptions about rare events. Treasury secretary Hank Paulson noted that many firms assumed they could raise cash in a pinch by selling assets — but in a crisis every firm wants cash and all are dumping the same assets. Wheelan's image: refusing to stock water before a disaster because you will \"just go buy some,\" only to arrive at a supermarket with broken windows and empty shelves.</p>" },
       { h: "Black swans (Taleb)", body:
@@ -259,7 +259,7 @@
       { h: "Reconciling it with the gambler's fallacy", body:
         "<p>Wheelan anticipates a confusion. After a student flips six tails in a row, is he \"due\" for heads? No — each flip is independent, so the next is still $\\frac{1}{2}$ heads (that would be the gambler's fallacy). Reversion to the mean is a different claim: the <em>ensuing flips</em> will tend toward what probability predicts, half heads and half tails, rather than toward the all-tails past.</p>" +
         "<ul class=\"steps\">" +
-        "<li>He imagines offering a student a ten-year, $50 million contract after seeing six tails in a row, treating it as coin-flipping talent.</li>" +
+        "<li>He imagines offering a student a ten-year, \\$50 million contract after seeing six tails in a row, treating it as coin-flipping talent.</li>" +
         "<li>Each future flip is still independent at $\\frac{1}{2}$ — no \"hot streak\" carries over.</li>" +
         "<li>Over the contract the student flips about 50 percent tails, and Wheelan is disappointed.</li>" +
         "<li>The more flips, the closer the outcome to the 50-50 the law of large numbers predicts.</li>" +

@@ -126,19 +126,19 @@
     tagline: "A result can be statistically real and still too small to matter.",
     sections: [
       { h: "The white-teeth example", body:
-        "Wheelan imagines a study of what determines income. In a large data set, researchers might find that people with whiter teeth earn $86 more per year than others, ceteris paribus — and that this finding is statistically significant. That means two things: the null hypothesis that white teeth have no association with income is rejected with high confidence, and a similar relationship would likely appear in other samples." },
+        "Wheelan imagines a study of what determines income. In a large data set, researchers might find that people with whiter teeth earn \\$86 more per year than others, ceteris paribus — and that this finding is statistically significant. That means two things: the null hypothesis that white teeth have no association with income is rejected with high confidence, and a similar relationship would likely appear in other samples." },
       { h: "So what?", body:
-        "Statistically significant does not mean important. $86 a year is not life-changing money. From a policy angle, $86 is probably less than the annual cost of whitening teeth, so it is not even worth doing. The effect is real but practically trivial." },
+        "Statistically significant does not mean important. \\$86 a year is not life-changing money. From a policy angle, \\$86 is probably less than the annual cost of whitening teeth, so it is not even worth doing. The effect is real but practically trivial." },
       { h: "The two questions are separate", body:
         "<ul class='steps'>" +
         "<li>Statistical significance: is the effect likely real rather than chance? (white teeth: yes)</li>" +
-        "<li>Practical significance: is the effect large enough to matter? (white teeth: no — only $86/yr)</li>" +
+        "<li>Practical significance: is the effect large enough to matter? (white teeth: no — only \\$86/yr)</li>" +
         "<li>A finding must clear BOTH bars to be worth acting on.</li>" +
         "</ul>" }
     ],
     takeaways: [
       "Statistical significance asks 'is it real?'; practical significance asks 'is it big enough to care?'",
-      "The $86/year whiter-teeth effect is statistically significant yet practically meaningless.",
+      "The \\$86/year whiter-teeth effect is statistically significant yet practically meaningless.",
       "Always check the size of an effect, not just whether it is significant."
     ]
   });

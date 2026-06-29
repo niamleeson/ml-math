@@ -145,9 +145,9 @@
         "<table class='extable'>" +
         "<thead><tr><th>quantity</th><th class='num'>value</th></tr></thead>" +
         "<tbody>" +
-        "<tr><td class='row-h'>original median estimate</td><td class='num'>$62,000</td></tr>" +
-        "<tr><td class='row-h'>bias</td><td class='num'>about &minus;$70</td></tr>" +
-        "<tr><td class='row-h'>standard error</td><td class='num'>about $209</td></tr>" +
+        "<tr><td class='row-h'>original median estimate</td><td class='num'>\\$62,000</td></tr>" +
+        "<tr><td class='row-h'>bias</td><td class='num'>about &minus;\\$70</td></tr>" +
+        "<tr><td class='row-h'>standard error</td><td class='num'>about \\$209</td></tr>" +
         "</tbody></table>" +
         "<p>The bootstrap also works on multivariate data, sampling whole rows as units. Running models on bootstrap samples and aggregating their predictions (or majority-voting for classification) is called <em>bagging</em> — bootstrap aggregating — and generally beats a single model.</p>" +
         "<p class='warn'>Warning: the bootstrap does not compensate for a small sample, create new data, or fill holes. It tells you how additional samples drawn from a population like your sample would behave.</p>" },
@@ -157,7 +157,7 @@
     takeaways: [
       "Bootstrap = resample your data with replacement and recompute the statistic.",
       "It needs no normality assumption and estimates standard error for almost any statistic.",
-      "Loan-income median example: $62,000 estimate, ~$-70 bias, ~$209 standard error.",
+      "Loan-income median example: \\$62,000 estimate, ~\\$-70 bias, ~\\$209 standard error.",
       "Bootstrap always means with replacement; resampling also covers permutation tests."
     ]
   });
@@ -182,7 +182,7 @@
         "<li>For an $x$% interval, trim $[(1 - x/100)/2]$ of the $R$ results from each end of the distribution.</li>" +
         "<li>The trim points are the endpoints of the $x$% bootstrap confidence interval.</li>" +
         "</ul>" +
-        "<p>The book's example (Figure 2-9): a 90% confidence interval for mean annual income of loan applicants, based on a sample of 20 with mean $57,573, runs from about $53,610 to $62,279 — trimming 5% from each tail of the bootstrap distribution.</p>" },
+        "<p>The book's example (Figure 2-9): a 90% confidence interval for mean annual income of loan applicants, based on a sample of 20 with mean \\$57,573, runs from about \\$53,610 to \\$62,279 — trimming 5% from each tail of the bootstrap distribution.</p>" },
       { h: "How level and sample size affect width", body:
         "<p>The higher the confidence level, the wider the interval. The smaller the sample, the wider the interval (more uncertainty). Both make intuitive sense: more confidence and less data both force a wider range to be sure of capturing the true value.</p>" +
         "<p>The book notes that what people usually want to know — \"what is the probability the true value lies in this interval?\" — is not quite what a confidence interval answers, though that is how most people read it. For a data scientist, the interval is mainly a tool to gauge how variable a sample result is and whether a larger sample is needed.</p>" }
@@ -190,14 +190,14 @@
     takeaways: [
       "A confidence interval presents an estimate as a range around a point estimate.",
       "A 90% bootstrap interval encloses the central 90% of the resampled statistics.",
-      "Example: mean income $57,573 from n=20 gives a ~$53,610–$62,279 90% interval.",
+      "Example: mean income \\$57,573 from n=20 gives a ~\\$53,610–\\$62,279 90% interval.",
       "Higher confidence and smaller samples both widen the interval."
     ]
   });
   window.CODEVIZ["ps-ch2-confidence-intervals"] = { charts: [ {
     type: "bars",
     title: "90 percent interval for mean loan income",
-    interpret: "Reconstruction of Figure 2-9. The bootstrap distribution of the mean (sample of 20, mean $57,573) is roughly bell-shaped; trimming 5% from each tail leaves the 90% interval $53,610 to $62,279.",
+    interpret: "Reconstruction of Figure 2-9. The bootstrap distribution of the mean (sample of 20, mean \\$57,573) is roughly bell-shaped; trimming 5% from each tail leaves the 90% interval \\$53,610 to \\$62,279.",
     labels: ["50,346", "52,625", "54,905", "57,184", "59,464", "61,743", "64,022"],
     values: [8, 30, 52, 60, 45, 22, 6],
     colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]

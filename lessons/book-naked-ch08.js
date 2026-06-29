@@ -106,13 +106,13 @@
         "<li>This holds no matter what the underlying population looks like; the population need not be normal for the sample means to be normal.</li>" +
         "</ul>" },
       { h: "Household income: a skewed population", body:
-        "<p>U.S. household income is skewed right; no household earns below $0, while a few earn enormous amounts, giving a long right tail. The median household income is about $51,900 and the mean is about $70,900 (high earners pull the mean rightward).</p>" +
-        "<p>Take a random sample of 1,000 households. The best guess for the sample mean is the population mean, about $70,900, because a proper sample looks like America in miniature. Repeated samples of 1,000 cluster around $70,900: a sample mean of $427,000 or $8,000 is possible but highly unlikely. Crucially, even though income itself is skewed, the distribution of the sample means is not skewed; it forms the familiar bell shape around $70,900.</p>" }
+        "<p>U.S. household income is skewed right; no household earns below \\$0, while a few earn enormous amounts, giving a long right tail. The median household income is about \\$51,900 and the mean is about \\$70,900 (high earners pull the mean rightward).</p>" +
+        "<p>Take a random sample of 1,000 households. The best guess for the sample mean is the population mean, about \\$70,900, because a proper sample looks like America in miniature. Repeated samples of 1,000 cluster around \\$70,900: a sample mean of \\$427,000 or \\$8,000 is possible but highly unlikely. Crucially, even though income itself is skewed, the distribution of the sample means is not skewed; it forms the familiar bell shape around \\$70,900.</p>" }
     ],
     takeaways: [
       "Repeated sample means form a normal curve centered on the population mean.",
       "The best guess for a single sample mean is the population mean itself.",
-      "Income is skewed (median ~$51,900, mean ~$70,900), yet its sample means are not skewed."
+      "Income is skewed (median ~\\$51,900, mean ~\\$70,900), yet its sample means are not skewed."
     ]
   });
 

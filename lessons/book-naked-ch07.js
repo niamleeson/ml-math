@@ -183,7 +183,7 @@
     sections: [
       {
         h: "Always ask how the sample was chosen",
-        body: "<p>Wheelan cites the (likely apocryphal) line attributed to film critic Pauline Kael after Nixon's election &mdash; that she didn't know anyone who voted for him &mdash; as a tidy illustration of how a lousy sample (one's circle of liberal friends) misrepresents a larger population (American voters). The question to always ask: <em>how was the sample chosen?</em> The Iowa straw poll is biased the same way &mdash; Iowans who pay $30 to vote differ from other Iowa Republicans, who differ from Republicans nationally (it has predicted only three of the last five nominees). Airport surveys skew wealthy; rest-stop surveys skew the other way; and in any public-place survey, the people willing to stop and answer differ from those who walk by.</p>"
+        body: "<p>Wheelan cites the (likely apocryphal) line attributed to film critic Pauline Kael after Nixon's election &mdash; that she didn't know anyone who voted for him &mdash; as a tidy illustration of how a lousy sample (one's circle of liberal friends) misrepresents a larger population (American voters). The question to always ask: <em>how was the sample chosen?</em> The Iowa straw poll is biased the same way &mdash; Iowans who pay \\$30 to vote differ from other Iowa Republicans, who differ from Republicans nationally (it has predicted only three of the last five nominees). Airport surveys skew wealthy; rest-stop surveys skew the other way; and in any public-place survey, the people willing to stop and answer differ from those who walk by.</p>"
       },
       {
         h: "Literary Digest, 1936",

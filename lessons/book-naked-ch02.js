@@ -17,12 +17,12 @@
         "<p>The most basic descriptive task is to find the middle of a set of data, what statisticians call its <em>central tendency</em>. The mean (the average) is the simplest such measure: add up all the values and divide by how many there are. The symbol $\\bar{x}$ means the average, and $n$ means the number of observations.</p>" +
         "<p>Wheelan's printer example: you compare warranty defects on the laser printers your firm sold against a competitor's. Tally every reported quality problem, then divide by the number of printers sold. Your firm averages <strong>9.1</strong> defects per printer; the competitor averages <strong>2.8</strong>. At a glance, your printers break far more often.</p>" },
       { h: "Why the mean can mislead", body:
-        "<p>The trouble is that the mean is pulled by <em>outliers</em> — observations sitting far from the center. The bar-stool story makes this vivid: ten people sit in a Seattle bar, each earning $35{,}000 a year, so the mean income is $35{,}000. Then Bill Gates walks in (with a talking parrot) and, for the sake of the example, earns $1 billion a year.</p>" +
+        "<p>The trouble is that the mean is pulled by <em>outliers</em> — observations sitting far from the center. The bar-stool story makes this vivid: ten people sit in a Seattle bar, each earning \\$35{,}000 a year, so the mean income is \\$35{,}000. Then Bill Gates walks in (with a talking parrot) and, for the sake of the example, earns \\$1 billion a year.</p>" +
         "<ul class='steps'>" +
         "<li>Before Gates: total income $= 10 \\times 35{,}000 = 350{,}000$, so mean $= 350{,}000 / 10 = 35{,}000$.</li>" +
-        "<li>After Gates: total $= 350{,}000 + 1{,}000{,}000{,}000 = 1{,}000{,}350{,}000$, divided by $11$ people $\\approx 90{,}940{,}909$, i.e. about $91 million.</li>" +
+        "<li>After Gates: total $= 350{,}000 + 1{,}000{,}000{,}000 = 1{,}000{,}350{,}000$, divided by $11$ people $\\approx 90{,}940{,}909$, i.e. about \\$91 million.</li>" +
         "</ul>" +
-        "<p>None of the original ten earns a penny more, yet calling this a bar of $91-million-a-year patrons is technically correct and grossly misleading. This is exactly why Wheelan says we should not judge the economic health of the middle class by per capita income: explosive growth at the very top can lift the average without helping the typical person.</p>" }
+        "<p>None of the original ten earns a penny more, yet calling this a bar of \\$91-million-a-year patrons is technically correct and grossly misleading. This is exactly why Wheelan says we should not judge the economic health of the middle class by per capita income: explosive growth at the very top can lift the average without helping the typical person.</p>" }
     ],
     takeaways: [
       "The mean = sum of values divided by the count.",
@@ -40,14 +40,14 @@
     sections: [
       { h: "What the median is", body:
         "<p>The median is the value that divides a distribution in half: half the observations lie above it and half below. With an even number of observations, the median is the midpoint between the two middle values.</p>" +
-        "<p>Picture the bar patrons lined up on stools in ascending order of income. With ten original drinkers, the median is the midpoint of the fifth and sixth stools — $35{,}000. When Bill Gates joins, there are eleven people, and the income of the person on the sixth stool is the middle one: still <strong>$35{,}000</strong>. Even if Warren Buffett then takes a twelfth stool, the median does not budge.</p>" },
+        "<p>Picture the bar patrons lined up on stools in ascending order of income. With ten original drinkers, the median is the midpoint of the fifth and sixth stools — \\$35{,}000. When Bill Gates joins, there are eleven people, and the income of the person on the sixth stool is the middle one: still <strong>\\$35{,}000</strong>. Even if Warren Buffett then takes a twelfth stool, the median does not budge.</p>" },
       { h: "Mean vs. median side by side", body:
         "<p>The bar-stool numbers show the contrast clearly.</p>" +
         "<table class='extable'><thead><tr><th>Scenario</th><th class='num'>Mean income</th><th class='num'>Median income</th></tr></thead><tbody>" +
-        "<tr><td class='row-h'>Ten original drinkers</td><td class='num'>$35{,}000</td><td class='num'>$35{,}000</td></tr>" +
-        "<tr><td class='row-h'>After Bill Gates joins</td><td class='num'>~$91{,}000{,}000</td><td class='num'>$35{,}000</td></tr>" +
+        "<tr><td class='row-h'>Ten original drinkers</td><td class='num'>\\$35{,}000</td><td class='num'>\\$35{,}000</td></tr>" +
+        "<tr><td class='row-h'>After Bill Gates joins</td><td class='num'>~\\$91{,}000{,}000</td><td class='num'>\\$35{,}000</td></tr>" +
         "</tbody></table>" +
-        "<p>Footnote detail from the book: with twelve patrons the median is the midpoint of the sixth and seventh stools. If both earn $35{,}000, the median is $35{,}000; if one earns $35{,}000 and the other $36{,}000, the median would be $35{,}500.</p>" +
+        "<p>Footnote detail from the book: with twelve patrons the median is the midpoint of the sixth and seventh stools. If both earn \\$35{,}000, the median is \\$35{,}000; if one earns \\$35{,}000 and the other \\$36{,}000, the median would be \\$35{,}500.</p>" +
         "<p>Neither measure is hard to compute. The real skill is judging which measure of the middle is the honest one for a given situation — a choice that is easy to exploit.</p>" }
     ],
     takeaways: [

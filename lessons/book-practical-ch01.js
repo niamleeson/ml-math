@@ -192,13 +192,13 @@
       },
       {
         h: "Expected value",
-        body: "When categories map to numeric values, the <em>expected value</em> gives an average weighted by each category's probability — a weighted mean whose weights are probabilities. The book's example: a cloud-service marketer offers a $300/month tier and a $50/month tier, and estimates that of webinar attendees 5% will buy the $300 service, 15% the $50 service, and 80% nothing.<ul class=\"steps\"><li>Multiply each outcome by its probability of occurring.</li><li>Sum those products.</li><li>$EV = (0.05)(300) + (0.15)(50) + (0.80)(0) = 15 + 7.5 + 0 = 22.5$ — an expected value of $22.50 per attendee per month.</li></ul>The book frames expected value as a fundamental tool in business valuation and capital budgeting."
+        body: "When categories map to numeric values, the <em>expected value</em> gives an average weighted by each category's probability — a weighted mean whose weights are probabilities. The book's example: a cloud-service marketer offers a \\$300/month tier and a \\$50/month tier, and estimates that of webinar attendees 5% will buy the \\$300 service, 15% the \\$50 service, and 80% nothing.<ul class=\"steps\"><li>Multiply each outcome by its probability of occurring.</li><li>Sum those products.</li><li>$EV = (0.05)(300) + (0.15)(50) + (0.80)(0) = 15 + 7.5 + 0 = 22.5$ — an expected value of \\$22.50 per attendee per month.</li></ul>The book frames expected value as a fundamental tool in business valuation and capital budgeting."
       }
     ],
     takeaways: [
       "Categorical data is summarized by proportions and visualized with bar charts (gaps between bars, unlike a histogram).",
       "The mode is the most frequent category; at DFW the leading delay cause is Inbound at 42.43%.",
-      "Expected value is a probability-weighted mean: (0.05)(300)+(0.15)(50)+(0.80)(0) = $22.50."
+      "Expected value is a probability-weighted mean: (0.05)(300)+(0.15)(50)+(0.80)(0) = \\$22.50."
     ]
   });
   window.CODEVIZ["ps-ch1-categorical"] = {

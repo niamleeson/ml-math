@@ -17,7 +17,7 @@
       },
       {
         h: "The golf-lessons example",
-        body: "<p>His example plots the number of golf lessons he takes in a month (the explanatory variable) against his average score for an eighteen-hole round (the dependent variable; lower is better). The scatter shows a clear pattern, but it bends &mdash; it splits into three stretches with three different slopes:</p><table class=\"extable\"><thead><tr><th class=\"row-h\">Spending range</th><th class=\"row-h\">What happens to score</th><th class=\"row-h\">Slope</th></tr></thead><tbody><tr><td class=\"row-h\">Up to about $100/mo</td><td>Score drops sharply (improves)</td><td>Negative</td></tr><tr><td class=\"row-h\">About $200&ndash;$300/mo</td><td>Little or no change</td><td>Zero</td></tr><tr><td class=\"row-h\">Above $300/mo</td><td>Score rises (gets worse)</td><td>Positive</td></tr></tbody></table>"
+        body: "<p>His example plots the number of golf lessons he takes in a month (the explanatory variable) against his average score for an eighteen-hole round (the dependent variable; lower is better). The scatter shows a clear pattern, but it bends &mdash; it splits into three stretches with three different slopes:</p><table class=\"extable\"><thead><tr><th class=\"row-h\">Spending range</th><th class=\"row-h\">What happens to score</th><th class=\"row-h\">Slope</th></tr></thead><tbody><tr><td class=\"row-h\">Up to about \\$100/mo</td><td>Score drops sharply (improves)</td><td>Negative</td></tr><tr><td class=\"row-h\">About \\$200&ndash;\\$300/mo</td><td>Little or no change</td><td>Zero</td></tr><tr><td class=\"row-h\">Above \\$300/mo</td><td>Score rises (gets worse)</td><td>Positive</td></tr></tbody></table>"
       },
       {
         h: "Why one coefficient fails",
@@ -36,7 +36,7 @@
         type: "scatter",
         title: "Effect of golf lessons on score",
         interpret: "Score falls fast at first, levels off in the middle, then rises again — three different slopes, so one straight line cannot fit it.",
-        xlabel: "Money spent on lessons per month ($)",
+        xlabel: "Money spent on lessons per month (\\$)",
         ylabel: "Average score (lower is better)",
         groups: [
           {
@@ -109,7 +109,7 @@
       },
       {
         h: "Cars and SAT scores",
-        body: "<p>Wheelan recalls a professor noting that SAT scores correlate strongly with the number of cars a family owns, insinuating the SAT is therefore unfair. But the number of cars is just a proxy for income, education, and socioeconomic status. As noted earlier in the book, the mean SAT critical reading score for students from families earning over $200,000 is 134 points higher than for students from families earning below $20,000. The real worry is whether the SAT is \"coachable\" through prep classes that wealthy families can better afford.</p>"
+        body: "<p>Wheelan recalls a professor noting that SAT scores correlate strongly with the number of cars a family owns, insinuating the SAT is therefore unfair. But the number of cars is just a proxy for income, education, and socioeconomic status. As noted earlier in the book, the mean SAT critical reading score for students from families earning over \\$200,000 is 134 points higher than for students from families earning below \\$20,000. The real worry is whether the SAT is \"coachable\" through prep classes that wealthy families can better afford.</p>"
       }
     ],
     takeaways: [

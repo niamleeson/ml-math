@@ -144,7 +144,7 @@
   window.CODEVIZ["ps-ch7-kmeans-simple-example"] = {
     charts: [{
       type: "scatter",
-      title: "K-means cluster centers for XOM and CVX returns (from book's km$centers, Figure 7-4)",
+      title: "K-means cluster centers for XOM and CVX returns (from book's km\\$centers, Figure 7-4)",
       interpret: "Clusters 1 and 3 sit in negative (down-market) territory; clusters 2 and 4 sit in positive (up-market) territory.",
       xlabel: "XOM",
       ylabel: "CVX",
@@ -211,7 +211,7 @@
   window.CODEVIZ["ps-ch7-interpreting-clusters"] = {
     charts: [{
       type: "bars",
-      title: "K-means cluster sizes for the five-cluster S&P 500 example (book's km$size)",
+      title: "K-means cluster sizes for the five-cluster S&P 500 example (book's km\\$size)",
       interpret: "The five clusters are relatively balanced in size; no single cluster is a tiny outlier group.",
       labels: ["Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"],
       values: [186, 106, 285, 288, 266]
