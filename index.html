@@ -141,19 +141,14 @@
   }
   .module .lessons { list-style: none; margin: 0; padding: 0 0 8px; }
   .module.collapsed .lessons { display: none; }
-  .lessons li {
+  .lessons li { display: block; }
+  .lessons li a.navlink {
     padding: 7px 16px 7px 38px; font-size: 13px; cursor: pointer; color: var(--ink-dim);
-    display: flex; align-items: center; gap: 8px; line-height: 1.35;
+    display: flex; align-items: center; gap: 8px; line-height: 1.35; text-decoration: none;
   }
-  .lessons li:hover { background: var(--panel-2); color: var(--ink); }
-  .lessons li.active { background: rgba(78,161,255,.12); color: var(--ink); border-left: 3px solid var(--accent); padding-left: 35px; }
-  .lessons li .dot {
-    width: 14px; height: 14px; min-width: 14px; border-radius: 50%;
-    border: 1.5px solid var(--border); display: inline-flex; align-items: center; justify-content: center;
-    font-size: 9px; color: var(--bg);
-  }
-  .lessons li.done .dot { background: var(--good); border-color: var(--good); }
-  .lessons li .ltitle { flex: 1; min-width: 0; }
+  .lessons li a.navlink:hover { background: var(--panel-2); color: var(--ink); }
+  .lessons li.active a.navlink { background: rgba(78,161,255,.12); color: var(--ink); border-left: 3px solid var(--accent); padding-left: 35px; }
+  .lessons li a.navlink .ltitle { flex: 1; min-width: 0; }
   .usebadge {
     min-width: 21px; height: 17px; padding: 0 5px; border-radius: 4px;
     font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
@@ -1209,14 +1204,13 @@ const App = (function () {
         const li = document.createElement("li");
         li.dataset.id = l.id;
         li.dataset.search = (l.title + " " + (l.module || "")).toLowerCase();
-        li.className = progress[l.id] ? "done" : "";
         const u = (window.USAGE && l.id in window.USAGE) ? window.USAGE[l.id] : null;
         // Green badge whose saturation grows with how commonly the concept is used (0–10).
         // Lightness is held constant so the white text stays equally readable across the scale.
         const badge = (u == null) ? "" :
           `<span class="usebadge" style="background:hsl(140 ${Math.round(14 + u * 6.6)}% 36%)" title="How commonly used in practice: ${u}/10 (10 = used everywhere, 0 = niche)">${u}</span>`;
-        li.innerHTML = `<span class="dot">✓</span><span class="ltitle">${l.title}</span>${badge}`;
-        li.onclick = () => { open(l.id); if (window.innerWidth <= 820) document.body.classList.add("nav-collapsed"); };
+        // Real anchor so lessons can be middle-/cmd-clicked into a new tab; in-tab clicks route via hashchange.
+        li.innerHTML = `<a class="navlink" href="#${l.id}"><span class="ltitle">${l.title}</span>${badge}</a>`;
         ul.appendChild(li);
       });
       mod.querySelector(".mod-head").onclick = (e) => {
@@ -1423,9 +1417,7 @@ const App = (function () {
       list.map(q => `<li>${q}</li>`).join("") + `</ul></div>`;
   }
   function navRow(id, prev, next) {
-    return `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
-      `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
-      `<div class="nav-row">` +
+    return `<div class="nav-row">` +
       `<button ${prev ? `onclick="App.open('${prev}')"` : "disabled"}><span>← Previous</span>${prev ? byId[prev].title : ""}</button>` +
       `<button class="next" ${next ? `onclick="App.open('${next}')"` : "disabled"}><span>Next →</span>${next ? byId[next].title : ""}</button>` +
       `</div>`;
@@ -1571,8 +1563,6 @@ const App = (function () {
       underHoodWrap +
       (l.demo ? `<div class="card"><h3>Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       practiceBlock(l.practice) +
-      `<button class="markdone ${progress[id] ? 'done' : ''}" onclick="App.toggleDone('${id}')">` +
-        `${progress[id] ? '✓ Completed — click to unmark' : 'Mark this lesson complete'}</button>` +
       `<div class="nav-row">` +
         `<button ${prev ? `onclick="App.open('${prev}')"` : "disabled"}><span>← Previous</span>${prev ? byId[prev].title : ""}</button>` +
         `<button class="next" ${next ? `onclick="App.open('${next}')"` : "disabled"}><span>Next →</span>${next ? byId[next].title : ""}</button>` +
@@ -1657,6 +1647,14 @@ const App = (function () {
     if (window.innerWidth <= 820) document.body.classList.add("nav-collapsed");
     const hash = location.hash.replace("#", "");
     if (hash && byId[hash]) open(hash); else welcome();
+    // In-tab nav-anchor clicks (and browser back/forward) change the hash; route them here.
+    window.addEventListener("hashchange", () => {
+      const h = location.hash.replace("#", "");
+      if (h && byId[h]) {
+        open(h);
+        if (window.innerWidth <= 820) document.body.classList.add("nav-collapsed");
+      }
+    });
   }
 
   function typeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); }
