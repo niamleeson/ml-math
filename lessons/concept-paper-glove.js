@@ -254,19 +254,30 @@
       `<p><b>Worked numbers</b> for <b>one term</b> of $J$ (Eq. 8). Take a tiny $D=3$. Suppose the pair $(i,j)$
        has co-occurrence count $X_{ij}=30$, with $x_{\\max}=100$ and $\\alpha=0.75$. Let
        $w_i=[0.5,\\,{-0.2},\\,0.1]$, $\\tilde w_j=[0.3,\\,0.4,\\,{-0.1}]$, $b_i=0.2$, $\\tilde b_j=0.1$.</p>
-       <ul>
+       <ul class="steps">
          <li><b>The weight</b> $f(30)$: since $30\\lt 100$, $f=(30/100)^{0.75}=0.3^{0.75}=0.40536$.</li>
-         <li><b>The dot product</b> $w_i^\\top\\tilde w_j = (0.5)(0.3)+(-0.2)(0.4)+(0.1)(-0.1)
-         = 0.15-0.08-0.01 = 0.06$.</li>
+         <li><b>The dot product</b> $w_i^\\top\\tilde w_j = (0.5)(0.3)+(-0.2)(0.4)+(0.1)(-0.1)$
+         $= 0.15-0.08-0.01 = 0.06$.</li>
          <li><b>The target</b> $\\log X_{ij}=\\ln 30 = 3.401197$.</li>
          <li><b>The residual</b> (inside the parentheses):
          $0.06 + 0.2 + 0.1 - 3.401197 = -3.041197$.</li>
          <li><b>Square it:</b> $(-3.041197)^2 = 9.248882$.</li>
          <li><b>This term of $J$:</b> $f(30)\\times 9.248882 = 0.40536\\times 9.248882 = 3.749127$.</li>
        </ul>
-       <p>Notice how the weight scales the squared error down: a much rarer pair (say $X_{ij}=1$,
-       $f=(1/100)^{0.75}=0.031623$) would contribute far less, exactly as intended. The CODE cell recomputes these
-       exact numbers and prints them.</p>`,
+       <p>Now see how the weight $f$ scales the same squared error down for rarer pairs. Hold the residual fixed
+       at $-3.041197$ (so the squared error is $9.248882$) and vary only the count $X_{ij}$:</p>
+       <table class="extable">
+         <caption>The weight $f(X_{ij})=(X_{ij}/100)^{0.75}$ shrinks a pair's contribution as it gets rarer (same squared error $9.248882$).</caption>
+         <thead><tr><th>$X_{ij}$</th><th class="num">$f(X_{ij})$</th><th class="num">squared error</th><th class="num">term of $J$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$100$ (cutoff)</td><td class="num">1.000000</td><td class="num">9.248882</td><td class="num">9.248882</td></tr>
+           <tr><td class="row-h">$30$</td><td class="num">0.405360</td><td class="num">9.248882</td><td class="num">3.749127</td></tr>
+           <tr><td class="row-h">$1$</td><td class="num">0.031623</td><td class="num">9.248882</td><td class="num">0.292468</td></tr>
+         </tbody>
+       </table>
+       <p>The rare pair ($X_{ij}=1$, $f=(1/100)^{0.75}=0.031623$) contributes far less than the common one,
+       exactly as intended &mdash; noisy rare counts cannot dominate the fit. The CODE cell recomputes the
+       $X_{ij}=30$ row's exact numbers and prints them.</p>`,
 
     recipe:
       `<p><b>GloVe training, as numbered steps (Section 3):</b></p>

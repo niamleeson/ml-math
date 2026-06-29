@@ -274,9 +274,19 @@
         <li><b>MAX.</b> $v$: element-wise max of $[1,0],[1,0],[0,1] = [1,1]$. &nbsp; $v'$: max of $[1,0],[0,1]=[1,1]$.
         $\\;[1,1]=[1,1]$ &mdash; <b>confused.</b> Max only records that red and blue are <i>present</i>, not their counts.</li>
        </ul>
-       <p><b>Read-off:</b> on $\\{r,r\\}$ vs $\\{r\\}$, SUM gives $[2,0]\\ne[1,0]$ (separates), MEAN gives
-       $[1,0]=[1,0]$ (confused), MAX gives $[1,0]=[1,0]$ (confused). Only SUM is injective. These exact vectors are
-       recomputed in the notebook's first cell.</p>`,
+       <table class="extable">
+        <caption>Each aggregator on the two multiset pairs &mdash; only SUM separates both (one-hot $r=[1,0]$, $b=[0,1]$).</caption>
+        <thead><tr><th>aggregator</th><th class="num">$\\{r,r,b\\}$</th><th class="num">$\\{r,b\\}$</th><th>verdict</th><th class="num">$\\{r,r\\}$</th><th class="num">$\\{r\\}$</th><th>verdict</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">SUM</td><td class="num">$[2,1]$</td><td class="num">$[1,1]$</td><td>distinguished</td><td class="num">$[2,0]$</td><td class="num">$[1,0]$</td><td>distinguished</td></tr>
+         <tr><td class="row-h">MEAN</td><td class="num">$[0.667,0.333]$</td><td class="num">$[0.5,0.5]$</td><td>distinguished</td><td class="num">$[1,0]$</td><td class="num">$[1,0]$</td><td>confused</td></tr>
+         <tr><td class="row-h">MAX</td><td class="num">$[1,1]$</td><td class="num">$[1,1]$</td><td>confused</td><td class="num">$[1,0]$</td><td class="num">$[1,0]$</td><td>confused</td></tr>
+        </tbody>
+       </table>
+       <p><b>Read-off:</b> only SUM is injective &mdash; it separates both pairs. MEAN happens to separate
+       $\\{r,r,b\\}$ vs $\\{r,b\\}$ (their proportions differ) but collapses the count pair $\\{r,r\\}$ vs $\\{r\\}$;
+       MAX confuses both because it records only which colours are <i>present</i>, not how many. These exact vectors
+       are recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>The GIN layer (Eqn. 4.1).</b> Given node-feature matrix $H$ (row $i$ = node $i$) and adjacency $A$:

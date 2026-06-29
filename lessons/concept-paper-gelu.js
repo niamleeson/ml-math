@@ -229,19 +229,25 @@
        using the error function so it can be computed in closed form.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; the exact GELU $x\\Phi(x)$ at two inputs, with
-       $\\Phi(x)=\\tfrac12[1+\\operatorname{erf}(x/\\sqrt2)]$:</p>
-       <ul>
-         <li><b>At $x=1$:</b> $x/\\sqrt2=0.7071$, and $\\operatorname{erf}(0.7071)\\approx0.6827$, so
-         $\\Phi(1)=\\tfrac12(1+0.6827)=0.8413$. Then $\\mathrm{GELU}(1)=1\\times0.8413=\\mathbf{0.8413}$.
-         (ReLU would give $1$ &mdash; GELU keeps slightly less.)</li>
-         <li><b>At $x=-1$:</b> by symmetry $\\Phi(-1)=1-\\Phi(1)=0.1587$, so
-         $\\mathrm{GELU}(-1)=(-1)\\times0.1587=\\mathbf{-0.1587}$.
-         (ReLU would give exactly $0$ &mdash; GELU instead returns a small <i>negative</i> value, the
-         characteristic dip below zero.)</li>
-         <li><b>At $x=0$:</b> $\\Phi(0)=\\tfrac12$, so $\\mathrm{GELU}(0)=0\\times0.5=\\mathbf{0}$ &mdash; same as
-         ReLU, it passes through the origin.</li>
+      `<p><b>Worked numbers</b> &mdash; the exact GELU $\\mathrm{GELU}(x)=x\\,\\Phi(x)$ at three inputs, with
+       $\\Phi(x)=\\tfrac12[1+\\operatorname{erf}(x/\\sqrt2)]$. Step through one input first:</p>
+       <ul class="steps">
+        <li><b>At $x=1$, scale:</b> $x/\\sqrt2=1/1.4142=0.7071$.</li>
+        <li><b>Error function:</b> $\\operatorname{erf}(0.7071)\\approx0.6827$.</li>
+        <li><b>Normal CDF:</b> $\\Phi(1)=\\tfrac12(1+0.6827)=0.8413$.</li>
+        <li><b>Weight the input:</b> $\\mathrm{GELU}(1)=1\\times0.8413=\\mathbf{0.8413}$ &mdash; ReLU would give $1$, so GELU keeps slightly less.</li>
+        <li><b>At $x=-1$, by symmetry:</b> $\\Phi(-1)=1-\\Phi(1)=0.1587$, so $\\mathrm{GELU}(-1)=(-1)\\times0.1587=\\mathbf{-0.1587}$ &mdash; ReLU gives $0$; GELU dips slightly <i>negative</i>.</li>
+        <li><b>At $x=0$:</b> $\\Phi(0)=\\tfrac12$, so $\\mathrm{GELU}(0)=0\\times0.5=\\mathbf{0}$ &mdash; same as ReLU, passes through the origin.</li>
        </ul>
+       <table class="extable">
+        <caption>GELU vs ReLU at the three inputs (exact erf form).</caption>
+        <thead><tr><th>$x$</th><th class="num">$\\Phi(x)$</th><th class="num">$\\mathrm{GELU}(x)=x\\,\\Phi(x)$</th><th class="num">$\\mathrm{ReLU}(x)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">0.8413</td><td class="num">0.8413</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h">$0$</td><td class="num">0.5000</td><td class="num">0.0000</td><td class="num">0.0000</td></tr>
+         <tr><td class="row-h">$-1$</td><td class="num">0.1587</td><td class="num">$-0.1587$</td><td class="num">0.0000</td></tr>
+        </tbody>
+       </table>
        <p>The CODE cell recomputes these exact values and prints them; they match
        <code>F.gelu</code> to floating-point precision.</p>`,
 

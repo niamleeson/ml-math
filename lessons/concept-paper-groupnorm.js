@@ -212,16 +212,27 @@
       `<p><b>Worked numbers</b> (one image, $C=4$ channels, $G=2$ groups so $C/G=2$ channels per group, spatial
        size $H\\times W=1\\times 2$, $\\epsilon$ tiny enough to ignore). Take group 0 = channels 0 and 1, with
        values channel&nbsp;0 $=[1,3]$ and channel&nbsp;1 $=[5,7]$. The pooling set $\\mathcal{S}$ for group 0 is
-       all four of these numbers:</p>
-       <ul>
-         <li>Values in the group: $[1,3,5,7]$, so $m=4$.</li>
-         <li>Mean: $\\mu=(1+3+5+7)/4=4$.</li>
-         <li>Variance: $\\sigma^2=\\big((1-4)^2+(3-4)^2+(5-4)^2+(7-4)^2\\big)/4=(9+1+1+9)/4=5$.</li>
-         <li>Std: $\\sqrt{5}\\approx 2.236$.</li>
-         <li>Normalize: $\\hat{x}=[(1-4),(3-4),(5-4),(7-4)]/2.236=[-1.342,\\,-0.447,\\,0.447,\\,1.342]$.</li>
+       all four of these numbers, so $m=4$.</p>
+       <ul class="steps">
+         <li><b>Mean</b> (Eq. 2): $\\mu=(1+3+5+7)/4 = 16/4 = 4$.</li>
+         <li><b>Variance</b> (Eq. 2, biased, divide by $m=4$): $\\sigma^2=\\big((1-4)^2+(3-4)^2+(5-4)^2+(7-4)^2\\big)/4=(9+1+1+9)/4=5$.</li>
+         <li><b>Std</b>: $\\sigma=\\sqrt{5}\\approx 2.236$.</li>
+         <li><b>Normalize</b> (Eq. 1): subtract $\\mu$ then divide by $\\sigma$, cell by cell &mdash; see the table.</li>
+         <li><b>Scale &amp; shift</b> (Eq. 6): with $\\gamma=1,\\beta=0$ the output equals $\\hat{x}$ unchanged.</li>
        </ul>
-       <p>With $\\gamma=1,\\beta=0$ the output equals $\\hat{x}$. The CODE cell recomputes these exact numbers and
-       checks the whole layer against <code>nn.GroupNorm(2, 4)</code>.</p>`,
+       <table class="extable">
+        <caption>Group 0's four values normalized: $\\hat{x}=(x-\\mu)/\\sigma$ with $\\mu=4,\\;\\sigma\\approx 2.236$.</caption>
+        <thead><tr><th>cell</th><th class="num">$x$</th><th class="num">$x-\\mu$</th><th class="num">$\\hat{x}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">ch0, pix0</td><td class="num">$1$</td><td class="num">$-3$</td><td class="num">$-1.342$</td></tr>
+         <tr><td class="row-h">ch0, pix1</td><td class="num">$3$</td><td class="num">$-1$</td><td class="num">$-0.447$</td></tr>
+         <tr><td class="row-h">ch1, pix0</td><td class="num">$5$</td><td class="num">$1$</td><td class="num">$0.447$</td></tr>
+         <tr><td class="row-h">ch1, pix1</td><td class="num">$7$</td><td class="num">$3$</td><td class="num">$1.342$</td></tr>
+        </tbody>
+       </table>
+       <p>So $\\hat{x}=[-1.342,\\,-0.447,\\,0.447,\\,1.342]$ &mdash; mean $0$, variance $\\approx 1$ within the group.
+       The CODE cell recomputes these exact numbers and checks the whole layer against
+       <code>nn.GroupNorm(2, 4)</code>.</p>`,
 
     recipe:
       `<p><b>Group Normalization as numbered steps (Eq. 1, 2, 7):</b></p>

@@ -356,20 +356,30 @@
     example:
       `<p>Because this is a survey, the "worked example" is a <b>worked reading</b>: trace one concrete claim from
        the review through the hierarchy it describes, using only the review's own words and numbers.</p>
+       <p><b>The image-feature hierarchy (Intro).</b> The review says an image classifier's learned layers build up
+       from the bottom; here is its explicit four-level list, lowest layer first, with what each level detects:</p>
+       <table class="extable">
+        <caption>The review's stated learned hierarchy for an image classifier (Intro) — all four levels named verbatim.</caption>
+        <thead><tr><th class="num">level</th><th>learned feature</th><th>built from</th></tr></thead>
+        <tbody>
+         <tr><td class="num">1 (lowest)</td><td>edges at particular orientations and locations</td><td class="row-h">raw pixels</td></tr>
+         <tr><td class="num">2</td><td>motifs — particular arrangements of edges</td><td class="row-h">edges (level 1)</td></tr>
+         <tr><td class="num">3</td><td>parts of familiar objects</td><td class="row-h">motifs (level 2)</td></tr>
+         <tr><td class="num">4 (highest)</td><td>objects as combinations of parts</td><td class="row-h">parts (level 3)</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Pick the image hierarchy claim (Intro).</b> The review says an image classifier's learned layers
-        build up as: <i>edges</i> &rarr; <i>motifs (arrangements of edges)</i> &rarr; <i>parts of familiar
-        objects</i> &rarr; <i>objects (combinations of parts)</i>. This is the predict-question answer, and it is
-        stated explicitly, not inferred.</li>
-        <li><b>Connect it to depth.</b> The review elsewhere notes such systems have "a depth of 5 to 20"
-        non-linear layers (&sect;Backprop), and that recent ConvNets have "10 to 20 layers of ReLUs, hundreds of
-        millions of weights, and billions of connections between units." (&sect;Image understanding.) So the
-        four-step hierarchy is spread across many layers, not four — each conceptual step is several layers of
-        refinement.</li>
+        <li><b>Read the order off the table.</b> Each level is built from the one below it, so the network must
+        discover <i>edges</i> before <i>motifs</i>, motifs before <i>parts</i>, parts before <i>objects</i> —
+        this is the predict-question answer, stated explicitly in the Intro, not inferred.</li>
+        <li><b>Connect it to depth.</b> The review notes such systems have "a depth of 5 to 20" non-linear layers
+        (&sect;Backprop), and recent ConvNets have "10 to 20 layers of ReLUs, hundreds of millions of weights, and
+        billions of connections between units." (&sect;Image understanding.) So the four conceptual steps are spread
+        across many layers — each step is several layers of refinement.</li>
         <li><b>Tie it to the headline result.</b> Run that learned hierarchy on ImageNet — "about a million images
         that contained 1,000 different classes" — and deep ConvNets "achieved spectacular results, almost halving
-        the error rates of the best competing approaches." (&sect;Image understanding.) The point: the
-        <i>learned</i> edge-to-object hierarchy is exactly what beat the hand-engineered feature pipelines.</li>
+        the error rates of the best competing approaches." (&sect;Image understanding.) The <i>learned</i>
+        edge-to-object hierarchy is exactly what beat the hand-engineered feature pipelines.</li>
         <li><b>The one-line takeaway.</b> Every number here — "5 to 20", "10 to 20 layers", "hundreds of millions of
         weights", "about a million images", "1,000 different classes", "almost halving the error rates" — is
         <b>quoted from the review</b>. Nothing is invented or from our own run; a survey has no run of ours.</li>

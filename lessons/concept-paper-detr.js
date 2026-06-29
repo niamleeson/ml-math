@@ -257,23 +257,42 @@
     example:
       `<p>Work the matching by hand on a tiny instance: $N=3$ predictions, $M=2$ true objects (we leave the
        $\\varnothing$ padding implicit &mdash; any unmatched prediction is "no object"). Two real classes,
-       $A$ and $B$. Each prediction gives a probability over $[A,B,\\varnothing]$ and a box; each object has a class
-       and a box. Use $\\lambda_{L1}=1$ and L1 distance on the 4-vector $(c_x,c_y,w,h)$.</p>
-       <p>Predictions $\\hat p$ and boxes; ground truth (object 0 is class $A$, object 1 is class $B$):</p>
-       <p>$$ \\hat p = \\begin{bmatrix} 0.7 & 0.2 & 0.1 \\\\ 0.1 & 0.8 & 0.1 \\\\ 0.3 & 0.3 & 0.4 \\end{bmatrix}\\!,\\;
-            \\hat b = \\begin{bmatrix} .20&.20&.10&.10 \\\\ .62&.55&.20&.20 \\\\ .50&.50&.30&.30 \\end{bmatrix}\\!,\\;
-            b^{gt}=\\begin{bmatrix} .25&.25&.12&.12 \\\\ .60&.60&.18&.22 \\end{bmatrix} $$</p>
+       $A$ and $B$. Each prediction gives a probability over $[A,B,\\varnothing]$ and a box $(c_x,c_y,w,h)$; each
+       object has a class and a box. Use $\\lambda_{L1}=1$ and L1 distance on the 4-vector.</p>
+       <table class="extable">
+        <caption>The $N=3$ predictions and the $M=2$ ground-truth objects (object 0 is class $A$, object 1 is class $B$).</caption>
+        <thead><tr><th></th><th class="num">$\\hat p(A)$</th><th class="num">$\\hat p(B)$</th><th class="num">$\\hat p(\\varnothing)$</th><th class="num">$c_x$</th><th class="num">$c_y$</th><th class="num">$w$</th><th class="num">$h$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">pred 0</td><td class="num">0.70</td><td class="num">0.20</td><td class="num">0.10</td><td class="num">.20</td><td class="num">.20</td><td class="num">.10</td><td class="num">.10</td></tr>
+         <tr><td class="row-h">pred 1</td><td class="num">0.10</td><td class="num">0.80</td><td class="num">0.10</td><td class="num">.62</td><td class="num">.55</td><td class="num">.20</td><td class="num">.20</td></tr>
+         <tr><td class="row-h">pred 2</td><td class="num">0.30</td><td class="num">0.30</td><td class="num">0.40</td><td class="num">.50</td><td class="num">.50</td><td class="num">.30</td><td class="num">.30</td></tr>
+         <tr><td class="row-h">obj 0 ($A$)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">.25</td><td class="num">.25</td><td class="num">.12</td><td class="num">.12</td></tr>
+         <tr><td class="row-h">obj 1 ($B$)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">.60</td><td class="num">.60</td><td class="num">.18</td><td class="num">.22</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Build the cost matrix</b> $C[i,j] = -\\hat p_i(\\text{class}_j) + \\lVert \\hat b_i - b^{gt}_j\\rVert_1$.
-        For example $C[0,0] = -0.70 + |.20-.25|+|.20-.25|+|.10-.12|+|.10-.12| = -0.70 + 0.14 = \\mathbf{-0.56}$.</li>
-        <li><b>The full matrix</b> (rows = predictions, columns = objects $A,B$):
-        $$ C = \\begin{bmatrix} -0.56 & \\;\\;0.80 \\\\ \\;\\;0.73 & -0.69 \\\\ \\;\\;0.56 & \\;\\;0.10 \\end{bmatrix} $$</li>
-        <li><b>Run the Hungarian algorithm.</b> Compare the two valid one-to-one assignments of two distinct
+        <li><b>Build the cost matrix</b> $C[i,j] = -\\hat p_i(\\text{class}_j) + \\lVert \\hat b_i - b^{gt}_j\\rVert_1$.</li>
+        <li><b>Entry $C[0,0]$</b> (pred 0 to obj 0, class $A$): class term $-0.70$; box L1
+        $|.20-.25|+|.20-.25|+|.10-.12|+|.10-.12| = 0.05+0.05+0.02+0.02 = 0.14$; so $C[0,0] = -0.70 + 0.14 = \\mathbf{-0.56}$.</li>
+        <li><b>Entry $C[1,1]$</b> (pred 1 to obj 1, class $B$): class term $-0.80$; box L1
+        $|.62-.60|+|.55-.60|+|.20-.18|+|.20-.22| = 0.02+0.05+0.02+0.02 = 0.11$; so $C[1,1] = -0.80 + 0.11 = \\mathbf{-0.69}$.</li>
+       </ul>
+       <table class="extable">
+        <caption>The full cost matrix $C$ (rows = predictions, columns = objects); lower is a better match.</caption>
+        <thead><tr><th></th><th class="num">obj 0 ($A$)</th><th class="num">obj 1 ($B$)</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">pred 0</td><td class="num">-0.56</td><td class="num">0.80</td></tr>
+         <tr><td class="row-h">pred 1</td><td class="num">0.73</td><td class="num">-0.69</td></tr>
+         <tr><td class="row-h">pred 2</td><td class="num">0.56</td><td class="num">0.10</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Run the Hungarian algorithm.</b> Compare the valid one-to-one assignments of two distinct
         predictions to the two objects: $\\{0\\!\\to\\!A,\\,1\\!\\to\\!B\\}$ costs $-0.56 + (-0.69) = \\mathbf{-1.25}$;
-        the swap $\\{0\\!\\to\\!B,\\,1\\!\\to\\!A\\}$ costs $0.80 + 0.73 = \\mathbf{+1.53}$ (using preds 2 is worse
-        still). The minimum is $\\mathbf{-1.25}$.</li>
-        <li><b>The matching.</b> $\\hat\\sigma$: prediction $0 \\to$ object $A$, prediction $1 \\to$ object $B$.
-        Prediction $2$ is left unmatched &rarr; it is trained toward $\\varnothing$ ("no object"). One-to-one:
+        the swap $\\{0\\!\\to\\!B,\\,1\\!\\to\\!A\\}$ costs $0.80 + 0.73 = \\mathbf{+1.53}$ (any pairing using pred 2 is worse).
+        The minimum is $\\mathbf{-1.25}$.</li>
+        <li><b>The matching $\\hat\\sigma$.</b> Prediction $0 \\to$ object $A$, prediction $1 \\to$ object $B$.
+        Prediction $2$ is left unmatched &rarr; trained toward $\\varnothing$ ("no object"). One-to-one:
         each object got a <i>distinct</i> prediction.</li>
        </ul>
        <p>The notebook builds this exact $C$ and calls <code>scipy.optimize.linear_sum_assignment(C)</code>, which

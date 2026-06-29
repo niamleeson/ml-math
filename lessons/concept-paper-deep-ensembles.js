@@ -256,21 +256,42 @@
         (-0.693147) = -0.346574$. (The logarithm here is the natural logarithm, base $e$.)</li>
         <li><b>Second term</b> $\\dfrac{(y-\\mu)^2}{2\\sigma^2} = \\dfrac{(3.0 - 2.0)^2}{2\\cdot 0.5}
         = \\dfrac{1}{1} = 1.0$.</li>
-        <li><b>Sum</b> $= -0.346574 + 1.0 = \\mathbf{0.653426}$. That is the loss for this one example. If the
-        network had instead claimed it was very sure ($\\sigma^2 = 0.05$), the second term would jump to
-        $\\frac{1}{0.1} = 10.0$ — ten times the penalty — punishing the overconfident wrong guess.</li>
+        <li><b>Sum</b> $= -0.346574 + 1.0 = \\mathbf{0.653426}$. That is the loss for this one example.</li>
        </ul>
+       <p><b>Confident-but-wrong is punished harder.</b> Re-run the second term for three claimed variances at the
+       same error $(y-\\mu)^2 = 1.0$:</p>
+       <table class="extable">
+        <caption>Gaussian NLL terms vs claimed variance $\\sigma^2$, with $(y-\\mu)^2 = 1.0$ fixed.</caption>
+        <thead><tr><th>$\\sigma^2$</th><th class="num">$\\tfrac12\\log\\sigma^2$</th><th class="num">$\\dfrac{(y-\\mu)^2}{2\\sigma^2}$</th><th class="num">NLL</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0.05 (very sure)</td><td class="num">-1.498</td><td class="num">10.000</td><td class="num">8.502</td></tr>
+         <tr><td class="row-h">0.50 (the example)</td><td class="num">-0.347</td><td class="num">1.000</td><td class="num">0.653</td></tr>
+         <tr><td class="row-h">5.00 (very unsure)</td><td class="num">0.805</td><td class="num">0.100</td><td class="num">0.905</td></tr>
+        </tbody>
+       </table>
+       <p>Claiming $\\sigma^2 = 0.05$ sends the data-fit term to $\\tfrac{1}{0.1} = 10.0$ &mdash; ten times the
+       penalty &mdash; punishing the overconfident wrong guess; but claiming a huge $\\sigma^2 = 5.0$ is also worse
+       than $0.5$, because the $\\tfrac12\\log\\sigma^2$ term now charges for over-claiming. The minimum sits in
+       between: honest variance.</p>
        <p><b>(B) Combine two members (&sect;2.4).</b> Member 1 predicts $\\mu_1 = 2.0,\\ \\sigma_1^2 = 0.5$;
        member 2 predicts $\\mu_2 = 4.0,\\ \\sigma_2^2 = 1.0$. With $M = 2$:</p>
+       <table class="extable">
+        <caption>The two members and the per-member pieces of the &sect;2.4 combination ($M=2$).</caption>
+        <thead><tr><th>member $m$</th><th class="num">$\\mu_m$</th><th class="num">$\\sigma_m^2$</th><th class="num">$\\mu_m^2$</th><th class="num">$\\sigma_m^2+\\mu_m^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">2.0</td><td class="num">0.5</td><td class="num">4.0</td><td class="num">4.5</td></tr>
+         <tr><td class="row-h">2</td><td class="num">4.0</td><td class="num">1.0</td><td class="num">16.0</td><td class="num">17.0</td></tr>
+         <tr><td class="row-h">average</td><td class="num">3.0</td><td class="num">0.75</td><td class="num">10.0</td><td class="num">10.75</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Ensemble mean</b> $\\mu_* = \\tfrac{1}{2}(2.0 + 4.0) = \\mathbf{3.0}$.</li>
-        <li><b>Average of $(\\sigma_m^2 + \\mu_m^2)$</b> $= \\tfrac{1}{2}\\big[(0.5 + 2.0^2) + (1.0 + 4.0^2)\\big]
-        = \\tfrac{1}{2}\\big[(0.5 + 4) + (1.0 + 16)\\big] = \\tfrac{1}{2}(4.5 + 17.0) = 10.75$.</li>
+        <li><b>Ensemble mean</b> $\\mu_* = \\tfrac{1}{2}(2.0 + 4.0) = \\mathbf{3.0}$ (the $\\mu_m$ average column).</li>
+        <li><b>Average of $(\\sigma_m^2 + \\mu_m^2)$</b> $= \\tfrac{1}{2}(4.5 + 17.0) = 10.75$ (last column).</li>
         <li><b>Ensemble variance</b> $\\sigma_*^2 = 10.75 - \\mu_*^2 = 10.75 - 3.0^2 = 10.75 - 9.0 = \\mathbf{1.75}$.</li>
        </ul>
        <p>Sanity check the two parts: average member variance $= \\tfrac{1}{2}(0.5 + 1.0) = 0.75$; spread of the
        means $= \\tfrac{1}{2}(2.0^2 + 4.0^2) - 3.0^2 = 10.0 - 9.0 = 1.0$; and $0.75 + 1.0 = 1.75$. The
-       <b>disagreement</b> piece ($1.0$) here outweighs the members' own variances ($0.75$) — exactly the
+       <b>disagreement</b> piece ($1.0$) here outweighs the members' own variances ($0.75$) &mdash; exactly the
        effect that lets ensembles flag inputs where members diverge.</p>`,
     recipe:
       `<ol>

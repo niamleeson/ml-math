@@ -207,26 +207,45 @@ $$ r = \\frac{n\\,b}{n\\,\\log_2(k) + k\\,b} \\qquad\\text{(Eqn. 1, compression 
     example:
       `<p>Cluster a tiny weight vector by hand so the centroids are concrete. Suppose a layer has six weights</p>
        <p>$$ w = [\\,-0.98,\\; -0.95,\\; 0.02,\\; 0.05,\\; 0.91,\\; 1.05\\,], \\qquad k = 2. $$</p>
+       <p><b>Run k-means (Eqn. 2).</b> Linear init places $k=2$ centroids at the min and max,
+       $c = [\\,-0.98,\\; 1.05\\,]$; then alternate <i>assign each weight to its nearer centroid</i> and
+       <i>set each centroid to its cluster's mean</i> until the assignments stop changing:</p>
+       <table class="extable">
+        <caption>k-means iterations (assignments use cluster 0 / 1; centroid = mean of its cluster's weights).</caption>
+        <thead><tr><th>iteration</th><th>assignments</th><th class="num">$c_0$</th><th class="num">$c_1$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">init (linear)</td><td>&mdash;</td><td class="num">-0.98</td><td class="num">1.05</td></tr>
+         <tr><td class="row-h">0</td><td>$[0,0,0,1,1,1]$</td><td class="num">-0.637</td><td class="num">0.670</td></tr>
+         <tr><td class="row-h">1</td><td>$[0,0,1,1,1,1]$</td><td class="num">-0.965</td><td class="num">0.5075</td></tr>
+         <tr><td class="row-h">2 (converged)</td><td>$[0,0,1,1,1,1]$</td><td class="num">-0.965</td><td class="num">0.5075</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Linear init.</b> Place $k=2$ centroids evenly between the min and max:
-        $c = [\\,-0.98,\\; 1.05\\,]$.</li>
-        <li><b>Iteration 0 &mdash; assign</b> each weight to its nearer centroid. The first two are closer to
-        $-0.98$; the last four are closer to $1.05$ (note $0.02$ and $0.05$ are both nearer $1.05$? check:
-        $|0.02-(-0.98)|=1.00$ vs $|0.02-1.05|=1.03$, so $0.02$ goes to $-0.98$). Assignments
-        $= [0,0,0,1,1,1]$. <b>Update</b>: $c_0 = \\text{mean}(-0.98,-0.95,0.02) = -0.637$,
+        <li><b>Iteration 0 &mdash; assign.</b> The first two weights are closest to $-0.98$; check the
+        borderline $0.02$: $|0.02-(-0.98)|=1.00$ vs $|0.02-1.05|=1.03$, so it joins cluster 0. Assignments
+        $[0,0,0,1,1,1]$. <b>Update:</b> $c_0 = \\text{mean}(-0.98,-0.95,0.02) = -0.637$,
         $c_1 = \\text{mean}(0.05,0.91,1.05) = 0.670$.</li>
-        <li><b>Iteration 1 &mdash; reassign.</b> Now $0.02$ is nearer $-0.637$? $|0.02-(-0.637)|=0.657$ vs
-        $|0.02-0.670|=0.650$, so $0.02$ flips to cluster 1. Assignments $= [0,0,1,1,1,1]$. <b>Update</b>:
+        <li><b>Iteration 1 &mdash; reassign.</b> Now $0.02$ flips: $|0.02-(-0.637)|=0.657$ vs
+        $|0.02-0.670|=0.650$, so it moves to cluster 1. Assignments $[0,0,1,1,1,1]$. <b>Update:</b>
         $c_0 = \\text{mean}(-0.98,-0.95) = -0.965$, $c_1 = \\text{mean}(0.02,0.05,0.91,1.05) = 0.5075$.</li>
-        <li><b>Iteration 2 &mdash; converged.</b> Assignments do not change: $[0,0,1,1,1,1]$. Final centroids
+        <li><b>Iteration 2 &mdash; converged.</b> Assignments unchanged, so the final centroids are
         $c = [\\,-0.965,\\; 0.5075\\,]$.</li>
         <li><b>Within-cluster sum of squares</b> (Eqn. 2): add each weight's squared distance to its centroid.
-        $(-0.98+0.965)^2 + (-0.95+0.965)^2 + (0.02-0.5075)^2 + (0.05-0.5075)^2 + (0.91-0.5075)^2 +
-        (1.05-0.5075)^2 \\approx 0.9037$.</li>
-        <li><b>Compression (Eqn. 1)</b> with $n=6$, $b=32$, $k=2$: bits per weight after $= \\log_2 2 = 1$, and
-        $r = \\dfrac{6\\cdot 32}{6\\cdot 1 + 2\\cdot 32} = \\dfrac{192}{70} \\approx 2.74\\times$. (The codebook of
-        2 centroids is large relative to only 6 weights; with millions of weights $r \\to 32/1 = 32\\times$.)</li>
+        $(-0.015)^2 + (0.015)^2 + (-0.4875)^2 + (-0.4575)^2 + (0.4025)^2 + (0.5425)^2 \\approx 0.9037$.</li>
        </ul>
+       <p><b>Compression (Eqn. 1).</b> After quantization each weight stores a $\\log_2 k$-bit index. For these
+       $n=6$ weights at $b=32$ bits, compare $k=2$ against what a larger layer would give:</p>
+       <table class="extable">
+        <caption>Compression rate $r = \\dfrac{n\\,b}{n\\,\\log_2 k + k\\,b}$ for $b = 32$.</caption>
+        <thead><tr><th>case</th><th class="num">$n$</th><th class="num">$k$</th><th class="num">$\\log_2 k$</th><th class="num">$n\\,b$</th><th class="num">$n\\log_2 k + k\\,b$</th><th class="num">$r$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">this example</td><td class="num">6</td><td class="num">2</td><td class="num">1</td><td class="num">192</td><td class="num">70</td><td class="num">2.74&times;</td></tr>
+         <tr><td class="row-h">large layer</td><td class="num">1,000,000</td><td class="num">2</td><td class="num">1</td><td class="num">32,000,000</td><td class="num">1,000,064</td><td class="num">32.0&times;</td></tr>
+        </tbody>
+       </table>
+       <p>For only 6 weights the 2-centroid codebook ($k\\,b = 64$ bits) is large next to the $n\\log_2 k = 6$ index
+       bits, so $r$ is just $192/70 \\approx 2.74\\times$. With a million weights the codebook is negligible and
+       $r \\to b/\\log_2 k = 32/1 = 32\\times$.</p>
        <p>These exact numbers &mdash; centroids $[-0.965, 0.5075]$, assignments $[0,0,1,1,1,1]$, sum-of-squares
        $0.9037$, and $r \\approx 2.74$ &mdash; are recomputed in the notebook's first cell so you can check the
        clustering by running it.</p>`,

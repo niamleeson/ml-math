@@ -222,30 +222,48 @@
        now spread across all of the word's n-gram vectors.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> for the summed-embedding idea, with a tiny dimension $D=3$ and $n=3$ only (so the
-       n-gram sets are short). Take the word <b>cat</b>: wrapping gives <code>&lt;cat&gt;</code>, whose 3-grams are
-       <code>&lt;ca</code>, <code>cat</code>, <code>at&gt;</code>, plus the whole-word token <code>&lt;cat&gt;</code>.
-       Suppose the learned n-gram vectors are:</p>
-       <ul>
-         <li>$\\mathbf{z}_{\\langle ca} = [0.2,\\,0.5,\\,-0.1]$</li>
-         <li>$\\mathbf{z}_{cat} = [0.4,\\,-0.2,\\,0.3]$</li>
-         <li>$\\mathbf{z}_{at\\rangle} = [-0.1,\\,0.1,\\,0.6]$</li>
-         <li>$\\mathbf{z}_{\\langle cat\\rangle} = [0.3,\\,0.2,\\,-0.2]$ (the whole-word special token)</li>
+      `<p><b>Worked numbers</b> for the summed-embedding idea, with a tiny dimension $D=3$ (each vector has 3
+       numbers) and $n=3$ only (so the n-gram sets are short). Take the word <b>cat</b>: wrapping it in boundary
+       marks gives <code>&lt;cat&gt;</code>, whose 3-grams (runs of 3 letters) are <code>&lt;ca</code>,
+       <code>cat</code>, <code>at&gt;</code>, plus the whole-word token <code>&lt;cat&gt;</code>. The OOV (never-seen)
+       word <b>cats</b> has 3-gram bag <code>&lt;ca</code>, <code>cat</code>, <code>ats</code>, <code>ts&gt;</code>,
+       plus <code>&lt;cats&gt;</code> &mdash; the first two are <b>shared with "cat"</b>. Suppose the learned n-gram
+       vectors $\\mathbf{z}_g$ are:</p>
+       <table class="extable">
+        <caption>Per-n-gram vectors. Rows used by "cat" and by OOV "cats" are marked; the first two are shared.</caption>
+        <thead><tr><th>n-gram $g$</th><th class="num">dim 1</th><th class="num">dim 2</th><th class="num">dim 3</th><th>in "cat"?</th><th>in "cats"?</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">$\\langle$ca</td><td class="num">0.20</td><td class="num">0.50</td><td class="num">-0.10</td><td>yes</td><td>yes (shared)</td></tr>
+          <tr><td class="row-h">cat</td><td class="num">0.40</td><td class="num">-0.20</td><td class="num">0.30</td><td>yes</td><td>yes (shared)</td></tr>
+          <tr><td class="row-h">at$\\rangle$</td><td class="num">-0.10</td><td class="num">0.10</td><td class="num">0.60</td><td>yes</td><td>&mdash;</td></tr>
+          <tr><td class="row-h">$\\langle$cat$\\rangle$</td><td class="num">0.30</td><td class="num">0.20</td><td class="num">-0.20</td><td>yes</td><td>&mdash;</td></tr>
+          <tr><td class="row-h">ats</td><td class="num">0.05</td><td class="num">-0.05</td><td class="num">0.10</td><td>&mdash;</td><td>yes</td></tr>
+          <tr><td class="row-h">ts$\\rangle$</td><td class="num">0.00</td><td class="num">0.10</td><td class="num">-0.05</td><td>&mdash;</td><td>yes</td></tr>
+          <tr><td class="row-h">$\\langle$cats$\\rangle$</td><td class="num">0.10</td><td class="num">0.00</td><td class="num">0.00</td><td>&mdash;</td><td>yes</td></tr>
+        </tbody>
+       </table>
+       <p>A word vector is the <b>sum</b> of its n-gram vectors (the boxed score, $\\mathbf{v}_w=\\sum_g\\mathbf{z}_g$):</p>
+       <ul class="steps">
+         <li><b>$\\mathbf{v}_{cat}$:</b> dim 1 $=0.2{+}0.4{-}0.1{+}0.3=0.8$; dim 2 $=0.5{-}0.2{+}0.1{+}0.2=0.6$;
+         dim 3 $=-0.1{+}0.3{+}0.6{-}0.2=0.6$. So $\\mathbf{v}_{cat}=[0.8,\\,0.6,\\,0.6]$.</li>
+         <li><b>$\\mathbf{v}_{cats}$:</b> dim 1 $=0.2{+}0.4{+}0.05{+}0{+}0.1=0.75$; dim 2 $=0.5{-}0.2{-}0.05{+}0.1{+}0=0.35$;
+         dim 3 $=-0.1{+}0.3{+}0.1{-}0.05{+}0=0.25$. So $\\mathbf{v}_{cats}=[0.75,\\,0.35,\\,0.25]$.</li>
        </ul>
-       <p><b>Word vector for "cat"</b> = sum of its n-gram vectors:
-       $\\mathbf{v}_{cat} = [0.2{+}0.4{-}0.1{+}0.3,\\; 0.5{-}0.2{+}0.1{+}0.2,\\; -0.1{+}0.3{+}0.6{-}0.2]
-       = [0.8,\\,0.6,\\,0.6]$.</p>
-       <p>Now the <b>OOV word "cats"</b>, never seen in training. Its 3-gram bag is
-       <code>&lt;ca</code>, <code>cat</code>, <code>ats</code>, <code>ts&gt;</code>, plus <code>&lt;cats&gt;</code>.
-       The first two are <b>shared with "cat"</b> (same vectors above); the last three are new, say
-       $\\mathbf{z}_{ats}=[0.05,-0.05,0.1]$, $\\mathbf{z}_{ts\\rangle}=[0,0.1,-0.05]$,
-       $\\mathbf{z}_{\\langle cats\\rangle}=[0.1,0,0]$. Summing:</p>
-       <ul>
-         <li>$\\mathbf{v}_{cats} = [0.2{+}0.4{+}0.05{+}0{+}0.1,\\; 0.5{-}0.2{-}0.05{+}0.1{+}0,\\;
-         -0.1{+}0.3{+}0.1{-}0.05{+}0] = [0.75,\\,0.35,\\,0.25]$.</li>
-         <li><b>Cosine similarity</b> of $\\mathbf{v}_{cat}=[0.8,0.6,0.6]$ and $\\mathbf{v}_{cats}=[0.75,0.35,0.25]$:
-         dot $=0.8{\\cdot}0.75+0.6{\\cdot}0.35+0.6{\\cdot}0.25 = 0.96$; norms $\\approx 1.166$ and $0.866$;
-         cosine $=0.96/(1.166{\\cdot}0.866) \\approx \\mathbf{0.9521}$.</li>
+       <table class="extable">
+        <caption>Summed word vectors. "cats" inherits most of "cat" through the two shared n-grams.</caption>
+        <thead><tr><th>word</th><th class="num">dim 1</th><th class="num">dim 2</th><th class="num">dim 3</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">cat</td><td class="num">0.80</td><td class="num">0.60</td><td class="num">0.60</td></tr>
+          <tr><td class="row-h">cats (OOV)</td><td class="num">0.75</td><td class="num">0.35</td><td class="num">0.25</td></tr>
+        </tbody>
+       </table>
+       <p><b>Cosine similarity</b> (the angle-based closeness of the two vectors) of $\\mathbf{v}_{cat}$ and
+       $\\mathbf{v}_{cats}$:</p>
+       <ul class="steps">
+         <li>Dot product: $0.8{\\cdot}0.75+0.6{\\cdot}0.35+0.6{\\cdot}0.25 = 0.60+0.21+0.15 = 0.96$.</li>
+         <li>Norms (vector lengths): $\\lVert\\mathbf{v}_{cat}\\rVert=\\sqrt{0.64+0.36+0.36}\\approx 1.166$;
+         $\\lVert\\mathbf{v}_{cats}\\rVert=\\sqrt{0.5625+0.1225+0.0625}\\approx 0.866$.</li>
+         <li>Cosine $=0.96/(1.166{\\cdot}0.866) \\approx \\mathbf{0.9521}$.</li>
        </ul>
        <p>So "cats" lands very close to "cat" purely because they share n-grams &mdash; <b>word2vec would have no
        vector for "cats" at all.</b> The CODE cell recomputes these exact numbers and prints them.</p>`,

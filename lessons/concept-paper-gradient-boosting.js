@@ -228,24 +228,35 @@
        derived in full in the <b>cls-gradient-boosting</b> concept lesson &mdash; head there for the
        function-space descent picture; we only recap it here.</p>`,
     example:
-      `<p>Work <b>one boosting round</b> by hand on tiny data, squared loss, $\\nu=1$, base learner = a
+      `<p>Work <b>two boosting rounds</b> by hand on tiny data, squared loss, $\\nu=1$, base learner = a
        depth-1 tree (a single split, a "stump"). Inputs $x=[1,2,3]$, targets $y=[10,20,30]$.</p>
        <ul class="steps">
-        <li><b>Initialize</b> $F_0 = $ mean$(y) = 20$ (the constant that minimizes squared loss).</li>
+        <li><b>Initialize</b> $F_0 = $ mean$(y) = (10+20+30)/3 = 20$ (the constant that minimizes squared loss).</li>
         <li><b>Pseudo-response = negative gradient = residual</b> (Alg. 1 line 3, squared-loss case):
         $\\tilde y = y - F_0 = [10-20,\\;20-20,\\;30-20] = [-10,\\,0,\\,+10]$.</li>
         <li><b>Fit a stump to those residuals.</b> A depth-1 tree tries every split and keeps the one with the
         smallest squared error; each leaf outputs the <b>mean residual</b> on its side. The best split is
-        $x\\lt 1.5$ (i.e. $\\{x=1\\}$ vs $\\{x=2,3\\}$): left leaf $=-10$, right leaf $=\\tfrac{0+10}{2}=+5$. So
-        $h_1 = [-10,\\,+5,\\,+5]$ &mdash; that is exactly what the next tree fits.</li>
+        $x\\lt 1.5$ ($\\{x=1\\}$ vs $\\{x=2,3\\}$): left leaf $=-10$, right leaf $=\\tfrac{0+10}{2}=+5$. So
+        $h_1 = [-10,\\,+5,\\,+5]$.</li>
         <li><b>Shrunk update</b> (Eq. 36, $\\nu=1$, $\\rho_1=1$): $F_1 = F_0 + h_1 = [20-10,\\;20+5,\\;20+5]
-        = [10,\\,25,\\,25]$.</li>
-        <li><b>New residuals:</b> $y - F_1 = [0,\\,-5,\\,+5]$. The sum of squared errors dropped from
-        $(-10)^2+0^2+10^2 = 200$ to $0^2+5^2+5^2 = 50$ &mdash; a $4\\times$ cut in one round. The next stump
-        fits these leftovers and shrinks them again.</li>
+        = [10,\\,25,\\,25]$. New residuals $y - F_1 = [0,\\,-5,\\,+5]$.</li>
+        <li><b>Round 2:</b> fit a stump to $[0,-5,+5]$. Best split $x\\lt 2.5$ ($\\{1,2\\}$ vs $\\{3\\}$): left leaf
+        $=\\tfrac{0+(-5)}{2}=-2.5$, right leaf $=+5$, so $h_2=[-2.5,\\,-2.5,\\,+5]$. Then
+        $F_2 = F_1 + h_2 = [7.5,\\,22.5,\\,30]$, leaving residuals $[2.5,\\,-2.5,\\,0]$.</li>
        </ul>
-       <p>These exact numbers (including the stump's split at $x\\lt 1.5$, which the tree picks because it
-       minimizes squared error) are recomputed in the notebook so you can check the round by running it.</p>`,
+       <p>The sum of squared errors (SSE) shrinks each round &mdash; here is the ledger:</p>
+       <table class="extable">
+        <caption>SSE $=\\sum_i (y_i - F_i)^2$ falls stage by stage.</caption>
+        <thead><tr><th>round</th><th class="num">$F$ at $x=[1,2,3]$</th><th class="num">residuals</th><th class="num">SSE</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$F_0$ (mean)</td><td class="num">$[20,20,20]$</td><td class="num">$[-10,0,10]$</td><td class="num">$200$</td></tr>
+         <tr><td class="row-h">$F_1$ (+$h_1$)</td><td class="num">$[10,25,25]$</td><td class="num">$[0,-5,5]$</td><td class="num">$50$</td></tr>
+         <tr><td class="row-h">$F_2$ (+$h_2$)</td><td class="num">$[7.5,22.5,30]$</td><td class="num">$[2.5,-2.5,0]$</td><td class="num">$12.5$</td></tr>
+        </tbody>
+       </table>
+       <p>SSE drops $200 \\to 50 \\to 12.5$ &mdash; each round fits the leftover error and shrinks it again. These
+       exact numbers (including the splits at $x\\lt 1.5$ and $x\\lt 2.5$, which the tree picks because they minimize
+       squared error) are recomputed in the notebook so you can check the rounds by running them.</p>`,
     recipe:
       `<ol>
         <li><b>Initialize</b> the model to the constant that minimizes the loss: for squared error,

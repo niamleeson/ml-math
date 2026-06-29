@@ -268,34 +268,50 @@ $$ H(P_t,P_s) = h(P_t) + D_{KL}(P_t\\Vert P_s) $$
        a degenerate teacher), <b>no sharpening</b> → the loss converges to $\\ln K$ (uniform collapse).</p>`,
     example:
       `<p>Work the centered + sharpened teacher target and the cross-entropy loss (Eqns. 1, 2) by hand for one
-       view, with a tiny $K=4$. Take the <b>teacher logits</b> for one global view, the running <b>center</b>,
-       and the teacher temperature:</p>
-       <ul>
-        <li>teacher logits $g_t = [\\,2.0,\\ 1.0,\\ 0.0,\\ -1.0\\,]$</li>
-        <li>center $c = [\\,0.5,\\ 0.5,\\ 0.0,\\ 0.0\\,]$</li>
-        <li>teacher temperature $\\tau_t = 0.5$ &nbsp;(sharpening: small $\\tau$)</li>
-       </ul>
+       view, with a tiny $K=4$. Take the <b>teacher logits</b> $g_t = [\\,2.0,\\ 1.0,\\ 0.0,\\ -1.0\\,]$, the
+       running <b>center</b> $c = [\\,0.5,\\ 0.5,\\ 0.0,\\ 0.0\\,]$, and the teacher temperature $\\tau_t = 0.5$
+       (small $\\tau$ = sharpening). The teacher pipeline is: subtract $c$, divide by $\\tau_t$, softmax.</p>
+       <table class="extable">
+        <caption>Building the teacher target $P_t$ across the $K=4$ output dims (Eqn. 1).</caption>
+        <thead><tr><th></th><th class="num">dim 0</th><th class="num">dim 1</th><th class="num">dim 2</th><th class="num">dim 3</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$g_t$ (logits)</td><td class="num">2.0</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">-1.0</td></tr>
+         <tr><td class="row-h">$g_t - c$ (centered)</td><td class="num">1.5</td><td class="num">0.5</td><td class="num">0.0</td><td class="num">-1.0</td></tr>
+         <tr><td class="row-h">$(g_t-c)/\\tau_t$ (sharpened)</td><td class="num">3.0</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">-2.0</td></tr>
+         <tr><td class="row-h">$P_t$ (softmax)</td><td class="num">0.8390</td><td class="num">0.1135</td><td class="num">0.0418</td><td class="num">0.0057</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Center</b> (subtract $c$): $g_t - c = [\\,1.5,\\ 0.5,\\ 0.0,\\ -1.0\\,].$</li>
         <li><b>Sharpen</b> (divide by $\\tau_t=0.5$): $(g_t-c)/\\tau_t = [\\,3.0,\\ 1.0,\\ 0.0,\\ -2.0\\,].$</li>
-        <li><b>Softmax → teacher target $P_t$.</b> Exponentiate and normalize:
-        $P_t = [\\,0.8390,\\ 0.1135,\\ 0.0418,\\ 0.0057\\,]$ (sums to $1$). A confident target peaked on dim 1.</li>
-        <li><b>Student distribution $P_s$.</b> Say the student's logits for the <i>other</i> view are
-        $g_s = [\\,1.0,\\ 0.5,\\ 0.0,\\ 0.0\\,]$ at $\\tau_s = 1.0$ (no centering on the student):
+        <li><b>Softmax → teacher target $P_t$.</b> $e^{[3,1,0,-2]} = [20.086,\\ 2.718,\\ 1.000,\\ 0.135]$,
+        sum $= 23.939$; normalize → $P_t = [\\,0.8390,\\ 0.1135,\\ 0.0418,\\ 0.0057\\,]$ (sums to $1$). A confident
+        target peaked on dim 0.</li>
+        <li><b>Student distribution $P_s$.</b> Student logits for the <i>other</i> view
+        $g_s = [\\,1.0,\\ 0.5,\\ 0.0,\\ 0.0\\,]$ at $\\tau_s = 1.0$ (no centering on the student) →
         $P_s = [\\,0.4269,\\ 0.2589,\\ 0.1571,\\ 0.1571\\,].$</li>
         <li><b>Cross-entropy loss (Eqn. 2).</b>
-        $H(P_t,P_s) = -\\sum_k P_t^{(k)}\\log P_s^{(k)} = 0.9553.$</li>
+        $H(P_t,P_s) = -\\sum_k P_t^{(k)}\\log P_s^{(k)} = \\mathbf{0.9553}.$</li>
         <li><b>Check the decomposition (Eqn. 5).</b> Teacher entropy
-        $h(P_t) = -\\sum_k P_t^{(k)}\\log P_t^{(k)} = 0.5562$; &nbsp;
-        $D_{KL}(P_t\\Vert P_s) = 0.3991$; &nbsp; sum $= 0.5562 + 0.3991 = 0.9553.$ ✓ matches $H$.</li>
+        $h(P_t) = -\\sum_k P_t^{(k)}\\log P_t^{(k)} = 0.5562$; $D_{KL}(P_t\\Vert P_s) = 0.3991$;
+        sum $= 0.5562 + 0.3991 = 0.9553$ ✓ matches $H$.</li>
        </ul>
-       <p><b>Collapse peek.</b> If we had <b>skipped centering</b> and sharpened the raw logits
-       $g_t/\\tau_t = [\\,4,2,0,-2\\,]$, the teacher target becomes <i>more</i> peaked on dim 1,
-       $P_t' = [\\,0.8650,\\ 0.1171,\\ 0.0158,\\ 0.0021\\,]$ — and with no centering across the batch, that same
-       dim 1 dominates for <i>every</i> image: the one-dimension collapse. For reference, a fully uniform
-       teacher would have entropy $\\ln K = \\ln 4 = 1.3863$ (the no-sharpening collapse). These exact numbers
-       ($H=0.9553$, $h(P_t)=0.5562$, $D_{KL}=0.3991$) are recomputed in the notebook's first cell so you can
-       check your softmax, centering, and cross-entropy code.</p>`,
+       <p><b>Collapse peek.</b> The table below contrasts the healthy teacher with the two collapse modes.
+       Skipping centering and sharpening the raw logits $g_t/\\tau_t = [\\,4,2,0,-2\\,]$ gives a target
+       <i>more</i> peaked on dim 0; with no centering across the batch the same dim dominates for <i>every</i>
+       image (the one-dimension collapse). A fully uniform teacher has entropy $\\ln K = \\ln 4 = 1.3863$ (the
+       no-sharpening collapse).</p>
+       <table class="extable">
+        <caption>Healthy teacher vs the two collapse modes (entropy in nats; $\\ln 4 = 1.3863$ is the max).</caption>
+        <thead><tr><th></th><th class="num">dim 0</th><th class="num">dim 1</th><th class="num">dim 2</th><th class="num">dim 3</th><th class="num">entropy $h(P_t)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">healthy (center + sharpen)</td><td class="num">0.8390</td><td class="num">0.1135</td><td class="num">0.0418</td><td class="num">0.0057</td><td class="num">0.5562</td></tr>
+         <tr><td class="row-h">no centering (one-dim collapse)</td><td class="num">0.8650</td><td class="num">0.1171</td><td class="num">0.0158</td><td class="num">0.0021</td><td class="num">0.4554</td></tr>
+         <tr><td class="row-h">no sharpening (uniform collapse)</td><td class="num">0.2500</td><td class="num">0.2500</td><td class="num">0.2500</td><td class="num">0.2500</td><td class="num">1.3863</td></tr>
+        </tbody>
+       </table>
+       <p>These exact numbers ($H=0.9553$, $h(P_t)=0.5562$, $D_{KL}=0.3991$) are recomputed in the notebook's
+       first cell so you can check your softmax, centering, and cross-entropy code.</p>`,
     recipe:
       `<ol>
         <li><b>Views.</b> For each image make global + local crops (we use two views $x_1,x_2$ to keep it

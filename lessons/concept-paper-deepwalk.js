@@ -246,24 +246,32 @@ $$ \\Pr\\big(u_k\\mid\\Phi(v_j)\\big)=\\prod_{l=1}^{\\lceil \\log |V|\\rceil}\\P
        tree (and our negative sampling) that word2vec relies on is well-matched to graphs.</p>`,
     example:
       `<p>Turn <b>one length-5 walk into skip-gram pairs</b> by hand, with window half-width $w=2$. Suppose a
-       random walk produced the node sequence</p>
-       <p style="text-align:center">$W = (\\,3,\\ 1,\\ 4,\\ 1,\\ 5\\,)$ &nbsp; (positions $0,1,2,3,4$).</p>
+       random walk produced the node sequence $W = (\\,3,\\ 1,\\ 4,\\ 1,\\ 5\\,)$ at positions $0,1,2,3,4$. For
+       each center position $i$, the context is every position $j$ with $1 \\le |i-j| \\le 2$ (clipped at the walk's
+       ends); each makes one $(\\text{center},\\text{context})$ pair. Tabulate it:</p>
+       <table class="extable">
+        <caption>Window $w=2$ over the walk $(3,1,4,1,5)$; "in window" lists positions within $2$ of the center.</caption>
+        <thead><tr><th>pos $i$</th><th>center node</th><th>context positions</th><th>pairs</th><th class="num"># pairs</th></tr></thead>
+        <tbody>
+         <tr><td class="num">0</td><td class="num">3</td><td>1, 2</td><td>$(3,1),(3,4)$</td><td class="num">2</td></tr>
+         <tr><td class="num">1</td><td class="num">1</td><td>0, 2, 3</td><td>$(1,3),(1,4),(1,1)$</td><td class="num">3</td></tr>
+         <tr><td class="num">2</td><td class="num">4</td><td>0, 1, 3, 4</td><td>$(4,3),(4,1),(4,1),(4,5)$</td><td class="num">4</td></tr>
+         <tr><td class="num">3</td><td class="num">1</td><td>1, 2, 4</td><td>$(1,1),(1,4),(1,5)$</td><td class="num">3</td></tr>
+         <tr><td class="num">4</td><td class="num">5</td><td>2, 3</td><td>$(5,4),(5,1)$</td><td class="num">2</td></tr>
+         <tr><td class="row-h">total</td><td class="num"></td><td></td><td></td><td class="num">14</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Center = position 2, node $4$.</b> Window covers positions $0,1,3,4$ (within $2$ of position
-        $2$). Context nodes: $3, 1, 1, 5$. Pairs: $(4,3),\\,(4,1),\\,(4,1),\\,(4,5)$ &mdash; <b>4 pairs</b>.</li>
-        <li><b>Center = position 0, node $3$.</b> Only positions $1,2$ lie within $w=2$ on the right (nothing on
-        the left). Context: $1, 4$. Pairs: $(3,1),\\,(3,4)$ &mdash; <b>2 pairs</b> (the window is clipped at the
-        walk's edge).</li>
-        <li><b>Center = position 1, node $1$.</b> Window covers positions $0,2,3$ (position $-1$ and $4$ is more
-        than $2$ away on the right? &mdash; position $3$ is within $2$, position $4$ is distance $3$, excluded).
-        Context: $3, 4, 1$. Pairs: $(1,3),\\,(1,4),\\,(1,1)$ &mdash; <b>3 pairs</b>.</li>
-        <li><b>Centers at positions 3 and 4</b> give, by the same rule, $(1,4),(1,1),(1,5)$ (3 pairs) and
-        $(5,1),(5,4),(5,1)$ (3 pairs).</li>
+        <li><b>Center pos 2 (node 4)</b> is interior, so both sides fill: positions $0,1,3,4$ give the most
+        context &mdash; <b>4 pairs</b>.</li>
+        <li><b>Centers pos 1 and pos 3 (both node 1)</b> reach 3 positions each &mdash; <b>3 pairs</b> apiece.</li>
+        <li><b>Centers at the ends (pos 0, pos 4)</b> are clipped to one side &mdash; <b>2 pairs</b> each.</li>
+        <li><b>Add them up:</b> $2 + 3 + 4 + 3 + 2 = 14$ (center, context) pairs from this single walk.</li>
        </ul>
-       <p>Total: $4+2+3+3+3 = 15$ (center, context) pairs from this single walk. Each pair is a positive example
-       that pulls $\\Phi(\\text{center})$ toward $\\Phi(\\text{context})$. Notice node $1$ appears three times in
-       the walk &mdash; it is a hub, so it co-occurs with many nodes; that is the power-law frequency in
-       miniature. The notebook's first cell recomputes this exact pair list and prints the count $15$.</p>`,
+       <p>Each pair is a positive example that pulls $\\Phi(\\text{center})$ toward $\\Phi(\\text{context})$. Notice
+       node $1$ sits at <i>two</i> positions, so it appears as a center twice and as a context many times &mdash; a
+       hub that co-occurs with everything. That is the power-law frequency in miniature. The notebook's first cell
+       recomputes this exact pair list and prints the count $14$.</p>`,
     recipe:
       `<ol>
         <li><b>Generate walks (Algorithm 1).</b> For $\\gamma$ rounds, shuffle the nodes; from each node take one
@@ -296,7 +304,7 @@ $$ \\Pr\\big(u_k\\mid\\Phi(v_j)\\big)=\\prod_{l=1}^{\\lceil \\log |V|\\rceil}\\P
        walk-embedding earns its keep.</p>
        <ul>
         <li><b>2. Sanity checks before the full run.</b> Verify the skip-gram pair extractor on the worked
-        example: the length-5 walk $(3,1,4,1,5)$ with window $w=2$ must yield exactly <b>15</b> (center,context)
+        example: the length-5 walk $(3,1,4,1,5)$ with window $w=2$ must yield exactly <b>14</b> (center,context)
         pairs (the lesson recomputes this). Check the walk sampler steps to a <i>uniform</i> neighbor and never
         leaves the graph (every visited node is in <code>adj</code>). Confirm shapes: $\\Phi$ is $|V|\\times d$.
         At init (random vectors) the probe should score near the <b>majority-class</b> floor &mdash; if it scores
@@ -427,7 +435,7 @@ $$ \\Pr\\big(u_k\\mid\\Phi(v_j)\\big)=\\prod_{l=1}^{\\lceil \\log |V|\\rceil}\\P
        (uniform neighbor steps, $\\gamma$ walks per node), <b>skip-gram pair extraction</b> over a window of
        half-width $w$, and <b>skip-gram with negative sampling</b> &mdash; on top of PyTorch's
        <code>nn.Embedding</code> and Adam. The first cell recomputes the worked example: the length-5 walk
-       $(3,1,4,1,5)$ with $w{=}2$ yields exactly <b>15</b> (center, context) pairs. Then, on a toy
+       $(3,1,4,1,5)$ with $w{=}2$ yields exactly <b>14</b> (center, context) pairs. Then, on a toy
        <b>two-community</b> graph, we train <b>2-D</b> embeddings and run a <b>logistic-regression probe</b> to
        recover the community split &mdash; comparing it against the same probe fed the raw <b>adjacency rows</b>
        (the ablation). The dense walk-embedding wins because it encodes \\\"same neighborhood\\\" even between nodes
@@ -450,7 +458,7 @@ def skipgram_pairs(walk, w):
 
 ex = skipgram_pairs([3, 1, 4, 1, 5], w=2)
 print("walk (3,1,4,1,5), w=2 ->", ex)
-print("number of pairs =", len(ex))     # 15, matching the worked example by hand
+print("number of pairs =", len(ex))     # 14, matching the worked example by hand
 
 
 # --- 1. A toy graph: two dense communities joined by a single bridge. ---
@@ -536,7 +544,7 @@ acc_emb = probe(Z.numpy())
 acc_adj = probe(A)
 print(f"logistic probe accuracy:  DeepWalk 2-D embedding = {acc_emb:.2f}   raw adjacency rows = {acc_adj:.2f}")
 
-# Our small run (NOT the paper's numbers): the length-5 walk gives 15 skip-gram pairs (matches the worked
+# Our small run (NOT the paper's numbers): the length-5 walk gives 14 skip-gram pairs (matches the worked
 # example); a logistic probe on the learned 2-D embeddings recovers the community split (~1.00) while the
 # same probe on the sparse adjacency rows is weaker -- because two same-community nodes can share no edge,
 # so their adjacency rows look unrelated, but their random walks co-occur and pull their embeddings together.`
@@ -577,7 +585,7 @@ print(f"logistic probe accuracy:  DeepWalk 2-D embedding = {acc_emb:.2f}   raw a
         ]
       }
     ],
-    caption: "Our small run, not the paper's reported numbers. A toy 12-node graph = two dense communities (0-5 and 6-11) joined by a single bridge edge. We start gamma=20 truncated random walks (length 20) from every node, extract skip-gram pairs with window w=2 (the SAME extractor that turns the worked-example walk (3,1,4,1,5) into 15 pairs), and train 2-D node embeddings with negative sampling. LEFT: the embedding cleanly separates the two communities into two clusters — nodes that walk together land together. RIGHT (the ablation): a plain logistic regression trained on a few labeled nodes recovers the split almost perfectly from the dense embedding (~1.00) but does noticeably worse from the raw length-12 adjacency rows (~0.62), because two same-community nodes that share no direct neighbor have near-disjoint adjacency rows yet co-occur in walks. Numbers depend on the seed; the qualitative gap — dense walk-embedding beats sparse adjacency — is DeepWalk's whole point (&sect;1, &sect;3).",
+    caption: "Our small run, not the paper's reported numbers. A toy 12-node graph = two dense communities (0-5 and 6-11) joined by a single bridge edge. We start gamma=20 truncated random walks (length 20) from every node, extract skip-gram pairs with window w=2 (the SAME extractor that turns the worked-example walk (3,1,4,1,5) into 14 pairs), and train 2-D node embeddings with negative sampling. LEFT: the embedding cleanly separates the two communities into two clusters — nodes that walk together land together. RIGHT (the ablation): a plain logistic regression trained on a few labeled nodes recovers the split almost perfectly from the dense embedding (~1.00) but does noticeably worse from the raw length-12 adjacency rows (~0.62), because two same-community nodes that share no direct neighbor have near-disjoint adjacency rows yet co-occur in walks. Numbers depend on the seed; the qualitative gap — dense walk-embedding beats sparse adjacency — is DeepWalk's whole point (&sect;1, &sect;3).",
     code: `import torch, torch.nn as nn, torch.nn.functional as F, random, numpy as np
 from sklearn.linear_model import LogisticRegression
 random.seed(0); torch.manual_seed(0)
@@ -601,7 +609,7 @@ def walk(s, L):                                  # truncated UNIFORM random walk
     p=[s]; cur=s
     for _ in range(L-1): cur=random.choice(adj[cur]); p.append(cur)
     return p
-def pairs_of(wlk, w):                             # skip-gram pairs: 15 for (3,1,4,1,5),w=2
+def pairs_of(wlk, w):                             # skip-gram pairs: 14 for (3,1,4,1,5),w=2
     return [(c, wlk[j]) for i,c in enumerate(wlk)
             for j in range(max(0,i-w),min(len(wlk),i+w+1)) if j!=i]
 

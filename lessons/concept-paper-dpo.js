@@ -244,13 +244,17 @@
        log-likelihood of this logistic model, averaged over the dataset, is exactly Eqn. 7. No $Z(x)$, no reward
        model, no reinforcement learning &mdash; only a classification loss.</p>`,
     example:
-      `<p>Compute the DPO loss for <b>one</b> preference pair from tiny log-probabilities, by hand. Suppose for a
-       prompt $x$ the (sequence-summed) log-probabilities are:</p>
-       <ul>
-        <li>Policy: $\\log\\pi_\\theta(y_w|x)=-2.0$, $\\;\\log\\pi_\\theta(y_l|x)=-3.0$.</li>
-        <li>Reference: $\\log\\pi_{\\text{ref}}(y_w|x)=-2.5$, $\\;\\log\\pi_{\\text{ref}}(y_l|x)=-2.5$.</li>
-        <li>Temperature $\\beta=0.1$.</li>
-       </ul>
+      `<p>Compute the DPO loss for <b>one</b> preference pair from tiny log-probabilities, by hand. For a
+       prompt $x$, the (sequence-summed) log-probabilities of the preferred response $y_w$ and the
+       dispreferred $y_l$ under the policy and the frozen reference are (temperature $\\beta=0.1$):</p>
+       <table class="extable">
+         <caption>Log-probabilities and per-response implicit reward $\\hat r=\\beta\\,[\\log\\pi_\\theta-\\log\\pi_{\\text{ref}}]$.</caption>
+         <thead><tr><th>response</th><th class="num">$\\log\\pi_\\theta$</th><th class="num">$\\log\\pi_{\\text{ref}}$</th><th class="num">$\\log\\pi_\\theta-\\log\\pi_{\\text{ref}}$</th><th class="num">$\\hat r=\\beta\\times$ that</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$y_w$ (preferred)</td><td class="num">-2.0</td><td class="num">-2.5</td><td class="num">+0.5</td><td class="num">+0.05</td></tr>
+           <tr><td class="row-h">$y_l$ (dispreferred)</td><td class="num">-3.0</td><td class="num">-2.5</td><td class="num">-0.5</td><td class="num">-0.05</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
         <li><b>Implicit reward, preferred.</b>
         $\\hat r(y_w)=\\beta\\,[\\log\\pi_\\theta(y_w|x)-\\log\\pi_{\\text{ref}}(y_w|x)]

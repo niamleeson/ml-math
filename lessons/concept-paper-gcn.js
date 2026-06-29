@@ -232,9 +232,17 @@
        and $1\\!-\\!2$ (node 1 is the middle). So</p>
        <p>$$ A = \\begin{bmatrix} 0&1&0 \\\\ 1&0&1 \\\\ 0&1&0 \\end{bmatrix}, \\qquad
             \\tilde{A} = A + I_3 = \\begin{bmatrix} 1&1&0 \\\\ 1&1&1 \\\\ 0&1&1 \\end{bmatrix}. $$</p>
+       <table class="extable">
+        <caption>Per-node degree of $\\tilde{A}$ (row sums, self-loop included) and $1/\\sqrt{\\tilde{d}}$.</caption>
+        <thead><tr><th>node</th><th class="num">row of $\\tilde{A}$</th><th class="num">$\\tilde{d}_i$</th><th class="num">$1/\\sqrt{\\tilde{d}_i}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">$1{+}1{+}0$</td><td class="num">2</td><td class="num">0.7071</td></tr>
+         <tr><td class="row-h">1 (hub)</td><td class="num">$1{+}1{+}1$</td><td class="num">3</td><td class="num">0.5774</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$0{+}1{+}1$</td><td class="num">2</td><td class="num">0.7071</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Degrees of $\\tilde{A}$.</b> Row sums: node 0 has $\\tilde{d}_0=2$, node 1 (the hub) has
-        $\\tilde{d}_1=3$, node 2 has $\\tilde{d}_2=2$. So $\\tilde{D}^{-1/2}=\\mathrm{diag}(1/\\sqrt2,\\,1/\\sqrt3,\\,1/\\sqrt2)$.</li>
+        <li><b>Degree matrix.</b> $\\tilde{D}^{-1/2}=\\mathrm{diag}(1/\\sqrt2,\\,1/\\sqrt3,\\,1/\\sqrt2)$ from the table above.</li>
         <li><b>Renormalized adjacency $S=\\tilde{D}^{-1/2}\\tilde{A}\\tilde{D}^{-1/2}$.</b> Each entry $S_{ij}=\\tilde{A}_{ij}/\\sqrt{\\tilde{d}_i\\tilde{d}_j}$:
         $$ S = \\begin{bmatrix} 1/2 & 1/\\sqrt6 & 0 \\\\ 1/\\sqrt6 & 1/3 & 1/\\sqrt6 \\\\ 0 & 1/\\sqrt6 & 1/2 \\end{bmatrix}
              \\approx \\begin{bmatrix} 0.500 & 0.408 & 0 \\\\ 0.408 & 0.333 & 0.408 \\\\ 0 & 0.408 & 0.500 \\end{bmatrix}. $$

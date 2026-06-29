@@ -236,9 +236,21 @@ $$ o^{(i,j)} \\;=\\; \\arg\\max_{o \\in \\mathcal{O}}\\; \\alpha^{(i,j)}_{o} \\q
        (Hessian) term; dropping it ($\\xi = 0$) gives the cheap <b>first-order</b> variant we implement, which
        simply takes $\\nabla_\\alpha \\mathcal{L}_{\\text{val}}$ at the current weights.</p>`,
     example:
-      `<p>Work the mixture weights by hand for one edge with four candidate ops. Suppose after some training the
-       architecture parameters on this edge are $\\alpha = [2.0,\\, 0.5,\\, 0.5,\\, 0.5]$ &mdash; the first op (the
-       useful one) has pulled ahead. Eqn. 2 weights each op by $\\mathrm{softmax}(\\alpha)$.</p>
+      `<p>Work the mixture weights (Eqn. 2) by hand for one edge with four candidate ops. Suppose after some
+       training the architecture parameters on this edge are $\\alpha = [2.0,\\, 0.5,\\, 0.5,\\, 0.5]$ &mdash; the
+       first op (the useful one) has pulled ahead. Softmax exponentiates each $\\alpha$, then divides by their
+       sum. The table tracks each op through that calculation:</p>
+       <table class="extable">
+        <caption>$\\mathrm{softmax}([2.0,\\,0.5,\\,0.5,\\,0.5])$ &mdash; the mixture weight per candidate op.</caption>
+        <thead><tr><th>op</th><th class="num">$\\alpha$</th><th class="num">$e^{\\alpha}$</th><th class="num">weight $= e^{\\alpha}/\\sum$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$o_0$ (useful)</td><td class="num">2.0</td><td class="num">7.3890</td><td class="num">0.5990</td></tr>
+         <tr><td class="row-h">$o_1$</td><td class="num">0.5</td><td class="num">1.6487</td><td class="num">0.1337</td></tr>
+         <tr><td class="row-h">$o_2$</td><td class="num">0.5</td><td class="num">1.6487</td><td class="num">0.1337</td></tr>
+         <tr><td class="row-h">$o_3$</td><td class="num">0.5</td><td class="num">1.6487</td><td class="num">0.1337</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">12.335</td><td class="num">1.000</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Exponentiate each entry:</b> $e^{2.0} \\approx 7.389$, and $e^{0.5} \\approx 1.6487$ (three times).</li>
         <li><b>Sum them:</b> $7.389 + 1.6487 + 1.6487 + 1.6487 \\approx 12.335$.</li>

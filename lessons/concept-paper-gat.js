@@ -233,6 +233,16 @@ $$ \\vec{h}_i' \\;=\\; \\sigma\\!\\Big(\\tfrac{1}{K}\\textstyle\\sum_{k=1}^{K}\\
        $\\vec{h}_i=[1,0]$, $\\vec{h}_j=[0,1]$, $\\vec{h}_k=[1,1]$. Attention vector
        $\\vec{a}=[\\,0.2,\\,0.3\\;\\|\\;-0.6,\\,0.5\\,]$ (first half multiplies $W\\vec{h}_i$, second half
        multiplies the neighbor).</p>
+       <table class="extable">
+        <caption>Per-neighbor ledger for node $i$ over $\\mathcal{N}_i=\\{i,j,k\\}$. The $i$-part of every score is fixed at $0.2$; each row adds its neighbor's $-0.6\\,h_{n,1}+0.5\\,h_{n,2}$. The $\\alpha$ column sums to $1$.</caption>
+        <thead><tr><th>neighbor $n$</th><th class="num">$\\vec{h}_n$</th><th class="num">raw $\\vec{a}^{\\top}[\\cdot]$</th><th class="num">$e=\\text{LeakyReLU}$</th><th class="num">$\\exp(e)$</th><th class="num">$\\alpha_{in}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$i$ (self)</td><td class="num">$[1,0]$</td><td class="num">-0.40</td><td class="num">-0.08</td><td class="num">0.9231</td><td class="num">0.2284</td></tr>
+         <tr><td class="row-h">$j$</td><td class="num">$[0,1]$</td><td class="num">0.70</td><td class="num">0.70</td><td class="num">2.0138</td><td class="num">0.4982</td></tr>
+         <tr><td class="row-h">$k$</td><td class="num">$[1,1]$</td><td class="num">0.10</td><td class="num">0.10</td><td class="num">1.1052</td><td class="num">0.2734</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">4.0421</td><td class="num">1.0000</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Raw scores</b> $e_{ij}=\\text{LeakyReLU}\\big(\\vec{a}^{\\top}[W\\vec{h}_i \\| W\\vec{h}_{(\\cdot)}]\\big)$,
         with $\\vec{a}^{\\top}[\\cdot] = 0.2\\,h_{i,1}+0.3\\,h_{i,2}-0.6\\,h_{n,1}+0.5\\,h_{n,2}$. The

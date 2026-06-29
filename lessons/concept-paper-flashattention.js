@@ -272,20 +272,44 @@
 
     example:
       `<p><b>Worked numbers — one row, two blocks.</b> Suppose a query row's scores against 4 keys are
-       $S=[1,\\ 3,\\ 2,\\ 0]$, and we process them in two blocks: block A $=[1,3]$, block B $=[2,0]$. The values are 1-D for
-       clarity: $V=[10,\\ 20,\\ 30,\\ 40]$. The true answer is full-row softmax of $S$ times $V$.</p>
-       <p><b>Block A</b> $=[1,3]$: block max $\\tilde m=3$. Weights $e^{1-3}=0.1353,\\ e^{3-3}=1$. Running
-       $m=3$, $\\ell=0.1353+1=1.1353$, output accumulator $O=0.1353\\cdot10+1\\cdot20=21.353$.</p>
-       <p><b>Block B</b> $=[2,0]$: block max $\\tilde m=2$. New running max $m^{\\text{new}}=\\max(3,2)=3$, so the rescale
-       factor for the old running quantities is $e^{m-m^{\\text{new}}}=e^{3-3}=1$ (block A already at the max — no shrink).
-       Block weights at the new max: $e^{2-3}=0.3679,\\ e^{0-3}=0.0498$. Update:
-       $\\ell^{\\text{new}}=1\\cdot1.1353+(0.3679+0.0498)=1.5530$;
-       $O^{\\text{new}}=1\\cdot21.353+(0.3679\\cdot30+0.0498\\cdot40)=21.353+11.036+1.992=34.381$.</p>
-       <p><b>Normalize once:</b> output $=O^{\\text{new}}/\\ell^{\\text{new}}=34.381/1.5530=22.14$.</p>
-       <p><b>Check against full-row softmax.</b> $\\ell$ over all four $=e^{1-3}+e^{3-3}+e^{2-3}+e^{0-3}=0.1353+1+0.3679+0.0498=1.5530$
-       (matches). Output $=(0.1353\\cdot10+1\\cdot20+0.3679\\cdot30+0.0498\\cdot40)/1.5530=34.381/1.5530=22.14$ — <b>identical</b>.
-       The online update reproduced the full softmax without ever holding all four scores at once. The CODE cell recomputes
-       these exact numbers and prints them, then runs <code>torch.allclose</code> on a full random tensor.</p>
+       $S=[1,\\ 3,\\ 2,\\ 0]$, processed in two blocks: block A $=[1,3]$, block B $=[2,0]$. The values are 1-D for
+       clarity: $V=[10,\\ 20,\\ 30,\\ 40]$. We run the online softmax block by block and check it equals full-row
+       softmax of $S$ times $V$.</p>
+       <ul class="steps">
+        <li><b>Block A $=[1,3]$.</b> Block max $\\tilde m=3$, so running $m=3$. Weights at this max:
+        $e^{1-3}=0.1353$, $e^{3-3}=1$. Running sum $\\ell=0.1353+1=1.1353$; output accumulator
+        $O=0.1353\\cdot10+1\\cdot20=21.353$.</li>
+        <li><b>Block B $=[2,0]$ — new max.</b> Block max $\\tilde m=2$, so $m^{\\text{new}}=\\max(3,2)=3$. Rescale
+        factor for the old running quantities is $e^{m-m^{\\text{new}}}=e^{3-3}=1$ (block A already at the max — no
+        shrink here).</li>
+        <li><b>Block B contribution.</b> Weights at the new max: $e^{2-3}=0.3679$, $e^{0-3}=0.0498$. Block sum
+        $=0.3679+0.0498=0.4177$; block weighted values $=0.3679\\cdot30+0.0498\\cdot40=11.036+1.992=13.028$.</li>
+        <li><b>Update.</b> $\\ell^{\\text{new}}=1\\cdot1.1353+0.4177=1.5530$;
+        $O^{\\text{new}}=1\\cdot21.353+13.028=34.381$.</li>
+        <li><b>Normalize once (after the last block).</b> output
+        $=O^{\\text{new}}/\\ell^{\\text{new}}=34.381/1.5530=22.14$.</li>
+       </ul>
+       <p>The running state after each block, next to the full-row answer:</p>
+       <table class="extable">
+        <caption>Online softmax (running $m,\\ell,O$) vs. full-row softmax — both reach $22.14$.</caption>
+        <thead>
+         <tr><th>step</th><th class="num">running $m$</th><th class="num">running $\\ell$</th>
+             <th class="num">running $O$</th><th class="num">$O/\\ell$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">after block A</td><td class="num">3</td><td class="num">1.1353</td>
+             <td class="num">21.353</td><td class="num">18.81</td></tr>
+         <tr><td class="row-h">after block B</td><td class="num">3</td><td class="num">1.5530</td>
+             <td class="num">34.381</td><td class="num">22.14</td></tr>
+         <tr><td class="row-h">full-row softmax</td><td class="num">3</td><td class="num">1.5530</td>
+             <td class="num">34.381</td><td class="num">22.14</td></tr>
+        </tbody>
+       </table>
+       <p><b>Check against full-row softmax.</b> $\\ell$ over all four
+       $=e^{1-3}+e^{3-3}+e^{2-3}+e^{0-3}=0.1353+1+0.3679+0.0498=1.5530$ (matches the table). Output
+       $=(0.1353\\cdot10+1\\cdot20+0.3679\\cdot30+0.0498\\cdot40)/1.5530=34.381/1.5530=22.14$ — <b>identical</b>. The
+       online update reproduced the full softmax without ever holding all four scores at once. The CODE cell recomputes
+       these exact numbers, then runs <code>torch.allclose</code> on a full random tensor.</p>
        <p><i>(Note: when a later block raises the max, the rescale factor $e^{m-m^{\\text{new}}}\\lt1$ actually shrinks the old
        running sum and output — that is the correction in action. Here block B's max did not exceed block A's, so the factor
        was exactly 1; the CODE example also includes a case where it shrinks.)</i></p>`,

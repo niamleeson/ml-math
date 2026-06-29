@@ -285,18 +285,27 @@ $$ k \\;=\\; \\Big\\lfloor\\, k_0 + \\log_2\\!\\big(\\sqrt{w\\,h}\\,/\\,224\\big
        <p>So one level converts a coarse $(256,2,2)$ semantic map plus a fine $(512,4,4)$ location map into a
        fused $(256,4,4)$ pyramid level $P_4$ &mdash; high-resolution AND semantically strong.</p>
        <p><b>Now the level-assignment rule (Eq. 1), $k = \\lfloor k_0 + \\log_2(\\sqrt{wh}/224)\\rfloor$ with
-       $k_0=4$.</b> Three RoIs:</p>
+       $k_0=4$.</b> Run three RoIs of different sizes through it. The table is the per-RoI ledger; the steps
+       below walk one row in full:</p>
+       <table class="extable">
+        <caption>Level assignment for three RoIs (Eq. 1, $k_0=4$). Final $k$ is floored, then clamped to $\\{2,3,4,5\\}$.</caption>
+        <thead><tr><th>RoI $w\\times h$</th><th class="num">$\\sqrt{wh}$</th><th class="num">$\\sqrt{wh}/224$</th><th class="num">$\\log_2(\\cdot)$</th><th class="num">$k_0+\\log_2$</th><th class="num">$\\lfloor\\cdot\\rfloor$</th><th class="num">level</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$224\\times224$</td><td class="num">224</td><td class="num">1.000</td><td class="num">0.00</td><td class="num">4.00</td><td class="num">4</td><td class="num">$P_4$</td></tr>
+         <tr><td class="row-h">$448\\times448$</td><td class="num">448</td><td class="num">2.000</td><td class="num">1.00</td><td class="num">5.00</td><td class="num">5</td><td class="num">$P_5$</td></tr>
+         <tr><td class="row-h">$50\\times50$</td><td class="num">50</td><td class="num">0.223</td><td class="num">-2.16</td><td class="num">1.84</td><td class="num">1 &rarr; 2</td><td class="num">$P_2$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>A $224\\times224$ RoI.</b> $\\sqrt{wh}=\\sqrt{224\\cdot224}=224$, so $224/224=1$,
-        $\\log_2 1 = 0$, and $k=\\lfloor 4+0\\rfloor = \\mathbf{4}$ &mdash; read off $P_4$. This is the
-        canonical box, as designed.</li>
-        <li><b>A large $448\\times448$ RoI.</b> $\\sqrt{wh}=448$, $448/224=2$, $\\log_2 2 = 1$, so
-        $k=\\lfloor 4+1\\rfloor = \\mathbf{5}$ &mdash; a doubling of side bumps it to the coarser, more
+        <li><b>The canonical $224\\times224$ RoI.</b> $\\sqrt{wh}=\\sqrt{224\\cdot224}=224$, so $224/224=1$,
+        $\\log_2 1 = 0$, and $k=\\lfloor 4+0\\rfloor = \\mathbf{4}$ &mdash; read off $P_4$, exactly as designed.</li>
+        <li><b>The large $448\\times448$ RoI.</b> $\\sqrt{wh}=448$, $448/224=2$, $\\log_2 2 = 1$, so
+        $k=\\lfloor 4+1\\rfloor = \\mathbf{5}$ &mdash; a doubling of side bumps it one level coarser, to the more
         semantic $P_5$.</li>
-        <li><b>A small $50\\times50$ RoI.</b> $\\sqrt{wh}=50$, $50/224\\approx0.223$,
-        $\\log_2 0.223 \\approx -2.16$, so $k=\\lfloor 4-2.16\\rfloor = \\lfloor 1.84\\rfloor = 1$, which is
-        below the finest level, so it <b>clamps to $\\mathbf{2}$</b> &mdash; the small box reads off the
-        high-resolution $P_2$.</li>
+        <li><b>The small $50\\times50$ RoI.</b> $\\sqrt{wh}=50$, $50/224\\approx0.223$,
+        $\\log_2 0.223 \\approx -2.16$, so $k=\\lfloor 4-2.16\\rfloor = \\lfloor 1.84\\rfloor = 1$ &mdash; below
+        the finest level, so it <b>clamps to $\\mathbf{2}$</b> and the small box reads off the high-resolution
+        $P_2$.</li>
        </ul>`,
     recipe:
       `<ol>

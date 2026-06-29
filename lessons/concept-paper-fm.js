@@ -255,6 +255,19 @@ $$ V^{(l)} \\in \\mathbb{R}^{n\\times k_l}, \\qquad k_l \\in \\mathbb{N}_0^{+} \
         gives $0 \\cdot 2 = 0$.</li>
         <li><b>Naive total</b> $= 4 + 1 + 0 = 5$.</li>
        </ul>
+       <table class="extable">
+        <caption>Naive double sum over the three unordered pairs ($i \\lt j$); the term column sums to 5.</caption>
+        <thead>
+         <tr><th>pair $(i,j)$</th><th class="num">$\\langle v_i,v_j\\rangle$</th>
+             <th class="num">$x_i x_j$</th><th class="num">term</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">$(1,2)$</td><td class="num">2</td><td class="num">2</td><td class="num">4</td></tr>
+         <tr><td class="row-h">$(1,3)$</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$(2,3)$</td><td class="num">0</td><td class="num">2</td><td class="num">0</td></tr>
+         <tr><td class="row-h">total</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">5</td></tr>
+        </tbody>
+       </table>
        <p><b>Fast O(kn) form</b>, factor by factor. First the weighted sums $\\sum_i v_{i,f} x_i$:</p>
        <ul class="steps">
         <li>Factor $f = 1$: $\\sum_i v_{i,1} x_i = 1\\cdot1 + 2\\cdot2 + 0\\cdot1 = 5$.</li>
@@ -265,6 +278,19 @@ $$ V^{(l)} \\in \\mathbb{R}^{n\\times k_l}, \\qquad k_l \\in \\mathbb{N}_0^{+} \
         <li>Per factor: $\\tfrac{1}{2}(25 - 17) = 4$ and $\\tfrac{1}{2}(4 - 2) = 1$. <b>Fast total</b>
         $= 4 + 1 = 5$.</li>
        </ul>
+       <table class="extable">
+        <caption>Fast $O(kn)$ form: per factor, $\\tfrac{1}{2}\\big[(\\sum_i v_{i,f}x_i)^2 - \\sum_i v_{i,f}^2 x_i^2\\big]$. Sums to 5.</caption>
+        <thead>
+         <tr><th>factor $f$</th><th class="num">$\\sum_i v_{i,f}x_i$</th>
+             <th class="num">square</th><th class="num">$\\sum_i v_{i,f}^2 x_i^2$</th>
+             <th class="num">$\\tfrac{1}{2}(\\text{sq}-\\text{ssq})$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">5</td><td class="num">25</td><td class="num">17</td><td class="num">4</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2</td><td class="num">4</td><td class="num">2</td><td class="num">1</td></tr>
+         <tr><td class="row-h">total</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">5</td></tr>
+        </tbody>
+       </table>
        <p>Both give <b>5</b> &mdash; the fast form equals the double sum. These exact numbers are recomputed in
        the notebook's first cell and checked with <code>torch.allclose</code>.</p>`,
     recipe:

@@ -257,26 +257,37 @@
        same with or without centering. The split is therefore "free": it re-parameterizes $Q$ without altering
        the decisions or the Q-learning loss &mdash; exactly the "no change to the underlying algorithm" claim.</p>`,
     example:
-      `<p>Work Eq. 9 by hand on a CartPole-shaped state &mdash; $|\\mathcal{A}| = 2$ actions (left, right). These
+      `<p>Work Eq. 9 by hand on a CartPole-shaped state &mdash; $|\\mathcal{A}| = 2$ actions (left, right) &mdash;
+       starting from value stream $V(s) = 12.0$ and raw advantage stream $A(s,\\cdot) = [\\,2.0,\\,-4.0\\,]$. These
        are the exact numbers the notebook's first cell recomputes.</p>
        <ul class="steps">
-        <li><b>Read the two streams.</b> Suppose for state $s$ the network outputs value stream
-        $V(s) = 12.0$ and raw advantage stream $A(s,\\cdot) = [\\,A(s,\\text{left}),\\,A(s,\\text{right})\\,]
-        = [\\,2.0,\\,-4.0\\,]$.</li>
         <li><b>Mean over actions.</b> $\\bar{A}(s) = \\tfrac{1}{2}(2.0 + (-4.0)) = \\tfrac{1}{2}(-2.0) = -1.0$.</li>
         <li><b>Center the advantages</b> (subtract the mean): $A - \\bar{A} = [\\,2.0 - (-1.0),\\; -4.0 - (-1.0)\\,]
         = [\\,3.0,\\,-3.0\\,]$. Check: these now sum to $0$ (mean $0$), as required.</li>
         <li><b>Add the value</b> (Eq. 9): $Q(s,\\cdot) = V + (A - \\bar{A}) = 12.0 + [\\,3.0,\\,-3.0\\,]
         = [\\,15.0,\\,9.0\\,]$.</li>
-        <li><b>Two checks.</b> (a) The mean of $Q$ is $\\tfrac{1}{2}(15.0 + 9.0) = 12.0 = V$ &mdash; centering
-        forced $V$ to equal the action-mean of $Q$, just as the derivation says. (b) The greedy action is
-        "left" ($15.0 \\gt 9.0$), which is also $\\arg\\max$ of the raw advantage $[2.0, -4.0]$ &mdash; centering
-        did not change the decision.</li>
        </ul>
-       <p>Contrast the <b>naive</b> Eq. 7: $V + A = 12.0 + [2.0, -4.0] = [14.0, 8.0]$. Same greedy action, but
-       its mean is $11.0 \\ne V$, and you could have written the same $[14, 8]$ with $V = 100$ and
-       $A = [-86, -92]$ &mdash; the ambiguity Eq. 9 removes. These numbers
-       ($\\bar{A} = -1.0$, centered $[3.0, -3.0]$, $Q = [15.0, 9.0]$) are recomputed in the notebook.</p>`,
+       <table class="extable">
+        <caption>Per-action ledger: Eq. 9 (mean-centered) vs the naive Eq. 7 sum, with $V = 12.0$, $\\bar{A} = -1.0$.</caption>
+        <thead>
+         <tr><th>action $a$</th><th class="num">raw $A(s,a)$</th><th class="num">centered $A - \\bar{A}$</th><th class="num">$Q$ (Eq. 9)</th><th class="num">$Q$ (Eq. 7 naive)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">left</td><td class="num">2.0</td><td class="num">3.0</td><td class="num">15.0</td><td class="num">14.0</td></tr>
+         <tr><td class="row-h">right</td><td class="num">&minus;4.0</td><td class="num">&minus;3.0</td><td class="num">9.0</td><td class="num">8.0</td></tr>
+         <tr><td class="row-h">mean over actions</td><td class="num">&minus;1.0</td><td class="num">0.0</td><td class="num">12.0</td><td class="num">11.0</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Check (a) &mdash; $V$ recovered.</b> The mean of the Eq. 9 column is $\\tfrac{1}{2}(15.0 + 9.0) = 12.0 = V$
+        &mdash; centering forced $V$ to equal the action-mean of $Q$, just as the derivation says. The naive Eq. 7
+        mean is $11.0 \\ne V$.</li>
+        <li><b>Check (b) &mdash; same policy.</b> The greedy action is "left" under <i>both</i> rules
+        ($15.0 \\gt 9.0$ and $14.0 \\gt 8.0$), which is also $\\arg\\max$ of the raw advantage $[2.0, -4.0]$
+        &mdash; centering did not change the decision.</li>
+        <li><b>Check (c) &mdash; the ambiguity.</b> The naive $[14.0, 8.0]$ could equally come from $V = 100$ and
+        $A = [-86, -92]$; Eq. 9 removes that free constant by pinning $V$ to $\\text{mean}(Q)$.</li>
+       </ul>`,
     recipe:
       `<ol>
         <li><b>Shared body</b> from <code>nn.Linear</code>: map the state to a hidden feature vector

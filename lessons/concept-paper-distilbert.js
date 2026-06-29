@@ -248,12 +248,20 @@
         <li><b>Cross-entropy.</b> $-\\sum_i t_i \\log s_i =
         -(0.5017\\log 0.4698 + 0.3043\\log 0.2849 + 0.1940\\log 0.2453)$
         $= -(0.5017\\cdot(-0.7554) + 0.3043\\cdot(-1.2556) + 0.1940\\cdot(-1.4053))$
-        $= -(-0.3790 - 0.3820 - 0.2726) = 1.0337$.</li>
-        <li><b>Compare to no softening.</b> With $T = 1$ the teacher is peakier:
-        $t = [0.6590,\\,0.2424,\\,0.0986]$ &mdash; the third class has been squashed toward $0$, so the student
-        gets almost no signal about it. Raising $T$ to $2$ lifted that probability from $0.099$ to $0.194$:
-        the dark knowledge is now visible.</li>
+        $= -(-0.3790 - 0.3820 - 0.2726) = \\mathbf{1.0337}$.</li>
        </ul>
+       <p><b>Why the temperature matters.</b> The table contrasts the teacher's distribution at $T=1$ (ordinary
+       softmax) and $T=2$ (the training temperature). Raising $T$ lifts the small "dark knowledge" probability
+       on the third class from $0.099$ to $0.194$, so the student now gets a usable signal about it.</p>
+       <table class="extable">
+        <caption>Teacher logits $z^{(t)}=[2.0,1.0,0.1]$ softened at two temperatures, and the student at $T=2$.</caption>
+        <thead><tr><th></th><th class="num">class 1</th><th class="num">class 2</th><th class="num">class 3</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">teacher $t$, $T=1$ (peaky)</td><td class="num">0.6590</td><td class="num">0.2424</td><td class="num">0.0986</td></tr>
+         <tr><td class="row-h">teacher $t$, $T=2$ (softened)</td><td class="num">0.5017</td><td class="num">0.3043</td><td class="num">0.1940</td></tr>
+         <tr><td class="row-h">student $s$, $T=2$</td><td class="num">0.4698</td><td class="num">0.2849</td><td class="num">0.2453</td></tr>
+        </tbody>
+       </table>
        <p>These exact numbers ($t$, $s$, and $L_{ce} \\approx 1.0337$) are recomputed in the notebook's first
        cell so you can check the loss by running it.</p>`,
     recipe:

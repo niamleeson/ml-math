@@ -218,19 +218,32 @@
        $L(M(\\phi))\\ge L(\\phi)$ &mdash; Theorem 1.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> for one E-step responsibility and one M-step mean update. Take $K=2$ in 1-D with
-       current $\\pi=(0.5,0.5)$, means $\\mu=(0,4)$, variances $\\sigma^2=(1,1)$, and three points
-       $x=(0.5,\\,1.5,\\,5.0)$. The Gaussian density is $\\mathcal{N}(x;\\mu,\\sigma^2)=\\tfrac{1}{\\sqrt{2\\pi\\sigma^2}}e^{-(x-\\mu)^2/2\\sigma^2}$.</p>
-       <ul>
-         <li><b>E-step, point $x_0=0.5$, responsibility to cluster 0.</b> Densities:
-         $\\mathcal{N}(0.5;0,1)=0.35206533$ and $\\mathcal{N}(0.5;4,1)=0.00087268$.</li>
-         <li>Weight by $\\pi$: numerator $=0.5\\times0.35206533=0.17603266$; the other term $=0.5\\times0.00087268=0.00043634$.</li>
-         <li>Denominator (their sum) $=0.17646900$.</li>
-         <li><b>Responsibility</b> $\\gamma_{0,0}=0.17603266/0.17646900=\\mathbf{0.997527}$ (point 0 is almost surely from cluster 0).</li>
-         <li>Doing the same for all three points gives column-0 responsibilities $\\gamma_{\\cdot,0}=(0.997527,\\,0.880797,\\,0.000006)$.</li>
-         <li><b>M-step, new $\\mu_0$.</b> Effective count $N_0=\\sum_i\\gamma_{i,0}=0.997527+0.880797+0.000006=1.878331$.
-         Numerator $\\sum_i\\gamma_{i,0}x_i=0.997527\\cdot0.5+0.880797\\cdot1.5+0.000006\\cdot5.0=1.81999$.
-         So $\\mu_0^{\\text{new}}=1.81999/1.878331=\\mathbf{0.96894}$ &mdash; the cluster-0 centre moves toward the points it is responsible for.</li>
+      `<p><b>Worked numbers</b> for one full E-step and one M-step mean update. Take $K=2$ ($K$ = number of
+       clusters) in 1-D with current weights $\\pi=(0.5,0.5)$, means $\\mu=(0,4)$, variances $\\sigma^2=(1,1)$, and
+       three points $x=(0.5,\\,1.5,\\,5.0)$. The Gaussian density (the bell curve height at $x$) is
+       $\\mathcal{N}(x;\\mu,\\sigma^2)=\\tfrac{1}{\\sqrt{2\\pi\\sigma^2}}e^{-(x-\\mu)^2/2\\sigma^2}$.</p>
+       <p><b>E-step, point $x_0=0.5$, responsibility to cluster 0</b> (the chance point 0 came from cluster 0):</p>
+       <ul class="steps">
+         <li>Densities: $\\mathcal{N}(0.5;0,1)=0.35206533$ and $\\mathcal{N}(0.5;4,1)=0.00087268$.</li>
+         <li>Weight by $\\pi$: cluster-0 numerator $=0.5\\times0.35206533=0.17603266$; cluster-1 term $=0.5\\times0.00087268=0.00043634$.</li>
+         <li>Denominator (their sum) $=0.17603266+0.00043634=0.17646900$.</li>
+         <li><b>Responsibility</b> $\\gamma_{0,0}=0.17603266/0.17646900=\\mathbf{0.997527}$ &mdash; point 0 is almost surely from cluster 0.</li>
+       </ul>
+       <p>Repeating for all three points gives the full responsibility table (each row sums to 1):</p>
+       <table class="extable">
+         <caption>E-step output: $\\gamma_{ik}$ = posterior probability point $i$ came from cluster $k$.</caption>
+         <thead><tr><th>point $x_i$</th><th class="num">$\\gamma_{i,0}$ (cluster 0, $\\mu{=}0$)</th><th class="num">$\\gamma_{i,1}$ (cluster 1, $\\mu{=}4$)</th><th class="num">row sum</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$0.5$</td><td class="num">0.997527</td><td class="num">0.002473</td><td class="num">1.000000</td></tr>
+           <tr><td class="row-h">$1.5$</td><td class="num">0.880797</td><td class="num">0.119203</td><td class="num">1.000000</td></tr>
+           <tr><td class="row-h">$5.0$</td><td class="num">0.000006</td><td class="num">0.999994</td><td class="num">1.000000</td></tr>
+         </tbody>
+       </table>
+       <p><b>M-step, new $\\mu_0$</b> (cluster-0 centre = responsibility-weighted average of the points):</p>
+       <ul class="steps">
+         <li>Effective count $N_0=\\sum_i\\gamma_{i,0}=0.997527+0.880797+0.000006=\\mathbf{1.878331}$.</li>
+         <li>Weighted sum $\\sum_i\\gamma_{i,0}\\,x_i=0.997527\\cdot0.5+0.880797\\cdot1.5+0.000006\\cdot5.0=0.498764+1.321196+0.000030=1.819990$.</li>
+         <li>$\\mu_0^{\\text{new}}=1.819990/1.878331=\\mathbf{0.96894}$ &mdash; the centre moves from $0$ toward the points it owns.</li>
        </ul>
        <p>The CODE cell recomputes these exact numbers and prints them.</p>`,
 

@@ -211,9 +211,19 @@
     example:
       `<p><b>Worked numbers (the $1/(1-p)$ scaling).</b> Take a layer output vector
        $\\mathbf{y} = [2,\\,4,\\,6,\\,8]$ and inverted dropout with drop probability $p_{\\text{drop}} = 0.5$,
-       so keep $p = 1 - 0.5 = 0.5$ and the scale is $1/p = 2$.</p>
-       <ul>
-         <li>Suppose the sampled mask keeps units 1, 3, 4 and drops unit 2: $\\mathbf{r} = [1,\\,0,\\,1,\\,1]$.</li>
+       so keep $p = 1 - 0.5 = 0.5$ and the scale is $1/p = 2$. The sampled mask keeps units 1, 3, 4 and drops
+       unit 2: $\\mathbf{r} = [1,\\,0,\\,1,\\,1]$.</p>
+       <table class="extable">
+         <caption>Per-unit: train output $= y\\cdot r/p$ (kept units doubled, dropped zeroed); eval output $= y$ unchanged.</caption>
+         <thead><tr><th>unit</th><th class="num">$y$</th><th class="num">mask $r$</th><th class="num">train $= y\\,r/p$</th><th class="num">eval $= y$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">2</td><td class="num">1</td><td class="num">4</td><td class="num">2</td></tr>
+           <tr><td class="row-h">2</td><td class="num">4</td><td class="num">0</td><td class="num">0</td><td class="num">4</td></tr>
+           <tr><td class="row-h">3</td><td class="num">6</td><td class="num">1</td><td class="num">12</td><td class="num">6</td></tr>
+           <tr><td class="row-h">4</td><td class="num">8</td><td class="num">1</td><td class="num">16</td><td class="num">8</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
          <li><b>Train output</b> $= \\mathbf{y} * \\mathbf{r} / p
          = [2,\\,0,\\,6,\\,8] \\times 2 = [\\,4,\\,0,\\,12,\\,16\\,]$. The kept units are doubled; the dropped
          one is 0.</li>

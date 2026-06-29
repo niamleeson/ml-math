@@ -254,9 +254,25 @@
         $= 0.5 + (0.5)(0.125) = 0.5 + 0.0625 = 0.5625$.</li>
         <li><b>Plug in $k=6$.</b> $P(\\text{visible}) = 6/6 = 1$. Accuracy $= 1\\cdot 1 + 0\\cdot 0.125 = 1.0$.</li>
        </ul>
+       <p>The whole curve, with the trained tiny model's measured accuracy alongside the prediction:</p>
+       <table class="extable">
+        <caption>Expected accuracy $\\tfrac{k}{6} + (1-\\tfrac{k}{6})\\tfrac{1}{8}$ vs. the measured toy run, for $k = 1\\dots 6$.</caption>
+        <thead>
+         <tr><th>$k$ fused</th><th class="num">$P(\\text{visible}) = k/6$</th>
+             <th class="num">predicted acc</th><th class="num">measured acc</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.1667</td><td class="num">0.2708</td><td class="num">0.22</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.3333</td><td class="num">0.4167</td><td class="num">0.32</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.5000</td><td class="num">0.5625</td><td class="num">0.56</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.6667</td><td class="num">0.7083</td><td class="num">0.70</td></tr>
+         <tr><td class="row-h">5</td><td class="num">0.8333</td><td class="num">0.8542</td><td class="num">0.86</td></tr>
+         <tr><td class="row-h">6</td><td class="num">1.0000</td><td class="num">1.0000</td><td class="num">1.00</td></tr>
+        </tbody>
+       </table>
        <p>So the predicted curve is $0.27, 0.42, 0.56, 0.71, 0.85, 1.00$ for $k = 1\\dots 6$. The trained tiny model
-       below tracks this closely (it measured $\\approx 0.22, 0.32, 0.56, 0.70, 0.86, 1.00$): more fused passages
-       &rarr; the spread-out evidence is found &rarr; higher accuracy. This is the paper's effect in miniature.</p>`,
+       tracks it closely: more fused passages &rarr; the spread-out evidence is found &rarr; higher accuracy. This
+       is the paper's effect in miniature.</p>`,
     recipe:
       `<ol>
         <li><b>Build the pieces</b> with <code>torch.nn</code>: a token <code>nn.Embedding</code>, a small

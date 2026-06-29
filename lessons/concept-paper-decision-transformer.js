@@ -259,18 +259,21 @@
        from $t$ onward. Compute it in one backward pass, accumulating from the end:</p>
        <ol class="steps">
         <li><b>Total return</b> (the target you would condition on): $\\hat R_1 = 0+0+0+1+1+1+1+0+0+0 = \\mathbf{4}$.</li>
-        <li><b>Walk backward.</b> Start an accumulator at $0$ at the end and add each reward as you move left:
-          <ul>
-           <li>$t=10$: $\\hat R_{10}=0$. &nbsp; $t=9$: $0$. &nbsp; $t=8$: $0$ &nbsp;<i>(no reward left)</i>.</li>
-           <li>$t=7$: $+1 \\Rightarrow \\hat R_7 = 1$. &nbsp; $t=6$: $+1 \\Rightarrow \\hat R_6 = 2$.
-               &nbsp; $t=5$: $+1 \\Rightarrow \\hat R_5 = 3$. &nbsp; $t=4$: $+1 \\Rightarrow \\hat R_4 = 4$.</li>
-           <li>$t=3,2,1$: rewards are $0$, so the accumulator stays at $4$: $\\hat R_3=\\hat R_2=\\hat R_1=4$.</li>
-          </ul>
-        </li>
-        <li><b>Result:</b>
-          $$ \\hat R = [\\,\\mathbf{4},\\,\\mathbf{4},\\,\\mathbf{4},\\,\\mathbf{4},\\,\\mathbf{3},\\,\\mathbf{2},\\,\\mathbf{1},\\,\\mathbf{0},\\,\\mathbf{0},\\,\\mathbf{0}\\,]. $$
-        </li>
+        <li><b>Walk backward.</b> Start an accumulator at $0$ past the end and add each reward as you move left:
+        $t=10,9,8$ add $0$ (acc stays $0$); $t=7$ adds $+1 \\Rightarrow 1$; $t=6 \\Rightarrow 2$;
+        $t=5 \\Rightarrow 3$; $t=4 \\Rightarrow 4$; $t=3,2,1$ add $0$, so the accumulator holds at $4$.</li>
        </ol>
+       <p>Lining the reward up against its return-to-go, timestep by timestep:</p>
+       <table class="extable">
+        <caption>Return-to-go is the running suffix sum of reward: each $\\hat R_t = \\hat R_{t+1} + r_t$.</caption>
+        <thead>
+         <tr><th>$t$</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">6</th><th class="num">7</th><th class="num">8</th><th class="num">9</th><th class="num">10</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">reward $r_t$</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="row-h">return-to-go $\\hat R_t$</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">2</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        </tbody>
+       </table>
        <p><b>Read it back.</b> The first four return-to-go values are $4$: at those steps the whole $+4$ of reward
        is still ahead. Each time a $+1$ is collected the remaining target drops by $1$ &mdash; precisely the
        test-time decrement $\\hat R_{t+1} = \\hat R_t - r_t$. The token stream the model trains on is

@@ -255,20 +255,31 @@
        MFCC clusters you started from (&sect;II-A).</p>`,
     example:
       `<p>Work the masked-prediction loss at <b>one</b> masked frame by hand. Suppose k-means produced $C=4$
-       clusters and the true cluster of the masked frame is $z_t=2$. The model's head (Eq 3) compared the
-       projected encoder output $A o_t$ to the four codewords and got these cosine-similarity scores, already
-       divided by the temperature $\\tau=0.1$ (so they are the softmax logits):</p>
-       <p>$$ \\big[\\mathrm{sim}(A o_t,e_c)/\\tau\\big]_{c=1\\ldots4} = [\\,1.0,\\;3.0,\\;0.5,\\;-1.0\\,]. $$</p>
+       clusters and the true cluster of the masked frame is $z_t=2$. The head (Eq 3) scored the projected
+       encoder output $A o_t$ against the four codewords by cosine similarity and divided by the temperature
+       $\\tau=0.1$, giving the softmax logits $[\\,1.0,\\;3.0,\\;0.5,\\;-1.0\\,]$. The table runs the softmax of
+       Eq 3 cluster by cluster:</p>
+       <table class="extable">
+        <caption>Softmax over the $C=4$ clusters (Eq 3); true cluster is $z_t=2$.</caption>
+        <thead><tr><th>cluster $c$</th><th class="num">logit $\\mathrm{sim}/\\tau$</th><th class="num">$e^{\\text{logit}}$</th><th class="num">$p_f(c)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">1.0</td><td class="num">2.718</td><td class="num">0.1095</td></tr>
+         <tr><td class="row-h">2 (true)</td><td class="num">3.0</td><td class="num">20.086</td><td class="num">0.8093</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.5</td><td class="num">1.649</td><td class="num">0.0664</td></tr>
+         <tr><td class="row-h">4</td><td class="num">-1.0</td><td class="num">0.368</td><td class="num">0.0148</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">24.821</td><td class="num">1.0000</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Softmax (turn scores into cluster probabilities).</b> Exponentiate:
-        $e^{1.0},e^{3.0},e^{0.5},e^{-1.0} = [2.718,\\,20.086,\\,1.649,\\,0.368]$, which sum to $24.821$.
-        Divide: $p_f \\approx [0.1095,\\,0.8093,\\,0.0664,\\,0.0148]$. The big logit ($3.0$, cluster 2) becomes the
-        dominant probability.</li>
-        <li><b>Read off the true cluster's probability.</b> The true cluster is $z_t=2$, so
-        $p_f(z_t\\mid\\tilde X,t) = 0.8093$ &mdash; the model is fairly confident.</li>
-        <li><b>Cross-entropy loss at this masked frame.</b> $-\\log(0.8093) = 0.2115$. (If it had been certain
-        &mdash; probability $1.0$ on cluster 2 &mdash; the loss would be $-\\log 1 = 0$; if it had put only $0.05$
-        there, the loss would be $-\\log 0.05 = 3.00$.)</li>
+        <li><b>Exponentiate the logits.</b> $e^{1.0},e^{3.0},e^{0.5},e^{-1.0} = 2.718,\\,20.086,\\,1.649,\\,0.368$
+        (the $e^{\\text{logit}}$ column), which sum to $2.718+20.086+1.649+0.368 = 24.821$.</li>
+        <li><b>Divide each by the sum.</b> $p_f = [\\,2.718,\\,20.086,\\,1.649,\\,0.368\\,]/24.821 \\approx
+        [\\,0.1095,\\,0.8093,\\,0.0664,\\,0.0148\\,]$ (the $p_f(c)$ column). The big logit ($3.0$, cluster 2)
+        dominates.</li>
+        <li><b>Read off the true cluster.</b> $z_t=2$, so $p_f(z_t\\mid\\tilde X,t) = 0.8093$.</li>
+        <li><b>Cross-entropy loss at this masked frame.</b> $-\\log(0.8093) = 0.2115$. (Certain &mdash;
+        probability $1.0$ on cluster 2 &mdash; would give $-\\log 1 = 0$; only $0.05$ there would give
+        $-\\log 0.05 = 3.00$.)</li>
        </ul>
        <p>The full masked loss $L_m$ sums (or averages) this over all masked frames $t\\in M$; unmasked frames are
        skipped when $\\alpha=1$. These exact numbers ($p_f=[0.1095,\\ldots,0.8093,\\ldots]$, loss $0.2115$) are

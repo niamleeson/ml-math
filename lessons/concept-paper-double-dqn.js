@@ -214,11 +214,15 @@
     example:
       `<p><b>The two TD targets side by side, with numbers.</b> One transition. Reward $R_{t+1}=1$,
        discount $\\gamma=0.99$. The next state $S_{t+1}$ has TWO actions. The two networks disagree about
-       them (estimation noise):</p>
-       <ul>
-         <li>Online net $\\theta$: $\\;Q(S_{t+1},a_0;\\theta)=3.0,\\quad Q(S_{t+1},a_1;\\theta)=4.0$.</li>
-         <li>Target net $\\theta^-$: $\\;Q(S_{t+1},a_0;\\theta^-)=3.2,\\quad Q(S_{t+1},a_1;\\theta^-)=2.5$.</li>
-       </ul>
+       them (estimation noise) &mdash; here is what each net predicts for each next action:</p>
+       <table class="extable">
+         <caption>Per-action $Q$-values at $S_{t+1}$ from each network (the inputs to both targets).</caption>
+         <thead><tr><th>next action</th><th class="num">online $Q(\\cdot;\\theta)$</th><th class="num">target $Q(\\cdot;\\theta^-)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$a_0$</td><td class="num">3.0</td><td class="num">3.2</td></tr>
+           <tr><td class="row-h">$a_1$</td><td class="num">4.0</td><td class="num">2.5</td></tr>
+         </tbody>
+       </table>
        <p><b>Standard DQN (Eq. 3)</b> &mdash; $\\max$ over the TARGET net:</p>
        <ul class="steps">
          <li>$\\max_a Q(S_{t+1},a;\\theta^-) = \\max(3.2,\\ 2.5) = 3.2$  (it picks $a_0$, the target net's larger value).</li>
@@ -230,6 +234,15 @@
          <li>EVALUATE that same $a_1$ in the target net: $Q(S_{t+1},a_1;\\theta^-) = 2.5$.</li>
          <li>$Y^{DoubleDQN} = 1 + 0.99\\times 2.5 = 1 + 2.475 = \\mathbf{3.475}$.</li>
        </ul>
+       <p><b>The two targets compared:</b></p>
+       <table class="extable">
+         <caption>DQN grabs the target net's largest value; Double DQN scores only the online net's pick.</caption>
+         <thead><tr><th>target</th><th>action used</th><th class="num">bootstrap value</th><th class="num">$Y = 1 + 0.99\\times\\text{value}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">DQN</td><td>$a_0$ (target's max)</td><td class="num">3.2</td><td class="num">4.168</td></tr>
+           <tr><td class="row-h">Double DQN</td><td>$a_1$ (online's pick)</td><td class="num">2.5</td><td class="num">3.475</td></tr>
+         </tbody>
+       </table>
        <p><b>The gap is the overestimation:</b> $4.168 - 3.475 = 0.693$. DQN inflated the target by grabbing
        the target net's lucky $3.2$ (action $a_0$). Double DQN refused to: the online net's actual pick was
        $a_1$, which the target net rates at only $2.5$. The two nets had to AGREE for a value to count, and

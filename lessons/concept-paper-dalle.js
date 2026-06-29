@@ -385,7 +385,17 @@
     example:
       `<p>This is a read-only paper; the numbers below are the paper's stated
        architecture sizes, worked through to make the "factor of 192" compression
-       concrete. (These are quoted sizes, not a training run.)</p>
+       concrete. (These are quoted sizes, not a training run.) The table compares
+       the raw-pixel representation against the dVAE-token representation:</p>
+       <table class="extable">
+        <caption>Raw $256\\times256$ RGB image vs. the dVAE's $32\\times32$ token grid (&sect;2, Stage One).</caption>
+        <thead><tr><th>quantity</th><th class="num">raw pixels</th><th class="num">dVAE tokens</th><th class="num">factor</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">grid positions</td><td class="num">$256\\times256 = 65536$</td><td class="num">$32\\times32 = 1024$</td><td class="num">$64\\times$</td></tr>
+         <tr><td class="row-h">numbers per position</td><td class="num">$3$ (R,G,B)</td><td class="num">$1$ (token)</td><td class="num">$3\\times$</td></tr>
+         <tr><td class="row-h">total numbers</td><td class="num">$196608$</td><td class="num">$1024$</td><td class="num">$192\\times$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Raw pixel positions.</b> A 256-by-256 image has
         $256 \\times 256 = 65536$ pixel positions. With three color channels that

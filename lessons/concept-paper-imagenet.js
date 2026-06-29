@@ -327,25 +327,32 @@
        &mdash; it is engineering justified by the measured precision.</p>`,
     example:
       `<p>Work the dataset's headline numbers by hand, using only figures <i>quoted</i> from the paper, to feel
-       the scale and the noise. (Every number below is the paper's own; nothing is invented.)</p>
+       the scale and the noise. (Every number below is the paper's own; nothing is invented.) The table is the
+       four-line ledger; the steps show the arithmetic.</p>
+       <table class="extable">
+        <caption>Four back-of-envelope checks against the paper's quoted figures.</caption>
+        <thead><tr><th>quantity</th><th class="num">computation</th><th class="num">result</th><th class="num">paper says</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">images / synset</td><td class="num">$3{,}200{,}000 / 5247$</td><td class="num">$\\approx 610$</td><td class="num">"over 600"</td></tr>
+         <tr><td class="row-h">correct in raw pool</td><td class="num">$10{,}000 \\times 0.10$</td><td class="num">$\\approx 1{,}000$</td><td class="num">500&ndash;1000 target</td></tr>
+         <tr><td class="row-h">wrong / 600-img synset</td><td class="num">$600 \\times 0.003$</td><td class="num">$\\approx 2$</td><td class="num">99.7% precision</td></tr>
+         <tr><td class="row-h">WordNet coverage</td><td class="num">$5247 / 80{,}000$</td><td class="num">$\\approx 6.6\\%$</td><td class="num">"&sim;10%"</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Average images per synset.</b> The snapshot has "5247 synsets and 3.2 million images" (Abstract).
-        Divide: $3{,}200{,}000 / 5247 \\approx 610$ images per synset &mdash; consistent with the paper's
-        statement "on average over 600 images are collected for each synset" (Section 2). So a typical concept
-        bucket holds roughly 600 images.</li>
-        <li><b>How much cleaning the crowd does.</b> Each synset starts with "over 10K images on average" as
-        web candidates, but search is "around 10%" accurate (Section 3.1). Ten thousand candidates at 10%
-        correct is about $10{,}000 \\times 0.10 = 1{,}000$ truly-correct images hiding in the pool &mdash; in
-        the right ballpark for the 500&ndash;1000-per-synset target. The crowd's job is to find those and
-        discard the other &sim;9,000. That is why the verification stage exists.</li>
-        <li><b>Resulting purity.</b> After cleaning, "an average of 99.7% precision is achieved" (Figure 4).
-        In a 600-image synset that means about $600 \\times 0.003 \\approx 2$ wrong images on average &mdash;
-        a roughly 1-in-300 error rate. The pile goes from &sim;90% wrong (raw search) to &sim;0.3% wrong
-        (after the crowd).</li>
+        <li><b>Average images per synset.</b> "5247 synsets and 3.2 million images" (Abstract): divide
+        $3{,}200{,}000 / 5247 \\approx 610$ &mdash; consistent with "on average over 600 images are collected for
+        each synset" (Section 2).</li>
+        <li><b>How much cleaning the crowd does.</b> Each synset starts with "over 10K images on average" at
+        "around 10%" search accuracy (Section 3.1): $10{,}000 \\times 0.10 = 1{,}000$ truly-correct images hide
+        in the pool &mdash; in the right ballpark for the 500&ndash;1000 target. The crowd finds those and
+        discards the other &sim;9,000.</li>
+        <li><b>Resulting purity.</b> After cleaning, "an average of 99.7% precision" (Figure 4): in a 600-image
+        synset that is $600 \\times (1-0.997) = 600 \\times 0.003 \\approx 2$ wrong images &mdash; a 1-in-300
+        error rate. The pile goes from &sim;90% wrong to &sim;0.3% wrong.</li>
         <li><b>Coverage so far.</b> WordNet has "around 80,000 noun synsets" (Section 2); the snapshot covers
-        5247. That is $5247 / 80{,}000 \\approx 6.6\\%$ by this count, and the paper rounds the broader progress
-        to "&sim; 10% of the WordNet synsets" (Section 5.1). Either way: a small but substantial slice, with the
-        rest the stated future goal of "around 50 million images" (Section 3).</li>
+        5247: $5247 / 80{,}000 \\approx 6.6\\%$, which the paper rounds up to "&sim;10% of the WordNet synsets"
+        (Section 5.1).</li>
        </ul>
        <p>These four numbers tell the story: roughly 600 clean images per concept, distilled by the crowd from
        a &sim;90%-noisy web pool, at &sim;99.7% precision, over a few thousand of WordNet's tens of thousands of

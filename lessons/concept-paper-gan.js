@@ -223,7 +223,29 @@
         the game value hits its optimum $C(G) = -\\log 4 = -1.3863$. Equivalently each <b>BCE</b> (binary
         cross-entropy) loss term settles at $-\\log\\tfrac12 = \\log 2 = 0.6931$, so the discriminator's total
         loss settles near $2\\log 2 = 1.3863$. Watch for those two numbers in the loss panel below.</li>
-       </ul>`,
+       </ul>
+       <p><b>The optimal discriminator, before vs at convergence</b> (Proposition 1, plugging two density
+       pairs into $D^*_G = p_{\\text{data}}/(p_{\\text{data}}+p_g)$):</p>
+       <table class="extable">
+        <caption>As the generator matches the data ($p_g \\to p_{\\text{data}}$), the best possible $D$ falls to $0.5$ &mdash; it can only guess.</caption>
+        <thead><tr><th>situation</th><th class="num">$p_{\\text{data}}(x)$</th><th class="num">$p_g(x)$</th><th class="num">$D^*_G(x)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$G$ still losing</td><td class="num">0.6</td><td class="num">0.2</td><td class="num">0.75</td></tr>
+         <tr><td class="row-h">$G$ converged</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.50</td></tr>
+        </tbody>
+       </table>
+       <p><b>The discriminator's loss: a normal classifier vs a converged GAN.</b> Unlike an ordinary
+       classifier, a winning GAN drives $D$'s loss <i>up</i> toward chance, not down to $0$:</p>
+       <table class="extable">
+        <caption>BCE terms at the two regimes. Each side is $-\\log$ of $D$'s confidence; at equilibrium both sides land on $\\log 2$.</caption>
+        <thead><tr><th>regime</th><th class="num">$D(x)$ on real</th><th class="num">real BCE</th><th class="num">fake BCE</th><th class="num">total $D$-loss</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$D$ perfect (won)</td><td class="num">$\\approx 1$</td><td class="num">$\\approx 0$</td><td class="num">$\\approx 0$</td><td class="num">$\\approx 0$</td></tr>
+         <tr><td class="row-h">converged ($D=0.5$)</td><td class="num">0.50</td><td class="num">0.6931</td><td class="num">0.6931</td><td class="num">1.3863</td></tr>
+        </tbody>
+       </table>
+       <p>So the target plateau is total $D$-loss $\\approx 2\\log 2 = 1.3863$ (the optimum $-\\log 4$),
+       <i>not</i> $0$.</p>`,
     recipe:
       `<ol>
         <li><b>Build the generator</b> $G$: an MLP <code>z_dim &rarr; hidden &rarr; 784</code> with a

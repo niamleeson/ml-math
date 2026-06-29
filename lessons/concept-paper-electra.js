@@ -237,22 +237,24 @@ $$ \\min_{\\theta_G,\\theta_D}\\ \\sum_{\\mathbf{x}\\in\\mathcal{X}} \\mathcal{L
        was <code>the cat sat down</code>; the generator was asked to fill two masked positions and produced the
        corrupted sentence <code>the dog sat down</code> — so position 2 was <b>replaced</b> (<code>cat</code>→
        <code>dog</code>) and position 4 happened to be re-sampled <b>back to the original</b> (<code>down</code>),
-       i.e. "not replaced." Positions 1 and 3 were never masked (real). The real/replaced labels $y_t$
-       ($1$ = real) are therefore:</p>
-       <ul>
-        <li>$t=1$ <code>the</code>: real, $y_1 = 1$</li>
-        <li>$t=2$ <code>dog</code>: replaced, $y_2 = 0$</li>
-        <li>$t=3$ <code>sat</code>: real, $y_3 = 1$</li>
-        <li>$t=4$ <code>down</code>: real (re-sampled to original), $y_4 = 1$</li>
-       </ul>
-       <p>Say the discriminator outputs these probabilities-of-real $D_t$: $D_1 = 0.9,\\ D_2 = 0.2,\\ D_3 = 0.8,\\
-       D_4 = 0.6$. The per-token loss is $-\\log D_t$ when $y_t=1$ and $-\\log(1-D_t)$ when $y_t=0$:</p>
+       i.e. "not replaced." Positions 1 and 3 were never masked (real). The label is $y_t = 1$ when the corrupted
+       token equals the original, else $0$; the per-token loss is $-\\log D_t$ when $y_t=1$ and $-\\log(1-D_t)$
+       when $y_t=0$. Say the discriminator outputs probabilities-of-real $D = [\\,0.9,\\,0.2,\\,0.8,\\,0.6\\,]$:</p>
+       <table class="extable">
+        <caption>Per-token RTD binary cross-entropy, summed over <b>all</b> $n=4$ positions (not just the masked ones).</caption>
+        <thead>
+         <tr><th>$t$</th><th>token</th><th>status</th><th class="num">label $y_t$</th><th class="num">$D_t$ (P real)</th><th class="num">per-token loss</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="num">1</td><td><code>the</code></td><td>real (unmasked)</td><td class="num">1</td><td class="num">0.9</td><td class="num">$-\\log 0.9 = 0.1054$</td></tr>
+         <tr><td class="num">2</td><td><code>dog</code></td><td>replaced</td><td class="num">0</td><td class="num">0.2</td><td class="num">$-\\log 0.8 = 0.2231$</td></tr>
+         <tr><td class="num">3</td><td><code>sat</code></td><td>real (unmasked)</td><td class="num">1</td><td class="num">0.8</td><td class="num">$-\\log 0.8 = 0.2231$</td></tr>
+         <tr><td class="num">4</td><td><code>down</code></td><td>real (re-sampled)</td><td class="num">1</td><td class="num">0.6</td><td class="num">$-\\log 0.6 = 0.5108$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li>$t=1$ (real): $-\\log(0.9) = 0.1054$.</li>
-        <li>$t=2$ (replaced): $-\\log(1 - 0.2) = -\\log(0.8) = 0.2231$.</li>
-        <li>$t=3$ (real): $-\\log(0.8) = 0.2231$.</li>
-        <li>$t=4$ (real): $-\\log(0.6) = 0.5108$.</li>
-        <li><b>Sum over all 4 tokens</b>: $0.1054 + 0.2231 + 0.2231 + 0.5108 = 1.0624$; <b>mean per token</b> $= 0.2656$.</li>
+        <li><b>Sum over all 4 tokens:</b> $0.1054 + 0.2231 + 0.2231 + 0.5108 = 1.0624$.</li>
+        <li><b>Mean per token:</b> $1.0624 / 4 = 0.2656$.</li>
        </ul>
        <p>Notice the loss is summed over <b>all four</b> positions, including the unmasked real ones — that is the
        RTD efficiency point: even <code>the</code> and <code>sat</code> contribute a (small) gradient. The biggest

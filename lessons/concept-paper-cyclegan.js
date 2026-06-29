@@ -232,16 +232,22 @@
        fixed $F$. Cycle consistency is the regularizer that selects, among all distribution-matching $G$'s, the
        ones that are invertible &mdash; the meaningful translations.</p>`,
     example:
-      `<p>Work the cycle-consistency loss on one round trip by hand, with real numbers (these are recomputed in
-       the notebook's first cell). Take a 2-D toy point so every coordinate is visible.</p>
+      `<p>Work the cycle-consistency loss (Eq. 2) on one forward and one backward round trip by hand, with real
+       numbers (these are recomputed in the notebook's first cell). Take 2-D toy points so every coordinate is
+       visible. Here is the data for the two round trips &mdash; original, the two translations, and the
+       reconstruction:</p>
+       <table class="extable">
+        <caption>One forward cycle ($x\\to G\\to F$) and one backward cycle ($y\\to F\\to G$). $L_1$ error compares the <b>reconstruction</b> to the <b>original</b> only.</caption>
+        <thead><tr><th>round trip</th><th class="num">original</th><th class="num">step 1</th><th class="num">reconstruction</th><th class="num">$L_1$ error</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">forward $x\\to G\\to F$</td><td class="num">$x=[1.0,\\,0.0]$</td><td class="num">$G(x)=[0.0,\\,1.2]$</td><td class="num">$F(G(x))=[0.8,\\,-0.1]$</td><td class="num">0.30</td></tr>
+         <tr><td class="row-h">backward $y\\to F\\to G$</td><td class="num">$y=[0.0,\\,1.0]$</td><td class="num">$F(y)=[1.1,\\,0.2]$</td><td class="num">$G(F(y))=[0.05,\\,0.9]$</td><td class="num">0.15</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Forward round trip.</b> Input $x = [1.0,\\ 0.0]$. Say $G(x) = [0.0,\\ 1.2]$ (translated into
-        domain $Y$), and then $F(G(x)) = [0.8,\\ -0.1]$ (translated back toward $X$). The forward $L_1$ error is
-        $\\|F(G(x))-x\\|_1 = |0.8-1.0| + |-0.1-0.0| = 0.20 + 0.10 = 0.30$.</li>
-        <li><b>Backward round trip.</b> Input $y = [0.0,\\ 1.0]$. Say $F(y) = [1.1,\\ 0.2]$ and
-        $G(F(y)) = [0.05,\\ 0.9]$. The backward $L_1$ error is
-        $\\|G(F(y))-y\\|_1 = |0.05-0.0| + |0.9-1.0| = 0.05 + 0.10 = 0.15$.</li>
-        <li><b>The cycle loss for this pair</b> (Eq. 2, here with one sample per expectation) is the sum:
+        <li><b>Forward $L_1$ error.</b> $\\|F(G(x))-x\\|_1 = |0.8-1.0| + |-0.1-0.0| = 0.20 + 0.10 = 0.30$.</li>
+        <li><b>Backward $L_1$ error.</b> $\\|G(F(y))-y\\|_1 = |0.05-0.0| + |0.9-1.0| = 0.05 + 0.10 = 0.15$.</li>
+        <li><b>The cycle loss for this pair</b> (Eq. 2, one sample per expectation) is the sum:
         $\\mathcal{L}_{\\text{cyc}} = 0.30 + 0.15 = 0.45$.</li>
         <li><b>Its weight in the full objective</b> (Eq. 3) with $\\lambda = 10$:
         $\\lambda\\,\\mathcal{L}_{\\text{cyc}} = 10 \\times 0.45 = 4.5$. This large weight is why the round-trip

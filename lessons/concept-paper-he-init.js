@@ -237,22 +237,37 @@
        use the fan-in form.</p>`,
 
     example:
-      `<p><b>Worked numbers</b> &mdash; the $2/n_{\\text{in}}$ scale, the heart of the method.</p>
-       <ul>
-         <li><b>A layer with fan-in $n_l=256$.</b> Weight variance $\\mathrm{Var}[w]=2/256=0.0078125$, so the
-         standard deviation is $\\sqrt{0.0078125}=0.088388\\ldots$ &mdash; draw each weight from a zero-mean
-         Gaussian with std $\\approx 0.0884$.</li>
-         <li><b>A layer with fan-in $n_l=512$.</b> $\\mathrm{Var}[w]=2/512=0.00390625$, std
-         $=\\sqrt{2/512}=0.0625$ exactly. Wider fan-in &rArr; smaller weights, because more inputs are being
-         summed.</li>
-         <li><b>Why not Xavier's $1/n$?</b> With $n=512$, Xavier gives std $\\sqrt{1/512}=0.0442$, a factor
-         $\\sqrt{2}=1.414$ smaller. The ReLU variance multiplier is then $\\tfrac12 n\\cdot(1/n)=\\tfrac12$: each
-         layer halves the variance. After $L=20$ layers the activation variance is scaled by
-         $(\\tfrac12)^{20}\\approx 9.5\\times10^{-7}$ &mdash; effectively zero. He's factor of 2 makes the
-         multiplier $\\tfrac12 n\\cdot(2/n)=1$, so variance is preserved.</li>
+      `<p><b>Worked numbers</b> &mdash; the $2/n_{\\text{in}}$ scale, the heart of the method. Take a layer with
+       fan-in $n_l=256$ and plug into $\\mathrm{Var}[w]=2/n_l$:</p>
+       <ul class="steps">
+         <li><b>Variance.</b> $\\mathrm{Var}[w]=2/256=0.0078125$.</li>
+         <li><b>Std (square root).</b> $\\sigma=\\sqrt{0.0078125}=\\mathbf{0.088388}\\ldots$ &mdash; draw each
+         weight from a zero-mean Gaussian with std $\\approx 0.0884$.</li>
+         <li><b>Check the ReLU multiplier.</b> per-layer factor $\\tfrac12 n_l\\,\\mathrm{Var}[w]=\\tfrac12\\cdot256\\cdot0.0078125=\\mathbf{1}$
+         &mdash; variance is preserved, exactly what we forced in eq. (10).</li>
+         <li><b>Compare to Xavier $1/n$.</b> Xavier std $=\\sqrt{1/256}=0.0625$, a factor
+         $\\sqrt2=1.414$ smaller; its multiplier is $\\tfrac12\\cdot256\\cdot(1/256)=\\tfrac12$ &mdash; each layer
+         <i>halves</i> the variance.</li>
        </ul>
-       <p>The CODE cell recomputes these exact numbers ($\\sqrt{2/256}=0.088388$, $\\sqrt{2/512}=0.0625$) and the
-       CODEVIZ measures the $\\tfrac12$-per-layer collapse for real.</p>`,
+       <p>The table contrasts He vs Xavier across three fan-ins, and shows the per-layer ReLU multiplier each
+       produces (He keeps it at $1$; Xavier halves the signal every layer):</p>
+       <table class="extable">
+         <caption>He ($2/n$) vs Xavier-scale ($1/n$) standard deviations, and the resulting per-layer ReLU variance multiplier.</caption>
+         <thead>
+           <tr><th>fan-in $n$</th><th class="num">He std $\\sqrt{2/n}$</th><th class="num">Xavier std $\\sqrt{1/n}$</th><th class="num">He mult. $\\tfrac12 n\\cdot\\tfrac2n$</th><th class="num">Xavier mult. $\\tfrac12 n\\cdot\\tfrac1n$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">256</td><td class="num">0.088388</td><td class="num">0.062500</td><td class="num">1.0</td><td class="num">0.5</td></tr>
+           <tr><td class="row-h">512</td><td class="num">0.062500</td><td class="num">0.044194</td><td class="num">1.0</td><td class="num">0.5</td></tr>
+           <tr><td class="row-h">1152 ($3{\\times}3$, 128 ch.)</td><td class="num">0.041667</td><td class="num">0.029463</td><td class="num">1.0</td><td class="num">0.5</td></tr>
+         </tbody>
+       </table>
+       <p>Wider fan-in &rArr; smaller weights (more inputs are summed). The Xavier multiplier is $\\tfrac12$ at
+       every row, so after $L=20$ ReLU layers the activation variance is scaled by
+       $(\\tfrac12)^{20}=1/1{,}048{,}576\\approx 9.5\\times10^{-7}$ &mdash; effectively zero. He's factor of 2
+       keeps the multiplier at $1$, so variance is preserved. The CODE cell recomputes
+       $\\sqrt{2/256}=0.088388$ and $\\sqrt{2/512}=0.0625$, and the CODEVIZ measures the $\\tfrac12$-per-layer
+       collapse for real.</p>`,
 
     recipe:
       `<p><b>He initialization, as numbered steps</b> &mdash; for each weight tensor of a ReLU (or PReLU) layer:</p>

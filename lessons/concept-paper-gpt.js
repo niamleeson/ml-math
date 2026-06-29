@@ -298,9 +298,7 @@ $$ p(\\text{output} \\mid \\text{input}) \\qquad\\longrightarrow\\qquad p(\\text
         <li><b>Raw scores</b> $= QK^\\top/\\sqrt{d_k} = QK^\\top/\\sqrt 2$. Row for token 2 (the last) is
         $[\\,1,\\,1,\\,2\\,]/\\sqrt 2 = [0.707,\\,0.707,\\,1.414]$.</li>
         <li><b>Apply the causal mask.</b> Token 0 may see only itself; token 1 may see 0 and 1; token 2 may
-        see all three. So we set the "future" entries to $-\\infty$ before softmax: token 0's row becomes
-        $[0.707,\\,-\\infty,\\,-\\infty]$; token 1's row $[0,\\,0.707,\\,-\\infty]$; token 2's row is
-        unchanged $[0.707,\\,0.707,\\,1.414]$.</li>
+        see all three. We set the "future" entries to $-\\infty$ before softmax (the masked grid below).</li>
         <li><b>Softmax each (masked) row.</b> Token 0: $[1,\\,0,\\,0]$ &mdash; it can only attend to itself.
         Token 1: $\\mathrm{softmax}([0,\\,0.707]) \\approx [0.330,\\,0.670]$. Token 2:
         $\\mathrm{softmax}([0.707,0.707,1.414]) \\approx [0.248,\\,0.248,\\,0.504]$.</li>
@@ -308,19 +306,39 @@ $$ p(\\text{output} \\mid \\text{input}) \\qquad\\longrightarrow\\qquad p(\\text
         0.330[1,0]+0.670[0,1] = [0.330,\\,0.670]$; token 2 $\\to [0.752,\\,0.752]$. <b>Note token 0's output
         used no future information at all</b> &mdash; that is the mask doing its job.</li>
        </ul>
+       <table class="extable">
+        <caption>Masked scores (before softmax) then attention weights (after), per query token. $-\\infty$ entries are the forbidden future; softmax turns them into weight $0$.</caption>
+        <thead><tr><th>query token</th><th class="num">masked scores $[\\to 0,\\to 1,\\to 2]$</th><th class="num">attention weights</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">token 0</td><td class="num">$[0.707,\\,-\\infty,\\,-\\infty]$</td><td class="num">$[1.000,\\,0.000,\\,0.000]$</td></tr>
+         <tr><td class="row-h">token 1</td><td class="num">$[0.000,\\,0.707,\\,-\\infty]$</td><td class="num">$[0.330,\\,0.670,\\,0.000]$</td></tr>
+         <tr><td class="row-h">token 2</td><td class="num">$[0.707,\\,0.707,\\,1.414]$</td><td class="num">$[0.248,\\,0.248,\\,0.504]$</td></tr>
+        </tbody>
+       </table>
        <p><b>(b) Next-token cross-entropy on a tiny vocab of digits.</b> Vocab $=\\{0,1,2,3\\}$. Suppose at one
        position the head outputs logits $z=[1.0,\\,0.0,\\,3.0,\\,0.5]$ and the <i>true next token</i> is $2$.</p>
        <ul class="steps">
         <li><b>Exponentiate</b> (shift by the max, $3.0$, for stability):
         $e^{z-3}=[e^{-2},e^{-3},e^{0},e^{-2.5}] \\approx [0.1353,\\,0.0498,\\,1.0,\\,0.0821]$; sum
         $Z \\approx 1.2672$.</li>
-        <li><b>Softmax:</b> $p \\approx [0.1068,\\,0.0393,\\,0.7891,\\,0.0648]$. The model put $78.9\\%$ on
-        token 2.</li>
-        <li><b>Cross-entropy loss</b> at this position $= -\\ln p(2) = -\\ln(0.7891) \\approx \\mathbf{0.237}$.
-        (If the true next token had been the unlikely $1$, the loss would be $-\\ln(0.0393) \\approx 3.24$
-        &mdash; large, pushing the model to fix it.)</li>
+        <li><b>Softmax</b> (each $e^{z-3}$ divided by $Z$): $p \\approx [0.1068,\\,0.0393,\\,0.7891,\\,0.0648]$.
+        The model put $78.9\\%$ on token 2.</li>
+        <li><b>Cross-entropy loss</b> at this position $= -\\ln p(\\text{true})$. For true token $2$:
+        $-\\ln(0.7891) \\approx \\mathbf{0.237}$.</li>
        </ul>
-       <p>All of these exact numbers are recomputed in the notebook's first cells.</p>`,
+       <table class="extable">
+        <caption>Per-token softmax over the digit vocab, and the loss $-\\ln p$ if that token were the true next one. Logits $z=[1.0,\\,0.0,\\,3.0,\\,0.5]$.</caption>
+        <thead><tr><th>token</th><th class="num">logit $z$</th><th class="num">$e^{z-3}$</th><th class="num">softmax $p$</th><th class="num">$-\\ln p$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">1.0</td><td class="num">0.1353</td><td class="num">0.1068</td><td class="num">2.236</td></tr>
+         <tr><td class="row-h">1</td><td class="num">0.0</td><td class="num">0.0498</td><td class="num">0.0393</td><td class="num">3.238</td></tr>
+         <tr><td class="row-h">2 (true)</td><td class="num">3.0</td><td class="num">1.0000</td><td class="num">0.7891</td><td class="num">0.237</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.5</td><td class="num">0.0821</td><td class="num">0.0648</td><td class="num">2.736</td></tr>
+        </tbody>
+       </table>
+       <p>The loss is small ($0.237$) because the model put most mass on the token that truly came next. Had the
+       true token been the unlikely $1$, the loss would be $-\\ln(0.0393) \\approx 3.24$ &mdash; large, pushing the
+       model to fix it. All of these exact numbers are recomputed in the notebook's first cells.</p>`,
     recipe:
       `<ol>
         <li><b>Tokenize.</b> Map each character to an integer id (char-level vocab). Cut the text into

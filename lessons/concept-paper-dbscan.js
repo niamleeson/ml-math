@@ -239,23 +239,30 @@
        <code>cls-dbscan</code> lesson for the full statements.</p>`,
 
     example:
-      `<p><b>Worked core-point test.</b> Take $Eps=1.0$, $MinPts=4$, and these five 2-D points:</p>
-       <ul>
-         <li>$A=(0,0)$, $B=(0.5,0)$, $C=(0,0.6)$, $D=(0.8,0.6)$, and a far-off $E=(5,5)$.</li>
+      `<p><b>Worked core-point test.</b> Take $Eps=1.0$, $MinPts=4$, and these five 2-D points:
+       $A=(0,0)$, $B=(0.5,0)$, $C=(0,0.6)$, $D=(0.8,0.6)$, and a far-off $E=(5,5)$.</p>
+       <p><b>Is $A$ a core point?</b> Compute the Euclidean distance from $A$ to every point and keep those
+       $\\le Eps=1.0$ (Definition 1):</p>
+       <table class="extable">
+        <caption>Distances from $A=(0,0)$; a point is in $N_{Eps}(A)$ when $dist \\le Eps = 1.0$.</caption>
+        <thead><tr><th>point</th><th class="num">$dist(A,\\cdot)$</th><th>in $N_{Eps}(A)$?</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$A=(0,0)$</td><td class="num">$0$</td><td>yes (counts itself)</td></tr>
+         <tr><td class="row-h">$B=(0.5,0)$</td><td class="num">$\\sqrt{0.5^2}=0.50$</td><td>yes</td></tr>
+         <tr><td class="row-h">$C=(0,0.6)$</td><td class="num">$\\sqrt{0.6^2}=0.60$</td><td>yes</td></tr>
+         <tr><td class="row-h">$D=(0.8,0.6)$</td><td class="num">$\\sqrt{0.64+0.36}=1.00$</td><td>yes (exactly $=Eps$)</td></tr>
+         <tr><td class="row-h">$E=(5,5)$</td><td class="num">$\\sqrt{50}\\approx 7.07$</td><td>no (too far)</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Collect the neighborhood:</b> the four rows that pass give $N_{Eps}(A)=\\{A,B,C,D\\}$, so
+        $|N_{Eps}(A)|=4$.</li>
+        <li><b>Apply the core-point condition:</b> $|N_{Eps}(A)|=4 \\ge MinPts=4$ &mdash; the test holds, so
+        <b>$A$ is a core point.</b></li>
+        <li><b>Now test $E$:</b> $E$'s only neighbor within $Eps$ is itself, so $|N_{Eps}(E)|=1 \\lt 4$. $E$ is
+        <b>not</b> core; since no core point reaches it either, $E$ is <b>noise</b> (label $-1$).</li>
        </ul>
-       <p><b>Is $A$ a core point?</b> Compute distances from $A$ and keep those $\\le Eps=1.0$ (Definition 1):</p>
-       <ul>
-         <li>$dist(A,A)=0$ ✓ (a point is in its own neighborhood)</li>
-         <li>$dist(A,B)=\\sqrt{0.5^2+0^2}=0.5$ ✓</li>
-         <li>$dist(A,C)=\\sqrt{0^2+0.6^2}=0.6$ ✓</li>
-         <li>$dist(A,D)=\\sqrt{0.8^2+0.6^2}=\\sqrt{0.64+0.36}=\\sqrt{1.0}=1.0\\le 1.0$ ✓</li>
-         <li>$dist(A,E)=\\sqrt{5^2+5^2}=\\sqrt{50}\\approx 7.07$ ✗ (too far)</li>
-       </ul>
-       <p>So $N_{Eps}(A)=\\{A,B,C,D\\}$, giving $|N_{Eps}(A)|=4$. Since $4\\ge MinPts=4$, the core-point condition
-       holds: <b>$A$ is a core point.</b></p>
-       <p><b>Is $E$ a core point?</b> $E$'s only neighbor within $Eps$ is itself, so $|N_{Eps}(E)|=1 \\lt 4$. $E$ is
-       <b>not</b> core, and since no core point reaches it, $E$ is <b>noise</b>. The CODE cell recomputes these
-       exact neighborhood sizes and prints them.</p>`,
+       <p>The CODE cell recomputes these exact neighborhood sizes and prints them.</p>`,
 
     recipe:
       `<p><b>DBSCAN / ExpandCluster (Section 4.1), as numbered steps:</b></p>

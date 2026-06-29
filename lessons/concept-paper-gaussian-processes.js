@@ -251,22 +251,31 @@
        the "linear predictor"); the variance is independent of $\\mathbf{y}$.</p>`,
 
     example:
-      `<p><b>Worked numbers (the 2&times;2 kernel + one predictive mean)</b>. Two training points $x_1=0,\\ x_2=1$
-       with targets $\\mathbf{y}=[\\,1,\\,-1\\,]^\\top$. RBF kernel with $\\sigma_f^2=1,\\ \\ell=1$, and noise
-       $\\sigma_n^2=0.1$.</p>
-       <ul>
-         <li>Kernel entries: $k(0,0)=k(1,1)=1$ and $k(0,1)=\\exp(-\\tfrac{1}{2}(0-1)^2)=\\exp(-0.5)=0.6065$. So
-         $$K=\\begin{bmatrix}1 & 0.6065\\\\ 0.6065 & 1\\end{bmatrix},\\qquad
+      `<p><b>Worked numbers (the 2&times;2 kernel + one predictive mean &amp; variance).</b> Two training points
+       $x_1=0,\\ x_2=1$ with targets $\\mathbf{y}=[\\,1,\\,-1\\,]^\\top$. RBF kernel with $\\sigma_f^2=1,\\ \\ell=1$,
+       and noise $\\sigma_n^2=0.1$. We predict at the test point $x_*=0$ (a training location).</p>
+       <table class="extable">
+        <caption>Every kernel value needed, $k(a,b)=\\exp\\!\\big(-\\tfrac{1}{2}(a-b)^2\\big)$ ($\\sigma_f^2=1,\\ \\ell=1$).</caption>
+        <thead><tr><th>pair $(a,b)$</th><th class="num">$(a-b)^2$</th><th class="num">$-\\tfrac12(a-b)^2$</th><th class="num">$k(a,b)$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$(0,0)$</td><td class="num">0</td><td class="num">0</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h">$(1,1)$</td><td class="num">0</td><td class="num">0</td><td class="num">1.0000</td></tr>
+         <tr><td class="row-h">$(0,1)$</td><td class="num">1</td><td class="num">$-0.5$</td><td class="num">0.6065</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li>Assemble $K$ and add noise to the diagonal:
+        $$K=\\begin{bmatrix}1 & 0.6065\\\\ 0.6065 & 1\\end{bmatrix},\\qquad
           K+\\sigma_n^2 I=\\begin{bmatrix}1.1 & 0.6065\\\\ 0.6065 & 1.1\\end{bmatrix}.$$</li>
-         <li>Invert the $2\\times 2$: determinant $=1.1^2-0.6065^2=1.21-0.3679=0.8421$, so
-         $$(K+\\sigma_n^2 I)^{-1}=\\frac{1}{0.8421}\\begin{bmatrix}1.1 & -0.6065\\\\ -0.6065 & 1.1\\end{bmatrix}
-          =\\begin{bmatrix}1.3062 & -0.7202\\\\ -0.7202 & 1.3062\\end{bmatrix}.$$</li>
-         <li>Precompute $\\boldsymbol\\alpha=(K+\\sigma_n^2 I)^{-1}\\mathbf{y}$:
-         $\\alpha_1=1.3062\\cdot 1+(-0.7202)\\cdot(-1)=2.0265$, $\\alpha_2=-2.0265$ by symmetry.</li>
-         <li>Predict at the test point $x_*=0$ (a training location). Test covariances:
-         $\\mathbf{k}_*=[\\,k(0,0),\\,k(1,0)\\,]=[\\,1,\\,0.6065\\,]$. Mean
-         $\\bar f_*=\\mathbf{k}_*^\\top\\boldsymbol\\alpha=1\\cdot 2.0265+0.6065\\cdot(-2.0265)=0.797$.</li>
-         <li>Variance at $x_*=0$: $\\mathbb{V}[f_*]=k(0,0)-\\mathbf{k}_*^\\top(K+\\sigma_n^2 I)^{-1}\\mathbf{k}_*
+        <li>Determinant of the $2\\times2$: $1.1^2-0.6065^2=1.21-0.3679=0.8421$.</li>
+        <li>Invert it: $(K+\\sigma_n^2 I)^{-1}=\\dfrac{1}{0.8421}\\begin{bmatrix}1.1 & -0.6065\\\\ -0.6065 & 1.1\\end{bmatrix}
+          =\\begin{bmatrix}1.3062 & -0.7202\\\\ -0.7202 & 1.3062\\end{bmatrix}.$</li>
+        <li>Precompute $\\boldsymbol\\alpha=(K+\\sigma_n^2 I)^{-1}\\mathbf{y}$:
+        $\\alpha_1=1.3062\\cdot 1+(-0.7202)\\cdot(-1)=2.0265$, and $\\alpha_2=-2.0265$ by symmetry.</li>
+        <li>Test covariances at $x_*=0$: $\\mathbf{k}_*=[\\,k(0,0),\\,k(1,0)\\,]=[\\,1,\\,0.6065\\,]$.</li>
+        <li>Predictive mean (eq. 2.25): $\\bar f_*=\\mathbf{k}_*^\\top\\boldsymbol\\alpha
+          =1\\cdot 2.0265+0.6065\\cdot(-2.0265)=2.0265-1.2291=0.797$.</li>
+        <li>Predictive variance (eq. 2.26): $\\mathbb{V}[f_*]=k(0,0)-\\mathbf{k}_*^\\top(K+\\sigma_n^2 I)^{-1}\\mathbf{k}_*
           =1-0.913=0.087$, so $\\sigma_*=\\sqrt{0.087}=0.295$.</li>
        </ul>
        <p>Two things to notice. The prediction at the data point is $0.797$, not the raw target $1$ &mdash; the

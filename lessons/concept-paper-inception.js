@@ -212,18 +212,30 @@
        sparsity argument &mdash; is recapped from the <b>dl-inception</b> concept lesson, not re-derived here.</p>`,
     example:
       `<p>Work the $5\\times5$ branch of module (3a) in <b>weights</b> (ignore bias) and in <b>MACs</b>, using
-       $H\\,W = 28\\times28 = 784$, $C_{in}=192$, $C_{out}=32$, reduce $r=16$.</p>
+       the convolution cost $k^2 C_{in} C_{out}$ with $H\\,W = 28\\times28 = 784$, $C_{in}=192$, $C_{out}=32$,
+       reduce $r=16$ &mdash; then the $3\\times3$ branch ($C_{out}=128$, $r=96$) for contrast. The table is the
+       comparison; the steps work the $5\\times5$ row.</p>
+       <table class="extable">
+        <caption>Naive vs. $1\\times1$-bottleneck cost per branch of module (3a), $C_{in}=192$.</caption>
+        <thead><tr><th>branch</th><th class="num">naive weights</th><th class="num">bottleneck weights</th><th class="num">ratio</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$5\\times5$ (192&rarr;32, $r{=}16$)</td><td class="num">153,600</td><td class="num">15,872</td><td class="num">9.68&times;</td></tr>
+         <tr><td class="row-h">$3\\times3$ (192&rarr;128, $r{=}96$)</td><td class="num">221,184</td><td class="num">129,024</td><td class="num">1.71&times;</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Naive weights:</b> $5^2\\cdot192\\cdot32 = 25\\cdot192\\cdot32 = 153{,}600$.</li>
-        <li><b>Bottleneck weights:</b> the $1\\times1$ is $1\\cdot192\\cdot16 = 3{,}072$; the $5\\times5$ is
-        $25\\cdot16\\cdot32 = 12{,}800$. Total $= 3{,}072 + 12{,}800 = 15{,}872$.</li>
+        <li><b>Naive $5\\times5$ weights:</b> $5^2\\cdot192\\cdot32 = 25\\cdot192\\cdot32 = 153{,}600$.</li>
+        <li><b>Bottleneck $5\\times5$ weights:</b> the $1\\times1$ reduce is $1\\cdot192\\cdot16 = 3{,}072$; the
+        $5\\times5$ on 16 channels is $25\\cdot16\\cdot32 = 12{,}800$. Total $= 3{,}072 + 12{,}800 = 15{,}872$.</li>
         <li><b>Weight ratio:</b> $153{,}600 / 15{,}872 \\approx \\mathbf{9.68\\times}$ fewer weights.</li>
         <li><b>Naive MACs:</b> $784\\cdot153{,}600 = 120{,}422{,}400 \\approx 120.4$ million.</li>
         <li><b>Bottleneck MACs:</b> $784\\cdot15{,}872 = 12{,}443{,}648 \\approx 12.4$ million &mdash; the same
         $\\mathbf{9.68\\times}$ saving (the $H\\,W$ factor cancels in the ratio).</li>
        </ul>
        <p>So the $1\\times1$ bottleneck makes the $5\\times5$ branch almost <b>ten times</b> cheaper while still
-       producing 32 output channels. These exact numbers are recomputed in the notebook's worked-example cell.</p>`,
+       producing 32 output channels &mdash; far more than the $3\\times3$ branch's $1.71\\times$ (gentler reduce
+       $192\\to96$, smaller $k^2=9$). These exact numbers are recomputed in the notebook's worked-example
+       cell.</p>`,
     recipe:
       `<ol>
         <li><b>Branch 1 &mdash; $1\\times1$:</b> <code>nn.Conv2d(Cin, c1, 1)</code>.</li>

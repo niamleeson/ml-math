@@ -208,21 +208,30 @@
        generalization of CAM that drops the architecture restriction.</p>`,
     example:
       `<p>Work Equations 1 and 2 by hand on the smallest possible case: <b>one</b> feature map ($k=1$) that is a
-       tiny $2\\times2$ grid, so $Z = 2\\times2 = 4$. Suppose back-propagation has filled in the gradient of the
-       class score with respect to that map's four cells as</p>
-       <p>$$ \\frac{\\partial y^c}{\\partial A^1} = \\begin{bmatrix} 1 & 3 \\\\ -2 & 0 \\end{bmatrix}, \\qquad
-       \\text{and the feature map itself is}\\quad A^1 = \\begin{bmatrix} 2 & 0 \\\\ 1 & 4 \\end{bmatrix}. $$</p>
+       tiny $2\\times2$ grid, so $Z = 2\\times2 = 4$. Back-propagation has filled in the gradient
+       $\\partial y^c/\\partial A^1$ at each of the four cells, and we already have the feature map $A^1$. Here is
+       the data, cell by cell:</p>
+       <table class="extable">
+        <caption>The four cells of the $2\\times2$ map: gradient (Eqn. 1 input) and activation $A^1$.</caption>
+        <thead><tr><th>cell $(i,j)$</th><th class="num">$\\partial y^c/\\partial A^1_{ij}$</th><th class="num">$A^1_{ij}$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">(0,0) top-left</td><td class="num">$1$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">(0,1) top-right</td><td class="num">$3$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">(1,0) bot-left</td><td class="num">$-2$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">(1,1) bot-right</td><td class="num">$0$</td><td class="num">$4$</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Pool the gradients (Equation 1).</b> Sum the four gradient cells: $1 + 3 + (-2) + 0 = 2$. Divide by
-        $Z = 4$: $\\alpha_1^c = \\tfrac{1}{4}\\cdot 2 = 0.5$. So this map's importance weight is $0.5$.</li>
-        <li><b>Weight the feature map.</b> Multiply $A^1$ by $\\alpha_1^c = 0.5$ cell-by-cell:
-        $0.5 \\cdot \\begin{bmatrix} 2 & 0 \\\\ 1 & 4 \\end{bmatrix} = \\begin{bmatrix} 1.0 & 0 \\\\ 0.5 & 2.0
-        \\end{bmatrix}$. (With only one map, the sum $\\sum_k \\alpha_k^c A^k$ is just this.)</li>
-        <li><b>Apply the ReLU (Equation 2).</b> $\\text{ReLU}$ keeps positives and zeroes negatives. Every cell
-        here is already $\\ge 0$, so the heatmap is
-        $L^c_{\\text{Grad-CAM}} = \\begin{bmatrix} 1.0 & 0 \\\\ 0.5 & 2.0 \\end{bmatrix}$.</li>
-        <li><b>Read it.</b> The bottom-right cell ($2.0$) is the hottest &mdash; that location contributed most to
-        class $c$. Had any cell come out negative, the ReLU would have set it to $0$.</li>
+        <li><b>Pool the gradients (Equation 1).</b> Sum the gradient column: $1 + 3 + (-2) + 0 = 2$.</li>
+        <li>Divide by $Z = 4$: $\\alpha_1^c = \\tfrac{1}{4}\\cdot 2 = 0.5$. So this map's importance weight is $0.5$.</li>
+        <li><b>Weight the feature map.</b> Multiply each $A^1_{ij}$ by $\\alpha_1^c = 0.5$: top-left $0.5\\cdot 2 = 1.0$;
+        top-right $0.5\\cdot 0 = 0$; bot-left $0.5\\cdot 1 = 0.5$; bot-right $0.5\\cdot 4 = 2.0$. (With one map, the sum
+        $\\sum_k \\alpha_k^c A^k$ is just this.)</li>
+        <li><b>Apply the ReLU (Equation 2).</b> $\\text{ReLU}$ keeps positives and zeroes negatives. Every cell here
+        is already $\\ge 0$, so it passes through unchanged.</li>
+        <li><b>Read it.</b> The heatmap is $L^c_{\\text{Grad-CAM}} = \\begin{bmatrix} 1.0 & 0 \\\\ 0.5 & 2.0
+        \\end{bmatrix}$. The bottom-right cell ($2.0$) is the hottest &mdash; that location contributed most to class
+        $c$. Had any cell come out negative, the ReLU would have set it to $0$.</li>
        </ul>
        <p>These exact numbers ($\\alpha_1^c = 0.5$, heatmap $[[1.0, 0], [0.5, 2.0]]$) are recomputed in the
        notebook's first cell so you can check them.</p>`,

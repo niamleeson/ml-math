@@ -214,27 +214,47 @@ $$ L_\\text{loc}(t^u,v) = \\!\\!\\sum_{i\\in\\{x,y,w,h\\}}\\!\\!\\text{smooth}_{
       `<p>Two short worked computations &mdash; both are recomputed in the notebook so you can check them.</p>
        <p><b>(A) RoI pooling on a toy $4\\times4$ feature map.</b> Take the single-channel feature map</p>
        <p>$$ \\begin{bmatrix}1&3&2&4\\\\5&6&1&2\\\\7&2&8&3\\\\0&9&4&1\\end{bmatrix}. $$</p>
-       <p>Let the RoI be the whole $4\\times4$ window ($h=4,\\,w=4$), pooled to $H\\times W = 2\\times2$. Each
-       output cell covers a $2\\times2$ sub-window ($h/H = w/W = 2$); take the <b>max</b> of each:</p>
+       <p>Let the RoI (region of interest) be the whole $4\\times4$ window ($h=4$ rows, $w=4$ cols), pooled to a
+       fixed $H\\times W = 2\\times2$ grid. Each output cell covers a $2\\times2$ sub-window ($h/H = w/W = 2$); take
+       the <b>max</b> (largest value) of each:</p>
        <ul class="steps">
         <li>top-left sub-window $\\begin{bmatrix}1&3\\\\5&6\\end{bmatrix}\\to \\max = 6$.</li>
         <li>top-right $\\begin{bmatrix}2&4\\\\1&2\\end{bmatrix}\\to \\max = 4$.</li>
         <li>bottom-left $\\begin{bmatrix}7&2\\\\0&9\\end{bmatrix}\\to \\max = 9$.</li>
         <li>bottom-right $\\begin{bmatrix}8&3\\\\4&1\\end{bmatrix}\\to \\max = 8$.</li>
        </ul>
+       <table class="extable">
+        <caption>Each output cell $(i,j)$ = max over its sub-window. Pooled output is a fixed $2\\times2$.</caption>
+        <thead><tr><th>output cell</th><th>sub-window values</th><th class="num">max</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">$(0,0)$ top-left</td><td>$1,3,5,6$</td><td class="num">6</td></tr>
+          <tr><td class="row-h">$(0,1)$ top-right</td><td>$2,4,1,2$</td><td class="num">4</td></tr>
+          <tr><td class="row-h">$(1,0)$ bottom-left</td><td>$7,2,0,9$</td><td class="num">9</td></tr>
+          <tr><td class="row-h">$(1,1)$ bottom-right</td><td>$8,3,4,1$</td><td class="num">8</td></tr>
+        </tbody>
+       </table>
        <p>Pooled output $= \\begin{bmatrix}6&4\\\\9&8\\end{bmatrix}$ &mdash; a fixed $2\\times2$, whatever the
        region&rsquo;s original size.</p>
-       <p><b>(B) The multi-task loss (Eqns 1-3).</b> Suppose the true class is $u=1$ (a real object, so
-       $[u\\ge 1]=1$), the classifier gave it probability $p_u = 0.6$, the predicted offsets are
-       $t^u=(0.2,\\,-0.1,\\,0.5,\\,-2.0)$ and the targets are $v=(0,0,0,0)$. Use $\\lambda=1$.</p>
+       <p><b>(B) The multi-task loss (Eqns 1-3).</b> Suppose the true class is $u=1$ (a real object, so the switch
+       $[u\\ge 1]=1$), the classifier gave it probability $p_u = 0.6$, the predicted box offsets are
+       $t^u=(0.2,\\,-0.1,\\,0.5,\\,-2.0)$ and the targets are $v=(0,0,0,0)$. Use $\\lambda=1$ (the term that balances
+       the two losses). Since $v=0$, each coordinate error is just $t^u_i$. Run each through
+       $\\text{smooth}_{L_1}(x)=0.5x^2$ if $|x|\\lt 1$, else $|x|-0.5$:</p>
+       <table class="extable">
+        <caption>Box loss (Eqn. 2): smooth-L1 of each coordinate error, then summed.</caption>
+        <thead><tr><th>coord</th><th class="num">error $x$</th><th class="num">branch</th><th class="num">$\\text{smooth}_{L_1}(x)$</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">$t_x$</td><td class="num">0.2</td><td class="num">$0.5(0.2)^2$</td><td class="num">0.020</td></tr>
+          <tr><td class="row-h">$t_y$</td><td class="num">-0.1</td><td class="num">$0.5(0.1)^2$</td><td class="num">0.005</td></tr>
+          <tr><td class="row-h">$t_w$</td><td class="num">0.5</td><td class="num">$0.5(0.5)^2$</td><td class="num">0.125</td></tr>
+          <tr><td class="row-h">$t_h$</td><td class="num">-2.0</td><td class="num">$|{-}2|-0.5$</td><td class="num">1.500</td></tr>
+          <tr><td class="row-h"><b>$L_\\text{loc}$ total</b></td><td class="num"></td><td class="num"></td><td class="num"><b>1.650</b></td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Classification:</b> $L_\\text{cls} = -\\log p_u = -\\log 0.6 \\approx 0.5108$.</li>
-        <li><b>Box, per coordinate</b> (errors are just $t^u$ since $v=0$), via Eqn. 3:
-        $\\text{smooth}_{L_1}(0.2)=0.5(0.2)^2=0.02$; $\\text{smooth}_{L_1}(-0.1)=0.5(0.1)^2=0.005$;
-        $\\text{smooth}_{L_1}(0.5)=0.5(0.5)^2=0.125$; $\\text{smooth}_{L_1}(-2.0)=|{-2}|-0.5=1.5$ (this one is
-        in the <b>linear tail</b>, $|x|\\ge1$).</li>
-        <li><b>Box total</b> (Eqn. 2): $L_\\text{loc}=0.02+0.005+0.125+1.5 = 1.65$.</li>
-        <li><b>Combine</b> (Eqn. 1): $L = 0.5108 + 1\\cdot 1 \\cdot 1.65 = 2.1608$.</li>
+        <li><b>Box total</b> (Eqn. 2): $L_\\text{loc}=0.020+0.005+0.125+1.500 = 1.65$.</li>
+        <li><b>Combine</b> (Eqn. 1): $L = L_\\text{cls} + \\lambda[u\\ge1]L_\\text{loc} = 0.5108 + 1\\cdot 1 \\cdot 1.65 = \\mathbf{2.1608}$.</li>
        </ul>
        <p>Notice the worst coordinate ($-2.0$) added only $1.5$, not $\\tfrac12(2)^2=2$ &mdash; the linear tail
        already softened it.</p>`,

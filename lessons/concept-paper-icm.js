@@ -241,21 +241,28 @@
        full exploration-vs-exploitation argument and regret bounds are in the <b>rl-exploration</b> concept
        lesson; we only recap the curiosity-specific piece here.</p>`,
     example:
-      `<p>Work one intrinsic reward by hand &mdash; the exact case the notebook recomputes. We use a tiny
-       2-dimensional feature space and the paper's $\\eta = 1$ (so $r^i_t = \\tfrac12\\lVert\\cdot\\rVert_2^2$).</p>
+      `<p>Work the intrinsic reward $r^i_t$ (Eq. 6) by hand for two transitions &mdash; the exact case the
+       notebook recomputes. We use a tiny 2-dimensional feature space and the paper's $\\eta = 1$, so
+       $r^i_t = \\tfrac12\\lVert\\hat{\\phi}(s_{t+1})-\\phi(s_{t+1})\\rVert_2^2$. The real next features are the
+       same $\\phi(s_{t+1}) = (1.0,\\,0.5)$ in both rows; only the forward model's prediction $\\hat{\\phi}$
+       differs (early/wrong vs. later/accurate):</p>
+       <table class="extable">
+        <caption>Eq. 6 on a novel vs. a familiar transition ($\\eta=1$, real $\\phi=(1.0,0.5)$).</caption>
+        <thead><tr><th>transition</th><th class="num">$\\hat{\\phi}(s_{t+1})$</th><th class="num">error vector</th><th class="num">$\\lVert\\cdot\\rVert_2^2$</th><th class="num">$r^i_t=\\tfrac12\\lVert\\cdot\\rVert_2^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">novel (early)</td><td class="num">$(0.2,\\,0.1)$</td><td class="num">$(-0.8,\\,-0.4)$</td><td class="num">0.80</td><td class="num">0.40</td></tr>
+         <tr><td class="row-h">familiar (learned)</td><td class="num">$(0.98,\\,0.49)$</td><td class="num">$(-0.02,\\,-0.01)$</td><td class="num">0.0005</td><td class="num">0.00025</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>A surprising (novel) transition.</b> The forward model predicts
-        $\\hat{\\phi}(s_{t+1}) = (0.2,\\;0.1)$ but the real next features are
-        $\\phi(s_{t+1}) = (1.0,\\;0.5)$. The error vector is
-        $(0.2-1.0,\\;0.1-0.5) = (-0.8,\\;-0.4)$.</li>
+        <li><b>Novel transition &mdash; error vector.</b> $\\hat{\\phi}-\\phi = (0.2-1.0,\\;0.1-0.5) =
+        (-0.8,\\;-0.4)$.</li>
         <li><b>Square and sum:</b> $(-0.8)^2 + (-0.4)^2 = 0.64 + 0.16 = 0.80$.</li>
-        <li><b>Halve and scale by $\\eta = 1$:</b> $r^i_t = \\tfrac{1}{2}\\times 0.80 = \\mathbf{0.40}$ &mdash;
-        a sizeable bonus, because the model was wrong. The agent is rewarded for visiting here.</li>
-        <li><b>A familiar transition.</b> After more training the model predicts
-        $\\hat{\\phi} = (0.98,\\;0.49)$ for the same real $\\phi = (1.0,\\;0.5)$. Error
-        $(-0.02,\\;-0.01)$, squared-sum $0.0004 + 0.0001 = 0.0005$, so
-        $r^i_t = \\tfrac12\\times 0.0005 = \\mathbf{0.00025}$ &mdash; a near-zero bonus. The state is no
-        longer surprising, so curiosity moves on.</li>
+        <li><b>Halve and scale by $\\eta=1$:</b> $r^i_t = \\tfrac12\\times 0.80 = \\mathbf{0.40}$ &mdash; a
+        sizeable bonus, because the model was wrong.</li>
+        <li><b>Familiar transition &mdash; error vector.</b> $(0.98-1.0,\\;0.49-0.5) = (-0.02,\\;-0.01)$.</li>
+        <li><b>Square, sum, halve:</b> $(-0.02)^2 + (-0.01)^2 = 0.0004 + 0.0001 = 0.0005$, so
+        $r^i_t = \\tfrac12\\times 0.0005 = \\mathbf{0.00025}$ &mdash; a near-zero bonus.</li>
        </ul>
        <p>These exact numbers ($r^i = 0.40$ for the novel transition, $0.00025$ once learned) are recomputed
        in the notebook's first cell so you can check Eq. 6 by running it. The bonus falling from $0.40$ to

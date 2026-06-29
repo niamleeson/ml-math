@@ -222,16 +222,24 @@
     example:
       `<p>Work the <b>channel growth</b> through one dense block by hand &mdash; this is the bookkeeping you must
        get right when you build it. Take a tiny block with input channels $k_0 = 1$ (a grayscale map), growth
-       rate $k = 6$, and $L = 4$ layers. Each layer $H_\\ell$ outputs exactly $k = 6$ new channels, and its
-       input is everything concatenated so far, so the input channel count is $k_0 + k(\\ell-1)$:</p>
+       rate $k = 6$, and $L = 4$ layers. Each layer $H_\\ell$ outputs exactly $k = 6$ new channels, and its input
+       is everything concatenated so far, so by the channel-count rule its input width is $k_0 + k(\\ell-1)$.
+       Apply that formula row by row:</p>
+       <table class="extable">
+        <caption>Channel ledger for $k_0=1$, $k=6$, $L=4$. "in" $= k_0 + k(\\ell-1)$; each layer outputs $k=6$.</caption>
+        <thead><tr><th>layer $\\ell$</th><th>sees (concatenation)</th><th class="num">in $= k_0+k(\\ell-1)$</th><th class="num">out $=k$</th><th class="num">pool after</th></tr></thead>
+        <tbody>
+         <tr><td class="num">1</td><td>$[x_0]$</td><td class="num">$1+6\\cdot0=1$</td><td class="num">6</td><td class="num">7</td></tr>
+         <tr><td class="num">2</td><td>$[x_0,x_1]$</td><td class="num">$1+6\\cdot1=7$</td><td class="num">6</td><td class="num">13</td></tr>
+         <tr><td class="num">3</td><td>$[x_0,x_1,x_2]$</td><td class="num">$1+6\\cdot2=13$</td><td class="num">6</td><td class="num">19</td></tr>
+         <tr><td class="num">4</td><td>$[x_0,x_1,x_2,x_3]$</td><td class="num">$1+6\\cdot3=19$</td><td class="num">6</td><td class="num">25</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Layer 1</b> input channels $= k_0 + k(1-1) = 1 + 0 = 1$. It sees just $x_0$, outputs $6$.</li>
-        <li><b>Layer 2</b> input $= 1 + 6(1) = 7$. It sees $[x_0, x_1]$ &mdash; the $1$ input map plus layer 1's
-        $6$ &mdash; and outputs $6$ more.</li>
-        <li><b>Layer 3</b> input $= 1 + 6(2) = 13$. It sees $[x_0, x_1, x_2]$ &mdash; $1 + 6 + 6$ &mdash; outputs $6$.</li>
-        <li><b>Layer 4</b> input $= 1 + 6(3) = 19$. It sees $[x_0, x_1, x_2, x_3]$ &mdash; $1 + 6 + 6 + 6$ &mdash; outputs $6$.</li>
-        <li><b>Block output</b> = concatenation of <i>all</i> maps, including the input:
-        $k_0 + kL = 1 + 6\\cdot 4 = 25$ channels.</li>
+        <li><b>Input channels per layer</b> follow $k_0+k(\\ell-1)$: $1,\\ 7,\\ 13,\\ 19$ &mdash; each layer sees
+        $6$ more than the last, because the previous layer added its $6$ maps to the shared pool.</li>
+        <li><b>Each conv stays thin:</b> every $H_\\ell$ outputs exactly $k=6$ maps, no matter how wide its input.</li>
+        <li><b>Block output</b> concatenates <i>all</i> maps including the input: $k_0 + kL = 1 + 6\\cdot 4 = 25$ channels.</li>
        </ul>
        <p>So a $4$-layer block with $k=6$ turns $1$ input channel into a $25$-channel output, while each
        convolution only ever produces $6$ maps &mdash; thin layers, rich pooled output. These exact numbers

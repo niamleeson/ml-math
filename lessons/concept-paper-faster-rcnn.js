@@ -240,22 +240,37 @@ $$ t_x^\\ast = \\frac{x^\\ast - x_a}{w_a},\\quad t_y^\\ast = \\frac{y^\\ast - y_
        <ul class="steps">
         <li><b>Anchor center.</b> Cell $(1,1)$ has center $((j{+}0.5)\\cdot16,\\,(i{+}0.5)\\cdot16) =
         (1.5\\cdot16,\\,1.5\\cdot16) = (24,\\,24)$ in image pixels. So $x_a=24,\\;y_a=24$.</li>
-        <li><b>The 3 aspect-ratio anchors</b> at one scale (take area $=64^2=4096$). With
-        $w=\\text{scale}\\sqrt{r},\\,h=\\text{scale}/\\sqrt{r}$: ratio $1{:}1\\Rightarrow(w_a,h_a)=(64,64)$;
-        ratio $1{:}2\\Rightarrow(45.25,90.51)$; ratio $2{:}1\\Rightarrow(90.51,45.25)$. Each keeps area
-        $\\approx 4096$.</li>
-        <li><b>Pick the $1{:}1$ anchor:</b> $x_a=24,\\,y_a=24,\\,w_a=64,\\,h_a=64$.</li>
-        <li><b>Apply a predicted delta</b> $t=(t_x,t_y,t_w,t_h)=(0.5,\\,-0.25,\\,0.2,\\,0.0)$ via the inverse of
-        Eq 2:</li>
+        <li><b>The 3 aspect-ratio anchors</b> at one scale (take area $=64^2=4096$), using
+        $w_a=\\text{scale}\\sqrt{r}$ (width) and $h_a=\\text{scale}/\\sqrt{r}$ (height), where $r$ is the aspect ratio:</li>
+       </ul>
+       <table class="extable">
+        <caption>Three anchors at one scale ($\\text{scale}=64$). All keep area $\\approx 4096$ pixels.</caption>
+        <thead><tr><th>ratio $r$</th><th class="num">$w_a$</th><th class="num">$h_a$</th><th class="num">area $w_a h_a$</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">$1{:}1$ ($r{=}1$)</td><td class="num">64.00</td><td class="num">64.00</td><td class="num">4096</td></tr>
+          <tr><td class="row-h">$1{:}2$ ($r{=}0.5$)</td><td class="num">45.25</td><td class="num">90.51</td><td class="num">4096</td></tr>
+          <tr><td class="row-h">$2{:}1$ ($r{=}2$)</td><td class="num">90.51</td><td class="num">45.25</td><td class="num">4096</td></tr>
+        </tbody>
+       </table>
+       <p><b>Pick the $1{:}1$ anchor</b> $x_a=24,\\,y_a=24,\\,w_a=64,\\,h_a=64$ and apply a predicted delta
+       $t=(t_x,t_y,t_w,t_h)=(0.5,\\,-0.25,\\,0.2,\\,0.0)$ via the inverse of Eq 2:</p>
+       <ul class="steps">
         <li>$x = t_x w_a + x_a = 0.5\\cdot64 + 24 = 32 + 24 = 56$.</li>
         <li>$y = t_y h_a + y_a = -0.25\\cdot64 + 24 = -16 + 24 = 8$.</li>
         <li>$w = w_a e^{t_w} = 64\\cdot e^{0.2} = 64\\cdot 1.2214 = 78.17$.</li>
         <li>$h = h_a e^{t_h} = 64\\cdot e^{0} = 64\\cdot 1 = 64$.</li>
        </ul>
-       <p>So the anchor box centered at $(24,24)$ of size $64\\times64$, after the delta $(0.5,-0.25,0.2,0)$,
-       becomes a proposed box centered at $(56,\\,8)$ of size $\\approx78.17\\times64$. Notice $t_x=0.5$ moved the
-       center right by half an anchor width, $t_w=0.2$ grew the width by $e^{0.2}\\approx22\\%$, and $t_h=0$ left
-       the height untouched. Every one of these numbers is recomputed in the notebook's first cell.</p>`,
+       <table class="extable">
+        <caption>Anchor &rarr; proposed box, after the delta $(0.5,-0.25,0.2,0)$.</caption>
+        <thead><tr><th></th><th class="num">center $x$</th><th class="num">center $y$</th><th class="num">width $w$</th><th class="num">height $h$</th></tr></thead>
+        <tbody>
+          <tr><td class="row-h">anchor</td><td class="num">24</td><td class="num">24</td><td class="num">64.00</td><td class="num">64.00</td></tr>
+          <tr><td class="row-h">proposed box</td><td class="num">56</td><td class="num">8</td><td class="num">78.17</td><td class="num">64.00</td></tr>
+        </tbody>
+       </table>
+       <p>So $t_x=0.5$ moved the center right by half an anchor width, $t_w=0.2$ grew the width by
+       $e^{0.2}\\approx22\\%$, and $t_h=0$ left the height untouched. Every one of these numbers is recomputed in
+       the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Run the shared backbone.</b> Pass the image through the CNN once to get a $W\\times H\\times C$

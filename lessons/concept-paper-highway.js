@@ -227,6 +227,18 @@
         2's gate was nearly shut, so it <b>carried the raw input $-2.0$ through</b> almost intact — the
         transform's $0.5$ barely registered. The gate let one unit transform and the other pass through.</li>
        </ul>
+       <p>Per-unit, the gate routes each unit differently &mdash; the table lays out the blend $H\\cdot T$ vs
+       $x\\cdot(1-T)$ for both units:</p>
+       <table class="extable">
+         <caption>Per-unit highway blend $y = H\\cdot T + x\\cdot(1-T)$ for $x=[1.0,-2.0]$, $H=[0.8,0.5]$, $z=[2.0,-1.5]$.</caption>
+         <thead>
+           <tr><th>unit</th><th class="num">$x$</th><th class="num">$H$</th><th class="num">$T=\\sigma(z)$</th><th class="num">transform $H\\cdot T$</th><th class="num">carry $x\\cdot(1-T)$</th><th class="num">$y$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1 (open)</td><td class="num">1.0</td><td class="num">0.8</td><td class="num">0.8808</td><td class="num">0.7046</td><td class="num">0.1192</td><td class="num">0.8238</td></tr>
+           <tr><td class="row-h">2 (closed)</td><td class="num">-2.0</td><td class="num">0.5</td><td class="num">0.1824</td><td class="num">0.0912</td><td class="num">-1.6352</td><td class="num">-1.5439</td></tr>
+         </tbody>
+       </table>
        <p>These exact numbers ($y = [0.8238, -1.5439]$) are recomputed in the notebook's first cell so you can
        check the layer by running it.</p>`,
     recipe:

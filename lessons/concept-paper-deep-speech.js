@@ -237,24 +237,47 @@
        this softmax stack into it.</p>`,
     example:
       `<p><b>Worked numbers &mdash; one CTC decode end to end.</b> Take a tiny alphabet
-       $\\{\\text{blank}, h, i\\}$ (index the blank as 0) and a short utterance of $T=4$ frames. Suppose the
-       softmax output (one row per frame, columns = blank, $h$, $i$; each row sums to 1) is:</p>
-       <pre><code>frame 1:  [0.1, 0.7, 0.2]
-frame 2:  [0.6, 0.3, 0.1]
-frame 3:  [0.2, 0.2, 0.6]
-frame 4:  [0.5, 0.1, 0.4]</code></pre>
-       <p><b>(a) Greedy (best-path) decode.</b> Take the argmax of each row: frame 1 &rarr; $h$, frame 2 &rarr;
-       blank, frame 3 &rarr; $i$, frame 4 &rarr; blank, giving the path <code>h _ i _</code>. Apply CTC's
-       collapse: merge adjacent repeats (none here), then drop blanks &rarr; <b>"hi"</b>. We decoded characters
-       directly &mdash; no phonemes, no dictionary.</p>
+       $\\{\\text{blank}, h, i\\}$ (index the blank as 0) and a short utterance of $T=4$ frames. Each row of the
+       softmax output $\\hat{y}_{t,k}=\\mathbb{P}(c_t=k\\mid x)$ is one frame and sums to 1; the boldface cell in
+       each row is that frame's argmax (its greedy pick):</p>
+       <table class="extable">
+        <caption>Per-frame softmax stack $\\hat{y}$ (rows = frames, columns = characters; each row sums to 1).</caption>
+        <thead><tr><th>frame $t$</th><th class="num">blank</th><th class="num">$h$</th><th class="num">$i$</th><th>argmax</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.1</td><td class="num"><b>0.7</b></td><td class="num">0.2</td><td>$h$</td></tr>
+         <tr><td class="row-h">2</td><td class="num"><b>0.6</b></td><td class="num">0.3</td><td class="num">0.1</td><td>blank</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.2</td><td class="num">0.2</td><td class="num"><b>0.6</b></td><td>$i$</td></tr>
+         <tr><td class="row-h">4</td><td class="num"><b>0.5</b></td><td class="num">0.1</td><td class="num">0.4</td><td>blank</td></tr>
+        </tbody>
+       </table>
+       <p><b>(a) Greedy (best-path) decode.</b> Reading the argmax column top to bottom gives the path
+       <code>h _ i _</code>. Apply CTC's collapse:</p>
+       <ul class="steps">
+        <li><b>Merge adjacent repeats:</b> <code>h _ i _</code> has no adjacent duplicates, so it is unchanged.</li>
+        <li><b>Drop every blank:</b> <code>h _ i _</code> &rarr; <code>h i</code> &rarr; <b>"hi"</b>. We decoded
+        characters directly &mdash; no phonemes, no dictionary.</li>
+       </ul>
        <p><b>(b) CTC training loss for target "hi".</b> The loss does not just take the best path; it sums the
-       probability of <i>every</i> length-4 path that collapses to "hi". Brute-forcing all $3^4=81$ paths,
-       exactly <b>15</b> of them collapse to "hi" (e.g. <code>h _ i _</code>, <code>h h _ i</code>,
-       <code>_ h i i</code>, &hellip;). Summing each path's product of per-frame probabilities gives
-       $\\mathbb{P}(\\text{"hi"}\\mid x) = 0.478$, so the loss is
-       $-\\ln 0.478 = \\mathbf{0.738145}$. The CTC forward dynamic program gets the same 0.478 without
-       enumerating paths; in CODE we confirm <code>torch.nn.CTCLoss</code> returns exactly
-       <code>0.738145</code> (allclose True).</p>`,
+       probability of <i>every</i> length-4 path that collapses to "hi". Three of the 15 such paths, with their
+       probability $=$ product of the four per-frame values picked:</p>
+       <table class="extable">
+        <caption>Three of the 15 length-4 paths that collapse to "hi" (of $3^4=81$ total paths).</caption>
+        <thead><tr><th>path</th><th>frame-1</th><th>frame-2</th><th>frame-3</th><th>frame-4</th><th class="num">product</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h"><code>h _ i _</code></td><td class="num">0.7</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.5</td><td class="num">0.126</td></tr>
+         <tr><td class="row-h"><code>h h _ i</code></td><td class="num">0.7</td><td class="num">0.3</td><td class="num">0.2</td><td class="num">0.4</td><td class="num">0.0168</td></tr>
+         <tr><td class="row-h"><code>_ h i i</code></td><td class="num">0.1</td><td class="num">0.3</td><td class="num">0.6</td><td class="num">0.4</td><td class="num">0.0072</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li>Top path <code>h _ i _</code>: $0.7 \\times 0.6 \\times 0.6 \\times 0.5 = 0.126$ &mdash; the single
+        biggest term (the greedy path).</li>
+        <li><b>Sum all 15 collapsing paths</b> (the three above plus twelve more):
+        $\\mathbb{P}(\\text{"hi"}\\mid x) = 0.478$.</li>
+        <li><b>CTC loss</b> $= -\\ln \\mathbb{P}(\\text{"hi"}\\mid x) = -\\ln 0.478 = \\mathbf{0.738145}$.</li>
+       </ul>
+       <p>The CTC forward dynamic program gets the same $0.478$ without enumerating paths; in CODE we confirm
+       <code>torch.nn.CTCLoss</code> returns exactly <code>0.738145</code> (allclose True).</p>`,
     recipe:
       `<p>The architecture as numbered steps (&sect;2), exactly what CODE builds:</p>
        <ol>

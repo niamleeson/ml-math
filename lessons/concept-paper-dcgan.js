@@ -262,22 +262,34 @@
        DCGAN inherits all of it and contributes the <i>architecture</i>, not new objective math.</p>`,
     example:
       `<p>The DCGAN math you actually compute when building the generator is the <b>output spatial size of a
-       transposed convolution</b> &mdash; you must get it right so the four upsampling layers land exactly on
-       $64\\times64$. For an input of side length $H_{\\text{in}}$, a <code>ConvTranspose2d</code> with kernel
-       $k$, stride $s$, padding $p$ (and default output-padding $0$) produces side length:</p>
-       <p>$$ H_{\\text{out}} = (H_{\\text{in}} - 1)\\,s - 2p + k. $$</p>
-       <p>Work the DCGAN-standard layer with $k=4$, $s=2$, $p=1$ (the values that cleanly <b>double</b> a
-       feature map), step by step, on an $H_{\\text{in}} = 4$ input:</p>
+       transposed convolution</b>, $H_{\\text{out}} = (H_{\\text{in}} - 1)\\,s - 2p + k$ &mdash; you must get it
+       right so the four upsampling layers land exactly on $64\\times64$. Plug in the DCGAN-standard layer
+       $k=4$, $s=2$, $p=1$ (the values that cleanly <b>double</b> a feature map) on an $H_{\\text{in}} = 4$
+       input, step by step:</p>
        <ul class="steps">
         <li><b>$(H_{\\text{in}} - 1)\\,s$</b> $= (4 - 1)\\times 2 = 3 \\times 2 = 6$.</li>
         <li><b>$-\\,2p$</b> $= -\\,2\\times 1 = -2$, giving $6 - 2 = 4$.</li>
         <li><b>$+\\,k$</b> $= +\\,4$, giving $4 + 4 = 8$.</li>
-        <li><b>Result:</b> $H_{\\text{out}} = 8$. The $4\\times4$ map became $8\\times8$ &mdash; exactly doubled,
-        as the "double each layer" recipe needs.</li>
+        <li><b>Result:</b> $H_{\\text{out}} = 8$. The $4\\times4$ map became $8\\times8$ &mdash; exactly doubled.</li>
        </ul>
-       <p>Chain four such layers from $4$: $4\\to8\\to16\\to32\\to64$ &mdash; the generator's full upsampling
-       path. This exact computation ($k=4,s=2,p=1$ on a $4\\times4$ input giving $8\\times8$) is recomputed in
-       the notebook's first cell and checked against the real tensor shape from
+       <p>Now chain four such $k=4,s=2,p=1$ layers from a $4\\times4$ start, applying $H_{\\text{out}}=2H_{\\text{in}}$
+       each time &mdash; the generator's full upsampling path. The last column re-checks the arithmetic
+       $(H_{\\text{in}}-1)\\cdot2 - 2 + 4$:</p>
+       <table class="extable">
+        <caption>The DCGAN generator's four upsampling layers ($k=4,s=2,p=1$): $4\\to8\\to16\\to32\\to64$.</caption>
+        <thead>
+         <tr><th>layer</th><th class="num">$H_{\\text{in}}$</th><th class="num">$(H_{\\text{in}}-1)\\cdot2$</th><th class="num">$-2p+k$</th><th class="num">$H_{\\text{out}}$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">4</td><td class="num">6</td><td class="num">+2</td><td class="num">8</td></tr>
+         <tr><td class="row-h">2</td><td class="num">8</td><td class="num">14</td><td class="num">+2</td><td class="num">16</td></tr>
+         <tr><td class="row-h">3</td><td class="num">16</td><td class="num">30</td><td class="num">+2</td><td class="num">32</td></tr>
+         <tr><td class="row-h">4</td><td class="num">32</td><td class="num">62</td><td class="num">+2</td><td class="num">64</td></tr>
+        </tbody>
+       </table>
+       <p>Each row doubles the side length, ending on a $64\\times64$ image. (Note $-2p+k = -2\\times1+4 = +2$ is
+       the same every row.) This exact computation ($k=4,s=2,p=1$ on a $4\\times4$ input giving $8\\times8$) is
+       recomputed in the notebook's first cell and checked against the real tensor shape from
        <code>nn.ConvTranspose2d</code>.</p>`,
     recipe:
       `<ol>

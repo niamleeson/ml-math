@@ -276,12 +276,17 @@
       `<p>Work GAE by hand on a tiny <b>3-step rollout</b> &mdash; the exact numbers the notebook recomputes.
        Use $\\gamma = 0.9$ and $\\lambda = 0.8$ (so $\\gamma\\lambda = 0.72$), round numbers for easy arithmetic.
        The episode <b>ends</b> at step $t = 2$ (the pole fell), so there is no bootstrap after it: $V(s_3) = 0$.</p>
-       <p><b>The rollout (rewards $r_t$ and critic values $V(s_t)$):</b></p>
-       <ul>
-        <li>$t=0$: $r_0 = 1.0$, $V(s_0) = 1.0$</li>
-        <li>$t=1$: $r_1 = 0.0$, $V(s_1) = 0.5$</li>
-        <li>$t=2$: $r_2 = 2.0$, $V(s_2) = 1.0$, terminal so $V(s_3) = 0$</li>
-       </ul>
+       <p><b>The rollout</b> (rewards $r_t$, critic values $V(s_t)$, and the bootstrap value $V(s_{t+1})$ used
+       by the TD error; the episode ends at $t=2$ so $V(s_3)=0$):</p>
+       <table class="extable">
+        <caption>The 3-step rollout. The last column is the next-state value the TD error bootstraps from.</caption>
+        <thead><tr><th>$t$</th><th class="num">$r_t$</th><th class="num">$V(s_t)$</th><th class="num">$V(s_{t+1})$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">0</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">0.5</td></tr>
+         <tr><td class="row-h">1</td><td class="num">0.0</td><td class="num">0.5</td><td class="num">1.0</td></tr>
+         <tr><td class="row-h">2 (terminal)</td><td class="num">2.0</td><td class="num">1.0</td><td class="num">0.0</td></tr>
+        </tbody>
+       </table>
        <ol class="steps">
         <li><b>TD errors</b> $\\delta_t = r_t + \\gamma V(s_{t+1}) - V(s_t)$ (Eq. 11):
           <ul>
@@ -304,6 +309,17 @@
           </ul>
         </li>
        </ol>
+       <p><b>The three estimates of $\\hat{A}_0$, side by side</b> &mdash; the same rollout, only $\\lambda$
+       changes:</p>
+       <table class="extable">
+        <caption>$\\hat{A}_0$ at the two endpoints and at GAE's $\\lambda=0.8$. As $\\lambda$ rises, more far-future reward enters, so the estimate climbs.</caption>
+        <thead><tr><th>estimator</th><th class="num">$\\lambda$</th><th class="num">$\\hat{A}_0$</th><th>character</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">one-step TD (Eq. 17)</td><td class="num">0</td><td class="num">0.4500</td><td>lowest, biased, leans on critic</td></tr>
+         <tr><td class="row-h">GAE (Eq. 16)</td><td class="num">0.8</td><td class="num">1.2564</td><td>in between, small bias, low variance</td></tr>
+         <tr><td class="row-h">Monte-Carlo (Eq. 18)</td><td class="num">1</td><td class="num">1.6200</td><td>highest, unbiased, uses every reward</td></tr>
+        </tbody>
+       </table>
        <p><b>Result:</b> $0.45 \\;(\\lambda{=}0) \\;\\lt\\; 1.2564 \\;(\\text{GAE},\\,\\lambda{=}0.8) \\;\\lt\\; 1.62 \\;(\\lambda{=}1)$.
        GAE interpolates between the biased low-variance one-step estimate and the unbiased high-variance
        Monte-Carlo one &mdash; exactly the dial Eq. 16 promises. The notebook recomputes all of these and

@@ -304,9 +304,28 @@
         the cases. That monotone climb &mdash; with the weights frozen &mdash; is in-context learning, and Figure
         1.2's point is that the climb is <i>steeper</i> for larger models.</li>
        </ul>
-       <p>The CODEVIZ below runs this exact toy: a frozen rule-matcher with no weight updates, scored at K = 0, 1,
-       2, 4, 8, 16. Our run gives accuracy 0.000 at K = 0, 0.325 at K = 1, and 0.952 at K = 16 &mdash; the climbing
-       in-context curve. Those are <b>our small-scale numbers, not the paper's reported results.</b></p>`,
+       <p>The three settings differ only by $K$, the count of demonstrations in the prompt &mdash; never by a
+       weight update:</p>
+       <table class="extable">
+        <caption>The same frozen model, three prompts, on the query <code>a#</code> (gold answer <code>a</code>).</caption>
+        <thead><tr><th>setting</th><th class="num">$K$</th><th>prompt (after the instruction)</th><th>likely answer</th><th>weights change?</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">zero-shot</td><td class="num">0</td><td><code>a#</code></td><td><code>a#</code> (echo &mdash; wrong)</td><td>no</td></tr>
+         <tr><td class="row-h">one-shot</td><td class="num">1</td><td><code>b@</code>&rarr;<code>b</code>; <code>a#</code></td><td><code>a</code> (often right)</td><td>no</td></tr>
+         <tr><td class="row-h">few-shot</td><td class="num">10&ndash;100</td><td><code>b@</code>&rarr;<code>b</code>; <code>c#</code>&rarr;<code>c</code>; &hellip;; <code>a#</code></td><td><code>a</code> (right)</td><td>no</td></tr>
+        </tbody>
+       </table>
+       <p>The CODEVIZ below runs this exact toy: a frozen rule-matcher with no weight updates, scored at
+       $K = 0, 1, 2, 4, 8, 16$. The accuracy-vs-$K$ ledger from our run (seed 0):</p>
+       <table class="extable">
+        <caption>Toy in-context-learning curve &mdash; OUR small run, not the paper's reported numbers.</caption>
+        <thead><tr><th>$K$</th><th class="num">0</th><th class="num">1</th><th class="num">2</th><th class="num">4</th><th class="num">8</th><th class="num">16</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">accuracy</td><td class="num">0.000</td><td class="num">0.325</td><td class="num">0.603</td><td class="num">0.603</td><td class="num">0.777</td><td class="num">0.952</td></tr>
+        </tbody>
+       </table>
+       <p>Accuracy climbs from $0.000$ at $K=0$ to $0.952$ at $K=16$ &mdash; the climbing in-context curve, with
+       the weights frozen throughout. Those are <b>our small-scale numbers, not the paper's reported results.</b></p>`,
     recipe:
       `<p>This is a read-only paper &mdash; no <i>novel</i> architecture to assemble (GPT-3 is "the same model and
        architecture as GPT-2," &sect;2.1; see the Architecture section for the decoder-only Transformer it scales up).

@@ -249,12 +249,18 @@
        the deadly-triad discussion live in the concept lessons &mdash; we only recap here.</p>`,
     example:
       `<p>Work one TD target by hand &mdash; the exact case the notebook recomputes. Use $\\gamma = 0.99$ and a
-       single transition.</p>
+       single transition: the agent was in state $s$, took action $a$, got reward $r = 1.0$ (CartPole's
+       per-step reward), and landed in a <b>non-terminal</b> next state $s'$ ($\\text{done} = 0$). The target
+       net $Q(\\cdot;\\theta^-)$ outputs these values for the next state $s'$:</p>
+       <table class="extable">
+         <caption>Target-net next-state action values; the Bellman target uses their $\\max$.</caption>
+         <thead><tr><th>next action $a'$</th><th class="num">$Q(s',a';\\theta^-)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">left</td><td class="num">12.0</td></tr>
+           <tr><td class="row-h">right</td><td class="num">15.0</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-        <li><b>The transition.</b> The agent was in state $s$, took action $a$, got reward $r = 1.0$ (CartPole's
-        per-step reward), and landed in a <b>non-terminal</b> next state $s'$ ($\\text{done} = 0$).</li>
-        <li><b>Read the target network's next-state values.</b> Say the target net $Q(\\cdot;\\theta^-)$ outputs
-        for $s'$ the two action values $Q(s',\\text{left}) = 12.0$ and $Q(s',\\text{right}) = 15.0$.</li>
         <li><b>Take the max over next actions.</b> $\\max_{a'} Q(s',a';\\theta^-) = \\max(12.0,\\,15.0) = 15.0$.</li>
         <li><b>Discount and add the reward.</b>
         $y = r + \\gamma\\,(1-\\text{done})\\max_{a'} Q(s',a';\\theta^-) = 1.0 + 0.99 \\times 1 \\times 15.0
@@ -263,9 +269,17 @@
         $Q(s,a;\\theta) = 13.0$ for the action actually taken. The TD error is
         $y - Q(s,a;\\theta) = 15.85 - 13.0 = 2.85$, so the squared loss for this sample is
         $2.85^2 = 8.1225$. The gradient step nudges $Q(s,a;\\theta)$ up toward $15.85$.</li>
-        <li><b>Terminal check.</b> Had $s'$ been terminal ($\\text{done} = 1$), the bootstrap term zeroes out
-        and $y = r = 1.0$ &mdash; no future to add.</li>
        </ul>
+       <p><b>Non-terminal vs terminal target.</b> The only thing that changes is the $(1-\\text{done})$ factor,
+       which zeroes the bootstrap when the episode ends:</p>
+       <table class="extable">
+         <caption>Same $r=1.0$, $\\gamma=0.99$, $\\max_{a'}Q=15.0$; only $\\text{done}$ differs.</caption>
+         <thead><tr><th>case</th><th class="num">$\\text{done}$</th><th class="num">$(1-\\text{done})$</th><th class="num">$y = r + \\gamma(1-\\text{done})\\max_{a'}Q$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">non-terminal</td><td class="num">0</td><td class="num">1</td><td class="num">15.85</td></tr>
+           <tr><td class="row-h">terminal</td><td class="num">1</td><td class="num">0</td><td class="num">1.00</td></tr>
+         </tbody>
+       </table>
        <p>These exact numbers ($\\max(12, 15) = 15$, $y = 1 + 0.99\\times15 = 15.85$, TD error $= 2.85$, squared
        loss $= 8.1225$) are recomputed in the notebook's first cell so you can check the target by running it.</p>`,
     recipe:

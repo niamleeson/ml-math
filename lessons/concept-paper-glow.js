@@ -243,14 +243,26 @@
       `<p><b>Worked numbers for the 1&times;1-convolution log-determinant (Eq. 9).</b> Take a $2$-channel
        feature map of size $h=4$, $w=4$ (so $16$ pixels), and the learned mixing matrix</p>
        $$ W = \\begin{pmatrix} 2 & 0 \\\\ 1 & 3 \\end{pmatrix}. $$
-       <p><b>Step 1 — determinant of $W$.</b> For a $2\\times2$ matrix $\\det\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}=ad-bc$,
-       so $\\det W = (2)(3) - (0)(1) = 6$.</p>
-       <p><b>Step 2 — per-pixel log.</b> $\\log|\\det W| = \\log 6 \\approx 1.791759$.</p>
-       <p><b>Step 3 — sum over all pixels (Eq. 9).</b> The same $W$ acts at all $h\\cdot w = 16$ pixels, so the
-       layer's log-determinant is $h\\cdot w\\cdot\\log|\\det W| = 16 \\times 1.791759 \\approx 28.668$.</p>
-       <p><b>Contrast with actnorm.</b> If actnorm used scale $s=(2,\\,0.5)$, its log-determinant would be
-       $h\\cdot w\\cdot\\sum\\log|s| = 16\\,(\\log 2 + \\log 0.5) = 16\\times 0 = 0$ &mdash; because $2\\times 0.5=1$
-       preserves volume. The notebook recomputes all three numbers and they match.</p>`,
+       <ul class="steps">
+         <li><b>Step 1 — determinant of $W$.</b> For a $2\\times2$ matrix
+         $\\det\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}=ad-bc$, so $\\det W = (2)(3) - (0)(1) = 6$.</li>
+         <li><b>Step 2 — per-pixel log.</b> $\\log|\\det W| = \\log 6 \\approx 1.791759$.</li>
+         <li><b>Step 3 — sum over all pixels (Eq. 9).</b> The same $W$ acts at all $h\\cdot w = 16$ pixels, so
+         the layer's log-determinant is $h\\cdot w\\cdot\\log|\\det W| = 16 \\times 1.791759 \\approx 28.668$.</li>
+       </ul>
+       <p><b>Compare the two log-dets of one flow step.</b> Run actnorm with scale $s=(2,\\,0.5)$ on the same
+       $4\\times4$ map and lay it next to the 1&times;1 conv above &mdash; both carry the $h\\cdot w=16$ factor:</p>
+       <table class="extable">
+         <caption>Per-pixel volume change vs. whole-layer log-det for the two layers on a $4\\times4$ ($h\\cdot w=16$) feature map.</caption>
+         <thead><tr><th>layer</th><th class="num">per-pixel $\\log|\\det|$</th><th class="num">$h\\cdot w$</th><th class="num">layer log-det</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1&times;1 conv, $W=[[2,0],[1,3]]$</td><td class="num">$\\log 6 = 1.791759$</td><td class="num">16</td><td class="num">28.668150</td></tr>
+           <tr><td class="row-h">actnorm, $s=(2,\\,0.5)$</td><td class="num">$\\log 2+\\log 0.5 = 0$</td><td class="num">16</td><td class="num">0.000000</td></tr>
+         </tbody>
+       </table>
+       <p>Actnorm's log-det is exactly $0$ because $2\\times 0.5 = 1$ preserves volume (it stretches one channel
+       and compresses the other by the reciprocal), while the 1&times;1 conv expands volume by $\\log 6$ per
+       pixel. The notebook recomputes both numbers and they match.</p>`,
     recipe:
       `<p>One <b>step of flow</b> (Table 1), then the full model:</p>
        <ol>

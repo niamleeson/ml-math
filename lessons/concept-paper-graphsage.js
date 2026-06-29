@@ -239,14 +239,24 @@ $$ \\text{per-batch cost } = O\\!\\left(\\textstyle\\prod_{i=1}^{K} S_i\\right) 
        concat on top.)</p>`,
     example:
       `<p>Work <b>one layer</b> by hand (one mean-aggregate + combine) with tiny 2-dimensional vectors. Target
-       node $v$ has feature $\\mathbf{h}_v = [1,\\,0]$ and two sampled neighbors $a,b$ with
-       $\\mathbf{h}_a = [0,\\,2]$ and $\\mathbf{h}_b = [2,\\,2]$. Use the mean aggregator (Alg. 1 line 4), the
-       concat-combine (line 5) with</p>
+       node $v$ has feature $\\mathbf{h}_v = [1,\\,0]$ and two sampled neighbors $a,b$. Here are the three input
+       vectors:</p>
+       <table class="extable">
+        <caption>The target node and its two sampled neighbors (dim 0, dim 1).</caption>
+        <thead><tr><th>vector</th><th class="num">dim 0</th><th class="num">dim 1</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">$\\mathbf{h}_v$ (self)</td><td class="num">$1$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$\\mathbf{h}_a$ (neighbor)</td><td class="num">$0$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">$\\mathbf{h}_b$ (neighbor)</td><td class="num">$2$</td><td class="num">$2$</td></tr>
+        </tbody>
+       </table>
+       <p>Use the mean aggregator (Alg. 1 line 4), the concat-combine (line 5) with</p>
        <p>$$ \\mathbf{W} = \\begin{bmatrix} 1 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 1 \\end{bmatrix}, \\qquad \\sigma = \\mathrm{ReLU}. $$</p>
        <ul class="steps">
         <li><b>Aggregate</b> (line 4): mean of the neighbors $= \\tfrac{1}{2}([0,2]+[2,2]) = [\\,(0{+}2)/2,\\;(2{+}2)/2\\,] = [1,\\,2]$. So $\\mathbf{h}_{N(v)} = [1,\\,2]$.</li>
         <li><b>Concatenate</b> self then neighbor-aggregate: $\\mathrm{concat}(\\mathbf{h}_v, \\mathbf{h}_{N(v)}) = [\\,1,\\,0,\\,1,\\,2\\,]$ (length 4).</li>
-        <li><b>Apply weights</b> $\\mathbf{W}\\cdot[1,0,1,2]^\\top$: row 1 $= 1{\\cdot}1 + 0{\\cdot}0 + 1{\\cdot}1 + 0{\\cdot}2 = 2$; row 2 $= 0{\\cdot}1 + 1{\\cdot}0 + 0{\\cdot}1 + 1{\\cdot}2 = 2$. Result $[2,\\,2]$.</li>
+        <li><b>Apply weights</b> $\\mathbf{W}\\cdot[1,0,1,2]^\\top$, row 1 $= 1{\\cdot}1 + 0{\\cdot}0 + 1{\\cdot}1 + 0{\\cdot}2 = 2$.</li>
+        <li>Row 2 $= 0{\\cdot}1 + 1{\\cdot}0 + 0{\\cdot}1 + 1{\\cdot}2 = 2$. Result $[2,\\,2]$.</li>
         <li><b>ReLU</b>: $\\mathrm{ReLU}([2,2]) = [2,\\,2]$ (both positive, unchanged).</li>
         <li><b>L2-normalize</b> (Alg. 1 line 7): length $= \\sqrt{2^2 + 2^2} = \\sqrt{8} \\approx 2.8284$, so
         $\\mathbf{h}_v^{1} = [\\,2/2.8284,\\; 2/2.8284\\,] \\approx [0.7071,\\,0.7071]$.</li>

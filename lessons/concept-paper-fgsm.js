@@ -238,6 +238,25 @@
         $s_{\\text{adv}} = 0.5 - 0.55 = -0.05$. The score flipped from $+0.5$ (class 1) to $-0.05$ (class 0).
         A $0.1$ nudge per pixel changed the prediction.</li>
        </ul>
+       <p>Per-pixel ledger &mdash; how each pixel's gradient becomes its perturbation and its push on the score:</p>
+       <table class="extable">
+        <caption>FGSM on the 3-pixel input ($\\epsilon = 0.1$); the last column sums to $w^\\top\\eta$.</caption>
+        <thead>
+         <tr><th>pixel $j$</th><th class="num">$w_j$</th><th class="num">$x_j$</th>
+             <th class="num">$(\\nabla_x J)_j$</th><th class="num">$\\text{sign}$</th>
+             <th class="num">$\\eta_j$</th><th class="num">$w_j\\,\\eta_j$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">2</td><td class="num">1</td>
+             <td class="num">-0.7550</td><td class="num">-1</td><td class="num">-0.1</td><td class="num">-0.20</td></tr>
+         <tr><td class="row-h">2</td><td class="num">-3</td><td class="num">1</td>
+             <td class="num">1.1326</td><td class="num">+1</td><td class="num">+0.1</td><td class="num">-0.30</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.5</td><td class="num">1</td>
+             <td class="num">-0.1888</td><td class="num">-1</td><td class="num">-0.1</td><td class="num">-0.05</td></tr>
+         <tr><td class="row-h">total</td><td class="num">&mdash;</td><td class="num">&mdash;</td>
+             <td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">-0.55</td></tr>
+        </tbody>
+       </table>
        <p>Notice $w^\\top\\eta = -\\epsilon\\sum_j|w_j| = -0.1\\cdot(2+3+0.5) = -0.55$ &mdash; exactly the
        $\\epsilon m n$ formula from &sect;3 (here $\\sum|w_j| = m\\,n = 5.5$). These exact numbers are recomputed
        in the notebook's first cell so you can check them.</p>`,

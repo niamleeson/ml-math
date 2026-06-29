@@ -248,25 +248,34 @@
        bias&ndash;variance reasoning live in the <b>rl-continuous-control</b> concept lesson &mdash; we only recap
        here.</p>`,
     example:
-      `<p>Work the two key updates by hand on tiny scalar numbers &mdash; the exact case the notebook recomputes.
-       Use one transition with $\\gamma = 0.99$ and soft-update rate $\\tau = 0.01$.</p>
+      `<p>Work all four of DDPG's per-step quantities by hand on tiny scalar numbers &mdash; the exact case the
+       notebook recomputes. Take one transition with discount $\\gamma = 0.99$, soft-update rate $\\tau = 0.01$,
+       reward $r = -1.0$; the target actor picks $\\mu'(s') = 0.30$ and the target critic scores it
+       $Q'(s', 0.30) = -5.0$; the live critic currently predicts $Q(s,a) = -5.50$.</p>
        <ul class="steps">
-        <li><b>Compute the critic's Bellman target.</b> Say the reward was $r = -1.0$, the target actor picks the
-        next action $\\mu'(s') = 0.30$, and the target critic scores it $Q'(s', 0.30) = -5.0$. Then
-        $y = r + \\gamma\\,Q'(s',\\mu'(s')) = -1.0 + 0.99\\times(-5.0) = -1.0 - 4.95 = -5.95$.</li>
-        <li><b>Critic error.</b> The live critic currently predicts $Q(s,a) = -5.50$. The squared error it is
-        regressed down is $(y - Q)^2 = (-5.95 - (-5.50))^2 = (-0.45)^2 = 0.2025$. The critic steps to shrink this.</li>
-        <li><b>Actor's deterministic policy gradient (Eq. 6).</b> Suppose at this state the critic's slope with
-        respect to the action is $\\nabla_a Q = +2.0$ (raising the action raises value), and the actor's slope
-        $\\nabla_{\\theta^\\mu}\\mu = 0.5$. The policy-gradient contribution is the product
-        $\\nabla_a Q \\cdot \\nabla_{\\theta^\\mu}\\mu = 2.0 \\times 0.5 = +1.0$ &mdash; a positive push that
-        increases the actor weight (and thus the action) to raise $Q$.</li>
-        <li><b>Soft target update.</b> Say a target weight is $\\theta' = 2.00$ and the matching live weight is
-        $\\theta = 3.00$. After one soft update with $\\tau = 0.01$:
-        $\\theta' \\leftarrow 0.01\\times 3.00 + 0.99\\times 2.00 = 0.03 + 1.98 = 2.01$. The target crept just
-        $0.01$ of the way (a $1\\%$ step) toward the live weight &mdash; that is the slow tracking that stabilizes
-        the critic's target.</li>
+        <li><b>Bellman target (Eq. 5).</b> $y = r + \\gamma\\,Q'(s',\\mu'(s')) = -1.0 + 0.99\\times(-5.0)
+        = -1.0 - 4.95 = -5.95$.</li>
+        <li><b>Critic squared error.</b> $(y - Q)^2 = (-5.95 - (-5.50))^2 = (-0.45)^2 = 0.2025$. The critic steps
+        to shrink this gap.</li>
+        <li><b>Deterministic policy gradient (Eq. 6).</b> With critic action-slope $\\nabla_a Q = +2.0$ and actor
+        slope $\\nabla_{\\theta^\\mu}\\mu = 0.5$, the product is $2.0 \\times 0.5 = +1.0$ &mdash; a positive push
+        that raises the action to raise $Q$.</li>
+        <li><b>Soft target update.</b> A target weight $\\theta' = 2.00$ tracks the live weight $\\theta = 3.00$:
+        $\\theta' \\leftarrow 0.01\\times 3.00 + 0.99\\times 2.00 = 0.03 + 1.98 = 2.01$ &mdash; it crept just
+        $1\\%$ of the way.</li>
        </ul>
+       <table class="extable">
+        <caption>One DDPG step, the four quantities ($\\gamma=0.99$, $\\tau=0.01$).</caption>
+        <thead>
+         <tr><th>quantity</th><th>plugged-in arithmetic</th><th class="num">value</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">Bellman target $y$</td><td>$-1.0 + 0.99\\times(-5.0)$</td><td class="num">$-5.95$</td></tr>
+         <tr><td class="row-h">critic error $(y-Q)^2$</td><td>$(-5.95 - (-5.50))^2$</td><td class="num">$0.2025$</td></tr>
+         <tr><td class="row-h">policy-grad term</td><td>$2.0 \\times 0.5$</td><td class="num">$+1.0$</td></tr>
+         <tr><td class="row-h">soft-updated $\\theta'$</td><td>$0.01\\times3.00 + 0.99\\times2.00$</td><td class="num">$2.01$</td></tr>
+        </tbody>
+       </table>
        <p>These exact numbers ($y = -5.95$, error $= 0.2025$, policy-gradient term $= 1.0$, soft-updated
        target $= 2.01$) are recomputed in the notebook's first cell so you can check them by running it.</p>`,
     recipe:

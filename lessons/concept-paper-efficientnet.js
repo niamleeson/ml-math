@@ -245,15 +245,25 @@ $$ \\text{FLOPS multiplier} \\;=\\; d\\cdot w^{2}\\cdot r^{2} \\;=\\; \\alpha^{\
         <li>$\\alpha\\cdot\\beta^2\\cdot\\gamma^2 = 1.2 \\times 1.21 \\times 1.3225 = 1.9203\\ldots \\approx 2.$
         ✓ (close to $2$, as required.)</li>
        </ul>
-       <p>Now <b>scale to $\\phi = 2$</b> (about the EfficientNet-B2 level). Apply Eqn. 3:</p>
+       <p>Now <b>scale to $\\phi = 2$</b> (about the EfficientNet-B2 level). Apply Eqn. 3 to each knob:</p>
+       <table class="extable">
+        <caption>One dial $\\phi = 2$, three knobs (Eqn. 3), with $\\alpha=1.2,\\ \\beta=1.1,\\ \\gamma=1.15$.</caption>
+        <thead>
+         <tr><th>knob</th><th>base</th><th>multiplier $= \\text{base}^\\phi$</th><th class="num">value</th><th class="num">FLOPS contribution</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">depth $d$</td><td>$\\alpha=1.2$</td><td>$1.2^2$</td><td class="num">1.4400</td><td class="num">$d = 1.4400$ (linear)</td></tr>
+         <tr><td class="row-h">width $w$</td><td>$\\beta=1.1$</td><td>$1.1^2$</td><td class="num">1.2100</td><td class="num">$w^2 = 1.4641$ (squared)</td></tr>
+         <tr><td class="row-h">resolution $r$</td><td>$\\gamma=1.15$</td><td>$1.15^2$</td><td class="num">1.3225</td><td class="num">$r^2 = 1.7490$ (squared)</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Depth</b> $d = \\alpha^\\phi = 1.2^2 = 1.44$ &mdash; about <b>44% more layers</b>.</li>
-        <li><b>Width</b> $w = \\beta^\\phi = 1.1^2 = 1.21$ &mdash; about <b>21% more channels</b>.</li>
-        <li><b>Resolution</b> $r = \\gamma^\\phi = 1.15^2 = 1.3225$ &mdash; about <b>32% bigger</b> per side.
-        Starting from B0's $224$ px, that is $224 \\times 1.3225 \\approx 296$ px.</li>
+        <li><b>Read the multipliers.</b> $d = 1.44$ (~44% more layers), $w = 1.21$ (~21% more channels),
+        $r = 1.3225$ (~32% bigger per side). From B0's $224$ px that is $224 \\times 1.3225 \\approx 296$ px.</li>
         <li><b>Cost check.</b> FLOPS multiplier $= d\\cdot w^2\\cdot r^2
-        = 1.44 \\times 1.21^2 \\times 1.3225^2 = 1.44 \\times 1.4641 \\times 1.7490 \\approx 3.687$. Compare to
-        $2^\\phi = 2^2 = 4$ &mdash; close (the small gap is because the product was $1.92$, not exactly $2$).</li>
+        = 1.4400 \\times 1.4641 \\times 1.7490 \\approx 3.687$ (multiply the last column).</li>
+        <li><b>Compare to the rule.</b> $2^\\phi = 2^2 = 4$ &mdash; close; the small gap is because the product
+        $\\alpha\\beta^2\\gamma^2 = 1.92$, not exactly $2$ (indeed $1.92^2 \\approx 3.687$).</li>
        </ul>
        <p>So one dial ($\\phi=2$) turned into "44% deeper, 21% wider, 32% higher resolution, ~3.7&times; the
        compute." These exact numbers are recomputed in the notebook's first cell so you can check the

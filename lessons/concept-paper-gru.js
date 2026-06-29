@@ -230,16 +230,33 @@
       `<p><b>Worked numbers — one scalar GRU step</b> (1 unit, 1 input), so you can do it by hand. Take input
        $x=1.0$, previous state $h^{&lt;t-1&gt;}=0.5$, and these weights:
        $W_r=0.5, U_r=-0.3$; $W_z=0.8, U_z=0.2$; $W=1.0, U=0.4$ (no biases).</p>
-       <ol>
-         <li><b>Reset gate.</b> $r=\\sigma(0.5\\cdot1 + (-0.3)\\cdot0.5)=\\sigma(0.35)=\\mathbf{0.5866}$.</li>
-         <li><b>Update gate.</b> $z=\\sigma(0.8\\cdot1 + 0.2\\cdot0.5)=\\sigma(0.90)=\\mathbf{0.7109}$.</li>
-         <li><b>Candidate.</b> first $r\\odot h^{&lt;t-1&gt;}=0.5866\\cdot0.5=0.2933$, then
-         $\\tilde{h}=\\tanh(1.0\\cdot1 + 0.4\\cdot0.2933)=\\tanh(1.1173)=\\mathbf{0.8066}$.</li>
+       <ul class="steps">
+         <li><b>Reset gate.</b> pre-activation $0.5\\cdot1 + (-0.3)\\cdot0.5 = 0.5-0.15 = 0.35$, then
+         $r=\\sigma(0.35)=1/(1+e^{-0.35})=\\mathbf{0.5866}$.</li>
+         <li><b>Update gate.</b> pre-activation $0.8\\cdot1 + 0.2\\cdot0.5 = 0.8+0.10 = 0.90$, then
+         $z=\\sigma(0.90)=1/(1+e^{-0.90})=\\mathbf{0.7109}$.</li>
+         <li><b>Gate the old state.</b> $r\\odot h^{&lt;t-1&gt;}=0.5866\\cdot0.5=0.2933$.</li>
+         <li><b>Candidate.</b> pre-activation $1.0\\cdot1 + 0.4\\cdot0.2933 = 1.0+0.1173 = 1.1173$, then
+         $\\tilde{h}=\\tanh(1.1173)=\\mathbf{0.8066}$.</li>
          <li><b>Blend (PyTorch form $h=(1-z)\\tilde{h}+z\\,h^{&lt;t-1&gt;}$).</b>
-         $h^{&lt;t&gt;}=(1-0.7109)\\cdot0.8066 + 0.7109\\cdot0.5 = 0.2332 + 0.3555 = \\mathbf{0.5886}$.</li>
-       </ol>
-       <p>Because $z=0.71$ is fairly high, the new state $0.5886$ stays close to the old $0.5$ — the gate chose to
-       mostly keep. The notebook recomputes these exact four numbers.</p>`,
+         $(1-0.7109)\\cdot0.8066 + 0.7109\\cdot0.5 = 0.2891\\cdot0.8066 + 0.3555 = 0.2332 + 0.3555 = \\mathbf{0.5886}$.</li>
+       </ul>
+       <p>Because $z=0.7109$ is fairly high, the blend leans on the old state — the new state $0.5886$ stays close
+       to the old $0.5$. The table below lays the four quantities side by side; note how each gate's value steers
+       the mix:</p>
+       <table class="extable">
+         <caption>One scalar GRU step: each quantity, its arithmetic, and its result.</caption>
+         <thead>
+           <tr><th>quantity</th><th>formula (plugged in)</th><th class="num">value</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">reset gate $r$</td><td>$\\sigma(0.5\\cdot1-0.3\\cdot0.5)=\\sigma(0.35)$</td><td class="num">0.5866</td></tr>
+           <tr><td class="row-h">update gate $z$</td><td>$\\sigma(0.8\\cdot1+0.2\\cdot0.5)=\\sigma(0.90)$</td><td class="num">0.7109</td></tr>
+           <tr><td class="row-h">candidate $\\tilde{h}$</td><td>$\\tanh(1.0+0.4\\cdot(0.5866\\cdot0.5))=\\tanh(1.1173)$</td><td class="num">0.8066</td></tr>
+           <tr><td class="row-h">new state $h^{&lt;t&gt;}$</td><td>$0.2891\\cdot0.8066+0.7109\\cdot0.5$</td><td class="num">0.5886</td></tr>
+         </tbody>
+       </table>
+       <p>The notebook recomputes these exact four numbers.</p>`,
 
     recipe:
       `<p>The GRU cell as numbered steps (PyTorch packing order $[r, z, n]$ in <code>weight_ih</code>/<code>weight_hh</code>):</p>

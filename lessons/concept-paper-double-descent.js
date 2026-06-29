@@ -281,7 +281,17 @@
        model with $D = 2$ features: a bias feature (always $1$) and one input feature $x$. So the model is
        $\\hat y = a\\cdot 1 + b\\cdot x$, fit by least squares. Here $D = 2 \\lt n = 3$, so the model cannot fit
        all three points exactly &mdash; this is the classical side.</p>
-       <p>Points: $x = [0, 1, 2]$ with noisy targets $y = [1, 1, 3]$. The feature matrix and its pieces:</p>
+       <p>Points: $x = [0, 1, 2]$ with noisy targets $y = [1, 1, 3]$; the two features per row are the bias
+       ($1$) and $x$:</p>
+       <table class="extable">
+        <caption>The $n=3$ training points and their $D=2$ features (bias and $x$).</caption>
+        <thead><tr><th></th><th class="num">feat 1 ($1$)</th><th class="num">feat 2 ($x$)</th><th class="num">target $y$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">point 0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+         <tr><td class="row-h">point 1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+         <tr><td class="row-h">point 2</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
         <li><b>Feature matrix.</b> $\\Phi = \\begin{bmatrix} 1 & 0 \\\\ 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$ (rows =
         the 3 points; columns = the 2 features). Targets $y = [1, 1, 3]$.</li>
@@ -291,11 +301,20 @@
         <li><b>Solve.</b> Two equations: $3a + 3b = 5$ and $3a + 5b = 7$. Subtract the first from the second:
         $2b = 2$, so $b = 1$. Back-substitute: $3a + 3 = 5$, so $a = \\tfrac{2}{3} \\approx 0.6667$. Thus
         $\\theta = (0.6667, 1)$.</li>
-        <li><b>Predictions and training error.</b> $\\hat y = [\\,0.6667,\\; 1.6667,\\; 2.6667\\,]$; residuals
-        $\\hat y - y = [-0.3333,\\; 0.6667,\\; -0.3333]$; training mean-squared error
-        $= \\tfrac{1}{3}(0.1111 + 0.4444 + 0.1111) = 0.2222$. Non-zero, because $D \\lt n$: the model is
+        <li><b>Training error.</b> Mean-squared error
+        $= \\tfrac{1}{3}(0.1111 + 0.4444 + 0.1111) = \\mathbf{0.2222}$. Non-zero, because $D \\lt n$: the model is
         <b>under-parameterized</b> and cannot interpolate.</li>
        </ul>
+       <table class="extable">
+        <caption>Fit $\\hat y = 0.6667 + 1\\cdot x$: predictions, residuals, and squared residuals.</caption>
+        <thead><tr><th></th><th class="num">$y$</th><th class="num">$\\hat y$</th><th class="num">$\\hat y - y$</th><th class="num">$(\\hat y - y)^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">point 0</td><td class="num">1</td><td class="num">0.6667</td><td class="num">-0.3333</td><td class="num">0.1111</td></tr>
+         <tr><td class="row-h">point 1</td><td class="num">1</td><td class="num">1.6667</td><td class="num">0.6667</td><td class="num">0.4444</td></tr>
+         <tr><td class="row-h">point 2</td><td class="num">3</td><td class="num">2.6667</td><td class="num">-0.3333</td><td class="num">0.1111</td></tr>
+         <tr><td class="row-h">mean</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">0.2222</td></tr>
+        </tbody>
+       </table>
        <p>Now imagine adding a third feature ($D = 3 = n$): the matrix becomes square and invertible, the fit
        passes through all three points exactly, and training error drops to $0$. That is the interpolation
        threshold. The notebook recomputes these exact numbers, then sweeps $D$ far past it to draw the full

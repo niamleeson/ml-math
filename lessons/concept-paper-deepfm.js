@@ -219,24 +219,32 @@ $$ y_{DNN} = \\sigma\\big(W^{(|H|+1)} a^{(H)} + b^{(|H|+1)}\\big) $$
        special derivation: it is a standard MLP on the same $a^{(0)}$.</p>`,
     example:
       `<p>Work the FM order-2 trick on two tiny embeddings so the identity is concrete. Suppose only two
-       features are active, with shared embeddings (here $k=3$):</p>
-       <p>$$ e_1 = [\\,0.2,\\,-0.1,\\,0.4\\,], \\qquad e_2 = [\\,0.5,\\,0.3,\\,-0.2\\,]. $$</p>
-       <p>The order-2 term should equal the single pair's inner product $\\langle e_1,e_2\\rangle$. Check both ways.</p>
+       features are active, with shared embeddings (here $k=3$): $e_1 = [\\,0.2,\\,-0.1,\\,0.4\\,]$ and
+       $e_2 = [\\,0.5,\\,0.3,\\,-0.2\\,]$. The order-2 term should equal the single pair's inner product
+       $\\langle e_1,e_2\\rangle$ &mdash; we check both ways. First lay the two vectors out per dimension and form
+       the three quantities the $O(kd)$ identity needs (sum $s_f=e_{1,f}+e_{2,f}$, its square, and the
+       sum of squares):</p>
+       <table class="extable">
+        <caption>Per-dimension ledger for $\\tfrac12[(\\sum e)^2 - \\sum e^2]$ (here $\\sum e = e_1+e_2$).</caption>
+        <thead><tr><th>dim $f$</th><th class="num">$e_{1,f}$</th><th class="num">$e_{2,f}$</th><th class="num">$e_{1,f}e_{2,f}$</th><th class="num">$s_f=e_{1,f}{+}e_{2,f}$</th><th class="num">$s_f^2$</th><th class="num">$e_{1,f}^2{+}e_{2,f}^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.2</td><td class="num">0.5</td><td class="num">0.10</td><td class="num">0.7</td><td class="num">0.49</td><td class="num">0.29</td></tr>
+         <tr><td class="row-h">2</td><td class="num">-0.1</td><td class="num">0.3</td><td class="num">-0.03</td><td class="num">0.2</td><td class="num">0.04</td><td class="num">0.10</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.4</td><td class="num">-0.2</td><td class="num">-0.08</td><td class="num">0.2</td><td class="num">0.04</td><td class="num">0.20</td></tr>
+         <tr><td class="row-h">total</td><td class="num"></td><td class="num"></td><td class="num">-0.01</td><td class="num"></td><td class="num">0.57</td><td class="num">0.59</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Direct inner product:</b> $\\langle e_1,e_2\\rangle = (0.2)(0.5) + (-0.1)(0.3) + (0.4)(-0.2)
-        = 0.10 - 0.03 - 0.08 = -0.01.$</li>
-        <li><b>Sum of the embeddings:</b> $e_1 + e_2 = [\\,0.7,\\,0.2,\\,0.2\\,]$.</li>
-        <li><b>Square-of-the-sum (per dimension, then add):</b>
-        $0.7^2 + 0.2^2 + 0.2^2 = 0.49 + 0.04 + 0.04 = 0.57.$</li>
-        <li><b>Sum-of-the-squares:</b>
-        $\\;\\sum e_1^2 = 0.04+0.01+0.16 = 0.21$ and $\\;\\sum e_2^2 = 0.25+0.09+0.04 = 0.38$,
-        together $0.21 + 0.38 = 0.59.$</li>
-        <li><b>Apply the identity:</b> $\\tfrac12(0.57 - 0.59) = \\tfrac12(-0.02) = -0.01.$ It matches the direct
-        inner product exactly.</li>
+        <li><b>Direct inner product</b> (sum the $e_{1,f}e_{2,f}$ column): $\\langle e_1,e_2\\rangle = 0.10 + (-0.03)
+        + (-0.08) = -0.01.$</li>
+        <li><b>Square-of-the-sum</b> (sum the $s_f^2$ column): $0.49 + 0.04 + 0.04 = 0.57.$</li>
+        <li><b>Sum-of-the-squares</b> (sum the last column): $0.29 + 0.10 + 0.20 = 0.59.$</li>
+        <li><b>Apply the identity:</b> $\\tfrac12(0.57 - 0.59) = \\tfrac12(-0.02) = -0.01.$</li>
+        <li><b>Compare:</b> $-0.01 = -0.01$ &mdash; the cheap identity matches the direct inner product exactly.</li>
        </ul>
-       <p>So the cheap "square-of-sum minus sum-of-squares, halved" gives the same FM order-2 score $-0.01$ as
-       summing pair inner products &mdash; with one active pair, that is just $\\langle e_1,e_2\\rangle$. These
-       numbers are recomputed in the notebook's first cell.</p>`,
+       <p>So "square-of-sum minus sum-of-squares, halved" gives the same FM order-2 score $-0.01$ as summing pair
+       inner products &mdash; with one active pair, that is just $\\langle e_1,e_2\\rangle$. These numbers are
+       recomputed in the notebook's first cell.</p>`,
     recipe:
       `<ol>
         <li><b>Build one shared embedding table</b> <code>V = nn.Embedding(total_features, k)</code>, plus an

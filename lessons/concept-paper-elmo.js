@@ -212,29 +212,33 @@
        blend instead, and the paper shows this beats using only the top layer (&sect;5.1). The softmax keeps
        the weights a valid average (positive, sum to one) so $\\gamma$ alone controls scale.</p>`,
     example:
-      `<p>Worked numbers for Equation (1), with a tiny $L=2$ biLM and 3-dimensional layer vectors. The CODE
-       cell recomputes these exact numbers.</p>
-       <p><b>Given.</b> The three layer vectors for our token (layer 0 = static, layer 1, layer 2):</p>
-       <ul>
-        <li>$h_0 = (1.0,\\ 0.0,\\ -1.0)$</li>
-        <li>$h_1 = (0.0,\\ 2.0,\\ 0.0)$</li>
-        <li>$h_2 = (1.0,\\ 1.0,\\ 1.0)$</li>
+      `<p>Worked numbers for Equation (1), with a tiny $L=2$ biLM and 3-dimensional layer vectors. The given
+       layer vectors, raw task weights $w$, and scale $\\gamma = 2.0$ are below; the CODE cell recomputes these
+       exact numbers.</p>
+       <table class="extable">
+        <caption>Inputs to Eq. (1): three layer vectors, raw weights $w_j$, and the softmax weights $s_j$ they produce.</caption>
+        <thead>
+         <tr><th>layer $j$</th><th class="num">$h_{j}$ (dim 0)</th><th class="num">$h_{j}$ (dim 1)</th><th class="num">$h_{j}$ (dim 2)</th><th class="num">raw $w_j$</th><th class="num">$e^{w_j}$</th><th class="num">$s_j$ (softmax)</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="row-h">0 (static)</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">&minus;1.0</td><td class="num">0.0</td><td class="num">1.00000</td><td class="num">0.09003</td></tr>
+         <tr><td class="row-h">1 (LSTM)</td><td class="num">0.0</td><td class="num">2.0</td><td class="num">0.0</td><td class="num">1.0</td><td class="num">2.71828</td><td class="num">0.24473</td></tr>
+         <tr><td class="row-h">2 (LSTM)</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">2.0</td><td class="num">7.38906</td><td class="num">0.66524</td></tr>
+        </tbody>
+       </table>
+       <ul class="steps">
+        <li><b>Step 1 — softmax the weights.</b> The $e^{w_j}$ sum to $1.00000 + 2.71828 + 7.38906 = 11.10734$;
+        dividing each by that gives $s = (0.09003,\\ 0.24473,\\ 0.66524)$. (Check: they sum to $1$.)</li>
+        <li><b>Step 2 — weighted sum, dim 0:</b>
+        $0.09003(1.0) + 0.24473(0.0) + 0.66524(1.0) = 0.75527$.</li>
+        <li><b>weighted sum, dim 1:</b>
+        $0.09003(0.0) + 0.24473(2.0) + 0.66524(1.0) = 1.15470$.</li>
+        <li><b>weighted sum, dim 2:</b>
+        $0.09003(-1.0) + 0.24473(0.0) + 0.66524(1.0) = 0.57521$. Blended vector $= (0.75527,\\ 1.15470,\\ 0.57521)$.</li>
+        <li><b>Step 3 — scale by $\\gamma = 2.0$:</b>
+        $\\text{ELMo} = 2.0 \\times (0.75527,\\ 1.15470,\\ 0.57521) = (1.51054,\\ 2.30940,\\ 1.15042)$.</li>
        </ul>
-       <p>Unnormalized task weights $w = (w_0,w_1,w_2) = (0.0,\\ 1.0,\\ 2.0)$ and scale $\\gamma = 2.0$.</p>
-       <p><b>Step 1 — softmax the weights into $s_j$.</b> $e^{0}=1,\\ e^{1}=2.71828,\\ e^{2}=7.38906$; their
-       sum is $11.10734$. So
-       $s_0 = 1/11.10734 = 0.09003$, $s_1 = 2.71828/11.10734 = 0.24473$, $s_2 = 7.38906/11.10734 = 0.66524$.
-       (Check: they sum to 1.)</p>
-       <p><b>Step 2 — weighted sum $\\sum_j s_j h_j$</b>, component by component:</p>
-       <ul>
-        <li>dim 0: $0.09003(1.0) + 0.24473(0.0) + 0.66524(1.0) = 0.75527$</li>
-        <li>dim 1: $0.09003(0.0) + 0.24473(2.0) + 0.66524(1.0) = 1.15470$</li>
-        <li>dim 2: $0.09003(-1.0) + 0.24473(0.0) + 0.66524(1.0) = 0.57521$</li>
-       </ul>
-       <p>So the blended vector is $(0.75527,\\ 1.15470,\\ 0.57521)$.</p>
-       <p><b>Step 3 — scale by $\\gamma = 2.0$:</b>
-       $\\text{ELMo} = 2.0 \\times (0.75527,\\ 1.15470,\\ 0.57521) = (1.51054,\\ 2.30940,\\ 1.15042)$.</p>
-       <p>That final triple is the token's ELMo vector. Notice layer 2 (weight 0.665) dominated the blend, but
+       <p>That final triple is the token's ELMo vector. Notice layer 2 (weight $0.665$) dominated the blend, but
        the static layer 0 still pulled dim 2 negative before $\\gamma$ doubled everything &mdash; the whole
        point is that the task <i>chose</i> this mix.</p>`,
     recipe:

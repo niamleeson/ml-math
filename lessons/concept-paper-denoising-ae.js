@@ -294,25 +294,31 @@ $$ \\text{Variational lower bound (§4.2, Eq. 6-7):}\\quad \\log p(\\tilde X) \\
        (§4.2-4.3) — denoising = maximizing a lower bound on the mutual information $I(X;Y)$, and = a variational
        bound in a particular generative model — are beyond this lesson; see the paper.</p>`,
     example:
-      `<p>Work the <b>denoising setup</b> by hand on a tiny 4-pixel "image" so you can check the notebook. Take a
-       clean input and corrupt one of its pixels with masking noise (set to $0$):</p>
-       <ul>
-        <li>clean input $x = [\\,0.9,\\ 0.2,\\ 0.8,\\ 0.5\\,]$</li>
-        <li>masking noise zeroes pixel 3 (the $0.8$): mask $m = [\\,1,\\ 1,\\ 0,\\ 1\\,]$, so corrupted
-        $\\tilde x = x \\odot m = [\\,0.9,\\ 0.2,\\ 0.0,\\ 0.5\\,]$. Here $\\nu = 1/4 = 0.25$ ($1$ of $4$ pixels zeroed).</li>
-       </ul>
-       <p>Suppose the decoder, fed $\\tilde x$, produces reconstruction $z = [\\,0.85,\\ 0.25,\\ 0.6,\\ 0.5\\,]$.
-       The denoising loss compares $z$ to the <b>clean</b> $x$ (NOT to $\\tilde x$). Use squared error so the
-       arithmetic is transparent:</p>
+      `<p>Work the <b>denoising setup</b> by hand on a tiny 4-pixel "image" so you can check the notebook. The
+       clean input is $x = [\\,0.9,\\ 0.2,\\ 0.8,\\ 0.5\\,]$. Masking noise zeroes pixel 3 (the $0.8$): mask
+       $m = [\\,1,\\ 1,\\ 0,\\ 1\\,]$, so the corrupted encoder input is
+       $\\tilde x = x \\odot m = [\\,0.9,\\ 0.2,\\ 0.0,\\ 0.5\\,]$ &mdash; that is $\\nu = 1/4 = 0.25$ ($1$ of $4$
+       pixels zeroed). Suppose the decoder, fed $\\tilde x$, produces $z = [\\,0.85,\\ 0.25,\\ 0.6,\\ 0.5\\,]$. The
+       denoising loss compares $z$ to the <b>clean</b> $x$ (NOT to $\\tilde x$). Lay out each pixel with squared
+       error so the arithmetic is transparent:</p>
+       <table class="extable">
+        <caption>Per-pixel squared error of $z$ against the CLEAN target $x$. Pixel 3 is the masked one.</caption>
+        <thead><tr><th>pixel $k$</th><th class="num">clean $x_k$</th><th class="num">corrupt $\\tilde x_k$</th><th class="num">recon $z_k$</th><th class="num">$x_k-z_k$</th><th class="num">$(x_k-z_k)^2$</th></tr></thead>
+        <tbody>
+         <tr><td class="num">1</td><td class="num">0.90</td><td class="num">0.90</td><td class="num">0.85</td><td class="num">0.05</td><td class="num">0.0025</td></tr>
+         <tr><td class="num">2</td><td class="num">0.20</td><td class="num">0.20</td><td class="num">0.25</td><td class="num">-0.05</td><td class="num">0.0025</td></tr>
+         <tr><td class="row-h">3 (masked)</td><td class="num">0.80</td><td class="num">0.00</td><td class="num">0.60</td><td class="num">0.20</td><td class="num">0.0400</td></tr>
+         <tr><td class="num">4</td><td class="num">0.50</td><td class="num">0.50</td><td class="num">0.50</td><td class="num">0.00</td><td class="num">0.0000</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">0.0450</td></tr>
+        </tbody>
+       </table>
        <ul class="steps">
-        <li><b>Per-pixel errors vs the CLEAN target.</b> $x - z = [\\,0.9-0.85,\\ 0.2-0.25,\\ 0.8-0.6,\\ 0.5-0.5\\,]
-        = [\\,0.05,\\ -0.05,\\ 0.20,\\ 0.00\\,].$</li>
-        <li><b>Square each.</b> $[\\,0.05^2,\\ (-0.05)^2,\\ 0.20^2,\\ 0.00^2\\,] = [\\,0.0025,\\ 0.0025,\\ 0.04,\\ 0.00\\,].$</li>
-        <li><b>Sum of squared errors.</b> $0.0025 + 0.0025 + 0.04 + 0.00 = 0.045.$</li>
-        <li><b>Mean-squared error (divide by 4 pixels).</b> $\\text{MSE} = 0.045 / 4 = 0.01125.$</li>
-        <li><b>Where the cost lives.</b> Pixel 3 — the one that was <b>zeroed</b> — carries $0.04$ of the $0.045$
-        total. The network is being scored almost entirely on how well it <b>guessed the missing pixel</b> from
-        its neighbours. That is the denoising signal.</li>
+        <li><b>Sum of squared errors</b> (last column): $0.0025 + 0.0025 + 0.0400 + 0.0000 = 0.045.$</li>
+        <li><b>Mean-squared error</b> (divide by $4$ pixels): $\\text{MSE} = 0.045 / 4 = 0.01125.$</li>
+        <li><b>Where the cost lives:</b> pixel 3 &mdash; the <b>zeroed</b> one &mdash; carries $0.04$ of the $0.045$
+        total, about $89\\%$ of the loss.</li>
+        <li><b>Read the signal:</b> the network is scored almost entirely on how well it <b>guessed the missing
+        pixel</b> from its surviving neighbours. That pressure is the denoising criterion.</li>
        </ul>
        <p>Contrast a plain autoencoder (no corruption, $\\nu=0$): it would see the clean $x$ and could just copy
        it, so pixel 3 would cost nothing and it would learn nothing about how pixel 3 relates to the others.

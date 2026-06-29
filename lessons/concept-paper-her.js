@@ -293,6 +293,18 @@
         in both copies; only the goal-tag flipped ($11111 \\to 01101$) and so the reward flipped ($-1 \\to 0$).
         That single $0$ is the first learnable success the episode produced.</li>
        </ul>
+       <p>The two stored copies side by side &mdash; same physical step, only the goal-tag and its derived
+       reward differ:</p>
+       <table class="extable">
+         <caption>The same transition stored twice: real-goal copy vs hindsight (relabeled) copy, $n=5$, <code>final</code> strategy.</caption>
+         <thead>
+           <tr><th>copy</th><th>goal used</th><th>reward formula</th><th class="num">reward</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">real goal $g$</td><td>$11111$</td><td>$-[\\,01101 \\neq 11111\\,]$</td><td class="num">-1</td></tr>
+           <tr><td class="row-h">hindsight $g'=s_T$</td><td>$01101$</td><td>$-[\\,01101 \\neq 01101\\,]$</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
        <p>So the relabeled transition stored is $(s\\|g',\\,a,\\,r',\\,s'\\|g') =
        (01001\\,\\|\\,01101,\\; 2,\\; 0,\\; 01101\\,\\|\\,01101)$. The notebook recomputes
        $-[01101 \\neq 11111] = -1$ and $-[01101 \\neq 01101] = 0$ so you can check the reward flip by running it.</p>`,

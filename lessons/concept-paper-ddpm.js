@@ -242,25 +242,34 @@
        network is learning the gradient of the log-density, the "score") and the full ELBO algebra are derived
        in the <b>mod-diffusion</b> concept lesson; we only recap here.</p>`,
     example:
-      `<p>Work one <b>forward-noising step</b> by hand with a tiny schedule, so $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0
-       + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ is concrete. Use a 4-step toy schedule
-       $\\beta = [0.1,\\,0.2,\\,0.3,\\,0.4]$.</p>
+      `<p>Work one <b>forward-noising step</b> by hand with a tiny 4-step schedule
+       $\\beta = [0.1,\\,0.2,\\,0.3,\\,0.4]$, so $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0
+       + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$ is concrete. First build the schedule: keep-fraction
+       $\\alpha_t = 1-\\beta_t$, then the running product $\\bar\\alpha_t = \\alpha_1\\cdots\\alpha_t$ (each cell
+       is the one above-left times its own $\\alpha$), and the two Eq. 4 mixing coefficients:</p>
+       <table class="extable">
+        <caption>The 4-step schedule. $\\bar\\alpha_t$ is the running product of $\\alpha$; it fades from $0.9$ toward $0.30$.</caption>
+        <thead>
+         <tr><th class="num">$t$</th><th class="num">$\\beta_t$</th><th class="num">$\\alpha_t$</th><th class="num">$\\bar\\alpha_t$</th><th class="num">$\\sqrt{\\bar\\alpha_t}$</th><th class="num">$\\sqrt{1-\\bar\\alpha_t}$</th></tr>
+        </thead>
+        <tbody>
+         <tr><td class="num">1</td><td class="num">0.1</td><td class="num">0.9</td><td class="num">0.9</td><td class="num">0.9487</td><td class="num">0.3162</td></tr>
+         <tr><td class="num">2</td><td class="num">0.2</td><td class="num">0.8</td><td class="num">0.72</td><td class="num">0.8485</td><td class="num">0.5292</td></tr>
+         <tr><td class="num">3</td><td class="num">0.3</td><td class="num">0.7</td><td class="num">0.504</td><td class="num">0.7099</td><td class="num">0.7043</td></tr>
+         <tr><td class="num">4</td><td class="num">0.4</td><td class="num">0.6</td><td class="num">0.3024</td><td class="num">0.5499</td><td class="num">0.8352</td></tr>
+        </tbody>
+       </table>
+       <p>Now noise $x_0 = 2.0$ to timestep $t = 2$ with one noise draw $\\epsilon = 0.5$, reading the $t=2$ row
+       ($\\bar\\alpha_2 = 0.72$):</p>
        <ul class="steps">
-        <li><b>Keep-fractions</b> $\\alpha_t = 1-\\beta_t$:&nbsp; $\\alpha = [0.9,\\,0.8,\\,0.7,\\,0.6]$.</li>
-        <li><b>Running products</b> $\\bar\\alpha_t = \\alpha_1\\cdots\\alpha_t$:&nbsp;
-        $\\bar\\alpha_1 = 0.9$,&nbsp; $\\bar\\alpha_2 = 0.9\\times0.8 = 0.72$,&nbsp;
-        $\\bar\\alpha_3 = 0.72\\times0.7 = 0.504$,&nbsp; $\\bar\\alpha_4 = 0.504\\times0.6 = 0.3024$.</li>
-        <li><b>Pick</b> $x_0 = 2.0$, timestep $t = 2$, and one noise draw $\\epsilon = 0.5$. So
-        $\\bar\\alpha_2 = 0.72$.</li>
-        <li><b>Coefficients:</b> $\\sqrt{\\bar\\alpha_2} = \\sqrt{0.72} \\approx 0.848528$ and
-        $\\sqrt{1-\\bar\\alpha_2} = \\sqrt{0.28} \\approx 0.529150$.</li>
-        <li><b>Mix</b> (Eq. 4): $x_2 = 0.848528 \\times 2.0 + 0.529150 \\times 0.5
-        = 1.697056 + 0.264575 = \\mathbf{1.961631}$.</li>
+        <li><b>Clean part:</b> $\\sqrt{\\bar\\alpha_2}\\,x_0 = 0.848528 \\times 2.0 = 1.697056$.</li>
+        <li><b>Noise part:</b> $\\sqrt{1-\\bar\\alpha_2}\\,\\epsilon = 0.529150 \\times 0.5 = 0.264575$.</li>
+        <li><b>Mix</b> (Eq. 4): $x_2 = 1.697056 + 0.264575 = \\mathbf{1.961631}$.</li>
        </ul>
        <p>Read the two parts: about $1.70$ is the surviving clean signal and about $0.26$ is the injected
-       noise. At $t=4$ ($\\bar\\alpha_4 = 0.3024$) the clean coefficient would be only $\\sqrt{0.3024}\\approx
-       0.55$, so the signal has faded much further. These exact numbers are recomputed in the notebook's first
-       cell so you can check them by running it.</p>`,
+       noise. At $t=4$ the clean coefficient is only $\\sqrt{0.3024}\\approx 0.55$ (last table row), so the signal
+       has faded much further. These exact numbers are recomputed in the notebook's first cell so you can check
+       them by running it.</p>`,
     recipe:
       `<ol>
         <li><b>Build the schedule.</b> <code>betas = linspace(1e-4, 0.02, T)</code>;
