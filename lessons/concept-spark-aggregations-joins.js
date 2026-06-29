@@ -143,10 +143,13 @@
        </ul>`,
 
     example:
-      `<p>A retail pipeline: <code>sales</code> is a 50-million-row fact table (one row per line item, with a
-       <code>product_id</code>); <code>products</code> is a 200-row lookup of <code>product_id &rarr; name,
-       category</code>.</p>
+      `<p>A retail pipeline: <code>sales</code> is a 50-million-row fact table (one row per line item, $b=80$ bytes
+       each, with a <code>product_id</code>); <code>products</code> is a 200-row lookup of
+       <code>product_id &rarr; name, category</code> at 120 bytes each. The cluster has $E=8$ executors. We work the
+       exact byte cost of each join strategy.</p>
        <ul class="steps">
+         <li><b>Size the two tables.</b> Fact table $=50{,}000{,}000 \\times 80 = 4{,}000{,}000{,}000$ bytes $\\approx 4$ GB.
+         Dimension table $=200 \\times 120 = 24{,}000$ bytes $\\approx 24$ KB.</li>
          <li><b>Aggregate.</b> <code>sales.groupBy("region").agg(F.sum("revenue").alias("rev"),
          F.countDistinct("user_id").alias("buyers"))</code> collapses 50M rows to one row per region. Spark
          combines partial sums per machine, then shuffles only those small partials.</li>
@@ -154,14 +157,25 @@
          <code>w = Window.partitionBy("category").orderBy(F.col("rev").desc())</code>, then
          <code>F.rank().over(w)</code> gives each product its rank inside its category &mdash; one value per row,
          no collapsing.</li>
-         <li><b>Join &mdash; the wrong way.</b> <code>sales.join(products, "product_id")</code> may trigger a
-         <b>SortMergeJoin</b>: both the 4 GB <code>sales</code> and the tiny <code>products</code> get shuffled
-         and sorted by <code>product_id</code>. The 4 GB move dominates &mdash; about 50 s.</li>
-         <li><b>Join &mdash; the right way.</b> <code>sales.join(F.broadcast(products), "product_id")</code> sends
-         the 24 KB <code>products</code> to every machine; <code>sales</code> never moves. <code>.explain()</code>
-         now shows <b>BroadcastHashJoin</b>, and the job finishes in about 3 s &mdash; roughly 17&times; faster
-         for the same answer.</li>
-       </ul>`,
+         <li><b>Shuffle (sort-merge) join &mdash; bytes moved.</b> Both sides are repartitioned by key, so the move
+         is dominated by the fact table: $\\approx 4{,}000$ MB across the wire, plus a global sort.</li>
+         <li><b>Broadcast join &mdash; bytes moved.</b> Only the dimension is copied to each executor:
+         $24\\text{ KB} \\times 8 = 192{,}000$ bytes $\\approx 0.19$ MB &mdash; total. The 4 GB fact table never moves.</li>
+         <li><b>The ratio.</b> $4{,}000 \\text{ MB} \\div 0.19 \\text{ MB} \\approx 21{,}000\\times$ less data shuffled.
+         In the runtime model that turns $\\approx 50$ s of shuffle join into $\\approx 3$ s of broadcast join &mdash;
+         $50 \\div 3 \\approx 17\\times$ faster for the identical answer.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same join, two physical strategies (4 GB fact &times; 24 KB dimension, $E=8$).</caption>
+         <thead><tr><th>strategy</th><th class="num">data shuffled</th><th class="num">runtime</th><th>plan shows</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">sort-merge (shuffle)</td><td class="num">~4000 MB</td><td class="num">~50 s</td><td>SortMergeJoin</td></tr>
+           <tr><td class="row-h">broadcast</td><td class="num">~0.19 MB</td><td class="num">~3 s</td><td>BroadcastHashJoin</td></tr>
+           <tr><td class="row-h">ratio</td><td class="num">~21,000&times;</td><td class="num">~17&times;</td><td>&mdash;</td></tr>
+         </tbody>
+       </table>
+       <p>Force the win with <code>sales.join(F.broadcast(products), "product_id")</code> and confirm with
+       <code>.explain()</code> that the plan reads <b>BroadcastHashJoin</b>, not <b>SortMergeJoin</b>.</p>`,
 
     practice: [
       {

@@ -154,9 +154,38 @@
        <p><b>Why <code>keepdim</code> matters.</b> Softmax needs <code>x - x.max(dim=-1, keepdim=True).values</code> and a divide by <code>sum(dim=-1, keepdim=True)</code>. Keeping the reduced axis at size 1 lets it broadcast back against the original tensor. Drop it and the shapes no longer line up.</p>`,
 
     example:
-      `<p>Take a column <code>a = [[10],[20],[30]]</code> with shape <code>(3,1)</code> and a row <code>b = [[1,2,3,4]]</code> with shape <code>(1,4)</code>.</p>
-       <p><code>a + b</code> broadcasts to <code>(3,4)</code>: the column repeats across 4 columns, the row repeats down 3 rows. Entry <code>(i,j)</code> is <code>a[i] + b[j]</code>, e.g. top-left <code>10+1=11</code>, bottom-right <code>30+4=34</code>.</p>
-       <p>Now reduce: <code>grid.sum(dim=1, keepdim=True)</code> adds across each row, giving <code>[[50],[90],[130]]</code> with shape <code>(3,1)</code> — still a column, so it can broadcast again. Drop <code>keepdim</code> and you get a flat <code>(3,)</code> instead.</p>`,
+      `<p>Work the matmul shape rule <code>(m,k) @ (k,n) &rarr; (m,n)</code> with real numbers. Take <code>A</code> of shape <code>(2,3)</code> and <code>C</code> of shape <code>(3,2)</code> &mdash; the inner <code>k=3</code> matches, so <code>A @ C</code> is valid and produces <code>(2,2)</code>.</p>
+       <table class="extable">
+         <caption>The two operands: $A$ is $(2,3)$, $C$ is $(3,2)$; inner $k=3$ cancels.</caption>
+         <thead><tr><th></th><th class="num">col 0</th><th class="num">col 1</th><th class="num">col 2</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A row 0</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+           <tr><td class="row-h">A row 1</td><td class="num">4</td><td class="num">5</td><td class="num">6</td></tr>
+         </tbody>
+       </table>
+       <table class="extable">
+         <caption>$C$ has shape $(3,2)$.</caption>
+         <thead><tr><th></th><th class="num">col 0</th><th class="num">col 1</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">C row 0</td><td class="num">7</td><td class="num">8</td></tr>
+           <tr><td class="row-h">C row 1</td><td class="num">9</td><td class="num">10</td></tr>
+           <tr><td class="row-h">C row 2</td><td class="num">11</td><td class="num">12</td></tr>
+         </tbody>
+       </table>
+       <p>Each output cell <code>(i,j)</code> is the dot product of <code>A</code>'s row <code>i</code> with <code>C</code>'s column <code>j</code>:</p>
+       <ul class="steps">
+         <li>out[0,0] $= 1\\cdot 7 + 2\\cdot 9 + 3\\cdot 11 = 7 + 18 + 33 = 58$</li>
+         <li>out[0,1] $= 1\\cdot 8 + 2\\cdot 10 + 3\\cdot 12 = 8 + 20 + 36 = 64$</li>
+         <li>out[1,0] $= 4\\cdot 7 + 5\\cdot 9 + 6\\cdot 11 = 28 + 45 + 66 = 139$</li>
+         <li>out[1,1] $= 4\\cdot 8 + 5\\cdot 10 + 6\\cdot 12 = 32 + 50 + 72 = 154$</li>
+         <li>so <code>A @ C</code> $= [[58, 64], [139, 154]]$ with shape <code>(2,2)</code> &mdash; the inner 3 is gone, the outer dims survive.</li>
+       </ul>
+       <p>Contrast with broadcasting. Take a column <code>a = [[10],[20],[30]]</code> of shape <code>(3,1)</code> and a row <code>b = [[1,2,3,4]]</code> of shape <code>(1,4)</code>. <code>a + b</code> stretches each size-1 axis to give a <code>(3,4)</code> grid where entry <code>(i,j) = a[i] + b[j]</code>:</p>
+       <ul class="steps">
+         <li>top-left $= a[0] + b[0] = 10 + 1 = 11$</li>
+         <li>bottom-right $= a[2] + b[3] = 30 + 4 = 34$</li>
+         <li>then <code>grid.sum(dim=1, keepdim=True)</code> adds across each row: row 0 $= 11{+}12{+}13{+}14 = 50$, row 1 $= 21{+}22{+}23{+}24 = 90$, row 2 $= 31{+}32{+}33{+}34 = 130$, giving <code>[[50],[90],[130]]</code> of shape <code>(3,1)</code> &mdash; still a column, so it can broadcast back. Drop <code>keepdim</code> and you get a flat <code>(3,)</code> instead.</li>
+       </ul>`,
 
     practice: [
       {

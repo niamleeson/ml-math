@@ -271,6 +271,12 @@
            <tr><td class="num">7</td><td><code>&lt;|endoftext|&gt;</code></td><td>$\\langle\\text{eot}\\rangle$</td><td>stop</td></tr>
          </tbody>
        </table>
+       <ul class="steps">
+         <li>Control prefix length $= 4$ tokens: $\\langle\\text{sot}\\rangle$, $\\langle\\text{lang}\\rangle$, $\\langle\\text{task}\\rangle$, $\\langle\\text{ts}\\rangle$.</li>
+         <li>Text length $= 2$ tokens: "Guten", "Tag".</li>
+         <li>Stop $= 1$ token: $\\langle\\text{eot}\\rangle$.</li>
+         <li>Total positions $= 4 + 2 + 1 = 7$.</li>
+       </ul>
        <p>Count it out: the first <b>4</b> tokens are pure control (start, language, task, timestamps) and the
        remaining <b>2</b> are content, ending in the stop token &mdash; $4+2+1=7$ positions total. Flip the
        language token (position 2) and you change LID; flip the task token (position 3) and you switch transcribe

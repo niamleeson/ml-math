@@ -107,12 +107,32 @@
        </ul>`,
 
     example:
-      `<p>Fraud screening. A blocked good customer (FP) costs <b>$5</b> in support and churn risk. A missed fraud (FN) costs <b>$50</b> in chargebacks. So a miss is 10× a false alarm.</p>
+      `<p>Fraud screening. The cost matrix, signed off with the decision owner — correct calls are free; the two errors are not:</p>
+       <table class="extable">
+         <caption>Cost matrix $C_{ij}$: dollars per case by (predicted, truth).</caption>
+         <thead><tr><th></th><th class="num">truth: fraud</th><th class="num">truth: legit</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">predict: block</td><td class="num">$0 (TP)</td><td class="num">$5 (FP)</td></tr>
+           <tr><td class="row-h">predict: allow</td><td class="num">$50 (FN)</td><td class="num">$0 (TN)</td></tr>
+         </tbody>
+       </table>
+       <p>A blocked good customer (FP) costs <b>$5</b>; a missed fraud (FN) costs <b>$50</b> — so a miss is 10× a false alarm.</p>
        <ul class="steps">
          <li><b>Bayes-optimal threshold:</b> $t^\\*=\\dfrac{C_{\\text{FP}}}{C_{\\text{FP}}+C_{\\text{FN}}}=\\dfrac{5}{5+50}=\\dfrac{5}{55}\\approx 0.091$. Alert on anything scoring above ~9%, not 50%.</li>
-         <li><b>Cost at $t=0.5$ on 1,000 cases:</b> say it yields 2 FP and 6 FN. Cost $=2(5)+6(50)=10+300=\\$310$.</li>
-         <li><b>Cost at $t=0.09$:</b> the lower cutoff catches 5 of those 6 misses but adds false alarms — say 30 FP and 1 FN. Cost $=30(5)+1(50)=150+50=\\$200$.</li>
-         <li>The lower threshold costs <b>$110 less per 1,000 cases</b>, even though it makes <i>more</i> total errors (31 vs 8). Accuracy went down; the bill went down. That is the whole point.</li>
+       </ul>
+       <p>Now compare the naive $t=0.5$ cutoff against the cost-aware $t=0.09$ on 1,000 cases. Each threshold yields a different (FP, FN) count; multiply by the cost matrix and sum:</p>
+       <table class="extable">
+         <caption>Expected cost per 1,000 cases at two thresholds.</caption>
+         <thead><tr><th>threshold</th><th class="num">FP</th><th class="num">FN</th><th class="num">FP cost</th><th class="num">FN cost</th><th class="num">total</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$t=0.5$ (naive)</td><td class="num">2</td><td class="num">6</td><td class="num">$10</td><td class="num">$300</td><td class="num">$310</td></tr>
+           <tr><td class="row-h">$t=0.09$ (cost-aware)</td><td class="num">30</td><td class="num">1</td><td class="num">$150</td><td class="num">$50</td><td class="num">$200</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Cost at $t=0.5$: $2(\\$5)+6(\\$50)=\\$10+\\$300=\\$310$.</li>
+         <li>Cost at $t=0.09$: $30(\\$5)+1(\\$50)=\\$150+\\$50=\\$200$.</li>
+         <li>Saving: $\\$310-\\$200=\\$110$ less per 1,000 cases — even though the lower threshold makes <i>more</i> total errors (31 vs 8). Accuracy went down; the bill went down. That is the whole point.</li>
        </ul>`,
 
     demo: function (host) {

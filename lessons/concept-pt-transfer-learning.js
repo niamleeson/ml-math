@@ -178,15 +178,27 @@ print("after one fine-tune step:", round(loss.item(), 4))`,
 <li><b>Optimizer sees only the head.</b> <code>optim.SGD(model.fc.parameters(), lr=...)</code> — the optimizer's update step touches only the parameters you handed it. Hand it the frozen backbone and it would do nothing useful (no gradients) while wasting bookkeeping.</li>
 <li><b>Fine-tune later.</b> To fine-tune, set <code>requires_grad = True</code> again on the layers you want to adapt and rebuild the optimizer over those parameters with a <b>small</b> learning rate.</li>
 </ul>`,
-    example: `<p>Suppose you have 5 classes of flower photos and ~300 labeled images.</p>
-<ol>
-<li>Load <code>resnet18</code> with default weights; grab <code>tf = weights.transforms()</code>.</li>
-<li>Freeze all parameters.</li>
-<li><code>model.fc</code> is <code>nn.Linear(512, 1000)</code>; replace it with <code>nn.Linear(512, 5)</code>.</li>
-<li>Optimizer over <code>model.fc.parameters()</code> only, learning rate <code>1e-3</code>.</li>
-<li>Run <code>model.eval()</code> on the backbone (so batchnorm uses stored stats) and train the head for a few epochs. You will likely hit strong accuracy fast.</li>
-<li>Optional phase two: unfreeze the last block, learning rate <code>1e-4</code>, train a little more.</li>
-</ol>`,
+    example: `<p>Suppose you have 5 classes of flower photos and ~300 labeled images. Work the real numbers behind the head swap.</p>
+       <p><b>The head swap, with counts.</b> ResNet18's final layer maps 512 features to ImageNet's 1000 classes. An <code>nn.Linear(in, out)</code> holds <code>in &times; out</code> weights plus <code>out</code> biases, so:</p>
+       <table class="extable">
+         <caption>Old ImageNet head vs the new 5-class head.</caption>
+         <thead><tr><th></th><th class="num">in</th><th class="num">out</th><th class="num">weights = in&times;out</th><th class="num">biases = out</th><th class="num">total params</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">old <code>fc</code> (ImageNet)</td><td class="num">512</td><td class="num">1000</td><td class="num">512,000</td><td class="num">1,000</td><td class="num">513,000</td></tr>
+           <tr><td class="row-h">new <code>fc</code> (5 flowers)</td><td class="num">512</td><td class="num">5</td><td class="num">2,560</td><td class="num">5</td><td class="num">2,565</td></tr>
+         </tbody>
+       </table>
+       <p>You freeze the ~11.2M backbone parameters and train only those <b>2,565</b> head parameters &mdash; that is why feature extraction works on a few hundred labels.</p>
+       <p><b>The recipe, step by step:</b></p>
+       <ul class="steps">
+         <li>Load <code>resnet18</code> with default weights; grab <code>tf = weights.transforms()</code>.</li>
+         <li>Freeze all parameters: <code>for p in model.parameters(): p.requires_grad = False</code>.</li>
+         <li><code>model.fc</code> is <code>nn.Linear(512, 1000)</code>; replace with <code>nn.Linear(512, 5)</code> &mdash; the new layer is trainable by default.</li>
+         <li>Optimizer over <code>model.fc.parameters()</code> only (2 tensors: <code>fc.weight</code>, <code>fc.bias</code>), learning rate <code>1e-3</code>.</li>
+         <li>Run <code>model.eval()</code> on the backbone, <code>model.fc.train()</code> on the head, and train a few epochs.</li>
+         <li>Optional phase two: unfreeze, learning rate <code>1e-4</code>, train a little more.</li>
+       </ul>
+       <p><b>Sanity-check the starting loss.</b> A freshly-initialized 5-way head outputs near-equal logits, so each class gets probability $\\tfrac{1}{5} = 0.2$. Cross-entropy is $-\\ln(p_{\\text{true}})$, so the first loss should sit near $-\\ln(0.2) = \\ln 5 \\approx 1.61$. If your first printed loss is far from ~1.6 (e.g. 7.0), something is wrong with the head or the labels.</p>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Load <code>resnet18</code> with <code>ResNet18_Weights.DEFAULT</code> and print <code>model.fc</code>. Then print <code>model.fc.in_features</code> and <code>model.fc.out_features</code> so you see the ImageNet head's exact shape before you replace it.`,

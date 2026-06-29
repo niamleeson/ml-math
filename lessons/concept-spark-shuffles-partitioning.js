@@ -147,23 +147,34 @@
        </ul>`,
 
     example:
-      `<p>You join an <code>events</code> table (200 million rows) to a small <code>users</code> table
-       (50,000 rows) on <code>user_id</code>, then count events per user.</p>
+      `<p>Plug real numbers into the straggler formula $\\frac{fR}{R/n}=f\\cdot n$. You
+       <code>groupBy('user_id').count()</code> over $R=10{,}000{,}000$ rows into $n=8$ shuffle partitions,
+       but $f=0.70$ of all rows carry the sentinel <code>user_id = 0</code> (logged-out events) &mdash; one
+       hot key.</p>
+       <table class="extable">
+         <caption>Rows landing on each partition: balanced vs the one hot key (R = 10,000,000, n = 8)</caption>
+         <thead><tr><th>partition</th><th class="num">balanced (R/n)</th><th class="num">skewed (hot key 0)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">p0 (holds key 0)</td><td class="num">1,250,000</td><td class="num">7,428,571</td></tr>
+           <tr><td class="row-h">p1</td><td class="num">1,250,000</td><td class="num">428,571</td></tr>
+           <tr><td class="row-h">p2</td><td class="num">1,250,000</td><td class="num">428,571</td></tr>
+           <tr><td class="row-h">p3</td><td class="num">1,250,000</td><td class="num">428,571</td></tr>
+           <tr><td class="row-h">p4&ndash;p7 (each)</td><td class="num">1,250,000</td><td class="num">428,571</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>The naive join shuffles both sides.</b> Spark redistributes all 200M event rows
-         <i>and</i> the 50K user rows by <code>user_id</code> &mdash; a big, expensive Exchange. You see it
-         in <code>df.explain()</code> as two <code>Exchange hashpartitioning(user_id, 200)</code> nodes.</li>
-         <li><b>Broadcast the small side instead.</b> The users table is tiny, so
-         <code>events.join(broadcast(users), 'user_id')</code> ships the whole users table to every
-         executor and joins locally &mdash; <b>no shuffle of the 200M rows.</b> The Exchange disappears
-         from the plan.</li>
-         <li><b>The <code>groupBy('user_id').count()</code> still shuffles</b> the 200M rows by user. Fine
-         &mdash; that one is unavoidable. But now suppose 70% of events have <code>user_id = 0</code> (a
-         logged-out sentinel). All of those land in one partition; one task runs for an hour while the
-         other 199 finish in minutes.</li>
-         <li><b>Salt the hot key.</b> Add <code>salt = floor(rand()*16)</code>, group by
-         <code>(user_id, salt)</code>, sum, then group by <code>user_id</code> to combine the 16 partials.
-         The sentinel's rows now spread across 16 partitions instead of one, and the straggler is gone.</li>
+         <li><b>Balanced case:</b> each task does $R/n = 10{,}000{,}000 / 8 = 1{,}250{,}000$ rows. All 8
+         tasks finish together.</li>
+         <li><b>The hot partition:</b> key 0's rows all hash to one partition: $f\\cdot R = 0.70 \\times
+         10{,}000{,}000 = 7{,}000{,}000$ rows, plus its share of the rest &mdash; about $7.43$M on p0.</li>
+         <li><b>Every other partition:</b> the remaining $(1-f)R = 0.30 \\times 10{,}000{,}000 = 3{,}000{,}000$
+         rows split over $n-1 = 7$ partitions: $3{,}000{,}000 / 7 \\approx 428{,}571$ each.</li>
+         <li><b>Slowdown = biggest task / average task:</b> $f\\cdot n = 0.70 \\times 8 = 5.6$. The skewed
+         stage takes $\\approx 5.6\\times$ longer than the balanced one &mdash; and adding executors does
+         nothing, since one un-splittable task is the bottleneck.</li>
+         <li><b>Salt the hot key</b> with $s=16$: replace key 0 with <code>(0, rand()%16)</code>, so its
+         $7$M rows spread across 16 sub-partitions of $\\approx 7{,}000{,}000 / 16 = 437{,}500$ rows each
+         &mdash; back in line with the others. The $5.6\\times$ straggler is gone.</li>
        </ul>`,
 
     practice: [

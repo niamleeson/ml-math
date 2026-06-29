@@ -50,10 +50,20 @@
        </ul>
        <p><b>Why this assumption can be wrong.</b> Low-density separation only helps if the true boundary really does sit in a low-density gap. When two classes overlap, the densest region <i>is</i> the boundary, and confidently labeling points there bakes in errors — the seed of confirmation bias.</p>`,
     example:
-      `<p>Three classes ($C = 3$), threshold $\\tau = 0.9$. The model predicts on two unlabeled images.</p>
+      `<p>Three classes ($C = 3$), threshold $\\tau = 0.9$. The model predicts on two unlabeled images. We run each through the gate $\\mathbb{1}[\\max_c p_c \\gt \\tau]$, the pseudo-label loss $-\\log p_{\\hat{y}}$, and the entropy $H(p)=-\\sum_c p_c\\log p_c$.</p>
+       <table class="extable">
+         <caption>Two unlabeled images through the confidence gate ($\\tau=0.9$).</caption>
+         <thead><tr><th>image</th><th class="num">$p$</th><th class="num">$\\max_c p_c$</th><th>gate</th><th class="num">$\\hat{y}$</th><th class="num">$-\\log p_{\\hat{y}}$</th><th class="num">$H(p)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td class="num">$(0.97,0.02,0.01)$</td><td class="num">0.97</td><td>open</td><td class="num">1</td><td class="num">0.030</td><td class="num">0.15</td></tr>
+           <tr><td class="row-h">B</td><td class="num">$(0.45,0.40,0.15)$</td><td class="num">0.45</td><td>shut</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">1.01</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Image A: $p = (0.97, 0.02, 0.01)$. Top probability $\\max_c p_c = 0.97 \\gt  0.9$, so the gate opens. Pseudo-label $\\hat{y} = 1$ (class with the 0.97). Loss term $-\\log(0.97) = 0.030$ — small, and it nudges $p_1$ even closer to 1. Entropy $H = -(0.97\\log 0.97 + 0.02\\log 0.02 + 0.01\\log 0.01) = 0.16$, low: a confident prediction.</li>
-         <li>Image B: $p = (0.45, 0.40, 0.15)$. Top probability $\\max_c p_c = 0.45 \\lt  0.9$, so the gate stays shut and B is ignored this round. Its entropy $H = 0.99$ is high — the model is torn between classes 1 and 2, exactly the kind of borderline guess we must not trust yet.</li>
+         <li>Image A: $\\max_c p_c = 0.97 \\gt 0.9$, so the gate opens. Pseudo-label $\\hat{y} = 1$ (the 0.97). Loss term $-\\log(0.97) = 0.030$ — small, and it nudges $p_1$ even closer to 1.</li>
+         <li>A's entropy $H = -(0.97\\log 0.97 + 0.02\\log 0.02 + 0.01\\log 0.01) = -(-0.030 - 0.078 - 0.046) = 0.15$, low: a confident prediction.</li>
+         <li>Image B: $\\max_c p_c = 0.45 \\lt 0.9$, so the gate stays shut and B is ignored this round; it contributes no loss.</li>
+         <li>B's entropy $H = -(0.45\\log 0.45 + 0.40\\log 0.40 + 0.15\\log 0.15) = -(-0.359 - 0.367 - 0.285) = 1.01$, high — the model is torn between classes 1 and 2, exactly the kind of borderline guess we must not trust yet.</li>
        </ul>
        <p>As training proceeds and the model sharpens, B's top probability may climb past $\\tau$ and it joins the training set. The threshold is a patience knob: act only on the sure ones, and let confidence grow before committing.</p>`,
     application:

@@ -157,21 +157,32 @@
        </ul>`,
 
     example:
-      `<p>A tiny <code>customers</code> table to show the whole arc on one screen.</p>
+      `<p>A tiny <code>customers</code> table to show the whole arc on one screen. We follow the
+       <code>_delta_log/</code> commit by commit and watch the row count change.</p>
        <ul class="steps">
          <li><b>Write v0.</b> Start with two rows &mdash; <code>(1, "Ada", "NY")</code> and
-         <code>(2, "Lin", "CA")</code> &mdash; with <code>df.write.format("delta").save(path)</code>. The
-         <code>_delta_log/00000.json</code> commit now lists the Parquet files for these two rows.</li>
-         <li><b>Upsert with <code>MERGE</code>.</b> A daily feed arrives: <code>(2, "Lin", "WA")</code> (Lin moved)
-         and <code>(3, "Ravi", "TX")</code> (new). <code>MERGE</code> matches on <code>id</code>: row 2 is
-         <b>updated</b> in place, row 3 is <b>inserted</b>. This lands as commit <code>00001.json</code>. The table
-         is now three rows: Ada/NY, Lin/WA, Ravi/TX.</li>
-         <li><b>Time travel.</b> Read <code>option("versionAsOf", 0)</code> and you get the <i>original</i> two rows
-         back &mdash; Lin still in CA, no Ravi &mdash; because version 0's commit still describes that exact file
-         set. The current read shows the merged three rows. Same path, two points in history, both queryable.</li>
+         <code>(2, "Lin", "CA")</code> &mdash; with <code>df.write.format("delta").save(path)</code>. Commit
+         <code>00000.json</code> lists the Parquet files for these 2 rows. Row count $=2$.</li>
+         <li><b>Upsert with <code>MERGE</code>.</b> A daily feed of 2 rows arrives: <code>(2, "Lin", "WA")</code>
+         (Lin moved) and <code>(3, "Ravi", "TX")</code> (new). Matching on <code>id</code>: id 2 already exists
+         &rarr; <b>1 update</b> in place; id 3 is new &rarr; <b>1 insert</b>. Lands as commit
+         <code>00001.json</code>. Row count $=2 - 0 \\text{ (no deletes)} + 1 \\text{ (insert)} = 3$.</li>
+         <li><b>Time travel.</b> Read <code>option("versionAsOf", 0)</code> &rarr; replay only commit
+         <code>00000</code> &rarr; the <i>original</i> 2 rows (Lin still in CA, no Ravi). The current read replays
+         <code>00000</code>+<code>00001</code> &rarr; the merged 3 rows. Same path, two points in history, both
+         queryable.</li>
        </ul>
-       <p>That single <code>MERGE</code> &mdash; safe, atomic, undoable &mdash; is the thing a bare Parquet lake
-       cannot give you, and it is why teams convert swamps to Delta.</p>`,
+       <table class="extable">
+         <caption>The table at each Delta version. Same path; the commit log decides what you see.</caption>
+         <thead><tr><th>version (commit)</th><th>id 1</th><th>id 2</th><th>id 3</th><th class="num">rows</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">v0 (00000.json)</td><td>Ada, NY</td><td>Lin, CA</td><td>&mdash;</td><td class="num">2</td></tr>
+           <tr><td class="row-h">v1 (00001.json)</td><td>Ada, NY</td><td>Lin, WA</td><td>Ravi, TX</td><td class="num">3</td></tr>
+           <tr><td class="row-h">read versionAsOf 0</td><td>Ada, NY</td><td>Lin, CA</td><td>&mdash;</td><td class="num">2</td></tr>
+         </tbody>
+       </table>
+       <p>That single <code>MERGE</code> &mdash; 1 update + 1 insert, safe, atomic, undoable &mdash; is the thing a
+       bare Parquet lake cannot give you, and it is why teams convert swamps to Delta.</p>`,
 
     practice: [
       {

@@ -201,25 +201,36 @@
     example:
       `<p>One state, two actions, <b>Left</b> and <b>Right</b>, with logits (preferences)
        $\\theta=(\\theta_L,\\theta_R)$ fed through a softmax. Start at $\\theta_L=\\theta_R=0$, so
-       $\\pi(\\text{Left})=\\pi(\\text{Right})=0.5$. Learning rate $\\alpha=0.4$.</p>
+       $\\pi(\\text{Left})=\\pi(\\text{Right})=0.5$. Learning rate $\\alpha=0.4$. The agent samples
+       <b>Right</b> and the episode returns $G=+2$; we plug $G$ in for $Q^\\pi$ (this is REINFORCE).</p>
        <ul class="steps">
-         <li><b>Sample &amp; observe.</b> The agent samples <b>Right</b> and the episode returns
-         $G=+2$. We will plug $G$ in for $Q^\\pi$ (this is REINFORCE).</li>
-         <li><b>The score for a softmax</b> is $\\nabla_{\\theta_a}\\log\\pi(a)=1-\\pi(a)$ for the
-         chosen action and $-\\pi(a')$ for the others. So for Right:
-         $\\nabla_{\\theta_R}\\log\\pi(\\text{Right})=1-0.5=0.5$; for Left: $0-0.5=-0.5$.</li>
-         <li><b>Ascent update</b> $\\theta_a\\leftarrow\\theta_a+\\alpha\\,G\\,(\\text{score})$:
-         $\\theta_R\\!\\leftarrow\\!0+0.4\\cdot2\\cdot0.5=+0.4$ and
-         $\\theta_L\\!\\leftarrow\\!0+0.4\\cdot2\\cdot(-0.5)=-0.4$.</li>
-         <li><b>Re-softmax:</b>
-         $\\pi(\\text{Right})=\\frac{e^{0.4}}{e^{0.4}+e^{-0.4}}\\approx\\frac{1.49}{1.49+0.67}\\approx0.69$.
-         Right rose $0.5\\to0.69$ because $G&gt;0$.</li>
-         <li><b>Now add a baseline.</b> Suppose a critic estimates $V(s)=+1.5$. The advantage is
-         $A=G-V=2-1.5=+0.5$, so the update uses $0.5$ in place of $2$: a <i>gentler, less noisy</i>
-         nudge. If instead a different episode had returned $G=+1\\lt V$, the advantage would be
-         <i>negative</i> &mdash; Right's probability would <i>fall</i>, even though the raw reward was
-         positive. The baseline is what lets the agent tell "better than usual" from "worse than
-         usual," which is exactly what cuts the variance.</li>
+         <li><b>Score of the softmax.</b> $\\nabla_{\\theta_a}\\log\\pi(a)=1-\\pi(a)$ for the chosen
+         action, $-\\pi(a')$ for the others. Chosen = Right:
+         $\\nabla_{\\theta_R}\\log\\pi(\\text{Right})=1-0.5=0.5$; Left: $0-0.5=-0.5$.</li>
+         <li><b>Ascent update</b> $\\theta_a\\leftarrow\\theta_a+\\alpha\\,G\\,(\\text{score})$.
+         Right: $0+0.4\\cdot2\\cdot0.5=+0.4$. Left: $0+0.4\\cdot2\\cdot(-0.5)=-0.4$.</li>
+         <li><b>Re-softmax.</b> $e^{0.4}\\approx1.4918$, $e^{-0.4}\\approx0.6703$, sum $\\approx2.1621$,
+         so $\\pi(\\text{Right})=1.4918/2.1621\\approx0.69$. Right rose $0.5\\to0.69$ because $G&gt;0$.</li>
+       </ul>
+       <p><b>Now the baseline.</b> Suppose a critic estimates $V(s)=+1.5$. REINFORCE weights the score
+       by the raw return $G$; the advantage version weights it by $A=G-V$ instead. The table contrasts
+       the two for Right (score $=+0.5$, $\\alpha=0.4$) over two different episodes:</p>
+       <table class="extable">
+         <caption>Same score, two weightings: raw return vs. advantage</caption>
+         <thead><tr><th>episode</th><th class="num">$G$</th><th class="num">$V(s)$</th><th class="num">$A=G-V$</th><th class="num">REINFORCE step $\\alpha G\\cdot0.5$</th><th class="num">advantage step $\\alpha A\\cdot0.5$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">good (above avg)</td><td class="num">$+2$</td><td class="num">$1.5$</td><td class="num">$+0.5$</td><td class="num">$+0.40$</td><td class="num">$+0.10$</td></tr>
+           <tr><td class="row-h">meh (below avg)</td><td class="num">$+1$</td><td class="num">$1.5$</td><td class="num">$-0.5$</td><td class="num">$+0.20$</td><td class="num">$-0.10$</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Read the top row.</b> $A=2-1.5=+0.5$, so the update uses $0.5$ in place of $2$: a
+         <i>gentler, less noisy</i> nudge ($+0.10$ vs. $+0.40$).</li>
+         <li><b>Read the bottom row.</b> A return of $G=+1\\lt V$ gives $A=-0.5$: Right's probability
+         now <i>falls</i> ($-0.10$), even though the raw reward was positive. REINFORCE would still
+         push it <i>up</i> ($+0.20$).</li>
+         <li><b>The point.</b> The baseline lets the agent tell "better than usual" from "worse than
+         usual" &mdash; exactly what cuts the variance.</li>
        </ul>
        <p>The CODEVIZ below runs this exact softmax policy gradient on a tiny 3-arm environment for
        real, and plots the learning curve <i>with</i> versus <i>without</i> a baseline to show the

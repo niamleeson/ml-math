@@ -169,14 +169,21 @@
     example:
       `<p>Evaluate a fixed policy on a 3-state chain $s_0 \\to s_1 \\to s_2 \\to$ terminal, with $\\gamma = 0.9$.
        Each step gives reward $-1$, and the terminal step gives a noisy bonus (mean $+10$). We want
-       $V^\\pi(s_0)$ by first-visit MC.</p>
+       $V^\\pi(s_0)$ by first-visit MC. Three episodes, each giving one return from $s_0$ via
+       $G = -1 + 0.9(-1) + 0.9^2(r_3)$:</p>
+       <table class="extable">
+         <caption>Per-episode rewards and the return from $s_0$ ($\\gamma = 0.9$, so $\\gamma^2 = 0.81$).</caption>
+         <thead><tr><th>episode</th><th class="num">$r_1$</th><th class="num">$r_2$</th><th class="num">$r_3$ (noisy)</th><th class="num">return $G$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">$-1$</td><td class="num">$-1$</td><td class="num">$+9$</td><td class="num">$5.39$</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$-1$</td><td class="num">$-1$</td><td class="num">$+13$</td><td class="num">$8.63$</td></tr>
+           <tr><td class="row-h">3</td><td class="num">$-1$</td><td class="num">$-1$</td><td class="num">$+5$</td><td class="num">$2.15$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Episode 1</b> rewards $(-1, -1, +9)$. Return from $s_0$:
-          $G = -1 + 0.9(-1) + 0.9^2(9) = -1 - 0.9 + 0.81\\times 9 = -1 - 0.9 + 7.29 = 5.39$.</li>
-         <li><b>Episode 2</b> rewards $(-1, -1, +13)$:
-          $G = -1 - 0.9 + 0.81\\times 13 = -1 - 0.9 + 10.53 = 8.63$.</li>
-         <li><b>Episode 3</b> rewards $(-1, -1, +5)$:
-          $G = -1 - 0.9 + 0.81\\times 5 = -1 - 0.9 + 4.05 = 2.15$.</li>
+         <li><b>Episode 1 return:</b> $G = -1 + 0.9(-1) + 0.81\\times 9 = -1 - 0.9 + 7.29 = 5.39$.</li>
+         <li><b>Episode 2 return:</b> $G = -1 - 0.9 + 0.81\\times 13 = -1 - 0.9 + 10.53 = 8.63$.</li>
+         <li><b>Episode 3 return:</b> $G = -1 - 0.9 + 0.81\\times 5 = -1 - 0.9 + 4.05 = 2.15$.</li>
          <li><b>Average the returns:</b> $V(s_0) = (5.39 + 8.63 + 2.15)/3 = 16.17/3 = 5.39$.</li>
          <li><b>Check with the incremental update</b> (start $V=0,\\,N=0$):
           $V \\leftarrow 0 + \\tfrac{1}{1}(5.39 - 0) = 5.39$;

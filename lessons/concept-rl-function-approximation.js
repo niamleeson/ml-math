@@ -149,11 +149,24 @@
          <li><b>Predict:</b> $\\hat V(s;w) = w^\\top x(s) = 0.5\\cdot 1 + (-0.1)\\cdot 2 = 0.5 - 0.2 = 0.3$.</li>
          <li><b>TD target:</b> $r + \\gamma\\hat V(s';w) = 1 + 0.9\\cdot 3 = 1 + 2.7 = 3.7$.</li>
          <li><b>TD error:</b> $\\delta_t = 3.7 - 0.3 = 3.4$. We badly under-estimated.</li>
-         <li><b>Update</b> (linear, so $\\nabla_w\\hat V = x(s)$):
-             $w \\leftarrow w + \\alpha\\,\\delta_t\\,x(s) = [0.5, -0.1] + 0.1\\cdot 3.4\\cdot[1, 2] = [0.5 + 0.34,\\; -0.1 + 0.68] = [0.84,\\; 0.58]$.</li>
-         <li><b>Check it moved the right way:</b> the new prediction is $0.84\\cdot 1 + 0.58\\cdot 2 = 0.84 + 1.16 = 2.0$, up from
-             $0.3$ and closer to the target $3.7$. Notice the SECOND feature (value $2$) got a bigger weight bump than the first
-             (value $1$) — active, larger features are credited more.</li>
+         <li><b>Per-feature update</b> (linear, so $\\nabla_w\\hat V = x(s)$): each weight $w_i$ moves by
+             $\\alpha\\,\\delta_t\\,x_i = 0.1\\cdot 3.4\\cdot x_i$, shown in the table below.</li>
+       </ul>
+       <table class="extable">
+         <caption>Semi-gradient TD update $w_i \\leftarrow w_i + \\alpha\\,\\delta_t\\,x_i$, with $\\alpha\\,\\delta_t = 0.1\\cdot 3.4 = 0.34$.</caption>
+         <thead>
+           <tr><th>feature $i$</th><th class="num">$x_i$</th><th class="num">old $w_i$</th><th class="num">bump $0.34\\,x_i$</th><th class="num">new $w_i$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">1</td><td class="num">0.50</td><td class="num">$0.34$</td><td class="num">0.84</td></tr>
+           <tr><td class="row-h">2</td><td class="num">2</td><td class="num">$-0.10$</td><td class="num">$0.68$</td><td class="num">0.58</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Updated weights:</b> $w \\leftarrow [0.84,\\; 0.58]$. The SECOND feature (value $2$) got a bigger
+             bump than the first (value $1$) &mdash; active, larger features are credited more.</li>
+         <li><b>Check it moved the right way:</b> the new prediction is $0.84\\cdot 1 + 0.58\\cdot 2 = 0.84 + 1.16 = 2.0$,
+             up from $0.3$ and closer to the target $3.7$.</li>
        </ul>`,
 
     demo: function (host) {

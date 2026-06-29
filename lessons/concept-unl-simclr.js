@@ -78,17 +78,36 @@
          <li><b>Augmentations that destroy the label.</b> If a transform changes the very thing you will later predict (e.g. color-jittering when the task is to tell red from green apples), the encoder learns to ignore exactly the signal you need. Match the augmentations to the downstream task's invariances.</li>
        </ul>`,
     example:
-      `<p>One tiny batch of $N = 2$ images, so $2N = 4$ views: image A gives views $z_1, z_2$ and image B gives views $z_3, z_4$. Use cosine similarity and temperature $\\tau = 0.5$. Compute $\\ell_{1,2}$, the loss for the positive pair $(z_1, z_2)$.</p>
-       <p>Suppose the similarities of view $1$ to the others are: to its partner $\\text{sim}(z_1, z_2) = 0.8$ (high, good), and to the two negatives $\\text{sim}(z_1, z_3) = 0.1$, $\\text{sim}(z_1, z_4) = 0.0$.</p>
+      `<p>One tiny batch of $N = 2$ images, so $2N = 4$ views: image A gives views $z_1, z_2$ and image B gives views $z_3, z_4$. Use cosine similarity and temperature $\\tau = 0.5$, so $1/\\tau = 2$. We compute $\\ell_{1,2}$, the loss for the positive pair $(z_1, z_2)$. The candidates for view $1$ are its partner $z_2$ (the only positive) and the two negatives $z_3, z_4$; view $1$ itself is skipped.</p>
+       <table class="extable">
+         <caption>Per-candidate ledger: scale each similarity by $1/\\tau = 2$, then exponentiate.</caption>
+         <thead>
+           <tr><th>candidate</th><th>role</th><th class="num">$\\text{sim}(z_1, z_k)$</th><th class="num">$\\text{sim}/\\tau$</th><th class="num">$\\exp(\\text{sim}/\\tau)$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">$z_2$</td><td>positive</td><td class="num">0.8</td><td class="num">1.6</td><td class="num">4.95</td></tr>
+           <tr><td class="row-h">$z_3$</td><td>negative</td><td class="num">0.1</td><td class="num">0.2</td><td class="num">1.22</td></tr>
+           <tr><td class="row-h">$z_4$</td><td>negative</td><td class="num">0.0</td><td class="num">0.0</td><td class="num">1.00</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Scale each by $1/\\tau = 1/0.5 = 2$, then exponentiate: &nbsp; positive $\\exp(0.8 \\times 2) = \\exp(1.6) \\approx 4.95$; &nbsp; negatives $\\exp(0.1 \\times 2) = \\exp(0.2) \\approx 1.22$ and $\\exp(0.0) = 1.00$.</li>
          <li>Numerator (the positive only): $4.95$.</li>
-         <li>Denominator (all others, skipping view $1$ itself): $4.95 + 1.22 + 1.00 = 7.17$.</li>
+         <li>Denominator (all candidates, skipping view $1$ itself): $4.95 + 1.22 + 1.00 = 7.17$.</li>
          <li>Softmax probability of the true partner: $\\frac{4.95}{7.17} \\approx 0.690$.</li>
          <li>Loss: $\\ell_{1,2} = -\\log(0.690) \\approx 0.371$.</li>
-         <li>Now make the negatives <i>harder</i>: $\\text{sim}(z_1, z_3) = 0.7$. Then $\\exp(1.4) \\approx 4.06$, denominator $= 4.95 + 4.06 + 1.00 = 10.01$, probability $\\approx 0.495$, loss $\\approx 0.704$. A confusing negative nearly doubled the loss — that hard negative is what the encoder must learn to push away.</li>
        </ul>
-       <p>The full SimCLR loss averages this $\\ell_{i,j}$ over all $2N = 4$ views (each view takes its turn as the anchor $i$).</p>`,
+       <p>Now make negative $z_3$ <i>harder</i> — raise $\\text{sim}(z_1, z_3)$ from $0.1$ to $0.7$, so $\\exp(0.7 \\times 2) = \\exp(1.4) \\approx 4.06$. The positive is unchanged; only the denominator grows:</p>
+       <table class="extable">
+         <caption>Easy vs hard negative: a confusing negative inflates the denominator and the loss.</caption>
+         <thead>
+           <tr><th>scenario</th><th class="num">numerator</th><th class="num">denominator</th><th class="num">prob of partner</th><th class="num">loss $\\ell_{1,2}$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">easy negatives</td><td class="num">4.95</td><td class="num">7.17</td><td class="num">0.690</td><td class="num">0.371</td></tr>
+           <tr><td class="row-h">one hard negative</td><td class="num">4.95</td><td class="num">10.01</td><td class="num">0.495</td><td class="num">0.704</td></tr>
+         </tbody>
+       </table>
+       <p>The hard negative nearly doubled the loss ($0.371 \\to 0.704$) — that confusing negative is exactly what the encoder must learn to push away. The full SimCLR loss averages $\\ell_{i,j}$ over all $2N = 4$ views (each view takes its turn as the anchor $i$).</p>`,
     demo: function (host) {
       host.innerHTML = "";
       function C() {

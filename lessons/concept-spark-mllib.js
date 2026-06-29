@@ -124,23 +124,50 @@
        </ul>`,
 
     example:
-      `<p>A tiny end-to-end pipeline, the MLlib way. Suppose a DataFrame has two numeric columns
-       <code>x1</code>, <code>x2</code> and a 0/1 <code>label</code>.</p>
+      `<p>A tiny end-to-end pipeline, the MLlib way, with the <b>scaler step worked in real numbers</b>. Suppose the
+       training DataFrame has two numeric columns <code>x1</code>, <code>x2</code> and a 0/1 <code>label</code>:</p>
+       <table class="extable">
+         <caption>Four training rows</caption>
+         <thead><tr><th>row</th><th class="num">x1</th><th class="num">x2</th><th class="num">label</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">r1</td><td class="num">2</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="row-h">r2</td><td class="num">4</td><td class="num">3</td><td class="num">0</td></tr>
+           <tr><td class="row-h">r3</td><td class="num">6</td><td class="num">5</td><td class="num">1</td></tr>
+           <tr><td class="row-h">r4</td><td class="num">8</td><td class="num">7</td><td class="num">1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li><b>Assemble:</b> <code>VectorAssembler(inputCols=["x1","x2"], outputCol="raw")</code> adds a
-         <code>raw</code> column whose value is the vector <code>[x1, x2]</code> for each row.</li>
-         <li><b>Scale:</b> <code>StandardScaler(inputCol="raw", outputCol="features")</code> &mdash; its
-         <code>fit</code> learns the mean and standard deviation of each of the two features across the
-         training rows, and its <code>transform</code> standardizes them into a <code>features</code> column.</li>
-         <li><b>Train:</b> <code>LogisticRegression(featuresCol="features", labelCol="label")</code> &mdash;
-         <code>fit</code> learns coefficients across the cluster.</li>
+         <code>raw</code> column holding the vector <code>[x1, x2]</code> for each row &mdash; e.g. r1 &rarr;
+         <code>[2, 1]</code>.</li>
+         <li><b>Scale &mdash; learn the statistics.</b> <code>StandardScaler.fit</code> computes each feature's mean
+         and (sample) standard deviation across the four training rows. The standardize formula is
+         $z = \\dfrac{x - \\mu}{\\sigma}$ ($x$ = a raw value, $\\mu$ = that feature's mean, $\\sigma$ = its std).</li>
+         <li>Mean of <code>x1</code>: $\\mu_1 = (2 + 4 + 6 + 8)/4 = 5$. Mean of <code>x2</code>:
+         $\\mu_2 = (1 + 3 + 5 + 7)/4 = 4$.</li>
+         <li>Std of <code>x1</code>: deviations are $-3, -1, 1, 3$, so
+         $\\sigma_1 = \\sqrt{\\tfrac{9 + 1 + 1 + 9}{4 - 1}} = \\sqrt{20/3} \\approx 2.582$.
+         By symmetry $\\sigma_2 \\approx 2.582$ too.</li>
+         <li><b>Scale &mdash; transform.</b> Apply $z = (x - \\mu)/\\sigma$ to every value, e.g. r1's x1:
+         $(2 - 5)/2.582 \\approx -1.162$; r4's x1: $(8 - 5)/2.582 \\approx 1.162$.</li>
+         <li><b>Train:</b> <code>LogisticRegression(featuresCol="features", labelCol="label")</code> fits on the
+         standardized vectors across the cluster.</li>
          <li><b>One object:</b> wrap all three in <code>Pipeline(stages=[asm, scaler, lr])</code> and call
-         <code>.fit(train)</code> once. You get a <code>PipelineModel</code>; <code>.transform(test)</code>
-         adds a <code>prediction</code> column, reusing the training means/standard deviations automatically.</li>
-         <li><b>Score:</b> <code>BinaryClassificationEvaluator(labelCol="label")</code> reads the model's
-         output and reports areaUnderROC &mdash; one number summarizing ranking quality. On the demo data
-         below it lands near 1.0 because the classes are cleanly separable.</li>
-       </ul>`,
+         <code>.fit(train)</code> once. <code>.transform(test)</code> reuses these same $\\mu$ and $\\sigma$ &mdash;
+         no leakage.</li>
+         <li><b>Score:</b> <code>BinaryClassificationEvaluator(labelCol="label")</code> reports areaUnderROC. These
+         classes are perfectly ordered (label 0 sits low, label 1 sits high), so it lands at <code>1.0</code>.</li>
+       </ul>
+       <table class="extable">
+         <caption>Standardized <code>features</code> column ($\\mu_1=5,\\ \\mu_2=4,\\ \\sigma\\approx 2.582$)</caption>
+         <thead><tr><th>row</th><th class="num">scaled x1</th><th class="num">scaled x2</th><th class="num">label</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">r1</td><td class="num">-1.162</td><td class="num">-1.162</td><td class="num">0</td></tr>
+           <tr><td class="row-h">r2</td><td class="num">-0.387</td><td class="num">-0.387</td><td class="num">0</td></tr>
+           <tr><td class="row-h">r3</td><td class="num">0.387</td><td class="num">0.387</td><td class="num">1</td></tr>
+           <tr><td class="row-h">r4</td><td class="num">1.162</td><td class="num">1.162</td><td class="num">1</td></tr>
+         </tbody>
+       </table>`,
 
     pitfalls:
       `<ul>

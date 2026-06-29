@@ -71,12 +71,21 @@
        <p><b>Why the label-efficiency curve.</b> Define $A(\\rho)$ as the probe (or fine-tune) accuracy using a fraction $\\rho$ of labels. A strong representation needs few labels to separate the classes, so $A(\\rho)$ rises <b>steeply</b> at small $\\rho$ and plateaus early. A weak one (e.g. raw pixels) climbs slowly because the classifier must compensate for poor features with more data. Comparing two encoders by their whole $A(\\rho)$ curve — not one point — exposes exactly this label-efficiency gap.</p>
        <p><b>Why kNN complements the probe.</b> A linear probe asks "is there a <i>hyperplane</i> separating the classes?". kNN asks "are same-class points <i>locally</i> clustered?". They can disagree: features can be locally clustered yet globally tangled (kNN wins), or linearly separable yet not tightly clustered (probe wins). Reporting both gives a fuller picture of the geometry.</p>`,
     example:
-      `<p>Suppose two encoders, A and B, are pretrained on unlabeled images, and we have very few labels.</p>
+      `<p>Two encoders, A and B, both pretrained on unlabeled images; we have very few labels. We score each one three ways. The numbers are illustrative, chosen to show how the protocols can disagree.</p>
+       <table class="extable">
+         <caption>Test accuracy (%) by protocol — winner of each row in bold</caption>
+         <thead><tr><th>protocol</th><th class="num">encoder A</th><th class="num">encoder B</th><th>what it measures</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">linear probe (frozen)</td><td class="num"><b>78</b></td><td class="num">71</td><td>linear separability of frozen features</td></tr>
+           <tr><td class="row-h">kNN ($k=5$, frozen)</td><td class="num"><b>74</b></td><td class="num">73</td><td>local clustering of the geometry</td></tr>
+           <tr><td class="row-h">fine-tune</td><td class="num">80</td><td class="num"><b>82</b></td><td>best accuracy once the encoder can adapt</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Linear probe.</b> Freeze each encoder, extract features, train one logistic layer on the labels. A scores 78%, B scores 71%. On the probe, A looks better.</li>
-         <li><b>kNN ($k=5$).</b> No training: vote among the 5 nearest labeled features. A scores 74%, B scores 73%. Close — B's geometry is locally about as clustered as A's.</li>
-         <li><b>Fine-tune.</b> Unfreeze and adapt with the same few labels. Now B reaches 82% and A reaches 80%. B's mediocre <i>frozen</i> features hid an encoder that adapts well once unlocked.</li>
-         <li><b>Reading it.</b> If you will deploy a frozen encoder, pick A. If you will fine-tune, pick B. A single protocol would have sent you the wrong way — which is exactly why papers report several.</li>
+         <li><b>Linear probe.</b> Freeze each encoder, extract features, train one logistic layer. A (78) beats B (71): A's frozen features are more linearly separable.</li>
+         <li><b>kNN.</b> No training — vote among the 5 nearest labeled features. A (74) and B (73) are nearly tied: B's geometry is locally about as clustered as A's.</li>
+         <li><b>Fine-tune.</b> Unfreeze and adapt with the same few labels. The rank flips: B (82) edges A (80). B's mediocre <i>frozen</i> features hid an encoder that adapts well once unlocked.</li>
+         <li><b>Reading it.</b> Deploy frozen, pick A; plan to fine-tune, pick B. Any single protocol would have sent you the wrong way — which is why papers report several.</li>
        </ul>`,
     demo: function (host) {
       host.innerHTML = "";

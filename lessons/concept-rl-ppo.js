@@ -198,21 +198,29 @@
        the Monte-Carlo advantage; $\\lambda \\approx 0.95$ blends them for a good bias&ndash;variance trade.</p>`,
 
     example:
-      `<p>One concrete clip, by hand. Take $\\epsilon = 0.2$, so the clip range is $[0.8,\\,1.2]$.</p>
+      `<p>Three clips, by hand. Take $\\epsilon = 0.2$, so the clip range is $[0.8,\\,1.2]$. For each
+       sample we compute the unclipped term $r_t A_t$, the clipped term
+       $\\text{clip}(r_t,0.8,1.2)\\,A_t$, and then $L=\\min$ of the two.</p>
+       <table class="extable">
+         <caption>PPO clipped surrogate per sample ($\\epsilon=0.2$)</caption>
+         <thead><tr><th>case</th><th class="num">$A_t$</th><th class="num">$r_t$</th><th class="num">$\\text{clip}(r_t)$</th><th class="num">unclipped $r_tA_t$</th><th class="num">clipped</th><th class="num">$L=\\min$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">good, modest move</td><td class="num">$+2$</td><td class="num">$1.1$</td><td class="num">$1.1$</td><td class="num">$2.2$</td><td class="num">$2.2$</td><td class="num">$2.2$</td></tr>
+           <tr><td class="row-h">good, reckless move</td><td class="num">$+2$</td><td class="num">$1.5$</td><td class="num">$1.2$</td><td class="num">$3.0$</td><td class="num">$2.4$</td><td class="num">$2.4$</td></tr>
+           <tr><td class="row-h">bad, over-shot</td><td class="num">$-2$</td><td class="num">$1.5$</td><td class="num">$1.2$</td><td class="num">$-3.0$</td><td class="num">$-2.4$</td><td class="num">$-3.0$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Good action, modest move.</b> $A_t = +2$, and the new policy raised the action's
-         probability to give $r_t = 1.1$. Both terms equal $1.1 \\times 2 = 2.2$ (the ratio is inside
-         $[0.8,1.2]$), so $L = 2.2$ &mdash; full credit, full gradient. Good: keep nudging it up.</li>
-         <li><b>Good action, reckless move.</b> Same $A_t = +2$, but the update over-shot to $r_t = 1.5$.
-         Unclipped: $1.5\\times 2 = 3.0$. Clipped: $\\text{clip}(1.5,0.8,1.2)\\times 2 = 1.2\\times 2 = 2.4$.
-         The $\\min(3.0,\\,2.4) = 2.4$ &mdash; the clipped, flat value. Beyond $r_t = 1.2$ the objective
-         stops growing, so the <b>gradient is zero</b> there: no reward for pushing harder. That is the
+         <li><b>Good action, modest move ($r_t=1.1$).</b> The ratio is inside $[0.8,1.2]$, so both terms
+         equal $1.1\\times2=2.2$ and $L=2.2$ &mdash; full credit, full gradient. Keep nudging it up.</li>
+         <li><b>Good action, reckless move ($r_t=1.5$).</b> Unclipped $1.5\\times2=3.0$; clipped
+         $1.2\\times2=2.4$. $\\min(3.0,2.4)=2.4$ &mdash; the flat clipped value. Beyond $r_t=1.2$ the
+         objective stops growing, so the <b>gradient is zero</b>: no reward for pushing harder. The
          trust region biting.</li>
-         <li><b>Bad action that already over-shot.</b> $A_t = -2$ and somehow $r_t = 1.5$ (we accidentally
-         made a bad action more likely). Unclipped: $1.5\\times(-2) = -3.0$. Clipped:
-         $1.2\\times(-2) = -2.4$. The $\\min(-3.0,\\,-2.4) = -3.0$ &mdash; the <i>unclipped</i> term wins,
-         keeping a live gradient that pulls this bad action's probability back down. This is why the $\\min$
-         matters: the clip alone would have given $-2.4$ (flat, no gradient) and stranded the mistake.</li>
+         <li><b>Bad action that already over-shot ($A_t=-2$, $r_t=1.5$).</b> Unclipped $1.5\\times(-2)=-3.0$;
+         clipped $1.2\\times(-2)=-2.4$. $\\min(-3.0,-2.4)=-3.0$ &mdash; the <i>unclipped</i> term wins,
+         keeping a live gradient that pulls this bad action back down. The clip alone would have given
+         $-2.4$ (flat, no gradient) and stranded the mistake; the $\\min$ is what rescues it.</li>
        </ul>
        <p>The CODEVIZ below plots exactly this surrogate &mdash; clipped versus unclipped &mdash; across a
        range of $r_t$, computed in numpy, so you can see the flattening past $1\\pm\\epsilon$.</p>`,

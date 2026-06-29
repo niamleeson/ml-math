@@ -48,13 +48,23 @@
        <p>Read it carefully. Driving the loss $\\mathcal{L}_{\\text{InfoNCE}}$ <i>down</i> pushes the lower bound on $I$ <i>up</i>. So the model is forced to make the context carry as much information about the future as it can — which is precisely a representation that "understands" the signal. The $\\log|N|$ term also explains a practical fact: <b>more negatives raise the ceiling of the bound</b>, so bigger negative sets give a tighter estimate and usually better features.</p>
        <p>The intuition: to win a hard multiple-choice quiz about the future, knowing only low-level texture is not enough — the context has to capture the slow, high-level structure (the phoneme, the object, the stroke) that actually predicts what comes next. That high-level structure is the representation we wanted all along.</p>`,
     example:
-      `<p>One prediction, one offset, with tiny 1-D "latents" so the arithmetic is visible. Suppose the predicted future is $W_k c_t = 2.0$ (just a number here), the true future latent is $z_{t+k} = 1.8$, and there are two negatives $z = 0.3$ and $z = -1.0$. Scores are products $z \\cdot (W_k c_t)$.</p>
+      `<p>One prediction, one offset, with tiny 1-D "latents" so the arithmetic is visible. The predicted future is $W_k c_t = 2.0$, the true future latent is $z_{t+k} = 1.8$, and there are two negatives $z = 0.3$ and $z = -1.0$. Each score is the product $z \\cdot (W_k c_t)$, then we run InfoNCE (a softmax over the candidates).</p>
+       <table class="extable">
+         <caption>InfoNCE candidate scores (predicted future $W_k c_t = 2.0$)</caption>
+         <thead><tr><th>candidate</th><th class="num">$z$</th><th class="num">score $z\\cdot 2.0$</th><th class="num">$e^{\\text{score}}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">true future</td><td class="num">1.8</td><td class="num">3.6</td><td class="num">36.6</td></tr>
+           <tr><td class="row-h">negative 1</td><td class="num">0.3</td><td class="num">0.6</td><td class="num">1.82</td></tr>
+           <tr><td class="row-h">negative 2</td><td class="num">&minus;1.0</td><td class="num">&minus;2.0</td><td class="num">0.14</td></tr>
+           <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">38.6</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>True score: $1.8 \\times 2.0 = 3.6$. Negative scores: $0.3 \\times 2.0 = 0.6$ and $-1.0 \\times 2.0 = -2.0$.</li>
-         <li>Exponentiate: $e^{3.6} \\approx 36.6$, $e^{0.6} \\approx 1.82$, $e^{-2.0} \\approx 0.14$. Sum $\\approx 38.6$.</li>
+         <li>Score each candidate, then exponentiate (last column).</li>
          <li>Probability of the true future $= 36.6 / 38.6 \\approx 0.948$.</li>
          <li>Loss $= -\\log(0.948) \\approx 0.053$. Small, because the true future already dominates.</li>
-         <li>Now imagine a confusing negative at $z = 1.7$ (almost as aligned as the true one). Its score is $1.7 \\times 2.0 = 3.4$, $e^{3.4} \\approx 30.0$. The true probability drops to $36.6 / (36.6 + 30.0 + 1.82 + 0.14) \\approx 0.534$, and the loss climbs to $-\\log(0.534) \\approx 0.627$. <b>Hard negatives are where the learning happens.</b></li>
+         <li>Now add a confusing negative at $z = 1.7$ (almost as aligned as the true one): score $1.7 \\times 2.0 = 3.4$, $e^{3.4} \\approx 30.0$.</li>
+         <li>The true probability drops to $36.6 / (36.6 + 30.0 + 1.82 + 0.14) \\approx 0.534$, and the loss climbs to $-\\log(0.534) \\approx 0.627$. <b>Hard negatives are where the learning happens.</b></li>
        </ul>`,
     application:
       `<p>CPC started in <b>audio</b>: predict the next latent of a speech waveform and you learn phoneme- and speaker-aware features with no transcripts. The same recipe carries to <b>images</b> (predict patches below/right from above/left), <b>text</b>, <b>video</b>, and <b>reinforcement-learning</b> states.</p>

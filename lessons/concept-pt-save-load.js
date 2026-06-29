@@ -205,9 +205,26 @@ print("loaded onto:", next(cpu_model.parameters()).device)`,
        <p><b>Why <code>eval()</code> changes the answer.</b> <code>eval()</code> flips a single <code>training</code> flag on every submodule. Dropout reads it and stops zeroing units; batch-norm reads it and switches from per-batch statistics to its stored running averages. Loading does not flip this flag for you, so a freshly loaded model is still in training mode until you call <code>eval()</code>.</p>`,
 
     example:
-      `<p>A two-layer network has parameters <code>fc1.weight</code>, <code>fc1.bias</code>, <code>fc2.weight</code>, <code>fc2.bias</code>. Its <code>state_dict()</code> is a dictionary with exactly those four keys, each mapping to a tensor.</p>
-       <p>Save it: <code>torch.save(model.state_dict(), 'm.pt')</code>. Later, build a brand-new <code>model = Net()</code> with random weights, then <code>model.load_state_dict(torch.load('m.pt', weights_only=True))</code> overwrites all four tensors with the trained values. Call <code>model.eval()</code> and the reloaded model returns <i>identical</i> outputs to the original — the numbers are the same and dropout is now off.</p>
-       <p>Skip the <code>eval()</code> and a dropout layer would randomly zero half the activations, so two runs on the same input would disagree.</p>`,
+      `<p>Work the saved-file size with real numbers for <code>Net(4 -&gt; 8 -&gt; 1)</code> (a <code>Linear(4, 8)</code> then a <code>Linear(8, 1)</code>). Its <code>state_dict()</code> holds exactly four named tensors; each <code>float32</code> number takes <b>4 bytes</b>, so bytes $=$ (element count) $\\times 4$.</p>
+       <ul class="steps">
+         <li><code>fc1.weight</code> is an $8 \\times 4$ matrix $= 32$ numbers $= 32 \\times 4 = 128$ bytes.</li>
+         <li><code>fc1.bias</code> is a length-$8$ vector $= 8$ numbers $= 8 \\times 4 = 32$ bytes.</li>
+         <li><code>fc2.weight</code> is a $1 \\times 8$ matrix $= 8$ numbers $= 8 \\times 4 = 32$ bytes.</li>
+         <li><code>fc2.bias</code> is a length-$1$ vector $= 1$ number $= 1 \\times 4 = 4$ bytes.</li>
+         <li>Total parameters $= 32 + 8 + 8 + 1 = 49$; raw bytes $= 49 \\times 4 = 196$ (the <code>.pt</code> file adds a little zip/pickle overhead).</li>
+       </ul>
+       <table class="extable">
+         <caption>Bytes per tensor in the <code>state_dict</code> of <code>Net(4 -&gt; 8 -&gt; 1)</code>, at 4 bytes per float32.</caption>
+         <thead><tr><th>tensor</th><th>shape</th><th class="num">numbers</th><th class="num">bytes</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h"><code>fc1.weight</code></td><td>8 &times; 4</td><td class="num">32</td><td class="num">128</td></tr>
+           <tr><td class="row-h"><code>fc1.bias</code></td><td>8</td><td class="num">8</td><td class="num">32</td></tr>
+           <tr><td class="row-h"><code>fc2.weight</code></td><td>1 &times; 8</td><td class="num">8</td><td class="num">32</td></tr>
+           <tr><td class="row-h"><code>fc2.bias</code></td><td>1</td><td class="num">1</td><td class="num">4</td></tr>
+           <tr><td class="row-h">total</td><td></td><td class="num">49</td><td class="num">196</td></tr>
+         </tbody>
+       </table>
+       <p>Save it with <code>torch.save(model.state_dict(), 'm.pt')</code>, build a fresh <code>Net()</code>, then <code>model.load_state_dict(torch.load('m.pt', weights_only=True))</code> overwrites all four tensors with the trained values. Call <code>model.eval()</code> and the reloaded model returns <i>identical</i> outputs — max difference $0.0$. Skip the <code>eval()</code> and a <code>Dropout(0.5)</code> layer randomly zeros half the activations, so the same input gives a different answer (a non-zero max difference, e.g. $\\approx 0.83$). That is the eval()-after-loading rule made into a number.</p>`,
 
     practice: [
       {
@@ -443,7 +460,7 @@ print("loaded onto:", next(cpu_model.parameters()).device)   # cpu`
         values: [128, 32, 32, 4],
         valueLabels: ["128", "32", "32", "4"],
         colors: ["#4ea1ff", "#7ee787", "#c89bff", "#ffa657"],
-        interpret: "Each bar is one named tensor in the state_dict; the height is its size in bytes = (number of elements) x 4, because each float32 weight takes 4 bytes. fc1.weight is an 8x4 matrix = 32 numbers = 128 bytes, the biggest bar; the bias vectors are tiny. <b>Read it as:</b> the saved file size is dominated by the weight matrices, and it scales with the parameter count — 97 params here, 97x4 = 388 raw bytes (the .pt adds a little zip/pickle overhead). These are the only numbers worth saving."
+        interpret: "Each bar is one named tensor in the state_dict; the height is its size in bytes = (number of elements) x 4, because each float32 weight takes 4 bytes. fc1.weight is an 8x4 matrix = 32 numbers = 128 bytes, the biggest bar; the bias vectors are tiny. <b>Read it as:</b> the saved file size is dominated by the weight matrices, and it scales with the parameter count — 49 params here, 49x4 = 196 raw bytes (the .pt adds a little zip/pickle overhead). These are the only numbers worth saving."
       },
       {
         type: "bars",

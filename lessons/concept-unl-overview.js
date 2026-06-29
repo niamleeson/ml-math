@@ -82,13 +82,22 @@
          <li><b>Why this licenses $\\mathcal{L}_{\\text{unsup}}$.</b> We never observe $p(x)$, but the unlabeled set $\\mathcal{D}_U$ is a sample <i>from</i> it. So $\\mathcal{L}_{\\text{unsup}}$ is just an empirical stand-in for these penalties — pushing predictions to be smooth, confident, and consistent exactly where the unlabeled points (hence the density) actually are. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p>Two moons of unlabeled points, and just <b>one</b> labeled point per moon. We have no other labels.</p>
+      `<p>Two moons of unlabeled points, and just <b>one</b> labeled point per moon — say $\\mathcal{D}_L=\\{(x_a,\\text{top}),(x_b,\\text{bottom})\\}$ and $|\\mathcal{D}_U|=58$ unlabeled points. We plug real numbers into the objective $\\mathcal{L}=\\mathcal{L}_{\\text{sup}}+\\lambda\\,\\mathcal{L}_{\\text{unsup}}$ with weight $\\lambda=1$ for two candidate boundaries.</p>
+       <table class="extable">
+         <caption>Loss of two boundaries on the two-moons toy ($\\lambda=1$, illustrative units).</caption>
+         <thead><tr><th>boundary</th><th class="num">$\\mathcal{L}_{\\text{sup}}$</th><th class="num">$\\lambda\\,\\mathcal{L}_{\\text{unsup}}$</th><th class="num">total $\\mathcal{L}$</th><th class="num">arcs misread</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">straight bisector (labels only)</td><td class="num">0.00</td><td class="num">0.90</td><td class="num">0.90</td><td class="num">28</td></tr>
+           <tr><td class="row-h">curved seam (uses unlabeled)</td><td class="num">0.00</td><td class="num">0.05</td><td class="num">0.05</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li><b>Cluster assumption:</b> the points clearly fall into two arcs (clusters). Assume each arc is one class.</li>
          <li><b>Smoothness:</b> a new point next to many top-arc points should be labeled like the top arc — neighbors agree.</li>
          <li><b>Low-density separation:</b> there is an empty gap between the two arcs. Route the boundary <i>through that gap</i>, not across either arc.</li>
-         <li>A purely supervised model with two labeled points would draw a straight line halfway between them — slicing through both moons. Add the unlabeled points and the low-density principle bends the boundary into the empty seam, classifying every arc correctly.</li>
-         <li>In the objective: $\\mathcal{L}_{\\text{sup}}$ pins the two labeled points to their classes; $\\lambda\\,\\mathcal{L}_{\\text{unsup}}$ pushes the boundary into the low-density gap. Together they recover the right split from almost no labels.</li>
+         <li>Both boundaries pass through the two labeled points, so each has $\\mathcal{L}_{\\text{sup}}=0$. They are told apart only by $\\mathcal{L}_{\\text{unsup}}$, which counts how many unlabeled points sit in the dense region the boundary cuts through.</li>
+         <li>The straight bisector slices through both arcs, so many of the 58 unlabeled points are crowded against it: $\\lambda\\,\\mathcal{L}_{\\text{unsup}}=0.90$ and total $\\mathcal{L}=0+0.90=0.90$. The curved seam threads the empty gap, so few points are near it: $\\lambda\\,\\mathcal{L}_{\\text{unsup}}=0.05$ and total $\\mathcal{L}=0+0.05=0.05$.</li>
+         <li>$0.05 \\lt 0.90$, so minimizing the objective picks the curved seam — recovering the right two-moons split from just two labels.</li>
        </ul>`,
     demo: function (host) {
       host.innerHTML = "";

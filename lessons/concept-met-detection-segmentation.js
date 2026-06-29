@@ -96,6 +96,15 @@
          <li><b>Shifted box</b> $B=(2,1,8,9)$, also $48$ pixels but moved by $(1,1)$. Overlap $=5\\times 7 = 35$. Union $=48+48-35 = 61$. IoU $=35/61 \\approx 0.574$.</li>
          <li><b>Loose box</b> with a $1$-pixel margin, $B=(0,-1,8,9)$, area $8\\times 10 = 80$. Overlap $=48$ (the true box sits inside). Union $=80$. IoU $=48/80 = 0.6$.</li>
        </ul>
+       <table class="extable">
+         <caption>Three predicted boxes against the true box $A=(1,0,7,8)$, area $48$. IoU $=$ overlap $/$ union.</caption>
+         <thead><tr><th>predicted box $B$</th><th class="num">area</th><th class="num">overlap</th><th class="num">union</th><th class="num">IoU</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">perfect $(1,0,7,8)$</td><td class="num">$48$</td><td class="num">$48$</td><td class="num">$48$</td><td class="num">$1.000$</td></tr>
+           <tr><td class="row-h">shifted $(2,1,8,9)$</td><td class="num">$48$</td><td class="num">$35$</td><td class="num">$61$</td><td class="num">$0.574$</td></tr>
+           <tr><td class="row-h">loose $(0,-1,8,9)$</td><td class="num">$80$</td><td class="num">$48$</td><td class="num">$80$</td><td class="num">$0.600$</td></tr>
+         </tbody>
+       </table>
        <p>Now a tiny <b>mask</b> example. Prediction $A$ covers $3$ pixels, truth $B$ covers $3$ pixels, and they share $2$. Then IoU $= 2/(3+3-2) = 2/4 = 0.5$, while Dice $= 2\\times 2/(3+3) = 4/6 \\approx 0.667$ — Dice reads higher on the very same masks.</p>`,
 
     demo: function (host) {

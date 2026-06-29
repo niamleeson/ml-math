@@ -230,8 +230,21 @@
           $\\max$ is allowed to trust $Q$ on an action the data never showed. Naive: <b>diverges</b>.
           Conservative: <b>stable</b>, and it commits to the action the data actually supports.</li>
        </ul>
-       <p>The CODEVIZ below runs exactly this contrast in numpy on a small fixed dataset and plots the
-       blow-up versus the stable curve, with real numbers.</p>`,
+       <p>The two methods, sweep by sweep on the <i>same</i> $Q(s,a_{\\text{good}})$ &mdash; naive lets the
+       $\\max$ chase the phantom $Q(s,a_{\\text{risky}})$, conservative clamps that phantom to $0$:</p>
+       <table class="extable">
+         <caption>$Q(s,a_{\\text{good}}) \\leftarrow 1 + 0.9\\,\\max_a Q(s,a)$ each sweep ($\\gamma = 0.9$).</caption>
+         <thead><tr><th>sweep</th><th class="num">naive: $\\max_a Q$ used</th><th class="num">naive $Q(s,a_{\\text{good}})$</th><th class="num">conservative: $\\max_a Q$ used</th><th class="num">conservative $Q(s,a_{\\text{good}})$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">$5$ (OOD phantom)</td><td class="num">$5.5$</td><td class="num">$1$</td><td class="num">$1.9$</td></tr>
+           <tr><td class="row-h">2</td><td class="num">$5.5$</td><td class="num">$5.95$</td><td class="num">$1.9$</td><td class="num">$2.71$</td></tr>
+           <tr><td class="row-h">3</td><td class="num">$5.95$</td><td class="num">$6.36$</td><td class="num">$2.71$</td><td class="num">$3.44$</td></tr>
+           <tr><td class="row-h">$\\to \\infty$</td><td class="num">climbs without bound</td><td class="num"><b>diverges</b></td><td class="num">$\\to 10$</td><td class="num"><b>$10$</b></td></tr>
+         </tbody>
+       </table>
+       <p>The conservative column converges to the honest fixed point $1/(1-0.9) = 10$; the naive column
+       has no ceiling. The CODEVIZ below runs exactly this contrast in numpy on a small fixed dataset and
+       plots the blow-up versus the stable curve, with real numbers.</p>`,
 
     practice: [
       {

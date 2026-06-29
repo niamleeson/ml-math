@@ -50,14 +50,23 @@
        </ul>
        <p><b>Why an EMA teacher instead of a second live pass?</b> Self-training has a chicken-and-egg risk: if the model trains to match its own current output, errors reinforce themselves (confirmation bias). The EMA teacher breaks the loop. Averaging weights over many steps is like ensembling many past models for free; the averaged model is smoother and usually more accurate, so it gives a cleaner target. Temporal Ensembling does the same averaging on <i>predictions</i>; Mean Teacher does it on <i>weights</i>, which updates every step instead of once per epoch and scales to large datasets. $\\blacksquare$</p>`,
     example:
-      `<p>One unlabeled image, 3 classes. The student sees a strongly-augmented view; the teacher sees a weakly-augmented view. Use the squared-distance (MSE) consistency loss.</p>
+      `<p>One unlabeled image, 3 classes. The student sees a strongly-augmented view; the teacher sees a weakly-augmented view. We plug both predictions into the squared-distance (MSE) consistency loss $\\lVert f - f'\\rVert^2$.</p>
+       <table class="extable">
+         <caption>Teacher (weak view) vs student (strong view), per class</caption>
+         <thead><tr><th>class</th><th class="num">teacher $f'$</th><th class="num">student $f$</th><th class="num">$f-f'$</th><th class="num">$(f-f')^2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">c1</td><td class="num">0.7</td><td class="num">0.5</td><td class="num">&minus;0.2</td><td class="num">0.04</td></tr>
+           <tr><td class="row-h">c2</td><td class="num">0.2</td><td class="num">0.3</td><td class="num">+0.1</td><td class="num">0.01</td></tr>
+           <tr><td class="row-h">c3</td><td class="num">0.1</td><td class="num">0.2</td><td class="num">+0.1</td><td class="num">0.01</td></tr>
+           <tr><td class="row-h">sum</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">0.06</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Teacher prediction (weak view): $f' = [0.7,\\ 0.2,\\ 0.1]$ — fairly confident it is class 1.</li>
-         <li>Student prediction (strong view): $f = [0.5,\\ 0.3,\\ 0.2]$ — the heavy augmentation blurred it, so the student is less sure.</li>
-         <li>Differences per class: $0.5-0.7=-0.2$, &nbsp; $0.3-0.2=+0.1$, &nbsp; $0.2-0.1=+0.1$.</li>
-         <li>Consistency loss: $\\lVert f-f'\\rVert^2 = (-0.2)^2 + (0.1)^2 + (0.1)^2 = 0.04 + 0.01 + 0.01 = 0.06$.</li>
-         <li>Backprop on this 0.06 nudges the <i>student</i> toward the teacher's $[0.7, 0.2, 0.1]$. The teacher is held fixed for the loss (stop-gradient); it only changes through the EMA update.</li>
-         <li>EMA update with $\\alpha = 0.99$: each teacher weight becomes $\\theta' \\leftarrow 0.99\\,\\theta' + 0.01\\,\\theta$. If a weight had teacher value $2.00$ and student value $2.50$, the new teacher value is $0.99(2.00) + 0.01(2.50) = 1.98 + 0.025 = 2.005$ — it crept just $0.005$ toward the student.</li>
+         <li>Teacher is fairly confident it is class 1; the heavy augmentation blurred the student, so it is less sure.</li>
+         <li>Subtract class by class and square each gap (last two columns of the table).</li>
+         <li>Consistency loss: $\\lVert f-f'\\rVert^2 = 0.04 + 0.01 + 0.01 = 0.06$.</li>
+         <li>Backprop on this 0.06 nudges the <i>student</i> toward the teacher's $[0.7, 0.2, 0.1]$. The teacher is held fixed for the loss (stop-gradient); it only moves through the EMA update.</li>
+         <li>EMA update with $\\alpha = 0.99$: each teacher weight becomes $\\theta' \\leftarrow 0.99\\,\\theta' + 0.01\\,\\theta$. If a weight had teacher value $2.00$ and student value $2.50$, the new value is $0.99(2.00) + 0.01(2.50) = 1.98 + 0.025 = 2.005$ — it crept just $0.005$ toward the student.</li>
        </ul>
        <p>So the student learns to predict the teacher's steadier answer on an image nobody labeled, and the teacher inches toward the improving student. Repeat over a flood of unlabeled images and the decision boundary settles into the low-density gaps.</p>`,
     application:

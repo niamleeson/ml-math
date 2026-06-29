@@ -82,13 +82,31 @@
          <li><b>Calibration, by contrast,</b> is checked, not guaranteed: bin predictions by confidence, and compare each bin's mean predicted probability to its observed frequency. ECE $= \\sum_m \\frac{|B_m|}{N}\\,\\big|\\text{acc}(B_m)-\\text{conf}(B_m)\\big|$ — the size-weighted average gap between "claimed" and "real" across bins $B_m$.</li>
        </ul>`,
     example:
-      `<p><b>Split-conformal classification, by hand.</b> Target coverage $1-\\alpha = 0.9$, so $\\alpha=0.1$. Calibration set of $n=9$ examples. For each, we record the nonconformity score $s_i = 1-\\hat p(\\text{true class})$:</p>
+      `<p><b>Split-conformal classification, by hand.</b> Target coverage $1-\\alpha = 0.9$, so $\\alpha=0.1$. Calibration set of $n=9$ examples. For each, we record the nonconformity score $s_i = 1-\\hat p(\\text{true class})$ and sort them:</p>
+       <table class="extable">
+         <caption>Sorted calibration nonconformity scores ($n=9$).</caption>
+         <thead><tr><th class="num">rank</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">6</th><th class="num">7</th><th class="num">8</th><th class="num">9</th></tr></thead>
+         <tbody><tr><td class="row-h">$s_i$</td><td class="num">0.02</td><td class="num">0.05</td><td class="num">0.08</td><td class="num">0.10</td><td class="num">0.15</td><td class="num">0.22</td><td class="num">0.30</td><td class="num">0.41</td><td class="num">0.55</td></tr></tbody>
+       </table>
        <ul class="steps">
-         <li>Scores, sorted: $[0.02,\\,0.05,\\,0.08,\\,0.10,\\,0.15,\\,0.22,\\,0.30,\\,0.41,\\,0.55]$.</li>
-         <li>Rank to take: $\\lceil (n+1)(1-\\alpha)\\rceil = \\lceil 10 \\times 0.9\\rceil = \\lceil 9 \\rceil = 9$. So $\\hat q$ is the 9th-smallest score $= 0.55$.</li>
-         <li>New input. The model gives class A probability 0.7 (score $1-0.7=0.30$) and class B probability 0.3 (score $0.70$). Include a class iff its score $\\le 0.55$. Class A: $0.30 \\le 0.55$ ✓ included. Class B: $0.70 \\le 0.55$ ✗ excluded.</li>
-         <li>Prediction set $C(x)=\\{A\\}$ — a confident, single-label call.</li>
-         <li>Another input scores A at $0.50$ and B at $0.52$. Both $\\le 0.55$, so $C(x)=\\{A,B\\}$ — a two-label set. The model is telling you it cannot separate them: <b>abstain and defer to a human</b>. The set size <i>is</i> the confidence signal.</li>
+         <li>Rank to take: $\\lceil (n+1)(1-\\alpha)\\rceil = \\lceil 10 \\times 0.9\\rceil = \\lceil 9 \\rceil = 9$.</li>
+         <li>So $\\hat q$ is the 9th-smallest score $= 0.55$. Include any candidate label whose score is $\\le \\hat q$.</li>
+       </ul>
+       <p>Now score two new inputs. For each candidate class, the score is $1-\\hat p(\\text{class})$; include it iff the score $\\le \\hat q = 0.55$:</p>
+       <table class="extable">
+         <caption>Building the prediction set for two test inputs ($\\hat q=0.55$).</caption>
+         <thead><tr><th>input</th><th>class</th><th class="num">$\\hat p$</th><th class="num">score $=1-\\hat p$</th><th>$\\le 0.55$?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">input 1</td><td>A</td><td class="num">0.70</td><td class="num">0.30</td><td>✓ include</td></tr>
+           <tr><td class="row-h">input 1</td><td>B</td><td class="num">0.30</td><td class="num">0.70</td><td>✗ exclude</td></tr>
+           <tr><td class="row-h">input 2</td><td>A</td><td class="num">0.50</td><td class="num">0.50</td><td>✓ include</td></tr>
+           <tr><td class="row-h">input 2</td><td>B</td><td class="num">0.48</td><td class="num">0.52</td><td>✓ include</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Input 1: only A's score clears the bar, so $C(x)=\\{A\\}$ — a confident, single-label call.</li>
+         <li>Input 2: both scores are $\\le 0.55$, so $C(x)=\\{A,B\\}$ — a two-label set.</li>
+         <li>A two-label set means the model cannot separate them: <b>abstain and defer to a human</b>. The set size <i>is</i> the confidence signal.</li>
        </ul>`,
     demo: function (host) {
       // Interactive split-conformal: drag alpha, watch the quantile threshold and coverage move.

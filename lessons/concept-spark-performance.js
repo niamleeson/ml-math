@@ -147,24 +147,37 @@
          Caching something used once ($k=1$) gains nothing and wastes memory. $\\blacksquare$</li>
        </ul>`,
 
-    example:
+      example:
       `<p>You build one cleaned DataFrame <code>orders</code> (read Parquet, filter to last 90 days, derive a few
        columns), then you need three things from it: a row count, a per-region total written to disk, and a quick
-       <code>show</code> of the top rows.</p>
+       <code>show</code> of the top rows. Plug real numbers into the cache speedup
+       $\\dfrac{kT}{T + (k-1)\\epsilon}$ from the derivation: say the chain costs $T = 100$ s to compute, you run
+       $k = 3$ actions, and reading from cache costs $\\epsilon = 0.05$ s.</p>
+       <table class="extable">
+         <caption>Three actions on <code>orders</code>: cost per action (seconds)</caption>
+         <thead><tr><th>action</th><th class="num">no cache</th><th class="num">with cache</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">count() (1st)</td><td class="num">100</td><td class="num">100 (compute + store)</td></tr>
+           <tr><td class="row-h">write() (2nd)</td><td class="num">100</td><td class="num">0.05</td></tr>
+           <tr><td class="row-h">show() (3rd)</td><td class="num">100</td><td class="num">0.05</td></tr>
+           <tr><td class="row-h">total</td><td class="num">300</td><td class="num">100.1</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Naive.</b> Define <code>orders</code>, then call <code>.count()</code>, <code>.write...</code>, and
-         <code>.show()</code>. Spark re-reads the Parquet and re-runs the filter and derivations <b>three times</b>
-         &mdash; the source scan is the expensive part, paid thrice.</li>
-         <li><b>Cached.</b> Call <code>orders.cache()</code> once. The first action (<code>count</code>) computes the
-         chain and stores the result; the <code>write</code> and <code>show</code> read straight from memory. The
-         scan happens <b>once</b>.</li>
+         <li><b>Naive total:</b> each action re-runs the whole chain, so $k\\,T = 3 \\times 100 = 300$ s &mdash; the
+         expensive scan is paid thrice.</li>
+         <li><b>Cached total:</b> the first action pays $T = 100$ s and stores the result; the other two only read
+         it: $T + (k-1)\\epsilon = 100 + 2 \\times 0.05 = 100.1$ s.</li>
+         <li><b>Speedup:</b> $\\dfrac{300}{100.1} \\approx 3.0\\times$ &mdash; with $k = 3$ reuses, cache turns 3x
+         the work into about 1x, matching the $\\approx k$ rule.</li>
          <li><b>Plus broadcast.</b> The per-region step joins <code>orders</code> to a tiny 8-row
          <code>region_names</code> lookup. Wrap it: <code>orders.join(F.broadcast(region_names), "region")</code>
          &mdash; the lookup is copied to every worker, so the giant <code>orders</code> table never shuffles.</li>
          <li><b>When done</b>, <code>orders.unpersist()</code> frees the memory for the next stage.</li>
        </ul>
-       <p>On a real pipeline the three repeated scans dominate the runtime; caching collapses them to one and the
-       broadcast removes a shuffle &mdash; together often a 2&ndash;3x wall-clock cut for a few lines of code.</p>`,
+       <p>Caching collapses the three scans to one ($\\approx 3\\times$ on the repeated work) and the broadcast
+       removes a shuffle &mdash; together often a 2&ndash;3x wall-clock cut for a few lines of code. (Cache only
+       pays when $k \\ge 2$: at $k = 1$ you would pay $T$ plus store overhead and never read it back.)</p>`,
 
     practice: [
       {

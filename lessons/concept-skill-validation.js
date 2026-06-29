@@ -91,11 +91,29 @@
          <li><b>Why nested CV avoids optimistic bias.</b> Picking the best of $T$ hyperparameter settings on a validation set is like taking the max of $T$ noisy numbers — the max is biased <i>upward</i> even if all settings are equally good. The outer loop re-scores the <i>chosen</i> setting on data the inner selection never saw, so that upward bias is removed. The outer score honestly estimates the whole "tune-then-fit" procedure. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p>You ran 5-fold CV and got per-fold accuracies $[0.88,\\ 0.91,\\ 0.90,\\ 0.86,\\ 0.93]$. Mean $=0.896$. Is "0.90" the whole story? No — you need its uncertainty.</p>
+      `<p>You ran 5-fold CV and got per-fold accuracies $[0.88,\\ 0.91,\\ 0.90,\\ 0.86,\\ 0.93]$. Is "0.90" the whole story? No — you need the mean, its interval, and a paired test before you trust it.</p>
+       <table class="extable">
+         <caption>The five per-fold accuracies $\\hat{e}_k$ being averaged.</caption>
+         <thead><tr><th>fold $k$</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th></tr></thead>
+         <tbody><tr><td class="row-h">accuracy $\\hat{e}_k$</td><td class="num">0.88</td><td class="num">0.91</td><td class="num">0.90</td><td class="num">0.86</td><td class="num">0.93</td></tr></tbody>
+       </table>
        <ul class="steps">
-         <li><b>Bootstrap the interval.</b> Resample those 5 numbers with replacement many times (say $B=10{,}000$); each resample's mean is one $\\bar{e}^{*}$. The middle 95% of those means runs from about <b>0.876 to 0.916</b>. So report <b>0.896, 95% CI [0.876, 0.916]</b> — a band of roughly &plusmn;2 points, not a single decimal.</li>
-         <li><b>Now compare two models with McNemar.</b> On one test set of 200 examples: model A right & B wrong on $b=18$; B right & A wrong on $c=7$; the rest they agree on. Then $\\chi^2=\\frac{(|18-7|-1)^2}{18+7}=\\frac{(10)^2}{25}=4.0$. Against the chi-squared table (1 degree of freedom), $\\chi^2=4.0$ gives $p\\approx0.046$ — just under 0.05, so A's edge is (barely) statistically real, not split luck.</li>
-         <li><b>The lesson:</b> the point estimates ($0.896$; A "beats" B) were not enough — the interval and the paired test are what tell you how much to trust them.</li>
+         <li><b>Mean of the folds.</b> $\\bar{e}=\\frac{1}{5}(0.88+0.91+0.90+0.86+0.93)=\\frac{4.48}{5}=0.896$.</li>
+         <li><b>Bootstrap the interval.</b> Resample those 5 numbers with replacement many times (say $B=10{,}000$); each resample's mean is one $\\bar{e}^{*}$. The middle 95% of those means runs from about $Q_{2.5\\%}=0.876$ to $Q_{97.5\\%}=0.916$. So report <b>0.896, 95% CI [0.876, 0.916]</b> — a band of roughly &plusmn;2 points, not a single decimal.</li>
+         <li><b>Set up McNemar.</b> Compare two models on one test set of 200 examples. Count only the disagreements: $b$ (A right, B wrong) and $c$ (B right, A wrong).</li>
+       </ul>
+       <table class="extable">
+         <caption>McNemar contingency: where models A and B disagree.</caption>
+         <thead><tr><th></th><th class="num">B wrong</th><th class="num">B right</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A right</td><td class="num">$b=18$</td><td class="num">(agree)</td></tr>
+           <tr><td class="row-h">A wrong</td><td class="num">$c=7$</td><td class="num">(agree)</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li><b>Plug into the formula.</b> $\\chi^2=\\frac{(|b-c|-1)^2}{b+c}=\\frac{(|18-7|-1)^2}{18+7}=\\frac{(10)^2}{25}=\\frac{100}{25}=4.0$.</li>
+         <li><b>Read the p-value.</b> Against the chi-squared table (1 degree of freedom), $\\chi^2=4.0$ gives $p\\approx0.046$ — just under 0.05, so A's edge is (barely) statistically real, not split luck.</li>
+         <li><b>The lesson:</b> the point estimates ($0.896$; A "beats" B) were not enough — the interval $[0.876, 0.916]$ and the paired test ($p\\approx0.046$) are what tell you how much to trust them.</li>
        </ul>`,
     demo: function (host) {
       host.innerHTML = "";

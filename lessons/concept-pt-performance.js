@@ -216,16 +216,25 @@
        the pipeline, so their speedups multiply rather than overlap &mdash; which is exactly what the chart below shows.</p>`,
 
     example:
-      `<p>A concrete sync trap. Suppose each training step you write
-       <code>running += loss.item()</code> just to keep a running total.</p>
+      `<p>Work the <b>gradient-accumulation</b> formula $\\text{loss}_{\\text{scaled}} = \\frac{1}{N}\\sum_{i=1}^{N}\\ell_i$ with real numbers. Take $N = 4$ micro-batches whose individual losses are $\\ell_1 = 0.80,\\ \\ell_2 = 0.60,\\ \\ell_3 = 0.50,\\ \\ell_4 = 0.30$, and you step the optimizer once every 4 micro-batches.</p>
        <ul class="steps">
-         <li><code>loss</code> lives on the GPU and may not be finished computing yet. <code>.item()</code> forces the
-         CPU to <b>wait</b> for the GPU, copy one number back, and only then continue &mdash; a host/device sync, every
-         single step.</li>
-         <li>The fix: keep the total on the GPU &mdash; <code>running += loss.detach()</code> &mdash; and call
-         <code>.item()</code> <b>once</b>, at the end of the epoch, when you actually want to log the number.</li>
-         <li>On a fast model the per-step sync can cost more than the backward pass itself. Removing it is free speed.</li>
-       </ul>`,
+         <li>Scale each loss by $\\tfrac{1}{N} = \\tfrac{1}{4} = 0.25$ before <code>.backward()</code>: $0.25\\cdot0.80 = 0.20$, $0.25\\cdot0.60 = 0.15$, $0.25\\cdot0.50 = 0.125$, $0.25\\cdot0.30 = 0.075$.</li>
+         <li>The gradients accumulate, so the accumulated loss is the sum of the scaled pieces: $0.20 + 0.15 + 0.125 + 0.075 = 0.55$.</li>
+         <li>Check against the formula directly: $\\frac{1}{4}(0.80 + 0.60 + 0.50 + 0.30) = \\frac{2.20}{4} = 0.55$ &mdash; same number, so the accumulation equals the <i>average</i> of one big batch.</li>
+         <li><b>Trap to avoid:</b> if you forget to divide and accumulate the raw sum $0.80 + 0.60 + 0.50 + 0.30 = 2.20$, the gradient (and your effective learning rate) is $N = 4\\times$ too large.</li>
+       </ul>
+       <table class="extable">
+         <caption>The two ways to keep a running loss total &mdash; same answer, very different cost on a GPU.</caption>
+         <thead><tr><th>step</th><th class="num">scaled loss</th><th class="num"><code>+= .item()</code> (syncs)</th><th class="num"><code>+= .detach()</code> (syncs)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">0.200</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.150</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.125</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="row-h">4</td><td class="num">0.075</td><td class="num">1</td><td class="num">0</td></tr>
+           <tr><td class="row-h">total</td><td class="num">0.550</td><td class="num">4 syncs</td><td class="num">1 sync (at end)</td></tr>
+         </tbody>
+       </table>
+       <p>Both columns reach the same total $0.55$, but <code>+= loss.item()</code> forces the CPU to wait for the GPU <b>4 times</b> (one host/device sync per step), while <code>+= loss.detach()</code> keeps the total on the GPU and syncs <b>once</b> at the end. On a fast model that per-step sync can cost more than the backward pass &mdash; removing it is free speed.</p>`,
 
     practice: [
       {

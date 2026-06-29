@@ -166,13 +166,26 @@
       `<p>One concrete TD(0) update. State $S_t$ currently has $V(S_t) = 0.4$. The agent steps, receives reward
        $R_{t+1} = 0$, and lands in $S_{t+1}$ where $V(S_{t+1}) = 1.0$. Use $\\alpha = 0.1$, $\\gamma = 0.9$.</p>
        <ul class="steps">
-         <li>TD target: $R_{t+1} + \\gamma V(S_{t+1}) = 0 + 0.9 \\times 1.0 = 0.9$.</li>
-         <li>TD error: $\\delta_t = 0.9 - V(S_t) = 0.9 - 0.4 = 0.5$ (a positive surprise — the next state is worth
-         more than we thought).</li>
-         <li>Update: $V(S_t) \\leftarrow 0.4 + 0.1 \\times 0.5 = 0.45$.</li>
-         <li>$V(S_t)$ moved a tenth of the way from $0.4$ toward $0.9$. We did not wait for the episode to end;
-         the next state's value flowed back one step, immediately.</li>
-       </ul>`,
+         <li><b>TD target.</b> $R_{t+1} + \\gamma V(S_{t+1}) = 0 + 0.9 \\times 1.0 = 0.9$.</li>
+         <li><b>TD error.</b> $\\delta_t = \\text{target} - V(S_t) = 0.9 - 0.4 = 0.5$ (a positive surprise &mdash; the next state is worth more than we thought).</li>
+         <li><b>Step size applied.</b> $\\alpha\\,\\delta_t = 0.1 \\times 0.5 = 0.05$.</li>
+         <li><b>Update.</b> $V(S_t) \\leftarrow 0.4 + 0.05 = 0.45$.</li>
+       </ul>
+       <table class="extable">
+         <caption>The single update, quantity by quantity.</caption>
+         <thead>
+           <tr><th>quantity</th><th class="num">formula</th><th class="num">value</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">old value $V(S_t)$</td><td class="num">given</td><td class="num">$0.40$</td></tr>
+           <tr><td class="row-h">TD target</td><td class="num">$R_{t+1}+\\gamma V(S_{t+1})$</td><td class="num">$0.90$</td></tr>
+           <tr><td class="row-h">TD error $\\delta_t$</td><td class="num">$\\text{target}-V(S_t)$</td><td class="num">$0.50$</td></tr>
+           <tr><td class="row-h">step $\\alpha\\,\\delta_t$</td><td class="num">$0.1\\times0.5$</td><td class="num">$0.05$</td></tr>
+           <tr><td class="row-h">new value $V(S_t)$</td><td class="num">$0.40+0.05$</td><td class="num">$0.45$</td></tr>
+         </tbody>
+       </table>
+       <p>$V(S_t)$ moved a tenth of the way from $0.4$ toward $0.9$. We did not wait for the episode to end;
+       the next state's value flowed back one step, immediately.</p>`,
 
     practice: [
       {

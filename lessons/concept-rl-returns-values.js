@@ -160,15 +160,25 @@
 
     example:
       `<p>Tiny $2$-state chain. State $s_0$ then absorbing goal $s_1$. The fixed policy always advances:
-       $80\\%$ it reaches $s_1$ (reward $+1$), $20\\%$ it slips and stays in $s_0$ (reward $0$). Once in $s_1$ it
-       stays forever with reward $0$. Discount $\\gamma = 0.9$.</p>
+       $80\\%$ it reaches $s_1$ (reward $+1$), $20\\%$ it slips and stays in $s_0$ (reward $0$). Once in
+       $s_1$ it stays forever with reward $0$. Discount $\\gamma = 0.9$.</p>
+       <table class="extable">
+         <caption>The MDP under the fixed policy: where you go from $s_0$, and the reward</caption>
+         <thead><tr><th>from $s_0$, outcome</th><th class="num">prob</th><th class="num">reward</th><th>lands in</th><th class="num">value of next</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">advance succeeds</td><td class="num">$0.8$</td><td class="num">$+1$</td><td>$s_1$</td><td class="num">$V^\\pi(s_1)=0$</td></tr>
+           <tr><td class="row-h">advance slips</td><td class="num">$0.2$</td><td class="num">$0$</td><td>$s_0$</td><td class="num">$V^\\pi(s_0)$</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Goal value is easy: $V^\\pi(s_1) = 0$ (no more reward).</li>
-         <li>Write Bellman at $s_0$: $V^\\pi(s_0) = 0.8\\,[\\,1 + \\gamma V^\\pi(s_1)\\,] + 0.2\\,[\\,0 + \\gamma V^\\pi(s_0)\\,]$.</li>
-         <li>Substitute $V^\\pi(s_1)=0$: $V^\\pi(s_0) = 0.8 + 0.18\\,V^\\pi(s_0)$.</li>
-         <li>Solve: $V^\\pi(s_0)(1 - 0.18) = 0.8$, so $V^\\pi(s_0) = 0.8 / 0.82 \\approx 0.976$.</li>
-         <li>Sanity check: it is a bit below $1$ (the slip-chance and discount cost you a little), exactly as the
-         recursion demands. We solved one Bellman equation by hand &mdash; no infinite sum needed.</li>
+         <li><b>Goal value is easy:</b> $V^\\pi(s_1) = 0$ (no more reward).</li>
+         <li><b>Write Bellman at $s_0$</b> (sum each row's $\\text{prob}\\,[\\,R + \\gamma\\,V_{\\text{next}}\\,]$):
+         $V^\\pi(s_0) = 0.8\\,[\\,1 + 0.9\\cdot 0\\,] + 0.2\\,[\\,0 + 0.9\\,V^\\pi(s_0)\\,]$.</li>
+         <li><b>Simplify:</b> $V^\\pi(s_0) = 0.8 + 0.18\\,V^\\pi(s_0)$, since $0.2\\times0.9 = 0.18$.</li>
+         <li><b>Solve:</b> $V^\\pi(s_0)(1 - 0.18) = 0.8$, so $V^\\pi(s_0) = 0.8 / 0.82 \\approx 0.976$.</li>
+         <li><b>Sanity check:</b> a bit below $1$ (the slip-chance and discount cost you a little),
+         exactly as the recursion demands. One Bellman equation, solved by hand &mdash; no infinite
+         sum needed.</li>
        </ul>`,
 
     demo: function (host) {

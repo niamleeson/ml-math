@@ -79,19 +79,31 @@
        </ul>`,
 
     example:
-      `<p>A tiny <code>sales</code> table &mdash; four rows, columns <code>category</code> and
-       <code>amount</code>:</p>
+      `<p>Run <code>SELECT category, SUM(amount) AS total FROM sales WHERE amount &gt;= 10 GROUP BY category
+       ORDER BY total DESC</code> on a tiny four-row <code>sales</code> table, and trace each clause on real
+       numbers.</p>
+       <table class="extable">
+         <caption>The sales table, and which rows survive WHERE amount &ge; 10</caption>
+         <thead><tr><th>category</th><th class="num">amount</th><th>WHERE amount &ge; 10?</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">books</td><td class="num">30</td><td>keep</td></tr>
+           <tr><td class="row-h">books</td><td class="num">20</td><td>keep</td></tr>
+           <tr><td class="row-h">toys</td><td class="num">50</td><td>keep</td></tr>
+           <tr><td class="row-h">toys</td><td class="num">5</td><td>drop (5 &lt; 10)</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><code>("books", 30)</code>, <code>("books", 20)</code>, <code>("toys", 50)</code>,
-         <code>("toys", 5)</code>.</li>
-         <li><b>Register it:</b> <code>df.createOrReplaceTempView("sales")</code>.</li>
-         <li><b>SQL form:</b> <code>spark.sql("SELECT category, SUM(amount) AS total FROM sales WHERE amount &gt;= 10 GROUP BY category ORDER BY total DESC")</code>.
-         The <code>WHERE amount &gt;= 10</code> drops the <code>("toys", 5)</code> row before aggregating.</li>
-         <li><b>DataFrame-API form:</b>
-         <code>df.filter(df.amount &gt;= 10).groupBy("category").agg(sum("amount").alias("total")).orderBy("total", ascending=False)</code>.</li>
-         <li><b>Both return the same result:</b> <code>toys&nbsp;50</code>, then <code>books&nbsp;50</code>.
-         And <code>.explain()</code> on each prints the same physical plan &mdash; same filter pushdown, same
-         <code>HashAggregate</code>, same sort. Identical work, your choice of syntax.</li>
+         <li><b>Register it:</b> <code>df.createOrReplaceTempView("sales")</code> &mdash; gives SQL a name,
+         copies no data.</li>
+         <li><b>WHERE amount &ge; 10:</b> drops the <code>("toys", 5)</code> row; 3 rows remain.</li>
+         <li><b>GROUP BY category, SUM(amount):</b> books $= 30 + 20 = 50$; toys $= 50$ (the 5 is gone).</li>
+         <li><b>ORDER BY total DESC:</b> a tie at 50, so the result is <code>toys&nbsp;50</code> then
+         <code>books&nbsp;50</code>.</li>
+         <li><b>DataFrame-API twin:</b>
+         <code>df.filter(df.amount &gt;= 10).groupBy("category").agg(sum("amount").alias("total")).orderBy("total", ascending=False)</code>
+         returns the <i>same</i> two rows, and <code>.explain()</code> on each prints the same physical plan
+         &mdash; same filter pushdown, same <code>HashAggregate</code>, same sort. Identical work, your choice
+         of syntax.</li>
        </ul>`,
 
     whenToUse:

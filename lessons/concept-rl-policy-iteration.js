@@ -88,14 +88,36 @@
        <p><b>Why it terminates at $\\pi^*$.</b> Each improvement either strictly raises the value of some state or changes nothing. There are only finitely many deterministic policies (finite states $\\times$ finite actions), and values never decrease, so the process cannot cycle and must stop after finitely many steps. When it stops, no action change helped, which means the greedy policy already equals the current one. That fixed-point condition is the <b>Bellman optimality equation</b> $V(s) = \\max_a \\sum_{s'} P\\,[R + \\gamma V(s')]$ &mdash; satisfied only by $V^*$ &mdash; so the stable policy is the optimal $\\pi^*$.</p>`,
 
     example:
-      `<p>A 3-state chain: states $L \\to M \\to G$, where $G$ is a terminal goal worth nothing further. Two actions, <code>left</code> and <code>right</code>, are deterministic; every step that does not enter $G$ costs $R = -1$; entering $G$ costs $-1$ on that final move; $\\gamma = 1$. Start with the bad plan $\\pi = $ "always <code>left</code>".</p>
+      `<p>A 3-state chain: states $L \\to M \\to G$, where $G$ is a terminal goal worth nothing further.
+       Two actions, <code>left</code> and <code>right</code>, are deterministic; every step costs
+       $R = -1$; $\\gamma = 1$. Start with the bad plan $\\pi_0 = $ "always <code>left</code>".</p>
        <ul class="steps">
-         <li><b>Evaluate $\\pi$ (always left).</b> From $M$, left $\\to L$; from $L$, left stays at $L$. Following this plan you never reach $G$, so $V^\\pi(L) = V^\\pi(M) = -\\infty$ &mdash; the bad plan loops forever. (This is the $\\gamma = 1$ non-termination pitfall; in code we cap the sweeps.)</li>
-         <li><b>Improve.</b> Look one step ahead with these scores. In $M$: <code>right</code> $\\to G$ gives $Q(M,\\text{right}) = -1 + 1\\cdot 0 = -1$, far better than looping left. So $\\pi'(M) = \\text{right}$. In $L$: <code>right</code> $\\to M$ gives $Q(L,\\text{right}) = -1 + 1\\cdot V(M)$, better than staying. So $\\pi'(L) = \\text{right}$. Two actions changed.</li>
-         <li><b>Evaluate $\\pi'$ (always right).</b> Now $L \\to M \\to G$. $V^{\\pi'}(M) = -1$ (one step to $G$); $V^{\\pi'}(L) = -1 + V^{\\pi'}(M) = -2$. Finite, and $\\ge$ the old scores, exactly as the theorem promised.</li>
-         <li><b>Improve again.</b> Greedy with respect to these values picks <code>right</code> everywhere &mdash; no action changes. The policy is stable, so $\\pi' = \\pi^*$. Done in two improvement steps.</li>
+         <li><b>Evaluate $\\pi_0$ (always left).</b> From $M$, left $\\to L$; from $L$, left stays at $L$.
+         You never reach $G$, so $V^{\\pi_0}(L) = V^{\\pi_0}(M) = -\\infty$ &mdash; the bad plan loops
+         forever. (This is the $\\gamma = 1$ non-termination pitfall; in code we cap the sweeps.)</li>
+         <li><b>Improve at $M$.</b> $Q(M,\\text{right}) = -1 + 1\\cdot V(G) = -1 + 0 = -1$, far better
+         than $Q(M,\\text{left}) = -\\infty$. So $\\pi_1(M) = \\text{right}$.</li>
+         <li><b>Improve at $L$.</b> $Q(L,\\text{right}) = -1 + 1\\cdot V(M)$, better than looping left.
+         So $\\pi_1(L) = \\text{right}$. Two actions changed.</li>
+         <li><b>Evaluate $\\pi_1$ (always right).</b> Now $L \\to M \\to G$.
+         $V^{\\pi_1}(M) = -1 + V(G) = -1$; $V^{\\pi_1}(L) = -1 + V^{\\pi_1}(M) = -1 + (-1) = -2$.
+         Finite, and $\\ge$ the old scores, exactly as the theorem promised.</li>
+         <li><b>Improve again.</b> Greedy w.r.t. these values: at $L$, $Q(L,\\text{right})=-1+(-1)=-2 \\gt
+         Q(L,\\text{left})=-1+(-2)=-3$, so <code>right</code> stays; same at $M$. <b>No action changes</b>
+         &mdash; the policy is stable, so $\\pi_1 = \\pi^*$. Done in two improvement steps.</li>
        </ul>
-       <p>The CODE below runs the same loop on a 4&times;4 gridworld; the CODEVIZ chart plots how many states change action each improvement step &mdash; dropping to $0$ marks convergence.</p>`,
+       <table class="extable">
+         <caption>The loop in a ledger: action chosen per state, and resulting values</caption>
+         <thead><tr><th>round</th><th>$\\pi(L)$</th><th>$\\pi(M)$</th><th class="num">$V(L)$</th><th class="num">$V(M)$</th><th class="num">states changed</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$\\pi_0$ start</td><td>left</td><td>left</td><td class="num">$-\\infty$</td><td class="num">$-\\infty$</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">after improve 1</td><td>right</td><td>right</td><td class="num">$-2$</td><td class="num">$-1$</td><td class="num">$2$</td></tr>
+           <tr><td class="row-h">after improve 2</td><td>right</td><td>right</td><td class="num">$-2$</td><td class="num">$-1$</td><td class="num">$0$</td></tr>
+         </tbody>
+       </table>
+       <p>The "states changed" column dropping to $0$ is the convergence signal. The CODE below runs the
+       same loop on a 4&times;4 gridworld; the CODEVIZ chart plots exactly this count per improvement
+       step.</p>`,
 
     practice: [
       {

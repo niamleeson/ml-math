@@ -92,26 +92,36 @@
        </ul>`,
 
     example:
-      `<p><b>Word count &mdash; the "hello world" of distributed data.</b> Count how often each word appears across
-       a large body of text, expressed entirely as RDD steps.</p>
+      `<p><b>Word count &mdash; the "hello world" of distributed data.</b> Run it on the famous opening of
+       <i>A Tale of Two Cities</i>: 5 lines, 60 words, one line per record across the partitions.</p>
        <ul class="steps">
-         <li><b>Start</b> with an RDD of text lines (one record per line), spread across partitions.</li>
-         <li><code>flatMap(lambda line: line.split())</code> &mdash; turn each line into its words and flatten, so
-         now every record is a single <b>word</b>.</li>
-         <li><code>map(lambda w: (w, 1))</code> &mdash; turn each word into a pair <code>(word, 1)</code>, a vote of
-         "I saw this word once."</li>
-         <li><code>reduceByKey(lambda a, b: a + b)</code> &mdash; add up all the 1's that share the same word, giving
-         <code>(word, total)</code>.</li>
-         <li><b>Nothing has run yet</b> &mdash; all four steps are lazy transformations; we have only built a recipe.</li>
-         <li><code>.take(5)</code> (an action) finally triggers it: Spark runs the chain and returns the first five
-         <code>(word, count)</code> pairs. On the famous opening of <i>A Tale of Two Cities</i> (60 words), the top
-         counts come back as <code>("it", 10)</code>, <code>("was", 10)</code>, <code>("the", 10)</code>,
-         <code>("of", 10)</code> &mdash; then <code>("times", 2)</code>, <code>("age", 2)</code>, and so on. The
-         CODEVIZ below plots exactly these numbers.</li>
+         <li><b>Start</b> with an RDD of 5 text lines. Line 1 is
+         <code>"it was the best of times it was the worst of times"</code> (12 words).</li>
+         <li><code>flatMap(lambda line: line.split())</code> &mdash; flatten lines into words. The 5 lines'
+         <i>(12 + 12 + 12 + 12 + 12)</i> words give <b>60</b> records, each a single word.</li>
+         <li><code>map(lambda w: (w, 1))</code> &mdash; emit one pair <code>(word, 1)</code> per word, e.g.
+         <code>("it", 1)</code>.</li>
+         <li><code>reduceByKey(lambda a, b: a + b)</code> &mdash; add the 1's per word. The word <code>"it"</code>
+         appears twice in every line, so $2 + 2 + 2 + 2 + 2 = 10$; <code>"times"</code> appears once on line 1 only
+         once more &mdash; just $1 + 1 = 2$.</li>
+         <li><b>Nothing has run yet</b> &mdash; all three are lazy transformations; we only built a recipe.</li>
+         <li><code>.takeOrdered(5, key=...)</code> (an action) finally triggers it and returns the top pairs below.</li>
        </ul>
-       <p>Notice the shape: <code>flatMap &rarr; map &rarr; reduceByKey</code> is the canonical
-       split &rarr; emit-pairs &rarr; combine-by-key pattern, and it is the same shape behind countless real
-       aggregations.</p>`,
+       <table class="extable">
+         <caption>Result of <code>flatMap &rarr; map &rarr; reduceByKey</code> (60 words, 20 distinct)</caption>
+         <thead><tr><th>word</th><th class="num">1's summed</th><th class="num">count</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">it</td><td class="num">2+2+2+2+2</td><td class="num">10</td></tr>
+           <tr><td class="row-h">was</td><td class="num">2+2+2+2+2</td><td class="num">10</td></tr>
+           <tr><td class="row-h">the</td><td class="num">2+2+2+2+2</td><td class="num">10</td></tr>
+           <tr><td class="row-h">of</td><td class="num">2+2+2+2+2</td><td class="num">10</td></tr>
+           <tr><td class="row-h">times</td><td class="num">1+1</td><td class="num">2</td></tr>
+         </tbody>
+       </table>
+       <p>Check: the four words at 10 account for $4 \\times 10 = 40$ of the 60 words; the remaining 20 are split
+       among 16 less-common words (e.g. <code>age</code>, <code>epoch</code>, <code>season</code> at 2 each;
+       <code>best</code>, <code>worst</code> at 1). Notice the shape: <code>flatMap &rarr; map &rarr; reduceByKey</code>
+       is the canonical split &rarr; emit-pairs &rarr; combine-by-key pattern behind countless real aggregations.</p>`,
 
     whenToUse:
       `<p><b>Prefer DataFrames for everyday work. Drop down to raw RDDs only when you genuinely need the low-level

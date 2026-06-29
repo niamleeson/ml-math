@@ -93,13 +93,37 @@
        <p><b>Why permutation importance works.</b> Shuffling the target destroys any real feature-target relationship but keeps each feature's marginal distribution intact. So any importance a feature still earns under the shuffle is pure overfitting headroom. A feature whose real importance does not clear that bar is, statistically, just noise the model latched onto.</p>
        <p><b>Why confident learning finds mislabels.</b> Out-of-fold, the model never trained on the row it scores, so its confident prediction is an independent second opinion. Counting (given label, confidently-predicted label) pairs estimates the joint $Q_{\\tilde y, y^*}$; off-diagonal mass flags the rows whose stored label disagrees with the model's confident belief — the likely mislabels.</p>`,
     example:
-      `<p><b>Worked kappa.</b> Two doctors each label 100 scans as "tumor" (positive) or "clear". They agree on 90 of them, so $p_o=0.90$. Doctor 1 called 20 positive ($\\hat p^{(1)}=0.20$), Doctor 2 called 25 positive ($\\hat p^{(2)}=0.25$).</p>
+      `<p><b>Worked kappa.</b> Two doctors each label 100 scans as "tumor" (positive) or "clear". They agree on 90 of them, so $p_o=0.90$. Doctor 1 called 20% positive ($\\hat p^{(1)}=0.20$), Doctor 2 called 25% positive ($\\hat p^{(2)}=0.25$). The chance-agreement $p_e$ adds up per class — each doctor's rate for that class, multiplied:</p>
+       <table class="extable">
+         <caption>Expected agreement by luck, per class: $\\hat p^{(1)}_c\\times\\hat p^{(2)}_c$.</caption>
+         <thead><tr><th>class $c$</th><th class="num">$\\hat p^{(1)}_c$</th><th class="num">$\\hat p^{(2)}_c$</th><th class="num">product</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">tumor</td><td class="num">0.20</td><td class="num">0.25</td><td class="num">0.05</td></tr>
+           <tr><td class="row-h">clear</td><td class="num">0.80</td><td class="num">0.75</td><td class="num">0.60</td></tr>
+           <tr><td class="row-h">$p_e$ (sum)</td><td class="num"></td><td class="num"></td><td class="num">0.65</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Chance agreement on "positive": $0.20\\times0.25=0.05$. Chance agreement on "clear": $0.80\\times0.75=0.60$. So $p_e=0.05+0.60=0.65$.</li>
+         <li>Observed agreement: $p_o=90/100=0.90$.</li>
+         <li>Chance agreement: $p_e=0.05+0.60=0.65$ (the table's sum).</li>
          <li>$\\kappa=\\dfrac{p_o-p_e}{1-p_e}=\\dfrac{0.90-0.65}{1-0.65}=\\dfrac{0.25}{0.35}\\approx 0.71$.</li>
          <li>Reading: 90% raw agreement sounds great, but once you remove the huge agreement they'd get just by both usually saying "clear", only $\\kappa\\approx0.71$ of the achievable beyond-chance agreement is real — "substantial" but not airtight. If $\\kappa$ had come out near 0, the labels would be too noisy to trust as ground truth.</li>
        </ul>
-       <p><b>Worked leak detector.</b> You inject a column equal to the label plus a touch of noise, then score it alone: single-feature AUC = 1.00 versus 0.97 for the best real feature. That near-perfect lone feature is the unmistakable signature of a target-derived leak — exactly the pattern the chart below highlights.</p>`,
+       <p><b>Worked leak detector.</b> You inject a column equal to the label plus a touch of noise, then score every feature alone against the target (single-feature AUC):</p>
+       <table class="extable">
+         <caption>Standalone AUC per feature — one feature towers at 1.00.</caption>
+         <thead><tr><th>feature</th><th class="num">single-feature AUC</th><th>verdict</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">leaky_feature (= label + noise)</td><td class="num">1.00</td><td>leak — audit and remove</td></tr>
+           <tr><td class="row-h">worst perimeter</td><td class="num">0.97</td><td>genuine signal</td></tr>
+           <tr><td class="row-h">mean texture</td><td class="num">0.78</td><td>genuine signal</td></tr>
+           <tr><td class="row-h">symmetry error</td><td class="num">0.56</td><td>weak</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>Gap to the ceiling: the best real feature leaves $1.00-0.97=0.03$ of daylight below a perfect AUC; the planted column leaves $0.00$.</li>
+         <li>A lone feature pinned at AUC $=1.00$, detached from the pack, is the unmistakable signature of a target-derived leak — exactly the pattern the chart below highlights.</li>
+       </ul>`,
     demo: function (host) {
       host.innerHTML = "";
       var s = getComputedStyle(document.documentElement);

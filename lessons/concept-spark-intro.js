@@ -128,24 +128,45 @@
        </ul>`,
 
     example:
-      `<p>A tiny concrete run, the same shape you would scale to billions of rows.</p>
+      `<p>A tiny concrete run of <code>groupBy("key").sum("val")</code> &mdash; the same shape you would scale to
+       billions of rows. Take this 5-row DataFrame built from
+       <code>[("a",1),("b",2),("a",3),("a",4),("b",5)]</code>:</p>
+       <table class="extable">
+         <caption>Input rows, split across 2 partitions</caption>
+         <thead><tr><th>partition</th><th>key</th><th class="num">val</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">P0</td><td>a</td><td class="num">1</td></tr>
+           <tr><td class="row-h">P0</td><td>b</td><td class="num">2</td></tr>
+           <tr><td class="row-h">P0</td><td>a</td><td class="num">3</td></tr>
+           <tr><td class="row-h">P1</td><td>a</td><td class="num">4</td></tr>
+           <tr><td class="row-h">P1</td><td>b</td><td class="num">5</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Start a session in local mode.</b> On a laptop or in Google Colab,
-         <code>SparkSession.builder.master("local[*]")</code> starts Spark using all of your machine's cores as
-         pretend "executors." <code>local[*]</code> means "use every core here." Same code, real cluster later.</li>
-         <li><b>Make a small DataFrame.</b> <code>spark.createDataFrame([("a", 1), ("b", 2), ("a", 3)],
-         ["key", "val"])</code> builds a distributed table &mdash; trivially small here, but Spark treats it the
-         same way it would a huge one.</li>
+         <li><b>Start a session in local mode.</b> <code>SparkSession.builder.master("local[*]")</code> uses every
+         core on your machine as a pretend "executor." Same code, real cluster later.</li>
          <li><b>Build a lazy plan.</b> <code>df.groupBy("key").sum("val")</code> records "group by key, sum val"
          in the DAG. Nothing has run yet.</li>
-         <li><b>Trigger it with an action.</b> <code>.show()</code> runs the plan and prints the result:
-         <code>a &rarr; 4</code>, <code>b &rarr; 2</code>. <code>df.count()</code> is another action; it returns
-         <code>3</code>.</li>
-         <li><b>Clean up.</b> <code>spark.stop()</code> releases the session. On a real cluster that frees the
-         executors for the next job.</li>
+         <li><b>Trigger it with an action.</b> <code>.show()</code> runs the plan. Each executor first sums its own
+         partition (a <i>partial</i> sum), then a shuffle brings matching keys together for the final add.</li>
+         <li>Partial sums on <b>P0</b>: key <code>a</code> &rarr; $1 + 3 = 4$, key <code>b</code> &rarr; $2$.</li>
+         <li>Partial sums on <b>P1</b>: key <code>a</code> &rarr; $4$, key <code>b</code> &rarr; $5$.</li>
+         <li>Combine the partials after the shuffle: <code>a</code> &rarr; $4 + 4 = 8$,
+         <code>b</code> &rarr; $2 + 5 = 7$.</li>
+         <li><code>df.count()</code> is another action; it returns <code>5</code> (the row total).</li>
+         <li><b>Clean up.</b> <code>spark.stop()</code> releases the session.</li>
        </ul>
+       <table class="extable">
+         <caption>Final result of <code>groupBy("key").sum("val")</code></caption>
+         <thead><tr><th>key</th><th class="num">P0 partial</th><th class="num">P1 partial</th><th class="num">sum(val)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">a</td><td class="num">4</td><td class="num">4</td><td class="num">8</td></tr>
+           <tr><td class="row-h">b</td><td class="num">2</td><td class="num">5</td><td class="num">7</td></tr>
+         </tbody>
+       </table>
        <p>The leap to production is conceptual, not syntactic: swap <code>master("local[*]")</code> for a real
-       cluster manager and point at terabytes &mdash; the DataFrame code is identical.</p>`,
+       cluster manager and point at terabytes &mdash; the DataFrame code is identical, and the same
+       partial-sum-then-combine happens across hundreds of machines.</p>`,
 
     practice: [
       {

@@ -186,21 +186,41 @@
     example:
       `<p>One step, with a critic that has already learned a bit. The critic says the current state is
        worth $\\hat V_w(s_t) = 5.0$. The agent acts, gets reward $r_t = 1.0$, and lands in $s_{t+1}$ with
-       $\\hat V_w(s_{t+1}) = 6.0$. Use $\\gamma = 0.9$, $\\alpha_\\theta = \\alpha_w = 0.1$.</p>
+       $\\hat V_w(s_{t+1}) = 6.0$. Use $\\gamma = 0.9$, $\\alpha_\\theta = \\alpha_w = 0.1$. Plug those
+       numbers into the three formulas line by line.</p>
        <ul class="steps">
-         <li><b>TD target:</b> $r_t + \\gamma\\hat V_w(s_{t+1}) = 1.0 + 0.9\\times 6.0 = 6.4$.</li>
+         <li><b>TD target</b> (inside the first formula): $r_t + \\gamma\\hat V_w(s_{t+1}) = 1.0 + 0.9\\times 6.0 = 1.0 + 5.4 = 6.4$.</li>
          <li><b>TD error / advantage:</b> $\\delta_t = 6.4 - 5.0 = 1.4$. Positive &mdash; the action did
          better than the critic expected.</li>
          <li><b>Actor update:</b> $\\theta\\leftarrow\\theta + 0.1\\cdot\\nabla_\\theta\\log\\pi_\\theta(a_t\\mid s_t)\\cdot 1.4$.
          The probability of $a_t$ goes <i>up</i>, by an amount proportional to $\\delta_t = 1.4$.</li>
          <li><b>Critic update (tabular):</b>
-         $\\hat V(s_t)\\leftarrow 5.0 + 0.1\\times 1.4 = 5.14$. The critic raises its estimate of $s_t$
-         toward the target $6.4$ &mdash; it had under-valued the state.</li>
-         <li><b>Contrast with REINFORCE:</b> REINFORCE would have waited for the whole episode and used
-         the full return $G_t$ (which might be anything from this lucky $+1$ to a long string of penalties)
-         as the weight &mdash; far noisier. Actor-critic used a single, low-variance $\\delta_t = 1.4$
-         right now.</li>
-       </ul>`,
+         $\\hat V(s_t)\\leftarrow 5.0 + 0.1\\times 1.4 = 5.0 + 0.14 = 5.14$. The critic raises its estimate
+         of $s_t$ toward the target $6.4$ &mdash; it had under-valued the state.</li>
+       </ul>
+       <p>The single number $\\delta_t = 1.4$ drives both nets. The ledger:</p>
+       <table class="extable">
+         <caption>One step: every quantity plugged into the three formulas ($\\gamma=0.9$, $\\alpha=0.1$).</caption>
+         <thead><tr><th>quantity</th><th>formula</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$\\hat V_w(s_t)$</td><td>critic, current state</td><td class="num">5.00</td></tr>
+           <tr><td class="row-h">$r_t$</td><td>reward received</td><td class="num">1.00</td></tr>
+           <tr><td class="row-h">$\\hat V_w(s_{t+1})$</td><td>critic, next state</td><td class="num">6.00</td></tr>
+           <tr><td class="row-h">TD target</td><td>$r_t+\\gamma\\hat V_w(s_{t+1})$</td><td class="num">6.40</td></tr>
+           <tr><td class="row-h">$\\delta_t$</td><td>target $-\\,\\hat V_w(s_t)$</td><td class="num">1.40</td></tr>
+           <tr><td class="row-h">new $\\hat V(s_t)$</td><td>$5.0+0.1\\times 1.4$</td><td class="num">5.14</td></tr>
+         </tbody>
+       </table>
+       <p><b>Contrast with REINFORCE.</b> Same step, different weight on the actor gradient &mdash; that is
+       the whole difference:</p>
+       <table class="extable">
+         <caption>What weights the actor's gradient: one low-variance number vs. a noisy full return.</caption>
+         <thead><tr><th>method</th><th>weight $\\Psi_t$ used</th><th class="num">value here</th><th>variance</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">REINFORCE</td><td>full return $G_t$ (waits for episode end)</td><td class="num">+1 … ?</td><td>high (sums every future step's noise)</td></tr>
+           <tr><td class="row-h">Actor-critic</td><td>one-step TD error $\\delta_t$</td><td class="num">1.40</td><td>low (one step, bootstrapped now)</td></tr>
+         </tbody>
+       </table>`,
 
     practice: [
       {

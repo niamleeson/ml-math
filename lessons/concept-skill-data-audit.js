@@ -84,7 +84,17 @@
          <li><b>Why PSI looks the way it does.</b> PSI is a <b>symmetrized relative entropy</b>. Standard KL (Kullback&ndash;Leibler) divergence is $\\sum_i a_i\\ln(a_i/e_i)$, which measures surprise of $a$ given $e$ but is asymmetric. PSI adds the reverse direction: $\\sum_i a_i\\ln(a_i/e_i)+\\sum_i e_i\\ln(e_i/a_i)=\\sum_i (a_i-e_i)\\ln(a_i/e_i)$. The symmetry means a bucket that grew and a bucket that shrank both contribute, so PSI fairly scores movement in either direction. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p><b>Worked PSI.</b> A feature is bucketed into 3 bins. Reference (training) shares $e=[0.6,\\ 0.3,\\ 0.1]$. Current (serving) shares $a=[0.4,\\ 0.35,\\ 0.25]$.</p>
+      `<p><b>Worked PSI.</b> A feature is bucketed into 3 bins. Reference (training) shares $e=[0.6,\\ 0.3,\\ 0.1]$, current (serving) shares $a=[0.4,\\ 0.35,\\ 0.25]$. The table builds the per-bin term $(a_i-e_i)\\ln(a_i/e_i)$; the steps redo the arithmetic.</p>
+       <table class="extable">
+         <caption>PSI per bin: $\\text{PSI}=\\sum_i (a_i-e_i)\\,\\ln(a_i/e_i)$.</caption>
+         <thead><tr><th>bin $i$</th><th class="num">$e_i$</th><th class="num">$a_i$</th><th class="num">$a_i-e_i$</th><th class="num">$\\ln(a_i/e_i)$</th><th class="num">term</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">0.60</td><td class="num">0.40</td><td class="num">&minus;0.20</td><td class="num">&minus;0.405</td><td class="num">0.081</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.30</td><td class="num">0.35</td><td class="num">+0.05</td><td class="num">0.154</td><td class="num">0.008</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.10</td><td class="num">0.25</td><td class="num">+0.15</td><td class="num">0.916</td><td class="num">0.137</td></tr>
+           <tr><td class="row-h">PSI</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">0.226</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li>Bin 1: $(0.4-0.6)\\ln(0.4/0.6)=(-0.2)\\times\\ln(0.667)=(-0.2)\\times(-0.405)=0.081$.</li>
          <li>Bin 2: $(0.35-0.3)\\ln(0.35/0.3)=(0.05)\\times\\ln(1.167)=(0.05)\\times(0.154)=0.008$.</li>

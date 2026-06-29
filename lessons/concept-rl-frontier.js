@@ -200,20 +200,31 @@
     example:
       `<p><b>Shaping a 1-D walk to the goal.</b> States $0,1,2,3$ on a line; state $3$ is the goal (terminal).
        The only true reward is $R = +1$ on reaching state $3$, else $0$ &mdash; very sparse. Let
-       $\\gamma = 0.9$ and choose the potential $\\Phi(s) = s$ (closer to the goal = higher potential).</p>
+       $\\gamma = 0.9$ and choose the potential $\\Phi(s) = s$ (closer to the goal = higher potential). The
+       shaping bonus for a move is $F(s,s') = \\gamma\\Phi(s') - \\Phi(s)$. Plugging in each transition:</p>
+       <table class="extable">
+         <caption>Shaping bonus $F = \\gamma\\Phi(s')-\\Phi(s)$ with $\\Phi(s)=s$, $\\gamma=0.9$.</caption>
+         <thead>
+           <tr><th>move $s\\to s'$</th><th class="num">$\\Phi(s)$</th><th class="num">$\\gamma\\Phi(s')$</th><th class="num">$F$</th><th>effect</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">$2 \\to 3$ (forward)</td><td class="num">2</td><td class="num">$0.9(3)=2.7$</td><td class="num">$+0.7$</td><td>rewards progress</td></tr>
+           <tr><td class="row-h">$1 \\to 2$ (forward)</td><td class="num">1</td><td class="num">$0.9(2)=1.8$</td><td class="num">$+0.8$</td><td>rewards progress</td></tr>
+           <tr><td class="row-h">$2 \\to 1$ (backward)</td><td class="num">2</td><td class="num">$0.9(1)=0.9$</td><td class="num">$-1.1$</td><td>penalises retreat</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Shaping bonus for stepping forward</b> $2 \\to 3$:
-          $F = \\gamma\\Phi(3) - \\Phi(2) = 0.9(3) - 2 = 2.7 - 2 = +0.7$. Moving toward the goal now pays
+         <li><b>Forward</b> $2 \\to 3$: $F = 0.9(3) - 2 = 2.7 - 2 = +0.7$. Moving toward the goal now pays
           immediately, even before the $+1$ ever appears.</li>
-         <li><b>Stepping backward</b> $2 \\to 1$:
-          $F = \\gamma\\Phi(1) - \\Phi(2) = 0.9(1) - 2 = 0.9 - 2 = -1.1$. Retreating is penalised.</li>
-         <li><b>Does it change the goal?</b> No. Sum the shaping over the full path $0\\to1\\to2\\to3$:
+         <li><b>Backward</b> $2 \\to 1$: $F = 0.9(1) - 2 = 0.9 - 2 = -1.1$. Retreating is penalised.</li>
+         <li><b>Does it change the goal?</b> No. Sum the discounted shaping over the full path $0\\to1\\to2\\to3$:
           $F_{0\\to1}+ \\gamma F_{1\\to2} + \\gamma^2 F_{2\\to3}$
-          $= (0.9{\\cdot}1 - 0) + 0.9(0.9{\\cdot}2 - 1) + 0.81(0.9{\\cdot}3 - 2)$
-          $= 0.9 + 0.9(0.8) + 0.81(0.7) = 0.9 + 0.72 + 0.567 = 2.187$. And indeed
-          $-\\Phi(s_0) + \\gamma^{3}\\Phi(s_3) = -0 + 0.729{\\cdot}3 = 2.187$ &mdash; it depends only on the
-          endpoints, exactly as the telescoping derivation said. The action-by-action preferences are unchanged;
-          the agent just gets a dense breadcrumb trail.</li>
+          $= (0.9{\\cdot}1 - 0) + 0.9(0.9{\\cdot}2 - 1) + 0.81(0.9{\\cdot}3 - 2)$.</li>
+         <li>$= 0.9 + 0.9(0.8) + 0.81(0.7) = 0.9 + 0.72 + 0.567 = 2.187$.</li>
+         <li><b>Cross-check with the telescoping formula</b> $-\\Phi(s_0) + \\gamma^{3}\\Phi(s_3)$:
+          $= -0 + 0.729{\\cdot}3 = 2.187$. &check; It depends only on the endpoints, exactly as the
+          telescoping derivation said &mdash; so the action-by-action preferences are unchanged; the agent just
+          gets a dense breadcrumb trail.</li>
        </ul>
        <p>The CODEVIZ below runs this same idea on a 5&times;5 gridworld and shows the shaped agent solving it in
        a fraction of the episodes, converging to the <i>same</i> optimal return.</p>`,

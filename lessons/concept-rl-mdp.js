@@ -167,10 +167,18 @@
       `<p>A tiny <b>4-state chain</b>: states $s_0, s_1, s_2, s_3$ in a line; $s_3$ is the goal. Two
        actions, <b>LEFT</b> and <b>RIGHT</b>. The floor is slippery: the intended move happens with
        probability $0.8$, and with probability $0.2$ the agent stays put. Reward is $+1$ for entering
-       $s_3$ and $0$ otherwise; $\\gamma = 0.9$.</p>
+       $s_3$ and $0$ otherwise; $\\gamma = 0.9$. First, the transition row for the move that matters,
+       $P(\\cdot \\mid s_2, \\text{RIGHT})$:</p>
+       <table class="extable">
+         <caption>Transition dynamics from $s_2$ under RIGHT &mdash; one row of $P$.</caption>
+         <thead><tr><th>next state $s'$</th><th class="num">$s_0$</th><th class="num">$s_1$</th><th class="num">$s_2$ (slip-stay)</th><th class="num">$s_3$ (goal)</th><th class="num">row sum</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$P(s' \\mid s_2,\\text{RIGHT})$</td><td class="num">0.0</td><td class="num">0.0</td><td class="num">0.2</td><td class="num">0.8</td><td class="num">1.0</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Transitions from $s_2$ under RIGHT:</b> $P(s_3\\mid s_2,\\text{RIGHT}) = 0.8$ and
-         $P(s_2\\mid s_2,\\text{RIGHT}) = 0.2$. Check: $0.8 + 0.2 = 1$ &mdash; valid.</li>
+         <li><b>Valid distribution?</b> Sum the row: $0.0 + 0.0 + 0.2 + 0.8 = 1.0$ &mdash; valid, so this
+         is a legal $P$.</li>
          <li><b>Markov check:</b> the chance of reaching $s_3$ depends only on being in $s_2$ and
          choosing RIGHT &mdash; not on how the agent got to $s_2$. The property holds.</li>
          <li><b>A single move's expected reward</b> from $s_2$ under RIGHT:
@@ -178,11 +186,21 @@
          That gap is the cost of slipperiness.</li>
          <li><b>Return of a lucky run</b> from $s_0$ that reaches the goal in $3$ clean steps (reward
          only on the last): $G_0 = \\gamma^0\\!\\cdot 0 + \\gamma^1\\!\\cdot 0 + \\gamma^2\\!\\cdot 1
-         = 0.9^2 = 0.81$. A slower, slippier run discounts the $+1$ more, so its return is smaller. The
-         objective $\\mathbb{E}_\\pi[G_0]$ averages over all such runs.</li>
+         = 0.9^2 = 0.81$.</li>
        </ul>
-       <p>The CODE below builds exactly this MDP as numpy arrays and simulates a trajectory; the CODEVIZ
-       draws its transition matrix as a heatmap.</p>`,
+       <p>Why "lucky"? A slower, slippier run discounts the $+1$ more, so its return is smaller &mdash;
+       compare a clean run that lands the $+1$ at different steps:</p>
+       <table class="extable">
+         <caption>Same $+1$ goal reward, discounted by where it lands ($\\gamma = 0.9$).</caption>
+         <thead><tr><th>run</th><th class="num">step the $+1$ lands ($k$)</th><th class="num">discount $\\gamma^k$</th><th class="num">return $G_0$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">3-step (lucky)</td><td class="num">2</td><td class="num">$0.9^2$</td><td class="num">0.81</td></tr>
+           <tr><td class="row-h">4-step (one slip)</td><td class="num">3</td><td class="num">$0.9^3$</td><td class="num">0.729</td></tr>
+         </tbody>
+       </table>
+       <p>The objective $\\mathbb{E}_\\pi[G_0]$ averages over all such runs. The CODE below builds exactly
+       this MDP as numpy arrays and simulates a trajectory; the CODEVIZ draws its transition matrix as a
+       heatmap.</p>`,
 
     practice: [
       {

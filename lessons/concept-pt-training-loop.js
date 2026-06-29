@@ -121,7 +121,30 @@
 <p><code>optimizer.step()</code> then reads those <code>.grad</code> values and updates the weights, e.g. plain SGD (Stochastic Gradient Descent) does <code>w -= lr * w.grad</code>. Because gradients <i>accumulate</i> by design (useful for some tricks), you must clear them with <code>zero_grad()</code> before the next batch.</p>
 <p>The order matters: zero, forward, loss, backward, step. Forward builds the graph; backward fills the gradients; step uses them. See <code>dl-backprop</code> for the math and <code>dl-optimizers</code> for the update rules.</p>`,
 
-    example: `<p>Take a 2-feature input <code>x</code> and a tiny linear model <code>y = Wx + b</code>. One batch: <code>zero_grad()</code> wipes <code>W.grad</code> and <code>b.grad</code> to zero. <code>pred = model(x)</code> gives a guess, say 0.3 when the label is 1. <code>loss = criterion(pred, y)</code> turns that gap into a number. <code>loss.backward()</code> fills <code>W.grad</code> and <code>b.grad</code> with slopes pointing uphill. <code>optimizer.step()</code> moves <code>W</code> and <code>b</code> a small step the other way, so next time the guess for this kind of input is closer to 1.</p>`,
+    example: `<p>Run all five steps with real numbers on the tiniest model: one weight <code>w</code>, prediction <code>pred = w &middot; x</code>, mean-squared-error loss <code>loss = (pred - y)&sup2;</code>. Start at <code>w = 0.5</code> with input <code>x = 2.0</code>, true label <code>y = 1.0</code>, and learning rate <code>lr = 0.1</code>. (<code>w</code> is the weight, <code>x</code> the input, <code>y</code> the target, <code>lr</code> the step size.)</p>
+       <ul class="steps">
+         <li><b>1. <code>zero_grad()</code></b> &rarr; set <code>w.grad = 0</code> so last batch's slope is wiped out.</li>
+         <li><b>2. forward</b> &rarr; <code>pred</code> $= w \\cdot x = 0.5 \\times 2.0 = 1.0$.</li>
+         <li><b>3. loss</b> &rarr; <code>loss</code> $= (pred - y)^2 = (1.0 - 1.0)^2 = 0.0$. The guess is already perfect, so let's instead start at <code>w = 0.0</code> to see learning happen.</li>
+       </ul>
+       <p>Restart at <code>w = 0.0</code> (same <code>x = 2.0</code>, <code>y = 1.0</code>, <code>lr = 0.1</code>) and run the full five steps:</p>
+       <ul class="steps">
+         <li><b>1. <code>zero_grad()</code></b> &rarr; <code>w.grad = 0</code>.</li>
+         <li><b>2. forward</b> &rarr; <code>pred</code> $= 0.0 \\times 2.0 = 0.0$.</li>
+         <li><b>3. loss</b> &rarr; $(0.0 - 1.0)^2 = 1.0$.</li>
+         <li><b>4. <code>backward()</code></b> &rarr; the slope is $\\dfrac{d\\,loss}{d\\,w} = 2(pred - y)\\cdot x = 2(0.0 - 1.0)(2.0) = -4.0$. So <code>w.grad = -4.0</code>.</li>
+         <li><b>5. <code>step()</code></b> &rarr; plain SGD does <code>w</code> $\\leftarrow w - lr \\cdot w.grad = 0.0 - 0.1(-4.0) = +0.4$.</li>
+       </ul>
+       <p>The weight moved from 0.0 toward 0.5 (the value that makes <code>pred = y</code>). Re-running the forward confirms the loss fell:</p>
+       <table class="extable">
+         <caption>Loss before vs after one update step.</caption>
+         <thead><tr><th></th><th class="num">w</th><th class="num">pred = w&middot;x</th><th class="num">loss = (pred-y)&sup2;</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">before step</td><td class="num">0.00</td><td class="num">0.00</td><td class="num">1.0000</td></tr>
+           <tr><td class="row-h">after step</td><td class="num">0.40</td><td class="num">0.80</td><td class="num">0.0400</td></tr>
+         </tbody>
+       </table>
+       <p>One batch dropped the loss from 1.0 to 0.04. Repeat the cycle and <code>w</code> converges to 0.5.</p>`,
 
     demo: function (host) {
       var s = getComputedStyle(document.documentElement);

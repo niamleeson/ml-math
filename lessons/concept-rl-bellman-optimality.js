@@ -77,13 +77,28 @@
        </ul>
        <p>By the Banach fixed-point theorem, repeatedly applying $\\mathcal{T}^*$ from <i>any</i> start converges geometrically to $V^*$ — that is precisely <b>value iteration</b> [ai-value-iteration]. But because $\\mathcal{T}^*$ contains a $\\max$, it is <b>not</b> a linear map, so unlike policy evaluation ($V = R + \\gamma P V$, solvable as $V = (I - \\gamma P)^{-1} R$) there is no matrix inverse that gives $V^*$ in one shot. The non-linearity is the price of optimality.</p>`,
     example:
-      `<p>A 2-action backup, by hand, with $\\gamma = 0.9$. State $s$ has two actions; suppose the optimal next-state values are already known: $V^*(s_{\\text{goal}}) = 10$ and $V^*(s_{\\text{empty}}) = 0$. The step reward is $R = -1$ unless noted. Transitions are deterministic here.</p>
+      `<p>A 2-action backup, by hand, with $\\gamma = 0.9$. State $s$ has two actions; suppose the optimal next-state values are already known: $V^*(s_{\\text{goal}}) = 10$ and $V^*(s_{\\text{empty}}) = 0$. The step reward is $R = -1$ unless noted. Transitions are deterministic here. Plug each action into $Q^*(s,a) = \\sum_{s'} P(s'\\mid s,a)[R + \\gamma V^*(s')]$.</p>
        <ul class="steps">
-         <li><b>Action "right"</b> goes to the goal: $Q^*(s,\\text{right}) = -1 + 0.9 \\times 10 = 8.0$.</li>
+         <li><b>Action "right"</b> goes to the goal: $Q^*(s,\\text{right}) = -1 + 0.9 \\times 10 = -1 + 9.0 = 8.0$.</li>
          <li><b>Action "left"</b> goes to an empty cell: $Q^*(s,\\text{left}) = -1 + 0.9 \\times 0 = -1.0$.</li>
          <li><b>Optimal state value:</b> $V^*(s) = \\max(8.0,\\,-1.0) = 8.0$ — the $\\max$ keeps the better action.</li>
          <li><b>Optimal action:</b> $\\pi^*(s) = \\arg\\max(8.0,\\,-1.0) = \\text{right}$.</li>
-         <li><b>Stochastic twist.</b> Say "right" is slippery: $0.8$ to the goal, $0.2$ to the empty cell. Then $Q^*(s,\\text{right}) = -1 + 0.9\\,[0.8\\times10 + 0.2\\times0] = -1 + 0.9\\times8 = 6.2$. Still the best, but the slip lowered its value. The reward and next value always come from the SAME transition — that is the off-by-one guard.</li>
+       </ul>
+       <table class="extable">
+         <caption>The $\\max_a$ backup: best action wins, its value becomes $V^*(s)$ ($\\gamma=0.9$, $R=-1$).</caption>
+         <thead><tr><th>action $a$</th><th>lands in</th><th class="num">$V^*(s')$</th><th>$Q^*(s,a) = R + \\gamma V^*(s')$</th><th class="num">$Q^*(s,a)$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">right</td><td>goal</td><td class="num">10</td><td>$-1 + 0.9\\times 10$</td><td class="num">8.0</td></tr>
+           <tr><td class="row-h">left</td><td>empty</td><td class="num">0</td><td>$-1 + 0.9\\times 0$</td><td class="num">-1.0</td></tr>
+           <tr><td class="row-h">$V^*(s)=\\max_a$</td><td>—</td><td class="num"></td><td>$\\max(8.0,-1.0)$</td><td class="num">8.0</td></tr>
+         </tbody>
+       </table>
+       <p><b>Stochastic twist.</b> Now say "right" is slippery: $0.8$ to the goal, $0.2$ to the empty cell.
+       The reward and next value must come from the SAME transition — the off-by-one guard.</p>
+       <ul class="steps">
+         <li><b>Expected next value:</b> $0.8\\times 10 + 0.2\\times 0 = 8.0 + 0 = 8.0$.</li>
+         <li><b>Q for slippery right:</b> $Q^*(s,\\text{right}) = -1 + 0.9\\times 8.0 = -1 + 7.2 = 6.2$.</li>
+         <li><b>Still the best:</b> $6.2 \\gt -1.0$, but the slip lowered its value from $8.0$ to $6.2$.</li>
        </ul>`,
     demo: function (host) {
       host.innerHTML = "";

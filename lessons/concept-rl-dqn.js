@@ -158,18 +158,42 @@
 
     example:
       `<p>The online net currently guesses $\\hat Q(s,a;\\theta) = 4$. The agent acts, gets reward
-       $r = 1$, and lands in $s'$, where the TARGET network's best next value is
-       $\\max_{a'}\\hat Q(s',a';\\theta^-) = 6$. Use $\\gamma = 0.9$.</p>
+       $r = 1$, and lands in $s'$, where the TARGET network gives the per-action next values
+       $\\hat Q(s',\\cdot;\\theta^-) = \\{6,\\,5\\}$ (so $\\max_{a'} = 6$). Use $\\gamma = 0.9$. Plug into the
+       two formulas $y = r + \\gamma\\max_{a'}\\hat Q(s',a';\\theta^-)$ and $L = (y-\\hat Q)^2$.</p>
        <ul class="steps">
-         <li><b>Target:</b> $y = r + \\gamma\\max_{a'}\\hat Q(s',a';\\theta^-) = 1 + 0.9\\times 6 = 6.4$.</li>
+         <li><b>Target:</b> $y = r + \\gamma\\max_{a'}\\hat Q(s',a';\\theta^-) = 1 + 0.9\\times 6 = 1 + 5.4 = 6.4$.</li>
          <li><b>TD error:</b> $\\delta = y - \\hat Q(s,a;\\theta) = 6.4 - 4 = 2.4$.</li>
          <li><b>Loss (this sample):</b> $\\delta^2 = 2.4^2 = 5.76$.</li>
          <li><b>Update:</b> backprop nudges $\\theta$ so $\\hat Q(s,a;\\theta)$ rises from $4$ toward $6.4$,
          shrinking the error. The target value $6.4$ does NOT move during this step, because it was computed
          from the frozen $\\theta^-$.</li>
        </ul>
-       <p>Note the over-estimation seed already present here: that $6$ came from a $\\max$ over noisy
-       estimates, which tends to be too high. Double DQN (below) fixes exactly this.</p>`,
+       <table class="extable">
+         <caption>One transition through both formulas ($r=1$, $\\gamma=0.9$).</caption>
+         <thead><tr><th>quantity</th><th>formula</th><th class="num">value</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">$\\hat Q(s,a;\\theta)$</td><td>online net, taken action</td><td class="num">4.00</td></tr>
+           <tr><td class="row-h">$\\max_{a'}\\hat Q(s',a';\\theta^-)$</td><td>target net, best next</td><td class="num">6.00</td></tr>
+           <tr><td class="row-h">$y$</td><td>$1 + 0.9\\times 6$</td><td class="num">6.40</td></tr>
+           <tr><td class="row-h">$\\delta$</td><td>$y - \\hat Q$</td><td class="num">2.40</td></tr>
+           <tr><td class="row-h">$L=\\delta^2$</td><td>$2.4^2$</td><td class="num">5.76</td></tr>
+         </tbody>
+       </table>
+       <p><b>The over-estimation seed, and how Double DQN removes it.</b> Suppose action $a'_1$'s true value is
+       $5$ but its estimate is noisily high at $6$, while $a'_2$ is the genuinely-best action (true $5.5$,
+       estimate $5$). Standard DQN's single $\\max$ trusts the lucky $6$; Double DQN lets the ONLINE net pick
+       the action and the TARGET net score it.</p>
+       <table class="extable">
+         <caption>Same next state, two targets. Standard $\\max$ picks the over-estimate; Double DQN cross-checks.</caption>
+         <thead><tr><th>method</th><th>action chosen for $s'$</th><th>value used</th><th class="num">$y = 1 + 0.9\\times\\text{value}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Standard DQN</td><td>$\\arg\\max\\theta^-$ &rarr; $a'_1$</td><td>$\\theta^-$ says $6$ (too high)</td><td class="num">6.40</td></tr>
+           <tr><td class="row-h">Double DQN</td><td>$\\arg\\max\\theta$ &rarr; $a'_1$, scored by $\\theta^-$</td><td>$\\theta^-$ on $a'_1 = 5$</td><td class="num">5.50</td></tr>
+         </tbody>
+       </table>
+       <p>Decoupling selection from evaluation pulls the target down from $6.40$ to $5.50$, closer to the
+       truth &mdash; exactly the over-estimation fix.</p>`,
 
     pitfalls:
       `<ul>

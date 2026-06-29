@@ -73,13 +73,25 @@ $$ \\delta_t = R_{t+1} + \\gamma V(S_{t+1}) - V(S_t), \\qquad e_t = \\gamma\\lam
        <p>$$ G_t^{\\lambda} - V(S_t) = \\sum_{k=0}^{\\infty} (\\gamma\\lambda)^{k}\\, \\delta_{t+k}. $$</p>
        <p>So the update owed to state $S_t$ is $\\alpha\\sum_k (\\gamma\\lambda)^k \\delta_{t+k}$ — each future TD error $\\delta_{t+k}$ contributes, discounted by $(\\gamma\\lambda)^k$. Reading it the other way around: a single TD error $\\delta_{t}$ should be sent <i>back</i> to every earlier state $S_{t-k}$ with weight $(\\gamma\\lambda)^k$. That weight, summed over all visits, is exactly the eligibility trace $e_t(s)=\\sum_{k}(\\gamma\\lambda)^{k}\\,\\nabla\\!\\mathbb{1}[S_{t-k}=s]$, which satisfies the recursion $e_t = \\gamma\\lambda\\, e_{t-1} + \\nabla$. Applying $V\\leftarrow V+\\alpha\\,\\delta_t\\,e_t$ every step therefore delivers, in total, the same updates as the forward view — the <b>forward/backward equivalence</b>. $\\blacksquare$</p>`,
     example:
-      `<p>Tiny chain: states $S_1 \\to S_2 \\to S_3 \\to$ <b>GOAL</b>. All rewards are 0 until the final step into GOAL, which pays $R=+1$. Take $\\gamma=1$, $\\lambda=0.9$, $\\alpha=0.1$, and start every value at 0: $V(S_1)=V(S_2)=V(S_3)=0$.</p>
+      `<p>Tiny chain: states $S_1 \\to S_2 \\to S_3 \\to$ <b>GOAL</b>. All rewards are 0 until the final step into GOAL, which pays $R=+1$. Take $\\gamma=1$, $\\lambda=0.9$, $\\alpha=0.1$, and start every value at 0: $V(S_1)=V(S_2)=V(S_3)=0$. So $\\gamma\\lambda = 1 \\times 0.9 = 0.9$ &mdash; the per-step trace decay.</p>
        <ul class="steps">
-         <li><b>Steps with no surprise.</b> Moving $S_1\\to S_2$ and $S_2\\to S_3$: the reward is 0 and both values are 0, so $\\delta = 0 + 1\\cdot 0 - 0 = 0$. No update yet — but each visited state's trace is bumped to 1, then decays: after two steps $e(S_1)=(\\gamma\\lambda)^2=0.81$, $e(S_2)=0.9$, $e(S_3)=1$.</li>
-         <li><b>The surprise at the goal.</b> Stepping $S_3\\to$ GOAL pays $+1$; GOAL's value is 0, so $\\delta = 1 + 1\\cdot 0 - V(S_3) = 1$.</li>
-         <li><b>Credit flows backward in one update.</b> Apply $V\\leftarrow V+\\alpha\\,\\delta\\,e$. All three states get credited at once: $V(S_3) \\mathrel{+}= 0.1\\cdot1\\cdot1 = 0.1$; $V(S_2)\\mathrel{+}= 0.1\\cdot1\\cdot0.9 = 0.09$; $V(S_1)\\mathrel{+}= 0.1\\cdot1\\cdot0.81 = 0.081$.</li>
-         <li><b>Contrast with TD(0).</b> Plain one-step TD ($\\lambda=0$) would update only $V(S_3)$ this episode; $S_2$ and $S_1$ would have to wait for future episodes to feel the goal. With $\\lambda=0.9$, one episode already nudged the entire path toward the right values — faster credit assignment.</li>
-       </ul>`,
+         <li><b>Steps with no surprise.</b> Moving $S_1\\to S_2$ then $S_2\\to S_3$: reward is 0 and every value is 0, so the TD error is $\\delta = 0 + 1\\cdot 0 - 0 = 0$. No value changes yet &mdash; but each visited state's trace is bumped to 1, then decays by $\\gamma\\lambda=0.9$ per step.</li>
+         <li><b>Trace bookkeeping.</b> By the time we reach $S_3$: $S_1$ was bumped two steps ago, $S_2$ one step ago, $S_3$ just now, so $e(S_1)=(\\gamma\\lambda)^2=0.9^2=0.81$, $e(S_2)=\\gamma\\lambda=0.9$, $e(S_3)=1.0$.</li>
+         <li><b>The surprise at the goal.</b> Stepping $S_3\\to$ GOAL pays $R=+1$; GOAL's value is 0, so $\\delta = 1 + 1\\cdot 0 - V(S_3) = 1 - 0 = 1$.</li>
+         <li><b>Credit flows backward in one update.</b> Apply $V(s)\\leftarrow V(s)+\\alpha\\,\\delta\\,e(s)$ to every state at once: $V(S_3)\\mathrel{+}=0.1\\cdot1\\cdot1.0=0.1$; $V(S_2)\\mathrel{+}=0.1\\cdot1\\cdot0.9=0.09$; $V(S_1)\\mathrel{+}=0.1\\cdot1\\cdot0.81=0.081$.</li>
+       </ul>
+       <table class="extable">
+         <caption>One goal reward, credited backward to the whole path in a single update (vs TD(0), which credits only $S_3$).</caption>
+         <thead>
+           <tr><th>state</th><th class="num">trace $e(s)$</th><th class="num">$\\Delta V = \\alpha\\,\\delta\\,e$</th><th class="num">new $V(s)$</th><th class="num">TD(0) would give</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">$S_3$ (just visited)</td><td class="num">$1.00$</td><td class="num">$0.100$</td><td class="num">$0.100$</td><td class="num">$0.100$</td></tr>
+           <tr><td class="row-h">$S_2$ (1 step back)</td><td class="num">$0.90$</td><td class="num">$0.090$</td><td class="num">$0.090$</td><td class="num">$0.000$</td></tr>
+           <tr><td class="row-h">$S_1$ (2 steps back)</td><td class="num">$0.81$</td><td class="num">$0.081$</td><td class="num">$0.081$</td><td class="num">$0.000$</td></tr>
+         </tbody>
+       </table>
+       <p><b>Contrast with TD(0).</b> Plain one-step TD ($\\lambda=0$) shrinks every trace to 0 except the just-visited state, so this episode it would update only $V(S_3)$; $S_2$ and $S_1$ would wait for future episodes to feel the goal. With $\\lambda=0.9$, one episode already nudged the entire path toward the right values &mdash; faster credit assignment.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       function C() {

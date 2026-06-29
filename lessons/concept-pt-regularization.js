@@ -151,12 +151,24 @@
        </ul>
        <p><b>Early stopping</b> needs no special layer: you watch validation loss, remember the epoch where it was lowest, and roll the weights back to that snapshot — trading a few wasted epochs for the best-generalizing model (see <code>dl-early-stopping</code>).</p>`,
     example:
-      `<p>A minimal regularized block: <code>nn.Sequential(nn.Linear(20, 64), nn.BatchNorm1d(64), nn.ReLU(), nn.Dropout(0.3), nn.Linear(64, 2))</code>.</p>
+      `<p>Work the weight-decay update $w \\leftarrow w - \\eta\\,\\nabla \\mathcal{L}(w) - \\eta\\,\\lambda\\, w$ with real numbers for a single weight. Take $w = 2.0$, learning rate $\\eta = 0.1$, loss gradient $\\nabla \\mathcal{L}(w) = 0.5$, and weight-decay strength $\\lambda = 1.0$.</p>
        <ul class="steps">
-         <li>During <code>model.train()</code>: <code>BatchNorm1d</code> normalizes each of the 64 features using the batch, and <code>Dropout(0.3)</code> zeros about 30% of them at random.</li>
-         <li>During <code>model.eval()</code>: <code>BatchNorm1d</code> switches to its running statistics and <code>Dropout</code> becomes a pass-through — so a given input always maps to the same output.</li>
-         <li>Add <code>optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)</code> and the weights are gently shrunk toward zero every step — three regularizers working together.</li>
-       </ul>`,
+         <li>The ordinary gradient step: $\\eta\\,\\nabla \\mathcal{L}(w) = 0.1 \\times 0.5 = 0.05$.</li>
+         <li>The decay (shrink) term: $\\eta\\,\\lambda\\, w = 0.1 \\times 1.0 \\times 2.0 = 0.20$.</li>
+         <li>Subtract both: $w \\leftarrow 2.0 - 0.05 - 0.20 = 1.75$.</li>
+         <li>Compare with <b>no</b> decay ($\\lambda = 0$): $w \\leftarrow 2.0 - 0.05 = 1.95$. The extra $-0.20$ is exactly the L2 pull toward zero.</li>
+       </ul>
+       <table class="extable">
+         <caption>One step on $w = 2.0$ with $\\eta = 0.1$, $\\nabla\\mathcal{L} = 0.5$ — decay shrinks the weight further toward 0.</caption>
+         <thead><tr><th>term</th><th class="num">no decay ($\\lambda = 0$)</th><th class="num">with decay ($\\lambda = 1$)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">start $w$</td><td class="num">2.00</td><td class="num">2.00</td></tr>
+           <tr><td class="row-h">$-\\,\\eta\\nabla\\mathcal{L}$</td><td class="num">&minus;0.05</td><td class="num">&minus;0.05</td></tr>
+           <tr><td class="row-h">$-\\,\\eta\\lambda w$</td><td class="num">0.00</td><td class="num">&minus;0.20</td></tr>
+           <tr><td class="row-h">new $w$</td><td class="num">1.95</td><td class="num">1.75</td></tr>
+         </tbody>
+       </table>
+       <p>That constant $-\\eta\\lambda w$ shrink, repeated every step, is L2 regularization — it keeps the weights small and the learned function smooth. In a real model you pair it with the in-network regularizers via <code>optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)</code> plus <code>BatchNorm1d</code> and <code>Dropout(0.3)</code> — three regularizers working together.</p>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Create <code>drop = nn.Dropout(p=0.5)</code> and a fixed input <code>x = torch.ones(1, 10)</code>. With <code>drop.train()</code>, run the dropout twice and print both outputs; then call <code>drop.eval()</code> and run it once more. Set <code>torch.manual_seed(0)</code> first.`,

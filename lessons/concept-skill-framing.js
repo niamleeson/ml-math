@@ -89,14 +89,27 @@
          <li>Crucially it captures <b>any</b> dependence, not just linear correlation — a feature can have zero correlation with $Y$ yet high $I$. That makes it a strict, model-free feasibility test: if $I(X;Y)\\approx 0$ for every candidate feature, no model can do better than the base rate. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p><b>Worked frame: "reduce churn".</b> Suppose 8% of users churn each month, so the base rate is $p=0.08$.</p>
+      `<p><b>Worked frame: "reduce churn".</b> Suppose 8% of users churn each month, so the base rate is $p=0.08$. Two checks decide if this is a real ML task: is the decision worth automating (expected value), and is there signal (mutual information)?</p>
+       <p><b>Check 1 — expected value of acting.</b> The retention team sends a $10 discount ($c=10$); a retained user is worth $b=200$; past tests show the discount works on a would-churner 30% of the time ($P(\\text{action})=0.30$).</p>
        <ul class="steps">
-         <li><b>Decision:</b> the retention team sends a $10 discount to flagged users. So $c=10$. A retained user is worth $b=200$. Past tests show the discount retains a would-churn user 30% of the time, so $P(\\text{action})=0.30$.</li>
-         <li><b>Expected value of acting on a true would-churner:</b> $\\text{value}=0.30\\times 200 - 10 = 60 - 10 = \\$50$. Positive, so acting is worth it — <i>if</i> we can find the would-churners.</li>
-         <li><b>Feasibility:</b> on logged data we compute $I(X;Y)$ for candidate features. "Logins in last 7 days" scores $I=0.12$ nats; "days since signup" scores $0.01$ nats — near zero, so drop it.</li>
-         <li><b>Baseline:</b> always predict "stays" is 92% accurate (since $1-p=0.92$). So accuracy is the wrong metric; with a fixed offer budget we rank by risk and measure precision at the top.</li>
-         <li><b>One-page spec:</b> per-user, binary label "no login for 30 days in the next 60", offline nightly batch, rank by P(churn), metric = precision@budget, baseline = 92% majority, evidence = $I=0.12$ from login activity. Now it is a real ML task.</li>
-       </ul>`,
+         <li>Expected benefit: $P(\\text{action})\\cdot b = 0.30\\times 200 = 60$.</li>
+         <li>Subtract the cost: $\\text{value}=60 - 10 = \\$50$. Positive, so acting is worth it — <i>if</i> we can find the would-churners.</li>
+       </ul>
+       <p><b>Check 2 — is there signal?</b> On logged data we compute $I(X;Y)$ in nats for each candidate feature. Bigger means the feature shares more information with the churn label.</p>
+       <table class="extable">
+         <caption>Mutual information of candidate features with the churn label.</caption>
+         <thead><tr><th>feature $X$</th><th class="num">$I(X;Y)$ (nats)</th><th>verdict</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">logins in last 7 days</td><td class="num">0.12</td><td>keep — real signal</td></tr>
+           <tr><td class="row-h">support tickets (30d)</td><td class="num">0.05</td><td>keep — weak signal</td></tr>
+           <tr><td class="row-h">days since signup</td><td class="num">0.01</td><td>drop — near zero</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>"Logins in last 7 days" at $I=0.12$ nats carries usable signal; "days since signup" at $0.01$ nats is near zero, so drop it.</li>
+         <li><b>Baseline:</b> always predict "stays" is $1-p=0.92$, i.e. 92% accurate. So accuracy is the wrong metric; with a fixed offer budget we rank by risk and measure precision at the top.</li>
+       </ul>
+       <p>The two checks pass, so the one-page spec is: per-user, binary label "no login for 30 days in the next 60", offline nightly batch, rank by P(churn), metric = precision@budget, baseline = 92% majority, evidence = $I=0.12$ from login activity. Now it is a real ML task.</p>`,
     demo: function (host) {
       host.innerHTML = "";
       var s = getComputedStyle(document.documentElement);

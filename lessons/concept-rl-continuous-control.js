@@ -138,18 +138,29 @@
     example:
       `<p><b>A one-dimensional continuous-control toy, by hand.</b> One state, one real action $a\\in[-2,2]$. The true reward is
        $r(a) = -(a-0.5)^2$, so the best action is $a^*=0.5$. We don't know $r$; the critic has learned an approximation
-       $Q_\\phi(a) = -(a-0.5)^2$ (treat it as given). The actor currently outputs $\\mu_\\theta = a_0 = -1.0$.</p>
+       $Q_\\phi(a) = -(a-0.5)^2$ (treat it as given). The actor currently outputs $\\mu_\\theta = a_0 = -1.0$. Apply the
+       deterministic policy gradient $\\nabla_a Q_\\phi = -2(a-0.5)$ with step size $\\eta=0.1$.</p>
        <ul class="steps">
-         <li><b>Critic's action-gradient.</b> $\\nabla_a Q_\\phi(a) = -2(a-0.5)$. At $a_0=-1.0$ this is $-2(-1.5) = +3.0$.
+         <li><b>Critic's action-gradient at $a_0=-1.0$.</b> $\\nabla_a Q_\\phi = -2(-1.0-0.5) = -2(-1.5) = +3.0$.
          Positive &rarr; the critic says "increase the action."</li>
-         <li><b>Push the actor uphill.</b> With a step size $\\eta=0.1$, the deterministic policy gradient moves the action toward
-         $a_0 + \\eta\\cdot 3.0 = -1.0 + 0.3 = -0.7$. The actor's output climbs toward $0.5$.</li>
-         <li><b>Repeat.</b> At $a=-0.7$: gradient $-2(-1.2)=+2.4$ &rarr; next action $-0.46$. Then $-0.27, -0.11, \\dots$ &mdash;
-         each step shrinks the gap to $a^*=0.5$ geometrically. The actor is doing gradient <i>ascent on the critic</i>.</li>
-         <li><b>What entropy (SAC) would add.</b> A SAC policy would not collapse straight to $0.5$; it keeps a spread of actions
-         around it (high $\\mathcal{H}$), so if the real optimum were actually at $0.7$ it would still be sampling there and could
-         discover it &mdash; deterministic DDPG, without added noise, would not.</li>
-       </ul>`,
+         <li><b>Push the actor uphill.</b> $a_1 = a_0 + \\eta\\cdot 3.0 = -1.0 + 0.1\\times 3.0 = -1.0 + 0.3 = -0.7$.</li>
+         <li><b>Repeat at $a_1=-0.7$.</b> Gradient $= -2(-0.7-0.5) = -2(-1.2) = +2.4$, so $a_2 = -0.7 + 0.1\\times 2.4 = -0.46$.</li>
+       </ul>
+       <p>Each step shrinks the gap to $a^*=0.5$ by a factor $0.8$ (since $a-0.5 \\leftarrow (a-0.5)(1 - 2\\eta)$):</p>
+       <table class="extable">
+         <caption>Gradient ascent on the critic: the actor's action climbs toward $a^*=0.5$ ($\\eta=0.1$).</caption>
+         <thead><tr><th>step</th><th class="num">$a$</th><th class="num">$\\nabla_a Q_\\phi = -2(a-0.5)$</th><th class="num">next $a = a + 0.1\\,\\nabla$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0</td><td class="num">-1.00</td><td class="num">+3.00</td><td class="num">-0.70</td></tr>
+           <tr><td class="row-h">1</td><td class="num">-0.70</td><td class="num">+2.40</td><td class="num">-0.46</td></tr>
+           <tr><td class="row-h">2</td><td class="num">-0.46</td><td class="num">+1.92</td><td class="num">-0.27</td></tr>
+           <tr><td class="row-h">3</td><td class="num">-0.27</td><td class="num">+1.54</td><td class="num">-0.11</td></tr>
+           <tr><td class="row-h">4</td><td class="num">-0.11</td><td class="num">+1.23</td><td class="num">+0.01</td></tr>
+         </tbody>
+       </table>
+       <p><b>What entropy (SAC) would add.</b> A SAC policy would not collapse straight to $0.5$; it keeps a spread of actions
+       around it (high $\\mathcal{H}$), so if the real optimum were actually at $0.7$ it would still be sampling there and could
+       discover it &mdash; deterministic DDPG, without added noise, would not.</p>`,
 
     practice: [
       {

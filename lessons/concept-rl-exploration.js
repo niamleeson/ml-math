@@ -194,23 +194,45 @@
        regret of stuck greedy and the larger constant of fixed-&epsilon; greedy.</p>`,
 
     example:
-      `<p>A tiny worked UCB step. Three arms, after $t = 10$ total pulls. Note $\\ln 10 \\approx 2.303$, and take
-       $c = 1$.</p>
+      `<p>A tiny worked UCB step. Three arms, after $t = 10$ total pulls, with $c = 1$ and $\\ln 10 \\approx 2.303$.
+       For each arm we add the bonus $c\\sqrt{\\ln t / N(a)}$ to its estimate $\\hat Q(a)$ to get the optimistic
+       upper bound $U(a)$, then pull the largest $U$.</p>
+       <table class="extable">
+         <caption>UCB at $t=10$, $c=1$: estimate + bonus = upper bound (pull the max).</caption>
+         <thead>
+           <tr><th>arm</th><th class="num">$\\hat Q(a)$</th><th class="num">$N(a)$</th><th class="num">bonus $\\sqrt{2.303/N}$</th><th class="num">$U(a)$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">A</td><td class="num">0.60</td><td class="num">6</td><td class="num">0.62</td><td class="num">1.22</td></tr>
+           <tr><td class="row-h">B</td><td class="num">0.50</td><td class="num">3</td><td class="num">0.88</td><td class="num">1.38</td></tr>
+           <tr><td class="row-h">C</td><td class="num">0.40</td><td class="num">1</td><td class="num">1.52</td><td class="num">1.92 &check;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Current state.</b> Arm A: $\\hat Q = 0.60$, pulled $N = 6$ times. Arm B: $\\hat Q = 0.50$,
-         $N = 3$. Arm C: $\\hat Q = 0.40$, $N = 1$. Greedy would pull A (highest estimate). Watch UCB instead.</li>
          <li><b>Bonus for A:</b> $\\sqrt{2.303 / 6} = \\sqrt{0.384} \\approx 0.62$, so $U_A = 0.60 + 0.62 = 1.22$.</li>
          <li><b>Bonus for B:</b> $\\sqrt{2.303 / 3} = \\sqrt{0.768} \\approx 0.88$, so $U_B = 0.50 + 0.88 = 1.38$.</li>
          <li><b>Bonus for C:</b> $\\sqrt{2.303 / 1} = \\sqrt{2.303} \\approx 1.52$, so $U_C = 0.40 + 1.52 = 1.92$.</li>
          <li><b>Decision.</b> UCB pulls <b>C</b> &mdash; the least-tried arm &mdash; even though its <i>estimate</i>
-         is the lowest, because its uncertainty is the largest. Greedy would never have given C another chance.
-         This is exactly the exploration greedy lacks.</li>
+         is the lowest, because its uncertainty (and so its bonus) is the largest. Greedy reads only the
+         $\\hat Q$ column and pulls A; it would never give C another chance. This is exactly the exploration
+         greedy lacks.</li>
        </ul>
-       <p><b>Tiny regret tally.</b> Suppose the true means are $\\mu_A = 0.7, \\mu_B = 0.5, \\mu_C = 0.3$, so
-       $\\mu^* = 0.7$ (arm A). A greedy agent that wrongly locked onto B pays $\\mu^* - \\mu_B = 0.7 - 0.5 = 0.2$
-       of regret <i>every</i> step; over $T = 1000$ steps that is $200$ &mdash; a straight line. An agent that
-       finds A and stays adds essentially nothing after it settles, so its regret line flattens near a small
-       constant.</p>`,
+       <p><b>Tiny regret tally.</b> Suppose the true means are $\\mu_A = 0.7,\\ \\mu_B = 0.5,\\ \\mu_C = 0.3$, so
+       $\\mu^* = 0.7$ (arm A). Each step adds $\\mu^* - \\mu_{a_t}$ to regret. Over $T = 1000$ steps:</p>
+       <table class="extable">
+         <caption>Cumulative regret $\\text{Regret}_T = \\sum_t (\\mu^* - \\mu_{a_t})$ over $T=1000$ pulls.</caption>
+         <thead>
+           <tr><th>strategy</th><th class="num">arm settled on</th><th class="num">per-step gap $\\mu^*-\\mu_{a_t}$</th><th class="num">regret over $T=1000$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">greedy stuck on B</td><td class="num">B</td><td class="num">$0.7-0.5=0.2$</td><td class="num">$0.2 \\times 1000 = 200$</td></tr>
+           <tr><td class="row-h">greedy stuck on C</td><td class="num">C</td><td class="num">$0.7-0.3=0.4$</td><td class="num">$0.4 \\times 1000 = 400$</td></tr>
+           <tr><td class="row-h">UCB (finds A, settles)</td><td class="num">A</td><td class="num">$0.7-0.7=0$</td><td class="num">$\\approx$ small constant</td></tr>
+         </tbody>
+       </table>
+       <p>A strategy stuck on a wrong arm pays a fixed positive gap <i>every</i> step, so its regret is a straight
+       line ($200$ or $400$ here). UCB finds A and adds essentially nothing after it settles, so its regret line
+       flattens near a small constant.</p>`,
 
     practice: [
       {

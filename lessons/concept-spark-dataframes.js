@@ -155,21 +155,42 @@
        </ul>`,
 
     example:
-      `<p>A tiny three-column table of people, built in memory with an explicit schema.</p>
+      `<p>A tiny three-column table of people, built in memory with an explicit schema
+       (<code>name</code> string, <code>age</code> integer, <code>city</code> string). The query: "names and
+       ages of people over 30, with age in dog-years" &mdash;
+       <code>df.filter(F.col("age") &gt; 30).withColumn("dog_years", F.col("age") * 7).select("name", "age", "dog_years")</code>.</p>
+       <table class="extable">
+         <caption>Input rows (left) and which survive <code>age &gt; 30</code> (right). The pruned <code>city</code> column is greyed by the optimizer.</caption>
+         <thead><tr><th>name</th><th class="num">age</th><th>city</th><th>kept by filter?</th><th class="num">dog_years = age &times; 7</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Ada</td><td class="num">36</td><td>London</td><td>yes</td><td class="num">252</td></tr>
+           <tr><td class="row-h">Linus</td><td class="num">25</td><td>Helsinki</td><td>no</td><td class="num">&mdash;</td></tr>
+           <tr><td class="row-h">Grace</td><td class="num">41</td><td>New York</td><td>yes</td><td class="num">287</td></tr>
+           <tr><td class="row-h">Alan</td><td class="num">29</td><td>London</td><td>no</td><td class="num">&mdash;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li><b>Schema:</b> <code>name</code> (string), <code>age</code> (integer), <code>city</code>
-         (string). Build it with <code>spark.createDataFrame(rows, schema)</code> &mdash; no extra scan,
-         exact types.</li>
-         <li><b>Query:</b> "names and ages of people over 30, with age in dog-years."
-         <code>df.filter(F.col("age") &gt; 30).withColumn("dog_years", F.col("age") * 7).select("name", "age", "dog_years")</code>.
-         At this point <b>nothing has run</b> &mdash; it is just a plan.</li>
-         <li><b>Inspect:</b> <code>df.printSchema()</code> confirms the types; <code>.explain()</code> shows
-         Catalyst pushed the <code>age &gt; 30</code> filter down and pruned <code>city</code> (never read,
-         since the final <code>select</code> does not need it).</li>
-         <li><b>Trigger:</b> <code>result.show()</code> &mdash; <i>this</i> action runs the optimized plan
-         and prints the rows. Had you written <code>print(result)</code> you would have seen only the object
+         <li><b>Build.</b> <code>spark.createDataFrame(rows, schema)</code> &mdash; no extra scan, exact types. At
+         this point, and after the <code>filter</code>/<code>withColumn</code>/<code>select</code> chain,
+         <b>nothing has run</b> &mdash; it is just a lazy plan.</li>
+         <li><b>Apply the filter.</b> Keep rows where <code>age &gt; 30</code>: Ada (36 &gt; 30 &check;) and Grace
+         (41 &gt; 30 &check;) stay; Linus (25) and Alan (29) drop. 4 rows &rarr; 2 rows.</li>
+         <li><b>Compute the column.</b> <code>dog_years = age &times; 7</code>: Ada $\\to 36 \\times 7 = 252$;
+         Grace $\\to 41 \\times 7 = 287$.</li>
+         <li><b>Inspect the plan.</b> <code>.explain()</code> shows Catalyst pushed the <code>age &gt; 30</code>
+         filter down and pruned <code>city</code> (never read, since the final <code>select</code> does not need it).</li>
+         <li><b>Trigger.</b> <code>result.show()</code> &mdash; <i>this</i> action runs the optimized plan and
+         prints the two rows. Had you written <code>print(result)</code> you would have seen only the object
          repr, not the data.</li>
-       </ul>`,
+       </ul>
+       <table class="extable">
+         <caption>What <code>result.show()</code> finally prints.</caption>
+         <thead><tr><th>name</th><th class="num">age</th><th class="num">dog_years</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Ada</td><td class="num">36</td><td class="num">252</td></tr>
+           <tr><td class="row-h">Grace</td><td class="num">41</td><td class="num">287</td></tr>
+         </tbody>
+       </table>`,
 
     practice: [
       {

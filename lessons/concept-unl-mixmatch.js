@@ -104,7 +104,32 @@
          <li>Renormalize (divide each by 0.38): $0.25/0.38\\approx0.658$, $0.09/0.38\\approx0.237$, $0.04/0.38\\approx0.105$.</li>
          <li>So $\\text{Sharpen}(p,0.5)\\approx[0.658,\\,0.237,\\,0.105]$. The top class climbed from 0.50 to 0.66 and the laggards shrank: the guess is now more confident, exactly as intended.</li>
        </ul>
-       <p>Now one MixUp step on the labeled side. Image $x_1$ has one-hot label $[1,0,0]$ and image $x_2$ has guessed label $[0.658,0.237,0.105]$. Draw $\\lambda=0.7$. The blended target is $0.7\\cdot[1,0,0]+0.3\\cdot[0.658,0.237,0.105]=[0.897,\\,0.071,\\,0.032]$, and the blended image is $0.7\\,x_1+0.3\\,x_2$. The network is trained on that mixture, never on either target at full strength.</p>`,
+       <table class="extable">
+         <caption>Sharpening, class by class ($T=0.5$, power $1/T=2$).</caption>
+         <thead><tr><th>class</th><th class="num">$p_c$</th><th class="num">$p_c^{2}$</th><th class="num">$p_c^{2}/0.38$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">0.50</td><td class="num">0.25</td><td class="num">0.658</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.30</td><td class="num">0.09</td><td class="num">0.237</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.20</td><td class="num">0.04</td><td class="num">0.105</td></tr>
+           <tr><td class="row-h">sum</td><td class="num">1.00</td><td class="num">0.38</td><td class="num">1.000</td></tr>
+         </tbody>
+       </table>
+       <p>Now one MixUp step on the labeled side. Image $x_1$ has one-hot label $[1,0,0]$, image $x_2$ has the sharpened guessed label $[0.658,0.237,0.105]$, and we draw $\\lambda=0.7$. The blended target is the same convex combination of the two label vectors, computed entry by entry below; the blended image is $\\tilde{x}=0.7\\,x_1+0.3\\,x_2$.</p>
+       <ul class="steps">
+         <li>Class 1: $0.7\\cdot 1 + 0.3\\cdot 0.658 = 0.700 + 0.197 = 0.897$.</li>
+         <li>Class 2: $0.7\\cdot 0 + 0.3\\cdot 0.237 = 0 + 0.071 = 0.071$.</li>
+         <li>Class 3: $0.7\\cdot 0 + 0.3\\cdot 0.105 = 0 + 0.032 = 0.032$.</li>
+       </ul>
+       <table class="extable">
+         <caption>MixUp of the two targets, $\\lambda=0.7$.</caption>
+         <thead><tr><th>class</th><th class="num">$x_1$ label</th><th class="num">$x_2$ guess</th><th class="num">$0.7\\,x_1+0.3\\,x_2$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">1</td><td class="num">1.000</td><td class="num">0.658</td><td class="num">0.897</td></tr>
+           <tr><td class="row-h">2</td><td class="num">0.000</td><td class="num">0.237</td><td class="num">0.071</td></tr>
+           <tr><td class="row-h">3</td><td class="num">0.000</td><td class="num">0.105</td><td class="num">0.032</td></tr>
+         </tbody>
+       </table>
+       <p>The network is trained on that mixture target $[0.897,\\,0.071,\\,0.032]$, never on either label at full strength.</p>`,
     application:
       `<p>MixMatch and its successors are how you train an image classifier when labels are scarce but raw images are cheap — exactly the situation in medical imaging (a radiologist's time is the bottleneck), industrial defect detection, satellite imagery, and content moderation. On CIFAR-10 the paper reached strong accuracy with only 250 labels by leaning on tens of thousands of unlabeled images.</p>
        <p>The same recipe underpins the modern semi-supervised toolbox (MixMatch, ReMixMatch, FixMatch) that production teams reach for before paying to label more data.</p>`,

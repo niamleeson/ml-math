@@ -113,16 +113,29 @@
        &mdash; the contraction argument is robust &mdash; and in-place often converges in fewer sweeps because good values propagate sooner.</p>`,
 
     example:
-      `<p>A tiny 3-state chain to see one full sweep with real numbers. States $A, B, G$; $G$ is a terminal goal worth $10$.
-       From $A$ you can go right to $B$; from $B$ you can go right to $G$. Step reward $R=-1$, discount $\\gamma=0.9$. Start $V_0 = 0$ everywhere.</p>
+      `<p>A tiny 3-state chain to run the backup with real numbers. States $A, B, G$; $G$ is a terminal goal worth $V(G)=10$ (it keeps that value).
+       From $A$ you can go right to $B$; from $B$ you can go right to $G$. Step reward $R=-1$, discount $\\gamma=0.9$, transitions deterministic so the backup is just $V_{k+1}(s) = -1 + 0.9\\,V_k(\\text{next})$. Start $V_0 = 0$ for $A$ and $B$.</p>
        <ul class="steps">
-         <li><b>Sweep 1.</b> $V_1(B) = -1 + 0.9\\cdot V_0(G) = -1 + 0.9\\cdot 10 = 8$. And $V_1(A) = -1 + 0.9\\cdot V_0(B) = -1 + 0.9\\cdot 0 = -1$.
-         (The good news has reached $B$ but not yet $A$.)</li>
-         <li><b>Sweep 2.</b> $V_2(A) = -1 + 0.9\\cdot V_1(B) = -1 + 0.9\\cdot 8 = 6.2$. Now $A$ knows about the goal too.</li>
-         <li><b>Convergence.</b> $V^*(G)=10,\\ V^*(B)=8,\\ V^*(A)=6.2$; further sweeps no longer change them. The Bellman residual has hit $0$.</li>
-         <li><b>Read off $\\pi^*$.</b> In $A$, 'right' is the only/best action $\\Rightarrow \\pi^*(A)=\\text{right}$; likewise $\\pi^*(B)=\\text{right}$. Head for the goal.</li>
-         <li><b>Contraction check.</b> Between sweeps the max change went $8 \\to 6.2$-ish per state, each bounded by $\\gamma$ times the previous &mdash; the geometric decay the theory promises.</li>
-       </ul>`,
+         <li><b>Sweep 1, state $B$.</b> $V_1(B) = -1 + 0.9\\cdot V_0(G) = -1 + 0.9\\cdot 10 = -1 + 9 = 8$.</li>
+         <li><b>Sweep 1, state $A$.</b> $V_1(A) = -1 + 0.9\\cdot V_0(B) = -1 + 0.9\\cdot 0 = -1$. (Good news reached $B$, not yet $A$.)</li>
+         <li><b>Sweep 2, state $A$.</b> $V_2(A) = -1 + 0.9\\cdot V_1(B) = -1 + 0.9\\cdot 8 = -1 + 7.2 = 6.2$. Now $A$ knows about the goal.</li>
+         <li><b>Sweep 2, state $B$.</b> $V_2(B) = -1 + 0.9\\cdot V_1(G) = -1 + 0.9\\cdot 10 = 8$ (already at its fixed point).</li>
+         <li><b>Convergence.</b> Further sweeps no longer change anything: $V^*(G)=10,\\ V^*(B)=8,\\ V^*(A)=6.2$. The Bellman residual $\\lVert V_{k+1}-V_k\\rVert_\\infty$ has hit $0$.</li>
+         <li><b>Read off $\\pi^*$.</b> In $A$ and $B$, 'right' is the only/best action, so $\\pi^*(A)=\\pi^*(B)=\\text{right}$. Head for the goal.</li>
+       </ul>
+       <table class="extable">
+         <caption>Value per state after each sweep ($G$ fixed at $10$); values stop changing by sweep 2.</caption>
+         <thead>
+           <tr><th>sweep $k$</th><th class="num">$V_k(A)$</th><th class="num">$V_k(B)$</th><th class="num">$V_k(G)$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">$0$ (init)</td><td class="num">$0.0$</td><td class="num">$0.0$</td><td class="num">$10.0$</td></tr>
+           <tr><td class="row-h">$1$</td><td class="num">$-1.0$</td><td class="num">$8.0$</td><td class="num">$10.0$</td></tr>
+           <tr><td class="row-h">$2$</td><td class="num">$6.2$</td><td class="num">$8.0$</td><td class="num">$10.0$</td></tr>
+           <tr><td class="row-h">$3 = V^*$</td><td class="num">$6.2$</td><td class="num">$8.0$</td><td class="num">$10.0$</td></tr>
+         </tbody>
+       </table>
+       <p><b>Contraction check.</b> $A$'s gap to its fixed point $V^*(A)=6.2$ went $6.2 \\to 7.2 \\to 0$ over sweeps $0,1,2$; once both $A$ and $B$ point at settled successors the residual collapses, bounded by $\\gamma=0.9$ times the previous gap each sweep &mdash; the geometric decay the theory promises.</p>`,
 
     practice: [
       {

@@ -58,13 +58,20 @@
          <li>Net effect: $\\mathcal{L}_u$ is a consistency loss whose target is a confidence-filtered hard pseudo-label. One term, three ideas. $\\blacksquare$</li>
        </ul>`,
     example:
-      `<p>One unlabeled image of a cat, 3 classes [cat, dog, bird], threshold $\\tau = 0.95$.</p>
+      `<p>Two unlabeled images, 3 classes [cat, dog, bird], threshold $\\tau = 0.95$. We read the weak-view confidence $\\max(q_b)$, gate on $\\tau$, and only the kept image pays a loss.</p>
+       <table class="extable">
+         <caption>Weak-view prediction $q_b$, keep/drop gate, and resulting loss</caption>
+         <thead><tr><th>image</th><th class="num">cat</th><th class="num">dog</th><th class="num">bird</th><th class="num">$\\max(q_b)$</th><th>$\\ge\\tau$?</th><th>$\\mathbb{1}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">A (confident)</td><td class="num">0.97</td><td class="num">0.02</td><td class="num">0.01</td><td class="num">0.97</td><td>yes</td><td class="num">1</td></tr>
+           <tr><td class="row-h">B (shaky)</td><td class="num">0.55</td><td class="num">0.40</td><td class="num">0.05</td><td class="num">0.55</td><td>no</td><td class="num">0</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Weak view through the model: $q_b = [0.97,\\ 0.02,\\ 0.01]$. Confidence $\\max(q_b) = 0.97$.</li>
-         <li>Is $0.97 \\ge 0.95$? Yes. So $\\mathbb{1}(\\cdot) = 1$: keep this image. Pseudo-label $\\hat{q}_b = \\arg\\max q_b = $ class 0 (cat).</li>
-         <li>Strong view (rotated, sheared, Cutout) through the same model: $p(y \\mid \\text{strong}) = [0.6,\\ 0.3,\\ 0.1]$. The distortion made it less sure.</li>
-         <li>Cross-entropy to the hard pseudo-label (cat): $H = -\\log(0.6) \\approx 0.51$. This loss pushes the strong-view probability for "cat" up toward 1.</li>
-         <li>Now a shaky image: weak view $q_b = [0.55,\\ 0.4,\\ 0.05]$, confidence $0.55$. Is $0.55 \\ge 0.95$? No. $\\mathbb{1}(\\cdot) = 0$, so this image contributes <b>nothing</b> this step. The threshold quietly dropped a guess the model was not sure about.</li>
+         <li>Image A: confidence $0.97 \\ge 0.95$, so $\\mathbb{1}(\\cdot) = 1$ — keep it. Pseudo-label $\\hat{q}_b = \\arg\\max q_b = $ class 0 (cat).</li>
+         <li>Strong view of A (rotated, sheared, Cutout) through the same model: $p(y \\mid \\text{strong}) = [0.6,\\ 0.3,\\ 0.1]$ — the distortion made it less sure.</li>
+         <li>Cross-entropy to the hard pseudo-label (cat): $H = -\\log(0.6) \\approx 0.51$. This loss pushes the strong-view "cat" probability up toward 1.</li>
+         <li>Image B: confidence $0.55 \\lt 0.95$, so $\\mathbb{1}(\\cdot) = 0$ — it contributes <b>nothing</b> this step. The threshold quietly dropped a guess the model was not sure about.</li>
        </ul>
        <p>That is the whole unlabeled step: keep the confident ones, harden their guess, and make the distorted view match.</p>`,
     demo: function (host) {

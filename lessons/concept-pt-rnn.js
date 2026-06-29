@@ -184,13 +184,43 @@ h_n[-1] -> Linear  : (4, 16)`
 <li><b>Tokens in.</b> If your inputs are integer token ids, put an <code>nn.Embedding</code> in front: it maps each id to a learned dense vector, turning <code>(batch, seq_len)</code> of ids into <code>(batch, seq_len, embed_dim)</code> for the recurrent layer.</li>
 <li><b>Variable lengths.</b> Sort or record each sequence's true length, pad the batch to the longest, then wrap with <code>pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)</code> before the module and <code>pad_packed_sequence</code> after. The packed form skips padding so <code>h_n</code> reflects each real end.</li>
 </ul>`,
-    example: `<p>One LSTM over a tiny batch, classifying each sequence:</p>
-<ul>
-<li>Data: <code>x</code> of shape <code>(4, 6, 3)</code> — 4 sequences, 6 steps each, 3 features per step. Built an LSTM with <code>nn.LSTM(input_size=3, hidden_size=8, batch_first=True)</code>.</li>
-<li>Call it: <code>output, (h_n, c_n) = lstm(x)</code>. Now <code>output.shape</code> is <code>(4, 6, 8)</code> (every step) and <code>h_n.shape</code> is <code>(1, 4, 8)</code> (last step only).</li>
-<li>For a label per sequence, take <code>last = h_n[-1]</code> &rarr; shape <code>(4, 8)</code>, then <code>logits = nn.Linear(8, num_classes)(last)</code> &rarr; shape <code>(4, num_classes)</code>.</li>
-<li>Score with <code>nn.CrossEntropyLoss()</code>, which wants <i>raw logits</i> (no softmax) and integer class labels.</li>
-</ul>`,
+    example: `<p>Two concrete things to work through: how a signal decays as the sequence rolls on (the vanishing-memory story), and how the LSTM's shapes flow through a classifier on a tiny <code>(4, 6, 3)</code> batch.</p>
+<p><b>1. Memory decay with real numbers.</b> A plain RNN multiplies its retained signal by a factor every step. With a decay factor $0.7$ a signal of strength $1.0$ arriving at step $0$ retains $0.7^t$ at step $t$; a gated LSTM/GRU with a near-1 forget gate ($0.98$) keeps $0.98^t$. Compute both:</p>
+<ul class="steps">
+<li>Step 2: RNN $= 0.7^2 = 0.49$; LSTM $= 0.98^2 = 0.9604$.</li>
+<li>Step 6: RNN $= 0.7^6 = 0.1176$; LSTM $= 0.98^6 = 0.8858$.</li>
+<li>Step 10: RNN $= 0.7^{10} = 0.0282$; LSTM $= 0.98^{10} = 0.8171$.</li>
+<li>Step 20: RNN $= 0.7^{20} = 0.0008$ (effectively forgotten); LSTM $= 0.98^{20} = 0.6676$ (still remembers).</li>
+</ul>
+<table class="extable">
+<caption>Retained signal strength $0.7^t$ (plain RNN) vs $0.98^t$ (gated cell) as the sequence rolls on.</caption>
+<thead><tr><th>step $t$</th><th class="num">RNN $0.7^t$</th><th class="num">LSTM $0.98^t$</th></tr></thead>
+<tbody>
+<tr><td class="row-h">0</td><td class="num">1.0000</td><td class="num">1.0000</td></tr>
+<tr><td class="row-h">2</td><td class="num">0.4900</td><td class="num">0.9604</td></tr>
+<tr><td class="row-h">6</td><td class="num">0.1176</td><td class="num">0.8858</td></tr>
+<tr><td class="row-h">10</td><td class="num">0.0282</td><td class="num">0.8171</td></tr>
+<tr><td class="row-h">20</td><td class="num">0.0008</td><td class="num">0.6676</td></tr>
+</tbody>
+</table>
+<p><b>2. Shapes through one LSTM.</b> Data <code>x</code> of shape <code>(4, 6, 3)</code> — 4 sequences, 6 steps each, 3 features per step — through <code>nn.LSTM(input_size=3, hidden_size=8, batch_first=True)</code> then a <code>nn.Linear(8, num_classes)</code> head with <code>num_classes = 2</code>:</p>
+<ul class="steps">
+<li>Call <code>output, (h_n, c_n) = lstm(x)</code>: <code>output</code> is <code>(4, 6, 8)</code> — a hidden vector at every one of the 6 steps.</li>
+<li><code>h_n</code> is <code>(1, 4, 8)</code> — last step only, one row per layer (<code>num_layers = 1</code>).</li>
+<li>Take <code>last = h_n[-1]</code> &rarr; <code>(4, 8)</code>, the per-sequence summary vector.</li>
+<li><code>logits = nn.Linear(8, 2)(last)</code> &rarr; <code>(4, 2)</code> raw logits, ready for <code>nn.CrossEntropyLoss()</code> (which wants raw logits, no softmax, and integer class labels).</li>
+</ul>
+<table class="extable">
+<caption>Tensor shapes flowing through the LSTM classifier for a 4-sequence batch.</caption>
+<thead><tr><th>tensor</th><th>shape</th><th>meaning</th></tr></thead>
+<tbody>
+<tr><td class="row-h"><code>x</code></td><td>(4, 6, 3)</td><td>4 seqs &times; 6 steps &times; 3 features</td></tr>
+<tr><td class="row-h"><code>output</code></td><td>(4, 6, 8)</td><td>hidden at every step</td></tr>
+<tr><td class="row-h"><code>h_n</code></td><td>(1, 4, 8)</td><td>last step, per layer</td></tr>
+<tr><td class="row-h"><code>h_n[-1]</code></td><td>(4, 8)</td><td>per-sequence summary</td></tr>
+<tr><td class="row-h"><code>logits</code></td><td>(4, 2)</td><td>one row per sequence</td></tr>
+</tbody>
+</table>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Build <code>rnn = nn.RNN(input_size=3, hidden_size=5, batch_first=True)</code>. Feed it <code>x = torch.randn(2, 4, 3)</code> (2 sequences, 4 steps, 3 features). Call <code>output, h_n = rnn(x)</code>. Predict the shapes of <code>output</code> and <code>h_n</code> before running, then print both.`,

@@ -151,21 +151,38 @@
        cliff-edge path as optimal &mdash; and keeps falling in while it explores.</p>`,
 
     example:
-      `<p>One step in a gridworld. Current $Q(S,A) = 2.0$. The agent takes $A$, gets reward $R = -1$,
-       lands in $S'$ where the action-values are $Q(S',\\,\\text{left}) = 3.0$ and
-       $Q(S',\\,\\text{right}) = 5.0$. Its $\\varepsilon$-greedy roll this step happens to explore and
-       it will take $A' = \\text{left}$. Use $\\alpha = 0.5$, $\\gamma = 1.0$.</p>
+      `<p>One step in a gridworld, fed to BOTH rules so you can see the single-term gap. Current
+       $Q(S,A) = 2.0$. The agent takes $A$, gets reward $R = -1$, lands in $S'$ where the
+       action-values are $Q(S',\\,\\text{left}) = 3.0$ and $Q(S',\\,\\text{right}) = 5.0$. Its
+       $\\varepsilon$-greedy roll this step happens to explore, so it will take $A' = \\text{left}$.
+       Use $\\alpha = 0.5$, $\\gamma = 1.0$.</p>
        <ul class="steps">
-         <li><b>SARSA</b> uses the action it will take, $A' = \\text{left}$, so $Q(S',A') = 3.0$.
-           Target $= -1 + 1.0 \\times 3.0 = 2.0$. Error $= 2.0 - 2.0 = 0.0$. Update:
-           $Q(S,A) \\leftarrow 2.0 + 0.5 \\times 0.0 = 2.0$ (unchanged).</li>
-         <li><b>Q-learning</b> uses the best action, $\\max_{a'} Q(S',a') = 5.0$. Target
-           $= -1 + 1.0 \\times 5.0 = 4.0$. Error $= 4.0 - 2.0 = 2.0$. Update:
-           $Q(S,A) \\leftarrow 2.0 + 0.5 \\times 2.0 = 3.0$.</li>
-         <li>Same step, same data &mdash; Q-learning raises the value (it assumes it will play the
-           good action next); SARSA does not (it accounts for the exploratory move it will really
-           make). That single-term gap is the whole on- vs off-policy distinction.</li>
-       </ul>`,
+         <li><b>SARSA &mdash; bootstrap value.</b> Use the action actually taken, $A' = \\text{left}$:
+           $Q(S',A') = 3.0$.</li>
+         <li><b>SARSA &mdash; target.</b> $R + \\gamma\\, Q(S',A') = -1 + 1.0 \\times 3.0 = 2.0$.</li>
+         <li><b>SARSA &mdash; TD error.</b> $\\delta = 2.0 - Q(S,A) = 2.0 - 2.0 = 0.0$.</li>
+         <li><b>SARSA &mdash; update.</b> $Q(S,A) \\leftarrow 2.0 + 0.5 \\times 0.0 = 2.0$ (unchanged).</li>
+         <li><b>Q-learning &mdash; bootstrap value.</b> Use the best action:
+           $\\max_{a'} Q(S',a') = \\max(3.0, 5.0) = 5.0$.</li>
+         <li><b>Q-learning &mdash; target.</b> $R + \\gamma \\max_{a'} Q(S',a') = -1 + 1.0 \\times 5.0 = 4.0$.</li>
+         <li><b>Q-learning &mdash; TD error.</b> $\\delta = 4.0 - Q(S,A) = 4.0 - 2.0 = 2.0$.</li>
+         <li><b>Q-learning &mdash; update.</b> $Q(S,A) \\leftarrow 2.0 + 0.5 \\times 2.0 = 3.0$.</li>
+       </ul>
+       <table class="extable">
+         <caption>Same step, same data &mdash; the two rules side by side.</caption>
+         <thead>
+           <tr><th>quantity</th><th class="num">SARSA (on-policy)</th><th class="num">Q-learning (off-policy)</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">bootstrap value</td><td class="num">$Q(S',A')=3.0$</td><td class="num">$\\max_{a'}Q(S',a')=5.0$</td></tr>
+           <tr><td class="row-h">target $R+\\gamma\\cdot(\\text{bootstrap})$</td><td class="num">$2.0$</td><td class="num">$4.0$</td></tr>
+           <tr><td class="row-h">TD error $\\delta$</td><td class="num">$0.0$</td><td class="num">$2.0$</td></tr>
+           <tr><td class="row-h">new $Q(S,A)$</td><td class="num">$2.0$</td><td class="num">$3.0$</td></tr>
+         </tbody>
+       </table>
+       <p>Q-learning raises the value (it assumes it will play the good action next); SARSA does not
+       (it accounts for the exploratory move it will really make). That single-term gap &mdash;
+       $Q(S',A')$ vs $\\max_{a'}Q(S',a')$ &mdash; is the whole on- vs off-policy distinction.</p>`,
 
     demo: function (host) {
       // Side-by-side: same S' with two next-action values; show how SARSA's target

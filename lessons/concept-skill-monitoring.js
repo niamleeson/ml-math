@@ -93,14 +93,23 @@
        </ul>`,
 
     example:
-      `<p>One feature, 4 bins. Reference shares (from training): $e=[0.25,0.25,0.25,0.25]$. A recent live window: $a=[0.10,0.20,0.30,0.40]$ — mass has slid toward the high bins.</p>
+      `<p>One feature, 4 bins. Reference shares (from training): $e=[0.25,0.25,0.25,0.25]$. A recent live window: $a=[0.10,0.20,0.30,0.40]$ — mass has slid toward the high bins. Per bin, take $(a_i-e_i)$, then $\\ln(a_i/e_i)$, then their product:</p>
+       <table class="extable">
+         <caption>PSI per-bin ledger: each contribution is $(a_i-e_i)\\ln(a_i/e_i)$.</caption>
+         <thead><tr><th class="num">bin $i$</th><th class="num">$e_i$</th><th class="num">$a_i$</th><th class="num">$a_i-e_i$</th><th class="num">$\\ln(a_i/e_i)$</th><th class="num">contribution</th></tr></thead>
+         <tbody>
+           <tr><td class="num">1</td><td class="num">0.25</td><td class="num">0.10</td><td class="num">-0.15</td><td class="num">-0.916</td><td class="num">0.137</td></tr>
+           <tr><td class="num">2</td><td class="num">0.25</td><td class="num">0.20</td><td class="num">-0.05</td><td class="num">-0.223</td><td class="num">0.011</td></tr>
+           <tr><td class="num">3</td><td class="num">0.25</td><td class="num">0.30</td><td class="num">0.05</td><td class="num">0.182</td><td class="num">0.009</td></tr>
+           <tr><td class="num">4</td><td class="num">0.25</td><td class="num">0.40</td><td class="num">0.15</td><td class="num">0.470</td><td class="num">0.071</td></tr>
+           <tr><td class="row-h">PSI (sum)</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">0.228</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Bin 1: $(0.10-0.25)\\ln(0.10/0.25)=(-0.15)(\\ln 0.4)=(-0.15)(-0.916)=0.137$.</li>
-         <li>Bin 2: $(0.20-0.25)\\ln(0.20/0.25)=(-0.05)(-0.223)=0.011$.</li>
-         <li>Bin 3: $(0.30-0.25)\\ln(0.30/0.25)=(0.05)(0.182)=0.009$.</li>
+         <li>Bin 1: $(0.10-0.25)\\ln(0.10/0.25)=(-0.15)(-0.916)=0.137$.</li>
          <li>Bin 4: $(0.40-0.25)\\ln(0.40/0.25)=(0.15)(0.470)=0.071$.</li>
          <li>PSI $=0.137+0.011+0.009+0.071=0.228$. That is above $0.2$ &mdash; a <b>significant shift</b>, fire the alert.</li>
-         <li>Notice every term is positive even when a bin lost mass: $(a_i-e_i)$ and $\\ln(a_i/e_i)$ always share the same sign, so PSI can never cancel itself out.</li>
+         <li>Notice every contribution is positive even when a bin lost mass: $(a_i-e_i)$ and $\\ln(a_i/e_i)$ always share the same sign, so PSI can never cancel itself out.</li>
        </ul>`,
 
     demo: function (host) {

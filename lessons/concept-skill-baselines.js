@@ -91,11 +91,32 @@
        <p><b>Why baselines bound value and expose leakage.</b> A real model can only be <i>credited</i> with the lift above this floor — the floor is free. And because a no-information predictor <i>cannot</i> exceed $\\max_c p_c$, any baseline that scores far higher than the class balance can plausibly explain is getting information it shouldn't have: a leaked, post-outcome feature. So a "too-good" baseline is a leakage alarm, not a success.</p>`,
 
     example:
-      `<p>Real numbers from the breast-cancer test split below: $n=171$ examples, with $n_0=64$ malignant and $n_1=107$ benign.</p>
+      `<p>Real numbers from the breast-cancer test split: $n=171$ examples, with $n_0=64$ malignant and $n_1=107$ benign. First the class counts, then the no-information rate, then the lift.</p>
+       <table class="extable">
+         <caption>Class balance of the test split ($n=171$).</caption>
+         <thead><tr><th>class $c$</th><th class="num">$n_c$</th><th class="num">$p_c=n_c/n$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">0 (malignant)</td><td class="num">64</td><td class="num">0.374</td></tr>
+           <tr><td class="row-h">1 (benign)</td><td class="num">107</td><td class="num">0.626</td></tr>
+           <tr><td class="row-h">total</td><td class="num">171</td><td class="num">1.000</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li>Class shares: $p_0 = 64/171 = 0.374$, $p_1 = 107/171 = 0.626$.</li>
          <li>No-information rate: $\\text{NIR}=\\max(0.374,\\ 0.626)=0.626$. Always guessing "benign" is right 62.6% of the time.</li>
-         <li>The <b>stratified</b> dummy (guess in proportion to the rates) actually scores <i>worse</i>, $\\approx 0.538$, because random proportional guessing wastes the majority advantage.</li>
+       </ul>
+       <p>Now score three predictors on the <i>same</i> split and read each as lift over that 0.626 floor.</p>
+       <table class="extable">
+         <caption>Each predictor's test accuracy and its lift over the NIR.</caption>
+         <thead><tr><th>predictor</th><th class="num">accuracy $A$</th><th class="num">lift $=A-\\text{NIR}$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">majority dummy (NIR)</td><td class="num">0.626</td><td class="num">0.000</td></tr>
+           <tr><td class="row-h">stratified dummy</td><td class="num">0.538</td><td class="num">&minus;0.088</td></tr>
+           <tr><td class="row-h">logistic regression</td><td class="num">0.959</td><td class="num">+0.333</td></tr>
+         </tbody>
+       </table>
+       <ul class="steps">
+         <li>The <b>stratified</b> dummy (guess in proportion to the rates) scores $0.538$ — <i>below</i> the floor, because random proportional guessing wastes the majority advantage.</li>
          <li>Logistic regression on the scaled features scores $0.959$.</li>
          <li>Lift of logistic regression over the NIR: $0.959 - 0.626 = 0.333$ — a real, large gain. <i>That</i> is the number to report, not the bare 0.959.</li>
        </ul>`,

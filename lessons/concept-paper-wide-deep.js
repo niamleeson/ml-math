@@ -221,6 +221,12 @@ $$ P(Y=1\\mid \\mathbf{x}) = \\sigma\\!\\Big( \\mathbf{w}_{\\text{wide}}^{\\top}
            <tr><td class="row-h">$(u_0,a_2)$</td><td class="num">$0$</td><td class="num">$1$</td><td class="num">$0\\cdot1=0$</td></tr>
          </tbody>
        </table>
+       <ul class="steps">
+         <li>Row $(u_1,a_2)$: indicators $1$ and $1$, so $\\phi = 1\\cdot 1 = 1$ (fires).</li>
+         <li>Row $(u_1,a_1)$: indicators $1$ and $0$, so $\\phi = 1\\cdot 0 = 0$.</li>
+         <li>Row $(u_0,a_2)$: indicators $0$ and $1$, so $\\phi = 0\\cdot 1 = 0$.</li>
+         <li>Column over the three rows $= [1,0,0]$.</li>
+       </ul>
        <p>So $\\phi$ fires (equals 1) only for the exact pair $(u_1,a_2)$ &mdash; a logical AND, giving the
        column $[1,0,0]$. Give the wide part a weight on this feature and it has memorized a rule about that one
        pair, touching no other. The notebook's first cell recomputes these three values and prints $[1,0,0]$.</p>`,

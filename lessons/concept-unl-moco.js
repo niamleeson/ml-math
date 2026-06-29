@@ -82,13 +82,22 @@
        <p><b>MoCo v2.</b> Two cheap changes from SimCLR lift accuracy a lot: replace the single linear projection with a 2-layer MLP (Multi-Layer Perceptron) <b>projection head</b>, and use <b>stronger augmentation</b> (color jitter, Gaussian blur). Same queue, same momentum — just a better head and harder views.</p>`,
 
     example:
-      `<p>Tiny 2-D example with temperature $\\tau = 0.1$ and a queue of just $K = 2$ negatives. Suppose (already L2-normalized) the query and keys give these cosine similarities:</p>
+      `<p>Tiny 2-D example with temperature $\\tau = 0.1$ and a queue of just $K = 2$ negatives. The (already L2-normalized) query and keys give the cosine similarities in the first column; the InfoNCE loss turns them into a softmax over the $K+1=3$ candidates.</p>
+       <table class="extable">
+         <caption>InfoNCE over the positive and 2 queued negatives ($\\tau=0.1$).</caption>
+         <thead><tr><th>candidate</th><th class="num">$q\\cdot k_i$</th><th class="num">$\\div\\,\\tau$</th><th class="num">$\\exp$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">positive $k_+$</td><td class="num">0.9</td><td class="num">9.0</td><td class="num">8103</td></tr>
+           <tr><td class="row-h">negative $k_1$</td><td class="num">0.2</td><td class="num">2.0</td><td class="num">7.39</td></tr>
+           <tr><td class="row-h">negative $k_2$</td><td class="num">0.1</td><td class="num">1.0</td><td class="num">2.72</td></tr>
+           <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">8113</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>Positive: $q\\cdot k_+ = 0.9$.</li>
-         <li>Negative 1: $q\\cdot k_1 = 0.2$. &nbsp; Negative 2: $q\\cdot k_2 = 0.1$.</li>
-         <li>Divide each by $\\tau = 0.1$: scores become $9.0,\\ 2.0,\\ 1.0$.</li>
+         <li>Divide each similarity by $\\tau = 0.1$: scores become $9.0,\\ 2.0,\\ 1.0$.</li>
          <li>Exponentiate: $e^{9.0} \\approx 8103$, $e^{2.0} \\approx 7.39$, $e^{1.0} \\approx 2.72$.</li>
-         <li>Probability of the positive: $\\frac{8103}{8103 + 7.39 + 2.72} = \\frac{8103}{8113} \\approx 0.9988$.</li>
+         <li>Sum the denominator: $8103 + 7.39 + 2.72 \\approx 8113$.</li>
+         <li>Probability of the positive: $\\frac{8103}{8113} \\approx 0.9988$.</li>
          <li>Loss: $-\\log(0.9988) \\approx 0.0012$ — tiny, because the positive already wins easily.</li>
        </ul>
        <p>Now imagine the queue grows to $K = 65535$ negatives, a few of them genuinely confusable with $q$. Those add real mass to the denominator, the positive's probability drops below 1, and the loss has something to teach — which is exactly why MoCo's large queue produces sharper features.</p>`,

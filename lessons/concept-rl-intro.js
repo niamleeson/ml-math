@@ -173,14 +173,26 @@
 
     example:
       `<p>A 3-step episode collects rewards $R_1 = 0$, then $R_2 = 0$, then $R_3 = +10$ (a classic
-       <b>delayed, sparse</b> reward: nothing until the payoff at the end). Use discount $\\gamma = 0.9$.</p>
+       <b>delayed, sparse</b> reward: nothing until the payoff at the end). Use discount $\\gamma = 0.9$, so the
+       discount weights are $\\gamma^0 = 1$, $\\gamma^1 = 0.9$, $\\gamma^2 = 0.81$.</p>
        <ul class="steps">
          <li>Return from the start, $G_0 = \\gamma^0 R_1 + \\gamma^1 R_2 + \\gamma^2 R_3 = 1(0) + 0.9(0) + 0.81(10) = 8.1$.</li>
          <li>Return from step 1, $G_1 = \\gamma^0 R_2 + \\gamma^1 R_3 = 0 + 0.9(10) = 9.0$.</li>
          <li>Return from step 2, $G_2 = \\gamma^0 R_3 = 10$.</li>
-         <li>Sanity check the recursion $G_t = R_{t+1} + \\gamma G_{t+1}$: $G_1 = R_2 + 0.9\\,G_2 = 0 + 0.9(10) = 9$. ✓ And $G_0 = R_1 + 0.9\\,G_1 = 0 + 0.9(9) = 8.1$. ✓</li>
        </ul>
-       <p><b>Credit assignment in action:</b> the only reward came at step 3, yet $G_0 = 8.1$ is positive — the
+       <table class="extable">
+         <caption>Return $G_t$ at each step, two ways: direct discounted sum vs. the recursion $G_t = R_{t+1} + \\gamma G_{t+1}$.</caption>
+         <thead>
+           <tr><th>step $t$</th><th class="num">next reward $R_{t+1}$</th><th class="num">$G_t$ (direct sum)</th><th class="num">$G_t = R_{t+1} + 0.9\\,G_{t+1}$</th></tr>
+         </thead>
+         <tbody>
+           <tr><td class="row-h">2</td><td class="num">$R_3 = 10$</td><td class="num">$10$</td><td class="num">$10 + 0.9(0) = 10$</td></tr>
+           <tr><td class="row-h">1</td><td class="num">$R_2 = 0$</td><td class="num">$9.0$</td><td class="num">$0 + 0.9(10) = 9.0$ &check;</td></tr>
+           <tr><td class="row-h">0</td><td class="num">$R_1 = 0$</td><td class="num">$8.1$</td><td class="num">$0 + 0.9(9.0) = 8.1$ &check;</td></tr>
+         </tbody>
+       </table>
+       <p>The two columns agree, confirming the recursion $G_t = R_{t+1} + \\gamma G_{t+1}$.</p>
+       <p><b>Credit assignment in action:</b> the only reward came at step 3, yet $G_0 = 8.1$ is positive &mdash; the
        discounted return has carried that final $+10$ all the way back to the very first action, telling the
        agent the opening move was worthwhile. That backward flow of late reward to early actions is the heart
        of RL.</p>`,

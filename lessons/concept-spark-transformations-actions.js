@@ -137,19 +137,29 @@
        </ul>`,
 
     example:
-      `<p>Picture a 12-million-row sales table, split into <b>8 input partitions</b>. You run:
-       <code>df.filter(amount &gt; 0).groupBy("region").sum("amount").show()</code>, where about 70% of rows pass
-       the filter and there are 5 distinct regions.</p>
+      `<p>Run <code>df.filter(amount &gt; 0).groupBy("region").sum("amount").show()</code> on a
+       $12{,}000{,}000$-row sales table split into <b>8 input partitions</b>, where $70\\%$ of rows pass the
+       filter and there are 5 distinct regions. Work the task counts and bytes moved.</p>
+       <table class="extable">
+         <caption>Stage ledger: one task per partition, shuffle splits the stages</caption>
+         <thead><tr><th>step</th><th>kind</th><th class="num">tasks</th><th class="num">data moved (MB)</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">Stage 1: filter</td><td>narrow</td><td class="num">8</td><td class="num">0.0</td></tr>
+           <tr><td class="row-h">Exchange (groupBy)</td><td>wide / shuffle</td><td class="num">&mdash;</td><td class="num">201.6</td></tr>
+           <tr><td class="row-h">Stage 2: sum</td><td>wide</td><td class="num">200 (5 non-empty)</td><td class="num">&mdash;</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
          <li><b>Nothing runs</b> while you write <code>filter</code> and <code>groupBy</code> &mdash; they only
          extend the DAG. The <code>show()</code> at the end is the action that fires the job.</li>
-         <li><b>Stage 1 (narrow):</b> the <code>filter</code> is applied inside each partition with no data
-         movement &mdash; <b>8 map tasks</b>, one per input partition, in parallel. About 8.4M rows survive.</li>
-         <li><b>Shuffle (the <code>Exchange</code>):</b> to bring every region's rows together,
-         the surviving rows are repartitioned by <code>region</code> across the network &mdash; roughly
-         <b>200 MB shuffled</b>. This is the stage boundary.</li>
-         <li><b>Stage 2 (wide):</b> Spark's default is 200 shuffle partitions, so up to <b>200 reduce tasks</b>;
-         with only 5 regions, just <b>5 do real work</b> and the rest are empty. Each sums its region's rows.</li>
+         <li><b>Stage 1 (narrow):</b> <b>8 map tasks</b>, one per input partition, in parallel, no data moved.
+         Rows surviving the filter: $12{,}000{,}000 \\times 0.70 = 8{,}400{,}000$.</li>
+         <li><b>Shuffle (the <code>Exchange</code>):</b> the 8.4M survivors are repartitioned by
+         <code>region</code>. At $\\approx 24$ bytes per row, that is $8{,}400{,}000 \\times 24 =
+         201{,}600{,}000$ bytes $= 201.6$ MB over the network. This is the stage boundary.</li>
+         <li><b>Stage 2 (wide):</b> Spark's default is 200 shuffle partitions, so up to <b>200 reduce
+         tasks</b>; with only 5 regions, just <b>5 do real work</b> ($\\tfrac{8{,}400{,}000}{5} \\approx
+         1{,}680{,}000$ rows each) and the other 195 are empty.</li>
          <li><b>Read it back:</b> <code>df.filter(...).groupBy(...).sum(...).explain()</code> prints the plan;
          the line containing <code>Exchange hashpartitioning(region...)</code> is exactly the shuffle &mdash; the
          seam between Stage 1 and Stage 2.</li>

@@ -94,21 +94,32 @@
        </ul>`,
 
     example:
-      `<p>Count events per 1-minute window with a 2-minute watermark. Two events for the
-       <code>10:00&ndash;10:01</code> window:</p>
+      `<p>Count events per 1-minute window with a 2-minute watermark, for the
+       <code>10:00&ndash;10:01</code> window. The rule each batch: $\\text{watermark} = (\\text{max event
+       time seen}) - 2\\text{ min}$, and a window stays open while $\\text{watermark} \\lt \\text{window
+       end}$. The window end here is 10:01.</p>
+       <table class="extable">
+         <caption>Three events; watermark = (max event time seen) &minus; 2 min, window end = 10:01</caption>
+         <thead><tr><th>processing time</th><th>event time</th><th class="num">watermark</th><th>vs end 10:01</th><th>action</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">10:00:30</td><td>10:00:10</td><td class="num">9:58:10</td><td>9:58:10 &lt; 10:01</td><td>open window, count = 1</td></tr>
+           <tr><td class="row-h">10:01:40</td><td>10:00:50</td><td class="num">9:59:40</td><td>9:59:40 &lt; 10:01</td><td>late but accepted, count = 2</td></tr>
+           <tr><td class="row-h">10:03:10</td><td>10:03:00</td><td class="num">10:01:00</td><td>10:01:00 &ge; 10:01</td><td>finalize, emit count = 2, drop state</td></tr>
+         </tbody>
+       </table>
        <ul class="steps">
-         <li>At processing time 10:00:30 an event with <b>event time 10:00:10</b> arrives. Spark opens the
-         <code>10:00&ndash;10:01</code> window with count 1. Watermark so far &asymp; 10:00:10 &minus; 2 min, so the
-         window is still open.</li>
-         <li>At processing time 10:01:40 an event with <b>event time 10:00:50</b> arrives &mdash; <i>late</i> (it
-         happened in the first window but showed up after it ended). Because the watermark
-         (&asymp; 10:01:40 &minus; 2 min = 9:59:40) has not yet passed the window's end (10:01), the window is still
-         alive: Spark bumps its count to 2. Late but accepted.</li>
-         <li>Once the watermark crosses 10:01 (around processing time 10:03), Spark <b>finalizes</b> the window,
-         emits its final count, and drops its state. A straggler arriving after that is ignored &mdash; the
+         <li><b>First event</b> (event time 10:00:10): watermark $= 10{:}00{:}10 - 2\\text{ min} = 9{:}58{:}10$,
+         which is $\\lt 10{:}01$, so the window opens with <b>count = 1</b>.</li>
+         <li><b>Second event</b> (event time 10:00:50) arrives <i>late</i> at processing time 10:01:40, after
+         the window's wall-clock end. Watermark $= 10{:}00{:}50 - 2\\text{ min} = 9{:}58{:}50$; still
+         $\\lt 10{:}01$, so the window is alive &mdash; <b>count bumps to 2</b>. Late but accepted.</li>
+         <li><b>Third event</b> (event time 10:03:00) pushes the max event time to 10:03, so watermark
+         $= 10{:}03{:}00 - 2\\text{ min} = 10{:}01{:}00$, now $\\ge 10{:}01$. Spark <b>finalizes</b> the
+         window, emits its final <b>count = 2</b>, and frees its state.</li>
+         <li><b>After finalize:</b> a straggler for 10:00&ndash;10:01 arriving now is dropped &mdash; the
          deliberate trade for bounded memory.</li>
-         <li>Same query in batch would be <code>df.groupBy(window("event_time","1 minute")).count()</code> &mdash;
-         streaming adds exactly two words: <code>withWatermark(...)</code> and <code>readStream</code>.</li>
+         <li><b>Batch twin:</b> <code>df.groupBy(window("event_time","1 minute")).count()</code> &mdash;
+         streaming adds exactly two pieces: <code>withWatermark(...)</code> and <code>readStream</code>.</li>
        </ul>`,
 
     whenToUse:

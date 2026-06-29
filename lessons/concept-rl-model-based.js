@@ -186,10 +186,20 @@
          <li><b>Planning step 2.</b> Sample the remembered $(s_0,\\text{right})\\to s_1,\\ r=0$. Now
           $\\max_{a'}Q(s_1,a')=0.5$, so $Q(s_0,\\text{right})\\leftarrow 0+0.5[\\,0+0.9\\cdot 0.5-0\\,]=0.225$. The value reached
           $s_0$ too &mdash; again with no real step.</li>
-         <li><b>Punchline.</b> Plain Q-learning ($n=0$) would have needed the agent to physically walk
-          $s_0\\to s_1\\to G$ again to move $Q(s_0,\\cdot)$ off zero. Dyna did it in imagination after a single real step. That is the
-          sample-efficiency win &mdash; quantified in the chart below.</li>
-       </ul>`,
+       </ul>
+       <p>The ledger of every update this single real step triggered, and the $Q$ values it changed:</p>
+       <table class="extable">
+         <caption>One real step + $n=2$ planning steps; $\\alpha=0.5,\\ \\gamma=0.9$.</caption>
+         <thead><tr><th>update</th><th>source</th><th>sampled transition</th><th class="num">target $r+\\gamma\\max Q'$</th><th class="num">new $Q$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">real</td><td>environment</td><td>$(s_0,\\text{right})\\to s_1,\\ r=0$</td><td class="num">$0+0.9(0)=0$</td><td class="num">$Q(s_0,\\text{R})=0$</td></tr>
+           <tr><td class="row-h">plan 1</td><td>model</td><td>$(s_1,\\text{right})\\to G,\\ r=1$</td><td class="num">$1+0.9(0)=1$</td><td class="num">$Q(s_1,\\text{R})=0.5$</td></tr>
+           <tr><td class="row-h">plan 2</td><td>model</td><td>$(s_0,\\text{right})\\to s_1,\\ r=0$</td><td class="num">$0+0.9(0.5)=0.45$</td><td class="num">$Q(s_0,\\text{R})=0.225$</td></tr>
+         </tbody>
+       </table>
+       <p><b>Punchline.</b> Plain Q-learning ($n=0$) would have needed the agent to physically walk
+       $s_0\\to s_1\\to G$ again to move $Q(s_0,\\cdot)$ off zero. Dyna did it in imagination after a single real step. That is the
+       sample-efficiency win &mdash; quantified in the chart below.</p>`,
 
     practice: [
       {

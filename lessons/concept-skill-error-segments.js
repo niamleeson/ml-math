@@ -87,12 +87,23 @@
        </ul>
        <p><b>Fairness, in the same language.</b> The slicing machinery names specific gaps. <b>Demographic parity</b> asks that the <i>positive-prediction rate</i> be equal across groups: $P(\\hat y{=}1\\mid g)$ the same for all $g$. <b>Equalized odds</b> is stricter — it asks the true-positive rate <i>and</i> the false-positive rate to match across groups. Both are just per-segment rates plugged into the same z-test to see whether a measured gap is real. <b>Per-slice confidence intervals</b> ($\\hat p_g \\pm 1.96\\sqrt{\\hat p_g(1-\\hat p_g)/n_g}$) are the visual version: when two slices' intervals overlap heavily, the gap is probably noise.</p>`,
     example:
-      `<p>A breast-cancer classifier scores <b>0.965 accuracy overall</b> — looks done. We slice the test set into three groups by tumor <b>mean radius</b> (small / medium / large tertiles) and recompute <b>recall on the benign class</b> (fraction of true benign cases caught).</p>
+      `<p>A breast-cancer classifier scores <b>0.965 accuracy overall</b> — looks done. We slice the test set into three groups by tumor <b>mean radius</b> (small / medium / large tertiles) and recompute <b>recall on the benign class</b> $a_g$ (fraction of true benign cases caught) inside each.</p>
+       <table class="extable">
+         <caption>Benign recall per mean-radius tertile (always read the count $n_g$).</caption>
+         <thead><tr><th>segment $g$</th><th class="num">benign caught</th><th class="num">$n_g$ benign</th><th class="num">recall $a_g$</th></tr></thead>
+         <tbody>
+           <tr><td class="row-h">small</td><td class="num">55</td><td class="num">55</td><td class="num">1.000</td></tr>
+           <tr><td class="row-h">medium</td><td class="num">74</td><td class="num">76</td><td class="num">0.974</td></tr>
+           <tr><td class="row-h">large</td><td class="num">9</td><td class="num">12</td><td class="num">0.750</td></tr>
+         </tbody>
+       </table>
+       <p>The large slice catches only 9 of 12 — a quarter of benign cases missed. Now test whether that gap is real with the two-proportion z-test, large slice vs. the rest.</p>
        <ul class="steps">
-         <li><b>small</b> tumors: recall $=1.00$ (55 of 55 benign caught).</li>
-         <li><b>medium</b> tumors: recall $=0.974$ (74 of 76).</li>
-         <li><b>large</b> tumors: recall $=0.75$ (9 of 12). The model misses a quarter of the benign cases here.</li>
-         <li><b>Is the large-slice gap real?</b> Compare the large slice ($\\hat p_1=0.75,\\ n_1=12$) to the rest ($\\hat p_2=129/131=0.985,\\ n_2=131$). Pooled $\\hat p=138/143=0.965$. Then $z=\\dfrac{0.985-0.75}{\\sqrt{0.965\\cdot0.035\\,(\\tfrac{1}{12}+\\tfrac{1}{131})}}\\approx 4.2$.</li>
+         <li>Worst slice rate: $\\hat p_1=9/12=0.75$, $n_1=12$.</li>
+         <li>The rest (small + medium): $\\hat p_2=(55+74)/(55+76)=129/131=0.985$, $n_2=131$.</li>
+         <li>Pooled rate: $\\hat p=(9+129)/(12+131)=138/143=0.965$.</li>
+         <li>Standard error: $\\sqrt{0.965\\cdot0.035\\,(\\tfrac{1}{12}+\\tfrac{1}{131})}=\\sqrt{0.033775\\times0.09097}=\\sqrt{0.003073}=0.0554$.</li>
+         <li>$z=\\dfrac{0.985-0.75}{0.0554}=\\dfrac{0.235}{0.0554}\\approx 4.2$.</li>
          <li>$|z|=4.2 > 1.96$, so the gap clears the 5% bar — it is <b>not</b> noise. The 0.965 headline hid a genuinely weak slice on the largest tumors. That is the slice to fix.</li>
        </ul>`,
     demo: function (host) {

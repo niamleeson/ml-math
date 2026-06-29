@@ -130,13 +130,25 @@
 <li><b>device.</b> A tensor lives on the CPU by default. <code>x.to('cuda')</code> (or <code>x.to(device)</code>) copies it to the GPU; <code>x.cpu()</code> brings it back. All tensors in one operation must share a device.</li>
 <li><b>Indexing.</b> Exactly numpy-style: <code>x[0]</code> first row, <code>x[:, 1]</code> second column, <code>x[1:3]</code> a slice, <code>x[x &gt; 0]</code> a boolean mask. Slicing returns a <i>view</i> sharing memory; fancy indexing copies.</li>
 </ul>`,
-    example: `<p>Build a 2-by-3 tensor of zeros, fill its first row, then inspect it:</p>
-<ul>
-<li><code>x = torch.zeros(2, 3)</code> &rarr; two rows, three columns, all <code>0.0</code>, dtype <code>float32</code>.</li>
-<li><code>x[0] = torch.tensor([1.0, 2.0, 3.0])</code> &rarr; first row becomes <code>[1, 2, 3]</code>.</li>
-<li><code>x.shape</code> is <code>torch.Size([2, 3])</code>, <code>x.ndim</code> is <code>2</code>, <code>x.numel()</code> is <code>6</code>, <code>x.dtype</code> is <code>torch.float32</code>, <code>x.device</code> is <code>cpu</code>.</li>
-<li><code>x[0, 2].item()</code> returns the plain Python float <code>3.0</code>.</li>
-</ul>`,
+    example: `<p>Build a 2-by-3 tensor of zeros, fill its first row, then read off every property with real values.</p>
+<ul class="steps">
+<li><code>x = torch.zeros(2, 3)</code> &rarr; two rows, three columns, all <code>0.0</code>:<br><code>[[0, 0, 0], [0, 0, 0]]</code>.</li>
+<li><code>x[0] = torch.tensor([1.0, 2.0, 3.0])</code> &rarr; the grid is now <code>[[1, 2, 3], [0, 0, 0]]</code>.</li>
+<li><code>x[0, 2].item()</code> &rarr; the plain Python float <code>3.0</code> (row 0, column 2).</li>
+</ul>
+<p>The three bookkeeping properties, plus the derived counts, for this exact tensor:</p>
+<table class="extable">
+  <caption>Every property of <code>x</code> after the fill.</caption>
+  <thead><tr><th>property</th><th>value</th><th>how it is computed</th></tr></thead>
+  <tbody>
+    <tr><td class="row-h"><code>x.shape</code></td><td><code>torch.Size([2, 3])</code></td><td>2 rows along axis 0, 3 columns along axis 1</td></tr>
+    <tr><td class="row-h"><code>x.ndim</code></td><td class="num">2</td><td>number of axes = length of the shape</td></tr>
+    <tr><td class="row-h"><code>x.numel()</code></td><td class="num">6</td><td>$2 \\times 3 = 6$ total elements</td></tr>
+    <tr><td class="row-h"><code>x.dtype</code></td><td><code>torch.float32</code></td><td>the default for float data (4 bytes each)</td></tr>
+    <tr><td class="row-h">memory</td><td class="num">24 bytes</td><td>$6 \\text{ elements} \\times 4 \\text{ bytes} = 24$</td></tr>
+    <tr><td class="row-h"><code>x.device</code></td><td><code>cpu</code></td><td>where the numbers physically live</td></tr>
+  </tbody>
+</table>`,
     practice: [
       {
         q: `<b>Type this in Colab.</b> Create three tensors and print each one's <code>.shape</code> and <code>.dtype</code>: (a) a 2&times;3 tensor of zeros in <code>float32</code>; (b) a 1-D tensor holding 0,1,2,3,4 built with <code>torch.arange</code>; (c) a 3&times;3 identity matrix.`,
