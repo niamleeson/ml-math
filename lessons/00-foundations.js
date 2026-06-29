@@ -91,11 +91,12 @@ L({
   bigIdea:
     `<p>A <b>vector</b> is an ordered list of numbers.</p>
      <p>That's it. No magic.</p>
-     <p>One house can be described by numbers: size, bedrooms, age. Put them in a list. That list is a vector.</p>
-     <p>In machine learning, every example (a house, a photo, a user) becomes a vector of numbers. The whole field runs on vectors.</p>`,
+     <p>Think of a nutrition label on a cereal box: calories, sugar, protein, fat. Four numbers, written in a fixed order. That label <i>is</i> a vector — a compact description of one thing made of several measurements.</p>
+     <p>One house can be described the same way: size, bedrooms, age. Put them in a list, in a fixed order. That list is a vector.</p>
+     <p>Why does this matter? A computer can't "look at" a house or a photo. It can only do arithmetic on numbers. So the first job in machine learning is always the same: turn each real thing (a house, a photo, a user) into a vector of numbers. Once everything is a vector, the whole field is just arithmetic on those lists. The whole field runs on vectors.</p>`,
   buildup:
-    `<p>You already know a single number, like $5$. We call that a <b>scalar</b>.</p>
-     <p>A vector stacks several scalars together. We write it standing up (a column):</p>`,
+    `<p>You already know a single number, like $5$ — your shoe size, the temperature, one price. A lone number like that is called a <b>scalar</b> (the plain-English meaning: "just one value, no list").</p>
+     <p>A vector simply stacks several scalars together so they describe one thing as a group. By convention we write the stack standing up (a <b>column</b>), one number per line, so position 1 is on top and position $n$ is at the bottom:</p>`,
   symbols: [
     { sym: "$x$", desc: "the whole vector. Bold or lower-case letters are common." },
     { sym: "$x_i$", desc: "the $i$-th number inside the vector. The little $i$ is the position." },
@@ -292,8 +293,9 @@ L({
   ],
   formula: `$$ x^\\top y = \\sum_{i=1}^{n} x_i\\, y_i \\;\\in\\; \\mathbb{R} $$`,
   whatItDoes:
-    `<p>The $\\sum$ says: walk through every position $i$, multiply $x_i$ by $y_i$, and keep a running total.</p>
-     <p>The answer is a plain number (it lives in $\\mathbb{R}$), not a vector.</p>`,
+    `<p>The $\\sum$ (capital Greek S, short for "sum") says: walk through every position $i$, multiply $x_i$ by $y_i$, and keep a running total. Position 1 times position 1, plus position 2 times position 2, and so on to the end.</p>
+     <p>A grocery analogy: $x$ is how many of each item you buy $[2\\text{ apples}, 3\\text{ breads}]$ and $y$ is the price of each $[\\$1, \\$2]$. The dot product $2\\times1 + 3\\times2 = 8$ is your total bill. "Quantities dotted with prices = total" is the same shape as "features dotted with weights = score".</p>
+     <p>The answer is a plain single number (it lives in $\\mathbb{R}$, the real numbers), not a vector. Two lists go in, one number comes out.</p>`,
   example:
     `<p>First, the recipe as a prediction. Let $x = [1500, 3, 10]$ be a house and $w = [200, 10000, -500]$ be "price weights" (dollars per sq ft, per bedroom, per year of age). The dot product pairs them up:</p>
      <table class="extable">
@@ -392,17 +394,20 @@ L({
      <p>Think of a spreadsheet. Each row is one example. Each column is one feature.</p>
      <p>A whole dataset of 1000 houses, each with 3 numbers, is a $1000 \\times 3$ matrix.</p>`,
   buildup:
-    `<p>One vector describes one thing. But you have many things. Stack their vectors as rows. Now you have a matrix.</p>`,
+    `<p>One vector describes one thing — one house, with its size and bedrooms.</p>
+     <p>But a dataset is <i>many</i> things. So take each house's vector and lay it down as one horizontal <b>row</b>. Put the next house's vector as the row beneath it. Keep going. The result is a grid: every row is one example, every column lines up the same feature across all examples (all the sizes in column 1, all the bedroom counts in column 2). That grid is a matrix — literally a stack of vectors.</p>`,
   symbols: [
     { sym: "$A$", desc: "the matrix. Capital letters are used for matrices." },
-    { sym: "$\\mathbb{R}^{m\\times n}$", desc: "all matrices with $m$ rows and $n$ columns." },
+    { sym: "$\\mathbb{R}^{m\\times n}$", desc: "all matrices with $m$ rows and $n$ columns. 'R' = real numbers; the '$m\\times n$' is the shape." },
     { sym: "$m$", desc: "number of rows (often: number of examples)." },
     { sym: "$n$", desc: "number of columns (often: number of features)." },
     { sym: "$A_{i,j}$", desc: "the number in row $i$, column $j$. Row first, column second." }
   ],
   formula: `$$ A = \\begin{bmatrix} A_{1,1} & \\cdots & A_{1,n} \\\\ \\vdots & \\ddots & \\vdots \\\\ A_{m,1} & \\cdots & A_{m,n} \\end{bmatrix} \\in \\mathbb{R}^{m\\times n} $$`,
   whatItDoes:
-    `<p>$A_{2,3}$ means "go to row 2, column 3, read that number". The dots ($\\cdots$, $\\vdots$, $\\ddots$) just mean "and so on" across, down, and diagonally.</p>`,
+    `<p>To find one number, use two coordinates, always row first then column: $A_{2,3}$ means "go down to row 2, across to column 3, read that number" — exactly like "row 2, seat 3" in a theater.</p>
+     <p>The dots are just shorthand for "and so on": $\\cdots$ means "continue across the row", $\\vdots$ means "continue down the column", and $\\ddots$ means "continue along the diagonal". They let us write a grid of any size without listing every cell.</p>
+     <p>The shape $m\\times n$ is always read "rows by columns". A $3\\times 2$ matrix has 3 rows and 2 columns — never the other way round.</p>`,
   example:
     `<p>Let's build a matrix from three houses, two features each (size, bedrooms). One house per row, one feature per column.</p>
      <table class="extable">
@@ -552,12 +557,12 @@ L({
   tagline: "Apply the same dot product to every row at once.",
   prereqs: ["fnd-dot", "fnd-matrix"],
   bigIdea:
-    `<p>Multiplying a matrix by a vector does one dot product per row.</p>
-     <p>So you can score a whole dataset of examples in a single step.</p>
-     <p>This is why ML code is fast: one matrix multiply replaces a thousand loops.</p>`,
+    `<p>Multiplying a matrix by a vector does one dot product per row — automatically, all at once.</p>
+     <p>Picture a stamp-and-conveyor-belt: the vector $x$ is the stamp (say, your price weights), and each row of the matrix slides under it and gets stamped, producing one number. The matrix has many rows, so you get many numbers — one per row — without writing a loop yourself.</p>
+     <p>So you can score a whole dataset of examples in a single step. This is why ML code is fast: one matrix multiply replaces a thousand hand-written loops, and hardware (GPUs) is built to do exactly this.</p>`,
   buildup:
-    `<p>You learned the dot product turns weights + one example into one prediction.</p>
-     <p>You have many examples stacked in a matrix. Do the dot product against each row. Collect the answers into a new vector.</p>`,
+    `<p>You already learned the dot product: weights + <i>one</i> example $\\to$ one prediction (one number).</p>
+     <p>Now you have <i>many</i> examples stacked as the rows of a matrix. The obvious move: take that same weight vector and dot it against row 1, then against row 2, and so on. Each dot product gives one number. Collect those numbers, in row order, into a new vector. That collected vector is the result $Ax$ — and "do this for every row" is exactly what the single symbol $Ax$ packages up.</p>`,
   symbols: [
     { sym: "$A$", desc: "an $m\\times n$ matrix. Each of its $m$ rows is one example/vector." },
     { sym: "$x$", desc: "a vector with $n$ numbers (e.g. the weights). Length must match the columns of $A$." },
@@ -710,7 +715,8 @@ L({
      <p>The most common one is ordinary straight-line length, from the Pythagorean theorem.</p>
      <p>Norms let us say how <i>far apart</i> two vectors are, and how <i>big</i> a model's weights are. Both matter a lot in ML (Machine Learning).</p>`,
   buildup:
-    `<p>In 2D, the length of an arrow $[a, b]$ is $\\sqrt{a^2+b^2}$ (Pythagoras). Norms generalize that to any number of dimensions.</p>`,
+    `<p>Start with the most familiar "length" you know: the diagonal of a right triangle. In 2D, a vector $[a, b]$ is the arrow from the origin to the point $(a, b)$, and that arrow is the hypotenuse of a right triangle with a horizontal leg $a$ and a vertical leg $b$. The Pythagorean theorem (the leg-squared rule you met in school) gives its length: $\\sqrt{a^2+b^2}$.</p>
+     <p>A <b>norm</b> is just that idea made general. In 3D you add a third perpendicular leg and the same rule gives $\\sqrt{a^2+b^2+c^2}$. In $n$ dimensions — where you can no longer draw the picture — the formula keeps the same shape: square every entry, add, take the square root. The <b>L2 norm</b> ("L-two") is exactly this straight-line length. There are other valid rulers too (L1, L-infinity), which we compare below.</p>`,
   symbols: [
     { sym: "$\\lVert x \\rVert_2$", desc: "the Euclidean (L2) norm: ordinary straight-line length." },
     { sym: "$\\lVert x \\rVert_1$", desc: "the Manhattan (L1) norm: add up the sizes, like walking city blocks." },
@@ -798,9 +804,9 @@ L({
   ],
   formula: `$$ f'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h} $$`,
   whatItDoes:
-    `<p>$f(x+h) - f(x)$ is how much the output changed. Divide by $h$ (how much the input changed) to get rise-over-run: a slope.</p>
-     <p>$\\lim_{h\\to 0}$ means "let the step shrink to nearly nothing", so you get the slope exactly at the point, not an average over a gap.</p>
-     <p>Handy rule: the slope of $x^2$ is $2x$.</p>`,
+    `<p>Read the fraction as "rise over run", the steepness of a hill. The top, $f(x+h) - f(x)$, is the <b>rise</b>: how much the output changed. The bottom, $h$, is the <b>run</b>: how much the input changed. Rise divided by run is a slope — "output change per unit of input change".</p>
+     <p>$\\lim_{h\\to 0}$ ("the limit as $h$ goes to zero") means "let the step $h$ shrink to almost nothing". Why bother? A big $h$ gives the <i>average</i> slope across a wide gap; shrinking it pins down the slope <i>exactly at the one point</i>, the way a car's speedometer reads your speed right now, not your average over the whole trip.</p>
+     <p>Handy rule you can just memorize: the slope of $f(x)=x^2$ is $f'(x)=2x$. (The "Why it's true" section below proves it straight from this limit.)</p>`,
   example:
     `<p>Let $f(x) = x^2$ (a U-shaped bowl). Its derivative is $f'(x) = 2x$. Plug in a few points:</p>
      <table class="extable">
@@ -949,8 +955,9 @@ L({
   ],
   formula: `$$ \\nabla f(x) = \\begin{bmatrix} \\dfrac{\\partial f}{\\partial x_1} \\\\[4pt] \\vdots \\\\[2pt] \\dfrac{\\partial f}{\\partial x_n} \\end{bmatrix} $$`,
   whatItDoes:
-    `<p>Each slot of the gradient is the slope in one direction. Together they form an arrow pointing toward steepest increase.</p>
-     <p>Going downhill (to reduce error) means moving along $-\\nabla f$, the negative gradient.</p>`,
+    `<p>Each slot of the gradient is the slope in one direction — slot 1 is "how steep if I move along input 1", slot 2 is "how steep along input 2", and so on. Bundle those slopes together and they form a single arrow.</p>
+     <p>That arrow has a remarkable property: it points in the direction of <b>steepest increase</b>. Stand on a hillside, look at the gradient arrow, and it points straight up the steepest way to climb. Its <i>length</i> tells you how steep that climb is. (The "Why it's true" section proves this.)</p>
+     <p>In ML we want to go <i>down</i> (reduce error), so we walk the opposite way, along $-\\nabla f$ (the negative gradient — every entry's sign flipped). That single move, repeated, is gradient descent.</p>`,
   example:
     `<p>Let $f(x_1, x_2) = x_1^2 + x_2^2$ (a round bowl). Partials: $\\frac{\\partial f}{\\partial x_1} = 2x_1$, $\\frac{\\partial f}{\\partial x_2} = 2x_2$. Evaluate each one at the point $(3, 4)$:</p>
      <table class="extable">
@@ -1024,8 +1031,9 @@ L({
   ],
   formula: `$$ \\frac{dz}{dx} = \\frac{dz}{dy} \\cdot \\frac{dy}{dx} $$`,
   whatItDoes:
-    `<p>Read it as: "rate of $z$ over $x$ = (rate of $z$ over $y$) times (rate of $y$ over $x$)."</p>
-     <p>The middle term $dy$ "cancels" like a fraction — a good memory trick (it is not literally division, but it behaves that way here).</p>`,
+    `<p>Read it as: "rate of $z$ per $x$ = (rate of $z$ per $y$) times (rate of $y$ per $x$)." You multiply the two step-slopes together.</p>
+     <p>Think gears. If gear A turns 3 times for every 1 turn of the crank, and gear B turns 2 times for every 1 turn of A, then B turns $3\\times2 = 6$ times per crank turn. The amplifications <i>multiply</i> down the chain — they do not add. The chain rule is exactly this for slopes.</p>
+     <p>Memory trick: the middle term $dy$ looks like it "cancels" top-and-bottom, the way $\\frac{a}{b}\\cdot\\frac{b}{c}$ leaves $\\frac{a}{c}$. It is not literally a fraction division, but it behaves that way and helps you remember which pieces to multiply.</p>`,
   example:
     `<p>Let $y = 3x$ and $z = y^2$. So $z$ depends on $x$ through $y$. Find each step's slope, then multiply.</p>
      <table class="extable">
@@ -1198,8 +1206,9 @@ L({
   ],
   formula: `$$ A z = \\lambda z $$`,
   whatItDoes:
-    `<p>Left side: run $z$ through the matrix. Right side: just scale $z$ by the number $\\lambda$.</p>
-     <p>When both sides match, the matrix's effect on $z$ is pure stretching. Same direction in, same direction out.</p>`,
+    `<p>The equation $Az=\\lambda z$ compares two ways of moving $z$. Left side, $Az$: run $z$ through the full matrix (which usually rotates <i>and</i> stretches). Right side, $\\lambda z$: do nothing but resize $z$ — same direction, just multiplied by the single number $\\lambda$.</p>
+     <p>For most directions these two sides disagree (the matrix tilts $z$ to a new angle). For the special eigen-directions they match <i>exactly</i>: the matrix's whole effect on $z$ turns out to be pure stretching. Same direction in, same direction out, only the length changed by the factor $\\lambda$.</p>
+     <p>Reading $\\lambda$: $\\lambda=2$ means twice as long; $\\lambda=0.5$ half as long; $\\lambda=-1$ same length but flipped to point the opposite way; $\\lambda=1$ unchanged.</p>`,
   example:
     `<p>Let $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$. Run two directions through it and compare $Az$ to $z$.</p>
      <table class="extable">

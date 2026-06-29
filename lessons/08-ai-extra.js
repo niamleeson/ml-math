@@ -121,9 +121,10 @@ L({
   tagline: "Drop a rule to make an easier problem. Its cost becomes a heuristic that never lies high.",
   prereqs: ["ai-astar"],
   bigIdea:
-    `<p>A* needs a <b>heuristic</b> $h(s)$: a guess of the remaining cost to the goal. It must never overestimate.</p>
-     <p>Where do we get such a guess? <b>Relax</b> the problem: throw away a constraint to make an easier version.</p>
-     <p>The cost of the easier problem is the heuristic. It is automatically admissible, because removing rules can only make things cheaper.</p>`,
+    `<p>A* (say "A-star") is a way to find the cheapest route to a goal. It works faster if you can give it a <b>hint</b> about how far the goal still is. That hint is the <b>heuristic</b> $h(s)$ — read it as "h of s", a guess of the remaining cost from where you are now (the state $s$) to the goal.</p>
+     <p>The one rule the hint must obey: it may be too low, but it must <b>never be too high</b>. (Why? A hint that exaggerates the distance can scare A* away from the real shortest path.)</p>
+     <p>So where do we get a hint that is guaranteed never to exaggerate? We <b>relax</b> the problem: throw away one of the rules to make an easier version, and solve that. The easy version's cost is the hint.</p>
+     <p>Think of a runner facing a hurdle race versus a flat sprint over the same distance. The flat sprint (rules removed) can only be faster or equal — never slower. So its time is a safe "you'll need at least this long" estimate for the real race.</p>`,
   buildup:
     `<p>Take a maze. The hard rule is "you cannot walk through walls".</p>
      <p>Drop that rule. Now you can fly straight to the goal. The straight-line (or Manhattan) distance is the cost of this relaxed maze.</p>
@@ -275,9 +276,10 @@ L({
      <p>The <b>structured perceptron</b> scores a whole output (a path, a parse, a labeling) and fixes its weights when it picks the wrong one.</p>
      <p>The rule: nudge the true output's features up, and the wrongly predicted output's features down.</p>`,
   buildup:
-    `<p>Describe each output by a feature vector $\\phi$. Its score is $w\\cdot\\phi$: weights dotted with features.</p>
-     <p>The model predicts the highest-scoring output. If that prediction $\\hat y$ differs from the truth $y$, we made a mistake.</p>
-     <p>On a mistake, push the weights so the true output scores higher next time and the wrong one scores lower.</p>`,
+    `<p>Start with the plain-English picture. Imagine a panel of judges scoring whole figure-skating routines, not single jumps. Each routine has a list of ingredients (a spin, a jump, a footwork sequence). Each judge has an opinion about how many points each ingredient is worth. The routine's total score is just: for every ingredient, multiply "how much of it" by "how many points the judges give it", and add those up.</p>
+     <p>Now the same idea in symbols. We describe each candidate output by a <b>feature vector</b> $\\phi$ — read "phi": a list that says how much of each ingredient the output uses (e.g. "uses edge $e_1$ once"). The <b>weights</b> $w$ are the judges' points-per-ingredient. The score of an output is $w\\cdot\\phi$, the <b>dot product</b>: pair up each weight with its feature, multiply, and sum. That single number is how good the model currently thinks that output is.</p>
+     <p>The model predicts the output with the highest score. Call it $\\hat y$ (read "y-hat" — the hat means "the model's guess"). If $\\hat y$ is not the true answer $y$, we made a mistake.</p>
+     <p>The fix is the whole trick: on a mistake, nudge the weights so the <i>true</i> output scores a little higher next time and the <i>wrong</i> one a little lower. Reward the right answer's ingredients, penalize the impostor's. Repeat, and the true output eventually wins.</p>`,
   symbols: [
     { sym: "$y$", desc: "the true (gold) output, e.g. the correct path." },
     { sym: "$\\hat y$", desc: "the predicted output: the one the current weights score highest (the hat means 'predicted')." },
@@ -428,9 +430,10 @@ L({
      <p>Play a full episode to the end. Add up the discounted rewards you actually received: that is the <b>return</b> $u$.</p>
      <p>The Q-value of a state-action pair is estimated as the average return over all episodes where that pair appeared.</p>`,
   buildup:
-    `<p>An episode is one complete run from a start state until the game ends.</p>
-     <p>For each step in the episode, the return $u_t$ is the discounted sum of all rewards from that step onward.</p>
-     <p>To estimate $\\hat Q(s,a)$, collect every $u_t$ that followed taking action $a$ in state $s$, and average them.</p>`,
+    `<p>First, three everyday words. An <b>episode</b> is one complete play-through, from the start until the game ends — like one full round of a board game. A <b>reward</b> is the points you get on a single step (could be negative, like a penalty). The <b>return</b> is your total score for the whole round, added up over all the steps.</p>
+     <p>There is one twist: points you get sooner count for slightly more than points far in the future. We shrink each later reward by a factor $\\gamma$ ("gamma", a number like $0.9$) once per step. This is "discounting" — a bird in the hand. The return from step $t$ onward, written $u_t$ (read "u at time t"), is the discounted sum of every reward from that step to the end.</p>
+     <p>The analogy: you do not know the odds inside a slot machine, so you just pull the lever many times and write down what you actually won each time. The average of those winnings tells you what the machine is worth.</p>
+     <p>That is exactly Monte Carlo. To estimate $\\hat Q(s,a)$ — the worth of taking action $a$ in state $s$ — collect every return $u_t$ that followed doing $a$ in $s$ across many episodes, and average them.</p>`,
   symbols: [
     { sym: "$s, a$", desc: "a state and the action taken in it." },
     { sym: "$u_t$", desc: "the return from step $t$: the discounted total of rewards received from step $t$ to the end of the episode." },
@@ -569,9 +572,10 @@ L({
      <p>It nudges a value toward the reward just seen plus the discounted value of the <i>next</i> state. This is called <b>bootstrapping</b>: using one estimate to improve another.</p>
      <p><b>SARSA</b> is TD applied to Q-values, using the actual quintuple $(s, a, r, s', a')$ the agent experienced.</p>`,
   buildup:
-    `<p>At each step the agent is in state $s$, takes action $a$, gets reward $r$, lands in $s'$, then takes $a'$. That is the name SARSA: $s, a, r, s', a'$.</p>
-     <p>The <b>TD target</b> is $r + \\gamma V(s')$: the reward now plus the discounted estimate of what follows.</p>
-     <p>The <b>TD error</b> is target minus current value: how surprised we are. We step the value a fraction $\\alpha$ toward the target.</p>`,
+    `<p>Here is the everyday version. You are driving home and you keep a running guess of "minutes left". You do not wait until you arrive to learn whether your guess was good. The moment you pass a familiar landmark, you compare: "I thought 20 minutes; this landmark says more like 15." That gap is a little lesson, and you revise your earlier guess right away. That is temporal-difference learning — learn from the very next step, not the end of the trip.</p>
+     <p>Now the pieces. At each step the agent is in a state $s$, takes an action $a$, gets a reward $r$, lands in the next state $s'$ (read "s prime"), then takes the next action $a'$. Line up those five and you spell the method's name: SARSA = $s, a, r, s', a'$.</p>
+     <p>The <b>TD target</b> is $r + \\gamma V(s')$: the reward you just got, plus your current estimate of the value of where you landed (shrunk by the discount $\\gamma$). It is your freshly-updated "minutes left" using the new landmark.</p>
+     <p>The <b>TD error</b> is the target minus your old value $V(s)$ — literally how surprised you were. We move the old value a small fraction $\\alpha$ ("alpha", the learning rate) of the way toward the target, so each surprise teaches a little, not everything at once.</p>`,
   symbols: [
     { sym: "$V(s)$", desc: "the estimated value of state $s$." },
     { sym: "$s'$", desc: "the next state, after taking the action (read 's prime')." },
@@ -714,9 +718,9 @@ L({
      <p>A <b>Nash equilibrium</b> is a choice for each player where no single player can do better by switching alone.</p>
      <p>Players may use <b>mixed strategies</b>: randomizing over moves. The <b>minimax theorem</b> says for two-player zero-sum games, the order of who commits first does not matter.</p>`,
   buildup:
-    `<p>Player A picks a row, player B picks a column. The cell gives the payoff $V(a,b)$ to each.</p>
-     <p>A <b>best response</b> is the move that maximizes your payoff given what the other does.</p>
-     <p>If both players are simultaneously best-responding to each other, no one wants to deviate. That mutual stability is the equilibrium.</p>`,
+    `<p>Picture two people playing rock-paper-scissors: they reveal at the same instant, neither sees the other's choice first. That is a <b>simultaneous</b> game. We write all the outcomes in a grid called a <b>payoff matrix</b>: player A picks a row, player B picks a column, and the cell where they meet lists the payoff $V(a,b)$ to each (a bigger number is better for that player).</p>
+     <p>A <b>best response</b> is simply your smartest move <i>assuming you knew</i> what the other player picked: scan that row or column and choose the entry that pays you the most.</p>
+     <p>A <b>Nash equilibrium</b> is a pair of choices where <i>both</i> players are simultaneously playing a best response to each other. The plain-English test: stand in that cell and ask each player, "knowing what the other did, do you wish you'd chosen differently?" If the answer is no for both, the cell is stable — that mutual "no regrets" is the equilibrium.</p>`,
   symbols: [
     { sym: "$a$", desc: "player A's action (a row of the matrix)." },
     { sym: "$b$", desc: "player B's action (a column of the matrix)." },
@@ -885,9 +889,10 @@ L({
      <p>Done naively, that sum is astronomically large. <b>Variable elimination</b> makes it tractable by pushing sums inward.</p>
      <p>It removes hidden variables one at a time: gather the factors that mention the variable, multiply them, and sum the variable out into a smaller new factor.</p>`,
   buildup:
-    `<p>A <b>factor</b> is a table of non-negative numbers over some variables, e.g. $f_1(A,B)$.</p>
-     <p>To eliminate variable $B$: collect every factor that contains $B$, multiply them together, then sum over all values of $B$.</p>
-     <p>The leftover is a new factor over $B$'s neighbours. $B$ is gone, and the remaining problem is smaller.</p>`,
+    `<p>The cheap trick behind everything here is the one you learned in grade school: $ab + ac = a(b+c)$. The left side does two multiplications and an add; the right side does one of each. Same answer, less work, because we pulled the common $a$ out front. Variable elimination is that same "factor it out" move, applied to giant probability sums.</p>
+     <p>A <b>factor</b> is just a little lookup table of non-negative numbers indexed by some variables — for example $f_1(A,B)$ stores a number for each combination of $A$ and $B$. A Bayes net is a bunch of these small tables that, multiplied together, describe the whole world.</p>
+     <p>To answer a question we must add up over the variables we do not care about. Doing that by writing out the full combined table is the "expand everything" way, and it explodes. Instead we <b>eliminate</b> one unwanted variable $B$ at a time: collect every factor that mentions $B$, multiply just those, then sum over all values of $B$.</p>
+     <p>What is left is one new, smaller table over $B$'s neighbours. $B$ has vanished, the problem shrank, and we never had to build the giant table. Repeat until only the answer remains.</p>`,
   symbols: [
     { sym: "$f(\\cdots)$", desc: "a factor: a table of non-negative numbers indexed by some variables." },
     { sym: "$\\prod$", desc: "multiply the listed factors together, entry by matching entry." },
@@ -1026,9 +1031,10 @@ L({
      <p><b>Gibbs sampling</b> walks through the variables, resampling one at a time from its conditional given all the others. The visited states form samples from the posterior.</p>
      <p><b>Particle filtering</b> tracks a swarm of guesses (particles) over time, reweighting them by how well they match each new observation.</p>`,
   buildup:
-    `<p>To estimate $P(X \\mid \\text{evidence})$, draw many samples consistent with the evidence and count how often each value of $X$ appears.</p>
-     <p>Gibbs sampling fixes the evidence, then repeatedly picks one non-evidence variable and resamples it from $P(\\text{that variable}\\mid\\text{all others})$.</p>
-     <p>Particle filtering keeps a set of weighted particles; each new observation multiplies a particle's weight by how likely that observation was under it.</p>`,
+    `<p>Think of a pollster who cannot survey all 300 million people, so they phone a random few thousand and report the fractions. Sampling replaces an impossible exact calculation with "ask enough random cases and count." Here the "population" is the probability landscape, and a "poll" is a random draw from it.</p>
+     <p>So to estimate $P(X \\mid \\text{evidence})$ — the chance the unknown $X$ takes each value, given what we observed — we draw many samples that respect the evidence and just count how often each value of $X$ shows up. The fractions are the answer.</p>
+     <p><b>Gibbs sampling</b> is one way to produce those samples. It pins the observed values, then walks through the unknown variables one at a time, re-rolling each from its probability <i>given everyone else's current value</i>. One coordinate moves per step; over many steps the visited states behave like draws from the true posterior.</p>
+     <p><b>Particle filtering</b> is the moving-target version, for tracking something over time. It carries a whole swarm of guesses ("particles"). Each new observation multiplies a particle's <b>weight</b> by how well that particle predicted the observation, so guesses that match reality survive and ones that do not fade away.</p>`,
   symbols: [
     { sym: "$X$", desc: "the query variable whose posterior we want." },
     { sym: "$P(X_i \\mid X_{-i})$", desc: "the conditional of one variable given all the others ($X_{-i}$ means 'all variables except $i$')." },
@@ -1181,9 +1187,10 @@ L({
      <p>The blanket is the node's <b>parents</b>, its <b>children</b>, and its <b>children's other parents</b> (co-parents).</p>
      <p>Given the values of its blanket, a node is conditionally independent of every other variable in the network.</p>`,
   buildup:
-    `<p>Parents directly influence the node. Children are directly influenced by it. So both clearly matter.</p>
-     <p>Co-parents matter because of <b>explaining away</b>: once you observe a shared child, the parents become coupled.</p>
-     <p>Put those three groups together and you have shielded the node from everything else.</p>`,
+    `<p>Think of gossip in a town. News about you can reach a stranger only through people connected to you. If you "block" everyone directly linked to you, no rumor can get through. The Markov blanket is exactly that ring of people you need to block.</p>
+     <p>Who is in the ring? <b>Parents</b> (your direct causes) clearly matter — they push on you. <b>Children</b> (things you cause) matter too, because seeing an effect tells you something about its cause; information flows backward up an arrow.</p>
+     <p><b>Co-parents</b> are the surprising one, and they enter through <b>explaining away</b>. Plain example: your lawn is wet (a shared child). It could be rain (you) or the sprinkler (a co-parent). If you learn it rained, the sprinkler becomes less likely — so once you observe the shared child, the two parents become linked even though they had nothing to do with each other before.</p>
+     <p>Put parents, children, and co-parents together and you have fenced the node off completely: nothing outside can tell you anything new.</p>`,
   symbols: [
     { sym: "$X$", desc: "the node of interest." },
     { sym: "$\\text{MB}(X)$", desc: "the Markov blanket of $X$: its parents, children, and co-parents." },
@@ -1349,9 +1356,10 @@ L({
      <p>The <b>forward-backward</b> algorithm runs two passes. The forward pass $\\alpha$ gathers evidence from the start up to step $i$; the backward pass $\\beta$ gathers evidence from the end back to step $i$.</p>
      <p>Multiply them: the smoothed posterior $P(H_i \\mid E)$ is proportional to $\\alpha_i\\,\\beta_i$. This is called <b>smoothing</b>.</p>`,
   buildup:
-    `<p>Let $H_i$ be the hidden state at step $i$ and $E$ the whole sequence of observations $E_1,\\dots,E_T$.</p>
-     <p>The forward message $\\alpha_i$ is the joint probability of the observations up to step $i$ together with $H_i$.</p>
-     <p>The backward message $\\beta_i$ is the probability of the observations <i>after</i> step $i$, given $H_i$.</p>`,
+    `<p>First the picture. A friend texts you a photo of their outfit each day, but never tells you the weather. You want to guess the weather on, say, Tuesday. Monday's and Tuesday's photos help — but so does <i>Wednesday's</i>: if Wednesday was clearly stormy, Tuesday was probably already turning bad. To judge a past moment, clues from both before <i>and</i> after it help. That is the whole idea of smoothing.</p>
+     <p>The setup in symbols: $H_i$ is the <b>hidden</b> state at step $i$ (the unknown weather on day $i$), and $E$ is the whole list of observations $E_1,\\dots,E_T$ (every outfit photo).</p>
+     <p>The <b>forward message</b> $\\alpha_i$ (read "alpha at i") sweeps left to right and gathers everything the photos up to and including day $i$ say about $H_i$.</p>
+     <p>The <b>backward message</b> $\\beta_i$ ("beta at i") sweeps right to left and gathers everything the photos <i>after</i> day $i$ say about $H_i$. Multiply the two and you have used every clue.</p>`,
   symbols: [
     { sym: "$H_i$", desc: "the hidden state at time step $i$." },
     { sym: "$E$", desc: "the full sequence of observations $E_1,\\dots,E_T$ (all the clues)." },
@@ -1481,9 +1489,9 @@ L({
   tagline: "Every document is a blend of hidden topics. Each topic is a favorite set of words.",
   prereqs: ["aix-gibbs-particle", "ai-bayes-net"],
   bigIdea:
-    `<p><b>Latent Dirichlet Allocation (LDA)</b> discovers hidden <b>topics</b> in a collection of documents, with no labels.</p>
-     <p>Each document is a <b>mixture of topics</b>, described by proportions $\\theta$. Each topic is a distribution over words, $\\phi$.</p>
-     <p>To make a word, the model first picks a topic from the document's mix, then picks a word from that topic's vocabulary.</p>`,
+    `<p><b>Latent Dirichlet Allocation (LDA)</b> reads a big pile of documents and figures out, all by itself, what themes ("topics") run through them — nobody hand-labels anything. "Latent" just means hidden: the topics are never written down, LDA infers them from which words appear together.</p>
+     <p>Picture a few colored jugs, each full of its own favorite words: a "Sports" jug brimming with <i>game, team, score</i>, a "Finance" jug with <i>market, stock, bank</i>. Each document is poured from these jugs in some blend — those blend proportions are $\\theta$ ("theta"). Each jug's word mix is $\\phi$ ("phi").</p>
+     <p>To produce one word, the model first picks a jug according to the document's blend, then draws a word from that jug. You only ever see the final mixed cup of words; LDA reverse-engineers which jugs exist and how much of each went into every document.</p>`,
   buildup:
     `<p>Imagine writing a document. First decide its topic blend $\\theta$: maybe $70\\%$ sports, $30\\%$ finance.</p>
      <p>For each word slot, draw a topic $Z_i$ from that blend. Then draw a word $W_i$ from the chosen topic's word distribution $\\phi_{Z_i}$.</p>
@@ -1611,9 +1619,9 @@ L({
      <p>It adds <b>predicates</b> like $P(x,y)$ ("$x$ relates to $y$"), <b>variables</b>, and <b>quantifiers</b> $\\forall$ ("for all") and $\\exists$ ("there exists").</p>
      <p>Reasoning works by <b>unification</b> (find a substitution that makes two atoms identical) and <b>resolution</b> (cancel matching opposite literals to derive new facts).</p>`,
   buildup:
-    `<p>A <b>predicate</b> takes objects and returns true/false: $\\text{Loves}(\\text{alice}, \\text{bob})$.</p>
-     <p>A <b>variable</b> like $x$ stands for any object. A <b>quantifier</b> says how many: $\\forall x$ ("for every $x$") or $\\exists x$ ("for some $x$").</p>
-     <p>To use a general rule on a specific fact, we must line them up. <b>Unification</b> finds the substitution of variables that makes two atoms match.</p>`,
+    `<p>Why bother going beyond simple true/false logic? Because the world is full of objects and patterns. Saying "everyone who is human is mortal" in plain true/false logic would force you to write a separate fact for every single person. First-order logic lets you say it <i>once</i>, with a variable, and apply it to anybody.</p>
+     <p>A <b>predicate</b> is a property or relationship that is true or false about specific objects: $\\text{Loves}(\\text{alice}, \\text{bob})$ asks "does Alice love Bob?". A <b>variable</b> like $x$ is a blank that stands for any object. A <b>quantifier</b> says how widely a statement applies: $\\forall x$ means "for every $x$" and $\\exists x$ means "there exists at least one $x$".</p>
+     <p>To apply a general rule (with a variable) to a concrete fact (with a real name), you must first line them up so they talk about the same thing. <b>Unification</b> is that lining-up step: it finds which substitutions of variables make two statements become identical — pure pattern-matching, like fitting a stencil over a specific spot.</p>`,
   symbols: [
     { sym: "$P(x, y)$", desc: "a predicate applied to terms $x$ and $y$; it is true or false for given objects." },
     { sym: "$\\forall$", desc: "the universal quantifier: 'for all'. $\\forall x\\,P(x)$ means $P$ holds for every object." },

@@ -43,11 +43,15 @@ L({
     `<p>Before you can talk about chance, you must list what <i>could</i> happen.</p>
      <p>The <b>sample space</b> is that complete list of possible outcomes.</p>
      <p>An <b>event</b> is just a chunk of that list — a group of outcomes you care about.</p>
-     <p>Everything in probability is built on these two simple ideas.</p>`,
+     <p>Everything in probability is built on these two simple ideas.</p>
+     <p><b>Analogy: a board of stickers.</b> Picture a board with one sticker for every possible result. That whole board is the sample space. Now draw a circle around some stickers. That circle is an event. Probability is later just "how much of the board did your circle cover?"</p>
+     <p>So this lesson is not about computing anything yet. It is about laying down the board that every later formula will sit on.</p>`,
   buildup:
     `<p>Flip a coin. The only things that can happen are heads or tails.</p>
      <p>Write them down: $\\{H, T\\}$. That full set of possibilities is the sample space.</p>
-     <p>An event is a question you ask about it, like "did we get heads?"</p>`,
+     <p>An event is a question you ask about it, like "did we get heads?"</p>
+     <p>Notice the two words mean different sizes of thing. An <b>outcome</b> is one single sticker — one exact result, like rolling a 4. An <b>event</b> is a circle around one or more stickers — like "rolled an even number", which covers the stickers 2, 4, and 6.</p>
+     <p>Why bother being this careful? Because if your list of possibilities is wrong, every probability you compute later is wrong. You cannot find "favorable out of total" if you don't first know the total.</p>`,
   symbols: [
     { sym: "$\\Omega$", desc: "the sample space: the set of ALL possible outcomes. It is a capital Greek 'omega'." },
     { sym: "$\\{\\,\\}$", desc: "curly braces mean 'a set', i.e. a collection of things listed inside." },
@@ -141,7 +145,9 @@ L({
   buildup:
     `<p>You have a sample space $\\Omega$ and events inside it.</p>
      <p>You want to assign each event a chance. But you cannot assign chances randomly — they have to be consistent.</p>
-     <p>These three rules (axioms) keep them consistent.</p>`,
+     <p>These three rules (axioms) keep them consistent.</p>
+     <p><b>Analogy: slicing a pie.</b> Think of total probability as one whole pie. Each event gets a slice. A slice can be tiny or big, but it can never be a <i>negative</i> amount of pie (rule 1), and all the slices together must make up exactly one whole pie, no more, no less (rule 2). If two slices don't overlap, the pie they cover together is just the two slice sizes added (rule 3).</p>
+     <p>The word "axiom" just means "a rule we agree to start from, without proof". Everything else in probability is then <i>derived</i> from these three.</p>`,
   symbols: [
     { sym: "$P(A)$", desc: "the probability of event $A$: a number from 0 to 1." },
     { sym: "$\\ge$", desc: "'greater than or equal to'. So $P(A) \\ge 0$ means the chance is never negative." },
@@ -318,7 +324,9 @@ L({
   buildup:
     `<p>Normally $A$'s chance is measured against the full sample space $\\Omega$.</p>
      <p>But if you know $B$ happened, $\\Omega$ is no longer the playing field. $B$ is.</p>
-     <p>So you re-measure $A$ inside $B$ only.</p>`,
+     <p>So you re-measure $A$ inside $B$ only.</p>
+     <p><b>Analogy: cropping a photo.</b> Conditioning is like cropping. You start with the whole photo (all of $\\Omega$). Learning "$B$ happened" crops the photo down to just the part where $B$ is true. Then you ask: of this cropped photo, what fraction also shows $A$? That fraction is $P(A \\mid B)$.</p>
+     <p>The cropped photo is smaller than the original — it only has total "weight" $P(B)$, not 1. That is exactly why the formula divides by $P(B)$: to rescale the smaller world back to a fair fraction.</p>`,
   symbols: [
     { sym: "$P(A \\mid B)$", desc: "the probability of $A$ GIVEN that $B$ happened. The bar '$\\mid$' means 'given'." },
     { sym: "$A \\cap B$", desc: "'A intersect B': the event that A AND B both happen. The cap $\\cap$ means 'and'." },
@@ -430,7 +438,9 @@ L({
     `<p>Start with your prior belief $P(A)$.</p>
      <p>Multiply by how well the evidence fits, $P(B \\mid A)$.</p>
      <p>Divide by how likely the evidence was overall, $P(B)$.</p>
-     <p>Out comes your updated belief $P(A \\mid B)$.</p>`,
+     <p>Out comes your updated belief $P(A \\mid B)$.</p>
+     <p><b>Read it as a three-knob recipe.</b> The prior $P(A)$ is where you started before seeing anything. The likelihood $P(B \\mid A)$ is how excited the evidence makes you ("this is just what I'd expect if $A$ were true"). The denominator $P(B)$ is a normalizer that keeps the answer a valid probability. The output is the same belief, now corrected by the evidence.</p>
+     <p><b>Why the prior never goes away.</b> Notice $P(A)$ sits right in the top. If $A$ was rare to begin with ($P(A)$ tiny), the answer is dragged toward small no matter how convincing the evidence looks. That single fact is why a "99% accurate" test for a rare disease still mostly fires false alarms — the worked example below shows it landing at only ~9%.</p>`,
   example:
     `<p>A disease affects 1 in 1000 people. A test is 99% accurate (it catches sick people 99% of the time, and gives a false alarm just 1% of the time for healthy people). You test positive. Are you sick?</p>
      <table class="extable">
@@ -513,7 +523,9 @@ L({
   buildup:
     `<p>Suppose the world splits cleanly into pieces $A_1, A_2, \\dots$ that don't overlap and cover everything. That is called a <b>partition</b>.</p>
      <p>Example: every person is either an adult or a child — two pieces that cover everyone with no overlap.</p>
-     <p>Inside each piece, $B$'s chance is simpler to reason about.</p>`,
+     <p>Inside each piece, $B$'s chance is simpler to reason about.</p>
+     <p><b>Analogy: a weighted average of cases.</b> Imagine asking "what fraction of people in this city are left-handed?" Hard to answer city-wide. But split the city into neighborhoods (the partition), find the left-handed rate in <i>each</i> neighborhood, then blend those rates — giving big neighborhoods more say. That blend is total probability. Each case contributes "how big it is" times "the chance of $B$ inside it".</p>
+     <p>The two requirements — no overlap, and cover everything — are what guarantee you count every person exactly once: nobody double-counted, nobody missed.</p>`,
   symbols: [
     { sym: "$A_i$", desc: "the $i$-th case in the partition (the pieces the world is split into)." },
     { sym: "partition", desc: "a set of non-overlapping cases $A_1, A_2, \\dots$ that together cover all of $\\Omega$." },
@@ -675,7 +687,8 @@ L({
   whatItDoes:
     `<p>The middle test: if the chance of both equals the product of the two chances, the events are independent.</p>
      <p>The right test says the same thing differently: knowing $B$ leaves $A$'s probability unchanged.</p>
-     <p>Warning: independent is NOT the same as disjoint. Disjoint events can't co-occur, so they actually depend on each other a lot.</p>`,
+     <p><b>Why "multiply" is what "tells you nothing" looks like.</b> If $B$ doesn't change $A$'s odds, then $A$ keeps the same fraction inside $B$ as it had overall. Keeping the same fraction of a chunk of size $P(B)$ gives $P(A) \\times P(B)$ — the product. So the product rule isn't a separate fact; it is just "no influence" written in arithmetic.</p>
+     <p><b>Warning: independent is NOT the same as disjoint.</b> This is the single most common mix-up. Disjoint means the two events can never both happen, so $P(A \\cap B) = 0$. That means learning $B$ happened makes $A$ <i>impossible</i> — the strongest dependence there is, the exact opposite of independence. Two events that exclude each other are about as far from independent as you can get.</p>`,
   example:
     `<p>Flip a fair coin twice; outcomes $\\{HH, HT, TH, TT\\}$, each with probability $\\frac{1}{4}$. Let $A$ = "first flip heads" $= \\{HH, HT\\}$, $P(A) = \\frac{1}{2}$. Test the product rule against three partners $B, C, D$.</p>
      <table class="extable">
@@ -834,7 +847,9 @@ L({
   buildup:
     `<p>To arrange $r$ items out of $n$, the first slot has $n$ choices, the next $n-1$, and so on.</p>
      <p>That product is a permutation — order matters (gold, silver, bronze are different).</p>
-     <p>If order does NOT matter (just 'which 3 people', not their ranks), you've over-counted. Divide out the orderings to get a combination.</p>`,
+     <p>If order does NOT matter (just 'which 3 people', not their ranks), you've over-counted. Divide out the orderings to get a combination.</p>
+     <p><b>Analogy: line-ups vs teams.</b> Picking 3 runners and ranking them gold-silver-bronze is a <i>line-up</i> — swapping two of them gives a different result, so order matters (permutation). Picking 3 runners just to form a relay team is a <i>team</i> — swapping two of them is the same team, so order does not matter (combination). The team count is always smaller, because each team hides many possible line-ups.</p>
+     <p>How many line-ups does one team of 3 hide? Exactly $3! = 6$ orderings of those same 3 people. So to go from the permutation count to the combination count, you divide by $r!$ to collapse all those equivalent orderings into one.</p>`,
   symbols: [
     { sym: "$n$", desc: "the total number of items to choose from." },
     { sym: "$r$", desc: "how many you pick." },
@@ -912,7 +927,9 @@ L({
     `<p>Outcomes like "heads" or "defective" are hard to do math with.</p>
      <p>A <b>random variable</b> turns each outcome into a number.</p>
      <p>The <b>PMF</b> (probability mass function) then lists how likely each number is.</p>
-     <p>Now you can add, average, and compute — because everything is numbers.</p>`,
+     <p>Now you can add, average, and compute — because everything is numbers.</p>
+     <p><b>Analogy: a scoreboard.</b> A random variable is a rule that reads an outcome and writes down a number — like a scoreboard that turns "heads, tails, heads" into the score "2 heads". You cannot average the words "heads" and "tails", but you can average the numbers 1 and 0. The random variable is the translator that makes arithmetic possible.</p>
+     <p>The word "variable" is slightly misleading: it is really a <i>function</i> (a fixed rule) from outcomes to numbers. What is random is the outcome you feed in, not the rule.</p>`,
   buildup:
     `<p>Say you flip 3 coins. The outcome is messy: $HTH$, $TTH$, and so on.</p>
      <p>Define a random variable $X$ = "number of heads". Now every outcome becomes 0, 1, 2, or 3.</p>
@@ -999,7 +1016,9 @@ L({
   buildup:
     `<p>A plain average treats every value equally. But some values are more likely than others.</p>
      <p>So weight each value by its probability before adding.</p>
-     <p>Rare big values count less; common values count more. That weighted sum is the expectation.</p>`,
+     <p>Rare big values count less; common values count more. That weighted sum is the expectation.</p>
+     <p><b>Why "weight by probability" really is just the long-run average.</b> Imagine repeating the experiment a million times. A value $x$ would show up about $p_X(x)$ of the time — so in a million trials it appears about $1{,}000{,}000 \\times p_X(x)$ times. Add up all the results and divide by a million, and the million cancels, leaving exactly $\\sum_x x\\,p_X(x)$. So the expectation is not a strange new average — it is the ordinary average you'd actually measure if you ran the experiment forever.</p>
+     <p><b>Analogy: a balance point.</b> Lay the values out on a ruler and stack a weight on each one equal to its probability. The expectation is where the ruler balances — the center of mass. A heavy (likely) value tugs the balance point toward itself; a rare value barely moves it.</p>`,
   symbols: [
     { sym: "$E[X]$", desc: "the expectation (mean) of $X$. 'E' for Expected value." },
     { sym: "$\\mu$", desc: "another name for the mean (Greek 'mu'). $\\mu = E[X]$." },
@@ -1099,7 +1118,9 @@ L({
   buildup:
     `<p>You know the mean $\\mu$ is the center.</p>
      <p>For each value, measure how far it is from $\\mu$. Square that distance (so big gaps count extra and signs don't cancel).</p>
-     <p>Average those squared distances. That average is the variance.</p>`,
+     <p>Average those squared distances. That average is the variance.</p>
+     <p><b>Why square instead of just taking the distance?</b> Two reasons. First, signs: a value 3 above the mean and a value 3 below are both "off by 3", but $+3$ and $-3$ would cancel to 0 if you added them raw. Squaring makes both into $+9$, so they don't cancel. Second, emphasis: squaring punishes a big miss far more than a small one ($10^2 = 100$ but $2^2 = 4$), which matches the intuition that one wild value should count as more than just "a bit more spread".</p>
+     <p><b>Analogy: two archers.</b> Two archers can have the same average hit point (both centered on the bullseye) yet feel totally different — one groups tightly, the other sprays all over. Variance is the number that separates the tight grouper (small variance) from the sprayer (large variance). The mean tells you <i>where</i> the arrows center; the variance tells you <i>how scattered</i> they are.</p>`,
   symbols: [
     { sym: "$\\mu$", desc: "the mean of $X$, i.e. $E[X]$ (Greek 'mu')." },
     { sym: "$\\operatorname{Var}(X)$", desc: "the variance of $X$: the average squared distance from the mean." },
@@ -1276,7 +1297,9 @@ L({
      <p>'How many emails will arrive this hour?'</p>`,
   buildup:
     `<p>For Geometric: to get the first success on trial $k$, you must fail $k-1$ times, then succeed once. Failures multiply, then one success.</p>
-     <p>For Poisson: imagine many tiny independent chances over a window, with $\\lambda$ events expected on average. The formula below pops out.</p>`,
+     <p>For Poisson: imagine many tiny independent chances over a window, with $\\lambda$ events expected on average. The formula below pops out.</p>
+     <p><b>Analogy for Geometric: keep rolling until you win.</b> You roll a die over and over, waiting for the first six. Maybe it comes on roll 1, maybe not until roll 12. The Geometric distribution is the chance the first six lands on exactly roll $k$. Because each roll is independent, a long wait just means a long string of "not a six" before the one success.</p>
+     <p><b>Analogy for Poisson: counting drops in a bucket.</b> Rain falls steadily; you count how many drops land in a cup in one minute. Each tiny instant either gets a drop or not, there are a huge number of instants, and each is very unlikely — but on average $\\lambda$ drops land. Poisson is the distribution of that count. Both distributions are about <i>rare events over a fixed exposure</i>: Geometric asks "how long until the first?", Poisson asks "how many in the window?".</p>`,
   symbols: [
     { sym: "$p$", desc: "the success probability on each trial (Geometric)." },
     { sym: "$k$", desc: "the trial number of the first success (Geometric), or the count of events (Poisson)." },
@@ -1348,7 +1371,9 @@ L({
   buildup:
     `<p>For discrete variables, the PMF (Probability Mass Function) gave the chance of each exact value.</p>
      <p>For continuous variables, we use a <b>density</b> curve $f_X$ instead. Height of the curve is not probability — area is.</p>
-     <p>'Area under a curve' is computed by an integral, written $\\int$. Total area must be 1.</p>`,
+     <p>'Area under a curve' is computed by an integral, written $\\int$. Total area must be 1.</p>
+     <p><b>Analogy: a dartboard ruler.</b> Throw a dart at a ruler marked 0 to 1. What is the chance it lands on <i>exactly</i> 0.5, to infinite precision? Zero — that's one point among infinitely many. But the chance it lands <i>somewhere</i> in $[0.4, 0.6]$ is real (a fifth of the ruler). Probability is the <b>size of the region you ask about</b>, and a single point has size 0. That is why we switch from "chance of a value" to "chance of a range".</p>
+     <p><b>Density is a rate, not a probability.</b> The curve's height $f_X(x)$ can be bigger than 1 — it is "probability per unit length", like a speed (miles per hour) rather than a distance. You only get an actual probability after multiplying by a width (taking an area), just as you only get a distance after multiplying speed by time.</p>`,
   symbols: [
     { sym: "$f_X(x)$", desc: "the PDF (probability density function): the height of the curve at value $x$." },
     { sym: "$\\int$", desc: "an integral: it adds up area under a curve (the smooth version of a sum $\\sum$)." },
@@ -1520,7 +1545,9 @@ L({
   formula: `$$ \\text{Uniform: } f(x) = \\frac{1}{b-a},\\;\\; E[X] = \\frac{a+b}{2} \\qquad \\text{Exponential: } f(x) = \\lambda e^{-\\lambda x},\\;\\; E[X] = \\frac{1}{\\lambda} $$`,
   whatItDoes:
     `<p>Uniform: a flat curve of height $\\frac{1}{b-a}$. Its mean $\\frac{a+b}{2}$ is just the midpoint of the range.</p>
-     <p>Exponential: a curve that decays. Mean wait $\\frac{1}{\\lambda}$ — a faster rate $\\lambda$ means a shorter wait.</p>`,
+     <p>Exponential: a curve that decays. Mean wait $\\frac{1}{\\lambda}$ — a faster rate $\\lambda$ means a shorter wait.</p>
+     <p><b>Why the Uniform height has to be $\\frac{1}{b-a}$.</b> The total area under any density must be 1. A flat slab has area = width × height = $(b-a) \\times h$. Setting that equal to 1 forces $h = \\frac{1}{b-a}$. A wider range means a shorter, flatter slab — the same unit of probability spread thinner.</p>
+     <p><b>Analogy for memoryless: a forgetful bus.</b> The Exponential "forgets" how long you've already waited. A memoryless bus is just as far away after you've stood at the stop for 10 minutes as it was the second you arrived. Your past waiting buys you nothing — the expected remaining wait is always $\\frac{1}{\\lambda}$. (The worked example below shows this in numbers: the chance of 5 more minutes is the same whether you just arrived or already waited 3.)</p>`,
   example:
     `<p>(a) A bus is equally likely to arrive any minute in $[0, 10]$. (b) Calls arrive at rate $\\lambda = \\frac{1}{5}$ per minute (one every 5 minutes on average).</p>
      <table class="extable">
@@ -1671,7 +1698,9 @@ L({
     `<p>The <b>Normal</b> distribution is the classic bell-shaped curve.</p>
      <p>Most values cluster near the middle; extremes are rare on both sides.</p>
      <p>It shows up everywhere: heights, test scores, measurement errors.</p>
-     <p>It is described by just two numbers: the center $\\mu$ and the spread $\\sigma$.</p>`,
+     <p>It is described by just two numbers: the center $\\mu$ and the spread $\\sigma$.</p>
+     <p><b>Analogy: a pile of sand.</b> Picture pouring sand onto a single point. It heaps up tallest right at the center and tapers off smoothly in both directions, never quite reaching zero. That heap is the bell. Move the pour-point and the whole heap slides over (that's changing $\\mu$); pour from higher up and the heap spreads wider and flatter (that's a bigger $\\sigma$). Just two dials — where it's centered and how wide it spreads — fully describe it.</p>
+     <p>Why care so much about one curve? Because of a deep result (the Central Limit Theorem, a few lessons ahead): whenever you add up many small independent random effects, the total is forced toward this exact shape — no matter what the individual effects looked like.</p>`,
   buildup:
     `<p>You know the mean $\\mu$ sets the center and $\\sigma$ sets the spread.</p>
      <p>The Normal curve is tallest at $\\mu$ and falls off symmetrically on each side.</p>
@@ -1775,7 +1804,9 @@ L({
   buildup:
     `<p>One variable had a PMF (Probability Mass Function) $p_X(x)$. Two variables have a joint PMF $p_{X,Y}(x, y)$ — a chance for each pair.</p>
      <p>To get $X$ by itself, you don't care about $Y$. So add up over all values of $Y$.</p>
-     <p>Summing over a variable 'integrates it out' — the answer sits in the margin of the table, hence 'marginal'.</p>`,
+     <p>Summing over a variable 'integrates it out' — the answer sits in the margin of the table, hence 'marginal'.</p>
+     <p><b>Analogy: a spreadsheet with totals in the margins.</b> Lay the joint distribution out as a grid: rows for one variable, columns for the other, and the chance of each combination in the cells. To find the chance of one row-value alone, just add across that row — and you'd naturally write the total in the right-hand <i>margin</i> of the sheet. That margin total is literally where the word "marginal" comes from.</p>
+     <p>Adding across a row doesn't throw probability away; it <b>collapses</b> the table in one direction. The column variable disappears, and all its weight gets folded into the row variable that remains.</p>`,
   symbols: [
     { sym: "$p_{X,Y}(x, y)$", desc: "the joint PMF: the chance that $X = x$ AND $Y = y$ together." },
     { sym: "$p_X(x)$", desc: "the marginal PMF of $X$ alone: the chance $X = x$, ignoring $Y$." },
@@ -1912,7 +1943,9 @@ L({
   formula: `$$ \\operatorname{Cov}(X, Y) = E[XY] - E[X]\\,E[Y] \\qquad \\rho = \\frac{\\operatorname{Cov}(X, Y)}{\\sigma_X\\,\\sigma_Y} \\in [-1, 1] $$`,
   whatItDoes:
     `<p>Covariance: 'mean of the product' minus 'product of the means'. If they move together, this is positive; if oppositely, negative; if unrelated, near 0.</p>
-     <p>Correlation divides covariance by both spreads, giving a unit-free number. $+1$ = perfect straight-line up, $-1$ = perfect straight-line down, $0$ = no linear link.</p>`,
+     <p>Correlation divides covariance by both spreads, giving a unit-free number. $+1$ = perfect straight-line up, $-1$ = perfect straight-line down, $0$ = no linear link.</p>
+     <p><b>Why divide by the spreads?</b> Raw covariance is in mixed units (e.g. "dollar-years") and its size depends on how big the variables happen to be, so the number alone is hard to read. Dividing by both standard deviations strips out the units and the scale, leaving only the <i>direction of agreement</i>. That's why correlation is trapped between $-1$ and $+1$: it measures how well the points line up, and "perfectly lined up" is the most agreement possible.</p>
+     <p><b>Analogy: dancing partners.</b> Positive correlation is two dancers who step the same way at the same time; negative correlation is mirror-image partners (one steps left as the other steps right); zero correlation is two people dancing to different songs. Correlation near $\\pm 1$ means tightly synchronized; near 0 means no shared rhythm — at least, no <i>straight-line</i> rhythm (it can miss curved relationships, which is the big pitfall below).</p>`,
   example:
     `<p>Two variables with $E[X] = 2$, $E[Y] = 3$, $E[XY] = 8$, $\\sigma_X = 1$, $\\sigma_Y = 2$.</p>
      <table class="extable">
@@ -1992,7 +2025,9 @@ L({
     `<p>The expectation gave the overall average of $X$.</p>
      <p><b>Conditional expectation</b> $E[X \\mid Y]$ is the average of $X$ once you know $Y$.</p>
      <p>It is a 'group-by' average: pick a group (a value of $Y$), then average $X$ inside it.</p>
-     <p>A neat law says: averaging those group-averages gets you back the overall average.</p>`,
+     <p>A neat law says: averaging those group-averages gets you back the overall average.</p>
+     <p><b>Analogy: class averages and the school average.</b> A school has several classes. Each class has its own average test score — that's the conditional expectation, "average score given which class". Now blend those class averages, giving each class weight by how many students it has. You land back on the school-wide average. That blending-back is the <b>law of iterated expectations</b>: you can compute a mean in two stages (average each group, then average the groups) and still get the same grand total.</p>
+     <p>Why this matters for ML: a regression model's whole job is to predict $E[Y \\mid X]$ — the average output for each input. Conditional expectation is the formal target of nearly all supervised learning.</p>`,
   buildup:
     `<p>Different groups have different averages. Tall parents tend to have taller kids.</p>
      <p>So $E[\\text{child height} \\mid \\text{tall parents}]$ differs from the overall average.</p>
@@ -2091,7 +2126,9 @@ L({
   buildup:
     `<p>If a positive variable has a small mean, it can't often be huge — there's not enough 'average' to go around. That's Markov.</p>
      <p>If the variance (spread) is small, values can't stray far from the mean very often. That's Chebyshev.</p>
-     <p>Both give upper bounds: 'at most this probability', without assuming any particular curve.</p>`,
+     <p>Both give upper bounds: 'at most this probability', without assuming any particular curve.</p>
+     <p><b>Analogy for Markov: a fixed payroll.</b> Suppose a company's <i>average</i> salary is \\$50k and nobody earns a negative salary. Can half the staff earn \\$500k? No — paying that many people 10× the average would blow the average way past \\$50k. There simply isn't enough total money to make huge values common. Markov turns exactly that bookkeeping into a bound: $P(X \\ge a) \\le \\frac{E[X]}{a}$.</p>
+     <p><b>Why these are weaker but safer.</b> Knowing the full distribution lets you compute the exact tail. These inequalities use far less — just the mean (Markov), or the mean and variance (Chebyshev) — so they can only promise a loose "at most". The payoff is that they hold for <i>any</i> distribution with those numbers, which makes them the safety nets behind machine-learning guarantees.</p>`,
   symbols: [
     { sym: "$X \\ge 0$", desc: "for Markov, $X$ must be nonnegative (no negative values)." },
     { sym: "$a$", desc: "a threshold: we ask how often $X$ reaches at least $a$." },
@@ -2187,7 +2224,9 @@ L({
   whatItDoes:
     `<p>$\\overline{X}$ is the average of your samples so far.</p>
      <p>As the sample count $n$ grows toward infinity, that average converges to the true mean $\\mu$.</p>
-     <p>The gap between your estimate and the truth shrinks the more data you gather.</p>`,
+     <p>The gap between your estimate and the truth shrinks the more data you gather.</p>
+     <p><b>Why the noise cancels.</b> Each sample is the true value $\\mu$ plus some random error. Those errors are independent — some push high, some push low. When you average many of them, the highs and lows partly cancel, so the leftover error of the <i>average</i> is much smaller than the error of any single sample. The example below shows the typical error shrinking like $\\frac{\\sigma}{\\sqrt{n}}$: 100× more data cuts the error 10×.</p>
+     <p><b>Watch out — the gambler's fallacy.</b> "Converges to $\\mu$" does NOT mean outcomes balance out in the short run. A run of 5 tails does not make heads "due" on the next flip; each flip is still 50/50. The average settles down only because new independent samples dilute the old imbalance, not because past results get corrected.</p>`,
   example:
     `<p>Roll a fair die (true mean $\\mu = 3.5$, one-roll std $\\sigma = \\sqrt{35/12} \\approx 1.71$) and track the running average $\\overline{X}$. The typical distance of $\\overline{X}$ from $3.5$ shrinks like $\\frac{\\sigma}{\\sqrt{n}}$.</p>
      <table class="extable">
@@ -2275,7 +2314,9 @@ L({
   whatItDoes:
     `<p>For a large sample size $n$, the sample average $\\overline{X}$ follows a Normal distribution.</p>
      <p>It is centered at the true mean $\\mu$, just like the Law of Large Numbers said.</p>
-     <p>Its variance is $\\frac{\\sigma^2}{n}$: more samples means a tighter, narrower bell around $\\mu$.</p>`,
+     <p>Its variance is $\\frac{\\sigma^2}{n}$: more samples means a tighter, narrower bell around $\\mu$.</p>
+     <p><b>Analogy: a tug-of-war.</b> Adding up many small independent random pieces is like a tug-of-war where each sample tugs the total a little up or down. For the total to end up far out, almost every tug would have to pull the same way — wildly unlikely, so extremes are rare (the thin tails). Middling totals can happen a huge number of ways (some up, some down, mostly cancelling), so the middle is fat. Fat middle, thin symmetric tails — that silhouette is the bell.</p>
+     <p><b>The punchline that surprises everyone:</b> this happens no matter what each individual sample looked like — flat, skewed, lumpy. One die roll is perfectly flat, yet the average of 30 rolls is a clean bell. The individual shapes wash out; only $\\mu$ and $\\sigma$ survive. That is why the Normal shows up everywhere in nature and in measurement error.</p>`,
   example:
     `<p>Roll a die. One roll is Uniform (flat, not bell-shaped) with $\\mu = 3.5$ and $\\sigma^2 \\approx 2.92$. Now average $n = 30$ rolls.</p>
      <table class="extable">
@@ -2354,7 +2395,9 @@ L({
   buildup:
     `<p>Call the true hidden number $\\theta$ (could be a mean, a rate, anything). Your guess from data is $\\hat\\theta$, said 'theta-hat'.</p>
      <p>The <b>bias</b> is how far off your guess is on average: $E[\\hat\\theta] - \\theta$. Zero bias is ideal.</p>
-     <p>The sample mean estimates the true mean. The sample variance estimates the true variance — but it needs a sneaky fix.</p>`,
+     <p>The sample mean estimates the true mean. The sample variance estimates the true variance — but it needs a sneaky fix.</p>
+     <p><b>Analogy: a bathroom scale.</b> A good estimator is like a scale that, over many weigh-ins, averages out to your true weight even though any single reading wobbles. That's <b>unbiased</b>: the wobble is random, not a systematic lean. A scale that always reads 2 lbs heavy is <b>biased</b> — more data won't fix it, because every reading is shifted the same wrong way.</p>
+     <p><b>Why the variance needs the $n-1$ fix.</b> When you measure spread, you measure it around the sample's <i>own</i> average $\\overline{X}$ — but $\\overline{X}$ was computed from the very same data, so it hugs those points more snugly than the true mean would. That makes the spread look a little too small. Dividing by the smaller $n-1$ instead of $n$ nudges the estimate back up by exactly the right amount, removing that built-in bias.</p>`,
   symbols: [
     { sym: "$\\theta$", desc: "the true, unknown parameter (Greek 'theta'). What we want to know." },
     { sym: "$\\hat\\theta$", desc: "the estimator: our data-based guess of $\\theta$. The 'hat' means 'estimate of'." },

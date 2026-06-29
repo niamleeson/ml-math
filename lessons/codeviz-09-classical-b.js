@@ -409,6 +409,16 @@ window.CODEVIZ["cls-bandits"] = {
       values: [1998, 1, 1],
       colors: ["#ff7b72", "#9aa7b4", "#9aa7b4"],
       interpret: "Illustrative of a real failure mode: a pure-greedy rule (no exploration bonus) got a lucky early click on the worst ad, decided it was the winner, and poured <b>nearly all 2000 impressions into it</b> (red) while the genuinely best ad got pulled once and never revisited. Recognise this pattern by the single dominant bar sitting on a <i>weak</i> arm and near-zero traffic everywhere else — it is why greedy's regret line above is a steep straight line. The fix is the UCB bonus (or epsilon-greedy / Thompson sampling), which forces under-tried arms to be sampled before being written off."
+    },
+    {
+      type: "line",
+      title: "Why the bonus shrinks: exploration term sqrt(2 ln t / n) vs pulls (at t = 1000)",
+      xlabel: "times this arm has been pulled, n",
+      ylabel: "exploration bonus added to the average",
+      series: [
+        { name: "bonus = sqrt(2 ln 1000 / n)", color: "#ffb454", points: [[1,3.717],[2,2.628],[5,1.662],[10,1.175],[20,0.831],[40,0.588],[80,0.416],[160,0.294],[320,0.208],[640,0.147],[1000,0.118]] }
+      ],
+      interpret: "X is how many times one arm has been pulled; Y is the optimism bonus UCB adds on top of that arm's measured average (real values of sqrt(2 ln t / n) at round t = 1000). The first pull earns a huge bonus (about 3.7) — UCB is shouting 'we barely know this arm, try it!' — but the curve plunges as pulls accumulate, reaching about 0.1 after 1000 pulls. That decay is the engine of UCB: under-tried arms get a big benefit-of-the-doubt that forces exploration, and well-tried arms fall back to being judged on their average alone (pure exploitation)."
     }
   ],
   caption: "Three ad creatives with click-through rates 6% / 10% / 16%. UCB1 finds that the carousel (Ad C) wins and routes most traffic there, finishing with 254 clicks vs 212 for blind random rotation. Read the regret curve to judge any bandit: flattening means it learned; a straight line means it is stuck.",

@@ -99,8 +99,9 @@ L({
   prereqs: ["dl-attention", "dl-word-embeddings"],
   bigIdea:
     `<p>A <b>Transformer</b> reads a whole sentence at once. It does not crawl word by word.</p>
-     <p>The trick is <b>self-attention</b>. Every word builds three small vectors: a <i>query</i> (what am I looking for?), a <i>key</i> (what do I offer?), and a <i>value</i> (what I carry).</p>
-     <p>Each word compares its query to every key, decides who to listen to, and pulls in a weighted blend of their values. That blend becomes its new, context-aware meaning.</p>`,
+     <p><b>An everyday analogy.</b> Picture a room full of people, each holding a little sign. Your sign says what you are looking for (a <i>query</i>). Everyone else's sign says what they can offer (a <i>key</i>), and each person also carries a note of useful information (a <i>value</i>). You glance around, see whose offer best matches your need, and copy down a blend of their notes, paying most attention to the closest match. Self-attention is exactly this, done by every word at the same time.</p>
+     <p>The trick is <b>self-attention</b>. Every word builds three small vectors: a <i>query</i> (what am I looking for?), a <i>key</i> (what do I offer?), and a <i>value</i> (what I carry). A "vector" here just means a short list of numbers the model learns.</p>
+     <p>Each word compares its query to every key, decides who to listen to, and pulls in a weighted blend of their values. That blend becomes its new, context-aware meaning. So after one attention step, the word "it" can quietly absorb meaning from the noun it refers to, even if that noun is far away.</p>`,
   buildup:
     `<p>You already know attention: turn scores into weights with a softmax, then take a weighted sum. Self-attention is the same idea, but a word attends to its own sentence.</p>
      <p>The scores come from a dot product of queries and keys. We divide by $\\sqrt{d}$ so the numbers do not get huge when the vectors are long.</p>`,
@@ -238,8 +239,9 @@ L({
   prereqs: ["mod-transformer"],
   bigIdea:
     `<p>One attention pattern can only focus on one kind of relationship at a time.</p>
+     <p><b>An everyday analogy.</b> Imagine reading a contract with a team instead of alone. One person watches the grammar, another tracks who "they" and "it" refer to, another flags the numbers and dates. Each teammate reads the same page but looks for a different thing, then you pool their notes. A <i>head</i> is one such teammate; multi-head attention is the whole team reading in parallel.</p>
      <p><b>Multi-head attention</b> runs several attentions side by side. Each <i>head</i> has its own query, key, and value vectors, so each learns to focus on something different.</p>
-     <p>One head might track grammar, another might link a pronoun to its noun, another might watch the verb. You then glue the heads' outputs together.</p>`,
+     <p>One head might track grammar, another might link a pronoun to its noun, another might watch the verb. You then glue the heads' outputs together so the word ends up carrying all of those views at once.</p>`,
   buildup:
     `<p>We split the model's vector into $h$ smaller pieces, one per head. Each piece runs the same scaled-dot-product attention from the last lesson.</p>
      <p>Each head returns its own little output vector. We line them up side by side (concatenate), then mix them with one more weight matrix.</p>`,
@@ -370,8 +372,9 @@ L({
   prereqs: ["mod-transformer", "prob-normal"],
   bigIdea:
     `<p>A <b>large language model</b> (LLM) is a giant Transformer trained on a simple game: guess the next word.</p>
-     <p>Two famous styles. <b>GPT</b> reads left to right and predicts the <i>next</i> token. <b>BERT</b> sees the whole sentence and predicts <i>masked</i> (hidden) tokens.</p>
-     <p>This is <b>pretraining</b>: cheap because the text is its own answer key. Afterward you <b>fine-tune</b> the model on a smaller, specific task.</p>`,
+     <p><b>An everyday analogy.</b> It is the autocomplete on your phone, scaled up enormously. Show it "The cat sat on the ___" and it ranks every word it knows by how likely it comes next. Play that guessing game across billions of sentences and, to get good at it, the model is forced to pick up grammar, facts, and even bits of reasoning along the way. A <i>token</i> is just the model's unit of text — usually a word or a word-piece.</p>
+     <p>Two famous styles. <b>GPT</b> reads left to right and predicts the <i>next</i> token (good for writing). <b>BERT</b> sees the whole sentence and predicts <i>masked</i> (hidden) tokens, like a fill-in-the-blank quiz (good for understanding).</p>
+     <p>This is <b>pretraining</b>: cheap because the text is its own answer key — no human has to label anything, the next word is already there. Afterward you <b>fine-tune</b> the model on a smaller, specific task.</p>`,
   buildup:
     `<p>The model turns its final token vector into one raw score (a <i>logit</i>) for every word in its vocabulary.</p>
      <p>A softmax turns those scores into probabilities that sum to 1. The biggest probability is the model's top guess for the next word.</p>`,
@@ -519,8 +522,9 @@ L({
   prereqs: ["dl-backprop", "dl-neuron"],
   bigIdea:
     `<p>An <b>autoencoder</b> is a network that tries to copy its input to its output. But there is a catch in the middle.</p>
+     <p><b>An everyday analogy.</b> Imagine describing a photo to a friend over the phone in just five words, and then asking them to redraw it from those five words. You are forced to drop the unimportant details and keep the gist ("sunset, beach, two people, palm tree, orange sky"). The five words are the <b>code</b>; your friend redrawing is the <b>decoder</b>. The tighter the word limit, the more ruthlessly you must summarize.</p>
      <p>The <b>encoder</b> squeezes the input down to a few numbers, called the <b>code</b> or <b>bottleneck</b>. The <b>decoder</b> expands those few numbers back to a full reconstruction.</p>
-     <p>Because the bottleneck is small, the network cannot just copy everything. It must keep only the important structure. That compressed code is a learned summary of the data.</p>`,
+     <p>Because the bottleneck is small, the network cannot just copy everything. It must keep only the important structure. That compressed code is a learned summary of the data — and crucially, it learns it with no labels at all, just by trying to rebuild the input.</p>`,
   buildup:
     `<p>The training signal is simple: make the output look like the input. We measure the gap with a <b>reconstruction loss</b>, usually mean squared error.</p>
      <p>No labels are needed. The input is its own target. So autoencoders learn from raw, unlabeled data.</p>`,
@@ -683,8 +687,9 @@ L({
   prereqs: ["mod-autoencoder", "prob-normal"],
   bigIdea:
     `<p>A plain autoencoder maps each input to one point in the code space. Gaps between points decode to garbage, so you cannot generate new samples.</p>
-     <p>A <b>variational autoencoder</b> fixes this. The encoder outputs a small <i>distribution</i> for each input: a mean $\\mu$ and a spread $\\sigma$.</p>
-     <p>We sample a code from that distribution, then decode it. Training packs all the distributions near a standard bell curve, so the whole space is smooth. To generate, just sample a random code and decode.</p>`,
+     <p><b>An everyday analogy.</b> A plain autoencoder is like memorizing the exact GPS pin of every house you have visited. Ask for a spot you never pinned and you get nonsense. A <b>variational autoencoder</b> instead remembers each house as a fuzzy circle ("somewhere around here"), and it nudges all those circles to overlap into one well-covered neighborhood. Now you can drop a pin anywhere in that neighborhood and land on a plausible house. The fuzzy circle is described by its center (the mean $\\mu$, "where") and its radius (the spread $\\sigma$, "how unsure").</p>
+     <p>A <b>variational autoencoder</b> fixes this. The encoder outputs a small <i>distribution</i> for each input: a mean $\\mu$ (the center) and a spread $\\sigma$ (the uncertainty).</p>
+     <p>We sample a code from that distribution, then decode it. Training packs all the distributions near a standard bell curve, so the whole space is smooth with no holes. To generate brand-new data, just sample a random code and decode.</p>`,
   buildup:
     `<p>The loss has two jobs. <b>Reconstruction</b> keeps the decoded output close to the input. The <b>KL (Kullback–Leibler) term</b> pulls each encoded distribution toward the standard normal $N(0, 1)$.</p>
      <p>The KL term is what makes the latent space tidy and continuous. Without it, you would just have a regular autoencoder again.</p>`,
@@ -829,6 +834,7 @@ L({
   prereqs: ["dl-backprop", "prob-normal"],
   bigIdea:
     `<p>A <b>diffusion model</b> learns to generate by first learning to destroy, then reversing it.</p>
+     <p><b>An everyday analogy.</b> Drop one drop of ink into a glass of water and stir: the picture dissolves into an even murky haze. That is easy and needs no skill. The hard, magical part is running the clock backward — pulling the haze back into a sharp drop. A diffusion model trains a network to do exactly that un-stirring, one tiny step at a time. Once it can un-stir, you can start from a glass of pure haze (random noise) and watch a brand-new picture condense out of it. "Gaussian noise" just means random fuzz drawn from the familiar bell curve.</p>
      <p>The <b>forward process</b> takes a clean image and adds a little Gaussian noise, again and again, until it is pure static. This part is fixed, no learning needed.</p>
      <p>The <b>reverse process</b> is what we train. A network looks at a noisy image and predicts the noise to subtract. Run it from pure static and, step by step, a brand-new image appears.</p>`,
   buildup:
@@ -978,6 +984,7 @@ L({
   prereqs: ["prob-normal", "dl-backprop"],
   bigIdea:
     `<p>A <b>normalizing flow</b> builds a complex probability distribution out of a simple one.</p>
+     <p><b>An everyday analogy.</b> Think of a flat sheet of stretchy rubber printed with a smooth, even fog of dots (a plain bell curve). Now stretch and pinch the sheet with your hands: the dots bunch up where you squeeze and thin out where you pull. You can sculpt that single even fog into any pattern of clumps you like. The key rule is that you only ever stretch — never tear or fold dots on top of each other — so the move can always be undone (it is <b>invertible</b>). That reversibility is what lets you read off the exact probability of any point. "Density" just means how thickly the dots pile up at a spot.</p>
      <p>Start with an easy density, a standard Gaussian. Pass each sample through an <b>invertible</b> transform $g$. The Gaussian gets stretched and folded into a rich, multi-peaked shape.</p>
      <p>Because $g$ can be undone, you also get the <i>exact</i> probability of any data point, something GANs (Generative Adversarial Networks) and VAEs (Variational Autoencoders) only approximate.</p>`,
   buildup:

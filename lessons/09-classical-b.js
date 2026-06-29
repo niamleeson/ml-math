@@ -43,7 +43,8 @@ L({
     `<p>Run all $K$ base models on the input. Collect their $K$ predictions into a short vector.</p>
      <p>Feed that vector into the meta-model $g$. Its output is the final prediction.</p>
      <p>If $g$ is a linear model, the final answer is a weighted sum of the base predictions, $\\hat{y} = \\sum_k w_k\\,z_k$, and training learns the weights $w_k$.</p>
-     <p>To avoid cheating, the base predictions used to train $g$ come from held-out folds (out-of-fold predictions), not from data the base models already memorized.</p>`,
+     <p><b>What is "out-of-fold"?</b> A model is always too optimistic about data it has already seen — it half-memorized those exact answers. So to get honest base predictions for training the combiner, we split the training data into a few equal slices called <b>folds</b> (say 5). For each fold, we train the base models on the <i>other</i> four folds and let them predict the one fold they have <i>not</i> seen. Stitching together all the held-out predictions gives one honest prediction per training row.</p>
+     <p>To avoid cheating, the base predictions used to train $g$ are exactly these <b>out-of-fold</b> predictions, not predictions on data the base models already memorized. Think of it like grading students on questions they did not get to practice — only then do the scores reflect real skill.</p>`,
   derivation:
     `<p><b>Why a learned combiner beats a fixed average.</b></p>
      <p>Suppose two base models give predictions $z_1$ and $z_2$ for a true value $y$. Each has an error: $e_1 = z_1 - y$ and $e_2 = z_2 - y$.</p>
@@ -170,9 +171,10 @@ L({
   formula: `$$ s(x) = 2^{\\,-\\,\\dfrac{E[h(x)]}{c(n)}} $$`,
   whatItDoes:
     `<p>Compute the average number of cuts $E[h(x)]$ needed to isolate $x$. Divide by the typical depth $c(n)$.</p>
+     <p><b>What is $c(n)$, and why divide by it?</b> Raw cut-counts are not comparable across datasets — a big dataset naturally needs more cuts to isolate any point, just because there are more points to separate. So we measure each point's path <i>relative to</i> what a normal point would take. $c(n)$ is that yardstick: the average path length for an ordinary point when the tree was built from $n$ points. (It is computed from a known formula for random binary trees, but you can read it as "how deep a typical point sits".) Dividing by $c(n)$ turns "5 cuts" into "5 cuts compared to a normal 4", a fair, dataset-independent ratio.</p>
      <p>If $x$ is easy to isolate, $E[h(x)]$ is small, the exponent is near 0, and $s(x)$ is near $2^0 = 1$: an anomaly.</p>
      <p>If $x$ is buried in a crowd, $E[h(x)]$ is large, the exponent is very negative, and $s(x)$ drops toward 0: normal.</p>
-     <p>The score is bounded in $(0,1)$, so a single threshold (say $0.6$) flags outliers.</p>`,
+     <p>The score is bounded in $(0,1)$, so a single threshold (say $0.6$) flags outliers. The exponential $2^{-\\,\\cdot}$ is just a tidy way to squeeze any path-length ratio into that clean $0$-to-$1$ band.</p>`,
   derivation:
     `<p><b>Why short paths mean outliers.</b></p>
      <p>A random split is more likely to land in a region where points are spread out (low density) than where they are packed tight.</p>
@@ -301,10 +303,11 @@ L({
      <p>Each user gets a short vector of <b>latent factors</b> (taste). Each item gets one too.</p>
      <p>A predicted rating is the dot product of the user's vector and the item's vector.</p>`,
   buildup:
-    `<p>The full ratings matrix $R$ is huge but mostly empty. We assume it is secretly low-rank.</p>
-     <p>"Low-rank" means it can be rebuilt from a few hidden dimensions — like "amount of comedy", "amount of action".</p>
-     <p>Factor $R$ into a tall user matrix $U$ and a tall item matrix $V$. Each has only $k$ columns.</p>
-     <p>Then $R \\approx U V^\\top$. We learn $U$ and $V$ from the ratings we <i>do</i> have.</p>`,
+    `<p>The full ratings matrix $R$ is huge but mostly empty. We assume it is secretly <b>low-rank</b>.</p>
+     <p>"Low-rank" is a fancy way of saying: the table looks complicated, but it is really driven by only a <i>few</i> underlying knobs. Picture a movie grid where every rating is just "how much you like comedy" times "how funny the movie is" plus "how much you like action" times "how action-packed it is". Two knobs per person, two per movie — yet they reproduce thousands of ratings. That is low rank: a few hidden dimensions explain the whole table.</p>
+     <p>These hidden dimensions are the <b>latent factors</b>. "Latent" just means hidden — we never label them by hand; the model invents them. Each user gets a short list of $k$ numbers (their taste), each item gets $k$ numbers (its traits).</p>
+     <p>Factor $R$ into a tall user matrix $U$ (one row of $k$ numbers per user) and a tall item matrix $V$ (one row of $k$ numbers per item). Each has only $k$ columns — far fewer than the number of items.</p>
+     <p>Then $R \\approx U V^\\top$, which is just shorthand for "fill every cell with the matching user-row · item-row dot product". We learn $U$ and $V$ from the ratings we <i>do</i> have, then read off the blanks.</p>`,
   symbols: [
     { sym: "$R$", desc: "the ratings matrix: rows = users, columns = items. Entry $R_{ui}$ is user $u$'s rating of item $i$ (blank if unrated)." },
     { sym: "$k$", desc: "the number of latent factors (hidden taste dimensions). Small, like 10–100." },
@@ -434,9 +437,10 @@ L({
      <p>The payoff: hidden clusters pop out as visible blobs.</p>`,
   buildup:
     `<p>PCA keeps the directions of biggest spread, but flattens curved structure.</p>
-     <p>t-SNE instead cares only about <i>neighborhoods</i>. It turns distances into probabilities of "being neighbors".</p>
-     <p>It builds these neighbor-probabilities in the high-D space ($p$) and in the 2-D map ($q$).</p>
-     <p>Then it nudges the 2-D points until $q$ matches $p$ as closely as possible.</p>`,
+     <p>t-SNE instead cares only about <i>neighborhoods</i>. It turns distances into <b>probabilities of "being neighbors"</b>. What does that mean? Instead of recording an exact distance like "4.7 units apart", it records a softer fact: "there is a 30% chance these two points count as neighbors". Close points get a high chance; far points get a low one. This soft version is more forgiving — it does not insist on preserving every exact distance, only on keeping friends as friends.</p>
+     <p>It builds these neighbor-probabilities twice: once in the original high-D space (call the pattern $p$) and once in the 2-D map we are drawing (call it $q$).</p>
+     <p>Then it nudges the 2-D points until $q$ matches $p$ as closely as possible. The single number measuring "how different are these two neighbor-patterns" is the <b>KL divergence</b> $\\text{KL}(P\\,\\|\\,Q)$ — read it as a mismatch score that is $0$ when the patterns are identical and grows as they diverge. Shrinking it is the whole job.</p>
+     <p><b>Analogy.</b> Imagine seating people from a huge banquet hall into a small room so that everyone keeps the same friends nearby. You cannot preserve exact distances in the smaller room, but you <i>can</i> keep each clique together. t-SNE solves exactly that seating puzzle.</p>`,
   symbols: [
     { sym: "$x_i, x_j$", desc: "two data points in the original high-dimensional space." },
     { sym: "$y_i, y_j$", desc: "the same two points placed on the 2-D map (what we solve for)." },
@@ -554,10 +558,10 @@ L({
      <p>What is left over after the factors is treated as measurement <b>noise</b>.</p>
      <p>So observed = (factors mixed together) + (its own average) + noise.</p>`,
   buildup:
-    `<p>Imagine ten test scores per student. They are correlated — a strong student does well across the board.</p>
-     <p>Maybe one hidden factor, "general ability", explains most of that correlation.</p>
-     <p>Each test responds to ability by its own amount (its <b>loading</b>), plus a private wobble.</p>
-     <p>Factor analysis finds those loadings and the hidden factors from the correlations alone.</p>`,
+    `<p>Imagine ten test scores per student. They are <b>correlated</b> — "correlated" just means they tend to move together: a strong student does well across the board, a weak one does poorly across the board.</p>
+     <p>Maybe one hidden factor, "general ability", explains most of that togetherness.</p>
+     <p>Each test responds to ability by its own amount, called its <b>loading</b>. A loading is simply a dial: "for every one unit more ability, this test's score goes up by <i>this</i> much." A math test might have a big loading on ability; a spelling test a smaller one. On top of that each test has its own private wobble (noise) unrelated to the others.</p>
+     <p>Factor analysis works backward: from the pattern of which scores move together, it recovers those loadings and the hidden factors — without ever being told what "ability" is. It infers the hidden cause purely from the correlations.</p>`,
   symbols: [
     { sym: "$x$", desc: "the vector of observed variables (e.g. the ten test scores). It has many dimensions." },
     { sym: "$z$", desc: "the vector of hidden factors. Few dimensions — often just 1 or 2." },
@@ -573,7 +577,8 @@ L({
      <p>Because the noise $\\epsilon$ is modeled <i>per variable</i> (the diagonal $\\Psi$), factor analysis separates shared structure from per-signal junk — something plain PCA (Principal Component Analysis) does not do.</p>`,
   derivation:
     `<p><b>Why this implies a specific correlation pattern.</b></p>
-     <p>Center the data so $\\mu = 0$, giving $x = \\Lambda z + \\epsilon$. Find the covariance of $x$ (how its components vary together).</p>
+     <p>First, two words. <b>Center the data</b> means subtract each signal's average so everything is measured as "above or below normal" — this just sets $\\mu = 0$ to clean up the algebra. The <b>covariance</b> of $x$ is a grid of numbers recording, for every pair of signals, how strongly they swing together (big positive = rise together, near zero = unrelated).</p>
+     <p>Center the data so $\\mu = 0$, giving $x = \\Lambda z + \\epsilon$. Now find the covariance of $x$ and see what the model forces it to look like.</p>
      <ul class="steps">
        <li>Covariance is $\\mathbb{E}[x x^\\top] = \\mathbb{E}[(\\Lambda z + \\epsilon)(\\Lambda z + \\epsilon)^\\top]$.</li>
        <li>Expand. The cross terms $\\mathbb{E}[\\Lambda z\\,\\epsilon^\\top]$ vanish because factors $z$ and noise $\\epsilon$ are independent (and mean zero).</li>
@@ -690,8 +695,9 @@ L({
   whatItDoes:
     `<p>Measure each point's error. Subtract $\\varepsilon$. If the result is negative (inside the tube), clamp it to 0 — free.</p>
      <p>Only points outside the tube add to the cost, and they add in proportion to how far out they are.</p>
-     <p>The term $\\tfrac12\\|w\\|^2$ keeps the function as flat as possible; $C$ trades flatness against fitting the outside points.</p>
-     <p>The solution depends only on the support vectors (the outside points), so SVR is robust to the many points sitting comfortably inside.</p>`,
+     <p>The term $\\tfrac12\\|w\\|^2$ keeps the function as flat as possible; $C$ trades flatness against fitting the outside points. Read $C$ as a strictness knob: a big $C$ says "really do fit those outside points", a small $C$ says "stay flat, I'll tolerate misses".</p>
+     <p>The solution depends only on the support vectors (the outside points), so SVR is robust to the many points sitting comfortably inside.</p>
+     <p><b>What about curves?</b> So far the line is straight. The <b>kernel trick</b> lets SVR bend without extra work: instead of fitting a straight line in the raw features, it measures how <i>similar</i> two points are and fits a straight line in that similarity space — which comes out curved back in the original space. The most common similarity measure is the <b>RBF (Radial Basis Function) kernel</b>: "two points are similar if they are close, and the similarity drops off smoothly with distance." That single idea lets the same tube-fitting machinery trace wavy, nonlinear trends.</p>`,
   derivation:
     `<p><b>Why only the support vectors matter.</b></p>
      <p>The fit minimizes $\\tfrac12\\|w\\|^2 + C\\sum_i L_\\varepsilon$. Look at how each point pulls on the weights via the gradient.</p>
@@ -823,9 +829,10 @@ L({
      <p>Early on the bonus dominates, so every arm gets sampled. Later the averages dominate, so the true best arm wins out.</p>`,
   derivation:
     `<p><b>Where the bonus $\\sqrt{2\\ln t / n_i}$ comes from.</b></p>
-     <p>The average $\\bar{x}_i$ is an estimate from $n_i$ samples, so it has error. We want a bound that is true with high probability.</p>
+     <p>The average $\\bar{x}_i$ is an estimate from $n_i$ samples, so it has error. Pull an arm only a few times and your estimate of its payout could be way off; pull it many times and it settles down. We want a bound that says "the true payout is almost surely no more than <i>this</i>", and we want that "almost surely" to hold tighter as we collect more data.</p>
+     <p>The tool for that is <b>Hoeffding's inequality</b> — a standard result that bounds how far a sample average can stray from the true average. In words: with more samples ($n_i$), the chance of a big gap $u$ shrinks fast (exponentially). We use it to size the optimism bonus $u$ so it is just big enough to cover the likely error.</p>
      <ul class="steps">
-       <li>Hoeffding's inequality says: for $n_i$ samples of a bounded reward, the true mean exceeds $\\bar{x}_i + u$ with probability at most $e^{-2 n_i u^2}$.</li>
+       <li>Hoeffding's inequality says: for $n_i$ samples of a bounded reward, the true mean exceeds $\\bar{x}_i + u$ with probability at most $e^{-2 n_i u^2}$. (More pulls $n_i$ or a wider gap $u$ both make this failure chance tiny.)</li>
        <li>We want that failure probability to fall like $t^{-4}$ as the game goes on, so set $e^{-2 n_i u^2} = t^{-4}$.</li>
        <li>Take logs: $-2 n_i u^2 = -4\\ln t$, so $u^2 = \\dfrac{2\\ln t}{n_i}$, giving $u = \\sqrt{\\dfrac{2\\ln t}{n_i}}$.</li>
        <li>So $\\bar{x}_i + \\sqrt{2\\ln t / n_i}$ is a high-confidence upper bound on the arm's true value. Pulling the largest such bound is "optimism in the face of uncertainty". ∎</li>

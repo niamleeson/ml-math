@@ -48,11 +48,14 @@ L({
   prereqs: ["dl-backprop", "dl-forward-prop"],
   bigIdea:
     `<p>A <b>graph</b> is dots (nodes) joined by lines (edges). Think of friends and friendships, or atoms and bonds.</p>
-     <p>A <b>Graph Neural Network</b> gives every node a small list of numbers (its features). Then it lets nodes share with their neighbours.</p>
-     <p>The sharing rule is called <b>message passing</b>: each node collects its neighbours' features, averages them, and uses that to update itself.</p>`,
+     <p>A <b>Graph Neural Network</b> (GNN) gives every node a small list of numbers (its <b>features</b>: a description of the node). Then it lets nodes share with their neighbours.</p>
+     <p>The sharing rule is called <b>message passing</b>: each node collects its neighbours' features, averages them, and uses that to update itself.</p>
+     <p>Picture a rumour spreading at a party. At first you only know what you know. Then you chat with the people standing next to you and absorb a little of what they know. Do that again and the news from across the room reaches you, one handshake at a time. A GNN is that rumour spreading, but the "news" is a list of numbers and the "chat" is a weighted average.</p>
+     <p>Why bother? Because in a graph a thing's <i>meaning depends on its company</i>. A paper that cites mostly biology papers is probably a biology paper, even if its own words are vague. Message passing lets each node borrow context from its neighbours.</p>`,
   buildup:
-    `<p>You already know a neuron: multiply by a weight, add up, then squish. A GNN (Graph Neural Network) does the same, but the inputs are a node's neighbours.</p>
-     <p>One round of message passing lets a node hear from its direct neighbours. A second round lets it hear from neighbours-of-neighbours. Information spreads.</p>`,
+    `<p>You already know a neuron: multiply by a weight, add up, then squish (run through a curve-bending function). A GNN (Graph Neural Network) does the same, but the inputs are a node's neighbours.</p>
+     <p>Here is the recipe for one node, in plain words: (1) <b>gather</b> the feature lists of every neighbour, (2) <b>average</b> them into a single list, (3) <b>multiply</b> that average by a shared weight matrix (a learned grid of numbers that reshapes the list), (4) <b>squish</b> the result through an activation so the network can bend, not just stretch.</p>
+     <p>One round of message passing lets a node hear from its direct neighbours. A second round lets it hear from neighbours-of-neighbours (because by then the neighbours already carry <i>their</i> neighbours' news). Information spreads one hop per round, like the rumour crossing the room.</p>`,
   symbols: [
     { sym: "$v$", desc: "one node (a dot) in the graph." },
     { sym: "$N(v)$", desc: "the neighbours of $v$: every node joined to $v$ by an edge." },
@@ -204,12 +207,14 @@ L({
   tagline: "Let a neural net guess the value of each move. Train it to match reward-now plus the best value next.",
   prereqs: ["ai-q-learning", "dl-backprop"],
   bigIdea:
-    `<p>Q-learning keeps a value $Q(s,a)$ for every state-action pair. But real games have far too many states to list.</p>
-     <p>A <b>Deep Q-Network</b> replaces that giant table with a neural network. The net reads a state and outputs a $Q$ value for each action.</p>
-     <p>Two tricks keep it stable: <b>experience replay</b> (reuse past moves) and a <b>target network</b> (a slow copy used for the goal).</p>`,
+    `<p>Imagine a video game. At any moment you see a screen (the <b>state</b>) and can press one of a few buttons (the <b>actions</b>). You want a little voice that whispers, for each button, "pressing this is worth about 6 points in the long run". That number is the <b>$Q$ value</b>: the expected total future reward of taking that action.</p>
+     <p>Plain Q-learning keeps a value $Q(s,a)$ for every state-action pair in a giant lookup table. But real games have far too many screens to ever list — billions of pixel arrangements.</p>
+     <p>A <b>Deep Q-Network</b> (DQN) replaces that impossible table with a neural network: a function that reads the screen and outputs a $Q$ value for each button. Similar screens get similar values automatically, so it never needs to have seen the exact screen before.</p>
+     <p>Two tricks keep training from falling apart: <b>experience replay</b> (save old moves in a notebook and re-study them in random order) and a <b>target network</b> (a slowly-updated copy of the net used to set the training goal, so the goal does not jiggle every step).</p>`,
   buildup:
-    `<p>From Q-learning you know the idea: a move is good if its reward now, plus the discounted best value of where you land, is high.</p>
-     <p>DQN trains the net so its output $Q(s,a)$ matches that goal, called the <b>TD target</b>. "TD" means temporal difference: compare your guess to a slightly better guess one step later.</p>`,
+    `<p>From Q-learning you know the idea: a move is good if its reward right now, plus the discounted best value of wherever you land next, is high. "Discounted" means future reward counts a little less than reward today.</p>
+     <p>DQN trains the net so its output $Q(s,a)$ matches that goal, called the <b>TD target</b>. "TD" means temporal difference: you compare your current guess to a slightly-better guess made one step later (after you have actually seen the reward and the next screen). The gap between them is the error you shrink.</p>
+     <p>Think of it like correcting an estimate. You guess a trip takes 60 minutes. After driving one segment you have real information and now estimate 55. You nudge your original guess toward 55. DQN does exactly this, one move at a time.</p>`,
   symbols: [
     { sym: "$s$", desc: "the current state (what the agent sees right now)." },
     { sym: "$a$", desc: "an action the agent can take." },
@@ -341,13 +346,14 @@ L({
   tagline: "Skip the value table. Directly raise the chance of actions that led to a big reward.",
   prereqs: ["ai-q-learning", "dl-cross-entropy", "ml-gradient-descent"],
   bigIdea:
-    `<p>DQN learns values, then acts greedily. <b>Policy gradients</b> skip that. They learn the <b>policy</b> itself: the probability of each action.</p>
-     <p>The rule is wonderfully direct: if an action led to a high reward, make it more likely next time. If it led to a low reward, make it less likely.</p>
-     <p>The basic version is called <b>REINFORCE</b>.</p>`,
+    `<p>DQN learns the <i>value</i> of each move, then acts greedily on those values. <b>Policy gradients</b> skip the middle-man. They learn the <b>policy</b> directly: a dial for each action saying how likely the agent is to take it.</p>
+     <p>The rule is wonderfully direct, and it is exactly how you might train a dog. If an action led to a treat (high reward), make that action more likely next time. If it led to nothing or a scolding (low reward), make it less likely. Repeat, and good behaviour drifts to the top.</p>
+     <p>A <b>policy</b> is just "the agent's habits": given what it sees, what are the odds it does each thing? Policy gradients shift those odds toward whatever paid off.</p>
+     <p>The basic version is called <b>REINFORCE</b>. It is the simplest member of a family that includes the workhorse algorithms (A2C, PPO) behind robots and chatbot tuning.</p>`,
   buildup:
-    `<p>The policy $\\pi(a\\mid s)$ is a probability: given state $s$, how likely is action $a$? A neural net outputs these probabilities.</p>
-     <p>We run a full episode, add up the reward it earned (the <b>return</b> $G$), and use $G$ to decide which actions to encourage.</p>
-     <p>The math uses $\\nabla\\log\\pi$: the direction in weight-space that makes the chosen action more probable.</p>`,
+    `<p>The policy $\\pi(a\\mid s)$ is a probability: given state $s$ (what the agent sees), how likely is action $a$? A neural net outputs one such probability per action, all adding to 1. The symbol $\\pi$ is just a name for "the policy"; the bar $\\mid$ reads "given".</p>
+     <p>We run a full <b>episode</b> (one complete attempt, start to finish), add up all the reward it earned — that total is the <b>return</b> $G$ — and use $G$ to decide which actions to encourage. A big $G$ means "whatever you just did, do more of it".</p>
+     <p>The math uses $\\nabla\\log\\pi$ (say "grad log pi"). Read $\\nabla$ as "the direction that increases this", and $\\log\\pi$ as the (log of the) chosen action's probability. So $\\nabla\\log\\pi$ points in the direction of weight changes that make the action the agent actually took <i>more probable</i>. Multiply that direction by $G$ and you push hard when the payoff was big, gently when small, and the <i>opposite</i> way when $G$ is negative.</p>`,
   symbols: [
     { sym: "$s$", desc: "a state the agent is in." },
     { sym: "$a$", desc: "the action the agent actually took." },
@@ -489,13 +495,14 @@ L({
   tagline: "One net picks actions, a second net judges the state. Update the actor by how much better an action did than expected.",
   prereqs: ["mod-policy-gradient", "ai-value-iteration"],
   bigIdea:
-    `<p>Plain policy gradients use the full episode return $G$, which is noisy. <b>Actor-Critic</b> reduces that noise.</p>
-     <p>It uses two networks. The <b>actor</b> is the policy: it picks actions. The <b>critic</b> estimates the value $V(s)$: how good a state is.</p>
-     <p>The actor is updated by the <b>advantage</b> $A = Q - V$: how much better an action turned out than the state's average.</p>`,
+    `<p>Plain policy gradients judge a move by the full episode return $G$, which swings wildly from run to run — like rating a chess opening by whether you happened to win that whole game. <b>Actor-Critic</b> calms that noise.</p>
+     <p>It uses two networks working as a pair: a <b>player</b> and a <b>coach</b>. The <b>actor</b> (the player) is the policy — it picks actions. The <b>critic</b> (the coach) estimates the value $V(s)$ — how good the current situation is on average.</p>
+     <p>Instead of asking "did we win?", the coach asks the sharper question: "did that move do <i>better than expected from here</i>?" That comparison is the <b>advantage</b> $A = Q - V$: the action's value $Q$ minus the situation's average value $V$. Positive advantage means the move beat expectations, so the actor makes it more likely.</p>
+     <p>Why this is better: comparing to expectation cancels out the luck of the situation. A great move from a losing position still gets credit, instead of being blamed for the loss.</p>`,
   buildup:
-    `<p>From policy gradients: we scale the update by how good the outcome was. Using the raw return $G$ is high-variance.</p>
-     <p>Subtract a <b>baseline</b>, the state's value $V(s)$. Now we ask: did this action beat the state's average, or fall short?</p>
-     <p>That difference is the advantage. A positive advantage means "better than expected", so push the action up.</p>`,
+    `<p>From policy gradients: we scale each update by how good the outcome was. Using the raw return $G$ is high-variance — too noisy — because $G$ folds in everything that happened, lucky or not.</p>
+     <p>The fix: subtract a <b>baseline</b>, a reference level we expected anyway. The natural baseline is the state's value $V(s)$, the average return the critic expects from this state. Now we ask: did this action beat that average, or fall short?</p>
+     <p>That difference is the <b>advantage</b> $A = Q - V$, where $Q$ (estimated as reward plus the discounted value of the next state) is what the action actually delivered. A positive advantage means "better than expected", so push the action's probability up; negative means "worse than expected", so push it down. Crucially, subtracting the baseline does not bias the learning (we prove this below) — it only trims the noise.</p>`,
   symbols: [
     { sym: "$s$", desc: "the current state." },
     { sym: "$a$", desc: "the action taken by the actor." },
@@ -650,13 +657,14 @@ L({
   tagline: "Pull two views of the same thing together, push everything else apart. No labels needed.",
   prereqs: ["dl-cross-entropy", "dl-forward-prop"],
   bigIdea:
-    `<p>Labels are expensive. <b>Self-supervised learning</b> learns useful features from raw data with no human labels.</p>
-     <p><b>Contrastive learning</b> is one way. Take an image, make two altered copies (crop, recolour). These are a <b>positive pair</b>: they should land close together in feature space.</p>
-     <p>Every other image is a <b>negative</b>: it should be pushed away. Pull positives together, push negatives apart.</p>`,
+    `<p>Labels are expensive — someone has to look at each image and type "cat". <b>Self-supervised learning</b> sidesteps that: it learns useful features from raw data with no human labels, by inventing its own practice puzzle from the data itself.</p>
+     <p><b>Contrastive learning</b> is one such puzzle. Take one image, make two altered copies of it (crop it, recolour it, flip it). These two copies are a <b>positive pair</b>: even though they look different, they are the same thing underneath, so the network should map them to nearly the same place.</p>
+     <p>Every <i>other</i> image in the batch is a <b>negative</b>: it should be pushed away. The whole rule fits in one line — <b>pull positives together, push negatives apart</b>.</p>
+     <p>Analogy: imagine a giant board where you pin photos. You are told "these two pins are secretly the same object" and "these others are different". You shuffle the pins until same-things cluster and different-things spread out. After enough shuffling, the <i>positions</i> on the board capture what each image is about — without anyone ever naming the objects.</p>`,
   buildup:
-    `<p>An <b>embedding</b> is the network's output vector for an input: a point in a feature space.</p>
-     <p>We measure closeness with <b>similarity</b>, usually the cosine of the angle between two embeddings: $+1$ means same direction, $0$ means unrelated.</p>
-     <p>The loss rewards high similarity for the positive pair and low similarity for the anchor against every negative.</p>`,
+    `<p>An <b>embedding</b> is the network's output vector for an input — a point in a high-dimensional "feature space" (think: the pin's position on that board). Similar inputs should land at nearby points.</p>
+     <p>We measure closeness with <b>cosine similarity</b>: the cosine of the angle between two embedding vectors. It is $+1$ when they point the same direction (very similar), $0$ when they are at right angles (unrelated), and $-1$ when opposite. Direction, not length, is what matters.</p>
+     <p>The loss then rewards <i>high</i> similarity for the positive pair and <i>low</i> similarity between the anchor and every negative. Minimizing it is the shuffling of pins: it drags the positive toward the anchor and shoves the negatives away, all in one step.</p>`,
   symbols: [
     { sym: "$z_i$", desc: "the embedding of the anchor: the network's output vector for one view." },
     { sym: "$z_j$", desc: "the embedding of its positive: a different augmented view of the same input." },
@@ -802,13 +810,14 @@ L({
   tagline: "Chop an image into patches, treat each patch as a word, and let attention mix them.",
   prereqs: ["dl-forward-prop", "dl-cross-entropy"],
   bigIdea:
-    `<p>Transformers conquered language by treating a sentence as a sequence of word tokens. A <b>Vision Transformer</b> does the same to images.</p>
-     <p>It slices the image into a grid of small square <b>patches</b>. Each patch becomes one token, like a word.</p>
-     <p>Then the standard transformer runs <b>attention</b> over the patches, so any patch can look at any other, no matter how far apart.</p>`,
+    `<p>Transformers conquered language by treating a sentence as a sequence of word <b>tokens</b> (a token is just one unit fed to the model) and letting every word look at every other word. A <b>Vision Transformer</b> (ViT) plays the same trick on images.</p>
+     <p>The problem: an image is not a sentence, it is a grid of pixels. The clever move is to slice the image into a grid of small square <b>patches</b> (like cutting a photo into jigsaw squares) and treat <i>each patch as one "word"</i>. A 3-by-3 cut gives 9 patch-words.</p>
+     <p>Then the standard transformer runs <b>attention</b> over those patches: a mechanism where any patch can look at any other patch, no matter how far apart, and decide how much to care about it. So a patch showing a cat's left ear can directly consult the patch showing the right ear.</p>
+     <p>Why not just use one pixel per word? Because attention compares every word to every other word, and that cost grows with the <i>square</i> of the word count — millions of pixels would be hopeless. Patches shrink the count to a few hundred, which is exactly what makes the whole idea affordable (we work the numbers below).</p>`,
   buildup:
-    `<p>A patch is just a block of pixels. Flatten its pixels into a vector and multiply by a weight matrix to get a fixed-size <b>patch embedding</b>: the token.</p>
-     <p>Because a grid has no built-in order, we add a <b>position embedding</b> so the model knows where each patch sat.</p>
-     <p>Attention then scores how much each patch should attend to every other patch.</p>`,
+    `<p>A patch is just a small block of pixels — say a $16\\times16$ square. To turn it into a token we <b>flatten</b> its pixels into one long row of numbers, then multiply by a weight matrix $E$ (a learned grid of numbers) to get a fixed-size <b>patch embedding</b>: the token vector. This is the vision version of looking up a word's embedding.</p>
+     <p>A jigsaw box of loose pieces has no built-in order, and neither does a bag of patches. So we add a <b>position embedding</b>: a small vector that stamps each patch with "I came from row 2, column 3", so the model can tell a top-left patch from a bottom-right one.</p>
+     <p>Attention then scores, for every patch, how much it should attend to every other patch, and mixes their information accordingly. Stack a few such layers and each patch's vector summarizes the whole image as seen from its vantage point.</p>`,
   symbols: [
     { sym: "$H \\times W$", desc: "the image height and width in pixels." },
     { sym: "$P$", desc: "the patch size: each patch is a $P \\times P$ square of pixels." },
@@ -952,13 +961,13 @@ L({
   tagline: "Predict the next value from recent values and recent surprises, then give a range, not just a point.",
   prereqs: ["ml-gradient-descent"],
   bigIdea:
-    `<p>A <b>time series</b> is numbers in order over time: daily sales, hourly temperature, a stock price.</p>
-     <p><b>ARIMA</b> forecasts the next value from the recent past. Its name is three ideas: <b>AR</b> (autoregression), <b>I</b> (integration / differencing), <b>MA</b> (moving average).</p>
-     <p>It also gives a <b>prediction interval</b>: a shaded band saying "the true value will probably land in here", which widens as we look further ahead.</p>`,
+    `<p>A <b>time series</b> is simply numbers in order over time: daily sales, hourly temperature, a stock price. The order matters — yesterday tells you a lot about today.</p>
+     <p><b>ARIMA</b> forecasts the next value from the recent past, the way a weather forecaster guesses tomorrow from the last few days. Its name bundles three ideas, each a letter: <b>AR</b> (autoregression — lean on recent <i>values</i>), <b>I</b> (integration / differencing — strip out a trend first), and <b>MA</b> (moving average — lean on recent <i>surprises</i>).</p>
+     <p>Just as important, ARIMA does not only give a single number. It gives a <b>prediction interval</b>: a shaded band saying "the true value will probably land somewhere in here". The band <i>widens</i> the further ahead you look, because uncertainty piles up — you can guess tomorrow well, next month much less so.</p>`,
   buildup:
-    `<p><b>AR</b> says today depends on recent days: a weighted sum of past values.</p>
-     <p><b>MA</b> says today also depends on recent <b>errors</b> (surprises): a weighted sum of past prediction misses.</p>
-     <p><b>Differencing (I)</b> subtracts each value from the one before it. A series that keeps trending up becomes a flat, steady series, which AR and MA handle better.</p>`,
+    `<p><b>AR (autoregression)</b> says today is an echo of recent days: a weighted sum of past values. If sales were high yesterday they are probably high-ish today.</p>
+     <p><b>MA (moving average)</b> says today also reacts to recent <b>errors</b> — the <i>surprises</i>, the part the model failed to predict last time: a weighted sum of those past misses. A big unexpected jump yesterday leaves a fading echo today.</p>
+     <p><b>Differencing (I)</b> means: replace each value by how much it <i>changed</i> from the one before it. A series that keeps trending up (raw values 10, 12, 14, 16) becomes a flat, steady series of changes (+2, +2, +2), which AR and MA handle far better. After forecasting the changes you add them back up to recover the real numbers. This is the "I" — it tames trends so the linear AR and MA parts can do their job.</p>`,
   symbols: [
     { sym: "$y_t$", desc: "the series value at time $t$ (today's number)." },
     { sym: "$y_{t-1}$", desc: "the value one step earlier (yesterday)." },

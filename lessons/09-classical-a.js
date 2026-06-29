@@ -114,9 +114,10 @@ L({
   prereqs: ["ml-kmeans", "ml-gda", "prob-normal"],
   bigIdea:
     `<p>k-means gives each point one hard label. A <b>Gaussian Mixture Model</b> (GMM) is gentler.</p>
-     <p>It says the data is a blend of several bell-shaped blobs (Gaussians).</p>
-     <p>Each point gets a <i>soft</i> membership: 70% blob A, 30% blob B.</p>
-     <p>We learn the blobs with an algorithm called <b>EM</b> (Expectation–Maximization) that alternates two easy steps.</p>`,
+     <p><b>Analogy.</b> Sort people into "tall" and "short" with one strict cutoff and a 5'10" person is forced into one bucket, hiding the fact that they sit right on the line. A GMM instead says "this person is 60% in the tall group, 40% in the short group." That fractional answer is a <i>soft</i> membership.</p>
+     <p>A "Gaussian" is just a bell curve — most values pile up near a center and thin out on both sides (heights, test scores, and measurement errors all look like this). A GMM says the data is a <b>blend of several bell-shaped blobs</b> stacked on top of each other.</p>
+     <p>Each point gets a soft membership: 70% blob A, 30% blob B (the two always add to 100%).</p>
+     <p>We learn the blobs with an algorithm called <b>EM</b> (Expectation–Maximization) that alternates two easy steps: guess which blob each point came from, then redraw the blobs to fit the points they were given. Like adjusting two spotlights until each one sits over a crowd.</p>`,
   buildup:
     `<p>Each blob $k$ has a center $\\mu_k$, a spread $\\Sigma_k$, and a weight $\\pi_k$ (how big a slice of data it owns).</p>
      <p>The chance a point came from blob $k$ is its <b>responsibility</b> $\\gamma_k$.</p>
@@ -274,9 +275,10 @@ L({
   prereqs: ["ml-kmeans"],
   bigIdea:
     `<p>k-means needs you to pick the number of clusters and assumes round blobs.</p>
-     <p><b>DBSCAN</b> needs neither. It finds clusters as regions where points are packed densely together.</p>
-     <p>Points in sparse, empty regions are simply labeled <b>noise</b> — no cluster at all.</p>
-     <p>Because it grows clusters from dense seeds, it can trace any shape: rings, ribbons, crescents.</p>`,
+     <p><b>Analogy.</b> Picture a city at night from a plane. You don't count neighborhoods in advance — you just see them as <b>bright crowds of lights packed close together</b>, with dark empty stretches between. A lone farmhouse far from any town is not a tiny neighborhood; it is just an outlier. DBSCAN clusters the same way: a cluster is wherever points are crowded, and lonely points get set aside.</p>
+     <p><b>DBSCAN</b> needs neither a cluster count nor round shapes. It finds clusters as regions where points are packed densely together.</p>
+     <p>Points in sparse, empty regions are simply labeled <b>noise</b> — they join no cluster at all. (This built-in "none of the above" answer is something k-means cannot give: k-means forces every point into some group.)</p>
+     <p>Because it grows each cluster outward from a dense seed, following the crowd wherever it leads, it can trace any shape: rings, ribbons, crescents — not just round blobs.</p>`,
   buildup:
     `<p>Pick a radius $\\varepsilon$ and a count minPts.</p>
      <p>A point is a <b>core</b> point if it has at least minPts neighbors within $\\varepsilon$.</p>
@@ -429,10 +431,11 @@ L({
   tagline: "Cluster by connectivity, not distance — cut the graph at its thin seams.",
   prereqs: ["ml-kmeans", "ml-pca"],
   bigIdea:
-    `<p>Two crescents can interleave so that points across the gap are closer than points along the same arc.</p>
-     <p>k-means, which judges by raw distance, fails badly here.</p>
-     <p><b>Spectral clustering</b> first builds a graph: connect points that are similar.</p>
-     <p>Then it cuts the graph where the connections are thinnest — using the graph Laplacian's eigenvectors.</p>`,
+    `<p>Two crescents can interleave so that points across the gap are physically closer than points along the same arc. So "close in distance" stops meaning "same group."</p>
+     <p>k-means, which judges only by raw straight-line distance to a center, fails badly here — it would slice across each crescent.</p>
+     <p><b>Analogy.</b> Think of a friendship network, not a map. You and your office friends form one tight group of mutual connections; your family forms another. The two groups touch at maybe one person who knows both sides. To split the network into two communities you would <b>cut that single weak link</b>, not draw a line on a map of where everyone lives. Spectral clustering does exactly this: it groups by <i>who is connected to whom</i>, then snips the few thin links between communities.</p>
+     <p>Step one: build a graph — draw a link between every pair of similar (nearby) points, strong for close pairs, near-zero for far ones.</p>
+     <p>Step two: cut the graph where the links are thinnest. Finding that cheapest cut directly is too hard, so it uses a clever shortcut from linear algebra: the <b>eigenvectors</b> of a matrix called the graph Laplacian. (An eigenvector is just a special direction that a matrix stretches without rotating; the ones tied to the smallest stretch reveal the natural seams of the graph.)</p>`,
   buildup:
     `<p>Build a similarity weight $W_{ij}$ between every pair of points (big if close, near 0 if far).</p>
      <p>From $W$ form the <b>Laplacian</b> $L=D-W$, where $D$ holds each point's total connection strength.</p>
@@ -597,10 +600,11 @@ L({
   tagline: "Fit a Gaussian per class. Share covariance ⇒ line. Per-class ⇒ curve.",
   prereqs: ["ml-gda", "prob-normal"],
   bigIdea:
-    `<p>Model each class as its own Gaussian bell. To classify a point, ask which bell explains it better.</p>
-     <p>If all classes are forced to share one covariance (one shape), the boundary between them is a straight line: that is <b>LDA</b> (Linear Discriminant Analysis).</p>
-     <p>If each class keeps its own covariance, the boundary bends into a curve: that is <b>QDA</b> (Quadratic Discriminant Analysis).</p>
-     <p>LDA is simpler and needs less data; QDA is more flexible when class shapes truly differ.</p>`,
+    `<p>Model each class as its own Gaussian bell — a cloud of points piled up around a center. To classify a new point, ask <b>which bell explains it better</b>: which class's cloud is this point a more natural member of?</p>
+     <p><b>Analogy.</b> You hear an unknown animal sound at night. You have a mental model of how dogs sound (centered on "bark," with some spread) and how cats sound (centered on "meow"). You guess whichever model the new sound fits more comfortably. "Covariance" is just how wide and tilted each model's spread is.</p>
+     <p>Now the key choice. If you assume every class has the <b>same</b> spread shape (one shared covariance) and only the centers differ, the dividing line between two classes comes out perfectly straight — that is <b>LDA</b> (Linear Discriminant Analysis). It is like deciding by which center is closer.</p>
+     <p>If you let each class keep its <b>own</b> spread (one tight, one wide), the dividing line bends into a curve that hugs the tighter class — that is <b>QDA</b> (Quadratic Discriminant Analysis).</p>
+     <p>LDA is simpler and needs less data (fewer numbers to estimate); QDA is more flexible when class shapes truly differ but is hungrier for data.</p>`,
   buildup:
     `<p>For class $k$: a prior $\\pi_k$ (how common it is), a mean $\\mu_k$, and a covariance $\\Sigma_k$.</p>
      <p>By Bayes' rule, the score for class $k$ is $\\log\\pi_k + \\log\\mathcal{N}(x;\\mu_k,\\Sigma_k)$.</p>
@@ -756,10 +760,11 @@ L({
   tagline: "A distribution over functions: predictions come with honest error bars.",
   prereqs: ["ml-linear-regression", "prob-normal", "ml-pca"],
   bigIdea:
-    `<p>Most models give you one prediction. A <b>Gaussian Process</b> (GP) gives a prediction <i>and</i> its uncertainty.</p>
-     <p>Instead of fitting one curve, a GP keeps a whole probability distribution over all curves that could fit.</p>
-     <p>A <b>kernel</b> sets how smooth those curves are and how far one point's influence reaches.</p>
-     <p>Near data, the curves agree, so uncertainty is small. Far from data, they spread out, so uncertainty grows.</p>`,
+    `<p>Most models give you one prediction. A <b>Gaussian Process</b> (GP) gives a prediction <i>and</i> an honest measure of how unsure it is about that prediction.</p>
+     <p><b>Analogy.</b> Connect-the-dots, but you don't draw just one line — you imagine <i>every</i> smooth line that could pass through the dots. Right at a dot, all those lines must meet, so they agree completely (no doubt). Halfway between two far-apart dots, the lines fan out into a wide spray, because many smooth curves could thread that gap. The width of that spray is the GP's uncertainty.</p>
+     <p>So instead of committing to one curve, a GP keeps a whole probability distribution over all curves that could fit.</p>
+     <p>A <b>kernel</b> is the rule that sets how smooth those curves are and how far one data point's influence reaches sideways — a knob for "do nearby x-values have similar y-values, and how nearby counts?"</p>
+     <p>Near data the curves are forced to agree, so uncertainty is small (the band pinches shut). Far from data they spread out, so uncertainty grows (the band fans open). Crucially, the GP <b>tells you</b> where it is guessing.</p>`,
   buildup:
     `<p>Pick a kernel $k(x,x')$ that says how correlated the function's values at $x$ and $x'$ are.</p>
      <p>Stack the training inputs; the kernel fills a matrix $K$ of all pairwise correlations.</p>
@@ -922,10 +927,11 @@ L({
   tagline: "Don't fit one line — keep a whole distribution of plausible lines.",
   prereqs: ["ml-linear-regression", "ml-likelihood", "prob-normal"],
   bigIdea:
-    `<p>Ordinary linear regression returns one best line. But with little data, many lines fit almost as well.</p>
-     <p><b>Bayesian linear regression</b> keeps all of them, weighted by how plausible each is.</p>
-     <p>It starts with a <b>prior</b> belief about the weights, then updates it with the data to a <b>posterior</b>.</p>
-     <p>Predictions then carry uncertainty: tight where data is dense, wide where data is sparse.</p>`,
+    `<p>Ordinary linear regression returns one best-fit line. But with only a few data points, many different lines fit almost as well — and reporting just one hides that ambiguity.</p>
+     <p><b>Analogy.</b> A detective with two clues doesn't lock onto a single suspect; they hold a short list of plausible suspects and rank them by how well each fits the evidence. As more clues arrive, the list narrows. Bayesian linear regression treats candidate lines the same way: it keeps a whole ranked set of plausible lines instead of one.</p>
+     <p>It starts with a <b>prior</b> — a belief about the lines before seeing any data (here: "probably gentle slopes, nothing wild"). The "weights" are just the line's slope and intercept.</p>
+     <p>It then updates that belief with the data to get a <b>posterior</b> — the refined ranking of lines after the evidence. (This update is Bayes' rule: prior belief combined with how well each line explains the data.)</p>
+     <p>Because we kept many lines, predictions carry uncertainty automatically: the lines bunch tightly where data is dense (they agree) and fan apart where data is sparse (they disagree).</p>`,
   buildup:
     `<p>Put a Gaussian prior on the weights: $w\\sim\\mathcal{N}(0,\\alpha^{-1}I)$ — we expect small weights unless data says otherwise.</p>
      <p>The data likelihood is Gaussian too (squared-error noise).</p>
@@ -1077,10 +1083,11 @@ L({
   tagline: "Build the model in stages: each new tree fixes the last one's mistakes.",
   prereqs: ["ml-ensembles", "ml-gradient-descent"],
   bigIdea:
-    `<p>Random forests build many trees in parallel and vote. <b>Gradient boosting</b> builds them one at a time, in sequence.</p>
-     <p>Each new tree is trained to fix what the current model still gets wrong — its <b>residual</b> errors.</p>
-     <p>Add the new tree (scaled down a bit) to the running total. The error shrinks stage by stage.</p>
-     <p><b>XGBoost</b> is a fast, regularized version that dominates tabular-data competitions.</p>`,
+    `<p>Random forests build many trees in parallel and let them vote. <b>Gradient boosting</b> builds them one at a time, in sequence, where each tree learns from the last one's mistakes.</p>
+     <p><b>Analogy.</b> A student takes a practice test and gets some questions wrong. Instead of re-studying everything, they focus their next session only on the topics they missed. Then they test again, see a smaller set of mistakes, and study just those. Each round targets the leftover errors, so the score climbs. Gradient boosting works the same way: every new tree studies only what the current model still gets wrong.</p>
+     <p>That "what we still get wrong" is the <b>residual</b> — the gap between the true answer and the model's current guess, point by point.</p>
+     <p>Add each new tree (scaled down a bit, so no single tree overcorrects) to the running total. The error shrinks stage by stage as the residuals get smaller.</p>
+     <p><b>XGBoost</b> (eXtreme Gradient Boosting) is a fast, regularized version of this idea that dominates competitions on table-shaped data.</p>`,
   buildup:
     `<p>Start with a trivial model $F_0$ (just the average).</p>
      <p>Compute each point's residual: how far the current model is from the truth.</p>

@@ -27,12 +27,16 @@ L({
   tagline: "Every output entry is one row dotted with one column. Step through it.",
   prereqs: ["fnd-dot", "fnd-matrix", "fnd-matvec"],
   bigIdea:
-    `<p>Multiplying two matrices is just many dot products, organized.</p>
-     <p>To get the number in row $i$, column $j$ of the answer: take row $i$ of the left matrix, dot it with column $j$ of the right matrix.</p>
-     <p>Do that for every (row, column) pair and you have filled in the whole product. One matrix multiply is how a neural-network layer transforms a whole batch at once.</p>`,
+    `<p>Multiplying two matrices is just many dot products, organized into a grid.</p>
+     <p><b>What is a "dot product"?</b> Take two equal-length lists of numbers, multiply them position-by-position, and add up the results. For example $[1,2]\\cdot[5,7] = 1\\cdot5 + 2\\cdot7 = 19$. That single number is the dot product. It is the only piece of arithmetic you need here — matrix multiply is nothing but a tidy collection of dot products.</p>
+     <p><b>The whole rule in one sentence.</b> To get the number in row $i$, column $j$ of the answer: take row $i$ of the left matrix, dot it with column $j$ of the right matrix.</p>
+     <p><b>An analogy.</b> Think of the left matrix as a list of recipes (each row is one recipe's amounts) and the right matrix as a price list (each column is one shop's prices). The cost of recipe $i$ at shop $j$ is "amounts dotted with prices" — exactly one dot product. The product matrix is the full recipe-by-shop cost table.</p>
+     <p>Do that for every (row, column) pair and you have filled in the whole product. One matrix multiply is how a neural-network layer transforms a whole batch of examples at once.</p>`,
   buildup:
-    `<p>You already know matrix × vector: one dot product per row.</p>
-     <p>A matrix is just several columns side by side. So matrix × matrix is matrix × vector, repeated once for each column of the right-hand matrix.</p>`,
+    `<p>Let's build up from the simplest case you already know.</p>
+     <p><b>Step 1 — matrix times one vector.</b> A matrix times a single column vector produces one dot product per row of the matrix. Each row of the matrix "looks at" the vector and returns one number.</p>
+     <p><b>Step 2 — a matrix is just several columns side by side.</b> The right-hand matrix $B$ is literally a few column vectors parked next to each other.</p>
+     <p><b>Step 3 — so matrix × matrix is just step 1 repeated.</b> Multiply $A$ by $B$'s first column to get the answer's first column; multiply $A$ by $B$'s second column to get the answer's second column; and so on. Matrix × matrix is matrix × vector, done once for each column of $B$.</p>`,
   symbols: [
     { sym: "$A$", desc: "the left matrix, with $m$ rows and $n$ columns." },
     { sym: "$B$", desc: "the right matrix, with $n$ rows and $p$ columns. Its row count must equal $A$'s column count." },
@@ -176,12 +180,12 @@ L({
   tagline: "Flip a matrix across its diagonal: rows become columns.",
   prereqs: ["fnd-matrix", "la-matmul"],
   bigIdea:
-    `<p>The <b>transpose</b> of a matrix flips it across its main diagonal.</p>
-     <p>Row 1 becomes column 1, row 2 becomes column 2, and so on. The entry at $(i,j)$ moves to $(j,i)$.</p>
-     <p>Transpose shows up everywhere: the dot product $x^\\top y$, turning weights to match data, and the famous rule $(AB)^\\top = B^\\top A^\\top$ that reverses order.</p>`,
+    `<p>The <b>transpose</b> of a matrix flips it across its main diagonal — the line of cells running from the top-left corner down to the bottom-right.</p>
+     <p><b>Picture it physically.</b> Write the matrix on a sheet of paper, then tip the sheet over along that top-left-to-bottom-right diagonal. What were rows are now standing up as columns. Row 1 becomes column 1, row 2 becomes column 2, and so on. The entry sitting at row $i$, column $j$ ends up at row $j$, column $i$ — its two address numbers simply trade places.</p>
+     <p><b>Why anyone cares.</b> Transpose shows up everywhere in machine learning: the dot product $x^\\top y$ (laying a vector on its side so it can multiply another), lining up a weight matrix so its shape matches the data, and the famous rule $(AB)^\\top = B^\\top A^\\top$ that <i>reverses the order</i> of a product when you transpose it.</p>`,
   buildup:
-    `<p>A matrix has a shape $m\\times n$. Sometimes the multiply you want needs an $n\\times m$ instead.</p>
-     <p>Transpose gives you that for free: it relabels every entry by swapping its two indices. No arithmetic, just rearranging.</p>`,
+    `<p>A matrix has a shape, written $m\\times n$ ($m$ rows, $n$ columns). Often the multiply you want to do needs an $n\\times m$ instead — the dimensions have to line up, and they don't yet.</p>
+     <p>Transpose hands you that reshaped version for free. It does no arithmetic at all: it just relabels every entry by swapping its two index numbers. Nothing is added or multiplied — the same numbers are rearranged into a new grid.</p>`,
   symbols: [
     { sym: "$A$", desc: "a matrix with $m$ rows and $n$ columns." },
     { sym: "$A^\\top$", desc: "the transpose of $A$: an $n\\times m$ matrix. Read 'A transpose'." },
@@ -308,12 +312,14 @@ L({
   tagline: "The number 1 of matrices, and matrices that just scale each axis.",
   prereqs: ["la-matmul", "fnd-matvec"],
   bigIdea:
-    `<p>The <b>identity matrix</b> $I$ has 1's down the diagonal and 0's everywhere else. Multiplying by it changes nothing: $AI = A$ and $Ix = x$.</p>
-     <p>A <b>diagonal matrix</b> $D$ also has zeros off the diagonal, but any numbers on it. Multiplying a vector by $D$ scales each coordinate independently — stretch axis 1 by $d_1$, axis 2 by $d_2$, and so on.</p>
-     <p>These are the simplest matrices, and most deep results (eigen, SVD (Singular Value Decomposition)) work by turning a hard matrix into a diagonal one.</p>`,
+    `<p>The <b>identity matrix</b> $I$ has 1's running down the diagonal (top-left to bottom-right) and 0's everywhere else. Multiplying by it changes nothing at all: $AI = A$ and $Ix = x$. It is the matrix version of the number 1.</p>
+     <p>A <b>diagonal matrix</b> $D$ also has zeros off the diagonal, but it can hold <i>any</i> numbers on the diagonal. Multiplying a vector by $D$ scales each coordinate on its own — stretch axis 1 by $d_1$, axis 2 by $d_2$, and so on, with no coordinate ever mixing into another.</p>
+     <p><b>An analogy.</b> Imagine the volume knobs on a mixing board, one knob per channel. A diagonal matrix is exactly that bank of independent knobs: knob $i$ turns channel $i$ louder or softer, and turning one knob never touches another channel. The identity is the setting where every knob is at "1" (unchanged).</p>
+     <p>These are the simplest matrices there are, and most deep results (eigenvectors, SVD (Singular Value Decomposition)) work precisely by turning a hard, mixing matrix into a clean diagonal one in the right coordinates.</p>`,
   buildup:
-    `<p>Ordinary numbers have a special value, $1$, that leaves everything unchanged: $1\\cdot a = a$.</p>
-     <p>Matrices need their own "1". It is $I$: the matrix that does nothing. And a diagonal matrix is the next-simplest thing — it acts on each axis separately, with no mixing.</p>`,
+    `<p>Ordinary numbers have a special value, $1$, that leaves everything unchanged: $1\\cdot a = a$. It is the "do nothing" number.</p>
+     <p>Matrices need their own "1" too — a matrix you can multiply by without changing anything. That is $I$, the identity. From the entry formula for a product you can check that $I$ acts exactly like the number 1 (we prove it below).</p>
+     <p>And a diagonal matrix is the very next step in complexity: instead of leaving every axis alone, it scales each axis by its own factor, still with zero mixing between axes. One step up from "do nothing" is "scale each axis separately."</p>`,
   symbols: [
     { sym: "$I$", desc: "the identity matrix: 1's on the diagonal, 0's elsewhere. $I_n$ if the size $n$ matters." },
     { sym: "$I_{ij}$", desc: "entry $(i,j)$ of the identity: it equals 1 when $i=j$ and 0 otherwise." },
@@ -432,12 +438,13 @@ L({
   tagline: "The matrix that undoes another matrix. $A$ maps a shape; $A^{-1}$ maps it back.",
   prereqs: ["la-matmul", "la-identity-diagonal"],
   bigIdea:
-    `<p>The <b>inverse</b> $A^{-1}$ is the matrix that undoes $A$. Apply $A$, then $A^{-1}$, and you are back where you started: $A^{-1}A = I$.</p>
-     <p>Only square matrices can have an inverse, and only if they do not collapse space (that is the determinant from the next lesson).</p>
-     <p>The inverse is how we "solve" $Ax=b$ in closed form: $x = A^{-1}b$. It is the matrix version of dividing.</p>`,
+    `<p>The <b>inverse</b> $A^{-1}$ (read "A inverse") is the matrix that undoes $A$. Apply $A$ to something, then apply $A^{-1}$, and you land back exactly where you started: $A^{-1}A = I$, the do-nothing matrix.</p>
+     <p><b>An analogy.</b> If $A$ is a machine that scrambles a vector, $A^{-1}$ is the machine that perfectly unscrambles it. Run the scrambler then the unscrambler and the vector comes out untouched — like a key that locks a door and the same key turning the other way to unlock it.</p>
+     <p><b>Two catches.</b> Only square matrices (same number of rows and columns) can have an inverse, and even then only if the matrix does not collapse space — if it flattens a 2-D shape onto a line, there is no way to puff it back out. That "did it collapse?" test is the determinant from the next lesson.</p>
+     <p><b>Why it matters.</b> The inverse is how we "solve" the equation $Ax=b$ in one clean step: $x = A^{-1}b$. It is the matrix version of dividing — instead of "divide both sides by $A$" (which matrices don't allow) you "multiply both sides by $A^{-1}$".</p>`,
   buildup:
-    `<p>With numbers, to undo "multiply by 5" you "multiply by $1/5$". The product $5\\cdot\\tfrac15 = 1$.</p>
-     <p>Matrices need the same idea, but $1$ becomes the identity $I$. The undo-matrix is $A^{-1}$, defined by $A^{-1}A=I$.</p>`,
+    `<p>Start with plain numbers. To undo "multiply by 5" you "multiply by $\\tfrac15$", because $5\\cdot\\tfrac15 = 1$ — and multiplying by 1 leaves everything alone. The number $\\tfrac15$ is the <i>inverse</i> of 5.</p>
+     <p>Matrices need the exact same idea, with one substitution: the role of the number $1$ is played by the identity matrix $I$ (the do-nothing matrix from the last lesson). So the undo-matrix, written $A^{-1}$, is defined by the requirement $A^{-1}A=I$ — apply $A$ then $A^{-1}$ and the net effect is "do nothing."</p>`,
   symbols: [
     { sym: "$A$", desc: "a square matrix ($n\\times n$)." },
     { sym: "$A^{-1}$", desc: "the inverse of $A$: the matrix with $A^{-1}A = AA^{-1} = I$. Read 'A inverse'." },
@@ -567,12 +574,13 @@ L({
   tagline: "One number that says how much a matrix scales area. Zero means it collapses space.",
   prereqs: ["la-inverse", "fnd-matvec"],
   bigIdea:
-    `<p>The <b>determinant</b> is a single number squeezed out of a square matrix.</p>
-     <p>Its meaning is geometric: $|\\det A|$ is the factor by which $A$ scales area (in 2D) or volume (in 3D). A unit square of area 1 becomes a parallelogram of area $|\\det A|$.</p>
-     <p>If $\\det A = 0$, the matrix flattens space onto a line — it loses a dimension, and cannot be undone. That is exactly when no inverse exists.</p>`,
+    `<p>The <b>determinant</b> is a single number squeezed out of a square matrix that summarises what the matrix does to <i>size</i>.</p>
+     <p>Its meaning is geometric. The bars in $|\\det A|$ mean "absolute value" (drop any minus sign). That number $|\\det A|$ is the factor by which $A$ scales area (in 2-D) or volume (in 3-D). Feed in a unit square (a square of area exactly 1) and $A$ turns it into a slanted parallelogram whose area is $|\\det A|$.</p>
+     <p><b>An analogy.</b> Think of the determinant as a "zoom factor with a twist switch." Its magnitude says how much bigger or smaller areas get; its sign ($+$ or $-$) says whether the shape was also flipped over like a mirror image.</p>
+     <p><b>The special case to remember.</b> If $\\det A = 0$, the matrix flattens space onto a line — it squashes a 2-D shape down to something with zero area, losing a whole dimension. Once flattened it cannot be puffed back out, which is exactly why no inverse exists when the determinant is zero.</p>`,
   buildup:
-    `<p>A matrix moves the corners of a shape. Sometimes the shape grows, sometimes it shrinks, sometimes it flips over.</p>
-     <p>We want one number capturing "how much bigger" and "did it flip". That number is the determinant.</p>`,
+    `<p>A matrix moves the corners of a shape to new places. Sometimes the resulting shape grows, sometimes it shrinks, sometimes it flips over to its mirror image, and sometimes it collapses flat.</p>
+     <p>We want a single number that captures two things at once: "how much bigger or smaller did areas get?" and "did the shape get flipped?" That one number is the determinant — magnitude for the size change, sign for the flip.</p>`,
   symbols: [
     { sym: "$A$", desc: "a square matrix; here $2\\times2$ with entries $a,b,c,d$." },
     { sym: "$\\det A$", desc: "the determinant of $A$, a single real number. Also written $|A|$." },
@@ -705,9 +713,10 @@ L({
   tagline: "Compute any determinant by breaking it into smaller ones — the recursive recipe.",
   prereqs: ["la-determinant"],
   bigIdea:
-    `<p><b>Cofactor expansion</b> (also called <b>Laplace expansion</b>) computes a determinant of any size by reducing it to smaller determinants.</p>
-     <p>Pick any one row or column. Walk along it: each entry contributes <i>(its value)</i> × <i>(a sign)</i> × <i>(the determinant of the smaller matrix you get by crossing out that entry's row and column)</i>. Add them up.</p>
-     <p>That is the recursive definition behind the determinant — and how you compute a $3\\times 3$ by hand by turning it into three $2\\times 2$s.</p>`,
+    `<p><b>Cofactor expansion</b> (also called <b>Laplace expansion</b>) computes a determinant of any size by reducing it to smaller determinants — and you already know how to do the smallest ones.</p>
+     <p>Pick any one row or column of the matrix. Walk along it entry by entry. Each entry contributes a term made of three things multiplied together: <i>(the entry's value)</i> × <i>(a $+$ or $-$ sign)</i> × <i>(the determinant of the smaller matrix you get by crossing out that entry's whole row and whole column)</i>. Add all those terms up and you have the determinant.</p>
+     <p><b>An analogy.</b> It is divide-and-conquer, like cutting a big problem into smaller copies of itself. A $3\\times 3$ determinant becomes a signed sum of three $2\\times 2$ determinants; each $2\\times 2$ you already know how to do with $ad-bc$. The big problem dissolves into easy sub-problems.</p>
+     <p>That recursive "break it into smaller versions" structure is the definition behind the determinant — and the standard way to compute a $3\\times 3$ by hand.</p>`,
   buildup:
     `<p>You already know the $2\\times 2$ rule: $\\det\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}=ad-bc$.</p>
      <p>For a $3\\times 3$ there is no short formula worth memorising. Cofactor expansion gives a recipe: expand along a row and the $3\\times 3$ becomes a signed sum of three $2\\times 2$ determinants — each of which you already know how to do.</p>`,
@@ -884,12 +893,12 @@ L({
   tagline: "Add up the diagonal. It equals the sum of the eigenvalues.",
   prereqs: ["fnd-matrix", "la-matmul", "fnd-eigen"],
   bigIdea:
-    `<p>The <b>trace</b> is the sum of the diagonal entries of a square matrix.</p>
-     <p>It looks trivial, but it has two deep properties: you can swap the order in a product, $\\operatorname{tr}(AB)=\\operatorname{tr}(BA)$, and it always equals the sum of the matrix's eigenvalues.</p>
-     <p>So the trace measures total "stretch" across all eigen-directions, in one cheap addition.</p>`,
+    `<p>The <b>trace</b> is just the sum of the diagonal entries of a square matrix — add up the numbers running from the top-left corner to the bottom-right, ignore everything else.</p>
+     <p>It looks almost too simple to be useful, but it hides two deep properties. First, you can swap the order inside a product without changing it: $\\operatorname{tr}(AB)=\\operatorname{tr}(BA)$. Second, it always equals the sum of the matrix's <b>eigenvalues</b> (the matrix's natural stretch factors), even though finding those eigenvalues is normally much harder work.</p>
+     <p><b>An analogy.</b> The trace is like reading a total off a receipt without re-adding every line item — one quick glance at the diagonal hands you the sum of all the eigenvalues for free. It measures the total "stretch" the matrix applies across all its natural directions, in a single cheap addition.</p>`,
   buildup:
-    `<p>Of all the numbers you could read off a matrix, the diagonal entries $A_{11}, A_{22}, \\dots$ are special: they connect each axis to itself.</p>
-     <p>Add them up and, remarkably, you get a quantity that does not change under many transformations.</p>`,
+    `<p>Of all the numbers you could read off a matrix, the diagonal entries $A_{11}, A_{22}, \\dots$ (row 1 col 1, row 2 col 2, and so on) are special: each one connects an axis to itself, with no mixing into other axes.</p>
+     <p>Add just those diagonal numbers and, remarkably, you get a quantity that stays the same under many transformations — and that secretly equals the sum of the eigenvalues. A trivial-looking sum turns out to carry real information.</p>`,
   symbols: [
     { sym: "$A$", desc: "a square matrix ($n\\times n$)." },
     { sym: "$\\operatorname{tr}(A)$", desc: "the trace: the sum of the diagonal entries." },
@@ -1008,12 +1017,12 @@ L({
   tagline: "How many truly independent directions a matrix's columns span.",
   prereqs: ["fnd-matvec", "la-matmul"],
   bigIdea:
-    `<p>Vectors are <b>linearly independent</b> if none of them can be built from the others by scaling and adding.</p>
-     <p>The <b>rank</b> of a matrix is the number of independent columns it has — the true number of directions it spans.</p>
-     <p>If one column is a combination of the others, it adds nothing new: the rank drops, and the matrix collapses space (it becomes singular).</p>`,
+    `<p>A set of vectors is <b>linearly independent</b> if none of them can be built out of the others by scaling and adding. ("Scaling" means stretching a vector by a number; "adding" means tip-to-tail combining.) If every vector points somewhere genuinely new, they are independent.</p>
+     <p>The <b>rank</b> of a matrix is the number of independent columns it has — the true count of distinct directions its columns reach.</p>
+     <p><b>An analogy.</b> Think of each column as a travel instruction ("go 2 east, 1 north"). If one instruction is just a repeat of others already in the list — "go twice as far in the same direction you could already reach" — it takes you nowhere new. That redundant column adds nothing, so the rank drops, and the matrix collapses space (it becomes singular, with no inverse).</p>`,
   buildup:
-    `<p>Stack some vectors as the columns of a matrix. Do they reach out into many directions, or do they secretly lie on a smaller line or plane?</p>
-     <p>Rank answers that. Full rank = no wasted directions. Low rank = redundancy.</p>`,
+    `<p>Stack a handful of vectors side by side as the columns of a matrix. Here is the question: do those columns genuinely reach out into many different directions, or do they secretly all lie along one line, or flat in one plane?</p>
+     <p>Rank answers exactly that. <b>Full rank</b> means no wasted directions — every column pulls somewhere new. <b>Low rank</b> means redundancy — some columns are just rehashes of the others and contribute no fresh direction.</p>`,
   symbols: [
     { sym: "$v_1,\\dots,v_k$", desc: "a set of vectors (here, the columns of a matrix)." },
     { sym: "$c_1,\\dots,c_k$", desc: "scalar weights used to combine the vectors." },
@@ -1152,12 +1161,13 @@ L({
   tagline: "Symmetric matrices that never bend the quadratic the wrong way: a bowl, not a saddle.",
   prereqs: ["la-transpose", "fnd-dot", "fnd-eigen"],
   bigIdea:
-    `<p>A symmetric matrix $A$ is <b>positive semi-definite (PSD)</b> if the quadratic form $x^\\top A x$ is never negative, for any $x$.</p>
-     <p>Geometrically, the surface $x^\\top A x$ is an upward bowl: it curves up in every direction (or is flat), never down. A matrix that curves down somewhere gives a saddle and is not PSD.</p>
-     <p>Equivalently, every eigenvalue of $A$ is $\\ge 0$. PSD matrices are the "non-negative numbers" of the matrix world.</p>`,
+    `<p>A symmetric matrix $A$ (one that equals its own transpose) is <b>positive semi-definite</b>, or <b>PSD</b> for short, if a certain number it produces is never negative.</p>
+     <p><b>What number?</b> The <i>quadratic form</i> $x^\\top A x$. You feed in any direction $x$, the matrix spits out a single number, and PSD means that number is always $\\ge 0$, no matter which $x$ you choose. (The "$\\ge 0$" sign means "greater than or equal to zero" — zero is allowed, negative is not.)</p>
+     <p><b>The picture.</b> Plot that number as a height over every direction and you get a surface. PSD means the surface is an upward <b>bowl</b>: it curves up in every direction (or is dead flat), never dipping down. A matrix whose surface curves down somewhere makes a <b>saddle</b> (like a horse's saddle — up front-to-back, down side-to-side) and is not PSD.</p>
+     <p><b>The shortcut.</b> Equivalently, every eigenvalue of $A$ (each natural stretch factor) is $\\ge 0$. The slogan: PSD matrices are the "non-negative numbers" of the matrix world — the matrix analogue of saying a plain number is $\\ge 0$.</p>`,
   buildup:
-    `<p>For a single number $a$, "non-negative" means $a \\ge 0$, i.e. $a x^2 \\ge 0$ for all $x$.</p>
-     <p>The matrix version replaces $a x^2$ with $x^\\top A x$. Asking that this is never negative is the PSD condition.</p>`,
+    `<p>Start with one plain number $a$. Saying "$a$ is non-negative" ($a \\ge 0$) is the same as saying $a x^2 \\ge 0$ for every $x$ — because $x^2$ is always $\\ge 0$, the sign of $a x^2$ is just the sign of $a$.</p>
+     <p>The matrix version takes that exact idea and replaces the scalar expression $a x^2$ with the matrix expression $x^\\top A x$ (here $x$ is a vector, not a single number). Demanding that this is never negative, for every possible $x$, is the whole PSD condition — the natural generalisation of "$a \\ge 0$" from numbers to matrices.</p>`,
   symbols: [
     { sym: "$A$", desc: "a symmetric matrix: $A^\\top = A$." },
     { sym: "$x$", desc: "any vector (the input we test the quadratic form on)." },
@@ -1291,12 +1301,13 @@ L({
   tagline: "Every symmetric matrix is a rotation, a scaling along perpendicular axes, then the rotation back.",
   prereqs: ["fnd-eigen", "la-transpose", "la-identity-diagonal", "la-psd"],
   bigIdea:
-    `<p>The <b>spectral theorem</b> says any symmetric matrix $A$ can be written $A = U\\Lambda U^\\top$.</p>
-     <p>Here $\\Lambda$ is diagonal (the eigenvalues) and $U$ holds the eigenvectors as columns — and those eigenvectors are <i>perpendicular</i> (orthonormal).</p>
-     <p>So a symmetric matrix does something simple in disguise: rotate into the eigenvector axes, scale each axis by its eigenvalue, rotate back. A circle becomes an ellipse aligned to those perpendicular axes.</p>`,
+    `<p>The <b>spectral theorem</b> says any symmetric matrix $A$ (one equal to its own transpose) can be pulled apart and rewritten as $A = U\\Lambda U^\\top$ — a product of three simpler matrices.</p>
+     <p><b>What the pieces are.</b> $\\Lambda$ (capital lambda) is a diagonal matrix holding the eigenvalues — the stretch factors. $U$ holds the eigenvectors as its columns — the natural axes of the matrix. The remarkable part: for a symmetric matrix those eigenvectors come out <i>perpendicular</i> to each other (at right angles) and unit length, a property called orthonormal.</p>
+     <p><b>The punchline.</b> So a symmetric matrix, which can look complicated, is secretly doing three simple things in a row: rotate the space into the eigenvector axes, scale each of those axes by its own eigenvalue, then rotate back. Picture a circle being stretched into an ellipse whose long and short axes line up with those perpendicular directions.</p>
+     <p><b>An analogy.</b> It is like discovering a tilted, awkward-looking stretch is really "straighten up, stretch along clean axes, then tilt back" — the messiness was just a change of viewpoint.</p>`,
   buildup:
-    `<p>General matrices can rotate, shear, and stretch in messy ways. Symmetric matrices are far tamer.</p>
-     <p>Their eigenvectors come out at right angles to each other, which means $U$ is a pure rotation and $U^\\top = U^{-1}$. That orthogonality is what makes everything clean.</p>`,
+    `<p>General matrices can rotate, shear (slant a shape sideways), and stretch all at once, in tangled ways that are hard to picture. Symmetric matrices are far tamer.</p>
+     <p>The reason is that their eigenvectors come out at right angles to each other. When you collect perpendicular unit vectors as the columns of $U$, that $U$ is a pure rotation (no stretching or shearing of its own), and a pure rotation has the tidy property $U^\\top = U^{-1}$ — its transpose is its inverse. That perpendicularity is exactly what makes the whole decomposition clean: stretching happens only along nice perpendicular axes, never as a shear.</p>`,
   symbols: [
     { sym: "$A$", desc: "a symmetric matrix: $A^\\top = A$." },
     { sym: "$U$", desc: "an orthogonal matrix whose columns are the unit eigenvectors of $A$. Orthogonal means $U^\\top U = I$." },
@@ -1424,12 +1435,13 @@ L({
   tagline: "Factor ANY matrix into rotate, stretch, rotate. Keep the big stretches, throw the rest away.",
   prereqs: ["la-spectral", "la-rank-independence", "la-matmul"],
   bigIdea:
-    `<p>The <b>SVD</b> (Singular Value Decomposition) factors <i>any</i> matrix (square or not) as $A = U\\Sigma V^\\top$.</p>
-     <p>$V^\\top$ rotates, $\\Sigma$ stretches each axis by a non-negative <b>singular value</b>, and $U$ rotates again. The singular values $\\sigma_1 \\ge \\sigma_2 \\ge \\dots$ rank the directions from most important to least.</p>
-     <p>Keep only the top few singular values and you get the best low-rank approximation of $A$ — the math behind compression, recommender systems, and noise removal.</p>`,
+    `<p>The <b>SVD</b> (Singular Value Decomposition) factors <i>any</i> matrix — square or rectangular, symmetric or not — as $A = U\\Sigma V^\\top$, a product of three simple matrices.</p>
+     <p><b>Read it right to left as three actions.</b> $V^\\top$ rotates the input, $\\Sigma$ (capital sigma) stretches each axis by a non-negative number called a <b>singular value</b>, and $U$ rotates the result again. Rotate, stretch, rotate — the same clean story as the spectral theorem, now for every matrix.</p>
+     <p><b>The singular values rank importance.</b> They come out sorted, $\\sigma_1 \\ge \\sigma_2 \\ge \\dots$ (sigma-one biggest), so the first direction is the one the matrix stretches most, the second next, and so on. The big ones carry most of what the matrix does; the tiny ones are nearly noise.</p>
+     <p><b>An analogy.</b> It is like a lossy zip file for matrices: keep only the top few singular values and you reconstruct the matrix almost perfectly with far fewer numbers. That "keep the big ones, drop the small ones" move is the best possible low-rank approximation, and it is the math behind image compression, recommender systems, and noise removal.</p>`,
   buildup:
-    `<p>The spectral theorem only handles symmetric matrices. Real data matrices (users × items, pixels) are rectangular and not symmetric.</p>
-     <p>The SVD extends the same "rotate, scale, rotate" idea to every matrix, by using two different rotations $U$ and $V$.</p>`,
+    `<p>The spectral theorem from the last lesson was powerful but picky: it only works on symmetric matrices. Real data matrices are usually neither symmetric nor even square — a users-by-items ratings table, or a grid of image pixels, has different numbers of rows and columns.</p>
+     <p>The SVD removes that restriction. It extends the same "rotate, scale, rotate" idea to absolutely every matrix, and it does so with one extra ingredient: instead of a single rotation $U$ used on both sides, it allows <i>two different</i> rotations, $V$ on the way in and $U$ on the way out. That extra freedom is exactly what lets the decomposition handle rectangular, non-symmetric matrices.</p>`,
   symbols: [
     { sym: "$A$", desc: "any $m\\times n$ matrix (need not be square)." },
     { sym: "$U$", desc: "an $m\\times m$ orthogonal matrix (left singular vectors as columns)." },
@@ -1557,13 +1569,15 @@ L({
   tagline: "The matrix of all first derivatives. It is how a vector function stretches space, locally.",
   prereqs: ["fnd-gradient", "fnd-matvec", "la-determinant"],
   bigIdea:
-    `<p>The <b>Jacobian</b> is the matrix of every first partial derivative of a function that takes <b>several inputs</b> and returns <b>several outputs</b>.</p>
-     <p>Near a point it is the function's <b>best linear approximation</b>: how the map stretches, rotates, and shears space right there.</p>
-     <p>The gradient is just the one-output special case. The Jacobian generalises it to many outputs at once.</p>`,
+    `<p>The <b>Jacobian</b> is a grid that collects every first <i>partial derivative</i> of a function that takes <b>several inputs</b> and returns <b>several outputs</b>.</p>
+     <p><b>What is a partial derivative?</b> It is the slope of an output as you nudge just one input, holding all the others fixed — "if I wiggle input $j$ a tiny bit, how fast does output $i$ change?" The Jacobian simply records that slope for every (output, input) pair in one rectangular table.</p>
+     <p><b>What it means geometrically.</b> Zoom in close enough to any point and even a curvy function looks like a straight-line stretch. The Jacobian <i>is</i> that local straight-line version — the function's <b>best linear approximation</b> right there, telling you how the map stretches, rotates, and shears space in the immediate neighbourhood.</p>
+     <p><b>An analogy.</b> The gradient you may have met is the one-output special case (slopes of a single output). The Jacobian is the full dashboard: one gradient per output, all stacked together, so you see how many outputs respond to many inputs at once.</p>`,
   buildup:
-    `<p>One input, one output: the derivative $f'(x)$ is a single slope.</p>
-     <p>Many inputs, one output: the gradient stacks the partials into one vector.</p>
-     <p>Many inputs, many outputs: you need the partial of <i>every output</i> with respect to <i>every input</i>. Lay them out in a grid — that grid is the Jacobian.</p>`,
+    `<p>Let's climb the ladder of derivatives from simplest to fullest.</p>
+     <p><b>One input, one output.</b> The ordinary derivative $f'(x)$ is a single slope — how fast $f$ rises as $x$ moves.</p>
+     <p><b>Many inputs, one output.</b> Now there is a slope for each input. Stack those slopes into one vector and you have the gradient.</p>
+     <p><b>Many inputs, many outputs.</b> Now you need the slope of <i>every output</i> with respect to <i>every input</i>. There is no way to fit all of those into a single vector — so you lay them out in a grid, rows for outputs and columns for inputs. That grid is the Jacobian.</p>`,
   symbols: [
     { sym: "$f$", desc: "a function from $n$ inputs to $m$ outputs, $f:\\mathbb{R}^n\\to\\mathbb{R}^m$." },
     { sym: "$J$", desc: "the Jacobian: an $m\\times n$ matrix of first partial derivatives." },
@@ -1732,12 +1746,13 @@ L({
   tagline: "The matrix of second derivatives. It tells you the curvature, and whether you're convex.",
   prereqs: ["fnd-gradient", "la-jacobian", "la-psd", "la-determinant"],
   bigIdea:
-    `<p>The <b>Hessian</b> is the matrix of all second partial derivatives of a function of several inputs.</p>
-     <p>Where the gradient gives slope (first derivative), the Hessian gives <b>curvature</b> (second derivative): how the slope itself bends, in every pair of directions.</p>
-     <p>The big payoff: a function is <b>convex</b> (one global bowl, easy to minimize) exactly when its Hessian is positive semi-definite everywhere.</p>`,
+    `<p>The <b>Hessian</b> is a square grid collecting all the <i>second</i> partial derivatives of a function of several inputs — the derivative of the derivative, taken in every pair of directions.</p>
+     <p><b>Slope vs curvature.</b> The gradient (first derivatives) tells you the <i>slope</i> — which way is downhill and how steep. The Hessian (second derivatives) tells you the <i>curvature</i> — how that slope itself is bending. Slope says "the ground tilts this way"; curvature says "and it is bending into a valley / over a ridge."</p>
+     <p><b>An analogy.</b> Driving a car, the gradient is your speed and direction; the Hessian is whether the road is curving into a dip (a bowl you'll settle into) or cresting a hill (a top you'll roll off). It is the shape of the terrain around you, not just the slope under your wheels.</p>
+     <p><b>The big payoff.</b> A function is <b>convex</b> — a single global bowl with one easy-to-find lowest point — exactly when its Hessian is positive semi-definite (PSD) everywhere. That is the link to the PSD lesson: a bowl-shaped Hessian guarantees gradient descent slides to the one true minimum and never gets stuck.</p>`,
   buildup:
-    `<p>For one variable, the second derivative $f''(x)$ tells you the bend: positive = bowl up, negative = bump down.</p>
-     <p>With many variables, you need the bend between every pair of directions. Collect them all into a square matrix — that is the Hessian.</p>`,
+    `<p>For a function of one variable, the second derivative $f''(x)$ already tells you the bend at a point: a positive value means the curve cups upward like a bowl, a negative value means it arches downward like a bump.</p>
+     <p>With many variables there is not just one bend — the surface can curve differently along each direction, and even have a cross-bend between a pair of directions. To capture all of it you need the second derivative for every pair of inputs. Collect every one of those numbers into a square matrix, and that matrix is the Hessian: the full curvature description of a multi-input function.</p>`,
   symbols: [
     { sym: "$f$", desc: "a function from $n$ inputs to one number, $f(x_1,\\dots,x_n)$." },
     { sym: "$H$", desc: "the Hessian: an $n\\times n$ matrix of second partial derivatives." },

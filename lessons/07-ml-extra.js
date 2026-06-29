@@ -121,10 +121,9 @@ L({
   tagline: "Use curvature, not just slope. Jump to the bottom of a parabola each step.",
   prereqs: ["ml-gradient-descent", "fnd-gradient"],
   bigIdea:
-    `<p>Gradient descent only knows the <b>slope</b>. It takes many small, cautious steps.</p>
-     <p><b>Newton's method</b> also uses the <b>curvature</b> (how the slope changes).</p>
-     <p>Curvature tells you not just which way to go, but how far.</p>
-     <p>So Newton fits a parabola to the cost and jumps straight to that parabola's bottom. Few steps, very fast.</p>`,
+    `<p><b>Analogy: rolling a ball into a valley in the dark.</b> Gradient descent feels only the <b>slope</b> under its feet — "downhill is that way" — and shuffles a small, cautious step that direction. It has no idea how far the valley floor is, so it repeats the shuffle hundreds of times.</p>
+     <p><b>Newton's method</b> also feels the <b>curvature</b>: how quickly the slope is changing. A gentle curve means the bottom is far away (take a big step); a sharp curve means the bottom is close (take a small step). Curvature turns "which way" into "which way AND how far."</p>
+     <p>So Newton does something bolder: it pretends the cost near you is a perfect bowl (a parabola), works out exactly where that bowl's bottom is, and <b>jumps straight there</b>. For a real bowl that is one leap. For a smooth cost it is a handful of leaps. That is why it is so much faster than the shuffling of gradient descent.</p>`,
   buildup:
     `<p>Near any point, a smooth cost looks like a parabola (a bowl).</p>
      <p>A parabola is fixed by its slope and its curvature at one point.</p>
@@ -263,10 +262,10 @@ L({
   tagline: "Fit a fresh line at every query point, trusting nearby data most.",
   prereqs: ["ml-linear-regression"],
   bigIdea:
-    `<p>Plain linear regression fits <b>one</b> line to all the data. That fails for curvy patterns.</p>
-     <p><b>Locally weighted regression</b> fits a fresh little line for each point you ask about.</p>
-     <p>It pays most attention to training points <b>near</b> the query, and ignores far-away ones.</p>
-     <p>Stitch all those local lines together and you trace a smooth curve that bends with the data.</p>`,
+    `<p><b>Analogy: asking the neighbors, not the whole town.</b> Plain linear regression fits <b>one</b> straight line through <i>all</i> the data — like guessing a house's price from the average of every house in the country. That single line cannot bend, so it misses any curvy pattern.</p>
+     <p><b>Locally weighted regression (LWR)</b> instead asks: "what are the houses right next to this one selling for?" For each point you want a prediction at, it fits a <b>fresh little line</b> using mostly the <b>nearby</b> training points and all but ignoring the far-away ones.</p>
+     <p>The trick is a smooth "nearness" dial: a point sitting right on your query counts fully; a point far away counts almost nothing; points in between fade gradually. Fit a line under those weights, read off the prediction, then slide to the next query and refit.</p>
+     <p>Stitch all those local straight lines together and they trace a single <b>smooth curve that bends with the data</b> — no need to guess the right equation in advance.</p>`,
   buildup:
     `<p>To predict at a query point $x$, give each training point a <b>weight</b>.</p>
      <p>Points close to $x$ get weight near 1. Points far away get weight near 0.</p>
@@ -392,10 +391,10 @@ L({
   tagline: "Reuse all your data: take turns holding out each slice to test on.",
   prereqs: ["ml-bias-variance", "ml-regression-metrics"],
   bigIdea:
-    `<p>You must test a model on data it did not train on — otherwise you only measure memorization.</p>
-     <p>But a single train/test split wastes data and gives a noisy score.</p>
-     <p><b>k-fold cross-validation</b> splits the data into $k$ equal slices (folds).</p>
-     <p>Each fold takes a turn as the test set while the other $k-1$ train. Average the $k$ scores for a stable estimate.</p>`,
+    `<p><b>Analogy: a fair exam, not a re-test of the homework.</b> If you grade a student on the exact questions they studied, you measure memory, not understanding. A model is the same: testing it on the rows it trained on only measures memorization, so you <b>must</b> score it on fresh, unseen data.</p>
+     <p>The obvious fix — set aside one chunk as a "test" — has two problems when data is scarce: you waste those rows (the model never learns from them), and the score depends on the luck of which rows landed in the test chunk.</p>
+     <p><b>k-fold cross-validation</b> solves both. Cut the data into $k$ equal slices, called <b>folds</b>. Then run $k$ separate "exams": each time, one fold is the held-out test and the other $k-1$ folds are the study material. Rotate so every fold gets one turn as the test.</p>
+     <p>Now <b>every row gets used for training (in $k-1$ of the rounds) and tested exactly once</b>, so nothing is wasted. Average the $k$ scores and the luck of any single split cancels out, giving one stable, trustworthy number.</p>`,
   buildup:
     `<p>Cut the data into $k$ folds of roughly equal size.</p>
      <p>Run $k$ rounds. In round $j$, hold out fold $j$ for validation and train on the rest.</p>
@@ -520,10 +519,10 @@ L({
   tagline: "Reward fit, punish complexity. The best model balances the two.",
   prereqs: ["ml-bias-variance", "ml-regression-metrics"],
   bigIdea:
-    `<p>A bigger model always fits the <b>training</b> data better. But it may just memorize noise.</p>
-     <p>So we need a score that rewards good fit but <b>punishes</b> extra parameters.</p>
-     <p><b>Model selection criteria</b> like AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) do exactly that: fit term plus complexity penalty.</p>
-     <p>Pick the model with the best (lowest) score. It is the sweet spot between underfit and overfit.</p>`,
+    `<p><b>Analogy: hiring the smallest team that gets the job done.</b> Give a model more parameters and it will <i>always</i> fit the <b>training</b> data better — just as adding more people to a project will never make the to-do list look worse. But extra parameters, like extra hires, can simply "memorize" quirks (noise) instead of doing real work, and they cost you in overfitting.</p>
+     <p>So we want a score that <b>rewards good fit</b> but <b>charges a fee for every extra parameter</b> — only keep a parameter if it earns more than it costs.</p>
+     <p><b>Model selection criteria</b> like AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) do exactly this: a "how badly it fits" term plus a "how complex it is" penalty.</p>
+     <p>Compute the score for each candidate model and keep the one with the best (lowest) total. That winner sits at the sweet spot — complex enough to capture the real pattern, simple enough not to chase noise.</p>`,
   buildup:
     `<p>Measure fit with the <b>log-likelihood</b> $\\ln L$: how probable the data is under the model. Higher is better.</p>
      <p>Measure complexity by counting parameters $k$. More parameters = more flexibility = more risk of overfitting.</p>
@@ -691,10 +690,10 @@ L({
   tagline: "Score each point: tight inside its cluster, far from the next one.",
   prereqs: ["ml-kmeans"],
   bigIdea:
-    `<p>Clustering has no labels, so how do you know if it is any good?</p>
-     <p>The <b>silhouette</b> scores each point on two questions: is it close to its own cluster, and far from the nearest other cluster?</p>
-     <p>A point deep inside a tight, well-separated cluster scores near $+1$. A point on a border scores near $0$. A point likely in the <b>wrong</b> cluster scores negative.</p>
-     <p>Average the scores over all points to grade the whole clustering — and to pick the best number of clusters $k$.</p>`,
+    `<p><b>Analogy: are you with your real friends, or stuck at the wrong table?</b> Clustering groups data with no answer key, so how do you know the groups are any good? Picture each data point as a person at a party who has been assigned to a table. A good seating has everyone close to their own tablemates and clearly apart from the next table over.</p>
+     <p>The <b>silhouette</b> turns that gut feeling into a number by asking each point two questions: am I <b>close to my own cluster</b> (do I belong at this table?), and am I <b>far from the nearest other cluster</b> (is the next table comfortably away?).</p>
+     <p>A point deep inside a tight, well-separated cluster scores near $+1$ ("definitely my table"). A point on the boundary between two clusters scores near $0$ ("could go either way"). A point that is actually closer to a neighboring cluster scores <b>negative</b> ("I'm at the wrong table") — a red flag that it may be misassigned.</p>
+     <p>Average everyone's score to grade the whole seating, and to choose the best number of clusters $k$: try several values and keep the $k$ whose average silhouette is highest.</p>`,
   buildup:
     `<p>For one point, compute $a$: its average distance to the other points <b>in its own cluster</b>. Small $a$ = it fits in tightly.</p>
      <p>Then compute $b$: its average distance to the points of the <b>nearest other</b> cluster. Large $b$ = it is well separated.</p>
@@ -826,10 +825,10 @@ L({
   tagline: "Find which part of your system to fix — and which part actually earns its keep.",
   prereqs: ["ml-bias-variance"],
   bigIdea:
-    `<p>Real systems are <b>pipelines</b>: several components in a row (preprocess → detect → classify …).</p>
-     <p>When the whole thing underperforms, where do you spend your effort? Guessing wastes weeks.</p>
-     <p><b>Error analysis</b> answers it: make one component <b>perfect</b> (an oracle) and see how much the final accuracy jumps. The biggest jump = the part to fix.</p>
-     <p><b>Ablative analysis</b> is the mirror image: <b>remove</b> a component from a working system and see how much accuracy you lose. The biggest drop = the part that matters most.</p>`,
+    `<p><b>Analogy: finding the weak link in an assembly line.</b> Real ML systems are <b>pipelines</b> — several components in a row, like stations on an assembly line (preprocess → detect → classify …). A mistake at any station gets passed downstream, so the final product can be flawed even if most stations are fine. When the whole line underperforms, which station do you fix? Guessing can waste weeks polishing a station that was never the problem.</p>
+     <p><b>Error analysis (ceiling analysis)</b> answers it by experiment: temporarily make <b>one</b> station <b>perfect</b> — feed it the correct answer from your labels (an "oracle") — and measure how much the final accuracy jumps. The station whose perfection helps most is your bottleneck; fix it first.</p>
+     <p><b>Ablative analysis</b> is the mirror image: start from the full working line and <b>switch off one station</b> at a time, then see how much accuracy you lose. A big drop means that station was pulling its weight; a tiny drop means it is barely helping and could be cut.</p>
+     <p>Two opposite questions, two tools: error analysis tells you <i>what to improve</i>, ablative analysis tells you <i>what is actually earning its keep</i>.</p>`,
   buildup:
     `<p>Both methods change <b>one</b> component at a time and re-measure the whole system. That isolates each part's effect.</p>
      <p><b>What does "make a component perfect" actually mean?</b> A perfect component makes <b>zero mistakes</b> — for every input it outputs exactly the right answer. You can't build such a thing, so you <b>fake it on your dev set</b>: for each example you hand that stage its <b>ground-truth</b> output (read straight from your labels) instead of whatever the component actually computed, and let the rest of the pipeline run on that flawless input. The overall accuracy you then measure is the <b>ceiling</b> you'd hit if that stage were flawless.</p>

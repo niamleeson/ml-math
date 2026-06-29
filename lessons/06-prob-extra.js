@@ -26,15 +26,16 @@ L({
   tagline: "Push a random variable through a function. Here is how its spread of values gets reshaped.",
   prereqs: ["prob-pdf-cdf", "prob-expectation"],
   bigIdea:
-    `<p>You know the distribution of $X$. You build a new variable $Y = g(X)$.</p>
-     <p>What is the distribution of $Y$?</p>
-     <p>When $g$ stretches a region, the probability there gets spread thin.</p>
-     <p>When $g$ squeezes a region, the probability there piles up.</p>`,
+    `<p><b>Plain-English picture.</b> Think of probability as a fixed lump of clay laid along a number line. A "distribution" is just how that clay is spread out — thick where values are likely, thin where they are rare.</p>
+     <p>You know the distribution of $X$ — that is, you know how the clay sits. You now build a new variable $Y = g(X)$, which means: take each value of $X$ and run it through a function $g$ (a rule like "square it" or "double it"). The question is: how is the clay spread out now, for $Y$?</p>
+     <p>Here "$g$" is the function (the reshaping rule) and "$g(X)$" is the result of feeding $X$ into it. The total clay never changes — there is always exactly one unit of probability. The function just moves it around.</p>
+     <p>When $g$ <b>stretches</b> a region (pulls nearby values far apart), the same clay covers more line, so it gets spread thin — the density goes down.</p>
+     <p>When $g$ <b>squeezes</b> a region (pushes nearby values together), the same clay piles into a smaller space — the density goes up.</p>`,
   buildup:
-    `<p>A density $f_X$ is "probability per unit length" on the $x$ axis.</p>
-     <p>Apply $Y = g(X)$. A tiny slice of width $dx$ near $x$ maps to a slice of width $dy$ near $y = g(x)$.</p>
-     <p>The same probability now sits in a slice of a different width. So the height (the density) must change.</p>
-     <p>The stretch factor is exactly how fast $g$ changes — its slope.</p>`,
+    `<p>A density $f_X$ is "probability per unit length" on the $x$ axis — the symbol $x$ is just a value $X$ could take. Density is like the <i>thickness</i> of the clay at a point, not the amount: to get an actual probability you multiply thickness by width (the way length times width gives area).</p>
+     <p>Now apply $Y = g(X)$. Zoom in on a tiny slice of the line of width $dx$ sitting near a point $x$. (Here "$dx$" just means "a very small width.") That slice carries a tiny amount of probability: thickness times width, $f_X(x)\\,dx$.</p>
+     <p>The function maps that slice to a new slice near $y = g(x)$, but the new slice has a <i>different</i> width $dy$. The probability inside it cannot change — it is the same clay — so $f_Y(y)\\,dy = f_X(x)\\,dx$.</p>
+     <p>Rearrange and the new thickness is the old thickness times $dx/dy$, the ratio of the two widths. That ratio is the <b>stretch factor</b>: how much $g$ pulls apart or squeezes a tiny slice. And that is exactly how fast $g$ changes near $x$ — its slope.</p>`,
   symbols: [
     { sym: "$X$", desc: "the original (input) random variable, with known density $f_X$." },
     { sym: "$Y = g(X)$", desc: "the new random variable: feed $X$ through the function $g$." },
@@ -201,10 +202,11 @@ L({
   tagline: "Add two independent random variables. Their densities blend together by sliding one across the other.",
   prereqs: ["prob-pdf-cdf", "prob-normal"],
   bigIdea:
-    `<p>You have two independent random variables, $X$ and $Y$. You care about their sum $Z = X + Y$.</p>
-     <p>The sum can hit a value $z$ in many ways: $X = k$ and $Y = z - k$, for every possible $k$.</p>
-     <p>Add up the chances of all those ways. That sliding-and-summing is called <b>convolution</b>.</p>
-     <p>It is why sums of many small effects pile up into a bell shape.</p>`,
+    `<p><b>Plain-English picture.</b> "Random variable" just means a number you do not know yet — the result of some random thing, like a die roll or a measurement. "Independent" means two of them do not influence each other: knowing one tells you nothing about the other.</p>
+     <p>You have two independent random variables, $X$ and $Y$, and you care about their sum $Z = X + Y$. You know how likely each value of $X$ is and how likely each value of $Y$ is. The question: how likely is each possible total $Z$?</p>
+     <p>Here is the trick. The sum can hit a target value $z$ in many ways: $X$ could be any value $k$, as long as $Y$ is exactly $z - k$ so the two add up to $z$. (Here $k$ is a stand-in for "whatever $X$ happened to be.")</p>
+     <p>So to find the chance of total $z$, list every way to split it, multiply the two chances for each split, and add them all up. That sliding-one-list-across-the-other-and-summing is called <b>convolution</b>.</p>
+     <p>It is also why sums of many small independent effects pile up into a bell shape — every middle total can be reached in far more ways than the extremes.</p>`,
   buildup:
     `<p>For two dice, the sum 7 happens as $1{+}6, 2{+}5, 3{+}4, 4{+}3, 5{+}2, 6{+}1$ — six ways.</p>
      <p>The sum 2 happens only as $1{+}1$ — one way. So 7 is far more likely than 2.</p>
@@ -350,11 +352,11 @@ L({
   tagline: "Split a variable's spread into two parts: scatter inside each group, plus scatter between the groups.",
   prereqs: ["prob-variance", "prob-conditional-expectation"],
   bigIdea:
-    `<p>Imagine the data is sorted into groups by a second variable $Y$.</p>
-     <p>The total spread of $X$ comes from two sources.</p>
-     <p>One: how much $X$ wobbles <i>inside</i> each group (within-group).</p>
-     <p>Two: how much the group <i>averages</i> differ from each other (between-group).</p>
-     <p>The law says the total variance is exactly these two added together.</p>`,
+    `<p><b>Plain-English picture.</b> "Variance" is one number that says how spread out a set of values is: small variance means everything clusters near the average, large variance means the values are scattered far and wide. "Mean" is just the average.</p>
+     <p>Concrete example: heights of students. Now imagine you sort them into groups by a second label $Y$ — say, by grade level. The total spread of height $X$ across the whole school comes from two separate sources.</p>
+     <p><b>Source one (within-group):</b> even inside a single grade, students still differ in height — some tall, some short. That is the wobble <i>inside</i> each group.</p>
+     <p><b>Source two (between-group):</b> the grades have different <i>average</i> heights — 12th graders are taller on average than 6th graders. That is how far the group averages sit from one another.</p>
+     <p>The law of total variance says the total spread is <b>exactly</b> these two pieces added together — nothing left over, nothing counted twice. It is a clean accounting identity: total spread = average wobble inside groups + spread of the group averages.</p>`,
   buildup:
     `<p>Pick a group $Y$. Inside it, $X$ has a conditional mean $E[X \\mid Y]$ and a conditional variance $\\operatorname{Var}(X \\mid Y)$.</p>
      <p>Average the within-group variances to get the typical scatter inside a group: $E[\\operatorname{Var}(X \\mid Y)]$.</p>
@@ -519,10 +521,10 @@ L({
   tagline: "One function that secretly stores every moment of a distribution. Differentiate at zero to read them off.",
   prereqs: ["prob-expectation", "prob-variance"],
   bigIdea:
-    `<p>The mean and variance are "moments" — averages of powers of $X$.</p>
-     <p>The moment generating function (MGF) packs all of them into a single function $M_X(t)$.</p>
-     <p>Differentiate it at $t = 0$ to pull out the moments one by one.</p>
-     <p>Bonus superpower: the MGF of a sum of independent variables is just the product of their MGFs.</p>`,
+    `<p><b>Plain-English picture.</b> A "moment" is just the average of a power of $X$. The first moment is the average of $X$ itself, $E[X]$ — the ordinary mean. The second moment is the average of $X^2$, written $E[X^2]$. (Here $E[\\cdot]$ means "expected value", i.e. the long-run average.) Together the moments pin down the shape of a distribution: the first sets where it sits, the second how wide it is, and so on.</p>
+     <p>Computing each moment separately is tedious. The <b>moment generating function</b> (MGF) is a clever single function $M_X(t)$ that secretly stores <i>all</i> the moments at once — think of it as a sealed box, and each moment is a different item inside.</p>
+     <p>To open the box and read out a moment, you <b>differentiate</b> (take the slope of) $M_X(t)$ and evaluate it at $t = 0$. One derivative gives the first moment (the mean), two derivatives give the second moment, and so on. The knob "$t$" is a helper dummy variable; we only care about behavior right at $t = 0$.</p>
+     <p>Bonus superpower: for a sum of independent variables, the MGF is just the <b>product</b> of their MGFs. So a hard "what is the distribution of a sum?" question turns into easy multiplication.</p>`,
   buildup:
     `<p>Take the expected value of $e^{tX}$, treating $t$ as a knob you can turn.</p>
      <p>Expand $e^{tX} = 1 + tX + \\frac{t^2}{2}X^2 + \\dots$ — a power series in $t$ whose coefficients are powers of $X$.</p>
