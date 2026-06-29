@@ -110,8 +110,10 @@ let written = 0, skipped = 0;
 const outDir = path.join(ROOT, "notebooks");
 fs.mkdirSync(outDir, { recursive: true });
 
+const ONLY = process.argv[2];   // optional: regenerate just one notebook, e.g. `node tools/gen-notebooks.js paper-cb-loss`
 L.forEach(l => {
   const id = l.id, code = CODE[id], viz = CODEVIZ[id];
+  if (ONLY && id !== ONLY) return;
   const cells = [];
   // intro
   let intro = "# " + (l.title || id) + "\n\n";
