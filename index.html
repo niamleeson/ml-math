@@ -528,6 +528,15 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   #content .nav-row button:hover, #content .colab-btn:hover { border-color: var(--ink); color: var(--ink); }
   #content .markdone.done { border-color: var(--ink); color: var(--ink); }
+
+  /* Book lessons: a clean reading layout that follows the book's own chapter flow. */
+  #content .book-chapter { line-height: 1.75; }
+  #content .book-chapter p { margin: 0 0 14px; }
+  #content .book-chapter .book-h { margin: 26px 0 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
+  #content .book-chapter > .book-h:first-child { margin-top: 0; }
+  #content .book-chapter blockquote { margin: 0 0 14px; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--ink-dim); font-style: italic; }
+  #content .book-takeaways { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
+  #content .book-takeaways h3 { margin: 0 0 8px; }
 </style>
 </head>
 <body>
@@ -580,10 +589,12 @@
   window.MODULE_ORDER = [
     "Foundations & Linear Algebra",
     "Probability & Statistics",
+    "Naked Statistics",
+    "Practical Statistics",
+    "All of Statistics",
     "Machine Learning",
     "Classical ML",
     "Deep Learning",
-    "PyTorch",
     "Modern Deep Learning & AI",
     "Few-shot & Transfer Learning",
     "Semi & Self-Supervised Learning",
@@ -592,8 +603,9 @@
     "Doing ML for Real — the skills that matter",
     "Metrics & Evaluation — measuring models, data & statistics",
     "Data Wrangling",
-    "Apache Spark",
     "Feature Engineering",
+    "Apache Spark",
+    "PyTorch",
     "Capstones",
     "Papers · Foundations & Optimization",
     "Papers · Classical ML",
@@ -632,6 +644,11 @@
 <script src="lessons/09-classical-b.js"></script>
 <script src="lessons/10-modern-a.js"></script>
 <script src="lessons/10-modern-b.js"></script>
+
+<!-- Book companions: lessons follow each book's own chapter structure (template: "book"). -->
+<script src="lessons/book-naked.js"></script>
+<script src="lessons/book-practical.js"></script>
+<script src="lessons/book-allofstats.js"></script>
 
 <!-- Wave C: Few-shot & Transfer Learning (lesson + its codeviz self-register in each file) -->
 <script src="lessons/concept-fs-transfer-learning.js"></script>
@@ -1516,6 +1533,23 @@ const App = (function () {
       navRow(id, prev, next);
   }
 
+  // Book lessons: render the chapter faithfully as flowing prose + sub-headings, not the
+  // fixed concept/paper scaffold. `sections:[{h?, body}]` carries the book's own structure.
+  function renderBook(l, id, prev, next) {
+    const body = (l.sections || []).map(s =>
+      `${s.h ? `<h3 class="book-h">${s.h}</h3>` : ""}${s.body || ""}`).join("");
+    const takeaways = (l.takeaways && l.takeaways.length)
+      ? `<div class="book-takeaways"><h3>Key takeaways</h3><ul>` +
+        l.takeaways.map(t => `<li>${t}</li>`).join("") + `</ul></div>`
+      : "";
+    return `<div class="crumbs">${l.book || l.module}${l.chapter ? " · " + l.chapter : ""}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      prereqLinks(l.prereqs) +
+      `<div class="card book-chapter">${body}${takeaways}</div>` +
+      navRow(id, prev, next);
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -1541,6 +1575,7 @@ const App = (function () {
     if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
+    else if (l.template === "book") { html = renderBook(l, id, prev, next); }
     else { html =
       `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
