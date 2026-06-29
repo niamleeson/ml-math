@@ -154,13 +154,22 @@ L({
      <p><b>Why the maze gives Manhattan distance.</b> Delete "no walking through walls". Now the only cost is one per grid step, and the cheapest way to cover $|\\Delta r|$ rows and $|\\Delta c|$ columns is $|\\Delta r| + |\\Delta c|$ steps. That sum is the relaxed cost, hence an admissible $h$.</p>
      <p><b>Intuition.</b> A relaxation is the same problem with the handcuffs off. With fewer rules to obey, you can always do at least as well, never worse. So its cost is a lower bound on the real cost: a guess that is honest about being optimistic.</p>`,
   example:
-    `<p>Start at cell $(0,0)$, goal at $(4,4)$ in a $5\\times5$ maze. Walls force a long detour.</p>
+    `<p>Start at cell $(0,0)$, goal at $(4,4)$ in a $5\\times5$ maze. Walls force a long detour. Plug the cells into the Manhattan formula, then compare the relaxed cost to the true cost.</p>
      <ul class="steps">
-       <li>Relax: remove the walls. Now $h = $ Manhattan distance $= |4-0| + |4-0| = 4 + 4 = 8$.</li>
-       <li>The real maze winds around the walls; suppose its true shortest path is $12$ steps.</li>
-       <li>Check: $8 \\le 12$. The heuristic does not overestimate, so it is admissible.</li>
-       <li>A* uses $h = 8$ to aim toward the goal, exploring far fewer cells than blind search.</li>
-     </ul>`,
+       <li>Row gap: $|\\Delta r| = |4-0| = 4$.</li>
+       <li>Column gap: $|\\Delta c| = |4-0| = 4$.</li>
+       <li>Relax (remove walls): $h = |\\Delta r| + |\\Delta c| = 4 + 4 = 8$.</li>
+       <li>True maze path winds around the walls: $\\text{Cost} = 12$ steps.</li>
+       <li>Check admissibility: $h = 8 \\le 12 = \\text{Cost}$. Never overestimates. ✓</li>
+     </ul>
+     <table class="extable">
+       <caption>Relaxed heuristic $h$ vs true cost for two start cells (goal $(4,4)$)</caption>
+       <thead><tr><th>start $(r,c)$</th><th class="num">$h=|\\Delta r|+|\\Delta c|$</th><th class="num">true cost</th><th>admissible?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$(0,0)$</td><td class="num">$8$</td><td class="num">$12$</td><td>yes ($8 \\le 12$)</td></tr>
+         <tr><td class="row-h">$(2,4)$</td><td class="num">$2$</td><td class="num">$6$</td><td>yes ($2 \\le 6$)</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Relaxation is the standard recipe for inventing heuristics. For the 8-puzzle, "ignore that tiles block each other" gives the Manhattan-distance heuristic. For routing, "ignore roads, fly straight" gives the straight-line heuristic. Every good A* heuristic is a relaxed problem in disguise.</p>`,
   whenToUse:
@@ -295,13 +304,26 @@ L({
      <p><b>Connection to gradient descent.</b> The update is exactly a gradient step on the hinge-style loss $\\max_{y'}\\big[w\\cdot\\phi(y') - w\\cdot\\phi(y)\\big]$: its (sub)gradient is $\\phi(\\hat y) - \\phi(y)$, and stepping against it gives $+\\phi(y) - \\phi(\\hat y)$.</p>
      <p><b>Intuition.</b> Each edge the true path uses but the wrong path does not gets cheaper to prefer (weight $+1$). Each edge only the wrong path uses gets penalized (weight $-1$). Shared edges cancel out. After enough corrections, the true structure outscores the impostor.</p>`,
   example:
-    `<p>Two paths share start and goal. True path uses edges $\\{e_1, e_2\\}$; the model wrongly predicts a path using $\\{e_3, e_4\\}$. All weights start at $0$.</p>
+    `<p>Two paths share start and goal. True path $y$ uses edges $\\{e_1, e_2\\}$; the model wrongly predicts $\\hat y$ using $\\{e_3, e_4\\}$. All weights start at $0$. Apply $w \\leftarrow w + \\phi(y) - \\phi(\\hat y)$ once and watch the scores flip.</p>
      <ul class="steps">
-       <li>Scores tie at $0$, and the tie is broken toward the wrong path: a mistake.</li>
-       <li>Update: $w_{e_1} \\mathbin{+}= 1$, $w_{e_2} \\mathbin{+}= 1$, $w_{e_3} \\mathbin{-}= 1$, $w_{e_4} \\mathbin{-}= 1$.</li>
-       <li>Now true score $= 1 + 1 = 2$; wrong score $= -1 + -1 = -2$.</li>
-       <li>The true path wins by $4$. One correction flipped the decision.</li>
-     </ul>`,
+       <li>Before: true score $= w_{e_1}+w_{e_2} = 0+0 = 0$; wrong score $= w_{e_3}+w_{e_4} = 0+0 = 0$. Tie breaks to wrong → a mistake.</li>
+       <li>Update true edges: $w_{e_1} = 0+1 = 1$, $w_{e_2} = 0+1 = 1$.</li>
+       <li>Update wrong edges: $w_{e_3} = 0-1 = -1$, $w_{e_4} = 0-1 = -1$.</li>
+       <li>After: true score $= 1+1 = 2$; wrong score $= -1+(-1) = -2$.</li>
+       <li>Gap $= 2-(-2) = 4$. The true path now wins; one correction flipped the decision.</li>
+     </ul>
+     <table class="extable">
+       <caption>Edge weights and path scores, before vs after one update</caption>
+       <thead><tr><th>edge</th><th class="num">before</th><th class="num">after</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$w_{e_1}$ (true)</td><td class="num">$0$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$w_{e_2}$ (true)</td><td class="num">$0$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$w_{e_3}$ (wrong)</td><td class="num">$0$</td><td class="num">$-1$</td></tr>
+         <tr><td class="row-h">$w_{e_4}$ (wrong)</td><td class="num">$0$</td><td class="num">$-1$</td></tr>
+         <tr><td class="row-h">true score</td><td class="num">$0$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">wrong score</td><td class="num">$0$</td><td class="num">$-2$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>The structured perceptron trains part-of-speech taggers, dependency parsers, and named-entity recognizers, where the output is a whole sequence or tree, not a single label. It is also how you learn action costs for a search/planning agent from demonstrations (imitation learning).</p>`,
   whenToUse:
@@ -434,13 +456,24 @@ L({
      <p><b>Why it is unbiased.</b> Each $u_t$ is a complete, real return: no estimate feeds into it. So $\\mathbb{E}[\\hat Q] = \\mathbb{E}[u] = Q$ even with few samples. The price is variance: full-episode returns wobble a lot, so you need many episodes.</p>
      <p><b>Intuition.</b> You do not need to know the dice to learn the game. Roll enough times and write down what you actually scored; the average tells you what each move is worth. Monte Carlo trusts experience over any model.</p>`,
   example:
-    `<p>From $(s,a)$, with $\\gamma = 0.9$, one episode unfolds: reward $-1$, then $-1$, then $+10$ at the goal. Compute its return $u$.</p>
+    `<p>From $(s,a)$, with $\\gamma = 0.9$, one episode unfolds: reward $r_0 = -1$, then $r_1 = -1$, then $r_2 = +10$ at the goal. Compute its return $u = \\sum_k \\gamma^{\\,k} r_k$, then average over three episodes.</p>
      <ul class="steps">
-       <li>Discount each reward by $\\gamma^{\\,k-t}$: $u = (-1) + 0.9(-1) + 0.9^2(10) = -1 - 0.9 + 0.81\\times10 = -1 - 0.9 + 8.1 = 6.2$.</li>
-       <li>Two more episodes (different random lengths) give returns $u = 9$ and $u = 8$.</li>
-       <li>Average them: $\\hat Q(s,a) = (6.2 + 9 + 8)/3 = 23.2/3 \\approx 7.73$.</li>
-       <li>No model was used: each $u$ is a real, discounted return, and the mean tracks the true $Q$. More episodes shrink the wobble.</li>
-     </ul>`,
+       <li>Discount the rewards: $\\gamma^0 r_0 = 1\\times(-1) = -1$; $\\gamma^1 r_1 = 0.9\\times(-1) = -0.9$; $\\gamma^2 r_2 = 0.81\\times10 = 8.1$.</li>
+       <li>Episode 1 return: $u = -1 - 0.9 + 8.1 = 6.2$.</li>
+       <li>Two more episodes (different random lengths) give $u = 9$ and $u = 8$.</li>
+       <li>Average: $\\hat Q(s,a) = (6.2 + 9 + 8)/3 = 23.2/3 \\approx 7.73$.</li>
+       <li>No model used: each $u$ is a real discounted return; more episodes shrink the wobble toward the true $Q$.</li>
+     </ul>
+     <table class="extable">
+       <caption>Episode 1: per-step discounting of $r_k$ ($\\gamma = 0.9$)</caption>
+       <thead><tr><th>step $k$</th><th class="num">$r_k$</th><th class="num">$\\gamma^k$</th><th class="num">$\\gamma^k r_k$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$0$</td><td class="num">$-1$</td><td class="num">$1$</td><td class="num">$-1$</td></tr>
+         <tr><td class="row-h">$1$</td><td class="num">$-1$</td><td class="num">$0.9$</td><td class="num">$-0.9$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$10$</td><td class="num">$0.81$</td><td class="num">$8.1$</td></tr>
+         <tr><td class="row-h">return $u$</td><td class="num"></td><td class="num"></td><td class="num">$6.2$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Monte Carlo evaluation underlies Monte Carlo Tree Search, the engine behind strong Go and game-playing AIs (Artificial Intelligences): it plays many random rollouts to the end and averages the outcomes to score a move. It is also used to evaluate policies when a simulator exists but the exact model does not.</p>`,
   whenToUse:
@@ -566,13 +599,24 @@ L({
      <p><b>MC (Monte Carlo) vs TD in one line.</b> Monte Carlo uses the full return $u_t$ (low bias, high variance, must wait). TD uses $r + \\gamma V(s')$ (a little biased while $V$ is wrong, but low variance and usable immediately).</p>
      <p><b>Intuition.</b> You do not need to finish the trip to learn the route. The moment the next landmark looks closer than expected, you revise your estimate of where you started. Each step's small surprise teaches a little, and the goal's reward seeps backward one cell per update.</p>`,
   example:
-    `<p>State $s$ has value $V(s) = 0$. The agent steps, gets reward $r = 0$, lands in $s'$ with $V(s') = 1$. Use $\\alpha = 0.5$, $\\gamma = 0.9$.</p>
+    `<p>State $s$ has value $V(s) = 0$. The agent steps, gets reward $r = 0$, lands in $s'$ with $V(s') = 1$. Use $\\alpha = 0.5$, $\\gamma = 0.9$. Plug into $V(s) \\leftarrow V(s) + \\alpha[r + \\gamma V(s') - V(s)]$.</p>
      <ul class="steps">
        <li>TD target: $r + \\gamma V(s') = 0 + 0.9\\times1 = 0.9$.</li>
-       <li>TD error: $0.9 - V(s) = 0.9 - 0 = 0.9$.</li>
-       <li>Update: $V(s) \\leftarrow 0 + 0.5\\times0.9 = 0.45$.</li>
-       <li>$V(s)$ moved from $0$ to $0.45$, halfway to the target. The goal's value flowed back one step.</li>
-     </ul>`,
+       <li>TD error: $\\text{target} - V(s) = 0.9 - 0 = 0.9$.</li>
+       <li>Scaled step: $\\alpha \\times 0.9 = 0.5\\times0.9 = 0.45$.</li>
+       <li>Update: $V(s) \\leftarrow 0 + 0.45 = 0.45$.</li>
+       <li>$V(s)$ moved halfway to the target $0.9$; the goal's value flowed back one step.</li>
+     </ul>
+     <table class="extable">
+       <caption>One TD update ($\\alpha = 0.5$, $\\gamma = 0.9$)</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$V(s)$ old</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$r + \\gamma V(s')$ (target)</td><td class="num">$0.9$</td></tr>
+         <tr><td class="row-h">TD error</td><td class="num">$0.9$</td></tr>
+         <tr><td class="row-h">$V(s)$ new</td><td class="num">$0.45$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>TD learning is the backbone of modern RL (Reinforcement Learning). TD-Gammon learned backgammon at expert level this way. The TD error even matches dopamine signals measured in the brain, making it a leading model of how animals learn from reward. SARSA's on-policy nature makes it safer than Q-learning when exploration can be costly.</p>`,
   whenToUse:
@@ -700,12 +744,21 @@ L({
      <p><b>Why a pure Nash can be bad for everyone.</b> In the prisoner's dilemma, Defect strictly beats Cooperate <i>whatever the opponent does</i> (it is a dominant strategy). So (Defect, Defect) is the unique Nash, even though (Cooperate, Cooperate) pays both more. Individual best-responding does not maximize the group.</p>
      <p><b>Intuition.</b> A Nash equilibrium is a "no regrets" outcome: looking back at the others' choices, you would not change yours. The minimax theorem says that against a worst-case opponent, randomizing your moves guarantees the game's value, and you cannot be punished for revealing a randomized plan you yourself follow by chance.</p>`,
   example:
-    `<p>Prisoner's dilemma, payoffs (higher is better) shown as A's / B's:</p>
+    `<p>Prisoner's dilemma. Each cell is the payoff $V(a,b)$ as A's / B's (higher is better). Find A's best response to each column, then B's, then the cell where both best-respond.</p>
+     <table class="extable">
+       <caption>Payoff matrix $V(a,b)$ = (A's payoff, B's payoff)</caption>
+       <thead><tr><th></th><th class="num">B: Cooperate</th><th class="num">B: Defect</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A: Cooperate</td><td class="num">$(-1,\\,-1)$</td><td class="num">$(-3,\\,0)$</td></tr>
+         <tr><td class="row-h">A: Defect</td><td class="num">$(0,\\,-3)$</td><td class="num">$(-2,\\,-2)$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Both Cooperate: $(-1, -1)$. Both Defect: $(-2, -2)$. One Defects, other Cooperates: $(0, -3)$.</li>
-       <li>A's view: if B Cooperates, A gets $-1$ (Coop) vs $0$ (Defect) → Defect. If B Defects, A gets $-3$ vs $-2$ → Defect. Defect dominates.</li>
+       <li>A vs "B Cooperates": $\\max(-1,\\,0) = 0$ → Defect.</li>
+       <li>A vs "B Defects": $\\max(-3,\\,-2) = -2$ → Defect. So Defect dominates for A.</li>
        <li>By symmetry, Defect dominates for B too.</li>
-       <li>So the Nash equilibrium is (Defect, Defect) at $(-2,-2)$, even though (Cooperate, Cooperate) at $(-1,-1)$ is better for both.</li>
+       <li>Both best-respond at (Defect, Defect) $= (-2,-2)$: the Nash equilibrium.</li>
+       <li>Yet (Cooperate, Cooperate) $= (-1,-1)$ pays both more — Nash is not the social optimum.</li>
      </ul>`,
   application:
     `<p>Game theory models pricing wars, ad auctions, network routing congestion, and security (attacker vs defender). Nash equilibrium predicts stable behavior; the minimax theorem underlies poker-bot strategies and adversarial machine learning, where one network maximizes and another minimizes.</p>`,
@@ -860,13 +913,23 @@ L({
      <p><b>Why order matters.</b> Different elimination orders create intermediate factors of different sizes. A good order keeps factors small; a bad one can blow them up. Finding the optimal order is itself hard, but cheap heuristics (eliminate the least-connected variable first) work well.</p>
      <p><b>Intuition.</b> It is the same trick as factoring $ab + ac = a(b+c)$: do the small multiplications and the small sums in a smart order instead of expanding everything. You never write down the giant joint table; you collapse it variable by variable.</p>`,
   example:
-    `<p>Chain $A - f_1 - B - f_2 - C$, binary variables. $f_1 = \\{00{:}2,\\,01{:}1,\\,10{:}1,\\,11{:}3\\}$, $f_2 = \\{00{:}1,\\,01{:}2,\\,10{:}3,\\,11{:}1\\}$ (indices are $A,B$ then $B,C$). Eliminate $B$ to build the whole new factor $g(A,C)$.</p>
+    `<p>Chain $A - f_1 - B - f_2 - C$, binary variables. Eliminate $B$ via $g(A,C) = \\sum_B f_1(A,B)\\,f_2(B,C)$. Start from the two factor tables:</p>
+     <table class="extable">
+       <caption>Input factors $f_1(A,B)$ and $f_2(B,C)$</caption>
+       <thead><tr><th>row</th><th class="num">$f_1(A,B)$</th><th class="num">$f_2(B,C)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$00$</td><td class="num">$2$</td><td class="num">$1$</td></tr>
+         <tr><td class="row-h">$01$</td><td class="num">$1$</td><td class="num">$2$</td></tr>
+         <tr><td class="row-h">$10$</td><td class="num">$1$</td><td class="num">$3$</td></tr>
+         <tr><td class="row-h">$11$</td><td class="num">$3$</td><td class="num">$1$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>$g(0,0) = f_1(0,0)f_2(0,0) + f_1(0,1)f_2(1,0) = 2\\times1 + 1\\times3 = 5$.</li>
        <li>$g(0,1) = f_1(0,0)f_2(0,1) + f_1(0,1)f_2(1,1) = 2\\times2 + 1\\times1 = 5$.</li>
        <li>$g(1,0) = f_1(1,0)f_2(0,0) + f_1(1,1)f_2(1,0) = 1\\times1 + 3\\times3 = 10$.</li>
        <li>$g(1,1) = f_1(1,0)f_2(0,1) + f_1(1,1)f_2(1,1) = 1\\times2 + 3\\times1 = 5$.</li>
-       <li>So $g(A,C) = \\{00{:}5,\\,01{:}5,\\,10{:}10,\\,11{:}5\\}$: one factor, $B$ gone, graph now $A - g - C$.</li>
+       <li>$g(A,C) = \\{00{:}5,\\,01{:}5,\\,10{:}10,\\,11{:}5\\}$: one factor, $B$ gone, graph now $A - g - C$.</li>
      </ul>`,
   application:
     `<p>Variable elimination is the standard exact-inference engine inside probabilistic systems: medical diagnosis networks, error-correcting decoders, and speech models. The same factor-graph machinery (the sum-product algorithm) underlies belief propagation and the decoding of LDPC (Low-Density Parity-Check) and turbo codes in your phone's modem.</p>`,
@@ -990,13 +1053,23 @@ L({
      <p><b>Why particle weights work.</b> Each particle is a sample from a proposal; multiplying its weight by the observation likelihood $P(\\text{obs}\\mid\\text{particle})$ is importance sampling. Resampling in proportion to weights focuses computation on particles that explain the data, so a fixed swarm tracks a moving posterior.</p>
      <p><b>Intuition.</b> You cannot compute the whole probability landscape, so you scatter darts that land more often where probability is high, then read the answer off where the darts cluster. More darts, sharper picture. Gibbs moves one coordinate at a time; particle filters carry a cloud of hypotheses through time, pruning the ones reality contradicts.</p>`,
   example:
-    `<p>True posterior over three states is $[0.2, 0.5, 0.3]$. We sample $10$ times and get states: $2,2,2,1,2,3,3,2,2,3$.</p>
+    `<p>True posterior over three states is $[0.2, 0.5, 0.3]$. We draw $N = 10$ samples and get states: $2,2,2,1,2,3,3,2,2,3$. Estimate each $\\hat P$ by $\\#\\{X=x\\}/N$.</p>
      <ul class="steps">
-       <li>Counts: state 1 → $1$, state 2 → $6$, state 3 → $3$.</li>
-       <li>Estimates: $\\hat P(1) = 1/10 = 0.1$, $\\hat P(2) = 6/10 = 0.6$, $\\hat P(3) = 3/10 = 0.3$.</li>
-       <li>With only $10$ samples the estimates are rough (true values $0.2, 0.5, 0.3$).</li>
-       <li>Draw thousands more and the histogram tightens onto $[0.2, 0.5, 0.3]$.</li>
-     </ul>`,
+       <li>Count: state 1 → $1$, state 2 → $6$, state 3 → $3$ (total $1+6+3 = 10$). ✓</li>
+       <li>$\\hat P(1) = 1/10 = 0.1$.</li>
+       <li>$\\hat P(2) = 6/10 = 0.6$.</li>
+       <li>$\\hat P(3) = 3/10 = 0.3$.</li>
+       <li>With only $10$ samples the fit is rough; thousands more tighten it onto $[0.2, 0.5, 0.3]$.</li>
+     </ul>
+     <table class="extable">
+       <caption>Empirical estimate ($N=10$) vs true posterior</caption>
+       <thead><tr><th>state</th><th class="num">count</th><th class="num">$\\hat P = $ count$/10$</th><th class="num">true $P$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">$1$</td><td class="num">$0.1$</td><td class="num">$0.2$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$6$</td><td class="num">$0.6$</td><td class="num">$0.5$</td></tr>
+         <tr><td class="row-h">$3$</td><td class="num">$3$</td><td class="num">$0.3$</td><td class="num">$0.3$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Particle filters track robot and self-driving-car positions (Monte Carlo localization), aircraft on radar, and objects in video. Gibbs sampling powers topic models, image denoising, and the Bayesian statistics packages (BUGS, Stan's cousins) used across science when the posterior has no closed form.</p>`,
   whenToUse:
@@ -1136,13 +1209,22 @@ L({
      <p><b>Why parents alone are not enough.</b> Knowing a child's value also tells you about $X$ (information flows backward up an arrow). So children must be in the blanket too, even though $X$ does not point the other way.</p>
      <p><b>Intuition.</b> The blanket is a fence. Influence can reach $X$ only through its parents (causes), its children (effects), or the back-door explaining-away link via a shared child. Stand on the whole fence and nothing outside can sneak in. That locality is what makes large probabilistic models computable at all.</p>`,
   example:
-    `<p>$X$ (binary) has one parent $P$ and one child $C$; a far node $U$ sits outside the blanket. Resample $X$ from its local factors: $P(X{=}1 \\mid \\text{rest}) \\propto P(X{=}1\\mid P)\\,P(C\\mid X{=}1)$.</p>
+    `<p>$X$ (binary) has one parent $P$ and one child $C$; a far node $U$ sits outside the blanket. Resample $X$ from its local factors only: $P(X \\mid \\text{rest}) \\propto P(X\\mid P)\\,P(C\\mid X)$. Take $P(X{=}1\\mid P) = 0.6$, $P(C\\mid X{=}1) = 0.5$, $P(C\\mid X{=}0) = 0.2$.</p>
      <ul class="steps">
-       <li>Suppose $P(X{=}1\\mid P) = 0.6$ and the observed child gives $P(C\\mid X{=}1) = 0.5$, $P(C\\mid X{=}0) = 0.2$.</li>
-       <li>Unnormalized: $X{=}1$ scores $0.6\\times0.5 = 0.30$; $X{=}0$ scores $0.4\\times0.2 = 0.08$.</li>
-       <li>Normalize: $P(X{=}1\\mid\\text{rest}) = 0.30/(0.30+0.08) = 0.30/0.38 \\approx 0.79$.</li>
-       <li>The far node $U$ never entered the arithmetic — it cancels. Conditioning on the blanket $\\{P, C\\}$ alone fixes $X$'s belief; the rest of the network is irrelevant.</li>
-     </ul>`,
+       <li>Score $X{=}1$: $P(X{=}1\\mid P)\\,P(C\\mid X{=}1) = 0.6\\times0.5 = 0.30$.</li>
+       <li>Score $X{=}0$: $P(X{=}0\\mid P)\\,P(C\\mid X{=}0) = 0.4\\times0.2 = 0.08$.</li>
+       <li>Normalizer: $0.30 + 0.08 = 0.38$.</li>
+       <li>$P(X{=}1\\mid\\text{rest}) = 0.30/0.38 \\approx 0.79$.</li>
+       <li>The far node $U$ never appears — it cancels. The blanket $\\{P, C\\}$ alone fixes $X$'s belief.</li>
+     </ul>
+     <table class="extable">
+       <caption>Resampling $X$ from its Markov blanket $\\{P, C\\}$</caption>
+       <thead><tr><th>$X$</th><th class="num">$P(X\\mid P)$</th><th class="num">$P(C\\mid X)$</th><th class="num">unnorm. score</th><th class="num">normalized</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">$0.6$</td><td class="num">$0.5$</td><td class="num">$0.30$</td><td class="num">$0.79$</td></tr>
+         <tr><td class="row-h">$0$</td><td class="num">$0.4$</td><td class="num">$0.2$</td><td class="num">$0.08$</td><td class="num">$0.21$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>The Markov blanket makes large-scale probabilistic inference feasible: Gibbs samplers, belief propagation, and Markov random fields all update a variable using only its blanket. In feature selection, the Markov blanket of a target is provably the minimal optimal feature set. The concept even appears in theories of biological self-organization (the "free energy principle").</p>`,
   whenToUse:
@@ -1296,13 +1378,22 @@ L({
      <p><b>Why smoothing beats filtering.</b> Filtering uses $\\alpha_i$ alone (past only). Multiplying in $\\beta_i$ injects the future evidence, which can sharply revise a belief — a later clue can reveal what an earlier ambiguous step must have been.</p>
      <p><b>Intuition.</b> To judge where you were a minute ago, it helps to know both where you came from and where you ended up. The forward pass carries the story up to now; the backward pass carries it from the end back. Glue them at the same instant and you get the best possible estimate of that instant.</p>`,
   example:
-    `<p>At step $i$, the forward message is $\\alpha_i = [0.6, 0.2]$ over hidden states $\\{1, 2\\}$, and the backward message is $\\beta_i = [0.5, 1.0]$.</p>
+    `<p>At step $i$, forward message $\\alpha_i = [0.6, 0.2]$ over hidden states $\\{1, 2\\}$, backward message $\\beta_i = [0.5, 1.0]$. The smoothed posterior is $P(H_i \\mid E) \\propto \\alpha_i\\,\\beta_i$.</p>
      <ul class="steps">
        <li>Multiply elementwise: $\\alpha_i \\cdot \\beta_i = [0.6\\times0.5,\\; 0.2\\times1.0] = [0.30, 0.20]$.</li>
-       <li>Normalize: divide by the total $0.30 + 0.20 = 0.50$.</li>
-       <li>$P(H_i = 1 \\mid E) = 0.30/0.50 = 0.6$, $P(H_i = 2 \\mid E) = 0.20/0.50 = 0.4$.</li>
-       <li>The future evidence ($\\beta$) reweighted the belief away from what filtering alone would have said.</li>
-     </ul>`,
+       <li>Normalizer: $0.30 + 0.20 = 0.50$.</li>
+       <li>$P(H_i = 1 \\mid E) = 0.30/0.50 = 0.6$.</li>
+       <li>$P(H_i = 2 \\mid E) = 0.20/0.50 = 0.4$.</li>
+       <li>Filtering alone ($\\alpha$ only) would normalize $[0.6, 0.2]$ to $[0.75, 0.25]$; the future evidence $\\beta$ pulled it to $[0.6, 0.4]$.</li>
+     </ul>
+     <table class="extable">
+       <caption>Combining forward and backward messages at step $i$</caption>
+       <thead><tr><th>state $h$</th><th class="num">$\\alpha_i(h)$</th><th class="num">$\\beta_i(h)$</th><th class="num">$\\alpha_i\\beta_i$</th><th class="num">$P(H_i{=}h\\mid E)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$1$</td><td class="num">$0.6$</td><td class="num">$0.5$</td><td class="num">$0.30$</td><td class="num">$0.6$</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">$0.2$</td><td class="num">$1.0$</td><td class="num">$0.20$</td><td class="num">$0.4$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Forward-backward trains and decodes HMMs in speech recognition, gene finding (which DNA (Deoxyribonucleic Acid) regions are genes), and part-of-speech tagging. It is the E-step of the Baum-Welch (EM, Expectation–Maximization) algorithm that learns the HMM's parameters from unlabeled sequences.</p>`,
   whenToUse:
@@ -1424,13 +1515,20 @@ L({
      <p><b>Why topics emerge unsupervised.</b> Words like "game", "team", "score" tend to appear together; LDA can raise their joint likelihood by assigning them to one topic. Co-occurrence is the only signal, yet it reliably carves a corpus into themes.</p>
      <p><b>Intuition.</b> Think of each document as poured from a few colored jugs (topics), each jug full of its own favorite words. You only see the final mixed cup of words. LDA reverse-engineers which jugs exist and how much of each went into every cup.</p>`,
   example:
-    `<p>Two topics, Sports and Finance. Document mix $\\theta = [0.8, 0.2]$ (mostly Sports). Word "team" has $\\phi_{\\text{Sports,team}} = 0.4$, $\\phi_{\\text{Fin,team}} = 0.0$. What is $P(\\text{word} = \\text{"team"})$? Sum the mixture over both topics.</p>
+    `<p>Two topics, Sports and Finance. Document mix $\\theta = [0.8, 0.2]$ (mostly Sports). Use $P(W{=}w) = \\sum_k \\theta_k\\,\\phi_{k,w}$ to score two words.</p>
      <ul class="steps">
-       <li>$P(\\text{"team"}) = \\sum_k \\theta_k\\,\\phi_{k,\\text{team}} = \\theta_{\\text{Sp}}\\phi_{\\text{Sp,team}} + \\theta_{\\text{Fin}}\\phi_{\\text{Fin,team}}$.</li>
-       <li>$= 0.8\\times0.4 + 0.2\\times0.0 = 0.32 + 0 = 0.32$.</li>
-       <li>Now "stock", with $\\phi_{\\text{Sp,stock}} = 0.0$, $\\phi_{\\text{Fin,stock}} = 0.3$: $P(\\text{"stock"}) = 0.8\\times0.0 + 0.2\\times0.3 = 0.06$.</li>
-       <li>"team" ($0.32$) beats "stock" ($0.06$): the same word probabilities, weighted by $\\theta$, make a mostly-Sports document emit mostly Sports words.</li>
-     </ul>`,
+       <li>$P(\\text{"team"}) = \\theta_{\\text{Sp}}\\phi_{\\text{Sp,team}} + \\theta_{\\text{Fin}}\\phi_{\\text{Fin,team}} = 0.8\\times0.4 + 0.2\\times0.0 = 0.32 + 0 = 0.32$.</li>
+       <li>$P(\\text{"stock"}) = \\theta_{\\text{Sp}}\\phi_{\\text{Sp,stock}} + \\theta_{\\text{Fin}}\\phi_{\\text{Fin,stock}} = 0.8\\times0.0 + 0.2\\times0.3 = 0 + 0.06 = 0.06$.</li>
+       <li>"team" ($0.32$) beats "stock" ($0.06$): a mostly-Sports document emits mostly Sports words.</li>
+     </ul>
+     <table class="extable">
+       <caption>Mixture $P(W{=}w) = \\sum_k \\theta_k\\,\\phi_{k,w}$ with $\\theta = [0.8, 0.2]$</caption>
+       <thead><tr><th>word $w$</th><th class="num">$\\phi_{\\text{Sp},w}$</th><th class="num">$\\phi_{\\text{Fin},w}$</th><th class="num">$P(W{=}w)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">team</td><td class="num">$0.4$</td><td class="num">$0.0$</td><td class="num">$0.32$</td></tr>
+         <tr><td class="row-h">stock</td><td class="num">$0.0$</td><td class="num">$0.3$</td><td class="num">$0.06$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>LDA organizes huge text collections: it powers topic browsers for news archives and scientific papers, content recommendation, and exploratory analysis of survey responses or customer reviews. The same mixture idea extends to images (objects as topics) and genetics (populations as topics).</p>`,
   whenToUse:
@@ -1544,12 +1642,20 @@ L({
      <p><b>Why completeness matters.</b> Resolution refutation is <i>complete</i> for FOL: if a set of clauses is unsatisfiable, repeated resolution will eventually derive the empty clause. So to prove "$KB \\models \\text{goal}$", add $\\neg\\text{goal}$ and resolve until you reach a contradiction.</p>
      <p><b>Intuition.</b> Predicates and quantifiers let logic describe a whole world of objects, not just a fixed list of yes/no facts. Unification is pattern-matching: line up a general law with a specific case. Resolution is the single engine that, fed unified clauses, grinds out every consequence.</p>`,
   example:
-    `<p>Unify $P(x, b)$ with $P(a, y)$, then resolve with a rule.</p>
+    `<p>Unify $P(x, b)$ with $P(a, y)$ position by position, then resolve with a rule.</p>
+     <table class="extable">
+       <caption>Unifying $P(x,b)$ with $P(a,y)$, argument by argument</caption>
+       <thead><tr><th>position</th><th>term in $P(x,b)$</th><th>term in $P(a,y)$</th><th>substitution</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td>$x$ (variable)</td><td>$a$ (constant)</td><td>$\\{x/a\\}$</td></tr>
+         <tr><td class="row-h">2</td><td>$b$ (constant)</td><td>$y$ (variable)</td><td>$\\{y/b\\}$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Match position 1: $x$ vs $a$ → substitute $\\{x/a\\}$. Match position 2: $b$ vs $y$ → substitute $\\{y/b\\}$.</li>
-       <li>Unifier $\\theta = \\{x/a, y/b\\}$. Both atoms become $P(a, b)$: identical. ✓</li>
-       <li>Now take the rule $\\neg P(a,b) \\vee Q(a)$ (i.e. "$P(a,b) \\Rightarrow Q(a)$") and the fact $P(a,b)$.</li>
-       <li>Resolve on $P(a,b)$: the $\\neg P(a,b)$ and $P(a,b)$ cancel, leaving the new fact $Q(a)$.</li>
+       <li>Combine the substitutions: unifier $\\theta = \\{x/a,\\; y/b\\}$.</li>
+       <li>Apply $\\theta$: both atoms become $P(a, b)$ — identical. ✓</li>
+       <li>Take the rule $\\neg P(a,b) \\vee Q(a)$ (i.e. "$P(a,b) \\Rightarrow Q(a)$") and the fact $P(a,b)$.</li>
+       <li>Resolve on $P(a,b)$: $\\neg P(a,b)$ and $P(a,b)$ cancel, deriving the new fact $Q(a)$.</li>
      </ul>`,
   application:
     `<p>First-order logic and resolution power automated theorem provers, the Prolog programming language (its execution <i>is</i> resolution), formal verification of hardware and software, and the knowledge bases behind expert systems and the semantic web (ontologies, description logics).</p>`,

@@ -486,6 +486,22 @@
   /* Ruled tables (symbols / API) keep their hairlines, lose the colour. */
   #content .symbols td.sym, #content .api-table td.api-sig code { color: var(--ink); font-weight: 600; }
 
+  /* Worked-example tables: a clean textbook table (sans for tabular figures, ruled rows). */
+  #content table.extable {
+    border-collapse: collapse; margin: 16px 0; font-size: 15px; line-height: 1.45;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #content table.extable caption { caption-side: top; text-align: left; color: var(--ink-dim);
+    font-size: 13.5px; margin-bottom: 6px; font-style: italic; }
+  #content table.extable th, #content table.extable td {
+    padding: 6px 16px 6px 0; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  #content table.extable thead th { font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--ink); }
+  #content table.extable tbody tr:last-child td { border-bottom: none; }
+  #content table.extable th.num, #content table.extable td.num {
+    text-align: right; font-variant-numeric: tabular-nums; }
+  #content table.extable td.row-h, #content table.extable th[scope="row"] { font-weight: 600; color: var(--ink); }
+
   /* Practice & step lists: flat numbered text, hairline separators, monochrome counters. */
   #content .problem { background: none; border: none; border-radius: 0; padding: 16px 0 0; margin: 0;
     border-top: 1px solid var(--border); }

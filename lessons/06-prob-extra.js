@@ -61,16 +61,25 @@ L({
        <li>Both cases collapse into one if we take the absolute value: $f_Y(y) = f_X(h(y))\\,|h'(y)|$. $\\;\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Let $X$ be uniform on $[0,1]$, so $f_X(x) = 1$ for $0 \\le x \\le 1$. Let $Y = X^2$. Find $f_Y$.</p>
+    `<p>Let $X$ be uniform on $[0,1]$, so $f_X(x) = 1$ for $0 \\le x \\le 1$. Let $Y = X^2$. Find $f_Y$ and plug in real numbers.</p>
      <ul class="steps">
        <li>Invert: $y = x^2$ with $x \\ge 0$ gives $h(y) = \\sqrt{y}$, valid for $0 \\le y \\le 1$.</li>
        <li>Slope of inverse: $\\frac{dh}{dy} = \\frac{1}{2\\sqrt{y}}$.</li>
        <li>Plug in: $f_Y(y) = f_X(\\sqrt{y}) \\cdot \\left|\\frac{1}{2\\sqrt{y}}\\right| = 1 \\cdot \\frac{1}{2\\sqrt{y}} = \\frac{1}{2\\sqrt{y}}$.</li>
        <li>Sanity check it integrates to 1: $\\int_0^1 \\frac{1}{2\\sqrt{y}}\\,dy = [\\sqrt{y}]_0^1 = 1$. Good.</li>
-       <li>Read off the reshaping with real numbers. The input was flat: $f_X = 1$ everywhere. After the transform, at $y = 0.04$ the density is $f_Y(0.04) = \\frac{1}{2\\sqrt{0.04}} = \\frac{1}{2(0.2)} = 2.5$ — squeezed values pile up, height jumps from $1$ to $2.5$.</li>
-       <li>At $y = 0.64$ the density is $f_Y(0.64) = \\frac{1}{2\\sqrt{0.64}} = \\frac{1}{2(0.8)} = 0.625$ — stretched values spread thin, height drops from $1$ to $0.625$.</li>
-       <li>So $f_Y$ blows up near $y = 0$ and thins out near $y = 1$: squaring squashes small values together (probability piles up) and spreads large ones apart.</li>
-     </ul>`,
+       <li>At $y = 0.04$: $f_Y = \\frac{1}{2\\sqrt{0.04}} = \\frac{1}{2(0.2)} = 2.5$ — squeezed values pile up.</li>
+       <li>At $y = 0.64$: $f_Y = \\frac{1}{2\\sqrt{0.64}} = \\frac{1}{2(0.8)} = 0.625$ — stretched values spread thin.</li>
+     </ul>
+     <table class="extable">
+       <caption>The flat input ($f_X = 1$ everywhere) gets reshaped by squaring.</caption>
+       <thead><tr><th>$y$</th><th class="num">$f_X$ (before)</th><th class="num">$f_Y(y) = \\frac{1}{2\\sqrt{y}}$ (after)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$0.04$</td><td class="num">$1$</td><td class="num">$2.5$</td></tr>
+         <tr><td class="row-h">$0.25$</td><td class="num">$1$</td><td class="num">$1.0$</td></tr>
+         <tr><td class="row-h">$0.64$</td><td class="num">$1$</td><td class="num">$0.625$</td></tr>
+       </tbody>
+     </table>
+     <p>So $f_Y$ blows up near $y = 0$ and thins out near $y = 1$: squaring squashes small values together (probability piles up) and spreads large ones apart.</p>`,
   application:
     `<p>Generating random samples from a target distribution uses this idea in reverse: if $U$ is uniform on $[0,1]$, then $X = F^{-1}(U)$ has CDF $F$ (the "inverse-transform" trick). Reparameterization in variational autoencoders pushes a simple noise variable through a learned $g$ to get a complex one.</p>`,
   whenToUse:
@@ -227,14 +236,20 @@ L({
        <li>So $f_Z(z) = \\int_{-\\infty}^{\\infty} f_X(x)\\,f_Y(z - x)\\,dx$ — exactly the convolution. $\\;\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Take two small independent dice, $X$ on faces $\\{1,2,3\\}$ and $Y$ on faces $\\{1,2\\}$, each face uniform. So $p_X = (\\tfrac13,\\tfrac13,\\tfrac13)$ and $p_Y = (\\tfrac12,\\tfrac12)$. Build the whole PMF of $Z = X + Y$ by sliding $p_Y$ across $p_X$.</p>
+    `<p>Take two small independent dice, $X$ on faces $\\{1,2,3\\}$ and $Y$ on faces $\\{1,2\\}$, each face uniform. So $p_X = (\\tfrac13,\\tfrac13,\\tfrac13)$ and $p_Y = (\\tfrac12,\\tfrac12)$. Build the whole PMF of $Z = X + Y$ by summing $p_X(x)\\,p_Y(z-x)$ over every $x$ — the convolution.</p>
+     <table class="extable">
+       <caption>Each target sum $z$ collects every pair $(x, z-x)$ that lands there.</caption>
+       <thead><tr><th>$z$</th><th>pairs $(x, z{-}x)$</th><th class="num">$P(Z=z)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$2$</td><td>$(1,1)$</td><td class="num">$\\tfrac13\\cdot\\tfrac12 = \\tfrac16$</td></tr>
+         <tr><td class="row-h">$3$</td><td>$(1,2),(2,1)$</td><td class="num">$2(\\tfrac13\\cdot\\tfrac12) = \\tfrac13$</td></tr>
+         <tr><td class="row-h">$4$</td><td>$(2,2),(3,1)$</td><td class="num">$2(\\tfrac13\\cdot\\tfrac12) = \\tfrac13$</td></tr>
+         <tr><td class="row-h">$5$</td><td>$(3,2)$</td><td class="num">$\\tfrac13\\cdot\\tfrac12 = \\tfrac16$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>For each target $z$, sum $p_X(x)\\,p_Y(z-x)$ over every $x$ — the convolution.</li>
-       <li>$z=2$: only $(1,1)$, so $P = \\tfrac13\\cdot\\tfrac12 = \\tfrac16$.</li>
-       <li>$z=3$: $(1,2)$ and $(2,1)$, so $P = \\tfrac13\\cdot\\tfrac12 + \\tfrac13\\cdot\\tfrac12 = \\tfrac26 = \\tfrac13$.</li>
-       <li>$z=4$: $(2,2)$ and $(3,1)$, so $P = \\tfrac13\\cdot\\tfrac12 + \\tfrac13\\cdot\\tfrac12 = \\tfrac13$.</li>
-       <li>$z=5$: only $(3,2)$, so $P = \\tfrac13\\cdot\\tfrac12 = \\tfrac16$.</li>
-       <li>Resulting PMF: $p_Z = (\\tfrac16,\\ \\tfrac13,\\ \\tfrac13,\\ \\tfrac16)$ at $z = 2,3,4,5$. It sums to $\\tfrac16+\\tfrac13+\\tfrac13+\\tfrac16 = 1$ — a valid distribution, and the two flat inputs blended into a flat-topped tent.</li>
+       <li>Resulting PMF: $p_Z = (\\tfrac16,\\ \\tfrac13,\\ \\tfrac13,\\ \\tfrac16)$ at $z = 2,3,4,5$.</li>
+       <li>It sums to $\\tfrac16+\\tfrac13+\\tfrac13+\\tfrac16 = 1$ — a valid distribution; two flat inputs blended into a flat-topped tent.</li>
        <li>Same recipe on two fair 6-sided dice gives $P(Z=5) = 4 \\times \\tfrac{1}{36} = \\tfrac19$ and a triangle peaking at $\\tfrac{6}{36}$ at $z=7$.</li>
        <li>Continuous check: two independent $\\mathcal{N}(0,1)$ Normals sum to $\\mathcal{N}(0,2)$ — means $0{+}0$, variances $1{+}1$.</li>
      </ul>`,
@@ -372,10 +387,18 @@ L({
        <li>What remains is $\\operatorname{Var}(X) = E[\\operatorname{Var}(X \\mid Y)] + \\operatorname{Var}(E[X \\mid Y])$. $\\;\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Test scores in two equally-sized classes. Class A: mean 70, variance 25. Class B: mean 80, variance 25. Pick a random student. Find $\\operatorname{Var}(X)$.</p>
+    `<p>Test scores in two equally-sized classes. Pick a random student. Find $\\operatorname{Var}(X)$.</p>
+     <table class="extable">
+       <caption>Per-class breakdown (each class has probability $\\tfrac12$).</caption>
+       <thead><tr><th>class</th><th class="num">$P$</th><th class="num">mean $E[X\\mid Y]$</th><th class="num">variance $\\operatorname{Var}(X\\mid Y)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">$0.5$</td><td class="num">$70$</td><td class="num">$25$</td></tr>
+         <tr><td class="row-h">B</td><td class="num">$0.5$</td><td class="num">$80$</td><td class="num">$25$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Within-group: both classes have variance 25, so $E[\\operatorname{Var}(X \\mid Y)] = \\frac{1}{2}(25) + \\frac{1}{2}(25) = 25$.</li>
-       <li>Group means: 70 and 80, each with probability $\\frac{1}{2}$. Overall mean $E[X] = 75$.</li>
+       <li>Within-group: $E[\\operatorname{Var}(X \\mid Y)] = \\frac{1}{2}(25) + \\frac{1}{2}(25) = 25$.</li>
+       <li>Overall mean: $E[X] = \\frac{1}{2}(70) + \\frac{1}{2}(80) = 75$.</li>
        <li>Between-group: $\\operatorname{Var}(E[X \\mid Y]) = \\frac{1}{2}(70-75)^2 + \\frac{1}{2}(80-75)^2 = \\frac{1}{2}(25) + \\frac{1}{2}(25) = 25$.</li>
        <li>Total: $\\operatorname{Var}(X) = 25 + 25 = 50$.</li>
        <li>Check directly: $E[X^2] = \\frac{1}{2}(25 + 70^2) + \\frac{1}{2}(25 + 80^2) = \\frac{1}{2}(4925) + \\frac{1}{2}(6425) = 5675$, and $5675 - 75^2 = 5675 - 5625 = 50$. Matches.</li>
@@ -532,14 +555,23 @@ L({
      </ul>
      <p><i>Note: replacing $t$ with $it$ gives the characteristic function $\\varphi_X(t)=E[e^{itX}]$, which always exists even when the MGF does not.</i></p>`,
   example:
-    `<p>Let $X$ be exponential with rate $\\lambda$, density $f(x) = \\lambda e^{-\\lambda x}$ for $x \\ge 0$. Find its mean and variance via the MGF.</p>
+    `<p>Let $X$ be exponential with rate $\\lambda$, density $f(x) = \\lambda e^{-\\lambda x}$ for $x \\ge 0$. Find its mean and variance via the MGF. To get concrete numbers, also plug in $\\lambda = 2$.</p>
      <ul class="steps">
        <li>$M_X(t) = \\int_0^\\infty e^{tx}\\lambda e^{-\\lambda x}\\,dx = \\lambda \\int_0^\\infty e^{-(\\lambda - t)x}\\,dx = \\frac{\\lambda}{\\lambda - t}$ for $t &lt; \\lambda$.</li>
        <li>First derivative: $M_X'(t) = \\frac{\\lambda}{(\\lambda - t)^2}$, so $M_X'(0) = \\frac{\\lambda}{\\lambda^2} = \\frac{1}{\\lambda} = E[X]$.</li>
        <li>Second derivative: $M_X''(t) = \\frac{2\\lambda}{(\\lambda - t)^3}$, so $M_X''(0) = \\frac{2\\lambda}{\\lambda^3} = \\frac{2}{\\lambda^2} = E[X^2]$.</li>
        <li>Variance: $\\operatorname{Var}(X) = E[X^2] - (E[X])^2 = \\frac{2}{\\lambda^2} - \\frac{1}{\\lambda^2} = \\frac{1}{\\lambda^2}$.</li>
-       <li>Both match the known exponential facts: mean $\\frac{1}{\\lambda}$, variance $\\frac{1}{\\lambda^2}$.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Read each moment off a derivative at $t=0$; numbers shown for $\\lambda = 2$.</caption>
+       <thead><tr><th>quantity</th><th>formula</th><th class="num">value at $\\lambda=2$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$M_X'(0) = E[X]$</td><td>$\\frac{1}{\\lambda}$</td><td class="num">$0.5$</td></tr>
+         <tr><td class="row-h">$M_X''(0) = E[X^2]$</td><td>$\\frac{2}{\\lambda^2}$</td><td class="num">$0.5$</td></tr>
+         <tr><td class="row-h">$\\operatorname{Var}(X)$</td><td>$\\frac{1}{\\lambda^2}$</td><td class="num">$0.25$</td></tr>
+       </tbody>
+     </table>
+     <p>Check: $\\operatorname{Var} = E[X^2] - (E[X])^2 = 0.5 - 0.5^2 = 0.25$. Both match the known exponential facts: mean $\\frac{1}{\\lambda}$, variance $\\frac{1}{\\lambda^2}$.</p>`,
   application:
     `<p>MGFs prove that sums of independent Poissons are Poisson and sums of independent Normals are Normal (multiply the MGFs, recognize the form). They power Chernoff bounds — the backbone of concentration inequalities and generalization bounds in learning theory — by bounding $P(X \\ge a) \\le e^{-ta}M_X(t)$.</p>`,
   whenToUse:

@@ -197,8 +197,16 @@ L({
      <p>$f_w(x)$ just reads the sign of that score to decide yes or no.</p>
      <p>The margin $m$ checks our work. If the score and the true label agree in sign, $m$ is positive. A big positive margin means "correct and confident". A negative margin means we got it wrong.</p>`,
   example:
-    `<p>Spam filter. Two features: number of times "free" appears, and number of links.</p>
-     <p>An email has $\\phi(x) = [2, 3]$. The learned weights are $w = [1.5, 0.5]$.</p>
+    `<p>Spam filter. Two features: number of times "free" appears, and number of links. The learned weights are $w = [1.5, 0.5]$. Score each email by $s = w\\cdot\\phi(x)$.</p>
+     <table class="extable">
+       <caption>Two emails scored by the same weights $w=[1.5,\\,0.5]$.</caption>
+       <thead><tr><th>email</th><th class="num">"free"</th><th class="num">links</th><th class="num">$s = 1.5\\,\\phi_1 + 0.5\\,\\phi_2$</th><th>$f_w(x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">2</td><td class="num">3</td><td class="num">4.5</td><td>+1 spam</td></tr>
+         <tr><td class="row-h">B</td><td class="num">0</td><td class="num">1</td><td class="num">0.5</td><td>+1 spam</td></tr>
+       </tbody>
+     </table>
+     <p>Work email A step by step, where $\\phi(x) = [2, 3]$:</p>
      <ul class="steps">
        <li>Score: $s = 1.5\\times2 + 0.5\\times3 = 3 + 1.5 = 4.5$.</li>
        <li>Sign of $4.5$ is positive, so $f_w(x) = +1$. We call it spam.</li>
@@ -292,8 +300,19 @@ L({
      <ul class="steps">
        <li>Zero-one loss: the sign of $0.3$ is $+1$, which matches $y$. So loss $= 0$. Looks fine.</li>
        <li>Hinge loss: $\\max(1 - 0.3,\\, 0) = \\max(0.7, 0) = 0.7$. Not zero.</li>
+       <li>Squared loss (toward a target of $1$): $(0.3 - 1)^2 = (-0.7)^2 = 0.49$.</li>
        <li>Hinge complains because the margin is small. It wants the answer correct AND confident (margin past $1$).</li>
-     </ul>`,
+     </ul>
+     <p>The same margin scores very differently under each loss:</p>
+     <table class="extable">
+       <caption>Three losses at margin $m = 0.3$ (target $y=+1$).</caption>
+       <thead><tr><th>loss</th><th>formula</th><th class="num">value at $m=0.3$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">zero-one</td><td>$1$ if $m\\lt0$ else $0$</td><td class="num">0</td></tr>
+         <tr><td class="row-h">hinge</td><td>$\\max(1-m,\\,0)$</td><td class="num">0.70</td></tr>
+         <tr><td class="row-h">squared</td><td>$(m-1)^2$</td><td class="num">0.49</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Every trained model minimizes some loss. Spam filters and classifiers often use hinge or logistic loss. House-price predictors use squared loss. Choosing the loss shapes what "good" means.</p>`,
   whenToUse:
@@ -355,12 +374,22 @@ L({
      <p>The minus sign means "go downhill". The learning rate $\\eta$ controls how far.</p>
      <p>Too big a step and you overshoot. Too small and learning crawls.</p>`,
   example:
-    `<p>One weight $w = 4$. For the current example the loss gradient is $\\nabla_w = 2$. Learning rate $\\eta = 0.5$.</p>
+    `<p>Minimize $\\text{Loss}(w) = w^2$, whose gradient is $\\nabla_w = 2w$. Start at $w = 4$ with learning rate $\\eta = 0.5$. Each step applies $w \\leftarrow w - \\eta\\,\\nabla_w$.</p>
      <ul class="steps">
-       <li>The gradient is $+2$: uphill is to the right, so loss drops if we move left.</li>
-       <li>Update: $w \\leftarrow 4 - 0.5\\times2 = 4 - 1 = 3$.</li>
-       <li>The weight moved from $4$ to $3$, downhill. Next example gives the next nudge.</li>
+       <li>Step 1: gradient $\\nabla_w = 2\\times4 = 8$. Update $w \\leftarrow 4 - 0.5\\times8 = 4 - 4 = 0$.</li>
+       <li>Wait — that step overshot to the minimum exactly. Use a gentler $\\eta = 0.25$ to see the descent: $w \\leftarrow 4 - 0.25\\times8 = 4 - 2 = 2$.</li>
+       <li>Step 2 (still $\\eta=0.25$): $\\nabla_w = 2\\times2 = 4$, so $w \\leftarrow 2 - 0.25\\times4 = 2 - 1 = 1$.</li>
+       <li>Step 3: $\\nabla_w = 2\\times1 = 2$, so $w \\leftarrow 1 - 0.25\\times2 = 1 - 0.5 = 0.5$. The weight crawls toward $0$.</li>
      </ul>
+     <table class="extable">
+       <caption>SGD on $w^2$ with $\\eta = 0.25$: each step nudges $w$ toward the minimum at $0$.</caption>
+       <thead><tr><th class="num">step</th><th class="num">$w$</th><th class="num">$\\nabla_w = 2w$</th><th class="num">$\\eta\\,\\nabla_w$</th><th class="num">new $w$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">4</td><td class="num">8</td><td class="num">2.0</td><td class="num">2.0</td></tr>
+         <tr><td class="num">2</td><td class="num">2.0</td><td class="num">4.0</td><td class="num">1.0</td><td class="num">1.0</td></tr>
+         <tr><td class="num">3</td><td class="num">1.0</td><td class="num">2.0</td><td class="num">0.5</td><td class="num">0.5</td></tr>
+       </tbody>
+     </table>
      <p>Thousands of tiny nudges like this drive the loss down.</p>`,
   application:
     `<p>SGD trains almost every modern model, including giant neural networks. Looking at one example (or a small batch) at a time is what makes training huge datasets possible.</p>`,
@@ -480,6 +509,14 @@ L({
      <p>The path's total cost is the sum of all its action costs. We want the path with the smallest total that ends where $\\text{IsEnd}$ is true.</p>`,
   example:
     `<p>Start at $A$, goal is $D$. Two routes exist, and we want the cheapest total cost.</p>
+     <table class="extable">
+       <caption>Two paths from Start $A$ to goal $D$. Total cost is the sum of action costs.</caption>
+       <thead><tr><th>path</th><th>actions</th><th class="num">steps</th><th class="num">total Cost</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">direct</td><td>$A \\to D$</td><td class="num">1</td><td class="num">5</td></tr>
+         <tr><td class="row-h">detour</td><td>$A \\to B \\to D$</td><td class="num">2</td><td class="num">2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Direct: $\\text{Cost}(A,\\text{slow}) = 5$, $\\text{Succ}(A,\\text{slow}) = D$. One step, total $= 5$.</li>
        <li>Detour: $A \\to B$ costs $1$, $B \\to D$ costs $1$. Total $= 1 + 1 = 2$.</li>
@@ -607,11 +644,20 @@ L({
   example:
     `<p>A tree with branching factor $b = 2$ and the goal at depth $d = 3$.</p>
      <ul class="steps">
-       <li>Number of states at the bottom level: about $2^3 = 8$.</li>
-       <li>BFS visits level 1 (2 states), then level 2 (4 states), then level 3 (8 states), finding the goal as soon as it reaches depth $3$.</li>
-       <li>DFS might dive straight down one branch first. If the goal is on another branch, it backtracks.</li>
-       <li>BFS must hold a full level in memory ($\\mathcal{O}(b^d)$). DFS holds just the path of length $3$ ($\\mathcal{O}(d)$).</li>
-     </ul>`,
+       <li>States at level 1: $b^1 = 2$. Level 2: $b^2 = 4$. Level 3: $b^3 = 8$.</li>
+       <li>Total nodes BFS may hold to reach depth $3$: $2 + 4 + 8 = 14$, dominated by the bottom level $b^d = 8$.</li>
+       <li>BFS visits level by level and finds the goal as soon as it reaches depth $3$.</li>
+       <li>DFS holds just the current path of length $3$ in memory, so its space is $\\mathcal{O}(d) = 3$.</li>
+     </ul>
+     <table class="extable">
+       <caption>Same tree, $b = 2$, goal at $d = 3$. Memory is the headline difference.</caption>
+       <thead><tr><th>method</th><th class="num">time $\\mathcal{O}(b^d)$</th><th class="num">space</th><th>finds shallowest goal?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">BFS</td><td class="num">8</td><td class="num">$b^d = 8$</td><td>yes</td></tr>
+         <tr><td class="row-h">DFS</td><td class="num">8</td><td class="num">$d = 3$</td><td>no</td></tr>
+         <tr><td class="row-h">iter. deepening</td><td class="num">8</td><td class="num">$d = 3$</td><td>yes</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Puzzle solvers, web crawlers, and game engines all use tree search. The $b^d$ blowup is why we need smarter methods (next lessons) for big problems.</p>`,
   whenToUse:
@@ -746,6 +792,14 @@ L({
      <p>Uniform cost search handles loops and any non-negative costs. It pulls out the cheapest frontier state each round, exactly like Dijkstra's algorithm.</p>`,
   example:
     `<p>States $A \\to B \\to D$ and $A \\to C \\to D$. Costs: $A\\to B = 1$, $B\\to D = 4$, $A\\to C = 2$, $C\\to D = 1$.</p>
+     <table class="extable">
+       <caption>Two paths from $A$ to $D$; $\\text{FutureCost}(A)$ is the cheaper sum.</caption>
+       <thead><tr><th>path</th><th class="num">first edge</th><th class="num">second edge</th><th class="num">total</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">via $B$</td><td class="num">1</td><td class="num">4</td><td class="num">5</td></tr>
+         <tr><td class="row-h">via $C$</td><td class="num">2</td><td class="num">1</td><td class="num">3</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Path through $B$: $1 + 4 = 5$.</li>
        <li>Path through $C$: $2 + 1 = 3$.</li>
@@ -838,6 +892,14 @@ L({
      <p>A <b>consistent</b> heuristic is even nicer: it keeps the modified costs non-negative, so the search behaves smoothly.</p>`,
   example:
     `<p>A* ranks states by $f = g + h$, where $g = \\text{PastCost}$ and $h$ is the guess to the goal. It always expands the smallest $f$ first. Two frontier cells, with $h$ = straight-line distance to the goal:</p>
+     <table class="extable">
+       <caption>Both cells cost the same to reach ($g=2$); $h$ breaks the tie toward the goal.</caption>
+       <thead><tr><th>cell</th><th class="num">$g$ (PastCost)</th><th class="num">$h$ (guess)</th><th class="num">$f = g + h$</th><th>A* expands</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$P$ (toward goal)</td><td class="num">2</td><td class="num">3</td><td class="num">5</td><td>first</td></tr>
+         <tr><td class="row-h">$Q$ (detour)</td><td class="num">2</td><td class="num">6</td><td class="num">8</td><td>later</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Cell $P$ (toward the goal): $g = 2$, $h = 3$, so $f = 2 + 3 = 5$.</li>
        <li>Cell $Q$ (a detour): $g = 2$, $h = 6$, so $f = 2 + 6 = 8$.</li>
@@ -910,6 +972,15 @@ L({
      <p>The agent's job is to choose actions that earn the most reward over time, given the randomness.</p>`,
   example:
     `<p>Robot tries to move right. Outcomes: $80\\%$ it goes right, $20\\%$ it slips up.</p>
+     <table class="extable">
+       <caption>Transition table for action "right" in state $s$. Probabilities must sum to $1$.</caption>
+       <thead><tr><th>next state $s'$</th><th class="num">$T(s,\\text{right},s')$</th><th class="num">Reward</th><th class="num">prob $\\times$ reward</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">right-cell</td><td class="num">0.8</td><td class="num">+5</td><td class="num">4.0</td></tr>
+         <tr><td class="row-h">up-cell (slip)</td><td class="num">0.2</td><td class="num">0</td><td class="num">0.0</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">1.0</td><td class="num">—</td><td class="num">4.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>$T(s, \\text{right}, \\text{right-cell}) = 0.8$ and $T(s, \\text{right}, \\text{up-cell}) = 0.2$.</li>
        <li>Check: $0.8 + 0.2 = 1$. The probabilities sum to $1$. Good — something must happen.</li>
@@ -980,7 +1051,17 @@ L({
      <p>The value $V_\\pi(s)$ is the <i>expected</i> (average) utility, because the outcomes are random.</p>
      <p>A good policy has high value everywhere.</p>`,
   example:
-    `<p>A policy gives rewards $r_1 = 10$, then $r_2 = 10$, then $r_3 = 10$. Discount $\\gamma = 0.5$.</p>
+    `<p>A policy gives rewards $r_1 = 10$, then $r_2 = 10$, then $r_3 = 10$. Discount $\\gamma = 0.5$. Each step $i$ is weighted by $\\gamma^{i-1}$.</p>
+     <table class="extable">
+       <caption>Discounted utility $u = \\sum_i r_i\\,\\gamma^{i-1}$ with $\\gamma = 0.5$.</caption>
+       <thead><tr><th class="num">step $i$</th><th class="num">$r_i$</th><th class="num">$\\gamma^{i-1}$</th><th class="num">$r_i\\,\\gamma^{i-1}$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">10</td><td class="num">1.00</td><td class="num">10.0</td></tr>
+         <tr><td class="num">2</td><td class="num">10</td><td class="num">0.50</td><td class="num">5.0</td></tr>
+         <tr><td class="num">3</td><td class="num">10</td><td class="num">0.25</td><td class="num">2.5</td></tr>
+         <tr><td class="row-h">total $u$</td><td class="num"></td><td class="num"></td><td class="num">17.5</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Step 1: $10\\times\\gamma^0 = 10\\times1 = 10$.</li>
        <li>Step 2: $10\\times\\gamma^1 = 10\\times0.5 = 5$.</li>
@@ -1049,7 +1130,16 @@ L({
      <p>Weight that by how likely $s'$ is, $T(s,a,s')$. Sum over all $s'$.</p>
      <p>The result is the average worth of choosing action $a$ right now.</p>`,
   example:
-    `<p>Action $a$ has two outcomes. $80\\%$: reward $5$, next-state value $V=10$. $20\\%$: reward $0$, next-state value $V=0$. Discount $\\gamma = 0.5$.</p>
+    `<p>Action $a$ has two outcomes. $80\\%$: reward $5$, next-state value $V=10$. $20\\%$: reward $0$, next-state value $V=0$. Discount $\\gamma = 0.5$. Each term is $T\\times[\\,R + \\gamma V\\,]$.</p>
+     <table class="extable">
+       <caption>$Q(s,a) = \\sum_{s'} T\\,[\\,R + \\gamma V(s')\\,]$ with $\\gamma = 0.5$.</caption>
+       <thead><tr><th>outcome $s'$</th><th class="num">$T$</th><th class="num">$R$</th><th class="num">$V(s')$</th><th class="num">$R + \\gamma V$</th><th class="num">$T\\,[R+\\gamma V]$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">good</td><td class="num">0.8</td><td class="num">5</td><td class="num">10</td><td class="num">10</td><td class="num">8.0</td></tr>
+         <tr><td class="row-h">bad</td><td class="num">0.2</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0.0</td></tr>
+         <tr><td class="row-h">$Q(s,a)$</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">8.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Good outcome term: $0.8\\times[\\,5 + 0.5\\times10\\,] = 0.8\\times[5 + 5] = 0.8\\times10 = 8$.</li>
        <li>Bad outcome term: $0.2\\times[\\,0 + 0.5\\times0\\,] = 0.2\\times0 = 0$.</li>
@@ -1119,6 +1209,15 @@ L({
      <p>The values keep improving until they barely change. At that point, reading off $\\arg\\max$ in every state gives the optimal policy $\\pi^*$.</p>`,
   example:
     `<p>One Bellman backup. State $s$ has two actions. Last round's neighbour values were $V^{(t-1)} = 0$ everywhere except the goal cell, worth $10$. Step reward $R = -1$, discount $\\gamma = 0.9$. Build each Q-value from $Q = R + \\gamma\\,V^{(t-1)}(s')$:</p>
+     <table class="extable">
+       <caption>Q-values for each action in $s$; the backup takes the max.</caption>
+       <thead><tr><th>action $a$</th><th>lands in $s'$</th><th class="num">$V^{(t-1)}(s')$</th><th class="num">$Q = R + \\gamma V$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">right</td><td>goal cell</td><td class="num">10</td><td class="num">8</td></tr>
+         <tr><td class="row-h">left</td><td>empty cell</td><td class="num">0</td><td class="num">−1</td></tr>
+         <tr><td class="row-h">$V^{(t)}(s) = \\max$</td><td></td><td class="num"></td><td class="num">8</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>$Q(s,\\text{right})$: right leads to the goal cell ($V = 10$), so $Q = -1 + 0.9\\times10 = -1 + 9 = 8$.</li>
        <li>$Q(s,\\text{left})$: left leads to an empty cell ($V = 0$), so $Q = -1 + 0.9\\times0 = -1$.</li>
@@ -1191,7 +1290,18 @@ L({
      <p>The target is the reward just seen plus the discounted best value from the new state.</p>
      <p><b>Explore vs exploit</b>: to learn, the agent sometimes tries random actions (explore), but mostly takes its current best (exploit). Epsilon-greedy balances these.</p>`,
   example:
-    `<p>Current estimate $\\hat Q(s,a) = 4$. The agent acts and sees reward $r = 10$. Best next value $\\max_{a'}\\hat Q(s',a') = 0$. Use $\\eta = 0.5$, $\\gamma = 0.5$.</p>
+    `<p>Current estimate $\\hat Q(s,a) = 4$. The agent acts and sees reward $r = 10$. Best next value $\\max_{a'}\\hat Q(s',a') = 0$. Use $\\eta = 0.5$, $\\gamma = 0.5$. The update blends old and target: $\\hat Q \\leftarrow (1-\\eta)\\,\\hat Q + \\eta\\,\\text{target}$.</p>
+     <table class="extable">
+       <caption>One Q-learning update ($\\eta = 0.5$): the estimate moves halfway to the target.</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">old $\\hat Q$</td><td class="num">4</td></tr>
+         <tr><td class="row-h">target $r + \\gamma\\max_{a'}\\hat Q$</td><td class="num">10</td></tr>
+         <tr><td class="row-h">$(1-\\eta)\\,\\hat Q = 0.5\\times4$</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$\\eta\\,\\text{target} = 0.5\\times10$</td><td class="num">5</td></tr>
+         <tr><td class="row-h">new $\\hat Q$</td><td class="num">7</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Target: $r + \\gamma\\times0 = 10 + 0.5\\times0 = 10$.</li>
        <li>Blend: $(1-0.5)\\times4 + 0.5\\times10 = 2 + 5 = 7$.</li>
@@ -1257,7 +1367,15 @@ L({
      <p>You maximize. The opponent minimizes. The value flows up from the leaves to the root.</p>
      <p>The root value tells you the best outcome you can guarantee against perfect play.</p>`,
   example:
-    `<p>Your move at the top. Two choices, $A$ and $B$. After each, the opponent moves.</p>
+    `<p>Your move at the top. Two choices, $A$ and $B$. After each, the opponent (min) moves between two leaves.</p>
+     <table class="extable">
+       <caption>Game tree: opponent minimizes each branch, then you maximize.</caption>
+       <thead><tr><th>your branch</th><th class="num">leaf 1</th><th class="num">leaf 2</th><th class="num">opponent picks $\\min$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$A$</td><td class="num">3</td><td class="num">8</td><td class="num">3</td></tr>
+         <tr><td class="row-h">$B$</td><td class="num">5</td><td class="num">2</td><td class="num">2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Branch $A$ leads to leaves with scores $3$ and $8$. The opponent (min) picks $\\min(3,8) = 3$.</li>
        <li>Branch $B$ leads to leaves with scores $5$ and $2$. The opponent (min) picks $\\min(5,2) = 2$.</li>
@@ -1323,12 +1441,20 @@ L({
      <p>If $\\alpha \\ge \\beta$, the current branch can never beat what is already settled. Cut it off.</p>
      <p>The final root value is identical to plain minimax. Only wasted exploration is removed.</p>`,
   example:
-    `<p>Your move (max). You already found branch $A$ gives a guaranteed $5$. Now you start exploring branch $B$ (an opponent min node).</p>
+    `<p>Your move (max). You already found branch $A$ gives a guaranteed $5$, so $\\alpha = 5$. Now you start exploring branch $B$ (an opponent min node, where $\\beta$ tracks its best-so-far).</p>
+     <table class="extable">
+       <caption>Inside branch $B$: as soon as $\\beta \\le \\alpha$, prune.</caption>
+       <thead><tr><th>step</th><th class="num">$\\alpha$</th><th class="num">$\\beta$ (B so far)</th><th>$\\alpha \\ge \\beta$?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A done</td><td class="num">5</td><td class="num">$+\\infty$</td><td>no</td></tr>
+         <tr><td class="row-h">B's 1st reply $= 2$</td><td class="num">5</td><td class="num">2</td><td>yes — prune</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>From branch $A$, you have $\\alpha = 5$ secured.</li>
-       <li>In branch $B$, the opponent's first reply already gives a score of $2$.</li>
+       <li>In branch $B$, the opponent's first reply already gives a score of $2$, so $\\beta = 2$.</li>
        <li>Branch $B$'s value is $\\min(2, \\dots)$, so it is at most $2$ no matter what the other replies are.</li>
-       <li>Since $2 &lt; 5$, branch $B$ can never beat branch $A$. Prune it. Skip the remaining replies.</li>
+       <li>Since $\\alpha = 5 \\ge \\beta = 2$, branch $B$ can never beat branch $A$. Prune it. Skip the remaining replies.</li>
      </ul>
      <p>You reached the same decision (branch $A$) without checking the rest of $B$.</p>`,
   application:
@@ -1389,6 +1515,14 @@ L({
      <p>The result reflects what you can expect against a random opponent, not the worst case.</p>`,
   example:
     `<p>The opponent picks randomly between two replies, each with probability $0.5$. They lead to values $8$ and $2$.</p>
+     <table class="extable">
+       <caption>Same two outcomes ($8$ and $2$), two different node assumptions.</caption>
+       <thead><tr><th>method</th><th>rule at the node</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">expectimax</td><td>$0.5\\times8 + 0.5\\times2$</td><td class="num">5</td></tr>
+         <tr><td class="row-h">minimax</td><td>$\\min(8,\\,2)$</td><td class="num">2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Expectimax (average): $0.5\\times8 + 0.5\\times2 = 4 + 1 = 5$.</li>
        <li>Compare to minimax (worst case): $\\min(8, 2) = 2$.</li>
@@ -1500,7 +1634,17 @@ L({
      <p>If any hard constraint is broken, its factor is $0$, so the whole product becomes $0$. The assignment fails.</p>
      <p>A valid solution has weight greater than $0$: every hard constraint holds.</p>`,
   example:
-    `<p>Color two neighboring regions, R1 and R2, using Red or Blue. Rule: neighbors must differ.</p>
+    `<p>Color two neighboring regions, R1 and R2, using Red or Blue. Rule: neighbors must differ. The single "differ" factor is $1$ if they differ, $0$ if not; the weight is the product of all factors.</p>
+     <table class="extable">
+       <caption>All four assignments of (R1, R2). Weight $= 0$ kills the broken ones.</caption>
+       <thead><tr><th>R1</th><th>R2</th><th class="num">differ factor</th><th class="num">Weight</th><th>valid?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Red</td><td>Red</td><td class="num">0</td><td class="num">0</td><td>no</td></tr>
+         <tr><td class="row-h">Red</td><td>Blue</td><td class="num">1</td><td class="num">1</td><td>yes</td></tr>
+         <tr><td class="row-h">Blue</td><td>Red</td><td class="num">1</td><td class="num">1</td><td>yes</td></tr>
+         <tr><td class="row-h">Blue</td><td>Blue</td><td class="num">0</td><td class="num">0</td><td>no</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Try R1 = Red, R2 = Red. The "differ" factor is $0$ (same color). Weight $= 0$. Invalid.</li>
        <li>Try R1 = Red, R2 = Blue. The factor is $1$ (they differ). Weight $= 1$. Valid.</li>
@@ -1682,12 +1826,21 @@ L({
      <p>Forward checking and arc consistency shrink domains early, so fewer branches even exist.</p>
      <p>The <b>most-constrained-variable</b> heuristic tackles the hardest variable first, so dead ends are found sooner.</p>`,
   example:
-    `<p>Map coloring with Red, Green, Blue. Region A is set to Red. Region B is a neighbor of A.</p>
+    `<p>Map coloring with Red, Green, Blue. Region A is set to Red. Region B is a neighbor of A. Forward checking deletes conflicting values from neighbours' domains.</p>
+     <table class="extable">
+       <caption>B's domain shrinking under forward checking after A = Red and another neighbour drops Green.</caption>
+       <thead><tr><th>stage</th><th>B's domain</th><th class="num">size</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">start</td><td>$\\{$Red, Green, Blue$\\}$</td><td class="num">3</td></tr>
+         <tr><td class="row-h">after A = Red</td><td>$\\{$Green, Blue$\\}$</td><td class="num">2</td></tr>
+         <tr><td class="row-h">after Green dropped</td><td>$\\{$Blue$\\}$</td><td class="num">1</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Forward checking: remove Red from B's domain. B now allows only $\\{$Green, Blue$\\}$.</li>
        <li>Suppose another neighbor forces B to drop Green too. B's domain becomes just $\\{$Blue$\\}$.</li>
-       <li>Most-constrained heuristic: assign B next, since it has only one choice left.</li>
-       <li>If a domain ever becomes empty, backtrack: undo an earlier choice and try again.</li>
+       <li>Most-constrained heuristic: assign B next, since it has only one choice left (size $1$, the smallest).</li>
+       <li>If a domain ever becomes empty (size $0$), backtrack: undo an earlier choice and try again.</li>
      </ul>`,
   application:
     `<p>These techniques power Sudoku solvers, exam and shift scheduling, and resource allocation. Forward checking and good variable ordering turn problems that look impossible into ones that solve in a blink.</p>`,
@@ -1820,7 +1973,17 @@ L({
      <p>Each term is small: just that node's chance given its few parents.</p>
      <p>A node with no parents uses its plain probability $P(X_i)$. This factoring saves enormous space.</p>`,
   example:
-    `<p>The classic net: Rain $\\rightarrow$ WetGrass $\\leftarrow$ Sprinkler. Two causes, one effect. Suppose $P(\\text{Rain})=0.3$, $P(\\text{Sprinkler})=0.4$, and the effect's table gives $P(\\text{Wet}\\mid\\text{Rain},\\text{Sprinkler})=0.99$.</p>
+    `<p>The classic net: Rain $\\rightarrow$ WetGrass $\\leftarrow$ Sprinkler. Two causes, one effect. Suppose $P(\\text{Rain})=0.3$, $P(\\text{Sprinkler})=0.4$, and the effect's table gives $P(\\text{Wet}\\mid\\text{Rain},\\text{Sprinkler})=0.99$. The joint factors into one term per node.</p>
+     <table class="extable">
+       <caption>One factor per node; multiply them for the joint of "all three true".</caption>
+       <thead><tr><th>node</th><th>parents</th><th>term</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Rain</td><td>none</td><td>$P(\\text{Rain})$</td><td class="num">0.30</td></tr>
+         <tr><td class="row-h">Sprinkler</td><td>none</td><td>$P(\\text{Sprinkler})$</td><td class="num">0.40</td></tr>
+         <tr><td class="row-h">WetGrass</td><td>Rain, Sprinkler</td><td>$P(\\text{Wet}\\mid\\text{R},\\text{S})$</td><td class="num">0.99</td></tr>
+         <tr><td class="row-h">joint (product)</td><td></td><td></td><td class="num">0.1188</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Rain and Sprinkler have no parents, so their terms are just $0.3$ and $0.4$.</li>
        <li>WetGrass has two parents, so its term is $P(\\text{Wet}\\mid\\text{Rain},\\text{Sprinkler}) = 0.99$.</li>
@@ -1961,7 +2124,17 @@ L({
      <p>Exact methods give the true number but can be slow on tangled networks.</p>
      <p>Approximate methods sample, trading a little accuracy for big speed. <b>Explaining away</b> is a key intuition: confirming one cause of an effect lowers the probability of another.</p>`,
   example:
-    `<p>A worked posterior. Three hypotheses with priors $P(\\text{Flu})=0.2$, $P(\\text{Cold})=0.3$, $P(\\text{Healthy})=0.5$. A test comes back positive; its likelihoods are $P(+\\mid\\text{Flu})=0.9$, $P(+\\mid\\text{Cold})=0.5$, $P(+\\mid\\text{Healthy})=0.1$.</p>
+    `<p>A worked posterior. Three hypotheses with priors $P(\\text{Flu})=0.2$, $P(\\text{Cold})=0.3$, $P(\\text{Healthy})=0.5$. A test comes back positive; its likelihoods are $P(+\\mid\\text{Flu})=0.9$, $P(+\\mid\\text{Cold})=0.5$, $P(+\\mid\\text{Healthy})=0.1$. Posterior $=$ (prior $\\times$ likelihood) $/$ evidence.</p>
+     <table class="extable">
+       <caption>Bayes update after a positive test. Evidence $P(+) = 0.38$ normalizes the column.</caption>
+       <thead><tr><th>hypothesis</th><th class="num">prior $P(H)$</th><th class="num">likelihood $P(+\\mid H)$</th><th class="num">joint</th><th class="num">posterior $P(H\\mid+)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Flu</td><td class="num">0.20</td><td class="num">0.90</td><td class="num">0.18</td><td class="num">0.47</td></tr>
+         <tr><td class="row-h">Cold</td><td class="num">0.30</td><td class="num">0.50</td><td class="num">0.15</td><td class="num">0.39</td></tr>
+         <tr><td class="row-h">Healthy</td><td class="num">0.50</td><td class="num">0.10</td><td class="num">0.05</td><td class="num">0.13</td></tr>
+         <tr><td class="row-h">sum (evidence)</td><td class="num">1.00</td><td class="num">—</td><td class="num">0.38</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Multiply prior × likelihood for each: Flu $= 0.2\\times0.9 = 0.18$; Cold $= 0.3\\times0.5 = 0.15$; Healthy $= 0.5\\times0.1 = 0.05$.</li>
        <li>Evidence $P(+) = 0.18 + 0.15 + 0.05 = 0.38$ (this is the normalizer).</li>
@@ -2106,6 +2279,15 @@ L({
      <p>The result is the probability of each hidden state at each time, given all the evidence. That is <b>smoothing</b>.</p>`,
   example:
     `<p>One numeric forward (filtering) step. Hidden weather Rainy/Sunny. Transition: stays the same with prob $0.7$ (so switches with $0.3$). Emission: $P(\\text{Umbrella}\\mid\\text{Rainy})=0.9$, $P(\\text{Umbrella}\\mid\\text{Sunny})=0.2$. Start belief is even: $P(\\text{Rainy})=P(\\text{Sunny})=0.5$. You see an Umbrella.</p>
+     <table class="extable">
+       <caption>One forward step: predict, reweight by the Umbrella emission, normalize.</caption>
+       <thead><tr><th>state</th><th class="num">predict $P$</th><th class="num">$P(\\text{Umb}\\mid\\cdot)$</th><th class="num">reweight</th><th class="num">normalize</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Rainy</td><td class="num">0.50</td><td class="num">0.90</td><td class="num">0.45</td><td class="num">0.82</td></tr>
+         <tr><td class="row-h">Sunny</td><td class="num">0.50</td><td class="num">0.20</td><td class="num">0.10</td><td class="num">0.18</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">1.00</td><td class="num">—</td><td class="num">0.55</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li><b>Predict</b> via transition: $P(\\text{Rainy}) = 0.7\\times0.5 + 0.3\\times0.5 = 0.5$, same for Sunny. (Symmetric, so unchanged here.)</li>
        <li><b>Reweight</b> by the emission: Rainy $= 0.5\\times0.9 = 0.45$; Sunny $= 0.5\\times0.2 = 0.10$.</li>
@@ -2199,12 +2381,22 @@ L({
      <p>A knowledge base (KB) is a set of sentences we accept as true.</p>
      <p><b>Entailment</b> ($\\models$) asks: does $f$ hold in <i>every</i> model that satisfies the KB? If so, $f$ must follow.</p>`,
   example:
-    `<p>KB has two facts: $R$ (it is raining) and $R \\rightarrow W$ (if raining, the ground is wet). Does $W$ follow?</p>
+    `<p>KB has two facts: $R$ (it is raining) and $R \\rightarrow W$ (if raining, the ground is wet). Does $W$ follow? Check all four models of $(R, W)$.</p>
+     <table class="extable">
+       <caption>Truth table over $(R, W)$. KB holds only on the bold row; there $W$ is true.</caption>
+       <thead><tr><th class="num">$R$</th><th class="num">$W$</th><th class="num">$R \\rightarrow W$</th><th class="num">KB $= R \\wedge (R \\rightarrow W)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num"><b>T</b></td><td class="num"><b>T</b></td><td class="num"><b>T</b></td><td class="num"><b>T</b></td></tr>
+         <tr><td class="num">T</td><td class="num">F</td><td class="num">F</td><td class="num">F</td></tr>
+         <tr><td class="num">F</td><td class="num">T</td><td class="num">T</td><td class="num">F</td></tr>
+         <tr><td class="num">F</td><td class="num">F</td><td class="num">T</td><td class="num">F</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>For the KB to be true, $R$ must be true.</li>
        <li>The rule $R \\rightarrow W$ must also be true. With $R$ true, the rule forces $W$ to be true too.</li>
-       <li>So in every model where the KB holds, $W$ is true. Therefore KB $\\models W$.</li>
-       <li>Conclusion: the ground is wet. We derived it from the facts.</li>
+       <li>Only one model (the bold row) makes the KB true, and there $W = $ T.</li>
+       <li>So in every model where the KB holds, $W$ is true. Therefore KB $\\models W$: the ground is wet.</li>
      </ul>`,
   application:
     `<p>Logic underlies digital circuits (AND, OR, NOT gates), program verification, and rule-based expert systems. When facts are crisp and certain, logic gives exact, checkable reasoning.</p>`,
@@ -2377,6 +2569,17 @@ L({
        <li>Match $x$ = Socrates. Modus ponens fires: conclude $\\text{Mortal(Socrates)}$.</li>
        <li>We derived a new true fact without any truth table.</li>
      </ul>
+     <p>Forward chaining repeats this over a Horn-clause KB. Start with facts $\\{$Rain, Cold$\\}$ and rules $\\text{Rain}\\rightarrow\\text{Wet}$, $\\text{Wet}\\rightarrow\\text{Slippery}$, $\\text{Wet}\\wedge\\text{Cold}\\rightarrow\\text{Ice}$. Each round, every rule whose premises are all known fires:</p>
+     <table class="extable">
+       <caption>Forward chaining: each round fires rules and adds new facts until saturated.</caption>
+       <thead><tr><th class="num">round</th><th>rule that fires</th><th>new fact</th><th>known after</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td>— (seeds)</td><td>—</td><td>Rain, Cold</td></tr>
+         <tr><td class="num">1</td><td>$\\text{Rain}\\rightarrow\\text{Wet}$</td><td>Wet</td><td>Rain, Cold, Wet</td></tr>
+         <tr><td class="num">2</td><td>$\\text{Wet}\\rightarrow\\text{Slippery}$; $\\text{Wet}\\wedge\\text{Cold}\\rightarrow\\text{Ice}$</td><td>Slippery, Ice</td><td>+ Slippery, Ice</td></tr>
+         <tr><td class="num">3</td><td>none</td><td>—</td><td>saturated</td></tr>
+       </tbody>
+     </table>
      <p>The quantified rule "for all $x$" is first-order logic; the plain $f, f\\rightarrow g$ step is propositional modus ponens.</p>`,
   application:
     `<p>Automated theorem provers, the Prolog programming language, and formal verification of software all run on resolution and modus ponens. They let a machine prove conclusions that are guaranteed correct.</p>`,

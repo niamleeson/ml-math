@@ -78,12 +78,19 @@ L({
      </ul>
      <p>That is the whole layer: a permutation-invariant average, a shared linear map, an activation. ∎</p>`,
   example:
-    `<p>One node $v$ has two neighbours. To keep the numbers tiny, each feature is a single number.</p>
+    `<p>One node $v$ has two neighbours. To keep the numbers tiny, each feature $h_u$ is a single number, $W = 0.5$, and $\\sigma$ is ReLU.</p>
+     <table class="extable">
+       <caption>The neighbours of $v$ and their features.</caption>
+       <thead><tr><th>neighbour $u$</th><th class="num">feature $h_u$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$u_1$</td><td class="num">4</td></tr>
+         <tr><td class="row-h">$u_2$</td><td class="num">2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Neighbour features: $h_{u_1} = 4$ and $h_{u_2} = 2$.</li>
-       <li>Aggregate by averaging: $\\text{agg} = \\frac{4 + 2}{2} = 3$.</li>
+       <li>Aggregate by averaging the column: $\\text{agg} = \\frac{4 + 2}{2} = \\frac{6}{2} = 3$.</li>
        <li>Apply the weight $W = 0.5$: $W\\cdot\\text{agg} = 0.5 \\times 3 = 1.5$.</li>
-       <li>Squish with ReLU (keep positives): $h_v' = \\max(0, 1.5) = 1.5$.</li>
+       <li>Squish with ReLU (keep positives): $h_v' = \\max(0,\\, 1.5) = 1.5$.</li>
      </ul>
      <p>Node $v$'s new value $1.5$ was pulled from its neighbours' $4$ and $2$. That is one message-passing step.</p>`,
   application:
@@ -229,9 +236,19 @@ L({
      </ul>
      <p>Minimizing the squared TD error is exactly fitting the Bellman equation. ∎</p>`,
   example:
-    `<p>The net currently guesses $Q(s,a) = 4$. The agent acts, gets reward $r = 1$, and lands in $s'$ where the best next value is $\\max_{a'}Q(s',a') = 6$. Use $\\gamma = 0.9$.</p>
+    `<p>The agent acts once. Here is everything observed.</p>
+     <table class="extable">
+       <caption>The numbers going into the TD update.</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">current guess $Q(s,a)$</td><td class="num">4</td></tr>
+         <tr><td class="row-h">reward $r$</td><td class="num">1</td></tr>
+         <tr><td class="row-h">best next value $\\max_{a'}Q(s',a')$</td><td class="num">6</td></tr>
+         <tr><td class="row-h">discount $\\gamma$</td><td class="num">0.9</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>TD target: $y = 1 + 0.9 \\times 6 = 1 + 5.4 = 6.4$.</li>
+       <li>TD target: $y = r + \\gamma\\max_{a'}Q(s',a') = 1 + 0.9 \\times 6 = 1 + 5.4 = 6.4$.</li>
        <li>TD error: $\\delta = y - Q(s,a) = 6.4 - 4 = 2.4$.</li>
        <li>Loss: $\\delta^2 = 2.4^2 = 5.76$.</li>
        <li>Training nudges $Q(s,a)$ up from $4$ toward $6.4$, shrinking the error.</li>
@@ -357,13 +374,21 @@ L({
      </ul>
      <p>The log trick turns a hard-to-sample gradient into a simple average we can estimate by just running episodes. ∎</p>`,
   example:
-    `<p>One state, two actions, with preferences (logits) $\\ell_{\\text{Left}} = 0$ and $\\ell_{\\text{Right}} = 0$. The softmax gives Left $0.5$ and Right $0.5$. The agent samples <b>Right</b> and the episode returns $G = +2$. Use learning rate $\\eta = 0.4$.</p>
+    `<p>One state, two actions, starting from equal preferences (logits) $\\ell_{\\text{Left}} = 0$ and $\\ell_{\\text{Right}} = 0$, so softmax gives each $0.5$. The agent samples <b>Right</b> and the episode returns $G = +2$. Use learning rate $\\eta = 0.4$.</p>
      <ul class="steps">
-       <li>The score for the chosen action is $\\nabla_\\ell \\log\\pi(\\text{Right}) = 1 - \\pi(\\text{Right}) = 1 - 0.5 = 0.5$. (For the other action it is $0 - 0.5 = -0.5$.)</li>
-       <li>Update each logit by $\\eta\\,G\\times(\\text{score})$: Right gets $0.4\\times2\\times0.5 = +0.4$, Left gets $0.4\\times2\\times(-0.5) = -0.4$.</li>
-       <li>New logits $\\ell_{\\text{Right}} = 0.4$, $\\ell_{\\text{Left}} = -0.4$. Re-softmax: $\\pi(\\text{Right}) = \\frac{e^{0.4}}{e^{0.4}+e^{-0.4}} = \\frac{1.49}{1.49+0.67} \\approx 0.69$, so Left $\\approx 0.31$.</li>
-       <li>Right rose from $0.5$ to $0.69$ <i>because</i> $G = +2 &gt; 0$. Had $G = -2$, every sign flips: Right would fall to $\\approx 0.31$ and Left rise. The reward's sign sets the update's direction.</li>
-     </ul>`,
+       <li>Score for the chosen action: $\\nabla_\\ell \\log\\pi(\\text{Right}) = 1 - \\pi(\\text{Right}) = 1 - 0.5 = 0.5$. For Left it is $0 - 0.5 = -0.5$.</li>
+       <li>Update each logit by $\\eta\\,G\\times(\\text{score})$: Right $= 0.4\\times2\\times0.5 = +0.4$; Left $= 0.4\\times2\\times(-0.5) = -0.4$.</li>
+       <li>Re-softmax the new logits $\\ell_{\\text{Right}}=0.4,\\ \\ell_{\\text{Left}}=-0.4$: $\\pi(\\text{Right}) = \\frac{e^{0.4}}{e^{0.4}+e^{-0.4}} = \\frac{1.49}{1.49+0.67} \\approx 0.69$.</li>
+     </ul>
+     <table class="extable">
+       <caption>Action probabilities before and after one update (rows sum to 1).</caption>
+       <thead><tr><th>action</th><th class="num">$\\pi$ before</th><th class="num">$\\pi$ after</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Right (chosen, $G=+2$)</td><td class="num">0.50</td><td class="num">0.69</td></tr>
+         <tr><td class="row-h">Left</td><td class="num">0.50</td><td class="num">0.31</td></tr>
+       </tbody>
+     </table>
+     <p>Right rose from $0.50$ to $0.69$ <i>because</i> $G = +2 &gt; 0$. Had $G = -2$, every sign flips: Right would fall to $\\approx 0.31$ and Left rise. The reward's sign sets the update's direction.</p>`,
   application:
     `<p>Policy gradients power robotics (smooth, continuous controls), game-playing agents, and the alignment step of chatbots: RLHF (Reinforcement Learning from Human Feedback) tunes a language model's policy to prefer responses humans rated highly.</p>`,
   whenToUse:
@@ -497,12 +522,22 @@ L({
      </ul>
      <p>Same direction, far less noise. That is why Actor-Critic learns faster and steadier. ∎</p>`,
   example:
-    `<p>The critic says the state is worth $V(s) = 5$. The agent takes an action, gets reward $r = 1$, and lands in $s'$ with $V(s') = 6$. Use $\\gamma = 0.9$.</p>
+    `<p>The agent takes one action. Here is what the critic believed and what happened.</p>
+     <table class="extable">
+       <caption>The numbers going into the advantage.</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">critic's value $V(s)$</td><td class="num">5</td></tr>
+         <tr><td class="row-h">reward $r$</td><td class="num">1</td></tr>
+         <tr><td class="row-h">next value $V(s')$</td><td class="num">6</td></tr>
+         <tr><td class="row-h">discount $\\gamma$</td><td class="num">0.9</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>One-step action value: $Q = r + \\gamma V(s') = 1 + 0.9\\times6 = 1 + 5.4 = 6.4$.</li>
        <li>Advantage: $A = Q - V(s) = 6.4 - 5 = 1.4$.</li>
        <li>$A &gt; 0$, so the action did better than the state's average. The actor pushes its probability up.</li>
-       <li>The critic also nudges $V(s)$ up toward $6.4$, since it under-valued the state.</li>
+       <li>The critic also nudges $V(s)$ up from $5$ toward $6.4$, since it under-valued the state.</li>
      </ul>`,
   application:
     `<p>Actor-Critic methods (A2C, A3C (Asynchronous Advantage Actor-Critic), PPO) are the modern default for reinforcement learning: they trained the OpenAI Five Dota 2 team, control simulated and real robots, and run the reinforcement step (PPO) in many chatbot alignment pipelines.</p>`,
@@ -647,12 +682,20 @@ L({
      </ul>
      <p>So the single loss simultaneously attracts the positive and repels the negatives. ∎</p>`,
   example:
-    `<p>Tiny 2D embeddings. Anchor $z_i = (1, 0)$. Its positive $z_j = (0.8, 0.6)$ points almost the same way; a negative $z_k = (-0.6, 0.8)$ points off sideways. Use $\\tau = 1$.</p>
+    `<p>Tiny 2D unit-length embeddings, $\\tau = 1$. Anchor $z_i = (1, 0)$. Its positive $z_j = (0.8, 0.6)$ points almost the same way; a negative $z_k = (-0.6, 0.8)$ points off sideways. Cosine similarity here is just the dot product $z_i\\cdot z$ (every vector has length $1$).</p>
+     <table class="extable">
+       <caption>Similarity to the anchor and its softmax weight $\\exp(\\text{sim}/\\tau)$.</caption>
+       <thead><tr><th>pair</th><th class="num">$\\text{sim}$</th><th class="num">$\\exp(\\text{sim})$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">positive $z_j$</td><td class="num">0.8</td><td class="num">2.23</td></tr>
+         <tr><td class="row-h">negative $z_k$</td><td class="num">-0.6</td><td class="num">0.55</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Cosine similarity is the dot product over the lengths. Each vector here has length $1$, so $\\text{sim} = z_i\\cdot z$. Positive: $\\text{sim}(z_i,z_j) = 1{\\times}0.8 + 0{\\times}0.6 = 0.8$ (close). Negative: $\\text{sim}(z_i,z_k) = 1{\\times}(-0.6) + 0{\\times}0.8 = -0.6$ (far apart).</li>
-       <li>Turn each into a weight: positive $\\exp(0.8) \\approx 2.23$, negative $\\exp(-0.6) \\approx 0.55$.</li>
+       <li>Positive similarity: $\\text{sim}(z_i,z_j) = 1{\\times}0.8 + 0{\\times}0.6 = 0.8$. Negative: $\\text{sim}(z_i,z_k) = 1{\\times}(-0.6) + 0{\\times}0.8 = -0.6$.</li>
        <li>Probability of the positive: $\\frac{2.23}{2.23 + 0.55} = \\frac{2.23}{2.78} \\approx 0.80$.</li>
-       <li>Loss: $\\ell = -\\log(0.80) \\approx 0.22$. The gap $0.8$ vs $-0.6$ already makes the positive dominate; pulling it closer (toward sim $+1$) or pushing the negative further (toward sim $-1$) shrinks the loss further.</li>
+       <li>Loss: $\\ell_i = -\\log(0.80) \\approx 0.22$.</li>
+       <li>The gap $0.8$ vs $-0.6$ already makes the positive dominate; pulling it closer (toward sim $+1$) or pushing the negative further (toward sim $-1$) shrinks the loss further.</li>
      </ul>`,
   application:
     `<p>SimCLR learns image features with no labels, then a tiny labelled set fine-tunes a strong classifier. CLIP uses the same idea across types: it pulls an image and its caption together, which is how text-to-image search and many generative models connect words to pictures.</p>`,
@@ -793,11 +836,19 @@ L({
     `<p>An image is $H = 48$ by $W = 48$ pixels. Use patch size $P = 16$.</p>
      <ul class="steps">
        <li>Patches along each side: $48 \\div 16 = 3$. So the grid is $3 \\times 3$.</li>
-       <li>Total tokens: $N = \\frac{48 \\times 48}{16^2} = \\frac{2304}{256} = 9$.</li>
-       <li>Each patch holds $16\\times16 = 256$ pixels (per colour channel). Flatten and embed them into one token vector.</li>
-       <li>Add each token's position (which of the 9 cells it came from). Now attention can relate any token to any other.</li>
-       <li>Why patches pay off: attention costs $N^2$ comparisons. With $9$ patch tokens that is $9^2 = 81$. One token <i>per pixel</i> instead would be $N = 2304$ tokens, costing $2304^2 \\approx 5.3$ million — about $65{,}000\\times$ more. Patching is what makes attention over an image affordable.</li>
-     </ul>`,
+       <li>Total tokens: $N = \\frac{H \\times W}{P^2} = \\frac{48 \\times 48}{16^2} = \\frac{2304}{256} = 9$.</li>
+       <li>Each patch holds $16\\times16 = 256$ pixels (per colour channel). Flatten and embed them: $\\text{token}_p = x_p E + E_{pos}(p)$.</li>
+     </ul>
+     <p>Why patches pay off: self-attention costs $N^2$ comparisons. Compare cutting into patches versus one token per pixel.</p>
+     <table class="extable">
+       <caption>Attention cost grows with the square of the token count $N$.</caption>
+       <thead><tr><th>tokenisation</th><th class="num">$N$</th><th class="num">$N^2$ comparisons</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">patches ($P=16$)</td><td class="num">9</td><td class="num">81</td></tr>
+         <tr><td class="row-h">one per pixel</td><td class="num">2304</td><td class="num">5,308,416</td></tr>
+       </tbody>
+     </table>
+     <p>Patches cost $81$ comparisons; one-token-per-pixel costs $\\approx 5.3$ million — about $65{,}000\\times$ more. Patching is what makes attention over an image affordable.</p>`,
   application:
     `<p>Vision Transformers match or beat convolutional networks on image classification when trained on enough data. They are the image backbone of multimodal models (the vision side of systems that take both pictures and text), and power modern image search and captioning.</p>`,
   whenToUse:
@@ -932,20 +983,24 @@ L({
      </ul>
      <p>Uncertainty compounds because each future step adds its own fresh surprise. ∎</p>`,
   example:
-    `<p>Use a simple AR(1): $y_t = c + \\phi\\, y_{t-1}$ with $c = 2$ and $\\phi = 0.5$. The latest value is $y_{t-1} = 10$.</p>
+    `<p>Use a simple AR(1): $y_t = c + \\phi\\, y_{t-1}$ with $c = 2$ and $\\phi = 0.5$. The latest value is $y_{t-1} = 10$. Each forecast feeds into the next.</p>
      <ul class="steps">
-       <li>One step ahead: $\\hat y_t = 2 + 0.5\\times10 = 2 + 5 = 7$.</li>
+       <li>One step ahead: $\\hat y_t = c + \\phi\\, y_{t-1} = 2 + 0.5\\times10 = 2 + 5 = 7$.</li>
        <li>Next step uses that forecast: $\\hat y_{t+1} = 2 + 0.5\\times7 = 2 + 3.5 = 5.5$.</li>
        <li>And again: $\\hat y_{t+2} = 2 + 0.5\\times5.5 = 2 + 2.75 = 4.75$.</li>
        <li>The forecasts settle toward $\\frac{c}{1-\\phi} = \\frac{2}{0.5} = 4$, the series' long-run level.</li>
      </ul>
-     <p>Now watch the uncertainty grow. Say each surprise has variance $\\sigma^2 = 1$. The $h$-step forecast variance is $\\sigma^2(1 + \\phi^2 + \\dots + \\phi^{2(h-1)})$.</p>
-     <ul class="steps">
-       <li>$1$ step: variance $= 1$, so the band half-width $\\propto \\sqrt{1} = 1.00$.</li>
-       <li>$2$ steps: variance $= 1 + 0.5^2 = 1.25$, half-width $\\propto \\sqrt{1.25} \\approx 1.12$.</li>
-       <li>$3$ steps: variance $= 1 + 0.25 + 0.0625 = 1.3125$, half-width $\\propto \\sqrt{1.3125} \\approx 1.15$.</li>
-       <li>The half-width climbs $1.00 \\to 1.12 \\to 1.15$: the interval <i>widens</i> with the horizon. (It tops out near $\\sqrt{1/(1-\\phi^2)} = \\sqrt{1.33} \\approx 1.15$ here, because $\\phi = 0.5 &lt; 1$.)</li>
-     </ul>`,
+     <p>Now watch the uncertainty grow. Say each surprise has variance $\\sigma^2 = 1$. The $h$-step forecast variance is $\\sigma^2(1 + \\phi^2 + \\dots + \\phi^{2(h-1)})$, and the band half-width $\\propto \\sqrt{\\text{variance}}$.</p>
+     <table class="extable">
+       <caption>The prediction interval widens with the forecast horizon $h$.</caption>
+       <thead><tr><th>horizon $h$</th><th class="num">forecast $\\hat y$</th><th class="num">variance</th><th class="num">half-width $\\propto\\sqrt{\\text{var}}$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1 step</td><td class="num">7.00</td><td class="num">1.0000</td><td class="num">1.00</td></tr>
+         <tr><td class="row-h">2 steps</td><td class="num">5.50</td><td class="num">1.2500</td><td class="num">1.12</td></tr>
+         <tr><td class="row-h">3 steps</td><td class="num">4.75</td><td class="num">1.3125</td><td class="num">1.15</td></tr>
+       </tbody>
+     </table>
+     <p>The half-width climbs $1.00 \\to 1.12 \\to 1.15$: the interval <i>widens</i> with the horizon. It tops out near $\\sqrt{1/(1-\\phi^2)} = \\sqrt{1.33} \\approx 1.15$ here, because $\\phi = 0.5 &lt; 1$.</p>`,
   application:
     `<p>ARIMA and its state-space cousins forecast electricity demand, retail inventory, website traffic, and economic indicators. Anywhere a business asks "what comes next, and how sure are we?", these models give a forecast plus an honest uncertainty band.</p>`,
   whenToUse:

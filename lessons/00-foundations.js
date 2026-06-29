@@ -107,13 +107,21 @@ L({
     `<p>Read it left to right: "$x$ is a stack of $n$ numbers, $x_1$ down to $x_n$, and it lives in $\\mathbb{R}^n$."</p>
      <p>$\\in$ means "is a member of". So $x \\in \\mathbb{R}^n$ just means "$x$ is one of the $n$-number vectors".</p>`,
   example:
-    `<p>Let's turn one house into a vector, step by step.</p>
+    `<p>Let's turn one house into a vector. Start with the raw measurements, in a fixed order.</p>
+     <table class="extable">
+       <caption>One house, three features, stacked into position order.</caption>
+       <thead><tr><th>Position $i$</th><th>Feature</th><th class="num">Value $x_i$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td>size (sq ft)</td><td class="num">1500</td></tr>
+         <tr><td class="row-h">2</td><td>bedrooms</td><td class="num">3</td></tr>
+         <tr><td class="row-h">3</td><td>age (years)</td><td class="num">10</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Pick the measurements you care about: size = 1500 sq ft, bedrooms = 3, age = 10 years.</li>
-       <li>Stack them in a fixed order into a column. That column is the vector:
+       <li>Stack the values in that order into a column:
            $x = \\begin{bmatrix} 1500 \\\\ 3 \\\\ 10 \\end{bmatrix}$.</li>
        <li>Read the entries back by position: $x_1 = 1500$ (size), $x_2 = 3$ (bedrooms), $x_3 = 10$ (age).</li>
-       <li>Count the entries: there are 3, so $n = 3$ and we write $x \\in \\mathbb{R}^3$.</li>
+       <li>Count the entries: there are $3$, so $n = 3$ and we write $x \\in \\mathbb{R}^3$.</li>
      </ul>
      <p>A second house is just another vector. A whole dataset is many such vectors.</p>`,
   application:
@@ -287,19 +295,38 @@ L({
     `<p>The $\\sum$ says: walk through every position $i$, multiply $x_i$ by $y_i$, and keep a running total.</p>
      <p>The answer is a plain number (it lives in $\\mathbb{R}$), not a vector.</p>`,
   example:
-    `<p>First, the recipe as a prediction. Let $x = [1500, 3, 10]$ be a house and $w = [200, 10000, -500]$ be "price weights" (dollars per sq ft, per bedroom, per year of age).</p>
+    `<p>First, the recipe as a prediction. Let $x = [1500, 3, 10]$ be a house and $w = [200, 10000, -500]$ be "price weights" (dollars per sq ft, per bedroom, per year of age). The dot product pairs them up:</p>
+     <table class="extable">
+       <caption>$w^\\top x$: multiply matching entries, then sum the column.</caption>
+       <thead><tr><th>$i$</th><th class="num">$x_i$</th><th class="num">$w_i$</th><th class="num">$x_i\\, w_i$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">size</td><td class="num">1500</td><td class="num">200</td><td class="num">300000</td></tr>
+         <tr><td class="row-h">bedrooms</td><td class="num">3</td><td class="num">10000</td><td class="num">30000</td></tr>
+         <tr><td class="row-h">age</td><td class="num">10</td><td class="num">−500</td><td class="num">−5000</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">325000</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Multiply matching entries: $1500\\times200 = 300000$, &nbsp; $3\\times10000 = 30000$, &nbsp; $10\\times(-500) = -5000$.</li>
        <li>Add them: $300000 + 30000 - 5000 = 325000$. So $w^\\top x = \\$325{,}000$, a price prediction.</li>
      </ul>
      <p>Now the real punchline: <b>the dot product measures agreement.</b> Take $a = [1, 0]$ (points right) and dot it with three other vectors to see all three cases with numbers:</p>
+     <table class="extable">
+       <caption>Same fixed $a=[1,0]$, three partners: sign of $a\\cdot b$ tells the relationship.</caption>
+       <thead><tr><th>Partner $b$</th><th class="num">$a\\cdot b$</th><th>Meaning</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$[3, 0]$</td><td class="num">3</td><td>positive &rarr; agree (same direction)</td></tr>
+         <tr><td class="row-h">$[0, 5]$</td><td class="num">0</td><td>zero &rarr; unrelated (perpendicular)</td></tr>
+         <tr><td class="row-h">$[-4, 0]$</td><td class="num">−4</td><td>negative &rarr; disagree (opposite)</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li><b>Same direction</b> &mdash; $a\\cdot[3,0] = 1\\times3 + 0\\times0 = 3$. Both point right, so the result is <b>positive</b>. They agree.
-           <div class="why">When two vectors point the same way, every matching pair multiplies to a positive, so the sum is big and positive.</div></li>
-       <li><b>Perpendicular</b> &mdash; $a\\cdot[0,5] = 1\\times0 + 0\\times5 = 0$. One points right, the other straight up.
+       <li><b>Same direction</b> &mdash; $a\\cdot[3,0] = 1\\times3 + 0\\times0 = 3$.
+           <div class="why">Pointing the same way makes every pair positive, so the sum is positive.</div></li>
+       <li><b>Perpendicular</b> &mdash; $a\\cdot[0,5] = 1\\times0 + 0\\times5 = 0$.
            <div class="why">A dot product of exactly $0$ is the signal for "at right angles / unrelated". This is why $0$ means orthogonal.</div></li>
-       <li><b>Opposite direction</b> &mdash; $a\\cdot[-4,0] = 1\\times(-4) + 0\\times0 = -4$. One points right, the other left.
-           <div class="why">Pointing against each other makes the products negative, so the sum goes <b>negative</b>: they disagree.</div></li>
+       <li><b>Opposite direction</b> &mdash; $a\\cdot[-4,0] = 1\\times(-4) + 0\\times0 = -4$.
+           <div class="why">Pointing against each other makes the products negative, so the sum goes negative: they disagree.</div></li>
      </ul>
      <p>So $+3$ (agree), $0$ (unrelated), $-4$ (disagree) &mdash; one number tells you how much two vectors point the same way. That is exactly why the negative age-weight $-500$ above pushes the price <i>down</i>: it disagrees with age.</p>`,
   application:
@@ -377,13 +404,22 @@ L({
   whatItDoes:
     `<p>$A_{2,3}$ means "go to row 2, column 3, read that number". The dots ($\\cdots$, $\\vdots$, $\\ddots$) just mean "and so on" across, down, and diagonally.</p>`,
   example:
-    `<p>Let's build a matrix from three houses, two features each (size, bedrooms), step by step.</p>
+    `<p>Let's build a matrix from three houses, two features each (size, bedrooms). One house per row, one feature per column.</p>
+     <table class="extable">
+       <caption>Three houses &times; two features. Each row is one example.</caption>
+       <thead><tr><th>House (row)</th><th class="num">size (col 1)</th><th class="num">bedrooms (col 2)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">1500</td><td class="num">3</td></tr>
+         <tr><td class="row-h">2</td><td class="num">900</td><td class="num">2</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2200</td><td class="num">4</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Write each house as a row: house 1 = $[1500, 3]$, house 2 = $[900, 2]$, house 3 = $[2200, 4]$.</li>
        <li>Stack the three rows into a grid:
            $A = \\begin{bmatrix} 1500 & 3 \\\\ 900 & 2 \\\\ 2200 & 4 \\end{bmatrix}$.</li>
-       <li>Count the shape: 3 rows, 2 columns. So $m = 3$, $n = 2$, and $A \\in \\mathbb{R}^{3\\times 2}$.</li>
-       <li>Read a cell by (row, column): $A_{2,1} = 900$ (house 2's size); $A_{3,2} = 4$ (house 3's bedrooms).</li>
+       <li>Count the shape: $3$ rows, $2$ columns. So $m = 3$, $n = 2$, and $A \\in \\mathbb{R}^{3\\times 2}$.</li>
+       <li>Read a cell by (row, column): $A_{2,1} = 900$ (house 2's size).</li>
+       <li>Another cell: $A_{3,2} = 4$ (house 3's bedrooms).</li>
      </ul>`,
   application:
     `<p>Datasets are matrices (rows = examples, columns = features). Images are matrices of pixels. Neural-network layers are matrices of weights. Almost all ML (Machine Learning) computation is "matrix in, matrix out".</p>`,
@@ -533,11 +569,19 @@ L({
     `<p>Row by row: take row $i$ of $A$, dot it with $x$, write the number in slot $i$ of the answer.</p>
      <p>Rule to remember: an $(m\\times n)$ matrix times an $(n)$ vector gives an $(m)$ vector. The inner $n$'s must match and cancel.</p>`,
   example:
-    `<p>Two houses $A=\\begin{bmatrix}1500 & 3\\\\900 & 2\\end{bmatrix}$, price weights $x=\\begin{bmatrix}200\\\\10000\\end{bmatrix}$.</p>
+    `<p>Two houses $A=\\begin{bmatrix}1500 & 3\\\\900 & 2\\end{bmatrix}$, price weights $x=\\begin{bmatrix}200\\\\10000\\end{bmatrix}$. Each row of $A$ gets dotted with $x$, giving one price per row.</p>
+     <table class="extable">
+       <caption>$Ax$: one dot product per row &rarr; one score per row.</caption>
+       <thead><tr><th>Row of $A$</th><th>row $\\cdot\\, x$</th><th class="num">result</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$[1500, 3]$</td><td>$1500\\times200 + 3\\times10000$</td><td class="num">330000</td></tr>
+         <tr><td class="row-h">$[900, 2]$</td><td>$900\\times200 + 2\\times10000$</td><td class="num">200000</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Row 1 dot $x$: $1500\\times200 + 3\\times10000 = 300000 + 30000 = 330000$.</li>
        <li>Row 2 dot $x$: $900\\times200 + 2\\times10000 = 180000 + 20000 = 200000$.</li>
-       <li>Result: $Ax = \\begin{bmatrix}330000\\\\200000\\end{bmatrix}$ — both prices at once.</li>
+       <li>Stack the two answers: $Ax = \\begin{bmatrix}330000\\\\200000\\end{bmatrix}$ &mdash; both prices at once.</li>
      </ul>`,
   application:
     `<p>Predicting on a batch of data, passing inputs through a neural-network layer, rotating 3D points in graphics — all are matrix×vector. GPUs exist mainly to do this operation very fast.</p>`,
@@ -683,7 +727,15 @@ L({
        <li>L2: $\\sqrt{3^2 + (-4)^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$.</li>
        <li>L1: $|3| + |-4| = 3 + 4 = 7$.</li>
      </ul>
-     <p>Same vector, two different "sizes". Now the key use: <b>distance between two vectors is the norm of their difference</b>, $\\lVert x - y\\rVert$. Let's see it with numbers. Take $x = [4, 6]$ and $y = [1, 2]$:</p>
+     <table class="extable">
+       <caption>Same vector $x=[3,-4]$, two different "sizes".</caption>
+       <thead><tr><th>Norm</th><th>computation</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">L2 (Euclidean)</td><td>$\\sqrt{9 + 16} = \\sqrt{25}$</td><td class="num">5</td></tr>
+         <tr><td class="row-h">L1 (Manhattan)</td><td>$3 + 4$</td><td class="num">7</td></tr>
+       </tbody>
+     </table>
+     <p>Now the key use: <b>distance between two vectors is the norm of their difference</b>, $\\lVert x - y\\rVert$. Let's see it with numbers. Take $x = [4, 6]$ and $y = [1, 2]$:</p>
      <ul class="steps">
        <li>Subtract entry by entry: $x - y = [4-1,\\; 6-2] = [3, 4]$.
            <div class="why">The difference vector is the "arrow from $y$ to $x$". Its length is how far apart they are.</div></li>
@@ -750,11 +802,20 @@ L({
      <p>$\\lim_{h\\to 0}$ means "let the step shrink to nearly nothing", so you get the slope exactly at the point, not an average over a gap.</p>
      <p>Handy rule: the slope of $x^2$ is $2x$.</p>`,
   example:
-    `<p>Let $f(x) = x^2$ (a U-shaped bowl). Its derivative is $f'(x) = 2x$.</p>
+    `<p>Let $f(x) = x^2$ (a U-shaped bowl). Its derivative is $f'(x) = 2x$. Plug in a few points:</p>
+     <table class="extable">
+       <caption>Slope $f'(x)=2x$ of $f(x)=x^2$ at three points.</caption>
+       <thead><tr><th class="num">$x$</th><th class="num">$f'(x) = 2x$</th><th>what it means</th></tr></thead>
+       <tbody>
+         <tr><td class="num">3</td><td class="num">6</td><td>steep, uphill to the right</td></tr>
+         <tr><td class="num">0</td><td class="num">0</td><td>flat &mdash; bottom of the bowl (minimum)</td></tr>
+         <tr><td class="num">−2</td><td class="num">−4</td><td>downhill to the right</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>At $x = 3$: slope $= 2\\times3 = 6$. Steep, going uphill to the right.</li>
-       <li>At $x = 0$: slope $= 0$. Flat — this is the bottom of the bowl (the minimum).</li>
-       <li>At $x = -2$: slope $= -4$. Going downhill to the right.</li>
+       <li>At $x = 3$: slope $= 2\\times3 = 6$.</li>
+       <li>At $x = 0$: slope $= 2\\times0 = 0$.</li>
+       <li>At $x = -2$: slope $= 2\\times(-2) = -4$.</li>
      </ul>
      <p>To reach the bottom, step <i>opposite</i> the slope. That single idea is gradient descent.</p>`,
   application:
@@ -891,10 +952,18 @@ L({
     `<p>Each slot of the gradient is the slope in one direction. Together they form an arrow pointing toward steepest increase.</p>
      <p>Going downhill (to reduce error) means moving along $-\\nabla f$, the negative gradient.</p>`,
   example:
-    `<p>Let $f(x_1, x_2) = x_1^2 + x_2^2$ (a round bowl). Partials: $\\frac{\\partial f}{\\partial x_1} = 2x_1$, $\\frac{\\partial f}{\\partial x_2} = 2x_2$.</p>
+    `<p>Let $f(x_1, x_2) = x_1^2 + x_2^2$ (a round bowl). Partials: $\\frac{\\partial f}{\\partial x_1} = 2x_1$, $\\frac{\\partial f}{\\partial x_2} = 2x_2$. Evaluate each one at the point $(3, 4)$:</p>
+     <table class="extable">
+       <caption>Each partial = one slot of $\\nabla f$, evaluated at $(3,4)$.</caption>
+       <thead><tr><th>direction</th><th>partial</th><th class="num">at $(3,4)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$x_1$</td><td>$2x_1 = 2\\times3$</td><td class="num">6</td></tr>
+         <tr><td class="row-h">$x_2$</td><td>$2x_2 = 2\\times4$</td><td class="num">8</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>At the point $(3, 4)$: $\\nabla f = [\\,2\\times3,\\; 2\\times4\\,] = [6, 8]$.</li>
-       <li>That arrow points away from the center — straight uphill.</li>
+       <li>Stack the two partials: $\\nabla f = [\\,2\\times3,\\; 2\\times4\\,] = [6, 8]$.</li>
+       <li>That arrow points away from the center &mdash; straight uphill.</li>
        <li>To go downhill, step toward $-[6,8] = [-6,-8]$, heading back to the bottom at $(0,0)$.</li>
      </ul>`,
   application:
@@ -958,12 +1027,21 @@ L({
     `<p>Read it as: "rate of $z$ over $x$ = (rate of $z$ over $y$) times (rate of $y$ over $x$)."</p>
      <p>The middle term $dy$ "cancels" like a fraction — a good memory trick (it is not literally division, but it behaves that way here).</p>`,
   example:
-    `<p>Let $y = 3x$ and $z = y^2$. So $z$ depends on $x$ through $y$.</p>
+    `<p>Let $y = 3x$ and $z = y^2$. So $z$ depends on $x$ through $y$. Find each step's slope, then multiply.</p>
+     <table class="extable">
+       <caption>Two steps, two slopes; the chain rule multiplies them.</caption>
+       <thead><tr><th>step</th><th>local slope</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">outer: $z = y^2$</td><td>$\\frac{dz}{dy} = 2y$</td></tr>
+         <tr><td class="row-h">inner: $y = 3x$</td><td>$\\frac{dy}{dx} = 3$</td></tr>
+         <tr><td class="row-h">product</td><td>$\\frac{dz}{dx} = 2y\\cdot3 = 18x$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Slope of the outer step: $\\frac{dz}{dy} = 2y$.</li>
        <li>Slope of the inner step: $\\frac{dy}{dx} = 3$.</li>
        <li>Multiply: $\\frac{dz}{dx} = 2y \\cdot 3 = 6y = 6(3x) = 18x$.</li>
-       <li>Check at $x=1$: $z = (3\\cdot1)^2 = 9$. Slope $18\\times1 = 18$. ✔</li>
+       <li>Check at $x=1$: $z = (3\\cdot1)^2 = 9$, and the slope is $18\\times1 = 18$. &#10003;</li>
      </ul>`,
   application:
     `<p>Backpropagation runs the chain rule backward through every layer of a network, multiplying local slopes, to find how each weight affects the final loss. Without it, deep learning would be impossible.</p>`,
@@ -1123,7 +1201,17 @@ L({
     `<p>Left side: run $z$ through the matrix. Right side: just scale $z$ by the number $\\lambda$.</p>
      <p>When both sides match, the matrix's effect on $z$ is pure stretching. Same direction in, same direction out.</p>`,
   example:
-    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$. First a <i>special</i> direction, $z=\\begin{bmatrix}1\\\\0\\end{bmatrix}$:</p>
+    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$. Run two directions through it and compare $Az$ to $z$.</p>
+     <table class="extable">
+       <caption>Special (eigen) vs ordinary direction under $A$.</caption>
+       <thead><tr><th>$z$</th><th class="num">$Az$</th><th>same direction as $z$?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$[1, 0]$</td><td class="num">$[2, 0]$</td><td>yes &mdash; $= 2z$, so $\\lambda = 2$</td></tr>
+         <tr><td class="row-h">$[0, 1]$</td><td class="num">$[0, 3]$</td><td>yes &mdash; $= 3z$, so $\\lambda = 3$</td></tr>
+         <tr><td class="row-h">$[1, 1]$</td><td class="num">$[2, 3]$</td><td>no &mdash; direction changed</td></tr>
+       </tbody>
+     </table>
+     <p>First a <i>special</i> direction, $z=\\begin{bmatrix}1\\\\0\\end{bmatrix}$:</p>
      <ul class="steps">
        <li>$Az=\\begin{bmatrix}2\\cdot1 + 0\\cdot0\\\\0\\cdot1 + 3\\cdot0\\end{bmatrix}=\\begin{bmatrix}2\\\\0\\end{bmatrix}$.</li>
        <li>That equals $2\\begin{bmatrix}1\\\\0\\end{bmatrix} = 2z$. So $Az = \\lambda z$ holds exactly with $\\lambda = 2$.

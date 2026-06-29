@@ -145,12 +145,20 @@ L({
        <li>Each round can only raise (or hold) the data's log-likelihood, so EM climbs steadily to a local maximum. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>One feature, two blobs. Point $x=6$. Blob A: $\\mu_A=5,\\sigma_A=1,\\pi_A=0.5$. Blob B: $\\mu_B=8,\\sigma_B=1,\\pi_B=0.5$.</p>
+    `<p>One feature, two blobs, equal weights $\\pi_A=\\pi_B=0.5$. Score the point $x=6$ against both bells, then normalize to get its responsibilities.</p>
+     <table class="extable">
+       <caption>E-step at $x=6$: bell value, weighted score, responsibility per blob.</caption>
+       <thead><tr><th>blob $k$</th><th class="num">$\\mu_k$</th><th class="num">$\\sigma_k$</th><th class="num">$\\mathcal{N}(6)$</th><th class="num">$\\pi_k\\mathcal{N}$</th><th class="num">$\\gamma_k$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">5</td><td class="num">1</td><td class="num">0.242</td><td class="num">0.121</td><td class="num">0.82</td></tr>
+         <tr><td class="row-h">B</td><td class="num">8</td><td class="num">1</td><td class="num">0.054</td><td class="num">0.027</td><td class="num">0.18</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Bell of A at 6: $\\mathcal{N}=\\frac{1}{\\sqrt{2\\pi}}e^{-(6-5)^2/2}=0.399\\times e^{-0.5}=0.242$.</li>
        <li>Bell of B at 6: $0.399\\times e^{-(6-8)^2/2}=0.399\\times e^{-2}=0.054$.</li>
-       <li>Weighted: A $=0.5\\times0.242=0.121$, B $=0.5\\times0.054=0.027$.</li>
-       <li>Responsibility of A: $\\gamma_A=\\frac{0.121}{0.121+0.027}=\\frac{0.121}{0.148}=0.82$.</li>
+       <li>Weighted scores: A $=0.5\\times0.242=0.121$, B $=0.5\\times0.054=0.027$.</li>
+       <li>Normalize: $\\gamma_A=\\frac{0.121}{0.121+0.027}=\\frac{0.121}{0.148}=0.82$, so $\\gamma_B=1-0.82=0.18$.</li>
        <li>So $x=6$ is 82% blob A, 18% blob B — closer to A, but not 100%. That softness is the point.</li>
      </ul>`,
   application:
@@ -296,11 +304,22 @@ L({
        <li>Border points attach to whichever cluster's core reached them; points reached by no core seed are noise. The naive pass is $O(n^2)$, faster with a spatial index. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>minPts $=3$, $\\varepsilon=1$. Five points on a line: A$=0$, B$=0.5$, C$=1$, D$=5$, E$=5.4$.</p>
+    `<p>minPts $=3$, $\\varepsilon=1$. Five points on a line. Count each point's neighbors within $\\varepsilon=1$ (excluding itself), then add 1 for itself to decide core status.</p>
+     <table class="extable">
+       <caption>Each point's $\\varepsilon$-neighbors, total count (with itself), and label.</caption>
+       <thead><tr><th>point</th><th class="num">position</th><th>neighbors $\\le 1$</th><th class="num">count+self</th><th>label</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">0</td><td>B, C</td><td class="num">3</td><td>core</td></tr>
+         <tr><td class="row-h">B</td><td class="num">0.5</td><td>A, C</td><td class="num">3</td><td>core</td></tr>
+         <tr><td class="row-h">C</td><td class="num">1</td><td>A, B</td><td class="num">3</td><td>core</td></tr>
+         <tr><td class="row-h">D</td><td class="num">5</td><td>E</td><td class="num">2</td><td>noise</td></tr>
+         <tr><td class="row-h">E</td><td class="num">5.4</td><td>D</td><td class="num">2</td><td>noise</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>B's neighbors within 1: A (0.5 away) and C (0.5 away). With itself that is 3 ⇒ B is a <b>core</b> point.</li>
-       <li>A's neighbors: B and C ⇒ 3 with itself ⇒ A is core too. C likewise. A, B, C form one cluster.</li>
-       <li>D's neighbors within 1: only E. With itself that is 2 $&lt;3$ ⇒ D is <b>not</b> core. Same for E.</li>
+       <li>B's neighbors within 1: A (0.5 away) and C (0.5 away). With itself that is 3 $\\ge 3$ ⇒ B is a <b>core</b> point.</li>
+       <li>A and C likewise reach count 3 ⇒ both core. The three core points overlap, so A, B, C form one cluster.</li>
+       <li>D's only neighbor within 1 is E. With itself that is $2&lt;3$ ⇒ D is <b>not</b> core. Same for E.</li>
        <li>D and E touch no core point, so both are labeled <b>noise</b>. Final: one cluster {A,B,C}, noise {D,E}.</li>
      </ul>`,
   application:
@@ -441,13 +460,23 @@ L({
        <li>Its sign pattern is the soft cut; for $k$ clusters use the $k$ smallest eigenvectors and run k-means on them. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Tiny graph: 4 points in two pairs. Edges: 1–2 weight 1, 3–4 weight 1, and a weak 2–3 weight $0.1$.</p>
+    `<p>Tiny graph: 4 points in two pairs. Edges: 1–2 weight 1, 3–4 weight 1, and a weak 2–3 weight $0.1$. A split is a sign vector $f$ ($+1$ one side, $-1$ the other); its cut cost is $\\tfrac14 f^\\top L f=\\tfrac14\\sum_{ij}W_{ij}(f_i-f_j)^2$ — the total weight of edges whose endpoints disagree in sign.</p>
      <ul class="steps">
        <li>Degrees: $D_{11}=1,\\ D_{22}=1.1,\\ D_{33}=1.1,\\ D_{44}=1$. Build $L=D-W$; row for point 2 is $[-1,\\ 1.1,\\ -0.1,\\ 0]$.</li>
-       <li>A split is a vector $f$ with $+1$ on one side, $-1$ on the other, and the cut cost is $\\tfrac14 f^\\top L f=\\tfrac14\\sum_{ij}W_{ij}(f_i-f_j)^2$ — sum the weights of edges whose endpoints disagree in sign.</li>
-       <li><b>Natural split</b> $f=[+1,+1,-1,-1]$: only edge 2–3 is cut ($f_2=+1\\ne f_3=-1$), so cost $=W_{23}=0.1$.</li>
-       <li><b>Bad split</b> $f=[+1,-1,+1,-1]$: now edges 1–2 and 3–4 disagree, so cost $=W_{12}+W_{34}=1+1=2.0$ — twenty times worse.</li>
-       <li>$L$'s all-ones eigenvector (eigenvalue $0$) is the trivial "no cut". The next-smallest eigenvector (the Fiedler vector) minimizes that cost, so its sign pattern is $[+,+,-,-]$: it cuts the cheap $0.1$ seam and leaves both strong pairs intact.</li>
+       <li>For each candidate $f$, sum the weights of the edges it cuts (endpoints with opposite sign).</li>
+     </ul>
+     <table class="extable">
+       <caption>Two candidate splits and the total weight each one cuts.</caption>
+       <thead><tr><th>split $f$</th><th>edges cut</th><th class="num">cut cost</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$[+1,+1,-1,-1]$ (natural)</td><td>2–3</td><td class="num">0.1</td></tr>
+         <tr><td class="row-h">$[+1,-1,+1,-1]$ (bad)</td><td>1–2, 3–4</td><td class="num">2.0</td></tr>
+       </tbody>
+     </table>
+     <ul class="steps">
+       <li><b>Natural split</b>: only edge 2–3 disagrees ($f_2=+1\\ne f_3=-1$), so cost $=W_{23}=0.1$.</li>
+       <li><b>Bad split</b>: edges 1–2 and 3–4 disagree, so cost $=W_{12}+W_{34}=1+1=2.0$ — twenty times worse.</li>
+       <li>$L$'s all-ones eigenvector (eigenvalue $0$) is the trivial "no cut". The next-smallest eigenvector (the Fiedler vector) minimizes the cost, so its sign pattern is $[+,+,-,-]$: it cuts the cheap $0.1$ seam and leaves both strong pairs intact.</li>
      </ul>`,
   application:
     `<p>Spectral methods segment images (pixels as a graph), find communities in social networks, group genes by co-expression, and partition meshes for parallel computing. Whenever "similar" matters more than "nearby", spectral clustering shines.</p>`,
@@ -600,14 +629,22 @@ L({
        <li>What remains is linear in $x$: a hyperplane boundary. That is LDA. Keep the $\\Sigma_k$ distinct and the quadratic survives — QDA's curved boundary. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>One feature. Class 0: $\\mu_0=0$. Class 1: $\\mu_1=4$. Shared variance $\\sigma^2=1$, equal priors. Where is the LDA boundary?</p>
+    `<p>One feature. Class 0: $\\mu_0=0$. Class 1: $\\mu_1=4$. Equal priors. Find the boundary first with a shared variance (LDA), then with class 1 widened (QDA).</p>
      <ul class="steps">
-       <li>LDA boundary sits where the two scores tie: $(x-\\mu_0)^2=(x-\\mu_1)^2$.</li>
+       <li><b>LDA</b> (shared $\\sigma^2=1$): the scores tie where $(x-\\mu_0)^2=(x-\\mu_1)^2$.</li>
        <li>$x^2=(x-4)^2=x^2-8x+16 \\Rightarrow 8x=16 \\Rightarrow x=2$. The midpoint, as expected.</li>
-       <li>Now give class 1 a wider variance $\\sigma_1^2=4$ (QDA). The tie becomes $\\frac{(x-0)^2}{1}+\\log 1=\\frac{(x-4)^2}{4}+\\log 4$.</li>
+       <li><b>QDA</b> (give class 1 a wider $\\sigma_1^2=4$): the tie becomes $\\frac{(x-0)^2}{1}+\\log 1=\\frac{(x-4)^2}{4}+\\log 4$.</li>
        <li>Rearranged: $x^2-\\tfrac14(x-4)^2-\\log4=0\\Rightarrow 0.75x^2+2x-4-\\log4=0$ — a quadratic in $x$.</li>
        <li>A quadratic has up to two roots, so the boundary is a pair of crossing points (a curve in 2-D) wrapping the tighter class, not a single midpoint.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Same two means, shared vs per-class variance: the boundary shape changes.</caption>
+       <thead><tr><th>method</th><th class="num">$\\sigma_0^2$</th><th class="num">$\\sigma_1^2$</th><th>tie equation</th><th>boundary</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">LDA</td><td class="num">1</td><td class="num">1</td><td>$8x=16$</td><td>line at $x=2$</td></tr>
+         <tr><td class="row-h">QDA</td><td class="num">1</td><td class="num">4</td><td>$0.75x^2+2x-4-\\log4=0$</td><td>curve (2 roots)</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>LDA is a fast, robust baseline for face recognition, credit scoring, and medical diagnosis, and doubles as a supervised dimensionality reducer. QDA is preferred when classes genuinely have different spreads, e.g. distinguishing tissue types in imaging.</p>`,
   whenToUse:
@@ -751,12 +788,21 @@ L({
        <li>At a training input, $k_*$ equals a column of $K$, so $k_*^\\top K^{-1}k_*=k(x_*,x_*)$ and the variance collapses to (near) zero. The band pinches shut at data. $\\blacksquare$</li>
      </ul>`,
   example:
-    `<p>Two data points: $x_1=0,y_1=1$ and $x_2=2,y_2=3$. Kernel $k(a,b)=e^{-(a-b)^2/2}$. Predict the mean at $x_*=1$.</p>
+    `<p>Two training points and one test point, kernel $k(a,b)=e^{-(a-b)^2/2}$. Predict the mean at $x_*=1$.</p>
+     <table class="extable">
+       <caption>The data and the kernel values that go into the prediction.</caption>
+       <thead><tr><th>input</th><th class="num">$x$</th><th class="num">$y$</th><th class="num">$k(x_*,x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$x_1$</td><td class="num">0</td><td class="num">1</td><td class="num">0.607</td></tr>
+         <tr><td class="row-h">$x_2$</td><td class="num">2</td><td class="num">3</td><td class="num">0.607</td></tr>
+         <tr><td class="row-h">$x_*$</td><td class="num">1</td><td class="num">?</td><td class="num">—</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$K=\\begin{bmatrix}1 & e^{-2}\\\\ e^{-2} & 1\\end{bmatrix}=\\begin{bmatrix}1 & 0.135\\\\ 0.135 & 1\\end{bmatrix}$.</li>
+       <li>$K=\\begin{bmatrix}1 & e^{-2}\\\\ e^{-2} & 1\\end{bmatrix}=\\begin{bmatrix}1 & 0.135\\\\ 0.135 & 1\\end{bmatrix}$ (the diagonal is $k(x,x)=1$).</li>
        <li>$k_*=\\big(k(1,0),k(1,2)\\big)=\\big(e^{-0.5},e^{-0.5}\\big)=(0.607,\\,0.607)$.</li>
-       <li>$K^{-1}\\approx\\frac{1}{0.982}\\begin{bmatrix}1 & -0.135\\\\ -0.135 & 1\\end{bmatrix}$, so $K^{-1}y\\approx(0.605,\\,2.92)$.</li>
-       <li>$\\mu_*=k_*^\\top K^{-1}y\\approx 0.607(0.605)+0.607(2.92)\\approx 2.14$.</li>
+       <li>$\\det K=1-0.135^2=0.982$, so $K^{-1}=\\frac{1}{0.982}\\begin{bmatrix}1 & -0.135\\\\ -0.135 & 1\\end{bmatrix}$, giving $K^{-1}y\\approx(0.606,\\,2.918)$.</li>
+       <li>$\\mu_*=k_*^\\top K^{-1}y\\approx 0.607(0.606)+0.607(2.918)\\approx 2.14$.</li>
        <li>So the GP predicts about $2.14$ at $x_*=1$ — between the two observed values, pulled by both. The error bar there is moderate; it would balloon out near $x_*=10$.</li>
      </ul>`,
   application:
@@ -914,9 +960,17 @@ L({
        <li>$\\Phi^\\top\\Phi=1^2+2^2=5$. $\\Phi^\\top y=1\\cdot2+2\\cdot4=10$.</li>
        <li>Posterior variance: $S_N=(\\alpha+\\beta\\,\\Phi^\\top\\Phi)^{-1}=(1+1\\cdot5)^{-1}=\\tfrac16\\approx0.167$.</li>
        <li>Posterior mean: $m_N=\\beta\\,S_N\\,\\Phi^\\top y=1\\cdot\\tfrac16\\cdot10=\\tfrac{10}{6}\\approx1.67$.</li>
-       <li>Plain least squares would give $10/5=2.0$; the prior pulls the slope down to $1.67$, and we now also have a variance $0.167$ — an error bar on the slope.</li>
        <li>Add more data and $\\Phi^\\top\\Phi$ grows, so $S_N$ shrinks and the mean drifts toward the least-squares value: the prior's pull fades.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Plain least squares vs the Bayesian posterior on the same two points.</caption>
+       <thead><tr><th>method</th><th class="num">slope estimate</th><th class="num">variance (error bar)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">OLS (no prior)</td><td class="num">$10/5=2.00$</td><td class="num">—</td></tr>
+         <tr><td class="row-h">Bayesian ($\\alpha=1$)</td><td class="num">$10/6\\approx1.67$</td><td class="num">0.167</td></tr>
+       </tbody>
+     </table>
+     <p>The prior pulls the slope down from $2.00$ to $1.67$, and Bayes also returns a variance $0.167$ — an honest error bar on the slope that OLS never gives.</p>`,
   application:
     `<p>Bayesian regression gives calibrated error bars for A/B test effects, sensor calibration, and forecasting with small data. Its built-in regularization (the prior) tames overfitting, and the same machinery underlies Bayesian neural nets and active learning.</p>`,
   whenToUse:
@@ -1061,8 +1115,18 @@ L({
        <li>Fit a stump (one split) to those residuals. Try the split $x&lt;2.5$ vs $x\\ge2.5$. A stump's leaf outputs the <b>mean residual</b> on its side: left leaf $\\{x=1,2\\}$ gives $\\tfrac{-10+0}{2}=-5$; right leaf $\\{x=3\\}$ gives $+10$.</li>
        <li>So the tree predicts $h_1=[-5,\\,-5,\\,+10]$ — that is exactly how the next tree "fits" the residual.</li>
        <li>Update: $F_1=F_0+\\nu h_1=[20-5,\\ 20-5,\\ 20+10]=[15,\\,15,\\,30]$.</li>
-       <li>New residuals: $[10-15,\\ 20-15,\\ 30-30]=[-5,\\,+5,\\,0]$. Sum of squares dropped from $10^2+0+10^2=200$ to $5^2+5^2+0=50$ — a $4\\times$ cut in one stage. The next stump fits these leftovers and shrinks them again.</li>
-     </ul>`,
+       <li>New residuals: $[10-15,\\ 20-15,\\ 30-30]=[-5,\\,+5,\\,0]$.</li>
+     </ul>
+     <table class="extable">
+       <caption>One boosting stage, per point: residual, stump output, updated model.</caption>
+       <thead><tr><th>$x$</th><th class="num">$y$</th><th class="num">$F_0$</th><th class="num">$r=y-F_0$</th><th class="num">$h_1$</th><th class="num">$F_1$</th><th class="num">new $r$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">10</td><td class="num">20</td><td class="num">-10</td><td class="num">-5</td><td class="num">15</td><td class="num">-5</td></tr>
+         <tr><td class="row-h">2</td><td class="num">20</td><td class="num">20</td><td class="num">0</td><td class="num">-5</td><td class="num">15</td><td class="num">+5</td></tr>
+         <tr><td class="row-h">3</td><td class="num">30</td><td class="num">20</td><td class="num">+10</td><td class="num">+10</td><td class="num">30</td><td class="num">0</td></tr>
+       </tbody>
+     </table>
+     <p>Sum of squared residuals dropped from $10^2+0+10^2=200$ to $5^2+5^2+0=50$ — a $4\\times$ cut in one stage. The next stump fits these leftovers and shrinks them again.</p>`,
   application:
     `<p>Gradient-boosted trees (XGBoost, LightGBM, CatBoost) are the go-to winners on tabular data: credit risk, click-through rates, search ranking, insurance pricing, and Kaggle leaderboards. They handle mixed feature types, missing values, and nonlinearity with little tuning.</p>`,
   whenToUse:

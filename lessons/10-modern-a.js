@@ -128,7 +128,17 @@ L({
      </ul>
      <p>That single $\\frac{1}{\\sqrt{d}}$ keeps the softmax in a healthy range no matter how long the vectors are. $\\blacksquare$</p>`,
   example:
-    `<p>One token's query is $q = [1, 1, 0, 0]$ (so $d = 4$, and $\\sqrt{d} = 2$). It compares against three keys: $k_1 = [2, 2, 0, 0]$, $k_2 = [1, 1, 0, 0]$, $k_3 = [0, 0, 1, 1]$.</p>
+    `<p>One token's query is $q = [1, 1, 0, 0]$ (so $d = 4$, and $\\sqrt{d} = 2$). It compares against three keys: $k_1 = [2, 2, 0, 0]$, $k_2 = [1, 1, 0, 0]$, $k_3 = [0, 0, 1, 1]$. The table runs each key through the whole attention pipeline.</p>
+     <table class="extable">
+       <caption>One attention row: from raw scores to weights (each step on its column)</caption>
+       <thead><tr><th>key</th><th class="num">$q \\cdot k$</th><th class="num">$/\\sqrt{d}$</th><th class="num">$\\exp$</th><th class="num">softmax</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$k_1$</td><td class="num">4</td><td class="num">2</td><td class="num">7.39</td><td class="num">0.67</td></tr>
+         <tr><td class="row-h">$k_2$</td><td class="num">2</td><td class="num">1</td><td class="num">2.72</td><td class="num">0.24</td></tr>
+         <tr><td class="row-h">$k_3$</td><td class="num">0</td><td class="num">0</td><td class="num">1.00</td><td class="num">0.09</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">11.11</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Raw dot products $q \\cdot k$: $k_1$ gives $1{\\cdot}2 + 1{\\cdot}2 = 4$; $k_2$ gives $1 + 1 = 2$; $k_3$ gives $0$.</li>
        <li>Divide by $\\sqrt{d} = 2$ to get the scaled scores: $[4/2,\\, 2/2,\\, 0/2] = [2, 1, 0]$.</li>
@@ -254,7 +264,15 @@ L({
      </ul>
      <p>Same budget, many views. That is why every Transformer uses multiple heads. $\\blacksquare$</p>`,
   example:
-    `<p>A model with vector size $d = 4$ and $h = 2$ heads, so each head works in $d/h = 2$ dimensions. Two tokens, "The" and "cat"; we compute the new "cat" vector. Each head divides its scores by $\\sqrt{2} \\approx 1.41$.</p>
+    `<p>A model with vector size $d = 4$ and $h = 2$ heads, so each head works in $d/h = 2$ dimensions. Two tokens, "The" and "cat"; we compute the new "cat" vector. Each head divides its scores by $\\sqrt{2} \\approx 1.41$, then softmaxes over the two keys.</p>
+     <table class="extable">
+       <caption>Two heads run in parallel on the same "cat" query</caption>
+       <thead><tr><th>head</th><th class="num">scaled "The"</th><th class="num">scaled "cat"</th><th class="num">softmax "The"</th><th class="num">softmax "cat"</th><th>output</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Head 1</td><td class="num">2.12</td><td class="num">0.00</td><td class="num">0.89</td><td class="num">0.11</td><td>$[0.89, 0.11]$</td></tr>
+         <tr><td class="row-h">Head 2</td><td class="num">0.00</td><td class="num">2.12</td><td class="num">0.11</td><td class="num">0.89</td><td>$[0.11, 0.89]$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li><b>Head 1</b> (dims 1-2). cat's query is $[1,0]$; keys are The$=[3,0]$, cat$=[0,3]$. Dot products $[3, 0]$, scaled by $\\sqrt{2}$ give $[2.12, 0]$. Softmax: $[0.89, 0.11]$ — it attends to "The".</li>
        <li>Head 1 values are The$=[1,0]$, cat$=[0,1]$, so its output is $0.89{\\cdot}[1,0] + 0.11{\\cdot}[0,1] = [0.89, 0.11]$.</li>
@@ -378,9 +396,19 @@ L({
      </ul>
      <p>One humble objective, predict the next token, secretly forces the model to model the world. $\\blacksquare$</p>`,
   example:
-    `<p>Prompt: "The cat sat on the ___". Logits over a tiny vocabulary are $z = [3.2, 2.1, 1.0]$ for ["mat", "sofa", "roof"]. Use temperature $T = 1$.</p>
+    `<p>Prompt: "The cat sat on the ___". Logits over a tiny vocabulary are $z = [3.2, 2.1, 1.0]$ for ["mat", "sofa", "roof"]. The table compares temperature $T = 1$ (sharp) against $T = 2$ (flatter).</p>
+     <table class="extable">
+       <caption>Same logits, two temperatures: dividing $z$ by $T$ before softmax</caption>
+       <thead><tr><th>word</th><th class="num">$z$</th><th class="num">$e^{z}$ ($T{=}1$)</th><th class="num">$P$ ($T{=}1$)</th><th class="num">$e^{z/2}$ ($T{=}2$)</th><th class="num">$P$ ($T{=}2$)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">mat</td><td class="num">3.2</td><td class="num">24.5</td><td class="num">0.69</td><td class="num">4.95</td><td class="num">0.52</td></tr>
+         <tr><td class="row-h">sofa</td><td class="num">2.1</td><td class="num">8.2</td><td class="num">0.23</td><td class="num">2.86</td><td class="num">0.30</td></tr>
+         <tr><td class="row-h">roof</td><td class="num">1.0</td><td class="num">2.7</td><td class="num">0.08</td><td class="num">1.65</td><td class="num">0.17</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">35.4</td><td class="num">1.00</td><td class="num">9.46</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Exponentiate: $e^{3.2} \\approx 24.5$, $e^{2.1} \\approx 8.2$, $e^{1.0} \\approx 2.7$. Sum $\\approx 35.4$.</li>
+       <li>At $T = 1$ exponentiate the logits: $e^{3.2} \\approx 24.5$, $e^{2.1} \\approx 8.2$, $e^{1.0} \\approx 2.7$. Sum $\\approx 35.4$.</li>
        <li>Probabilities: $24.5/35.4 \\approx 0.69$, $8.2/35.4 \\approx 0.23$, $2.7/35.4 \\approx 0.08$.</li>
        <li>"mat" wins at 69%. The model would likely emit "mat".</li>
        <li>Raise temperature to $T = 2$: scores become $[1.6, 1.05, 0.5]$, probabilities flatten to about $0.52, 0.30, 0.17$. Less sure, more varied.</li>
@@ -523,9 +551,20 @@ L({
        <li>Code entry 1: $0.5(0.8) + 0.1(0.2) + 0.5(0.9) + 0(0.1) + 0.3(0.6) = 0.40 + 0.02 + 0.45 + 0.18 = 1.05$.</li>
        <li>Code entry 2: $0(0.8) + 0.6(0.2) + 0.1(0.9) + 0.6(0.1) + 0.2(0.6) = 0.12 + 0.09 + 0.06 + 0.12 = 0.39$. So $z = [1.05, 0.39]$.</li>
        <li>The decoder expands $z$ back to 5 numbers, e.g. row 1 $= 0.9(1.05) + 0.0(0.39) = 0.945$, giving $\\hat{x} \\approx [0.95, 0.42, 0.98, 0.35, 0.54]$.</li>
-       <li>Squared gaps averaged: mean squared error $\\approx 0.028$. Small, even though 5 numbers were squeezed through just 2.</li>
      </ul>
-     <p>The encoder's two dot products are the entire summary of the input; everything rebuilt downstream flows from those two numbers.</p>`,
+     <table class="extable">
+       <caption>Input vs reconstruction, with the squared error per entry</caption>
+       <thead><tr><th>entry</th><th class="num">$x_i$</th><th class="num">$\\hat{x}_i$</th><th class="num">$(x_i-\\hat{x}_i)^2$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.80</td><td class="num">0.95</td><td class="num">0.0210</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.20</td><td class="num">0.42</td><td class="num">0.0471</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0.90</td><td class="num">0.98</td><td class="num">0.0071</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.10</td><td class="num">0.35</td><td class="num">0.0630</td></tr>
+         <tr><td class="row-h">5</td><td class="num">0.60</td><td class="num">0.54</td><td class="num">0.0040</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">0.1421</td></tr>
+       </tbody>
+     </table>
+     <p>Mean squared error $= 0.1421 / 5 \\approx 0.028$. Small, even though 5 numbers were squeezed through just 2. The encoder's two dot products are the entire summary of the input; everything rebuilt downstream flows from those two numbers.</p>`,
   application:
     `<p>Autoencoders power denoising (rebuild a clean image from a noisy one), anomaly detection (a fraud transaction reconstructs badly, so its error spikes), and dimensionality reduction for visualizing high-dimensional data.</p>`,
   whenToUse:
@@ -673,10 +712,18 @@ L({
      </ul>
      <p>The randomness is pushed into $\\epsilon$, leaving a differentiable path to the parameters. $\\blacksquare$</p>`,
   example:
-    `<p>The encoder outputs $\\mu = 0.5$, $\\sigma = 0.2$ for one latent dimension. We sample noise $\\epsilon = 1.3$.</p>
+    `<p>The encoder outputs $\\mu = 0.5$, $\\sigma = 0.2$ for one latent dimension. The same $(\\mu, \\sigma)$ gives a different code each time we draw fresh noise $\\epsilon$, via $z = \\mu + \\sigma\\epsilon$.</p>
+     <table class="extable">
+       <caption>Two noise draws from the same encoded distribution</caption>
+       <thead><tr><th>noise $\\epsilon$</th><th class="num">$\\sigma\\epsilon$</th><th class="num">$z = \\mu + \\sigma\\epsilon$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$+1.3$</td><td class="num">0.26</td><td class="num">0.76</td></tr>
+         <tr><td class="row-h">$-0.5$</td><td class="num">$-0.10$</td><td class="num">0.40</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Form the code: $z = \\mu + \\sigma\\epsilon = 0.5 + 0.2 \\times 1.3 = 0.5 + 0.26 = 0.76$.</li>
-       <li>Sample again with $\\epsilon = -0.5$: $z = 0.5 + 0.2 \\times (-0.5) = 0.4$. Same input, slightly different code each time.</li>
+       <li>First draw: $z = \\mu + \\sigma\\epsilon = 0.5 + 0.2 \\times 1.3 = 0.5 + 0.26 = 0.76$.</li>
+       <li>Second draw: $z = 0.5 + 0.2 \\times (-0.5) = 0.4$. Same input, slightly different code each time.</li>
        <li>The decoder turns $0.76$ and $0.4$ into two similar-but-different outputs. That variety is what lets a VAE generate.</li>
        <li>Now the KL term, in 1-D it is $D_{KL} = \\tfrac{1}{2}\\big(\\mu^2 + \\sigma^2 - 1 - \\ln \\sigma^2\\big)$. Plug in: $\\tfrac{1}{2}\\big(0.25 + 0.04 - 1 - \\ln 0.04\\big) = \\tfrac{1}{2}\\big(-0.71 + 3.22\\big) \\approx 1.25$.</li>
        <li>That positive KL is the penalty for this code being away from $N(0,1)$; minimizing it pushes $\\mu$ toward 0 and $\\sigma$ toward 1, where $D_{KL} = 0$.</li>
@@ -817,6 +864,15 @@ L({
        <li>New pixel: $x_t = 0.894 \\times 0.9 + 0.447 \\times (-1.0) = 0.805 - 0.447 = 0.358$.</li>
        <li>The pixel shifted toward noise. After many such steps it forgets its original value entirely.</li>
      </ul>
+     <table class="extable">
+       <caption>How the schedule $\\beta_t$ splits keep vs noise (more $\\beta$ = noisier)</caption>
+       <thead><tr><th>$\\beta_t$</th><th class="num">keep $\\sqrt{1-\\beta_t}$</th><th class="num">noise $\\sqrt{\\beta_t}$</th><th class="num">$x_t$ at $x_{t-1}{=}0.9,\\,\\epsilon{=}{-}1$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">0.1</td><td class="num">0.949</td><td class="num">0.316</td><td class="num">0.538</td></tr>
+         <tr><td class="row-h">0.2</td><td class="num">0.894</td><td class="num">0.447</td><td class="num">0.358</td></tr>
+         <tr><td class="row-h">0.5</td><td class="num">0.707</td><td class="num">0.707</td><td class="num">$-0.071$</td></tr>
+       </tbody>
+     </table>
      <p>To reverse, the network would predict that $\\epsilon \\approx -1.0$ was added, and subtract it to recover $0.9$.</p>`,
   application:
     `<p>Diffusion models power Stable Diffusion, DALL-E, and Midjourney for image generation, plus tools for video, audio, and 3-D shapes. They produce sharp, diverse samples and are now the dominant approach to image generation.</p>`,
@@ -956,7 +1012,16 @@ L({
        <li>Stretch factor: $\\left|\\frac{d g^{-1}}{dx}\\right| = \\frac{1}{2}$.</li>
        <li>Apply the formula: $p_x(0) = p_u(0) \\times \\frac{1}{2} = 0.399 \\times 0.5 \\approx 0.199$.</li>
        <li>Makes sense: doubling spreads the bell over twice the width, so its peak height drops by half.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Peak density at $x=0$ for $g(u) = c\\,u$: bigger stretch thins the peak</caption>
+       <thead><tr><th>stretch $x = c\\,u$</th><th class="num">factor $1/c$</th><th class="num">$p_x(0) = 0.399 / c$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$c = 1$ (identity)</td><td class="num">1.000</td><td class="num">0.399</td></tr>
+         <tr><td class="row-h">$c = 2$</td><td class="num">0.500</td><td class="num">0.199</td></tr>
+         <tr><td class="row-h">$c = 3$</td><td class="num">0.333</td><td class="num">0.133</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Normalizing flows give exact likelihoods, so they are used for density estimation, anomaly detection (low-probability points are flagged), and generating audio, where the invertible WaveGlow flow produces speech in real time.</p>`,
   whenToUse:

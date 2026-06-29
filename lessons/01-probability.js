@@ -61,12 +61,20 @@ L({
      <p>The right side says: an event $A$ is some of those outcomes grouped together.</p>
      <p>If the outcome that actually happens is inside $A$, we say "the event $A$ occurred".</p>`,
   example:
-    `<p>Roll one fair six-sided die.</p>
+    `<p>Roll one fair six-sided die. Sample space $\\Omega = \\{1, 2, 3, 4, 5, 6\\}$ — six equally likely outcomes, each with probability $\\frac{1}{6}$.</p>
+     <table class="extable">
+       <caption>Two events as subsets of the same $\\Omega = \\{1,2,3,4,5,6\\}$</caption>
+       <thead><tr><th>event</th><th>subset</th><th class="num">outcomes in it</th><th class="num">probability</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$A$ = "even"</td><td>$\\{2, 4, 6\\}$</td><td class="num">3</td><td class="num">$\\frac{3}{6} = 0.5$</td></tr>
+         <tr><td class="row-h">$B$ = "more than 4"</td><td>$\\{5, 6\\}$</td><td class="num">2</td><td class="num">$\\frac{2}{6} \\approx 0.333$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Sample space: $\\Omega = \\{1, 2, 3, 4, 5, 6\\}$. Six possible outcomes.</li>
-       <li>Event "even number": $A = \\{2, 4, 6\\}$. A subset of $\\Omega$.</li>
-       <li>Event "roll more than 4": $B = \\{5, 6\\}$. Another subset.</li>
-       <li>If you roll a 4, event $A$ happened (4 is inside $A$) but $B$ did not (4 is not in $B$).</li>
+       <li>$P(A) = \\frac{|A|}{|\\Omega|} = \\frac{3}{6} = 0.5$ (count of even faces over total faces).</li>
+       <li>$P(B) = \\frac{|B|}{|\\Omega|} = \\frac{2}{6} \\approx 0.333$.</li>
+       <li>Roll a 4: it is inside $A$ ($4 \\in \\{2,4,6\\}$), so event $A$ occurred.</li>
+       <li>That same 4 is NOT inside $B$ ($4 \\notin \\{5,6\\}$), so event $B$ did not occur.</li>
      </ul>`,
   application:
     `<p>A spam filter's sample space is every email it could see. The event "this email is spam" is a subset. Defining the sample space clearly is the first step in any model that handles uncertainty.</p>`,
@@ -149,12 +157,21 @@ L({
      <p>Rule 3 (additivity): if two events can't overlap, the chance of "one or the other" is just their chances added.</p>
      <p>A handy result follows: $P(A^c) = 1 - P(A)$. The chance it doesn't happen is 1 minus the chance it does.</p>`,
   example:
-    `<p>Roll a fair die. Each face has probability $\\frac{1}{6}$.</p>
+    `<p>Roll a fair die. Each face has probability $\\frac{1}{6} \\approx 0.167$. Take $A = \\{1,2\\}$ and $B = \\{5,6\\}$ — they share no faces, so they are disjoint.</p>
+     <table class="extable">
+       <caption>Checking each axiom on the fair die</caption>
+       <thead><tr><th>axiom</th><th>plug in</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">nonnegativity $P(A)\\ge 0$</td><td>$\\frac{2}{6}$</td><td class="num">$0.333 \\ge 0$ ✔</td></tr>
+         <tr><td class="row-h">normalization $P(\\Omega)$</td><td>$\\frac{6}{6}$</td><td class="num">$1$ ✔</td></tr>
+         <tr><td class="row-h">additivity $P(A\\cup B)$</td><td>$\\frac{2}{6}+\\frac{2}{6}$</td><td class="num">$\\frac{4}{6} \\approx 0.667$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Event $A = \\{1,2\\}$ and event $B = \\{5,6\\}$. They share no faces, so they are disjoint.</li>
-       <li>$P(A) = \\frac{2}{6}$ and $P(B) = \\frac{2}{6}$.</li>
-       <li>By additivity: $P(A \\cup B) = \\frac{2}{6} + \\frac{2}{6} = \\frac{4}{6} = \\frac{2}{3}$.</li>
-       <li>Complement check: $P(\\text{not } A) = 1 - \\frac{2}{6} = \\frac{4}{6}$. Faces $\\{3,4,5,6\\}$ — yes, four of them.</li>
+       <li>$P(A) = \\frac{2}{6}$ and $P(B) = \\frac{2}{6}$ (two faces each).</li>
+       <li>$A$ and $B$ are disjoint, so additivity applies: $P(A \\cup B) = \\frac{2}{6} + \\frac{2}{6} = \\frac{4}{6} = \\frac{2}{3} \\approx 0.667$.</li>
+       <li>Complement rule: $P(\\text{not } A) = 1 - P(A) = 1 - \\frac{2}{6} = \\frac{4}{6} \\approx 0.667$.</li>
+       <li>Check: "not $A$" is faces $\\{3,4,5,6\\}$ — four faces, so $\\frac{4}{6}$. ✔ Matches.</li>
      </ul>`,
   application:
     `<p>When a classifier outputs probabilities over many classes (cat, dog, bird), those numbers must each be $\\ge 0$ and sum to 1. That is the normalization axiom in action. The 'softmax' function exists to enforce it.</p>`,
@@ -315,11 +332,19 @@ L({
      <p>Dividing gives the fraction of $B$ that is also $A$ — exactly the chance of $A$ inside $B$.</p>`,
   example:
     `<p>Roll a fair die. Let $A$ = "rolled a 2", and $B$ = "rolled an even number" $= \\{2,4,6\\}$. Someone tells you the roll was even. Now, how likely is a 2?</p>
+     <table class="extable">
+       <caption>Plugging real numbers into $P(A\\mid B) = \\dfrac{P(A\\cap B)}{P(B)}$</caption>
+       <thead><tr><th>piece</th><th>outcomes</th><th class="num">probability</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$B$ (the given world)</td><td>$\\{2,4,6\\}$</td><td class="num">$\\frac{3}{6} = 0.5$</td></tr>
+         <tr><td class="row-h">$A \\cap B$ (2 and even)</td><td>$\\{2\\}$</td><td class="num">$\\frac{1}{6} \\approx 0.167$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$P(B) = \\frac{3}{6} = \\frac{1}{2}$ (three even faces).</li>
+       <li>$P(B) = \\frac{3}{6} = \\frac{1}{2}$ (three even faces out of six).</li>
        <li>$A \\cap B$ = "rolled a 2 AND it's even" = just $\\{2\\}$, so $P(A \\cap B) = \\frac{1}{6}$.</li>
-       <li>$P(A \\mid B) = \\frac{1/6}{1/2} = \\frac{1}{6} \\times \\frac{2}{1} = \\frac{2}{6} = \\frac{1}{3}$.</li>
-       <li>Makes sense: once you know it's even, there are only 3 faces left, and 2 is one of them.</li>
+       <li>$P(A \\mid B) = \\frac{1/6}{1/2} = \\frac{1}{6} \\times \\frac{2}{1} = \\frac{2}{6} = \\frac{1}{3} \\approx 0.333$.</li>
+       <li>Makes sense: once you know it's even, there are only 3 faces left and 2 is one of them — $\\frac{1}{3}$.</li>
      </ul>`,
   application:
     `<p>Recommendation systems ask "given that you watched this movie, how likely are you to watch that one?" Conditioning on what a user already did is the core of personalization.</p>`,
@@ -408,10 +433,19 @@ L({
      <p>Out comes your updated belief $P(A \\mid B)$.</p>`,
   example:
     `<p>A disease affects 1 in 1000 people. A test is 99% accurate (it catches sick people 99% of the time, and gives a false alarm just 1% of the time for healthy people). You test positive. Are you sick?</p>
+     <table class="extable">
+       <caption>Prior × likelihood = the two ways to test positive</caption>
+       <thead><tr><th>group</th><th class="num">prior $P(A)$</th><th class="num">likelihood $P(+\\mid A)$</th><th class="num">product</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">sick</td><td class="num">0.001</td><td class="num">0.99</td><td class="num">0.00099</td></tr>
+         <tr><td class="row-h">healthy</td><td class="num">0.999</td><td class="num">0.01</td><td class="num">0.00999</td></tr>
+         <tr><td class="row-h">total $P(+)$</td><td class="num"></td><td class="num"></td><td class="num">0.01098</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Prior: $P(\\text{sick}) = 0.001$. So $P(\\text{healthy}) = 0.999$.</li>
-       <li>Likelihood: $P(+ \\mid \\text{sick}) = 0.99$. False alarm: $P(+ \\mid \\text{healthy}) = 0.01$.</li>
-       <li>Total chance of a positive test: $P(+) = 0.99 \\times 0.001 + 0.01 \\times 0.999 = 0.00099 + 0.00999 = 0.01098$.</li>
+       <li>Prior: $P(\\text{sick}) = 0.001$, so $P(\\text{healthy}) = 0.999$.</li>
+       <li>Likelihood: $P(+ \\mid \\text{sick}) = 0.99$, false alarm $P(+ \\mid \\text{healthy}) = 0.01$.</li>
+       <li>Evidence $P(+) = 0.99 \\times 0.001 + 0.01 \\times 0.999 = 0.00099 + 0.00999 = 0.01098$.</li>
        <li>Bayes: $P(\\text{sick} \\mid +) = \\frac{0.99 \\times 0.001}{0.01098} = \\frac{0.00099}{0.01098} \\approx 0.09$.</li>
        <li>Only about <b>9%</b>! Even with a "99% accurate" test, a positive usually means you're healthy — because the disease is so rare to begin with.</li>
      </ul>`,
@@ -494,11 +528,19 @@ L({
      <p>The cases cover everything with no overlap, so nothing is missed and nothing is double-counted.</p>`,
   example:
     `<p>Two factories make light bulbs. Factory 1 makes 60% of them, with a 2% defect rate. Factory 2 makes 40%, with a 5% defect rate. Pick a random bulb. What's the chance it's defective?</p>
+     <table class="extable">
+       <caption>Each case contributes $P(A_i)\\,P(B\\mid A_i)$ to the total</caption>
+       <thead><tr><th>case $A_i$</th><th class="num">weight $P(A_i)$</th><th class="num">$P(D\\mid A_i)$</th><th class="num">contribution</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">factory 1</td><td class="num">0.60</td><td class="num">0.02</td><td class="num">0.012</td></tr>
+         <tr><td class="row-h">factory 2</td><td class="num">0.40</td><td class="num">0.05</td><td class="num">0.020</td></tr>
+         <tr><td class="row-h">total $P(D)$</td><td class="num">1.00</td><td class="num"></td><td class="num">0.032</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Cases: $A_1$ = from factory 1 ($P = 0.6$), $A_2$ = from factory 2 ($P = 0.4$).</li>
-       <li>Defect chance per case: $P(D \\mid A_1) = 0.02$, $P(D \\mid A_2) = 0.05$.</li>
-       <li>Factory 1 contribution: $0.6 \\times 0.02 = 0.012$.</li>
-       <li>Factory 2 contribution: $0.4 \\times 0.05 = 0.020$.</li>
+       <li>Cases partition the bulbs: $P(A_1) = 0.6$, $P(A_2) = 0.4$ (they sum to 1).</li>
+       <li>Factory 1 contribution: $P(A_1)\\,P(D\\mid A_1) = 0.6 \\times 0.02 = 0.012$.</li>
+       <li>Factory 2 contribution: $P(A_2)\\,P(D\\mid A_2) = 0.4 \\times 0.05 = 0.020$.</li>
        <li>Add: $P(D) = 0.012 + 0.020 = 0.032$, i.e. a 3.2% defect rate overall.</li>
      </ul>`,
   application:
@@ -635,14 +677,21 @@ L({
      <p>The right test says the same thing differently: knowing $B$ leaves $A$'s probability unchanged.</p>
      <p>Warning: independent is NOT the same as disjoint. Disjoint events can't co-occur, so they actually depend on each other a lot.</p>`,
   example:
-    `<p>Flip a fair coin twice. Let $A$ = "first flip heads", $B$ = "second flip heads".</p>
+    `<p>Flip a fair coin twice; outcomes $\\{HH, HT, TH, TT\\}$, each with probability $\\frac{1}{4}$. Let $A$ = "first flip heads" $= \\{HH, HT\\}$, $P(A) = \\frac{1}{2}$. Test the product rule against three partners $B, C, D$.</p>
+     <table class="extable">
+       <caption>$A$ vs each partner: compare $P(A)P(\\cdot)$ with the actual $P(A\\cap\\cdot)$</caption>
+       <thead><tr><th>event</th><th class="num">$P(\\cdot)$</th><th class="num">$P(A)\\,P(\\cdot)$</th><th class="num">actual $P(A\\cap\\cdot)$</th><th>verdict</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$B$ = 2nd is H</td><td class="num">$\\frac{1}{2}$</td><td class="num">$\\frac{1}{4} = 0.25$</td><td class="num">$\\frac{1}{4} = 0.25$</td><td>independent</td></tr>
+         <tr><td class="row-h">$C$ = same face</td><td class="num">$\\frac{1}{2}$</td><td class="num">$\\frac{1}{4} = 0.25$</td><td class="num">$\\frac{1}{4} = 0.25$</td><td>independent</td></tr>
+         <tr><td class="row-h">$D$ = at least 1 H</td><td class="num">$\\frac{3}{4}$</td><td class="num">$\\frac{3}{8} = 0.375$</td><td class="num">$\\frac{1}{2} = 0.5$</td><td>dependent</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$P(A) = \\frac{1}{2}$ and $P(B) = \\frac{1}{2}$, so the product is $P(A)P(B) = \\frac{1}{2} \\times \\frac{1}{2} = \\frac{1}{4}$.<div class="why">This is what independence <i>predicts</i> for "both heads".</div></li>
-       <li>Check directly: outcomes are $\\{HH, HT, TH, TT\\}$, and "both heads" is just $HH$, so $P(A \\cap B) = \\frac{1}{4}$.<div class="why">$\\frac{1}{4} = \\frac{1}{4}$ — the actual matches the prediction, so $A$ and $B$ are independent.</div></li>
-       <li>The "knowing B" view agrees: $P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)} = \\frac{1/4}{1/2} = \\frac{1}{2} = P(A)$. Learning the second flip was heads left the first flip's chance unchanged.</li>
-       <li><b>Contrast — a DEPENDENT pair.</b> Now let $C$ = "both flips show the same face" $= \\{HH, TT\\}$, so $P(C) = \\frac{2}{4} = \\frac{1}{2}$. Is $C$ independent of $A$?
-         <div class="why">$P(A)P(C) = \\frac{1}{2} \\times \\frac{1}{2} = \\frac{1}{4}$. But $A \\cap C = \\{HH\\}$ gives $P(A \\cap C) = \\frac{1}{4}$ too — so $A$ and $C$ ARE independent. The multiply rule is the only reliable test; "feels related" is not.</div></li>
-       <li><b>A genuinely dependent pair.</b> Let $D$ = "at least one head" $= \\{HH, HT, TH\\}$, $P(D) = \\frac{3}{4}$. Then $P(A)P(D) = \\frac{1}{2} \\times \\frac{3}{4} = \\frac{3}{8}$, but $A \\cap D = \\{HH, HT\\}$ gives $P(A \\cap D) = \\frac{2}{4} = \\frac{1}{2}$. Since $\\frac{1}{2} \\neq \\frac{3}{8}$, $A$ and $D$ are <b>dependent</b> — knowing the first flip is heads makes "at least one head" certain.</li>
+       <li>$B$ = "second flip heads": $P(A)P(B) = \\frac{1}{2}\\times\\frac{1}{2} = \\frac{1}{4}$, and $A\\cap B = \\{HH\\}$ gives $\\frac{1}{4}$ — equal, so <b>independent</b>.</li>
+       <li>"Knowing $B$" view agrees: $P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)} = \\frac{1/4}{1/2} = \\frac{1}{2} = P(A)$. Learning the second flip changed nothing.</li>
+       <li>$C$ = "same face" $= \\{HH, TT\\}$: $P(A)P(C) = \\frac{1}{4}$ and $A\\cap C = \\{HH\\}$ gives $\\frac{1}{4}$ — equal, so <b>independent</b> (even though it "feels" related).</li>
+       <li>$D$ = "at least one head" $= \\{HH, HT, TH\\}$: $P(A)P(D) = \\frac{1}{2}\\times\\frac{3}{4} = \\frac{3}{8}$, but $A\\cap D = \\{HH, HT\\}$ gives $\\frac{1}{2}$. Since $\\frac{1}{2} \\neq \\frac{3}{8}$, <b>dependent</b>.</li>
      </ul>`,
   application:
     `<p>The 'Naive Bayes' spam classifier assumes every word appears independently. That assumption is not quite true, but it lets the model just multiply many small probabilities together — and it works shockingly well.</p>`,
@@ -797,11 +846,19 @@ L({
     `<p>The permutation $\\frac{n!}{(n-r)!}$ counts ordered arrangements of $r$ items.</p>
      <p>The combination $\\binom{n}{r}$ takes that and divides by $r!$, the number of ways to reorder $r$ chosen items, since those reorderings are all the 'same' pick.</p>`,
   example:
-    `<p>A class of 5 students. (a) How many ways to line up 3 of them for a photo (order matters)? (b) How many ways to pick 3 for a team (order doesn't)?</p>
+    `<p>A class of $n = 5$ students; pick $r = 3$. (a) How many ways to line up 3 for a photo (order matters)? (b) How many ways to pick 3 for a team (order doesn't)?</p>
+     <table class="extable">
+       <caption>Same $n=5$, $r=3$ — order is the only difference</caption>
+       <thead><tr><th>question</th><th>formula</th><th class="num">arithmetic</th><th class="num">count</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">line-up (order matters)</td><td>$\\frac{n!}{(n-r)!}$</td><td class="num">$\\frac{120}{2}$</td><td class="num">60</td></tr>
+         <tr><td class="row-h">team (order doesn't)</td><td>$\\binom{n}{r} = \\frac{n!}{r!(n-r)!}$</td><td class="num">$\\frac{120}{12}$</td><td class="num">10</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Permutations: $\\frac{5!}{(5-3)!} = \\frac{5!}{2!} = \\frac{120}{2} = 60$ ordered line-ups.</li>
        <li>Combinations: $\\binom{5}{3} = \\frac{5!}{3!\\,2!} = \\frac{120}{6 \\times 2} = \\frac{120}{12} = 10$ teams.</li>
-       <li>Notice $60$ is $10 \\times 6$: each team of 3 can be lined up in $3! = 6$ orders.</li>
+       <li>Notice $60 = 10 \\times 6$: each team of 3 can be lined up in $3! = 6$ orders, so dividing by $3!$ collapses them.</li>
      </ul>`,
   application:
     `<p>Combinations appear inside the binomial distribution (next lessons), in counting possible feature subsets, and in calculating the odds of card hands or lottery wins. Counting correctly is the foundation of discrete probability.</p>`,
@@ -872,12 +929,22 @@ L({
     `<p>The left part defines the PMF: plug in a value $x$, get the chance $X$ lands on it.</p>
      <p>The right part is the normalization rule: $X$ must take SOME value, so all the chances add to 1.</p>`,
   example:
-    `<p>Flip 2 fair coins. Let $X$ = number of heads. Outcomes: $\\{HH, HT, TH, TT\\}$, each with chance $\\frac{1}{4}$.</p>
+    `<p>Flip 2 fair coins. Let $X$ = number of heads. Outcomes $\\{HH, HT, TH, TT\\}$, each with chance $\\frac{1}{4}$.</p>
+     <table class="extable">
+       <caption>The PMF $p_X(x) = P(X=x)$</caption>
+       <thead><tr><th>$x$</th><th>outcomes giving it</th><th class="num">$p_X(x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td>$TT$</td><td class="num">$\\frac{1}{4} = 0.25$</td></tr>
+         <tr><td class="num">1</td><td>$HT, TH$</td><td class="num">$\\frac{2}{4} = 0.5$</td></tr>
+         <tr><td class="num">2</td><td>$HH$</td><td class="num">$\\frac{1}{4} = 0.25$</td></tr>
+         <tr><td class="row-h">sum</td><td></td><td class="num">$1.0$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>$X = 0$ (no heads): only $TT$, so $p_X(0) = \\frac{1}{4}$.</li>
        <li>$X = 1$ (one head): $HT$ or $TH$, so $p_X(1) = \\frac{2}{4} = \\frac{1}{2}$.</li>
        <li>$X = 2$ (two heads): only $HH$, so $p_X(2) = \\frac{1}{4}$.</li>
-       <li>Check they add to 1: $\\frac{1}{4} + \\frac{1}{2} + \\frac{1}{4} = 1$. ✔</li>
+       <li>Normalization check: $\\frac{1}{4} + \\frac{1}{2} + \\frac{1}{4} = 1$. ✔</li>
      </ul>`,
   application:
     `<p>A model's output 'how many clicks will this ad get?' is a random variable. Its PMF is the model's prediction. Random variables are how we attach numbers and probabilities to real-world uncertainty.</p>`,
@@ -948,13 +1015,25 @@ $$ E[g(X)] = \\sum_x g(x)\\,p(x) \\quad\\text{(discrete)}, \\qquad E[g(X)] = \\i
      <p><b>Law of the Unconscious Statistician (LOTUS):</b> you can take the expectation of a FUNCTION of $X$ by weighting $g(x)$ by the distribution of $X$ — you do NOT need the distribution of $g(X)$ itself (that is why it is the "unconscious statistician").</p>
      <p>The <b>$k$-th moment</b> is $E[X^k]$: so $k = 1$ is the mean, and the variance uses the 2nd moment.</p>`,
   example:
-    `<p>A game: roll a fair die, win that many dollars. What's your expected winning?</p>
+    `<p>A game: roll a fair die, win that many dollars. What's your expected winning? Each face has probability $\\frac{1}{6}$, so weight each value by $\\frac{1}{6}$ and add.</p>
+     <table class="extable">
+       <caption>$E[X] = \\sum_x x\\,p_X(x)$ — the value × probability ledger</caption>
+       <thead><tr><th class="num">$x$</th><th class="num">$p_X(x)$</th><th class="num">$x\\,p_X(x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">$\\frac{1}{6}$</td><td class="num">$0.1\\overline{6}$</td></tr>
+         <tr><td class="num">2</td><td class="num">$\\frac{1}{6}$</td><td class="num">$0.3\\overline{3}$</td></tr>
+         <tr><td class="num">3</td><td class="num">$\\frac{1}{6}$</td><td class="num">$0.5$</td></tr>
+         <tr><td class="num">4</td><td class="num">$\\frac{1}{6}$</td><td class="num">$0.6\\overline{6}$</td></tr>
+         <tr><td class="num">5</td><td class="num">$\\frac{1}{6}$</td><td class="num">$0.8\\overline{3}$</td></tr>
+         <tr><td class="num">6</td><td class="num">$\\frac{1}{6}$</td><td class="num">$1.0$</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">$1.0$</td><td class="num">$3.5$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Each face $1$ through $6$ has probability $\\frac{1}{6}$.</li>
        <li>$E[X] = 1\\cdot\\frac{1}{6} + 2\\cdot\\frac{1}{6} + 3\\cdot\\frac{1}{6} + 4\\cdot\\frac{1}{6} + 5\\cdot\\frac{1}{6} + 6\\cdot\\frac{1}{6}$.</li>
        <li>$= \\frac{1+2+3+4+5+6}{6} = \\frac{21}{6} = 3.5$.</li>
        <li>So on average you win \\$3.50 per roll — even though 3.5 is never an actual roll.</li>
-       <li>Linearity: if the prize doubles and adds \\$1, expected winning is $2 \\times 3.5 + 1 = \\$8$.</li>
+       <li>Linearity: if the prize doubles and adds \\$1, $E[2X+1] = 2 \\times 3.5 + 1 = \\$8$.</li>
      </ul>`,
   application:
     `<p>'Expected loss' is the quantity nearly every ML (Machine Learning) model minimizes during training. Expected value also drives decision-making: an A/B test picks the option with the higher expected payoff.</p>`,
@@ -1038,6 +1117,15 @@ L({
      <p>So use <b>variance</b> when you are doing the math — it behaves nicely in formulas (variances of independent things simply add). Report <b>standard deviation</b> to a human, because it is a real, feelable distance in the data's own units. The notation even says it: variance is $\\sigma^2$, standard deviation is $\\sigma$ — one is literally the square of the other.</p>`,
   example:
     `<p>Let $X$ be a fair coin worth \\$0 (tails) or \\$2 (heads), each chance $\\frac{1}{2}$.</p>
+     <table class="extable">
+       <caption>Ledger for $E[X]$ and $E[X^2]$</caption>
+       <thead><tr><th class="num">$x$</th><th class="num">$p(x)$</th><th class="num">$x\\,p(x)$</th><th class="num">$x^2\\,p(x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td class="num">0.5</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="num">2</td><td class="num">0.5</td><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">1.0</td><td class="num">$E[X]=1$</td><td class="num">$E[X^2]=2$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Mean: $E[X] = 0 \\times \\frac{1}{2} + 2 \\times \\frac{1}{2} = 1$. So $\\mu = 1$.</li>
        <li>$E[X^2] = 0^2 \\times \\frac{1}{2} + 2^2 \\times \\frac{1}{2} = 0 + 2 = 2$.</li>
@@ -1112,10 +1200,20 @@ L({
      <div class="formula-box">$$ \\operatorname{Var}(X) = E[X^2] - (E[X])^2 = p - p^2 = p(1-p) $$</div>
      <p>Read $p(1-p)$ as (chance of success) × (chance of failure). It is <b>largest at $p = 0.5$</b> ($0.5 \\times 0.5 = 0.25$, a fair coin — most unpredictable) and <b>zero at $p = 0$ or $p = 1$</b> (the result never changes, so there is no spread). For the Binomial of $n$ such trials, the variances add: $\\operatorname{Var} = np(1-p)$.</p>`,
   example:
-    `<p>Flip a fair coin ($p = 0.5$) 3 times. What's the chance of exactly 2 heads?</p>
+    `<p>Flip a fair coin ($p = 0.5$) $n = 3$ times. What's the chance of exactly $k = 2$ heads? Use $P(X=k) = \\binom{n}{k} p^k (1-p)^{n-k}$.</p>
+     <table class="extable">
+       <caption>Full Binomial PMF for $n=3$, $p=0.5$</caption>
+       <thead><tr><th class="num">$k$</th><th class="num">$\\binom{3}{k}$</th><th class="num">$p^k(1-p)^{3-k}$</th><th class="num">$P(X=k)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td class="num">1</td><td class="num">0.125</td><td class="num">0.125</td></tr>
+         <tr><td class="num">1</td><td class="num">3</td><td class="num">0.125</td><td class="num">0.375</td></tr>
+         <tr><td class="num">2</td><td class="num">3</td><td class="num">0.125</td><td class="num">0.375</td></tr>
+         <tr><td class="num">3</td><td class="num">1</td><td class="num">0.125</td><td class="num">0.125</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">1.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$n = 3$, $k = 2$, $p = 0.5$.</li>
-       <li>Count the patterns: $\\binom{3}{2} = 3$ ways (HHT, HTH, THH).</li>
+       <li>Count the patterns for $k=2$: $\\binom{3}{2} = 3$ ways (HHT, HTH, THH).</li>
        <li>Each pattern's chance: $p^2 (1-p)^1 = 0.5^2 \\times 0.5^1 = 0.25 \\times 0.5 = 0.125$.</li>
        <li>Multiply: $P(X=2) = 3 \\times 0.125 = 0.375$, i.e. 37.5%.</li>
        <li>Mean number of heads: $np = 3 \\times 0.5 = 1.5$.</li>
@@ -1192,6 +1290,15 @@ L({
      <p>Poisson: with average rate $\\lambda$, this gives the chance of seeing exactly $k$ events. Its mean is simply $\\lambda$.</p>`,
   example:
     `<p>(a) Roll a die until the first six ($p = \\frac{1}{6}$). Chance the first six comes on roll 3? (b) A call center gets $\\lambda = 2$ calls per minute. Chance of exactly 0 calls in a minute?</p>
+     <table class="extable">
+       <caption>Two count distributions side by side</caption>
+       <thead><tr><th>distribution</th><th>formula used</th><th class="num">plug-in</th><th class="num">result</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Geometric $P(X=3)$</td><td>$(1-p)^{k-1}p$</td><td class="num">$(\\frac{5}{6})^2\\frac{1}{6}$</td><td class="num">$\\approx 0.116$</td></tr>
+         <tr><td class="row-h">Geometric mean</td><td>$\\frac{1}{p}$</td><td class="num">$\\frac{1}{1/6}$</td><td class="num">6 rolls</td></tr>
+         <tr><td class="row-h">Poisson $P(X=0)$</td><td>$\\frac{\\lambda^k e^{-\\lambda}}{k!}$</td><td class="num">$e^{-2}$</td><td class="num">$\\approx 0.135$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Geometric: $P(X=3) = (1-\\frac{1}{6})^{2} \\times \\frac{1}{6} = (\\frac{5}{6})^2 \\times \\frac{1}{6} = \\frac{25}{36} \\times \\frac{1}{6} \\approx 0.116$.</li>
        <li>Expected wait for a six: $\\frac{1}{p} = \\frac{1}{1/6} = 6$ rolls.</li>
@@ -1255,11 +1362,20 @@ L({
      <p>The CDF $F_X(x)$ accumulates area from the far left up to $x$. So it climbs from 0 to 1 as $x$ increases.</p>
      <p>The chance $X$ lands between $a$ and $b$ is the area in that slice, $F_X(b) - F_X(a)$.</p>`,
   example:
-    `<p>Let $X$ be uniform on $[0, 2]$: the density is a flat line at height $\\frac{1}{2}$ over that range.</p>
+    `<p>Let $X$ be uniform on $[0, 2]$: the density is a flat line at height $\\frac{1}{2}$ over that range. The CDF accumulates area, so $F_X(x) = \\frac{x}{2}$ for $x$ in $[0,2]$.</p>
+     <table class="extable">
+       <caption>CDF $F_X(x) = P(X \\le x) =$ area to the left $= \\frac{x}{2}$</caption>
+       <thead><tr><th class="num">$x$</th><th class="num">area $=$ width $\\times \\frac{1}{2}$</th><th class="num">$F_X(x)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td class="num">$0 \\times \\frac{1}{2}$</td><td class="num">0.0</td></tr>
+         <tr><td class="num">1</td><td class="num">$1 \\times \\frac{1}{2}$</td><td class="num">0.5</td></tr>
+         <tr><td class="num">2</td><td class="num">$2 \\times \\frac{1}{2}$</td><td class="num">1.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Total area: width $\\times$ height $= 2 \\times \\frac{1}{2} = 1$. ✔ It's a valid PDF.</li>
        <li>Chance $X \\le 1$: area from 0 to 1 is $1 \\times \\frac{1}{2} = \\frac{1}{2}$. So $F_X(1) = 0.5$.</li>
-       <li>Chance $X$ between 0.5 and 1.5: width $1 \\times \\frac{1}{2} = \\frac{1}{2}$.</li>
+       <li>Chance $X$ between 0.5 and 1.5: $F_X(1.5) - F_X(0.5) = 0.75 - 0.25 = \\frac{1}{2}$.</li>
        <li>Chance $X$ equals exactly 1: a line has zero width, so the area — and the probability — is 0.</li>
      </ul>`,
   application:
@@ -1407,12 +1523,20 @@ L({
      <p>Exponential: a curve that decays. Mean wait $\\frac{1}{\\lambda}$ — a faster rate $\\lambda$ means a shorter wait.</p>`,
   example:
     `<p>(a) A bus is equally likely to arrive any minute in $[0, 10]$. (b) Calls arrive at rate $\\lambda = \\frac{1}{5}$ per minute (one every 5 minutes on average).</p>
+     <table class="extable">
+       <caption>Two continuous distributions — both happen to have mean 5</caption>
+       <thead><tr><th>distribution</th><th>density $f(x)$</th><th>mean formula</th><th class="num">mean value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Uniform$[0,10]$</td><td>$\\frac{1}{b-a} = \\frac{1}{10}$</td><td>$\\frac{a+b}{2}$</td><td class="num">5 min</td></tr>
+         <tr><td class="row-h">Exponential $\\lambda=\\frac{1}{5}$</td><td>$\\lambda e^{-\\lambda x}$</td><td>$\\frac{1}{\\lambda}$</td><td class="num">5 min</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Uniform mean wait: $\\frac{a+b}{2} = \\frac{0 + 10}{2} = 5$ minutes.</li>
        <li>Uniform density height: $\\frac{1}{b-a} = \\frac{1}{10}$ over the range.</li>
        <li>Exponential mean wait: $\\frac{1}{\\lambda} = \\frac{1}{1/5} = 5$ minutes until the next call.</li>
-       <li><b>Memoryless, with numbers.</b> The chance of waiting more than $t$ minutes is $P(X &gt; t) = e^{-\\lambda t}$. So $P(X &gt; 5) = e^{-(1/5)(5)} = e^{-1} \\approx 0.368$.</li>
-       <li>Now suppose you've <i>already</i> waited 3 minutes. The chance you wait 5 more is $P(X &gt; 8 \\mid X &gt; 3) = \\frac{P(X &gt; 8)}{P(X &gt; 3)} = \\frac{e^{-8/5}}{e^{-3/5}} = e^{-(8-3)/5} = e^{-1} \\approx 0.368$.<div class="why">Same $0.368$ as a fresh start — the 3 minutes already spent change nothing. That equality $P(X &gt; 8 \\mid X &gt; 3) = P(X &gt; 5)$ IS the memoryless property, shown in numbers.</div></li>
+       <li><b>Memoryless, with numbers.</b> The chance of waiting more than $t$ minutes is $P(X \\gt t) = e^{-\\lambda t}$. So $P(X \\gt 5) = e^{-(1/5)(5)} = e^{-1} \\approx 0.368$.</li>
+       <li>Now suppose you've <i>already</i> waited 3 minutes. The chance you wait 5 more is $P(X \\gt 8 \\mid X \\gt 3) = \\frac{P(X \\gt 8)}{P(X \\gt 3)} = \\frac{e^{-8/5}}{e^{-3/5}} = e^{-(8-3)/5} = e^{-1} \\approx 0.368$.<div class="why">Same $0.368$ as a fresh start — the 3 minutes already spent change nothing. That equality $P(X \\gt 8 \\mid X \\gt 3) = P(X \\gt 5)$ IS the memoryless property, shown in numbers.</div></li>
      </ul>`,
   application:
     `<p>Uniform is used to initialize neural-network weights and to generate random samples. Exponential models time-between-events: server request gaps, equipment failures, customer arrivals.</p>`,
@@ -1566,11 +1690,20 @@ L({
      <p>Squaring it and putting it in $e^{-(\\dots)}$ makes the curve drop quickly as you move away from $\\mu$.</p>
      <p>The front fraction $\\frac{1}{\\sqrt{2\\pi}\\,\\sigma}$ just scales the curve so its total area is 1.</p>`,
   example:
-    `<p>Adult heights are roughly Normal with $\\mu = 170$ cm and $\\sigma = 10$ cm. Use the <b>68-95-99.7 rule</b>.</p>
+    `<p>Adult heights are roughly Normal with $\\mu = 170$ cm and $\\sigma = 10$ cm. Use the <b>68-95-99.7 rule</b>: a fixed share of values falls within 1, 2, and 3 standard deviations of the mean.</p>
+     <table class="extable">
+       <caption>$\\mu = 170$, $\\sigma = 10$: bands $\\mu \\pm k\\sigma$</caption>
+       <thead><tr><th class="num">$k$</th><th class="num">range $\\mu \\pm k\\sigma$ (cm)</th><th class="num">share inside</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">160 to 180</td><td class="num">~68%</td></tr>
+         <tr><td class="num">2</td><td class="num">150 to 190</td><td class="num">~95%</td></tr>
+         <tr><td class="num">3</td><td class="num">140 to 200</td><td class="num">~99.7%</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>About 68% of values fall within 1 $\\sigma$: between $170 - 10 = 160$ and $170 + 10 = 180$ cm.</li>
-       <li>About 95% fall within 2 $\\sigma$: between $170 - 20 = 150$ and $170 + 20 = 190$ cm.</li>
-       <li>About 99.7% fall within 3 $\\sigma$: between $140$ and $200$ cm.</li>
+       <li>1 $\\sigma$ band: $170 - 10 = 160$ to $170 + 10 = 180$ cm holds ~68%.</li>
+       <li>2 $\\sigma$ band: $170 - 20 = 150$ to $170 + 20 = 190$ cm holds ~95%.</li>
+       <li>3 $\\sigma$ band: $170 - 30 = 140$ to $170 + 30 = 200$ cm holds ~99.7%.</li>
        <li>So a height of 200 cm is about 3 $\\sigma$ out — very rare (top ~0.15%).</li>
      </ul>`,
   application:
@@ -1658,13 +1791,21 @@ $$ f_{X\\mid Y}(x\\mid y) = \\frac{f_{X,Y}(x,y)}{f_Y(y)} $$`,
      <p>The <b>conditional density</b> $f_{X\\mid Y}(x\\mid y) = \\frac{f_{X,Y}(x,y)}{f_Y(y)}$ rescales the joint density by the marginal of the variable you are conditioning on, so it integrates to 1 once $y$ is fixed.</p>
      <p><b>Independence (continuous):</b> $X$ and $Y$ are independent iff $f_{X,Y}(x,y) = f_X(x)\\,f_Y(y)$ for all $x, y$ — that is, the joint factors into the product of the two marginals.</p>`,
   example:
-    `<p>Joint table for weather ($Y$ = Sunny/Rainy) and your mood ($X$ = Happy/Sad):</p>
+    `<p>Joint distribution of weather ($Y$ = Sunny/Rainy) and your mood ($X$ = Happy/Sad). The four inner cells add to 1; each margin is a row or column sum.</p>
+     <table class="extable">
+       <caption>Joint cells inside; marginals in the last row/column</caption>
+       <thead><tr><th></th><th class="num">Sunny</th><th class="num">Rainy</th><th class="num">$P(\\text{mood})$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Happy</td><td class="num">0.4</td><td class="num">0.1</td><td class="num">0.5</td></tr>
+         <tr><td class="row-h">Sad</td><td class="num">0.2</td><td class="num">0.3</td><td class="num">0.5</td></tr>
+         <tr><td class="row-h">$P(\\text{weather})$</td><td class="num">0.6</td><td class="num">0.4</td><td class="num">1.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$P(\\text{Happy, Sunny}) = 0.4$, $P(\\text{Happy, Rainy}) = 0.1$.</li>
-       <li>$P(\\text{Sad, Sunny}) = 0.2$, $P(\\text{Sad, Rainy}) = 0.3$. (These four add to 1.)</li>
-       <li>Marginal of mood = Happy: sum over weather $= 0.4 + 0.1 = 0.5$.</li>
-       <li>Marginal of mood = Sad: $0.2 + 0.3 = 0.5$.</li>
-       <li>Marginal of weather = Sunny: $0.4 + 0.2 = 0.6$. So it's sunny 60% of the time.</li>
+       <li>Joint cells: $P(\\text{Happy, Sunny}) = 0.4$, $P(\\text{Happy, Rainy}) = 0.1$, $P(\\text{Sad, Sunny}) = 0.2$, $P(\\text{Sad, Rainy}) = 0.3$. They sum to 1.</li>
+       <li>Marginal mood = Happy: sum its row over weather $= 0.4 + 0.1 = 0.5$.</li>
+       <li>Marginal mood = Sad: $0.2 + 0.3 = 0.5$.</li>
+       <li>Marginal weather = Sunny: sum its column over mood $= 0.4 + 0.2 = 0.6$. So it's sunny 60% of the time.</li>
      </ul>`,
   application:
     `<p>Joint distributions describe how features relate. Probabilistic graphical models and Bayesian networks are built entirely from joint and marginal distributions. Marginalizing out hidden variables is a core inference step.</p>`,
@@ -1774,6 +1915,18 @@ L({
      <p>Correlation divides covariance by both spreads, giving a unit-free number. $+1$ = perfect straight-line up, $-1$ = perfect straight-line down, $0$ = no linear link.</p>`,
   example:
     `<p>Two variables with $E[X] = 2$, $E[Y] = 3$, $E[XY] = 8$, $\\sigma_X = 1$, $\\sigma_Y = 2$.</p>
+     <table class="extable">
+       <caption>Given quantities and the two results computed from them</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$E[X]$</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$E[Y]$</td><td class="num">3</td></tr>
+         <tr><td class="row-h">$E[XY]$</td><td class="num">8</td></tr>
+         <tr><td class="row-h">$\\sigma_X,\\ \\sigma_Y$</td><td class="num">1, 2</td></tr>
+         <tr><td class="row-h">$\\operatorname{Cov}(X,Y)$</td><td class="num">2</td></tr>
+         <tr><td class="row-h">$\\rho$</td><td class="num">1</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Covariance: $E[XY] - E[X]E[Y] = 8 - (2 \\times 3) = 8 - 6 = 2$. Positive — they move together.</li>
        <li>Correlation: $\\rho = \\frac{\\operatorname{Cov}}{\\sigma_X \\sigma_Y} = \\frac{2}{1 \\times 2} = \\frac{2}{2} = 1$.</li>
@@ -1857,11 +2010,20 @@ L({
      <p>The result is the plain overall average $E[X]$. You can compute a mean in two stages and still land in the same place.</p>`,
   example:
     `<p>A factory's items come from two machines. Machine A (60% of items) makes items averaging 10 grams. Machine B (40%) averages 20 grams. What's the overall average weight?</p>
+     <table class="extable">
+       <caption>Weight each group-average by how common the group is</caption>
+       <thead><tr><th>group $Y$</th><th class="num">$P(Y)$</th><th class="num">$E[X\\mid Y]$</th><th class="num">$P(Y)\\,E[X\\mid Y]$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Machine A</td><td class="num">0.6</td><td class="num">10 g</td><td class="num">6 g</td></tr>
+         <tr><td class="row-h">Machine B</td><td class="num">0.4</td><td class="num">20 g</td><td class="num">8 g</td></tr>
+         <tr><td class="row-h">overall $E[X]$</td><td class="num">1.0</td><td class="num"></td><td class="num">14 g</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Group averages: $E[X \\mid A] = 10$, $E[X \\mid B] = 20$.</li>
        <li>Group sizes: $P(A) = 0.6$, $P(B) = 0.4$.</li>
        <li>Weight and add: $E[X] = 0.6 \\times 10 + 0.4 \\times 20 = 6 + 8 = 14$ grams.</li>
-       <li>So the overall mean is 14 grams — exactly the law of iterated expectations in action.</li>
+       <li>So the overall mean is 14 grams — exactly the law of iterated expectations $E[E[X\\mid Y]] = E[X]$ in action.</li>
      </ul>`,
   application:
     `<p>A regression model literally predicts $E[Y \\mid X]$ — the average output given the inputs. Conditional expectation is the formal target of nearly all supervised learning.</p>`,
@@ -1944,6 +2106,14 @@ L({
      <p>Chebyshev: the chance $X$ is at least $\\epsilon$ away from its mean is at most $\\frac{\\sigma^2}{\\epsilon^2}$. Less variance, or a bigger gap $\\epsilon$, means a smaller bound.</p>`,
   example:
     `<p>(a) Markov: scores average $E[X] = 50$ (and are nonnegative). Bound the chance of scoring 100 or more. (b) Chebyshev: mean $\\mu = 50$, variance $\\sigma^2 = 100$ (so $\\sigma = 10$). Bound the chance of being 30+ points from the mean.</p>
+     <table class="extable">
+       <caption>Both bounds beat the trivial "at most 1", using only mean (and variance)</caption>
+       <thead><tr><th>bound</th><th>formula</th><th class="num">plug-in</th><th class="num">upper bound</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Markov $P(X\\ge 100)$</td><td>$\\frac{E[X]}{a}$</td><td class="num">$\\frac{50}{100}$</td><td class="num">0.5</td></tr>
+         <tr><td class="row-h">Chebyshev $P(|X-50|\\ge 30)$</td><td>$\\frac{\\sigma^2}{\\epsilon^2}$</td><td class="num">$\\frac{100}{900}$</td><td class="num">$\\approx 0.11$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Markov: $P(X \\ge 100) \\le \\frac{E[X]}{a} = \\frac{50}{100} = 0.5$. At most 50%.</li>
        <li>Chebyshev: $P(|X - 50| \\ge 30) \\le \\frac{\\sigma^2}{\\epsilon^2} = \\frac{100}{30^2} = \\frac{100}{900} \\approx 0.11$.</li>
@@ -2020,6 +2190,15 @@ L({
      <p>The gap between your estimate and the truth shrinks the more data you gather.</p>`,
   example:
     `<p>Roll a fair die (true mean $\\mu = 3.5$, one-roll std $\\sigma = \\sqrt{35/12} \\approx 1.71$) and track the running average $\\overline{X}$. The typical distance of $\\overline{X}$ from $3.5$ shrinks like $\\frac{\\sigma}{\\sqrt{n}}$.</p>
+     <table class="extable">
+       <caption>Typical wobble $\\frac{\\sigma}{\\sqrt{n}}$ with $\\sigma \\approx 1.71$</caption>
+       <thead><tr><th class="num">$n$</th><th class="num">$\\sqrt{n}$</th><th class="num">$\\frac{1.71}{\\sqrt{n}}$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">5</td><td class="num">2.24</td><td class="num">$\\approx 0.76$</td></tr>
+         <tr><td class="num">100</td><td class="num">10</td><td class="num">$\\approx 0.17$</td></tr>
+         <tr><td class="num">10000</td><td class="num">100</td><td class="num">$\\approx 0.017$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>After $n = 5$ rolls $[6, 2, 5, 1, 4]$: average $= \\frac{18}{5} = 3.6$, off by $0.10$. Typical error $\\frac{\\sigma}{\\sqrt{5}} = \\frac{1.71}{2.24} \\approx 0.76$ — wobble is large.</li>
        <li>After $n = 100$: typical error $\\frac{1.71}{\\sqrt{100}} = \\frac{1.71}{10} \\approx 0.17$. The bound on wobble already fell ~4.4×.</li>
@@ -2099,6 +2278,14 @@ L({
      <p>Its variance is $\\frac{\\sigma^2}{n}$: more samples means a tighter, narrower bell around $\\mu$.</p>`,
   example:
     `<p>Roll a die. One roll is Uniform (flat, not bell-shaped) with $\\mu = 3.5$ and $\\sigma^2 \\approx 2.92$. Now average $n = 30$ rolls.</p>
+     <table class="extable">
+       <caption>One roll vs the average of 30 — the CLT bell tightens</caption>
+       <thead><tr><th>quantity</th><th>shape</th><th class="num">center</th><th class="num">variance</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">one roll $X$</td><td>flat (uniform)</td><td class="num">3.5</td><td class="num">$\\approx 2.92$</td></tr>
+         <tr><td class="row-h">average $\\overline{X}$ of 30</td><td>bell (Normal)</td><td class="num">3.5</td><td class="num">$\\frac{2.92}{30} \\approx 0.097$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>The average $\\overline{X}$ is centered at $\\mu = 3.5$.</li>
        <li>Its variance is $\\frac{\\sigma^2}{n} = \\frac{2.92}{30} \\approx 0.097$, so its spread $\\sigma_{\\overline{X}} = \\sqrt{0.097} \\approx 0.31$.</li>
@@ -2183,11 +2370,21 @@ L({
      <p>Why $n-1$? The data looks a little too close to its OWN average $\\overline{X}$, which slightly underestimates the true spread. Dividing by the smaller $n-1$ corrects exactly for that, making $s^2$ unbiased.</p>`,
   example:
     `<p>Data: $\\{2, 4, 6\\}$. Estimate the mean and variance.</p>
+     <table class="extable">
+       <caption>Squared-distance ledger around $\\overline{X} = 4$</caption>
+       <thead><tr><th class="num">$X_i$</th><th class="num">$X_i - \\overline{X}$</th><th class="num">$(X_i - \\overline{X})^2$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">2</td><td class="num">$-2$</td><td class="num">4</td></tr>
+         <tr><td class="num">4</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="num">6</td><td class="num">$+2$</td><td class="num">4</td></tr>
+         <tr><td class="row-h">sum</td><td class="num">0</td><td class="num">8</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Sample mean: $\\overline{X} = \\frac{2 + 4 + 6}{3} = \\frac{12}{3} = 4$.</li>
-       <li>Squared distances from 4: $(2-4)^2 = 4$, $(4-4)^2 = 0$, $(6-4)^2 = 4$. Sum $= 8$.</li>
-       <li>Sample variance (divide by $n - 1 = 2$): $s^2 = \\frac{8}{2} = 4$.</li>
-       <li>If we had wrongly divided by $n = 3$, we'd get $\\frac{8}{3} \\approx 2.67$ — too small. The $n-1$ fix corrects this downward bias.</li>
+       <li>Sum of squared distances from 4 is $4 + 0 + 4 = 8$.</li>
+       <li>Sample variance (divide by $n - 1 = 2$): $s^2 = \\frac{8}{2} = 4$. ← unbiased.</li>
+       <li>Divide wrongly by $n = 3$: $\\frac{8}{3} \\approx 2.67$ — too small. The $n-1$ fix corrects this downward bias.</li>
      </ul>`,
   application:
     `<p>Every statistic computed from a dataset is an estimator: a model's accuracy, a feature's average, an A/B test's lift. Understanding bias keeps you from being fooled by your own measurements. Maximum likelihood estimation generalizes this idea to fit entire models.</p>`,

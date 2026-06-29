@@ -55,12 +55,13 @@ L({
      </ul>
      <p><b>Intuition.</b> A fixed average trusts every model the same. A learned combiner notices which model is reliable and leans on it.</p>`,
   example:
-    `<p>Three base models predict a house price (in \\$k). The truth is $y = 300$.</p>
+    `<p>Three base models predict a house price (in \\$k). The truth is $y = 300$. The meta-model $g$ learned weights $w$ on past data (it trusts the tree and linear model most).</p>
+     <table class="extable"><caption>Base predictions $z_k$ and learned meta-weights $w_k$</caption><thead><tr><th>base model</th><th class="num">prediction $z_k$</th><th class="num">weight $w_k$</th><th class="num">$w_k z_k$</th></tr></thead><tbody><tr><td class="row-h">Tree</td><td class="num">310</td><td class="num">0.5</td><td class="num">155</td></tr><tr><td class="row-h">Linear</td><td class="num">290</td><td class="num">0.4</td><td class="num">116</td></tr><tr><td class="row-h">kNN</td><td class="num">330</td><td class="num">0.1</td><td class="num">33</td></tr></tbody></table>
      <ul class="steps">
-       <li>Tree predicts $z_1 = 310$. Linear predicts $z_2 = 290$. kNN (k-Nearest Neighbors) predicts $z_3 = 330$.</li>
-       <li>A meta-model learned the weights $w = (0.5,\\ 0.4,\\ 0.1)$ on past data (it trusts the tree and linear model most).</li>
-       <li>Combine: $\\hat{y} = 0.5{\\cdot}310 + 0.4{\\cdot}290 + 0.1{\\cdot}330 = 155 + 116 + 33 = 304$.</li>
-       <li>A plain average would give $(310 + 290 + 330)/3 = 310$ — further from the true $300$ than the learned $304$.</li>
+       <li>Combine the base predictions: $\\hat{y} = g(z_1, z_2, z_3) = \\sum_k w_k z_k$.</li>
+       <li>$\\hat{y} = 0.5{\\cdot}310 + 0.4{\\cdot}290 + 0.1{\\cdot}330 = 155 + 116 + 33 = 304$.</li>
+       <li>A plain (equal-weight) average gives $(310 + 290 + 330)/3 = 930/3 = 310$.</li>
+       <li>The learned $\\hat{y} = 304$ is 4 off the true 300; the plain average of 310 is 10 off. The learned combiner wins.</li>
      </ul>`,
   application:
     `<p>Stacking wins Kaggle competitions and powers production ranking systems. Netflix's famous \\$1M prize was won by a stacked blend of many models. Anywhere a single model plateaus, stacking a few diverse models squeezes out extra accuracy.</p>`,
@@ -183,11 +184,12 @@ L({
      </ul>
      <p><b>Intuition.</b> To find the one person standing alone in a field, you only need a couple of fences. To single out one person in a packed stadium, you need fence after fence after fence.</p>`,
   example:
-    `<p>A forest of trees is built. A normal point and an outlier are scored. Suppose $c(n) = 4$ (the typical depth).</p>
+    `<p>A forest of trees is built and two points are scored. Suppose the typical depth $c(n) = 4$. The score is $s(x) = 2^{-E[h(x)]/c(n)}$; a threshold of $0.6$ flags outliers.</p>
+     <table class="extable"><caption>Two points scored at $c(n) = 4$</caption><thead><tr><th>point</th><th class="num">$E[h(x)]$</th><th class="num">exponent $-E[h]/c(n)$</th><th class="num">score $s(x)$</th><th>verdict</th></tr></thead><tbody><tr><td class="row-h">Normal</td><td class="num">5</td><td class="num">−1.25</td><td class="num">0.42</td><td>normal</td></tr><tr><td class="row-h">Outlier</td><td class="num">1.5</td><td class="num">−0.375</td><td class="num">0.77</td><td>flag red</td></tr></tbody></table>
      <ul class="steps">
-       <li>Normal point: average path length $E[h] = 5$. Exponent $= -5/4 = -1.25$. Score $s = 2^{-1.25} \\approx 0.42$. Below threshold — normal.</li>
-       <li>Outlier: average path length $E[h] = 1.5$. Exponent $= -1.5/4 = -0.375$. Score $s = 2^{-0.375} \\approx 0.77$. Above threshold — flag it red.</li>
-       <li>The outlier was isolated in just $1.5$ cuts on average; the normal point needed $5$.</li>
+       <li>Normal point: exponent $= -5/4 = -1.25$, so $s = 2^{-1.25} \\approx 0.42$. Below $0.6$ — normal.</li>
+       <li>Outlier: exponent $= -1.5/4 = -0.375$, so $s = 2^{-0.375} \\approx 0.77$. Above $0.6$ — flag it.</li>
+       <li>The outlier was isolated in just $1.5$ cuts on average; the normal point needed $5$. Short path means anomaly.</li>
      </ul>`,
   application:
     `<p>Isolation Forests catch credit-card fraud, server intrusions, and faulty sensors. They are fast (linear time), need no labels, and handle high-dimensional data — the default tool when you must find "the weird ones" without knowing in advance what weird looks like.</p>`,
@@ -328,12 +330,13 @@ L({
      </ul>
      <p><b>Intuition.</b> Aligned tastes point the same way, so their dot product is big (high rating). Opposite tastes cancel, so it is small (low rating). The model never needs to be told what the factors mean — it discovers them.</p>`,
   example:
-    `<p>Two factors: [comedy, action]. We predict whether user Ann likes the movie "Hot Fuzz".</p>
+    `<p>Two latent factors ($k = 2$): [comedy, action]. We predict the blank $\\hat{R}_{ui} = u_u \\cdot v_i$ for user Ann and the movie "Hot Fuzz".</p>
+     <table class="extable"><caption>The $k = 2$ factor rows being dotted</caption><thead><tr><th>row</th><th class="num">factor 1 (comedy)</th><th class="num">factor 2 (action)</th></tr></thead><tbody><tr><td class="row-h">$u_{\\text{Ann}}$</td><td class="num">0.9</td><td class="num">0.2</td></tr><tr><td class="row-h">$v_{\\text{HF}}$</td><td class="num">0.8</td><td class="num">0.6</td></tr></tbody></table>
      <ul class="steps">
-       <li>Ann's factor row: $u_{\\text{Ann}} = [0.9,\\ 0.2]$ (loves comedy, mild on action).</li>
-       <li>Hot Fuzz's factor row: $v_{\\text{HF}} = [0.8,\\ 0.6]$ (very funny, fairly action-packed).</li>
-       <li>Dot product: $\\hat{R} = 0.9{\\times}0.8 + 0.2{\\times}0.6 = 0.72 + 0.12 = 0.84$.</li>
-       <li>On a 0–1 scale that is a high predicted rating, so the system recommends Hot Fuzz to Ann.</li>
+       <li>Ann loves comedy (0.9), is mild on action (0.2). Hot Fuzz is very funny (0.8), fairly action-packed (0.6).</li>
+       <li>Factor 1 term: $U_{u1} V_{i1} = 0.9{\\times}0.8 = 0.72$.</li>
+       <li>Factor 2 term: $U_{u2} V_{i2} = 0.2{\\times}0.6 = 0.12$.</li>
+       <li>Sum the terms: $\\hat{R} = 0.72 + 0.12 = 0.84$. On a 0–1 scale that is a high rating, so recommend Hot Fuzz to Ann.</li>
      </ul>`,
   application:
     `<p>This is the engine behind Netflix, Spotify, Amazon, and YouTube recommendations. From a sparse log of "who watched/bought/liked what", matrix factorization fills in the rest and surfaces items you have not seen but probably want.</p>`,
@@ -458,12 +461,13 @@ L({
      </ul>
      <p><b>Intuition.</b> Use a forgiving ruler for the 2-D map. It says "far is far" without insisting on an exact distance, leaving space for clusters to separate cleanly.</p>`,
   example:
-    `<p>The central trick is the <b>heavy tail</b>: it lets far-apart clusters sit at a finite distance instead of crushing together. Watch the Student-t map shape $(1+d^2)^{-1}$ beat a Gaussian $e^{-d^2}$ at a far pair $d = 3$.</p>
+    `<p>The central trick is the <b>heavy tail</b>: it lets far-apart clusters sit at a finite distance instead of crushing together. Compare the Student-t map shape $(1+d^2)^{-1}$ against a Gaussian $e^{-d^2}$ at a close pair ($d = 1$) and a far pair ($d = 3$).</p>
+     <table class="extable"><caption>Map affinity: Student-t (t-SNE) vs Gaussian</caption><thead><tr><th>distance $d$</th><th class="num">Student-t $(1+d^2)^{-1}$</th><th class="num">Gaussian $e^{-d^2}$</th></tr></thead><tbody><tr><td class="row-h">close, $d = 1$</td><td class="num">0.50</td><td class="num">0.37</td></tr><tr><td class="row-h">far, $d = 3$</td><td class="num">0.10</td><td class="num">0.00012</td></tr><tr><td class="row-h">far/close ratio</td><td class="num">0.20</td><td class="num">0.0003</td></tr></tbody></table>
      <ul class="steps">
-       <li>Close pair, $d = 1$. Student-t: $(1 + 1^2)^{-1} = 1/2 = 0.50$. Gaussian: $e^{-1} \\approx 0.37$. Both call this a neighbor.</li>
-       <li>Far pair, $d = 3$. Student-t: $(1 + 3^2)^{-1} = 1/10 = 0.10$. Gaussian: $e^{-9} \\approx 0.00012$.</li>
-       <li>Gaussian far/close ratio $= 0.00012 / 0.37 \\approx 0.0003$: the far pair's affinity has collapsed to near-zero, so the Gaussian map cannot tell "far" from "even farther" — it crushes distant clusters into one blob.</li>
-       <li>Student-t ratio $= 0.10 / 0.50 = 0.2$: the far pair still carries a real, non-vanishing affinity. The heavy tail lets the layout place those clusters at a large but finite gap — so they separate cleanly instead of piling up. That is exactly the crowding problem t-SNE solves.</li>
+       <li>Close pair, $d = 1$: Student-t $(1 + 1)^{-1} = 0.50$; Gaussian $e^{-1} \\approx 0.37$. Both call it a neighbor.</li>
+       <li>Far pair, $d = 3$: Student-t $(1 + 9)^{-1} = 0.10$; Gaussian $e^{-9} \\approx 0.00012$.</li>
+       <li>Gaussian far/close ratio $= 0.00012 / 0.37 \\approx 0.0003$: affinity collapsed to near-zero, so the Gaussian map cannot tell "far" from "even farther" — it crushes distant clusters into one blob.</li>
+       <li>Student-t ratio $= 0.10 / 0.50 = 0.2$: the far pair still carries real affinity, so the layout places those clusters at a large but finite gap and they separate cleanly. That is the crowding problem t-SNE solves.</li>
      </ul>`,
   application:
     `<p>t-SNE and UMAP are everywhere in exploratory data analysis: visualizing word embeddings, single-cell RNA data (cell types appear as islands), and the hidden layers of neural nets. They turn a 50- or 500-dimensional dataset into a picture you can actually read.</p>`,
@@ -578,12 +582,13 @@ L({
      </ul>
      <p><b>Intuition.</b> Correlation <i>between</i> different signals can only come from shared factors, so it must be carried by $\\Lambda\\Lambda^\\top$. Each signal's own private variance is the diagonal $\\Psi$. The model cleanly splits the two.</p>`,
   example:
-    `<p>One hidden factor "general ability" $z$. Three test scores load on it: $\\Lambda = [2,\\ 1.5,\\ 1]^\\top$, with baselines $\\mu = [70,\\ 60,\\ 80]$. The key insight: the <i>shared factor</i> is what makes the three scores move together, i.e. correlate. Watch it across two students.</p>
+    `<p>One hidden factor "general ability" $z$. Three test scores load on it with $\\Lambda = [2,\\ 1.5,\\ 1]^\\top$ and baselines $\\mu = [70,\\ 60,\\ 80]$ (ignore noise $\\epsilon$). Each score is $x_j = \\Lambda_j z + \\mu_j$. Compute both students.</p>
+     <table class="extable"><caption>Scores $x_j = \\Lambda_j z + \\mu_j$ for two students</caption><thead><tr><th>student</th><th class="num">factor $z$</th><th class="num">Test 1 ($\\Lambda{=}2,\\mu{=}70$)</th><th class="num">Test 2 ($\\Lambda{=}1.5,\\mu{=}60$)</th><th class="num">Test 3 ($\\Lambda{=}1,\\mu{=}80$)</th></tr></thead><tbody><tr><td class="row-h">Strong</td><td class="num">+1.5</td><td class="num">73</td><td class="num">62.25</td><td class="num">81.5</td></tr><tr><td class="row-h">Weak</td><td class="num">−1.0</td><td class="num">68</td><td class="num">58.5</td><td class="num">79</td></tr></tbody></table>
      <ul class="steps">
-       <li>Strong student, $z = +1.5$. Test 1: $2{\\times}1.5 + 70 = 73$. Test 2: $1.5{\\times}1.5 + 60 = 62.25$. Test 3: $1{\\times}1.5 + 80 = 81.5$.</li>
-       <li>Weak student, $z = -1.0$. Test 1: $2{\\times}({-}1) + 70 = 68$. Test 2: $1.5{\\times}({-}1) + 60 = 58.5$. Test 3: $1{\\times}({-}1) + 80 = 79$.</li>
-       <li>One hidden number moved <i>all three</i> tests the same direction: the strong student is up on every test ($73, 62.25, 81.5$), the weak one down on every test ($68, 58.5, 79$). That lock-step co-movement is correlation, and it came entirely from $z$.</li>
-       <li>Check the shared-structure prediction $\\text{Cov} = \\Lambda\\Lambda^\\top + \\Psi$. The off-diagonal coupling between tests 1 and 2 is $\\Lambda_1\\Lambda_2 = 2{\\times}1.5 = 3$ — purely the factor. Noise $\\Psi$ only sits on the diagonal, so it never makes two different tests correlate. The shared factor is the sole source of between-test correlation. ∎</li>
+       <li>Strong student, $z = +1.5$: Test 1 $= 2{\\times}1.5 + 70 = 73$; Test 2 $= 1.5{\\times}1.5 + 60 = 62.25$; Test 3 $= 1{\\times}1.5 + 80 = 81.5$.</li>
+       <li>Weak student, $z = -1.0$: Test 1 $= 2{\\times}({-}1) + 70 = 68$; Test 2 $= 1.5{\\times}({-}1) + 60 = 58.5$; Test 3 $= 1{\\times}({-}1) + 80 = 79$.</li>
+       <li>One hidden number moved <i>all three</i> tests the same way — strong is up on every test, weak down on every test. That lock-step co-movement is correlation, and it came entirely from $z$.</li>
+       <li>Check $\\text{Cov} = \\Lambda\\Lambda^\\top + \\Psi$: the off-diagonal coupling of tests 1 and 2 is $\\Lambda_1\\Lambda_2 = 2{\\times}1.5 = 3$ — purely the factor. Noise $\\Psi$ only sits on the diagonal, so the shared factor is the sole source of between-test correlation. ∎</li>
      </ul>`,
   application:
     `<p>Factor analysis was born in psychology (the "g" factor of intelligence) and is a staple in finance (a few market factors drive many stock returns), marketing (survey questions reduce to a few attitudes), and any field drowning in correlated measurements.</p>`,
@@ -698,11 +703,12 @@ L({
      </ul>
      <p><b>Intuition.</b> If a point is already "close enough", nudging the line does not help it and does not hurt it — so it stays silent. Only the points the line fails to cover get a vote.</p>`,
   example:
-    `<p>Tube half-width $\\varepsilon = 1$. The fitted line predicts $f(x) = 5$ at some $x$. Score three points there.</p>
+    `<p>Tube half-width $\\varepsilon = 1$. The fitted line predicts $f(x) = 5$ at some $x$. Score three points with the $\\varepsilon$-insensitive loss $L_\\varepsilon = \\max(0,\\ |y - f(x)| - \\varepsilon)$.</p>
+     <table class="extable"><caption>$\\varepsilon$-insensitive loss at $f(x) = 5$, $\\varepsilon = 1$</caption><thead><tr><th>true $y$</th><th class="num">error $|y - f(x)|$</th><th class="num">loss $L_\\varepsilon$</th><th>support vector?</th></tr></thead><tbody><tr><td class="num">5.5</td><td class="num">0.5</td><td class="num">0</td><td>no (inside)</td></tr><tr><td class="num">6.0</td><td class="num">1.0</td><td class="num">0</td><td>no (on edge)</td></tr><tr><td class="num">7.5</td><td class="num">2.5</td><td class="num">1.5</td><td>yes (outside)</td></tr></tbody></table>
      <ul class="steps">
-       <li>True $y = 5.5$: error $= |5.5 - 5| = 0.5$. Since $0.5 &lt; 1$, it is inside the tube. Loss $= \\max(0,\\ 0.5 - 1) = 0$.</li>
-       <li>True $y = 6.0$: error $= 1.0$. Exactly at the edge. Loss $= \\max(0,\\ 1.0 - 1) = 0$.</li>
-       <li>True $y = 7.5$: error $= 2.5$. Outside. Loss $= \\max(0,\\ 2.5 - 1) = 1.5$. This point is a support vector and pulls on the fit.</li>
+       <li>$y = 5.5$: error $= |5.5 - 5| = 0.5$. Since $0.5 &lt; 1$ it is inside; $L_\\varepsilon = \\max(0,\\ 0.5 - 1) = 0$.</li>
+       <li>$y = 6.0$: error $= 1.0$, exactly at the edge; $L_\\varepsilon = \\max(0,\\ 1.0 - 1) = 0$.</li>
+       <li>$y = 7.5$: error $= 2.5$, outside; $L_\\varepsilon = \\max(0,\\ 2.5 - 1) = 1.5$. A support vector that pulls on the fit.</li>
        <li>Only the third point pays — the first two are absorbed by the tube.</li>
      </ul>`,
   application:
@@ -826,12 +832,13 @@ L({
      </ul>
      <p><b>Intuition.</b> Give every arm the benefit of the doubt, sized by how little you know about it. Pulling the most-promising-it-could-be arm either pays off or teaches you fast.</p>`,
   example:
-    `<p>Three arms after $t = 10$ total pulls. $\\ln 10 \\approx 2.303$, so $2\\ln t \\approx 4.6$.</p>
+    `<p>Three arms after $t = 10$ total pulls. $\\ln 10 \\approx 2.303$, so $2\\ln t \\approx 4.6$. Each arm's score is $\\text{UCB}_i = \\bar{x}_i + \\sqrt{2\\ln t / n_i}$.</p>
+     <table class="extable"><caption>UCB scores at $t = 10$ ($2\\ln t \\approx 4.6$)</caption><thead><tr><th>arm</th><th class="num">$\\bar{x}_i$</th><th class="num">$n_i$</th><th class="num">bonus $\\sqrt{4.6/n_i}$</th><th class="num">UCB</th></tr></thead><tbody><tr><td class="row-h">A</td><td class="num">0.6</td><td class="num">6</td><td class="num">0.876</td><td class="num">1.476</td></tr><tr><td class="row-h">B</td><td class="num">0.5</td><td class="num">3</td><td class="num">1.238</td><td class="num">1.738</td></tr><tr><td class="row-h">C</td><td class="num">0.7</td><td class="num">1</td><td class="num">2.145</td><td class="num">2.845</td></tr></tbody></table>
      <ul class="steps">
-       <li>Arm A: $\\bar{x} = 0.6$, $n = 6$. Bonus $= \\sqrt{4.6 / 6} = \\sqrt{0.767} \\approx 0.876$. UCB $\\approx 1.476$.</li>
-       <li>Arm B: $\\bar{x} = 0.5$, $n = 3$. Bonus $= \\sqrt{4.6 / 3} = \\sqrt{1.533} \\approx 1.238$. UCB $\\approx 1.738$.</li>
-       <li>Arm C: $\\bar{x} = 0.7$, $n = 1$. Bonus $= \\sqrt{4.6 / 1} = \\sqrt{4.6} \\approx 2.145$. UCB $\\approx 2.845$.</li>
-       <li>Arm C wins, even though it was pulled only once — its huge uncertainty bonus says "worth another look".</li>
+       <li>Arm A: bonus $= \\sqrt{4.6 / 6} = \\sqrt{0.767} \\approx 0.876$, so UCB $= 0.6 + 0.876 \\approx 1.476$.</li>
+       <li>Arm B: bonus $= \\sqrt{4.6 / 3} = \\sqrt{1.533} \\approx 1.238$, so UCB $= 0.5 + 1.238 \\approx 1.738$.</li>
+       <li>Arm C: bonus $= \\sqrt{4.6 / 1} = \\sqrt{4.6} \\approx 2.145$, so UCB $= 0.7 + 2.145 \\approx 2.845$.</li>
+       <li>$\\arg\\max$ picks Arm C, even though it was pulled only once — its huge uncertainty bonus says "worth another look".</li>
      </ul>`,
   application:
     `<p>Bandits power A/B testing that adapts in real time, news and ad selection, clinical-trial dosing, and recommendation cold-starts. Wherever you must keep earning while still learning, a bandit beats a fixed split-test.</p>`,

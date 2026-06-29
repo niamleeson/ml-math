@@ -56,15 +56,23 @@ L({
      </ul>
      <p>So the formula is not arbitrary: it is the only rule that makes "do $A$ after $B$" collapse into one matrix.</p>`,
   example:
-    `<p>Let $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $B=\\begin{bmatrix}5&6\\\\7&8\\end{bmatrix}$. Both are $2\\times2$, so $AB$ is $2\\times2$.</p>
+    `<p>Let $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $B=\\begin{bmatrix}5&6\\\\7&8\\end{bmatrix}$. Both are $2\\times2$, so $AB$ is $2\\times2$. Each output cell is one row of $A$ dotted with one column of $B$.</p>
      <ul class="steps">
        <li>$(AB)_{11}$ = row 1 of $A$ $\\cdot$ column 1 of $B$ $= 1\\cdot5 + 2\\cdot7 = 5+14 = 19$.</li>
        <li>$(AB)_{12}$ = row 1 $\\cdot$ column 2 $= 1\\cdot6 + 2\\cdot8 = 6+16 = 22$.</li>
        <li>$(AB)_{21}$ = row 2 $\\cdot$ column 1 $= 3\\cdot5 + 4\\cdot7 = 15+28 = 43$.</li>
        <li>$(AB)_{22}$ = row 2 $\\cdot$ column 2 $= 3\\cdot6 + 4\\cdot8 = 18+32 = 50$.</li>
-       <li>So $AB=\\begin{bmatrix}19&22\\\\43&50\\end{bmatrix}$.</li>
      </ul>
-     <p>Order matters: $BA=\\begin{bmatrix}23&34\\\\31&46\\end{bmatrix}$, a different matrix. Matrix multiplication is not commutative.</p>`,
+     <p>Collecting the four numbers, $AB=\\begin{bmatrix}19&22\\\\43&50\\end{bmatrix}$:</p>
+     <table class="extable">
+       <caption>The product $AB$, one dot product per cell.</caption>
+       <thead><tr><th></th><th class="num">col 1 of $B$</th><th class="num">col 2 of $B$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">row 1 of $A$</td><td class="num">$1\\cdot5+2\\cdot7=19$</td><td class="num">$1\\cdot6+2\\cdot8=22$</td></tr>
+         <tr><td class="row-h">row 2 of $A$</td><td class="num">$3\\cdot5+4\\cdot7=43$</td><td class="num">$3\\cdot6+4\\cdot8=50$</td></tr>
+       </tbody>
+     </table>
+     <p>Order matters: swapping factors gives $BA=\\begin{bmatrix}5\\cdot1+6\\cdot3 & 5\\cdot2+6\\cdot4\\\\ 7\\cdot1+8\\cdot3 & 7\\cdot2+8\\cdot4\\end{bmatrix}=\\begin{bmatrix}23&34\\\\31&46\\end{bmatrix}$ — a different matrix. Matrix multiplication is not commutative.</p>`,
   application:
     `<p>A neural-network layer computes $XW$: $X$ is a batch of examples (rows), $W$ is the weight matrix. One matrix multiply scores the whole batch. GPUs are built to do exactly this, which is why deep learning runs on them.</p>`,
   whenToUse:
@@ -209,6 +217,15 @@ L({
        <li><b>Right side.</b> $B^\\top=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$ (it is symmetric) and $A^\\top=\\begin{bmatrix}1&3\\\\2&4\\end{bmatrix}$, so $B^\\top A^\\top=\\begin{bmatrix}0\\cdot1+1\\cdot2 & 0\\cdot3+1\\cdot4\\\\ 1\\cdot1+0\\cdot2 & 1\\cdot3+0\\cdot4\\end{bmatrix}=\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}$.</li>
        <li><b>They match:</b> $(AB)^\\top=\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}=B^\\top A^\\top$. ✔ Note the order <i>flipped</i>: $B^\\top$ comes first. Computing $A^\\top B^\\top$ instead would give $\\begin{bmatrix}3&1\\\\4&2\\end{bmatrix}$ — the wrong answer.<div class="why">Transposing reverses order, like taking off shoes then socks to undo socks then shoes.</div></li>
      </ul>
+     <table class="extable">
+       <caption>The order is what matters — only $B^\\top A^\\top$ equals $(AB)^\\top$.</caption>
+       <thead><tr><th>expression</th><th class="num">result</th><th>verdict</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$(AB)^\\top$ (target)</td><td class="num">$\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}$</td><td>—</td></tr>
+         <tr><td class="row-h">$B^\\top A^\\top$ (reversed)</td><td class="num">$\\begin{bmatrix}2&4\\\\1&3\\end{bmatrix}$</td><td>matches ✔</td></tr>
+         <tr><td class="row-h">$A^\\top B^\\top$ (same order)</td><td class="num">$\\begin{bmatrix}3&1\\\\4&2\\end{bmatrix}$</td><td>wrong ✗</td></tr>
+       </tbody>
+     </table>
      <p>A symmetric matrix is one where nothing moves: $A^\\top = A$, so $A_{ij}=A_{ji}$ already.</p>`,
   application:
     `<p>The dot product is written $x^\\top y$ because laying $x$ on its side ($1\\times n$) lets it multiply the column $y$ ($n\\times 1$) into a single number. Backpropagation is full of transposes: the gradient flowing back through a layer $W$ uses $W^\\top$.</p>`,
@@ -319,13 +336,21 @@ L({
      </ul>
      <p><b>Why $D$ scales each axis.</b> $(Dx)_i = \\sum_k D_{ik} x_k$. Every $D_{ik}$ with $k\\neq i$ is 0, so only $k=i$ survives: $(Dx)_i = D_{ii} x_i = d_i x_i$. Each coordinate is scaled independently. ∎</p>`,
   example:
-    `<p>Let $D=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$ and $x=\\begin{bmatrix}4\\\\5\\end{bmatrix}$.</p>
+    `<p>Let $D=\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}$ and $x=\\begin{bmatrix}4\\\\5\\end{bmatrix}$. Using $(Dx)_i = d_i\\,x_i$, each coordinate is scaled on its own:</p>
      <ul class="steps">
        <li>First coordinate: $d_1 x_1 = 2\\cdot4 = 8$.</li>
        <li>Second coordinate: $d_2 x_2 = 3\\cdot5 = 15$.</li>
        <li>So $Dx=\\begin{bmatrix}8\\\\15\\end{bmatrix}$: the $x$-axis doubled, the $y$-axis tripled.</li>
-       <li>With $I=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$ instead: $Ix=\\begin{bmatrix}4\\\\5\\end{bmatrix}=x$. Nothing changes.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>$D$ scales each axis independently; $I$ leaves it alone.</caption>
+       <thead><tr><th>coordinate</th><th class="num">$x_i$</th><th class="num">$d_i$</th><th class="num">$(Dx)_i=d_i x_i$</th><th class="num">$(Ix)_i$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1 (x-axis)</td><td class="num">$4$</td><td class="num">$2$</td><td class="num">$2\\cdot4=8$</td><td class="num">$4$</td></tr>
+         <tr><td class="row-h">2 (y-axis)</td><td class="num">$5$</td><td class="num">$3$</td><td class="num">$3\\cdot5=15$</td><td class="num">$5$</td></tr>
+       </tbody>
+     </table>
+     <p>With the identity $I=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$, every $d_i=1$, so $Ix=\\begin{bmatrix}4\\\\5\\end{bmatrix}=x$ — nothing changes.</p>`,
   application:
     `<p>Scaling features (normalization) is multiplying by a diagonal matrix. Regularizers add $\\lambda I$ to a matrix to keep it invertible (Ridge regression: $(X^\\top X + \\lambda I)^{-1}$). Batch-norm (Batch Normalization) scale parameters are a diagonal $D$ applied per feature.</p>`,
   whenToUse:
@@ -448,7 +473,16 @@ L({
        <li><b>Apply $A$:</b> $Av=\\begin{bmatrix}2\\cdot3+1\\cdot5\\\\1\\cdot3+1\\cdot5\\end{bmatrix}=\\begin{bmatrix}11\\\\8\\end{bmatrix}$. The vector $v$ got moved somewhere new.<div class="why">$A$ mixed the two coordinates: row 1 is $2x_1+x_2$, row 2 is $x_1+x_2$.</div></li>
        <li><b>Now apply $A^{-1}$ to that result:</b> $A^{-1}(Av)=\\begin{bmatrix}1&-1\\\\-1&2\\end{bmatrix}\\begin{bmatrix}11\\\\8\\end{bmatrix}=\\begin{bmatrix}1\\cdot11+(-1)\\cdot8\\\\(-1)\\cdot11+2\\cdot8\\end{bmatrix}=\\begin{bmatrix}11-8\\\\-11+16\\end{bmatrix}=\\begin{bmatrix}3\\\\5\\end{bmatrix}=v$. ✔</li>
        <li><b>The punchline:</b> $A^{-1}(Av)=v$. Multiplying by $A^{-1}$ undid exactly what $A$ did and handed $v$ back, untouched.<div class="why">This is why $x=A^{-1}b$ solves $Ax=b$: undoing $A$ on both sides isolates $x$.</div></li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Apply $A$, then $A^{-1}$ — the vector returns to where it started.</caption>
+       <thead><tr><th>step</th><th class="num">vector</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">start $v$</td><td class="num">$(3,\\,5)$</td></tr>
+         <tr><td class="row-h">$Av$</td><td class="num">$(2\\cdot3+5,\\;3+5)=(11,\\,8)$</td></tr>
+         <tr><td class="row-h">$A^{-1}(Av)$</td><td class="num">$(11-8,\\;-11+16)=(3,\\,5)$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>The exact solution to least-squares regression is $w=(X^\\top X)^{-1}X^\\top y$ — an inverse sits at its heart. In practice we rarely form $A^{-1}$ explicitly (it is slow and unstable); we solve the system directly. But the inverse is the concept that makes "solve $Ax=b$" precise.</p>`,
   whenToUse:
@@ -562,12 +596,21 @@ L({
     `<p>Let $A=\\begin{bmatrix}3&1\\\\1&2\\end{bmatrix}$.</p>
      <ul class="steps">
        <li>$\\det A = ad - bc = 3\\cdot2 - 1\\cdot1 = 6 - 1 = 5$.</li>
-       <li><b>Watch the unit square's area.</b> The unit square has corners $(0,0),(1,0),(1,1),(0,1)$ and area exactly $1$. Map each corner with $A$ (a corner $(x,y)$ goes to $(3x+y,\\;x+2y)$):
-         <div class="why">$(0,0)\\to(0,0)$; &nbsp; $(1,0)\\to(3,1)$; &nbsp; $(1,1)\\to(4,3)$; &nbsp; $(0,1)\\to(1,2)$. The square became the parallelogram with these four corners.</div></li>
+       <li><b>Watch the unit square's area.</b> The unit square has corners $(0,0),(1,0),(1,1),(0,1)$ and area exactly $1$. Map each corner with $A$ (a corner $(x,y)$ goes to $(3x+y,\\;x+2y)$):</li>
        <li><b>Measure that parallelogram's area directly.</b> It is spanned by the two edge vectors out of the origin, $u=(3,1)$ and $w=(1,2)$. The 2D cross-product area is $|u_x w_y - u_y w_x| = |3\\cdot2 - 1\\cdot1| = |6-1| = 5$.<div class="why">Area went from $1$ to $5$. The scale factor is $5/1 = 5 = \\det A$ — the determinant <i>is</i> the area-scaling factor, exactly.</div></li>
        <li>The sign is positive, so orientation is preserved (no mirror flip).</li>
        <li>Compare $B=\\begin{bmatrix}2&4\\\\1&2\\end{bmatrix}$: $\\det B = 2\\cdot2 - 4\\cdot1 = 0$. Its columns $(2,1)$ and $(4,2)$ are parallel — the unit square gets squashed onto a line of area $0$. Scale factor $0 = \\det B$; $B$ is singular.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Each corner $(x,y)$ of the unit square maps to $(3x+y,\\;x+2y)$.</caption>
+       <thead><tr><th>corner $(x,y)$</th><th class="num">$3x+y$</th><th class="num">$x+2y$</th><th>image</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$(0,0)$</td><td class="num">$0$</td><td class="num">$0$</td><td>$(0,0)$</td></tr>
+         <tr><td class="row-h">$(1,0)$</td><td class="num">$3$</td><td class="num">$1$</td><td>$(3,1)$</td></tr>
+         <tr><td class="row-h">$(1,1)$</td><td class="num">$4$</td><td class="num">$3$</td><td>$(4,3)$</td></tr>
+         <tr><td class="row-h">$(0,1)$</td><td class="num">$1$</td><td class="num">$2$</td><td>$(1,2)$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>The determinant decides invertibility (zero = singular = no unique solution). In probability, the multivariate Gaussian's normalizing constant contains $\\det\\Sigma$ (the covariance's "volume"). Change-of-variables in integration multiplies by $|\\det|$ of the Jacobian — the backbone of normalizing-flow generative models.</p>`,
   whenToUse:
@@ -694,7 +737,17 @@ L({
        <li><b>Entry $a_{12}=0$</b>, sign $-$. The minor is $\\begin{bmatrix}3&2\\\\1&4\\end{bmatrix}=10$, but the entry is $0$, so the whole term is $0$. <span class="why">This is why zeros save work — pick a line with many of them.</span></li>
        <li><b>Entry $a_{13}=1$</b>, sign $(-1)^{1+3}=+$. Minor $\\begin{bmatrix}3&1\\\\1&0\\end{bmatrix}=3\\cdot0-1\\cdot1=-1$. Term $= +\\,1\\cdot(-1) = -1$.</li>
        <li><b>Add them:</b> $\\det = 8 + 0 + (-1) = 7$.<div class="why">Check by expanding along column 2 instead (entries $0,1,0$): only $a_{22}=1$ survives, $\\det = (+1)\\cdot 1\\cdot\\det\\begin{bmatrix}2&1\\\\1&4\\end{bmatrix}=7$. Same answer, far less work.</div></li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>The three terms of the first-row expansion. Signed terms add to $\\det = 7$.</caption>
+       <thead><tr><th>entry</th><th class="num">value</th><th class="num">sign $(-1)^{1+j}$</th><th class="num">minor det</th><th class="num">term</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$a_{11}$</td><td class="num">$2$</td><td class="num">$+$</td><td class="num">$4$</td><td class="num">$+2\\cdot4=8$</td></tr>
+         <tr><td class="row-h">$a_{12}$</td><td class="num">$0$</td><td class="num">$-$</td><td class="num">$10$</td><td class="num">$0$</td></tr>
+         <tr><td class="row-h">$a_{13}$</td><td class="num">$1$</td><td class="num">$+$</td><td class="num">$-1$</td><td class="num">$+1\\cdot(-1)=-1$</td></tr>
+         <tr><td class="row-h">total</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">$8+0-1=7$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p><b>By hand.</b> The standard way to compute a $3\\times3$ or $4\\times4$ determinant on paper.</p>
      <p><b>The adjugate inverse.</b> The matrix of cofactors gives a closed form for the inverse: $A^{-1} = \\dfrac{1}{\\det A}\\,\\mathrm{adj}(A)$, where $\\mathrm{adj}(A)$ is the transpose of the cofactor matrix.</p>
@@ -869,7 +922,15 @@ L({
        <li>Trace by diagonal (the cheap way): $\\operatorname{tr}(M)=1+1=2$.</li>
        <li>Eigenvalues the hard way, from $\\det(M-\\lambda I)=(1-\\lambda)^2-4=0$, i.e. $1-\\lambda=\\pm2$: $\\lambda_1=3$ and $\\lambda_2=-1$.<div class="why">These are nowhere on the diagonal $(1,1)$ — you had to solve for them.</div></li>
        <li><b>Sum them:</b> $\\lambda_1+\\lambda_2 = 3 + (-1) = 2 = \\operatorname{tr}(M)$. ✔ The trace equals the sum of eigenvalues even when the eigenvalues are buried.<div class="why">So you can read off the eigenvalue sum for free — just add the diagonal, no characteristic polynomial needed.</div></li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Trace two ways: add the diagonal, or sum the eigenvalues — they always agree.</caption>
+       <thead><tr><th>matrix</th><th class="num">diagonal sum</th><th class="num">eigenvalues</th><th class="num">$\\sum\\lambda_i$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$A=\\begin{bmatrix}2&1\\\\0&3\\end{bmatrix}$</td><td class="num">$2+3=5$</td><td class="num">$2,\\,3$</td><td class="num">$5$</td></tr>
+         <tr><td class="row-h">$M=\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$</td><td class="num">$1+1=2$</td><td class="num">$3,\\,-1$</td><td class="num">$2$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>In statistics, the trace of the "hat" matrix is the effective number of parameters used by a model. The trace appears in the matrix derivative identities used to derive backprop (backpropagation), and $\\operatorname{tr}(\\Sigma)$ (total variance) is a quick summary of how spread out data is across all features.</p>`,
   whenToUse:
@@ -974,9 +1035,18 @@ L({
      </ul>
      <p>Independence is the opposite case: $Aw=\\mathbf{0}$ forces $w=\\mathbf{0}$, so no direction is wasted, the rank is full, and the inverse exists.</p>`,
   example:
-    `<p>Take three column vectors $v_1=\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix}$, $v_2=\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix}$, $v_3=\\begin{bmatrix}2\\\\3\\\\0\\end{bmatrix}$.</p>
+    `<p>Take three column vectors and ask how many independent directions they really reach.</p>
+     <table class="extable">
+       <caption>Three columns in $\\mathbb{R}^3$. Check whether the last is built from the first two.</caption>
+       <thead><tr><th>row</th><th class="num">$v_1$</th><th class="num">$v_2$</th><th class="num">$v_3$</th><th class="num">$2v_1+3v_2$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">$1$</td><td class="num">$0$</td><td class="num">$2$</td><td class="num">$2\\cdot1+3\\cdot0=2$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$0$</td><td class="num">$1$</td><td class="num">$3$</td><td class="num">$2\\cdot0+3\\cdot1=3$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$2\\cdot0+3\\cdot0=0$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Notice $v_3 = 2v_1 + 3v_2$ — it is built from the first two.</li>
+       <li>The last two columns match entry-for-entry: $v_3 = 2v_1 + 3v_2$ — it is built from the first two.</li>
        <li>So $v_3$ adds no new direction. The three columns all lie in the flat $z=0$ plane.</li>
        <li>Independent columns: just $v_1$ and $v_2$. So $\\operatorname{rank} = 2$, not 3.</li>
        <li>The matrix $[v_1\\;v_2\\;v_3]$ is $3\\times3$ but rank 2: it is singular, $\\det = 0$, and has no inverse.</li>
@@ -1110,12 +1180,20 @@ L({
      </ul>
      <p>So the sign of the quadratic form is governed entirely by the signs of the eigenvalues.</p>`,
   example:
-    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&1\\end{bmatrix}$. It is symmetric (diagonal). Test it.</p>
+    `<p>Let $A=\\begin{bmatrix}2&0\\\\0&1\\end{bmatrix}$. It is symmetric (diagonal). Plug a vector into the quadratic form $x^\\top A x$.</p>
      <ul class="steps">
        <li>$x^\\top A x = 2x_1^2 + 1\\,x_2^2$. Both terms are squares, so the sum is always $\\ge 0$. PSD. ✔</li>
        <li>Eigenvalues are $2$ and $1$, both $\\ge 0$. Same conclusion.</li>
-       <li>Now $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$: $x^\\top B x = x_1^2 - x_2^2$. At $x=(0,1)$ this is $-1 &lt; 0$. Not PSD — it is a saddle (eigenvalue $-1$).</li>
-     </ul>`,
+       <li>Now $B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$: $x^\\top B x = x_1^2 - x_2^2$. At $x=(0,1)$ this is $0-1=-1 &lt; 0$. Not PSD — it is a saddle (eigenvalue $-1$).</li>
+     </ul>
+     <table class="extable">
+       <caption>Both forms at $x=(0,1)$: a square stays $\\ge 0$, a difference of squares can go negative.</caption>
+       <thead><tr><th>matrix</th><th class="num">$x^\\top \\cdot x$ at $(0,1)$</th><th class="num">eigenvalues</th><th>PSD?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$A=\\begin{bmatrix}2&0\\\\0&1\\end{bmatrix}$</td><td class="num">$2\\cdot0^2+1\\cdot1^2=1$</td><td class="num">$2,\\,1$</td><td>yes ✔</td></tr>
+         <tr><td class="row-h">$B=\\begin{bmatrix}1&0\\\\0&-1\\end{bmatrix}$</td><td class="num">$0^2-1^2=-1$</td><td class="num">$1,\\,-1$</td><td>no ✗</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Every covariance matrix is PSD (variance can't be negative). A loss is convex exactly when its Hessian is PSD, which guarantees gradient descent reaches the global minimum. Kernel methods (SVMs (Support Vector Machines), Gaussian processes) require a PSD kernel matrix — that is what makes the optimization well-behaved.</p>`,
   whenToUse:
@@ -1249,7 +1327,16 @@ L({
        <li><b>The other eigenvector</b> $v=(1,-1)$ for $\\lambda=1$: $Av=\\begin{bmatrix}2\\cdot1+1\\cdot(-1)\\\\1\\cdot1+2\\cdot(-1)\\end{bmatrix}=\\begin{bmatrix}1\\\\-1\\end{bmatrix}=1\\cdot v$. ✔ This direction is unchanged (stretched by $1$).</li>
        <li>So $U=\\frac{1}{\\sqrt2}\\begin{bmatrix}1&1\\\\1&-1\\end{bmatrix}$, $\\Lambda=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$, and $A = U\\Lambda U^\\top$.</li>
        <li>Effect: $A$ stretches by 3 along the $(1,1)$ diagonal and by 1 along $(1,-1)$. The unit circle becomes an ellipse tilted at $45^\\circ$.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>The two eigen-pairs of $A$: $Av=\\lambda v$ verified, and the directions are perpendicular.</caption>
+       <thead><tr><th class="num">$\\lambda$</th><th class="num">eigenvector $v$</th><th class="num">$Av$</th><th class="num">$\\lambda v$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">$3$</td><td class="num">$(1,1)$</td><td class="num">$(2+1,\\,1+2)=(3,3)$</td><td class="num">$3\\cdot(1,1)=(3,3)$</td></tr>
+         <tr><td class="num">$1$</td><td class="num">$(1,-1)$</td><td class="num">$(2-1,\\,1-2)=(1,-1)$</td><td class="num">$1\\cdot(1,-1)=(1,-1)$</td></tr>
+       </tbody>
+     </table>
+     <p>Dot product of the two eigenvectors: $1\\cdot1+1\\cdot(-1)=0$ — perpendicular, as the spectral theorem promises.</p>`,
   application:
     `<p>PCA (Principal Component Analysis) is the spectral theorem applied to the covariance matrix: the eigenvectors are the principal axes of the data, the eigenvalues are the variances along them. Whitening, Gaussian-process kernels, and matrix square roots ($A^{1/2}=U\\Lambda^{1/2}U^\\top$) all rest on this decomposition.</p>`,
   whenToUse:
@@ -1370,9 +1457,20 @@ L({
        <li><b>Rebuild $A$ from the pieces.</b> The rank-1 term is $\\sigma_1 u_1 v_1^\\top = 5\\begin{bmatrix}0.6\\\\0.8\\end{bmatrix}\\begin{bmatrix}1&0\\end{bmatrix} = 5\\begin{bmatrix}0.6\\cdot1 & 0.6\\cdot0\\\\ 0.8\\cdot1 & 0.8\\cdot0\\end{bmatrix} = 5\\begin{bmatrix}0.6&0\\\\0.8&0\\end{bmatrix}=\\begin{bmatrix}3&0\\\\4&0\\end{bmatrix}=A$. ✔<div class="why">The outer product $u_1 v_1^\\top$ is a full $2\\times2$ matrix; scaling it by $\\sigma_1=5$ reconstructs $A$ exactly. Here one singular value carries the whole matrix.</div></li>
        <li><b>Why $\\sigma_1=5$?</b> Check $\\sqrt{u_1\\cdot u_1}=\\sqrt{0.36+0.64}=1$ (unit), and the column $(3,4)$ has length $\\sqrt{9+16}=5$ — that length <i>is</i> the singular value, since $(3,4)=5\\,(0.6,0.8)=\\sigma_1 u_1$.</li>
      </ul>
-     <p><b>Now the truncation idea, with bigger spectra.</b> Suppose a matrix has singular values $\\sigma = (10, 8, 1, 0.2)$.</p>
+     <p><b>Now the truncation idea, with bigger spectra.</b> Suppose a matrix has singular values $\\sigma = (10, 8, 1, 0.2)$. Energy is measured by $\\sigma_i^2$.</p>
+     <table class="extable">
+       <caption>Energy per singular value. The top 2 carry nearly all of it.</caption>
+       <thead><tr><th>$i$</th><th class="num">$\\sigma_i$</th><th class="num">$\\sigma_i^2$</th><th class="num">running %</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">$10$</td><td class="num">$100$</td><td class="num">$60.6\\%$</td></tr>
+         <tr><td class="row-h">2</td><td class="num">$8$</td><td class="num">$64$</td><td class="num">$99.4\\%$</td></tr>
+         <tr><td class="row-h">3</td><td class="num">$1$</td><td class="num">$1$</td><td class="num">$100.0\\%$</td></tr>
+         <tr><td class="row-h">4</td><td class="num">$0.2$</td><td class="num">$0.04$</td><td class="num">$100.0\\%$</td></tr>
+         <tr><td class="row-h">total</td><td class="num"></td><td class="num">$165.04$</td><td class="num"></td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>"Energy" is measured by $\\sigma_i^2$: total $= 100 + 64 + 1 + 0.04 = 165.04$.</li>
+       <li>Total energy $= 100 + 64 + 1 + 0.04 = 165.04$.</li>
        <li>Keep the top 2: captured energy $= 100 + 64 = 164$, which is $164/165.04 \\approx 99.4\\%$.</li>
        <li>So a rank-2 approximation $A_2$ keeps over 99% of the matrix while storing far fewer numbers.</li>
        <li>The reconstruction error is the next singular value, $\\sigma_3 = 1$ — small compared to $\\sigma_1=10$.</li>
@@ -1492,7 +1590,15 @@ L({
        <li><b>Partials of the second output</b> $y=r\\sin\\theta$: $\\;\\partial y/\\partial r = \\sin\\theta$, $\\;\\partial y/\\partial\\theta = r\\cos\\theta$.</li>
        <li><b>Assemble</b> $J = \\begin{bmatrix}\\cos\\theta & -r\\sin\\theta\\\\ \\sin\\theta & r\\cos\\theta\\end{bmatrix}$.<div class="why">Rows = outputs $(x,y)$, columns = inputs $(r,\\theta)$.</div></li>
        <li><b>Determinant</b> $\\det J = \\cos\\theta\\,(r\\cos\\theta) - (-r\\sin\\theta)\\,\\sin\\theta = r\\cos^2\\theta + r\\sin^2\\theta = r$.<div class="why">That $r$ is exactly the "$r\\,dr\\,d\\theta$" area factor you use when integrating in polar coordinates — the Jacobian determinant is the change-of-variables factor.</div></li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>The Jacobian is a grid: rows = outputs, columns = inputs, entry $=\\partial f_i/\\partial x_j$.</caption>
+       <thead><tr><th></th><th class="num">$\\partial/\\partial r$</th><th class="num">$\\partial/\\partial\\theta$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$x=r\\cos\\theta$</td><td class="num">$\\cos\\theta$</td><td class="num">$-r\\sin\\theta$</td></tr>
+         <tr><td class="row-h">$y=r\\sin\\theta$</td><td class="num">$\\sin\\theta$</td><td class="num">$r\\cos\\theta$</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p><b>Backpropagation.</b> Each layer has a local Jacobian; backprop chains them by multiplying Jacobians (the vector chain rule). Autodiff never builds them fully — it computes Jacobian–vector products.</p>
      <p><b>Robotics.</b> The Jacobian relates joint velocities to the robot hand's velocity, and tells you when the arm is in a stuck (singular) configuration.</p>
@@ -1653,14 +1759,21 @@ L({
      </ul>
      <p>That is why checking the Hessian's eigenvalue signs tells you the shape: all $\\ge 0$ is a bowl (minimum); mixed signs is a saddle.</p>`,
   example:
-    `<p>Let $f(x_1,x_2) = x_1^2 + 3x_2^2$. Find its Hessian.</p>
+    `<p>Let $f(x_1,x_2) = x_1^2 + 3x_2^2$. Find its Hessian by differentiating twice.</p>
      <ul class="steps">
        <li>Gradient: $\\frac{\\partial f}{\\partial x_1} = 2x_1$, $\\frac{\\partial f}{\\partial x_2} = 6x_2$.</li>
        <li>Second derivatives: $\\frac{\\partial^2 f}{\\partial x_1^2} = 2$, $\\frac{\\partial^2 f}{\\partial x_2^2} = 6$, and the cross term $\\frac{\\partial^2 f}{\\partial x_1\\partial x_2} = 0$.</li>
        <li>So $H = \\begin{bmatrix}2 & 0\\\\ 0 & 6\\end{bmatrix}$ — constant here.</li>
        <li>Eigenvalues $2$ and $6$ are both $&gt; 0$, so $H \\succeq 0$: the function is convex, a bowl with its minimum at the origin.</li>
      </ul>
-     <p>Compare $g = x_1^2 - x_2^2$: its Hessian is $\\begin{bmatrix}2&0\\\\0&-2\\end{bmatrix}$, eigenvalues $2$ and $-2$ — a saddle, not convex.</p>`,
+     <table class="extable">
+       <caption>Two functions, two Hessians: all-positive eigenvalues is a bowl; mixed signs is a saddle.</caption>
+       <thead><tr><th>function</th><th class="num">$H$</th><th class="num">eigenvalues</th><th>shape</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$f=x_1^2+3x_2^2$</td><td class="num">$\\begin{bmatrix}2&0\\\\0&6\\end{bmatrix}$</td><td class="num">$2,\\,6$</td><td>convex bowl ✔</td></tr>
+         <tr><td class="row-h">$g=x_1^2-x_2^2$</td><td class="num">$\\begin{bmatrix}2&0\\\\0&-2\\end{bmatrix}$</td><td class="num">$2,\\,-2$</td><td>saddle ✗</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Newton's method steps with $H^{-1}\\nabla f$, using curvature to converge far faster than plain gradient descent. Checking the Hessian's eigenvalue signs classifies critical points (min, max, saddle). Convex loss functions (the Hessian stays PSD) are why linear and logistic regression train reliably to the global optimum.</p>`,
   whenToUse:

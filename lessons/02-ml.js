@@ -58,13 +58,21 @@ L({
      <p>The goal: build $h_\\theta$ so that $h_\\theta(x^{(i)})$ is close to $y^{(i)}$ for the examples, and also for new inputs.</p>
      <p>If $y$ is a number (like price), it is <b>regression</b>. If $y$ is a category (like spam / not spam), it is <b>classification</b>.</p>`,
   example:
-    `<p>You want to predict house price from size. You collect 3 examples:</p>
+    `<p>You want to predict house price from size. You collect $m = 3$ training pairs:</p>
+     <table class="extable">
+       <caption>Training set: size (feature $x$) and price (target $y$)</caption>
+       <thead><tr><th>example $i$</th><th class="num">$x^{(i)}$ (sq ft)</th><th class="num">$y^{(i)}$ ($k)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">1000</td><td class="num">200</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1500</td><td class="num">300</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2000</td><td class="num">400</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$(x^{(1)}, y^{(1)}) = (1000 \\text{ sq ft},\\ \\$200\\text{k})$.</li>
-       <li>$(x^{(2)}, y^{(2)}) = (1500 \\text{ sq ft},\\ \\$300\\text{k})$.</li>
-       <li>$(x^{(3)}, y^{(3)}) = (2000 \\text{ sq ft},\\ \\$400\\text{k})$.</li>
-       <li>Here $m = 3$. The price is a number, so this is regression.</li>
-       <li>A learned rule might be $h_\\theta(x) = 200 \\times x$ (price = 200 per sq ft). For a new 1800 sq ft house it predicts $\\$360$k.</li>
+       <li>Here $m = 3$. The price is a number, so this is regression (not classification).</li>
+       <li>A learned rule fitting these is $h_\\theta(x) = 0.2 \\times x$ (price $= \\$0.2$k per sq ft).</li>
+       <li>Check example 2: $h_\\theta(1500) = 0.2 \\times 1500 = 300$ — matches $y^{(2)} = 300$.</li>
+       <li>Predict a new $1800$ sq ft house: $h_\\theta(1800) = 0.2 \\times 1800 = \\mathbf{360}$ (i.e. $\\$360$k).</li>
      </ul>`,
   application:
     `<p>Spam filters learn from emails labeled spam / not-spam. Photo apps learn to tag cats from labeled photos. Loan approval learns from past approved / denied applications. Anything with labeled past data can be supervised learning.</p>`,
@@ -134,12 +142,21 @@ L({
      <p>A gap of 2 gives loss $\\tfrac12(2)^2 = 2$. A gap of 4 gives loss $\\tfrac12(4)^2 = 8$. Twice the gap, four times the loss.</p>
      <p>Other tasks use other losses: <b>hinge loss</b> (for SVMs (Support Vector Machines)) and <b>cross-entropy loss</b> (for probabilities). Same idea, different formula.</p>`,
   example:
-    `<p>True price is $y = \\$300$k. The model predicts $z = \\$280$k.</p>
+    `<p>True price is $y = \\$300$k. Plug the formula $L = \\tfrac12(y-z)^2$ into a few guesses $z$:</p>
+     <table class="extable">
+       <caption>Squared loss grows fast as the prediction $z$ drifts from $y = 300$</caption>
+       <thead><tr><th>prediction $z$</th><th class="num">gap $y-z$</th><th class="num">$(y-z)^2$</th><th class="num">$L=\\tfrac12(y-z)^2$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">300 (perfect)</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="row-h">280</td><td class="num">20</td><td class="num">400</td><td class="num">200</td></tr>
+         <tr><td class="row-h">260</td><td class="num">40</td><td class="num">1600</td><td class="num">800</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Gap: $y - z = 300 - 280 = 20$.</li>
+       <li>Take $z = 280$. Gap: $y - z = 300 - 280 = 20$.</li>
        <li>Square it: $20^2 = 400$.</li>
        <li>Halve it: $L = \\tfrac12 \\times 400 = 200$.</li>
-       <li>If instead $z = \\$300$k (perfect), gap $= 0$, so $L = 0$.</li>
+       <li>Doubling the gap to $40$ gives $L = 800$ — four times the loss. A perfect $z = 300$ gives $L = 0$.</li>
      </ul>`,
   application:
     `<p>Predicting delivery times, stock prices, or temperatures all use squared loss. Image classifiers use cross-entropy loss. Every model needs a loss so it knows what "wrong" means.</p>`,
@@ -208,12 +225,22 @@ L({
      <p>The result $J(\\theta)$ is one number summarizing how badly the model fits the entire dataset.</p>
      <p>Training is the search for the $\\theta$ that minimizes $J(\\theta)$.</p>`,
   example:
-    `<p>Three houses, true prices $y = 300, 250, 400$ (k). Model A predicts $\\hat y = 280, 240, 400$.</p>
+    `<p>Three houses with true prices $y = 300, 250, 400$ (k). Score two models with loss $\\tfrac12(y-\\hat y)^2$ per house, then total to the cost $J$.</p>
+     <table class="extable">
+       <caption>Per-example loss for Model A vs Model B (B fixes house 1)</caption>
+       <thead><tr><th>house</th><th class="num">true $y$</th><th class="num">A: $\\hat y$</th><th class="num">A loss</th><th class="num">B: $\\hat y$</th><th class="num">B loss</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">300</td><td class="num">280</td><td class="num">200</td><td class="num">290</td><td class="num">50</td></tr>
+         <tr><td class="row-h">2</td><td class="num">250</td><td class="num">240</td><td class="num">50</td><td class="num">240</td><td class="num">50</td></tr>
+         <tr><td class="row-h">3</td><td class="num">400</td><td class="num">400</td><td class="num">0</td><td class="num">400</td><td class="num">0</td></tr>
+         <tr><td class="row-h">$J=\\sum L$</td><td class="num"></td><td class="num"></td><td class="num">250</td><td class="num"></td><td class="num">150</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Per-example loss $\\tfrac12(y-\\hat y)^2$: $\\tfrac12(20)^2 = 200$, &nbsp; $\\tfrac12(10)^2 = 50$, &nbsp; $\\tfrac12(0)^2 = 0$.</li>
-       <li>Cost: $J = 200 + 50 + 0 = \\mathbf{250}$. One number for the whole dataset.</li>
-       <li>Now model B fixes example 1, predicting $290$: its loss drops to $\\tfrac12(10)^2 = 50$.</li>
-       <li>New cost: $J = 50 + 50 + 0 = \\mathbf{150}$. Lowering one example's loss lowered the total $J$ — that is exactly what training searches for.</li>
+       <li>Model A loss on house 1: $\\tfrac12(300-280)^2 = \\tfrac12(20)^2 = 200$.</li>
+       <li>Model A cost: $J = 200 + 50 + 0 = \\mathbf{250}$. One number for the whole dataset.</li>
+       <li>Model B fixes house 1 to $290$: loss drops to $\\tfrac12(10)^2 = 50$.</li>
+       <li>Model B cost: $J = 50 + 50 + 0 = \\mathbf{150}$. Lowering one loss lowered the total — that is what training searches for.</li>
      </ul>`,
   application:
     `<p>Every trained model has a cost it is trying to minimize. House-price models, recommendation systems, and language models all define a cost over their data, then push it down.</p>`,
@@ -368,12 +395,21 @@ L({
      <p>That nudges $\\theta$ downhill a little. Repeat until the cost stops dropping.</p>
      <p><b>SGD</b> (stochastic gradient descent) uses just one example at a time to estimate the slope. Noisier, but much faster on huge datasets.</p>`,
   example:
-    `<p>Suppose $J(\\theta) = \\theta^2$, so the slope is $\\nabla J = 2\\theta$. Start at $\\theta = 5$, learning rate $\\alpha = 0.1$.</p>
+    `<p>Suppose $J(\\theta) = \\theta^2$, so the slope is $\\nabla J = 2\\theta$. Start at $\\theta = 5$, learning rate $\\alpha = 0.1$, and run the rule $\\theta \\leftarrow \\theta - \\alpha\\nabla J$.</p>
+     <table class="extable">
+       <caption>Each step nudges $\\theta$ downhill toward the bottom $\\theta = 0$</caption>
+       <thead><tr><th>step</th><th class="num">$\\theta$ (start)</th><th class="num">slope $2\\theta$</th><th class="num">$\\alpha\\cdot$slope</th><th class="num">new $\\theta$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">5.00</td><td class="num">10.0</td><td class="num">1.00</td><td class="num">4.00</td></tr>
+         <tr><td class="row-h">2</td><td class="num">4.00</td><td class="num">8.0</td><td class="num">0.80</td><td class="num">3.20</td></tr>
+         <tr><td class="row-h">3</td><td class="num">3.20</td><td class="num">6.4</td><td class="num">0.64</td><td class="num">2.56</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Slope at $\\theta = 5$: $2 \\times 5 = 10$.</li>
        <li>Step: $\\theta \\leftarrow 5 - 0.1 \\times 10 = 5 - 1 = 4$.</li>
-       <li>Slope at $\\theta = 4$: $2 \\times 4 = 8$. Step: $4 - 0.1 \\times 8 = 3.2$.</li>
-       <li>Next: $3.2 - 0.1 \\times 6.4 = 2.56$. We are sliding toward $\\theta = 0$, the bottom.</li>
+       <li>Slope at $\\theta = 4$: $2 \\times 4 = 8$, so $\\theta \\leftarrow 4 - 0.1 \\times 8 = 3.2$.</li>
+       <li>Next: $3.2 - 0.1 \\times 6.4 = 2.56$. The steps shrink as the slope flattens — $\\theta$ slides toward $0$, the bottom.</li>
      </ul>`,
   application:
     `<p>Gradient descent trains almost everything: linear regression, logistic regression, and every deep neural network. SGD is how giant models learn from billions of examples without choking.</p>`,
@@ -531,13 +567,22 @@ L({
      <p>The right part gives the exact best weights in one calculation. No looping needed.</p>
      <p>It works because squared-error cost is a smooth bowl with one bottom, and this formula jumps straight to it.</p>`,
   example:
-    `<p>One feature. Data: $(x,y) = (1,2), (2,4), (3,6)$. The perfect line is $y = 2x$, so $\\theta = 2$.</p>
+    `<p>One feature, $3$ rows. The perfect line is $y = 2x$, so we expect $\\theta = 2$. Solve it with the normal equation $\\theta = (X^\\top X)^{-1}X^\\top y$.</p>
+     <table class="extable">
+       <caption>Data, plus the per-row products the formula sums</caption>
+       <thead><tr><th>row</th><th class="num">$x$</th><th class="num">$y$</th><th class="num">$x\\cdot x$</th><th class="num">$x\\cdot y$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">1</td><td class="num">2</td><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2</td><td class="num">4</td><td class="num">4</td><td class="num">8</td></tr>
+         <tr><td class="row-h">3</td><td class="num">3</td><td class="num">6</td><td class="num">9</td><td class="num">18</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">14</td><td class="num">28</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Here $X = \\begin{bmatrix}1\\\\2\\\\3\\end{bmatrix}$ and $y = \\begin{bmatrix}2\\\\4\\\\6\\end{bmatrix}$.</li>
-       <li>$X^\\top X = 1{\\cdot}1 + 2{\\cdot}2 + 3{\\cdot}3 = 14$.</li>
-       <li>$X^\\top y = 1{\\cdot}2 + 2{\\cdot}4 + 3{\\cdot}6 = 28$.</li>
-       <li>$\\theta = (14)^{-1} \\times 28 = 28 / 14 = 2$. The formula found the line exactly.</li>
-       <li>Predict for $x = 5$: $h_\\theta(5) = 2 \\times 5 = 10$.</li>
+       <li>$X^\\top X = 1{\\cdot}1 + 2{\\cdot}2 + 3{\\cdot}3 = 14$ (sum of the $x\\cdot x$ column).</li>
+       <li>$X^\\top y = 1{\\cdot}2 + 2{\\cdot}4 + 3{\\cdot}6 = 28$ (sum of the $x\\cdot y$ column).</li>
+       <li>$\\theta = (14)^{-1} \\times 28 = 28 / 14 = \\mathbf{2}$. The formula found the line exactly.</li>
+       <li>Predict for $x = 5$: $h_\\theta(5) = 2 \\times 5 = \\mathbf{10}$.</li>
      </ul>`,
   application:
     `<p>Predicting house prices from size, sales from ad spend, or crop yield from rainfall. Linear regression is the first model to try, and the baseline everything else is compared against.</p>`,
@@ -609,12 +654,21 @@ L({
      <p>Take its logarithm to make the math easy (sums, not products).</p>
      <p>Find the $\\theta$ that makes it as large as possible. That $\\theta$ is your model.</p>`,
   example:
-    `<p>You flip a coin 10 times and get 7 heads. What heads-probability $\\theta$ best explains this?</p>
+    `<p>You flip a coin 10 times and get 7 heads. Which heads-probability $\\theta$ best explains this? Plug values into $L(\\theta) = \\theta^7 (1-\\theta)^3$.</p>
+     <table class="extable">
+       <caption>Likelihood $L(\\theta)=\\theta^7(1-\\theta)^3$ peaks at $\\theta = 0.7$</caption>
+       <thead><tr><th>$\\theta$</th><th class="num">$\\theta^7$</th><th class="num">$(1-\\theta)^3$</th><th class="num">$L(\\theta)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">0.5</td><td class="num">0.0078</td><td class="num">0.125</td><td class="num">0.00098</td></tr>
+         <tr><td class="row-h">0.7</td><td class="num">0.0824</td><td class="num">0.027</td><td class="num">0.00222</td></tr>
+         <tr><td class="row-h">0.9</td><td class="num">0.4783</td><td class="num">0.001</td><td class="num">0.00048</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Likelihood of 7 heads in 10 flips: $L(\\theta) = \\theta^7 (1-\\theta)^3$ (times a constant).</li>
        <li>Try $\\theta = 0.5$: $0.5^7 \\times 0.5^3 = 0.5^{10} \\approx 0.00098$.</li>
-       <li>Try $\\theta = 0.7$: $0.7^7 \\times 0.3^3 \\approx 0.0823 \\times 0.027 \\approx 0.00222$.</li>
-       <li>$\\theta = 0.7$ gives higher likelihood. In fact the maximum is exactly $\\theta = 7/10 = 0.7$.</li>
+       <li>Try $\\theta = 0.7$: $0.7^7 \\times 0.3^3 \\approx 0.0824 \\times 0.027 \\approx 0.00222$ — higher.</li>
+       <li>Try $\\theta = 0.9$: $0.9^7 \\times 0.1^3 \\approx 0.4783 \\times 0.001 \\approx 0.00048$ — lower again.</li>
+       <li>$\\theta = 0.7$ wins. The maximum is exactly $\\theta = 7/10 = \\mathbf{0.7}$, the fraction of heads.</li>
      </ul>`,
   application:
     `<p>Maximum likelihood underlies logistic regression, naive Bayes, and the training of language models. It is the standard recipe: define the data's probability, then maximize it.</p>`,
@@ -732,12 +786,21 @@ L({
      <p>When $z = 0$, $g(0) = \\tfrac{1}{1+1} = 0.5$. When $z$ is large positive, $e^{-z} \\to 0$ so $g \\to 1$. When $z$ is large negative, $g \\to 0$.</p>
      <p>We train $\\theta$ by maximum likelihood (which gives cross-entropy loss).</p>`,
   example:
-    `<p>A model has score $z = \\theta^\\top x = 2$ for some email. Is it spam ($y=1$)?</p>
+    `<p>A model has score $z = \\theta^\\top x = 2$ for some email. Push it through $g(z) = \\dfrac{1}{1+e^{-z}}$ to get $P(\\text{spam})$.</p>
+     <table class="extable">
+       <caption>The sigmoid squashes any score $z$ into a probability in $(0,1)$</caption>
+       <thead><tr><th>score $z$</th><th class="num">$e^{-z}$</th><th class="num">$g(z)$</th><th>decision (cutoff 0.5)</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$-2$</td><td class="num">7.389</td><td class="num">0.12</td><td>not-spam</td></tr>
+         <tr><td class="row-h">$0$</td><td class="num">1.000</td><td class="num">0.50</td><td>tie</td></tr>
+         <tr><td class="row-h">$2$</td><td class="num">0.135</td><td class="num">0.88</td><td>spam</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Compute $e^{-z} = e^{-2} \\approx 0.135$.</li>
+       <li>Take $z = 2$. Compute $e^{-z} = e^{-2} \\approx 0.135$.</li>
        <li>Sigmoid: $g(2) = \\dfrac{1}{1 + 0.135} = \\dfrac{1}{1.135} \\approx 0.88$.</li>
-       <li>So $P(\\text{spam}) \\approx 0.88$. That is above $0.5$, so predict spam.</li>
-       <li>If instead $z = -2$, then $g(-2) \\approx 0.12$, so predict not-spam.</li>
+       <li>So $P(\\text{spam}) \\approx 0.88$, above $0.5$ — predict spam.</li>
+       <li>If instead $z = -2$, then $g(-2) \\approx 0.12$, below $0.5$ — predict not-spam.</li>
      </ul>`,
   application:
     `<p>Spam detection, click-through prediction, disease risk scoring, and credit default — all are yes/no problems solved with logistic regression. It is the workhorse classifier of industry.</p>`,
@@ -817,13 +880,22 @@ L({
     `<p>Exponentiate each class score to make it positive. Add all of them up to get the total. Divide each by the total.</p>
      <p>The bottom (the sum) is the same for every class, so the outputs share one pie that adds to 1.</p>`,
   example:
-    `<p>Three classes with scores $\\theta_1^\\top x = 2$, $\\theta_2^\\top x = 1$, $\\theta_3^\\top x = 0$.</p>
+    `<p>Three classes with scores $\\theta_1^\\top x = 2$, $\\theta_2^\\top x = 1$, $\\theta_3^\\top x = 0$. Apply $\\phi_i = e^{z_i} / \\sum_j e^{z_j}$.</p>
+     <table class="extable">
+       <caption>Per-class: score &rarr; $\\exp$ &rarr; divide by the sum $11.11$</caption>
+       <thead><tr><th>class $i$</th><th class="num">score $z_i$</th><th class="num">$e^{z_i}$</th><th class="num">$\\phi_i = e^{z_i}/11.11$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">2</td><td class="num">7.39</td><td class="num">0.67</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1</td><td class="num">2.72</td><td class="num">0.24</td></tr>
+         <tr><td class="row-h">3</td><td class="num">0</td><td class="num">1.00</td><td class="num">0.09</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">11.11</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Exponentiate: $e^2 \\approx 7.39$, $e^1 \\approx 2.72$, $e^0 = 1$.</li>
-       <li>Sum: $7.39 + 2.72 + 1 = 11.11$.</li>
-       <li>$\\phi_1 = 7.39 / 11.11 \\approx 0.67$.</li>
-       <li>$\\phi_2 = 2.72 / 11.11 \\approx 0.24$. &nbsp; $\\phi_3 = 1 / 11.11 \\approx 0.09$.</li>
-       <li>Check: $0.67 + 0.24 + 0.09 = 1.00$. Class 1 wins.</li>
+       <li>Exponentiate each score: $e^2 \\approx 7.39$, $e^1 \\approx 2.72$, $e^0 = 1$.</li>
+       <li>Sum them: $7.39 + 2.72 + 1 = 11.11$.</li>
+       <li>Divide each by the sum: $\\phi_1 = 7.39 / 11.11 \\approx 0.67$, $\\phi_2 \\approx 0.24$, $\\phi_3 \\approx 0.09$.</li>
+       <li>Check: $0.67 + 0.24 + 0.09 = 1.00$. Class 1 has the biggest $\\phi$, so class 1 wins.</li>
      </ul>`,
   application:
     `<p>Softmax is the final layer of almost every image classifier and language model. Recognizing handwritten digits (10 classes) or the next word (tens of thousands of classes) both end in a softmax.</p>`,
@@ -907,7 +979,16 @@ L({
        <li>That is the sigmoid. So logistic regression falls out of the GLM automatically.</li>
        <li>Check with numbers: if the linear score is $\\eta = \\theta^\\top x = 2$, then $\\phi = \\dfrac{1}{1+e^{-2}} = \\dfrac{1}{1.135} \\approx \\mathbf{0.88}$ — a probability, exactly logistic regression's output.</li>
        <li>Swap Bernoulli for Poisson and the mean becomes $e^{\\eta} = e^{2} \\approx \\mathbf{7.39}$ (a count) — same template, different distribution.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Same linear score $\\eta = 2$, three families, three meanings</caption>
+       <thead><tr><th>family</th><th>link: mean as $f(\\eta)$</th><th class="num">mean at $\\eta = 2$</th><th>output type</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">Gaussian</td><td>$\\eta$</td><td class="num">2.00</td><td>any number (linear reg.)</td></tr>
+         <tr><td class="row-h">Bernoulli</td><td>$1/(1+e^{-\\eta})$</td><td class="num">0.88</td><td>probability (logistic)</td></tr>
+         <tr><td class="row-h">Poisson</td><td>$e^{\\eta}$</td><td class="num">7.39</td><td>count (Poisson reg.)</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>GLMs let one library fit many models: counts of website visits (Poisson regression), yes/no churn (logistic), or dollar amounts (linear). Statisticians and data scientists use this single framework daily.</p>`,
   whenToUse:
@@ -998,13 +1079,21 @@ L({
      <p>"s.t." means "subject to" — the rule that must hold. Each point must be on its correct side, at least one margin-width away.</p>
      <p>The few points sitting right on the margin edge are the <b>support vectors</b>. They alone define the line. When points overlap, the <b>hinge loss</b> allows soft violations.</p>`,
   example:
-    `<p>1D toy: class $-1$ at $x = 1$, class $+1$ at $x = 3$. The boundary is $w\\,x - b = 0$.</p>
+    `<p>1D toy: class $-1$ at $x = 1$, class $+1$ at $x = 3$. The boundary $w\\,x - b = 0$ sits halfway at $x = 2$, so $b = 2w$.</p>
      <ul class="steps">
-       <li>The widest gap puts the boundary halfway, at $x = 2$, so $b = 2w$.</li>
        <li>The constraint $y^{(i)}(w x^{(i)} - b) \\ge 1$ is tightest at the two points. At $x=3$: $w(3) - 2w = w \\ge 1$. The smallest allowed weight is $w = 1$.</li>
-       <li>Now compute the margin width: $\\dfrac{2}{\\lVert w\\rVert} = \\dfrac{2}{1} = \\mathbf{2}$ — exactly the gap from $x=1$ to $x=3$. The half-width is $1$.</li>
-       <li>Punchline: if we forced a bigger $w = 2$, the street would shrink to $2/2 = 1$. Minimizing $\\lVert w\\rVert$ is literally maximizing the street. Both points sit on the edges, so both are support vectors.</li>
-     </ul>`,
+       <li>Margin width $= \\dfrac{2}{\\lVert w\\rVert} = \\dfrac{2}{1} = \\mathbf{2}$ — exactly the gap from $x=1$ to $x=3$. Half-width $= 1$.</li>
+       <li>Both points sit on the margin edges, so both are support vectors.</li>
+     </ul>
+     <table class="extable">
+       <caption>Smaller $\\lVert w\\rVert$ &rArr; wider street; $w = 1$ is the smallest that still satisfies $w \\ge 1$</caption>
+       <thead><tr><th>weight $w$</th><th class="num">$\\lVert w\\rVert$</th><th class="num">margin $2/\\lVert w\\rVert$</th><th>constraint $w \\ge 1$?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">0.5</td><td class="num">0.5</td><td class="num">4.0</td><td>no (violated)</td></tr>
+         <tr><td class="row-h">1</td><td class="num">1.0</td><td class="num">2.0</td><td>yes (tight, optimal)</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2.0</td><td class="num">1.0</td><td>yes, but street too narrow</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>SVMs classify text (spam, topic), images, and gene-expression data. They shine when you have many features but only a moderate number of examples — common in medicine and bioinformatics.</p>`,
   whenToUse:
@@ -1130,12 +1219,20 @@ L({
      <p>The Gaussian kernel gives $1$ when points are identical and fades toward $0$ as they separate.</p>
      <p>Swap dot products for kernels inside an SVM, and the straight boundary becomes a curved one — with no extra features computed.</p>`,
   example:
-    `<p>Use the Gaussian kernel with $\\sigma = 1$. Compare two points at distance $0$ and at distance $2$.</p>
+    `<p>Use the Gaussian kernel $K = \\exp\\!\\big(-\\lVert x-z\\rVert^2 / (2\\sigma^2)\\big)$ with $\\sigma = 1$, so $K = \\exp(-\\lVert x-z\\rVert^2 / 2)$. Vary the distance between two points.</p>
+     <table class="extable">
+       <caption>Similarity fades smoothly from $1$ (identical) toward $0$ (far apart)</caption>
+       <thead><tr><th>distance $\\lVert x-z\\rVert$</th><th class="num">$\\lVert x-z\\rVert^2$</th><th class="num">$-\\lVert x-z\\rVert^2/2$</th><th class="num">$K$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">0</td><td class="num">0</td><td class="num">0</td><td class="num">1.000</td></tr>
+         <tr><td class="row-h">1</td><td class="num">1</td><td class="num">$-0.5$</td><td class="num">0.607</td></tr>
+         <tr><td class="row-h">2</td><td class="num">4</td><td class="num">$-2$</td><td class="num">0.135</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Same point, $\\lVert x - z\\rVert^2 = 0$: $K = \\exp(0) = 1$. Maximum similarity.</li>
        <li>Distance $2$, so $\\lVert x - z\\rVert^2 = 4$: $K = \\exp(-4 / 2) = \\exp(-2) \\approx 0.135$.</li>
-       <li>So nearby points score high, distant points score low.</li>
-       <li>This is why the Gaussian kernel acts like a smooth similarity bump.</li>
+       <li>Nearby points score high, distant points score low — a smooth similarity bump.</li>
      </ul>`,
   application:
     `<p>Kernel SVMs handle handwriting, text, and tasks where the boundary is curvy. The same kernel idea also powers Gaussian processes and many similarity-based methods.</p>`,
@@ -1220,12 +1317,20 @@ L({
      <p>Weight each by how common the class is, $p(y)$. Bayes' rule combines them into $p(y \\mid x)$.</p>
      <p>The bottom $p(x)$ is the same for every class, so we just pick the class with the largest top.</p>`,
   example:
-    `<p>Classify height as adult or child. Both bell curves use spread $\\sigma = 20$ cm. Adults: mean $170$. Children: mean $130$. A person is $135$ cm. Equal priors $p(y) = 0.5$.</p>
+    `<p>Classify a $135$ cm person as adult or child. Both bell curves use spread $\\sigma = 20$ cm; means are $\\mu_{\\text{child}} = 130$, $\\mu_{\\text{adult}} = 170$. Equal priors $p(y) = 0.5$.</p>
+     <table class="extable">
+       <caption>Each class's bell curve $\\propto e^{-(x-\\mu)^2/(2\\sigma^2)}$ scored at $x = 135$</caption>
+       <thead><tr><th>class</th><th class="num">$\\mu$</th><th class="num">$(135-\\mu)^2$</th><th class="num">density $\\propto$</th><th class="num">posterior</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">child</td><td class="num">130</td><td class="num">25</td><td class="num">0.969</td><td class="num">0.82</td></tr>
+         <tr><td class="row-h">adult</td><td class="num">170</td><td class="num">1225</td><td class="num">0.216</td><td class="num">0.18</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Child curve at $135$: $p(x \\mid \\text{child}) \\propto e^{-\\frac{(135-130)^2}{2\\cdot 20^2}} = e^{-25/800} = e^{-0.031} \\approx 0.969$.</li>
-       <li>Adult curve at $135$: $p(x \\mid \\text{adult}) \\propto e^{-\\frac{(135-170)^2}{2\\cdot 20^2}} = e^{-1225/800} = e^{-1.531} \\approx 0.216$.</li>
+       <li>Child curve at $135$: $p(x \\mid \\text{child}) \\propto e^{-25/(2\\cdot 400)} = e^{-0.031} \\approx 0.969$.</li>
+       <li>Adult curve at $135$: $p(x \\mid \\text{adult}) \\propto e^{-1225/(2\\cdot 400)} = e^{-1.531} \\approx 0.216$.</li>
        <li>Bayes (equal priors cancel): $p(\\text{child} \\mid x) = \\dfrac{0.969}{0.969 + 0.216} \\approx \\mathbf{0.82}$.</li>
-       <li>So $82\\%$ child vs $18\\%$ adult — the nearer mean wins, and Bayes turns the densities into a real probability. Predict child.</li>
+       <li>So $82\\%$ child vs $18\\%$ adult — the nearer mean wins, and Bayes turns densities into a real probability. Predict child.</li>
      </ul>`,
   application:
     `<p>Generative models like GDA are useful when data is limited, since they make stronger assumptions. They also let you generate fake-but-plausible examples and detect outliers that fit no class well.</p>`,
@@ -1304,13 +1409,22 @@ L({
      <p>Combine with the class prior $P(y)$ via Bayes' rule, then pick the class with the highest result.</p>
      <p>Because it is just lookups and multiplies, it trains and predicts very fast.</p>`,
   example:
-    `<p>Spam filter. The word "free" appears in $80\\%$ of spam but only $10\\%$ of normal mail.</p>
+    `<p>Spam filter. An email contains the words "free" and "win". Each word's per-class probability:</p>
+     <table class="extable">
+       <caption>Word likelihoods $P(x_i \\mid y)$, then the naive product across words</caption>
+       <thead><tr><th>feature</th><th class="num">$P(\\cdot\\mid\\text{spam})$</th><th class="num">$P(\\cdot\\mid\\text{ham})$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">"free"</td><td class="num">0.8</td><td class="num">0.10</td></tr>
+         <tr><td class="row-h">"win"</td><td class="num">0.5</td><td class="num">0.05</td></tr>
+         <tr><td class="row-h">product $\\prod P(x_i\\mid y)$</td><td class="num">0.40</td><td class="num">0.005</td></tr>
+         <tr><td class="row-h">$\\times$ prior</td><td class="num">$0.4\\cdot0.40=0.16$</td><td class="num">$0.6\\cdot0.005=0.003$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$P(\\text{"free"} \\mid \\text{spam}) = 0.8$. &nbsp; $P(\\text{"free"} \\mid \\text{not spam}) = 0.1$.</li>
-       <li>Say "win" also appears: $P(\\text{"win"} \\mid \\text{spam}) = 0.5$, &nbsp; $P(\\text{"win"} \\mid \\text{not spam}) = 0.05$.</li>
-       <li>Multiply the features (the naive step): spam $= 0.8 \\times 0.5 = 0.40$, not-spam $= 0.1 \\times 0.05 = 0.005$.</li>
-       <li>Now fold in a prior $P(\\text{spam}) = 0.4$: spam score $= 0.4 \\times 0.40 = 0.16$; not-spam score $= 0.6 \\times 0.005 = 0.003$.</li>
-       <li>Normalize: $P(\\text{spam} \\mid \\text{words}) = \\dfrac{0.16}{0.16 + 0.003} \\approx \\mathbf{0.98}$. Predict spam — the two independent words multiplied into near-certainty.</li>
+       <li>Multiply the features (the naive step): spam $= 0.8 \\times 0.5 = 0.40$, ham $= 0.1 \\times 0.05 = 0.005$.</li>
+       <li>Fold in the prior $P(\\text{spam}) = 0.4$: spam score $= 0.4 \\times 0.40 = 0.16$; ham score $= 0.6 \\times 0.005 = 0.003$.</li>
+       <li>Normalize: $P(\\text{spam} \\mid \\text{words}) = \\dfrac{0.16}{0.16 + 0.003} \\approx \\mathbf{0.98}$.</li>
+       <li>Predict spam — two independent words multiplied into near-certainty.</li>
      </ul>`,
   application:
     `<p>Naive Bayes is a classic spam filter. It also classifies news articles by topic, flags sentiment, and serves as a fast baseline for any text-classification problem.</p>`,
@@ -1472,12 +1586,21 @@ L({
      <p>Pick the split that gives the purest groups. Add it to the tree. Repeat on each group.</p>
      <p>Gini is $0$ when a group is all one class, and largest when classes are evenly mixed.</p>`,
   example:
-    `<p>10 people: 5 buy, 5 don't. Split on "age > 30?". Above 30: 4 buy, 1 don't. Below: 1 buy, 4 don't.</p>
+    `<p>10 people: 5 buy, 5 don't. Split on "age &gt; 30?". Score each group's Gini $= 1 - \\sum_c p_c^2$.</p>
+     <table class="extable">
+       <caption>Both child groups are purer (lower Gini) than the parent</caption>
+       <thead><tr><th>group</th><th class="num">buy</th><th class="num">no-buy</th><th class="num">$p_{\\text{buy}}$</th><th class="num">Gini</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">parent (all 10)</td><td class="num">5</td><td class="num">5</td><td class="num">0.5</td><td class="num">0.50</td></tr>
+         <tr><td class="row-h">age &gt; 30</td><td class="num">4</td><td class="num">1</td><td class="num">0.8</td><td class="num">0.32</td></tr>
+         <tr><td class="row-h">age &le; 30</td><td class="num">1</td><td class="num">4</td><td class="num">0.2</td><td class="num">0.32</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Before split, fractions are $0.5$ and $0.5$. Gini $= 1 - (0.5^2 + 0.5^2) = 1 - 0.5 = 0.5$. Very mixed.</li>
+       <li>Parent: fractions $0.5$ and $0.5$. Gini $= 1 - (0.5^2 + 0.5^2) = 1 - 0.5 = 0.50$. Very mixed.</li>
        <li>Above-30 group: fractions $0.8$ and $0.2$. Gini $= 1 - (0.64 + 0.04) = 0.32$. Purer.</li>
-       <li>Below-30 group: same by symmetry, Gini $= 0.32$. Also purer.</li>
-       <li>Both groups got purer, so "age > 30?" is a good split.</li>
+       <li>Below-30 group: by symmetry, Gini $= 0.32$ too.</li>
+       <li>Weighted child Gini $= \\tfrac{5}{10}(0.32) + \\tfrac{5}{10}(0.32) = 0.32 \\lt 0.50$ — both groups got purer, so "age &gt; 30?" is a good split.</li>
      </ul>`,
   application:
     `<p>Decision trees power credit scoring, medical triage, and customer churn analysis, where people must understand and trust the reasoning. They are also the building block of random forests.</p>`,
@@ -1554,12 +1677,21 @@ L({
      <p>Boosting: add trees one at a time, each with a weight $\\alpha_t$. Later trees correct earlier mistakes.</p>
      <p>Adaboost and gradient boosting are the famous boosting methods.</p>`,
   example:
-    `<p>Why does averaging help? Each tree's prediction is noisy with variance $\\sigma^2 = 4$. Average $T$ independent trees.</p>
+    `<p>Why does averaging help? Each tree's prediction is noisy with variance $\\sigma^2 = 4$. Averaging $T$ independent trees gives variance $\\sigma^2/T$.</p>
+     <table class="extable">
+       <caption>More trees &rArr; less variance (here $\\sigma^2 = 4$)</caption>
+       <thead><tr><th>trees $T$</th><th class="num">ensemble variance $4/T$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">4.00</td></tr>
+         <tr><td class="row-h">4</td><td class="num">1.00</td></tr>
+         <tr><td class="row-h">25</td><td class="num">0.16</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>One tree: variance $= 4$. The forest of $T$ trees has variance $\\dfrac{\\sigma^2}{T} = \\dfrac{4}{T}$.</li>
-       <li>$T = 4$ trees: variance $= 4/4 = \\mathbf{1}$. Already a quarter of one tree's noise.</li>
-       <li>$T = 25$ trees: variance $= 4/25 = \\mathbf{0.16}$. The forest is steadier and steadier.</li>
-       <li>Concrete vote: three trees predict house prices $8, 10, 12$. The average is $\\dfrac{8+10+12}{3} = \\mathbf{10}$ — their scattered guesses cancel into one stable number.</li>
+       <li>One tree: variance $= 4$. A forest of $T$ trees has variance $\\dfrac{\\sigma^2}{T} = \\dfrac{4}{T}$.</li>
+       <li>$T = 4$: variance $= 4/4 = \\mathbf{1}$ — a quarter of one tree's noise.</li>
+       <li>$T = 25$: variance $= 4/25 = \\mathbf{0.16}$ — steadier still.</li>
+       <li>Concrete vote: three trees predict house prices $8, 10, 12$; the average is $\\dfrac{8+10+12}{3} = \\mathbf{10}$ — scattered guesses cancel into one stable number.</li>
      </ul>`,
   application:
     `<p>Random forests and gradient boosting (XGBoost (eXtreme Gradient Boosting), LightGBM) win many real-world contests. They power fraud detection, search ranking, and risk models on tabular data across industry.</p>`,
@@ -1649,12 +1781,23 @@ L({
      <p>Those are the neighbors. Take their majority class, or their average value.</p>
      <p>Raising $k$ smooths the prediction: more bias, less variance. Lowering $k$ does the reverse.</p>`,
   example:
-    `<p>Classify a fruit by weight. Stored: apples at $100, 110, 120$ g; oranges at $150, 160$ g. New fruit: $115$ g. Use $k = 3$.</p>
+    `<p>Classify a new fruit weighing $115$ g. Use $k = 3$ and distance $|x - x^{(i)}|$ to each stored fruit.</p>
+     <table class="extable">
+       <caption>Distance from the query ($115$ g) to each stored fruit; the 3 smallest are the neighbors</caption>
+       <thead><tr><th>stored fruit</th><th class="num">weight (g)</th><th class="num">$|115 - x^{(i)}|$</th><th>in top-3?</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">apple</td><td class="num">100</td><td class="num">15</td><td>no</td></tr>
+         <tr><td class="row-h">apple</td><td class="num">110</td><td class="num">5</td><td>yes</td></tr>
+         <tr><td class="row-h">apple</td><td class="num">120</td><td class="num">5</td><td>yes</td></tr>
+         <tr><td class="row-h">orange</td><td class="num">150</td><td class="num">35</td><td>no</td></tr>
+         <tr><td class="row-h">orange</td><td class="num">160</td><td class="num">45</td><td>no</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Distances: to $100 \\to 15$, to $110 \\to 5$, to $120 \\to 5$, to $150 \\to 35$, to $160 \\to 45$.</li>
-       <li>The 3 closest are $110, 120, 100$ g — all apples.</li>
-       <li>Vote: 3 apples, 0 oranges.</li>
-       <li>Predict apple.</li>
+       <li>Compute each distance, e.g. to $110$: $|115 - 110| = 5$.</li>
+       <li>The 3 smallest distances are $5, 5, 15$ — the fruits at $110, 120, 100$ g, all apples.</li>
+       <li>Vote among the neighbors: $3$ apples, $0$ oranges.</li>
+       <li>Majority wins: predict apple.</li>
      </ul>`,
   application:
     `<p>k-NN powers recommendation ("users like you also bought..."), image search by similarity, and quick baselines. It is simple but slow at prediction time, since it scans all stored points.</p>`,
@@ -1806,11 +1949,20 @@ L({
      <p>The best model sits where the bias-plus-variance sum is smallest — the bottom of the U.</p>`,
   example:
     `<p>Fit data with polynomials of growing degree. Total test error $= \\text{bias}^2 + \\text{variance}$ (ignore fixed noise).</p>
+     <table class="extable">
+       <caption>As degree rises, bias$^2$ falls but variance climbs faster — total dips at degree 4 (the U)</caption>
+       <thead><tr><th>degree</th><th class="num">bias$^2$</th><th class="num">variance</th><th class="num">total</th><th>verdict</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1 (line)</td><td class="num">0.90</td><td class="num">0.07</td><td class="num">0.97</td><td>underfit (high bias)</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0.28</td><td class="num">0.40</td><td class="num">0.68</td><td>just right (min)</td></tr>
+         <tr><td class="row-h">8</td><td class="num">0.15</td><td class="num">1.45</td><td class="num">1.60</td><td>overfit (high variance)</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Degree 1 (line): bias$^2 = 0.90$, variance $= 0.07$. Total $= \\mathbf{0.97}$. High bias — underfit.</li>
-       <li>Degree 4: bias$^2 = 0.28$, variance $= 0.40$. Total $= \\mathbf{0.68}$. The lowest sum — just right.</li>
-       <li>Degree 8: bias$^2 = 0.15$, variance $= 1.45$. Total $= \\mathbf{1.60}$. High variance — overfit.</li>
-       <li>Punchline: as degree rises, bias$^2$ keeps falling but variance climbs faster. The total dips to a minimum at degree 4, then rises — the U-shape.</li>
+       <li>Degree 1: total $= 0.90 + 0.07 = \\mathbf{0.97}$. High bias — underfit.</li>
+       <li>Degree 4: total $= 0.28 + 0.40 = \\mathbf{0.68}$. The lowest sum — just right.</li>
+       <li>Degree 8: total $= 0.15 + 1.45 = \\mathbf{1.60}$. High variance — overfit.</li>
+       <li>The total dips to a minimum at degree 4, then rises — the classic U-shape.</li>
      </ul>`,
   application:
     `<p>Every model-tuning decision is a bias-variance call: how deep a tree, how many neighbors, how strong the regularization. Watching the gap between training and test error tells you which way to move.</p>`,
@@ -1873,12 +2025,24 @@ L({
      <p>That is the training error rate, between $0$ (perfect) and $1$ (always wrong).</p>
      <p>The theory: with more data ($m$ large) or a simpler class (low VC (Vapnik–Chervonenkis) dimension), training error becomes a trustworthy estimate of true error.</p>`,
   example:
-    `<p>A classifier is tested on $5$ training examples. It gets $4$ right and $1$ wrong.</p>
+    `<p>A classifier is checked on $m = 5$ training examples. The indicator $1\\{h(x^{(i)}) \\ne y^{(i)}\\}$ is $1$ on a mistake, $0$ when correct.</p>
+     <table class="extable">
+       <caption>Per-example: true label vs prediction, and the mistake indicator</caption>
+       <thead><tr><th>example $i$</th><th class="num">true $y^{(i)}$</th><th class="num">pred $h(x^{(i)})$</th><th class="num">$1\\{\\ne\\}$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">1</td><td class="num">1</td><td class="num">0</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="row-h">3</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+         <tr><td class="row-h">4</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="row-h">5</td><td class="num">1</td><td class="num">1</td><td class="num">0</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">1</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Indicators for the 5 examples: $0, 0, 1, 0, 0$ (one mistake).</li>
-       <li>Sum: $0 + 0 + 1 + 0 + 0 = 1$.</li>
-       <li>Divide by $m = 5$: $\\hat\\epsilon = 1/5 = 0.2$.</li>
-       <li>So the training error is $20\\%$. With more data, this number better reflects true performance.</li>
+       <li>The indicators are $0, 0, 1, 0, 0$ — one mistake (example 3).</li>
+       <li>Sum them: $0 + 0 + 1 + 0 + 0 = 1$.</li>
+       <li>Divide by $m = 5$: $\\hat\\epsilon = 1/5 = \\mathbf{0.2}$.</li>
+       <li>So training error is $20\\%$. With more data, this number better reflects true performance.</li>
      </ul>`,
   application:
     `<p>Learning theory guides practical choices: collect more data, prefer simpler models, and never trust training accuracy alone. It explains why huge models still need huge datasets to generalize.</p>`,
@@ -2040,12 +2204,22 @@ L({
      <p>Update step: for each cluster, recompute the centroid as the average of its current points.</p>
      <p>Loop these two steps. Each round lowers the total distance; it settles to a stable answer.</p>`,
   example:
-    `<p>1D points: $1, 2, 9, 10$. Use $k = 2$. Start centroids at $\\mu_1 = 1$, $\\mu_2 = 10$.</p>
+    `<p>1D points: $1, 2, 9, 10$. Use $k = 2$, starting centroids $\\mu_1 = 1$, $\\mu_2 = 10$. Assign each point to its nearer centroid.</p>
+     <table class="extable">
+       <caption>Assignment step: distance to each centroid picks the cluster</caption>
+       <thead><tr><th>point</th><th class="num">$|x-\\mu_1|$</th><th class="num">$|x-\\mu_2|$</th><th>cluster</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">0</td><td class="num">9</td><td>1</td></tr>
+         <tr><td class="row-h">2</td><td class="num">1</td><td class="num">8</td><td>1</td></tr>
+         <tr><td class="row-h">9</td><td class="num">8</td><td class="num">1</td><td>2</td></tr>
+         <tr><td class="row-h">10</td><td class="num">9</td><td class="num">0</td><td>2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Assign: $1, 2$ are closer to $\\mu_1$; $9, 10$ are closer to $\\mu_2$.</li>
-       <li>Update $\\mu_1$ = mean$(1, 2) = 1.5$. Update $\\mu_2$ = mean$(9, 10) = 9.5$.</li>
-       <li>Reassign: same two groups. Nothing changes.</li>
-       <li>Done. Clusters are $\\{1, 2\\}$ and $\\{9, 10\\}$, centered at $1.5$ and $9.5$.</li>
+       <li>Assign: $1, 2$ are closer to $\\mu_1 = 1$; $9, 10$ are closer to $\\mu_2 = 10$.</li>
+       <li>Update $\\mu_1 = \\text{mean}(1, 2) = 1.5$, $\\mu_2 = \\text{mean}(9, 10) = 9.5$.</li>
+       <li>Reassign with the new centroids: the same two groups. Nothing changes.</li>
+       <li>Done. Clusters $\\{1, 2\\}$ and $\\{9, 10\\}$, centered at $\\mathbf{1.5}$ and $\\mathbf{9.5}$.</li>
      </ul>`,
   application:
     `<p>k-means segments customers into groups, compresses image colors, and organizes documents by topic, all without labels. It is the go-to first step for exploring unlabeled data.</p>`,
@@ -2125,11 +2299,20 @@ L({
      <p>M-step: re-estimate each cluster's center and spread, weighting points by their responsibilities.</p>
      <p>Repeat. The fit improves each round until it stops changing.</p>`,
   example:
-    `<p>Two Gaussians. A point sits between them. How does the E-step share it?</p>
+    `<p>Two Gaussians. A point sits between them. The E-step computes each cluster's responsibility $Q_i(z) = \\dfrac{\\text{density}_z}{\\sum \\text{density}}$.</p>
+     <table class="extable">
+       <caption>E-step: normalize the two densities into soft memberships summing to 1</caption>
+       <thead><tr><th>cluster</th><th class="num">density at point</th><th class="num">responsibility $Q_i(z)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">0.3</td><td class="num">0.75</td></tr>
+         <tr><td class="row-h">B</td><td class="num">0.1</td><td class="num">0.25</td></tr>
+         <tr><td class="row-h">total</td><td class="num">0.4</td><td class="num">1.00</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Cluster A's curve gives the point a density of $0.3$. Cluster B gives $0.1$.</li>
+       <li>Cluster A's curve gives the point density $0.3$; cluster B gives $0.1$.</li>
        <li>Total: $0.3 + 0.1 = 0.4$.</li>
-       <li>Responsibility to A: $0.3 / 0.4 = 0.75$. To B: $0.1 / 0.4 = 0.25$.</li>
+       <li>Responsibility to A: $0.3 / 0.4 = 0.75$; to B: $0.1 / 0.4 = 0.25$.</li>
        <li>So the point is $75\\%$ cluster A, $25\\%$ cluster B — a soft, not hard, assignment.</li>
      </ul>`,
   application:
@@ -2209,11 +2392,31 @@ L({
      <p>Repeat until everything is in a single cluster. Record each merge to draw the dendrogram.</p>
      <p>Cut the tree at a chosen height to get however many clusters you want.</p>`,
   example:
-    `<p>Points $A = 1$, $B = 2$, $C = 9$ on a line. Use single linkage (closest pair).</p>
+    `<p>Points $A = 1$, $B = 2$, $C = 9$ on a line. Pairwise distances:</p>
+     <table class="extable">
+       <caption>Pairwise distances; the smallest ($A$-$B = 1$) merges first</caption>
+       <thead><tr><th>pair</th><th class="num">distance</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$A$-$B$</td><td class="num">1</td></tr>
+         <tr><td class="row-h">$B$-$C$</td><td class="num">7</td></tr>
+         <tr><td class="row-h">$A$-$C$</td><td class="num">8</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Distances: $A$-$B = 1$, $B$-$C = 7$, $A$-$C = 8$.</li>
-       <li>Smallest is $A$-$B = 1$. Merge $A$ and $B$ into one cluster $\\{A, B\\}$.</li>
-       <li>Now distance $\\{A,B\\}$-$C$ is $|2 - 9| = 7$ (closest member). Merge them.</li>
+       <li>Smallest is $A$-$B = 1$. Merge them into cluster $\\{A, B\\}$.</li>
+       <li>Now measure $\\{A,B\\}$ to $C$. The linkage rule changes the number:</li>
+     </ul>
+     <table class="extable">
+       <caption>Linkage rules give different $d(\\{A,B\\}, C)$ from members $A$-$C=8$, $B$-$C=7$</caption>
+       <thead><tr><th>linkage</th><th>rule</th><th class="num">$d(\\{A,B\\},C)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">single</td><td>min member pair</td><td class="num">7</td></tr>
+         <tr><td class="row-h">average</td><td>mean of pairs</td><td class="num">7.5</td></tr>
+         <tr><td class="row-h">complete</td><td>max member pair</td><td class="num">8</td></tr>
+       </tbody>
+     </table>
+     <ul class="steps">
+       <li>With single linkage, $d(\\{A,B\\}, C) = \\min(8, 7) = 7$. Merge them next.</li>
        <li>The tree: first $\\{A,B\\}$, then everything. Cut low for 2 clusters, high for 1.</li>
      </ul>`,
   application:
@@ -2384,12 +2587,19 @@ L({
      <p>Compute $\\Sigma$ to see how the features vary together.</p>
      <p>Take its top $k$ eigenvectors — the directions of greatest spread — and project the data onto them. Done.</p>`,
   example:
-    `<p>Data sits roughly along a diagonal line in 2D. PCA should find that diagonal.</p>
+    `<p>Data sits roughly along a diagonal in 2D, with covariance $\\Sigma = \\begin{bmatrix}2 & 1.8 \\\\ 1.8 & 2\\end{bmatrix}$. For this symmetric $2\\times2$, the eigenvalues are $\\lambda = 2 \\pm 1.8$.</p>
+     <table class="extable">
+       <caption>Each principal component, its eigenvalue (variance), and share of total spread $3.8 + 0.2 = 4.0$</caption>
+       <thead><tr><th>component</th><th>direction</th><th class="num">eigenvalue $\\lambda$</th><th class="num">variance share</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">PC1</td><td>$[1, 1]$ (diagonal)</td><td class="num">3.8</td><td class="num">95%</td></tr>
+         <tr><td class="row-h">PC2</td><td>$[1, -1]$</td><td class="num">0.2</td><td class="num">5%</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>The covariance matrix comes out to $\\Sigma = \\begin{bmatrix}2 & 1.8 \\\\ 1.8 & 2\\end{bmatrix}$. For this symmetric $2\\times2$, the eigenvalues are $\\lambda = 2 \\pm 1.8$.</li>
-       <li>So $\\lambda_1 = 2 + 1.8 = \\mathbf{3.8}$ along $[1, 1]$ (the diagonal), and $\\lambda_2 = 2 - 1.8 = \\mathbf{0.2}$ along $[1, -1]$.</li>
+       <li>$\\lambda_1 = 2 + 1.8 = \\mathbf{3.8}$ along $[1,1]$; $\\lambda_2 = 2 - 1.8 = \\mathbf{0.2}$ along $[1,-1]$.</li>
        <li>Variance captured by PC1: $\\dfrac{\\lambda_1}{\\lambda_1 + \\lambda_2} = \\dfrac{3.8}{4.0} = \\mathbf{95\\%}$. PC2 holds just $5\\%$.</li>
-       <li>Punchline: keep only $[1, 1]$ and 2D collapses to 1D, yet $95\\%$ of the spread survives — almost lossless compression.</li>
+       <li>Keep only $[1,1]$ and 2D collapses to 1D, yet $95\\%$ of the spread survives — almost lossless compression.</li>
      </ul>`,
   application:
     `<p>PCA compresses images, speeds up models by cutting features, removes noise, and makes high-dimensional data visualizable in 2D. It is the classic dimensionality-reduction tool.</p>`,
@@ -2567,11 +2777,20 @@ L({
      <p>ICA finds an unmixing matrix $W$ so that the outputs $Wx$ look independent.</p>
      <p>When the outputs are maximally independent, they match the original sources (up to order and scale).</p>`,
   example:
-    `<p>Two sources $s = [s_1, s_2]$ get mixed by $A = \\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}$.</p>
+    `<p>Two sources mixed by $A = \\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}$, so $x_1 = s_1 + s_2$ and $x_2 = s_2$. Invert: $W = A^{-1} = \\begin{bmatrix}1 & -1 \\\\ 0 & 1\\end{bmatrix}$, giving $s_1 = x_1 - x_2$, $s_2 = x_2$. Try one sample $s_1 = 3$, $s_2 = 5$.</p>
+     <table class="extable">
+       <caption>Mixing then unmixing one sample recovers the sources exactly</caption>
+       <thead><tr><th>quantity</th><th class="num">channel 1</th><th class="num">channel 2</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">true source $s$</td><td class="num">3</td><td class="num">5</td></tr>
+         <tr><td class="row-h">mixed $x = As$</td><td class="num">8</td><td class="num">5</td></tr>
+         <tr><td class="row-h">recovered $\\hat s = Wx$</td><td class="num">3</td><td class="num">5</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Recordings: $x_1 = s_1 + s_2$, $x_2 = s_2$.</li>
-       <li>To recover the sources, invert: $W = A^{-1} = \\begin{bmatrix}1 & -1 \\\\ 0 & 1\\end{bmatrix}$.</li>
-       <li>Apply $W$: $s_1 = x_1 - x_2$, $s_2 = x_2$. The voices are unmixed.</li>
+       <li>Mix: $x_1 = s_1 + s_2 = 3 + 5 = 8$, $x_2 = s_2 = 5$.</li>
+       <li>Unmix: $\\hat s_1 = x_1 - x_2 = 8 - 5 = 3$, $\\hat s_2 = x_2 = 5$.</li>
+       <li>Recovered $[3, 5]$ matches the true sources exactly.</li>
        <li>ICA's job is to discover this $W$ from the data alone, without being told $A$.</li>
      </ul>`,
   application:
@@ -2758,11 +2977,19 @@ L({
      <p>Recall: of all the actual "yes" cases, what fraction you found. High recall = few misses.</p>
      <p>F1 blends the two into one number (their harmonic mean), useful when you want both to be good.</p>`,
   example:
-    `<p>A spam filter flags emails. Results: TP $= 80$, FP $= 20$, FN $= 10$, TN $= 90$.</p>
+    `<p>A spam filter flags emails. Lay the four counts in a confusion matrix (rows = truth, columns = prediction):</p>
+     <table class="extable">
+       <caption>Confusion matrix: TP $= 80$, FP $= 20$, FN $= 10$, TN $= 90$</caption>
+       <thead><tr><th></th><th class="num">predicted spam</th><th class="num">predicted ham</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">actual spam</td><td class="num">80 (TP)</td><td class="num">10 (FN)</td></tr>
+         <tr><td class="row-h">actual ham</td><td class="num">20 (FP)</td><td class="num">90 (TN)</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Precision: $\\dfrac{80}{80 + 20} = \\dfrac{80}{100} = 0.80$.</li>
-       <li>Recall: $\\dfrac{80}{80 + 10} = \\dfrac{80}{90} \\approx 0.89$.</li>
-       <li>F1: $\\dfrac{2 \\times 80}{2 \\times 80 + 20 + 10} = \\dfrac{160}{190} \\approx 0.84$.</li>
+       <li>Precision $= \\dfrac{TP}{TP+FP} = \\dfrac{80}{80 + 20} = \\dfrac{80}{100} = \\mathbf{0.80}$.</li>
+       <li>Recall $= \\dfrac{TP}{TP+FN} = \\dfrac{80}{80 + 10} = \\dfrac{80}{90} \\approx \\mathbf{0.89}$.</li>
+       <li>F1 $= \\dfrac{2\\,TP}{2\\,TP + FP + FN} = \\dfrac{160}{190} \\approx \\mathbf{0.84}$.</li>
        <li>So it rarely cries wolf (precision $0.80$) and misses few spam (recall $0.89$).</li>
      </ul>`,
   application:
@@ -2922,12 +3149,22 @@ L({
      <p>The curve traces all the in-between tradeoffs. A curve hugging the top-left corner is excellent.</p>
      <p>AUC sums it up: $1.0$ is perfect, $0.5$ is random guessing, below $0.5$ is worse than a coin flip.</p>`,
   example:
-    `<p>Tiny dataset. Two positives score $0.9, 0.6$; two negatives score $0.7, 0.3$. AUC = fraction of positive–negative pairs the model ranks correctly.</p>
+    `<p>Tiny dataset. Two positives score $0.9, 0.6$; two negatives score $0.7, 0.3$. AUC is the fraction of positive&ndash;negative pairs where the positive scores higher.</p>
+     <table class="extable">
+       <caption>All $2 \\times 2 = 4$ pairs; the positive should outrank the negative</caption>
+       <thead><tr><th class="num">positive score</th><th class="num">negative score</th><th>positive higher?</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0.9</td><td class="num">0.7</td><td>yes</td></tr>
+         <tr><td class="num">0.9</td><td class="num">0.3</td><td>yes</td></tr>
+         <tr><td class="num">0.6</td><td class="num">0.7</td><td>no</td></tr>
+         <tr><td class="num">0.6</td><td class="num">0.3</td><td>yes</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>There are $2 \\times 2 = 4$ pairs. Check each (positive should outrank negative):</li>
-       <li>$0.9 &gt; 0.7$ ✓, &nbsp; $0.9 &gt; 0.3$ ✓, &nbsp; $0.6 &lt; 0.7$ ✗, &nbsp; $0.6 &gt; 0.3$ ✓.</li>
-       <li>Correct pairs: $3$ of $4$, so AUC $= 3/4 = \\mathbf{0.75}$.</li>
-       <li>Punchline: AUC $= 0.75$ literally means a random positive outranks a random negative $75\\%$ of the time — no threshold needed. ($1.0$ = perfect, $0.5$ = coin flip.)</li>
+       <li>Check each pair: $0.9 \\gt 0.7$ correct, $0.9 \\gt 0.3$ correct, $0.6 \\lt 0.7$ wrong, $0.6 \\gt 0.3$ correct.</li>
+       <li>Correct pairs: $3$ of $4$.</li>
+       <li>AUC $= 3/4 = \\mathbf{0.75}$.</li>
+       <li>This literally means a random positive outranks a random negative $75\\%$ of the time — no threshold needed ($1.0$ = perfect, $0.5$ = coin flip).</li>
      </ul>`,
   application:
     `<p>AUC compares classifiers without fixing a threshold first, which is handy when the right cutoff depends on business cost. It is standard in credit scoring, ad targeting, and medical diagnostics.</p>`,
@@ -3020,12 +3257,22 @@ L({
      <p>If your model is much better, the ratio is small and R² is near $1$. If it is no better, R² is near $0$.</p>
      <p>RMSE just reports the typical error in plain units, so a house-price RMSE of $\\$20$k is easy to read.</p>`,
   example:
-    `<p>True values $y = 1, 2, 3$ (mean $\\bar{y} = 2$). Predictions $\\hat{y} = 1.1, 1.9, 3.0$.</p>
+    `<p>True values $y = 1, 2, 3$ (mean $\\bar{y} = 2$). Model predicts $\\hat{y} = 1.1, 1.9, 3.0$. Build both sums of squares per row.</p>
+     <table class="extable">
+       <caption>Per-row residual$^2$ (for $SS_{res}$) and deviation-from-mean$^2$ (for $SS_{tot}$)</caption>
+       <thead><tr><th class="num">$y$</th><th class="num">$\\hat y$</th><th class="num">$(y-\\hat y)^2$</th><th class="num">$(y-\\bar y)^2$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">1.1</td><td class="num">0.01</td><td class="num">1</td></tr>
+         <tr><td class="num">2</td><td class="num">1.9</td><td class="num">0.01</td><td class="num">0</td></tr>
+         <tr><td class="num">3</td><td class="num">3.0</td><td class="num">0.00</td><td class="num">1</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">0.02</td><td class="num">2</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>$SS_{res} = (1 - 1.1)^2 + (2 - 1.9)^2 + (3 - 3.0)^2 = 0.01 + 0.01 + 0 = 0.02$.</li>
-       <li>$SS_{tot} = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = 1 + 0 + 1 = 2$.</li>
-       <li>$R^2 = 1 - 0.02 / 2 = 1 - 0.01 = 0.99$. Excellent fit.</li>
-       <li>RMSE $= \\sqrt{0.02 / 3} \\approx \\sqrt{0.0067} \\approx 0.08$. Errors are tiny.</li>
+       <li>$SS_{res} = 0.01 + 0.01 + 0 = 0.02$ (sum of the residual$^2$ column).</li>
+       <li>$SS_{tot} = 1 + 0 + 1 = 2$ (sum of the deviation$^2$ column).</li>
+       <li>$R^2 = 1 - SS_{res}/SS_{tot} = 1 - 0.02 / 2 = 1 - 0.01 = \\mathbf{0.99}$. Excellent fit.</li>
+       <li>RMSE $= \\sqrt{SS_{res}/m} = \\sqrt{0.02 / 3} \\approx \\sqrt{0.0067} \\approx \\mathbf{0.08}$. Errors are tiny.</li>
      </ul>`,
   application:
     `<p>R² and RMSE report how well a model predicts sales, prices, or demand. RMSE in real units tells stakeholders the typical miss; R² tells them how much better than guessing the average it is.</p>`,
@@ -3177,12 +3424,32 @@ L({
      <p>A bigger $\\lambda$ leans toward simpler models (more bias, less variance); a smaller $\\lambda$ leans toward fitting (less bias, more variance).</p>
      <p>To pick $\\lambda$, use k-fold cross-validation: try several values, see which generalizes best on held-out folds.</p>`,
   example:
-    `<p>Watch a weight shrink. Ridge picks $\\theta$ to minimize $J = (\\theta - 4)^2 + \\lambda\\,\\theta^2$, where plain least-squares wants $\\theta = 4$.</p>
+    `<p>Watch a weight shrink. Ridge minimizes $J = (\\theta - 4)^2 + \\lambda\\,\\theta^2$, where plain least-squares wants $\\theta = 4$. Setting the derivative to zero, $2(\\theta-4) + 2\\lambda\\theta = 0$, gives $\\theta = \\dfrac{4}{1+\\lambda}$.</p>
+     <table class="extable">
+       <caption>The coefficient shrinks toward $0$ as the penalty $\\lambda$ grows</caption>
+       <thead><tr><th class="num">$\\lambda$</th><th class="num">$\\theta = 4/(1+\\lambda)$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0</td><td class="num">4</td></tr>
+         <tr><td class="num">1</td><td class="num">2</td></tr>
+         <tr><td class="num">3</td><td class="num">1</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Set the derivative to zero: $2(\\theta - 4) + 2\\lambda\\theta = 0$, giving the shrunk weight $\\theta = \\dfrac{4}{1 + \\lambda}$.</li>
-       <li>$\\lambda = 0$ (no penalty): $\\theta = 4/1 = \\mathbf{4}$. The original big weight.</li>
-       <li>$\\lambda = 1$: $\\theta = 4/2 = \\mathbf{2}$. &nbsp; $\\lambda = 3$: $\\theta = 4/4 = \\mathbf{1}$. The coefficient shrinks toward $0$ as $\\lambda$ grows — that is regularization, in numbers.</li>
-       <li>Which $\\lambda$? Use 5-fold cross-validation: average test error comes out $\\lambda{=}0.1 \\to 0.30$, $\\lambda{=}1 \\to 0.22$, $\\lambda{=}10 \\to 0.28$. Pick $\\lambda = 1$, the lowest.</li>
+       <li>$\\lambda = 0$ (no penalty): $\\theta = 4/1 = \\mathbf{4}$, the original big weight.</li>
+       <li>$\\lambda = 1$: $\\theta = 4/2 = \\mathbf{2}$; $\\lambda = 3$: $\\theta = 4/4 = \\mathbf{1}$ — regularization, in numbers.</li>
+       <li>Which $\\lambda$? Pick the one with the lowest cross-validated error.</li>
+     </ul>
+     <table class="extable">
+       <caption>5-fold cross-validation: average held-out error per $\\lambda$ — pick the minimum</caption>
+       <thead><tr><th class="num">$\\lambda$</th><th class="num">avg CV error</th></tr></thead>
+       <tbody>
+         <tr><td class="num">0.1</td><td class="num">0.30</td></tr>
+         <tr><td class="num">1</td><td class="num">0.22</td></tr>
+         <tr><td class="num">10</td><td class="num">0.28</td></tr>
+       </tbody>
+     </table>
+     <ul class="steps">
+       <li>$\\lambda = 1$ has the lowest error ($0.22$), so pick $\\lambda = \\mathbf{1}$.</li>
      </ul>`,
   application:
     `<p>Ridge stabilizes models with many correlated features. LASSO does automatic feature selection by zeroing out useless ones. Cross-validation is the universal way to tune any knob (penalty, tree depth, $k$) honestly.</p>`,

@@ -152,15 +152,27 @@ L({
      $$ \\theta - \\theta_0 = - H^{-1} \\nabla J(\\theta_0) \\quad\\Longrightarrow\\quad \\theta = \\theta_0 - H^{-1}\\nabla J(\\theta_0). $$
      <p>That is exactly the Newton update. If $J$ really is a parabola, $H$ is constant and one step is exact. $\\blacksquare$</p>`,
   example:
-    `<p>Minimize the 1-D cost $J(\\theta) = 3\\theta^2 - 12\\theta + 7$. Slope $J'(\\theta) = 6\\theta - 12$, curvature $J''(\\theta) = 6$.</p>
+    `<p>Minimize the 1-D cost $J(\\theta) = 3\\theta^2 - 12\\theta + 7$. Slope $J'(\\theta) = 6\\theta - 12$, curvature $J''(\\theta) = 6$. Start at $\\theta_0 = 5$.</p>
      <ul class="steps">
-       <li>Start anywhere, say $\\theta_0 = 5$.</li>
-       <li>Slope: $J'(5) = 6\\cdot 5 - 12 = 18$.</li>
-       <li>Curvature: $J''(5) = 6$.</li>
-       <li>Newton step: $\\theta = 5 - \\dfrac{18}{6} = 5 - 3 = 2$.</li>
-       <li>Check: $J'(2) = 6\\cdot 2 - 12 = 0$. The slope is zero — we are at the minimum after <b>one</b> step.</li>
-       <li>Gradient descent with $\\alpha = 0.1$ crawls: $\\theta_1 = 5 - 0.1(18) = 3.2$, then $\\theta_2 = 3.2 - 0.1(7.2) = 2.48$, then $2.19$, $2.08$, $2.03$, $\\dots$ — still not at $2$ after 5 steps, while Newton was already exact after 1.</li>
-     </ul>`,
+       <li>Slope at the start: $J'(5) = 6\\cdot 5 - 12 = 30 - 12 = 18$.</li>
+       <li>Curvature: $J''(5) = 6$ (constant for a parabola).</li>
+       <li>Newton step: $\\theta = 5 - \\dfrac{J'(5)}{J''(5)} = 5 - \\dfrac{18}{6} = 5 - 3 = 2$.</li>
+       <li>Check: $J'(2) = 6\\cdot 2 - 12 = 12 - 12 = 0$. Slope is zero — at the minimum after <b>one</b> step.</li>
+     </ul>
+     <p>Now race it against gradient descent ($\\theta \\leftarrow \\theta - \\alpha J'(\\theta)$, $\\alpha = 0.1$) from the same start. Each GD step closes only $1 - \\alpha J'' = 1 - 0.6 = 0.4$ of the remaining gap to $\\theta = 2$:</p>
+     <table class="extable">
+       <caption>Newton (1 step, exact) vs gradient descent ($\\alpha = 0.1$)</caption>
+       <thead><tr><th>step</th><th class="num">Newton $\\theta$</th><th class="num">GD $\\theta$</th><th class="num">GD slope $J'$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">0</td><td class="num">5.000</td><td class="num">5.000</td><td class="num">18.00</td></tr>
+         <tr><td class="row-h">1</td><td class="num">2.000</td><td class="num">3.200</td><td class="num">7.20</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2.000</td><td class="num">2.480</td><td class="num">2.88</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2.000</td><td class="num">2.192</td><td class="num">1.15</td></tr>
+         <tr><td class="row-h">4</td><td class="num">2.000</td><td class="num">2.077</td><td class="num">0.46</td></tr>
+         <tr><td class="row-h">5</td><td class="num">2.000</td><td class="num">2.031</td><td class="num">0.18</td></tr>
+       </tbody>
+     </table>
+     <p>Newton lands exactly at $2$ in one step; GD is still drifting in after five.</p>`,
   application:
     `<p>Newton's method (and Hessian-aware cousins like L-BFGS) trains logistic regression and small GLMs (Generalized Linear Models) in a handful of iterations. Statistics packages use it for maximum-likelihood fits. It also powers the "trust region" optimizers behind many scientific solvers, where fast, accurate convergence matters more than the cost of the Hessian.</p>`,
   whenToUse:
@@ -283,15 +295,24 @@ L({
      $$ \\theta = (X^\\top W X)^{-1} X^\\top W y. $$
      <p>This is the normal equations with weights inserted. Setting all $w^{(i)} = 1$ ($W = I$) recovers ordinary linear regression. $\\blacksquare$</p>`,
   example:
-    `<p>Predict at query $x = 2$ with bandwidth $\\tau = 1$. Three training points: $x^{(1)} = 2$, $x^{(2)} = 3$, $x^{(3)} = 6$.</p>
+    `<p>Predict at query $x = 2$ with bandwidth $\\tau = 1$. Three training points, with the far one ($x^{(3)} = 6$, $y^{(3)} = 20$) an outlier. Each weight is $w^{(i)} = \\exp\\!\\big(-(x^{(i)}-2)^2 / 2\\big)$:</p>
+     <table class="extable">
+       <caption>Weights fall off fast with distance from the query $x = 2$</caption>
+       <thead><tr><th>$x^{(i)}$</th><th class="num">dist $|x^{(i)}-2|$</th><th class="num">weight $w^{(i)}$</th><th class="num">$y^{(i)}$</th><th class="num">$w^{(i)} y^{(i)}$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">2</td><td class="num">0</td><td class="num">1.0000</td><td class="num">5</td><td class="num">5.000</td></tr>
+         <tr><td class="row-h">3</td><td class="num">1</td><td class="num">0.6065</td><td class="num">6</td><td class="num">3.639</td></tr>
+         <tr><td class="row-h">6</td><td class="num">4</td><td class="num">0.0003</td><td class="num">20</td><td class="num">0.006</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">1.6068</td><td class="num"></td><td class="num">8.645</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Point 1 distance $0$: $w^{(1)} = \\exp(0) = 1.00$ (closest, full vote).</li>
-       <li>Point 2 distance $1$: $w^{(2)} = \\exp\\!\\big(-\\tfrac{1}{2}\\big) = e^{-0.5} \\approx 0.61$.</li>
-       <li>Point 3 distance $4$: $w^{(3)} = \\exp\\!\\big(-\\tfrac{16}{2}\\big) = e^{-8} \\approx 0.0003$ (basically ignored).</li>
-       <li>So the local line for $x=2$ is fit almost entirely from points 1 and 2; the far point barely matters.</li>
-       <li><b>See it in the prediction.</b> Say the targets are $y^{(1)} = 5$, $y^{(2)} = 6$, $y^{(3)} = 20$ (the far point is an outlier). A weighted average of the $y$'s is $\\dfrac{\\sum_i w^{(i)} y^{(i)}}{\\sum_i w^{(i)}} = \\dfrac{1.00(5) + 0.61(6) + 0.0003(20)}{1.00 + 0.61 + 0.0003} = \\dfrac{8.666}{1.610} \\approx 5.38$.</li>
-       <li>The prediction $5.38$ sits right between the two nearby targets ($5$ and $6$). The wild far point at $20$ pulled it by under $0.01$ — exactly the point of local weighting.</li>
-       <li>Shrink $\\tau$ to $0.5$ and even point 2 fades: $w^{(2)} = e^{-2} \\approx 0.14$. The fit gets very local and wiggly.</li>
+       <li>Closest point gets the full vote: $w^{(1)} = \\exp(0) = 1.0000$.</li>
+       <li>One unit away: $w^{(2)} = \\exp(-\\tfrac12) \\approx 0.6065$.</li>
+       <li>Four units away: $w^{(3)} = \\exp(-8) \\approx 0.0003$ — basically ignored.</li>
+       <li>Weighted average prediction: $\\hat y = \\dfrac{\\sum_i w^{(i)} y^{(i)}}{\\sum_i w^{(i)}} = \\dfrac{8.645}{1.6068} \\approx 5.38$.</li>
+       <li>It sits between the two nearby targets ($5$ and $6$); the wild far point at $20$ moved it by under $0.01$ — exactly the point of local weighting.</li>
+       <li>Shrink $\\tau$ to $0.5$ and even point 2 fades: $w^{(2)} = \\exp(-2) \\approx 0.135$. The fit gets very local and wiggly.</li>
      </ul>`,
   application:
     `<p>LWR (a.k.a. LOESS / LOWESS) is the go-to smoother for scatterplots in statistics. Robotics and control use locally weighted methods to model nonlinear dynamics on the fly. Anywhere the relationship bends in ways a single line cannot capture — and you have enough data to refit locally — LWR shines.</p>`,
@@ -399,15 +420,23 @@ L({
      $$ \\operatorname{Var}(\\text{CV}) = \\frac{1}{k^2}\\sum_{j=1}^{k}\\operatorname{Var}(\\text{Err}_j) = \\frac{\\sigma^2}{k}. $$
      <p>So more folds means a steadier estimate. (In practice the folds share training data, so they are correlated and the variance falls a bit slower than $\\sigma^2/k$ — but the direction holds.) $\\blacksquare$</p>`,
   example:
-    `<p>You have 100 examples and choose $k = 5$ folds (20 examples each). Validation errors come out as:</p>
+    `<p>You have 100 examples and choose $k = 5$ folds (20 each). Each round holds out one fold for validation and trains on the other 4. The five held-out errors:</p>
+     <table class="extable">
+       <caption>One held-out error per round; the CV score is their average</caption>
+       <thead><tr><th>round $j$</th><th class="num">held-out fold</th><th class="num">$\\text{Err}_j$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">1</td><td class="num">0.30</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2</td><td class="num">0.26</td></tr>
+         <tr><td class="row-h">3</td><td class="num">3</td><td class="num">0.34</td></tr>
+         <tr><td class="row-h">4</td><td class="num">4</td><td class="num">0.28</td></tr>
+         <tr><td class="row-h">5</td><td class="num">5</td><td class="num">0.32</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num">1.50</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Round 1 (hold out fold 1): $\\text{Err}_1 = 0.30$.</li>
-       <li>Round 2: $\\text{Err}_2 = 0.26$.</li>
-       <li>Round 3: $\\text{Err}_3 = 0.34$.</li>
-       <li>Round 4: $\\text{Err}_4 = 0.28$.</li>
-       <li>Round 5: $\\text{Err}_5 = 0.32$.</li>
-       <li>$\\text{CV} = \\dfrac{0.30 + 0.26 + 0.34 + 0.28 + 0.32}{5} = \\dfrac{1.50}{5} = 0.30$. That 0.30 is your trusted error estimate.</li>
-       <li><b>Why average?</b> A single split could have landed on fold 3 alone and reported $0.34$ (too pessimistic), or fold 2 alone and reported $0.26$ (too rosy) — a spread of $0.08$. The folds scatter around $0.30$ with a spread of only $\\pm 0.04$; averaging all 5 cancels that luck and centers on $0.30$.</li>
+       <li>Add the five round errors: $0.30 + 0.26 + 0.34 + 0.28 + 0.32 = 1.50$.</li>
+       <li>Divide by $k = 5$: $\\text{CV} = \\dfrac{1}{k}\\sum_{j=1}^{5}\\text{Err}_j = \\dfrac{1.50}{5} = 0.30$. That $0.30$ is your trusted error estimate.</li>
+       <li><b>Why average?</b> A single split could have landed on fold 3 alone and reported $0.34$ (too pessimistic), or fold 2 alone at $0.26$ (too rosy) — a spread of $0.08$. Averaging all five cancels that luck and centers on $0.30$.</li>
      </ul>`,
   application:
     `<p>Cross-validation is the standard way to pick hyperparameters (regularization strength, tree depth, $k$ in k-NN (k-Nearest Neighbors)) and to compare models on limited data. Kaggle competitions and scientific ML (Machine Learning) papers report CV (Cross-Validation) scores because a single split can be misleadingly lucky or unlucky.</p>`,
@@ -521,14 +550,21 @@ L({
      <p>Adding a predictor lowers RSS but also lowers the divisor $n - k - 1$. If the new predictor barely helps, the divisor effect wins and $\\bar{R}^2$ <b>drops</b>.</p>
      <p>Rearranging, $\\bar{R}^2 = 1 - (1 - R^2)\\dfrac{n-1}{n-k-1}$. The factor $\\dfrac{n-1}{n-k-1} &gt; 1$ grows with $k$ — that is the built-in complexity penalty. $\\blacksquare$</p>`,
   example:
-    `<p>Two models for the same $n = 100$ data points. Compare with AIC and BIC.</p>
+    `<p>Two models for the same $n = 100$ data points. Model B fits a touch better but uses far more parameters. Score both with AIC $= 2k - 2\\ln L$ and BIC $= k\\ln n - 2\\ln L$ (here $\\ln n = \\ln 100 \\approx 4.6$).</p>
+     <table class="extable">
+       <caption>Misfit $-2\\ln L$ plus a complexity penalty — lower total wins</caption>
+       <thead><tr><th>model</th><th class="num">$k$</th><th class="num">$\\ln L$</th><th class="num">$-2\\ln L$</th><th class="num">AIC</th><th class="num">BIC</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">A</td><td class="num">3</td><td class="num">-120</td><td class="num">240</td><td class="num">246.0</td><td class="num">253.8</td></tr>
+         <tr><td class="row-h">B</td><td class="num">8</td><td class="num">-116</td><td class="num">232</td><td class="num">248.0</td><td class="num">268.8</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Model A: $k = 3$ params, $\\ln L = -120$.</li>
-       <li>Model B: $k = 8$ params, $\\ln L = -116$ (fits a little better).</li>
        <li>AIC(A) $= 2(3) - 2(-120) = 6 + 240 = 246$.</li>
        <li>AIC(B) $= 2(8) - 2(-116) = 16 + 232 = 248$. A wins (lower AIC).</li>
-       <li>BIC uses $\\ln n = \\ln 100 \\approx 4.6$. BIC(A) $= 3(4.6) + 240 = 253.8$; BIC(B) $= 8(4.6) + 232 = 268.8$.</li>
-       <li>BIC punishes B's extra parameters even harder. Both criteria prefer the simpler Model A.</li>
+       <li>BIC(A) $= 3(4.6) + 240 = 13.8 + 240 = 253.8$.</li>
+       <li>BIC(B) $= 8(4.6) + 232 = 36.8 + 232 = 268.8$.</li>
+       <li>BIC punishes B's five extra parameters even harder ($+23$ vs AIC's $+2$). Both criteria prefer the simpler Model A.</li>
      </ul>`,
   application:
     `<p>AIC and BIC pick the order of time-series models (how many lags in ARIMA (AutoRegressive Integrated Moving Average)), choose the number of components in a mixture model, and select which features enter a regression. Whenever "more parameters" is tempting but risky, these criteria give an automatic, principled cutoff.</p>`,
@@ -684,13 +720,19 @@ L({
      <p>Since $0 \\le b &lt; a$, the ratio $b/a \\in [0,1)$, hence $s \\in [-1, 0)$.</p>
      <p>Together the two cases cover all values, so $s \\in [-1, 1]$ always. The boundary $a = b$ gives $s = 0$. $\\blacksquare$</p>`,
   example:
-    `<p>Take one point. It belongs to cluster Red. Compute its $a$ and $b$.</p>
+    `<p>Take one point in cluster Red. Its $a$ is the mean distance to other Red points (tightness); its $b$ is the mean distance to the nearest other cluster, Blue (separation). Compare a deep-inside point against a borderline one with $s = \\dfrac{b-a}{\\max(a,b)}$:</p>
+     <table class="extable">
+       <caption>Same formula, two points: confident core vs near-border</caption>
+       <thead><tr><th>point</th><th class="num">$a$ (own)</th><th class="num">$b$ (nearest)</th><th class="num">$\\max(a,b)$</th><th class="num">$s$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">deep inside Red</td><td class="num">1.0</td><td class="num">4.0</td><td class="num">4.0</td><td class="num">0.75</td></tr>
+         <tr><td class="row-h">near the border</td><td class="num">3.5</td><td class="num">4.0</td><td class="num">4.0</td><td class="num">0.125</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Mean distance to the other Red points: $a = 1.0$ (it sits snugly in Red).</li>
-       <li>Mean distance to the nearest other cluster (Blue): $b = 4.0$ (Blue is far).</li>
-       <li>$\\max(a, b) = \\max(1, 4) = 4$.</li>
-       <li>$s = \\dfrac{b - a}{\\max(a,b)} = \\dfrac{4 - 1}{4} = \\dfrac{3}{4} = 0.75$. A strong, confident assignment.</li>
-       <li>Now suppose instead $a = 3.5$, $b = 4.0$: $s = \\dfrac{0.5}{4.0} = 0.125$ — barely inside, near a border.</li>
+       <li>Deep point: $\\max(1.0, 4.0) = 4.0$, so $s = \\dfrac{4.0 - 1.0}{4.0} = \\dfrac{3.0}{4.0} = 0.75$ — a strong, confident assignment.</li>
+       <li>Border point: $\\max(3.5, 4.0) = 4.0$, so $s = \\dfrac{4.0 - 3.5}{4.0} = \\dfrac{0.5}{4.0} = 0.125$ — barely inside, near a boundary.</li>
+       <li>Both stay in $[-1, 1]$; the larger gap $b - a$ relative to $\\max(a,b)$ means a cleaner cluster fit.</li>
      </ul>`,
   application:
     `<p>The average silhouette is the standard way to choose how many clusters to use when you have no labels: customer segments, document topics, gene-expression groups. Run k-means for $k = 2, 3, 4, \\dots$ and keep the $k$ whose average silhouette peaks. It also flags individual points that may be misclustered (negative $s$).</p>`,
@@ -814,14 +856,21 @@ L({
      $$ \\sum_{c \\in \\text{top-}t} \\Delta_c \\;\\ge\\; \\sum_{c \\in S} \\Delta_c \\quad \\text{for every } S \\text{ with } |S| = t. $$
      <p>So ranking by $\\Delta_c$ and fixing from the top is the effort-optimal order. $\\blacksquare$</p>`,
   example:
-    `<p>A face-recognition pipeline scores $72\\%$ overall. Error analysis replaces each stage with an oracle:</p>
+    `<p>A face-recognition pipeline scores $\\text{acc} = 72\\%$ overall. Error analysis replaces each stage with a ground-truth oracle in turn, leaving the rest unchanged, and records the gain $\\Delta_c = \\text{acc}^{\\star}_c - \\text{acc}$:</p>
+     <table class="extable">
+       <caption>Per-stage headroom: which stage, made perfect, helps most</caption>
+       <thead><tr><th>stage $c$</th><th class="num">$\\text{acc}$</th><th class="num">$\\text{acc}^{\\star}_c$</th><th class="num">$\\Delta_c$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">preprocessing</td><td class="num">72%</td><td class="num">73%</td><td class="num">+1%</td></tr>
+         <tr><td class="row-h">face detector</td><td class="num">72%</td><td class="num">80%</td><td class="num">+8%</td></tr>
+         <tr><td class="row-h">features</td><td class="num">72%</td><td class="num">75%</td><td class="num">+3%</td></tr>
+         <tr><td class="row-h">classifier</td><td class="num">72%</td><td class="num">74%</td><td class="num">+2%</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Perfect <b>preprocessing</b>: accuracy $72\\% \\to 73\\%$, so $\\Delta = 1\\%$.</li>
-       <li>Perfect <b>face detector</b>: $72\\% \\to 80\\%$, so $\\Delta = 8\\%$.</li>
-       <li>Perfect <b>features</b>: $72\\% \\to 75\\%$, so $\\Delta = 3\\%$.</li>
-       <li>Perfect <b>classifier</b>: $72\\% \\to 74\\%$, so $\\Delta = 2\\%$.</li>
-       <li>The detector has by far the largest headroom ($\\Delta = 8\\%$). Fix the detector first — improving preprocessing could earn at most $1\\%$.</li>
-       <li>Ablative check: removing the classifier might drop accuracy from $72\\%$ to $60\\%$ ($\\nabla = 12\\%$), confirming it is essential to keep.</li>
+       <li>Each $\\Delta_c = \\text{acc}^{\\star}_c - 72\\%$: detector $80 - 72 = 8$, features $75 - 72 = 3$, classifier $74 - 72 = 2$, preprocessing $73 - 72 = 1$.</li>
+       <li>The <b>detector</b> has by far the largest headroom ($\\Delta = 8\\%$). Fix it first — perfecting preprocessing could earn at most $1\\%$.</li>
+       <li>Ablative check: removing the classifier drops accuracy $72\\% \\to 60\\%$, so $\\nabla = 72 - 60 = 12\\%$ — confirming it is essential to keep.</li>
      </ul>`,
   application:
     `<p>Andrew Ng's CS229 popularized this for vision pipelines, but the idea drives any multi-stage ML (Machine Learning) system: speech recognition (acoustic vs. language model), recommendation (candidate generation vs. ranking), and modern RAG (Retrieval-Augmented Generation) stacks (retriever vs. generator). Before optimizing blindly, run error analysis to find the bottleneck and ablative analysis to prune dead weight.</p>`,

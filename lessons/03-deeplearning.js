@@ -96,11 +96,20 @@ L({
     `<p>Read it as: "take the dot product of weights and inputs, then add the bias."</p>
      <p>That gives one number, $z$. Next the neuron runs $z$ through an activation function (next lesson) to get its final output.</p>`,
   example:
-    `<p>One neuron has weights $w = [0.5, -1, 2]$ and bias $b = 3$. The input is $x = [4, 1, 2]$.</p>
+    `<p>One neuron has weights $w = [0.5, -1, 2]$ and bias $b = 3$. The input is $x = [4, 1, 2]$. Multiply each input by its weight, then total.</p>
+     <table class="extable">
+       <caption>Each input times its weight</caption>
+       <thead><tr><th>$i$</th><th class="num">$w_i$</th><th class="num">$x_i$</th><th class="num">$w_i\\,x_i$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.5</td><td class="num">4</td><td class="num">2</td></tr>
+         <tr><td class="row-h">2</td><td class="num">-1</td><td class="num">1</td><td class="num">-1</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2</td><td class="num">2</td><td class="num">4</td></tr>
+         <tr><td class="row-h">total $w^\\top x$</td><td class="num"></td><td class="num"></td><td class="num">5</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Multiply matching entries: $0.5\\times4 = 2$, &nbsp; $-1\\times1 = -1$, &nbsp; $2\\times2 = 4$.</li>
-       <li>Add them: $2 - 1 + 4 = 5$. That is the dot product $w^\\top x$.</li>
-       <li>Add the bias: $z = 5 + 3 = 8$.</li>
+       <li>Add the products: $2 - 1 + 4 = 5$. That is the dot product $w^\\top x$.</li>
+       <li>Add the bias: $z = w^\\top x + b = 5 + 3 = 8$.</li>
      </ul>
      <p>So this neuron outputs $z = 8$ before its activation. The bias nudged the answer from 5 up to 8.</p>`,
   application:
@@ -186,12 +195,23 @@ $$ \\text{Leaky ReLU}(z) = \\max(\\epsilon z, z),\\ \\epsilon \\ll 1 \\qquad \\t
      <p><b>Leaky ReLU</b> is a small fix: $g(z) = \\max(\\epsilon z, z)$ with $\\epsilon \\ll 1$. Instead of flat 0 for negatives, it lets a tiny slope through (like $0.01z$), so a small gradient still flows and neurons never fully "die" — this is the fix for the "dying ReLU" problem.</p>
      <p><b>ELU (Exponential Linear Unit)</b> goes further: $g(z) = \\max(\\alpha(e^{z} - 1),\\, z)$ with $\\alpha \\ll 1$. It is smooth and differentiable everywhere (no sharp kink at 0) and can output negative values, which pushes the activations' mean toward zero and helps training.</p>`,
   example:
-    `<p>Let $z = 2$. Apply each activation and watch the <b>bend</b>: the input changes, but the outputs do not all move in step.</p>
+    `<p>Let $z = 2$. Apply each activation, then bump $z$ to $4$ and watch the <b>bend</b>: the inputs double, but the outputs do not all double.</p>
      <ul class="steps">
-       <li>Sigmoid: $\\frac{1}{1+e^{-2}} = \\frac{1}{1+0.135} = \\frac{1}{1.135} \\approx 0.88$.</li>
-       <li>Tanh: $\\frac{e^{2}-e^{-2}}{e^{2}+e^{-2}} = \\frac{7.39-0.135}{7.39+0.135} = \\frac{7.25}{7.52} \\approx 0.96$.</li>
-       <li>ReLU: $\\max(0, 2) = 2$ (positive, so it passes through unchanged).</li>
-       <li>Now bump $z$ from $2$ to $4$. ReLU rises $2 \\to 4$ (a straight line), but sigmoid barely moves $0.88 \\to 0.98$ and tanh $0.96 \\to 0.9993$ — they flatten out. That curving is the non-linearity.</li>
+       <li>Sigmoid at $z=2$: $\\frac{1}{1+e^{-2}} = \\frac{1}{1+0.135} = \\frac{1}{1.135} \\approx 0.88$.</li>
+       <li>Tanh at $z=2$: $\\frac{e^{2}-e^{-2}}{e^{2}+e^{-2}} = \\frac{7.39-0.135}{7.39+0.135} = \\frac{7.25}{7.52} \\approx 0.96$.</li>
+       <li>ReLU at $z=2$: $\\max(0, 2) = 2$ (positive, so it passes through unchanged).</li>
+     </ul>
+     <table class="extable">
+       <caption>Double the input ($z: 2 \\to 4$) — only ReLU doubles</caption>
+       <thead><tr><th>activation</th><th class="num">at $z=2$</th><th class="num">at $z=4$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">sigmoid</td><td class="num">0.88</td><td class="num">0.98</td></tr>
+         <tr><td class="row-h">tanh</td><td class="num">0.96</td><td class="num">0.9993</td></tr>
+         <tr><td class="row-h">ReLU</td><td class="num">2</td><td class="num">4</td></tr>
+       </tbody>
+     </table>
+     <ul class="steps">
+       <li>ReLU rises $2 \\to 4$ (a straight line), but sigmoid barely moves $0.88 \\to 0.98$ and tanh $0.96 \\to 0.9993$ — they flatten out. That curving is the non-linearity.</li>
        <li>And for $z = -3$: ReLU $\\max(0, -3) = 0$ (flattened); Leaky ReLU lets $0.01\\times(-3) = -0.03$ through, so the neuron never fully dies.</li>
      </ul>
      <p>The punchline: doubling the input from 2 to 4 does <i>not</i> double sigmoid or tanh. A straight line would — that bend is exactly what lets stacked layers learn curvy patterns.</p>`,
@@ -315,11 +335,19 @@ L({
     `<p>Layer 1 takes the input $x$, computes $z^{[1]}$, then squishes it to $a^{[1]}$.</p>
      <p>Layer 2 takes $a^{[1]}$ as its input and does the same. Its output $a^{[2]}$ is the prediction.</p>`,
   example:
-    `<p>Tiny 2-layer network. Input $x = 2$ (one number). Use ReLU as the activation.</p>
+    `<p>Tiny 2-layer network. Input $x = 2$ (one number). Use ReLU as the activation. Push it through left to right.</p>
+     <table class="extable">
+       <caption>Each layer: $z = w\\,(\\text{input}) + b$, then $a = \\text{ReLU}(z)$</caption>
+       <thead><tr><th>layer</th><th class="num">$w$</th><th class="num">$b$</th><th class="num">$z$</th><th class="num">$a$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1 (input $x=2$)</td><td class="num">3</td><td class="num">-1</td><td class="num">5</td><td class="num">5</td></tr>
+         <tr><td class="row-h">2 (input $a^{[1]}=5$)</td><td class="num">-2</td><td class="num">4</td><td class="num">-6</td><td class="num">0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Layer 1: $w^{[1]} = 3$, $b^{[1]} = -1$. So $z^{[1]} = 3\\times2 - 1 = 5$. ReLU keeps it: $a^{[1]} = 5$.</li>
-       <li>Layer 2: $w^{[2]} = -2$, $b^{[2]} = 4$. So $z^{[2]} = -2\\times5 + 4 = -6$. ReLU flattens it: $a^{[2]} = \\max(0, -6) = 0$.</li>
-       <li>The network's prediction is $0$.</li>
+       <li>Layer 1: $z^{[1]} = 3\\times2 - 1 = 5$. ReLU keeps it: $a^{[1]} = \\max(0, 5) = 5$.</li>
+       <li>Layer 2 takes $a^{[1]}=5$ as input: $z^{[2]} = -2\\times5 + 4 = -6$. ReLU flattens it: $a^{[2]} = \\max(0, -6) = 0$.</li>
+       <li>The network's prediction is $a^{[2]} = 0$.</li>
      </ul>
      <p>Notice the output of layer 1 (which was 5) became the input to layer 2. That chaining is forward propagation.</p>`,
   application:
@@ -387,11 +415,20 @@ L({
     `<p>If the truth is $y = 1$, only the first part survives: $L = -\\log z$. A confident-correct $z$ near 1 gives loss near 0. A wrong $z$ near 0 gives a huge loss.</p>
      <p>If the truth is $y = 0$, only the second part survives: $L = -\\log(1-z)$. The minus sign flips the negative log into a positive loss.</p>`,
   example:
-    `<p>True label $y = 1$ (it really is a cat). Compare two predictions.</p>
+    `<p>True label $y = 1$ (it really is a cat). Since $y=1$, only the first term survives: $L = -\\log z$. Compare three predictions.</p>
+     <table class="extable">
+       <caption>Loss for $y=1$: $L = -\\log z$ (confident-wrong hurts most)</caption>
+       <thead><tr><th>prediction</th><th class="num">$z$</th><th class="num">$L = -\\log z$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">good</td><td class="num">0.9</td><td class="num">0.105</td></tr>
+         <tr><td class="row-h">bad</td><td class="num">0.1</td><td class="num">2.303</td></tr>
+         <tr><td class="row-h">terrible</td><td class="num">0.01</td><td class="num">4.605</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Good prediction $z = 0.9$: $L = -\\log(0.9) = -(-0.105) = 0.105$. Small loss.</li>
-       <li>Bad prediction $z = 0.1$: $L = -\\log(0.1) = -(-2.303) = 2.303$. Much bigger loss.</li>
-       <li>Terrible prediction $z = 0.01$: $L = -\\log(0.01) = 4.605$. Confident <i>and</i> wrong, so a giant loss.</li>
+       <li>Good $z = 0.9$: $L = -\\log(0.9) = -(-0.105) = 0.105$. Small loss.</li>
+       <li>Bad $z = 0.1$: $L = -\\log(0.1) = -(-2.303) = 2.303$. Much bigger loss.</li>
+       <li>Terrible $z = 0.01$: $L = -\\log(0.01) = 4.605$. Confident <i>and</i> wrong, so a giant loss.</li>
      </ul>
      <p>The closer the prediction is to the truth, the smaller the loss. Being confidently wrong is punished the hardest.</p>`,
   application:
@@ -511,14 +548,19 @@ L({
     `<p>The first formula chains three slopes to find the total slope of the loss with respect to one weight.</p>
      <p>The second formula updates the weight: step in the <i>opposite</i> direction of the slope (downhill) by an amount $\\eta$. Repeat for every weight, many times.</p>`,
   example:
-    `<p>Chain the gradient backward through <b>two layers</b>. Layer 2 weight $w^{[2]}$, layer 1 weight $w^{[1]}$. The loss reaches $w^{[1]}$ only by passing through layer 2, so its chain is longer.</p>
+    `<p>Chain the gradient backward through <b>two layers</b>, with $\\eta = 0.1$ and current $w^{[2]} = w^{[1]} = 1$. The loss reaches $w^{[1]}$ only by passing through layer 2, so its chain is longer.</p>
      <ul class="steps">
-       <li>Suppose the per-step slopes are: $\\frac{\\partial L}{\\partial a^{[2]}} = 2$ (loss vs output), $\\frac{\\partial a^{[2]}}{\\partial z^{[2]}} = 0.5$ (layer-2 activation), $\\frac{\\partial z^{[2]}}{\\partial w^{[2]}} = 3$ (its input).</li>
-       <li><b>Layer 2 weight:</b> $\\frac{\\partial L}{\\partial w^{[2]}} = 2 \\times 0.5 \\times 3 = 3$.</li>
+       <li>Per-step slopes: $\\frac{\\partial L}{\\partial a^{[2]}} = 2$ (loss vs output), $\\frac{\\partial a^{[2]}}{\\partial z^{[2]}} = 0.5$ (layer-2 activation), $\\frac{\\partial z^{[2]}}{\\partial w^{[2]}} = 3$ (its input).</li>
        <li>To reach layer 1, keep going: $\\frac{\\partial z^{[2]}}{\\partial a^{[1]}} = w^{[2]} = 0.4$, then $\\frac{\\partial a^{[1]}}{\\partial z^{[1]}} = 1$ (ReLU on a positive), then $\\frac{\\partial z^{[1]}}{\\partial w^{[1]}} = 2$ (layer-1 input).</li>
-       <li><b>Layer 1 weight:</b> $\\frac{\\partial L}{\\partial w^{[1]}} = \\underbrace{2 \\times 0.5}_{\\text{into }z^{[2]}} \\times \\underbrace{0.4 \\times 1}_{\\text{through layer 1}} \\times 2 = 0.8$.</li>
-       <li>Update both, with $\\eta = 0.1$ and current $w^{[2]} = 1$, $w^{[1]} = 1$: &nbsp; $w^{[2]} \\leftarrow 1 - 0.1\\times3 = 0.7$, &nbsp; $w^{[1]} \\leftarrow 1 - 0.1\\times0.8 = 0.92$.</li>
      </ul>
+     <table class="extable">
+       <caption>Per-weight gradient and update $w \\leftarrow w - \\eta\\,\\frac{\\partial L}{\\partial w}$</caption>
+       <thead><tr><th>weight</th><th>chained slopes</th><th class="num">$\\frac{\\partial L}{\\partial w}$</th><th class="num">update</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$w^{[2]}$</td><td>$2 \\times 0.5 \\times 3$</td><td class="num">3</td><td class="num">$1 - 0.1\\times3 = 0.7$</td></tr>
+         <tr><td class="row-h">$w^{[1]}$</td><td>$2 \\times 0.5 \\times 0.4 \\times 1 \\times 2$</td><td class="num">0.8</td><td class="num">$1 - 0.1\\times0.8 = 0.92$</td></tr>
+       </tbody>
+     </table>
      <p>The same upstream slope ($2\\times0.5 = 1$) flows into both, but layer 1's gradient is smaller (0.8 vs 3) because it is multiplied by extra terms on the way back. That is the chain rule run layer by layer — and why deep early layers get weaker gradients.</p>`,
   application:
     `<p>Backprop is the engine behind training every neural network ever built: image classifiers, translators, and the large language models behind chatbots. It is just the chain rule run at huge scale.</p>`,
@@ -577,13 +619,21 @@ L({
      <p><b>RMSprop</b> divides the step by a running measure of how large recent gradients were, so wild directions get tamed.</p>
      <p><b>Adam</b> does both at once and is the usual default.</p>`,
   example:
-    `<p>Imagine the gradient keeps pointing the same way: $+2, +2, +2$.</p>
+    `<p>Imagine the gradient keeps pointing the same way: $+2, +2, +2$. Plain SGD moves by the gradient each step; Momentum accumulates a velocity $v_t = 0.9\\,v_{t-1} + 2$ (keep 90% of past speed, add the new gradient).</p>
      <ul class="steps">
-       <li>Plain step (size 1 each): you move $2, 2, 2$. Steady but slow.</li>
-       <li>With Momentum (keep 90% of past speed): step 1 moves $2$, step 2 builds to about $3.8$, step 3 to about $5.4$.</li>
-       <li>Same consistent direction, but you accelerate and reach the bottom faster.</li>
+       <li>Momentum velocities: $v_1 = 2$, then $v_2 = 0.9\\times2 + 2 = 3.8$, then $v_3 = 0.9\\times3.8 + 2 = 5.42$.</li>
+       <li>Plain SGD just repeats the gradient: $2, 2, 2$ every step.</li>
      </ul>
-     <p>When the gradient is consistent, Momentum speeds you up. When it flip-flops, it cancels out the noise.</p>`,
+     <table class="extable">
+       <caption>Step size each update: Plain SGD vs Momentum (gradient $=+2$ throughout)</caption>
+       <thead><tr><th>step</th><th class="num">plain move</th><th class="num">momentum move</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">2</td><td class="num">2</td></tr>
+         <tr><td class="row-h">2</td><td class="num">2</td><td class="num">3.8</td></tr>
+         <tr><td class="row-h">3</td><td class="num">2</td><td class="num">5.42</td></tr>
+       </tbody>
+     </table>
+     <p>Same consistent direction, but Momentum accelerates and reaches the bottom faster. When the gradient flip-flops instead, the velocity cancels out the noise.</p>`,
   application:
     `<p>Nearly every deep network today is trained with Adam. It saves engineers from hand-tuning the step size and makes training reliable on huge models.</p>`,
   whenToUse:
@@ -749,12 +799,21 @@ L({
     `<p>Split the data into mini-batches. For each batch, run forward prop, compute the loss, run backprop, and update the weights.</p>
      <p>When you have used every batch once, that is one epoch. Then shuffle and go again.</p>`,
   example:
-    `<p>You have $N = 1000$ training images. You choose a batch size of 100.</p>
+    `<p>You have $N = 1000$ training images and choose a batch size of 100. Plug into $\\text{iterations per epoch} = N \\div \\text{batch size}$.</p>
      <ul class="steps">
        <li>Iterations per epoch: $1000 \\div 100 = 10$. So 10 weight updates make one epoch.</li>
-       <li>If you train for 5 epochs, that is $10 \\times 5 = 50$ total updates.</li>
+       <li>Training for 5 epochs: $10 \\times 5 = 50$ total updates.</li>
        <li>Each update uses 100 images, not just 1 and not all 1000.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Counting updates for $N=1000$, batch size $=100$, 5 epochs</caption>
+       <thead><tr><th>quantity</th><th>computation</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">images per update</td><td>batch size</td><td class="num">100</td></tr>
+         <tr><td class="row-h">iterations per epoch</td><td>$1000 \\div 100$</td><td class="num">10</td></tr>
+         <tr><td class="row-h">total updates (5 epochs)</td><td>$10 \\times 5$</td><td class="num">50</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>All large-scale training uses mini-batches because they fit nicely in GPU memory and keep the GPU busy. Batch size is one of the first knobs engineers tune.</p>`,
   whenToUse:
@@ -876,12 +935,20 @@ L({
     `<p>The rule says: the spread of the starting weights should be 1 divided by the number of inputs.</p>
      <p>Many inputs means each weight should start smaller, so their sum does not blow up. This keeps signals at a healthy size through deep networks.</p>`,
   example:
-    `<p>A layer has $n_{in} = 100$ inputs.</p>
+    `<p>A layer has $n_{in} = 100$ inputs. Apply the rule $\\text{Var}(w) = \\frac{1}{n_{in}}$, then compare with a 4-input layer.</p>
      <ul class="steps">
-       <li>Xavier variance: $\\frac{1}{100} = 0.01$.</li>
-       <li>The typical spread (standard deviation) is $\\sqrt{0.01} = 0.1$. So weights start around $\\pm 0.1$.</li>
-       <li>If instead the layer had only 4 inputs: variance $\\frac{1}{4} = 0.25$, spread $\\sqrt{0.25} = 0.5$. Bigger, because fewer inputs add up.</li>
+       <li>Xavier variance for 100 inputs: $\\frac{1}{100} = 0.01$.</li>
+       <li>Typical spread (standard deviation): $\\sqrt{0.01} = 0.1$. So weights start around $\\pm 0.1$.</li>
+       <li>For only 4 inputs: variance $\\frac{1}{4} = 0.25$, spread $\\sqrt{0.25} = 0.5$. Bigger, because fewer inputs add up.</li>
      </ul>
+     <table class="extable">
+       <caption>Xavier starting spread shrinks as inputs grow</caption>
+       <thead><tr><th class="num">$n_{in}$</th><th class="num">$\\text{Var}(w) = 1/n_{in}$</th><th class="num">std $= \\sqrt{\\text{Var}}$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">4</td><td class="num">0.25</td><td class="num">0.5</td></tr>
+         <tr><td class="num">100</td><td class="num">0.01</td><td class="num">0.1</td></tr>
+       </tbody>
+     </table>
      <p>Compare with all-zeros: every neuron would be identical forever, so the network could never learn.</p>`,
   application:
     `<p>Good initialization lets very deep networks (dozens of layers) train at all. Xavier and its cousin He-initialization are the defaults in PyTorch and TensorFlow.</p>`,
@@ -988,9 +1055,17 @@ L({
      <ul class="steps">
        <li>On one training step, about half drop: say 5 are kept (output 1), 5 are set to 0. The kept sum is $5 \\times 1 = 5$, only half the full $10$.</li>
        <li><b>The fix (inverted dropout):</b> scale every survivor by $\\frac{1}{1-p} = \\frac{1}{0.5} = 2$. Now the kept sum is $5 \\times (1 \\times 2) = 10$ — back to the full-network size.</li>
-       <li>Why it matters: averaged over many random masks, the expected output stays $10$, so test time (dropout off, all 10 active, no scaling) sees the same scale it trained on. No mismatch.</li>
-       <li>Next step a different random 5 survive, but the $\\times 2$ rescaling keeps the total balanced every time.</li>
+       <li>At test time dropout is off: all 10 neurons are active and no scaling is applied, giving sum $10 \\times 1 = 10$.</li>
+       <li>The two scales now match, so there is no train/test mismatch. A different random 5 survive next step, but the $\\times 2$ keeps the total balanced.</li>
      </ul>
+     <table class="extable">
+       <caption>Inverted dropout keeps the output sum the same in train and test</caption>
+       <thead><tr><th class="row-h">scenario</th><th class="num">neurons active</th><th class="num">scale factor</th><th class="num">output sum</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">train (dropout on)</td><td class="num">5</td><td class="num">2</td><td class="num">10</td></tr>
+         <tr><td class="row-h">test (dropout off)</td><td class="num">10</td><td class="num">1</td><td class="num">10</td></tr>
+       </tbody>
+     </table>
      <p>Dropping neurons would shrink every signal by half; multiplying survivors by $1/(1-p)$ undoes that, so train and test agree.</p>`,
   application:
     `<p>Dropout is a simple, cheap way to reduce overfitting in image and text networks. It was a key trick in many breakthrough models and is built into every deep learning library.</p>`,
@@ -1097,13 +1172,22 @@ L({
     `<p>The fraction subtracts the batch mean and divides by the batch spread. That makes the values centered at 0 with a standard size.</p>
      <p>Then $\\gamma$ rescales and $\\beta$ shifts, both learned, so the layer can recover any scale it actually needs.</p>`,
   example:
-    `<p>A batch of three values: $[2, 4, 6]$. Suppose $\\gamma = 1$, $\\beta = 0$, $\\epsilon \\approx 0$.</p>
+    `<p>A batch of three values: $[2, 4, 6]$. Suppose $\\gamma = 1$, $\\beta = 0$, $\\epsilon \\approx 0$, so the formula reduces to $\\frac{x_i - \\mu_B}{\\sigma_B}$.</p>
      <ul class="steps">
        <li>Mean: $\\mu_B = (2 + 4 + 6)\\div 3 = 4$.</li>
-       <li>Variance: average of $(2-4)^2, (4-4)^2, (6-4)^2 = (4 + 0 + 4)\\div 3 \\approx 2.67$. Spread $\\sqrt{2.67} \\approx 1.63$.</li>
-       <li>Normalize each: $(2-4)/1.63 \\approx -1.23$, $(4-4)/1.63 = 0$, $(6-4)/1.63 \\approx 1.23$.</li>
+       <li>Variance: average of $(2-4)^2, (4-4)^2, (6-4)^2 = (4 + 0 + 4)\\div 3 \\approx 2.67$. Spread $\\sigma_B = \\sqrt{2.67} \\approx 1.63$.</li>
+       <li>Normalize each value by subtracting $\\mu_B = 4$ and dividing by $\\sigma_B \\approx 1.63$ (see table).</li>
        <li>New values $[-1.23, 0, 1.23]$ are centered at 0 with a tidy spread.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Each value re-centered on $\\mu_B = 4$ and scaled by $\\sigma_B \\approx 1.63$</caption>
+       <thead><tr><th class="num">$x_i$</th><th class="num">$x_i - \\mu_B$</th><th class="num">$(x_i - \\mu_B)/\\sigma_B$</th></tr></thead>
+       <tbody>
+         <tr><td class="num">2</td><td class="num">$-2$</td><td class="num">$-1.23$</td></tr>
+         <tr><td class="num">4</td><td class="num">0</td><td class="num">0</td></tr>
+         <tr><td class="num">6</td><td class="num">2</td><td class="num">1.23</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Batch norm lets very deep image networks train faster and more reliably. It is standard in convolutional networks like ResNet and reduces the need for careful tuning.</p>`,
   whenToUse:
@@ -1168,12 +1252,23 @@ L({
   whatItDoes:
     `<p>After each epoch, check the validation error. If it improved, save this model. If it gets worse for several epochs in a row, stop and keep the best saved model.</p>`,
   example:
-    `<p>Validation error by epoch: $0.50, 0.40, 0.35, 0.36, 0.39, 0.45$. Patience = 2.</p>
+    `<p>Validation error by epoch: $0.50, 0.40, 0.35, 0.36, 0.39, 0.45$, with patience $= 2$ (stop after 2 epochs with no improvement).</p>
      <ul class="steps">
        <li>It improves through epoch 3 (down to 0.35). Best model saved at epoch 3.</li>
-       <li>Epoch 4 (0.36) and epoch 5 (0.39) are both worse. That is 2 epochs of no improvement.</li>
-       <li>Patience hit, so stop. Keep the epoch-3 model, not the later overfit ones.</li>
-     </ul>`,
+       <li>Epoch 4 (0.36) and epoch 5 (0.39) are both worse than 0.35. That is 2 epochs in a row of no improvement.</li>
+       <li>Patience of 2 is hit at epoch 5, so stop. Keep the epoch-3 model, not the later overfit ones.</li>
+     </ul>
+     <table class="extable">
+       <caption>Best is epoch 3; two worse epochs trip patience and stop training</caption>
+       <thead><tr><th class="num">epoch</th><th class="num">val error</th><th class="row-h">improved?</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">0.50</td><td class="row-h">—</td></tr>
+         <tr><td class="num">2</td><td class="num">0.40</td><td class="row-h">yes</td></tr>
+         <tr><td class="num">3</td><td class="num">0.35</td><td class="row-h">yes (best)</td></tr>
+         <tr><td class="num">4</td><td class="num">0.36</td><td class="row-h">no</td></tr>
+         <tr><td class="num">5</td><td class="num">0.39</td><td class="row-h">no &rarr; stop</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Early stopping is a free, simple guard against overfitting used everywhere. It also saves compute time by not training longer than helpful.</p>`,
   whenToUse:
@@ -1290,12 +1385,23 @@ L({
     `<p>At each position, line the filter up over a patch of the image, multiply each pair, and sum. That single number measures how strongly the filter's pattern appears there.</p>
      <p>Slide everywhere to build the full feature map. The same filter weights are reused at every position, so it learns far fewer weights than a full layer.</p>`,
   example:
-    `<p>Tiny 2×2 filter $\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}$ over an image patch $\\begin{bmatrix}3 & 5\\\\2 & 4\\end{bmatrix}$.</p>
+    `<p>Tiny 2×2 filter $\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}$ over an image patch $\\begin{bmatrix}3 & 5\\\\2 & 4\\end{bmatrix}$. The output is $\\sum(\\text{filter} \\odot \\text{patch})$.</p>
      <ul class="steps">
        <li>Multiply matching cells: $1\\times3 = 3$, $0\\times5 = 0$, $0\\times2 = 0$, $1\\times4 = 4$.</li>
        <li>Add them up: $3 + 0 + 0 + 4 = 7$.</li>
        <li>So this position of the feature map is $7$. Slide the filter and repeat for the next patch.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Element-wise products, then summed</caption>
+       <thead><tr><th class="row-h">cell</th><th class="num">filter</th><th class="num">patch</th><th class="num">product</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">top-left</td><td class="num">1</td><td class="num">3</td><td class="num">3</td></tr>
+         <tr><td class="row-h">top-right</td><td class="num">0</td><td class="num">5</td><td class="num">0</td></tr>
+         <tr><td class="row-h">bottom-left</td><td class="num">0</td><td class="num">2</td><td class="num">0</td></tr>
+         <tr><td class="row-h">bottom-right</td><td class="num">1</td><td class="num">4</td><td class="num">4</td></tr>
+         <tr><td class="row-h">sum</td><td class="num"></td><td class="num"></td><td class="num">7</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Convolutional layers are the heart of image recognition: detecting faces, reading handwriting, spotting tumors in medical scans, and seeing the road for self-driving cars.</p>`,
   whenToUse:
@@ -1404,12 +1510,20 @@ L({
     `<p>Cover the feature map with non-overlapping windows. From each window, output a single number (the max, or the average).</p>
      <p>A 2×2 pool turns each 2×2 block into one value, cutting both width and height in half.</p>`,
   example:
-    `<p>Max-pool this 2×2 window: $\\begin{bmatrix}1 & 7\\\\3 & 2\\end{bmatrix}$.</p>
+    `<p>Pool this 2×2 window: $\\begin{bmatrix}1 & 7\\\\3 & 2\\end{bmatrix}$, comparing max pooling with average pooling.</p>
      <ul class="steps">
        <li>The four values are $1, 7, 3, 2$.</li>
        <li>Max pooling keeps the biggest: $\\max(1, 7, 3, 2) = 7$.</li>
-       <li>Average pooling instead would give $(1 + 7 + 3 + 2)\\div 4 = 13 \\div 4 = 3.25$.</li>
+       <li>Average pooling instead gives $(1 + 7 + 3 + 2)\\div 4 = 13 \\div 4 = 3.25$.</li>
      </ul>
+     <table class="extable">
+       <caption>Same window, two pooling rules</caption>
+       <thead><tr><th class="row-h">method</th><th class="row-h">computation</th><th class="num">result</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">max</td><td class="row-h">$\\max(1, 7, 3, 2)$</td><td class="num">7</td></tr>
+         <tr><td class="row-h">average</td><td class="row-h">$(1 + 7 + 3 + 2)\\div 4$</td><td class="num">3.25</td></tr>
+       </tbody>
+     </table>
      <p>The whole 2×2 block becomes a single number, shrinking the map.</p>`,
   application:
     `<p>Pooling is in nearly every image network. It makes recognition robust to small shifts: a cat slightly off-center still triggers the same strong features.</p>`,
@@ -1504,13 +1618,20 @@ L({
        <li><b>Full</b> — maximal padding, $P_{\\text{end}} = F - 1$ on each end, so every input cell is fully convolved (visited by every filter position). The output grows.</li>
      </ul>`,
   example:
-    `<p>Input $I = 7$, filter $F = 3$, padding $P = 0$, stride $S = 1$.</p>
+    `<p>Input $I = 7$, filter $F = 3$, padding $P = 0$. Use $O = \\frac{I - F + 2P}{S} + 1$ for stride $S = 1$, then $S = 2$.</p>
      <ul class="steps">
-       <li>Plug in: $O = \\frac{7 - 3 + 2\\times0}{1} + 1$.</li>
-       <li>Top: $7 - 3 + 0 = 4$. Divide by stride 1: $4$. Add 1: $O = 5$.</li>
+       <li>Stride 1: $O = \\frac{7 - 3 + 2\\times0}{1} + 1$. Top is $7 - 3 + 0 = 4$; divide by 1, add 1: $O = 5$.</li>
        <li>So a 7×7 image with a 3×3 filter gives a 5×5 output.</li>
-       <li>Now try stride $S = 2$: $\\frac{7-3+0}{2}+1 = \\frac{4}{2}+1 = 2+1 = 3$. A bigger stride shrinks the output to 3×3.</li>
-     </ul>`,
+       <li>Stride 2: $O = \\frac{7-3+0}{2}+1 = \\frac{4}{2}+1 = 2+1 = 3$. A bigger stride shrinks the output to 3×3.</li>
+     </ul>
+     <table class="extable">
+       <caption>Bigger stride, smaller output ($I = 7$, $F = 3$, $P = 0$)</caption>
+       <thead><tr><th class="num">stride $S$</th><th class="num">$O = (I - F + 2P)/S + 1$</th><th class="num">output size</th></tr></thead>
+       <tbody>
+         <tr><td class="num">1</td><td class="num">$4/1 + 1$</td><td class="num">5</td></tr>
+         <tr><td class="num">2</td><td class="num">$4/2 + 1$</td><td class="num">3</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Designers use this formula to plan network shapes: how much each layer shrinks the image, and whether to pad to keep the size the same. It is everyday work in building CNNs (Convolutional Neural Networks).</p>`,
   whenToUse:
@@ -1629,12 +1750,22 @@ L({
     `<p>Inside the parentheses: count the weights in one filter ($F \\times F \\times C$), then add 1 for its bias.</p>
      <p>Multiply by $K$ for all the filters. That total is how many numbers the layer learns.</p>`,
   example:
-    `<p>A layer with $K = 10$ filters, each $F = 3$ (so 3×3), over a color image with $C = 3$ channels.</p>
+    `<p>Plug $K = 10$ filters, each $F = 3$ (so 3×3), over a color image with $C = 3$ channels into $(F\\cdot F\\cdot C + 1)\\cdot K$.</p>
      <ul class="steps">
-       <li>Weights in one filter: $3 \\times 3 \\times 3 = 27$.</li>
+       <li>Weights in one filter: $F\\cdot F\\cdot C = 3 \\times 3 \\times 3 = 27$.</li>
        <li>Add the bias: $27 + 1 = 28$ numbers per filter.</li>
-       <li>For all 10 filters: $28 \\times 10 = 280$ parameters.</li>
+       <li>Multiply by all $K = 10$ filters: $28 \\times 10 = 280$ parameters.</li>
      </ul>
+     <table class="extable">
+       <caption>Building up the parameter count term by term</caption>
+       <thead><tr><th>term</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">weights per filter ($F\\cdot F\\cdot C$)</td><td class="num">27</td></tr>
+         <tr><td class="row-h">+ bias</td><td class="num">1</td></tr>
+         <tr><td class="row-h">= per filter</td><td class="num">28</td></tr>
+         <tr><td class="row-h">× $K$ filters</td><td class="num">280</td></tr>
+       </tbody>
+     </table>
      <p>Only 280 numbers, no matter if the image is 32×32 or 1000×1000. That reuse is why CNNs are efficient.</p>`,
   application:
     `<p>Parameter counts tell engineers how big and how memory-hungry a model is. Knowing them helps fit networks on phones and edge devices.</p>`,
@@ -1743,12 +1874,23 @@ L({
     `<p>Compute the overlapping area of the two boxes (the intersection) and the combined area (the union). Divide them.</p>
      <p>A high IoU (say above 0.5) means the prediction sits well on the true object. Non-max suppression then cleans up duplicate boxes.</p>`,
   example:
-    `<p>Two boxes overlap. Overlap area $= 20$. Box A area $= 40$, Box B area $= 30$.</p>
+    `<p>Two boxes overlap. Overlap area $= 20$, Box A area $= 40$, Box B area $= 30$. Plug into $\\text{IoU} = \\frac{\\text{overlap}}{\\text{union}}$.</p>
      <ul class="steps">
        <li>Union = area A + area B − overlap (so the shared part isn't counted twice): $40 + 30 - 20 = 50$.</li>
        <li>IoU = overlap ÷ union = $20 \\div 50 = 0.4$.</li>
        <li>0.4 is below 0.5, so this would usually count as a poor match.</li>
-     </ul>`,
+     </ul>
+     <table class="extable">
+       <caption>Working the IoU ledger</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">area A</td><td class="num">40</td></tr>
+         <tr><td class="row-h">area B</td><td class="num">30</td></tr>
+         <tr><td class="row-h">intersection (overlap)</td><td class="num">20</td></tr>
+         <tr><td class="row-h">union ($A + B -$ overlap)</td><td class="num">50</td></tr>
+         <tr><td class="row-h">IoU ($20 \\div 50$)</td><td class="num">0.40</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>Object detection powers self-driving cars (spotting pedestrians and signs), security cameras, and photo apps that tag the people and pets in your pictures.</p>`,
   whenToUse:
@@ -1912,12 +2054,19 @@ L({
     `<p>The loss wants $d(A,P)$ small and $d(A,N)$ large. If the negative is already farther than the positive by at least the margin $\\alpha$, the inside is negative and the $\\max$ makes the loss 0 (nothing to fix).</p>
      <p>Otherwise the loss is positive, and training pulls the same person closer and pushes the different person away.</p>`,
   example:
-    `<p>Suppose $d(A, P) = 0.3$, $d(A, N) = 0.5$, margin $\\alpha = 0.2$.</p>
+    `<p>Plug two cases into $\\ell = \\max\\big(d(A,P) - d(A,N) + \\alpha,\\; 0\\big)$ with margin $\\alpha = 0.2$ and $d(A,P) = 0.3$ fixed.</p>
      <ul class="steps">
-       <li>Inside the max: $0.3 - 0.5 + 0.2 = 0$.</li>
-       <li>Loss $= \\max(0, 0) = 0$. The negative is exactly far enough, so no penalty.</li>
-       <li>Now suppose $d(A, N) = 0.4$: inside $= 0.3 - 0.4 + 0.2 = 0.1$, loss $= 0.1$. Training pushes them apart.</li>
-     </ul>`,
+       <li>Case 1, $d(A,N) = 0.5$: inside the max $= 0.3 - 0.5 + 0.2 = 0$, so loss $= \\max(0, 0) = 0$. The negative is exactly far enough — no penalty.</li>
+       <li>Case 2, $d(A,N) = 0.4$: inside $= 0.3 - 0.4 + 0.2 = 0.1$, so loss $= \\max(0.1, 0) = 0.1$. The negative crept too close — training pushes it away.</li>
+     </ul>
+     <table class="extable">
+       <caption>Same anchor–positive, closer negative → real loss</caption>
+       <thead><tr><th>case</th><th class="num">$d(A,P)$</th><th class="num">$d(A,N)$</th><th class="num">$\\alpha$</th><th class="num">inside max</th><th class="num">loss</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">1</td><td class="num">0.3</td><td class="num">0.5</td><td class="num">0.2</td><td class="num">0.0</td><td class="num">0.0</td></tr>
+         <tr><td class="row-h">2</td><td class="num">0.3</td><td class="num">0.4</td><td class="num">0.2</td><td class="num">0.1</td><td class="num">0.1</td></tr>
+       </tbody>
+     </table>`,
   application:
     `<p>This powers phone face-unlock and photo apps that group pictures by person. It works from just one example per person, since it compares encodings rather than memorizing faces.</p>`,
   whenToUse:
@@ -2046,9 +2195,17 @@ L({
      <ul class="steps">
        <li>$G_{11} = f_1\\cdot f_1 = 1{+}4{+}4 = 9$ (how strongly channel 1 fires with itself).</li>
        <li>$G_{22} = f_2\\cdot f_2 = 4{+}0{+}1 = 5$.</li>
-       <li>$G_{12} = f_1\\cdot f_2 = 1{\\cdot}2 + 2{\\cdot}0 + 2{\\cdot}1 = 4$ (how often the two channels fire <i>together</i>). So $G = \\begin{bmatrix}9 & 4\\\\4 & 5\\end{bmatrix}$.</li>
+       <li>$G_{12} = G_{21} = f_1\\cdot f_2 = 1{\\cdot}2 + 2{\\cdot}0 + 2{\\cdot}1 = 4$ (how often the two channels fire <i>together</i>).</li>
        <li>Style cost = how far the generated image's $G$ is from the painting's $G$. Each entry sums over all 3 spots, so shuffling <i>which</i> spot is which leaves every dot product the same — $G$ ignores spatial layout. That is why it captures texture, not where things sit.</li>
      </ul>
+     <table class="extable">
+       <caption>The Gram matrix $G$ (each cell = a channel pair's dot product)</caption>
+       <thead><tr><th></th><th class="num">channel 1</th><th class="num">channel 2</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">channel 1</td><td class="num">9</td><td class="num">4</td></tr>
+         <tr><td class="row-h">channel 2</td><td class="num">4</td><td class="num">5</td></tr>
+       </tbody>
+     </table>
      <p>Match the painting's $G$ (its co-firing pattern) and you copy its style; match the raw feature map and you copy its content. Style transfer drives both costs down at once.</p>`,
   application:
     `<p>This is the magic behind art-filter apps that turn your selfies into paintings. It also helps artists and designers prototype looks quickly.</p>`,
@@ -2174,11 +2331,20 @@ L({
     `<p>Each round, the generator makes fakes and the discriminator scores a mix of real and fake. Both update: the detective gets sharper, the forger gets sneakier.</p>
      <p>At balance, the generator's fakes are so good the discriminator can only guess (about 50/50).</p>`,
   example:
-    `<p>Track the discriminator's accuracy as a GAN learns to make fake digits. Accuracy is the share of images it labels correctly (1.0 = perfect, 0.5 = pure guessing).</p>
+    `<p>Track the discriminator's accuracy as a GAN learns to make fake digits. Accuracy is the share of images it labels correctly (1.0 = perfect, 0.5 = pure guessing); the generator's fool rate is whatever the discriminator misses, $1 - \\text{accuracy}$.</p>
+     <table class="extable">
+       <caption>Discriminator accuracy vs generator fool rate as training proceeds</caption>
+       <thead><tr><th>stage</th><th class="num">disc. accuracy</th><th class="num">fool rate $= 1 - \\text{acc}$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">early (blurry blobs)</td><td class="num">0.98</td><td class="num">0.02</td></tr>
+         <tr><td class="row-h">mid (sharper digits)</td><td class="num">0.75</td><td class="num">0.25</td></tr>
+         <tr><td class="row-h">equilibrium</td><td class="num">0.50</td><td class="num">0.50</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Early on: fakes are blurry blobs. The discriminator catches almost all of them — accuracy $\\approx 0.98$. The generator's "fool rate" is only $1 - 0.98 = 0.02$.</li>
-       <li>The generator sharpens its digits. Now the detective slips more: accuracy drops to $\\approx 0.75$.</li>
-       <li>At the end, the fakes are indistinguishable from real digits. The discriminator can only guess: accuracy $\\approx 0.50$, the same as flipping a coin.</li>
+       <li>Early on the fakes are obvious, so the detective catches almost all: accuracy $0.98$, fool rate $1 - 0.98 = 0.02$.</li>
+       <li>The generator improves, so the detective slips more: accuracy $0.75$, fool rate $1 - 0.75 = 0.25$.</li>
+       <li>At the end the fakes are indistinguishable, so the detective just guesses: accuracy $0.50$, fool rate $1 - 0.50 = 0.50$.</li>
      </ul>
      <p>That $0.50$ is the punchline: <b>equilibrium is 50% accuracy</b>. When the detective is reduced to coin-flipping, the forger has won — the fakes are as good as real.</p>`,
   application:
@@ -2297,11 +2463,19 @@ L({
     `<p>Combine the old memory and the new input, each through their own weights, add a bias, and squish with $g$.</p>
      <p>The result is the new memory, which feeds into the next step. So information flows along the sequence.</p>`,
   example:
-    `<p>Tiny RNN. Weights $W_{aa} = 0.5$, $W_{ax} = 1$, $b_a = 0$, activation tanh. Start memory $a^{&lt;0&gt;} = 0$. Input sequence $x = [2, 1]$.</p>
+    `<p>Tiny RNN with $W_{aa} = 0.5$, $W_{ax} = 1$, $b_a = 0$, activation tanh, start memory $a^{&lt;0&gt;} = 0$, input sequence $x = [2, 1]$. Each step computes $a^{&lt;t&gt;} = \\tanh(W_{aa}\\,a^{&lt;t-1&gt;} + W_{ax}\\,x^{&lt;t&gt;} + b_a)$.</p>
+     <table class="extable">
+       <caption>Hidden state unrolled over two time steps</caption>
+       <thead><tr><th>step $t$</th><th class="num">$x^{&lt;t&gt;}$</th><th class="num">pre-activation</th><th class="num">$a^{&lt;t&gt;} = \\tanh(\\cdot)$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">$t = 1$</td><td class="num">2</td><td class="num">2.00</td><td class="num">0.96</td></tr>
+         <tr><td class="row-h">$t = 2$</td><td class="num">1</td><td class="num">1.48</td><td class="num">0.90</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Step 1: combine $0.5\\times0 + 1\\times2 + 0 = 2$. Then $a^{&lt;1&gt;} = \\tanh(2) \\approx 0.96$.</li>
-       <li>Step 2: combine $0.5\\times0.96 + 1\\times1 + 0 = 1.48$. Then $a^{&lt;2&gt;} = \\tanh(1.48) \\approx 0.90$.</li>
-       <li>The memory $a^{&lt;1&gt;}$ from step 1 carried into step 2's calculation. That is the recurrence.</li>
+       <li>Step 1: $0.5\\times0 + 1\\times2 + 0 = 2$, so $a^{&lt;1&gt;} = \\tanh(2) \\approx 0.96$.</li>
+       <li>Step 2: $0.5\\times0.96 + 1\\times1 + 0 = 1.48$, so $a^{&lt;2&gt;} = \\tanh(1.48) \\approx 0.90$.</li>
+       <li>The memory $a^{&lt;1&gt;}$ from step 1 flowed into step 2's pre-activation. That carry-over is the recurrence.</li>
      </ul>`,
   application:
     `<p>RNNs handle text, speech, and time series: early language models, speech-to-text, and forecasting. They process inputs in order and remember context.</p>`,
@@ -2379,11 +2553,19 @@ L({
     `<p>Measure the gradient's size (its norm). If it is bigger than the threshold, shrink it back down to the threshold while keeping its direction.</p>
      <p>This stops single giant steps from wrecking training. Vanishing gradients need a different fix (next lesson: LSTM (Long Short-Term Memory)/GRU (Gated Recurrent Unit)).</p>`,
   example:
-    `<p>Multiply slopes of 0.5 along a 5-step sequence: $0.5 \\times 0.5 \\times 0.5 \\times 0.5 \\times 0.5$.</p>
+    `<p>Backprop multiplies one slope per step. Take a slope of $0.5$ at every step and watch the product $0.5^k$ shrink as the depth $k$ grows.</p>
+     <table class="extable">
+       <caption>The product $0.5^k$ collapses toward zero with depth</caption>
+       <thead><tr><th>steps $k$</th><th class="num">$0.5^k$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">5</td><td class="num">0.03125</td></tr>
+         <tr><td class="row-h">20</td><td class="num">$\\approx 9.5\\times10^{-7}$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>That is $0.5^5 = 0.03125$. Already tiny after just 5 steps.</li>
-       <li>Over 20 steps it would be near $0.000001$: practically zero. The gradient has vanished.</li>
-       <li>Now clipping: if a gradient's size is 100 but the threshold is 5, scale it down to size 5, same direction.</li>
+       <li>After 5 steps: $0.5^5 = 0.03125$. Already tiny.</li>
+       <li>After 20 steps: $0.5^{20} \\approx 0.00000095$, practically zero — the gradient has vanished, so early steps barely learn.</li>
+       <li>Now the exploding case and its fix (clipping): if a gradient's size is $100$ but the threshold is $5$, scale it down to size $5$, keeping the same direction.</li>
      </ul>`,
   application:
     `<p>These problems are why plain RNNs (Recurrent Neural Networks) struggle with long paragraphs. Gradient clipping is standard in training RNNs and even large language models to keep updates stable.</p>`,
@@ -2508,11 +2690,19 @@ $$ \\text{LSTM: } c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + \\Ga
      <p><b>GRU.</b> First build a candidate memory $\\tilde{c}^{&lt;t&gt;} = \\tanh(W_c[\\Gamma_r \\star a^{&lt;t-1&gt;},\\, x^{&lt;t&gt;}] + b_c)$ — the relevance gate $\\Gamma_r$ chooses how much old state to look at. Then the update gate $\\Gamma_u$ blends old and new: $c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + (1-\\Gamma_u)\\star c^{&lt;t-1&gt;}$. One gate trades off "write new" against "keep old".</p>
      <p><b>LSTM.</b> It splits that single trade-off into two independent gates — an update gate $\\Gamma_u$ and a separate forget gate $\\Gamma_f$: $c^{&lt;t&gt;} = \\Gamma_u \\star \\tilde{c}^{&lt;t&gt;} + \\Gamma_f \\star c^{&lt;t-1&gt;}$. A third output gate $\\Gamma_o$ then decides how much of the cell to expose: $a^{&lt;t&gt;} = \\Gamma_o \\star c^{&lt;t&gt;}$. Here $\\star$ is elementwise multiplication, so each entry of the memory vector is gated on its own.</p>`,
   example:
-    `<p>Store a memory of strength $1$ at step 0, then read 10 more words. Compare how much survives. The LSTM carry is $c \\leftarrow f\\cdot c$ with forget gate $f = 0.9$; a plain RNN shrinks by roughly its recurrent slope $0.5$ each step.</p>
+    `<p>Store a memory of strength $1$ at step 0, then read 10 more words. Each step multiplies the memory by a fixed factor: the LSTM carry is $c \\leftarrow f\\cdot c$ with forget gate $f = 0.9$; a plain RNN shrinks by roughly its recurrent slope $0.5$. Compare how much of that first memory survives.</p>
+     <table class="extable">
+       <caption>Memory of strength 1 after 10 steps, by per-step multiplier</caption>
+       <thead><tr><th>model</th><th class="num">per-step multiplier</th><th class="num">memory after 10 steps</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">LSTM (forget gate)</td><td class="num">0.9</td><td class="num">$0.9^{10} \\approx 0.35$</td></tr>
+         <tr><td class="row-h">plain RNN (slope)</td><td class="num">0.5</td><td class="num">$0.5^{10} \\approx 0.001$</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li><b>LSTM (gate $f = 0.9$):</b> after 10 steps the memory is $0.9^{10} \\approx 0.35$. Still over a third — clearly alive.</li>
-       <li><b>Plain RNN (slope $\\approx 0.5$):</b> after 10 steps it is $0.5^{10} \\approx 0.001$. Essentially gone.</li>
-       <li>That is over a <b>350×</b> difference ($0.35 \\div 0.001 \\approx 357$). The gate near 1 keeps the multiplier near 1, so memory barely fades; the RNN's smaller multiplier crushes it.</li>
+       <li><b>LSTM (gate $f = 0.9$):</b> $0.9^{10} \\approx 0.35$. Still over a third — clearly alive.</li>
+       <li><b>Plain RNN (slope $\\approx 0.5$):</b> $0.5^{10} \\approx 0.001$. Essentially gone.</li>
+       <li>That is over a <b>350×</b> difference: $0.35 \\div 0.001 \\approx 357$. The gate near 1 keeps the multiplier near 1, so memory barely fades; the RNN's smaller multiplier crushes it.</li>
      </ul>
      <p>So in "I grew up in France ... I speak fluent ___", the LSTM still remembers "France" 10 words later to predict "French" — the plain RNN has long forgotten it.</p>`,
   application:
@@ -2661,11 +2851,21 @@ L({
     `<p>The one-hot $o_w$ has a 1 in word $w$'s slot. Multiplying $E$ by it picks out the matching column of $E$.</p>
      <p>That column is $e_w$, the word's dense embedding: a handful of numbers instead of a huge mostly-zero vector.</p>`,
   example:
-    `<p>Vocabulary of 4 words. The word "cat" is at position 2, so $o_{\\text{cat}} = [0, 1, 0, 0]$.</p>
+    `<p>Vocabulary of 4 words, each a column of $E$ (a 2-number embedding). The word "cat" sits at position 2, so its one-hot is $o_{\\text{cat}} = [0, 1, 0, 0]$, and $e_w = E\\,o_w$ picks out the matching column.</p>
+     <table class="extable">
+       <caption>Embedding matrix $E$ — one column per word</caption>
+       <thead><tr><th>word</th><th class="num">dim 1</th><th class="num">dim 2</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">cat</td><td class="num">0.9</td><td class="num">0.8</td></tr>
+         <tr><td class="row-h">dog</td><td class="num">0.85</td><td class="num">0.82</td></tr>
+         <tr><td class="row-h">car</td><td class="num">0.1</td><td class="num">0.95</td></tr>
+         <tr><td class="row-h">the</td><td class="num">0.0</td><td class="num">0.1</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
-       <li>Embedding matrix columns (each a 2-number embedding): cat $= [0.9, 0.8]$, dog $= [0.85, 0.82]$, car $= [0.1, 0.95]$, the $= [0.0, 0.1]$.</li>
-       <li>Multiply $E$ by $o_{\\text{cat}}$: it selects column 2, giving $e_{\\text{cat}} = [0.9, 0.8]$.</li>
-       <li>"dog" $= [0.85, 0.82]$ is very close to "cat" — similar meaning, nearby vectors. "car" is farther away.</li>
+       <li>Form the one-hot for "cat": $o_{\\text{cat}} = [0, 1, 0, 0]$ (a 1 in slot 2).</li>
+       <li>Multiply $E\\,o_{\\text{cat}}$: the 1 selects column 2, giving $e_{\\text{cat}} = [0.9, 0.8]$.</li>
+       <li>"dog" $= [0.85, 0.82]$ sits very close to "cat" — similar meaning, nearby vectors. "car" $= [0.1, 0.95]$ is far away.</li>
      </ul>`,
   application:
     `<p>Embeddings let search engines, translators, and chatbots understand that "happy" and "glad" mean almost the same thing. They are the first layer of nearly every language model.</p>`,
@@ -2750,11 +2950,23 @@ L({
     `<p>The top scores word $t$ by the dot product $\\theta_t^\\top e_c$: high when their vectors agree. The bottom sums that over all words $j$, so dividing turns scores into probabilities that add to 1.</p>
      <p>Training maximizes the probability of the real nearby words, which shapes the embeddings so related words cluster.</p>`,
   example:
-    `<p>"king − man + woman ≈ queen" is real vector arithmetic. Use tiny 2-number embeddings [royalty, female] the model might have learned: &nbsp; king $=[0.9, 0.1]$, man $=[0.1, 0.1]$, woman $=[0.1, 0.9]$, queen $=[0.9, 0.9]$.</p>
+    `<p>"king − man + woman ≈ queen" is real vector arithmetic. Use tiny 2-number embeddings $[\\text{royalty}, \\text{female}]$ the model might have learned, and compute the expression entry by entry.</p>
+     <table class="extable">
+       <caption>Embeddings and the king − man + woman computation</caption>
+       <thead><tr><th>word / expression</th><th class="num">royalty</th><th class="num">female</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">king</td><td class="num">0.9</td><td class="num">0.1</td></tr>
+         <tr><td class="row-h">man</td><td class="num">0.1</td><td class="num">0.1</td></tr>
+         <tr><td class="row-h">woman</td><td class="num">0.1</td><td class="num">0.9</td></tr>
+         <tr><td class="row-h">king − man</td><td class="num">0.8</td><td class="num">0.0</td></tr>
+         <tr><td class="row-h">(king − man) + woman</td><td class="num">0.9</td><td class="num">0.9</td></tr>
+         <tr><td class="row-h">queen</td><td class="num">0.9</td><td class="num">0.9</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>king − man $= [0.9-0.1,\\; 0.1-0.1] = [0.8, 0.0]$. This strips out "man-ness", leaving pure <i>royalty</i> with no gender.</li>
        <li>+ woman $= [0.8+0.1,\\; 0.0+0.9] = [0.9, 0.9]$. Adding "woman" puts female-ness back in.</li>
-       <li>Compare the result $[0.9, 0.9]$ to the vocabulary: it lands exactly on queen $=[0.9, 0.9]$, and far from man $[0.1,0.1]$ or woman $[0.1,0.9]$.</li>
+       <li>The result $[0.9, 0.9]$ lands exactly on queen $=[0.9, 0.9]$, and far from man $[0.1, 0.1]$ or woman $[0.1, 0.9]$.</li>
      </ul>
      <p>Nobody told the model about royalty or gender — predicting nearby words alone pushed the vectors into a layout where this subtraction-and-addition just works.</p>`,
   application:
@@ -2838,7 +3050,17 @@ L({
     `<p>Top: the dot product, which measures agreement. Bottom: the two lengths, which divide that agreement so length stops mattering.</p>
      <p>What's left is pure direction: 1 (same way), 0 (perpendicular, unrelated), or -1 (opposite).</p>`,
   example:
-    `<p>Let $w_1 = [1, 2]$ and $w_2 = [2, 4]$.</p>
+    `<p>Let $w_1 = [1, 2]$ and $w_2 = [2, 4]$. Plug them into $\\frac{w_1\\cdot w_2}{\\|w_1\\|\\,\\|w_2\\|}$ piece by piece.</p>
+     <table class="extable">
+       <caption>Building the cosine similarity term by term</caption>
+       <thead><tr><th>quantity</th><th class="num">value</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">dot product $w_1\\cdot w_2$</td><td class="num">10</td></tr>
+         <tr><td class="row-h">length $\\|w_1\\| = \\sqrt{5}$</td><td class="num">2.24</td></tr>
+         <tr><td class="row-h">length $\\|w_2\\| = \\sqrt{20}$</td><td class="num">4.47</td></tr>
+         <tr><td class="row-h">cosine $= 10 / (2.24\\cdot4.47)$</td><td class="num">1.0</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Dot product: $1\\times2 + 2\\times4 = 2 + 8 = 10$.</li>
        <li>Length of $w_1$: $\\sqrt{1^2 + 2^2} = \\sqrt{5} \\approx 2.24$. Length of $w_2$: $\\sqrt{2^2 + 4^2} = \\sqrt{20} \\approx 4.47$.</li>
@@ -2963,7 +3185,16 @@ L({
     `<p>The softmax turns raw scores into weights between 0 and 1 that sum to 1: bigger score means more focus.</p>
      <p>The context $c$ is the weighted sum of the inputs. Inputs with big weights dominate; inputs with tiny weights are nearly ignored.</p>`,
   example:
-    `<p>Translating, the model attends to 3 source words with raw scores $e = [2, 1, 0]$.</p>
+    `<p>Translating, the model attends to 3 source words with raw scores $e = [2, 1, 0]$. Softmax exponentiates each score and divides by the total to get the weights.</p>
+     <table class="extable">
+       <caption>Softmax turning raw scores into attention weights (sum $\\approx 11.11$)</caption>
+       <thead><tr><th>input</th><th class="num">raw score $e$</th><th class="num">$\\exp(e)$</th><th class="num">weight $\\alpha$</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">word 1</td><td class="num">2</td><td class="num">7.39</td><td class="num">0.67</td></tr>
+         <tr><td class="row-h">word 2</td><td class="num">1</td><td class="num">2.72</td><td class="num">0.24</td></tr>
+         <tr><td class="row-h">word 3</td><td class="num">0</td><td class="num">1.00</td><td class="num">0.09</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Exponentiate: $e^2 \\approx 7.39$, $e^1 \\approx 2.72$, $e^0 = 1$. Sum $\\approx 11.11$.</li>
        <li>Weights: $7.39/11.11 \\approx 0.67$, $2.72/11.11 \\approx 0.24$, $1/11.11 \\approx 0.09$. They add to 1.</li>
@@ -3116,12 +3347,22 @@ L({
     `<p>Apply a random transformation to each image before feeding it in. The label is kept, since the content is still the same object.</p>
      <p>The model effectively trains on a much larger, more varied dataset, so it generalizes better to new photos.</p>`,
   example:
-    `<p>You have 1 photo of a dog. With augmentation you generate many variations.</p>
+    `<p>You have 1 photo of a dog. Each transform makes a new training example via $\\text{new image} = \\text{transform}(\\text{original})$, with the label left unchanged.</p>
+     <table class="extable">
+       <caption>From 1 photo to 4 training examples — same label every time</caption>
+       <thead><tr><th>transform</th><th>result</th><th>label</th></tr></thead>
+       <tbody>
+         <tr><td class="row-h">flip left-right</td><td>mirror-image dog</td><td>dog</td></tr>
+         <tr><td class="row-h">rotate 10°</td><td>slightly tilted dog</td><td>dog</td></tr>
+         <tr><td class="row-h">crop + zoom</td><td>close-up of the head</td><td>dog</td></tr>
+         <tr><td class="row-h">brighten</td><td>same dog, better light</td><td>dog</td></tr>
+       </tbody>
+     </table>
      <ul class="steps">
        <li>Flip it left-right: a mirror-image dog. Still a dog.</li>
        <li>Rotate it 10 degrees: a slightly tilted dog. Still a dog.</li>
        <li>Crop and zoom on the dog's head: a close-up. Still a dog.</li>
-       <li>Brighten it: the same dog in better light. From 1 photo, several training examples, all labeled "dog".</li>
+       <li>Brighten it: the same dog in better light. From 1 photo, 4 training examples, all labeled "dog".</li>
      </ul>`,
   application:
     `<p>Data augmentation is standard in image recognition for medical scans, self-driving, and photo apps, especially when labeled data is scarce. It is a cheap way to fight overfitting.</p>`,
