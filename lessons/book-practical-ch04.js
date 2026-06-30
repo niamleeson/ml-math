@@ -118,7 +118,8 @@
           { name: "Fitted line", color: "#ffb454", points: [[0, 424.583], [22, 332.51]] }
         ]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# model <- lm(PEFR ~ Exposure, data=lung)\n# model\n# # (Intercept) 424.583; Exposure -4.185\n# fitted <- predict(model)\n# resid <- residuals(model)\n\n# --- Python equivalent ---\nimport statsmodels.formula.api as smf\nmodel = smf.ols('PEFR ~ Exposure', data=lung).fit()\nprint(model.params)\n# Intercept 424.583; Exposure -4.185\nfitted = model.predict(lung)\nresid = model.resid"
   };
 
   // 2 — Multiple Linear Regression
@@ -173,7 +174,8 @@
           "<strong>t-statistic</strong> for each coefficient, $t_b = \\hat{b} / \\text{SE}(\\hat{b})$. A high " +
           "t-statistic (low p-value) argues for keeping a predictor; a low one suggests it could be dropped. The book " +
           "advises data scientists to use the t-statistic as a guide for variable inclusion and not fuss over formal " +
-          "statistical significance.</p>"
+          "statistical significance.</p>" +
+           "<table class=\"extable\"><thead><tr><th>summary(house_lm) term</th><th class=\"num\">Estimate</th><th class=\"num\">Std. Error</th><th class=\"num\">t value</th><th class=\"num\">Pr(&gt;|t|)</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">-5.219e+05</td><td class=\"num\">1.565e+04</td><td class=\"num\">-33.349</td><td class=\"num\">&lt; 2e-16</td></tr><tr><td class=\"row-h\">SqFtTotLiving</td><td class=\"num\">2.288e+02</td><td class=\"num\">3.898e+00</td><td class=\"num\">58.699</td><td class=\"num\">&lt; 2e-16</td></tr><tr><td class=\"row-h\">SqFtLot</td><td class=\"num\">-6.051e-02</td><td class=\"num\">6.118e-02</td><td class=\"num\">-0.989</td><td class=\"num\">0.323</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">-1.944e+04</td><td class=\"num\">3.625e+03</td><td class=\"num\">-5.362</td><td class=\"num\">8.32e-08</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-4.778e+04</td><td class=\"num\">2.489e+03</td><td class=\"num\">-19.194</td><td class=\"num\">&lt; 2e-16</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">1.061e+05</td><td class=\"num\">2.396e+03</td><td class=\"num\">44.287</td><td class=\"num\">&lt; 2e-16</td></tr></tbody></table>"
       },
       {
         h: "Cross-validation",
@@ -210,7 +212,8 @@
           "best contributor until gains stop being significant) and <em>backward elimination</em> (start full, remove " +
           "non-significant predictors). <em>Penalized regression</em> (ridge, lasso) is similar in spirit but shrinks " +
           "coefficients toward zero instead of discretely searching. Because stepwise and all-subset are in-sample " +
-          "they can overfit; cross-validation guards against this.</p>"
+          "they can overfit; cross-validation guards against this.</p>" +
+           "<table class=\"extable\"><thead><tr><th>stepAIC term</th><th class=\"num\">Coefficient</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">6,227,632.22</td></tr><tr><td class=\"row-h\">SqFtTotLiving</td><td class=\"num\">186.50</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">44,721.72</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-49,807.18</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">139,179.23</td></tr><tr><td class=\"row-h\">PropertyTypeSingle Family</td><td class=\"num\">23,328.69</td></tr><tr><td class=\"row-h\">PropertyTypeTownhouse</td><td class=\"num\">92,216.25</td></tr><tr><td class=\"row-h\">SqFtFinBasement</td><td class=\"num\">9.04</td></tr><tr><td class=\"row-h\">YrBuilt</td><td class=\"num\">-3,592.47</td></tr></tbody></table>"
       },
       {
         h: "Weighted regression",
@@ -253,7 +256,8 @@
         valueLabels: ["228.8", "-19.4", "-47.8"],
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# house_lm <- lm(AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms +\n#   Bedrooms + BldgGrade, data=house, na.action=na.omit)\n# summary(house_lm)\n# # RSE 261200 on 22683 df; R^2 0.5407; adj R^2 0.5406\n# # SqFtTotLiving 228.8 (SE 3.898, t 58.699); SqFtLot -0.0605 (p 0.323)\n# library(MASS); step <- stepAIC(house_full, direction='both')\n# # dropped: SqFtLot, NbrLivingUnits, YrRenovated, NewConstruction\n# library(lubridate); house$Weight <- year(house$DocumentDate) - 2005\n# house_wt <- lm(AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade,\n#                data=house, weight=Weight)\n# # weighted SqFtTotLiving 245.017; BldgGrade 115259.026\n\n# --- Python equivalent ---\nimport statsmodels.formula.api as smf\nlm = smf.ols('AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade', data=house).fit()\nprint(lm.rsquared)       # 0.5407\nhouse['Weight'] = house['DocumentDate'].dt.year - 2005\nwls = smf.wls(lm.model.formula, data=house, weights=house['Weight']).fit()\nprint(wls.params['SqFtTotLiving'])  # 245.017"
   };
 
   // 3 — Prediction Using Regression
@@ -299,7 +303,8 @@
           "</ul>" +
           "<p>Because a prediction interval must absorb that individual-value error, it is much wider than a " +
           "confidence interval for the same value. The book warns: using a confidence interval where a prediction " +
-          "interval is needed will greatly underestimate the uncertainty in a single predicted value.</p>"
+          "interval is needed will greatly underestimate the uncertainty in a single predicted value.</p>" +
+           "<pre><code class=\"language-python\"># --- R (Practical Statistics, 1st ed.) ---\n# # Empty-lot extrapolation from house_lm:\n# -521900 + 5000 * (-.0605)      # -522202.5 (about -$522,202)\n# predict(house_lm, newdata=new_house, interval='prediction')\n# predict(house_lm, newdata=new_house, interval='confidence')\n\n# --- Python equivalent ---\nimport pandas as pd\nnew_lot = pd.DataFrame({'SqFtTotLiving':[0], 'SqFtLot':[5000],\n                        'Bathrooms':[0], 'Bedrooms':[0], 'BldgGrade':[0]})\nprint(-521900 + 5000 * (-0.0605))  # -522202.5\n# pred = results.get_prediction(new_house)\n# pred.summary_frame(alpha=0.05)  # mean_ci_lower/upper and obs_ci_lower/upper</code></pre>"
       }
     ],
     takeaways: [
@@ -327,7 +332,7 @@
           "be recoded into a set of binary <strong>dummy variables</strong> (0/1 columns).</p>" +
           "<p>The King County data has a $\\text{PropertyType}$ factor with three levels: Multiplex, Single Family, " +
           "Townhouse. One-hot encoding turns it into three 0/1 columns — useful for tree models and nearest " +
-          "neighbors, but <em>not</em> appropriate for regression. In regression a factor with $P$ levels is " +
+          "neighbors, but <em>not</em> appropriate for regression. The book prints the first six one-hot rows:<table class=\"extable\"><thead><tr><th class=\"num\">row</th><th>PropertyType</th><th class=\"num\">Multiplex</th><th class=\"num\">Single Family</th><th class=\"num\">Townhouse</th></tr></thead><tbody><tr><td class=\"num\">1</td><td class=\"row-h\">Multiplex</td><td class=\"num\">1</td><td class=\"num\">0</td><td class=\"num\">0</td></tr><tr><td class=\"num\">2</td><td class=\"row-h\">Single Family</td><td class=\"num\">0</td><td class=\"num\">1</td><td class=\"num\">0</td></tr><tr><td class=\"num\">3</td><td class=\"row-h\">Single Family</td><td class=\"num\">0</td><td class=\"num\">1</td><td class=\"num\">0</td></tr><tr><td class=\"num\">4</td><td class=\"row-h\">Single Family</td><td class=\"num\">0</td><td class=\"num\">1</td><td class=\"num\">0</td></tr><tr><td class=\"num\">5</td><td class=\"row-h\">Single Family</td><td class=\"num\">0</td><td class=\"num\">1</td><td class=\"num\">0</td></tr><tr><td class=\"num\">6</td><td class=\"row-h\">Townhouse</td><td class=\"num\">0</td><td class=\"num\">0</td><td class=\"num\">1</td></tr></tbody></table>In regression a factor with $P$ levels is " +
           "represented by only $P - 1$ columns. With an intercept present, once $P - 1$ dummies are set the $P$th is " +
           "implied; including all $P$ would create a multicollinearity error.</p>" +
           "<p>R's default is <strong>reference coding</strong> (treatment coding): the first level is the reference, " +
@@ -388,7 +393,8 @@
         valueLabels: ["0", "-84,690", "-115,100"],
         colors: ["#7ee787", "#ffb454", "#ffb454"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# head(house[, 'PropertyType'])\n# prop_type_dummies <- model.matrix(~PropertyType -1, data=house)\n# head(prop_type_dummies)  # Multiplex row: 1 0 0; Single Family: 0 1 0\n# lm(AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms +\n#    BldgGrade + PropertyType, data=house)\n# # PropertyTypeSingle Family -8.469e+04; PropertyTypeTownhouse -1.151e+05\n# zip_groups <- house %>% mutate(resid=residuals(house_lm)) %>%\n#   group_by(ZipCode) %>% summarize(med_resid=median(resid), cnt=n()) %>%\n#   arrange(med_resid) %>% mutate(cum_cnt=cumsum(cnt), ZipGroup=ntile(cum_cnt, 5))\n\n# --- Python equivalent ---\nX = pd.get_dummies(house['PropertyType'], prefix='PropertyType')\nX_reg = pd.get_dummies(house['PropertyType'], drop_first=True)  # P-1 dummies for regression\nmodel = smf.ols('AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade + C(PropertyType)', data=house).fit()\n# C(PropertyType)[T.Single Family] ~= -84690; [T.Townhouse] ~= -115100\nzip_groups = (house.assign(resid=house_lm.resid).groupby('ZipCode')\n              .agg(med_resid=('resid','median'), cnt=('ZipCode','size'))\n              .sort_values('med_resid'))"
   };
 
   // 5 — Interpreting the Regression Equation
@@ -410,7 +416,8 @@
           "<p>Correlated predictors can also inflate the standard errors of the estimates. Refitting after removing " +
           "SqFtTotLiving, SqFtFinBasement, and Bathrooms flips the Bedrooms coefficient to positive (about " +
           "$+27{,}657$), in line with intuition — though now Bedrooms is really standing in as a proxy for house " +
-          "size.</p>"
+          "size.</p>" +
+           "<table class=\"extable\"><thead><tr><th>Term</th><th class=\"num\">step_lm coefficient</th><th class=\"num\">after removing size/bath terms</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">6,227,632</td><td class=\"num\">4,834,680</td></tr><tr><td class=\"row-h\">SqFtTotLiving</td><td class=\"num\">186.50</td><td class=\"num\">dropped</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">44,721.72</td><td class=\"num\">dropped</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-49,807.18</td><td class=\"num\">27,657</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">139,179.23</td><td class=\"num\">245,709</td></tr><tr><td class=\"row-h\">PropertyTypeSingle Family</td><td class=\"num\">23,328.69</td><td class=\"num\">-17,604</td></tr><tr><td class=\"row-h\">PropertyTypeTownhouse</td><td class=\"num\">92,216.25</td><td class=\"num\">-47,477</td></tr><tr><td class=\"row-h\">YrBuilt</td><td class=\"num\">-3,592.47</td><td class=\"num\">-3,161</td></tr></tbody></table>"
       },
       {
         h: "Multicollinearity",
@@ -438,7 +445,8 @@
           "ZipGroup turns out to be a major predictor: a home in the most expensive zip group is estimated to sell " +
           "for almost &dollar;340,000 more. With location in the model, SqFtLot and Bathrooms turn positive, and " +
           "adding a bathroom now raises the sale price by about &dollar;7,500. (Bedrooms stays negative — a " +
-          "well-known real-estate phenomenon for homes of equal area: more, hence smaller, bedrooms means lower value.)</p>"
+          "well-known real-estate phenomenon for homes of equal area: more, hence smaller, bedrooms means lower value.)</p>" +
+           "<table class=\"extable\"><thead><tr><th>Location model term</th><th class=\"num\">Coefficient</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">-670,900</td></tr><tr><td class=\"row-h\">SqFtTotLiving</td><td class=\"num\">211.2</td></tr><tr><td class=\"row-h\">SqFtLot</td><td class=\"num\">0.4692</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">5,537</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-41,390</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">98,930</td></tr><tr><td class=\"row-h\">PropertyTypeSingle Family</td><td class=\"num\">21,130</td></tr><tr><td class=\"row-h\">PropertyTypeTownhouse</td><td class=\"num\">-77,410</td></tr><tr><td class=\"row-h\">ZipGroup2</td><td class=\"num\">51,690</td></tr><tr><td class=\"row-h\">ZipGroup3</td><td class=\"num\">114,200</td></tr><tr><td class=\"row-h\">ZipGroup4</td><td class=\"num\">178,300</td></tr><tr><td class=\"row-h\">ZipGroup5</td><td class=\"num\">339,100</td></tr></tbody></table>"
       },
       {
         h: "Interactions and main effects",
@@ -477,7 +485,8 @@
           { name: "Highest ZipGroup (~\\$447/sqft)", color: "#ffb454", points: [[1000, 447000], [4000, 1788000]] }
         ]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# step_lm$coefficients\n# # Bedrooms -4.980718e+04 while SqFtTotLiving 1.865012e+02\n# update(step_lm, . ~ . -SqFtTotLiving -SqFtFinBasement -Bathrooms)\n# # Bedrooms 27657 after size/bath terms are removed\n# lm(AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms +\n#    BldgGrade + PropertyType + ZipGroup, data=house, na.action=na.omit)\n# # ZipGroup5 3.391e+05; SqFtLot 4.692e-01; Bathrooms 5.537e+03\n# lm(AdjSalePrice ~ SqFtTotLiving*ZipGroup + SqFtLot + Bathrooms +\n#    Bedrooms + BldgGrade + PropertyType, data=house, na.action=na.omit)\n# # SqFtTotLiving 1.176e+02; SqFtTotLiving:ZipGroup5 2.298e+02\n\n# --- Python equivalent ---\nstep = smf.ols(step_formula, data=house0).fit()\nreduced = smf.ols('AdjSalePrice ~ Bedrooms + BldgGrade + C(PropertyType) + YrBuilt', data=house0).fit()\nloc = smf.ols('AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade + C(PropertyType) + C(ZipGroup)', data=house).fit()\ninter = smf.ols('AdjSalePrice ~ SqFtTotLiving*C(ZipGroup) + SqFtLot + Bathrooms + Bedrooms + BldgGrade + C(PropertyType)', data=house).fit()"
   };
 
   // 6 — Regression Diagnostics
@@ -516,7 +525,8 @@
           "hat-values on the x-axis, standardized residuals on the y-axis, and scales bubble size by Cook's distance. " +
           "Removing the highly influential King County points changed the Bathrooms coefficient dramatically — from " +
           "about &dollar;2,282 to about $-\\$16{,}132$. For big data a single record rarely dominates the fit, but " +
-          "for anomaly detection influential points are very useful.</p>"
+          "for anomaly detection influential points are very useful.</p>" +
+           "<table class=\"extable\"><thead><tr><th>Coefficient</th><th class=\"num\">Original</th><th class=\"num\">Influential removed</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">-772,550</td><td class=\"num\">-647,137</td></tr><tr><td class=\"row-h\">SqFtTotLiving</td><td class=\"num\">210</td><td class=\"num\">230</td></tr><tr><td class=\"row-h\">SqFtLot</td><td class=\"num\">39</td><td class=\"num\">33</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">2,282</td><td class=\"num\">-16,132</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-26,320</td><td class=\"num\">-22,888</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">130,000</td><td class=\"num\">114,871</td></tr></tbody></table>"
       },
       {
         h: "Heteroskedasticity and non-normal residuals",
@@ -583,7 +593,8 @@
           { name: "loess smooth", color: "#ffb454", points: [[600, -120000], [1000, -150000], [2000, -50000], [3000, 250000], [4000, 600000], [5000, 700000], [5500, 730000]] }
         ]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# house_98105 <- house[house$ZipCode == 98105,]\n# lm_98105 <- lm(AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade, data=house_98105)\n# sresid <- rstandard(lm_98105); idx <- order(sresid); sresid[idx[1]]\n# # 20431 -4.326732; overestimate $757,753; sale price 119748\n# std_resid <- rstandard(lm_98105); cooks_D <- cooks.distance(lm_98105); hat_values <- hatvalues(lm_98105)\n# plot(hat_values, std_resid, cex=10*sqrt(cooks_D)); abline(h=c(-2.5, 2.5), lty=2)\n# df <- data.frame(resid=residuals(lm_98105), pred=predict(lm_98105))\n# ggplot(df, aes(pred, abs(resid))) + geom_point() + geom_smooth()\n# terms <- predict(lm_98105, type='terms'); partial_resid <- resid(lm_98105) + terms\n\n# --- Python equivalent ---\nmod = smf.ols('AdjSalePrice ~ SqFtTotLiving + SqFtLot + Bathrooms + Bedrooms + BldgGrade', data=house_98105).fit()\ninf = mod.get_influence()\nstd_resid = inf.resid_studentized_internal\ncooks_D = inf.cooks_distance[0]\nhat_values = inf.hat_matrix_diag\nidx = std_resid.argmin()  # -4.326732 in the book"
   };
 
   // 7 — Polynomial and Spline Regression
@@ -603,7 +614,8 @@
           "<p>$$Y = b_0 + b_1 X + b_2 X^2 + e$$</p>" +
           "<p>Fitting a quadratic in $\\text{SqFtTotLiving}$ on the 98105 data yields two coefficients for that " +
           "predictor — a linear term and a quadratic term. The partial residual plot of the fitted curve matches the " +
-          "smooth more closely than a straight line, confirming curvature.</p>"
+          "smooth more closely than a straight line, confirming curvature.</p>" +
+           "<table class=\"extable\"><thead><tr><th>Quadratic model term</th><th class=\"num\">Coefficient</th></tr></thead><tbody><tr><td class=\"row-h\">Intercept</td><td class=\"num\">-402,530.47</td></tr><tr><td class=\"row-h\">poly(SqFtTotLiving, 2)1</td><td class=\"num\">3,271,519.49</td></tr><tr><td class=\"row-h\">poly(SqFtTotLiving, 2)2</td><td class=\"num\">776,934.02</td></tr><tr><td class=\"row-h\">SqFtLot</td><td class=\"num\">32.56</td></tr><tr><td class=\"row-h\">Bathrooms</td><td class=\"num\">-1,435.12</td></tr><tr><td class=\"row-h\">BldgGrade</td><td class=\"num\">135,717.06</td></tr><tr><td class=\"row-h\">Bedrooms</td><td class=\"num\">-9,191.94</td></tr></tbody></table>"
       },
       {
         h: "Splines",
@@ -641,4 +653,21 @@
       "A flexible curve that fits well can still be an artifact of a confounder (omitted location)."
     ]
   });
+  window.CODEVIZ["ps-ch4-polynomial-and-spline"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Nonlinear SqFtTotLiving Fits (illustrative reconstruction of Figures 4-10 to 4-13)",
+        interpret: "The book's polynomial, spline, and GAM fits follow the partial-residual smooth more closely than a straight line; the spline/GAM are more flexible around small homes.",
+        xlabel: "SqFtTotLiving",
+        ylabel: "Fitted contribution",
+        series: [
+          { name: "linear", color: "#7ee787", points: [[700, -180000], [1500, -20000], [2500, 180000], [3500, 380000], [5000, 680000]] },
+          { name: "polynomial", color: "#4ea1ff", points: [[700, -100000], [1500, -50000], [2500, 140000], [3500, 420000], [5000, 760000]] },
+          { name: "spline/GAM", color: "#ffb454", points: [[700, -30000], [1000, -140000], [2000, -50000], [3000, 260000], [4000, 620000], [5000, 700000]] }
+        ]
+      }
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# lm(AdjSalePrice ~ poly(SqFtTotLiving, 2) + SqFtLot +\n#    BldgGrade + Bathrooms + Bedrooms, data=house_98105)\n# # (Intercept) -402530.47; poly(... )1 3271519.49; poly(... )2 776934.02\n# library(splines)\n# knots <- quantile(house_98105$SqFtTotLiving, p=c(.25, .5, .75))\n# lm_spline <- lm(AdjSalePrice ~ bs(SqFtTotLiving, knots=knots, degree=3) +\n#   SqFtLot + Bathrooms + Bedrooms + BldgGrade, data=house_98105)\n# library(mgcv)\n# lm_gam <- gam(AdjSalePrice ~ s(SqFtTotLiving) + SqFtLot +\n#   Bathrooms + Bedrooms + BldgGrade, data=house_98105)\n\n# --- Python equivalent ---\nimport statsmodels.formula.api as smf\nquad = smf.ols('AdjSalePrice ~ SqFtTotLiving + I(SqFtTotLiving**2) + SqFtLot + BldgGrade + Bathrooms + Bedrooms', data=house_98105).fit()\nspline = smf.ols('AdjSalePrice ~ bs(SqFtTotLiving, df=6, degree=3) + SqFtLot + Bathrooms + Bedrooms + BldgGrade', data=house_98105).fit()\n# GAM equivalent: use a spline smoother such as pygam.LinearGAM(s(0) + l(1) + ...).fit(X, y)"
+  };
 })();

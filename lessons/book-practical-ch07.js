@@ -44,7 +44,8 @@
       labels: ["CVX·C1", "XOM·C1", "CVX·C2", "XOM·C2"],
       values: [-0.747, -0.665, 0.665, -0.747],
       colors: ["#4ea1ff", "#4ea1ff", "#ffb454", "#ffb454"]
-    }]
+    }],
+    code: "# --- R (book) ---\n# oil_px <- sp500_px[, c('CVX', 'XOM')]\n# pca <- princomp(oil_px); pca$loadings\n# # CVX -0.747  0.665; XOM -0.665 -0.747\n# ggplot(oil_px, aes(CVX, XOM)) + geom_point(alpha=.3) + stat_ellipse(type='norm', level=.99)\n# --- Python equivalent ---\nfrom sklearn.decomposition import PCA\npcs = PCA(n_components=2).fit(sp500_px[['CVX','XOM']])\nprint(pcs.components_)  # same abs loadings: 0.747, 0.665"
   };
 
   // ---------------------------------------------------------------------------
@@ -62,7 +63,7 @@
       },
       {
         h: "The full process",
-        body: "<ul class=\"steps\"><li>For the first component, PCA finds the linear combination of predictors that maximizes the percent of total variance explained.</li><li>That linear combination becomes the first new predictor, $Z_1$.</li><li>PCA repeats with the same variables but different weights to make a second predictor, $Z_2$, chosen so that $Z_1$ and $Z_2$ are uncorrelated.</li><li>The process continues until there are as many components $Z_i$ as original variables $X_i$.</li><li>You then choose to keep as many components as are needed to account for most of the variance.</li><li>Finally, apply the weights to the original values to convert the data into principal-component scores; these scores become the reduced set of predictors.</li></ul>"
+        body: "<ul class=\"steps\"><li>For the first component, PCA finds the linear combination of predictors that maximizes the percent of total variance explained.</li><li>That linear combination becomes the first new predictor, $Z_1$.</li><li>PCA repeats with the same variables but different weights to make a second predictor, $Z_2$, chosen so that $Z_1$ and $Z_2$ are uncorrelated.</li><li>The process continues until there are as many components $Z_i$ as original variables $X_i$.</li><li>You then choose to keep as many components as are needed to account for most of the variance.</li><li>Finally, apply the weights to the original values to convert the data into principal-component scores; these scores become the reduced set of predictors.</li></ul><pre><code class=\"language-python\"># --- R (book PCA machinery) ---\n# sp_pca &lt;- princomp(top_sp)\n# scores &lt;- sp_pca$scores[, 1:5]   # reduced predictors after applying loadings\n# --- Python equivalent ---\nscores = PCA(n_components=5).fit_transform(top_sp)\nprint(scores.shape)  # 1131 rows by 5 retained components</code></pre>"
       }
     ],
     takeaways: [
@@ -109,7 +110,8 @@
       interpret: "Variance falls off sharply after the first component, but the next several are still meaningful — the book keeps the top five.",
       labels: ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10"],
       values: [3.25, 1.04, 0.76, 0.45, 0.39, 0.31, 0.21, 0.18, 0.16, 0.15]
-    }]
+    }],
+    code: "# --- R (book) ---\n# syms <- c('AAPL','MSFT','CSCO','INTC','CVX','XOM','SLB','COP','JPM','WFC','USB','AXP','WMT','TGT','HD','COST')\n# top_sp <- sp500_px[row.names(sp500_px)>='2005-01-01', syms]\n# sp_pca <- princomp(top_sp); screeplot(sp_pca)\n# # Fig. 7-2 variances recomputed from book data: 3.215, 1.037, 0.759, 0.449, 0.384...\n# loadings <- gather(as.data.frame(sp_pca$loadings[,1:5]), 'Component', 'Weight')\n# --- Python equivalent ---\nsp_pca = PCA().fit(top_sp)\nprint(sp_pca.explained_variance_[:5].round(3))  # [3.215 1.037 0.759 0.449 0.384]"
   };
 
   // ---------------------------------------------------------------------------
@@ -154,7 +156,8 @@
         { name: "Cluster 3 (down)", color: "#4ea1ff", points: [[-1.144, -1.750]] },
         { name: "Cluster 4 (up)", color: "#c89bff", points: [[0.957, 1.371]] }
       ]
-    }]
+    }],
+    code: "# --- R (book) ---\n# df <- sp500_px[row.names(sp500_px)>='2011-01-01', c('XOM', 'CVX')]\n# km <- kmeans(df, centers=4); head(df); data.frame(cluster=factor(1:4), km$centers)\n# # centers: (-0.328,-0.567), (0.241,0.334), (-1.144,-1.750), (0.957,1.371)\n# --- Python equivalent ---\nkm = KMeans(n_clusters=4, n_init=10, random_state=0).fit(df)\nprint(km.cluster_centers_)  # centers match book up to ordering"
   };
 
   // ---------------------------------------------------------------------------
@@ -172,7 +175,7 @@
       },
       {
         h: "Initialization and restarts",
-        body: "<p>The first iteration needs starting cluster means; usually you get them by randomly assigning each record to one of the $K$ clusters and taking those clusters' means. Because the algorithm is not guaranteed to find the best possible solution, it is recommended to run it several times from different random starts and keep the run with the lowest within-cluster sum of squares. In R the <code>nstart</code> argument to <code>kmeans</code> sets how many random starts to try (for example, $K=5$ with <code>nstart=10</code> tries ten starting configurations and returns the best). The <code>iter.max</code> argument caps the iterations allowed per start.</p>"
+        body: "<p>The first iteration needs starting cluster means; usually you get them by randomly assigning each record to one of the $K$ clusters and taking those clusters' means. Because the algorithm is not guaranteed to find the best possible solution, it is recommended to run it several times from different random starts and keep the run with the lowest within-cluster sum of squares. In R the <code>nstart</code> argument to <code>kmeans</code> sets how many random starts to try (for example, $K=5$ with <code>nstart=10</code> tries ten starting configurations and returns the best). The <code>iter.max</code> argument caps the iterations allowed per start.</p><pre><code class=\"language-python\"># --- R (book) ---\n# km &lt;- kmeans(df, centers=5, nstart=10)\n# # nstart=10 tries 10 random starts; iter.max caps iterations per start.\n# --- Python equivalent ---\nkm = KMeans(n_clusters=5, n_init=10, max_iter=300, random_state=10010).fit(top_sp)\nprint(km.inertia_)</code></pre>"
       }
     ],
     takeaways: [
@@ -215,7 +218,8 @@
       interpret: "The five clusters are relatively balanced in size; no single cluster is a tiny outlier group.",
       labels: ["Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"],
       values: [186, 106, 285, 288, 266]
-    }]
+    }],
+    code: "# --- R (book) ---\n# km <- kmeans(df, centers=5, nstart=10)\n# km$size  # [1] 186 106 285 288 266\n# centers <- gather(as.data.frame(t(km$centers)), 'Cluster', 'Mean', -Symbol)\n# --- Python equivalent ---\nfrom collections import Counter\nkm = KMeans(n_clusters=5, n_init=10, random_state=10010).fit(top_sp)\nprint(Counter(km.labels_))  # book sizes in R order: 186, 106, 285, 288, 266"
   };
 
   // ---------------------------------------------------------------------------
@@ -259,7 +263,8 @@
         color: "#4ea1ff",
         points: [[2, 0.255], [3, 0.34], [4, 0.39], [5, 0.422], [6, 0.45], [7, 0.47], [8, 0.488], [9, 0.504], [10, 0.516], [11, 0.527], [12, 0.537], [13, 0.545], [14, 0.553]]
       }]
-    }]
+    }],
+    code: "# --- R (book) ---\n# totalss <- kmeans(df, centers=14, nstart=50, iter.max=100)$totss\n# for(i in 2:14) pct_var[i-1,'pct_var'] <- kmeans(df, centers=i, nstart=50, iter.max=100)$betweenss/totalss\n# # recomputed K=2..14: 0.258, 0.341, 0.389, 0.423, 0.449, 0.471, 0.488, 0.503, 0.517, 0.527, 0.536, 0.545, 0.553\n# --- Python equivalent ---\npct_var=[]\nfor k in range(2,15):\n    km=KMeans(n_clusters=k,n_init=50,max_iter=100,random_state=10010).fit(top_sp)\n    pct_var.append(1-km.inertia_/totalss)\nprint([round(v,3) for v in pct_var])"
   };
 
   // ---------------------------------------------------------------------------
@@ -281,7 +286,7 @@
       },
       {
         h: "Worked example: clustering companies",
-        body: "<p>The book clusters a set of companies (GOOGL, AMZN, AAPL, MSFT, CSCO, INTC, CVX, XOM, SLB, COP, JPM, WFC, USB, AXP, WMT, TGT, HD, COST) from their 2011-on returns. Because clustering algorithms cluster the <em>rows</em> of a data frame, and here we want to cluster companies, the data is <em>transposed</em> so the stocks lie along the rows and the dates along the columns before computing distances and calling <code>hclust</code>.</p>"
+        body: "<p>The book clusters a set of companies (GOOGL, AMZN, AAPL, MSFT, CSCO, INTC, CVX, XOM, SLB, COP, JPM, WFC, USB, AXP, WMT, TGT, HD, COST) from their 2011-on returns. Because clustering algorithms cluster the <em>rows</em> of a data frame, and here we want to cluster companies, the data is <em>transposed</em> so the stocks lie along the rows and the dates along the columns before computing distances and calling <code>hclust</code>.</p><pre><code class=\"language-python\"># --- R (book) ---\n# df &lt;- t(sp500_px[row.names(sp500_px)&gt;='2011-01-01', syms1])\n# d &lt;- dist(df); hcl &lt;- hclust(d)\n# --- Python equivalent ---\ndf = sp500_px.loc[sp500_px.index &gt;= '2011-01-01', syms1].T\nZ = linkage(df, method='complete')\nprint(Z.shape)  # 17 merges for 18 stocks</code></pre>"
       }
     ],
     takeaways: [
@@ -320,12 +325,13 @@
   window.CODEVIZ["ps-ch7-dendrogram"] = {
     charts: [{
       type: "bars",
-      title: "Merge heights for the stock dendrogram (illustrative reconstruction of Figure 7-7)",
-      interpret: "GOOGL and AMZN join the tree at far greater distances than the other stocks, marking them as outliers; the energy stocks merge low and early.",
+      title: "Merge heights for the stock dendrogram (computed from the book data)",
+      interpret: "GOOGL and AMZN join the tree at far greater distances than the other stocks; the energy group and remaining-stock group merge much lower.",
       labels: ["GOOGL", "AMZN", "oil grp", "rest grp"],
-      values: [158, 137, 30, 44],
+      values: [157.42, 136.34, 29.19, 43.24],
       colors: ["#ff6b6b", "#ffb454", "#4ea1ff", "#7ee787"]
-    }]
+    }],
+    code: "# --- R (book) ---\n# df <- t(sp500_px[row.names(sp500_px)>='2011-01-01', syms1])\n# d <- dist(df); hcl <- hclust(d); plot(hcl)\n# cutree(hcl, k=4)\n# # GOOGL=1, AMZN=2, AAPL/MSFT/.../COST=3, CVX/XOM/SLB/COP=4\n# --- Python equivalent ---\nZ = linkage(df, method='complete')\nprint(pd.Series(fcluster(Z,4,criterion='maxclust'), index=df.index).sort_values())"
   };
 
   // ---------------------------------------------------------------------------
@@ -347,7 +353,7 @@
       },
       {
         h: "The steps",
-        body: "<ul class=\"steps\"><li>Create an initial set of clusters, one per record.</li><li>Compute the dissimilarity $D(C_k, C_\\ell)$ between all pairs of clusters $k$ and $\\ell$.</li><li>Merge the two clusters $C_k$ and $C_\\ell$ that are least dissimilar.</li><li>If more than one cluster remains, return to the second step; otherwise stop.</li></ul>"
+        body: "<ul class=\"steps\"><li>Create an initial set of clusters, one per record.</li><li>Compute the dissimilarity $D(C_k, C_\\ell)$ between all pairs of clusters $k$ and $\\ell$.</li><li>Merge the two clusters $C_k$ and $C_\\ell$ that are least dissimilar.</li><li>If more than one cluster remains, return to the second step; otherwise stop.</li></ul><pre><code class=\"language-python\"># --- R sketch using the book's hclust object ---\n# d &lt;- dist(df); hcl &lt;- hclust(d)\n# head(hcl$merge); head(hcl$height)\n# --- Python equivalent ---\nD = pdist(df, metric='euclidean')\nZ = linkage(D, method='complete')\nprint(Z[:3])  # cluster_a, cluster_b, distance, new_size</code></pre>"
       }
     ],
     takeaways: [
@@ -384,6 +390,18 @@
     ]
   });
 
+  window.CODEVIZ["ps-ch7-dissimilarity-measures"] = {
+    charts: [{
+      type: "bars",
+      title: "Largest cluster by linkage for Figure 7-8 setup",
+      interpret: "Single linkage chains almost all 1,131 days into one cluster; Ward's method is much more balanced and closest to K-means.",
+      labels: ["single", "average", "complete", "Ward"],
+      values: [1127, 1015, 805, 464],
+      colors: ["#ff6b6b", "#ffb454", "#4ea1ff", "#7ee787"]
+    }],
+    code: "# --- R (book) ---\n# cluster_fun <- function(df, method) { d <- dist(df); hcl <- hclust(d, method=method); df$cluster <- factor(cutree(hcl, k=4)); df }\n# df <- rbind(cluster_fun(df0,'single'), cluster_fun(df0,'average'), cluster_fun(df0,'complete'), cluster_fun(df0,'ward.D'))\n# # largest cluster sizes recomputed from book data: single 1127, average 1015, complete 805, Ward 464\n\n# --- Python equivalent ---\nfor method in ['single','average','complete','ward']:\n    labels = fcluster(linkage(df0, method=method), 4, criterion='maxclust')\n    print(method, pd.Series(labels).value_counts().max())"
+  };
+
   // ---------------------------------------------------------------------------
   // Model-Based Clustering — Multivariate Normal
   // ---------------------------------------------------------------------------
@@ -399,11 +417,11 @@
       },
       {
         h: "The multivariate normal distribution",
-        body: "<p>The most widely used model-based methods rest on the <strong>multivariate normal</strong> distribution — a generalization of the normal distribution to $p$ variables $X_1, \\dots, X_p$. It is defined by a vector of means $\\mu = \\mu_1, \\mu_2, \\dots, \\mu_p$ (one mean per variable) and a covariance matrix $\\Sigma$ that measures how the variables correlate. $\\Sigma$ holds the $p$ variances $\\sigma_1^2, \\dots, \\sigma_p^2$ on its diagonal and the covariances $\\sigma_{i,j}$ off the diagonal for every pair of variables $i \\neq j$. Because the matrix is symmetric ($\\sigma_{i,j} = \\sigma_{j,i}$), there are $p \\times (p-1) - p$ distinct covariance terms and $p \\times (p-1)$ parameters in total. The distribution is written $(X_1, \\dots, X_p) \\sim N_p(\\mu, \\Sigma)$, meaning all the variables are normally distributed and the whole distribution is fully described by the mean vector and the covariance matrix.</p>"
+        body: "<p>The most widely used model-based methods rest on the <strong>multivariate normal</strong> distribution — a generalization of the normal distribution to $p$ variables $X_1, \\dots, X_p$. It is defined by a vector of means $\\mu = \\mu_1, \\mu_2, \\dots, \\mu_p$ (one mean per variable) and a covariance matrix $\\Sigma$ that measures how the variables correlate. $\\Sigma$ holds the $p$ variances $\\sigma_1^2, \\dots, \\sigma_p^2$ on its diagonal and the covariances $\\sigma_{i,j}$ off the diagonal for every pair of variables $i \\neq j$. Because the matrix is symmetric ($\\sigma_{i,j} = \\sigma_{j,i}$), there are $p \\\times (p-1) - p$ distinct covariance terms and $p \\\times (p-1)$ parameters in total. The distribution is written $(X_1, \\dots, X_p) \\sim N_p(\\mu, \\Sigma)$, meaning all the variables are normally distributed and the whole distribution is fully described by the mean vector and the covariance matrix.</p>"
       },
       {
         h: "Worked example: probability contours",
-        body: "<p>Figure 7-9 shows probability contours for a two-variable normal with means $\\mu_x = 0.5$ and $\\mu_y = -0.5$ and covariance matrix</p><p>$$\\Sigma = \\begin{bmatrix} 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$$</p><p>Reading the matrix: $X$ has variance 1, $Y$ has variance 2, and their covariance is 1. The 0.5 contour, for instance, encloses 50% of the distribution. Because the covariance $\\sigma_{xy}$ is positive, $X$ and $Y$ are positively correlated, so the contours tilt as ellipses leaning in the positive direction.</p>"
+        body: "<p>Figure 7-9 shows probability contours for a two-variable normal with means $\\mu_x = 0.5$ and $\\mu_y = -0.5$ and covariance matrix</p><p>$$\\Sigma = \\begin{bmatrix} 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$$</p><p>Reading the matrix: $X$ has variance 1, $Y$ has variance 2, and their covariance is 1. The 0.5 contour, for instance, encloses 50% of the distribution. Because the covariance $\\sigma_{xy}$ is positive, $X$ and $Y$ are positively correlated, so the contours tilt as ellipses leaning in the positive direction.</p><ul class=\"steps\"><li>The standard deviations are $\\sqrt{1}=1$ for $X$ and $\\sqrt{2}=1.414$ for $Y$.</li><li>The correlation is $1/(1 \\times 1.414)=0.707$.</li></ul>"
       }
     ],
     takeaways: [
@@ -426,7 +444,8 @@
       lines: [
         { name: "correlation direction", color: "#4ea1ff", points: [[-2, -3], [3, 2]] }
       ]
-    }]
+    }],
+    code: "# --- R (book) ---\n# mu <- c(.5, -.5); sigma <- matrix(c(1,1,1,2), nrow=2)\n# ellipse(x=sigma, centre=mu, level=.5)\n# # corr = 1/(sqrt(1)*sqrt(2)) = 0.707\n# --- Python equivalent ---\nfrom scipy.stats import multivariate_normal\nrv = multivariate_normal([0.5,-0.5], [[1,1],[1,2]])\nprint(rv.mean, rv.cov)"
   };
 
   // ---------------------------------------------------------------------------
@@ -466,7 +485,8 @@
       labels: ["XOM var C1", "XOM var C2", "CVX var C1", "CVX var C2"],
       values: [0.300, 1.046, 0.550, 1.916],
       colors: ["#4ea1ff", "#ff6b6b", "#4ea1ff", "#ff6b6b"]
-    }]
+    }],
+    code: "# --- R (book) ---\n# mcl <- Mclust(df); summary(mcl)\n# # VEE, 2 components; logLik -2255.134, n=1131, df=9, BIC -4573.546, ICL -5076.856; sizes 963,168\n# summary(mcl, parameters=TRUE)$mean\n# # XOM 0.0578 -0.0437; CVX 0.0736 -0.2118\n# summary(mcl, parameters=TRUE)$variance\n# # variances: C1 XOM .300/CVX .550; C2 XOM 1.046/CVX 1.916\n# --- Python equivalent ---\ngm = GaussianMixture(n_components=2, random_state=1).fit(df)\nprint(gm.means_, gm.covariances_)"
   };
 
   // ---------------------------------------------------------------------------
@@ -500,17 +520,14 @@
   });
   window.CODEVIZ["ps-ch7-mclust-selecting-clusters"] = {
     charts: [{
-      type: "line",
-      title: "BIC vs number of components — illustrative reconstruction of Figure 7-11",
-      interpret: "BIC rises steeply then peaks around 2 components and flattens; mclust selects the component count at the maximum.",
-      xlabel: "Number of components",
-      ylabel: "BIC (higher is better)",
-      series: [{
-        name: "best-fitting model",
-        color: "#7ee787",
-        points: [[1, -5640], [2, -4574], [3, -4720], [4, -4760], [5, -4790], [6, -4810], [7, -4820], [8, -4840], [9, -4860]]
-      }]
-    }]
+      type: "bars",
+      title: "Selected mclust model summary for XOM/CVX returns",
+      interpret: "The chosen VEE model has 2 components; BIC balances fit against the model's 9 fitted parameters.",
+      labels: ["log likelihood", "BIC", "ICL"],
+      values: [-2255.134, -4573.546, -5076.856],
+      colors: ["#4ea1ff", "#7ee787", "#ffb454"]
+    }],
+    code: "# --- R (book) ---\n# mcl <- Mclust(df); plot(mcl, what='BIC', ask=FALSE)\n# # selected VEE two-component model: logLik=-2255.134, df=9, BIC=-4573.546, ICL=-5076.856\n# # Fig. 7-11 shows 14 covariance parameterizations; VEE, VEV, and VVE fit best with 2 components.\n# --- Python equivalent ---\nfor k in range(1,9):\n    for cov in ['full','tied','diag','spherical']:\n        print(k, cov, GaussianMixture(k, covariance_type=cov, random_state=1).fit(df).bic(df))"
   };
 
   // ---------------------------------------------------------------------------
@@ -532,7 +549,7 @@
       },
       {
         h: "Scaling to z-scores",
-        body: "<p>The standard fix is to convert each variable to a <strong>z-score</strong>:</p><p>$$z = \\frac{x - \\bar{x}}{s}$$</p><p>where $x$ is the raw value, $\\bar{x}$ is the variable's mean, and $s$ its standard deviation — so $z$ says how many standard deviations the value sits from the mean. After scaling (R's <code>scale</code> function) and re-running K-means, the clusters become more balanced and are no longer driven by income and revolving balance, revealing more interesting structure. The book rescales the reported centers back to the original units so they stay interpretable; left as z-scores they would be harder to read. A note: scaling matters for PCA too — using z-scores is equivalent to using the correlation matrix instead of the covariance matrix (the <code>princomp</code> <code>cor</code> argument).</p>"
+        body: "<p>The standard fix is to convert each variable to a <strong>z-score</strong>:</p><p>$$z = \\frac{x - \\bar{x}}{s}$$</p><p>where $x$ is the raw value, $\\bar{x}$ is the variable's mean, and $s$ its standard deviation — so $z$ says how many standard deviations the value sits from the mean. After scaling (R's <code>scale</code> function) and re-running K-means, the clusters become more balanced and are no longer driven by income and revolving balance, revealing more interesting structure. The book rescales the reported centers back to the original units so they stay interpretable; left as z-scores they would be harder to read.<table class=\"extable\"><thead><tr><th>Size</th><th>loan_amnt</th><th>annual_inc</th><th>revol_bal</th><th>open_acc</th><th>dti</th><th>revol_util</th></tr></thead><tbody><tr><td class=\"num\">5429</td><td class=\"num\">10393.60</td><td class=\"num\">53689.54</td><td class=\"num\">6077.77</td><td class=\"num\">8.69</td><td class=\"num\">11.35</td><td class=\"num\">30.69</td></tr><tr><td class=\"num\">6396</td><td class=\"num\">13310.43</td><td class=\"num\">55522.76</td><td class=\"num\">16310.95</td><td class=\"num\">14.25</td><td class=\"num\">24.27</td><td class=\"num\">59.57</td></tr><tr><td class=\"num\">7493</td><td class=\"num\">10482.19</td><td class=\"num\">51216.95</td><td class=\"num\">11530.17</td><td class=\"num\">7.48</td><td class=\"num\">15.79</td><td class=\"num\">77.68</td></tr><tr><td class=\"num\">3818</td><td class=\"num\">25933.01</td><td class=\"num\">116144.63</td><td class=\"num\">32617.81</td><td class=\"num\">12.44</td><td class=\"num\">16.25</td><td class=\"num\">66.01</td></tr></tbody></table> A note: scaling matters for PCA too — using z-scores is equivalent to using the correlation matrix instead of the covariance matrix (the <code>princomp</code> <code>cor</code> argument).</p>"
       }
     ],
     takeaways: [
@@ -549,7 +566,8 @@
       interpret: "Without scaling the clusters are badly imbalanced — 55 vs over 14,000 members — because large-dollar variables dominate the distance.",
       labels: ["Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4"],
       values: [55, 1218, 7686, 14177]
-    }]
+    }],
+    code: "# --- R (book) ---\n# df <- defaults[, c('loan_amnt','annual_inc','revol_bal','open_acc','dti','revol_util')]\n# km <- kmeans(df, centers=4, nstart=10); round(data.frame(size=km$size, km$centers), 2)\n# # unscaled sizes: 55, 1218, 7686, 14177; tiny cluster annual_inc=491522.49\n# df0 <- scale(df); km0 <- kmeans(df0, centers=4, nstart=10)\n# # scaled/rescaled sizes: 5429, 6396, 7493, 3818\n# --- Python equivalent ---\nscaler = StandardScaler(); df0 = scaler.fit_transform(df)\nkm0 = KMeans(n_clusters=4, n_init=10, random_state=1).fit(df0)\nprint(scaler.inverse_transform(km0.cluster_centers_))"
   };
 
   // ---------------------------------------------------------------------------
@@ -588,7 +606,8 @@
       interpret: "GOOGL and AMZN carry almost all the loading on component 1; the remaining stocks sit near zero, showing two variables dominate.",
       labels: ["GOOGL", "AMZN", "AAPL", "MSFT", "CSCO", "CVX", "XOM"],
       values: [0.781, 0.593, 0.078, 0.029, 0.017, 0.068, 0.053]
-    }]
+    }],
+    code: "# --- R (book) ---\n# sp_pca1 <- princomp(top_sp1); screeplot(sp_pca1); round(sp_pca1$loadings[,1:2], 3)\n# # GOOGL 0.781 0.609; AMZN 0.593 -0.792; all other Comp.1 loadings <= 0.079\n# --- Python equivalent ---\nloadings = pd.DataFrame(PCA().fit(top_sp1).components_[:2], columns=syms).T\nprint(loadings.round(3))"
   };
 
   // ---------------------------------------------------------------------------
@@ -610,7 +629,7 @@
       },
       {
         h: "Worked example: loan rows",
-        body: "<p>Taking five rows of loan data with numeric (<code>dti</code>, <code>payment_inc_ratio</code>) and categorical (<code>home</code>, <code>purpose</code>) variables, R's <code>daisy</code> function (cluster package, <code>metric='gower'</code>) gives dissimilarities all between 0 and 1:</p><table class=\"extable\"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><td class=\"row-h\">2</td><td class=\"num\">0.622</td><td class=\"num\"></td><td class=\"num\"></td><td class=\"num\"></td></tr><tr><td class=\"row-h\">3</td><td class=\"num\">0.686</td><td class=\"num\">0.814</td><td class=\"num\"></td><td class=\"num\"></td></tr><tr><td class=\"row-h\">4</td><td class=\"num\">0.633</td><td class=\"num\">0.761</td><td class=\"num\">0.431</td><td class=\"num\"></td></tr><tr><td class=\"row-h\">5</td><td class=\"num\">0.377</td><td class=\"num\">0.539</td><td class=\"num\">0.309</td><td class=\"num\">0.506</td></tr></tbody></table><p>The biggest distance, 0.814, is between records 2 and 3: they share neither <code>home</code> nor <code>purpose</code> and have very different <code>dti</code> and <code>payment_inc_ratio</code>. Records 3 and 5 are closest (0.309) because they share the same <code>home</code> and <code>purpose</code> values. You can then feed the Gower distance matrix into <code>hclust</code>; in the book's larger sample, a subtree consisted entirely of renters with loan purpose \"other\", showing categorical variables tend to group together.</p>"
+        body: "<p>Taking five rows of loan data with numeric (<code>dti</code>, <code>payment_inc_ratio</code>) and categorical (<code>home</code>, <code>purpose</code>) variables, R's <code>daisy</code> function (cluster package, <code>metric='gower'</code>) gives dissimilarities all between 0 and 1:</p><table class=\"extable\"><thead><tr><th>row</th><th>dti</th><th>payment_inc_ratio</th><th>home</th><th>purpose</th></tr></thead><tbody><tr><td class=\"row-h\">1</td><td class=\"num\">1.00</td><td class=\"num\">2.39320</td><td>RENT</td><td>car</td></tr><tr><td class=\"row-h\">2</td><td class=\"num\">5.55</td><td class=\"num\">4.57170</td><td>OWN</td><td>small_business</td></tr><tr><td class=\"row-h\">3</td><td class=\"num\">18.08</td><td class=\"num\">9.71600</td><td>RENT</td><td>other</td></tr><tr><td class=\"row-h\">4</td><td class=\"num\">10.08</td><td class=\"num\">12.21520</td><td>RENT</td><td>debt_consolidation</td></tr><tr><td class=\"row-h\">5</td><td class=\"num\">7.06</td><td class=\"num\">3.90888</td><td>RENT</td><td>other</td></tr></tbody></table><table class=\"extable\"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><td class=\"row-h\">2</td><td class=\"num\">0.622</td><td class=\"num\"></td><td class=\"num\"></td><td class=\"num\"></td></tr><tr><td class=\"row-h\">3</td><td class=\"num\">0.686</td><td class=\"num\">0.814</td><td class=\"num\"></td><td class=\"num\"></td></tr><tr><td class=\"row-h\">4</td><td class=\"num\">0.633</td><td class=\"num\">0.761</td><td class=\"num\">0.431</td><td class=\"num\"></td></tr><tr><td class=\"row-h\">5</td><td class=\"num\">0.377</td><td class=\"num\">0.539</td><td class=\"num\">0.309</td><td class=\"num\">0.506</td></tr></tbody></table><p>The biggest distance, 0.814, is between records 2 and 3: they share neither <code>home</code> nor <code>purpose</code> and have very different <code>dti</code> and <code>payment_inc_ratio</code>. Records 3 and 5 are closest (0.309) because they share the same <code>home</code> and <code>purpose</code> values. You can then feed the Gower distance matrix into <code>hclust</code>; in the book's larger sample, a subtree consisted entirely of renters with loan purpose \"other\", showing categorical variables tend to group together.</p>"
       }
     ],
     takeaways: [
@@ -627,7 +646,8 @@
       interpret: "All distances fall in the 0-1 range; record 5 is closest to record 1, record 3 is furthest.",
       labels: ["1↔2", "1↔3", "1↔4", "1↔5"],
       values: [0.622, 0.686, 0.633, 0.377]
-    }]
+    }],
+    code: "# --- R (book) ---\n# x <- defaults[1:5, c('dti','payment_inc_ratio','home','purpose')]\n# library(cluster); daisy(x, metric='gower')\n# # max d(2,3)=0.8143398; min d(3,5)=0.3091088\n# d <- daisy(df, metric='gower'); hcl <- hclust(d); plot(as.dendrogram(hcl), leaflab='none')\n# --- Python equivalent ---\n# sklearn has no built-in Gower; average scaled numeric Manhattan gaps plus 0/1 categorical mismatches.\n"
   };
 
   // ---------------------------------------------------------------------------
@@ -645,11 +665,11 @@
       },
       {
         h: "The binary-domination problem",
-        body: "<p>If standard z-scores are used, the binary variables end up <em>dominating</em> the cluster definitions. The reason: a 0/1 variable takes on only two values, so K-means can drive the within-cluster sum of squares very low simply by putting all the records with a 0 (or all with a 1) into one cluster. The book illustrates with loan data including factor variables <code>home</code> and <code>pub_rec_zero</code>: after one-hot encoding and scaling, the top four K-means clusters turn out to be essentially proxies for the different levels of the factor variables — for example, one cluster is basically all the home-owners, another all the renters — rather than meaningful structure.</p>"
+        body: "<p>If standard z-scores are used, the binary variables end up <em>dominating</em> the cluster definitions. The reason: a 0/1 variable takes on only two values, so K-means can drive the within-cluster sum of squares very low simply by putting all the records with a 0 (or all with a 1) into one cluster. The book illustrates with loan data including factor variables <code>home</code> and <code>pub_rec_zero</code>: after one-hot encoding and scaling, the top four K-means clusters turn out to be essentially proxies for the different levels of the factor variables — for example, one cluster is basically all the home-owners, another all the renters — rather than meaningful structure.<table class=\"extable\"><thead><tr><th>Cluster</th><th>dti</th><th>payment_inc_ratio</th><th>homeMORTGAGE</th><th>homeOWN</th><th>homeRENT</th><th>pub_rec_zero</th></tr></thead><tbody><tr><td class=\"row-h\">1</td><td class=\"num\">17.02</td><td class=\"num\">9.10</td><td class=\"num\">0.00</td><td class=\"num\">0</td><td class=\"num\">1.00</td><td class=\"num\">1.00</td></tr><tr><td class=\"row-h\">2</td><td class=\"num\">17.47</td><td class=\"num\">8.43</td><td class=\"num\">1.00</td><td class=\"num\">0</td><td class=\"num\">0.00</td><td class=\"num\">1.00</td></tr><tr><td class=\"row-h\">3</td><td class=\"num\">17.23</td><td class=\"num\">9.28</td><td class=\"num\">0.00</td><td class=\"num\">1</td><td class=\"num\">0.00</td><td class=\"num\">0.92</td></tr><tr><td class=\"row-h\">4</td><td class=\"num\">16.50</td><td class=\"num\">8.09</td><td class=\"num\">0.52</td><td class=\"num\">0</td><td class=\"num\">0.48</td><td class=\"num\">0.00</td></tr></tbody></table></p>"
       },
       {
         h: "Workarounds",
-        body: "<ul class=\"steps\"><li>Scale the binary variables to have a <em>smaller</em> variance than the other variables, so they no longer dominate.</li><li>For very large data sets, cluster separate subsets that share specific categorical values — for example, cluster loans with a mortgage, loans owned outright, and rentals separately.</li></ul>"
+        body: "<ul class=\"steps\"><li>Scale the binary variables to have a <em>smaller</em> variance than the other variables, so they no longer dominate.</li><li>For very large data sets, cluster separate subsets that share specific categorical values — for example, cluster loans with a mortgage, loans owned outright, and rentals separately.</li></ul><pre><code class=\"language-python\"># --- R (book) ---\n# df &lt;- model.matrix(~ -1 + dti + payment_inc_ratio + home + pub_rec_zero, data=defaults)\n# df0 &lt;- scale(df); km0 &lt;- kmeans(df0, centers=4, nstart=10)\n# centers0 &lt;- scale(km0$centers, center=FALSE, scale=1/attr(df0, 'scaled:scale'))\n# round(scale(centers0, center=-attr(df0, 'scaled:center'), scale=FALSE), 2)\n# # clusters are category proxies: homeRENT=1.00, homeMORTGAGE=1.00, homeOWN=1.00, or pub_rec_zero=0.00\n# --- Python equivalent ---\ndf = pd.get_dummies(defaults[['dti','payment_inc_ratio','home','pub_rec_zero']], dtype=int)\ndf0 = StandardScaler().fit_transform(df)\nkm0 = KMeans(n_clusters=4, n_init=10, random_state=1).fit(df0)</code></pre>"
       }
     ],
     takeaways: [
