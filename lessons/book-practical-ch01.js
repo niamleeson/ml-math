@@ -21,7 +21,7 @@
       },
       {
         h: "The two basic types and their forms",
-        body: "There are two basic types of structured data: <em>numeric</em> and <em>categorical</em>. Numeric data comes in two forms, and categorical data has a binary special case plus an ordered form.<table class=\"extable\"><thead><tr><th>type</th><th>meaning</th><th>synonyms</th></tr></thead><tbody><tr><td class=\"row-h\">Continuous</td><td>any value in an interval (wind speed, time duration)</td><td>interval, float, numeric</td></tr><tr><td class=\"row-h\">Discrete</td><td>only integer values, such as counts</td><td>integer, count</td></tr><tr><td class=\"row-h\">Categorical</td><td>only a fixed set of category values (TV type, state name)</td><td>enums, enumerated, factors, nominal, polychotomous</td></tr><tr><td class=\"row-h\">Binary</td><td>categorical with just two values (0/1, true/false)</td><td>dichotomous, logical, indicator, boolean</td></tr><tr><td class=\"row-h\">Ordinal</td><td>categorical with an explicit ordering (a 1–5 rating)</td><td>ordered factor</td></tr></tbody></table>The authors note one practical gotcha: R's default data-import behavior turns a text column into a factor, so later operations assume only the originally seen values are allowed, and a new value produces a warning and an NA."
+        body: "There are two basic types of structured data: <em>numeric</em> and <em>categorical</em>. Numeric data comes in two forms, and categorical data has a binary special case plus an ordered form.<table class=\"extable\"><thead><tr><th>type</th><th>meaning</th><th>synonyms</th></tr></thead><tbody><tr><td class=\"row-h\">Continuous</td><td>any value in an interval (wind speed, time duration)</td><td>interval, float, numeric</td></tr><tr><td class=\"row-h\">Discrete</td><td>only integer values, such as counts</td><td>integer, count</td></tr><tr><td class=\"row-h\">Categorical</td><td>only a fixed set of category values (TV type, state name)</td><td>enums, enumerated, factors, nominal, polychotomous</td></tr><tr><td class=\"row-h\">Binary</td><td>categorical with just two values (0/1, true/false)</td><td>dichotomous, logical, indicator, boolean</td></tr><tr><td class=\"row-h\">Ordinal</td><td>categorical with an explicit ordering (a 1–5 rating)</td><td>ordered factor</td></tr></tbody></table>The authors note one practical gotcha: R's default data-import behavior turns a text column into a factor, so later operations assume only the originally seen values are allowed, and a new value produces a warning and an NA.<pre><code class=\"language-python\"># How the book inspects/sets data types\n# --- R ---\n# class(state$Population)          # 'integer'\n# str(state)                       # type of every column\n# state$Category <- as.factor(state$Category)   # declare a categorical\n\n# --- Python ---\nstate.dtypes                       # type of every column\nstate['Category'] = state['Category'].astype('category')   # declare categorical\nstate['Rating'] = state['Rating'].astype(\n    pd.CategoricalDtype(categories=[1, 2, 3, 4, 5], ordered=True))  # ordinal</code></pre>"
       }
     ],
     takeaways: [
@@ -44,7 +44,7 @@
       },
       {
         h: "Data frames and indexes",
-        body: "Traditional database tables designate one or more columns as an index to speed up queries. In Python the basic rectangular structure is the pandas <code>DataFrame</code>, which by default gets an automatic integer index based on row order and can also take multilevel/hierarchical indexes. In R the structure is <code>data.frame</code>, which likewise has an implicit integer index by row order; a custom key can be set via <code>row.names</code>, but native R does not support user-specified or multilevel indexes. The packages <code>data.table</code> and <code>dplyr</code> add multilevel indexes and meaningful speedups. The chapter also notes nonrectangular structures — time series, spatial (object vs. field views), and graph/network data — but the book focuses on rectangular data as the building block of predictive modeling."
+        body: "Traditional database tables designate one or more columns as an index to speed up queries. In Python the basic rectangular structure is the pandas <code>DataFrame</code>, which by default gets an automatic integer index based on row order and can also take multilevel/hierarchical indexes. In R the structure is <code>data.frame</code>, which likewise has an implicit integer index by row order; a custom key can be set via <code>row.names</code>, but native R does not support user-specified or multilevel indexes. The packages <code>data.table</code> and <code>dplyr</code> add multilevel indexes and meaningful speedups. The chapter also notes nonrectangular structures — time series, spatial (object vs. field views), and graph/network data — but the book focuses on rectangular data as the building block of predictive modeling.<pre><code class=\"language-python\"># Loading a rectangular data set the book's way\n# --- R ---\n# state <- read.csv('state.csv')\n# class(state)                     # 'data.frame'\n# head(state)\n\n# --- Python ---\nimport pandas as pd\nstate = pd.read_csv('state.csv')\ntype(state)                        # pandas.core.frame.DataFrame\nstate.head()                       # first rows, with the implicit integer index</code></pre>"
       }
     ],
     takeaways: [
@@ -90,7 +90,8 @@
         values: [6162876, 4783697, 4436370],
         colors: ["#ffb454", "#4ea1ff", "#7ee787"]
       }
-    ]
+    ],
+    code: "# The book's code (R), with a Python equivalent below.\n# --- R (Practical Statistics, 1st ed.) ---\n# state <- read.csv('state.csv')\n# mean(state[['Population']])                    # [1] 6162876\n# mean(state[['Population']], trim=0.1)          # [1] 4783697  (drops top/bottom 10%)\n# median(state[['Population']])                  # [1] 4436370\n# # overall murder rate must weight states by population:\n# weighted.mean(state[['Murder.Rate']], w=state[['Population']])   # [1] 4.445834\n# library('matrixStats')\n# weightedMedian(state[['Murder.Rate']], w=state[['Population']])  # [1] 4.4\n\n# --- Python equivalent ---\nimport pandas as pd, numpy as np\nfrom scipy.stats import trim_mean\n\nstate = pd.read_csv('state.csv')\nprint(state['Population'].mean())                 # 6162876\nprint(trim_mean(state['Population'], 0.1))        # 4783697\nprint(state['Population'].median())               # 4436370\nprint(np.average(state['Murder.Rate'], weights=state['Population']))  # 4.446\n# weighted median: use a helper, e.g. wquantiles.median(values, weights)"
   };
 
   // 4) Estimates of Variability
@@ -129,7 +130,8 @@
         values: [6848235, 4847308, 3849870],
         colors: ["#ffb454", "#4ea1ff", "#7ee787"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# sd(state[['Population']])    # [1] 6848235\n# IQR(state[['Population']])   # [1] 4847308\n# mad(state[['Population']])   # [1] 3849870  (robust; R scales it to the SD scale)\n# quantile(state[['Murder.Rate']], p=c(.05,.25,.5,.75,.95))\n# #    5%   25%   50%   75%   95%\n# # 1.600 2.425 4.000 5.550 6.510\n\n# --- Python equivalent ---\nimport pandas as pd\nfrom statsmodels import robust\n\nstate = pd.read_csv('state.csv')\nprint(state['Population'].std())                 # 6848235\nprint(state['Population'].quantile(0.75) - state['Population'].quantile(0.25))  # IQR 4847308\nprint(robust.scale.mad(state['Population']))     # 3849870\nprint(state['Murder.Rate'].quantile([.05, .25, .5, .75, .95]))\n# 0.05 -> 1.600,  0.25 -> 2.425,  0.50 -> 4.000,  0.75 -> 5.550,  0.95 -> 6.510"
   };
 
   // 5) Exploring the Data Distribution
@@ -176,7 +178,8 @@
         values: [1.60, 2.42, 4.00, 5.55, 6.51],
         colors: ["#7ee787", "#7ee787", "#ffb454", "#7ee787", "#7ee787"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# quantile(state[['Murder.Rate']], p=c(.05,.25,.5,.75,.95))\n# boxplot(state[['Population']]/1000000, ylab='Population (millions)')   # Figure 1-2\n# breaks <- seq(from=min(state[['Population']]), to=max(state[['Population']]), length=11)\n# hist(state[['Population']], breaks=breaks)                             # Figure 1-3\n# hist(state[['Murder.Rate']], freq=FALSE)                              # density on y-axis\n# lines(density(state[['Murder.Rate']]), lwd=3, col='blue')             # Figure 1-4\n\n# --- Python equivalent ---\nimport pandas as pd, matplotlib.pyplot as plt\n\nstate = pd.read_csv('state.csv')\nprint(state['Murder.Rate'].quantile([.05, .25, .5, .75, .95]))\n(state['Population'] / 1_000_000).plot.box()                # boxplot\nstate['Population'].plot.hist(bins=10)                       # histogram\nstate['Murder.Rate'].plot.hist(density=True, bins=range(0, 12))\nstate['Murder.Rate'].plot.density()                         # smoothed density\nplt.show()"
   };
 
   // 6) Exploring Binary and Categorical Data
@@ -211,7 +214,8 @@
         values: [23.02, 30.40, 4.03, 0.12, 42.43],
         colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# dfw is a 1-row data frame of delay counts by cause; /6 averages over the years.\n# barplot(as.matrix(dfw)/6, cex.axis=.5)        # Figure 1-5\n\n# --- Python equivalent ---\nimport pandas as pd\n\ndfw = pd.DataFrame({'Carrier': [23.02], 'ATC': [30.40], 'Weather': [4.03],\n                    'Security': [0.12], 'Inbound': [42.43]})\nax = dfw.transpose().plot.bar(legend=False)\nax.set_ylabel('% of delays')\n\n# Expected value of the webinar offer:\nev = 0.05 * 300 + 0.15 * 50 + 0.80 * 0\nprint(ev)                                       # 22.5"
   };
 
   // 7) Correlation
@@ -246,7 +250,8 @@
         values: [0.678, 0.475, 0.420, 0.242],
         colors: ["#7ee787", "#4ea1ff", "#4ea1ff", "#ffb454"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(corrplot)\n# etfs <- sp500_px[row.names(sp500_px) > '2012-07-01',\n#                  sp500_sym[sp500_sym$sector == 'telecommunications_services', 'symbol']]\n# corrplot(cor(etfs), method='ellipse')         # Figure 1-6\n\n# --- Python equivalent ---\nimport pandas as pd, seaborn as sns\n\netfs = pd.read_csv('sp500_data.csv', index_col=0)   # telecom columns: T, VZ, CTL, FTR, LVLT\ncorr = etfs.corr()\nprint(corr.loc['T', 'VZ'])                      # 0.678  (AT&T vs Verizon)\nsns.heatmap(corr, vmin=-1, vmax=1, cmap='RdBu', annot=True)\n# scatterplot of two returns:\netfs.plot.scatter(x='T', y='VZ', alpha=0.5)"
   };
 
   // 8) Exploring Two or More Variables
@@ -286,6 +291,7 @@
         valueLabels: ["2.1%", "3.9%", "12.6%"],
         colors: ["#7ee787", "#4ea1ff", "#ffb454"]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# # numeric vs numeric on huge data: hexbin + contours (ggplot2)\n# ggplot(kc_tax0, aes(x=SqFtTotLiving, y=TaxAssessedValue)) +\n#   stat_binhex(colour='white') + theme_bw() +\n#   geom_density2d(colour='white')                 # Figures 1-8 / 1-9\n# # numeric across categories: side-by-side boxplots and violins\n# boxplot(pct_carrier_delay ~ airline, data=airline_stats, ylim=c(0, 50))\n# ggplot(airline_stats, aes(airline, pct_carrier_delay)) + geom_violin()\n\n# --- Python equivalent ---\nimport pandas as pd, seaborn as sns\n\nkc = pd.read_csv('kc_tax.csv')\nkc0 = kc[(kc.TaxAssessedValue < 750000) & kc.SqFtTotLiving.between(100, 3500)]\nprint(len(kc0))                                  # 432733 records\nkc0.plot.hexbin(x='SqFtTotLiving', y='TaxAssessedValue', gridsize=30)\nairline = pd.read_csv('airline_stats.csv')\nsns.boxplot(x='airline', y='pct_carrier_delay', data=airline)\nsns.violinplot(x='airline', y='pct_carrier_delay', data=airline)"
   };
 })();
