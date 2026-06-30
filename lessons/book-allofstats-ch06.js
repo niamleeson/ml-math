@@ -19,7 +19,8 @@
       { h: "Statistical model and parametric model", body:
         "<p>A <strong>statistical model</strong> $\\mathfrak{F}$ is simply a set of distributions (or densities, or regression functions). A <strong>parametric model</strong> is a set $\\mathfrak{F}$ that can be described by a finite number of parameters. The book's lead example is assuming the data are Normal, which gives the two-parameter family</p>" +
         "<p>$\\mathfrak{F} = \\left\\{ f(x; \\mu, \\sigma) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \\exp\\left\\{ -\\frac{1}{2\\sigma^2}(x-\\mu)^2 \\right\\}, \\ \\mu \\in \\mathbb{R}, \\ \\sigma \\gt 0 \\right\\}.$</p>" +
-        "<p>Here $x$ is a possible value of the random variable, while $\\mu$ (the mean) and $\\sigma$ (the standard deviation) are the two parameters. In general a parametric model is written $\\mathfrak{F} = \\{ f(x; \\theta) : \\theta \\in \\Theta \\}$, where $\\theta$ is the unknown parameter (possibly a vector) living in the <strong>parameter space</strong> $\\Theta$. If $\\theta$ is a vector but only one component interests us, the rest are called <strong>nuisance parameters</strong>.</p>" },
+        "<p>Here $x$ is a possible value of the random variable, while $\\mu$ (the mean) and $\\sigma$ (the standard deviation) are the two parameters. In general a parametric model is written $\\mathfrak{F} = \\{ f(x; \\theta) : \\theta \\in \\Theta \\}$, where $\\theta$ is the unknown parameter (possibly a vector) living in the <strong>parameter space</strong> $\\Theta$. If $\\theta$ is a vector but only one component interests us, the rest are called <strong>nuisance parameters</strong>.</p>" +
+        "<table class=\"extable\"><thead><tr><th>book example</th><th>model type</th><th>what is estimated</th></tr></thead><tbody><tr><td class=\"row-h\">6.1 Bernoulli</td><td>one-dimensional parametric</td><td>the single parameter $p$</td></tr><tr><td class=\"row-h\">6.2 Normal</td><td>two-dimensional parametric</td><td>$\\mu$ and $\\sigma$; if only $\\mu$ matters, $\\sigma$ is nuisance</td></tr><tr><td class=\"row-h\">6.3 CDF</td><td>nonparametric</td><td>$F$ with only $F\\in\\mathfrak{F}_{\\mathrm{ALL}}$</td></tr><tr><td class=\"row-h\">6.4 density</td><td>nonparametric with smoothness</td><td>$f=F'$ under a Sobolev-type restriction</td></tr><tr><td class=\"row-h\">6.5 functional</td><td>nonparametric functional</td><td>$T(F)$ such as mean, variance, or median</td></tr></tbody></table>" },
       { h: "Nonparametric models", body:
         "<p>A <strong>nonparametric model</strong> is a set $\\mathfrak{F}$ that <em>cannot</em> be captured by a finite number of parameters. The book's example is $\\mathfrak{F}_{\\mathrm{ALL}}$, the set of all CDFs — far too big to index with a fixed list of numbers. Wasserman notes the parametric/nonparametric distinction is actually more subtle than this, but a rigorous definition is not needed here.</p>" +
         "<p>The chapter's examples sketch the range of problems:</p>" +
@@ -117,7 +118,8 @@
         "</ul>" },
       { h: "Normal-based intervals", body:
         "<p>An estimator is <strong>asymptotically Normal</strong> (Definition 6.12) if $(\\hat{\\theta}_n - \\theta)/\\mathrm{se} \\rightsquigarrow N(0,1)$. When $\\hat{\\theta}_n \\approx N(\\theta, \\hat{\\mathrm{se}}^2)$, Theorem 6.16 gives the interval $C_n = (\\hat{\\theta}_n - z_{\\alpha/2}\\hat{\\mathrm{se}}, \\ \\hat{\\theta}_n + z_{\\alpha/2}\\hat{\\mathrm{se}})$, where $z_{\\alpha/2} = \\Phi^{-1}(1 - \\alpha/2)$. For 95% coverage, $\\alpha = 0.05$ and $z_{\\alpha/2} = 1.96 \\approx 2$, giving the handy rule $\\hat{\\theta}_n \\pm 2\\,\\hat{\\mathrm{se}}$.</p>" +
-        "<p>For the Bernoulli case (Example 6.17), $\\hat{\\mathrm{se}} = \\sqrt{\\hat{p}_n(1-\\hat{p}_n)/n}$, so an approximate $1-\\alpha$ interval is $\\hat{p}_n \\pm z_{\\alpha/2}\\sqrt{\\hat{p}_n(1-\\hat{p}_n)/n}$. This Normal-based interval is shorter than the Hoeffding one but only has approximate (large-sample) coverage.</p>" }
+        "<p>For the Bernoulli case (Example 6.17), $\\hat{\\mathrm{se}} = \\sqrt{\\hat{p}_n(1-\\hat{p}_n)/n}$, so an approximate $1-\\alpha$ interval is $\\hat{p}_n \\pm z_{\\alpha/2}\\sqrt{\\hat{p}_n(1-\\hat{p}_n)/n}$. This Normal-based interval is shorter than the Hoeffding one but only has approximate (large-sample) coverage.</p>" +
+        "<pre><code class=\"language-python\"># Book computations in Section 6.3.2\nimport math\nfrom scipy.stats import norm\n\n# Example 6.13: the poll interval 83 ± 4 percentage points\npoll = (0.83 - 0.04, 0.83 + 0.04)\nprint(poll)                 # (0.79, 0.87)\n\n# Example 6.14: enumerate Xi in {-1,+1}; coverage is 3 out of 4\ntheta = 0\noutcomes = [(-1,-1), (-1,1), (1,-1), (1,1)]\ndef contains_theta(x1, x2):\n    y1, y2 = theta + x1, theta + x2\n    c = y1 - 1 if y1 == y2 else (y1 + y2) / 2\n    return c == theta\nprint(sum(contains_theta(*o) for o in outcomes) / 4)  # 0.75\n\n# Normal-based 95% interval uses z_{.025}=Phi^{-1}(.975)\nprint(norm.ppf(0.975))      # 1.9599639845 ≈ 1.96 ≈ 2\n\ndef hoeffding_epsilon(alpha, n):\n    return math.sqrt(math.log(2/alpha) / (2*n))</code></pre>" }
     ],
     takeaways: [
       "$1-\\alpha$ confidence interval: $\\mathbb{P}_\\theta(\\theta \\in C_n) \\geq 1-\\alpha$ for all $\\theta$.",
@@ -151,4 +153,18 @@
       "Reject when $T = |\\hat{p}_n - 1/2|$ is large; the threshold is set later."
     ]
   });
+
+  window.CODEVIZ["aos-ch6-point-estimation"] = {
+    charts: [
+      { type: "hist",
+        title: "Example 6.8 — sampling distribution of the Bernoulli sample fraction",
+        interpret: "For a fair coin with n=25, p-hat is random and centered at p=0.5; its standard error is sqrt(.5(.5)/25)=0.10.",
+        labels: [".32", ".36", ".40", ".44", ".48", ".52", ".56", ".60", ".64", ".68"],
+        values: [3.22, 6.09, 9.74, 13.28, 15.5, 15.5, 13.28, 9.74, 6.09, 3.22],
+        valueLabels: ["3.22%", "6.09%", "9.74%", "13.28%", "15.50%", "15.50%", "13.28%", "9.74%", "6.09%", "3.22%"],
+        colors: ["#4ea1ff"]
+      }
+    ],
+    code: "# Examples 6.8 and 6.11: Bernoulli(p) estimator p_hat = mean(X_i)\nimport math\nfrom math import comb\n\np, n = 0.5, 25\nbias = p - p\nse = math.sqrt(p * (1 - p) / n)\nmse = bias**2 + se**2\nprint(bias)                 # 0\nprint(se)                   # 0.1\nprint(mse)                  # 0.01\n\n# Exact sampling probabilities for p_hat = k/n near the center\nfor k in range(8, 18):\n    prob = comb(n, k) * p**k * (1-p)**(n-k)\n    print(k/n, round(100*prob, 2))"
+  };
 })();

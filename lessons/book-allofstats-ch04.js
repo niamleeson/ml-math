@@ -87,6 +87,13 @@
           "</ul>"
       },
       {
+        h: "Normal-tail add-on: Mill's inequality",
+        body:
+          "<p>The chapter also records Mill's inequality for the standard Normal. If $Z \\sim N(0,1)$, then for $t \\gt 0$:</p>" +
+          "<p>$\\mathbb{P}(|Z| \\gt t) \\le \\sqrt{\\dfrac{2}{\\pi}}\\,\\dfrac{e^{-t^2/2}}{t}$.</p>" +
+          "<p>Unlike Chebyshev's $1/t^2$ bound, this one uses the Normal shape and decays like an exponential in $t^2$.</p>"
+      },
+      {
         h: "Example: a predictor's error rate",
         body:
           "<p>Wasserman tests a prediction method (his example is a neural net) on $n$ fresh cases. Let $X_i = 1$ when " +
@@ -108,6 +115,20 @@
       "Error-rate example with $\\epsilon=0.2$, $n=100$ gives bound $0.0625$."
     ]
   });
+  window.CODEVIZ["aos-ch4-chebyshev"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Chebyshev bounds read from Chapter 4",
+        interpret: "The book's two standard-deviation examples give 1/4 and 1/9; the prediction-error example gives 1/(4·100·0.2²)=0.0625.",
+        labels: ["|Z| > 2", "|Z| > 3", "error rate"],
+        values: [0.25, 0.1111111111111111, 0.0625],
+        valueLabels: ["1/4", "1/9", "0.0625"],
+        colors: ["#4ea1ff", "#4ea1ff", "#ffb454"]
+      }
+    ],
+    code: "# Chebyshev numbers from Chapter 4\nfor k in [2, 3]:\n    print(k, 1 / k**2)          # 2 -> 0.25, 3 -> 0.111111...\n\nn = 100\nepsilon = 0.2\nbound = 1 / (4 * n * epsilon**2)\nprint(bound)                    # 0.0625"
+  };
 
   // 3 — Hoeffding's inequality
   B({
@@ -146,7 +167,7 @@
           "<ul class=\"steps\">" +
           "<li>$\\mathbb{P}(|\\bar{X}_n - p| \\gt 0.2) \\le 2 e^{-2 (100)(0.2)^2}.$</li>" +
           "<li>The exponent is $-2 \\cdot 100 \\cdot 0.04 = -8$, so the bound is $2 e^{-8} \\approx 0.00067.$</li>" +
-          "<li>That is roughly $90$ times smaller than Chebyshev's $0.0625$.</li>" +
+          "<li>Numerically $2e^{-8}=0.0006709$, and $0.0625/0.0006709 \\approx 93.2$, so the Hoeffding bound is about $93$ times smaller.</li>" +
           "</ul>"
       },
       {
@@ -167,6 +188,20 @@
       "Choosing $\\epsilon_n = \\sqrt{(1/2n)\\log(2/\\alpha)}$ yields a $1-\\alpha$ confidence interval for $p$."
     ]
   });
+  window.CODEVIZ["aos-ch4-hoeffding"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Same error-rate example: Chebyshev vs Hoeffding",
+        interpret: "For n=100 and ε=0.2, Hoeffding's exponential bound 2e⁻⁸=0.0006709 is about 93 times smaller than Chebyshev's 0.0625.",
+        labels: ["Chebyshev", "Hoeffding"],
+        values: [0.0625, 0.0006709252558050237],
+        valueLabels: ["0.0625", "0.0006709"],
+        colors: ["#ffb454", "#7ee787"]
+      }
+    ],
+    code: "# Bound computation in Examples 4.3 and 4.6\nimport math\n\nn = 100\nepsilon = 0.2\nchebyshev = 1 / (4 * n * epsilon**2)\nhoeffding = 2 * math.exp(-2 * n * epsilon**2)\nprint(chebyshev)                # 0.0625\nprint(hoeffding)                # 0.0006709252558050237\nprint(chebyshev / hoeffding)    # 93.155..."
+  };
 
   // 4 — Cauchy-Schwarz inequality
   B({
@@ -211,8 +246,13 @@
           "curve sits below the straight chord joining two of its points. If $g$ is twice differentiable with " +
           "$g''(x) \\ge 0$ everywhere (the second derivative measures how fast the slope is bending), then $g$ is " +
           "convex. A convex $g$ lies above any tangent line touching it. A function is <strong>concave</strong> " +
-          "(curving downward) if $-g$ is convex. The book's examples: $g(x) = x^2$ and $g(x) = e^x$ are convex; " +
-          "$g(x) = -x^2$ and $g(x) = \\log x$ are concave.</p>"
+          "(curving downward) if $-g$ is convex. The book's examples are:</p>" +
+          "<table class=\"extable\"><thead><tr><th>function</th><th>shape</th><th>reason in the chapter</th></tr></thead><tbody>" +
+          "<tr><td class=\"row-h\">$g(x)=x^2$</td><td>convex</td><td>$g''(x)=2 \\ge 0$</td></tr>" +
+          "<tr><td class=\"row-h\">$g(x)=e^x$</td><td>convex</td><td>$g''(x)=e^x \\ge 0$</td></tr>" +
+          "<tr><td class=\"row-h\">$g(x)=-x^2$</td><td>concave</td><td>$-g$ is convex</td></tr>" +
+          "<tr><td class=\"row-h\">$g(x)=\\log x$</td><td>concave</td><td>$-g$ is convex on $x \\gt 0$</td></tr>" +
+          "</tbody></table>"
       },
       {
         h: "The statement",

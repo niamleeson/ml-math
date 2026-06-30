@@ -14,11 +14,18 @@
     tagline: "The CDF carries all the information about a random variable; the pmf or pdf describes where its probability sits.",
     sections: [
       { h: "Random variable and CDF", body:
-        "<p>A <strong>random variable</strong> is a mapping $X : \\Omega \\to \\mathbb{R}$ that attaches a real number $X(\\omega)$ to every outcome $\\omega$ in the sample space $\\Omega$. Here $\\Omega$ is the set of all possible outcomes and $\\omega$ is one such outcome. Wasserman's example: flip a coin ten times and let $X(\\omega)$ count the heads, so the outcome $HHTHHTHHTT$ gives $X(\\omega) = 6$.</p>" +
+        "<p>A <strong>random variable</strong> is a mapping $X : \\Omega \\to \\mathbb{R}$ that attaches a real number $X(\\omega)$ to every outcome $\\omega$ in the sample space $\\Omega$. Here $\\Omega$ is the set of all possible outcomes and $\\omega$ is one such outcome. Wasserman's example: flip a coin ten times and let $X(\\omega)$ count the heads, so the outcome $HHTHHTHHTT$ gives $X(\\omega) = 6$. Example 2.3 gives a geometric sample space too: draw a point $\\omega=(x,y)$ from the unit disk $\\{(x,y):x^2+y^2\\le 1\\}$, then examples of random variables are $X(\\omega)=x$, $Y(\\omega)=y$, $Z(\\omega)=x+y$, and $W(\\omega)=x^2+y^2$.</p>" +
         "<p>The <strong>cumulative distribution function</strong> (CDF) is $F_X : \\mathbb{R} \\to [0,1]$ defined by $F_X(x) = \\mathbb{P}(X \\le x)$ — the probability that $X$ lands at or below $x$. The author stresses that the CDF \"effectively contains all the information about the random variable\": if two variables have the same CDF, they assign the same probability to every event.</p>" +
         "<p>A valid CDF must be (i) non-decreasing, (ii) normalized so $\\lim_{x\\to-\\infty}F(x)=0$ and $\\lim_{x\\to\\infty}F(x)=1$, and (iii) right-continuous.</p>" },
       { h: "Worked CDF: two coin flips", body:
-        "<p>Flip a fair coin twice and let $X$ be the number of heads. The four equally-likely outcomes $TT, TH, HT, HH$ give $\\mathbb{P}(X=0)=1/4$, $\\mathbb{P}(X=1)=1/2$, $\\mathbb{P}(X=2)=1/4$. Accumulating these probabilities yields a step function:</p>" +
+        "<p>Flip a fair coin twice and let $X$ be the number of heads. The four equally-likely outcomes $TT, TH, HT, HH$ give $\\mathbb{P}(X=0)=1/4$, $\\mathbb{P}(X=1)=1/2$, $\\mathbb{P}(X=2)=1/4$.</p>" +
+        "<table class='extable'><thead><tr><th>$\\omega$</th><th class='num'>$\\mathbb{P}(\\{\\omega\\})$</th><th class='num'>$X(\\omega)$</th></tr></thead><tbody>" +
+        "<tr><td class='row-h'>$TT$</td><td class='num'>1/4</td><td class='num'>0</td></tr>" +
+        "<tr><td class='row-h'>$TH$</td><td class='num'>1/4</td><td class='num'>1</td></tr>" +
+        "<tr><td class='row-h'>$HT$</td><td class='num'>1/4</td><td class='num'>1</td></tr>" +
+        "<tr><td class='row-h'>$HH$</td><td class='num'>1/4</td><td class='num'>2</td></tr>" +
+        "</tbody></table>" +
+        "<p>Accumulating these probabilities yields a step function:</p>" +
         "<table class='extable'><thead><tr><th>Range of $x$</th><th class='num'>$F_X(x)$</th></tr></thead><tbody>" +
         "<tr><td class='row-h'>$x \\lt 0$</td><td class='num'>0</td></tr>" +
         "<tr><td class='row-h'>$0 \\le x \\lt 1$</td><td class='num'>1/4</td></tr>" +
@@ -38,6 +45,25 @@
       "For continuous $X$, $\\mathbb{P}(X=x)=0$ and a density may be larger than 1."
     ]
   });
+  window.CODEVIZ["aos-ch2-distribution-functions"] = {
+    charts: [
+      { type: "line", title: "CDF for flipping a coin twice (Figure 2.1)",
+        interpret: "The CDF is right-continuous and jumps at the possible head counts 0, 1, and 2.",
+        xlabel: "x", ylabel: "F_X(x)",
+        series: [ { name: "F_X(x)", color: "#4ea1ff", points: [
+          [-0.5, 0], [0, 0.25], [0.999, 0.25], [1, 0.75], [1.999, 0.75], [2, 1], [2.5, 1] ] } ] },
+      { type: "bars", title: "Probability function for flipping a coin twice (Figure 2.2)",
+        interpret: "The mass function is 1/4 at 0 heads, 1/2 at 1 head, and 1/4 at 2 heads.",
+        labels: ["0", "1", "2"], values: [0.25, 0.5, 0.25],
+        valueLabels: ["1/4", "1/2", "1/4"], colors: ["#4ea1ff", "#ffb454", "#4ea1ff"] },
+      { type: "line", title: "CDF for Uniform(0,1) (Figure 2.3)",
+        interpret: "The CDF is 0 before 0, rises linearly from 0 to 1, and stays at 1 after 1.",
+        xlabel: "x", ylabel: "F_X(x)",
+        series: [ { name: "F_X(x)", color: "#7ee787", points: [
+          [-0.25, 0], [0, 0], [1, 1], [1.25, 1] ] } ] }
+    ],
+    code: "# Recreate the chapter's coin-flip pmf/CDF and Uniform(0,1) CDF figures.\nimport numpy as np\n\nx = np.array([0, 1, 2])\npmf = np.array([1/4, 1/2, 1/4])\ncdf = np.cumsum(pmf)        # [0.25, 0.75, 1.00]\nprint(dict(zip(x, pmf)))    # {0: 0.25, 1: 0.5, 2: 0.25}\nprint(dict(zip(x, cdf)))    # {0: 0.25, 1: 0.75, 2: 1.0}\n\nu = np.linspace(-0.25, 1.25, 7)\nF_uniform = np.clip(u, 0, 1)\nprint(F_uniform)            # 0 before 0, line on [0,1], 1 after 1"
+  };
 
   // 2) Important discrete random variables
   B({
@@ -89,7 +115,13 @@
         "<p>To find $q = \\Phi^{-1}(0.2)$ for this $X$: the table gives $\\Phi(-0.8416)=0.2$, so $-0.8416 = (q-3)/\\sqrt{5}$, hence $q = 3 - 0.8416\\sqrt{5} = 1.1181$. The Figure 2.4 standard-Normal density is charted below.</p>" },
       { h: "Gamma and Beta", body:
         "<p>The <strong>Gamma function</strong> is $\\Gamma(\\alpha) = \\int_0^{\\infty} y^{\\alpha-1}e^{-y}\\,dy$ for $\\alpha \\gt 0$. The <strong>Gamma distribution</strong> $X \\sim \\text{Gamma}(\\alpha,\\beta)$ has $f(x) = \\dfrac{1}{\\beta^\\alpha \\Gamma(\\alpha)} x^{\\alpha-1} e^{-x/\\beta}$ for $x \\gt 0$. The Exponential is the special case $\\text{Gamma}(1,\\beta)$, and independent Gammas with shared $\\beta$ add: $\\sum_i X_i \\sim \\text{Gamma}(\\sum_i \\alpha_i, \\beta)$.</p>" +
-        "<p>The <strong>Beta distribution</strong> $X \\sim \\text{Beta}(\\alpha,\\beta)$, with $\\alpha,\\beta \\gt 0$, lives on $(0,1)$ with $f(x) = \\dfrac{\\Gamma(\\alpha+\\beta)}{\\Gamma(\\alpha)\\Gamma(\\beta)} x^{\\alpha-1}(1-x)^{\\beta-1}$. The chapter also introduces the $t$ and Cauchy distributions (the $t$ resembles a Normal with thicker tails; Cauchy is $t$ with $\\nu=1$) and the $\\chi^2$ distribution, where a sum of $p$ squared independent standard Normals is $\\chi^2_p$.</p>" }
+        "<p>The <strong>Beta distribution</strong> $X \\sim \\text{Beta}(\\alpha,\\beta)$, with $\\alpha,\\beta \\gt 0$, lives on $(0,1)$ with $f(x) = \\dfrac{\\Gamma(\\alpha+\\beta)}{\\Gamma(\\alpha)\\Gamma(\\beta)} x^{\\alpha-1}(1-x)^{\\beta-1}$. The chapter also introduces the $t$ and Cauchy distributions (the $t$ resembles a Normal with thicker tails; Cauchy is $t$ with $\\nu=1$) and the $\\chi^2$ distribution, where a sum of $p$ squared independent standard Normals is $\\chi^2_p$.</p>" +
+        "<table class='extable'><thead><tr><th>distribution</th><th>support / density from the book</th></tr></thead><tbody>" +
+        "<tr><td class='row-h'>Cauchy</td><td>$f(x)=1/(\\pi(1+x^2))$ on $\\mathbb{R}$</td></tr>" +
+        "<tr><td class='row-h'>$\\chi^2_p$</td><td>$f(x)=\\dfrac{1}{\\Gamma(p/2)2^{p/2}}x^{(p/2)-1}e^{-x/2}$ for $x\\gt0$</td></tr>" +
+        "<tr><td class='row-h'>sum of squares</td><td>if $Z_1,\\ldots,Z_p$ are independent standard Normals, then $\\sum_{i=1}^{p}Z_i^2\\sim\\chi^2_p$</td></tr>" +
+        "</tbody></table>" +
+        "<ul class='steps'><li>The book verifies the Cauchy density by integration: $\\int_{-\\infty}^{\\infty}\\frac{1}{\\pi(1+x^2)}\\,dx = \\frac{1}{\\pi}[\\tan^{-1}(x)]_{-\\infty}^{\\infty}$.</li><li>Since $\\tan^{-1}(\\infty)=\\pi/2$ and $\\tan^{-1}(-\\infty)=-\\pi/2$, the integral is $\\frac{1}{\\pi}(\\pi/2-(-\\pi/2))=1$.</li></ul>" }
     ],
     takeaways: [
       "Uniform$(a,b)$: flat density $1/(b-a)$; Exponential$(\\beta)$: lifetimes and waiting times.",
@@ -112,7 +144,11 @@
         "<tr><td class='row-h'>$X=0$</td><td class='num'>1/9</td><td class='num'>2/9</td></tr>" +
         "<tr><td class='row-h'>$X=1$</td><td class='num'>2/9</td><td class='num'>4/9</td></tr>" +
         "</tbody></table>" +
-        "<p>so $f(1,1) = \\mathbb{P}(X=1,Y=1) = 4/9$. For $(X,Y)$ uniform on the unit square, $\\mathbb{P}(X \\lt 1/2, Y \\lt 1/2)$ is just the area $1/4$.</p>" },
+        "<p>so $f(1,1) = \\mathbb{P}(X=1,Y=1) = 4/9$. For $(X,Y)$ uniform on the unit square, $\\mathbb{P}(X \\lt 1/2, Y \\lt 1/2)$ is just the area $1/4$.</p>" +
+        "<p>Example 2.21 checks that $f(x,y)=x+y$ on the unit square is a valid pdf:</p>" +
+        "<ul class='steps'><li>$\\int_0^1\\int_0^1(x+y)\\,dx\\,dy = \\int_0^1\\left(\\int_0^1x\\,dx\\right)dy + \\int_0^1\\left(\\int_0^1y\\,dx\\right)dy$.</li><li>The two terms are $\\int_0^1(1/2)\\,dy=1/2$ and $\\int_0^1 y\\,dy=1/2$.</li><li>Total mass $=1/2+1/2=1$, so the density is normalized.</li></ul>" +
+        "<p>Example 2.22 uses the non-rectangular support $x^2\\le y\\le1$ with density $c x^2y$.</p>" +
+        "<ul class='steps'><li>Because $-1\\le x\\le1$, normalization gives $1=c\\int_{-1}^{1}\\int_{x^2}^{1}x^2y\\,dy\\,dx=4c/21$, hence $c=21/4$.</li><li>The event $X\\ge Y$ inside the support is $0\\le x\\le1$ and $x^2\\le y\\le x$.</li><li>$\\mathbb{P}(X\\ge Y)=\\frac{21}{4}\\int_0^1\\int_{x^2}^{x}x^2y\\,dy\\,dx=3/20$.</li></ul>" },
       { h: "Marginal distributions", body:
         "<p>The <strong>marginal</strong> of $X$ sums (or integrates) out the other variable: $f_X(x) = \\sum_y f(x,y)$ and $f_Y(y) = \\sum_x f(x,y)$; continuously, $f_X(x) = \\int f(x,y)\\,dy$. In a joint table the marginals are exactly the row and column totals.</p>" +
         "<table class='extable'><thead><tr><th></th><th class='num'>$Y=0$</th><th class='num'>$Y=1$</th><th class='num'>$f_X$</th></tr></thead><tbody>" +
@@ -120,7 +156,8 @@
         "<tr><td class='row-h'>$X=1$</td><td class='num'>3/10</td><td class='num'>4/10</td><td class='num'>7/10</td></tr>" +
         "<tr><td class='row-h'>$f_Y$</td><td class='num'>4/10</td><td class='num'>6/10</td><td class='num'>1</td></tr>" +
         "</tbody></table>" +
-        "<p>Reading the row totals, $f_X(0)=3/10$ and $f_X(1)=7/10$. A continuous example: if $f(x,y)=x+y$ on the unit square, then $f_Y(y) = \\int_0^1 (x+y)\\,dx = \\frac{1}{2} + y$.</p>" },
+        "<p>Reading the row totals, $f_X(0)=3/10$ and $f_X(1)=7/10$. A continuous example: if $f(x,y)=x+y$ on the unit square, then $f_Y(y) = \\int_0^1 (x+y)\\,dx = \\frac{1}{2} + y$.</p>" +
+        "<ul class='steps'><li>For the non-rectangular density from Example 2.22, $f(x,y)=\\frac{21}{4}x^2y$ on $x^2\\le y\\le1$.</li><li>The marginal of $X$ integrates over $y$: $f_X(x)=\\int_{x^2}^{1}\\frac{21}{4}x^2y\\,dy$.</li><li>This equals $\\frac{21}{8}x^2(1-x^4)$ for $-1\\le x\\le1$, and 0 otherwise.</li></ul>" },
       { h: "Conditional distributions", body:
         "<p>The <strong>conditional pmf</strong> is $f_{X|Y}(x|y) = \\dfrac{f_{X,Y}(x,y)}{f_Y(y)}$ whenever $f_Y(y) \\gt 0$; the same formula defines the continuous conditional density. For $(X,Y)$ uniform on the unit square, $f_{X|Y}(x|y) = 1$, so $X|Y=y \\sim \\text{Uniform}(0,1)$.</p>" +
         "<p><strong>Worked conditional probability.</strong> With $f(x,y)=x+y$ on the unit square and $f_Y(y)=y+\\frac{1}{2}$, find $\\mathbb{P}(X \\lt 1/4 \\mid Y = 1/3)$:</p>" +
@@ -128,9 +165,17 @@
         "<li>$f_{X|Y}(x|1/3) = \\dfrac{x + \\frac{1}{3}}{\\frac{1}{3}+\\frac{1}{2}}.$</li>" +
         "<li>$\\mathbb{P}(X \\lt 1/4 \\mid Y=1/3) = \\displaystyle\\int_0^{1/4} \\frac{x+\\frac{1}{3}}{\\frac{1}{3}+\\frac{1}{2}}\\,dx = \\frac{\\frac{1}{32}+\\frac{1}{12}}{\\frac{1}{3}+\\frac{1}{2}}.$</li>" +
         "<li>Numerator $= \\frac{3}{96}+\\frac{8}{96} = \\frac{11}{96}$; denominator $= \\frac{5}{6}$; ratio $= \\frac{11}{96}\\cdot\\frac{6}{5} = \\frac{11}{80}.$</li>" +
-        "</ul>" },
+        "</ul>" +
+        "<p>Two more conditional examples show the same divide-by-the-marginal rule.</p>" +
+        "<ul class='steps'><li>Example 2.39: if $X\\sim\\text{Uniform}(0,1)$ and $Y\\mid X=x\\sim\\text{Uniform}(x,1)$, then $f_{X,Y}(x,y)=1/(1-x)$ for $0\\lt x\\lt y\\lt1$.</li><li>Integrating over $x$ gives $f_Y(y)=\\int_0^y\\frac{dx}{1-x}=-\\log(1-y)$ for $0\\lt y\\lt1$.</li><li>Example 2.40: for the non-rectangular density, $f_{Y|X}(y|x)=\\frac{2y}{1-x^4}$ on $x^2\\le y\\le1$.</li><li>At $x=1/2$, $f_{Y|X}(y|1/2)=32y/15$, so $\\mathbb{P}(Y\\ge3/4\\mid X=1/2)=\\int_{3/4}^{1}32y/15\\,dy=7/15$.</li></ul>" },
       { h: "Independence", body:
-        "<p>$X$ and $Y$ are <strong>independent</strong> ($X \\amalg Y$) if $\\mathbb{P}(X\\in A, Y\\in B) = \\mathbb{P}(X\\in A)\\mathbb{P}(Y\\in B)$ for all $A,B$. Equivalently $f_{X,Y}(x,y) = f_X(x)f_Y(y)$ for all $x,y$. In the author's first $2\\times 2$ example each cell equals $f_X f_Y$, so the variables are independent; in a second table with cells $1/2, 0, 0, 1/2$ they are dependent because $f_X(0)f_Y(1) = 1/4$ yet $f(0,1)=0$. A handy check (Theorem 2.33): if the support is a rectangle and $f(x,y)=g(x)h(y)$ factors, then $X$ and $Y$ are independent.</p>" }
+        "<p>$X$ and $Y$ are <strong>independent</strong> ($X \\amalg Y$) if $\\mathbb{P}(X\\in A, Y\\in B) = \\mathbb{P}(X\\in A)\\mathbb{P}(Y\\in B)$ for all $A,B$. Equivalently $f_{X,Y}(x,y) = f_X(x)f_Y(y)$ for all $x,y$. Example 2.31 contrasts independence and dependence:</p>" +
+        "<table class='extable'><thead><tr><th>case</th><th class='num'>$f(0,0)$</th><th class='num'>$f(0,1)$</th><th class='num'>$f(1,0)$</th><th class='num'>$f(1,1)$</th><th>check</th></tr></thead><tbody>" +
+        "<tr><td class='row-h'>independent</td><td class='num'>1/4</td><td class='num'>1/4</td><td class='num'>1/4</td><td class='num'>1/4</td><td>all marginals are 1/2, so each product is 1/4</td></tr>" +
+        "<tr><td class='row-h'>dependent</td><td class='num'>1/2</td><td class='num'>0</td><td class='num'>0</td><td class='num'>1/2</td><td>$f_X(0)f_Y(1)=1/4$ but $f(0,1)=0$</td></tr>" +
+        "</tbody></table>" +
+        "<p>A handy check (Theorem 2.33): if the support is a rectangle and $f(x,y)=g(x)h(y)$ factors, then $X$ and $Y$ are independent.</p>" +
+        "<ul class='steps'><li>Example 2.32: if independent $X,Y$ both have density $2x$ on $[0,1]$, then $f(x,y)=4xy$ on the unit square.</li><li>$\\mathbb{P}(X+Y\\le1)=4\\int_0^1\\int_0^{1-x}xy\\,dy\\,dx=1/6$.</li><li>Example 2.34: $f(x,y)=2e^{-(x+2y)}$ on $(0,\\infty)\\times(0,\\infty)$ factors as $g(x)h(y)$ with $g(x)=2e^{-x}$ and $h(y)=e^{-2y}$, so $X$ and $Y$ are independent.</li></ul>" }
     ],
     takeaways: [
       "Joint $f(x,y)=\\mathbb{P}(X=x,Y=y)$; in a table, marginals are the row and column totals.",
@@ -214,13 +259,22 @@
         "<li>For $1 \\le y \\lt 9$: $A_y = [-1, \\sqrt{y}]$, so $F_Y(y) = \\int_{-1}^{\\sqrt{y}} \\frac{1}{4}\\,dx = \\frac{1}{4}(\\sqrt{y}+1)$.</li>" +
         "<li>Differentiating gives $f_Y(y) = \\frac{1}{4\\sqrt{y}}$ for $0 \\lt y \\lt 1$ and $f_Y(y) = \\frac{1}{8\\sqrt{y}}$ for $1 \\lt y \\lt 9$, and $0$ otherwise.</li>" +
         "</ul>" +
-        "<p>For transformations of several variables, $Z = r(X,Y)$ (e.g. $X+Y$, $X/Y$, $\\max\\{X,Y\\}$), the same three steps apply with $A_z = \\{(x,y) : r(x,y) \\le z\\}$ and a double integral.</p>" }
+        "<p>For transformations of several variables, $Z = r(X,Y)$ (e.g. $X+Y$, $X/Y$, $\\max\\{X,Y\\}$), the same three steps apply with $A_z = \\{(x,y) : r(x,y) \\le z\\}$ and a double integral.</p>" },
+      { h: "Worked example: sum of two uniforms", body:
+        "<p>Example 2.48 applies the same recipe to $Y=X_1+X_2$ with independent $X_1,X_2\\sim\\text{Uniform}(0,1)$. The joint density is 1 on the unit square, and $A_y$ is the part of the square below the line $x_2=y-x_1$.</p>" +
+        "<ul class='steps'>" +
+        "<li>For $0\\lt y\\le1$, $A_y$ is a triangle with vertices $(0,0)$, $(y,0)$, and $(0,y)$, so $F_Y(y)=y^2/2$.</li>" +
+        "<li>For $1\\lt y\\lt2$, $A_y$ is the square minus the upper-right triangle with side length $2-y$, so $F_Y(y)=1-(2-y)^2/2$.</li>" +
+        "<li>Differentiating gives $f_Y(y)=y$ for $0\\le y\\le1$, $f_Y(y)=2-y$ for $1\\le y\\le2$, and 0 otherwise.</li>" +
+        "</ul>" +
+        "<table class='extable'><thead><tr><th>range</th><th>$F_Y(y)$</th><th>$f_Y(y)$</th></tr></thead><tbody><tr><td class='row-h'>$y\\lt0$</td><td>0</td><td>0</td></tr><tr><td class='row-h'>$0\\le y\\lt1$</td><td>$y^2/2$</td><td>$y$</td></tr><tr><td class='row-h'>$1\\le y\\lt2$</td><td>$1-(2-y)^2/2$</td><td>$2-y$</td></tr><tr><td class='row-h'>$y\\ge2$</td><td>1</td><td>0</td></tr></tbody></table>" }
     ],
     takeaways: [
       "Discrete: $f_Y(y)=\\mathbb{P}(X\\in r^{-1}(y))$; $Y=X^2$ can collapse values (here to $1/2, 1/2$).",
       "Continuous recipe: build $A_y$, integrate $f_X$ to get $F_Y$, then differentiate.",
       "Monotone $r$ shortcut: $f_Y(y)=f_X(s(y))|ds/dy|$.",
-      "For $X\\sim\\text{Uniform}(-1,3)$, $Y=X^2$ has a two-piece density splitting at $y=1$."
+      "For $X\\sim\\text{Uniform}(-1,3)$, $Y=X^2$ has a two-piece density splitting at $y=1$.",
+      "The sum of two independent Uniform(0,1) variables has triangular density: $y$ then $2-y$."
     ]
   });
 
@@ -231,7 +285,8 @@
         interpret: "The ten-flip head-count from the chapter peaks at 5 heads and is symmetric — the most likely outcome is half heads.",
         labels: ["0","1","2","3","4","5","6","7","8","9","10"],
         values: [0.001, 0.010, 0.044, 0.117, 0.205, 0.246, 0.205, 0.117, 0.044, 0.010, 0.001] }
-    ]
+    ],
+    code: "# Binomial probability function for the chapter's ten-flip head count.\nfrom math import comb\n\nn, p = 10, 0.5\npmf = [comb(n, x) * p**x * (1-p)**(n-x) for x in range(n+1)]\nprint([round(v, 3) for v in pmf])\n# [0.001, 0.01, 0.044, 0.117, 0.205, 0.246, 0.205, 0.117, 0.044, 0.01, 0.001]\n\n# Geometric and Poisson normalization checks from the book:\n# sum_{k>=1} p(1-p)^{k-1} = 1;  sum_x e^{-lambda} lambda^x/x! = 1"
   };
   window.CODEVIZ["aos-ch2-continuous-distributions"] = {
     charts: [
@@ -241,6 +296,39 @@
         series: [ { name: "phi(z)", color: "#4ea1ff", points: [
           [-3, 0.004], [-2.5, 0.018], [-2, 0.054], [-1.5, 0.130], [-1, 0.242], [-0.5, 0.352],
           [0, 0.399], [0.5, 0.352], [1, 0.242], [1.5, 0.130], [2, 0.054], [2.5, 0.018], [3, 0.004] ] } ] }
-    ]
+    ],
+    code: "# Normal-table computations in Example 2.17, plus values for Figure 2.4.\nimport math\nfrom statistics import NormalDist\n\nmu, var = 3, 5\nsigma = math.sqrt(var)\nz = (1 - mu) / sigma\nprint(z)                                      # -0.894427...\nprint(1 - NormalDist().cdf(z))                # 0.81445, book rounds to 0.81\nq_std = NormalDist().inv_cdf(0.2)             # -0.84162 from table\nprint(mu + sigma * q_std)                     # 1.118..., book: 1.1181\n\nzs = [-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3]\nprint([round(math.exp(-z*z/2)/math.sqrt(2*math.pi), 3) for z in zs])"
+  };
+  window.CODEVIZ["aos-ch2-bivariate-marginal-conditional"] = {
+    charts: [
+      { type: "scatter", title: "Non-rectangular support and event from Figure 2.5",
+        interpret: "The density in Example 2.22 is positive above y=x^2; the event X >= Y is the wedge between y=x^2 and y=x for x from 0 to 1.",
+        xlabel: "x", ylabel: "y",
+        groups: [],
+        lines: [
+          { color: "#4ea1ff", points: [[-1,1],[-0.75,0.563],[-0.5,0.25],[-0.25,0.063],[0,0],[0.25,0.063],[0.5,0.25],[0.75,0.563],[1,1]] },
+          { color: "#ffb454", dash: true, points: [[0,0],[0.25,0.25],[0.5,0.5],[0.75,0.75],[1,1]] }
+        ] }
+    ],
+    code: "# Example 2.22: normalize c*x^2*y on x^2 <= y <= 1, then integrate X >= Y.\nfrom fractions import Fraction\n\nc = Fraction(21, 4)            # since 1 = c * 4/21\nprob = Fraction(3, 20)         # (21/4) * int_0^1 int_{x^2}^x x^2*y dy dx\nprint(c)                       # 21/4\nprint(float(prob), prob)        # 0.15, 3/20\n\n# Example 2.32: independent densities f(x)=2x on [0,1]\nprint(Fraction(1, 6))           # P(X+Y <= 1)"
+  };
+  window.CODEVIZ["aos-ch2-transformations"] = {
+    charts: [
+      { type: "line", title: "Density of Y = X1 + X2 for independent Uniform(0,1) variables",
+        interpret: "Example 2.48 differentiates the area CDF to get a triangular pdf: it rises to 1 at y=1, then falls to 0 at y=2.",
+        xlabel: "y", ylabel: "f_Y(y)",
+        series: [ { name: "f_Y(y)", color: "#7ee787", points: [
+          [0,0], [0.25,0.25], [0.5,0.5], [0.75,0.75], [1,1], [1.25,0.75], [1.5,0.5], [1.75,0.25], [2,0] ] } ] },
+      { type: "scatter", title: "Boundary line for the set A_y in Figure 2.6",
+        interpret: "For y between 0 and 1, A_y is a triangle below x2=y-x1; for y between 1 and 2, it is the unit square minus an upper-right triangle.",
+        xlabel: "x1", ylabel: "x2",
+        groups: [],
+        lines: [
+          { color: "#4ea1ff", points: [[0,0],[1,0],[1,1],[0,1],[0,0]] },
+          { color: "#ffb454", dash: true, points: [[0,0.75],[0.75,0]] },
+          { color: "#c89bff", dash: true, points: [[0.25,1],[1,0.25]] }
+        ] }
+    ],
+    code: "# Example 2.48: sum of two independent Uniform(0,1) variables.\ndef F_sum(y):\n    if y < 0: return 0\n    if y < 1: return y*y/2\n    if y < 2: return 1 - (2-y)**2/2\n    return 1\n\ndef f_sum(y):\n    if 0 <= y <= 1: return y\n    if 1 <= y <= 2: return 2-y\n    return 0\n\nprint(F_sum(0.5), f_sum(0.5))   # 0.125, 0.5\nprint(F_sum(1.5), f_sum(1.5))   # 0.875, 0.5"
   };
 })();

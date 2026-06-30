@@ -23,11 +23,11 @@
       },
       {
         h: "Set operations on events",
-        body: "Events are sets, so the author defines the usual set operations. For an event $A$, the $\\textbf{complement}$ is $A^c = \\{\\omega \\in \\Omega : \\omega \\notin A\\}$, read \"not $A$\"; the complement of $\\Omega$ is the empty set $\\emptyset$. The $\\textbf{union}$ $A \\cup B$ collects every $\\omega$ that is in $A$, in $B$, or in both, read \"$A$ or $B$\". The $\\textbf{intersection}$ $A \\cap B$ collects every $\\omega$ in both $A$ and $B$, read \"$A$ and $B$\"; this is sometimes written $AB$ or $(A, B)$. The $\\textbf{set difference}$ is $A - B = \\{\\omega : \\omega \\in A, \\omega \\notin B\\}$. If every element of $A$ lies in $B$, we write $A \\subset B$ (set inclusion). When $A$ is finite, $|A|$ denotes the number of elements in $A$."
+        body: "Events are sets, so the author defines the usual set operations. For an event $A$, the $\\textbf{complement}$ is $A^c = \\{\\omega \\in \\Omega : \\omega \\notin A\\}$, read \"not $A$\"; the complement of $\\Omega$ is the empty set $\\emptyset$. The $\\textbf{union}$ $A \\cup B$ collects every $\\omega$ that is in $A$, in $B$, or in both, read \"$A$ or $B$\". The $\\textbf{intersection}$ $A \\cap B$ collects every $\\omega$ in both $A$ and $B$, read \"$A$ and $B$\"; this is sometimes written $AB$ or $(A, B)$. The $\\textbf{set difference}$ is $A - B = \\{\\omega : \\omega \\in A, \\omega \\notin B\\}$. If every element of $A$ lies in $B$, we write $A \\subset B$ (set inclusion). When $A$ is finite, $|A|$ denotes the number of elements in $A$. The book summarizes this notation in a compact terminology table:<table class=\"extable\"><thead><tr><th>symbol</th><th>book terminology</th></tr></thead><tbody><tr><td class=\"row-h\">$\\Omega$</td><td>sample space</td></tr><tr><td class=\"row-h\">$\\omega$</td><td>outcome, point, or element</td></tr><tr><td class=\"row-h\">$A$</td><td>event, a subset of $\\Omega$</td></tr><tr><td class=\"row-h\">$A^c$</td><td>complement: not $A$</td></tr><tr><td class=\"row-h\">$A \\cup B$</td><td>union: $A$ or $B$</td></tr><tr><td class=\"row-h\">$A \\cap B$ or $AB$</td><td>intersection: $A$ and $B$</td></tr><tr><td class=\"row-h\">$A-B$</td><td>set difference: in $A$ but not in $B$</td></tr><tr><td class=\"row-h\">$A \\subset B$</td><td>set inclusion</td></tr><tr><td class=\"row-h\">$\\emptyset$</td><td>null event, always false</td></tr><tr><td class=\"row-h\">$\\Omega$</td><td>true event, always true</td></tr></tbody></table>"
       },
       {
         h: "Disjoint sets, partitions, and indicators",
-        body: "Sets $A_1, A_2, \\ldots$ are $\\textbf{disjoint}$ (or mutually exclusive) if $A_i \\cap A_j = \\emptyset$ whenever $i \\neq j$ — no two share an outcome. The author's example: $A_1 = [0, 1)$, $A_2 = [1, 2)$, $A_3 = [2, 3), \\ldots$ are disjoint. A $\\textbf{partition}$ of $\\Omega$ is a sequence of disjoint sets whose union is all of $\\Omega$. The $\\textbf{indicator function}$ of $A$ is $I_A(\\omega) = 1$ if $\\omega \\in A$ and $0$ otherwise — a 1/0 flag for membership."
+        body: "Sets $A_1, A_2, \\ldots$ are $\\textbf{disjoint}$ (or mutually exclusive) if $A_i \\cap A_j = \\emptyset$ whenever $i \\neq j$ — no two share an outcome. The author's example: $A_1 = [0, 1)$, $A_2 = [1, 2)$, $A_3 = [2, 3), \\ldots$ are disjoint. A $\\textbf{partition}$ of $\\Omega$ is a sequence of disjoint sets whose union is all of $\\Omega$. The $\\textbf{indicator function}$ of $A$ is $I_A(\\omega) = 1$ if $\\omega \\in A$ and $0$ otherwise — a 1/0 flag for membership. Example 1.4 shows why monotone limits of sets need attention:<ul class=\"steps\"><li>Let $\\Omega=\\mathbb{R}$ and $A_i=[0,1/i)$ for $i=1,2,\\ldots$.</li><li>The union is $\\bigcup_{i=1}^{\\infty} A_i = [0,1)$, because $A_1$ is the largest set.</li><li>The intersection is $\\bigcap_{i=1}^{\\infty} A_i = \\{0\\}$, because every interval includes 0 and the right endpoint shrinks toward 0.</li><li>If instead $A_i=(0,1/i)$, the union is $(0,1)$ but the intersection is $\\emptyset$; the point 0 is no longer included.</li></ul>"
       }
     ],
     takeaways: [
@@ -120,13 +120,17 @@
       {
         h: "Worked example: at least one head in ten tosses",
         body: "Example 1.10: toss a fair coin 10 times; let $A$ = \"at least one head\". Computing $A$ directly is messy, so the author uses the complement and independence. Let $T_j$ be tails on the $j$-th toss.<ul class=\"steps\"><li>$\\mathbb{P}(A) = 1 - \\mathbb{P}(A^c) = 1 - \\mathbb{P}(\\text{all tails})$.</li><li>$\\mathbb{P}(\\text{all tails}) = \\mathbb{P}(T_1 T_2 \\cdots T_{10}) = \\mathbb{P}(T_1)\\mathbb{P}(T_2)\\cdots\\mathbb{P}(T_{10})$ by independence.</li><li>$= \\left(\\tfrac{1}{2}\\right)^{10} = \\tfrac{1}{1024} \\approx 0.000977$.</li><li>So $\\mathbb{P}(A) = 1 - \\left(\\tfrac{1}{2}\\right)^{10} \\approx 0.999$.</li></ul>"
+      },
+      {
+        h: "Worked example: first basketball success",
+        body: "Example 1.11 uses disjoint events and a geometric series. Two players alternate shots; player 1 makes a shot with probability $1/3$ and player 2 with probability $1/4$. Let $E$ be the event that player 1 succeeds before player 2, and let $A_j$ be the event that player 1's first success occurs on his $j$-th attempt.<ul class=\"steps\"><li>The events $A_1,A_2,\\ldots$ are disjoint and $E=\\bigcup_{j=1}^{\\infty}A_j$, so $\\mathbb{P}(E)=\\sum_{j=1}^{\\infty}\\mathbb{P}(A_j)$.</li><li>$\\mathbb{P}(A_1)=1/3$.</li><li>$A_2$ requires player 1 miss, player 2 miss, then player 1 score: $(2/3)(3/4)(1/3)=(1/2)(1/3)$.</li><li>In general, $\\mathbb{P}(A_j)=(1/2)^{j-1}(1/3)$.</li><li>Thus $\\mathbb{P}(E)=\\frac{1}{3}\\sum_{j=1}^{\\infty}(1/2)^{j-1}=\\frac{1}{3}\\cdot\\frac{1}{1-1/2}=\\frac{2}{3}$.</li></ul>"
       }
     ],
     takeaways: [
       "Independence: $\\mathbb{P}(AB) = \\mathbb{P}(A)\\mathbb{P}(B)$.",
       "Independence can be assumed (coin tosses) or derived (the die $A=\\{2,4,6\\}$, $B=\\{1,2,3,4\\}$ check gives $1/3 = 1/3$).",
       "Disjoint events with positive probability are never independent.",
-      "At least one head in 10 tosses: $1 - (1/2)^{10} \\approx 0.999$."
+      "At least one head in 10 tosses: $1 - (1/2)^{10} \\approx 0.999$; basketball example sums to $2/3$."
     ]
   });
 

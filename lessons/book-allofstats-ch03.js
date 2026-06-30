@@ -22,7 +22,13 @@
         h: "When the mean exists",
         body:
           "<p>The expectation exists only if $\\int |x|\\, dF_X(x) \\lt \\infty$. If that quantity is infinite, the mean is not defined.</p>" +
-          "<p>The Cauchy distribution, with density $f_X(x) = 1 / (\\pi(1+x^2))$, is the book's cautionary example. Integrating $|x|$ against this density diverges to $\\infty$, so the Cauchy mean does not exist. The intuition: the Cauchy has thick tails, so extreme observations are common and a running average never settles down.</p>"
+          "<p>The Cauchy distribution, with density $f_X(x) = 1 / (\\pi(1+x^2))$, is the book's cautionary example. Integrating $|x|$ against this density diverges to $\\infty$, so the Cauchy mean does not exist. The book works the divergence by symmetry and integration by parts:</p>" +
+          "<ul class=\"steps\">" +
+          "<li>$\\int |x|\\,dF(x) = \\dfrac{2}{\\pi}\\int_0^\\infty \\dfrac{x}{1+x^2}\\,dx$.</li>" +
+          "<li>Using integration by parts as in the book, with $u=x$ and $v=\\tan^{-1}x$, this becomes $\\dfrac{2}{\\pi}\\left[x\\tan^{-1}x\\big|_0^\\infty - \\int_0^\\infty \\tan^{-1}x\\,dx\\right]$.</li>" +
+          "<li>The tail integral diverges, so $\\int |x|\\,dF(x)=\\infty$ and the mean does not exist.</li>" +
+          "</ul>" +
+          "<p>The intuition: the Cauchy has thick tails, so extreme observations are common and a running average never settles down.</p>"
       },
       {
         h: "Worked examples",
@@ -103,10 +109,11 @@
       {
         h: "Means and variances of common distributions",
         body:
-          "<p>Section 3.4 collects the mean and variance of standard distributions. A selection from the book's table:</p>" +
+          "<p>Section 3.4 collects the mean and variance of important distributions. The full table in the book is:</p>" +
           "<table class=\"extable\">" +
           "<thead><tr><th>Distribution</th><th>Mean</th><th>Variance</th></tr></thead>" +
           "<tbody>" +
+          "<tr><td class=\"row-h\">Point mass at $a$</td><td class=\"num\">$a$</td><td class=\"num\">$0$</td></tr>" +
           "<tr><td class=\"row-h\">Bernoulli$(p)$</td><td class=\"num\">$p$</td><td class=\"num\">$p(1-p)$</td></tr>" +
           "<tr><td class=\"row-h\">Binomial$(n,p)$</td><td class=\"num\">$np$</td><td class=\"num\">$np(1-p)$</td></tr>" +
           "<tr><td class=\"row-h\">Geometric$(p)$</td><td class=\"num\">$1/p$</td><td class=\"num\">$(1-p)/p^2$</td></tr>" +
@@ -115,8 +122,18 @@
           "<tr><td class=\"row-h\">Normal$(\\mu,\\sigma^2)$</td><td class=\"num\">$\\mu$</td><td class=\"num\">$\\sigma^2$</td></tr>" +
           "<tr><td class=\"row-h\">Exponential$(\\beta)$</td><td class=\"num\">$\\beta$</td><td class=\"num\">$\\beta^2$</td></tr>" +
           "<tr><td class=\"row-h\">Gamma$(\\alpha,\\beta)$</td><td class=\"num\">$\\alpha\\beta$</td><td class=\"num\">$\\alpha\\beta^2$</td></tr>" +
+          "<tr><td class=\"row-h\">Beta$(\\alpha,\\beta)$</td><td class=\"num\">$\\alpha/(\\alpha+\\beta)$</td><td class=\"num\">$\\alpha\\beta/((\\alpha+\\beta)^2(\\alpha+\\beta+1))$</td></tr>" +
+          "<tr><td class=\"row-h\">$t_\\nu$</td><td class=\"num\">$0$ if $\\nu \\gt 1$</td><td class=\"num\">$\\nu/(\\nu-2)$ if $\\nu \\gt 2$</td></tr>" +
+          "<tr><td class=\"row-h\">$\\chi^2_p$</td><td class=\"num\">$p$</td><td class=\"num\">$2p$</td></tr>" +
+          "<tr><td class=\"row-h\">Multinomial$(n,\\mathbf{p})$</td><td class=\"num\">$n\\mathbf{p}$</td><td class=\"num\">see covariance matrix below</td></tr>" +
+          "<tr><td class=\"row-h\">Multivariate Normal$(\\mu,\\Sigma)$</td><td class=\"num\">$\\mu$</td><td class=\"num\">$\\Sigma$</td></tr>" +
           "</tbody></table>" +
-          "<p>For a random vector $X = (X_1, \\dots, X_k)$ the mean is the vector of component means and the spread is captured by the variance-covariance matrix $\\mathbb{V}(X)$, whose diagonal holds the variances $\\mathbb{V}(X_i)$ and whose off-diagonal entries are the covariances $\\text{Cov}(X_i, X_j)$.</p>"
+          "<p>For a random vector $X = (X_1, \\dots, X_k)$ the mean is the vector of component means and the spread is captured by the variance-covariance matrix $\\mathbb{V}(X)$, whose diagonal holds the variances $\\mathbb{V}(X_i)$ and whose off-diagonal entries are the covariances $\\text{Cov}(X_i, X_j)$. For $X \\sim \\text{Multinomial}(n,\\mathbf{p})$, the book works out the off-diagonal entries:</p>" +
+          "<ul class=\"steps\">" +
+          "<li>Each component has marginal distribution $X_i \\sim \\text{Binomial}(n,p_i)$, so $\\mathbb{E}(X_i)=np_i$ and $\\mathbb{V}(X_i)=np_i(1-p_i)$.</li>" +
+          "<li>Also $X_i+X_j \\sim \\text{Binomial}(n,p_i+p_j)$, so $\\mathbb{V}(X_i+X_j)=n(p_i+p_j)(1-p_i-p_j)$.</li>" +
+          "<li>Equating this with $np_i(1-p_i)+np_j(1-p_j)+2\\text{Cov}(X_i,X_j)$ gives $\\text{Cov}(X_i,X_j)=-np_i p_j$.</li>" +
+          "</ul>"
       }
     ],
     takeaways: [
@@ -209,7 +226,8 @@
           "<li>$\\psi_X(t) = \\int_0^\\infty e^{tx} e^{-x}\\, dx = \\int_0^\\infty e^{(t-1)x}\\, dx = \\dfrac{1}{1-t}$ (divergent if $t \\ge 1$).</li>" +
           "<li>$\\psi'(0) = 1$, so $\\mathbb{E}(X) = 1$.</li>" +
           "<li>$\\psi''(0) = 2$, so $\\mathbb{E}(X^2) = 2$ and $\\mathbb{V}(X) = \\mathbb{E}(X^2) - \\mu^2 = 2 - 1 = 1$.</li>" +
-          "</ul>"
+          "</ul>" +
+          "<pre><code class=\"language-python\"># Reproduce Example 3.30's Exp(1) MGF arithmetic\n# psi(t) = 1/(1 - t), valid for t &lt; 1\ndef psi(t): return 1 / (1 - t)\ndef psi_prime(t): return 1 / (1 - t)**2\ndef psi_second(t): return 2 / (1 - t)**3\n\nmean = psi_prime(0)              # 1\nsecond_moment = psi_second(0)    # 2\nvariance = second_moment - mean**2\nprint(mean, second_moment, variance)  # 1 2 1</code></pre>"
       },
       {
         h: "Properties and the uniqueness theorem",

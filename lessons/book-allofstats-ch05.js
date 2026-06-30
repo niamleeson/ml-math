@@ -21,7 +21,9 @@
         "<p>Let $F_n$ be the CDF of $X_n$ and $F$ the CDF of $X$.</p>" +
         "<p><strong>In probability</strong> ($X_n \\xrightarrow{P} X$): for every $\\epsilon \\gt 0$, $\\mathbb{P}(|X_n - X| \\gt \\epsilon) \\to 0$ as $n \\to \\infty$. The values get close with high probability.</p>" +
         "<p><strong>In distribution</strong> ($X_n \\rightsquigarrow X$): $\\lim_{n\\to\\infty} F_n(t) = F(t)$ at every $t$ where $F$ is continuous. Only the distribution needs to match, and only at continuity points.</p>" +
-        "<p>When the limit is a point mass at $c$, we write $X_n \\xrightarrow{P} c$ or $X_n \\rightsquigarrow c$.</p>" },
+        "<p>When the limit is a point mass at $c$, we write $X_n \\xrightarrow{P} c$ or $X_n \\rightsquigarrow c$.</p>" +
+        "<p><strong>Example 5.3.</strong> If $X_n \\sim N(0,1/n)$, then $\\sqrt{n}X_n \\sim N(0,1)$ and the CDF is $F_n(t)=\\Phi(\\sqrt{n}t)$.</p>" +
+        "<ul class=\"steps\"><li>For $t\\lt0$, $\\sqrt{n}t \\to -\\infty$, so $F_n(t)=\\mathbb{P}(Z\\lt\\sqrt{n}t) \\to 0$.</li><li>For $t\\gt0$, $\\sqrt{n}t \\to \\infty$, so $F_n(t) \\to 1$.</li><li>At $t=0$, $F_n(0)=1/2$ while the point-mass CDF jumps to $1$; this does not block convergence in distribution because the definition ignores discontinuities of the limit.</li><li>Markov also gives $\\mathbb{P}(|X_n|\\gt\\epsilon) \\le \\mathbb{E}(X_n^2)/\\epsilon^2 = 1/(n\\epsilon^2) \\to 0$, so $X_n \\xrightarrow{P}0$.</li></ul>" },
       { h: "Convergence in quadratic mean", body:
         "<p><strong>In quadratic mean</strong> ($X_n \\xrightarrow{qm} X$, also called convergence in $L_2$): $\\mathbb{E}(X_n - X)^2 \\to 0$ as $n \\to \\infty$. The book introduces this mainly because it is a handy tool for proving convergence in probability.</p>" },
       { h: "How they rank", body:
@@ -34,7 +36,11 @@
         "<p>In general none of the reverse implications hold, except that special constant-limit case. The proof of part (a) is one line of Markov's inequality: $\\mathbb{P}(|X_n - X| \\gt \\epsilon) = \\mathbb{P}(|X_n - X|^2 \\gt \\epsilon^2) \\le \\mathbb{E}|X_n - X|^2 / \\epsilon^2 \\to 0$.</p>" },
       { h: "The reverse arrows really fail", body:
         "<p><strong>Distribution does not imply probability.</strong> Let $X \\sim N(0,1)$ and set $X_n = -X$ for all $n$. By symmetry each $X_n$ is also $N(0,1)$, so $F_n = F$ and $X_n \\rightsquigarrow X$ trivially. Yet $\\mathbb{P}(|X_n - X| \\gt \\epsilon) = \\mathbb{P}(|2X| \\gt \\epsilon) = \\mathbb{P}(|X| \\gt \\epsilon/2) \\neq 0$, so $X_n$ does not converge to $X$ in probability.</p>" +
-        "<p><strong>Probability does not imply quadratic mean.</strong> Let $U \\sim \\text{Unif}(0,1)$ and $X_n = \\sqrt{n}\\, I_{(0,1/n)}(U)$. Then $\\mathbb{P}(|X_n| \\gt \\epsilon) = \\mathbb{P}(0 \\le U \\lt 1/n) = 1/n \\to 0$, so $X_n \\xrightarrow{P} 0$. But $\\mathbb{E}(X_n^2) = n \\int_0^{1/n} du = 1$ for all $n$, which never goes to zero.</p>" }
+        "<p><strong>Probability does not imply quadratic mean.</strong> Let $U \\sim \\text{Unif}(0,1)$ and $X_n = \\sqrt{n}\\, I_{(0,1/n)}(U)$. Then $\\mathbb{P}(|X_n| \\gt \\epsilon) = \\mathbb{P}(0 \\le U \\lt 1/n) = 1/n \\to 0$, so $X_n \\xrightarrow{P} 0$. But $\\mathbb{E}(X_n^2) = n \\int_0^{1/n} du = 1$ for all $n$, which never goes to zero.</p>" +
+        "<p><strong>The warning about expectations.</strong> Convergence in probability alone does not force means to converge. The book's example sets $\\mathbb{P}(X_n=n^2)=1/n$ and $\\mathbb{P}(X_n=0)=1-1/n$. Then $\\mathbb{P}(|X_n|\\lt\\epsilon)=1-1/n\\to1$, so $X_n\\xrightarrow{P}0$, but $\\mathbb{E}(X_n)=n^2(1/n)+0(1-1/n)=n\\to\\infty$.</p>" },
+      { h: "Transformations and Slutzky", body:
+        "<p>Theorem 5.5 records which operations preserve convergence. The useful rules are:</p>" +
+        "<ul class=\"steps\"><li>Probability convergence is stable under sums, products, and continuous transformations: if $X_n\\xrightarrow{P}X$ and $Y_n\\xrightarrow{P}Y$, then $X_n+Y_n\\xrightarrow{P}X+Y$ and $X_nY_n\\xrightarrow{P}XY$; if $g$ is continuous, $g(X_n)\\xrightarrow{P}g(X)$.</li><li>Quadratic-mean convergence is stable under sums.</li><li>Slutzky's theorem: if $X_n\\rightsquigarrow X$ and $Y_n\\rightsquigarrow c$ for a constant $c$, then $X_n+Y_n\\rightsquigarrow X+c$ and $X_nY_n\\rightsquigarrow cX$.</li><li>The book cautions that $X_n\\rightsquigarrow X$ and $Y_n\\rightsquigarrow Y$ do not by themselves guarantee $X_n+Y_n\\rightsquigarrow X+Y$.</li></ul>" }
     ],
     takeaways: [
       "Three modes: quadratic mean, in probability, in distribution.",
@@ -101,7 +107,8 @@
         "</ul>" },
       { h: "Using it when sigma is unknown — confidence intervals", body:
         "<p>The CLT needs $\\sigma$, which we rarely know. We can estimate $\\sigma^2$ from the data with the sample variance $S_n^2 = \\dfrac{1}{n-1}\\sum_{i=1}^n (X_i - \\bar{X}_n)^2$. Replacing $\\sigma$ by $S_n$ keeps the CLT valid (Theorem 5.10): $\\dfrac{\\sqrt{n}(\\bar{X}_n - \\mu)}{S_n} \\rightsquigarrow N(0,1)$. This is what lets us build large-sample confidence intervals for $\\mu$ from data alone.</p>" +
-        "<p>How accurate is the Normal approximation? The Berry-Essèen inequality (Theorem 5.11) bounds the error: if $\\mathbb{E}|X_1|^3 \\lt \\infty$, then $\\sup_z |\\mathbb{P}(Z_n \\le z) - \\Phi(z)| \\le \\dfrac{33}{4}\\cdot\\dfrac{\\mathbb{E}|X_1 - \\mu|^3}{\\sqrt{n}\\,\\sigma^3}$.</p>" }
+        "<p>How accurate is the Normal approximation? The Berry-Essèen inequality (Theorem 5.11) bounds the error: if $\\mathbb{E}|X_1|^3 \\lt \\infty$, then $\\sup_z |\\mathbb{P}(Z_n \\le z) - \\Phi(z)| \\le \\dfrac{33}{4}\\cdot\\dfrac{\\mathbb{E}|X_1 - \\mu|^3}{\\sqrt{n}\\,\\sigma^3}$.</p>" +
+        "<p>The multivariate CLT (Theorem 5.12) says the same thing for a vector of sample means: if $X_i=(X_{1i},\\ldots,X_{ki})^T$ has mean vector $\\mu$ and variance matrix $\\Sigma$, then $\\sqrt{n}(\\bar{X}-\\mu)\\rightsquigarrow N(0,\\Sigma)$.</p>" }
     ],
     takeaways: [
       "CLT: $\\sqrt{n}(\\bar{X}_n - \\mu)/\\sigma \\rightsquigarrow N(0,1)$, regardless of the underlying distribution's shape.",
@@ -131,7 +138,9 @@
         "<li>Therefore $W_n \\approx N\\!\\left(e^{\\mu},\\, e^{2\\mu}\\sigma^2/n\\right)$.</li>" +
         "</ul>" },
       { h: "Multivariate version", body:
-        "<p>There is also a multivariate delta method (Theorem 5.15). If $\\sqrt{n}(Y_n - \\mu) \\rightsquigarrow N(0, \\Sigma)$ for a random vector $Y_n$, and $g:\\mathbb{R}^k \\to \\mathbb{R}$ has gradient $\\nabla g$ with $\\nabla_\\mu = \\nabla g$ evaluated at $\\mu$ having nonzero entries, then $\\sqrt{n}(g(Y_n) - g(\\mu)) \\rightsquigarrow N\\!\\left(0,\\, \\nabla_\\mu^T \\Sigma\\, \\nabla_\\mu\\right)$. The scalar slope is replaced by the gradient, and the variance becomes a quadratic form in $\\Sigma$.</p>" }
+        "<p>There is also a multivariate delta method (Theorem 5.15). If $\\sqrt{n}(Y_n - \\mu) \\rightsquigarrow N(0, \\Sigma)$ for a random vector $Y_n$, and $g:\\mathbb{R}^k \\to \\mathbb{R}$ has gradient $\\nabla g$ with $\\nabla_\\mu = \\nabla g$ evaluated at $\\mu$ having nonzero entries, then $\\sqrt{n}(g(Y_n) - g(\\mu)) \\rightsquigarrow N\\!\\left(0,\\, \\nabla_\\mu^T \\Sigma\\, \\nabla_\\mu\\right)$. The scalar slope is replaced by the gradient, and the variance becomes a quadratic form in $\\Sigma$.</p>" +
+        "<p><strong>Example 5.16.</strong> For iid pairs $(X_{1i},X_{2i})^T$ with mean $(\\mu_1,\\mu_2)^T$ and covariance matrix $\\Sigma$, define $Y_n=\\bar{X}_1\\bar{X}_2$ and $g(s_1,s_2)=s_1s_2$.</p>" +
+        "<ul class=\"steps\"><li>The gradient is $\\nabla g(s)=(s_2,s_1)^T$, so at the mean it is $(\\mu_2,\\mu_1)^T$.</li><li>The quadratic-form variance is $\\nabla_\\mu^T\\Sigma\\nabla_\\mu$ with $\\nabla_\\mu=(\\mu_2,\\mu_1)^T$.</li><li>Multiplying it out gives $\\mu_2^2\\sigma_{11}+2\\mu_1\\mu_2\\sigma_{12}+\\mu_1^2\\sigma_{22}$.</li><li>Therefore $\\sqrt{n}(\\bar{X}_1\\bar{X}_2-\\mu_1\\mu_2)\\rightsquigarrow N(0,\\mu_2^2\\sigma_{11}+2\\mu_1\\mu_2\\sigma_{12}+\\mu_1^2\\sigma_{22})$.</li></ul>" }
     ],
     takeaways: [
       "Delta method: $Y_n \\approx N(\\mu,\\sigma^2/n)$ gives $g(Y_n) \\approx N(g(\\mu), (g'(\\mu))^2\\sigma^2/n)$ for smooth $g$ with $g'(\\mu)\\neq0$.",
@@ -146,8 +155,8 @@
   window.CODEVIZ["aos-ch5-types-of-convergence"] = {
     charts: [
       { type: "line",
-        title: "Example 5.3 — F_n(t) sharpening toward the point mass at 0 (illustrative reconstruction)",
-        interpret: "As n grows, F_n(t) = Phi(sqrt(n) t) steepens toward the step at 0: F(t)=0 for t<0 and 1 for t>0. It converges at every t except t=0, which is not a continuity point of the limit F.",
+        title: "Example 5.3 — F_n(t) sharpening toward the point mass at 0",
+        interpret: "As n grows, F_n(t) = Phi(sqrt(n) t) steepens toward the step at 0: F(t)=0 for t<0 and 1 for t>0. The miss at t=0 is allowed because the limit CDF is discontinuous there.",
         xlabel: "t", ylabel: "F_n(t)",
         series: [
           { name: "n = 1",   color: "#4ea1ff", points: [[-1,0.159],[-0.6,0.274],[-0.3,0.382],[0,0.5],[0.3,0.618],[0.6,0.726],[1,0.841]] },
@@ -156,6 +165,36 @@
           { name: "n = 100", color: "#c89bff", points: [[-0.3,0.0013],[-0.15,0.067],[-0.05,0.309],[0,0.5],[0.05,0.691],[0.15,0.933],[0.3,0.9987]] }
         ]
       }
-    ]
+    ],
+    code: "# Reproduce Example 5.3 / Figure 5.1 from F_n(t)=Phi(sqrt(n)*t)\nimport numpy as np\nfrom scipy.stats import norm\n\nfor n in [1, 4, 16, 100]:\n    vals = [norm.cdf(np.sqrt(n) * t) for t in [-0.3, 0, 0.3]]\n    print(n, [round(v, 4) for v in vals])\n# n=100 at t=-0.3,0,0.3 -> [0.0013, 0.5, 0.9987]\n# Markov: P(|X_n|>eps) <= 1/(n*eps**2) -> 0"
+  };
+
+  window.CODEVIZ["aos-ch5-law-of-large-numbers"] = {
+    charts: [
+      { type: "line",
+        title: "Example 5.7 — Chebyshev lower bound for a fair coin",
+        interpret: "For p=1/2, P(.4 <= Xbar_n <= .6) is at least 1 - 25/n; n=84 is the first integer making the bound exceed .7.",
+        xlabel: "n tosses", ylabel: "lower bound",
+        series: [
+          { name: "1 - 25/n", color: "#4ea1ff", points: [[25,0],[50,0.5],[84,0.702],[100,0.75],[250,0.9],[500,0.95]] },
+          { name: "target .7", color: "#ffb454", points: [[25,0.7],[500,0.7]] }
+        ]
+      }
+    ],
+    code: "# Example 5.7: solve 1 - 25/n >= .7 for fair-coin tosses\nimport math\n\nneed = math.ceil(25 / 0.3)\nprint(need)                 # 84\nfor n in [25, 50, 84, 100, 250, 500]:\n    print(n, round(1 - 25/n, 3))\n# 84 -> 0.702, so P(.4 <= Xbar_n <= .6) >= .7"
+  };
+
+  window.CODEVIZ["aos-ch5-central-limit-theorem"] = {
+    charts: [
+      { type: "hist",
+        title: "Example 5.9 — Normal approximation for Poisson(5) sample means",
+        interpret: "With n=125, the CLT uses Xbar ~ N(5, 5/125); the cutoff 5.5 is 2.5 standard errors above the mean, giving Phi(2.5)=0.9938.",
+        labels: ["4.4-4.6", "4.6-4.8", "4.8-5.0", "5.0-5.2", "5.2-5.4", "5.4-5.6"],
+        values: [2.14, 13.59, 34.13, 34.13, 13.59, 2.14],
+        valueLabels: ["2.14%", "13.59%", "34.13%", "34.13%", "13.59%", "2.14%"],
+        colors: ["#4ea1ff"]
+      }
+    ],
+    code: "# Example 5.9: errors per program, Xi ~ Poisson(5), n=125\nfrom math import sqrt\nfrom scipy.stats import norm\n\nmu, var, n, cutoff = 5, 5, 125, 5.5\nse = sqrt(var / n)          # sqrt(5/125) = 0.2\nz = (cutoff - mu) / se      # 2.5\nprint(z)                    # 2.5\nprint(norm.cdf(z))          # 0.9937903347, printed as .9938\n# Approximation used by the book: P(Xbar < 5.5) ~= P(Z < 2.5)"
   };
 })();

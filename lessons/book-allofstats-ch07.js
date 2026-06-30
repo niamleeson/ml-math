@@ -54,7 +54,8 @@
           { name: "upper U(x)", color: "#ffb454", points: [[0,0.048],[0.1,0.388],[0.2,0.628],[0.3,0.778],[0.4,0.888],[0.5,0.948],[0.6,0.978],[0.8,1.0],[1.0,1.0],[1.3,1.0]] }
         ]
       }
-    ]
+    ],
+    code: "# Python/NumPy reproduction of Figure 7.1 and Example 7.6\nimport numpy as np\n\ndef ecdf(sample, x):\n    sample = np.asarray(sample)\n    return np.mean(sample <= x)\n\n# nerve = np.array([...])  # Cox-Lewis nerve waiting times, n = 799\n# Book's read-offs from the empirical CDF:\nFhat_04 = 0.84\nFhat_06 = 0.93\nprint(Fhat_06 - Fhat_04)                 # 0.09 in (.4, .6]\n\nn, alpha = 799, 0.05\neps = np.sqrt(np.log(2 / alpha) / (2 * n))\nprint(round(eps, 3))                     # 0.048, DKW 95% band half-width\n# lower = np.maximum(Fhat_grid - eps, 0)\n# upper = np.minimum(Fhat_grid + eps, 1)"
   };
 
   B({
@@ -84,6 +85,10 @@
         body: "<p>The variance is $\\sigma^2 = \\int x^2\\, dF(x) - \\left(\\int x\\, dF(x)\\right)^2$. Plugging in $\\widehat{F}_n$ gives the plug-in variance, which simplifies to the average squared deviation:</p><p>$$\\widehat{\\sigma}^2 = \\frac{1}{n}\\sum_{i=1}^{n} X_i^2 - \\left(\\frac{1}{n}\\sum_{i=1}^{n} X_i\\right)^2 = \\frac{1}{n}\\sum_{i=1}^{n} (X_i - \\overline{X}_n)^2.$$</p><p>A close cousin is the sample variance $S_n^2 = \\frac{1}{n-1}\\sum_{i=1}^{n}(X_i-\\overline{X}_n)^2$. In practice the difference between $\\widehat{\\sigma}^2$ and $S_n^2$ is tiny and either may be used; the mean's estimated standard error is then $\\widehat{\\mathrm{se}} = \\widehat{\\sigma}/\\sqrt{n}$.</p>"
       },
       {
+        h: "Worked plug-in arithmetic",
+        body: "<p>The chapter's plug-in calculations all use the same mechanical replacement: integrals against $F$ become averages over the observed values. For the cholesterol example the book computes the mean functional separately in the two groups and then computes the difference functional.</p><ul class=\"steps\"><li>No-heart-disease group: $n_1=51$, $\\widehat{\\mu}_1=195.27$, $\\widehat{\\mathrm{se}}(\\widehat{\\mu}_1)=5.0$, so the 95% Normal interval is $195.27\\pm 2(5.0)=(185,205)$.</li><li>Narrowed-arteries group: $n_2=320$, $\\widehat{\\mu}_2=216.19$, $\\widehat{\\mathrm{se}}(\\widehat{\\mu}_2)=2.4$, so the 95% Normal interval is $216.19\\pm 2(2.4)=(211,221)$.</li><li>Difference of means: $\\widehat{\\theta}=216.19-195.27=20.92$.</li><li>Standard error for the difference: $\\sqrt{5.0^2+2.4^2}=5.55$.</li><li>95% interval for the difference: $20.92\\pm 2(5.55)=(9.8,32.0)$.</li></ul>"
+      },
+      {
         h: "Example 7.15 — plasma cholesterol",
         body: "<p>Scott et al. (1978) measured plasma cholesterol (mg/dl) for $371$ patients with chest pain: $51$ with no heart disease and $320$ with narrowed arteries (Figure 7.2 shows the two histograms). The plug-in mean estimates are the two sample means, with standard errors $\\widehat{\\mathrm{se}} = \\widehat{\\sigma}/\\sqrt{n}$:</p><table class=\"extable\"><thead><tr><th>group</th><th class=\"num\">n</th><th class=\"num\">plug-in mean $\\widehat{\\mu}$</th><th class=\"num\">$\\widehat{\\mathrm{se}}$</th><th class=\"num\">95% CI $\\widehat{\\mu}\\pm 2\\widehat{\\mathrm{se}}$</th></tr></thead><tbody><tr><td class=\"row-h\">no heart disease ($F_1$)</td><td class=\"num\">51</td><td class=\"num\">195.27</td><td class=\"num\">5.0</td><td class=\"num\">(185, 205)</td></tr><tr><td class=\"row-h\">narrowed arteries ($F_2$)</td><td class=\"num\">320</td><td class=\"num\">216.19</td><td class=\"num\">2.4</td><td class=\"num\">(211, 221)</td></tr></tbody></table><p>For the difference functional $\\theta = T(F_2) - T(F_1)$, the plug-in estimate is $\\widehat{\\theta} = 216.19 - 195.27 = 20.92$, with standard error $\\widehat{\\mathrm{se}} = \\sqrt{(\\widehat{\\mathrm{se}}(\\widehat{\\mu}_1))^2 + (\\widehat{\\mathrm{se}}(\\widehat{\\mu}_2))^2} = \\sqrt{5.0^2 + 2.4^2} = 5.55$. The $95\\%$ interval is $\\widehat{\\theta} \\pm 2\\,\\widehat{\\mathrm{se}} = (9.8,\\ 32.0)$, suggesting higher cholesterol among those with narrowed arteries &mdash; though, the book cautions, this is not evidence of causation.</p>"
       },
@@ -100,4 +105,17 @@
       "Cholesterol: $\\widehat{\\theta}=20.92$, $\\widehat{\\mathrm{se}}=5.55$, 95% CI $(9.8,32.0)$ for the mean difference."
     ]
   });
+  window.CODEVIZ["aos-ch7-statistical-functionals-plug-in"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Plasma cholesterol plug-in means (Example 7.15)",
+        interpret: "The narrowed-arteries group has the larger plug-in mean: 216.19 versus 195.27 mg/dl, a difference of 20.92.",
+        labels: ["no heart disease", "narrowed arteries"],
+        values: [195.27, 216.19],
+        colors: ["#4ea1ff", "#ffb454"]
+      }
+    ],
+    code: "# Python/NumPy plug-in functionals from Chapter 7\nimport numpy as np\n\ndef plugin_variance(x):\n    x = np.asarray(x, dtype=float)\n    return np.mean((x - x.mean()) ** 2)       # divides by n, as in Example 7.11\n\ndef plugin_skewness(x):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean()\n    sigma = np.sqrt(np.mean((x - mu) ** 2))\n    return np.mean((x - mu) ** 3) / sigma**3  # Example 7.12 formula\n\n# Plasma cholesterol (Example 7.15): book's computed summaries\nmu1, se1, n1 = 195.27, 5.0, 51\nmu2, se2, n2 = 216.19, 2.4, 320\ntheta = mu2 - mu1\nse_theta = np.sqrt(se1**2 + se2**2)\nprint(theta, round(se_theta, 2))              # 20.92, 5.55\nprint((theta - 2*se_theta, theta + 2*se_theta))  # (about 9.8, 32.0)"
+  };
 })();
