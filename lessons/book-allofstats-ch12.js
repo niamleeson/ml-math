@@ -25,6 +25,7 @@
         "<li>Zero-one loss: $0$ if the guess is exactly right and $1$ if it is wrong.</li>" +
         "<li>Kullback-Leibler loss: $L(\\theta,\\hat{\\theta}) = \\int \\log( f(x;\\theta)/f(x;\\hat\\theta) ) f(x;\\theta)\\,dx$ — a measure built from the two densities.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>loss named in the book</th><th>formula</th><th>typical action</th></tr></thead><tbody><tr><td class=\"row-h\">squared error</td><td>$(\\theta-\\hat\\theta)^2$</td><td>penalizes large errors heavily</td></tr><tr><td class=\"row-h\">absolute error</td><td>$|\\theta-\\hat\\theta|$</td><td>linear penalty</td></tr><tr><td class=\"row-h\">$L_p$</td><td>$|\\theta-\\hat\\theta|^p$</td><td>tune the exponent $p$</td></tr><tr><td class=\"row-h\">zero-one</td><td>$0$ if correct, $1$ otherwise</td><td>exact-decision penalty</td></tr><tr><td class=\"row-h\">Kullback-Leibler</td><td>$\\int \\log(f(x;\\theta)/f(x;\\hat\\theta))f(x;\\theta)dx$</td><td>density discrepancy</td></tr></tbody></table>" +
         "<p>Unless a different loss is named, the book assumes squared error loss for the rest of the chapter.</p>" },
       { h: "Risk: the average loss", body:
         "<p>The loss depends on which data happened to come up, so to grade an estimator we average the loss over the data. That average is the <strong>risk</strong> (Definition 12.1):</p>" +
@@ -38,6 +39,7 @@
         "<li>$\\hat{\\theta}_2 = 3$ has risk $R(\\theta,\\hat{\\theta}_2) = \\mathbb{E}_\\theta(3-\\theta)^2 = (3-\\theta)^2$ — a parabola that hits $0$ at $\\theta=3$.</li>" +
         "<li>For $2 \\lt \\theta \\lt 4$ the parabola sits below $1$, so $\\hat{\\theta}_2$ wins. Everywhere else $\\hat{\\theta}_1$ wins.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th class=\"num\">$\\theta$</th><th class=\"num\">risk of $X$</th><th class=\"num\">risk of 3</th><th>winner</th></tr></thead><tbody><tr><td class=\"num\">1</td><td class=\"num\">1</td><td class=\"num\">4</td><td class=\"row-h\">$X$</td></tr><tr><td class=\"num\">2</td><td class=\"num\">1</td><td class=\"num\">1</td><td class=\"row-h\">tie</td></tr><tr><td class=\"num\">3</td><td class=\"num\">1</td><td class=\"num\">0</td><td class=\"row-h\">3</td></tr><tr><td class=\"num\">4</td><td class=\"num\">1</td><td class=\"num\">1</td><td class=\"row-h\">tie</td></tr><tr><td class=\"num\">5</td><td class=\"num\">1</td><td class=\"num\">4</td><td class=\"row-h\">$X$</td></tr></tbody></table>" +
         "<p>Neither estimator dominates the other across all $\\theta$ (Figure 12.1). A second example, the Bernoulli case below, makes the same point. These examples show why we want a one-number summary of a whole risk function.</p>" }
     ],
     takeaways: [
@@ -56,7 +58,9 @@
       { name: "R(theta, theta1) = 1", color: "#4ea1ff", points: [[0,1],[1,1],[2,1],[3,1],[4,1],[5,1]] },
       { name: "R(theta, theta2) = (3-theta)^2", color: "#ffb454", points: [[0,9],[1,4],[2,1],[3,0],[4,1],[5,4]] }
     ]
-  } ] };
+  } ],
+    code: "import numpy as np\n\ntheta = np.array([0, 1, 2, 3, 4, 5])\nrisk_x = np.ones_like(theta, dtype=float)        # R(theta, X) = E(X-theta)^2 = 1\nrisk_3 = (3 - theta) ** 2                       # R(theta, 3)\nprint(list(zip(theta, risk_x, risk_3)))\n# theta=3: risks are 1 and 0; theta=1 or 5: risks are 1 and 4\nprint(theta[risk_3 < risk_x])                   # [3], with continuum 2 < theta < 4"
+  };
 
   // 2 — Bayes estimators and the Bayes risk
   B({
@@ -84,11 +88,12 @@
         "<li>Absolute error loss: the Bayes estimator is the median of the posterior.</li>" +
         "<li>Zero-one loss: the Bayes estimator is the mode of the posterior.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>loss</th><th>Bayes estimator</th><th>posterior summary</th></tr></thead><tbody><tr><td class=\"row-h\">squared error</td><td>$\\int \\theta f(\\theta|x)d\\theta$</td><td>mean</td></tr><tr><td class=\"row-h\">absolute error</td><td>posterior median</td><td>50% quantile</td></tr><tr><td class=\"row-h\">zero-one</td><td>posterior mode</td><td>highest density point</td></tr></tbody></table>" +
         "<p>For squared error the proof differentiates the posterior risk $\\int (\\theta-\\hat{\\theta}(x))^2 f(\\theta|x)\\,d\\theta$ with respect to $\\hat{\\theta}(x)$, sets it to zero to get $2\\int(\\theta-\\hat{\\theta}(x))f(\\theta|x)\\,d\\theta = 0$, and solves — yielding the posterior mean.</p>" },
       { h: "Worked example — normal mean", body:
         "<p><strong>Example 12.9.</strong> Let $X_1,\\dots,X_n \\sim N(\\mu,\\sigma^2)$ with $\\sigma^2$ known, and put a $N(a,b^2)$ prior on the mean $\\mu$. Under squared error loss the Bayes estimator is the posterior mean, which is a weighted average of the sample mean $\\overline{X}$ and the prior mean $a$:</p>" +
         "<p>$\\hat{\\theta}(X_1,\\dots,X_n) = \\dfrac{b^2}{b^2+\\frac{\\sigma^2}{n}}\\,\\overline{X} + \\dfrac{\\frac{\\sigma^2}{n}}{b^2+\\frac{\\sigma^2}{n}}\\,a.$</p>" +
-        "<p>The two weights add to $1$. As the sample grows the term $\\sigma^2/n$ shrinks, so the weight on $\\overline{X}$ approaches $1$ and the data dominates the prior.</p>" }
+        "<p>The two weights add to $1$. As the sample grows the term $\\sigma^2/n$ shrinks, so the weight on $\\overline{X}$ approaches $1$ and the data dominates the prior.</p><table class=\"extable\"><thead><tr><th>ingredient</th><th>book formula</th></tr></thead><tbody><tr><td class=\"row-h\">weight on $\\overline X$</td><td>$b^2/(b^2+\\sigma^2/n)$</td></tr><tr><td class=\"row-h\">weight on prior mean $a$</td><td>$(\\sigma^2/n)/(b^2+\\sigma^2/n)$</td></tr><tr><td class=\"row-h\">limiting behavior</td><td>as $n$ grows, $\\sigma^2/n\\to0$ and the data weight tends to 1</td></tr></tbody></table>" }
     ],
     takeaways: [
       "Bayes risk is the prior-weighted average of the risk function; a Bayes rule minimizes it.",
@@ -97,6 +102,18 @@
       "For a normal mean with normal prior, the estimator is a weighted blend of the sample mean and the prior mean."
     ]
   });
+  window.CODEVIZ["aos-ch12-bayes-estimators"] = { charts: [ {
+    type: "line",
+    title: "Normal-prior Bayes weight on the sample mean",
+    interpret: "Example 12.9's weight b^2/(b^2+sigma^2/n) approaches 1 as n increases; the posterior mean becomes data-dominated.",
+    xlabel: "n", ylabel: "weight on Xbar",
+    series: [
+      { name: "sigma^2=1, b^2=1", color: "#4ea1ff", points: [[1,0.5],[2,0.667],[5,0.833],[10,0.909],[20,0.952],[50,0.98],[100,0.99]] },
+      { name: "sigma^2=4, b^2=1", color: "#ffb454", points: [[1,0.2],[2,0.333],[5,0.556],[10,0.714],[20,0.833],[50,0.926],[100,0.962]] }
+    ]
+  } ],
+    code: "import numpy as np\n\nn = np.array([1, 2, 5, 10, 20, 50, 100])\nsigma2, b2 = 1.0, 1.0\nw_data = b2 / (b2 + sigma2 / n)\nw_prior = 1 - w_data\nprint(w_data)                         # [0.5, 0.667, ..., 0.99]\nxbar, a = 4.0, 1.0\npost_mean = w_data * xbar + w_prior * a\nprint(post_mean[-1])                  # n=100: 3.97, close to xbar=4"
+  };
 
   // 3 — Minimax rules
   B({
@@ -114,6 +131,7 @@
         "<li>Maximum risk of $\\hat{p}_2$: $\\overline{R}(\\hat{p}_2) = n/(4(n+\\sqrt{n})^2)$ (its risk is already constant).</li>" +
         "<li>By maximum risk, $\\hat{p}_2$ wins because $\\overline{R}(\\hat{p}_2) \\lt \\overline{R}(\\hat{p}_1)$.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>risk summary for $n=20$</th><th class=\"num\">$\\hat p_1=\\overline X$</th><th class=\"num\">$\\hat p_2$</th></tr></thead><tbody><tr><td class=\"row-h\">maximum risk</td><td class=\"num\">$1/(4n)=0.012500$</td><td class=\"num\">$n/[4(n+\\sqrt n)^2]=0.008349$</td></tr><tr><td class=\"row-h\">Bayes risk, flat prior</td><td class=\"num\">$1/(6n)=0.008333$</td><td class=\"num\">0.008349</td></tr><tr><td class=\"row-h\">ranking</td><td class=\"num\">Bayes-risk winner</td><td class=\"num\">maximum-risk winner</td></tr></tbody></table>" +
         "<p>Yet for large $n$ the data estimator $\\hat{p}_1$ has smaller risk everywhere except a small region near $p=1/2$, so many people prefer it — the maximum-risk summary, while convenient, is imperfect.</p>" },
       { h: "Bayes risk on the same example", body:
         "<p>Taking the flat prior $f(p)=1$, the Bayes risks are $r(f,\\hat{p}_1) = \\int p(1-p)/n\\,dp = 1/(6n)$ and $r(f,\\hat{p}_2) = n/(4(n+\\sqrt{n})^2)$. For $n \\ge 20$ we get $r(f,\\hat{p}_2) \\gt r(f,\\hat{p}_1)$, so the Bayes summary now favors $\\hat{p}_1$ — the opposite ranking. The verdict depends on the chosen prior; the advantage of maximum risk is that it needs no prior at all.</p>" },
@@ -140,9 +158,20 @@
     xlabel: "p", ylabel: "risk",
     series: [
       { name: "R(p, p1) = p(1-p)/n", color: "#4ea1ff", points: [[0,0],[0.1,0.0045],[0.2,0.008],[0.3,0.0105],[0.4,0.012],[0.5,0.0125],[0.6,0.012],[0.7,0.0105],[0.8,0.008],[0.9,0.0045],[1,0]] },
-      { name: "R(p, p2) (constant)", color: "#ffb454", points: [[0,0.00691],[0.5,0.00691],[1,0.00691]] }
+      { name: "R(p, p2) (constant)", color: "#ffb454", points: [[0,0.008349],[0.5,0.008349],[1,0.008349]] }
     ]
-  } ] };
+  }, {
+    type: "line",
+    title: "Figure 12.3 — constrained Normal minimax risk (m = 0.5)",
+    interpret: "For the estimator m tanh(mX), the risk is largest at the least-favorable prior points -0.5 and 0.5 and stays below the Bayes-risk bound inside.",
+    xlabel: "theta", ylabel: "risk",
+    series: [
+      { name: "R(theta, m tanh(mX))", color: "#c89bff", points: [[-0.5,0.19899],[-0.4,0.14271],[-0.3,0.09914],[-0.2,0.06813],[-0.1,0.04956],[0,0.04338],[0.1,0.04956],[0.2,0.06813],[0.3,0.09914],[0.4,0.14271],[0.5,0.19899]] },
+      { name: "Bayes-risk bound", color: "#ffb454", points: [[-0.5,0.19899],[0.5,0.19899]] }
+    ]
+  } ],
+    code: "import numpy as np\nfrom math import sqrt\n\nn = 20\np = np.linspace(0, 1, 11)\nrisk_p1 = p * (1 - p) / n\nrisk_p2 = n / (4 * (n + sqrt(n))**2)\nprint(risk_p1.max())                  # 0.0125 = 1/(4n)\nprint(risk_p2)                        # 0.008348842, constant risk\nprint(1/(6*n), risk_p2)               # Bayes risks under flat prior; p1 is slightly smaller for n=20"
+  };
 
   // 4 — MLE, minimax, Bayes connections, and admissibility
   B({
@@ -154,9 +183,9 @@
       { h: "The MLE is approximately minimax and Bayes", body:
         "<p>For parametric models meeting weak regularity conditions, the maximum likelihood estimator is approximately minimax. Under squared error loss the risk is squared bias plus variance, and in large samples the variance term dominates the bias, so the risk roughly equals the variance:</p>" +
         "<p>$R(\\theta,\\hat{\\theta}) = \\mathbb{V}_\\theta(\\hat{\\theta}) + \\text{bias}^2 \\approx \\mathbb{V}_\\theta(\\hat{\\theta}).$</p>" +
-        "<p>From Chapter 9, the MLE's variance is approximately $1/(nI(\\theta))$ where $I(\\theta)$ is the Fisher information, so $nR(\\theta,\\hat{\\theta}) \\approx 1/I(\\theta)$ (Eq. 12.10). For any competing estimator $\\theta'$ and large $n$, $R(\\theta,\\theta') \\ge R(\\theta,\\hat{\\theta})$ in a local, large-sample sense. The summary: in most parametric models with large samples, the MLE is approximately minimax and Bayes.</p>" },
+        "<p>From Chapter 9, the MLE's variance is approximately $1/(nI(\\theta))$ where $I(\\theta)$ is the Fisher information, so $nR(\\theta,\\hat{\\theta}) \\approx 1/I(\\theta)$ (Eq. 12.10). For any competing estimator $\\theta'$ and large $n$, $R(\\theta,\\theta') \\ge R(\\theta,\\hat{\\theta})$ in a local, large-sample sense. The summary: in most parametric models with large samples, the MLE is approximately minimax and Bayes.</p><table class=\"extable\"><thead><tr><th>term</th><th>book relationship</th></tr></thead><tbody><tr><td class=\"row-h\">risk under squared error</td><td>$V_\\theta(\\hat\\theta)+\\text{bias}^2$</td></tr><tr><td class=\"row-h\">large-sample MLE variance</td><td>$V(\\hat\\theta)\\approx1/(nI(\\theta))$</td></tr><tr><td class=\"row-h\">scaled risk</td><td>$nR(\\theta,\\hat\\theta)\\approx1/I(\\theta)$</td></tr></tbody></table>" },
       { h: "The caveat — high dimensions", body:
-        "<p>These results break down when the number of parameters is large. <strong>Example 12.16 (Many Normal means).</strong> Let $Y_i \\sim N(\\theta_i,\\sigma^2/n)$ for $i=1,\\dots,n$, with the constraint $\\sum_{i=1}^n \\theta_i^2 \\le c^2$. Here there are as many parameters as observations. The MLE is $\\hat{\\theta} = Y$, and under the loss $L(\\theta,\\hat{\\theta}) = \\sum_i(\\hat{\\theta}_i-\\theta_i)^2$ its risk is $R(\\theta,\\hat{\\theta}) = \\sigma^2$. But the minimax risk is approximately $\\sigma^2/(\\sigma^2+c^2)$, achievable by another estimator $\\tilde{\\theta}$. Since $\\sigma^2/(\\sigma^2+c^2) \\lt \\sigma^2$, that estimator beats the MLE — sometimes substantially. Maximum likelihood is not optimal in high-dimensional problems.</p>" },
+        "<p>These results break down when the number of parameters is large. <strong>Example 12.16 (Many Normal means).</strong> Let $Y_i \\sim N(\\theta_i,\\sigma^2/n)$ for $i=1,\\dots,n$, with the constraint $\\sum_{i=1}^n \\theta_i^2 \\le c^2$. Here there are as many parameters as observations. The MLE is $\\hat{\\theta} = Y$, and under the loss $L(\\theta,\\hat{\\theta}) = \\sum_i(\\hat{\\theta}_i-\\theta_i)^2$ its risk is $R(\\theta,\\hat{\\theta}) = \\sigma^2$. But the minimax risk is approximately $\\sigma^2/(\\sigma^2+c^2)$, achievable by another estimator $\\tilde{\\theta}$. Since $\\sigma^2/(\\sigma^2+c^2) \\lt \\sigma^2$, that estimator beats the MLE — sometimes substantially. Maximum likelihood is not optimal in high-dimensional problems.</p><table class=\"extable\"><thead><tr><th>rule</th><th>risk from Example 12.16</th></tr></thead><tbody><tr><td class=\"row-h\">MLE $Y$</td><td>$\\sigma^2$</td></tr><tr><td class=\"row-h\">minimax estimator $\\tilde\\theta$</td><td>approximately $\\sigma^2/(\\sigma^2+c^2)$</td></tr><tr><td class=\"row-h\">comparison</td><td>$\\sigma^2/(\\sigma^2+c^2) \\lt \\sigma^2$</td></tr></tbody></table>" },
       { h: "Admissibility — labeling bad estimators", body:
         "<p>Minimax and Bayes estimators are good in the sense of having small risk; it also helps to flag bad ones. <strong>Definition 12.17.</strong> An estimator $\\hat{\\theta}$ is <strong>inadmissible</strong> if there is another rule $\\hat{\\theta}'$ with $R(\\theta,\\hat{\\theta}') \\le R(\\theta,\\hat{\\theta})$ for all $\\theta$ and strict inequality $R(\\theta,\\hat{\\theta}') \\lt R(\\theta,\\hat{\\theta})$ for at least one $\\theta$ — i.e. some rule is never worse and sometimes better. Otherwise $\\hat{\\theta}$ is <strong>admissible</strong>.</p>" +
         "<p><strong>Example 12.18.</strong> For $X \\sim N(\\theta,1)$ under squared error loss, the constant estimator $\\hat{\\theta}(X)=3$ is admissible. If a rule $\\hat{\\theta}'$ beat it, then at $\\theta=3$ we would need $R(3,\\hat{\\theta}') \\le R(3,\\hat{\\theta}) = 0$, forcing $\\hat{\\theta}'(x)=3$ everywhere — the same rule. So nothing beats it, even though always guessing $3$ is obviously a bad rule. Admissible does not mean good.</p>" },
@@ -192,7 +221,7 @@
         "<li>If $\\sum_i X_i^2$ is large, the shrinkage factor $1 - (k-2)/\\sum_i X_i^2$ is near $1$, so the estimate stays close to $X_i$.</li>" +
         "<li>If $\\sum_i X_i^2$ is small, the factor shrinks the estimates hard toward $0$.</li>" +
         "<li>The $(\\cdot)^{+}$ truncation prevents the multiplier from flipping the sign when $\\sum_i X_i^2 \\lt k-2$.</li>" +
-        "</ul>" },
+        "</ul><table class=\"extable\"><thead><tr><th class=\"num\">number of means $k$</th><th>status of $\\hat\\theta=X$</th><th>book message</th></tr></thead><tbody><tr><td class=\"num\">1</td><td>admissible</td><td class=\"row-h\">no paradox</td></tr><tr><td class=\"num\">2</td><td>admissible</td><td class=\"row-h\">still no paradox</td></tr><tr><td class=\"num\">$k\\ge3$</td><td>inadmissible</td><td class=\"row-h\">James-Stein improves total risk</td></tr></tbody></table>" },
       { h: "The lesson", body:
         "<p>The message is that when estimating many parameters at once, there is real value in shrinking the estimates. Pooling information across unrelated problems lowers the total risk. Wasserman notes this observation plays an important role in modern nonparametric function estimation.</p>" }
     ],

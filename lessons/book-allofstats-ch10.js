@@ -13,7 +13,7 @@
     sections: [
       {
         h: "Setup",
-        body: "<p>The chapter frames testing through the asbestos-and-rats story: split rats into an exposed group and an unexposed group and ask whether the disease rate differs. Formally we split the parameter space $\\Theta$ into two pieces and test $H_0 : \\theta \\in \\Theta_0$ against $H_1 : \\theta \\in \\Theta_1$. Here $H_0$ is the <strong>null hypothesis</strong> (the status quo, e.g. \"same rate\") and $H_1$ the <strong>alternative</strong>. We pick a <strong>rejection region</strong> $R$, usually of the form $R = \\{x : T(x) \\gt c\\}$, where $T$ is a <strong>test statistic</strong> and $c$ a <strong>critical value</strong>. If the data land in $R$ we reject $H_0$; otherwise we retain it.</p><p>Wasserman compares this to a trial: we presume innocence (retain $H_0$) unless the evidence is strong. Rejecting a true $H_0$ is a <strong>type I error</strong>; retaining $H_0$ when $H_1$ holds is a <strong>type II error</strong>. The <strong>size</strong> of a test is $\\alpha = \\sup_{\\theta \\in \\Theta_0} \\beta(\\theta)$, where the power function is $\\beta(\\theta) = \\mathbb{P}_\\theta(X \\in R)$.</p>"
+        body: "<p>The chapter frames testing through the asbestos-and-rats story: split rats into an exposed group and an unexposed group and ask whether the disease rate differs. Formally we split the parameter space $\\Theta$ into two pieces and test $H_0 : \\theta \\in \\Theta_0$ against $H_1 : \\theta \\in \\Theta_1$. Here $H_0$ is the <strong>null hypothesis</strong> (the status quo, e.g. \"same rate\") and $H_1$ the <strong>alternative</strong>. We pick a <strong>rejection region</strong> $R$, usually of the form $R = \\{x : T(x) \\gt c\\}$, where $T$ is a <strong>test statistic</strong> and $c$ a <strong>critical value</strong>. If the data land in $R$ we reject $H_0$; otherwise we retain it.</p><p>Wasserman compares this to a trial: we presume innocence (retain $H_0$) unless the evidence is strong. Rejecting a true $H_0$ is a <strong>type I error</strong>; retaining $H_0$ when $H_1$ holds is a <strong>type II error</strong>. The <strong>size</strong> of a test is $\\alpha = \\sup_{\\theta \\in \\Theta_0} \\beta(\\theta)$, where the power function is $\\beta(\\theta) = \\mathbb{P}_\\theta(X \\in R)$.</p><table class=\"extable\"><thead><tr><th>decision</th><th>$H_0$ true</th><th>$H_1$ true</th></tr></thead><tbody><tr><td class=\"row-h\">Retain null</td><td>✓</td><td>type II error</td></tr><tr><td class=\"row-h\">Reject null</td><td>type I error</td><td>✓</td></tr></tbody></table>"
       },
       {
         h: "Definition of the Wald test",
@@ -26,6 +26,10 @@
       {
         h: "Worked example — comparing two means",
         body: "<p>For two independent samples with means $\\mu_1, \\mu_2$, test $H_0 : \\delta = 0$ where $\\delta = \\mu_1 - \\mu_2$. The plug-in estimate is $\\hat{\\delta} = \\overline{X} - \\overline{Y}$ with $\\hat{\\mathsf{se}} = \\sqrt{s_1^2/m + s_2^2/n}$. The chapter applies this to cholesterol data ($\\overline{X} = 216.2$, $\\overline{Y} = 195.3$, $s_1 = 5$, $s_2 = 2.4$):</p><ul class=\"steps\"><li>Difference of means: $\\hat{\\delta} = 216.2 - 195.3 = 20.9$.</li><li>Standard error: $\\hat{\\mathsf{se}} = \\sqrt{5^2 + 2.4^2} = \\sqrt{25 + 5.76} = \\sqrt{30.76} \\approx 5.546$.</li><li>Wald statistic: $W = 20.9 / 5.546 \\approx 3.78$.</li><li>Since $|W| = 3.78 \\gt z_{0.025} = 1.96$, reject $H_0$ at the 5% level.</li></ul>"
+      },
+      {
+        h: "Appendix note — the t-test",
+        body: "<p>The appendix adds the small-sample Normal-theory version: to test $H_0:\\mu=\\mu_0$ when $\\mu$ and $\\sigma^2$ are unknown and $X_1,\\ldots,X_n \\sim N(\\mu,\\sigma^2)$, use $T=\\sqrt{n}(\\bar{X}_n-\\mu_0)/S_n$. Under $H_0$ the exact distribution is $t_{n-1}$, so the size $\\alpha$ test rejects when $|T| \\gt t_{n-1,\\alpha/2}$. For moderately large $n$, this is essentially identical to the Wald test.</p>"
       }
     ],
     takeaways: [
@@ -35,6 +39,32 @@
       "Statistical significance need not mean a large or important effect."
     ]
   });
+
+  window.CODEVIZ["aos-ch10-wald-test"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Power function for the one-sided Normal test (Figure 10.1)",
+        interpret: "In the standardized case, choosing the cutoff so beta(0)=alpha=.05 makes the largest null rejection probability occur at the boundary mu=0; power rises as mu moves into H1.",
+        xlabel: "mu",
+        ylabel: "beta(mu)",
+        series: [{ name: "power", color: "#4ea1ff", points: [[-2,0.000134],[-1,0.004086],[0,0.05],[1,0.259511],[2,0.63876],[3,0.912315]] }]
+      },
+      {
+        type: "line",
+        title: "Scientific versus statistical significance (Figure 10.2)",
+        interpret: "Both intervals exclude theta_0, but the second estimate lies much farther from theta_0; confidence intervals show effect size better than a reject/retain decision.",
+        xlabel: "theta",
+        ylabel: "interval row",
+        series: [
+          { name: "small practical effect", color: "#ffb454", points: [[0.12,1],[0.32,1]] },
+          { name: "large practical effect", color: "#7ee787", points: [[0.95,2],[1.35,2]] },
+          { name: "theta_0", color: "#c89bff", points: [[0,0.7],[0,2.3]] }
+        ]
+      }
+    ],
+    code: "import math\nfrom statistics import NormalDist\n\n# Cholesterol Wald statistic from Examples 10.8 and 10.15\nxbar, ybar, s1, s2 = 216.2, 195.3, 5.0, 2.4\nse = math.sqrt(s1**2 + s2**2)  # book's displayed values already include /m and /n\nw = (xbar - ybar) / se\np_value = 2 * NormalDist().cdf(-abs(w))\nprint(round(se, 3))       # 5.546\nprint(round(w, 2))        # 3.78\nprint(round(p_value, 4))  # 0.0002\n\n# t-test appendix: under Normal sampling with unknown variance, use t_{n-1}."
+  };
 
   B({
     id: "aos-ch10-p-values",
@@ -68,6 +98,31 @@
     ]
   });
 
+  window.CODEVIZ["aos-ch10-p-values"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Wald p-value tail areas (Figure 10.4)",
+        interpret: "For observed |w| = 3.78, the p-value is the two Normal tail areas outside ±3.78: about 0.0002.",
+        xlabel: "z",
+        ylabel: "standard Normal density",
+        series: [
+          { name: "N(0,1) density", color: "#4ea1ff", points: [[-4,0.000134],[-3,0.004432],[-2,0.053991],[-1,0.241971],[0,0.398942],[1,0.241971],[2,0.053991],[3,0.004432],[4,0.000134]] },
+          { name: "observed cutoffs ±3.78", color: "#ffb454", points: [[-3.78,0],[-3.78,0.000318],[3.78,0.000318],[3.78,0]] }
+        ]
+      },
+      {
+        type: "hist",
+        title: "Under H0, continuous-test p-values are Uniform(0,1)",
+        interpret: "Theorem 10.14: if H0 is true, P(p-value < alpha)=alpha, so rejecting below alpha has type I error alpha.",
+        labels: ["0-.2", ".2-.4", ".4-.6", ".6-.8", ".8-1"],
+        values: [0.2,0.2,0.2,0.2,0.2],
+        colors: ["#7ee787"]
+      }
+    ],
+    code: "import math\nfrom statistics import NormalDist\n\n# Example 10.15: two Wald p-values from the cholesterol data\nPhi = NormalDist().cdf\nw_means = 3.78\np_means = 2 * Phi(-abs(w_means))\nprint(round(p_means, 4))      # 0.0002 (book rounds)\n\nw_medians = (212.5 - 194) / 7.7\np_medians = 2 * Phi(-abs(w_medians))\nprint(round(w_medians, 2))    # 2.40\nprint(round(p_medians, 2))    # 0.02"
+  };
+
   B({
     id: "aos-ch10-chi-squared-pearson",
     chapter: "Chapter 10",
@@ -94,6 +149,21 @@
       "Mendel's peas: $\\chi^2 = 0.47$, p-value $.93$ — data consistent with the 9:3:3:1 theory."
     ]
   });
+
+  window.CODEVIZ["aos-ch10-chi-squared-pearson"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Mendel peas: observed minus expected counts",
+        interpret: "All four deviations from the 9:3:3:1 expected counts are small, giving chi-square = 0.47 and p-value = .93.",
+        labels: ["round yellow", "wrinkled yellow", "round green", "wrinkled green"],
+        values: [2.25,-3.25,3.75,-2.75],
+        valueLabels: ["315-312.75", "101-104.25", "108-104.25", "32-34.75"],
+        colors: ["#4ea1ff", "#ffb454", "#4ea1ff", "#ffb454"]
+      }
+    ],
+    code: "import numpy as np\nfrom scipy.stats import chi2\n\n# Mendel's peas, Example 10.18\nobs = np.array([315, 101, 108, 32])\np0 = np.array([9/16, 3/16, 3/16, 1/16])\nexp = obs.sum() * p0\nterms = (obs - exp)**2 / exp\nstat = terms.sum()\nprint(exp.tolist())          # [312.75, 104.25, 104.25, 34.75]\nprint(round(stat, 2))        # 0.47\nprint(round(chi2.sf(stat, 3), 2))  # 0.93"
+  };
 
   B({
     id: "aos-ch10-permutation-test",
@@ -149,6 +219,20 @@
     ]
   });
 
+  window.CODEVIZ["aos-ch10-likelihood-ratio-test"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Mendel likelihood-ratio contributions",
+        interpret: "Positive and negative log-ratio contributions nearly cancel; twice their sum is lambda = 0.48, with chi-square_3 p-value .92.",
+        labels: ["round yellow", "wrinkled yellow", "round green", "wrinkled green"],
+        values: [2.258,-3.199,3.817,-2.638],
+        colors: ["#4ea1ff", "#ffb454", "#4ea1ff", "#ffb454"]
+      }
+    ],
+    code: "import numpy as np\nfrom scipy.stats import chi2\n\n# Mendel likelihood-ratio test, Example 10.23\nobs = np.array([315, 101, 108, 32])\np0 = np.array([9/16, 3/16, 3/16, 1/16])\nphat = obs / obs.sum()\nterms = obs * np.log(phat / p0)\nlambda_stat = 2 * terms.sum()\nprint([round(t, 3) for t in terms])  # [2.258, -3.199, 3.817, -2.638]\nprint(round(lambda_stat, 2))         # 0.48\nprint(round(chi2.sf(lambda_stat, 3), 2))  # 0.92"
+  };
+
   B({
     id: "aos-ch10-multiple-testing",
     chapter: "Chapter 10",
@@ -165,7 +249,7 @@
       },
       {
         h: "False discovery rate and Benjamini-Hochberg",
-        body: "<p>A less strict goal is to control the <strong>false discovery rate</strong> (FDR). With $V$ false rejections out of $R$ total rejections, the false discovery proportion is $\\text{FDP} = V/R$ when $R \\gt 0$ (and $0$ if $R = 0$), and $\\text{FDR} = \\mathbb{E}(\\text{FDP})$. The <strong>Benjamini-Hochberg (BH) method</strong>: order the p-values $P_{(1)} \\lt \\cdots \\lt P_{(m)}$; define $\\ell_i = i\\alpha/(C_m m)$ (with $C_m = 1$ for independent p-values) and $R = \\max\\{i : P_{(i)} \\lt \\ell_i\\}$; set the threshold $T = P_{(R)}$ and reject every $H_{0i}$ with $P_i \\le T$. The BH theorem guarantees $\\text{FDR} \\le \\frac{m_0}{m}\\alpha \\le \\alpha$, where $m_0$ is the number of true nulls.</p>"
+        body: "<p>A less strict goal is to control the <strong>false discovery rate</strong> (FDR). With $V$ false rejections out of $R$ total rejections, the false discovery proportion is $\\text{FDP} = V/R$ when $R \\gt 0$ (and $0$ if $R = 0$), and $\\text{FDR} = \\mathbb{E}(\\text{FDP})$. The <strong>Benjamini-Hochberg (BH) method</strong>: order the p-values $P_{(1)} \\lt \\cdots \\lt P_{(m)}$; define $\\ell_i = i\\alpha/(C_m m)$ (with $C_m = 1$ for independent p-values) and $R = \\max\\{i : P_{(i)} \\lt \\ell_i\\}$; set the threshold $T = P_{(R)}$ and reject every $H_{0i}$ with $P_i \\le T$. The BH theorem guarantees $\\text{FDR} \\le \\frac{m_0}{m}\\alpha \\le \\alpha$, where $m_0$ is the number of true nulls.</p><table class=\"extable\"><thead><tr><th></th><th>$H_0$ true</th><th>$H_0$ false</th><th>Total</th></tr></thead><tbody><tr><td class=\"row-h\">$H_0$ not rejected</td><td class=\"num\">$U$</td><td class=\"num\">$T$</td><td class=\"num\">$m-R$</td></tr><tr><td class=\"row-h\">$H_0$ rejected</td><td class=\"num\">$V$</td><td class=\"num\">$S$</td><td class=\"num\">$R$</td></tr><tr><td class=\"row-h\">Total</td><td class=\"num\">$m_0$</td><td class=\"num\">$m_1$</td><td class=\"num\">$m$</td></tr></tbody></table>"
       },
       {
         h: "Worked example — ten ordered p-values",
@@ -218,7 +302,8 @@
         values: [2, 2, 7, 7, 5, 5],
         colors: ["#4ea1ff", "#4ea1ff", "#7ee787", "#7ee787", "#7ee787", "#7ee787"]
       }
-    ]
+    ],
+    code: "import itertools, numpy as np\n\n# Toy permutation example 10.19: (X1, X2, Y1)=(1,9,3)\ndata = [1, 9, 3]\ndef T(order):\n    return abs(np.mean(order[:2]) - order[2])\nvals = [(perm, T(perm)) for perm in itertools.permutations(data)]\nt_obs = T((1, 9, 3))\np_value = sum(v > t_obs for _, v in vals) / len(vals)\nprint([v for _, v in vals])  # [2, 2, 7, 7, 5, 5]\nprint(p_value)               # 0.666666... = 4/6\n\n# Gene 1 microarray example: |median Type I - median Type II| = 710; simulated p = .045"
   };
 
   window.CODEVIZ["aos-ch10-multiple-testing"] = {
@@ -236,6 +321,7 @@
           { name: "Bonferroni alpha/m", color: "#ffb454", points: [[1, 0.005], [10, 0.005]] }
         ]
       }
-    ]
+    ],
+    code: "import numpy as np\n\np = np.array([.00017, .00448, .00671, .00907, .01220,\n              .33626, .39341, .53882, .58125, .98617])\nalpha, m = .05, len(p)\nbonf = alpha / m\nbh_line = alpha * np.arange(1, m+1) / m\nuncorrected = np.sum(p < alpha)\nbonferroni = np.sum(p < bonf)\nR = np.max(np.where(p < bh_line)[0]) + 1\nprint(bonf)        # 0.005\nprint(uncorrected, bonferroni, R)  # 5, 2, 5"
   };
 })();
