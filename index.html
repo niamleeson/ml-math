@@ -534,13 +534,6 @@
   #content .book-chapter p { margin: 0 0 14px; }
   #content .book-chapter .book-h { margin: 26px 0 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
   #content .book-chapter > .book-h:first-child { margin-top: 0; }
-  /* Consolidated chapter lessons: a concept divider (book-concept) with its own one-line
-     lead, then the book's own sub-headings (book-sub) under it. */
-  #content .book-chapter .book-concept { margin: 40px 0 6px; padding-top: 22px; border-top: 1px solid var(--border);
-    font-size: 21px; font-weight: 700; line-height: 1.3; color: var(--ink); letter-spacing: -.01em; }
-  #content .book-chapter .book-concept:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-  #content .book-chapter .book-lead { margin: 0 0 16px; font-style: italic; color: var(--ink-dim); }
-  #content .book-chapter .book-sub { margin: 22px 0 8px; font-size: 16px; font-weight: 700; color: var(--ink); }
   #content .book-chapter blockquote { margin: 0 0 14px; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--ink-dim); font-style: italic; }
   #content .book-takeaways { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
   #content .book-takeaways h3 { margin: 0 0 8px; }
@@ -596,7 +589,6 @@
   window.MODULE_ORDER = [
     "Foundations & Linear Algebra",
     "Probability & Statistics",
-    "Naked Statistics",
     "Practical Statistics",
     "All of Statistics",
     "Machine Learning",
@@ -654,22 +646,6 @@
 
 <!-- Book companions: lessons follow each book's own chapter structure (template: "book").
      Per-chapter fragment <script> tags are added per book as each book is generated. -->
-<script src="lessons/book-naked-intro.js"></script>
-<script src="lessons/book-naked-ch01.js"></script>
-<script src="lessons/book-naked-ch02.js"></script>
-<script src="lessons/book-naked-ch03.js"></script>
-<script src="lessons/book-naked-ch04.js"></script>
-<script src="lessons/book-naked-ch05.js"></script>
-<script src="lessons/book-naked-ch05h.js"></script>
-<script src="lessons/book-naked-ch06.js"></script>
-<script src="lessons/book-naked-ch07.js"></script>
-<script src="lessons/book-naked-ch08.js"></script>
-<script src="lessons/book-naked-ch09.js"></script>
-<script src="lessons/book-naked-ch10.js"></script>
-<script src="lessons/book-naked-ch11.js"></script>
-<script src="lessons/book-naked-ch12.js"></script>
-<script src="lessons/book-naked-ch13.js"></script>
-<script src="lessons/book-naked-conclusion.js"></script>
 <script src="lessons/book-practical-ch01.js"></script>
 <script src="lessons/book-practical-ch02.js"></script>
 <script src="lessons/book-practical-ch03.js"></script>
