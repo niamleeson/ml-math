@@ -4,3 +4,7 @@ screenshots/
 .playwright-mcp/
 pt-tensors-new-template.png
 *.png
+
+# Cached torchvision datasets (local verification only)
+notebooks/data/
+data/
