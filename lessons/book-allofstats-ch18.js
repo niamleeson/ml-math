@@ -17,7 +17,12 @@
         "<p>The previous chapter used directed graphs to encode independence relations among random variables. This chapter introduces <strong>undirected graphs</strong> as an alternative. Both kinds are used in practice, so it helps to know both. The book stresses that the main difference is not the picture but the <em>rules</em>: the way you read independence relations off the graph is different for the two kinds.</p>" },
       { h: "Vertices and edges", body:
         "<p>An <strong>undirected graph</strong> $\\mathcal{G} = (V,E)$ has a finite set $V$ of <strong>vertices</strong> (also called nodes) and a set $E$ of <strong>edges</strong> (also called arcs). Each edge is a <em>pair</em> of vertices. The vertices stand for random variables $X, Y, Z, \\dots$ One edge is written as an <em>unordered</em> pair: writing $(X,Y) \\in E$ means $X$ and $Y$ are joined by an edge. Unordered means $(X,Y)$ and $(Y,X)$ describe the same edge — there is no direction.</p>" +
-        "<p>The book's first picture (Figure 18.1) is the graph on $V = \\{X,Y,Z\\}$ with edge set $E = \\{(X,Y),(Y,Z)\\}$: $X$ joins $Y$, and $Y$ joins $Z$, but $X$ and $Z$ are not directly joined.</p>" },
+        "<p>The book's first picture (Figure 18.1) is the graph on $V = \\{X,Y,Z\\}$ with edge set $E = \\{(X,Y),(Y,Z)\\}$: $X$ joins $Y$, and $Y$ joins $Z$, but $X$ and $Z$ are not directly joined.</p>" +
+        "<table class=\"extable\"><thead><tr><th>Figure 18.1 pair</th><th>edge present?</th><th>book notation</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">X, Y</td><td>yes</td><td>$X\\sim Y$</td></tr>" +
+        "<tr><td class=\"row-h\">Y, Z</td><td>yes</td><td>$Y\\sim Z$</td></tr>" +
+        "<tr><td class=\"row-h\">X, Z</td><td>no</td><td>$X\\not\\sim Z$</td></tr>" +
+        "</tbody></table>" },
       { h: "Adjacent, path, complete, subgraph", body:
         "<p>Four more terms, all read off the picture:</p>" +
         "<ul class=\"steps\">" +
@@ -28,7 +33,11 @@
         "</ul>" },
       { h: "Separation", body:
         "<p>The key structural idea for reading the graph is <strong>separation</strong>. Let $A$, $B$, $C$ be three distinct subsets of the vertices $V$. We say $C$ <strong>separates</strong> $A$ and $B$ if every path from a variable in $A$ to a variable in $B$ passes through (intersects) a variable in $C$. In other words, you cannot get from $A$'s side to $B$'s side without stepping on a vertex in $C$.</p>" +
-        "<p>The book's example (Figure 18.2) is the graph on $\\{W,X,Y,Z\\}$ with edges making $X$ the hub: there $\\{Y,W\\}$ and $\\{Z\\}$ are separated by $\\{X\\}$, and $W$ and $Z$ are separated by $\\{X,Y\\}$. Separation is the device the next lessons turn into independence statements.</p>" }
+        "<p>The book's example (Figure 18.2) is the graph on $\\{W,X,Y,Z\\}$ with edges making $X$ the hub: there $\\{Y,W\\}$ and $\\{Z\\}$ are separated by $\\{X\\}$, and $W$ and $Z$ are separated by $\\{X,Y\\}$. Separation is the device the next lessons turn into independence statements.</p>" +
+        "<table class=\"extable\"><thead><tr><th>sets in Figure 18.2</th><th>separator</th><th>why every path is hit</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">$\\{Y,W\\}$ and $\\{Z\\}$</td><td>$\\{X\\}$</td><td>to reach $Z$, paths from $Y$ or $W$ must pass through $X$</td></tr>" +
+        "<tr><td class=\"row-h\">$W$ and $Z$</td><td>$\\{X,Y\\}$</td><td>the listed separator blocks all routes from $W$ to $Z$</td></tr>" +
+        "</tbody></table>" }
     ],
     takeaways: [
       "An undirected graph G = (V,E) has vertices (random variables) and unordered edges (pairs of vertices).",
@@ -37,6 +46,15 @@
       "C separates A and B when every path from A to B must pass through C — the basis for reading independence."
     ]
   });
+  window.CODEVIZ["aos-ch18-undirected-graphs"] = { charts: [ {
+    type: "heatmap",
+    title: "Figure 18.1 — undirected adjacency",
+    interpret: "The symmetric ones encode the book's edge set {(X,Y),(Y,Z)}; the X-Z cells are zero because X and Z are not adjacent.",
+    rows: ["X", "Y", "Z"],
+    cols: ["X", "Y", "Z"],
+    matrix: [[0,1,0],[1,0,1],[0,1,0]],
+    showVals: true
+  } ] };
 
   // 2 — Probability and graphs: the pairwise Markov graph
   B({
@@ -51,7 +69,11 @@
         "<p>Here $X \\amalg Y \\mid \\text{rest}$ means $X$ and $Y$ are independent once we condition on all the other variables, and \"rest\" is every variable besides $X$ and $Y$. So you <em>omit</em> the edge between a pair precisely when that pair is conditionally independent given the rest; otherwise you draw it. The graph produced this way is called the <strong>pairwise Markov graph</strong>.</p>" },
       { h: "Reading a single edge", body:
         "<p>By construction, each <em>missing</em> edge is a pairwise conditional independence statement. Figure 18.3 is the graph $X - Y - Z$ (edges $X\\sim Y$ and $Y \\sim Z$, none between $X$ and $Z$). The missing $X$–$Z$ edge says exactly $X \\amalg Z \\mid Y$: $X$ and $Z$ are independent given $Y$.</p>" +
-        "<p>By contrast, Figure 18.4 is the complete triangle on $\\{X,Y,Z\\}$ — every pair joined. With no missing edges, there are no implied independence relations at all.</p>" },
+        "<p>By contrast, Figure 18.4 is the complete triangle on $\\{X,Y,Z\\}$ — every pair joined. With no missing edges, there are no implied independence relations at all.</p>" +
+        "<table class=\"extable\"><thead><tr><th>figure</th><th>missing edge(s)</th><th>implied relation</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">18.3 chain $X-Y-Z$</td><td>$X-Z$</td><td>$X \\amalg Z\\mid Y$</td></tr>" +
+        "<tr><td class=\"row-h\">18.4 complete triangle</td><td>none</td><td>no implied independence relations</td></tr>" +
+        "</tbody></table>" },
       { h: "Implied relations come for free", body:
         "<p>The graph directly encodes a set of <em>pairwise</em> conditional independence relations (one per missing edge). But these pairwise relations imply other conditional independence relations too. The pleasant fact, developed in the next lesson, is that you can read those other relations straight off the same graph using separation — no algebra required.</p>" }
     ],
@@ -90,7 +112,16 @@
         "<li><strong>Figure 18.5</strong> — the four-cycle (square) $X - W$, $W - Z$, $Z - Y$, $Y - X$. Here $X \\amalg Z \\mid \\{Y,W\\}$ and $Y \\amalg W \\mid \\{X,Z\\}$: each diagonal pair is separated by the other two corners.</li>" +
         "<li><strong>Example 18.4 (Figure 18.7)</strong> — vertices $\\{X,Y,Z\\}$ with the single edge $Y - Z$ and $X$ isolated. Then $X \\amalg Y$, $X \\amalg Z$, and $X \\amalg (Y,Z)$: the disconnected $X$ is separated from the rest by the empty set.</li>" +
         "<li><strong>Example 18.5 (Figure 18.8)</strong> — $X - Y$, plus the triangle $Y - Z$, $Y - W$, $Z - W$. Then $X \\amalg W \\mid (Y,Z)$ and $X \\amalg Z \\mid Y$.</li>" +
-        "</ul>" }
+        "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>figure</th><th>separator</th><th>independence read globally</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">18.5 square</td><td>$\\{Y,W\\}$</td><td>$X \\amalg Z\\mid\\{Y,W\\}$</td></tr>" +
+        "<tr><td class=\"row-h\">18.5 square</td><td>$\\{X,Z\\}$</td><td>$Y \\amalg W\\mid\\{X,Z\\}$</td></tr>" +
+        "<tr><td class=\"row-h\">18.6 chain</td><td>$Y$</td><td>$X \\amalg Z\\mid Y$</td></tr>" +
+        "<tr><td class=\"row-h\">18.6 chain</td><td>$Z$</td><td>$Y \\amalg W\\mid Z$</td></tr>" +
+        "<tr><td class=\"row-h\">18.7 isolated $X$</td><td>empty set</td><td>$X \\amalg Y$, $X \\amalg Z$, $X \\amalg (Y,Z)$</td></tr>" +
+        "<tr><td class=\"row-h\">18.8 triangle plus $X-Y$</td><td>$Y$</td><td>$X \\amalg Z\\mid Y$</td></tr>" +
+        "<tr><td class=\"row-h\">18.8 triangle plus $X-Y$</td><td>$\\{Y,Z\\}$</td><td>$X \\amalg W\\mid(Y,Z)$</td></tr>" +
+        "</tbody></table>" }
     ],
     takeaways: [
       "Theorem 18.1: if C separates A and B in the graph, then A is independent of B given C (global Markov property).",
@@ -100,14 +131,13 @@
     ]
   });
   window.CODEVIZ["aos-ch18-markov-properties"] = { charts: [ {
-    type: "scatter",
-    title: "Figure 18.6 — the chain X - Y - Z - W",
-    interpret: "Y separates X from Z, so X is independent of Z given Y; likewise Z separates Y from W. The line traces the chain of edges.",
-    xlabel: "position", ylabel: "",
-    groups: [
-      { name: "vertices", color: "#4ea1ff", points: [[0,0],[1,0],[2,0],[3,0]] }
-    ],
-    lines: [ { points: [[0,0],[1,0],[2,0],[3,0]] } ]
+    type: "heatmap",
+    title: "Figure 18.6 — adjacency for the chain X-Y-Z-W",
+    interpret: "The ones are exactly the undirected edges X-Y, Y-Z, and Z-W; the zero at X-Z is why pairwise Markov gives X independent of Z given {Y,W}.",
+    rows: ["X", "Y", "Z", "W"],
+    cols: ["X", "Y", "Z", "W"],
+    matrix: [[0,1,0,0],[1,0,1,0],[0,1,0,1],[0,0,1,0]],
+    showVals: true
   } ] };
 
   // 4 — Cliques and potentials: the factorization
@@ -146,7 +176,8 @@
         "<tr><td class=\"row-h\">{X2, X4}</td><td class=\"num\">2</td><td>$\\psi_{24}(x_2,x_4)$</td></tr>" +
         "<tr><td class=\"row-h\">{X3, X5}</td><td class=\"num\">2</td><td>$\\psi_{35}(x_3,x_5)$</td></tr>" +
         "<tr><td class=\"row-h\">{X2, X5, X6}</td><td class=\"num\">3</td><td>$\\psi_{256}(x_2,x_5,x_6)$</td></tr>" +
-        "</tbody></table>" }
+        "</tbody></table>" +
+        "<pre><code class=\"language-python\"># Examples 18.6 and 18.7: one factor per maximal clique\ncliques_181 = [('X','Y'), ('Y','Z')]\nprint('f(x,y,z) proportional to psi_1(x,y) * psi_2(y,z)')\n\ncliques_189 = [('X1','X2'), ('X1','X3'), ('X2','X4'),\n               ('X3','X5'), ('X2','X5','X6')]\nfactor = ' * '.join('psi_' + ''.join(c).replace('X','') for c in cliques_189)\nprint(factor)\n# psi_12 * psi_13 * psi_24 * psi_35 * psi_256</code></pre>" }
     ],
     takeaways: [
       "A clique is an all-adjacent set; a maximal clique cannot be enlarged; a potential is any positive function.",
@@ -156,11 +187,13 @@
     ]
   });
   window.CODEVIZ["aos-ch18-cliques-potentials"] = { charts: [ {
-    type: "bars",
-    title: "Figure 18.9 — size of each maximal clique",
-    interpret: "Four maximal cliques are pairs and one is a triple {X2,X5,X6}; each contributes one potential to the factorization.",
-    labels: ["{X1,X2}", "{X1,X3}", "{X2,X4}", "{X3,X5}", "{X2,X5,X6}"],
-    values: [2, 2, 2, 2, 3]
+    type: "heatmap",
+    title: "Figure 18.9 — adjacency implied by the maximal cliques",
+    interpret: "The triple clique {X2,X5,X6} appears as a fully connected 3-by-3 block, while the other maximal cliques are single edges.",
+    rows: ["X1", "X2", "X3", "X4", "X5", "X6"],
+    cols: ["X1", "X2", "X3", "X4", "X5", "X6"],
+    matrix: [[0,1,1,0,0,0],[1,0,0,1,1,1],[1,0,0,0,1,0],[0,1,0,0,0,0],[0,1,1,0,0,1],[0,1,0,0,1,0]],
+    showVals: true
   } ] };
 
   // 5 — Fitting graphs to data
@@ -174,6 +207,24 @@
         "<p>So far the graph has been given. The practical question is the reverse: given a data set, how do we <em>find</em> a graphical model that fits it? As with directed graphs, the book flags this as a large topic that it does not treat in full here.</p>" },
       { h: "The discrete case: log-linear models", body:
         "<p>The book does point to one concrete approach for the <strong>discrete</strong> case — when the variables take finitely many values. There, a standard way to fit a graph to data is to use a <strong>log-linear model</strong>. A log-linear model parameterizes the probability function so that its logarithm is a sum of terms; choosing which terms to include corresponds to choosing which clique potentials are present, and hence which edges the graph has. Wasserman notes this is the subject of the next chapter, where the fitting is developed in detail.</p>" },
+      { h: "Book data table — breast cancer exercise", body:
+        "<p>The chapter closes with a discrete three-way table from Morrison et al. (1973), using diagnostic center $X_1$, nuclear grade $X_2$, and survival $X_3$. The book asks the reader to treat it as multinomial data and test conditional-independence graphs.</p>" +
+        "<table class=\"extable\"><thead><tr><th>diagnostic center</th><th>nuclear grade</th><th>survival</th><th class=\"num\">count</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">Boston</td><td>malignant</td><td>died</td><td class=\"num\">35</td></tr>" +
+        "<tr><td class=\"row-h\">Glamorgan</td><td>malignant</td><td>died</td><td class=\"num\">42</td></tr>" +
+        "<tr><td class=\"row-h\">Boston</td><td>malignant</td><td>survived</td><td class=\"num\">59</td></tr>" +
+        "<tr><td class=\"row-h\">Glamorgan</td><td>malignant</td><td>survived</td><td class=\"num\">77</td></tr>" +
+        "<tr><td class=\"row-h\">Boston</td><td>benign</td><td>died</td><td class=\"num\">47</td></tr>" +
+        "<tr><td class=\"row-h\">Glamorgan</td><td>benign</td><td>died</td><td class=\"num\">26</td></tr>" +
+        "<tr><td class=\"row-h\">Boston</td><td>benign</td><td>survived</td><td class=\"num\">112</td></tr>" +
+        "<tr><td class=\"row-h\">Glamorgan</td><td>benign</td><td>survived</td><td class=\"num\">76</td></tr>" +
+        "</tbody></table>" +
+        "<ul class=\"steps\">" +
+        "<li>The multinomial MLE for a cell is its count divided by the total count, and the total here is $35+42+59+77+47+26+112+76=474$.</li>" +
+        "<li>For a benign tumor at Glamorgan, the estimated death probability is $26/(26+76)=26/102=0.2549$.</li>" +
+        "<li>A binomial standard-error calculation for that conditional proportion is $\\sqrt{0.2549(1-0.2549)/102}=0.0432$.</li>" +
+        "</ul>" +
+        "<pre><code class=\"language-python\"># Exercise 18.5 table calculation\ncounts = [35, 42, 59, 77, 47, 26, 112, 76]\ntotal = sum(counts)\nmle = [c / total for c in counts]\nprint(total)                 # 474\nprint(round(mle[0], 4))      # 35/474 = 0.0738\n\np = 26 / (26 + 76)\nse = (p * (1 - p) / (26 + 76)) ** 0.5\nprint(round(p, 4), round(se, 4))  # 0.2549, 0.0432</code></pre>" },
       { h: "Where to read more", body:
         "<p>For thorough treatments of undirected graphs the book's bibliographic remarks point to Whittaker (1990) and Lauritzen (1996); several of the chapter's exercises are drawn from Whittaker (1990).</p>" }
     ],

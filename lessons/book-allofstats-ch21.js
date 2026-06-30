@@ -39,7 +39,8 @@
         "<li><strong>Legendre polynomials</strong> on $[-1,1]$: $P_j(x) = \\frac{1}{2^j j!}\\frac{d^j}{dx^j}(x^2-1)^j$. They are complete and orthogonal with $\\int_{-1}^1 P_j^2(x)\\,dx = 2/(2j+1)$, so $\\phi_j(x) = \\sqrt{(2j+1)/2}\\,P_j(x)$ is the orthonormal version. First few: $P_0=1$, $P_1=x$, $P_2=\\frac{1}{2}(3x^2-1)$, $P_3=\\frac{1}{2}(5x^3-3x)$, with recursion $P_{j+1}(x) = \\frac{(2j+1)xP_j(x) - jP_{j-1}(x)}{j+1}$.</li>" +
         "<li>A smoothness link: for the cosine basis, $\\int_0^1 (f^{(k)}(x))^2\\,dx = 2\\sum_{j=1}^{\\infty} \\beta_j^2(\\pi j)^{2k}$. This sum is finite only if the $\\beta_j$ shrink as $j$ grows — so <em>if $f$ is smooth, its coefficients $\\beta_j$ are small for large $j$</em>.</li>" +
         "</ul>" +
-        "<p><strong>Example 21.2 (doppler function).</strong> The function $f(x) = \\sqrt{x(1-x)}\\sin(2.1\\pi/(x+0.05))$ can be approximated by the partial sum $f_J(x) = \\sum_{j=1}^J \\beta_j \\phi_j(x)$ in the cosine basis. Figure 21.2 shows that as $J$ grows from $5$ to $20$ to $200$, the approximation $f_J$ gets steadily closer to $f$.</p>" }
+        "<p><strong>Example 21.2 (doppler function).</strong> The function $f(x) = \\sqrt{x(1-x)}\\sin(2.1\\pi/(x+0.05))$ can be approximated by the partial sum $f_J(x) = \\sum_{j=1}^J \\beta_j \\phi_j(x)$ in the cosine basis. Figure 21.2 shows that as $J$ grows from $5$ to $20$ to $200$, the approximation $f_J$ gets steadily closer to $f$.</p>"+
+        "<pre><code class=\"language-python\">import numpy as np\n\n# Vector example: v = 10.97 psi1 + 6.36 psi2 + 2.86 psi3\nv = np.array([12., 3., 4.])\npsi = np.array([[1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)],\n                [1/np.sqrt(2),-1/np.sqrt(2), 0.],\n                [1/np.sqrt(6), 1/np.sqrt(6),-2/np.sqrt(6)]])\nprint(psi @ v)  # [10.9697, 6.3640, 2.8577]\n\n# Doppler partial sums in the cosine basis (book uses J=5, 20, 200)\ndef phi(j, x): return np.ones_like(x) if j == 0 else np.sqrt(2) * np.cos(j*np.pi*x)\ndef doppler(x): return np.sqrt(x*(1-x)) * np.sin(2.1*np.pi/(x+0.05))\ngrid = np.linspace(1e-4, 1, 4000); fx = doppler(grid)\nbeta = [np.trapz(fx * phi(j, grid), grid) for j in range(201)]\nfor J in [5, 20, 200]:\n    fJ = sum(beta[j] * phi(j, grid) for j in range(1, J+1))\n    print(J, np.mean((fx - fJ)**2))  # larger J gets closer to f</code></pre>" }
     ],
     takeaways: [
       "Functions in L2 behave like vectors: there is an inner product, a norm, orthogonality, and orthonormal bases.",
@@ -97,7 +98,9 @@
     series: [
       { name: "f(x)", color: "#4ea1ff", points: [[0,0.2],[0.1,0.4],[0.2,0.7],[0.3,1.6],[0.333,3.6],[0.367,1.3],[0.417,3.6],[0.45,1.3],[0.5,3.6],[0.55,1.3],[0.583,3.6],[0.633,1.3],[0.667,3.6],[0.7,1.6],[0.8,0.7],[0.9,0.4],[1,0.2]] }
     ]
-  } ] };
+  } ],
+    code: "import numpy as np\nfrom scipy.stats import chi2\n\n# Orthogonal-series density estimate using the cosine basis on [0, 1].\ndef phi(j, x): return np.ones_like(x) if j == 0 else np.sqrt(2) * np.cos(j*np.pi*x)\ndef os_density(x, grid):\n    n = len(x); p = int(np.sqrt(n))              # book: 1 <= J <= p=sqrt(n)\n    Phi = np.vstack([phi(j, x) for j in range(1, p+1)])\n    beta = Phi.mean(axis=1)                     # beta_hat_j = mean phi_j(X_i)\n    sig2 = Phi.var(axis=1, ddof=1)\n    risk = [sig2[:J].sum()/n + np.maximum(beta[J:]**2 - sig2[J:]/n, 0).sum()\n            for J in range(1, p+1)]\n    Jhat = 1 + np.argmin(risk)\n    fhat = sum(beta[j-1] * phi(j, grid) for j in range(1, Jhat+1))\n    return Jhat, fhat, np.array(risk)\n\n# Example 21.7: Bart Simpson density, n=5000, 95% band; y=(x+3)/6.\n# f(x)=5/6 N(0,1) + (1/6) sum_j N(mu_j, .1), mu=(-1,-.5,0,.5,1).\nK = np.sqrt(2)                                  # cosine basis bound\n# c = K**2 * np.sqrt(Jhat * chi2.ppf(.95, Jhat) / n)  # band half-width"
+  };
 
   // 3 — Regression using orthogonal functions
   B({
@@ -148,7 +151,9 @@
     labels: ["J = 234 (min risk)", "J = 45 (~sqrt n)"],
     values: [234, 45],
     colors: ["#4ea1ff", "#ffb454"]
-  } ] };
+  } ],
+    code: "import numpy as np\n\n# Orthogonal-series regression estimate for x_i=i/n using the cosine basis.\ndef phi(j, x): return np.sqrt(2) * np.cos(j*np.pi*x)\ndef fit_os_regression(x, y):\n    n = len(y)\n    B = np.vstack([phi(j, x) for j in range(1, n+1)])\n    beta = (B * y).mean(axis=1)                 # beta_hat_j = n^-1 sum Y_i phi_j(x_i)\n    k = n // 4                                  # book: k about n/4\n    sigma2 = n / k * np.sum(beta[-k:]**2)\n    risk = [J*sigma2/n + np.maximum(beta[J:]**2 - sigma2/n, 0).sum()\n            for J in range(1, n+1)]\n    Jhat = 1 + np.argmin(risk)\n    return Jhat, beta, sigma2, np.array(risk)\n\n# Example 21.10: doppler data with n=2048 and epsilon~N(0, .1^2).\n# The book's estimated-risk minimizer used Jhat=234 terms.\n# Example 21.12 compares J=234 with J=45 ~= sqrt(2048), whose bands are tighter."
+  };
 
   // 4 — Wavelets
   B({

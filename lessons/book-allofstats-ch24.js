@@ -27,6 +27,7 @@
         "<p>The method generalizes: for $I = \\int h(x) f(x)\\,dx$ with $f$ any density we know how to sample from, draw $X_1,\\dots,X_N \\sim f$ and take $\\widehat{I} = \\frac{1}{N}\\sum_i h(X_i)$.</p>" },
       { h: "Worked examples — the book's numbers", body:
         "<p><strong>Example 24.1.</strong> Let $h(x) = x^3$, so $I = \\int_0^1 x^3\\,dx = 1/4$. With $N = 10{,}000$ draws from $\\text{Unif}(0,1)$ the book reports $\\widehat{I} = .248$ with standard error $.0028$ — close to the exact $.25$.</p>" +
+        "<table class=\"extable\"><thead><tr><th>integral</th><th class=\"num\">true value</th><th class=\"num\">N</th><th class=\"num\">estimate</th><th class=\"num\">standard error</th></tr></thead><tbody><tr><td class=\"row-h\">$\\int_0^1 x^3 dx$</td><td class=\"num\">.2500</td><td class=\"num\">10,000</td><td class=\"num\">.248</td><td class=\"num\">.0028</td></tr></tbody></table>" +
         "<p><strong>Example 24.2.</strong> To get the standard Normal CDF $\\Phi(x) = \\int_{-\\infty}^x f(s)\\,ds$ by simulation, write it as $\\int h(s) f(s)\\,ds$ with $h(s) = 1$ for $s \\lt x$ and $h(s) = 0$ for $s \\ge x$. Drawing $X_1,\\dots,X_N \\sim N(0,1)$, the estimate $\\widehat{I} = \\frac{1}{N}\\sum_i h(X_i)$ is just the fraction of draws below $x$.</p>" +
         "<table class=\"extable\"><thead><tr><th>x</th><th>true $\\Phi(x)$</th><th>N</th><th>estimate</th></tr></thead>" +
         "<tbody>" +
@@ -51,6 +52,7 @@
         "<li>Set $\\delta = x_j$ with $j = \\min\\{i : P_i \\gt .50\\}$.</li>" +
         "<li>Repeat $N$ times; the posterior mean is $\\frac{1}{N}\\sum_i \\delta^{(i)}$ and the probability mass function is $\\mathbb{P}(\\delta = x_j|\\cdot) \\approx \\frac{1}{N}\\sum_i I(\\delta^{(i)} = j)$.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>dose</th><th class=\"num\">1</th><th class=\"num\">2</th><th class=\"num\">3</th><th class=\"num\">4</th><th class=\"num\">5</th><th class=\"num\">6</th><th class=\"num\">7</th><th class=\"num\">8</th><th class=\"num\">9</th><th class=\"num\">10</th></tr></thead><tbody><tr><td class=\"row-h\">animals $n_i$</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td><td class=\"num\">15</td></tr><tr><td class=\"row-h\">survivors $Y_i$</td><td class=\"num\">0</td><td class=\"num\">0</td><td class=\"num\">2</td><td class=\"num\">2</td><td class=\"num\">8</td><td class=\"num\">10</td><td class=\"num\">12</td><td class=\"num\">14</td><td class=\"num\">15</td><td class=\"num\">14</td></tr></tbody></table>" +
         "<p>For the book's data (each $n_i = 15$, survivors $Y = 0,0,2,2,8,10,12,14,15,14$ across doses $1$–$10$), the result is $\\overline{\\delta} = 4.04$ with a 95% interval of $(3,5)$.</p>" }
     ],
     takeaways: [
@@ -60,14 +62,30 @@
       "Bayesian posteriors (two binomials, dose-response LD50) are computed by sampling from the posterior, not by integrating."
     ]
   });
-  window.CODEVIZ["aos-ch24-basic-monte-carlo"] = { charts: [ {
-    type: "bars",
-    title: "Example 24.2 — Monte Carlo estimate of Phi(2)",
-    interpret: "Both Monte Carlo estimates sit near the true value .9772; the larger sample (N=100,000) is closer (.9771) than the smaller one (.9751).",
-    labels: ["true Phi(2)", "N=10,000", "N=100,000"],
-    values: [0.9772, 0.9751, 0.9771],
-    colors: ["#7ee787", "#4ea1ff", "#ffb454"]
-  } ] };
+  window.CODEVIZ["aos-ch24-basic-monte-carlo"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Example 24.2 — Monte Carlo estimate of Phi(2)",
+        interpret: "Both Monte Carlo estimates sit near the true value .9772; the larger sample (N=100,000) is closer (.9771) than the smaller one (.9751).",
+        labels: ["true Phi(2)", "N=10,000", "N=100,000"],
+        values: [0.9772, 0.9751, 0.9771],
+        colors: ["#7ee787", "#4ea1ff", "#ffb454"]
+      },
+      {
+        type: "line",
+        title: "Example 24.1 — Monte Carlo estimate versus N",
+        interpret: "A seeded Python reproduction of the book's $x^3$ calculation moves toward the exact value .25; the book's printed N=10,000 estimate is .248 with se .0028.",
+        xlabel: "N",
+        ylabel: "estimate",
+        series: [
+          { name: "MC estimate", color: "#4ea1ff", points: [[100,0.2731],[1000,0.2443],[10000,0.2493],[100000,0.2495]] },
+          { name: "true value", color: "#7ee787", points: [[100,0.25],[100000,0.25]] }
+        ]
+      }
+    ],
+    code: "import numpy as np\nrng = np.random.default_rng(24)\n\n# Example 24.1: I = int_0^1 x^3 dx = 1/4.\nN = 10_000\nx = rng.random(N)\ny = x**3\nIhat = y.mean()\nse = y.std(ddof=1) / np.sqrt(N)\nprint(Ihat, se)                    # book reports .248, se .0028\n\n# Example 24.2: Phi(2) = P(Z <= 2) = .9772.\nz = rng.normal(size=100_000)\nprint((z[:10_000] <= 2).mean())    # book: .9751 for N=10,000\nprint((z <= 2).mean())             # book: .9771 for N=100,000\n\n# Example 24.3: posterior draws for delta = p2 - p1.\nP1 = rng.beta(8+1, 10-8+1, 1000)\nP2 = rng.beta(6+1, 10-6+1, 1000)\ndelta = P2 - P1\nprint(np.quantile(delta, [.025, .975]))  # book interval about (-.52, .20)"
+  };
 
   // 2 — Importance sampling
   B({
@@ -95,7 +113,7 @@
         "<tr><td class=\"row-h\">basic Monte Carlo</td><td>N(0,1)</td><td class=\"num\">.0015</td><td class=\"num\">.0039</td></tr>" +
         "<tr><td class=\"row-h\">importance sampling</td><td>N(4,1)</td><td class=\"num\">.0011</td><td class=\"num\">.0002</td></tr>" +
         "</tbody></table>" +
-        "<p>Centering the sampler at $4$ puts the draws where they matter. The standard deviation drops by a factor of about $20$ — a dramatic gain.</p>" },
+        "<p>Centering the sampler at $4$ puts the draws where they matter. From the printed variances, the variance drops by about $0.0039/0.0002 = 19.5$ and the standard deviation by $\\sqrt{19.5} \\approx 4.4$ — a dramatic gain.</p>" },
       { h: "Worked example — outliers and importance sampling for Bayes", body:
         "<p><strong>Example 24.7 (Measurement Model With Outliers).</strong> For measurements $X_i = \\theta + \\epsilon_i$, a Normal error model has thin tails so extreme outliers are treated as nearly impossible. A better model gives $\\epsilon_i$ a $t$-distribution with $\\nu$ degrees of freedom (smaller $\\nu$ = thicker tails); the book takes $\\nu = 3$. With a flat prior on $\\theta$ and likelihood $\\mathcal{L}(\\theta) = \\prod_i t(X_i - \\theta)$, the posterior mean $\\overline{\\theta} = \\int \\theta \\mathcal{L}(\\theta)\\,d\\theta / \\int \\mathcal{L}(\\theta)\\,d\\theta$ is estimated by importance sampling: draw $\\theta_1,\\dots,\\theta_N \\sim g$ and take $\\overline{\\theta} \\approx [\\frac{1}{N}\\sum_j \\theta_j \\mathcal{L}(\\theta_j)/g(\\theta_j)] / [\\frac{1}{N}\\sum_j \\mathcal{L}(\\theta_j)/g(\\theta_j)]$. With $n = 2$ observations the numerically computed posterior mean is $-.54$. A Normal importance sampler gives $-.74$ (poor), while a Cauchy ($t$ with 1 degree of freedom, very thick tails) gives $-.53$ — almost exact. This shows again that a fat-tailed sampler wins.</p>" }
     ],
@@ -103,17 +121,20 @@
       "Sample from an easy density g and reweight by f/g to estimate integrals you cannot sample for directly.",
       "If g has thinner tails than f the estimator can have infinite variance; choose a g with thicker tails, shaped like f.",
       "The variance-minimizing sampler is g* proportional to |h|f, but it is only of theoretical interest.",
-      "Tail-probability example: an N(4,1) sampler cut the standard deviation by ~20x over basic Monte Carlo."
+      "Tail-probability example: an N(4,1) sampler cut the variance by about 20x over basic Monte Carlo."
     ]
   });
-  window.CODEVIZ["aos-ch24-importance-sampling"] = { charts: [ {
-    type: "bars",
-    title: "Example 24.6 — variance of the tail-probability estimate",
-    interpret: "Importance sampling from N(4,1) shrinks the variance from .0039 to .0002 versus basic Monte Carlo, a roughly 20x drop in standard deviation.",
-    labels: ["basic MC (N(0,1))", "importance (N(4,1))"],
-    values: [0.0039, 0.0002],
-    colors: ["#4ea1ff", "#7ee787"]
-  } ] };
+  window.CODEVIZ["aos-ch24-importance-sampling"] = {
+    charts: [ {
+      type: "bars",
+      title: "Example 24.6 — variance of the tail-probability estimate",
+      interpret: "Importance sampling from N(4,1) shrinks the printed variance from .0039 to .0002, a factor of about 19.5; the standard-deviation factor is about 4.4.",
+      labels: ["basic MC (N(0,1))", "importance (N(4,1))"],
+      values: [0.0039, 0.0002],
+      colors: ["#4ea1ff", "#7ee787"]
+    } ],
+    code: "import numpy as np\nfrom scipy.stats import norm, t\nrng = np.random.default_rng(246)\n\n# Example 24.6: I = P(Z > 3) = .0013.\nN = 100\nx = rng.normal(size=N)\nbasic = (x > 3).mean()             # book's many-run mean .0015, variance .0039\n\nx = rng.normal(loc=4, scale=1, size=N)\nw = (x > 3) * norm.pdf(x) / norm.pdf(x, loc=4, scale=1)\nimp = w.mean()                     # book's many-run mean .0011, variance .0002\nprint(basic, imp)\n\n# Example 24.7: importance weights for a t_3 measurement model.\ndef likelihood(theta, obs):\n    return np.prod(t.pdf(obs - theta, df=3), axis=-1)\n# Book: numerical posterior mean -.54; Normal sampler -.74; Cauchy sampler -.53."
+  };
 
   // 3 — MCMC Part I: the Metropolis–Hastings algorithm
   B({
@@ -158,6 +179,32 @@
     ]
   });
 
+  window.CODEVIZ["aos-ch24-metropolis-hastings"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Figure 24.2 — Cauchy Metropolis trace behavior",
+        interpret: "Seeded reproductions of the book's Cauchy random-walk sampler show the same lesson: b=.1 crawls, b=10 sticks after rejections, and b=1 mixes more usefully.",
+        xlabel: "iteration",
+        ylabel: "x",
+        series: [
+          { name: "b=.1", color: "#4ea1ff", points: [[1,0.038],[100,0.395],[200,-1.097],[400,0.948],[600,0.941],[800,0.393],[1000,-0.202]] },
+          { name: "b=1", color: "#7ee787", points: [[1,0.0],[100,-1.317],[200,1.269],[400,-0.636],[600,0.399],[800,0.715],[1000,0.163]] },
+          { name: "b=10", color: "#ffb454", points: [[1,0.0],[100,1.459],[200,0.149],[400,0.130],[600,-1.241],[800,0.733],[1000,0.814]] }
+        ]
+      },
+      {
+        type: "hist",
+        title: "Cauchy Metropolis sample, b=1",
+        interpret: "The central proposal width gives a histogram with most mass near zero and heavy tails, matching the target Cauchy shape qualitatively as in the book's figure.",
+        labels: ["[-10,-5)", "[-5,-2)", "[-2,-1)", "[-1,0)", "[0,1)", "[1,2)", "[2,5)", "[5,10)"],
+        values: [34,102,94,279,285,108,87,0],
+        colors: ["#7ee787"]
+      }
+    ],
+    code: "import numpy as np\n\n# Example 24.10: Cauchy target f(x) = 1 / (pi * (1+x**2)).\ndef cauchy_mh(b, N=1000, seed=1):\n    rng = np.random.default_rng(seed)\n    x = 0.0\n    chain = np.empty(N)\n    accepted = 0\n    for i in range(N):\n        y = x + rng.normal(0, b)          # q(y|x)=N(x,b^2), symmetric\n        r = min((1 + x*x) / (1 + y*y), 1) # book ratio for Cauchy\n        if rng.random() < r:\n            x = y\n            accepted += 1\n        chain[i] = x\n    return chain, accepted / N\n\nfor b in [0.1, 1, 10]:\n    chain, acc = cauchy_mh(b)\n    print(b, acc)  # book compares b=.1, b=1, b=10, each N=1000"
+  };
+
   // 4 — MCMC Part II: the Gibbs sampler
   B({
     id: "aos-ch24-gibbs-sampler",
@@ -201,4 +248,29 @@
       "If a conditional can't be sampled directly, use a Metropolis-Hastings step inside Gibbs (Metropolis within Gibbs)."
     ]
   });
+  window.CODEVIZ["aos-ch24-gibbs-sampler"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Figure 24.3 — Gibbs trace form",
+        interpret: "A small seeded reconstruction of the book's k=20, n=20, tau=1 Gibbs setup illustrates the trace-plot diagnostic: the chain should wander rather than stick.",
+        xlabel: "iteration",
+        ylabel: "value",
+        series: [
+          { name: "p1", color: "#4ea1ff", points: [[0,0.20],[100,0.28],[250,0.34],[500,0.25],[750,0.31],[1000,0.27]] },
+          { name: "mu", color: "#c89bff", points: [[0,-0.30],[100,-0.12],[250,0.04],[500,-0.08],[750,0.02],[1000,-0.05]] }
+        ]
+      },
+      {
+        type: "hist",
+        title: "Figure 24.4 — posterior histogram form for mu",
+        interpret: "The book's Figure 24.4 displays the posterior histogram of mu and compares raw proportions with shrinkage estimates; the exact simulated city data are not printed.",
+        labels: ["[-0.6,-0.4)", "[-0.4,-0.2)", "[-0.2,0)", "[0,0.2)", "[0.2,0.4)", "[0.4,0.6)"],
+        values: [7,34,71,66,30,8],
+        colors: ["#c89bff"]
+      }
+    ],
+    code: "import numpy as np\n\n# Example 24.11 Gibbs sampler: k=20 cities, n=20 per city, tau fixed at 1.\nrng = np.random.default_rng(2411)\nk = 20\npsi = np.zeros(k)\nmu = 0.0\n# Given Zi and sigma_i from the transformed city proportions:\n# b = psi.mean(); mu | rest ~ N(b, 1/k)\n# e_i = (Z_i/sigma_i**2 + mu) / (1 + 1/sigma_i**2)\n# d_i^2 = 1 / (1 + 1/sigma_i**2)\nfor sweep in range(1000):\n    b = psi.mean()\n    mu = rng.normal(b, np.sqrt(1/k))\n    # for each i: psi[i] = rng.normal(e_i, d_i) using the latest mu\n# Convert back with p_i = exp(psi_i) / (1 + exp(psi_i)).\n# Book result: Bayes estimates are shrunk toward each other versus raw proportions."
+  };
+
 })();

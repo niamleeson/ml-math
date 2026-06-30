@@ -39,17 +39,20 @@
       "The risk is U-shaped in the smoothing parameter; cross-validation estimates it to find the bottom."
     ]
   });
-  window.CODEVIZ["aos-ch20-bias-variance-tradeoff"] = { charts: [ {
-    type: "line",
-    title: "Figure 20.2 — the bias-variance tradeoff",
-    interpret: "As smoothing increases, squared bias rises and variance falls. Risk = bias^2 + variance is U-shaped; its minimum is the optimal amount of smoothing.",
-    xlabel: "amount of smoothing", ylabel: "error",
-    series: [
-      { name: "bias squared", color: "#ffb454", points: [[0,0.05],[1,0.1],[2,0.2],[3,0.35],[4,0.55],[5,0.8],[6,1.1],[7,1.45],[8,1.85]] },
-      { name: "variance", color: "#7ee787", points: [[0,1.85],[1,1.45],[2,1.1],[3,0.8],[4,0.55],[5,0.35],[6,0.2],[7,0.1],[8,0.05]] },
-      { name: "risk = bias^2 + variance", color: "#4ea1ff", points: [[0,1.9],[1,1.55],[2,1.3],[3,1.15],[4,1.1],[5,1.15],[6,1.3],[7,1.55],[8,1.9]] }
-    ]
-  } ] };
+  window.CODEVIZ["aos-ch20-bias-variance-tradeoff"] = {
+    charts: [ {
+      type: "line",
+      title: "Figure 20.2 — the bias-variance tradeoff",
+      interpret: "As smoothing increases, squared bias rises and variance falls. Risk = bias^2 + variance is U-shaped; its minimum is the optimal amount of smoothing.",
+      xlabel: "amount of smoothing", ylabel: "error",
+      series: [
+        { name: "bias squared", color: "#ffb454", points: [[0,0.05],[1,0.1],[2,0.2],[3,0.35],[4,0.55],[5,0.8],[6,1.1],[7,1.45],[8,1.85]] },
+        { name: "variance", color: "#7ee787", points: [[0,1.85],[1,1.45],[2,1.1],[3,0.8],[4,0.55],[5,0.35],[6,0.2],[7,0.1],[8,0.05]] },
+        { name: "risk = bias^2 + variance", color: "#4ea1ff", points: [[0,1.9],[1,1.55],[2,1.3],[3,1.15],[4,1.1],[5,1.15],[6,1.3],[7,1.55],[8,1.9]] }
+      ]
+    } ],
+    code: "# Figure 20.2 is schematic: the book's computation is risk = bias^2 + variance.\nimport numpy as np\nsmoothing = np.arange(9)\nbias2 = np.array([0.05, 0.10, 0.20, 0.35, 0.55, 0.80, 1.10, 1.45, 1.85])\nvariance = bias2[::-1]\nrisk = bias2 + variance\nprint(risk.min(), smoothing[risk.argmin()])  # minimum risk at the balancing point"
+  };
 
   // 2 — Histograms
   B({
@@ -78,7 +81,7 @@
         "<p>Since $h^{*}$ depends on $f$, the book chooses $h$ by estimating the risk and minimizing it. Dropping the term that does not depend on $h$, the quantity to minimize is the <strong>cross-validation score</strong> (Definition 20.5):</p>" +
         "<p>$\\hat{J}(h) = \\int (\\hat{f}_n(x))^2\\,dx - \\dfrac{2}{n}\\sum_{i=1}^n \\hat{f}_{(-i)}(X_i),$</p>" +
         "<p>where $\\hat{f}_{(-i)}$ is the histogram built after removing the $i$-th observation. Theorem 20.6 says this estimate is nearly unbiased, and Theorem 20.7 gives a shortcut so we do not recompute the histogram $n$ times:</p>" +
-        "<p>$\\hat{J}(h) = \\dfrac{2}{(n-1)h} - \\dfrac{n+1}{n-1}\\sum_{j=1}^m \\hat{p}_j^2.$</p>" },
+        "<p>$\\hat{J}(h) = \\dfrac{2}{(n-1)h} - \\dfrac{n+1}{(n-1)h}\\sum_{j=1}^m \\hat{p}_j^2.$</p>" },
       { h: "Worked example — the astronomy data", body:
         "<p><strong>Example 20.2 / 20.8.</strong> Figure 20.3 shows three histograms of $n = 1{,}266$ galaxy distances measured along a \"pencil-beam\" pointing out into space; because light takes time to reach us, farther galaxies are seen further back in time. The number of bins controls the bias-variance tradeoff:</p>" +
         "<ul class=\"steps\">" +
@@ -86,7 +89,7 @@
         "<li>Too many bins (bottom left): undersmoothed, too much variance.</li>" +
         "<li>Just right (top right): built with $m = 73$ bins, chosen by cross-validation.</li>" +
         "</ul>" +
-        "<p>The cross-validation curve is flat near its minimum: any $m$ from $73$ to $310$ gives nearly the same histogram. The right number of bins reveals clusters of galaxies, helping cosmologists trace how the universe evolved.</p>" }
+        "<p>The cross-validation curve is flat near its minimum: any $m$ from $73$ to $310$ gives nearly the same histogram. On the redshift scale $[0,0.2]$, $m=73$ means $h=0.2/73=0.00274$; recomputing the shortcut score gives $\\hat{J}(73)=-13.642$ and a nearby low score at $m=258$ of $-14.643$, consistent with the book's broad flat minimum. The right number of bins reveals clusters of galaxies, helping cosmologists trace how the universe evolved.</p>" }
     ],
     takeaways: [
       "A histogram estimates a density by a piecewise-constant function of height p-hat_j / h on each bin.",
@@ -96,6 +99,29 @@
       "On the n = 1,266 galaxy data, cross-validation picked m = 73 bins and exposed galaxy clusters."
     ]
   });
+
+  window.CODEVIZ["aos-ch20-histograms"] = {
+    charts: [
+      {
+        type: "hist",
+        title: "Figure 20.3 — astronomy redshifts, m = 73 bins",
+        interpret: "Using the book's n = 1,266 redshifts on [0, 0.2], m = 73 gives h = 0.00274 and exposes several galaxy clusters as tall, narrow bars.",
+        labels: ["0.000-0.003","0.003-0.005","0.005-0.008","0.008-0.011","0.011-0.014","0.014-0.016","0.016-0.019","0.019-0.022","0.022-0.025","0.025-0.027","0.027-0.030","0.030-0.033","0.033-0.036","0.036-0.038","0.038-0.041","0.041-0.044","0.044-0.047","0.047-0.049","0.049-0.052","0.052-0.055","0.055-0.058","0.058-0.060","0.060-0.063","0.063-0.066","0.066-0.068","0.068-0.071","0.071-0.074","0.074-0.077","0.077-0.079","0.079-0.082","0.082-0.085","0.085-0.088","0.088-0.090","0.090-0.093","0.093-0.096","0.096-0.099","0.099-0.101","0.101-0.104","0.104-0.107","0.107-0.110","0.110-0.112","0.112-0.115","0.115-0.118","0.118-0.121","0.121-0.123","0.123-0.126","0.126-0.129","0.129-0.132","0.132-0.134","0.134-0.137","0.137-0.140","0.140-0.142","0.142-0.145","0.145-0.148","0.148-0.151","0.151-0.153","0.153-0.156","0.156-0.159","0.159-0.162","0.162-0.164","0.164-0.167","0.167-0.170","0.170-0.173","0.173-0.175","0.175-0.178","0.178-0.181","0.181-0.184","0.184-0.186","0.186-0.189","0.189-0.192","0.192-0.195","0.195-0.197","0.197-0.200"],
+        values: [0,2,2,0,0,0,1,0,4,36,4,6,0,6,11,2,1,14,38,150,19,3,1,4,2,12,8,8,31,8,67,18,2,1,10,13,5,31,23,5,6,26,20,29,41,67,77,24,12,31,76,43,24,32,30,9,6,4,9,3,10,28,5,16,10,15,14,17,12,9,7,3,3],
+        colors: ["#4ea1ff"]
+      },
+      {
+        type: "line",
+        title: "Figure 20.3 — histogram cross-validation score",
+        interpret: "The score is very flat over the book's stated range 73–310 bins; a recomputation has m = 258 lowest on this grid, while m = 73 gives a similar histogram.",
+        xlabel: "number of bins", ylabel: "estimated risk",
+        series: [
+          { name: "CV score", color: "#ffb454", points: [[10,-7.593],[20,-9.025],[50,-12.43],[73,-13.642],[100,-13.291],[150,-13.861],[200,-14.315],[258,-14.643],[310,-14.179],[500,-13.661],[1000,-11.598]] }
+        ]
+      }
+    ],
+    code: "# Histogram estimator and cross-validation for the book's astronomy data\nimport numpy as np\nz = redshift[redshift[:, 2] <= 0.2, 2]  # n = 1266 galaxy distances/redshifts\nn, m = len(z), 73\ncounts, edges = np.histogram(z, bins=m, range=(0, 0.2))\nh = 0.2 / m\nphat = counts / n\nJ = 2 / ((n - 1) * h) - ((n + 1) / ((n - 1) * h)) * np.sum(phat ** 2)\nprint(n, h, counts.max(), round(J, 3))  # 1266, 0.00274, 150, -13.642\n# Book: m = 73 was used; any m from 73 to 310 approximately minimizes the CV curve."
+  };
 
   // 3 — Kernel density estimation
   B({
@@ -121,7 +147,9 @@
         "<p>$h^{*} = \\dfrac{c_1^{-2/5} c_2^{1/5} c_3^{-1/5}}{n^{1/5}},$</p>" +
         "<p>with $c_1 = \\int x^2 K(x)\\,dx$, $c_2 = \\int K^2(x)\\,dx$, and $c_3 = \\int (f''(x))^2\\,dx$. The bandwidth shrinks like $n^{-1/5}$, and with it the risk falls like $c_4/n^{4/5}$.</p>" },
       { h: "Why the choices matter", body:
-        "<p>Kernel estimators converge at rate $n^{-4/5}$, faster than the histogram's $n^{-2/3}$; in fact no nonparametric estimator beats $n^{-4/5}$ under weak conditions. The book stresses that the choice of kernel $K$ is not crucial (the Epanechnikov kernel is theoretically optimal but barely better than others), whereas the choice of bandwidth $h$ is very important. Since $h^{*}$ depends on the unknown $f$, in practice we again use cross-validation, minimizing the estimated risk</p>" +
+        "<p>Kernel estimators converge at rate $n^{-4/5}$, faster than the histogram's $n^{-2/3}$; in fact no nonparametric estimator beats $n^{-4/5}$ under weak conditions. The book stresses that the choice of kernel $K$ is not crucial (the Epanechnikov kernel is theoretically optimal but barely better than others), whereas the choice of bandwidth $h$ is very important. In $d$ dimensions the optimal bandwidth scales as $n^{-1/(4+d)}$ and the risk as $n^{-4/(4+d)}$, producing the curse of dimensionality. Silverman's table in the book shows how quickly the needed sample size explodes:</p>" +
+        "<table class=\"extable\"><thead><tr><th>dimension</th><th class=\"num\">1</th><th class=\"num\">2</th><th class=\"num\">3</th><th class=\"num\">4</th><th class=\"num\">5</th><th class=\"num\">6</th><th class=\"num\">7</th><th class=\"num\">8</th><th class=\"num\">9</th><th class=\"num\">10</th></tr></thead><tbody><tr><td class=\"row-h\">sample size</td><td class=\"num\">4</td><td class=\"num\">19</td><td class=\"num\">67</td><td class=\"num\">223</td><td class=\"num\">768</td><td class=\"num\">2,790</td><td class=\"num\">10,700</td><td class=\"num\">43,700</td><td class=\"num\">187,000</td><td class=\"num\">842,000</td></tr></tbody></table>" +
+        "<p>Since $h^{*}$ depends on the unknown $f$, in practice we again use cross-validation, minimizing the estimated risk</p>" +
         "<p>$\\hat{J}(h) = \\int \\hat{f}^2(x)\\,dx - \\dfrac{2}{n}\\sum_{i=1}^n \\hat{f}_{-i}(X_i),$</p>" +
         "<p>where $\\hat{f}_{-i}$ drops the $i$-th point (Eq. 20.24). Stone's Theorem (20.16) shows the bandwidth chosen this way is asymptotically as good as the best possible bandwidth.</p>" },
       { h: "Worked example — the astronomy data", body:
@@ -135,6 +163,30 @@
       "Kernel estimators converge faster (n^(-4/5)) than histograms (n^(-2/3))."
     ]
   });
+
+  window.CODEVIZ["aos-ch20-kernel-density-estimation"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Figure 20.6 — Gaussian kernel density for astronomy redshifts",
+        interpret: "A Gaussian KDE with h = 0.003 on the n = 1,266 redshifts smooths the same clustered structure shown by the book's just-right panel.",
+        xlabel: "redshift", ylabel: "density",
+        series: [
+          { name: "KDE, h = 0.003", color: "#4ea1ff", points: [[0,0.072],[0.005,0.375],[0.01,0.18],[0.015,0.097],[0.02,0.926],[0.025,4.315],[0.03,2.321],[0.035,1.417],[0.04,1.649],[0.045,2.32],[0.05,13.3],[0.055,17.502],[0.06,2.946],[0.065,1.07],[0.07,2.271],[0.075,4.17],[0.08,7.485],[0.085,8.499],[0.09,2.165],[0.095,2.498],[0.1,4.331],[0.105,5.305],[0.11,3.706],[0.115,5.978],[0.12,10.249],[0.125,17.162],[0.13,10.7],[0.135,9.928],[0.14,14.007],[0.145,8.863],[0.15,6.224],[0.155,2.267],[0.16,1.787],[0.165,3.066],[0.17,4.325],[0.175,3.652],[0.18,4.224],[0.185,4.147],[0.19,2.63],[0.195,1.415],[0.2,0.413]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "Figure 20.6 — kernel bandwidth cross-validation",
+        interpret: "The book notes that rounding pushes naive CV toward h = 0; this recomputed UCV curve decreases toward the smallest grid bandwidth, illustrating that warning.",
+        xlabel: "bandwidth h", ylabel: "estimated risk",
+        series: [
+          { name: "UCV score", color: "#ffb454", points: [[0.0005,-14.781],[0.001,-14.18],[0.002,-12.446],[0.003,-11.066],[0.004,-10.041],[0.006,-8.734],[0.008,-7.989],[0.012,-7.213],[0.016,-6.82],[0.02,-6.55]] }
+        ]
+      }
+    ],
+    code: "# Gaussian kernel density estimator and UCV risk from Eq. 20.24/20.25\nimport numpy as np\nfrom scipy.stats import norm\nz = redshift[redshift[:, 2] <= 0.2, 2]  # book's astronomy example: n = 1266\nh = 0.003\nx = np.linspace(0, 0.2, 41)\nfhat = np.mean(norm.pdf((x[:, None] - z[None, :]) / h) / h, axis=1)\nprint(round(fhat.max(), 3))  # 17.502 at h = 0.003\n# Book's warning: rounded redshifts make naive cross-validation choose h near 0;\n# adding small Normal noise gives the smooth minimum shown in Figure 20.6."
+  };
 
   // 4 — Nonparametric regression
   B({
@@ -161,7 +213,7 @@
         "<p>$\\hat{\\sigma}^2 = \\dfrac{1}{2(n-1)}\\sum_{i=1}^{n-1} (Y_{i+1} - Y_i)^2.$</p>" +
         "<p>As with density estimation the confidence band is built for the smoothed version $\\overline{r}_n(x) = \\mathbb{E}(\\hat{r}_n(x))$ of the true regression function.</p>" },
       { h: "Worked example — the CMB data", body:
-        "<p><strong>Example 20.23.</strong> Figure 20.8 fits the cosmic microwave background (CMB) power spectrum from the BOOMERaNG, Maxima, and DASI experiments. Each pair $(x_i,Y_i)$ has $x_i$ a multipole moment and $Y_i$ the estimated power of temperature fluctuations — sound waves in the leftover heat from the big bang. The figure shows three fits: undersmoothed (too wiggly), oversmoothed (too flat), and just right by cross-validation. The cross-validation fit reveals three well-defined peaks, exactly as the physics of the big bang predicts. The fourth panel is the estimated risk versus bandwidth — a U-shaped curve whose minimum picks the bandwidth.</p>" }
+        "<p><strong>Example 20.23.</strong> Figure 20.8 fits the cosmic microwave background (CMB) power spectrum from the BOOMERaNG, Maxima, and DASI experiments. Each pair $(x_i,Y_i)$ has $x_i$ a multipole moment and $Y_i$ the estimated power of temperature fluctuations — sound waves in the leftover heat from the big bang. The figure shows three fits: undersmoothed (too wiggly), oversmoothed (too flat), and just right by cross-validation. The cross-validation fit reveals three well-defined peaks, exactly as the physics of the big bang predicts. The fourth panel is the estimated risk versus bandwidth — a U-shaped curve whose minimum picks the bandwidth. Figure 20.9 then puts a 95 percent confidence envelope around the fit: the first peak is located confidently, while the second and third are more uncertain.</p>" }
     ],
     takeaways: [
       "Regression assumes Y_i = r(x_i) + noise; we estimate r(x) = E(Y | X = x) by a local average of the Y_i.",
@@ -171,16 +223,30 @@
       "On the CMB data, cross-validation recovered three peaks predicted by big-bang physics."
     ]
   });
-  window.CODEVIZ["aos-ch20-nonparametric-regression"] = { charts: [ {
-    type: "scatter",
-    title: "Figure 20.8 — CMB power spectrum with cross-validation fit",
-    interpret: "Power of temperature fluctuations versus multipole moment. The local-average (kernel) fit traces a tall first acoustic peak near multipole 200, illustrating the three peaks the just-right fit recovers.",
-    xlabel: "multipole moment", ylabel: "power",
-    groups: [
-      { name: "CMB measurements", color: "#c89bff", points: [[100,2900],[150,3600],[200,5900],[230,6050],[300,2300],[400,2000],[500,1950],[600,2100],[700,2050],[800,2300],[850,2900],[1000,1600],[1100,500]] }
+  window.CODEVIZ["aos-ch20-nonparametric-regression"] = {
+    charts: [
+      {
+        type: "scatter",
+        title: "Figure 20.8 — CMB power spectrum with cross-validation fit",
+        interpret: "Power of temperature fluctuations versus multipole moment. The local-average (kernel) fit traces a tall first acoustic peak near multipole 200, illustrating the three peaks the just-right fit recovers.",
+        xlabel: "multipole moment", ylabel: "power",
+        groups: [
+          { name: "CMB measurements", color: "#c89bff", points: [[100,2900],[150,3600],[200,5900],[230,6050],[300,2300],[400,2000],[500,1950],[600,2100],[700,2050],[800,2300],[850,2900],[1000,1600],[1100,500]] }
+        ],
+        lines: [
+          { name: "cross-validation fit", color: "#4ea1ff", points: [[100,2900],[150,3700],[200,5600],[250,4200],[300,2500],[400,2000],[500,1950],[600,2050],[700,2150],[800,2400],[850,2600],[1000,1400],[1100,600]] }
+        ]
+      },
+      {
+        type: "line",
+        title: "Figure 20.8 — kernel-regression CV risk",
+        interpret: "The book's fourth CMB panel plots estimated risk versus bandwidth; this recomputation on the book-site CMB data has its grid minimum at h = 40.",
+        xlabel: "bandwidth", ylabel: "estimated risk",
+        series: [
+          { name: "CV score", color: "#ffb454", points: [[20,8707448837],[30,8687003614],[40,8676631627],[50,8696618982],[60,8745518027],[70,8817170392],[80,8903457997],[90,8996191602],[100,9088492153],[110,9175502971],[120,9254454525]] }
+        ]
+      }
     ],
-    lines: [
-      { name: "cross-validation fit", color: "#4ea1ff", points: [[100,2900],[150,3700],[200,5600],[250,4200],[300,2500],[400,2000],[500,1950],[600,2050],[700,2150],[800,2400],[850,2600],[1000,1400],[1100,600]] }
-    ]
-  } ] };
+    code: "# Nadaraya-Watson kernel regression and leave-one-out CV (Eq. 20.34/20.35)\nimport numpy as np\nx, y = cmb[:, 0], cmb[:, 1]  # multipole moment and power spectrum\n\ndef nw(x0, h):\n    W = np.exp(-0.5 * ((x0[:, None] - x[None, :]) / h) ** 2)\n    return (W @ y) / W.sum(axis=1)\n\ndef cv(h):\n    W = np.exp(-0.5 * ((x[:, None] - x[None, :]) / h) ** 2)\n    yhat = (W @ y) / W.sum(axis=1)\n    loo_resid = (y - yhat) / (1 - 1 / W.sum(axis=1))\n    return np.sum(loo_resid ** 2)\n\nhs = np.arange(20, 121, 10)\nprint(hs[np.argmin([cv(h) for h in hs])])  # 40 on this grid; book chooses h by CV\nprint(nw(np.array([200.0]), 40)[0])        # first peak fit about 5034 on book-site CMB data"
+  };
 })();

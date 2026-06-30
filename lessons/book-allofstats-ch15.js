@@ -95,7 +95,9 @@
     labels: ["Tons.: Disease", "Tons.: No Disease", "No Tons.: Disease", "No Tons.: No Disease"],
     values: [90, 165, 84, 307],
     colors: ["#ff7b72", "#4ea1ff", "#ff7b72", "#4ea1ff"]
-  } ] };
+  } ],
+    code: "# Reproduce Wasserman's Example 15.5 / 15.8 calculations.\nimport numpy as np\nfrom scipy.stats import chi2\n\n# rows: Tonsillectomy, No Tonsillectomy; cols: Hodgkins, No Disease\nx = np.array([[90, 165], [84, 307]])\nn = x.sum()                                                    # 646\nexpected = np.outer(x.sum(axis=1), x.sum(axis=0)) / n\nG = 2 * np.sum(x * np.log(x / expected))\nU = ((x - expected) ** 2 / expected).sum()\npsi = (90 * 307) / (165 * 84)\ngamma = np.log(psi)\nse = np.sqrt(1/90 + 1/84 + 1/165 + 1/307)\nci_gamma = (gamma - 2*se, gamma + 2*se)\nci_psi = tuple(np.exp(ci_gamma))\nprint(G, chi2.sf(G, 1))      # 14.75, about .0001\nprint(U, chi2.sf(U, 1))      # 14.96, about .0001\nprint(psi, gamma, se)        # 1.99, .69, .18\nprint(gamma/se, ci_gamma, ci_psi)  # 3.84, (.33, 1.05), (1.39, 2.86)"
+  };
 
   // 3 — Two discrete variables: chi-square test of independence on an I x J table
   B({
@@ -144,7 +146,9 @@
     labels: ["LP", "NS", "MC", "LD"],
     values: [12, 12, 58, 44],
     colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#ff7b72"]
-  } ] };
+  } ],
+    code: "# Reproduce Wasserman's Example 15.10 independence tests.\nimport numpy as np\nfrom scipy.stats import chi2\n\n# rows: LP, NS, MC, LD; cols: positive, partial, none\nx = np.array([[74, 18, 12],\n              [68, 16, 12],\n              [154, 54, 58],\n              [18, 10, 44]])\nn = x.sum()                                                    # 538\nexpected = np.outer(x.sum(axis=1), x.sum(axis=0)) / n\nU = ((x - expected) ** 2 / expected).sum()\nT = 2 * np.sum(x * np.log(x / expected))\ndf = (x.shape[0] - 1) * (x.shape[1] - 1)\nprint(df)                    # 6\nprint(U, chi2.sf(U, df))     # 75.89, approximately 0\nprint(T, chi2.sf(T, df))     # 68.30, approximately 0"
+  };
 
   // 4 — Continuous variables and the mixed continuous/discrete case
   B({

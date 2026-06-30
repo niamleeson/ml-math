@@ -48,6 +48,20 @@
     ]
   });
 
+  window.CODEVIZ["aos-ch22-error-rates-bayes"] = { charts: [ {
+    type: "scatter",
+    title: "Figure 22.1 — linear decision boundary schematic",
+    interpret: "The book's fake-data figure has 100 points and a line that perfectly separates the two classes: above the line is classified 0, below it classified 1.",
+    xlabel: "x1", ylabel: "x2",
+    groups: [
+      { name: "Y = 0 (squares)", color: "#4ea1ff", points: [[0.6,1.5],[1.0,1.8],[1.6,2.3],[2.4,2.9],[3.2,3.3],[3.8,3.8]] },
+      { name: "Y = 1 (triangles)", color: "#ffb454", points: [[0.5,0.2],[1.1,0.5],[1.7,0.9],[2.3,1.2],[3.0,1.6],[3.6,2.0]] }
+    ],
+    lines: [ { color: "#7ee787", dash: true, points: [[0.3,0.9],[4.0,3.1]] } ]
+  } ],
+    code: "import numpy as np\n\n# Bayes classifier for two classes: predict 1 iff pi*f1(x) > (1-pi)*f0(x).\ndef bayes_predict(f0, f1, pi, x):\n    post1 = pi * f1(x) / (pi * f1(x) + (1-pi) * f0(x))\n    return (post1 > 0.5).astype(int), post1\n\n# Training error: Lhat_n(h) = n^-1 sum I(h(X_i) != Y_i).\ndef error_rate(y_true, y_pred):\n    return np.mean(np.asarray(y_true) != np.asarray(y_pred))\n\n# Heart-data linear boundary in Example 22.2/22.8 misclassifies 141 of 462.\nprint(141/462)  # 0.3052, reported as .31"
+  };
+
   // 2 — Gaussian and Linear Classifiers (LDA and QDA)
   B({
     id: "aos-ch22-gaussian-lda-qda",
@@ -81,7 +95,8 @@
         "<li>Observed misclassification rate $= 141/462 = .31$.</li>" +
         "<li>Using all nine covariates instead of two reduces the error rate to $.27$.</li>" +
         "</ul>" +
-        "<p>QDA on the same two covariates gives $30$ false positives and $113$ false negatives, so $143/462 \\approx .31$ — about the same. With all covariates QDA reaches $.26$. The book concludes there is little advantage to QDA over LDA here.</p>" },
+        "<p>QDA on the same two covariates gives $30$ false positives and $113$ false negatives, so $143/462 \\approx .31$ — about the same. With all covariates QDA reaches $.26$. The book concludes there is little advantage to QDA over LDA here.</p>" +
+        "<table class=\"extable\"><thead><tr><th></th><th>classified 0</th><th>classified 1</th></tr></thead><tbody><tr><td class=\"row-h\">y = 0</td><td class=\"num\">272</td><td class=\"num\">30</td></tr><tr><td class=\"row-h\">y = 1</td><td class=\"num\">113</td><td class=\"num\">47</td></tr></tbody></table>" },
       { h: "Many classes", body:
         "<p><strong>Theorem 22.9</strong> generalizes to $K$ classes: if each $f_k$ is Gaussian, $h(x) = \\operatorname{argmax}_k \\delta_k(x)$ with the same quadratic discriminant $\\delta_k(x) = -\\tfrac12\\log|\\Sigma_k| - \\tfrac12(x-\\mu_k)^T\\Sigma_k^{-1}(x-\\mu_k) + \\log\\pi_k$ (Eq. 22.16). If all covariances are equal it reduces to the linear discriminant $\\delta_k(x) = x^T\\Sigma^{-1}\\mu_k - \\tfrac12\\mu_k^T\\Sigma^{-1}\\mu_k + \\log\\pi_k$ (Eq. 22.17).</p>" }
     ],
@@ -98,7 +113,15 @@
     interpret: "The 141 off-diagonal cases (25 false positives + 116 false negatives) give the .31 error rate; most errors are class-1 cases called 0.",
     labels: ["0", "1"],
     matrix: [[277, 25], [116, 44]]
-  } ] };
+  }, {
+    type: "confusion",
+    title: "Example 22.8 — QDA confusion table (heart data, 2 covariates)",
+    interpret: "QDA has 143 off-diagonal cases (30 + 113), also about .31, so the extra quadratic boundary gives little gain here.",
+    labels: ["0", "1"],
+    matrix: [[272, 30], [113, 47]]
+  } ],
+    code: "import numpy as np\nfrom sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis\nfrom sklearn.metrics import confusion_matrix\n\n# X2 contains systolic blood pressure and cumulative tobacco; y is 0/1 CHD.\nlda = LinearDiscriminantAnalysis().fit(X2, y)\nqda = QuadraticDiscriminantAnalysis().fit(X2, y)\nprint(confusion_matrix(y, lda.predict(X2)))\n# [[277, 25], [116, 44]]; (25+116)/462 = .31\nprint(confusion_matrix(y, qda.predict(X2)))\n# [[272, 30], [113, 47]]; (30+113)/462 = .31\n\n# With all 9 covariates: LDA error .27; QDA error .26 (book)."
+  };
 
   // 3 — Linear and Logistic Regression for Classification
   B({
@@ -137,7 +160,9 @@
     interpret: "Adding second-order interaction terms to logistic regression cuts the error from .27 to .22 — the richer model fits the data better.",
     labels: ["linear", "logistic", "logistic order-2"],
     values: [0.26, 0.27, 0.22]
-  } ] };
+  } ],
+    code: "import numpy as np\nfrom sklearn.linear_model import LinearRegression, LogisticRegression\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.pipeline import make_pipeline\n\n# Classify by estimating r(x)=P(Y=1|X=x), then thresholding at 1/2.\nlin = LinearRegression().fit(X, y)\ny_lin = (lin.predict(X) > 0.5).astype(int)\nprint(np.mean(y_lin != y))        # book: .26 on the heart data\n\nlogit = LogisticRegression(max_iter=1000).fit(X, y)\nprint(np.mean(logit.predict(X) != y))  # book: .27\n\norder2 = make_pipeline(PolynomialFeatures(2, include_bias=False),\n                       LogisticRegression(max_iter=2000)).fit(X, y)\nprint(np.mean(order2.predict(X) != y)) # book: .22 for model (22.25), r=2"
+  };
 
   // 4 — Relationship Between Logistic Regression and LDA
   B({
@@ -212,7 +237,8 @@
         "<p>If a piece $A_s$ contains all $0$'s or all $1$'s then $\\gamma_s = 0$ (perfectly pure); otherwise $\\gamma_s \\gt 0$. We choose the split point $t$ that minimizes the impurity. For $K$ classes the impurity generalizes to $\\gamma_s = 1 - \\sum_{j=1}^k \\widehat{p}_s(j)^2$ (Eq. 22.31).</p>" },
       { h: "Growing, leaves, and overfitting", body:
         "<p>With several covariates, we pick whichever covariate and split give the lowest impurity, and repeat until a stopping rule is met — for example, stop when every piece has fewer than $n_0$ points. The bottom nodes are the <strong>leaves</strong>; each leaf is labeled $0$ or $1$ depending on whether it holds more $Y=0$ or $Y=1$ points. If we keep splitting until each leaf has very few cases we are likely to overfit, so the tree's complexity should be chosen to keep the estimated true error rate low — which is exactly what cross-validation is for.</p>" +
-        "<p><strong>Example 22.13.</strong> A classification tree on the heart disease data has a misclassification rate of $.21$. Restricting the tree to use only tobacco and age raises the rate to $.29$.</p>" +
+        "<p><strong>Example 22.13.</strong> A classification tree on the heart disease data has a misclassification rate of $.21$. Restricting the tree to use only tobacco and age raises the rate to $.29$. Figure 22.4's two-covariate tree uses these printed split points:</p>" +
+        "<table class=\"extable\"><thead><tr><th>node</th><th>split</th><th>left label</th><th>right branch</th></tr></thead><tbody><tr><td class=\"row-h\">root</td><td>age &lt; 31.5</td><td>0</td><td>age ≥ 31.5</td></tr><tr><td class=\"row-h\">left branch</td><td>tobacco &lt; 0.51</td><td>0</td><td>age split</td></tr><tr><td class=\"row-h\">age branch</td><td>age &lt; 50.5</td><td>0</td><td>tobacco split</td></tr><tr><td class=\"row-h\">final branch</td><td>tobacco &lt; 7.47</td><td>0</td><td>1</td></tr></tbody></table>" +
         "<table class=\"extable\"><thead><tr><th>tree</th><th>error rate</th></tr></thead>" +
         "<tbody>" +
         "<tr><td class=\"row-h\">all covariates</td><td class=\"num\">.21</td></tr>" +
@@ -232,7 +258,9 @@
     interpret: "The full tree (.21) beats the two-covariate tree (.29): dropping covariates throws away information.",
     labels: ["all covariates", "tobacco + age"],
     values: [0.21, 0.29]
-  } ] };
+  } ],
+    code: "import numpy as np\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.model_selection import cross_val_score\n\n# Classification tree: split to reduce Gini impurity, then label leaves by majority class.\ntree = DecisionTreeClassifier(criterion='gini', random_state=1).fit(X, y)\nprint(np.mean(tree.predict(X) != y))       # book: .21 with all covariates\n\ntwo = DecisionTreeClassifier(criterion='gini', random_state=1).fit(X[:, [tobacco, age]], y)\nprint(np.mean(two.predict(X[:, [tobacco, age]]) != y))  # book: .29\n# Figure 22.4 two-covariate splits: age 31.5, tobacco .51, age 50.5, tobacco 7.47."
+  };
 
   // 7 — Assessing Error Rates and Choosing a Good Classifier
   B({
@@ -254,7 +282,8 @@
         "<li>For each $k$: delete chunk $k$, fit the classifier $\\widehat{h}_{(k)}$ on the rest, then predict the held-out chunk $k$ and record its error $\\widehat{L}_{(k)}$.</li>" +
         "<li>Average the chunk errors (Eq. 22.33): $\\widehat{L}(h) = \\dfrac{1}{K}\\sum_{k=1}^K \\widehat{L}_{(k)}.$</li>" +
         "</ul>" +
-        "<p><strong>Example 22.15.</strong> Applying $10$-fold cross-validation to the heart data, the minimum cross-validation error as a function of the number of leaves occurred at six leaves.</p>" },
+        "<p><strong>Example 22.15.</strong> Applying $10$-fold cross-validation to the heart data, the minimum cross-validation error as a function of the number of leaves occurred at six leaves.</p>" +
+        "<table class=\"extable\"><thead><tr><th>classifier or fit</th><th class=\"num\">book error</th></tr></thead><tbody><tr><td class=\"row-h\">LDA, 2 covariates</td><td class=\"num\">.31</td></tr><tr><td class=\"row-h\">LDA, 9 covariates</td><td class=\"num\">.27</td></tr><tr><td class=\"row-h\">QDA, 2 covariates</td><td class=\"num\">.31</td></tr><tr><td class=\"row-h\">QDA, 9 covariates</td><td class=\"num\">.26</td></tr><tr><td class=\"row-h\">linear regression classifier</td><td class=\"num\">.26</td></tr><tr><td class=\"row-h\">logistic regression</td><td class=\"num\">.27</td></tr><tr><td class=\"row-h\">logistic, order 2</td><td class=\"num\">.22</td></tr><tr><td class=\"row-h\">classification tree</td><td class=\"num\">.21</td></tr><tr><td class=\"row-h\">tree, tobacco and age</td><td class=\"num\">.29</td></tr></tbody></table>" },
       { h: "Probability inequalities and VC dimension", body:
         "<p>A second route to error estimation uses <strong>probability inequalities</strong>, useful for empirical risk minimization where $\\widehat{h} = \\operatorname{argmin}_{h\\in\\mathcal{H}} \\widehat{L}_n(h)$. Hoeffding's inequality gives $\\mathbb{P}(|\\widehat{p}-p|\\gt\\epsilon) \\le 2e^{-2n\\epsilon^2}$. <strong>Theorem 22.16</strong> (uniform convergence) extends this over a finite $\\mathcal{H}$ with $m$ classifiers: $\\mathbb{P}(\\max_{h\\in\\mathcal{H}}|\\widehat{L}_n(h)-L(h)|\\gt\\epsilon) \\le 2m e^{-2n\\epsilon^2}$, proved by Hoeffding plus the union bound. <strong>Theorem 22.17</strong> turns this into a confidence interval $\\widehat{L}_n(\\widehat{h})\\pm\\epsilon$ with $\\epsilon = \\sqrt{(2/n)\\log(2m/\\alpha)}$ — wider when $\\mathcal{H}$ is bigger, the price of overfitting.</p>" +
         "<p>For infinite $\\mathcal{H}$ (e.g. all linear classifiers) we use <strong>VC dimension</strong>. <strong>Definition 22.20:</strong> the VC dimension of a class of sets is the size of the largest set it can <em>shatter</em> (pick out every subset of). The Vapnik-Chervonenkis theorem (Theorem 22.18) bounds the gap between empirical and true probabilities. <strong>Theorem 22.26:</strong> linear classifiers in $d$ dimensions have VC dimension $d+1$, giving the confidence interval $\\widehat{L}_n(\\widehat{h})\\pm\\epsilon$ with $\\epsilon_n^2 = \\dfrac{32}{n}\\log\\left(\\dfrac{8(n^{d+1}+1)}{\\alpha}\\right)$. The book's examples: half-lines have VC dimension $1$, intervals $2$, half-planes $3$, axis-aligned rectangles $4$.</p>" }
@@ -275,7 +304,9 @@
       { name: "observed (training) error", color: "#4ea1ff", points: [[1,0.35],[3,0.31],[5,0.31],[7,0.30],[9,0.28],[11,0.25],[13,0.245],[15,0.245],[17,0.25]] },
       { name: "10-fold cross-validation", color: "#ffb454", points: [[1,0.35],[3,0.30],[5,0.31],[7,0.30],[9,0.28],[11,0.27],[13,0.27],[15,0.345],[17,0.345]] }
     ]
-  } ] };
+  } ],
+    code: "import numpy as np\nfrom sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.tree import DecisionTreeClassifier\n\n# K-fold CV estimate: average the held-out error over K chunks; book uses K=10.\ncv = KFold(n_splits=10, shuffle=True, random_state=1)\nmodel = LogisticRegression(max_iter=1000)\nerr = 1 - cross_val_score(model, X, y, cv=cv, scoring='accuracy')\nprint(err.mean())  # Figure 22.5: CV error falls, then rises with complexity\n\n# Example 22.15: choose tree size by 10-fold CV; minimum occurred at six leaves.\nfor leaves in range(2, 12):\n    clf = DecisionTreeClassifier(max_leaf_nodes=leaves, random_state=1)\n    cv_err = 1 - cross_val_score(clf, X, y, cv=cv, scoring='accuracy').mean()\n    print(leaves, cv_err)  # best in book: 6 leaves"
+  };
 
   // 8 — Support Vector Machines
   B({
@@ -371,4 +402,18 @@
       "Neural networks are nonlinear regressions with a smooth sigmoid; flexible but plagued by multiple minima and tuning p."
     ]
   });
+  window.CODEVIZ["aos-ch22-other-classifiers"] = { charts: [ {
+    type: "scatter",
+    title: "k-nearest-neighbors majority vote schematic",
+    interpret: "For a new point x, the classifier looks at the k closest training points and predicts the majority class; the book says k is chosen by cross-validation.",
+    xlabel: "x1", ylabel: "x2",
+    groups: [
+      { name: "class 0", color: "#4ea1ff", points: [[0.7,1.1],[1.0,1.4],[1.2,0.9],[1.5,1.3],[1.8,1.0]] },
+      { name: "class 1", color: "#ffb454", points: [[2.2,2.0],[2.5,2.4],[2.8,2.1],[3.0,2.7],[3.3,2.3]] },
+      { name: "new x", color: "#7ee787", points: [[2.05,1.75]] }
+    ]
+  } ],
+    code: "import numpy as np\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.ensemble import BaggingClassifier, AdaBoostClassifier\nfrom sklearn.model_selection import cross_val_score\n\n# k-nearest neighbors: classify by majority vote among the k closest training points.\nfor k in [1, 3, 5, 9, 15]:\n    clf = KNeighborsClassifier(n_neighbors=k)\n    cv_error = 1 - cross_val_score(clf, X, y, cv=10, scoring='accuracy').mean()\n    print(k, cv_error)  # choose k by cross-validation (book's recommendation)\n\n# Bagging averages bootstrap classifiers; boosting reweights errors.\nbag = BaggingClassifier(n_estimators=100, random_state=1).fit(X, y)\nboost = AdaBoostClassifier(n_estimators=100, random_state=1).fit(X, y)"
+  };
+
 })();

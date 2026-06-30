@@ -84,7 +84,8 @@
         "<li>$\\mathbb{E}(C_1) = \\tfrac{0+0+0+0+1+1+1+1}{8} = \\tfrac{4}{8} = 0.5$ and $\\mathbb{E}(C_0) = \\tfrac{0+0+0+0+1+1+1+1}{8} = 0.5$, so $\\theta = 0.5 - 0.5 = 0$.</li>" +
         "<li>From the observed data only: $\\mathbb{E}(Y\\mid X=1) = \\tfrac{1+1+1+1}{4} = 1$ and $\\mathbb{E}(Y\\mid X=0) = \\tfrac{0+0+0+0}{4} = 0$, so $\\alpha = 1 - 0 = 1$.</li>" +
         "<li>Hence $\\theta = 0$ but $\\alpha = 1$: $\\theta \\neq \\alpha$.</li>" +
-        "</ul>" },
+        "</ul>" +
+        "<pre><code class=\"language-python\"># Reproduce Example 16.2: treatment has no causal effect, but association is 1.\nimport numpy as np\n\nX  = np.array([0, 0, 0, 0, 1, 1, 1, 1])\nY  = np.array([0, 0, 0, 0, 1, 1, 1, 1])\nC0 = np.array([0, 0, 0, 0, 1, 1, 1, 1])\nC1 = np.array([0, 0, 0, 0, 1, 1, 1, 1])\ntheta = C1.mean() - C0.mean()\nalpha = Y[X == 1].mean() - Y[X == 0].mean()\nprint(theta, alpha)  # 0.0, 1.0\n\n# After most people comply with taking vitamin C:\nX2 = np.array([0, 1, 1, 1, 1, 1, 1, 1])\nY2 = np.array([0, 0, 0, 0, 1, 1, 1, 1])\nalpha2 = Y2[X2 == 1].mean() - Y2[X2 == 0].mean()\nprint(alpha2)        # 4/7 = 0.571...</code></pre>" },
       { h: "The story: vitamin C", body:
         "<p>To add intuition, let $Y=1$ mean \"healthy\" and $Y=0$ mean \"sick,\" with $X=1$ meaning the subject takes vitamin C. Vitamin C has no causal effect here because $C_0 = C_1$ for everyone. There are two kinds of people: healthy people with $(C_0,C_1)=(1,1)$ and unhealthy people with $(C_0,C_1)=(0,0)$. Healthy people happen to take vitamin C; unhealthy people do not. That link between subject type $(C_0,C_1)$ and treatment $X$ is what manufactures an association between $X$ and $Y$.</p>" +
         "<p>A naive observer with only $X$ and $Y$ sees them associated, wrongly concludes vitamin C prevents illness, and urges everyone to take it.</p>" },
@@ -129,18 +130,36 @@
       "Flat counterfactual curves (no causal effect) can still yield a sloped regression curve (an association)."
     ]
   });
-  window.CODEVIZ["aos-ch16-beyond-binary"] = { charts: [ {
+  window.CODEVIZ["aos-ch16-beyond-binary"] = { charts: [
+  {
+    type: "line",
+    title: "Reconstruction of Figure 16.1: C(x)",
+    interpret: "The observed outcome is read from the subject's hidden curve at the actual dose: at X = 6, the dotted guides give Y = C(X) = 4.",
+    xlabel: "dose x",
+    ylabel: "outcome",
+    series: [
+      { name: "C(x)", color: "#4ea1ff", points: [[1,1],[2,2.1],[3,2.8],[4,3.3],[5,3.7],[6,4],[7,4.4],[8,4.9],[9,5.5],[10,6.3],[11,7]] },
+      { name: "Y = C(X) at X=6", color: "#ffb454", points: [[0,4],[6,4],[6,0]] }
+    ]
+  },
+  {
     type: "line",
     title: "Example 16.5: flat causal effect, sloped association",
     interpret: "Each subject's counterfactual curve is flat (no causal effect), so the causal regression theta(x) is the flat line at 2.5. But the four observed dots Y_i = C_i(X_i) sit at different doses, and the regression r(x) fitted through them slopes upward — an association with no causation.",
     xlabel: "dose x",
     ylabel: "outcome",
     series: [
-      { name: "theta(x): causal regression", color: "#7ee787", points: [[0,2.5],[5,2.5]] },
-      { name: "r(x): association regression", color: "#ffb454", points: [[1,1],[4,4]] },
+      { name: "C1(x)", color: "#c89bff", points: [[1,4],[4,4]] },
+      { name: "C2(x)", color: "#c89bff", points: [[1,3],[4,3]] },
+      { name: "C3(x)", color: "#c89bff", points: [[1,2],[4,2]] },
+      { name: "C4(x)", color: "#c89bff", points: [[1,1],[4,1]] },
+      { name: "theta(x): causal regression", color: "#7ee787", points: [[1,2.5],[4,2.5]] },
+      { name: "r(x): association regression", color: "#ffb454", points: [[1,1.5],[4,3.5]] },
       { name: "observed Y_i = C_i(X_i)", color: "#4ea1ff", points: [[4,4],[4,3],[1,2],[1,1]] }
     ]
-  } ] };
+  } ],
+    code: "# Reproduce the computations behind Figures 16.1 and 16.2.\nimport numpy as np\n\n# Figure 16.1: read the observed response from the counterfactual curve.\nX = 6\ndef C(x):\n    # Approximate points digitized from the displayed curve; the book's computed point is exact.\n    return 4 if x == 6 else np.nan\nY = C(X)\nprint(X, Y)                 # X = 6, Y = C(X) = 4\n\n# Example 16.5 / Figure 16.2: four flat counterfactual functions.\nheights = np.array([4, 3, 2, 1])\nobserved_X = np.array([4, 4, 1, 1])\nobserved_Y = heights.copy()\ntheta = heights.mean()\nprint(theta)                # theta(x) = (4 + 3 + 2 + 1)/4 = 2.5\nprint(list(zip(observed_X, observed_Y)))  # (4,4), (4,3), (1,2), (1,1)\n# No subject's outcome changes with x, but observed Y is larger at larger observed X."
+  };
 
   // 4 — Observational Studies and Confounding
   B({
@@ -220,4 +239,16 @@
       "Stated causally, beneficial-within-each-group implies beneficial-overall, so a true paradox cannot occur."
     ]
   });
+  window.CODEVIZ["aos-ch16-simpsons-paradox"] = { charts: [ {
+    type: "bars",
+    title: "Simpson's paradox example: association differences",
+    interpret: "The marginal association is -0.1, while the conditional associations are +0.1 for both women and men; the reversal comes from reading associations as causal effects.",
+    labels: ["overall", "women Z=0", "men Z=1"],
+    values: [-0.1, 0.1, 0.1],
+    valueLabels: ["-0.1", "+0.1", "+0.1"],
+    colors: ["#ffb454", "#7ee787", "#7ee787"]
+  } ],
+    code: "# Reproduce the Simpson's paradox probabilities in Section 16.4.\n# Order within each gender: rows X=1, X=0; cols Y=1, Y=0.\nimport numpy as np\n\nmen = np.array([[.1500, .2250], [.0375, .0875]])\nwomen = np.array([[.1000, .0250], [.2625, .1125]])\nxy = men + women\n\ndef risk_diff(tab):\n    p_y1_x1 = tab[0,0] / tab[0].sum()\n    p_y1_x0 = tab[1,0] / tab[1].sum()\n    return p_y1_x1 - p_y1_x0\n\nprint(risk_diff(xy))      # .25/.50 - .30/.50 = -0.1\nprint(risk_diff(women))   # .10/.125 - .2625/.375 = 0.1\nprint(risk_diff(men))     # .15/.375 - .0375/.125 = 0.1"
+  };
+
 })();

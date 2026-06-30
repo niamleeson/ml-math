@@ -23,7 +23,7 @@
       },
       {
         h: "Fitted line, predictions, and residuals",
-        body: "<p>Let $\\widehat\\beta_0$ and $\\widehat\\beta_1$ denote estimates of $\\beta_0$ and $\\beta_1$ (the hat means \"estimated from the data\"). The $\\textbf{fitted line}$ is $\\widehat r(x) = \\widehat\\beta_0 + \\widehat\\beta_1 x$. The $\\textbf{predicted (fitted) values}$ are $\\widehat Y_i = \\widehat r(X_i)$, and the $\\textbf{residuals}$ are the leftover gaps between observed and predicted:</p><ul class=\"steps\"><li>$\\widehat\\epsilon_i = Y_i - \\widehat Y_i = Y_i - (\\widehat\\beta_0 + \\widehat\\beta_1 X_i)$.</li></ul><p>The author's running example (Example 13.2, Figure 13.1) plots log surface temperature $Y$ against log light intensity $X$ for some nearby stars, with an estimated regression line drawn through the cloud of points. The estimated line is given later in Example 13.5.</p>"
+        body: "<p>Let $\\widehat\\beta_0$ and $\\widehat\\beta_1$ denote estimates of $\\beta_0$ and $\\beta_1$ (the hat means \"estimated from the data\"). The $\\textbf{fitted line}$ is $\\widehat r(x) = \\widehat\\beta_0 + \\widehat\\beta_1 x$. The $\\textbf{predicted (fitted) values}$ are $\\widehat Y_i = \\widehat r(X_i)$, and the $\\textbf{residuals}$ are the leftover gaps between observed and predicted:</p><ul class=\"steps\"><li>$\\widehat\\epsilon_i = Y_i - \\widehat Y_i = Y_i - (\\widehat\\beta_0 + \\widehat\\beta_1 X_i)$.</li></ul><p>The author's running example (Example 13.2, Figure 13.1) plots log surface temperature $Y$ against log light intensity $X$ for some nearby stars. Example 13.5 gives the book's fitted line:</p><ul class=\"steps\"><li>$\\widehat\\beta_0 = 3.58$ and $\\widehat\\beta_1 = 0.166$.</li><li>$\\widehat r(x) = 3.58 + 0.166x$.</li><li>At $x=4.0$, $\\widehat r(4.0)=3.58+0.166(4.0)=4.244$; at $x=5.5$, $\\widehat r(5.5)=4.493$.</li></ul>"
       }
     ],
     takeaways: [
@@ -37,8 +37,8 @@
     charts: [
       {
         type: "scatter",
-        title: "Figure 13.1 (reconstruction): star data with the least squares line",
-        interpret: "Log surface temperature rises gently with log light intensity. The fitted line from Example 13.5 is $\\widehat r(x) = 3.58 + 0.166\\,x$; points are an illustrative reconstruction (the book does not list the raw coordinates).",
+        title: "Figure 13.1: star data with the least squares line",
+        interpret: "Log surface temperature rises gently with log light intensity. The book gives the least-squares line $\\widehat r(x) = 3.58 + 0.166\\,x$; the plotted star coordinates are a visual reconstruction because the chapter prints the graph but not the raw data table.",
         xlabel: "log light intensity (X)",
         ylabel: "log surface temperature (Y)",
         groups: [
@@ -46,7 +46,8 @@
         ],
         lines: [ { name: "least squares line", color: "#ff6b6b", points: [[3.9,4.227],[5.7,4.526]] } ]
       }
-    ]
+    ],
+    code: "# Least-squares computation for the book's star example.\n# The chapter prints the fitted values, not the raw star table.\nimport numpy as np\n\n# If x and y hold the log-light and log-temperature data from Figure 13.1:\n# beta1 = ((x - x.mean()) * (y - y.mean())).sum() / ((x - x.mean())**2).sum()\n# beta0 = y.mean() - beta1 * x.mean()\n# sigma2_unbiased = ((y - (beta0 + beta1*x))**2).sum() / (len(x) - 2)\n\nbeta0, beta1 = 3.58, 0.166              # Example 13.5\nfor x0 in [4.0, 5.5]:\n    print(x0, beta0 + beta1*x0)         # 4.244, 4.493"
   };
 
   // 2) Least squares and maximum likelihood
@@ -66,7 +67,7 @@
       },
       {
         h: "The MLE for the variance",
-        body: "<p>Maximizing $\\ell$ over $\\sigma$ as well gives the MLE of the variance, $\\widehat\\sigma^2 = \\frac{1}{n}\\sum_i \\widehat\\epsilon_i^2$ (equation 13.10). This divides by $n$ rather than $n-2$, so it is close to but not identical to the unbiased estimate in Theorem 13.4. The author notes that common practice is to use the unbiased $n-2$ version.</p>"
+        body: "<p>Maximizing $\\ell$ over $\\sigma$ as well gives the MLE of the variance, $\\widehat\\sigma^2 = \\frac{1}{n}\\sum_i \\widehat\\epsilon_i^2$ (equation 13.10). This divides by $n$ rather than $n-2$, so it is close to but not identical to the unbiased estimate in Theorem 13.4. The author notes that common practice is to use the unbiased $n-2$ version.</p><pre><code class=\"language-python\"># Equations 13.5--13.10 in NumPy: least squares = Normal-error MLE\nimport numpy as np\n\nx = np.asarray(x, dtype=float)          # covariate X_i\ny = np.asarray(y, dtype=float)          # response Y_i\nb1 = ((x - x.mean()) * (y - y.mean())).sum() / ((x - x.mean())**2).sum()\nb0 = y.mean() - b1 * x.mean()\nresid = y - (b0 + b1*x)\nsigma2_unbiased = (resid @ resid) / (len(x) - 2)   # Eq. 13.7\nsigma2_mle = (resid @ resid) / len(x)              # Eq. 13.10\n# Star example printed in the book: b0 = 3.58, b1 = 0.166</code></pre>"
       }
     ],
     takeaways: [
@@ -104,6 +105,33 @@
       "Palm Beach predicted $(493, 717)$ votes but actually got 3,467 — far above the interval."
     ]
   });
+  window.CODEVIZ["aos-ch13-properties-and-prediction"] = {
+    charts: [
+      {
+        type: "scatter",
+        title: "Figure 13.2 summary: log election fit and Palm Beach",
+        interpret: "The fitted line is $\\log(\\text{Buchanan})=-2.3298+0.7303\\log(\\text{Bush})$. Palm Beach's observed log count 8.151 is far above the fitted value 6.388.",
+        xlabel: "log Bush votes",
+        ylabel: "log Buchanan votes",
+        groups: [
+          { name: "Palm Beach", color: "#ffb454", points: [[11.93789, 8.151045]] }
+        ],
+        lines: [ { name: "least squares line", color: "#4ea1ff", points: [[7, 2.7823], [13, 7.1641]] } ]
+      },
+      {
+        type: "scatter",
+        title: "Figure 13.2 residual summary: Palm Beach on the log scale",
+        interpret: "For Palm Beach, the residual is $8.151045-6.388441=1.762604$, nearly 20 prediction standard errors above the fitted value.",
+        xlabel: "log Bush votes",
+        ylabel: "residual",
+        groups: [
+          { name: "Palm Beach residual", color: "#ff6b6b", points: [[11.93789, 1.762604]] }
+        ],
+        lines: [ { name: "zero residual", color: "#7ee787", points: [[7, 0], [13, 0]] } ]
+      }
+    ],
+    code: "# Book's election calculations (Examples 13.10 and 13.12)\nimport math\n\nb0, b1, se_b1 = -2.3298, 0.7303, 0.0358\nci_slope = (b1 - 2*se_b1, b1 + 2*se_b1)\nwald = abs(b1) / se_b1\nprint(ci_slope)                         # (0.6587, 0.8019) ~= (0.66, 0.80)\nprint(wald)                             # 20.40\n\nlog_bush, log_buchanan = 11.93789, 8.151045\nyhat = b0 + b1 * log_bush\nxi = 0.093775\npi_log = (yhat - 2*xi, yhat + 2*xi)\nprint(yhat, pi_log)                     # 6.388441, (6.200891, 6.575991)\nprint(tuple(round(math.exp(v)) for v in pi_log))  # (493, 717); actual = 3467"
+  };
 
   // 4) Multiple regression
   B({
@@ -122,7 +150,7 @@
       },
       {
         h: "Crime data example",
-        body: "<p>Example 13.14 fits a regression of crime rate on 10 covariates for 47 US states in 1960. The \"$t$-value\" column is the Wald statistic for $H_0: \\beta_j = 0$; asterisks flag smaller $p$-values. The author's table:</p><table class=\"extable\"><thead><tr><th>covariate</th><th>$\\widehat\\beta_j$</th><th>$\\widehat{\\text{se}}(\\widehat\\beta_j)$</th><th>$t$ value</th><th>$p$-value</th></tr></thead><tbody><tr><td class=\"row-h\">(Intercept)</td><td class=\"num\">-589.39</td><td class=\"num\">167.59</td><td class=\"num\">-3.51</td><td class=\"num\">0.001</td></tr><tr><td class=\"row-h\">Age</td><td class=\"num\">1.04</td><td class=\"num\">0.45</td><td class=\"num\">2.33</td><td class=\"num\">0.025</td></tr><tr><td class=\"row-h\">Southern State</td><td class=\"num\">11.29</td><td class=\"num\">13.24</td><td class=\"num\">0.85</td><td class=\"num\">0.399</td></tr><tr><td class=\"row-h\">Education</td><td class=\"num\">1.18</td><td class=\"num\">0.68</td><td class=\"num\">1.70</td><td class=\"num\">0.093</td></tr><tr><td class=\"row-h\">Expenditures</td><td class=\"num\">0.96</td><td class=\"num\">0.25</td><td class=\"num\">3.86</td><td class=\"num\">0.000</td></tr><tr><td class=\"row-h\">Labor</td><td class=\"num\">0.11</td><td class=\"num\">0.15</td><td class=\"num\">0.69</td><td class=\"num\">0.493</td></tr><tr><td class=\"row-h\">Number of Males</td><td class=\"num\">0.30</td><td class=\"num\">0.22</td><td class=\"num\">1.36</td><td class=\"num\">0.181</td></tr><tr><td class=\"row-h\">Population</td><td class=\"num\">0.09</td><td class=\"num\">0.14</td><td class=\"num\">0.65</td><td class=\"num\">0.518</td></tr><tr><td class=\"row-h\">Unemployment (14-24)</td><td class=\"num\">-0.68</td><td class=\"num\">0.48</td><td class=\"num\">-1.40</td><td class=\"num\">0.165</td></tr><tr><td class=\"row-h\">Unemployment (25-39)</td><td class=\"num\">2.15</td><td class=\"num\">0.95</td><td class=\"num\">2.26</td><td class=\"num\">0.030</td></tr><tr><td class=\"row-h\">Wealth</td><td class=\"num\">-0.08</td><td class=\"num\">0.09</td><td class=\"num\">-0.91</td><td class=\"num\">0.367</td></tr></tbody></table><p>This raises two questions the author flags: (1) should we drop some variables (model selection, next section)? and (2) should we read these as causal (deferred to Chapter 16)?</p>"
+        body: "<p>Example 13.14 fits a regression of crime rate on 10 covariates for 47 US states in 1960. The \"$t$-value\" column is the Wald statistic for $H_0: \\beta_j = 0$; asterisks flag smaller $p$-values. The author's table:</p><table class=\"extable\"><thead><tr><th>covariate</th><th>$\\widehat\\beta_j$</th><th>$\\widehat{\\text{se}}(\\widehat\\beta_j)$</th><th>$t$ value</th><th>$p$-value</th></tr></thead><tbody><tr><td class=\"row-h\">(Intercept)</td><td class=\"num\">-589.39</td><td class=\"num\">167.59</td><td class=\"num\">-3.51</td><td class=\"num\">0.001</td></tr><tr><td class=\"row-h\">Age</td><td class=\"num\">1.04</td><td class=\"num\">0.45</td><td class=\"num\">2.33</td><td class=\"num\">0.025</td></tr><tr><td class=\"row-h\">Southern State</td><td class=\"num\">11.29</td><td class=\"num\">13.24</td><td class=\"num\">0.85</td><td class=\"num\">0.399</td></tr><tr><td class=\"row-h\">Education</td><td class=\"num\">1.18</td><td class=\"num\">0.68</td><td class=\"num\">1.70</td><td class=\"num\">0.093</td></tr><tr><td class=\"row-h\">Expenditures</td><td class=\"num\">0.96</td><td class=\"num\">0.25</td><td class=\"num\">3.86</td><td class=\"num\">0.000</td></tr><tr><td class=\"row-h\">Labor</td><td class=\"num\">0.11</td><td class=\"num\">0.15</td><td class=\"num\">0.69</td><td class=\"num\">0.493</td></tr><tr><td class=\"row-h\">Number of Males</td><td class=\"num\">0.30</td><td class=\"num\">0.22</td><td class=\"num\">1.36</td><td class=\"num\">0.181</td></tr><tr><td class=\"row-h\">Population</td><td class=\"num\">0.09</td><td class=\"num\">0.14</td><td class=\"num\">0.65</td><td class=\"num\">0.518</td></tr><tr><td class=\"row-h\">Unemployment (14-24)</td><td class=\"num\">-0.68</td><td class=\"num\">0.48</td><td class=\"num\">-1.40</td><td class=\"num\">0.165</td></tr><tr><td class=\"row-h\">Unemployment (25-39)</td><td class=\"num\">2.15</td><td class=\"num\">0.95</td><td class=\"num\">2.26</td><td class=\"num\">0.030</td></tr><tr><td class=\"row-h\">Wealth</td><td class=\"num\">-0.08</td><td class=\"num\">0.09</td><td class=\"num\">-0.91</td><td class=\"num\">0.367</td></tr></tbody></table><pre><code class=\"language-python\"># Matrix least squares for Example 13.14\nimport numpy as np\n\nX = np.asarray(X, dtype=float)          # columns: intercept plus 10 covariates\ny = np.asarray(y, dtype=float)          # crime rate\nbeta_hat = np.linalg.solve(X.T @ X, X.T @ y)\nresid = y - X @ beta_hat\nsigma2 = resid @ resid / (len(y) - X.shape[1])\nse = np.sqrt(np.diag(sigma2 * np.linalg.inv(X.T @ X)))\nt = beta_hat / se\n# Book table highlights: intercept -589.39 (se 167.59), Age 1.04 (se 0.45),\n# Expenditures 0.96 (se 0.25), U2 2.15 (se 0.95).</code></pre><p>This raises two questions the author flags: (1) should we drop some variables (model selection, next section)? and (2) should we read these as causal (deferred to Chapter 16)?</p>"
       }
     ],
     takeaways: [
@@ -150,7 +178,7 @@
       },
       {
         h: "Searching models and the crime example",
-        body: "<p>With $k$ covariates there are $2^k$ possible models. If $k$ is small you can score them all; otherwise use $\\textbf{forward}$ stepwise (start empty, add the best variable each step) or $\\textbf{backward}$ stepwise (start full, drop one variable each step). Both are greedy and not guaranteed to find the best model. Example 13.16 applies backward stepwise with AIC (R's smaller-is-better convention, equivalent to minimizing $C_p$) to the crime data. The full model has AIC = 310.37. The AIC after deleting one variable, in ascending order:</p><table class=\"extable\"><thead><tr><th>drop</th><th>Pop</th><th>Labor</th><th>South</th><th>Wealth</th><th>Males</th><th>U1</th><th>Educ.</th><th>U2</th><th>Age</th><th>Expend</th></tr></thead><tbody><tr><td class=\"row-h\">AIC</td><td class=\"num\">308</td><td class=\"num\">309</td><td class=\"num\">309</td><td class=\"num\">309</td><td class=\"num\">310</td><td class=\"num\">310</td><td class=\"num\">312</td><td class=\"num\">314</td><td class=\"num\">315</td><td class=\"num\">324</td></tr></tbody></table><p>Dropping Pop gives the lowest AIC (308), so Pop is removed; the process repeats. The author then drops \"Southern\". Continuing until no drop helps leaves the final model</p><ul class=\"steps\"><li>Crime $= 1.2\\,$Age $+ .75\\,$Education $+ .87\\,$Expenditure $+ .34\\,$Males $- .86\\,$U1 $+ 2.31\\,$U2.</li></ul><p>The author warns this does not say which variables $\\textbf{cause}$ crime. He also mentions the Zheng-Loh (1995) method, which instead seeks the smallest true model: order the Wald statistics $|W_{(1)}| \\geq \\cdots \\geq |W_{(k)}|$, then pick the $\\widehat j$ minimizing $\\text{RSS}(j) + j\\,\\widehat\\sigma^2 \\log n$ and keep those $\\widehat j$ largest-Wald terms.</p>"
+        body: "<p>With $k$ covariates there are $2^k$ possible models. If $k$ is small you can score them all; otherwise use $\\textbf{forward}$ stepwise (start empty, add the best variable each step) or $\\textbf{backward}$ stepwise (start full, drop one variable each step). Both are greedy and not guaranteed to find the best model. Example 13.16 applies backward stepwise with AIC (R's smaller-is-better convention, equivalent to minimizing $C_p$) to the crime data. The full model has AIC = 310.37. The AIC after deleting one variable, in ascending order:</p><table class=\"extable\"><thead><tr><th>drop</th><th>Pop</th><th>Labor</th><th>South</th><th>Wealth</th><th>Males</th><th>U1</th><th>Educ.</th><th>U2</th><th>Age</th><th>Expend</th></tr></thead><tbody><tr><td class=\"row-h\">AIC</td><td class=\"num\">308</td><td class=\"num\">309</td><td class=\"num\">309</td><td class=\"num\">309</td><td class=\"num\">310</td><td class=\"num\">310</td><td class=\"num\">312</td><td class=\"num\">314</td><td class=\"num\">315</td><td class=\"num\">324</td></tr></tbody></table><p>Dropping Pop gives the lowest AIC (308), so Pop is removed; the process repeats. The next deletion table in the book is:</p><table class=\"extable\"><thead><tr><th>drop after Pop</th><th>South</th><th>Labor</th><th>Wealth</th><th>Males</th><th>U1</th><th>Education</th><th>U2</th><th>Age</th><th>Expend</th></tr></thead><tbody><tr><td class=\"row-h\">AIC</td><td class=\"num\">308</td><td class=\"num\">308</td><td class=\"num\">308</td><td class=\"num\">309</td><td class=\"num\">309</td><td class=\"num\">310</td><td class=\"num\">313</td><td class=\"num\">313</td><td class=\"num\">329</td></tr></tbody></table><p>The author then drops \"Southern\". Continuing until no drop helps leaves the final model</p><ul class=\"steps\"><li>Start with all covariates: AIC $=310.37$.</li><li>First step: dropping Pop gives AIC $=308$, the smallest one-variable deletion score.</li><li>Second step: after Pop is gone, South, Labor, and Wealth tie at AIC $=308$; the book drops Southern.</li><li>Final selected equation: Crime $= 1.2\\,$Age $+ .75\\,$Education $+ .87\\,$Expenditure $+ .34\\,$Males $- .86\\,$U1 $+ 2.31\\,$U2.</li></ul><p>The author warns this does not say which variables $\\textbf{cause}$ crime. He also mentions the Zheng-Loh (1995) method, which instead seeks the smallest true model: order the Wald statistics $|W_{(1)}| \\geq \\cdots \\geq |W_{(k)}|$, then pick the $\\widehat j$ minimizing $\\text{RSS}(j) + j\\,\\widehat\\sigma^2 \\log n$ and keep those $\\widehat j$ largest-Wald terms.</p>"
       }
     ],
     takeaways: [
@@ -169,7 +197,8 @@
         labels: ["Pop","Labor","South","Wealth","Males","U1","Educ.","U2","Age","Expend"],
         values: [308,309,309,309,310,310,312,314,315,324]
       }
-    ]
+    ],
+    code: "# Backward stepwise AIC from Example 13.16\n# The book reports these values from R's stepwise regression output.\nimport pandas as pd\n\nfirst_drop = pd.Series({\n    'Pop': 308, 'Labor': 309, 'South': 309, 'Wealth': 309, 'Males': 310,\n    'U1': 310, 'Educ.': 312, 'U2': 314, 'Age': 315, 'Expend': 324\n})\nsecond_drop = pd.Series({\n    'South': 308, 'Labor': 308, 'Wealth': 308, 'Males': 309, 'U1': 309,\n    'Education': 310, 'U2': 313, 'Age': 313, 'Expend': 329\n})\nprint(first_drop.idxmin(), first_drop.min())      # Pop, 308 (full model AIC = 310.37)\nprint(second_drop.idxmin(), second_drop.min())    # South, 308 (book drops Southern)\n# Final: Crime = 1.2 Age + .75 Education + .87 Expenditure + .34 Males - .86 U1 + 2.31 U2"
   };
 
   // 6) Logistic regression
@@ -199,4 +228,27 @@
       "A weak predictor is not necessarily a weak cause — association is not causation."
     ]
   });
+  window.CODEVIZ["aos-ch13-logistic-regression"] = {
+    charts: [
+      {
+        type: "line",
+        title: "Figure 13.3: the logistic function",
+        interpret: "The logistic curve maps any linear predictor $x$ to a probability between 0 and 1, using $p=e^x/(1+e^x)$.",
+        xlabel: "x",
+        ylabel: "p",
+        series: [
+          { name: "logistic", color: "#4ea1ff", points: [[-6,0.0025],[-5,0.0067],[-4,0.0180],[-3,0.0474],[-2,0.1192],[-1,0.2689],[0,0.5],[1,0.7311],[2,0.8808],[3,0.9526],[4,0.9820],[5,0.9933],[6,0.9975]] }
+        ]
+      },
+      {
+        type: "bars",
+        title: "Example 13.17: CORIS logistic Wald statistics",
+        interpret: "The largest absolute Wald statistics are for family history, age, type-A behavior, tobacco, and LDL; systolic blood pressure is weak after the other covariates are included.",
+        labels: ["sbp","tobacco","ldl","adiposity","famhist","typea","obesity","alcohol","age"],
+        values: [1.138,2.991,2.925,0.637,4.078,3.233,1.427,0.027,3.754],
+        colors: ["#4ea1ff","#7ee787","#7ee787","#4ea1ff","#ffb454","#7ee787","#4ea1ff","#4ea1ff","#7ee787"]
+      }
+    ],
+    code: "# Logistic regression computations from Section 13.7\nimport numpy as np\n\nlogistic = lambda x: np.exp(x) / (1 + np.exp(x))\nprint(logistic(0.0))                    # 0.5, midpoint of Figure 13.3\n\n# Reweighted least squares skeleton for the book's algorithm.\n# X includes an intercept column; y is 0/1.\nbeta = np.zeros(X.shape[1])\nfor _ in range(25):\n    eta = X @ beta\n    p = logistic(eta)\n    w = p * (1 - p)\n    z = eta + (y - p) / w\n    beta_new = np.linalg.solve(X.T @ (w[:, None] * X), X.T @ (w * z))\n    if np.max(np.abs(beta_new - beta)) < 1e-8:\n        break\n    beta = beta_new\n# CORIS table highlights: intercept -6.145; tobacco 0.079; ldl 0.174;\n# famhist 0.925; typea 0.040; age 0.045."
+  };
 })();

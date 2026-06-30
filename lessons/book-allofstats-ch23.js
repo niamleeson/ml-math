@@ -61,15 +61,31 @@
       "A limiting distribution is stronger than a stationary one — a cyclic chain can be stationary yet never converge."
     ]
   });
-  window.CODEVIZ["aos-ch23-markov-chains"] = { charts: [ {
-    type: "bars",
-    title: "Weather chain — stationary distribution pi = pi P",
-    interpret: "Solving pi = pi P for the book's weather matrix gives a long-run 4/7 sunny, 3/7 cloudy split.",
-    labels: ["Sunny", "Cloudy"],
-    values: [0.571, 0.429],
-    valueLabels: ["4/7 = 0.571", "3/7 = 0.429"],
-    colors: ["#ffb454", "#4ea1ff"]
-  } ] };
+  window.CODEVIZ["aos-ch23-markov-chains"] = {
+    charts: [
+      {
+        type: "bars",
+        title: "Weather chain — stationary distribution pi = pi P",
+        interpret: "Solving pi = pi P for the book's weather matrix gives a long-run 4/7 sunny, 3/7 cloudy split.",
+        labels: ["Sunny", "Cloudy"],
+        values: [0.571, 0.429],
+        valueLabels: ["4/7 = 0.571", "3/7 = 0.429"],
+        colors: ["#ffb454", "#4ea1ff"]
+      },
+      {
+        type: "line",
+        title: "Weather chain — mu_n = mu_0 P^n converges",
+        interpret: "Starting from a sunny day, the marginal distribution oscillates but quickly settles near the stationary vector (4/7, 3/7).",
+        xlabel: "n",
+        ylabel: "probability",
+        series: [
+          { name: "P(sunny at n)", color: "#ffb454", points: [[0,1],[1,0.4],[2,0.64],[3,0.544],[4,0.5824],[5,0.56704],[10,0.571474],[20,0.571429]] },
+          { name: "P(cloudy at n)", color: "#4ea1ff", points: [[0,0],[1,0.6],[2,0.36],[3,0.456],[4,0.4176],[5,0.43296],[10,0.428526],[20,0.428571]] }
+        ]
+      }
+    ],
+    code: "import numpy as np\n\n# Example 23.8 weather transition matrix: rows are today, columns are tomorrow.\nP = np.array([[0.4, 0.6],\n              [0.8, 0.2]])\nmu0 = np.array([1.0, 0.0])          # start sunny\nfor n in [0, 1, 2, 3, 4, 5, 10, 20]:\n    print(n, mu0 @ np.linalg.matrix_power(P, n))\n# n=2 -> [0.64, 0.36]; n=10 -> [0.571474, 0.428526]\n\n# Solve pi = pi P with sum(pi)=1.\nA = np.vstack([(P.T - np.eye(2))[0], np.ones(2)])\nb = np.array([0.0, 1.0])\npi = np.linalg.solve(A, b)\nprint(pi, pi @ P)                  # [4/7, 3/7] = [0.57142857, 0.42857143]"
+  };
 
   // 2 — Poisson processes
   B({
@@ -97,7 +113,9 @@
         "<p>Because a waiting time $W_n$ is a sum of $n$ exponential gaps, it follows a Gamma distribution: $W_n \\sim \\text{Gamma}(n, 1/\\lambda)$ with density $f(w) = \\frac{1}{\\Gamma(n)} \\lambda^n w^{n-1} e^{-\\lambda w}$, giving $\\mathbb{E}(W_n) = n/\\lambda$ and $\\mathbb{V}(W_n) = n/\\lambda^2$.</p>" },
       { h: "Estimating the rate from data", body:
         "<p><strong>Example 23.36.</strong> The book applies this to recorded hits on a web server in Calgary (Figure 23.3, where each vertical mark is one event). Assuming a homogeneous Poisson process, the total count over a span $T$ is $N \\equiv X(T) \\sim \\text{Poisson}(\\lambda T)$, so the likelihood is $\\mathcal{L}(\\lambda) \\propto e^{-\\lambda T}(\\lambda T)^N$. Maximizing it gives the estimate $\\widehat{\\lambda} = N / T = 48.0077$ events per minute.</p>" +
-        "<p>The book then checks whether a constant-rate (homogeneous) model is reasonable. Split $[0,T]$ into four equal intervals $I_1, I_2, I_3, I_4$. Under a homogeneous process, given the total number of events, each interval should be equally likely, so the null hypothesis is $p_1 = p_2 = p_3 = p_4 = 1/4$. A chi-squared goodness-of-fit test, $\\sum_{i=1}^{4} (O_i - E_i)^2 / E_i$ with expected count $E_i = N/4$, yields $\\chi^2 = 252$ with a p-value near $0$. That is strong evidence against a constant rate — unsurprising, since the intensity of web traffic naturally varies through the day.</p>" }
+        "<ul class=\"steps\"><li>Likelihood for $N$ events in time $T$: $\\mathcal{L}(\\lambda) \\propto e^{-\\lambda T}(\\lambda T)^N$.</li><li>Log-likelihood derivative: $-T + N/\\lambda = 0$.</li><li>Therefore $\\widehat{\\lambda} = N/T = 48.0077$ hits per minute for the Calgary server data.</li><li>With four equal intervals, $E_i=N/4$ and the book reports $\\chi^2=252$ with p-value near $0$.</li></ul>" +
+        "<p>The book then checks whether a constant-rate (homogeneous) model is reasonable. Split $[0,T]$ into four equal intervals $I_1, I_2, I_3, I_4$. Under a homogeneous process, given the total number of events, each interval should be equally likely, so the null hypothesis is $p_1 = p_2 = p_3 = p_4 = 1/4$. A chi-squared goodness-of-fit test, $\\sum_{i=1}^{4} (O_i - E_i)^2 / E_i$ with expected count $E_i = N/4$, yields $\\chi^2 = 252$ with a p-value near $0$. That is strong evidence against a constant rate \u2014 unsurprising, since the intensity of web traffic naturally varies through the day.</p>" +
+        "<pre><code class=\"language-python\"># Example 23.36: homogeneous Poisson process fit.\n# Given event times in minutes over [0, T], N = len(times).\nlambda_hat = N / T                  # book result: 48.0077 hits per minute\nexpected = N / 4                    # four equal intervals under H0\nchi2 = sum((obs - expected)**2 / expected for obs in observed_counts)\n# book result: chi2 = 252, p-value near 0, so reject constant intensity\n\n# Simulating a homogeneous Poisson process at the fitted rate:\nrng = np.random.default_rng(1)\ngaps = rng.exponential(scale=1/lambda_hat, size=N)  # mean gap 1/lambda\nsimulated_event_times = np.cumsum(gaps)\n</code></pre>" }
     ],
     takeaways: [
       "A Poisson process counts events in continuous time: $X(0)=0$, increments over disjoint intervals are independent, and an intensity function $\\lambda(t)$ governs the chance of an event.",

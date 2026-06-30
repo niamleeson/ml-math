@@ -32,7 +32,21 @@
         "<li>$X \\amalg Y \\mid Z$ and $X \\amalg W \\mid (Y,Z) \\;\\Rightarrow\\; X \\amalg (W,Y) \\mid Z$.</li>" +
         "<li>$X \\amalg Y \\mid Z$ and $X \\amalg Z \\mid Y \\;\\Rightarrow\\; X \\amalg (Y,Z)$.</li>" +
         "</ul>" +
-        "<p>The author footnotes that the last property needs every event to have positive probability; the first four do not.</p>" }
+        "<p>The author footnotes that the last property needs every event to have positive probability; the first four do not.</p>" },
+      { h: "Worked joint table from Exercise 17.3", body:
+        "<p>The chapter's exercises give a concrete distribution where $X \\amalg Y \\mid Z$ but $X$ and $Y$ are not marginally independent. The joint probabilities are:</p>" +
+        "<table class=\"extable\"><thead><tr><th>Z</th><th>X</th><th class=\"num\">Y=0</th><th class=\"num\">Y=1</th><th class=\"num\">row sum</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\" rowspan=\"2\">0</td><td class=\"row-h\">0</td><td class=\"num\">0.405</td><td class=\"num\">0.045</td><td class=\"num\">0.450</td></tr>" +
+        "<tr><td class=\"row-h\">1</td><td class=\"num\">0.045</td><td class=\"num\">0.005</td><td class=\"num\">0.050</td></tr>" +
+        "<tr><td class=\"row-h\" rowspan=\"2\">1</td><td class=\"row-h\">0</td><td class=\"num\">0.125</td><td class=\"num\">0.125</td><td class=\"num\">0.250</td></tr>" +
+        "<tr><td class=\"row-h\">1</td><td class=\"num\">0.125</td><td class=\"num\">0.125</td><td class=\"num\">0.250</td></tr>" +
+        "</tbody></table>" +
+        "<ul class=\"steps\">" +
+        "<li>$P(Z=0)=0.405+0.045+0.045+0.005=0.500$, so $P(X,Y\\mid Z=0)$ is $\\begin{smallmatrix}0.81&0.09\\\\0.09&0.01\\end{smallmatrix}$. Its margins are $P(X=0\\mid Z=0)=0.90$ and $P(Y=0\\mid Z=0)=0.90$, so each cell is a product such as $0.90\\times0.90=0.81$.</li>" +
+        "<li>$P(Z=1)=0.500$, so every conditional cell is $0.125/0.500=0.25$; the margins are both $(0.50,0.50)$, again giving products.</li>" +
+        "<li>Marginally, $P(X=0,Y=0)=0.405+0.125=0.530$, while $P(X=0)P(Y=0)=0.700\\times0.700=0.490$. Thus the variables are conditionally independent given $Z$, but not independent without conditioning.</li>" +
+        "</ul>" +
+        "<pre><code class=\"language-python\"># Exercise 17.3: verify X independent of Y given Z, but not marginally\njoint = {\n    0: [[0.405, 0.045], [0.045, 0.005]],\n    1: [[0.125, 0.125], [0.125, 0.125]],\n}\nfor z, tab in joint.items():\n    pz = sum(sum(row) for row in tab)\n    cond = [[v / pz for v in row] for row in tab]\n    print(z, pz, cond)  # z=0 -> [[0.81,0.09],[0.09,0.01]]; z=1 -> all 0.25\n\nmarg = [[joint[0][x][y] + joint[1][x][y] for y in range(2)] for x in range(2)]\npx0, py0 = sum(marg[0]), marg[0][0] + marg[1][0]\nprint(marg[0][0], px0 * py0)  # 0.53 versus 0.49: not marginally independent</code></pre>" }
     ],
     takeaways: [
       "$X \\amalg Y \\mid Z$ means the conditional joint factors: $f(x,y\\mid z) = f(x\\mid z)f(y\\mid z)$.",
@@ -70,7 +84,16 @@
         "<li>$X$ and $Y$ are d-separated given the empty set.</li>" +
         "<li>$X$ and $Y$ are d-connected given $\\{S_1,S_2\\}$ (the descendants of the colliders).</li>" +
         "<li>$X$ and $Y$ are d-separated given $\\{S_1,S_2,V\\}$.</li>" +
-        "</ul>" }
+        "</ul>" +
+        "<p>The book's worked readings can be summarized as a decision table:</p>" +
+        "<table class=\"extable\"><thead><tr><th>book figure</th><th>conditioning set</th><th>status read from the graph</th><th>reason</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">Figure 17.6, no collider</td><td>none</td><td>d-connected</td><td>an unconditioned non-collider path stays open</td></tr>" +
+        "<tr><td class=\"row-h\">Figure 17.6, no collider</td><td>middle node $Y$</td><td>d-separated</td><td>conditioning on a non-collider blocks the path</td></tr>" +
+        "<tr><td class=\"row-h\">Figure 17.6, collider $X\\to Y\\leftarrow Z$</td><td>none</td><td>d-separated</td><td>an unconditioned collider blocks the path</td></tr>" +
+        "<tr><td class=\"row-h\">Figure 17.6, collider</td><td>collider $Y$</td><td>d-connected</td><td>conditioning on the collider opens the path</td></tr>" +
+        "<tr><td class=\"row-h\">Figure 17.7</td><td>descendant $W$ of the collider</td><td>d-connected</td><td>conditioning on a collider descendant has the same opening effect</td></tr>" +
+        "<tr><td class=\"row-h\">Figure 17.8</td><td>$\\{S_1,S_2,V\\}$</td><td>d-separated</td><td>after opening colliders with $S_1,S_2$, conditioning on non-collider $V$ blocks</td></tr>" +
+        "</tbody></table>" }
     ],
     takeaways: [
       "A DAG is a directed graph with no cycles; each vertex is a random variable.",
@@ -100,7 +123,13 @@
         "<li>$\\times\\, f(\\text{heart disease} \\mid \\text{overweight}, \\text{smoking})$ — heart disease given its two parents.</li>" +
         "<li>$\\times\\, f(\\text{cough} \\mid \\text{smoking})$ — cough given its one parent.</li>" +
         "</ul>" +
-        "<p>Each node contributes exactly one factor; a node with no parents contributes its plain marginal probability.</p>" },
+        "<p>Each node contributes exactly one factor; a node with no parents contributes its plain marginal probability.</p>" +
+        "<table class=\"extable\"><thead><tr><th>node in Figure 17.2</th><th>parents</th><th>factor contributed</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">overweight</td><td>none</td><td>$f(\\text{overweight})$</td></tr>" +
+        "<tr><td class=\"row-h\">smoking</td><td>none</td><td>$f(\\text{smoking})$</td></tr>" +
+        "<tr><td class=\"row-h\">heart disease</td><td>overweight, smoking</td><td>$f(\\text{heart disease}\\mid\\text{overweight},\\text{smoking})$</td></tr>" +
+        "<tr><td class=\"row-h\">cough</td><td>smoking</td><td>$f(\\text{cough}\\mid\\text{smoking})$</td></tr>" +
+        "</tbody></table>" },
       { h: "Example 17.5 — the collider DAG", body:
         "<p>Figure 17.3 is the collider: $X$ and $Y$ both point into $Z$, and $Z$ points to $W$. By the same rule, a distribution is in $M(\\mathcal{G})$ for this graph exactly when its probability function $f$ has the form</p>" +
         "<p>$f(x,y,z,w) = f(x)\\, f(y)\\, f(z\\mid x,y)\\, f(w\\mid z)$.</p>" +
@@ -113,6 +142,29 @@
       "$M(\\mathcal{G})$ is the set of all distributions the graph can represent."
     ]
   });
+  window.CODEVIZ["aos-ch17-probability-and-dags"] = {
+    charts: [
+      {
+        type: "heatmap",
+        title: "Figure 17.2 — directed adjacency",
+        interpret: "Rows are arrow tails and columns are arrow heads: overweight and smoking both point to heart disease, and smoking points to cough.",
+        rows: ["overweight", "smoking", "heart", "cough"],
+        cols: ["overweight", "smoking", "heart", "cough"],
+        matrix: [[0,0,1,0],[0,0,1,1],[0,0,0,0],[0,0,0,0]],
+        showVals: true
+      },
+      {
+        type: "heatmap",
+        title: "Figure 17.3 — directed adjacency",
+        interpret: "X and Y are parentless causes of Z; Z is the only parent of W, matching f(x)f(y)f(z|x,y)f(w|z).",
+        rows: ["X", "Y", "Z", "W"],
+        cols: ["X", "Y", "Z", "W"],
+        matrix: [[0,0,1,0],[0,0,1,0],[0,0,0,1],[0,0,0,0]],
+        showVals: true
+      }
+    ],
+    code: "# Factorizations printed in Examples 17.4 and 17.5\nparents_172 = {\n    'overweight': [],\n    'smoking': [],\n    'heart disease': ['overweight', 'smoking'],\n    'cough': ['smoking'],\n}\n# f(overweight, smoking, heart disease, cough)\n# = f(overweight) f(smoking) f(heart disease | overweight, smoking) f(cough | smoking)\n\nparents_173 = {'X': [], 'Y': [], 'Z': ['X', 'Y'], 'W': ['Z']}\n# f(x,y,z,w) = f(x) f(y) f(z | x,y) f(w | z)\nfor node, parents in parents_173.items():\n    print(node, 'parents:', parents or 'none')"
+  };
 
   // 4 — More independence relations
   B({
@@ -135,13 +187,27 @@
         "<li>$D \\amalg A \\mid \\{B,C\\}$ — given both of $D$'s parents, $D$ is independent of $A$.</li>" +
         "<li>$E \\amalg \\{A,B,C\\} \\mid D$ — given its parent $D$, $E$ is independent of everything earlier.</li>" +
         "<li>$B \\amalg C \\mid A$ — the two children of $A$ are independent once $A$ is known.</li>" +
-        "</ul>" },
+        "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>Figure 17.4 node</th><th>parents</th><th>Markov-Condition relation contributed</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">B</td><td>A</td><td>$B \\amalg C\\mid A$</td></tr>" +
+        "<tr><td class=\"row-h\">C</td><td>A</td><td>$C \\amalg B\\mid A$ (same statement by symmetry)</td></tr>" +
+        "<tr><td class=\"row-h\">D</td><td>B, C</td><td>$D \\amalg A\\mid\\{B,C\\}$</td></tr>" +
+        "<tr><td class=\"row-h\">E</td><td>D</td><td>$E \\amalg\\{A,B,C\\}\\mid D$</td></tr>" +
+        "</tbody></table>" },
       { h: "Extra relations need d-separation", body:
         "<p>The Markov Condition lists some independences, but they may logically imply more. The author uses the DAG of Figure 17.5 (with vertices $X_1,\\dots,X_5$). The Markov Condition gives:</p>" +
         "<ul class=\"steps\">" +
         "<li>$X_1 \\amalg X_2$, &nbsp; $X_2 \\amalg \\{X_1,X_4\\}$, &nbsp; $X_3 \\amalg X_4 \\mid \\{X_1,X_2\\}$,</li>" +
         "<li>$X_4 \\amalg \\{X_2,X_3\\} \\mid X_1$, &nbsp; $X_5 \\amalg \\{X_1,X_2\\} \\mid \\{X_3,X_4\\}$.</li>" +
         "</ul>" +
+        "<table class=\"extable\"><thead><tr><th>source in Figure 17.5</th><th>independence statement</th><th>conditioning set</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">Markov Condition</td><td>$X_1 \\amalg X_2$</td><td>none</td></tr>" +
+        "<tr><td class=\"row-h\">Markov Condition</td><td>$X_2 \\amalg \\{X_1,X_4\\}$</td><td>none</td></tr>" +
+        "<tr><td class=\"row-h\">Markov Condition</td><td>$X_4 \\amalg \\{X_2,X_3\\}$</td><td>$X_1$</td></tr>" +
+        "<tr><td class=\"row-h\">Markov Condition</td><td>$X_3 \\amalg X_4$</td><td>$\\{X_1,X_2\\}$</td></tr>" +
+        "<tr><td class=\"row-h\">Markov Condition</td><td>$X_5 \\amalg \\{X_1,X_2\\}$</td><td>$\\{X_3,X_4\\}$</td></tr>" +
+        "<tr><td class=\"row-h\">extra consequence</td><td>$\\{X_4,X_5\\} \\amalg X_2$</td><td>$\\{X_1,X_3\\}$</td></tr>" +
+        "</tbody></table>" +
         "<p>The author notes it is not obvious, but these conditions also imply $\\{X_4,X_5\\} \\amalg X_2 \\mid \\{X_1,X_3\\}$. The tool that finds such extra relations is d-separation.</p>" +
         "<p><strong>Theorem 17.10.</strong> For disjoint sets of vertices $A$, $B$, $C$: $A \\amalg B \\mid C$ if and only if $A$ and $B$ are d-separated by $C$. (This assumes $\\mathbb{P}$ is <strong>faithful</strong> to $\\mathcal{G}$ — it has no independences beyond those the Markov Condition forces.)</p>" },
       { h: "Colliders create dependence — the alien example", body:
@@ -159,6 +225,15 @@
       "Two DAGs are Markov equivalent iff same skeleton and same unshielded colliders."
     ]
   });
+  window.CODEVIZ["aos-ch17-more-independence-relations"] = { charts: [ {
+    type: "heatmap",
+    title: "Figure 17.4 — directed adjacency",
+    interpret: "A points to B and C; B and C point to D; D points to E. This is the DAG behind the factorization in Example 17.8.",
+    rows: ["A", "B", "C", "D", "E"],
+    cols: ["A", "B", "C", "D", "E"],
+    matrix: [[0,1,1,0,0],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,0,1],[0,0,0,0,0]],
+    showVals: true
+  } ] };
 
   // 5 — Estimation for DAGs
   B({

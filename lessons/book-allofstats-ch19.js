@@ -128,7 +128,18 @@
         "<tr><td class=\"row-h\">Boston</td><td class=\"num\">35</td><td class=\"num\">59</td><td class=\"num\">47</td><td class=\"num\">112</td></tr>" +
         "<tr><td class=\"row-h\">Glamorgan</td><td class=\"num\">42</td><td class=\"num\">77</td><td class=\"num\">26</td><td class=\"num\">76</td></tr>" +
         "</tbody></table>" +
-        "<p>Fitting the saturated log-linear model gives eight estimated coefficients. The best sub-model, found by AIC with backward search, keeps the intercept, all three main effects, and two two-way interactions — center&times;grade and grade&times;survival — but drops center&times;survival and the three-way term. The fitted coefficients of the chosen model:</p>" +
+        "<p>Fitting the saturated log-linear model gives eight estimated coefficients. With Boston, malignant, and died as the baseline cell, the saturated fit exactly reproduces the observed counts and yields:</p>" +
+        "<table class=\"extable\"><thead><tr><th>Variable</th><th>$\\hat\\beta_j$</th><th>$\\widehat{se}$</th><th>$W_j$</th><th>p-value</th></tr></thead><tbody>" +
+        "<tr><td class=\"row-h\">(Intercept)</td><td class=\"num\">3.56</td><td class=\"num\">0.17</td><td class=\"num\">21.03</td><td class=\"num\">0.00</td></tr>" +
+        "<tr><td class=\"row-h\">center</td><td class=\"num\">0.18</td><td class=\"num\">0.22</td><td class=\"num\">0.79</td><td class=\"num\">0.42</td></tr>" +
+        "<tr><td class=\"row-h\">grade</td><td class=\"num\">0.29</td><td class=\"num\">0.22</td><td class=\"num\">1.32</td><td class=\"num\">0.18</td></tr>" +
+        "<tr><td class=\"row-h\">survival</td><td class=\"num\">0.52</td><td class=\"num\">0.21</td><td class=\"num\">2.44</td><td class=\"num\">0.01</td></tr>" +
+        "<tr><td class=\"row-h\">center&times;grade</td><td class=\"num\">-0.77</td><td class=\"num\">0.33</td><td class=\"num\">-2.31</td><td class=\"num\">0.02</td></tr>" +
+        "<tr><td class=\"row-h\">center&times;survival</td><td class=\"num\">0.08</td><td class=\"num\">0.28</td><td class=\"num\">0.29</td><td class=\"num\">0.76</td></tr>" +
+        "<tr><td class=\"row-h\">grade&times;survival</td><td class=\"num\">0.34</td><td class=\"num\">0.27</td><td class=\"num\">1.25</td><td class=\"num\">0.20</td></tr>" +
+        "<tr><td class=\"row-h\">center&times;grade&times;survival</td><td class=\"num\">0.12</td><td class=\"num\">0.40</td><td class=\"num\">0.29</td><td class=\"num\">0.76</td></tr>" +
+        "</tbody></table>" +
+        "<p>The best sub-model, found by AIC with backward search, keeps the intercept, all three main effects, and two two-way interactions — center&times;grade and grade&times;survival — but drops center&times;survival and the three-way term. The fitted coefficients of the chosen model:</p>" +
         "<table class=\"extable\"><thead><tr><th>Variable</th><th>$\\hat\\beta_j$</th><th>$\\widehat{se}$</th><th>$W_j$</th><th>p-value</th></tr></thead><tbody>" +
         "<tr><td class=\"row-h\">(Intercept)</td><td class=\"num\">3.52</td><td class=\"num\">0.13</td><td class=\"num\">25.62</td><td class=\"num\">&lt; 0.00</td></tr>" +
         "<tr><td class=\"row-h\">center</td><td class=\"num\">0.23</td><td class=\"num\">0.13</td><td class=\"num\">1.70</td><td class=\"num\">0.08</td></tr>" +
@@ -154,11 +165,14 @@
       "Breast cancer fit: deviance 0.6 on 2 df gives p = 0.74 (good fit); dropping center x survival means center and survival are independent given grade."
     ]
   });
-  window.CODEVIZ["aos-ch19-fitting-to-data"] = { charts: [ {
-    type: "bars",
-    title: "Example 19.15 — breast cancer counts by center, grade, survival",
-    interpret: "Observed cell counts cross-classifying the three binary variables; the fitted model finds center and survival independent given grade.",
-    labels: ["Boston mal/died", "Boston mal/surv", "Boston ben/died", "Boston ben/surv", "Glam mal/died", "Glam mal/surv", "Glam ben/died", "Glam ben/surv"],
-    values: [35, 59, 47, 112, 42, 77, 26, 76]
-  } ] };
+  window.CODEVIZ["aos-ch19-fitting-to-data"] = {
+    charts: [ {
+      type: "bars",
+      title: "Example 19.15 — breast cancer counts by center, grade, survival",
+      interpret: "Observed cell counts cross-classifying the three binary variables; the fitted model finds center and survival independent given grade.",
+      labels: ["Boston mal/died", "Boston mal/surv", "Boston ben/died", "Boston ben/surv", "Glam mal/died", "Glam mal/surv", "Glam ben/died", "Glam ben/surv"],
+      values: [35, 59, 47, 112, 42, 77, 26, 76]
+    } ],
+    code: "# Log-linear fit for Example 19.15 (Poisson likelihood for cell counts)\nimport numpy as np\nfrom scipy.optimize import minimize\nfrom scipy.stats import chi2\n\ny = np.array([35, 59, 47, 112, 42, 77, 26, 76.])  # book's 2 x 2 x 2 table\nrows = [(c, g, s) for c in [0, 1] for g in [0, 1] for s in [0, 1]]\nX = np.array([[1, c, g, s, c*g, g*s] for c, g, s in rows], float)  # selected AIC model\n\ndef nll(beta):\n    eta = X @ beta\n    mu = np.exp(eta)\n    return np.sum(mu - y * eta)\n\nbeta = minimize(nll, np.zeros(X.shape[1]), method='BFGS').x\nprint(np.round(beta, 2))       # [3.52, 0.23, 0.26, 0.56, -0.67, 0.37] in the book\n# saturated log-likelihood minus selected log-likelihood gives deviance = 0.600...\nprint(chi2.sf(0.600069, df=2)) # 0.7408; book reports P(chi^2_2 > 0.6) = 0.74"
+  };
 })();
