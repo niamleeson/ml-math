@@ -68,7 +68,16 @@
         "<tr><td class='row-h'>29572</td><td class='num'>5.00128</td><td class='num'>1.84</td><td class='num'>1695</td><td class='num'>5.1</td></tr>" +
         "<tr><td class='row-h'>20962</td><td class='num'>9.42600</td><td class='num'>7.14</td><td class='num'>1683</td><td class='num'>8.6</td></tr>" +
         "</tbody></table>" +
-        "<p>After standardizing each variable to a z-score, the five nearest neighbors are much more alike across all four variables, giving a more sensible result. The book notes z-scoring is just one rescaling; you could use the median and the interquartile range instead, and scaling every variable to equal variance is itself a (somewhat arbitrary) choice.</p>" },
+        "<p>After standardizing each variable to a z-score, the five nearest neighbors are much more alike across all four variables, giving a more sensible result. The book prints the neighbors below on the original dollar/ratio scales even though KNN was run on the z-scored matrix:</p>" +
+        "<table class='extable'><thead><tr><th>row</th><th class='num'>payment_inc_ratio</th><th class='num'>dti</th><th class='num'>revol_bal</th><th class='num'>revol_util</th></tr></thead><tbody>" +
+        "<tr><td class='row-h'>new</td><td class='num'>2.3932</td><td class='num'>1</td><td class='num'>1687</td><td class='num'>9.4</td></tr>" +
+        "<tr><td class='row-h'>2081</td><td class='num'>2.61091</td><td class='num'>1.03</td><td class='num'>1218</td><td class='num'>9.7</td></tr>" +
+        "<tr><td class='row-h'>36054</td><td class='num'>2.22024</td><td class='num'>0.79</td><td class='num'>1687</td><td class='num'>8.4</td></tr>" +
+        "<tr><td class='row-h'>23655</td><td class='num'>2.34286</td><td class='num'>1.12</td><td class='num'>523</td><td class='num'>10.7</td></tr>" +
+        "<tr><td class='row-h'>41327</td><td class='num'>2.15987</td><td class='num'>0.69</td><td class='num'>2115</td><td class='num'>8.1</td></tr>" +
+        "<tr><td class='row-h'>39555</td><td class='num'>2.76891</td><td class='num'>0.75</td><td class='num'>2129</td><td class='num'>9.5</td></tr>" +
+        "</tbody></table>" +
+        "<p>The book notes z-scoring is just one rescaling; you could use the median and the interquartile range instead, and scaling every variable to equal variance is itself a (somewhat arbitrary) choice.</p>" },
       { h: "Choosing K", body:
         "<p>The choice of <em>K</em> strongly affects performance. The simplest is $K = 1$, the 1-nearest neighbor classifier: predict using the single most similar training record. It is intuitive but rarely best — you almost always do better with $K \\gt 1$.</p>" +
         "<ul class='steps'>" +
@@ -135,7 +144,12 @@
         "<p>$I(A) = p(1 - p)$</p>" +
         "<p>Entropy (information):</p>" +
         "<p>$I(A) = -p\\,\\log_2(p) - (1 - p)\\,\\log_2(1 - p)$</p>" +
-        "<p>Rescaled Gini and entropy behave similarly, with entropy giving somewhat higher impurity scores at moderate and high accuracy rates. In the splitting algorithm, impurity is measured for each resulting partition, a weighted average is taken, and the split with the lowest weighted average is chosen. (Note: Gini impurity is not the Gini coefficient, which is tied to the AUC metric.)</p>" },
+        "<p>Rescaled Gini and entropy behave similarly, with entropy giving somewhat higher impurity scores at moderate and high accuracy rates. In the splitting algorithm, impurity is measured for each resulting partition, a weighted average is taken, and the split with the lowest weighted average is chosen. (Note: Gini impurity is not the Gini coefficient, which is tied to the AUC metric.)</p>" +
+        "<ul class='steps'>" +
+        "<li>At a node with misclassification rate $p=0.30$, the unscaled Gini impurity is $0.30(1-0.30)=0.21$; Figure 6-5 rescales it by its maximum 0.25, giving $0.21/0.25=0.84$.</li>" +
+        "<li>The entropy is $-0.30\\log_2(0.30)-0.70\\log_2(0.70)=0.881$.</li>" +
+        "<li>Accuracy on the same rescaled plot is $0.30/0.50=0.60$, which is why the straight accuracy line sits below entropy at this point.</li>" +
+        "</ul>" },
       { h: "Stopping the tree from growing", body:
         "<p>As a tree grows, its rules get more detailed and start reflecting noise rather than real relationships. A fully grown tree has completely pure leaves and 100% accuracy on its training data — but that accuracy is illusory: the tree has overfit, fitting the noise instead of the signal you want for new data. You need a way to stop growth at a point that generalizes. There are two common approaches (the parameters below are from R's <code>rpart</code>):</p>" +
         "<ul class='steps'>" +
@@ -206,6 +220,8 @@
         "<li><strong>Gini decrease</strong> (type 2): the mean decrease in Gini impurity across all nodes split on that variable. It measures how much that variable improves node purity, but it is based on the training set and is less reliable.</li>" +
         "</ul>" +
         "<p>The two measures can rank variables quite differently. Gini decrease is the default because it is a free byproduct of training, while accuracy decrease needs extra permute-and-predict computation — costly when fitting thousands of models. Comparing the two can suggest ways to improve the model. The chart below recreates the accuracy-decrease panel of Figure 6-8, with <code>borrower_score</code> by far the most important predictor.</p>" },
+      { h: "Random-forest hyperparameters", body:
+        "<p>The book highlights two random-forest hyperparameters that matter for noisy data. <code>nodesize</code> is the minimum terminal-node size; in R <code>randomForest</code> defaults to 1 for classification and 5 for regression. <code>maxnodes</code> caps the number of nodes in each tree; by default there is no cap beyond <code>nodesize</code>. Raising either one grows smaller trees, reducing the chance of spurious rules; cross-validation is used to pick values.</p>" },
     ],
     takeaways: [
       "Ensembles average many models and beat any single model — the wisdom-of-crowds principle.",
@@ -230,7 +246,7 @@
         "<p>The easiest variant to follow is Adaboost. Starting with $M$ models, set the counter $m = 1$, give every observation equal weight $w_i = 1/N$, and start the ensemble at $\\hat{F}_0 = 0$. Then:</p>" +
         "<ul class='steps'>" +
         "<li>Train a model $\\hat{f}_m$ using the current observation weights so that it minimizes the weighted error $e_m$ (the sum of the weights of the misclassified observations).</li>" +
-        "<li>Add the model to the ensemble: $\\hat{F}_m = \\hat{F}_{m-1} + \\alpha_m \\hat{f}_m$, where $\\alpha_m = \\dfrac{\\log(1 - e_m)}{e_m}$.</li>" +
+        "<li>Add the model to the ensemble: $\\hat{F}_m = \\hat{F}_{m-1} + \\alpha_m \\hat{f}_m$, where $\\alpha_m = \\log\\left(\\dfrac{1 - e_m}{e_m}\\right)$.</li>" +
         "<li>Update the weights so that the misclassified observations get larger weights; the size of the increase grows with $\\alpha_m$.</li>" +
         "<li>Increment $m = m + 1$; if $m \\le M$, repeat.</li>" +
         "</ul>" +
@@ -247,12 +263,12 @@
         "<p>XGBoost does not accept formula syntax: predictors must be a numeric data matrix and the response must be 0/1. An <code>objective</code> argument (e.g. binary:logistic) tells it the problem type so it can pick a metric to optimize. Applied to the loan data, its predictions look qualitatively like the random forest's — and similarly noisy, with some high-score borrowers still predicted to default.</p>" },
       { h: "Regularization and avoiding overfitting", body:
         "<p>Blindly applying <code>xgboost</code> can produce unstable, overfit models. Overfitting hurts two ways: accuracy on new data degrades, and predictions become highly variable. Most methods avoid overfitting through careful predictor selection, and even a random forest is usually reasonable untuned — but this is not true of XGBoost.</p>" +
-        "<p>The book demonstrates this. Fitting the default model with 250 rounds to a training set (the rest of the data, with 10,000 records held out as a test set) gives a training error of only about 14.6%, but a test error of about 36.2% — a clear sign of overfitting.</p>" +
+        "<p>The book demonstrates this. Fitting the default model with 250 rounds to a training set (the rest of the data, with 10,000 records held out as a test set) prints a training error of 0.145622 and a test error of 0.3715 — a clear sign of overfitting.</p>" +
         "<table class='extable'><thead><tr><th>model</th><th class='num'>training error</th><th class='num'>test error</th></tr></thead><tbody>" +
-        "<tr><td class='row-h'>default</td><td class='num'>0.146</td><td class='num'>0.362</td></tr>" +
-        "<tr><td class='row-h'>penalized (lambda = 1000)</td><td class='num'>0.332</td><td class='num'>0.348</td></tr>" +
+        "<tr><td class='row-h'>default</td><td class='num'>0.145622</td><td class='num'>0.3715</td></tr>" +
+        "<tr><td class='row-h'>penalized (lambda = 1000)</td><td class='num'>0.332405</td><td class='num'>0.3483</td></tr>" +
         "</tbody></table>" +
-        "<p>Beyond <code>eta</code> and <code>subsample</code>, another defense is <em>regularization</em>: modifying the cost function to penalize model complexity. XGBoost has two regularization parameters, <code>lambda</code> and <code>alpha</code>, which correspond to squared Euclidean distance and Manhattan distance respectively (analogous to ridge regression and the Lasso). Increasing them penalizes complex models and shrinks the trees. With <code>lambda</code> set to 1,000, the training error rises to about 0.332 — now only slightly below the test error, so the gap from overfitting has nearly closed. Figure 6-10 shows the default model's training error steadily improving while its test error worsens; the penalized model does not show that divergence.</p>" },
+        "<p>Beyond <code>eta</code> and <code>subsample</code>, another defense is <em>regularization</em>: modifying the cost function to penalize model complexity. XGBoost has two regularization parameters, <code>lambda</code> and <code>alpha</code>, which correspond to squared Euclidean distance and Manhattan distance respectively (analogous to ridge regression and the Lasso). Increasing them penalizes complex models and shrinks the trees. With <code>lambda</code> set to 1,000, the training error rises to 0.332405 — now only slightly below the 0.3483 test error, so the gap from overfitting has nearly closed. Figure 6-10 shows the default model's training error steadily improving while its test error worsens; the penalized model does not show that divergence.</p>" },
       { h: "Hyperparameters and cross-validation", body:
         "<p>The <em>hyperparameters</em> are parameters you set before fitting; they are not optimized during training. XGBoost has a daunting array of them, and the choice dramatically changes the fit. The standard way to choose them is <em>cross-validation</em>: split the data into $K$ groups (folds); for each fold, train on the other folds and evaluate on the held-out fold; the best hyperparameters give the lowest average out-of-sample error across folds.</p>" +
         "<p>The book tunes two parameters: the shrinkage <code>eta</code> and <code>max_depth</code> (the maximum tree depth, default 6 — deeper trees are more complex and more prone to overfitting). Using a 3-by-3 grid of <code>eta</code> in {0.1, 0.5, 0.9} and <code>max_depth</code> in {3, 6, 12} with five folds (45 model fits in all) gives these average error rates (as percentages):</p>" +
@@ -279,6 +295,19 @@
   });
 
   // -------------------------------------------------------------- CHARTS
+  // Figure 6-2: KNN neighbors around the new loan; the book prints 14 defaults versus 6 paid off.
+  window.CODEVIZ["ps-ch6-knn"] = {
+    charts: [{
+      type: "bars",
+      title: "KNN vote for the new loan",
+      interpret: "With K = 20, the nearest-neighbor circle contains 14 defaulted loans and 6 paid-off loans, so the estimated default probability is 14/20 = 0.70.",
+      labels: ["default", "paid off"],
+      values: [14, 6],
+      colors: ["#ffb454", "#4ea1ff"]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(FNN)\n# knn_pred <- knn(train=loan200, test=newloan, cl=outcome200, k=20)\n# knn_pred == 'default'                         # [1] TRUE\n# # Figure 6-2: among the 20 neighbors, 14 default and 6 paid off\n# loan_df <- model.matrix(~ -1 + payment_inc_ratio + dti + revol_bal + revol_util, data=loan_data)\n# knn_pred <- knn(train=loan_df, test=newloan, cl=outcome, k=5)\n# loan_df[attr(knn_pred, \"nn.index\"), ]        # raw-scale neighbors: rows 36054,33233,28989,29572,20962\n# loan_std <- scale(loan_df)\n# knn_pred <- knn(train=loan_std, test=newloan_std, cl=outcome, k=5)\n# loan_df[attr(knn_pred, \"nn.index\"), ]        # standardized neighbors: 2081,36054,23655,41327,39555\n# borrow_df <- model.matrix(~ -1 + dti + revol_bal + revol_util + open_acc + delinq_2yrs_zero + pub_rec_zero, data=loan_data)\n# borrow_knn <- knn(borrow_df, test=borrow_df, cl=loan_data[, 'outcome'], prob=TRUE, k=10)\n# summary(ifelse(borrow_knn=='default', attr(borrow_knn, \"prob\"), 1-attr(borrow_knn, \"prob\")))\n# # Min 0.0000; 1st Qu. 0.4000; Median 0.5000; Mean 0.5012; 3rd Qu. 0.6000; Max 1.0000\n\n# --- Python equivalent ---\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.preprocessing import StandardScaler\nknn = KNeighborsClassifier(n_neighbors=20)\nknn.fit(loan200[['dti', 'payment_inc_ratio']], outcome200)\nprint(knn.predict([[22.5, 9.0]])[0])             # default\nprint(knn.predict_proba([[22.5, 9.0]]).max())    # about 0.70 if class default has 14/20 votes\nscaler = StandardScaler().fit(loan_df)\nKNeighborsClassifier(n_neighbors=5).fit(scaler.transform(loan_df), outcome).kneighbors(scaler.transform(newloan))"
+  };
+
   // Figure 6-5: Gini impurity (rescaled) and entropy versus p, with the accuracy line.
   window.CODEVIZ["ps-ch6-trees"] = {
     charts: [{
@@ -292,11 +321,12 @@
         { name: "Entropy", color: "#7ee787", points: [[0, 0], [0.1, 0.469], [0.2, 0.722], [0.3, 0.881], [0.4, 0.971], [0.5, 1.0]] },
         { name: "Gini", color: "#4ea1ff", points: [[0, 0], [0.1, 0.36], [0.2, 0.64], [0.3, 0.84], [0.4, 0.96], [0.5, 1.0]] }
       ]
-    }]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(rpart)\n# loan_tree <- rpart(outcome ~ borrower_score + payment_inc_ratio,\n#                    data=loan_data, control=rpart.control(cp=.005))\n# plot(loan_tree, uniform=TRUE, margin=.05); text(loan_tree)\n# loan_tree\n# # n=3000; root loss=1467; first split borrower_score>=0.525\n# # leaf payment_inc_ratio<8.772305: n=845, loss=249, P(default)=0.2946746\n# # leaf payment_inc_ratio>=9.73236: n=635, loss=207, P(default)=0.6740157\n# printcp(loan_tree)   # cptable gives cp and xerror for pruning/cross-validation\n\n# --- Python equivalent ---\nfrom sklearn.tree import DecisionTreeClassifier, plot_tree\nX = loan_data[['borrower_score', 'payment_inc_ratio']]\ny = loan_data['outcome']\ntree = DecisionTreeClassifier(min_impurity_decrease=0.005, random_state=1)\ntree.fit(X, y)\nplot_tree(tree, feature_names=X.columns, class_names=tree.classes_, filled=True)\n# impurity check used in Figure 6-5: p=0.30 -> gini=0.30*(1-0.30)=0.21; rescaled=0.84"
   };
 
-  // Figure 6-8 (top panel): variable importance by accuracy decrease, full loan model.
-  // Values read from the book's dot plot, ranked highest to lowest.
+  // Figures 6-6 and 6-8: random-forest OOB error and variable importance.
+  // Figure 6-8 values are approximate readings from the book's dot plot, ranked highest to lowest.
   window.CODEVIZ["ps-ch6-bagging-rf"] = {
     charts: [{
       type: "bars",
@@ -304,6 +334,27 @@
       interpret: "borrower_score dominates, with grade, term, payment_inc_ratio and annual_inc next; home ownership matters least. Reconstructed from the accuracy-decrease panel of Figure 6-8 (approximate values read off the dot plot).",
       labels: ["borrower_score", "grade", "term", "payment_inc_ratio", "annual_inc", "loan_amnt", "revol_bal", "revol_util", "dti", "purpose", "open_acc", "emp_len", "delinq_2yrs_zero", "pub_rec_zero", "home"],
       values: [126, 92, 66, 60, 54, 49, 36, 35, 30, 28, 18, 11, 9, 8, 7]
-    }]
+    }, {
+      type: "line",
+      xlabel: "number of trees",
+      ylabel: "OOB error rate",
+      title: "Random forest OOB error stabilizes",
+      interpret: "Figure 6-6 drops from over 0.44 and settles near the printed OOB error of 0.3853 as 500 trees accumulate.",
+      series: [{ name: "OOB error", color: "#4ea1ff", points: [[1, 0.445], [25, 0.405], [50, 0.392], [100, 0.386], [250, 0.385], [500, 0.3853]] }]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(randomForest)\n# rf <- randomForest(outcome ~ borrower_score + payment_inc_ratio, data=loan3000)\n# rf\n# # Number of trees: 500; variables tried at each split: 1; OOB error: 38.53%\n# # Confusion: paid off 1089/425 class.error 0.2807133; default 731/755 class.error 0.4919246\n# error_df <- data.frame(error_rate=rf$err.rate[, 'OOB'], num_trees=1:rf$ntree)\n# ggplot(error_df, aes(x=num_trees, y=error_rate)) + geom_line()  # Figure 6-6: stabilizes around .385\n# rf_all <- randomForest(outcome ~ ., data=loan_data, importance=TRUE)\n# rf_all   # variables tried: 3; OOB error: 34.38%; default class.error 0.3392548\n# varImpPlot(rf_all, type=1); varImpPlot(rf_all, type=2)\n\n# --- Python equivalent ---\nfrom sklearn.ensemble import RandomForestClassifier\nrf = RandomForestClassifier(n_estimators=500, max_features=1, oob_score=True, random_state=1)\nrf.fit(loan3000[['borrower_score', 'payment_inc_ratio']], loan3000['outcome'])\nprint(1 - rf.oob_score_)                         # about 0.3853\nrf_all = RandomForestClassifier(n_estimators=500, max_features=3, oob_score=True, random_state=1)\nrf_all.fit(X_all, y_all)\nprint(1 - rf_all.oob_score_)                     # about 0.3438"
+  };
+
+  // Figure 6-10 plus the printed training/test errors for default versus penalized XGBoost.
+  window.CODEVIZ["ps-ch6-boosting"] = {
+    charts: [{
+      type: "bars",
+      title: "XGBoost overfitting and regularization",
+      interpret: "The default 250-round model drives training error to 0.145622 while test error is 0.3715; lambda=1000 raises train error to 0.332405 and lowers test error to 0.3483.",
+      labels: ["default train", "default test", "lambda=1000 train", "lambda=1000 test"],
+      values: [0.145622, 0.3715, 0.332405, 0.3483],
+      colors: ["#7ee787", "#ffb454", "#4ea1ff", "#c89bff"]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(xgboost)\n# predictors <- data.matrix(loan3000[, c('borrower_score', 'payment_inc_ratio')])\n# label <- as.numeric(loan3000[, 'outcome']) - 1\n# xgb <- xgboost(data=predictors, label=label, objective='binary:logistic',\n#                params=list(subsample=.63, eta=0.1), nrounds=100)\n# pred <- predict(xgb, newdata=predictors)\n# xgb_default <- xgboost(data=predictors[-test_idx,], label=label[-test_idx], objective='binary:logistic', nrounds=250)\n# xgb_default$evaluation_log[250,]                # train_error 0.145622\n# mean(abs(label[test_idx] - predict(xgb_default, predictors[test_idx,])) > 0.5)  # [1] 0.3715\n# xgb_penalty <- xgboost(data=predictors[-test_idx,], label=label[-test_idx],\n#                        params=list(eta=.1, subsample=.63, lambda=1000), objective='binary:logistic', nrounds=250)\n# xgb_penalty$evaluation_log[250,]                # train_error 0.332405\n# mean(abs(label[test_idx] - predict(xgb_penalty, predictors[test_idx,])) > 0.5)  # [1] 0.3483\n# cbind(params, 100 * rowMeans(error))             # best: eta=.1,max_depth=6 -> 35.37%; eta=.1,max_depth=3 -> 35.41%\n\n# --- Python equivalent ---\nfrom xgboost import XGBClassifier\nxgb = XGBClassifier(objective='binary:logistic', n_estimators=100, subsample=.63, learning_rate=.1)\nxgb.fit(loan3000[['borrower_score', 'payment_inc_ratio']], label)\npenalty = XGBClassifier(objective='binary:logistic', n_estimators=250, learning_rate=.1, subsample=.63, reg_lambda=1000)\npenalty.fit(X_train, y_train)\nprint(1 - penalty.score(X_test, y_test))          # about 0.3483"
   };
 })();

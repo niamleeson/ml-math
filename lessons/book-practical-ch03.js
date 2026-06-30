@@ -44,7 +44,8 @@
         "<em>price A: mean = 3.87, SD = 51.10</em> and <em>price B: mean = 4.11, SD = 62.98</em>. The book warns " +
         "this output is misleading: the data is a few high values (page views with a conversion) plus a flood of " +
         "zeros, so a standard deviation that suggests large negative revenue is unhelpful. The mean absolute " +
-        "deviation (7.68 for A, 8.15 for B) describes the spread more reasonably.</p>" },
+        "deviation (7.68 for A, 8.15 for B) describes the spread more reasonably.</p>" +
+        "<pre><code class=\"language-python\"># Book numbers for the ecommerce price test\n# --- R (Practical Statistics, 1st ed.; arithmetic shown from Table 3-1) ---\n# conv &lt;- c(A=200, B=182); n &lt;- c(A=23739, B=22588)\n# conv / n                         # A 0.008424955, B 0.008057376\n# 100 * (conv['A']/n['A'] - conv['B']/n['B'])  # 0.0367579 percentage points\n# c(mean_A=3.87, sd_A=51.10, mad_A=7.68, mean_B=4.11, sd_B=62.98, mad_B=8.15)\n\n# --- Python equivalent ---\nconv = {'A': 200, 'B': 182}\nn = {'A': 23739, 'B': 22588}\nrates = {k: conv[k] / n[k] for k in conv}\nprint(rates)                       # {'A': 0.008424955, 'B': 0.008057376}\nprint(100 * (rates['A'] - rates['B']))  # 0.0367579 percentage points</code></pre>" },
       { h: "Why just A/B?", body:
         "<p>A/B is not the only design — more treatments can be added, and pharmaceutical trials sometimes build " +
         "in multiple chances to stop early. Traditional designs answer a static question (&quot;is A vs B " +
@@ -100,7 +101,8 @@
         "bidirectional (A differs from B) and you use a <strong>two-way</strong> (two-tail) test: extreme chance " +
         "results in both directions count. A one-tail test often matches A/B decision-making, but software " +
         "(including R) usually defaults to two-tail, and many statisticians prefer it to avoid argument. The book " +
-        "notes the distinction is not that important for data science, where p-value precision rarely matters.</p>" }
+        "notes the distinction is not that important for data science, where p-value precision rarely matters.</p>" +
+        "<pre><code class=\"language-python\"># Coin-flip demonstration of random runs (book: 50 flips; runs of 5 or 6 are not unusual)\n# --- R ---\n# flips &lt;- sample(c('H','T'), 50, replace=TRUE)\n# rle(flips)$lengths\n# max(rle(flips)$lengths)           # often 5 or 6 in a real random series\n\n# --- Python equivalent ---\nimport random, itertools\nflips = [random.choice(['H', 'T']) for _ in range(50)]\nruns = [len(list(g)) for _, g in itertools.groupby(flips)]\nprint(max(runs))                   # real random flips commonly produce long runs</code></pre>" }
     ],
     takeaways: [
       "A null hypothesis says nothing special happened — any effect is just chance.",
@@ -182,7 +184,9 @@
     labels: ["-100", "-75", "-50", "-25", "0", "+25", "+50", "+75", "+100"],
     values: [2, 7, 32, 62, 161, 224, 258, 148, 80],
     colors: ["#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff","#4ea1ff"]
-  } ] };
+  } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# ggplot(session_times, aes(x=Page, y=Time)) + geom_boxplot()\n# mean_a <- mean(session_times[session_times['Page']=='Page A', 'Time'])\n# mean_b <- mean(session_times[session_times['Page']=='Page B', 'Time'])\n# mean_b - mean_a                  # [1] 21.4\n# perm_fun <- function(x, n1, n2) { n <- n1 + n2; idx_b <- sample(1:n, n2); idx_a <- setdiff(1:n, idx_b); mean(x[idx_b]) - mean(x[idx_a]) }\n# perm_diffs <- rep(0, 1000); for(i in 1:1000) perm_diffs[i] = perm_fun(session_times[,'Time'], 21, 15)\n# hist(perm_diffs); abline(v = mean_b - mean_a)  # Figure 3-4; permutation p about 0.124\n\n# --- Python equivalent ---\nimport numpy as np\n# times = session_times['Time'].to_numpy(); observed = 21.4\ndef perm_fun(x, n1=21, n2=15):\n    idx_b = np.random.choice(len(x), n2, replace=False)\n    mask = np.ones(len(x), dtype=bool); mask[idx_b] = False\n    return x[idx_b].mean() - x[mask].mean()\n# perm_diffs = np.array([perm_fun(times) for _ in range(1000)])\n# (perm_diffs > observed).mean()   # approximately 0.124"
+  };
 
   // ------------------------------------------- Statistical Significance & P-Values
   B({
@@ -254,6 +258,16 @@
       "Type 1 = false positive; Type 2 = false negative (often just too-small a sample)."
     ]
   });
+  window.CODEVIZ["ps-ch3-significance-pvalues"] = { charts: [ {
+    type: "bars",
+    title: "Permutation distribution of conversion-rate differences (reconstruction of Figure 3-5)",
+    interpret: "The observed difference is only 0.0368 percentage points; in the book's permutation test, results at least this large occurred 30.8% of the time.",
+    labels: ["-0.20:-0.15", "-0.15:-0.10", "-0.10:-0.05", "-0.05:0", "0:0.05", "0.05:0.10", "0.10:0.15", "0.15:0.20", "0.20:0.25"],
+    values: [24, 98, 125, 265, 210, 138, 93, 32, 6],
+    colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#ffb454", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+  } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# obs_pct_diff <- 100*(200/23739 - 182/22588)    # 0.03675791 percentage points\n# conversion <- c(rep(0, 45945), rep(1, 382))    # shared null rate 382/46327 = 0.8246%\n# perm_diffs <- rep(0, 1000)\n# for(i in 1:1000) perm_diffs[i] = 100*perm_fun(conversion, 23739, 22588)\n# mean(perm_diffs > obs_pct_diff)                # [1] 0.308\n# prop.test(x=c(200,182), n=c(23739,22588), alternative=\"greater\")\n# # X-squared = 0.14893, df = 1, p-value = 0.3498; prop1=0.008424955, prop2=0.008057376\n\n# --- Python equivalent ---\nfrom statsmodels.stats.proportion import proportions_ztest\ncount = [200, 182]; nobs = [23739, 22588]\nprint(100 * (count[0]/nobs[0] - count[1]/nobs[1]))  # 0.03675791 percentage points\n# z, p = proportions_ztest(count, nobs, alternative='larger')\n# print(p)  # close to R's one-sided normal approximation, about 0.35"
+  };
 
   // ----------------------------------------------------------------- t-Tests
   B({
@@ -286,6 +300,7 @@
         "<li>Alternative: the true difference in means is less than 0 (mean of page A less than page B).</li>" +
         "<li>Sample estimates: mean of page A $= 126.33$, mean of page B $= 162.00$.</li>" +
         "</ul>" +
+        "<pre><code class=\"language-python\"># --- R (Practical Statistics, 1st ed.) ---\n# t.test(Time ~ Page, data=session_times, alternative='less')\n# # Welch Two Sample t-test\n# # t = -1.0983, df = 27.693, p-value = 0.1408\n# # 95 percent confidence interval: -Inf 19.59674\n# # mean Page A = 126.3333; mean Page B = 162.0000\n\n# --- Python equivalent ---\nfrom scipy import stats\n# page_a = session_times.loc[session_times.Page == 'Page A', 'Time']\n# page_b = session_times.loc[session_times.Page == 'Page B', 'Time']\n# res = stats.ttest_ind(page_a, page_b, equal_var=False, alternative='less')\n# print(res.statistic, res.pvalue)  # -1.0983, 0.1408</code></pre>" +
         "<p>This p-value of 0.1408 is fairly close to the permutation-test p-value of 0.124 from the web " +
         "stickiness example — the two approaches agree.</p>" +
         "<p>The book's takeaway: in resampling mode you structure the solution to fit the observed data and the " +
@@ -355,7 +370,9 @@
       "matching the worked example. Values are an illustrative reconstruction of the book's arithmetic.",
     labels: ["1", "5", "10", "20", "40"],
     values: [0.05, 0.23, 0.40, 0.64, 0.87]
-  } ] };
+  } ],
+    code: "# Book's multiplicity arithmetic\n# --- R ---\n# 0.95^20                         # [1] 0.3584859  (all 20 nonsignificant)\n# 1 - 0.95^20                     # [1] 0.6415141  (at least one false significant)\n# p.adjust(p_values, method='bonferroni')  # divide alpha across multiple tests\n\n# --- Python equivalent ---\nalpha = 0.05\nfor k in [1, 5, 10, 20, 40]:\n    print(k, 1 - (1 - alpha)**k)\n# k=20 -> 0.641514, matching the book's 0.64"
+  };
 
   // -------------------------------------------------------- Degrees of Freedom
   B({
@@ -385,7 +402,8 @@
         "there are seven days of the week, day-of-week has only six degrees of freedom — once you know it is not " +
         "Monday through Saturday, it must be Sunday. Including all seven binary indicators (Mon&ndash;Sat " +
         "<em>plus</em> Sunday) causes a <strong>multicollinearity</strong> error, so you use only $n - 1$ dummy " +
-        "indicators.</p>" }
+        "indicators.</p>" +
+        "<pre><code class=\"language-python\"># Degrees of freedom in the book's examples\n# --- R ---\n# n &lt;- 10; df_variance &lt;- n - 1       # 9 values free once the mean is fixed\n# model.matrix(~ day_of_week, data=df) # 7 weekdays produce 6 dummy columns plus intercept\n\n# --- Python equivalent ---\nn = 10\nprint(n - 1)                          # 9 degrees of freedom for sample variance\nweekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']\nprint(len(weekdays) - 1)              # 6 d.f.; omit one dummy to avoid multicollinearity</code></pre>" }
     ],
     takeaways: [
       "Degrees of freedom (d.f.) is part of standardizing test statistics against reference distributions.",
@@ -480,7 +498,9 @@
       "F-statistic of 2.74 gives p = 0.0776 (aovp permutation p = 0.093) — not significant at alpha = 0.05.",
     labels: ["Page 1", "Page 2", "Page 3", "Page 4"],
     values: [172, 185, 176, 162]
-  } ] };
+  } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(lmPerm)\n# summary(aovp(Time ~ Page, data=four_sessions))\n# # Page: Df=3, R Sum Sq=831.4, R Mean Sq=277.13, Iter=3104, Pr(Prob)=0.09278\n# summary(aov(Time ~ Page, data=four_sessions))\n# # Page: Df=3, Sum Sq=831.4, Mean Sq=277.1, F value=2.74, Pr(>F)=0.0776\n# # Residuals: Df=16, Sum Sq=1618.4, Mean Sq=101.2\n\n# --- Python equivalent ---\nimport pandas as pd, statsmodels.api as sm\nfrom statsmodels.formula.api import ols\nfour_sessions = pd.DataFrame({'Page': sum(([f'Page {i}']*5 for i in [1,2,3,4]), []),\n    'Time': [164,172,177,156,195,178,191,182,185,177,175,193,171,163,176,155,166,164,170,168]})\nmodel = ols('Time ~ C(Page)', data=four_sessions).fit()\nprint(sm.stats.anova_lm(model, typ=1))  # F=2.7398, p=0.0776"
+  };
 
   // -------------------------------------------------------------- Chi-Square Test
   B({
@@ -581,7 +601,21 @@
       "spikes at 1, 3, 7, 8 and dips at 2, 9 depart far beyond chance — the basis of the chi-square fraud finding.",
     labels: ["0","1","2","3","4","5","6","7","8","9"],
     values: [14, 71, 7, 65, 23, 19, 12, 45, 53, 6]
-  } ] };
+  }, {
+    type: "line",
+    title: "Chi-square distributions with 1, 2, 5, and 10 degrees of freedom (Figure 3-7)",
+    interpret: "The reference distribution is right-skewed; with the headline table's df = (2-1)(3-1) = 2, X-squared = 1.6659 gives p = 0.4348.",
+    xlabel: "chi-square statistic",
+    ylabel: "density",
+    series: [
+      { name: "df=1", color: "#4ea1ff", points: [[0.5,0.4394],[1,0.2420],[2,0.1038],[3,0.0514],[5,0.0146],[7,0.0046],[10,0.0009],[15,0.0001],[20,0.0000]] },
+      { name: "df=2", color: "#7ee787", points: [[0.5,0.3894],[1,0.3033],[2,0.1839],[3,0.1116],[5,0.0410],[7,0.0151],[10,0.0034],[15,0.0003],[20,0.0000]] },
+      { name: "df=5", color: "#ffb454", points: [[0.5,0.0366],[1,0.0807],[2,0.1384],[3,0.1542],[5,0.1220],[7,0.0744],[10,0.0283],[15,0.0043],[20,0.0005]] },
+      { name: "df=10", color: "#c89bff", points: [[0.5,0.0001],[1,0.0008],[2,0.0077],[3,0.0235],[5,0.0668],[7,0.0944],[10,0.0877],[15,0.0365],[20,0.0095]] }
+    ]
+  } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# clicks <- matrix(c(14, 8, 12, 986, 992, 988), nrow=2, byrow=TRUE)\n# chisq.test(clicks, simulate.p.value=TRUE)\n# # X-squared = 1.6659, df = NA, p-value = 0.4853 (based on 2000 replicates)\n# chisq.test(clicks, simulate.p.value=FALSE)\n# # X-squared = 1.6659, df = 2, p-value = 0.4348\n# fisher.test(clicks)                # p-value = 0.4824\n\n# --- Python equivalent ---\nimport numpy as np\nfrom scipy.stats import chi2_contingency, fisher_exact\nclicks = np.array([[14, 8, 12], [986, 992, 988]])\nchi2, p, dof, expected = chi2_contingency(clicks, correction=False)\nprint(chi2, dof, p)                  # 1.6659, 2, 0.4348\nprint(expected)                      # click row: 11.33 each; no-click row: 988.67 each"
+  };
 
   // ----------------------------------------------------- Multi-Arm Bandit Algorithm
   B({
@@ -632,7 +666,8 @@
         "each stage to maximize the probability of choosing the best arm. It uses a Bayesian approach: assume a " +
         "prior distribution of rewards (a <em>beta distribution</em>), then update it as each payoff is observed, " +
         "so later draws are better optimized. Bandits handle 3+ treatments efficiently — exactly where the " +
-        "decision complexity of traditional testing balloons.</p>" }
+        "decision complexity of traditional testing balloons.</p>" +
+        "<pre><code class=\"language-python\"># Epsilon-greedy algorithm described in the book\n# --- R-style pseudocode ---\n# if (runif(1) &lt; epsilon) sample(c('A','B'), 1) else names(which.max(response_rates))\n# epsilon = 1 -&gt; ordinary random A/B allocation; epsilon = 0 -&gt; purely greedy\n# initial slot-arm results: A 10/50 = 0.20, B 2/50 = 0.04, C 4/50 = 0.08\n\n# --- Python equivalent ---\nimport random\nwins = {'A': 10, 'B': 2, 'C': 4}; pulls = {'A': 50, 'B': 50, 'C': 50}\ndef choose_arm(epsilon=0.1):\n    if random.random() &lt; epsilon:\n        return random.choice(list(wins))\n    return max(wins, key=lambda arm: wins[arm] / pulls[arm])\nprint({a: wins[a] / pulls[a] for a in wins})  # A=0.20, B=0.04, C=0.08</code></pre>" }
     ],
     takeaways: [
       "Traditional A/B tests can over-expose visitors to the inferior treatment.",
@@ -704,7 +739,8 @@
         "</ul>" +
         "<p>Specify any three and the fourth can be computed. Most often you compute sample size, so you specify " +
         "the other three. R's <code>pwr.2p.test(h = ..., n = ..., sig.level = ..., power = )</code> (pwr package) " +
-        "does this for two-proportion tests, where h is the effect size as a proportion.</p>" }
+        "does this for two-proportion tests, where h is the effect size as a proportion.</p>" +
+        "<pre><code class=\"language-python\"># --- R (Practical Statistics, 1st ed.) ---\n# library(pwr)\n# pwr.2p.test(h = ..., n = ..., sig.level = ..., power = )\n# # h = effect size; n = sample size; sig.level = alpha; power = probability of detecting the effect\n# # Book trial 1: A 110/9890 vs B 121/9879, n=300 draws -&gt; first draw 3 vs 5, not significant\n# # Book trial 2: A 110/9890 vs B 165/9868, n=2000 draws -&gt; first draw 19 vs 34, still not significant\n\n# --- Python equivalent ---\nfrom statsmodels.stats.power import NormalIndPower\nfrom statsmodels.stats.proportion import proportion_effectsize\np1, p2 = 0.011, 0.0165             # 50% boost from 1.1% to 1.65%\neffect = proportion_effectsize(p1, p2)\n# n = NormalIndPower().solve_power(effect_size=effect, alpha=0.05, power=0.8, ratio=1)\n# print(n)                         # several thousand impressions per group</code></pre>" }
     ],
     takeaways: [
       "Finding the needed sample size means thinking ahead to the test you plan to run.",

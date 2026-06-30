@@ -110,15 +110,18 @@
       "Standard error $SE = s/\\sqrt{n}$; quartering it requires 4x the sample size."
     ]
   });
-  window.CODEVIZ["ps-ch2-sampling-distribution"] = { charts: [ {
-    type: "bars",
-    title: "Income histograms get tighter with averaging",
-    interpret: "Reconstruction of Figure 2-6. Raw incomes are wide and right-skewed; means of 5 are narrower; means of 20 are tightest and most bell-shaped — illustrating the central limit theorem.",
-    labels: ["Raw spread (data)", "Spread of means of 5", "Spread of means of 20"],
-    values: [100, 45, 23],
-    valueLabels: ["wide", "narrower", "narrowest"],
-    colors: ["#ffb454", "#4ea1ff", "#7ee787"]
-  } ] };
+  window.CODEVIZ["ps-ch2-sampling-distribution"] = {
+    charts: [ {
+      type: "bars",
+      title: "Income histograms get tighter with averaging",
+      interpret: "Reconstruction of Figure 2-6. Raw incomes are wide and right-skewed; means of 5 are narrower; means of 20 are tightest and most bell-shaped — illustrating the central limit theorem.",
+      labels: ["Raw spread (data)", "Spread of means of 5", "Spread of means of 20"],
+      values: [100, 45, 23],
+      valueLabels: ["wide", "narrower", "narrowest"],
+      colors: ["#ffb454", "#4ea1ff", "#7ee787"]
+    } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(ggplot2)\n# # take a simple random sample\n# samp_data <- data.frame(income=sample(loans_income, 1000), type='data_dist')\n# # take a sample of means of 5 values\n# samp_mean_05 <- data.frame(income=tapply(sample(loans_income, 1000*5),\n#     rep(1:1000, rep(5, 1000)), FUN=mean), type='mean_of_5')\n# # take a sample of means of 20 values\n# samp_mean_20 <- data.frame(income=tapply(sample(loans_income, 1000*20),\n#     rep(1:1000, rep(20, 1000)), FUN=mean), type='mean_of_20')\n# income <- rbind(samp_data, samp_mean_05, samp_mean_20)\n# income$type <- factor(income$type, levels=c('data_dist','mean_of_5','mean_of_20'),\n#     labels=c('Data','Mean of 5','Mean of 20'))\n# ggplot(income, aes(x=income)) + geom_histogram(bins=40) + facet_grid(type ~ .)\n# # Figure 2-6: 1,000 incomes; 1,000 means of n=5; 1,000 means of n=20.\n\n# --- Python equivalent ---\nimport numpy as np, pandas as pd\nimport seaborn as sns\n\nloans_income = pd.Series(loans_income)\nsamp_data = pd.DataFrame({'income': loans_income.sample(1000, replace=False), 'type': 'Data'})\nsamp_mean_05 = pd.DataFrame({'income': [loans_income.sample(5).mean() for _ in range(1000)], 'type': 'Mean of 5'})\nsamp_mean_20 = pd.DataFrame({'income': [loans_income.sample(20).mean() for _ in range(1000)], 'type': 'Mean of 20'})\nincome = pd.concat([samp_data, samp_mean_05, samp_mean_20])\nsns.displot(income, x='income', row='type', bins=40)  # same three histograms as Figure 2-6"
+  };
 
   // 4. The Bootstrap
   B({
@@ -149,6 +152,7 @@
         "<tr><td class='row-h'>bias</td><td class='num'>about &minus;\\$70</td></tr>" +
         "<tr><td class='row-h'>standard error</td><td class='num'>about \\$209</td></tr>" +
         "</tbody></table>" +
+        "<pre><code class='language-python'># --- R (Practical Statistics, 1st ed.) ---\n# library(boot)\n# stat_fun &lt;- function(x, idx) median(x[idx])\n# boot_obj &lt;- boot(loans_income, R = 1000, statistic=stat_fun)\n# boot_obj\n# # Bootstrap Statistics :\n# # original   bias    std. error\n# # t1* 62000 -70.5595 209.1515\n\n# --- Python equivalent ---\nimport numpy as np\nloans_income = np.asarray(loans_income)\nmedians = [np.median(np.random.choice(loans_income, size=len(loans_income), replace=True))\n           for _ in range(1000)]\noriginal = np.median(loans_income)             # 62000\nbias = np.mean(medians) - original             # about -70.5595\nse = np.std(medians, ddof=1)                   # about 209.1515</code></pre>" +
         "<p>The bootstrap also works on multivariate data, sampling whole rows as units. Running models on bootstrap samples and aggregating their predictions (or majority-voting for classification) is called <em>bagging</em> — bootstrap aggregating — and generally beats a single model.</p>" +
         "<p class='warn'>Warning: the bootstrap does not compensate for a small sample, create new data, or fill holes. It tells you how additional samples drawn from a population like your sample would behave.</p>" },
       { h: "Resampling versus bootstrapping", body:
@@ -194,14 +198,17 @@
       "Higher confidence and smaller samples both widen the interval."
     ]
   });
-  window.CODEVIZ["ps-ch2-confidence-intervals"] = { charts: [ {
-    type: "bars",
-    title: "90 percent interval for mean loan income",
-    interpret: "Reconstruction of Figure 2-9. The bootstrap distribution of the mean (sample of 20, mean \\$57,573) is roughly bell-shaped; trimming 5% from each tail leaves the 90% interval \\$53,610 to \\$62,279.",
-    labels: ["50,346", "52,625", "54,905", "57,184", "59,464", "61,743", "64,022"],
-    values: [8, 30, 52, 60, 45, 22, 6],
-    colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-  } ] };
+  window.CODEVIZ["ps-ch2-confidence-intervals"] = {
+    charts: [ {
+      type: "bars",
+      title: "90 percent interval for mean loan income",
+      interpret: "Reconstruction of Figure 2-9. The bootstrap distribution of the mean (sample of 20, mean \$57,573) is roughly bell-shaped; trimming 5% from each tail leaves the 90% interval \$53,610 to \$62,279.",
+      labels: ["50,346", "52,625", "54,905", "57,184", "59,464", "61,743", "64,022"],
+      values: [8, 30, 52, 60, 45, 22, 6],
+      colors: ["#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+    } ],
+    code: "# Bootstrap confidence interval algorithm from the book.\n# --- R (Practical Statistics, 1st ed.) ---\n# # For a sample of n = 20 loan applicants with mean 57573:\n# boot_mean <- function(x, idx) mean(x[idx])\n# boot_obj <- boot(income_sample_20, R=1000, statistic=boot_mean)\n# quantile(boot_obj$t, c(.05, .95))\n# # 5% 53610, 95% 62279  (central 90%; trim 5% from each tail)\n\n# --- Python equivalent ---\nimport numpy as np\nx = np.asarray(income_sample_20)\nboot_means = [np.mean(np.random.choice(x, size=len(x), replace=True)) for _ in range(1000)]\nnp.mean(x)                              # 57573\nnp.quantile(boot_means, [0.05, 0.95])   # about [53610, 62279]"
+  };
 
   // 6. Normal Distribution
   B({
@@ -226,15 +233,18 @@
       "A QQ-plot near the diagonal line means the sample is close to normal."
     ]
   });
-  window.CODEVIZ["ps-ch2-normal-distribution"] = { charts: [ {
-    type: "scatter",
-    title: "QQ-plot of a normal sample",
-    interpret: "Reconstruction of Figure 2-11. For 100 values drawn from a normal distribution, the ordered z-scores fall almost exactly on the y = x diagonal, indicating closeness to normality.",
-    xlabel: "theoretical normal quantile",
-    ylabel: "sample z-score",
-    groups: [ { name: "sample", color: "#4ea1ff", points: [[-2.6,-2.55],[-2.1,-2.15],[-1.6,-1.6],[-1.1,-1.05],[-0.6,-0.55],[-0.2,-0.15],[0.2,0.25],[0.6,0.6],[1.1,1.05],[1.6,1.55],[2.1,1.85],[2.55,2.5]] } ],
-    lines: [ { name: "y = x", color: "#8b949e", points: [[-2.6,-2.6],[2.55,2.55]] } ]
-  } ] };
+  window.CODEVIZ["ps-ch2-normal-distribution"] = {
+    charts: [ {
+      type: "scatter",
+      title: "QQ-plot of a normal sample",
+      interpret: "Reconstruction of Figure 2-11. For 100 values drawn from a normal distribution, the ordered z-scores fall almost exactly on the y = x diagonal, indicating closeness to normality.",
+      xlabel: "theoretical normal quantile",
+      ylabel: "sample z-score",
+      groups: [ { name: "sample", color: "#4ea1ff", points: [[-2.6,-2.55],[-2.1,-2.15],[-1.6,-1.6],[-1.1,-1.05],[-0.6,-0.55],[-0.2,-0.15],[0.2,0.25],[0.6,0.6],[1.1,1.05],[1.6,1.55],[2.1,1.85],[2.55,2.5]] } ],
+      lines: [ { name: "y = x", color: "#8b949e", points: [[-2.6,-2.6],[2.55,2.55]] } ]
+    } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# norm_samp <- rnorm(100)\n# qqnorm(norm_samp)\n# abline(a=0, b=1, col='grey')\n# # Figure 2-11: 100 random normal values; points closely follow the line.\n\n# --- Python equivalent ---\nimport numpy as np\nimport scipy.stats as stats\nimport matplotlib.pyplot as plt\n\nnorm_samp = np.random.normal(size=100)\nstats.probplot(norm_samp, dist='norm', plot=plt)\nplt.axline((0, 0), slope=1, color='grey')"
+  };
 
   // 7. Long-Tailed Distributions
   B({
@@ -257,15 +267,18 @@
       "Data can be 'normal in the middle' yet have much longer tails (Tukey)."
     ]
   });
-  window.CODEVIZ["ps-ch2-long-tailed-distributions"] = { charts: [ {
-    type: "scatter",
-    title: "QQ-plot of Netflix returns shows fat tails",
-    interpret: "Reconstruction of Figure 2-12. The points lie far below the diagonal at the low end and far above it at the high end while tracking the line in the middle — the signature of a long-tailed distribution.",
-    xlabel: "theoretical normal quantile",
-    ylabel: "standardized return",
-    groups: [ { name: "NFLX returns", color: "#ffb454", points: [[-3.4,-6.5],[-3.0,-5.2],[-2.6,-3.6],[-2.0,-2.3],[-1.4,-1.2],[-0.7,-0.5],[0,0.05],[0.7,0.6],[1.4,1.3],[2.0,2.4],[2.6,3.8],[3.0,5.0],[3.4,6.1]] } ],
-    lines: [ { name: "y = x", color: "#8b949e", points: [[-3.4,-3.4],[3.4,3.4]] } ]
-  } ] };
+  window.CODEVIZ["ps-ch2-long-tailed-distributions"] = {
+    charts: [ {
+      type: "scatter",
+      title: "QQ-plot of Netflix returns shows fat tails",
+      interpret: "Reconstruction of Figure 2-12. The points lie far below the diagonal at the low end and far above it at the high end while tracking the line in the middle — the signature of a long-tailed distribution.",
+      xlabel: "theoretical normal quantile",
+      ylabel: "standardized return",
+      groups: [ { name: "NFLX returns", color: "#ffb454", points: [[-3.4,-6.5],[-3.0,-5.2],[-2.6,-3.6],[-2.0,-2.3],[-1.4,-1.2],[-0.7,-0.5],[0,0.05],[0.7,0.6],[1.4,1.3],[2.0,2.4],[2.6,3.8],[3.0,5.0],[3.4,6.1]] } ],
+      lines: [ { name: "y = x", color: "#8b949e", points: [[-3.4,-3.4],[3.4,3.4]] } ]
+    } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# nflx <- sp500_px[,'NFLX']\n# nflx <- diff(log(nflx[nflx>0]))\n# qqnorm(nflx)\n# abline(a=0, b=1, col='grey')\n# # Figure 2-12: NFLX daily returns fall far below/above the line in the tails.\n\n# --- Python equivalent ---\nimport numpy as np\nimport scipy.stats as stats\nimport matplotlib.pyplot as plt\n\nnflx = sp500_px['NFLX']\nnflx = np.diff(np.log(nflx[nflx > 0]))\nstats.probplot(nflx, dist='norm', plot=plt)\nplt.axline((0, 0), slope=1, color='grey')"
+  };
 
   // 8. Student's t-Distribution
   B({
@@ -328,15 +341,18 @@
       "For large n with p not near 0 or 1, the normal distribution approximates it."
     ]
   });
-  window.CODEVIZ["ps-ch2-binomial-distribution"] = { charts: [ {
-    type: "bars",
-    title: "Binomial probabilities for n=5, p=0.1",
-    interpret: "From the book's example. Probability of x successes in 5 trials at p=0.1: P(2)=0.0729 (the dbinom result) and P(0)+P(1)+P(2)=0.9914 (the pbinom result).",
-    labels: ["0", "1", "2", "3", "4", "5"],
-    values: [0.59049, 0.32805, 0.0729, 0.0081, 0.00045, 0.00001],
-    valueLabels: ["0.590", "0.328", "0.073", "0.008", "0.000", "0.000"],
-    colors: ["#4ea1ff", "#4ea1ff", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
-  } ] };
+  window.CODEVIZ["ps-ch2-binomial-distribution"] = {
+    charts: [ {
+      type: "bars",
+      title: "Binomial probabilities for n=5, p=0.1",
+      interpret: "From the book's example. Probability of x successes in 5 trials at p=0.1: P(2)=0.0729 (the dbinom result) and P(0)+P(1)+P(2)=0.9914 (the pbinom result).",
+      labels: ["0", "1", "2", "3", "4", "5"],
+      values: [0.59049, 0.32805, 0.0729, 0.0081, 0.00045, 0.00001],
+      valueLabels: ["0.590", "0.328", "0.073", "0.008", "0.000", "0.000"],
+      colors: ["#4ea1ff", "#4ea1ff", "#7ee787", "#4ea1ff", "#4ea1ff", "#4ea1ff"]
+    } ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# dbinom(x=2, n=5, p=0.1)   # 0.0729\n# pbinom(2, 5, 0.1)         # 0.9914\n\n# --- Python equivalent ---\nfrom scipy.stats import binom\nprint(binom.pmf(2, n=5, p=0.1))   # 0.0729\nprint(binom.cdf(2, n=5, p=0.1))   # 0.99144, reported as 0.9914\n# P(0..5) = [0.59049, 0.32805, 0.0729, 0.0081, 0.00045, 0.00001]"
+  };
 
   // 10. Poisson and Related Distributions
   B({
@@ -355,16 +371,19 @@
         "</ul>" },
       { h: "Poisson distribution", body:
         "<p>The Poisson distribution tells us how the number of events per unit of time or space varies when we sample many such units. It is useful for queuing questions like \"how much capacity do we need to be 95% sure of fully processing the internet traffic arriving on a server in any 5-second period?\"</p>" +
-        "<p>Its key parameter is $\\lambda$ (lambda), the mean number of events in a specified interval; the variance is also $\\lambda$. In R, <code>rpois(100, lambda = 2)</code> generates 100 random Poisson values with $\\lambda = 2$ — for example, if customer-service calls average 2 per minute, this simulates 100 minutes and returns the number of calls in each.</p>" },
+        "<p>Its key parameter is $\\lambda$ (lambda), the mean number of events in a specified interval; the variance is also $\\lambda$. In R, <code>rpois(100, lambda = 2)</code> generates 100 random Poisson values with $\\lambda = 2$ — for example, if customer-service calls average 2 per minute, this simulates 100 minutes and returns the number of calls in each.</p>" +
+        "<pre><code class='language-python'># --- R (Practical Statistics, 1st ed.) ---\n# rpois(100, lambda = 2)\n# # 100 random Poisson counts; lambda = 2 calls per minute.\n\n# --- Python equivalent ---\nimport numpy as np\ncounts = np.random.poisson(lam=2, size=100)\ncounts.mean()  # about 2</code></pre>" },
       { h: "Exponential distribution", body:
         "<p>Using the same $\\lambda$, the <em>exponential distribution</em> models the time between events: time between website visits, time between cars at a toll plaza, time to failure in engineering, or time per service call. In R, <code>rexp(n = 100, rate = .2)</code> generates 100 values from an exponential distribution where the mean rate is 0.2 per time period — e.g., simulating 100 intervals (in minutes) between service calls when calls average 0.2 per minute.</p>" +
+        "<pre><code class='language-python'># --- R (Practical Statistics, 1st ed.) ---\n# rexp(n = 100, rate = .2)\n# # 100 waiting times; average incoming-call rate = 0.2 per minute.\n\n# --- Python equivalent ---\nimport numpy as np\nwaits = np.random.exponential(scale=1/0.2, size=100)\nwaits.mean()  # about 5 minutes between calls</code></pre>" +
         "<p>A key assumption for both Poisson and exponential simulation is that the rate $\\lambda$ stays constant over the period considered. That rarely holds globally (road or network traffic varies by time of day), but periods can usually be divided into segments homogeneous enough for valid analysis.</p>" },
       { h: "Estimating the failure rate", body:
         "<p>Often the event rate $\\lambda$ is known or can be estimated from prior data, but for rare events it may not be. The book's example: aircraft engine failure is rare enough that there may be little data on time between failures for a given engine type.</p>" +
         "<p>With no data, you can still make educated guesses — if no events have occurred after 20 hours, the rate is probably not 1 per hour. Via simulation or direct probability calculation, you can test hypothetical event rates and estimate threshold values below which the true rate is very unlikely to fall. With some (but not enough) data, a goodness-of-fit test like the chi-square test can assess how well candidate rates fit the observed data.</p>" },
       { h: "Weibull distribution", body:
         "<p>When the event rate does <em>not</em> stay constant — as in mechanical failure, where the risk of failure rises as time goes by — the exponential and Poisson distributions no longer apply. The <em>Weibull distribution</em> extends the exponential by letting the event rate change, controlled by a <em>shape parameter</em> $\\beta$ (beta). If $\\beta > 1$ the event probability increases over time; if $\\beta &lt; 1$ it decreases.</p>" +
-        "<p>Because Weibull is used for time-to-failure rather than event rate, its second parameter is expressed as <em>characteristic life</em> (also called the <em>scale</em> parameter), written $\\eta$ (eta), instead of a rate. Estimation involves both $\\beta$ and $\\eta$, usually fit by software. In R, <code>rweibull(100, 1.5, 5000)</code> generates 100 lifetimes from a Weibull distribution with shape 1.5 and characteristic life 5,000.</p>" }
+        "<p>Because Weibull is used for time-to-failure rather than event rate, its second parameter is expressed as <em>characteristic life</em> (also called the <em>scale</em> parameter), written $\\eta$ (eta), instead of a rate. Estimation involves both $\\beta$ and $\\eta$, usually fit by software. In R, <code>rweibull(100, 1.5, 5000)</code> generates 100 lifetimes from a Weibull distribution with shape 1.5 and characteristic life 5,000.</p>" +
+        "<pre><code class='language-python'># --- R (Practical Statistics, 1st ed.) ---\n# rweibull(100, 1.5, 5000)\n# # 100 lifetimes; shape beta = 1.5, characteristic life eta = 5000.\n\n# --- Python equivalent ---\nimport numpy as np\nlifetimes = 5000 * np.random.weibull(a=1.5, size=100)\nlen(lifetimes)  # 100</code></pre>" }
     ],
     takeaways: [
       "Poisson: number of events per unit time/space; parameter $\\lambda$, with variance also $\\lambda$.",

@@ -41,6 +41,20 @@
       {
         h: "Worked example: a loan",
         body: "<p>Fitting a model on the loan data (predictors: purpose, home ownership, employment length) gives conditional probabilities $P(X_j \\mid Y = i)$ for the \"paid off\" and \"default\" classes. Scoring a new loan that is a small-business loan, with a mortgage, and employment over one year:</p>" +
+          "<table class=\"extable\"><thead><tr><th>Predictor category</th><th>paid off</th><th>default</th></tr></thead><tbody>" +
+          "<tr><td class=\"row-h\">purpose: credit_card</td><td class=\"num\">0.1857711</td><td class=\"num\">0.1517548</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: debt_consolidation</td><td class=\"num\">0.5523427</td><td class=\"num\">0.5777144</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: home_improvement</td><td class=\"num\">0.0715335</td><td class=\"num\">0.0595609</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: major_purchase</td><td class=\"num\">0.0554115</td><td class=\"num\">0.0370851</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: medical</td><td class=\"num\">0.0123617</td><td class=\"num\">0.0143499</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: other</td><td class=\"num\">0.0995851</td><td class=\"num\">0.1141511</td></tr>" +
+          "<tr><td class=\"row-h\">purpose: small_business</td><td class=\"num\">0.0229945</td><td class=\"num\">0.0453838</td></tr>" +
+          "<tr><td class=\"row-h\">home: MORTGAGE</td><td class=\"num\">0.4966286</td><td class=\"num\">0.4327455</td></tr>" +
+          "<tr><td class=\"row-h\">home: OWN</td><td class=\"num\">0.0804374</td><td class=\"num\">0.0836359</td></tr>" +
+          "<tr><td class=\"row-h\">home: RENT</td><td class=\"num\">0.4229340</td><td class=\"num\">0.4836186</td></tr>" +
+          "<tr><td class=\"row-h\">emp_len: &gt; 1 Year</td><td class=\"num\">0.9690526</td><td class=\"num\">0.9523686</td></tr>" +
+          "<tr><td class=\"row-h\">emp_len: &lt; 1 Year</td><td class=\"num\">0.0309474</td><td class=\"num\">0.0476314</td></tr>" +
+          "</tbody></table>" +
           "<table class=\"extable\"><thead><tr><th>Outcome</th><th>Posterior probability</th></tr></thead><tbody>" +
           "<tr><td class=\"row-h\">paid off</td><td class=\"num\">0.3717</td></tr>" +
           "<tr><td class=\"row-h\">default</td><td class=\"num\">0.6283</td></tr>" +
@@ -67,7 +81,8 @@
       labels: ["paid off", "default"],
       values: [0.3717, 0.6283],
       colors: ["#7ee787", "#ffb454"]
-    }]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(klaR)\n# naive_model <- NaiveBayes(outcome ~ purpose_ + home_ + emp_len_,\n#                           data = na.omit(loan_data))\n# naive_model$table\n# # purpose small_business: paid off 0.02299447, default 0.04538382\n# # home MORTGAGE: paid off 0.4966286, default 0.4327455\n# # emp_len > 1 Year: paid off 0.9690526, default 0.9523686\n# predict(naive_model, new_loan)\n# # class: default; posterior: paid off 0.3717206, default 0.6282794\n\n# --- Python equivalent ---\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.naive_bayes import CategoricalNB\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import OrdinalEncoder\n\nfeatures = ['purpose_', 'home_', 'emp_len_']\nnb = make_pipeline(OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1),\n                   CategoricalNB())\nnb.fit(loan_data[features].dropna(), loan_data.dropna()['outcome'])\nnb.predict(new_loan[features])       # ['default']\nnb.predict_proba(new_loan[features]) # paid off 0.3717206, default 0.6282794"
   };
 
   /* -------------------------------------------------------- Discriminant Analysis */
@@ -102,6 +117,15 @@
           "<tr><td class=\"row-h\">borrower_score</td><td class=\"num\">-6.2963</td></tr>" +
           "<tr><td class=\"row-h\">payment_inc_ratio</td><td class=\"num\">0.1288</td></tr>" +
           "</tbody></table>" +
+          "<p>The first six posterior probabilities printed by <code>predict(loan_lda)</code> show how close many loans sit to the boundary:</p>" +
+          "<table class=\"extable\"><thead><tr><th>row</th><th>paid off</th><th>default</th></tr></thead><tbody>" +
+          "<tr><td class=\"row-h\">25333</td><td class=\"num\">0.5554293</td><td class=\"num\">0.4445707</td></tr>" +
+          "<tr><td class=\"row-h\">27041</td><td class=\"num\">0.6274352</td><td class=\"num\">0.3725648</td></tr>" +
+          "<tr><td class=\"row-h\">7398</td><td class=\"num\">0.4014055</td><td class=\"num\">0.5985945</td></tr>" +
+          "<tr><td class=\"row-h\">35625</td><td class=\"num\">0.3411242</td><td class=\"num\">0.6588758</td></tr>" +
+          "<tr><td class=\"row-h\">17058</td><td class=\"num\">0.6081592</td><td class=\"num\">0.3918408</td></tr>" +
+          "<tr><td class=\"row-h\">2986</td><td class=\"num\">0.6733245</td><td class=\"num\">0.3266755</td></tr>" +
+          "</tbody></table>" +
           "<p>Predicting the probability of default versus paid off and plotting it over the two predictors, LDA splits the predictor space into two regions with a straight line; predictions farther from the line carry higher confidence (probability further from 0.5). If predictors are normalized before LDA, the discriminator weights themselves measure variable importance — an efficient feature-selection method.</p>"
       },
       {
@@ -115,6 +139,17 @@
       "Applied to records, the function yields weights (scores) that determine the predicted class."
     ]
   });
+  window.CODEVIZ["ps-ch5-discriminant-analysis"] = {
+    charts: [{
+      type: "bars",
+      title: "LDA linear discriminator weights",
+      interpret: "The fitted LD1 direction weights borrower_score strongly negative (-6.2963) and payment_inc_ratio weakly positive (0.1288), matching the book's loan-data output.",
+      labels: ["borrower_score", "payment_inc_ratio"],
+      values: [-6.2963, 0.1288],
+      colors: ["#4ea1ff", "#ffb454"]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# library(MASS)\n# loan_lda <- lda(outcome ~ borrower_score + payment_inc_ratio, data=loan3000)\n# loan_lda$scaling\n# #                    LD1\n# # borrower_score     -6.2962811\n# # payment_inc_ratio   0.1288243\n# pred <- predict(loan_lda)\n# head(pred$posterior)\n# # 25333: paid off 0.5554293, default 0.4445707\n# # 7398:  paid off 0.4014055, default 0.5985945\n# lda_df <- cbind(loan3000, prob_default=pred$posterior[, 'default'])\n\n# --- Python equivalent ---\nfrom sklearn.discriminant_analysis import LinearDiscriminantAnalysis\n\nX = loan3000[['borrower_score', 'payment_inc_ratio']]\ny = loan3000['outcome']\nlda = LinearDiscriminantAnalysis().fit(X, y)\nproba = lda.predict_proba(X.head())\n# first rows correspond to default probabilities near 0.4446, 0.3726, 0.5986"
+  };
 
   /* ------------------------------------------------------------ Logistic Regression */
   B({
@@ -196,7 +231,8 @@
           [0.70, 0.85], [0.80, 1.39], [0.90, 2.20], [0.95, 2.94], [0.99, 4.60]
         ]
       }]
-    }]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# logistic_model <- glm(outcome ~ payment_inc_ratio + purpose_ + home_ +\n#                         emp_len_ + borrower_score,\n#                       data=loan_data, family='binomial')\n# logistic_model\n# # (Intercept) 1.26982; payment_inc_ratio 0.08244\n# # purpose_small_business 1.21226; borrower_score -4.63890\n# pred <- predict(logistic_model)\n# summary(pred)\n# # Min -2.728000; Median -0.005235; Mean 0.002599; Max 3.658000\n# prob <- 1/(1 + exp(-pred))\n# summary(prob)\n# # Min 0.06132; Median 0.49870; Mean 0.50000; Max 0.97490\n# exp(1.212264)   # 3.361086; small_business odds multiplier\n# exp(0.082443)   # 1.085937; payment_inc_ratio +1\n# exp(-4.638902)  # 0.009668; best vs worst borrower_score\n\n# --- Python equivalent ---\nimport numpy as np\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import OneHotEncoder\n\ncat = ['purpose_', 'home_', 'emp_len_']\nnum = ['payment_inc_ratio', 'borrower_score']\nprep = ColumnTransformer([('cat', OneHotEncoder(drop='first'), cat), ('num', 'passthrough', num)])\nlogit = make_pipeline(prep, LogisticRegression(max_iter=1000)).fit(loan_data[cat + num], loan_data['outcome'])\nlog_odds = logit.decision_function(loan_data[cat + num])\nprob = 1 / (1 + np.exp(-log_odds))"
   };
 
   /* ------------------------------------------------- Evaluating Classification Models */
@@ -225,8 +261,15 @@
           "<ul class=\"steps\">" +
           "<li><strong>Precision</strong> — accuracy of a predicted positive: $\\frac{\\sum \\text{TruePositive}}{\\sum \\text{TruePositive} + \\sum \\text{FalsePositive}}$.</li>" +
           "<li><strong>Recall</strong> (a.k.a. <em>sensitivity</em>) — the strength to find positives, the proportion of 1s correctly identified: $\\frac{\\sum \\text{TruePositive}}{\\sum \\text{TruePositive} + \\sum \\text{FalseNegative}}$. \"Sensitivity\" is the biostatistics/medical term; \"recall\" the machine-learning one.</li>" +
-          "<li><strong>Specificity</strong> — the ability to find negatives: $\\frac{\\sum \\text{TrueNegative}}{\\sum \\text{TrueNegative} + \\sum \\text{FalseNegative}}$.</li>" +
-          "</ul>"
+          "<li><strong>Specificity</strong> — the ability to find negatives: $\\frac{\\sum \\text{TrueNegative}}{\\sum \\text{TrueNegative} + \\sum \\text{FalsePositive}}$.</li>" +
+          "</ul>" +
+          "<table class=\"extable\"><thead><tr><th>Metric</th><th>Arithmetic</th><th>Value</th></tr></thead><tbody>" +
+          "<tr><td class=\"row-h\">accuracy</td><td>(14635 + 14900) / 46272</td><td class=\"num\">0.6383</td></tr>" +
+          "<tr><td class=\"row-h\">precision</td><td>14635 / (14635 + 8236)</td><td class=\"num\">0.6399</td></tr>" +
+          "<tr><td class=\"row-h\">recall</td><td>14635 / (14635 + 8501)</td><td class=\"num\">0.6326</td></tr>" +
+          "<tr><td class=\"row-h\">specificity</td><td>14900 / (14900 + 8236)</td><td class=\"num\">0.6440</td></tr>" +
+          "</tbody></table>" +
+          "<ul class=\"steps\"><li>Total records: $14635 + 8501 + 8236 + 14900 = 46272$.</li><li>Precision asks whether predicted defaults were truly defaults: $14635 / 22871 = 0.6399$.</li><li>Recall asks how many actual defaults were caught: $14635 / 23136 = 0.6326$.</li><li>Specificity asks how many actual paid-off loans were kept negative: $14900 / 23136 = 0.6440$.</li></ul>"
       },
       {
         h: "ROC curve",
@@ -273,7 +316,8 @@
           [0.8, 0.93], [0.9, 0.97], [1.0, 1.0]
         ]
       }
-    ]
+    ],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# pred <- predict(logistic_gam, newdata=train_set)\n# pred_y <- as.numeric(pred > 0)\n# true_y <- as.numeric(train_set$outcome == 'default')\n# true_pos <- (true_y==1) & (pred_y==1)\n# true_neg <- (true_y==0) & (pred_y==0)\n# false_pos <- (true_y==0) & (pred_y==1)\n# false_neg <- (true_y==1) & (pred_y==0)\n# conf_mat <- matrix(c(sum(true_pos), sum(false_pos),\n#                      sum(false_neg), sum(true_neg)), 2, 2)\n# #      Yhat=1 Yhat=0\n# # Y=1   14635   8501\n# # Y=0    8236  14900\n# conf_mat[1,1]/sum(conf_mat[,1])  # precision 0.6399\n# conf_mat[1,1]/sum(conf_mat[1,])  # recall 0.6326\n# conf_mat[2,2]/sum(conf_mat[2,])  # specificity 0.6440\n# idx <- order(-pred)\n# recall <- cumsum(true_y[idx]==1)/sum(true_y==1)\n# specificity <- (sum(true_y==0)-cumsum(true_y[idx]==0))/sum(true_y==0)\n# roc_df <- data.frame(recall=recall, specificity=specificity)\n# sum(roc_df$recall[-1] * diff(1-roc_df$specificity)) # 0.5924072\n\n# --- Python equivalent ---\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, roc_auc_score, roc_curve\n\npred_y = (pred > 0).astype(int)\ntrue_y = (train_set['outcome'] == 'default').astype(int)\nconfusion_matrix(true_y, pred_y, labels=[1, 0])  # [[14635, 8501], [8236, 14900]]\nprecision_score(true_y, pred_y)  # 0.6399\nrecall_score(true_y, pred_y)     # 0.6326\nfpr, tpr, thresholds = roc_curve(true_y, pred)\nroc_auc_score(true_y, pred)      # 0.5924072"
   };
 
   /* ----------------------------------------------- Strategies for Imbalanced Data */
@@ -331,6 +375,7 @@
       values: [0.39, 43, 50],
       valueLabels: ["0.39%", "43%", "~50%"],
       colors: ["#ffb454", "#4ea1ff", "#7ee787"]
-    }]
+    }],
+    code: "# --- R (Practical Statistics, 1st ed.) ---\n# mean(loan_all_data$outcome == 'default')\n# # [1] 0.05024048\n# full_model <- glm(outcome ~ payment_inc_ratio + purpose_ +\n#                     home_ + emp_len_ + dti + revol_bal + revol_util,\n#                   data=train_set, family='binomial')\n# pred <- predict(full_model)\n# mean(pred > 0)\n# # [1] 0.00386009\n# wt <- ifelse(loan_all_data$outcome == 'default',\n#              1/mean(loan_all_data$outcome == 'default'), 1)\n# full_model <- glm(outcome ~ payment_inc_ratio + purpose_ +\n#                     home_ + emp_len_ + dti + revol_bal + revol_util,\n#                   data=loan_all_data, weight=wt, family='binomial')\n# pred <- predict(full_model)\n# mean(pred > 0)\n# # [1] 0.4344177\n\n# --- Python equivalent ---\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression\n\np_default = (loan_all_data['outcome'] == 'default').mean()  # 0.05024048\nweights = np.where(loan_all_data['outcome'] == 'default', 1 / p_default, 1)\n# Fit the same features with sample_weight=weights; predicted-default share rises to about 0.4344."
   };
 })();
