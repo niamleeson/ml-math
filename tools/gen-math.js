@@ -141,12 +141,13 @@ for (const topic of TOPICS) {
     const secs = o.sections.map((s) => `      { h: \`${esc(s.h)}\`, body: \`${esc(s.body)}\` }`).join(",\n");
     const tks = (o.takeaways || []).map((t) => `      \`${esc(t)}\``).join(",\n");
     const pre = o.prereqs ? `\n    prereqs: ${JSON.stringify(o.prereqs)},` : "";
+    const demo = typeof o.demo === "function" ? `,\n    demo: ${o.demo.toString()}` : "";
     return `  B({\n` +
       `    id: ${JSON.stringify(o.id)},\n` +
       `    title: \`${esc(o.title)}\`,\n` +
       `    tagline: \`${esc(o.tagline || "")}\`,` + pre + `\n` +
       `    sections: [\n${secs}\n    ],\n` +
-      `    takeaways: [\n${tks}\n    ]\n` +
+      `    takeaways: [\n${tks}\n    ]` + demo + `\n` +
       `  });`;
   }).join("\n\n");
 

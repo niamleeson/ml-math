@@ -62,14 +62,17 @@ property rather than asserting it. Fold in the conditions/assumptions that must 
 *Voice: precise, lightly warm.*
 
 ### 4. Worked Example & Practice
-One fully guided worked example (format below), then faded practice problems. The worked
-example ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole;
-negative means it decays — stable") that section 5 builds on.
+One fully guided worked example in the **full guided-walkthrough format** (below) — difficulty
+badge, skills tags, strategy cue, **interactive revealable hints**, one-operation-per-step,
+verify, common mistakes, answer, connects-to — then faded practice problems. The worked example
+ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole; negative
+means it decays — stable") that section 5 builds on.
 
 *Voice: patient.*
 
 ### 5. Real-World Applications in CS & ML
-Replaces the old "Why It Works" and "Summary". ~6 concrete uses spanning CS and ML.
+Replaces the old "Why It Works" and "Summary". **At least 6** concrete uses spanning CS and ML
+(6 is the target floor, not a ceiling).
 **Each application:**
 - Opens with a short **flowing explanation that includes light background** (history / why it
   exists). **Do not** use a "What it is:" label.
@@ -85,7 +88,8 @@ Close on the transferable thread ("one idea, many uniforms").
 
 1. **Problem** + difficulty badge (`●●●○○`) + skills tags.
 2. **Strategy cue** — one line naming the obstacle and the tool.
-3. **Hints** — 2–3 progressive, revealable, fading.
+3. **Hints** — 2–3 progressive and fading, rendered as **interactive** `<details class="hint">`
+   "Show hint" toggles (see *Interactive elements*).
 4. **Step-by-step** — **one operation per step**: `action → result`, then a short italic *why*.
    Define notation up front.
 5. **Verify** — substitute back / sanity check (✓).
@@ -94,6 +98,46 @@ Close on the transferable thread ("one idea, many uniforms").
 8. **Connects to** — one line back to the lesson's concept.
 
 **Rule: never bundle operations.** "Substitute, factor, and isolate" is three steps, not one.
+
+### HTML patterns for §4
+
+```html
+<!-- difficulty + skills (top of the worked example) -->
+<p class="lesson-meta"><span class="difficulty">●●●○○</span><span class="skills">factoring · limits</span></p>
+
+<!-- strategy cue -->
+<p class="strategy"><b>Strategy.</b> Direct substitution gives 0/0 — rewrite before you plug in.</p>
+
+<!-- interactive revealable hints -->
+<details class="hint"><summary>Hint 1</summary><p>Factor the numerator.</p></details>
+<details class="hint"><summary>Hint 2</summary><p>Cancel the common factor, then substitute.</p></details>
+
+<!-- step-by-step: one operation per <li> -->
+<ol class="steps"><li><b>Factor</b> &rarr; (x-1)(x+1)/(x-1). <i>Difference of squares.</i></li></ol>
+
+<!-- common mistakes -->
+<ul class="steps"><li>❌ Saying the limit doesn't exist because f(1) is undefined.</li></ul>
+
+<!-- connects-to -->
+<p class="connects"><b>Connects to:</b> continuity — the limit is f's continuous extension at x=1.</p>
+```
+
+---
+
+## Interactive elements
+
+Lessons may include interactivity **where it aids understanding** — not on every lesson.
+
+- **Revealable hints** — native `<details class="hint"><summary>…</summary>…</details>`. Zero JS,
+  works inside the textbook page, keeps it uncluttered until the learner asks for help.
+- **Interactive widget** — an optional `demo(host)` function on the lesson object. The book
+  template mounts it into a `#demo-host` element (a "Play with it" card after the chapter, or
+  inline if you place `<div class="demo" id="demo-host"></div>` in a section body). Use it for a
+  visual that genuinely helps — drag `x → 1` and watch `f(x) → 2`, a slider over a parameter, a
+  draggable vector. Keep it small and self-contained, and read theme colors from CSS variables
+  (`--ink`, `--accent`, …) so it matches light/dark mode.
+
+*Guideline: reach for a widget only when a static figure can't show the idea moving.*
 
 ---
 
@@ -150,7 +194,8 @@ B({
     { h: "Worked Example & Practice",            body: "…" },
     { h: "Real-World Applications in CS & ML",   body: "…" }
   ],
-  takeaways: [ "…", "…" ]   // rendered as "Key takeaways"
+  takeaways: [ "…", "…" ],  // rendered as "Key takeaways"
+  demo: function (host) { /* optional interactive widget, mounted into #demo-host */ }
 });
 // B sets { module, template:"book", book } automatically.
 ```

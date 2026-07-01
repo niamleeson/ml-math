@@ -538,6 +538,17 @@
   #content .book-takeaways { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
   #content .book-takeaways h3 { margin: 0 0 8px; }
   #content .scaffold-note { color: var(--ink-dim); font-style: italic; }
+  /* Math lessons: guided-walkthrough meta + interactive revealable hints */
+  #content .lesson-meta { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; color: var(--ink-dim); margin: 2px 0 14px; }
+  #content .lesson-meta .difficulty { letter-spacing: 3px; margin-right: 10px; color: var(--ink); }
+  #content .lesson-meta .skills { font-style: italic; }
+  #content .strategy { color: var(--ink-dim); }
+  #content details.hint { margin: 6px 0; border-left: 3px solid var(--border); padding-left: 14px; }
+  #content details.hint > summary { cursor: pointer; color: var(--accent); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; list-style: none; }
+  #content details.hint > summary::-webkit-details-marker { display: none; }
+  #content details.hint > summary::before { content: "\25B8  "; }
+  #content details.hint[open] > summary::before { content: "\25BE  "; }
+  #content .connects { font-style: italic; color: var(--ink-dim); }
 </style>
 </head>
 <body>
@@ -1633,6 +1644,7 @@ const App = (function () {
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
       `<div class="card book-chapter">${body}${takeaways}</div>` +
+      (l.demo && !/id="demo-host"/.test(body) ? `<div class="card"><h3>Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       codeVizBlock(id) +
       navRow(id, prev, next);
   }

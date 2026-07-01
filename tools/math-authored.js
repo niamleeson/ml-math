@@ -308,25 +308,58 @@ const t1_limits = {
       "<p>to mean: $f(x)$ can be made as close to $L$ as we like by taking $x$ close enough to $a$ (from both sides), <i>without</i> ever setting $x = a$. The rigorous version is the $\\varepsilon$–$\\delta$ statement: for every tolerance $\\varepsilon > 0$ there is a closeness $\\delta > 0$ such that $0 < |x - a| < \\delta$ forces $|f(x) - L| < \\varepsilon$.</p>" +
       "<p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the two <i>one-sided</i> limits (approaching from the left and from the right) must agree, or the limit does not exist.</p>" },
     { h: "Worked Example & Practice", body:
-      "<p>Compute $\\displaystyle\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$, one operation at a time.</p><ol class=\"steps\">" +
-      "<li><b>Try direct substitution</b> &rarr; $\\tfrac{0}{0}$. <i>Indeterminate — substitution alone fails, so rewrite first.</i></li>" +
-      "<li><b>Factor the numerator</b> &rarr; $\\dfrac{(x-1)(x+1)}{x-1}$. <i>$x^2 - 1$ is a difference of squares.</i></li>" +
-      "<li><b>Cancel the common $(x-1)$</b> &rarr; $x + 1$ (valid for $x \\ne 1$). <i>The limit ignores the single point $x = 1$.</i></li>" +
-      "<li><b>Substitute $x = 1$</b> &rarr; $1 + 1 = 2$. <i>The simplified form is continuous, so plugging in is now safe.</i></li></ol>" +
-      "<p><b>Verify numerically.</b> $x = 0.9 \\to 1.9$; $x = 0.99 \\to 1.99$; $x = 1.1 \\to 2.1$; $x = 1.01 \\to 2.01$. The values close in on $2$ from both sides. &#10003;</p>" +
-      "<p><b>Practice</b> (scaffolding fades):</p><ul class=\"steps\">" +
-      "<li>$\\displaystyle\\lim_{x \\to 2}\\frac{x^2 - 4}{x - 2}$. &rarr; factor to $x + 2$, so the limit is $4$.</li>" +
-      "<li>$\\displaystyle\\lim_{x \\to 0}\\frac{\\sin x}{x}$. &rarr; $1$ (the classic squeeze-theorem limit; check: at $x = 0.01$, $\\sin x / x = 0.99998$).</li></ul>" },
+      "<p class=\"lesson-meta\"><span class=\"difficulty\">●●○○○</span><span class=\"skills\">factoring · indeterminate forms · one-sided limits</span></p>" +
+      "<p>Compute $\\displaystyle\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$.</p>" +
+      "<p class=\"strategy\"><b>Strategy.</b> Direct substitution gives $\\tfrac{0}{0}$, an indeterminate form. Rewrite to cancel what causes the $0$, then substitute.</p>" +
+      "<details class=\"hint\"><summary>Hint 1</summary><p>Plug in $x = 1$ first and name the problem you hit.</p></details>" +
+      "<details class=\"hint\"><summary>Hint 2</summary><p>The numerator $x^2 - 1$ is a difference of squares — factor it.</p></details>" +
+      "<details class=\"hint\"><summary>Hint 3</summary><p>Cancel the common $(x-1)$ — legal, since the limit never sets $x = 1$ — then substitute.</p></details>" +
+      "<p>Now, one operation at a time:</p><ol class=\"steps\">" +
+      "<li><b>Try direct substitution</b> &rarr; $\\tfrac{0}{0}$. <i>Indeterminate — substitution alone fails.</i></li>" +
+      "<li><b>Factor the numerator</b> &rarr; $\\dfrac{(x-1)(x+1)}{x-1}$. <i>Difference of squares.</i></li>" +
+      "<li><b>Cancel $(x-1)$</b> &rarr; $x + 1$ (for $x \\ne 1$). <i>The limit ignores the single point $x = 1$.</i></li>" +
+      "<li><b>Substitute $x = 1$</b> &rarr; $2$. <i>The simplified form is continuous, so plugging in is safe.</i></li></ol>" +
+      "<p><b>Verify.</b> $x = 0.99 \\to 1.99$ and $x = 1.01 \\to 2.01$ — closing on $2$ from both sides &#10003; (drag the slider below to feel it).</p>" +
+      "<p><b>Answer:</b> $\\displaystyle\\lim_{x \\to 1}\\frac{x^2 - 1}{x - 1} = 2$.</p>" +
+      "<p><b>Common mistakes.</b></p><ul class=\"steps\">" +
+      "<li>❌ Declaring the limit \"does not exist\" because $f(1)$ is undefined — the value <i>at</i> the point is irrelevant.</li>" +
+      "<li>❌ Forgetting the cancelled form $x + 1$ only equals $f$ for $x \\ne 1$.</li>" +
+      "<li>❌ Checking one side only — the left and right limits must agree.</li></ul>" +
+      "<p class=\"connects\"><b>Connects to:</b> continuity — the answer $2$ is exactly $f$'s continuous extension at $x = 1$, filling the hole in the graph.</p>" +
+      "<p><b>Practice</b> (hints fade):</p><ul class=\"steps\">" +
+      "<li>$\\displaystyle\\lim_{x \\to 2}\\frac{x^2 - 4}{x - 2}$. &rarr; factor to $x + 2$, limit $= 4$.</li>" +
+      "<li>$\\displaystyle\\lim_{x \\to 0}\\frac{\\sin x}{x}$. &rarr; $1$ (at $x = 0.01$, ratio $= 0.99998$).</li>" +
+      "<li>$\\displaystyle\\lim_{x \\to 3}\\frac{x^2 - 9}{x - 3}$. &rarr; $6$.</li></ul>" },
     { h: "Real-World Applications in CS & ML", body:
-      "<p><b>The gradient is a limit.</b> Backpropagation rests on the derivative, defined as $f'(x) = \\lim_{h \\to 0}\\frac{f(x+h) - f(x)}{h}$. To sanity-check a hand-coded gradient, engineers compute the same ratio at a small finite $h$ (a \"gradient check\"). For $f(x) = x^2$ at $x = 2$ with $h = 0.001$: $\\frac{2.001^2 - 2^2}{0.001} = \\frac{4.004001 - 4}{0.001} = 4.001$, essentially the true derivative $4$.</p>" +
-      "<p><b>Training convergence.</b> When we say SGD \"converges\", we mean the loss $L_t$ has a limit as $t \\to \\infty$; and schedules like $\\eta_t = \\eta_0 / t$ drive the learning rate's limit to $0$ so updates settle rather than bounce.</p>" }
+      "<p>Limits are the quiet machinery under a lot of computing. Six places, each with numbers.</p>" +
+      "<p><b>1. The gradient is a limit.</b> Backprop rests on $f'(x) = \\lim_{h \\to 0}\\frac{f(x+h) - f(x)}{h}$. A \"gradient check\" evaluates that ratio at small finite $h$: for $f(x) = x^2$ at $x = 2$, $h = 0.001$ gives $\\frac{4.004001 - 4}{0.001} = 4.001 \\approx 4$.</p>" +
+      "<p><b>2. Numerical differentiation.</b> The central difference $\\frac{f(x+h) - f(x-h)}{2h}$ converges faster: at $x = 2$, $h = 0.01$ gives $\\frac{4.0401 - 3.9601}{0.02} = 4.000$ exactly. But push $h$ too small and floating-point cancellation ruins it — the sweet spot is near $h \\approx 10^{-8}$ in double precision.</p>" +
+      "<p><b>3. Training convergence.</b> \"SGD converges\" means the loss $L_t$ has a limit as $t \\to \\infty$; schedules like $\\eta_t = \\eta_0 / t$ send the learning rate's limit to $0$ so updates settle instead of bouncing.</p>" +
+      "<p><b>4. Activation saturation.</b> The sigmoid $\\sigma(x) = 1/(1 + e^{-x})$ has limits $1$ and $0$ as $x \\to \\pm\\infty$. At $x = 6$, $\\sigma = 0.9975$ and its slope is only $0.0025$ — the vanishing-gradient problem is a saturating limit.</p>" +
+      "<p><b>5. Algorithm analysis (Big-O).</b> Asymptotics are limits as $n \\to \\infty$: $\\lim_{n \\to \\infty}\\frac{3n^2 + 5n}{n^2} = 3$, so a $3n^2 + 5n$ step count is $\\Theta(n^2)$ — the linear term stops mattering.</p>" +
+      "<p><b>6. Discounted returns in RL.</b> A reward stream discounted by $\\gamma$ sums to the limit $\\sum_{t=0}^{\\infty}\\gamma^t = \\frac{1}{1 - \\gamma}$; with $\\gamma = 0.99$ that is $100$ — the agent's effective planning horizon.</p>" +
+      "<p>One idea — \"what value is this heading toward?\" — reused six ways.</p>" }
   ],
   takeaways: [
     "$\\lim_{x\\to a} f(x) = L$ asks where $f$ is heading near $a$, not its value at $a$.",
     "If direct substitution gives $\\tfrac{0}{0}$, rewrite (factor and cancel) then substitute.",
     "Left and right limits must agree for the limit to exist.",
     "The derivative/gradient is a limit; finite-difference gradient checks approximate it (e.g. $4.001 \\approx 4$)."
-  ]
+  ],
+  demo: function (host) {
+    var lab = document.createElement("label");
+    lab.textContent = "Slide x toward 1 — watch f(x) = (x^2 - 1)/(x - 1) head for 2";
+    var r = document.createElement("input");
+    r.type = "range"; r.min = "0.5"; r.max = "1.5"; r.step = "0.001"; r.value = "0.6";
+    var out = document.createElement("div"); out.className = "out";
+    function upd() {
+      var x = parseFloat(r.value);
+      var f = (Math.abs(x - 1) < 1e-9) ? null : (x * x - 1) / (x - 1);
+      out.textContent = "x = " + x.toFixed(3) + "     f(x) = " + (f === null ? "undefined (0/0)" : f.toFixed(3)) + "     -> heading toward 2";
+    }
+    r.addEventListener("input", upd);
+    host.appendChild(lab); host.appendChild(r); host.appendChild(out); upd();
+  }
 };
 
 module.exports = {
