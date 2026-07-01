@@ -142,7 +142,8 @@
   .module .lessons { list-style: none; margin: 0; padding: 0 0 8px; }
   .module.collapsed .lessons { display: none; }
   /* Supergroup: a top-level umbrella (e.g. "Math") wrapping several module sections. */
-  .supergroup { border-bottom: 1px solid var(--border); }
+  .supergroup { border-bottom: 1px solid var(--border); }         /* closes the collapsed group */
+  .supergroup:not(.collapsed) { border-bottom: none; }            /* expanded: the last child's own border closes it (avoids a doubled line) */
   .supergroup > .sg-head {
     display: flex; align-items: center; gap: 8px;
     padding: 13px 16px; cursor: pointer; user-select: none;
@@ -155,10 +156,8 @@
   .supergroup.collapsed > .sg-head { border-bottom: none; }
   .supergroup.collapsed > .sg-head .chev { transform: rotate(-90deg); }
   .supergroup.collapsed > .sg-body { display: none; }
-  /* Child sections sit inside the umbrella: lighter dividers that align under the
-     indented headers, and no doubled border where the group closes. */
-  .supergroup > .sg-body > .module { border-bottom: none; }
-  .supergroup > .sg-body > .module:not(:last-child) { border-bottom: 1px solid var(--border); }
+  /* Child sections keep the same bottom divider as top-level modules — every one,
+     including the last, so no secondary item ever looks border-less. */
   .supergroup > .sg-body > .module > .mod-head { padding-left: 28px; font-weight: 500; }
   .supergroup > .sg-body > .module .lessons li a.navlink { padding-left: 50px; }
   .lessons li { display: block; }
