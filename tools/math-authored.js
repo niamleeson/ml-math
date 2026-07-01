@@ -305,6 +305,7 @@ const t1_limits = {
     { title: "Algorithm analysis (Big-O)", background: "Asymptotics are limits as $n\\to\\infty$.", numbers: "$\\lim_{n\\to\\infty}\\frac{3n^2+5n}{n^2}=3$, so $3n^2+5n=\\Theta(n^2)$." },
     { title: "Discounted returns in RL", background: "A discounted reward stream sums to a limit — the effective horizon.", numbers: "$\\sum_{t=0}^{\\infty}\\gamma^t=\\frac{1}{1-\\gamma}$; with $\\gamma=0.99$ that is $100$." }
   ],
+  applicationsClose: "One idea — \"what value is this heading toward?\" — reused six different ways.",
   takeaways: [
     "$\\lim_{x\\to a}f(x)=L$ asks where $f$ is heading near $a$, not its value at $a$.",
     "If direct substitution gives $\\tfrac00$, rewrite (factor and cancel) then substitute.",
@@ -389,6 +390,7 @@ const laplace = {
     { title: "Control ↔ RL", background: "Feedback moves a plant's poles; RL inherits this through optimal control.", numbers: "Plant $1/(s+1)$ (pole $-1$, settling $\\sim4$s); gain $K=9\\to$ pole $-10\\to$ settling $\\approx0.4$s, a $10\\times$ speed-up." },
     { title: "Core CS — queues", background: "Queueing theory (Erlang, early 1900s) uses the transform of the service-time distribution.", numbers: "M/M/1 with $\\lambda=8,\\mu=10$: $\\rho=0.8$, $L=\\rho/(1-\\rho)=4$, $W=L/\\lambda=0.5$s; service transform $\\mu/(s+\\mu)$ has a pole at $-10$." }
   ],
+  applicationsClose: "The thread through all six: compute a pole, read its real part, know the behavior. One idea, six uniforms.",
   takeaways: [
     "The Laplace transform turns differentiation into multiplication by $s$, converting a linear ODE into algebra.",
     "$F(s)=\\int_0^\\infty e^{-st}f(t)\\,dt$; key property $\\mathcal{L}\\{f'\\}=sF(s)-f(0)$, where the initial condition enters.",

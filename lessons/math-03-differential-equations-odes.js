@@ -690,6 +690,7 @@
         "numbers": "M/M/1 with $\\lambda=8,\\mu=10$: $\\rho=0.8$, $L=\\rho/(1-\\rho)=4$, $W=L/\\lambda=0.5$s; service transform $\\mu/(s+\\mu)$ has a pole at $-10$."
       }
     ],
+    "applicationsClose": "The thread through all six: compute a pole, read its real part, know the behavior. One idea, six uniforms.",
     "takeaways": [
       "The Laplace transform turns differentiation into multiplication by $s$, converting a linear ODE into algebra.",
       "$F(s)=\\int_0^\\infty e^{-st}f(t)\\,dt$; key property $\\mathcal{L}\\{f'\\}=sF(s)-f(0)$, where the initial condition enters.",

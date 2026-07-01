@@ -1737,7 +1737,8 @@ const App = (function () {
     const worked = `<h3 class="book-h">Worked Example &amp; Practice</h3>` + workedBody;
 
     const apps = (l.applications && l.applications.length)
-      ? l.applications.map((a, i) => `<p><b>${i + 1}. ${a.title}.</b> ${a.background || ""}${a.numbers ? " " + a.numbers : ""}</p>`).join("")
+      ? l.applications.map((a, i) => `<p><b>${i + 1}. ${a.title}.</b> ${a.background || ""}${a.numbers ? " " + a.numbers : ""}</p>`).join("") +
+        (l.applicationsClose ? `<p>${l.applicationsClose}</p>` : "")
       : noteHTML;
     const appsSec = `<h3 class="book-h">Real-World Applications in CS &amp; ML</h3>` + apps;
 

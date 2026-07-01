@@ -202,6 +202,7 @@ B({
   },
   practice: [{ problem: "…", answer: "…" }],
   applications: [{ title: "…", background: "…", numbers: "…" }],   // ≥6
+  applicationsClose: "…",      // §5 closing thread ("one idea, many uniforms")
   takeaways: ["…"],
   demo: function (host) { /* optional interactive widget, mounted into #demo-host */ }
 });

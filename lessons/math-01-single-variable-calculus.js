@@ -550,6 +550,7 @@
         "numbers": "$\\sum_{t=0}^{\\infty}\\gamma^t=\\frac{1}{1-\\gamma}$; with $\\gamma=0.99$ that is $100$."
       }
     ],
+    "applicationsClose": "One idea — \"what value is this heading toward?\" — reused six different ways.",
     "takeaways": [
       "$\\lim_{x\\to a}f(x)=L$ asks where $f$ is heading near $a$, not its value at $a$.",
       "If direct substitution gives $\\tfrac00$, rewrite (factor and cancel) then substitute.",
