@@ -11,14 +11,14 @@ window.ALLML_CONTENT["8.11"] = {
   context: String.raw`
     <p>You already hold every piece of this lesson; attention just gives each one a new job.</p>
     <ul>
-      <li><b>Word embeddings</b> gave each token a <i>static</i> meaning. Attention turns that into a
-        <i>context-dependent</i> meaning by asking which words matter to each other in <i>this</i> sentence.</li>
-      <li><b>The dot product</b> you learned as a measure of alignment <i>is</i> the scoring step here — nothing more exotic.</li>
-      <li><b>Softmax</b>, which turned class scores into probabilities, does the identical job over <i>positions</i>.</li>
+      <li><b>Word embeddings</b> gave each token a static meaning. Attention turns that into a
+        context-dependent meaning by asking which words matter to each other in this sentence.</li>
+      <li><b>The dot product</b> you learned as a measure of alignment is the scoring step here — nothing more exotic.</li>
+      <li><b>Softmax</b>, which turned class scores into probabilities, does the identical job over positions.</li>
       <li><b>MLPs and backprop</b> train attention's projection matrices with the same gradient descent you already trust.</li>
     </ul>
     <p><b>Where it leads:</b> wrap this single layer with residuals, LayerNorm and a feed-forward net to get a
-      <i>Transformer block</i> (8.12); stack blocks with a causal mask for <i>GPT</i> (9.2); drop the mask for <i>BERT</i> (9.1);
+      Transformer block (8.12); stack blocks with a causal mask for GPT (9.2); drop the mask for BERT (9.1);
       and its $O(T^2)$ cost is exactly what efficient/long-context attention (8.14) exists to tame.</p>`,
 
   intuition: String.raw`
@@ -30,7 +30,7 @@ window.ALLML_CONTENT["8.11"] = {
       and a <b>Value</b> (what I hand over). Compare a Query to every Key, softmax the scores into weights that sum to one,
       then take that weighted blend of Values.</p>
     <p><b>The design decision people gloss over:</b> why three separate vectors, not the raw embedding for all? Because a word must
-      <i>ask</i> a different question than it <i>answers</i>. Separate learned projections let similarity be <i>directed and asymmetric</i>
+      ask a different question than it answers. Separate learned projections let similarity be directed and asymmetric
       — the only way attention can represent "this word points at that word."</p>`,
 
   mathematics: String.raw`
@@ -51,7 +51,7 @@ window.ALLML_CONTENT["8.11"] = {
       it cares about another. Magnitude counts too, not just direction: $a\cdot[3,4]=2\cdot3+1\cdot4=10$, and doubling the Query
       doubles the score, $(2a)\cdot[3,4]=20$. If you want direction alone, cosine divides that out —
       $\cos=\frac{a\cdot k}{\lVert a\rVert\,\lVert k\rVert}$, so $[1,0]$ against $[1,0]$ and against $[10,0]$ both give $\cos=1.00$
-      even though the raw dots are $1$ and $10$. And crucially the score is <i>directed</i>: below $\text{score}(0\!\to\!1)=1$ while
+      even though the raw dots are $1$ and $10$. And crucially the score is directed: below $\text{score}(0\!\to\!1)=1$ while
       $\text{score}(1\!\to\!0)=0$, and it is precisely this asymmetry — "0 attends to 1" need not equal "1 attends to 0" — that
       forces $Q$ and $K$ to be separate matrices rather than one shared vector.</p>
 
@@ -63,8 +63,8 @@ window.ALLML_CONTENT["8.11"] = {
     </ol>
     <p>Repeating for the other two tokens fills the whole table:</p>
     <div class="formula-box">$$QK^\top=\begin{bmatrix}1&1&0\\0&1&1\\1&2&1\end{bmatrix}$$</div>
-    <p>Reading it by axis is the key skill: row $i$ tells you <i>who token $i$ attends to</i>, while column $j$ tells you
-      <i>who attends to token $j$</i> — and since the matrix is not symmetric, those are genuinely different vectors, the concrete
+    <p>Reading it by axis is the key skill: row $i$ tells you who token $i$ attends to, while column $j$ tells you
+      who attends to token $j$ — and since the matrix is not symmetric, those are genuinely different vectors, the concrete
       payoff of the directed scoring above.</p>
 
     <p><b>Scaling by $\sqrt{d_k}$.</b> Why divide the scores at all? Each component of $Q,K$ has variance $1$, and
@@ -111,7 +111,7 @@ window.ALLML_CONTENT["8.11"] = {
     </ol>
     <p>The output lands almost exactly on $V_1=[4,0]$, the "animal" Value — so the pronoun "it" has resolved to "animal" purely by
       weighted averaging, with no hand-written rule. And because the weights are $\ge 0$ and sum to $1$, the output is a
-      <i>convex combination</i> of the Values: it can never leave the triangle they span, so attention can blend and interpolate but
+      convex combination of the Values: it can never leave the triangle they span, so attention can blend and interpolate but
       never overshoot. Push the weights near one-hot, $[0.01,0.98,0.01]$, and the output $0.98\cdot[4,0]=[3.94,0.03]$ snaps onto a
       single Value — the hard-lookup limit, where soft attention degenerates into an ordinary dictionary lookup.</p>
 
@@ -120,16 +120,16 @@ window.ALLML_CONTENT["8.11"] = {
       eight $64$-wide outputs concatenate back to $8\times64=512$. Since each head is $1/8$ the width, eight of them cost about the
       same as one full-width attention — so the model gets eight different relations (syntax, coreference, position, …) almost for free.</p>
 
-    <p><b>Masking.</b> To stop a token from seeing the future, add $-\infty$ to those scores <i>before</i> softmax. Token at
+    <p><b>Masking.</b> To stop a token from seeing the future, add $-\infty$ to those scores before softmax. Token at
       position 1, with scores $[2,1]$ for positions $0,1$ and $-\infty$ for $2,3$:</p>
     <ol class="work">
       <li>exponentiate: $e^{2}=7.389,\; e^{1}=2.718,\; e^{-\infty}=0,\; e^{-\infty}=0$</li>
       <li>sum: $7.389+2.718=10.107$</li>
       <li>weights $=[\,0.731,\; 0.269,\; 0,\; 0\,]$</li>
     </ol>
-    <p>The future positions receive <i>exactly</i> zero weight — because $e^{-\infty}=0$ — while the surviving weights still sum to
-      $1$. That is why the mask goes in <i>before</i> softmax: softmax renormalizes over only the allowed positions, whereas zeroing
-      weights <i>after</i> softmax would leave the row summing to less than $1$ and quietly break the average. The same trick handles
+    <p>The future positions receive exactly zero weight — because $e^{-\infty}=0$ — while the surviving weights still sum to
+      $1$. That is why the mask goes in before softmax: softmax renormalizes over only the allowed positions, whereas zeroing
+      weights after softmax would leave the row summing to less than $1$ and quietly break the average. The same trick handles
       padding: real scores $[1,2,0.5]$ with a $\langle\text{pad}\rangle$ key at the end ($-\infty$) give $e^{1}=2.718$, $e^{2}=7.389$,
       $e^{0.5}=1.649$, sum $11.756$, so $[0.231,0.629,0.140,0]$ — the pad contributes nothing and the rest renormalize. Every figure
       and cross-check for all of the above lives in the notebook: the <b>Open in Colab</b> button at the top of this lesson.</p>`,

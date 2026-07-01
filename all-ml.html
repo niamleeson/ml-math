@@ -90,7 +90,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
   .lesson-title { font-size: 34px; font-weight: 700; line-height: 1.18; letter-spacing: -.012em; margin: 0 0 10px; }
-  .lesson-sub { font-size: 18px; font-style: italic; color: var(--ink-dim); margin: 0 0 34px; }
+  .lesson-sub { font-size: 18px; color: var(--ink-dim); margin: 0 0 34px; }
 
   /* Controls stay in the page sans, not the body serif. */
   .toolbar {
@@ -116,7 +116,9 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px;
   }
   .card.mathematics ol.work li { margin: 5px 0; font-variant-numeric: tabular-nums; line-height: 1.5; }
-  .scaffold-note { color: var(--ink-dim); font-style: italic; }
+  .scaffold-note { color: var(--ink-dim); }
+  /* No prose italics anywhere in the reading pane; MathJax math variables keep their own styling. */
+  #content :not(mjx-container) i, #content em { font-style: normal; }
   .sec-hint { color: var(--ink-dim); font-size: 15px; margin: 0 0 4px; }
 
   /* Key equations: centred with breathing room, no box. */
